@@ -8605,3 +8605,30 @@ expected/chain/valid/rejected session identity。
 合法产生第三类。`PRESENT` 仅表示 option chain 曾出现，不等于该轴或整体 transport/DQ/PIT PASS；其余轴在
 没有 per-axis derived counters 时不得由调用者自报或从组合计数推断。该合同不授权新 Cloud run、Results
 下载、API/CLI/HTTP、订单、成交、paper/live/broker/production 或策略解释。
+
+## TRADING-2529 QQQ Options daily transport 逐轴 export-safe aggregate 采集提案 V1
+
+`qqq_options_research.daily_transport_per_axis_collection_proposal` 是 2528 的离线 proposal-only 后继。
+它把未来可能补齐的 8 轴 × 4 状态会话计数、primary `2021-02-22..2025-12-02` / `1202` XNYS
+sessions、existing project `34808569`、一次 project mutation / 一次 zero-order Cloud run 上限以及
+零订单零成交边界密封进 exact package；本任务不登录、不上传、不运行、不下载，也不生成 raw rows。
+
+```text
+2528 canonical UNRESOLVED_COMBINATION diagnostic + exact hashes
+  -> bind 2522 backtest/range/session identity and 2528 axis statuses
+  -> freeze OPTION_CHAIN / UNDERLYING / BID_ASK / GREEKS / IV / OI / VOLUME / CROSS_FIELD
+  -> allow only PRESENT / MISSING / INVALID / NOT_EVALUATED session-count aggregates
+  -> render candidate main.py in memory; no contract identifiers or values leave memory
+  -> no logs-as-data / Object Store / API / CLI / HTTP / background network
+  -> proposed future cap = one existing-project mutation + one zero-order Cloud backtest
+  -> actual current action = none; orders = 0; fills = 0
+  -> canonical run_scope + proposal + owner request + project code + package manifest hashes
+  -> missing/extra/symlink/noncanonical/duplicate/tampered package bytes fail closed
+  -> ordinary-pushed exact main + separate Owner final token still required
+  -> POLICY_BLOCKED_CASH_PRESERVATION
+```
+
+proposal 中的 `main.py` 只是可审阅候选代码，不是已部署代码或 Cloud evidence。package 完成只表示
+`PROPOSAL_READY / OWNER_FINAL_TOKEN_PENDING`；不等于 DQ/PIT PASS、transport root cause 已定位、策略有效、
+selection/engine 解锁或允许交易。真实 token admission、外部运行、Results collection、evidence admission 与
+独立复核必须另立 governed 后继任务。

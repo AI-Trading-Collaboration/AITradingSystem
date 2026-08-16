@@ -42,12 +42,12 @@ def _rendered(
 def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 49
+    assert len(policy.task_sources) == 50
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
         "TRADING-2523B",
-        *[f"TRADING-{number}" for number in range(2524, 2529)],
+        *[f"TRADING-{number}" for number in range(2524, 2530)],
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -73,12 +73,12 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
     assert manifest.schema_version == "strategy_research_page_effectiveness.v2"
-    assert len(manifest.task_coverage) == 49
+    assert len(manifest.task_coverage) == 50
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
         "TRADING-2523B",
-        *[f"TRADING-{number}" for number in range(2524, 2529)],
+        *[f"TRADING-{number}" for number in range(2524, 2530)],
     ]
     coverage_by_task = {
         item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
@@ -145,7 +145,10 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "PROTOCOL_PREPARED_OWNER_POLICY_AND_HUMAN_PILOT_PENDING"
     )
     assert coverage_by_task["TRADING-2528"] == (
-        "DISCLOSED_OFFLINE_PER_AXIS_DIAGNOSTIC_CONTRACT_REGISTERED_NOT_IMPLEMENTED"
+        "DISCLOSED_OFFLINE_PER_AXIS_DIAGNOSTIC_IMPLEMENTED_ROOT_CAUSE_UNRESOLVED"
+    )
+    assert coverage_by_task["TRADING-2529"] == (
+        "DISCLOSED_EXPORT_SAFE_PER_AXIS_PROPOSAL_READY_OWNER_FINAL_TOKEN_PENDING"
     )
     assert len(manifest.source_artifacts) == 28
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)

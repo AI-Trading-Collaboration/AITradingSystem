@@ -127,7 +127,7 @@ def test_repository_authority_is_fresh_lossless_and_inactive() -> None:
     assert result["source_of_truth"] == "LEGACY_MONOLITH"
     assert result["fragment_shadow_active"] is False
     assert result["target_count"] == 3
-    assert result["entry_count"] == 2928
+    assert result["entry_count"] == 2932
     assert 1 <= result["fragment_count"] <= 192
     assert policy["contract"] == {
         "source_of_truth": "LEGACY_MONOLITH",
@@ -151,7 +151,7 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     assert fragment_authority["source_of_truth"] == "LEGACY_MONOLITH"
     assert fragment_authority["fragment_shadow_active"] is False
     assert fragment_authority["target_count"] == 3
-    assert fragment_authority["entry_count"] == 2928
+    assert fragment_authority["entry_count"] == 2932
     assert fragment_authority["fragment_count"] == 192
     assert section["consumer_contract"]["cutover_ready"] is False
 
@@ -174,8 +174,8 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         (
             "system_flow",
             "docs/system_flow.md",
-            "fdf4f529e85fb7222ccae8a99dfaf64b1d87031438f3f5b46b0dd8b10c29d49b",
-            1001,
+            "ecabc430069091898d6272ce0c0f3584ce34a7739489cda3b67c59d5ed372697",
+            1005,
         ),
     ],
 )

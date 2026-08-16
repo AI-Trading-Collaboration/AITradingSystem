@@ -1,0 +1,137 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2529_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_PROPOSAL_V1
+  task_id_sha256: 00694c4d74f1cf57e212a31df3e95424030175bc0aaf33726c983d0bc21affa8
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2529_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_PROPOSAL_V1
+  title: null
+  domain: QQQ Options daily transport per-axis export-safe aggregate collection proposal
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner：ordinary-pushed exact package 后复核 hashes 与一次性 token；真实
+    admission/Cloud/Results/evidence 必须另立 governed 后继任务。
+  requirement_refs:
+  - docs/requirements/TRADING-2529_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Proposal_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Proposal ready / Owner final token pending。当前
+    external_action=none；未授权 Cloud、raw rows、交易、订单、API/CLI/HTTP、browser 或其他外部动作。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Exact 5-file package、8轴×4状态 session/count aggregates、zero-order candidate
+      code、strict replay/negative tests、generated/compatibility/formal PASS；manifest
+      file SHA-256=856d3fda6b5ffb6ac4d5bd56886d03c4a62868498d63fc9ae0a27a079b2f6d33。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2529_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_PROPOSAL_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-16T19:46:00+09:00'
+  actor: codex_capability_coordinator
+  change_id: trading-2529-registration-owner-proposal-auth-20260816-v1
+  lane_id: null
+  base_commit: 4366092a2284557a659daa3bd497250ea0ce1052
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2529_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_PROPOSAL_V1
+    - QQQ Options daily transport per-axis export-safe aggregate collection proposal
+    - P0
+    - IN_PROGRESS
+    - 2529 coordinator：仅生成 proposal package、deterministic zero-order code 与 exact
+      hashes；ordinary push 后把最终一次性 token 文本交 Project Owner 复核。
+    - 2528 已完成离线逐轴诊断合同，但现有 2522 汇总仍为 UNRESOLVED_COMBINATION；本阶段明确禁止 Cloud、raw rows、交易、订单与其他外部动作。
+    - 冻结 project/range/session/八轴/action 上限；sealed run scope/proposal/package、strict
+      loader、golden/negative tests 与 generated/formal PASS；Owner token 缺失时 fail closed。
+    - '[supporting requirement](docs/requirements/TRADING-2529_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Proposal_V1.md)；Owner
+      2026-08-16 仅授权建立后继任务和生成 proposal/exact hashes；external_action=none。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2529-registration-owner-proposal-auth-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-aef03c70935464e5dbb774fb29213e48
+- schema_version: task_event.v1
+  task_id: TRADING-2529_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_PROPOSAL_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T20:08:48+09:00'
+  actor: codex_capability_coordinator
+  change_id: trading-2529-baseline-done-exact-proposal-20260816-v1
+  lane_id: null
+  base_commit: 4366092a2284557a659daa3bd497250ea0ce1052
+  previous_state_event_id: task-event-aef03c70935464e5dbb774fb29213e48
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：ordinary-pushed exact package 后复核 hashes 与一次性 token；真实
+      admission/Cloud/Results/evidence 必须另立 governed 后继任务。
+    blocker_or_next_step: Proposal ready / Owner final token pending。当前 external_action=none；未授权
+      Cloud、raw rows、交易、订单、API/CLI/HTTP、browser 或其他外部动作。
+    acceptance_criteria: Exact 5-file package、8轴×4状态 session/count aggregates、zero-order
+      candidate code、strict replay/negative tests、generated/compatibility/formal PASS；manifest
+      file SHA-256=856d3fda6b5ffb6ac4d5bd56886d03c4a62868498d63fc9ae0a27a079b2f6d33。
+    notes: 2529 只完成离线采集提案与 exact hashes；future token admission/execution is out of
+      scope and fail-closed until separate Owner authorization.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2529-baseline-done-exact-proposal-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fd38c0f6ef4580f2602d78cdefed0a86
+- schema_version: task_event.v1
+  task_id: TRADING-2529_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_PROPOSAL_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T20:58:36+09:00'
+  actor: codex_capability_coordinator
+  change_id: trading-2529-restore-requirement-binding-20260816-v1
+  lane_id: null
+  base_commit: 4366092a2284557a659daa3bd497250ea0ce1052
+  previous_state_event_id: task-event-fd38c0f6ef4580f2602d78cdefed0a86
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：ordinary-pushed exact package 后复核 hashes 与一次性 token；真实
+      admission/Cloud/Results/evidence 必须另立 governed 后继任务。
+    blocker_or_next_step: Proposal ready / Owner final token pending。当前 external_action=none；未授权
+      Cloud、raw rows、交易、订单、API/CLI/HTTP、browser 或其他外部动作。
+    acceptance_criteria: Exact 5-file package、8轴×4状态 session/count aggregates、zero-order
+      candidate code、strict replay/negative tests、generated/compatibility/formal PASS；manifest
+      file SHA-256=856d3fda6b5ffb6ac4d5bd56886d03c4a62868498d63fc9ae0a27a079b2f6d33。
+    notes: '[supporting requirement](docs/requirements/TRADING-2529_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Proposal_V1.md)；2529
+      proposal package ready，Owner final token pending，external_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2529-restore-requirement-binding-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fc7de727eeb548534380afeb0818e6a9
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2529_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_PROPOSAL_V1
+  - QQQ Options daily transport per-axis export-safe aggregate collection proposal
+  - P0
+  - BASELINE_DONE
+  - Project Owner：ordinary-pushed exact package 后复核 hashes 与一次性 token；真实 admission/Cloud/Results/evidence
+    必须另立 governed 后继任务。
+  - Proposal ready / Owner final token pending。当前 external_action=none；未授权 Cloud、raw
+    rows、交易、订单、API/CLI/HTTP、browser 或其他外部动作。
+  - Exact 5-file package、8轴×4状态 session/count aggregates、zero-order candidate code、strict
+    replay/negative tests、generated/compatibility/formal PASS；manifest file SHA-256=856d3fda6b5ffb6ac4d5bd56886d03c4a62868498d63fc9ae0a27a079b2f6d33。
+  - '[supporting requirement](docs/requirements/TRADING-2529_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Proposal_V1.md)；2529
+    proposal package ready，Owner final token pending，external_action=none。'
+  docs_links:
+  - docs/requirements/TRADING-2529_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Proposal_V1.md
+  terminal: false
+  canonical_row_sha256: 9ca05a02131e85d1da20d2c6208d4555d017fff10ad80a209d9cf18149560211
+last_event_id: task-event-fc7de727eeb548534380afeb0818e6a9
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 0df19d3d8eea1c226c59ccb890d03cd699978ec9dea9c081080f9cae348b7cd5

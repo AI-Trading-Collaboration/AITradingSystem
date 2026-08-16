@@ -1,0 +1,61 @@
+{
+  "artifacts": [
+    {
+      "byte_count": 24420,
+      "relative_path": "main.py",
+      "role": "PROJECT_CODE",
+      "sha256": "adfc060fff3cfd840565fb000ac4a1759b6f54f847568dd46c5418912d0b1421"
+    },
+    {
+      "byte_count": 3777,
+      "relative_path": "owner_decision_request.md",
+      "role": "OWNER_DECISION_REQUEST",
+      "sha256": "0fcd5fe80d0d282b22c1d2713047a51883ee09b3231c200b0307eab1e1501677"
+    },
+    {
+      "byte_count": 4880,
+      "relative_path": "proposal.json",
+      "role": "PROPOSAL",
+      "sha256": "09d62938680a2d2190e03787de3cf44c7d0097c7e004956ad56235f809320656"
+    },
+    {
+      "byte_count": 23383,
+      "relative_path": "run_scope.json",
+      "role": "RUN_SCOPE",
+      "sha256": "23b9a1fa2aef4973b6c1e8892e6245a99f37587554de02fcb32609b4c0dd0a13"
+    }
+  ],
+  "authorization_status": "NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS",
+  "axis_count": 8,
+  "broker_action": "none",
+  "content_sha256": "79e6d0ca0b2a0b9793e1dad1fbecb033e90f5dfb36c0e8cc4430fd316398c5ea",
+  "created_at_utc": "2026-08-16T10:46:00Z",
+  "decision": "OWNER_FINAL_TOKEN_REQUIRED",
+  "external_action_performed": false,
+  "maximum_cloud_backtests": 1,
+  "maximum_fills": 0,
+  "maximum_orders": 0,
+  "maximum_project_mutations": 1,
+  "package_id": "TRADING_2529_DAILY_TRANSPORT_PER_AXIS_COLLECTION_PROPOSAL_V1",
+  "production_effect": "none",
+  "project_code_lf_byte_count": 24420,
+  "project_code_lf_sha256": "adfc060fff3cfd840565fb000ac4a1759b6f54f847568dd46c5418912d0b1421",
+  "proposal_canonical_sha256": "09d62938680a2d2190e03787de3cf44c7d0097c7e004956ad56235f809320656",
+  "proposal_content_sha256": "2c41024a72229245290599da58056d5b0fd31da9cce7a562e9b7fe9e411081c9",
+  "proposal_policy_canonical_sha256": "417af9f94d81f83c44feb4dde3b663a7f67122abbda99ceb77bffd416c351f73",
+  "proposal_policy_file_sha256": "05f45abfc296cb9e622559fde0602f4274ac9a52a42cacb92b1d6cca86707cc9",
+  "repository_code_sha": "4366092a2284557a659daa3bd497250ea0ce1052",
+  "requested_end": "2025-12-02",
+  "requested_start": "2021-02-22",
+  "run_scope_canonical_sha256": "23b9a1fa2aef4973b6c1e8892e6245a99f37587554de02fcb32609b4c0dd0a13",
+  "run_scope_content_sha256": "6c10f143fa542505b4696f255303510015e6b2318f22d6ac83e1c0933a974c33",
+  "schema_version": "qc_qqq_options_daily_transport_per_axis_collection_proposal_package.v1",
+  "session_count": 1202,
+  "source_diagnostic_canonical_sha256": "b2382b928a860685412add5ac091ac458d08ab9d246351a4a5a516d050eca9ac",
+  "source_diagnostic_content_sha256": "e8125e165f8acf6147f15fbd64701832ba6f602bbc98d69863d65ae942b8b7aa",
+  "source_diagnostic_implementation_file_sha256": "36bf01bb5ec473112bd0655fead589074a4be4ea1fe117ca65389852bf3b360c",
+  "source_diagnostic_policy_canonical_sha256": "f051f5e50458add258f2915c00222a56f942576be6f42bd4b8c42aa3ab971f70",
+  "source_diagnostic_policy_file_sha256": "d98b94d783ae3405f50e5a470d7d720e1ca187cd48bef186fb09ea87c8e303e0",
+  "status_count": 4,
+  "target_project_id": 34808569
+}

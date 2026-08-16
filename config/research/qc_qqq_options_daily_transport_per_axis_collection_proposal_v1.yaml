@@ -1,0 +1,77 @@
+schema_version: qc_qqq_options_daily_transport_per_axis_collection_proposal_policy.v1
+policy_id: qc_qqq_options_daily_transport_per_axis_collection_proposal_v1
+policy_version: 1.0.0
+policy_status: OWNER_REVIEW_REQUIRED_EXACT_PROPOSAL
+task_id: TRADING-2529_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_PROPOSAL_V1
+registration_base_repository_code_sha: 4366092a2284557a659daa3bd497250ea0ce1052
+package_id: TRADING_2529_DAILY_TRANSPORT_PER_AXIS_COLLECTION_PROPOSAL_V1
+package_root: inputs/research/qqq_options/trading_2529_daily_transport_per_axis_collection_proposal_v1
+created_at_utc: '2026-08-16T10:46:00Z'
+run_scope_id: TRADING_2529_DAILY_TRANSPORT_PER_AXIS_SCOPE_V1
+proposal_id: TRADING_2529_DAILY_TRANSPORT_PER_AXIS_PROPOSAL_V1
+target_project_id: 34808569
+requested_start: '2021-02-22'
+requested_end: '2025-12-02'
+evaluated_start: '2021-02-22'
+evaluated_end: '2025-12-02'
+primary_research_role: PRIMARY
+exchange_calendar: XNYS
+expected_session_count: 1202
+expected_first_session: '2021-02-22'
+expected_last_session: '2025-12-02'
+collector_id: codex_capability_coordinator
+independent_reviewer_id: project_owner
+authorization_expires_after_hours: 168
+authorization_single_use: true
+authorization_invalidates_on_first_run_attempt: true
+maximum_project_mutations: 1
+maximum_cloud_backtests: 1
+maximum_orders: 0
+maximum_fills: 0
+result_carrier: MANUAL_DOWNLOAD_RESULTS_JSON
+axis_order:
+  - OPTION_CHAIN_PRESENCE
+  - UNDERLYING_PRICE
+  - BID_ASK_QUOTE
+  - GREEKS
+  - IMPLIED_VOLATILITY
+  - OPEN_INTEREST
+  - VOLUME
+  - CROSS_FIELD_CONSISTENCY
+status_order:
+  - PRESENT
+  - MISSING
+  - INVALID
+  - NOT_EVALUATED
+source_diagnostic:
+  policy_path: config/research/qc_qqq_options_daily_transport_per_axis_diagnostic_v1.yaml
+  policy_file_sha256: d98b94d783ae3405f50e5a470d7d720e1ca187cd48bef186fb09ea87c8e303e0
+  policy_canonical_sha256: f051f5e50458add258f2915c00222a56f942576be6f42bd4b8c42aa3ab971f70
+  implementation_path: src/ai_trading_system/qqq_options_research/daily_transport_per_axis_diagnostic.py
+  implementation_file_sha256: 36bf01bb5ec473112bd0655fead589074a4be4ea1fe117ca65389852bf3b360c
+  diagnostic_content_sha256: e8125e165f8acf6147f15fbd64701832ba6f602bbc98d69863d65ae942b8b7aa
+  diagnostic_canonical_sha256: b2382b928a860685412add5ac091ac458d08ab9d246351a4a5a516d050eca9ac
+  source_backtest_id: 60ce7e0bec3ad2d83a4d1341e0221492
+  chain_session_count: 1201
+  valid_candidate_session_count: 0
+  transport_rejected_session_count: 1201
+  root_cause_status: UNRESOLVED
+  reject_scope: UNRESOLVED_COMBINATION
+safety:
+  authorization_status: NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS
+  decision: OWNER_FINAL_TOKEN_REQUIRED
+  owner_policy_value_count: 0
+  executable_policy_authorized: false
+  engine_status: POLICY_BLOCKED_CASH_PRESERVATION
+  selection_authorized: false
+  external_action_performed: false
+  investment_interpretation_generated: false
+  raw_options_data_export_allowed: false
+  log_data_carrier_allowed: false
+  object_store_allowed: false
+  api_cli_http_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

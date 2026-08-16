@@ -1,0 +1,21 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_daily_transport_per_axis_collection_proposal
+fragment_kind: module
+owner: options_daily_backtest_governance
+module_prefix: src/ai_trading_system/qqq_options_research/daily_transport_per_axis_collection_proposal.py
+public_contracts:
+  - Axis
+  - AxisStatus
+  - BuiltPerAxisCollectionProposalPackage
+  - PackageArtifact
+  - PerAxisCollectionProposal
+  - PerAxisCollectionProposalError
+  - PerAxisCollectionProposalPackageManifest
+  - PerAxisCollectionProposalPolicy
+  - PerAxisCollectionRunScope
+  - build_per_axis_collection_proposal_package
+  - load_per_axis_collection_proposal_package
+  - load_per_axis_collection_proposal_policy
+  - write_per_axis_collection_proposal_package
+compatibility_facades: []
+deprecation_status: active_reference_architecture

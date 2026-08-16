@@ -238,8 +238,12 @@ task_sources:
     reader_summary_zh: exact-HTML 理解验收 protocol、场景、事实问题和记录结构已准备，但样本、阈值、critical error 与 reviewer policy 仍等待 Owner；尚未招募、执行 pilot 或产生人类 PASS。
   - task_id: TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
     requirement_path: docs/requirements/TRADING-2528_QC_QQQ_Options_Daily_Transport_Per_Axis_Diagnostic_Contract_V1.md
-    coverage: DISCLOSED_OFFLINE_PER_AXIS_DIAGNOSTIC_CONTRACT_REGISTERED_NOT_IMPLEMENTED
-    reader_summary_zh: 下一步先实现 2528 离线 per-axis 诊断合同。2528 仅登记为严格离线的 per-axis transport 诊断合同，尚未实现；它将区分 quote、Greeks、IV、OI、volume 与交叉条件，但不会反演 raw rows、伪造轴向根因或授权新的 Cloud run。当前 evidence/DQ-PIT/engine 状态均不改变。
+    coverage: DISCLOSED_OFFLINE_PER_AXIS_DIAGNOSTIC_IMPLEMENTED_ROOT_CAUSE_UNRESOLVED
+    reader_summary_zh: 2528 严格离线逐轴诊断合同已实现并绑定 2522 的原始失败证据；它只能确认“期权链已出现”，其余七个检查维度仍未评估，因此目前只知道“组合条件未解析”，不能定位具体失败维度。它没有反演逐条原始数据、伪造轴向根因或授权新的 Cloud run，当前证据、数据质量、时点可得性与研究引擎状态均不改变。
+  - task_id: TRADING-2529_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_PROPOSAL_V1
+    requirement_path: docs/requirements/TRADING-2529_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Proposal_V1.md
+    coverage: DISCLOSED_EXPORT_SAFE_PER_AXIS_PROPOSAL_READY_OWNER_FINAL_TOKEN_PENDING
+    reader_summary_zh: 2529 已生成逐轴、仅含 session/count 汇总的安全导出离线提案与精确哈希；当前只是“提案已准备，等待 Owner 最终授权令牌”，尚未执行任何外部动作。它没有登录、修改项目、运行 Cloud、下载 Results 或逐条原始数据，也没有产生订单；真实令牌准入、一次零订单运行与证据采集必须另立 governed 后继任务。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW
