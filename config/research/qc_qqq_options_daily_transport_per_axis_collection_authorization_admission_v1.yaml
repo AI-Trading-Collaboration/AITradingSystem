@@ -1,0 +1,47 @@
+schema_version: qc_qqq_options_daily_transport_per_axis_collection_authorization_admission_policy.v1
+policy_id: TRADING_2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_COLLECTION_AUTHORIZATION_ADMISSION_V1
+policy_version: 1.0.0
+policy_status: OWNER_TOKEN_OBSERVED_ADMISSION_REQUIRED
+task_id: TRADING-2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_ADMISSION_AND_EXECUTION_V1
+predecessor_task_id: TRADING-2529_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_PROPOSAL_V1
+ordinary_pushed_main_sha: cd8a89fdb5052e908c5f8b010b27f92a95645689
+registration_base_repository_code_sha: 4366092a2284557a659daa3bd497250ea0ce1052
+proposal_package_root: inputs/research/qqq_options/trading_2529_daily_transport_per_axis_collection_proposal_v1
+owner_token_sha256: cc9841b8fc2b9bd5bb86528435cd4d4cc01e1cbce9e8f423055ef5c17f03e3d4
+owner_token_byte_count: 1498
+owner_token_source: PROJECT_OWNER_CURRENT_CODEX_DIALOG
+owner_decision_date: '2026-08-16'
+authorization_expires_at_utc: '2026-08-17T13:02:48Z'
+authorization_expires_after_hours_maximum: 168
+target_project_id: 34808569
+requested_start: '2021-02-22'
+requested_end: '2025-12-02'
+expected_session_count: 1202
+maximum_project_mutations: 1
+maximum_cloud_backtests: 1
+maximum_orders: 0
+maximum_fills: 0
+collector_id: codex_capability_coordinator
+independent_reviewer_id: project_owner
+authorization_single_use: true
+authorization_invalidates_on_first_run_attempt: true
+result_carrier: MANUAL_DOWNLOAD_RESULTS_JSON
+output_granularity: PER_AXIS_SESSION_COUNT_AGGREGATES_ONLY
+allowed_actions:
+  - INTERACTIVE_LOGIN_TO_EXISTING_QUANTCONNECT_ACCOUNT
+  - MUTATE_EXISTING_PROJECT_34808569_ONCE
+  - RUN_ONE_ZERO_ORDER_CLOUD_BACKTEST
+  - MANUALLY_DOWNLOAD_ONE_RESULTS_JSON
+  - COLLECT_PER_AXIS_SESSION_COUNT_AGGREGATES_ONLY
+prohibited_actions:
+  - API_CLI_HTTP_OR_BACKGROUND_NETWORK_PATH
+  - RAW_OPTION_ROWS_OR_INDIVIDUAL_CONTRACT_VALUES
+  - LOGS_AS_DATA_OR_OBJECT_STORE_EXPORT
+  - SECOND_PROJECT_MUTATION_OR_SECOND_CLOUD_RUN
+  - ANY_ORDER_FILL_PAPER_LIVE_BROKER_OR_PRODUCTION_ACTION
+  - DQ_PIT_SELECTION_ENGINE_STRATEGY_OR_INVESTMENT_CONCLUSION
+safety:
+  engine_status: POLICY_BLOCKED_CASH_PRESERVATION
+  selection_authorized: false
+  production_effect: none
+  broker_action: none

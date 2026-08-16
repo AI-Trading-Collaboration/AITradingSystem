@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 120
+fragment_count: 121
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: ecabc430069091898d6272ce0c0f3584ce34a7739489cda3b67c59d5ed372697
+  current_sha256: a228b27fec3eb9570a1b783e20577e955c90dd95ffe2808b06d1f05fb2cf42d4
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 48
+  fragment_count: 49
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -69,6 +69,7 @@ targets:
   - config/architecture/fragments/flows/qqq_options_daily_primary_backtest.yaml
   - config/architecture/fragments/flows/qqq_options_daily_slice_revalidation_authorization_admission.yaml
   - config/architecture/fragments/flows/qqq_options_daily_slice_revalidation_execution_evidence.yaml
+  - config/architecture/fragments/flows/qqq_options_daily_transport_per_axis_collection_execution.yaml
   - config/architecture/fragments/flows/qqq_options_daily_transport_per_axis_collection_proposal.yaml
   - config/architecture/fragments/flows/qqq_options_daily_transport_per_axis_diagnostic.yaml
   - config/architecture/fragments/flows/qqq_options_deterministic_selection.yaml
@@ -345,6 +346,13 @@ fragments:
   target_id: system_flow
   path: config/architecture/fragments/flows/qqq_options_daily_slice_revalidation_execution_evidence.yaml
   sha256: d37f2a0a8adeabbce936e3a9e8c7bf199f29ae3a8efcfef2b7505758cfbee9ed
+  generated_source_of_truth_active: false
+- fragment_id: flow.qqq_options_daily_transport_per_axis_collection_execution
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/qqq_options_daily_transport_per_axis_collection_execution.yaml
+  sha256: 6c3a2c14ec43f3760ec93d3037b279e94d7561e3e1f03a178bd0a3b068bea835
   generated_source_of_truth_active: false
 - fragment_id: flow.qqq_options_daily_transport_per_axis_collection_proposal
   fragment_kind: flow

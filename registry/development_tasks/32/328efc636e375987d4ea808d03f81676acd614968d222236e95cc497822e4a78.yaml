@@ -1,0 +1,195 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_ADMISSION_AND_EXECUTION_V1
+  task_id_sha256: 328efc636e375987d4ea808d03f81676acd614968d222236e95cc497822e4a78
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_ADMISSION_AND_EXECUTION_V1
+  title: null
+  domain: QQQ Options daily transport per-axis export-safe aggregate admission and
+    execution
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner independent review; any successor requires a new governed
+    task
+  requirement_refs:
+  - docs/requirements/TRADING-2530_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Admission_And_Execution_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: No execution blocker. Single authorized
+    transport collection is complete and sealed; final formal validation and ordinary-push
+    closeout are coordinator-owned. Any DQ/PIT or new Cloud diagnosis requires separate
+    governed authority.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Exact token/package admitted; mutation/run/orders/fills=1/1/0/0; 1202-session
+      per-axis aggregate evidence sealed; three identical download copies disclosed
+      as one logical result; raw Results remain external; no DQ/PIT, strategy, selection,
+      engine or trading conclusion; focused/generated/formal final-tree validation
+      and ordinary push.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_ADMISSION_AND_EXECUTION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-16T22:10:02+09:00'
+  actor: codex_capability_coordinator
+  change_id: trading-2530-register-20260816-v1
+  lane_id: null
+  base_commit: cd8a89fdb5052e908c5f8b010b27f92a95645689
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_ADMISSION_AND_EXECUTION_V1
+    - QQQ Options daily transport per-axis export-safe aggregate admission and execution
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator; Project Owner independent reviewer
+    - Depends on ordinary-pushed 2529 main cd8a89fdb5052e908c5f8b010b27f92a95645689
+      and Owner-selected expiry 2026-08-17T13:02:48Z; token single-use invalidates
+      on first run attempt.
+    - Exact token/package admission; at most 1 project mutation and 1 Cloud backtest;
+      0 orders/fills; first attempt consumes; aggregate-only Results evidence and
+      checksums; no second run.
+    - '[supporting requirement](docs/requirements/TRADING-2530_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Admission_And_Execution_V1.md);
+      Owner expiry confirmed; registration and offline admission starting; external
+      action none.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2530-register-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-65a7369a2de6da27b645ffaffc79230a
+- schema_version: task_event.v1
+  task_id: TRADING-2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_ADMISSION_AND_EXECUTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T22:33:44+09:00'
+  actor: codex_capability_coordinator
+  change_id: trading-2530-admission-pass-await-login-20260816-v1
+  lane_id: null
+  base_commit: cd8a89fdb5052e908c5f8b010b27f92a95645689
+  previous_state_event_id: task-event-65a7369a2de6da27b645ffaffc79230a
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Project Owner interactive login; then Codex capability coordinator
+    blocker_or_next_step: Owner token admitted unused; Results validator 16 PASS;
+      complete private interactive QuantConnect login, then exactly one project mutation
+      and one Cloud attempt before 2026-08-17T13:02:48Z.
+    acceptance_criteria: Exact token/package admission; at most 1 project mutation
+      and 1 Cloud backtest; 0 orders/fills; first attempt consumes; aggregate-only
+      Results evidence and checksums; no second run.
+    notes: '[supporting requirement](docs/requirements/TRADING-2530_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Admission_And_Execution_V1.md);
+      admission receipt c90e0e64f610a0a2c10110ff45a3766a37d7371d4fa0f86b37ac3f14b8b0763f;
+      external counters mutation/run/orders/fills=0/0/0/0; browser stopped at login
+      for Owner action.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2530-admission-pass-await-login-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d1f77b965627cba95af1046b0ba0ab6d
+- schema_version: task_event.v1
+  task_id: TRADING-2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_ADMISSION_AND_EXECUTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T16:37:19Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2530-collection-evidence-sealed-20260817-v1
+  lane_id: null
+  base_commit: cd8a89fdb5052e908c5f8b010b27f92a95645689
+  previous_state_event_id: task-event-d1f77b965627cba95af1046b0ba0ab6d
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex capability coordinator; Project Owner independent reviewer
+    blocker_or_next_step: Single authorized collection completed and sealed; focused
+      admission 19 PASS and Atlas disclosure 25 PASS. Run generated/formal final-tree
+      validation, then ordinary-push closeout; no second Cloud run.
+    acceptance_criteria: Exact token/package admitted; mutation/run/orders/fills=1/1/0/0;
+      1202-session per-axis aggregate evidence sealed; three identical download copies
+      disclosed as one logical result; raw Results remain external; no DQ/PIT, strategy,
+      selection, engine or trading conclusion; final validation and ordinary push
+      required.
+    notes: '[supporting requirement](docs/requirements/TRADING-2530_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Admission_And_Execution_V1.md);
+      evidence=d47f3234f58e1a7114984a7a79a5090082f923b7e02c65a66dfa8b761321f792; incident=63195dda0e8c9b9d48422be9c771043efccf595a6e132a605abd47bb3db939c8;
+      ledger=fc846733a571df897a0070d10ccd4a1ca225a187ab7e296201b39bbae857830a; manifest=fdaed41f4ed642c51b5b91cacbec89ebf91ac7f77b97076fb7088e8e0d155466;
+      source Results copies retained in G:\Download and not committed or deletion-authorized.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2530-collection-evidence-sealed-20260817-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-34b9ec62712f0744e31917505e64bc3d
+- schema_version: task_event.v1
+  task_id: TRADING-2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_ADMISSION_AND_EXECUTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T17:42:16Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2530-baseline-done-final-validation-20260817-v1
+  lane_id: null
+  base_commit: cd8a89fdb5052e908c5f8b010b27f92a95645689
+  previous_state_event_id: task-event-34b9ec62712f0744e31917505e64bc3d
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner independent review; any successor requires a new governed
+      task
+    blocker_or_next_step: No execution blocker. Single authorized transport collection
+      is complete and sealed; final formal validation and ordinary-push closeout are
+      coordinator-owned. Any DQ/PIT or new Cloud diagnosis requires separate governed
+      authority.
+    acceptance_criteria: Exact token/package admitted; mutation/run/orders/fills=1/1/0/0;
+      1202-session per-axis aggregate evidence sealed; three identical download copies
+      disclosed as one logical result; raw Results remain external; no DQ/PIT, strategy,
+      selection, engine or trading conclusion; focused/generated/formal final-tree
+      validation and ordinary push.
+    notes: '[supporting requirement](docs/requirements/TRADING-2530_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Admission_And_Execution_V1.md);
+      evidence=d47f3234f58e1a7114984a7a79a5090082f923b7e02c65a66dfa8b761321f792; incident=63195dda0e8c9b9d48422be9c771043efccf595a6e132a605abd47bb3db939c8;
+      ledger=fc846733a571df897a0070d10ccd4a1ca225a187ab7e296201b39bbae857830a; manifest=fdaed41f4ed642c51b5b91cacbec89ebf91ac7f77b97076fb7088e8e0d155466;
+      first Full failure was generated-authority/page-sidecar drift only and is preserved;
+      targeted failure-fix replay=49 PASS; final five-tier rerun pending on frozen
+      BASELINE_DONE tree; three source Results copies retained in G:\Download, not
+      committed, deletion not authorized.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2530-baseline-done-final-validation-20260817-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-64e5e9c94c211d8a0a89c4b0869cb51d
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_ADMISSION_AND_EXECUTION_V1
+  - QQQ Options daily transport per-axis export-safe aggregate admission and execution
+  - P0
+  - BASELINE_DONE
+  - Project Owner independent review; any successor requires a new governed task
+  - No execution blocker. Single authorized transport collection is complete and sealed;
+    final formal validation and ordinary-push closeout are coordinator-owned. Any
+    DQ/PIT or new Cloud diagnosis requires separate governed authority.
+  - Exact token/package admitted; mutation/run/orders/fills=1/1/0/0; 1202-session
+    per-axis aggregate evidence sealed; three identical download copies disclosed
+    as one logical result; raw Results remain external; no DQ/PIT, strategy, selection,
+    engine or trading conclusion; focused/generated/formal final-tree validation and
+    ordinary push.
+  - '[supporting requirement](docs/requirements/TRADING-2530_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Admission_And_Execution_V1.md);
+    evidence=d47f3234f58e1a7114984a7a79a5090082f923b7e02c65a66dfa8b761321f792; incident=63195dda0e8c9b9d48422be9c771043efccf595a6e132a605abd47bb3db939c8;
+    ledger=fc846733a571df897a0070d10ccd4a1ca225a187ab7e296201b39bbae857830a; manifest=fdaed41f4ed642c51b5b91cacbec89ebf91ac7f77b97076fb7088e8e0d155466;
+    first Full failure was generated-authority/page-sidecar drift only and is preserved;
+    targeted failure-fix replay=49 PASS; final five-tier rerun pending on frozen BASELINE_DONE
+    tree; three source Results copies retained in G:\Download, not committed, deletion
+    not authorized.'
+  docs_links:
+  - docs/requirements/TRADING-2530_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Admission_And_Execution_V1.md
+  terminal: false
+  canonical_row_sha256: 2ce3022ab43580a8bf4f181a5884fc8f3333f255ee2fe760139d451780ed5af0
+last_event_id: task-event-64e5e9c94c211d8a0a89c4b0869cb51d
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 83761a558b0da715687950ecf6b4c45c67d78a63c4e0c078e1dd160807c6e59c

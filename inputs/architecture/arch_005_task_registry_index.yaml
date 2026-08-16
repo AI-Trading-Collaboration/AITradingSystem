@@ -7,14 +7,14 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 1002
-active_task_count: 492
+task_count: 1003
+active_task_count: 493
 completed_task_count: 510
-fragment_count: 1002
+fragment_count: 1003
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: a113669a24812bc1ce6376448eac5a2c0156dd9bb32ea07e6403f986c5908350
+final_chain_sha256: 450e9a5ba8adc2da35dd356f12c84f5ba7604ad90ed84e6ffd700bba7423646f
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -8045,12 +8045,20 @@ fragments:
   order: 1002
   previous_entry_sha256: d040e8a53af5ec689477f2a9a689fc9184c366056d4eef0b1cac431eeecb870b
   entry_sha256: a113669a24812bc1ce6376448eac5a2c0156dd9bb32ea07e6403f986c5908350
+- task_id: TRADING-2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_ADMISSION_AND_EXECUTION_V1
+  path: registry/development_tasks/32/328efc636e375987d4ea808d03f81676acd614968d222236e95cc497822e4a78.yaml
+  file_sha256: f308a9fb954ed2fd4bbf2c4d8e06630dceac4a49e0818aabde52d9874b251a74
+  fragment_checksum: 83761a558b0da715687950ecf6b4c45c67d78a63c4e0c078e1dd160807c6e59c
+  partition: active
+  order: 1003
+  previous_entry_sha256: a113669a24812bc1ce6376448eac5a2c0156dd9bb32ea07e6403f986c5908350
+  entry_sha256: 450e9a5ba8adc2da35dd356f12c84f5ba7604ad90ed84e6ffd700bba7423646f
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 80c4726d62feec29ddc3e31943ef0b563d3e848383b329ded95e2602025bc226
-  byte_count: 1740965
-  row_count: 492
+  sha256: 010697e6f6503f4e8edbe0ac6a3fc1a8668dd9d5de5d493df89508c81c5f24c1
+  byte_count: 1742558
+  row_count: 493
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
@@ -8892,7 +8900,35 @@ governance_cycles:
   change_id: trading-2529-restore-requirement-binding-20260816-v1
   event_count: 3
   production_effect: none
-governance_cycle_count: 119
+- cycle_id: arch-005-s5-cycle-120
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: TRADING-2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_ADMISSION_AND_EXECUTION_V1
+  change_id: trading-2530-register-20260816-v1
+  event_count: 1
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-121
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_ADMISSION_AND_EXECUTION_V1
+  change_id: trading-2530-admission-pass-await-login-20260816-v1
+  event_count: 2
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-122
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_ADMISSION_AND_EXECUTION_V1
+  change_id: trading-2530-collection-evidence-sealed-20260817-v1
+  event_count: 3
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-123
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_ADMISSION_AND_EXECUTION_V1
+  change_id: trading-2530-baseline-done-final-validation-20260817-v1
+  event_count: 4
+  production_effect: none
+governance_cycle_count: 123
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -8906,4 +8942,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: c7d4ff9735e0c29d5776cc7e54f094bf0577efb961e438b7da0b32b1f9d88544
+index_checksum: 336ece8d61c26d930f8a653da8546a9b8498b04089bcb0ac1f527c88fb6537b1

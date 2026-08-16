@@ -244,6 +244,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2529_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Proposal_V1.md
     coverage: DISCLOSED_EXPORT_SAFE_PER_AXIS_PROPOSAL_READY_OWNER_FINAL_TOKEN_PENDING
     reader_summary_zh: 2529 已生成逐轴、仅含 session/count 汇总的安全导出离线提案与精确哈希；当前只是“提案已准备，等待 Owner 最终授权令牌”，尚未执行任何外部动作。它没有登录、修改项目、运行 Cloud、下载 Results 或逐条原始数据，也没有产生订单；真实令牌准入、一次零订单运行与证据采集必须另立 governed 后继任务。
+  - task_id: TRADING-2530_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_ADMISSION_AND_EXECUTION_V1
+    requirement_path: docs/requirements/TRADING-2530_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Admission_And_Execution_V1.md
+    coverage: DISCLOSED_SINGLE_ZERO_ORDER_COLLECTION_COMPLETE_PER_AXIS_TRANSPORT_LIMITED
+    reader_summary_zh: 2530 的真实一次零订单采集已完成：1202 个交易日中只有 182 个看到 option chain，1020 个缺失；在看到 chain 的 182 日里，quote、Greeks、IV、OI、volume 有值，但 underlying 与 cross-field 检查均为 invalid。三份 Results 下载文件逐字节相同，是下载回执未确认造成的重复副本，不是第二次 Cloud run。该结果只定位 transport 可见性，不能据此宣称 DQ/PIT、策略有效、selection/engine 解锁或可以交易。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

@@ -8632,3 +8632,34 @@ proposal 中的 `main.py` 只是可审阅候选代码，不是已部署代码或
 `PROPOSAL_READY / OWNER_FINAL_TOKEN_PENDING`；不等于 DQ/PIT PASS、transport root cause 已定位、策略有效、
 selection/engine 解锁或允许交易。真实 token admission、外部运行、Results collection、evidence admission 与
 独立复核必须另立 governed 后继任务。
+
+## TRADING-2530 QQQ Options daily transport 逐轴 export-safe aggregate 单次采集 V1
+
+`qqq_options_research.daily_transport_per_axis_collection_authorization_admission` 严格准入 Owner exact token，
+并把 2529 的 proposal、project code、project ID、研究窗口与一次性上限绑定到不可重复使用的 receipt。现有
+project `34808569` 只修改一次；唯一 Cloud backtest `614999fe733e85177e9b14d1583cc0bd` 完成后，Results
+JSON 只被本地严格校验器读取，raw carrier 不进入 Git。
+
+```text
+2529 exact proposal package + Owner exact token + pushed-main identity
+  -> offline admission PASS / unused receipt
+  -> existing authenticated account; project 34808569 mutation = 1
+  -> first Cloud attempt consumes token; backtest attempts = 1; no second run
+  -> zero-order run over requested 2021-02-22..2025-12-02 / 1202 sessions
+  -> Download Results JSON SHA-256 2233b20a...752b7 / 813847 bytes
+  -> strict range / backtest / aggregate-key / raw-log-carrier / order-fee checks
+  -> OPTION_CHAIN = 182 PRESENT / 1020 MISSING
+  -> QUOTE / GREEKS / IV / OI / VOLUME = 182 PRESENT / 1020 NOT_EVALUATED
+  -> UNDERLYING = 182 INVALID / 1020 NOT_EVALUATED
+  -> CROSS_FIELD = 182 INVALID / 1020 NOT_EVALUATED
+  -> every axis total = 1202; orders = 0; fills = 0
+  -> export-safe normalized evidence + action ledger + exact manifest hashes
+  -> duplicate delivery incident: 3 identical files / 1 logical result content
+  -> evidence admission remains diagnostic-only; DQ/PIT and strategy conclusions not authorized
+  -> selection blocked / engine blocked / POLICY_BLOCKED_CASH_PRESERVATION
+```
+
+浏览器没有确认 download event，但实际保存了三个逐字节相同的 Results 副本；该偏差被独立 evidence
+显式记录，未触发第二次 Cloud run。`182 PRESENT` 只说明部分 session 的 option chain 可见；`1020 MISSING`
+说明主要 transport 缺口仍在。即使 quote、Greeks、IV、OI、volume 在这 182 个 session 中出现，也不能把
+aggregate 可见性解释成 DQ/PIT PASS、策略有效、可下单或可部署。
