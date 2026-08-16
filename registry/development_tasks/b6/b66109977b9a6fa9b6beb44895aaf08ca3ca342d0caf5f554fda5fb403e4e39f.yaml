@@ -13,20 +13,21 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 2524 coordinator：完成 final-tree formal、ff-only local main 与 ordinary
-    push；随后保持 human tracks 未代签，并把当前 per-axis transport 阻塞交回独立 TRADING-2528。
+  next_owner: 2524 coordinator：提交 final module/test manifest refresh，重跑完整 Architecture；仅
+    PASS 后继续 Contract→Integration→Reproducibility→Full 与普通推送。
   requirement_refs:
   - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Owner 已确认当前可读性有改善并授权推送；最终 exact HTML/sidecars/provenance
-    PASS。须完成 governed formal 与 remote gates，不能把正向反馈自动扩写为完整 mobile/AT/20 秒五问 PASS。
+  unstructured_legacy_blocker_or_next_step: 首轮 Architecture 864 PASS/1 FAIL，唯一失败为
+    final renderer/test bytes 导致 module/test manifests stale；确定性刷新和 targeted 10 PASS
+    已完成，须完整 Architecture failure-fix rerun。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 2524 final tree 保持 zero-jargon L0、single L1、independent AUDIT 与 exact provenance；适用
-      formal PASS 后 ff-only local main 并 ordinary non-force push、SHA 对齐。Owner 正向反馈保留但
-      human tracks 仅在明确覆盖协议后才能 PASS；2528 独立。
+    text: module/test manifests 必须与最终候选确定性一致且 architecture-fitness/deprecation targeted
+      PASS；完整 Architecture 重跑必须 promotion-blocking PASS，首轮失败只作 failure-fix evidence；后继
+      tiers 不得提前启动。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -497,26 +498,55 @@ events:
   - change:trading-2524-owner-readability-improved-push-authorized-20260816-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-3dbe7143a16302827910e20c27310055
+- schema_version: task_event.v1
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T13:56:26.2723563+09:00'
+  actor: codex_coordinator
+  change_id: trading-2524-final-architecture-manifest-failure-fix-20260816-v1
+  lane_id: null
+  base_commit: ee323dc39923260d591190db1247e295f1f53437
+  previous_state_event_id: task-event-3dbe7143a16302827910e20c27310055
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2524 coordinator：提交 final module/test manifest refresh，重跑完整 Architecture；仅
+      PASS 后继续 Contract→Integration→Reproducibility→Full 与普通推送。
+    blocker_or_next_step: 首轮 Architecture 864 PASS/1 FAIL，唯一失败为 final renderer/test
+      bytes 导致 module/test manifests stale；确定性刷新和 targeted 10 PASS 已完成，须完整 Architecture
+      failure-fix rerun。
+    acceptance_criteria: module/test manifests 必须与最终候选确定性一致且 architecture-fitness/deprecation
+      targeted PASS；完整 Architecture 重跑必须 promotion-blocking PASS，首轮失败只作 failure-fix
+      evidence；后继 tiers 不得提前启动。
+    notes: '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；Architecture
+      first=864 PASS/1 FAIL/372.99s；artifact=outputs/validation_runtime/architecture-fitness_20260816T044754Z/test_runtime_summary.json；violations=module_manifest_fresh+test_manifest_fresh；deterministic
+      generate PASS；targeted devex+deprecation=10 PASS/38.04s。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2524-final-architecture-manifest-failure-fix-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c63bf5b29106efc76b9f58331893aa6e
 projection:
   legacy_first_eight_cells:
   - TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
   - Atlas strategy research page / reader decision path and progressive disclosure
   - P1
   - IN_PROGRESS
-  - 2524 coordinator：完成 final-tree formal、ff-only local main 与 ordinary push；随后保持
-    human tracks 未代签，并把当前 per-axis transport 阻塞交回独立 TRADING-2528。
-  - Owner 已确认当前可读性有改善并授权推送；最终 exact HTML/sidecars/provenance PASS。须完成 governed formal
-    与 remote gates，不能把正向反馈自动扩写为完整 mobile/AT/20 秒五问 PASS。
-  - 2524 final tree 保持 zero-jargon L0、single L1、independent AUDIT 与 exact provenance；适用
-    formal PASS 后 ff-only local main 并 ordinary non-force push、SHA 对齐。Owner 正向反馈保留但
-    human tracks 仅在明确覆盖协议后才能 PASS；2528 独立。
-  - '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；corrected
-    exact build commit=bc1fb678361b6275885a7266448cc7be3c33e327；HTML sha256=e419d970e2714b52a53ec876b7e62175a1eb78f1212ced58c57951e1596e421a；page-effectiveness/accessibility
-    PASS；Owner feedback=目前可读性有改善 + push authorized；visual/reader not auto-signed。'
+  - 2524 coordinator：提交 final module/test manifest refresh，重跑完整 Architecture；仅 PASS
+    后继续 Contract→Integration→Reproducibility→Full 与普通推送。
+  - 首轮 Architecture 864 PASS/1 FAIL，唯一失败为 final renderer/test bytes 导致 module/test
+    manifests stale；确定性刷新和 targeted 10 PASS 已完成，须完整 Architecture failure-fix rerun。
+  - module/test manifests 必须与最终候选确定性一致且 architecture-fitness/deprecation targeted
+    PASS；完整 Architecture 重跑必须 promotion-blocking PASS，首轮失败只作 failure-fix evidence；后继
+    tiers 不得提前启动。
+  - '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；Architecture
+    first=864 PASS/1 FAIL/372.99s；artifact=outputs/validation_runtime/architecture-fitness_20260816T044754Z/test_runtime_summary.json；violations=module_manifest_fresh+test_manifest_fresh；deterministic
+    generate PASS；targeted devex+deprecation=10 PASS/38.04s。'
   docs_links:
   - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
   terminal: false
-  canonical_row_sha256: 039ea1a4d3979c33c21d9b05bca547b9c018fced8baae6f163fbef3f3804f6d2
-last_event_id: task-event-3dbe7143a16302827910e20c27310055
+  canonical_row_sha256: 00aed4b1602a21ee9f2c38f87ea89e6764d9aa465cbaa4b2c497123f768a6c8d
+last_event_id: task-event-c63bf5b29106efc76b9f58331893aa6e
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 5308547848afc215e850e2e5a595313672ea914e9103496a79d230c36b03a9b9
+fragment_checksum: 34ccf5e4aa2eb46825ab0228989838cfcaf3fa656af33c0d301d98ddece56200

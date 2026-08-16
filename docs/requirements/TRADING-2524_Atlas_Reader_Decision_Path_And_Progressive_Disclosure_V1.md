@@ -340,3 +340,11 @@ integration、唯一 exact HTML、2526-B final candidate 验收与适用 formal 
   该反馈作为正向人工 evidence，但没有明确覆盖 320/360/390px、键盘/AT 与 20 秒五问，因此不自动把
   `OWNER_VISUAL_REVIEW` 或 `READER_COMPREHENSION_REVIEW` 代签为 `PASS`。2524 发布后，页面所指向的
   per-axis transport 诊断继续由独立 `TRADING-2528` 承接，不混入 Atlas 页面语义或执行权限。
+- 2026-08-16：Owner push 授权后的 final-tree Architecture 首轮=`864 passed / 1 failed in 372.99s`，
+  runtime artifact=`outputs/validation_runtime/architecture-fitness_20260816T044754Z/test_runtime_summary.json`。
+  唯一失败为 `module_manifest_fresh` 与 `test_manifest_fresh`：本轮最终 renderer/test bytes 已变化，但对应
+  coordinator-generated manifests 仍绑定较早候选。`python scripts/architecture_devex.py generate` 在不改变
+  module/test count、dependency gate 或 aggregate source-of-truth 的前提下确定性刷新两个 manifest；
+  architecture-fitness 自检 `PASS`，目标用例加完整 deprecation 文件并行复核=`10 passed in 38.04s`。
+  首轮 Architecture 继续保留为 failure-fix evidence，不得冒充 promotion PASS；必须在提交 final-tree
+  manifest refresh 后重跑完整 Architecture，且通过前不启动 Contract 或推送。
