@@ -13,19 +13,21 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 2524 coordinator / Project Owner：提交零术语 L0 修复，从最终 commit 原子重建 exact HTML，并复核
-    desktop 与 320/360/390px 的 20 秒五问。
+  next_owner: 2524 coordinator / Project Owner：先从真实最终 commit 重建 exact HTML；仅该新构建可供
+    desktop 与 320/360/390px 视觉及 20 秒五问复核。
   requirement_refs:
   - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: L0/L1/AUDIT 重排与四文件 focused 已 PASS；下一步提交
-    tracked candidate、重建页面并完成人工视觉/理解复核。2528 保持独立。
+  unstructured_legacy_blocker_or_next_step: 前一构建传入了错误扩写的 full SHA，a033bd85 固定为 NON_FORMAL
+    / NOT_REVIEW_EVIDENCE / PROVENANCE_IDENTITY_INVALID；须提交纠正后从真实最终 commit 重建。2528
+    保持独立。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: compact trust strip→当前问题→四张单决策卡→始终可见禁止推断→普通话流程线；L0 无未解释缩写/raw ID/必需 tooltip，局部六步链为唯一
-      L1，来源为独立 AUDIT；45 项 renderer/terminology/accessibility/effectiveness 回归保持通过，人工轨不自动代签。
+    text: writer 输入 exact_commit 必须逐字等于 git rev-parse HEAD，page_effectiveness repository/source
+      commit 与所有 citations 必须一致绑定该真实 SHA；错误身份构建不得用于人工验收。新构建 automated PASS 后仍由 Owner
+      独立复核，人工轨不自动代签。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -409,26 +411,86 @@ events:
   - change:trading-2524-zero-jargon-l0-focused-pass-20260816-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-4447496c57bf5f8509fe623c80c29c4e
+- schema_version: task_event.v1
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T13:38:39.3177626+09:00'
+  actor: codex_coordinator
+  change_id: trading-2524-zero-jargon-l0-exact-html-review-gate-20260816-v1
+  lane_id: null
+  base_commit: 624201c88e202e6aaefbbd49a5beb05ddf361020
+  previous_state_event_id: task-event-4447496c57bf5f8509fe623c80c29c4e
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Project Owner / 2524 coordinator：刷新最终 file:// 页面，按 desktop 与 320/360/390px
+      复核首屏层级，并执行 20 秒五问；失败则登记最小页面 remediation。
+    blocker_or_next_step: 13 个 artifacts 已从 624201c88 exact commit 原子重建；in-app Browser
+      因本地 URL 安全策略拒绝接管/刷新，未绕过。提交本次 evidence 更新后再从最终 commit 重建；Owner visual/reader
+      仍待人工复核。2528 保持独立。
+    acceptance_criteria: 最终 HTML/sidecars 必须 exact-bind 最终 tracked commit 且 automated
+      PASS；Owner 手工刷新后确认 compact trust strip、零术语四卡、始终可见禁止推断、普通话流程线、唯一 L1 与独立 AUDIT
+      在 desktop/320/360/390px 可读，并完成 20 秒五问；人工轨不自动代签。
+    notes: '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；implementation
+      commit=624201c88；first exact HTML sha256=a033bd858add47319fbf5fd3efd113d97d3ea30d66c9d4d88422acf12938fab1；13
+      artifacts canonical writer PASS；in-app Browser file:// reload blocked by URL
+      policy, no workaround；visual/reader=PENDING_REVIEW。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2524-zero-jargon-l0-exact-html-review-gate-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8c3965b68e0ccab00896b01ce554b5dd
+- schema_version: task_event.v1
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T13:39:30.9878189+09:00'
+  actor: codex_coordinator
+  change_id: trading-2524-exact-commit-provenance-correction-20260816-v1
+  lane_id: null
+  base_commit: 624201c887e48f9995ead4f0c0884063de978e31
+  previous_state_event_id: task-event-8c3965b68e0ccab00896b01ce554b5dd
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2524 coordinator / Project Owner：先从真实最终 commit 重建 exact HTML；仅该新构建可供
+      desktop 与 320/360/390px 视觉及 20 秒五问复核。
+    blocker_or_next_step: 前一构建传入了错误扩写的 full SHA，a033bd85 固定为 NON_FORMAL / NOT_REVIEW_EVIDENCE
+      / PROVENANCE_IDENTITY_INVALID；须提交纠正后从真实最终 commit 重建。2528 保持独立。
+    acceptance_criteria: writer 输入 exact_commit 必须逐字等于 git rev-parse HEAD，page_effectiveness
+      repository/source commit 与所有 citations 必须一致绑定该真实 SHA；错误身份构建不得用于人工验收。新构建 automated
+      PASS 后仍由 Owner 独立复核，人工轨不自动代签。
+    notes: '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；actual
+      implementation commit=624201c887e48f9995ead4f0c0884063de978e31；prior transcribed
+      exact_commit=624201c88e202e6aaefbbd49a5beb05ddf361020 was invalid；a033bd85 build
+      rejected as provenance-invalid；no review evidence。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2524-exact-commit-provenance-correction-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f0696cb3b44c6dedacd9948bed8ffbb1
 projection:
   legacy_first_eight_cells:
   - TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
   - Atlas strategy research page / reader decision path and progressive disclosure
   - P1
   - IN_PROGRESS
-  - 2524 coordinator / Project Owner：提交零术语 L0 修复，从最终 commit 原子重建 exact HTML，并复核 desktop
-    与 320/360/390px 的 20 秒五问。
-  - L0/L1/AUDIT 重排与四文件 focused 已 PASS；下一步提交 tracked candidate、重建页面并完成人工视觉/理解复核。2528
-    保持独立。
-  - compact trust strip→当前问题→四张单决策卡→始终可见禁止推断→普通话流程线；L0 无未解释缩写/raw ID/必需 tooltip，局部六步链为唯一
-    L1，来源为独立 AUDIT；45 项 renderer/terminology/accessibility/effectiveness 回归保持通过，人工轨不自动代签。
-  - '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；implemented
-    zero-jargon L0 + single L1 + independent AUDIT；initial expanded=44 PASS/1 FAIL
-    old-title snapshot；final four-file focused=45 PASS/135.07s；research/DQ-PIT/production/broker/system-flow
-    unchanged；visual/reader=PENDING_REVIEW。'
+  - 2524 coordinator / Project Owner：先从真实最终 commit 重建 exact HTML；仅该新构建可供 desktop 与
+    320/360/390px 视觉及 20 秒五问复核。
+  - 前一构建传入了错误扩写的 full SHA，a033bd85 固定为 NON_FORMAL / NOT_REVIEW_EVIDENCE / PROVENANCE_IDENTITY_INVALID；须提交纠正后从真实最终
+    commit 重建。2528 保持独立。
+  - writer 输入 exact_commit 必须逐字等于 git rev-parse HEAD，page_effectiveness repository/source
+    commit 与所有 citations 必须一致绑定该真实 SHA；错误身份构建不得用于人工验收。新构建 automated PASS 后仍由 Owner
+    独立复核，人工轨不自动代签。
+  - '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；actual
+    implementation commit=624201c887e48f9995ead4f0c0884063de978e31；prior transcribed
+    exact_commit=624201c88e202e6aaefbbd49a5beb05ddf361020 was invalid；a033bd85 build
+    rejected as provenance-invalid；no review evidence。'
   docs_links:
   - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
   terminal: false
-  canonical_row_sha256: c34b5dc005d9ab90c32309088fa73371b4f9dc8e23b1d13488106894b1c49c25
-last_event_id: task-event-4447496c57bf5f8509fe623c80c29c4e
+  canonical_row_sha256: 9e6d6e11d746b1448cad864430867177888b8075ec71269d6f93cdd8e7ab04c9
+last_event_id: task-event-f0696cb3b44c6dedacd9948bed8ffbb1
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 31279d81d264730201a6d10322bd9c4815b7d02bca2fae43536a6b0bf32a0002
+fragment_checksum: e2e98ebf93c35d3eb2f5b3f321b837a5a0d41e6c6157bf25fe909cf6529ac55c

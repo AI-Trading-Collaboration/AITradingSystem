@@ -326,3 +326,10 @@ integration、唯一 exact HTML、2526-B final candidate 验收与适用 formal 
   `45 passed in 135.07s`。本轮不改变研究事实、DQ/PIT、production、broker 或系统数据流，因此不更新
   `docs/system_flow.md`；下一步从最终 tracked commit 原子重建 exact HTML，并进行 320/360/390px 与 desktop
   视觉复核，Owner visual/reader comprehension 继续 `PENDING_REVIEW`。
+- 2026-08-16：实现提交实际为 `624201c887e48f9995ead4f0c0884063de978e31`。首次 writer 调用误把同一短
+  前缀扩写成不存在的 `624201c88e202e6aaefbbd49a5beb05ddf361020`；因此即使 13 个 artifacts 与 sidecar
+  结构校验通过，HTML SHA-256 `a033bd858add47319fbf5fd3efd113d97d3ea30d66c9d4d88422acf12938fab1`
+  也固定标记为 `NON_FORMAL / NOT_REVIEW_EVIDENCE / PROVENANCE_IDENTITY_INVALID`，不得用于验收。in-app
+  Browser 对该无效构建的接管/刷新又被 `file://` URL 安全策略拒绝；未切换浏览器接口、未启动 loopback
+  server，也未绕过。coordinator 必须先提交本次纠正，从真实最终 commit 重建，再交 Owner 手工刷新；
+  visual/reader comprehension 继续 `PENDING_REVIEW`。
