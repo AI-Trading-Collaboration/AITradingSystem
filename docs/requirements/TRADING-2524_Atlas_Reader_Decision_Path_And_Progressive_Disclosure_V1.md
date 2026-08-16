@@ -379,3 +379,17 @@ integration、唯一 exact HTML、2526-B final candidate 验收与适用 formal 
   此失败只作 failure-fix evidence。source-set 修正并重建 authority 后，三个代表性历史前缀节点、
   compatibility/2452、策略夹具、DevEx 与完整 deprecation 合计 `17 passed in 79.59s`；仍不替代完整
   Architecture。
+- 2026-08-16：source-set 修正后的 formal 为 Architecture=`865 passed in 298.26s`、Contract=
+  `276 passed in 150.25s`、Integration=`995 passed / 642 warnings in 49.14s`、Reproducibility=
+  `24 passed in 24.53s`；parent-bound Full artifact=
+  `outputs/validation_runtime/full_20260816T061310Z/test_runtime_summary.json` 得到
+  `9077 passed / 1 failed / 3 skipped / 644 warnings in 1522.12s`。唯一失败是
+  `test_compatibility_authority_carries_the_inactive_shadow_contract` 的重复 aggregate 断言仍写 2922，而同一
+  文件的 repository-authority 断言、current index 和三个 exact target seals 已一致为
+  `1371 + 556 + 997 = 2924`；这不是 splitter、source seal、fragment shadow 或 monolith byte 回归。最小
+  failure-fix 仅把旧 aggregate count 精确随动为 2924，随后重建 generated/compatibility 并以本次 Full
+  artifact 为 parent 重跑；本次 Full 仍为失败证据，不可用于推送。首次 26 项定向复核中 25 项通过，
+  唯一失败是 task register 最新投影改变了两个 G6 surface 的文档/配置可达文件集合：
+  相邻 G6 system-target surface 从 18 确定性增至 19，`dynamic_v3_parameter_research` 因最新投影不再展示上一事件中的
+  策略测试路径而从 19 回落至 18；冻结 inventory 只随动这两个实际计数与 identity，不改变 surface/removal gate。
+  排除自描述引用后，同一 26 项 authority/DevEx/deprecation 定向复核最终为 `26 passed in 23.48s`。
