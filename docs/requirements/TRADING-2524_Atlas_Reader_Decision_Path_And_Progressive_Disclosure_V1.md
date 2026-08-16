@@ -333,3 +333,10 @@ integration、唯一 exact HTML、2526-B final candidate 验收与适用 formal 
   Browser 对该无效构建的接管/刷新又被 `file://` URL 安全策略拒绝；未切换浏览器接口、未启动 loopback
   server，也未绕过。coordinator 必须先提交本次纠正，从真实最终 commit 重建，再交 Owner 手工刷新；
   visual/reader comprehension 继续 `PENDING_REVIEW`。
+- 2026-08-16：纠正提交=`bc1fb678361b6275885a7266448cc7be3c33e327`；writer 直接读取
+  `git rev-parse HEAD` 后重建，`repository_commit=source_snapshot_commit=all citation commits` 均逐字绑定
+  该 SHA，最终 HTML SHA-256=`e419d970e2714b52a53ec876b7e62175a1eb78f1212ced58c57951e1596e421a`，
+  page-effectiveness 与 accessibility 均 `PASS`。Owner 手工刷新后反馈“目前可读性有改善”并授权普通推送；
+  该反馈作为正向人工 evidence，但没有明确覆盖 320/360/390px、键盘/AT 与 20 秒五问，因此不自动把
+  `OWNER_VISUAL_REVIEW` 或 `READER_COMPREHENSION_REVIEW` 代签为 `PASS`。2524 发布后，页面所指向的
+  per-axis transport 诊断继续由独立 `TRADING-2528` 承接，不混入 Atlas 页面语义或执行权限。
