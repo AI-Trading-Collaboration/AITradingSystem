@@ -497,6 +497,14 @@ def test_renderer_follows_why_first_section_and_term_interaction_contract() -> N
     assert 'data-term-first="true"' in html
     assert 'data-term-first="false"' in html
     assert 'class="term-full-link"' in html
+    assert html.count('class="term-context"') == html.count('class="term-trigger"')
+    assert html.count('class="term-popover"') == html.count('class="term-trigger"')
+    assert 'data-term-placement="below"' in html
+    assert "const positionTerm = (context) =>" in html
+    assert "window.innerHeight - triggerRect.bottom" in html
+    assert "--term-tooltip-left" in html
+    assert "position:fixed; z-index:1001" in html
+    assert ".term-trigger::after" not in html
     assert "title=" not in html
 
     accessibility = validate_reader_accessibility(html.encode("utf-8"))

@@ -1966,15 +1966,20 @@ class _InlineTermParser(HTMLParser):
                 )
                 + f">{matched}</span>"
             )
-            if first:
-                result.append(
-                    '<span class="term-context">'
-                    + trigger
-                    + f'<a class="term-full-link" href="#reader-term-{escape(term.term_id)}">'
-                    + "完整定义</a></span>"
-                )
-            else:
-                result.append(trigger)
+            full_definition_link = (
+                f'<a class="term-full-link" href="#reader-term-{escape(term.term_id)}">'
+                "完整定义</a>"
+                if first
+                else ""
+            )
+            result.append(
+                '<span class="term-context" data-term-placement="below">'
+                + trigger
+                + '<span class="term-popover" '
+                + f'data-term-short="{escape(term.plain_definition_zh, quote=True)}">'
+                + full_definition_link
+                + "</span></span>"
+            )
             cursor = end
         result.append(text[cursor:])
         return "".join(result)
@@ -2513,6 +2518,30 @@ def _render_audit_destinations(
 
 _READER_INTERACTION_SCRIPT = """<script>
 (() => {
+  const positionTerm = (context) => {
+    if (!context) return;
+    const trigger = context.querySelector('.term-trigger');
+    const popover = context.querySelector('.term-popover');
+    if (!trigger || !popover) return;
+    const triggerRect = trigger.getBoundingClientRect();
+    const popoverWidth = popover.offsetWidth;
+    const popoverHeight = popover.offsetHeight;
+    const viewportInset = 12;
+    const naturalLeft = triggerRect.left + (triggerRect.width / 2) - (popoverWidth / 2);
+    const maximumLeft = Math.max(viewportInset, window.innerWidth - popoverWidth - viewportInset);
+    const clampedLeft = Math.min(Math.max(viewportInset, naturalLeft), maximumLeft);
+    const spaceAbove = triggerRect.top - viewportInset;
+    const spaceBelow = window.innerHeight - triggerRect.bottom - viewportInset;
+    const placeBelow = spaceBelow >= popoverHeight || spaceBelow >= spaceAbove;
+    const naturalTop = placeBelow
+      ? triggerRect.bottom + 9
+      : triggerRect.top - popoverHeight - 9;
+    const maximumTop = Math.max(viewportInset, window.innerHeight - popoverHeight - viewportInset);
+    const clampedTop = Math.min(Math.max(viewportInset, naturalTop), maximumTop);
+    context.style.setProperty('--term-tooltip-left', `${clampedLeft}px`);
+    context.style.setProperty('--term-tooltip-top', `${clampedTop}px`);
+    context.dataset.termPlacement = placeBelow ? 'below' : 'above';
+  };
   const closeTerms = (except = null) => {
     document.querySelectorAll('.term-context.term-open').forEach((item) => {
       if (item !== except) {
@@ -2526,12 +2555,19 @@ _READER_INTERACTION_SCRIPT = """<script>
     const context = trigger.closest('.term-context');
     if (!context) return;
     const opening = !context.classList.contains('term-open');
+    if (opening) positionTerm(context);
     closeTerms(opening ? context : null);
     context.classList.toggle('term-open', opening);
     if (trigger.hasAttribute('aria-expanded')) {
       trigger.setAttribute('aria-expanded', String(opening));
     }
   };
+  document.addEventListener('pointerover', (event) => {
+    positionTerm(event.target.closest('.term-context'));
+  });
+  document.addEventListener('focusin', (event) => {
+    positionTerm(event.target.closest('.term-context'));
+  });
   document.addEventListener('click', (event) => {
     const trigger = event.target.closest('.term-trigger');
     if (trigger) toggleTerm(trigger);
@@ -2550,6 +2586,13 @@ _READER_INTERACTION_SCRIPT = """<script>
       if (active) active.focus();
     }
   });
+  window.addEventListener('resize', () => {
+    document.querySelectorAll('.term-context.term-open').forEach(positionTerm);
+  });
+  window.addEventListener('scroll', () => {
+    document.querySelectorAll('.term-context.term-open,.term-context:focus-within,.term-context:hover')
+      .forEach(positionTerm);
+  }, true);
   const drilldown = document.querySelector('.drilldown-toggle');
   const drilldownBody = document.getElementById('research-drilldown-body');
   if (drilldown && drilldownBody) {
@@ -3059,13 +3102,15 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .skip-link {{ position:fixed; z-index:1000; top:.5rem; left:.5rem; padding:.55rem .8rem; color:#fff; background:#102a4d; border-radius:.45rem; transform:translateY(-180%); }}
     .skip-link:focus {{ transform:none; }}
     .term-definition-bank {{ position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; border:0; }}
-    .term-context {{ position:relative; display:inline; }}
+    .term-context {{ position:relative; display:inline; --term-tooltip-left:12px; --term-tooltip-top:12px; }}
     .term-trigger {{ color:#174f91; border-bottom:1px dashed #4f7fb8; background:#edf5ff; border-radius:.18rem; cursor:help; text-decoration:none; }}
     .term-trigger:focus-visible {{ outline:3px solid #76a8ec; outline-offset:2px; }}
-    .term-trigger::after {{ position:absolute; z-index:80; left:0; bottom:calc(100% + .55rem); display:block; width:min(300px,78vw); padding:.65rem .72rem; color:#fff; background:#142b4c; border-radius:.55rem; box-shadow:0 10px 28px #10223b40; content:attr(data-term-short); font-size:.72rem; font-weight:600; line-height:1.45; opacity:0; pointer-events:none; transform:translateY(.3rem); transition:opacity .15s ease,transform .15s ease; }}
-    .term-trigger:hover::after,.term-trigger:focus::after,.term-context.term-open .term-trigger::after {{ opacity:1; transform:none; }}
-    .term-full-link {{ position:absolute; z-index:81; left:.55rem; bottom:calc(100% + .72rem); color:#b9dbff; font-size:.64rem; font-weight:800; visibility:hidden; transform:translateY(-.05rem); }}
-    .term-context:hover .term-full-link,.term-context:focus-within .term-full-link,.term-context.term-open .term-full-link {{ visibility:visible; }}
+    .term-popover {{ position:fixed; z-index:1001; left:var(--term-tooltip-left); top:var(--term-tooltip-top); display:block; width:min(22rem,calc(100vw - 1.5rem)); padding:.72rem .8rem; color:#fff; background:#142b4c; border:1px solid #365271; border-radius:.6rem; box-shadow:0 10px 28px #10223b40; font-size:.72rem; line-height:1.5; opacity:0; visibility:hidden; pointer-events:none; transform:translateY(-.25rem); transition:opacity .15s ease,transform .15s ease,visibility 0s linear .15s; }}
+    .term-context[data-term-placement="above"] .term-popover {{ transform:translateY(.25rem); }}
+    .term-context:hover .term-popover,.term-context:focus-within .term-popover,.term-context.term-open .term-popover {{ opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0); transition-delay:0s; }}
+    .term-popover::before {{ display:block; content:attr(data-term-short); font-weight:650; overflow-wrap:anywhere; }}
+    .term-full-link {{ display:block; margin-top:.52rem; padding-top:.42rem; border-top:1px solid #ffffff2e; color:#b9dbff; font-size:.66rem; font-weight:850; text-decoration:underline; text-underline-offset:.16rem; }}
+    .term-full-link:focus-visible {{ outline:2px solid #fff; outline-offset:2px; border-radius:.18rem; }}
     .trust-strip,.why-context,.canonical-questions,.change-summary,.conclusion-boundary,.acceptance-axes,.flow-position,.research-drilldown,.audit-destinations {{ margin:0 0 1.35rem; border:1px solid var(--line); border-radius:1rem; background:#fff; box-shadow:0 10px 30px #12213a0a; overflow:visible; }}
     .trust-strip {{ overflow:hidden; border:0; }}
     .trust-strip > header {{ padding:2.4rem 1.6rem; }}

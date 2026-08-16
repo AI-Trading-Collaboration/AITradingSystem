@@ -266,3 +266,11 @@ integration、唯一 exact HTML、2526-B final candidate 验收与适用 formal 
   `PASS`。in-app Browser 在接管/重载既有 `file://` tab 时被其本地 URL 安全策略拒绝；未切换浏览器、
   未启动 loopback server 或以其他接口绕过。因此 2526-B 与 2527-B 均未完成，本任务保持
   `IN_PROGRESS`，Owner visual/reader comprehension 保持 `PENDING_REVIEW`。
+- 2026-08-16：Project Owner 通过同一 `file://` 页面人工截图发现 inline term 面板排版失败：靠近视口顶部的
+  “快照”解释仍向上展开而被裁切，独立绝对定位的“完整定义”链接又与短释义重叠。coordinator 将短释义与
+  glossary link 合并为一个 fixed popover，由运行时按可用上下空间选择方向，并把 top/left 限制在 viewport
+  inset 内；重复术语也进入同一 context，因而 hover/tap 共用同一面板。首轮四文件并行回归为
+  `44 passed / 1 failed`，失败准确暴露隐藏面板文本污染静态正文提取；改为从 `data-term-short` 生成视觉文本、
+  继续由既有 `aria-describedby` 提供读屏说明后，定向 `2 passed`，四文件并行回归=`45 passed in 110.64s`。
+  新 exact HTML 尚待从最终 tracked commit 生成并由 Owner 刷新复核，visual/reader comprehension 继续
+  `PENDING_REVIEW`，不得把本次修复或 automated PASS 当成人工代签。
