@@ -78,11 +78,16 @@ its own independent counters beginning at `0 / 0 / 0 / 0` until admission.
 ## 4. Owner decision contract
 
 Proposal publication does **not** authorize external action. Admission requires one new Owner
-message whose fields bind the ordinary-pushed proposal SHA and all frozen inputs above:
+message whose fields separately bind the immutable proposal publication and the exact
+ordinary-pushed admission implementation. This separation is required because the admission
+parser did not exist at the earlier proposal commit; treating those two commits as one identity
+would make admission impossible.
 
 ```text
-owner_decision:TRADING-2532:<YYYY-MM-DD>:authorize_single_zero_order_session_finalization_v2_external_validation_v1
-ordinary_pushed_main_sha:<ORDINARY_PUSHED_PROPOSAL_MAIN_SHA>
+owner_decision:TRADING-2532:<YYYY-MM-DD>:authorize_single_zero_order_session_finalization_v2_external_validation_v2
+proposal_publication_main_sha:c3e593b0e0739ca5f2494f3d55d52af019b0fc47
+ordinary_pushed_admission_main_sha:<EXACT_CURRENT_LOCAL_AND_ORIGIN_MAIN_SHA>
+admission_identity_contract_content_sha256:93671fc9c4f4251826d80e62f5e790bd18b453dc08780df93ecbedbcfbf2644c
 registration_base_repository_code_sha:bb6e43eff2dabfaa12d3f50354451075542380de
 policy_file_sha256:cea137e0cb17b1c9594c359926015189f6fcfc2f472c4b6db72357d67a5d0cf5
 policy_canonical_sha256:adc2e9cc0c889b814a97a5b8c4841c0890ef73c27dc07eddddc98ed2bed26f22
@@ -109,14 +114,25 @@ authorization_invalidates_on_first_run_attempt:true
 
 `package_manifest_content_sha256` above is the final proposal-only package content seal.
 It is not admission evidence until the strict proposal validator proves it and the exact
-ordinary-pushed proposal SHA plus an unexpired Owner-selected expiry are substituted.
+ordinary-pushed admission implementation SHA plus an unexpired Owner-selected expiry are
+substituted. The published proposal package remains immutable; a separate v2 admission-identity
+contract records this correction and its own exact content seal.
+
+The Owner message is admitted directly from `PROJECT_OWNER_CURRENT_CODEX_DIALOG`. No tracked
+policy mutation is permitted after receiving it: such a mutation would change the very main SHA
+the token must bind. Instead, the parser validates the exact token bytes and v2 identity-contract
+seal, requires `local main = origin/main = ordinary_pushed_admission_main_sha`, and emits a sealed
+unused admission receipt before any external attempt. The first attempted project mutation/run
+then consumes that receipt once.
 
 ## 5. Execution and evidence sequence
 
 1. Publish this proposal-only registration with no QuantConnect action.
-2. Generate and validate a strict TRADING-2532 admission package that binds the final
-   ordinary-pushed proposal main SHA and all exact hashes.
-3. Admit the exact, unexpired, single-use Owner message; otherwise remain `PROPOSED`.
+2. Generate and validate a strict TRADING-2532 admission-identity v2 contract that preserves the
+   proposal SHA and lets the later Owner message bind the exact already-published implementation
+   main SHA without a recursive tracked mutation.
+3. Admit the exact, unexpired, single-use Owner message directly into a sealed local receipt;
+   otherwise remain `AWAITING_EXACT_OWNER_TOKEN_DIRECT_ADMISSION`.
 4. Recheck no prior 2532 project mutation/run attempt exists.
 5. Perform at most one project mutation and one zero-order Cloud run.
 6. Collect only the bounded aggregate payload and strict runtime provenance.
@@ -178,6 +194,37 @@ writer is required to refresh that sidecar, and no rendered or governed file is
 hand-edited to mask the freshness failure.
 
 This offline baseline is not external authority. The repository policy still has
-`owner_token_status=PENDING_EXACT_OWNER_TOKEN`, no TRADING-2532 Owner decision has been
+`owner_token_status=PENDING_DIRECT_RUNTIME_ADMISSION`, no TRADING-2532 Owner decision has been
 admitted, no QuantConnect action has occurred, and the task-local external counters remain
 `0 / 0 / 0 / 0`. Applicable final formal gates must pass before ordinary publication.
+
+### 7.1 Publication-identity defect found after baseline publication
+
+Post-publication read-only audit found that v1 required both runtime Git refs to equal proposal
+commit `c3e593b0e0739ca5f2494f3d55d52af019b0fc47`, while the admission parser itself was first
+published at `1002cfd21de4f9ca33f816f9a418c4a256b7d1bd`. The condition was therefore
+unreachable: checking out the proposal removes the parser, while running the parser makes the
+Git equality check fail. No Owner token or external action was attempted against this defective
+contract.
+
+The required repair is the v2 two-layer identity contract described in section 4. It must retain
+the original proposal seal, bind the final executable main dynamically in the Owner token,
+require local/remote equality at admission, avoid any post-token tracked mutation, and preserve
+all `1 / 1 / 0 / 0`, single-use, export-safe and no-trading boundaries. Focused and applicable
+formal validation must pass again before ordinary publication.
+
+The repair is now implemented offline. The frozen v2 contract is
+`inputs/research/qqq_options/trading_2532_session_finalization_v2_external_validation_admission_identity_v2/contract.json`
+with content SHA-256
+`93671fc9c4f4251826d80e62f5e790bd18b453dc08780df93ecbedbcfbf2644c`;
+the copy-ready request artifact has file SHA-256
+`051a27ad90f65daee5f6962a07ec21ca2f92f8f8b406177e9a11bd1fac89b77d`.
+The focused v2 suite passes `32` parallel tests, including contract/request tamper,
+proposal/admission-main distinction, dynamic ref mismatch, direct sealed admission and rejection
+of post-token tracked policy mutation. External counters remain `0 / 0 / 0 / 0` while authority,
+Atlas freshness and applicable formal validation are rerun.
+
+After regenerating DevEx, report-flow, compatibility and Atlas sidecar authority, the expanded
+admission/proposal/predecessor/task-source/authority/Atlas suite passes `138` parallel tests.
+The local canonical page is regenerated from the current task projection; its final hash is kept
+in the generated sidecar and publication handoff rather than embedded in this tracked source.

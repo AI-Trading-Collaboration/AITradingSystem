@@ -20,7 +20,9 @@ DEFAULT_POLICY_PATH = Path(
 )
 
 _FIELD_ORDER = (
-    "ordinary_pushed_main_sha",
+    "proposal_publication_main_sha",
+    "ordinary_pushed_admission_main_sha",
+    "admission_identity_contract_content_sha256",
     "registration_base_repository_code_sha",
     "policy_file_sha256",
     "policy_canonical_sha256",
@@ -149,6 +151,10 @@ def _load_policy(project_root: Path = PROJECT_ROOT) -> dict[str, Any]:
         "proposal_package_root",
         "proposal_scope_content_sha256",
         "proposal_package_content_sha256",
+        "admission_identity_contract_path",
+        "admission_identity_contract_content_sha256",
+        "admission_identity_request_path",
+        "admission_identity_request_sha256",
         "owner_decision",
         "owner_token_status",
         "owner_token_sha256",
@@ -186,7 +192,10 @@ def _load_policy(project_root: Path = PROJECT_ROOT) -> dict[str, Any]:
     if set(value) != required:
         _fail("SESSION_FINALIZATION_EXTERNAL_POLICY_KEYSET_INVALID")
     if (
-        value["maximum_project_mutations"] != 1
+        value["schema_version"]
+        != "qc_qqq_options_session_finalization_external_validation_admission_policy.v2"
+        or value["policy_version"] != "2.0.0"
+        or value["maximum_project_mutations"] != 1
         or value["maximum_cloud_backtests"] != 1
         or value["maximum_orders"] != 0
         or value["maximum_fills"] != 0
@@ -277,9 +286,75 @@ def _load_proposal_package(
     return scope, manifest
 
 
+def _load_admission_identity_contract(
+    *, project_root: Path, policy: Mapping[str, Any]
+) -> dict[str, Any]:
+    root = project_root.resolve()
+
+    def resolve_portable_file(policy_key: str) -> Path:
+        portable = str(policy[policy_key])
+        candidate = (root / portable).resolve()
+        try:
+            if candidate.relative_to(root).as_posix() != portable:
+                _fail("SESSION_FINALIZATION_EXTERNAL_IDENTITY_PATH_INVALID", policy_key)
+        except ValueError:
+            _fail("SESSION_FINALIZATION_EXTERNAL_IDENTITY_PATH_INVALID", policy_key)
+        if not candidate.is_file():
+            _fail("SESSION_FINALIZATION_EXTERNAL_IDENTITY_PATH_INVALID", policy_key)
+        return candidate
+
+    contract_path = resolve_portable_file("admission_identity_contract_path")
+    request_path = resolve_portable_file("admission_identity_request_path")
+    contract = _load_json_object(contract_path, label="admission_identity_contract")
+    _verify_seal(contract, label="admission_identity_contract")
+    if contract.get("content_sha256") != policy["admission_identity_contract_content_sha256"]:
+        _fail("SESSION_FINALIZATION_EXTERNAL_IDENTITY_CONTRACT_MISMATCH")
+    request_bytes = request_path.read_bytes()
+    if sha256(request_bytes).hexdigest() != policy["admission_identity_request_sha256"]:
+        _fail("SESSION_FINALIZATION_EXTERNAL_IDENTITY_REQUEST_MISMATCH")
+    binding = _mapping(contract.get("admission_main_binding"), field="admission_main_binding")
+    expected_binding = {
+        "field_name": "ordinary_pushed_admission_main_sha",
+        "required_format": "LOWERCASE_GIT_SHA1_40",
+        "required_relation": "LOCAL_MAIN_EQUALS_ORIGIN_MAIN_EQUALS_OWNER_TOKEN_FIELD",
+        "must_differ_from_proposal_publication_main": True,
+        "post_token_tracked_mutation_allowed": False,
+    }
+    if (
+        contract.get("schema_version")
+        != "qc_qqq_options_session_finalization_external_validation_admission_identity_contract.v2"
+        or contract.get("task_id") != policy["task_id"]
+        or contract.get("contract_status") != "FROZEN_PROPOSAL_IDENTITY_AND_DYNAMIC_ADMISSION_MAIN"
+        or contract.get("proposal_publication_main_sha")
+        != policy["ordinary_pushed_proposal_main_sha"]
+        or contract.get("original_proposal_package_content_sha256")
+        != policy["proposal_package_content_sha256"]
+        or contract.get("owner_decision_exact") != policy["owner_decision"]
+        or contract.get("owner_token_source") != policy["owner_token_source"]
+        or binding != expected_binding
+        or contract.get("maximum_project_mutations") != 1
+        or contract.get("maximum_cloud_backtests") != 1
+        or contract.get("maximum_orders") != 0
+        or contract.get("maximum_fills") != 0
+        or contract.get("authorization_single_use") is not True
+        or contract.get("authorization_invalidates_on_first_run_attempt") is not True
+        or contract.get("external_action_authorized") is not False
+        or contract.get("production_effect") != "none"
+        or contract.get("broker_action") != "none"
+    ):
+        _fail("SESSION_FINALIZATION_EXTERNAL_IDENTITY_CONTRACT_INVALID")
+    baseline_main = contract.get("baseline_admission_implementation_main_sha")
+    if not isinstance(baseline_main, str) or re.fullmatch(r"[0-9a-f]{40}", baseline_main) is None:
+        _fail("SESSION_FINALIZATION_EXTERNAL_IDENTITY_CONTRACT_INVALID")
+    return contract
+
+
 def _expected_token_fields(policy: Mapping[str, Any]) -> dict[str, str]:
     return {
-        "ordinary_pushed_main_sha": str(policy["ordinary_pushed_proposal_main_sha"]),
+        "proposal_publication_main_sha": str(policy["ordinary_pushed_proposal_main_sha"]),
+        "admission_identity_contract_content_sha256": str(
+            policy["admission_identity_contract_content_sha256"]
+        ),
         "registration_base_repository_code_sha": str(
             policy["registration_base_repository_code_sha"]
         ),
@@ -391,6 +466,7 @@ def validate_owner_token_candidate(
         _fail("SESSION_FINALIZATION_EXTERNAL_TOKEN_UTF8_REQUIRED", str(exc))
     policy = _load_policy(project_root)
     _load_proposal_package(project_root=project_root, policy=policy)
+    _load_admission_identity_contract(project_root=project_root, policy=policy)
     lines = text.split("\n")
     if len(lines) != 1 + len(_FIELD_ORDER) or lines[0] != policy["owner_decision"]:
         _fail("SESSION_FINALIZATION_EXTERNAL_TOKEN_DECISION_OR_LINE_COUNT_INVALID")
@@ -410,6 +486,11 @@ def validate_owner_token_candidate(
     wrong = sorted(key for key, value in expected.items() if fields.get(key) != value)
     if wrong:
         _fail("SESSION_FINALIZATION_EXTERNAL_TOKEN_SCOPE_OR_HASH_MISMATCH", ",".join(wrong))
+    admission_main = fields["ordinary_pushed_admission_main_sha"]
+    if re.fullmatch(r"[0-9a-f]{40}", admission_main) is None:
+        _fail("SESSION_FINALIZATION_EXTERNAL_ADMISSION_MAIN_FORMAT_INVALID")
+    if admission_main == fields["proposal_publication_main_sha"]:
+        _fail("SESSION_FINALIZATION_EXTERNAL_ADMISSION_MAIN_EQUALS_PROPOSAL")
     expires_at = _parse_utc(fields["authorization_expires_at_utc"], field="expiry")
     decision_start = datetime.fromisoformat(str(policy["owner_decision_date"])).replace(tzinfo=UTC)
     if expires_at <= decision_start or expires_at > decision_start + timedelta(
@@ -439,16 +520,16 @@ def admit_owner_authorization(
         owner_token_bytes=owner_token_bytes, project_root=project_root
     )
     if (
-        policy["policy_status"] != "OWNER_TOKEN_OBSERVED_ADMISSION_REQUIRED"
-        or policy["owner_token_status"] != "EXACT_OWNER_TOKEN_OBSERVED"
-        or policy["owner_token_sha256"] != candidate.token_sha256
-        or policy["owner_token_byte_count"] != candidate.token_byte_count
-        or policy["authorization_expires_at_utc"] != candidate.expires_at_utc
+        policy["policy_status"] != "AWAITING_EXACT_OWNER_TOKEN_DIRECT_ADMISSION"
+        or policy["owner_token_status"] != "PENDING_DIRECT_RUNTIME_ADMISSION"
+        or policy["owner_token_sha256"] is not None
+        or policy["owner_token_byte_count"] is not None
+        or policy["authorization_expires_at_utc"] is not None
     ):
-        _fail("SESSION_FINALIZATION_EXTERNAL_OWNER_TOKEN_NOT_ADMITTED_BY_POLICY")
+        _fail("SESSION_FINALIZATION_EXTERNAL_DIRECT_ADMISSION_POLICY_INVALID")
     if owner_token_source != policy["owner_token_source"]:
         _fail("SESSION_FINALIZATION_EXTERNAL_OWNER_TOKEN_SOURCE_INVALID")
-    expected_main = str(policy["ordinary_pushed_proposal_main_sha"])
+    expected_main = candidate.fields["ordinary_pushed_admission_main_sha"]
     if local_main_sha != expected_main or origin_main_sha != expected_main:
         _fail("SESSION_FINALIZATION_EXTERNAL_PUBLISHED_MAIN_MISMATCH")
     reviewed_at = _parse_utc(reviewed_at_utc, field="reviewed_at_utc")
@@ -468,7 +549,11 @@ def admit_owner_authorization(
         "owner_token_byte_count": candidate.token_byte_count,
         "reviewed_at_utc": reviewed_at_utc,
         "expires_at_utc": candidate.expires_at_utc,
-        "ordinary_pushed_main_sha": expected_main,
+        "proposal_publication_main_sha": policy["ordinary_pushed_proposal_main_sha"],
+        "ordinary_pushed_admission_main_sha": expected_main,
+        "admission_identity_contract_content_sha256": policy[
+            "admission_identity_contract_content_sha256"
+        ],
         "proposal_scope_content_sha256": policy["proposal_scope_content_sha256"],
         "proposal_package_content_sha256": policy["proposal_package_content_sha256"],
         "project_code_lf_sha256": policy["project_code_lf_sha256"],

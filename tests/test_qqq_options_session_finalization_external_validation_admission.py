@@ -26,6 +26,7 @@ validate_results_json = admission_module.validate_results_json
 
 ROOT = Path(__file__).resolve().parents[1]
 PROPOSAL_MAIN = "c3e593b0e0739ca5f2494f3d55d52af019b0fc47"
+ADMISSION_MAIN = "1002cfd21de4f9ca33f816f9a418c4a256b7d1bd"
 PROJECT_CODE_SHA256 = "0665a759a9db9bcae100133da9dd950e7f66597d4f19d00f01b26afb6a478f45"
 EXPIRY = "2026-08-18T13:02:48Z"
 
@@ -37,6 +38,7 @@ def _policy() -> dict[str, Any]:
 def _owner_token(policy: dict[str, Any] | None = None, **overrides: str) -> bytes:
     selected = _policy() if policy is None else policy
     fields = admission_module._expected_token_fields(selected)
+    fields["ordinary_pushed_admission_main_sha"] = ADMISSION_MAIN
     fields["authorization_expires_at_utc"] = EXPIRY
     fields.update(overrides)
     lines = [str(selected["owner_decision"])]
@@ -44,34 +46,14 @@ def _owner_token(policy: dict[str, Any] | None = None, **overrides: str) -> byte
     return "\n".join(lines).encode("utf-8")
 
 
-def _observed_policy(token: bytes) -> dict[str, Any]:
-    policy = _policy()
-    return {
-        **policy,
-        "policy_status": "OWNER_TOKEN_OBSERVED_ADMISSION_REQUIRED",
-        "owner_token_status": "EXACT_OWNER_TOKEN_OBSERVED",
-        "owner_token_sha256": hashlib.sha256(token).hexdigest(),
-        "owner_token_byte_count": len(token),
-        "authorization_expires_at_utc": EXPIRY,
-    }
-
-
-def _admit(
-    monkeypatch: pytest.MonkeyPatch,
-) -> OwnerAuthorizationAdmissionReceipt:
+def _admit() -> OwnerAuthorizationAdmissionReceipt:
     token = _owner_token()
-    policy = _observed_policy(token)
-    monkeypatch.setattr(
-        admission_module,
-        "_load_policy",
-        lambda project_root=ROOT: policy,
-    )
     return admit_owner_authorization(
         owner_token_bytes=token,
         owner_token_source="PROJECT_OWNER_CURRENT_CODEX_DIALOG",
         reviewed_at_utc="2026-08-17T13:05:00Z",
-        local_main_sha=PROPOSAL_MAIN,
-        origin_main_sha=PROPOSAL_MAIN,
+        local_main_sha=ADMISSION_MAIN,
+        origin_main_sha=ADMISSION_MAIN,
         project_root=ROOT,
     )
 
@@ -146,24 +128,24 @@ def _assert_code(code: str, call: Any) -> None:
     assert caught.value.code == code
 
 
-def test_current_policy_validates_candidate_but_refuses_admission() -> None:
+def test_current_pending_policy_directly_admits_exact_owner_token() -> None:
     token = _owner_token()
     candidate = validate_owner_token_candidate(owner_token_bytes=token, project_root=ROOT)
     assert candidate.token_sha256 == hashlib.sha256(token).hexdigest()
     assert candidate.token_byte_count == len(token)
     assert candidate.expires_at_utc == EXPIRY
 
-    _assert_code(
-        "SESSION_FINALIZATION_EXTERNAL_OWNER_TOKEN_NOT_ADMITTED_BY_POLICY",
-        lambda: admit_owner_authorization(
-            owner_token_bytes=token,
-            owner_token_source="PROJECT_OWNER_CURRENT_CODEX_DIALOG",
-            reviewed_at_utc="2026-08-17T13:05:00Z",
-            local_main_sha=PROPOSAL_MAIN,
-            origin_main_sha=PROPOSAL_MAIN,
-            project_root=ROOT,
-        ),
+    receipt = admit_owner_authorization(
+        owner_token_bytes=token,
+        owner_token_source="PROJECT_OWNER_CURRENT_CODEX_DIALOG",
+        reviewed_at_utc="2026-08-17T13:05:00Z",
+        local_main_sha=ADMISSION_MAIN,
+        origin_main_sha=ADMISSION_MAIN,
+        project_root=ROOT,
     )
+    assert receipt.payload["proposal_publication_main_sha"] == PROPOSAL_MAIN
+    assert receipt.payload["ordinary_pushed_admission_main_sha"] == ADMISSION_MAIN
+    assert receipt.payload["authorization_consumed"] is False
 
 
 @pytest.mark.parametrize(
@@ -181,10 +163,18 @@ def test_current_policy_validates_candidate_but_refuses_admission() -> None:
         ),
         (
             lambda token: token.replace(
-                b"ordinary_pushed_main_sha:c3e593",
-                b"ordinary_pushed_main_sha:000000",
+                b"proposal_publication_main_sha:c3e593",
+                b"proposal_publication_main_sha:000000",
             ),
             "SESSION_FINALIZATION_EXTERNAL_TOKEN_SCOPE_OR_HASH_MISMATCH",
+        ),
+        (
+            lambda token: token.replace(ADMISSION_MAIN.encode(), b"g" * 40),
+            "SESSION_FINALIZATION_EXTERNAL_ADMISSION_MAIN_FORMAT_INVALID",
+        ),
+        (
+            lambda token: token.replace(ADMISSION_MAIN.encode(), PROPOSAL_MAIN.encode()),
+            "SESSION_FINALIZATION_EXTERNAL_ADMISSION_MAIN_EQUALS_PROPOSAL",
         ),
         (
             lambda token: b"\n".join(
@@ -208,10 +198,54 @@ def test_owner_token_is_exact_and_tamper_evident(mutator: Any, expected_code: st
     )
 
 
-def test_observed_exact_token_admits_unused_receipt(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    receipt = _admit(monkeypatch)
+def _identity_contract_sandbox(
+    tmp_path: Path,
+) -> tuple[dict[str, Any], Path, Path]:
+    policy = _policy()
+    contract_relative = Path("identity/contract.json")
+    request_relative = Path("identity/owner_decision_request.md")
+    contract_path = tmp_path / contract_relative
+    request_path = tmp_path / request_relative
+    contract_path.parent.mkdir(parents=True)
+    contract_path.write_bytes((ROOT / policy["admission_identity_contract_path"]).read_bytes())
+    request_path.write_bytes((ROOT / policy["admission_identity_request_path"]).read_bytes())
+    selected = {
+        **policy,
+        "admission_identity_contract_path": contract_relative.as_posix(),
+        "admission_identity_request_path": request_relative.as_posix(),
+    }
+    return selected, contract_path, request_path
+
+
+def test_admission_identity_contract_tamper_fails_closed(tmp_path: Path) -> None:
+    policy, contract_path, _request_path = _identity_contract_sandbox(tmp_path)
+    contract_path.write_text(
+        contract_path.read_text(encoding="utf-8").replace(
+            '"maximum_orders": 0', '"maximum_orders": 1'
+        ),
+        encoding="utf-8",
+    )
+    _assert_code(
+        "SESSION_FINALIZATION_EXTERNAL_SEAL_INVALID",
+        lambda: admission_module._load_admission_identity_contract(
+            project_root=tmp_path, policy=policy
+        ),
+    )
+
+
+def test_admission_identity_request_tamper_fails_closed(tmp_path: Path) -> None:
+    policy, _contract_path, request_path = _identity_contract_sandbox(tmp_path)
+    request_path.write_bytes(request_path.read_bytes() + b"tamper")
+    _assert_code(
+        "SESSION_FINALIZATION_EXTERNAL_IDENTITY_REQUEST_MISMATCH",
+        lambda: admission_module._load_admission_identity_contract(
+            project_root=tmp_path, policy=policy
+        ),
+    )
+
+
+def test_exact_token_admits_unused_receipt_without_post_token_policy_mutation() -> None:
+    receipt = _admit()
     assert receipt.payload["status"] == "OWNER_AUTHORIZATION_ADMITTED_UNUSED"
     assert receipt.payload["authorization_consumed"] is False
     assert receipt.payload["external_action_performed"] is False
@@ -248,30 +282,51 @@ def test_observed_exact_token_admits_unused_receipt(
     ],
 )
 def test_admission_fails_closed_on_authority_or_publication_drift(
-    monkeypatch: pytest.MonkeyPatch,
     field: str,
     value: str,
     expected_code: str,
 ) -> None:
     token = _owner_token()
-    policy = _observed_policy(token)
-    monkeypatch.setattr(admission_module, "_load_policy", lambda project_root=ROOT: policy)
     arguments = {
         "owner_token_bytes": token,
         "owner_token_source": "PROJECT_OWNER_CURRENT_CODEX_DIALOG",
         "reviewed_at_utc": "2026-08-17T13:05:00Z",
-        "local_main_sha": PROPOSAL_MAIN,
-        "origin_main_sha": PROPOSAL_MAIN,
+        "local_main_sha": ADMISSION_MAIN,
+        "origin_main_sha": ADMISSION_MAIN,
         "project_root": ROOT,
     }
     arguments[field] = value
     _assert_code(expected_code, lambda: admit_owner_authorization(**arguments))
 
 
-def test_first_attempt_consumes_authority_and_second_attempt_is_forbidden(
+def test_direct_admission_rejects_post_token_tracked_policy_mutation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    admitted = _admit(monkeypatch)
+    token = _owner_token()
+    policy = {
+        **_policy(),
+        "policy_status": "OWNER_TOKEN_OBSERVED_ADMISSION_REQUIRED",
+        "owner_token_status": "EXACT_OWNER_TOKEN_OBSERVED",
+        "owner_token_sha256": hashlib.sha256(token).hexdigest(),
+        "owner_token_byte_count": len(token),
+        "authorization_expires_at_utc": EXPIRY,
+    }
+    monkeypatch.setattr(admission_module, "_load_policy", lambda project_root=ROOT: policy)
+    _assert_code(
+        "SESSION_FINALIZATION_EXTERNAL_DIRECT_ADMISSION_POLICY_INVALID",
+        lambda: admit_owner_authorization(
+            owner_token_bytes=token,
+            owner_token_source="PROJECT_OWNER_CURRENT_CODEX_DIALOG",
+            reviewed_at_utc="2026-08-17T13:05:00Z",
+            local_main_sha=ADMISSION_MAIN,
+            origin_main_sha=ADMISSION_MAIN,
+            project_root=ROOT,
+        ),
+    )
+
+
+def test_first_attempt_consumes_authority_and_second_attempt_is_forbidden() -> None:
+    admitted = _admit()
     consumed = _consume(admitted)
     assert consumed.payload["authorization_consumed"] is True
     assert consumed.payload["authorization_invalidated_for_further_attempts"] is True
@@ -316,11 +371,10 @@ def test_first_attempt_consumes_authority_and_second_attempt_is_forbidden(
     ],
 )
 def test_consumption_rejects_expiry_and_execution_drift(
-    monkeypatch: pytest.MonkeyPatch,
     overrides: dict[str, Any],
     expected_code: str,
 ) -> None:
-    admitted = _admit(monkeypatch)
+    admitted = _admit()
     arguments: dict[str, Any] = {
         "admission": admitted,
         "attempted_at_utc": "2026-08-17T13:10:00Z",
@@ -333,10 +387,8 @@ def test_consumption_rejects_expiry_and_execution_drift(
     _assert_code(expected_code, lambda: consume_on_first_run_attempt(**arguments))
 
 
-def test_valid_export_safe_result_builds_bound_evidence_ledger_and_manifest(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    admitted = _admit(monkeypatch)
+def test_valid_export_safe_result_builds_bound_evidence_ledger_and_manifest() -> None:
+    admitted = _admit()
     consumed = _consume(admitted)
     raw = _result_bytes()
     evidence = validate_results_json(
@@ -430,11 +482,10 @@ def _mutate_range(payload: dict[str, Any]) -> None:
     ],
 )
 def test_result_parser_fails_closed_on_unsafe_or_inconsistent_payload(
-    monkeypatch: pytest.MonkeyPatch,
     mutator: Any,
     expected_code: str,
 ) -> None:
-    admitted = _admit(monkeypatch)
+    admitted = _admit()
     consumed = _consume(admitted)
     payload = copy.deepcopy(_result_payload())
     mutator(payload)
@@ -451,10 +502,8 @@ def test_result_parser_fails_closed_on_unsafe_or_inconsistent_payload(
     )
 
 
-def test_pending_ledger_and_manifest_do_not_claim_result_completion(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    admitted = _admit(monkeypatch)
+def test_pending_ledger_and_manifest_do_not_claim_result_completion() -> None:
+    admitted = _admit()
     consumed = _consume(admitted)
     ledger = build_external_action_ledger(
         admission=admitted,
@@ -474,10 +523,8 @@ def test_pending_ledger_and_manifest_do_not_claim_result_completion(
     assert "export_safe_aggregate_evidence.json" not in manifest.payload["artifacts"]
 
 
-def test_action_ledger_rejects_time_and_evidence_binding_drift(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    admitted = _admit(monkeypatch)
+def test_action_ledger_rejects_time_and_evidence_binding_drift() -> None:
+    admitted = _admit()
     consumed = _consume(admitted)
     _assert_code(
         "SESSION_FINALIZATION_EXTERNAL_ACTION_ORDER_INVALID",

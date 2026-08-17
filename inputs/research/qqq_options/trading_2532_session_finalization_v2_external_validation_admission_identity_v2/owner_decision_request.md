@@ -1,0 +1,43 @@
+# TRADING-2532 admission identity V2 Owner decision request
+
+This request preserves the immutable proposal publication while binding the exact
+already-published admission implementation at authorization time. It does not itself
+authorize QuantConnect, Cloud, orders, fills, or any external action.
+
+After the V2 implementation is ordinarily pushed, replace the two angle-bracket values
+and send only the lines inside the code block as one UTF-8 message. The final line must
+not have a trailing newline.
+
+```text
+owner_decision:TRADING-2532:2026-08-17:authorize_single_zero_order_session_finalization_v2_external_validation_v2
+proposal_publication_main_sha:c3e593b0e0739ca5f2494f3d55d52af019b0fc47
+ordinary_pushed_admission_main_sha:<EXACT_CURRENT_LOCAL_AND_ORIGIN_MAIN_SHA>
+admission_identity_contract_content_sha256:93671fc9c4f4251826d80e62f5e790bd18b453dc08780df93ecbedbcfbf2644c
+registration_base_repository_code_sha:bb6e43eff2dabfaa12d3f50354451075542380de
+policy_file_sha256:cea137e0cb17b1c9594c359926015189f6fcfc2f472c4b6db72357d67a5d0cf5
+policy_canonical_sha256:adc2e9cc0c889b814a97a5b8c4841c0890ef73c27dc07eddddc98ed2bed26f22
+contract_content_sha256:f3c3918dd5dfd6fc1c6e84b63471c652d34090c9d50fab25d77dc58f9190b378
+contract_canonical_sha256:97557122d50f6a82fe68f57286f7008bbe8bbdb511886f62f936d9fc1b6bb7e4
+project_code_lf_byte_count:26901
+project_code_lf_sha256:0665a759a9db9bcae100133da9dd950e7f66597d4f19d00f01b26afb6a478f45
+predecessor_evidence_content_sha256:d47f3234f58e1a7114984a7a79a5090082f923b7e02c65a66dfa8b761321f792
+predecessor_results_sha256:2233b20a900c76cbb6938a96c635c5dabc5855349ac74ff684c8f1c657b752b7
+package_manifest_content_sha256:7b49e82498c0ede285e93265007c5cbf89c42485eab5d5853018032eb95f80ce
+target_project_id:34808569
+requested_range:2021-02-22..2025-12-02
+expected_session_count:1202
+maximum_project_mutations:1
+maximum_cloud_backtests:1
+maximum_orders:0
+maximum_fills:0
+collector:codex_capability_coordinator
+independent_reviewer:project_owner
+authorization_expires_at_utc:<OWNER_SELECTED_EXPIRY_NOT_MORE_THAN_168_HOURS>
+authorization_single_use:true
+authorization_invalidates_on_first_run_attempt:true
+```
+
+Admission remains fail-closed unless the dynamic main value equals both local `main` and
+`origin/main` at review time, the expiry is valid, and the exact V2 contract seal above
+revalidates. The first project-mutation/run attempt consumes the authorization whether
+that attempt passes or fails.

@@ -1,0 +1,27 @@
+{
+  "schema_version": "qc_qqq_options_session_finalization_external_validation_admission_identity_contract.v2",
+  "task_id": "TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1",
+  "contract_status": "FROZEN_PROPOSAL_IDENTITY_AND_DYNAMIC_ADMISSION_MAIN",
+  "proposal_publication_main_sha": "c3e593b0e0739ca5f2494f3d55d52af019b0fc47",
+  "baseline_admission_implementation_main_sha": "1002cfd21de4f9ca33f816f9a418c4a256b7d1bd",
+  "original_proposal_package_content_sha256": "7b49e82498c0ede285e93265007c5cbf89c42485eab5d5853018032eb95f80ce",
+  "owner_decision_exact": "owner_decision:TRADING-2532:2026-08-17:authorize_single_zero_order_session_finalization_v2_external_validation_v2",
+  "owner_token_source": "PROJECT_OWNER_CURRENT_CODEX_DIALOG",
+  "admission_main_binding": {
+    "field_name": "ordinary_pushed_admission_main_sha",
+    "required_format": "LOWERCASE_GIT_SHA1_40",
+    "required_relation": "LOCAL_MAIN_EQUALS_ORIGIN_MAIN_EQUALS_OWNER_TOKEN_FIELD",
+    "must_differ_from_proposal_publication_main": true,
+    "post_token_tracked_mutation_allowed": false
+  },
+  "maximum_project_mutations": 1,
+  "maximum_cloud_backtests": 1,
+  "maximum_orders": 0,
+  "maximum_fills": 0,
+  "authorization_single_use": true,
+  "authorization_invalidates_on_first_run_attempt": true,
+  "external_action_authorized": false,
+  "production_effect": "none",
+  "broker_action": "none",
+  "content_sha256": "93671fc9c4f4251826d80e62f5e790bd18b453dc08780df93ecbedbcfbf2644c"
+}

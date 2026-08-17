@@ -8693,16 +8693,21 @@ v2 的离线 PASS 只能证明 collector 合同已消除已知混淆，不能证
 
 ## TRADING-2532 session-finalization V2 外部验证的准入、单次消费与聚合证据
 
-`qqq_options_research.session_finalization_external_validation_admission` 把“Owner 表达了运行意图”、
-“exact token 已被策略登记”、“第一次运行尝试已消费授权”和“结果已通过聚合合同”拆成四个不能跳过的状态。
-当前仓库策略仍是 `AWAITING_EXACT_OWNER_TOKEN`，因此即使 token 文本结构正确，也只能形成待审候选，不能触发
-QuantConnect project mutation 或 Cloud run。
+`qqq_options_research.session_finalization_external_validation_admission` 把“proposal evidence 已冻结”、
+“可执行 admission main 已由 Owner 精确绑定”、“第一次运行尝试已消费授权”和“结果已通过聚合合同”拆成
+四个不能跳过的状态。v1 把 proposal commit 与 parser 所在 commit 错当成同一个 SHA，导致合同不可达；v2
+保留 proposal `c3e593...`，同时要求 Owner token 动态绑定已经 ordinary-pushed 的 admission implementation
+main。当前策略仍是 `AWAITING_EXACT_OWNER_TOKEN_DIRECT_ADMISSION`，因此不能触发 QuantConnect project
+mutation 或 Cloud run。
 
 ```text
-2532 ordinary-pushed proposal main + frozen 2531 package/hashes
+2532 immutable proposal main + frozen 2531 package/hashes
+  -> sealed admission-identity v2 contract + exact request artifact
   -> exact LF/UTF-8 Owner token candidate
-  -> verify field order / scope hashes / 168-hour maximum / proposal local-main=origin-main
-  -> policy must already bind exact token SHA-256 + byte count + expiry
+  -> verify field order / scope hashes / 168-hour maximum / proposal main remains immutable
+  -> token binds a distinct ordinary-pushed admission implementation main
+  -> require local main = origin/main = token admission main
+  -> no tracked policy mutation after token receipt
   -> admission receipt = OWNER_AUTHORIZATION_ADMITTED_UNUSED
   -> first project-mutation/run attempt consumes and invalidates authorization
   -> no retry after SUBMITTED / COMPLETED / FAILED
@@ -8714,6 +8719,7 @@ QuantConnect project mutation 或 Cloud run。
 ```
 
 离线 parser 只定义未来一次运行“怎样才算可采信”，不会自行执行运行，也不会把用户下载的原始 Results
-写入治理证据。只有严格 parser 归一化出的 axis/session aggregates、诊断计数和 hashes 可以进入 evidence；
-任一 seal、published SHA、时间顺序、session 分区或零订单边界不一致都 fail closed。2532 自身的外部计数
-在实际首次尝试前保持 `0 / 0 / 0 / 0`。
+写入治理证据。Owner token 直接从当前 Project Owner 对话进入 sealed unused receipt，不先写回 tracked policy，
+避免 token 绑定的 main SHA 因登记 commit 再次变化。只有严格 parser 归一化出的 axis/session aggregates、
+诊断计数和 hashes 可以进入 evidence；任一 seal、published SHA、时间顺序、session 分区或零订单边界不一致
+都 fail closed。2532 自身的外部计数在实际首次尝试前保持 `0 / 0 / 0 / 0`。

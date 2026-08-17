@@ -14,7 +14,7 @@ fragment_count: 1005
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: ace380c4530e944cfb68020b8b01336c22c5780226530d58159b39b423c42f13
+final_chain_sha256: 1bfce2a22e8b61c01dc62f71070c852274a345dfe7aa2c49b03b6dcf6f809ea9
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -8063,17 +8063,17 @@ fragments:
   entry_sha256: beead84502ede78309d48390ec527fb629166a438c7989918a23cc143011e900
 - task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
   path: registry/development_tasks/ef/ef1b0dad858e33a71eac979a487ae42700c671260c784fcdf9126e397f1bd57e.yaml
-  file_sha256: 7288fcf6653de3eacbfaa6384ef43ad25abc23089733d747ac922416e09b7b87
-  fragment_checksum: b74a2228c9948f25638e35457cf1feb199f743639488c1b02c68bf65b348dd2f
+  file_sha256: cca53d05f5c5a2f1f138744b32b71d763871dfb432a10a341d8438979a04ae55
+  fragment_checksum: c7ab81ff20b235f536cf128a9b86467d3cf3e53da2fb2e45c48c6397c8d472f1
   partition: active
   order: 1005
   previous_entry_sha256: beead84502ede78309d48390ec527fb629166a438c7989918a23cc143011e900
-  entry_sha256: ace380c4530e944cfb68020b8b01336c22c5780226530d58159b39b423c42f13
+  entry_sha256: 1bfce2a22e8b61c01dc62f71070c852274a345dfe7aa2c49b03b6dcf6f809ea9
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 7924e86149ba6b326511d919b019ccbfb352fdceeda08a302e03329a1d34bce6
-  byte_count: 1745356
+  sha256: 1a4c85c0500f631cc80817d00f4bc872a4dfc398af3be773d22b442cca3fb958
+  byte_count: 1745200
   row_count: 495
   generated_do_not_edit: true
 - partition: completed
@@ -9000,7 +9000,28 @@ governance_cycles:
   change_id: trading-2532-atlas-canonical-freshness-20260817-v1
   event_count: 5
   production_effect: none
-governance_cycle_count: 131
+- cycle_id: arch-005-s5-cycle-132
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  change_id: trading-2532-publication-identity-defect-20260817-v1
+  event_count: 6
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-133
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  change_id: trading-2532-publication-identity-v2-validating-20260817-v1
+  event_count: 7
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-134
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  change_id: trading-2532-publication-identity-v2-baseline-done-20260817-v1
+  event_count: 8
+  production_effect: none
+governance_cycle_count: 134
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -9014,4 +9035,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: f8b8ffebe8cf4cb4d1a0d6f82eab2a4a4a676403fc5e6f4de06c3dd9db69873a
+index_checksum: 0e06f7f5f61b5ac87c51cfc480bf71f88549db39555dd9c45c6694a57f0387cd

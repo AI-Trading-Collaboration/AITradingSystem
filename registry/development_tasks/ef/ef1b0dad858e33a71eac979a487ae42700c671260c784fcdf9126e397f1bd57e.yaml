@@ -14,22 +14,22 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex capability coordinator：完成 failure-fix formal 与 ordinary publication；Project
-    Owner：之后提供 exact single-use token
+  next_owner: Project Owner：提供 exact v2 single-use token；Codex capability coordinator：direct
+    admission 后执行唯一外部尝试
   requirement_refs:
   - docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: offline admission/result parser 已完成；Atlas
-    TRADING-2532 successor classification 与当前阻塞叙事已修复，39 项并行 focused PASS；需在 final
-    generated tree 完成 formal failure-fix rerun 与 ordinary publication。external action
-    仍由 PENDING_EXACT_OWNER_TOKEN fail-closed。
+  unstructured_legacy_blocker_or_next_step: v1 publication identity 不可达缺陷已由 v2 双层合同修复；32
+    项 focused 与 138 项 expanded focused/authority/Atlas 均 PASS。ordinary publication/formal
+    完成后，external action 唯一阻塞为 exact v2 token 动态绑定 final local=origin main。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 绑定 ordinary-pushed proposal SHA、2531 frozen hashes、exact token seal、1202-session
-      axis partitions 与 1/1/0/0 上限；首次尝试即消费；strict aggregate/provenance attribution；focused/formal
-      PASS；不产生 DQ/PIT/strategy/trading conclusion。
+    text: 保留原 proposal seal；v2 token 分别绑定 proposal_publication_main_sha 与 exact ordinary_pushed_admission_main_sha；admission
+      要求 local main=origin/main=token main、直接生成 sealed unused receipt、无 post-token
+      tracked mutation；继续满足 single-use、1202 sessions、1/1/0/0、export-safe、no trading；focused/formal
+      PASS。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -191,6 +191,99 @@ events:
   - change:trading-2532-atlas-canonical-freshness-20260817-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-c3050039740374599d335549f0a8bd9c
+- schema_version: task_event.v1
+  task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-17T07:59:01Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2532-publication-identity-defect-20260817-v1
+  lane_id: null
+  base_commit: 1002cfd21de4f9ca33f816f9a418c4a256b7d1bd
+  previous_state_event_id: task-event-c3050039740374599d335549f0a8bd9c
+  from_status: BASELINE_DONE
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex capability coordinator：修复 admission publication identity 自引用并重新发布；Project
+      Owner：修复发布后提供 exact v2 single-use token
+    blocker_or_next_step: read-only audit 证明 v1 admission 不可达：runtime refs 被要求等于旧
+      proposal c3e593，但 parser 仅存在于 1002cfd 及其后继。需发布 v2 双层身份合同，分别冻结 proposal 与 token
+      动态绑定的 executable main，且不得在 token 后再做 tracked mutation。
+    acceptance_criteria: 保留原 proposal seal；v2 token 分别绑定 proposal_publication_main_sha
+      与 exact ordinary_pushed_admission_main_sha；admission 要求 local main=origin/main=token
+      main、直接生成 sealed unused receipt、无 post-token tracked mutation；继续满足 single-use、1202
+      sessions、1/1/0/0、export-safe、no trading；focused/formal PASS。
+    notes: '[supporting requirement](docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md)；defect
+      discovered after published baseline main=1002cfd21de4f9ca33f816f9a418c4a256b7d1bd；no
+      Owner token admitted；external counters=0/0/0/0；external_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2532-publication-identity-defect-20260817-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-9df126269bf30aea87d94c72bbd516f3
+- schema_version: task_event.v1
+  task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-17T08:26:33Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2532-publication-identity-v2-validating-20260817-v1
+  lane_id: null
+  base_commit: 1002cfd21de4f9ca33f816f9a418c4a256b7d1bd
+  previous_state_event_id: task-event-9df126269bf30aea87d94c72bbd516f3
+  from_status: IN_PROGRESS
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: Codex capability coordinator：刷新 authority/Atlas 并完成 formal/ordinary
+      publication；Project Owner：发布后提供 exact v2 single-use token
+    blocker_or_next_step: v2 双层 publication identity 合同已实现并完成 32 项并行 focused PASS；需刷新生成权威、Atlas
+      canonical freshness 与 applicable formal。发布后 token 动态绑定 final local=origin main，不再发生
+      post-token tracked mutation。
+    acceptance_criteria: 保留原 proposal seal；v2 token 分别绑定 proposal_publication_main_sha
+      与 exact ordinary_pushed_admission_main_sha；admission 要求 local main=origin/main=token
+      main、直接生成 sealed unused receipt、无 post-token tracked mutation；继续满足 single-use、1202
+      sessions、1/1/0/0、export-safe、no trading；focused/formal PASS。
+    notes: '[supporting requirement](docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md)；v2
+      contract content_sha256=93671fc9c4f4251826d80e62f5e790bd18b453dc08780df93ecbedbcfbf2644c；request
+      file sha256=051a27ad90f65daee5f6962a07ec21ca2f92f8f8b406177e9a11bd1fac89b77d；focused=32
+      PASS；no Owner token admitted；external counters=0/0/0/0。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2532-publication-identity-v2-validating-20260817-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ea3e078ebb9d2085e7898defd6fbcdc8
+- schema_version: task_event.v1
+  task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-17T08:35:24Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2532-publication-identity-v2-baseline-done-20260817-v1
+  lane_id: null
+  base_commit: 1002cfd21de4f9ca33f816f9a418c4a256b7d1bd
+  previous_state_event_id: task-event-ea3e078ebb9d2085e7898defd6fbcdc8
+  from_status: VALIDATING
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：提供 exact v2 single-use token；Codex capability coordinator：direct
+      admission 后执行唯一外部尝试
+    blocker_or_next_step: v1 publication identity 不可达缺陷已由 v2 双层合同修复；32 项 focused 与
+      138 项 expanded focused/authority/Atlas 均 PASS。ordinary publication/formal 完成后，external
+      action 唯一阻塞为 exact v2 token 动态绑定 final local=origin main。
+    acceptance_criteria: 保留原 proposal seal；v2 token 分别绑定 proposal_publication_main_sha
+      与 exact ordinary_pushed_admission_main_sha；admission 要求 local main=origin/main=token
+      main、直接生成 sealed unused receipt、无 post-token tracked mutation；继续满足 single-use、1202
+      sessions、1/1/0/0、export-safe、no trading；focused/formal PASS。
+    notes: '[supporting requirement](docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md)；v2
+      contract content_sha256=93671fc9c4f4251826d80e62f5e790bd18b453dc08780df93ecbedbcfbf2644c；request
+      file sha256=051a27ad90f65daee5f6962a07ec21ca2f92f8f8b406177e9a11bd1fac89b77d；focused=32
+      PASS；expanded focused/authority/Atlas=138 PASS；no Owner token admitted；external
+      counters=0/0/0/0。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2532-publication-identity-v2-baseline-done-20260817-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-beebe53c670bc172a07d9780f0b04a80
 projection:
   legacy_first_eight_cells:
   - TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
@@ -198,24 +291,24 @@ projection:
     execution
   - P0
   - BASELINE_DONE
-  - Codex capability coordinator：完成 failure-fix formal 与 ordinary publication；Project
-    Owner：之后提供 exact single-use token
-  - offline admission/result parser 已完成；Atlas TRADING-2532 successor classification
-    与当前阻塞叙事已修复，39 项并行 focused PASS；需在 final generated tree 完成 formal failure-fix rerun
-    与 ordinary publication。external action 仍由 PENDING_EXACT_OWNER_TOKEN fail-closed。
-  - 绑定 ordinary-pushed proposal SHA、2531 frozen hashes、exact token seal、1202-session
-    axis partitions 与 1/1/0/0 上限；首次尝试即消费；strict aggregate/provenance attribution；focused/formal
-    PASS；不产生 DQ/PIT/strategy/trading conclusion。
-  - '[supporting requirement](docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md)；offline
-    admission focused=27 PASS，combined focused/authority=109 PASS；首轮 Full=9174 passed/7
-    failed/3 skipped/644 warnings，唯一根因为 Atlas 未分类 2532 successor；Atlas failure-fix
-    focused=39 PASS；retained Full artifact=outputs/validation_runtime/full_20260817T054813Z/test_runtime_summary.json；canonical
-    page final SHA 由生成侧车与 publication handoff 记录，避免 tracked-source 自引用；owner_token_status=PENDING_EXACT_OWNER_TOKEN；external
+  - Project Owner：提供 exact v2 single-use token；Codex capability coordinator：direct
+    admission 后执行唯一外部尝试
+  - v1 publication identity 不可达缺陷已由 v2 双层合同修复；32 项 focused 与 138 项 expanded focused/authority/Atlas
+    均 PASS。ordinary publication/formal 完成后，external action 唯一阻塞为 exact v2 token 动态绑定
+    final local=origin main。
+  - 保留原 proposal seal；v2 token 分别绑定 proposal_publication_main_sha 与 exact ordinary_pushed_admission_main_sha；admission
+    要求 local main=origin/main=token main、直接生成 sealed unused receipt、无 post-token tracked
+    mutation；继续满足 single-use、1202 sessions、1/1/0/0、export-safe、no trading；focused/formal
+    PASS。
+  - '[supporting requirement](docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md)；v2
+    contract content_sha256=93671fc9c4f4251826d80e62f5e790bd18b453dc08780df93ecbedbcfbf2644c；request
+    file sha256=051a27ad90f65daee5f6962a07ec21ca2f92f8f8b406177e9a11bd1fac89b77d；focused=32
+    PASS；expanded focused/authority/Atlas=138 PASS；no Owner token admitted；external
     counters=0/0/0/0。'
   docs_links:
   - docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md
   terminal: false
-  canonical_row_sha256: 669a8c51b59916d9cf681565eb05f1bad1ab71e4d4caf2722ba9778dc094a997
-last_event_id: task-event-c3050039740374599d335549f0a8bd9c
+  canonical_row_sha256: 77f5e68e814c6c70f5f73a930c7462ff437316ddefb85533772b896db4fa12fc
+last_event_id: task-event-beebe53c670bc172a07d9780f0b04a80
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b74a2228c9948f25638e35457cf1feb199f743639488c1b02c68bf65b348dd2f
+fragment_checksum: c7ab81ff20b235f536cf128a9b86467d3cf3e53da2fb2e45c48c6397c8d472f1
