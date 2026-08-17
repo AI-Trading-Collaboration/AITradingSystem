@@ -275,7 +275,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="51"' in html
+    assert 'data-task-coverage-count="52"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html
@@ -351,6 +351,10 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         in html
     )
     assert (
+        'data-successor-task="TRADING-2531_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_AND_UNDERLYING_PRICE_SOURCE_CONTRACT_FIX_V1"'
+        in html
+    )
+    assert (
         'data-successor-task="TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1"'
         in html
     )
@@ -366,6 +370,9 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert "真实一次零订单采集已完成" in html
     assert "只有 182 个看到 option chain，1020 个缺失" in html
     assert "不能据此宣称 DQ/PIT" in html
+    assert "旧 collector 在当天第一条 Slice 没有 chain 时就提前把整天判为 missing" in html
+    assert "整天合并、最后结算" in html
+    assert "真实缺链数量仍需未来一次另行授权的零订单验证" in html
     assert "2516 v2 token 也已签署并在唯一一次 Cloud run 尝试中消费" in html
     assert "9518360aeb329219cd83e78442a1d229" in html
     assert "Option filter 已以显式 list[Symbol] 完成 versioned failure-fix" in html

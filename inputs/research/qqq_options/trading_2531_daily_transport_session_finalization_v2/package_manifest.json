@@ -1,0 +1,35 @@
+{
+  "artifact_count": 4,
+  "artifacts": [
+    {
+      "byte_count": 26901,
+      "relative_path": "main.py",
+      "sha256": "0665a759a9db9bcae100133da9dd950e7f66597d4f19d00f01b26afb6a478f45"
+    },
+    {
+      "byte_count": 1085,
+      "relative_path": "owner_decision_request.md",
+      "sha256": "c466c77a31e53dc3099eb10cab579023b690de90e7d5553b66adc5831673c1b8"
+    },
+    {
+      "byte_count": 1794,
+      "relative_path": "proposal.json",
+      "sha256": "e4ed039271c3d0ec498c471641e52c9efab25d6fab29a95885719c0b8fc58b4f"
+    },
+    {
+      "byte_count": 3681,
+      "relative_path": "session_finalization_contract.json",
+      "sha256": "97557122d50f6a82fe68f57286f7008bbe8bbdb511886f62f936d9fc1b6bb7e4"
+    }
+  ],
+  "broker_action": "none",
+  "content_sha256": "1f018f42b1149f5c04b559e3ca1b35e0418c841a75da6a6099dbff7ec67d1b4b",
+  "created_at_utc": "2026-08-17T04:30:00Z",
+  "external_action_authorized": false,
+  "external_action_performed": false,
+  "package_id": "TRADING_2531_DAILY_TRANSPORT_SESSION_FINALIZATION_PACKAGE_V2",
+  "production_effect": "none",
+  "repository_code_sha": "4c4c108bb0af990833b325ca11cce5d21d8505c9",
+  "schema_version": "qc_qqq_options_daily_transport_session_finalization_package.v2",
+  "task_id": "TRADING-2531_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_AND_UNDERLYING_PRICE_SOURCE_CONTRACT_FIX_V1"
+}

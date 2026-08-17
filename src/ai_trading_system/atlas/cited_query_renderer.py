@@ -2098,7 +2098,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
             "</li>"
         )
         for item in manifest.task_coverage
-        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2530
+        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2531
     )
     return f"""
     <section class="page-effectiveness" id="page-effectiveness" aria-labelledby="page-effectiveness-title" data-page-freshness="{escape(manifest.freshness_status.value)}" data-task-coverage-count="{len(manifest.task_coverage)}">
@@ -2118,7 +2118,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
         <article><span>02 · 最大阻塞</span><strong>18 个 G3 证据槽位尚无通过 DQ/PIT（数据质量与时点可得性）准入的主研究窗口结果，G2 数值政策仍有 0 项获批。</strong></article>
         <article><span>03 · 已做到什么</span><strong>工程合同、数据质量与时点可得性检查、离线工程机制、10 条汇总序列收集器与证据结构均可重放；这只是能力，不是盈利或风险证据。</strong></article>
         <article><span>04 · 不能推出什么</span><strong>不能推出策略有效、收益稳健或风险可接受，也不能把局部工程许可解释成策略结论通过。</strong></article>
-        <article><span>05 · 下一步</span><strong>v4 唯一 Cloud run 已完成：1201 个有期权链的交易日全部被组合传输检查拒绝，0 个有效候选；2528 离线诊断只能确认期权链已出现，仍不能确定报价、Greeks、持仓量、成交量或交叉条件中的具体失败项。2529 已把逐项安全汇总采集方案封存为可审阅提案，下一步等待 Owner 对精确哈希和一次性令牌另行授权；当前禁止第二次运行。</strong></article>
+        <article><span>05 · 下一步</span><strong>2530 的唯一一次零订单采集已完成，但旧 collector 把“第一条 Slice 暂时没有 chain”和“整天从未有 chain”混在一起，还使用了 contract 上的零值 underlying。2531 正在离线修复为“同日事件先合并、运行末端再结算”，并以同日 RAW QQQ bar 作为 underlying；这能修复诊断方法，但不会凭空改写 1020 个 missing。真实缺链数量仍需未来另行授权的零订单验证。</strong></article>
         <article class="reader-answer-stop"><span>06 · 现在能否投资或下单</span><strong>不能。期权合约选择保持关闭，订单和成交数量均为 0；本页不授权真实策略执行引擎、外部动作或交易。</strong></article>
       </div>
       <div class="effectiveness-boundary">
@@ -2128,7 +2128,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <p>工程自动化只能更新工程验收；Owner 视觉验收和目标读者理解验收必须来自真实人工事实。</p>
         </div>
         <details class="successor-coverage" data-reader-layer="audit">
-          <summary>查看 TRADING-2494–2529（含 2523A/2523B）如何影响当前页面</summary>
+          <summary>查看 TRADING-2494–2531（含 2523A/2523B）如何影响当前页面</summary>
           <ul>{successor_rows}</ul>
         </details>
       </div>
@@ -2139,7 +2139,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <div><dt>repository commit</dt><dd><code>{escape(manifest.repository_commit)}</code></dd></div>
           <div><dt>source snapshot</dt><dd><code>{escape(manifest.source_snapshot_commit)}</code></dd></div>
           <div><dt>policy SHA-256</dt><dd><code>{escape(manifest.policy_sha256)}</code></dd></div>
-          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2504, 2506..2529, 2523A, 2523B</code> · {len(manifest.source_artifacts)} semantic sources</dd></div>
+          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2504, 2506..2531, 2523A, 2523B</code> · {len(manifest.source_artifacts)} semantic sources</dd></div>
         </dl>
         <h3>验收原始状态</h3><ul>{acceptance_audit}</ul>
       </details>
@@ -2539,7 +2539,7 @@ def _render_audit_destinations(
         f"<code>{escape(item.task_id)}</code>"
         f"<span>{escape(item.reader_summary_zh)}</span></li>"
         for item in manifest.task_coverage
-        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2530
+        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2531
     )
     return f"""
     <section class="audit-destinations" data-reader-section="AUDIT_DESTINATIONS" data-task-coverage-count="{len(manifest.task_coverage)}" aria-labelledby="audit-destinations-title">

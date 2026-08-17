@@ -1,0 +1,143 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2531_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_AND_UNDERLYING_PRICE_SOURCE_CONTRACT_FIX_V1
+  task_id_sha256: 44f4c85bacaa76bdfa6a8afb18f9a8be41951779040af3598125480f4d331e3c
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2531_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_AND_UNDERLYING_PRICE_SOURCE_CONTRACT_FIX_V1
+  title: null
+  domain: QQQ Options daily transport session finalization and underlying-price source
+    contract fix
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner：未来仅审阅新的 zero-order external validation authority
+  requirement_refs:
+  - docs/requirements/TRADING-2531_QC_QQQ_Options_Daily_Transport_Session_Finalization_And_Underlying_Price_Source_Contract_Fix_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 离线 v2 contract fix、zero-order candidate
+    与 exact hashes 已闭合；旧 1020 MISSING 不重解释。需另行 governed owner authority 才可执行一次外部 v2
+    validation；当前 Cloud/project/browser/API 均禁止。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 纯 session reducer、multi-Slice permutation regression、same-session raw QQQ
+      bar provenance、v2 bounded aggregate contract/zero-order candidate/exact hashes；不改写
+      v1 evidence；focused/formal PASS。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2531_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_AND_UNDERLYING_PRICE_SOURCE_CONTRACT_FIX_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-17T01:43:41Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2531-register-20260817-v1
+  lane_id: null
+  base_commit: 4c4c108bb0af990833b325ca11cce5d21d8505c9
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2531_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_AND_UNDERLYING_PRICE_SOURCE_CONTRACT_FIX_V1
+    - QQQ Options daily transport session finalization and underlying-price source
+      contract fix
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator；Project Owner：未来仅审阅新的 external validation authority
+    - TRADING-2530 aggregate 被 first-Slice terminalization 与 contract-level zero underlying
+      source 混淆；当前禁止第二次 Cloud run。
+    - 纯 session reducer、multi-Slice permutation regression、same-session raw QQQ bar
+      provenance、v2 bounded aggregate contract/zero-order candidate/exact hashes；不改写
+      v1 evidence；focused/formal PASS。
+    - '[supporting requirement](docs/requirements/TRADING-2531_QC_QQQ_Options_Daily_Transport_Session_Finalization_And_Underlying_Price_Source_Contract_Fix_V1.md)；offline
+      contract fix starting；external_action=none；2530 counters remain 1/1/0/0。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2531-register-20260817-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-be3072d2d93953363f687343f3441881
+- schema_version: task_event.v1
+  task_id: TRADING-2531_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_AND_UNDERLYING_PRICE_SOURCE_CONTRACT_FIX_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-17T02:52:14Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2531-baseline-done-20260817-v1
+  lane_id: null
+  base_commit: 4c4c108bb0af990833b325ca11cce5d21d8505c9
+  previous_state_event_id: task-event-be3072d2d93953363f687343f3441881
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：未来仅审阅新的 zero-order external validation authority
+    blocker_or_next_step: 离线 v2 contract fix、zero-order candidate 与 exact hashes 已闭合；旧
+      1020 MISSING 不重解释。需另行 governed owner authority 才可执行一次外部 v2 validation；当前 Cloud/project/browser/API
+      均禁止。
+    acceptance_criteria: 纯 session reducer、multi-Slice permutation regression、same-session
+      raw QQQ bar provenance、v2 bounded aggregate contract/zero-order candidate/exact
+      hashes；不改写 v1 evidence；focused/formal PASS。
+    notes: focused=19 PASS；Atlas/reducer=58 PASS；authority=79 PASS；main.py_sha256=0665a759a9db9bcae100133da9dd950e7f66597d4f19d00f01b26afb6a478f45；package_content_sha256=1f018f42b1149f5c04b559e3ca1b35e0418c841a75da6a6099dbff7ec67d1b4b；external
+      counters remain 1/1/0/0；external_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2531-baseline-done-20260817-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-389a7a9cf4583b3081258b8af639666d
+- schema_version: task_event.v1
+  task_id: TRADING-2531_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_AND_UNDERLYING_PRICE_SOURCE_CONTRACT_FIX_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-17T02:57:13Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2531-restore-requirement-binding-20260817-v1
+  lane_id: null
+  base_commit: 4c4c108bb0af990833b325ca11cce5d21d8505c9
+  previous_state_event_id: task-event-389a7a9cf4583b3081258b8af639666d
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：未来仅审阅新的 zero-order external validation authority
+    blocker_or_next_step: 离线 v2 contract fix、zero-order candidate 与 exact hashes 已闭合；旧
+      1020 MISSING 不重解释。需另行 governed owner authority 才可执行一次外部 v2 validation；当前 Cloud/project/browser/API
+      均禁止。
+    acceptance_criteria: 纯 session reducer、multi-Slice permutation regression、same-session
+      raw QQQ bar provenance、v2 bounded aggregate contract/zero-order candidate/exact
+      hashes；不改写 v1 evidence；focused/formal PASS。
+    notes: '[supporting requirement](docs/requirements/TRADING-2531_QC_QQQ_Options_Daily_Transport_Session_Finalization_And_Underlying_Price_Source_Contract_Fix_V1.md)；focused=19
+      PASS；Atlas/reducer=58 PASS；authority=79 PASS；main.py_sha256=0665a759a9db9bcae100133da9dd950e7f66597d4f19d00f01b26afb6a478f45；package_content_sha256=1f018f42b1149f5c04b559e3ca1b35e0418c841a75da6a6099dbff7ec67d1b4b；external
+      counters remain 1/1/0/0；external_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2531-restore-requirement-binding-20260817-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7d45e68971e8750f92744cbceda7673b
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2531_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_AND_UNDERLYING_PRICE_SOURCE_CONTRACT_FIX_V1
+  - QQQ Options daily transport session finalization and underlying-price source contract
+    fix
+  - P0
+  - BASELINE_DONE
+  - Project Owner：未来仅审阅新的 zero-order external validation authority
+  - 离线 v2 contract fix、zero-order candidate 与 exact hashes 已闭合；旧 1020 MISSING 不重解释。需另行
+    governed owner authority 才可执行一次外部 v2 validation；当前 Cloud/project/browser/API 均禁止。
+  - 纯 session reducer、multi-Slice permutation regression、same-session raw QQQ bar
+    provenance、v2 bounded aggregate contract/zero-order candidate/exact hashes；不改写
+    v1 evidence；focused/formal PASS。
+  - '[supporting requirement](docs/requirements/TRADING-2531_QC_QQQ_Options_Daily_Transport_Session_Finalization_And_Underlying_Price_Source_Contract_Fix_V1.md)；focused=19
+    PASS；Atlas/reducer=58 PASS；authority=79 PASS；main.py_sha256=0665a759a9db9bcae100133da9dd950e7f66597d4f19d00f01b26afb6a478f45；package_content_sha256=1f018f42b1149f5c04b559e3ca1b35e0418c841a75da6a6099dbff7ec67d1b4b；external
+    counters remain 1/1/0/0；external_action=none。'
+  docs_links:
+  - docs/requirements/TRADING-2531_QC_QQQ_Options_Daily_Transport_Session_Finalization_And_Underlying_Price_Source_Contract_Fix_V1.md
+  terminal: false
+  canonical_row_sha256: 17fd996c8021fcbcf1b173f0013dfe5b41dfe958d0f8a71965812a9fea4347b6
+last_event_id: task-event-7d45e68971e8750f92744cbceda7673b
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 195fff3874c31049cf9da692bbb54758f2702808176e69590328f571fb69b451

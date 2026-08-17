@@ -1,0 +1,36 @@
+{
+  "authorization_status": "NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS",
+  "broker_action": "none",
+  "content_sha256": "2c740e48d96e983ef48d22b7ed42953573380c074eec433bfe9c72ddca5824a1",
+  "contract_canonical_sha256": "97557122d50f6a82fe68f57286f7008bbe8bbdb511886f62f936d9fc1b6bb7e4",
+  "contract_content_sha256": "f3c3918dd5dfd6fc1c6e84b63471c652d34090c9d50fab25d77dc58f9190b378",
+  "current_external_counters": {
+    "cloud_backtests": 1,
+    "fills": 0,
+    "orders": 0,
+    "project_mutations": 1
+  },
+  "expected_session_count": 1202,
+  "external_action_performed": false,
+  "investment_conclusion_authorized": false,
+  "issued_at_utc": "2026-08-17T04:30:00Z",
+  "policy_canonical_sha256": "adc2e9cc0c889b814a97a5b8c4841c0890ef73c27dc07eddddc98ed2bed26f22",
+  "policy_file_sha256": "cea137e0cb17b1c9594c359926015189f6fcfc2f472c4b6db72357d67a5d0cf5",
+  "predecessor_evidence_content_sha256": "d47f3234f58e1a7114984a7a79a5090082f923b7e02c65a66dfa8b761321f792",
+  "predecessor_source_result_sha256": "2233b20a900c76cbb6938a96c635c5dabc5855349ac74ff684c8f1c657b752b7",
+  "production_effect": "none",
+  "project_code_lf_byte_count": 26901,
+  "project_code_lf_sha256": "0665a759a9db9bcae100133da9dd950e7f66597d4f19d00f01b26afb6a478f45",
+  "proposal_id": "TRADING_2531_DAILY_TRANSPORT_SESSION_FINALIZATION_PROPOSAL_V2",
+  "requested_future_limits_after_new_owner_authority": {
+    "cloud_backtests": 1,
+    "fills": 0,
+    "orders": 0,
+    "project_mutations": 1
+  },
+  "requested_range": "2021-02-22..2025-12-02",
+  "schema_version": "qc_qqq_options_daily_transport_session_finalization_proposal.v2",
+  "selection_authorized": false,
+  "target_project_id": 34808569,
+  "task_id": "TRADING-2531_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_AND_UNDERLYING_PRICE_SOURCE_CONTRACT_FIX_V1"
+}

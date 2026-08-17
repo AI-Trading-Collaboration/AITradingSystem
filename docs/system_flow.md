@@ -8663,3 +8663,30 @@ JSON 只被本地严格校验器读取，raw carrier 不进入 Git。
 显式记录，未触发第二次 Cloud run。`182 PRESENT` 只说明部分 session 的 option chain 可见；`1020 MISSING`
 说明主要 transport 缺口仍在。即使 quote、Greeks、IV、OI、volume 在这 182 个 session 中出现，也不能把
 aggregate 可见性解释成 DQ/PIT PASS、策略有效、可下单或可部署。
+
+## TRADING-2531 QQQ Options daily transport session finalization 与 underlying source 合同修复 V2
+
+`qqq_options_research.daily_transport_session_finalization` 不改写 2530 的不可变运行证据。它把 2530 暴露的
+两个 collector 混淆拆开：v1 在当天第一条 Slice 没有 chain 时立即把 session 判为 `MISSING`，并忽略之后
+同日事件；同时把 contract-level `underlying_last_price=0` 当作 canonical underlying。v2 改为全程聚合、
+末端结算，并以同 session 的 RAW QQQ Equity TradeBar close 作为唯一 canonical underlying。
+
+```text
+2530 immutable aggregate evidence + v1 candidate code
+  -> static contract diagnosis: first-Slice terminalization can create false MISSING
+  -> static source diagnosis: contract-level zero cannot establish underlying validity
+  -> pure per-session reducer receives zero / one / many same-session Slice observations
+  -> chain-less Slice = non-terminal diagnostic event; no axis counter increments yet
+  -> merge later non-empty chains idempotently; classify each session exactly once at finalization
+  -> canonical underlying = same-session RAW QQQ Equity TradeBar close
+  -> no Security.Price / previous-close / forward-fill / renderer fallback
+  -> cross-field consistency uses the same canonical underlying provenance
+  -> export bounded recovery / never-chain / equity-source / ignored-zero diagnostics
+  -> seal exact v2 contract + zero-order main.py + proposal + manifest hashes
+  -> existing external counters remain 1 / 1 / 0 / 0; no second Cloud run in this task
+  -> DQ/PIT / selection / engine / strategy / investment conclusions remain blocked
+```
+
+v2 的离线 PASS 只能证明 collector 合同已消除已知混淆，不能证明原来的 `1020 MISSING` 全部是程序错误，
+也不能产生新的 session 事实。区分“后来同日收到 chain”和“全日从未收到 chain”必须使用另一个明确授权、
+绑定 exact hashes 的 zero-order external validation task；在此之前继续 `POLICY_BLOCKED_CASH_PRESERVATION`。

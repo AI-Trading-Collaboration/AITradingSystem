@@ -1,0 +1,21 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.qqq_options_daily_transport_session_finalization_v2
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: trading_2530_export_safe_aggregate_evidence
+stages:
+  - preserve_trading_2530_result_and_external_counter_identity
+  - diagnose_first_slice_session_terminalization_confounder
+  - diagnose_contract_level_zero_underlying_source_confounder
+  - reduce_zero_one_or_many_same_session_slice_events
+  - defer_never_chain_missing_classification_until_finalization
+  - merge_later_nonempty_chain_observations_idempotently
+  - bind_canonical_underlying_to_same_session_raw_qqq_tradebar_close
+  - forbid_security_price_previous_close_forward_fill_or_renderer_fallback
+  - bind_cross_field_consistency_to_canonical_underlying_provenance
+  - export_bounded_recovery_never_chain_equity_source_and_ignored_zero_counts
+  - seal_exact_v2_contract_zero_order_candidate_proposal_and_manifest_hashes
+  - preserve_no_external_action_no_dq_pit_no_selection_no_engine_no_strategy_conclusion
+compatibility_flow_entry_required: false
+generated_source_of_truth_active: false
