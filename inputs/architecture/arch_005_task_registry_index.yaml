@@ -14,7 +14,7 @@ fragment_count: 1005
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: e69df14910846f62513951fe96a81a10a59d2ee0ee1273dfdc24f27c456e00ce
+final_chain_sha256: 2ca81514841e7c8c14cd8a8f2b55025a06964996616e92e5e98de6406434132d
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -8063,12 +8063,12 @@ fragments:
   entry_sha256: beead84502ede78309d48390ec527fb629166a438c7989918a23cc143011e900
 - task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
   path: registry/development_tasks/ef/ef1b0dad858e33a71eac979a487ae42700c671260c784fcdf9126e397f1bd57e.yaml
-  file_sha256: 129e0d813bde65eb1b2e4b60705ad34202b844a6edceb4d4373d80e0f7907976
-  fragment_checksum: 13946522d01d1790269f383ad096b3dfcb12ad4c6cc83b16024151c8ab9e2e3f
+  file_sha256: 62a96aa33c57298f5b09871e3ada96e793a20ca2eac315b0efb8db21255d4b62
+  fragment_checksum: fe4e500b97f8385cdc39f3c50613788e6b721ee9bb040d56f47a16abc9ddf5eb
   partition: completed
   order: 1005
   previous_entry_sha256: beead84502ede78309d48390ec527fb629166a438c7989918a23cc143011e900
-  entry_sha256: e69df14910846f62513951fe96a81a10a59d2ee0ee1273dfdc24f27c456e00ce
+  entry_sha256: 2ca81514841e7c8c14cd8a8f2b55025a06964996616e92e5e98de6406434132d
 generated_views:
 - partition: active
   path: docs/task_register.md
@@ -8078,8 +8078,8 @@ generated_views:
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
-  sha256: e442a12bde55bfef1f0b55f376f9cd2b51556b7c3901f3fa1913414669628861
-  byte_count: 1106762
+  sha256: 4791f2ab29ff09ec34572b4101d91bf3d7ee5168a9c187f77a96a2f47cb6ffcf
+  byte_count: 1106721
   row_count: 511
   generated_do_not_edit: true
 governance_cycles:
@@ -9042,7 +9042,14 @@ governance_cycles:
   change_id: trading-2532-done-requirement-binding-fix-20260817-v1
   event_count: 11
   production_effect: none
-governance_cycle_count: 137
+- cycle_id: arch-005-s5-cycle-138
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  change_id: trading-2532-architecture-generated-refresh-done-evidence-20260818-v1
+  event_count: 12
+  production_effect: none
+governance_cycle_count: 138
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -9056,4 +9063,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: d6b35304db0999d64bd1cb31a4c11fd294008987f816a7aaaa5e6486c2fa59f7
+index_checksum: 43111d4e88825dfcb568c12363f26a7f69632e57f5afbc9118f47551f7a0152a

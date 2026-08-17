@@ -167,8 +167,18 @@ are permanently `1 / 1 / 0 / 0`; the consumed token does not authorize a retry.
 The terminal tracked package, evidence-binding regression and Atlas projection pass `58`
 parallel focused tests. Applicable final formal results and ordinary publication identity are
 recorded in runtime artifacts and the publication handoff so this tracked requirement does not
-create a self-referential commit identity; any non-PASS formal result must block publication and
-return the task to a non-terminal state.
+create a self-referential commit identity. Any non-PASS formal result must block publication;
+because canonical terminal task events are immutable, the failure and correction are appended as
+same-status `DONE` evidence while ordinary push remains forbidden until corrected final formal
+passes.
+
+The first final-tree Architecture run is retained as failure evidence at
+`outputs/validation_runtime/architecture-fitness_20260817T151852Z/test_runtime_summary.json`:
+`864 passed / 1 failed`. Its only failed surface reported stale deterministic DevEx module,
+test and aggregate-shadow manifests after the tracked renderer, tests and system-flow changes.
+The canonical `scripts/architecture_devex.py generate` writer refreshed exactly those generated
+artifacts and now reports architecture fitness `PASS`; publication remains blocked until the
+failure-fix validation chain passes on the corrected final candidate.
 
 The combined admission, predecessor-contract, proposal, task-source, DevEx,
 deprecation, report-flow and compatibility-authority suite passes `109` parallel

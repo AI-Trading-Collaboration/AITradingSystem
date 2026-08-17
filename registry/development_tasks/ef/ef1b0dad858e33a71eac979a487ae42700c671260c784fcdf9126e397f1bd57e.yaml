@@ -14,19 +14,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: TRADING-2532无剩余动作；后续独立governed任务可审查canonical DQ/PIT evidence admission
+  next_owner: Codex capability coordinator：验证canonical DevEx generated refresh并完成failure-fix
+    formal；publication前保持no-push
   requirement_refs:
   - docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 唯一授权已永久消费；canonical execution package、Atlas事实投影与58项并行focused已完成。2532禁止第二次Cloud
-    run；后续仅可在独立任务中审查已封存aggregate的完整性、来源与时点可得性。
+  unstructured_legacy_blocker_or_next_step: 首次final Architecture为864 PASS/1 FAIL，唯一失败是renderer/tests/system-flow变更后的module/test/aggregate-shadow
+    manifests陈旧；canonical generator现已PASS。terminal identity保持immutable；ordinary publication继续阻塞，直到corrected
+    candidate formal全PASS。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 五份sealed canonical artifacts绑定admission/consumption/result/action/manifest；1202-session每轴分区、1019
-      recovered-after-chainless、1 never-chain、1201 canonical QQQ underlying均已验证；orders/fills=0/0、raw/log/Object
-      Store=false；final formal非PASS则禁止publication。
+    text: 五份sealed execution artifacts与1202-session结果边界保持不变；canonical DevEx generated
+      artifacts必须fresh；focused与五级final formal全部PASS后才可ordinary publication；禁止第二次Cloud
+      run。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -370,6 +372,36 @@ events:
   - change:trading-2532-done-requirement-binding-fix-20260817-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-768c5423427e7056e9c2308b5f06ad11
+- schema_version: task_event.v1
+  task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-17T15:32:57Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2532-architecture-generated-refresh-done-evidence-20260818-v1
+  lane_id: null
+  base_commit: 7dd638894fb7be5bfa20609b54df60a791dd80ec
+  previous_state_event_id: task-event-768c5423427e7056e9c2308b5f06ad11
+  from_status: DONE
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Codex capability coordinator：验证canonical DevEx generated refresh并完成failure-fix
+      formal；publication前保持no-push
+    blocker_or_next_step: 首次final Architecture为864 PASS/1 FAIL，唯一失败是renderer/tests/system-flow变更后的module/test/aggregate-shadow
+      manifests陈旧；canonical generator现已PASS。terminal identity保持immutable；ordinary
+      publication继续阻塞，直到corrected candidate formal全PASS。
+    acceptance_criteria: 五份sealed execution artifacts与1202-session结果边界保持不变；canonical
+      DevEx generated artifacts必须fresh；focused与五级final formal全部PASS后才可ordinary publication；禁止第二次Cloud
+      run。
+    notes: '[supporting requirement](docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md)；retained
+      failure=outputs/validation_runtime/architecture-fitness_20260817T151852Z/test_runtime_summary.json（864
+      PASS/1 FAIL）；root cause=stale deterministic DevEx manifests；scripts/architecture_devex.py
+      generate=PASS；terminal task event按canonical invariant保持DONE；external counters=1/1/0/0。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2532-architecture-generated-refresh-done-evidence-20260818-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-baa2f186025d894eef43ff6323b4a2c2
 projection:
   legacy_first_eight_cells:
   - TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
@@ -377,21 +409,21 @@ projection:
     execution
   - P0
   - DONE
-  - TRADING-2532无剩余动作；后续独立governed任务可审查canonical DQ/PIT evidence admission
-  - 唯一授权已永久消费；canonical execution package、Atlas事实投影与58项并行focused已完成。2532禁止第二次Cloud
-    run；后续仅可在独立任务中审查已封存aggregate的完整性、来源与时点可得性。
-  - 五份sealed canonical artifacts绑定admission/consumption/result/action/manifest；1202-session每轴分区、1019
-    recovered-after-chainless、1 never-chain、1201 canonical QQQ underlying均已验证；orders/fills=0/0、raw/log/Object
-    Store=false；final formal非PASS则禁止publication。
-  - '[supporting requirement](docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md)；backtest=acf111f24d09a41870f9a23e93fcbe3b；Results
-    SHA-256=5d3220342c96217f2c4a4d624b0dc7fbbcad98427de728e749dc2e4f3168d50d / 814999
-    bytes；evidence seal=ffa9faafd1d480282bcfe1c07c896f538f26d2b23d7d7d8356460bc881e0bc49；focused=58
-    PASS；external counters=1/1/0/0；second attempt unauthorized；formal/runtime identity由publication
-    handoff记录。'
+  - Codex capability coordinator：验证canonical DevEx generated refresh并完成failure-fix
+    formal；publication前保持no-push
+  - 首次final Architecture为864 PASS/1 FAIL，唯一失败是renderer/tests/system-flow变更后的module/test/aggregate-shadow
+    manifests陈旧；canonical generator现已PASS。terminal identity保持immutable；ordinary publication继续阻塞，直到corrected
+    candidate formal全PASS。
+  - 五份sealed execution artifacts与1202-session结果边界保持不变；canonical DevEx generated artifacts必须fresh；focused与五级final
+    formal全部PASS后才可ordinary publication；禁止第二次Cloud run。
+  - '[supporting requirement](docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md)；retained
+    failure=outputs/validation_runtime/architecture-fitness_20260817T151852Z/test_runtime_summary.json（864
+    PASS/1 FAIL）；root cause=stale deterministic DevEx manifests；scripts/architecture_devex.py
+    generate=PASS；terminal task event按canonical invariant保持DONE；external counters=1/1/0/0。'
   docs_links:
   - docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md
   terminal: true
-  canonical_row_sha256: 513bd1c26fbce705739980946308979258dc04723971b3a80b266ee886382de8
-last_event_id: task-event-768c5423427e7056e9c2308b5f06ad11
+  canonical_row_sha256: 8b73906aa5c813bd92ba97b0262ea9553d9009b195bf7d7c2713f3dc989bcd99
+last_event_id: task-event-baa2f186025d894eef43ff6323b4a2c2
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 13946522d01d1790269f383ad096b3dfcb12ad4c6cc83b16024151c8ab9e2e3f
+fragment_checksum: fe4e500b97f8385cdc39f3c50613788e6b721ee9bb040d56f47a16abc9ddf5eb
