@@ -180,6 +180,19 @@ The canonical `scripts/architecture_devex.py generate` writer refreshed exactly 
 artifacts and now reports architecture fitness `PASS`; publication remains blocked until the
 failure-fix validation chain passes on the corrected final candidate.
 
+That corrected candidate passed Architecture `865`, Contract `276`, Integration `995` with
+`642` warnings, and Reproducibility `24`. Its Full run is retained at
+`outputs/validation_runtime/full_20260817T155116Z/test_runtime_summary.json` with
+`9181 passed / 6 failed / 3 skipped / 644 warnings`. All six failures share the same generated
+authority root cause: `docs/system_flow.md` had changed from the last sealed report-flow and
+compatibility authority snapshots. The canonical report-flow writer now binds the live
+`2230062` bytes and SHA-256
+`41451feb05a17e0e33373af56ffa651d374e33e3f338af2d643e88b002065dac`; the compatibility
+authority and DevEx manifests were then rebuilt in their required order. No strategy, evidence,
+DQ/PIT or external-action behavior was involved in these failures. Publication remains blocked
+until the new exact candidate passes the complete failure-fix chain, including one Full rerun
+bound to the retained failed Full parent artifact.
+
 The combined admission, predecessor-contract, proposal, task-source, DevEx,
 deprecation, report-flow and compatibility-authority suite passes `109` parallel
 tests on the refreshed generated tree.

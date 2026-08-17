@@ -30,10 +30,10 @@ targets:
     path: docs/system_flow.md
     format: MARKDOWN
     splitter: EXACT_BLANK_LINE_BLOCKS_V1
-    byte_count: 2229658
-    file_sha256: 2d5932845057ba2134c0d0b79a17c46a7dbb8759b384d4299d4734f298a513d9
-    lf_sha256: 2d5932845057ba2134c0d0b79a17c46a7dbb8759b384d4299d4734f298a513d9
-    git_blob: 4e7048ba61a3c29679433a67fe4f221d20bc921b
+    byte_count: 2230062
+    file_sha256: 41451feb05a17e0e33373af56ffa651d374e33e3f338af2d643e88b002065dac
+    lf_sha256: 41451feb05a17e0e33373af56ffa651d374e33e3f338af2d643e88b002065dac
+    git_blob: 745c91f4d5ebaa2a40ded6e93a42cf646a849d46
     entry_count: 1017
 contract:
   source_of_truth: LEGACY_MONOLITH

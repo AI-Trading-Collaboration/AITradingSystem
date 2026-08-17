@@ -14,21 +14,23 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex capability coordinator：验证canonical DevEx generated refresh并完成failure-fix
-    formal；publication前保持no-push
+  next_owner: Codex capability coordinator：验证report-flow/compatibility authority refresh并完成parent-bound
+    Full failure-fix；publication前保持no-push
   requirement_refs:
   - docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md
+  - docs/system_flow.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 首次final Architecture为864 PASS/1 FAIL，唯一失败是renderer/tests/system-flow变更后的module/test/aggregate-shadow
-    manifests陈旧；canonical generator现已PASS。terminal identity保持immutable；ordinary publication继续阻塞，直到corrected
-    candidate formal全PASS。
+  unstructured_legacy_blocker_or_next_step: corrected四级formal已PASS；Full=9181 PASS/6
+    FAIL/3 skip/644 warnings，六个失败同源于system_flow的report-flow/compatibility authority
+    snapshot陈旧。canonical writers已按report-flow→compatibility→DevEx顺序刷新；需focused与完整failure-fix
+    formal PASS。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 五份sealed execution artifacts与1202-session结果边界保持不变；canonical DevEx generated
-      artifacts必须fresh；focused与五级final formal全部PASS后才可ordinary publication；禁止第二次Cloud
-      run。
+    text: 五份sealed execution artifacts与1202-session结果边界不变；system_flow live SHA必须由report-flow与compatibility
+      authority完整绑定；Architecture/Contract/Integration/Reproducibility及parent-bound
+      Full failure-fix全部PASS后才可ordinary publication；禁止第二次Cloud run。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -402,6 +404,37 @@ events:
   - change:trading-2532-architecture-generated-refresh-done-evidence-20260818-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-baa2f186025d894eef43ff6323b4a2c2
+- schema_version: task_event.v1
+  task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-17T16:26:57Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2532-full-authority-refresh-done-evidence-20260818-v1
+  lane_id: null
+  base_commit: 6511f97fee18692b357ce0ef90a349e562445dd9
+  previous_state_event_id: task-event-baa2f186025d894eef43ff6323b4a2c2
+  from_status: DONE
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Codex capability coordinator：验证report-flow/compatibility authority
+      refresh并完成parent-bound Full failure-fix；publication前保持no-push
+    blocker_or_next_step: corrected四级formal已PASS；Full=9181 PASS/6 FAIL/3 skip/644
+      warnings，六个失败同源于system_flow的report-flow/compatibility authority snapshot陈旧。canonical
+      writers已按report-flow→compatibility→DevEx顺序刷新；需focused与完整failure-fix formal PASS。
+    acceptance_criteria: 五份sealed execution artifacts与1202-session结果边界不变；system_flow
+      live SHA必须由report-flow与compatibility authority完整绑定；Architecture/Contract/Integration/Reproducibility及parent-bound
+      Full failure-fix全部PASS后才可ordinary publication；禁止第二次Cloud run。
+    notes: '[supporting requirement](docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md)；retained
+      Full failure=outputs/validation_runtime/full_20260817T155116Z/test_runtime_summary.json（9181
+      PASS/6 FAIL/3 skip/644 warnings）；root cause=stale report-flow/compatibility
+      authority for docs/system_flow.md；live SHA=41451feb05a17e0e33373af56ffa651d374e33e3f338af2d643e88b002065dac；external
+      counters=1/1/0/0。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2532-full-authority-refresh-done-evidence-20260818-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-dca0df5a1deef75285952547eb253657
 projection:
   legacy_first_eight_cells:
   - TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
@@ -409,21 +442,24 @@ projection:
     execution
   - P0
   - DONE
-  - Codex capability coordinator：验证canonical DevEx generated refresh并完成failure-fix
-    formal；publication前保持no-push
-  - 首次final Architecture为864 PASS/1 FAIL，唯一失败是renderer/tests/system-flow变更后的module/test/aggregate-shadow
-    manifests陈旧；canonical generator现已PASS。terminal identity保持immutable；ordinary publication继续阻塞，直到corrected
-    candidate formal全PASS。
-  - 五份sealed execution artifacts与1202-session结果边界保持不变；canonical DevEx generated artifacts必须fresh；focused与五级final
-    formal全部PASS后才可ordinary publication；禁止第二次Cloud run。
+  - Codex capability coordinator：验证report-flow/compatibility authority refresh并完成parent-bound
+    Full failure-fix；publication前保持no-push
+  - corrected四级formal已PASS；Full=9181 PASS/6 FAIL/3 skip/644 warnings，六个失败同源于system_flow的report-flow/compatibility
+    authority snapshot陈旧。canonical writers已按report-flow→compatibility→DevEx顺序刷新；需focused与完整failure-fix
+    formal PASS。
+  - 五份sealed execution artifacts与1202-session结果边界不变；system_flow live SHA必须由report-flow与compatibility
+    authority完整绑定；Architecture/Contract/Integration/Reproducibility及parent-bound Full
+    failure-fix全部PASS后才可ordinary publication；禁止第二次Cloud run。
   - '[supporting requirement](docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md)；retained
-    failure=outputs/validation_runtime/architecture-fitness_20260817T151852Z/test_runtime_summary.json（864
-    PASS/1 FAIL）；root cause=stale deterministic DevEx manifests；scripts/architecture_devex.py
-    generate=PASS；terminal task event按canonical invariant保持DONE；external counters=1/1/0/0。'
+    Full failure=outputs/validation_runtime/full_20260817T155116Z/test_runtime_summary.json（9181
+    PASS/6 FAIL/3 skip/644 warnings）；root cause=stale report-flow/compatibility authority
+    for docs/system_flow.md；live SHA=41451feb05a17e0e33373af56ffa651d374e33e3f338af2d643e88b002065dac；external
+    counters=1/1/0/0。'
   docs_links:
   - docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md
+  - docs/system_flow.md
   terminal: true
-  canonical_row_sha256: 8b73906aa5c813bd92ba97b0262ea9553d9009b195bf7d7c2713f3dc989bcd99
-last_event_id: task-event-baa2f186025d894eef43ff6323b4a2c2
+  canonical_row_sha256: 9141c6c81ebe55afa8d515e3eac2851c1f4c7173a0de6fbbd962476fca5968fd
+last_event_id: task-event-dca0df5a1deef75285952547eb253657
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: fe4e500b97f8385cdc39f3c50613788e6b721ee9bb040d56f47a16abc9ddf5eb
+fragment_checksum: 506a0a32b5ba3b65b9063f73cbcd36bf9b1ae4eed182b7d97622e7a7ffd34254
