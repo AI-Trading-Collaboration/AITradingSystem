@@ -1,0 +1,38 @@
+# TRADING-2532 exact owner decision request — proposal only
+
+本文件不是 QuantConnect 执行授权。当前 2532 外部计数为
+`project_mutations/cloud_backtests/orders/fills = 0/0/0/0`。
+
+proposal-only commit ordinary push 后，只需把下列两个占位符替换成最终值，并由
+Project Owner 在当前 Codex 对话中发送完整 token：
+
+```text
+owner_decision:TRADING-2532:2026-08-17:authorize_single_zero_order_session_finalization_v2_external_validation_v1
+ordinary_pushed_main_sha:<ORDINARY_PUSHED_PROPOSAL_MAIN_SHA>
+registration_base_repository_code_sha:bb6e43eff2dabfaa12d3f50354451075542380de
+policy_file_sha256:cea137e0cb17b1c9594c359926015189f6fcfc2f472c4b6db72357d67a5d0cf5
+policy_canonical_sha256:adc2e9cc0c889b814a97a5b8c4841c0890ef73c27dc07eddddc98ed2bed26f22
+contract_content_sha256:f3c3918dd5dfd6fc1c6e84b63471c652d34090c9d50fab25d77dc58f9190b378
+contract_canonical_sha256:97557122d50f6a82fe68f57286f7008bbe8bbdb511886f62f936d9fc1b6bb7e4
+project_code_lf_byte_count:26901
+project_code_lf_sha256:0665a759a9db9bcae100133da9dd950e7f66597d4f19d00f01b26afb6a478f45
+predecessor_evidence_content_sha256:d47f3234f58e1a7114984a7a79a5090082f923b7e02c65a66dfa8b761321f792
+predecessor_results_sha256:2233b20a900c76cbb6938a96c635c5dabc5855349ac74ff684c8f1c657b752b7
+package_manifest_content_sha256:<FINAL_TRADING_2532_PROPOSAL_PACKAGE_CONTENT_SHA256>
+target_project_id:34808569
+requested_range:2021-02-22..2025-12-02
+expected_session_count:1202
+maximum_project_mutations:1
+maximum_cloud_backtests:1
+maximum_orders:0
+maximum_fills:0
+collector:codex_capability_coordinator
+independent_reviewer:project_owner
+authorization_expires_at_utc:<OWNER_SELECTED_EXPIRY_NOT_MORE_THAN_168_HOURS>
+authorization_single_use:true
+authorization_invalidates_on_first_run_attempt:true
+```
+
+授权在首次 project-mutation/run attempt 时失效，无论运行成功或失败均不得自动重试。
+仍禁止 raw rows、contract identifiers、logs-as-data、Object Store、订单、成交、
+DQ/PIT admission、策略或交易结论。

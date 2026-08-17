@@ -1,0 +1,24 @@
+{
+  "artifact_count": 2,
+  "artifacts": [
+    {
+      "byte_count": 2227,
+      "relative_path": "execution_scope.json",
+      "sha256": "903a97cbb9f83d06b6b4d982880add39f10001d0ed4b77622edbbd9c356e6451"
+    },
+    {
+      "byte_count": 2038,
+      "relative_path": "owner_decision_request.md",
+      "sha256": "aa7f3bc92b9a34bab70f3ad8c98f38238cf0c5e70fa8f59288505c3dbf4b4dcd"
+    }
+  ],
+  "broker_action": "none",
+  "content_sha256": "7b49e82498c0ede285e93265007c5cbf89c42485eab5d5853018032eb95f80ce",
+  "external_action_authorized": false,
+  "external_action_performed": false,
+  "package_id": "TRADING_2532_SESSION_FINALIZATION_V2_EXTERNAL_VALIDATION_PROPOSAL_PACKAGE_V1",
+  "production_effect": "none",
+  "registration_base_repository_code_sha": "bb6e43eff2dabfaa12d3f50354451075542380de",
+  "schema_version": "qc_qqq_options_session_finalization_v2_external_validation_proposal_package.v1",
+  "task_id": "TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1"
+}

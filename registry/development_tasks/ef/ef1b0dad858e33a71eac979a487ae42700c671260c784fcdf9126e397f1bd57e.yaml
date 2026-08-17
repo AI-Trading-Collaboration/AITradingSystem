@@ -1,0 +1,89 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  task_id_sha256: ef1b0dad858e33a71eac979a487ae42700c671260c784fcdf9126e397f1bd57e
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  title: null
+  domain: QQQ Options session-finalization v2 zero-order external validation admission
+    and execution
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner：一次性 exact external authority；Codex capability coordinator：admission
+    后执行
+  requirement_refs:
+  - docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 2531 离线修复已发布；2532 尚无 exact、未过期、single-use
+    Owner decision，因此禁止 QuantConnect project mutation/Cloud run。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 绑定 ordinary-pushed proposal SHA、2531 frozen hashes、1202 sessions 与 1/1/0/0
+      上限；一次 zero-order run；strict aggregate/provenance attribution；focused/formal
+      PASS；不产生 DQ/PIT/strategy/trading conclusion。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-17T03:55:30Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2532-register-proposal-20260817-v1
+  lane_id: null
+  base_commit: bb6e43eff2dabfaa12d3f50354451075542380de
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    legacy_projection:
+    - TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+    - QQQ Options session-finalization v2 zero-order external validation admission
+      and execution
+    - P0
+    - PROPOSED
+    - Project Owner：一次性 exact external authority；Codex capability coordinator：admission
+      后执行
+    - 2531 离线修复已发布；2532 尚无 exact、未过期、single-use Owner decision，因此禁止 QuantConnect project
+      mutation/Cloud run。
+    - 绑定 ordinary-pushed proposal SHA、2531 frozen hashes、1202 sessions 与 1/1/0/0 上限；一次
+      zero-order run；strict aggregate/provenance attribution；focused/formal PASS；不产生
+      DQ/PIT/strategy/trading conclusion。
+    - '[supporting requirement](docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md)；proposal-only
+      registration；external counters=0/0/0/0；external_action=none。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2532-register-proposal-20260817-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2142f571d1b8928777dd3c51092d9f1d
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  - QQQ Options session-finalization v2 zero-order external validation admission and
+    execution
+  - P0
+  - PROPOSED
+  - Project Owner：一次性 exact external authority；Codex capability coordinator：admission
+    后执行
+  - 2531 离线修复已发布；2532 尚无 exact、未过期、single-use Owner decision，因此禁止 QuantConnect project
+    mutation/Cloud run。
+  - 绑定 ordinary-pushed proposal SHA、2531 frozen hashes、1202 sessions 与 1/1/0/0 上限；一次
+    zero-order run；strict aggregate/provenance attribution；focused/formal PASS；不产生
+    DQ/PIT/strategy/trading conclusion。
+  - '[supporting requirement](docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md)；proposal-only
+    registration；external counters=0/0/0/0；external_action=none。'
+  docs_links:
+  - docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md
+  terminal: false
+  canonical_row_sha256: e52b82bb8ed5927154d07bd8befe826f38569fb94422bf9f48cd6c2323543325
+last_event_id: task-event-2142f571d1b8928777dd3c51092d9f1d
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: f4c9e64c1cccfd3116f4dc04b5b4c2db8d3c82b4802d4e6e5d8f419466de5b0b
