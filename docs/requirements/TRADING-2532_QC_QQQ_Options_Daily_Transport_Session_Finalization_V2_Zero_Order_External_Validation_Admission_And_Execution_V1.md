@@ -1,7 +1,7 @@
 # TRADING-2532 — QQQ Options daily transport session-finalization V2 zero-order external validation admission and execution V1
 
 - priority: `P0`
-- status: `PROPOSED`
+- status: `BASELINE_DONE`
 - owner: Project Owner（一次性 external authority）；Codex capability coordinator（admission 后执行）
 - production effect: `none`
 - broker action: `none`
@@ -29,8 +29,10 @@ candidate，回答以下事实问题：
 
 ## 2. Frozen authority inputs
 
-- registration base / current ordinary-pushed main:
+- registration base:
   `bb6e43eff2dabfaa12d3f50354451075542380de`;
+- current ordinary-pushed proposal main before this offline-admission lane:
+  `c3e593b0e0739ca5f2494f3d55d52af019b0fc47`;
 - target QuantConnect project id: `34808569`;
 - requested range: `2021-02-22..2025-12-02`;
 - expected session count: `1202`;
@@ -139,5 +141,43 @@ ordinary-pushed proposal SHA plus an unexpired Owner-selected expiry are substit
 
 ## 7. Current status
 
-`PROPOSED`: exact predecessor identities and execution limits are frozen. No 2532 Owner
-decision has been admitted and no QuantConnect action has occurred.
+`BASELINE_DONE`: the offline admission and result-attribution baseline is implemented. It
+strictly validates the exact Owner-token bytes and publication identity, consumes a
+single-use authorization on the first run attempt, validates the v2 `1202`-session
+aggregate partitions, rejects raw/log/Object Store/order carriers, and seals the
+normalized evidence, action ledger and execution manifest. The parallel focused suite
+passes `27` tests after one fail-closed seal-validation defect was found and corrected;
+the first run remains recorded as `26 passed / 1 failed` rather than being hidden by a
+serial rerun.
+
+The combined admission, predecessor-contract, proposal, task-source, DevEx,
+deprecation, report-flow and compatibility-authority suite passes `109` parallel
+tests on the refreshed generated tree.
+
+The first formal pass on that tree recorded Architecture `865 PASS`, Contract
+`276 PASS`, Integration `995 PASS / 642 warnings`, and Reproducibility `24 PASS`.
+Full then recorded `9174 passed / 7 failed / 3 skipped / 644 warnings`. All seven
+failures had one presentation-governance root cause: Atlas had no explicit
+page-effectiveness classification for the new TRADING-2532 successor, so the page
+failed closed with `UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED`; the admission parser,
+transport contract, and trading paths were not the failing surfaces.
+
+The successor classification and first-layer current-blocker narrative are now
+updated. The Atlas focused suite passes `39` tests, and the regenerated local
+canonical page is written to
+`outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html`; its
+final SHA-256 is recorded in the publication handoff and generated sidecar rather
+than recursively embedded in a tracked source that itself changes the page.
+The browser plugin refused to reload the local `file://` URL under its URL policy;
+no bypass was attempted, and renderer/DOM contracts remain the auditable page QA.
+The retained Full failure is the required parent evidence for the governed
+failure-fix rerun after the final tracked tree is generated.
+An expanded focused run then recorded `132 passed / 1 failed` because the local
+ignored page sidecar still bound the prior task-event identity; the canonical
+writer is required to refresh that sidecar, and no rendered or governed file is
+hand-edited to mask the freshness failure.
+
+This offline baseline is not external authority. The repository policy still has
+`owner_token_status=PENDING_EXACT_OWNER_TOKEN`, no TRADING-2532 Owner decision has been
+admitted, no QuantConnect action has occurred, and the task-local external counters remain
+`0 / 0 / 0 / 0`. Applicable final formal gates must pass before ordinary publication.

@@ -8690,3 +8690,30 @@ aggregate 可见性解释成 DQ/PIT PASS、策略有效、可下单或可部署�
 v2 的离线 PASS 只能证明 collector 合同已消除已知混淆，不能证明原来的 `1020 MISSING` 全部是程序错误，
 也不能产生新的 session 事实。区分“后来同日收到 chain”和“全日从未收到 chain”必须使用另一个明确授权、
 绑定 exact hashes 的 zero-order external validation task；在此之前继续 `POLICY_BLOCKED_CASH_PRESERVATION`。
+
+## TRADING-2532 session-finalization V2 外部验证的准入、单次消费与聚合证据
+
+`qqq_options_research.session_finalization_external_validation_admission` 把“Owner 表达了运行意图”、
+“exact token 已被策略登记”、“第一次运行尝试已消费授权”和“结果已通过聚合合同”拆成四个不能跳过的状态。
+当前仓库策略仍是 `AWAITING_EXACT_OWNER_TOKEN`，因此即使 token 文本结构正确，也只能形成待审候选，不能触发
+QuantConnect project mutation 或 Cloud run。
+
+```text
+2532 ordinary-pushed proposal main + frozen 2531 package/hashes
+  -> exact LF/UTF-8 Owner token candidate
+  -> verify field order / scope hashes / 168-hour maximum / proposal local-main=origin-main
+  -> policy must already bind exact token SHA-256 + byte count + expiry
+  -> admission receipt = OWNER_AUTHORIZATION_ADMITTED_UNUSED
+  -> first project-mutation/run attempt consumes and invalidates authorization
+  -> no retry after SUBMITTED / COMPLETED / FAILED
+  -> manually downloaded Results JSON only
+  -> exact v2 identity + COMPLETE terminal + 1202 sessions on every public axis
+  -> reject undeclared TRADING2531_* keys, raw rows, logs-as-data, Object Store, orders or fills
+  -> seal export-safe aggregate evidence + ordered action ledger + execution manifest
+  -> DQ/PIT / selection / engine / strategy / investment conclusions remain blocked
+```
+
+离线 parser 只定义未来一次运行“怎样才算可采信”，不会自行执行运行，也不会把用户下载的原始 Results
+写入治理证据。只有严格 parser 归一化出的 axis/session aggregates、诊断计数和 hashes 可以进入 evidence；
+任一 seal、published SHA、时间顺序、session 分区或零订单边界不一致都 fail closed。2532 自身的外部计数
+在实际首次尝试前保持 `0 / 0 / 0 / 0`。

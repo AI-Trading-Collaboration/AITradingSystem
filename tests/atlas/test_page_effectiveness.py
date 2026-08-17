@@ -42,12 +42,12 @@ def _rendered(
 def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 52
+    assert len(policy.task_sources) == 53
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
         "TRADING-2523B",
-        *[f"TRADING-{number}" for number in range(2524, 2532)],
+        *[f"TRADING-{number}" for number in range(2524, 2533)],
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -73,12 +73,12 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
     assert manifest.schema_version == "strategy_research_page_effectiveness.v2"
-    assert len(manifest.task_coverage) == 52
+    assert len(manifest.task_coverage) == 53
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
         "TRADING-2523B",
-        *[f"TRADING-{number}" for number in range(2524, 2532)],
+        *[f"TRADING-{number}" for number in range(2524, 2533)],
     ]
     coverage_by_task = {
         item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
@@ -123,12 +123,8 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
     assert coverage_by_task["TRADING-2522"] == (
         "DISCLOSED_V4_RUN_INVALID_ALL_CHAIN_SESSIONS_TRANSPORT_REJECTED_AXIS_UNRESOLVED"
     )
-    assert coverage_by_task["TRADING-2523"] == (
-        "INCLUDED_READER_TERMINOLOGY_FIRST_USE_CONTRACT"
-    )
-    assert coverage_by_task["TRADING-2523A"] == (
-        "COMPLETED_BASE_DRIFT_INTEGRATION_CORRECTION"
-    )
+    assert coverage_by_task["TRADING-2523"] == ("INCLUDED_READER_TERMINOLOGY_FIRST_USE_CONTRACT")
+    assert coverage_by_task["TRADING-2523A"] == ("COMPLETED_BASE_DRIFT_INTEGRATION_CORRECTION")
     assert coverage_by_task["TRADING-2523B"] == (
         "COMPLETED_PAGE_EFFECTIVENESS_V2_SERIAL_CONTRACT_WAVE"
     )
@@ -156,6 +152,9 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
     assert coverage_by_task["TRADING-2531"] == (
         "DISCLOSED_OFFLINE_SESSION_FINALIZATION_AND_UNDERLYING_SOURCE_FIX_"
         "EXTERNAL_VALIDATION_PENDING"
+    )
+    assert coverage_by_task["TRADING-2532"] == (
+        "DISCLOSED_OFFLINE_V2_ADMISSION_READY_EXACT_OWNER_TOKEN_PENDING"
     )
     assert len(manifest.source_artifacts) == 28
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)
@@ -284,10 +283,7 @@ def test_human_pass_for_different_page_identity_fails_validation() -> None:
     )
 
     assert validation.status == "FAIL"
-    assert (
-        "HUMAN_REVIEW_PAGE_IDENTITY_MISMATCH:READER_COMPREHENSION_REVIEW"
-        in validation.errors
-    )
+    assert "HUMAN_REVIEW_PAGE_IDENTITY_MISMATCH:READER_COMPREHENSION_REVIEW" in validation.errors
 
 
 def test_human_review_track_mismatch_fails_closed() -> None:
