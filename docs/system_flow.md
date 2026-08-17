@@ -8696,9 +8696,9 @@ v2 的离线 PASS 只能证明 collector 合同已消除已知混淆，不能证
 `qqq_options_research.session_finalization_external_validation_admission` 把“proposal evidence 已冻结”、
 “可执行 admission main 已由 Owner 精确绑定”、“第一次运行尝试已消费授权”和“结果已通过聚合合同”拆成
 四个不能跳过的状态。v1 把 proposal commit 与 parser 所在 commit 错当成同一个 SHA，导致合同不可达；v2
-保留 proposal `c3e593...`，同时要求 Owner token 动态绑定已经 ordinary-pushed 的 admission implementation
-main。当前策略仍是 `AWAITING_EXACT_OWNER_TOKEN_DIRECT_ADMISSION`，因此不能触发 QuantConnect project
-mutation 或 Cloud run。
+保留 proposal `c3e593...`，同时由 exact Owner token 绑定 ordinary-pushed admission main
+`49e8a0...2405`。唯一运行 `acf111f24d09a41870f9a23e93fcbe3b` 已完成并永久消费授权；不允许第二次
+project mutation 或 Cloud run。
 
 ```text
 2532 immutable proposal main + frozen 2531 package/hashes
@@ -8711,15 +8711,21 @@ mutation 或 Cloud run。
   -> admission receipt = OWNER_AUTHORIZATION_ADMITTED_UNUSED
   -> first project-mutation/run attempt consumes and invalidates authorization
   -> no retry after SUBMITTED / COMPLETED / FAILED
-  -> manually downloaded Results JSON only
-  -> exact v2 identity + COMPLETE terminal + 1202 sessions on every public axis
+  -> manually downloaded one Results JSON: 814999 bytes / SHA-256 5d322034...68d50d
+  -> exact v2 identity + COMPLETE terminal + every public axis partitions to 1202 sessions
+  -> OPTION_CHAIN = 1201 PRESENT / 1 MISSING
+  -> UNDERLYING / QUOTE / GREEKS / IV / OI / VOLUME / CROSS_FIELD
+     = 1201 PRESENT / 1 NOT_EVALUATED
+  -> 1020 chainless-Slice sessions / 1019 recovered later / 1 never-chain
+  -> 1201 canonical same-session QQQ Equity sources / 1201 contract-zero values ignored
   -> reject undeclared TRADING2531_* keys, raw rows, logs-as-data, Object Store, orders or fills
   -> seal export-safe aggregate evidence + ordered action ledger + execution manifest
   -> DQ/PIT / selection / engine / strategy / investment conclusions remain blocked
 ```
 
-离线 parser 只定义未来一次运行“怎样才算可采信”，不会自行执行运行，也不会把用户下载的原始 Results
-写入治理证据。Owner token 直接从当前 Project Owner 对话进入 sealed unused receipt，不先写回 tracked policy，
-避免 token 绑定的 main SHA 因登记 commit 再次变化。只有严格 parser 归一化出的 axis/session aggregates、
-诊断计数和 hashes 可以进入 evidence；任一 seal、published SHA、时间顺序、session 分区或零订单边界不一致
-都 fail closed。2532 自身的外部计数在实际首次尝试前保持 `0 / 0 / 0 / 0`。
+Owner token 直接从当前 Project Owner 对话进入 sealed unused receipt，不先写回 tracked policy，避免 token
+绑定的 main SHA 因登记 commit 再次变化。严格 parser 只把 axis/session aggregates、诊断计数和 hashes 写入
+canonical evidence，原始 Results 不进 Git；任一 seal、published SHA、时间顺序、session 分区或零订单边界
+不一致都 fail closed。`1019 recovered-after-chainless` 证明 v1 的 first-Slice terminalization 是 2530 主要
+`MISSING` 来源，但只剩 1 个 never-chain 并不自动构成 DQ/PIT PASS。2532 外部计数现为永久的
+`1 / 1 / 0 / 0`，engine 继续 `POLICY_BLOCKED_CASH_PRESERVATION`。

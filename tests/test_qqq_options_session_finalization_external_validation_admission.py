@@ -14,6 +14,9 @@ from ai_trading_system.qqq_options_research import (
 
 OwnerAuthorizationAdmissionReceipt = admission_module.OwnerAuthorizationAdmissionReceipt
 RunAttemptConsumptionReceipt = admission_module.RunAttemptConsumptionReceipt
+ExportSafeSessionFinalizationEvidence = admission_module.ExportSafeSessionFinalizationEvidence
+ExternalActionLedger = admission_module.ExternalActionLedger
+ExecutionEvidenceManifest = admission_module.ExecutionEvidenceManifest
 SessionFinalizationExternalValidationError = (
     admission_module.SessionFinalizationExternalValidationError
 )
@@ -426,6 +429,63 @@ def test_valid_export_safe_result_builds_bound_evidence_ledger_and_manifest() ->
     assert manifest.payload["artifact_count"] == 4
     assert manifest.payload["raw_result_committed"] is False
     assert manifest.payload["content_sha256"] == manifest.content_sha256
+
+
+def test_published_execution_package_is_sealed_bound_and_export_safe() -> None:
+    package = (
+        ROOT
+        / "inputs"
+        / "research"
+        / "qqq_options"
+        / "trading_2532_session_finalization_v2_external_validation_execution_v1"
+    )
+    assert {item.name for item in package.iterdir()} == {
+        "authorization_admission.json",
+        "run_attempt_consumption_receipt.json",
+        "export_safe_aggregate_evidence.json",
+        "external_action_ledger.json",
+        "execution_evidence_manifest.json",
+    }
+    admission_payload = json.loads((package / "authorization_admission.json").read_text())
+    consumption_payload = json.loads((package / "run_attempt_consumption_receipt.json").read_text())
+    evidence_payload = json.loads((package / "export_safe_aggregate_evidence.json").read_text())
+    ledger_payload = json.loads((package / "external_action_ledger.json").read_text())
+    manifest_payload = json.loads((package / "execution_evidence_manifest.json").read_text())
+
+    admission = OwnerAuthorizationAdmissionReceipt(admission_payload)
+    consumption = RunAttemptConsumptionReceipt(consumption_payload)
+    evidence = ExportSafeSessionFinalizationEvidence(evidence_payload)
+    ledger = ExternalActionLedger(ledger_payload)
+    manifest = ExecutionEvidenceManifest(manifest_payload)
+    for label, payload in (
+        ("authorization admission", admission.payload),
+        ("run consumption", consumption.payload),
+        ("export-safe evidence", evidence.payload),
+        ("external action ledger", ledger.payload),
+        ("execution evidence manifest", manifest.payload),
+    ):
+        admission_module._verify_seal(payload, label=label)
+
+    assert evidence.payload["source_result_file_sha256"] == (
+        "5d3220342c96217f2c4a4d624b0dc7fbbcad98427de728e749dc2e4f3168d50d"
+    )
+    assert evidence.payload["source_result_byte_count"] == 814999
+    assert evidence.payload["backtest_id"] == "acf111f24d09a41870f9a23e93fcbe3b"
+    assert evidence.payload["observed_session_count"] == 1202
+    assert evidence.payload["orders"] == evidence.payload["fills"] == 0
+    assert evidence.payload["raw_rows_collected"] is False
+    assert evidence.payload["logs_as_data_collected"] is False
+    assert evidence.payload["object_store_used"] is False
+    assert ledger.payload["cloud_backtest_attempt_count"] == 1
+    assert ledger.payload["second_attempt_authorized"] is False
+    assert manifest.payload["status"] == "EXECUTION_EVIDENCE_COMPLETE"
+    assert manifest.payload["raw_result_committed"] is False
+    assert manifest.payload["artifacts"] == {
+        "authorization_admission.json": admission.content_sha256,
+        "export_safe_aggregate_evidence.json": evidence.content_sha256,
+        "external_action_ledger.json": ledger.content_sha256,
+        "run_attempt_consumption_receipt.json": consumption.content_sha256,
+    }
 
 
 def _mutate_axis_total(payload: dict[str, Any]) -> None:

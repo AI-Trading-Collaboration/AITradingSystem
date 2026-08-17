@@ -154,7 +154,7 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "EXTERNAL_VALIDATION_PENDING"
     )
     assert coverage_by_task["TRADING-2532"] == (
-        "DISCLOSED_OFFLINE_V2_ADMISSION_READY_EXACT_OWNER_TOKEN_PENDING"
+        "DISCLOSED_SINGLE_V2_VALIDATION_COMPLETE_COLLECTOR_CONFOUNDERS_RESOLVED_DQ_PIT_BLOCKED"
     )
     assert len(manifest.source_artifacts) == 28
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)

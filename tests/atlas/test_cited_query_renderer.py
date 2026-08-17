@@ -377,12 +377,12 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert "旧 collector 在当天第一条 Slice 没有 chain 时就提前把整天判为 missing" in html
     assert "整天合并、最后结算" in html
     assert "真实缺链数量仍需未来一次另行授权的零订单验证" in html
-    assert "2532 已完成离线准入与结果归因基线" in html
-    assert "当前 policy 仍是 PENDING_EXACT_OWNER_TOKEN" in html
-    assert "尚未完成一次新运行验证" in rendered_text
-    assert "离线准入与结果解析已经准备好" in rendered_text
-    assert "仍未登记，因此不发起外部运行" in rendered_text
-    assert "只允许一次零订单外部验证" in rendered_text
+    assert "2532 的唯一零订单外部验证已完成并永久消费授权" in html
+    assert "1201 个最终看到 option chain，仅 1 个全日未见" in html
+    assert "1019 个是当天先出现无链 Slice、后来恢复的提前结算混淆" in html
+    assert "现在还要判断这些安全汇总是否足够完整、来源和时点是否可信" in rendered_text
+    assert "当前：检查数据可信性" in rendered_text
+    assert "不重跑 Cloud，也不自动解锁策略、引擎或交易" in rendered_text
     assert "2516 v2 token 也已签署并在唯一一次 Cloud run 尝试中消费" in html
     assert "9518360aeb329219cd83e78442a1d229" in html
     assert "Option filter 已以显式 list[Symbol] 完成 versioned failure-fix" in html

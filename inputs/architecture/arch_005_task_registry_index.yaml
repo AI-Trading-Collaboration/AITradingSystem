@@ -8,13 +8,13 @@ legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
 task_count: 1005
-active_task_count: 495
-completed_task_count: 510
+active_task_count: 494
+completed_task_count: 511
 fragment_count: 1005
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 1bfce2a22e8b61c01dc62f71070c852274a345dfe7aa2c49b03b6dcf6f809ea9
+final_chain_sha256: e69df14910846f62513951fe96a81a10a59d2ee0ee1273dfdc24f27c456e00ce
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -8063,24 +8063,24 @@ fragments:
   entry_sha256: beead84502ede78309d48390ec527fb629166a438c7989918a23cc143011e900
 - task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
   path: registry/development_tasks/ef/ef1b0dad858e33a71eac979a487ae42700c671260c784fcdf9126e397f1bd57e.yaml
-  file_sha256: cca53d05f5c5a2f1f138744b32b71d763871dfb432a10a341d8438979a04ae55
-  fragment_checksum: c7ab81ff20b235f536cf128a9b86467d3cf3e53da2fb2e45c48c6397c8d472f1
-  partition: active
+  file_sha256: 129e0d813bde65eb1b2e4b60705ad34202b844a6edceb4d4373d80e0f7907976
+  fragment_checksum: 13946522d01d1790269f383ad096b3dfcb12ad4c6cc83b16024151c8ab9e2e3f
+  partition: completed
   order: 1005
   previous_entry_sha256: beead84502ede78309d48390ec527fb629166a438c7989918a23cc143011e900
-  entry_sha256: 1bfce2a22e8b61c01dc62f71070c852274a345dfe7aa2c49b03b6dcf6f809ea9
+  entry_sha256: e69df14910846f62513951fe96a81a10a59d2ee0ee1273dfdc24f27c456e00ce
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 1a4c85c0500f631cc80817d00f4bc872a4dfc398af3be773d22b442cca3fb958
-  byte_count: 1745200
-  row_count: 495
+  sha256: 8e4ee33de18dd65fac767128d00ee03e4cb874037eea6367d00afe89aa499f66
+  byte_count: 1743745
+  row_count: 494
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
-  sha256: 848d5465d53fe596dd1dccbe02585ed8f2f554ff0a2b286b72c036bc23221272
-  byte_count: 1105371
-  row_count: 510
+  sha256: e442a12bde55bfef1f0b55f376f9cd2b51556b7c3901f3fa1913414669628861
+  byte_count: 1106762
+  row_count: 511
   generated_do_not_edit: true
 governance_cycles:
 - cycle_id: arch-005-s5-cycle-1-final-import-cutover
@@ -9021,7 +9021,28 @@ governance_cycles:
   change_id: trading-2532-publication-identity-v2-baseline-done-20260817-v1
   event_count: 8
   production_effect: none
-governance_cycle_count: 134
+- cycle_id: arch-005-s5-cycle-135
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  change_id: trading-2532-external-result-validating-20260817-v1
+  event_count: 9
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-136
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  change_id: trading-2532-external-execution-done-20260817-v1
+  event_count: 10
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-137
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+  change_id: trading-2532-done-requirement-binding-fix-20260817-v1
+  event_count: 11
+  production_effect: none
+governance_cycle_count: 137
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -9035,4 +9056,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 0e06f7f5f61b5ac87c51cfc480bf71f88549db39555dd9c45c6694a57f0387cd
+index_checksum: d6b35304db0999d64bd1cb31a4c11fd294008987f816a7aaaa5e6486c2fa59f7

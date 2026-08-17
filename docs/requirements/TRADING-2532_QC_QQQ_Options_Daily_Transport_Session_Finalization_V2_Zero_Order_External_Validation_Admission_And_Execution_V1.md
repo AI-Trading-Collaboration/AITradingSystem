@@ -1,7 +1,7 @@
 # TRADING-2532 — QQQ Options daily transport session-finalization V2 zero-order external validation admission and execution V1
 
 - priority: `P0`
-- status: `BASELINE_DONE`
+- status: `DONE`
 - owner: Project Owner（一次性 external authority）；Codex capability coordinator（admission 后执行）
 - production effect: `none`
 - broker action: `none`
@@ -157,14 +157,18 @@ then consumes that receipt once.
 
 ## 7. Current status
 
-`BASELINE_DONE`: the offline admission and result-attribution baseline is implemented. It
-strictly validates the exact Owner-token bytes and publication identity, consumes a
-single-use authorization on the first run attempt, validates the v2 `1202`-session
-aggregate partitions, rejects raw/log/Object Store/order carriers, and seals the
-normalized evidence, action ledger and execution manifest. The parallel focused suite
-passes `27` tests after one fail-closed seal-validation defect was found and corrected;
-the first run remains recorded as `26 passed / 1 failed` rather than being hidden by a
-serial rerun.
+`DONE`: exact v2 Owner authority has been admitted and consumed by the sole permitted
+project mutation and Cloud run. Backtest `acf111f24d09a41870f9a23e93fcbe3b` completed; its
+manually downloaded Results JSON is `814999` bytes with SHA-256
+`5d3220342c96217f2c4a4d624b0dc7fbbcad98427de728e749dc2e4f3168d50d`. The strict result
+validator passes and seals export-safe evidence content SHA-256
+`ffa9faafd1d480282bcfe1c07c896f538f26d2b23d7d7d8356460bc881e0bc49`. External counters
+are permanently `1 / 1 / 0 / 0`; the consumed token does not authorize a retry.
+The terminal tracked package, evidence-binding regression and Atlas projection pass `58`
+parallel focused tests. Applicable final formal results and ordinary publication identity are
+recorded in runtime artifacts and the publication handoff so this tracked requirement does not
+create a self-referential commit identity; any non-PASS formal result must block publication and
+return the task to a non-terminal state.
 
 The combined admission, predecessor-contract, proposal, task-source, DevEx,
 deprecation, report-flow and compatibility-authority suite passes `109` parallel
@@ -193,10 +197,10 @@ ignored page sidecar still bound the prior task-event identity; the canonical
 writer is required to refresh that sidecar, and no rendered or governed file is
 hand-edited to mask the freshness failure.
 
-This offline baseline is not external authority. The repository policy still has
-`owner_token_status=PENDING_DIRECT_RUNTIME_ADMISSION`, no TRADING-2532 Owner decision has been
-admitted, no QuantConnect action has occurred, and the task-local external counters remain
-`0 / 0 / 0 / 0`. Applicable final formal gates must pass before ordinary publication.
+The paragraphs above record the pre-execution offline baseline and its retained validation
+history. They are not the current external state: section 7.2 is now the canonical execution
+and result-attribution summary. Applicable final formal gates must still pass before ordinary
+publication.
 
 ### 7.1 Publication-identity defect found after baseline publication
 
@@ -221,10 +225,66 @@ the copy-ready request artifact has file SHA-256
 `051a27ad90f65daee5f6962a07ec21ca2f92f8f8b406177e9a11bd1fac89b77d`.
 The focused v2 suite passes `32` parallel tests, including contract/request tamper,
 proposal/admission-main distinction, dynamic ref mismatch, direct sealed admission and rejection
-of post-token tracked policy mutation. External counters remain `0 / 0 / 0 / 0` while authority,
-Atlas freshness and applicable formal validation are rerun.
+of post-token tracked policy mutation. At that repair-publication checkpoint, external counters
+were still `0 / 0 / 0 / 0`; section 7.2 records the later separately authorized execution.
 
 After regenerating DevEx, report-flow, compatibility and Atlas sidecar authority, the expanded
 admission/proposal/predecessor/task-source/authority/Atlas suite passes `138` parallel tests.
 The local canonical page is regenerated from the current task projection; its final hash is kept
 in the generated sidecar and publication handoff rather than embedded in this tracked source.
+
+### 7.2 Admitted single execution and result attribution
+
+The exact Owner token was admitted at `2026-08-17T11:28:22.916240Z` against
+`local main = origin/main = 49e8a0aa2d918fc4cf53b8085dde217bf4c22405`. It bound token SHA-256
+`d38a68d98be1593923e81fd27b7e786da0f78b52d3c70f66bc751ee3474e7202`, the frozen
+`26901`-byte project code and all proposal/predecessor hashes. The first run attempt at
+`2026-08-17T11:48:34.340Z` consumed and invalidated the authorization. There was one actual
+project mutation, one Cloud backtest, no order and no fill.
+
+The v2 result answers the collector question without changing TRADING-2530's immutable bytes:
+
+- option-chain presence is `1201 PRESENT / 1 MISSING / 0 INVALID / 0 NOT_EVALUATED`;
+- underlying price, bid/ask quote, Greeks, implied volatility, open interest, volume and
+  cross-field consistency are each `1201 PRESENT / 0 MISSING / 0 INVALID / 1 NOT_EVALUATED`;
+- `1020` sessions contained at least one chainless Slice event, but `1019` later recovered a
+  non-empty chain in the same session; only `1` session remained never-chain;
+- all `1201` chain-present sessions had a canonical same-session QQQ Equity source, and all
+  `1201` contract-level zero values were ignored as required by the v2 source contract;
+- every public axis partitions to exactly `1202` sessions, while orders, fills, fees, holdings
+  and trading volume remain zero.
+
+Therefore, `1019` of the old `1020 MISSING` observations are attributable to v1's premature
+first-Slice terminalization rather than final whole-session chain absence. The single remaining
+session is a final transport absence under this run. The former underlying/cross-field invalid
+result is also removed by the reviewed same-session RAW QQQ Equity source rule. These are
+collector and transport facts only: canonical DQ/PIT admission, policy calibration, strategy
+validity, selection, engine activation and investment conclusions all remain unauthorized and
+`POLICY_BLOCKED_CASH_PRESERVATION` remains in force.
+
+The raw Results JSON stays outside Git. The tracked execution package contains only its hash,
+byte count, strict normalized aggregates and sealed provenance. The browser client did not
+persist separate timestamps for login observation, mutation start and mutation verification;
+the action ledger therefore uses the exact run-consumption timestamp as their shared conservative
+observation boundary and preserves causal order with explicit ordinals. This coarsens only
+sub-run chronology, not counters, identities or result content; hash/seal and ordering validation
+cover the retained evidence, and no retry is permitted merely to recover finer UI timing.
+
+### 7.3 Local ownership correction and retained replay workspace
+
+During local closeout, the first write lease omitted the Atlas renderer and three focused test
+paths. No unleased implementation bytes were retained: those edits were reverted, the original
+lease was released, an expanded lease was acquired, and the same reviewed changes were then
+reapplied inside its declared scope. This correction did not modify the external result, token,
+receipts, seals or counters.
+
+The ignored replay workspace
+`outputs/external_validation/trading_2532_session_finalization_v2_once_20260817/` is retained
+after publication because it contains the unique raw Results payload needed to replay the tracked
+hash-only evidence. The original browser download at
+`G:/Download/Upgraded Magenta Gorilla.json` is also left intact. The tracked JSON files are
+byte-for-byte sealed in the canonical package; the raw payload remains untracked. The next owner
+is the coordinator of a separately governed DQ/PIT evidence-admission task. The exit condition is
+an independently verified source hash plus an explicit permanent-retention decision; only then
+may the ignored workspace be audited and removed with an exact absolute-path allowlist. Until
+that point the raw evidence is recoverable from both retained locations and must not be cleaned.

@@ -254,8 +254,8 @@ task_sources:
     reader_summary_zh: 2531 发现 2530 的汇总不能直接解释成“1020 天确实没有数据”：旧 collector 在当天第一条 Slice 没有 chain 时就提前把整天判为 missing，后来同日到达的 chain 会被忽略；它还把 contract 上的零值当作 underlying 来源。v2 已改成整天合并、最后结算，并只用同一交易日的 RAW QQQ bar 判断 underlying。该离线修复消除了已知混淆，但没有产生新的 Cloud 事实；真实缺链数量仍需未来一次另行授权的零订单验证。
   - task_id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
     requirement_path: docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md
-    coverage: DISCLOSED_OFFLINE_V2_ADMISSION_READY_EXACT_OWNER_TOKEN_PENDING
-    reader_summary_zh: 2532 已完成离线准入与结果归因基线：exact Owner token、proposal main、2531 frozen hashes、首次尝试即消费和 1202-session 聚合分区都必须严格匹配；raw rows、logs-as-data、Object Store、订单与成交均被拒绝。当前 policy 仍是 PENDING_EXACT_OWNER_TOKEN，因此尚未登录、修改 QuantConnect 项目或启动新 Cloud run，外部计数保持 0/0/0/0，DQ/PIT、策略结论与交易仍关闭。
+    coverage: DISCLOSED_SINGLE_V2_VALIDATION_COMPLETE_COLLECTOR_CONFOUNDERS_RESOLVED_DQ_PIT_BLOCKED
+    reader_summary_zh: 2532 的唯一零订单外部验证已完成并永久消费授权：1202 个交易日中 1201 个最终看到 option chain，仅 1 个全日未见；旧 collector 报告的 1020 个 missing 中，1019 个是当天先出现无链 Slice、后来恢复的提前结算混淆。1201 个 chain-present session 的同日 QQQ underlying、quote、Greeks、IV、OI、volume 与 cross-field 汇总均为 present；结果文件只以哈希和安全汇总进入证据，外部计数为 1/1/0/0。该事实修复 transport/collector 归因，但没有授权 DQ/PIT、策略有效、selection/engine 解锁或交易。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

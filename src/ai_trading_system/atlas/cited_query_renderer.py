@@ -2118,7 +2118,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
         <article><span>02 · 最大阻塞</span><strong>18 个 G3 证据槽位尚无通过 DQ/PIT（数据质量与时点可得性）准入的主研究窗口结果，G2 数值政策仍有 0 项获批。</strong></article>
         <article><span>03 · 已做到什么</span><strong>工程合同、数据质量与时点可得性检查、离线工程机制、10 条汇总序列收集器与证据结构均可重放；这只是能力，不是盈利或风险证据。</strong></article>
         <article><span>04 · 不能推出什么</span><strong>不能推出策略有效、收益稳健或风险可接受，也不能把局部工程许可解释成策略结论通过。</strong></article>
-        <article><span>05 · 下一步</span><strong>2531 已把 collector 修复为“同日事件先合并、运行末端再结算”，并以同日 RAW QQQ bar 作为 underlying；它修复了诊断方法，但不会凭空改写 2530 的 1020 个 missing。2532 现已建立严格的单次准入与结果解析基线，只有 exact Owner token 被登记后才允许一次零订单外部验证；当前 token 仍未登记，外部计数为 0/0/0/0。</strong></article>
+        <article><span>05 · 下一步</span><strong>2532 的唯一零订单外部验证已经完成：1202 个交易日中 1201 个最终看到 option chain，只有 1 个全日未见；旧结果中的 1019 个 missing 是首条 Slice 提前结算造成的 collector 混淆。当前只允许审查这份 export-safe aggregate 是否满足 canonical DQ/PIT 证据准入，不重跑 Cloud，也不自动解锁策略或交易。</strong></article>
         <article class="reader-answer-stop"><span>06 · 现在能否投资或下单</span><strong>不能。期权合约选择保持关闭，订单和成交数量均为 0；本页不授权真实策略执行引擎、外部动作或交易。</strong></article>
       </div>
       <div class="effectiveness-boundary">
@@ -2178,8 +2178,8 @@ def _build_why_first_projection(
             kind=ReaderCausalNodeKind.CHOICE,
             question_zh="为什么选择当前研究路径？",
             answer_zh=(
-                "先修复 2530 暴露的 session 结算与 underlying 来源混淆，再建立严格的单次准入和结果解析；"
-                "exact Owner token 未登记前不启动新的 Cloud run，也不进入候选搜索或经验回测。"
+                "先修复 2530 暴露的 session 结算与 underlying 来源混淆，再用严格的一次性准入验证修复后的"
+                "整日结果；这样可以先分清 collector 问题和真实 transport 缺口，再决定是否进入 DQ/PIT 审查。"
             ),
             sources=(
                 _coverage_source(readiness),
@@ -2190,29 +2190,34 @@ def _build_why_first_projection(
         _ReaderCausalNode(
             kind=ReaderCausalNodeKind.EVIDENCE,
             question_zh="这条路径目前拿到了什么证据？",
-            answer_zh=observed_evidence.reader_summary_zh,
-            sources=(_coverage_source(observed_evidence),),
+            answer_zh=next_step.reader_summary_zh,
+            sources=(
+                _coverage_source(observed_evidence),
+                _coverage_source(collector_fix),
+                _coverage_source(next_step),
+            ),
         ),
         _ReaderCausalNode(
             kind=ReaderCausalNodeKind.RESULT,
             question_zh="现有证据只支持什么结论？",
             answer_zh=(
-                "2530 只能说明旧 collector 记录了 182 个 chain-present session 和 1020 个 missing；"
-                "2531 已证明该汇总混有首条 Slice 提前结算与错误 underlying 来源，"
-                "因此不能据此判断真实缺链天数或形成策略结论。"
+                "2532 证明修复后的整日结算得到 1201 个 chain-present session 和 1 个 never-chain session；"
+                "旧结果中的 1019 个 missing 来自首条 Slice 提前结算混淆。它只解决 collector 与 transport 归因，"
+                "尚未完成 DQ/PIT 准入，也不能形成策略结论。"
             ),
             sources=(
                 qqq_source,
                 _coverage_source(observed_evidence),
                 _coverage_source(collector_fix),
+                _coverage_source(next_step),
             ),
         ),
         _ReaderCausalNode(
             kind=ReaderCausalNodeKind.NEXT_STEP,
             question_zh="当前结果把下一步指向哪里？",
             answer_zh=(
-                "离线准入和结果解析已经完成；下一步需由项目负责人提供精确的单次授权文本，"
-                "之后只允许一次零订单外部验证。授权登记前不做任何外部动作。"
+                "唯一零订单外部验证已经完成且不能重跑；下一步只审查这份 export-safe aggregate 是否满足"
+                "canonical DQ/PIT 证据准入，再由人工决定是否继续研究。"
             ),
             sources=(
                 _coverage_source(next_step),
@@ -2293,7 +2298,7 @@ def _render_trust_strip(showcase: AtlasCitedQueryShowcase) -> str:
             <li data-system-stage="HUMAN_DECISION"><span>03 · 形成结论</span><strong>只说现有数据真正支持的部分</strong></li>
             <li data-system-stage="AUTHORIZED_EXECUTION"><span>04 · 决定行动</span><strong>由人工决定是否继续，页面不会自行执行</strong></li>
           </ol>
-          <p class="system-orientation-current"><strong>当前停在第 02 步：</strong>旧 collector 的汇总混有结算时机与 underlying 来源问题；v2 已离线修复，但尚未完成一次新运行验证。</p>
+          <p class="system-orientation-current"><strong>当前停在第 02 步：</strong>v2 的唯一外部验证已确认 collector 修复后的结果；现在还要判断这些安全汇总是否足够完整、来源和时点是否可信，尚未进入策略评价。</p>
         </div>
       </header>
       <p class="trust-stop" data-always-visible="critical-risk">本页只解释研究状态，不提供投资建议，也不会运行策略、连接外部系统或下单。</p>
@@ -2368,21 +2373,21 @@ def _render_why_context(showcase: AtlasCitedQueryShowcase) -> str:
             <span>01 · 当前决定</span><strong data-always-visible="conclusion_boundary">暂不继续形成策略结论。</strong>
           </article>
           <article class="reader-decision-card" data-reader-decision="WHY_PAUSED" data-reader-claim-source-refs="{escape(source_refs(ReaderCausalNodeKind.CONSTRAINT, ReaderCausalNodeKind.EVIDENCE))}">
-            <span>02 · 为什么</span><strong data-always-visible="largest_blocker">2530 的 1020 个 missing 混有 collector 结算问题，修复后的 v2 还没有新的外部结果，不能据此判断真实缺链天数。</strong>
+            <span>02 · 为什么</span><strong data-always-visible="largest_blocker">新的外部结果已分清 collector 混淆和最终 transport 缺口，但还没有确认这份安全汇总是否完整、来源是否明确，以及研究当时能否看到。</strong>
           </article>
           <article class="reader-decision-card" data-reader-decision="CURRENT_WORK" data-reader-claim-source-refs="{escape(source_refs(ReaderCausalNodeKind.CHOICE))}">
-            <span>03 · 现在在查什么</span><strong>collector 修复、离线准入与结果解析已经准备好；精确的单次授权文本仍未登记，因此不发起外部运行。</strong>
+            <span>03 · 现在在查什么</span><strong>唯一零订单验证已完成：1201 天最终看到 option chain，1 天全日未见；当前在封存证据并准备独立的数据可信性审查。</strong>
           </article>
           <article class="reader-decision-card" data-reader-decision="NEXT_STEP" data-reader-claim-source-refs="{escape(source_refs(ReaderCausalNodeKind.NEXT_STEP))}">
-            <span>04 · 下一步</span><strong data-always-visible="next_legal_action">项目负责人登记精确的单次授权文本后，只允许一次零订单外部验证；结果仍须严格解析并由人工决定是否继续。</strong>
+            <span>04 · 下一步</span><strong data-always-visible="next_legal_action">只对已封存的安全汇总检查来源、完整性和研究当时是否可见；不重跑 Cloud，也不自动解锁策略、引擎或交易。</strong>
           </article>
         </div>
         <p class="reader-safety" data-always-visible="prohibited_inference" data-reader-claim-source-refs="{escape(source_refs(ReaderCausalNodeKind.RESULT))}"><strong>当前不能推出：</strong>这既不能证明策略有效，也不能证明策略无效；更不表示可以投资、部署或交易。</p>
         <ol class="reader-plain-flow" aria-label="当前研究与前后步骤的关系">
           <li><span>已经收集数据</span></li>
           <li><span>离线修复诊断方法</span></li>
-          <li class="is-current"><span>当前：等待单次授权准入</span></li>
-          <li><span>一次零订单外部验证</span></li>
+          <li><span>完成唯一零订单外部验证</span></li>
+          <li class="is-current"><span>当前：检查数据可信性</span></li>
           <li><span>人工决定是否继续</span></li>
         </ol>
       </div>
@@ -2397,9 +2402,9 @@ def _render_why_context(showcase: AtlasCitedQueryShowcase) -> str:
           <p class="reader-problem">当前研究问题：现有已准入证据是否足以让策略研究重新开放？</p>
           <ol class="causal-chain">{"".join(node_cards)}</ol>
           <div class="why-boundary-grid">
-            <p data-research-detail="largest_blocker">最大阻塞：v2 collector 还没有新的外部结果；当前策略仍在等待精确的单次授权文本。</p>
+            <p data-research-detail="largest_blocker">最大阻塞：v2 外部结果已取得，但 export-safe aggregates 还没有成为 canonical DQ/PIT admitted evidence。</p>
             <p data-research-detail="prohibited_inference">禁止推断：不能据此宣称策略有效、收益稳健、风险可接受或可以下单。</p>
-            <p data-research-detail="next_legal_action">下一合法动作：exact token 准入后只做一次 zero-order v2 external validation；首次尝试即消费，失败也不自动重跑。</p>
+            <p data-research-detail="next_legal_action">下一合法动作：只审查已封存 aggregates 的来源、完整性与时点可得性；不授权第二次 Cloud run。</p>
           </div>
         </div>
       </details>
