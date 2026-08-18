@@ -1,7 +1,7 @@
 # TRADING-2533 — QQQ Options session-finalization V2 export-safe DQ/PIT evidence admission V1
 
 - priority: `P0`
-- status: `DONE`（publication 仍以 final-tree formal PASS 为前置条件）
+- status: `DONE`（terminal admission identity 保持不变；Architecture failure-fix 阻塞 publication）
 - owner: Codex capability coordinator（离线 admission 与实现）；Project Owner（后续任何外部动作）
 - production effect: `none`
 - broker action: `none`
@@ -152,7 +152,7 @@ Coordinator-owned:
 
 ## 7. 当前状态与生命周期
 
-`DONE`：离线 admission 已完成，且没有执行新的外部动作。deterministic validator 已复核 retained
+`DONE`：离线 admission 逻辑已完成，且没有执行新的外部动作。deterministic validator 已复核 retained
 raw Results exact `814999` bytes / SHA-256 `5d322034...d50d`，同时验证 2532 tracked package、
 2482 policy 与 2481 contract 的冻结身份。生成结果为：
 
@@ -163,8 +163,20 @@ raw Results exact `814999` bytes / SHA-256 `5d322034...d50d`，同时验证 2532
 - overall：`DQ=FAIL`、`PIT=NOT_EVALUATED`、selection/engine 继续 cash-preservation blocked；
 - Atlas 首层已改为先解释研究上下文、当前门槛和证据缺口，15 项检查留在展开层。
 
-本任务的 terminal 语义是“离线判定已完成”，不是“策略准入通过”。ordinary publication 仍由最终
-候选的 focused/generated/formal validation 结果约束；任一级非 PASS 都禁止发布。
+首个 final-tree Architecture artifact
+`outputs/validation_runtime/architecture-fitness_20260818T032739Z/test_runtime_summary.json`
+记录 `864 passed / 1 failed`。唯一失败是新增 module/test 后 deprecation inventory ratchet 仍冻结在
+`1134/1294`，而实际 repository count 已为 `1135/1295`；该失败发生在正式架构门，不改变 admission
+结论，但要求受治理地刷新 exact inventory id/count 并重跑 final formal。
+
+failure-fix 已把 frozen deprecation inventory 与测试 ratchet 同步为
+`arch_004g_deprecation_inventory_c002c804a23ec3f33d72`、`1135 modules / 1295 tests / 856 writers`；
+`tests/test_arch_004g_deprecation.py` 并行 focused 为 `9 passed`。该 PASS 只证明已修复首个
+Architecture 根因，不能替代完整 formal rerun。
+
+canonical terminal identity 不允许回退，因此任务保持 `DONE`，并把该失败作为同一 terminal task 的
+publication failure-fix evidence 追加记录。ordinary publication 仍由最终候选的
+focused/generated/formal validation 结果约束；任一级非 PASS 都禁止发布。
 
 忽略的 replay workspace
 `D:/Work/AITradingSystem/outputs/external_validation/trading_2532_session_finalization_v2_once_20260817/`

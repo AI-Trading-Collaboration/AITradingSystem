@@ -14,20 +14,22 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: No remaining TRADING-2533 external action; Project Owner must separately
-    govern any new evidence collection
+  next_owner: 'Codex capability coordinator: rebuild generated authority and rerun
+    final formal'
   requirement_refs:
   - docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 离线 admission 已完成：2482 coverage=1 PASS/1
-    FAIL/13 NOT_EVALUATED，DQ=FAIL、PIT=NOT_EVALUATED；2532 external counters 保持 1/1/0/0，禁止复用
-    token 或第二次 Cloud run；final formal 非 PASS 则禁止 publication。
+  unstructured_legacy_blocker_or_next_step: Architecture 首轮 864 PASS/1 FAIL 的唯一 deprecation
+    inventory ratchet 根因已修复；exact inventory=c002c804...、1135 modules/1295 tests/856
+    writers，focused=9 PASS。需刷新 DevEx/compatibility authority 并重跑五级 final formal；publication
+    继续 blocked。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: exact input/hash/seal validation；15 checks 恰好一次；DQ=FAIL（1 final never-chain），PIT=NOT_EVALUATED；缺口分层明确；Atlas
-      progressive disclosure；focused/generated/formal PASS 后 ordinary push。
+    text: 保留 admission seals 与 DQ=FAIL/PIT=NOT_EVALUATED；deprecation inventory exact
+      id/count 与 final tree 一致；focused/generated PASS；Architecture failure-fix 与后继
+      Contract/Integration/Reproducibility/Full 全 PASS 后 ordinary push。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -126,6 +128,67 @@ events:
   - change:trading-2533-canonical-whitespace-seal-correction-20260818-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-e061d239a2f9573949299c075b6c588a
+- schema_version: task_event.v1
+  task_id: TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-18T03:36:52Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2533-architecture-inventory-ratchet-failure-20260818-v1
+  lane_id: null
+  base_commit: 7c865f0ac49540e34542c316ff903b404b55861e
+  previous_state_event_id: task-event-e061d239a2f9573949299c075b6c588a
+  from_status: DONE
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 'Codex capability coordinator: refresh exact deprecation inventory
+      ratchet and rerun final formal'
+    blocker_or_next_step: Architecture=864 PASS/1 FAIL；唯一失败是新增 module/test 后 WAVE17
+      deprecation inventory 仍冻结为 1134/1294。需扩展 governed path claim，刷新 exact 1135/1295
+      与 inventory id，再重建 DevEx/compatibility authority；publication blocked。
+    acceptance_criteria: 保留 admission seals 与 DQ=FAIL/PIT=NOT_EVALUATED；deprecation
+      inventory exact id/count 与 final tree 一致；focused/generated PASS；Architecture
+      failure-fix 与后继 Contract/Integration/Reproducibility/Full 全 PASS 后 ordinary
+      push。
+    notes: '[supporting requirement](docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md)；failure
+      artifact=outputs/validation_runtime/architecture-fitness_20260818T032739Z/test_runtime_summary.json；864
+      passed/1 failed in 376.30s；canonical terminal invariant keeps status DONE；external
+      counters=1/1/0/0，no new external action。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2533-architecture-inventory-ratchet-failure-20260818-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-916b3881aedd37c097e0634849d21928
+- schema_version: task_event.v1
+  task_id: TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-18T03:44:56Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2533-architecture-inventory-ratchet-failure-fix-ready-20260818-v1
+  lane_id: null
+  base_commit: 7c865f0ac49540e34542c316ff903b404b55861e
+  previous_state_event_id: task-event-916b3881aedd37c097e0634849d21928
+  from_status: DONE
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 'Codex capability coordinator: rebuild generated authority and rerun
+      final formal'
+    blocker_or_next_step: Architecture 首轮 864 PASS/1 FAIL 的唯一 deprecation inventory
+      ratchet 根因已修复；exact inventory=c002c804...、1135 modules/1295 tests/856 writers，focused=9
+      PASS。需刷新 DevEx/compatibility authority 并重跑五级 final formal；publication 继续 blocked。
+    acceptance_criteria: 保留 admission seals 与 DQ=FAIL/PIT=NOT_EVALUATED；deprecation
+      inventory exact id/count 与 final tree 一致；focused/generated PASS；Architecture
+      failure-fix 与后继 Contract/Integration/Reproducibility/Full 全 PASS 后 ordinary
+      push。
+    notes: '[supporting requirement](docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md)；failure
+      artifact=outputs/validation_runtime/architecture-fitness_20260818T032739Z/test_runtime_summary.json；failure-fix
+      focused=9 PASS；canonical terminal invariant keeps status DONE；external counters=1/1/0/0。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2533-architecture-inventory-ratchet-failure-fix-ready-20260818-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ea4238e7f316d18bc839958720c86907
 projection:
   legacy_first_eight_cells:
   - TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1
@@ -133,22 +196,20 @@ projection:
     canonical 2482 DQ/PIT checks
   - P0
   - DONE
-  - No remaining TRADING-2533 external action; Project Owner must separately govern
-    any new evidence collection
-  - 离线 admission 已完成：2482 coverage=1 PASS/1 FAIL/13 NOT_EVALUATED，DQ=FAIL、PIT=NOT_EVALUATED；2532
-    external counters 保持 1/1/0/0，禁止复用 token 或第二次 Cloud run；final formal 非 PASS 则禁止
-    publication。
-  - exact input/hash/seal validation；15 checks 恰好一次；DQ=FAIL（1 final never-chain），PIT=NOT_EVALUATED；缺口分层明确；Atlas
-    progressive disclosure；focused/generated/formal PASS 后 ordinary push。
-  - '[supporting requirement](docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md)；canonical
-    EOF normalization 后 policy SHA-256=1b6fc081fcd442acc125c5077422b941522b1e0fa90926835afa7e1b57d2539b；report
-    seal=58a80cf8c0c7678dd1eab0cc8b3297fc1c27a6aace45f46d6789efc2446d7c0a；manifest
-    seal=6029d78faf9fb0c752ef030ac399707cb04ebf053a8ff88d392fc327f14b62f3；前一事件的 pre-normalization
-    seals 已被本事件替代；production_effect=none、broker_action=none。'
+  - 'Codex capability coordinator: rebuild generated authority and rerun final formal'
+  - Architecture 首轮 864 PASS/1 FAIL 的唯一 deprecation inventory ratchet 根因已修复；exact
+    inventory=c002c804...、1135 modules/1295 tests/856 writers，focused=9 PASS。需刷新 DevEx/compatibility
+    authority 并重跑五级 final formal；publication 继续 blocked。
+  - 保留 admission seals 与 DQ=FAIL/PIT=NOT_EVALUATED；deprecation inventory exact id/count
+    与 final tree 一致；focused/generated PASS；Architecture failure-fix 与后继 Contract/Integration/Reproducibility/Full
+    全 PASS 后 ordinary push。
+  - '[supporting requirement](docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md)；failure
+    artifact=outputs/validation_runtime/architecture-fitness_20260818T032739Z/test_runtime_summary.json；failure-fix
+    focused=9 PASS；canonical terminal invariant keeps status DONE；external counters=1/1/0/0。'
   docs_links:
   - docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md
   terminal: true
-  canonical_row_sha256: 98a71022522d4cf8cf959aacac9540c2ca56a9e506c079370ed097be570c4697
-last_event_id: task-event-e061d239a2f9573949299c075b6c588a
+  canonical_row_sha256: 702ebbf1a691b96f532f800dba97fb5556eb1072051bff5d65f671e853dd20c8
+last_event_id: task-event-ea4238e7f316d18bc839958720c86907
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b0ba984ad704a96ca6e761a30fd2815e1edfa704b28acc6f2cd4ee50d43437a1
+fragment_checksum: b98654d07241c418504c5f71c5a313da0a058d9a7ad2f0a62a8f39325e3745e8
