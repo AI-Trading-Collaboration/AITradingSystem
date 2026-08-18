@@ -178,6 +178,15 @@ canonical terminal identity 不允许回退，因此任务保持 `DONE`，并把
 publication failure-fix evidence 追加记录。ordinary publication 仍由最终候选的
 focused/generated/formal validation 结果约束；任一级非 PASS 都禁止发布。
 
+final candidate `7e010afd4660e5d5c8448d9ac4acec8b3430d363` 的四个前置 formal tier 为
+`865 / 276 / 995 / 24 PASS`；首次 Full artifact
+`outputs/validation_runtime/full_20260818T040337Z/test_runtime_summary.json` 为
+`9199 passed / 1 failed / 3 skipped / 644 warnings`。唯一失败来自本机 ignored canonical Atlas
+页面仍绑定旧 commit `bf7fbfd...`，导致 current-successor identity 校验 fail closed。修复范围只允许在
+同一 final commit 重建 `outputs/atlas/strategy_research_cited_query/trading_2470_v1/**` sidecars，
+随后运行 historical projection focused，并以该失败 artifact 为 parent 做完整 Full failure-fix rerun；
+不得以 focused PASS 替代 Full，也不得修改 tracked admission identity。
+
 忽略的 replay workspace
 `D:/Work/AITradingSystem/outputs/external_validation/trading_2532_session_finalization_v2_once_20260817/`
 和 `G:/Download/Upgraded Magenta Gorilla.json` 继续保留。它们属于唯一 raw Results 复核证据；本任务只读使用，
