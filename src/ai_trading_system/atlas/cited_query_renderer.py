@@ -2098,7 +2098,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
             "</li>"
         )
         for item in manifest.task_coverage
-        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2532
+        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2533
     )
     return f"""
     <section class="page-effectiveness" id="page-effectiveness" aria-labelledby="page-effectiveness-title" data-page-freshness="{escape(manifest.freshness_status.value)}" data-task-coverage-count="{len(manifest.task_coverage)}">
@@ -2115,10 +2115,10 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
       </div>
       <div class="reader-answer-grid" aria-label="读者先回答的六个问题">
         <article><span>01 · 当前主线</span><strong>策略研究重新开放条件已经登记；当前仍须保持研究关闭，而且只允许补齐预先登记的证据，不能进行候选搜索或经验回测。</strong></article>
-        <article><span>02 · 最大阻塞</span><strong>18 个 G3 证据槽位尚无通过 DQ/PIT（数据质量与时点可得性）准入的主研究窗口结果，G2 数值政策仍有 0 项获批。</strong></article>
-        <article><span>03 · 已做到什么</span><strong>工程合同、数据质量与时点可得性检查、离线工程机制、10 条汇总序列收集器与证据结构均可重放；这只是能力，不是盈利或风险证据。</strong></article>
+        <article><span>02 · 最大阻塞</span><strong>离线审查已确认：15 项数据可信性检查中 1 项通过、1 项明确失败、13 项仍缺少时点或身份依据；G2 数值政策仍有 0 项获批。</strong></article>
+        <article><span>03 · 已做到什么</span><strong>唯一外部结果、来源哈希和安全汇总已封存，并已逐项完成数据可信性审查；这只是定位缺口，不是盈利或风险证据。</strong></article>
         <article><span>04 · 不能推出什么</span><strong>不能推出策略有效、收益稳健或风险可接受，也不能把局部工程许可解释成策略结论通过。</strong></article>
-        <article><span>05 · 下一步</span><strong>2532 的唯一零订单外部验证已经完成：1202 个交易日中 1201 个最终看到 option chain，只有 1 个全日未见；旧结果中的 1019 个 missing 是首条 Slice 提前结算造成的 collector 混淆。当前只允许审查这份 export-safe aggregate 是否满足 canonical DQ/PIT 证据准入，不重跑 Cloud，也不自动解锁策略或交易。</strong></article>
+        <article><span>05 · 下一步</span><strong>先解释唯一一个全日缺链交易日，并补齐数据新鲜度、交易日历、symbol mapping、cache/engine/provider identity 等证据；任何新外部采集都必须另行登记和授权。</strong></article>
         <article class="reader-answer-stop"><span>06 · 现在能否投资或下单</span><strong>不能。期权合约选择保持关闭，订单和成交数量均为 0；本页不授权真实策略执行引擎、外部动作或交易。</strong></article>
       </div>
       <div class="effectiveness-boundary">
@@ -2128,7 +2128,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <p>工程自动化只能更新工程验收；Owner 视觉验收和目标读者理解验收必须来自真实人工事实。</p>
         </div>
         <details class="successor-coverage" data-reader-layer="audit">
-          <summary>查看 TRADING-2494–2532（含 2523A/2523B）如何影响当前页面</summary>
+          <summary>查看 TRADING-2494–2533（含 2523A/2523B）如何影响当前页面</summary>
           <ul>{successor_rows}</ul>
         </details>
       </div>
@@ -2139,7 +2139,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <div><dt>repository commit</dt><dd><code>{escape(manifest.repository_commit)}</code></dd></div>
           <div><dt>source snapshot</dt><dd><code>{escape(manifest.source_snapshot_commit)}</code></dd></div>
           <div><dt>policy SHA-256</dt><dd><code>{escape(manifest.policy_sha256)}</code></dd></div>
-          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2504, 2506..2532, 2523A, 2523B</code> · {len(manifest.source_artifacts)} semantic sources</dd></div>
+          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2504, 2506..2533, 2523A, 2523B</code> · {len(manifest.source_artifacts)} semantic sources</dd></div>
         </dl>
         <h3>验收原始状态</h3><ul>{acceptance_audit}</ul>
       </details>
@@ -2156,6 +2156,7 @@ def _build_why_first_projection(
     observed_evidence = _task_coverage(manifest, "2530")
     collector_fix = _task_coverage(manifest, "2531")
     next_step = _task_coverage(manifest, "2532")
+    dq_admission = _task_coverage(manifest, "2533")
     qqq_source = _ReaderCausalSource(
         source_ref_id="qqq_options_projection",
         source_locator="config/atlas/qqq_options_projection.yaml",
@@ -2179,22 +2180,24 @@ def _build_why_first_projection(
             question_zh="为什么选择当前研究路径？",
             answer_zh=(
                 "先修复 2530 暴露的 session 结算与 underlying 来源混淆，再用严格的一次性准入验证修复后的"
-                "整日结果；这样可以先分清 collector 问题和真实 transport 缺口，再决定是否进入 DQ/PIT 审查。"
+                "整日结果；分清 collector 问题和真实 transport 缺口后，再逐项审查 DQ/PIT 证据。"
             ),
             sources=(
                 _coverage_source(readiness),
                 _coverage_source(collector_fix),
                 _coverage_source(next_step),
+                _coverage_source(dq_admission),
             ),
         ),
         _ReaderCausalNode(
             kind=ReaderCausalNodeKind.EVIDENCE,
             question_zh="这条路径目前拿到了什么证据？",
-            answer_zh=next_step.reader_summary_zh,
+            answer_zh=dq_admission.reader_summary_zh,
             sources=(
                 _coverage_source(observed_evidence),
                 _coverage_source(collector_fix),
                 _coverage_source(next_step),
+                _coverage_source(dq_admission),
             ),
         ),
         _ReaderCausalNode(
@@ -2202,26 +2205,28 @@ def _build_why_first_projection(
             question_zh="现有证据只支持什么结论？",
             answer_zh=(
                 "2532 证明修复后的整日结算得到 1201 个 chain-present session 和 1 个 never-chain session；"
-                "旧结果中的 1019 个 missing 来自首条 Slice 提前结算混淆。它只解决 collector 与 transport 归因，"
-                "尚未完成 DQ/PIT 准入，也不能形成策略结论。"
+                "旧结果中的 1019 个 missing 来自首条 Slice 提前结算混淆。2533 进一步确认，15 项检查中"
+                "只有范围隔离通过、chain presence 明确失败，其余 13 项未评估，因此不能形成策略结论。"
             ),
             sources=(
                 qqq_source,
                 _coverage_source(observed_evidence),
                 _coverage_source(collector_fix),
                 _coverage_source(next_step),
+                _coverage_source(dq_admission),
             ),
         ),
         _ReaderCausalNode(
             kind=ReaderCausalNodeKind.NEXT_STEP,
             question_zh="当前结果把下一步指向哪里？",
             answer_zh=(
-                "唯一零订单外部验证已经完成且不能重跑；下一步只审查这份 export-safe aggregate 是否满足"
-                "canonical DQ/PIT 证据准入，再由人工决定是否继续研究。"
+                "离线 DQ/PIT 审查已经完成且保持 fail closed；下一步先解释唯一一个全日缺链交易日，"
+                "再补齐新鲜度、calendar/mapping、cache/engine/provider identity。新外部采集需独立授权。"
             ),
             sources=(
                 _coverage_source(next_step),
                 _coverage_source(collector_fix),
+                _coverage_source(dq_admission),
             ),
         ),
     )
@@ -2275,6 +2280,7 @@ def _render_trust_strip(showcase: AtlasCitedQueryShowcase) -> str:
             _task_coverage(manifest, "2530").task_id,
             _task_coverage(manifest, "2531").task_id,
             _task_coverage(manifest, "2532").task_id,
+            _task_coverage(manifest, "2533").task_id,
         )
     )
     return f"""
@@ -2298,7 +2304,7 @@ def _render_trust_strip(showcase: AtlasCitedQueryShowcase) -> str:
             <li data-system-stage="HUMAN_DECISION"><span>03 · 形成结论</span><strong>只说现有数据真正支持的部分</strong></li>
             <li data-system-stage="AUTHORIZED_EXECUTION"><span>04 · 决定行动</span><strong>由人工决定是否继续，页面不会自行执行</strong></li>
           </ol>
-          <p class="system-orientation-current"><strong>当前停在第 02 步：</strong>v2 的唯一外部验证已确认 collector 修复后的结果；现在还要判断这些安全汇总是否足够完整、来源和时点是否可信，尚未进入策略评价。</p>
+          <p class="system-orientation-current"><strong>当前停在第 02 步：</strong>离线审查已确认现有安全汇总不足以通过数据可信性准入；现在需要补齐缺链归因、时点和身份依据，尚未进入策略评价。</p>
         </div>
       </header>
       <p class="trust-stop" data-always-visible="critical-risk">本页只解释研究状态，不提供投资建议，也不会运行策略、连接外部系统或下单。</p>
@@ -2373,13 +2379,13 @@ def _render_why_context(showcase: AtlasCitedQueryShowcase) -> str:
             <span>01 · 当前决定</span><strong data-always-visible="conclusion_boundary">暂不继续形成策略结论。</strong>
           </article>
           <article class="reader-decision-card" data-reader-decision="WHY_PAUSED" data-reader-claim-source-refs="{escape(source_refs(ReaderCausalNodeKind.CONSTRAINT, ReaderCausalNodeKind.EVIDENCE))}">
-            <span>02 · 为什么</span><strong data-always-visible="largest_blocker">新的外部结果已分清 collector 混淆和最终 transport 缺口，但还没有确认这份安全汇总是否完整、来源是否明确，以及研究当时能否看到。</strong>
+            <span>02 · 为什么</span><strong data-always-visible="largest_blocker">数据审查已经完成：仍有 1 天全日未出现期权链，而且多数检查缺少研究当时可见的时点和身份依据。</strong>
           </article>
           <article class="reader-decision-card" data-reader-decision="CURRENT_WORK" data-reader-claim-source-refs="{escape(source_refs(ReaderCausalNodeKind.CHOICE))}">
-            <span>03 · 现在在查什么</span><strong>唯一零订单验证已完成：1201 天最终看到 option chain，1 天全日未见；当前在封存证据并准备独立的数据可信性审查。</strong>
+            <span>03 · 现在在查什么</span><strong>15 项数据可信性检查中，1 项通过、1 项明确失败、13 项未评估；当前在把缺口分成可用性、时点、身份和策略时序四类。</strong>
           </article>
           <article class="reader-decision-card" data-reader-decision="NEXT_STEP" data-reader-claim-source-refs="{escape(source_refs(ReaderCausalNodeKind.NEXT_STEP))}">
-            <span>04 · 下一步</span><strong data-always-visible="next_legal_action">只对已封存的安全汇总检查来源、完整性和研究当时是否可见；不重跑 Cloud，也不自动解锁策略、引擎或交易。</strong>
+            <span>04 · 下一步</span><strong data-always-visible="next_legal_action">先解释唯一缺链交易日，并补齐数据新鲜度、交易日历、证券代码映射、缓存、运行环境和数据提供方的身份依据；当前不授权再次运行外部平台。</strong>
           </article>
         </div>
         <p class="reader-safety" data-always-visible="prohibited_inference" data-reader-claim-source-refs="{escape(source_refs(ReaderCausalNodeKind.RESULT))}"><strong>当前不能推出：</strong>这既不能证明策略有效，也不能证明策略无效；更不表示可以投资、部署或交易。</p>
@@ -2387,8 +2393,8 @@ def _render_why_context(showcase: AtlasCitedQueryShowcase) -> str:
           <li><span>已经收集数据</span></li>
           <li><span>离线修复诊断方法</span></li>
           <li><span>完成唯一零订单外部验证</span></li>
-          <li class="is-current"><span>当前：检查数据可信性</span></li>
-          <li><span>人工决定是否继续</span></li>
+          <li><span>完成数据可信性审查</span></li>
+          <li class="is-current"><span>当前：补齐明确证据缺口</span></li>
         </ol>
       </div>
       <details class="local-research-explanation" data-reader-layer="research">
@@ -2402,9 +2408,9 @@ def _render_why_context(showcase: AtlasCitedQueryShowcase) -> str:
           <p class="reader-problem">当前研究问题：现有已准入证据是否足以让策略研究重新开放？</p>
           <ol class="causal-chain">{"".join(node_cards)}</ol>
           <div class="why-boundary-grid">
-            <p data-research-detail="largest_blocker">最大阻塞：v2 外部结果已取得，但 export-safe aggregates 还没有成为 canonical DQ/PIT admitted evidence。</p>
+            <p data-research-detail="largest_blocker">最大阻塞：1 个 final never-chain session 使 DQ 明确失败；另外 13 项检查缺少 canonical 时点或身份依据。</p>
             <p data-research-detail="prohibited_inference">禁止推断：不能据此宣称策略有效、收益稳健、风险可接受或可以下单。</p>
-            <p data-research-detail="next_legal_action">下一合法动作：只审查已封存 aggregates 的来源、完整性与时点可得性；不授权第二次 Cloud run。</p>
+            <p data-research-detail="next_legal_action">下一合法动作：基于 2533 缺口清单设计最小证据补齐提案；任何外部动作另行授权。</p>
           </div>
         </div>
       </details>
@@ -2561,7 +2567,7 @@ def _render_audit_destinations(
         f"<code>{escape(item.task_id)}</code>"
         f"<span>{escape(item.reader_summary_zh)}</span></li>"
         for item in manifest.task_coverage
-        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2532
+        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2533
     )
     return f"""
     <section class="audit-destinations" data-reader-section="AUDIT_DESTINATIONS" data-task-coverage-count="{len(manifest.task_coverage)}" aria-labelledby="audit-destinations-title">

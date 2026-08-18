@@ -1,0 +1,17 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_session_finalization_dq_pit_evidence_admission
+fragment_kind: module
+owner: options_data_governance
+module_prefix: src/ai_trading_system/qqq_options_research/session_finalization_dq_pit_evidence_admission.py
+public_contracts:
+  - DEFAULT_OUTPUT_ROOT
+  - DEFAULT_POLICY_PATH
+  - DEFAULT_RETAINED_RAW_RESULTS_PATH
+  - DQPITEvidenceAdmissionBuild
+  - SessionFinalizationDQPITAdmissionError
+  - build_dq_pit_evidence_admission
+  - validate_dq_pit_evidence_admission_package
+  - verify_retained_raw_results
+  - write_dq_pit_evidence_admission_package
+compatibility_facades: []
+deprecation_status: active_reference_architecture

@@ -1,0 +1,154 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1
+  task_id_sha256: 60972a9b2f49796d70f29cd804d449af555aa7e9df01350e078294ee111772f7
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1
+  title: null
+  domain: Data governance / offline admission of TRADING-2532 export-safe evidence
+    against canonical 2482 DQ/PIT checks
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: No remaining TRADING-2533 external action; Project Owner must separately
+    govern any new evidence collection
+  requirement_refs:
+  - docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 离线 admission 已完成：2482 coverage=1 PASS/1
+    FAIL/13 NOT_EVALUATED，DQ=FAIL、PIT=NOT_EVALUATED；2532 external counters 保持 1/1/0/0，禁止复用
+    token 或第二次 Cloud run；final formal 非 PASS 则禁止 publication。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: exact input/hash/seal validation；15 checks 恰好一次；DQ=FAIL（1 final never-chain），PIT=NOT_EVALUATED；缺口分层明确；Atlas
+      progressive disclosure；focused/generated/formal PASS 后 ordinary push。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-18T01:51:45.7667917Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2533-registration
+  lane_id: null
+  base_commit: bf7fbfd489b9c3eb8dbe22248cc45385f7c56347
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1
+    - Data governance / offline admission of TRADING-2532 export-safe evidence against
+      canonical 2482 DQ/PIT checks
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator：完成离线 admission；Project Owner：任何新 external evidence
+      action 需独立授权
+    - 详见 `docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md`。消费
+      2532 immutable execution package 与 retained raw Results hash，逐项审计 2482 exact
+      15 checks；不修改 2482 semantics，不运行 Cloud。
+    - exact input/hash/seal validation；15 checks 恰好一次；DQ=FAIL（1 final never-chain），PIT=NOT_EVALUATED；缺口分层明确；Atlas
+      progressive disclosure；focused/formal PASS；ordinary push。
+    - 2026-08-18：只读审计确认 raw Results=814999 bytes/SHA-256 5d322034...d50d；现有 aggregate
+      不含 freshness、calendar/mapping、cache/engine/provider identity 或 chronology，不能产生
+      canonical PASS；production_effect=none、broker_action=none。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2533-registration
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-145ce7cb7c1c5fe48790fac9bae63bf4
+- schema_version: task_event.v1
+  task_id: TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-18T03:07:53Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2533-offline-admission-done-20260818-v1
+  lane_id: null
+  base_commit: bf7fbfd489b9c3eb8dbe22248cc45385f7c56347
+  previous_state_event_id: task-event-145ce7cb7c1c5fe48790fac9bae63bf4
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: No remaining TRADING-2533 external action; Project Owner must separately
+      govern any new evidence collection
+    blocker_or_next_step: 离线 admission 已完成：2482 coverage=1 PASS/1 FAIL/13 NOT_EVALUATED，DQ=FAIL、PIT=NOT_EVALUATED；2532
+      external counters 保持 1/1/0/0，禁止复用 token 或第二次 Cloud run；final formal 非 PASS 则禁止
+      publication。
+    acceptance_criteria: exact input/hash/seal validation；15 checks 恰好一次；DQ=FAIL（1
+      final never-chain），PIT=NOT_EVALUATED；缺口分层明确；Atlas progressive disclosure；focused/generated/formal
+      PASS 后 ordinary push。
+    notes: '[supporting requirement](docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md)；policy
+      SHA-256=92cd1b7ce6d7e7e25caa257f7e72568348cbc767c23c73df38743587747d1521；report
+      seal=87194b062f0d1fa2d35d5be7b3e4042d0fd319a1a3423d6bb202ce0d0c9bcdd5；manifest
+      seal=5651cc91d08ec9eb22749e0eb17c6b913ac97a5253196e353b75a7aff8742818；production_effect=none、broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2533-offline-admission-done-20260818-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-764f7b392a02bf6e6e06f3afe4f8ec29
+- schema_version: task_event.v1
+  task_id: TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-18T03:18:53Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2533-canonical-whitespace-seal-correction-20260818-v1
+  lane_id: null
+  base_commit: bf7fbfd489b9c3eb8dbe22248cc45385f7c56347
+  previous_state_event_id: task-event-764f7b392a02bf6e6e06f3afe4f8ec29
+  from_status: DONE
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: No remaining TRADING-2533 external action; Project Owner must separately
+      govern any new evidence collection
+    blocker_or_next_step: 离线 admission 已完成：2482 coverage=1 PASS/1 FAIL/13 NOT_EVALUATED，DQ=FAIL、PIT=NOT_EVALUATED；2532
+      external counters 保持 1/1/0/0，禁止复用 token 或第二次 Cloud run；final formal 非 PASS 则禁止
+      publication。
+    acceptance_criteria: exact input/hash/seal validation；15 checks 恰好一次；DQ=FAIL（1
+      final never-chain），PIT=NOT_EVALUATED；缺口分层明确；Atlas progressive disclosure；focused/generated/formal
+      PASS 后 ordinary push。
+    notes: '[supporting requirement](docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md)；canonical
+      EOF normalization 后 policy SHA-256=1b6fc081fcd442acc125c5077422b941522b1e0fa90926835afa7e1b57d2539b；report
+      seal=58a80cf8c0c7678dd1eab0cc8b3297fc1c27a6aace45f46d6789efc2446d7c0a；manifest
+      seal=6029d78faf9fb0c752ef030ac399707cb04ebf053a8ff88d392fc327f14b62f3；前一事件的
+      pre-normalization seals 已被本事件替代；production_effect=none、broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2533-canonical-whitespace-seal-correction-20260818-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e061d239a2f9573949299c075b6c588a
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1
+  - Data governance / offline admission of TRADING-2532 export-safe evidence against
+    canonical 2482 DQ/PIT checks
+  - P0
+  - DONE
+  - No remaining TRADING-2533 external action; Project Owner must separately govern
+    any new evidence collection
+  - 离线 admission 已完成：2482 coverage=1 PASS/1 FAIL/13 NOT_EVALUATED，DQ=FAIL、PIT=NOT_EVALUATED；2532
+    external counters 保持 1/1/0/0，禁止复用 token 或第二次 Cloud run；final formal 非 PASS 则禁止
+    publication。
+  - exact input/hash/seal validation；15 checks 恰好一次；DQ=FAIL（1 final never-chain），PIT=NOT_EVALUATED；缺口分层明确；Atlas
+    progressive disclosure；focused/generated/formal PASS 后 ordinary push。
+  - '[supporting requirement](docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md)；canonical
+    EOF normalization 后 policy SHA-256=1b6fc081fcd442acc125c5077422b941522b1e0fa90926835afa7e1b57d2539b；report
+    seal=58a80cf8c0c7678dd1eab0cc8b3297fc1c27a6aace45f46d6789efc2446d7c0a；manifest
+    seal=6029d78faf9fb0c752ef030ac399707cb04ebf053a8ff88d392fc327f14b62f3；前一事件的 pre-normalization
+    seals 已被本事件替代；production_effect=none、broker_action=none。'
+  docs_links:
+  - docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md
+  terminal: true
+  canonical_row_sha256: 98a71022522d4cf8cf959aacac9540c2ca56a9e506c079370ed097be570c4697
+last_event_id: task-event-e061d239a2f9573949299c075b6c588a
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: b0ba984ad704a96ca6e761a30fd2815e1edfa704b28acc6f2cd4ee50d43437a1

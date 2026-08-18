@@ -275,7 +275,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="53"' in html
+    assert 'data-task-coverage-count="54"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html
@@ -359,6 +359,10 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         in html
     )
     assert (
+        'data-successor-task="TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1"'
+        in html
+    )
+    assert (
         'data-successor-task="TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1"'
         in html
     )
@@ -380,9 +384,10 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert "2532 的唯一零订单外部验证已完成并永久消费授权" in html
     assert "1201 个最终看到 option chain，仅 1 个全日未见" in html
     assert "1019 个是当天先出现无链 Slice、后来恢复的提前结算混淆" in html
-    assert "现在还要判断这些安全汇总是否足够完整、来源和时点是否可信" in rendered_text
-    assert "当前：检查数据可信性" in rendered_text
-    assert "不重跑 Cloud，也不自动解锁策略、引擎或交易" in rendered_text
+    assert "15 项数据可信性检查中，1 项通过、1 项明确失败、13 项未评估" in rendered_text
+    assert "当前：补齐明确证据缺口" in rendered_text
+    assert "当前不授权再次运行外部平台" in rendered_text
+    assert "只有范围隔离通过、chain presence 明确失败，其余 13 项未评估" in rendered_text
     assert "2516 v2 token 也已签署并在唯一一次 Cloud run 尝试中消费" in html
     assert "9518360aeb329219cd83e78442a1d229" in html
     assert "Option filter 已以显式 list[Symbol] 完成 versioned failure-fix" in html

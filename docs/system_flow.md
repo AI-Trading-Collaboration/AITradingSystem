@@ -8729,3 +8729,34 @@ canonical evidence，原始 Results 不进 Git；任一 seal、published SHA、�
 不一致都 fail closed。`1019 recovered-after-chainless` 证明 v1 的 first-Slice terminalization 是 2530 主要
 `MISSING` 来源，但只剩 1 个 never-chain 并不自动构成 DQ/PIT PASS。2532 外部计数现为永久的
 `1 / 1 / 0 / 0`，engine 继续 `POLICY_BLOCKED_CASH_PRESERVATION`。
+
+## TRADING-2533 export-safe aggregate 的 DQ/PIT evidence admission
+
+`qqq_options_research.session_finalization_dq_pit_evidence_admission` 只读取 2532 已发布的五份
+canonical execution artifacts，并对 retained Results 整份字节做 byte-count/SHA-256 复核；它不解析或
+导出 raw option rows，也不访问 QuantConnect。该模块把 2532 的 transport facts 与 2482 frozen 15-check
+语义逐项对照，拒绝用字段存在计数、zero-order 事实或 manual Results hash 代替 freshness、PIT 或 provider
+identity。
+
+```text
+2532 immutable execution package
+  + retained Results identity = 814999 bytes / SHA-256 5d322034...68d50d
+  + 2482 exact policy SHA-256 1e0128c4...b2358 / 15 required check ids
+  -> verify five tracked file hashes, content seals, manifest binding and 1202-session partitions
+  -> verify whole Results bytes only; do not extract raw option rows
+  -> local_cache_dq_scope_separation = PASS
+  -> chain_presence = FAIL because final never-chain sessions = 1
+  -> quote_integrity = NOT_EVALUATED because 1201/1202 presence counts are not per-candidate values
+  -> freshness / calendar / mapping / cache / engine / provider / chronology checks = NOT_EVALUATED
+  -> exact coverage = 1 PASS / 1 FAIL / 13 NOT_EVALUATED
+  -> DQ = FAIL / PIT = NOT_EVALUATED
+  -> admission = BLOCKED_INSUFFICIENT_CANONICAL_DQ_PIT_EVIDENCE
+  -> seal dq_pit_evidence_admission.json + package_manifest.json
+  -> Atlas first layer explains the blocker; exact 15-check detail remains progressive disclosure
+  -> no Cloud / raw rows / selection / engine / investment / order / fill authority
+```
+
+当前下一证据缺口已拆成：唯一 never-chain session 的 provider/transport attribution、quote 与 OI/Greeks
+as-of、calendar/mapping identity、cache/engine/platform identity、provider raw checksum availability，以及未来
+策略运行才可能产生的 chronology。任何新外部采集必须由独立 proposal/admission 重新绑定 scope、hash、
+expiry 与动作上限；已消费的 2532 token 不可复用。

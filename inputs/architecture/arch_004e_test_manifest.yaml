@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1294
-test_count: 1234
+test_file_count: 1295
+test_count: 1235
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -27,7 +27,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_cited_query_renderer
   path: tests/atlas/test_cited_query_renderer.py
-  sha256: 4537f1ae9af6d3266fc9bc439d2e4ea26964ed91f2b0bb1ef80586840c0e6e11
+  sha256: 9236c1fd5f24c4721c11a0e9d01301949506b5a808869ad9e85b05413ffe5f97
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_page_effectiveness
   path: tests/atlas/test_page_effectiveness.py
-  sha256: 590d955baf8491d4fea6b885855cefbe6b2432d74e643f82f7695642dd02bee5
+  sha256: 65b0bbfc8067b1511629837107855780ab173ad9c1366f53be24514d9456620a
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8650,7 +8650,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s5_task_source_cutover
   path: tests/test_arch_005_s5_task_source_cutover.py
-  sha256: b6ef86ecb86c58591aabc8855f85bc42a3409537d875350d19935654eff11f57
+  sha256: 2ff2d24b32c562c5b8a9df658dd7f6418f154751d2d99a299cab3256946f12f9
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -10378,7 +10378,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 2de2450ff008ccb0b25c29d011e566b26fe9f01bbbe9c570599b44bb3c59b690
+  sha256: e08c955928f22727ad6ac437ee37332f246c1892f822509136b69c7e126938db
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -15153,6 +15153,22 @@ tests:
 - test_id: tests.test_qqq_options_refresh_authorization_admission
   path: tests/test_qqq_options_refresh_authorization_admission.py
   sha256: 2f23943249beb2834cf28ed0114422630f7c8029b5209b250b9e526fb327e5f3
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_qqq_options_session_finalization_dq_pit_evidence_admission
+  path: tests/test_qqq_options_session_finalization_dq_pit_evidence_admission.py
+  sha256: b6f65d7af2e492b06cf576a049baf58397079e24f5128e799e5b2d6072ed2546
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
