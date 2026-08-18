@@ -14,7 +14,7 @@ fragment_count: 1006
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 208027e0edac177373c74fd2e535b6136a30c67dd634f81aaf7d3fd5f4c7f203
+final_chain_sha256: 4d9e6b546e4c48612abe34c859c8e9737d4a78a50aac1622aad28f913b59cbad
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -8071,12 +8071,12 @@ fragments:
   entry_sha256: ffa76892278c26a47c9cb7b2e477b269d804e3ca318660f5ddd359890c60344e
 - task_id: TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1
   path: registry/development_tasks/60/60972a9b2f49796d70f29cd804d449af555aa7e9df01350e078294ee111772f7.yaml
-  file_sha256: 7d6023f8cbc59a328cc23beb078eba2e4a572477f4d377295a1e045b9e40b445
-  fragment_checksum: 51f3ba4f903b78722a13778fff13ce53730940ae88b7fe426783b34472d4179e
+  file_sha256: dadb758ba6efc8401471f04551d87acb332dca814c7cd8e2ce116162f8766913
+  fragment_checksum: 1a8f1169add6bdb144975ff4f2d112c099c9ed83f040a8c3e32872474661de1a
   partition: completed
   order: 1006
   previous_entry_sha256: ffa76892278c26a47c9cb7b2e477b269d804e3ca318660f5ddd359890c60344e
-  entry_sha256: 208027e0edac177373c74fd2e535b6136a30c67dd634f81aaf7d3fd5f4c7f203
+  entry_sha256: 4d9e6b546e4c48612abe34c859c8e9737d4a78a50aac1622aad28f913b59cbad
 generated_views:
 - partition: active
   path: docs/task_register.md
@@ -8086,8 +8086,8 @@ generated_views:
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
-  sha256: e603d21ad8d76ea8ad30736b71eac564afa37466c6b7140b5b73a35d84131135
-  byte_count: 1108028
+  sha256: 21fe3e25cd7a26f01e28bdd67100cb02f6bbbebf79218b7c0f8defce5d85e195
+  byte_count: 1108082
   row_count: 512
   generated_do_not_edit: true
 governance_cycles:
@@ -9106,7 +9106,14 @@ governance_cycles:
   change_id: trading-2533-full-local-canonical-page-failure-20260818-v1
   event_count: 6
   production_effect: none
-governance_cycle_count: 145
+- cycle_id: arch-005-s5-cycle-146
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1
+  change_id: trading-2533-historical-projection-coverage-failure-fix-ready-20260818-v1
+  event_count: 7
+  production_effect: none
+governance_cycle_count: 146
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -9120,4 +9127,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: c8a3bfd1839819a00f9271f46874d83431b2f6c7d25ea4f6a96de8b270769ab1
+index_checksum: e1afe0dc88737c69a512d51e34797f649d0cf45b73745eb8aacdbfa147313323

@@ -2031,7 +2031,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "115faba656f9aec6eb64d0c4956c0ccde29701fb4dcab41333567dedff3f3b84"
+        "sha256": "6296702a10450a3fb720f03f4114ca9c0ed8ce0c58a72783c95de9ba238a6ef3"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -2221,12 +2221,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register_completed.md",
-        "sha256": "e603d21ad8d76ea8ad30736b71eac564afa37466c6b7140b5b73a35d84131135"
+        "sha256": "21fe3e25cd7a26f01e28bdd67100cb02f6bbbebf79218b7c0f8defce5d85e195"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "ff5b0954f492f4fb9c7e16e85ff2527edaf24cc2ef053e445eb1dbc6563d7f16"
+        "sha256": "d845c4d1e2418a05c6a1b4643bc88a778ec00d856b67bdd52cc2d8e5818a4751"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -4389,12 +4389,12 @@
       "consumer_inventory_path": "inputs/architecture/arch_005_s5_consumer_inventory.yaml",
       "consumer_inventory_sha256": "19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4",
       "cutover_performed": true,
-      "final_chain_sha256": "208027e0edac177373c74fd2e535b6136a30c67dd634f81aaf7d3fd5f4c7f203",
+      "final_chain_sha256": "4d9e6b546e4c48612abe34c859c8e9737d4a78a50aac1622aad28f913b59cbad",
       "fragment_count": 1006,
       "fragment_root": "registry/development_tasks",
-      "governance_cycle_count": 145,
+      "governance_cycle_count": 146,
       "index_path": "inputs/architecture/arch_005_task_registry_index.yaml",
-      "index_sha256": "ff5b0954f492f4fb9c7e16e85ff2527edaf24cc2ef053e445eb1dbc6563d7f16",
+      "index_sha256": "d845c4d1e2418a05c6a1b4643bc88a778ec00d856b67bdd52cc2d8e5818a4751",
       "manifest_path": "inputs/architecture/arch_005_s5_cutover_manifest.yaml",
       "manifest_sha256": "d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6",
       "manual_row_move_workflow_enabled": false,
@@ -4404,5 +4404,5 @@
     }
   },
   "section_id": "phase_arch_005_s5_canonical_task_source_cutover",
-  "section_sha256": "29869549ba36860874045227e55030f67c1ea1f4fb47d6ee0459b7cbcfc1bab0"
+  "section_sha256": "b59d61379b908b5fa2818d33054b1490b65393a9cc186329dcc51cfe0298ef2b"
 }

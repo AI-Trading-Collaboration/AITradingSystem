@@ -14,22 +14,22 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 'Codex capability coordinator: hydrate ignored canonical Atlas page
-    and run parent-bound Full failure-fix'
+  next_owner: 'Codex capability coordinator: freeze final commit, rehydrate canonical
+    page, rerun final formal and parent-bound Full'
   requirement_refs:
   - docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 四个前置 formal=865/276/995/24 PASS；Full=9199
-    PASS/1 FAIL/3 skip/644 warnings。唯一失败是 ignored canonical Atlas sidecar 仍绑定 bf7fbfd，而
-    final candidate=7e010afd。仅允许重建同 commit 本地页面、focused 后 parent-bound 完整 Full；publication
-    blocked。
+  unstructured_legacy_blocker_or_next_step: ignored page 已重建并通过 freshness/commit/hash
+    checks；随后 exact focused 揭示 historical projection expected coverage 尚停在 2532，现已显式加入
+    2533 且 exact test=1 PASS。需刷新 DevEx/compatibility、提交 final tree、再次重建本地页面并完成五级 formal；publication
+    blocked until PASS。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 保留 tracked admission seals 与 DQ=FAIL/PIT=NOT_EVALUATED；canonical local page/sidecars
-      绑定 exact final commit；historical projection focused PASS；parent-bound Full failure-fix
-      PASS 后 ordinary push。
+    text: 保留 admission seals 与 DQ=FAIL/PIT=NOT_EVALUATED；Atlas manifest task coverage
+      有序覆盖 TRADING-2481..2533；final-commit local page/sidecars current；Atlas focused、四前置
+      tier 及 parent-bound Full 全 PASS 后 ordinary push。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -220,6 +220,37 @@ events:
   - change:trading-2533-full-local-canonical-page-failure-20260818-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-197cad1439889f07904efc04fdea9027
+- schema_version: task_event.v1
+  task_id: TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-18T04:43:30Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2533-historical-projection-coverage-failure-fix-ready-20260818-v1
+  lane_id: null
+  base_commit: fc805784325c4b4d779696c372565211c57dd312
+  previous_state_event_id: task-event-197cad1439889f07904efc04fdea9027
+  from_status: DONE
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 'Codex capability coordinator: freeze final commit, rehydrate canonical
+      page, rerun final formal and parent-bound Full'
+    blocker_or_next_step: ignored page 已重建并通过 freshness/commit/hash checks；随后 exact
+      focused 揭示 historical projection expected coverage 尚停在 2532，现已显式加入 2533 且 exact
+      test=1 PASS。需刷新 DevEx/compatibility、提交 final tree、再次重建本地页面并完成五级 formal；publication
+      blocked until PASS。
+    acceptance_criteria: 保留 admission seals 与 DQ=FAIL/PIT=NOT_EVALUATED；Atlas manifest
+      task coverage 有序覆盖 TRADING-2481..2533；final-commit local page/sidecars current；Atlas
+      focused、四前置 tier 及 parent-bound Full 全 PASS 后 ordinary push。
+    notes: '[supporting requirement](docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md)；parent
+      Full=outputs/validation_runtime/full_20260818T040337Z/test_runtime_summary.json；historical
+      projection exact focused=1 PASS；canonical terminal invariant keeps DONE；external
+      counters=1/1/0/0。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2533-historical-projection-coverage-failure-fix-ready-20260818-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-92abe799bf27a5ec5527ae4d00c843f7
 projection:
   legacy_first_eight_cells:
   - TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1
@@ -227,22 +258,22 @@ projection:
     canonical 2482 DQ/PIT checks
   - P0
   - DONE
-  - 'Codex capability coordinator: hydrate ignored canonical Atlas page and run parent-bound
-    Full failure-fix'
-  - 四个前置 formal=865/276/995/24 PASS；Full=9199 PASS/1 FAIL/3 skip/644 warnings。唯一失败是
-    ignored canonical Atlas sidecar 仍绑定 bf7fbfd，而 final candidate=7e010afd。仅允许重建同
-    commit 本地页面、focused 后 parent-bound 完整 Full；publication blocked。
-  - 保留 tracked admission seals 与 DQ=FAIL/PIT=NOT_EVALUATED；canonical local page/sidecars
-    绑定 exact final commit；historical projection focused PASS；parent-bound Full failure-fix
-    PASS 后 ordinary push。
-  - '[supporting requirement](docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md)；Full
-    failure artifact=outputs/validation_runtime/full_20260818T040337Z/test_runtime_summary.json；9199
-    passed/1 failed/3 skipped/644 warnings in 1555.60s；failure is ignored local artifact
-    freshness only；external counters=1/1/0/0。'
+  - 'Codex capability coordinator: freeze final commit, rehydrate canonical page,
+    rerun final formal and parent-bound Full'
+  - ignored page 已重建并通过 freshness/commit/hash checks；随后 exact focused 揭示 historical
+    projection expected coverage 尚停在 2532，现已显式加入 2533 且 exact test=1 PASS。需刷新 DevEx/compatibility、提交
+    final tree、再次重建本地页面并完成五级 formal；publication blocked until PASS。
+  - 保留 admission seals 与 DQ=FAIL/PIT=NOT_EVALUATED；Atlas manifest task coverage 有序覆盖
+    TRADING-2481..2533；final-commit local page/sidecars current；Atlas focused、四前置
+    tier 及 parent-bound Full 全 PASS 后 ordinary push。
+  - '[supporting requirement](docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md)；parent
+    Full=outputs/validation_runtime/full_20260818T040337Z/test_runtime_summary.json；historical
+    projection exact focused=1 PASS；canonical terminal invariant keeps DONE；external
+    counters=1/1/0/0。'
   docs_links:
   - docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md
   terminal: true
-  canonical_row_sha256: 305ed22375687fff900e7ef00de65ce8765cfb8ff68719fb61fd4ce166acdfa7
-last_event_id: task-event-197cad1439889f07904efc04fdea9027
+  canonical_row_sha256: daf1067440d3cb67690f2b2b0f71b94358de5292ece1ad8ec21dcba946c5be70
+last_event_id: task-event-92abe799bf27a5ec5527ae4d00c843f7
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 51f3ba4f903b78722a13778fff13ce53730940ae88b7fe426783b34472d4179e
+fragment_checksum: 1a8f1169add6bdb144975ff4f2d112c099c9ed83f040a8c3e32872474661de1a

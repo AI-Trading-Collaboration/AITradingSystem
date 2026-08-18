@@ -187,6 +187,12 @@ final candidate `7e010afd4660e5d5c8448d9ac4acec8b3430d363` 的四个前置 forma
 随后运行 historical projection focused，并以该失败 artifact 为 parent 做完整 Full failure-fix rerun；
 不得以 focused PASS 替代 Full，也不得修改 tracked admission identity。
 
+ignored 页面首次重建后，exact failed test 已通过 manifest freshness、commit identity 与 artifact hash，
+并进一步暴露 historical projection 的 expected task coverage 尚停在 TRADING-2532。该 tracked test
+已显式加入 `TRADING-2533`，exact focused 为 `1 passed`。这不是放宽断言：页面 manifest 仍要求从
+TRADING-2481 到 TRADING-2533 的有序、无缺口 task coverage。最终 commit 形成后必须再次重建本地页面，
+再运行整组 Atlas focused、四个前置 tier 和 parent-bound 完整 Full。
+
 忽略的 replay workspace
 `D:/Work/AITradingSystem/outputs/external_validation/trading_2532_session_finalization_v2_once_20260817/`
 和 `G:/Download/Upgraded Magenta Gorilla.json` 继续保留。它们属于唯一 raw Results 复核证据；本任务只读使用，

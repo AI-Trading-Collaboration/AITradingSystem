@@ -65,7 +65,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "115faba656f9aec6eb64d0c4956c0ccde29701fb4dcab41333567dedff3f3b84"
+        "sha256": "6296702a10450a3fb720f03f4114ca9c0ed8ce0c58a72783c95de9ba238a6ef3"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -199,5 +199,5 @@
     "task_id": "DEVX-006C_COMPATIBILITY_AUTHORITY_FRAGMENTATION"
   },
   "section_id": "phase_devx_006c_compatibility_authority_fragmentation",
-  "section_sha256": "61fd8ec3fd45ac6a84c2f99e92b08ddd6a379e6b6b9e7f112e42395a35115bd7"
+  "section_sha256": "8dc24b38d224e2090868c5a38bfabb309d8d821e844533865558369afd1ace0f"
 }

@@ -139,7 +139,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_historical_projection_review
   path: tests/atlas/test_historical_projection_review.py
-  sha256: 4506a990f9f9a0b6259a97f08fed7377de29fabd5ddb1856ee371655e4fb5633
+  sha256: 4058594657b7c9701166b310ec9fba93803025ab748016443e90206ff04ffd61
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
