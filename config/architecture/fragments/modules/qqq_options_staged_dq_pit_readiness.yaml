@@ -1,0 +1,17 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_staged_dq_pit_readiness
+fragment_kind: module
+owner: data_governance
+module_prefix: src/ai_trading_system/qqq_options_research/staged_dq_pit_readiness.py
+public_contracts:
+  - PlatformAttestedDerivedEvidence
+  - QQQOptionsStagedReadinessDecision
+  - QQQOptionsStagedReadinessPolicy
+  - QQQOptionsStagedReadinessPolicyLoadResult
+  - ReadinessCheckEvidence
+  - StageReadinessDecision
+  - evaluate_qqq_options_staged_readiness
+  - load_qqq_options_staged_readiness_policy
+  - readiness_checks_from_dq_results
+compatibility_facades: []
+deprecation_status: active_reference_architecture

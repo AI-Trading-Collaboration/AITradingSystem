@@ -1,0 +1,81 @@
+schema_version: qqq_options_staged_dq_pit_readiness_policy.v1
+policy_id: qqq_options_staged_dq_pit_readiness_v1
+policy_version: 1.0.0
+status: REVIEWED_SERIAL_CONTRACT_WAVE
+owner: project_owner_and_data_governance
+owner_decision: owner_decision:TRADING-2534:2026-08-18:authorize_high_risk_blocker_remediation_serial_contract_wave_v1
+rationale: Separate data-research, shadow-selection, and execution evidence gates without weakening the frozen 2482 check facts.
+intended_effect: A zero-order evidence run is not required to prove order/fill chronology before data research can begin, while every applicable unknown or failure remains fail closed.
+validation_plan: Validate exact policy and base identities, stage monotonicity, 2533 blocked replay, alternate-route positive and negative cases, canonical seals, tamper rejection, and governed formal tiers.
+review_condition: Review before changing stage applicability, accepting another source-evidence route, calibrating numeric thresholds, or authorizing an external diagnostic.
+expiry_condition: Supersede only through an owner-reviewed serial contract wave with compatibility and migration evidence.
+registration_base_repository_code_sha: a887aee4e0d0cfe396a9f7e6994a46afa0c9fe44
+base_dq_policy_path: config/research/qqq_options_dq_pit_identity_v1.yaml
+base_dq_policy_file_sha256: 1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358
+base_dq_evaluator_path: src/ai_trading_system/qqq_options_research/dq_pit_identity.py
+base_dq_evaluator_file_sha256: baf9baffe1bc441342b9acfcca0010d3a40482bc63b8f5f16629d8b29326ef07
+shared_contract_sha256: c89916ee7c3a4d9979780bf9359b0b39f61a383fe25aaf251e61ae629b43ff6b
+required_check_ids:
+  - cache_identity
+  - chain_presence
+  - engine_identity
+  - evidence_identity
+  - exchange_calendar_identity
+  - fill_forward_ambiguity
+  - local_cache_dq_scope_separation
+  - open_interest_freshness
+  - order_fill_chronology
+  - prior_day_model_freshness
+  - provider_raw_checksum
+  - quote_freshness
+  - quote_integrity
+  - signal_selection_chronology
+  - symbol_mapping_identity
+stage_order:
+  - DATA_RESEARCH
+  - SHADOW_SELECTION
+  - EXECUTION
+stage_required_checks:
+  DATA_RESEARCH:
+    - cache_identity
+    - chain_presence
+    - engine_identity
+    - evidence_identity
+    - exchange_calendar_identity
+    - local_cache_dq_scope_separation
+    - open_interest_freshness
+    - prior_day_model_freshness
+    - provider_raw_checksum
+    - quote_freshness
+    - quote_integrity
+    - symbol_mapping_identity
+  SHADOW_SELECTION:
+    - signal_selection_chronology
+  EXECUTION:
+    - fill_forward_ambiguity
+    - order_fill_chronology
+source_evidence_routes:
+  - PROVIDER_RAW_CHECKSUM
+  - PLATFORM_ATTESTED_DERIVED
+alternate_route_trigger_reason: PROVIDER_RAW_CHECKSUM_UNAVAILABLE
+alternate_route_provider_state: UNAVAILABLE_PROVIDER_DOES_NOT_EXPOSE
+alternate_route_export_classification: EXPORT_ALLOWED_DERIVED
+alternate_route_license_state: CONFIRMED_EXPORT_SAFE_DERIVED
+numeric_thresholds:
+  max_quote_age_seconds: UNKNOWN_REQUIRES_POLICY_REVIEW
+  max_relative_spread: UNKNOWN_REQUIRES_POLICY_REVIEW
+  min_open_interest: UNKNOWN_REQUIRES_POLICY_REVIEW
+  min_volume: UNKNOWN_REQUIRES_POLICY_REVIEW
+unknown_can_pass: false
+current_window_session_exclusion_allowed: false
+external_action_authorized: false
+safety:
+  research_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  raw_options_data_export_allowed: false
+  strategy_execution_allowed: false
+  bounded_cloud_pilot_authorized: false
+  production_effect: none
+  broker_action: none

@@ -1,0 +1,16 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.qqq_options_staged_dq_pit_readiness
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: frozen_2482_dq_pit_checks_and_typed_export_safe_evidence_identity
+stages:
+  - preserve_all_15_check_facts_without_rewriting_fail_or_not_evaluated
+  - evaluate_data_research_applicability_before_strategy_chronology
+  - require_signal_selection_chronology_for_shadow_selection
+  - require_fill_forward_and_order_fill_chronology_for_execution
+  - accept_provider_raw_checksum_or_exact_platform_attested_derived_route
+  - propagate_fail_unknown_and_predecessor_blocks_monotonically
+  - seal_readiness_decision_without_authorizing_external_action
+compatibility_flow_entry_required: false
+generated_source_of_truth_active: false

@@ -1,0 +1,150 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2534_QQQ_OPTIONS_STAGED_DQ_PIT_RESEARCH_READINESS_AND_EXPORT_SAFE_EVIDENCE_AUTHORITY_V1
+  task_id_sha256: 4e969b5f1a96dcd759a84909da1166a3bf0ee95bd78c1e66d747f4de3f8cbdf6
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2534_QQQ_OPTIONS_STAGED_DQ_PIT_RESEARCH_READINESS_AND_EXPORT_SAFE_EVIDENCE_AUTHORITY_V1
+  title: null
+  domain: Data governance / staged research, shadow-selection, and execution readiness
+    with platform-attested export-safe evidence authority
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner / governed successor coordinator：仅在 2534 RELEASE exact
+    main 后登记 export-safe missing-session attribution；任何外部动作需独立 authority
+  requirement_refs:
+  - docs/requirements/TRADING-2534_QQQ_Options_Staged_DQ_PIT_Research_Readiness_And_Export_Safe_Evidence_Authority_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 结构性 chronology/alternate-evidence authority
+    已修复；2533 的 1 个 never-chain session 与 chain_presence=FAIL 仍真实阻塞研究，下一步须独立 export-safe
+    provider/transport attribution，不得复用 2532 token。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 2482/2533 事实不变；三阶段单调 fail-closed；alternate route 不冒充 raw checksum；2533 replay
+      三阶段仍 BLOCKED；focused 与 final-tree 五级 formal PASS；ordinary push、SHA verify、lease
+      cleanup。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2534_QQQ_OPTIONS_STAGED_DQ_PIT_RESEARCH_READINESS_AND_EXPORT_SAFE_EVIDENCE_AUTHORITY_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-18T14:22:45Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2534-registration-20260818-v1
+  lane_id: null
+  base_commit: a887aee4e0d0cfe396a9f7e6994a46afa0c9fe44
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2534_QQQ_OPTIONS_STAGED_DQ_PIT_RESEARCH_READINESS_AND_EXPORT_SAFE_EVIDENCE_AUTHORITY_V1
+    - Data governance / staged research, shadow-selection, and execution readiness
+      with platform-attested export-safe evidence authority
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator：完成最小串行 contract wave；Project Owner：后续 external
+      diagnostic 与数值阈值
+    - 2533 保持 1 FAIL/13 NOT_EVALUATED；先修复 zero-order chronology 循环依赖与 provider raw
+      checksum 不可得的 evidence authority，不运行 Cloud。
+    - 保留 2482/2533 事实；三个阶段单调 fail-closed；alternate route 不冒充 raw checksum；2533 replay
+      仍 BLOCKED；focused/formal PASS；ordinary push。
+    - 详见 `docs/requirements/TRADING-2534_QQQ_Options_Staged_DQ_PIT_Research_Readiness_And_Export_Safe_Evidence_Authority_V1.md`。production_effect=none、broker_action=none、external_action=none。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2534-registration-20260818-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0ef97365d7f283120cac5093fafed918
+- schema_version: task_event.v1
+  task_id: TRADING-2534_QQQ_OPTIONS_STAGED_DQ_PIT_RESEARCH_READINESS_AND_EXPORT_SAFE_EVIDENCE_AUTHORITY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-18T15:53:50Z'
+  actor: integration-coordinator
+  change_id: trading-2534-terminal-candidate-20260819-v1
+  lane_id: null
+  base_commit: a887aee4e0d0cfe396a9f7e6994a46afa0c9fe44
+  previous_state_event_id: task-event-0ef97365d7f283120cac5093fafed918
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner / governed successor coordinator：仅在 2534 RELEASE exact
+      main 后登记 export-safe missing-session attribution；任何外部动作需独立 authority
+    blocker_or_next_step: 结构性 chronology/alternate-evidence authority 已修复；2533 的 1
+      个 never-chain session 与 chain_presence=FAIL 仍真实阻塞研究，下一步须独立 export-safe provider/transport
+      attribution，不得复用 2532 token。
+    acceptance_criteria: 2482/2533 事实不变；三阶段单调 fail-closed；alternate route 不冒充 raw
+      checksum；2533 replay 三阶段仍 BLOCKED；focused 与 final-tree 五级 formal PASS；ordinary
+      push、SHA verify、lease cleanup。
+    notes: 终态候选：实现与 focused/adjacent/governance tests PASS；pre-close Architecture
+      865、Contract 276、Integration 995 PASS。production_effect=none、broker_action=none、external_action=none；RELEASE
+      以 final-tree 五级校验与 ordinary push 为准。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2534-terminal-candidate-20260819-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-61e3787e27ab1b421c02424ed8228494
+- schema_version: task_event.v1
+  task_id: TRADING-2534_QQQ_OPTIONS_STAGED_DQ_PIT_RESEARCH_READINESS_AND_EXPORT_SAFE_EVIDENCE_AUTHORITY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-18T16:50:54Z'
+  actor: integration-coordinator
+  change_id: trading-2534-terminal-binding-correction-20260819-v1
+  lane_id: null
+  base_commit: a887aee4e0d0cfe396a9f7e6994a46afa0c9fe44
+  previous_state_event_id: task-event-61e3787e27ab1b421c02424ed8228494
+  from_status: DONE
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner / governed successor coordinator：仅在 2534 RELEASE exact
+      main 后登记 export-safe missing-session attribution；任何外部动作需独立 authority
+    blocker_or_next_step: 结构性 chronology/alternate-evidence authority 已修复；2533 的 1
+      个 never-chain session 与 chain_presence=FAIL 仍真实阻塞研究，下一步须独立 export-safe provider/transport
+      attribution，不得复用 2532 token。
+    acceptance_criteria: 2482/2533 事实不变；三阶段单调 fail-closed；alternate route 不冒充 raw
+      checksum；2533 replay 三阶段仍 BLOCKED；focused 与 final-tree 五级 formal PASS；ordinary
+      push、SHA verify、lease cleanup。
+    notes: 详见 `docs/requirements/TRADING-2534_QQQ_Options_Staged_DQ_PIT_Research_Readiness_And_Export_Safe_Evidence_Authority_V1.md`。终态候选保留首次
+      Full 9205 PASS/7 FAIL failure evidence；7 failures 同源于 page-effectiveness successor
+      未分类，现以显式 BLOCKED 语义登记修复。production_effect=none、broker_action=none、external_action=none；RELEASE
+      以 corrected final-tree 五级 PASS 与 ordinary push 为准。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2534-terminal-binding-correction-20260819-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b737a641d2a72c1091984191358af8f1
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2534_QQQ_OPTIONS_STAGED_DQ_PIT_RESEARCH_READINESS_AND_EXPORT_SAFE_EVIDENCE_AUTHORITY_V1
+  - Data governance / staged research, shadow-selection, and execution readiness with
+    platform-attested export-safe evidence authority
+  - P0
+  - DONE
+  - Project Owner / governed successor coordinator：仅在 2534 RELEASE exact main 后登记
+    export-safe missing-session attribution；任何外部动作需独立 authority
+  - 结构性 chronology/alternate-evidence authority 已修复；2533 的 1 个 never-chain session
+    与 chain_presence=FAIL 仍真实阻塞研究，下一步须独立 export-safe provider/transport attribution，不得复用
+    2532 token。
+  - 2482/2533 事实不变；三阶段单调 fail-closed；alternate route 不冒充 raw checksum；2533 replay
+    三阶段仍 BLOCKED；focused 与 final-tree 五级 formal PASS；ordinary push、SHA verify、lease
+    cleanup。
+  - 详见 `docs/requirements/TRADING-2534_QQQ_Options_Staged_DQ_PIT_Research_Readiness_And_Export_Safe_Evidence_Authority_V1.md`。终态候选保留首次
+    Full 9205 PASS/7 FAIL failure evidence；7 failures 同源于 page-effectiveness successor
+    未分类，现以显式 BLOCKED 语义登记修复。production_effect=none、broker_action=none、external_action=none；RELEASE
+    以 corrected final-tree 五级 PASS 与 ordinary push 为准。
+  docs_links:
+  - docs/requirements/TRADING-2534_QQQ_Options_Staged_DQ_PIT_Research_Readiness_And_Export_Safe_Evidence_Authority_V1.md
+  terminal: true
+  canonical_row_sha256: b83978c5de971ab552a74f8ce4eec9cd1e6e30c64100f80690bee1cdd60c08c4
+last_event_id: task-event-b737a641d2a72c1091984191358af8f1
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 4db7a9886b1ef12ef6e34bd9d514866bcf49accc035b611f90c51e8ee9da6264

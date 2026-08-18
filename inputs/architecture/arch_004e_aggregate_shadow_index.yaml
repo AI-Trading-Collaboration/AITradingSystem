@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 126
+fragment_count: 128
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: c662672712c8efde701d857efdedddb261af21b3a54aac2c6920f2ca1436fe23
+  current_sha256: 96af93c7beeb1599ad0afad503b33c4543e97c1f50b2c61fc98a66b95b814f31
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 52
+  fragment_count: 53
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -88,6 +88,7 @@ targets:
   - config/architecture/fragments/flows/qqq_options_session_finalization_external_validation_admission.yaml
   - config/architecture/fragments/flows/qqq_options_shared_contract.yaml
   - config/architecture/fragments/flows/qqq_options_signal_package.yaml
+  - config/architecture/fragments/flows/qqq_options_staged_dq_pit_readiness.yaml
   - config/architecture/fragments/flows/report_audit_index.yaml
   - config/architecture/fragments/flows/research_review_pack.yaml
 fragments:
@@ -483,6 +484,13 @@ fragments:
   path: config/architecture/fragments/flows/qqq_options_signal_package.yaml
   sha256: 84b6caa523259afa5e31abd4bb0a591d8c649db7ec43315e6b36a7b39dc502da
   generated_source_of_truth_active: false
+- fragment_id: flow.qqq_options_staged_dq_pit_readiness
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/qqq_options_staged_dq_pit_readiness.yaml
+  sha256: 124c8115cb3d77ec484182e4653d0485baef9a140f5ce0d4cffc1612276cce7f
+  generated_source_of_truth_active: false
 - fragment_id: flow.report_audit_index
   fragment_kind: flow
   owner: architecture_governance
@@ -874,6 +882,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/qqq_options_signal_package.yaml
   sha256: 9f7dd68271603a79fffdea6c26dfe6b66ec23d3411d517268e13cdfc10d9b3e6
+  generated_source_of_truth_active: false
+- fragment_id: module.qqq_options_staged_dq_pit_readiness
+  fragment_kind: module
+  owner: data_governance
+  target_id: null
+  path: config/architecture/fragments/modules/qqq_options_staged_dq_pit_readiness.yaml
+  sha256: 7296bd260ac5e9b55cfb3c64ede13e693b09913af75102e322b790b4c7cb7cb5
   generated_source_of_truth_active: false
 - fragment_id: module.research_framework
   fragment_kind: module

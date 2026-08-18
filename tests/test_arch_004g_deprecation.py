@@ -57,13 +57,13 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-WAVE17_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_c002c804a23ec3f33d72"
-WAVE17_CURRENT_REPOSITORY_COUNTS = {
-    "python_module_count": 1135,
-    "python_test_file_count": 1295,
+WAVE18_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_6e2e1c83d60f0915ba20"
+WAVE18_CURRENT_REPOSITORY_COUNTS = {
+    "python_module_count": 1136,
+    "python_test_file_count": 1296,
     "direct_writer_current_count": 856,
 }
-WAVE17_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(
+WAVE18_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(
     zip(
         WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS,
         (105, 33, 29, 25),
@@ -124,9 +124,9 @@ def test_deprecation_reference_scan_never_opens_known_unrelated_bytes(
 def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     inventory = scan_deprecation_inventory(load_deprecation_policy())
     surfaces = {item.surface_id: item for item in inventory.surfaces}
-    repository_counts = WAVE17_CURRENT_REPOSITORY_COUNTS
+    repository_counts = WAVE18_CURRENT_REPOSITORY_COUNTS
 
-    assert inventory.inventory_id == WAVE17_CURRENT_INVENTORY_ID
+    assert inventory.inventory_id == WAVE18_CURRENT_INVENTORY_ID
     assert inventory.python_module_count == repository_counts["python_module_count"]
     assert inventory.python_test_file_count == repository_counts["python_test_file_count"]
     assert inventory.direct_writer_baseline_count == 894
@@ -147,7 +147,7 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     assert surfaces["dynamic_strategy_task_wrappers"].file_count == 99
     assert surfaces["dynamic_strategy_task_wrappers"].line_count == 88315
     assert surfaces["dynamic_strategy_task_wrappers"].top_level_function_count == 2114
-    for surface_id, expected_count in WAVE17_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS.items():
+    for surface_id, expected_count in WAVE18_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS.items():
         assert surfaces[surface_id].docs_config_reference_file_count == expected_count
     assert all(not item.removal_ready for item in inventory.surfaces)
     assert all(len(item.open_gate_ids) == 12 for item in inventory.surfaces)

@@ -42,12 +42,12 @@ def _rendered(
 def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 54
+    assert len(policy.task_sources) == 55
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
         "TRADING-2523B",
-        *[f"TRADING-{number}" for number in range(2524, 2534)],
+        *[f"TRADING-{number}" for number in range(2524, 2535)],
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -73,12 +73,12 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
     assert manifest.schema_version == "strategy_research_page_effectiveness.v2"
-    assert len(manifest.task_coverage) == 54
+    assert len(manifest.task_coverage) == 55
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
         "TRADING-2523B",
-        *[f"TRADING-{number}" for number in range(2524, 2534)],
+        *[f"TRADING-{number}" for number in range(2524, 2535)],
     ]
     coverage_by_task = {
         item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
@@ -158,6 +158,9 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
     )
     assert coverage_by_task["TRADING-2533"] == (
         "DISCLOSED_OFFLINE_DQ_PIT_ADMISSION_FAIL_CLOSED_NEXT_EVIDENCE_GAPS_EXPLICIT"
+    )
+    assert coverage_by_task["TRADING-2534"] == (
+        "DISCLOSED_STAGED_READINESS_AUTHORITY_IMPLEMENTED_CURRENT_EVIDENCE_STILL_BLOCKED"
     )
     assert len(manifest.source_artifacts) == 29
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)

@@ -261,6 +261,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2533_QC_QQQ_Options_Session_Finalization_V2_Export_Safe_DQ_PIT_Evidence_Admission_V1.md
     coverage: DISCLOSED_OFFLINE_DQ_PIT_ADMISSION_FAIL_CLOSED_NEXT_EVIDENCE_GAPS_EXPLICIT
     reader_summary_zh: 2533 已把 2532 的安全汇总逐项对照 2482 的 15 个数据可信性检查：只有“不能用别的数据代签”通过，1 个全日缺链使 chain presence 明确失败，其余 13 项因缺少时点、calendar/mapping、cache/engine/provider identity 或策略时序而未评估。当前结论为 DQ=FAIL、PIT=NOT_EVALUATED，研究、selection、engine 与交易继续关闭；本任务没有重跑 Cloud。
+  - task_id: TRADING-2534_QQQ_OPTIONS_STAGED_DQ_PIT_RESEARCH_READINESS_AND_EXPORT_SAFE_EVIDENCE_AUTHORITY_V1
+    requirement_path: docs/requirements/TRADING-2534_QQQ_Options_Staged_DQ_PIT_Research_Readiness_And_Export_Safe_Evidence_Authority_V1.md
+    coverage: DISCLOSED_STAGED_READINESS_AUTHORITY_IMPLEMENTED_CURRENT_EVIDENCE_STILL_BLOCKED
+    reader_summary_zh: 2534 已把数据研究、shadow selection 与 execution 的检查按实际发生顺序分成三个单调 fail-closed 门，并为 provider raw checksum 不可得定义不冒充 raw checksum 的 platform-attested export-safe 替代证据路径。它只消除了“先有执行证据才能开始研究”的循环依赖，没有修复 2533 的 1 个全日缺链；当前三个阶段仍由 chain_presence=FAIL 阻塞，没有运行 Cloud、导出 raw rows 或授权 selection、engine 与交易。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

@@ -8760,3 +8760,33 @@ identity。
 as-of、calendar/mapping identity、cache/engine/platform identity、provider raw checksum availability，以及未来
 策略运行才可能产生的 chronology。任何新外部采集必须由独立 proposal/admission 重新绑定 scope、hash、
 expiry 与动作上限；已消费的 2532 token 不可复用。
+
+## TRADING-2534 分阶段 DQ/PIT 研究准入与 export-safe 证据权威
+
+`qqq_options_research.staged_dq_pit_readiness` 在 2482 的 15 项 immutable check facts 之上增加
+独立 readiness decision，不修改原 `DQReportRecord`、status 或 reason code。它把数据研究、shadow
+selection 与 execution 按真实发生顺序分开，避免要求 zero-order transport run 在研究开始前证明尚未发生的
+order/fill chronology，同时保持任一适用 FAIL、unknown 或 identity drift fail closed。
+
+```text
+2482 canonical 15-check facts / 2533 exact admission replay
+  -> require all 15 check ids exactly once in canonical order
+  -> DATA_RESEARCH gate
+       chain/quote/freshness/OI/Greeks/calendar/mapping/cache/engine/evidence
+       + provider raw checksum
+         or exact PLATFORM_ATTESTED_DERIVED route without rewriting the raw-checksum fact
+  -> SHADOW_SELECTION gate
+       requires DATA_RESEARCH READY + signal_selection_chronology PASS
+  -> EXECUTION gate
+       requires SHADOW_SELECTION READY
+       + fill_forward_ambiguity PASS + order_fill_chronology PASS
+  -> predecessor NOT_READY/BLOCKED propagates monotonically
+  -> seal qqq_options_staged_dq_pit_readiness_decision.v1
+  -> external_action_authorized=false / production_effect=none / broker_action=none
+```
+
+alternate route 只在 provider 明确不暴露 raw checksum 时适用，并必须绑定 confirmed
+platform/tier/engine/evidence manifest、exact repository/contract/2482 policy/evaluator identities、完整
+requested range 与 session count、derived evidence 与 manifest seals、deterministic replay 和已确认 license
+state。derived seal 不能冒充 provider raw checksum。当前 2533 的 `chain_presence=FAIL` 会使三个阶段继续
+`BLOCKED`；本 contract wave 不排除那个交易日、不缩短主窗口，也不运行新的 Cloud 或交易动作。
