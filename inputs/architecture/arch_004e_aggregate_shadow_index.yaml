@@ -400,7 +400,7 @@ fragments:
   owner: architecture_governance
   target_id: system_flow
   path: config/architecture/fragments/flows/qqq_options_exact_date_provider_catalog_attribution_correction.yaml
-  sha256: 651cd859d95a7339cf4a1b479bb631c163f0e35f22212cb3836dbe66950b49d9
+  sha256: c56daef2b490eccc110e9ed9abfd2948f46e7d1cbf4bf47efb85aa577b2381e2
   generated_source_of_truth_active: false
 - fragment_id: flow.qqq_options_final_never_chain_provider_transport_attribution_proposal
   fragment_kind: flow
@@ -792,7 +792,7 @@ fragments:
   owner: options_daily_backtest_governance
   target_id: null
   path: config/architecture/fragments/modules/qqq_options_exact_date_provider_catalog_attribution_correction.yaml
-  sha256: 232acba438a54973b9811b04bb98c907c20bbf835e9a289b128dca4c600dd68a
+  sha256: 9e7ecb774b5eba41dfb78bdd55acd8e3852ca96e0d4af7cf52f12cd6705f50b3
   generated_source_of_truth_active: false
 - fragment_id: module.qqq_options_final_never_chain_provider_transport_attribution_proposal
   fragment_kind: module

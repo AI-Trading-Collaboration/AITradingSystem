@@ -166,3 +166,12 @@ primary source，不得 forward-fill、静默排除该日或把 derived seal 冒
   `outputs/validation_runtime/trading_2537_full_final_v1/test_runtime_summary.json`；该 artifact 缺失或
   status 非 PASS 时不得进入 local-main integration。当前 external counters 仍为 `0/0/0/0`，没有
   QuantConnect、Cloud、browser、raw rows、Object Store、orders、fills 或 broker action。
+- 2026-08-20：提交 `64cd439c4d5aa2c7d73c129689baf0a0259e3002` 的首次 Full 为
+  `9243 passed / 4 failed / 3 skipped / 643 warnings`，parent artifact 即上述
+  `trading_2537_full_final_v1/test_runtime_summary.json`。四项失败均为生成权威新鲜度缺口：一次
+  ARCH-004E aggregate shadow 未在 architecture fragment 尾部格式修正后重建，另三项来自
+  DEVX-006C compatibility authority 尚未吸收本任务对 `docs/system_flow.md`、deprecation test 与
+  canonical task-source fragment 的当前哈希。exact-date probe 行为、2535 immutable predecessor、
+  Atlas exact-commit 页面和其余 9243 项均未失败。修复必须重建并验证这两条 authority，创建新的
+  final commit，按新 commit 重建 ignored Atlas sidecars，再以该失败 artifact 为 parent 运行完整
+  `failure_fix_rerun`；不得用 focused PASS 代替 Full。
