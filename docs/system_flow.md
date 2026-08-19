@@ -8790,3 +8790,34 @@ platform/tier/engine/evidence manifest、exact repository/contract/2482 policy/e
 requested range 与 session count、derived evidence 与 manifest seals、deterministic replay 和已确认 license
 state。derived seal 不能冒充 provider raw checksum。当前 2533 的 `chain_presence=FAIL` 会使三个阶段继续
 `BLOCKED`；本 contract wave 不排除那个交易日、不缩短主窗口，也不运行新的 Cloud 或交易动作。
+
+## TRADING-2535 唯一 final never-chain session 的 export-safe provider/transport attribution proposal
+
+`qqq_options_research.final_never_chain_provider_transport_attribution_proposal` 从 2534 RELEASE exact main
+独立建立 proposal。现有 2532 aggregate 只能证明 `1202 sessions / 1201 chain-present / 1 final
+never-chain`，不能指出日期，也不能区分 provider catalog 当日为空与 option subscription 已配置但
+`Slice.option_chains` 没有交付。2535 只离线生成 future candidate，不访问 QuantConnect。
+
+```text
+2532 exact export-safe aggregate + 2533 blocked admission + 2534 staged-readiness authority
+  -> bind released main, source file/content seals and 1202-session XNYS inventory
+  -> candidate observes subscribed Slice option-chain event count per session
+  -> candidate independently probes option_chain catalog and retains count only
+  -> after exact finalization require unique never-chain count = 1
+  -> export bounded runtime statistics only:
+       target session date / equity Slice present / subscribed chain events
+       provider probe status / provider contract count / typed attribution / identity / terminal
+  -> classify exactly one of:
+       PROVIDER_CATALOG_EMPTY_FOR_TARGET_SESSION
+       PROVIDER_CATALOG_AVAILABLE_BUT_SUBSCRIBED_SLICE_NEVER_DELIVERED
+       PROVIDER_PROBE_ERROR
+       ATTRIBUTION_INDETERMINATE
+  -> never export contract identifiers, symbols, strike, expiry, quote, Greeks, IV, OI, volume or raw rows
+  -> no logs-as-data / Object Store / orders / fills / DQ-PIT rewrite / selection / engine authority
+  -> seal run scope, proposal, project code, unsigned owner request and package manifest
+  -> ordinary-pushed exact main + new single-use owner token required before any project mutation or run
+```
+
+本 proposal 只缩小 data availability/transport 根因，不自动把 `chain_presence=FAIL` 改为 PASS，也不代表
+策略无效或可重新开放研究。2532 的 token 已消费且过期；2535 publication 之前以及新的 exact owner token
+admission 之前，external counters 固定为 `project_mutations/cloud_backtests/orders/fills = 0/0/0/0`。

@@ -2098,7 +2098,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
             "</li>"
         )
         for item in manifest.task_coverage
-        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2534
+        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2536
     )
     return f"""
     <section class="page-effectiveness" id="page-effectiveness" aria-labelledby="page-effectiveness-title" data-page-freshness="{escape(manifest.freshness_status.value)}" data-task-coverage-count="{len(manifest.task_coverage)}">
@@ -2128,7 +2128,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <p>工程自动化只能更新工程验收；Owner 视觉验收和目标读者理解验收必须来自真实人工事实。</p>
         </div>
         <details class="successor-coverage" data-reader-layer="audit">
-          <summary>查看 TRADING-2494–2534（含 2523A/2523B）如何影响当前页面</summary>
+          <summary>查看 TRADING-2494–2536（含 2523A/2523B）如何影响当前页面</summary>
           <ul>{successor_rows}</ul>
         </details>
       </div>
@@ -2139,7 +2139,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <div><dt>repository commit</dt><dd><code>{escape(manifest.repository_commit)}</code></dd></div>
           <div><dt>source snapshot</dt><dd><code>{escape(manifest.source_snapshot_commit)}</code></dd></div>
           <div><dt>policy SHA-256</dt><dd><code>{escape(manifest.policy_sha256)}</code></dd></div>
-          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2504, 2506..2534, 2523A, 2523B</code> · {len(manifest.source_artifacts)} semantic sources</dd></div>
+          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2504, 2506..2536, 2523A, 2523B</code> · {len(manifest.source_artifacts)} semantic sources</dd></div>
         </dl>
         <h3>验收原始状态</h3><ul>{acceptance_audit}</ul>
       </details>
@@ -2567,7 +2567,7 @@ def _render_audit_destinations(
         f"<code>{escape(item.task_id)}</code>"
         f"<span>{escape(item.reader_summary_zh)}</span></li>"
         for item in manifest.task_coverage
-        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2534
+        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2536
     )
     return f"""
     <section class="audit-destinations" data-reader-section="AUDIT_DESTINATIONS" data-task-coverage-count="{len(manifest.task_coverage)}" aria-labelledby="audit-destinations-title">

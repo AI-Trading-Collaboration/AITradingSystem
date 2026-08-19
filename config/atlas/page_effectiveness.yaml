@@ -265,6 +265,14 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2534_QQQ_Options_Staged_DQ_PIT_Research_Readiness_And_Export_Safe_Evidence_Authority_V1.md
     coverage: DISCLOSED_STAGED_READINESS_AUTHORITY_IMPLEMENTED_CURRENT_EVIDENCE_STILL_BLOCKED
     reader_summary_zh: 2534 已把数据研究、shadow selection 与 execution 的检查按实际发生顺序分成三个单调 fail-closed 门，并为 provider raw checksum 不可得定义不冒充 raw checksum 的 platform-attested export-safe 替代证据路径。它只消除了“先有执行证据才能开始研究”的循环依赖，没有修复 2533 的 1 个全日缺链；当前三个阶段仍由 chain_presence=FAIL 阻塞，没有运行 Cloud、导出 raw rows 或授权 selection、engine 与交易。
+  - task_id: TRADING-2535_QC_QQQ_OPTIONS_FINAL_NEVER_CHAIN_SESSION_EXPORT_SAFE_PROVIDER_TRANSPORT_ATTRIBUTION_PROPOSAL_V1
+    requirement_path: docs/requirements/TRADING-2535_QC_QQQ_Options_Final_Never_Chain_Session_Export_Safe_Provider_Transport_Attribution_Proposal_V1.md
+    coverage: DISCLOSED_EXPORT_SAFE_PROVIDER_TRANSPORT_ATTRIBUTION_PROPOSAL_READY_EXTERNAL_COLLECTION_UNEXECUTED
+    reader_summary_zh: 2535 已为唯一全日未见 option chain 的 session 建立独立、zero-order、export-safe 归因提案：未来一次另行授权的采集只会用安全计数区分 provider 当日目录为空、provider 有目录但 subscribed Slice 未交付、provider probe 出错或仍无法归因。当前只完成了离线 sealed package、exact hashes 与 replay/tamper 检查，尚未执行 Cloud 或 provider probe，因此不能声称该 session 已获得真实归因，也不改变 DQ=FAIL、PIT=NOT_EVALUATED、research/selection/engine 关闭和禁止交易的边界。
+  - task_id: TRADING-2536_ATLAS_PROVIDER_TRANSPORT_ATTRIBUTION_SUCCESSOR_CLASSIFICATION_SERIAL_CONTRACT_WAVE_V1
+    requirement_path: docs/requirements/TRADING-2536_Atlas_Provider_Transport_Attribution_Successor_Classification_Serial_Contract_Wave_V1.md
+    coverage: DISCLOSED_ATLAS_SUCCESSOR_CLASSIFICATION_SERIAL_CONTRACT_WAVE
+    reader_summary_zh: 2536 只负责把 2535 的 proposal-ready、external-collection-unexecuted 边界显式纳入 Atlas freshness 合同，并刷新页面的来源 identity；它不改变 2535 package、不执行归因采集，也不冒充 Owner visual review、reader-comprehension review、DQ/PIT 或策略结论。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

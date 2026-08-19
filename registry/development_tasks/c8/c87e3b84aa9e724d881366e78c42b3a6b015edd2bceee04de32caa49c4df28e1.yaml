@@ -1,0 +1,149 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2535_QC_QQQ_OPTIONS_FINAL_NEVER_CHAIN_SESSION_EXPORT_SAFE_PROVIDER_TRANSPORT_ATTRIBUTION_PROPOSAL_V1
+  task_id_sha256: c87e3b84aa9e724d881366e78c42b3a6b015edd2bceee04de32caa49c4df28e1
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2535_QC_QQQ_OPTIONS_FINAL_NEVER_CHAIN_SESSION_EXPORT_SAFE_PROVIDER_TRANSPORT_ATTRIBUTION_PROPOSAL_V1
+  title: null
+  domain: Data governance / export-safe provider versus subscribed-transport attribution
+    proposal for the unique final never-chain QQQ option session
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner / governed successor coordinator：proposal ordinary push
+    后仅可用新的 exact single-use token 进入 admission；不得复用 2532 token
+  requirement_refs:
+  - docs/requirements/TRADING-2535_QC_QQQ_Options_Final_Never_Chain_Session_Export_Safe_Provider_Transport_Attribution_Proposal_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Offline sealed proposal 已完成；external counters
+    仍为 0/0/0/0。下一步是 final-tree validation、ordinary push，再等待 OWNER_FINAL_TOKEN_REQUIRED；本任务不自动访问
+    QuantConnect。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Exact 2532/2533/2534 identities、1202 sessions/1 never-chain facts 与 count-only
+      provider/subscribed-transport contract 已绑定；raw rows/identifiers/fields/logs/Object
+      Store/orders/fills 禁止；focused/formal PASS、ordinary push、SHA verify。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2535_QC_QQQ_OPTIONS_FINAL_NEVER_CHAIN_SESSION_EXPORT_SAFE_PROVIDER_TRANSPORT_ATTRIBUTION_PROPOSAL_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-19T01:16:37Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2535-registration-20260819-v1
+  lane_id: null
+  base_commit: c290f1244bb81df789d3b95d29d894b657943ca8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2535_QC_QQQ_OPTIONS_FINAL_NEVER_CHAIN_SESSION_EXPORT_SAFE_PROVIDER_TRANSPORT_ATTRIBUTION_PROPOSAL_V1
+    - Data governance / export-safe provider versus subscribed-transport attribution
+      proposal for the unique final never-chain QQQ option session
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator：完成 offline sealed proposal；Project Owner：任何后续 external
+      action
+    - 2532/2533 只证明 1 个 final never-chain session，尚无 session date 与 provider catalog
+      / subscribed Slice 交付分界证据；2532 token 不可复用。
+    - 生成 exact-hash、zero-order、aggregate-only proposal；typed attribution 不冒充 DQ/PIT
+      PASS；禁止 raw rows、logs、Object Store、orders/fills；focused/formal PASS 与 ordinary
+      push。
+    - 详见 `docs/requirements/TRADING-2535_QC_QQQ_Options_Final_Never_Chain_Session_Export_Safe_Provider_Transport_Attribution_Proposal_V1.md`。production_effect=none、broker_action=none、external_action=none。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2535-registration-20260819-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e83b20a0c4edfd0cec0363b9980f1b90
+- schema_version: task_event.v1
+  task_id: TRADING-2535_QC_QQQ_OPTIONS_FINAL_NEVER_CHAIN_SESSION_EXPORT_SAFE_PROVIDER_TRANSPORT_ATTRIBUTION_PROPOSAL_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-19T02:15:03Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2535-terminal-proposal-candidate-20260819-v1
+  lane_id: null
+  base_commit: c290f1244bb81df789d3b95d29d894b657943ca8
+  previous_state_event_id: task-event-e83b20a0c4edfd0cec0363b9980f1b90
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner / governed successor coordinator：proposal ordinary push
+      后仅可用新的 exact single-use token 进入 admission；不得复用 2532 token
+    blocker_or_next_step: Offline sealed proposal 已完成；external counters 仍为 0/0/0/0。下一步是
+      final-tree validation、ordinary push，再等待 OWNER_FINAL_TOKEN_REQUIRED；本任务不自动访问
+      QuantConnect。
+    acceptance_criteria: Exact 2532/2533/2534 identities、1202 sessions/1 never-chain
+      facts 与 count-only provider/subscribed-transport contract 已绑定；raw rows/identifiers/fields/logs/Object
+      Store/orders/fills 禁止；focused/formal PASS、ordinary push、SHA verify。
+    notes: 终态 proposal candidate：policy/run-scope/proposal/project-code/manifest exact
+      hashes 已生成；focused proposal 13 PASS、adjacent 76 PASS、architecture/generated
+      60 PASS，Ruff PASS。production_effect=none、broker_action=none、external_action=none；RELEASE
+      仍以 final-tree formal 与 ordinary push 为准。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2535-terminal-proposal-candidate-20260819-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-bcbfe429aa0ddaeabf1b3d1ca854f350
+- schema_version: task_event.v1
+  task_id: TRADING-2535_QC_QQQ_OPTIONS_FINAL_NEVER_CHAIN_SESSION_EXPORT_SAFE_PROVIDER_TRANSPORT_ATTRIBUTION_PROPOSAL_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-19T03:03:04Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2535-terminal-requirement-binding-correction-20260819-v1
+  lane_id: null
+  base_commit: c290f1244bb81df789d3b95d29d894b657943ca8
+  previous_state_event_id: task-event-bcbfe429aa0ddaeabf1b3d1ca854f350
+  from_status: DONE
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner / governed successor coordinator：proposal ordinary push
+      后仅可用新的 exact single-use token 进入 admission；不得复用 2532 token
+    blocker_or_next_step: Offline sealed proposal 已完成；external counters 仍为 0/0/0/0。下一步是
+      final-tree validation、ordinary push，再等待 OWNER_FINAL_TOKEN_REQUIRED；本任务不自动访问
+      QuantConnect。
+    acceptance_criteria: Exact 2532/2533/2534 identities、1202 sessions/1 never-chain
+      facts 与 count-only provider/subscribed-transport contract 已绑定；raw rows/identifiers/fields/logs/Object
+      Store/orders/fills 禁止；focused/formal PASS、ordinary push、SHA verify。
+    notes: 详见 `docs/requirements/TRADING-2535_QC_QQQ_Options_Final_Never_Chain_Session_Export_Safe_Provider_Transport_Attribution_Proposal_V1.md`。2535
+      terminal proposal candidate 由 TRADING-2536 吸收完成 Atlas 分类、final-tree validation
+      与 ordinary publication；production_effect=none、broker_action=none、external_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2535-terminal-requirement-binding-correction-20260819-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b9a8daf8690d9a3fc5da9c757e71c1cf
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2535_QC_QQQ_OPTIONS_FINAL_NEVER_CHAIN_SESSION_EXPORT_SAFE_PROVIDER_TRANSPORT_ATTRIBUTION_PROPOSAL_V1
+  - Data governance / export-safe provider versus subscribed-transport attribution
+    proposal for the unique final never-chain QQQ option session
+  - P0
+  - DONE
+  - Project Owner / governed successor coordinator：proposal ordinary push 后仅可用新的 exact
+    single-use token 进入 admission；不得复用 2532 token
+  - Offline sealed proposal 已完成；external counters 仍为 0/0/0/0。下一步是 final-tree validation、ordinary
+    push，再等待 OWNER_FINAL_TOKEN_REQUIRED；本任务不自动访问 QuantConnect。
+  - Exact 2532/2533/2534 identities、1202 sessions/1 never-chain facts 与 count-only
+    provider/subscribed-transport contract 已绑定；raw rows/identifiers/fields/logs/Object
+    Store/orders/fills 禁止；focused/formal PASS、ordinary push、SHA verify。
+  - 详见 `docs/requirements/TRADING-2535_QC_QQQ_Options_Final_Never_Chain_Session_Export_Safe_Provider_Transport_Attribution_Proposal_V1.md`。2535
+    terminal proposal candidate 由 TRADING-2536 吸收完成 Atlas 分类、final-tree validation
+    与 ordinary publication；production_effect=none、broker_action=none、external_action=none。
+  docs_links:
+  - docs/requirements/TRADING-2535_QC_QQQ_Options_Final_Never_Chain_Session_Export_Safe_Provider_Transport_Attribution_Proposal_V1.md
+  terminal: true
+  canonical_row_sha256: c5ccdcf20d4640f8d857d716c6c58637529b76d6a7bafadd37c8982e8f6c3387
+last_event_id: task-event-b9a8daf8690d9a3fc5da9c757e71c1cf
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 94715c41eb67981d4f11e4967eeb2d41e2129e0f0b2ff1de4e520e25d6158cb6

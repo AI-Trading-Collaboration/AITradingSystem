@@ -1,0 +1,39 @@
+{
+  "artifact_count": 4,
+  "artifacts": [
+    {
+      "byte_count": 22533,
+      "kind": "PROJECT_CODE",
+      "relative_path": "main.py",
+      "sha256": "9307d438da6ba0b46f42c590db683d383d3b272e973bdede2819166ebbf18ebe"
+    },
+    {
+      "byte_count": 2643,
+      "kind": "OWNER_DECISION_REQUEST",
+      "relative_path": "owner_decision_request.md",
+      "sha256": "e9092c0ba8ea98668d1193fa6cd2acedb5f40e1aea7da6ac07f7b51201b49bac"
+    },
+    {
+      "byte_count": 2162,
+      "kind": "PROPOSAL",
+      "relative_path": "proposal.json",
+      "sha256": "aff23a1fc9c49dfd3a8d14a6b8cf2940d9749eceb76d060a0e895a421e06fca3"
+    },
+    {
+      "byte_count": 23403,
+      "kind": "RUN_SCOPE",
+      "relative_path": "run_scope.json",
+      "sha256": "ef67fefb3313a9881861150779ddcc1eca809f5b032c98e4eb0aff7e32469748"
+    }
+  ],
+  "broker_action": "none",
+  "content_sha256": "3978c94ad4a5fa00ef77ae9325bec727bc20df0bc722e123916f22e821b927c1",
+  "external_action_authorized": false,
+  "external_action_performed": false,
+  "fills": 0,
+  "orders": 0,
+  "production_effect": "none",
+  "schema_version": "qc_qqq_options_final_never_chain_provider_transport_attribution_package_manifest.v1",
+  "status": "SEALED_OFFLINE_PROPOSAL_OWNER_REVIEW_REQUIRED",
+  "task_id": "TRADING-2535_QC_QQQ_OPTIONS_FINAL_NEVER_CHAIN_SESSION_EXPORT_SAFE_PROVIDER_TRANSPORT_ATTRIBUTION_PROPOSAL_V1"
+}

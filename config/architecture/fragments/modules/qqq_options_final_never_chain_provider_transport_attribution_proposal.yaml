@@ -1,0 +1,20 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_final_never_chain_provider_transport_attribution_proposal
+fragment_kind: module
+owner: options_daily_backtest_governance
+module_prefix: src/ai_trading_system/qqq_options_research/final_never_chain_provider_transport_attribution_proposal.py
+public_contracts:
+  - AttributionPackageManifest
+  - AttributionProposal
+  - AttributionProposalError
+  - AttributionProposalPolicy
+  - AttributionRunScope
+  - BuiltAttributionProposalPackage
+  - LoadedAttributionProposalPolicy
+  - ManifestArtifact
+  - build_attribution_proposal_package
+  - load_attribution_proposal_package
+  - load_attribution_proposal_policy
+  - write_attribution_proposal_package
+compatibility_facades: []
+deprecation_status: active_reference_architecture

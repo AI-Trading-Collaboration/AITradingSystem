@@ -2016,27 +2016,27 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "8e4ee33de18dd65fac767128d00ee03e4cb874037eea6367d00afe89aa499f66"
+        "sha256": "8635adb307d7e76749e945b6d9951ca1189de8640d4e14147f243768ca92372e"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
-        "sha256": "c3a1cc38e839a0d76008f40167ec9a568e55ad761df81609be80a8afc2362340"
+        "sha256": "aa9da589714c06ad71838f5556c94a24c25a6320e12c96f55d3e3fd225e00146"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "df3b10334249cc8ab6976acbc0b27cb984482355d70a7fb29d574b69423463d3"
+        "sha256": "f29c92db154d69f8bcbbb509792392715fc02af34c22ea5fe68f98b1b832f0e2"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "a86cab9e0bee70d2b25eb2b197de52e1c9fd6e48ef43d713cb3bf1508ea271e6"
+        "sha256": "29ea1607871b66b1368617b224c95c7ffa32f35960c78d3ea8f04b430be0a23d"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
-        "sha256": "7b35ba4228041fb06b9d10e40745f2f35d7b4eea76fcd0094ec6b26e9f50dd70"
+        "sha256": "f574e7392c349c215e04637db86d601c2e3811acec3f5acb1f54f1dc0d5350e5"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -2101,7 +2101,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004g_deprecation.py",
-        "sha256": "72ea9579efc9d7ae65f1c00ca7a4c95e3c9774a6407d51329e175ae5772fcf2d"
+        "sha256": "2537c8d66cd6a7161fd671b4a4a35b65db64eedd1edcd7a62de410802fff4e4d"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -2131,7 +2131,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
-        "sha256": "49d07954f2e65d8f0c6d9dc1b2b50ddedf072f6919de64dca141cf61693a4d51"
+        "sha256": "e9568ee144d504e4daaf9ab96ec6877b520bbe68e07b7d43da49f35fa58f7a0c"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -2151,12 +2151,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/system_flow.md",
-        "sha256": "96af93c7beeb1599ad0afad503b33c4543e97c1f50b2c61fc98a66b95b814f31"
+        "sha256": "efbe87e00034051a50c3b3cb3483954453bf864c223a9fc912d08ccdc24047d8"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-        "sha256": "f3bd63b989451d8fd9cfe55b06c8218e783d9e3243a156e55511429dc6ee586f"
+        "sha256": "880003de14ec2641e0e50eb39d5a1297d442c43b96769d7eb45d9c15c81706c3"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -2166,7 +2166,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "538c07a1cf938267ce444b87aa0d5c70e31316ea3a93e2108830cb2834a66e61"
+        "sha256": "100acd440c6a086625ed2bcde32b93f5ce19cf16e5f2c242a84d365b010ef980"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -2181,7 +2181,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "036889ad80e058efb7d9a7b01919acaff787d6da60836d9aca61e5457af84c18"
+        "sha256": "1da34ef3093452a19be5626e5f06e0e5494c0341e8a59ccf6bbe23e4ae01a8aa"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -2221,12 +2221,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register_completed.md",
-        "sha256": "44bd8e47275fbc73c3b24c3e023dd44c0a3ebfe9039dc4a988cb184e1122db88"
+        "sha256": "63511e8b9e26c54e04d487883f55e3824de61870d4d73fb093dd43bc485bd016"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "a22d0e1edf53ce5f57f23218e7aa4ba9b18e3f5d140c25b506aa30dccb02fa12"
+        "sha256": "7f28125dba6dd6573088590e63029ba39000cee193ae8c3797fc4ed885035933"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -2336,7 +2336,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_005_s5_task_source_cutover.py",
-        "sha256": "43029ad7e514c2d66c55667192c0e14769cbf31570e7ac1a7ba68629ec3488b7"
+        "sha256": "3b44b7a4ef766f19e76919d43978e332b48c4d1d4721fbdc28ffa98d23707586"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -4384,25 +4384,25 @@
     },
     "task_id": "ARCH-005S5_CANONICAL_TASK_SOURCE_CUTOVER",
     "task_registry_authority": {
-      "active_task_count": 494,
-      "completed_task_count": 513,
+      "active_task_count": 495,
+      "completed_task_count": 514,
       "consumer_inventory_path": "inputs/architecture/arch_005_s5_consumer_inventory.yaml",
       "consumer_inventory_sha256": "19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4",
       "cutover_performed": true,
-      "final_chain_sha256": "5744f93ead32accef9b0cfbb766952e8fa1a56f815da8720a7fd05c9e4586149",
-      "fragment_count": 1007,
+      "final_chain_sha256": "96c1e5208a51118d4e8900d583ba0acc7dd796d756862d65c3f51fe588724cbb",
+      "fragment_count": 1009,
       "fragment_root": "registry/development_tasks",
-      "governance_cycle_count": 149,
+      "governance_cycle_count": 154,
       "index_path": "inputs/architecture/arch_005_task_registry_index.yaml",
-      "index_sha256": "a22d0e1edf53ce5f57f23218e7aa4ba9b18e3f5d140c25b506aa30dccb02fa12",
+      "index_sha256": "7f28125dba6dd6573088590e63029ba39000cee193ae8c3797fc4ed885035933",
       "manifest_path": "inputs/architecture/arch_005_s5_cutover_manifest.yaml",
       "manifest_sha256": "d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6",
       "manual_row_move_workflow_enabled": false,
       "rollback_mode": "OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY",
       "source_of_truth": "ARCH_005_TASK_REGISTRY",
-      "task_count": 1007
+      "task_count": 1009
     }
   },
   "section_id": "phase_arch_005_s5_canonical_task_source_cutover",
-  "section_sha256": "b9ed4e52e4d36fed761ed143f1b993b614f246943c804383f3fe729758eecd90"
+  "section_sha256": "962638b18f3795985c74cc64c278c01467d60dce1f4ff896173129e2ec338b3f"
 }

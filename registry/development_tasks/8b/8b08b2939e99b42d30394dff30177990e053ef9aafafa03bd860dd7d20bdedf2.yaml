@@ -1,0 +1,124 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2536_ATLAS_PROVIDER_TRANSPORT_ATTRIBUTION_SUCCESSOR_CLASSIFICATION_SERIAL_CONTRACT_WAVE_V1
+  task_id_sha256: 8b08b2939e99b42d30394dff30177990e053ef9aafafa03bd860dd7d20bdedf2
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2536_ATLAS_PROVIDER_TRANSPORT_ATTRIBUTION_SUCCESSOR_CLASSIFICATION_SERIAL_CONTRACT_WAVE_V1
+  title: null
+  domain: Atlas / provider-transport attribution successor classification serial contract
+    wave
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner / governed external attribution admission successor
+  requirement_refs:
+  - docs/requirements/TRADING-2536_Atlas_Provider_Transport_Attribution_Successor_Classification_Serial_Contract_Wave_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Atlas classification and canonical page
+    refresh are implemented. Await a fresh exact single-use Owner token bound to the
+    ordinary-pushed proposal identities before any QuantConnect/Cloud/provider probe;
+    2532 token remains consumed and invalid for reuse.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 2535 and 2536 are explicitly classified; canonical page freshness CURRENT;
+      sealed package hashes unchanged; focused and five formal tiers PASS on final
+      tree; ordinary push and SHA verification; external counters remain 0/0/0/0 until
+      a new exact token.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2536_ATLAS_PROVIDER_TRANSPORT_ATTRIBUTION_SUCCESSOR_CLASSIFICATION_SERIAL_CONTRACT_WAVE_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-19T02:56:12Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2536-registration-20260819-v1
+  lane_id: null
+  base_commit: c290f1244bb81df789d3b95d29d894b657943ca8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2536_ATLAS_PROVIDER_TRANSPORT_ATTRIBUTION_SUCCESSOR_CLASSIFICATION_SERIAL_CONTRACT_WAVE_V1
+    - Atlas / provider-transport attribution successor classification serial contract
+      wave
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator
+    - 2535 proposal candidate exists but Full failed UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED;
+      append-only 2535 terminal event cannot be reopened, so this successor must classify
+      and publish it without changing external-action boundaries.
+    - Absorb the same-base 2535 candidate; classify 2535 in page effectiveness as
+      proposal ready/external attribution unexecuted; refresh canonical Atlas artifacts;
+      focused and five formal tiers PASS; ordinary push and SHA verify; no Cloud/raw
+      rows/orders/fills.
+    - 详见 `docs/requirements/TRADING-2536_Atlas_Provider_Transport_Attribution_Successor_Classification_Serial_Contract_Wave_V1.md`。production_effect=none、broker_action=none、external_action=none。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2536-registration-20260819-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-9a78bc753f96c3af4b671faa53868a29
+- schema_version: task_event.v1
+  task_id: TRADING-2536_ATLAS_PROVIDER_TRANSPORT_ATTRIBUTION_SUCCESSOR_CLASSIFICATION_SERIAL_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-19T03:29:00Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2536-baseline-done-owner-token-required-20260819-v1
+  lane_id: null
+  base_commit: c290f1244bb81df789d3b95d29d894b657943ca8
+  previous_state_event_id: task-event-9a78bc753f96c3af4b671faa53868a29
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner / governed external attribution admission successor
+    blocker_or_next_step: Atlas classification and canonical page refresh are implemented.
+      Await a fresh exact single-use Owner token bound to the ordinary-pushed proposal
+      identities before any QuantConnect/Cloud/provider probe; 2532 token remains
+      consumed and invalid for reuse.
+    acceptance_criteria: 2535 and 2536 are explicitly classified; canonical page freshness
+      CURRENT; sealed package hashes unchanged; focused and five formal tiers PASS
+      on final tree; ordinary push and SHA verification; external counters remain
+      0/0/0/0 until a new exact token.
+    notes: BASELINE_DONE is intentionally non-terminal until final-tree validation
+      and ordinary publication complete. No Cloud, raw rows, Object Store, orders,
+      fills, broker, browser, or external action occurred. See `docs/requirements/TRADING-2536_Atlas_Provider_Transport_Attribution_Successor_Classification_Serial_Contract_Wave_V1.md`.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2536-baseline-done-owner-token-required-20260819-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-cc628b39eca681ce3b4a7408ea47c65d
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2536_ATLAS_PROVIDER_TRANSPORT_ATTRIBUTION_SUCCESSOR_CLASSIFICATION_SERIAL_CONTRACT_WAVE_V1
+  - Atlas / provider-transport attribution successor classification serial contract
+    wave
+  - P0
+  - BASELINE_DONE
+  - Project Owner / governed external attribution admission successor
+  - Atlas classification and canonical page refresh are implemented. Await a fresh
+    exact single-use Owner token bound to the ordinary-pushed proposal identities
+    before any QuantConnect/Cloud/provider probe; 2532 token remains consumed and
+    invalid for reuse.
+  - 2535 and 2536 are explicitly classified; canonical page freshness CURRENT; sealed
+    package hashes unchanged; focused and five formal tiers PASS on final tree; ordinary
+    push and SHA verification; external counters remain 0/0/0/0 until a new exact
+    token.
+  - BASELINE_DONE is intentionally non-terminal until final-tree validation and ordinary
+    publication complete. No Cloud, raw rows, Object Store, orders, fills, broker,
+    browser, or external action occurred. See `docs/requirements/TRADING-2536_Atlas_Provider_Transport_Attribution_Successor_Classification_Serial_Contract_Wave_V1.md`.
+  docs_links:
+  - docs/requirements/TRADING-2536_Atlas_Provider_Transport_Attribution_Successor_Classification_Serial_Contract_Wave_V1.md
+  terminal: false
+  canonical_row_sha256: 84e484886b76417e313f74a479770affaebd35dc370affa973e5b80d21938332
+last_event_id: task-event-cc628b39eca681ce3b4a7408ea47c65d
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: b913429b7dbe7265cd87469aad8e3d5d622989453a01b94d548e237151b24522
