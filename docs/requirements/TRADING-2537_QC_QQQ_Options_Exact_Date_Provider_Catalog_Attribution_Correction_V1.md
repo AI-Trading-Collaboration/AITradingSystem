@@ -175,3 +175,11 @@ primary source，不得 forward-fill、静默排除该日或把 derived seal 冒
   Atlas exact-commit 页面和其余 9243 项均未失败。修复必须重建并验证这两条 authority，创建新的
   final commit，按新 commit 重建 ignored Atlas sidecars，再以该失败 artifact 为 parent 运行完整
   `failure_fix_rerun`；不得用 focused PASS 代替 Full。
+- 2026-08-20：authority-refresh commit `ac432c5cf458f5f5d70c080c71124a8286abfc91`
+  的首次 parent-bound Full rerun 为 `9246 passed / 1 failed / 3 skipped / 644 warnings`，artifact=
+  `outputs/validation_runtime/trading_2537_full_failure_fix_rerun_v1/test_runtime_summary.json`。此前四项
+  新鲜度失败全部通过；唯一新暴露项是 `tests/test_devx_006d_report_catalog_flow_authority.py` 的
+  compatibility-consumer 冻结断言仍保留旧 `entry_count=2956`，与同文件及已验证 authority 的当前
+  `2960` 不一致。修复仅允许把该精确 consumer 断言同步为 `2960`，刷新由该测试哈希影响的 DevEx /
+  compatibility authority，创建新 final commit 并重建 ignored Atlas sidecars；随后必须以本次失败
+  artifact 为 parent 再运行完整 Full。
