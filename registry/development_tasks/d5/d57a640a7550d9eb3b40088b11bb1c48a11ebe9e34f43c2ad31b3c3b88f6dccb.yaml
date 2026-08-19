@@ -1,0 +1,151 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1
+  task_id_sha256: d57a640a7550d9eb3b40088b11bb1c48a11ebe9e34f43c2ad31b3c3b88f6dccb
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1
+  title: null
+  domain: QQQ Options exact-date provider catalog attribution correction serial wave
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner / governed exact-date attribution admission after ordinary
+    publication
+  requirement_refs:
+  - docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Corrected exact-date sealed package is
+    implemented and offline-validated. Complete final committed-tree Full and ordinary
+    push, then await a fresh exact single-use Owner token; no QuantConnect/Cloud/provider
+    action is authorized yet.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 2535 bytes remain immutable; target-only History[OptionUniverse] query count=1;
+      end_time exact-date match required; cross-date fallback cannot classify AVAILABLE;
+      typed execution/attribution terminals; focused and five formal tiers PASS; ordinary
+      push/SHA verify; external counters stay 0/0/0/0 until new token.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-20T00:00:00Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2537-registration-20260820-v1
+  lane_id: null
+  base_commit: fb246ab362e6942e3f4948c1e1cd9247212f9897
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1
+    - QQQ Options exact-date provider catalog attribution correction serial wave
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator; Project Owner for any external action
+    - TRADING-2535 option_chain helper can return a recent prior-date universe and
+      does not prove target-date availability; corrected exact-date proposal is required
+      before a new Owner token.
+    - Build an immutable V2 package with one target-only History[OptionUniverse] probe,
+      strict end_time date match, fallback rejection, typed terminal separation, replay/tamper
+      tests, final-tree validation, ordinary push; keep external counters 0/0/0/0.
+    - 详见 `docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md`。production_effect=none、broker_action=none、external_action=none。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2537-registration-20260820-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ef05e0206b2bf87fd5009ddb05105e62
+- schema_version: task_event.v1
+  task_id: TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-20T00:30:00Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2537-baseline-done-exact-date-correction-20260820-v1
+  lane_id: null
+  base_commit: fb246ab362e6942e3f4948c1e1cd9247212f9897
+  previous_state_event_id: task-event-ef05e0206b2bf87fd5009ddb05105e62
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner / governed exact-date attribution admission after ordinary
+      publication
+    blocker_or_next_step: Corrected exact-date sealed package is implemented and offline-validated.
+      Complete final committed-tree Full and ordinary push, then await a fresh exact
+      single-use Owner token; no QuantConnect/Cloud/provider action is authorized
+      yet.
+    acceptance_criteria: 2535 bytes remain immutable; target-only History[OptionUniverse]
+      query count=1; end_time exact-date match required; cross-date fallback cannot
+      classify AVAILABLE; typed execution/attribution terminals; focused and five
+      formal tiers PASS; ordinary push/SHA verify; external counters stay 0/0/0/0
+      until new token.
+    notes: BASELINE_DONE is intentionally non-terminal because the actual target date/provider
+      attribution still requires a separately admitted zero-order Cloud run. Offline
+      hashes and validation authority are recorded in the supporting requirement;
+      production_effect=none, broker_action=none, external_action=none.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2537-baseline-done-exact-date-correction-20260820-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-94d1ce83a09fd17cffa5113f498cfa21
+- schema_version: task_event.v1
+  task_id: TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-20T01:10:00Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2537-requirement-binding-correction-20260820-v1
+  lane_id: null
+  base_commit: fb246ab362e6942e3f4948c1e1cd9247212f9897
+  previous_state_event_id: task-event-94d1ce83a09fd17cffa5113f498cfa21
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner / governed exact-date attribution admission after ordinary
+      publication
+    blocker_or_next_step: Corrected exact-date sealed package is implemented and offline-validated.
+      Complete final committed-tree Full and ordinary push, then await a fresh exact
+      single-use Owner token; no QuantConnect/Cloud/provider action is authorized
+      yet.
+    acceptance_criteria: 2535 bytes remain immutable; target-only History[OptionUniverse]
+      query count=1; end_time exact-date match required; cross-date fallback cannot
+      classify AVAILABLE; typed execution/attribution terminals; focused and five
+      formal tiers PASS; ordinary push/SHA verify; external counters stay 0/0/0/0
+      until new token.
+    notes: 详见 [TRADING-2537 exact-date provider catalog attribution correction](docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md)。production_effect=none、broker_action=none、external_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2537-requirement-binding-correction-20260820-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-716d44faa754b59cd306e056ae6df5ee
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1
+  - QQQ Options exact-date provider catalog attribution correction serial wave
+  - P0
+  - BASELINE_DONE
+  - Project Owner / governed exact-date attribution admission after ordinary publication
+  - Corrected exact-date sealed package is implemented and offline-validated. Complete
+    final committed-tree Full and ordinary push, then await a fresh exact single-use
+    Owner token; no QuantConnect/Cloud/provider action is authorized yet.
+  - 2535 bytes remain immutable; target-only History[OptionUniverse] query count=1;
+    end_time exact-date match required; cross-date fallback cannot classify AVAILABLE;
+    typed execution/attribution terminals; focused and five formal tiers PASS; ordinary
+    push/SHA verify; external counters stay 0/0/0/0 until new token.
+  - 详见 [TRADING-2537 exact-date provider catalog attribution correction](docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md)。production_effect=none、broker_action=none、external_action=none。
+  docs_links:
+  - docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md
+  terminal: false
+  canonical_row_sha256: ec287cdc6da9717fca1be94362348f758f8b0cfc410dbd7cce163a2d75d339d3
+last_event_id: task-event-716d44faa754b59cd306e056ae6df5ee
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: ec205f41d0b752a011519aab4888ea924744c0c2fa9ba5c97a129b59f146356a

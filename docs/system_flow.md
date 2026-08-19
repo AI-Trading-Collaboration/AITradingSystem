@@ -8821,3 +8821,36 @@ never-chain`，不能指出日期，也不能区分 provider catalog 当日为�
 本 proposal 只缩小 data availability/transport 根因，不自动把 `chain_presence=FAIL` 改为 PASS，也不代表
 策略无效或可重新开放研究。2532 的 token 已消费且过期；2535 publication 之前以及新的 exact owner token
 admission 之前，external counters 固定为 `project_mutations/cloud_backtests/orders/fills = 0/0/0/0`。
+
+## TRADING-2537 exact-date provider catalog attribution correction V1
+
+`qqq_options_research.exact_date_provider_catalog_attribution_correction` 保留 2535 sealed package 的
+全部 immutable bytes，并修复其 `option_chain` probe 不能证明目标日可用性的语义缺陷。LEAN 的 helper
+允许在当前 universe 文件缺失时读取最近交易日的 universe；因此 2535 candidate 只能作为历史 proposal，
+不得直接进入 Owner token admission。2537 是最小 serial correction，仍然只生成 offline、zero-order、
+export-safe future candidate，不访问 QuantConnect。
+
+```text
+2532 aggregate + 2533 blocked admission + 2534 staged readiness + immutable 2535/2536 identities
+  -> bind 2535 manifest/project-code exact hashes and preserve the 1202-session primary window
+  -> on_data records Slice / canonical QQQ equity / subscribed chain events only
+  -> after complete finalization require exactly one never-chain target
+  -> execute exactly one bounded History[OptionUniverse] request for that target date
+  -> compare every OptionUniverse.end_time.date with the exact target date
+       prior/other-date-only result -> NO_EXACT_DATE_PROVIDER_EVIDENCE
+       exact-date record + contracts -> EXACT_DATE_CATALOG_AVAILABLE_SUBSCRIPTION_MISSING
+       exact-date empty record -> EXACT_DATE_CATALOG_EMPTY
+       query exception -> PROVIDER_PROBE_ERROR
+       incomplete or duplicate evidence -> ATTRIBUTION_INDETERMINATE
+  -> export target boundary position, query count, exact/non-target counts and fallback flag only
+  -> separate execution_terminal COMPLETE/INVALID from attribution_terminal RESOLVED/INDETERMINATE/ERROR
+  -> never export contract identifiers, symbols, strike, expiry, quote, Greeks, IV, OI, volume or raw rows
+  -> no logs-as-data / Object Store / orders / fills / DQ-PIT rewrite / selection / engine authority
+  -> ordinary-pushed exact main + new single-use owner token required before any project mutation or run
+```
+
+目标日若位于 start/end boundary，后继可以分别提出 pre-roll/post-roll transport 验证，但 primary
+evaluation range 仍固定为 `2021-02-22..2025-12-02`；若位于 interior 且 exact-date catalog 可用，
+修复 subscription/transport；若没有 exact-date provider evidence，必须走 provider remediation、backfill
+或治理后的替代 primary source，不得 forward-fill 或排除 session。当前 `chain_presence=FAIL`、DQ=`FAIL`、
+PIT=`NOT_EVALUATED` 和 `POLICY_BLOCKED_CASH_PRESERVATION` 均保持不变。

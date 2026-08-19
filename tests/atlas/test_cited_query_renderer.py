@@ -275,7 +275,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="57"' in html
+    assert 'data-task-coverage-count="58"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html
@@ -372,6 +372,10 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     )
     assert (
         'data-successor-task="TRADING-2536_ATLAS_PROVIDER_TRANSPORT_ATTRIBUTION_SUCCESSOR_CLASSIFICATION_SERIAL_CONTRACT_WAVE_V1"'
+        in html
+    )
+    assert (
+        'data-successor-task="TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1"'
         in html
     )
     assert (

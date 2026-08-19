@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 130
+fragment_count: 132
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: efbe87e00034051a50c3b3cb3483954453bf864c223a9fc912d08ccdc24047d8
+  current_sha256: 10c79f55311ab3f679c52c70e70af460abdb99185c80491102342f9f95fd4d2d
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 54
+  fragment_count: 55
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -75,6 +75,7 @@ targets:
   - config/architecture/fragments/flows/qqq_options_daily_transport_session_finalization_v2.yaml
   - config/architecture/fragments/flows/qqq_options_deterministic_selection.yaml
   - config/architecture/fragments/flows/qqq_options_dq_pit_identity.yaml
+  - config/architecture/fragments/flows/qqq_options_exact_date_provider_catalog_attribution_correction.yaml
   - config/architecture/fragments/flows/qqq_options_final_never_chain_provider_transport_attribution_proposal.yaml
   - config/architecture/fragments/flows/qqq_options_minute_execution.yaml
   - config/architecture/fragments/flows/qqq_options_owner_decision_manifest.yaml
@@ -393,6 +394,13 @@ fragments:
   target_id: system_flow
   path: config/architecture/fragments/flows/qqq_options_dq_pit_identity.yaml
   sha256: 0dfed8f4390a83d396bcca5035516d90f81b209669445760e71264b21e655345
+  generated_source_of_truth_active: false
+- fragment_id: flow.qqq_options_exact_date_provider_catalog_attribution_correction
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/qqq_options_exact_date_provider_catalog_attribution_correction.yaml
+  sha256: 651cd859d95a7339cf4a1b479bb631c163f0e35f22212cb3836dbe66950b49d9
   generated_source_of_truth_active: false
 - fragment_id: flow.qqq_options_final_never_chain_provider_transport_attribution_proposal
   fragment_kind: flow
@@ -778,6 +786,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/qqq_options_dq_pit_identity.yaml
   sha256: b461b4f1e5e776e014d058ef9931924fc2ff21698e9dcadeaf56c8c54146bc76
+  generated_source_of_truth_active: false
+- fragment_id: module.qqq_options_exact_date_provider_catalog_attribution_correction
+  fragment_kind: module
+  owner: options_daily_backtest_governance
+  target_id: null
+  path: config/architecture/fragments/modules/qqq_options_exact_date_provider_catalog_attribution_correction.yaml
+  sha256: 232acba438a54973b9811b04bb98c907c20bbf835e9a289b128dca4c600dd68a
   generated_source_of_truth_active: false
 - fragment_id: module.qqq_options_final_never_chain_provider_transport_attribution_proposal
   fragment_kind: module

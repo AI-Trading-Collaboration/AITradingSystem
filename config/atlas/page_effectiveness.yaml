@@ -273,6 +273,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2536_Atlas_Provider_Transport_Attribution_Successor_Classification_Serial_Contract_Wave_V1.md
     coverage: DISCLOSED_ATLAS_SUCCESSOR_CLASSIFICATION_SERIAL_CONTRACT_WAVE
     reader_summary_zh: 2536 只负责把 2535 的 proposal-ready、external-collection-unexecuted 边界显式纳入 Atlas freshness 合同，并刷新页面的来源 identity；它不改变 2535 package、不执行归因采集，也不冒充 Owner visual review、reader-comprehension review、DQ/PIT 或策略结论。
+  - task_id: TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1
+    requirement_path: docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md
+    coverage: DISCLOSED_EXACT_DATE_PROVIDER_ATTRIBUTION_CORRECTION_READY_EXTERNAL_COLLECTION_UNEXECUTED
+    reader_summary_zh: 2537 发现 2535 的 option_chain helper 可能读取最近交易日 universe，不能证明唯一缺链 session 的目标日 catalog 可用；因此保留 2535 sealed bytes，并建立只在完整窗口确定唯一目标后执行一次 History[OptionUniverse]、严格校验 end_time 日期和拒绝跨日 fallback 的 corrected proposal。当前仍只完成离线 package 与测试，没有执行 QuantConnect、Cloud 或 provider probe；DQ=FAIL、PIT=NOT_EVALUATED、research/selection/engine 关闭与禁止交易均不变。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW
