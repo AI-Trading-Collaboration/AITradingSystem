@@ -277,6 +277,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md
     coverage: DISCLOSED_EXACT_DATE_PROVIDER_ATTRIBUTION_CORRECTION_READY_EXTERNAL_COLLECTION_UNEXECUTED
     reader_summary_zh: 2537 发现 2535 的 option_chain helper 可能读取最近交易日 universe，不能证明唯一缺链 session 的目标日 catalog 可用；因此保留 2535 sealed bytes，并建立只在完整窗口确定唯一目标后执行一次 History[OptionUniverse]、严格校验 end_time 日期和拒绝跨日 fallback 的 corrected proposal。当前仍只完成离线 package 与测试，没有执行 QuantConnect、Cloud 或 provider probe；DQ=FAIL、PIT=NOT_EVALUATED、research/selection/engine 关闭与禁止交易均不变。
+  - task_id: TRADING-2538_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_ADMISSION_AND_EXECUTION_V1
+    requirement_path: docs/requirements/TRADING-2538_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Admission_And_Execution_V1.md
+    coverage: DISCLOSED_FIRST_MUTATION_ATTEMPT_FAILED_AUTHORIZATION_CONSUMED_NO_CLOUD_RUN
+    reader_summary_zh: 2538 已严格 admission Owner 的 single-use token，并在已登录的 existing project 34808569 上发起唯一整文件 mutation attempt；save/build 后的只读 Monaco text 仍显示前序 runtime marker，无法证明 2537 sealed candidate 已进入项目。授权按 no-retry 条款消费，因此没有第二次 paste/save，也没有提交 Cloud backtest 或 provider query；terminal counters 为 mutation attempts/verified mutations/runs/provider queries/orders/fills=1/0/0/0/0/0。目标日期和 provider attribution 仍未知，DQ=FAIL、PIT=NOT_EVALUATED、research/selection/engine 关闭与禁止交易均不变。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

@@ -8854,3 +8854,32 @@ evaluation range 仍固定为 `2021-02-22..2025-12-02`；若位于 interior 且 
 修复 subscription/transport；若没有 exact-date provider evidence，必须走 provider remediation、backfill
 或治理后的替代 primary source，不得 forward-fill 或排除 session。当前 `chain_presence=FAIL`、DQ=`FAIL`、
 PIT=`NOT_EVALUATED` 和 `POLICY_BLOCKED_CASH_PRESERVATION` 均保持不变。
+
+## TRADING-2538 exact-date attribution admission / failed first mutation attempt
+
+`qqq_options_research.exact_date_provider_catalog_attribution_execution` 对 Owner 在当前对话中提供的
+single-use token、ordinary-pushed `02a3a9b75f9e3e25f0c811cbdb974c1eb5727eb3`、2537 sealed package
+及其全部 predecessor hashes 做 strict admission，并为后续 Results 定义只接受 15 个
+`TRADING2537_*` terminal statistics 的 export-safe validator。该 admission/evidence 模块本身没有浏览器、
+网络、QuantConnect、order 或 broker capability。
+
+```text
+Owner token (2519 UTF-8/LF bytes; exact key/order/value; expiry enforced)
+  -> local main = origin/main = token-bound ordinary-pushed SHA
+  -> replay 2537 package; verify policy/source/admission/readiness/2535 exact hashes
+  -> seal OWNER_AUTHORIZATION_ADMITTED_UNUSED before browser mutation
+  -> read-only Chrome login + existing project 34808569 identity check
+  -> first and only whole-file mutation attempt with sealed 26223 LF bytes
+  -> post-save read-only Monaco verification still observes prior 2532 runtime marker
+  -> mark preliminary mutation receipt superseded by typed verification incident
+  -> consume authorization; forbid a second paste/save and do not submit Cloud backtest
+  -> seal blocked ledger/manifest with attempts/verified mutations/runs/provider queries/orders/fills
+     = 1/0/0/0/0/0
+  -> no Results/raw rows/logs/Object Store/DQ-PIT/selection/engine/investment conclusion
+```
+
+因此本轮没有生成 target date 或 provider attribution；2537 的 corrected proposal 仍未获得真实 Cloud
+执行证据。当前直接阻塞点是浏览器 synthetic clipboard paste 没有改变 Monaco 的可见代码，而当前 token
+已按 no-retry 条款消费。任何后继必须先离线证明一个可靠、单输入、不会产生中间 autosave 的 Monaco
+mutation mechanism，再由 Project Owner 审阅 incident 后发放新的 exact single-use token。不得把初始
+copy-back clipboard hash 当作 project mutation 成功证据，也不得在当前授权下补跑 backtest。

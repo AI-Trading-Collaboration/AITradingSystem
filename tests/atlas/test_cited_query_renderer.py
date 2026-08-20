@@ -275,7 +275,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="58"' in html
+    assert 'data-task-coverage-count="59"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html
@@ -379,6 +379,10 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         in html
     )
     assert (
+        'data-successor-task="TRADING-2538_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_ADMISSION_AND_EXECUTION_V1"'
+        in html
+    )
+    assert (
         'data-successor-task="TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1"'
         in html
     )
@@ -393,6 +397,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert "尚未执行任何外部动作" in html
     assert "真实一次零订单采集已完成" in html
     assert "只消除了“先有执行证据才能开始研究”的循环依赖" in html
+    assert "没有提交 Cloud backtest 或 provider query" in html
     assert "只完成了离线 sealed package、exact hashes 与 replay/tamper 检查" in html
     assert "不能声称该 session 已获得真实归因" in html
     assert "external-collection-unexecuted 边界显式纳入 Atlas freshness 合同" in html

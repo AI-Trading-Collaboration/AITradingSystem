@@ -1,0 +1,133 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2538_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_ADMISSION_AND_EXECUTION_V1
+  task_id_sha256: 8ae2cc075f1189b8d5ff765064c84b6587712921663a05ceafc80fd6ac988507
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2538_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_ADMISSION_AND_EXECUTION_V1
+  title: null
+  domain: QQQ Options exact-date provider catalog attribution admission and execution
+    V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner / governed fresh-token admission after incident review
+    and reliable single-input Monaco mutation mechanism
+  requirement_refs:
+  - docs/requirements/TRADING-2538_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Admission_And_Execution_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: The first authorized browser mutation
+    attempt did not replace the prior Monaco content. Authorization is consumed and
+    retry is forbidden; Cloud run/provider query stayed 0. Review the sealed incident,
+    prove a reliable one-input mutation mechanism offline, then issue a fresh exact
+    single-use token if another attempt is desired.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Preserve token/admission/incident/ledger/manifest seals; treat preliminary
+      mutation receipt as superseded; terminal counters attempts/verified mutations/runs/provider
+      queries/orders/fills=1/0/0/0/0/0; no retry under current token; focused/formal
+      validation and governed publication of failure evidence; any successor needs
+      new Owner authorization.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2538_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_ADMISSION_AND_EXECUTION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-20T17:03:00Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2538-registration-20260820-v1
+  lane_id: null
+  base_commit: 02a3a9b75f9e3e25f0c811cbdb974c1eb5727eb3
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2538_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_ADMISSION_AND_EXECUTION_V1
+    - QQQ Options exact-date provider catalog attribution admission and execution
+      V1
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator; Project Owner independent reviewer
+    - Exact single-use Owner token received and offline facts match. Strictly admit
+      from ordinary-pushed main, then perform at most one existing-project mutation
+      and one zero-order Cloud backtest; first mutation or run attempt consumes authorization
+      and no retry is allowed.
+    - Exact token/package/hash/expiry admission; sealed unused receipt before browser
+      mutation; counters <=1/1/1/0/0 for project mutation/run/provider query/orders/fills;
+      export-safe typed attribution with execution/attribution terminal separation;
+      focused and formal validation PASS; ordinary push/SHA verify; branch cleanup.
+    - 详见 [TRADING-2538 exact-date provider catalog attribution admission and execution](docs/requirements/TRADING-2538_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Admission_And_Execution_V1.md)。production_effect=none、broker_action=none；single-use
+      external action authorized by Project Owner.
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2538-registration-20260820-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f6eb7c79125a5e8fc5ca74cc89c25cf2
+- schema_version: task_event.v1
+  task_id: TRADING-2538_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_ADMISSION_AND_EXECUTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-20T17:56:26Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2538-failed-mutation-attempt-blocked-20260820-v1
+  lane_id: null
+  base_commit: 02a3a9b75f9e3e25f0c811cbdb974c1eb5727eb3
+  previous_state_event_id: task-event-f6eb7c79125a5e8fc5ca74cc89c25cf2
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_EXTERNAL
+  payload:
+    priority: P0
+    next_owner: Project Owner / governed fresh-token admission after incident review
+      and reliable single-input Monaco mutation mechanism
+    blocker_or_next_step: The first authorized browser mutation attempt did not replace
+      the prior Monaco content. Authorization is consumed and retry is forbidden;
+      Cloud run/provider query stayed 0. Review the sealed incident, prove a reliable
+      one-input mutation mechanism offline, then issue a fresh exact single-use token
+      if another attempt is desired.
+    acceptance_criteria: Preserve token/admission/incident/ledger/manifest seals;
+      treat preliminary mutation receipt as superseded; terminal counters attempts/verified
+      mutations/runs/provider queries/orders/fills=1/0/0/0/0/0; no retry under current
+      token; focused/formal validation and governed publication of failure evidence;
+      any successor needs new Owner authorization.
+    notes: 详见 [TRADING-2538 exact-date provider catalog attribution admission and
+      execution](docs/requirements/TRADING-2538_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Admission_And_Execution_V1.md)。production_effect=none、broker_action=none；authorization
+      consumed, no Cloud backtest submitted.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2538-failed-mutation-attempt-blocked-20260820-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-08cbd0281f4afb2288d453ef1017f9e6
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2538_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_ADMISSION_AND_EXECUTION_V1
+  - QQQ Options exact-date provider catalog attribution admission and execution V1
+  - P0
+  - BLOCKED_EXTERNAL
+  - Project Owner / governed fresh-token admission after incident review and reliable
+    single-input Monaco mutation mechanism
+  - The first authorized browser mutation attempt did not replace the prior Monaco
+    content. Authorization is consumed and retry is forbidden; Cloud run/provider
+    query stayed 0. Review the sealed incident, prove a reliable one-input mutation
+    mechanism offline, then issue a fresh exact single-use token if another attempt
+    is desired.
+  - Preserve token/admission/incident/ledger/manifest seals; treat preliminary mutation
+    receipt as superseded; terminal counters attempts/verified mutations/runs/provider
+    queries/orders/fills=1/0/0/0/0/0; no retry under current token; focused/formal
+    validation and governed publication of failure evidence; any successor needs new
+    Owner authorization.
+  - 详见 [TRADING-2538 exact-date provider catalog attribution admission and execution](docs/requirements/TRADING-2538_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Admission_And_Execution_V1.md)。production_effect=none、broker_action=none；authorization
+    consumed, no Cloud backtest submitted.
+  docs_links:
+  - docs/requirements/TRADING-2538_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Admission_And_Execution_V1.md
+  terminal: false
+  canonical_row_sha256: 9432511c7295d4fafaff4a0a0da9aea9d81fa1dffb55cfb1ad94a7b9da65e51c
+last_event_id: task-event-08cbd0281f4afb2288d453ef1017f9e6
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 086db0264da44dd7a9d60a0bc1bf65202349b33eb1863f78c0043754fb4265e6
