@@ -242,3 +242,12 @@ Owner 决定：
   exact PASS。该外部本地文件由 Owner 保留到 raw LF 复核或明确放弃；Codex 不修改或删除它。任务继续
   `BLOCKED_EXTERNAL`，等待 Owner 将 copy-back 文件转换为 LF、审阅 auto-build incident，并决定 clone
   cleanup；QuantConnect 端不得再执行任何动作。
+- 2026-08-22：Owner 授权 Codex 自行处理本地 copy-back 换行问题。写入前精确复核
+  `D:\Work\TRADING-2539-canary-copyback.py` 仍为 raw byte count=`116`、SHA-256=
+  `2b7e94a647459cc6aa94dd91a3e07b9752d86b97ea3daaee2aedc11f4a7e5461`、UTF-8 无 BOM、
+  LF/CRLF/lone CR=`3/3/0`；随后仅移除三处 CR byte 并原位写回。写后 raw byte count=`113`、
+  SHA-256=`23e0492a1e2e5f4627820aecde6881fc772520c28c41f38531e24da8e007de2d`、
+  UTF-8 无 BOM、LF/CRLF/lone CR=`3/0/0`、末尾 LF=`true`，因此 transport canary 的
+  `RAW_EXACT_LF_PASS` 门禁成立。该文件继续保留，且 CRLF 版本可由已记录的确定性换行变换重建；
+  本轮未访问 QuantConnect，云端 counters 保持 `1 / 1 / 1 / 1 / 0 / 0 / 0 / 0`。任务继续
+  `BLOCKED_EXTERNAL`，仅等待 Owner 审阅 auto-build incident，并决定 clone cleanup 或另行授权正式候选路径。

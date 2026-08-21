@@ -13,24 +13,24 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / convert local copy-back to LF, review auto-Cloud-Build
-    incident, and decide clone cleanup
+  next_owner: Project Owner / review auto-Cloud-Build incident and decide clone cleanup
+    or a separately authorized candidate path
   requirement_refs:
   - docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 'Copy-back content is canonical-LF exact
-    but the Owner-saved local file uses three CRLF endings: raw 116-byte SHA fails
-    while LF-normalized 113-byte SHA matches. Convert only the local copy-back file
-    to LF for the predeclared raw gate; perform no further QuantConnect action. Auto-build
-    incident review and clone cleanup decision remain outstanding.'
+  unstructured_legacy_blocker_or_next_step: 'The local copy-back raw LF gate now passes
+    exactly: UTF-8 no BOM, 113 bytes, SHA-256=23e0492a1e2e5f4627820aecde6881fc772520c28c41f38531e24da8e007de2d.
+    The transport canary is proven. Remaining external decisions are review of the
+    unexpected automatic Cloud Build and clone cleanup or a separately authorized
+    formal-candidate path; perform no further QuantConnect action.'
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Require raw UTF-8 no-BOM copy-back file byte count=113 and SHA-256=23e0492a1e2e5f4627820aecde6881fc772520c28c41f38531e24da8e007de2d;
-      preserve canonical-LF PASS/raw-CRLF FAIL evidence and cloud counters 1/1/1/1/0/0/0/0;
-      no QuantConnect retry, candidate write, backtest, provider query, public sharing,
-      broker action, or clone deletion without separate Owner decision.
+    text: Preserve the exact raw LF copy-back proof, prior CRLF-only audit evidence,
+      and cloud counters 1/1/1/1/0/0/0/0; require Owner review of the auto-build incident
+      and separate authority for clone deletion or any candidate write/build/backtest/provider/broker
+      action.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -199,30 +199,66 @@ events:
   - change:trading-2539-copyback-crlf-audit-20260821-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-6430d515ea58eadd0d32276c91db06f3
+- schema_version: task_event.v1
+  task_id: TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-21T16:25:22Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2539-copyback-lf-exact-pass-20260822-v1
+  lane_id: null
+  base_commit: 301800bff3edec7d277b7adb7c0379bcf4498b99
+  previous_state_event_id: task-event-6430d515ea58eadd0d32276c91db06f3
+  from_status: BLOCKED_EXTERNAL
+  to_status: BLOCKED_EXTERNAL
+  payload:
+    priority: P0
+    next_owner: Project Owner / review auto-Cloud-Build incident and decide clone
+      cleanup or a separately authorized candidate path
+    blocker_or_next_step: 'The local copy-back raw LF gate now passes exactly: UTF-8
+      no BOM, 113 bytes, SHA-256=23e0492a1e2e5f4627820aecde6881fc772520c28c41f38531e24da8e007de2d.
+      The transport canary is proven. Remaining external decisions are review of the
+      unexpected automatic Cloud Build and clone cleanup or a separately authorized
+      formal-candidate path; perform no further QuantConnect action.'
+    acceptance_criteria: Preserve the exact raw LF copy-back proof, prior CRLF-only
+      audit evidence, and cloud counters 1/1/1/1/0/0/0/0; require Owner review of
+      the auto-build incident and separate authority for clone deletion or any candidate
+      write/build/backtest/provider/broker action.
+    notes: Owner authorized deterministic LF normalization of D:\Work\TRADING-2539-canary-copyback.py.
+      Pre-write identity was 116 bytes/SHA-256=2b7e94a647459cc6aa94dd91a3e07b9752d86b97ea3daaee2aedc11f4a7e5461;
+      post-write identity is 113 bytes/SHA-256=23e0492a1e2e5f4627820aecde6881fc772520c28c41f38531e24da8e007de2d,
+      UTF-8 no BOM, LF/CRLF/lone-CR=3/0/0, terminal LF present. QuantConnect was not
+      accessed. See [TRADING-2539 requirement](docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md).
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2539-copyback-lf-exact-pass-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a64ca8cf32feb3a9fb7a7746978742f0
 projection:
   legacy_first_eight_cells:
   - TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
   - QuantConnect Cloud file API exact-content mutation and retry proposal V1
   - P0
   - BLOCKED_EXTERNAL
-  - Project Owner / convert local copy-back to LF, review auto-Cloud-Build incident,
-    and decide clone cleanup
-  - 'Copy-back content is canonical-LF exact but the Owner-saved local file uses three
-    CRLF endings: raw 116-byte SHA fails while LF-normalized 113-byte SHA matches.
-    Convert only the local copy-back file to LF for the predeclared raw gate; perform
-    no further QuantConnect action. Auto-build incident review and clone cleanup decision
-    remain outstanding.'
-  - Require raw UTF-8 no-BOM copy-back file byte count=113 and SHA-256=23e0492a1e2e5f4627820aecde6881fc772520c28c41f38531e24da8e007de2d;
-    preserve canonical-LF PASS/raw-CRLF FAIL evidence and cloud counters 1/1/1/1/0/0/0/0;
-    no QuantConnect retry, candidate write, backtest, provider query, public sharing,
-    broker action, or clone deletion without separate Owner decision.
-  - 'Read-only audit of D:\Work\TRADING-2539-canary-copyback.py: raw 116 bytes, SHA-256=2b7e94a647459cc6aa94dd91a3e07b9752d86b97ea3daaee2aedc11f4a7e5461,
-    three CRLF, valid UTF-8 no BOM; canonical LF 113 bytes matches the sealed hash.
-    See [TRADING-2539 requirement](docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md).'
+  - Project Owner / review auto-Cloud-Build incident and decide clone cleanup or a
+    separately authorized candidate path
+  - 'The local copy-back raw LF gate now passes exactly: UTF-8 no BOM, 113 bytes,
+    SHA-256=23e0492a1e2e5f4627820aecde6881fc772520c28c41f38531e24da8e007de2d. The
+    transport canary is proven. Remaining external decisions are review of the unexpected
+    automatic Cloud Build and clone cleanup or a separately authorized formal-candidate
+    path; perform no further QuantConnect action.'
+  - Preserve the exact raw LF copy-back proof, prior CRLF-only audit evidence, and
+    cloud counters 1/1/1/1/0/0/0/0; require Owner review of the auto-build incident
+    and separate authority for clone deletion or any candidate write/build/backtest/provider/broker
+    action.
+  - Owner authorized deterministic LF normalization of D:\Work\TRADING-2539-canary-copyback.py.
+    Pre-write identity was 116 bytes/SHA-256=2b7e94a647459cc6aa94dd91a3e07b9752d86b97ea3daaee2aedc11f4a7e5461;
+    post-write identity is 113 bytes/SHA-256=23e0492a1e2e5f4627820aecde6881fc772520c28c41f38531e24da8e007de2d,
+    UTF-8 no BOM, LF/CRLF/lone-CR=3/0/0, terminal LF present. QuantConnect was not
+    accessed. See [TRADING-2539 requirement](docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md).
   docs_links:
   - docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md
   terminal: false
-  canonical_row_sha256: 00ec5a2cb605404794ea431330e2cc71756ea118bfc5935b7561cde450af2ac7
-last_event_id: task-event-6430d515ea58eadd0d32276c91db06f3
+  canonical_row_sha256: 3a902b72a7afd9b7445a03f2d0431e70c0ad55fced5606998a1c5218a1fbffc7
+last_event_id: task-event-a64ca8cf32feb3a9fb7a7746978742f0
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 633014adfbaa24575f755ddc45d84d330ae78e568b86b84b5936e6e97773ea9f
+fragment_checksum: 87b7a9575ee2b651392b7382a94e436afba34a4f637af630a2eafe2da202d8f7
