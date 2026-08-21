@@ -231,3 +231,14 @@ Owner 决定：
   不得 backtest。终端计数为 clone / canary mutation / save / Cloud build / backtest / provider query /
   orders / fills = `1 / 1 / 1 / 1 / 0 / 0 / 0 / 0`。任务转回 `BLOCKED_EXTERNAL`，等待 Owner 人工
   copy-back、SHA 核验、incident review 和 clone cleanup 决定。
+- 2026-08-21：Owner 将人工 copy-back 保存为 `D:\Work\TRADING-2539-canary-copyback.py`。只读 byte
+  audit 结果为 UTF-8 无 BOM、raw byte count=`116`、raw SHA-256=
+  `2b7e94a647459cc6aa94dd91a3e07b9752d86b97ea3daaee2aedc11f4a7e5461`、LF=`3`、CRLF=`3`、
+  lone CR=`0`、末尾 LF=`true`；因此预先声明的 raw 113-byte gate 为 FAIL，差异类型仅为本地保存器
+  将三处 LF 转为 CRLF。
+- 2026-08-21：同一文件经只读 CRLF-to-LF canonicalization 后 byte count=`113`、SHA-256=
+  `23e0492a1e2e5f4627820aecde6881fc772520c28c41f38531e24da8e007de2d`，与 sealed canary 完全匹配；
+  分类为 `CANONICAL_LF_CONTENT_PASS / RAW_COPYBACK_FILE_FAIL_LINE_ENDING_ONLY`，不得静默升级为 raw
+  exact PASS。该外部本地文件由 Owner 保留到 raw LF 复核或明确放弃；Codex 不修改或删除它。任务继续
+  `BLOCKED_EXTERNAL`，等待 Owner 将 copy-back 文件转换为 LF、审阅 auto-build incident，并决定 clone
+  cleanup；QuantConnect 端不得再执行任何动作。
