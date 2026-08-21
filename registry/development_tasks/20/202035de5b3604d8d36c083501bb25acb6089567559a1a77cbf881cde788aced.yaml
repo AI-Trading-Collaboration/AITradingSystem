@@ -1,0 +1,90 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
+  task_id_sha256: 202035de5b3604d8d36c083501bb25acb6089567559a1a77cbf881cde788aced
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
+  title: null
+  domain: QuantConnect Cloud file API exact-content mutation and retry proposal V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner / secure QC credential readiness and fresh exact API token
+  requirement_refs:
+  - docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: TRADING-2538 browser clipboard mutation
+    token is consumed. Official /files/update + /files/read is the intended exact
+    carrier, but this host has no lean CLI, QC_USER_ID, or QC_API_TOKEN; no QuantConnect
+    API or UI mutation is authorized.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Publish governed proposal only; preserve 2538 counters 1/0/0/0/0/0; future
+      flow requires one authenticate/read admission, fresh exact token, one update,
+      one read-back with 26223-byte/SHA gate, at most one compile/backtest/provider
+      query, zero orders/fills, no UI fallback or retry.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-21T08:22:56Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2539-registration-20260821-v1
+  lane_id: null
+  base_commit: d3b29be25b5c9674b698dbba5b2ddcd3e65fe255
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_EXTERNAL
+  payload:
+    legacy_projection:
+    - TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
+    - QuantConnect Cloud file API exact-content mutation and retry proposal V1
+    - P0
+    - BLOCKED_EXTERNAL
+    - Project Owner / secure QC credential readiness and fresh exact API token
+    - TRADING-2538 browser clipboard mutation token is consumed. Official /files/update
+      + /files/read is the intended exact carrier, but this host has no lean CLI,
+      QC_USER_ID, or QC_API_TOKEN; no QuantConnect API or UI mutation is authorized.
+    - Publish governed proposal only; preserve 2538 counters 1/0/0/0/0/0; future flow
+      requires one authenticate/read admission, fresh exact token, one update, one
+      read-back with 26223-byte/SHA gate, at most one compile/backtest/provider query,
+      zero orders/fills, no UI fallback or retry.
+    - 详见 [TRADING-2539 QuantConnect Cloud file API exact-content mutation proposal](docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md)。production_effect=none、broker_action=none；当前仅
+      proposal，等待 Owner 安全认证和新 token。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2539-registration-20260821-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f8dc05dc057c5dc69282d26658a162a8
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
+  - QuantConnect Cloud file API exact-content mutation and retry proposal V1
+  - P0
+  - BLOCKED_EXTERNAL
+  - Project Owner / secure QC credential readiness and fresh exact API token
+  - TRADING-2538 browser clipboard mutation token is consumed. Official /files/update
+    + /files/read is the intended exact carrier, but this host has no lean CLI, QC_USER_ID,
+    or QC_API_TOKEN; no QuantConnect API or UI mutation is authorized.
+  - Publish governed proposal only; preserve 2538 counters 1/0/0/0/0/0; future flow
+    requires one authenticate/read admission, fresh exact token, one update, one read-back
+    with 26223-byte/SHA gate, at most one compile/backtest/provider query, zero orders/fills,
+    no UI fallback or retry.
+  - 详见 [TRADING-2539 QuantConnect Cloud file API exact-content mutation proposal](docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md)。production_effect=none、broker_action=none；当前仅
+    proposal，等待 Owner 安全认证和新 token。
+  docs_links:
+  - docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md
+  terminal: false
+  canonical_row_sha256: e7872e6df7a11250b4592cf793af34e9c41645d4d6f3921734f17fcc804bb871
+last_event_id: task-event-f8dc05dc057c5dc69282d26658a162a8
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: dff94490ce1e20a006573cfe032129569a75336f54480e88405c9c9afdf6995a
