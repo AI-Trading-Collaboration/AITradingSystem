@@ -6,7 +6,7 @@
 - predecessor: `TRADING-2538`
 - production effect: `none`
 - broker action: `none`
-- external boundary: proposal only; no QuantConnect mutation, compile, backtest, provider query, order, or fill is authorized by this change
+- external boundary: Owner-authorized Free Web IDE canary only; one clone of project `34808569` and one `main.py` canary save in that clone are allowed, while the original project, compile, backtest, provider query, order, fill, public sharing, and formal candidate write remain prohibited
 
 ## 1. 问题与结论
 
@@ -52,8 +52,9 @@ authentication。凭据不得写入 tracked/untracked repository 文件、命令
 task artifact、Codex 回复或屏幕截图；所有 readiness 输出只允许记录 present/absent，不允许记录值、
 前后缀、hash 或可关联片段。
 
-本任务不会把 Monaco direct typing 当作临时 workaround。只有 Project Owner 明确拒绝 API 路径并
-另行审阅 direct-input 风险、验证覆盖和退出条件后，才可提出不同 carrier 的后续方案。
+官方 API 仍是 exact-content mutation 的 intended best solution。Project Owner 为保持 Free 套餐，已于
+2026-08-21 单独批准第 9 节定义的隔离 clone canary，用来验证 Web IDE direct-input 与人工 copy-back
+是否能形成可核验的免费 carrier；该例外不授权正式候选写入，也不把 canary 结果等同于 API read-back。
 
 ## 3. 分阶段门禁
 
@@ -166,7 +167,42 @@ SHA 的单次授权；TRADING-2538 closeout 使用过的 SSH-over-443 授权已�
 8. local commit/local-main integration完成；remote ordinary push 仅在新的 SSH-over-443 授权和 closeout gate
    通过后执行。
 
-## 9. Progress
+## 9. Owner-approved Free Web IDE clone canary
+
+Owner 决定：
+
+`授权使用 QuantConnect Free Web IDE 克隆 project 34808569 一次作为 TRADING-2539 传输沙箱；仅在克隆项目 main.py 执行一次短 canary 写入和保存，用于验证人工复制回读及本地 SHA-256 校验。禁止修改原项目、编译、回测、公开分享、迁移、实盘、下单或成交。验证完成后不得写入正式候选代码，须另行授权。`
+
+这是 Owner 明确接受的临时 workaround，边界如下：
+
+- reason：Free organization 不提供 API Access，Owner 选择保持免费；Web IDE 当前没有官方 upload、
+  download 或 source hash surface；
+- behavioral impact：恰好创建一个 project `34808569` 的云端 clone，并只在该 clone 的 `main.py`
+  完成一次 canary replace/save；原 project `34808569` 不修改；
+- canary exact LF content：
+
+  ```python
+  # TRADING-2539_FREE_WEB_CANARY_V1
+  def canary():
+      return "ASCII|quotes:'|brackets:[]{}|equals=|colon:|comma:,"
+  ```
+
+  exact LF byte count=`113`，SHA-256=
+  `23e0492a1e2e5f4627820aecde6881fc772520c28c41f38531e24da8e007de2d`，并要求文件末尾保留一个 LF；
+- risk：Monaco direct input 可能丢字节、改变换行或保存失败；浏览器自动化不能把内部 editor model、
+  clipboard 或 page-internal request 作为 authority；clone 在人工 copy-back 前会暂时保留在 Owner 的
+  Free organization 中；
+- validation coverage：记录 clone project id/name，保存后仅用可见 editor state 确认 canary marker；
+  随后由 Owner 从 clone `main.py` 人工 `Ctrl+A` / `Ctrl+C` 并粘贴回本地，由 Codex 对 UTF-8 LF bytes
+  计算 byte count 与 SHA-256；未完成 copy-back 或 hash 不匹配均为 FAIL；
+- exit condition：人工 copy-back exact byte/hash PASS 或首次 canary save/read-back 不确定即停止；无论
+  PASS/FAIL 均不得写入 sealed candidate。clone 不含独有策略实现，但在获得单独删除授权并确认无
+  唯一证据前不得删除；下一 Owner 动作为完成 copy-back，并决定是否授权 clone cleanup 或正式候选步骤；
+- prohibited：不得对原项目写入，不得第二次 clone、第二次 canary save、candidate write、build、
+  backtest、provider query、公开分享、迁移、live/broker/portfolio/order/fill、page-internal fetch、raw CDP
+  或 clipboard 自动化读取。
+
+## 10. Progress
 
 - 2026-08-21：完成 logged-in QuantConnect project `34808569` 的只读诊断。加载完成后 Monaco 可编辑；
   Explorer 无 upload/replace；clipboard copy-back 仍不可信。未进行 code input、save、build、run 或 API call。
@@ -181,3 +217,17 @@ SHA 的单次授权；TRADING-2538 closeout 使用过的 SSH-over-443 授权已�
   `outputs/validation_runtime/architecture-fitness_20260821T082853Z/test_runtime_summary.json`；唯一 mismatch
   是修改 deterministic test 后 `arch_004e_test_manifest.yaml` stale。经 coordinator claim 后使用官方
   generator 刷新，architecture fitness 重新计算为 `PASS`、module/test orphan=`0/0`、violation=`0`。
+- 2026-08-21：Owner 选择保持 Free 套餐并授权一次隔离 Web IDE clone canary。执行前固化 113-byte
+  canary、人工 copy-back SHA gate、原项目零 mutation、零 build/backtest/order/fill 和 clone 保留/清理
+  边界；该 workaround 不改变 official API 仍是正式 exact-content carrier 的结论。
+- 2026-08-21：唯一一次 Clone 已完成，沙箱为 `Clone of Sleepy Yellow-Green Shark`、project id=
+  `35444189`；Free organization 的唯一 coding session 先从原项目停止，再由 clone 使用。原 project
+  `34808569` 未写入；clone `main.py` 经 Monaco 原生键盘 carrier 完成一次 select-all、113-byte canary
+  输入和一次 `Control+S`，可见 editor 显示三条预期代码行和第 4 行空行，tab 无 dirty marker；exact
+  copy-back SHA 尚未验证。
+- 2026-08-21：保存后 Cloud Terminal 自动出现 `Built project 'Clone of Sleepy Yellow-Green Shark'
+  in Cloud for Lean Engine 2.5.0.0.18016, with Id 'e972ea-ce1a69'`。Codex 未点击 Cloud Build，但该自动
+  compilation side effect 仍超出 Owner 的 zero-compile 边界，按 incident 处理并立即停止；不得重试、
+  不得 backtest。终端计数为 clone / canary mutation / save / Cloud build / backtest / provider query /
+  orders / fills = `1 / 1 / 1 / 1 / 0 / 0 / 0 / 0`。任务转回 `BLOCKED_EXTERNAL`，等待 Owner 人工
+  copy-back、SHA 核验、incident review 和 clone cleanup 决定。
