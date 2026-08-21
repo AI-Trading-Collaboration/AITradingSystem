@@ -13,24 +13,28 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / review auto-Cloud-Build incident and decide clone cleanup
-    or a separately authorized candidate path
+  next_owner: Codex capability coordinator / publish existing-clone formal execution
+    contract and generate final exact token; then Project Owner / return token and
+    perform manual copy-back
   requirement_refs:
   - docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 'The local copy-back raw LF gate now passes
-    exactly: UTF-8 no BOM, 113 bytes, SHA-256=23e0492a1e2e5f4627820aecde6881fc772520c28c41f38531e24da8e007de2d.
-    The transport canary is proven. Remaining external decisions are review of the
-    unexpected automatic Cloud Build and clone cleanup or a separately authorized
-    formal-candidate path; perform no further QuantConnect action.'
+  unstructured_legacy_blocker_or_next_step: Retained TRADING-2532 Results was exhaustively
+    checked for date-only metadata and contains no target date or per-session chain-presence
+    series. The 26223-byte TRADING-2537 exact-date candidate is sealed and ready.
+    Publish the existing-clone lifecycle, then wait for a final exact single-use token
+    before one candidate save/automatic build/zero-order backtest/provider query in
+    clone 35444189.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Preserve the exact raw LF copy-back proof, prior CRLF-only audit evidence,
-      and cloud counters 1/1/1/1/0/0/0/0; require Owner review of the auto-build incident
-      and separate authority for clone deletion or any candidate write/build/backtest/provider/broker
-      action.
+    text: Keep original project 34808569 unchanged and create no second clone; bind
+      final pushed SHA, requirement and 2537 identities; allow at most one additional
+      candidate mutation/save/automatic build/backtest/provider query and zero orders/fills;
+      require manual raw LF copy-back byte/hash PASS before run; export the unique
+      target date and typed exact-date attribution without raw option rows, Logs-as-data
+      or Object Store.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -233,32 +237,69 @@ events:
   - change:trading-2539-copyback-lf-exact-pass-20260822-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-a64ca8cf32feb3a9fb7a7746978742f0
+- schema_version: task_event.v1
+  task_id: TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-21T17:36:38Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2539-existing-clone-exact-date-fast-path-20260822-v1
+  lane_id: null
+  base_commit: 2aa08465ebc6b2bd400bff20d50ccac1a2e59fc0
+  previous_state_event_id: task-event-a64ca8cf32feb3a9fb7a7746978742f0
+  from_status: BLOCKED_EXTERNAL
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex capability coordinator / publish existing-clone formal execution
+      contract and generate final exact token; then Project Owner / return token and
+      perform manual copy-back
+    blocker_or_next_step: Retained TRADING-2532 Results was exhaustively checked for
+      date-only metadata and contains no target date or per-session chain-presence
+      series. The 26223-byte TRADING-2537 exact-date candidate is sealed and ready.
+      Publish the existing-clone lifecycle, then wait for a final exact single-use
+      token before one candidate save/automatic build/zero-order backtest/provider
+      query in clone 35444189.
+    acceptance_criteria: Keep original project 34808569 unchanged and create no second
+      clone; bind final pushed SHA, requirement and 2537 identities; allow at most
+      one additional candidate mutation/save/automatic build/backtest/provider query
+      and zero orders/fills; require manual raw LF copy-back byte/hash PASS before
+      run; export the unique target date and typed exact-date attribution without
+      raw option rows, Logs-as-data or Object Store.
+    notes: 'Owner directed on 2026-08-22: 推进后续的任务尽快找到问题日期相关数据. This authorizes offline
+      preparation/publication but is not the final external token. Existing cloud
+      counters remain 1/1/1/1/0/0/0/0. See [TRADING-2539 requirement section 11](docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md).'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2539-existing-clone-exact-date-fast-path-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-9934c9ee97c4af519b5191aa8a18068a
 projection:
   legacy_first_eight_cells:
   - TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
   - QuantConnect Cloud file API exact-content mutation and retry proposal V1
   - P0
-  - BLOCKED_EXTERNAL
-  - Project Owner / review auto-Cloud-Build incident and decide clone cleanup or a
-    separately authorized candidate path
-  - 'The local copy-back raw LF gate now passes exactly: UTF-8 no BOM, 113 bytes,
-    SHA-256=23e0492a1e2e5f4627820aecde6881fc772520c28c41f38531e24da8e007de2d. The
-    transport canary is proven. Remaining external decisions are review of the unexpected
-    automatic Cloud Build and clone cleanup or a separately authorized formal-candidate
-    path; perform no further QuantConnect action.'
-  - Preserve the exact raw LF copy-back proof, prior CRLF-only audit evidence, and
-    cloud counters 1/1/1/1/0/0/0/0; require Owner review of the auto-build incident
-    and separate authority for clone deletion or any candidate write/build/backtest/provider/broker
-    action.
-  - Owner authorized deterministic LF normalization of D:\Work\TRADING-2539-canary-copyback.py.
-    Pre-write identity was 116 bytes/SHA-256=2b7e94a647459cc6aa94dd91a3e07b9752d86b97ea3daaee2aedc11f4a7e5461;
-    post-write identity is 113 bytes/SHA-256=23e0492a1e2e5f4627820aecde6881fc772520c28c41f38531e24da8e007de2d,
-    UTF-8 no BOM, LF/CRLF/lone-CR=3/0/0, terminal LF present. QuantConnect was not
-    accessed. See [TRADING-2539 requirement](docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md).
+  - IN_PROGRESS
+  - Codex capability coordinator / publish existing-clone formal execution contract
+    and generate final exact token; then Project Owner / return token and perform
+    manual copy-back
+  - Retained TRADING-2532 Results was exhaustively checked for date-only metadata
+    and contains no target date or per-session chain-presence series. The 26223-byte
+    TRADING-2537 exact-date candidate is sealed and ready. Publish the existing-clone
+    lifecycle, then wait for a final exact single-use token before one candidate save/automatic
+    build/zero-order backtest/provider query in clone 35444189.
+  - Keep original project 34808569 unchanged and create no second clone; bind final
+    pushed SHA, requirement and 2537 identities; allow at most one additional candidate
+    mutation/save/automatic build/backtest/provider query and zero orders/fills; require
+    manual raw LF copy-back byte/hash PASS before run; export the unique target date
+    and typed exact-date attribution without raw option rows, Logs-as-data or Object
+    Store.
+  - 'Owner directed on 2026-08-22: 推进后续的任务尽快找到问题日期相关数据. This authorizes offline preparation/publication
+    but is not the final external token. Existing cloud counters remain 1/1/1/1/0/0/0/0.
+    See [TRADING-2539 requirement section 11](docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md).'
   docs_links:
   - docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md
   terminal: false
-  canonical_row_sha256: 3a902b72a7afd9b7445a03f2d0431e70c0ad55fced5606998a1c5218a1fbffc7
-last_event_id: task-event-a64ca8cf32feb3a9fb7a7746978742f0
+  canonical_row_sha256: fc56095f49e87633bc4b79fa4ba67513d7df55bdcdc7d44a0040d492d5a80ca9
+last_event_id: task-event-9934c9ee97c4af519b5191aa8a18068a
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 87b7a9575ee2b651392b7382a94e436afba34a4f637af630a2eafe2da202d8f7
+fragment_checksum: 553e0b8e49c1925f078bdb5af6135e1edc98bacad0c0b69f84331e695ddfbe38

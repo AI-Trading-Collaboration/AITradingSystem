@@ -1,12 +1,12 @@
 # TRADING-2539 — QuantConnect Cloud file API exact-content mutation and retry proposal V1
 
 - priority: `P0`
-- status: `BLOCKED_EXTERNAL`
+- status: `IN_PROGRESS`（仅准备 existing-clone formal exact-date execution；云端动作仍等待 final exact token）
 - governed mode: `SINGLE_LANE`
 - predecessor: `TRADING-2538`
 - production effect: `none`
 - broker action: `none`
-- external boundary: Owner-authorized Free Web IDE canary only; one clone of project `34808569` and one `main.py` canary save in that clone are allowed, while the original project, compile, backtest, provider query, order, fill, public sharing, and formal candidate write remain prohibited
+- external boundary: Owner directs immediate preparation to identify the unique missing session; current tracked work may publish the existing-clone formal execution contract, while any new clone mutation, save/automatic Cloud Build, backtest, provider query, order, fill, public sharing, or candidate write remains prohibited until a final exact single-use token is returned
 
 ## 1. 问题与结论
 
@@ -251,3 +251,66 @@ Owner 决定：
   `RAW_EXACT_LF_PASS` 门禁成立。该文件继续保留，且 CRLF 版本可由已记录的确定性换行变换重建；
   本轮未访问 QuantConnect，云端 counters 保持 `1 / 1 / 1 / 1 / 0 / 0 / 0 / 0`。任务继续
   `BLOCKED_EXTERNAL`，仅等待 Owner 审阅 auto-build incident，并决定 clone cleanup 或另行授权正式候选路径。
+
+## 11. Owner-directed existing-clone formal exact-date fast path
+
+2026-08-22，Owner 指示：`推进后续的任务尽快找到问题日期相关数据`。该指示授权立即完成本节的
+离线治理、验证、ordinary publication 和 final exact-token 生成准备；它不替代最终 token，也不单独
+授权任何新的 QuantConnect mutation、save、automatic Cloud Build、backtest 或 provider query。
+
+### 11.1 Retained-result exhaustion fact
+
+已对 TRADING-2532 保留的 Results JSON 做 date-only metadata scan。文件仍为 exact byte count=`814999`、
+SHA-256=`5d3220342c96217f2c4a4d624b0dc7fbbcad98427de728e749dc2e4f3168d50d`；只含 aggregate
+runtime statistics 和普通 portfolio charts，没有 target-session date、per-session option-chain presence
+series 或可与唯一 never-chain event 对应的 custom log/chart。2531 frozen candidate 在 finalization 中只遍历
+state values 并导出计数，未导出 session id。因此旧 Results 无法可靠恢复日期，继续本地推断没有证据价值；
+唯一可靠路径是运行已封存的 TRADING-2537 exact-date candidate。
+
+### 11.2 Fast-path target and immutable identities
+
+- 复用现有隔离 clone project `35444189`；禁止创建第二个 clone，原 project `34808569` 保持不变；
+- clone 当前已核验 `main.py` pre-mutation identity：UTF-8/LF byte count=`113`、SHA-256=
+  `23e0492a1e2e5f4627820aecde6881fc772520c28c41f38531e24da8e007de2d`；
+- formal candidate：
+  `inputs/research/qqq_options/trading_2537_exact_date_provider_catalog_attribution_correction_v1/main.py`，
+  exact UTF-8/LF byte count=`26223`、SHA-256=
+  `86a3560f973c7720ac1362757d08e7263845bf3c9b0db51d0690740e54ee3fe4`；
+- package manifest content SHA-256=
+  `d2cfac9c2b66a9e3e8203537cb2ed2a9bcec5ef6a7d17c9e8d40eee41c4c8737`；
+- requested/evaluated range=`2021-02-22..2025-12-02`、expected sessions=`1202`、expected unique
+  never-chain session count=`1`。
+
+### 11.3 Final token lifecycle
+
+最终 exact token 必须绑定本节 ordinary-pushed main、requirement file SHA-256、2537 package/candidate
+identities、clone id/pre-mutation identity、expiry 和以下 additional-action maxima：
+
+- candidate mutations / saves / automatic Cloud Builds / zero-order Cloud backtests / provider queries=
+  `1 / 1 / 1 / 1 / 1`；
+- orders / fills=`0 / 0`；
+- second clone、second mutation/save/build/backtest/provider query、原项目写入、公开分享、迁移、
+  paper/live/broker/portfolio action=`0`；
+- authorization single-use，candidate input dispatch 即不可逆消费；任何 carrier ambiguity、save/build error、
+  post-save mismatch 或 result ambiguity 都 fail closed，不得 retry。
+
+严格执行顺序：
+
+1. 仅在 final token admission PASS 后，使用已经通过 canary 的 Monaco native-input carrier，对 clone
+   `35444189/main.py` 做一次 select-all、candidate input 和 save；save 可能自动触发一次 Cloud Build，
+   本次 side effect 必须计入授权和 ledger，不能再按 zero-build 假设处理；
+2. Owner 将保存后的完整 `main.py` 人工 copy-back 到
+   `D:\Work\TRADING-2539-formal-candidate-copyback.py`。Codex 只做 UTF-8/LF byte/hash 核验；只有 raw
+   byte count=`26223` 且 SHA-256 精确匹配才允许继续；失败或不确定即停止，不做第二次 save；
+3. exact copy-back PASS 后最多提交一次 zero-order Cloud backtest。只收集 2537 reviewed terminal
+   statistics，必须包含 `TRADING2537_TARGET_SESSION_DATE`、target position、exact/non-target record counts、
+   provider probe status、typed attribution 以及分离的 execution/attribution terminals；
+4. exact source-date match 是把 provider catalog 分类为 available/empty 的必要条件；prior-date-only 或
+   mixed-date fallback 不能冒充目标日 evidence；
+5. 禁止 raw option rows、contract identifiers、strike/expiry/right/quote/Greeks/IV/OI/volume、Logs-as-data、
+   Object Store、orders、fills 或从图表推断缺失日期。
+
+若 lifecycle 成功，既有 clone/canary/save/build/backtest/provider/orders/fills 总计数将从
+`1 / 1 / 1 / 1 / 0 / 0 / 0 / 0` 变为 `1 / 2 / 2 / 2 / 1 / 1 / 0 / 0`；任何提前终止按实际已 dispatch
+动作计数。copy-back 文件包含已 tracked 的 2537 candidate，没有独有实现；在 result evidence 封存并完成
+exact allowlist 审计前保留，之后可从 Git candidate 恢复。clone cleanup 仍需单独 Owner authority。
