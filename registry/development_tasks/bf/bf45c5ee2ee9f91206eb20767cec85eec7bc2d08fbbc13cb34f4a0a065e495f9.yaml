@@ -13,21 +13,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / ordinary publication 后自动 replay manifest 并在 clone 35444189 dispatch
-    一次 zero-order Cloud validation
-  requirement_refs:
-  - docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
+  next_owner: Codex / QuantConnect free coding session 可用后自动 replay 未消费 manifest 并继续唯一
+    S3 run
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S3 exact manifest 已形成 READY_UNUSED；focused
-    67、Architecture 865、Contract 276 passed。先完成 manifest commit、local-main fast-forward、ordinary
-    push 与 SHA verify，再执行唯一外部 run。
+  unstructured_legacy_blocker_or_next_step: QuantConnect clone 35444189 在 candidate
+    input 前返回 No Coding Session Available / error retrieving session information；官方
+    Retry 一次仍同终态。manifest 未消费，mutation/save/build/backtest/provider query/orders/fills/new
+    clone 均为 0。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Execution manifest content/file 72e326fca3677d9cb4516b447003165be3ff470cca27ccfe6e6ac7d6f5a366cb/3379942295b97499b661e9fc70adbf4f4f978cfbe871b0e4516ab9d63862721b；candidate
-      31720/d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3；clone
-      35444189；one mutation/save/build/backtest/query；no retry；orders/fills 0/0。
+    text: 解除条件是同一免费账户出现一个可用 coding session；重新 replay manifest 3379942295b97499b661e9fc70adbf4f4f978cfbe871b0e4516ab9d63862721b
+      后，按既定上限执行一次 clone mutation/save/build/backtest/provider query，无 retry，orders/fills
+      0/0，并封存 terminal evidence。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -208,25 +208,52 @@ events:
   - change:trading-2541-s3-manifest-validated-ready-unused-20260822-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-4ea48b44990f4f64f217f1e73a3aa6e8
+- schema_version: task_event.v1
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T14:05:04Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2541-s3-predispatch-coding-session-unavailable-20260822-v1
+  lane_id: null
+  base_commit: 91ab61074eca8037402dec457f870cf6cbeb3feb
+  previous_state_event_id: task-event-4ea48b44990f4f64f217f1e73a3aa6e8
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_EXTERNAL
+  payload:
+    priority: P0
+    next_owner: Codex / QuantConnect free coding session 可用后自动 replay 未消费 manifest
+      并继续唯一 S3 run
+    blocker_or_next_step: QuantConnect clone 35444189 在 candidate input 前返回 No Coding
+      Session Available / error retrieving session information；官方 Retry 一次仍同终态。manifest
+      未消费，mutation/save/build/backtest/provider query/orders/fills/new clone 均为 0。
+    acceptance_criteria: 解除条件是同一免费账户出现一个可用 coding session；重新 replay manifest 3379942295b97499b661e9fc70adbf4f4f978cfbe871b0e4516ab9d63862721b
+      后，按既定上限执行一次 clone mutation/save/build/backtest/provider query，无 retry，orders/fills
+      0/0，并封存 terminal evidence。
+    notes: 'pre-dispatch evidence: inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v1/predispatch_environment_evidence.json；content
+      SHA-256 ab9a8906c26bd4931705f08d40786695e7cfdabbb2b8902d58725cc1e5ec9704。authorization_state=STANDING_OWNER_SCOPE；authorization_consumption_state=UNCONSUMED_NO_BACKTEST_DISPATCH；technical_validation_state=BLOCKED_PRE_DISPATCH_NOT_EXECUTED；production_effect=none；broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2541-s3-predispatch-coding-session-unavailable-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ac476c799269ba238065e1353b753504
 projection:
   legacy_first_eight_cells:
   - TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
   - QQQ Options exact-date provider-available subscription missing remediation
   - P0
-  - IN_PROGRESS
-  - Codex / ordinary publication 后自动 replay manifest 并在 clone 35444189 dispatch 一次
-    zero-order Cloud validation
-  - S3 exact manifest 已形成 READY_UNUSED；focused 67、Architecture 865、Contract 276 passed。先完成
-    manifest commit、local-main fast-forward、ordinary push 与 SHA verify，再执行唯一外部 run。
-  - Execution manifest content/file 72e326fca3677d9cb4516b447003165be3ff470cca27ccfe6e6ac7d6f5a366cb/3379942295b97499b661e9fc70adbf4f4f978cfbe871b0e4516ab9d63862721b；candidate
-    31720/d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3；clone 35444189；one
-    mutation/save/build/backtest/query；no retry；orders/fills 0/0。
-  - Authorization state=STANDING_OWNER_SCOPE，technical validation state=NOT_EXECUTED，actual
-    counters 当前全 0。详见 [TRADING-2541 requirement](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)。
-  docs_links:
-  - docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
+  - BLOCKED_EXTERNAL
+  - Codex / QuantConnect free coding session 可用后自动 replay 未消费 manifest 并继续唯一 S3 run
+  - QuantConnect clone 35444189 在 candidate input 前返回 No Coding Session Available
+    / error retrieving session information；官方 Retry 一次仍同终态。manifest 未消费，mutation/save/build/backtest/provider
+    query/orders/fills/new clone 均为 0。
+  - 解除条件是同一免费账户出现一个可用 coding session；重新 replay manifest 3379942295b97499b661e9fc70adbf4f4f978cfbe871b0e4516ab9d63862721b
+    后，按既定上限执行一次 clone mutation/save/build/backtest/provider query，无 retry，orders/fills
+    0/0，并封存 terminal evidence。
+  - 'pre-dispatch evidence: inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v1/predispatch_environment_evidence.json；content
+    SHA-256 ab9a8906c26bd4931705f08d40786695e7cfdabbb2b8902d58725cc1e5ec9704。authorization_state=STANDING_OWNER_SCOPE；authorization_consumption_state=UNCONSUMED_NO_BACKTEST_DISPATCH；technical_validation_state=BLOCKED_PRE_DISPATCH_NOT_EXECUTED；production_effect=none；broker_action=none。'
+  docs_links: []
   terminal: false
-  canonical_row_sha256: b11c115fa5b67ea1ff29ff79d1b4422706eb0d0fa45b3109adf50c9ef5032615
-last_event_id: task-event-4ea48b44990f4f64f217f1e73a3aa6e8
+  canonical_row_sha256: 5390273c4ea3e316451af187de33446aa66e10ee038a69d5138501c62bf3747e
+last_event_id: task-event-ac476c799269ba238065e1353b753504
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 198439f9298a51a3347438373ff7b3e3d8d7622ff07f61c759a4a519f2b33a5a
+fragment_checksum: 997bfa0d6a73ba92c757da48d5d0503ffd9d373e94e0245b886dc7a2f89d2693

@@ -1,8 +1,8 @@
 # TRADING-2541 — QQQ Options exact-date subscription missing remediation V1
 
 - priority: `P0`
-- status: `IN_PROGRESS`（S1/S2 已发布；S3 standing-scope exact manifest 已验证，待发布后 dispatch）
-- owner: Codex（contract / implementation / offline validation）；Project Owner（后续新的 R1 Cloud validation）
+- status: `BLOCKED_EXTERNAL`（S1/S2 与 S3 manifest 已发布；Cloud candidate input 前被 QuantConnect coding-session availability 阻塞）
+- owner: Codex（coding session 可用后自动 replay 未消费 manifest 并继续唯一 S3 run）
 - governed mode: `SINGLE_LANE`
 - predecessor evidence: `TRADING-2537` V2 terminal attribution
 - production effect: `none`
@@ -148,3 +148,35 @@ pre-dispatch manifest identities：
 
 这些 artifacts 当前仍为 `READY_UNUSED / NOT_EXECUTED`，actual external counters 全部为 `0`；只有其
 ordinary-pushed main SHA 完成三方相等验证后才允许开始浏览器 readback/mutation/dispatch。
+
+## 9. S3 pre-dispatch coding-session 阻塞（2026-08-22）
+
+S3 manifest 已以 commit `91ab61074eca8037402dec457f870cf6cbeb3feb` 完成 ordinary push，且
+`HEAD = local main = origin/main`。随后自动 manifest replay PASS：execution-manifest
+content/file SHA-256 仍为
+`72e326fca3677d9cb4516b447003165be3ff470cca27ccfe6e6ac7d6f5a366cb` /
+`3379942295b97499b661e9fc70adbf4f4f978cfbe871b0e4516ab9d63862721b`，candidate 仍为
+`31720` LF bytes /
+`d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3`。
+
+浏览器在 candidate input 以前精确核验了 clone URL
+`https://www.quantconnect.com/project/35444189`，但 QuantConnect 先停留于
+`Requesting coding environment...`，随后返回：
+
+- `No Coding Session Available`；
+- `We got an error retrieving your session information, please retry`。
+
+官方页面 `Retry` 仅执行一次，仍返回同一终态；因此没有继续重试。QuantConnect 官方资源文档确认
+Free tier 具有一个全局 coding-session quota，所以不把付费升级当作本任务前置条件。当前 blocker 是
+free coding session 可用性或 session-information retrieval，而不是 candidate compile/backtest 失败。
+
+本次没有完成 editor readback，也没有把 candidate 输入 Web IDE；clone/original mutation、save、
+automatic build、Cloud backtest、provider query、orders、fills 和 new clone 的 actual counters 全部为
+`0`。standing scope 仅在 backtest dispatch 时消费，故仍为
+`UNCONSUMED_NO_BACKTEST_DISPATCH`；technical validation 仍为
+`BLOCKED_PRE_DISPATCH_NOT_EXECUTED`。精确证据见
+`inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v1/predispatch_environment_evidence.json`。
+
+解除条件：QuantConnect 对该免费账户暴露一个可用 coding session。解除后 Codex 必须重新自动 replay
+同一未消费 manifest，再执行既定的一次 clone mutation/save/build/backtest/provider-query 序列；不得把
+本次页面故障计为算法失败，也不得据此提升 chain presence、DQ、PIT 或 engine readiness。

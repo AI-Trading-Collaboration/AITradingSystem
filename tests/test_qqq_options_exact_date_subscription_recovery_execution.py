@@ -139,3 +139,26 @@ def test_run_scope_requires_exact_date_recovery_terminal() -> None:
     assert scope["orders"] == scope["fills"] == 0
     assert set(scope["evidence_output"].values()) == {False, True}
     assert scope["evidence_output"]["terminal_statistics_only"] is True
+
+
+def test_predispatch_environment_blocker_preserves_unused_execution_scope() -> None:
+    evidence = _load_json("predispatch_environment_evidence.json")
+
+    assert evidence["content_sha256"] == _content_sha256(evidence)
+    assert evidence["blocker_code"] == (
+        "QC_FREE_CODING_SESSION_UNAVAILABLE_PRE_DISPATCH"
+    )
+    assert evidence["candidate_dispatch_state"] == "NOT_DISPATCHED"
+    assert evidence["authorization_state"] == "STANDING_OWNER_SCOPE"
+    assert evidence["authorization_consumption_state"] == (
+        "UNCONSUMED_NO_BACKTEST_DISPATCH"
+    )
+    assert evidence["technical_validation_state"] == (
+        "BLOCKED_PRE_DISPATCH_NOT_EXECUTED"
+    )
+    assert evidence["browser_observations"]["target_clone_project_id"] == 35444189
+    assert evidence["browser_observations"]["final_heading"] == (
+        "No Coding Session Available"
+    )
+    assert evidence["browser_observations"]["official_coding_session_retry_attempts"] == 1
+    assert set(evidence["actual_manifest_counters"].values()) == {0}
