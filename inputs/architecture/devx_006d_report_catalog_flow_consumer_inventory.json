@@ -1,6 +1,6 @@
 {
   "broker_action": "none",
-  "consumer_count": 159,
+  "consumer_count": 160,
   "consumers": [
     {
       "migration_status": "PENDING_OWNER_CUTOVER",
@@ -2453,6 +2453,17 @@
         {
           "literal_count": 1,
           "target_path": "config/report_registry.yaml"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_risk_tiered_external_action_evidence_admission.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
         }
       ],
       "role": "SOURCE_CONTRACT_TEST"

@@ -15,19 +15,19 @@ task_record:
   accountable_owner: null
   next_owner: Codex capability coordinator / publish DEVX-008 then execute one bounded
     V2 run
-  requirement_refs: []
+  requirement_refs:
+  - docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Complete DEVX-008 final Full and ordinary
-    publication, then automatically replay the V2 manifest and execute the existing-clone
-    zero-order run under STANDING_OWNER_SCOPE; no long token is required.
+  unstructured_legacy_blocker_or_next_step: Complete DEVX-008 parent-bound Full failure-fix
+    rerun and ordinary publication, then automatically replay the V2 manifest and
+    execute the existing-clone zero-order run under STANDING_OWNER_SCOPE.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Preserve V1 bytes; V2 code 26587 LF bytes/SHA-256 06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2;
       clone 35444189 only; one mutation/save/build/backtest/provider query; zero orders/fills;
-      record authorization_state separately from technical_validation_state and seal
-      exact terminal evidence.
+      separate authorization and technical validation states.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -186,6 +186,34 @@ events:
   - change:trading-2537-standing-r1-v2-execution-ready-20260822-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-6a0c92214f0ee7217b5b386073b1b574
+- schema_version: task_event.v1
+  task_id: TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T09:41:49Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2537-standing-r1-requirement-binding-fix-20260822-v1
+  lane_id: null
+  base_commit: 252bcaa76caf9cbf9dd4a923468400dd1302273c
+  previous_state_event_id: task-event-6a0c92214f0ee7217b5b386073b1b574
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex capability coordinator / publish DEVX-008 then execute one bounded
+      V2 run
+    blocker_or_next_step: Complete DEVX-008 parent-bound Full failure-fix rerun and
+      ordinary publication, then automatically replay the V2 manifest and execute
+      the existing-clone zero-order run under STANDING_OWNER_SCOPE.
+    acceptance_criteria: Preserve V1 bytes; V2 code 26587 LF bytes/SHA-256 06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2;
+      clone 35444189 only; one mutation/save/build/backtest/provider query; zero orders/fills;
+      separate authorization and technical validation states.
+    notes: 详见 [TRADING-2537 standing R1 V2 execution scope](docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md)。DEVX-008
+      supersedes only the long-token blocker; production_effect=none、broker_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2537-standing-r1-requirement-binding-fix-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-4c9b61452a8162e23e5dd087da4276a3
 projection:
   legacy_first_eight_cells:
   - TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1
@@ -193,18 +221,18 @@ projection:
   - P0
   - IN_PROGRESS
   - Codex capability coordinator / publish DEVX-008 then execute one bounded V2 run
-  - Complete DEVX-008 final Full and ordinary publication, then automatically replay
-    the V2 manifest and execute the existing-clone zero-order run under STANDING_OWNER_SCOPE;
-    no long token is required.
+  - Complete DEVX-008 parent-bound Full failure-fix rerun and ordinary publication,
+    then automatically replay the V2 manifest and execute the existing-clone zero-order
+    run under STANDING_OWNER_SCOPE.
   - Preserve V1 bytes; V2 code 26587 LF bytes/SHA-256 06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2;
     clone 35444189 only; one mutation/save/build/backtest/provider query; zero orders/fills;
-    record authorization_state separately from technical_validation_state and seal
-    exact terminal evidence.
-  - DEVX-008 supersedes the V2 long-token blocker for this bounded R1 sandbox run.
-    Historical token and execution evidence remain immutable; production_effect=none、broker_action=none。
-  docs_links: []
+    separate authorization and technical validation states.
+  - 详见 [TRADING-2537 standing R1 V2 execution scope](docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md)。DEVX-008
+    supersedes only the long-token blocker; production_effect=none、broker_action=none。
+  docs_links:
+  - docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md
   terminal: false
-  canonical_row_sha256: d3de11bf18c75cfd40133cacf4cc94aafcc2012d49d0cb4567971ff90f72298d
-last_event_id: task-event-6a0c92214f0ee7217b5b386073b1b574
+  canonical_row_sha256: 72484cdf46ca9f2fb2464b47af5fdd923507de01eae15b3b10353e8cdfc9b866
+last_event_id: task-event-4c9b61452a8162e23e5dd087da4276a3
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 5237cab05a0278809c3cd7d597ad96d5e4d9ebdb200df43dab37ee62887263c9
+fragment_checksum: 82b86ea32e418bacdf81226f2b6e83296f12d8dfbdb83b18a6cdea47d1e83790

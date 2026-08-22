@@ -135,3 +135,16 @@ architecture/compatibility authorities 和 formal validation artifacts。
   `1299` 变为 `1300`；同步 immutable current inventory 后最终 Architecture=`865 passed`。
   Contract=`276 passed`、Integration=`995 passed / 643 warnings`、Reproducibility=`24 passed`。
   final committed-tree Full 与 ordinary publication 仍是外部 V2 dispatch 前最后门禁。
+- 2026-08-22：commit `252bcaa76caf9cbf9dd4a923468400dd1302273c` 的首次 Full=
+  `9242 passed / 28 failed / 3 skipped / 643 warnings`，parent artifact=
+  `outputs/validation_runtime/devx_008_risk_tiered_external_evidence_full_final_v1/test_runtime_summary.json`。
+  28 项归并为三条生成/绑定根因：AGENTS/deprecation compatibility authority stale、system-flow
+  report-catalog-flow authority stale、2537/2539 task update notes 缺少 Markdown requirement link 使 canonical
+  structured `requirement_refs` 被清空并导致 Atlas fail closed。policy focused 行为和其余 9242 项均通过。
+  修复只允许恢复 requirement binding、按官方顺序重建 report-flow/compatibility/ARCH-004E authority，创建
+  新 committed final tree，并以本次失败 artifact 为 parent 完整运行 `failure_fix_rerun`。
+- 2026-08-22：2537/2539 canonical `requirement_refs` 已通过 append-only task events 恢复；system-flow
+  report authority 更新为 `2243340 bytes / SHA-256 c015baa58b6095d6c670786890252b46067f42cb2a1388e816538ebaaa6d8dc0`
+  与 `1042` blocks，总 entry count=`2969`、fragment count=`192`。按
+  `ARCH-004E -> report-flow -> compatibility` 官方顺序重建后，首次 Full 的 28 项失败覆盖聚焦=
+  `60 passed`。下一门禁是 final fix commit、ignored Atlas exact-commit sidecar 和 parent-bound Full rerun。

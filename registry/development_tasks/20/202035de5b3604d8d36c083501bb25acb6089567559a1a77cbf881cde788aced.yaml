@@ -15,20 +15,19 @@ task_record:
   accountable_owner: null
   next_owner: Codex capability coordinator / V2 existing-clone execution after DEVX-008
     publication
-  requirement_refs: []
+  requirement_refs:
+  - docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Policy publication is the only remaining
-    pre-dispatch gate. Then use clone 35444189 under STANDING_OWNER_SCOPE with exact
-    V2 manifest replay and bounded actual-counter recording; no owner hash copyback
-    token.
+  unstructured_legacy_blocker_or_next_step: Complete the parent-bound policy Full
+    rerun and publication, then use clone 35444189 under STANDING_OWNER_SCOPE with
+    exact V2 manifest replay and bounded actual-counter recording.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Keep original project 34808569 and V1 evidence unchanged; V2 additional
       mutation/save/build/backtest/provider query maxima=1/1/1/1/1, new clones/orders/fills=0/0/0,
-      no retry; technical evidence admission depends on exact runtime validation rather
-      than token format.
+      no retry; admit technical evidence by exact runtime validation.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -363,6 +362,35 @@ events:
   - change:trading-2539-standing-r1-v2-existing-clone-ready-20260822-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-d90c589bb043109f50716ae8ca3c62d4
+- schema_version: task_event.v1
+  task_id: TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T09:42:03Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2539-standing-r1-requirement-binding-fix-20260822-v1
+  lane_id: null
+  base_commit: 252bcaa76caf9cbf9dd4a923468400dd1302273c
+  previous_state_event_id: task-event-d90c589bb043109f50716ae8ca3c62d4
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex capability coordinator / V2 existing-clone execution after DEVX-008
+      publication
+    blocker_or_next_step: Complete the parent-bound policy Full rerun and publication,
+      then use clone 35444189 under STANDING_OWNER_SCOPE with exact V2 manifest replay
+      and bounded actual-counter recording.
+    acceptance_criteria: Keep original project 34808569 and V1 evidence unchanged;
+      V2 additional mutation/save/build/backtest/provider query maxima=1/1/1/1/1,
+      new clones/orders/fills=0/0/0, no retry; admit technical evidence by exact runtime
+      validation.
+    notes: 详见 [TRADING-2539 standing R1 existing-clone V2 path](docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md)。Existing
+      clone retained；production_effect=none、broker_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2539-standing-r1-requirement-binding-fix-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e2b62ef41e2b5120365fcb758725fbac
 projection:
   legacy_first_eight_cells:
   - TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
@@ -370,17 +398,18 @@ projection:
   - P0
   - IN_PROGRESS
   - Codex capability coordinator / V2 existing-clone execution after DEVX-008 publication
-  - Policy publication is the only remaining pre-dispatch gate. Then use clone 35444189
+  - Complete the parent-bound policy Full rerun and publication, then use clone 35444189
     under STANDING_OWNER_SCOPE with exact V2 manifest replay and bounded actual-counter
-    recording; no owner hash copyback token.
+    recording.
   - Keep original project 34808569 and V1 evidence unchanged; V2 additional mutation/save/build/backtest/provider
-    query maxima=1/1/1/1/1, new clones/orders/fills=0/0/0, no retry; technical evidence
-    admission depends on exact runtime validation rather than token format.
-  - 详见 DEVX-008 与 TRADING-2539 requirement section 12.2。Existing clone remains retained;
-    production_effect=none、broker_action=none。
-  docs_links: []
+    query maxima=1/1/1/1/1, new clones/orders/fills=0/0/0, no retry; admit technical
+    evidence by exact runtime validation.
+  - 详见 [TRADING-2539 standing R1 existing-clone V2 path](docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md)。Existing
+    clone retained；production_effect=none、broker_action=none。
+  docs_links:
+  - docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md
   terminal: false
-  canonical_row_sha256: a2178dddcd71539601c159e0d130aec0697df1d578e058786b8930bf67d5520e
-last_event_id: task-event-d90c589bb043109f50716ae8ca3c62d4
+  canonical_row_sha256: 80ebf8c33096f5508d238b0b17658b2d729744dd8b00c27395ecc2ae9c0fb43a
+last_event_id: task-event-e2b62ef41e2b5120365fcb758725fbac
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: ea67ffab0854b0042007dfff26e2b15a25297aa42af1e7ea0759e4fe28eea275
+fragment_checksum: cf1525d4131b3ed8142cd1356b65033ce6e2c7b5a0e38b64300f4fd120b05795
