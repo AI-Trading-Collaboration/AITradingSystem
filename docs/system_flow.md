@@ -8985,3 +8985,8 @@ SHA-256 为 `465961f8bb040968d0d49f1753aa40d8160ae2d35333d3dee1d025e358f49188`�
 `2022-08-26`、缩短 primary window，也不得在新的 1202-session S3 DQ/PIT validation 前开放 selection、
 engine 或交易；当前 `chain_presence=FAIL`、DQ=`FAIL`、PIT=`NOT_EVALUATED` 和
 `POLICY_BLOCKED_CASH_PRESERVATION` 保持不变。
+
+S3 由 DEVX-008 `R1_BOUNDED_RESEARCH_SANDBOX` standing owner scope 管理：exact manifest 发布并自动重放
+后，只允许在 existing clone `35444189` 发生一次 candidate mutation/save/build、一次 zero-order Cloud
+backtest 与一次 provider query；首个 dispatch 即消费且禁止 retry。execution evidence 必须把
+`authorization_state=STANDING_OWNER_SCOPE` 与 `technical_validation_state` 分开封存。

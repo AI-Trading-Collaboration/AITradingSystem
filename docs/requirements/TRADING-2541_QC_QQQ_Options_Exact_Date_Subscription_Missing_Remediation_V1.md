@@ -1,7 +1,7 @@
 # TRADING-2541 — QQQ Options exact-date subscription missing remediation V1
 
 - priority: `P0`
-- status: `BASELINE_DONE`（S1/S2 已实现并通过聚焦离线验证；S3 Cloud validation 未执行）
+- status: `IN_PROGRESS`（S1/S2 已发布；S3 standing-scope exact manifest 已验证，待发布后 dispatch）
 - owner: Codex（contract / implementation / offline validation）；Project Owner（后续新的 R1 Cloud validation）
 - governed mode: `SINGLE_LANE`
 - predecessor evidence: `TRADING-2537` V2 terminal attribution
@@ -110,3 +110,41 @@ pure adapter 将 accepted provider record 转换为既有 `SessionSliceObservati
 在新的 S3 bounded R1 validation 完成以前，`cloud_validation_status=NOT_EXECUTED`、
 `chain_presence=FAIL`、DQ=`FAIL`、PIT=`NOT_EVALUATED`、
 `engine_status=POLICY_BLOCKED_CASH_PRESERVATION`，orders/fills=`0/0` 均保持不变。
+
+## 8. S3 standing owner scope（2026-08-22）
+
+Project Owner 已在当前对话明确要求 Codex 继续修复该工程问题。依据 DEVX-008 的
+`R1_BOUNDED_RESEARCH_SANDBOX` 规则，该意图与本任务已审阅的 S3 边界构成
+`STANDING_OWNER_SCOPE`，不要求 Owner 机械回贴机器生成的长 token。执行前必须发布并自动重放：
+
+- `config/research/qc_qqq_options_exact_date_subscription_recovery_execution_v1.yaml`；
+- `inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v1/`；
+- exact candidate：`31720` LF bytes / SHA-256
+  `d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3`；
+- existing clone `35444189`；原项目 `34808569` mutation=`0`、new clone=`0`；
+- clone mutation/save/automatic build/zero-order backtest/provider query 上限均为 `1`；
+- orders/fills=`0/0`，无 retry、raw rows、contract identifiers、individual fields、Object Store、
+  public share、migration、cloud deletion、paper/live、broker 或 production action。
+
+standing scope 在首个 backtest dispatch 时消费；不论 terminal 成功或失败都必须停止并封存 exact
+readback、actual counters、build/run identity 和 terminal statistics。authorization state 与
+technical validation state 分轴记录；只有 S3 technical terminal 满足 acceptance criteria 才能推进
+chain presence/DQ/PIT，不能用 standing scope 本身代替数据正确性证明。
+
+pre-dispatch manifest identities：
+
+- execution policy file SHA-256：
+  `e121d3bde9968a1c344f1d389675cd436c35ae1df21bf935af1f571932d6dca0`；
+- standing-scope admission content/file SHA-256：
+  `02f5dfbaa85c58fd7abec2598bb90c73df699bca13762b44d535d265797d69ce` /
+  `96cabc23f01a53ca2f20c1a9bf02395060ed619df72e0248f4bb2ce62f1a08af`；
+- run-scope content/file SHA-256：
+  `79b1f4a322d893a74b7ef13d48f36bc0de18c29500f997308c88a15f9af726ff` /
+  `63f6fe0a46e585021feb9f3cbf3a85eac616ea1590ebf6d35a8975fc2f728634`；
+- execution-manifest content/file SHA-256：
+  `72e326fca3677d9cb4516b447003165be3ff470cca27ccfe6e6ac7d6f5a366cb` /
+  `3379942295b97499b661e9fc70adbf4f4f978cfbe871b0e4516ab9d63862721b`；
+- pre-dispatch focused=`67 passed`、Architecture=`865 passed`、Contract=`276 passed`、Ruff PASS。
+
+这些 artifacts 当前仍为 `READY_UNUSED / NOT_EXECUTED`，actual external counters 全部为 `0`；只有其
+ordinary-pushed main SHA 完成三方相等验证后才允许开始浏览器 readback/mutation/dispatch。

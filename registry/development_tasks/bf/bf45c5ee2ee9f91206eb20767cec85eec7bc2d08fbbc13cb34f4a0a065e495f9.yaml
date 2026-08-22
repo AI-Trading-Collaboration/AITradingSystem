@@ -13,22 +13,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / 本次 ordinary publication 后另行准备 S3 reviewed R1 validation manifest
+  next_owner: Codex / ordinary publication 后自动 replay manifest 并在 clone 35444189 dispatch
+    一次 zero-order Cloud validation
   requirement_refs:
   - docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S1/S2 offline durable recovery baseline
-    与 final-tree formal repository validation 已完成。剩余 S3 是一次独立 governed zero-order
-    Cloud validation/provider query；当前未执行，不能提升 chain presence、DQ/PIT 或 engine readiness。
+  unstructured_legacy_blocker_or_next_step: S3 exact manifest 已形成 READY_UNUSED；focused
+    67、Architecture 865、Contract 276 passed。先完成 manifest commit、local-main fast-forward、ordinary
+    push 与 SHA verify，再执行唯一外部 run。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Normal Slice precedence；END_OF_ALGORITHM_ONLY；最多一次 exact-date query；Time/EndTime
-      exact identity；cross-date/duplicate/missing/empty/invalid availability fail
-      closed；main.py LF 31720 bytes / d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3；focused
-      17、Architecture 865、Contract 276、Integration 995、Reproducibility 24 passed；Ruff
-      PASS；orders/fills=0/0。
+    text: Execution manifest content/file 72e326fca3677d9cb4516b447003165be3ff470cca27ccfe6e6ac7d6f5a366cb/3379942295b97499b661e9fc70adbf4f4f978cfbe871b0e4516ab9d63862721b；candidate
+      31720/d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3；clone
+      35444189；one mutation/save/build/backtest/query；no retry；orders/fills 0/0。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -152,27 +151,82 @@ events:
   - change:trading-2541-offline-recovery-formal-validation-pass-20260822-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-0a6096da30c8f944bb787401ab470630
+- schema_version: task_event.v1
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T13:28:27Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2541-s3-standing-scope-preparation-20260822-v1
+  lane_id: null
+  base_commit: d4dd62cd967404643ff6931f3b2451aeb67124e1
+  previous_state_event_id: task-event-0a6096da30c8f944bb787401ab470630
+  from_status: BASELINE_DONE
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / 自动核验 exact manifest 后在 existing clone 35444189 执行一次 bounded
+      zero-order Cloud validation
+    blocker_or_next_step: 依据 DEVX-008 R1 standing owner scope 准备 S3 exact manifest；限定
+      clone mutation/save/build/backtest/provider query 各最多 1，禁止 retry、原项目修改、订单、成交、公开、删除及
+      paper/live。
+    acceptance_criteria: Published main d4dd62cd967404643ff6931f3b2451aeb67124e1；candidate
+      LF 31720 bytes / d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3；existing
+      clone 35444189；1202 sessions；target 2022-08-26；exact Time/EndTime；one recovery/query；orders/fills
+      0/0；actual counters 与 terminal evidence 封存。
+    notes: Project Owner 在当前对话明确要求继续修复工程问题；按 [DEVX-008 standing scope](docs/requirements/DEVX-008_Risk_Tiered_External_Action_and_Evidence_Admission.md)
+      不要求机械回贴长 token。详见 [TRADING-2541 requirement](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2541-s3-standing-scope-preparation-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a0d12e40c7f6534119e41348f6e46f53
+- schema_version: task_event.v1
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T13:44:31Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2541-s3-manifest-validated-ready-unused-20260822-v1
+  lane_id: null
+  base_commit: d4dd62cd967404643ff6931f3b2451aeb67124e1
+  previous_state_event_id: task-event-a0d12e40c7f6534119e41348f6e46f53
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / ordinary publication 后自动 replay manifest 并在 clone 35444189
+      dispatch 一次 zero-order Cloud validation
+    blocker_or_next_step: S3 exact manifest 已形成 READY_UNUSED；focused 67、Architecture
+      865、Contract 276 passed。先完成 manifest commit、local-main fast-forward、ordinary
+      push 与 SHA verify，再执行唯一外部 run。
+    acceptance_criteria: Execution manifest content/file 72e326fca3677d9cb4516b447003165be3ff470cca27ccfe6e6ac7d6f5a366cb/3379942295b97499b661e9fc70adbf4f4f978cfbe871b0e4516ab9d63862721b；candidate
+      31720/d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3；clone
+      35444189；one mutation/save/build/backtest/query；no retry；orders/fills 0/0。
+    notes: Authorization state=STANDING_OWNER_SCOPE，technical validation state=NOT_EXECUTED，actual
+      counters 当前全 0。详见 [TRADING-2541 requirement](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2541-s3-manifest-validated-ready-unused-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-4ea48b44990f4f64f217f1e73a3aa6e8
 projection:
   legacy_first_eight_cells:
   - TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
   - QQQ Options exact-date provider-available subscription missing remediation
   - P0
-  - BASELINE_DONE
-  - Codex / 本次 ordinary publication 后另行准备 S3 reviewed R1 validation manifest
-  - S1/S2 offline durable recovery baseline 与 final-tree formal repository validation
-    已完成。剩余 S3 是一次独立 governed zero-order Cloud validation/provider query；当前未执行，不能提升
-    chain presence、DQ/PIT 或 engine readiness。
-  - Normal Slice precedence；END_OF_ALGORITHM_ONLY；最多一次 exact-date query；Time/EndTime
-    exact identity；cross-date/duplicate/missing/empty/invalid availability fail closed；main.py
-    LF 31720 bytes / d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3；focused
-    17、Architecture 865、Contract 276、Integration 995、Reproducibility 24 passed；Ruff
-    PASS；orders/fills=0/0。
-  - 详见 [TRADING-2541 requirement](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)。BASELINE_DONE
-    继续为非终态；Cloud/provider action=NOT_EXECUTED，production_effect=none、broker_action=none。
+  - IN_PROGRESS
+  - Codex / ordinary publication 后自动 replay manifest 并在 clone 35444189 dispatch 一次
+    zero-order Cloud validation
+  - S3 exact manifest 已形成 READY_UNUSED；focused 67、Architecture 865、Contract 276 passed。先完成
+    manifest commit、local-main fast-forward、ordinary push 与 SHA verify，再执行唯一外部 run。
+  - Execution manifest content/file 72e326fca3677d9cb4516b447003165be3ff470cca27ccfe6e6ac7d6f5a366cb/3379942295b97499b661e9fc70adbf4f4f978cfbe871b0e4516ab9d63862721b；candidate
+    31720/d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3；clone 35444189；one
+    mutation/save/build/backtest/query；no retry；orders/fills 0/0。
+  - Authorization state=STANDING_OWNER_SCOPE，technical validation state=NOT_EXECUTED，actual
+    counters 当前全 0。详见 [TRADING-2541 requirement](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)。
   docs_links:
   - docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
   terminal: false
-  canonical_row_sha256: a2a49822449f8c44e3d88edd72c85f599e4c44027619dd0944a370293386cbd0
-last_event_id: task-event-0a6096da30c8f944bb787401ab470630
+  canonical_row_sha256: b11c115fa5b67ea1ff29ff79d1b4422706eb0d0fa45b3109adf50c9ef5032615
+last_event_id: task-event-4ea48b44990f4f64f217f1e73a3aa6e8
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: d2e3b9d83ae624f648dc26e6bbaaa3a40e162d55663a283ff818d62540e2f8a3
+fragment_checksum: 198439f9298a51a3347438373ff7b3e3d8d7622ff07f61c759a4a519f2b33a5a

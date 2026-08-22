@@ -1,0 +1,58 @@
+{
+  "actual_counters": {
+    "additional_automatic_cloud_builds": 0,
+    "additional_clone_project_mutations": 0,
+    "additional_saves": 0,
+    "fills": 0,
+    "new_clones": 0,
+    "orders": 0,
+    "original_project_mutations": 0,
+    "provider_queries": 0,
+    "zero_order_cloud_backtests": 0
+  },
+  "artifacts": [
+    {
+      "byte_count": 2576,
+      "kind": "EXECUTION_POLICY",
+      "path": "config/research/qc_qqq_options_exact_date_subscription_recovery_execution_v1.yaml",
+      "sha256": "e121d3bde9968a1c344f1d389675cd436c35ae1df21bf935af1f571932d6dca0"
+    },
+    {
+      "byte_count": 31720,
+      "kind": "PROJECT_CODE",
+      "path": "inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_v1/main.py",
+      "sha256": "d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3"
+    },
+    {
+      "byte_count": 1151,
+      "kind": "OFFLINE_PACKAGE_MANIFEST",
+      "path": "inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_v1/package_manifest.json",
+      "sha256": "e142575b24c843393c17ecb5742085ed0a9fccbbef1f78ff5416aadb886f3715"
+    },
+    {
+      "byte_count": 1204,
+      "kind": "RUN_SCOPE",
+      "path": "inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v1/run_scope.json",
+      "sha256": "63f6fe0a46e585021feb9f3cbf3a85eac616ea1590ebf6d35a8975fc2f728634"
+    },
+    {
+      "byte_count": 1560,
+      "kind": "STANDING_SCOPE_ADMISSION",
+      "path": "inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v1/standing_scope_admission.json",
+      "sha256": "96cabc23f01a53ca2f20c1a9bf02395060ed619df72e0248f4bb2ce62f1a08af"
+    }
+  ],
+  "authorization_state": "STANDING_OWNER_SCOPE",
+  "broker_action": "none",
+  "candidate_lf_byte_count": 31720,
+  "candidate_lf_sha256": "d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3",
+  "content_sha256": "72e326fca3677d9cb4516b447003165be3ff470cca27ccfe6e6ac7d6f5a366cb",
+  "manifest_replay_state": "NOT_EXECUTED",
+  "ordinary_pushed_main_sha": "d4dd62cd967404643ff6931f3b2451aeb67124e1",
+  "production_effect": "none",
+  "schema_version": "qc_qqq_options_exact_date_subscription_recovery_execution_manifest.v1",
+  "status": "READY_UNUSED",
+  "target_clone_project_id": 35444189,
+  "task_id": "TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1",
+  "technical_validation_state": "NOT_EXECUTED"
+}
