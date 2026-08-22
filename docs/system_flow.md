@@ -8972,6 +8972,16 @@ session finalization confirms full-day subscription missing
   -> future separately reviewed zero-order R1 validation over all 1202 sessions
 ```
 
-2541 当前只冻结 requirement 并进入 repository implementation；尚未执行新的 Cloud action。不得把
-V2 attribution 的 `6496` 当作硬编码阈值，不得 forward-fill、删除 `2022-08-26`、缩短 primary window，
-也不得在新的 1202-session DQ/PIT validation 前开放 selection、engine 或交易。
+2541 的 S1/S2 repository 基线已实现：pure adapter、policy、zero-order candidate builder、同轴 reducer
+接入、typed fail-closed 测试与 sealed package 均已落库，聚焦验证为 `17 passed`、Ruff PASS；正式
+repository validation 为 Architecture=`865 passed`、Contract=`276 passed`、Integration=`995 passed`、
+Reproducibility=`24 passed`。生成的
+`main.py` 为 `31720` LF bytes，SHA-256 为
+`d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3`；package manifest content
+SHA-256 为 `465961f8bb040968d0d49f1753aa40d8160ae2d35333d3dee1d025e358f49188`。
+
+该实现尚未执行新的 Cloud action 或 provider query，因此只证明离线 recovery contract 与 candidate 可重放，
+不证明 Cloud transport 已修复。不得把 V2 attribution 的 `6496` 当作硬编码阈值，不得 forward-fill、删除
+`2022-08-26`、缩短 primary window，也不得在新的 1202-session S3 DQ/PIT validation 前开放 selection、
+engine 或交易；当前 `chain_presence=FAIL`、DQ=`FAIL`、PIT=`NOT_EVALUATED` 和
+`POLICY_BLOCKED_CASH_PRESERVATION` 保持不变。

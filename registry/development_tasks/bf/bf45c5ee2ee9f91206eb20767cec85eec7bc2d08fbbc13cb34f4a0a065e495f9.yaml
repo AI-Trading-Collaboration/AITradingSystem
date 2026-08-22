@@ -13,20 +13,22 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex：先冻结 exact-date recovery contract/precedence/cache identity，随后实现
-    adapter 与离线验证
+  next_owner: Codex / 本次 ordinary publication 后另行准备 S3 reviewed R1 validation manifest
   requirement_refs:
   - docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 2022-08-26 exact-source-date provider
-    record/6496 contracts 已证实存在，但 subscribed chain event=0；需实现 same-date recovery
-    语义、字段完整性与后续新 R1 validation，禁止 cross-date fallback。
+  unstructured_legacy_blocker_or_next_step: S1/S2 offline durable recovery baseline
+    与 final-tree formal repository validation 已完成。剩余 S3 是一次独立 governed zero-order
+    Cloud validation/provider query；当前未执行，不能提升 chain presence、DQ/PIT 或 engine readiness。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 正常 Slice 优先；仅在完整 session finalization 后允许同源日期 recovery；1202 sessions 走同一
-      schema/cache/DQ/PIT/lineage；cross-date fail closed；orders/fills=0/0。
+    text: Normal Slice precedence；END_OF_ALGORITHM_ONLY；最多一次 exact-date query；Time/EndTime
+      exact identity；cross-date/duplicate/missing/empty/invalid availability fail
+      closed；main.py LF 31720 bytes / d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3；focused
+      17、Architecture 865、Contract 276、Integration 995、Reproducibility 24 passed；Ruff
+      PASS；orders/fills=0/0。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -62,25 +64,115 @@ events:
   - change:trading-2541-register-exact-date-subscription-remediation-20260822-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-0370fa5b4b5cf217cdbf32fd494b5903
+- schema_version: task_event.v1
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T12:05:19Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2541-offline-recovery-implementation-start-20260822-v1
+  lane_id: null
+  base_commit: 157f84af680616a2b8d31cc545892afae77c1235
+  previous_state_event_id: task-event-0370fa5b4b5cf217cdbf32fd494b5903
+  from_status: READY
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：实现 same-date recovery contract、pure adapter、zero-order candidate
+      与离线测试
+    blocker_or_next_step: 冻结 normal Slice precedence、END_OF_ALGORITHM_ONLY finalization、exact
+      Time/EndTime identity 和 fail-closed 枚举；实现后只做 repository validation，不执行新 Cloud
+      action。
+    acceptance_criteria: Normal Slice 优先；仅全日缺链且 equity session valid 时计划一次 query；只接受
+      Time=target、EndTime=Time+1 day 的唯一 record；cross-date/duplicate/partial/empty
+      fail closed；同一 axis schema；1202 sessions；0 orders/fills。
+    notes: 受控 SINGLE_LANE preflight 在 main 157f84af680616a2b8d31cc545892afae77c1235
+      上 PASS。详见 [TRADING-2541 requirement](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)；本阶段
+      external_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2541-offline-recovery-implementation-start-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-25196fe4eef01866ca84afcc427aa513
+- schema_version: task_event.v1
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T12:19:17Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2541-offline-recovery-baseline-done-20260822-v1
+  lane_id: null
+  base_commit: 157f84af680616a2b8d31cc545892afae77c1235
+  previous_state_event_id: task-event-25196fe4eef01866ca84afcc427aa513
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Codex / 完成 final-tree validation 与 ordinary publication；随后另行准备 S3
+      reviewed R1 manifest
+    blocker_or_next_step: S1/S2 pure adapter、policy、zero-order candidate、same-axis
+      reducer 接入与 sealed package 已实现；当前完成正式 repository validation。S3 Cloud validation/provider
+      query 未执行，需在本次代码普通发布后另行 governed admission。
+    acceptance_criteria: Normal Slice precedence；仅 END_OF_ALGORITHM 确认唯一缺链且 equity
+      valid 后计划最多一次 exact-date query；Time=target、EndTime=Time+1 day；cross-date/duplicate/missing/empty/invalid
+      availability fail closed；17 focused tests 与 Ruff PASS；main.py LF 31720 bytes
+      / SHA-256 d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3；orders/fills=0/0。
+    notes: 详见 [TRADING-2541 requirement](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)。BASELINE_DONE
+      为非终态：仅表示 offline durable recovery 基线完成；cloud_validation_status=NOT_EXECUTED、chain_presence=FAIL、DQ=FAIL、PIT=NOT_EVALUATED、engine
+      blocked 保持不变。production_effect=none、broker_action=none、external_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2541-offline-recovery-baseline-done-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c4b3ef0c8616b4f6f8955834d569266c
+- schema_version: task_event.v1
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T12:43:17Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2541-offline-recovery-formal-validation-pass-20260822-v1
+  lane_id: null
+  base_commit: 157f84af680616a2b8d31cc545892afae77c1235
+  previous_state_event_id: task-event-c4b3ef0c8616b4f6f8955834d569266c
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Codex / 本次 ordinary publication 后另行准备 S3 reviewed R1 validation manifest
+    blocker_or_next_step: S1/S2 offline durable recovery baseline 与 final-tree formal
+      repository validation 已完成。剩余 S3 是一次独立 governed zero-order Cloud validation/provider
+      query；当前未执行，不能提升 chain presence、DQ/PIT 或 engine readiness。
+    acceptance_criteria: Normal Slice precedence；END_OF_ALGORITHM_ONLY；最多一次 exact-date
+      query；Time/EndTime exact identity；cross-date/duplicate/missing/empty/invalid
+      availability fail closed；main.py LF 31720 bytes / d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3；focused
+      17、Architecture 865、Contract 276、Integration 995、Reproducibility 24 passed；Ruff
+      PASS；orders/fills=0/0。
+    notes: 详见 [TRADING-2541 requirement](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)。BASELINE_DONE
+      继续为非终态；Cloud/provider action=NOT_EXECUTED，production_effect=none、broker_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2541-offline-recovery-formal-validation-pass-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0a6096da30c8f944bb787401ab470630
 projection:
   legacy_first_eight_cells:
   - TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
   - QQQ Options exact-date provider-available subscription missing remediation
   - P0
-  - READY
-  - Codex：先冻结 exact-date recovery contract/precedence/cache identity，随后实现 adapter
-    与离线验证
-  - 2022-08-26 exact-source-date provider record/6496 contracts 已证实存在，但 subscribed
-    chain event=0；需实现 same-date recovery 语义、字段完整性与后续新 R1 validation，禁止 cross-date
-    fallback。
-  - 正常 Slice 优先；仅在完整 session finalization 后允许同源日期 recovery；1202 sessions 走同一 schema/cache/DQ/PIT/lineage；cross-date
-    fail closed；orders/fills=0/0。
-  - 'Supporting requirement: [TRADING-2541 exact-date subscription remediation](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)；TRADING-2537
-    V2 attribution 已 RESOLVED，但 durable repair 尚未实现。'
+  - BASELINE_DONE
+  - Codex / 本次 ordinary publication 后另行准备 S3 reviewed R1 validation manifest
+  - S1/S2 offline durable recovery baseline 与 final-tree formal repository validation
+    已完成。剩余 S3 是一次独立 governed zero-order Cloud validation/provider query；当前未执行，不能提升
+    chain presence、DQ/PIT 或 engine readiness。
+  - Normal Slice precedence；END_OF_ALGORITHM_ONLY；最多一次 exact-date query；Time/EndTime
+    exact identity；cross-date/duplicate/missing/empty/invalid availability fail closed；main.py
+    LF 31720 bytes / d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3；focused
+    17、Architecture 865、Contract 276、Integration 995、Reproducibility 24 passed；Ruff
+    PASS；orders/fills=0/0。
+  - 详见 [TRADING-2541 requirement](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)。BASELINE_DONE
+    继续为非终态；Cloud/provider action=NOT_EXECUTED，production_effect=none、broker_action=none。
   docs_links:
   - docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
   terminal: false
-  canonical_row_sha256: 8a79a0f2048c9a12f41ada586d1f355f9f1f8facc471357a9c81c63f32a6ea28
-last_event_id: task-event-0370fa5b4b5cf217cdbf32fd494b5903
+  canonical_row_sha256: a2a49822449f8c44e3d88edd72c85f599e4c44027619dd0944a370293386cbd0
+last_event_id: task-event-0a6096da30c8f944bb787401ab470630
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 37870fddaf9752be42c4572aa1f1d1cb23ab4cfd12e6b71330583ccd9a921f88
+fragment_checksum: d2e3b9d83ae624f648dc26e6bbaaa3a40e162d55663a283ff818d62540e2f8a3

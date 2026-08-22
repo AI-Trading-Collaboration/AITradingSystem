@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1300
-test_count: 1240
+test_file_count: 1301
+test_count: 1241
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -27,7 +27,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_cited_query_renderer
   path: tests/atlas/test_cited_query_renderer.py
-  sha256: 758db886d2207a678556f81b959767daf68781994f960a68313be679cf2ce2d2
+  sha256: 618ffd3138573458cca7be6f4f2d449abc4945fba982127e67187df6f0a93ef9
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_page_effectiveness
   path: tests/atlas/test_page_effectiveness.py
-  sha256: 56d72192832c4f7d653fdd7e6cb09bb6e8057bcce45a12f5a42998f42e5381cf
+  sha256: 9446c7ddd9b36e9c0cccd77910cb2ef43f70725edb9586c0dedc6d2ae8c85fa8
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8454,7 +8454,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: ce64ed85c7f137b65e53e5cc4d958284d8aae039cbe24a32358265c692e0db21
+  sha256: fba81c293d6497b4b164e1cb584f5f72830a7c7e2969b88cf76a2c1d95152706
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -10378,7 +10378,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 56a7583fab8b1a60085c7e1266ac1206ec35e861bb028513f2f8a0137a11de8d
+  sha256: d3f73dafd3d9b3caf9e580b9f5d7fc4f49fceea3b5a278d6242f144629d69ab9
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -14945,6 +14945,22 @@ tests:
 - test_id: tests.test_qqq_options_exact_date_provider_catalog_attribution_execution
   path: tests/test_qqq_options_exact_date_provider_catalog_attribution_execution.py
   sha256: d9eb4e873765d4e3d7eac2ffd69c770f43a1c1f79a2f54fcef781192a1ba453f
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_qqq_options_exact_date_subscription_recovery
+  path: tests/test_qqq_options_exact_date_subscription_recovery.py
+  sha256: b3b9b6fa1f3e83e73133779085a734079d9d5ed54f3b93eef28992f10ea50250
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

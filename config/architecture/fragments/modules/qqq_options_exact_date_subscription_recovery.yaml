@@ -1,0 +1,22 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_exact_date_subscription_recovery
+fragment_kind: module
+owner: options_daily_backtest_governance
+module_prefix: src/ai_trading_system/qqq_options_research/exact_date_subscription_recovery.py
+public_contracts:
+  - BuiltExactDateSubscriptionRecoveryPackage
+  - DeliveryPath
+  - ExactDateSubscriptionRecoveryError
+  - ProviderHistoryRecord
+  - RecoveredSessionDelivery
+  - RecoveryQueryPlan
+  - RecoveryStatus
+  - SubscriptionSessionSummary
+  - admit_exact_date_provider_history
+  - build_exact_date_subscription_recovery_package
+  - load_exact_date_subscription_recovery_policy
+  - plan_exact_date_recovery
+  - validate_exact_date_subscription_recovery_package
+  - write_exact_date_subscription_recovery_package
+compatibility_facades: []
+deprecation_status: active_reference_architecture

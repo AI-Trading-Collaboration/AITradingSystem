@@ -418,7 +418,8 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert "缺口位于 subscription/transport" in html
     assert "V1 existing-clone run、错误 source-date 解释和历史 counters 保持 immutable" in html
     assert "与 QQQ options 缺链归因分离的 growth preregistration serial wave" in html
-    assert "同一 source date 的 provider history 做显式 recovery" in html
+    assert "已实现 pure same-date recovery adapter" in html
+    assert "尚未执行新的 Cloud validation/provider query" in html
     assert "只有 182 个看到 option chain，1020 个缺失" in html
     assert "不能据此宣称 DQ/PIT" in html
     assert "旧 collector 在当天第一条 Slice 没有 chain 时就提前把整天判为 missing" in html

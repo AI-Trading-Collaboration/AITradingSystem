@@ -291,8 +291,8 @@ task_sources:
     reader_summary_zh: 2540 是与 QQQ options 缺链归因分离的 growth preregistration serial wave；当前只冻结 non-leveraged QQQ/SGOV hypothesis 与单一 QLD data-lane 选择，且因 active data-lane conflict 保持 blocked。它不授权 cache mutation、经验研究、backtest、外部动作或投资结论，也不改变 2537 的 V2 Cloud 重跑边界。
   - task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
     requirement_path: docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
-    coverage: DISCLOSED_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_READY_NOT_YET_IMPLEMENTED
-    reader_summary_zh: 2541 承接 2537 已终结的根因归因，拟在完整 session finalization 确认 subscribed Slice 全日未交付后，才使用同一 source date 的 provider history 做显式 recovery；正常 Slice 始终优先，跨日/最近日 fallback、duplicate、partial 或 availability identity 错误全部 fail closed。recovered contracts 必须进入同一 schema、cache、DQ/PIT 和 lineage contract。当前仅完成 requirement 与任务登记，尚未实现或执行新的 Cloud validation，因此 chain_presence=FAIL、DQ=FAIL、PIT=NOT_EVALUATED 和 engine blocked 保持不变。
+    coverage: DISCLOSED_EXACT_DATE_SUBSCRIPTION_RECOVERY_OFFLINE_IMPLEMENTED_CLOUD_VALIDATION_PENDING
+    reader_summary_zh: 2541 承接 2537 已终结的根因归因，已实现 pure same-date recovery adapter、policy、zero-order candidate、同一八轴 reducer 接入、typed fail-closed tests 与 sealed package。正常 subscribed Slice 始终优先；仅在完整 session finalization 确认目标日全日未交付且 equity session 有效后，才计划最多一次同源日期 provider history；跨日/最近日 fallback、duplicate、empty 或 availability identity 错误全部拒绝。聚焦验证 17 passed、Ruff PASS，正式 Architecture/Contract/Integration/Reproducibility 分别为 865/276/995/24 passed；但尚未执行新的 Cloud validation/provider query，因此这只是离线 durable recovery 基线，不是 Cloud 数据修复结论；chain_presence=FAIL、DQ=FAIL、PIT=NOT_EVALUATED 和 engine blocked 保持不变。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

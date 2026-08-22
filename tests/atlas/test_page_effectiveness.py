@@ -183,7 +183,8 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "DISCLOSED_SEPARATE_GROWTH_PREREGISTRATION_ONLY_DATA_LANE_BLOCKED"
     )
     assert coverage_by_task["TRADING-2541"] == (
-        "DISCLOSED_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_READY_NOT_YET_IMPLEMENTED"
+        "DISCLOSED_EXACT_DATE_SUBSCRIPTION_RECOVERY_OFFLINE_IMPLEMENTED_"
+        "CLOUD_VALIDATION_PENDING"
     )
     assert len(manifest.source_artifacts) == 29
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)

@@ -1,0 +1,337 @@
+from AlgorithmImports import *
+from datetime import datetime, timedelta
+import math
+
+# TRADING-2541 offline candidate only. No external execution is authorized here.
+# Zero orders; bounded aggregate runtime statistics; no logs or Object Store.
+EXPECTED_SESSIONS = ('2021-02-22', '2021-02-23', '2021-02-24', '2021-02-25', '2021-02-26', '2021-03-01', '2021-03-02', '2021-03-03', '2021-03-04', '2021-03-05', '2021-03-08', '2021-03-09', '2021-03-10', '2021-03-11', '2021-03-12', '2021-03-15', '2021-03-16', '2021-03-17', '2021-03-18', '2021-03-19', '2021-03-22', '2021-03-23', '2021-03-24', '2021-03-25', '2021-03-26', '2021-03-29', '2021-03-30', '2021-03-31', '2021-04-01', '2021-04-05', '2021-04-06', '2021-04-07', '2021-04-08', '2021-04-09', '2021-04-12', '2021-04-13', '2021-04-14', '2021-04-15', '2021-04-16', '2021-04-19', '2021-04-20', '2021-04-21', '2021-04-22', '2021-04-23', '2021-04-26', '2021-04-27', '2021-04-28', '2021-04-29', '2021-04-30', '2021-05-03', '2021-05-04', '2021-05-05', '2021-05-06', '2021-05-07', '2021-05-10', '2021-05-11', '2021-05-12', '2021-05-13', '2021-05-14', '2021-05-17', '2021-05-18', '2021-05-19', '2021-05-20', '2021-05-21', '2021-05-24', '2021-05-25', '2021-05-26', '2021-05-27', '2021-05-28', '2021-06-01', '2021-06-02', '2021-06-03', '2021-06-04', '2021-06-07', '2021-06-08', '2021-06-09', '2021-06-10', '2021-06-11', '2021-06-14', '2021-06-15', '2021-06-16', '2021-06-17', '2021-06-18', '2021-06-21', '2021-06-22', '2021-06-23', '2021-06-24', '2021-06-25', '2021-06-28', '2021-06-29', '2021-06-30', '2021-07-01', '2021-07-02', '2021-07-06', '2021-07-07', '2021-07-08', '2021-07-09', '2021-07-12', '2021-07-13', '2021-07-14', '2021-07-15', '2021-07-16', '2021-07-19', '2021-07-20', '2021-07-21', '2021-07-22', '2021-07-23', '2021-07-26', '2021-07-27', '2021-07-28', '2021-07-29', '2021-07-30', '2021-08-02', '2021-08-03', '2021-08-04', '2021-08-05', '2021-08-06', '2021-08-09', '2021-08-10', '2021-08-11', '2021-08-12', '2021-08-13', '2021-08-16', '2021-08-17', '2021-08-18', '2021-08-19', '2021-08-20', '2021-08-23', '2021-08-24', '2021-08-25', '2021-08-26', '2021-08-27', '2021-08-30', '2021-08-31', '2021-09-01', '2021-09-02', '2021-09-03', '2021-09-07', '2021-09-08', '2021-09-09', '2021-09-10', '2021-09-13', '2021-09-14', '2021-09-15', '2021-09-16', '2021-09-17', '2021-09-20', '2021-09-21', '2021-09-22', '2021-09-23', '2021-09-24', '2021-09-27', '2021-09-28', '2021-09-29', '2021-09-30', '2021-10-01', '2021-10-04', '2021-10-05', '2021-10-06', '2021-10-07', '2021-10-08', '2021-10-11', '2021-10-12', '2021-10-13', '2021-10-14', '2021-10-15', '2021-10-18', '2021-10-19', '2021-10-20', '2021-10-21', '2021-10-22', '2021-10-25', '2021-10-26', '2021-10-27', '2021-10-28', '2021-10-29', '2021-11-01', '2021-11-02', '2021-11-03', '2021-11-04', '2021-11-05', '2021-11-08', '2021-11-09', '2021-11-10', '2021-11-11', '2021-11-12', '2021-11-15', '2021-11-16', '2021-11-17', '2021-11-18', '2021-11-19', '2021-11-22', '2021-11-23', '2021-11-24', '2021-11-26', '2021-11-29', '2021-11-30', '2021-12-01', '2021-12-02', '2021-12-03', '2021-12-06', '2021-12-07', '2021-12-08', '2021-12-09', '2021-12-10', '2021-12-13', '2021-12-14', '2021-12-15', '2021-12-16', '2021-12-17', '2021-12-20', '2021-12-21', '2021-12-22', '2021-12-23', '2021-12-27', '2021-12-28', '2021-12-29', '2021-12-30', '2021-12-31', '2022-01-03', '2022-01-04', '2022-01-05', '2022-01-06', '2022-01-07', '2022-01-10', '2022-01-11', '2022-01-12', '2022-01-13', '2022-01-14', '2022-01-18', '2022-01-19', '2022-01-20', '2022-01-21', '2022-01-24', '2022-01-25', '2022-01-26', '2022-01-27', '2022-01-28', '2022-01-31', '2022-02-01', '2022-02-02', '2022-02-03', '2022-02-04', '2022-02-07', '2022-02-08', '2022-02-09', '2022-02-10', '2022-02-11', '2022-02-14', '2022-02-15', '2022-02-16', '2022-02-17', '2022-02-18', '2022-02-22', '2022-02-23', '2022-02-24', '2022-02-25', '2022-02-28', '2022-03-01', '2022-03-02', '2022-03-03', '2022-03-04', '2022-03-07', '2022-03-08', '2022-03-09', '2022-03-10', '2022-03-11', '2022-03-14', '2022-03-15', '2022-03-16', '2022-03-17', '2022-03-18', '2022-03-21', '2022-03-22', '2022-03-23', '2022-03-24', '2022-03-25', '2022-03-28', '2022-03-29', '2022-03-30', '2022-03-31', '2022-04-01', '2022-04-04', '2022-04-05', '2022-04-06', '2022-04-07', '2022-04-08', '2022-04-11', '2022-04-12', '2022-04-13', '2022-04-14', '2022-04-18', '2022-04-19', '2022-04-20', '2022-04-21', '2022-04-22', '2022-04-25', '2022-04-26', '2022-04-27', '2022-04-28', '2022-04-29', '2022-05-02', '2022-05-03', '2022-05-04', '2022-05-05', '2022-05-06', '2022-05-09', '2022-05-10', '2022-05-11', '2022-05-12', '2022-05-13', '2022-05-16', '2022-05-17', '2022-05-18', '2022-05-19', '2022-05-20', '2022-05-23', '2022-05-24', '2022-05-25', '2022-05-26', '2022-05-27', '2022-05-31', '2022-06-01', '2022-06-02', '2022-06-03', '2022-06-06', '2022-06-07', '2022-06-08', '2022-06-09', '2022-06-10', '2022-06-13', '2022-06-14', '2022-06-15', '2022-06-16', '2022-06-17', '2022-06-21', '2022-06-22', '2022-06-23', '2022-06-24', '2022-06-27', '2022-06-28', '2022-06-29', '2022-06-30', '2022-07-01', '2022-07-05', '2022-07-06', '2022-07-07', '2022-07-08', '2022-07-11', '2022-07-12', '2022-07-13', '2022-07-14', '2022-07-15', '2022-07-18', '2022-07-19', '2022-07-20', '2022-07-21', '2022-07-22', '2022-07-25', '2022-07-26', '2022-07-27', '2022-07-28', '2022-07-29', '2022-08-01', '2022-08-02', '2022-08-03', '2022-08-04', '2022-08-05', '2022-08-08', '2022-08-09', '2022-08-10', '2022-08-11', '2022-08-12', '2022-08-15', '2022-08-16', '2022-08-17', '2022-08-18', '2022-08-19', '2022-08-22', '2022-08-23', '2022-08-24', '2022-08-25', '2022-08-26', '2022-08-29', '2022-08-30', '2022-08-31', '2022-09-01', '2022-09-02', '2022-09-06', '2022-09-07', '2022-09-08', '2022-09-09', '2022-09-12', '2022-09-13', '2022-09-14', '2022-09-15', '2022-09-16', '2022-09-19', '2022-09-20', '2022-09-21', '2022-09-22', '2022-09-23', '2022-09-26', '2022-09-27', '2022-09-28', '2022-09-29', '2022-09-30', '2022-10-03', '2022-10-04', '2022-10-05', '2022-10-06', '2022-10-07', '2022-10-10', '2022-10-11', '2022-10-12', '2022-10-13', '2022-10-14', '2022-10-17', '2022-10-18', '2022-10-19', '2022-10-20', '2022-10-21', '2022-10-24', '2022-10-25', '2022-10-26', '2022-10-27', '2022-10-28', '2022-10-31', '2022-11-01', '2022-11-02', '2022-11-03', '2022-11-04', '2022-11-07', '2022-11-08', '2022-11-09', '2022-11-10', '2022-11-11', '2022-11-14', '2022-11-15', '2022-11-16', '2022-11-17', '2022-11-18', '2022-11-21', '2022-11-22', '2022-11-23', '2022-11-25', '2022-11-28', '2022-11-29', '2022-11-30', '2022-12-01', '2022-12-02', '2022-12-05', '2022-12-06', '2022-12-07', '2022-12-08', '2022-12-09', '2022-12-12', '2022-12-13', '2022-12-14', '2022-12-15', '2022-12-16', '2022-12-19', '2022-12-20', '2022-12-21', '2022-12-22', '2022-12-23', '2022-12-27', '2022-12-28', '2022-12-29', '2022-12-30', '2023-01-03', '2023-01-04', '2023-01-05', '2023-01-06', '2023-01-09', '2023-01-10', '2023-01-11', '2023-01-12', '2023-01-13', '2023-01-17', '2023-01-18', '2023-01-19', '2023-01-20', '2023-01-23', '2023-01-24', '2023-01-25', '2023-01-26', '2023-01-27', '2023-01-30', '2023-01-31', '2023-02-01', '2023-02-02', '2023-02-03', '2023-02-06', '2023-02-07', '2023-02-08', '2023-02-09', '2023-02-10', '2023-02-13', '2023-02-14', '2023-02-15', '2023-02-16', '2023-02-17', '2023-02-21', '2023-02-22', '2023-02-23', '2023-02-24', '2023-02-27', '2023-02-28', '2023-03-01', '2023-03-02', '2023-03-03', '2023-03-06', '2023-03-07', '2023-03-08', '2023-03-09', '2023-03-10', '2023-03-13', '2023-03-14', '2023-03-15', '2023-03-16', '2023-03-17', '2023-03-20', '2023-03-21', '2023-03-22', '2023-03-23', '2023-03-24', '2023-03-27', '2023-03-28', '2023-03-29', '2023-03-30', '2023-03-31', '2023-04-03', '2023-04-04', '2023-04-05', '2023-04-06', '2023-04-10', '2023-04-11', '2023-04-12', '2023-04-13', '2023-04-14', '2023-04-17', '2023-04-18', '2023-04-19', '2023-04-20', '2023-04-21', '2023-04-24', '2023-04-25', '2023-04-26', '2023-04-27', '2023-04-28', '2023-05-01', '2023-05-02', '2023-05-03', '2023-05-04', '2023-05-05', '2023-05-08', '2023-05-09', '2023-05-10', '2023-05-11', '2023-05-12', '2023-05-15', '2023-05-16', '2023-05-17', '2023-05-18', '2023-05-19', '2023-05-22', '2023-05-23', '2023-05-24', '2023-05-25', '2023-05-26', '2023-05-30', '2023-05-31', '2023-06-01', '2023-06-02', '2023-06-05', '2023-06-06', '2023-06-07', '2023-06-08', '2023-06-09', '2023-06-12', '2023-06-13', '2023-06-14', '2023-06-15', '2023-06-16', '2023-06-20', '2023-06-21', '2023-06-22', '2023-06-23', '2023-06-26', '2023-06-27', '2023-06-28', '2023-06-29', '2023-06-30', '2023-07-03', '2023-07-05', '2023-07-06', '2023-07-07', '2023-07-10', '2023-07-11', '2023-07-12', '2023-07-13', '2023-07-14', '2023-07-17', '2023-07-18', '2023-07-19', '2023-07-20', '2023-07-21', '2023-07-24', '2023-07-25', '2023-07-26', '2023-07-27', '2023-07-28', '2023-07-31', '2023-08-01', '2023-08-02', '2023-08-03', '2023-08-04', '2023-08-07', '2023-08-08', '2023-08-09', '2023-08-10', '2023-08-11', '2023-08-14', '2023-08-15', '2023-08-16', '2023-08-17', '2023-08-18', '2023-08-21', '2023-08-22', '2023-08-23', '2023-08-24', '2023-08-25', '2023-08-28', '2023-08-29', '2023-08-30', '2023-08-31', '2023-09-01', '2023-09-05', '2023-09-06', '2023-09-07', '2023-09-08', '2023-09-11', '2023-09-12', '2023-09-13', '2023-09-14', '2023-09-15', '2023-09-18', '2023-09-19', '2023-09-20', '2023-09-21', '2023-09-22', '2023-09-25', '2023-09-26', '2023-09-27', '2023-09-28', '2023-09-29', '2023-10-02', '2023-10-03', '2023-10-04', '2023-10-05', '2023-10-06', '2023-10-09', '2023-10-10', '2023-10-11', '2023-10-12', '2023-10-13', '2023-10-16', '2023-10-17', '2023-10-18', '2023-10-19', '2023-10-20', '2023-10-23', '2023-10-24', '2023-10-25', '2023-10-26', '2023-10-27', '2023-10-30', '2023-10-31', '2023-11-01', '2023-11-02', '2023-11-03', '2023-11-06', '2023-11-07', '2023-11-08', '2023-11-09', '2023-11-10', '2023-11-13', '2023-11-14', '2023-11-15', '2023-11-16', '2023-11-17', '2023-11-20', '2023-11-21', '2023-11-22', '2023-11-24', '2023-11-27', '2023-11-28', '2023-11-29', '2023-11-30', '2023-12-01', '2023-12-04', '2023-12-05', '2023-12-06', '2023-12-07', '2023-12-08', '2023-12-11', '2023-12-12', '2023-12-13', '2023-12-14', '2023-12-15', '2023-12-18', '2023-12-19', '2023-12-20', '2023-12-21', '2023-12-22', '2023-12-26', '2023-12-27', '2023-12-28', '2023-12-29', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05', '2024-01-08', '2024-01-09', '2024-01-10', '2024-01-11', '2024-01-12', '2024-01-16', '2024-01-17', '2024-01-18', '2024-01-19', '2024-01-22', '2024-01-23', '2024-01-24', '2024-01-25', '2024-01-26', '2024-01-29', '2024-01-30', '2024-01-31', '2024-02-01', '2024-02-02', '2024-02-05', '2024-02-06', '2024-02-07', '2024-02-08', '2024-02-09', '2024-02-12', '2024-02-13', '2024-02-14', '2024-02-15', '2024-02-16', '2024-02-20', '2024-02-21', '2024-02-22', '2024-02-23', '2024-02-26', '2024-02-27', '2024-02-28', '2024-02-29', '2024-03-01', '2024-03-04', '2024-03-05', '2024-03-06', '2024-03-07', '2024-03-08', '2024-03-11', '2024-03-12', '2024-03-13', '2024-03-14', '2024-03-15', '2024-03-18', '2024-03-19', '2024-03-20', '2024-03-21', '2024-03-22', '2024-03-25', '2024-03-26', '2024-03-27', '2024-03-28', '2024-04-01', '2024-04-02', '2024-04-03', '2024-04-04', '2024-04-05', '2024-04-08', '2024-04-09', '2024-04-10', '2024-04-11', '2024-04-12', '2024-04-15', '2024-04-16', '2024-04-17', '2024-04-18', '2024-04-19', '2024-04-22', '2024-04-23', '2024-04-24', '2024-04-25', '2024-04-26', '2024-04-29', '2024-04-30', '2024-05-01', '2024-05-02', '2024-05-03', '2024-05-06', '2024-05-07', '2024-05-08', '2024-05-09', '2024-05-10', '2024-05-13', '2024-05-14', '2024-05-15', '2024-05-16', '2024-05-17', '2024-05-20', '2024-05-21', '2024-05-22', '2024-05-23', '2024-05-24', '2024-05-28', '2024-05-29', '2024-05-30', '2024-05-31', '2024-06-03', '2024-06-04', '2024-06-05', '2024-06-06', '2024-06-07', '2024-06-10', '2024-06-11', '2024-06-12', '2024-06-13', '2024-06-14', '2024-06-17', '2024-06-18', '2024-06-20', '2024-06-21', '2024-06-24', '2024-06-25', '2024-06-26', '2024-06-27', '2024-06-28', '2024-07-01', '2024-07-02', '2024-07-03', '2024-07-05', '2024-07-08', '2024-07-09', '2024-07-10', '2024-07-11', '2024-07-12', '2024-07-15', '2024-07-16', '2024-07-17', '2024-07-18', '2024-07-19', '2024-07-22', '2024-07-23', '2024-07-24', '2024-07-25', '2024-07-26', '2024-07-29', '2024-07-30', '2024-07-31', '2024-08-01', '2024-08-02', '2024-08-05', '2024-08-06', '2024-08-07', '2024-08-08', '2024-08-09', '2024-08-12', '2024-08-13', '2024-08-14', '2024-08-15', '2024-08-16', '2024-08-19', '2024-08-20', '2024-08-21', '2024-08-22', '2024-08-23', '2024-08-26', '2024-08-27', '2024-08-28', '2024-08-29', '2024-08-30', '2024-09-03', '2024-09-04', '2024-09-05', '2024-09-06', '2024-09-09', '2024-09-10', '2024-09-11', '2024-09-12', '2024-09-13', '2024-09-16', '2024-09-17', '2024-09-18', '2024-09-19', '2024-09-20', '2024-09-23', '2024-09-24', '2024-09-25', '2024-09-26', '2024-09-27', '2024-09-30', '2024-10-01', '2024-10-02', '2024-10-03', '2024-10-04', '2024-10-07', '2024-10-08', '2024-10-09', '2024-10-10', '2024-10-11', '2024-10-14', '2024-10-15', '2024-10-16', '2024-10-17', '2024-10-18', '2024-10-21', '2024-10-22', '2024-10-23', '2024-10-24', '2024-10-25', '2024-10-28', '2024-10-29', '2024-10-30', '2024-10-31', '2024-11-01', '2024-11-04', '2024-11-05', '2024-11-06', '2024-11-07', '2024-11-08', '2024-11-11', '2024-11-12', '2024-11-13', '2024-11-14', '2024-11-15', '2024-11-18', '2024-11-19', '2024-11-20', '2024-11-21', '2024-11-22', '2024-11-25', '2024-11-26', '2024-11-27', '2024-11-29', '2024-12-02', '2024-12-03', '2024-12-04', '2024-12-05', '2024-12-06', '2024-12-09', '2024-12-10', '2024-12-11', '2024-12-12', '2024-12-13', '2024-12-16', '2024-12-17', '2024-12-18', '2024-12-19', '2024-12-20', '2024-12-23', '2024-12-24', '2024-12-26', '2024-12-27', '2024-12-30', '2024-12-31', '2025-01-02', '2025-01-03', '2025-01-06', '2025-01-07', '2025-01-08', '2025-01-10', '2025-01-13', '2025-01-14', '2025-01-15', '2025-01-16', '2025-01-17', '2025-01-21', '2025-01-22', '2025-01-23', '2025-01-24', '2025-01-27', '2025-01-28', '2025-01-29', '2025-01-30', '2025-01-31', '2025-02-03', '2025-02-04', '2025-02-05', '2025-02-06', '2025-02-07', '2025-02-10', '2025-02-11', '2025-02-12', '2025-02-13', '2025-02-14', '2025-02-18', '2025-02-19', '2025-02-20', '2025-02-21', '2025-02-24', '2025-02-25', '2025-02-26', '2025-02-27', '2025-02-28', '2025-03-03', '2025-03-04', '2025-03-05', '2025-03-06', '2025-03-07', '2025-03-10', '2025-03-11', '2025-03-12', '2025-03-13', '2025-03-14', '2025-03-17', '2025-03-18', '2025-03-19', '2025-03-20', '2025-03-21', '2025-03-24', '2025-03-25', '2025-03-26', '2025-03-27', '2025-03-28', '2025-03-31', '2025-04-01', '2025-04-02', '2025-04-03', '2025-04-04', '2025-04-07', '2025-04-08', '2025-04-09', '2025-04-10', '2025-04-11', '2025-04-14', '2025-04-15', '2025-04-16', '2025-04-17', '2025-04-21', '2025-04-22', '2025-04-23', '2025-04-24', '2025-04-25', '2025-04-28', '2025-04-29', '2025-04-30', '2025-05-01', '2025-05-02', '2025-05-05', '2025-05-06', '2025-05-07', '2025-05-08', '2025-05-09', '2025-05-12', '2025-05-13', '2025-05-14', '2025-05-15', '2025-05-16', '2025-05-19', '2025-05-20', '2025-05-21', '2025-05-22', '2025-05-23', '2025-05-27', '2025-05-28', '2025-05-29', '2025-05-30', '2025-06-02', '2025-06-03', '2025-06-04', '2025-06-05', '2025-06-06', '2025-06-09', '2025-06-10', '2025-06-11', '2025-06-12', '2025-06-13', '2025-06-16', '2025-06-17', '2025-06-18', '2025-06-20', '2025-06-23', '2025-06-24', '2025-06-25', '2025-06-26', '2025-06-27', '2025-06-30', '2025-07-01', '2025-07-02', '2025-07-03', '2025-07-07', '2025-07-08', '2025-07-09', '2025-07-10', '2025-07-11', '2025-07-14', '2025-07-15', '2025-07-16', '2025-07-17', '2025-07-18', '2025-07-21', '2025-07-22', '2025-07-23', '2025-07-24', '2025-07-25', '2025-07-28', '2025-07-29', '2025-07-30', '2025-07-31', '2025-08-01', '2025-08-04', '2025-08-05', '2025-08-06', '2025-08-07', '2025-08-08', '2025-08-11', '2025-08-12', '2025-08-13', '2025-08-14', '2025-08-15', '2025-08-18', '2025-08-19', '2025-08-20', '2025-08-21', '2025-08-22', '2025-08-25', '2025-08-26', '2025-08-27', '2025-08-28', '2025-08-29', '2025-09-02', '2025-09-03', '2025-09-04', '2025-09-05', '2025-09-08', '2025-09-09', '2025-09-10', '2025-09-11', '2025-09-12', '2025-09-15', '2025-09-16', '2025-09-17', '2025-09-18', '2025-09-19', '2025-09-22', '2025-09-23', '2025-09-24', '2025-09-25', '2025-09-26', '2025-09-29', '2025-09-30', '2025-10-01', '2025-10-02', '2025-10-03', '2025-10-06', '2025-10-07', '2025-10-08', '2025-10-09', '2025-10-10', '2025-10-13', '2025-10-14', '2025-10-15', '2025-10-16', '2025-10-17', '2025-10-20', '2025-10-21', '2025-10-22', '2025-10-23', '2025-10-24', '2025-10-27', '2025-10-28', '2025-10-29', '2025-10-30', '2025-10-31', '2025-11-03', '2025-11-04', '2025-11-05', '2025-11-06', '2025-11-07', '2025-11-10', '2025-11-11', '2025-11-12', '2025-11-13', '2025-11-14', '2025-11-17', '2025-11-18', '2025-11-19', '2025-11-20', '2025-11-21', '2025-11-24', '2025-11-25', '2025-11-26', '2025-11-28', '2025-12-01', '2025-12-02')
+TARGET_SOURCE_DATE = "2022-08-26"
+AXES = ('OPTION_CHAIN_PRESENCE', 'UNDERLYING_PRICE', 'BID_ASK_QUOTE', 'GREEKS', 'IMPLIED_VOLATILITY', 'OPEN_INTEREST', 'VOLUME', 'CROSS_FIELD_CONSISTENCY')
+STATUSES = ("PRESENT", "MISSING", "INVALID", "NOT_EVALUATED")
+IDENTITY = 'schema=qc_qqq_options_daily_transport_per_axis_runtime.v3|recovery_contract=167c8bf0f80b9e29293dda7fd1d536f95eff858349576e09145b7836f8f5ed21|normal_path=SUBSCRIBED_SLICE|recovery_path=EXACT_DATE_PROVIDER_HISTORY_RECOVERY|source_date=OptionUniverse.Time|availability=OptionUniverse.EndTime=Time+1day'
+REQUESTED_RANGE = "2021-02-22..2025-12-02"
+EVALUATED_RANGE = "2021-02-22..2025-12-02"
+
+
+class QQQOptionsExactDateSubscriptionRecovery(QCAlgorithm):
+    def initialize(self):
+        self.set_start_date(2021, 2, 22)
+        self.set_end_date(2025, 12, 2)
+        self.set_cash(100000)
+        self.settings.daily_precise_end_time = True
+        self.universe_settings.asynchronous = False
+        self.set_time_zone(TimeZones.NEW_YORK)
+        self._equity = self.add_equity(
+            "QQQ", Resolution.DAILY, data_normalization_mode=DataNormalizationMode.RAW
+        ).symbol
+        option = self.add_option("QQQ", Resolution.DAILY)
+        option.set_filter(
+            lambda universe: universe.contracts(
+                lambda contracts: [contract.symbol for contract in contracts]
+            )
+        )
+        self._option = option.symbol
+        self._states = {session: self._new_state() for session in EXPECTED_SESSIONS}
+        self._order_event_count = 0
+
+    @staticmethod
+    def _new_state():
+        return {
+            "slice_events": 0,
+            "subscribed_chain_events": 0,
+            "chain_events": 0,
+            "equity_observed": False,
+            "equity_valid": False,
+            "equity_invalid": False,
+            "contract_zero_observed": False,
+            "cross_without_underlying_valid": False,
+            "axis_observed": {axis: False for axis in AXES[2:7]},
+            "axis_valid": {axis: False for axis in AXES[2:7]},
+            "delivery_path": "UNRESOLVED",
+        }
+
+    @staticmethod
+    def _finite(value):
+        try:
+            result = float(value)
+        except (TypeError, ValueError):
+            return None
+        return result if math.isfinite(result) else None
+
+    @staticmethod
+    def _attribute(item, *names):
+        for name in names:
+            if hasattr(item, name):
+                return getattr(item, name)
+        return None
+
+    @staticmethod
+    def _merge_axis(state, axis, values, valid):
+        observed = [value for value in values if value is not None]
+        state["axis_observed"][axis] |= bool(observed)
+        state["axis_valid"][axis] |= any(valid(value) for value in observed)
+
+    def _merge_contracts(self, state, contracts, session):
+        contract_underlyings = [
+            self._finite(self._attribute(item, "underlying_last_price"))
+            for item in contracts
+        ]
+        state["contract_zero_observed"] |= any(
+            value == 0 for value in contract_underlyings
+        )
+        bids = [
+            self._finite(self._attribute(item, "bid_price", "bidprice"))
+            for item in contracts
+        ]
+        asks = [
+            self._finite(self._attribute(item, "ask_price", "askprice"))
+            for item in contracts
+        ]
+        ivs = [
+            self._finite(self._attribute(item, "implied_volatility"))
+            for item in contracts
+        ]
+        ois = [
+            self._finite(self._attribute(item, "open_interest", "openinterest"))
+            for item in contracts
+        ]
+        volumes = [self._finite(self._attribute(item, "volume")) for item in contracts]
+        quote_pairs = [
+            pair for pair in zip(bids, asks)
+            if pair[0] is not None or pair[1] is not None
+        ]
+        self._merge_axis(
+            state, "BID_ASK_QUOTE", quote_pairs,
+            lambda pair: pair[0] is not None and pair[1] is not None
+            and pair[0] >= 0 and pair[1] > 0 and pair[1] >= pair[0],
+        )
+        greek_vectors = []
+        for item in contracts:
+            greeks = self._attribute(item, "greeks")
+            greek_vectors.append(None if greeks is None else tuple(
+                self._finite(self._attribute(greeks, name))
+                for name in ("delta", "gamma", "vega", "theta", "rho")
+            ))
+        self._merge_axis(
+            state, "GREEKS", greek_vectors,
+            lambda vector: all(value is not None for value in vector),
+        )
+        self._merge_axis(state, "IMPLIED_VOLATILITY", ivs, lambda value: value >= 0)
+        self._merge_axis(state, "OPEN_INTEREST", ois, lambda value: value >= 0)
+        self._merge_axis(state, "VOLUME", volumes, lambda value: value >= 0)
+        for index, item in enumerate(contracts):
+            strike = self._finite(self._attribute(item, "strike"))
+            if strike is None and hasattr(item, "symbol"):
+                strike = self._finite(item.symbol.id.strike_price)
+            expiry = self._attribute(item, "expiry")
+            if expiry is None and hasattr(item, "symbol"):
+                expiry = item.symbol.id.date
+            expiry_date = expiry.date() if hasattr(expiry, "date") else expiry
+            state["cross_without_underlying_valid"] |= (
+                strike is not None and strike > 0
+                and hasattr(expiry_date, "year") and expiry_date >= session
+                and bids[index] is not None and asks[index] is not None
+                and bids[index] >= 0 and asks[index] > 0 and asks[index] >= bids[index]
+            )
+
+    def on_data(self, data: Slice):
+        session_id = data.time.date().isoformat()
+        state = self._states.get(session_id)
+        if state is None:
+            return
+        state["slice_events"] += 1
+        bar = data.bars.get(self._equity)
+        if bar is not None:
+            equity_close = self._finite(bar.close)
+            if equity_close is not None:
+                state["equity_observed"] = True
+                if equity_close > 0:
+                    state["equity_valid"] = True
+                else:
+                    state["equity_invalid"] = True
+        chain = data.option_chains.get(self._option)
+        if chain is None or len(chain) == 0:
+            return
+        state["subscribed_chain_events"] += 1
+        state["chain_events"] += 1
+        state["delivery_path"] = "SUBSCRIBED_SLICE"
+        self._merge_contracts(state, list(chain), data.time.date())
+
+    def _recover_target(self, target_date, state):
+        result = {
+            "status": "QUERY_ERROR",
+            "provider_query_attempt_count": 1,
+            "exact_date_record_count": 0,
+            "exact_date_contract_count": 0,
+            "non_target_record_count": 0,
+            "invalid_availability_record_count": 0,
+            "source_date": "NOT_AVAILABLE",
+            "availability_date": "NOT_AVAILABLE",
+        }
+        start_time = datetime.strptime(target_date, "%Y-%m-%d")
+        end_time = start_time + timedelta(days=1)
+        try:
+            history = self.history[OptionUniverse](self._option, start_time, end_time)
+            records = list(history)
+        except Exception:
+            return result
+        exact_records = []
+        for record in records:
+            source_date = record.time.date().isoformat()
+            availability_date = record.end_time.date()
+            expected_availability = record.time.date() + timedelta(days=1)
+            if source_date != target_date:
+                result["non_target_record_count"] += 1
+            elif availability_date != expected_availability:
+                result["invalid_availability_record_count"] += 1
+            else:
+                exact_records.append(record)
+        result["exact_date_record_count"] = len(exact_records)
+        if result["non_target_record_count"] > 0:
+            result["status"] = "CROSS_DATE_FALLBACK_REJECTED"
+            return result
+        if result["invalid_availability_record_count"] > 0:
+            result["status"] = "INVALID_AVAILABILITY_REJECTED"
+            return result
+        if len(exact_records) == 0:
+            result["status"] = "EXACT_DATE_RECORD_MISSING"
+            return result
+        if len(exact_records) != 1:
+            result["status"] = "EXACT_DATE_RECORD_DUPLICATE"
+            return result
+        record = exact_records[0]
+        contracts = list(record)
+        result["exact_date_contract_count"] = len(contracts)
+        result["source_date"] = record.time.date().isoformat()
+        result["availability_date"] = record.end_time.date().isoformat()
+        if not contracts:
+            result["status"] = "EXACT_DATE_RECORD_EMPTY"
+            return result
+        state["chain_events"] += 1
+        state["delivery_path"] = "EXACT_DATE_PROVIDER_HISTORY_RECOVERY"
+        self._merge_contracts(state, contracts, record.time.date())
+        result["status"] = "ACCEPTED"
+        return result
+
+    def on_order_event(self, order_event):
+        self._order_event_count += 1
+
+    def on_end_of_algorithm(self):
+        observed_sessions = sum(
+            int(state["slice_events"] > 0) for state in self._states.values()
+        )
+        missing = [
+            (session, state)
+            for session, state in self._states.items()
+            if state["chain_events"] == 0
+        ]
+        target_date = "NOT_AVAILABLE"
+        recovery = {
+            "status": "NOT_EVALUATED",
+            "provider_query_attempt_count": 0,
+            "exact_date_record_count": 0,
+            "exact_date_contract_count": 0,
+            "non_target_record_count": 0,
+            "invalid_availability_record_count": 0,
+            "source_date": "NOT_AVAILABLE",
+            "availability_date": "NOT_AVAILABLE",
+        }
+        if observed_sessions == len(EXPECTED_SESSIONS) and len(missing) == 1:
+            target_date, target_state = missing[0]
+            if target_date != TARGET_SOURCE_DATE:
+                recovery["status"] = "UNEXPECTED_MISSING_SESSION"
+            elif not target_state["equity_valid"]:
+                recovery["status"] = "EQUITY_SESSION_INVALID"
+            else:
+                recovery = self._recover_target(target_date, target_state)
+
+        counts = {axis: {status: 0 for status in STATUSES} for axis in AXES}
+        normal_slice_sessions = 0
+        recovered_sessions = 0
+        unresolved_sessions = 0
+        for state in self._states.values():
+            if state["chain_events"] == 0:
+                unresolved_sessions += 1
+                counts["OPTION_CHAIN_PRESENCE"]["MISSING"] += 1
+                for axis in AXES[1:]:
+                    counts[axis]["NOT_EVALUATED"] += 1
+                continue
+            counts["OPTION_CHAIN_PRESENCE"]["PRESENT"] += 1
+            normal_slice_sessions += int(state["delivery_path"] == "SUBSCRIBED_SLICE")
+            recovered_sessions += int(
+                state["delivery_path"] == "EXACT_DATE_PROVIDER_HISTORY_RECOVERY"
+            )
+            if state["equity_valid"]:
+                underlying_status = "PRESENT"
+            elif state["equity_observed"] or state["equity_invalid"]:
+                underlying_status = "INVALID"
+            else:
+                underlying_status = "MISSING"
+            counts["UNDERLYING_PRICE"][underlying_status] += 1
+            for axis in AXES[2:7]:
+                status = "MISSING" if not state["axis_observed"][axis] else (
+                    "PRESENT" if state["axis_valid"][axis] else "INVALID"
+                )
+                counts[axis][status] += 1
+            cross_status = (
+                "PRESENT"
+                if underlying_status == "PRESENT"
+                and state["cross_without_underlying_valid"]
+                else "INVALID"
+            )
+            counts["CROSS_FIELD_CONSISTENCY"][cross_status] += 1
+
+        partitions_valid = all(
+            sum(counts[axis].values()) == len(EXPECTED_SESSIONS) for axis in AXES
+        )
+        valid = (
+            partitions_valid
+            and observed_sessions == len(EXPECTED_SESSIONS)
+            and len(missing) == 1
+            and target_date == TARGET_SOURCE_DATE
+            and recovery["status"] == "ACCEPTED"
+            and recovery["provider_query_attempt_count"] == 1
+            and normal_slice_sessions == len(EXPECTED_SESSIONS) - 1
+            and recovered_sessions == 1
+            and unresolved_sessions == 0
+            and self._order_event_count == 0
+            and not self.portfolio.invested
+        )
+        for axis in AXES:
+            for status in STATUSES:
+                self.set_runtime_statistic(
+                    "TRADING2541_" + axis + "_" + status + "_SESSIONS",
+                    str(counts[axis][status]),
+                )
+        statistics = {
+            "TARGET_SOURCE_DATE": target_date,
+            "RECOVERY_STATUS": recovery["status"],
+            "DELIVERY_PATH": "EXACT_DATE_PROVIDER_HISTORY_RECOVERY"
+                if recovered_sessions == 1 else "UNRESOLVED",
+            "PROVIDER_QUERY_ATTEMPT_COUNT": recovery["provider_query_attempt_count"],
+            "EXACT_DATE_RECORD_COUNT": recovery["exact_date_record_count"],
+            "EXACT_DATE_CONTRACT_COUNT": recovery["exact_date_contract_count"],
+            "NON_TARGET_RECORD_COUNT": recovery["non_target_record_count"],
+            "INVALID_AVAILABILITY_RECORD_COUNT": recovery[
+                "invalid_availability_record_count"
+            ],
+            "RECOVERY_SOURCE_DATE": recovery["source_date"],
+            "RECOVERY_AVAILABILITY_DATE": recovery["availability_date"],
+            "NORMAL_SLICE_SESSION_COUNT": normal_slice_sessions,
+            "RECOVERED_SESSION_COUNT": recovered_sessions,
+            "UNRESOLVED_SESSION_COUNT": unresolved_sessions,
+        }
+        for key, value in statistics.items():
+            self.set_runtime_statistic("TRADING2541_" + key, str(value))
+        self.set_runtime_statistic("TRADING2541_IDENTITY", IDENTITY)
+        self.set_runtime_statistic(
+            "TRADING2541_EXECUTION_TERMINAL",
+            "status=" + ("COMPLETE" if valid else "INVALID")
+            + "|expected_sessions=" + str(len(EXPECTED_SESSIONS))
+            + "|observed_sessions=" + str(observed_sessions)
+            + "|requested_range=" + REQUESTED_RANGE
+            + "|evaluated_range=" + EVALUATED_RANGE
+            + "|orders=0|fills=0|portfolio_invested=false|raw_rows=false"
+            + "|contract_identifiers_exported=false|individual_fields_exported=false"
+            + "|logs_as_data=false|object_store=false|dq_pit_promoted=false",
+        )

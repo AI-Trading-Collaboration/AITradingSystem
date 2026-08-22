@@ -1,7 +1,7 @@
 # TRADING-2541 — QQQ Options exact-date subscription missing remediation V1
 
 - priority: `P0`
-- status: `READY`
+- status: `BASELINE_DONE`（S1/S2 已实现并通过聚焦离线验证；S3 Cloud validation 未执行）
 - owner: Codex（contract / implementation / offline validation）；Project Owner（后续新的 R1 Cloud validation）
 - governed mode: `SINGLE_LANE`
 - predecessor evidence: `TRADING-2537` V2 terminal attribution
@@ -73,3 +73,40 @@ source date 执行受控 `History[OptionUniverse]` recovery。recovery 必须：
 
 本任务当前只授权 repository 内 contract、实现和离线验证。它不沿用已消费的 TRADING-2537 external scope，
 不授权新的 Cloud mutation/build/backtest/provider query，也不授权 paper/live、broker、order 或 fill。
+
+## 6. S1/S2 实现结果（2026-08-22）
+
+repository 内的 durable recovery 基线已经实现，不再停留在方案描述：
+
+- policy：`config/research/qc_qqq_options_exact_date_subscription_recovery_v1.yaml`，file SHA-256
+  `05e6daafed6d891e0db1c590ed3750a01e86c91b78d786cf0d585d9fabdb5ce9`；
+- pure adapter / candidate builder：
+  `src/ai_trading_system/qqq_options_research/exact_date_subscription_recovery.py`，file SHA-256
+  `cadc80f53287798fe638d63d34abc8caa04983c4c10bf3ee9a55342e905e6004`；
+- sealed package：
+  `inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_v1/`；
+- generated `main.py`：LF byte count=`31720`，SHA-256
+  `d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3`；
+- recovery contract content SHA-256：
+  `167c8bf0f80b9e29293dda7fd1d536f95eff858349576e09145b7836f8f5ed21`；
+- package manifest content SHA-256：
+  `465961f8bb040968d0d49f1753aa40d8160ae2d35333d3dee1d025e358f49188`；
+- 聚焦验证：`tests/test_qqq_options_exact_date_subscription_recovery.py` 共 `17 passed`；Ruff PASS；
+- formal repository validation：Architecture=`865 passed`、Contract=`276 passed`、
+  Integration=`995 passed`、Reproducibility=`24 passed`，全部使用 pytest-xdist `16` workers / `loadfile`
+  并写入对应 runtime artifact。
+
+pure adapter 将 accepted provider record 转换为既有 `SessionSliceObservation`，交给同一个
+`DailyTransportSessionReducer` 计算八个 axis；normal subscribed Slice 一旦存在就不计划 provider query。
+生成的 zero-order candidate 仅在 `on_end` 确认唯一缺链目标日和有效 equity session 后计划最多一次
+`History[OptionUniverse]`，并要求 `record.Time.date()=2022-08-26`、
+`record.EndTime=record.Time+1 day`。cross-date、duplicate、missing、empty 或 availability identity 错误
+均进入 typed fail-closed terminal。
+
+## 7. 尚未完成的实证边界
+
+本轮没有访问 QuantConnect、没有执行 Cloud build/backtest/provider query，也没有订单或成交。因而当前只可得出
+“可审计的离线 recovery 路径已实现并可生成候选代码”，不能得出“Cloud transport 已恢复”或“数据质量已通过”。
+在新的 S3 bounded R1 validation 完成以前，`cloud_validation_status=NOT_EXECUTED`、
+`chain_presence=FAIL`、DQ=`FAIL`、PIT=`NOT_EVALUATED`、
+`engine_status=POLICY_BLOCKED_CASH_PRESERVATION`，orders/fills=`0/0` 均保持不变。
