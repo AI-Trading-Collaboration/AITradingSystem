@@ -1,0 +1,73 @@
+{
+  "schema_version": "qc_qqq_options_existing_clone_exact_date_external_action_ledger.v1",
+  "task_id": "TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1",
+  "status": "EXTERNAL_ACTION_LIFECYCLE_COMPLETE",
+  "actions": [
+    {
+      "ordinal": 1,
+      "action": "EXISTING_CLONE_CANARY_MUTATION_AND_SAVE",
+      "project_id": 35444189
+    },
+    {
+      "ordinal": 2,
+      "action": "CANARY_AUTOMATIC_CLOUD_BUILD_OBSERVED",
+      "build_id": "e972ea-ce1a69"
+    },
+    {
+      "ordinal": 3,
+      "action": "FORMAL_CANDIDATE_MUTATION_AND_SAVE",
+      "project_id": 35444189,
+      "code_lf_sha256": "86a3560f973c7720ac1362757d08e7263845bf3c9b0db51d0690740e54ee3fe4"
+    },
+    {
+      "ordinal": 4,
+      "action": "FORMAL_SAVE_AUTOMATIC_CLOUD_BUILD_OBSERVED",
+      "build_id": "06d69b-976ac2",
+      "lean_engine_version": "2.5.0.0.18018"
+    },
+    {
+      "ordinal": 5,
+      "action": "MASTER_ENGINE_BACKGROUND_BUILD_ACCEPTED",
+      "build_id": "0472f8-976ac2",
+      "lean_engine_version": "2.5.0.0.18024"
+    },
+    {
+      "ordinal": 6,
+      "action": "POST_SAVE_READ_ONLY_EXACT_CONTENT_VERIFIED",
+      "lf_byte_count": 26223,
+      "lf_sha256": "86a3560f973c7720ac1362757d08e7263845bf3c9b0db51d0690740e54ee3fe4"
+    },
+    {
+      "ordinal": 7,
+      "action": "ZERO_ORDER_CLOUD_BACKTEST_ATTEMPT_CONSUMED_AUTHORIZATION",
+      "backtest_id": "fbad84708af7aceee7b91922809f942f",
+      "backtest_name": "Ugly Yellow Green Owlet"
+    },
+    {
+      "ordinal": 8,
+      "action": "SINGLE_BOUNDED_PROVIDER_QUERY_COMPLETED",
+      "provider_probe_status": "CROSS_DATE_FALLBACK"
+    },
+    {
+      "ordinal": 9,
+      "action": "EXPORT_SAFE_TERMINAL_EVIDENCE_VALIDATED",
+      "target_session_date": "2022-08-26"
+    }
+  ],
+  "lifetime_counters": {
+    "clones": 1,
+    "project_mutations": 2,
+    "saves": 2,
+    "cloud_builds": 3,
+    "cloud_backtests": 1,
+    "provider_queries": 1,
+    "orders": 0,
+    "fills": 0
+  },
+  "second_candidate_mutation_authorized": false,
+  "second_backtest_authorized": false,
+  "second_provider_query_authorized": false,
+  "clone_cleanup_authorized": false,
+  "production_effect": "none",
+  "broker_action": "none"
+}

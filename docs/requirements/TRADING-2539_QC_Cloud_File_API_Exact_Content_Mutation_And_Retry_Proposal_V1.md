@@ -1,12 +1,12 @@
 # TRADING-2539 — QuantConnect Cloud file API exact-content mutation and retry proposal V1
 
 - priority: `P0`
-- status: `IN_PROGRESS`（仅准备 existing-clone formal exact-date execution；云端动作仍等待 final exact token）
+- status: `BASELINE_DONE`（existing-clone formal exact-date execution 已完成；唯一缺失日已定位，等待 exact-date source repair）
 - governed mode: `SINGLE_LANE`
 - predecessor: `TRADING-2538`
 - production effect: `none`
 - broker action: `none`
-- external boundary: Owner directs immediate preparation to identify the unique missing session; current tracked work may publish the existing-clone formal execution contract, while any new clone mutation, save/automatic Cloud Build, backtest, provider query, order, fill, public sharing, or candidate write remains prohibited until a final exact single-use token is returned
+- external boundary: Owner-authorized single-use lifecycle 已完成；任何后续 clone mutation/save/build/backtest/provider query、clone cleanup、公开分享、迁移、paper/live/broker/portfolio action 仍需新的明确授权
 
 ## 1. 问题与结论
 
@@ -314,3 +314,53 @@ identities、clone id/pre-mutation identity、expiry 和以下 additional-action
 `1 / 1 / 1 / 1 / 0 / 0 / 0 / 0` 变为 `1 / 2 / 2 / 2 / 1 / 1 / 0 / 0`；任何提前终止按实际已 dispatch
 动作计数。copy-back 文件包含已 tracked 的 2537 candidate，没有独有实现；在 result evidence 封存并完成
 exact allowlist 审计前保留，之后可从 Git candidate 恢复。clone cleanup 仍需单独 Owner authority。
+
+## 12. Existing-clone exact-date execution result
+
+2026-08-22，Owner 先返回 formal execution token，随后明确授权以 Codex 在同一 Web IDE editor 内做
+只读 `Control+A` / `Control+C` 回读，替代人工 copy-back。回读文本按 UTF-8/LF 归一化后 exact byte
+count=`26223`、SHA-256=
+`86a3560f973c7720ac1362757d08e7263845bf3c9b0db51d0690740e54ee3fe4`，未发生第二次 mutation 或 save。
+
+项目启用 `Always use Master Branch` 后，QuantConnect 在未再次保存的情况下把 Lean 从 `v18018` 更新为
+`v18024`，并产生 background Build `0472f8-976ac2`。Owner 审阅并明确接受该 engine drift，返回新的
+single-use token；最终 zero-order Cloud backtest 为 `Ugly Yellow Green Owlet`，backtest id=
+`fbad84708af7aceee7b91922809f942f`，Lean Engine=`2.5.0.0.18024`。
+
+受控 terminal statistics 给出唯一结果：
+
+- requested/evaluated range=`2021-02-22..2025-12-02`，expected/observed sessions=`1202/1202`；
+- `TRADING2537_TARGET_SESSION_COUNT=1`；
+- `TRADING2537_TARGET_SESSION_DATE=2022-08-26`；
+- `TRADING2537_TARGET_SESSION_POSITION=INTERIOR`；
+- `TRADING2537_TARGET_EQUITY_SLICE_PRESENT=true`；
+- `TRADING2537_TARGET_SUBSCRIBED_CHAIN_EVENT_COUNT=0`；
+- provider query attempts=`1`，exact-date records/contracts=`0/0`，non-target records=`1`；
+- `TRADING2537_CROSS_DATE_FALLBACK_DETECTED=true`；
+- provider status=`CROSS_DATE_FALLBACK`；attribution=`NO_EXACT_DATE_PROVIDER_EVIDENCE`；
+  attribution terminal=`INDETERMINATE`；execution terminal=`COMPLETE`；
+- orders/fills=`0/0`，portfolio invested=`false`，raw rows/contract identifiers/individual fields/Logs-as-data/
+  Object Store 均未导出或使用。
+
+因此唯一缺失日已经确定为 `2022-08-26`。这不是“日期尚未定位”的问题：当日 QQQ equity slice 存在，
+但 subscribed option-chain event 缺失；Free Web IDE 中唯一一次 bounded provider query 只返回一个非目标日
+record，没有任何 exact-date record 或 contract。该结果不能把 prior-date data 静默替代为目标日数据，
+`chain_presence=FAIL`、DQ=`FAIL`、PIT=`NOT_EVALUATED` 与
+`POLICY_BLOCKED_CASH_PRESERVATION` 继续成立。下一实质修复是为 `2022-08-26` 接入可审计的 exact-date
+期权源；在找到免费且许可清晰的来源前保持 fail closed，不使用跨日填充。
+
+封存证据位于
+`inputs/research/qqq_options/trading_2539_existing_clone_exact_date_execution_v1/`。原项目 `34808569`
+未修改；clone `35444189` 继续保留，删除仍需单独 Owner authority。最终 lifetime counters：
+clone / project mutations / saves / Cloud Builds / Cloud backtests / provider queries / orders / fills=
+`1 / 2 / 2 / 3 / 1 / 1 / 0 / 0`；第三个 Build 是 Owner 已接受的 `v18024` background rebuild。
+
+治理审计记录：创建本任务结果分支时，`git switch` 自身输出了 registered known-unrelated exclusion
+`docs/research/growth_tilt_owner_diagnosis_pack.md` 的路径名和 `M` 状态；命令未读取、hash、diff、stage 或
+修改其内容。该遗漏按 audit incident 记录；其后所有 repository-wide closeout inspection 继续只使用
+`architecture_arch005_checkout_guard.py worktree-audit`，该 excluded 内容不进入本任务证据或提交。
+
+封存验证：三个 source evidence artifact 的 manifest SHA-256 逐项 PASS，全部 JSON 可解析；canonical
+task source validate PASS；`test_qqq_options_exact_date_provider_catalog_attribution_execution.py` 与
+`test_arch_005_s5_task_source_cutover.py` 按 `pytest-xdist` 并行执行为 `21 passed`；governed worktree audit
+与 explicit task-path diff check PASS。

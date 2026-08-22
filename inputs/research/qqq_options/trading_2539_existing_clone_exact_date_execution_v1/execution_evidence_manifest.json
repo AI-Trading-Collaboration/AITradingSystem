@@ -1,0 +1,23 @@
+{
+  "schema_version": "qc_qqq_options_existing_clone_exact_date_execution_manifest.v1",
+  "task_id": "TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1",
+  "status": "EXECUTION_EVIDENCE_COMPLETE",
+  "artifact_count": 3,
+  "artifacts": {
+    "authorization_admission.json": "32e4b9375cedb9bd1946efb5c6fb5c8cee80045009b917cf7d58c06a035a42d3",
+    "export_safe_terminal_evidence.json": "3349ee8fb0c677feec4622a7aab923285a8e4944cc6405ca20453b799ec891c4",
+    "external_action_ledger.json": "a153508b43ca2c5c07bafe1cbc82bf0b3e3dad12292884c554b4e40ae49734cf"
+  },
+  "backtest_id": "fbad84708af7aceee7b91922809f942f",
+  "target_session_date": "2022-08-26",
+  "provider_probe_status": "CROSS_DATE_FALLBACK",
+  "attribution": "NO_EXACT_DATE_PROVIDER_EVIDENCE",
+  "attribution_terminal": "INDETERMINATE",
+  "execution_terminal": "COMPLETE",
+  "raw_result_committed": false,
+  "raw_rows_collected": false,
+  "orders": 0,
+  "fills": 0,
+  "production_effect": "none",
+  "broker_action": "none"
+}
