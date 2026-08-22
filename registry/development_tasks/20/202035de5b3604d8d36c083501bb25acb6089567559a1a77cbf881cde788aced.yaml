@@ -13,23 +13,22 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / fresh single-use V2 existing-clone authorization after
-    ordinary publication
-  requirement_refs:
-  - docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md
+  next_owner: Codex capability coordinator / V2 existing-clone execution after DEVX-008
+    publication
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: V1 Cloud run proved 2022-08-26 is the
-    missing subscribed-chain session but used EndTime as source date; append-only
-    V2 now uses OptionUniverse.Time and requires a fresh exact token before any further
-    QuantConnect action
+  unstructured_legacy_blocker_or_next_step: Policy publication is the only remaining
+    pre-dispatch gate. Then use clone 35444189 under STANDING_OWNER_SCOPE with exact
+    V2 manifest replay and bounded actual-counter recording; no owner hash copyback
+    token.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Preserve V1 execution/evidence bytes and lifetime counters 1 clone / 2 mutations
-      / 2 saves / 3 builds / 1 backtest / 1 provider query / 0 orders / 0 fills; V2
-      code 26587 LF bytes / SHA-256 06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2;
-      ordinary publication and new exact authorization required before rerun
+    text: Keep original project 34808569 and V1 evidence unchanged; V2 additional
+      mutation/save/build/backtest/provider query maxima=1/1/1/1/1, new clones/orders/fills=0/0/0,
+      no retry; technical evidence admission depends on exact runtime validation rather
+      than token format.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -335,28 +334,53 @@ events:
   - change:trading-2539-source-time-v2-final-main-reconciliation-20260822-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-c43eb89875c217d4423a8bc9cc5d04a4
+- schema_version: task_event.v1
+  task_id: TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T09:09:26Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2539-standing-r1-v2-existing-clone-ready-20260822-v1
+  lane_id: null
+  base_commit: 8702a4026d79ae51cc9709130c3d2bc416d9a2ad
+  previous_state_event_id: task-event-c43eb89875c217d4423a8bc9cc5d04a4
+  from_status: BASELINE_DONE
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex capability coordinator / V2 existing-clone execution after DEVX-008
+      publication
+    blocker_or_next_step: Policy publication is the only remaining pre-dispatch gate.
+      Then use clone 35444189 under STANDING_OWNER_SCOPE with exact V2 manifest replay
+      and bounded actual-counter recording; no owner hash copyback token.
+    acceptance_criteria: Keep original project 34808569 and V1 evidence unchanged;
+      V2 additional mutation/save/build/backtest/provider query maxima=1/1/1/1/1,
+      new clones/orders/fills=0/0/0, no retry; technical evidence admission depends
+      on exact runtime validation rather than token format.
+    notes: 详见 DEVX-008 与 TRADING-2539 requirement section 12.2。Existing clone remains
+      retained; production_effect=none、broker_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2539-standing-r1-v2-existing-clone-ready-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d90c589bb043109f50716ae8ca3c62d4
 projection:
   legacy_first_eight_cells:
   - TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
   - QuantConnect Cloud file API exact-content mutation and retry proposal V1
   - P0
-  - BASELINE_DONE
-  - Project Owner / fresh single-use V2 existing-clone authorization after ordinary
-    publication
-  - V1 Cloud run proved 2022-08-26 is the missing subscribed-chain session but used
-    EndTime as source date; append-only V2 now uses OptionUniverse.Time and requires
-    a fresh exact token before any further QuantConnect action
-  - Preserve V1 execution/evidence bytes and lifetime counters 1 clone / 2 mutations
-    / 2 saves / 3 builds / 1 backtest / 1 provider query / 0 orders / 0 fills; V2
-    code 26587 LF bytes / SHA-256 06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2;
-    ordinary publication and new exact authorization required before rerun
-  - 详见 [TRADING-2539 existing-clone V1 result and source-time correction requirement](docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md)。V1
-    backtest fbad84708af7aceee7b91922809f942f、Lean v18024、orders/fills=0/0；original
-    project 34808569 unchanged，clone 35444189 retained。production_effect=none；broker_action=none；external_action=none。
-  docs_links:
-  - docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md
+  - IN_PROGRESS
+  - Codex capability coordinator / V2 existing-clone execution after DEVX-008 publication
+  - Policy publication is the only remaining pre-dispatch gate. Then use clone 35444189
+    under STANDING_OWNER_SCOPE with exact V2 manifest replay and bounded actual-counter
+    recording; no owner hash copyback token.
+  - Keep original project 34808569 and V1 evidence unchanged; V2 additional mutation/save/build/backtest/provider
+    query maxima=1/1/1/1/1, new clones/orders/fills=0/0/0, no retry; technical evidence
+    admission depends on exact runtime validation rather than token format.
+  - 详见 DEVX-008 与 TRADING-2539 requirement section 12.2。Existing clone remains retained;
+    production_effect=none、broker_action=none。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 55d50af77f188f3d649628eb3684381ac06ba5dd965ab102ba098c21fc156fd9
-last_event_id: task-event-c43eb89875c217d4423a8bc9cc5d04a4
+  canonical_row_sha256: a2178dddcd71539601c159e0d130aec0697df1d578e058786b8930bf67d5520e
+last_event_id: task-event-d90c589bb043109f50716ae8ca3c62d4
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 072dc36253b850217c6c2191efbf71e8600825bc8c04cb1e5bc7589cae87e539
+fragment_checksum: ea67ffab0854b0042007dfff26e2b15a25297aa42af1e7ea0759e4fe28eea275

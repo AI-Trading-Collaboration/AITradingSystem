@@ -13,23 +13,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex capability coordinator；ordinary publication 后 Project Owner 提供
-    fresh V2 token
-  requirement_refs:
-  - docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md
+  next_owner: Codex capability coordinator / publish DEVX-008 then execute one bounded
+    V2 run
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 在 latest-main 309db390f9010e3b2801d79dbac9ab1b833b8e45
-    final candidate 重建 authorities/Atlas sidecars，完成 Full、ordinary push/SHA verify；此前不得执行
-    QuantConnect
+  unstructured_legacy_blocker_or_next_step: Complete DEVX-008 final Full and ordinary
+    publication, then automatically replay the V2 manifest and execute the existing-clone
+    zero-order run under STANDING_OWNER_SCOPE; no long token is required.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Executed V1 package/evidence bytes remain immutable; V2 code is 26587 LF
-      bytes / SHA-256 06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2;
-      source date is OptionUniverse.Time; EndTime must equal Time plus one day; target
-      clone=35444189, original mutations/new clones=0/0; focused and formal tiers
-      PASS; ordinary push/SHA verify; no external counter increase before a new token
+    text: Preserve V1 bytes; V2 code 26587 LF bytes/SHA-256 06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2;
+      clone 35444189 only; one mutation/save/build/backtest/provider query; zero orders/fills;
+      record authorization_state separately from technical_validation_state and seal
+      exact terminal evidence.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -159,29 +157,54 @@ events:
   - change:trading-2537-source-time-v2-final-309db-reconciliation-20260822-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-59a0b8122adb6ab7b43ae3921095d31d
+- schema_version: task_event.v1
+  task_id: TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T09:09:11Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2537-standing-r1-v2-execution-ready-20260822-v1
+  lane_id: null
+  base_commit: 8702a4026d79ae51cc9709130c3d2bc416d9a2ad
+  previous_state_event_id: task-event-59a0b8122adb6ab7b43ae3921095d31d
+  from_status: BASELINE_DONE
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex capability coordinator / publish DEVX-008 then execute one bounded
+      V2 run
+    blocker_or_next_step: Complete DEVX-008 final Full and ordinary publication, then
+      automatically replay the V2 manifest and execute the existing-clone zero-order
+      run under STANDING_OWNER_SCOPE; no long token is required.
+    acceptance_criteria: Preserve V1 bytes; V2 code 26587 LF bytes/SHA-256 06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2;
+      clone 35444189 only; one mutation/save/build/backtest/provider query; zero orders/fills;
+      record authorization_state separately from technical_validation_state and seal
+      exact terminal evidence.
+    notes: DEVX-008 supersedes the V2 long-token blocker for this bounded R1 sandbox
+      run. Historical token and execution evidence remain immutable; production_effect=none、broker_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2537-standing-r1-v2-execution-ready-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-6a0c92214f0ee7217b5b386073b1b574
 projection:
   legacy_first_eight_cells:
   - TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1
   - QQQ Options exact-date provider catalog attribution correction serial wave
   - P0
-  - BASELINE_DONE
-  - Codex capability coordinator；ordinary publication 后 Project Owner 提供 fresh V2
-    token
-  - 在 latest-main 309db390f9010e3b2801d79dbac9ab1b833b8e45 final candidate 重建 authorities/Atlas
-    sidecars，完成 Full、ordinary push/SHA verify；此前不得执行 QuantConnect
-  - Executed V1 package/evidence bytes remain immutable; V2 code is 26587 LF bytes
-    / SHA-256 06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2; source
-    date is OptionUniverse.Time; EndTime must equal Time plus one day; target clone=35444189,
-    original mutations/new clones=0/0; focused and formal tiers PASS; ordinary push/SHA
-    verify; no external counter increase before a new token
-  - 详见 [TRADING-2537 source-time V2 final 309db reconciliation](docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md)。validated
-    plan=integration-revalidation-946ab65c1ae18858946f，SHA-256=946ab65c1ae18858946f09ef2faebce26771a195c8d2bc961a4bfba942f71d07；TRADING-2540
-    mainline bytes preserved，Atlas coverage=61。2022-08-26 remains proven missing subscribed-chain
-    session；exact provider count awaits fresh V2 token。production_effect=none；broker_action=none；external_action=none。
-  docs_links:
-  - docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md
+  - IN_PROGRESS
+  - Codex capability coordinator / publish DEVX-008 then execute one bounded V2 run
+  - Complete DEVX-008 final Full and ordinary publication, then automatically replay
+    the V2 manifest and execute the existing-clone zero-order run under STANDING_OWNER_SCOPE;
+    no long token is required.
+  - Preserve V1 bytes; V2 code 26587 LF bytes/SHA-256 06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2;
+    clone 35444189 only; one mutation/save/build/backtest/provider query; zero orders/fills;
+    record authorization_state separately from technical_validation_state and seal
+    exact terminal evidence.
+  - DEVX-008 supersedes the V2 long-token blocker for this bounded R1 sandbox run.
+    Historical token and execution evidence remain immutable; production_effect=none、broker_action=none。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 156c62f5743bbf4b14f6142c8dc5e791785326a936c2a6d64ea28eb8ce0069f1
-last_event_id: task-event-59a0b8122adb6ab7b43ae3921095d31d
+  canonical_row_sha256: d3de11bf18c75cfd40133cacf4cc94aafcc2012d49d0cb4567971ff90f72298d
+last_event_id: task-event-6a0c92214f0ee7217b5b386073b1b574
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: e3f2000afca498ff29aafd11a81d16dadb78fbbf2fe17dc8ee0cb4bd876195d4
+fragment_checksum: 5237cab05a0278809c3cd7d597ad96d5e4d9ebdb200df43dab37ee62887263c9

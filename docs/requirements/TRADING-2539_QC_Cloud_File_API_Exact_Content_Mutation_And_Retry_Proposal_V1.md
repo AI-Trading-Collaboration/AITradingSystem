@@ -378,3 +378,16 @@ V2 package 改用 `OptionUniverse.Time` 做 exact source-date match，并把 `En
 availability invariant。只有新的 single-use、zero-order V2 run 才能最终确认 2022-08-26 的 exact-date
 record/contract count 与 provider/subscription attribution；本轮没有新增 clone mutation、save、build、
 backtest、provider query、order 或 fill。
+
+### 12.2 DEVX-008 successor authorization/evidence policy
+
+2026-08-22，Project Owner 明确决定逐次 exact-token 限制过重，正确性应由实际 evidence、exact identity、
+runtime provenance、terminal completeness 和可复现核验决定，而不是由 Owner 是否机械回贴机器生成
+hashes 决定。DEVX-008 将 action authorization 与 technical evidence admission 分轴记录。
+
+此前 exact token、V1 run 和 lifetime counters 保持 immutable。V2 existing-clone run 在 DEVX-008
+ordinary publication 后属于 `R1_BOUNDED_RESEARCH_SANDBOX / STANDING_OWNER_SCOPE`：Codex 自动重放
+V2 manifest，可在 clone `35444189` 执行最多一次 mutation/save/automatic build、一次 zero-order
+backtest 和一次 provider query；原项目/new clone/orders/fills=`0/0/0/0`，禁止 retry、公开分享、迁移、
+paper/live、broker 或 production action。结果是否进入正式证据由 technical validation 决定，缺少新的
+preformatted token 本身不再构成 rejection reason。

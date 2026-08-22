@@ -124,13 +124,24 @@ package/project-code exact identities 和 2532 evidence identities；本轮不�
 
 ## 6. 外部动作与后续真实修复边界
 
-在 V2 corrected package ordinary-pushed 且 Project Owner 对 final exact hashes 发放新的 single-use token 前：
+本节的历史 exact-token gate 由 DEVX-008 successor policy 保留为历史事实，不再是 V2 当前执行的唯一
+授权形式。V2 corrected package ordinary-pushed 后，Project Owner 已要求继续该诊断且 exact manifest
+固定 existing clone、zero-order 和 action maxima，因此当前一次运行属于
+`R1_BOUNDED_RESEARCH_SANDBOX / STANDING_OWNER_SCOPE`。Codex 自动重放 final exact hashes，不再要求
+Owner 将机器生成的 hashes 粘贴回对话。
+
+在 DEVX-008 policy ordinary-pushed 前：
 
 - `maximum_project_mutations=0`；
 - `maximum_cloud_backtests=0`；
 - `maximum_orders=0`；
 - `maximum_fills=0`；
 - `external_action=none`。
+
+publication 后当前 standing scope 只允许 clone `35444189` 的一次 V2 mutation/save/automatic build、
+一次 zero-order backtest 和一次 provider query；原 project mutation/new clone/orders/fills 均为 0，
+禁止自动 retry。authorization state 与 technical evidence state 必须分轴记录；结果是否准入由 exact
+identity、runtime provenance、terminal completeness 和可复现验证决定。
 
 未来一次获批 zero-order run 只负责定位目标日期和归因。若目标是 start boundary，后继可提出一个
 pre-roll trading session 但 evaluation 仍从 `2021-02-22` 开始；若是 end boundary，可提出一个 post-roll
@@ -286,3 +297,7 @@ primary source，不得 forward-fill、静默排除该日或把 derived seal 冒
   `PASS`。切到 frozen lane 和再切到 `309db390...` final candidate 时，Git 各打印一次同一
   known-unrelated exclusion 路径及 `M`，分别记录为第三、第四次 audit incident；仍未读取、hash、diff、
   stage 或修改该文件内容。
+- 2026-08-22：Project Owner 判定逐次 exact-token 限制过重，要求正确性从实际证据出发，并要求同步项目
+  后继续中断工作。DEVX-008 successor policy 将本 V2 existing-clone、zero-order、bounded run 分类为
+  `R1_BOUNDED_RESEARCH_SANDBOX / STANDING_OWNER_SCOPE`；不修改 V1 历史授权/运行/evidence bytes，V2
+  publication 后由 Codex 自动核验 manifest 并记录 actual counters，无需 Owner 再粘贴长 token。

@@ -1,0 +1,113 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-008_RISK_TIERED_EXTERNAL_ACTION_AND_EVIDENCE_ADMISSION
+  task_id_sha256: 298a35815f72a7931a935dd54e5dfc0292ff3e7dd3c3e2036f110ba8a4d06667
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-008_RISK_TIERED_EXTERNAL_ACTION_AND_EVIDENCE_ADMISSION
+  title: null
+  domain: Risk-tiered external action and empirical evidence admission
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex strategy-evidence coordinator / apply standing R1 scope to TRADING-2537
+  requirement_refs:
+  - docs/requirements/DEVX-008_Risk_Tiered_External_Action_and_Evidence_Admission.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: None for policy implementation; ordinary
+    publication is the closeout gate before the TRADING-2537 external run.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Action authorization and technical evidence validity are separate; R1 standing
+      owner scope uses automatic manifest replay without owner hash copyback; R2/R3
+      remain explicit; focused 20, Architecture 865, Contract 276, Integration 995
+      and Reproducibility 24 PASS; Full and ordinary publication remain closeout gates.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-008_RISK_TIERED_EXTERNAL_ACTION_AND_EVIDENCE_ADMISSION
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-22T08:40:42Z'
+  actor: codex_capability_coordinator
+  change_id: devx-008-risk-tiered-external-evidence-registration-20260822-v1
+  lane_id: null
+  base_commit: 8702a4026d79ae51cc9709130c3d2bc416d9a2ad
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-008_RISK_TIERED_EXTERNAL_ACTION_AND_EVIDENCE_ADMISSION
+    - Risk-tiered external action and empirical evidence admission
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator / serial policy publication, then TRADING-2537
+      R1 execution
+    - Current exact-token rules conflate action permission with technical evidence
+      validity; complete the serial successor policy before resuming QuantConnect
+      V2.
+    - Separate authorization_state from technical_validation_state; allow bounded
+      R1 sandbox work under standing owner scope with automatic manifest verification;
+      preserve R2/R3 explicit authorization; publish and validate before TRADING-2537
+      execution.
+    - 详见 [DEVX-008 risk-tiered external action and evidence admission](docs/requirements/DEVX-008_Risk_Tiered_External_Action_and_Evidence_Admission.md)。production_effect=none、broker_action=none。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-008-risk-tiered-external-evidence-registration-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-cb03a70f05d29b0602ebe1d872a248c2
+- schema_version: task_event.v1
+  task_id: DEVX-008_RISK_TIERED_EXTERNAL_ACTION_AND_EVIDENCE_ADMISSION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T09:10:01Z'
+  actor: codex_capability_coordinator
+  change_id: devx-008-risk-tiered-policy-done-20260822-v1
+  lane_id: null
+  base_commit: 8702a4026d79ae51cc9709130c3d2bc416d9a2ad
+  previous_state_event_id: task-event-cb03a70f05d29b0602ebe1d872a248c2
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Codex strategy-evidence coordinator / apply standing R1 scope to TRADING-2537
+    blocker_or_next_step: None for policy implementation; ordinary publication is
+      the closeout gate before the TRADING-2537 external run.
+    acceptance_criteria: Action authorization and technical evidence validity are
+      separate; R1 standing owner scope uses automatic manifest replay without owner
+      hash copyback; R2/R3 remain explicit; focused 20, Architecture 865, Contract
+      276, Integration 995 and Reproducibility 24 PASS; Full and ordinary publication
+      remain closeout gates.
+    notes: 详见 [DEVX-008 risk-tiered external action and evidence admission](docs/requirements/DEVX-008_Risk_Tiered_External_Action_and_Evidence_Admission.md)。production_effect=none、broker_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-008-risk-tiered-policy-done-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2d8afc54c66f7a1f9960930c81b9a5f4
+projection:
+  legacy_first_eight_cells:
+  - DEVX-008_RISK_TIERED_EXTERNAL_ACTION_AND_EVIDENCE_ADMISSION
+  - Risk-tiered external action and empirical evidence admission
+  - P0
+  - DONE
+  - Codex strategy-evidence coordinator / apply standing R1 scope to TRADING-2537
+  - None for policy implementation; ordinary publication is the closeout gate before
+    the TRADING-2537 external run.
+  - Action authorization and technical evidence validity are separate; R1 standing
+    owner scope uses automatic manifest replay without owner hash copyback; R2/R3
+    remain explicit; focused 20, Architecture 865, Contract 276, Integration 995 and
+    Reproducibility 24 PASS; Full and ordinary publication remain closeout gates.
+  - 详见 [DEVX-008 risk-tiered external action and evidence admission](docs/requirements/DEVX-008_Risk_Tiered_External_Action_and_Evidence_Admission.md)。production_effect=none、broker_action=none。
+  docs_links:
+  - docs/requirements/DEVX-008_Risk_Tiered_External_Action_and_Evidence_Admission.md
+  terminal: true
+  canonical_row_sha256: 5aa9950263c9cea05bcdd9af83b1d4f0e41b68359237f15701de2d8c813cefd1
+last_event_id: task-event-2d8afc54c66f7a1f9960930c81b9a5f4
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 61d333e570404d861ddd7cf3add19eb2ae18f0bbefa6d4fc895581df1000c2ce

@@ -8815,7 +8815,8 @@ never-chain`，不能指出日期，也不能区分 provider catalog 当日为�
   -> never export contract identifiers, symbols, strike, expiry, quote, Greeks, IV, OI, volume or raw rows
   -> no logs-as-data / Object Store / orders / fills / DQ-PIT rewrite / selection / engine authority
   -> seal run scope, proposal, project code, unsigned owner request and package manifest
-  -> ordinary-pushed exact main + new single-use owner token required before any project mutation or run
+  -> after DEVX-008 publication, bounded existing-clone R1 execution may use STANDING_OWNER_SCOPE
+       automatic manifest replay + exact maxima/actual counters replace owner hash copyback
 ```
 
 本 proposal 只缩小 data availability/transport 根因，不自动把 `chain_presence=FAIL` 改为 PASS，也不代表
@@ -8860,8 +8861,35 @@ PIT=`NOT_EVALUATED` 和 `POLICY_BLOCKED_CASH_PRESERVATION` 均保持不变。
 2026-08-22 的 V1 Cloud run 已定位 target=`2022-08-26`，但其
 `CROSS_DATE_FALLBACK` attribution 被后续 LEAN source audit 判定为探针误判：日级
 `BaseChainUniverseData.EndTime` 固定为 `Time + OneDay`。V1 package/terminal evidence 保持 immutable；
-append-only V2 以 `Time` 归属 source trading date。V2 尚未获得新的 external token，因此当前只能确认
-缺失 session 日期，不能确认 exact-date provider contract count 或选择 provider remediation。
+append-only V2 以 `Time` 归属 source trading date。DEVX-008 publication 后，本任务在 existing clone、
+zero-order、exact manifest 和有界 counters 下属于 `R1_BOUNDED_RESEARCH_SANDBOX`，可使用
+`STANDING_OWNER_SCOPE` 继续实证验证；在 V2 terminal 完成前仍不能确认 exact-date provider contract count
+或选择 provider remediation。
+
+## DEVX-008 风险分级外部动作与实证证据准入
+
+`config/governance/risk_tiered_external_action_evidence_admission_v1.yaml` 把动作权限与证据正确性拆成
+两个独立轴。逐次 exact token 继续作为一种可用 authorization state，但不是技术真实性的必要条件；
+Owner 已要求继续的 bounded research sandbox 可以在 exact task/manifest、zero-order/zero-fill、自动
+pre-dispatch replay 和 post-dispatch counter/terminal 记录下使用 `STANDING_OWNER_SCOPE`。
+
+```text
+owner task intent + reviewed exact task/manifest
+  -> classify external action risk:
+       R0 local/read-only -> task request is sufficient
+       R1 bounded research sandbox -> STANDING_OWNER_SCOPE, no owner hash copyback
+       R2 material external change -> concise explicit owner instruction
+       R3 production/broker/order/fill -> separate exact-scope authorization
+  -> automatically replay exact target/code/range/maxima before dispatch
+  -> record authorization_state independently from technical_validation_state
+  -> validate runtime identity, actual counters, terminal completeness, reproducibility and DQ/PIT
+  -> unresolved scope/safety incident quarantines downstream use but preserves factual bytes
+  -> missing preformatted token alone never makes technical evidence false
+```
+
+Historical exact-token packages and execution receipts remain immutable. This successor policy does not authorize
+original-project writes, cloud deletion, public sharing, paid-resource expansion, production, paper/live, broker,
+orders or fills, and does not weaken Git PR/force-push/history-rewrite/divergence-repair rules.
 
 ## TRADING-2538 exact-date attribution admission / failed first mutation attempt
 

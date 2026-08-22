@@ -353,6 +353,45 @@ risk, next owner, and concrete exit condition in the canonical task registry or
 the linked supporting requirement. Leaving temporary directories behind without
 that record is not an acceptable closeout state.
 
+## Risk-Tiered External Actions and Evidence Admission
+
+External-action permission and technical evidence validity are separate axes.
+Authorization limits account, resource, third-party, reversibility, production,
+and broker risk. Evidence admission depends on exact code/data identity, runtime
+provenance, requested/evaluated scope, output integrity, reproducibility, DQ/PIT,
+and independent validation. A missing preformatted token must not, by itself,
+make an observed result technically false or permanently inadmissible.
+
+Apply these risk tiers:
+
+- `R0_LOCAL_READ_ONLY`: local reads, static analysis, offline validation, and
+  retained-result review require no per-action authorization beyond the user's
+  task request.
+- `R1_BOUNDED_RESEARCH_SANDBOX`: bounded work in an existing research sandbox or
+  clone may proceed under standing owner scope when the owner has asked Codex to
+  continue that research task and a reviewed task/manifest fixes the target,
+  code identity, action maxima, zero-order/zero-fill boundary, and exit condition.
+  Do not require the owner to paste machine-generated hashes back into chat.
+  Codex must automatically replay the manifest before dispatch and record actual
+  counters and terminal evidence afterward.
+- `R2_MATERIAL_EXTERNAL_CHANGE`: original-project writes, meaningful paid-resource
+  consumption, cloud deletion, public sharing, external messages, or similarly
+  material/recovery-cost actions require a concise explicit owner instruction
+  bound to the target and intended effect.
+- `R3_PRODUCTION_OR_BROKER`: paper/live, broker, order, fill, capital/position,
+  production promotion, or comparably high-consequence actions require separate,
+  exact-scope authorization and all existing fail-closed safety gates.
+
+For every external run, record `authorization_state` separately from
+`technical_validation_state`. Allowed authorization states are
+`EXACT_PREAUTHORIZED`, `STANDING_OWNER_SCOPE`, `RETROSPECTIVELY_REVIEWED`, and
+`UNAUTHORIZED_ACTION_INCIDENT`. An action outside owner intent is quarantined and
+reviewed; its bytes are preserved as incident evidence, but it cannot drive DQ/PIT,
+selection, engine, production, or investment conclusions until scope and safety
+review complete. Historical exact-token artifacts remain immutable. PR,
+force-push, history rewrite, remote-divergence repair, destructive cleanup, and
+R2/R3 actions retain their separate authorization rules.
+
 ## Local Branch, Commit, and Main Integration Discipline
 
 When completing work that was explicitly selected from the canonical task registry
