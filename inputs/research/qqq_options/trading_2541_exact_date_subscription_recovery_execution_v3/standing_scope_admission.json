@@ -1,0 +1,38 @@
+{
+  "authorization_state": "STANDING_OWNER_SCOPE",
+  "automatic_retry_allowed": false,
+  "broker_action": "none",
+  "candidate": {
+    "lf_byte_count": 31720,
+    "lf_sha256": "d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3",
+    "path": "inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_v1/main.py"
+  },
+  "content_sha256": "d459284e4c2a998b3e10983219801c6d11cffeb06f20718ff484ec2e9ab1bbb3",
+  "declared_maxima": {
+    "candidate_automatic_cloud_builds": 1,
+    "environment_startup_automatic_cloud_builds": 2,
+    "fills": 0,
+    "new_clones": 0,
+    "orders": 0,
+    "original_project_mutations": 0,
+    "provider_queries": 1,
+    "total_additional_automatic_cloud_builds": 3,
+    "additional_clone_project_mutations": 1,
+    "additional_saves": 1,
+    "zero_order_cloud_backtests": 1
+  },
+  "manifest_replay_state": "NOT_EXECUTED",
+  "original_project_id": 34808569,
+  "owner_intent_source": "Project Owner requested Codex to continue after reinstalling the Chrome plugin in the current dialog.",
+  "policy_file_sha256_at_admission": "a619908bb5db2dc67704b67bfa9b59f05a9c8c6365a582e1bdb4e54d88684608",
+  "policy_repository_commit_at_admission": "e131a101b7108b56af00b42e86e35dde17e05aa6",
+  "production_effect": "none",
+  "requested_range": "2021-02-22..2025-12-02",
+  "risk_tier": "R1_BOUNDED_RESEARCH_SANDBOX",
+  "schema_version": "risk_tiered_external_action_standing_scope_admission.v3",
+  "scope_id": "TRADING_2541_EXACT_DATE_SUBSCRIPTION_RECOVERY_S3_V3",
+  "scope_status": "READY_UNUSED",
+  "startup_build_evidence_path": "inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v3/environment_startup_evidence.json",
+  "target_clone_project_id": 35444189,
+  "task_id": "TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1"
+}

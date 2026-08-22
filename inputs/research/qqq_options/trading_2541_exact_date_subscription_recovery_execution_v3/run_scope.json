@@ -1,0 +1,38 @@
+{
+  "acceptance": {
+    "delivery_path": "EXACT_DATE_PROVIDER_HISTORY_RECOVERY",
+    "exact_availability_identity_required": true,
+    "exact_source_date_match_required": true,
+    "expected_normal_slice_session_count": 1201,
+    "expected_recovered_session_count": 1,
+    "expected_session_count": 1202,
+    "expected_unresolved_session_count": 0,
+    "execution_terminal_status": "COMPLETE",
+    "recovery_status": "ACCEPTED",
+    "target_source_date": "2022-08-26"
+  },
+  "automatic_build_accounting": {
+    "candidate_maximum": 1,
+    "environment_startup_observed": 2,
+    "environment_startup_maximum": 2,
+    "total_maximum": 3
+  },
+  "content_sha256": "5aee2bd98127800dea2643c92b667c09b8026bff0a196b01bf99ba6fcff09944",
+  "cross_date_fallback_allowed": false,
+  "evidence_output": {
+    "contract_identifiers_exported": false,
+    "individual_contract_fields_exported": false,
+    "logs_as_data": false,
+    "object_store": false,
+    "raw_rows": false,
+    "terminal_statistics_only": true
+  },
+  "maximum_provider_queries": 1,
+  "maximum_zero_order_cloud_backtests": 1,
+  "orders": 0,
+  "fills": 0,
+  "requested_range": "2021-02-22..2025-12-02",
+  "schema_version": "qc_qqq_options_exact_date_subscription_recovery_run_scope.v3",
+  "target_clone_project_id": 35444189,
+  "task_id": "TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1"
+}

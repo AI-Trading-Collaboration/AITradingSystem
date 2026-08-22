@@ -215,3 +215,26 @@ S3 v2 pre-dispatch identities：
 - execution-manifest content/file SHA-256：
   `e18c2dcf867de606a21d02f885e53e6a134a75a4a5b506a3cb7bd1e4cf6759aa` /
   `6cb0ad1450dc65e3ca4b1520343ada29b66cc9b6acd7f9ebb9cfef805894bd98`。
+
+## 11. S3 v3 稳定启动 baseline（2026-08-23）
+
+v2 发布后的 replay 在 candidate input 前发现第二个旧代码 background build：
+`684f9c-8b195b`（Cloud Terminal time=`3:26:56`，LEAN `2.5.0.0.18024`）。两个 build 均绑定同一
+TRADING-2537 v2 readback，candidate mutation/save/backtest/provider query 仍全为 `0`；因此不是
+candidate retry，但 v2 的单个 environment-build baseline 已失效，必须 fail closed。
+
+v3 不改写 v1/v2，锁定 environment startup build 上限/实绩=`2/2`、candidate build 上限/剩余=`1/1`、
+总 automatic build 上限=`3`。其他边界与 v2 完全相同。只有 v3 发布、三方 SHA 相等、manifest replay
+与页面 build lineage 都通过后才能执行一次 candidate mutation/save/backtest；任何新增 pre-candidate
+build 都再次 fail closed。
+
+S3 v3 pre-dispatch identities：policy file SHA-256
+`a619908bb5db2dc67704b67bfa9b59f05a9c8c6365a582e1bdb4e54d88684608`；startup evidence
+content/file SHA-256 `8d44956dd7ad3f89665a90b1232c8dffa124d2bd33ad4f0798b82351a49e03aa` /
+`727b7980d3500fe83683a0a1881082da04e58ee743fd2e0adef87441f36d8d8b`；admission content/file
+SHA-256 `d459284e4c2a998b3e10983219801c6d11cffeb06f20718ff484ec2e9ab1bbb3` /
+`85977aa84b381c5ac7bf3ec812ba8f24077a75990fdb7bc8bfc813bc22fd85b7`；run-scope content/file
+SHA-256 `5aee2bd98127800dea2643c92b667c09b8026bff0a196b01bf99ba6fcff09944` /
+`429599db20609b26fe854ced925e31e3672165ece5c0261b53f49da9684b676e`；execution-manifest
+content/file SHA-256 `1871b6005adebeefe615f24dd1686efd939e85eeb18fb940a5df82aa67fa7304` /
+`481a6f4aca6c05b965693f067cd6ebb45685cbd6524bc151f2394aecde3dc6d8`。

@@ -13,18 +13,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / 发布并 replay S3 v2 startup-build accounting 后执行唯一 candidate save/backtest
+  next_owner: Codex / 发布并 replay S3 v3 稳定 startup-build baseline 后执行唯一 candidate save/backtest
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Chrome plugin 重装后控制连接与 clone 35444189
-    editor readback 均恢复。会话启动对既有 TRADING-2537 v2 代码自动产生 build 11e9d4-8b195b；先发布 v2
-    清单，将 environment startup build=1 与 remaining candidate build=1 分轴计数，再继续唯一候选执行。
+  unstructured_legacy_blocker_or_next_step: v2 发布后 replay 发现 candidate input 前还有第二个旧代码
+    background build 684f9c-8b195b（3:26:56，LEAN 2.5.0.0.18024）；v2 accounting 因而 fail
+    closed。页面此后稳定且 candidate 尚未输入，新增不可改写 v2 的 v3 baseline：environment builds=2、remaining
+    candidate build=1、total max=3。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: v2 清单锁定 current clone LF 26587/06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2
-      与 startup build 11e9d4-8b195b；总 automatic build 上限 2，其中 startup=1、candidate=1；candidate
+    text: v3 清单锁定 current clone LF 26587/06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2
+      与 startup builds 11e9d4-8b195b、684f9c-8b195b；总 automatic build 上限 3，其中 environment=2、candidate=1；candidate
       mutation/save/backtest/provider query 各不超过 1；无 retry；1202 sessions；2022-08-26
       exact recovery；orders/fills 0/0；封存 terminal evidence。
   production_effect: none
@@ -322,26 +323,57 @@ events:
   - change:trading-2541-s3-browser-restored-startup-build-accounting-20260823-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-b7314edd2deb72c357d124263f5e3d7e
+- schema_version: task_event.v1
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T15:54:49Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2541-s3-v2-replay-second-startup-build-20260823-v1
+  lane_id: null
+  base_commit: e131a101b7108b56af00b42e86e35dde17e05aa6
+  previous_state_event_id: task-event-b7314edd2deb72c357d124263f5e3d7e
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / 发布并 replay S3 v3 稳定 startup-build baseline 后执行唯一 candidate
+      save/backtest
+    blocker_or_next_step: v2 发布后 replay 发现 candidate input 前还有第二个旧代码 background build
+      684f9c-8b195b（3:26:56，LEAN 2.5.0.0.18024）；v2 accounting 因而 fail closed。页面此后稳定且
+      candidate 尚未输入，新增不可改写 v2 的 v3 baseline：environment builds=2、remaining candidate
+      build=1、total max=3。
+    acceptance_criteria: v3 清单锁定 current clone LF 26587/06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2
+      与 startup builds 11e9d4-8b195b、684f9c-8b195b；总 automatic build 上限 3，其中 environment=2、candidate=1；candidate
+      mutation/save/backtest/provider query 各不超过 1；无 retry；1202 sessions；2022-08-26
+      exact recovery；orders/fills 0/0；封存 terminal evidence。
+    notes: 'v2 replay technical state=INVALIDATED_PRE_CANDIDATE_BY_SECOND_BACKGROUND_BUILD；authorization
+      仍 UNCONSUMED_NO_BACKTEST_DISPATCH。actual counters: environment builds=2；candidate
+      mutation/save/build/backtest/provider query/orders/fills=0；production_effect=none；broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2541-s3-v2-replay-second-startup-build-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-344a20b8b12f0dfa0e316c87a9024153
 projection:
   legacy_first_eight_cells:
   - TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
   - QQQ Options exact-date provider-available subscription missing remediation
   - P0
   - IN_PROGRESS
-  - Codex / 发布并 replay S3 v2 startup-build accounting 后执行唯一 candidate save/backtest
-  - Chrome plugin 重装后控制连接与 clone 35444189 editor readback 均恢复。会话启动对既有 TRADING-2537
-    v2 代码自动产生 build 11e9d4-8b195b；先发布 v2 清单，将 environment startup build=1 与 remaining
-    candidate build=1 分轴计数，再继续唯一候选执行。
-  - v2 清单锁定 current clone LF 26587/06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2
-    与 startup build 11e9d4-8b195b；总 automatic build 上限 2，其中 startup=1、candidate=1；candidate
+  - Codex / 发布并 replay S3 v3 稳定 startup-build baseline 后执行唯一 candidate save/backtest
+  - v2 发布后 replay 发现 candidate input 前还有第二个旧代码 background build 684f9c-8b195b（3:26:56，LEAN
+    2.5.0.0.18024）；v2 accounting 因而 fail closed。页面此后稳定且 candidate 尚未输入，新增不可改写 v2 的
+    v3 baseline：environment builds=2、remaining candidate build=1、total max=3。
+  - v3 清单锁定 current clone LF 26587/06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2
+    与 startup builds 11e9d4-8b195b、684f9c-8b195b；总 automatic build 上限 3，其中 environment=2、candidate=1；candidate
     mutation/save/backtest/provider query 各不超过 1；无 retry；1202 sessions；2022-08-26
     exact recovery；orders/fills 0/0；封存 terminal evidence。
-  - '只读 editor copyback 与 repository TRADING-2537 v2 main.py 精确匹配；TRADING-2541 candidate
-    尚未输入。authorization_state=STANDING_OWNER_SCOPE；authorization_consumption_state=UNCONSUMED_NO_BACKTEST_DISPATCH；actual
-    counters: startup build=1，candidate mutation/save/build/backtest/provider query/orders/fills=0；technical_validation_state=NOT_EXECUTED；production_effect=none；broker_action=none。'
+  - 'v2 replay technical state=INVALIDATED_PRE_CANDIDATE_BY_SECOND_BACKGROUND_BUILD；authorization
+    仍 UNCONSUMED_NO_BACKTEST_DISPATCH。actual counters: environment builds=2；candidate
+    mutation/save/build/backtest/provider query/orders/fills=0；production_effect=none；broker_action=none。'
   docs_links: []
   terminal: false
-  canonical_row_sha256: 5347a610141dec17f7a911cf0307065da5b2d58b007e8e740fe958c263991cb1
-last_event_id: task-event-b7314edd2deb72c357d124263f5e3d7e
+  canonical_row_sha256: eaee26bd27a16a5afc191a3525867e7296476637bab751194c750a1f9b8d623f
+last_event_id: task-event-344a20b8b12f0dfa0e316c87a9024153
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 41b6b847f733c77740db75cf4537011875a807c95de2510951d0b14b283fca82
+fragment_checksum: cf9ac3c8432381a10659da47ea97218476b074e0fd23f4fd210451b028898a76

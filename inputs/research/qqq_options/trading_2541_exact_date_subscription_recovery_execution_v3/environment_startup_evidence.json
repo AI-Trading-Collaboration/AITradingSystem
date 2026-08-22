@@ -1,0 +1,31 @@
+{
+  "authorization_consumption_state": "UNCONSUMED_NO_BACKTEST_DISPATCH",
+  "authorization_state": "STANDING_OWNER_SCOPE",
+  "candidate_dispatch_state": "NOT_DISPATCHED",
+  "candidate_lf_byte_count": 31720,
+  "candidate_lf_sha256": "d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3",
+  "content_sha256": "8d44956dd7ad3f89665a90b1232c8dffa124d2bd33ad4f0798b82351a49e03aa",
+  "current_clone_code_identity": "TRADING_2537_V2",
+  "current_clone_lf_byte_count": 26587,
+  "current_clone_lf_sha256": "06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2",
+  "environment_startup_builds": [
+    {
+      "build_id": "11e9d4-8b195b",
+      "displayed_terminal_time": "3:24:04",
+      "engine_version": "2.5.0.0.18024"
+    },
+    {
+      "build_id": "684f9c-8b195b",
+      "displayed_terminal_time": "3:26:56",
+      "engine_version": "2.5.0.0.18024"
+    }
+  ],
+  "observed_at_utc": "2026-08-22T15:55:05Z",
+  "production_effect": "none",
+  "broker_action": "none",
+  "schema_version": "qc_qqq_options_exact_date_subscription_recovery_startup_evidence.v2",
+  "target_clone_project_id": 35444189,
+  "technical_validation_state": "NOT_EXECUTED",
+  "task_id": "TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1",
+  "v2_replay_state": "INVALIDATED_PRE_CANDIDATE_BY_SECOND_BACKGROUND_BUILD"
+}
