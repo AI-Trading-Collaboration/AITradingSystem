@@ -2031,7 +2031,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "688a6de18b5fc1715555254a2de4a44472e66c0e5e9d10d1d93b49ec4e92a498"
+        "sha256": "58f3d02579abdca7e2704ffd92fdfdc569cef802e5ca0af09cba99eac97fdced"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -4404,5 +4404,5 @@
     }
   },
   "section_id": "phase_arch_005_s5_canonical_task_source_cutover",
-  "section_sha256": "14b1f37151f210c9857cf30f0428ffa0ede64356eaf0308b9792d258270c20df"
+  "section_sha256": "ed197b4c34bfce016d5900e8cd6292be6ba9432383d60a628d6fd7d8ab3ba9ba"
 }

@@ -106,7 +106,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "688a6de18b5fc1715555254a2de4a44472e66c0e5e9d10d1d93b49ec4e92a498"
+        "sha256": "58f3d02579abdca7e2704ffd92fdfdc569cef802e5ca0af09cba99eac97fdced"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -306,5 +306,5 @@
     "task_id": "DEVX-006D_REPORT_CATALOG_FLOW_LOSSLESS_FRAGMENTATION"
   },
   "section_id": "phase_devx_006d_report_catalog_flow_lossless_fragmentation",
-  "section_sha256": "21eafe27abd40ae744af75f5e45b3408b7b0fe7cc017383533ece2cb97f60de0"
+  "section_sha256": "579a9a71effb8ce7a08a619ec4a1e5b87120577dfd43b89adc5d3300e9b89b52"
 }
