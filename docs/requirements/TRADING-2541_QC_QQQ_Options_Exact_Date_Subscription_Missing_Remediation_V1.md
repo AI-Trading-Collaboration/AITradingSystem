@@ -1,8 +1,8 @@
 # TRADING-2541 — QQQ Options exact-date subscription missing remediation V1
 
 - priority: `P0`
-- status: `IN_PROGRESS`（Chrome 控制与 coding session 已恢复；S3 v2 startup-build accounting 待发布/replay）
-- owner: Codex（发布并 replay S3 v2 后继续唯一 candidate save/backtest）
+- status: `DONE`（S3 v3 exact-date recovery Cloud terminal PASS）
+- owner: Codex（正式证据已封存并关闭）
 - governed mode: `SINGLE_LANE`
 - predecessor evidence: `TRADING-2537` V2 terminal attribution
 - production effect: `none`
@@ -238,3 +238,35 @@ SHA-256 `5aee2bd98127800dea2643c92b667c09b8026bff0a196b01bf99ba6fcff09944` /
 `429599db20609b26fe854ced925e31e3672165ece5c0261b53f49da9684b676e`；execution-manifest
 content/file SHA-256 `1871b6005adebeefe615f24dd1686efd939e85eeb18fb940a5df82aa67fa7304` /
 `481a6f4aca6c05b965693f067cd6ebb45685cbd6524bc151f2394aecde3dc6d8`。
+
+## 12. S3 v3 正式 Cloud 终态（2026-08-23）
+
+v3 以 pre-dispatch commit `31bac57176a335545b11cca6f0f4055650e3ffdd` 完成
+`HEAD = local main = origin/main` 和 manifest replay。页面在 candidate input 前仍只有两个已封存的旧代码
+environment startup build。随后 existing clone `35444189` 只执行一次 candidate mutation/autosave，云端回读
+精确匹配 `31720` LF bytes / SHA-256
+`d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3`；唯一 candidate build id 为
+`d65491-f6b483`，LEAN=`2.5.0.0.18024`。
+
+唯一 zero-order Cloud backtest：
+
+- name=`Hyper Active Red Barracuda`；id=`8142b39f1c76a10471a355fc1eb27a1d`；
+- requested/evaluated range=`2021-02-22..2025-12-02`；expected/observed sessions=`1202/1202`；
+- terminal=`COMPLETE`，duration=`5643.88s`，data points=`38,396,279`；
+- target/recovery source date=`2022-08-26`，availability date=`2022-08-27`；
+- recovery status=`ACCEPTED`，delivery path=`EXACT_DATE_PROVIDER_HISTORY_RECOVERY`；
+- provider query=`1`，exact-date record=`1`，contracts=`6496`，non-target record=`0`，invalid availability=`0`；
+- normal Slice sessions=`1201`，recovered sessions=`1`，unresolved sessions=`0`；
+- orders/fills=`0/0`，portfolio invested=`false`，raw rows/log data/Object Store/public share/migration 均未使用；
+- 原项目 `34808569` mutation=`0`，production effect=`none`，broker action=`none`。
+
+因此缺失日已经从“定位与归因”推进到实质修复：正常 subscribed Slice 仍是主路径，唯一缺失 session 由同 source
+date、正确 availability date 的 provider history 精确补齐，没有跨日替代。`chain_presence` 可在明确标记
+`EXACT_DATE_PROVIDER_HISTORY_RECOVERY` 的研究 transport contract 下判定为 PASS；exact-source/availability PIT
+identity 和 1202-session transport completeness 通过。该 run 是 zero-order 诊断，未授权把结果直接提升为策略
+engine、生产或 broker readiness；terminal 也明确记录 `dq_pit_promoted=false`。
+
+性能观察与正确性结论分开记录：免费 B-MICRO 处理完整窗口耗时约 94 分钟、处理 3839 万数据点，结果有效，
+但后续若把该诊断常态化，应另建性能优化任务，不能通过缩短 primary window、删除 session 或跨日 fallback
+掩盖成本。本任务 acceptance criteria 已全部满足，正式 export-safe evidence 位于
+`inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v3/export_safe_terminal_evidence.json`。

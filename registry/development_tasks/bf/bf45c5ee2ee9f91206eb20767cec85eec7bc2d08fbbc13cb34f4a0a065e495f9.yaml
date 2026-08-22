@@ -13,21 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / 发布并 replay S3 v3 稳定 startup-build baseline 后执行唯一 candidate save/backtest
+  next_owner: project_owner
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: v2 发布后 replay 发现 candidate input 前还有第二个旧代码
-    background build 684f9c-8b195b（3:26:56，LEAN 2.5.0.0.18024）；v2 accounting 因而 fail
-    closed。页面此后稳定且 candidate 尚未输入，新增不可改写 v2 的 v3 baseline：environment builds=2、remaining
-    candidate build=1、total max=3。
+  unstructured_legacy_blocker_or_next_step: 无阻塞；如需常态化运行，另建 B-MICRO 全窗口性能优化任务。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: v3 清单锁定 current clone LF 26587/06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2
-      与 startup builds 11e9d4-8b195b、684f9c-8b195b；总 automatic build 上限 3，其中 environment=2、candidate=1；candidate
-      mutation/save/backtest/provider query 各不超过 1；无 retry；1202 sessions；2022-08-26
-      exact recovery；orders/fills 0/0；封存 terminal evidence。
+    text: 2022-08-26 仅以 exact-source-date OptionUniverse history 恢复；availability=2022-08-27；normal=1201、recovered=1、unresolved=0、sessions=1202/1202；provider
+      query=1；orders/fills=0/0；production/broker effect=none。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -354,26 +349,47 @@ events:
   - change:trading-2541-s3-v2-replay-second-startup-build-20260823-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-344a20b8b12f0dfa0e316c87a9024153
+- schema_version: task_event.v1
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T17:53:36Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2541-s3-v3-terminal-pass-20260823-v1
+  lane_id: null
+  base_commit: 31bac57176a335545b11cca6f0f4055650e3ffdd
+  previous_state_event_id: task-event-344a20b8b12f0dfa0e316c87a9024153
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: project_owner
+    blocker_or_next_step: 无阻塞；如需常态化运行，另建 B-MICRO 全窗口性能优化任务。
+    acceptance_criteria: 2022-08-26 仅以 exact-source-date OptionUniverse history 恢复；availability=2022-08-27；normal=1201、recovered=1、unresolved=0、sessions=1202/1202；provider
+      query=1；orders/fills=0/0；production/broker effect=none。
+    notes: S3 v3 Cloud PASS：candidate readback SHA d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3，build
+      d65491-f6b483，backtest 8142b39f1c76a10471a355fc1eb27a1d，RECOVERY_STATUS=ACCEPTED，EXACT_DATE_CONTRACT_COUNT=6496，duration=5643.88s。正式
+      export-safe terminal evidence 已封存。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2541-s3-v3-terminal-pass-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7b71ddbea43e47788ca386f343f8cecb
 projection:
   legacy_first_eight_cells:
   - TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
   - QQQ Options exact-date provider-available subscription missing remediation
   - P0
-  - IN_PROGRESS
-  - Codex / 发布并 replay S3 v3 稳定 startup-build baseline 后执行唯一 candidate save/backtest
-  - v2 发布后 replay 发现 candidate input 前还有第二个旧代码 background build 684f9c-8b195b（3:26:56，LEAN
-    2.5.0.0.18024）；v2 accounting 因而 fail closed。页面此后稳定且 candidate 尚未输入，新增不可改写 v2 的
-    v3 baseline：environment builds=2、remaining candidate build=1、total max=3。
-  - v3 清单锁定 current clone LF 26587/06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2
-    与 startup builds 11e9d4-8b195b、684f9c-8b195b；总 automatic build 上限 3，其中 environment=2、candidate=1；candidate
-    mutation/save/backtest/provider query 各不超过 1；无 retry；1202 sessions；2022-08-26
-    exact recovery；orders/fills 0/0；封存 terminal evidence。
-  - 'v2 replay technical state=INVALIDATED_PRE_CANDIDATE_BY_SECOND_BACKGROUND_BUILD；authorization
-    仍 UNCONSUMED_NO_BACKTEST_DISPATCH。actual counters: environment builds=2；candidate
-    mutation/save/build/backtest/provider query/orders/fills=0；production_effect=none；broker_action=none。'
+  - DONE
+  - project_owner
+  - 无阻塞；如需常态化运行，另建 B-MICRO 全窗口性能优化任务。
+  - 2022-08-26 仅以 exact-source-date OptionUniverse history 恢复；availability=2022-08-27；normal=1201、recovered=1、unresolved=0、sessions=1202/1202；provider
+    query=1；orders/fills=0/0；production/broker effect=none。
+  - S3 v3 Cloud PASS：candidate readback SHA d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3，build
+    d65491-f6b483，backtest 8142b39f1c76a10471a355fc1eb27a1d，RECOVERY_STATUS=ACCEPTED，EXACT_DATE_CONTRACT_COUNT=6496，duration=5643.88s。正式
+    export-safe terminal evidence 已封存。
   docs_links: []
-  terminal: false
-  canonical_row_sha256: eaee26bd27a16a5afc191a3525867e7296476637bab751194c750a1f9b8d623f
-last_event_id: task-event-344a20b8b12f0dfa0e316c87a9024153
+  terminal: true
+  canonical_row_sha256: f3cca50c9d233ca82c67782bc071004bbaf096b47cda2bd594c0a5c333f4ed60
+last_event_id: task-event-7b71ddbea43e47788ca386f343f8cecb
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: cf9ac3c8432381a10659da47ea97218476b074e0fd23f4fd210451b028898a76
+fragment_checksum: aa31f9112c68b4c9f8d62df7f3ead0ab35b69e420ebc9307f0fd6c719df73d1b

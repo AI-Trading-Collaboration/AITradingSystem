@@ -304,3 +304,58 @@ def test_s3_v3_seals_two_startup_builds_and_one_remaining_candidate_build() -> N
             raw = raw.replace(b"\r\n", b"\n")
         assert len(raw) == artifact["byte_count"]
         assert _sha256(raw) == artifact["sha256"]
+
+
+def test_s3_v3_terminal_evidence_accepts_exact_date_recovery() -> None:
+    evidence = _load_json_from(V3_EXECUTION_ROOT, "export_safe_terminal_evidence.json")
+
+    assert evidence["content_sha256"] == _content_sha256(evidence)
+    assert evidence["authorization_state"] == "STANDING_OWNER_SCOPE"
+    assert evidence["authorization_consumption_state"] == (
+        "CONSUMED_ON_SINGLE_BACKTEST_DISPATCH"
+    )
+    assert evidence["technical_validation_state"] == "PASS"
+    assert evidence["project_code_lf_byte_count"] == 31720
+    assert evidence["project_code_lf_sha256"] == (
+        "d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3"
+    )
+    assert evidence["cloud_readback_exact_candidate_match"] is True
+    assert evidence["candidate_build_id"] == "d65491-f6b483"
+    assert evidence["backtest_id"] == "8142b39f1c76a10471a355fc1eb27a1d"
+    assert evidence["lean_engine_version"] == "2.5.0.0.18024"
+    assert evidence["requested_range"] == evidence["evaluated_range"] == (
+        "2021-02-22..2025-12-02"
+    )
+    assert evidence["expected_session_count"] == 1202
+    assert evidence["observed_session_count"] == 1202
+    assert evidence["target_source_date"] == "2022-08-26"
+    assert evidence["recovery_source_date"] == "2022-08-26"
+    assert evidence["recovery_availability_date"] == "2022-08-27"
+    assert evidence["recovery_status"] == "ACCEPTED"
+    assert evidence["delivery_path"] == "EXACT_DATE_PROVIDER_HISTORY_RECOVERY"
+    assert evidence["provider_query_attempt_count"] == 1
+    assert evidence["exact_date_record_count"] == 1
+    assert evidence["exact_date_contract_count"] == 6496
+    assert evidence["non_target_record_count"] == 0
+    assert evidence["invalid_availability_record_count"] == 0
+    assert evidence["normal_slice_session_count"] == 1201
+    assert evidence["recovered_session_count"] == 1
+    assert evidence["unresolved_session_count"] == 0
+    assert evidence["execution_terminal"] == "COMPLETE"
+    assert evidence["actual_counters"] == {
+        "additional_clone_project_mutations": 1,
+        "additional_saves": 1,
+        "candidate_automatic_cloud_builds": 1,
+        "environment_startup_automatic_cloud_builds": 2,
+        "fills": 0,
+        "new_clones": 0,
+        "orders": 0,
+        "original_project_mutations": 0,
+        "provider_queries": 1,
+        "total_additional_automatic_cloud_builds": 3,
+        "zero_order_cloud_backtests": 1,
+    }
+    assert evidence["orders"] == evidence["fills"] == 0
+    assert evidence["portfolio_invested"] is False
+    assert evidence["production_effect"] == "none"
+    assert evidence["broker_action"] == "none"
