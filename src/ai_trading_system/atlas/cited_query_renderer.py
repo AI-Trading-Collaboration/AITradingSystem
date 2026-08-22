@@ -2098,7 +2098,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
             "</li>"
         )
         for item in manifest.task_coverage
-        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2540
+        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2541
     )
     return f"""
     <section class="page-effectiveness" id="page-effectiveness" aria-labelledby="page-effectiveness-title" data-page-freshness="{escape(manifest.freshness_status.value)}" data-task-coverage-count="{len(manifest.task_coverage)}">
@@ -2567,7 +2567,7 @@ def _render_audit_destinations(
         f"<code>{escape(item.task_id)}</code>"
         f"<span>{escape(item.reader_summary_zh)}</span></li>"
         for item in manifest.task_coverage
-        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2540
+        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2541
     )
     return f"""
     <section class="audit-destinations" data-reader-section="AUDIT_DESTINATIONS" data-task-coverage-count="{len(manifest.task_coverage)}" aria-labelledby="audit-destinations-title">

@@ -1,0 +1,30 @@
+{
+  "schema_version": "qc_qqq_options_exact_date_v2_execution_manifest.v1",
+  "task_id": "TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1",
+  "status": "EXECUTION_EVIDENCE_COMPLETE",
+  "artifact_count": 3,
+  "artifacts": {
+    "standing_scope_admission.json": "2b4ac70000d49d545b6fa51940c2756ace2d07432a1f8a334f63482147fe4d06",
+    "export_safe_terminal_evidence.json": "cc209a039706e577b653e9059ff305dfa268ae1d84841539f28183f2cdded5ad",
+    "external_action_ledger.json": "9bbda75861e3ab1b59a9cd5774e217d7198138a78c0703268552f320d673d56c"
+  },
+  "authorization_state": "STANDING_OWNER_SCOPE",
+  "scope_status": "CONSUMED_CLOSED",
+  "technical_validation_state": "PASS",
+  "policy_repository_commit_at_dispatch": "d122b4d3a9ba0a87ae8c9a009439482159ffbbf6",
+  "build_id": "d432a0-8b195b",
+  "backtest_id": "351d818182ef42b62f4d968016035854",
+  "target_session_date": "2022-08-26",
+  "exact_date_record_count": 1,
+  "exact_date_contract_count": 6496,
+  "provider_probe_status": "EXACT_DATE_AVAILABLE",
+  "attribution": "EXACT_DATE_CATALOG_AVAILABLE_SUBSCRIPTION_MISSING",
+  "attribution_terminal": "RESOLVED",
+  "durable_subscription_repair_status": "NOT_IMPLEMENTED",
+  "successor_task_id": "TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1",
+  "raw_result_opened_or_downloaded": false,
+  "orders": 0,
+  "fills": 0,
+  "broker_action": "none",
+  "production_effect": "none"
+}

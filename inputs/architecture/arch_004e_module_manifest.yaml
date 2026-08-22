@@ -189,7 +189,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.cited_query_renderer
   path: src/ai_trading_system/atlas/cited_query_renderer.py
-  sha256: 71144daee60cb6307dbc64c4c3d95b7769e4bb1bdc5f6ddc22b9baf0b2195b41
+  sha256: 56220a9ab5daec0b346b9cda11bc31cf17b9c5fce2f591b5ca1dc66c4bc11d26
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

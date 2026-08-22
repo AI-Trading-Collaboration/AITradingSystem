@@ -8849,7 +8849,7 @@ export-safe future candidate，不访问 QuantConnect。
   -> separate execution_terminal COMPLETE/INVALID from attribution_terminal RESOLVED/INDETERMINATE/ERROR
   -> never export contract identifiers, symbols, strike, expiry, quote, Greeks, IV, OI, volume or raw rows
   -> no logs-as-data / Object Store / orders / fills / DQ-PIT rewrite / selection / engine authority
-  -> ordinary-pushed exact main + new single-use owner token required before any project mutation or run
+  -> ordinary-pushed exact main + reviewed authorization state required before any project mutation or run
 ```
 
 目标日若位于 start/end boundary，后继可以分别提出 pre-roll/post-roll transport 验证，但 primary
@@ -8863,8 +8863,12 @@ PIT=`NOT_EVALUATED` 和 `POLICY_BLOCKED_CASH_PRESERVATION` 均保持不变。
 `BaseChainUniverseData.EndTime` 固定为 `Time + OneDay`。V1 package/terminal evidence 保持 immutable；
 append-only V2 以 `Time` 归属 source trading date。DEVX-008 publication 后，本任务在 existing clone、
 zero-order、exact manifest 和有界 counters 下属于 `R1_BOUNDED_RESEARCH_SANDBOX`，可使用
-`STANDING_OWNER_SCOPE` 继续实证验证；在 V2 terminal 完成前仍不能确认 exact-date provider contract count
-或选择 provider remediation。
+`STANDING_OWNER_SCOPE` 继续实证验证。V2 已完整执行：requested/evaluated range 均为
+`2021-02-22..2025-12-02`，observed sessions=`1202/1202`；target=`2022-08-26` 位于 interior，equity
+Slice 存在但 subscribed chain event count=`0`。唯一 provider query 返回 exact-date records/contracts=
+`1/6496`，non-target records=`0`、cross-date fallback=`false`，因此 attribution=
+`EXACT_DATE_CATALOG_AVAILABLE_SUBSCRIPTION_MISSING`、terminal=`RESOLVED`。这完成了根因归因，但没有
+完成数据修复；`chain_presence=FAIL`、DQ=`FAIL`、PIT=`NOT_EVALUATED` 与 engine blocked 保持不变。
 
 ## DEVX-008 风险分级外部动作与实证证据准入
 
@@ -8919,3 +8923,55 @@ Owner token (2519 UTF-8/LF bytes; exact key/order/value; expiry enforced)
 已按 no-retry 条款消费。任何后继必须先离线证明一个可靠、单输入、不会产生中间 autosave 的 Monaco
 mutation mechanism，再由 Project Owner 审阅 incident 后发放新的 exact single-use token。不得把初始
 copy-back clipboard hash 当作 project mutation 成功证据，也不得在当前授权下补跑 backtest。
+
+## TRADING-2539 existing-clone V1 execution 与 V2 successor closure
+
+2539 在 clone `35444189` 建立了受控 Web IDE 传输路径，并执行 immutable V1 candidate。V1 正确定位
+唯一缺链日为 `2022-08-26`，但把日级 universe `EndTime=Time+1 day` 错作 source date，产生
+`CROSS_DATE_FALLBACK / INDETERMINATE`。该 observed terminal 与 lifetime counters 保持原样，不回写。
+
+DEVX-008 publication 后，2537 V2 successor 在同一 clone 通过 `STANDING_OWNER_SCOPE` 执行；自动重放
+candidate `26587 LF bytes / 06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2`，
+readback exact match 后只触发一次 save/build/backtest/provider query。Build=`d432a0-8b195b`，
+backtest=`351d818182ef42b62f4d968016035854`，orders/fills=`0/0`，原项目 `34808569` 未修改，未读取或
+下载 raw Results，未把 Logs/Object Store 当数据使用。scope 已消费并关闭，证据封存在
+`inputs/research/qqq_options/trading_2537_existing_clone_exact_date_execution_v2/`。
+
+```text
+immutable V1 execution
+  -> identifies 2022-08-26 but misclassifies Time/EndTime semantics
+DEVX-008 standing-scope admission + exact V2 readback
+  -> one build + one zero-order backtest + one provider query
+  -> 1202/1202 sessions; exact target count = 1
+  -> equity Slice present; subscribed chain event count = 0
+  -> exact-date provider record/contract count = 1/6496
+  -> non-target count = 0; cross-date fallback = false
+  -> attribution RESOLVED: provider catalog available, subscription delivery missing
+  -> seal authorization state separately from technical PASS
+  -> preserve DQ/PIT/engine fail-closed state until durable recovery is implemented and validated
+```
+
+## TRADING-2541 exact-date subscription missing remediation V1
+
+2537 的 evidence 使修复方向从 provider remediation 收敛到 subscription/transport remediation。2541 的
+intended best solution 是 same-date recovery adapter：正常 subscribed Slice chain 保持主路径；只有完整
+session finalization 确认目标日从未交付 chain 且 equity session identity 有效时，才允许读取同一
+`OptionUniverse.Time` source date 的 provider history，并把来源显式标为
+`EXACT_DATE_PROVIDER_HISTORY_RECOVERY`。
+
+```text
+normal subscribed Slice chain
+  -> canonical option schema/cache/DQ/PIT/lineage
+session finalization confirms full-day subscription missing
+  -> require valid target equity session identity
+  -> at most one same-source-date provider-history recovery
+  -> validate Time=target and EndTime=Time+1 day
+  -> reject cross-date/recent-date/duplicate/partial/invalid-availability evidence
+  -> map recovered contracts through the same canonical schema/cache/DQ/PIT/lineage
+  -> record delivery_path without impersonating normal Slice delivery
+  -> future separately reviewed zero-order R1 validation over all 1202 sessions
+```
+
+2541 当前只冻结 requirement 并进入 repository implementation；尚未执行新的 Cloud action。不得把
+V2 attribution 的 `6496` 当作硬编码阈值，不得 forward-fill、删除 `2022-08-26`、缩短 primary window，
+也不得在新的 1202-session DQ/PIT validation 前开放 selection、engine 或交易。

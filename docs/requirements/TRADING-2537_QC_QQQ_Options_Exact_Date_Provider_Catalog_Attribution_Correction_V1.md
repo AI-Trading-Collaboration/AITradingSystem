@@ -1,8 +1,8 @@
 # TRADING-2537 — QQQ Options exact-date provider catalog attribution correction V1
 
 - priority: `P0`
-- status: `BASELINE_DONE`（non-terminal；V2 offline correction 完成，等待 final publication 与新 token）
-- owner: Codex capability coordinator（offline correction）；Project Owner（任何 external action）
+- status: `DONE`（V2 attribution terminal 已实证 RESOLVED；durable repair 转入 TRADING-2541）
+- owner: Codex capability coordinator（evidence closure）；TRADING-2541（subscription/transport repair）
 - governed mode: `SINGLE_LANE`
 - contract change: `true`（provider attribution 的 consumer-visible typed contract）
 - registration base: `fb246ab362e6942e3f4948c1e1cd9247212f9897`
@@ -301,3 +301,26 @@ primary source，不得 forward-fill、静默排除该日或把 derived seal 冒
   后继续中断工作。DEVX-008 successor policy 将本 V2 existing-clone、zero-order、bounded run 分类为
   `R1_BOUNDED_RESEARCH_SANDBOX / STANDING_OWNER_SCOPE`；不修改 V1 历史授权/运行/evidence bytes，V2
   publication 后由 Codex 自动核验 manifest 并记录 actual counters，无需 Owner 再粘贴长 token。
+- 2026-08-22：V2 standing scope 在 published policy commit
+  `d122b4d3a9ba0a87ae8c9a009439482159ffbbf6` 上通过 manifest replay 与 editor exact readback；clone
+  `35444189` 的 candidate 为 `26587 LF bytes` / SHA-256=
+  `06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2`。唯一 save 产生 Build
+  `d432a0-8b195b`，唯一 zero-order Cloud backtest `Calm Violet Jackal` / id=
+  `351d818182ef42b62f4d968016035854`，Lean=`2.5.0.0.18024`。
+- V2 terminal 完整覆盖 requested/evaluated `2021-02-22..2025-12-02` 和 `1202/1202` sessions：唯一
+  target=`2022-08-26`（`INTERIOR`），equity Slice present=`true`，subscribed chain events=`0`；唯一
+  provider query 的 exact-date records/contracts=`1/6496`，non-target records=`0`，cross-date fallback=
+  `false`。因此 attribution=`EXACT_DATE_CATALOG_AVAILABLE_SUBSCRIPTION_MISSING`，attribution terminal=
+  `RESOLVED`，execution terminal=`COMPLETE`。orders/fills=`0/0`，portfolio invested=`false`，没有 raw
+  rows、contract identifiers、individual fields、Logs-as-data、Object Store、broker 或 production effect。
+- 该结果完成的是根因归因，不是 durable data repair。`chain_presence=FAIL`、DQ=`FAIL`、PIT=
+  `NOT_EVALUATED`、engine=`POLICY_BLOCKED_CASH_PRESERVATION` 继续成立。same-date recovery contract、
+  adapter、offline validation 与后续新的 bounded R1 validation 由
+  [TRADING-2541](TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md) 承接。
+  V2 证据封存在
+  `inputs/research/qqq_options/trading_2537_existing_clone_exact_date_execution_v2/`；scope 已消费并关闭，
+  不允许 retry。
+- repository evidence closure 的 focused suite=`121 passed`，Ruff PASS；正式 Architecture=
+  `865 passed`、Contract=`276 passed`、Integration=`995 passed`、Reproducibility=`24 passed`。这些验证
+  确认 sealed evidence、canonical task projection、Atlas successor disclosure、report-flow 与 compatibility
+  authority 一致；最终 Full 必须绑定 committed tree 后执行，不能由上述 focused/formal subset 代替。

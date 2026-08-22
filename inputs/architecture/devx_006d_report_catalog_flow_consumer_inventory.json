@@ -2462,7 +2462,7 @@
       "path": "tests/test_risk_tiered_external_action_evidence_admission.py",
       "references": [
         {
-          "literal_count": 1,
+          "literal_count": 2,
           "target_path": "docs/system_flow.md"
         }
       ],

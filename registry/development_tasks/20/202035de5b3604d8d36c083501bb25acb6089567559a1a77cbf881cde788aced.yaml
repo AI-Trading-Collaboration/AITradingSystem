@@ -13,21 +13,20 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex capability coordinator / V2 existing-clone execution after DEVX-008
-    publication
+  next_owner: TRADING-2541/Codex
   requirement_refs:
   - docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md
+  - docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Complete the parent-bound policy Full
-    rerun and publication, then use clone 35444189 under STANDING_OWNER_SCOPE with
-    exact V2 manifest replay and bounded actual-counter recording.
+  unstructured_legacy_blocker_or_next_step: V1 Web IDE carrier evidence remains immutable；V2
+    successor 已纠正 Time/EndTime 语义并确认 subscription/transport missing。后续实现不沿用已消费 scope。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Keep original project 34808569 and V1 evidence unchanged; V2 additional
-      mutation/save/build/backtest/provider query maxima=1/1/1/1/1, new clones/orders/fills=0/0/0,
-      no retry; admit technical evidence by exact runtime validation.
+    text: Preserve original project 34808569 and V1 evidence；V2 clone mutation/save/build/backtest/provider
+      query=1/1/1/1/1，new clone/orders/fills=0/0/0，no retry；technical evidence exact
+      PASS。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -391,25 +390,53 @@ events:
   - change:trading-2539-standing-r1-requirement-binding-fix-20260822-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-e2b62ef41e2b5120365fcb758725fbac
+- schema_version: task_event.v1
+  task_id: TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T11:05:46Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2539-v2-successor-terminal-closure-20260822-v1
+  lane_id: null
+  base_commit: d122b4d3a9ba0a87ae8c9a009439482159ffbbf6
+  previous_state_event_id: task-event-e2b62ef41e2b5120365fcb758725fbac
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: TRADING-2541/Codex
+    blocker_or_next_step: V1 Web IDE carrier evidence remains immutable；V2 successor
+      已纠正 Time/EndTime 语义并确认 subscription/transport missing。后续实现不沿用已消费 scope。
+    acceptance_criteria: Preserve original project 34808569 and V1 evidence；V2 clone
+      mutation/save/build/backtest/provider query=1/1/1/1/1，new clone/orders/fills=0/0/0，no
+      retry；technical evidence exact PASS。
+    notes: 详见 [TRADING-2539 V1/V2 closure](docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md)
+      与 [TRADING-2541 remediation](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)。scope
+      已消费关闭；production_effect=none、broker_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2539-v2-successor-terminal-closure-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-9c40467b5efe8f067f7d48b0f513836d
 projection:
   legacy_first_eight_cells:
   - TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
   - QuantConnect Cloud file API exact-content mutation and retry proposal V1
   - P0
-  - IN_PROGRESS
-  - Codex capability coordinator / V2 existing-clone execution after DEVX-008 publication
-  - Complete the parent-bound policy Full rerun and publication, then use clone 35444189
-    under STANDING_OWNER_SCOPE with exact V2 manifest replay and bounded actual-counter
-    recording.
-  - Keep original project 34808569 and V1 evidence unchanged; V2 additional mutation/save/build/backtest/provider
-    query maxima=1/1/1/1/1, new clones/orders/fills=0/0/0, no retry; admit technical
-    evidence by exact runtime validation.
-  - 详见 [TRADING-2539 standing R1 existing-clone V2 path](docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md)。Existing
-    clone retained；production_effect=none、broker_action=none。
+  - DONE
+  - TRADING-2541/Codex
+  - V1 Web IDE carrier evidence remains immutable；V2 successor 已纠正 Time/EndTime 语义并确认
+    subscription/transport missing。后续实现不沿用已消费 scope。
+  - Preserve original project 34808569 and V1 evidence；V2 clone mutation/save/build/backtest/provider
+    query=1/1/1/1/1，new clone/orders/fills=0/0/0，no retry；technical evidence exact
+    PASS。
+  - 详见 [TRADING-2539 V1/V2 closure](docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md)
+    与 [TRADING-2541 remediation](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)。scope
+    已消费关闭；production_effect=none、broker_action=none。
   docs_links:
   - docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md
-  terminal: false
-  canonical_row_sha256: 80ebf8c33096f5508d238b0b17658b2d729744dd8b00c27395ecc2ae9c0fb43a
-last_event_id: task-event-e2b62ef41e2b5120365fcb758725fbac
+  - docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
+  terminal: true
+  canonical_row_sha256: 349e3889397f495952a680e91353024a424ea1df883384c08809df418bd40ffd
+last_event_id: task-event-9c40467b5efe8f067f7d48b0f513836d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: cf1525d4131b3ed8142cd1356b65033ce6e2c7b5a0e38b64300f4fd120b05795
+fragment_checksum: 40fa3cf695142bc99c1bdd84408ad200a5d5b967379561cd9822fd315dd2c93a

@@ -1,0 +1,86 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  task_id_sha256: bf45c5ee2ee9f91206eb20767cec85eec7bc2d08fbbc13cb34f4a0a065e495f9
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  title: null
+  domain: QQQ Options exact-date provider-available subscription missing remediation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex：先冻结 exact-date recovery contract/precedence/cache identity，随后实现
+    adapter 与离线验证
+  requirement_refs:
+  - docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 2022-08-26 exact-source-date provider
+    record/6496 contracts 已证实存在，但 subscribed chain event=0；需实现 same-date recovery
+    语义、字段完整性与后续新 R1 validation，禁止 cross-date fallback。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 正常 Slice 优先；仅在完整 session finalization 后允许同源日期 recovery；1202 sessions 走同一
+      schema/cache/DQ/PIT/lineage；cross-date fail closed；orders/fills=0/0。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-22T11:05:05Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2541-register-exact-date-subscription-remediation-20260822-v1
+  lane_id: null
+  base_commit: d122b4d3a9ba0a87ae8c9a009439482159ffbbf6
+  previous_state_event_id: null
+  from_status: null
+  to_status: READY
+  payload:
+    legacy_projection:
+    - TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+    - QQQ Options exact-date provider-available subscription missing remediation
+    - P0
+    - READY
+    - Codex：先冻结 exact-date recovery contract/precedence/cache identity，随后实现 adapter
+      与离线验证
+    - 2022-08-26 exact-source-date provider record/6496 contracts 已证实存在，但 subscribed
+      chain event=0；需实现 same-date recovery 语义、字段完整性与后续新 R1 validation，禁止 cross-date
+      fallback。
+    - 正常 Slice 优先；仅在完整 session finalization 后允许同源日期 recovery；1202 sessions 走同一 schema/cache/DQ/PIT/lineage；cross-date
+      fail closed；orders/fills=0/0。
+    - 'Supporting requirement: [TRADING-2541 exact-date subscription remediation](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)；TRADING-2537
+      V2 attribution 已 RESOLVED，但 durable repair 尚未实现。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2541-register-exact-date-subscription-remediation-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0370fa5b4b5cf217cdbf32fd494b5903
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  - QQQ Options exact-date provider-available subscription missing remediation
+  - P0
+  - READY
+  - Codex：先冻结 exact-date recovery contract/precedence/cache identity，随后实现 adapter
+    与离线验证
+  - 2022-08-26 exact-source-date provider record/6496 contracts 已证实存在，但 subscribed
+    chain event=0；需实现 same-date recovery 语义、字段完整性与后续新 R1 validation，禁止 cross-date
+    fallback。
+  - 正常 Slice 优先；仅在完整 session finalization 后允许同源日期 recovery；1202 sessions 走同一 schema/cache/DQ/PIT/lineage；cross-date
+    fail closed；orders/fills=0/0。
+  - 'Supporting requirement: [TRADING-2541 exact-date subscription remediation](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)；TRADING-2537
+    V2 attribution 已 RESOLVED，但 durable repair 尚未实现。'
+  docs_links:
+  - docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
+  terminal: false
+  canonical_row_sha256: 8a79a0f2048c9a12f41ada586d1f355f9f1f8facc471357a9c81c63f32a6ea28
+last_event_id: task-event-0370fa5b4b5cf217cdbf32fd494b5903
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 37870fddaf9752be42c4572aa1f1d1cb23ab4cfd12e6b71330583ccd9a921f88

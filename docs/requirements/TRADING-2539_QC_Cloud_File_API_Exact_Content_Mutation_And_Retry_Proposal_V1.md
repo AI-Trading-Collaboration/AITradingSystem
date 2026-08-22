@@ -1,12 +1,12 @@
 # TRADING-2539 — QuantConnect Cloud file API exact-content mutation and retry proposal V1
 
 - priority: `P0`
-- status: `BASELINE_DONE`（existing-clone V1 execution 已完成；唯一缺失日已定位，V1 provider attribution 已被 source-time correction 取代）
+- status: `DONE`（V1 历史证据已封存；V2 successor 已纠正 source-time 并终结 attribution）
 - governed mode: `SINGLE_LANE`
 - predecessor: `TRADING-2538`
 - production effect: `none`
 - broker action: `none`
-- external boundary: Owner-authorized single-use lifecycle 已完成；任何后续 clone mutation/save/build/backtest/provider query、clone cleanup、公开分享、迁移、paper/live/broker/portfolio action 仍需新的明确授权
+- external boundary: V1 single-use lifecycle 与 V2 DEVX-008 standing scope 均已消费并关闭；TRADING-2541 的任何新 Cloud action 必须使用新的 reviewed scope，clone cleanup、公开分享、迁移、paper/live/broker/portfolio action 不在本任务权限内
 
 ## 1. 问题与结论
 
@@ -391,3 +391,29 @@ V2 manifest，可在 clone `35444189` 执行最多一次 mutation/save/automatic
 backtest 和一次 provider query；原项目/new clone/orders/fills=`0/0/0/0`，禁止 retry、公开分享、迁移、
 paper/live、broker 或 production action。结果是否进入正式证据由 technical validation 决定，缺少新的
 preformatted token 本身不再构成 rejection reason。
+
+### 12.3 V2 successor 的最终实证结论
+
+2537 V2 已在 existing clone `35444189` 完成唯一 bounded run。candidate readback 精确等于
+`26587 LF bytes` / SHA-256=
+`06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2`；Build=
+`d432a0-8b195b`，backtest=`Calm Violet Jackal` / `351d818182ef42b62f4d968016035854`，Lean=
+`2.5.0.0.18024`。
+
+terminal 证明 requested/evaluated range=`2021-02-22..2025-12-02`、sessions=`1202/1202`、唯一 target=
+`2022-08-26`，当日 equity Slice present=`true`、subscribed chain event count=`0`；唯一 provider query
+返回 exact-date records/contracts=`1/6496`、non-target records=`0`、cross-date fallback=`false`。
+attribution 因而为 `EXACT_DATE_CATALOG_AVAILABLE_SUBSCRIPTION_MISSING / RESOLVED`。这确认 V1 的
+`CROSS_DATE_FALLBACK` 是 `EndTime` 解释错误，也确认 provider catalog 并不缺少该 source date；实际未修复
+的是 subscription/transport delivery。
+
+V2 additional counters mutation/save/build/backtest/provider-query/orders/fills=
+`1/1/1/1/1/0/0`；V2 后 lifetime clones/mutations/saves/builds/backtests/provider-queries/orders/fills=
+`1/3/3/4/2/2/0/0`。原项目 `34808569` 未修改，无 retry、raw Results download、Logs-as-data、Object
+Store、public share、paper/live、broker 或 production action。封存 evidence 位于
+`inputs/research/qqq_options/trading_2537_existing_clone_exact_date_execution_v2/`。
+
+2539 由此 terminal closure；durable repair 由
+[TRADING-2541](TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md) 承接。
+在 2541 adapter 和新的 1202-session DQ/PIT validation 完成前，`chain_presence=FAIL`、DQ=`FAIL`、
+PIT=`NOT_EVALUATED` 与 engine blocked 不变。

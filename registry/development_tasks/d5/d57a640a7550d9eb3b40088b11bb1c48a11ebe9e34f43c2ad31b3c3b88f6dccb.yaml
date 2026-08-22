@@ -13,21 +13,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex capability coordinator / publish DEVX-008 then execute one bounded
-    V2 run
+  next_owner: TRADING-2541/Codex
   requirement_refs:
   - docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md
+  - docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Complete DEVX-008 parent-bound Full failure-fix
-    rerun and ordinary publication, then automatically replay the V2 manifest and
-    execute the existing-clone zero-order run under STANDING_OWNER_SCOPE.
+  unstructured_legacy_blocker_or_next_step: Exact-date attribution 已终结：2022-08-26
+    provider catalog 有 1 record/6496 contracts，subscribed chain event=0；后续由 2541 实现同日
+    recovery，当前不得开放 DQ/PIT/engine。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Preserve V1 bytes; V2 code 26587 LF bytes/SHA-256 06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2;
-      clone 35444189 only; one mutation/save/build/backtest/provider query; zero orders/fills;
-      separate authorization and technical validation states.
+    text: V1 immutable；V2 candidate/readback exact；1202/1202 sessions；one provider
+      query；attribution=EXACT_DATE_CATALOG_AVAILABLE_SUBSCRIPTION_MISSING/RESOLVED；orders/fills=0/0；证据哈希封存；ordinary
+      push/SHA verify。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -214,25 +214,53 @@ events:
   - change:trading-2537-standing-r1-requirement-binding-fix-20260822-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-4c9b61452a8162e23e5dd087da4276a3
+- schema_version: task_event.v1
+  task_id: TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T11:05:26Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2537-v2-terminal-attribution-resolved-20260822-v1
+  lane_id: null
+  base_commit: d122b4d3a9ba0a87ae8c9a009439482159ffbbf6
+  previous_state_event_id: task-event-4c9b61452a8162e23e5dd087da4276a3
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: TRADING-2541/Codex
+    blocker_or_next_step: Exact-date attribution 已终结：2022-08-26 provider catalog 有
+      1 record/6496 contracts，subscribed chain event=0；后续由 2541 实现同日 recovery，当前不得开放
+      DQ/PIT/engine。
+    acceptance_criteria: V1 immutable；V2 candidate/readback exact；1202/1202 sessions；one
+      provider query；attribution=EXACT_DATE_CATALOG_AVAILABLE_SUBSCRIPTION_MISSING/RESOLVED；orders/fills=0/0；证据哈希封存；ordinary
+      push/SHA verify。
+    notes: 详见 [TRADING-2537 V2 terminal evidence](docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md)
+      与 [TRADING-2541 remediation](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)。诊断完成不代表
+      durable repair 完成；production_effect=none、broker_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2537-v2-terminal-attribution-resolved-20260822-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d65fc67e954d5a783cf6a8a41bf2c61d
 projection:
   legacy_first_eight_cells:
   - TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1
   - QQQ Options exact-date provider catalog attribution correction serial wave
   - P0
-  - IN_PROGRESS
-  - Codex capability coordinator / publish DEVX-008 then execute one bounded V2 run
-  - Complete DEVX-008 parent-bound Full failure-fix rerun and ordinary publication,
-    then automatically replay the V2 manifest and execute the existing-clone zero-order
-    run under STANDING_OWNER_SCOPE.
-  - Preserve V1 bytes; V2 code 26587 LF bytes/SHA-256 06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2;
-    clone 35444189 only; one mutation/save/build/backtest/provider query; zero orders/fills;
-    separate authorization and technical validation states.
-  - 详见 [TRADING-2537 standing R1 V2 execution scope](docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md)。DEVX-008
-    supersedes only the long-token blocker; production_effect=none、broker_action=none。
+  - DONE
+  - TRADING-2541/Codex
+  - Exact-date attribution 已终结：2022-08-26 provider catalog 有 1 record/6496 contracts，subscribed
+    chain event=0；后续由 2541 实现同日 recovery，当前不得开放 DQ/PIT/engine。
+  - V1 immutable；V2 candidate/readback exact；1202/1202 sessions；one provider query；attribution=EXACT_DATE_CATALOG_AVAILABLE_SUBSCRIPTION_MISSING/RESOLVED；orders/fills=0/0；证据哈希封存；ordinary
+    push/SHA verify。
+  - 详见 [TRADING-2537 V2 terminal evidence](docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md)
+    与 [TRADING-2541 remediation](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)。诊断完成不代表
+    durable repair 完成；production_effect=none、broker_action=none。
   docs_links:
   - docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md
-  terminal: false
-  canonical_row_sha256: 72484cdf46ca9f2fb2464b47af5fdd923507de01eae15b3b10353e8cdfc9b866
-last_event_id: task-event-4c9b61452a8162e23e5dd087da4276a3
+  - docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
+  terminal: true
+  canonical_row_sha256: 248bb26252aadc78183838e0d4b1b6c021e2cb05c91c55d384b940186393c040
+last_event_id: task-event-d65fc67e954d5a783cf6a8a41bf2c61d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 82b86ea32e418bacdf81226f2b6e83296f12d8dfbdb83b18a6cdea47d1e83790
+fragment_checksum: 1c25ba0062c7f592ef64514f96284c45ebdd46b96387b692c066a3b7d3da2f7e

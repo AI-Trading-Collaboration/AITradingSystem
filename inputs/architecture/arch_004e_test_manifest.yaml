@@ -27,7 +27,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_cited_query_renderer
   path: tests/atlas/test_cited_query_renderer.py
-  sha256: c7dc26aa8197fece43d672b7cf3c504d813ea16a8de21b62c9b51b3585940d71
+  sha256: 758db886d2207a678556f81b959767daf68781994f960a68313be679cf2ce2d2
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -139,7 +139,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_historical_projection_review
   path: tests/atlas/test_historical_projection_review.py
-  sha256: 69692031f8f5a09d8ace4660a3ea2662eba2ec08d43751d48b20ce80f8343c2f
+  sha256: 5f3d62470aee36c0ffd31f12d11b285c23a795711ca076dec10d64b6c4c24e70
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_page_effectiveness
   path: tests/atlas/test_page_effectiveness.py
-  sha256: b4488f9e23ebdec5de1864640033bf226c3bd3cdd20d6a5d063faa6eb00d4959
+  sha256: 56d72192832c4f7d653fdd7e6cb09bb6e8057bcce45a12f5a42998f42e5381cf
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8650,7 +8650,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s5_task_source_cutover
   path: tests/test_arch_005_s5_task_source_cutover.py
-  sha256: ea7dcac0a1fe460f4170ae2a2fccf3adfa0f336da92c95546f6dce93ffeb7777
+  sha256: 81d1faa65d5760a62e20cd33b2022ed37c19cd3f4f7fda0bbae1328929406300
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -10378,7 +10378,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: bd0298873b99b733699810c74b426df3d2fe879458bc37cb7fd7bde073787647
+  sha256: 56a7583fab8b1a60085c7e1266ac1206ec35e861bb028513f2f8a0137a11de8d
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -16192,7 +16192,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_risk_tiered_external_action_evidence_admission
   path: tests/test_risk_tiered_external_action_evidence_admission.py
-  sha256: 0d52cc88a8d3e4e7ebd900e182a595ef2bc659e8183264d58e8101fb45632b93
+  sha256: 0fa166c4a1d033eeb059cbea08e93a9a7fe31e81a503df09f706120aca4bb972
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

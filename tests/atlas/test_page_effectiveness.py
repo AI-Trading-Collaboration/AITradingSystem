@@ -42,12 +42,12 @@ def _rendered(
 def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 61
+    assert len(policy.task_sources) == 62
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
         "TRADING-2523B",
-        *[f"TRADING-{number}" for number in range(2524, 2541)],
+        *[f"TRADING-{number}" for number in range(2524, 2542)],
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -73,12 +73,12 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
     assert manifest.schema_version == "strategy_research_page_effectiveness.v2"
-    assert len(manifest.task_coverage) == 61
+    assert len(manifest.task_coverage) == 62
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
         "TRADING-2523B",
-        *[f"TRADING-{number}" for number in range(2524, 2541)],
+        *[f"TRADING-{number}" for number in range(2524, 2542)],
     ]
     coverage_by_task = {
         item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
@@ -170,15 +170,20 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "DISCLOSED_ATLAS_SUCCESSOR_CLASSIFICATION_SERIAL_CONTRACT_WAVE"
     )
     assert coverage_by_task["TRADING-2537"] == (
-        "DISCLOSED_SOURCE_TIME_CORRECTION_OFFLINE_VALIDATED_V2_EXTERNAL_RERUN_PENDING"
+        "DISCLOSED_SOURCE_TIME_V2_EXECUTION_ATTRIBUTION_RESOLVED_SUBSCRIPTION_REPAIR_PENDING"
     )
     assert coverage_by_task["TRADING-2538"] == (
         "DISCLOSED_FIRST_MUTATION_ATTEMPT_FAILED_AUTHORIZATION_CONSUMED_"
         "NO_CLOUD_RUN"
     )
     assert coverage_by_task["TRADING-2539"] == (
-        "DISCLOSED_EXISTING_CLONE_EXACT_DATE_V1_EXECUTION_COMPLETE_"
-        "SOURCE_TIME_CORRECTION_REQUIRED"
+        "DISCLOSED_EXISTING_CLONE_V1_HISTORY_PRESERVED_V2_SUCCESSOR_EVIDENCE_RESOLVED"
+    )
+    assert coverage_by_task["TRADING-2540"] == (
+        "DISCLOSED_SEPARATE_GROWTH_PREREGISTRATION_ONLY_DATA_LANE_BLOCKED"
+    )
+    assert coverage_by_task["TRADING-2541"] == (
+        "DISCLOSED_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_READY_NOT_YET_IMPLEMENTED"
     )
     assert len(manifest.source_artifacts) == 29
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)
