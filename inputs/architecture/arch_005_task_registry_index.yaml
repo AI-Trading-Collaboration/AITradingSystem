@@ -14,7 +14,7 @@ fragment_count: 1015
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: fe35d63e71140d3cbc105ed5ef9a4993fd268adbdd33e4edda9784d8d4a9d3af
+final_chain_sha256: 098eb6a1bdbb0b2a041ef9826331a4a3af9c19db9bf76ceb17ceabb65edd5ea5
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -8143,17 +8143,17 @@ fragments:
   entry_sha256: d70b2ca134bd5752e1d2ef90e1e83b23e4728c421787f67a58e25dfb39d20a2b
 - task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
   path: registry/development_tasks/bf/bf45c5ee2ee9f91206eb20767cec85eec7bc2d08fbbc13cb34f4a0a065e495f9.yaml
-  file_sha256: ab1894995cf00055b798ea448105b5420d9fe16a0a80748887825816742d5a55
-  fragment_checksum: e9a42b28b9d869f1ce1e65d67f3ea63a862a7381382fd456b9ed0330ccda6fa3
+  file_sha256: 5805f5ddc0d83750e81df9fac9ffcffed29383bcdab3862d1868c3c887487a40
+  fragment_checksum: 41b6b847f733c77740db75cf4537011875a807c95de2510951d0b14b283fca82
   partition: active
   order: 1015
   previous_entry_sha256: d70b2ca134bd5752e1d2ef90e1e83b23e4728c421787f67a58e25dfb39d20a2b
-  entry_sha256: fe35d63e71140d3cbc105ed5ef9a4993fd268adbdd33e4edda9784d8d4a9d3af
+  entry_sha256: 098eb6a1bdbb0b2a041ef9826331a4a3af9c19db9bf76ceb17ceabb65edd5ea5
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 9052fa1914dd8187490b1ce2ceabf9a00cb3b14f4a64e5fc2ef50c741ccfdfac
-  byte_count: 1748838
+  sha256: 24ca0fb03c1821143d69c7c927137821e421c36949b2081560e651cc67565418
+  byte_count: 1748761
   row_count: 498
   generated_do_not_edit: true
 - partition: completed
@@ -9486,7 +9486,14 @@ governance_cycles:
   change_id: trading-2541-s3-browser-control-attach-blocked-20260823-v1
   event_count: 9
   production_effect: none
-governance_cycle_count: 189
+- cycle_id: arch-005-s5-cycle-190
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  change_id: trading-2541-s3-browser-restored-startup-build-accounting-20260823-v1
+  event_count: 10
+  production_effect: none
+governance_cycle_count: 190
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -9500,4 +9507,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 96e228371f031eaca2d137a9c330ecaf03e683214ef400b639e87b5a58d38e33
+index_checksum: cb5c42d7eab9754d5d5739aeb55265a9608dde9e5381b6c713fc8717c8067cff

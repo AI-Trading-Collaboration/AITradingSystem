@@ -22,6 +22,15 @@ CANDIDATE_PATH = (
     / "inputs/research/qqq_options/"
     "trading_2541_exact_date_subscription_recovery_v1/main.py"
 )
+V2_POLICY_PATH = (
+    ROOT
+    / "config/research/qc_qqq_options_exact_date_subscription_recovery_execution_v2.yaml"
+)
+V2_EXECUTION_ROOT = (
+    ROOT
+    / "inputs/research/qqq_options/"
+    "trading_2541_exact_date_subscription_recovery_execution_v2"
+)
 
 
 def _sha256(raw: bytes) -> str:
@@ -30,6 +39,12 @@ def _sha256(raw: bytes) -> str:
 
 def _load_json(name: str) -> dict[str, Any]:
     value = json.loads((EXECUTION_ROOT / name).read_text(encoding="utf-8"))
+    assert isinstance(value, dict)
+    return value
+
+
+def _load_json_from(root: Path, name: str) -> dict[str, Any]:
+    value = json.loads((root / name).read_text(encoding="utf-8"))
     assert isinstance(value, dict)
     return value
 
@@ -162,3 +177,69 @@ def test_predispatch_environment_blocker_preserves_unused_execution_scope() -> N
     )
     assert evidence["browser_observations"]["official_coding_session_retry_attempts"] == 1
     assert set(evidence["actual_manifest_counters"].values()) == {0}
+
+
+def test_s3_v2_separates_startup_and_candidate_build_budgets() -> None:
+    policy = yaml.safe_load(V2_POLICY_PATH.read_text(encoding="utf-8"))
+    evidence = _load_json_from(V2_EXECUTION_ROOT, "environment_startup_evidence.json")
+    admission = _load_json_from(V2_EXECUTION_ROOT, "standing_scope_admission.json")
+    run_scope = _load_json_from(V2_EXECUTION_ROOT, "run_scope.json")
+    manifest = _load_json_from(V2_EXECUTION_ROOT, "execution_manifest.json")
+
+    assert policy["status"] == "REVIEWED_READY_UNUSED"
+    assert policy["startup_build_accounting"] == {
+        "environment_startup_build_id": "11e9d4-8b195b",
+        "environment_startup_build_engine": "2.5.0.0.18024",
+        "environment_startup_build_code_identity": "CURRENT_CLONE_TRADING_2537_V2",
+        "observed_environment_startup_builds": 1,
+        "maximum_environment_startup_builds": 1,
+        "maximum_candidate_builds": 1,
+        "maximum_total_additional_automatic_cloud_builds": 2,
+        "remaining_candidate_builds": 1,
+    }
+    assert policy["run"]["maximum_candidate_automatic_cloud_builds"] == 1
+    assert evidence["content_sha256"] == _content_sha256(evidence)
+    assert evidence["current_clone_lf_byte_count"] == 26587
+    assert evidence["current_clone_lf_sha256"] == (
+        "06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2"
+    )
+    assert evidence["environment_startup_build"]["build_id"] == "11e9d4-8b195b"
+    assert evidence["candidate_dispatch_state"] == "NOT_DISPATCHED"
+    assert admission["content_sha256"] == _content_sha256(admission)
+    assert admission["policy_file_sha256_at_admission"] == _sha256(
+        V2_POLICY_PATH.read_bytes()
+    )
+    assert admission["declared_maxima"]["total_additional_automatic_cloud_builds"] == 2
+    assert admission["declared_maxima"]["candidate_automatic_cloud_builds"] == 1
+    assert run_scope["content_sha256"] == _content_sha256(run_scope)
+    assert run_scope["automatic_build_accounting"] == {
+        "candidate_maximum": 1,
+        "environment_startup_observed": 1,
+        "environment_startup_maximum": 1,
+        "total_maximum": 2,
+    }
+    assert policy["authorization"]["automatic_retry_allowed"] is False
+    assert policy["run"]["maximum_orders"] == policy["run"]["maximum_fills"] == 0
+    assert manifest["content_sha256"] == _content_sha256(manifest)
+    assert manifest["status"] == "READY_CONTINUATION_UNUSED"
+    assert manifest["manifest_replay_state"] == "NOT_EXECUTED"
+    assert manifest["technical_validation_state"] == "NOT_EXECUTED"
+    assert manifest["actual_counters"] == {
+        "candidate_automatic_cloud_builds": 0,
+        "environment_startup_automatic_cloud_builds": 1,
+        "additional_clone_project_mutations": 0,
+        "additional_saves": 0,
+        "fills": 0,
+        "new_clones": 0,
+        "orders": 0,
+        "original_project_mutations": 0,
+        "provider_queries": 0,
+        "total_additional_automatic_cloud_builds": 1,
+        "zero_order_cloud_backtests": 0,
+    }
+    for artifact in manifest["artifacts"]:
+        raw = (ROOT / artifact["path"]).read_bytes()
+        if artifact["kind"] == "PROJECT_CODE":
+            raw = raw.replace(b"\r\n", b"\n")
+        assert len(raw) == artifact["byte_count"]
+        assert _sha256(raw) == artifact["sha256"]

@@ -13,20 +13,20 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / 重新安装 Codex Browser plugin 后由 Codex 自动继续唯一 S3 run
+  next_owner: Codex / 发布并 replay S3 v2 startup-build accounting 后执行唯一 candidate save/backtest
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: QuantConnect coding session 与 clone 35444189
-    页面可见且可用，但 Codex Browser plugin 无法取得受控标签页句柄；Chrome、扩展、native-host 检查均 PASS，新开 Default
-    profile 窗口后按规范唯一重连仍失败。需从 Codex plugin UI 重新安装 Browser plugin，随后重新 replay 未消费 manifest。
+  unstructured_legacy_blocker_or_next_step: Chrome plugin 重装后控制连接与 clone 35444189
+    editor readback 均恢复。会话启动对既有 TRADING-2537 v2 代码自动产生 build 11e9d4-8b195b；先发布 v2
+    清单，将 environment startup build=1 与 remaining candidate build=1 分轴计数，再继续唯一候选执行。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Browser plugin 重装后可稳定 claim/read DOM；重新 replay manifest 3379942295b97499b661e9fc70adbf4f4f978cfbe871b0e4516ab9d63862721b；candidate
-      LF 31720/d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3；mutation/save/build/backtest/provider
-      query 各不超过 1；无 retry；1202 sessions；2022-08-26 exact recovery；orders/fills 0/0；封存
-      terminal evidence。
+    text: v2 清单锁定 current clone LF 26587/06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2
+      与 startup build 11e9d4-8b195b；总 automatic build 上限 2，其中 startup=1、candidate=1；candidate
+      mutation/save/backtest/provider query 各不超过 1；无 retry；1202 sessions；2022-08-26
+      exact recovery；orders/fills 0/0；封存 terminal evidence。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -292,25 +292,56 @@ events:
   - change:trading-2541-s3-browser-control-attach-blocked-20260823-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-a5370a34f5836b287c688dd280afb092
+- schema_version: task_event.v1
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T15:29:17Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2541-s3-browser-restored-startup-build-accounting-20260823-v1
+  lane_id: null
+  base_commit: e11f115ce3ab1dd4fa5e1ce8a030a93673e54da7
+  previous_state_event_id: task-event-a5370a34f5836b287c688dd280afb092
+  from_status: BLOCKED_EXTERNAL
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / 发布并 replay S3 v2 startup-build accounting 后执行唯一 candidate
+      save/backtest
+    blocker_or_next_step: Chrome plugin 重装后控制连接与 clone 35444189 editor readback 均恢复。会话启动对既有
+      TRADING-2537 v2 代码自动产生 build 11e9d4-8b195b；先发布 v2 清单，将 environment startup build=1
+      与 remaining candidate build=1 分轴计数，再继续唯一候选执行。
+    acceptance_criteria: v2 清单锁定 current clone LF 26587/06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2
+      与 startup build 11e9d4-8b195b；总 automatic build 上限 2，其中 startup=1、candidate=1；candidate
+      mutation/save/backtest/provider query 各不超过 1；无 retry；1202 sessions；2022-08-26
+      exact recovery；orders/fills 0/0；封存 terminal evidence。
+    notes: '只读 editor copyback 与 repository TRADING-2537 v2 main.py 精确匹配；TRADING-2541
+      candidate 尚未输入。authorization_state=STANDING_OWNER_SCOPE；authorization_consumption_state=UNCONSUMED_NO_BACKTEST_DISPATCH；actual
+      counters: startup build=1，candidate mutation/save/build/backtest/provider query/orders/fills=0；technical_validation_state=NOT_EXECUTED；production_effect=none；broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2541-s3-browser-restored-startup-build-accounting-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b7314edd2deb72c357d124263f5e3d7e
 projection:
   legacy_first_eight_cells:
   - TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
   - QQQ Options exact-date provider-available subscription missing remediation
   - P0
-  - BLOCKED_EXTERNAL
-  - Project Owner / 重新安装 Codex Browser plugin 后由 Codex 自动继续唯一 S3 run
-  - QuantConnect coding session 与 clone 35444189 页面可见且可用，但 Codex Browser plugin 无法取得受控标签页句柄；Chrome、扩展、native-host
-    检查均 PASS，新开 Default profile 窗口后按规范唯一重连仍失败。需从 Codex plugin UI 重新安装 Browser plugin，随后重新
-    replay 未消费 manifest。
-  - Browser plugin 重装后可稳定 claim/read DOM；重新 replay manifest 3379942295b97499b661e9fc70adbf4f4f978cfbe871b0e4516ab9d63862721b；candidate
-    LF 31720/d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3；mutation/save/build/backtest/provider
-    query 各不超过 1；无 retry；1202 sessions；2022-08-26 exact recovery；orders/fills 0/0；封存
-    terminal evidence。
-  - 本轮仅打开一个 Chrome Default profile 新窗口并执行一次控制连接重试；未修改或保存 QuantConnect 文件，未触发 build/backtest/provider
-    query，所有候选 action counter 仍为 0。authorization_state=STANDING_OWNER_SCOPE；authorization_consumption_state=UNCONSUMED_NO_BACKTEST_DISPATCH；technical_validation_state=BLOCKED_PRE_DISPATCH_NOT_EXECUTED；production_effect=none；broker_action=none。
+  - IN_PROGRESS
+  - Codex / 发布并 replay S3 v2 startup-build accounting 后执行唯一 candidate save/backtest
+  - Chrome plugin 重装后控制连接与 clone 35444189 editor readback 均恢复。会话启动对既有 TRADING-2537
+    v2 代码自动产生 build 11e9d4-8b195b；先发布 v2 清单，将 environment startup build=1 与 remaining
+    candidate build=1 分轴计数，再继续唯一候选执行。
+  - v2 清单锁定 current clone LF 26587/06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2
+    与 startup build 11e9d4-8b195b；总 automatic build 上限 2，其中 startup=1、candidate=1；candidate
+    mutation/save/backtest/provider query 各不超过 1；无 retry；1202 sessions；2022-08-26
+    exact recovery；orders/fills 0/0；封存 terminal evidence。
+  - '只读 editor copyback 与 repository TRADING-2537 v2 main.py 精确匹配；TRADING-2541 candidate
+    尚未输入。authorization_state=STANDING_OWNER_SCOPE；authorization_consumption_state=UNCONSUMED_NO_BACKTEST_DISPATCH；actual
+    counters: startup build=1，candidate mutation/save/build/backtest/provider query/orders/fills=0；technical_validation_state=NOT_EXECUTED；production_effect=none；broker_action=none。'
   docs_links: []
   terminal: false
-  canonical_row_sha256: 30fddd56e0507f24f49514567cdd93b6adcfa80adfc1d86206a630f5501288ba
-last_event_id: task-event-a5370a34f5836b287c688dd280afb092
+  canonical_row_sha256: 5347a610141dec17f7a911cf0307065da5b2d58b007e8e740fe958c263991cb1
+last_event_id: task-event-b7314edd2deb72c357d124263f5e3d7e
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: e9a42b28b9d869f1ce1e65d67f3ea63a862a7381382fd456b9ed0330ccda6fa3
+fragment_checksum: 41b6b847f733c77740db75cf4537011875a807c95de2510951d0b14b283fca82

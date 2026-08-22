@@ -1,8 +1,8 @@
 # TRADING-2541 — QQQ Options exact-date subscription missing remediation V1
 
 - priority: `P0`
-- status: `BLOCKED_EXTERNAL`（S1/S2 与 S3 manifest 已发布；Cloud candidate input 前被 QuantConnect coding-session availability 阻塞）
-- owner: Codex（coding session 可用后自动 replay 未消费 manifest 并继续唯一 S3 run）
+- status: `IN_PROGRESS`（Chrome 控制与 coding session 已恢复；S3 v2 startup-build accounting 待发布/replay）
+- owner: Codex（发布并 replay S3 v2 后继续唯一 candidate save/backtest）
 - governed mode: `SINGLE_LANE`
 - predecessor evidence: `TRADING-2537` V2 terminal attribution
 - production effect: `none`
@@ -180,3 +180,38 @@ automatic build、Cloud backtest、provider query、orders、fills 和 new clone
 解除条件：QuantConnect 对该免费账户暴露一个可用 coding session。解除后 Codex 必须重新自动 replay
 同一未消费 manifest，再执行既定的一次 clone mutation/save/build/backtest/provider-query 序列；不得把
 本次页面故障计为算法失败，也不得据此提升 chain presence、DQ、PIT 或 engine readiness。
+
+## 10. S3 v2 环境启动 build 分轴（2026-08-23）
+
+Project Owner 重装 Chrome plugin 后，Codex 已恢复对 existing clone `35444189` 的稳定控制和只读
+editor copyback。云端 `main.py` 精确匹配 repository 内 TRADING-2537 v2：LF byte count=`26587`、
+SHA-256=`06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2`；因此 TRADING-2541
+candidate 仍未输入，clone mutation/save/backtest/provider query/orders/fills 均为 `0`。
+
+QuantConnect 在 coding session 启动、candidate input 以前自动构建了当前旧代码，Cloud Terminal 显示
+LEAN `2.5.0.0.18024`、build id=`11e9d4-8b195b`。这不是算法 retry，也不是 candidate build，但属于
+真实的 external resource action，不能继续记为 `0`。v1 的单一 automatic-build 上限已经被该环境动作
+占用；直接保存 candidate 会使总计数越界。
+
+因此新增不可回写 v1 历史 artifact 的 S3 v2 accounting：环境启动 build 上限/实绩=`1/1`，candidate
+automatic build 上限/剩余=`1/1`，总 automatic build 上限=`2`。其余边界保持不变：existing clone
+mutation/save/backtest/provider query 各最多 `1`，无 retry，orders/fills=`0/0`，原项目 mutation=`0`，
+production effect=`none`，broker action=`none`。v2 发布并完成三方 SHA 相等后必须重新 replay；首个
+backtest dispatch 仍消费 standing scope，且不论 terminal 结果均立即停止并封存证据。
+
+S3 v2 pre-dispatch identities：
+
+- execution policy file SHA-256：
+  `90764f5d63f5d045f285668d1f0fc81e81e49afe4afe5d7b29d16e5706005988`；
+- startup evidence content/file SHA-256：
+  `6c8ae6e5b2c6571e8d5b1e20f5755d7b9a78522b945fa589989fd3a34d570f1c` /
+  `57581e308e7d52c33844d2697b60f05ff6631af708e86eb0ab20a291725f7a08`；
+- standing-scope admission content/file SHA-256：
+  `b1ef7730409c9f8e70599e3a46a59539f2df4b160a945b556295f35f9ac2111b` /
+  `9a521dbf4daed4fb2e1629d427919e3137f4f4a930cbd961bb241912351e8258`；
+- run-scope content/file SHA-256：
+  `48219c45a4b804da1362d3ebe78b14f04eb3a9695c6ec6f0184222c6b8e181bd` /
+  `79f5c3554cbe48ab2a7d71f23d01b231191a6c06061eb17057c7b8654658027e`；
+- execution-manifest content/file SHA-256：
+  `e18c2dcf867de606a21d02f885e53e6a134a75a4a5b506a3cb7bd1e4cf6759aa` /
+  `6cb0ad1450dc65e3ca4b1520343ada29b66cc9b6acd7f9ebb9cfef805894bd98`。

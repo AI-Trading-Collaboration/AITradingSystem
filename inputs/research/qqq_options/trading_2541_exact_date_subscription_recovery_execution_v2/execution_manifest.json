@@ -1,0 +1,69 @@
+{
+  "actual_counters": {
+    "candidate_automatic_cloud_builds": 0,
+    "environment_startup_automatic_cloud_builds": 1,
+    "additional_clone_project_mutations": 0,
+    "additional_saves": 0,
+    "fills": 0,
+    "new_clones": 0,
+    "orders": 0,
+    "original_project_mutations": 0,
+    "provider_queries": 0,
+    "total_additional_automatic_cloud_builds": 1,
+    "zero_order_cloud_backtests": 0
+  },
+  "artifacts": [
+    {
+      "byte_count": 3076,
+      "kind": "EXECUTION_POLICY",
+      "path": "config/research/qc_qqq_options_exact_date_subscription_recovery_execution_v2.yaml",
+      "sha256": "90764f5d63f5d045f285668d1f0fc81e81e49afe4afe5d7b29d16e5706005988"
+    },
+    {
+      "byte_count": 1207,
+      "kind": "ENVIRONMENT_STARTUP_EVIDENCE",
+      "path": "inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v2/environment_startup_evidence.json",
+      "sha256": "57581e308e7d52c33844d2697b60f05ff6631af708e86eb0ab20a291725f7a08"
+    },
+    {
+      "byte_count": 1830,
+      "kind": "STANDING_SCOPE_ADMISSION",
+      "path": "inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v2/standing_scope_admission.json",
+      "sha256": "9a521dbf4daed4fb2e1629d427919e3137f4f4a930cbd961bb241912351e8258"
+    },
+    {
+      "byte_count": 1371,
+      "kind": "RUN_SCOPE",
+      "path": "inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v2/run_scope.json",
+      "sha256": "79f5c3554cbe48ab2a7d71f23d01b231191a6c06061eb17057c7b8654658027e"
+    },
+    {
+      "byte_count": 31720,
+      "kind": "PROJECT_CODE",
+      "path": "inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_v1/main.py",
+      "sha256": "d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3"
+    },
+    {
+      "byte_count": 1151,
+      "kind": "OFFLINE_PACKAGE_MANIFEST",
+      "path": "inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_v1/package_manifest.json",
+      "sha256": "e142575b24c843393c17ecb5742085ed0a9fccbbef1f78ff5416aadb886f3715"
+    }
+  ],
+  "authorization_state": "STANDING_OWNER_SCOPE",
+  "broker_action": "none",
+  "candidate_lf_byte_count": 31720,
+  "candidate_lf_sha256": "d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3",
+  "content_sha256": "e18c2dcf867de606a21d02f885e53e6a134a75a4a5b506a3cb7bd1e4cf6759aa",
+  "current_clone_lf_byte_count": 26587,
+  "current_clone_lf_sha256": "06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2",
+  "environment_startup_build_id": "11e9d4-8b195b",
+  "manifest_replay_state": "NOT_EXECUTED",
+  "ordinary_pushed_main_sha": "e11f115ce3ab1dd4fa5e1ce8a030a93673e54da7",
+  "production_effect": "none",
+  "schema_version": "qc_qqq_options_exact_date_subscription_recovery_execution_manifest.v2",
+  "status": "READY_CONTINUATION_UNUSED",
+  "target_clone_project_id": 35444189,
+  "task_id": "TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1",
+  "technical_validation_state": "NOT_EXECUTED"
+}

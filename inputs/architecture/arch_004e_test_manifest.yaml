@@ -14976,7 +14976,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_qqq_options_exact_date_subscription_recovery_execution
   path: tests/test_qqq_options_exact_date_subscription_recovery_execution.py
-  sha256: d0e7c02fbfe9492b941d050e9d02382f26bb9e669ae70fcb285b10d508ccbf77
+  sha256: 7587acd28891fe21e5398c6beae7e6d6c4d9fe3583bf517149373ebbf78e8feb
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
