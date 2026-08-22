@@ -14,21 +14,23 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex strategy-governance coordinator：完成 Wave 1 serial preregistration
-    contract；Project Owner：后继仅在独立任务中授权 QLD canonical DQ execution 与任何 empirical reopen
+  next_owner: Project Owner：明确选择 versioned successor 路径——正式暂停/关闭/supersede 2516-2539
+    QQQ Options active lane 并唯一选择 QLD，或保留 QQQ Options lane 并移除 2540 的 QLD selected-lane
+    语义；Codex 收到后重做 preflight
   requirement_refs:
   - docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 当前仅授权 PREREGISTRATION_ONLY；reviewed threshold
-    policy references 待 authority 盘点；QLD DQ/cache mutation 与 empirical growth evaluation
-    均未授权
+  unstructured_legacy_blocker_or_next_step: TRADING-2516 已选择 QQQ Options evidence
+    lane，TRADING-2539 已在该 lane 上定位 2022-08-26 exact-date source blocker；Web Pro 13
+    文件清单遗漏 2516-2539，不能静默以 QLD 草案覆盖 active authority。四个 S1 草案未提交并保留，无 empirical/cache/external
+    action。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 冻结唯一 non-leveraged QQQ/SGOV growth hypothesis、baseline/comparator、defense
-      hard gate、mandatory axes、typed stop taxonomy 与 selected-not-executable QLD data
-      lane；不得运行回测、holdout、cache 或 external action
+    text: 取得 exact Owner successor decision；active data lane 保持唯一；若切换则 versioned supersession
+      并保留 2516-2539 immutable evidence，若保留则重写 2540 为 QQQ Options-compatible；随后重做 governed
+      preflight。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -65,26 +67,88 @@ events:
   - change:TRADING-2540-REGISTRATION-V1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-d4fb379a7b290add23e5801db10e1039
+- schema_version: task_event.v1
+  task_id: TRADING-2540_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_AND_SINGLE_LANE_DECISION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T12:14:43+09:00'
+  actor: codex
+  change_id: TRADING-2540-BLOCKED-OWNER-LANE-CONFLICT-20260822T121443+0900
+  lane_id: null
+  base_commit: a55ebb43778cf6579e1086d62743481b40ecc019
+  previous_state_event_id: task-event-d4fb379a7b290add23e5801db10e1039
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner：明确选择 versioned successor 路径——正式暂停/关闭/supersede 2516-2539
+      QQQ Options active lane 并唯一选择 QLD，或保留 QQQ Options lane 并移除 2540 的 QLD selected-lane
+      语义；Codex 收到后重做 preflight
+    blocker_or_next_step: TRADING-2516 已选择 QQQ Options evidence lane，TRADING-2539
+      已在该 lane 上定位 2022-08-26 exact-date source blocker；Web Pro 13 文件清单遗漏 2516-2539，不能静默以
+      QLD 草案覆盖 active authority。四个 S1 草案未提交并保留，无 empirical/cache/external action。
+    acceptance_criteria: 取得 exact Owner successor decision；active data lane 保持唯一；若切换则
+      versioned supersession 并保留 2516-2539 immutable evidence，若保留则重写 2540 为 QQQ Options-compatible；随后重做
+      governed preflight。
+    notes: Read-only authority reconciliation discovered same-commit successor authority
+      omitted by Web Pro file list; implementation paused fail closed.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2540-BLOCKED-OWNER-LANE-CONFLICT-20260822T121443+0900
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-776294911e40ddf522b2f4213cc7a9a8
+- schema_version: task_event.v1
+  task_id: TRADING-2540_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_AND_SINGLE_LANE_DECISION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T12:17:00+09:00'
+  actor: codex
+  change_id: TRADING-2540-RESTORE-REQUIREMENT-LINK-20260822T121700+0900
+  lane_id: null
+  base_commit: a55ebb43778cf6579e1086d62743481b40ecc019
+  previous_state_event_id: task-event-776294911e40ddf522b2f4213cc7a9a8
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner：明确选择 versioned successor 路径——正式暂停/关闭/supersede 2516-2539
+      QQQ Options active lane 并唯一选择 QLD，或保留 QQQ Options lane 并移除 2540 的 QLD selected-lane
+      语义；Codex 收到后重做 preflight
+    blocker_or_next_step: TRADING-2516 已选择 QQQ Options evidence lane，TRADING-2539
+      已在该 lane 上定位 2022-08-26 exact-date source blocker；Web Pro 13 文件清单遗漏 2516-2539，不能静默以
+      QLD 草案覆盖 active authority。四个 S1 草案未提交并保留，无 empirical/cache/external action。
+    acceptance_criteria: 取得 exact Owner successor decision；active data lane 保持唯一；若切换则
+      versioned supersession 并保留 2516-2539 immutable evidence，若保留则重写 2540 为 QQQ Options-compatible；随后重做
+      governed preflight。
+    notes: 'Supporting requirement: docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md；read-only
+      authority reconciliation discovered same-commit successor authority omitted
+      by Web Pro file list；implementation paused fail closed。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2540-RESTORE-REQUIREMENT-LINK-20260822T121700+0900
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-abea4aee07d2554782788726b266e93d
 projection:
   legacy_first_eight_cells:
   - TRADING-2540_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_AND_SINGLE_LANE_DECISION_V1
   - Strategy governance / growth action-value preregistration and single QLD data-lane
     decision
   - P0
-  - IN_PROGRESS
-  - Codex strategy-governance coordinator：完成 Wave 1 serial preregistration contract；Project
-    Owner：后继仅在独立任务中授权 QLD canonical DQ execution 与任何 empirical reopen
-  - 当前仅授权 PREREGISTRATION_ONLY；reviewed threshold policy references 待 authority 盘点；QLD
-    DQ/cache mutation 与 empirical growth evaluation 均未授权
-  - 冻结唯一 non-leveraged QQQ/SGOV growth hypothesis、baseline/comparator、defense hard
-    gate、mandatory axes、typed stop taxonomy 与 selected-not-executable QLD data lane；不得运行回测、holdout、cache
-    或 external action
-  - 'Supporting requirement: docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md；registration
-    base=9717949319e619952c192e39c4ed2db1ee9f9eab；mode=SINGLE_LANE；topology=SERIAL_CONTRACT_WAVE_FIRST；production_effect=none；broker_action=none。'
+  - BLOCKED_OWNER_INPUT
+  - Project Owner：明确选择 versioned successor 路径——正式暂停/关闭/supersede 2516-2539 QQQ Options
+    active lane 并唯一选择 QLD，或保留 QQQ Options lane 并移除 2540 的 QLD selected-lane 语义；Codex
+    收到后重做 preflight
+  - TRADING-2516 已选择 QQQ Options evidence lane，TRADING-2539 已在该 lane 上定位 2022-08-26
+    exact-date source blocker；Web Pro 13 文件清单遗漏 2516-2539，不能静默以 QLD 草案覆盖 active authority。四个
+    S1 草案未提交并保留，无 empirical/cache/external action。
+  - 取得 exact Owner successor decision；active data lane 保持唯一；若切换则 versioned supersession
+    并保留 2516-2539 immutable evidence，若保留则重写 2540 为 QQQ Options-compatible；随后重做 governed
+    preflight。
+  - 'Supporting requirement: docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md；read-only
+    authority reconciliation discovered same-commit successor authority omitted by
+    Web Pro file list；implementation paused fail closed。'
   docs_links:
   - docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md
   terminal: false
-  canonical_row_sha256: 0d11a8e2c70a1c0acac4ce52b67c76b4c1ac387d3b30abf2755ccee402e8e16a
-last_event_id: task-event-d4fb379a7b290add23e5801db10e1039
+  canonical_row_sha256: 5fed662ad9955b479edc319adffe1fba46258af3c4f60420e3dc732ec139360c
+last_event_id: task-event-abea4aee07d2554782788726b266e93d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: d48505db6116d43e43180cb5455bdc4e867ac9736b26d8646a956148f4090843
+fragment_checksum: 834c1481a1e3c8fc1984379bb87907a32c26b38b1ae695bc44585d888fb62c62
