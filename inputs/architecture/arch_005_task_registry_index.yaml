@@ -14,7 +14,7 @@ fragment_count: 1015
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: df1346d1ee6f7cdc54000b986c3273c4f5ebaac88ec860d763c1e2320399589b
+final_chain_sha256: fe35d63e71140d3cbc105ed5ef9a4993fd268adbdd33e4edda9784d8d4a9d3af
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -8143,17 +8143,17 @@ fragments:
   entry_sha256: d70b2ca134bd5752e1d2ef90e1e83b23e4728c421787f67a58e25dfb39d20a2b
 - task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
   path: registry/development_tasks/bf/bf45c5ee2ee9f91206eb20767cec85eec7bc2d08fbbc13cb34f4a0a065e495f9.yaml
-  file_sha256: 13afd5f792f6cb5a45a389a0bdd0054499000a882b847567ea71643a15225e6e
-  fragment_checksum: 997bfa0d6a73ba92c757da48d5d0503ffd9d373e94e0245b886dc7a2f89d2693
+  file_sha256: ab1894995cf00055b798ea448105b5420d9fe16a0a80748887825816742d5a55
+  fragment_checksum: e9a42b28b9d869f1ce1e65d67f3ea63a862a7381382fd456b9ed0330ccda6fa3
   partition: active
   order: 1015
   previous_entry_sha256: d70b2ca134bd5752e1d2ef90e1e83b23e4728c421787f67a58e25dfb39d20a2b
-  entry_sha256: df1346d1ee6f7cdc54000b986c3273c4f5ebaac88ec860d763c1e2320399589b
+  entry_sha256: fe35d63e71140d3cbc105ed5ef9a4993fd268adbdd33e4edda9784d8d4a9d3af
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: dcf9b1a6e57ab59a42750e876bfccc603c6520dcf27f22749116ecdb219ddacf
-  byte_count: 1748712
+  sha256: 9052fa1914dd8187490b1ce2ceabf9a00cb3b14f4a64e5fc2ef50c741ccfdfac
+  byte_count: 1748838
   row_count: 498
   generated_do_not_edit: true
 - partition: completed
@@ -9472,7 +9472,21 @@ governance_cycles:
   change_id: trading-2541-s3-predispatch-coding-session-unavailable-20260822-v1
   event_count: 7
   production_effect: none
-governance_cycle_count: 187
+- cycle_id: arch-005-s5-cycle-188
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  change_id: trading-2541-s3-coding-session-restored-20260823-v1
+  event_count: 8
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-189
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  change_id: trading-2541-s3-browser-control-attach-blocked-20260823-v1
+  event_count: 9
+  production_effect: none
+governance_cycle_count: 189
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -9486,4 +9500,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 3ee3e8759e14f5b344b6070569eb577d972c94149afb777052083b95c5babfd2
+index_checksum: 96e228371f031eaca2d137a9c330ecaf03e683214ef400b639e87b5a58d38e33
