@@ -1,0 +1,90 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2540_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_AND_SINGLE_LANE_DECISION_V1
+  task_id_sha256: c7e94252c8ca4e84e4f0fd93aa530f29af458b716fe4669a83f36a191cbffcc4
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2540_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_AND_SINGLE_LANE_DECISION_V1
+  title: null
+  domain: Strategy governance / growth action-value preregistration and single QLD
+    data-lane decision
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex strategy-governance coordinator：完成 Wave 1 serial preregistration
+    contract；Project Owner：后继仅在独立任务中授权 QLD canonical DQ execution 与任何 empirical reopen
+  requirement_refs:
+  - docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 当前仅授权 PREREGISTRATION_ONLY；reviewed threshold
+    policy references 待 authority 盘点；QLD DQ/cache mutation 与 empirical growth evaluation
+    均未授权
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 冻结唯一 non-leveraged QQQ/SGOV growth hypothesis、baseline/comparator、defense
+      hard gate、mandatory axes、typed stop taxonomy 与 selected-not-executable QLD data
+      lane；不得运行回测、holdout、cache 或 external action
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2540_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_AND_SINGLE_LANE_DECISION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-22T02:59:02Z'
+  actor: codex_strategy_governance_coordinator
+  change_id: TRADING-2540-REGISTRATION-V1
+  lane_id: null
+  base_commit: 9717949319e619952c192e39c4ed2db1ee9f9eab
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2540_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_AND_SINGLE_LANE_DECISION_V1
+    - Strategy governance / growth action-value preregistration and single QLD data-lane
+      decision
+    - P0
+    - IN_PROGRESS
+    - Codex strategy-governance coordinator：完成 Wave 1 serial preregistration contract；Project
+      Owner：后继仅在独立任务中授权 QLD canonical DQ execution 与任何 empirical reopen
+    - 当前仅授权 PREREGISTRATION_ONLY；reviewed threshold policy references 待 authority
+      盘点；QLD DQ/cache mutation 与 empirical growth evaluation 均未授权
+    - 冻结唯一 non-leveraged QQQ/SGOV growth hypothesis、baseline/comparator、defense hard
+      gate、mandatory axes、typed stop taxonomy 与 selected-not-executable QLD data lane；不得运行回测、holdout、cache
+      或 external action
+    - 'Supporting requirement: docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md；registration
+      base=9717949319e619952c192e39c4ed2db1ee9f9eab；mode=SINGLE_LANE；topology=SERIAL_CONTRACT_WAVE_FIRST；production_effect=none；broker_action=none。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2540-REGISTRATION-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d4fb379a7b290add23e5801db10e1039
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2540_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_AND_SINGLE_LANE_DECISION_V1
+  - Strategy governance / growth action-value preregistration and single QLD data-lane
+    decision
+  - P0
+  - IN_PROGRESS
+  - Codex strategy-governance coordinator：完成 Wave 1 serial preregistration contract；Project
+    Owner：后继仅在独立任务中授权 QLD canonical DQ execution 与任何 empirical reopen
+  - 当前仅授权 PREREGISTRATION_ONLY；reviewed threshold policy references 待 authority 盘点；QLD
+    DQ/cache mutation 与 empirical growth evaluation 均未授权
+  - 冻结唯一 non-leveraged QQQ/SGOV growth hypothesis、baseline/comparator、defense hard
+    gate、mandatory axes、typed stop taxonomy 与 selected-not-executable QLD data lane；不得运行回测、holdout、cache
+    或 external action
+  - 'Supporting requirement: docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md；registration
+    base=9717949319e619952c192e39c4ed2db1ee9f9eab；mode=SINGLE_LANE；topology=SERIAL_CONTRACT_WAVE_FIRST；production_effect=none；broker_action=none。'
+  docs_links:
+  - docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md
+  terminal: false
+  canonical_row_sha256: 0d11a8e2c70a1c0acac4ce52b67c76b4c1ac387d3b30abf2755ccee402e8e16a
+last_event_id: task-event-d4fb379a7b290add23e5801db10e1039
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: d48505db6116d43e43180cb5455bdc4e867ac9736b26d8646a956148f4090843
