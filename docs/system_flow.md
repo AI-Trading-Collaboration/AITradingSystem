@@ -8836,8 +8836,10 @@ export-safe future candidate，不访问 QuantConnect。
   -> on_data records Slice / canonical QQQ equity / subscribed chain events only
   -> after complete finalization require exactly one never-chain target
   -> execute exactly one bounded History[OptionUniverse] request for that target date
-  -> compare every OptionUniverse.end_time.date with the exact target date
-       prior/other-date-only result -> NO_EXACT_DATE_PROVIDER_EVIDENCE
+  -> V1 historical/executed bytes compared OptionUniverse.end_time.date and are retained immutable
+  -> V2 compares OptionUniverse.time.date with the exact target source trading date
+       require OptionUniverse.end_time.date = OptionUniverse.time.date + 1 day as availability invariant
+       true prior/other-source-date or invalid-availability result -> NO_EXACT_DATE_PROVIDER_EVIDENCE
        exact-date record + contracts -> EXACT_DATE_CATALOG_AVAILABLE_SUBSCRIPTION_MISSING
        exact-date empty record -> EXACT_DATE_CATALOG_EMPTY
        query exception -> PROVIDER_PROBE_ERROR
@@ -8854,6 +8856,12 @@ evaluation range 仍固定为 `2021-02-22..2025-12-02`；若位于 interior 且 
 修复 subscription/transport；若没有 exact-date provider evidence，必须走 provider remediation、backfill
 或治理后的替代 primary source，不得 forward-fill 或排除 session。当前 `chain_presence=FAIL`、DQ=`FAIL`、
 PIT=`NOT_EVALUATED` 和 `POLICY_BLOCKED_CASH_PRESERVATION` 均保持不变。
+
+2026-08-22 的 V1 Cloud run 已定位 target=`2022-08-26`，但其
+`CROSS_DATE_FALLBACK` attribution 被后续 LEAN source audit 判定为探针误判：日级
+`BaseChainUniverseData.EndTime` 固定为 `Time + OneDay`。V1 package/terminal evidence 保持 immutable；
+append-only V2 以 `Time` 归属 source trading date。V2 尚未获得新的 external token，因此当前只能确认
+缺失 session 日期，不能确认 exact-date provider contract count 或选择 provider remediation。
 
 ## TRADING-2538 exact-date attribution admission / failed first mutation attempt
 

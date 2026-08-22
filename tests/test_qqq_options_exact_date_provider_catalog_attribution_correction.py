@@ -5,7 +5,7 @@ import json
 import sys
 import types
 from collections.abc import Iterator
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -26,8 +26,19 @@ PACKAGE_NAMES = (
 
 
 class _FakeOptionUniverse:
-    def __init__(self, source_date: str, contract_count: int) -> None:
-        self.end_time = datetime.fromisoformat(f"{source_date}T16:00:00")
+    def __init__(
+        self,
+        availability_date: str,
+        contract_count: int,
+        *,
+        source_date: str | None = None,
+    ) -> None:
+        self.end_time = datetime.fromisoformat(f"{availability_date}T16:00:00")
+        self.time = (
+            datetime.fromisoformat(f"{source_date}T16:00:00")
+            if source_date is not None
+            else self.end_time - timedelta(days=1)
+        )
         self._contracts = tuple(object() for _ in range(contract_count))
 
     def __iter__(self) -> Iterator[object]:
@@ -93,9 +104,9 @@ def sandbox_package(
         (package_root / name).write_bytes(raw)
 
     def expected_builder(
-        *, project_root: Path = PROJECT_ROOT
+        *, project_root: Path = PROJECT_ROOT, policy_path: Path | None = None
     ) -> proposal_v1.BuiltAttributionProposalPackage:
-        del project_root
+        del project_root, policy_path
         return built
 
     monkeypatch.setattr(proposal_v1, "build_attribution_proposal_package", expected_builder)
@@ -156,6 +167,85 @@ def test_build_is_deterministic_and_golden() -> None:
     )
     assert first.manifest.content_sha256 == (
         "d2cfac9c2b66a9e3e8203537cb2ed2a9bcec5ef6a7d17c9e8d40eee41c4c8737"
+    )
+
+
+def test_source_time_v2_preserves_v1_and_binds_executed_package() -> None:
+    built = proposal_v1.build_attribution_proposal_package(
+        project_root=PROJECT_ROOT,
+        policy_path=proposal_v1.SOURCE_TIME_POLICY_PATH,
+    )
+    policy = built.policy.policy
+
+    assert policy.schema_version.endswith(".v2")
+    assert policy.policy_version == "2.0.0"
+    assert policy.source_date_field == "OPTION_UNIVERSE_TIME_DATE"
+    assert policy.target_project_id == 35444189
+    assert policy.predecessor_package_manifest_content_sha256 == (
+        "d2cfac9c2b66a9e3e8203537cb2ed2a9bcec5ef6a7d17c9e8d40eee41c4c8737"
+    )
+    assert policy.predecessor_project_code_sha256 == (
+        "86a3560f973c7720ac1362757d08e7263845bf3c9b0db51d0690740e54ee3fe4"
+    )
+    assert built.run_scope.schema_version.endswith(".v2")
+    assert built.proposal.schema_version.endswith(".v2")
+    assert built.manifest.schema_version.endswith(".v2")
+    text = built.project_code_bytes.decode("utf-8")
+    assert "source_time = option_universe.time" in text
+    assert "availability_date = option_universe.end_time.date()" in text
+    assert "expected_availability_date = source_time.date() + timedelta(days=1)" in text
+    assert "source_date = option_universe.end_time.date().isoformat()" not in text
+
+
+@pytest.mark.parametrize(
+    ("record", "expected_status", "expected_contract_count"),
+    (
+        (
+            _FakeOptionUniverse(
+                "2022-08-27", 314, source_date="2022-08-26"
+            ),
+            "EXACT_DATE_AVAILABLE",
+            314,
+        ),
+        (
+            _FakeOptionUniverse(
+                "2022-08-26", 9, source_date="2022-08-25"
+            ),
+            "CROSS_DATE_FALLBACK",
+            0,
+        ),
+        (
+            _FakeOptionUniverse(
+                "2022-08-28", 314, source_date="2022-08-26"
+            ),
+            "CROSS_DATE_FALLBACK",
+            0,
+        ),
+    ),
+)
+def test_source_time_v2_uses_time_and_validates_next_day_availability(
+    monkeypatch: pytest.MonkeyPatch,
+    record: _FakeOptionUniverse,
+    expected_status: str,
+    expected_contract_count: int,
+) -> None:
+    built = proposal_v1.build_attribution_proposal_package(
+        project_root=PROJECT_ROOT,
+        policy_path=proposal_v1.SOURCE_TIME_POLICY_PATH,
+    )
+    algorithm_class = _candidate_algorithm_class(built, monkeypatch)
+    algorithm = algorithm_class()
+    history = _HistoryAccessor(records=(record,))
+    algorithm.history = history
+    algorithm._option = object()
+
+    result = algorithm._probe_provider_catalog("2022-08-26")
+
+    assert len(history.calls) == 1
+    assert result["provider_probe_status"] == expected_status
+    assert result["exact_date_contract_count"] == expected_contract_count
+    assert result["cross_date_fallback_detected"] is (
+        expected_status == "CROSS_DATE_FALLBACK"
     )
 
 
@@ -465,6 +555,34 @@ def test_repository_package_inventory_and_replay_are_exact() -> None:
         raw = (package_root / artifact.relative_path).read_bytes()
         assert len(raw) == artifact.byte_count
         assert hashlib.sha256(raw).hexdigest() == artifact.sha256
+
+
+def test_source_time_v2_repository_package_replays_exactly() -> None:
+    package_root = proposal_v1.SOURCE_TIME_PACKAGE_ROOT
+    assert tuple(sorted(path.name for path in package_root.iterdir())) == PACKAGE_NAMES
+
+    loaded = proposal_v1.load_attribution_proposal_package(
+        project_root=PROJECT_ROOT,
+        policy_path=proposal_v1.SOURCE_TIME_POLICY_PATH,
+    )
+    assert loaded.policy.policy.source_date_field == "OPTION_UNIVERSE_TIME_DATE"
+    assert loaded.manifest.content_sha256 == (
+        "03d0107a8de280781b3742e3deac653cdbb92730b65b6808c16d1aed8d611bd2"
+    )
+    assert loaded.proposal.project_code_lf_sha256 == (
+        "06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2"
+    )
+    assert (
+        "authorize_single_zero_order_option_universe_time_date_attribution_correction_v2"
+        in loaded.owner_decision_request_bytes.decode("utf-8")
+    )
+    owner_request = loaded.owner_decision_request_bytes.decode("utf-8")
+    assert "target_clone_project_id:35444189" in owner_request
+    assert "original_project_mutations_allowed:0" in owner_request
+    assert "expected_pre_mutation_lf_byte_count:26223" in owner_request
+    assert "maximum_new_clones:0" in owner_request
+    assert "maximum_saves:1" in owner_request
+    assert "maximum_automatic_cloud_builds:1" in owner_request
 
 
 @pytest.mark.parametrize(

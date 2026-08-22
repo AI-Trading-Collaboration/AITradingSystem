@@ -1,7 +1,7 @@
 # TRADING-2537 — QQQ Options exact-date provider catalog attribution correction V1
 
 - priority: `P0`
-- status: `BASELINE_DONE`（non-terminal；等待 final-tree Full、ordinary publication 与新 Owner token）
+- status: `BASELINE_DONE`（non-terminal；V2 offline correction 完成，等待 final publication 与新 token）
 - owner: Codex capability coordinator（offline correction）；Project Owner（任何 external action）
 - governed mode: `SINGLE_LANE`
 - contract change: `true`（provider attribution 的 consumer-visible typed contract）
@@ -37,6 +37,11 @@ exact-date V2 sealed package。它只修复诊断器和 typed attribution contra
 - 2535 policy、run scope、proposal、project code 与 package manifest bytes 均保持 immutable；
 - 2536 Atlas classification 作为历史 proposal/unexecuted 证据保留，不冒充 2537 已执行；
 - DQ/PIT、selection、engine、orders、fills、portfolio、production 与 broker 边界不变。
+- LEAN source authority：
+  [`BaseChainUniverseData.EndTime`](https://github.com/QuantConnect/Lean/blob/master/Common/Data/UniverseSelection/BaseChainUniverseData.cs)
+  明确定义为 `Time + OneDay`，构造器以 source file `date` 初始化 `Time`；
+  [`OptionUniverse`](https://github.com/QuantConnect/Lean/blob/master/Common/Data/UniverseSelection/OptionUniverse.cs)
+  继承该语义。
 
 任何 predecessor hash、window、session identity、package inventory 或 safety flag drift 必须 fail closed。
 
@@ -48,8 +53,11 @@ exact-date V2 sealed package。它只修复诊断器和 typed attribution contra
    subscribed `Slice.option_chains` non-empty event count；不得在 chainless Slice 中调用 provider history；
 2. `on_end_of_algorithm` 先证明 observed session count=`1202` 且 unique final never-chain count=`1`，
    然后仅对该目标日期执行一次 bounded `History[OptionUniverse]` exact-date query；
-3. 只把 `OptionUniverse.end_time.date()` 等于目标日期的 record 纳入 exact-date count；任何只返回更早
-   日期的结果必须记录为 cross-date fallback 并 fail closed，不得归类为目标日 `AVAILABLE`；
+3. V2 只把 `OptionUniverse.time.date()` 等于目标日期、且
+   `OptionUniverse.end_time.date() = OptionUniverse.time.date() + 1 day` 的日级 record 纳入
+   exact-date count；`Time` 是 source trading date，`EndTime` 只证明该日级数据的次日可用时间。
+   任何真正来自其他 source date 的结果或 availability invariant 异常都必须记录为 cross-date
+   fallback 并 fail closed，不得归类为目标日 `AVAILABLE`；
 4. 目标日期需要同时导出其窗口位置 `START_BOUNDARY / INTERIOR / END_BOUNDARY`，为后续 pre-roll、
    subscription repair、provider remediation 或 post-roll 路径提供有界证据；
 5. provider probe 必须是 count-only：不导出 symbol、contract identifier、strike、expiry、right、
@@ -87,18 +95,20 @@ DQ=`FAIL`、PIT=`NOT_EVALUATED` 与 `POLICY_BLOCKED_CASH_PRESERVATION`。
 Task-owned：
 
 - `config/research/qc_qqq_options_exact_date_provider_catalog_attribution_correction_v1.yaml`；
+- `config/research/qc_qqq_options_exact_date_provider_catalog_attribution_correction_v2.yaml`；
 - `src/ai_trading_system/qqq_options_research/exact_date_provider_catalog_attribution_correction.py`；
 - `tests/test_qqq_options_exact_date_provider_catalog_attribution_correction.py`；
 - `inputs/research/qqq_options/trading_2537_exact_date_provider_catalog_attribution_correction_v1/**`；
+- `inputs/research/qqq_options/trading_2537_exact_date_provider_catalog_attribution_correction_v2/**`；
 - 本 supporting requirement 与 task-specific architecture fragments。
 
 Coordinator-owned：canonical task registry/index、generated task views、`docs/system_flow.md`、
 Atlas page-effectiveness classification/reader summary、generated architecture/compatibility/deprecation
 authority 与 formal validation artifacts。
 
-实现必须生成 deterministic policy、run scope、proposal、candidate `main.py`、unsigned owner request
-与 package manifest，并绑定 2535 package identities 和 2532 evidence identities。当前 external counters
-保持 `project_mutations/cloud_backtests/orders/fills = 0/0/0/0`。
+V1 已成为 executed predecessor，其 policy、run scope、proposal、candidate `main.py`、unsigned owner
+request 与 package manifest bytes 必须保持 immutable。V2 生成独立 deterministic package，绑定 V1
+package/project-code exact identities 和 2532 evidence identities；本轮不得增加任何 external counter。
 
 ### S2 — Validation / publication
 
@@ -114,7 +124,7 @@ authority 与 formal validation artifacts。
 
 ## 6. 外部动作与后续真实修复边界
 
-在 corrected package ordinary-pushed 且 Project Owner 对 final exact hashes 发放新的 single-use token 前：
+在 V2 corrected package ordinary-pushed 且 Project Owner 对 final exact hashes 发放新的 single-use token 前：
 
 - `maximum_project_mutations=0`；
 - `maximum_cloud_backtests=0`；
@@ -183,3 +193,96 @@ primary source，不得 forward-fill、静默排除该日或把 derived seal 冒
   `2960` 不一致。修复仅允许把该精确 consumer 断言同步为 `2960`，刷新由该测试哈希影响的 DevEx /
   compatibility authority，创建新 final commit 并重建 ignored Atlas sidecars；随后必须以本次失败
   artifact 为 parent 再运行完整 Full。
+- 2026-08-22：TRADING-2539 的唯一 Cloud run 定位 missing session=`2022-08-26`，但 V1 runtime 把
+  唯一返回 record 的 `EndTime=2022-08-27` 当作 source date，输出
+  `CROSS_DATE_FALLBACK / NO_EXACT_DATE_PROVIDER_EVIDENCE`。复核 LEAN
+  `BaseChainUniverseData` 后确认日级 universe 的 `EndTime` getter 固定返回 `Time + OneDay`；因此该
+  terminal 是 V1 探针实现的确定性误判，不是 provider 缺少 2022-08-26 数据的证据。
+- 2026-08-22：V1 package 与 2539 execution evidence 保持 immutable；同一 non-terminal task 以
+  append-only V2 serial correction 继续。V2 使用 `OptionUniverse.Time` 归属 source trading date，
+  同时要求 `EndTime.date = Time.date + 1 day`，并保留原有 count-only、zero-order、单 query、typed
+  terminal 与 export-safe 边界。创建分支时 `git switch` 仅打印 known-unrelated exclusion
+  `docs/research/growth_tilt_owner_diagnosis_pack.md` 的路径名和 `M` 状态；未读取、hash、diff、stage
+  或修改其内容，按 audit incident 记录，后续 repository-wide inspection 只使用 governed audit。
+- 2026-08-22：V2 sealed identities：policy file/canonical SHA-256=
+  `ae027dbe396fee789b84b67362c2d9ba1f0f6ffdfeee3ae1f5fa730983ac4d02` /
+  `b6eaa91520a73aa74450c3b5c2725a9e0848bb8484062d35f60e9749b1868520`；run scope
+  content/canonical SHA-256=`d2c0e124b27777f0492f11912dd3c10ba1a9c4be11e16f6dfd9b0955b6cfb280` /
+  `04376415dd9f6310aa796a930465f875d51effd6f681cfb2ac9da21bbde7191a`；proposal
+  content/canonical SHA-256=`bd4ae649dd98baac7a1bdda3d6c21bba236a3f2fb852b0ad2fbdda9351e98893` /
+  `cab386f66151ed7e9d48b46d8c03fac6f81424f707aaed8766e58b4c002d2fff`；project code=
+  `26587 bytes` / `06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2`；
+  manifest content/canonical SHA-256=
+  `03d0107a8de280781b3742e3deac653cdbb92730b65b6808c16d1aed8d611bd2` /
+  `3d7af489e4c6dabe710b045a94152f81c21f65bd922f7e101119f24fb18f713d`。目标固定为
+  existing clone `35444189`；原项目 `34808569` mutation 上限为 0，新 clone 上限为 0。
+- 2026-08-22：V1/V2 focused + historical execution + task-source parallel suite=`48 passed`；Ruff、
+  package replay、V1 immutable golden 与 task-source validate PASS。Architecture 首轮=
+  `864 passed / 1 failed`，唯一失败是修改 module/test/system-flow 后三个 ARCH-004E generated
+  manifest stale；官方 generator 刷新后 architecture fitness=`PASS / violation_count=0`，完整 final
+  Architecture rerun=`865 passed`。Contract=`276 passed`、Integration=`995 passed`、
+  Reproducibility=`24 passed`。Full 必须绑定本轮 committed final tree 后才能 ordinary publication。
+- 2026-08-22：commit `96579e79cf2b377a289d5f4ef655cfb642dd6c78` 的首次 V2 Full 为
+  `9253 passed / 13 failed / 3 skipped / 644 warnings`，parent artifact=
+  `outputs/validation_runtime/trading_2537_source_time_v2_full_final_v1/test_runtime_summary.json`。
+  13 项失败全部属于新增 `system_flow` 与 TRADING-2539 后的 DEVX-006D/DEVX-006C/Atlas 生成权威
+  新鲜度：V2 行为、V1 immutable evidence 与 9253 个其余测试均未失败。修复范围固定为更新
+  `system_flow` seal、Atlas 2537/2539 reader contract、对应冻结断言，并按官方顺序重建 report-flow、
+  compatibility 与 ARCH-004E authority；随后必须创建新 commit，以该失败 artifact 为 parent 运行完整
+  `failure_fix_rerun`，不得用 focused PASS 代替。
+- 2026-08-22：首次 5-file authority/Atlas focused rerun 为 `36 passed / 24 failed`：2539 canonical
+  task 的结构化 `requirement_refs` 为空使 Atlas fail closed，且 compatibility build 早于最终
+  ARCH-004E test-manifest refresh。通过官方 task-source append-only update 补齐 requirement binding，
+  再按 `ARCH-004E -> report-flow validate -> compatibility build/validate` 重建后，同覆盖为
+  `58 passed / 2 failed`；剩余一项是 renderer 冻结计数仍为 59（当前应为 60），另一项是本机 ignored
+  canonical Atlas sidecar 必须绑定即将创建的新 commit。冻结计数同步后，同覆盖排除 ignored-sidecar
+  exact-commit test 为 `58 passed / 1 failed`，进一步暴露 renderer 的 audit 列表仍硬编码到 2538；该
+  共享上界已扩展到 2539。sidecar 只允许在 final commit 后重建，不得修改 tracked source 或代签人工
+  acceptance。最终 tracked 5-file 原失败面（排除必须等 commit 的一项）=`59 passed`。
+- 2026-08-22：authority-refresh commit=`ef05618d8c3b2d5e45750dfcf7731e0b5577441f`；ignored Atlas
+  page/sidecars 已绑定该 exact commit，historical exact-commit test=`1 passed`，三条独立 acceptance
+  原样保持 `NOT_EXECUTED / PENDING_REVIEW / PENDING_REVIEW`。以首次 13-failure Full 为 parent 的
+  `failure_fix_rerun` 为 `9264 passed / 2 failed / 3 skipped / 644 warnings`，artifact=
+  `outputs/validation_runtime/trading_2537_source_time_v2_full_failure_fix_rerun_v1/test_runtime_summary.json`。
+  两项失败仅为运行期间 local `main` 与 `origin/main` 被并发推进到
+  `a55ebb43778cf6579e1086d62743481b40ecc019`，使 Wave14/15 carrier 检查对 frozen-lane HEAD 报
+  `CARRIER_PUSH_DRIFT`；V2、原 13 项 authority/Atlas failure 与其余 9264 项均通过。不得修改测试或
+  回退 remote-tracking ref；按 ARCH-005 base-drift 流程生成真实 frozen-base/lane-head/latest-main plan，
+  在 latest-main coordinator candidate 重建共享 authority 和 ignored Atlas sidecars后，以本次两项失败
+  artifact 为新 parent 完整复跑 Full。
+- 临时 integration drift workspace 固定为
+  `outputs/validation_runtime/trading_2537_source_time_v2_integration_drift_v1/`，owner=TRADING-2537，
+  purpose=保存 ignored `change_manifest.json` 与 `integration_revalidation_plan.json` 直到 final candidate
+  integration；exit condition=final main ordinary push/SHA verify 后确认无唯一证据再删除，未完成前不得
+  创建第二个 drift workspace。
+- 2026-08-22：validated drift plan id=`integration-revalidation-2b87125fffe202420ffe`、SHA-256=
+  `2b87125fffe202420ffef10ce226dd28897659408b473d0a64a938573b707a47`，decision=
+  `RECONCILIATION_REQUIRED`。精确 overlap 仅为 generated `docs/task_register.md`（planner 分类
+  `DOMAIN_OVERLAP`）与 `inputs/architecture/arch_005_task_registry_index.yaml`（`COORDINATOR_REFRESH`）；
+  reviewed reconciliation 只允许在 latest-main candidate 上从 canonical fragments 重建二者，不手工
+  合并 generated bytes。创建 integration branch 时 `git switch` 再次只打印 known-unrelated exclusion
+  `docs/research/growth_tilt_owner_diagnosis_pack.md` 的路径名与 `M` 状态；未读取、hash、diff、stage 或
+  修改其内容，作为第二次 audit incident 记录。
+- 2026-08-22：在 `a55ebb43778cf6579e1086d62743481b40ecc019` integration candidate 的聚焦验证期间，
+  local `main` 与 `origin/main` 又由并发 TRADING-2540 推进到
+  `309db390f9010e3b2801d79dbac9ab1b833b8e45`。新增 mainline delta 只更新 TRADING-2540 requirement、
+  canonical task fragment/views 与 task-count test；不得在旧 candidate 上绕过 Wave14/15 carrier drift。
+  该 candidate 对最新 registry 的 Atlas fail-closed 结果同时证明 TRADING-2540 尚未被 successor policy
+  分类，因此协调修复将其登记为与 QQQ options 缺链归因分离、仅 preregistration、data-lane blocked 的
+  disclosed successor，并把 Atlas task coverage 从 60 更新为 61；这不授权 2540 cache/empirical/backtest
+  动作，也不扩大 2537 的 QuantConnect 权限。Atlas focused=`25 passed`；旧 HEAD 上仅余的 Wave14/15
+  `CARRIER_PUSH_DRIFT` 必须在基于 `309db390...` 的唯一最新-main candidate 中消除。当前树先形成可审计
+  中间 lane commit，再用 frozen-base / committed-lane-head / latest-main 重新生成并验证 drift plan。
+- 2026-08-22：正确 frozen-base/lane-head/latest-main 三元组为
+  `9717949319e619952c192e39c4ed2db1ee9f9eab` /
+  `62b01bbc1ee45c10f7a09f038fab3f8c2399eb67` /
+  `309db390f9010e3b2801d79dbac9ab1b833b8e45`；最终 validated plan id=
+  `integration-revalidation-946ab65c1ae18858946f`、SHA-256=
+  `946ab65c1ae18858946f09ef2faebce26771a195c8d2bc961a4bfba942f71d07`、decision=
+  `RECONCILIATION_REQUIRED`。overlap 仍只含 generated `docs/task_register.md` 与
+  `inputs/architecture/arch_005_task_registry_index.yaml`；TRADING-2540 requirement/fragment 与
+  `tests/test_arch_005_s5_task_source_cutover.py` 均为 `MAINLINE_UNRELATED`，最终 candidate 从 main
+  原样保留并用 official task events 重建 2539/2537 projection。exact reviewed-reconciliation preflight=
+  `PASS`。切到 frozen lane 和再切到 `309db390...` final candidate 时，Git 各打印一次同一
+  known-unrelated exclusion 路径及 `M`，分别记录为第三、第四次 audit incident；仍未读取、hash、diff、
+  stage 或修改该文件内容。

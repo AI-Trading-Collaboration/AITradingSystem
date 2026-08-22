@@ -35,6 +35,19 @@ DEFAULT_PACKAGE_ROOT = (
     / "qqq_options"
     / "trading_2537_exact_date_provider_catalog_attribution_correction_v1"
 )
+SOURCE_TIME_POLICY_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "research"
+    / "qc_qqq_options_exact_date_provider_catalog_attribution_correction_v2.yaml"
+)
+SOURCE_TIME_PACKAGE_ROOT = (
+    PROJECT_ROOT
+    / "inputs"
+    / "research"
+    / "qqq_options"
+    / "trading_2537_exact_date_provider_catalog_attribution_correction_v2"
+)
 TASK_ID = (
     "TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_"
     "ATTRIBUTION_CORRECTION_V1"
@@ -195,12 +208,14 @@ class _SealedModel(_FrozenModel):
 
 class AttributionProposalPolicy(_FrozenModel):
     schema_version: Literal[
-        "qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal_policy.v1"
+        "qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal_policy.v1",
+        "qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal_policy.v2",
     ]
     policy_id: Literal[
-        "qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal_v1"
+        "qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal_v1",
+        "qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal_v2",
     ]
-    policy_version: Literal["1.0.0"]
+    policy_version: Literal["1.0.0", "2.0.0"]
     policy_status: Literal["OWNER_REVIEW_REQUIRED_EXACT_PROPOSAL"]
     task_id: Literal[
         "TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1"
@@ -208,7 +223,7 @@ class AttributionProposalPolicy(_FrozenModel):
     registration_base_repository_code_sha: str
     created_at_utc: datetime
     package_root: str
-    target_project_id: Literal[34808569]
+    target_project_id: Literal[34808569, 35444189]
     requested_start: date
     requested_end: date
     exchange_calendar: Literal["XNYS"]
@@ -243,7 +258,9 @@ class AttributionProposalPolicy(_FrozenModel):
     provider_query_timing: Literal["ON_END_AFTER_UNIQUE_TARGET_FINALIZATION"]
     provider_query_interval: Literal["TARGET_DATE_TO_NEXT_CALENDAR_DATE_END_EXCLUSIVE"]
     maximum_provider_query_attempts: Literal[1]
-    source_date_field: Literal["OPTION_UNIVERSE_END_TIME_DATE"]
+    source_date_field: Literal[
+        "OPTION_UNIVERSE_END_TIME_DATE", "OPTION_UNIVERSE_TIME_DATE"
+    ]
     exact_source_date_match_required: Literal[True]
     cross_date_fallback_allowed: Literal[False]
     execution_attribution_terminal_separation_required: Literal[True]
@@ -302,12 +319,39 @@ class AttributionProposalPolicy(_FrozenModel):
             raise ValueError("allowed_classifications drift")
         if self.created_at_utc.tzinfo is None:
             raise ValueError("created_at_utc must be timezone-aware")
+        version_contract = {
+            "qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal_v1": (
+                "qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal_policy.v1",
+                "1.0.0",
+                "inputs/research/qqq_options/trading_2537_exact_date_provider_catalog_attribution_correction_v1",
+                "OPTION_UNIVERSE_END_TIME_DATE",
+                34808569,
+            ),
+            "qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal_v2": (
+                "qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal_policy.v2",
+                "2.0.0",
+                "inputs/research/qqq_options/trading_2537_exact_date_provider_catalog_attribution_correction_v2",
+                "OPTION_UNIVERSE_TIME_DATE",
+                35444189,
+            ),
+        }
+        expected = version_contract[self.policy_id]
+        actual = (
+            self.schema_version,
+            self.policy_version,
+            self.package_root,
+            self.source_date_field,
+            self.target_project_id,
+        )
+        if actual != expected:
+            raise ValueError("policy version/source-date contract drift")
         return self
 
 
 class AttributionRunScope(_SealedModel):
     schema_version: Literal[
-        "qc_qqq_options_exact_date_provider_catalog_attribution_correction_scope.v1"
+        "qc_qqq_options_exact_date_provider_catalog_attribution_correction_scope.v1",
+        "qc_qqq_options_exact_date_provider_catalog_attribution_correction_scope.v2",
     ]
     task_id: str
     requested_start: date
@@ -320,14 +364,16 @@ class AttributionRunScope(_SealedModel):
     provider_query_timing: Literal["ON_END_AFTER_UNIQUE_TARGET_FINALIZATION"]
     provider_query_interval: Literal["TARGET_DATE_TO_NEXT_CALENDAR_DATE_END_EXCLUSIVE"]
     maximum_provider_query_attempts: Literal[1]
-    source_date_field: Literal["OPTION_UNIVERSE_END_TIME_DATE"]
+    source_date_field: Literal[
+        "OPTION_UNIVERSE_END_TIME_DATE", "OPTION_UNIVERSE_TIME_DATE"
+    ]
     exact_source_date_match_required: Literal[True]
     cross_date_fallback_allowed: Literal[False]
     execution_attribution_terminal_separation_required: Literal[True]
     subscription_observation: Literal["SLICE_OPTION_CHAINS_CANONICAL_KEY_EVENT_COUNT_ONLY"]
     output_keys: tuple[str, ...]
     allowed_classifications: tuple[str, ...]
-    target_project_id: Literal[34808569]
+    target_project_id: Literal[34808569, 35444189]
     proposed_maximum_project_mutations: Literal[1]
     proposed_maximum_cloud_backtests: Literal[1]
     maximum_orders: Literal[0]
@@ -347,6 +393,20 @@ class AttributionRunScope(_SealedModel):
     def _scope_is_exact(self) -> Self:
         if self.task_id != TASK_ID:
             raise ValueError("task_id drift")
+        source_date_contract = {
+            "OPTION_UNIVERSE_END_TIME_DATE": (
+                "qc_qqq_options_exact_date_provider_catalog_attribution_correction_scope.v1",
+                34808569,
+            ),
+            "OPTION_UNIVERSE_TIME_DATE": (
+                "qc_qqq_options_exact_date_provider_catalog_attribution_correction_scope.v2",
+                35444189,
+            ),
+        }
+        if (self.schema_version, self.target_project_id) != source_date_contract[
+            self.source_date_field
+        ]:
+            raise ValueError("scope version/source-date contract drift")
         if (
             len(self.session_ids) != 1202
             or self.session_ids[0] != self.requested_start
@@ -363,7 +423,8 @@ class AttributionRunScope(_SealedModel):
 
 class AttributionProposal(_SealedModel):
     schema_version: Literal[
-        "qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal.v1"
+        "qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal.v1",
+        "qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal.v2",
     ]
     task_id: str
     proposal_status: Literal["OWNER_FINAL_TOKEN_REQUIRED"]
@@ -384,7 +445,7 @@ class AttributionProposal(_SealedModel):
     run_scope_canonical_sha256: str
     project_code_lf_byte_count: int
     project_code_lf_sha256: str
-    target_project_id: Literal[34808569]
+    target_project_id: Literal[34808569, 35444189]
     requested_range: Literal["2021-02-22..2025-12-02"]
     expected_session_count: Literal[1202]
     expected_never_chain_session_count: Literal[1]
@@ -460,7 +521,8 @@ class ManifestArtifact(_FrozenModel):
 
 class AttributionPackageManifest(_SealedModel):
     schema_version: Literal[
-        "qc_qqq_options_exact_date_provider_catalog_attribution_correction_package_manifest.v1"
+        "qc_qqq_options_exact_date_provider_catalog_attribution_correction_package_manifest.v1",
+        "qc_qqq_options_exact_date_provider_catalog_attribution_correction_package_manifest.v2",
     ]
     task_id: str
     artifact_count: Literal[4]
@@ -568,7 +630,9 @@ def _verify_regular_file_hash(root: Path, relative_path: str, expected: str) -> 
         raise AttributionProposalError("ATTRIBUTION_PROPOSAL_BOUND_FILE_DRIFT", relative_path)
 
 
-def _render_project_code(*, session_ids: tuple[date, ...], identity: str) -> bytes:
+def _render_project_code(
+    *, session_ids: tuple[date, ...], identity: str, source_date_field: str
+) -> bytes:
     sessions = repr(tuple(item.isoformat() for item in session_ids))
     template = """from AlgorithmImports import *
 from datetime import datetime, timedelta
@@ -778,6 +842,19 @@ class QQQOptionsExactDateProviderCatalogAttributionCorrection(QCAlgorithm):
             + "|logs_as_data=false|object_store=false",
         )
 """
+    if source_date_field == "OPTION_UNIVERSE_TIME_DATE":
+        template = template.replace(
+            "            source_date = option_universe.end_time.date().isoformat()\n"
+            "            if source_date == target_date:\n",
+            "            source_time = option_universe.time\n"
+            "            source_date = source_time.date().isoformat()\n"
+            "            availability_date = option_universe.end_time.date()\n"
+            "            expected_availability_date = source_time.date() + timedelta(days=1)\n"
+            "            if (\n"
+            "                source_date == target_date\n"
+            "                and availability_date == expected_availability_date\n"
+            "            ):\n",
+        )
     rendered = template.replace("__SESSIONS__", sessions).replace("__IDENTITY__", repr(identity))
     return rendered.replace("\r\n", "\n").encode("utf-8")
 
@@ -788,6 +865,13 @@ def _owner_request(
     proposal: AttributionProposal,
 ) -> bytes:
     values = policy.policy
+    owner_decision = (
+        "owner_decision:TRADING-2537:<YYYY-MM-DD>:"
+        "authorize_single_zero_order_option_universe_time_date_attribution_correction_v2"
+        if values.source_date_field == "OPTION_UNIVERSE_TIME_DATE"
+        else "owner_decision:TRADING-2537:<YYYY-MM-DD>:"
+        "authorize_single_zero_order_exact_date_provider_catalog_attribution_correction_v1"
+    )
     lines = [
         "# TRADING-2537 exact owner decision request — proposal only",
         "",
@@ -797,7 +881,7 @@ def _owner_request(
         "proposal ordinary push 后，由 Project Owner 在当前 Codex 对话中发送完整 token：",
         "",
         "```text",
-        "owner_decision:TRADING-2537:<YYYY-MM-DD>:authorize_single_zero_order_exact_date_provider_catalog_attribution_correction_v1",
+        owner_decision,
         "ordinary_pushed_main_sha:<ORDINARY_PUSHED_MAIN_SHA>",
         f"registration_base_repository_code_sha:{values.registration_base_repository_code_sha}",
         f"proposal_policy_file_sha256:{policy.file_sha256}",
@@ -842,18 +926,42 @@ def _owner_request(
         "Object Store、订单、成交、DQ/PIT admission、selection、engine 或投资结论。",
         "",
     ]
+    if values.source_date_field == "OPTION_UNIVERSE_TIME_DATE":
+        lines[3] = (
+            "现有 clone lifetime counters 为 `clones/project_mutations/saves/cloud_builds/"
+            "cloud_backtests/provider_queries/orders/fills = 1/2/2/3/1/1/0/0`。"
+        )
+        target_index = lines.index(f"target_project_id:{values.target_project_id}")
+        lines[target_index : target_index + 1] = [
+            f"target_clone_project_id:{values.target_project_id}",
+            "original_project_id:34808569",
+            "original_project_mutations_allowed:0",
+            "maximum_new_clones:0",
+            "expected_pre_mutation_lf_byte_count:26223",
+            f"expected_pre_mutation_lf_sha256:{values.predecessor_project_code_sha256}",
+            "maximum_saves:1",
+            "maximum_automatic_cloud_builds:1",
+        ]
     return "\n".join(lines).encode("utf-8")
 
 
 def build_attribution_proposal_package(
-    *, project_root: Path = PROJECT_ROOT
+    *,
+    project_root: Path = PROJECT_ROOT,
+    policy_path: Path | None = None,
 ) -> BuiltAttributionProposalPackage:
     root = project_root.resolve()
+    selected_policy_path = (
+        root / DEFAULT_POLICY_PATH.relative_to(PROJECT_ROOT)
+        if policy_path is None
+        else (policy_path if policy_path.is_absolute() else root / policy_path)
+    )
     loaded_policy = load_attribution_proposal_policy(
-        policy_path=root / DEFAULT_POLICY_PATH.relative_to(PROJECT_ROOT),
+        policy_path=selected_policy_path,
         project_root=root,
     )
     policy = loaded_policy.policy
+    source_time_correction = policy.source_date_field == "OPTION_UNIVERSE_TIME_DATE"
     evidence = _load_bound_json(
         root=root,
         relative_path=policy.source_evidence_path,
@@ -907,14 +1015,16 @@ def build_attribution_proposal_package(
         expected_content=policy.predecessor_package_manifest_content_sha256,
     )
     predecessor_artifacts = predecessor_manifest.get("artifacts")
+    expected_predecessor_task_id = TASK_ID if source_time_correction else _PREDECESSOR_TASK_ID
     if (
-        predecessor_manifest.get("task_id") != _PREDECESSOR_TASK_ID
+        predecessor_manifest.get("task_id") != expected_predecessor_task_id
         or predecessor_manifest.get("status")
         != "SEALED_OFFLINE_PROPOSAL_OWNER_REVIEW_REQUIRED"
         or not isinstance(predecessor_artifacts, list)
     ):
         raise AttributionProposalError(
-            "ATTRIBUTION_PROPOSAL_PREDECESSOR_MANIFEST_DRIFT", "TRADING-2535 manifest"
+            "ATTRIBUTION_PROPOSAL_PREDECESSOR_MANIFEST_DRIFT",
+            "TRADING-2537 V1 manifest" if source_time_correction else "TRADING-2535 manifest",
         )
     predecessor_project = next(
         (
@@ -940,7 +1050,11 @@ def build_attribution_proposal_package(
             "ATTRIBUTION_PROPOSAL_SESSION_SCOPE_DRIFT", str(len(session_ids))
         )
     run_scope = AttributionRunScope.seal(
-        schema_version="qc_qqq_options_exact_date_provider_catalog_attribution_correction_scope.v1",
+        schema_version=(
+            "qc_qqq_options_exact_date_provider_catalog_attribution_correction_scope.v2"
+            if source_time_correction
+            else "qc_qqq_options_exact_date_provider_catalog_attribution_correction_scope.v1"
+        ),
         task_id=TASK_ID,
         requested_start=policy.requested_start,
         requested_end=policy.requested_end,
@@ -984,9 +1098,27 @@ def build_attribution_proposal_package(
         f"|staged_policy={policy.staged_readiness_policy_file_sha256}"
         f"|predecessor={policy.predecessor_package_manifest_content_sha256}"
     )
-    project_code = _render_project_code(session_ids=session_ids, identity=identity)
+    if source_time_correction:
+        identity = (
+            "schema=qc_qqq_options_exact_date_provider_catalog_attribution_correction_runtime.v2"
+            f"|source={policy.source_evidence_content_sha256}"
+            f"|admission={policy.source_admission_content_sha256}"
+            f"|staged_policy={policy.staged_readiness_policy_file_sha256}"
+            f"|predecessor={policy.predecessor_package_manifest_content_sha256}"
+            "|source_date=OPTION_UNIVERSE_TIME_DATE"
+            "|availability_date=OPTION_UNIVERSE_END_TIME_DATE"
+        )
+    project_code = _render_project_code(
+        session_ids=session_ids,
+        identity=identity,
+        source_date_field=policy.source_date_field,
+    )
     proposal = AttributionProposal.seal(
-        schema_version="qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal.v1",
+        schema_version=(
+            "qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal.v2"
+            if source_time_correction
+            else "qc_qqq_options_exact_date_provider_catalog_attribution_correction_proposal.v1"
+        ),
         task_id=TASK_ID,
         proposal_status="OWNER_FINAL_TOKEN_REQUIRED",
         registration_base_repository_code_sha=policy.registration_base_repository_code_sha,
@@ -1059,7 +1191,14 @@ def build_attribution_proposal_package(
         ),
     )
     manifest = AttributionPackageManifest.seal(
-        schema_version="qc_qqq_options_exact_date_provider_catalog_attribution_correction_package_manifest.v1",
+        schema_version=(
+            "qc_qqq_options_exact_date_provider_catalog_attribution_correction_package_manifest.v2"
+            if source_time_correction
+            else (
+                "qc_qqq_options_exact_date_provider_catalog_attribution_correction_"
+                "package_manifest.v1"
+            )
+        ),
         task_id=TASK_ID,
         artifact_count=4,
         artifacts=artifacts,
@@ -1082,13 +1221,20 @@ def build_attribution_proposal_package(
 
 
 def write_attribution_proposal_package(
-    *, project_root: Path = PROJECT_ROOT, package_root: Path | None = None
+    *,
+    project_root: Path = PROJECT_ROOT,
+    package_root: Path | None = None,
+    policy_path: Path | None = None,
 ) -> BuiltAttributionProposalPackage:
     root = project_root.resolve()
+    built = build_attribution_proposal_package(
+        project_root=root,
+        policy_path=policy_path,
+    )
     target = (
         package_root.resolve()
         if package_root is not None
-        else root / DEFAULT_PACKAGE_ROOT.relative_to(PROJECT_ROOT)
+        else root / built.policy.policy.package_root
     )
     try:
         target.relative_to(root)
@@ -1096,7 +1242,6 @@ def write_attribution_proposal_package(
         raise AttributionProposalError(
             "ATTRIBUTION_PROPOSAL_PACKAGE_OUTSIDE_REPOSITORY", str(target)
         ) from exc
-    built = build_attribution_proposal_package(project_root=root)
     target.mkdir(parents=True, exist_ok=True)
     payloads = {
         "main.py": built.project_code_bytes,
@@ -1111,14 +1256,25 @@ def write_attribution_proposal_package(
 
 
 def load_attribution_proposal_package(
-    *, project_root: Path = PROJECT_ROOT, package_root: Path | None = None
+    *,
+    project_root: Path = PROJECT_ROOT,
+    package_root: Path | None = None,
+    policy_path: Path | None = None,
 ) -> BuiltAttributionProposalPackage:
     root = project_root.resolve()
-    target = (
-        package_root.resolve()
-        if package_root is not None
-        else root / DEFAULT_PACKAGE_ROOT.relative_to(PROJECT_ROOT)
+    selected_policy_path = (
+        root / DEFAULT_POLICY_PATH.relative_to(PROJECT_ROOT)
+        if policy_path is None
+        else (policy_path if policy_path.is_absolute() else root / policy_path)
     )
+    if package_root is not None:
+        target = package_root.resolve()
+    else:
+        loaded_policy = load_attribution_proposal_policy(
+            policy_path=selected_policy_path,
+            project_root=root,
+        )
+        target = root / loaded_policy.policy.package_root
     try:
         target.relative_to(root)
     except ValueError as exc:
@@ -1148,7 +1304,10 @@ def load_attribution_proposal_package(
             raise AttributionProposalError(
                 "ATTRIBUTION_PROPOSAL_PACKAGE_ARTIFACT_DRIFT", artifact.relative_path
             )
-    expected = build_attribution_proposal_package(project_root=root)
+    expected = build_attribution_proposal_package(
+        project_root=root,
+        policy_path=selected_policy_path,
+    )
     if (
         manifest != expected.manifest
         or proposal != expected.proposal

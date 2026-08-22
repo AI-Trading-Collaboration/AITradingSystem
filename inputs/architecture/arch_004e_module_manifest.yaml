@@ -189,7 +189,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.cited_query_renderer
   path: src/ai_trading_system/atlas/cited_query_renderer.py
-  sha256: 8f424a0f10b956d1b2711ef9133cbb04abd34a452cf113e775d2eae47e4a3013
+  sha256: 71144daee60cb6307dbc64c4c3d95b7769e4bb1bdc5f6ddc22b9baf0b2195b41
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -16813,7 +16813,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.qqq_options_research.exact_date_provider_catalog_attribution_correction
   path: src/ai_trading_system/qqq_options_research/exact_date_provider_catalog_attribution_correction.py
-  sha256: 61e8e07e84e4fd6054a174f2397e5536a990d65b6a3c8c2600070ea9a56f8a2c
+  sha256: b2aa709314d7a595076f8dab8447116cc9d59ed82c050c375b3aee3970042b55
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

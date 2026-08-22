@@ -275,12 +275,20 @@ task_sources:
     reader_summary_zh: 2536 只负责把 2535 的 proposal-ready、external-collection-unexecuted 边界显式纳入 Atlas freshness 合同，并刷新页面的来源 identity；它不改变 2535 package、不执行归因采集，也不冒充 Owner visual review、reader-comprehension review、DQ/PIT 或策略结论。
   - task_id: TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1
     requirement_path: docs/requirements/TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md
-    coverage: DISCLOSED_EXACT_DATE_PROVIDER_ATTRIBUTION_CORRECTION_READY_EXTERNAL_COLLECTION_UNEXECUTED
-    reader_summary_zh: 2537 发现 2535 的 option_chain helper 可能读取最近交易日 universe，不能证明唯一缺链 session 的目标日 catalog 可用；因此保留 2535 sealed bytes，并建立只在完整窗口确定唯一目标后执行一次 History[OptionUniverse]、严格校验 end_time 日期和拒绝跨日 fallback 的 corrected proposal。当前仍只完成离线 package 与测试，没有执行 QuantConnect、Cloud 或 provider probe；DQ=FAIL、PIT=NOT_EVALUATED、research/selection/engine 关闭与禁止交易均不变。
+    coverage: DISCLOSED_SOURCE_TIME_CORRECTION_OFFLINE_VALIDATED_V2_EXTERNAL_RERUN_PENDING
+    reader_summary_zh: 2537 的 V1 candidate 已在 2539 唯一 Cloud run 中执行并定位唯一缺链 session 为 2022-08-26；但 V1 错把日级 OptionUniverse 的 EndTime 当成 source date，而 LEAN 的 EndTime 固定为 Time 加一天，因此把真实目标日 record 确定性误判成跨日 fallback。V1 bytes 与 observed terminal 保持 immutable；append-only V2 已改用 OptionUniverse.Time 匹配 source trading date，并独立校验 EndTime=Time+1 day。V2 已离线验证，仍需新的 single-use、zero-order run 才能确认 exact-date contract count 与 provider/subscription attribution；DQ=FAIL、PIT=NOT_EVALUATED、research/selection/engine 关闭与禁止交易均不变。
   - task_id: TRADING-2538_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_ADMISSION_AND_EXECUTION_V1
     requirement_path: docs/requirements/TRADING-2538_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Admission_And_Execution_V1.md
     coverage: DISCLOSED_FIRST_MUTATION_ATTEMPT_FAILED_AUTHORIZATION_CONSUMED_NO_CLOUD_RUN
     reader_summary_zh: 2538 已严格 admission Owner 的 single-use token，并在已登录的 existing project 34808569 上发起唯一整文件 mutation attempt；save/build 后的只读 Monaco text 仍显示前序 runtime marker，无法证明 2537 sealed candidate 已进入项目。授权按 no-retry 条款消费，因此没有第二次 paste/save，也没有提交 Cloud backtest 或 provider query；terminal counters 为 mutation attempts/verified mutations/runs/provider queries/orders/fills=1/0/0/0/0/0。目标日期和 provider attribution 仍未知，DQ=FAIL、PIT=NOT_EVALUATED、research/selection/engine 关闭与禁止交易均不变。
+  - task_id: TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
+    requirement_path: docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md
+    coverage: DISCLOSED_EXISTING_CLONE_EXACT_DATE_V1_EXECUTION_COMPLETE_SOURCE_TIME_CORRECTION_REQUIRED
+    reader_summary_zh: 2539 在 existing clone 35444189 完成唯一 V1 zero-order Cloud backtest，完整评估 2021-02-22..2025-12-02 的 1202 个 session，并定位 2022-08-26 当日 QQQ equity Slice 存在但 subscribed option-chain event 为 0。V1 只返回一个日级 universe record，却因 EndTime=2022-08-27 被旧探针误归为非目标日；这不证明 provider 缺少 2022-08-26 record。原项目 34808569 未修改，orders/fills=0/0；后续 V2 project mutation、save、build、backtest 或 provider query 均需新的明确授权。
+  - task_id: TRADING-2540_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_AND_SINGLE_LANE_DECISION_V1
+    requirement_path: docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md
+    coverage: DISCLOSED_SEPARATE_GROWTH_PREREGISTRATION_ONLY_DATA_LANE_BLOCKED
+    reader_summary_zh: 2540 是与 QQQ options 缺链归因分离的 growth preregistration serial wave；当前只冻结 non-leveraged QQQ/SGOV hypothesis 与单一 QLD data-lane 选择，且因 active data-lane conflict 保持 blocked。它不授权 cache mutation、经验研究、backtest、外部动作或投资结论，也不改变 2537 的 V2 Cloud 重跑边界。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

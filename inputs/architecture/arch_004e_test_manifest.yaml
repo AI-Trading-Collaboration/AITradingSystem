@@ -27,7 +27,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_cited_query_renderer
   path: tests/atlas/test_cited_query_renderer.py
-  sha256: 90120f99a86bc1e2adeae1d8ea17aac439053ef45ad43082173ea4c7927e38a7
+  sha256: c7dc26aa8197fece43d672b7cf3c504d813ea16a8de21b62c9b51b3585940d71
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -139,7 +139,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_historical_projection_review
   path: tests/atlas/test_historical_projection_review.py
-  sha256: 41fa2428f02726c30a652d3e8a34b0310de1fcd91b2ae71734da7521c8c4f316
+  sha256: ae5a4614a74fabacf5d6c05150cfcc031af4322f3a2c7fe642b2607c0a6a072b
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_page_effectiveness
   path: tests/atlas/test_page_effectiveness.py
-  sha256: dfa259c8779766ee6e53a53840bc5721c08f2e1391c97f1722b1de9ea3ebdb14
+  sha256: b4488f9e23ebdec5de1864640033bf226c3bd3cdd20d6a5d063faa6eb00d4959
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8650,7 +8650,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s5_task_source_cutover
   path: tests/test_arch_005_s5_task_source_cutover.py
-  sha256: 9f431e1189a01893276cc5725465a046c552e60b9d5958f72cb6ae79bfc29d5a
+  sha256: 548443d55280169ba65ba8910e085ab33d7e81e9c7585793ad4c077b7e9de599
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -10378,7 +10378,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 2c959a1061a8daa8134c72dee617878ea537c02c85fb9c424e13ac2897bf2ac9
+  sha256: 7b7557ecebfb748c9794eafe47d5adf4b575a5268f686266fd6009e465767ed6
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -14928,7 +14928,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_qqq_options_exact_date_provider_catalog_attribution_correction
   path: tests/test_qqq_options_exact_date_provider_catalog_attribution_correction.py
-  sha256: 8c22aa7e155c3659caa8b048ad3dddfd719442d6f7c58ce8d3f9e95f333ef426
+  sha256: 34f63b355ab554042b4b4e89188764fda65df83faaac791f1415eed64822cda9
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

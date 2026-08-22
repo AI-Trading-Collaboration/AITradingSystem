@@ -1,0 +1,39 @@
+{
+  "artifact_count": 4,
+  "artifacts": [
+    {
+      "byte_count": 26587,
+      "kind": "PROJECT_CODE",
+      "relative_path": "main.py",
+      "sha256": "06b26262823c8c56ebceb4c90356086e07b050f9192e087b5e35a3dc43c5eac2"
+    },
+    {
+      "byte_count": 3484,
+      "kind": "OWNER_DECISION_REQUEST",
+      "relative_path": "owner_decision_request.md",
+      "sha256": "e23caa4676624afe30c258bdc7fdb5b6444afbd465908cdd0b26493c03292a03"
+    },
+    {
+      "byte_count": 2659,
+      "kind": "PROPOSAL",
+      "relative_path": "proposal.json",
+      "sha256": "cab386f66151ed7e9d48b46d8c03fac6f81424f707aaed8766e58b4c002d2fff"
+    },
+    {
+      "byte_count": 24065,
+      "kind": "RUN_SCOPE",
+      "relative_path": "run_scope.json",
+      "sha256": "04376415dd9f6310aa796a930465f875d51effd6f681cfb2ac9da21bbde7191a"
+    }
+  ],
+  "broker_action": "none",
+  "content_sha256": "03d0107a8de280781b3742e3deac653cdbb92730b65b6808c16d1aed8d611bd2",
+  "external_action_authorized": false,
+  "external_action_performed": false,
+  "fills": 0,
+  "orders": 0,
+  "production_effect": "none",
+  "schema_version": "qc_qqq_options_exact_date_provider_catalog_attribution_correction_package_manifest.v2",
+  "status": "SEALED_OFFLINE_PROPOSAL_OWNER_REVIEW_REQUIRED",
+  "task_id": "TRADING-2537_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_CORRECTION_V1"
+}

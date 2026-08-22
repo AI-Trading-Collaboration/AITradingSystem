@@ -1,7 +1,7 @@
 # TRADING-2539 — QuantConnect Cloud file API exact-content mutation and retry proposal V1
 
 - priority: `P0`
-- status: `BASELINE_DONE`（existing-clone formal exact-date execution 已完成；唯一缺失日已定位，等待 exact-date source repair）
+- status: `BASELINE_DONE`（existing-clone V1 execution 已完成；唯一缺失日已定位，V1 provider attribution 已被 source-time correction 取代）
 - governed mode: `SINGLE_LANE`
 - predecessor: `TRADING-2538`
 - production effect: `none`
@@ -343,11 +343,10 @@ single-use token；最终 zero-order Cloud backtest 为 `Ugly Yellow Green Owlet
   Object Store 均未导出或使用。
 
 因此唯一缺失日已经确定为 `2022-08-26`。这不是“日期尚未定位”的问题：当日 QQQ equity slice 存在，
-但 subscribed option-chain event 缺失；Free Web IDE 中唯一一次 bounded provider query 只返回一个非目标日
-record，没有任何 exact-date record 或 contract。该结果不能把 prior-date data 静默替代为目标日数据，
-`chain_presence=FAIL`、DQ=`FAIL`、PIT=`NOT_EVALUATED` 与
-`POLICY_BLOCKED_CASH_PRESERVATION` 继续成立。下一实质修复是为 `2022-08-26` 接入可审计的 exact-date
-期权源；在找到免费且许可清晰的来源前保持 fail closed，不使用跨日填充。
+但 subscribed option-chain event 缺失。V1 terminal 把唯一返回 record 分类为“非目标日”；第 12.1 节
+记录了该分类随后发现的探针实现缺陷。在 V2 重新验证前，不能据此断言 provider 缺少 exact-date record，
+也不能选择 provider remediation。`chain_presence=FAIL`、DQ=`FAIL`、PIT=`NOT_EVALUATED` 与
+`POLICY_BLOCKED_CASH_PRESERVATION` 继续成立，不使用跨日填充。
 
 封存证据位于
 `inputs/research/qqq_options/trading_2539_existing_clone_exact_date_execution_v1/`。原项目 `34808569`
@@ -364,3 +363,18 @@ clone / project mutations / saves / Cloud Builds / Cloud backtests / provider qu
 task source validate PASS；`test_qqq_options_exact_date_provider_catalog_attribution_execution.py` 与
 `test_arch_005_s5_task_source_cutover.py` 按 `pytest-xdist` 并行执行为 `21 passed`；governed worktree audit
 与 explicit task-path diff check PASS。
+
+### 12.1 V1 terminal 的 source-date 解释修正
+
+V1 的 `_summarize_provider_history` 使用 `option_universe.end_time.date()` 作为 source date。LEAN
+`BaseChainUniverseData` 的权威实现明确：`Time` 保存源文件/交易日期，而 `EndTime` getter 返回
+`Time + OneDay`，表示数据可用时间。因此 target=`2022-08-26` 时，真正属于该 source date 的日级
+record 会自然表现为 `Time=2022-08-26 / EndTime=2022-08-27`；V1 会把它确定性计入
+`non_target_record_count`。
+
+这不会改写第 12 节的 immutable observed terminal，也不会把尚未导出的 contract count 猜测为正数；
+它只撤销“该 terminal 证明 provider 无 exact-date evidence”的错误解释。TRADING-2537 的 append-only
+V2 package 改用 `OptionUniverse.Time` 做 exact source-date match，并把 `EndTime=Time+1 day` 作为独立
+availability invariant。只有新的 single-use、zero-order V2 run 才能最终确认 2022-08-26 的 exact-date
+record/contract count 与 provider/subscription attribution；本轮没有新增 clone mutation、save、build、
+backtest、provider query、order 或 fill。
