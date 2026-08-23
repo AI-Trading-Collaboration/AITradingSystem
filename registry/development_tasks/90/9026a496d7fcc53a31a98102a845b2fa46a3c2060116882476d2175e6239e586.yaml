@@ -1,0 +1,91 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1
+  task_id_sha256: 9026a496d7fcc53a31a98102a845b2fa46a3c2060116882476d2175e6239e586
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1
+  title: null
+  domain: Developer workflow / parallel integration publication fence and generated-state
+    rebuild
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner：决定是否启动 S0 serial workflow-contract wave；Codex 仅在复核后推进
+  requirement_refs:
+  - docs/requirements/DEVX-009_Parallel_Integration_Publication_Fence_And_Generated_State_Rebuild_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 当前仅登记方向；启动前需 review docs/requirements/DEVX-009_Parallel_Integration_Publication_Fence_And_Generated_State_Rebuild_V1.md，复用
+    ARCH-005/S4D primitives 冻结 publication fence、expected_main CAS、generated rebuild、Full
+    独占与 closeout receipt；不得与活动 coordinator publication 或 Full 重叠。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Reviewed V1 contract；同一共享发布边界最多一个 coordinator；stale main/plan 在首次写入前拒绝；canonical
+      task 与 generated/current authorities 从 latest-main final tree 重建；Full 绑定唯一 candidate/run/parent；ordinary
+      push/SHA equality/cleanup 可审计；正式门禁全 PASS。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-24T01:34:15.7011583+09:00'
+  actor: codex
+  change_id: DEVX-009-registration-20260824-v1
+  lane_id: null
+  base_commit: e5266c9aadfba067060b013d83ec26bd4f065604
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    legacy_projection:
+    - DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1
+    - Developer workflow / parallel integration publication fence and generated-state
+      rebuild
+    - P0
+    - PROPOSED
+    - Project Owner：决定是否启动 S0 serial workflow-contract wave；Codex 仅在复核后推进
+    - 当前仅登记方向；启动前需 review docs/requirements/DEVX-009_Parallel_Integration_Publication_Fence_And_Generated_State_Rebuild_V1.md，复用
+      ARCH-005/S4D primitives 冻结 publication fence、expected_main CAS、generated rebuild、Full
+      独占与 closeout receipt；不得与活动 coordinator publication 或 Full 重叠。
+    - Reviewed V1 contract；同一共享发布边界最多一个 coordinator；stale main/plan 在首次写入前拒绝；canonical
+      task 与 generated/current authorities 从 latest-main final tree 重建；Full 绑定唯一 candidate/run/parent；ordinary
+      push/SHA equality/cleanup 可审计；正式门禁全 PASS。
+    - 详见 [DEVX-009 parallel integration publication fence and generated-state rebuild](docs/requirements/DEVX-009_Parallel_Integration_Publication_Fence_And_Generated_State_Rebuild_V1.md)。2026-08-24
+      在 TRADING-2542C Full 9487 passed/3 skipped、main=origin/main=e5266c9a…、lease=0
+      后登记为 PROPOSED；不实施、不采数、不训练、不回测；production_effect=none、broker_action=none。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:DEVX-009-registration-20260824-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b8f7b4f22aaab495c53dcf41f42b3453
+projection:
+  legacy_first_eight_cells:
+  - DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1
+  - Developer workflow / parallel integration publication fence and generated-state
+    rebuild
+  - P0
+  - PROPOSED
+  - Project Owner：决定是否启动 S0 serial workflow-contract wave；Codex 仅在复核后推进
+  - 当前仅登记方向；启动前需 review docs/requirements/DEVX-009_Parallel_Integration_Publication_Fence_And_Generated_State_Rebuild_V1.md，复用
+    ARCH-005/S4D primitives 冻结 publication fence、expected_main CAS、generated rebuild、Full
+    独占与 closeout receipt；不得与活动 coordinator publication 或 Full 重叠。
+  - Reviewed V1 contract；同一共享发布边界最多一个 coordinator；stale main/plan 在首次写入前拒绝；canonical
+    task 与 generated/current authorities 从 latest-main final tree 重建；Full 绑定唯一 candidate/run/parent；ordinary
+    push/SHA equality/cleanup 可审计；正式门禁全 PASS。
+  - 详见 [DEVX-009 parallel integration publication fence and generated-state rebuild](docs/requirements/DEVX-009_Parallel_Integration_Publication_Fence_And_Generated_State_Rebuild_V1.md)。2026-08-24
+    在 TRADING-2542C Full 9487 passed/3 skipped、main=origin/main=e5266c9a…、lease=0
+    后登记为 PROPOSED；不实施、不采数、不训练、不回测；production_effect=none、broker_action=none。
+  docs_links:
+  - docs/requirements/DEVX-009_Parallel_Integration_Publication_Fence_And_Generated_State_Rebuild_V1.md
+  terminal: false
+  canonical_row_sha256: 799d98e01502434cd3c9b481581afe5c71efaecc740bc9631588a23ecf33da0b
+last_event_id: task-event-b8f7b4f22aaab495c53dcf41f42b3453
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 2af40d23e49f539eb14c5ba3eb5656d065b6134bb04a98b8cd82f90c682b9327

@@ -7,14 +7,14 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 1021
-active_task_count: 502
+task_count: 1022
+active_task_count: 503
 completed_task_count: 519
-fragment_count: 1021
+fragment_count: 1022
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: c01dbbb0f55c8eacf5b615469d56d556d8552d321ba43f951028f38cf6c877ab
+final_chain_sha256: ccfbb6d8551315cf504d0b4ed99414d82acbeecdba8b32b439adcd943d45535a
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -8197,12 +8197,20 @@ fragments:
   order: 1021
   previous_entry_sha256: 3bf31cfd0ab1dd74ae532d7b0f9ed1ad4c5a3ea0265d28966d3b8827ec663ad8
   entry_sha256: c01dbbb0f55c8eacf5b615469d56d556d8552d321ba43f951028f38cf6c877ab
+- task_id: DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1
+  path: registry/development_tasks/90/9026a496d7fcc53a31a98102a845b2fa46a3c2060116882476d2175e6239e586.yaml
+  file_sha256: a6a5562d1ddebe5d7a81df159e828dd63c3d442ce4ebb9cd84384df4f623e87e
+  fragment_checksum: 2af40d23e49f539eb14c5ba3eb5656d065b6134bb04a98b8cd82f90c682b9327
+  partition: active
+  order: 1022
+  previous_entry_sha256: c01dbbb0f55c8eacf5b615469d56d556d8552d321ba43f951028f38cf6c877ab
+  entry_sha256: ccfbb6d8551315cf504d0b4ed99414d82acbeecdba8b32b439adcd943d45535a
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 0d186c5c387688ade6e801be3e393e544ba7681e3220592532fc015eb5961287
-  byte_count: 1752960
-  row_count: 502
+  sha256: cf7b7e25445b57e1a0fbdb5c4dd87f646b3c8baaab22d7e26d44f6797b380c9b
+  byte_count: 1754294
+  row_count: 503
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
@@ -9807,7 +9815,14 @@ governance_cycles:
   change_id: trading-2542c-architecture-latest-authority-fix-20260824-v1
   event_count: 5
   production_effect: none
-governance_cycle_count: 228
+- cycle_id: arch-005-s5-cycle-229
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1
+  change_id: DEVX-009-registration-20260824-v1
+  event_count: 1
+  production_effect: none
+governance_cycle_count: 229
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -9821,4 +9836,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: cc1281d7197da034e9c9f371979f03a88801186029bf94d0933e42df99662159
+index_checksum: 33ed15335a558087920d5c20e2530b062a46e7767a6af822f36b3754fa0d9a65
