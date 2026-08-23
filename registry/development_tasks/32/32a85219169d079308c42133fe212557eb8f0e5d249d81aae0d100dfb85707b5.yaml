@@ -1,0 +1,85 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2544_CONDITIONAL_SOURCE_VALUE_AUDIT_SERIAL_CONTRACT_AND_FEASIBILITY_V1
+  task_id_sha256: 32a85219169d079308c42133fe212557eb8f0e5d249d81aae0d100dfb85707b5
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2544_CONDITIONAL_SOURCE_VALUE_AUDIT_SERIAL_CONTRACT_AND_FEASIBILITY_V1
+  title: null
+  domain: Strategy research governance / contextual data-source information-value
+    audit
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Project Owner：决定是否启动 S0 serial contract；Codex 仅在新授权后推进
+  requirement_refs:
+  - docs/requirements/TRADING-2544_Conditional_Source_Value_Audit_Serial_Contract_And_Feasibility_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 当前仅记录方向；启动前需 review docs/requirements/TRADING-2544_Conditional_Source_Value_Audit_Serial_Contract_And_Feasibility_V1.md，并冻结
+    estimand、context、target/horizon、OOF split、DQ/PIT、capacity gate 与 conclusion taxonomy；未授权前不采数、不训练、不回测。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Reviewed S0 contract；可审计 source/provider/feature/PIT lineage；M0/M1 outer-fold
+      OOF full/drop/add/group/pairwise 评估；只有 capacity gate 通过才允许 small gated MLP challenger；输出区分
+      predictive、tail-risk、provider reliability、decision utility，并保持 research-only。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2544_CONDITIONAL_SOURCE_VALUE_AUDIT_SERIAL_CONTRACT_AND_FEASIBILITY_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-23T23:26:36.2948586+09:00'
+  actor: codex
+  change_id: TRADING-2544-direction-record-20260823-v1
+  lane_id: null
+  base_commit: 5ae2e9752af5d649d4590dee13c03517ace7c19d
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    legacy_projection:
+    - TRADING-2544_CONDITIONAL_SOURCE_VALUE_AUDIT_SERIAL_CONTRACT_AND_FEASIBILITY_V1
+    - Strategy research governance / contextual data-source information-value audit
+    - P1
+    - PROPOSED
+    - Project Owner：决定是否启动 S0 serial contract；Codex 仅在新授权后推进
+    - 当前仅记录方向；启动前需 review docs/requirements/TRADING-2544_Conditional_Source_Value_Audit_Serial_Contract_And_Feasibility_V1.md，并冻结
+      estimand、context、target/horizon、OOF split、DQ/PIT、capacity gate 与 conclusion
+      taxonomy；未授权前不采数、不训练、不回测。
+    - Reviewed S0 contract；可审计 source/provider/feature/PIT lineage；M0/M1 outer-fold
+      OOF full/drop/add/group/pairwise 评估；只有 capacity gate 通过才允许 small gated MLP challenger；输出区分
+      predictive、tail-risk、provider reliability、decision utility，并保持 research-only。
+    - 2026-08-23：Owner 仅要求记录该方向，状态 PROPOSED。Web Pro advisory 建议先 serial contract，再
+      M0/M1，M2 仅作 capacity-gated challenger；attention/gate weight 不作为价值证据。production_effect=none、broker_action=none、external_research_run=none。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2544-direction-record-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7a25a5d7f293d38dbbca2c63bb038d23
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2544_CONDITIONAL_SOURCE_VALUE_AUDIT_SERIAL_CONTRACT_AND_FEASIBILITY_V1
+  - Strategy research governance / contextual data-source information-value audit
+  - P1
+  - PROPOSED
+  - Project Owner：决定是否启动 S0 serial contract；Codex 仅在新授权后推进
+  - 当前仅记录方向；启动前需 review docs/requirements/TRADING-2544_Conditional_Source_Value_Audit_Serial_Contract_And_Feasibility_V1.md，并冻结
+    estimand、context、target/horizon、OOF split、DQ/PIT、capacity gate 与 conclusion taxonomy；未授权前不采数、不训练、不回测。
+  - Reviewed S0 contract；可审计 source/provider/feature/PIT lineage；M0/M1 outer-fold
+    OOF full/drop/add/group/pairwise 评估；只有 capacity gate 通过才允许 small gated MLP challenger；输出区分
+    predictive、tail-risk、provider reliability、decision utility，并保持 research-only。
+  - 2026-08-23：Owner 仅要求记录该方向，状态 PROPOSED。Web Pro advisory 建议先 serial contract，再 M0/M1，M2
+    仅作 capacity-gated challenger；attention/gate weight 不作为价值证据。production_effect=none、broker_action=none、external_research_run=none。
+  docs_links:
+  - docs/requirements/TRADING-2544_Conditional_Source_Value_Audit_Serial_Contract_And_Feasibility_V1.md
+  terminal: false
+  canonical_row_sha256: 4e4d0d7f609640ecdfd4c60333fc05e59cdcfd9058c3ac6c99f63947922943e9
+last_event_id: task-event-7a25a5d7f293d38dbbca2c63bb038d23
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: b3793e10c7944737bd9b4acd2f4e1f2d612ed47994f37182256fb71ff837aa93
