@@ -5,6 +5,7 @@ import json
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from enum import StrEnum
 from typing import ClassVar
 
@@ -144,6 +145,11 @@ class PageTaskCoverage:
     task_id: str
     requirement_path: str
     requirement_sha256: str
+    task_fragment_path: str
+    task_fragment_sha256: str
+    task_event_id: str
+    task_event_at: str
+    task_event_time_basis: str
     task_status: str
     coverage: str
     reader_summary_zh: str
@@ -159,6 +165,30 @@ class PageTaskCoverage:
             raise PageEffectivenessContractError(
                 f"PAGE_EFFECTIVENESS_REQUIREMENT_SHA_INVALID:{self.task_id}"
             )
+        _portable_path(self.task_fragment_path, "coverage.task_fragment_path")
+        if not self.task_fragment_path.startswith("registry/development_tasks/"):
+            raise PageEffectivenessContractError(
+                f"PAGE_EFFECTIVENESS_TASK_FRAGMENT_PATH_INVALID:{self.task_id}"
+            )
+        if not _SHA256.fullmatch(self.task_fragment_sha256):
+            raise PageEffectivenessContractError(
+                f"PAGE_EFFECTIVENESS_TASK_FRAGMENT_SHA_INVALID:{self.task_id}"
+            )
+        _required(self.task_event_id, "coverage.task_event_id")
+        try:
+            event_at = datetime.fromisoformat(self.task_event_at.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise PageEffectivenessContractError(
+                f"PAGE_EFFECTIVENESS_TASK_EVENT_AT_INVALID:{self.task_id}"
+            ) from exc
+        if event_at.tzinfo is None or event_at.utcoffset() is None:
+            raise PageEffectivenessContractError(
+                f"PAGE_EFFECTIVENESS_TASK_EVENT_AT_TIMEZONE_REQUIRED:{self.task_id}"
+            )
+        if self.task_event_time_basis not in {"EVENT_OCCURRED_AT", "EVENT_BASE_COMMIT_AT"}:
+            raise PageEffectivenessContractError(
+                f"PAGE_EFFECTIVENESS_TASK_EVENT_TIME_BASIS_INVALID:{self.task_id}"
+            )
         for field in ("task_status", "coverage", "reader_summary_zh"):
             _required(str(getattr(self, field)), f"coverage.{field}")
 
@@ -167,6 +197,11 @@ class PageTaskCoverage:
             "task_id": self.task_id,
             "requirement_path": self.requirement_path,
             "requirement_sha256": self.requirement_sha256,
+            "task_fragment_path": self.task_fragment_path,
+            "task_fragment_sha256": self.task_fragment_sha256,
+            "task_event_id": self.task_event_id,
+            "task_event_at": self.task_event_at,
+            "task_event_time_basis": self.task_event_time_basis,
             "task_status": self.task_status,
             "coverage": self.coverage,
             "reader_summary_zh": self.reader_summary_zh,
@@ -178,6 +213,11 @@ class PageTaskCoverage:
             "task_id",
             "requirement_path",
             "requirement_sha256",
+            "task_fragment_path",
+            "task_fragment_sha256",
+            "task_event_id",
+            "task_event_at",
+            "task_event_time_basis",
             "task_status",
             "coverage",
             "reader_summary_zh",
@@ -272,7 +312,7 @@ class PageAcceptanceRecord:
 
 @dataclass(frozen=True)
 class StrategyResearchPageEffectivenessManifest:
-    schema_version: ClassVar[str] = "strategy_research_page_effectiveness.v2"
+    schema_version: ClassVar[str] = "strategy_research_page_effectiveness.v3"
 
     page_id: str
     repository_commit: str

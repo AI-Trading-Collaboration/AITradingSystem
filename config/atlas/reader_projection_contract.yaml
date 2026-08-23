@@ -153,7 +153,7 @@ source_binding:
   exact_identity_fields: [source_commit, contract_sha256, html_sha256, manifest_sha256]
   canonical_serialization: UTF8_SORTED_KEY_JSON_V1
 interfaces:
-  state_projection: reader_state_projection.v1
+  state_projection: reader_state_projection.v2
   date_change_projection: reader_date_change_projection.v1
   accessibility_validation: reader_accessibility_validation.v1
   remediation_handoff: reader_projection_remediation_handoff.v1

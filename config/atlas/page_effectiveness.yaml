@@ -1,7 +1,7 @@
 schema_version: atlas_page_effectiveness_policy.v1
 policy_id: atlas_strategy_research_page_effectiveness_v1
-policy_version: 2.0.0
-status: REVIEWED_PAGE_IDENTITY_CONTRACT_V2
+policy_version: 3.0.0
+status: REVIEWED_LIVE_SNAPSHOT_IDENTITY_CONTRACT_V3
 owner: Atlas page engineering owner
 primary_research_start: '2021-02-22'
 canonical_page_path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html
@@ -15,6 +15,7 @@ reader_questions:
   - NEXT_OWNER_AND_ACTION
   - INVESTMENT_ORDER_ENGINE_AUTHORITY
 relevant_source_paths:
+  - config/atlas/live_snapshot.yaml
   - config/atlas/page_effectiveness.yaml
   - config/atlas/reader_comprehension_protocol.yaml
   - config/atlas/reader_profile.yaml
@@ -25,14 +26,19 @@ relevant_source_paths:
   - config/atlas/qqq_options_projection.yaml
   - config/atlas/status_explanation_authority.yaml
   - config/atlas/work_progress_explanation.yaml
+  - config/atlas/source_registry.yaml
+  - inputs/architecture/arch_005_task_registry_index.yaml
   - inputs/research/qqq_options/trading_2533_session_finalization_dq_pit_evidence_admission_v1/dq_pit_evidence_admission.json
   - src/ai_trading_system/atlas/cited_query_renderer.py
   - src/ai_trading_system/atlas/historical_canonical_projection.py
+  - src/ai_trading_system/atlas/live_snapshot.py
   - src/ai_trading_system/atlas/page_effectiveness.py
   - src/ai_trading_system/atlas/qqq_options_projection.py
   - src/ai_trading_system/atlas/reader_accessibility_validation.py
   - src/ai_trading_system/atlas/reader_comprehension_protocol.py
   - src/ai_trading_system/atlas/reader_state_projection.py
+  - src/ai_trading_system/atlas/snapshot_builder.py
+  - src/ai_trading_system/atlas/snapshot_diff.py
   - src/ai_trading_system/atlas/reader_terminology_projection.py
   - src/ai_trading_system/atlas/rendered_term_inventory.py
   - src/ai_trading_system/atlas/status_explanation_projection.py
@@ -44,6 +50,7 @@ relevant_source_paths:
   - src/ai_trading_system/contracts/strategy_research_reader_terminology.py
   - src/ai_trading_system/contracts/strategy_research_status_explanation.py
   - src/ai_trading_system/contracts/strategy_research_work_progress.py
+  - scripts/render_atlas_strategy_research_page.py
 task_sources:
   - task_id: TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1
     requirement_path: docs/requirements/TRADING-2481_QQQ_Options_Shared_Schema_Policy_Freeze_V1.md
@@ -305,6 +312,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md
     coverage: DISCLOSED_CANONICAL_DQ_PIT_SERIAL_CONTRACT_DRAFT_OWNER_AND_INDEPENDENT_REVIEW_REQUIRED
     reader_summary_zh: 2542B 已把 CANONICAL_DQ_PIT 的 quote-age UTC clock、midpoint relative spread、exact source date、prior-session OI、PIT availability、八类 identity、contributing contract/session/window aggregation 与 INVALID>FAIL>INSUFFICIENT>PASS 终态写成 strict canonical serial contract 和 pure evaluator。120s、0.20、OI=10、volume=1 仍只是 OWNER_INTENT_ONLY_NOT_EXECUTABLE_AUTHORITY；synthetic tests 可核验边界，但真实观测在 Owner exact approval 与 independent review 前只能返回 AUTHORITY_UNAVAILABLE/INSUFFICIENT，不能 PASS。本波未读取 cache/raw rows，未运行 DQ/provider/backtest/Cloud，production/broker effect=none。
+  - task_id: TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1
+    requirement_path: docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md
+    coverage: INTEGRATING_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR
+    reader_summary_zh: 2543 正在把 Atlas canonical 页面从 08-02 historical/synthetic 核心快照迁移到 task-event-bound live snapshot；该页面工程修复不改变 2542 的 BLOCKED_OWNER_REVIEW、DQ、经验研究、回测、投资结论或交易边界。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

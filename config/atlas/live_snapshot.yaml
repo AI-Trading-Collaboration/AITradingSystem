@@ -1,0 +1,27 @@
+schema_version: atlas_live_snapshot_policy.v1
+policy_id: atlas_live_canonical_snapshot_v1
+policy_version: 1.0.0
+status: REVIEWED_FAIL_CLOSED_LIVE_PROJECTION
+owner: Atlas strategy research publishing coordinator
+historical_source_registry_path: config/atlas/source_registry.yaml
+page_effectiveness_policy_path: config/atlas/page_effectiveness.yaml
+classified_through_task_id: TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1
+current_mainline_task_id: TRADING-2542B_GROWTH_ACTION_VALUE_CANONICAL_DQ_PIT_SERIAL_CONTRACT_V1
+largest_blocker_task_id: TRADING-2542B_GROWTH_ACTION_VALUE_CANONICAL_DQ_PIT_SERIAL_CONTRACT_V1
+next_legal_action_task_id: TRADING-2542B_GROWTH_ACTION_VALUE_CANONICAL_DQ_PIT_SERIAL_CONTRACT_V1
+status_object_zh: 策略增长主线 canonical DQ/PIT 串行合同状态
+evidence_evaluated_at: null
+task_status_mapping:
+  DONE: PASS
+  BASELINE_DONE: LIMITED
+  IN_PROGRESS: RUNNING
+  VALIDATING: RUNNING
+  BLOCKED_EXTERNAL: BLOCKED
+  BLOCKED_OWNER_INPUT: BLOCKED
+safety:
+  primary_research_start: '2021-02-22'
+  historical_snapshot_role: LEGACY_COMPARISON_EVIDENCE
+  live_task_records_are_investment_evidence: false
+  investment_conclusion_generated: false
+  production_effect: none
+  broker_action: none

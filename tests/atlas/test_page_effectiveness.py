@@ -1,15 +1,20 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import replace
+from functools import lru_cache
 from pathlib import Path
 
 import pytest
 
+from ai_trading_system.atlas.cited_query_renderer import build_cited_query_showcase
+from ai_trading_system.atlas.live_snapshot import build_live_snapshot_bundle
 from ai_trading_system.atlas.page_effectiveness import (
     PageEffectivenessError,
     build_page_effectiveness_manifest,
     load_page_effectiveness_policy,
+    repository_head,
     validate_page_effectiveness_manifest,
 )
 from ai_trading_system.contracts.strategy_research_page_effectiveness import (
@@ -25,24 +30,49 @@ from ai_trading_system.contracts.strategy_research_page_effectiveness import (
 
 ROOT = Path(__file__).resolve().parents[2]
 PAGE_LOCATOR = "outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html"
+PAGE_PREFIX = "outputs/atlas/strategy_research_cited_query/trading_2470_v1"
+
+
+@lru_cache(maxsize=1)
+def _live_sidecar_payloads() -> dict[str, bytes]:
+    head = repository_head(ROOT)
+    bundle = build_live_snapshot_bundle(repository_root=ROOT, exact_commit=head)
+    showcase = build_cited_query_showcase(
+        target_ids=bundle.target_ids,
+        snapshot_payload=bundle.current_snapshot.to_dict(),
+        before_payload=bundle.comparison_snapshot.to_dict(),
+        after_payload=bundle.current_snapshot.to_dict(),
+        diff_payload=bundle.current_diff.to_dict(),
+        repository_root=ROOT,
+    )
+    return {
+        "comparison_snapshot.json": bundle.comparison_snapshot.canonical_json_bytes(),
+        "current_snapshot.json": bundle.current_snapshot.canonical_json_bytes(),
+        "current_diff.json": bundle.current_diff.canonical_json_bytes(),
+        "reader_state.json": showcase.reader_state.canonical_bytes,
+    }
 
 
 def _rendered(
     payload: bytes = b"<!doctype html><title>Atlas</title>\n",
 ) -> tuple[tuple[PageArtifactIdentity, ...], dict[str, bytes]]:
-    identity = PageArtifactIdentity(
-        role="ATLAS_PAGE_INDEX_HTML",
-        locator=PAGE_LOCATOR,
-        sha256=hashlib.sha256(payload).hexdigest(),
-        byte_count=len(payload),
+    payloads = {"index.html": payload, **_live_sidecar_payloads()}
+    identities = tuple(
+        PageArtifactIdentity(
+            role="ATLAS_PAGE_" + name.upper().replace(".", "_"),
+            locator=f"{PAGE_PREFIX}/{name}",
+            sha256=hashlib.sha256(raw).hexdigest(),
+            byte_count=len(raw),
+        )
+        for name, raw in payloads.items()
     )
-    return (identity,), {"index.html": payload}
+    return identities, payloads
 
 
 def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 65
+    assert len(policy.task_sources) == 66
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
@@ -50,6 +80,7 @@ def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None
         *[f"TRADING-{number}" for number in range(2524, 2543)],
         "TRADING-2542A",
         "TRADING-2542B",
+        "TRADING-2543",
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -74,8 +105,8 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
     assert (
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
-    assert manifest.schema_version == "strategy_research_page_effectiveness.v2"
-    assert len(manifest.task_coverage) == 65
+    assert manifest.schema_version == "strategy_research_page_effectiveness.v3"
+    assert len(manifest.task_coverage) == 66
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
@@ -83,6 +114,7 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         *[f"TRADING-{number}" for number in range(2524, 2543)],
         "TRADING-2542A",
         "TRADING-2542B",
+        "TRADING-2543",
     ]
     coverage_by_task = {
         item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
@@ -200,7 +232,14 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "DISCLOSED_CANONICAL_DQ_PIT_SERIAL_CONTRACT_DRAFT_"
         "OWNER_AND_INDEPENDENT_REVIEW_REQUIRED"
     )
-    assert len(manifest.source_artifacts) == 29
+    assert coverage_by_task["TRADING-2543"] == (
+        "INTEGRATING_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR"
+    )
+    assert len(manifest.source_artifacts) == len(
+        load_page_effectiveness_policy(repository_root=ROOT).relevant_source_paths
+    )
+    assert all(item.task_event_id for item in manifest.task_coverage)
+    assert all(item.task_fragment_sha256 for item in manifest.task_coverage)
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)
     assert [item.status for item in manifest.acceptance] == [
         PageAcceptanceStatus.NOT_EXECUTED,
@@ -405,6 +444,38 @@ def test_validation_passes_exact_payload_and_marks_source_drift_stale() -> None:
     assert stale_validation.status == "FAIL"
     assert stale_validation.freshness_status is PageFreshnessStatus.STALE_REBUILD_REQUIRED
     assert "SEMANTIC_SOURCE_DRIFT" in stale_validation.errors
+
+
+def test_validation_rejects_live_snapshot_and_reader_date_substitution() -> None:
+    rendered, payloads = _rendered()
+    manifest = build_page_effectiveness_manifest(
+        repository_root=ROOT,
+        rendered_artifacts=rendered,
+    )
+    reader_state = json.loads(payloads["reader_state.json"])
+    reader_state["dates"]["evidence_evaluated_at"] = reader_state["dates"][
+        "research_state_as_of"
+    ]
+    tampered = {
+        **payloads,
+        "reader_state.json": (
+            json.dumps(reader_state, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            + "\n"
+        ).encode("utf-8"),
+        "current_snapshot.json": payloads["current_snapshot.json"].replace(
+            b'"title":"', b'"title":"tampered ', 1
+        ),
+    }
+
+    validation = validate_page_effectiveness_manifest(
+        repository_root=ROOT,
+        manifest=manifest,
+        rendered_payloads=tampered,
+    )
+
+    assert validation.status == "FAIL"
+    assert any("reader_state.json" in item for item in validation.errors)
+    assert any("current_snapshot.json" in item for item in validation.errors)
 
 
 def test_unknown_or_invalid_policy_fails_closed(tmp_path: Path) -> None:

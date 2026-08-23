@@ -18,6 +18,11 @@ from ai_trading_system.atlas.cited_query_validation import (
     load_validated_snapshot_payload,
     validate_serialized_cited_query_response,
 )
+from ai_trading_system.atlas.live_snapshot import (
+    load_live_snapshot_policy,
+    reader_safe_task_summary,
+    repository_commit_time,
+)
 from ai_trading_system.atlas.page_effectiveness import (
     build_page_effectiveness_manifest,
     validate_page_effectiveness_manifest,
@@ -173,6 +178,7 @@ class AtlasCitedQueryRenderedArtifact:
 
 @dataclass(frozen=True)
 class AtlasCitedQueryShowcase:
+    repository_root: Path
     responses: tuple[StrategyResearchCitedQueryResponse, ...]
     validations: tuple[CitedQueryValidationResult, ...]
     snapshot_payload: Mapping[str, object]
@@ -237,6 +243,16 @@ def _task_coverage(
     return matches[0]
 
 
+def _task_coverage_by_id(
+    manifest: StrategyResearchPageEffectivenessManifest,
+    task_id: str,
+) -> PageTaskCoverage:
+    matches = tuple(item for item in manifest.task_coverage if item.task_id == task_id)
+    if len(matches) != 1:
+        raise ValueError(f"ATLAS_READER_TASK_COVERAGE_ID_INVALID:{task_id}:{len(matches)}")
+    return matches[0]
+
+
 def _coverage_source(item: PageTaskCoverage) -> _ReaderCausalSource:
     return _ReaderCausalSource(
         source_ref_id=item.task_id,
@@ -249,15 +265,22 @@ def _build_reader_state(
     *,
     manifest: StrategyResearchPageEffectivenessManifest,
     responses: tuple[StrategyResearchCitedQueryResponse, ...],
-    snapshot_generated_at: str,
+    research_state_as_of: str,
+    evidence_evaluated_at: str | None,
+    page_source_commit_at: str,
+    status_object_zh: str,
+    current_mainline_task_id: str,
+    largest_blocker_task_id: str,
+    next_legal_action_task_id: str,
+    task_status_mapping: Mapping[str, str],
     before_snapshot_id: str,
     before_generated_at: str,
     has_changes: bool,
     policy_root: Path,
 ) -> ReaderStateProjection:
-    readiness = _task_coverage(manifest, "2515")
-    evidence = _task_coverage(manifest, "2522")
-    next_step = _task_coverage(manifest, "2528")
+    mainline = _task_coverage_by_id(manifest, current_mainline_task_id)
+    blocker = _task_coverage_by_id(manifest, largest_blocker_task_id)
+    next_step = _task_coverage_by_id(manifest, next_legal_action_task_id)
     change_response = next(
         item
         for item in responses
@@ -270,18 +293,18 @@ def _build_reader_state(
     ).strip()
     if not change_summary:
         change_summary = "当前来源没有提供可安全展示的变化说明。"
-    citation_dates = tuple(
-        citation.as_of.isoformat() for response in responses for citation in response.citations
-    )
+    raw_status = task_status_mapping.get(mainline.task_status)
+    if raw_status is None:
+        raise ValueError(f"ATLAS_READER_TASK_STATUS_UNMAPPED:{mainline.task_status}")
     return project_reader_state(
         policy=load_reader_state_semantics(repository_root=policy_root),
-        status_object_zh="策略研究重新开放状态",
-        raw_status="KEEP_CLOSED",
-        reason_zh=readiness.reader_summary_zh,
-        data_as_of=max(citation_dates) if citation_dates else None,
-        evidence_evaluated_at=snapshot_generated_at,
-        page_generated_at=snapshot_generated_at,
-        next_legal_action_zh=next_step.reader_summary_zh,
+        status_object_zh=status_object_zh,
+        raw_status=raw_status,
+        reason_zh=reader_safe_task_summary(blocker.reader_summary_zh),
+        research_state_as_of=research_state_as_of,
+        evidence_evaluated_at=evidence_evaluated_at,
+        page_source_commit_at=page_source_commit_at,
+        next_legal_action_zh=reader_safe_task_summary(next_step.reader_summary_zh),
         prohibited_inference_zh=(
             "不能把工程校验、页面可读或一次外部运行解释为策略有效、收益稳健或风险可接受。"
         ),
@@ -289,10 +312,14 @@ def _build_reader_state(
         comparison_base_id=before_snapshot_id,
         comparison_base_date=before_generated_at,
         change_explanation_zh=change_summary,
-        source_refs=(
-            readiness.requirement_path,
-            evidence.requirement_path,
-            next_step.requirement_path,
+        source_refs=tuple(
+            dict.fromkeys(
+                (
+                    mainline.requirement_path,
+                    blocker.requirement_path,
+                    next_step.requirement_path,
+                )
+            )
         ),
     )
 
@@ -401,6 +428,14 @@ def build_cited_query_showcase(
         if repository_root is None
         else repository_root.resolve()
     )
+    source_commits = {
+        str(item.get("exact_commit", "")) for item in snapshot_payload.get("sources", [])
+        if isinstance(item, Mapping)
+    }
+    if len(source_commits) != 1:
+        raise ValueError("ATLAS_CITED_QUERY_SOURCE_COMMIT_SET_INVALID")
+    source_snapshot_commit = next(iter(source_commits))
+    live_policy = load_live_snapshot_policy(repository_root=root)
     explanation_policy = load_status_explanation_authority_policy(repository_root=root)
     status_explanations = project_status_explanations(
         snapshot=snapshot,
@@ -450,6 +485,7 @@ def build_cited_query_showcase(
     )
     page_effectiveness = build_page_effectiveness_manifest(
         repository_root=root,
+        source_snapshot_commit=source_snapshot_commit,
         engineering_status=page_engineering_status,
         engineering_evidence_refs=page_engineering_evidence_refs,
         owner_visual_review=page_owner_visual_review,
@@ -458,13 +494,23 @@ def build_cited_query_showcase(
     reader_state = _build_reader_state(
         manifest=page_effectiveness,
         responses=ordered,
-        snapshot_generated_at=str(snapshot_payload["generated_at"]),
+        research_state_as_of=str(snapshot_payload["generated_at"]),
+        evidence_evaluated_at=live_policy.evidence_evaluated_at,
+        page_source_commit_at=repository_commit_time(
+            repository_root=root, exact_commit=source_snapshot_commit
+        ),
+        status_object_zh=live_policy.status_object_zh,
+        current_mainline_task_id=live_policy.current_mainline_task_id,
+        largest_blocker_task_id=live_policy.largest_blocker_task_id,
+        next_legal_action_task_id=live_policy.next_legal_action_task_id,
+        task_status_mapping=live_policy.task_status_mapping,
         before_snapshot_id=str(before_payload["snapshot_id"]),
         before_generated_at=str(before_payload["generated_at"]),
         has_changes=bool(diff_payload["changes"]),
         policy_root=root,
     )
     return AtlasCitedQueryShowcase(
+        repository_root=root,
         responses=ordered,
         validations=tuple(validations),
         snapshot_payload=snapshot_payload,
@@ -2287,7 +2333,7 @@ def _render_trust_strip(showcase: AtlasCitedQueryShowcase) -> str:
     <section class="trust-strip" data-reader-section="TRUST_STRIP" data-reader-card="trust-strip" data-page-freshness="{escape(manifest.freshness_status.value)}" data-source-commit="{escape(manifest.repository_commit)}">
       <div class="trust-grid" aria-label="页面身份与安全边界">
         <p data-always-visible="source_commit">代码版本：已锁定，完整值可在页末核对。</p>
-        <p><span data-always-visible="evidence_date">数据截至：{escape(state.dates.data_as_of or "未知")}</span><span data-always-visible="page_date">页面生成：{escape(state.dates.page_generated_at)}</span></p>
+        <p><span data-always-visible="evidence_date">研究状态截至：{escape(state.dates.research_state_as_of)}</span><span data-always-visible="page_date">页面来源 commit 时间：{escape(state.dates.page_source_commit_at)}</span></p>
         <p><span data-always-visible="freshness">页面状态：{escape(_PAGE_FRESHNESS_LABELS[manifest.freshness_status])}</span><span data-always-visible="engineering_validation">工程检查：{escape(_PAGE_ACCEPTANCE_LABELS[acceptance[PageAcceptanceTrack.ENGINEERING_VALIDATION].status])}</span></p>
         <p><span data-always-visible="owner_visual_review">视觉检查：{escape(_PAGE_ACCEPTANCE_LABELS[acceptance[PageAcceptanceTrack.OWNER_VISUAL_REVIEW].status])}</span><span data-always-visible="reader_comprehension_review">理解检查：{escape(_PAGE_ACCEPTANCE_LABELS[acceptance[PageAcceptanceTrack.READER_COMPREHENSION_REVIEW].status])}</span></p>
         <p class="trust-grid-boundary"><span data-always-visible="strategy_conclusion_pass_count">策略结论：尚未形成</span><span data-always-visible="production_effect">生产动作：无</span><span data-always-visible="broker_action">交易动作：无</span></p>
@@ -2457,9 +2503,9 @@ def _render_change_summary(showcase: AtlasCitedQueryShowcase) -> str:
       <p class="change-state" data-change-kind="{escape(state.change.change_kind.value)}">{escape(_CHANGE_LABELS[state.change.change_kind])}</p>
       <p data-always-visible="change_summary">{escape(project_reader_text(text=state.change.explanation_zh, policy=showcase.reader_terminology))}</p>
       <dl class="date-context">
-        <div><dt>数据截至</dt><dd>{escape(state.dates.data_as_of or "未知")}</dd></div>
+        <div><dt>研究状态截至</dt><dd>{escape(state.dates.research_state_as_of)}</dd></div>
         <div><dt>证据评估</dt><dd>{escape(state.dates.evidence_evaluated_at or "未知")}</dd></div>
-        <div><dt>页面生成</dt><dd>{escape(state.dates.page_generated_at)}</dd></div>
+        <div><dt>页面来源 commit 时间</dt><dd>{escape(state.dates.page_source_commit_at)}</dd></div>
         <div><dt>比较基准日期</dt><dd>{escape(state.change.comparison_base_date or "不适用")}</dd></div>
       </dl>
       <details data-reader-layer="audit"><summary>查看比较基准身份</summary><code>{escape(state.change.comparison_base_id or "none")}</code></details>
@@ -3404,6 +3450,9 @@ def write_cited_query_artifacts(
         policy=showcase.reader_terminology,
     )
     payloads = {
+        "comparison_snapshot.json": showcase.before_payload,
+        "current_diff.json": showcase.diff_payload,
+        "current_snapshot.json": showcase.snapshot_payload,
         "index.html": html_bytes,
         "qqq_options_projection.json": showcase.qqq_options_projection.canonical_bytes,
         "qqq_options_projection_validation.json": (
@@ -3419,6 +3468,7 @@ def write_cited_query_artifacts(
             )
             + "\n"
         ).encode("utf-8"),
+        "reader_state.json": showcase.reader_state.canonical_bytes,
         "reader_terminology_inventory.json": reader_terminology_inventory.canonical_bytes,
         "status_explanation_validation.json": status_explanation_validation_json_bytes(
             showcase.status_explanation_validation
@@ -3429,6 +3479,14 @@ def write_cited_query_artifacts(
             showcase.work_progress_validation
         ),
         "work_progress_explanations.json": showcase.work_progress.canonical_bytes,
+    }
+    payloads = {
+        name: (
+            (json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+            if isinstance(payload, Mapping)
+            else payload
+        )
+        for name, payload in payloads.items()
     }
     artifacts: list[AtlasCitedQueryRenderedArtifact] = []
     for name, payload in payloads.items():
@@ -3452,7 +3510,7 @@ def write_cited_query_artifacts(
     )
     preliminary = showcase.page_effectiveness
     manifest = build_page_effectiveness_manifest(
-        repository_root=Path(__file__).resolve().parents[3],
+        repository_root=showcase.repository_root,
         repository_commit=preliminary.repository_commit,
         source_snapshot_commit=preliminary.source_snapshot_commit,
         rendered_artifacts=rendered_identities,
@@ -3462,7 +3520,7 @@ def write_cited_query_artifacts(
         reader_comprehension_review=preliminary.acceptance[2],
     )
     validation = validate_page_effectiveness_manifest(
-        repository_root=Path(__file__).resolve().parents[3],
+        repository_root=showcase.repository_root,
         manifest=manifest,
         current_repository_commit=preliminary.repository_commit,
         rendered_payloads=payloads,

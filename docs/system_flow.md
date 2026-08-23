@@ -196,12 +196,14 @@ evidence、policy、external authority、strategy conclusion 五层状态，以�
 contract、task lifecycle、DQ/PIT、投资阈值或结论，也不执行外部平台、production 或 broker 动作。
 
 TRADING-2505 在现有 Citation-first renderer 之后增加页面有效性闭环，而不是增加新的策略事实；
-TRADING-2523B 将其 manifest 推进为 `strategy_research_page_effectiveness.v2`。`page_effectiveness.yaml`
+TRADING-2523B 将其 manifest 推进为 `strategy_research_page_effectiveness.v2`，TRADING-2543 再将其
+推进为绑定 live snapshot/task event 的 `strategy_research_page_effectiveness.v3`。`page_effectiveness.yaml`
 显式维护经审阅的 exact task set、requirement source、projection inclusion/exclusion 与普通读者摘要；task identity
 接受 `TRADING-<number><optional suffix>_...`，按 `(number, suffix)` 确定性排序，不再依赖硬编码数量、连续
 编号范围或特殊尾号。builder 通过 ARCH-005 S5 canonical task registry 读取真实 task status，以 successor
-replay 检出 policy 未分类任务，并绑定 exact repository/source snapshot commit、policy/module/renderer/requirement
-SHA-256、最终 HTML 与 JSON artifact identity。freshness 只允许 `CURRENT / REPOSITORY_AHEAD_NO_RELEVANT_DRIFT /
+replay 检出 policy 未分类任务，并绑定 exact repository/source snapshot commit、policy/module/renderer/requirement、
+task fragment 与 last-event SHA-256/identity，以及最终 HTML 与 JSON artifact identity。freshness 只允许
+`CURRENT / REPOSITORY_AHEAD_NO_RELEVANT_DRIFT /
 STALE_REBUILD_REQUIRED / UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED`；相关 source 漂移或未知 successor
 不能降级为 warning。页面首屏先回答“主线、最大阻塞、工程能力与研究证据、不能推出什么、下一责任方、
 能否投资/下单/启动 engine”六个问题，technical commit/hash/locator 延后到审计 disclosure。
@@ -211,6 +213,19 @@ identity，自动化不得代签后两项。loopback HTTP + Playwright 在 deskt
 keyboard focus、accessibility/DOM 与 screenshot 后，browser evidence 再与 page/manifest hash 绑定。
 该闭环不改变 QQQ policy、DQ/PIT、研究窗口、投资结论或交易权限，external/production/broker action
 继续为 `none`。
+
+TRADING-2543 修复上述闭环此前仍可能把测试夹具式 08-02/08-03 snapshot 当成当前核心状态的问题。
+`live_snapshot.yaml` 显式选择 current mainline、largest blocker 与 next legal action 的 canonical task；
+`build_live_snapshot_bundle` 从 ARCH-005 canonical registry、page task policy、requirement hash、task fragment hash
+和 last-event identity 构建 current snapshot，并把 `source_registry.yaml` 的 2026-08-02 snapshot 仅保留为
+`LEGACY_COMPARISON_EVIDENCE`。正式入口 `scripts/render_atlas_strategy_research_page.py` 不导入测试 helper，
+输出 `comparison_snapshot.json / current_snapshot.json / current_diff.json / reader_state.json` 后再写 HTML 与其余
+sidecars。validator 会从同一 exact commit 独立重建三件套，任一 source registry、task event、snapshot、diff、
+semantic source 或 rendered hash 漂移都拒绝 `CURRENT`。`strategy_research_reader_state.v2` 分开保存
+`research_state_as_of`（最新相关 canonical occurred_at）、`evidence_evaluated_at`（无 admitted date 时为
+`UNKNOWN`）与 `page_source_commit_at`（exact commit metadata），禁止用 snapshot 生成时间互相代填。
+2543 只修复发布和审计链；latest-main 的当前策略主线由 2542B 的 `BLOCKED_OWNER_INPUT` 映射为 reader `BLOCKED`，
+不改变 DQ、经验研究、回测、投资结论、engine、order、production 或 broker 边界。
 
 TRADING-2506 在八阶段流程节点中新增独立的工作进展解释合同。每个节点先回答“为什么需要这一步、
 具体做什么、工程能力做到哪里、本次页面看到什么状态、对研究结论有什么影响、预期产物、完成后怎样
@@ -249,7 +264,8 @@ fail closed。原 canonical execution status 保留为第三个“本页状态�
 外部平台、production 或 broker 动作。
 
 TRADING-2523/2523A 在 reader-first renderer 与最终静态 artifact 之间增加面向读者的术语首现合同，
-并在 TRADING-2523B 已发布的 `strategy_research_page_effectiveness.v2` 页面身份契约上完成漂移纠正。
+并在 TRADING-2523B 已发布、后由 TRADING-2543 升级为
+`strategy_research_page_effectiveness.v3` 的页面身份契约上完成漂移纠正。
 `reader_profile.yaml` 冻结“理解基本投资语境、但不假定熟悉项目内部架构、状态码、QuantConnect
 transport 或 task naming”的目标读者；`reader_terminology.yaml` 对每个术语给出唯一分类、显式 alias、
 中文定义与使用理由。renderer 先投影键盘可达、非 hover-only 的术语说明，再由
@@ -264,8 +280,8 @@ DQ/PIT-admitted 策略证据；2528 已实现严格离线 per-axis 诊断合同�
 `NOT_EVALUATED`，组合根因保持 unresolved。2524--2527-A 已在同一受治理候选中形成
 可重放的读者投影链：`reader_projection_contract.v1` 冻结 `PROBLEM -> CONSTRAINT -> CHOICE -> EVIDENCE ->
 RESULT -> NEXT_STEP` 的 source-bound why-first 因果链、六问到五个 cited-query 问题的 typed mapping 与
-`READER_DEFAULT / RESEARCH_DRILLDOWN / AUDIT_STRATUM` 信息层级；`reader_state_semantics.v1` 将状态限定到
-具体对象，并并列数据、证据与页面日期、snapshot change、下一合法动作和禁止推断。renderer 按九段合同
+`READER_DEFAULT / RESEARCH_DRILLDOWN / AUDIT_STRATUM` 信息层级；`reader_state_semantics.v2` 将状态限定到
+具体对象，并并列研究状态、证据评估与页面来源 commit 日期、snapshot change、下一合法动作和禁止推断。renderer 按九段合同
 先展示为什么、问题、变化与结论边界，再由单层 research drilldown 承载八阶段流程、QQQ 投影和结果账本；
 术语首次出现提供 hover/focus/tap 共享短定义与完整定义链接，重复出现不增加 tab stop。最终 HTML 写入前
 `reader_accessibility_validation.v1` 对 DOM 顺序、标题、无嵌套 disclosure、术语描述目标和卡片预算
@@ -324,6 +340,11 @@ flowchart LR
     HADAPT --> HCAN
     HCAN --> PROJ
     HCAN --> QLEDGER
+    TASKREG --> LIVE["TRADING-2543 live canonical snapshot<br/>requirement + task fragment + last event identity"]
+    SNAP -->|"historical comparison only"| LIVE
+    LIVE --> LDIFF["Current diff<br/>08-02 comparison → live canonical state"]
+    LIVE --> XRENDER
+    LDIFF --> XRENDER
     XAUTH["TRADING-2495 explanation authority policy<br/>typed facts + explicit missing states"] --> XPROJ["Status explanation sidecar projection<br/>8 stages + exact target/status/source binding"]
     SNAP --> XPROJ
     XPROJ --> XVAL["Independent explanation validation<br/>fingerprint + lineage + anti-fabrication"]
@@ -336,9 +357,9 @@ flowchart LR
     TPROFILE["TRADING-2523 reader profile + terminology authority<br/>unique classes / explicit aliases / plain Chinese"] --> TINV["Full rendered-text inventory<br/>visible + disclosure + ARIA/title + audit raw IDs"]
     XRENDER --> TINV
     TINV --> A11Y["TRADING-2526 accessibility validation<br/>DOM order + headings + one disclosure level + term targets"]
-    A11Y --> XART["Deterministic static page + 12 JSON artifacts<br/>technical authority folded under audit disclosure"]
+    A11Y --> XART["Deterministic static page + live snapshot/diff JSON artifacts<br/>technical authority folded under audit disclosure"]
     CPROTO["TRADING-2527 comprehension protocol<br/>Owner policy slots remain PENDING"] --> REVIEWS
-    TASKREG["ARCH-005 S5 canonical task registry<br/>reviewed task set incl. 2523A/2523B + requirement refs"] --> EFF["TRADING-2505/2523B page effectiveness v2<br/>source + semantic + visual + reader layers"]
+    TASKREG["ARCH-005 S5 canonical task registry<br/>reviewed task set + requirement refs + last events"] --> EFF["TRADING-2505/2523B/2543 page effectiveness v3<br/>live source + semantic + visual + reader layers"]
     XART --> EFF
     EFF --> BVIS["Loopback HTTP + Playwright<br/>desktop / tablet / mobile / accessibility / DOM / screenshots"]
     BVIS --> REVIEWS["Three independent acceptance tracks<br/>engineering / Owner visual / reader comprehension"]

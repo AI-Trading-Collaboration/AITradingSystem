@@ -69,20 +69,20 @@ def _temporal(value: str | None, field: str) -> str | None:
 
 @dataclass(frozen=True)
 class ReaderDateContext:
-    data_as_of: str | None
+    research_state_as_of: str
     evidence_evaluated_at: str | None
-    page_generated_at: str
+    page_source_commit_at: str
 
     def __post_init__(self) -> None:
-        _temporal(self.data_as_of, "date.data_as_of")
+        _temporal(self.research_state_as_of, "date.research_state_as_of")
         _temporal(self.evidence_evaluated_at, "date.evidence_evaluated_at")
-        _temporal(self.page_generated_at, "date.page_generated_at")
+        _temporal(self.page_source_commit_at, "date.page_source_commit_at")
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "data_as_of": self.data_as_of,
+            "research_state_as_of": self.research_state_as_of,
             "evidence_evaluated_at": self.evidence_evaluated_at,
-            "page_generated_at": self.page_generated_at,
+            "page_source_commit_at": self.page_source_commit_at,
         }
 
 
@@ -116,7 +116,7 @@ class ReaderChangeContext:
 
 @dataclass(frozen=True)
 class ReaderStateProjection:
-    schema_version = "atlas_reader_state_projection.v1"
+    schema_version = "atlas_reader_state_projection.v2"
 
     status_object_zh: str
     raw_status: str

@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 137
+fragment_count: 138
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -21,7 +21,7 @@ targets:
 - target_id: artifact_catalog
   current_path: docs/artifact_catalog.md
   current_exists: true
-  current_sha256: 7bb3355d3cf895ee1a8b8b63cb47e75691f45e581aca96f78f1064482ec3aca7
+  current_sha256: 2abbc92dce73f734be367a8242804433be5bc1044a90906bac65d897dc0fcd57
   fragment_root: config/architecture/fragments/artifacts
   fragment_count: 6
   fragment_paths:
@@ -34,7 +34,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 222d093ba33c388b780b33978947909030ec867337c2d11357b8f90b9ba95308
+  current_sha256: 14427de4769e66aff6d26b8fdaed134870ab2a74f03dc812fa1eda7dba40650a
   fragment_root: config/architecture/fragments/flows
   fragment_count: 56
   fragment_paths:
@@ -163,7 +163,7 @@ fragments:
   owner: atlas_publishing_experience
   target_id: system_flow
   path: config/architecture/fragments/flows/atlas_page_effectiveness_validation.yaml
-  sha256: d4264a680ede75385e513ab4e7d7fba3138a9af2c269efbdc17998ede2d8d2f1
+  sha256: 8aeab5373148ee5a48fe2872c72ce3a369ffcceb2a4a81b124ba9d65352e09d4
   generated_source_of_truth_active: false
 - fragment_id: flow.atlas_qqq_options_projection_page
   fragment_kind: flow
@@ -536,12 +536,19 @@ fragments:
   path: config/architecture/fragments/modules/atlas_historical_canonical_projection.yaml
   sha256: c71e57d857fb67795133aef4c3bb270092fea49b0e81a44fa844811745e39cbd
   generated_source_of_truth_active: false
+- fragment_id: module.atlas_live_snapshot
+  fragment_kind: module
+  owner: atlas_publishing_experience
+  target_id: null
+  path: config/architecture/fragments/modules/atlas_live_snapshot.yaml
+  sha256: 01b9d70ff2d33d06e9520b2f93af0b3878f0e27b0f5974f72e8a249be46618e4
+  generated_source_of_truth_active: false
 - fragment_id: module.atlas_page_effectiveness
   fragment_kind: module
   owner: atlas_publishing_experience
   target_id: null
   path: config/architecture/fragments/modules/atlas_page_effectiveness.yaml
-  sha256: 037d9e620483a124d5095cb7f20394509e0dee4b502dd19c0b07381aec7069b3
+  sha256: 5b3649c96487fc966440c4df5488af2fa93cf7004121ddd049b02d984bf855ec
   generated_source_of_truth_active: false
 - fragment_id: module.atlas_qqq_options_projection
   fragment_kind: module

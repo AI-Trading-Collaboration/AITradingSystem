@@ -4,6 +4,7 @@ import json
 import re
 from dataclasses import replace
 from datetime import timedelta
+from functools import cache, lru_cache
 from html import unescape
 from pathlib import Path
 from typing import Any, cast
@@ -16,6 +17,8 @@ from ai_trading_system.atlas.cited_query_renderer import (
     render_cited_query_html,
     write_cited_query_artifacts,
 )
+from ai_trading_system.atlas.live_snapshot import build_live_snapshot_bundle
+from ai_trading_system.atlas.page_effectiveness import repository_head
 from ai_trading_system.atlas.reader_accessibility_validation import (
     validate_reader_accessibility,
 )
@@ -43,12 +46,13 @@ from ai_trading_system.contracts.strategy_research_reader_terminology import (
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
+@cache
 def _payloads(
     *, injected_summary: str = ""
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     before = build_atlas_bundle(
         repository_root=PROJECT_ROOT,
-        exact_commit="f" * 40,
+        exact_commit=repository_head(PROJECT_ROOT),
     ).snapshot
     selected_node_id = "program-strategy-research"
     after = StrategyResearchExplorerSnapshot.build(
@@ -78,6 +82,7 @@ def _payloads(
     )
 
 
+@cache
 def _showcase(
     *,
     injected_summary: str = "",
@@ -109,6 +114,22 @@ def _showcase(
         if page_engineering_status is PageAcceptanceStatus.PASS
         else (),
         page_reader_comprehension_review=page_reader_comprehension_review,
+    )
+
+
+@lru_cache(maxsize=1)
+def _live_showcase() -> AtlasCitedQueryShowcase:
+    bundle = build_live_snapshot_bundle(
+        repository_root=PROJECT_ROOT,
+        exact_commit=repository_head(PROJECT_ROOT),
+    )
+    return build_cited_query_showcase(
+        target_ids=bundle.target_ids,
+        snapshot_payload=bundle.current_snapshot.to_dict(),
+        before_payload=bundle.comparison_snapshot.to_dict(),
+        after_payload=bundle.current_snapshot.to_dict(),
+        diff_payload=bundle.current_diff.to_dict(),
+        repository_root=PROJECT_ROOT,
     )
 
 
@@ -275,7 +296,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="65"' in html
+    assert 'data-task-coverage-count="66"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html
@@ -783,15 +804,19 @@ def test_renderer_escapes_claim_content() -> None:
 
 
 def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
-    showcase = _showcase()
+    showcase = _live_showcase()
     first = write_cited_query_artifacts(showcase, tmp_path / "first")
     second = write_cited_query_artifacts(showcase, tmp_path / "second")
     assert tuple(Path(item.path).name for item in first) == (
+        "comparison_snapshot.json",
+        "current_diff.json",
+        "current_snapshot.json",
         "index.html",
         "qqq_options_projection.json",
         "qqq_options_projection_validation.json",
         "responses.json",
         "reader_accessibility_validation.json",
+        "reader_state.json",
         "reader_terminology_inventory.json",
         "status_explanation_validation.json",
         "status_explanations.json",
@@ -804,11 +829,15 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
     assert [item.sha256 for item in first] == [item.sha256 for item in second]
     assert [item.size_bytes for item in first] == [item.size_bytes for item in second]
     for name in (
+        "comparison_snapshot.json",
+        "current_diff.json",
+        "current_snapshot.json",
         "index.html",
         "qqq_options_projection.json",
         "qqq_options_projection_validation.json",
         "responses.json",
         "reader_accessibility_validation.json",
+        "reader_state.json",
         "reader_terminology_inventory.json",
         "status_explanation_validation.json",
         "status_explanations.json",
@@ -834,11 +863,12 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
     assert progress.content_sha256 == showcase.work_progress.content_sha256
     terminology_bytes = (tmp_path / "first" / "reader_terminology_inventory.json").read_bytes()
     terminology = RenderedTermInventory.from_json_bytes(terminology_bytes)
-    assert terminology.html_sha256 == first[0].sha256
+    html_identity = next(item for item in first if Path(item.path).name == "index.html")
+    assert terminology.html_sha256 == html_identity.sha256
     accessibility_payload = json.loads(
         (tmp_path / "first" / "reader_accessibility_validation.json").read_text(encoding="utf-8")
     )
-    assert accessibility_payload["html_sha256"] == first[0].sha256
+    assert accessibility_payload["html_sha256"] == html_identity.sha256
     assert accessibility_payload["status"] == "PASS"
     assert accessibility_payload["owner_visual_status"] == "PENDING_REVIEW"
     assert accessibility_payload["reader_comprehension_status"] == "PENDING_REVIEW"

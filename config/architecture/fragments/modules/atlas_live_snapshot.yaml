@@ -1,0 +1,15 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.atlas_live_snapshot
+fragment_kind: module
+owner: atlas_publishing_experience
+module_prefix: src/ai_trading_system/atlas/live_snapshot.py
+public_contracts:
+  - AtlasLiveSnapshotError
+  - AtlasLiveSnapshotPolicy
+  - AtlasLiveSnapshotBundle
+  - load_live_snapshot_policy
+  - build_live_snapshot_bundle
+  - repository_commit_time
+  - reader_safe_task_summary
+compatibility_facades: []
+deprecation_status: active_reference_architecture

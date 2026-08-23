@@ -500,7 +500,7 @@ class ReaderProjectionInterfaces:
 
     def __post_init__(self) -> None:
         expected = {
-            "state_projection": "reader_state_projection.v1",
+            "state_projection": "reader_state_projection.v2",
             "date_change_projection": "reader_date_change_projection.v1",
             "accessibility_validation": "reader_accessibility_validation.v1",
             "remediation_handoff": "reader_projection_remediation_handoff.v1",

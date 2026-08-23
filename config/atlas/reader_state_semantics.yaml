@@ -1,6 +1,6 @@
 schema_version: atlas_reader_state_semantics.v1
 policy_id: atlas_reader_state_date_change_v1
-policy_version: 1.0.0
+policy_version: 2.0.0
 status: REVIEWED_ENGINEERING_BASELINE
 owner: Atlas publishing experience coordinator
 state_mappings:
@@ -40,7 +40,7 @@ state_mappings:
   - raw_status: PENDING_REVIEW
     reader_state: NOT_EVALUATED
     reader_label_zh: 等待独立人工验收
-date_fields: [data_as_of, evidence_evaluated_at, page_generated_at]
+date_fields: [research_state_as_of, evidence_evaluated_at, page_source_commit_at]
 comparison_states: [CHANGED, UNCHANGED, UNKNOWN, NOT_COMPARABLE]
 source_binding:
   source_refs_required: true

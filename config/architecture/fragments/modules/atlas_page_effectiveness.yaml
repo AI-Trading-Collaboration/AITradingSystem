@@ -9,9 +9,11 @@ public_contracts:
   - PageEffectivenessTaskPolicy
   - PageEffectivenessValidation
   - load_page_effectiveness_policy
+  - build_page_task_coverage
   - build_page_effectiveness_manifest
   - validate_page_effectiveness_manifest
   - browser_evidence_identities
+  - unclassified_page_successors
   - write_page_effectiveness_sidecars
 compatibility_facades: []
 deprecation_status: active_reference_architecture

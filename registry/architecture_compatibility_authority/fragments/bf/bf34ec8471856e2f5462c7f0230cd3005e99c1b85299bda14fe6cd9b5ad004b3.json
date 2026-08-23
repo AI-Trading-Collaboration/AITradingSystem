@@ -11,12 +11,12 @@
     },
     "broker_action": "none",
     "consumer_contract": {
-      "current_authority_loader": "ai_trading_system.platform.architecture.compatibility_authority.load_compatibility_authority",
-      "growth_assuming_direct_consumer_count": 0,
-      "legacy_prefix_reader": "ai_trading_system.platform.architecture.compatibility_authority.load_immutable_compatibility_prefix",
-      "runtime_legacy_append_writer_count": 0
+      "consumer_count": 160,
+      "cutover_ready": false,
+      "inventory_status": "PASS",
+      "pending_owner_cutover_count": 15
     },
-    "exact_start_base": "cb437a4d4be178180f60cb3ee2d2994c1be45f94",
+    "exact_start_base": "57bec20b15a7b1d471bdb774a2966bb81f02a037",
     "generated_fragment_authority": {
       "active_task_count": 469,
       "completed_task_count": 505,
@@ -30,7 +30,48 @@
     "legacy_prefix_sha256": "253b976b2740f0097e1d8949ec8eaf3846c82809f88fdf3a47fb76fae6023842",
     "owner_decision": "owner_decision:DEVX-006C:2026-08-09:authorize_c_then_d_then_s5_serial_v1",
     "production_effect": "none",
-    "schema_version": "devx_006c_compatibility_authority_fragmentation.v1",
+    "report_catalog_flow_fragment_authority": {
+      "consumer_inventory_path": "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+      "consumer_inventory_sha256": "fbef12ce028c09208f6ef54091897e686a9ebc2d7dee7f5c789fd8d1ae6d7dc1",
+      "entry_count": 3000,
+      "fragment_count": 192,
+      "fragment_shadow_active": false,
+      "index_path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+      "index_sha256": "8dd1f2afa4ec95119a84afc4685bd585089d8283a6cdeb184ff323d9956b6b96",
+      "rollback_mode": "IGNORE_INACTIVE_SHADOW",
+      "source_of_truth": "LEGACY_MONOLITH",
+      "target_count": 3,
+      "targets": [
+        {
+          "byte_count": 1814070,
+          "coverage_percent": 100,
+          "entry_count": 1371,
+          "file_sha256": "c25f1dac0a6c2822dc88f0ae0a06b93af2a21b7004abba3dd7400df93faae1af",
+          "fragment_count": 64,
+          "path": "config/report_registry.yaml",
+          "target_id": "report_registry"
+        },
+        {
+          "byte_count": 2001882,
+          "coverage_percent": 100,
+          "entry_count": 556,
+          "file_sha256": "2abbc92dce73f734be367a8242804433be5bc1044a90906bac65d897dc0fcd57",
+          "fragment_count": 64,
+          "path": "docs/artifact_catalog.md",
+          "target_id": "artifact_catalog"
+        },
+        {
+          "byte_count": 2259526,
+          "coverage_percent": 100,
+          "entry_count": 1073,
+          "file_sha256": "14427de4769e66aff6d26b8fdaed134870ab2a74f03dc812fa1eda7dba40650a",
+          "fragment_count": 64,
+          "path": "docs/system_flow.md",
+          "target_id": "system_flow"
+        }
+      ]
+    },
+    "schema_version": "devx_006d_report_catalog_flow_lossless_fragmentation.v1",
     "sources": [
       {
         "hash_normalization": "git_eol_lf",
@@ -50,27 +91,27 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "b31eea30211f00bd3123d1e7ff4c50d08aae1bd281781ee4d5fb82030a96661d"
+        "sha256": "7265000280cb03a4c12d9a8965f4fe241a1e8bfcdba7238e5b9ea3a539ba60cc"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
-        "sha256": "f70cd2d4318a725feb192c1baebf21d4de2ba95b82e14a89fe53a11e86cabd4b"
+        "sha256": "e4f04cd3613eb02faecc736fbb5cc2680f6d5ef193c298ccfa007f9f9f4f77a2"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "747ce3ad38ca2c161c4588fa32d473b261feff635efc8adb61b6efe808afb82e"
+        "sha256": "b2da58604cd57e843ea9fea9244acee55d4336dad2cc39e7984914f78cee11f2"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "8c9465cf0b8165961244fc95e98c2741c860eac2a9a1b0a94f7a8813b6baadd5"
+        "sha256": "44266c7bd99ab29b9828ea2fe1806c8ef32bf7656f5d816999a2a8228d4e611f"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
-        "sha256": "b99d45cf8ca6914c5c0c88919e2ccba09ae8f19ec435b1f943fa55a52a8cf8a8"
+        "sha256": "04154aad7021f05cac2f6ab2550865e1d52a6b82189270c1bd54265e2f0afc29"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -135,7 +176,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004g_deprecation.py",
-        "sha256": "7a2dbeb4515f5a8c895d6e6f3213c7cf3be6518ce4edc17f11b15cd1d55cc0d0"
+        "sha256": "677c28816dd192db295af41b079d9402fdff68ad8c919e7e2a5b2c91e6456104"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -161,9 +202,64 @@
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_trading2452_architecture_contract.py",
         "sha256": "1f9655a733076eca4dbbb16034cccab31568c59da1d8e62c7d18d4f4f444640f"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+        "sha256": "378a6660109d5d3a8d704eee5cabbaba98389188a7cd0d5c2c02e34ff46b782d"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/report_registry.yaml",
+        "sha256": "c25f1dac0a6c2822dc88f0ae0a06b93af2a21b7004abba3dd7400df93faae1af"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/artifact_catalog.md",
+        "sha256": "2abbc92dce73f734be367a8242804433be5bc1044a90906bac65d897dc0fcd57"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/requirements/DEVX-006D_Report_Catalog_Flow_Lossless_Fragmentation.md",
+        "sha256": "208d99634b8249ba612603fc4acf635f645bcb443258a25bd3178a3a7f16499e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/system_flow.md",
+        "sha256": "14427de4769e66aff6d26b8fdaed134870ab2a74f03dc812fa1eda7dba40650a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+        "sha256": "8dd1f2afa4ec95119a84afc4685bd585089d8283a6cdeb184ff323d9956b6b96"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+        "sha256": "fbef12ce028c09208f6ef54091897e686a9ebc2d7dee7f5c789fd8d1ae6d7dc1"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "sha256": "53a3e5366423d97d0955a56439a2dbbee86160581346fe9d15c4bda498d6ebbf"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "scripts/architecture_report_catalog_flow_authority.py",
+        "sha256": "148a2f47786692190fa5d90f0e16447988765353e003d95adba60a928688df24"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/platform/architecture/report_catalog_flow_authority.py",
+        "sha256": "ea504e9f4f6649c2a9ad13755c35cbcf357bb542992d00d8c8213c531340872b"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "sha256": "0421d3d861695db0a72875c84f0dd7d52cae39da75a30ea1ca7816e8672c2301"
       }
     ],
-    "status": "ACTIVE",
+    "status": "INACTIVE_SHADOW",
     "superseded_live_source_paths": [
       "config/architecture/devx_006c_compatibility_authority.yaml",
       "docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md",
@@ -190,14 +286,25 @@
       "tests/test_devx_006c_compatibility_authority.py",
       "tests/test_etf_dynamic_v3_parameter_research.py",
       "tests/test_external_request_cache_revalidation_coordination.py",
-      "tests/test_trading2452_architecture_contract.py"
+      "tests/test_trading2452_architecture_contract.py",
+      "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+      "config/report_registry.yaml",
+      "docs/artifact_catalog.md",
+      "docs/requirements/DEVX-006D_Report_Catalog_Flow_Lossless_Fragmentation.md",
+      "docs/system_flow.md",
+      "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+      "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+      "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+      "scripts/architecture_report_catalog_flow_authority.py",
+      "src/ai_trading_system/platform/architecture/report_catalog_flow_authority.py",
+      "tests/test_devx_006d_report_catalog_flow_authority.py"
     ],
     "supersession": {
-      "current_hash_authority": "phase_devx_006c_compatibility_authority_fragmentation.sources",
+      "current_hash_authority": "phase_devx_006d_report_catalog_flow_lossless_fragmentation.sources",
       "historical_hashes_rewritten": false
     },
-    "task_id": "DEVX-006C_COMPATIBILITY_AUTHORITY_FRAGMENTATION"
+    "task_id": "DEVX-006D_REPORT_CATALOG_FLOW_LOSSLESS_FRAGMENTATION"
   },
-  "section_id": "phase_devx_006c_compatibility_authority_fragmentation",
-  "section_sha256": "ac82ad4b4b7f282b29d6024ef346de8444ddf268d461dfbb3ca57059c949febc"
+  "section_id": "phase_devx_006d_report_catalog_flow_lossless_fragmentation",
+  "section_sha256": "bf34ec8471856e2f5462c7f0230cd3005e99c1b85299bda14fe6cd9b5ad004b3"
 }

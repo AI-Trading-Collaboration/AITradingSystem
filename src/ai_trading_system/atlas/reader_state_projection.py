@@ -55,9 +55,9 @@ class ReaderStateSemanticsPolicy:
         if len(raw_statuses) != len(set(raw_statuses)) or not raw_statuses:
             raise ReaderStateProjectionError("READER_STATE_MAPPING_SET_INVALID")
         if self.date_fields != (
-            "data_as_of",
+            "research_state_as_of",
             "evidence_evaluated_at",
-            "page_generated_at",
+            "page_source_commit_at",
         ):
             raise ReaderStateProjectionError("READER_STATE_DATE_FIELD_SET_INVALID")
         if self.comparison_states != tuple(ReaderChangeKind):
@@ -174,9 +174,9 @@ def project_reader_state(
     status_object_zh: str,
     raw_status: str,
     reason_zh: str,
-    data_as_of: str | None,
+    research_state_as_of: str,
     evidence_evaluated_at: str | None,
-    page_generated_at: str,
+    page_source_commit_at: str,
     next_legal_action_zh: str,
     prohibited_inference_zh: str,
     change_kind: ReaderChangeKind,
@@ -196,9 +196,9 @@ def project_reader_state(
             reader_label_zh=f"{status_object_zh}：{mapping.reader_label_zh}",
             reason_zh=reason_zh,
             dates=ReaderDateContext(
-                data_as_of=data_as_of,
+                research_state_as_of=research_state_as_of,
                 evidence_evaluated_at=evidence_evaluated_at,
-                page_generated_at=page_generated_at,
+                page_source_commit_at=page_source_commit_at,
             ),
             next_legal_action_zh=next_legal_action_zh,
             prohibited_inference_zh=prohibited_inference_zh,

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import subprocess
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -282,6 +284,79 @@ def _task_status(registry: CanonicalTaskRegistry, task_id: str) -> str:
     return str(cells[3])
 
 
+def _task_fragment_record(
+    registry: CanonicalTaskRegistry, task_id: str
+) -> Mapping[str, object]:
+    records = registry.index.get("fragments")
+    if not isinstance(records, list):
+        raise PageEffectivenessError("PAGE_EFFECTIVENESS_TASK_INDEX_INVALID")
+    matches = tuple(
+        _mapping(item, "task.index_record")
+        for item in records
+        if isinstance(item, Mapping) and str(item.get("task_id", "")) == task_id
+    )
+    if len(matches) != 1:
+        raise PageEffectivenessError(
+            f"PAGE_EFFECTIVENESS_TASK_INDEX_BINDING_INVALID:{task_id}"
+        )
+    return matches[0]
+
+
+def _task_event(fragment: Mapping[str, object], task_id: str) -> Mapping[str, object]:
+    last_event_id = str(fragment.get("last_event_id", ""))
+    events = fragment.get("events")
+    if not last_event_id or not isinstance(events, list):
+        raise PageEffectivenessError(
+            f"PAGE_EFFECTIVENESS_TASK_EVENT_BINDING_INVALID:{task_id}"
+        )
+    matches = tuple(
+        _mapping(item, "task.event")
+        for item in events
+        if isinstance(item, Mapping) and str(item.get("event_id", "")) == last_event_id
+    )
+    if len(matches) != 1:
+        raise PageEffectivenessError(
+            f"PAGE_EFFECTIVENESS_TASK_EVENT_BINDING_INVALID:{task_id}"
+        )
+    return matches[0]
+
+
+def _task_event_time(
+    *, root: Path, event: Mapping[str, object], task_id: str
+) -> tuple[str, str]:
+    occurred_at = event.get("occurred_at")
+    if occurred_at is not None:
+        return str(occurred_at), "EVENT_OCCURRED_AT"
+    base_commit = str(event.get("base_commit", ""))
+    if not re.fullmatch(r"[0-9a-f]{40}", base_commit):
+        raise PageEffectivenessError(
+            f"PAGE_EFFECTIVENESS_TASK_EVENT_TIME_UNAVAILABLE:{task_id}"
+        )
+    value = _commit_time(root.as_posix(), base_commit)
+    if not value:
+        raise PageEffectivenessError(
+            f"PAGE_EFFECTIVENESS_TASK_EVENT_BASE_COMMIT_TIME_EMPTY:{task_id}"
+        )
+    return value, "EVENT_BASE_COMMIT_AT"
+
+
+@lru_cache(maxsize=512)
+def _commit_time(root: str, commit: str) -> str:
+    try:
+        result = subprocess.run(
+            ["git", "show", "-s", "--format=%cI", commit],
+            cwd=Path(root),
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.SubprocessError as exc:
+        raise PageEffectivenessError(
+            f"PAGE_EFFECTIVENESS_TASK_EVENT_BASE_COMMIT_UNAVAILABLE:{commit}"
+        ) from exc
+    return result.stdout.strip()
+
+
 def _sha_identity(root: Path, path: str, role: str) -> PageArtifactIdentity:
     selected = _portable_path(root, path, role)
     if not selected.is_file() or selected.is_symlink():
@@ -297,7 +372,7 @@ def _sha_identity(root: Path, path: str, role: str) -> PageArtifactIdentity:
     )
 
 
-def _task_coverage(
+def build_page_task_coverage(
     *, root: Path, policy: PageEffectivenessPolicy, registry: CanonicalTaskRegistry
 ) -> tuple[PageTaskCoverage, ...]:
     rows: list[PageTaskCoverage] = []
@@ -310,11 +385,27 @@ def _task_coverage(
                 f"PAGE_EFFECTIVENESS_TASK_REQUIREMENT_BINDING_INVALID:{item.task_id}"
             )
         identity = _sha_identity(root, item.requirement_path, "TASK_REQUIREMENT")
+        index_record = _task_fragment_record(registry, item.task_id)
+        fragment_path = str(index_record.get("path", ""))
+        fragment_identity = _sha_identity(root, fragment_path, "TASK_FRAGMENT")
+        if fragment_identity.sha256 != str(index_record.get("file_sha256", "")):
+            raise PageEffectivenessError(
+                f"PAGE_EFFECTIVENESS_TASK_FRAGMENT_INDEX_HASH_DRIFT:{item.task_id}"
+            )
+        event = _task_event(fragment, item.task_id)
+        event_at, event_time_basis = _task_event_time(
+            root=root, event=event, task_id=item.task_id
+        )
         rows.append(
             PageTaskCoverage(
                 task_id=item.task_id,
                 requirement_path=item.requirement_path,
                 requirement_sha256=identity.sha256,
+                task_fragment_path=fragment_path,
+                task_fragment_sha256=fragment_identity.sha256,
+                task_event_id=str(event.get("event_id", "")),
+                task_event_at=event_at,
+                task_event_time_basis=event_time_basis,
                 task_status=_task_status(registry, item.task_id),
                 coverage=item.coverage,
                 reader_summary_zh=item.reader_summary_zh,
@@ -323,7 +414,7 @@ def _task_coverage(
     return tuple(rows)
 
 
-def _unclassified_successors(
+def unclassified_page_successors(
     registry: CanonicalTaskRegistry, policy: PageEffectivenessPolicy
 ) -> tuple[str, ...]:
     covered = {item.task_id for item in policy.task_sources} | {_SELF_TASK_ID}
@@ -398,7 +489,7 @@ def build_page_effectiveness_manifest(
     registry = validate_canonical_registry(project_root=root)
     current = repository_commit or repository_head(root)
     source_commit = source_snapshot_commit or current
-    unknown = _unclassified_successors(registry, policy)
+    unknown = unclassified_page_successors(registry, policy)
     freshness = (
         PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
         if unknown
@@ -421,7 +512,7 @@ def build_page_effectiveness_manifest(
         primary_research_start=policy.primary_research_start,
         freshness_status=freshness,
         reader_questions=policy.reader_questions,
-        task_coverage=_task_coverage(root=root, policy=policy, registry=registry),
+        task_coverage=build_page_task_coverage(root=root, policy=policy, registry=registry),
         source_artifacts=sources,
         rendered_artifacts=rendered_artifacts,
         acceptance=_acceptance(
@@ -500,6 +591,13 @@ def validate_page_effectiveness_manifest(
         else:
             page = canonical_pages[0]
             checks.append("CANONICAL_HTML_IDENTITY_MATCH")
+            live_errors, live_checks = _validate_live_bundle_payloads(
+                root=root,
+                manifest=manifest,
+                rendered_payloads=rendered_payloads,
+            )
+            errors.extend(live_errors)
+            checks.extend(live_checks)
         if tuple(item.track for item in manifest.acceptance) == tuple(PageAcceptanceTrack):
             checks.append("THREE_ACCEPTANCE_TRACKS_INDEPENDENT")
         if (
@@ -549,6 +647,124 @@ def validate_page_effectiveness_manifest(
     )
 
 
+def _rendered_payload(
+    *,
+    root: Path,
+    manifest: StrategyResearchPageEffectivenessManifest,
+    basename: str,
+    rendered_payloads: Mapping[str, bytes] | None,
+) -> bytes | None:
+    matches = tuple(
+        item for item in manifest.rendered_artifacts if item.locator.rsplit("/", 1)[-1] == basename
+    )
+    if len(matches) != 1:
+        return None
+    if rendered_payloads is not None and basename in rendered_payloads:
+        return rendered_payloads[basename]
+    selected = _portable_path(root, matches[0].locator, "live_bundle_artifact")
+    return selected.read_bytes() if selected.is_file() else None
+
+
+def _validate_live_bundle_payloads(
+    *,
+    root: Path,
+    manifest: StrategyResearchPageEffectivenessManifest,
+    rendered_payloads: Mapping[str, bytes] | None,
+) -> tuple[list[str], list[str]]:
+    required = (
+        "comparison_snapshot.json",
+        "current_snapshot.json",
+        "current_diff.json",
+        "reader_state.json",
+    )
+    payloads = {
+        name: _rendered_payload(
+            root=root,
+            manifest=manifest,
+            basename=name,
+            rendered_payloads=rendered_payloads,
+        )
+        for name in required
+    }
+    missing = tuple(name for name, payload in payloads.items() if payload is None)
+    if missing:
+        return (["LIVE_SOURCE_BUNDLE_MISSING:" + ",".join(missing)], [])
+    try:
+        from ai_trading_system.atlas.live_snapshot import (
+            build_live_snapshot_bundle,
+            load_live_snapshot_policy,
+            reader_safe_task_summary,
+        )
+        from ai_trading_system.atlas.reader_state_projection import (
+            load_reader_state_semantics,
+            project_reader_state,
+        )
+        from ai_trading_system.contracts.strategy_research_reader_state import (
+            ReaderChangeKind,
+        )
+
+        expected = build_live_snapshot_bundle(
+            repository_root=root,
+            exact_commit=manifest.source_snapshot_commit,
+        )
+        expected_payloads = {
+            "comparison_snapshot.json": expected.comparison_snapshot.canonical_json_bytes(),
+            "current_snapshot.json": expected.current_snapshot.canonical_json_bytes(),
+            "current_diff.json": expected.current_diff.canonical_json_bytes(),
+        }
+        errors = [
+            "LIVE_SOURCE_BUNDLE_REPLAY_DRIFT:" + name
+            for name, expected_bytes in expected_payloads.items()
+            if payloads[name] != expected_bytes
+        ]
+        reader_state = _mapping(
+            json.loads((payloads["reader_state.json"] or b"").decode("utf-8")),
+            "reader_state",
+        )
+        live_policy = load_live_snapshot_policy(repository_root=root)
+        coverage_by_id = {item.task_id: item for item in manifest.task_coverage}
+        mainline = coverage_by_id[live_policy.current_mainline_task_id]
+        blocker = coverage_by_id[live_policy.largest_blocker_task_id]
+        next_step = coverage_by_id[live_policy.next_legal_action_task_id]
+        change = _mapping(reader_state.get("change"), "reader_state.change")
+        expected_reader_state = project_reader_state(
+            policy=load_reader_state_semantics(repository_root=root),
+            status_object_zh=live_policy.status_object_zh,
+            raw_status=live_policy.task_status_mapping[mainline.task_status],
+            reason_zh=reader_safe_task_summary(blocker.reader_summary_zh),
+            research_state_as_of=expected.research_state_as_of,
+            evidence_evaluated_at=live_policy.evidence_evaluated_at,
+            page_source_commit_at=expected.page_source_commit_at,
+            next_legal_action_zh=reader_safe_task_summary(next_step.reader_summary_zh),
+            prohibited_inference_zh=(
+                "不能把工程校验、页面可读或一次外部运行解释为策略有效、收益稳健或风险可接受。"
+            ),
+            change_kind=ReaderChangeKind.CHANGED,
+            comparison_base_id=expected.comparison_snapshot.snapshot_id,
+            comparison_base_date=expected.comparison_snapshot.generated_at.isoformat(),
+            change_explanation_zh=str(change.get("explanation_zh", "")),
+            source_refs=tuple(
+                dict.fromkeys(
+                    (
+                        mainline.requirement_path,
+                        blocker.requirement_path,
+                        next_step.requirement_path,
+                    )
+                )
+            ),
+        )
+        if dict(reader_state) != expected_reader_state.to_dict():
+            errors.append("READER_STATE_LIVE_TASK_OR_DATE_SEMANTICS_DRIFT")
+        checks = [] if errors else [
+            "LIVE_SOURCE_BUNDLE_CANONICAL_REPLAY_MATCH",
+            "TASK_EVENT_AND_FRAGMENT_IDENTITIES_MATCH",
+            "RESEARCH_EVIDENCE_PAGE_DATES_SEPARATED",
+        ]
+        return errors, checks
+    except (KeyError, OSError, TypeError, UnicodeDecodeError, ValueError) as exc:
+        return (["LIVE_SOURCE_BUNDLE_REPLAY_FAILED:" + str(exc)], [])
+
+
 def write_page_effectiveness_sidecars(
     *,
     output_directory: Path,
@@ -593,9 +809,11 @@ __all__ = [
     "PageEffectivenessTaskPolicy",
     "PageEffectivenessValidation",
     "browser_evidence_identities",
+    "build_page_task_coverage",
     "build_page_effectiveness_manifest",
     "load_page_effectiveness_policy",
     "repository_head",
+    "unclassified_page_successors",
     "validate_page_effectiveness_manifest",
     "write_page_effectiveness_sidecars",
 ]
