@@ -314,8 +314,8 @@ task_sources:
     reader_summary_zh: 2542B 已把 CANONICAL_DQ_PIT 的 quote-age UTC clock、midpoint relative spread、exact source date、prior-session OI、PIT availability、八类 identity、contributing contract/session/window aggregation 与 INVALID>FAIL>INSUFFICIENT>PASS 终态写成 strict canonical serial contract 和 pure evaluator。120s、0.20、OI=10、volume=1 仍只是 OWNER_INTENT_ONLY_NOT_EXECUTABLE_AUTHORITY；synthetic tests 可核验边界，但真实观测在 Owner exact approval 与 independent review 前只能返回 AUTHORITY_UNAVAILABLE/INSUFFICIENT，不能 PASS。本波未读取 cache/raw rows，未运行 DQ/provider/backtest/Cloud，production/broker effect=none。
   - task_id: TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1
     requirement_path: docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md
-    coverage: INTEGRATING_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR
-    reader_summary_zh: 2543 正在把 Atlas canonical 页面从 08-02 historical/synthetic 核心快照迁移到 task-event-bound live snapshot；该页面工程修复不改变 2542 的 BLOCKED_OWNER_REVIEW、DQ、经验研究、回测、投资结论或交易边界。
+    coverage: LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_COMPLETE
+    reader_summary_zh: 2543 已把 Atlas canonical 页面从 08-02 historical/synthetic 核心快照迁移到 task-event-bound live snapshot，并用正式 writer、独立 replay、三类日期语义和 exact-commit sidecars 封闭 freshness 链；该页面工程修复不改变 2542B 的 BLOCKED_OWNER_INPUT、DQ、经验研究、回测、投资结论或交易边界。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

@@ -233,7 +233,7 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "OWNER_AND_INDEPENDENT_REVIEW_REQUIRED"
     )
     assert coverage_by_task["TRADING-2543"] == (
-        "INTEGRATING_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR"
+        "LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_COMPLETE"
     )
     assert len(manifest.source_artifacts) == len(
         load_page_effectiveness_policy(repository_root=ROOT).relevant_source_paths

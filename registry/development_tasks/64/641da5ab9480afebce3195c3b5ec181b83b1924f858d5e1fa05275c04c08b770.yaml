@@ -14,21 +14,20 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Atlas 2543 coordinator：在 latest-main candidate 重建 task/report/compatibility/DevEx
-    authority，生成 exact-commit canonical page 并运行 final-tree formal gates
+  next_owner: Atlas 后继任务 coordinator：任何 successor 进入 exact main 后先完成 page classification
+    并由 canonical writer 重建；Project Owner 可继续进行页面内容审阅
   requirement_refs:
   - docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: integration_revalidation_plan.v1 已以 reviewed
-    reconciliation 通过；当前只剩 final candidate commit、canonical page exact rebuild、formal
-    Full 与普通推送收口
+  unstructured_legacy_blocker_or_next_step: 长期修复已完成；未来未分类 successor、source drift、snapshot/diff/task/page
+    hash drift 会 fail closed，不属于本任务未完成项
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 正式 writer 不依赖测试 fixture；live snapshot 覆盖全部已分类 task 并 exact-bind event/requirement/commit；research/evidence/page
-      dates 分离；source registry/snapshot/diff/task/page drift 均阻止 CURRENT；focused/formal
-      PASS；无投资/交易/production/broker effect。
+    text: 正式 writer 不依赖测试 fixture；live snapshot 覆盖 2542B 与 2543 在内的全部已分类 task 并 exact-bind
+      event/requirement/commit；三类日期分离；canonical page exact rebuild 与五级 final-tree
+      validation PASS；无投资/交易/production/broker effect。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -93,26 +92,55 @@ events:
   - change:trading-2543-latest-main-integration-validating-20260823-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-a9caa30389317aa286516fe952a14ad4
+- schema_version: task_event.v1
+  task_id: TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T21:33:39.3944305+09:00'
+  actor: atlas_2543_coordinator
+  change_id: trading-2543-final-validation-done-20260823-v1
+  lane_id: null
+  base_commit: 6fddf0ddba821ef309cc8b601917340d10ea69c5
+  previous_state_event_id: task-event-a9caa30389317aa286516fe952a14ad4
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Atlas 后继任务 coordinator：任何 successor 进入 exact main 后先完成 page classification
+      并由 canonical writer 重建；Project Owner 可继续进行页面内容审阅
+    blocker_or_next_step: 长期修复已完成；未来未分类 successor、source drift、snapshot/diff/task/page
+      hash drift 会 fail closed，不属于本任务未完成项
+    acceptance_criteria: 正式 writer 不依赖测试 fixture；live snapshot 覆盖 2542B 与 2543 在内的全部已分类
+      task 并 exact-bind event/requirement/commit；三类日期分离；canonical page exact rebuild
+      与五级 final-tree validation PASS；无投资/交易/production/broker effect。
+    notes: '[supporting requirement](docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md)；candidate=6fddf0ddba821ef309cc8b601917340d10ea69c5；plan=integration-revalidation-aee92b71764822bc8b3c；Architecture=865
+      PASS；Contract=276 PASS；Integration=995 PASS；Reproducibility=24 PASS；Full=9444
+      PASS/5 skipped/644 warnings；full artifact=outputs/validation_runtime/full_20260823T120227Z/test_runtime_summary.json；production_effect=none；broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2543-final-validation-done-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-48b0e23036e782732ad8fedf5d97a949
 projection:
   legacy_first_eight_cells:
   - TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1
   - Atlas strategy research page / live canonical snapshot, date semantics and freshness
     repair
   - P0
-  - VALIDATING
-  - Atlas 2543 coordinator：在 latest-main candidate 重建 task/report/compatibility/DevEx
-    authority，生成 exact-commit canonical page 并运行 final-tree formal gates
-  - integration_revalidation_plan.v1 已以 reviewed reconciliation 通过；当前只剩 final candidate
-    commit、canonical page exact rebuild、formal Full 与普通推送收口
-  - 正式 writer 不依赖测试 fixture；live snapshot 覆盖全部已分类 task 并 exact-bind event/requirement/commit；research/evidence/page
-    dates 分离；source registry/snapshot/diff/task/page drift 均阻止 CURRENT；focused/formal
+  - DONE
+  - Atlas 后继任务 coordinator：任何 successor 进入 exact main 后先完成 page classification 并由
+    canonical writer 重建；Project Owner 可继续进行页面内容审阅
+  - 长期修复已完成；未来未分类 successor、source drift、snapshot/diff/task/page hash drift 会 fail
+    closed，不属于本任务未完成项
+  - 正式 writer 不依赖测试 fixture；live snapshot 覆盖 2542B 与 2543 在内的全部已分类 task 并 exact-bind
+    event/requirement/commit；三类日期分离；canonical page exact rebuild 与五级 final-tree validation
     PASS；无投资/交易/production/broker effect。
-  - '[supporting requirement](docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md)；lane
-    commit=a12599d7ba1aa7abbbac488d64e20c6fc713b335；latest main=675b8841890b9c943d9e57ab9e99509426e00fa2；plan=integration-revalidation-3f3249bb7f37afcd7799；production_effect=none；broker_action=none。'
+  - '[supporting requirement](docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md)；candidate=6fddf0ddba821ef309cc8b601917340d10ea69c5；plan=integration-revalidation-aee92b71764822bc8b3c；Architecture=865
+    PASS；Contract=276 PASS；Integration=995 PASS；Reproducibility=24 PASS；Full=9444
+    PASS/5 skipped/644 warnings；full artifact=outputs/validation_runtime/full_20260823T120227Z/test_runtime_summary.json；production_effect=none；broker_action=none。'
   docs_links:
   - docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md
-  terminal: false
-  canonical_row_sha256: ddf333867eaaaf34364e37f6141cc46f2b5e6d3b4455fc73c0a44f1a9cd32304
-last_event_id: task-event-a9caa30389317aa286516fe952a14ad4
+  terminal: true
+  canonical_row_sha256: 9ca23834d9a3dc043132c7443cae6c6c4fd05ba9dc029482b04541b1e182bea7
+last_event_id: task-event-48b0e23036e782732ad8fedf5d97a949
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 1cb55a83ea09deb09b768618e8215b72a4c8516189e1b58ff8ff4d0abc6d0b7d
+fragment_checksum: bf925c1425ee3a266760d3316eff360b3cca3465f7a7ae3a0fdbc5ffb6e22101

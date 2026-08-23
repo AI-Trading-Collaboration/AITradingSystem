@@ -4,7 +4,7 @@
 
 - stable task id：`TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1`
 - priority：`P0`
-- status：`IN_PROGRESS`
+- status：`DONE`
 - governed mode：`SINGLE_LANE`（consumer-visible serial contract wave）
 - exact base：`b70fe3963988241b187bc0d30bbc422eed2b2160`
 - production effect：`none`
@@ -194,3 +194,11 @@ provider、Cloud、browser session、secret、paper/live、production 或 broker
   `1ca8ccf95c2a93a1b50164345d3e101a59b50838` 后的 `CARRIER_PUSH_DRIFT`，一项为 local canonical
   page test 尚未把 2543 加入 expected task list。不得放宽 carrier；后者直接修复，前者使用新 plan
   `integration-revalidation-aee92b71764822bc8b3c` 在 2542B latest-main 上再次协调重建。
+- 2026-08-23：2542B latest-main candidate=`6fddf0ddba821ef309cc8b601917340d10ea69c5`；
+  canonical page exact rebuild PASS，current mainline/blocker/next action 均为 2542B 的 Owner 与独立审阅阻塞，
+  2543 只完成发布链修复。Final-tree Architecture=`865 passed`、Contract=`276 passed`、
+  Integration=`995 passed / 642 warnings`、Reproducibility=`24 passed`、Full=
+  `9444 passed / 5 skipped / 644 warnings`；最终 Full artifact=
+  `outputs/validation_runtime/full_20260823T120227Z/test_runtime_summary.json`。Canonical task 已迁移为
+  `DONE`；terminal status/page coverage 的 final exact-commit rebuild 与聚焦复验作为无行为扩张的治理收口，
+  仍保持 `evidence_evaluated_at=null`、`investment_conclusion_generated=false`、production/broker effect=none。
