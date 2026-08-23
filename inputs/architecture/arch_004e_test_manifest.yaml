@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1304
-test_count: 1244
+test_file_count: 1305
+test_count: 1245
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_page_effectiveness
   path: tests/atlas/test_page_effectiveness.py
-  sha256: 20a92474bd25c4144a1708f9d75f01ad254f152c0c96af14a9e81b01ee04c659
+  sha256: 499b1b7e8bc7a1d5797416a042a7edc0729ef10073c30d7c94b12849c71d2228
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8454,7 +8454,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: c215385b9b54273e5934f2b63690b689fa51b2ceaca419eb2ce02fd351d15804
+  sha256: 6e7f86c5e9986f021bfcd80e4fd3acac1775c19e96bd824624df222f495ccc9b
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -10378,7 +10378,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 004995c090cd2ea317a3a472d03670bff617e3ce5bcdaec97c2f3e352e9efdff
+  sha256: f498ed13e7135a7b1e63cff42c645a519f4cc7d90b5f76d1801f1e23dc70dc4f
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -17473,6 +17473,22 @@ tests:
 - test_id: tests.test_strategy_growth_action_value_threshold_decision_pack
   path: tests/test_strategy_growth_action_value_threshold_decision_pack.py
   sha256: 16b14c7bf8ee34869c88c9db95c1ead2f7b5ae4563d73bcf8540f7849141bfc3
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_strategy_growth_action_value_threshold_exact_value_sheet
+  path: tests/test_strategy_growth_action_value_threshold_exact_value_sheet.py
+  sha256: 88810eeb57b168f4660fb7a46821f02e514ee0ad175dcff2c02bee90f08c2ed7
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

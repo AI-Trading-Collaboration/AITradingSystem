@@ -1,0 +1,289 @@
+schema_version: strategy_growth_action_value_threshold_exact_value_sheet.v1
+sheet_id: strategy_growth_action_value_threshold_exact_value_sheet_v1
+sheet_version: 1.0.0-draft.1
+sheet_status: DRAFT_FOR_OWNER_REVIEW
+task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+owner_instruction:
+  decision_id: owner_decision:TRADING-2542:2026-08-23:adopt_recommended_sources_and_draft_complete_exact_value_sheet_before_freeze_v1
+  source_assignment_choice: APPROVE_RECOMMENDED_PER_AXIS
+  review_condition_choice: LOCK_V1_FOR_ONE_PRIMARY_WINDOW_EVALUATION_NEW_VERSION_FOR_CHANGE
+  exact_value_approval_state: NOT_PROVIDED
+  complete_axis_set_review_required: true
+  partial_approval_can_freeze: false
+policy_metadata:
+  owner: project_owner_and_strategy_research_governance
+  rationale: >-
+    在任何新 DQ 或 strategy result 可见前，把每轴推荐来源转换为一份完整、可逐项审阅的
+    exact value sheet；建议值表达预先声明的经济实质和稳定性要求，不从当前 hypothesis
+    结果、holdout 或测试 fixture 反推。
+  intended_effect: >-
+    让 Project Owner 能一次审阅全部 numeric、categorical、set 和 policy-reference 字段，
+    同时阻止草案值在逐项批准前进入 frozen policy、DQ successor 或 empirical evaluation。
+  validation_evidence: >-
+    要求 strict YAML、decision-pack exact identity、八轴完整性、推荐来源一致性、单位和范围校验、
+    canonical JSON seal/replay、duplicate-key rejection、tamper negative tests 与安全边界断言。
+  review_condition: >-
+    V1 只允许一次 2021-02-22..2025-12-02 primary-window evaluation；任一值、单位、口径、
+    slice、DQ policy 或 attribution rule 的修改都必须创建新版本并重新取得 Owner 批准。
+decision_pack_binding:
+  path: config/research/strategy_growth_action_value_threshold_decision_pack_v1.yaml
+  file_sha256: b19269c23382dddb70882cd610c2ea506a643bdd2be5cc164a6496219ea930e8
+  canonical_sha256: e4604ccb6bf313ce93a8ae269208490431e40388474ee5d3ac7ab459efd519e3
+scope_binding:
+  predecessor_policy_id: strategy_growth_action_value_preregistration_v1
+  hypothesis_id: BASELINE_BOUNDED_QQQ_GROWTH_OVERLAY_NON_BETA_ACTION_VALUE_V1
+  baseline_id: equal_risk_qqq_sgov
+  comparator_ids:
+    - equal_risk_qqq_sgov
+    - exposure_matched_no_signal
+  action_universe:
+    - QQQ
+    - SGOV
+  primary_window_start: '2021-02-22'
+  primary_window_end: '2025-12-02'
+  selected_data_lane: QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE
+  uses_leverage_etf: false
+  uses_options: false
+  borrowed_leverage_allowed: false
+  threshold_after_result_allowed: false
+decision_timing:
+  state: PRE_EMPIRICAL_DRAFT_FOR_OWNER_REVIEW
+  new_dq_result_visible: false
+  new_strategy_result_visible: false
+  holdout_result_visible: false
+  draft_values_visible: true
+  exact_owner_approval_visible: false
+  threshold_bundle_frozen: false
+measurement_policy:
+  annualization_sessions: 252
+  return_measurement_basis: ANNUALIZED_GEOMETRIC_RETURN_DELTA
+  drawdown_measurement_basis: CANDIDATE_MINUS_COMPARATOR_ABSOLUTE_MAX_DRAWDOWN
+  false_risk_off_cost_basis: CANDIDATE_MINUS_BASELINE_MEAN_EVENT_MISSED_EXCESS_RETURN
+  turnover_measurement_basis: ONE_WAY_TRADED_NOTIONAL_OVER_AVERAGE_NAV_ANNUALIZED
+  beta_measurement_basis: DAILY_RETURN_OLS_BETA_WITH_INTERCEPT_252_SESSION_ANNUALIZATION
+  cost_model_policy_id: transaction_cost_model_v1
+window_slice_catalog:
+  - slice_id: PRIMARY_WINDOW_FULL
+    start: '2021-02-22'
+    end: '2025-12-02'
+    role: PRIMARY_AGGREGATE
+  - slice_id: PRIMARY_2021_PARTIAL
+    start: '2021-02-22'
+    end: '2021-12-31'
+    role: CALENDAR_STABILITY
+  - slice_id: RATE_HIKE_BEAR_2022
+    start: '2022-01-03'
+    end: '2022-12-30'
+    role: MANDATORY_STRESS
+  - slice_id: RECOVERY_2023
+    start: '2023-01-03'
+    end: '2023-12-29'
+    role: CALENDAR_STABILITY
+  - slice_id: AI_RALLY_2024
+    start: '2024-01-02'
+    end: '2024-12-31'
+    role: CALENDAR_STABILITY
+  - slice_id: PRIMARY_2025_TO_END
+    start: '2025-01-02'
+    end: '2025-12-02'
+    role: CALENDAR_STABILITY
+numeric_dq_policy_draft:
+  policy_ref: strategy_growth_action_value_qqq_options_numeric_dq_thresholds_draft_v1
+  status: DRAFT_FOR_OWNER_REVIEW
+  applicable_stage: DATA_RESEARCH
+  max_quote_age_seconds: 120
+  max_relative_spread: '0.20'
+  min_open_interest: 10
+  min_volume: 1
+  exact_source_date_required: true
+  unknown_can_pass: false
+  rationale: >-
+    这是 research-stage 的宽松但 fail-closed 流动性与新鲜度下限：排除明显陈旧、极宽 spread
+    和零参与度 observation，不把它解释为 execution-quality 或可交易性结论。
+  known_risk: >-
+    120 秒、20% spread、OI 10 和 volume 1 尚未经过该 data lane 的 outcome calibration；
+    逐项批准后仍需独立 serial DQ contract wave 才能替换现有 UNKNOWN policy。
+axis_values:
+  - axis_id: NON_BETA_ACTION_VALUE
+    threshold_id: growth_action_value.non_beta_increment_min
+    recommended_option_id: HYBRID_PRECOMMITTED
+    source_selection_state: OWNER_APPROVED_RECOMMENDED_SOURCE
+    owner_review_state: PENDING_OWNER_APPROVAL
+    unit: annualized_decimal_return_delta_after_exposure_match
+    direction: MINIMUM
+    minimum_non_beta_return_delta: '0.0100'
+    attribution_confidence_rule:
+      method: MOVING_BLOCK_BOOTSTRAP
+      block_length_sessions: 20
+      resamples: 10000
+      one_sided_confidence_level: '0.90'
+      lower_bound_rule: STRICTLY_GREATER_THAN_ZERO
+      random_seed: 2542
+    rationale: >-
+      100 bps annualized non-beta increment is large enough to matter for a bounded QQQ/SGOV overlay，
+      同时要求 90% one-sided block-bootstrap lower bound 大于零，避免只凭 point estimate 通过。
+    known_risk: >-
+      100 bps 与 90% confidence 都是 pre-result economic/stability judgment，可能对稀疏 action
+      过严或过松；不能在看到结果后调整。
+  - axis_id: NET_OF_COST_RETURN
+    threshold_id: growth_action_value.net_of_cost_return_min
+    recommended_option_id: HYBRID_PRECOMMITTED
+    source_selection_state: OWNER_APPROVED_RECOMMENDED_SOURCE
+    owner_review_state: PENDING_OWNER_APPROVAL
+    unit: annualized_decimal_net_return_delta
+    direction: MINIMUM
+    minimum_net_of_cost_return_delta: '0.0075'
+    cost_reconciliation_tolerance: '0.0001'
+    rationale: >-
+      扣除 governed transaction_cost_model_v1 后至少保留 75 bps annualized edge，并把独立成本
+      重算差异限制为 1 bp，防止 gross-only 或成本口径漂移形成 PASS。
+    known_risk: >-
+      tax drag 未纳入现有 cost model；该值只能支持 research comparison，不能代表特定账户净收益。
+  - axis_id: ACTUAL_PATH_DRAWDOWN_REGRESSION
+    threshold_id: growth_action_value.actual_path_drawdown_regression_max
+    recommended_option_id: HYBRID_PRECOMMITTED
+    source_selection_state: OWNER_APPROVED_RECOMMENDED_SOURCE
+    owner_review_state: PENDING_OWNER_APPROVAL
+    unit: absolute_decimal_max_drawdown_regression
+    direction: MAXIMUM
+    maximum_actual_path_drawdown_regression: '0.0200'
+    mandatory_stress_slice_set:
+      - PRIMARY_WINDOW_FULL
+      - PRIMARY_2021_PARTIAL
+      - RATE_HIKE_BEAR_2022
+      - RECOVERY_2023
+      - AI_RALLY_2024
+      - PRIMARY_2025_TO_END
+    rationale: >-
+      候选 actual NAV 相对 comparator 的最大回撤恶化不得超过 2 percentage points，且 full window
+      与所有预声明 calendar/stress slices 必须分别通过，不能用 target path 替代。
+    known_risk: >-
+      2 percentage points 是 risk-tolerance judgment；短 slice 的单次价格冲击可能主导结果。
+  - axis_id: FALSE_RISK_OFF_COST
+    threshold_id: growth_action_value.false_risk_off_cost_regression_max
+    recommended_option_id: HYBRID_PRECOMMITTED
+    source_selection_state: OWNER_APPROVED_RECOMMENDED_SOURCE
+    owner_review_state: PENDING_OWNER_APPROVAL
+    unit: decimal_mean_event_cost_regression
+    direction: MAXIMUM
+    maximum_false_risk_off_cost_regression: '0.0025'
+    false_risk_off_event_definition:
+      horizon_exchange_sessions: 20
+      qqq_minus_sgov_forward_return_min: '0.0300'
+      qqq_forward_max_drawdown_floor: '-0.0500'
+      adjacent_signal_cooldown_sessions: 20
+      activation_rule: BASELINE_DEFENSIVE_VETO_ACTIVE_AT_SIGNAL_TIME
+      regression_basis: CANDIDATE_MINUS_BASELINE_MEAN_MISSED_QQQ_MINUS_SGOV_RETURN
+    rationale: >-
+      对预先定义的 20-session false-risk-off event，growth interaction 相对 baseline 的平均 missed
+      excess-return cost 恶化最多 25 bps，并用 cooldown 防止同一 episode 重复计数。
+    known_risk: >-
+      event label 使用未来路径，只能用于离线评价；3% excess-return 与 -5% drawdown floor 是
+      pre-result definition，不得进入实时信号。
+  - axis_id: CANONICAL_DQ_PIT
+    threshold_id: growth_action_value.canonical_dq_pit_required_status
+    recommended_option_id: CANONICAL_STRICT_DQ_PIT
+    source_selection_state: OWNER_APPROVED_RECOMMENDED_SOURCE
+    owner_review_state: PENDING_OWNER_APPROVAL
+    unit: canonical_data_research_gate_status
+    direction: EXACT_CATEGORICAL
+    required_data_research_gate_status: PASS
+    numeric_dq_threshold_policy_ref: strategy_growth_action_value_qqq_options_numeric_dq_thresholds_draft_v1
+    rationale: >-
+      DATA_RESEARCH stage 的全部 applicable canonical checks 必须 PASS；transport completeness、UNKNOWN
+      或 scoped execution omission 都不能替代 DQ/PIT PASS。
+    known_risk: >-
+      本 sheet 只起草 numeric DQ 子政策；在独立 serial contract wave 前现有 canonical DQ policy
+      仍保持 UNKNOWN_REQUIRES_POLICY_REVIEW。
+  - axis_id: SAMPLE_AND_WINDOW_DEPENDENCE
+    threshold_id: growth_action_value.primary_window_stability_gate
+    recommended_option_id: FIXED_PRIMARY_WINDOW_STABILITY
+    source_selection_state: OWNER_APPROVED_RECOMMENDED_SOURCE
+    owner_review_state: PENDING_OWNER_APPROVAL
+    unit: composite_count_share_and_slice_set
+    direction: COMPOSITE_ALL
+    minimum_independent_action_count: 30
+    minimum_independent_action_count_per_slice: 3
+    independence_gap_exchange_sessions: 20
+    maximum_single_regime_contribution_share: '0.50'
+    contribution_share_basis: ABSOLUTE_NET_NON_BETA_ACTION_VALUE
+    mandatory_window_slices:
+      - PRIMARY_2021_PARTIAL
+      - RATE_HIKE_BEAR_2022
+      - RECOVERY_2023
+      - AI_RALLY_2024
+      - PRIMARY_2025_TO_END
+    rationale: >-
+      Full primary window 至少需要 30 个相隔 20 sessions 的 independent action episode，每个
+      calendar slice 至少 3 个；任一 regime 对 absolute net non-beta value 的贡献不得超过 50%。
+    known_risk: >-
+      稀疏 action 很可能得到 INSUFFICIENT；该结果应保持阻塞，不能降低 count floor 或删 slice 救援。
+  - axis_id: ACTUAL_PATH_TURNOVER
+    threshold_id: growth_action_value.actual_path_turnover_max
+    recommended_option_id: HYBRID_PRECOMMITTED
+    source_selection_state: OWNER_APPROVED_RECOMMENDED_SOURCE
+    owner_review_state: PENDING_OWNER_APPROVAL
+    unit: annualized_one_way_turnover_and_cost_drag_share
+    direction: COMPOSITE_ALL
+    maximum_annualized_actual_path_turnover: '1.00'
+    maximum_cost_drag_share: '0.25'
+    rationale: >-
+      actual executed path 的 annualized one-way turnover 上限为 100%，且 modeled cost drag 不得超过
+      gross non-beta edge 的 25%，避免通过高频小优势堆出不可实施结论。
+    known_risk: >-
+      turnover 与 cost-drag share 对 rebalance netting 很敏感；必须按 actual fills-equivalent path
+      统一计算，不能用 target-weight delta 代替。
+  - axis_id: LEVERAGE_BETA_ATTRIBUTION
+    threshold_id: growth_action_value.realized_beta_increment_max
+    recommended_option_id: HYBRID_PRECOMMITTED
+    source_selection_state: OWNER_APPROVED_RECOMMENDED_SOURCE
+    owner_review_state: PENDING_OWNER_APPROVAL
+    unit: realized_beta_delta_and_exposure_match_tolerance
+    direction: COMPOSITE_ALL
+    maximum_realized_beta_increment: '0.0200'
+    exposure_match_tolerance: '0.0100'
+    leverage_etf_allowed: false
+    options_position_allowed: false
+    borrowed_leverage_allowed: false
+    rationale: >-
+      候选相对 exposure-matched comparator 的 realized beta 增量最多 0.02，构造 comparator 时
+      exposure mismatch 最多 0.01；任何 QLD/TQQQ/options/borrowed leverage 直接 INVALID。
+    known_risk: >-
+      短样本 beta estimate 可能不稳定，必须与 NON_BETA_ACTION_VALUE 的 block-bootstrap attribution
+      一起解释，不能只看 ticker 名称。
+owner_review_contract:
+  required_review_order:
+    - NON_BETA_ACTION_VALUE
+    - NET_OF_COST_RETURN
+    - ACTUAL_PATH_DRAWDOWN_REGRESSION
+    - FALSE_RISK_OFF_COST
+    - CANONICAL_DQ_PIT
+    - SAMPLE_AND_WINDOW_DEPENDENCE
+    - ACTUAL_PATH_TURNOVER
+    - LEVERAGE_BETA_ATTRIBUTION
+  allowed_axis_decisions:
+    - APPROVE_EXACTLY_AS_DRAFTED
+    - REJECT_AND_REQUEST_NEW_VERSION
+  partial_review_state_allowed: true
+  partial_review_can_freeze: false
+  all_axes_approval_required_for_freeze: true
+  approval_must_precede_any_new_result: true
+terminal:
+  status: BLOCKED_OWNER_REVIEW
+  next_action: PROJECT_OWNER_REVIEW_COMPLETE_EXACT_VALUE_SHEET
+  threshold_bundle_frozen: false
+  dq_successor_authorized: false
+  empirical_successor_authorized: false
+safety:
+  empirical_research_authorized: false
+  dq_run_authorized: false
+  cache_mutation_authorized: false
+  backtest_authorized: false
+  holdout_access_authorized: false
+  external_action_authorized: false
+  investment_conclusion_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

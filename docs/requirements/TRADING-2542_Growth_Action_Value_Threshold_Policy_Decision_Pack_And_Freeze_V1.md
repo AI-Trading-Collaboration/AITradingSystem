@@ -10,6 +10,9 @@
 
 mode：`SINGLE_LANE`
 
+Owner 决定：
+`owner_decision:TRADING-2542:2026-08-23:adopt_recommended_sources_and_draft_complete_exact_value_sheet_before_freeze_v1`
+
 `production_effect=none`；`broker_action=none`；`external_action=none`。
 
 ## 1. 背景与目标
@@ -57,9 +60,18 @@ intended effect、PASS/FAIL/INSUFFICIENT/INVALID 规则、review/expiry conditio
 - 明确 transaction-cost input 与 investment-facing acceptance threshold 的区别；
 - 输出 Owner decision 所需的最小问题集。
 
-### S2：Owner-reviewed freeze
+### S2A：Owner-review exact value sheet draft
 
-- 只有收到 exact Owner decision 后才写入 numeric/directional policy values；
+- Owner 已选择 decision pack 的 per-axis 推荐来源；
+- Codex 起草一次完整 numeric、categorical、set、policy-reference value sheet；
+- 每个值必须记录 unit、measurement basis、经济理由、风险和逐项 review state；
+- value sheet 状态固定为 `DRAFT_FOR_OWNER_REVIEW`，任何值均不得被解释为已批准、已冻结或可供
+  empirical evaluation 使用；
+- V1 绑定一次 primary-window evaluation，任何修改必须新建版本。
+
+### S2B：Owner-reviewed freeze
+
+- 只有收到 Owner 对完整 value sheet 的逐项 exact approval 后，才能另行生成 frozen policy；
 - policy 必须 canonical serialize、seal、from-json/replay，并绑定 2540 hypothesis、baseline、comparator、
   primary window 和 selected QQQ Options lane；
 - threshold-after-result、wrong family、hidden leverage、double lane、wrong window 与 authority drift
@@ -75,8 +87,12 @@ intended effect、PASS/FAIL/INSUFFICIENT/INVALID 规则、review/expiry conditio
 ## 4. 当前 blocker / next step
 
 - S1 inventory、typed decision pack 与 exact authority replay 已完成；
-- S2 numeric/directional policy freeze 需要 Project Owner 对 decision pack 作出 exact choice；
-- 在该选择之前，2540 的 mechanical terminal 保持 `BLOCKED_POLICY_INPUT`。
+- Owner 已批准 `APPROVE_RECOMMENDED_PER_AXIS` 与
+  `LOCK_V1_FOR_ONE_PRIMARY_WINDOW_EVALUATION_NEW_VERSION_FOR_CHANGE`；
+- S2A 完整 exact value sheet 已起草并通过 focused schema/identity/safety validation；
+- 当前 next owner 为 Project Owner，需逐项审阅八轴；
+- S2B numeric/directional policy freeze 在逐项 approval 前仍禁止；
+- 在完整逐项 approval 之前，2540 的 mechanical terminal 保持 `BLOCKED_POLICY_INPUT`。
 
 ### 4.1 S1 authority inventory 结论
 
@@ -101,6 +117,77 @@ intended effect、PASS/FAIL/INSUFFICIENT/INVALID 规则、review/expiry conditio
 3. `REVIEW_CONDITION`：是否将 V1 锁定到一次 primary-window evaluation，任何修改都新建版本。
 
 不完整或仅提供部分 axis 的回复不会触发 S2 freeze；Codex 不会用后见结果补齐缺项。
+
+### 4.4 S2A Owner 指令与非冻结边界
+
+2026-08-23，Project Owner 明确采用每轴推荐来源，要求 Codex 先起草完整 exact value sheet 供逐项
+审阅，未经逐项确认不得冻结；V1 基于 primary window 进行一次评估，后续修改必须新建版本。
+
+该指令解除 `SOURCE_ASSIGNMENT` 与 `REVIEW_CONDITION` 阻塞，但不是 `EXACT_VALUE_SHEET` 的最终
+逐项 approval。S2A 可以提出完整建议值和测量合同；`threshold_bundle_frozen=false`、
+`dq_successor_authorized=false`、`empirical_successor_authorized=false` 必须保持不变。
+
+### 4.5 S2A exact value sheet 草案
+
+canonical draft：
+`config/research/strategy_growth_action_value_threshold_exact_value_sheet_v1.yaml`。
+
+| axis | 建议 exact value | measurement / gate 摘要 |
+| --- | --- | --- |
+| `NON_BETA_ACTION_VALUE` | annualized delta `>= 0.0100` | 20-session moving-block bootstrap、10,000 resamples、one-sided 90% lower bound `> 0` |
+| `NET_OF_COST_RETURN` | annualized net delta `>= 0.0075` | `transaction_cost_model_v1`，独立成本重算 tolerance `0.0001` |
+| `ACTUAL_PATH_DRAWDOWN_REGRESSION` | absolute regression `<= 0.0200` | full primary window 与 5 个预声明 calendar/stress slices 分别通过 |
+| `FALSE_RISK_OFF_COST` | mean event-cost regression `<= 0.0025` | 20-session event；QQQ-SGOV forward excess `>= 0.0300` 且 QQQ forward drawdown `>= -0.0500` |
+| `CANONICAL_DQ_PIT` | exact `PASS` | draft DQ：quote age `<=120s`、relative spread `<=0.20`、OI `>=10`、volume `>=1`、exact source date、UNKNOWN fail closed |
+| `SAMPLE_AND_WINDOW_DEPENDENCE` | count `>=30`、per-slice `>=3`、regime share `<=0.50` | independent episode gap `20` exchange sessions；5 个 primary-window calendar slices |
+| `ACTUAL_PATH_TURNOVER` | annualized one-way turnover `<=1.00`、cost-drag share `<=0.25` | actual fills-equivalent path，不接受 target-weight delta 替代 |
+| `LEVERAGE_BETA_ATTRIBUTION` | realized beta increment `<=0.0200`、exposure mismatch `<=0.0100` | QLD/TQQQ/options/borrowed leverage 均禁止 |
+
+这些建议值来自 Owner economic materiality、governed cost model、precommitted stability rule 与
+canonical strict DQ/PIT 的组合，不读取当前 hypothesis、holdout 或新 DQ result。DQ numeric 子政策也只是
+draft；即使逐项批准，仍需独立 serial DQ contract wave 才能替换现有
+`UNKNOWN_REQUIRES_POLICY_REVIEW`。
+
+当前每轴 `owner_review_state=PENDING_OWNER_APPROVAL`。只允许逐轴
+`APPROVE_EXACTLY_AS_DRAFTED` 或 `REJECT_AND_REQUEST_NEW_VERSION`；partial review 可记录，但不能冻结。
+
+建议逐项审阅回复格式：
+
+```yaml
+NON_BETA_ACTION_VALUE: APPROVE_EXACTLY_AS_DRAFTED
+NET_OF_COST_RETURN: APPROVE_EXACTLY_AS_DRAFTED
+ACTUAL_PATH_DRAWDOWN_REGRESSION: APPROVE_EXACTLY_AS_DRAFTED
+FALSE_RISK_OFF_COST: APPROVE_EXACTLY_AS_DRAFTED
+CANONICAL_DQ_PIT: APPROVE_EXACTLY_AS_DRAFTED
+SAMPLE_AND_WINDOW_DEPENDENCE: APPROVE_EXACTLY_AS_DRAFTED
+ACTUAL_PATH_TURNOVER: APPROVE_EXACTLY_AS_DRAFTED
+LEVERAGE_BETA_ATTRIBUTION: APPROVE_EXACTLY_AS_DRAFTED
+```
+
+任一 axis 如需修改，使用 `REJECT_AND_REQUEST_NEW_VERSION` 并在同一行说明修改方向；Codex 不会在
+当前 `1.0.0-draft.1` 上原地替换值后冒充已审版本。
+
+### 4.6 S2A 实现身份与初步验证
+
+- exact value sheet file SHA-256：
+  `82f75b55bb4a9576775d4e60a9a31bc01b24d3b5b8cf270c6aabbed9e9d17e7f`；
+- exact value sheet canonical SHA-256：
+  `14286008f464230921400c1def4173f34a6e9231e77c434504a5abab78451dfb`；
+- typed loader：
+  `src/ai_trading_system/strategy_growth_action_value_threshold_exact_value_sheet.py`；
+- exact tests：`tests/test_strategy_growth_action_value_threshold_exact_value_sheet.py`；
+- S1 + S2A schema/identity/safety focused：`30 passed`；
+- Atlas/deprecation/report-flow focused：`36 passed`；
+- combined S1/S2A/Atlas/deprecation/report-flow focused：`66 passed`；
+- Ruff 与 strict mypy：`PASS`；
+- final-tree 前置正式门：Architecture=`865 passed`、Contract=`276 passed`、
+  Integration=`995 passed / 643 warnings`、Reproducibility=`24 passed`；
+- 首次 Full：`9369 passed / 2 failed / 3 skipped / 644 warnings`，parent artifact=
+  `outputs/validation_runtime/full_20260823T040241Z/test_runtime_summary.json`。第一项失败定位为 S2A Atlas
+  摘要替换时遗漏仍然有效的“任何新 empirical result、cache、DQ 或 backtest 可见前”安全边界；恢复该边界后
+  cited-query/page-effectiveness focused=`13 passed`。第二项失败仅是 ignored Atlas canonical page/sidecar
+  仍绑定旧 repository commit；final candidate commit 后只重建该 read-only artifact，并以 parent artifact
+  执行完整 `failure_fix_rerun`。通过前不改变草案或任务安全状态。
 
 ### 4.3 S1 实现与验证
 
@@ -146,3 +233,14 @@ ordinary-pushed exact main 建立独立 task branch/workspace；其路径、purp
   task branch；
 - recovery：合入前由 task branch/commit 恢复，合入后由 local/remote main 恢复；S1 不复用
   TRADING-2540 的 runtime evidence。
+
+S2A 生命周期：
+
+- exact base：`b2ba8fb680c151a06cf0419b2701491dae553e42`；
+- task branch：`codex/trading-2542-exact-value-sheet-draft`；
+- workspace：复用 `D:\Work\AITradingSystem` existing checkout，不创建 worktree 或 clone；
+- purpose：只起草、校验并发布 `DRAFT_FOR_OWNER_REVIEW` exact value sheet；不冻结 threshold、不运行
+  DQ/cache/backtest/Cloud/empirical/external action；
+- exit condition：完整八轴草案和 negative tests 通过，task 回到 `BLOCKED_OWNER_INPUT` 等待逐项
+  approval，S2A commit 普通推送到 main，checkout 回到 clean main，并删除已合并 task branch；
+- recovery：合入前由 task branch/commit 恢复，合入后由 local/remote main 恢复。

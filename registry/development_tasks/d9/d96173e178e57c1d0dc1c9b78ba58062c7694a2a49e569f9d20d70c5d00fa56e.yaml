@@ -14,21 +14,22 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner exact source/value/review decision; Codex resumes S2 after
-    complete choice
+  next_owner: Project Owner reviews all eight exact value axes; Codex resumes S2B
+    only after complete per-axis decision
   requirement_refs:
   - docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S1 eight-axis gap matrix and typed decision
-    pack are complete. S2 requires a complete pre-result owner source assignment,
-    exact value sheet, and review condition; no partial/default values.
+  unstructured_legacy_blocker_or_next_step: S2A complete draft is DRAFT_FOR_OWNER_REVIEW.
+    Every axis remains PENDING_OWNER_APPROVAL; all eight must be approved exactly
+    as drafted or rejected into a new version before freeze.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Keep all eight axis values unset until exact owner choice; after choice
-      freeze one canonical replayable versioned policy bound to the 2540 scope, then
-      run focused and formal validation without DQ/cache/backtest/external actions.
+    text: Preserve exact sheet file SHA-256 82f75b55bb4a9576775d4e60a9a31bc01b24d3b5b8cf270c6aabbed9e9d17e7f
+      and canonical SHA-256 14286008f464230921400c1def4173f34a6e9231e77c434504a5abab78451dfb;
+      require complete per-axis owner review; keep threshold_bundle_frozen=false and
+      all DQ/empirical/external/trading authorizations false.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -97,6 +98,132 @@ events:
   - change:trading-2542-s1-decision-pack-owner-input-blocked-20260823-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-8f5362659077202efe3f55db74401d46
+- schema_version: task_event.v1
+  task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T03:28:57Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542-s2a-owner-source-review-choice-exact-value-sheet-draft-20260823-v1
+  lane_id: null
+  base_commit: b2ba8fb680c151a06cf0419b2701491dae553e42
+  previous_state_event_id: task-event-8f5362659077202efe3f55db74401d46
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex drafts complete exact value sheet; Project Owner then reviews
+      every field before S2B freeze
+    blocker_or_next_step: Owner approved recommended per-axis sources and versioned
+      primary-window review rule. Build one complete DRAFT_FOR_OWNER_REVIEW value
+      sheet; freeze remains blocked pending exact per-field approval.
+    acceptance_criteria: Draft all eight axes with exact numeric/categorical/set/policy-reference
+      values, units, measurement rules, rationale, risks, canonical replay and negative
+      tests; keep threshold_bundle_frozen=false and all DQ/empirical/external/trading
+      authorizations false until exact owner approval.
+    notes: 'Owner decision: adopt recommended sources; draft complete exact value
+      sheet for review; no freeze without per-field confirmation; V1 is one primary-window
+      evaluation and every change requires a new version. Requirement updated with
+      S2A/S2B split and task-branch lifecycle.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542-s2a-owner-source-review-choice-exact-value-sheet-draft-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-9fdc8f716d50b21e10f9925f467d92a7
+- schema_version: task_event.v1
+  task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T03:42:10Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542-s2a-restore-requirement-binding-20260823-v1
+  lane_id: null
+  base_commit: b2ba8fb680c151a06cf0419b2701491dae553e42
+  previous_state_event_id: task-event-9fdc8f716d50b21e10f9925f467d92a7
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex drafts complete exact value sheet; Project Owner then reviews
+      every field before S2B freeze
+    blocker_or_next_step: Owner approved recommended per-axis sources and versioned
+      primary-window review rule. Build one complete DRAFT_FOR_OWNER_REVIEW value
+      sheet; freeze remains blocked pending exact per-field approval.
+    acceptance_criteria: Draft all eight axes with exact numeric/categorical/set/policy-reference
+      values, units, measurement rules, rationale, risks, canonical replay and negative
+      tests; keep threshold_bundle_frozen=false and all DQ/empirical/external/trading
+      authorizations false until exact owner approval.
+    notes: 'Requirement: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md.
+      Owner selected recommended sources and versioned primary-window review rule;
+      S2A draft only, no freeze.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542-s2a-restore-requirement-binding-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0c256251d1700d9ec0791717db3eb44f
+- schema_version: task_event.v1
+  task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T03:48:34Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542-s2a-exact-value-sheet-draft-owner-review-blocked-20260823-v1
+  lane_id: null
+  base_commit: b2ba8fb680c151a06cf0419b2701491dae553e42
+  previous_state_event_id: task-event-0c256251d1700d9ec0791717db3eb44f
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner reviews all eight exact value axes; Codex resumes S2B
+      only after complete per-axis decision
+    blocker_or_next_step: S2A complete draft is DRAFT_FOR_OWNER_REVIEW. Every axis
+      remains PENDING_OWNER_APPROVAL; all eight must be approved exactly as drafted
+      or rejected into a new version before freeze.
+    acceptance_criteria: Preserve exact sheet file SHA-256 82f75b55bb4a9576775d4e60a9a31bc01b24d3b5b8cf270c6aabbed9e9d17e7f
+      and canonical SHA-256 14286008f464230921400c1def4173f34a6e9231e77c434504a5abab78451dfb;
+      require complete per-axis owner review; keep threshold_bundle_frozen=false and
+      all DQ/empirical/external/trading authorizations false.
+    notes: 'Requirement: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md.
+      S2A config/loader/tests complete; source and review choices recorded; numeric
+      values are proposed, not approved. Formal final-tree validation and ordinary
+      publication remain before handoff.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542-s2a-exact-value-sheet-draft-owner-review-blocked-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d9eee5369702424e5e522a7a0355417f
+- schema_version: task_event.v1
+  task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T04:26:01Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542-s2a-formal-precommit-validation-and-atlas-boundary-fix-20260823-v1
+  lane_id: null
+  base_commit: b2ba8fb680c151a06cf0419b2701491dae553e42
+  previous_state_event_id: task-event-d9eee5369702424e5e522a7a0355417f
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner reviews all eight exact value axes; Codex resumes S2B
+      only after complete per-axis decision
+    blocker_or_next_step: S2A complete draft is DRAFT_FOR_OWNER_REVIEW. Every axis
+      remains PENDING_OWNER_APPROVAL; all eight must be approved exactly as drafted
+      or rejected into a new version before freeze.
+    acceptance_criteria: Preserve exact sheet file SHA-256 82f75b55bb4a9576775d4e60a9a31bc01b24d3b5b8cf270c6aabbed9e9d17e7f
+      and canonical SHA-256 14286008f464230921400c1def4173f34a6e9231e77c434504a5abab78451dfb;
+      require complete per-axis owner review; keep threshold_bundle_frozen=false and
+      all DQ/empirical/external/trading authorizations false.
+    notes: 'Requirement: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md.
+      S2A precommit formal gates PASS: Architecture 865, Contract 276, Integration
+      995, Reproducibility 24. First Full 9369 passed/2 failed/3 skipped; the missing
+      Atlas safety sentence was restored and focused 13 passed. Remaining expected
+      failure is ignored Atlas canonical page bound to old repository commit; rebuild
+      after final candidate commit and execute complete failure_fix_rerun. Numeric
+      draft remains unapproved and unfrozen.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542-s2a-formal-precommit-validation-and-atlas-boundary-fix-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-981d0f6700d3cc4dfa33cc0d9c1dc5c2
 projection:
   legacy_first_eight_cells:
   - TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
@@ -104,21 +231,26 @@ projection:
     V1
   - P0
   - BLOCKED_OWNER_INPUT
-  - Project Owner exact source/value/review decision; Codex resumes S2 after complete
-    choice
-  - S1 eight-axis gap matrix and typed decision pack are complete. S2 requires a complete
-    pre-result owner source assignment, exact value sheet, and review condition; no
-    partial/default values.
-  - Keep all eight axis values unset until exact owner choice; after choice freeze
-    one canonical replayable versioned policy bound to the 2540 scope, then run focused
-    and formal validation without DQ/cache/backtest/external actions.
-  - 'S1 implementation: config/research/strategy_growth_action_value_threshold_decision_pack_v1.yaml,
-    typed loader/tests, architecture/system-flow/Atlas disclosure. No empirical result
-    or threshold value selected. Requirement: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md.'
+  - Project Owner reviews all eight exact value axes; Codex resumes S2B only after
+    complete per-axis decision
+  - S2A complete draft is DRAFT_FOR_OWNER_REVIEW. Every axis remains PENDING_OWNER_APPROVAL;
+    all eight must be approved exactly as drafted or rejected into a new version before
+    freeze.
+  - Preserve exact sheet file SHA-256 82f75b55bb4a9576775d4e60a9a31bc01b24d3b5b8cf270c6aabbed9e9d17e7f
+    and canonical SHA-256 14286008f464230921400c1def4173f34a6e9231e77c434504a5abab78451dfb;
+    require complete per-axis owner review; keep threshold_bundle_frozen=false and
+    all DQ/empirical/external/trading authorizations false.
+  - 'Requirement: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md.
+    S2A precommit formal gates PASS: Architecture 865, Contract 276, Integration 995,
+    Reproducibility 24. First Full 9369 passed/2 failed/3 skipped; the missing Atlas
+    safety sentence was restored and focused 13 passed. Remaining expected failure
+    is ignored Atlas canonical page bound to old repository commit; rebuild after
+    final candidate commit and execute complete failure_fix_rerun. Numeric draft remains
+    unapproved and unfrozen.'
   docs_links:
   - docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md
   terminal: false
-  canonical_row_sha256: 9eaef073df9555a4de384d43a3152f5841803c990a2053748be01018405eab03
-last_event_id: task-event-8f5362659077202efe3f55db74401d46
+  canonical_row_sha256: adba8a4c143017faa0b9c8967023a481f308c947c5a7f48ec6e628731ded6d8c
+last_event_id: task-event-981d0f6700d3cc4dfa33cc0d9c1dc5c2
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: a5f4d762aaabab0ef691dffd9f63fa98e8cae704b846b958ca32a787c0ccb30e
+fragment_checksum: 811904fc20485ad7be2e349d24925202653023d7c517cc0e9edc1739bf836b56

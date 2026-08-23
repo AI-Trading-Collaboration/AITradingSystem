@@ -9051,3 +9051,29 @@ TRADING-2540 frozen hypothesis / taxonomy / selected QQQ Options lane
 只有 Project Owner 在任何新结果可见前给出完整且精确的八轴 value sheet、source assignment 与
 review condition，S2 才能另行冻结 versioned policy。S1 decision pack 不是阈值 policy 本身，
 也不把 transport completeness、DQ input 或 transaction-cost input 冒充为策略 PASS 门槛。
+
+TRADING-2542 S2A 在 Owner 选择 `APPROVE_RECOMMENDED_PER_AXIS` 与
+`LOCK_V1_FOR_ONE_PRIMARY_WINDOW_EVALUATION_NEW_VERSION_FOR_CHANGE` 后新增
+`strategy_growth_action_value_threshold_exact_value_sheet`。该模块把八轴建议值、measurement basis、
+primary-window slice set、numeric DQ 子政策、经济理由与风险写入 canonical、可 replay 的
+`DRAFT_FOR_OWNER_REVIEW` sheet；它不修改 S1 decision-pack bytes，也不把建议值解释为 Owner 批准。
+
+```text
+S1 exact decision-pack identity + per-axis recommended source
+  + Owner source assignment / one-primary-window version rule
+  + pre-result economic materiality and stability judgments
+      -> complete eight-axis exact value sheet draft
+      -> every axis owner_review_state = PENDING_OWNER_APPROVAL
+      -> numeric DQ policy = DRAFT_FOR_OWNER_REVIEW
+      -> terminal = BLOCKED_OWNER_REVIEW
+      -> threshold bundle frozen = false
+      -> DQ / empirical successor authorized = false
+      -> cache/backtest/holdout/external/paper/live/production/broker remain closed
+```
+
+草案提出 100 bps annualized non-beta floor、75 bps net-of-cost floor、2 percentage-point actual-path
+drawdown-regression cap、25 bps mean false-risk-off event-cost cap、strict DATA_RESEARCH DQ/PIT PASS、
+30 个 independent action / 50% regime-contribution cap、100% annualized one-way turnover / 25% cost-drag
+share cap，以及 0.02 realized-beta increment / 0.01 exposure-match tolerance。上述值和 DQ numeric
+子政策必须由 Project Owner 逐项 `APPROVE_EXACTLY_AS_DRAFTED`；任何拒绝或修改都只能创建新版本，
+不能在当前 draft 上局部补丁后冻结。

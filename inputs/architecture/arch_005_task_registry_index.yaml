@@ -14,7 +14,7 @@ fragment_count: 1016
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 805ec180e58b5969445820f6bb52eafbd60045e51dd9912a71e90b22413d0897
+final_chain_sha256: 160718228289a9cd018bb9bf28b0891656fe8a5fcddbfc305494e24c9028ecfc
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -8151,17 +8151,17 @@ fragments:
   entry_sha256: df44c57fb3dfe203a79f8054dea561e7be735796420b67982796319b9c96c96a
 - task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
   path: registry/development_tasks/d9/d96173e178e57c1d0dc1c9b78ba58062c7694a2a49e569f9d20d70c5d00fa56e.yaml
-  file_sha256: 4e1f533519f9ac1b7c5f933b3c40463711bdbbd066d653ec5b7740d236c3dfb8
-  fragment_checksum: a5f4d762aaabab0ef691dffd9f63fa98e8cae704b846b958ca32a787c0ccb30e
+  file_sha256: 17a72ef3893a7634c720246a309e9357fc21f6e5a58b72deacb18713d982be3f
+  fragment_checksum: 811904fc20485ad7be2e349d24925202653023d7c517cc0e9edc1739bf836b56
   partition: active
   order: 1016
   previous_entry_sha256: df44c57fb3dfe203a79f8054dea561e7be735796420b67982796319b9c96c96a
-  entry_sha256: 805ec180e58b5969445820f6bb52eafbd60045e51dd9912a71e90b22413d0897
+  entry_sha256: 160718228289a9cd018bb9bf28b0891656fe8a5fcddbfc305494e24c9028ecfc
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 489781c3d258da9339c5102420edb52c8bec4264d0c20e188c8e4e3c04acf17e
-  byte_count: 1748593
+  sha256: e377146958582f6a0659e60860efc14ace55b39cca4efb13ed186401e6c23173
+  byte_count: 1748915
   row_count: 498
   generated_do_not_edit: true
 - partition: completed
@@ -9550,7 +9550,35 @@ governance_cycles:
   change_id: trading-2542-s1-decision-pack-owner-input-blocked-20260823-v1
   event_count: 2
   production_effect: none
-governance_cycle_count: 197
+- cycle_id: arch-005-s5-cycle-198
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  change_id: trading-2542-s2a-owner-source-review-choice-exact-value-sheet-draft-20260823-v1
+  event_count: 3
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-199
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  change_id: trading-2542-s2a-restore-requirement-binding-20260823-v1
+  event_count: 4
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-200
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  change_id: trading-2542-s2a-exact-value-sheet-draft-owner-review-blocked-20260823-v1
+  event_count: 5
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-201
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  change_id: trading-2542-s2a-formal-precommit-validation-and-atlas-boundary-fix-20260823-v1
+  event_count: 6
+  production_effect: none
+governance_cycle_count: 201
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -9564,4 +9592,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: fd02dd5cf21e9ad7dc80ef52657921f1a8b81e0106493254c07212519fbe0df7
+index_checksum: 4d98fae73a8ecc26d18dec4451aabdaaeccbf5683ee9aeaa223e038af7a70348

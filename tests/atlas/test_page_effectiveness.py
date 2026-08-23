@@ -187,8 +187,8 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "DISCLOSED_EXACT_DATE_SUBSCRIPTION_RECOVERY_CLOUD_VALIDATED_COMPLETE"
     )
     assert coverage_by_task["TRADING-2542"] == (
-        "DISCLOSED_THRESHOLD_DECISION_PACK_READY_OWNER_EXACT_SOURCE_VALUE_"
-        "REVIEW_CHOICE_REQUIRED"
+        "DISCLOSED_THRESHOLD_EXACT_VALUE_SHEET_DRAFT_READY_OWNER_PER_AXIS_"
+        "APPROVAL_REQUIRED"
     )
     assert len(manifest.source_artifacts) == 29
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)

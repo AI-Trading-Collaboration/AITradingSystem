@@ -1,0 +1,30 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.strategy_growth_action_value_threshold_exact_value_sheet
+fragment_kind: module
+owner: strategy_research_governance
+module_prefix: src/ai_trading_system/strategy_growth_action_value_threshold_exact_value_sheet.py
+public_contracts:
+  - DEFAULT_STRATEGY_GROWTH_ACTION_VALUE_THRESHOLD_EXACT_VALUE_SHEET_PATH
+  - ActualPathDrawdownRegressionDraft
+  - ActualPathTurnoverDraft
+  - AttributionConfidenceRule
+  - CanonicalDqPitDraft
+  - DraftDecisionTiming
+  - DraftTerminal
+  - FalseRiskOffCostDraft
+  - FalseRiskOffEventDefinition
+  - LeverageBetaAttributionDraft
+  - MeasurementPolicy
+  - NetOfCostReturnDraft
+  - NonBetaActionValueDraft
+  - NumericDqPolicyDraft
+  - OwnerInstruction
+  - OwnerReviewContract
+  - SampleAndWindowDependenceDraft
+  - StrategyGrowthActionValueThresholdExactValueSheet
+  - StrategyGrowthActionValueThresholdExactValueSheetError
+  - StrategyGrowthActionValueThresholdExactValueSheetLoadResult
+  - WindowSlice
+  - load_strategy_growth_action_value_threshold_exact_value_sheet
+compatibility_facades: []
+deprecation_status: active_reference_architecture
