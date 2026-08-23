@@ -20,16 +20,15 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Engineering candidate and focused gates
-    are ready; second independent review, four DQ numeric authority dispositions,
-    and Owner exact approval are required before freeze. Codex proceeds with exact
-    candidate commit and parent-bound formal validation without real DQ or empirical
-    execution.
+  unstructured_legacy_blocker_or_next_step: Architecture formal gate exposed a stale
+    global latest-compatibility test constant; Codex repairs and reruns formal validation.
+    Freeze remains blocked on second independent review, four DQ numeric authority
+    dispositions, and Owner exact approval.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Exact latest-main candidate preserves TRADING-2544 as PROPOSED/NOT_DUE;
-      V3 and DQ/PIT V2 replay; append-only compatibility successor and current report-flow
-      authority validate; parent-bound Full plus Architecture/Contract/Integration/Reproducibility
+      V3 and DQ/PIT V2 replay; append-only compatibility successor and every architecture
+      latest-authority consumer agree; parent-bound Full plus Architecture/Contract/Integration/Reproducibility
       pass; no real DQ or empirical run; second independent review and Owner exact
       approval remain mandatory for freeze.
   production_effect: none
@@ -172,6 +171,39 @@ events:
   - change:trading-2542c-owner-block-requirement-binding-repair-20260824-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-d28d0370a75cafb773bdfa6a5a2b7bf3
+- schema_version: task_event.v1
+  task_id: TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T15:42:16Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542c-architecture-latest-authority-fix-20260824-v1
+  lane_id: null
+  base_commit: c00629ed1f4421d88de5925556615784abc96ecf
+  previous_state_event_id: task-event-d28d0370a75cafb773bdfa6a5a2b7bf3
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner and second independent reviewer
+    blocker_or_next_step: Architecture formal gate exposed a stale global latest-compatibility
+      test constant; Codex repairs and reruns formal validation. Freeze remains blocked
+      on second independent review, four DQ numeric authority dispositions, and Owner
+      exact approval.
+    acceptance_criteria: Exact latest-main candidate preserves TRADING-2544 as PROPOSED/NOT_DUE;
+      V3 and DQ/PIT V2 replay; append-only compatibility successor and every architecture
+      latest-authority consumer agree; parent-bound Full plus Architecture/Contract/Integration/Reproducibility
+      pass; no real DQ or empirical run; second independent review and Owner exact
+      approval remain mandatory for freeze.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md.
+      Architecture artifact outputs/validation_runtime/architecture-fitness_20260823T153447Z/test_runtime_summary.json
+      retained 805 passed and 61 failed. All 61 failures share tests/test_arch_004_refactor_policy.py
+      LATEST_COMPATIBILITY_SECTION still pointing to DEVX-007 instead of the append-only
+      TRADING-2542C successor; no strategy mechanical assertion failed.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542c-architecture-latest-authority-fix-20260824-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-eed937bb8970d4a747c4dc69e5e25576
 projection:
   legacy_first_eight_cells:
   - TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1
@@ -180,25 +212,23 @@ projection:
   - P0
   - BLOCKED_OWNER_INPUT
   - Project Owner and second independent reviewer
-  - Engineering candidate and focused gates are ready; second independent review,
-    four DQ numeric authority dispositions, and Owner exact approval are required
-    before freeze. Codex proceeds with exact candidate commit and parent-bound formal
-    validation without real DQ or empirical execution.
+  - Architecture formal gate exposed a stale global latest-compatibility test constant;
+    Codex repairs and reruns formal validation. Freeze remains blocked on second independent
+    review, four DQ numeric authority dispositions, and Owner exact approval.
   - Exact latest-main candidate preserves TRADING-2544 as PROPOSED/NOT_DUE; V3 and
-    DQ/PIT V2 replay; append-only compatibility successor and current report-flow
-    authority validate; parent-bound Full plus Architecture/Contract/Integration/Reproducibility
+    DQ/PIT V2 replay; append-only compatibility successor and every architecture latest-authority
+    consumer agree; parent-bound Full plus Architecture/Contract/Integration/Reproducibility
     pass; no real DQ or empirical run; second independent review and Owner exact approval
     remain mandatory for freeze.
   - 'Supporting requirement: docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md.
-    Engineering candidate is ready on latest-main base 58b8c681d30043dc1ced32089c075241f454cbbd.
-    First Full failure remains retained at outputs/validation_runtime/full_20260823T135255Z/test_runtime_summary.json
-    and is the required parent for failure_fix_rerun. The immediately preceding update
-    omitted the supporting-requirement phrase and caused the compatibility projection
-    to clear requirement_refs; this append-only event restores that authority binding.'
+    Architecture artifact outputs/validation_runtime/architecture-fitness_20260823T153447Z/test_runtime_summary.json
+    retained 805 passed and 61 failed. All 61 failures share tests/test_arch_004_refactor_policy.py
+    LATEST_COMPATIBILITY_SECTION still pointing to DEVX-007 instead of the append-only
+    TRADING-2542C successor; no strategy mechanical assertion failed.'
   docs_links:
   - docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md
   terminal: false
-  canonical_row_sha256: 69f27703ac03637612f3227bc36ba1fe33e7c047456d4ff1baff525b7e38fcf8
-last_event_id: task-event-d28d0370a75cafb773bdfa6a5a2b7bf3
+  canonical_row_sha256: ccdf29a04ec5adcddfe8709f5ba363c4844dc2ae471608af54b3762e442b3c98
+last_event_id: task-event-eed937bb8970d4a747c4dc69e5e25576
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 679bc084830c92c2652acd20ef938645cb29a82116962e627390aad3370e1a23
+fragment_checksum: 7106ab3255dabec521345a7974c157295858c82946790808c9445ad62135cab8

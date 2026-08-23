@@ -36,25 +36,25 @@
       "section_sha256": "4e9e977f6701dec9b64455af4235bf532ec53729b36a51090769209a58e28252"
     },
     {
-      "entry_sha256": "3532408ba68704e63c657c82a3573670fafdb13e9ebbeeeb35edc472e1aabd1a",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/9b/9bd489d5c7b7ca58b1ada5102e0eadd3562a60b503d3c8b50dffb8cd9bad7a9d.json",
-      "fragment_sha256": "5a2d5f05b5b35e9c5813cfd2efe3152179e52282fb7c9fa4b1bd069c0ae25a52",
+      "entry_sha256": "b01da85274bafcaa044f2b36d1028433a537e62043a6f060faaab65a327e7121",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/c8/c838ae434e4ce48922f4704c6150e4da333673074856d6a770c292c99aafd444.json",
+      "fragment_sha256": "c6320dfc649e649e014c6d7d7f562e769d21ef88730377eb9a6da7431c18fce7",
       "order": 3,
       "previous_entry_sha256": "afebdf822635c51a58cf2e71622a3b3f871b44b2c38dad3036f532e640ca5e39",
       "section_id": "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2",
-      "section_sha256": "9bd489d5c7b7ca58b1ada5102e0eadd3562a60b503d3c8b50dffb8cd9bad7a9d"
+      "section_sha256": "c838ae434e4ce48922f4704c6150e4da333673074856d6a770c292c99aafd444"
     },
     {
-      "entry_sha256": "51caf9877995c13009013fcbba15740598fca762f41a2c1fc743417a18704f0d",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/bf/bf7a156509662527e807c0438dc7e24d35cbc2f449b23f20e0931f435b084e62.json",
-      "fragment_sha256": "045716472ec16b198104b497c2b714672009094301cd56c87067b61f74ef454f",
+      "entry_sha256": "881c1bb6df19a09cd63c049f0c09b2498e880a14b9df8b027ad5fd08a3274142",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/0c/0cac0f8a39ede57bf20e45a51caa0258b79b3675fd3cd8b63683d8ea8edc87da.json",
+      "fragment_sha256": "d6bd4c2ac2222a9b8797a8722ab35ab1a2a92b0b3bbb6726b78d94867e00bbfa",
       "order": 4,
-      "previous_entry_sha256": "3532408ba68704e63c657c82a3573670fafdb13e9ebbeeeb35edc472e1aabd1a",
+      "previous_entry_sha256": "b01da85274bafcaa044f2b36d1028433a537e62043a6f060faaab65a327e7121",
       "section_id": "phase_trading_2542c_growth_action_value_independent_review_remediation_and_freeze_readiness_v1",
-      "section_sha256": "bf7a156509662527e807c0438dc7e24d35cbc2f449b23f20e0931f435b084e62"
+      "section_sha256": "0cac0f8a39ede57bf20e45a51caa0258b79b3675fd3cd8b63683d8ea8edc87da"
     }
   ],
-  "final_chain_sha256": "51caf9877995c13009013fcbba15740598fca762f41a2c1fc743417a18704f0d",
+  "final_chain_sha256": "881c1bb6df19a09cd63c049f0c09b2498e880a14b9df8b027ad5fd08a3274142",
   "genesis_chain_sha256": "9be38b19ac0ccccd821200bc38b1fb86ce86e1052e7f4496595da5b40d475bcd",
   "legacy_prefix": {
     "byte_count": 3151107,

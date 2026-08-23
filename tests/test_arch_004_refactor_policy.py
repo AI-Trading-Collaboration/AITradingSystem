@@ -3872,6 +3872,11 @@ DEVX_007_V2_SOURCE_PATHS = frozenset(
     }
 )
 LATEST_COMPATIBILITY_SECTION = DEVX_007_V2_SECTION
+TRADING_2542C_REVIEW_REMEDIATION_SECTION = (
+    "phase_trading_2542c_growth_action_value_independent_review_"
+    "remediation_and_freeze_readiness_v1"
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2542C_REVIEW_REMEDIATION_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -24234,12 +24239,15 @@ def test_devx_007_is_append_only_current_hash_authority() -> None:
     }
 
 
-def test_devx_007_v2_is_latest_append_only_current_hash_authority() -> None:
+def test_devx_007_v2_has_trading_2542c_successor_authority() -> None:
     baseline = _compatibility_baseline()
     assert list(baseline).index(ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION) < list(
         baseline
     ).index(DEVX_007_V2_SECTION)
-    assert next(reversed(baseline)) == DEVX_007_V2_SECTION
+    assert list(baseline).index(DEVX_007_V2_SECTION) < list(baseline).index(
+        TRADING_2542C_REVIEW_REMEDIATION_SECTION
+    )
+    assert next(reversed(baseline)) == TRADING_2542C_REVIEW_REMEDIATION_SECTION
     phase = baseline[DEVX_007_V2_SECTION]
     assert phase["schema_version"] == (
         "devx_007_web_pro_git_review_skill_explicit_submission.v2"
@@ -24263,14 +24271,12 @@ def test_devx_007_v2_is_latest_append_only_current_hash_authority() -> None:
     superseded = set(phase["superseded_live_source_paths"])
     assert superseded == DEVX_007_V2_SOURCE_PATHS
     assert _latest_active_source_mismatches(DEVX_007_V2_SECTION) == (
-        DEVX_007_V2_SOURCE_PATHS
-        - {
-            "config/architecture/devx_007_web_pro_git_review_skill_authority.yaml",
-            "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-            "inputs/architecture/arch_004e_architecture_fitness.yaml",
-            "registry/development_tasks/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml",
-            "tests/test_trading2452_architecture_contract.py",
-        }
+            DEVX_007_V2_SOURCE_PATHS
+            - {
+                "config/architecture/devx_007_web_pro_git_review_skill_authority.yaml",
+                "registry/development_tasks/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml",
+                "tests/test_trading2452_architecture_contract.py",
+            }
     )
     assert phase["supersession"] == {
         "historical_hashes_rewritten": False,
