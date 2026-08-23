@@ -24,6 +24,7 @@ REAL_LEGACY_PATH = Path("inputs/architecture/arch_004_compatibility_baseline.yam
 DEVX_006C_SECTION = "phase_devx_006c_compatibility_authority_fragmentation"
 DEVX_006D_SECTION = "phase_devx_006d_report_catalog_flow_lossless_fragmentation"
 ARCH_005_S5_SECTION = "phase_arch_005_s5_canonical_task_source_cutover"
+DEVX_007_V2_SECTION = "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2"
 
 
 def _write_fixture_authority(
@@ -128,16 +129,24 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 309
+    assert len(merged) == 310
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == ARCH_005_S5_SECTION
+    assert next(reversed(merged)) == DEVX_007_V2_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
         "ARCH_005_TASK_REGISTRY"
     )
+    assert merged[DEVX_007_V2_SECTION]["submission_authorization"] == {
+        "explicit_current_request_is_submission_authority": True,
+        "non_sensitive_public_or_authorized_exact_commit_only": True,
+        "repeat_send_confirmation_required": False,
+        "second_submission_requires_separate_recovery_or_authorization": True,
+        "sensitive_private_unscoped_fail_closed": True,
+        "scope_expansion_is_new_authority_scope": True,
+    }
     assert merged[DEVX_006C_SECTION]["authority_contract"] == {
         "dual_write": False,
         "fragment_identity": "CANONICAL_SECTION_SHA256",

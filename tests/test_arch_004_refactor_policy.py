@@ -3850,7 +3850,28 @@ LATEST_COMPATIBILITY_SECTION = DEVX_006D_REPORT_CATALOG_FLOW_AUTHORITY_SECTION
 ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION = (
     "phase_arch_005_s5_canonical_task_source_cutover"
 )
-LATEST_COMPATIBILITY_SECTION = ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION
+DEVX_007_V2_SECTION = "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2"
+DEVX_007_V2_SOURCE_PATHS = frozenset(
+    {
+        "config/architecture/devx_007_web_pro_git_review_skill_authority.yaml",
+        "docs/requirements/DEVX-007_Web_Pro_Git_Strategy_Planning_Skill.md",
+        "docs/task_register.md",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_005_task_registry_index.yaml",
+        "registry/development_tasks/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml",
+        "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_devx_006c_compatibility_authority.py",
+        "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "tests/test_run_web_pro_git_review_skill.py",
+        "tests/test_trading2452_architecture_contract.py",
+        "tools/codex_skills/run-web-pro-git-review/SKILL.md",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = DEVX_007_V2_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -10323,6 +10344,25 @@ def _devx_007_all_current_authority_paths() -> frozenset[str]:
 
 
 @cache
+def _devx_007_v2_superseded_live_source_paths() -> frozenset[str]:
+    paths = _compatibility_baseline()[DEVX_007_V2_SECTION]["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _devx_007_v2_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[DEVX_007_V2_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _devx_007_v2_all_current_authority_paths() -> frozenset[str]:
+    return _devx_007_v2_superseded_live_source_paths() | _devx_007_v2_source_paths()
+
+
+@cache
 def _trading_2464_decision_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2464_decision_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -12539,6 +12579,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
                 "superseded_live_source_paths"
             ]
         )
+    if DEVX_007_V2_SECTION in baseline:
+        paths |= _devx_007_v2_all_current_authority_paths()
     return paths
 
 
@@ -12992,6 +13034,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION,
         DEVX_006D_REPORT_CATALOG_FLOW_AUTHORITY_SECTION,
         ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION,
+        DEVX_007_V2_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13079,6 +13122,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION,
         DEVX_006D_REPORT_CATALOG_FLOW_AUTHORITY_SECTION,
         ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION,
+        DEVX_007_V2_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -14019,7 +14063,28 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION in baseline:
+    if DEVX_007_V2_SECTION in baseline:
+        phase = baseline[DEVX_007_V2_SECTION]
+        current_superseded_paths = frozenset(
+            str(path) for path in phase["superseded_live_source_paths"]
+        )
+        assert (
+            _latest_active_source_mismatches(DEVX_007_V2_SECTION)
+            <= current_superseded_paths
+        )
+        inherited_superseded_paths = frozenset(
+            str(path)
+            for path in baseline[DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION][
+                "superseded_live_source_paths"
+            ]
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2504_qqq_options_owner_decision_manifest_all_current_authority_paths()
+            | inherited_superseded_paths
+            | current_superseded_paths
+        )
+        authority_section = DEVX_007_V2_SECTION
+    elif DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION in baseline:
         phase = baseline[DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION]
         current_superseded_paths = frozenset(
             str(path) for path in phase["superseded_live_source_paths"]
@@ -24167,6 +24232,60 @@ def test_devx_007_is_append_only_current_hash_authority() -> None:
         "production_effect": "none",
         "broker_action": "none",
     }
+
+
+def test_devx_007_v2_is_latest_append_only_current_hash_authority() -> None:
+    baseline = _compatibility_baseline()
+    assert list(baseline).index(ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION) < list(
+        baseline
+    ).index(DEVX_007_V2_SECTION)
+    assert next(reversed(baseline)) == DEVX_007_V2_SECTION
+    phase = baseline[DEVX_007_V2_SECTION]
+    assert phase["schema_version"] == (
+        "devx_007_web_pro_git_review_skill_explicit_submission.v2"
+    )
+    assert phase["status"] == "ACTIVE"
+    assert phase["task_id"] == "DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL"
+    assert phase["exact_start_base"] == "4eef79bd1614a7736a51cbf215cd69458041143c"
+    assert phase["owner_decision"] == (
+        "owner_decision:DEVX-007:2026-08-23:"
+        "explicit_web_pro_request_authorizes_non_sensitive_review_submission_"
+        "without_repeat_confirmation_v2"
+    )
+    assert phase["submission_authorization"] == {
+        "explicit_current_request_is_submission_authority": True,
+        "non_sensitive_public_or_authorized_exact_commit_only": True,
+        "repeat_send_confirmation_required": False,
+        "sensitive_private_unscoped_fail_closed": True,
+        "scope_expansion_is_new_authority_scope": True,
+        "second_submission_requires_separate_recovery_or_authorization": True,
+    }
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == DEVX_007_V2_SOURCE_PATHS
+    assert _latest_active_source_mismatches(DEVX_007_V2_SECTION) == (
+        DEVX_007_V2_SOURCE_PATHS
+        - {
+            "config/architecture/devx_007_web_pro_git_review_skill_authority.yaml",
+            "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+            "inputs/architecture/arch_004e_architecture_fitness.yaml",
+            "registry/development_tasks/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml",
+            "tests/test_trading2452_architecture_contract.py",
+        }
+    )
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION,
+        "current_hash_authority": f"{DEVX_007_V2_SECTION}.sources",
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert set(source_paths) == DEVX_007_V2_SOURCE_PATHS
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _source_sha256(source) == source["sha256"], source["path"]
+    assert phase["production_effect"] == "none"
+    assert phase["broker_action"] == "none"
 
 
 def test_trading_2464_decision_pack_is_append_only_current_hash_authority() -> None:

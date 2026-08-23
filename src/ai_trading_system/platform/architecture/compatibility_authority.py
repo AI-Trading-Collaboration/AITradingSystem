@@ -660,6 +660,45 @@ def build_repository_authority(
             section=s5_section,
         )
         rendered_fragments.append((s5_section_id, s5_relative, s5_record, s5_fragment_bytes))
+    devx_007_v2_policy_path = (
+        root / "config/architecture/devx_007_web_pro_git_review_skill_authority.yaml"
+    )
+    if devx_007_v2_policy_path.exists():
+        devx_007_v2_policy = _mapping(
+            load_strict_yaml_text(
+                devx_007_v2_policy_path.read_text(encoding="utf-8"),
+                label=devx_007_v2_policy_path.as_posix(),
+            ),
+            "devx_007_v2_policy",
+        )
+        rendered_fragments = _preserved_fragment_chain(
+            root,
+            policy=policy,
+            exact_start_base=_string(
+                devx_007_v2_policy.get("exact_start_base"),
+                "devx_007_v2.exact_start_base",
+            ),
+        )
+        devx_007_v2_section_id, devx_007_v2_section = _devx_007_v2_section(
+            root,
+            policy=policy,
+        )
+        (
+            devx_007_v2_relative,
+            devx_007_v2_record,
+            devx_007_v2_fragment_bytes,
+        ) = render_fragment(
+            section_id=devx_007_v2_section_id,
+            section=devx_007_v2_section,
+        )
+        rendered_fragments.append(
+            (
+                devx_007_v2_section_id,
+                devx_007_v2_relative,
+                devx_007_v2_record,
+                devx_007_v2_fragment_bytes,
+            )
+        )
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -699,6 +738,72 @@ def build_repository_authority(
         "section_sha256": latest_record["section_sha256"],
         "index": index,
     }
+
+
+def _git_bytes(root: Path, commit: str, portable: str) -> bytes:
+    result = subprocess.run(
+        ["git", "show", f"{commit}:{portable}"],
+        cwd=root,
+        check=False,
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        _fail("AUTHORITY_GIT_BLOB_UNAVAILABLE", f"{commit}:{portable}")
+    return result.stdout
+
+
+def _preserved_fragment_chain(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+    exact_start_base: str,
+) -> list[tuple[str, str, dict[str, Any], bytes]]:
+    index_path = _portable_path(policy["index_path"], "index_path")
+    index_content = _git_bytes(root, exact_start_base, index_path)
+    index = _strict_json_bytes(index_content, f"{exact_start_base}:{index_path}")
+    _exact_keys(index, _INDEX_FIELDS, "preserved_index")
+    raw_entries = index.get("entries")
+    if not isinstance(raw_entries, list):
+        _fail("AUTHORITY_PRESERVED_INDEX_ENTRIES", index_path)
+    expected_sections = [
+        "phase_devx_006c_compatibility_authority_fragmentation",
+        "phase_devx_006d_report_catalog_flow_lossless_fragmentation",
+        "phase_arch_005_s5_canonical_task_source_cutover",
+    ]
+    if [entry.get("section_id") for entry in raw_entries if isinstance(entry, dict)] != (
+        expected_sections
+    ):
+        _fail("AUTHORITY_PRESERVED_INDEX_SECTION_DRIFT", index_path)
+    fragment_root = PurePosixPath(
+        _portable_path(policy["fragment_root"], "fragment_root")
+    )
+    fragments: list[tuple[str, str, dict[str, Any], bytes]] = []
+    for position, raw_entry in enumerate(raw_entries):
+        entry = _mapping(raw_entry, f"preserved_index.entries[{position}]")
+        _exact_keys(entry, _ENTRY_FIELDS, f"preserved_index.entries[{position}]")
+        portable = _portable_path(
+            entry["fragment_path"],
+            f"preserved_index.entries[{position}].fragment_path",
+        )
+        content = _git_bytes(root, exact_start_base, portable)
+        if _digest(content) != entry["fragment_sha256"]:
+            _fail("AUTHORITY_PRESERVED_FRAGMENT_HASH_DRIFT", portable)
+        record = _strict_json_bytes(content, f"{exact_start_base}:{portable}")
+        _exact_keys(record, _FRAGMENT_FIELDS, f"preserved_fragment[{position}]")
+        if record["schema_version"] != FRAGMENT_SCHEMA:
+            _fail("AUTHORITY_PRESERVED_FRAGMENT_SCHEMA", portable)
+        if record["section_id"] != entry["section_id"]:
+            _fail("AUTHORITY_PRESERVED_FRAGMENT_SECTION_DRIFT", portable)
+        section = _mapping(record["section"], f"preserved_fragment[{position}].section")
+        section_sha = _digest(_canonical_mapping_bytes(section, sort_keys=True))
+        if record["section_sha256"] != section_sha or entry["section_sha256"] != section_sha:
+            _fail("AUTHORITY_PRESERVED_FRAGMENT_SECTION_HASH_DRIFT", portable)
+        try:
+            relative = PurePosixPath(portable).relative_to(fragment_root).as_posix()
+        except ValueError:
+            _fail("AUTHORITY_PRESERVED_FRAGMENT_ROOT_DRIFT", portable)
+        fragments.append((str(entry["section_id"]), relative, record, content))
+    return fragments
 
 
 def _source_record(root: Path, portable: str) -> dict[str, str]:
@@ -1108,6 +1213,88 @@ def _arch_005_s5_section(
         },
         "production_effect": "none",
         "broker_action": "none",
+    }
+
+
+def _devx_007_v2_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2"
+    v2_policy_path = "config/architecture/devx_007_web_pro_git_review_skill_authority.yaml"
+    v2_policy = _mapping(
+        load_strict_yaml_text(
+            _regular_path(root, v2_policy_path, "devx_007_v2_policy").read_text(
+                encoding="utf-8"
+            ),
+            label=v2_policy_path,
+        ),
+        "devx_007_v2_policy",
+    )
+    if v2_policy.get("schema_version") != (
+        "devx_007_web_pro_git_review_skill_authority.v2"
+    ):
+        _fail("AUTHORITY_DEVX_007_V2_SCHEMA", v2_policy_path)
+    if v2_policy.get("status") != "ACTIVE":
+        _fail("AUTHORITY_DEVX_007_V2_STATUS", v2_policy_path)
+    raw_source_paths = v2_policy.get("source_paths")
+    if not isinstance(raw_source_paths, list) or not raw_source_paths:
+        _fail("AUTHORITY_DEVX_007_V2_SOURCE_PATHS", v2_policy_path)
+    source_paths = [
+        _portable_path(path, f"devx_007_v2.source_paths[{position}]")
+        for position, path in enumerate(raw_source_paths)
+    ]
+    if source_paths != sorted(source_paths, key=str.casefold):
+        _fail("AUTHORITY_DEVX_007_V2_SOURCE_PATH_ORDER", v2_policy_path)
+    if len(source_paths) != len(set(source_paths)) or v2_policy_path not in source_paths:
+        _fail("AUTHORITY_DEVX_007_V2_SOURCE_PATH_IDENTITY", v2_policy_path)
+    authorization = _mapping(
+        v2_policy.get("authorization_boundary"),
+        "devx_007_v2.authorization_boundary",
+    )
+    expected_authorization = {
+        "explicit_current_request_is_submission_authority": True,
+        "non_sensitive_public_or_authorized_exact_commit_only": True,
+        "repeat_send_confirmation_required": False,
+        "sensitive_private_unscoped_fail_closed": True,
+        "scope_expansion_is_new_authority_scope": True,
+        "second_submission_requires_separate_recovery_or_authorization": True,
+    }
+    if dict(authorization) != expected_authorization:
+        _fail("AUTHORITY_DEVX_007_V2_AUTHORIZATION_BOUNDARY", v2_policy_path)
+    return section_id, {
+        "schema_version": "devx_007_web_pro_git_review_skill_explicit_submission.v2",
+        "task_id": _string(v2_policy.get("task_id"), "devx_007_v2.task_id"),
+        "status": "ACTIVE",
+        "exact_start_base": _string(
+            v2_policy.get("exact_start_base"),
+            "devx_007_v2.exact_start_base",
+        ),
+        "owner_decision": _string(
+            v2_policy.get("owner_decision"),
+            "devx_007_v2.owner_decision",
+        ),
+        "legacy_prefix_sha256": policy["legacy_prefix"]["file_sha256"],
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "submission_authorization": expected_authorization,
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_arch_005_s5_canonical_task_source_cutover"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "production_effect": _string(
+            v2_policy.get("production_effect"),
+            "devx_007_v2.production_effect",
+        ),
+        "broker_action": _string(
+            v2_policy.get("broker_action"),
+            "devx_007_v2.broker_action",
+        ),
     }
 
 

@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
   task_id_sha256: 2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3
 task_record:
+  schema_version: task_record.v1
   task_id: DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
   title: null
   domain: Developer experience / governed Web Pro exact-Git planning handoff
@@ -12,25 +13,23 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: workflow owner：在下一次用户明确授权的 Web Pro exact-Git 审阅中观察复用体验；如无问题无需继续开发
-  requirement_refs:
-  - docs/requirements/DEVX-007_Web_Pro_Git_Strategy_Planning_Skill.md
+  next_owner: Owner：如需继续 Conditional Source Value Audit，另行授权 proposed TRADING-2544
+    serial contract/feasibility wave；当前无需继续修改 DEVX-007
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-007_Web_Pro_Git_Strategy_Planning_Skill.md`。Skill
-    只在用户明确要求网页 Pro 外部审阅时，把公开或用户明确授权的 Git exact commit 与最小必要上下文发送到已登录 ChatGPT；必须分离
-    UI `Pro`、模型自述与 authoritative backend route evidence，并把 fallback 不可验证记为风险。
+  unstructured_legacy_blocker_or_next_step: DEVX-007 v2 无 blocker。主线已把 TRADING-2543
+    分配给 Atlas live canonical snapshot；Conditional Source Value 后续尚未创建，拟议 id 顺延为 TRADING-2544。显式非敏感
+    public/authorized exact-commit Web Pro 请求可直接提交；其他上位风险仍 fail closed。
   acceptance_criteria:
-  - criterion_id: legacy_markdown
-    text: 使用 `skill-creator` 标准结构；canonical bundle 位于 `tools/codex_skills/run-web-pro-git-review/`，installed
-      bundle 位于 `$CODEX_HOME/skills/run-web-pro-git-review/`；固定 exact commit、不读取 moving
-      main；仓库检索成功/失败逐项披露；路由结论只允许 verified mismatch signal、UI/self-report consistent但route不可验证、或明确不可用；`quick_validate`、canonical/installed
-      parity、技能/历史 authority 聚焦测试、Architecture 785项与Contract 276项 PASS；task shadow
-      live drift 由新的 append-only DEVX-007 compatibility authority 接管且不改写 D0E 历史段；不修改策略、数据、生产或broker状态。
+  - criterion_id: legacy_compatibility
+    text: PASS：canonical/installed skill parity；explicit-request no-repeat-confirmation
+      静态契约；9/9 exact-blob Web Pro retrieval；UI/self-report 一致但 exact backend route
+      不可验证；append-only v2 authority 且历史三 fragment 不变；Architecture 866 passed；Contract
+      276 passed；production_effect=none、broker_action=none。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: e493853818217821e7ff20dc89410c9331acb1f6fc0d9c1a55e5a0c0f164a4f4
   cell_count: 8
@@ -90,28 +89,178 @@ events:
   evidence_refs:
   - sha256:e493853818217821e7ff20dc89410c9331acb1f6fc0d9c1a55e5a0c0f164a4f4
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T10:09:40Z'
+  actor: codex
+  change_id: DEVX-007-V2-NO-RECONFIRM
+  lane_id: null
+  base_commit: 675b8841890b9c943d9e57ab9e99509426e00fa2
+  previous_state_event_id: legacy-import-e493853818217821e7ff20dc
+  from_status: BASELINE_DONE
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: workflow coordinator：实现并验证用户明确请求后无敏感 public exact-commit Web Pro 审阅直接提交规则，保持
+      canonical/installed parity
+    blocker_or_next_step: 无 blocker；仅更新显式授权复用语义。用户明确要求 Web Pro 审阅且 packet 只含 public/explicitly-authorized
+      non-sensitive exact-commit 上下文时，不再重复确认；敏感数据、private/unscoped content、账号/权限或其他外部变更仍按上位安全规则确认或停止。
+    acceptance_criteria: Canonical/installed SKILL.md 明确：用户当前请求已显式要求 Web Pro 审阅时，准备好的
+      non-sensitive public/authorized exact-commit packet 可直接提交，不重复询问；缺少外发授权、含敏感/private/unscoped
+      内容、认证/Pro/commit 失败仍 fail closed；static contract test、quick_validate、bundle
+      parity、适用 task/docs/architecture/contract 验证通过；production_effect=none、broker_action=none。
+    notes: 2026-08-23：Owner 明确指示发送给 Pro 不需要重复确认，并要求把该偏好更新到 skill；同日当前 Conditional
+      Source Value Audit packet 已按该授权提交，conversation=https://chatgpt.com/c/6a8ac662-51ac-83e8-afc6-336a20e46f8c。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:DEVX-007-V2-NO-RECONFIRM
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-300612fd75ced9edbd8421b9859422e5
+- schema_version: task_event.v1
+  task_id: DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T10:25:00Z'
+  actor: codex
+  change_id: DEVX-007-V2-AUTHORITY-WAVE
+  lane_id: null
+  base_commit: 675b8841890b9c943d9e57ab9e99509426e00fa2
+  previous_state_event_id: task-event-300612fd75ced9edbd8421b9859422e5
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: workflow coordinator：完成 append-only DEVX-007 v2 compatibility authority
+      wave，复跑正式 architecture/contract gate 后关闭任务
+    blocker_or_next_step: 首轮正式 architecture-fitness 为 FAIL_111（754 passed），原因是 DEVX-007
+      requirement、canonical SKILL 与 focused test 的新 live hashes 尚未由 ARCH-005 S5 后续
+      append-only authority 接管；直接方案是新增 v2 fragment/current-hash authority 并扩展消费者测试，不改写历史
+      authority、不跳过门禁。
+    acceptance_criteria: 在 explicit non-sensitive public/authorized exact-commit Web
+      Pro review 请求下不重复确认；敏感/private/unscoped、scope expansion 与 second submission
+      继续 fail closed；新增 append-only DEVX-007 v2 compatibility fragment 接管精确 live mismatch
+      set，历史 prefix 与既有 fragments 不变；quick_validate、bundle parity、focused pytest、task-registry
+      validation、architecture-fitness、contract-validation 全部 PASS；production_effect=none、broker_action=none。
+    notes: 2026-08-23：首轮正式 contract-validation PASS_276；architecture-fitness FAIL_111/PASS_754，错误集中于
+      current-hash authority，确认精确新增 mismatch 为 requirement、canonical SKILL、focused
+      test。按 No Silent Workarounds 进入最小 serial authority wave。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:DEVX-007-V2-AUTHORITY-WAVE
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-766b2c1b21bcc63b4bd776f773da4a21
+- schema_version: task_event.v1
+  task_id: DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T10:50:00Z'
+  actor: codex
+  change_id: DEVX-007-V2-MANIFEST-REFRESH
+  lane_id: null
+  base_commit: 675b8841890b9c943d9e57ab9e99509426e00fa2
+  previous_state_event_id: task-event-766b2c1b21bcc63b4bd776f773da4a21
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: workflow coordinator：重生成 deterministic Architecture manifests、纳入同一
+      DEVX-007 v2 append-only authority 后复跑正式 gate
+    blocker_or_next_step: 第二轮 architecture-fitness 已将 current-hash failures 清零，但剩余
+      1 个 test_architecture_fitness_passes_and_detects_stale_manifest 失败；直接原因是 compatibility_authority.py
+      与 architecture tests 变更后 arch_004e module/test manifests 未重生成。按生成器重建四个 ARCH-004E
+      artifacts，并由 v2 authority 接管其 live hashes。
+    acceptance_criteria: 显式 Web Pro 请求不重复确认规则、敏感/扩张/二次提交边界、历史 fragment immutability
+      与 deterministic ARCH-004E generated freshness 同时成立；quick_validate、bundle parity、focused
+      pytest、authority/task registry validation、architecture-fitness、contract-validation
+      全 PASS；production_effect=none、broker_action=none。
+    notes: 2026-08-23：第二轮正式 architecture-fitness 为 PASS_865/FAIL_1；111 个 authority
+      failures 已全部消除，唯一失败为 module_manifest_fresh/test_manifest_fresh 聚合检查。采用 canonical
+      architecture_devex generate，不手改生成物、不跳过该 gate。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:DEVX-007-V2-MANIFEST-REFRESH
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3744124b91696418b99f000c6ef4b8bf
+- schema_version: task_event.v1
+  task_id: DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T11:02:00Z'
+  actor: codex
+  change_id: DEVX-007-V2-CLOSEOUT
+  lane_id: null
+  base_commit: 675b8841890b9c943d9e57ab9e99509426e00fa2
+  previous_state_event_id: task-event-3744124b91696418b99f000c6ef4b8bf
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Owner：如需继续 Conditional Source Value Audit，另行授权 proposed TRADING-2543
+      serial contract/feasibility wave；当前无需继续修改 DEVX-007
+    blocker_or_next_step: DEVX-007 v2 无 blocker。显式非敏感 public/authorized exact-commit
+      Web Pro 请求可直接提交；敏感/private/unscoped、scope expansion、second submission 与其他上位风险仍
+      fail closed。新研究任务尚未创建或实施。
+    acceptance_criteria: PASS：canonical/installed skill parity；explicit-request no-repeat-confirmation
+      静态契约；9/9 exact-blob Web Pro retrieval；UI/self-report 一致但 exact backend route
+      不可验证；append-only v2 authority 且历史三 fragment 不变；Architecture 866 passed；Contract
+      276 passed；production_effect=none、broker_action=none。
+    notes: 2026-08-23：Web Pro conversation=https://chatgpt.com/c/6a8ac662-51ac-83e8-afc6-336a20e46f8c；建议
+      serial contract wave first、channel/provider 分轴、strict outer-fold OOF estimand、M2
+      gated MLP challenger only、sequence V1 rejected。最终 architecture-fitness PASS_866，contract-validation
+      PASS_276；未创建 TRADING-2543、未运行研究、未改变 strategy/production/broker。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:DEVX-007-V2-CLOSEOUT
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0f62948e1b20a67f844e494f9cb0324e
+- schema_version: task_event.v1
+  task_id: DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T13:09:59Z'
+  actor: codex
+  change_id: DEVX-007-V2-TASK-ID-COLLISION-RECONCILIATION
+  lane_id: null
+  base_commit: 4eef79bd1614a7736a51cbf215cd69458041143c
+  previous_state_event_id: task-event-0f62948e1b20a67f844e494f9cb0324e
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Owner：如需继续 Conditional Source Value Audit，另行授权 proposed TRADING-2544
+      serial contract/feasibility wave；当前无需继续修改 DEVX-007
+    blocker_or_next_step: DEVX-007 v2 无 blocker。主线已把 TRADING-2543 分配给 Atlas live canonical
+      snapshot；Conditional Source Value 后续尚未创建，拟议 id 顺延为 TRADING-2544。显式非敏感 public/authorized
+      exact-commit Web Pro 请求可直接提交；其他上位风险仍 fail closed。
+    acceptance_criteria: PASS：canonical/installed skill parity；explicit-request no-repeat-confirmation
+      静态契约；9/9 exact-blob Web Pro retrieval；UI/self-report 一致但 exact backend route
+      不可验证；append-only v2 authority 且历史三 fragment 不变；Architecture 866 passed；Contract
+      276 passed；production_effect=none、broker_action=none。
+    notes: 2026-08-23：latest main 4eef79bd 已注册 TRADING-2543 Atlas live canonical snapshot，故未创建的
+      Conditional Source Value Audit 拟议编号调整为 TRADING-2544_CONDITIONAL_SOURCE_VALUE_AUDIT_SERIAL_CONTRACT_AND_FEASIBILITY_V1；未运行研究、未改变
+      strategy/production/broker。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:DEVX-007-V2-TASK-ID-COLLISION-RECONCILIATION
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7c5d5f8676ac8d6d0cab6518655bea26
 projection:
   legacy_first_eight_cells:
   - DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
   - Developer experience / governed Web Pro exact-Git planning handoff
   - P0
   - BASELINE_DONE
-  - workflow owner：在下一次用户明确授权的 Web Pro exact-Git 审阅中观察复用体验；如无问题无需继续开发
-  - 详见 `docs/requirements/DEVX-007_Web_Pro_Git_Strategy_Planning_Skill.md`。Skill 只在用户明确要求网页
-    Pro 外部审阅时，把公开或用户明确授权的 Git exact commit 与最小必要上下文发送到已登录 ChatGPT；必须分离 UI `Pro`、模型自述与
-    authoritative backend route evidence，并把 fallback 不可验证记为风险。
-  - 使用 `skill-creator` 标准结构；canonical bundle 位于 `tools/codex_skills/run-web-pro-git-review/`，installed
-    bundle 位于 `$CODEX_HOME/skills/run-web-pro-git-review/`；固定 exact commit、不读取 moving
-    main；仓库检索成功/失败逐项披露；路由结论只允许 verified mismatch signal、UI/self-report consistent但route不可验证、或明确不可用；`quick_validate`、canonical/installed
-    parity、技能/历史 authority 聚焦测试、Architecture 785项与Contract 276项 PASS；task shadow live
-    drift 由新的 append-only DEVX-007 compatibility authority 接管且不改写 D0E 历史段；不修改策略、数据、生产或broker状态。
-  - 2026-07-29：skill bundle、提示模板、路由风险分类、恢复流程、静态契约测试与 append-only current-hash authority
-    已完成；首轮 Architecture 的 48 个 drift 失败已直接修复，复跑 `785 passed`，Contract `276 passed`。任务进入
-    `BASELINE_DONE`；不替代 TRADING-2464 的 Owner 授权或研究证据。
-  docs_links:
-  - docs/requirements/DEVX-007_Web_Pro_Git_Strategy_Planning_Skill.md
+  - Owner：如需继续 Conditional Source Value Audit，另行授权 proposed TRADING-2544 serial contract/feasibility
+    wave；当前无需继续修改 DEVX-007
+  - DEVX-007 v2 无 blocker。主线已把 TRADING-2543 分配给 Atlas live canonical snapshot；Conditional
+    Source Value 后续尚未创建，拟议 id 顺延为 TRADING-2544。显式非敏感 public/authorized exact-commit
+    Web Pro 请求可直接提交；其他上位风险仍 fail closed。
+  - PASS：canonical/installed skill parity；explicit-request no-repeat-confirmation
+    静态契约；9/9 exact-blob Web Pro retrieval；UI/self-report 一致但 exact backend route 不可验证；append-only
+    v2 authority 且历史三 fragment 不变；Architecture 866 passed；Contract 276 passed；production_effect=none、broker_action=none。
+  - 2026-08-23：latest main 4eef79bd 已注册 TRADING-2543 Atlas live canonical snapshot，故未创建的
+    Conditional Source Value Audit 拟议编号调整为 TRADING-2544_CONDITIONAL_SOURCE_VALUE_AUDIT_SERIAL_CONTRACT_AND_FEASIBILITY_V1；未运行研究、未改变
+    strategy/production/broker。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: e493853818217821e7ff20dc89410c9331acb1f6fc0d9c1a55e5a0c0f164a4f4
-last_event_id: legacy-import-e493853818217821e7ff20dc
+  canonical_row_sha256: 18a9502b6577deca0fcb0523ec89712120395a965b20a0620a5eb626ad6ceeb5
+last_event_id: task-event-7c5d5f8676ac8d6d0cab6518655bea26
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 3af0364711e3d00956e7ae5ff87ed348238fcdb947654127de262949741303db
+fragment_checksum: e82fa48ce016becf0ccc1322acc40015ebe0da1516b55e8ef013d46c24df218a

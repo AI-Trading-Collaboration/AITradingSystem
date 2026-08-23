@@ -147,7 +147,9 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     section = merged["phase_devx_006d_report_catalog_flow_lossless_fragmentation"]
     fragment_authority = section["report_catalog_flow_fragment_authority"]
 
-    assert next(reversed(merged)) == "phase_arch_005_s5_canonical_task_source_cutover"
+    assert next(reversed(merged)) == (
+        "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2"
+    )
     assert fragment_authority["source_of_truth"] == "LEGACY_MONOLITH"
     assert fragment_authority["fragment_shadow_active"] is False
     assert fragment_authority["target_count"] == 3

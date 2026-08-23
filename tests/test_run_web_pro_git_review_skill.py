@@ -53,6 +53,16 @@ def test_skill_preserves_authority_routing_and_recovery_boundaries() -> None:
         assert term in content
 
 
+def test_explicit_non_sensitive_review_request_does_not_require_repeat_confirmation() -> None:
+    content = _read("SKILL.md")
+
+    assert "do not ask for a second \"send now\" confirmation" in content
+    assert "non-sensitive public Git or" in content
+    assert "personal or sensitive data" in content
+    assert "private or unscoped content" in content
+    assert "a second submission after an" in content
+
+
 def test_prompt_template_requires_identity_exact_urls_and_planning_sections() -> None:
     content = _read("references/prompt-template.md")
 

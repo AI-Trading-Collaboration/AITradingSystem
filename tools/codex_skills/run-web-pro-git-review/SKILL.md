@@ -60,7 +60,14 @@ the webpage reviewer must verify.
 5. Enable web retrieval when the review requires public Git access.
 6. Fill the unique composer with the complete packet.
 7. Submit only after the user has explicitly asked for the external webpage review.
-8. Save the conversation URL immediately after submission.
+   When that current request is explicit and the packet contains only non-sensitive public Git or
+   explicitly authorized context within the reviewed scope, submit directly after the checks above;
+   do not ask for a second "send now" confirmation.
+8. A prior explicit review request does not waive higher-priority confirmation or stop requirements
+   for secrets, personal or sensitive data, private or unscoped content, file uploads, account or
+   permission changes, paid-resource use, other external actions, or a second submission after an
+   error. Treat material packet expansion as new outbound scope.
+9. Save the conversation URL immediately after submission.
 
 Do not use response latency, writing quality, subscription level, or a `Pro` UI label as proof of
 the exact serving backend.

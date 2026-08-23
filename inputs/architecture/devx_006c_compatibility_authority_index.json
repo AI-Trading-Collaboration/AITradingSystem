@@ -34,9 +34,18 @@
       "previous_entry_sha256": "a1742bde2d01d6c0279e4746b434f13cc50f89852994011e63630f56953a6927",
       "section_id": "phase_arch_005_s5_canonical_task_source_cutover",
       "section_sha256": "4e9e977f6701dec9b64455af4235bf532ec53729b36a51090769209a58e28252"
+    },
+    {
+      "entry_sha256": "c27a60e0565bd98dce2af2a8d4a68ad08100caee33baf9b4b18d478c19568fe3",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/fb/fb4288788f995a1a7ac586e964faa17d25da51003a5714073f5536f28eee67b4.json",
+      "fragment_sha256": "3864d695729efd06ff924e1c738d411f4b6e55f7723005212326efed4025e279",
+      "order": 3,
+      "previous_entry_sha256": "afebdf822635c51a58cf2e71622a3b3f871b44b2c38dad3036f532e640ca5e39",
+      "section_id": "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2",
+      "section_sha256": "fb4288788f995a1a7ac586e964faa17d25da51003a5714073f5536f28eee67b4"
     }
   ],
-  "final_chain_sha256": "afebdf822635c51a58cf2e71622a3b3f871b44b2c38dad3036f532e640ca5e39",
+  "final_chain_sha256": "c27a60e0565bd98dce2af2a8d4a68ad08100caee33baf9b4b18d478c19568fe3",
   "genesis_chain_sha256": "9be38b19ac0ccccd821200bc38b1fb86ce86e1052e7f4496595da5b40d475bcd",
   "legacy_prefix": {
     "byte_count": 3151107,
