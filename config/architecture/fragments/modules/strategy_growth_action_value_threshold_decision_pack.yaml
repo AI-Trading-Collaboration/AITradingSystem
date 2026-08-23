@@ -1,0 +1,27 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.strategy_growth_action_value_threshold_decision_pack
+fragment_kind: module
+owner: strategy_research_governance
+module_prefix: src/ai_trading_system/strategy_growth_action_value_threshold_decision_pack.py
+public_contracts:
+  - DEFAULT_STRATEGY_GROWTH_ACTION_VALUE_THRESHOLD_DECISION_PACK_PATH
+  - AuthorityDisposition
+  - AuthorityObservation
+  - AxisGap
+  - CalibrationSourceOption
+  - DecisionPackSafety
+  - DecisionPackTerminal
+  - DecisionTiming
+  - FileAuthorityBinding
+  - OwnerQuestion
+  - OwnerResponseContract
+  - PolicyMetadata
+  - ScopeBinding
+  - StrategyGrowthActionValueThresholdDecisionPack
+  - StrategyGrowthActionValueThresholdDecisionPackError
+  - StrategyGrowthActionValueThresholdDecisionPackLoadResult
+  - ThresholdDirection
+  - ThresholdSourceInventoryItem
+  - load_strategy_growth_action_value_threshold_decision_pack
+compatibility_facades: []
+deprecation_status: active_reference_architecture

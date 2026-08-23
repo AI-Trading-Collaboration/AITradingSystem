@@ -1,0 +1,487 @@
+schema_version: strategy_growth_action_value_threshold_decision_pack.v1
+pack_id: strategy_growth_action_value_threshold_decision_pack_v1
+pack_version: 1.0.0
+pack_status: OWNER_DECISION_REQUIRED
+task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+policy_metadata:
+  owner: project_owner_and_strategy_research_governance
+  rationale: >-
+    TRADING-2540 has frozen the growth hypothesis and evaluation taxonomy, but no reviewed
+    threshold bundle matches its hypothesis, comparator, primary window, and selected evidence
+    lane. Inventory the available authority before any new empirical result can be observed.
+  intended_effect: >-
+    Give the Project Owner one bounded decision surface for source assignment, exact values, and
+    review conditions while keeping every empirical, data, external, and trading action closed.
+  validation_evidence: >-
+    Strict source hashing, exact eight-axis coverage, canonical replay, no-value checks, authority
+    disposition checks, predecessor-rule reconciliation, and negative tamper tests.
+  review_condition: >-
+    Review before selecting any numeric or categorical threshold value, changing an axis, reading
+    a new DQ or strategy result, or authorizing a data, backtest, holdout, Cloud, paper, live, or
+    broker action.
+scope_binding:
+  predecessor_policy_id: strategy_growth_action_value_preregistration_v1
+  hypothesis_id: BASELINE_BOUNDED_QQQ_GROWTH_OVERLAY_NON_BETA_ACTION_VALUE_V1
+  baseline_id: equal_risk_qqq_sgov
+  comparator_ids:
+    - equal_risk_qqq_sgov
+    - exposure_matched_no_signal
+  action_universe:
+    - QQQ
+    - SGOV
+  primary_window_start: '2021-02-22'
+  primary_window_end: '2025-12-02'
+  selected_data_lane: QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE
+  uses_leverage_etf: false
+  uses_options: false
+  borrowed_leverage_allowed: false
+  threshold_after_result_allowed: false
+decision_timing:
+  state: PRE_EMPIRICAL_OWNER_DECISION_REQUIRED
+  new_dq_result_visible: false
+  new_strategy_result_visible: false
+  holdout_result_visible: false
+  threshold_value_selected: false
+binding_authorities:
+  - authority_id: PROJECT_ENGINEERING_RULES
+    path: AGENTS.md
+    file_sha256: 4dba5a5c45ada5d960e70c4eed6358b542415c26e70caf0a6e2f9652defe6fcd
+  - authority_id: TRADING_2540_PREREGISTRATION_POLICY
+    path: config/research/strategy_growth_action_value_preregistration_v1.yaml
+    file_sha256: f7e769c4a9f82d0a462c327669df0cc2bdfeb3f151c292cdb784ad3327a52f46
+  - authority_id: TRADING_2540_REQUIREMENT
+    path: docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md
+    file_sha256: 8d6e6f80eb7178527d03835150d41ad094096f56531ec513d2ed5076a51b8659
+  - authority_id: TRADING_2541_RECOVERY_TERMINAL
+    path: docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
+    file_sha256: 91831b05bf05606311e8cadadd0a058fdf841281006678dd477b9471d668fc2c
+threshold_source_inventory:
+  - authority_id: ACTION_VALUE_SCORE_POLICY_V2
+    path: config/research/action_value_score_policy_v2.yaml
+    file_sha256: d29c935167c3b15b9263af53287c32ecfb150bded20e859dd9ea4d359264ff05
+    disposition: WRONG_SCOPE
+    applicable_axes:
+      - NON_BETA_ACTION_VALUE
+      - NET_OF_COST_RETURN
+      - LEVERAGE_BETA_ATTRIBUTION
+    reusable_roles: []
+    prohibited_roles:
+      - THRESHOLD_VALUE_SOURCE
+      - PASS_BASIS
+    rationale: >-
+      This pilot scores legacy second-layer labels and includes TQQQ-specific penalties; it is not
+      calibrated for the bounded QQQ/SGOV hypothesis or its exposure-matched comparator.
+  - authority_id: DEFENSIVE_LANE_ACTION_VALUE_POLICY
+    path: config/research/defensive_lane_action_value_policy.yaml
+    file_sha256: 5de15faf54e3093395efa69230a10f170fa8e42b6fd7338344fbf3b262d22852
+    disposition: RETIRED_FAMILY
+    applicable_axes:
+      - ACTUAL_PATH_DRAWDOWN_REGRESSION
+      - FALSE_RISK_OFF_COST
+    reusable_roles:
+      - TERMINOLOGY_ONLY
+    prohibited_roles:
+      - THRESHOLD_VALUE_SOURCE
+      - GROWTH_PASS_BASIS
+    rationale: >-
+      The policy belongs to the closed defensive-preservation lane and explicitly excludes
+      add-risk reward; its labels may clarify terminology but cannot set growth acceptance values.
+  - authority_id: FIRST_LAYER_THRESHOLD_POLICY_V2
+    path: config/research/first_layer_threshold_policy_v2.yaml
+    file_sha256: 9ba69cb281910f94e6cc49cea7a86555ad9f676e9bf81011b21d69fb216b470b
+    disposition: RETIRED_FAMILY
+    applicable_axes:
+      - SAMPLE_AND_WINDOW_DEPENDENCE
+    reusable_roles:
+      - CALIBRATION_METHOD_EXAMPLE_ONLY
+    prohibited_roles:
+      - THRESHOLD_VALUE_SOURCE
+      - SAMPLE_FLOOR_SOURCE
+    rationale: >-
+      Train-window quantiles are a useful method example, but the first-layer family is closed and
+      its horizons, label distribution, and sample floors do not match the new action-value unit.
+  - authority_id: PROMOTION_GATE_THRESHOLDS
+    path: config/research/promotion_gate_thresholds.yaml
+    file_sha256: f6c3a18424e45613908f1d981ba506ac8aedefaa1588ddf18ba2235a20c92cb5
+    disposition: WRONG_SCOPE
+    applicable_axes:
+      - ACTUAL_PATH_DRAWDOWN_REGRESSION
+      - SAMPLE_AND_WINDOW_DEPENDENCE
+    reusable_roles:
+      - GOVERNANCE_PATTERN_ONLY
+    prohibited_roles:
+      - THRESHOLD_VALUE_SOURCE
+      - STRATEGY_PASS_BASIS
+    rationale: >-
+      These discrete bands govern different stress, A/B, and confirmation source gates; they are
+      not action-value thresholds and remain pilot, not outcome-calibrated boundaries.
+  - authority_id: THRESHOLD_REGISTRY_V1
+    path: config/research/threshold_registry.yaml
+    file_sha256: 73c228f9695f50743bd9336f90869913cfd4afdb8c234c55a206a3dbffbf3634
+    disposition: UNCALIBRATED_INVENTORY
+    applicable_axes:
+      - NON_BETA_ACTION_VALUE
+      - NET_OF_COST_RETURN
+      - ACTUAL_PATH_DRAWDOWN_REGRESSION
+      - FALSE_RISK_OFF_COST
+      - SAMPLE_AND_WINDOW_DEPENDENCE
+      - ACTUAL_PATH_TURNOVER
+      - LEVERAGE_BETA_ATTRIBUTION
+    reusable_roles:
+      - GAP_AND_METHOD_INVENTORY_ONLY
+    prohibited_roles:
+      - THRESHOLD_VALUE_SOURCE
+      - VALIDATED_STATISTICAL_BOUNDARY
+    rationale: >-
+      The registry explicitly reports zero validated boundaries and labels its high-impact values
+      as heuristic, uncalibrated, sensitivity-only, or test-fixture inputs.
+  - authority_id: TRANSACTION_COST_MODEL_V1
+    path: config/research/transaction_cost_model.yaml
+    file_sha256: e851d5e7732e96e77af202f26547f7047bfb96c4f3cab1c7345610454cf052b7
+    disposition: PARTIAL_INPUT_ONLY
+    applicable_axes:
+      - NET_OF_COST_RETURN
+      - ACTUAL_PATH_TURNOVER
+    reusable_roles:
+      - COST_INPUT_MODEL
+      - COST_RECONCILIATION_IDENTITY
+    prohibited_roles:
+      - MINIMUM_NET_RETURN_VALUE
+      - MAXIMUM_TURNOVER_VALUE
+    rationale: >-
+      The model can calculate governed research-only cost drag, but it does not define how much
+      net return or turnover is acceptable for this hypothesis.
+  - authority_id: QQQ_OPTIONS_DQ_PIT_IDENTITY_V1
+    path: config/research/qqq_options_dq_pit_identity_v1.yaml
+    file_sha256: 1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358
+    disposition: PARTIAL_INPUT_ONLY
+    applicable_axes:
+      - CANONICAL_DQ_PIT
+    reusable_roles:
+      - REQUIRED_CHECK_INVENTORY
+      - FAIL_CLOSED_UNKNOWN_SEMANTICS
+      - IDENTITY_AND_CHRONOLOGY_CONTRACT
+    prohibited_roles:
+      - NUMERIC_DQ_THRESHOLD_SOURCE
+      - CURRENT_DQ_PASS_CLAIM
+    rationale: >-
+      The canonical checks and unknown-fails-closed semantics are reviewed, but quote age, spread,
+      open-interest, and volume values remain UNKNOWN_REQUIRES_POLICY_REVIEW.
+  - authority_id: QQQ_OPTIONS_STAGED_DQ_PIT_READINESS_V1
+    path: config/research/qqq_options_staged_dq_pit_readiness_v1.yaml
+    file_sha256: 35e0455bc8f7e1b2660ffdbac5b508286a28671ca225872f4a86b7671ac14f2d
+    disposition: PARTIAL_INPUT_ONLY
+    applicable_axes:
+      - CANONICAL_DQ_PIT
+    reusable_roles:
+      - DATA_RESEARCH_STAGE_APPLICABILITY
+      - STAGE_MONOTONICITY
+      - SOURCE_EVIDENCE_ROUTE
+    prohibited_roles:
+      - NUMERIC_DQ_THRESHOLD_SOURCE
+      - CURRENT_DQ_PASS_CLAIM
+    rationale: >-
+      Stage applicability and evidence routes are reviewed, while the same numeric DQ thresholds
+      remain unknown and no current data-research PASS is admitted.
+calibration_source_options:
+  - option_id: OWNER_ECONOMIC_MATERIALITY
+    source_kind: PRE_RESULT_OWNER_JUDGMENT
+    allowed_inputs:
+      - INVESTMENT_OBJECTIVE
+      - GOVERNED_COST_MODEL
+      - RISK_TOLERANCE
+      - UNIT_DEFINITION
+    prohibited_inputs:
+      - CURRENT_HYPOTHESIS_RESULT
+      - HOLDOUT_RESULT
+      - POST_RESULT_OPTIMIZATION
+    risk: Subjective values may be conservative or poorly scaled, but avoid outcome leakage.
+  - option_id: TRAIN_WINDOW_ONLY_DISTRIBUTIONAL
+    source_kind: PRECOMMITTED_TRAIN_WINDOW_RULE
+    allowed_inputs:
+      - TRAIN_FOLD_ONLY
+      - PRECOMMITTED_QUANTILE_OR_CONFIDENCE_RULE
+      - PRECOMMITTED_SAMPLE_FLOOR
+    prohibited_inputs:
+      - VALIDATION_FOLD
+      - HOLDOUT_RESULT
+      - FULL_WINDOW_RESULT
+    risk: Adaptive values may be unstable when action counts or regime coverage are sparse.
+  - option_id: HYBRID_PRECOMMITTED
+    source_kind: ECONOMIC_FLOOR_PLUS_TRAIN_WINDOW_STABILITY
+    allowed_inputs:
+      - OWNER_ECONOMIC_MATERIALITY
+      - GOVERNED_COST_MODEL
+      - TRAIN_FOLD_ONLY_STABILITY_RULE
+    prohibited_inputs:
+      - VALIDATION_FOLD
+      - HOLDOUT_RESULT
+      - POST_RESULT_RESCUE
+    risk: Stronger protection against leakage and instability, with more policy fields to freeze.
+  - option_id: CANONICAL_STRICT_DQ_PIT
+    source_kind: REVIEWED_CATEGORICAL_GATE_PLUS_FUTURE_REVIEWED_NUMERIC_POLICY
+    allowed_inputs:
+      - QQQ_OPTIONS_DQ_PIT_IDENTITY_V1
+      - QQQ_OPTIONS_STAGED_DQ_PIT_READINESS_V1
+    prohibited_inputs:
+      - UNKNOWN_AS_PASS
+      - TRANSPORT_COMPLETENESS_AS_DQ_PASS
+      - UNREVIEWED_NUMERIC_DEFAULT
+    risk: Research remains blocked until every applicable check and missing numeric policy is resolved.
+  - option_id: FIXED_PRIMARY_WINDOW_STABILITY
+    source_kind: PRECOMMITTED_WINDOW_SAMPLE_AND_CONCENTRATION_RULE
+    allowed_inputs:
+      - PRIMARY_WINDOW_2021_02_22_TO_2025_12_02
+      - PREDECLARED_ACTION_COUNT_FLOOR
+      - PREDECLARED_REGIME_CONCENTRATION_CAP
+      - PREDECLARED_MANDATORY_SLICES
+    prohibited_inputs:
+      - POST_RESULT_WINDOW_CHANGE
+      - POST_RESULT_SLICE_SELECTION
+      - FULL_WINDOW_THRESHOLD_FIT
+    risk: A strict fixed window can remain insufficient when actions or regimes are sparse.
+axis_gap_matrix:
+  - axis_id: NON_BETA_ACTION_VALUE
+    threshold_id: growth_action_value.non_beta_increment_min
+    proposed_unit: decimal_return_delta_after_exposure_match
+    proposed_direction: MINIMUM
+    source_authority_ids:
+      - ACTION_VALUE_SCORE_POLICY_V2
+      - THRESHOLD_REGISTRY_V1
+    current_gap: EXACT_MATERIALITY_VALUE_AND_CALIBRATION_SOURCE_REQUIRED
+    calibration_option_ids:
+      - OWNER_ECONOMIC_MATERIALITY
+      - TRAIN_WINDOW_ONLY_DISTRIBUTIONAL
+      - HYBRID_PRECOMMITTED
+    recommended_option_id: HYBRID_PRECOMMITTED
+    owner_value_fields:
+      - minimum_non_beta_return_delta
+      - attribution_confidence_rule
+    owner_value_state: NOT_PROVIDED
+    rationale: Exposure matching must separate incremental action value from ordinary QQQ beta.
+    intended_effect: Reject apparent gains fully explained by higher market exposure.
+    pass_rule_code: NET_ACTION_VALUE_SURVIVES_EXPOSURE_MATCHED_ATTRIBUTION
+    fail_rule_code: ACTION_VALUE_ABSENT_OR_FULLY_EXPLAINED_BY_BETA
+    insufficient_rule_code: ACTION_OR_ATTRIBUTION_SAMPLE_INSUFFICIENT
+    invalid_rule_code: COMPARATOR_ATTRIBUTION_OR_ACTION_CHANGED_AFTER_RESULT
+    review_condition: Review only by creating a new policy version; never rescue a visible result.
+  - axis_id: NET_OF_COST_RETURN
+    threshold_id: growth_action_value.net_of_cost_return_min
+    proposed_unit: decimal_net_return_delta
+    proposed_direction: MINIMUM
+    source_authority_ids:
+      - TRANSACTION_COST_MODEL_V1
+      - THRESHOLD_REGISTRY_V1
+    current_gap: ACCEPTABLE_NET_RETURN_AND_RECONCILIATION_VALUES_REQUIRED
+    calibration_option_ids:
+      - OWNER_ECONOMIC_MATERIALITY
+      - HYBRID_PRECOMMITTED
+    recommended_option_id: HYBRID_PRECOMMITTED
+    owner_value_fields:
+      - minimum_net_of_cost_return_delta
+      - cost_reconciliation_tolerance
+    owner_value_state: NOT_PROVIDED
+    rationale: A cost model supplies deductions, not the acceptance boundary for net benefit.
+    intended_effect: Block gross-only value and unreconciled cost claims.
+    pass_rule_code: NET_OF_COST_GATE_AND_RECONCILIATION_PASS
+    fail_rule_code: NET_OF_COST_GATE_FAIL
+    insufficient_rule_code: TRUSTED_COST_INPUT_INSUFFICIENT
+    invalid_rule_code: COST_MODEL_OR_CADENCE_CHANGED_AFTER_RESULT
+    review_condition: Review when the cost model changes or through a new preregistered policy version.
+  - axis_id: ACTUAL_PATH_DRAWDOWN_REGRESSION
+    threshold_id: growth_action_value.actual_path_drawdown_regression_max
+    proposed_unit: decimal_drawdown_delta
+    proposed_direction: MAXIMUM
+    source_authority_ids:
+      - DEFENSIVE_LANE_ACTION_VALUE_POLICY
+      - PROMOTION_GATE_THRESHOLDS
+      - THRESHOLD_REGISTRY_V1
+    current_gap: MATERIAL_DRAWDOWN_REGRESSION_VALUE_AND_STRESS_SET_REQUIRED
+    calibration_option_ids:
+      - OWNER_ECONOMIC_MATERIALITY
+      - HYBRID_PRECOMMITTED
+    recommended_option_id: HYBRID_PRECOMMITTED
+    owner_value_fields:
+      - maximum_actual_path_drawdown_regression
+      - mandatory_stress_slice_set
+    owner_value_state: NOT_PROVIDED
+    rationale: Growth action value cannot be accepted by substituting a target path for realized NAV.
+    intended_effect: Keep every hard drawdown regression on the actual path promotion-blocking.
+    pass_rule_code: ALL_MANDATORY_ACTUAL_PATH_STRESS_GATES_PASS
+    fail_rule_code: ANY_HARD_GATE_DRAWDOWN_REGRESSION_FAIL
+    insufficient_rule_code: STRESS_OR_ACTUAL_PATH_COVERAGE_INSUFFICIENT
+    invalid_rule_code: TARGET_PATH_OR_INVALID_NAV_SUBSTITUTED
+    review_condition: Review only before a new evaluation version and never after seeing a failed slice.
+  - axis_id: FALSE_RISK_OFF_COST
+    threshold_id: growth_action_value.false_risk_off_cost_regression_max
+    proposed_unit: decimal_event_cost_delta
+    proposed_direction: MAXIMUM
+    source_authority_ids:
+      - DEFENSIVE_LANE_ACTION_VALUE_POLICY
+      - THRESHOLD_REGISTRY_V1
+    current_gap: EVENT_DEFINITION_AND_MAXIMUM_REGRESSION_VALUE_REQUIRED
+    calibration_option_ids:
+      - OWNER_ECONOMIC_MATERIALITY
+      - TRAIN_WINDOW_ONLY_DISTRIBUTIONAL
+      - HYBRID_PRECOMMITTED
+    recommended_option_id: HYBRID_PRECOMMITTED
+    owner_value_fields:
+      - maximum_false_risk_off_cost_regression
+      - false_risk_off_event_definition
+    owner_value_state: NOT_PROVIDED
+    rationale: Growth interaction must not quietly worsen defensive false-risk-off cost.
+    intended_effect: Preserve the independent defensive veto while measuring missed-upside cost consistently.
+    pass_rule_code: FALSE_RISK_OFF_COST_NO_REGRESSION_GATE_PASS
+    fail_rule_code: GROWTH_INTERACTION_FALSE_RISK_OFF_COST_GATE_FAIL
+    insufficient_rule_code: RISK_OFF_EVENT_OR_LABEL_EVIDENCE_INSUFFICIENT
+    invalid_rule_code: RISK_OFF_LABEL_OR_VETO_CHANGED_AFTER_RESULT
+    review_condition: Review the event definition only in a new preregistration version.
+  - axis_id: CANONICAL_DQ_PIT
+    threshold_id: growth_action_value.canonical_dq_pit_required_status
+    proposed_unit: canonical_data_research_gate_status
+    proposed_direction: EXACT_CATEGORICAL
+    source_authority_ids:
+      - QQQ_OPTIONS_DQ_PIT_IDENTITY_V1
+      - QQQ_OPTIONS_STAGED_DQ_PIT_READINESS_V1
+    current_gap: REQUIRED_STATUS_AND_MISSING_NUMERIC_DQ_POLICY_REQUIRED
+    calibration_option_ids:
+      - CANONICAL_STRICT_DQ_PIT
+    recommended_option_id: CANONICAL_STRICT_DQ_PIT
+    owner_value_fields:
+      - required_data_research_gate_status
+      - numeric_dq_threshold_policy_ref
+    owner_value_state: NOT_PROVIDED
+    rationale: Transport completeness cannot substitute for the canonical DQ/PIT check set.
+    intended_effect: Keep every applicable unknown, failure, identity drift, or chronology defect fail closed.
+    pass_rule_code: CANONICAL_STRICT_DQ_AND_PIT_PASS
+    fail_rule_code: CANONICAL_DQ_OR_PIT_POLICY_VIOLATION
+    insufficient_rule_code: PROVIDER_COVERAGE_OR_DATE_EVIDENCE_INSUFFICIENT
+    invalid_rule_code: SCOPED_PASS_LEAKAGE_OR_UNAUTHORIZED_CACHE_MUTATION
+    review_condition: Review before calibrating any numeric DQ field or changing stage applicability.
+  - axis_id: SAMPLE_AND_WINDOW_DEPENDENCE
+    threshold_id: growth_action_value.primary_window_stability_gate
+    proposed_unit: composite_count_share_and_slice_set
+    proposed_direction: COMPOSITE_ALL
+    source_authority_ids:
+      - FIRST_LAYER_THRESHOLD_POLICY_V2
+      - PROMOTION_GATE_THRESHOLDS
+      - THRESHOLD_REGISTRY_V1
+    current_gap: ACTION_FLOOR_REGIME_CAP_AND_MANDATORY_SLICES_REQUIRED
+    calibration_option_ids:
+      - TRAIN_WINDOW_ONLY_DISTRIBUTIONAL
+      - FIXED_PRIMARY_WINDOW_STABILITY
+      - HYBRID_PRECOMMITTED
+    recommended_option_id: FIXED_PRIMARY_WINDOW_STABILITY
+    owner_value_fields:
+      - minimum_independent_action_count
+      - maximum_single_regime_contribution_share
+      - mandatory_window_slices
+    owner_value_state: NOT_PROVIDED
+    rationale: The fixed primary window still needs predeclared evidence floors and concentration limits.
+    intended_effect: Prevent one regime, a small action count, or a post-result slice from driving PASS.
+    pass_rule_code: PRIMARY_WINDOW_AND_MANDATORY_SLICE_GATES_PASS
+    fail_rule_code: REGIME_CONCENTRATION_OR_SAMPLE_GATE_FAIL
+    insufficient_rule_code: MANDATORY_SLICE_OR_ACTION_COUNT_INSUFFICIENT
+    invalid_rule_code: WRONG_DEFAULT_WINDOW_OR_POST_RESULT_SLICE_SELECTION
+    review_condition: Window or slice changes require a new policy version before any rerun.
+  - axis_id: ACTUAL_PATH_TURNOVER
+    threshold_id: growth_action_value.actual_path_turnover_max
+    proposed_unit: annualized_turnover_and_cost_drag_share
+    proposed_direction: COMPOSITE_ALL
+    source_authority_ids:
+      - TRANSACTION_COST_MODEL_V1
+      - THRESHOLD_REGISTRY_V1
+    current_gap: TURNOVER_AND_COST_DRAG_MAXIMUM_VALUES_REQUIRED
+    calibration_option_ids:
+      - OWNER_ECONOMIC_MATERIALITY
+      - HYBRID_PRECOMMITTED
+    recommended_option_id: HYBRID_PRECOMMITTED
+    owner_value_fields:
+      - maximum_annualized_actual_path_turnover
+      - maximum_cost_drag_share
+    owner_value_state: NOT_PROVIDED
+    rationale: Actual executed path turnover, not target-weight deltas, determines cost exposure.
+    intended_effect: Reject impractical cadence or cost drag even when gross action value is positive.
+    pass_rule_code: ACTUAL_PATH_TURNOVER_AND_COST_DRAG_GATES_PASS
+    fail_rule_code: TURNOVER_OR_COST_DRAG_GATE_FAIL
+    insufficient_rule_code: EXECUTION_PATH_OR_COST_INPUT_INSUFFICIENT
+    invalid_rule_code: TARGET_WEIGHT_DELTA_OR_POST_RESULT_CADENCE_SUBSTITUTED
+    review_condition: Cost or cadence changes require a new preregistered policy version.
+  - axis_id: LEVERAGE_BETA_ATTRIBUTION
+    threshold_id: growth_action_value.realized_beta_increment_max
+    proposed_unit: realized_beta_delta_and_leverage_invariant
+    proposed_direction: COMPOSITE_ALL
+    source_authority_ids:
+      - ACTION_VALUE_SCORE_POLICY_V2
+      - THRESHOLD_REGISTRY_V1
+    current_gap: BETA_INCREMENT_AND_EXPOSURE_MATCH_TOLERANCE_VALUES_REQUIRED
+    calibration_option_ids:
+      - OWNER_ECONOMIC_MATERIALITY
+      - TRAIN_WINDOW_ONLY_DISTRIBUTIONAL
+      - HYBRID_PRECOMMITTED
+    recommended_option_id: HYBRID_PRECOMMITTED
+    owner_value_fields:
+      - maximum_realized_beta_increment
+      - exposure_match_tolerance
+    owner_value_state: NOT_PROVIDED
+    rationale: Leverage and beta must be measured, not inferred from ticker names or target weights.
+    intended_effect: Reject QLD, TQQQ, options, hidden leverage, or beta-explained improvement.
+    pass_rule_code: NON_LEVERAGED_BOUNDARY_AND_NON_BETA_INCREMENT_PASS
+    fail_rule_code: IMPROVEMENT_EXPLAINED_BY_HIGHER_MARKET_EXPOSURE
+    insufficient_rule_code: EXPOSURE_OR_REALIZED_BETA_TRACE_INSUFFICIENT
+    invalid_rule_code: QLD_TQQQ_OPTIONS_OR_HIDDEN_LEVERAGE_USED
+    review_condition: Exposure matching or beta tolerance changes require a new policy version.
+owner_questions:
+  - question_id: SOURCE_ASSIGNMENT
+    prompt: Select the pre-result calibration source assignment for all eight axes.
+    allowed_choices:
+      - APPROVE_RECOMMENDED_PER_AXIS
+      - USE_OWNER_ECONOMIC_MATERIALITY_FOR_ALL_NUMERIC_AXES
+      - REQUEST_ALTERNATE_PRE_RESULT_DESIGN
+    recommended_choice: APPROVE_RECOMMENDED_PER_AXIS
+    required_response_fields:
+      - source_assignment_choice
+  - question_id: EXACT_VALUE_SHEET
+    prompt: Provide every exact numeric, categorical, set, and policy-reference field listed by the eight axes.
+    allowed_choices:
+      - PROVIDE_COMPLETE_EXACT_VALUE_SHEET
+      - DEFER_KEEP_BLOCKED
+    recommended_choice: PROVIDE_COMPLETE_EXACT_VALUE_SHEET
+    required_response_fields:
+      - axis_values
+  - question_id: REVIEW_CONDITION
+    prompt: Select the expiry and change rule for the future frozen V1 threshold policy.
+    allowed_choices:
+      - LOCK_V1_FOR_ONE_PRIMARY_WINDOW_EVALUATION_NEW_VERSION_FOR_CHANGE
+      - FIXED_EXPIRY_BEFORE_EVALUATION
+      - RETIRE_WITHOUT_EVALUATION
+    recommended_choice: LOCK_V1_FOR_ONE_PRIMARY_WINDOW_EVALUATION_NEW_VERSION_FOR_CHANGE
+    required_response_fields:
+      - review_condition_choice
+owner_response_contract:
+  response_schema: strategy_growth_action_value_threshold_owner_decision.v1
+  source_assignment_choice: OWNER_CHOICE_REQUIRED
+  review_condition_choice: OWNER_CHOICE_REQUIRED
+  axis_value_token: OWNER_VALUE_REQUIRED
+  complete_axis_set_required: true
+  partial_response_allowed: false
+  decision_before_result_required: true
+terminal:
+  status: BLOCKED_OWNER_INPUT
+  next_action: PROJECT_OWNER_EXACT_THRESHOLD_SOURCE_VALUE_AND_REVIEW_DECISION
+  threshold_bundle_frozen: false
+  dq_successor_authorized: false
+  empirical_successor_authorized: false
+safety:
+  empirical_research_authorized: false
+  dq_run_authorized: false
+  cache_mutation_authorized: false
+  backtest_authorized: false
+  holdout_access_authorized: false
+  external_action_authorized: false
+  investment_conclusion_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

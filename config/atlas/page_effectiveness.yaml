@@ -295,8 +295,8 @@ task_sources:
     reader_summary_zh: 2541 已完成 pure same-date recovery adapter、policy、zero-order candidate、同一八轴 reducer 接入、typed fail-closed tests、sealed package 与一次受治理 Cloud 验证。正常 subscribed Slice 始终优先；唯一缺链日 2022-08-26 在完整 session finalization 后仅执行一次同源日期 OptionUniverse history，恢复 1 个 exact-date record、6496 个 contracts；normal=1201、recovered=1、unresolved=0、sessions=1202/1202，orders/fills=0/0，production/broker effect=none。该结论证明 subscription/transport 工程缺口已恢复，但不自动构成策略 DQ/PIT promotion、threshold PASS 或投资结论。
   - task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
     requirement_path: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md
-    coverage: DISCLOSED_THRESHOLD_POLICY_DECISION_PACK_REGISTERED_OWNER_FREEZE_PENDING
-    reader_summary_zh: 2542 承接 2540 的唯一实质阻塞项：在任何新 empirical result、cache、DQ 或 backtest 可见前，整理八个 mandatory axes 的 threshold authority decision pack，并由 Project Owner 冻结与当前 hypothesis、comparator、evaluation unit 精确匹配的 reviewed policy。当前只完成 registration 与输入边界，未选择数值、未运行研究、未产生策略 PASS；2540 因此继续机械输出 BLOCKED_POLICY_INPUT。
+    coverage: DISCLOSED_THRESHOLD_DECISION_PACK_READY_OWNER_EXACT_SOURCE_VALUE_REVIEW_CHOICE_REQUIRED
+    reader_summary_zh: 2542 S1 已在任何新 empirical result、cache、DQ 或 backtest 可见前完成八个 mandatory axes 的 authority inventory 与 gap matrix。现有 action-value、promotion、defensive、first-layer 与 threshold inventory 均不能直接构成 reviewed bundle；transaction-cost 和 QQQ Options DQ authorities 只能作为 partial input。typed decision pack 没有选择任何 numeric/categorical threshold value，机械终态为 BLOCKED_OWNER_INPUT；S2 仍需 Project Owner 提供完整 exact value sheet、source assignment 与 review condition，且当前不授权 DQ、研究、回测、投资结论或外部动作。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

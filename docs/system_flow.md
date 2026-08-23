@@ -9024,3 +9024,30 @@ TRADING-2516 selected lane authority
 候选。只有新的 exact threshold policy 在任何 empirical result 可见前完成 reviewed freeze，后继任务才可
 继续 DQ/PIT admission；即使 DQ/PIT PASS，也必须另经 Owner reopen review 才能执行 locked growth
 action-value evaluation。
+
+## TRADING-2542 growth action-value threshold decision pack
+
+`strategy_growth_action_value_threshold_decision_pack` 在不读取新 DQ、cache 或策略结果的前提下，
+把 2540 暴露的八轴阈值缺口变成可核验的 Owner 决策面。它只允许盘点现有 authority、固定候选
+calibration source、收集 exact value 与 review condition；没有任何默认数值或自动冻结路径。
+
+```text
+TRADING-2540 frozen hypothesis / taxonomy / selected QQQ Options lane
+  + exact authority bytes and scope replay
+  + source inventory
+      -> action_value_score_policy_v2 = WRONG_SCOPE
+      -> defensive / first-layer = RETIRED_FAMILY
+      -> promotion gate = WRONG_SCOPE
+      -> threshold registry = UNCALIBRATED_INVENTORY
+      -> transaction cost + QQQ Options DQ authorities = PARTIAL_INPUT_ONLY
+  -> eight-axis gap matrix; selected threshold values = 0
+  -> owner questions = source assignment + complete exact value sheet + review condition
+  -> terminal = BLOCKED_OWNER_INPUT
+  -> threshold bundle frozen = false
+  -> DQ / empirical successor authorized = false
+  -> cache/backtest/holdout/Cloud/paper/live/production/broker remain closed
+```
+
+只有 Project Owner 在任何新结果可见前给出完整且精确的八轴 value sheet、source assignment 与
+review condition，S2 才能另行冻结 versioned policy。S1 decision pack 不是阈值 policy 本身，
+也不把 transport completeness、DQ input 或 transaction-cost input 冒充为策略 PASS 门槛。

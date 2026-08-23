@@ -14,21 +14,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex：完成八轴 authority inventory 与 Owner decision pack；Project Owner：在任何新
-    DQ/strategy result 可见前选择 exact threshold policy values/source/review condition
+  next_owner: Project Owner exact source/value/review decision; Codex resumes S2 after
+    complete choice
   requirement_refs:
   - docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 现有历史 policy 均不能直接覆盖 TRADING-2540 八个 mandatory
-    axes；transaction_cost_model 仅是 partial input。S1 decision pack 可继续，S2 freeze 等待
-    Owner exact choice；empirical/cache/Cloud/production/broker 未授权。
+  unstructured_legacy_blocker_or_next_step: S1 eight-axis gap matrix and typed decision
+    pack are complete. S2 requires a complete pre-result owner source assignment,
+    exact value sheet, and review condition; no partial/default values.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 八轴 gap matrix 0 omission；现有 policy 逐项 ADMISSIBLE/PARTIAL/WRONG_SCOPE/RETIRED/UNCALIBRATED
-      分类；Owner 决定先于结果；frozen policy 无 unexplained numeric literal且可 seal/replay；formal
-      validation PASS；不自动授权 DQ 或 empirical evaluation。
+    text: Keep all eight axis values unset until exact owner choice; after choice
+      freeze one canonical replayable versioned policy bound to the 2540 scope, then
+      run focused and formal validation without DQ/cache/backtest/external actions.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -67,28 +67,58 @@ events:
   - change:trading-2542-register-threshold-policy-decision-pack-20260823-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-35faef04522182eadb7ca779db14f912
+- schema_version: task_event.v1
+  task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T01:42:57Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542-s1-decision-pack-owner-input-blocked-20260823-v1
+  lane_id: null
+  base_commit: ce91cb768010a9e30104fd7a6bfa219bf3459af8
+  previous_state_event_id: task-event-35faef04522182eadb7ca779db14f912
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner exact source/value/review decision; Codex resumes S2
+      after complete choice
+    blocker_or_next_step: S1 eight-axis gap matrix and typed decision pack are complete.
+      S2 requires a complete pre-result owner source assignment, exact value sheet,
+      and review condition; no partial/default values.
+    acceptance_criteria: Keep all eight axis values unset until exact owner choice;
+      after choice freeze one canonical replayable versioned policy bound to the 2540
+      scope, then run focused and formal validation without DQ/cache/backtest/external
+      actions.
+    notes: 'S1 implementation: config/research/strategy_growth_action_value_threshold_decision_pack_v1.yaml,
+      typed loader/tests, architecture/system-flow/Atlas disclosure. No empirical
+      result or threshold value selected. Requirement: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542-s1-decision-pack-owner-input-blocked-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8f5362659077202efe3f55db74401d46
 projection:
   legacy_first_eight_cells:
   - TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
   - Strategy governance / growth action-value threshold policy decision pack and freeze
     V1
   - P0
-  - IN_PROGRESS
-  - Codex：完成八轴 authority inventory 与 Owner decision pack；Project Owner：在任何新 DQ/strategy
-    result 可见前选择 exact threshold policy values/source/review condition
-  - 现有历史 policy 均不能直接覆盖 TRADING-2540 八个 mandatory axes；transaction_cost_model 仅是 partial
-    input。S1 decision pack 可继续，S2 freeze 等待 Owner exact choice；empirical/cache/Cloud/production/broker
-    未授权。
-  - 八轴 gap matrix 0 omission；现有 policy 逐项 ADMISSIBLE/PARTIAL/WRONG_SCOPE/RETIRED/UNCALIBRATED
-    分类；Owner 决定先于结果；frozen policy 无 unexplained numeric literal且可 seal/replay；formal
-    validation PASS；不自动授权 DQ 或 empirical evaluation。
-  - 'Supporting requirement: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md；TRADING-2540
-    successor，registration-only 随 2540 final candidate，S1 必须从 2540 released main 独立
-    preflight。'
+  - BLOCKED_OWNER_INPUT
+  - Project Owner exact source/value/review decision; Codex resumes S2 after complete
+    choice
+  - S1 eight-axis gap matrix and typed decision pack are complete. S2 requires a complete
+    pre-result owner source assignment, exact value sheet, and review condition; no
+    partial/default values.
+  - Keep all eight axis values unset until exact owner choice; after choice freeze
+    one canonical replayable versioned policy bound to the 2540 scope, then run focused
+    and formal validation without DQ/cache/backtest/external actions.
+  - 'S1 implementation: config/research/strategy_growth_action_value_threshold_decision_pack_v1.yaml,
+    typed loader/tests, architecture/system-flow/Atlas disclosure. No empirical result
+    or threshold value selected. Requirement: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md.'
   docs_links:
   - docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md
   terminal: false
-  canonical_row_sha256: 54a38e020f1a2aad84f27abecf7f366c09b6be490bd4a30d5c9a63e37c264ecd
-last_event_id: task-event-35faef04522182eadb7ca779db14f912
+  canonical_row_sha256: 9eaef073df9555a4de384d43a3152f5841803c990a2053748be01018405eab03
+last_event_id: task-event-8f5362659077202efe3f55db74401d46
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 49ef99e8939a890df673f3b125325a2ca71f170fbb8bea0f87d20bbcf730c423
+fragment_checksum: a5f4d762aaabab0ef691dffd9f63fa98e8cae704b846b958ca32a787c0ccb30e

@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BLOCKED_OWNER_INPUT`
 
 mode：`SINGLE_LANE`
 
@@ -74,9 +74,50 @@ intended effect、PASS/FAIL/INSUFFICIENT/INVALID 规则、review/expiry conditio
 
 ## 4. 当前 blocker / next step
 
-- Codex 可立即完成 S1 inventory 与 decision pack；
+- S1 inventory、typed decision pack 与 exact authority replay 已完成；
 - S2 numeric/directional policy freeze 需要 Project Owner 对 decision pack 作出 exact choice；
 - 在该选择之前，2540 的 mechanical terminal 保持 `BLOCKED_POLICY_INPUT`。
+
+### 4.1 S1 authority inventory 结论
+
+| authority | disposition | 可复用边界 |
+| --- | --- | --- |
+| `action_value_score_policy_v2` | `WRONG_SCOPE` | 不可提供 threshold value 或 PASS basis |
+| `defensive_lane_action_value_policy` | `RETIRED_FAMILY` | 仅术语参考 |
+| `first_layer_threshold_policy_v2` | `RETIRED_FAMILY` | 仅 calibration method 示例 |
+| `promotion_gate_thresholds` | `WRONG_SCOPE` | 仅治理结构示例 |
+| `threshold_registry` | `UNCALIBRATED_INVENTORY` | 仅 inventory/lineage，不可提供数值 |
+| `transaction_cost_model` | `PARTIAL_INPUT_ONLY` | 只提供成本输入，不是 acceptance threshold |
+| `qqq_options_dq_pit_identity_v1` | `PARTIAL_INPUT_ONLY` | 只提供 identity/completeness 输入 |
+| `qqq_options_staged_dq_pit_readiness_v1` | `PARTIAL_INPUT_ONLY` | 只提供 staged readiness 输入 |
+
+没有 `ADMISSIBLE` 的完整八轴 bundle。decision pack 已覆盖全部八个 axis，所有
+`owner_value_state=NOT_PROVIDED`，并保持 `threshold_value_selected=false`。
+
+### 4.2 Owner 最小决策面
+
+1. `SOURCE_ASSIGNMENT`：是否采用 decision pack 的 per-axis 推荐 calibration source；
+2. `EXACT_VALUE_SHEET`：一次性提供八轴列出的全部 numeric、categorical、set 与 policy-reference 值；
+3. `REVIEW_CONDITION`：是否将 V1 锁定到一次 primary-window evaluation，任何修改都新建版本。
+
+不完整或仅提供部分 axis 的回复不会触发 S2 freeze；Codex 不会用后见结果补齐缺项。
+
+### 4.3 S1 实现与验证
+
+- decision pack：`config/research/strategy_growth_action_value_threshold_decision_pack_v1.yaml`；
+- typed loader：`src/ai_trading_system/strategy_growth_action_value_threshold_decision_pack.py`；
+- pack file SHA-256：`b19269c23382dddb70882cd610c2ea506a643bdd2be5cc164a6496219ea930e8`；
+- canonical SHA-256：`e4604ccb6bf313ce93a8ae269208490431e40388474ee5d3ac7ab459efd519e3`；
+- authority-set SHA-256：`c4c5d5edb2faeb6b1745516022033bb3edaae4620d52582e2529aa4bb578f197`；
+- preregistration + decision-pack focused tests：`58 passed`；Atlas/authority/deprecation 联合
+  focused：`94 passed`；Ruff 与 strict mypy：`PASS`；
+- final-tree 前置正式门：Architecture=`865 passed`、Contract=`276 passed`、
+  Integration=`995 passed / 642 warnings`、Reproducibility=`24 passed`；
+- 首次 Full：`9354 passed / 1 failed / 3 skipped / 644 warnings`，parent artifact=
+  `outputs/validation_runtime/full_20260823T020352Z/test_runtime_summary.json`。唯一失败是本地 ignored
+  Atlas canonical page/sidecar 仍绑定旧 repository commit 与旧 2542 coverage；decision-pack、策略、
+  task source、report-flow、compatibility、DQ/PIT 与交易路径均未失败。修复仅允许用当前 final commit
+  重建既有 read-only page artifacts，并以该 parent 执行完整 `failure_fix_rerun`。
 
 ## 5. 验收标准
 
@@ -92,3 +133,16 @@ intended effect、PASS/FAIL/INSUFFICIENT/INVALID 规则、review/expiry conditio
 S0 只随 TRADING-2540 final integration candidate 完成 canonical registration。S1 起必须从 2540
 ordinary-pushed exact main 建立独立 task branch/workspace；其路径、purpose 与 exit condition 在首次创建前
 补充到本节。不得复用 2540 的 formal evidence。
+
+- exact base：`ce91cb768010a9e30104fd7a6bfa219bf3459af8`，且创建前已验证
+  `local main = origin/main`；
+- task branch：`codex/trading-2542-threshold-decision-pack`；
+- workspace：复用 `D:\Work\AITradingSystem` 的 existing clean checkout，并在首次 tracked mutation 后、
+  branch 创建前仅保留本生命周期记录；不创建新的 worktree 或 clone；
+- purpose：只完成 S1 authority inventory、gap matrix、typed decision pack 与 focused validation；不写入
+  numeric threshold、不运行 DQ/cache/backtest/Cloud/empirical/external action；
+- S1 exit condition：decision pack 与 tests 通过审阅和 formal validation，task source 更新为
+  `BLOCKED_OWNER_INPUT` 或等价非终态，S1 commit 普通推送到 main，checkout 切回 clean main，并删除已合并
+  task branch；
+- recovery：合入前由 task branch/commit 恢复，合入后由 local/remote main 恢复；S1 不复用
+  TRADING-2540 的 runtime evidence。
