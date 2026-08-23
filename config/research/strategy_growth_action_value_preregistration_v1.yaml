@@ -1,0 +1,288 @@
+schema_version: strategy_growth_action_value_preregistration_policy.v1
+policy_id: strategy_growth_action_value_preregistration_v1
+policy_version: 1.0.0
+policy_status: REVIEWED_BASELINE_BLOCKED_POLICY_INPUT
+task_id: TRADING-2540_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_AND_SINGLE_LANE_DECISION_V1
+owner_decision: owner_decision:TRADING-2540:2026-08-23:retain_qqq_options_lane_and_remove_qld_selected_lane_semantics_v1
+policy_metadata:
+  owner: project_owner_and_strategy_research_governance
+  rationale: >-
+    Existing first-layer and defensive research produced no promotable candidate, while
+    return-seeking diagnostics were beta/TQQQ and 2023+ dependent. Freeze one non-leveraged
+    QQQ/SGOV growth hypothesis before any new empirical work.
+  intended_effect: >-
+    Make growth action value the next research question, keep defense as an independent hard
+    gate, select exactly one non-executable data evidence lane, and fail closed until reviewed
+    threshold policy references exist.
+  validation_evidence: >-
+    Canonical policy loading, exact authority identity and semantic replay, sealed decision
+    serialization, mandatory-axis aggregation and negative tests are required before closeout.
+  review_condition: >-
+    Review before adding or changing threshold references, executing the selected data lane,
+    running empirical evaluation, changing the action universe, adding leverage/options, or
+    changing any downstream authorization.
+primary_research_start: '2021-02-22'
+primary_research_role: PRIMARY
+prohibited_default_start: '2022-12-01'
+preregistration_stage: PREREGISTRATION_ONLY
+hypothesis:
+  hypothesis_id: BASELINE_BOUNDED_QQQ_GROWTH_OVERLAY_NON_BETA_ACTION_VALUE_V1
+  mechanism_scope: SINGLE_GROWTH_STATE_BOUNDED_QQQ_SGOV_REALLOCATION
+  baseline_id: equal_risk_qqq_sgov
+  comparator_ids:
+    - equal_risk_qqq_sgov
+    - exposure_matched_no_signal
+  action_universe:
+    - QQQ
+    - SGOV
+  action_count: 1
+  candidate_count: 1
+  uses_leverage_etf: false
+  uses_options: false
+  borrowed_leverage_allowed: false
+  candidate_search_allowed: false
+  parameter_search_allowed: false
+  risk_veto_priority: highest
+  defense_is_independent_hard_gate: true
+  growth_can_modify_defensive_policy: false
+  growth_can_emit_official_weights: false
+data_lane:
+  selected_data_lane: QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE
+  selection_status: OWNER_RETAINED_NOT_EXECUTABLE
+  qqq_options_lane_selected: true
+  transport_completeness_status: RECOVERED_COMPLETE_NOT_DQ_PIT_PROMOTED
+  expected_session_count: 1202
+  observed_session_count: 1202
+  exact_date_recovery_session_count: 1
+  unresolved_session_count: 0
+  dq_pit_promoted: false
+  data_lane_execution_authorized: false
+  cache_mutation_authorized: false
+  proves_growth_action_value: false
+  proves_qld_investment_value: false
+threshold_policy:
+  status: NOT_PROVIDED
+  reviewed_policy_refs: []
+  threshold_after_result_allowed: false
+mandatory_axes:
+  - axis_id: NON_BETA_ACTION_VALUE
+    reviewed_policy_refs: []
+    pass_rule_code: NET_ACTION_VALUE_SURVIVES_EXPOSURE_MATCHED_ATTRIBUTION
+    fail_rule_code: ACTION_VALUE_ABSENT_OR_FULLY_EXPLAINED_BY_BETA
+    insufficient_rule_code: ACTION_OR_ATTRIBUTION_SAMPLE_INSUFFICIENT
+    invalid_rule_code: COMPARATOR_ATTRIBUTION_OR_ACTION_CHANGED_AFTER_RESULT
+  - axis_id: NET_OF_COST_RETURN
+    reviewed_policy_refs: []
+    pass_rule_code: NET_OF_COST_GATE_AND_RECONCILIATION_PASS
+    fail_rule_code: NET_OF_COST_GATE_FAIL
+    insufficient_rule_code: TRUSTED_COST_INPUT_INSUFFICIENT
+    invalid_rule_code: COST_MODEL_OR_CADENCE_CHANGED_AFTER_RESULT
+  - axis_id: ACTUAL_PATH_DRAWDOWN_REGRESSION
+    reviewed_policy_refs: []
+    pass_rule_code: ALL_MANDATORY_ACTUAL_PATH_STRESS_GATES_PASS
+    fail_rule_code: ANY_HARD_GATE_DRAWDOWN_REGRESSION_FAIL
+    insufficient_rule_code: STRESS_OR_ACTUAL_PATH_COVERAGE_INSUFFICIENT
+    invalid_rule_code: TARGET_PATH_OR_INVALID_NAV_SUBSTITUTED
+  - axis_id: FALSE_RISK_OFF_COST
+    reviewed_policy_refs: []
+    pass_rule_code: FALSE_RISK_OFF_COST_NO_REGRESSION_GATE_PASS
+    fail_rule_code: GROWTH_INTERACTION_FALSE_RISK_OFF_COST_GATE_FAIL
+    insufficient_rule_code: RISK_OFF_EVENT_OR_LABEL_EVIDENCE_INSUFFICIENT
+    invalid_rule_code: RISK_OFF_LABEL_OR_VETO_CHANGED_AFTER_RESULT
+  - axis_id: CANONICAL_DQ_PIT
+    reviewed_policy_refs: []
+    pass_rule_code: CANONICAL_STRICT_DQ_AND_PIT_PASS
+    fail_rule_code: CANONICAL_DQ_OR_PIT_POLICY_VIOLATION
+    insufficient_rule_code: PROVIDER_COVERAGE_OR_DATE_EVIDENCE_INSUFFICIENT
+    invalid_rule_code: SCOPED_PASS_LEAKAGE_OR_UNAUTHORIZED_CACHE_MUTATION
+  - axis_id: SAMPLE_AND_WINDOW_DEPENDENCE
+    reviewed_policy_refs: []
+    pass_rule_code: PRIMARY_WINDOW_AND_MANDATORY_SLICE_GATES_PASS
+    fail_rule_code: REGIME_CONCENTRATION_OR_SAMPLE_GATE_FAIL
+    insufficient_rule_code: MANDATORY_SLICE_OR_ACTION_COUNT_INSUFFICIENT
+    invalid_rule_code: WRONG_DEFAULT_WINDOW_OR_POST_RESULT_SLICE_SELECTION
+  - axis_id: ACTUAL_PATH_TURNOVER
+    reviewed_policy_refs: []
+    pass_rule_code: ACTUAL_PATH_TURNOVER_AND_COST_DRAG_GATES_PASS
+    fail_rule_code: TURNOVER_OR_COST_DRAG_GATE_FAIL
+    insufficient_rule_code: EXECUTION_PATH_OR_COST_INPUT_INSUFFICIENT
+    invalid_rule_code: TARGET_WEIGHT_DELTA_OR_POST_RESULT_CADENCE_SUBSTITUTED
+  - axis_id: LEVERAGE_BETA_ATTRIBUTION
+    reviewed_policy_refs: []
+    pass_rule_code: NON_LEVERAGED_BOUNDARY_AND_NON_BETA_INCREMENT_PASS
+    fail_rule_code: IMPROVEMENT_EXPLAINED_BY_HIGHER_MARKET_EXPOSURE
+    insufficient_rule_code: EXPOSURE_OR_REALIZED_BETA_TRACE_INSUFFICIENT
+    invalid_rule_code: QLD_TQQQ_OPTIONS_OR_HIDDEN_LEVERAGE_USED
+terminal_outcome_policy:
+  aggregation_priority:
+    - INVALID
+    - FAIL
+    - INSUFFICIENT
+    - PASS
+  stop_rules:
+    - outcome: INVALID
+      action: DISCARD_ALL_EMPIRICAL_CONCLUSIONS_REQUIRE_NEW_OWNER_AUTHORIZATION
+    - outcome: FAIL
+      action: RETIRE_CURRENT_HYPOTHESIS_VERSION_NO_PARAMETER_RESCUE
+    - outcome: INSUFFICIENT
+      action: COLLECT_ONLY_PREREGISTERED_MISSING_EVIDENCE
+    - outcome: PASS
+      action: READY_FOR_OWNER_GROWTH_HYPOTHESIS_REVIEW_NOT_PROMOTION
+authorities:
+  - authority_id: PROJECT_ENGINEERING_RULES
+    path: AGENTS.md
+    format: TEXT
+    file_sha256: 4dba5a5c45ada5d960e70c4eed6358b542415c26e70caf0a6e2f9652defe6fcd
+    semantic_facts: []
+    required_snippets:
+      - 'default research and backtest start: 2021-02-22;'
+      - 2022-12-01 is not an active default
+      - aits validate-data
+      - Heuristic and Threshold Governance
+  - authority_id: TRADING_2515_READINESS_POLICY
+    path: config/research/strategy_research_reopen_readiness_decision_v1.yaml
+    format: YAML
+    file_sha256: 6f4688c245b512cef315128d721f76012725f37b7e232e197f107b1b4d27e223
+    semantic_facts:
+      - dotted_path: primary_research_start
+        expected_json: '"2021-02-22"'
+      - dotted_path: reopen_decision
+        expected_json: '"KEEP_CLOSED"'
+      - dotted_path: permitted_stage
+        expected_json: '"PREREGISTRATION_ONLY"'
+      - dotted_path: selected_data_lane
+        expected_json: 'null'
+      - dotted_path: recommended_data_lane
+        expected_json: '"QLD_CANONICAL_FULL_CACHE_DQ"'
+      - dotted_path: safety.empirical_research_authorized
+        expected_json: 'false'
+      - dotted_path: safety.cache_mutation_authorized
+        expected_json: 'false'
+    required_snippets: []
+  - authority_id: TRADING_2515_READINESS_REQUIREMENT
+    path: docs/requirements/TRADING-2515_Strategy_Research_Reopen_Readiness_Decision_V1.md
+    format: TEXT
+    file_sha256: a8f5549617421db68a3af2193336eca3e20db394b517ad61aad7f95730395347
+    semantic_facts: []
+    required_snippets:
+      - '`reopen_decision=KEEP_CLOSED`'
+      - '`permitted_stage=PREREGISTRATION_ONLY`'
+      - recommendation 不等于 Owner selection
+      - 任何真实 reopen 必须由后继任务和独立 Owner exact decision 处理
+  - authority_id: TRADING_2516_QQQ_OPTIONS_LANE_SELECTION
+    path: docs/requirements/TRADING-2516_QC_QQQ_Options_Primary_Window_Evidence_Lane_Authorization_Refresh_V1.md
+    format: TEXT
+    file_sha256: 4d2b5a3baff49488aa4de2f62ae06916b9eabfc3f549a9265203233aab8c6ecd
+    semantic_facts: []
+    required_snippets:
+      - '`QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE`'
+      - 只授权本地合同与授权请求刷新
+      - 不等于 DQ/PIT PASS
+  - authority_id: TRADING_2541_EXACT_DATE_RECOVERY_TERMINAL
+    path: docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
+    format: TEXT
+    file_sha256: 91831b05bf05606311e8cadadd0a058fdf841281006678dd477b9471d668fc2c
+    semantic_facts: []
+    required_snippets:
+      - '`2022-08-26`'
+      - '`1202/1202`'
+      - '`EXACT_DATE_PROVIDER_HISTORY_RECOVERY`'
+      - '`dq_pit_promoted=false`'
+  - authority_id: SIMPLE_BASELINE_EQUAL_RISK_QQQ_SGOV
+    path: config/research/simple_baseline_strategy_registry.yaml
+    format: YAML
+    file_sha256: a4487d4477e7066943c3894e690d1dc9dbcb18bc28919eaa8cfb15371ef79843
+    semantic_facts:
+      - dotted_path: strategies.15.strategy_id
+        expected_json: '"equal_risk_qqq_sgov"'
+      - dotted_path: strategies.15.asset_universe
+        expected_json: '["QQQ","SGOV"]'
+      - dotted_path: strategies.15.trend_filter_rule
+        expected_json: '"none"'
+      - dotted_path: strategies.15.uses_leverage_etf
+        expected_json: 'false'
+      - dotted_path: strategies.15.uses_options
+        expected_json: 'false'
+    required_snippets: []
+  - authority_id: TWO_LAYER_STRATEGY_BOUNDARY
+    path: config/research/two_layer_strategy_boundary_contract.yaml
+    format: YAML
+    file_sha256: fc17772b6259d2cb45c340fe69e311a918e61b86ebb4df04c1f153b5851f6301
+    semantic_facts:
+      - dotted_path: second_layer_contract.overlay_rules.growth_overlay_requires_risk_veto_clear
+        expected_json: 'true'
+      - dotted_path: second_layer_contract.overlay_rules.risk_veto_priority
+        expected_json: '"highest"'
+      - dotted_path: diagnostic_vs_allocation_boundary.current_allocation_candidate_count
+        expected_json: '0'
+      - dotted_path: safety_boundary.research_only
+        expected_json: 'true'
+    required_snippets: []
+  - authority_id: FIRST_LAYER_CHANNEL_CLOSEOUT
+    path: docs/research/first_layer_channel_master_closeout.md
+    format: TEXT
+    file_sha256: c8d76368194b365a048c7bb14677c84ed9454ee182e1fe85c399cbe2fd5a2f15
+    semantic_facts: []
+    required_snippets:
+      - FIRST_LAYER_CHANNEL_RESEARCH_CLOSED_NO_CANDIDATE
+      - add_risk_selected_families
+      - 后续只能在获得新 PIT 数据、新 feature family 或 forward diagnostic evidence
+  - authority_id: DEFENSIVE_LANE_CLOSEOUT
+    path: docs/research/defensive_preservation_lane_closeout.md
+    format: TEXT
+    file_sha256: f5f5da9f2f9c9019e6db2845705dc91905425a8d56ec97c29bf5a6980d747f32
+    semantic_facts: []
+    required_snippets:
+      - DEFENSIVE_LANE_NO_MATERIAL_IMPROVEMENT
+      - 'false_risk_off_cost_declined: `False`'
+      - 'gated_integration_allowed: `False`'
+  - authority_id: TWO_LANE_OPTIMIZATION_CLOSEOUT
+    path: docs/research/two_lane_optimization_master_closeout.md
+    format: TEXT
+    file_sha256: 3d5dc043c417eea3f29366d3c967c3d8d3f01e6600a33328b8c23445ea2fa7db
+    semantic_facts: []
+    required_snippets:
+      - 7/7 probes 的正收益差
+      - 7/7 probes 出现 drawdown regression
+      - 结论依赖 TQQQ/beta 与 2023+ AI trend
+  - authority_id: QLD_ROLE_LIMITED_IMPLEMENTATION_POLICY
+    path: config/research/strategy_style_discovery_universe_v1.yaml
+    format: YAML
+    file_sha256: b1a237a30c17f4f5f6adf0cc97058e5e66c4d337ea4c4fed8da449fb993e8bd6
+    semantic_facts:
+      - dotted_path: status
+        expected_json: '"OWNER_APPROVED_ROLE_LIMITED_2X_IMPLEMENTATION_INSTRUMENT"'
+      - dotted_path: role_limited_2x_implementation_policy.instrument_role
+        expected_json: '"execution_implementation_only"'
+      - dotted_path: role_limited_2x_implementation_policy.qld_as_trend_signal_allowed
+        expected_json: 'false'
+      - dotted_path: role_limited_2x_implementation_policy.automatic_exposure_increase_allowed
+        expected_json: 'false'
+      - dotted_path: role_limited_2x_implementation_policy.production_use_allowed
+        expected_json: 'false'
+    required_snippets: []
+  - authority_id: TRADING_2458_RETIRED_CANDIDATE_FAMILY
+    path: docs/research/trading2458_candidate_family_retirement.md
+    format: TEXT
+    file_sha256: 4152eeebe4b21fb40873b104c1af379b662c3a6a1828710fcc8fc8ea5bc01042
+    semantic_facts: []
+    required_snippets:
+      - 状态：`RETIRED`
+      - '`candidate_expansion`'
+      - '`parameter_search`'
+      - 新 family 必须使用新 identity、独立预注册
+safety:
+  empirical_research_authorized: false
+  candidate_search_authorized: false
+  parameter_search_authorized: false
+  backtest_authorized: false
+  holdout_access_authorized: false
+  investment_conclusion_authorized: false
+  data_lane_execution_authorized: false
+  cache_mutation_authorized: false
+  external_action_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

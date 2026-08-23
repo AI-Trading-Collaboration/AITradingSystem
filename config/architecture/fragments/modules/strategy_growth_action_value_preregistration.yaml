@@ -1,0 +1,31 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.strategy_growth_action_value_preregistration
+fragment_kind: module
+owner: strategy_research_governance
+module_prefix: src/ai_trading_system/strategy_growth_action_value_preregistration.py
+public_contracts:
+  - DEFAULT_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_POLICY_PATH
+  - AuthorityObservation
+  - AuthoritySemanticFact
+  - DataEvidenceLane
+  - EvaluationAxisPolicy
+  - GrowthAuthorityBinding
+  - GrowthHypothesisPolicy
+  - MandatoryAxis
+  - MandatoryAxisOutcome
+  - PreregistrationActionRequest
+  - PreregistrationSafety
+  - PreregistrationStatus
+  - StopAction
+  - StrategyGrowthActionValuePreregistrationDecision
+  - StrategyGrowthActionValuePreregistrationError
+  - StrategyGrowthActionValuePreregistrationPolicy
+  - StrategyGrowthActionValuePreregistrationPolicyLoadResult
+  - TerminalOutcome
+  - TerminalOutcomePolicy
+  - ThresholdPolicyStatus
+  - aggregate_mandatory_axis_outcomes
+  - build_strategy_growth_action_value_preregistration_decision
+  - load_strategy_growth_action_value_preregistration_policy
+compatibility_facades: []
+deprecation_status: active_reference_architecture

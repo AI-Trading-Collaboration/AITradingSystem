@@ -287,12 +287,16 @@ task_sources:
     reader_summary_zh: 2539 的 V1 existing-clone run、错误 source-date 解释和历史 counters 保持 immutable；DEVX-008 standing scope 下执行的 2537 V2 successor 已用 OptionUniverse.Time 纠正该解释，并实证 2022-08-26 有 1 个 exact-date record、6496 个 contracts，而 subscribed Slice 当日从未交付 option chain。原项目 34808569 未修改，V2 orders/fills=0/0。V1 传输沙箱任务由此完成；实际 subscription/transport recovery 转入 TRADING-2541，不能把归因完成冒充为数据质量修复完成。
   - task_id: TRADING-2540_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_AND_SINGLE_LANE_DECISION_V1
     requirement_path: docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md
-    coverage: DISCLOSED_SEPARATE_GROWTH_PREREGISTRATION_ONLY_DATA_LANE_BLOCKED
-    reader_summary_zh: 2540 是与 QQQ options 缺链归因分离的 growth preregistration serial wave；当前只冻结 non-leveraged QQQ/SGOV hypothesis 与单一 QLD data-lane 选择，且因 active data-lane conflict 保持 blocked。它不授权 cache mutation、经验研究、backtest、外部动作或投资结论，也不改变 2537 的 V2 Cloud 重跑边界。
+    coverage: DISCLOSED_QQQ_OPTIONS_LANE_RETAINED_PREREGISTRATION_BASELINE_DONE_THRESHOLD_POLICY_BLOCKED
+    reader_summary_zh: 2540 已保留 active QQQ Options primary-window derived aggregate evidence lane，并移除 QLD selected-lane 语义；non-leveraged QQQ/SGOV hypothesis、八轴 reducer、fail-closed taxonomy 与单一 data-lane contract 已冻结。2541 只证明 transport completeness=1202/1202，不代表 DQ/PIT promotion；由于当前不存在与本 hypothesis、comparator 和 evaluation unit 精确匹配的 reviewed threshold bundle，机械终态为 BASELINE_DONE / BLOCKED_POLICY_INPUT。后继 TRADING-2542 必须在任何新 empirical result 可见前完成 threshold decision pack 与 exact freeze；2540 不授权 cache mutation、经验研究、backtest、外部动作或投资结论。
   - task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
     requirement_path: docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
-    coverage: DISCLOSED_EXACT_DATE_SUBSCRIPTION_RECOVERY_OFFLINE_IMPLEMENTED_CLOUD_VALIDATION_PENDING
-    reader_summary_zh: 2541 承接 2537 已终结的根因归因，已实现 pure same-date recovery adapter、policy、zero-order candidate、同一八轴 reducer 接入、typed fail-closed tests 与 sealed package。正常 subscribed Slice 始终优先；仅在完整 session finalization 确认目标日全日未交付且 equity session 有效后，才计划最多一次同源日期 provider history；跨日/最近日 fallback、duplicate、empty 或 availability identity 错误全部拒绝。聚焦验证 17 passed、Ruff PASS，正式 Architecture/Contract/Integration/Reproducibility 分别为 865/276/995/24 passed；但尚未执行新的 Cloud validation/provider query，因此这只是离线 durable recovery 基线，不是 Cloud 数据修复结论；chain_presence=FAIL、DQ=FAIL、PIT=NOT_EVALUATED 和 engine blocked 保持不变。
+    coverage: DISCLOSED_EXACT_DATE_SUBSCRIPTION_RECOVERY_CLOUD_VALIDATED_COMPLETE
+    reader_summary_zh: 2541 已完成 pure same-date recovery adapter、policy、zero-order candidate、同一八轴 reducer 接入、typed fail-closed tests、sealed package 与一次受治理 Cloud 验证。正常 subscribed Slice 始终优先；唯一缺链日 2022-08-26 在完整 session finalization 后仅执行一次同源日期 OptionUniverse history，恢复 1 个 exact-date record、6496 个 contracts；normal=1201、recovered=1、unresolved=0、sessions=1202/1202，orders/fills=0/0，production/broker effect=none。该结论证明 subscription/transport 工程缺口已恢复，但不自动构成策略 DQ/PIT promotion、threshold PASS 或投资结论。
+  - task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+    requirement_path: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md
+    coverage: DISCLOSED_THRESHOLD_POLICY_DECISION_PACK_REGISTERED_OWNER_FREEZE_PENDING
+    reader_summary_zh: 2542 承接 2540 的唯一实质阻塞项：在任何新 empirical result、cache、DQ 或 backtest 可见前，整理八个 mandatory axes 的 threshold authority decision pack，并由 Project Owner 冻结与当前 hypothesis、comparator、evaluation unit 精确匹配的 reviewed policy。当前只完成 registration 与输入边界，未选择数值、未运行研究、未产生策略 PASS；2540 因此继续机械输出 BLOCKED_POLICY_INPUT。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

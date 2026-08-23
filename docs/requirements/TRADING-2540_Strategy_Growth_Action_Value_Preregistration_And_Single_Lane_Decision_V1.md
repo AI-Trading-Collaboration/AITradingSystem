@@ -1,12 +1,12 @@
 # TRADING-2540：Strategy Growth Action Value Preregistration And Single-Lane Decision V1
 
-最后更新：2026-08-22
+最后更新：2026-08-23
 
 稳定任务 ID：`TRADING-2540_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_AND_SINGLE_LANE_DECISION_V1`
 
 优先级：`P0`
 
-状态：`BLOCKED_OWNER_INPUT`
+状态：`BASELINE_DONE`
 
 mode：`SINGLE_LANE`
 
@@ -17,23 +17,30 @@ registration base：`9717949319e619952c192e39c4ed2db1ee9f9eab`
 初始解释记录（已因后继 authority 冲突而暂停，不构成 active lane supersession）：
 `owner_direction_interpretation:TRADING-2540:2026-08-22:proceed_serial_growth_preregistration_then_single_qld_dq_sequence_v1`
 
+Owner 后继决定：
+`owner_decision:TRADING-2540:2026-08-23:retain_qqq_options_lane_and_remove_qld_selected_lane_semantics_v1`
+
 `production_effect=none`；`broker_action=none`；`external_action=none`。
 
 ## 1. Owner 方向与当前授权
 
 Project Owner 要求参考 Web Pro exact-commit 审阅形成的顺序继续推进后续开发。该审阅只读取了
 13 个选定文件，遗漏同一 exact commit 中已经生效的 TRADING-2516 至 TRADING-2539 后继
-authority；因此以下顺序只能视为待冲突裁决的初始解释，不能直接覆盖现有单车道决定：
+authority；因此其 QLD selected-lane 解释不能覆盖现有单车道决定。2026-08-23 Owner 已选择保留
+QQQ Options active evidence lane，并要求继续推进本任务及其后继：
 
 1. 先完成增长假设 preregistration serial contract wave；
-2. 后继只保留一条 `QLD_CANONICAL_FULL_CACHE_DQ` 数据资格车道；
+2. 唯一 selected lane 保持
+   `QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE`，移除 QLD selected-lane 语义；
 3. 只有 canonical strict DQ/PIT PASS 且取得独立 Owner reopen 授权后，才允许一次 locked、
    non-leveraged `QQQ/SGOV` growth action-value evaluation；
 4. 只有非杠杆 growth action value 与独立 exposure-scaling hypothesis 均通过后，才允许另立任务
    评估 QLD/TQQQ 的 role-limited implementation value。
 
-在 Project Owner 对现有 QQQ Options lane 与拟议 QLD lane 作出 exact successor decision 之前，
-本任务不再获准冻结第 2 步或继续提交 S1/S2 实现。当前方向仍不授权 cache mutation、
+TRADING-2541 已对该车道的唯一缺失 session `2022-08-26` 完成 exact-date recovery，并得到
+`1202/1202`、unresolved=`0` 的 zero-order Cloud terminal。该结果修复 transport completeness，
+但不自动提升为 DQ/PIT、策略、生产或 broker readiness。当前方向授权继续完成 S1/S2
+preregistration contract；仍不授权 cache mutation、
 provider/API/CLI/cloud/QuantConnect 调用、经验研究、candidate/parameter search、backtest、holdout、
 paper/live/broker/production 或投资结论。
 
@@ -65,9 +72,10 @@ drawdown、no-regression 或 exit policy。缺少 reviewed policy reference 时�
 - `docs/requirements/TRADING-2516_QC_QQQ_Options_Primary_Window_Evidence_Lane_Authorization_Refresh_V1.md`：
   已把 2515 的唯一数据证据车道落实为
   `QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE`，不得由 2540 静默覆盖；
-- `docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md`：
-  已在该 QQQ Options lane 上完成 bounded zero-order execution，并把唯一缺失 session 定位到
-  `2022-08-26`；当前实质 blocker 是可审计 exact-date options source，而不是“尚未选择车道”；
+- `docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md`：
+  已在该 QQQ Options lane 上把唯一缺失 session `2022-08-26` 以 same-source-date、正确
+  availability date 的 provider history 补齐；transport completeness=`1202/1202`、unresolved=`0`，
+  但 `dq_pit_promoted=false`；
 - `config/research/simple_baseline_strategy_registry.yaml`：baseline identity
   `equal_risk_qqq_sgov`；
 - `config/research/two_layer_strategy_boundary_contract.yaml`：risk veto 最高优先级、growth 与
@@ -92,17 +100,14 @@ Primary Research Window 固定从 `2021-02-22` 开始。`2022-12-01` 不得成�
 - defensive/risk-veto policy 不得被本任务修改或共同调参；
 - growth signal 不得直接输出 official target weight、order 或 broker action。
 
-### 4.2 单一数据车道（等待 Owner successor decision）
+### 4.2 单一数据车道（Owner 已选择保留 QQQ Options）
 
-- current active predecessor lane：`QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE`；
-- proposed successor lane：`QLD_CANONICAL_FULL_CACHE_DQ`；
-- 当前不得把 proposed lane 写成 selected/active，也不得把 predecessor lane 写成未选择；
+- selected active lane：`QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE`；
+- QLD 仍只保留 role-limited implementation instrument 语义，不是 selected data lane；
+- 不得把 QLD 写成 selected/active，也不得把 QQQ Options predecessor lane 写成未选择；
 - 同时激活两个 data lane 必须 fail closed；
-- 若 Owner 选择切换，必须通过 versioned successor contract 正式暂停、关闭或 supersede 2516-2539
-  active lane，同时保留其 immutable evidence；
-- 若 Owner 选择保留 QQQ Options lane，2540 必须重新设计为与该 lane 兼容的 growth
-  preregistration，不能包含 QLD selected-lane 语义；
-- 任一路径都不自动授权 data execution、cache mutation、empirical evaluation 或投资解释。
+- 2541 的 exact-date recovery 只修复该 lane 的 transport completeness；
+- selected lane 本身不自动授权 data execution、cache mutation、empirical evaluation 或投资解释。
 
 ### 4.3 typed terminal taxonomy
 
@@ -206,22 +211,37 @@ consumer-visible contract，必须先收窄为本 serial contract wave 并重新
 
 ## 9. Blocker、后继任务与退出条件
 
-当前 blocker：
+当前 blocker / next step：
 
-- TRADING-2516 已选择 QQQ Options evidence lane，TRADING-2539 已在该 lane 上产生受控证据；
-  Web Pro 文件清单遗漏这些后继 authority，因而其“尚未选择车道”前提不成立；
-- Project Owner 必须明确选择二者之一：
-  1. 通过 versioned successor contract 暂停/关闭/supersede QQQ Options active lane、保留
-     2516-2539 immutable evidence，并唯一选择 QLD；或
-  2. 保留 QQQ Options active lane，并移除 2540 草案中的 QLD selected-lane 语义；
+- Owner 的单车道 successor decision 已收到，不再阻塞；
+- TRADING-2541 已解除 `2022-08-26` transport completeness blocker，但没有执行 DQ/PIT promotion；
 - reviewed threshold policy references 需要在实现中完成 authority 盘点；缺失项不得自行补数值；
-- QLD canonical DQ execution 尚未获得独立 task/token/source/cache mutation authorization；
+- 当前 S1/S2 只允许冻结 QQQ Options-compatible preregistration contract；
 - empirical growth evaluation、holdout、paper/live/broker/production 均未授权。
 
-当前 unblock condition：收到上述二选一的 exact Owner direction，并将其记录为 versioned successor
-authority。之后才能重做 preflight、修订合同并恢复 S1/S2。最终 exit condition 仍为 serial
+2026-08-23 authority inventory 已检查以下现有 policy：
+
+- `action_value_score_policy_v2.yaml` 面向旧 second-layer label score，并非本 hypothesis 的
+  exposure-matched action-value acceptance；
+- `defensive_lane_action_value_policy.yaml` 只治理 defensive preservation，不能被 growth channel
+  复用为共同调参门槛；
+- `transaction_cost_model.yaml` 可作为未来 cost input 候选，但单独不能覆盖其余 mandatory axes；
+- `first_layer_threshold_policy_v2.yaml` 属于已关闭 first-layer family；
+- `promotion_gate_thresholds.yaml` 面向不同 promotion source gates；
+- `threshold_registry.yaml` 状态为 `validation_inventory`，明确不是已校准统计边界。
+
+因此目前不存在可直接覆盖八个 mandatory axes、且与本 hypothesis/comparator/evaluation unit 精确
+匹配的 reviewed threshold bundle。preregistration 必须机械输出 `BLOCKED_POLICY_INPUT`；后继不能在
+DQ、回测或结果可见后拼接这些历史阈值。
+
+当前 next step：完成 authority inventory、修订合同并恢复 S1/S2。最终 exit condition 仍为 serial
 preregistration contract、tests、system flow、canonical registry 与 formal gates 完成并普通 push；
 任何后继数据任务 PASS 最多到 `READY_FOR_OWNER_REOPEN_REVIEW`，不自动授权经验研究。
+
+本任务的实现 exit condition 已满足后，策略线由
+[TRADING-2542 threshold policy decision pack and freeze](TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md)
+承接。2542 必须先于任何新 DQ/strategy result 冻结 exact threshold authority；在此之前，2540 保持
+`BASELINE_DONE / BLOCKED_POLICY_INPUT`，不得以 2541 的 transport PASS 代替 threshold 或 DQ/PIT PASS。
 
 ## 10. 临时工作区生命周期
 
@@ -248,3 +268,39 @@ preregistration contract、tests、system flow、canonical registry 与 formal g
   因此初始 QLD 解释与项目 active authority 冲突。任务改为 `BLOCKED_OWNER_INPUT`；四个未提交草案
   文件保留在 task-owned worktree，仅用于可恢复审阅，不构成 authority，不运行回测、cache 或任何
   external action。恢复前必须取得 exact Owner successor decision，并重新执行 governed preflight。
+- 2026-08-23：Owner 确认按既定后续顺序继续，接受保留 QQQ Options active lane、移除 QLD
+  selected-lane 语义的建议。TRADING-2541 已实证补齐 `2022-08-26`，transport completeness=
+  `1202/1202`；本任务恢复 `IN_PROGRESS`，只推进 S1/S2 preregistration，不执行 empirical、cache、
+  Cloud、production 或 broker action。
+- 2026-08-23：S1 threshold authority inventory 完成。六个相邻历史 policy 均因 scope、family、
+  source-gate 或 calibration-state 不匹配而不能组成 TRADING-2540 reviewed threshold bundle；这一
+  结论不是临时绕行。当前合同保持 `BLOCKED_POLICY_INPUT`，等待后继在任何 empirical result 可见前
+  独立冻结精确 threshold policy。
+- 2026-08-23：最新 main 协调合成使用 reviewed plan
+  `integration-revalidation-fcdb8ef89400992d10b6`；唯一 domain overlap 为 canonical task view，已从
+  task source 重放，Arch004E/report-flow/compatibility generated authority 均在最终树重建。Policy
+  file/canonical/authority-set SHA-256 分别为
+  `f7e769c4a9f82d0a462c327669df0cc2bdfeb3f151c292cdb784ad3327a52f46`、
+  `0be7e6b775523e55d68574563bd9f77bd22682c4d5241a90d8404ae1b541956f`、
+  `3198e9e52a1165f25ee494511810e1389e38acfd69645fc96687aa60cb2be417`；sealed decision
+  canonical SHA-256=`0f52f4d6fd993e8120e87e044ca2ada9a87e312d8cc8847769314bf998f9c4db`。
+  Focused contract=`43 passed`，Arch004E combined=`59 passed`，Ruff 与 strict mypy PASS；任务转为
+  `BASELINE_DONE`，后继 TRADING-2542 已 registration-only 建立。
+- 2026-08-23：首轮 final-tree Architecture=`864 passed / 1 failed`；唯一失败是新增一个 module 与
+  一个 test 后 `arch_004g_deprecation_inventory` 的 frozen repository counts/id 尚未刷新，runtime artifact=
+  `outputs/validation_runtime/architecture-fitness_20260822T233819Z/test_runtime_summary.json`。该失败保留，
+  不以 serial pytest 替代。已按实际 scan 更新 module/test counts=`1141/1303` 与 inventory id
+  `arch_004g_deprecation_inventory_bd9781d7b2e6f543c1bd`，随后重建 Arch004E/compatibility authority；
+  correction rerun 必须使用明确 task/boundary provenance。
+- 2026-08-23：Architecture correction rerun=`865 passed`、Contract=`276 passed`、Integration=
+  `995 passed`、Reproducibility=`24 passed`。首轮 Full=`9308 passed / 30 failed / 6 skipped`，runtime
+  artifact=`outputs/validation_runtime/full_20260822T235737Z/test_runtime_summary.json`。30 个失败归并为两个
+  共享工程前置条件：9 个 O1 ledger test 所引用的 Git-ignored DQ gate 未随 temporary worktree 携带；
+  其 retained main-workspace source 的 SHA-256 与 policy seal 同为
+  `ca02b4310f99d664bb8d987debd4900f4367935b3938663c7a633400d988a1ca`。其余 21 个 Atlas failure 均由
+  TRADING-2541 canonical `requirement_refs=[]` 与 page-effectiveness contract 不一致连锁触发。修正为：只把
+  exact-hash DQ fixture 复制到 task worktree 的相同 ignored path；通过 canonical task-source event 补齐
+  2541 requirement binding；刷新 Atlas 中 2540/2541 的实际终态说明。不得修改 O1 evidence bytes、不得
+  把 transport PASS 提升为 DQ/PIT PASS。聚焦回归进一步确认新登记的 2542 必须进入 Atlas successor
+  分类；渲染器的显式展示上限由 2541 精确推进到 2542，task coverage frozen count 由 62 更新为 63，
+  未放宽 unknown-successor fail-closed 规则。最终 Full 必须绑定上述失败产物以 `failure_fix_rerun` 重跑。

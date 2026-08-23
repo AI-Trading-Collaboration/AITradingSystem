@@ -14,23 +14,24 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner：明确选择 versioned successor 路径——正式暂停/关闭/supersede 2516-2539
-    QQQ Options active lane 并唯一选择 QLD，或保留 QQQ Options lane 并移除 2540 的 QLD selected-lane
-    语义；Codex 收到后重做 preflight
+  next_owner: TRADING-2542 / Codex decision-pack coordinator；Project Owner for exact
+    threshold freeze
   requirement_refs:
   - docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md
+  - docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: TRADING-2516 已选择 QQQ Options evidence
-    lane，TRADING-2539 已在该 lane 上定位 2022-08-26 exact-date source blocker；Web Pro 13
-    文件清单遗漏 2516-2539，不能静默以 QLD 草案覆盖 active authority。四个 S1 草案未提交并保留，无 empirical/cache/external
-    action。
+  unstructured_legacy_blocker_or_next_step: QQQ Options-compatible preregistration
+    contract 已实现；TRADING-2541 transport terminal 已 exact 绑定。八轴 reviewed threshold
+    bundle 缺失，机械 terminal=BLOCKED_POLICY_INPUT。后继 TRADING-2542 先完成 decision pack，再由
+    Owner 在任何 empirical result 可见前冻结 exact policy；当前不得运行 DQ/cache/backtest/holdout/Cloud。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 取得 exact Owner successor decision；active data lane 保持唯一；若切换则 versioned supersession
-      并保留 2516-2539 immutable evidence，若保留则重写 2540 为 QQQ Options-compatible；随后重做 governed
-      preflight。
+    text: Owner-retained QQQ Options lane、1202/1202 transport 与 dq_pit_promoted=false
+      exact replay；QQQ/SGOV bounded non-leveraged single hypothesis；八轴与四态 taxonomy
+      seal/replay；wrong lane/window/leverage/threshold-after-result/authority drift
+      fail closed；system flow/generated authority/formal final tree PASS；无策略 PASS、权重或投资建议。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -126,29 +127,94 @@ events:
   - change:TRADING-2540-RESTORE-REQUIREMENT-LINK-20260822T121700+0900
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-abea4aee07d2554782788726b266e93d
+- schema_version: task_event.v1
+  task_id: TRADING-2540_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_AND_SINGLE_LANE_DECISION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T23:31:56Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2540-retain-qqq-options-integration-replay-20260823-v1
+  lane_id: null
+  base_commit: 7369f5209fcbac694e07ddb366b72147df4c121b
+  previous_state_event_id: task-event-abea4aee07d2554782788726b266e93d
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / TRADING-2540 coordinator
+    blocker_or_next_step: Owner 已选择保留 QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE
+      并移除 QLD selected-lane 语义；TRADING-2541 已完成 1202/1202 transport 修复。继续完成 final-tree
+      authority refresh、formal validation 与 governed closeout；empirical/cache/Cloud/production/broker
+      均未授权。
+    acceptance_criteria: 唯一 selected lane 为 QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE；QLD
+      不得成为 selected lane；增长 action 仅限 QQQ/SGOV bounded non-leveraged reallocation；缺失
+      reviewed thresholds 时 BLOCKED_POLICY_INPUT；合同可 canonical seal/replay；negative
+      tests、system flow、generated authority 与 formal validation PASS；不输出策略 PASS 或投资建议。
+    notes: Owner successor authority=owner_decision:TRADING-2540:2026-08-23:retain_qqq_options_lane_and_remove_qld_selected_lane_semantics_v1。TRADING-2541
+      exact-date recovery 已补齐 2022-08-26，但 dq_pit_promoted=false；reviewed reconciliation
+      plan=integration-revalidation-fcdb8ef89400992d10b6。详见 docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2540-retain-qqq-options-integration-replay-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ca00da83dba642a5864f1ec7ff15a903
+- schema_version: task_event.v1
+  task_id: TRADING-2540_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_AND_SINGLE_LANE_DECISION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-22T23:32:45Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2540-baseline-done-threshold-policy-blocked-20260823-v1
+  lane_id: null
+  base_commit: 7369f5209fcbac694e07ddb366b72147df4c121b
+  previous_state_event_id: task-event-ca00da83dba642a5864f1ec7ff15a903
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: TRADING-2542 / Codex decision-pack coordinator；Project Owner for exact
+      threshold freeze
+    blocker_or_next_step: QQQ Options-compatible preregistration contract 已实现；TRADING-2541
+      transport terminal 已 exact 绑定。八轴 reviewed threshold bundle 缺失，机械 terminal=BLOCKED_POLICY_INPUT。后继
+      TRADING-2542 先完成 decision pack，再由 Owner 在任何 empirical result 可见前冻结 exact policy；当前不得运行
+      DQ/cache/backtest/holdout/Cloud。
+    acceptance_criteria: Owner-retained QQQ Options lane、1202/1202 transport 与 dq_pit_promoted=false
+      exact replay；QQQ/SGOV bounded non-leveraged single hypothesis；八轴与四态 taxonomy
+      seal/replay；wrong lane/window/leverage/threshold-after-result/authority drift
+      fail closed；system flow/generated authority/formal final tree PASS；无策略 PASS、权重或投资建议。
+    notes: 'Supporting requirement: docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md；successor:
+      docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md。Focused=43
+      PASS，Arch004E combined=59 PASS，Ruff/strict mypy PASS；final five-tier/Full follows
+      on exact candidate。production_effect=none，broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2540-baseline-done-threshold-policy-blocked-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a8e3105de3fd26aa323fb54d83aae204
 projection:
   legacy_first_eight_cells:
   - TRADING-2540_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_AND_SINGLE_LANE_DECISION_V1
   - Strategy governance / growth action-value preregistration and single QLD data-lane
     decision
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner：明确选择 versioned successor 路径——正式暂停/关闭/supersede 2516-2539 QQQ Options
-    active lane 并唯一选择 QLD，或保留 QQQ Options lane 并移除 2540 的 QLD selected-lane 语义；Codex
-    收到后重做 preflight
-  - TRADING-2516 已选择 QQQ Options evidence lane，TRADING-2539 已在该 lane 上定位 2022-08-26
-    exact-date source blocker；Web Pro 13 文件清单遗漏 2516-2539，不能静默以 QLD 草案覆盖 active authority。四个
-    S1 草案未提交并保留，无 empirical/cache/external action。
-  - 取得 exact Owner successor decision；active data lane 保持唯一；若切换则 versioned supersession
-    并保留 2516-2539 immutable evidence，若保留则重写 2540 为 QQQ Options-compatible；随后重做 governed
-    preflight。
-  - 'Supporting requirement: docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md；read-only
-    authority reconciliation discovered same-commit successor authority omitted by
-    Web Pro file list；implementation paused fail closed。'
+  - BASELINE_DONE
+  - TRADING-2542 / Codex decision-pack coordinator；Project Owner for exact threshold
+    freeze
+  - QQQ Options-compatible preregistration contract 已实现；TRADING-2541 transport terminal
+    已 exact 绑定。八轴 reviewed threshold bundle 缺失，机械 terminal=BLOCKED_POLICY_INPUT。后继
+    TRADING-2542 先完成 decision pack，再由 Owner 在任何 empirical result 可见前冻结 exact policy；当前不得运行
+    DQ/cache/backtest/holdout/Cloud。
+  - Owner-retained QQQ Options lane、1202/1202 transport 与 dq_pit_promoted=false exact
+    replay；QQQ/SGOV bounded non-leveraged single hypothesis；八轴与四态 taxonomy seal/replay；wrong
+    lane/window/leverage/threshold-after-result/authority drift fail closed；system
+    flow/generated authority/formal final tree PASS；无策略 PASS、权重或投资建议。
+  - 'Supporting requirement: docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md；successor:
+    docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md。Focused=43
+    PASS，Arch004E combined=59 PASS，Ruff/strict mypy PASS；final five-tier/Full follows
+    on exact candidate。production_effect=none，broker_action=none。'
   docs_links:
   - docs/requirements/TRADING-2540_Strategy_Growth_Action_Value_Preregistration_And_Single_Lane_Decision_V1.md
+  - docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md
   terminal: false
-  canonical_row_sha256: 5fed662ad9955b479edc319adffe1fba46258af3c4f60420e3dc732ec139360c
-last_event_id: task-event-abea4aee07d2554782788726b266e93d
+  canonical_row_sha256: 1142cc641d50edbf0e7bf911b358db277dd61bc6f87f2a18de5b6adbaf9a04a8
+last_event_id: task-event-a8e3105de3fd26aa323fb54d83aae204
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 834c1481a1e3c8fc1984379bb87907a32c26b38b1ae695bc44585d888fb62c62
+fragment_checksum: 6329d8c3407b77f139244de94df499a469db7f641c539a8f4c55f9015b0047b4

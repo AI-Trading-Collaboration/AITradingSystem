@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 134
+fragment_count: 135
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,7 +34,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 34f5d1e16d6ffbaf6b9651c33f3887e78e2f0c15a33c22f22f8904a5c6609972
+  current_sha256: 25b7996748c10c0196183d9eaa39f1748f9b5e8216c4e6177a0debfb34a3280c
   fragment_root: config/architecture/fragments/flows
   fragment_count: 56
   fragment_paths:
@@ -941,6 +941,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/research_framework.yaml
   sha256: 08d5475487b66a1028b1efc771bb50826b8796ad87a962049f88383573177869
+  generated_source_of_truth_active: false
+- fragment_id: module.strategy_growth_action_value_preregistration
+  fragment_kind: module
+  owner: strategy_research_governance
+  target_id: null
+  path: config/architecture/fragments/modules/strategy_growth_action_value_preregistration.yaml
+  sha256: 9526c8d9927bd9eb44b0733c59a429f90fdd8a24a7277ba6e8e295213dd21e98
   generated_source_of_truth_active: false
 - fragment_id: module.strategy_research_page_effectiveness_contract
   fragment_kind: module

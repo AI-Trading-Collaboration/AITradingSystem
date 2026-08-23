@@ -1,0 +1,94 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  task_id_sha256: d96173e178e57c1d0dc1c9b78ba58062c7694a2a49e569f9d20d70c5d00fa56e
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  title: null
+  domain: Strategy governance / growth action-value threshold policy decision pack
+    and freeze V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex：完成八轴 authority inventory 与 Owner decision pack；Project Owner：在任何新
+    DQ/strategy result 可见前选择 exact threshold policy values/source/review condition
+  requirement_refs:
+  - docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 现有历史 policy 均不能直接覆盖 TRADING-2540 八个 mandatory
+    axes；transaction_cost_model 仅是 partial input。S1 decision pack 可继续，S2 freeze 等待
+    Owner exact choice；empirical/cache/Cloud/production/broker 未授权。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 八轴 gap matrix 0 omission；现有 policy 逐项 ADMISSIBLE/PARTIAL/WRONG_SCOPE/RETIRED/UNCALIBRATED
+      分类；Owner 决定先于结果；frozen policy 无 unexplained numeric literal且可 seal/replay；formal
+      validation PASS；不自动授权 DQ 或 empirical evaluation。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-22T23:32:18Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542-register-threshold-policy-decision-pack-20260823-v1
+  lane_id: null
+  base_commit: 7369f5209fcbac694e07ddb366b72147df4c121b
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+    - Strategy governance / growth action-value threshold policy decision pack and
+      freeze V1
+    - P0
+    - IN_PROGRESS
+    - Codex：完成八轴 authority inventory 与 Owner decision pack；Project Owner：在任何新 DQ/strategy
+      result 可见前选择 exact threshold policy values/source/review condition
+    - 现有历史 policy 均不能直接覆盖 TRADING-2540 八个 mandatory axes；transaction_cost_model 仅是
+      partial input。S1 decision pack 可继续，S2 freeze 等待 Owner exact choice；empirical/cache/Cloud/production/broker
+      未授权。
+    - 八轴 gap matrix 0 omission；现有 policy 逐项 ADMISSIBLE/PARTIAL/WRONG_SCOPE/RETIRED/UNCALIBRATED
+      分类；Owner 决定先于结果；frozen policy 无 unexplained numeric literal且可 seal/replay；formal
+      validation PASS；不自动授权 DQ 或 empirical evaluation。
+    - 'Supporting requirement: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md；TRADING-2540
+      successor，registration-only 随 2540 final candidate，S1 必须从 2540 released main
+      独立 preflight。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2542-register-threshold-policy-decision-pack-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-35faef04522182eadb7ca779db14f912
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  - Strategy governance / growth action-value threshold policy decision pack and freeze
+    V1
+  - P0
+  - IN_PROGRESS
+  - Codex：完成八轴 authority inventory 与 Owner decision pack；Project Owner：在任何新 DQ/strategy
+    result 可见前选择 exact threshold policy values/source/review condition
+  - 现有历史 policy 均不能直接覆盖 TRADING-2540 八个 mandatory axes；transaction_cost_model 仅是 partial
+    input。S1 decision pack 可继续，S2 freeze 等待 Owner exact choice；empirical/cache/Cloud/production/broker
+    未授权。
+  - 八轴 gap matrix 0 omission；现有 policy 逐项 ADMISSIBLE/PARTIAL/WRONG_SCOPE/RETIRED/UNCALIBRATED
+    分类；Owner 决定先于结果；frozen policy 无 unexplained numeric literal且可 seal/replay；formal
+    validation PASS；不自动授权 DQ 或 empirical evaluation。
+  - 'Supporting requirement: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md；TRADING-2540
+    successor，registration-only 随 2540 final candidate，S1 必须从 2540 released main 独立
+    preflight。'
+  docs_links:
+  - docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md
+  terminal: false
+  canonical_row_sha256: 54a38e020f1a2aad84f27abecf7f366c09b6be490bd4a30d5c9a63e37c264ecd
+last_event_id: task-event-35faef04522182eadb7ca779db14f912
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 49ef99e8939a890df673f3b125325a2ca71f170fbb8bea0f87d20bbcf730c423

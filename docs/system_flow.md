@@ -8980,13 +8980,47 @@ Reproducibility=`24 passed`。生成的
 `d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3`；package manifest content
 SHA-256 为 `465961f8bb040968d0d49f1753aa40d8160ae2d35333d3dee1d025e358f49188`。
 
-该实现尚未执行新的 Cloud action 或 provider query，因此只证明离线 recovery contract 与 candidate 可重放，
-不证明 Cloud transport 已修复。不得把 V2 attribution 的 `6496` 当作硬编码阈值，不得 forward-fill、删除
-`2022-08-26`、缩短 primary window，也不得在新的 1202-session S3 DQ/PIT validation 前开放 selection、
-engine 或交易；当前 `chain_presence=FAIL`、DQ=`FAIL`、PIT=`NOT_EVALUATED` 和
-`POLICY_BLOCKED_CASH_PRESERVATION` 保持不变。
+上述 repository baseline 发布时尚未执行新的 Cloud action 或 provider query，因此当时只证明离线
+recovery contract 与 candidate 可重放。不得把 V2 attribution 的 `6496` 当作硬编码阈值，不得
+forward-fill、删除 `2022-08-26` 或缩短 primary window。
 
 S3 由 DEVX-008 `R1_BOUNDED_RESEARCH_SANDBOX` standing owner scope 管理：exact manifest 发布并自动重放
 后，只允许在 existing clone `35444189` 发生一次 candidate mutation/save/build、一次 zero-order Cloud
 backtest 与一次 provider query；首个 dispatch 即消费且禁止 retry。execution evidence 必须把
 `authorization_state=STANDING_OWNER_SCOPE` 与 `technical_validation_state` 分开封存。
+
+S3 v3 随后在同一 existing clone 完成唯一 zero-order run：requested/evaluated range 均为
+`2021-02-22..2025-12-02`，normal Slice sessions=`1201`、same-source-date recovered sessions=`1`、
+observed/expected=`1202/1202`、unresolved=`0`；provider query=`1`，exact-date records/contracts=
+`1/6496`，non-target=`0`，delivery path=`EXACT_DATE_PROVIDER_HISTORY_RECOVERY`，orders/fills=`0/0`。
+因此 transport completeness 已修复，但 terminal 明确保持 `dq_pit_promoted=false`；它不自动开放
+strategy selection、engine、production 或 broker。
+
+## TRADING-2540 QQQ Options-compatible growth action-value preregistration
+
+`strategy_growth_action_value_preregistration` 把 Owner 的单车道后继决定与 TRADING-2541 terminal
+纳入 exact authority replay。它只冻结一个 QQQ/SGOV、bounded、non-leveraged growth hypothesis，
+不执行数据车道、cache、回测或任何外部动作。
+
+```text
+TRADING-2516 selected lane authority
+  + TRADING-2541 exact-date recovery terminal
+      -> selected lane = QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE
+      -> transport sessions = 1202/1202; unresolved = 0
+      -> dq_pit_promoted = false
+  + baseline = equal_risk_qqq_sgov
+  + action universe = QQQ / SGOV; leverage/options/search = false
+  + independent defensive hard gate / highest-priority risk veto
+  -> freeze eight mandatory axes and INVALID > FAIL > INSUFFICIENT > PASS taxonomy
+  -> inventory existing threshold policies before any empirical result is visible
+  -> no exact reviewed bundle covers all eight axes
+  -> decision = BLOCKED_POLICY_INPUT
+  -> downstream gate = OWNER_REVIEWED_THRESHOLD_POLICY_REQUIRED
+  -> empirical/cache/Cloud/holdout/paper/live/production/broker remain closed
+```
+
+历史 `action_value_score_policy_v2`、defensive、first-layer、promotion policy 与 threshold inventory
+不能静默拼接成本任务的 reviewed threshold bundle；`transaction_cost_model` 也只能作为未来 cost input
+候选。只有新的 exact threshold policy 在任何 empirical result 可见前完成 reviewed freeze，后继任务才可
+继续 DQ/PIT admission；即使 DQ/PIT PASS，也必须另经 Owner reopen review 才能执行 locked growth
+action-value evaluation。

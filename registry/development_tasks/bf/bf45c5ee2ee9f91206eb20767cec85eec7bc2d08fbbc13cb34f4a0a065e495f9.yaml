@@ -14,11 +14,12 @@ task_record:
   priority: P0
   accountable_owner: null
   next_owner: project_owner
-  requirement_refs: []
+  requirement_refs:
+  - docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 无阻塞；如需常态化运行，另建 B-MICRO 全窗口性能优化任务。
+  unstructured_legacy_blocker_or_next_step: 无阻塞；如需常态化运行，另建 B-MICRO 全窗口性能优化任务；需求依据：docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 2022-08-26 仅以 exact-source-date OptionUniverse history 恢复；availability=2022-08-27；normal=1201、recovered=1、unresolved=0、sessions=1202/1202；provider
@@ -374,6 +375,31 @@ events:
   - change:trading-2541-s3-v3-terminal-pass-20260823-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-7b71ddbea43e47788ca386f343f8cecb
+- schema_version: task_event.v1
+  task_id: TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T00:27:05Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2541-requirement-ref-binding-repair-20260823-v1
+  lane_id: null
+  base_commit: 7369f5209fcbac694e07ddb366b72147df4c121b
+  previous_state_event_id: task-event-7b71ddbea43e47788ca386f343f8cecb
+  from_status: DONE
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: project_owner
+    blocker_or_next_step: 无阻塞；如需常态化运行，另建 B-MICRO 全窗口性能优化任务；需求依据：docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md。
+    acceptance_criteria: 2022-08-26 仅以 exact-source-date OptionUniverse history 恢复；availability=2022-08-27；normal=1201、recovered=1、unresolved=0、sessions=1202/1202；provider
+      query=1；orders/fills=0/0；production/broker effect=none。
+    notes: S3 v3 Cloud PASS：candidate readback SHA d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3，build
+      d65491-f6b483，backtest 8142b39f1c76a10471a355fc1eb27a1d，RECOVERY_STATUS=ACCEPTED，EXACT_DATE_CONTRACT_COUNT=6496，duration=5643.88s。正式
+      export-safe terminal evidence 已封存。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2541-requirement-ref-binding-repair-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3ca9de3cb554b12abf1c8a27ea2c9249
 projection:
   legacy_first_eight_cells:
   - TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1
@@ -381,15 +407,16 @@ projection:
   - P0
   - DONE
   - project_owner
-  - 无阻塞；如需常态化运行，另建 B-MICRO 全窗口性能优化任务。
+  - 无阻塞；如需常态化运行，另建 B-MICRO 全窗口性能优化任务；需求依据：docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md。
   - 2022-08-26 仅以 exact-source-date OptionUniverse history 恢复；availability=2022-08-27；normal=1201、recovered=1、unresolved=0、sessions=1202/1202；provider
     query=1；orders/fills=0/0；production/broker effect=none。
   - S3 v3 Cloud PASS：candidate readback SHA d8836be2165b56a8e9d56fb16eefb4e80c9be9225f9c8ffba93833bb1e69c9b3，build
     d65491-f6b483，backtest 8142b39f1c76a10471a355fc1eb27a1d，RECOVERY_STATUS=ACCEPTED，EXACT_DATE_CONTRACT_COUNT=6496，duration=5643.88s。正式
     export-safe terminal evidence 已封存。
-  docs_links: []
+  docs_links:
+  - docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md
   terminal: true
-  canonical_row_sha256: f3cca50c9d233ca82c67782bc071004bbaf096b47cda2bd594c0a5c333f4ed60
-last_event_id: task-event-7b71ddbea43e47788ca386f343f8cecb
+  canonical_row_sha256: 9317ce6e1ae907a86c0e3d2e5a591c0862dba00b3cf6f4271261322ed53e356b
+last_event_id: task-event-3ca9de3cb554b12abf1c8a27ea2c9249
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: aa31f9112c68b4c9f8d62df7f3ead0ab35b69e420ebc9307f0fd6c719df73d1b
+fragment_checksum: 7dc9c5d142a5fbb5d9f48eab8a289cda8d15849532a68f4336a13fcd1f8cb9cb

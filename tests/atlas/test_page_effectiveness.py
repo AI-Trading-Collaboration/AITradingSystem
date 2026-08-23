@@ -42,12 +42,12 @@ def _rendered(
 def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 62
+    assert len(policy.task_sources) == 63
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
         "TRADING-2523B",
-        *[f"TRADING-{number}" for number in range(2524, 2542)],
+        *[f"TRADING-{number}" for number in range(2524, 2543)],
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -73,12 +73,12 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
     assert manifest.schema_version == "strategy_research_page_effectiveness.v2"
-    assert len(manifest.task_coverage) == 62
+    assert len(manifest.task_coverage) == 63
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
         "TRADING-2523B",
-        *[f"TRADING-{number}" for number in range(2524, 2542)],
+        *[f"TRADING-{number}" for number in range(2524, 2543)],
     ]
     coverage_by_task = {
         item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
@@ -180,11 +180,14 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "DISCLOSED_EXISTING_CLONE_V1_HISTORY_PRESERVED_V2_SUCCESSOR_EVIDENCE_RESOLVED"
     )
     assert coverage_by_task["TRADING-2540"] == (
-        "DISCLOSED_SEPARATE_GROWTH_PREREGISTRATION_ONLY_DATA_LANE_BLOCKED"
+        "DISCLOSED_QQQ_OPTIONS_LANE_RETAINED_PREREGISTRATION_BASELINE_DONE_"
+        "THRESHOLD_POLICY_BLOCKED"
     )
     assert coverage_by_task["TRADING-2541"] == (
-        "DISCLOSED_EXACT_DATE_SUBSCRIPTION_RECOVERY_OFFLINE_IMPLEMENTED_"
-        "CLOUD_VALIDATION_PENDING"
+        "DISCLOSED_EXACT_DATE_SUBSCRIPTION_RECOVERY_CLOUD_VALIDATED_COMPLETE"
+    )
+    assert coverage_by_task["TRADING-2542"] == (
+        "DISCLOSED_THRESHOLD_POLICY_DECISION_PACK_REGISTERED_OWNER_FREEZE_PENDING"
     )
     assert len(manifest.source_artifacts) == 29
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)
