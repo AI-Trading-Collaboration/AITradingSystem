@@ -162,3 +162,14 @@ route 无法独立验证。
 
 - 2026-08-23：Owner 要求“可以先记录下这个方向”。任务以 `PROPOSED` 登记；该指令不解释为
   启动 serial contract、数据处理、训练、回测、外部资源消耗或生产授权。
+- 2026-08-23：登记变更已进入 local/remote `main`，但 closeout 审计发现受
+  `known_unrelated_exclusions` 保护的
+  `docs/research/growth_tilt_owner_diagnosis_pack.md` 出现在登记 worktree。Codex 未读取、哈希、
+  复制、移动、stage 或删除该文件，因此 worktree 与已合并 task branch 暂时保留。任务 tracked
+  内容与 Architecture PASS evidence 已进入 canonical main；其余 1,168 个 ignored cache/runtime
+  文件分布在 `.pytest_cache`、`outputs`、`scripts`、`src`、`tests`，没有发现依赖进程，也不作为
+  唯一实现或研究证据。保留风险限于临时磁盘占用与 worktree/branch residue，
+  `production_effect=none`、`broker_action=none`。下一责任方为 Project Owner 或该受保护文件的
+  内容所有者：独立决定文件处置；当该 path 已不再存在且无需 Codex 接触其内容时，Codex 可重新
+  执行 governed audit，确认无唯一内容/进程依赖，再运行 `git worktree remove`、`git worktree prune`
+  并删除已合并 task branch。
