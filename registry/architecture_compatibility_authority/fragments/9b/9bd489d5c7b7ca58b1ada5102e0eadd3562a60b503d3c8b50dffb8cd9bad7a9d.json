@@ -29,32 +29,32 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "5c0519a5860251cec9fd23b8bfe96fef9ba76952d75d5583e46d4b24ce41cd95"
+        "sha256": "ba9bc7cb5a80f7016ffd88d5713b6f87d0fbe5723a9b1857145a4a2e96c559b5"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "53a3e5366423d97d0955a56439a2dbbee86160581346fe9d15c4bda498d6ebbf"
+        "sha256": "a255ec0cd10f67de3435c21088a92dea080cc361b639cab4b405f3b628bf5182"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
-        "sha256": "e4f04cd3613eb02faecc736fbb5cc2680f6d5ef193c298ccfa007f9f9f4f77a2"
+        "sha256": "4fddf419ee5e592c8fc210d97a7dd07e094c4492565c30bb71b3500e1a341491"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "ba3d842e65f9974973c5dc773c45541a424e9285f3ad9af6d2fdc276d08e72fd"
+        "sha256": "5e4849130a403b065047d64d54aa155907f8397bcd0e5e250605b60d3de84b04"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "e0ade791234ba7f36e81a61066242adbdca36262d18870a5b9c59799ece39825"
+        "sha256": "944f4e1d4207871b3b345f710c8e7fd47d3d6d9e6876fc202a36a10d96a58e8b"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "16bda600d51a652a7a4b85e3fe169a576bd09dbc9a77469f454254deba2ccd19"
+        "sha256": "ca551296b04f76e1e7eddd1c45e371a8fa9240b2717b1d2ead5ebecab612b3a3"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -64,7 +64,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
-        "sha256": "5b1096f3668524ad465c282ed14595c539bcd1977ec5c99a4c45717f8a27ceed"
+        "sha256": "22bcc6b1b99b2fe24dd33590007a0eed73250dcb2cd032c927a6d1649c9c80d5"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -74,12 +74,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006c_compatibility_authority.py",
-        "sha256": "dc20b4efbde5196fb5f2fe4a927e17cc7c43b86d707ae332d6ea5974735a10ed"
+        "sha256": "b268322b7e428f0a2bd51edb8b37d419231d2c59c281eeddb8a793b0886051b0"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "88426ceddf7a740f659457fef266c9768b0e70e029466196b35f343f6d46e0f1"
+        "sha256": "6a6fa9a412e2809025884fb71795a37baa772094c5fad3dea47d24b5e7e2111a"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -89,7 +89,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_trading2452_architecture_contract.py",
-        "sha256": "45e468d8f56cd4da574245e67df0b317c1b2815b492003541593c59ebcba4247"
+        "sha256": "1c488a6671f500df2f607c83e3bb0d1e519684b71d148be6b507bed234fe1567"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -132,5 +132,5 @@
     "task_id": "DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL"
   },
   "section_id": "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2",
-  "section_sha256": "fb4288788f995a1a7ac586e964faa17d25da51003a5714073f5536f28eee67b4"
+  "section_sha256": "9bd489d5c7b7ca58b1ada5102e0eadd3562a60b503d3c8b50dffb8cd9bad7a9d"
 }

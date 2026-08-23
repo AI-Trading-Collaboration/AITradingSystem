@@ -50,6 +50,7 @@ _GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 _STATUS_MAPPING = {
     "DONE": "PASS",
     "BASELINE_DONE": "LIMITED",
+    "PROPOSED": "NOT_DUE",
     "IN_PROGRESS": "RUNNING",
     "VALIDATING": "RUNNING",
     "BLOCKED_EXTERNAL": "BLOCKED",

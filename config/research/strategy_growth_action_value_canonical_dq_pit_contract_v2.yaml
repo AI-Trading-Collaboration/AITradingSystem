@@ -1,0 +1,206 @@
+schema_version: strategy_growth_action_value_canonical_dq_pit_contract.v2
+contract_id: strategy_growth_action_value_canonical_dq_pit_contract_v2
+contract_version: 2.0.0-draft.1
+status: DRAFT_COMPLETE_PENDING_SECOND_REVIEW_AND_OWNER_EXACT_APPROVAL
+task_id: TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1
+predecessor_binding:
+  path: config/research/strategy_growth_action_value_canonical_dq_pit_contract_v1.yaml
+  file_sha256: a60b6c71e492aacac31d8fc9a4f4d406659679c6a1f88ac9e53664d49134d138
+  canonical_sha256: d7c6bfe8fcb8123be6b8d6f87c5ba72a90db3c5ac50af041d1b3f5eefcc32f68
+  disposition: REJECTED_FOR_EXECUTABLE_AUTHORITY_RETAINED_IMMUTABLE
+review_evidence:
+  reviewed_repository_commit: 1ca8ccf95c2a93a1b50164345d3e101a59b50838
+  conversation_url: https://chatgpt.com/c/6a8ae448-a5b4-83e8-8d88-d7e6b22e0fc2
+  visible_product_label: ChatGPT Pro
+  visible_model_label: GPT-5.6 Pro
+  backend_route_attestation: CANNOT_VERIFY_EXACT_BACKEND_ROUTE
+  overall_disposition: REQUEST_NEW_VERSION_BEFORE_FREEZE
+review_state:
+  project_owner_continuation_instruction: true
+  owner_exact_approval: NOT_PROVIDED
+  second_independent_review: NOT_PERFORMED
+  executable_authority: false
+  freeze_allowed: false
+scope_binding:
+  hypothesis_id: BASELINE_BOUNDED_QQQ_GROWTH_OVERLAY_NON_BETA_ACTION_VALUE_V1
+  selected_data_lane: QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE
+  stage: DATA_RESEARCH
+  primary_window_start: '2021-02-22'
+  primary_window_end: '2025-12-02'
+  expected_session_count: 1202
+  calendar_id: QQQ_EXCHANGE_SESSIONS
+  session_inventory_lf_sha256: d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0
+required_serial_contract_fields:
+  - QUOTE_AGE_CLOCK_AND_TIMESTAMP_DIRECTION
+  - RELATIVE_SPREAD_DENOMINATOR_AND_ZERO_DENOMINATOR
+  - CONTRACT_TO_SESSION_AGGREGATION
+  - MISSING_AND_UNKNOWN_TERMINAL_MAPPING
+  - EXACT_SOURCE_DATE_AND_PIT_RULE
+  - GLOBAL_DQ_TERMINAL_ORDER
+numeric_policy:
+  state: NON_EXECUTABLE_PILOT_POLICY_PENDING_REVIEW
+  executable: false
+  unknown_can_pass: false
+  numeric_check_order:
+    - max_quote_age_seconds
+    - max_relative_spread
+    - min_open_interest
+    - min_volume
+  numeric_failure_collection: COLLECT_ALL_NUMERIC_FAILURES
+  max_quote_age_seconds:
+    value: 120
+    unit: seconds
+    direction: LESS_THAN_OR_EQUAL
+    policy_source: Project Owner pre-empirical DATA_RESEARCH pilot intent; provider cadence and quote_end lineage must be bound by the future run manifest.
+    rationale: A two-minute ceiling is a conservative research-freshness pilot that rejects observations materially detached from the decision clock while allowing bounded provider publication latency; it is not execution timing authority.
+    intended_effect: Prevent stale option quotes from contributing to derived research aggregates.
+    known_risk: Provider cadence or quote_end semantics may make the ceiling too strict or too permissive; results cannot be used to retune it on the same primary window.
+    stage: DATA_RESEARCH
+    execution_liquidity_authority: false
+    primary_window_result_visible_when_selected: false
+    review_condition: REVIEW_AFTER_ONE_PRIMARY_WINDOW_EVALUATION_OR_PROVIDER_SEMANTIC_CHANGE
+    expiry_condition: EXPIRES_BEFORE_REUSE_OUTSIDE_BOUND_PRIMARY_WINDOW_OR_STAGE
+    review_disposition: INSUFFICIENT_EVIDENCE_TO_APPROVE
+  max_relative_spread:
+    value: '0.20'
+    unit: ratio
+    direction: LESS_THAN_OR_EQUAL
+    policy_source: Project Owner pre-empirical DATA_RESEARCH pilot intent using midpoint-relative mark uncertainty; independent review remains pending.
+    rationale: A 20 percent midpoint-relative spread ceiling excludes observations whose quoted mark uncertainty dominates a research aggregate while remaining deliberately separate from transaction_cost_model_v1 and execution liquidity.
+    intended_effect: Limit quote-width contamination in option-derived research evidence.
+    known_risk: One ceiling may behave differently across premium, moneyness, and expiry buckets; it cannot be interpreted as tradability or execution quality.
+    stage: DATA_RESEARCH
+    execution_liquidity_authority: false
+    primary_window_result_visible_when_selected: false
+    review_condition: REVIEW_AFTER_ONE_PRIMARY_WINDOW_EVALUATION_OR_PROVIDER_SEMANTIC_CHANGE
+    expiry_condition: EXPIRES_BEFORE_REUSE_OUTSIDE_BOUND_PRIMARY_WINDOW_OR_STAGE
+    review_disposition: INSUFFICIENT_EVIDENCE_TO_APPROVE
+  min_open_interest:
+    value: 10
+    unit: contracts
+    direction: GREATER_THAN_OR_EQUAL
+    policy_source: Project Owner pre-empirical DATA_RESEARCH pilot intent bound to exact-prior-session open interest and future provider revision policy.
+    rationale: Ten contracts is a minimal evidence-presence floor for inclusion in a derived aggregate, not a claim that the contract is executable or liquid.
+    intended_effect: Exclude essentially unestablished contracts from research contributors.
+    known_risk: Provider backfill or revision behavior can change reported prior-session OI; the run manifest must seal source and revision semantics.
+    stage: DATA_RESEARCH
+    execution_liquidity_authority: false
+    primary_window_result_visible_when_selected: false
+    review_condition: REVIEW_AFTER_ONE_PRIMARY_WINDOW_EVALUATION_OR_PROVIDER_SEMANTIC_CHANGE
+    expiry_condition: EXPIRES_BEFORE_REUSE_OUTSIDE_BOUND_PRIMARY_WINDOW_OR_STAGE
+    review_disposition: INSUFFICIENT_EVIDENCE_TO_APPROVE
+  min_volume:
+    value: 1
+    unit: contracts
+    direction: GREATER_THAN_OR_EQUAL
+    policy_source: Project Owner pre-empirical DATA_RESEARCH pilot intent restricted to decision-as-of cumulative session volume.
+    rationale: At least one reported contract provides a minimal same-session activity-presence signal for research evidence; it does not establish execution liquidity.
+    intended_effect: Exclude contributors with no observed decision-as-of session activity.
+    known_risk: End-of-day or revised volume would introduce lookahead; field-specific available_at and cumulative-as-of identity are mandatory.
+    stage: DATA_RESEARCH
+    execution_liquidity_authority: false
+    primary_window_result_visible_when_selected: false
+    review_condition: REVIEW_AFTER_ONE_PRIMARY_WINDOW_EVALUATION_OR_PROVIDER_SEMANTIC_CHANGE
+    expiry_condition: EXPIRES_BEFORE_REUSE_OUTSIDE_BOUND_PRIMARY_WINDOW_OR_STAGE
+    review_disposition: INSUFFICIENT_EVIDENCE_TO_APPROVE
+timestamp_contract:
+  timezone: UTC
+  quote_age_formula: DECISION_AS_OF_UTC_MINUS_QUOTE_END_UTC_TOTAL_SECONDS
+  missing_quote_timestamp_outcome: UNKNOWN
+  missing_decision_timestamp_outcome: INVALID
+  malformed_naive_or_non_utc_timestamp_outcome: INVALID
+  future_quote_outcome: INVALID
+  quote_end_source_date_rule: QUOTE_END_UTC_CALENDAR_DATE_EQUALS_QUOTE_SOURCE_DATE
+  rounding_before_comparison_allowed: false
+  absolute_value_allowed: false
+spread_contract:
+  formula: ASK_MINUS_BID_DIVIDED_BY_BID_ASK_MIDPOINT
+  denominator: BID_PLUS_ASK_DIVIDED_BY_TWO
+  both_sides_missing_outcome: UNKNOWN
+  single_sided_provider_quote_outcome: INVALID
+  non_decimal_nonfinite_crossed_or_zero_denominator_outcome: INVALID
+  alternate_denominator_allowed: false
+pit_contract:
+  source_date_rule: EXACT_TARGET_EXCHANGE_SESSION_DATE
+  cross_date_fallback_allowed: false
+  quote_volume_source_rule: SAME_TARGET_SESSION
+  open_interest_source_rule: EXACT_PRIOR_SESSION_DERIVED_FROM_FROZEN_SESSION_INVENTORY
+  quote_available_at_rule: QUOTE_AVAILABLE_AT_UTC_LE_DECISION_AS_OF_UTC
+  volume_available_at_rule: VOLUME_AVAILABLE_AT_UTC_LE_DECISION_AS_OF_UTC
+  open_interest_available_at_rule: OPEN_INTEREST_AVAILABLE_AT_UTC_LE_DECISION_AS_OF_UTC
+  volume_semantics: DECISION_AS_OF_CUMULATIVE_SESSION_VOLUME
+  end_of_day_or_revised_volume_allowed: false
+  missing_field_available_at_outcome: UNKNOWN
+  future_field_available_at_outcome: INVALID
+  expected_identity_fields:
+    - provider
+    - engine
+    - exchange_calendar
+    - symbol_mapping
+    - normalization
+    - repository_code_sha
+    - source_evidence
+    - aggregate_manifest
+  expected_identity_values_bound_by_run_manifest: true
+  identity_mismatch_outcome: INVALID
+contributor_manifest_contract:
+  expected_manifest_required_per_session: true
+  expected_contract_ids_sorted_unique: true
+  duplicate_contract_id_outcome: INVALID
+  missing_or_unexpected_contributing_contract_outcome: INVALID
+  excluded_row_reason_required: true
+  excluded_row_invalid_propagates_to_session: true
+  zero_expected_or_observed_contributors_outcome: FAIL
+  result_dependent_manifest_change_allowed: false
+run_control_contract:
+  pre_run_stop_terminal: INSUFFICIENT_EVIDENCE_TO_RUN_DQ
+  pre_run_invalid_terminal: PRE_RUN_AUTHORITY_INVALID
+  identity_or_pit_invalid_action: HARD_STOP_AND_WRITE_ABORT_RECEIPT
+  numeric_fail_or_unknown_action: CONTINUE_FIXED_1202_SESSION_INVENTORY
+  strategy_evaluation_after_nonpass_allowed: false
+  maximum_real_runs: 1
+artifact_contract:
+  required_artifact_types:
+    - authority_receipt
+    - run_manifest
+    - expected_session_inventory
+    - expected_contributor_manifest_by_session
+    - contract_level_derived_check_results
+    - session_level_terminals
+    - window_global_terminal
+    - stop_abort_receipt
+    - deterministic_replay_report
+    - artifact_checksum_catalog
+  derived_only: true
+  raw_option_rows_allowed: false
+  deterministic_replay_required: true
+  checksum_catalog_required: true
+terminal_contract:
+  session_precedence:
+    - INVALID
+    - FAIL
+    - INSUFFICIENT
+    - PASS
+  window_precedence:
+    - GLOBAL_INVALID
+    - GLOBAL_FAIL
+    - GLOBAL_INSUFFICIENT
+    - GLOBAL_PASS
+  exact_expected_session_set_required: true
+  exact_1202_of_1202_all_pass_required: true
+  missing_duplicate_or_unexpected_session_outcome: GLOBAL_INVALID
+  majority_vote_allowed: false
+  pass_rate_tolerance_allowed: false
+  silent_drop_allowed: false
+safety:
+  dq_run_authorized: false
+  cache_read_authorized: false
+  cache_mutation_allowed: false
+  provider_query_allowed: false
+  raw_option_rows_allowed: false
+  empirical_research_authorized: false
+  backtest_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_effect: none
+  broker_action: none

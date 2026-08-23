@@ -9163,3 +9163,40 @@ policy 以及未修改的 V2 consumer identity。
 `DRAFT_COMPLETE_PENDING_OWNER_AND_INDEPENDENT_REVIEW`，Owner exact approval 与 independent review 均未
 发生，因此合同没有 DQ run、cache read/write、provider query、empirical research、backtest、Cloud、
 paper/live、production 或 broker 权限，也不能产生 primary-window DQ PASS 或投资结论。
+
+## TRADING-2542C independent-review remediation 与 freeze-readiness drafts
+
+Web Pro 对 exact commit `1ca8ccf95c2a93a1b50164345d3e101a59b50838` 的完整复核结论为
+`REQUEST_NEW_VERSION_BEFORE_FREEZE`。V2 八轴中只有 non-beta、drawdown、turnover 和 beta attribution
+可原样保留；net-of-cost、false-risk-off、DQ/PIT 与 sample/window 必须新建版本。四项 DQ numeric
+`120 / 0.20 / 10 / 1` 均为 `INSUFFICIENT_EVIDENCE_TO_APPROVE`。因此旧 V1/V2 与 2542B V1 继续作为
+immutable historical draft，不是 freeze 或真实 DQ authority。
+
+```text
+immutable 2542A V2 + immutable 2542B V1
+  + exact-commit independent-review dispositions
+  -> strategy_growth_action_value_threshold_exact_value_sheet_v3
+       -> bind exact 2021-02-22..2025-12-02 / 1202-session inventory before intersection
+       -> preserve four approved-axis values and mechanics
+       -> make non-beta minimum common sessions = 252 explicit
+       -> freeze gross/net/cost residual operands, units, frequency and max-residual reduction
+       -> freeze left-censor, transitive merge, parenthesized missed-return and ex-post-only use
+       -> freeze active-episode boundaries, cross-slice assignment and censoring
+  -> strategy_growth_action_value_canonical_dq_pit_contract_v2
+       -> bind unique expected-contributor manifest and exact source/session identity
+       -> field-specific available-at, prior-session OI and decision-as-of cumulative volume
+       -> excluded invalid rows still propagate INVALID
+       -> typed synthetic vs real authority; pilot numerics remain non-executable
+       -> identity/PIT INVALID hard stop with abort receipt
+       -> numeric FAIL/UNKNOWN collect-all over the fixed inventory
+       -> derived-only artifact inventory, replay report and checksum catalog
+  -> terminal = NEW_VERSION_DRAFT_COMPLETE_PENDING_SECOND_REVIEW_AND_OWNER_APPROVAL
+  -> threshold bundle frozen = false
+  -> real DQ/provider/cache/backtest/empirical/external/trading remain closed
+```
+
+V3 与 DQ/PIT V2 的 loader、canonical replay 和 deterministic tests 只能证明合同工程实现与
+fail-closed 边界。它们不得把独立复核的 advisory disposition 当成 Owner 逐项批准，也不得仅通过修改
+status 字段把 pilot numeric 提升为 executable authority。只有 successor 再次 independent review、Owner
+exact approval/freeze 和另一个固定 scope 的 R1 run manifest 都完成后，才允许后继任务评估是否执行真实
+primary-window DQ；本任务不产生策略价值或投资结论。

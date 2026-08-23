@@ -699,6 +699,31 @@ def build_repository_authority(
                 devx_007_v2_fragment_bytes,
             )
         )
+    trading_2542c_policy_path = (
+        root
+        / "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v3.yaml"
+    )
+    if trading_2542c_policy_path.exists():
+        trading_2542c_section_id, trading_2542c_section = _trading_2542c_section(
+            root,
+            policy=policy,
+        )
+        (
+            trading_2542c_relative,
+            trading_2542c_record,
+            trading_2542c_fragment_bytes,
+        ) = render_fragment(
+            section_id=trading_2542c_section_id,
+            section=trading_2542c_section,
+        )
+        rendered_fragments.append(
+            (
+                trading_2542c_section_id,
+                trading_2542c_relative,
+                trading_2542c_record,
+                trading_2542c_fragment_bytes,
+            )
+        )
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -1295,6 +1320,88 @@ def _devx_007_v2_section(
             v2_policy.get("broker_action"),
             "devx_007_v2.broker_action",
         ),
+    }
+
+
+def _trading_2542c_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    section_id = (
+        "phase_trading_2542c_growth_action_value_independent_review_"
+        "remediation_and_freeze_readiness_v1"
+    )
+    task_id = (
+        "TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_"
+        "REMEDIATION_AND_FREEZE_READINESS_V1"
+    )
+    source_paths = [
+        "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+        "config/atlas/live_snapshot.yaml",
+        "config/atlas/page_effectiveness.yaml",
+        "config/atlas/reader_state_semantics.yaml",
+        "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v2.yaml",
+        "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v3.yaml",
+        (
+            "docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_"
+            "Remediation_And_Freeze_Readiness_V1.md"
+        ),
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "inputs/architecture/arch_005_task_registry_index.yaml",
+        "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+        (
+            "registry/development_tasks/58/"
+            "5819914f707588b6aef091078860d899cb4ceda4e460aa1a9cca9330b5598635.yaml"
+        ),
+        "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "src/ai_trading_system/strategy_growth_action_value_dq_pit_contract_v2.py",
+        "src/ai_trading_system/strategy_growth_action_value_freeze_readiness_contract.py",
+        "tests/atlas/test_cited_query_renderer.py",
+        "tests/atlas/test_historical_projection_review.py",
+        "tests/atlas/test_live_snapshot.py",
+        "tests/atlas/test_page_effectiveness.py",
+        "tests/atlas/test_reader_state_projection.py",
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_arch_005_s5_task_source_cutover.py",
+        "tests/test_devx_006c_compatibility_authority.py",
+        "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "tests/test_strategy_growth_action_value_dq_pit_contract_v2.py",
+        "tests/test_strategy_growth_action_value_freeze_readiness_contract.py",
+        "tests/test_trading2452_architecture_contract.py",
+    ]
+    source_paths = sorted(source_paths, key=str.casefold)
+    return section_id, {
+        "schema_version": (
+            "trading_2542c_growth_action_value_independent_review_remediation_"
+            "and_freeze_readiness.v1"
+        ),
+        "task_id": task_id,
+        "status": "ACTIVE_DRAFT_PENDING_SECOND_REVIEW_AND_OWNER_APPROVAL",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "research_boundary": {
+            "threshold_bundle_frozen": False,
+            "real_dq_or_empirical_run_authorized": False,
+            "second_independent_review_required": True,
+            "owner_exact_value_approval_required": True,
+        },
+        "production_effect": "none",
+        "broker_action": "none",
     }
 
 

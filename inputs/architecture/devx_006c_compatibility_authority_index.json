@@ -36,16 +36,25 @@
       "section_sha256": "4e9e977f6701dec9b64455af4235bf532ec53729b36a51090769209a58e28252"
     },
     {
-      "entry_sha256": "c27a60e0565bd98dce2af2a8d4a68ad08100caee33baf9b4b18d478c19568fe3",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/fb/fb4288788f995a1a7ac586e964faa17d25da51003a5714073f5536f28eee67b4.json",
-      "fragment_sha256": "3864d695729efd06ff924e1c738d411f4b6e55f7723005212326efed4025e279",
+      "entry_sha256": "3532408ba68704e63c657c82a3573670fafdb13e9ebbeeeb35edc472e1aabd1a",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/9b/9bd489d5c7b7ca58b1ada5102e0eadd3562a60b503d3c8b50dffb8cd9bad7a9d.json",
+      "fragment_sha256": "5a2d5f05b5b35e9c5813cfd2efe3152179e52282fb7c9fa4b1bd069c0ae25a52",
       "order": 3,
       "previous_entry_sha256": "afebdf822635c51a58cf2e71622a3b3f871b44b2c38dad3036f532e640ca5e39",
       "section_id": "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2",
-      "section_sha256": "fb4288788f995a1a7ac586e964faa17d25da51003a5714073f5536f28eee67b4"
+      "section_sha256": "9bd489d5c7b7ca58b1ada5102e0eadd3562a60b503d3c8b50dffb8cd9bad7a9d"
+    },
+    {
+      "entry_sha256": "51caf9877995c13009013fcbba15740598fca762f41a2c1fc743417a18704f0d",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/bf/bf7a156509662527e807c0438dc7e24d35cbc2f449b23f20e0931f435b084e62.json",
+      "fragment_sha256": "045716472ec16b198104b497c2b714672009094301cd56c87067b61f74ef454f",
+      "order": 4,
+      "previous_entry_sha256": "3532408ba68704e63c657c82a3573670fafdb13e9ebbeeeb35edc472e1aabd1a",
+      "section_id": "phase_trading_2542c_growth_action_value_independent_review_remediation_and_freeze_readiness_v1",
+      "section_sha256": "bf7a156509662527e807c0438dc7e24d35cbc2f449b23f20e0931f435b084e62"
     }
   ],
-  "final_chain_sha256": "c27a60e0565bd98dce2af2a8d4a68ad08100caee33baf9b4b18d478c19568fe3",
+  "final_chain_sha256": "51caf9877995c13009013fcbba15740598fca762f41a2c1fc743417a18704f0d",
   "genesis_chain_sha256": "9be38b19ac0ccccd821200bc38b1fb86ce86e1052e7f4496595da5b40d475bcd",
   "legacy_prefix": {
     "byte_count": 3151107,

@@ -48,7 +48,9 @@ def test_reader_state_projection_binds_object_dates_change_and_safety() -> None:
     assert len(projection.content_sha256) == 64
 
 
-@pytest.mark.parametrize("raw_status", ["LIMITED", "PASS", "ANSWERED", "CURRENT"])
+@pytest.mark.parametrize(
+    "raw_status", ["LIMITED", "NOT_DUE", "RUNNING", "PASS", "ANSWERED", "CURRENT"]
+)
 def test_reader_state_projection_never_silently_upgrades_strategy(raw_status: str) -> None:
     projection = _project(raw_status)
 

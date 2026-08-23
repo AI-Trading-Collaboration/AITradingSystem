@@ -1,0 +1,204 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1
+  task_id_sha256: 5819914f707588b6aef091078860d899cb4ceda4e460aa1a9cca9330b5598635
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1
+  title: null
+  domain: Strategy governance / growth action-value independent review remediation
+    and freeze readiness V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner and second independent reviewer
+  requirement_refs:
+  - docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Engineering candidate and focused gates
+    are ready; second independent review, four DQ numeric authority dispositions,
+    and Owner exact approval are required before freeze. Codex proceeds with exact
+    candidate commit and parent-bound formal validation without real DQ or empirical
+    execution.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Exact latest-main candidate preserves TRADING-2544 as PROPOSED/NOT_DUE;
+      V3 and DQ/PIT V2 replay; append-only compatibility successor and current report-flow
+      authority validate; parent-bound Full plus Architecture/Contract/Integration/Reproducibility
+      pass; no real DQ or empirical run; second independent review and Owner exact
+      approval remain mandatory for freeze.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-23T14:57:20Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542c-third-latest-main-registration-20260823-v1
+  lane_id: null
+  base_commit: 58b8c681d30043dc1ced32089c075241f454cbbd
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1
+    - Strategy governance / growth action-value independent review remediation and
+      freeze readiness V1
+    - P0
+    - IN_PROGRESS
+    - Codex reconciles successor drafts on latest main, refreshes final-tree authorities,
+      and runs parent-bound Full validation
+    - Third reviewed reconciliation plan is active after main advanced to 58b8c681;
+      only final-tree authority refresh and validation remain before owner review
+    - Integrate from main 58b8c681; preserve later TRADING-2544 mainline authority;
+      append TRADING-2542C successor authority without rewriting historical hashes;
+      refresh report-flow/deprecation/devex/task authorities; preserve first Full
+      failure artifact; parent-bound Full rerun passes; no real DQ or empirical run
+    - 'Supporting requirement: docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md.
+      First Full artifact: outputs/validation_runtime/full_20260823T135255Z/test_runtime_summary.json
+      (9462 passed, 21 failed, 3 skipped). Reviewed plans: integration-revalidation-bc63aa9aa2d9565f1211,
+      integration-revalidation-378e0392f060297e0f8a, and integration-revalidation-3896dbcd4bedda8be9a9.
+      Latest approved reconciliation base: 58b8c681d30043dc1ced32089c075241f454cbbd.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2542c-third-latest-main-registration-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-4809e053ed3a96e8ae05dea8738ad493
+- schema_version: task_event.v1
+  task_id: TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T15:13:44Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542c-final-tree-authority-refresh-20260824-v1
+  lane_id: null
+  base_commit: 58b8c681d30043dc1ced32089c075241f454cbbd
+  previous_state_event_id: task-event-4809e053ed3a96e8ae05dea8738ad493
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex commits the exact candidate, regenerates Atlas exact-commit
+      artifacts, and runs parent-bound five-tier final validation
+    blocker_or_next_step: Final-tree engineering reconciliation is focused-PASS; exact
+      candidate commit and formal validation remain before Owner and second independent
+      review
+    acceptance_criteria: Exact latest-main candidate preserves TRADING-2544 as PROPOSED/NOT_DUE;
+      V3 and DQ/PIT V2 replay; append-only compatibility successor and current report-flow
+      authority validate; parent-bound Full plus Architecture/Contract/Integration/Reproducibility
+      pass; no real DQ or empirical run
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md.
+      Reviewed plan: integration-revalidation-3896dbcd4bedda8be9a9. First Full failure
+      retained at outputs/validation_runtime/full_20260823T135255Z/test_runtime_summary.json.
+      Atlas focused=41 PASS; current report-flow=3004 entries while historical DEVX-006D
+      remains 3000; successor compatibility section appended. V3/DQ V2 hashes remain
+      unchanged.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542c-final-tree-authority-refresh-20260824-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5d8d0ca69fff3031f258027379ab2e42
+- schema_version: task_event.v1
+  task_id: TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T15:17:27Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542c-engineering-candidate-owner-block-20260824-v1
+  lane_id: null
+  base_commit: 58b8c681d30043dc1ced32089c075241f454cbbd
+  previous_state_event_id: task-event-5d8d0ca69fff3031f258027379ab2e42
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner and second independent reviewer
+    blocker_or_next_step: Engineering candidate and focused gates are ready; second
+      independent review, four DQ numeric authority dispositions, and Owner exact
+      approval are required before freeze. Codex proceeds with exact candidate commit
+      and parent-bound formal validation without real DQ or empirical execution.
+    acceptance_criteria: Exact latest-main candidate preserves TRADING-2544 as PROPOSED/NOT_DUE;
+      V3 and DQ/PIT V2 replay; append-only compatibility successor and current report-flow
+      authority validate; parent-bound Full plus Architecture/Contract/Integration/Reproducibility
+      pass; no real DQ or empirical run; second independent review and Owner exact
+      approval remain mandatory for freeze.
+    notes: Engineering candidate is ready on latest-main base 58b8c681d30043dc1ced32089c075241f454cbbd.
+      First Full failure remains retained at outputs/validation_runtime/full_20260823T135255Z/test_runtime_summary.json
+      and is the required parent for failure_fix_rerun. Status blocks freeze, not
+      local engineering validation or safe closeout.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542c-engineering-candidate-owner-block-20260824-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-46112b81165a4957a4da1cd42723836c
+- schema_version: task_event.v1
+  task_id: TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T15:21:31Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542c-owner-block-requirement-binding-repair-20260824-v1
+  lane_id: null
+  base_commit: 58b8c681d30043dc1ced32089c075241f454cbbd
+  previous_state_event_id: task-event-46112b81165a4957a4da1cd42723836c
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner and second independent reviewer
+    blocker_or_next_step: Engineering candidate and focused gates are ready; second
+      independent review, four DQ numeric authority dispositions, and Owner exact
+      approval are required before freeze. Codex proceeds with exact candidate commit
+      and parent-bound formal validation without real DQ or empirical execution.
+    acceptance_criteria: Exact latest-main candidate preserves TRADING-2544 as PROPOSED/NOT_DUE;
+      V3 and DQ/PIT V2 replay; append-only compatibility successor and current report-flow
+      authority validate; parent-bound Full plus Architecture/Contract/Integration/Reproducibility
+      pass; no real DQ or empirical run; second independent review and Owner exact
+      approval remain mandatory for freeze.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md.
+      Engineering candidate is ready on latest-main base 58b8c681d30043dc1ced32089c075241f454cbbd.
+      First Full failure remains retained at outputs/validation_runtime/full_20260823T135255Z/test_runtime_summary.json
+      and is the required parent for failure_fix_rerun. The immediately preceding
+      update omitted the supporting-requirement phrase and caused the compatibility
+      projection to clear requirement_refs; this append-only event restores that authority
+      binding.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542c-owner-block-requirement-binding-repair-20260824-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d28d0370a75cafb773bdfa6a5a2b7bf3
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1
+  - Strategy governance / growth action-value independent review remediation and freeze
+    readiness V1
+  - P0
+  - BLOCKED_OWNER_INPUT
+  - Project Owner and second independent reviewer
+  - Engineering candidate and focused gates are ready; second independent review,
+    four DQ numeric authority dispositions, and Owner exact approval are required
+    before freeze. Codex proceeds with exact candidate commit and parent-bound formal
+    validation without real DQ or empirical execution.
+  - Exact latest-main candidate preserves TRADING-2544 as PROPOSED/NOT_DUE; V3 and
+    DQ/PIT V2 replay; append-only compatibility successor and current report-flow
+    authority validate; parent-bound Full plus Architecture/Contract/Integration/Reproducibility
+    pass; no real DQ or empirical run; second independent review and Owner exact approval
+    remain mandatory for freeze.
+  - 'Supporting requirement: docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md.
+    Engineering candidate is ready on latest-main base 58b8c681d30043dc1ced32089c075241f454cbbd.
+    First Full failure remains retained at outputs/validation_runtime/full_20260823T135255Z/test_runtime_summary.json
+    and is the required parent for failure_fix_rerun. The immediately preceding update
+    omitted the supporting-requirement phrase and caused the compatibility projection
+    to clear requirement_refs; this append-only event restores that authority binding.'
+  docs_links:
+  - docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md
+  terminal: false
+  canonical_row_sha256: 69f27703ac03637612f3227bc36ba1fe33e7c047456d4ff1baff525b7e38fcf8
+last_event_id: task-event-d28d0370a75cafb773bdfa6a5a2b7bf3
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 679bc084830c92c2652acd20ef938645cb29a82116962e627390aad3370e1a23

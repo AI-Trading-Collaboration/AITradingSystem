@@ -10,6 +10,12 @@ state_mappings:
   - raw_status: LIMITED
     reader_state: LIMITED
     reader_label_zh: 证据有限
+  - raw_status: NOT_DUE
+    reader_state: NOT_EVALUATED
+    reader_label_zh: 方向已登记，尚未启动
+  - raw_status: RUNNING
+    reader_state: NOT_EVALUATED
+    reader_label_zh: 当前研究整改进行中
   - raw_status: BLOCKED
     reader_state: BLOCKED
     reader_label_zh: 当前步骤被阻塞

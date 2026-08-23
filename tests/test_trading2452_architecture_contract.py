@@ -79,6 +79,10 @@ ARCH_005_S5_CANONICAL_TASK_SOURCE_PHASE_KEY = (
 DEVX_007_EXPLICIT_SUBMISSION_PHASE_KEY = (
     "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2"
 )
+TRADING_2542C_REMEDIATION_PHASE_KEY = (
+    "phase_trading_2542c_growth_action_value_independent_review_"
+    "remediation_and_freeze_readiness_v1"
+)
 TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
         ("docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md"),
@@ -182,9 +186,10 @@ def _assert_historical_source_is_current_or_superseded(
             TRADING_2504_OWNER_DECISION_MANIFEST_PHASE_KEY,
             DEVX_006C_COMPATIBILITY_AUTHORITY_PHASE_KEY,
             DEVX_006D_REPORT_CATALOG_FLOW_AUTHORITY_PHASE_KEY,
-            ARCH_005_S5_CANONICAL_TASK_SOURCE_PHASE_KEY,
-            DEVX_007_EXPLICIT_SUBMISSION_PHASE_KEY,
-        }
+                ARCH_005_S5_CANONICAL_TASK_SOURCE_PHASE_KEY,
+                DEVX_007_EXPLICIT_SUBMISSION_PHASE_KEY,
+                TRADING_2542C_REMEDIATION_PHASE_KEY,
+            }
     ):
         section_ids = list(baseline)
         assert TRADING_2492_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_PHASE_KEY in section_ids

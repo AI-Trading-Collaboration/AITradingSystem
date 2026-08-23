@@ -312,10 +312,18 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md
     coverage: DISCLOSED_CANONICAL_DQ_PIT_SERIAL_CONTRACT_DRAFT_OWNER_AND_INDEPENDENT_REVIEW_REQUIRED
     reader_summary_zh: 2542B 已把 CANONICAL_DQ_PIT 的 quote-age UTC clock、midpoint relative spread、exact source date、prior-session OI、PIT availability、八类 identity、contributing contract/session/window aggregation 与 INVALID>FAIL>INSUFFICIENT>PASS 终态写成 strict canonical serial contract 和 pure evaluator。120s、0.20、OI=10、volume=1 仍只是 OWNER_INTENT_ONLY_NOT_EXECUTABLE_AUTHORITY；synthetic tests 可核验边界，但真实观测在 Owner exact approval 与 independent review 前只能返回 AUTHORITY_UNAVAILABLE/INSUFFICIENT，不能 PASS。本波未读取 cache/raw rows，未运行 DQ/provider/backtest/Cloud，production/broker effect=none。
+  - task_id: TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1
+    requirement_path: docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md
+    coverage: DISCLOSED_INDEPENDENT_REVIEW_REMEDIATION_DRAFT_SECOND_REVIEW_AND_OWNER_APPROVAL_REQUIRED
+    reader_summary_zh: 2542C 依据 exact-commit Web Pro 独立复核新建 V3 exact sheet 与 DQ/PIT V2 successor，绑定 1202-session inventory 并封闭 cost reconciliation、event/episode、contributor identity、typed authority 与 stop/artifact semantics。四个 DQ numeric 仍因证据不足无法批准，successor 尚未二审或由 Owner 逐项批准，因此 threshold bundle 仍未冻结，真实 DQ、provider、cache、回测、经验研究、投资结论、生产与交易动作保持关闭。
   - task_id: TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1
     requirement_path: docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md
     coverage: LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_COMPLETE
     reader_summary_zh: 2543 已把 Atlas canonical 页面从 08-02 historical/synthetic 核心快照迁移到 task-event-bound live snapshot，并用正式 writer、独立 replay、三类日期语义和 exact-commit sidecars 封闭 freshness 链；该页面工程修复不改变 2542B 的 BLOCKED_OWNER_INPUT、DQ、经验研究、回测、投资结论或交易边界。
+  - task_id: TRADING-2544_CONDITIONAL_SOURCE_VALUE_AUDIT_SERIAL_CONTRACT_AND_FEASIBILITY_V1
+    requirement_path: docs/requirements/TRADING-2544_Conditional_Source_Value_Audit_Serial_Contract_And_Feasibility_V1.md
+    coverage: DISCLOSED_DIRECTION_ONLY_PROPOSED_OWNER_AUTHORIZATION_REQUIRED
+    reader_summary_zh: 2544 目前只登记“条件信息来源价值审计”的研究方向，状态为 PROPOSED；Owner 尚未授权 S0 serial contract、采数、训练、回测、阈值冻结或外部资源消耗。若未来启动，必须先冻结 PIT/OOF、target/horizon/context、loss、uncertainty、coalition 与 capacity gate，并严格区分 predictive、tail-risk、provider reliability 和 decision utility。该方向记录不改变当前 2542C 主线、策略结论、生产或交易边界。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

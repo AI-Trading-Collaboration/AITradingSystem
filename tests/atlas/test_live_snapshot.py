@@ -88,21 +88,22 @@ def test_unclassified_successor_is_detected_before_live_projection() -> None:
     without_latest = replace(policy, task_sources=policy.task_sources[:-1])
 
     assert unclassified_page_successors(registry, without_latest) == (
-        "TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1",
+        "TRADING-2544_CONDITIONAL_SOURCE_VALUE_AUDIT_SERIAL_CONTRACT_AND_FEASIBILITY_V1",
     )
 
 
 def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     policy = load_live_snapshot_policy(repository_root=ROOT)
+    assert policy.task_status_mapping["PROPOSED"] == "NOT_DUE"
     bundle = build_live_snapshot_bundle(
         repository_root=ROOT,
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2542B_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2542C_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
-    assert bundle.status_object_zh == "策略增长主线 canonical DQ/PIT 串行合同状态"
+    assert bundle.status_object_zh == "策略增长主线独立复核整改与冻结就绪状态"
 
 
 def test_canonical_writer_has_no_test_fixture_dependency() -> None:
