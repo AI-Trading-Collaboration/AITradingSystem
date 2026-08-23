@@ -9112,3 +9112,33 @@ immutable S2A V1 draft + Owner-adopted Pro disposition
 只有 V2 获得完整逐项 Owner approval，且 `CANONICAL_DQ_PIT` 先完成独立 serial DQ contract wave，
 后继 freeze 才可另行开始。V2 合同、comparator 和 deterministic tests 本身不授权 primary-window
 evaluation，也不能产生 investment-facing PASS。
+
+## TRADING-2542B canonical DQ/PIT serial contract draft
+
+`strategy_growth_action_value_canonical_dq_pit_contract_v1` 不改写 2542A V2 exact value sheet，也不把
+四个 numeric owner intent 提升为 authority。它把原先缺失的六类 serial semantics 固定为 strict、
+canonical、可 replay 的独立合同，并用 pure evaluator 把语义有效性、数值阈值判断和 session/window
+reduction 分层。合同绑定 2541 的 exact `1202` session inventory identity、既有 reviewed fail-closed DQ/PIT
+policy 以及未修改的 V2 consumer identity。
+
+```text
+2541 exact 1202-session inventory identity
+  + reviewed base DQ identity / staged DATA_RESEARCH readiness
+  + immutable 2542A V2 consumer identity
+  -> quote_end_utc <= decision_as_of_utc; exact Decimal seconds; no abs/rounding
+  -> relative spread = (ask-bid) / ((bid+ask)/2); crossed/single-sided/zero invalid
+  -> source/quote/volume date = target session; OI date = exact prior exchange session
+  -> available_at_utc <= decision_as_of_utc; identity mismatch = INVALID
+  -> contributing contract: INVALID > FAIL > UNKNOWN > PASS
+  -> session: INVALID > FAIL > INSUFFICIENT > PASS; zero contributors = FAIL
+  -> exact session set + LF inventory SHA; duplicate/missing/unexpected = GLOBAL_INVALID
+  -> window: GLOBAL_INVALID > GLOBAL_FAIL > GLOBAL_INSUFFICIENT > GLOBAL_PASS
+  -> real evidence without reviewed numeric authority = AUTHORITY_UNAVAILABLE/INSUFFICIENT
+```
+
+`120s / 0.20 / OI 10 / volume 1` 仅能通过显式
+`SYNTHETIC_CONTRACT_VALIDATION_ONLY` helper 做离线边界测试；将该 test-only threshold 用于
+`REAL_EVIDENCE` 会返回 `INVALID`。当前 status=
+`DRAFT_COMPLETE_PENDING_OWNER_AND_INDEPENDENT_REVIEW`，Owner exact approval 与 independent review 均未
+发生，因此合同没有 DQ run、cache read/write、provider query、empirical research、backtest、Cloud、
+paper/live、production 或 broker 权限，也不能产生 primary-window DQ PASS 或投资结论。

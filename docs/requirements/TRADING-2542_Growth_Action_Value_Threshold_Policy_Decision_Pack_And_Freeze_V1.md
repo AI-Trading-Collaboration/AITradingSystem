@@ -260,3 +260,8 @@ S2A 生命周期：
 - exit condition：完整八轴草案和 negative tests 通过，task 回到 `BLOCKED_OWNER_INPUT` 等待逐项
   approval，S2A commit 普通推送到 main，checkout 回到 clean main，并删除已合并 task branch；
 - recovery：合入前由 task branch/commit 恢复，合入后由 local/remote main 恢复。
+
+S2B 仍未开始。后继 TRADING-2542B 已完成独立 CANONICAL_DQ_PIT serial contract draft，补齐 quote
+clock、spread、exact-date/PIT、contract/session/window aggregation 与 terminal precedence，但不构成 numeric
+approval 或 independent review。只有 2542A V2 全轴 Owner review 和 2542B 独立审阅均完成后，才可新建
+version 进入 freeze；当前 `threshold_bundle_frozen=false`，所有 DQ/empirical/external/trading action 关闭。

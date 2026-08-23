@@ -1,0 +1,185 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2542B_GROWTH_ACTION_VALUE_CANONICAL_DQ_PIT_SERIAL_CONTRACT_V1
+  task_id_sha256: 34758342307763216e70aa8c6704aef481692dea41ed6c71b5bedcc6bdc07453
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2542B_GROWTH_ACTION_VALUE_CANONICAL_DQ_PIT_SERIAL_CONTRACT_V1
+  title: null
+  domain: Strategy governance / growth action-value canonical DQ/PIT serial contract
+    V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner gives exact numeric review and appoints or confirms an
+    independent reviewer; any semantic or value change requires a new version
+  requirement_refs:
+  - docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: V1 serial semantics are DRAFT_COMPLETE_PENDING_OWNER_AND_INDEPENDENT_REVIEW.
+    Real evidence remains AUTHORITY_UNAVAILABLE; no executable DQ authority or freeze
+    exists.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Preserve contract file/canonical SHA-256 a60b6c71e492aacac31d8fc9a4f4d406659679c6a1f88ac9e53664d49134d138/d7c6bfe8fcb8123be6b8d6f87c5ba72a90db3c5ac50af041d1b3f5eefcc32f68
+      and unchanged V2 identity; require Owner exact approval plus independent review
+      in a new version; keep every DQ, empirical, external, and trading authorization
+      false.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2542B_GROWTH_ACTION_VALUE_CANONICAL_DQ_PIT_SERIAL_CONTRACT_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-23T09:39:39Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542b-register-canonical-dq-pit-contract-wave-20260823-v1
+  lane_id: null
+  base_commit: 675b8841890b9c943d9e57ab9e99509426e00fa2
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2542B_GROWTH_ACTION_VALUE_CANONICAL_DQ_PIT_SERIAL_CONTRACT_V1
+    - Strategy governance / growth action-value canonical DQ/PIT serial contract V1
+    - P0
+    - IN_PROGRESS
+    - Codex completes the serial DQ/PIT contract draft; Project Owner and an independent
+      reviewer must approve before executable authority
+    - Existing 2482/2534 DQ policies intentionally keep numeric thresholds UNKNOWN.
+      Define complete quote clock, spread, aggregation, UNKNOWN, exact-date/PIT, and
+      terminal semantics without running data.
+    - Typed strict contract and pure evaluator cover all six required fields; V2 bytes
+      unchanged; focused/formal validation PASS; all DQ/provider/cache/backtest/external/trading
+      actions remain false.
+    - 'Supporting requirement: docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md.
+      Exact base 675b8841890b9c943d9e57ab9e99509426e00fa2; SINGLE_LANE serial contract
+      wave; no new worktree or clone.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2542b-register-canonical-dq-pit-contract-wave-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-21f25dc02a629b60ae7ec74c50e9f361
+- schema_version: task_event.v1
+  task_id: TRADING-2542B_GROWTH_ACTION_VALUE_CANONICAL_DQ_PIT_SERIAL_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T09:56:13Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542b-dq-pit-contract-implementation-focused-pass-20260823-v1
+  lane_id: null
+  base_commit: 675b8841890b9c943d9e57ab9e99509426e00fa2
+  previous_state_event_id: task-event-21f25dc02a629b60ae7ec74c50e9f361
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex completes formal final-tree validation; Project Owner and independent
+      reviewer then review before executable authority
+    blocker_or_next_step: Strict contract, pure evaluator, and synthetic boundary
+      validation are implemented. Sync governance projections and complete formal
+      validation; no DQ or empirical action is authorized.
+    acceptance_criteria: Preserve contract file/canonical SHA-256 a60b6c71e492aacac31d8fc9a4f4d406659679c6a1f88ac9e53664d49134d138/d7c6bfe8fcb8123be6b8d6f87c5ba72a90db3c5ac50af041d1b3f5eefcc32f68
+      and unchanged V2 identity; formal validation PASS; keep executable authority
+      false.
+    notes: 'Requirement: docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md.
+      Focused parallel pytest 36 passed; Ruff and strict mypy PASS. Six serial fields
+      are implemented; real evidence returns AUTHORITY_UNAVAILABLE before review;
+      no DQ/provider/cache/backtest/empirical/external/trading action occurred.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542b-dq-pit-contract-implementation-focused-pass-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-071f357b462abe0347129767949def99
+- schema_version: task_event.v1
+  task_id: TRADING-2542B_GROWTH_ACTION_VALUE_CANONICAL_DQ_PIT_SERIAL_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T10:22:42Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542b-formal-four-tier-pass-full-pending-20260823-v1
+  lane_id: null
+  base_commit: 675b8841890b9c943d9e57ab9e99509426e00fa2
+  previous_state_event_id: task-event-071f357b462abe0347129767949def99
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex completes governed integration and Full final-tree validation;
+      Project Owner and independent reviewer then review before executable authority
+    blocker_or_next_step: Strict serial contract and governance projections pass focused
+      plus four formal tiers. Complete integration preflight, exclusive Full, commit-bound
+      Atlas rebuild, ordinary publication, and cleanup.
+    acceptance_criteria: Full final-tree PASS; preserve contract and unchanged V2
+      identities; Owner exact approval plus independent review required before executable
+      DQ authority; no DQ/provider/cache/backtest/empirical/external/trading action.
+    notes: 'Requirement: docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md.
+      Architecture 865, Contract 276, Integration 995, Reproducibility 24 PASS. Runtime
+      artifacts: architecture-fitness_20260823T101117Z, contract-validation_20260823T101759Z,
+      integration_20260823T102040Z, reproducibility_20260823T102139Z.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542b-formal-four-tier-pass-full-pending-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-05aea5bb5633378695a762b3741b7edc
+- schema_version: task_event.v1
+  task_id: TRADING-2542B_GROWTH_ACTION_VALUE_CANONICAL_DQ_PIT_SERIAL_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T10:23:48Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542b-contract-draft-owner-independent-review-blocked-20260823-v1
+  lane_id: null
+  base_commit: 675b8841890b9c943d9e57ab9e99509426e00fa2
+  previous_state_event_id: task-event-05aea5bb5633378695a762b3741b7edc
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner gives exact numeric review and appoints or confirms
+      an independent reviewer; any semantic or value change requires a new version
+    blocker_or_next_step: V1 serial semantics are DRAFT_COMPLETE_PENDING_OWNER_AND_INDEPENDENT_REVIEW.
+      Real evidence remains AUTHORITY_UNAVAILABLE; no executable DQ authority or freeze
+      exists.
+    acceptance_criteria: Preserve contract file/canonical SHA-256 a60b6c71e492aacac31d8fc9a4f4d406659679c6a1f88ac9e53664d49134d138/d7c6bfe8fcb8123be6b8d6f87c5ba72a90db3c5ac50af041d1b3f5eefcc32f68
+      and unchanged V2 identity; require Owner exact approval plus independent review
+      in a new version; keep every DQ, empirical, external, and trading authorization
+      false.
+    notes: 'Requirement: docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md.
+      Implementation and four formal tiers pass; Full final-tree closeout remains
+      an engineering publication gate and does not provide numeric approval. Current
+      terminal is owner/reviewer blocked, not strategy or DQ PASS.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542b-contract-draft-owner-independent-review-blocked-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-dd62290c11f3d0a93dc5062695373612
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2542B_GROWTH_ACTION_VALUE_CANONICAL_DQ_PIT_SERIAL_CONTRACT_V1
+  - Strategy governance / growth action-value canonical DQ/PIT serial contract V1
+  - P0
+  - BLOCKED_OWNER_INPUT
+  - Project Owner gives exact numeric review and appoints or confirms an independent
+    reviewer; any semantic or value change requires a new version
+  - V1 serial semantics are DRAFT_COMPLETE_PENDING_OWNER_AND_INDEPENDENT_REVIEW. Real
+    evidence remains AUTHORITY_UNAVAILABLE; no executable DQ authority or freeze exists.
+  - Preserve contract file/canonical SHA-256 a60b6c71e492aacac31d8fc9a4f4d406659679c6a1f88ac9e53664d49134d138/d7c6bfe8fcb8123be6b8d6f87c5ba72a90db3c5ac50af041d1b3f5eefcc32f68
+    and unchanged V2 identity; require Owner exact approval plus independent review
+    in a new version; keep every DQ, empirical, external, and trading authorization
+    false.
+  - 'Requirement: docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md.
+    Implementation and four formal tiers pass; Full final-tree closeout remains an
+    engineering publication gate and does not provide numeric approval. Current terminal
+    is owner/reviewer blocked, not strategy or DQ PASS.'
+  docs_links:
+  - docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md
+  terminal: false
+  canonical_row_sha256: 0d0b13f2873e43f7298f786021b9e208a8714dde1d0e5abf365f507c6bcb97f6
+last_event_id: task-event-dd62290c11f3d0a93dc5062695373612
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 938a5c59e402f92e0116b3f3ab0b253f786474506bd6fb12d3899526c468bdb2

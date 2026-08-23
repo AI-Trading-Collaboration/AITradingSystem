@@ -14,22 +14,23 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex completes TRADING-2542A V2 measurement contract closeout; Project
-    Owner then reviews every V2 axis before freeze
+  next_owner: Project Owner completes V2 per-axis review; independent reviewer validates
+    TRADING-2542B before any new-version freeze
   requirement_refs:
   - docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md
+  - docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md
   - docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Owner adopted GPT Pro REQUEST_NEW_VERSION_BEFORE_ANY_FREEZE.
-    V1 remains immutable and rejected for freeze; successor TRADING-2542A provides
-    the formula-complete V2 draft.
+  unstructured_legacy_blocker_or_next_step: V1 remains immutable and rejected for
+    freeze. V2 measurement and TRADING-2542B DQ/PIT semantics are drafted, but exact
+    numeric approval and independent review remain pending.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Preserve V1 identity; require complete V2 owner review and independent DQ
-      authority; keep threshold_bundle_frozen=false and every DQ, empirical, external,
-      and trading authorization false.
+    text: Preserve V1/V2 and TRADING-2542B identities; freeze only in a new version
+      after complete Owner and independent review; keep threshold_bundle_frozen=false
+      and all DQ, empirical, external, and trading authorizations false.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -285,6 +286,35 @@ events:
   - change:trading-2542-restore-parent-and-successor-requirement-bindings-20260823-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-b003e03198c5730159142de87b986789
+- schema_version: task_event.v1
+  task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T09:56:15Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542-record-2542b-dq-contract-review-boundary-20260823-v1
+  lane_id: null
+  base_commit: 675b8841890b9c943d9e57ab9e99509426e00fa2
+  previous_state_event_id: task-event-b003e03198c5730159142de87b986789
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner completes V2 per-axis review; independent reviewer validates
+      TRADING-2542B before any new-version freeze
+    blocker_or_next_step: V1 remains immutable and rejected for freeze. V2 measurement
+      and TRADING-2542B DQ/PIT semantics are drafted, but exact numeric approval and
+      independent review remain pending.
+    acceptance_criteria: Preserve V1/V2 and TRADING-2542B identities; freeze only
+      in a new version after complete Owner and independent review; keep threshold_bundle_frozen=false
+      and all DQ, empirical, external, and trading authorizations false.
+    notes: 'Parent requirement: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md.
+      V2 requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.
+      DQ successor requirement: docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542-record-2542b-dq-contract-review-boundary-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c3a796bb3e308698499c57756543240d
 projection:
   legacy_first_eight_cells:
   - TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
@@ -292,23 +322,23 @@ projection:
     V1
   - P0
   - BLOCKED_OWNER_INPUT
-  - Codex completes TRADING-2542A V2 measurement contract closeout; Project Owner
-    then reviews every V2 axis before freeze
-  - Owner adopted GPT Pro REQUEST_NEW_VERSION_BEFORE_ANY_FREEZE. V1 remains immutable
-    and rejected for freeze; successor TRADING-2542A provides the formula-complete
-    V2 draft.
-  - Preserve V1 identity; require complete V2 owner review and independent DQ authority;
-    keep threshold_bundle_frozen=false and every DQ, empirical, external, and trading
-    authorization false.
+  - Project Owner completes V2 per-axis review; independent reviewer validates TRADING-2542B
+    before any new-version freeze
+  - V1 remains immutable and rejected for freeze. V2 measurement and TRADING-2542B
+    DQ/PIT semantics are drafted, but exact numeric approval and independent review
+    remain pending.
+  - Preserve V1/V2 and TRADING-2542B identities; freeze only in a new version after
+    complete Owner and independent review; keep threshold_bundle_frozen=false and
+    all DQ, empirical, external, and trading authorizations false.
   - 'Parent requirement: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md.
-    Successor requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.
-    This event restores both docs-link bindings after the prior successor-only projection
-    caused Atlas PAGE_EFFECTIVENESS_TASK_REQUIREMENT_BINDING_INVALID.'
+    V2 requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.
+    DQ successor requirement: docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md.'
   docs_links:
   - docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md
+  - docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md
   - docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md
   terminal: false
-  canonical_row_sha256: 2523438e64703572a82ff0942473efe17c0f0a3d456be233139a4a14e7c53a4b
-last_event_id: task-event-b003e03198c5730159142de87b986789
+  canonical_row_sha256: 7c23718e9a688d909331d8b7966ad38e93a58743c8cec010e82f2758fb3c7631
+last_event_id: task-event-c3a796bb3e308698499c57756543240d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: a7af46f1ab0ca22675921ac0fe73b24b911a507f61dd1a8e017fb6ed77ea1fdf
+fragment_checksum: 2bfd02839b6643a544eb8cc822c752ea896c9631240530f8729c1337e319f156

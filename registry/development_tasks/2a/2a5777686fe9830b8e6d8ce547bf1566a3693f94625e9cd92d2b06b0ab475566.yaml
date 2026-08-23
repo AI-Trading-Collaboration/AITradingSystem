@@ -14,22 +14,22 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner reviews all eight V2 axes after engineering closeout;
-    CANONICAL_DQ_PIT requires independent serial DQ authority before freeze
+  next_owner: Project Owner reviews all eight V2 axes and TRADING-2542B numeric intent;
+    independent reviewer validates the DQ/PIT serial contract before freeze
   requirement_refs:
   - docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md
+  - docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: V2 remains DRAFT_FOR_OWNER_REVIEW and
-    unfrozen. First Full found only DEVX-006D/006C, parent task binding, and Atlas
-    freshness failures; rebuild governance authorities and final-commit Atlas artifact,
-    then run one parent-bound failure_fix_rerun.
+    unfrozen. TRADING-2542B has supplied the independent serial contract semantics,
+    but Owner exact threshold approval and independent review remain pending.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Parent-bound Full failure_fix PASS; preserve V1/V2/comparator identities;
-      complete V2 owner review and independent DQ authority before freeze; no DQ/provider/cache/backtest/empirical/external/trading
-      action.
+    text: Preserve V1/V2/comparator identities; require complete V2 owner review plus
+      reviewed TRADING-2542B DQ authority before freeze; keep all DQ/provider/cache/backtest/empirical/external/trading
+      action closed.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -199,6 +199,36 @@ events:
   - change:trading-2542a-full-parent-failure-governance-freshness-remediation-20260823-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-bd62b273449f6acca8f3dd317029bf4b
+- schema_version: task_event.v1
+  task_id: TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T09:56:14Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542a-record-2542b-independent-dq-contract-draft-20260823-v1
+  lane_id: null
+  base_commit: 675b8841890b9c943d9e57ab9e99509426e00fa2
+  previous_state_event_id: task-event-bd62b273449f6acca8f3dd317029bf4b
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner reviews all eight V2 axes and TRADING-2542B numeric
+      intent; independent reviewer validates the DQ/PIT serial contract before freeze
+    blocker_or_next_step: V2 remains DRAFT_FOR_OWNER_REVIEW and unfrozen. TRADING-2542B
+      has supplied the independent serial contract semantics, but Owner exact threshold
+      approval and independent review remain pending.
+    acceptance_criteria: Preserve V1/V2/comparator identities; require complete V2
+      owner review plus reviewed TRADING-2542B DQ authority before freeze; keep all
+      DQ/provider/cache/backtest/empirical/external/trading action closed.
+    notes: 'Parent requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.
+      DQ successor requirement: docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md.
+      2542B draft separates semantic validity from numeric authority; real evidence
+      cannot PASS before review.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542a-record-2542b-independent-dq-contract-draft-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7c0e4253c7beb0a3c3196de6be2c7617
 projection:
   legacy_first_eight_cells:
   - TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
@@ -206,23 +236,23 @@ projection:
     contract V1
   - P0
   - BLOCKED_OWNER_INPUT
-  - Project Owner reviews all eight V2 axes after engineering closeout; CANONICAL_DQ_PIT
-    requires independent serial DQ authority before freeze
-  - V2 remains DRAFT_FOR_OWNER_REVIEW and unfrozen. First Full found only DEVX-006D/006C,
-    parent task binding, and Atlas freshness failures; rebuild governance authorities
-    and final-commit Atlas artifact, then run one parent-bound failure_fix_rerun.
-  - Parent-bound Full failure_fix PASS; preserve V1/V2/comparator identities; complete
-    V2 owner review and independent DQ authority before freeze; no DQ/provider/cache/backtest/empirical/external/trading
-    action.
-  - 'Supporting requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.
-    First Full artifact outputs/validation_runtime/full_20260823T074719Z/test_runtime_summary.json
-    had 9376 passed/28 governance-freshness failures/3 skipped; measurement-contract
-    tests had no failure. Parent task bindings restored; Atlas disclosure and system-flow
-    seal prepared for 006D then 006C rebuild.'
+  - Project Owner reviews all eight V2 axes and TRADING-2542B numeric intent; independent
+    reviewer validates the DQ/PIT serial contract before freeze
+  - V2 remains DRAFT_FOR_OWNER_REVIEW and unfrozen. TRADING-2542B has supplied the
+    independent serial contract semantics, but Owner exact threshold approval and
+    independent review remain pending.
+  - Preserve V1/V2/comparator identities; require complete V2 owner review plus reviewed
+    TRADING-2542B DQ authority before freeze; keep all DQ/provider/cache/backtest/empirical/external/trading
+    action closed.
+  - 'Parent requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.
+    DQ successor requirement: docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md.
+    2542B draft separates semantic validity from numeric authority; real evidence
+    cannot PASS before review.'
   docs_links:
   - docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md
+  - docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md
   terminal: false
-  canonical_row_sha256: d89860a6985b9ce8fc5370d8f33275f12733d65f70867b1fef05d14d331a98c5
-last_event_id: task-event-bd62b273449f6acca8f3dd317029bf4b
+  canonical_row_sha256: 5a5d78ed411e1d2c29f6386c92e922236222dd3016f1fba007d0a7b10a7329ec
+last_event_id: task-event-7c0e4253c7beb0a3c3196de6be2c7617
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b5abfa5f5ba753cbefc965a384f2baf723d511eb73f2d58a5ffe7d8868798f52
+fragment_checksum: b1b5417ecdefa5a85ad074ba9695f2caacc541b8e40e264dd6e2d84020262892

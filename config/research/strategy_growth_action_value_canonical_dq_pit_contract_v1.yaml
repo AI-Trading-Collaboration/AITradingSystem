@@ -1,0 +1,161 @@
+schema_version: strategy_growth_action_value_canonical_dq_pit_contract.v1
+contract_id: strategy_growth_action_value_canonical_dq_pit_contract_v1
+contract_version: 1.0.0-draft.1
+status: DRAFT_COMPLETE_PENDING_OWNER_AND_INDEPENDENT_REVIEW
+task_id: TRADING-2542B_GROWTH_ACTION_VALUE_CANONICAL_DQ_PIT_SERIAL_CONTRACT_V1
+registration_base_repository_code_sha: 675b8841890b9c943d9e57ab9e99509426e00fa2
+owner_instruction:
+  decision_id: owner_decision:TRADING-2542B:2026-08-23:continue_complete_canonical_dq_pit_contract_draft_v1
+  scope: CONTINUE_DRAFT_NOT_EXACT_THRESHOLD_APPROVAL
+review_state:
+  owner_exact_approval: NOT_PROVIDED
+  independent_review: NOT_PERFORMED
+  executable_authority: false
+  freeze_allowed: false
+scope_binding:
+  hypothesis_id: BASELINE_BOUNDED_QQQ_GROWTH_OVERLAY_NON_BETA_ACTION_VALUE_V1
+  selected_data_lane: QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE
+  stage: DATA_RESEARCH
+  shadow_selection_authorized: false
+  execution_authorized: false
+  primary_window_start: '2021-02-22'
+  primary_window_end: '2025-12-02'
+  expected_session_count: 1202
+  calendar_id: QQQ_EXCHANGE_SESSIONS
+  session_inventory_lf_sha256: d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0
+source_authority_bindings:
+  - role: BASE_DQ_IDENTITY
+    path: config/research/qqq_options_dq_pit_identity_v1.yaml
+    file_sha256: 1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358
+    disposition: PRESERVE_REVIEWED_FAIL_CLOSED_FACTS
+  - role: STAGED_DQ_READINESS
+    path: config/research/qqq_options_staged_dq_pit_readiness_v1.yaml
+    file_sha256: 35e0455bc8f7e1b2660ffdbac5b508286a28671ca225872f4a86b7671ac14f2d
+    disposition: PRESERVE_DATA_RESEARCH_STAGE_SEPARATION
+  - role: RECOVERED_SESSION_INVENTORY
+    path: inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_v1/recovery_contract.json
+    file_sha256: 80fe6c16ab0e0c7d7104fc9d87c7a29437119b8d1ace4992285ff8f3ef18a86e
+    disposition: BIND_EXACT_1202_SESSION_INVENTORY_IDENTITY
+consumer_binding:
+  path: config/research/strategy_growth_action_value_threshold_exact_value_sheet_v2.yaml
+  file_sha256: bbb2e0ade108213269c3c9524b465836518457d932a6344887e6d8afb89ae620
+  canonical_sha256: b978e952c4767756025fc01b17f8694004e720a5bb44aa5dde893628a4d9c199
+  axis_id: CANONICAL_DQ_PIT
+  consumer_bytes_mutated: false
+required_serial_contract_fields:
+  - QUOTE_AGE_CLOCK_AND_TIMESTAMP_DIRECTION
+  - RELATIVE_SPREAD_DENOMINATOR_AND_ZERO_DENOMINATOR
+  - CONTRACT_TO_SESSION_AGGREGATION
+  - MISSING_AND_UNKNOWN_TERMINAL_MAPPING
+  - EXACT_SOURCE_DATE_AND_PIT_RULE
+  - GLOBAL_DQ_TERMINAL_ORDER
+numeric_authority:
+  state: OWNER_INTENT_ONLY_NOT_EXECUTABLE_AUTHORITY
+  authority_unavailable_outcome: INSUFFICIENT
+  owner_review_state: PENDING_OWNER_APPROVAL
+  independent_review_state: NOT_PERFORMED
+  executable: false
+  unknown_can_pass: false
+  values:
+    max_quote_age_seconds:
+      value: 120
+      unit: seconds
+      direction: LESS_THAN_OR_EQUAL
+    max_relative_spread:
+      value: '0.20'
+      unit: ratio
+      direction: LESS_THAN_OR_EQUAL
+    min_open_interest:
+      value: 10
+      unit: contracts
+      direction: GREATER_THAN_OR_EQUAL
+    min_volume:
+      value: 1
+      unit: contracts
+      direction: GREATER_THAN_OR_EQUAL
+timestamp_contract:
+  timezone: UTC
+  quote_age_formula: DECISION_AS_OF_UTC_MINUS_QUOTE_END_UTC_TOTAL_SECONDS
+  rounding_before_comparison_allowed: false
+  absolute_value_allowed: false
+  quote_timestamp_direction: QUOTE_END_UTC_LE_DECISION_AS_OF_UTC
+  future_quote_outcome: INVALID
+  missing_timestamp_outcome: UNKNOWN
+  naive_or_non_utc_timestamp_outcome: INVALID
+spread_contract:
+  formula: ASK_MINUS_BID_DIVIDED_BY_BID_ASK_MIDPOINT
+  denominator: BID_PLUS_ASK_DIVIDED_BY_TWO
+  bid_minimum: '0'
+  ask_strictly_positive: true
+  ask_greater_than_or_equal_to_bid: true
+  zero_or_nonfinite_denominator_outcome: INVALID
+  crossed_or_single_sided_quote_outcome: INVALID
+  alternate_denominator_allowed: false
+pit_contract:
+  source_date_rule: EXACT_TARGET_EXCHANGE_SESSION_DATE
+  cross_date_fallback_allowed: false
+  quote_volume_contract_identity_rule: SAME_SOURCE_SESSION
+  open_interest_freshness_rule: EXACT_PRIOR_EXCHANGE_SESSION
+  availability_rule: AVAILABLE_AT_UTC_LE_DECISION_AS_OF_UTC
+  missing_available_at_outcome: UNKNOWN
+  future_available_at_outcome: INVALID
+  identity_fields:
+    - provider
+    - engine
+    - exchange_calendar
+    - symbol_mapping
+    - normalization
+    - repository_code_sha
+    - source_evidence
+    - aggregate_manifest
+  identity_mismatch_outcome: INVALID
+contract_aggregation:
+  contribution_marker: contributing_contract
+  contribution_marker_binding: REVIEWED_AGGREGATE_MANIFEST_EXACT_IDENTITY
+  result_dependent_marker_change_allowed: false
+  noncontributing_row_terminal: EXCLUDED
+  noncontributing_exclusion_reason_required: true
+  contributing_identity_or_pit_violation_outcome: INVALID
+  contributing_numeric_threshold_miss_outcome: FAIL
+  contributing_required_field_missing_outcome: UNKNOWN
+  contributing_all_checks_pass_outcome: PASS
+session_aggregation:
+  minimum_contributing_contract_count: 1
+  zero_contributing_contract_outcome: FAIL
+  precedence:
+    - INVALID
+    - FAIL
+    - UNKNOWN
+    - PASS
+  unknown_session_mapping: INSUFFICIENT
+  contribution_manifest_mismatch_outcome: INVALID
+  one_terminal_record_per_requested_session: true
+  duplicate_or_unexpected_session_outcome: INVALID
+window_terminal:
+  expected_session_count: 1202
+  exact_expected_session_set_required: true
+  missing_session_outcome: GLOBAL_INVALID
+  precedence:
+    - GLOBAL_INVALID
+    - GLOBAL_FAIL
+    - GLOBAL_INSUFFICIENT
+    - GLOBAL_PASS
+  invalid_rule: ANY_SESSION_INVALID_OR_SESSION_SET_IDENTITY_DRIFT
+  fail_rule: NO_INVALID_AND_ANY_SESSION_FAIL
+  insufficient_rule: NO_INVALID_OR_FAIL_AND_ANY_SESSION_INSUFFICIENT
+  pass_rule: EXACT_1202_OF_1202_ALL_SESSION_PASS
+  majority_vote_allowed: false
+  pass_rate_tolerance_allowed: false
+  silent_drop_allowed: false
+safety:
+  dq_run_authorized: false
+  cache_read_authorized: false
+  cache_mutation_allowed: false
+  provider_query_allowed: false
+  raw_option_rows_allowed: false
+  empirical_research_authorized: false
+  backtest_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_effect: none
+  broker_action: none

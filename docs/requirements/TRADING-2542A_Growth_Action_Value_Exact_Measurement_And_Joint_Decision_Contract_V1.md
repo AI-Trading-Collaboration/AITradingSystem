@@ -182,3 +182,7 @@ contract 的 pure/offline validation。不得读取市场 cache、provider、Clo
   `b027f38589f0ddaf689a165e4e8e1a6405cc9bc1`、entry_count=`1068`。待按 006D→006C 顺序重建权威、
   重建 final-commit-bound ignored Atlas canonical page 后，使用首次 Full artifact 作为 parent 运行一次
   `failure_fix_rerun`；仍不运行 DQ/provider/cache/backtest/empirical/external/trading action。
+- 2026-08-23：后继 TRADING-2542B 已在不修改 V2 bytes 的前提下完成独立 CANONICAL_DQ_PIT serial
+  contract draft、pure evaluator 与 synthetic boundary tests。它补齐六类 required semantics，但数值仍为
+  owner intent；Owner exact approval 与 independent review 之前，真实 evidence 只能得到
+  `AUTHORITY_UNAVAILABLE/INSUFFICIENT`。2542A 继续保持 `BLOCKED_OWNER_INPUT` 和 unfrozen。
