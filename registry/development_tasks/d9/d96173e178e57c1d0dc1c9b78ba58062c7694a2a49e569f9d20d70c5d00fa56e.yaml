@@ -14,22 +14,22 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner reviews all eight exact value axes; Codex resumes S2B
-    only after complete per-axis decision
+  next_owner: Codex completes TRADING-2542A V2 measurement contract closeout; Project
+    Owner then reviews every V2 axis before freeze
   requirement_refs:
+  - docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md
   - docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S2A complete draft is DRAFT_FOR_OWNER_REVIEW.
-    Every axis remains PENDING_OWNER_APPROVAL; all eight must be approved exactly
-    as drafted or rejected into a new version before freeze.
+  unstructured_legacy_blocker_or_next_step: Owner adopted GPT Pro REQUEST_NEW_VERSION_BEFORE_ANY_FREEZE.
+    V1 remains immutable and rejected for freeze; successor TRADING-2542A provides
+    the formula-complete V2 draft.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Preserve exact sheet file SHA-256 82f75b55bb4a9576775d4e60a9a31bc01b24d3b5b8cf270c6aabbed9e9d17e7f
-      and canonical SHA-256 14286008f464230921400c1def4173f34a6e9231e77c434504a5abab78451dfb;
-      require complete per-axis owner review; keep threshold_bundle_frozen=false and
-      all DQ/empirical/external/trading authorizations false.
+    text: Preserve V1 identity; require complete V2 owner review and independent DQ
+      authority; keep threshold_bundle_frozen=false and every DQ, empirical, external,
+      and trading authorization false.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -224,6 +224,67 @@ events:
   - change:trading-2542-s2a-formal-precommit-validation-and-atlas-boundary-fix-20260823-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-981d0f6700d3cc4dfa33cc0d9c1dc5c2
+- schema_version: task_event.v1
+  task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T07:00:11Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542-owner-adopts-pro-review-v1-rejected-successor-2542a-20260823-v1
+  lane_id: null
+  base_commit: b70fe3963988241b187bc0d30bbc422eed2b2160
+  previous_state_event_id: task-event-981d0f6700d3cc4dfa33cc0d9c1dc5c2
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Codex completes TRADING-2542A V2 measurement contract; Project Owner
+      then reviews every V2 axis before freeze
+    blocker_or_next_step: Owner adopted GPT Pro REQUEST_NEW_VERSION_BEFORE_ANY_FREEZE.
+      V1 draft is rejected as freeze authority and remains immutable/unfrozen; successor
+      TRADING-2542A builds a formula-complete V2 draft.
+    acceptance_criteria: Preserve V1 file SHA-256 82f75b55bb4a9576775d4e60a9a31bc01b24d3b5b8cf270c6aabbed9e9d17e7f
+      and canonical SHA-256 14286008f464230921400c1def4173f34a6e9231e77c434504a5abab78451dfb;
+      require complete V2 owner review; keep threshold_bundle_frozen=false and all
+      DQ, empirical, external, and trading authorizations false.
+    notes: '2026-08-23 owner adopted the exact-commit Web Pro review at https://chatgpt.com/c/6a8a90ac-2e40-83e8-9ce6-6fc1cfb4dfdd.
+      UI/model self-report GPT-5.6 Pro with backend route unverified. Seven axes requested
+      new version; CANONICAL_DQ_PIT insufficient evidence. Successor requirement:
+      docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542-owner-adopts-pro-review-v1-rejected-successor-2542a-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-29178d9677ed3465b4b2f193d6f6d84e
+- schema_version: task_event.v1
+  task_id: TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T08:14:32Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542-restore-parent-and-successor-requirement-bindings-20260823-v1
+  lane_id: null
+  base_commit: b70fe3963988241b187bc0d30bbc422eed2b2160
+  previous_state_event_id: task-event-29178d9677ed3465b4b2f193d6f6d84e
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Codex completes TRADING-2542A V2 measurement contract closeout; Project
+      Owner then reviews every V2 axis before freeze
+    blocker_or_next_step: Owner adopted GPT Pro REQUEST_NEW_VERSION_BEFORE_ANY_FREEZE.
+      V1 remains immutable and rejected for freeze; successor TRADING-2542A provides
+      the formula-complete V2 draft.
+    acceptance_criteria: Preserve V1 identity; require complete V2 owner review and
+      independent DQ authority; keep threshold_bundle_frozen=false and every DQ, empirical,
+      external, and trading authorization false.
+    notes: 'Parent requirement: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md.
+      Successor requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.
+      This event restores both docs-link bindings after the prior successor-only projection
+      caused Atlas PAGE_EFFECTIVENESS_TASK_REQUIREMENT_BINDING_INVALID.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542-restore-parent-and-successor-requirement-bindings-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b003e03198c5730159142de87b986789
 projection:
   legacy_first_eight_cells:
   - TRADING-2542_GROWTH_ACTION_VALUE_THRESHOLD_POLICY_DECISION_PACK_AND_FREEZE_V1
@@ -231,26 +292,23 @@ projection:
     V1
   - P0
   - BLOCKED_OWNER_INPUT
-  - Project Owner reviews all eight exact value axes; Codex resumes S2B only after
-    complete per-axis decision
-  - S2A complete draft is DRAFT_FOR_OWNER_REVIEW. Every axis remains PENDING_OWNER_APPROVAL;
-    all eight must be approved exactly as drafted or rejected into a new version before
-    freeze.
-  - Preserve exact sheet file SHA-256 82f75b55bb4a9576775d4e60a9a31bc01b24d3b5b8cf270c6aabbed9e9d17e7f
-    and canonical SHA-256 14286008f464230921400c1def4173f34a6e9231e77c434504a5abab78451dfb;
-    require complete per-axis owner review; keep threshold_bundle_frozen=false and
-    all DQ/empirical/external/trading authorizations false.
-  - 'Requirement: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md.
-    S2A precommit formal gates PASS: Architecture 865, Contract 276, Integration 995,
-    Reproducibility 24. First Full 9369 passed/2 failed/3 skipped; the missing Atlas
-    safety sentence was restored and focused 13 passed. Remaining expected failure
-    is ignored Atlas canonical page bound to old repository commit; rebuild after
-    final candidate commit and execute complete failure_fix_rerun. Numeric draft remains
-    unapproved and unfrozen.'
+  - Codex completes TRADING-2542A V2 measurement contract closeout; Project Owner
+    then reviews every V2 axis before freeze
+  - Owner adopted GPT Pro REQUEST_NEW_VERSION_BEFORE_ANY_FREEZE. V1 remains immutable
+    and rejected for freeze; successor TRADING-2542A provides the formula-complete
+    V2 draft.
+  - Preserve V1 identity; require complete V2 owner review and independent DQ authority;
+    keep threshold_bundle_frozen=false and every DQ, empirical, external, and trading
+    authorization false.
+  - 'Parent requirement: docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md.
+    Successor requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.
+    This event restores both docs-link bindings after the prior successor-only projection
+    caused Atlas PAGE_EFFECTIVENESS_TASK_REQUIREMENT_BINDING_INVALID.'
   docs_links:
+  - docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md
   - docs/requirements/TRADING-2542_Growth_Action_Value_Threshold_Policy_Decision_Pack_And_Freeze_V1.md
   terminal: false
-  canonical_row_sha256: adba8a4c143017faa0b9c8967023a481f308c947c5a7f48ec6e628731ded6d8c
-last_event_id: task-event-981d0f6700d3cc4dfa33cc0d9c1dc5c2
+  canonical_row_sha256: 2523438e64703572a82ff0942473efe17c0f0a3d456be233139a4a14e7c53a4b
+last_event_id: task-event-b003e03198c5730159142de87b986789
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 811904fc20485ad7be2e349d24925202653023d7c517cc0e9edc1739bf836b56
+fragment_checksum: a7af46f1ab0ca22675921ac0fe73b24b911a507f61dd1a8e017fb6ed77ea1fdf

@@ -42,12 +42,13 @@ def _rendered(
 def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 63
+    assert len(policy.task_sources) == 64
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
         "TRADING-2523B",
         *[f"TRADING-{number}" for number in range(2524, 2543)],
+        "TRADING-2542A",
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -73,12 +74,13 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
     assert manifest.schema_version == "strategy_research_page_effectiveness.v2"
-    assert len(manifest.task_coverage) == 63
+    assert len(manifest.task_coverage) == 64
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
         "TRADING-2523B",
         *[f"TRADING-{number}" for number in range(2524, 2543)],
+        "TRADING-2542A",
     ]
     coverage_by_task = {
         item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
@@ -187,8 +189,10 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "DISCLOSED_EXACT_DATE_SUBSCRIPTION_RECOVERY_CLOUD_VALIDATED_COMPLETE"
     )
     assert coverage_by_task["TRADING-2542"] == (
-        "DISCLOSED_THRESHOLD_EXACT_VALUE_SHEET_DRAFT_READY_OWNER_PER_AXIS_"
-        "APPROVAL_REQUIRED"
+        "DISCLOSED_V1_REJECTED_V2_MEASUREMENT_DRAFT_OWNER_AND_DQ_REVIEW_REQUIRED"
+    )
+    assert coverage_by_task["TRADING-2542A"] == (
+        "DISCLOSED_V2_EXACT_MEASUREMENT_DRAFT_OWNER_AND_DQ_REVIEW_REQUIRED"
     )
     assert len(manifest.source_artifacts) == 29
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)

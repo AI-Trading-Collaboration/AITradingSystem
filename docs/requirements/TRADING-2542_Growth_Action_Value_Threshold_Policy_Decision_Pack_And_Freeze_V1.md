@@ -151,6 +151,22 @@ draft；即使逐项批准，仍需独立 serial DQ contract wave 才能替换�
 当前每轴 `owner_review_state=PENDING_OWNER_APPROVAL`。只允许逐轴
 `APPROVE_EXACTLY_AS_DRAFTED` 或 `REJECT_AND_REQUEST_NEW_VERSION`；partial review 可记录，但不能冻结。
 
+### 4.7 Web Pro 复核采纳与 V1 disposition
+
+2026-08-23，Project Owner 采纳对 exact commit
+`b70fe3963988241b187bc0d30bbc422eed2b2160` 的 ChatGPT Web Pro 审阅结论
+`REQUEST_NEW_VERSION_BEFORE_ANY_FREEZE`。会话：
+`https://chatgpt.com/c/6a8a90ac-2e40-83e8-9ce6-6fc1cfb4dfdd`；UI 与回答自报
+`GPT-5.6 Pro`，backend route 未得到 attestation。
+
+该决定否决 V1 作为 freeze authority，但不改写 V1 bytes：七轴
+`REJECT_AND_REQUEST_NEW_VERSION`，`CANONICAL_DQ_PIT` 为
+`INSUFFICIENT_EVIDENCE_TO_APPROVE`。V1 继续保持 `DRAFT_FOR_OWNER_REVIEW`、
+`threshold_bundle_frozen=false`。新任务
+`TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1`
+负责 serial V2 measurement/comparator contract wave；V2 完成后仍须 Owner 逐项审阅，DQ 轴还须独立
+serial DQ contract。当前任务继续 `BLOCKED_OWNER_INPUT`，不得据 V1 运行 DQ 或 empirical evaluation。
+
 建议逐项审阅回复格式：
 
 ```yaml

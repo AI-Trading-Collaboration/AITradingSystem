@@ -1,0 +1,77 @@
+schema_version: exposure_matched_no_signal_comparator_contract.v1
+comparator_id: exposure_matched_no_signal
+contract_version: 1.0.0-draft.1
+contract_status: DRAFT_FOR_OWNER_REVIEW
+task_id: TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
+owner_decision: owner_decision:TRADING-2542A:2026-08-23:adopt_gpt_pro_review_and_request_measurement_complete_v2_draft_v1
+role: RESEARCH_ATTRIBUTION_ONLY_NOT_TRADABLE
+objective: >-
+  在不使用 growth signal 时序或 return outcome 选参的前提下，以固定 QQQ/SGOV 配置匹配
+  candidate primary-window 平均 QQQ exposure，分离择时 action value 与静态 market beta。
+universe:
+  allowed_assets:
+    - QQQ
+    - SGOV
+  leverage_etf_allowed: false
+  options_position_allowed: false
+  borrowed_leverage_allowed: false
+calendar_contract:
+  calendar: QQQ_EXCHANGE_SESSIONS
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  join_rule: EXACT_COMMON_SESSION_INTERSECTION
+  duplicate_session_outcome: INVALID
+  missing_session_outcome: INVALID
+  non_finite_return_outcome: INVALID
+  return_less_than_or_equal_to_minus_one_outcome: INVALID
+return_contract:
+  source_field: DAILY_TOTAL_RETURN
+  price_only_return_allowed: false
+  corporate_action_adjustment: PROVIDER_TOTAL_RETURN_SERIES
+  qqq_factor_field: QQQ_DAILY_TOTAL_RETURN
+  sgov_field: SGOV_DAILY_TOTAL_RETURN
+construction_contract:
+  candidate_exposure_field: ACTUAL_PRE_TRADE_QQQ_NOTIONAL_OVER_OPENING_NAV
+  candidate_exposure_bounds:
+    minimum: '0.0000'
+    maximum: '1.0000'
+  fixed_qqq_weight_formula: ARITHMETIC_MEAN_OF_CANDIDATE_OPENING_QQQ_EXPOSURE_ON_COMMON_SESSIONS
+  fixed_sgov_weight_formula: ONE_MINUS_FIXED_QQQ_WEIGHT
+  weight_application_timing: PRIOR_SESSION_CLOSE_FOR_NEXT_SESSION_TOTAL_RETURN
+  rebalance_frequency: EACH_COMMON_SESSION_TO_FIXED_WEIGHTS
+  same_session_opposite_trades_can_net: false
+  return_outcome_can_select_weight: false
+  growth_signal_value_or_timestamp_read_allowed: false
+  candidate_return_read_allowed_for_construction: false
+  baseline_return_read_allowed_for_construction: false
+  cost_model_policy_id: transaction_cost_model_v1
+  cost_treatment: DEDUCT_MODELED_REBALANCE_COST_FROM_COMPARATOR_DAILY_GROSS_RETURN
+exposure_match_contract:
+  metric: ABSOLUTE_REALIZED_DAILY_OLS_BETA_DIFFERENCE
+  factor: QQQ_DAILY_TOTAL_RETURN
+  intercept: true
+  beta_annualized: false
+  minimum_common_sessions: 252
+  maximum_mismatch: '0.0100'
+  comparison: ABS_BETA_CANDIDATE_MINUS_BETA_COMPARATOR
+  mismatch_above_limit_outcome: FAIL
+  undefined_beta_outcome: INSUFFICIENT
+identity_contract:
+  version_change_required_for_any_semantic_change: true
+  exact_file_sha256_binding_required: true
+  canonical_sha256_binding_required: true
+  parameter_search_allowed: false
+  result_conditioned_rewrite_allowed: false
+safety:
+  empirical_research_authorized: false
+  dq_run_authorized: false
+  cache_mutation_authorized: false
+  backtest_authorized: false
+  holdout_access_authorized: false
+  external_action_authorized: false
+  investment_conclusion_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

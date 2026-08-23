@@ -1,0 +1,338 @@
+schema_version: strategy_growth_action_value_threshold_exact_value_sheet.v2
+sheet_id: strategy_growth_action_value_threshold_exact_value_sheet_v2
+sheet_version: 2.0.0-draft.1
+sheet_status: DRAFT_FOR_OWNER_REVIEW
+task_id: TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
+owner_instruction:
+  decision_id: owner_decision:TRADING-2542A:2026-08-23:adopt_gpt_pro_review_and_request_measurement_complete_v2_draft_v1
+  adopted_review_conclusion: REQUEST_NEW_VERSION_BEFORE_ANY_FREEZE
+  exact_value_approval_state: NOT_PROVIDED
+  complete_axis_set_review_required: true
+  partial_approval_can_freeze: false
+review_evidence:
+  reviewed_repository_commit: b70fe3963988241b187bc0d30bbc422eed2b2160
+  conversation_url: https://chatgpt.com/c/6a8a90ac-2e40-83e8-9ce6-6fc1cfb4dfdd
+  model_evidence: UI_PRO_AND_MODEL_SELF_REPORT_GPT_5_6_PRO_ROUTE_UNVERIFIED
+  backend_route_attested: false
+  advisory_reconciled_by_project_owner: true
+predecessor_binding:
+  path: config/research/strategy_growth_action_value_threshold_exact_value_sheet_v1.yaml
+  file_sha256: 82f75b55bb4a9576775d4e60a9a31bc01b24d3b5b8cf270c6aabbed9e9d17e7f
+  canonical_sha256: 14286008f464230921400c1def4173f34a6e9231e77c434504a5abab78451dfb
+  disposition: REJECTED_FOR_FREEZE_RETAINED_IMMUTABLE
+comparator_binding:
+  path: config/research/exposure_matched_no_signal_comparator_contract_v1.yaml
+  file_sha256: 4ced9407b8b8bca7b973c34016868fbf3151017bcc0b8ab67db449a0fed3b850
+  canonical_sha256: f429d9ffc12b227bf9fad6eed3340ca833fdb44dc179c5f29dfc8f0318d9e1cf
+  comparator_id: exposure_matched_no_signal
+scope_binding:
+  predecessor_policy_id: strategy_growth_action_value_preregistration_v1
+  hypothesis_id: BASELINE_BOUNDED_QQQ_GROWTH_OVERLAY_NON_BETA_ACTION_VALUE_V1
+  baseline_id: equal_risk_qqq_sgov
+  comparator_ids:
+    - equal_risk_qqq_sgov
+    - exposure_matched_no_signal
+  action_universe:
+    - QQQ
+    - SGOV
+  primary_window_start: '2021-02-22'
+  primary_window_end: '2025-12-02'
+  selected_data_lane: QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE
+  uses_leverage_etf: false
+  uses_options: false
+  borrowed_leverage_allowed: false
+  threshold_after_result_allowed: false
+decision_timing:
+  state: PRE_EMPIRICAL_DRAFT_FOR_OWNER_REVIEW
+  new_dq_result_visible: false
+  new_strategy_result_visible: false
+  holdout_result_visible: false
+  exact_owner_approval_visible: false
+  threshold_bundle_frozen: false
+common_series_contract:
+  calendar: QQQ_EXCHANGE_SESSIONS
+  join_rule: EXACT_COMMON_SESSION_INTERSECTION
+  return_field: DAILY_TOTAL_RETURN
+  annualization_sessions: 252
+  annualized_geometric_return_formula: PRODUCT_ONE_PLUS_DAILY_RETURN_POWER_252_OVER_N_MINUS_ONE
+  return_delta_formula: ANNUALIZED_CANDIDATE_MINUS_ANNUALIZED_COMPARATOR
+  duplicate_session_outcome: INVALID
+  missing_required_session_outcome: INVALID
+  non_finite_value_outcome: INVALID
+  return_less_than_or_equal_to_minus_one_outcome: INVALID
+  rounding_before_threshold_comparison_allowed: false
+window_slice_catalog:
+  - slice_id: PRIMARY_WINDOW_FULL
+    start: '2021-02-22'
+    end: '2025-12-02'
+    role: PRIMARY_AGGREGATE
+  - slice_id: PRIMARY_2021_PARTIAL
+    start: '2021-02-22'
+    end: '2021-12-31'
+    role: CALENDAR_STABILITY
+  - slice_id: RATE_HIKE_BEAR_2022
+    start: '2022-01-03'
+    end: '2022-12-30'
+    role: MANDATORY_STRESS
+  - slice_id: RECOVERY_2023
+    start: '2023-01-03'
+    end: '2023-12-29'
+    role: CALENDAR_STABILITY
+  - slice_id: AI_RALLY_2024
+    start: '2024-01-02'
+    end: '2024-12-31'
+    role: CALENDAR_STABILITY
+  - slice_id: PRIMARY_2025_TO_END
+    start: '2025-01-02'
+    end: '2025-12-02'
+    role: CALENDAR_STABILITY
+axis_contracts:
+  - axis_id: NON_BETA_ACTION_VALUE
+    predecessor_disposition: REJECT_AND_REQUEST_NEW_VERSION
+    owner_review_state: PENDING_OWNER_APPROVAL
+    threshold_id: growth_action_value.non_beta_increment_min
+    unit: annualized_decimal_return_delta_after_exposure_match
+    direction: MINIMUM
+    minimum_non_beta_return_delta: '0.0100'
+    bootstrap:
+      method: CIRCULAR_MOVING_BLOCK_BOOTSTRAP
+      paired_common_session_returns: true
+      block_length_sessions: 20
+      resamples: 10000
+      one_sided_confidence_level: '0.95'
+      lower_quantile: '0.05'
+      quantile_rule: NEAREST_RANK_CEILING_P_TIMES_N
+      lower_bound_rule: STRICTLY_GREATER_THAN_ZERO
+      random_seed: 2542
+    outcome_contract:
+      pass_rule: POINT_DELTA_GTE_0_0100_AND_BOOTSTRAP_LOWER_BOUND_GT_ZERO
+      fail_rule: COMPLETE_VALID_SAMPLE_NOT_MEETING_EITHER_PASS_CONDITION
+      insufficient_rule: COMMON_SAMPLE_BELOW_AXIS_OR_GLOBAL_SAMPLE_FLOOR
+      invalid_rule: SERIES_IDENTITY_OR_NUMERIC_DOMAIN_VIOLATION
+  - axis_id: NET_OF_COST_RETURN
+    predecessor_disposition: REJECT_AND_REQUEST_NEW_VERSION
+    owner_review_state: PENDING_OWNER_APPROVAL
+    threshold_id: growth_action_value.net_of_cost_return_min
+    unit: annualized_decimal_net_return_delta
+    direction: MINIMUM
+    minimum_net_of_cost_return_delta: '0.0075'
+    cost_reconciliation_tolerance: '0.0001'
+    cost_model_policy_id: transaction_cost_model_v1
+    candidate_net_daily_return_formula: CANDIDATE_GROSS_DAILY_RETURN_MINUS_MODELED_DAILY_COST_RETURN
+    annualized_cost_drag_formula: ANNUALIZED_GROSS_RETURN_MINUS_ANNUALIZED_NET_RETURN
+    outcome_contract:
+      pass_rule: NET_DELTA_GTE_0_0075_AND_ABS_INDEPENDENT_COST_RECONCILIATION_LTE_0_0001
+      fail_rule: COMPLETE_VALID_SAMPLE_WITH_NET_DELTA_BELOW_0_0075
+      insufficient_rule: REQUIRED_COST_INPUT_OR_COMMON_SAMPLE_UNAVAILABLE
+      invalid_rule: GROSS_NET_COST_IDENTITY_DRIFT_OR_SERIES_IDENTITY_VIOLATION
+  - axis_id: ACTUAL_PATH_DRAWDOWN_REGRESSION
+    predecessor_disposition: REJECT_AND_REQUEST_NEW_VERSION
+    owner_review_state: PENDING_OWNER_APPROVAL
+    threshold_id: growth_action_value.actual_path_drawdown_regression_max
+    unit: absolute_decimal_max_drawdown_regression
+    direction: MAXIMUM
+    maximum_actual_path_drawdown_regression: '0.0200'
+    nav_reset_rule: RESET_NAV_TO_ONE_AT_FIRST_COMMON_SESSION_OF_EACH_SLICE
+    max_drawdown_formula: MIN_NAV_DIVIDED_BY_RUNNING_PEAK_MINUS_ONE
+    regression_formula: ABS_CANDIDATE_MAX_DRAWDOWN_MINUS_ABS_COMPARATOR_MAX_DRAWDOWN
+    mandatory_slice_set:
+      - PRIMARY_WINDOW_FULL
+      - PRIMARY_2021_PARTIAL
+      - RATE_HIKE_BEAR_2022
+      - RECOVERY_2023
+      - AI_RALLY_2024
+      - PRIMARY_2025_TO_END
+    outcome_contract:
+      pass_rule: EVERY_MANDATORY_SLICE_REGRESSION_LTE_0_0200
+      fail_rule: ANY_COMPLETE_VALID_SLICE_REGRESSION_GT_0_0200
+      insufficient_rule: ANY_MANDATORY_SLICE_HAS_NO_COMPLETE_COMMON_SAMPLE
+      invalid_rule: ACTUAL_PATH_OR_SLICE_IDENTITY_VIOLATION
+  - axis_id: FALSE_RISK_OFF_COST
+    predecessor_disposition: REJECT_AND_REQUEST_NEW_VERSION
+    owner_review_state: PENDING_OWNER_APPROVAL
+    threshold_id: growth_action_value.false_risk_off_cost_regression_max
+    unit: decimal_mean_event_cost_regression
+    direction: MAXIMUM
+    maximum_false_risk_off_cost_regression: '0.0025'
+    minimum_independent_qualifying_event_count: 10
+    event_contract:
+      anchor_rule: BASELINE_DEFENSIVE_VETO_INACTIVE_TO_ACTIVE_TRANSITION
+      forward_horizon_exchange_sessions: 20
+      forward_window_start_offset_sessions: 1
+      right_censored_anchor_rule: EXCLUDE_FROM_NUMERIC_STATISTIC_AND_COUNT_AS_RIGHT_CENSORED
+      merge_distance_exchange_sessions: 20
+      merged_episode_anchor_rule: KEEP_EARLIEST_ANCHOR
+      qqq_minus_sgov_forward_compounded_return_min: '0.0300'
+      qqq_forward_path_max_drawdown_floor: '-0.0500'
+      path_daily_missed_return_formula: ONE_MINUS_OPENING_QQQ_WEIGHT_TIMES_QQQ_MINUS_SGOV_DAILY_TOTAL_RETURN
+      path_event_cost_formula: PRODUCT_ONE_PLUS_DAILY_MISSED_RETURN_MINUS_ONE
+      event_regression_formula: CANDIDATE_EVENT_COST_MINUS_BASELINE_EVENT_COST
+      aggregate_formula: ARITHMETIC_MEAN_OF_QUALIFYING_EVENT_REGRESSIONS
+    outcome_contract:
+      pass_rule: QUALIFYING_EVENT_COUNT_GTE_10_AND_MEAN_REGRESSION_LTE_0_0025
+      fail_rule: QUALIFYING_EVENT_COUNT_GTE_10_AND_MEAN_REGRESSION_GT_0_0025
+      insufficient_rule: QUALIFYING_EVENT_COUNT_LT_10_AFTER_RIGHT_CENSOR_AND_MERGE
+      invalid_rule: EVENT_CALENDAR_WEIGHT_OR_RETURN_IDENTITY_VIOLATION
+  - axis_id: CANONICAL_DQ_PIT
+    predecessor_disposition: INSUFFICIENT_EVIDENCE_TO_APPROVE
+    owner_review_state: PENDING_OWNER_APPROVAL
+    threshold_id: growth_action_value.canonical_dq_pit_required_status
+    unit: canonical_data_research_gate_status
+    direction: EXACT_CATEGORICAL
+    required_data_research_gate_status: PASS
+    operational_authority_state: UNAVAILABLE_PENDING_INDEPENDENT_SERIAL_DQ_CONTRACT
+    numeric_intent_draft:
+      status: OWNER_INTENT_ONLY_NOT_EXECUTABLE_AUTHORITY
+      max_quote_age_seconds: 120
+      max_relative_spread: '0.20'
+      min_open_interest: 10
+      min_volume: 1
+      exact_source_date_required: true
+      unknown_can_pass: false
+    required_serial_contract_fields:
+      - QUOTE_AGE_CLOCK_AND_TIMESTAMP_DIRECTION
+      - RELATIVE_SPREAD_DENOMINATOR_AND_ZERO_DENOMINATOR
+      - CONTRACT_TO_SESSION_AGGREGATION
+      - MISSING_AND_UNKNOWN_TERMINAL_MAPPING
+      - EXACT_SOURCE_DATE_AND_PIT_RULE
+      - GLOBAL_DQ_TERMINAL_ORDER
+    outcome_contract:
+      pass_rule: REVIEWED_CANONICAL_DATA_RESEARCH_GATE_EXACT_PASS_ONLY
+      fail_rule: REVIEWED_CANONICAL_DATA_RESEARCH_GATE_FAIL
+      insufficient_rule: UNKNOWN_OR_REVIEWED_DQ_AUTHORITY_UNAVAILABLE
+      invalid_rule: DQ_IDENTITY_SCOPE_PIT_OR_TERMINAL_CONTRACT_VIOLATION
+  - axis_id: SAMPLE_AND_WINDOW_DEPENDENCE
+    predecessor_disposition: REJECT_AND_REQUEST_NEW_VERSION
+    owner_review_state: PENDING_OWNER_APPROVAL
+    threshold_id: growth_action_value.primary_window_stability_gate
+    unit: composite_count_share_and_slice_set
+    direction: COMPOSITE_ALL
+    minimum_independent_action_count: 30
+    minimum_independent_action_count_per_slice: 5
+    independence_gap_exchange_sessions: 20
+    maximum_single_regime_contribution_share: '0.50'
+    episode_contract:
+      anchor_rule: GROWTH_ACTION_INACTIVE_TO_ACTIVE_TRANSITION
+      merge_distance_exchange_sessions: 20
+      merged_episode_anchor_rule: KEEP_EARLIEST_ANCHOR
+      slice_assignment_rule: EARLIEST_ANCHOR_SESSION_SLICE
+      cross_slice_double_count_allowed: false
+      episode_value_formula: COMPOUNDED_CANDIDATE_NET_RETURN_MINUS_COMPOUNDED_COMPARATOR_NET_RETURN
+      contribution_numerator: SUM_ABS_EPISODE_VALUE_WITH_ANCHOR_IN_SLICE
+      contribution_denominator: SUM_ABS_EPISODE_VALUE_ALL_EPISODES
+      nonpositive_denominator_outcome: INSUFFICIENT
+    mandatory_window_slices:
+      - PRIMARY_2021_PARTIAL
+      - RATE_HIKE_BEAR_2022
+      - RECOVERY_2023
+      - AI_RALLY_2024
+      - PRIMARY_2025_TO_END
+    outcome_contract:
+      pass_rule: FULL_COUNT_GTE_30_AND_EACH_SLICE_COUNT_GTE_5_AND_MAX_SHARE_LTE_0_50
+      fail_rule: COMPLETE_SAMPLE_WITH_ANY_COUNT_OR_SHARE_THRESHOLD_BREACH
+      insufficient_rule: NONPOSITIVE_CONTRIBUTION_DENOMINATOR_OR_UNAVAILABLE_REQUIRED_SLICE
+      invalid_rule: EPISODE_CALENDAR_ASSIGNMENT_OR_VALUE_IDENTITY_VIOLATION
+  - axis_id: ACTUAL_PATH_TURNOVER
+    predecessor_disposition: REJECT_AND_REQUEST_NEW_VERSION
+    owner_review_state: PENDING_OWNER_APPROVAL
+    threshold_id: growth_action_value.actual_path_turnover_max
+    unit: annualized_one_way_turnover_and_cost_drag_share
+    direction: COMPOSITE_ALL
+    maximum_annualized_actual_path_turnover: '1.00'
+    maximum_cost_drag_share: '0.25'
+    session_turnover_formula: SUM_ABS_FILL_NOTIONAL_DIVIDED_BY_OPENING_NAV
+    half_turnover_multiplier_allowed: false
+    same_session_opposite_fills_can_net: false
+    annualized_turnover_formula: SUM_SESSION_TURNOVER_TIMES_252_DIVIDED_BY_COMMON_SESSION_COUNT
+    annualized_cost_drag_formula: ANNUALIZED_CANDIDATE_GROSS_RETURN_MINUS_ANNUALIZED_CANDIDATE_NET_RETURN
+    gross_non_beta_edge_formula: ANNUALIZED_CANDIDATE_GROSS_RETURN_MINUS_ANNUALIZED_COMPARATOR_GROSS_RETURN
+    cost_drag_share_formula: ANNUALIZED_COST_DRAG_DIVIDED_BY_GROSS_NON_BETA_EDGE
+    nonpositive_cost_drag_denominator_outcome: FAIL
+    outcome_contract:
+      pass_rule: ANNUALIZED_TURNOVER_LTE_1_00_AND_COST_DRAG_SHARE_LTE_0_25
+      fail_rule: EITHER_THRESHOLD_BREACH_OR_GROSS_NON_BETA_EDGE_LTE_ZERO
+      insufficient_rule: REQUIRED_FILL_COST_OR_COMMON_SESSION_INPUT_UNAVAILABLE
+      invalid_rule: NAV_FILL_IDENTITY_OR_COST_RECONCILIATION_VIOLATION
+  - axis_id: LEVERAGE_BETA_ATTRIBUTION
+    predecessor_disposition: REJECT_AND_REQUEST_NEW_VERSION
+    owner_review_state: PENDING_OWNER_APPROVAL
+    threshold_id: growth_action_value.realized_beta_increment_max
+    unit: realized_beta_delta_and_exposure_match_tolerance
+    direction: COMPOSITE_ALL
+    maximum_realized_beta_increment: '0.0200'
+    exposure_match_tolerance: '0.0100'
+    beta_contract:
+      method: DAILY_OLS_SLOPE_WITH_INTERCEPT
+      factor: QQQ_DAILY_TOTAL_RETURN
+      annualized: false
+      common_session_rule: EXACT_COMMON_SESSION_INTERSECTION
+      minimum_common_sessions: 252
+      candidate_beta_formula: COVARIANCE_CANDIDATE_QQQ_DIVIDED_BY_VARIANCE_QQQ
+      comparator_beta_formula: COVARIANCE_COMPARATOR_QQQ_DIVIDED_BY_VARIANCE_QQQ
+      increment_formula: CANDIDATE_BETA_MINUS_COMPARATOR_BETA
+      zero_factor_variance_outcome: INSUFFICIENT
+    leverage_etf_allowed: false
+    options_position_allowed: false
+    borrowed_leverage_allowed: false
+    outcome_contract:
+      pass_rule: BETA_INCREMENT_LTE_0_0200_AND_EXPOSURE_MISMATCH_LTE_0_0100_AND_NO_LEVERAGE
+      fail_rule: COMPLETE_VALID_NONLEVERAGED_SAMPLE_WITH_EITHER_NUMERIC_THRESHOLD_BREACH
+      insufficient_rule: COMMON_SESSION_COUNT_LT_252_OR_ZERO_QQQ_FACTOR_VARIANCE
+      invalid_rule: LEVERAGE_ETF_OPTIONS_BORROWED_LEVERAGE_OR_SERIES_IDENTITY_VIOLATION
+joint_terminal_contract:
+  required_axis_order:
+    - NON_BETA_ACTION_VALUE
+    - NET_OF_COST_RETURN
+    - ACTUAL_PATH_DRAWDOWN_REGRESSION
+    - FALSE_RISK_OFF_COST
+    - CANONICAL_DQ_PIT
+    - SAMPLE_AND_WINDOW_DEPENDENCE
+    - ACTUAL_PATH_TURNOVER
+    - LEVERAGE_BETA_ATTRIBUTION
+  precedence:
+    - INVALID
+    - FAIL
+    - INSUFFICIENT
+    - PASS
+  invalid_terminal: GLOBAL_INVALID
+  fail_terminal: GLOBAL_FAIL
+  insufficient_terminal: GLOBAL_INSUFFICIENT
+  pass_terminal: GLOBAL_PASS
+  weighted_compensation_allowed: false
+  majority_vote_allowed: false
+  seven_of_eight_allowed: false
+owner_review_contract:
+  required_review_order:
+    - NON_BETA_ACTION_VALUE
+    - NET_OF_COST_RETURN
+    - ACTUAL_PATH_DRAWDOWN_REGRESSION
+    - FALSE_RISK_OFF_COST
+    - CANONICAL_DQ_PIT
+    - SAMPLE_AND_WINDOW_DEPENDENCE
+    - ACTUAL_PATH_TURNOVER
+    - LEVERAGE_BETA_ATTRIBUTION
+  allowed_axis_decisions:
+    - APPROVE_EXACTLY_AS_DRAFTED
+    - REJECT_AND_REQUEST_NEW_VERSION
+  all_axes_approval_required_for_freeze: true
+  approval_must_precede_any_new_result: true
+  any_change_requires_new_version: true
+terminal:
+  status: BLOCKED_OWNER_REVIEW_AND_DQ_AUTHORITY
+  next_action: PROJECT_OWNER_REVIEW_COMPLETE_V2_THEN_INDEPENDENT_DQ_CONTRACT
+  threshold_bundle_frozen: false
+  dq_successor_authorized: false
+  empirical_successor_authorized: false
+safety:
+  empirical_research_authorized: false
+  dq_run_authorized: false
+  cache_mutation_authorized: false
+  backtest_authorized: false
+  holdout_access_authorized: false
+  external_action_authorized: false
+  investment_conclusion_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

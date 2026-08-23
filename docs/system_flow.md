@@ -9077,3 +9077,38 @@ drawdown-regression cap、25 bps mean false-risk-off event-cost cap、strict DAT
 share cap，以及 0.02 realized-beta increment / 0.01 exposure-match tolerance。上述值和 DQ numeric
 子政策必须由 Project Owner 逐项 `APPROVE_EXACTLY_AS_DRAFTED`；任何拒绝或修改都只能创建新版本，
 不能在当前 draft 上局部补丁后冻结。
+
+TRADING-2542A 记录 Project Owner 对 exact commit `b70fe3963988241b187bc0d30bbc422eed2b2160`
+的 Web Pro 审阅采纳。审阅结论是 `REQUEST_NEW_VERSION_BEFORE_ANY_FREEZE`：S2A V1 bytes 继续作为
+immutable historical draft 保留，但七轴为 `REJECT_AND_REQUEST_NEW_VERSION`，`CANONICAL_DQ_PIT`
+为 `INSUFFICIENT_EVIDENCE_TO_APPROVE`，因此 V1 永远不能作为 freeze authority。
+
+`strategy_growth_action_value_measurement_contract` 与独立
+`exposure_matched_no_signal_comparator_contract` 构成 serial V2 contract wave。它们把 common-session
+total-return、geometric annualization、paired circular block bootstrap、event/episode construction、
+actual-fill turnover、non-annualized daily OLS beta 和 joint terminal precedence 变成 strict、canonical、
+可 replay 的计算合同；本阶段只接受 synthetic/offline deterministic validation，不读取市场 cache 或
+empirical result。
+
+```text
+immutable S2A V1 draft + Owner-adopted Pro disposition
+  -> V1 = REJECTED_FOR_FREEZE_RETAINED_IMMUTABLE
+  -> exposure_matched_no_signal comparator contract
+       -> QQQ/SGOV only; fixed mean candidate opening exposure
+       -> no growth-signal timing; no return-conditioned parameter search
+       -> daily total-return OLS beta; minimum common sessions = 252
+  -> V2 exact measurement contract
+       -> bootstrap confidence = 0.95; circular block = 20; nearest-rank q05
+       -> false-risk-off qualifying events >= 10; right-censor/merge fixed
+       -> independent actions >= 30 and >= 5 per period slice
+       -> no fill netting or half-turnover; nonpositive cost denominator = FAIL
+       -> INVALID > FAIL > INSUFFICIENT > PASS
+  -> terminal = BLOCKED_OWNER_REVIEW_AND_DQ_AUTHORITY
+  -> threshold bundle frozen = false
+  -> DQ numeric values = OWNER_INTENT_ONLY_NOT_EXECUTABLE_AUTHORITY
+  -> DQ/provider/cache/backtest/empirical/external/trading remain closed
+```
+
+只有 V2 获得完整逐项 Owner approval，且 `CANONICAL_DQ_PIT` 先完成独立 serial DQ contract wave，
+后继 freeze 才可另行开始。V2 合同、comparator 和 deterministic tests 本身不授权 primary-window
+evaluation，也不能产生 investment-facing PASS。

@@ -1,0 +1,228 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
+  task_id_sha256: 2a5777686fe9830b8e6d8ce547bf1566a3693f94625e9cd92d2b06b0ab475566
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
+  title: null
+  domain: Strategy governance / growth action-value exact measurement and joint decision
+    contract V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner reviews all eight V2 axes after engineering closeout;
+    CANONICAL_DQ_PIT requires independent serial DQ authority before freeze
+  requirement_refs:
+  - docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: V2 remains DRAFT_FOR_OWNER_REVIEW and
+    unfrozen. First Full found only DEVX-006D/006C, parent task binding, and Atlas
+    freshness failures; rebuild governance authorities and final-commit Atlas artifact,
+    then run one parent-bound failure_fix_rerun.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Parent-bound Full failure_fix PASS; preserve V1/V2/comparator identities;
+      complete V2 owner review and independent DQ authority before freeze; no DQ/provider/cache/backtest/empirical/external/trading
+      action.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-23T06:59:44Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542a-register-measurement-contract-wave-20260823-v1
+  lane_id: null
+  base_commit: b70fe3963988241b187bc0d30bbc422eed2b2160
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
+    - Strategy governance / growth action-value exact measurement and joint decision
+      contract V1
+    - P0
+    - IN_PROGRESS
+    - Codex completes the serial V2 measurement-contract wave; Project Owner reviews
+      every V2 axis before any freeze
+    - Owner adopted the GPT Pro REQUEST_NEW_VERSION_BEFORE_ANY_FREEZE disposition.
+      V1 remains immutable and unfrozen; build a formula-complete V2 draft without
+      DQ, provider, cache, backtest, empirical, external, production, or broker actions.
+    - V1 bytes unchanged; V2 covers all eight axes, comparator identity, exact formulas,
+      missing and UNKNOWN semantics, sample construction, and global terminal order;
+      deterministic focused and formal validation PASS; all execution and trading
+      authorizations remain false.
+    - 'Supporting requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.
+      Exact base b70fe3963988241b187bc0d30bbc422eed2b2160; SINGLE_LANE serial contract
+      wave; no new worktree or clone.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2542a-register-measurement-contract-wave-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ca87170f7558c053c26eddcfc96ceedf
+- schema_version: task_event.v1
+  task_id: TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T07:17:23Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542a-v2-measurement-contract-owner-review-blocked-20260823-v1
+  lane_id: null
+  base_commit: b70fe3963988241b187bc0d30bbc422eed2b2160
+  previous_state_event_id: task-event-ca87170f7558c053c26eddcfc96ceedf
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner reviews all eight V2 axes; CANONICAL_DQ_PIT additionally
+      requires an independent serial DQ contract before freeze
+    blocker_or_next_step: V2 exact measurement and comparator contracts are DRAFT_FOR_OWNER_REVIEW.
+      Every axis remains PENDING_OWNER_APPROVAL; V1 is immutable and rejected for
+      freeze. No DQ or empirical execution is authorized.
+    acceptance_criteria: Preserve V2 file SHA-256 bbb2e0ade108213269c3c9524b465836518457d932a6344887e6d8afb89ae620
+      and canonical SHA-256 b978e952c4767756025fc01b17f8694004e720a5bb44aa5dde893628a4d9c199
+      plus comparator file/canonical SHA-256 4ced9407b8b8bca7b973c34016868fbf3151017bcc0b8ab67db449a0fed3b850/f429d9ffc12b227bf9fad6eed3340ca833fdb44dc179c5f29dfc8f0318d9e1cf;
+      require complete V2 owner review and independent DQ authority; keep every execution
+      and trading authorization false.
+    notes: 'Requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.
+      New measurement-contract focused 33 passed; preregistration/decision-pack/V1/V2
+      combined focused 107 passed; Ruff and strict mypy PASS. Formal final-tree tiers
+      are the remaining closeout validation, not permission for DQ/provider/cache/backtest/empirical
+      action.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542a-v2-measurement-contract-owner-review-blocked-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-28b488df276acd1d06c84ad5f803d548
+- schema_version: task_event.v1
+  task_id: TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T07:28:28Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542a-formal-gates-architecture-freshness-remediation-20260823-v1
+  lane_id: null
+  base_commit: b70fe3963988241b187bc0d30bbc422eed2b2160
+  previous_state_event_id: task-event-28b488df276acd1d06c84ad5f803d548
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner reviews all eight V2 axes; CANONICAL_DQ_PIT additionally
+      requires an independent serial DQ contract before freeze
+    blocker_or_next_step: V2 remains DRAFT_FOR_OWNER_REVIEW and unfrozen. Formal Reproducibility,
+      Integration, and Contract pass; the first Architecture run exposed only task-count
+      and generated-manifest freshness, now remediated with targeted 22 passed and
+      awaiting full Architecture rerun.
+    acceptance_criteria: Preserve V2 and comparator identities; complete full parallel
+      Architecture rerun and Full final-tree validation; require complete V2 owner
+      review plus independent DQ authority; keep DQ, provider, cache, backtest, empirical,
+      external, production, and broker actions closed.
+    notes: 'Formal results: Reproducibility 24 passed; Integration 995 passed/643
+      warnings; Contract 276 passed. Architecture parent artifact outputs/validation_runtime/architecture-fitness_20260823T071756Z/test_runtime_summary.json
+      had 863 passed/2 freshness failures. Updated task-count ratchet 1016 to 1017
+      and regenerated ARCH-004E manifests/fitness; targeted 22 passed. Requirement
+      records the provenance.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542a-formal-gates-architecture-freshness-remediation-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-26e7d39fe8f669525bb1b9b4f0c572c3
+- schema_version: task_event.v1
+  task_id: TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T07:47:01Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542a-formal-four-tier-pass-full-pending-20260823-v1
+  lane_id: null
+  base_commit: b70fe3963988241b187bc0d30bbc422eed2b2160
+  previous_state_event_id: task-event-26e7d39fe8f669525bb1b9b4f0c572c3
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner reviews all eight V2 axes after Codex completes the
+      remaining Full closeout; CANONICAL_DQ_PIT requires independent serial DQ authority
+      before freeze
+    blocker_or_next_step: V2 is DRAFT_FOR_OWNER_REVIEW and unfrozen. Architecture
+      865, Contract 276, Integration 995, and Reproducibility 24 pass; Full final-tree
+      validation is the only remaining engineering closeout gate.
+    acceptance_criteria: Full final-tree PASS; preserve V1/V2/comparator identities;
+      complete V2 owner review and independent DQ authority before freeze; no DQ/provider/cache/backtest/empirical/external/trading
+      action.
+    notes: Final Architecture artifact outputs/validation_runtime/architecture-fitness_20260823T074138Z/test_runtime_summary.json;
+      Contract outputs/validation_runtime/contract-validation_20260823T071756Z/test_runtime_summary.json;
+      Integration outputs/validation_runtime/integration_20260823T071756Z/test_runtime_summary.json;
+      Reproducibility outputs/validation_runtime/reproducibility_20260823T071756Z/test_runtime_summary.json.
+      Full remains pending and exclusive.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542a-formal-four-tier-pass-full-pending-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d0caba0d1d4aeaa42da66a9e37146be5
+- schema_version: task_event.v1
+  task_id: TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-23T08:21:57Z'
+  actor: codex_capability_coordinator
+  change_id: trading-2542a-full-parent-failure-governance-freshness-remediation-20260823-v1
+  lane_id: null
+  base_commit: b70fe3963988241b187bc0d30bbc422eed2b2160
+  previous_state_event_id: task-event-d0caba0d1d4aeaa42da66a9e37146be5
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner reviews all eight V2 axes after engineering closeout;
+      CANONICAL_DQ_PIT requires independent serial DQ authority before freeze
+    blocker_or_next_step: V2 remains DRAFT_FOR_OWNER_REVIEW and unfrozen. First Full
+      found only DEVX-006D/006C, parent task binding, and Atlas freshness failures;
+      rebuild governance authorities and final-commit Atlas artifact, then run one
+      parent-bound failure_fix_rerun.
+    acceptance_criteria: Parent-bound Full failure_fix PASS; preserve V1/V2/comparator
+      identities; complete V2 owner review and independent DQ authority before freeze;
+      no DQ/provider/cache/backtest/empirical/external/trading action.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.
+      First Full artifact outputs/validation_runtime/full_20260823T074719Z/test_runtime_summary.json
+      had 9376 passed/28 governance-freshness failures/3 skipped; measurement-contract
+      tests had no failure. Parent task bindings restored; Atlas disclosure and system-flow
+      seal prepared for 006D then 006C rebuild.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542a-full-parent-failure-governance-freshness-remediation-20260823-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-bd62b273449f6acca8f3dd317029bf4b
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
+  - Strategy governance / growth action-value exact measurement and joint decision
+    contract V1
+  - P0
+  - BLOCKED_OWNER_INPUT
+  - Project Owner reviews all eight V2 axes after engineering closeout; CANONICAL_DQ_PIT
+    requires independent serial DQ authority before freeze
+  - V2 remains DRAFT_FOR_OWNER_REVIEW and unfrozen. First Full found only DEVX-006D/006C,
+    parent task binding, and Atlas freshness failures; rebuild governance authorities
+    and final-commit Atlas artifact, then run one parent-bound failure_fix_rerun.
+  - Parent-bound Full failure_fix PASS; preserve V1/V2/comparator identities; complete
+    V2 owner review and independent DQ authority before freeze; no DQ/provider/cache/backtest/empirical/external/trading
+    action.
+  - 'Supporting requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.
+    First Full artifact outputs/validation_runtime/full_20260823T074719Z/test_runtime_summary.json
+    had 9376 passed/28 governance-freshness failures/3 skipped; measurement-contract
+    tests had no failure. Parent task bindings restored; Atlas disclosure and system-flow
+    seal prepared for 006D then 006C rebuild.'
+  docs_links:
+  - docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md
+  terminal: false
+  canonical_row_sha256: d89860a6985b9ce8fc5370d8f33275f12733d65f70867b1fef05d14d331a98c5
+last_event_id: task-event-bd62b273449f6acca8f3dd317029bf4b
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: b5abfa5f5ba753cbefc965a384f2baf723d511eb73f2d58a5ffe7d8868798f52
