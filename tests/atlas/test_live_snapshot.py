@@ -104,10 +104,12 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2542C_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2542D_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
-    assert bundle.status_object_zh == "策略增长主线独立复核整改与冻结就绪状态"
+    assert bundle.status_object_zh == (
+        "策略增长主线 DQ/PIT 与样本语义 successor 待独立复核及 Owner 冻结状态"
+    )
 
 
 def test_reader_decision_projection_separates_transport_from_dq_pit_promotion() -> None:

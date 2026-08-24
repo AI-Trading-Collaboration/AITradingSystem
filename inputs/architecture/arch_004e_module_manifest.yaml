@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1149
+module_count: 1151
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -15369,7 +15369,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.compatibility_authority
   path: src/ai_trading_system/platform/architecture/compatibility_authority.py
-  sha256: 5dc14c707874beb0ce51917e167f7d59f30fae7255488dc925810b305899b930
+  sha256: f81ed5a02ebcebf09772754d9b9d1a915bcf4bd88943c2a0762d10e1306d2381
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -21226,9 +21226,49 @@ modules:
   validation_tiers:
   - fast-unit
   shared_integration: false
+- module_id: src.ai_trading_system.strategy_growth_action_value_dq_pit_contract_v3
+  path: src/ai_trading_system/strategy_growth_action_value_dq_pit_contract_v3.py
+  sha256: 6de29c784574ff0a75722714209305e8173e6cc5d86f10995a50fe6a0b65e983
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
 - module_id: src.ai_trading_system.strategy_growth_action_value_freeze_readiness_contract
   path: src/ai_trading_system/strategy_growth_action_value_freeze_readiness_contract.py
   sha256: cf69f8afb7d86f98468ef169e7d4cd9f6dfaf312bb9caef648404090d92c7648
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.strategy_growth_action_value_freeze_readiness_contract_v4
+  path: src/ai_trading_system/strategy_growth_action_value_freeze_readiness_contract_v4.py
+  sha256: 29e6145c2c7efdce02ca66d403a8dc93385346a1050aa9abd96b4eb05fccb77a
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

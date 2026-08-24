@@ -1,0 +1,265 @@
+{
+  "schema_version": "compatibility_authority_fragment.v1",
+  "section": {
+    "authority_contract": {
+      "dual_write": false,
+      "fragment_identity": "CANONICAL_SECTION_SHA256",
+      "fragment_source_active": true,
+      "index_chain": "SHA256",
+      "legacy_append_allowed": false,
+      "rollback_mode": "FROZEN_LEGACY_PREFIX_ONLY"
+    },
+    "broker_action": "none",
+    "engineering_contract": {
+      "cost_reconciliation_session_keyed": true,
+      "excluded_invalid_propagates": true,
+      "expected_nonempty_zero_observed_terminal": "INVALID",
+      "pre_window_prior_session": "2021-02-19",
+      "right_censor_after_transitive_cluster_merge": true,
+      "target_session_count": 1202,
+      "target_session_inventory_lf_sha256": "d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0",
+      "zero_expected_terminal": "FAIL"
+    },
+    "production_effect": "none",
+    "report_catalog_flow_successor": {
+      "current_hash_authority": "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1.sources",
+      "entry_count": 3015,
+      "fragment_count": 192,
+      "fragment_shadow_active": false,
+      "index_path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+      "index_sha256": "391fd4a8463de2a5d2826fedf3363c2a96060d8bbba2730260dccaebaf4e6728",
+      "source_of_truth": "LEGACY_MONOLITH",
+      "target_count": 3
+    },
+    "research_boundary": {
+      "non_executable_pilot_values_freeze_ready": true,
+      "owner_exact_freeze_approval_required": true,
+      "real_dq_or_empirical_run_authorized": false,
+      "threshold_bundle_frozen": false
+    },
+    "schema_version": "trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction.v1",
+    "sources": [
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+        "sha256": "f02510c293cad55ae91e6d698c747734fdde1cb82663b8e28f9dde7655841e76"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/atlas/live_snapshot.yaml",
+        "sha256": "cf932ef6fd1f9c7d7e9a6d70969632f885ed39af85f89e166a053b032b0c2616"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/atlas/page_effectiveness.yaml",
+        "sha256": "45741ae1933e76a0f661ccc016f9f076517a55ab20f01dbff73bea478fe14c6b"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v2.yaml",
+        "sha256": "c9c74d5da0819f206ae59543dcab34a2f1f920687fd4bf646da49a4eabbbd327"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v3.yaml",
+        "sha256": "b84d8d3dbe2dded761e989c623469607c386297e59d61207bb478d3054523c2e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v3.yaml",
+        "sha256": "304b5de907bbc0858d2ca1f6786e9e325d5493572561b8e4cff71fa91ff05375"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v4.yaml",
+        "sha256": "e525e40eab86e5a8fd748a38cbfde390eb12ffa5acd05211da21ec85719e1a58"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/requirements/TRADING-2542D_Growth_Action_Value_DQ_PIT_And_Sample_Semantics_Freeze_Correction_V1.md",
+        "sha256": "6ba41ecfb3d9e63a1cd27a553a47d489304c29c22665712f3eb67e12314c432f"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/system_flow.md",
+        "sha256": "4d17fcfc769495dd3301fdf1effc492761b3b01bf87ea17a87bb4ac96b88ee0d"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/task_register.md",
+        "sha256": "d1f34d0001466d7bab7d1d7a33c2afa8f51ffe904120ec5610f12c9c8c220eca"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/task_register_completed.md",
+        "sha256": "37923da2817705d9ed73e42373bfc17560810655c44f7956a688a05fc3bb4d3d"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "sha256": "91023279d3209965f0ed8eb9ef2daed0eacc1e0b247a6fa81c5b18dd5f2aac23"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "sha256": "f8f500d67c7042b477ac9cc4ea955f89870ea3edad2435a02961d3851df2497f"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_module_manifest.yaml",
+        "sha256": "b8c4e5739649a491726fefe7685cbb6e64099020615528c4811a364e4015db40"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_test_manifest.yaml",
+        "sha256": "b9cbe9b64844f61c585402d10c60b5e435d469214625d1d799a7c7f8522149d3"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "sha256": "17b532f7feb0e72f6c5253512a2eebc0fb8a5b7fc033f416e24c157587ac98a7"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_005_task_registry_index.yaml",
+        "sha256": "0f4f1a2a0fe480f4946b0ec9435fe2ca58275e6d1efc228d60331de896477a6f"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+        "sha256": "391fd4a8463de2a5d2826fedf3363c2a96060d8bbba2730260dccaebaf4e6728"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+        "sha256": "6ceefde1393d139a4a875a032891901d9ca82b403700948442ce421e4354210e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "registry/development_tasks/56/5639c736aba8144507f4ba4b544ee0a4bd15bc19750824abcb588c8f0a325b8e.yaml",
+        "sha256": "0c23273db4ce3589557d29d61c0d65f1c14bded5813b4fb326dd018fe57c0629"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "scripts/render_atlas_strategy_research_page.py",
+        "sha256": "20f84c63802c43f7f9113bf9f6677c52b650b4841ad6bad6be58d0c2e301636d"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "sha256": "f81ed5a02ebcebf09772754d9b9d1a915bcf4bd88943c2a0762d10e1306d2381"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/strategy_growth_action_value_dq_pit_contract_v3.py",
+        "sha256": "6de29c784574ff0a75722714209305e8173e6cc5d86f10995a50fe6a0b65e983"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/strategy_growth_action_value_freeze_readiness_contract_v4.py",
+        "sha256": "29e6145c2c7efdce02ca66d403a8dc93385346a1050aa9abd96b4eb05fccb77a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/atlas/test_cited_query_renderer.py",
+        "sha256": "561dbcd241c6540d5de6ddc35210bec08eab8f168fede7dfc4b0d5db108929b0"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/atlas/test_live_snapshot.py",
+        "sha256": "15d2ffb771aff086d06991e5e0abd51a6f6fac6c9a3087b98840dd9068b0b9a1"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/atlas/test_page_effectiveness.py",
+        "sha256": "3ab6cc814ab1bb23d84ad1da8d08b211b0b409192482c87d69d3e01313ed5f90"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_004_refactor_policy.py",
+        "sha256": "0cbf96486508ece4e989757811fedebae26bdbdeaa934e0104235516d1b556dd"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_004g_deprecation.py",
+        "sha256": "8c24cc45dbbf35af971633280b88e884b37d3a44e30e698fcba4a3f64b39c42d"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_005_s5_task_source_cutover.py",
+        "sha256": "7bf1200faf81fc26e34f6d42939d163e507ae64f829e6ce4e850ec22511990d2"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006c_compatibility_authority.py",
+        "sha256": "6661a972f9b38b06ade5d1f78861f15e929d66276e08827a009b4ee3e7dc49bf"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "sha256": "c793ad43ca1edc53e7cecb1ea9580b57da8072b39fcf6219d9fc24401ea7ea5a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_strategy_growth_action_value_dq_pit_contract_v3.py",
+        "sha256": "fe0a87d7513a1c01dd4d28bc9d84ef241d01c33564147cab4cc7c1a6c13bb07c"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_strategy_growth_action_value_freeze_readiness_contract_v4.py",
+        "sha256": "a95b912949248ea6d8f07860a64952afecccb96c2811f8d2581429644447ae89"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_trading2452_architecture_contract.py",
+        "sha256": "4a257cdd1b403287f848fac459c3064efcdd0cc4a502c80d02cb9ea3521776eb"
+      }
+    ],
+    "status": "ACTIVE_DRAFT_PENDING_OWNER_FREEZE_DECISION",
+    "superseded_live_source_paths": [
+      "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+      "config/atlas/live_snapshot.yaml",
+      "config/atlas/page_effectiveness.yaml",
+      "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v2.yaml",
+      "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v3.yaml",
+      "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v3.yaml",
+      "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v4.yaml",
+      "docs/requirements/TRADING-2542D_Growth_Action_Value_DQ_PIT_And_Sample_Semantics_Freeze_Correction_V1.md",
+      "docs/system_flow.md",
+      "docs/task_register.md",
+      "docs/task_register_completed.md",
+      "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+      "inputs/architecture/arch_004e_architecture_fitness.yaml",
+      "inputs/architecture/arch_004e_module_manifest.yaml",
+      "inputs/architecture/arch_004e_test_manifest.yaml",
+      "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+      "inputs/architecture/arch_005_task_registry_index.yaml",
+      "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+      "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+      "registry/development_tasks/56/5639c736aba8144507f4ba4b544ee0a4bd15bc19750824abcb588c8f0a325b8e.yaml",
+      "scripts/render_atlas_strategy_research_page.py",
+      "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+      "src/ai_trading_system/strategy_growth_action_value_dq_pit_contract_v3.py",
+      "src/ai_trading_system/strategy_growth_action_value_freeze_readiness_contract_v4.py",
+      "tests/atlas/test_cited_query_renderer.py",
+      "tests/atlas/test_live_snapshot.py",
+      "tests/atlas/test_page_effectiveness.py",
+      "tests/test_arch_004_refactor_policy.py",
+      "tests/test_arch_004g_deprecation.py",
+      "tests/test_arch_005_s5_task_source_cutover.py",
+      "tests/test_devx_006c_compatibility_authority.py",
+      "tests/test_devx_006d_report_catalog_flow_authority.py",
+      "tests/test_strategy_growth_action_value_dq_pit_contract_v3.py",
+      "tests/test_strategy_growth_action_value_freeze_readiness_contract_v4.py",
+      "tests/test_trading2452_architecture_contract.py"
+    ],
+    "supersession": {
+      "current_hash_authority": "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1.sources",
+      "historical_hashes_rewritten": false,
+      "inherited_supersession_authority": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1"
+    },
+    "task_id": "TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1"
+  },
+  "section_id": "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1",
+  "section_sha256": "916039be01ed2159a78e3f0478db99e854d69f89c47b7af10558cf46929b1bcc"
+}

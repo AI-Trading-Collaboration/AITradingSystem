@@ -33,6 +33,10 @@ DEVX_009_SECTION = (
     "phase_devx_009_parallel_integration_publication_fence_and_"
     "generated_state_rebuild_v1"
 )
+TRADING_2542D_SECTION = (
+    "phase_trading_2542d_growth_action_value_dq_pit_and_sample_"
+    "semantics_freeze_correction_v1"
+)
 
 
 def _write_fixture_authority(
@@ -137,11 +141,11 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 312
+    assert len(merged) == 313
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == DEVX_009_SECTION
+    assert next(reversed(merged)) == TRADING_2542D_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
@@ -167,6 +171,18 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
         "generated_state_rebuild_once": True,
         "full_dispatch_claim_is_atomic": True,
         "closeout_receipt_is_replayable": True,
+    }
+    assert merged[TRADING_2542D_SECTION]["engineering_contract"] == {
+        "target_session_count": 1202,
+        "target_session_inventory_lf_sha256": (
+            "d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0"
+        ),
+        "pre_window_prior_session": "2021-02-19",
+        "excluded_invalid_propagates": True,
+        "zero_expected_terminal": "FAIL",
+        "expected_nonempty_zero_observed_terminal": "INVALID",
+        "right_censor_after_transitive_cluster_merge": True,
+        "cost_reconciliation_session_keyed": True,
     }
     assert merged[DEVX_006C_SECTION]["authority_contract"] == {
         "dual_write": False,

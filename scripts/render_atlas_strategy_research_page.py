@@ -8,8 +8,12 @@ from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = REPOSITORY_ROOT / "src"
-if str(SOURCE_ROOT) not in sys.path:
-    sys.path.insert(0, str(SOURCE_ROOT))
+source_root_text = str(SOURCE_ROOT)
+# An editable install may already add this directory after PYTHONPATH entries.
+# Reinsert it at index zero so the exact repository is always the import authority.
+if source_root_text in sys.path:
+    sys.path.remove(source_root_text)
+sys.path.insert(0, str(SOURCE_ROOT))
 
 from ai_trading_system.atlas.cited_query_renderer import (  # noqa: E402
     build_cited_query_showcase,

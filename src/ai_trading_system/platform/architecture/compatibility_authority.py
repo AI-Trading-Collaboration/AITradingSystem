@@ -744,6 +744,31 @@ def build_repository_authority(
                 devx_009_fragment_bytes,
             )
         )
+    trading_2542d_policy_path = (
+        root
+        / "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v4.yaml"
+    )
+    if trading_2542d_policy_path.exists():
+        trading_2542d_section_id, trading_2542d_section = _trading_2542d_section(
+            root,
+            policy=policy,
+        )
+        (
+            trading_2542d_relative,
+            trading_2542d_record,
+            trading_2542d_fragment_bytes,
+        ) = render_fragment(
+            section_id=trading_2542d_section_id,
+            section=trading_2542d_section,
+        )
+        rendered_fragments.append(
+            (
+                trading_2542d_section_id,
+                trading_2542d_relative,
+                trading_2542d_record,
+                trading_2542d_fragment_bytes,
+            )
+        )
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -1594,6 +1619,146 @@ def _devx_009_section(
             "data_or_model_research_started": False,
             "production_effect": "none",
             "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _trading_2542d_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    section_id = (
+        "phase_trading_2542d_growth_action_value_dq_pit_and_sample_"
+        "semantics_freeze_correction_v1"
+    )
+    task_id = (
+        "TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_"
+        "SEMANTICS_FREEZE_CORRECTION_V1"
+    )
+    source_paths = [
+        "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+        "config/atlas/live_snapshot.yaml",
+        "config/atlas/page_effectiveness.yaml",
+        "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v2.yaml",
+        "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v3.yaml",
+        "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v3.yaml",
+        "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v4.yaml",
+        (
+            "docs/requirements/TRADING-2542D_Growth_Action_Value_DQ_PIT_And_"
+            "Sample_Semantics_Freeze_Correction_V1.md"
+        ),
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "docs/task_register_completed.md",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "inputs/architecture/arch_005_task_registry_index.yaml",
+        "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+        "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+        (
+            "registry/development_tasks/56/"
+            "5639c736aba8144507f4ba4b544ee0a4bd15bc19750824abcb588c8f0a325b8e.yaml"
+        ),
+        "scripts/render_atlas_strategy_research_page.py",
+        "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "src/ai_trading_system/strategy_growth_action_value_dq_pit_contract_v3.py",
+        (
+            "src/ai_trading_system/"
+            "strategy_growth_action_value_freeze_readiness_contract_v4.py"
+        ),
+        "tests/atlas/test_cited_query_renderer.py",
+        "tests/atlas/test_live_snapshot.py",
+        "tests/atlas/test_page_effectiveness.py",
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_arch_005_s5_task_source_cutover.py",
+        "tests/test_devx_006c_compatibility_authority.py",
+        "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "tests/test_strategy_growth_action_value_dq_pit_contract_v3.py",
+        "tests/test_strategy_growth_action_value_freeze_readiness_contract_v4.py",
+        "tests/test_trading2452_architecture_contract.py",
+    ]
+    source_paths = sorted(source_paths, key=str.casefold)
+    report_flow_index_path = (
+        "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json"
+    )
+    report_flow_index_content = _regular_path(
+        root,
+        report_flow_index_path,
+        "trading_2542d.report_flow_index",
+    ).read_bytes()
+    report_flow_index = _strict_json_bytes(
+        report_flow_index_content,
+        report_flow_index_path,
+    )
+    raw_report_flow_targets = report_flow_index.get("targets")
+    if not isinstance(raw_report_flow_targets, list) or not raw_report_flow_targets:
+        _fail("AUTHORITY_TRADING_2542D_REPORT_FLOW_TARGETS_INVALID", report_flow_index_path)
+    report_flow_targets = [
+        _mapping(target, f"trading_2542d.report_flow_targets[{position}]")
+        for position, target in enumerate(raw_report_flow_targets)
+    ]
+    return section_id, {
+        "schema_version": (
+            "trading_2542d_growth_action_value_dq_pit_and_sample_semantics_"
+            "freeze_correction.v1"
+        ),
+        "task_id": task_id,
+        "status": "ACTIVE_DRAFT_PENDING_OWNER_FREEZE_DECISION",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_devx_009_parallel_integration_publication_fence_and_"
+                "generated_state_rebuild_v1"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "engineering_contract": {
+            "target_session_count": 1202,
+            "target_session_inventory_lf_sha256": (
+                "d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0"
+            ),
+            "pre_window_prior_session": "2021-02-19",
+            "excluded_invalid_propagates": True,
+            "zero_expected_terminal": "FAIL",
+            "expected_nonempty_zero_observed_terminal": "INVALID",
+            "right_censor_after_transitive_cluster_merge": True,
+            "cost_reconciliation_session_keyed": True,
+        },
+        "report_catalog_flow_successor": {
+            "source_of_truth": report_flow_index["source_of_truth"],
+            "fragment_shadow_active": False,
+            "index_path": report_flow_index_path,
+            "index_sha256": _digest(report_flow_index_content),
+            "target_count": len(report_flow_targets),
+            "entry_count": sum(
+                _positive_or_zero_int(
+                    target.get("entry_count"), "trading_2542d.entry_count"
+                )
+                for target in report_flow_targets
+            ),
+            "fragment_count": sum(
+                _positive_or_zero_int(
+                    target.get("fragment_count"), "trading_2542d.fragment_count"
+                )
+                for target in report_flow_targets
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "research_boundary": {
+            "threshold_bundle_frozen": False,
+            "non_executable_pilot_values_freeze_ready": True,
+            "real_dq_or_empirical_run_authorized": False,
+            "owner_exact_freeze_approval_required": True,
         },
         "production_effect": "none",
         "broker_action": "none",

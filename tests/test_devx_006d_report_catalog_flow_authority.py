@@ -127,7 +127,7 @@ def test_repository_authority_is_fresh_lossless_and_inactive() -> None:
     assert result["source_of_truth"] == "LEGACY_MONOLITH"
     assert result["fragment_shadow_active"] is False
     assert result["target_count"] == 3
-    assert result["entry_count"] == 3011
+    assert result["entry_count"] == 3015
     assert 1 <= result["fragment_count"] <= 192
     assert policy["contract"] == {
         "source_of_truth": "LEGACY_MONOLITH",
@@ -147,12 +147,13 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     section = merged["phase_devx_006d_report_catalog_flow_lossless_fragmentation"]
     fragment_authority = section["report_catalog_flow_fragment_authority"]
     successor = merged[
-        "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1"
+        "phase_trading_2542d_growth_action_value_dq_pit_and_sample_"
+        "semantics_freeze_correction_v1"
     ]["report_catalog_flow_successor"]
 
     assert next(reversed(merged)) == (
-        "phase_devx_009_parallel_integration_publication_fence_and_"
-        "generated_state_rebuild_v1"
+        "phase_trading_2542d_growth_action_value_dq_pit_and_sample_"
+        "semantics_freeze_correction_v1"
     )
     assert fragment_authority["source_of_truth"] == "LEGACY_MONOLITH"
     assert fragment_authority["fragment_shadow_active"] is False
@@ -163,7 +164,7 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     assert successor["source_of_truth"] == "LEGACY_MONOLITH"
     assert successor["fragment_shadow_active"] is False
     assert successor["target_count"] == 3
-    assert successor["entry_count"] == 3011
+    assert successor["entry_count"] == 3015
     assert successor["fragment_count"] == 192
 
 
@@ -185,8 +186,8 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         (
             "system_flow",
             "docs/system_flow.md",
-            "ead1fea7f2b00b69045f80f79a70efeafa0ce63bdc74ac99bb25b89a4f98c4a3",
-            1082,
+            "4d17fcfc769495dd3301fdf1effc492761b3b01bf87ea17a87bb4ac96b88ee0d",
+            1086,
         ),
     ],
 )

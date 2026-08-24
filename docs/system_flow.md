@@ -9218,6 +9218,49 @@ status 字段把 pilot numeric 提升为 executable authority。只有 successor
 exact approval/freeze 和另一个固定 scope 的 R1 run manifest 都完成后，才允许后继任务评估是否执行真实
 primary-window DQ；本任务不产生策略价值或投资结论。
 
+## TRADING-2542D DQ/PIT 与 sample semantics successor correction
+
+第二轮 Web Pro review 在 exact commit `e5266c9aadfba067060b013d83ec26bd4f065604` 上要求
+`REQUEST_NEW_VERSION_BEFORE_OWNER_FREEZE_DECISION`。本地复现确认 DQ/PIT V2 的 target-only prior
+会使首个 target session 缺少 prior，excluded fast path 会掩盖 identity/PIT/quote invalid，通用
+contributor reasons 会把 zero-expected `FAIL` 与 missing-observed `INVALID` 混淆；V3 sample helper 还会
+在 transitive merge 前丢掉 right-censored raw tail，留下本应整体排除的 completed cluster。旧 V3 与
+DQ/PIT V2 保持 immutable，由 V4/V3 successor 修正。
+
+```text
+immutable exact sheet V3 + immutable DQ/PIT V2
+  + second independent-review dispositions
+  -> strategy_growth_action_value_canonical_dq_pit_contract_v3
+       -> exact target inventory = 2021-02-22..2025-12-02 / 1202 sessions
+       -> independent pre-window prior = 2021-02-19 (never a 1203rd target session)
+       -> one typed canonical-hash-rooted run authority binds contract, sessions, prior,
+          identity, per-session contributor manifests and evidence scope
+       -> validate identity/PIT/timestamp/quote before noncontributing EXCLUDED
+       -> zero expected contributors = FAIL
+       -> expected nonempty but zero/missing observed contributors = INVALID
+       -> synthetic numerics derive only from loaded V3 YAML exact values
+       -> 120 / 0.20 / OI 10 / volume 1 are non-executable pilot-freeze-ready;
+          executable/real-evidence authority remains unavailable
+  -> strategy_growth_action_value_threshold_exact_value_sheet_v4
+       -> preserve NON_BETA_ACTION_VALUE, NET_OF_COST_RETURN,
+          ACTUAL_PATH_DRAWDOWN_REGRESSION, FALSE_RISK_OFF_COST,
+          ACTUAL_PATH_TURNOVER and LEVERAGE_BETA_ATTRIBUTION exactly from V3
+       -> bind CANONICAL_DQ_PIT to DQ/PIT V3
+       -> merge complete raw episode clusters before right-censor exclusion
+       -> any connected right-censored member excludes the entire cluster
+       -> reconcile gross/net/cost by unique session key, not positional order
+  -> terminal = NEW_VERSION_DRAFT_COMPLETE_PENDING_OWNER_FREEZE_DECISION
+  -> canonical task event + requirement
+       -> Atlas page_effectiveness task coverage includes TRADING-2542D
+       -> Atlas live_snapshot current mainline/blocker/next action = TRADING-2542D
+       -> canonical Atlas writer always places this repository src first in sys.path
+  -> real provider/cache/DQ/backtest/empirical/production/broker remain closed
+```
+
+V3 DQ/PIT 的 1202/1202 synthetic `GLOBAL_PASS` 只证明机械合同可达，不是 primary-window data PASS。
+V4 的 exact values 也仍未冻结；Owner 审阅 V4 后，真实证据只能由另一个固定 code/data identity、
+zero-order/zero-fill 且单次计数的 R1 manifest 启动。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

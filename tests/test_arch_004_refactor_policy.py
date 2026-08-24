@@ -3880,7 +3880,11 @@ DEVX_009_PUBLICATION_FENCE_SECTION = (
     "phase_devx_009_parallel_integration_publication_fence_and_"
     "generated_state_rebuild_v1"
 )
-LATEST_COMPATIBILITY_SECTION = DEVX_009_PUBLICATION_FENCE_SECTION
+TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION = (
+    "phase_trading_2542d_growth_action_value_dq_pit_and_sample_"
+    "semantics_freeze_correction_v1"
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -13045,6 +13049,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION,
         DEVX_007_V2_SECTION,
         DEVX_009_PUBLICATION_FENCE_SECTION,
+        TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13134,6 +13139,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION,
         DEVX_007_V2_SECTION,
         DEVX_009_PUBLICATION_FENCE_SECTION,
+        TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -14074,7 +14080,30 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if DEVX_009_PUBLICATION_FENCE_SECTION in baseline:
+    if TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION in baseline:
+        phase = baseline[TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION]
+        current_superseded_paths = frozenset(
+            str(path) for path in phase["superseded_live_source_paths"]
+        )
+        assert (
+            _latest_active_source_mismatches(TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION)
+            <= current_superseded_paths
+        )
+        inherited_superseded_paths = frozenset(
+            str(path)
+            for section in (
+                DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION,
+                DEVX_009_PUBLICATION_FENCE_SECTION,
+            )
+            for path in baseline[section]["superseded_live_source_paths"]
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2504_qqq_options_owner_decision_manifest_all_current_authority_paths()
+            | inherited_superseded_paths
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION
+    elif DEVX_009_PUBLICATION_FENCE_SECTION in baseline:
         phase = baseline[DEVX_009_PUBLICATION_FENCE_SECTION]
         current_superseded_paths = frozenset(
             str(path) for path in phase["superseded_live_source_paths"]
@@ -24277,7 +24306,7 @@ def test_devx_007_v2_has_trading_2542c_and_devx_009_successor_authority() -> Non
     assert list(baseline).index(TRADING_2542C_REVIEW_REMEDIATION_SECTION) < list(
         baseline
     ).index(DEVX_009_PUBLICATION_FENCE_SECTION)
-    assert next(reversed(baseline)) == DEVX_009_PUBLICATION_FENCE_SECTION
+    assert next(reversed(baseline)) == TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION
     phase = baseline[DEVX_007_V2_SECTION]
     assert phase["schema_version"] == (
         "devx_007_web_pro_git_review_skill_explicit_submission.v2"
