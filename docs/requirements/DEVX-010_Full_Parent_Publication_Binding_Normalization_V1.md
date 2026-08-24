@@ -2,7 +2,7 @@
 
 ## 状态
 
-- 当前状态：`VALIDATING`
+- 当前状态：`DONE`
 - 下一责任方：`integration-coordinator`
 - 来源：DEVX-009 v5 在 Full 实际派发前触发 `PUBLICATION_FULL_PARENT_MISMATCH: missing-side`
 - 生产影响：`none`
@@ -48,3 +48,6 @@
 - 2026-08-24：完成结构化 `parent_run.summary_path` 适配和非 Full 延迟消费规则；
   focused regression `83 passed`，Ruff PASS，SINGLE_LANE LANE/INTEGRATION
   preflight PASS。进入绑定真实失败父运行的最终候选验证。
+- 2026-08-24：真实 v3 failed Full parent 已在 v6 transaction 中通过 LANE
+  preflight；task-source mutation 不再被 parent binding 误阻断。终态候选继续由
+  transaction 在 Full、local-main FF 与 ordinary push 之前 fail closed。

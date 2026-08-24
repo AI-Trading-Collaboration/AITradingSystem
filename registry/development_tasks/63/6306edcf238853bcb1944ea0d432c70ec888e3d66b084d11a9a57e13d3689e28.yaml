@@ -18,8 +18,8 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 绑定 v3 failed Full parent 建立最终 publication
-    transaction，验证真实派发、重跑四个正式层级与 Full。
+  unstructured_legacy_blocker_or_next_step: 无；由 v6/v7 publication transaction 完成最终正式验证、local-main
+    fast-forward、普通推送与清理。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 合法 failure_fix_rerun parent 与事务 exact-byte binding 一致时可派发；非法或不一致 parent
@@ -81,21 +81,47 @@ events:
   - change:DEVX-010-implementation-validating-20260824-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-346ff85b05e5fc37ffc04e31623729d3
+- schema_version: task_event.v1
+  task_id: DEVX-010_FULL_PARENT_PUBLICATION_BINDING_NORMALIZATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-24T03:39:00+00:00'
+  actor: integration-coordinator
+  change_id: DEVX-010-implementation-complete-20260824-v1
+  lane_id: null
+  base_commit: 51b8d33a3e0fb69e129df772492d4d36c4b853f5
+  previous_state_event_id: task-event-346ff85b05e5fc37ffc04e31623729d3
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: integration-coordinator
+    blocker_or_next_step: 无；由 v6/v7 publication transaction 完成最终正式验证、local-main fast-forward、普通推送与清理。
+    acceptance_criteria: 合法 failure_fix_rerun parent 与事务 exact-byte binding 一致时可派发；非法或不一致
+      parent 继续 fail closed；最终候选四层验证和 Full 均 PASS。
+    notes: 结构化 parent_run.summary_path 与事务 exact-byte binding 已正确衔接；非 Full 校验延迟消费
+      parent，显式/Full 消费仍 fail closed；focused regression 83 passed，Ruff、LANE/INTEGRATION
+      preflight 及真实 parent-bound LANE preflight 均 PASS。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:DEVX-010-implementation-complete-20260824-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0f9f5616bb7d11f9561908a55aab9c2b
 projection:
   legacy_first_eight_cells:
   - DEVX-010_FULL_PARENT_PUBLICATION_BINDING_NORMALIZATION_V1
   - Full parent publication binding 规范化与回归验证
   - P1
-  - VALIDATING
+  - DONE
   - integration-coordinator
-  - 绑定 v3 failed Full parent 建立最终 publication transaction，验证真实派发、重跑四个正式层级与 Full。
+  - 无；由 v6/v7 publication transaction 完成最终正式验证、local-main fast-forward、普通推送与清理。
   - 合法 failure_fix_rerun parent 与事务 exact-byte binding 一致时可派发；非法或不一致 parent 继续 fail
     closed；最终候选四层验证和 Full 均 PASS。
-  - 结构化 parent_run.summary_path 适配与延迟父绑定消费已实现；focused regression 83 passed，Ruff PASS，SINGLE_LANE
-    LANE/INTEGRATION preflight PASS。
+  - 结构化 parent_run.summary_path 与事务 exact-byte binding 已正确衔接；非 Full 校验延迟消费 parent，显式/Full
+    消费仍 fail closed；focused regression 83 passed，Ruff、LANE/INTEGRATION preflight 及真实
+    parent-bound LANE preflight 均 PASS。
   docs_links: []
-  terminal: false
-  canonical_row_sha256: 8ee355159743caa8b1f67a7bd560b0885405ab8f01dfb692b1330b447ebfc5fb
-last_event_id: task-event-346ff85b05e5fc37ffc04e31623729d3
+  terminal: true
+  canonical_row_sha256: c044ef887393fe45274ca79a77d38552df8761d64516f17de9848b6275bdda48
+last_event_id: task-event-0f9f5616bb7d11f9561908a55aab9c2b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: cad1fccdb7a258c4aa6a3a99c3b728d41acf36091e0e4a3028142abd3c56c42b
+fragment_checksum: 5b2db91a7f0364be3a032c3d072ed234141dbaeca5cbb12f5c2c34756b82a87f
