@@ -83,6 +83,10 @@ TRADING_2542C_REMEDIATION_PHASE_KEY = (
     "phase_trading_2542c_growth_action_value_independent_review_"
     "remediation_and_freeze_readiness_v1"
 )
+DEVX_009_PUBLICATION_FENCE_PHASE_KEY = (
+    "phase_devx_009_parallel_integration_publication_fence_and_"
+    "generated_state_rebuild_v1"
+)
 TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
         ("docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md"),
@@ -189,6 +193,7 @@ def _assert_historical_source_is_current_or_superseded(
                 ARCH_005_S5_CANONICAL_TASK_SOURCE_PHASE_KEY,
                 DEVX_007_EXPLICIT_SUBMISSION_PHASE_KEY,
                 TRADING_2542C_REMEDIATION_PHASE_KEY,
+                DEVX_009_PUBLICATION_FENCE_PHASE_KEY,
             }
     ):
         section_ids = list(baseline)

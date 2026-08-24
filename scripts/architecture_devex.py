@@ -11,6 +11,8 @@ from ai_trading_system.platform.architecture import (
     build_module_manifest,
     build_test_manifest,
     create_scaffold,
+    load_deprecation_policy,
+    scan_deprecation_inventory,
     select_impacted_tests,
     write_generated_architecture_artifact,
 )
@@ -22,6 +24,9 @@ MODULE_MANIFEST_PATH = PROJECT_ROOT / "inputs/architecture/arch_004e_module_mani
 TEST_MANIFEST_PATH = PROJECT_ROOT / "inputs/architecture/arch_004e_test_manifest.yaml"
 AGGREGATE_INDEX_PATH = PROJECT_ROOT / "inputs/architecture/arch_004e_aggregate_shadow_index.yaml"
 FITNESS_PATH = PROJECT_ROOT / "inputs/architecture/arch_004e_architecture_fitness.yaml"
+DEPRECATION_INVENTORY_PATH = (
+    PROJECT_ROOT / "inputs/architecture/arch_004g_deprecation_inventory.yaml"
+)
 DEPENDENCY_POLICY_PATH = PROJECT_ROOT / "config/architecture/arch_004c_dependency_policy.yaml"
 DIRECT_WRITER_BASELINE_PATH = (
     PROJECT_ROOT / "inputs/architecture/arch_004c_direct_writer_baseline.yaml"
@@ -76,6 +81,12 @@ def _generate() -> int:
     write_generated_architecture_artifact(AGGREGATE_INDEX_PATH, aggregate)
     fitness = _fitness()
     write_generated_architecture_artifact(FITNESS_PATH, fitness)
+    if fitness["status"] == "PASS":
+        deprecation_inventory = scan_deprecation_inventory(load_deprecation_policy())
+        write_generated_architecture_artifact(
+            DEPRECATION_INVENTORY_PATH,
+            deprecation_inventory.to_dict(),
+        )
     print(json.dumps(fitness, ensure_ascii=False, indent=2))
     return 0 if fitness["status"] == "PASS" else 1
 

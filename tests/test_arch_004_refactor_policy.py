@@ -3876,7 +3876,11 @@ TRADING_2542C_REVIEW_REMEDIATION_SECTION = (
     "phase_trading_2542c_growth_action_value_independent_review_"
     "remediation_and_freeze_readiness_v1"
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2542C_REVIEW_REMEDIATION_SECTION
+DEVX_009_PUBLICATION_FENCE_SECTION = (
+    "phase_devx_009_parallel_integration_publication_fence_and_"
+    "generated_state_rebuild_v1"
+)
+LATEST_COMPATIBILITY_SECTION = DEVX_009_PUBLICATION_FENCE_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -13040,6 +13044,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         DEVX_006D_REPORT_CATALOG_FLOW_AUTHORITY_SECTION,
         ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION,
         DEVX_007_V2_SECTION,
+        DEVX_009_PUBLICATION_FENCE_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13128,6 +13133,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         DEVX_006D_REPORT_CATALOG_FLOW_AUTHORITY_SECTION,
         ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION,
         DEVX_007_V2_SECTION,
+        DEVX_009_PUBLICATION_FENCE_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -14068,7 +14074,28 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if DEVX_007_V2_SECTION in baseline:
+    if DEVX_009_PUBLICATION_FENCE_SECTION in baseline:
+        phase = baseline[DEVX_009_PUBLICATION_FENCE_SECTION]
+        current_superseded_paths = frozenset(
+            str(path) for path in phase["superseded_live_source_paths"]
+        )
+        assert (
+            _latest_active_source_mismatches(DEVX_009_PUBLICATION_FENCE_SECTION)
+            <= current_superseded_paths
+        )
+        inherited_superseded_paths = frozenset(
+            str(path)
+            for path in baseline[DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION][
+                "superseded_live_source_paths"
+            ]
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2504_qqq_options_owner_decision_manifest_all_current_authority_paths()
+            | inherited_superseded_paths
+            | current_superseded_paths
+        )
+        authority_section = DEVX_009_PUBLICATION_FENCE_SECTION
+    elif DEVX_007_V2_SECTION in baseline:
         phase = baseline[DEVX_007_V2_SECTION]
         current_superseded_paths = frozenset(
             str(path) for path in phase["superseded_live_source_paths"]
@@ -24239,7 +24266,7 @@ def test_devx_007_is_append_only_current_hash_authority() -> None:
     }
 
 
-def test_devx_007_v2_has_trading_2542c_successor_authority() -> None:
+def test_devx_007_v2_has_trading_2542c_and_devx_009_successor_authority() -> None:
     baseline = _compatibility_baseline()
     assert list(baseline).index(ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION) < list(
         baseline
@@ -24247,7 +24274,10 @@ def test_devx_007_v2_has_trading_2542c_successor_authority() -> None:
     assert list(baseline).index(DEVX_007_V2_SECTION) < list(baseline).index(
         TRADING_2542C_REVIEW_REMEDIATION_SECTION
     )
-    assert next(reversed(baseline)) == TRADING_2542C_REVIEW_REMEDIATION_SECTION
+    assert list(baseline).index(TRADING_2542C_REVIEW_REMEDIATION_SECTION) < list(
+        baseline
+    ).index(DEVX_009_PUBLICATION_FENCE_SECTION)
+    assert next(reversed(baseline)) == DEVX_009_PUBLICATION_FENCE_SECTION
     phase = baseline[DEVX_007_V2_SECTION]
     assert phase["schema_version"] == (
         "devx_007_web_pro_git_review_skill_explicit_submission.v2"
@@ -24287,6 +24317,42 @@ def test_devx_007_v2_has_trading_2542c_successor_authority() -> None:
     source_paths = [str(source["path"]) for source in sources]
     assert source_paths == sorted(source_paths, key=str.casefold)
     assert set(source_paths) == DEVX_007_V2_SOURCE_PATHS
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _source_sha256(source) == source["sha256"], source["path"]
+    assert phase["production_effect"] == "none"
+    assert phase["broker_action"] == "none"
+
+
+def test_devx_009_is_latest_append_only_publication_authority() -> None:
+    baseline = _compatibility_baseline()
+    phase = baseline[DEVX_009_PUBLICATION_FENCE_SECTION]
+
+    assert phase["schema_version"] == (
+        "devx_009_parallel_integration_publication_fence_and_"
+        "generated_state_rebuild.v1"
+    )
+    assert phase["task_id"] == (
+        "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_"
+        "GENERATED_STATE_REBUILD_V1"
+    )
+    assert phase["status"] == "DONE"
+    assert phase["publication_contract"] == {
+        "single_active_coordinator": True,
+        "expected_main_compare_and_set": True,
+        "generated_state_rebuild_once": True,
+        "full_dispatch_claim_is_atomic": True,
+        "closeout_receipt_is_replayable": True,
+    }
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2542C_REVIEW_REMEDIATION_SECTION,
+        "current_hash_authority": f"{DEVX_009_PUBLICATION_FENCE_SECTION}.sources",
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert set(source_paths) == set(phase["superseded_live_source_paths"])
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
         assert _source_sha256(source) == source["sha256"], source["path"]

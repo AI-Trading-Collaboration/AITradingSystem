@@ -57,7 +57,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/system_flow.md",
-        "sha256": "f6980b1f115605dba09fc84420f1f7176f7d5f5b274e55c16a5b1c928e674c52"
+        "sha256": "bf7193be1019e145dc08c77ed8015ae8093a0b029032012e2ca553d8cd2c60dc"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -67,32 +67,32 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "a255ec0cd10f67de3435c21088a92dea080cc361b639cab4b405f3b628bf5182"
+        "sha256": "0b9b067a4fd8cb677aef0672995db8d4a12aa70fe230e4af27f6dabc238fcb94"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
-        "sha256": "4fddf419ee5e592c8fc210d97a7dd07e094c4492565c30bb71b3500e1a341491"
+        "sha256": "be5cc9eafeb03e3e457f43d9f0c3e6ce9cc4ce91074283f468a3f9adb5da5121"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "5e4849130a403b065047d64d54aa155907f8397bcd0e5e250605b60d3de84b04"
+        "sha256": "2b00238313c17df00d2076849f1a604128dbd917b8e192a71cb72f828e82a30e"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "782becaa2a91b755716fe92691e9b1935ca49b16d065b152f6b9085c23fc2345"
+        "sha256": "d2556b2230d2a06eead65079df8deeebed645d6124057d91ed1a4f2dbe4e8e07"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
-        "sha256": "153f70624c314fa5d746f0e022af727d9099db1174c520fe871c34167562f541"
+        "sha256": "37d7d9996a2670526565148b8c8682d9b10e184eab67da641fd60c003e785ae4"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "c6f3f0d2a343354a8bada09f94367e56b2f33d7267b3109c922c55f8c3a61737"
+        "sha256": "d6564d16c73c225813f2b656fda2243821e36657506a173b11914bc37cf0c8fd"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -107,7 +107,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
-        "sha256": "22bcc6b1b99b2fe24dd33590007a0eed73250dcb2cd032c927a6d1649c9c80d5"
+        "sha256": "fca9413218c5f5071392bbd9d3f00ba5c0d38e461581b953755164848873308c"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -147,17 +147,17 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004g_deprecation.py",
-        "sha256": "7581ffe070c837c6f8cb0f70cbfcb8342f38d43a3e5bc27aef5e527ab497c740"
+        "sha256": "3d284b0701358fdb7a20e52b51fef2eda30c8414c19b54fd762b5767f9e764dd"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_005_s5_task_source_cutover.py",
-        "sha256": "3e8d3f59f554d3d035f730ba1cc920de02b160e094da7f96cc31e15c600874b6"
+        "sha256": "31a3170d8ffc8c0609b17277b512446b14fcd4c06bda891e07de8391a9faa5c1"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006c_compatibility_authority.py",
-        "sha256": "b268322b7e428f0a2bd51edb8b37d419231d2c59c281eeddb8a793b0886051b0"
+        "sha256": "96273c7b3c7be03cec1582c6c24e69cc1c33889639b4da94afdb2b6992ac5310"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -177,7 +177,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_trading2452_architecture_contract.py",
-        "sha256": "1c488a6671f500df2f607c83e3bb0d1e519684b71d148be6b507bed234fe1567"
+        "sha256": "d46fdf2be5e532940224fe3c68bb9b5468522457339ddd9e81335c5ab54f2ce6"
       }
     ],
     "status": "ACTIVE_DRAFT_PENDING_SECOND_REVIEW_AND_OWNER_APPROVAL",
@@ -223,5 +223,5 @@
     "task_id": "TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1"
   },
   "section_id": "phase_trading_2542c_growth_action_value_independent_review_remediation_and_freeze_readiness_v1",
-  "section_sha256": "0cac0f8a39ede57bf20e45a51caa0258b79b3675fd3cd8b63683d8ea8edc87da"
+  "section_sha256": "4256cbf78a37b07ebc1933405eb8cd385e40ff3d07e13077c37ef63497179de2"
 }

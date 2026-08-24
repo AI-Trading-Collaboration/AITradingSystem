@@ -724,6 +724,26 @@ def build_repository_authority(
                 trading_2542c_fragment_bytes,
             )
         )
+    devx_009_policy_path = (
+        root / "config/architecture/arch_005_integration_publication_fence.yaml"
+    )
+    if devx_009_policy_path.exists():
+        devx_009_section_id, devx_009_section = _devx_009_section(
+            root,
+            policy=policy,
+        )
+        devx_009_relative, devx_009_record, devx_009_fragment_bytes = render_fragment(
+            section_id=devx_009_section_id,
+            section=devx_009_section,
+        )
+        rendered_fragments.append(
+            (
+                devx_009_section_id,
+                devx_009_relative,
+                devx_009_record,
+                devx_009_fragment_bytes,
+            )
+        )
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -1399,6 +1419,109 @@ def _trading_2542c_section(
             "real_dq_or_empirical_run_authorized": False,
             "second_independent_review_required": True,
             "owner_exact_value_approval_required": True,
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _devx_009_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    section_id = (
+        "phase_devx_009_parallel_integration_publication_fence_and_"
+        "generated_state_rebuild_v1"
+    )
+    task_id = (
+        "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_"
+        "GENERATED_STATE_REBUILD_V1"
+    )
+    source_paths = [
+        "AGENTS.md",
+        "config/architecture/arch_005_integration_publication_fence.yaml",
+        "docs/architecture/dual_lane_development_operating_model.md",
+        "docs/artifact_catalog.md",
+        "docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md",
+        (
+            "docs/requirements/DEVX-009_Parallel_Integration_Publication_Fence_And_"
+            "Generated_State_Rebuild_V1.md"
+        ),
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "docs/task_register_completed.md",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "inputs/architecture/arch_005_s5_consumer_inventory.yaml",
+        "inputs/architecture/arch_005_task_registry_index.yaml",
+        (
+            "registry/development_tasks/90/"
+            "9026a496d7fcc53a31a98102a845b2fa46a3c2060116882476d2175e6239e586.yaml"
+        ),
+        "scripts/architecture_arch005_publication_fence.py",
+        "scripts/architecture_arch005_task_source.py",
+        "scripts/architecture_devex.py",
+        "scripts/run_validation_tier.py",
+        (
+            "src/ai_trading_system/platform/architecture/"
+            "compatibility_authority.py"
+        ),
+        (
+            "src/ai_trading_system/platform/architecture/"
+            "integration_publication_fence.py"
+        ),
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_arch_005_integration_publication_fence.py",
+        "tests/test_arch_005_s5_task_source_cutover.py",
+        "tests/test_devx_006c_compatibility_authority.py",
+        "tests/test_governed_development_skill.py",
+        "tests/test_trading2452_architecture_contract.py",
+        "tests/test_validation_tier_script.py",
+        "tools/codex_skills/run-governed-development/agents/openai.yaml",
+        (
+            "tools/codex_skills/run-governed-development/references/"
+            "workflow-modes.md"
+        ),
+        "tools/codex_skills/run-governed-development/scripts/preflight.py",
+        "tools/codex_skills/run-governed-development/SKILL.md",
+    ]
+    source_paths = sorted(source_paths, key=str.casefold)
+    return section_id, {
+        "schema_version": (
+            "devx_009_parallel_integration_publication_fence_and_"
+            "generated_state_rebuild.v1"
+        ),
+        "task_id": task_id,
+        "status": "DONE",
+        "implementation_base": "faea3a6a5dc561008cfae793a6caad0b239b4777",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_trading_2542c_growth_action_value_independent_review_"
+                "remediation_and_freeze_readiness_v1"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "publication_contract": {
+            "single_active_coordinator": True,
+            "expected_main_compare_and_set": True,
+            "generated_state_rebuild_once": True,
+            "full_dispatch_claim_is_atomic": True,
+            "closeout_receipt_is_replayable": True,
+        },
+        "safety": {
+            "strategy_behavior_changed": False,
+            "data_or_model_research_started": False,
+            "production_effect": "none",
+            "broker_action": "none",
         },
         "production_effect": "none",
         "broker_action": "none",

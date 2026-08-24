@@ -202,3 +202,13 @@ DEVX-009 的完成不自动授权 TRADING-2544 采数、训练、回测或提升
   validation=`PASS`。本 candidate 在进入 official generated rebuild 前转 `DONE`；后续 phase、formal
   tiers、ordinary push、SHA equality、cleanup 与 lease release 由 v2 transaction 的 runtime events/
   receipt 记录，不修改策略、DQ/PIT、模型、训练、回测、production 或 broker 状态。
+- 2026-08-24：v2 formal validation 证明实现层可用，但发现两个生成权威缺口：Reproducibility
+  `24 passed`、Integration `995 passed`；Contract 因 deprecation inventory 未由统一 architecture
+  generator 刷新而为 `276 passed / 1 failed`，Architecture 因同一 inventory 与最新
+  compatibility current-hash authority 未继任而为 `760 passed / 115 failed`。失败事务与四个 runtime
+  artifacts 均保留并以 `FAILED` 释放，未串行降级、未改 expected count、未绕过门禁。
+- 2026-08-24：successor transaction `devx-009-publication-20260824-v3` 在同一 frozen base/candidate
+  lineage 上取得独占 lease。修复采用官方生成链：`architecture_devex.py generate` 同步生成 architecture
+  manifests、fitness 与 deprecation inventory；compatibility authority 追加 DEVX-009 继任 section，显式
+  记录 publication CAS、single coordinator、generated rebuild、Full dispatch 与 replayable closeout receipt
+  合同。完成生成和 current-hash freshness 后，重新绑定新 candidate 并重跑全部正式层级及 Full。

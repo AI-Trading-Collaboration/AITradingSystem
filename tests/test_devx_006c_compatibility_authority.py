@@ -29,6 +29,10 @@ TRADING_2542C_SECTION = (
     "phase_trading_2542c_growth_action_value_independent_review_"
     "remediation_and_freeze_readiness_v1"
 )
+DEVX_009_SECTION = (
+    "phase_devx_009_parallel_integration_publication_fence_and_"
+    "generated_state_rebuild_v1"
+)
 
 
 def _write_fixture_authority(
@@ -133,11 +137,11 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 311
+    assert len(merged) == 312
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == TRADING_2542C_SECTION
+    assert next(reversed(merged)) == DEVX_009_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
@@ -156,6 +160,13 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
         "real_dq_or_empirical_run_authorized": False,
         "second_independent_review_required": True,
         "owner_exact_value_approval_required": True,
+    }
+    assert merged[DEVX_009_SECTION]["publication_contract"] == {
+        "single_active_coordinator": True,
+        "expected_main_compare_and_set": True,
+        "generated_state_rebuild_once": True,
+        "full_dispatch_claim_is_atomic": True,
+        "closeout_receipt_is_replayable": True,
     }
     assert merged[DEVX_006C_SECTION]["authority_contract"] == {
         "dual_write": False,
