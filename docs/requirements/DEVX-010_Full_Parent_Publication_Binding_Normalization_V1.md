@@ -2,7 +2,7 @@
 
 ## 状态
 
-- 当前状态：`IN_PROGRESS`
+- 当前状态：`VALIDATING`
 - 下一责任方：`integration-coordinator`
 - 来源：DEVX-009 v5 在 Full 实际派发前触发 `PUBLICATION_FULL_PARENT_MISMATCH: missing-side`
 - 生产影响：`none`
@@ -45,3 +45,6 @@
 
 - 2026-08-24：登记任务；确认 v5 拒绝发生在 pytest 派发前，四个前置层级已
   分别通过 876、277、995、24 个测试，但这些结果不替代修复后最终候选重跑。
+- 2026-08-24：完成结构化 `parent_run.summary_path` 适配和非 Full 延迟消费规则；
+  focused regression `83 passed`，Ruff PASS，SINGLE_LANE LANE/INTEGRATION
+  preflight PASS。进入绑定真实失败父运行的最终候选验证。

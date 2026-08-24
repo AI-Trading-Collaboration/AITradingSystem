@@ -14,7 +14,7 @@ fragment_count: 1023
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 9e3ea7698f1fb1a464801f6b8c3fbc1a4e3547a804e28c53dccae8ef8a2052d2
+final_chain_sha256: bdcb6d460265313695dc3734f6ffd92c3dd631b83143397027ae2ed55464a7dd
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 0c3efea17f7c4a4cae0488be7b40116560b065ec6ee1c53818e0ff1fdaa31509
 templates:
@@ -8207,17 +8207,17 @@ fragments:
   entry_sha256: 7ffcc4be5d41d60a907b84ae8d13fbd02e3c42a242611aeedb96ca1f3f6ef981
 - task_id: DEVX-010_FULL_PARENT_PUBLICATION_BINDING_NORMALIZATION_V1
   path: registry/development_tasks/63/6306edcf238853bcb1944ea0d432c70ec888e3d66b084d11a9a57e13d3689e28.yaml
-  file_sha256: 190d350f0e170573a5479cdb885db9853f65a32120eb692dfc594ebaf93a741e
-  fragment_checksum: 40130ff0f8ebd9799112cc6fe1f2ce28a84915ca3008202b43ecefd01bd45ae7
+  file_sha256: 761ef322f97b0e14fee61de83d35997332e8dc12b28a72b9d126f9ad9707fb04
+  fragment_checksum: cad1fccdb7a258c4aa6a3a99c3b728d41acf36091e0e4a3028142abd3c56c42b
   partition: active
   order: 1023
   previous_entry_sha256: 7ffcc4be5d41d60a907b84ae8d13fbd02e3c42a242611aeedb96ca1f3f6ef981
-  entry_sha256: 9e3ea7698f1fb1a464801f6b8c3fbc1a4e3547a804e28c53dccae8ef8a2052d2
+  entry_sha256: bdcb6d460265313695dc3734f6ffd92c3dd631b83143397027ae2ed55464a7dd
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 221cf76ab411314c28d99c1e7c2a0f2fe94b70c066ef99a6232f49f7b0b59e4f
-  byte_count: 1753533
+  sha256: 7880f6c1f8e6abf6acb9746c208d67ad1f7fc57e30c6c5ecaffc45de56e61f5f
+  byte_count: 1753580
   row_count: 503
   generated_do_not_edit: true
 - partition: completed
@@ -9851,7 +9851,14 @@ governance_cycles:
   change_id: DEVX-010-registration-20260824-v1
   event_count: 1
   production_effect: none
-governance_cycle_count: 232
+- cycle_id: arch-005-s5-cycle-233
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: DEVX-010_FULL_PARENT_PUBLICATION_BINDING_NORMALIZATION_V1
+  change_id: DEVX-010-implementation-validating-20260824-v1
+  event_count: 2
+  production_effect: none
+governance_cycle_count: 233
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -9865,4 +9872,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: e72e360cf2357abeb15c0fb1afeb7103038a2153bb1d9e28cfdca1d85e12f003
+index_checksum: 6bb0bec9d7b6d9361a305b652e439a3c13f5fe05018f1629e7dd6336ce3e98f7
