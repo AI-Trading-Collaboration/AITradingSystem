@@ -351,6 +351,78 @@ events:
   - change:trading-2542d-owner-freeze-baseline-done-20260824-v8
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-786054d8eb689a22f547535cb49cedd4
+- schema_version: task_event.v1
+  task_id: TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-24T14:27:00Z'
+  actor: integration-coordinator
+  change_id: trading-2542d-owner-freeze-generated-wave-20260824-v9
+  lane_id: null
+  base_commit: 51599d5c94853f8e378b178469066ced90d524a5
+  previous_state_event_id: task-event-786054d8eb689a22f547535cb49cedd4
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner for any separate real-data or backtest authorization
+    blocker_or_next_step: Non-executable DATA_RESEARCH contract freeze is complete.
+      Real provider/cache/DQ execution, empirical evaluation, backtest, production,
+      and broker actions remain unauthorized and require a separate exact-scope decision;
+      Codex completes formal validation and ordinary publication only.
+    acceptance_criteria: Preserve exact sheet V3 and DQ/PIT V2 immutable; freeze DQ/PIT
+      V3 and exact sheet V4 all eight axes exactly as drafted for non-executable DATA_RESEARCH;
+      preserve six predecessor-axis threshold/formula/outcome semantics while changing
+      only their owner_review_state; bind V4 to frozen V3 hashes; focused regressions
+      plus Architecture, Contract, Integration, Reproducibility, and Full PASS; no
+      real provider/cache/DQ/backtest; ordinary push and SHA equality.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542D_Growth_Action_Value_DQ_PIT_And_Sample_Semantics_Freeze_Correction_V1.md.
+      Implementation commit 51599d5c94853f8e378b178469066ced90d524a5 passed focused
+      contract/static validation. v1/v2 failed only for audited test-path scope expansion;
+      v3 passed the corrected focused assertions but failed closed at generated pre
+      because it predated the implementation commit. v4 binds the exact implementation
+      head and owns the single generated/formal publication wave. Real data and backtest
+      remain unauthorized.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542d-owner-freeze-generated-wave-20260824-v9
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d95f7e9679f47870103b770f934e7cb8
+- schema_version: task_event.v1
+  task_id: TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-24T14:30:00Z'
+  actor: integration-coordinator
+  change_id: trading-2542d-owner-freeze-stable-task-state-20260824-v10
+  lane_id: null
+  base_commit: 51599d5c94853f8e378b178469066ced90d524a5
+  previous_state_event_id: task-event-d95f7e9679f47870103b770f934e7cb8
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner for any separate real-data or backtest authorization
+    blocker_or_next_step: Non-executable DATA_RESEARCH contract freeze is complete.
+      Real provider/cache/DQ execution, empirical evaluation, backtest, production,
+      and broker actions remain unauthorized and require a separate exact-scope decision;
+      Codex completes formal validation and ordinary publication only.
+    acceptance_criteria: Preserve exact sheet V3 and DQ/PIT V2 immutable; freeze DQ/PIT
+      V3 and exact sheet V4 all eight axes exactly as drafted for non-executable DATA_RESEARCH;
+      preserve six predecessor-axis threshold/formula/outcome semantics while changing
+      only their owner_review_state; bind V4 to frozen V3 hashes; focused regressions
+      plus Architecture, Contract, Integration, Reproducibility, and Full PASS; no
+      real provider/cache/DQ/backtest; ordinary push and SHA equality.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542D_Growth_Action_Value_DQ_PIT_And_Sample_Semantics_Freeze_Correction_V1.md.
+      Final stable task-source state: Owner-frozen DQ/PIT V3 and exact sheet V4 are
+      limited to non-executable DATA_RESEARCH; implementation commit 51599d5c94853f8e378b178469066ced90d524a5
+      passed focused contract/static validation. Generated authorities and formal
+      tiers are rebuilt from the next transaction bound to the committed exact task
+      state, without appending another task event. No real data or backtest action
+      occurred.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542d-owner-freeze-stable-task-state-20260824-v10
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-13aa86504408feb43927fc1694329370
 projection:
   legacy_first_eight_cells:
   - TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1
@@ -370,16 +442,15 @@ projection:
     Contract, Integration, Reproducibility, and Full PASS; no real provider/cache/DQ/backtest;
     ordinary push and SHA equality.
   - 'Supporting requirement: docs/requirements/TRADING-2542D_Growth_Action_Value_DQ_PIT_And_Sample_Semantics_Freeze_Correction_V1.md.
-    Project Owner approval is frozen in DQ/PIT V3 and exact sheet V4. DQ/PIT V3 file/canonical=96eafe7525704a8e0e260c9ed344adf3420f7e1c977e877a557856258fee3144/e8e180b147e1a88dad3776f886b8eb7398481b1518785b6a2243ae795f4a6ede;
-    V4 file/canonical=c90c4cc22b8918e90641bf0553416a68458433bea750bd2064fcf98df7886215/00198bb84cd57f518d0370035b5a5a38b12c9804880d7bf1e475ddd80a77bfc2.
-    Focused contract freeze 30/30 PASS; expanded strategy/Atlas run reached 240/241
-    PASS before the sole stale coverage assertion was corrected and its focused rerun
-    passed. v1/v2 were released failed only for audited path-scope expansion. No real
-    data or backtest action occurred.'
+    Final stable task-source state: Owner-frozen DQ/PIT V3 and exact sheet V4 are
+    limited to non-executable DATA_RESEARCH; implementation commit 51599d5c94853f8e378b178469066ced90d524a5
+    passed focused contract/static validation. Generated authorities and formal tiers
+    are rebuilt from the next transaction bound to the committed exact task state,
+    without appending another task event. No real data or backtest action occurred.'
   docs_links:
   - docs/requirements/TRADING-2542D_Growth_Action_Value_DQ_PIT_And_Sample_Semantics_Freeze_Correction_V1.md
   terminal: false
-  canonical_row_sha256: a43efd2baa2f6593cf3851d8eba13376d12178273844c9231294fb1c350cbd7a
-last_event_id: task-event-786054d8eb689a22f547535cb49cedd4
+  canonical_row_sha256: 4beb46e929ef0e0bc11ca8c2ab6175b48e8a4dac6801180da5307fa4e63c28b2
+last_event_id: task-event-13aa86504408feb43927fc1694329370
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: bbd75e6a4d529233917f5c4d27046301f947e2b28f9473719699fdf304b9c085
+fragment_checksum: 64f0b685e89d43f95f4b4b1c529d32fb77d47c5540c81e7b6e7d4ba6823789a3
