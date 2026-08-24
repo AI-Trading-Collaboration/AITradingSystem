@@ -45,25 +45,25 @@
       "section_sha256": "42c4f90c20575161e2210009f14dd32bb92b0bd8bf8ebb7b3b461ac65eb18e1b"
     },
     {
-      "entry_sha256": "2903a29e32375182a9c9c8bfcca6a48cc9d534a228d103c435e10d5f2c31e897",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/7a/7a488e39974ec5015e6ba040f17ce669185233637cbedfbda84b9e06a8eccda1.json",
-      "fragment_sha256": "211d3c6c17978dde9f0b9ef3507dfc7812b1d71bb9a80bb314108238a1691db6",
+      "entry_sha256": "0ea10bd18dbfe1a301f526a6d6278ef199f68970020b4d16e20df3711facc023",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/e0/e06631027280e3eec184762de26c19531932834a3027bf9f278d2e847887a36e.json",
+      "fragment_sha256": "5cff2ff0bb9c7562cfa25f87e52007b5c9b5123ea847922c13c726566cc2f78e",
       "order": 4,
       "previous_entry_sha256": "f14d4a096e9f3462b1a5af3a6bd6695bd14f9256be7c3adae4fb8fb07fd0c842",
       "section_id": "phase_trading_2542c_growth_action_value_independent_review_remediation_and_freeze_readiness_v1",
-      "section_sha256": "7a488e39974ec5015e6ba040f17ce669185233637cbedfbda84b9e06a8eccda1"
+      "section_sha256": "e06631027280e3eec184762de26c19531932834a3027bf9f278d2e847887a36e"
     },
     {
-      "entry_sha256": "941bebb324210e30e074c9a401481054c47b1a9b5192ea2a291b908661cd1102",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/66/66543291497f5ad514cfc33551085c45698b80d56ad793dc3a82e47e86fba0ed.json",
-      "fragment_sha256": "bc7fc2b94f0bddaae160f328d6c120a9c1642a458254aee88ad39f7945547f22",
+      "entry_sha256": "97dbbce50e5b3e49578efc32122686b2f550c3d93cc8ee1620aa2b898e04ca5f",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/00/00e74b49025c49313a33c347e4660da5368ff64855fdff2b396034fb3174d71c.json",
+      "fragment_sha256": "bbc9446217d9f21806943e15fcbf06fb84eacf7f174c829f9994db5c50213a01",
       "order": 5,
-      "previous_entry_sha256": "2903a29e32375182a9c9c8bfcca6a48cc9d534a228d103c435e10d5f2c31e897",
+      "previous_entry_sha256": "0ea10bd18dbfe1a301f526a6d6278ef199f68970020b4d16e20df3711facc023",
       "section_id": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1",
-      "section_sha256": "66543291497f5ad514cfc33551085c45698b80d56ad793dc3a82e47e86fba0ed"
+      "section_sha256": "00e74b49025c49313a33c347e4660da5368ff64855fdff2b396034fb3174d71c"
     }
   ],
-  "final_chain_sha256": "941bebb324210e30e074c9a401481054c47b1a9b5192ea2a291b908661cd1102",
+  "final_chain_sha256": "97dbbce50e5b3e49578efc32122686b2f550c3d93cc8ee1620aa2b898e04ca5f",
   "genesis_chain_sha256": "9be38b19ac0ccccd821200bc38b1fb86ce86e1052e7f4496595da5b40d475bcd",
   "legacy_prefix": {
     "byte_count": 3151107,
