@@ -9239,17 +9239,22 @@ immutable exact sheet V3 + immutable DQ/PIT V2
        -> zero expected contributors = FAIL
        -> expected nonempty but zero/missing observed contributors = INVALID
        -> synthetic numerics derive only from loaded V3 YAML exact values
-       -> 120 / 0.20 / OI 10 / volume 1 are non-executable pilot-freeze-ready;
+       -> 120 / 0.20 / OI 10 / volume 1 are Owner-frozen for non-executable DATA_RESEARCH;
           executable/real-evidence authority remains unavailable
   -> strategy_growth_action_value_threshold_exact_value_sheet_v4
        -> preserve NON_BETA_ACTION_VALUE, NET_OF_COST_RETURN,
           ACTUAL_PATH_DRAWDOWN_REGRESSION, FALSE_RISK_OFF_COST,
-          ACTUAL_PATH_TURNOVER and LEVERAGE_BETA_ATTRIBUTION exactly from V3
+          ACTUAL_PATH_TURNOVER and LEVERAGE_BETA_ATTRIBUTION semantics exactly from V3
+       -> all eight owner_review_state values =
+          APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH
        -> bind CANONICAL_DQ_PIT to DQ/PIT V3
        -> merge complete raw episode clusters before right-censor exclusion
        -> any connected right-censored member excludes the entire cluster
        -> reconcile gross/net/cost by unique session key, not positional order
-  -> terminal = NEW_VERSION_DRAFT_COMPLETE_PENDING_OWNER_FREEZE_DECISION
+  -> terminal = OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH
+       -> threshold_bundle_frozen = true
+       -> dq_successor_authorized = true (contract only)
+       -> dq_run / empirical / backtest authorization = false
   -> canonical task event + requirement
        -> Atlas page_effectiveness task coverage includes TRADING-2542D
        -> Atlas live_snapshot current mainline/blocker/next action = TRADING-2542D
@@ -9258,8 +9263,9 @@ immutable exact sheet V3 + immutable DQ/PIT V2
 ```
 
 V3 DQ/PIT 的 1202/1202 synthetic `GLOBAL_PASS` 只证明机械合同可达，不是 primary-window data PASS。
-V4 的 exact values 也仍未冻结；Owner 审阅 V4 后，真实证据只能由另一个固定 code/data identity、
-zero-order/zero-fill 且单次计数的 R1 manifest 启动。
+Project Owner 已批准 V3/V4 全部八轴完全按草案冻结，但只形成 non-executable `DATA_RESEARCH` policy
+authority。真实证据仍只能由另一个固定 code/data identity、zero-order/zero-fill 且单次计数的 R1 manifest
+与单独授权启动；本冻结不授权 provider/cache/DQ run、backtest 或投资结论。
 
 ## Coordinator integration publication fence（DEVX-009）
 

@@ -319,8 +319,8 @@ task_sources:
     reader_summary_zh: 2542C 依据 exact-commit Web Pro 独立复核新建 V3 exact sheet 与 DQ/PIT V2 successor，绑定 1202-session inventory 并封闭 cost reconciliation、event/episode、contributor identity、typed authority 与 stop/artifact semantics。四个 DQ numeric 仍因证据不足无法批准，successor 尚未二审或由 Owner 逐项批准，因此 threshold bundle 仍未冻结，真实 DQ、provider、cache、回测、经验研究、投资结论、生产与交易动作保持关闭。
   - task_id: TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1
     requirement_path: docs/requirements/TRADING-2542D_Growth_Action_Value_DQ_PIT_And_Sample_Semantics_Freeze_Correction_V1.md
-    coverage: DISCLOSED_DQ_PIT_AND_SAMPLE_SEMANTICS_SUCCESSOR_DRAFT_OWNER_FREEZE_REQUIRED
-    reader_summary_zh: 2542D 依据第二轮 exact-commit Web Pro review 新建 DQ/PIT V3 与 exact sheet V4，修正首日 pre-window prior、excluded invalid 传播、zero contributor terminal、typed run authority、cluster-level right censor 与 session-keyed cost reconciliation。1202-session synthetic authority 只证明机械合同可达；四个 DQ numeric 仍仅达到不可执行 pilot 的冻结就绪状态，V4 尚待独立复核与 Owner 逐项冻结，真实 provider/cache/DQ/backtest、经验研究、投资结论、生产与交易动作保持关闭。
+    coverage: DISCLOSED_DQ_PIT_V3_AND_EXACT_SHEET_V4_OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH
+    reader_summary_zh: 2542D 依据第二轮 exact-commit Web Pro review 新建 DQ/PIT V3 与 exact sheet V4，修正首日 pre-window prior、excluded invalid 传播、zero contributor terminal、typed run authority、cluster-level right censor 与 session-keyed cost reconciliation。Project Owner 已批准 DQ/PIT V3 与全部八轴完全按草案冻结，仅限不可执行数据研究；1202-session synthetic authority 仍只证明机械合同可达，真实 provider/cache/DQ/backtest、经验研究、投资结论、生产与交易动作保持关闭并需另行授权。
   - task_id: TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1
     requirement_path: docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md
     coverage: LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_COMPLETE

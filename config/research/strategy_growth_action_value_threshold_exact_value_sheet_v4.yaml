@@ -1,12 +1,12 @@
 schema_version: strategy_growth_action_value_threshold_exact_value_sheet.v4
 sheet_id: strategy_growth_action_value_threshold_exact_value_sheet_v4
-sheet_version: 4.0.0-draft.1
-sheet_status: NEW_VERSION_DRAFT_COMPLETE_PENDING_OWNER_FREEZE_DECISION
+sheet_version: 4.0.0
+sheet_status: OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH
 task_id: TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1
 owner_instruction:
-  decision_id: owner_decision:TRADING-2542D:2026-08-24:adopt_second_pro_review_and_continue_v1
+  decision_id: owner_decision:TRADING-2542D:2026-08-24:freeze_dq_pit_v3_and_exact_sheet_v4_all_eight_axes_as_drafted_non_executable_data_research_v1
   adopted_review_disposition: REQUEST_NEW_VERSION_BEFORE_OWNER_FREEZE_DECISION
-  exact_successor_freeze_approval_state: NOT_PROVIDED
+  exact_successor_freeze_approval_state: APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH
   no_separate_progress_confirmation_required: true
 review_evidence:
   reviewed_repository_commit: e5266c9aadfba067060b013d83ec26bd4f065604
@@ -24,8 +24,8 @@ predecessor_binding:
   disposition: REQUEST_NEW_VERSION_RETAINED_IMMUTABLE
 dq_successor_binding:
   path: config/research/strategy_growth_action_value_canonical_dq_pit_contract_v3.yaml
-  file_sha256: b84d8d3dbe2dded761e989c623469607c386297e59d61207bb478d3054523c2e
-  canonical_sha256: 9140e68dce070ca5cd421fe05ab480c9d2d330fd21a7f7c6cff0bda0b00aca8b
+  file_sha256: 96eafe7525704a8e0e260c9ed344adf3420f7e1c977e877a557856258fee3144
+  canonical_sha256: e8e180b147e1a88dad3776f886b8eb7398481b1518785b6a2243ae795f4a6ede
   contract_id: strategy_growth_action_value_canonical_dq_pit_contract_v3
   executable_authority: false
 scope_binding:
@@ -46,12 +46,12 @@ scope_binding:
   borrowed_leverage_allowed: false
   threshold_after_result_allowed: false
 decision_timing:
-  state: PRE_EMPIRICAL_DRAFT_FOR_OWNER_REVIEW
+  state: OWNER_FROZEN_PRE_EMPIRICAL_NON_EXECUTABLE_DATA_RESEARCH
   new_dq_result_visible: false
   new_strategy_result_visible: false
   holdout_result_visible: false
-  exact_owner_approval_visible: false
-  threshold_bundle_frozen: false
+  exact_owner_approval_visible: true
+  threshold_bundle_frozen: true
 common_series_contract:
   calendar: QQQ_EXCHANGE_SESSIONS
   primary_window_start: '2021-02-22'
@@ -97,7 +97,7 @@ window_slice_catalog:
 axis_contracts:
   - axis_id: NON_BETA_ACTION_VALUE
     predecessor_disposition: APPROVE_EXACTLY_AS_DRAFTED
-    owner_review_state: PENDING_SUCCESSOR_OWNER_APPROVAL
+    owner_review_state: APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH
     threshold_id: growth_action_value.non_beta_increment_min
     unit: annualized_decimal_return_delta_after_exposure_match
     direction: MINIMUM
@@ -121,7 +121,7 @@ axis_contracts:
       invalid_rule: SESSION_INVENTORY_SERIES_IDENTITY_OR_NUMERIC_DOMAIN_VIOLATION
   - axis_id: NET_OF_COST_RETURN
     predecessor_disposition: REJECT_AND_REQUEST_NEW_VERSION
-    owner_review_state: PENDING_SUCCESSOR_OWNER_APPROVAL
+    owner_review_state: APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH
     threshold_id: growth_action_value.net_of_cost_return_min
     unit: annualized_decimal_net_return_delta
     direction: MINIMUM
@@ -147,7 +147,7 @@ axis_contracts:
       invalid_rule: GROSS_NET_COST_RESIDUAL_GT_0_0001_OR_SESSION_SERIES_IDENTITY_VIOLATION
   - axis_id: ACTUAL_PATH_DRAWDOWN_REGRESSION
     predecessor_disposition: APPROVE_EXACTLY_AS_DRAFTED
-    owner_review_state: PENDING_SUCCESSOR_OWNER_APPROVAL
+    owner_review_state: APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH
     threshold_id: growth_action_value.actual_path_drawdown_regression_max
     unit: absolute_decimal_max_drawdown_regression
     direction: MAXIMUM
@@ -169,7 +169,7 @@ axis_contracts:
       invalid_rule: ACTUAL_PATH_NAV_SLICE_OR_SESSION_IDENTITY_VIOLATION
   - axis_id: FALSE_RISK_OFF_COST
     predecessor_disposition: REJECT_AND_REQUEST_NEW_VERSION
-    owner_review_state: PENDING_SUCCESSOR_OWNER_APPROVAL
+    owner_review_state: APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH
     threshold_id: growth_action_value.false_risk_off_cost_regression_max
     unit: decimal_mean_event_cost_regression
     direction: MAXIMUM
@@ -198,16 +198,16 @@ axis_contracts:
       invalid_rule: EVENT_CALENDAR_WEIGHT_RETURN_ANCHOR_OR_ANTI_LOOKAHEAD_IDENTITY_VIOLATION
   - axis_id: CANONICAL_DQ_PIT
     predecessor_disposition: REJECT_AND_REQUEST_NEW_VERSION
-    owner_review_state: PENDING_SUCCESSOR_OWNER_APPROVAL
+    owner_review_state: APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH
     threshold_id: growth_action_value.canonical_dq_pit_required_status
     unit: canonical_data_research_gate_status
     direction: EXACT_CATEGORICAL
     required_data_research_gate_status: PASS
     dq_successor_contract_id: strategy_growth_action_value_canonical_dq_pit_contract_v3
-    numeric_policy_state: NON_EXECUTABLE_PILOT_FREEZE_READY
+    numeric_policy_state: OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH
     pilot_review_disposition: APPROVE_EXACTLY_AS_DRAFTED
     executable_evidence_disposition: INSUFFICIENT_EVIDENCE_TO_APPROVE
-    operational_authority_state: UNAVAILABLE_PENDING_OWNER_EXACT_FREEZE_APPROVAL
+    operational_authority_state: FROZEN_CONTRACT_ONLY_REAL_DQ_EXECUTION_UNAUTHORIZED
     outcome_contract:
       pass_rule: OWNER_FROZEN_DQ_V3_AUTHORITY_EXACT_1202_OF_1202_GLOBAL_PASS_ONLY
       fail_rule: OWNER_FROZEN_DQ_V3_GLOBAL_FAIL
@@ -215,7 +215,7 @@ axis_contracts:
       invalid_rule: DQ_V3_AUTHORITY_IDENTITY_SCOPE_PIT_MANIFEST_OR_TERMINAL_VIOLATION
   - axis_id: SAMPLE_AND_WINDOW_DEPENDENCE
     predecessor_disposition: REJECT_AND_REQUEST_NEW_VERSION
-    owner_review_state: PENDING_SUCCESSOR_OWNER_APPROVAL
+    owner_review_state: APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH
     threshold_id: growth_action_value.primary_window_stability_gate
     unit: composite_count_share_and_slice_set
     direction: COMPOSITE_ALL
@@ -255,7 +255,7 @@ axis_contracts:
       invalid_rule: EPISODE_CLUSTER_MERGE_CENSOR_CALENDAR_ASSIGNMENT_VALUE_OR_SESSION_IDENTITY_VIOLATION
   - axis_id: ACTUAL_PATH_TURNOVER
     predecessor_disposition: APPROVE_EXACTLY_AS_DRAFTED
-    owner_review_state: PENDING_SUCCESSOR_OWNER_APPROVAL
+    owner_review_state: APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH
     threshold_id: growth_action_value.actual_path_turnover_max
     unit: annualized_one_way_turnover_and_cost_drag_share
     direction: COMPOSITE_ALL
@@ -276,7 +276,7 @@ axis_contracts:
       invalid_rule: NAV_FILL_IDENTITY_OR_COST_RECONCILIATION_VIOLATION
   - axis_id: LEVERAGE_BETA_ATTRIBUTION
     predecessor_disposition: APPROVE_EXACTLY_AS_DRAFTED
-    owner_review_state: PENDING_SUCCESSOR_OWNER_APPROVAL
+    owner_review_state: APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH
     threshold_id: growth_action_value.realized_beta_increment_max
     unit: realized_beta_delta_and_exposure_match_tolerance
     direction: COMPOSITE_ALL
@@ -339,10 +339,10 @@ owner_review_contract:
   approval_must_precede_any_new_result: true
   any_change_requires_new_version: true
 terminal:
-  status: BLOCKED_OWNER_EXACT_FREEZE_APPROVAL
-  next_action: OWNER_REVIEW_V4_THEN_SEPARATE_REAL_EVIDENCE_AUTHORIZATION
-  threshold_bundle_frozen: false
-  dq_successor_authorized: false
+  status: OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH
+  next_action: SEPARATE_REAL_DATA_DQ_AND_BACKTEST_AUTHORIZATION_REQUIRED
+  threshold_bundle_frozen: true
+  dq_successor_authorized: true
   empirical_successor_authorized: false
 safety:
   empirical_research_authorized: false

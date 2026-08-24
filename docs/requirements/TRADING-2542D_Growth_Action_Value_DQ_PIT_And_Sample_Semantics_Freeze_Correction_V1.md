@@ -2,7 +2,7 @@
 
 ## 1. 状态与目标
 
-- 状态：`IN_PROGRESS`；
+- 状态：`BASELINE_DONE`（仅 non-executable `DATA_RESEARCH` 合同冻结；正式门禁与发布进行中）；
 - 优先级：`P0`；
 - 上游：`TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1`；
 - governed mode：`SINGLE_LANE` serial contract wave；
@@ -13,6 +13,8 @@
 ## 2. Owner 指令与第二轮独立复核
 
 Project Owner 已采纳 Web Pro 结论并要求 Codex 继续完善和推进剩余修复。该指令授权本地工程整改、测试、正式门禁和普通 Git 发布，不授权真实数据或投资执行。
+
+2026-08-24，Project Owner 进一步精确批准：`DQ/PIT V3` 与 `exact sheet V4` 全部八轴完全按草案冻结，权限严格限定为 non-executable `DATA_RESEARCH`；真实 provider/cache/DQ run、empirical evaluation、backtest、production 与 broker 仍不授权。该批准把“合同冻结”和“真实执行授权”分离：`threshold_bundle_frozen=true`、`dq_successor_authorized=true`，但 `executable_authority=false`、`real_evidence_authority=false`、`dq_run_authorized=false`、`backtest_authorized=false`。
 
 第二轮 advisory review 固定在：
 
@@ -52,11 +54,11 @@ Reviewer advisory 仅作为整改输入；仓库合同、实现和测试仍由�
 - identity/PIT/timestamp/quote invalid 检查先于 noncontributing exclusion；`INVALID` 优先级高于 `EXCLUDED`；
 - zero expected contributor 明确 `FAIL`；expected 非空但 observed/missing/mismatch 明确 `INVALID`；numeric `FAIL/UNKNOWN` 按既有 collect-all 语义保留；
 - numeric thresholds 只能从加载并 hash 校验后的 V3 YAML authority 派生；synthetic evidence 不得构造另一套阈值；
-- 四个 pilot 数值原样保留：`120 seconds`、`0.20`、`open interest 10`、`volume 1`。它们仅获 `NON_EXECUTABLE_PILOT_FREEZE_READY`，对真实/可执行证据仍为 `INSUFFICIENT_EVIDENCE_TO_APPROVE`。
+- 四个 pilot 数值原样保留：`120 seconds`、`0.20`、`open interest 10`、`volume 1`。它们已获 `OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH`，对真实/可执行证据仍为 `INSUFFICIENT_EVIDENCE_TO_APPROVE`。
 
 ### 4.2 exact sheet V4
 
-以下六轴必须逐字段保持 V3：
+以下六轴的阈值、公式、单位、outcome 和其他投资解释字段必须逐字段保持 V3；唯一允许变化的字段是 `owner_review_state`，它在 Owner exact approval 后统一迁移为 `APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH`：
 
 - `NON_BETA_ACTION_VALUE`；
 - `NET_OF_COST_RETURN`；
@@ -71,6 +73,8 @@ Reviewer advisory 仅作为整改输入；仓库合同、实现和测试仍由�
 - `SAMPLE_AND_WINDOW_DEPENDENCE`：先构造和 transitive-merge 完整 raw episode clusters，再把含 right-censored tail 的整个 cluster 排除；跨 slice inclusion 和 single assignment 保持显式。
 
 cost reconciliation 改为按唯一 session key 对齐，拒绝重复 key、集合不等、缺失日和非 decimal-return unit。V4 loader、canonical replay、source/test 文件名必须显式版本化。
+
+全部八轴共享同一个冻结状态，不允许七取八、加权补偿或局部修改。V4 冻结只建立 pre-empirical、non-executable `DATA_RESEARCH` policy authority；它不建立真实数据读取、DQ 执行、backtest 或投资结论 authority。
 
 ## 5. 分阶段实施与验收
 
@@ -112,15 +116,15 @@ cost reconciliation 改为按唯一 session key 对齐，拒绝重复 key、集�
 
 ## 7. 开放边界与下一步
 
-- 本任务完成后 successor 状态仍为 `NEW_VERSION_DRAFT_COMPLETE_PENDING_INDEPENDENT_REVIEW_AND_OWNER_FREEZE_DECISION`；
-- 再次 independent review 与 Owner freeze decision 之前，不建立 executable DQ authority；
-- 真实 provider/cache/DQ/backtest 需要后续单独固定 R1 manifest；
+- successor 已进入 `OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH`；八轴数值和 DQ/PIT V3 policy bytes 不再允许原地调整，任何改变必须新建版本；
+- Owner freeze 不建立 executable DQ authority，也不把 synthetic `GLOBAL_PASS` 提升为真实数据 PASS；
+- 真实 provider/cache/DQ/backtest 仍需后续单独固定 R1 manifest、重放 code/data identity，并取得明确授权；
 - 当前缺失 options 日期 `2022-08-26` 的 provider 事实核验不在本工程波次内，本任务只消除导致日期/数据归因不可信的工程缺陷。
 
 ## 8. 生命周期与进度
 
-- branch：`codex/trading-2542d-dq-pit-sample-semantics`；
-- frozen base：`de3fe9cb039ead4023fe76864dde75cc42a9f541`；
+- 当前 owner-freeze branch：`codex/trading-2542d-owner-freeze`；
+- 当前 frozen base：`171ba278d419d944bee7666a92338c0755ee6faa`；
 - publication transactions：`v1` 因初始 shared-path claim 不完整失败释放；`v2` 在候选 `3b478af688dd7145a4f0e490d32bdeaa82c1ba9c` 的 Architecture 正式档发现两项冻结元数据漂移后失败释放；`v3` 在 Atlas rebuild 发现 successor 未分类后失败释放；`v4` 在 exact-commit 全页渲染发现未登记的组合术语后失败释放；`v5` 在 Architecture/Contract/Integration/Reproducibility 均 PASS 后，因 local `main` 已前进到 `6d4e0d8383328554e50eeb2ac86abb88f90d4384` 而在 Full dispatch 前 fail closed；`v6` 因 Atlas import-isolation 回归失败而释放；`v7` 修复后 343 项聚焦回归 PASS，但在 generated post 后发现 lifecycle 文本仍指向 v6，因此失败释放；`v8` 的四个前置正式档 PASS，Full 为 `9531 passed / 1 failed / 3 skipped` 后失败释放；当前 failure-fix 事务为 `trading-2542d-publication-20260824-v9`；
 - base drift reconciliation：原 task lane head 为 `fe5079d7dd99f8ede013e0a276cf38fd9754800e`，最新 main 含 TRADING-2545；`integration-revalidation-669f97fdfb5c784f7e50` 判定 `RECONCILIATION_REQUIRED`，无 contract conflict、undeclared path 或 branch rebuild 要求。v6 从最新 main 建立单一 integration candidate，保留 TRADING-2545 reader projection，并把 2542D 设为当前策略工程后继；
 - 不创建额外 worktree、clone、provider cache 或 credential 文件；
@@ -137,4 +141,5 @@ cost reconciliation 改为按唯一 session key 对齐，拒绝重复 key、集�
 - 2026-08-24：v6 聚焦回归得到 `342 passed / 1 failed`。唯一失败是 Atlas canonical writer 在本地 `src` 已由 editable install 置于 `sys.path` 后位时不会重新前插，导致受污染 `PYTHONPATH` 可抢先导入外部同名包；这破坏 exact-commit renderer 的来源隔离。未通过清空环境绕过；v7 把 `scripts/render_atlas_strategy_research_page.py` 纳入共享路径并修为无条件本仓库优先，重跑得到 `343 passed`，Ruff 与 strict mypy 也 PASS。
 - 2026-08-24：v7 的代码、测试与生成物均通过后，提交前审计发现生命周期摘要仍把 v6 标为当前事务。为避免最终证据自相矛盾，v7 在 candidate commit 前失败释放；v8 只收敛该元数据、canonical task event 及其派生哈希，不改变已经验证的策略或 Atlas 行为。
 - 2026-08-24：v8 exact candidate `7f22d1dadec41bd7a27e8aed045f7706385fc5aa` 的 Architecture `878 passed`、Contract `278 passed`、Integration `995 passed`、Reproducibility `24 passed`，Atlas exact-commit renderer 17 个产物 PASS。唯一 Full 以 `9531 passed / 1 failed / 3 skipped` 结束；失败是 `tests/atlas/test_historical_projection_review.py` 的硬编码 coverage 顺序遗漏已正式加入页面的 `TRADING-2542D`，实际 page manifest、source commit 和 renderer validation 均 PASS。v9 将 `full_20260824T070717Z/test_runtime_summary.json` 绑定为 parent-run，只修正该 stale expectation 及派生哈希，并以 `failure_fix_rerun` 重新运行最终门禁。
-- 当前工程 terminal 为 `NEW_VERSION_DRAFT_COMPLETE_PENDING_OWNER_FREEZE_DECISION`。四个 numeric 仅为 non-executable pilot freeze-ready；真实/可执行证据仍是 `INSUFFICIENT_EVIDENCE_TO_APPROVE`，provider/cache/DQ/backtest 权限继续关闭。
+- 2026-08-24：Owner 明确批准 DQ/PIT V3 与 exact sheet V4 全部八轴完全按草案冻结，仅限 non-executable `DATA_RESEARCH`。事务 `trading-2542d-owner-freeze-20260824-v1` 在聚焦 Atlas 回归发现 reader-facing freeze 文案必须同步 `tests/atlas/test_live_snapshot.py`，而该路径未在初始 lease 中声明，因此按 scope-expansion fail closed；v2 加入该路径后，241 项回归得到 `240 passed / 1 failed`，唯一失败是 `tests/atlas/test_page_effectiveness.py` 仍固定期待“draft/Owner freeze required”旧 coverage，该路径也未声明，故 v2 同样按 scope-expansion fail closed；v3 从同一 exact base `171ba278d419d944bee7666a92338c0755ee6faa` 一次性声明两项 Atlas 状态测试并继续。冻结后 DQ/PIT V3 file/canonical SHA-256 为 `96eafe7525704a8e0e260c9ed344adf3420f7e1c977e877a557856258fee3144` / `e8e180b147e1a88dad3776f886b8eb7398481b1518785b6a2243ae795f4a6ede`，exact sheet V4 为 `c90c4cc22b8918e90641bf0553416a68458433bea750bd2064fcf98df7886215` / `00198bb84cd57f518d0370035b5a5a38b12c9804880d7bf1e475ddd80a77bfc2`。28 项 V3/V4 聚焦合同回归已 PASS；未读取真实 cache、未查询 provider、未运行真实 DQ 或 backtest。
+- 当前工程 terminal 为 `OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH`。四个 numeric 与八轴 exact values 已冻结；真实/可执行证据仍是 `INSUFFICIENT_EVIDENCE_TO_APPROVE`，provider/cache/DQ/backtest 权限继续关闭。

@@ -21,8 +21,8 @@ from ai_trading_system.strategy_growth_action_value_freeze_readiness_contract_v4
 CONFIG_PATH = Path(
     "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v4.yaml"
 )
-EXPECTED_FILE_SHA256 = "e525e40eab86e5a8fd748a38cbfde390eb12ffa5acd05211da21ec85719e1a58"
-EXPECTED_CANONICAL_SHA256 = "04f43175ff915e97a0921b08168febdb3e16fbc89326b4876794eabbb4c14e29"
+EXPECTED_FILE_SHA256 = "c90c4cc22b8918e90641bf0553416a68458433bea750bd2064fcf98df7886215"
+EXPECTED_CANONICAL_SHA256 = "00198bb84cd57f518d0370035b5a5a38b12c9804880d7bf1e475ddd80a77bfc2"
 
 
 def test_loads_v4_with_immutable_v3_and_dq_v3_bindings() -> None:
@@ -30,7 +30,8 @@ def test_loads_v4_with_immutable_v3_and_dq_v3_bindings() -> None:
 
     assert result.contract_file_sha256 == EXPECTED_FILE_SHA256
     assert result.contract_canonical_sha256 == EXPECTED_CANONICAL_SHA256
-    assert result.contract.sheet_version == "4.0.0-draft.1"
+    assert result.contract.sheet_version == "4.0.0"
+    assert result.contract.sheet_status == "OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH"
     assert result.predecessor.contract_file_sha256 == (
         "304b5de907bbc0858d2ca1f6786e9e325d5493572561b8e4cff71fa91ff05375"
     )
@@ -38,20 +39,24 @@ def test_loads_v4_with_immutable_v3_and_dq_v3_bindings() -> None:
         "68acb53ce3a2c2656565f24a98fe2de5b700d0ed3b994b9b3b20477f7aa6edb0"
     )
     assert result.dq_successor.contract_file_sha256 == (
-        "b84d8d3dbe2dded761e989c623469607c386297e59d61207bb478d3054523c2e"
+        "96eafe7525704a8e0e260c9ed344adf3420f7e1c977e877a557856258fee3144"
     )
     assert result.dq_successor.contract_canonical_sha256 == (
-        "9140e68dce070ca5cd421fe05ab480c9d2d330fd21a7f7c6cff0bda0b00aca8b"
+        "e8e180b147e1a88dad3776f886b8eb7398481b1518785b6a2243ae795f4a6ede"
     )
 
 
-def test_six_axes_are_byte_semantically_identical_to_v3_models() -> None:
+def test_six_axes_preserve_v3_semantics_except_owner_freeze_state() -> None:
     result = load_strategy_growth_action_value_freeze_readiness_contract_v4()
 
     for index in (0, 1, 2, 3, 6, 7):
-        assert result.contract.axis_contracts[index].model_dump(mode="json") == (
-            result.predecessor.contract.axis_contracts[index].model_dump(mode="json")
+        current = result.contract.axis_contracts[index].model_dump(mode="json")
+        predecessor = result.predecessor.contract.axis_contracts[index].model_dump(mode="json")
+        assert current.pop("owner_review_state") == (
+            "APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH"
         )
+        assert predecessor.pop("owner_review_state") == "PENDING_SUCCESSOR_OWNER_APPROVAL"
+        assert current == predecessor
 
 
 def test_only_dq_and_sample_axes_are_versioned_successors() -> None:
@@ -62,7 +67,9 @@ def test_only_dq_and_sample_axes_are_versioned_successors() -> None:
     assert dq.dq_successor_contract_id == (  # type: ignore[union-attr]
         "strategy_growth_action_value_canonical_dq_pit_contract_v3"
     )
-    assert dq.numeric_policy_state == "NON_EXECUTABLE_PILOT_FREEZE_READY"  # type: ignore[union-attr]
+    assert dq.numeric_policy_state == (  # type: ignore[union-attr]
+        "OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH"
+    )
     assert dq.executable_evidence_disposition == (  # type: ignore[union-attr]
         "INSUFFICIENT_EVIDENCE_TO_APPROVE"
     )
@@ -179,11 +186,17 @@ def test_exact_values_and_outcomes_reject_tamper(mutate, match: str) -> None:
         StrategyGrowthActionValueFreezeReadinessContractV4.model_validate(payload)
 
 
-def test_freeze_and_all_execution_paths_remain_closed() -> None:
+def test_owner_freeze_is_recorded_while_all_execution_paths_remain_closed() -> None:
     contract = load_strategy_growth_action_value_freeze_readiness_contract_v4().contract
 
-    assert contract.terminal.threshold_bundle_frozen is False
-    assert contract.terminal.dq_successor_authorized is False
+    assert contract.decision_timing.exact_owner_approval_visible is True
+    assert contract.decision_timing.new_dq_result_visible is False
+    assert contract.decision_timing.new_strategy_result_visible is False
+    assert {item.owner_review_state for item in contract.axis_contracts} == {
+        "APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH"
+    }
+    assert contract.terminal.threshold_bundle_frozen is True
+    assert contract.terminal.dq_successor_authorized is True
     assert contract.terminal.empirical_successor_authorized is False
     assert contract.safety.dq_run_authorized is False
     assert contract.safety.empirical_research_authorized is False

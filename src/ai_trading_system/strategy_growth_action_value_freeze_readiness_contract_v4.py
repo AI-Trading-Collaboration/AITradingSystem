@@ -117,13 +117,24 @@ def _bound_file(path: Path, *, root: Path, field: str) -> Path:
 
 class OwnerInstructionV4(_StrictModel):
     decision_id: Literal[
-        "owner_decision:TRADING-2542D:2026-08-24:adopt_second_pro_review_and_continue_v1"
+        "owner_decision:TRADING-2542D:2026-08-24:freeze_dq_pit_v3_and_exact_sheet_v4_all_eight_axes_as_drafted_non_executable_data_research_v1"
     ]
     adopted_review_disposition: Literal[
         "REQUEST_NEW_VERSION_BEFORE_OWNER_FREEZE_DECISION"
     ]
-    exact_successor_freeze_approval_state: Literal["NOT_PROVIDED"]
+    exact_successor_freeze_approval_state: Literal[
+        "APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH"
+    ]
     no_separate_progress_confirmation_required: Literal[True]
+
+
+class DecisionTimingV4(DecisionTiming):
+    # Pydantic V4 deliberately narrows the immutable V3 draft-state fields after Owner approval.
+    state: Literal[  # type: ignore[assignment]
+        "OWNER_FROZEN_PRE_EMPIRICAL_NON_EXECUTABLE_DATA_RESEARCH"
+    ]
+    exact_owner_approval_visible: Literal[True]  # type: ignore[assignment]
+    threshold_bundle_frozen: Literal[True]  # type: ignore[assignment]
 
 
 class ReviewEvidenceV4(_StrictModel):
@@ -168,21 +179,26 @@ class PredecessorBindingV4(ShaBindingV4):
 
 class DqSuccessorBindingV4(ShaBindingV4):
     path: Literal["config/research/strategy_growth_action_value_canonical_dq_pit_contract_v3.yaml"]
-    file_sha256: Literal["b84d8d3dbe2dded761e989c623469607c386297e59d61207bb478d3054523c2e"]
-    canonical_sha256: Literal["9140e68dce070ca5cd421fe05ab480c9d2d330fd21a7f7c6cff0bda0b00aca8b"]
+    file_sha256: Literal["96eafe7525704a8e0e260c9ed344adf3420f7e1c977e877a557856258fee3144"]
+    canonical_sha256: Literal["e8e180b147e1a88dad3776f886b8eb7398481b1518785b6a2243ae795f4a6ede"]
     contract_id: Literal["strategy_growth_action_value_canonical_dq_pit_contract_v3"]
     executable_authority: Literal[False]
 
 
 class CanonicalDqPitAxisV4(AxisBaseV3):
+    owner_review_state: Literal[  # type: ignore[assignment]
+        "APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH"
+    ]
     axis_id: Literal["CANONICAL_DQ_PIT"]
     predecessor_disposition: Literal["REJECT_AND_REQUEST_NEW_VERSION"]
     required_data_research_gate_status: Literal["PASS"]
     dq_successor_contract_id: Literal["strategy_growth_action_value_canonical_dq_pit_contract_v3"]
-    numeric_policy_state: Literal["NON_EXECUTABLE_PILOT_FREEZE_READY"]
+    numeric_policy_state: Literal["OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH"]
     pilot_review_disposition: Literal["APPROVE_EXACTLY_AS_DRAFTED"]
     executable_evidence_disposition: Literal["INSUFFICIENT_EVIDENCE_TO_APPROVE"]
-    operational_authority_state: Literal["UNAVAILABLE_PENDING_OWNER_EXACT_FREEZE_APPROVAL"]
+    operational_authority_state: Literal[
+        "FROZEN_CONTRACT_ONLY_REAL_DQ_EXECUTION_UNAUTHORIZED"
+    ]
 
 
 class EpisodeContractV4(_StrictModel):
@@ -215,6 +231,9 @@ class EpisodeContractV4(_StrictModel):
 
 
 class SampleAndWindowDependenceAxisV4(AxisBaseV3):
+    owner_review_state: Literal[  # type: ignore[assignment]
+        "APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH"
+    ]
     axis_id: Literal["SAMPLE_AND_WINDOW_DEPENDENCE"]
     predecessor_disposition: Literal["REJECT_AND_REQUEST_NEW_VERSION"]
     minimum_independent_action_count: Literal[30]
@@ -225,32 +244,68 @@ class SampleAndWindowDependenceAxisV4(AxisBaseV3):
     mandatory_window_slices: tuple[str, ...]
 
 
+class NonBetaActionValueAxisV4(NonBetaActionValueAxisV3):
+    owner_review_state: Literal[  # type: ignore[assignment]
+        "APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH"
+    ]
+
+
+class NetOfCostReturnAxisV4(NetOfCostReturnAxisV3):
+    owner_review_state: Literal[  # type: ignore[assignment]
+        "APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH"
+    ]
+
+
+class DrawdownAxisV4(DrawdownAxisV3):
+    owner_review_state: Literal[  # type: ignore[assignment]
+        "APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH"
+    ]
+
+
+class FalseRiskOffCostAxisV4(FalseRiskOffCostAxisV3):
+    owner_review_state: Literal[  # type: ignore[assignment]
+        "APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH"
+    ]
+
+
+class ActualPathTurnoverAxisV4(ActualPathTurnoverAxisV3):
+    owner_review_state: Literal[  # type: ignore[assignment]
+        "APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH"
+    ]
+
+
+class LeverageBetaAttributionAxisV4(LeverageBetaAttributionAxisV3):
+    owner_review_state: Literal[  # type: ignore[assignment]
+        "APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH"
+    ]
+
+
 AxisContractV4: TypeAlias = Annotated[
-    NonBetaActionValueAxisV3
-    | NetOfCostReturnAxisV3
-    | DrawdownAxisV3
-    | FalseRiskOffCostAxisV3
+    NonBetaActionValueAxisV4
+    | NetOfCostReturnAxisV4
+    | DrawdownAxisV4
+    | FalseRiskOffCostAxisV4
     | CanonicalDqPitAxisV4
     | SampleAndWindowDependenceAxisV4
-    | ActualPathTurnoverAxisV3
-    | LeverageBetaAttributionAxisV3,
+    | ActualPathTurnoverAxisV4
+    | LeverageBetaAttributionAxisV4,
     Field(discriminator="axis_id"),
 ]
 
 
-class DraftTerminalV4(_StrictModel):
-    status: Literal["BLOCKED_OWNER_EXACT_FREEZE_APPROVAL"]
-    next_action: Literal["OWNER_REVIEW_V4_THEN_SEPARATE_REAL_EVIDENCE_AUTHORIZATION"]
-    threshold_bundle_frozen: Literal[False]
-    dq_successor_authorized: Literal[False]
+class FrozenTerminalV4(_StrictModel):
+    status: Literal["OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH"]
+    next_action: Literal["SEPARATE_REAL_DATA_DQ_AND_BACKTEST_AUTHORIZATION_REQUIRED"]
+    threshold_bundle_frozen: Literal[True]
+    dq_successor_authorized: Literal[True]
     empirical_successor_authorized: Literal[False]
 
 
 class StrategyGrowthActionValueFreezeReadinessContractV4(_CanonicalModel):
     schema_version: Literal["strategy_growth_action_value_threshold_exact_value_sheet.v4"]
     sheet_id: Literal["strategy_growth_action_value_threshold_exact_value_sheet_v4"]
-    sheet_version: Literal["4.0.0-draft.1"]
-    sheet_status: Literal["NEW_VERSION_DRAFT_COMPLETE_PENDING_OWNER_FREEZE_DECISION"]
+    sheet_version: Literal["4.0.0"]
+    sheet_status: Literal["OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH"]
     task_id: Literal[
         "TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1"
     ]
@@ -259,13 +314,13 @@ class StrategyGrowthActionValueFreezeReadinessContractV4(_CanonicalModel):
     predecessor_binding: PredecessorBindingV4
     dq_successor_binding: DqSuccessorBindingV4
     scope_binding: ScopeBinding
-    decision_timing: DecisionTiming
+    decision_timing: DecisionTimingV4
     common_series_contract: CommonSeriesContractV3
     window_slice_catalog: tuple[WindowSlice, ...]
     axis_contracts: tuple[AxisContractV4, ...]
     joint_terminal_contract: JointTerminalContract
     owner_review_contract: OwnerReviewContract
-    terminal: DraftTerminalV4
+    terminal: FrozenTerminalV4
     safety: DecisionPackSafety
 
     @model_validator(mode="after")
@@ -282,19 +337,19 @@ class StrategyGrowthActionValueFreezeReadinessContractV4(_CanonicalModel):
         ):
             raise ValueError("primary inventory identity drifted")
         non_beta, net, drawdown, false_risk, dq, sample, turnover, beta = self.axis_contracts
-        if not isinstance(non_beta, NonBetaActionValueAxisV3) or (
+        if not isinstance(non_beta, NonBetaActionValueAxisV4) or (
             non_beta.minimum_non_beta_return_delta != Decimal("0.0100")
         ):
             raise ValueError("non-beta axis drifted")
-        if not isinstance(net, NetOfCostReturnAxisV3) or (
+        if not isinstance(net, NetOfCostReturnAxisV4) or (
             net.minimum_net_of_cost_return_delta != Decimal("0.0075")
         ):
             raise ValueError("net-of-cost axis drifted")
-        if not isinstance(drawdown, DrawdownAxisV3) or (
+        if not isinstance(drawdown, DrawdownAxisV4) or (
             drawdown.maximum_actual_path_drawdown_regression != Decimal("0.0200")
         ):
             raise ValueError("drawdown axis drifted")
-        if not isinstance(false_risk, FalseRiskOffCostAxisV3) or (
+        if not isinstance(false_risk, FalseRiskOffCostAxisV4) or (
             false_risk.maximum_false_risk_off_cost_regression != Decimal("0.0025")
         ):
             raise ValueError("false-risk axis drifted")
@@ -306,12 +361,12 @@ class StrategyGrowthActionValueFreezeReadinessContractV4(_CanonicalModel):
             raise ValueError("regime contribution threshold drifted")
         if sample.mandatory_window_slices != _PERIOD_SLICE_IDS:
             raise ValueError("sample slice set drifted")
-        if not isinstance(turnover, ActualPathTurnoverAxisV3) or (
+        if not isinstance(turnover, ActualPathTurnoverAxisV4) or (
             turnover.maximum_annualized_actual_path_turnover != Decimal("1.00")
             or turnover.maximum_cost_drag_share != Decimal("0.25")
         ):
             raise ValueError("turnover axis drifted")
-        if not isinstance(beta, LeverageBetaAttributionAxisV3) or (
+        if not isinstance(beta, LeverageBetaAttributionAxisV4) or (
             beta.maximum_realized_beta_increment != Decimal("0.0200")
             or beta.exposure_match_tolerance != Decimal("0.0100")
         ):
@@ -358,6 +413,8 @@ def load_strategy_growth_action_value_freeze_readiness_contract_v4(
         for index in _PRESERVED_AXIS_INDICES:
             current = contract.axis_contracts[index].model_dump(mode="json")
             prior = predecessor.contract.axis_contracts[index].model_dump(mode="json")
+            current.pop("owner_review_state")
+            prior.pop("owner_review_state")
             if current != prior:
                 raise ValueError(f"preserved axis drifted at index {index}")
     except StrategyGrowthActionValueFreezeReadinessContractV4Error:

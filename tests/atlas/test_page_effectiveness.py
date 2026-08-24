@@ -249,8 +249,8 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "OWNER_AND_INDEPENDENT_REVIEW_REQUIRED"
     )
     assert coverage_by_task["TRADING-2542D"] == (
-        "DISCLOSED_DQ_PIT_AND_SAMPLE_SEMANTICS_SUCCESSOR_DRAFT_"
-        "OWNER_FREEZE_REQUIRED"
+        "DISCLOSED_DQ_PIT_V3_AND_EXACT_SHEET_V4_OWNER_FROZEN_"
+        "NON_EXECUTABLE_DATA_RESEARCH"
     )
     assert coverage_by_task["TRADING-2543"] == (
         "LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_COMPLETE"

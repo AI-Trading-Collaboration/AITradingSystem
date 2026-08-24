@@ -9,7 +9,7 @@ classified_through_task_id: TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READE
 current_mainline_task_id: TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1
 largest_blocker_task_id: TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1
 next_legal_action_task_id: TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1
-status_object_zh: 策略增长主线 DQ/PIT 与样本语义 successor 待独立复核及 Owner 冻结状态
+status_object_zh: 策略增长主线 DQ/PIT V3 与 exact sheet V4 八轴已按草案冻结，仅限不可执行数据研究；真实数据与回测仍待单独授权
 evidence_evaluated_at: null
 task_status_mapping:
   DONE: PASS

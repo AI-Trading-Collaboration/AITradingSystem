@@ -1,7 +1,7 @@
 schema_version: strategy_growth_action_value_canonical_dq_pit_contract.v3
 contract_id: strategy_growth_action_value_canonical_dq_pit_contract_v3
-contract_version: 3.0.0-draft.1
-status: NEW_VERSION_DRAFT_COMPLETE_PENDING_OWNER_FREEZE_DECISION
+contract_version: 3.0.0
+status: OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH
 task_id: TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1
 predecessor_binding:
   path: config/research/strategy_growth_action_value_canonical_dq_pit_contract_v2.yaml
@@ -20,10 +20,10 @@ review_state:
   project_owner_adopted_review: true
   second_independent_review: PERFORMED_NEW_VERSION_REQUIRED
   non_executable_pilot_values_freeze_ready: true
-  owner_exact_successor_freeze_approval: NOT_PROVIDED
+  owner_exact_successor_freeze_approval: APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH
   executable_authority: false
   real_evidence_authority: false
-  freeze_allowed: false
+  freeze_allowed: true
 scope_binding:
   hypothesis_id: BASELINE_BOUNDED_QQQ_GROWTH_OVERLAY_NON_BETA_ACTION_VALUE_V1
   selected_data_lane: QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE
@@ -45,7 +45,7 @@ required_serial_contract_fields:
   - EXACT_SOURCE_DATE_AND_PIT_RULE
   - GLOBAL_DQ_TERMINAL_ORDER
 numeric_policy:
-  state: NON_EXECUTABLE_PILOT_FREEZE_READY
+  state: OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH
   executable: false
   pilot_review_disposition: APPROVE_EXACTLY_AS_DRAFTED
   executable_evidence_disposition: INSUFFICIENT_EVIDENCE_TO_APPROVE

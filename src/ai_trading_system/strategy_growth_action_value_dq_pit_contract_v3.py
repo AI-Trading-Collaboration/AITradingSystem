@@ -49,7 +49,7 @@ _TARGET_START = date(2021, 2, 22)
 _TARGET_END = date(2025, 12, 2)
 _PRE_WINDOW_PRIOR = date(2021, 2, 19)
 _EXPECTED_SESSION_COUNT = 1202
-_CONTRACT_CANONICAL_SHA256 = "9140e68dce070ca5cd421fe05ab480c9d2d330fd21a7f7c6cff0bda0b00aca8b"
+_CONTRACT_CANONICAL_SHA256 = "e8e180b147e1a88dad3776f886b8eb7398481b1518785b6a2243ae795f4a6ede"
 _SERIAL_FIELDS = (
     "QUOTE_AGE_CLOCK_AND_TIMESTAMP_DIRECTION",
     "RELATIVE_SPREAD_DENOMINATOR_AND_ZERO_DENOMINATOR",
@@ -135,10 +135,12 @@ class ReviewStateV3(_StrictModel):
     project_owner_adopted_review: Literal[True]
     second_independent_review: Literal["PERFORMED_NEW_VERSION_REQUIRED"]
     non_executable_pilot_values_freeze_ready: Literal[True]
-    owner_exact_successor_freeze_approval: Literal["NOT_PROVIDED"]
+    owner_exact_successor_freeze_approval: Literal[
+        "APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH"
+    ]
     executable_authority: Literal[False]
     real_evidence_authority: Literal[False]
-    freeze_allowed: Literal[False]
+    freeze_allowed: Literal[True]
 
 
 class ScopeBindingV3(_StrictModel):
@@ -159,7 +161,7 @@ class ScopeBindingV3(_StrictModel):
 
 
 class NumericPolicyBundleV3(_StrictModel):
-    state: Literal["NON_EXECUTABLE_PILOT_FREEZE_READY"]
+    state: Literal["OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH"]
     executable: Literal[False]
     pilot_review_disposition: Literal["APPROVE_EXACTLY_AS_DRAFTED"]
     executable_evidence_disposition: Literal["INSUFFICIENT_EVIDENCE_TO_APPROVE"]
@@ -260,8 +262,8 @@ class RunAuthorityContractV3(_StrictModel):
 class StrategyGrowthActionValueDqPitContractV3(_CanonicalModel):
     schema_version: Literal["strategy_growth_action_value_canonical_dq_pit_contract.v3"]
     contract_id: Literal["strategy_growth_action_value_canonical_dq_pit_contract_v3"]
-    contract_version: Literal["3.0.0-draft.1"]
-    status: Literal["NEW_VERSION_DRAFT_COMPLETE_PENDING_OWNER_FREEZE_DECISION"]
+    contract_version: Literal["3.0.0"]
+    status: Literal["OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH"]
     task_id: Literal[
         "TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1"
     ]

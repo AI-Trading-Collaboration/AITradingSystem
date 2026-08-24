@@ -30,8 +30,8 @@ from ai_trading_system.trading_calendar import us_equity_market_session
 CONFIG_PATH = Path(
     "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v3.yaml"
 )
-EXPECTED_FILE_SHA256 = "b84d8d3dbe2dded761e989c623469607c386297e59d61207bb478d3054523c2e"
-EXPECTED_CANONICAL_SHA256 = "9140e68dce070ca5cd421fe05ab480c9d2d330fd21a7f7c6cff0bda0b00aca8b"
+EXPECTED_FILE_SHA256 = "96eafe7525704a8e0e260c9ed344adf3420f7e1c977e877a557856258fee3144"
+EXPECTED_CANONICAL_SHA256 = "e8e180b147e1a88dad3776f886b8eb7398481b1518785b6a2243ae795f4a6ede"
 EXPECTED_INVENTORY_SHA256 = "d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0"
 
 
@@ -138,7 +138,8 @@ def test_loads_v3_and_preserves_v2_as_immutable_predecessor() -> None:
 
     assert result.contract_file_sha256 == EXPECTED_FILE_SHA256
     assert result.contract_canonical_sha256 == EXPECTED_CANONICAL_SHA256
-    assert result.contract.contract_version == "3.0.0-draft.1"
+    assert result.contract.contract_version == "3.0.0"
+    assert result.contract.status == "OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH"
     assert result.predecessor.contract_file_sha256 == (
         "c9c74d5da0819f206ae59543dcab34a2f1f920687fd4bf646da49a4eabbbd327"
     )
@@ -146,7 +147,13 @@ def test_loads_v3_and_preserves_v2_as_immutable_predecessor() -> None:
         "94e99dea15f0c62756f87230a7706d575b24e4c193db7bd4673ef2bb44427843"
     )
     assert result.contract.review_state.non_executable_pilot_values_freeze_ready is True
+    assert result.contract.review_state.owner_exact_successor_freeze_approval == (
+        "APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH"
+    )
+    assert result.contract.review_state.freeze_allowed is True
     assert result.contract.review_state.executable_authority is False
+    assert result.contract.review_state.real_evidence_authority is False
+    assert result.contract.numeric_policy.state == "OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH"
 
 
 def test_run_authority_binds_exact_target_inventory_and_separate_prior() -> None:

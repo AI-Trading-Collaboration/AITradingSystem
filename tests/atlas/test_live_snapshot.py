@@ -108,7 +108,8 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
-        "策略增长主线 DQ/PIT 与样本语义 successor 待独立复核及 Owner 冻结状态"
+        "策略增长主线 DQ/PIT V3 与 exact sheet V4 八轴已按草案冻结，"
+        "仅限不可执行数据研究；真实数据与回测仍待单独授权"
     )
 
 
