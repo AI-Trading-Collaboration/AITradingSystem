@@ -210,3 +210,10 @@ joint precedence 固定为 `INVALID > FAIL > INSUFFICIENT > PASS`；不允许七
   `outputs/validation_runtime/architecture-fitness_20260824T174011Z/test_runtime_summary.json`；v2 已失败
   释放。v3 扩展精确 test path，只同步该 self-hosted registry invariant 后重新生成并验证，不改变
   DQ、策略、外部计数或 authorization consumption state。
+- 2026-08-25：v3 candidate `98ea5087e5ddbbec9c5e2578d433458458008e0d` 的 Architecture
+  `878 passed`、Contract `278 passed`、Integration `995 passed`、Reproducibility `24 passed`；Full 为
+  `9530 passed / 2 failed / 3 skipped`。两项失败均是新增 `TRADING-2542E` 后 Atlas coverage 的旧静态
+  期望：renderer 仍断言 count=70，historical projection list 在 2542D 后遗漏 2542E。页面 exact-commit
+  validation 自身 PASS，未发生研究语义、DQ 或策略失败。失败证据为
+  `outputs/validation_runtime/full_20260824T180511Z/test_runtime_summary.json`；v4 以该 artifact 为 exact
+  parent，只同步两项 coverage expectation 并执行 parent-bound `failure_fix_rerun`。
