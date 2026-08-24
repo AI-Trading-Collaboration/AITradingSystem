@@ -9267,6 +9267,37 @@ Project Owner 已批准 V3/V4 全部八轴完全按草案冻结，但只形成 n
 authority。真实证据仍只能由另一个固定 code/data identity、zero-order/zero-fill 且单次计数的 R1 manifest
 与单独授权启动；本冻结不授权 provider/cache/DQ run、backtest 或投资结论。
 
+## TRADING-2542E real-DQ / locked-backtest predispatch policy gate
+
+Project Owner 已对一次真实 DQ 与 locked zero-order backtest 复核给出 exact-scope 授权，但授权与
+executable policy completeness 分轴管理。predispatch inventory 在任何新 provider/result 可见前发现：
+
+```text
+Owner exact authorization (unconsumed)
+  + frozen DQ/PIT V3 and exact sheet V4
+  + TRADING-2541 transport completeness = 1202/1202
+  -> executable policy inventory
+       -> qqq_options_deterministic_selection_v1.selection_authorized = false
+       -> DTE / moneyness / delta / deterministic rank = UNKNOWN_REQUIRES_POLICY_REVIEW
+       -> qqq_options_signal_export_v1.etf_signal_mapping_allowed = false
+       -> growth-state formula / effective-session mapping = not frozen
+       -> bounded QQQ/SGOV action sizing and target weights = not frozen
+       -> daily-chain quote_end and exact-prior OI source/available-at lineage = not proven
+  -> cannot build V3 per-session expected contributor manifest
+  -> cannot build a result-prelocked candidate return / turnover / event series
+  -> technical_validation_state = BLOCKED_PRE_DISPATCH_POLICY_INPUT
+  -> authorization_consumption_state = UNCONSUMED_NO_BACKTEST_DISPATCH
+  -> clone mutation / save / build / backtest / provider query / order / fill = 0
+```
+
+不得以“全链全部是 contributor”、结果后挑选 contract、latest OI 冒充 exact-prior OI、event time
+冒充 quote-end，或自创 QQQ/SGOV 权重作为 workaround。下一合法节点是：在任何真实结果可见前新增并
+由 Owner review 的 versioned policy pack，精确冻结 contributor eligibility/rank、derived options
+growth-state 与有效 session、action sizing，以及 provider timestamp/OI adapter lineage。只有该 policy
+进入 authority、exact candidate/R1 manifest 完成验证和 ordinary publication 后，才允许消费唯一
+external run。Atlas current mainline/blocker/next action 均投影 TRADING-2542E；这次页面变化不运行数据、
+回测或交易。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

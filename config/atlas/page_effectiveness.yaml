@@ -321,6 +321,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2542D_Growth_Action_Value_DQ_PIT_And_Sample_Semantics_Freeze_Correction_V1.md
     coverage: DISCLOSED_DQ_PIT_V3_AND_EXACT_SHEET_V4_OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH
     reader_summary_zh: 2542D 依据第二轮 exact-commit Web Pro review 新建 DQ/PIT V3 与 exact sheet V4，修正首日 pre-window prior、excluded invalid 传播、zero contributor terminal、typed run authority、cluster-level right censor 与 session-keyed cost reconciliation。Project Owner 已批准 DQ/PIT V3 与全部八轴完全按草案冻结，仅限不可执行数据研究；1202-session synthetic authority 仍只证明机械合同可达，真实 provider/cache/DQ/backtest、经验研究、投资结论、生产与交易动作保持关闭并需另行授权。
+  - task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
+    requirement_path: docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md
+    coverage: DISCLOSED_REAL_DQ_AND_LOCKED_BACKTEST_EXACT_AUTHORIZATION_UNCONSUMED_POLICY_INPUT_BLOCKED
+    reader_summary_zh: 2542E 已取得一次真实 DQ 与 locked zero-order backtest 的精确范围授权，但授权尚未消费、所有外部计数仍为 0。predispatch inventory 发现 contributor eligibility/rank、options growth-state 与 effective-session mapping、QQQ/SGOV action sizing，以及 quote-end/exact-prior OI adapter lineage 尚未在结果前冻结；因此无法合法构造 V3 expected contributor manifest 或 locked candidate，技术状态为“结果前策略输入阻塞”。禁止用全链隐式 contributor、结果后选样或自创权重绕过；production/broker effect=none。
   - task_id: TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1
     requirement_path: docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md
     coverage: LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_COMPLETE

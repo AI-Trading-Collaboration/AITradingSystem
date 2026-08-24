@@ -23,11 +23,11 @@
       "consumer_inventory_path": "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
       "consumer_inventory_sha256": "6ceefde1393d139a4a875a032891901d9ca82b403700948442ce421e4354210e",
       "current_hash_authority": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1.sources",
-      "entry_count": 3015,
+      "entry_count": 3019,
       "fragment_count": 192,
       "fragment_shadow_active": false,
       "index_path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-      "index_sha256": "238c275b52003a762d2e3600167f67fab3f00e79248f354bd8b1205c9a21eb96",
+      "index_sha256": "11f89480d6f8b3717e4554bb09134bd4d7df3e1610f5bbd6152818a10d1ad334",
       "source_of_truth": "LEGACY_MONOLITH",
       "target_count": 3
     },
@@ -52,7 +52,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
-        "sha256": "f8f2a9a7a9d4737c430ef6768304c7ff00a457548d6b37143f123b26f50ec400"
+        "sha256": "7ac1f49a6bf4c23ea19f1f0c001db9a7b4fe9bbf51e3fdd983246a35eab88d2a"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -112,12 +112,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/system_flow.md",
-        "sha256": "cc09edd99213a361ad0d3516e018be7bc7a52a0995a51b8a981d0be62284f189"
+        "sha256": "f35ca3fd74327c30fd41cf97c7b0a1a5af613e00dae0a2c52d745bb281f5c580"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "0a74a7f81de6c25f1a489e35a7f864fa2523f2deb50c3ea88f73139ce1da732f"
+        "sha256": "16afe3f6ccd11c15e7aba0038667f0573259a655d182acb4bfe8eedb1232d8e2"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -127,7 +127,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "acff299595a6583a84816d171278a1df4efa66ae51dd43aa0e2730c580fec3c4"
+        "sha256": "1b3e24105afb2e927f59eca552b9a88505602e82a7a492464af79d426525e974"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -142,7 +142,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "942fc8ab6d70a5ba741f1d020a33496e5ee5e72d3fe1172dcc2b862293c48c00"
+        "sha256": "c2e8f0e3378ebbfac98f02dcbb9ac421b070bb464eb72d4bf9ed8940a391e162"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -157,12 +157,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "a89b3e195eff2b10c86bb57531834147e4b78a50e5c4ee1eda6c61b34024a654"
+        "sha256": "06a754ed61453c855df7a6d117e739e1c637a0dd73119d342a59fafb67214054"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-        "sha256": "238c275b52003a762d2e3600167f67fab3f00e79248f354bd8b1205c9a21eb96"
+        "sha256": "11f89480d6f8b3717e4554bb09134bd4d7df3e1610f5bbd6152818a10d1ad334"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -247,7 +247,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "f50ce118f351c1711ce073db61ec832defcfeff3b87050b1b3667f9b2ea61172"
+        "sha256": "b1ff76a8fff22a0f73050953bc0c3df1c5ebabd498573ffe718c0faf299485bf"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -387,5 +387,5 @@
     "task_id": "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1"
   },
   "section_id": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1",
-  "section_sha256": "2f6ff07acad0bbb509a824bd089730a60b601fdd82a49e773e4e31ad051c00e5"
+  "section_sha256": "2a5baf707c3847685cc5964f993d021e95b7a6d8aca8b58ba045ca873f9dcccb"
 }

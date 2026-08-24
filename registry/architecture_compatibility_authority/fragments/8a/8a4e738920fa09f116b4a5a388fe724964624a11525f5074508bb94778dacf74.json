@@ -29,12 +29,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "0a74a7f81de6c25f1a489e35a7f864fa2523f2deb50c3ea88f73139ce1da732f"
+        "sha256": "16afe3f6ccd11c15e7aba0038667f0573259a655d182acb4bfe8eedb1232d8e2"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "acff299595a6583a84816d171278a1df4efa66ae51dd43aa0e2730c580fec3c4"
+        "sha256": "1b3e24105afb2e927f59eca552b9a88505602e82a7a492464af79d426525e974"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -49,12 +49,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "942fc8ab6d70a5ba741f1d020a33496e5ee5e72d3fe1172dcc2b862293c48c00"
+        "sha256": "c2e8f0e3378ebbfac98f02dcbb9ac421b070bb464eb72d4bf9ed8940a391e162"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "a89b3e195eff2b10c86bb57531834147e4b78a50e5c4ee1eda6c61b34024a654"
+        "sha256": "06a754ed61453c855df7a6d117e739e1c637a0dd73119d342a59fafb67214054"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -79,7 +79,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "f50ce118f351c1711ce073db61ec832defcfeff3b87050b1b3667f9b2ea61172"
+        "sha256": "b1ff76a8fff22a0f73050953bc0c3df1c5ebabd498573ffe718c0faf299485bf"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -132,5 +132,5 @@
     "task_id": "DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL"
   },
   "section_id": "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2",
-  "section_sha256": "c2ca7d3a6ae7b5e46a863b1761357b251b36e8b923d4ca0a4e3990cc60087d0a"
+  "section_sha256": "8a4e738920fa09f116b4a5a388fe724964624a11525f5074508bb94778dacf74"
 }

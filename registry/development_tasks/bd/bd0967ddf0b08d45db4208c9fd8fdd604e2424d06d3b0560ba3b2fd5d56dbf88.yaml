@@ -1,0 +1,132 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
+  task_id_sha256: bd0967ddf0b08d45db4208c9fd8fdd604e2424d06d3b0560ba3b2fd5d56dbf88
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
+  title: null
+  domain: Growth action-value real DQ/PIT and locked zero-order backtest review V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner / review a pre-result executable contributor, signal,
+    action-sizing and provider-timestamp policy pack
+  requirement_refs:
+  - docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Authorization is exact and unconsumed,
+    but contributor eligibility/rank, options-to-growth-state mapping, QQQ/SGOV action
+    sizing, quote_end lineage and exact-prior OI adapter semantics are not frozen;
+    no legal candidate or V3 expected contributor manifest can be constructed.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 'Before any real result: Owner-reviewed versioned policy fixes contributor
+      eligibility/rank, growth-state/effective-session mapping, QQQ/SGOV target weights,
+      quote_end and exact-prior OI lineage; then exact candidate/R1 manifest binds
+      frozen V3/V4, 2021-02-22..2025-12-02, 1202 sessions plus 2021-02-19 prior, one
+      run/no retry, raw rows/orders/fills/positions=0.'
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-24T16:59:47Z'
+  actor: integration-coordinator
+  change_id: trading-2542e-register-real-review-20260825-v1
+  lane_id: null
+  base_commit: 4f591d50f007297a8ac7b42c8f0b9643fcf20694
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
+    - Growth action-value real DQ/PIT and locked zero-order backtest review V1
+    - P0
+    - IN_PROGRESS
+    - Codex / lock and validate the R1 manifest and zero-order Cloud candidate before
+      one bounded dispatch
+    - Build and validate one exact R1 manifest and candidate; publish and replay identity
+      before the only external run; admit strategy evidence only after V3 GLOBAL_PASS
+    - Preserve frozen V3/V4 hashes; exact 2021-02-22..2025-12-02 / 1202 sessions plus
+      2021-02-19 prior; one existing-clone mutation/save/build/backtest and at most
+      one exact-date recovery query; retry=0; raw rows/orders/fills/positions=0; eight-axis
+      terminal and actual counters sealed
+    - 'Supporting requirement: docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md.
+      Owner authorized one locked real-DQ and zero-order backtest review on 2026-08-25;
+      production_effect=none, broker_action=none, external counters currently 0.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2542e-register-real-review-20260825-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2779161f91906d48896db9f39567728d
+- schema_version: task_event.v1
+  task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-24T17:03:23Z'
+  actor: integration-coordinator
+  change_id: trading-2542e-predispatch-policy-input-block-20260825-v1
+  lane_id: null
+  base_commit: 4f591d50f007297a8ac7b42c8f0b9643fcf20694
+  previous_state_event_id: task-event-2779161f91906d48896db9f39567728d
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / review a pre-result executable contributor, signal,
+      action-sizing and provider-timestamp policy pack
+    blocker_or_next_step: Authorization is exact and unconsumed, but contributor eligibility/rank,
+      options-to-growth-state mapping, QQQ/SGOV action sizing, quote_end lineage and
+      exact-prior OI adapter semantics are not frozen; no legal candidate or V3 expected
+      contributor manifest can be constructed.
+    acceptance_criteria: 'Before any real result: Owner-reviewed versioned policy
+      fixes contributor eligibility/rank, growth-state/effective-session mapping,
+      QQQ/SGOV target weights, quote_end and exact-prior OI lineage; then exact candidate/R1
+      manifest binds frozen V3/V4, 2021-02-22..2025-12-02, 1202 sessions plus 2021-02-19
+      prior, one run/no retry, raw rows/orders/fills/positions=0.'
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md.
+      authorization_state=EXACT_PREAUTHORIZED; authorization_consumption_state=UNCONSUMED_NO_BACKTEST_DISPATCH;
+      technical_validation_state=BLOCKED_PRE_DISPATCH_POLICY_INPUT; all external counters=0.
+      QuantConnect official docs expose latest daily OI but current authority does
+      not prove exact-prior source/available-at identity.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542e-predispatch-policy-input-block-20260825-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f27ff4a6eb4ccb81336a9379c162189a
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
+  - Growth action-value real DQ/PIT and locked zero-order backtest review V1
+  - P0
+  - BLOCKED_OWNER_INPUT
+  - Project Owner / review a pre-result executable contributor, signal, action-sizing
+    and provider-timestamp policy pack
+  - Authorization is exact and unconsumed, but contributor eligibility/rank, options-to-growth-state
+    mapping, QQQ/SGOV action sizing, quote_end lineage and exact-prior OI adapter
+    semantics are not frozen; no legal candidate or V3 expected contributor manifest
+    can be constructed.
+  - 'Before any real result: Owner-reviewed versioned policy fixes contributor eligibility/rank,
+    growth-state/effective-session mapping, QQQ/SGOV target weights, quote_end and
+    exact-prior OI lineage; then exact candidate/R1 manifest binds frozen V3/V4, 2021-02-22..2025-12-02,
+    1202 sessions plus 2021-02-19 prior, one run/no retry, raw rows/orders/fills/positions=0.'
+  - 'Supporting requirement: docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md.
+    authorization_state=EXACT_PREAUTHORIZED; authorization_consumption_state=UNCONSUMED_NO_BACKTEST_DISPATCH;
+    technical_validation_state=BLOCKED_PRE_DISPATCH_POLICY_INPUT; all external counters=0.
+    QuantConnect official docs expose latest daily OI but current authority does not
+    prove exact-prior source/available-at identity.'
+  docs_links:
+  - docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md
+  terminal: false
+  canonical_row_sha256: c6fe01366ad4a8a18ac75a8aa7632342c06910eb0bc953ec09a096327669f27c
+last_event_id: task-event-f27ff4a6eb4ccb81336a9379c162189a
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 49c73462e65dc478a153503ad2e8ea428b3aa5fdec68f07a8da9900fde0cc700

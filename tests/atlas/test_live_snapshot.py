@@ -104,12 +104,13 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2542D_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2542E_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
-        "策略增长主线 DQ/PIT V3 与 exact sheet V4 八轴已按草案冻结，"
-        "仅限不可执行数据研究；真实数据与回测仍待单独授权"
+        "真实 DQ 与锁定回测已获范围授权但尚未消费；当前缺少结果前冻结的 "
+        "contributor、options growth-state、QQQ/SGOV action sizing 与 "
+        "provider timestamp/OI lineage policy"
     )
 
 
