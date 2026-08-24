@@ -21228,7 +21228,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.strategy_growth_action_value_dq_pit_contract_v3
   path: src/ai_trading_system/strategy_growth_action_value_dq_pit_contract_v3.py
-  sha256: 6de29c784574ff0a75722714209305e8173e6cc5d86f10995a50fe6a0b65e983
+  sha256: 28b130584b473e37e4a4640cadaa7a49dadd58d6e7a8416a8711b7a3a8ecc76d
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -21268,7 +21268,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.strategy_growth_action_value_freeze_readiness_contract_v4
   path: src/ai_trading_system/strategy_growth_action_value_freeze_readiness_contract_v4.py
-  sha256: 29e6145c2c7efdce02ca66d403a8dc93385346a1050aa9abd96b4eb05fccb77a
+  sha256: bf0bf281a32971bc9ebff42331cd9be8b85c1b5a9c382a71d94e2dadf8a79624
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

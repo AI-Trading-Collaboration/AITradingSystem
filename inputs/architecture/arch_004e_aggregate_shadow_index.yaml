@@ -34,7 +34,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 4d17fcfc769495dd3301fdf1effc492761b3b01bf87ea17a87bb4ac96b88ee0d
+  current_sha256: cc09edd99213a361ad0d3516e018be7bc7a52a0995a51b8a981d0be62284f189
   fragment_root: config/architecture/fragments/flows
   fragment_count: 56
   fragment_paths:

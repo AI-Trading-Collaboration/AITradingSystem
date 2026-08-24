@@ -29,12 +29,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "42edb8988fde17885012b705e44bbf2e50436e398c8878b738e385bcb6f6d5dc"
+        "sha256": "0a74a7f81de6c25f1a489e35a7f864fa2523f2deb50c3ea88f73139ce1da732f"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "91023279d3209965f0ed8eb9ef2daed0eacc1e0b247a6fa81c5b18dd5f2aac23"
+        "sha256": "acff299595a6583a84816d171278a1df4efa66ae51dd43aa0e2730c580fec3c4"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -44,17 +44,17 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "f215b07dc9b0381b71426813c19ecb055a2514018fd205bda47f42f8e42a9661"
+        "sha256": "fd0fc65f9b902e3f9f6a64eda036b1b16a160b3fa59cdcb233da7750ea38adc3"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "09cf020b3d2222d8ef81241baeed4392a7f773ca777e410d725aec6e385f023e"
+        "sha256": "0e3805b70d52ce19d5d34abae7e6e7f50cd6467e2bebb91f37318792ce40e655"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "4d585270826af79ca10d34485b50c78bec2f840a92492fe985655e4cf52bbaab"
+        "sha256": "a89b3e195eff2b10c86bb57531834147e4b78a50e5c4ee1eda6c61b34024a654"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -132,5 +132,5 @@
     "task_id": "DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL"
   },
   "section_id": "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2",
-  "section_sha256": "3ca81e80919bed47aae915d0d901f371b659b4bece4f1301aefa0d59355febdb"
+  "section_sha256": "0958721fbbccd2ac5bf4896d56f4dedb4e2fc22aa45aa283de73c44eff5c9bc6"
 }

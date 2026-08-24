@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_live_snapshot
   path: tests/atlas/test_live_snapshot.py
-  sha256: 15d2ffb771aff086d06991e5e0abd51a6f6fac6c9a3087b98840dd9068b0b9a1
+  sha256: 2e8e4f226738a811f1c91052c9516e3c60c57aa9cfc93779606370cfd07e7d88
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -203,7 +203,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_page_effectiveness
   path: tests/atlas/test_page_effectiveness.py
-  sha256: 3ab6cc814ab1bb23d84ad1da8d08b211b0b409192482c87d69d3e01313ed5f90
+  sha256: 4ca12a6f90244b3ab02982549868f5ace28ca75b7c4e6d2d9f0489083ccae2c6
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -17520,7 +17520,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_strategy_growth_action_value_dq_pit_contract_v3
   path: tests/test_strategy_growth_action_value_dq_pit_contract_v3.py
-  sha256: fe0a87d7513a1c01dd4d28bc9d84ef241d01c33564147cab4cc7c1a6c13bb07c
+  sha256: 427a5424cc2cd6ebc1a56fb2d89fd5ee62deeab10dbd6ed683703c3e4174d812
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -17552,7 +17552,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_strategy_growth_action_value_freeze_readiness_contract_v4
   path: tests/test_strategy_growth_action_value_freeze_readiness_contract_v4.py
-  sha256: a95b912949248ea6d8f07860a64952afecccb96c2811f8d2581429644447ae89
+  sha256: c49411beca6272c557137ca7c5c878b2579ebdf35b03317ac9f57e45fd9e24a2
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
