@@ -29,7 +29,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "d1f34d0001466d7bab7d1d7a33c2afa8f51ffe904120ec5610f12c9c8c220eca"
+        "sha256": "42edb8988fde17885012b705e44bbf2e50436e398c8878b738e385bcb6f6d5dc"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -44,17 +44,17 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "b8c4e5739649a491726fefe7685cbb6e64099020615528c4811a364e4015db40"
+        "sha256": "f215b07dc9b0381b71426813c19ecb055a2514018fd205bda47f42f8e42a9661"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "b9cbe9b64844f61c585402d10c60b5e435d469214625d1d799a7c7f8522149d3"
+        "sha256": "09cf020b3d2222d8ef81241baeed4392a7f773ca777e410d725aec6e385f023e"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "0f4f1a2a0fe480f4946b0ec9435fe2ca58275e6d1efc228d60331de896477a6f"
+        "sha256": "4d585270826af79ca10d34485b50c78bec2f840a92492fe985655e4cf52bbaab"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -64,7 +64,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
-        "sha256": "f81ed5a02ebcebf09772754d9b9d1a915bcf4bd88943c2a0762d10e1306d2381"
+        "sha256": "70a1fffaa7ec362c8eeeafcd19f409ee8dbcb4ce4ca2f24755131c44d643f91e"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -132,5 +132,5 @@
     "task_id": "DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL"
   },
   "section_id": "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2",
-  "section_sha256": "60acdf0baca9059caeb2f7b1a6a3ca48e8d688528490b7a0a9b77bfffb1277e3"
+  "section_sha256": "3ca81e80919bed47aae915d0d901f371b659b4bece4f1301aefa0d59355febdb"
 }

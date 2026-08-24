@@ -15,7 +15,7 @@ task_record:
   priority: P0
   accountable_owner: null
   next_owner: Project Owner reviews exact V4/V3 successors for freeze; Codex completes
-    final-candidate validation and ordinary publication
+    failure-fix validation and ordinary publication
   requirement_refs:
   - docs/requirements/TRADING-2542D_Growth_Action_Value_DQ_PIT_And_Sample_Semantics_Freeze_Correction_V1.md
   module_ids: []
@@ -30,9 +30,9 @@ task_record:
       2021-02-19 prior, excluded-invalid propagation, split contributor terminals
       and typed hash-rooted authority; exact sheet V4 six preserved axes, cluster-level
       right censor and keyed cost reconciliation; Atlas canonical writer imports this
-      exact repository before external packages; focused regressions plus five final
-      formal tiers PASS; no real provider/cache/DQ/backtest; ordinary push and SHA
-      equality
+      exact repository before external packages and page coverage includes 2542D;
+      focused regressions plus five final formal tiers PASS; no real provider/cache/DQ/backtest;
+      ordinary push and SHA equality
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -177,6 +177,43 @@ events:
   - change:trading-2542d-final-metadata-convergence-owner-block-20260824-v3
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-867d918a7ea30c0919a05095dd60df2b
+- schema_version: task_event.v1
+  task_id: TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-24T07:36:00Z'
+  actor: integration-coordinator
+  change_id: trading-2542d-full-failure-fix-owner-block-20260824-v4
+  lane_id: null
+  base_commit: 7f22d1dadec41bd7a27e8aed045f7706385fc5aa
+  previous_state_event_id: task-event-867d918a7ea30c0919a05095dd60df2b
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner reviews exact V4/V3 successors for freeze; Codex completes
+      failure-fix validation and ordinary publication
+    blocker_or_next_step: Engineering successor and Atlas exact-repository import
+      isolation are ready; exact Owner freeze approval remains required before real
+      DQ authority or empirical execution
+    acceptance_criteria: Preserve V3 and DQ/PIT V2 immutable; DQ/PIT V3 exact 1202
+      targets plus independent 2021-02-19 prior, excluded-invalid propagation, split
+      contributor terminals and typed hash-rooted authority; exact sheet V4 six preserved
+      axes, cluster-level right censor and keyed cost reconciliation; Atlas canonical
+      writer imports this exact repository before external packages and page coverage
+      includes 2542D; focused regressions plus five final formal tiers PASS; no real
+      provider/cache/DQ/backtest; ordinary push and SHA equality
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542D_Growth_Action_Value_DQ_PIT_And_Sample_Semantics_Freeze_Correction_V1.md.
+      v8 candidate 7f22d1dadec41bd7a27e8aed045f7706385fc5aa passed Architecture 878,
+      Contract 278, Integration 995, Reproducibility 24 and exact Atlas render; Full
+      parent full_20260824T070717Z ended 9531 passed, 1 failed, 3 skipped because
+      historical_projection_review omitted TRADING-2542D from a hardcoded expected
+      list. v9 fixes only that stale expectation and derived authority before failure_fix_rerun.
+      Real provider/cache/DQ/backtest remains closed.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542d-full-failure-fix-owner-block-20260824-v4
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-791433ddb2af138df1a531e1885910f7
 projection:
   legacy_first_eight_cells:
   - TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1
@@ -184,7 +221,7 @@ projection:
     V1
   - P0
   - BLOCKED_OWNER_INPUT
-  - Project Owner reviews exact V4/V3 successors for freeze; Codex completes final-candidate
+  - Project Owner reviews exact V4/V3 successors for freeze; Codex completes failure-fix
     validation and ordinary publication
   - Engineering successor and Atlas exact-repository import isolation are ready; exact
     Owner freeze approval remains required before real DQ authority or empirical execution
@@ -192,18 +229,20 @@ projection:
     2021-02-19 prior, excluded-invalid propagation, split contributor terminals and
     typed hash-rooted authority; exact sheet V4 six preserved axes, cluster-level
     right censor and keyed cost reconciliation; Atlas canonical writer imports this
-    exact repository before external packages; focused regressions plus five final
-    formal tiers PASS; no real provider/cache/DQ/backtest; ordinary push and SHA equality
+    exact repository before external packages and page coverage includes 2542D; focused
+    regressions plus five final formal tiers PASS; no real provider/cache/DQ/backtest;
+    ordinary push and SHA equality
   - 'Supporting requirement: docs/requirements/TRADING-2542D_Growth_Action_Value_DQ_PIT_And_Sample_Semantics_Freeze_Correction_V1.md.
-    DQ/PIT V3 file/canonical=b84d8d3dbe2dded761e989c623469607c386297e59d61207bb478d3054523c2e/9140e68dce070ca5cd421fe05ab480c9d2d330fd21a7f7c6cff0bda0b00aca8b;
-    exact sheet V4=e525e40eab86e5a8fd748a38cbfde390eb12ffa5acd05211da21ec85719e1a58/04f43175ff915e97a0921b08168febdb3e16fbc89326b4876794eabbb4c14e29.
-    v7 repaired Atlas exact-repository import isolation and passed 343 focused tests;
-    v8 converges lifecycle metadata and final generated hashes. Real provider/cache/DQ/backtest
+    v8 candidate 7f22d1dadec41bd7a27e8aed045f7706385fc5aa passed Architecture 878,
+    Contract 278, Integration 995, Reproducibility 24 and exact Atlas render; Full
+    parent full_20260824T070717Z ended 9531 passed, 1 failed, 3 skipped because historical_projection_review
+    omitted TRADING-2542D from a hardcoded expected list. v9 fixes only that stale
+    expectation and derived authority before failure_fix_rerun. Real provider/cache/DQ/backtest
     remains closed.'
   docs_links:
   - docs/requirements/TRADING-2542D_Growth_Action_Value_DQ_PIT_And_Sample_Semantics_Freeze_Correction_V1.md
   terminal: false
-  canonical_row_sha256: a32fa8e0bcad3d38b4837b9a2890df17dd9bad44fb757af49e409c4cd28262e0
-last_event_id: task-event-867d918a7ea30c0919a05095dd60df2b
+  canonical_row_sha256: 030b40f430887694ee5aca082a886a082ef15340755ae5f10fa3d981cb2817da
+last_event_id: task-event-791433ddb2af138df1a531e1885910f7
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: c502c01b63b0406cc8da1fc8f264f2c7bb40ee6ac87c80a3e235228ee2e90471
+fragment_checksum: 105b86a208c417d4e453408289112e2f7113901613e853d8a026740c6f61eae8

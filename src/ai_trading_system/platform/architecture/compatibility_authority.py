@@ -1673,6 +1673,7 @@ def _trading_2542d_section(
             "strategy_growth_action_value_freeze_readiness_contract_v4.py"
         ),
         "tests/atlas/test_cited_query_renderer.py",
+        "tests/atlas/test_historical_projection_review.py",
         "tests/atlas/test_live_snapshot.py",
         "tests/atlas/test_page_effectiveness.py",
         "tests/test_arch_004_refactor_policy.py",
