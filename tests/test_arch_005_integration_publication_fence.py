@@ -132,6 +132,36 @@ def test_plan_tamper_fails_closed_before_task_source_mutation(
     fence.release(transaction, actor="integration-coordinator", outcome="failed")
 
 
+def test_bound_full_parent_is_optional_until_explicitly_consumed(
+    publication_checkout: Path,
+) -> None:
+    parent = publication_checkout / "outputs/validation_runtime/parent/test_runtime_summary.json"
+    parent.parent.mkdir(parents=True)
+    parent.write_text('{"status":"FAIL"}\n', encoding="utf-8")
+    fence = _fence(publication_checkout)
+    binding = _acquire(
+        fence,
+        publication_checkout,
+        transaction_id="parent-binding",
+        full_parent=parent,
+    )
+    transaction = Path(str(binding["transaction_path"]))
+
+    assert fence.validate(transaction, exact_phase="ACQUIRED")["status"] == "PASS"
+    assert fence.validate(
+        transaction,
+        exact_phase="ACQUIRED",
+        parent_path=parent,
+    )["status"] == "PASS"
+
+    parent.write_text('{"status":"PASS"}\n', encoding="utf-8")
+    with pytest.raises(PublicationFenceError) as error:
+        fence.validate(transaction, exact_phase="ACQUIRED", parent_path=parent)
+
+    assert error.value.code == "PUBLICATION_FULL_PARENT_MISMATCH"
+    fence.release(transaction, actor="integration-coordinator", outcome="failed")
+
+
 def test_full_transaction_replays_candidate_publish_and_closeout_receipt(
     publication_checkout: Path,
 ) -> None:
@@ -287,6 +317,7 @@ def _acquire(
     transaction_id: str,
     expected_main: str | None = None,
     integration_plan: Path | None = None,
+    full_parent: Path | None = None,
     extra_shared: tuple[str, ...] = (),
 ) -> dict[str, object]:
     head = _git(repository, "rev-parse", "HEAD")
@@ -308,6 +339,7 @@ def _acquire(
         ),
         generator_ids=("canonical-task-source",),
         integration_plan_path=integration_plan,
+        full_parent_path=full_parent,
     )
 
 

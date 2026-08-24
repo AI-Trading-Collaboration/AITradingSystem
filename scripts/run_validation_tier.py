@@ -2723,7 +2723,16 @@ def _validate_publication_transaction_for_full(
             str(task_id),
         )
     parent_value = validation_provenance.get("parent_run")
-    parent_path = Path(parent_value) if isinstance(parent_value, str) and parent_value else None
+    if isinstance(parent_value, Mapping):
+        parent_value = parent_value.get("summary_path")
+    if parent_value is not None and (
+        not isinstance(parent_value, str) or not parent_value.strip()
+    ):
+        raise PublicationFenceError(
+            "PUBLICATION_FULL_PARENT_INVALID",
+            "validated parent_run summary_path is missing",
+        )
+    parent_path = Path(parent_value) if parent_value is not None else None
     fence = IntegrationPublicationFence(project_root=repo_root)
     fence.validate(
         transaction_path,

@@ -15461,7 +15461,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.integration_publication_fence
   path: src/ai_trading_system/platform/architecture/integration_publication_fence.py
-  sha256: 43f946c0f932af608029bd5ca8991f494f18f0c411ffad2af7285ca797129df9
+  sha256: 8d8534c96f428be0db60851f8c1c1f5a477599456a24a83e22275640128120d7
   rule_id: platform_architecture
   owner_profile: platform
   owners:

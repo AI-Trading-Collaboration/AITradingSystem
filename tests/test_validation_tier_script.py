@@ -43,6 +43,10 @@ FULL_PROVENANCE_ARGS = [
     "pytest-runtime-contract",
 ]
 
+_REAL_VALIDATE_PUBLICATION_TRANSACTION_FOR_FULL = (
+    validation_tier._validate_publication_transaction_for_full
+)
+
 
 @pytest.fixture(autouse=True)
 def _unit_full_publication_transaction(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -349,6 +353,49 @@ def test_executed_full_requires_active_publication_transaction(tmp_path: Path) -
     assert completed.returncode == 2
     assert "PUBLICATION_TRANSACTION_REQUIRED" in completed.stderr
     assert not (tmp_path / "must_not_run").exists()
+
+
+def test_full_publication_uses_normalized_parent_summary_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observed: dict[str, object] = {}
+
+    class _Fence:
+        def __init__(self, *, project_root: Path) -> None:
+            assert project_root == tmp_path
+
+        def validate(self, transaction: Path, **kwargs: object) -> dict[str, object]:
+            observed["transaction"] = transaction
+            observed.update(kwargs)
+            return {"status": "PASS"}
+
+        def checkpoint(self, transaction: Path, **kwargs: object) -> dict[str, object]:
+            observed["checkpoint_transaction"] = transaction
+            observed.update({f"checkpoint_{key}": value for key, value in kwargs.items()})
+            return {"status": "PASS"}
+
+    monkeypatch.setattr(validation_tier, "IntegrationPublicationFence", _Fence)
+    transaction = Path("outputs/architecture/publication/transaction.json")
+    parent = "outputs/validation_runtime/full_parent/test_runtime_summary.json"
+    args = validation_tier.parse_args(
+        ["full", "--write-runtime-artifact", "--publication-transaction", str(transaction)]
+    )
+
+    result = _REAL_VALIDATE_PUBLICATION_TRANSACTION_FOR_FULL(
+        args,
+        repo_root=tmp_path,
+        validation_provenance={
+            "task_id": "DEVX-010_FULL_PARENT_PUBLICATION_BINDING_NORMALIZATION_V1",
+            "parent_run": {"summary_path": parent},
+        },
+        full_run_id="full-child",
+    )
+
+    assert result["status"] == "PASS"
+    assert observed["parent_path"] == Path(parent)
+    assert observed["validation_tier"] == "full"
+    assert observed["checkpoint_full_run_id"] == "full-child"
 
 
 def test_full_print_only_records_canonical_trigger_provenance(tmp_path: Path) -> None:

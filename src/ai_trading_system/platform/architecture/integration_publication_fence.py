@@ -413,7 +413,8 @@ class IntegrationPublicationFence:
                         "PUBLICATION_FULL_RESOURCE_MISSING",
                         self.policy.exclusive_validation_resource,
                     )
-        self._validate_parent_binding(replay.transaction, parent_path)
+        if validation_tier == self.policy.heavyweight_tier or parent_path is not None:
+            self._validate_parent_binding(replay.transaction, parent_path)
         return self._binding(replay)
 
     def checkpoint(

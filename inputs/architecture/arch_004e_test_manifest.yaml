@@ -8522,7 +8522,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_integration_publication_fence
   path: tests/test_arch_005_integration_publication_fence.py
-  sha256: 3c0739abc058b6ea7904d3e6d28c5ff62991aa2f65cdb21fa4884a1eeff9eb61
+  sha256: 8f7ef27485838de772cba95f581fae9b91ec4b5df99b7c19542fe48ac86675fe
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -8682,7 +8682,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s5_task_source_cutover
   path: tests/test_arch_005_s5_task_source_cutover.py
-  sha256: 31a3170d8ffc8c0609b17277b512446b14fcd4c06bda891e07de8391a9faa5c1
+  sha256: e8b368d878670dc5d66875a58350059c6f6e6ad0a2ebe5c7fb9106247b85dcc1
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -18162,7 +18162,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_validation_tier_script
   path: tests/test_validation_tier_script.py
-  sha256: 0dde010a4e21db36c8e05607e728e532de43419757dfc413b35cb6bec823037d
+  sha256: 444abe81281d6276c4b9ac5a0e06f6fb0d5a9937b2c0ee910634b0c4770850dc
   file_role: test
   rule_id: architecture_control_tests
   owner_profile: quality
