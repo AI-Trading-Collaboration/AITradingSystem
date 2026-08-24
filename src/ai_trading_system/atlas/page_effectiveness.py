@@ -7,6 +7,7 @@ import subprocess
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from functools import lru_cache
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
@@ -50,6 +51,77 @@ _EXPECTED_SAFETY: Mapping[str, object] = {
     "production_effect": "none",
     "broker_action": "none",
 }
+
+
+@dataclass(frozen=True)
+class _RenderedReaderDecision:
+    item_id: str
+    text_zh: str
+    source_task_ids: tuple[str, ...]
+    projection_sha256: str
+
+
+class _ReaderDecisionHTMLParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.records: dict[tuple[str, str], _RenderedReaderDecision] = {}
+        self.errors: list[str] = []
+        self._active_kind: str | None = None
+        self._active_id: str | None = None
+        self._active_sources: tuple[str, ...] = ()
+        self._active_sha256 = ""
+        self._strong_depth = 0
+        self._text_parts: list[str] = []
+
+    def handle_starttag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        attributes = {key: value or "" for key, value in attrs}
+        if tag == "article":
+            reader_id = attributes.get("data-reader-decision")
+            quick_id = attributes.get("data-page-effectiveness-question")
+            if reader_id or quick_id:
+                if self._active_id is not None:
+                    self.errors.append("READER_DECISION_HTML_NESTED_RECORD")
+                    return
+                self._active_kind = "reader_cards" if reader_id else "quick_answers"
+                self._active_id = reader_id or quick_id
+                self._active_sources = tuple(
+                    attributes.get("data-reader-claim-source-refs", "").split()
+                )
+                self._active_sha256 = attributes.get(
+                    "data-reader-decision-projection-sha256", ""
+                )
+                self._text_parts = []
+        elif tag == "strong" and self._active_id is not None:
+            self._strong_depth += 1
+
+    def handle_data(self, data: str) -> None:
+        if self._active_id is not None and self._strong_depth:
+            self._text_parts.append(data)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "strong" and self._active_id is not None and self._strong_depth:
+            self._strong_depth -= 1
+            return
+        if tag != "article" or self._active_id is None or self._active_kind is None:
+            return
+        key = (self._active_kind, self._active_id)
+        if key in self.records:
+            self.errors.append("READER_DECISION_HTML_DUPLICATE_RECORD:" + ":".join(key))
+        else:
+            self.records[key] = _RenderedReaderDecision(
+                item_id=self._active_id,
+                text_zh="".join(self._text_parts).strip(),
+                source_task_ids=self._active_sources,
+                projection_sha256=self._active_sha256,
+            )
+        self._active_kind = None
+        self._active_id = None
+        self._active_sources = ()
+        self._active_sha256 = ""
+        self._strong_depth = 0
+        self._text_parts = []
 
 
 class PageEffectivenessError(ValueError):
@@ -665,6 +737,48 @@ def _rendered_payload(
     return selected.read_bytes() if selected.is_file() else None
 
 
+def _validate_reader_decision_html(
+    *,
+    html_bytes: bytes,
+    projection: Any,
+) -> tuple[list[str], list[str]]:
+    try:
+        text = html_bytes.decode("utf-8")
+    except UnicodeDecodeError:
+        return ["READER_DECISION_HTML_UTF8_INVALID"], []
+    parser = _ReaderDecisionHTMLParser()
+    parser.feed(text)
+    parser.close()
+    errors = list(parser.errors)
+    expected_records: dict[tuple[str, str], object] = {}
+    for item in projection.reader_cards:
+        expected_records[("reader_cards", item.item_id)] = item
+    actual_keys = set(parser.records)
+    expected_keys = set(expected_records)
+    for kind, item_id in sorted(expected_keys - actual_keys):
+        errors.append(f"READER_DECISION_HTML_RECORD_MISSING:{kind}:{item_id}")
+    for kind, item_id in sorted(actual_keys - expected_keys):
+        errors.append(f"READER_DECISION_HTML_RECORD_UNEXPECTED:{kind}:{item_id}")
+    for key in sorted(expected_keys & actual_keys):
+        expected = expected_records[key]
+        actual = parser.records[key]
+        if actual.text_zh != expected.text_zh:
+            errors.append("READER_DECISION_HTML_TEXT_DRIFT:" + ":".join(key))
+        if actual.source_task_ids != expected.source_task_ids:
+            errors.append("READER_DECISION_HTML_SOURCE_DRIFT:" + ":".join(key))
+        if actual.projection_sha256 != projection.content_sha256:
+            errors.append("READER_DECISION_HTML_PROJECTION_HASH_DRIFT:" + ":".join(key))
+    if projection.dq_pit_promoted is not False:
+        errors.append("READER_DECISION_DQ_PIT_PROMOTION_BOUNDARY_INVALID")
+    if errors:
+        return errors, []
+    return [], [
+        "VISIBLE_READER_DECISIONS_MATCH_LIVE_PROJECTION",
+        "TRANSPORT_AND_DQ_PIT_AXES_SEPARATED",
+        "SUCCESSOR_STATE_DOMINATES_HISTORICAL_TRANSPORT_FACT",
+    ]
+
+
 def _validate_live_bundle_payloads(
     *,
     root: Path,
@@ -676,6 +790,7 @@ def _validate_live_bundle_payloads(
         "current_snapshot.json",
         "current_diff.json",
         "reader_state.json",
+        "index.html",
     )
     payloads = {
         name: _rendered_payload(
@@ -692,6 +807,7 @@ def _validate_live_bundle_payloads(
     try:
         from ai_trading_system.atlas.live_snapshot import (
             build_live_snapshot_bundle,
+            build_reader_decision_projection,
             load_live_snapshot_policy,
             reader_safe_task_summary,
         )
@@ -755,10 +871,21 @@ def _validate_live_bundle_payloads(
         )
         if dict(reader_state) != expected_reader_state.to_dict():
             errors.append("READER_STATE_LIVE_TASK_OR_DATE_SEMANTICS_DRIFT")
+        decision_projection = build_reader_decision_projection(
+            repository_root=root,
+            coverage=manifest.task_coverage,
+            policy=live_policy,
+        )
+        decision_errors, decision_checks = _validate_reader_decision_html(
+            html_bytes=payloads["index.html"] or b"",
+            projection=decision_projection,
+        )
+        errors.extend(decision_errors)
         checks = [] if errors else [
             "LIVE_SOURCE_BUNDLE_CANONICAL_REPLAY_MATCH",
             "TASK_EVENT_AND_FRAGMENT_IDENTITIES_MATCH",
             "RESEARCH_EVIDENCE_PAGE_DATES_SEPARATED",
+            *decision_checks,
         ]
         return errors, checks
     except (KeyError, OSError, TypeError, UnicodeDecodeError, ValueError) as exc:

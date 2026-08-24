@@ -296,7 +296,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="68"' in html
+    assert 'data-task-coverage-count="69"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html
@@ -467,10 +467,8 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert "2532 的唯一零订单外部验证已完成并永久消费授权" in html
     assert "1201 个最终看到 option chain，仅 1 个全日未见" in html
     assert "1019 个是当天先出现无链 Slice、后来恢复的提前结算混淆" in html
-    assert "15 项数据可信性检查中，1 项通过、1 项明确失败、13 项未评估" in rendered_text
-    assert "当前：补齐明确证据缺口" in rendered_text
-    assert "当前不授权再次运行外部平台" in rendered_text
-    assert "只有范围隔离通过、chain presence 明确失败，其余 13 项未评估" in rendered_text
+    assert "当前：完成整体可信性与参数依据复核" in rendered_text
+    assert "无需再次解释缺链日，也不授权新的外部平台运行" in rendered_text
     assert "2516 v2 token 也已签署并在唯一一次 Cloud run 尝试中消费" in html
     assert "9518360aeb329219cd83e78442a1d229" in html
     assert "Option filter 已以显式 list[Symbol] 完成 versioned failure-fix" in html
@@ -631,6 +629,11 @@ def test_renderer_follows_why_first_section_and_term_interaction_contract() -> N
     l0_text = unescape(re.sub(r"<[^>]+>", " ", l0_html))
     for decision_kind in ("CURRENT_DECISION", "WHY_PAUSED", "CURRENT_WORK", "NEXT_STEP"):
         assert l0_html.count(f'data-reader-decision="{decision_kind}"') == 1
+    assert "1201 个 normal session + 1 个 exact-date recovery" in l0_text
+    assert "unresolved=0" in l0_text
+    assert "合计 1202/1202" in l0_text
+    assert "仍有 1 天全日未出现期权链" not in l0_text
+    assert "先解释唯一缺链交易日" not in l0_text
     assert 'class="term-trigger"' not in l0_html
     for forbidden_term in (
         "主研究窗口",

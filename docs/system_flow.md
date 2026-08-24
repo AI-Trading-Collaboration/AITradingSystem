@@ -219,6 +219,8 @@ TRADING-2543 修复上述闭环此前仍可能把测试夹具式 08-02/08-03 sna
 `build_live_snapshot_bundle` 从 ARCH-005 canonical registry、page task policy、requirement hash、task fragment hash
 和 last-event identity 构建 current snapshot，并把 `source_registry.yaml` 的 2026-08-02 snapshot 仅保留为
 `LEGACY_COMPARISON_EVIDENCE`。正式入口 `scripts/render_atlas_strategy_research_page.py` 不导入测试 helper，
+并在导入 Atlas 模块前把脚本所在 repository 的 `src` 放到 import path 首位，禁止 editable install 指向
+其他 checkout 时以旧 renderer/validator 生成假 `PASS`；
 输出 `comparison_snapshot.json / current_snapshot.json / current_diff.json / reader_state.json` 后再写 HTML 与其余
 sidecars。validator 会从同一 exact commit 独立重建三件套，任一 source registry、task event、snapshot、diff、
 semantic source 或 rendered hash 漂移都拒绝 `CURRENT`。`strategy_research_reader_state.v2` 分开保存
@@ -226,6 +228,18 @@ semantic source 或 rendered hash 漂移都拒绝 `CURRENT`。`strategy_research
 `UNKNOWN`）与 `page_source_commit_at`（exact commit metadata），禁止用 snapshot 生成时间互相代填。
 2543 只修复发布和审计链；latest-main 的当前策略主线由 2542B 的 `BLOCKED_OWNER_INPUT` 映射为 reader `BLOCKED`，
 不改变 DQ、经验研究、回测、投资结论、engine、order、production 或 broker 边界。
+
+TRADING-2545 在 live snapshot 与首屏 reader-first renderer 之间增加单一
+`atlas_reader_decision_projection.v1` 当前状态投影。builder 严格重放 TRADING-2541 export-safe terminal
+evidence，要求 normal=`1201`、exact-date recovery=`1`、unresolved=`0`、observed/expected=`1202/1202`，
+并同时要求 `dq_pit_promoted=false`、orders/fills=`0/0` 以及 strategy/engine/production/broker 继续关闭。
+TRADING-2533 的 `DQ=FAIL / PIT=NOT_EVALUATED` 保留为历史时点证据，但 successor TRADING-2541 支配
+“当前是否仍缺 chain session”的 transport 事实。首屏四张决定卡、why-first 因果链、边界提示与 source refs
+只消费该 typed projection；普通读者层用“期权链传递已补齐、整体数据可信性尚未提升为通过”分轴表达，
+审计属性保留 exact `dq_pit_promoted=false`。page-effectiveness validator 从同一 repository identity 独立重建
+projection，再解析最终 `index.html` 的四张可见卡并逐项核对文本、source refs 与 projection SHA-256；历史
+predecessor 覆盖 successor、把 transport PASS 提升成 DQ/PIT PASS、旧 next action 或 rendered-card drift
+均 fail closed，不能获得 `CURRENT`。该修复不改变研究窗口、阈值政策、策略结论或任何外部/生产/交易权限。
 
 TRADING-2506 在八阶段流程节点中新增独立的工作进展解释合同。每个节点先回答“为什么需要这一步、
 具体做什么、工程能力做到哪里、本次页面看到什么状态、对研究结论有什么影响、预期产物、完成后怎样
@@ -343,7 +357,9 @@ flowchart LR
     TASKREG --> LIVE["TRADING-2543 live canonical snapshot<br/>requirement + task fragment + last event identity"]
     SNAP -->|"historical comparison only"| LIVE
     LIVE --> LDIFF["Current diff<br/>08-02 comparison → live canonical state"]
-    LIVE --> XRENDER
+    T2541["TRADING-2541 export-safe terminal<br/>1201 normal + 1 recovered = 1202/1202<br/>dq_pit_promoted=false"] --> RDEC["TRADING-2545 reader decision projection<br/>successor transport fact + separate trust boundary"]
+    LIVE --> RDEC
+    RDEC --> XRENDER
     LDIFF --> XRENDER
     XAUTH["TRADING-2495 explanation authority policy<br/>typed facts + explicit missing states"] --> XPROJ["Status explanation sidecar projection<br/>8 stages + exact target/status/source binding"]
     SNAP --> XPROJ
@@ -359,8 +375,9 @@ flowchart LR
     TINV --> A11Y["TRADING-2526 accessibility validation<br/>DOM order + headings + one disclosure level + term targets"]
     A11Y --> XART["Deterministic static page + live snapshot/diff JSON artifacts<br/>technical authority folded under audit disclosure"]
     CPROTO["TRADING-2527 comprehension protocol<br/>Owner policy slots remain PENDING"] --> REVIEWS
-    TASKREG["ARCH-005 S5 canonical task registry<br/>reviewed task set + requirement refs + last events"] --> EFF["TRADING-2505/2523B/2543 page effectiveness v3<br/>live source + semantic + visual + reader layers"]
+    TASKREG["ARCH-005 S5 canonical task registry<br/>reviewed task set + requirement refs + last events"] --> EFF["TRADING-2505/2523B/2543/2545 page effectiveness v3<br/>live source + rendered decision semantics + visual + reader layers"]
     XART --> EFF
+    RDEC --> EFF
     EFF --> BVIS["Loopback HTTP + Playwright<br/>desktop / tablet / mobile / accessibility / DOM / screenshots"]
     BVIS --> REVIEWS["Three independent acceptance tracks<br/>engineering / Owner visual / reader comprehension"]
     REVIEWS -.-> NONE

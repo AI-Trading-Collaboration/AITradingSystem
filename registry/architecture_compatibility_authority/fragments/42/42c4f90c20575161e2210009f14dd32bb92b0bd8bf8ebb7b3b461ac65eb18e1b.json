@@ -34,7 +34,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "0b9b067a4fd8cb677aef0672995db8d4a12aa70fe230e4af27f6dabc238fcb94"
+        "sha256": "a11d2aff3c98918aff834721dfba0a07d94c83cfc00934370442a8cffa8167a2"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -44,17 +44,17 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "717981c307d38a6c06ca4bffc6f779538ef93ad58c31366d05f016fc8f49e285"
+        "sha256": "6f509078a563392b5680331438522c49b49472f7dd36ded1f733233f419fd029"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "a029355e799f11bfdc261a4ca1ffe05a9e9406c5f38bd237958373de5b689ffc"
+        "sha256": "9a761452dc4bb92e06087843d2062ea2de9a9779fd39f551ee01dc2d8c76073d"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "0b6673a747b8cbc026626268e5dea4d412aeb2f692a3a63a0af7848210d9c3f6"
+        "sha256": "e5bb67124dfac7673d10ab69a7bcf23c5d0d46b1f8096f9072736be717b5fa34"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -79,7 +79,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "a52a618f39dd5c5d8ae44dbee74404b865950bafe1508bdaf1c627cb50af437b"
+        "sha256": "9f38fa815affbd70038ef362a4dc91a04a24cf8691bd5aced6fbaf27f3ce53b9"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -132,5 +132,5 @@
     "task_id": "DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL"
   },
   "section_id": "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2",
-  "section_sha256": "a01f7063a135f26b38b383884e56c91158c29647bc75f449b6dd539b55a3198d"
+  "section_sha256": "42c4f90c20575161e2210009f14dd32bb92b0bd8bf8ebb7b3b461ac65eb18e1b"
 }

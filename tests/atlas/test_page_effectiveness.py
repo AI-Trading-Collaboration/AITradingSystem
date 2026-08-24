@@ -8,7 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from ai_trading_system.atlas.cited_query_renderer import build_cited_query_showcase
+from ai_trading_system.atlas.cited_query_renderer import (
+    build_cited_query_showcase,
+    render_cited_query_html,
+)
 from ai_trading_system.atlas.live_snapshot import build_live_snapshot_bundle
 from ai_trading_system.atlas.page_effectiveness import (
     PageEffectivenessError,
@@ -50,13 +53,18 @@ def _live_sidecar_payloads() -> dict[str, bytes]:
         "current_snapshot.json": bundle.current_snapshot.canonical_json_bytes(),
         "current_diff.json": bundle.current_diff.canonical_json_bytes(),
         "reader_state.json": showcase.reader_state.canonical_bytes,
+        "index.html": render_cited_query_html(showcase).encode("utf-8"),
     }
 
 
 def _rendered(
-    payload: bytes = b"<!doctype html><title>Atlas</title>\n",
+    payload: bytes | None = None,
 ) -> tuple[tuple[PageArtifactIdentity, ...], dict[str, bytes]]:
-    payloads = {"index.html": payload, **_live_sidecar_payloads()}
+    live_payloads = _live_sidecar_payloads()
+    payloads = {
+        "index.html": live_payloads["index.html"] if payload is None else payload,
+        **{name: raw for name, raw in live_payloads.items() if name != "index.html"},
+    }
     identities = tuple(
         PageArtifactIdentity(
             role="ATLAS_PAGE_" + name.upper().replace(".", "_"),
@@ -72,7 +80,7 @@ def _rendered(
 def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 68
+    assert len(policy.task_sources) == 69
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
@@ -83,6 +91,7 @@ def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None
         "TRADING-2542C",
         "TRADING-2543",
         "TRADING-2544",
+        "TRADING-2545",
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -108,7 +117,7 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
     assert manifest.schema_version == "strategy_research_page_effectiveness.v3"
-    assert len(manifest.task_coverage) == 68
+    assert len(manifest.task_coverage) == 69
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
@@ -119,6 +128,7 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "TRADING-2542C",
         "TRADING-2543",
         "TRADING-2544",
+        "TRADING-2545",
     ]
     coverage_by_task = {
         item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
@@ -451,6 +461,32 @@ def test_validation_passes_exact_payload_and_marks_source_drift_stale() -> None:
     assert stale_validation.status == "FAIL"
     assert stale_validation.freshness_status is PageFreshnessStatus.STALE_REBUILD_REQUIRED
     assert "SEMANTIC_SOURCE_DRIFT" in stale_validation.errors
+
+
+def test_validation_rejects_visible_reader_decision_drift() -> None:
+    rendered, payloads = _rendered()
+    manifest = build_page_effectiveness_manifest(
+        repository_root=ROOT,
+        rendered_artifacts=rendered,
+    )
+    tampered_html = payloads["index.html"].replace(
+        "合计 1202/1202。".encode(),
+        "合计 1201/1202。".encode(),
+        1,
+    )
+    assert tampered_html != payloads["index.html"]
+
+    validation = validate_page_effectiveness_manifest(
+        repository_root=ROOT,
+        manifest=manifest,
+        rendered_payloads={**payloads, "index.html": tampered_html},
+    )
+
+    assert validation.status == "FAIL"
+    assert (
+        "READER_DECISION_HTML_TEXT_DRIFT:reader_cards:WHY_PAUSED"
+        in validation.errors
+    )
 
 
 def test_validation_rejects_live_snapshot_and_reader_date_substitution() -> None:

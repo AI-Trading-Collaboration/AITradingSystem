@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import subprocess
 from collections.abc import Mapping
@@ -46,6 +47,25 @@ from ai_trading_system.platform.architecture.task_registry_canonical import (
 
 DEFAULT_LIVE_SNAPSHOT_POLICY_PATH = "config/atlas/live_snapshot.yaml"
 LIVE_SNAPSHOT_POLICY_SCHEMA = "atlas_live_snapshot_policy.v1"
+READER_DECISION_PROJECTION_SCHEMA = "atlas_reader_decision_projection.v1"
+
+# Reviewed terminal evidence for the only QQQ Options transport gap.  This is a
+# fixed evidence identity, not a tunable policy or an investment threshold.
+_QQQ_RECOVERY_EVIDENCE_PATH = (
+    "inputs/research/qqq_options/"
+    "trading_2541_exact_date_subscription_recovery_execution_v3/"
+    "export_safe_terminal_evidence.json"
+)
+_QQQ_HISTORICAL_DQ_TASK_ID = (
+    "TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_"
+    "EVIDENCE_ADMISSION_V1"
+)
+_QQQ_TRANSPORT_RECOVERY_TASK_ID = (
+    "TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1"
+)
+_ATLAS_READER_REPAIR_TASK_ID = (
+    "TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READER_CARD_REPAIR_V1"
+)
 _GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 _STATUS_MAPPING = {
     "DONE": "PASS",
@@ -115,6 +135,68 @@ class AtlasLiveSnapshotBundle:
     largest_blocker_task_id: str
     next_legal_action_task_id: str
     policy_sha256: str
+
+
+@dataclass(frozen=True)
+class AtlasReaderDecisionItem:
+    item_id: str
+    label_zh: str
+    text_zh: str
+    source_task_ids: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "item_id": self.item_id,
+            "label_zh": self.label_zh,
+            "text_zh": self.text_zh,
+            "source_task_ids": list(self.source_task_ids),
+        }
+
+
+@dataclass(frozen=True)
+class AtlasReaderDecisionProjection:
+    schema_version: str
+    evidence_path: str
+    normal_session_count: int
+    recovered_session_count: int
+    unresolved_session_count: int
+    observed_session_count: int
+    expected_session_count: int
+    dq_pit_promoted: bool
+    reader_cards: tuple[AtlasReaderDecisionItem, ...]
+    quick_answers: tuple[AtlasReaderDecisionItem, ...]
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "evidence_path": self.evidence_path,
+            "transport": {
+                "normal_session_count": self.normal_session_count,
+                "recovered_session_count": self.recovered_session_count,
+                "unresolved_session_count": self.unresolved_session_count,
+                "observed_session_count": self.observed_session_count,
+                "expected_session_count": self.expected_session_count,
+            },
+            "dq_pit_promoted": self.dq_pit_promoted,
+            "reader_cards": [item.to_dict() for item in self.reader_cards],
+            "quick_answers": [item.to_dict() for item in self.quick_answers],
+        }
+
+    @property
+    def canonical_bytes(self) -> bytes:
+        return (
+            json.dumps(
+                self.to_dict(),
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            + "\n"
+        ).encode("utf-8")
+
+    @property
+    def content_sha256(self) -> str:
+        return hashlib.sha256(self.canonical_bytes).hexdigest()
 
 
 def _mapping(value: object, field: str) -> Mapping[str, Any]:
@@ -316,6 +398,227 @@ def reader_safe_task_summary(value: str) -> str:
     return result
 
 
+def _reader_decision_sources(*items: PageTaskCoverage) -> tuple[str, ...]:
+    return tuple(dict.fromkeys(item.task_id for item in items))
+
+
+def _load_qqq_transport_recovery_facts(*, repository_root: Path) -> Mapping[str, Any]:
+    selected = _portable_path(
+        repository_root,
+        _QQQ_RECOVERY_EVIDENCE_PATH,
+        "qqq_transport_recovery_evidence",
+    )
+    try:
+        payload = _mapping(
+            json.loads(selected.read_text(encoding="utf-8")),
+            "qqq_transport_recovery_evidence",
+        )
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise AtlasLiveSnapshotError("ATLAS_READER_RECOVERY_EVIDENCE_INVALID") from exc
+    expected_identity = {
+        "schema_version": (
+            "qc_qqq_options_exact_date_subscription_recovery_terminal_evidence.v1"
+        ),
+        "task_id": _QQQ_TRANSPORT_RECOVERY_TASK_ID,
+        "status": "EXPORT_SAFE_TERMINAL_EVIDENCE_COLLECTED",
+        "technical_validation_state": "PASS",
+        "recovery_status": "ACCEPTED",
+        "delivery_path": "EXACT_DATE_PROVIDER_HISTORY_RECOVERY",
+        "execution_terminal": "COMPLETE",
+        "chain_presence_status": "PASS_WITH_EXACT_DATE_PROVIDER_HISTORY_RECOVERY",
+        "data_quality_status": "PASS_FOR_RESEARCH_TRANSPORT_COMPLETENESS",
+        "point_in_time_status": "PASS_FOR_EXACT_SOURCE_AND_AVAILABILITY_DATE",
+        "strategy_engine_status": "NOT_IN_SCOPE_ZERO_ORDER_VALIDATION",
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+    for field, expected in expected_identity.items():
+        if payload.get(field) != expected:
+            raise AtlasLiveSnapshotError(
+                f"ATLAS_READER_RECOVERY_EVIDENCE_IDENTITY_INVALID:{field}"
+            )
+    integer_fields = (
+        "normal_slice_session_count",
+        "recovered_session_count",
+        "unresolved_session_count",
+        "observed_session_count",
+        "expected_session_count",
+        "orders",
+        "fills",
+    )
+    if any(type(payload.get(field)) is not int for field in integer_fields):
+        raise AtlasLiveSnapshotError("ATLAS_READER_RECOVERY_COUNT_TYPE_INVALID")
+    normal = int(payload["normal_slice_session_count"])
+    recovered = int(payload["recovered_session_count"])
+    unresolved = int(payload["unresolved_session_count"])
+    observed = int(payload["observed_session_count"])
+    expected = int(payload["expected_session_count"])
+    if (
+        normal + recovered != observed
+        or observed != expected
+        or unresolved != 0
+        or int(payload["orders"]) != 0
+        or int(payload["fills"]) != 0
+        or payload.get("portfolio_invested") is not False
+        or payload.get("target_source_date") != payload.get("recovery_source_date")
+    ):
+        raise AtlasLiveSnapshotError("ATLAS_READER_RECOVERY_TERMINAL_FACTS_INVALID")
+    statistics = _mapping(payload.get("terminal_statistics"), "terminal_statistics")
+    execution_terminal = str(statistics.get("TRADING2541_EXECUTION_TERMINAL", ""))
+    if "dq_pit_promoted=false" not in execution_terminal:
+        raise AtlasLiveSnapshotError("ATLAS_READER_DQ_PIT_PROMOTION_BOUNDARY_INVALID")
+    return payload
+
+
+def build_reader_decision_projection(
+    *,
+    repository_root: Path,
+    coverage: tuple[PageTaskCoverage, ...],
+    policy: AtlasLiveSnapshotPolicy,
+) -> AtlasReaderDecisionProjection:
+    historical_dq = _coverage_by_id(coverage, _QQQ_HISTORICAL_DQ_TASK_ID)
+    recovery = _coverage_by_id(coverage, _QQQ_TRANSPORT_RECOVERY_TASK_ID)
+    reader_repair = _coverage_by_id(coverage, _ATLAS_READER_REPAIR_TASK_ID)
+    mainline = _coverage_by_id(coverage, policy.current_mainline_task_id)
+    blocker = _coverage_by_id(coverage, policy.largest_blocker_task_id)
+    next_step = _coverage_by_id(coverage, policy.next_legal_action_task_id)
+    evidence = _load_qqq_transport_recovery_facts(repository_root=repository_root)
+    normal = int(evidence["normal_slice_session_count"])
+    recovered = int(evidence["recovered_session_count"])
+    unresolved = int(evidence["unresolved_session_count"])
+    observed = int(evidence["observed_session_count"])
+    expected = int(evidence["expected_session_count"])
+    transport_text = (
+        f"QQQ Options transport 已补齐：{normal} 个 normal session + "
+        f"{recovered} 个 exact-date recovery，unresolved={unresolved}，"
+        f"合计 {observed}/{expected}。"
+    )
+    authority_text = (
+        "但整体数据可信性尚未提升为通过，参数依据、负责人和独立复核仍未完成。"
+    )
+    current_decision_sources = _reader_decision_sources(
+        recovery, mainline, blocker, reader_repair
+    )
+    why_sources = _reader_decision_sources(
+        historical_dq, recovery, blocker, reader_repair
+    )
+    work_sources = _reader_decision_sources(recovery, mainline, blocker, reader_repair)
+    next_sources = _reader_decision_sources(recovery, next_step, reader_repair)
+    prohibited_sources = _reader_decision_sources(
+        recovery, mainline, blocker, reader_repair
+    )
+    reader_cards = (
+        AtlasReaderDecisionItem(
+            item_id="CURRENT_DECISION",
+            label_zh="01 · 当前决定",
+            text_zh="暂不继续形成策略结论；期权链传递已修复，整体可信性与策略研究仍保持关闭。",
+            source_task_ids=current_decision_sources,
+        ),
+        AtlasReaderDecisionItem(
+            item_id="WHY_PAUSED",
+            label_zh="02 · 为什么",
+            text_zh=f"{transport_text}{authority_text}",
+            source_task_ids=why_sources,
+        ),
+        AtlasReaderDecisionItem(
+            item_id="CURRENT_WORK",
+            label_zh="03 · 现在在查什么",
+            text_zh=(
+                "当前把已补齐的期权链传递与尚未完成的整体可信性、参数依据和人工复核分开判断，"
+                "避免工程检查通过冒充策略通过。"
+            ),
+            source_task_ids=work_sources,
+        ),
+        AtlasReaderDecisionItem(
+            item_id="NEXT_STEP",
+            label_zh="04 · 下一步",
+            text_zh=(
+                "将最新传递验证结果纳入整体可信性复核，并完成参数依据、负责人和独立复核；"
+                "无需再次解释缺链日，也不授权新的外部平台运行。"
+            ),
+            source_task_ids=next_sources,
+        ),
+    )
+    prohibited = AtlasReaderDecisionItem(
+        item_id="PROHIBITED_INFERENCES",
+        label_zh="04 · 不能推出什么",
+        text_zh=(
+            "不能把期权链传递完整解释为整体数据可信、参数获批、策略有效、收益稳健或风险可接受，"
+            "更不表示可以投资、部署或交易。"
+        ),
+        source_task_ids=prohibited_sources,
+    )
+    quick_answers = (
+        AtlasReaderDecisionItem(
+            item_id="CURRENT_RESEARCH_MAINLINE",
+            label_zh="01 · 当前主线",
+            text_zh=(
+                "QQQ 期权数据车道继续保留；期权链传递已补齐，当前主线转为整体可信性、"
+                "参数依据与独立复核。"
+            ),
+            source_task_ids=current_decision_sources,
+        ),
+        AtlasReaderDecisionItem(
+            item_id="LARGEST_CURRENT_BLOCKER",
+            label_zh="02 · 最大阻塞",
+            text_zh=f"{transport_text}{authority_text}",
+            source_task_ids=why_sources,
+        ),
+        AtlasReaderDecisionItem(
+            item_id="ENGINEERING_VS_RESEARCH_EVIDENCE",
+            label_zh="03 · 已做到什么",
+            text_zh=(
+                f"受治理的外部验证已确认 {observed}/{expected} 个交易日的期权链传递完整；"
+                "这只修复数据传递工程缺口，没有把整体可信性提升为通过，也不是盈利或风险证据。"
+            ),
+            source_task_ids=work_sources,
+        ),
+        prohibited,
+        AtlasReaderDecisionItem(
+            item_id="NEXT_OWNER_AND_ACTION",
+            label_zh="05 · 下一步",
+            text_zh=reader_cards[-1].text_zh,
+            source_task_ids=next_sources,
+        ),
+        AtlasReaderDecisionItem(
+            item_id="INVESTMENT_ORDER_ENGINE_AUTHORITY",
+            label_zh="06 · 现在能否投资或下单",
+            text_zh=(
+                "不能。期权合约选择和真实策略执行引擎保持关闭，订单和成交均为 0；"
+                "本页不授权外部动作、生产或交易。"
+            ),
+            source_task_ids=prohibited_sources,
+        ),
+    )
+    projection = AtlasReaderDecisionProjection(
+        schema_version=READER_DECISION_PROJECTION_SCHEMA,
+        evidence_path=_QQQ_RECOVERY_EVIDENCE_PATH,
+        normal_session_count=normal,
+        recovered_session_count=recovered,
+        unresolved_session_count=unresolved,
+        observed_session_count=observed,
+        expected_session_count=expected,
+        dq_pit_promoted=False,
+        reader_cards=reader_cards,
+        quick_answers=quick_answers,
+    )
+    if tuple(item.item_id for item in reader_cards) != (
+        "CURRENT_DECISION",
+        "WHY_PAUSED",
+        "CURRENT_WORK",
+        "NEXT_STEP",
+    ) or tuple(item.item_id for item in quick_answers) != (
+        "CURRENT_RESEARCH_MAINLINE",
+        "LARGEST_CURRENT_BLOCKER",
+        "ENGINEERING_VS_RESEARCH_EVIDENCE",
+        "PROHIBITED_INFERENCES",
+        "NEXT_OWNER_AND_ACTION",
+        "INVESTMENT_ORDER_ENGINE_AUTHORITY",
+    ):
+        raise AtlasLiveSnapshotError("ATLAS_READER_DECISION_ITEM_SET_INVALID")
+    return projection
+
+
 def _build_current_snapshot(
     *,
     comparison: StrategyResearchExplorerSnapshot,
@@ -494,10 +797,14 @@ def build_live_snapshot_bundle(
 __all__ = [
     "DEFAULT_LIVE_SNAPSHOT_POLICY_PATH",
     "LIVE_SNAPSHOT_POLICY_SCHEMA",
+    "READER_DECISION_PROJECTION_SCHEMA",
     "AtlasLiveSnapshotBundle",
     "AtlasLiveSnapshotError",
     "AtlasLiveSnapshotPolicy",
+    "AtlasReaderDecisionItem",
+    "AtlasReaderDecisionProjection",
     "build_live_snapshot_bundle",
+    "build_reader_decision_projection",
     "load_live_snapshot_policy",
     "reader_safe_task_summary",
     "repository_commit_time",

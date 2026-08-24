@@ -3,19 +3,25 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 from pathlib import Path
 
-from ai_trading_system.atlas.cited_query_renderer import (
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+SOURCE_ROOT = REPOSITORY_ROOT / "src"
+if str(SOURCE_ROOT) not in sys.path:
+    sys.path.insert(0, str(SOURCE_ROOT))
+
+from ai_trading_system.atlas.cited_query_renderer import (  # noqa: E402
     build_cited_query_showcase,
     write_cited_query_artifacts,
 )
-from ai_trading_system.atlas.live_snapshot import build_live_snapshot_bundle
-from ai_trading_system.atlas.page_effectiveness import (
+from ai_trading_system.atlas.live_snapshot import build_live_snapshot_bundle  # noqa: E402
+from ai_trading_system.atlas.page_effectiveness import (  # noqa: E402
     build_page_task_coverage,
     load_page_effectiveness_policy,
     repository_head,
 )
-from ai_trading_system.platform.architecture.task_registry_canonical import (
+from ai_trading_system.platform.architecture.task_registry_canonical import (  # noqa: E402
     validate_canonical_registry,
 )
 
@@ -26,7 +32,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="从 canonical task registry 重建 Atlas 策略研究 live 页面。"
     )
-    parser.add_argument("--repository-root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser.add_argument("--repository-root", type=Path, default=REPOSITORY_ROOT)
     parser.add_argument("--exact-commit")
     parser.add_argument("--output-directory", default=DEFAULT_OUTPUT)
     return parser

@@ -189,7 +189,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.cited_query_renderer
   path: src/ai_trading_system/atlas/cited_query_renderer.py
-  sha256: e40b5dc6999bed61be77971a3ca91f846fe78cb1c745e4b1df811b7979c22a3f
+  sha256: 6b11c8c9147527642fac1d74266a33d9137f06fa4342a9827d546961484032e8
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -409,7 +409,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.live_snapshot
   path: src/ai_trading_system/atlas/live_snapshot.py
-  sha256: 646415cfae1cfe1c9b50f6b2aaedce4d5fca4b76d96cd9621dcdd3157022650c
+  sha256: 5ee1a9657cc76f18284e6af33772724570c7511e01d94ea9f56252ba6518f236
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -429,7 +429,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.page_effectiveness
   path: src/ai_trading_system/atlas/page_effectiveness.py
-  sha256: b16b106a6b3c5381e841d8310deb9f05525cd2faf449840757807998d6182482
+  sha256: ac49bf1c311dc490f84e29d53d0ede763517cf85f41d4478545c8fb30435241d
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

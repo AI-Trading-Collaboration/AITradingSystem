@@ -1,0 +1,127 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READER_CARD_REPAIR_V1
+  task_id_sha256: 6fb974a8c986b4c218d65260132b84a644ea62b9a8ad759d8afafd6a84053d3b
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READER_CARD_REPAIR_V1
+  title: null
+  domain: Atlas strategy research page / current-state successor dominance and reader-card
+    semantic repair
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner
+  requirement_refs:
+  - docs/requirements/TRADING-2545_Atlas_Current_State_Dominance_And_Reader_Card_Repair_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: No remaining implementation or data blocker.
+    Preserve the closed strategy/order boundary; any Owner visual acceptance is a
+    separate human track.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 首屏显示 1201 normal + 1 recovered + 0 unresolved = 1202/1202；DQ/PIT promotion
+      仍 false；历史 2533 可审计但不覆盖 2541；reader cards/why-first/source refs 单一投影；canonical
+      writers 只导入 exact worktree local source；compatibility authority current；final
+      exact-commit Full PASS、ordinary push/cleanup。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READER_CARD_REPAIR_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-24T20:00:00+09:00'
+  actor: codex
+  change_id: trading-2545-latest-main-register-20260824
+  lane_id: null
+  base_commit: de3fe9cb039ead4023fe76864dde75cc42a9f541
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READER_CARD_REPAIR_V1
+    - Atlas strategy research page / current-state successor dominance and reader-card
+      semantic repair
+    - P0
+    - IN_PROGRESS
+    - Codex
+    - Integrate the validated Atlas current-state repair onto latest main and rebuild
+      shared generated authority under the publication fence.
+    - 首屏显示 1201 normal + 1 recovered + 0 unresolved = 1202/1202；DQ/PIT promotion 仍
+      false；历史 2533 可审计但不覆盖 2541；reader cards/why-first/source refs 单一投影；canonical
+      writers 只导入 exact worktree local source；compatibility authority current；final
+      exact-commit Full PASS、ordinary push/cleanup。
+    - 'Latest-main coordinator reconciliation for integration-revalidation-74570e0a36107ff544cd.
+      Requirement: docs/requirements/TRADING-2545_Atlas_Current_State_Dominance_And_Reader_Card_Repair_V1.md.
+      Production effect none; broker action none.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2545-latest-main-register-20260824
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0d560f92ef889fc824cff614ad58f297
+- schema_version: task_event.v1
+  task_id: TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READER_CARD_REPAIR_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-24T20:05:00+09:00'
+  actor: codex
+  change_id: trading-2545-latest-main-complete-20260824
+  lane_id: null
+  base_commit: de3fe9cb039ead4023fe76864dde75cc42a9f541
+  previous_state_event_id: task-event-0d560f92ef889fc824cff614ad58f297
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner
+    blocker_or_next_step: No remaining implementation or data blocker. Preserve the
+      closed strategy/order boundary; any Owner visual acceptance is a separate human
+      track.
+    acceptance_criteria: 首屏显示 1201 normal + 1 recovered + 0 unresolved = 1202/1202；DQ/PIT
+      promotion 仍 false；历史 2533 可审计但不覆盖 2541；reader cards/why-first/source refs 单一投影；canonical
+      writers 只导入 exact worktree local source；compatibility authority current；final
+      exact-commit Full PASS、ordinary push/cleanup。
+    notes: 'Latest-main coordinator reconciliation uses reviewed plan integration-revalidation-74570e0a36107ff544cd.
+      Frozen-lane parent-bound Full passed 9487 tests; the first final Full then correctly
+      failed only because DEVX-010 advanced origin/main during execution. Requirement:
+      docs/requirements/TRADING-2545_Atlas_Current_State_Dominance_And_Reader_Card_Repair_V1.md.
+      Final integration candidate requires fresh parent-bound Full; runtime result
+      remains ignored evidence to avoid tracked self-reference.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2545-latest-main-complete-20260824
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-9d7f2fcd6467c0fa73b72db7f88d2881
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READER_CARD_REPAIR_V1
+  - Atlas strategy research page / current-state successor dominance and reader-card
+    semantic repair
+  - P0
+  - DONE
+  - Project Owner
+  - No remaining implementation or data blocker. Preserve the closed strategy/order
+    boundary; any Owner visual acceptance is a separate human track.
+  - 首屏显示 1201 normal + 1 recovered + 0 unresolved = 1202/1202；DQ/PIT promotion 仍 false；历史
+    2533 可审计但不覆盖 2541；reader cards/why-first/source refs 单一投影；canonical writers 只导入
+    exact worktree local source；compatibility authority current；final exact-commit
+    Full PASS、ordinary push/cleanup。
+  - 'Latest-main coordinator reconciliation uses reviewed plan integration-revalidation-74570e0a36107ff544cd.
+    Frozen-lane parent-bound Full passed 9487 tests; the first final Full then correctly
+    failed only because DEVX-010 advanced origin/main during execution. Requirement:
+    docs/requirements/TRADING-2545_Atlas_Current_State_Dominance_And_Reader_Card_Repair_V1.md.
+    Final integration candidate requires fresh parent-bound Full; runtime result remains
+    ignored evidence to avoid tracked self-reference.'
+  docs_links:
+  - docs/requirements/TRADING-2545_Atlas_Current_State_Dominance_And_Reader_Card_Repair_V1.md
+  terminal: true
+  canonical_row_sha256: 3881dc3780db33197bf2dd1b6620c7f84ef223a9126da2089bb449e1e9e3723b
+last_event_id: task-event-9d7f2fcd6467c0fa73b72db7f88d2881
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 17fe3b66bcc0e1293b850f52945cd002034c256e3d2317a179dd1cb62e3fb2de

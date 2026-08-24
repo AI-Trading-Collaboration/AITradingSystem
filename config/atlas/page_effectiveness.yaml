@@ -29,6 +29,7 @@ relevant_source_paths:
   - config/atlas/source_registry.yaml
   - inputs/architecture/arch_005_task_registry_index.yaml
   - inputs/research/qqq_options/trading_2533_session_finalization_dq_pit_evidence_admission_v1/dq_pit_evidence_admission.json
+  - inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v3/export_safe_terminal_evidence.json
   - src/ai_trading_system/atlas/cited_query_renderer.py
   - src/ai_trading_system/atlas/historical_canonical_projection.py
   - src/ai_trading_system/atlas/live_snapshot.py
@@ -324,6 +325,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2544_Conditional_Source_Value_Audit_Serial_Contract_And_Feasibility_V1.md
     coverage: DISCLOSED_DIRECTION_ONLY_PROPOSED_OWNER_AUTHORIZATION_REQUIRED
     reader_summary_zh: 2544 目前只登记“条件信息来源价值审计”的研究方向，状态为 PROPOSED；Owner 尚未授权 S0 serial contract、采数、训练、回测、阈值冻结或外部资源消耗。若未来启动，必须先冻结 PIT/OOF、target/horizon/context、loss、uncertainty、coalition 与 capacity gate，并严格区分 predictive、tail-risk、provider reliability 和 decision utility。该方向记录不改变当前 2542C 主线、策略结论、生产或交易边界。
+  - task_id: TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READER_CARD_REPAIR_V1
+    requirement_path: docs/requirements/TRADING-2545_Atlas_Current_State_Dominance_And_Reader_Card_Repair_V1.md
+    coverage: ATLAS_CURRENT_STATE_SUCCESSOR_DOMINANCE_AND_VISIBLE_READER_CARD_REPAIR_COMPLETE
+    reader_summary_zh: 2545 已修复 Atlas 首屏把 TRADING-2533 历史 DQ/PIT admission 冒充当前 transport 状态的问题。TRADING-2541 的 normal=1201、recovered=1、unresolved=0、sessions=1202/1202 当前事实现在支配历史 transport 缺口，同时 dq_pit_promoted=false 保持独立 fail closed；首屏可见决定卡、why-first 因果回答与 source refs 使用同一可重放投影，并由 page-effectiveness validator 独立核验最终 HTML。本任务不提升 DQ/PIT、策略、生产或交易状态。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

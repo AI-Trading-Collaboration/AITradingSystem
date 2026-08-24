@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
 from dataclasses import replace
 from datetime import timedelta
 from pathlib import Path
 
 from ai_trading_system.atlas.live_snapshot import (
     build_live_snapshot_bundle,
+    build_reader_decision_projection,
     load_live_snapshot_policy,
 )
 from ai_trading_system.atlas.page_effectiveness import (
@@ -37,7 +41,7 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
-    assert bundle.research_state_as_of.startswith("2026-08-23T")
+    assert bundle.research_state_as_of.startswith("2026-08-24T")
     assert bundle.evidence_evaluated_at is None
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
@@ -88,7 +92,7 @@ def test_unclassified_successor_is_detected_before_live_projection() -> None:
     without_latest = replace(policy, task_sources=policy.task_sources[:-1])
 
     assert unclassified_page_successors(registry, without_latest) == (
-        "TRADING-2544_CONDITIONAL_SOURCE_VALUE_AUDIT_SERIAL_CONTRACT_AND_FEASIBILITY_V1",
+        "TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READER_CARD_REPAIR_V1",
     )
 
 
@@ -106,7 +110,31 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.status_object_zh == "策略增长主线独立复核整改与冻结就绪状态"
 
 
-def test_canonical_writer_has_no_test_fixture_dependency() -> None:
+def test_reader_decision_projection_separates_transport_from_dq_pit_promotion() -> None:
+    manifest = build_page_effectiveness_manifest(repository_root=ROOT)
+    projection = build_reader_decision_projection(
+        repository_root=ROOT,
+        coverage=manifest.task_coverage,
+        policy=load_live_snapshot_policy(repository_root=ROOT),
+    )
+
+    assert projection.normal_session_count == 1201
+    assert projection.recovered_session_count == 1
+    assert projection.unresolved_session_count == 0
+    assert projection.observed_session_count == projection.expected_session_count == 1202
+    assert projection.dq_pit_promoted is False
+    assert all(
+        "TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READER_CARD_REPAIR_V1"
+        in item.source_task_ids
+        for item in projection.reader_cards
+    )
+    visible = " ".join(item.text_zh for item in projection.reader_cards)
+    assert "合计 1202/1202" in visible
+    assert "仍有 1 天全日未出现期权链" not in visible
+    assert "先解释唯一缺链交易日" not in visible
+
+
+def test_canonical_writer_has_no_test_fixture_dependency(tmp_path: Path) -> None:
     source = (ROOT / "scripts" / "render_atlas_strategy_research_page.py").read_text(
         encoding="utf-8"
     )
@@ -114,3 +142,29 @@ def test_canonical_writer_has_no_test_fixture_dependency() -> None:
     assert "tests." not in source
     assert "_payloads" not in source
     assert "build_live_snapshot_bundle" in source
+    assert "sys.path.insert(0, str(SOURCE_ROOT))" in source
+
+    poisoned = tmp_path / "poisoned-import"
+    package = poisoned / "ai_trading_system"
+    package.mkdir(parents=True)
+    (package / "__init__.py").write_text(
+        'raise RuntimeError("EXTERNAL_EDITABLE_INSTALL_USED")\n',
+        encoding="utf-8",
+    )
+    environment = dict(os.environ)
+    environment["PYTHONPATH"] = str(poisoned)
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "render_atlas_strategy_research_page.py"),
+            "--help",
+        ],
+        cwd=ROOT,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "EXTERNAL_EDITABLE_INSTALL_USED" not in completed.stderr
