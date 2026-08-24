@@ -127,7 +127,7 @@ def test_repository_authority_is_fresh_lossless_and_inactive() -> None:
     assert result["source_of_truth"] == "LEGACY_MONOLITH"
     assert result["fragment_shadow_active"] is False
     assert result["target_count"] == 3
-    assert result["entry_count"] == 3004
+    assert result["entry_count"] == 3010
     assert 1 <= result["fragment_count"] <= 192
     assert policy["contract"] == {
         "source_of_truth": "LEGACY_MONOLITH",
@@ -146,10 +146,13 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     merged = load_compatibility_authority()
     section = merged["phase_devx_006d_report_catalog_flow_lossless_fragmentation"]
     fragment_authority = section["report_catalog_flow_fragment_authority"]
+    successor = merged[
+        "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1"
+    ]["report_catalog_flow_successor"]
 
     assert next(reversed(merged)) == (
-        "phase_trading_2542c_growth_action_value_independent_review_"
-        "remediation_and_freeze_readiness_v1"
+        "phase_devx_009_parallel_integration_publication_fence_and_"
+        "generated_state_rebuild_v1"
     )
     assert fragment_authority["source_of_truth"] == "LEGACY_MONOLITH"
     assert fragment_authority["fragment_shadow_active"] is False
@@ -157,6 +160,11 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     assert fragment_authority["entry_count"] == 3000
     assert fragment_authority["fragment_count"] == 192
     assert section["consumer_contract"]["cutover_ready"] is False
+    assert successor["source_of_truth"] == "LEGACY_MONOLITH"
+    assert successor["fragment_shadow_active"] is False
+    assert successor["target_count"] == 3
+    assert successor["entry_count"] == 3010
+    assert successor["fragment_count"] == 192
 
 
 @pytest.mark.parametrize(
@@ -171,14 +179,14 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         (
             "artifact_catalog",
             "docs/artifact_catalog.md",
-            "2abbc92dce73f734be367a8242804433be5bc1044a90906bac65d897dc0fcd57",
-            556,
+            "1e24f6155953cb89f6854a252504c50d2f544fe350b03d32c2fe05830e82c5be",
+            558,
         ),
         (
             "system_flow",
             "docs/system_flow.md",
-            "f6980b1f115605dba09fc84420f1f7176f7d5f5b274e55c16a5b1c928e674c52",
-            1077,
+            "bf7193be1019e145dc08c77ed8015ae8093a0b029032012e2ca553d8cd2c60dc",
+            1081,
         ),
     ],
 )

@@ -1441,6 +1441,14 @@ def _devx_009_section(
     source_paths = [
         "AGENTS.md",
         "config/architecture/arch_005_integration_publication_fence.yaml",
+        "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+        "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v1.yaml",
+        "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v2.yaml",
+        "config/research/strategy_growth_action_value_preregistration_v1.yaml",
+        "config/research/strategy_growth_action_value_threshold_decision_pack_v1.yaml",
+        "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v1.yaml",
+        "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v2.yaml",
+        "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v3.yaml",
         "docs/architecture/dual_lane_development_operating_model.md",
         "docs/artifact_catalog.md",
         "docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md",
@@ -1458,6 +1466,8 @@ def _devx_009_section(
         "inputs/architecture/arch_004g_deprecation_inventory.yaml",
         "inputs/architecture/arch_005_s5_consumer_inventory.yaml",
         "inputs/architecture/arch_005_task_registry_index.yaml",
+        "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+        "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
         (
             "registry/development_tasks/90/"
             "9026a496d7fcc53a31a98102a845b2fa46a3c2060116882476d2175e6239e586.yaml"
@@ -1474,12 +1484,26 @@ def _devx_009_section(
             "src/ai_trading_system/platform/architecture/"
             "integration_publication_fence.py"
         ),
+        "src/ai_trading_system/strategy_growth_action_value_dq_pit_contract.py",
+        "src/ai_trading_system/strategy_growth_action_value_dq_pit_contract_v2.py",
+        (
+            "src/ai_trading_system/"
+            "strategy_growth_action_value_freeze_readiness_contract.py"
+        ),
         "tests/test_arch_004_refactor_policy.py",
         "tests/test_arch_004g_deprecation.py",
         "tests/test_arch_005_integration_publication_fence.py",
         "tests/test_arch_005_s5_task_source_cutover.py",
         "tests/test_devx_006c_compatibility_authority.py",
+        "tests/test_devx_006d_report_catalog_flow_authority.py",
         "tests/test_governed_development_skill.py",
+        "tests/test_strategy_growth_action_value_dq_pit_contract.py",
+        "tests/test_strategy_growth_action_value_dq_pit_contract_v2.py",
+        "tests/test_strategy_growth_action_value_freeze_readiness_contract.py",
+        "tests/test_strategy_growth_action_value_measurement_contract.py",
+        "tests/test_strategy_growth_action_value_preregistration.py",
+        "tests/test_strategy_growth_action_value_threshold_decision_pack.py",
+        "tests/test_strategy_growth_action_value_threshold_exact_value_sheet.py",
         "tests/test_trading2452_architecture_contract.py",
         "tests/test_validation_tier_script.py",
         "tools/codex_skills/run-governed-development/agents/openai.yaml",
@@ -1491,6 +1515,33 @@ def _devx_009_section(
         "tools/codex_skills/run-governed-development/SKILL.md",
     ]
     source_paths = sorted(source_paths, key=str.casefold)
+    report_flow_index_path = (
+        "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json"
+    )
+    report_flow_inventory_path = (
+        "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json"
+    )
+    report_flow_index_content = _regular_path(
+        root,
+        report_flow_index_path,
+        "devx_009.report_flow_index",
+    ).read_bytes()
+    report_flow_inventory_content = _regular_path(
+        root,
+        report_flow_inventory_path,
+        "devx_009.report_flow_inventory",
+    ).read_bytes()
+    report_flow_index = _strict_json_bytes(
+        report_flow_index_content,
+        report_flow_index_path,
+    )
+    raw_report_flow_targets = report_flow_index.get("targets")
+    if not isinstance(raw_report_flow_targets, list) or not raw_report_flow_targets:
+        _fail("AUTHORITY_DEVX_009_REPORT_FLOW_TARGETS_INVALID", report_flow_index_path)
+    report_flow_targets = [
+        _mapping(target, f"devx_009.report_flow_targets[{position}]")
+        for position, target in enumerate(raw_report_flow_targets)
+    ]
     return section_id, {
         "schema_version": (
             "devx_009_parallel_integration_publication_fence_and_"
@@ -1516,6 +1567,27 @@ def _devx_009_section(
             "generated_state_rebuild_once": True,
             "full_dispatch_claim_is_atomic": True,
             "closeout_receipt_is_replayable": True,
+        },
+        "report_catalog_flow_successor": {
+            "source_of_truth": report_flow_index["source_of_truth"],
+            "fragment_shadow_active": False,
+            "index_path": report_flow_index_path,
+            "index_sha256": _digest(report_flow_index_content),
+            "consumer_inventory_path": report_flow_inventory_path,
+            "consumer_inventory_sha256": _digest(report_flow_inventory_content),
+            "target_count": len(report_flow_targets),
+            "entry_count": sum(
+                _positive_or_zero_int(target.get("entry_count"), "devx_009.entry_count")
+                for target in report_flow_targets
+            ),
+            "fragment_count": sum(
+                _positive_or_zero_int(
+                    target.get("fragment_count"),
+                    "devx_009.fragment_count",
+                )
+                for target in report_flow_targets
+            ),
+            "current_hash_authority": f"{section_id}.sources",
         },
         "safety": {
             "strategy_behavior_changed": False,

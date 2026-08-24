@@ -18,8 +18,8 @@ from ai_trading_system.strategy_growth_action_value_freeze_readiness_contract im
     missed_return_for_qqq_weight,
 )
 
-EXPECTED_FILE_SHA256 = "f563f6499c86853c791589e40cf9d1dbac04b53b0728310e3b0e08376653a3d9"
-EXPECTED_CANONICAL_SHA256 = "7b7a0d19d04f52de2de4dc813cc29de4dc62e0a624e93cc486256b3071a2d8bd"
+EXPECTED_FILE_SHA256 = "304b5de907bbc0858d2ca1f6786e9e325d5493572561b8e4cff71fa91ff05375"
+EXPECTED_CANONICAL_SHA256 = "68acb53ce3a2c2656565f24a98fe2de5b700d0ed3b994b9b3b20477f7aa6edb0"
 CONFIG_PATH = Path(
     "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v3.yaml"
 )

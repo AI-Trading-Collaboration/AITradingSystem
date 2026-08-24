@@ -152,15 +152,15 @@ class PredecessorBinding(ShaBinding):
     path: Literal[
         "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v2.yaml"
     ]
-    file_sha256: Literal["bbb2e0ade108213269c3c9524b465836518457d932a6344887e6d8afb89ae620"]
-    canonical_sha256: Literal["b978e952c4767756025fc01b17f8694004e720a5bb44aa5dde893628a4d9c199"]
+    file_sha256: Literal["ee1db5f51affe3c76e3b6fd9dc78dd7308b4b4999ed67c2853c116c079b0965d"]
+    canonical_sha256: Literal["8da0aa87f463ee886d8195f39338c10af6fed536c1c982c0352c1cf37950fb7d"]
     disposition: Literal["REQUEST_NEW_VERSION_RETAINED_IMMUTABLE"]
 
 
 class DqSuccessorBinding(ShaBinding):
     path: Literal["config/research/strategy_growth_action_value_canonical_dq_pit_contract_v2.yaml"]
-    file_sha256: Literal["762f00395963ea32033334ff4ea1d26231bd1b0d0b9f22a05bd505dd572276e6"]
-    canonical_sha256: Literal["c9f762d4419aa7a8d9be77cce83d32026735bc61d1589b699f4e7db34489c672"]
+    file_sha256: Literal["c9c74d5da0819f206ae59543dcab34a2f1f920687fd4bf646da49a4eabbbd327"]
+    canonical_sha256: Literal["94e99dea15f0c62756f87230a7706d575b24e4c193db7bd4673ef2bb44427843"]
     contract_id: Literal["strategy_growth_action_value_canonical_dq_pit_contract_v2"]
     executable_authority: Literal[False]
 

@@ -27,8 +27,8 @@ policy_metadata:
     slice、DQ policy 或 attribution rule 的修改都必须创建新版本并重新取得 Owner 批准。
 decision_pack_binding:
   path: config/research/strategy_growth_action_value_threshold_decision_pack_v1.yaml
-  file_sha256: b19269c23382dddb70882cd610c2ea506a643bdd2be5cc164a6496219ea930e8
-  canonical_sha256: e4604ccb6bf313ce93a8ae269208490431e40388474ee5d3ac7ab459efd519e3
+  file_sha256: 67965b51b7d73f38ef0f71a2b78c85f5d3f1301283f184fcb4a23f90a13e2ca7
+  canonical_sha256: e4a83e702470ce5a4f79deb6e8ebe9367916f2d86c7c6c8df912a9f40fb9e13a
 scope_binding:
   predecessor_policy_id: strategy_growth_action_value_preregistration_v1
   hypothesis_id: BASELINE_BOUNDED_QQQ_GROWTH_OVERLAY_NON_BETA_ACTION_VALUE_V1

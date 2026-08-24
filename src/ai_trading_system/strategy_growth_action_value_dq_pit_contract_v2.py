@@ -109,8 +109,8 @@ def _bound_file(path: Path, *, root: Path, field: str) -> Path:
 
 class PredecessorBinding(_StrictModel):
     path: Literal["config/research/strategy_growth_action_value_canonical_dq_pit_contract_v1.yaml"]
-    file_sha256: Literal["a60b6c71e492aacac31d8fc9a4f4d406659679c6a1f88ac9e53664d49134d138"]
-    canonical_sha256: Literal["d7c6bfe8fcb8123be6b8d6f87c5ba72a90db3c5ac50af041d1b3f5eefcc32f68"]
+    file_sha256: Literal["39650c2aba7c4b33804de01f34c52e22f9992d7ded673cc6db506112d72e7d9c"]
+    canonical_sha256: Literal["c40296090fc5f84d5142e3b3d24f38c04a5fdc02223a3a329ce3d8e74b22aca1"]
     disposition: Literal["REJECTED_FOR_EXECUTABLE_AUTHORITY_RETAINED_IMMUTABLE"]
 
 

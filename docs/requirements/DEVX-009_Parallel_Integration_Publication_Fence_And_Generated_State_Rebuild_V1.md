@@ -212,3 +212,16 @@ DEVX-009 的完成不自动授权 TRADING-2544 采数、训练、回测或提升
   manifests、fitness 与 deprecation inventory；compatibility authority 追加 DEVX-009 继任 section，显式
   记录 publication CAS、single coordinator、generated rebuild、Full dispatch 与 replayable closeout receipt
   合同。完成生成和 current-hash freshness 后，重新绑定新 candidate 并重跑全部正式层级及 Full。
+- 2026-08-24：v3 正式层级全部 PASS：Architecture `876 passed`、Contract `277 passed`、Integration
+  `995 passed`、Reproducibility `24 passed`；随后 exact-candidate Full 运行完整但为
+  `9386 passed / 114 failed / 3 skipped`。失败不是随机并发，而是两个未纳入 v3 generator claim 的
+  精确权威链：report-catalog-flow 仍绑定 DEVX-009 修改前的 `docs/artifact_catalog.md` / `docs/system_flow.md`
+  source seals；`AGENTS.md` 的新增 publication discipline 使 TRADING-2542C 的
+  `PROJECT_ENGINEERING_RULES` file binding 及其 append-only consumer chain 过期。v3 以 `FAILED` 释放，
+  Full artifact=`outputs/validation_runtime/full_20260824T020642Z/test_runtime_summary.json`，未跳过失败、
+  未改策略数值、未删除失败证据。
+- 2026-08-24：v4 transaction 以 v3 Full artifact 为 mandatory `full_parent`，扩展最小 serial contract
+  wave：官方重建 report-catalog-flow fragments/index、architecture manifests 与 compatibility authority；
+  对 growth-action-value preregistration→decision pack→exact sheet→measurement→DQ/PIT v1/v2→freeze
+  readiness 仅重绑工程规则和上游文件/canonical SHA identity。所有 axis、threshold、window、DQ/PIT、
+  execution、production 与 broker 语义保持不变，重绑后由既有 loaders、canonical replay 和完整测试验证。

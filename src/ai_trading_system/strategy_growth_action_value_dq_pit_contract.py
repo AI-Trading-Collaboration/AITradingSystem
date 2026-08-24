@@ -195,8 +195,8 @@ class ConsumerBinding(_StrictModel):
     path: Literal[
         "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v2.yaml"
     ]
-    file_sha256: Literal["bbb2e0ade108213269c3c9524b465836518457d932a6344887e6d8afb89ae620"]
-    canonical_sha256: Literal["b978e952c4767756025fc01b17f8694004e720a5bb44aa5dde893628a4d9c199"]
+    file_sha256: Literal["ee1db5f51affe3c76e3b6fd9dc78dd7308b4b4999ed67c2853c116c079b0965d"]
+    canonical_sha256: Literal["8da0aa87f463ee886d8195f39338c10af6fed536c1c982c0352c1cf37950fb7d"]
     axis_id: Literal["CANONICAL_DQ_PIT"]
     consumer_bytes_mutated: Literal[False]
 

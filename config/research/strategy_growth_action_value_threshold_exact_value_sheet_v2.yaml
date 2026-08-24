@@ -17,8 +17,8 @@ review_evidence:
   advisory_reconciled_by_project_owner: true
 predecessor_binding:
   path: config/research/strategy_growth_action_value_threshold_exact_value_sheet_v1.yaml
-  file_sha256: 82f75b55bb4a9576775d4e60a9a31bc01b24d3b5b8cf270c6aabbed9e9d17e7f
-  canonical_sha256: 14286008f464230921400c1def4173f34a6e9231e77c434504a5abab78451dfb
+  file_sha256: c9b79bd29de72a052e93377a736f4431419a2ef4a941bdd5be7e768ab649c4de
+  canonical_sha256: 35d1ae862130175c7f039ccb5ab931811f2078e9a8f0097ce39cc2b11ec4d2d2
   disposition: REJECTED_FOR_FREEZE_RETAINED_IMMUTABLE
 comparator_binding:
   path: config/research/exposure_matched_no_signal_comparator_contract_v1.yaml

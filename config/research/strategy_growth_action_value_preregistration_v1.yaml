@@ -132,7 +132,7 @@ authorities:
   - authority_id: PROJECT_ENGINEERING_RULES
     path: AGENTS.md
     format: TEXT
-    file_sha256: 4dba5a5c45ada5d960e70c4eed6358b542415c26e70caf0a6e2f9652defe6fcd
+    file_sha256: 3acc539ebc79d4c76501ff3c127b56713fe64b8eaac463905786f1709fd472f7
     semantic_facts: []
     required_snippets:
       - 'default research and backtest start: 2021-02-22;'

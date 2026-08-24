@@ -19,8 +19,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SHEET_PATH = Path(
     "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v1.yaml"
 )
-SHEET_FILE_SHA256 = "82f75b55bb4a9576775d4e60a9a31bc01b24d3b5b8cf270c6aabbed9e9d17e7f"
-SHEET_CANONICAL_SHA256 = "14286008f464230921400c1def4173f34a6e9231e77c434504a5abab78451dfb"
+SHEET_FILE_SHA256 = "c9b79bd29de72a052e93377a736f4431419a2ef4a941bdd5be7e768ab649c4de"
+SHEET_CANONICAL_SHA256 = "35d1ae862130175c7f039ccb5ab931811f2078e9a8f0097ce39cc2b11ec4d2d2"
 AXIS_ORDER = (
     "NON_BETA_ACTION_VALUE",
     "NET_OF_COST_RETURN",

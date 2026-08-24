@@ -25,8 +25,8 @@ from ai_trading_system.strategy_growth_action_value_dq_pit_contract_v2 import (
     pre_run_authority_state,
 )
 
-EXPECTED_FILE_SHA256 = "762f00395963ea32033334ff4ea1d26231bd1b0d0b9f22a05bd505dd572276e6"
-EXPECTED_CANONICAL_SHA256 = "c9f762d4419aa7a8d9be77cce83d32026735bc61d1589b699f4e7db34489c672"
+EXPECTED_FILE_SHA256 = "c9c74d5da0819f206ae59543dcab34a2f1f920687fd4bf646da49a4eabbbd327"
+EXPECTED_CANONICAL_SHA256 = "94e99dea15f0c62756f87230a7706d575b24e4c193db7bd4673ef2bb44427843"
 EXPECTED_SESSIONS = (date(2021, 2, 22), date(2021, 2, 23))
 
 

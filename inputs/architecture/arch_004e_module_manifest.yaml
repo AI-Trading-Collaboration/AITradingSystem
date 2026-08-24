@@ -15369,7 +15369,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.compatibility_authority
   path: src/ai_trading_system/platform/architecture/compatibility_authority.py
-  sha256: fca9413218c5f5071392bbd9d3f00ba5c0d38e461581b953755164848873308c
+  sha256: 5dc14c707874beb0ce51917e167f7d59f30fae7255488dc925810b305899b930
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -21188,7 +21188,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.strategy_growth_action_value_dq_pit_contract
   path: src/ai_trading_system/strategy_growth_action_value_dq_pit_contract.py
-  sha256: 41409f2a8aae26bd4ee45b81750371dd2634e35a735ecb8a56cc7efc0698e469
+  sha256: c73ad2cacb3aeded20527c83716b1eb1ccedda5b5d7e422b3c041df46c29a34a
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -21208,7 +21208,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.strategy_growth_action_value_dq_pit_contract_v2
   path: src/ai_trading_system/strategy_growth_action_value_dq_pit_contract_v2.py
-  sha256: d84d022baa978211e168b7ae7d62af703800e059ac1bddf813ae36e6e29cf891
+  sha256: 7ba8e8a9ec02abdb38260508696e53253f5b277a28863217a37afde00b4300fb
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -21228,7 +21228,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.strategy_growth_action_value_freeze_readiness_contract
   path: src/ai_trading_system/strategy_growth_action_value_freeze_readiness_contract.py
-  sha256: 0de28a1f26be40fb5059526c9aa911d01ad672f437034e467541b91bbe26150b
+  sha256: cf69f8afb7d86f98468ef169e7d4cd9f6dfaf312bb9caef648404090d92c7648
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

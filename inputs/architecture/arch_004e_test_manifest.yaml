@@ -10410,7 +10410,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 6a6fa9a412e2809025884fb71795a37baa772094c5fad3dea47d24b5e7e2111a
+  sha256: a52a618f39dd5c5d8ae44dbee74404b865950bafe1508bdaf1c627cb50af437b
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -17488,7 +17488,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_strategy_growth_action_value_dq_pit_contract
   path: tests/test_strategy_growth_action_value_dq_pit_contract.py
-  sha256: 31c5a1b13930657a15cd1ca6aee2f9d73b047a2bb2ffd37b2b5565afc728e7e3
+  sha256: 27c3659df3845229c09e05e433af79a17f5d26717d283fd06cbacbdf8fc3e7a1
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -17504,7 +17504,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_strategy_growth_action_value_dq_pit_contract_v2
   path: tests/test_strategy_growth_action_value_dq_pit_contract_v2.py
-  sha256: a265e2fd845fe92eb807b7cbb254a197491d2d69fc34caa182baf2feddc3d6f6
+  sha256: 331f9186963f6235f05479b7d55d62c0022a9468704ddb4d2b50fa13f6e95991
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -17520,7 +17520,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_strategy_growth_action_value_freeze_readiness_contract
   path: tests/test_strategy_growth_action_value_freeze_readiness_contract.py
-  sha256: c8d37a9d8f5ad2cf0a6e4d2eb673abef067b590cbc54ce4d2f80d9ad52162fe6
+  sha256: 0196ac4a60e09f53ba8dd453ad55948e5070066564dc0c2718152ddadd035013
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -17536,7 +17536,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_strategy_growth_action_value_measurement_contract
   path: tests/test_strategy_growth_action_value_measurement_contract.py
-  sha256: 88c942d7611b595be5cfc0f06648f2be9ddfbfab09ac5d6dd567c065f4aa9aba
+  sha256: 6094357b9a40088a15d319eed636c885bcfe4820b9292288df1049a1c81fe480
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -17552,7 +17552,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_strategy_growth_action_value_preregistration
   path: tests/test_strategy_growth_action_value_preregistration.py
-  sha256: 5a6cb7db87a88dd51923e500eaf20962e4c391cfeceabd758c302544c33641fa
+  sha256: 824e7e3de6e2f37c7809626513639305ab2bb65cd2fac3aa2cbf9bd7fc812c69
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -17568,7 +17568,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_strategy_growth_action_value_threshold_decision_pack
   path: tests/test_strategy_growth_action_value_threshold_decision_pack.py
-  sha256: 16b14c7bf8ee34869c88c9db95c1ead2f7b5ae4563d73bcf8540f7849141bfc3
+  sha256: 4e9eacfe28754171bd6fbc9967fdb83f346a3fb76a2dc099b432a099c782fb92
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -17584,7 +17584,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_strategy_growth_action_value_threshold_exact_value_sheet
   path: tests/test_strategy_growth_action_value_threshold_exact_value_sheet.py
-  sha256: 88810eeb57b168f4660fb7a46821f02e514ee0ad175dcff2c02bee90f08c2ed7
+  sha256: 11e11a816e9cea3109e70659789d29d4af7379d5d3ea2e7dce4385dc1449dd52
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
