@@ -203,3 +203,10 @@ joint precedence 固定为 `INVALID > FAIL > INSUFFICIENT > PASS`；不允许七
   静态断言仍绑定旧 `system_flow` 哈希与条目数；该路径未在 v1 声明，因此 v1 以 path-scope
   incomplete 失败释放，没有越权修改。v2 扩展精确 owned path 后只同步生成权威断言，不改变研究、
   DQ、策略或 authorization consumption state。
+- 2026-08-25：v2 exact candidate `54b0cf062b55fa6d67655725ea7be7001ee31d57` 的 Atlas
+  exact-commit rebuild 17 个产物 PASS；Architecture 正式档为 `877 passed / 1 failed`。唯一失败是
+  `tests/test_arch_005_s5_task_source_cutover.py` 仍把 canonical task count 静态冻结为 1025，实际在
+  2542E 登记后为 1026。失败证据保存在
+  `outputs/validation_runtime/architecture-fitness_20260824T174011Z/test_runtime_summary.json`；v2 已失败
+  释放。v3 扩展精确 test path，只同步该 self-hosted registry invariant 后重新生成并验证，不改变
+  DQ、策略、外部计数或 authorization consumption state。
