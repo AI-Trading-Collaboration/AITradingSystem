@@ -9200,3 +9200,41 @@ fail-closed 边界。它们不得把独立复核的 advisory disposition 当成 
 status 字段把 pilot numeric 提升为 executable authority。只有 successor 再次 independent review、Owner
 exact approval/freeze 和另一个固定 scope 的 R1 run manifest 都完成后，才允许后继任务评估是否执行真实
 primary-window DQ；本任务不产生策略价值或投资结论。
+
+## Coordinator integration publication fence（DEVX-009）
+
+共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个
+`integration_publication_fence.v1` 串成单一 coordinator transaction。它复用 S4D
+`CheckoutLeaseGuard` / `FileExecutionLeaseStore`，固定声明 publication runtime 与
+`outputs/validation_runtime` 为排他资源；没有第二套 lock、scheduler 或 integration queue。
+
+```mermaid
+flowchart LR
+    A[exact frozen base / lane head / expected main] --> B[acquire S4D shared-mutation lease]
+    P[reviewed integration plan bytes] --> B
+    B --> C[TASK_SOURCE_PRE_WRITE]
+    C --> D[canonical task event writer]
+    D --> E[GENERATED_REBUILD_PRE]
+    E --> F[official generators on latest-main final tree]
+    F --> G[GENERATED_REBUILD_POST hashes/freshness]
+    G --> H[CANDIDATE_COMMIT_PRE]
+    H --> I[clean candidate commit]
+    I --> J[FORMAL_VALIDATION_PRE exact candidate]
+    J --> K[Architecture / Contract / Integration / Reproducibility]
+    J --> L[FULL_DISPATCHED atomic claim]
+    L --> U[exclusive Full + optional failed-parent binding]
+    U --> M[FORMAL_VALIDATION_RESULT]
+    K --> M
+    M --> N[LOCAL_MAIN_FF_PRE]
+    N --> O[ff-only local main]
+    O --> Q[fetch + REMOTE_PUSH_PRE]
+    Q --> R[ordinary non-force push]
+    R --> S[local main = origin/main = candidate]
+    S --> T[CLEANUP_PRE + replayable receipt + lease release]
+```
+
+每个 mutation phase 都重新校验 expected main、active lease、plan hash、声明路径、dirty attribution、
+generator 顺序和 candidate lineage。stale main、plan tamper、lease expiry、并发 Full、错误 parent、
+remote divergence 或 cleanup 不完整会在下一次写入前 fail closed。canonical task fragment/event 仍是事实源；
+两份 task-register Markdown、index 及其他 current authority 只能由各自官方 generator 在最终树重建一次。
+本流程不读取市场数据，不改变 DQ/PIT、策略、回测、模型、神经网络、production 或 broker 状态。

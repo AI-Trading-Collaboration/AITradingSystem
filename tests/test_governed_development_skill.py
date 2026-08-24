@@ -38,6 +38,23 @@ def _load_preflight() -> ModuleType:
 PREFLIGHT = _load_preflight()
 
 
+def test_repository_scope_gate_rejects_similarly_named_wrong_origin(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_run(command: list[str], cwd: Path, *, timeout: int = 90) -> str:
+        del cwd, timeout
+        if command[-1] == "--show-toplevel":
+            return str(tmp_path)
+        if command[-3:] == ["remote", "get-url", "origin"]:
+            return "https://github.com/example/AITradingSystem.git"
+        raise AssertionError(command)
+
+    monkeypatch.setattr(PREFLIGHT, "_run", fake_run)
+    with pytest.raises(PREFLIGHT.PreflightError, match="repository origin is not"):
+        PREFLIGHT.validate_repository_scope(tmp_path)
+
+
 def test_read_only_mode_rejects_write_claims() -> None:
     blockers, serial = PREFLIGHT.evaluate_claims(
         mode="READ_ONLY",
@@ -280,6 +297,33 @@ def test_active_and_read_only_task_registration_behavior_is_preserved() -> None:
     assert read_only == (True, "READ_ONLY")
 
 
+def test_integration_and_closeout_require_publication_transaction() -> None:
+    for stage in ("INTEGRATION", "CLOSEOUT"):
+        transaction, blockers = PREFLIGHT.load_publication_transaction(
+            repo=ROOT,
+            transaction_argument=None,
+            mode="SINGLE_LANE",
+            role="coordinator",
+            stage=stage,
+            task_id="DEVX-009",
+        )
+        assert transaction is None
+        assert [row["code"] for row in blockers] == ["PUBLICATION_TRANSACTION_REQUIRED"]
+
+
+def test_lane_stage_does_not_acquire_or_require_publication_transaction() -> None:
+    transaction, blockers = PREFLIGHT.load_publication_transaction(
+        repo=ROOT,
+        transaction_argument=None,
+        mode="SINGLE_LANE",
+        role="coordinator",
+        stage="LANE",
+        task_id="DEVX-009",
+    )
+    assert transaction is None
+    assert blockers == []
+
+
 def _base_drift(
     **overrides: object,
 ) -> tuple[
@@ -440,3 +484,5 @@ def test_default_remote_push_contract_is_consistent_and_fail_closed() -> None:
     assert "completed.md` is eligible only" in skill
     assert "integration_revalidation_plan.v1" in skill
     assert "--integration-revalidation-plan" in workflow
+    assert "--publication-transaction" in skill
+    assert "integration_publication_fence.v1" in workflow

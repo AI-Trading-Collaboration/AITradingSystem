@@ -645,3 +645,25 @@ domain focused=`73`与shared combined focused=`152`均PASS，failure-fix Full=`7
   decision及从其C HEAD生成的D carrier共同满足时才允许assignment；
 - 不运行周期 operations、联网 provider refresh 或 cache 删除；
 - 不改变研究窗口、阈值、策略结论、权重、promotion、paper-shadow、production 或 broker。
+
+## 11. DEVX-009 coordinator publication transaction
+
+并行 lane 仍只持有各自 disjoint leaf scope；它们不取得 publication transaction，也不写 canonical task
+source、root/shared wiring、generated views 或 formal artifacts。coordinator 在 domain 交付和必要的
+base-drift reconciliation 完成后，从 exact lane head / expected local main 获取唯一
+`integration_publication_fence.v1`：
+
+1. upfront 声明 task/coordinator/generated paths、official generator 顺序、required tiers 和可选 plan/
+   failed-Full parent；固定 publication 与 validation runtime path 使第二个 publisher/Full 在写入或
+   dispatch 前稳定冲突；
+2. task-source mutation 只允许在 `TASK_SOURCE_PRE_WRITE`；generated/current authority 只在
+   `GENERATED_REBUILD_PRE/POST` 之间从 final tree 官方重建一次；
+3. candidate commit 后必须 clean，`FORMAL_VALIDATION_PRE` 绑定 exact SHA；实际 Full 接收同一
+   `--publication-transaction`，先原子写入 `FULL_DISPATCHED`，再把不可覆盖的 summary 记录到
+   `FORMAL_VALIDATION_RESULT`；
+4. `LOCAL_MAIN_FF_PRE -> REMOTE_PUSH_PRE -> CLEANUP_PRE` 分别保护 ff-only、fetch 后 ordinary push、
+   SHA equality 与资源清理；最后通过 transaction release 写 closeout receipt。
+
+任一失败 attempt 作为 terminal evidence 保留；retry 使用新 transaction，failure-fix 还必须绑定旧
+Full bytes。该机制复用 S4D `FileExecutionLeaseStore`，不改变 domain lane 的机械可并行性，也不授权
+自动 merge/rebase/cherry-pick/force-push、策略研究、production 或 broker。

@@ -16,6 +16,15 @@ MODES = ("READ_ONLY", "SINGLE_LANE", "DUAL_LANE")
 STAGES = ("START", "LANE", "INTEGRATION", "CLOSEOUT")
 ROLES = ("reader", "worker", "coordinator")
 DUAL_LANES = {"engineering", "strategy-evidence"}
+EXPECTED_ORIGINS = {
+    "git@github.com:AI-Trading-Collaboration/AITradingSystem",
+    "https://github.com/AI-Trading-Collaboration/AITradingSystem",
+    "ssh://git@github.com/AI-Trading-Collaboration/AITradingSystem",
+}
+PROJECT_SENTINELS = (
+    "docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md",
+    "scripts/architecture_arch005_checkout_guard.py",
+)
 
 COORDINATOR_EXACT_PATHS = {
     "AGENTS.md",
@@ -59,6 +68,31 @@ def _run_json(command: list[str], cwd: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise PreflightError(f"{' '.join(command)} returned non-object JSON")
     return value
+
+
+def validate_repository_scope(candidate: Path) -> Path:
+    """Return the exact AITradingSystem checkout root or fail closed."""
+
+    candidate = candidate.resolve()
+    top_level = Path(_run(["git", "rev-parse", "--show-toplevel"], candidate).strip()).resolve()
+    if candidate != top_level:
+        raise PreflightError(f"--repo must resolve to the Git top level: {top_level}")
+
+    origin = _run(["git", "remote", "get-url", "origin"], top_level).strip()
+    normalized_origin = origin.rstrip("/").removesuffix(".git")
+    if normalized_origin not in EXPECTED_ORIGINS:
+        raise PreflightError(
+            "repository origin is not github.com/AI-Trading-Collaboration/AITradingSystem"
+        )
+
+    missing = [
+        relative_path
+        for relative_path in PROJECT_SENTINELS
+        if not (top_level / relative_path).is_file()
+    ]
+    if missing:
+        raise PreflightError(f"AITradingSystem repository sentinels missing: {','.join(missing)}")
+    return top_level
 
 
 def normalize_repo_path(raw: str) -> str:
@@ -384,11 +418,7 @@ def evaluate_base_drift(
                 }
             )
         return blockers, serial, warnings
-    if (
-        stage == "LANE"
-        and current_branch != "main"
-        and expected_base_is_head_ancestor is True
-    ):
+    if stage == "LANE" and current_branch != "main" and expected_base_is_head_ancestor is True:
         warnings.append(
             {
                 "code": "BASE_DRIFT_DEFERRED_TO_INTEGRATION_PLAN",
@@ -414,9 +444,7 @@ def evaluate_base_drift(
             blockers.append(
                 {
                     "code": "INTEGRATION_REVALIDATION_BINDING_MISMATCH",
-                    "detail": (
-                        f"{field}:{integration_plan.get(field)!r}!={expected!r}"
-                    ),
+                    "detail": (f"{field}:{integration_plan.get(field)!r}!={expected!r}"),
                 }
             )
     decision = integration_plan.get("decision")
@@ -519,6 +547,77 @@ def load_validated_integration_plan(
     return payload
 
 
+def load_publication_transaction(
+    *,
+    repo: Path,
+    transaction_argument: str | None,
+    mode: str,
+    role: str,
+    stage: str,
+    task_id: str | None,
+) -> tuple[dict[str, Any] | None, list[dict[str, str]]]:
+    blockers: list[dict[str, str]] = []
+    required = (
+        mode != "READ_ONLY"
+        and role == "coordinator"
+        and stage
+        in {
+            "INTEGRATION",
+            "CLOSEOUT",
+        }
+    )
+    if transaction_argument is None:
+        if required:
+            blockers.append(
+                {
+                    "code": "PUBLICATION_TRANSACTION_REQUIRED",
+                    "detail": f"{mode}:{role}:{stage}",
+                }
+            )
+        return None, blockers
+    validator = repo / "scripts" / "architecture_arch005_publication_fence.py"
+    if not validator.is_file():
+        return None, [
+            {
+                "code": "PUBLICATION_FENCE_VALIDATOR_MISSING",
+                "detail": str(validator),
+            }
+        ]
+    command = [
+        sys.executable,
+        str(validator),
+        "--repository",
+        str(repo),
+        "validate",
+        "--transaction",
+        transaction_argument,
+    ]
+    if task_id:
+        command.extend(("--task-id", task_id))
+    if stage == "CLOSEOUT":
+        command.extend(("--exact-phase", "REMOTE_PUSH_PRE"))
+    else:
+        command.extend(("--minimum-phase", "ACQUIRED"))
+    try:
+        payload = _run_json(command, repo)
+    except PreflightError as exc:
+        return None, [
+            {
+                "code": "PUBLICATION_TRANSACTION_INVALID",
+                "detail": str(exc),
+            }
+        ]
+    if payload.get("status") != "PASS" or not isinstance(payload.get("lease_id"), str):
+        blockers.append(
+            {
+                "code": "PUBLICATION_TRANSACTION_INVALID",
+                "detail": json.dumps(payload, sort_keys=True),
+            }
+        )
+        return None, blockers
+    return payload, blockers
+
+
 def _resolve_repo_file(repo: Path, raw: str, field: str) -> Path:
     candidate = Path(raw)
     resolved = (repo / candidate).resolve() if not candidate.is_absolute() else candidate.resolve()
@@ -592,13 +691,13 @@ def collect_repo_state(repo: Path) -> dict[str, Any]:
 
 
 def build_result(args: argparse.Namespace) -> dict[str, Any]:
-    repo = Path(args.repo).resolve()
+    repo = validate_repository_scope(Path(args.repo))
     blockers: list[dict[str, str]] = []
     serial: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
 
     if not (repo / "AGENTS.md").is_file() or not (repo / "docs" / "task_register.md").is_file():
-        raise PreflightError(f"not an AITradingSystem repository root: {repo}")
+        raise PreflightError(f"AITradingSystem governance files missing: {repo}")
 
     claims = parse_claims(args.claim)
     coordinator_paths = [normalize_repo_path(path) for path in args.coordinator_path]
@@ -612,6 +711,15 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
     blockers.extend(claim_blockers)
     serial.extend(claim_serial)
     state = collect_repo_state(repo)
+    publication_transaction, publication_blockers = load_publication_transaction(
+        repo=repo,
+        transaction_argument=args.publication_transaction,
+        mode=args.mode,
+        role=args.role,
+        stage=args.stage,
+        task_id=args.task_id,
+    )
+    blockers.extend(publication_blockers)
     integration_plan: dict[str, Any] | None = None
     try:
         integration_plan = load_validated_integration_plan(
@@ -653,6 +761,8 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
         )
         active_leases = []
     allowed_lease_ids = set(args.allow_active_lease)
+    if publication_transaction is not None:
+        allowed_lease_ids.add(str(publication_transaction["lease_id"]))
     unexpected_active = [
         lease
         for lease in active_leases
@@ -676,9 +786,7 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
     task_registered = args.mode == "READ_ONLY"
     task_registration_source = "READ_ONLY" if task_registered else "NONE"
     if args.mode != "READ_ONLY":
-        active_task_register = (repo / "docs" / "task_register.md").read_text(
-            encoding="utf-8"
-        )
+        active_task_register = (repo / "docs" / "task_register.md").read_text(encoding="utf-8")
         completed_task_register_path = repo / "docs" / "task_register_completed.md"
         completed_task_register = (
             completed_task_register_path.read_text(encoding="utf-8")
@@ -701,9 +809,7 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
             )
 
     expected_base_is_head_ancestor = (
-        _git_is_ancestor(repo, args.expected_base, state["head"])
-        if args.expected_base
-        else None
+        _git_is_ancestor(repo, args.expected_base, state["head"]) if args.expected_base else None
     )
     base_blockers, base_serial, base_warnings = evaluate_base_drift(
         stage=args.stage,
@@ -776,6 +882,7 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
             if integration_plan is not None
             else None
         ),
+        "publication_transaction": publication_transaction,
         "reviewed_reconciliation_plan_id": args.reviewed_reconciliation_plan_id,
         "remote_action_requested": args.remote_action,
         "blockers": blockers,
@@ -800,6 +907,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--claim", action="append", default=[], help="lane=repo/path")
     parser.add_argument("--coordinator-path", action="append", default=[])
     parser.add_argument("--allow-active-lease", action="append", default=[])
+    parser.add_argument("--publication-transaction")
     parser.add_argument("--contract-change", action="store_true")
     parser.add_argument("--remote-action", action="store_true")
     return parser.parse_args()

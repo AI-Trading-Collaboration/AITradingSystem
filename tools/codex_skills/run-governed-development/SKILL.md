@@ -1,12 +1,33 @@
 ---
 name: run-governed-development
-description: Run the governed AITradingSystem development workflow. Use for any non-trivial tracked repository mutation, including implementation, bug fixes, refactors, data/scoring/backtest/report changes, architecture or governance work, branch/worktree setup, parallel engineering and strategy lanes, integration, validation, or cleanup. Also use in READ_ONLY mode when a status or diagnosis depends on current checkout safety, leases, worktrees, or base divergence.
+description: Run the governed development workflow only in the AITradingSystem repository. Use there for non-trivial tracked mutations or read-only checkout, lease, worktree, and base-divergence audits. Do not use this skill in other repositories; their own AGENTS.md and project workflows apply instead.
 ---
 
 # Run Governed Development
 
 Treat repository rules and executable guards as authority. Use this skill to
 select and sequence them; never replace them with skill-local state.
+
+## Repository scope gate
+
+Before reading this skill's repository-specific references or running any of its
+commands:
+
+1. Resolve the current Git top level with `git rev-parse --show-toplevel`.
+2. Resolve the common Git directory with `git rev-parse --git-common-dir`.
+3. Require `origin` to identify
+   `github.com/AI-Trading-Collaboration/AITradingSystem` (HTTPS, SCP-style SSH,
+   or `ssh://` form). Accept its main checkout and linked worktrees, but not a
+   similarly named independent repository.
+4. Require both repository sentinels at the resolved top level:
+   - `docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md`
+   - `scripts/architecture_arch005_checkout_guard.py`
+
+The bundled `scripts/preflight.py` enforces the same identity and sentinel
+checks before any project workflow probe. If repository identity or either
+sentinel does not match, stop using this skill immediately. Do not create task
+rows, branches, worktrees, leases, or governance artifacts. Follow the active
+repository's `AGENTS.md` and ordinary workflow.
 
 ## Start
 
@@ -61,9 +82,20 @@ ownership rules, integration topology, validation, and cleanup.
   merge, cherry-pick, commit, push, cleanup, or task mutation. Discard
   coordinator-refreshable lane bytes and regenerate those views once on the
   final candidate; bind heavyweight formal validation only to that final tree.
+- Before coordinator-owned task-source mutation, generated-state rebuild, final
+  candidate binding, or executed Full validation, acquire one repository
+  `integration_publication_fence.v1` transaction. Pass its exact
+  `--publication-transaction` to task-source, validation, `INTEGRATION`, and
+  `CLOSEOUT` preflight commands. The transaction reuses the S4D
+  `FileExecutionLeaseStore`; do not add or emulate a second lock.
 
 ## Integrate and Close
 
+- Advance the publication transaction through the reviewed phase order. Recheck
+  expected local main and any integration-plan hash before each shared mutation;
+  rebuild generated authorities once, bind the clean committed candidate at
+  `FORMAL_VALIDATION_PRE`, and let the Full runner atomically record
+  `FULL_DISPATCHED` before pytest and `FORMAL_VALIDATION_RESULT` afterward.
 - For `SINGLE_LANE`, commit the validated task branch and fast-forward local
   `main` only after final-tree checks pass.
 - For `DUAL_LANE`, form one coordinator integration candidate from the common
@@ -71,6 +103,8 @@ ownership rules, integration topology, validation, and cleanup.
   validate the combined tree, and fast-forward local `main` once.
 - After local-main integration, fetch remote main, then rerun the same governed
   mode and claims as coordinator with `--stage CLOSEOUT --remote-action`.
+  The active transaction must already be at `REMOTE_PUSH_PRE` and is supplied
+  with `--publication-transaction`.
   A task archived in `docs/task_register_completed.md` is eligible only at this
   `CLOSEOUT` stage; `START`, `LANE`, and `INTEGRATION` still require the task in
   the active register.
@@ -80,6 +114,10 @@ ownership rules, integration topology, validation, and cleanup.
 - Treat PR, force-push, history rewrite, and remote-divergence repair as separate
   actions requiring explicit authorization.
 - Use the governed worktree audit at closeout.
+- After ordinary push and exact SHA equality, record `CLEANUP_PRE`; release the
+  S4D lease only through the publication command so the append-only closeout
+  receipt remains replayable. A failed attempt is terminal evidence and any
+  retry uses a new transaction with the failed Full parent bound explicitly.
 - Clean branches/worktrees only after ancestry, unique-content, canonical
   evidence, process dependency, and recoverability checks pass.
 - Report task commit, local-main SHA, validation, retained state, cleanup, and
@@ -88,6 +126,8 @@ ownership rules, integration topology, validation, and cleanup.
 ## Resources
 
 - Run `scripts/preflight.py` for deterministic repository and claim checks.
+- Run `scripts/architecture_arch005_publication_fence.py acquire|checkpoint|validate|replay|release`
+  for coordinator publication and Full exclusivity.
 - Run `scripts/architecture_arch005_integration_revalidation.py plan|validate`
   through the repository when a frozen lane reaches an integration boundary
   after local main has advanced.

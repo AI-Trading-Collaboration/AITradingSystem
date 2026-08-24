@@ -5,6 +5,10 @@ import json
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.platform.architecture.integration_publication_fence import (
+    IntegrationPublicationFence,
+    PublicationFenceError,
+)
 from ai_trading_system.platform.architecture.task_registry_canonical import (
     build_cutover_candidate,
     refresh_consumer_inventory,
@@ -25,12 +29,14 @@ def main() -> int:
 
     build = subparsers.add_parser("build", help="perform the one-time final legacy import")
     build.add_argument("--source-commit", required=True)
+    _add_publication_argument(build)
 
     subparsers.add_parser("validate", help="validate canonical authority and generated views")
-    subparsers.add_parser(
+    refresh = subparsers.add_parser(
         "refresh-consumers",
         help="refresh the typed consumer inventory after an audited consumer migration",
     )
+    _add_publication_argument(refresh)
 
     update = subparsers.add_parser("update", help="append one governed task-state event")
     _add_event_arguments(update)
@@ -40,6 +46,7 @@ def main() -> int:
     update.add_argument("--blocker-or-next-step")
     update.add_argument("--acceptance-criteria")
     update.add_argument("--notes")
+    _add_publication_argument(update)
 
     register = subparsers.add_parser("register", help="register one new canonical task")
     _add_event_arguments(register)
@@ -48,6 +55,7 @@ def main() -> int:
         required=True,
         help="JSON array containing the exact eight compatibility-view cells",
     )
+    _add_publication_argument(register)
 
     rollback = subparsers.add_parser(
         "rollback-rehearsal",
@@ -57,6 +65,7 @@ def main() -> int:
 
     args = parser.parse_args()
     command = str(args.command)
+    _require_publication_transaction(args)
     if command == "build":
         payload = build_cutover_candidate(
             project_root=PROJECT_ROOT,
@@ -114,6 +123,37 @@ def _add_event_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--change-id", required=True)
     parser.add_argument("--occurred-at", required=True)
     parser.add_argument("--base-commit", required=True)
+
+
+def _add_publication_argument(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--publication-transaction",
+        required=True,
+        type=Path,
+        help=("Active integration_publication_fence.v1 transaction at TASK_SOURCE_PRE_WRITE."),
+    )
+
+
+def _require_publication_transaction(args: argparse.Namespace) -> None:
+    if args.command not in {"build", "refresh-consumers", "update", "register"}:
+        return
+    task_id: str | None = None
+    if args.command == "update":
+        task_id = str(args.task_id)
+    elif args.command == "register":
+        cells = _cells(str(args.cells_json))
+        if not cells:
+            raise SystemExit("--cells-json must contain a task id")
+        task_id = cells[0]
+    fence = IntegrationPublicationFence(project_root=PROJECT_ROOT)
+    try:
+        fence.validate(
+            args.publication_transaction,
+            exact_phase="TASK_SOURCE_PRE_WRITE",
+            task_id=task_id,
+        )
+    except PublicationFenceError as exc:
+        raise SystemExit(f"publication transaction rejected task-source mutation: {exc}") from exc
 
 
 def _cells(raw: str) -> list[str]:

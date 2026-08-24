@@ -1,0 +1,59 @@
+schema_version: arch_005_integration_publication_fence_policy.v1
+policy_id: ARCH-005-INTEGRATION-PUBLICATION-FENCE
+version: 1.0.0
+status: OWNER_APPROVED_ENFORCED
+owner: Project Owner / architecture-control-plane
+approval_ref: owner_instruction:DEVX-009:2026-08-24:continue
+
+authority:
+  lease_schema: execution_lease.v1
+  lease_implementation: arch_005_file_execution_lease_store
+  checkout_guard_policy: config/architecture/arch_005_s4d_checkout_guard.yaml
+  parallel_control_policy: config/architecture/arch_005_parallel_control_policy.yaml
+
+runtime:
+  transaction_root: outputs/architecture/arch_005_integration_publication_fence
+  exclusive_publication_resource: outputs/architecture/arch_005_integration_publication_fence/publication.resource
+  exclusive_validation_resource: outputs/validation_runtime
+
+phase_order:
+  - ACQUIRED
+  - TASK_SOURCE_PRE_WRITE
+  - GENERATED_REBUILD_PRE
+  - GENERATED_REBUILD_POST
+  - CANDIDATE_COMMIT_PRE
+  - FORMAL_VALIDATION_PRE
+  - FULL_DISPATCHED
+  - FORMAL_VALIDATION_RESULT
+  - LOCAL_MAIN_FF_PRE
+  - REMOTE_PUSH_PRE
+  - CLEANUP_PRE
+  - RELEASED
+
+generated_rebuild:
+  allowed_generator_ids:
+    - canonical-task-source
+    - architecture-manifests
+    - atlas-authority
+    - report-flow-authority
+    - compatibility-authority
+  require_exact_declared_order: true
+
+validation:
+  required_formal_tiers:
+    - architecture
+    - contract
+    - integration
+    - reproducibility
+    - full
+  heavyweight_tier: full
+  failure_fix_trigger: failure_fix_rerun
+
+safety:
+  production_effect: none
+  broker_action: none
+  automatic_rebase_allowed: false
+  automatic_merge_allowed: false
+  automatic_cherry_pick_allowed: false
+  force_push_allowed: false
+  remote_divergence_repair_allowed: false

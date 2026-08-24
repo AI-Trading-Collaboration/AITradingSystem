@@ -3,10 +3,12 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+from argparse import Namespace
 from pathlib import Path
 
 import pytest
 
+import scripts.architecture_arch005_task_source as task_source_cli
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.platform.architecture.task_registry_canonical import (
     CANONICAL_SOURCE,
@@ -18,6 +20,40 @@ from ai_trading_system.platform.architecture.task_registry_canonical import (
     validate_canonical_fragment,
     validate_canonical_registry,
 )
+
+
+def test_task_source_mutation_binds_exact_publication_phase_and_task(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[dict[str, object]] = []
+
+    class StubFence:
+        def __init__(self, *, project_root: Path) -> None:
+            assert project_root == PROJECT_ROOT
+
+        def validate(self, transaction: Path, **kwargs: object) -> None:
+            calls.append({"transaction": transaction, **kwargs})
+
+    monkeypatch.setattr(task_source_cli, "IntegrationPublicationFence", StubFence)
+    args = Namespace(
+        command="update",
+        task_id="DEVX-009",
+        publication_transaction=Path("outputs/publication/transaction.json"),
+    )
+
+    task_source_cli._require_publication_transaction(args)
+
+    assert calls == [
+        {
+            "transaction": Path("outputs/publication/transaction.json"),
+            "exact_phase": "TASK_SOURCE_PRE_WRITE",
+            "task_id": "DEVX-009",
+        }
+    ]
+
+
+def test_task_source_validate_command_remains_read_only_without_publication_fence() -> None:
+    task_source_cli._require_publication_transaction(Namespace(command="validate"))
 
 
 def test_repository_canonical_registry_is_active_and_self_hosted() -> None:

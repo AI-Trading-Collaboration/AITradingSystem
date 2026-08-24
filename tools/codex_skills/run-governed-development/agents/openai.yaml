@@ -1,4 +1,4 @@
 interface:
-  display_name: "Governed Development"
-  short_description: "Run audited project development workflows"
-  default_prompt: "Use $run-governed-development to preflight and execute this repository task safely."
+  display_name: "AITradingSystem Governed Development"
+  short_description: "Run AITradingSystem's governed workflow"
+  default_prompt: "Use $run-governed-development only in AITradingSystem to preflight and execute this repository task safely."

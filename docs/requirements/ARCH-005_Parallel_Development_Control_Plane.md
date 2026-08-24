@@ -715,3 +715,14 @@ validated-main integration 授权；任何扩大 lane capacity、切换 source-o
   manifest、path/module/contract conflict、base drift、coordinator-only guard、deterministic lane plan
   与validation evidence binding均fail closed。它不创建registry/view、不dispatch、不发真实lease，
   `next_slice_unblocked=false`、`production_effect=none`。
+
+- 2026-08-24：DEVX-009 owner 指令启动 serial workflow-contract wave，补齐 S4D lease、base-drift
+  plan、canonical task source、generated authorities、formal Full 与 validated-main closeout 之间的
+  coordinator transaction。`integration_publication_fence.v1`复用唯一
+  `FileExecutionLeaseStore`，通过固定 publication/validation path claims 保证同一 repository 最多一个
+  shared publisher 或 Full；task-source mutation、official generated rebuild、exact candidate、ff-only、
+  ordinary push、SHA equality、cleanup 与 release 形成 append-only phase events 和 closeout receipt。
+  任何 stale main/plan、undeclared dirty、expired/conflicting lease、wrong Full parent 或 remote divergence
+  在 mutation 前 fail closed；不新建 scheduler/queue/lock，也不改变策略、数据、训练、回测、production
+  或 broker 边界。详细合同见
+  `docs/requirements/DEVX-009_Parallel_Integration_Publication_Fence_And_Generated_State_Rebuild_V1.md`。

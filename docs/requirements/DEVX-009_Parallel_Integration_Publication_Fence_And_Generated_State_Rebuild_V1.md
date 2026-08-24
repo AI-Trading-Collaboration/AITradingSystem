@@ -1,7 +1,7 @@
 # DEVX-009：并行集成发布栅栏与生成状态重建 V1
 
 - priority: `P0`
-- status: `PROPOSED`
+- status: `DONE`
 - owner: Project Owner（启动决策）；Codex workflow coordinator（合同、实现与验证）
 - governed mode: `SINGLE_LANE` serial workflow-contract wave
 - contract change: `true`
@@ -147,9 +147,12 @@ DEVX-009 的完成不自动授权 TRADING-2544 采数、训练、回测或提升
 
 ## 7. 当前 blocker、依赖与退出条件
 
-- status 保持 `PROPOSED`；本轮只登记方向与需求，不实施；
-- 启动前由 Project Owner/Codex workflow coordinator 复核 S0 schema 与现有 ARCH-005/S4D primitive 的
-  最小扩展边界；
+- 2026-08-24 Project Owner 已明确要求继续推进，启动决策已满足；
+- status=`IN_PROGRESS`，当前无外部 blocker；先以 `SINGLE_LANE` serial workflow-contract wave 冻结
+  S0 schema，再接入 S1/S2；
+- Codex workflow coordinator 已复核最小扩展边界：复用 `CheckoutLeaseGuard` 与
+  `FileExecutionLeaseStore`，publication transaction 通过固定共享资源声明实现独占，不新增第二套 lock、
+  scheduler 或 lease authority；
 - 若分析发现必须改变 shared/public contract，先执行最小 `SINGLE_LANE` serial contract wave；
 - 与投资研究无直接数据依赖，但实现时不得和另一个 coordinator publication 或 Full 重叠；
 - 退出条件：第 6 节全部满足、正式门禁与普通发布完成、任务状态通过 append-only event 更新。
@@ -158,6 +161,8 @@ DEVX-009 的完成不自动授权 TRADING-2544 采数、训练、回测或提升
 
 - registration branch：`codex/devx-009-parallel-integration-fence`；
 - registration base：`e5266c9aadfba067060b013d83ec26bd4f065604`；
+- implementation branch：`codex/devx-009-integration-publication-fence`；
+- implementation base：`faea3a6a5dc561008cfae793a6caad0b239b4777`；
 - 不创建额外 Git worktree、clone、download、cache 或 credential 文件；
 - 本轮只新增 canonical task event、支持性需求及其 deterministic generated views/index；
 - known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` 不得读取、hash、diff、stage
@@ -171,3 +176,29 @@ DEVX-009 的完成不自动授权 TRADING-2544 采数、训练、回测或提升
 - 2026-08-24：`TRADING-2542C` 工程与发布收口后，READ_ONLY preflight PASS：`main`/`origin/main`=
   `e5266c9aadfba067060b013d83ec26bd4f065604`，active lease=0，task-owned dirty paths=0；选择此窗口登记
   DEVX-009。未启动实现、Full、神经网络训练、数据采集或回测。
+- 2026-08-24：Project Owner 指示继续推进。SINGLE_LANE START preflight 在 exact
+  `main=origin/main=faea3a6a5dc561008cfae793a6caad0b239b4777` 上 PASS，active lease=0；创建 implementation
+  branch，并以既有 S4D authority 取得 shared-mutation activation lease
+  `lease-a9a56ad9ec15107d1c5c`。S0 设计确定为复用既有 lease store，publication transaction 固定声明
+  publication runtime 与 validation runtime 共享资源；本步只推进任务状态与合同，不运行 Full、模型训练、
+  数据采集或回测。
+- 2026-08-24：S0/S1/S2 candidate 已完成。新增 reviewed policy、
+  `IntegrationPublicationFence` 与 CLI；transaction 复用 S4D shared-mutation lease，按 append-only
+  hash-chain 执行 task-source、generated rebuild、candidate、formal Full、ff/push/cleanup CAS。
+  `architecture_arch005_task_source.py` 的 mutation commands 现在要求 exact
+  `TASK_SOURCE_PRE_WRITE`；实际 `run_validation_tier.py full` 要求同一 transaction，并先原子写入
+  `FULL_DISPATCHED`，因此同一 transaction 的第二个并发 Full 在 pytest 前停止。governed-development
+  `INTEGRATION/CLOSEOUT` preflight 会验证 transaction 并只允许其 lease；canonical/installed skill
+  bundle parity=`PASS`。
+- 2026-08-24：首个 bootstrap transaction `devx-009-publication-20260824-v1` 在回归中暴露“同一
+  transaction 双 Full dispatch”缺口。未绕过或复用旧事务；policy 加入 `FULL_DISPATCHED` 后，旧
+  policy hash 按设计失配，底层 lease `lease-f3faac5af0ea06f55656` 以 `FAILED` 正常释放，旧 bytes
+  保留为失败证据。successor `devx-009-publication-20260824-v2` / lease
+  `lease-8d8e71876e7097b503a5` 从同一 exact base 重新取得并通过 `INTEGRATION` preflight；不发生
+  rebase/merge/cherry-pick、无外部数据或投资行为。
+- 2026-08-24：扩大 focused regression=`196 passed`，覆盖 publication concurrency/stale-main/
+  plan tamper/event tamper/full dispatch/full closeout receipt、S4D guard/telemetry、S4E reconciliation、
+  kernel、base-drift、task-source、validation runner 与 skill；Ruff=`PASS`，canonical task registry
+  validation=`PASS`。本 candidate 在进入 official generated rebuild 前转 `DONE`；后续 phase、formal
+  tiers、ordinary push、SHA equality、cleanup 与 lease release 由 v2 transaction 的 runtime events/
+  receipt 记录，不修改策略、DQ/PIT、模型、训练、回测、production 或 broker 状态。

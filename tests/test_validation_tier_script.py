@@ -44,6 +44,28 @@ FULL_PROVENANCE_ARGS = [
 ]
 
 
+@pytest.fixture(autouse=True)
+def _unit_full_publication_transaction(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep unit-level Full runner tests focused on their existing boundary."""
+    monkeypatch.setattr(
+        validation_tier,
+        "_validate_publication_transaction_for_full",
+        lambda *args, **kwargs: {
+            "status": "PASS",
+            "transaction_id": "pytest-publication-transaction",
+            "transaction_sha256": "f" * 64,
+            "lease_id": "lease-pytest-publication",
+            "phase": "FORMAL_VALIDATION_PRE",
+            "candidate_sha": "a" * 40,
+        },
+    )
+    monkeypatch.setattr(
+        validation_tier,
+        "_record_publication_full_result",
+        lambda *args, **kwargs: {"status": "PASS"},
+    )
+
+
 def _full_provenance_payload(*, boundary_id: str = "pytest-runtime-contract") -> dict[str, object]:
     return {
         "schema_version": "validation_trigger_provenance.v1",
@@ -308,6 +330,27 @@ def test_full_requires_runtime_artifacts_before_pytest() -> None:
     assert "Full validation requires --write-runtime-artifact" in completed.stderr
 
 
+def test_executed_full_requires_active_publication_transaction(tmp_path: Path) -> None:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_validation_tier.py",
+            "full",
+            "--write-runtime-artifact",
+            "--artifact-dir",
+            str(tmp_path / "must_not_run"),
+            *FULL_PROVENANCE_ARGS,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 2
+    assert "PUBLICATION_TRANSACTION_REQUIRED" in completed.stderr
+    assert not (tmp_path / "must_not_run").exists()
+
+
 def test_full_print_only_records_canonical_trigger_provenance(tmp_path: Path) -> None:
     artifact_dir = tmp_path / "runtime_artifact"
 
@@ -484,7 +527,7 @@ def test_parent_run_import_is_rejected_outside_failure_fix_rerun() -> None:
             "full",
             *FULL_PROVENANCE_ARGS,
             "--parent-run-import",
-            ("outputs/validation_runtime/full_parent_failure/" "validation_parent_run_import.json"),
+            ("outputs/validation_runtime/full_parent_failure/validation_parent_run_import.json"),
         ]
     )
 
@@ -630,7 +673,7 @@ def test_failure_fix_rerun_binds_exact_byte_portable_parent_import(
     assert parent_binding == {
         "run_id": "full_portable_parent",
         "summary_path": (
-            "outputs/validation_runtime/full_portable_parent/" "test_runtime_summary.json"
+            "outputs/validation_runtime/full_portable_parent/test_runtime_summary.json"
         ),
         "summary_sha256": hashlib.sha256(source_summary_bytes).hexdigest(),
         "runtime_profile_sha256": hashlib.sha256(source_profile_bytes).hexdigest(),
@@ -641,7 +684,7 @@ def test_failure_fix_rerun_binds_exact_byte_portable_parent_import(
         "production_effect": "none",
         "locator_mode": "portable_import_v1",
         "import_manifest_path": (
-            "outputs/validation_runtime/full_portable_parent/" "validation_parent_run_import.json"
+            "outputs/validation_runtime/full_portable_parent/validation_parent_run_import.json"
         ),
         "import_manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
     }
@@ -1177,7 +1220,7 @@ def test_environment_failure_fix_envelope_binds_portable_parent_import(
         parent_binding["runtime_profile_sha256"] == hashlib.sha256(source_profile_bytes).hexdigest()
     )
     assert parent_binding["import_manifest_path"] == (
-        "outputs/validation_runtime/full_environment_parent/" "validation_parent_run_import.json"
+        "outputs/validation_runtime/full_environment_parent/validation_parent_run_import.json"
     )
     assert (
         parent_binding["import_manifest_sha256"]
@@ -1865,7 +1908,7 @@ def test_runtime_profile_rejects_formal_scheduler_semantic_drift(
         assert validation_tier._runtime_profile_contract_error(
             ineligible_policy_drift,
             pytest_exitstatus=0,
-        ) == ("runtime profile applied scheduler does not satisfy the formal scheduler " "contract")
+        ) == ("runtime profile applied scheduler does not satisfy the formal scheduler contract")
     scheduler = payload["scheduler"]  # type: ignore[assignment]
     scheduler[field] = value
     error = validation_tier._runtime_profile_contract_error(
@@ -1875,7 +1918,7 @@ def test_runtime_profile_rejects_formal_scheduler_semantic_drift(
     expected_error = (
         "runtime profile applied scheduler contains fallback evidence"
         if field == "fallback_reason"
-        else ("runtime profile applied scheduler does not satisfy the formal scheduler " "contract")
+        else ("runtime profile applied scheduler does not satisfy the formal scheduler contract")
     )
     assert error == expected_error
     profile_path.write_text(json.dumps(payload), encoding="utf-8")

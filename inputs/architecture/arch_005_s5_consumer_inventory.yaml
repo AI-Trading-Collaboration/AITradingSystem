@@ -1,10 +1,10 @@
 schema_version: arch_005_s5_consumer_inventory.v1
 status: PASS
 source_of_truth: ARCH_005_TASK_REGISTRY
-consumer_count: 134
+consumer_count: 135
 runtime_consumer_count: 8
 script_consumer_count: 3
-test_consumer_count: 123
+test_consumer_count: 124
 manual_semantic_runtime_consumer_count: 0
 manual_writer_count: 0
 consumers:
@@ -1012,6 +1012,14 @@ consumers:
   manual_semantic_runtime_consumer: false
   manual_writer: false
   rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_arch_005_integration_publication_fence.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
 - path: tests/test_arch_005_prebootstrap.py
   role: test
   targets:
@@ -1107,4 +1115,4 @@ consumers:
   rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
 production_effect: none
 broker_action: none
-inventory_checksum: 4fea01e5c6ea53297c8d988ee65435750a5bdee46942794a3e59bf2e93cbc2ac
+inventory_checksum: 88689c740acf452cc8e821000b2887dfc05058176354bb63ffc7c3cb274204aa

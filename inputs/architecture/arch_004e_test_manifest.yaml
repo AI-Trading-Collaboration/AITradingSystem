@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1310
-test_count: 1250
+test_file_count: 1311
+test_count: 1251
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -8520,6 +8520,22 @@ tests:
   suite: architecture-fitness
   covered_module_prefixes:
   - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_integration_publication_fence
+  path: tests/test_arch_005_integration_publication_fence.py
+  sha256: 3c0739abc058b6ea7904d3e6d28c5ff62991aa2f65cdb21fa4884a1eeff9eb61
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_integration_revalidation
   path: tests/test_arch_005_integration_revalidation.py
   sha256: e0e56b457be2c4172db5373a2f08d5216833fe9bd1f9a734477e9b1150bb9b62
@@ -8666,7 +8682,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s5_task_source_cutover
   path: tests/test_arch_005_s5_task_source_cutover.py
-  sha256: 5671dc88205f228d4a7be5087546965a97491411533f6c86a5776e9adc3ef384
+  sha256: 31a3170d8ffc8c0609b17277b512446b14fcd4c06bda891e07de8391a9faa5c1
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -12544,7 +12560,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_governed_development_skill
   path: tests/test_governed_development_skill.py
-  sha256: 5ed4626a0bf4604e3233377dd30416994b321a5940dd5995c7b7ddba495abb0e
+  sha256: fb39e485da9bc4d95881e2eecac14101a15c3dd263010bd749522db41c2cad14
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -18146,7 +18162,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_validation_tier_script
   path: tests/test_validation_tier_script.py
-  sha256: 52d54454375789b0acd4192e440101f99b43763002158b589418fd2dffe9bb02
+  sha256: 0dde010a4e21db36c8e05607e728e532de43419757dfc413b35cb6bec823037d
   file_role: test
   rule_id: architecture_control_tests
   owner_profile: quality

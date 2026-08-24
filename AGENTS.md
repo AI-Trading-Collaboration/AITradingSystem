@@ -392,6 +392,35 @@ review complete. Historical exact-token artifacts remain immutable. PR,
 force-push, history rewrite, remote-divergence repair, destructive cleanup, and
 R2/R3 actions retain their separate authorization rules.
 
+## Integration Publication Fence Discipline
+
+Before a coordinator mutates canonical task state, shared/generated authority,
+the final candidate, formal Full evidence, local `main`, or remote publication,
+it must acquire one `integration_publication_fence.v1` transaction through
+`scripts/architecture_arch005_publication_fence.py`. The transaction must reuse
+the S4D `CheckoutLeaseGuard` / `FileExecutionLeaseStore` authority and declare
+all task, coordinator, generated, and validation-resource paths; do not create a
+second lock, scheduler, or publication queue.
+
+Advance the transaction in the reviewed order: `TASK_SOURCE_PRE_WRITE`,
+`GENERATED_REBUILD_PRE/POST`, `CANDIDATE_COMMIT_PRE`,
+`FORMAL_VALIDATION_PRE`, `FULL_DISPATCHED`, `FORMAL_VALIDATION_RESULT`,
+`LOCAL_MAIN_FF_PRE`, `REMOTE_PUSH_PRE`,
+`CLEANUP_PRE`, then `RELEASED`. Revalidate expected main, active lease, plan
+bytes, dirty attribution, generator order, candidate SHA, parent Full artifact,
+remote ancestry, and final SHA equality at the applicable phase. A stale,
+expired, terminal, tampered, wrong-phase, dirty, or undeclared transaction fails
+closed before mutation.
+
+Mutating `architecture_arch005_task_source.py` commands and executed
+`run_validation_tier.py full` require the exact `--publication-transaction`.
+`INTEGRATION` and `CLOSEOUT` governed preflights require the same transaction;
+closeout accepts it at `REMOTE_PUSH_PRE`. A failed publication is immutable
+terminal evidence. Any retry uses a new transaction and, for
+`failure_fix_rerun`, binds the prior failed Full artifact. Release only through
+the publication command so ordinary push, SHA verification, cleanup evidence,
+and lease release remain replayable in one closeout receipt.
+
 ## Local Branch, Commit, and Main Integration Discipline
 
 When completing work that was explicitly selected from the canonical task registry

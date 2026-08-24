@@ -47,6 +47,26 @@ python scripts/architecture_arch005_integration_revalidation.py plan `
   --latest-main <LOCAL_MAIN> --output <PLAN_JSON>
 ```
 
+Before coordinator shared/generated mutation, acquire one publication transaction
+from the current exact lane head and expected local main. Declare every task,
+coordinator, generated, and formal-artifact path up front:
+
+```powershell
+python scripts/architecture_arch005_publication_fence.py acquire `
+  --transaction-id <TRANSACTION_ID> --task-id <TASK_ID> `
+  --change-id <CHANGE_ID> --thread-id <THREAD_ID> `
+  --frozen-base <FROZEN_BASE> --lane-head <LANE_HEAD> `
+  --expected-main <LOCAL_MAIN> `
+  --owned-path <TASK_PATH> --shared-path <COORDINATOR_PATH> `
+  --generator-id canonical-task-source
+```
+
+The returned `integration_publication_fence.v1` path is immutable. Advance it to
+`TASK_SOURCE_PRE_WRITE` before `task_source.py register|update|build|refresh-consumers`,
+then wrap the declared official generator order with `GENERATED_REBUILD_PRE` and
+`GENERATED_REBUILD_POST`. Plan bytes, expected main, lease state, dirty attribution,
+generator order, and evidence hashes are revalidated at each phase.
+
 Then rerun preflight on the clean committed lane:
 
 ```powershell
@@ -55,6 +75,7 @@ python <skill-root>/scripts/preflight.py --repo . --mode SINGLE_LANE `
   --expected-base <FROZEN_BASE> `
   --integration-revalidation-plan <PLAN_JSON> `
   --change-manifest <CHANGE_MANIFEST_JSON> `
+  --publication-transaction <TRANSACTION_JSON> `
   --coordinator-path docs/task_register.md `
   --claim task=src/example.py
 ```
@@ -90,6 +111,7 @@ remote main first, then rerun the same governed mode and claims with:
 python <skill-root>/scripts/preflight.py --repo . `
   --mode <SINGLE_LANE_OR_DUAL_LANE> --task-id <TASK_ID> `
   --role coordinator --stage CLOSEOUT --remote-action `
+  --publication-transaction <TRANSACTION_JSON> `
   <THE_SAME_LANE_AND_COORDINATOR_PATH_CLAIMS>
 ```
 
@@ -115,17 +137,23 @@ rebases, rewrites history, or repairs divergence.
 6. Run focused and applicable formal validation.
 7. If main advanced, keep the frozen task branch and obtain a validated
    `integration_revalidation_plan.v1`; do not create v2/v3 replacement lanes.
-8. Form one latest-main candidate, reconcile reviewed domain overlap once, and
-   regenerate coordinator-refreshable views once.
-9. Update task status and generated governance state.
-10. Run heavyweight formal validation on the candidate final tree and commit it.
-11. Verify local `main` is its ancestor and fast-forward local `main`.
-12. Fetch remote main, rerun `SINGLE_LANE` coordinator preflight with the same
+8. Acquire one `integration_publication_fence.v1` from the exact expected main,
+   then form one latest-main candidate, reconcile reviewed domain overlap once,
+   and regenerate coordinator-refreshable views once under that transaction.
+9. At `TASK_SOURCE_PRE_WRITE`, update task status through the canonical writer;
+   record official generator input/output hashes at the generated rebuild phases.
+10. Commit the clean candidate, record `FORMAL_VALIDATION_PRE`, and run formal
+   tiers. Executed Full requires `--publication-transaction`, atomically claims
+   `FULL_DISPATCHED`, and records the exact summary at `FORMAL_VALIDATION_RESULT`.
+11. Record `LOCAL_MAIN_FF_PRE`, verify local `main` is its ancestor, and
+   fast-forward local `main`.
+12. Fetch remote main, record `REMOTE_PUSH_PRE`, rerun `SINGLE_LANE` coordinator preflight with the same
     claims plus `--stage CLOSEOUT --remote-action`, ordinary-push, and verify
     both SHAs. A task moved to `docs/task_register_completed.md` by the validated
     final commit is recognized only at `CLOSEOUT`; earlier stages still require
     the active register.
-13. Audit, then delete the merged task branch when recovery is available.
+13. Ordinary-push, verify `local main = origin/main = candidate`, audit/clean,
+   record `CLEANUP_PRE`, and release the lease through the transaction receipt.
 
 ### DUAL_LANE
 
@@ -139,11 +167,12 @@ rebases, rewrites history, or repairs divergence.
 7. Create a coordinator integration branch from the frozen common base.
    If main has advanced, first obtain one validated base-drift plan and create
    the coordinator candidate from latest main; do not rebuild both domain lanes.
-8. Absorb changes in this order:
+8. Acquire one coordinator publication transaction and absorb changes in this order:
    `contract -> adapter -> domain -> tests/fragments -> shared wiring/docs ->
    generated views`.
-9. Run combined focused, generated freshness, architecture/contract, and the
-   required integration/Full tiers on the final candidate.
+9. Record the generated rebuild once, bind the clean candidate, and run combined
+   focused, generated freshness, architecture/contract, and the required
+   integration/Full tiers. Full receives the exact transaction path.
 10. Fast-forward local `main` once. Never fast-forward sibling lanes directly in
     sequence.
 11. Fetch remote main, rerun `DUAL_LANE` coordinator preflight with the same
@@ -180,6 +209,8 @@ Stop and report on:
 - lane claim on coordinator-only state;
 - unresolved public-contract or semantic conflict;
 - concurrent heavyweight Full runs;
+- missing, expired, terminal, stale-main, plan-tampered, or wrong-phase
+  `integration_publication_fence.v1`;
 - unattributed or unique worktree residue;
 - non-fast-forward local-main integration;
 - remote closeout from a non-main or dirty checkout;

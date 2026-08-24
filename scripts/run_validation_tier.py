@@ -24,6 +24,10 @@ SRC_ROOT_FOR_IMPORTS = REPO_ROOT_FOR_IMPORTS / "src"
 if str(SRC_ROOT_FOR_IMPORTS) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT_FOR_IMPORTS))
 
+from ai_trading_system.platform.architecture.integration_publication_fence import (  # noqa: E402
+    IntegrationPublicationFence,
+    PublicationFenceError,
+)
 from ai_trading_system.platform.validation_parent_run_import import (
     PARENT_RUN_IMPORT_ENV as VALIDATION_PARENT_RUN_IMPORT_ENV,
 )
@@ -658,9 +662,7 @@ def _validated_parent_run_binding(
     try:
         candidate_profile_path = profile_path.resolve(strict=True)
     except (OSError, RuntimeError, ValueError) as exc:
-        errors.append(
-            "parent_run runtime profile does not exist or could not be resolved: " f"{exc}"
-        )
+        errors.append(f"parent_run runtime profile does not exist or could not be resolved: {exc}")
         runtime_profile_bytes = None
     else:
         if (
@@ -841,7 +843,7 @@ def _validated_parent_run_binding(
         resolved_repo_root = repo_root.resolve()
         relative_path = resolved_path.relative_to(resolved_repo_root).as_posix()
     except (OSError, RuntimeError, ValueError) as exc:
-        return None, ["repository root could not be resolved for parent_run summary: " f"{exc}"]
+        return None, [f"repository root could not be resolved for parent_run summary: {exc}"]
     binding: dict[str, object] = {
         "run_id": run_id,
         "summary_path": relative_path,
@@ -1229,8 +1231,7 @@ def _runtime_summary_self_record(
         "file_count": None,
         "integrity_status": "SELF_REFERENCE_NOT_EMBEDDED",
         "measurement_reason": (
-            "the final summary cannot embed a digest or byte size of its own "
-            "final serialized bytes"
+            "the final summary cannot embed a digest or byte size of its own final serialized bytes"
         ),
     }
 
@@ -1663,8 +1664,7 @@ def _runtime_profile_contract_error(
                 float(phase["start_epoch_seconds"])
             ) or phase.get("stop_utc") != _epoch_utc_iso(float(phase["stop_epoch_seconds"])):
                 return (
-                    "runtime profile phase UTC timing is not epoch-derived for "
-                    f"{expected_nodeid}"
+                    f"runtime profile phase UTC timing is not epoch-derived for {expected_nodeid}"
                 )
             phase_names.append(str(phase_name))
             phase_worker_ids.add(phase_worker_id)
@@ -1776,7 +1776,7 @@ def _runtime_profile_contract_error(
         if telemetry_complete:
             expected_rows = node_runtime_by_worker.get(worker_id, [])
             if not expected_rows:
-                return "runtime profile worker aggregate is not node-derived for " f"{worker_id}"
+                return f"runtime profile worker aggregate is not node-derived for {worker_id}"
             expected_start = min(runtime_row[0] for runtime_row in expected_rows)
             expected_stop = max(runtime_row[1] for runtime_row in expected_rows)
             expected_busy = round(sum(runtime_row[2] for runtime_row in expected_rows), 9)
@@ -2084,8 +2084,7 @@ def _runtime_profile_contract_error(
             or scheduler.get("file_internal_node_order_preserved") is not True
         ):
             return (
-                "runtime profile applied scheduler does not satisfy the formal "
-                "scheduler contract"
+                "runtime profile applied scheduler does not satisfy the formal scheduler contract"
             )
     complete_collection_verified = bool(scheduler["complete_collection_verified"])
     if manifest_is_complete:
@@ -2296,7 +2295,7 @@ def _read_runtime_profile_payload(
     except Exception as exc:  # noqa: BLE001 - malformed evidence must not override pytest
         return _runtime_profile_failure_payload(
             reason=(
-                "runtime profile contract evaluation failed closed: " f"{type(exc).__name__}: {exc}"
+                f"runtime profile contract evaluation failed closed: {type(exc).__name__}: {exc}"
             ),
             pytest_exitstatus=pytest_exitstatus,
         )
@@ -2584,9 +2583,7 @@ def _render_runtime_reader_brief(payload: dict[str, object]) -> str:
         for row in slow_durations[:10]:
             if not isinstance(row, dict):
                 continue
-            lines.append(
-                "|" f"`{row.get('seconds')}`|" f"`{row.get('phase')}`|" f"`{row.get('nodeid')}`|"
-            )
+            lines.append(f"|`{row.get('seconds')}`|`{row.get('phase')}`|`{row.get('nodeid')}`|")
         lines.append("")
     if payload.get("pytest_output_log_path"):
         lines.extend(
@@ -2614,7 +2611,7 @@ def _render_runtime_reader_brief(payload: dict[str, object]) -> str:
                     f"`{runtime_profile.get('validation_provenance_binding_status', 'FAIL')}`"
                 ),
                 f"- Collection count: `{runtime_profile.get('collection_count', 0)}`",
-                ("- Duration manifest: " f"`{runtime_profile.get('duration_manifest_status')}`"),
+                (f"- Duration manifest: `{runtime_profile.get('duration_manifest_status')}`"),
                 (
                     "- Complete collection coverage: "
                     f"`{runtime_profile.get('duration_collection_coverage_verified', False)}`"
@@ -2701,6 +2698,70 @@ def _list_tiers() -> str:
     return "\n".join(lines)
 
 
+def _validate_publication_transaction_for_full(
+    args: argparse.Namespace,
+    *,
+    repo_root: Path,
+    validation_provenance: Mapping[str, object],
+    full_run_id: str,
+) -> dict[str, object]:
+    transaction_path = args.publication_transaction
+    if transaction_path is None:
+        raise PublicationFenceError(
+            "PUBLICATION_TRANSACTION_REQUIRED",
+            "executed Full requires --publication-transaction",
+        )
+    if args.benchmark_dist or args.benchmark_worker:
+        raise PublicationFenceError(
+            "PUBLICATION_FULL_BENCHMARK_NOT_FORMAL",
+            "benchmark variants require a separate non-publication run",
+        )
+    task_id = validation_provenance.get("task_id")
+    if not isinstance(task_id, str) or not task_id:
+        raise PublicationFenceError(
+            "PUBLICATION_VALIDATION_TASK_MISSING",
+            str(task_id),
+        )
+    parent_value = validation_provenance.get("parent_run")
+    parent_path = Path(parent_value) if isinstance(parent_value, str) and parent_value else None
+    fence = IntegrationPublicationFence(project_root=repo_root)
+    fence.validate(
+        transaction_path,
+        exact_phase="FORMAL_VALIDATION_PRE",
+        task_id=task_id,
+        validation_tier="full",
+        parent_path=parent_path,
+        require_candidate=True,
+    )
+    return fence.checkpoint(
+        transaction_path,
+        phase="FULL_DISPATCHED",
+        actor="integration-coordinator",
+        full_run_id=full_run_id,
+    )
+
+
+def _record_publication_full_result(
+    args: argparse.Namespace,
+    *,
+    repo_root: Path,
+    status: str,
+    summary_path: Path,
+) -> dict[str, object]:
+    if args.publication_transaction is None:
+        raise PublicationFenceError(
+            "PUBLICATION_TRANSACTION_REQUIRED",
+            "Full result has no publication transaction",
+        )
+    return IntegrationPublicationFence(project_root=repo_root).checkpoint(
+        args.publication_transaction,
+        phase="FORMAL_VALIDATION_RESULT",
+        actor="integration-coordinator",
+        evidence_paths=(summary_path,),
+        validation_status=status,
+    )
+
+
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run auditable pytest validation tiers for local development."
@@ -2761,6 +2822,14 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
             "Optional validation_parent_run_import.v1 proof for an exact-byte parent "
             "copied from another worktree; only valid with failure_fix_rerun and "
             "--parent-run. CLI overrides AITS_VALIDATION_PARENT_RUN_IMPORT."
+        ),
+    )
+    parser.add_argument(
+        "--publication-transaction",
+        type=Path,
+        help=(
+            "Active integration_publication_fence.v1 transaction. Required for "
+            "executed Full validation and ignored for --print-only."
         ),
     )
     parser.add_argument(
@@ -2842,6 +2911,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
     started_at = _utc_now()
     run_id = _runtime_run_id(resolved_tier, started_at)
+    publication_binding: dict[str, object] | None = None
+    if resolved_tier == "full" and not args.print_only:
+        try:
+            publication_binding = _validate_publication_transaction_for_full(
+                args,
+                repo_root=repo_root,
+                validation_provenance=validation_provenance,
+                full_run_id=run_id,
+            )
+        except PublicationFenceError as exc:
+            print(
+                f"error: Full publication transaction rejected: {exc.code}: {exc.message}",
+                file=sys.stderr,
+            )
+            return 2
     artifact_dir = _artifact_dir(repo_root, args, run_id)
     command = build_command(
         args.tier,
@@ -2977,7 +3061,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         benchmark_runs: list[dict[str, object]] = []
         for variant in benchmark_variants:
             print(
-                "Running benchmark variant " f"workers={variant['workers']} dist={variant['dist']}",
+                f"Running benchmark variant workers={variant['workers']} dist={variant['dist']}",
                 flush=True,
             )
             result = _run_command(
@@ -3048,6 +3132,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 **_summarize_benchmark_runs(benchmark_runs),
             }
         )
+        if publication_binding is not None:
+            payload["publication_transaction"] = publication_binding
         _mark_runtime_profile_not_applicable(
             payload,
             reason="benchmark_variants_are_non_formal",
@@ -3069,6 +3155,21 @@ def main(argv: Sequence[str] | None = None) -> int:
                 f"Runtime reader brief: {artifact_dir / 'test_runtime_reader_brief.md'}",
                 flush=True,
             )
+            if publication_binding is not None:
+                try:
+                    _record_publication_full_result(
+                        args,
+                        repo_root=repo_root,
+                        status=status,
+                        summary_path=artifact_dir / "test_runtime_summary.json",
+                    )
+                except PublicationFenceError as exc:
+                    print(
+                        "error: Full publication result recording failed: "
+                        f"{exc.code}: {exc.message}",
+                        file=sys.stderr,
+                    )
+                    return 2
         if args.json_output:
             _write_report(args.json_output, payload)
         return overall_exit_code
@@ -3157,6 +3258,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         artifact_dir=artifact_dir,
         validation_provenance=validation_provenance,
     )
+    if publication_binding is not None:
+        payload["publication_transaction"] = publication_binding
     print(f"Status: {status}")
     print(f"Elapsed seconds: {result['elapsed_seconds']}")
     if artifact_dir is not None:
@@ -3173,6 +3276,20 @@ def main(argv: Sequence[str] | None = None) -> int:
                 f"Runtime profile: {artifact_dir / RUNTIME_PROFILE_OUTPUT_NAME}",
                 flush=True,
             )
+        if publication_binding is not None:
+            try:
+                _record_publication_full_result(
+                    args,
+                    repo_root=repo_root,
+                    status=status,
+                    summary_path=artifact_dir / "test_runtime_summary.json",
+                )
+            except PublicationFenceError as exc:
+                print(
+                    f"error: Full publication result recording failed: {exc.code}: {exc.message}",
+                    file=sys.stderr,
+                )
+                return 2
     if args.json_output:
         _write_report(args.json_output, payload)
     if runtime_profile_temp_dir is not None:
