@@ -1,0 +1,78 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-010_FULL_PARENT_PUBLICATION_BINDING_NORMALIZATION_V1
+  task_id_sha256: 6306edcf238853bcb1944ea0d432c70ec888e3d66b084d11a9a57e13d3689e28
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-010_FULL_PARENT_PUBLICATION_BINDING_NORMALIZATION_V1
+  title: null
+  domain: Full parent publication binding 规范化与回归验证
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: integration-coordinator
+  requirement_refs:
+  - docs/requirements/DEVX-010_Full_Parent_Publication_Binding_Normalization_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 修复结构化 parent_run binding 被 publication
+    适配层错误转成 None 的派发前阻塞。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 合法 failure_fix_rerun parent 与事务 exact-byte binding 一致时可派发；非法或不一致 parent
+      继续 fail closed；最终候选四层验证和 Full 均 PASS。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-010_FULL_PARENT_PUBLICATION_BINDING_NORMALIZATION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-24T03:16:00+00:00'
+  actor: integration-coordinator
+  change_id: DEVX-010-registration-20260824-v1
+  lane_id: null
+  base_commit: 5cb2b42cae28a12a3e11ba98cbd87c1a88178fd0
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-010_FULL_PARENT_PUBLICATION_BINDING_NORMALIZATION_V1
+    - Full parent publication binding 规范化与回归验证
+    - P1
+    - IN_PROGRESS
+    - integration-coordinator
+    - 修复结构化 parent_run binding 被 publication 适配层错误转成 None 的派发前阻塞。
+    - 合法 failure_fix_rerun parent 与事务 exact-byte binding 一致时可派发；非法或不一致 parent 继续 fail
+      closed；最终候选四层验证和 Full 均 PASS。
+    - 支持文档：docs/requirements/DEVX-010_Full_Parent_Publication_Binding_Normalization_V1.md；由
+      DEVX-009 v5 实际派发前阻塞发现。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:DEVX-010-registration-20260824-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-850f74b441736105f0246b06fa0310c8
+projection:
+  legacy_first_eight_cells:
+  - DEVX-010_FULL_PARENT_PUBLICATION_BINDING_NORMALIZATION_V1
+  - Full parent publication binding 规范化与回归验证
+  - P1
+  - IN_PROGRESS
+  - integration-coordinator
+  - 修复结构化 parent_run binding 被 publication 适配层错误转成 None 的派发前阻塞。
+  - 合法 failure_fix_rerun parent 与事务 exact-byte binding 一致时可派发；非法或不一致 parent 继续 fail
+    closed；最终候选四层验证和 Full 均 PASS。
+  - 支持文档：docs/requirements/DEVX-010_Full_Parent_Publication_Binding_Normalization_V1.md；由
+    DEVX-009 v5 实际派发前阻塞发现。
+  docs_links:
+  - docs/requirements/DEVX-010_Full_Parent_Publication_Binding_Normalization_V1.md
+  terminal: false
+  canonical_row_sha256: bd4b8188b9228cdd6f08fe3bee8c4243652e16e61ecda5c1cffc04acb71db301
+last_event_id: task-event-850f74b441736105f0246b06fa0310c8
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 40130ff0f8ebd9799112cc6fe1f2ce28a84915ca3008202b43ecefd01bd45ae7
