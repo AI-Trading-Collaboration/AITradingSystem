@@ -9269,15 +9269,17 @@ authority。真实证据仍只能由另一个固定 code/data identity、zero-or
 
 ## TRADING-2542E real-DQ / locked-backtest predispatch policy gate
 
-Project Owner 已对一次真实 DQ 与 locked zero-order backtest 复核给出 exact-scope 授权，但授权与
-executable policy completeness 分轴管理。Owner 进一步授权 Codex 起草结果前 policy pack；该流程授权
-不等于对尚未展示数值的 exact freeze。当前数据流为：
+Project Owner 已对一次真实 DQ 与 locked zero-order backtest 复核给出 exact-scope 授权，并已把
+`qc_qqq_options_growth_action_value_real_review_execution_v1@1.0.0-draft.1` 的全部展示规则按
+file/canonical exact identity 冻结为 non-executable `DATA_RESEARCH`。授权、source readiness 与
+technical admission 继续分轴管理；批准规则不等于缺失的 veto producer 已存在。当前数据流为：
 
 ```text
-Owner exact authorization (unconsumed)
+Owner exact authorization + exact draft freeze (unconsumed)
   + frozen DQ/PIT V3 and exact sheet V4
   + TRADING-2541 transport completeness = 1202/1202
-  -> qc_qqq_options_growth_action_value_real_review_execution_v1 (draft.1)
+  -> immutable approved predecessor:
+       qc_qqq_options_growth_action_value_real_review_execution_v1@1.0.0-draft.1
        -> selection: 1 CALL + 1 PUT; DTE 7/14/21; moneyness 0.05;
           prior delta 0.30/0.40/0.55; V3 120s / 0.20 / OI 10 / volume 1
        -> rank: DTE distance -> delta distance -> spread -> -OI -> -volume -> stable SID
@@ -9286,23 +9288,34 @@ Owner exact authorization (unconsumed)
        -> signal: selected call volume/OI > selected put volume/OI
        -> effective session = next valid QQQ exchange session
        -> action: inactive/veto 50/50 QQQ/SGOV; active 60/40; research only
-       -> typed/hash/canonical/negative validation PASS
-       -> status = DRAFT_FOR_OWNER_EXACT_FREEZE; dispatch flags remain false
-  -> hard-veto input gate
-       -> five vetoes must all be exact false; missing = INVALID
-       -> retained label series extends beyond 2025-12-02 and is secondary_cross_checked
-       -> exact 1202-session PIT+DQ veto series = BLOCKED_NO_EXACT_1202_SESSION_PIT_DQ_SERIES
-  -> technical_validation_state = DRAFT_READY_FOR_OWNER_REVIEW_WITH_EXPLICIT_VETO_INPUT_BLOCKER
+       -> predecessor file/canonical SHA remain 03edd386... / 7daa5d1c...
+  -> qc_qqq_options_growth_action_value_real_review_execution_v2
+       -> exact predecessor sections frozen; no rule-value override
+       -> five vetoes must all be exact false; missing/unknown/non-PIT = INVALID
+       -> exact 1202-session series generation/admission authorized
+       -> source-readiness replay:
+            volatility_veto = source contract READY, series not generated
+            risk_off_veto = BLOCKED_AMBIGUOUS_RISK_ON_ALIAS
+            event_risk_veto = BLOCKED_NO_PIT_CONTRACT
+            trend_break_veto = BLOCKED_NO_CALLABLE_PRODUCER
+            tqqq_veto = BLOCKED_CONSTANT_TRUE_NO_TQQQ_GUARD_INCOMPATIBLE_WITH_REQUIRED_FALSE
+       -> constant false fill = forbidden
+       -> retained secondary_cross_checked series truncation = forbidden
+       -> exact five-veto series admission = NOT_ADMITTED
+       -> R1 manifest generation = false; replay = NOT_EXECUTED
+  -> technical_validation_state = BLOCKED_PRE_DISPATCH_VETO_SOURCE_CONTRACT
   -> authorization_consumption_state = UNCONSUMED_NO_BACKTEST_DISPATCH
-  -> clone mutation / save / build / backtest / provider query / order / fill = 0
+  -> clone mutation / save / build / backtest / provider query / order / fill / position = 0
 ```
 
 LEAN `BaseChainUniverseData.EndTime=Time+OneDay` 只证明 universe row available-at；`OptionUniverse`
 row 不含 bid/ask quote timestamp，因此不能再把日级 `Time/EndTime` 冒充 V3 的 120 秒 quote clock。
-下一合法节点是 Owner 对上列 exact values/formulas 作出 exact freeze，并允许生成/接纳 exact 1202-session
-PIT+DQ veto series。两项都满足、policy 与 candidate/R1 manifest 普通发布且 replay PASS 后，才允许消费
-唯一 external run。Atlas current mainline/blocker/next action 继续投影 TRADING-2542E；本次草案不读取
-provider/cache、不运行回测或交易，external counters 全为 0。
+下一合法节点不再是重复 freeze，而是为 `risk_off/event_risk/trend_break/tqqq` 四项建立逐项
+versioned、PIT-approved、available-at 可重放且与本任务 `QQQ/SGOV` action universe 语义兼容的
+source contract。全部五项 source contract 本地验证后，才能生成并接纳 exact 1202-session series，
+再形成普通发布的 candidate/R1 manifest。只有自动 replay 为 `PASS` 后，才允许读取真实 cache/provider、
+运行真实 DQ 或消费唯一 zero-order backtest。当前没有 provider/cache 读取、回测或交易，
+external counters 全为 0。
 
 ## Coordinator integration publication fence（DEVX-009）
 

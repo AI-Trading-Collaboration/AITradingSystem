@@ -108,8 +108,9 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
-        "真实 DQ 与锁定回测授权尚未消费；selection/signal/weight/minute-provider 草案已完成"
-        "本地验证，当前等待 Owner exact freeze，并缺 exact 1202-session PIT+DQ hard-veto series"
+        "exact policy freeze 与 1202-session veto-series 授权已接纳且尚未消费；volatility "
+        "source ready，但 risk_off/event_risk/trend_break/tqqq 四项 PIT source contract "
+        "未闭合，manifest、真实 DQ 与 backtest 继续关闭"
     )
 
 

@@ -16936,7 +16936,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.qqq_options_research.growth_action_value_real_review
   path: src/ai_trading_system/qqq_options_research/growth_action_value_real_review.py
-  sha256: 10a772392df9fee37f75c2bfbbf387c75b0484ea6618116dcabebd0736a7395a
+  sha256: 6affb49b20d1e497e7cf577b3ea44a51c19c6e9ca0044198e7d4fe8c874680d9
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

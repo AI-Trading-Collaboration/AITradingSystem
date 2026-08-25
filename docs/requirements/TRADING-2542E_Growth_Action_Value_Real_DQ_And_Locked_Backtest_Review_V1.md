@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`BLOCKED_OWNER_INPUT`（授权已收到但未消费；缺少 executable contributor、signal 与 action policy）；
+状态：`BLOCKED_OWNER_INPUT`（exact freeze 已完成且授权未消费；缺四项 versioned five-veto PIT source contract）；
 
 governed mode：`SINGLE_LANE`
 
@@ -35,6 +35,31 @@ Owner decision id：
 它解除“是否允许准备草案”的阻塞，但不把尚未向 Owner 展示的 selection、signal 或 target-weight
 数值视为已逐项审阅。任何真实 backtest dispatch 仍须等待一个 exact-value freeze decision；在该决定
 前 authorization 保持未消费、外部计数保持 0。
+
+同日，Project Owner 对结果前草案作出 exact freeze 并授权继续：
+
+> 批准 `qc_qqq_options_growth_action_value_real_review_execution_v1@1.0.0-draft.1`（file SHA `03edd386…` / canonical SHA `7daa5d1c…`）全部所列规则按草案精确冻结；授权生成并接纳 exact 1202-session PIT+DQ veto series。仅限 non-executable DATA_RESEARCH；真实 DQ/backtest 只能在 manifest replay PASS 后运行，orders/fills/positions/production/broker=0。
+
+该决定规范化为：
+`owner_decision:TRADING-2542E:2026-08-25:exact_freeze_policy_draft_1_and_authorize_1202_pit_dq_veto_series_v1`。
+其精确解释为：
+
+- 已批准的 draft bytes 保持不可变；用 versioned successor 绑定完整 file/canonical SHA-256 和全部
+  已展示规则，不原地改写 `1.0.0-draft.1`；
+- 允许生成并在严格 source/code/data/available-at/DQ/session identity 验证后接纳 exact 1202-session
+  five-veto boolean series；missing、unknown 或非 PIT source 仍为 `INVALID`，不得填充为 `false`；
+- `authorization_state=EXACT_PREAUTHORIZED`，但在 exact R1 manifest 自动 replay 为 `PASS` 前，真实
+  DQ、真实 cache/provider、QuantConnect candidate input 和 backtest dispatch 均保持禁止；
+- `orders/fills/positions/production/broker=0` 是硬边界，不因 DATA_RESEARCH 授权而放宽。
+
+冻结后 source-readiness 静态审计同时确认：当前 canonical inventory 只把
+`volatility_veto` 与 `tqqq_veto` 标为 callable/PIT-ready；`risk_off_veto` 仍是 risk-on-veto alias 的
+语义歧义，`event_risk_veto` 与 `trend_break_veto` 没有 PIT-approved runtime producer。进一步核对
+实际 producer 后发现当前 `tqqq_veto` 是常量 `true` 的 no-TQQQ guard，而本任务 action universe 本来
+就只含 `QQQ/SGOV`；把它当作要求“必须为 false”的 market-state series 会令 growth 永久不可激活，
+语义不兼容。因此当前只有 `volatility_veto` source contract 可进入 series 生成，另外四项仍需逐项
+versioned source contract。该缺口不会撤销本次 exact freeze，但在四项 source contract 被绑定前，
+exact 1202-session series 和 R1 manifest 必须 fail closed，外部授权保持未消费。
 
 ## 2. 上游 authority 与不可变身份
 
@@ -201,9 +226,10 @@ boolean series，因此草案明确记录
 - repository branch：`codex/trading-2542e-real-review`；
 - repository workspace：复用 `D:\Work\AITradingSystem`，不创建额外 worktree/clone/cache；
 - external sandbox：仅现有 QuantConnect clone `35444189`；原项目 `34808569` 只读且不修改；
-- 当前阻塞态退出条件：predispatch policy gap、未消费 authorization 与全零 external counters 已进入
-  validated local/remote main；task branch 无独有内容后删除；publication lease 释放。只有在 Owner
-  先 review 新的 executable policy pack 后，后续状态转换才可改为生成 manifest 并消费唯一 run；
+- 当前阻塞态退出条件：exact-freeze successor、未消费 authorization、source-readiness typed stop 与
+  全零 external counters 进入 validated local/remote main；task branch 无独有内容后删除；
+  publication lease 释放。后续只有在 Owner 为 `risk_off/event_risk/trend_break/tqqq` 逐项批准
+  versioned PIT source contract 后，才能生成 exact series、R1 manifest 并在 replay PASS 后消费唯一 run；
 - recovery：tracked bytes 由 Git/main 恢复，外部执行只由 immutable manifest 与 export-safe evidence
   重放，不依赖 raw provider row。
 
@@ -300,3 +326,21 @@ boolean series，因此草案明确记录
   扩面，保留既有 2542D latest-section 拓扑；在所有最终 source bytes 稳定后，按原 generator 机械重建
   architecture manifests 与 2542D compatibility fragments/index，再执行原 v4 Full artifact 绑定的
   `failure_fix_rerun`。这次回退不触及 research policy、DQ/PIT 或外部计数。
+- 2026-08-25：Owner exact-freeze
+  `qc_qqq_options_growth_action_value_real_review_execution_v1@1.0.0-draft.1`，并授权生成/接纳
+  exact 1202-session PIT+DQ five-veto series；真实 DQ/backtest 仍只允许在 manifest replay PASS 后
+  运行，orders/fills/positions/production/broker=0。不可变 V1 file/canonical SHA 保持
+  `03edd3868da276be69652cd9854f0201934a6cf2fa4eb5c40bfcfb4ff06206c1` /
+  `7daa5d1cb212051aab34d2af6477ee410ea8492f62c74da7417174ec3586e717`。
+- 2026-08-25：新增 exact-freeze successor V2，只绑定批准的 predecessor rule sections 和 workflow
+  transition，不覆盖任何规则值。V2 file/canonical SHA-256 为
+  `f02df23a4bd36069f5fe09354a3ce8480583fc451b71ec511bc3ba2da27780f2` /
+  `9b39a1cf6d1ad48c427755f07c592610ae2ad94055af4aab79d3327bf4e82456`；
+  terminal=`OWNER_FROZEN_BLOCKED_PRE_DISPATCH_VETO_SOURCE_CONTRACT`。
+- 2026-08-25：source-readiness replay 证明当前只有 `volatility_veto` source contract 可进入 series
+  生成；`risk_off_veto` 是语义歧义 alias，`event_risk_veto` 无 PIT contract，
+  `trend_break_veto` 无 callable producer，`tqqq_veto` 是常量 `true` no-TQQQ guard，与本任务
+  “五项必须全部 false”及 `QQQ/SGOV` action universe 不兼容。旧 `secondary_cross_checked` labels
+  不得裁切，missing 不得 false-fill，因此 exact series 未生成、R1 manifest 未生成/replay，真实
+  data/provider/DQ/backtest 未运行，所有 external counters 仍为 0。核心 policy=20 passed，
+  source-contract adjacent=38 passed，Atlas live/page=20 passed，Ruff 与 strict mypy PASS。

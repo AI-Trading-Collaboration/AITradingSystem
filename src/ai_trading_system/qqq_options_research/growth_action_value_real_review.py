@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -23,6 +24,9 @@ from ai_trading_system.yaml_loader import load_strict_yaml_text
 DEFAULT_GROWTH_ACTION_VALUE_REAL_REVIEW_POLICY_PATH = Path(
     "config/research/qc_qqq_options_growth_action_value_real_review_execution_v1.yaml"
 )
+DEFAULT_GROWTH_ACTION_VALUE_REAL_REVIEW_EXACT_FREEZE_PATH = Path(
+    "config/research/qc_qqq_options_growth_action_value_real_review_execution_v2.yaml"
+)
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _SESSION_SHA256 = "d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0"
@@ -40,6 +44,58 @@ _VETO_TYPES = (
     "event_risk_veto",
     "trend_break_veto",
     "tqqq_veto",
+)
+_FROZEN_RULE_SECTIONS = (
+    "authority_bindings",
+    "scope_binding",
+    "provider_adapter",
+    "contributor_selection",
+    "growth_state_mapping",
+    "action_sizing",
+    "defensive_veto_input",
+    "external_scope",
+)
+_VETO_SOURCE_COMPONENTS = (
+    (
+        "risk_off_veto",
+        "hard_veto_risk_off",
+        "BLOCKED",
+        "BLOCKED_AMBIGUOUS_GROWTH_ALLOWED_ALIAS",
+        "BLOCKED_AMBIGUOUS_RISK_ON_ALIAS",
+        False,
+    ),
+    (
+        "volatility_veto",
+        "hard_veto_volatility",
+        "READY",
+        "VALID",
+        "SOURCE_CONTRACT_READY_SERIES_NOT_GENERATED",
+        True,
+    ),
+    (
+        "event_risk_veto",
+        "hard_veto_event_risk",
+        "BLOCKED",
+        "BLOCKED_NO_PIT_CONTRACT",
+        "BLOCKED_NO_PIT_CONTRACT",
+        False,
+    ),
+    (
+        "trend_break_veto",
+        "hard_veto_trend_break",
+        "BLOCKED",
+        "BLOCKED_NO_CALLABLE_PRODUCER",
+        "BLOCKED_NO_CALLABLE_PRODUCER",
+        False,
+    ),
+    (
+        "tqqq_veto",
+        "hard_veto_tqqq",
+        "READY",
+        "VALID",
+        "BLOCKED_CONSTANT_TRUE_NO_TQQQ_GUARD_INCOMPATIBLE_WITH_REQUIRED_FALSE",
+        False,
+    ),
 )
 
 
@@ -429,6 +485,202 @@ class GrowthActionValueRealReviewPolicy(_CanonicalModel):
         return self
 
 
+class ExactFreezeOwnerInstruction(_StrictModel):
+    decision_id: Literal[
+        "owner_decision:TRADING-2542E:2026-08-25:exact_freeze_policy_draft_1_and_authorize_1202_pit_dq_veto_series_v1"
+    ]
+    exact_draft_freeze_approval: Literal[
+        "APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH"
+    ]
+    exact_1202_session_veto_series_generation_authorized: Literal[True]
+    exact_1202_session_veto_series_admission_authorized: Literal[True]
+    real_dq_or_backtest_requires_manifest_replay_pass: Literal[True]
+    authorization_state: Literal["EXACT_PREAUTHORIZED"]
+    authorization_consumption_state: Literal["UNCONSUMED_NO_BACKTEST_DISPATCH"]
+
+
+class ApprovedDraftBinding(_StrictModel):
+    path: Literal[
+        "config/research/qc_qqq_options_growth_action_value_real_review_execution_v1.yaml"
+    ]
+    policy_id: Literal["qc_qqq_options_growth_action_value_real_review_execution_v1"]
+    policy_version: Literal["1.0.0-draft.1"]
+    file_sha256: str
+    canonical_sha256: str
+    disposition: Literal["APPROVED_PREDECESSOR_RETAINED_IMMUTABLE"]
+    immutable: Literal[True]
+
+    @field_validator("file_sha256", "canonical_sha256")
+    @classmethod
+    def validate_sha(cls, value: str) -> str:
+        if not _SHA256.fullmatch(value):
+            raise ValueError("invalid lowercase SHA-256")
+        return value
+
+
+class FrozenRuleSurface(_StrictModel):
+    source_rule: Literal["EXACT_APPROVED_DRAFT_CANONICAL_SECTIONS"]
+    exact_sections: tuple[str, ...]
+    workflow_state_transition_only: Literal[True]
+    predecessor_bytes_may_change: Literal[False]
+    successor_may_override_rule_values: Literal[False]
+    result_visible_when_values_selected: Literal[False]
+
+    @model_validator(mode="after")
+    def validate_sections(self) -> Self:
+        if self.exact_sections != _FROZEN_RULE_SECTIONS:
+            raise ValueError("frozen rule surface drifted")
+        return self
+
+
+class CapabilityGraphBinding(_StrictModel):
+    path: Literal["config/research/growth_tilt_baseline_capability_graph.yaml"]
+    file_sha256: str
+    graph_id: Literal["growth_tilt_baseline_capability_graph_v1"]
+    status: Literal["REVIEWED_READ_ONLY_INVENTORY"]
+
+    @field_validator("file_sha256")
+    @classmethod
+    def validate_sha(cls, value: str) -> str:
+        if not _SHA256.fullmatch(value):
+            raise ValueError("invalid lowercase SHA-256")
+        return value
+
+
+class RuntimeProducerBinding(FileRoleBinding):
+    path: Literal["src/ai_trading_system/channel_specific_first_layer_v3.py"]
+    accepted_role: Literal["SOURCE_READINESS_EVIDENCE_ONLY_NOT_ADMITTED_SERIES"]
+
+
+class SourceReadinessAuthority(_StrictModel):
+    capability_graph: CapabilityGraphBinding
+    current_runtime_producer: RuntimeProducerBinding
+
+
+class VetoSourceComponent(_StrictModel):
+    veto_id: str
+    capability_id: str
+    graph_readiness: str
+    graph_pit_lineage_status: str
+    source_contract_state: str
+    series_generation_allowed: bool
+
+
+class ExactVetoSeriesContract(_StrictModel):
+    requested_start: date
+    requested_end: date
+    evaluated_start: date
+    evaluated_end: date
+    expected_session_count: Literal[1202]
+    target_session_inventory_lf_sha256: str
+    required_veto_types: tuple[str, ...]
+    candidate_growth_allowed_rule: Literal["ALL_REQUIRED_VETOES_EXACTLY_FALSE"]
+    missing_unknown_or_non_pit_outcome: Literal["INVALID"]
+    constant_false_fill_allowed: Literal[False]
+    retained_series_truncation_as_pit_authority_allowed: Literal[False]
+    all_rows_require_source_code_data_available_at_and_dq_identity: Literal[True]
+    exact_common_session_inventory_required: Literal[True]
+    source_components: tuple[VetoSourceComponent, ...]
+    ready_source_contracts: tuple[Literal["volatility_veto"]]
+    unresolved_source_contracts: tuple[str, ...]
+    current_series_admission_state: Literal[
+        "BLOCKED_NO_COMPLETE_FIVE_VETO_PIT_SOURCE_CONTRACT"
+    ]
+    admission_terminal: Literal["NOT_ADMITTED"]
+
+    @model_validator(mode="after")
+    def validate_series_contract(self) -> Self:
+        expected_dates = (date(2021, 2, 22), date(2025, 12, 2))
+        if (self.requested_start, self.requested_end) != expected_dates:
+            raise ValueError("veto-series requested range drifted")
+        if (self.evaluated_start, self.evaluated_end) != expected_dates:
+            raise ValueError("veto-series evaluated range drifted")
+        if self.target_session_inventory_lf_sha256 != _SESSION_SHA256:
+            raise ValueError("veto-series session inventory drifted")
+        if self.required_veto_types != _VETO_TYPES:
+            raise ValueError("veto-series required taxonomy drifted")
+        observed = tuple(
+            (
+                row.veto_id,
+                row.capability_id,
+                row.graph_readiness,
+                row.graph_pit_lineage_status,
+                row.source_contract_state,
+                row.series_generation_allowed,
+            )
+            for row in self.source_components
+        )
+        if observed != _VETO_SOURCE_COMPONENTS:
+            raise ValueError("veto source readiness surface drifted")
+        if self.ready_source_contracts != ("volatility_veto",):
+            raise ValueError("ready veto source set drifted")
+        if self.unresolved_source_contracts != (
+            "risk_off_veto",
+            "event_risk_veto",
+            "trend_break_veto",
+            "tqqq_veto",
+        ):
+            raise ValueError("unresolved veto source set drifted")
+        return self
+
+
+class ExactFreezeManifestGate(_StrictModel):
+    exact_r1_manifest_generation_allowed: Literal[False]
+    manifest_replay_state: Literal["NOT_EXECUTED"]
+    real_data_read_allowed_after_replay_pass_only: Literal[True]
+    provider_query_allowed_after_replay_pass_only: Literal[True]
+    real_dq_allowed_after_replay_pass_only: Literal[True]
+    zero_order_backtest_allowed_after_replay_pass_only: Literal[True]
+    current_technical_validation_state: Literal[
+        "BLOCKED_PRE_DISPATCH_VETO_SOURCE_CONTRACT"
+    ]
+    next_required_state: Literal[
+        "ALL_FIVE_VETO_SOURCE_CONTRACTS_VERSIONED_AND_LOCALLY_VALIDATED"
+    ]
+
+
+class ExactFreezeSafety(_StrictModel):
+    non_executable_data_research_only: Literal[True]
+    policy_values_frozen: Literal[True]
+    candidate_generation_allowed: Literal[False]
+    manifest_generation_allowed: Literal[False]
+    cache_read_authorized: Literal[False]
+    provider_query_authorized: Literal[False]
+    real_dq_authorized_now: Literal[False]
+    real_run_dispatch_authorized: Literal[False]
+    parameter_search_allowed: Literal[False]
+    threshold_after_result_allowed: Literal[False]
+    raw_option_rows_allowed: Literal[False]
+    order_generation_allowed: Literal[False]
+    paper_allowed: Literal[False]
+    live_allowed: Literal[False]
+    broker_allowed: Literal[False]
+    production_effect: Literal["none"]
+    broker_action: Literal["none"]
+
+
+class GrowthActionValueRealReviewExactFreezePolicy(_CanonicalModel):
+    schema_version: Literal[
+        "qc_qqq_options_growth_action_value_real_review_execution_freeze.v1"
+    ]
+    policy_id: Literal["qc_qqq_options_growth_action_value_real_review_execution_v2"]
+    policy_version: Literal["2.0.0"]
+    status: Literal[
+        "OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH_BLOCKED_PRE_DISPATCH_SOURCE_CONTRACT"
+    ]
+    task_id: Literal[
+        "TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1"
+    ]
+    owner_instruction: ExactFreezeOwnerInstruction
+    approved_draft_binding: ApprovedDraftBinding
+    frozen_rule_surface: FrozenRuleSurface
+    source_readiness_authority: SourceReadinessAuthority
+    veto_series_contract: ExactVetoSeriesContract
+    manifest_gate: ExactFreezeManifestGate
+    external_scope: ExternalScope
+    safety: ExactFreezeSafety
+
+
 @dataclass(frozen=True)
 class GrowthActionValueRealReviewPolicyLoadResult:
     policy: GrowthActionValueRealReviewPolicy
@@ -436,6 +688,16 @@ class GrowthActionValueRealReviewPolicyLoadResult:
     policy_file_sha256: str
     policy_canonical_sha256: str
     terminal: Literal["DRAFT_READY_FOR_OWNER_REVIEW_WITH_EXPLICIT_VETO_INPUT_BLOCKER"]
+
+
+@dataclass(frozen=True)
+class GrowthActionValueRealReviewExactFreezeLoadResult:
+    policy: GrowthActionValueRealReviewExactFreezePolicy
+    policy_path: Path
+    policy_file_sha256: str
+    policy_canonical_sha256: str
+    approved_draft: GrowthActionValueRealReviewPolicyLoadResult
+    terminal: Literal["OWNER_FROZEN_BLOCKED_PRE_DISPATCH_VETO_SOURCE_CONTRACT"]
 
 
 def _validate_authority_files(
@@ -508,10 +770,124 @@ def load_growth_action_value_real_review_policy(
     )
 
 
+def _mapping(value: object, *, field: str) -> Mapping[str, object]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{field} must be a mapping")
+    return value
+
+
+def _validate_veto_source_readiness(
+    policy: GrowthActionValueRealReviewExactFreezePolicy, *, project_root: Path
+) -> None:
+    authority = policy.source_readiness_authority
+    graph_path = _bound_file(
+        Path(authority.capability_graph.path),
+        root=project_root,
+        field="capability_graph",
+    )
+    graph_raw = graph_path.read_bytes()
+    if hashlib.sha256(graph_raw).hexdigest() != authority.capability_graph.file_sha256:
+        raise ValueError("capability graph file SHA-256 mismatch")
+    graph = _mapping(
+        load_strict_yaml_text(graph_raw.decode("utf-8"), label=str(graph_path)),
+        field="capability_graph",
+    )
+    if graph.get("graph_id") != authority.capability_graph.graph_id:
+        raise ValueError("capability graph identity drifted")
+    if graph.get("status") != authority.capability_graph.status:
+        raise ValueError("capability graph status drifted")
+    nodes_value = graph.get("nodes")
+    if not isinstance(nodes_value, list):
+        raise ValueError("capability graph nodes must be a list")
+    nodes: dict[str, Mapping[str, object]] = {}
+    for index, value in enumerate(nodes_value):
+        row = _mapping(value, field=f"capability_graph.nodes[{index}]")
+        capability_id = row.get("capability_id")
+        if isinstance(capability_id, str):
+            if capability_id in nodes:
+                raise ValueError("capability graph contains duplicate capability ids")
+            nodes[capability_id] = row
+
+    for component in policy.veto_series_contract.source_components:
+        node = nodes.get(component.capability_id)
+        if node is None:
+            raise ValueError(f"missing veto capability node: {component.capability_id}")
+        readiness = _mapping(
+            node.get("readiness"), field=f"{component.capability_id}.readiness"
+        )
+        pit = _mapping(node.get("pit"), field=f"{component.capability_id}.pit")
+        if readiness.get("status") != component.graph_readiness:
+            raise ValueError(f"{component.veto_id} readiness drifted")
+        if pit.get("lineage_status") != component.graph_pit_lineage_status:
+            raise ValueError(f"{component.veto_id} PIT lineage drifted")
+
+    runtime_binding = authority.current_runtime_producer
+    runtime_path = _bound_file(
+        Path(runtime_binding.path), root=project_root, field="current_runtime_producer"
+    )
+    runtime_raw = runtime_path.read_bytes()
+    if hashlib.sha256(runtime_raw).hexdigest() != runtime_binding.file_sha256:
+        raise ValueError("current runtime producer file SHA-256 mismatch")
+    runtime_text = runtime_raw.decode("utf-8")
+    required_snippets = (
+        '"volatility_veto": "volatility_not_compressed" in veto_reasons',
+        '"risk_off_veto": row.get("growth_allowed") is False',
+        '"tqqq_veto": True',
+    )
+    if any(snippet not in runtime_text for snippet in required_snippets):
+        raise ValueError("current runtime veto producer semantics drifted")
+    if '"event_risk_veto":' in runtime_text or '"trend_break_veto":' in runtime_text:
+        raise ValueError("source-readiness blocker no longer matches runtime producer")
+
+
+def load_growth_action_value_real_review_exact_freeze(
+    *,
+    policy_path: Path = DEFAULT_GROWTH_ACTION_VALUE_REAL_REVIEW_EXACT_FREEZE_PATH,
+    project_root: Path = PROJECT_ROOT,
+) -> GrowthActionValueRealReviewExactFreezeLoadResult:
+    try:
+        path = _bound_file(policy_path, root=project_root, field="exact_freeze_policy_path")
+        raw = path.read_bytes()
+        payload = load_strict_yaml_text(raw.decode("utf-8"), label=str(policy_path))
+        policy = GrowthActionValueRealReviewExactFreezePolicy.model_validate(payload)
+        binding = policy.approved_draft_binding
+        approved = load_growth_action_value_real_review_policy(
+            policy_path=Path(binding.path), project_root=project_root
+        )
+        if approved.policy.policy_id != binding.policy_id:
+            raise ValueError("approved draft policy identity drifted")
+        if approved.policy.policy_version != binding.policy_version:
+            raise ValueError("approved draft policy version drifted")
+        if approved.policy_file_sha256 != binding.file_sha256:
+            raise ValueError("approved draft file identity drifted")
+        if approved.policy_canonical_sha256 != binding.canonical_sha256:
+            raise ValueError("approved draft canonical identity drifted")
+        _validate_veto_source_readiness(policy, project_root=project_root)
+    except GrowthActionValueRealReviewPolicyError:
+        raise
+    except (KeyError, OSError, TypeError, UnicodeDecodeError, ValueError) as exc:
+        raise GrowthActionValueRealReviewPolicyError(
+            "GROWTH_ACTION_VALUE_REAL_REVIEW_EXACT_FREEZE_REJECTED", str(exc)
+        ) from exc
+
+    return GrowthActionValueRealReviewExactFreezeLoadResult(
+        policy=policy,
+        policy_path=path,
+        policy_file_sha256=hashlib.sha256(raw).hexdigest(),
+        policy_canonical_sha256=policy.canonical_sha256,
+        approved_draft=approved,
+        terminal="OWNER_FROZEN_BLOCKED_PRE_DISPATCH_VETO_SOURCE_CONTRACT",
+    )
+
+
 __all__ = [
+    "DEFAULT_GROWTH_ACTION_VALUE_REAL_REVIEW_EXACT_FREEZE_PATH",
     "DEFAULT_GROWTH_ACTION_VALUE_REAL_REVIEW_POLICY_PATH",
+    "GrowthActionValueRealReviewExactFreezeLoadResult",
+    "GrowthActionValueRealReviewExactFreezePolicy",
     "GrowthActionValueRealReviewPolicy",
     "GrowthActionValueRealReviewPolicyError",
     "GrowthActionValueRealReviewPolicyLoadResult",
+    "load_growth_action_value_real_review_exact_freeze",
     "load_growth_action_value_real_review_policy",
 ]

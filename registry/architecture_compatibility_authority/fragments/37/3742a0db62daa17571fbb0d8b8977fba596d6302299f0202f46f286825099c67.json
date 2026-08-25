@@ -29,12 +29,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "beb8ef8fa68a061adbd6ce778c3487892bb1f4ee5964df1aae3868bec69f5b44"
+        "sha256": "5ceafd69184339fbcd2a30237eae60dab957b5eef86c5a57bb39774bd4bd7e80"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "3940277a1ded69f508d0e24398240e20385f8db0db97a23c334918af917f54c1"
+        "sha256": "b33747d94fcb077ce7575c3ef6e92bddbe3a399137d925d5fa39395008838b40"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -44,17 +44,17 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "0a74cb6e5d0f9fa7b08380cdc8e08f689682b71b7d012485963e253d10b56cad"
+        "sha256": "3f905660c2f71184503a87f973be79ae96911a9bba63bcd582f991ed2c9b8bce"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "a31ba9e574d625ae867916e3afd929e3324447bd5fd1bca5d6ad724e07cf2b80"
+        "sha256": "e95c37162b499ba008b0bf7b51131d7cc752650cc614a909bc494f4941f34c5f"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "2589463733d7923fdd8ce1b59b8c4d89a636c2e484896e3d770f50272daba283"
+        "sha256": "91a7c041a14753733f8315e211ff5d918fac147c55d3eb8a9d08a8ff7411cf64"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -79,7 +79,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "79aa6cfd76d5110bd2d30f15fc7ff03233cb7cc84c6accf91d5a6477521bbb7e"
+        "sha256": "c75769206476d0bc8bd6679c64fc46509598fe5abe6b59a61cae08a6fa0d4006"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -132,5 +132,5 @@
     "task_id": "DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL"
   },
   "section_id": "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2",
-  "section_sha256": "ffa73c507579c709b8116332169a95b3dfec91ea236171bf60e5d05280d0cfb2"
+  "section_sha256": "3742a0db62daa17571fbb0d8b8977fba596d6302299f0202f46f286825099c67"
 }

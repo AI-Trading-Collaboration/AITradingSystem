@@ -255,8 +255,8 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "NON_EXECUTABLE_DATA_RESEARCH"
     )
     assert coverage_by_task["TRADING-2542E"] == (
-        "DISCLOSED_RESULT_BLIND_POLICY_DRAFT_VALIDATED_"
-        "OWNER_FREEZE_AND_VETO_SERIES_BLOCKED"
+        "DISCLOSED_EXACT_POLICY_FREEZE_ACCEPTED_"
+        "VETO_SOURCE_CONTRACT_BLOCKED"
     )
     assert coverage_by_task["TRADING-2543"] == (
         "LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_COMPLETE"

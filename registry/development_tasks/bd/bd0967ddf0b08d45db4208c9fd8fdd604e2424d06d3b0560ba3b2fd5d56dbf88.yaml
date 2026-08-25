@@ -13,25 +13,27 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / exact-freeze displayed draft values and authorize exact
-    1202-session veto-series admission before dispatch
+  next_owner: Project Owner / approve versioned PIT source contracts for risk_off,
+    event_risk, trend_break and tqqq vetoes
   requirement_refs:
   - docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Owner authorized drafting and review continuation.
-    The result-blind draft is locally validated; exact Owner freeze remains required
-    for contributor values, call/put activity mapping, QQQ/SGOV research weights,
-    minute quote/volume adapter and five-veto missing-is-invalid rule. Current retained
-    veto series is not exact 1202-session PIT+DQ authority.
+  unstructured_legacy_blocker_or_next_step: Exact freeze is complete, but only volatility_veto
+    has a compatible PIT source contract. risk_off is an ambiguous risk-on alias;
+    event_risk has no PIT contract; trend_break has no callable producer; current
+    tqqq_veto is constant true and incompatible with the frozen all-false growth gate
+    for a QQQ/SGOV-only action universe. No exact five-veto series or R1 manifest
+    can be legally generated.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Owner exact-freezes policy file SHA-256 03edd3868da276be69652cd9854f0201934a6cf2fa4eb5c40bfcfb4ff06206c1
-      and canonical SHA-256 7daa5d1cb212051aab34d2af6477ee410ea8492f62c74da7417174ec3586e717;
-      then exact 1202-session veto series is generated/admitted with code/data/available-at/DQ
-      identity, R1 candidate and manifest are published/replayed, and at most one
-      zero-order run is consumed with retry/raw rows/orders/fills/positions=0.
+    text: Owner approves for each unresolved veto an exact source/formula, code/data
+      identity, decision/available-at timing, missing/unknown outcome and versioned
+      PIT contract; tqqq must use a semantically compatible non-constant market-state
+      source or the frozen policy must be superseded and re-frozen. Then generate/admit
+      exactly 1202 rows, publish/replay the exact R1 manifest, and only replay PASS
+      may permit one real DQ/zero-order backtest with retry/raw rows/SID/orders/fills/positions/production/broker=0.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -138,33 +140,140 @@ events:
   - change:trading-2542e-owner-authorized-policy-draft-review-block-20260825-v2
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-f13ab6f40930e6c63a485ccc8f558795
+- schema_version: task_event.v1
+  task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-25T03:57:16Z'
+  actor: integration-coordinator
+  change_id: trading-2542e-owner-exact-freeze-authorized-v1
+  lane_id: null
+  base_commit: 37f88355ebf500b744af5d5b4aca53c8df782105
+  previous_state_event_id: task-event-f13ab6f40930e6c63a485ccc8f558795
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / freeze the exact approved draft as an immutable successor
+      and validate five-veto PIT source readiness
+    blocker_or_next_step: Owner exact-freeze and exact 1202-session veto-series generation/admission
+      authorization are received. Preserve the approved draft bytes; build a versioned
+      non-executable successor, verify all five veto source contracts, and prohibit
+      real DQ/backtest until exact R1 manifest replay PASS.
+    acceptance_criteria: Bind approved draft file SHA-256 03edd3868da276be69652cd9854f0201934a6cf2fa4eb5c40bfcfb4ff06206c1
+      and canonical SHA-256 7daa5d1cb212051aab34d2af6477ee410ea8492f62c74da7417174ec3586e717
+      without editing predecessor bytes; exact 1202-session PIT+DQ series must bind
+      all five boolean sources, code/data/available-at/DQ identity and session inventory;
+      only replay PASS may permit real DQ/backtest; retry/raw rows/SID/orders/fills/positions/production/broker=0.
+    notes: owner_decision=owner_decision:TRADING-2542E:2026-08-25:exact_freeze_policy_draft_1_and_authorize_1202_pit_dq_veto_series_v1;
+      scope=non-executable DATA_RESEARCH; authorization_state=EXACT_PREAUTHORIZED;
+      authorization_consumption_state=UNCONSUMED_NO_BACKTEST_DISPATCH; all external
+      counters=0.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542e-owner-exact-freeze-authorized-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d7ba5a599073f0de92b804fbc9309002
+- schema_version: task_event.v1
+  task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-25T04:06:44Z'
+  actor: integration-coordinator
+  change_id: trading-2542e-owner-exact-freeze-requirement-binding-v2
+  lane_id: null
+  base_commit: 37f88355ebf500b744af5d5b4aca53c8df782105
+  previous_state_event_id: task-event-d7ba5a599073f0de92b804fbc9309002
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / freeze the exact approved draft as an immutable successor
+      and validate five-veto PIT source readiness
+    blocker_or_next_step: Owner exact-freeze and exact 1202-session veto-series generation/admission
+      authorization are received. Preserve the approved draft bytes; build a versioned
+      non-executable successor, verify all five veto source contracts, and prohibit
+      real DQ/backtest until exact R1 manifest replay PASS.
+    acceptance_criteria: Bind approved draft file SHA-256 03edd3868da276be69652cd9854f0201934a6cf2fa4eb5c40bfcfb4ff06206c1
+      and canonical SHA-256 7daa5d1cb212051aab34d2af6477ee410ea8492f62c74da7417174ec3586e717
+      without editing predecessor bytes; exact 1202-session PIT+DQ series must bind
+      all five boolean sources, code/data/available-at/DQ identity and session inventory;
+      only replay PASS may permit real DQ/backtest; retry/raw rows/SID/orders/fills/positions/production/broker=0.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md.
+      owner_decision=owner_decision:TRADING-2542E:2026-08-25:exact_freeze_policy_draft_1_and_authorize_1202_pit_dq_veto_series_v1;
+      scope=non-executable DATA_RESEARCH; authorization_state=EXACT_PREAUTHORIZED;
+      authorization_consumption_state=UNCONSUMED_NO_BACKTEST_DISPATCH; all external
+      counters=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542e-owner-exact-freeze-requirement-binding-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-70c1c8054467ecab29d101caf646901f
+- schema_version: task_event.v1
+  task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-25T04:11:30Z'
+  actor: integration-coordinator
+  change_id: trading-2542e-exact-freeze-source-readiness-block-v3
+  lane_id: null
+  base_commit: 37f88355ebf500b744af5d5b4aca53c8df782105
+  previous_state_event_id: task-event-70c1c8054467ecab29d101caf646901f
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / approve versioned PIT source contracts for risk_off,
+      event_risk, trend_break and tqqq vetoes
+    blocker_or_next_step: Exact freeze is complete, but only volatility_veto has a
+      compatible PIT source contract. risk_off is an ambiguous risk-on alias; event_risk
+      has no PIT contract; trend_break has no callable producer; current tqqq_veto
+      is constant true and incompatible with the frozen all-false growth gate for
+      a QQQ/SGOV-only action universe. No exact five-veto series or R1 manifest can
+      be legally generated.
+    acceptance_criteria: Owner approves for each unresolved veto an exact source/formula,
+      code/data identity, decision/available-at timing, missing/unknown outcome and
+      versioned PIT contract; tqqq must use a semantically compatible non-constant
+      market-state source or the frozen policy must be superseded and re-frozen. Then
+      generate/admit exactly 1202 rows, publish/replay the exact R1 manifest, and
+      only replay PASS may permit one real DQ/zero-order backtest with retry/raw rows/SID/orders/fills/positions/production/broker=0.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md.
+      owner_decision=owner_decision:TRADING-2542E:2026-08-25:exact_freeze_policy_draft_1_and_authorize_1202_pit_dq_veto_series_v1;
+      V2 file/canonical SHA=f02df23a4bd36069f5fe09354a3ce8480583fc451b71ec511bc3ba2da27780f2/9b39a1cf6d1ad48c427755f07c592610ae2ad94055af4aab79d3327bf4e82456;
+      terminal=OWNER_FROZEN_BLOCKED_PRE_DISPATCH_VETO_SOURCE_CONTRACT; focused=20
+      passed; source-adjacent=38 passed; Atlas=20 passed; Ruff/mypy PASS; authorization=EXACT_PREAUTHORIZED/UNCONSUMED;
+      all external counters=0; production_effect=none; broker_action=none.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542e-exact-freeze-source-readiness-block-v3
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7db393625eaf935257955511780665fe
 projection:
   legacy_first_eight_cells:
   - TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
   - Growth action-value real DQ/PIT and locked zero-order backtest review V1
   - P0
   - BLOCKED_OWNER_INPUT
-  - Project Owner / exact-freeze displayed draft values and authorize exact 1202-session
-    veto-series admission before dispatch
-  - Owner authorized drafting and review continuation. The result-blind draft is locally
-    validated; exact Owner freeze remains required for contributor values, call/put
-    activity mapping, QQQ/SGOV research weights, minute quote/volume adapter and five-veto
-    missing-is-invalid rule. Current retained veto series is not exact 1202-session
-    PIT+DQ authority.
-  - Owner exact-freezes policy file SHA-256 03edd3868da276be69652cd9854f0201934a6cf2fa4eb5c40bfcfb4ff06206c1
-    and canonical SHA-256 7daa5d1cb212051aab34d2af6477ee410ea8492f62c74da7417174ec3586e717;
-    then exact 1202-session veto series is generated/admitted with code/data/available-at/DQ
-    identity, R1 candidate and manifest are published/replayed, and at most one zero-order
-    run is consumed with retry/raw rows/orders/fills/positions=0.
+  - Project Owner / approve versioned PIT source contracts for risk_off, event_risk,
+    trend_break and tqqq vetoes
+  - Exact freeze is complete, but only volatility_veto has a compatible PIT source
+    contract. risk_off is an ambiguous risk-on alias; event_risk has no PIT contract;
+    trend_break has no callable producer; current tqqq_veto is constant true and incompatible
+    with the frozen all-false growth gate for a QQQ/SGOV-only action universe. No
+    exact five-veto series or R1 manifest can be legally generated.
+  - Owner approves for each unresolved veto an exact source/formula, code/data identity,
+    decision/available-at timing, missing/unknown outcome and versioned PIT contract;
+    tqqq must use a semantically compatible non-constant market-state source or the
+    frozen policy must be superseded and re-frozen. Then generate/admit exactly 1202
+    rows, publish/replay the exact R1 manifest, and only replay PASS may permit one
+    real DQ/zero-order backtest with retry/raw rows/SID/orders/fills/positions/production/broker=0.
   - 'Supporting requirement: docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md.
-    owner_decision=owner_decision:TRADING-2542E:2026-08-25:authorize_policy_pack_drafting_and_continue_review_v1;
-    terminal=DRAFT_READY_FOR_OWNER_REVIEW_WITH_EXPLICIT_VETO_INPUT_BLOCKER; focused=12
-    passed; adjacent=90 passed; Atlas non-stale=46 passed; Ruff/mypy PASS; authorization=EXACT_PREAUTHORIZED/UNCONSUMED;
+    owner_decision=owner_decision:TRADING-2542E:2026-08-25:exact_freeze_policy_draft_1_and_authorize_1202_pit_dq_veto_series_v1;
+    V2 file/canonical SHA=f02df23a4bd36069f5fe09354a3ce8480583fc451b71ec511bc3ba2da27780f2/9b39a1cf6d1ad48c427755f07c592610ae2ad94055af4aab79d3327bf4e82456;
+    terminal=OWNER_FROZEN_BLOCKED_PRE_DISPATCH_VETO_SOURCE_CONTRACT; focused=20 passed;
+    source-adjacent=38 passed; Atlas=20 passed; Ruff/mypy PASS; authorization=EXACT_PREAUTHORIZED/UNCONSUMED;
     all external counters=0; production_effect=none; broker_action=none.'
   docs_links:
   - docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md
   terminal: false
-  canonical_row_sha256: 07e7c850a90875cc7c6cd29118c7fee045f2dcac96bed5d1fd48f351dd77d879
-last_event_id: task-event-f13ab6f40930e6c63a485ccc8f558795
+  canonical_row_sha256: 288bcdf0b96731d7725e96110c47f7558fff0dd7c2803d4e6a55d99cad0fe398
+last_event_id: task-event-7db393625eaf935257955511780665fe
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b65dc1bb5f18493a08a69cd294e3d052b13fe44ef698de0e6030c0516dbe6ea3
+fragment_checksum: 92d74d936ffabcea63c531d56bdb14009f2360f7a6ef3d0630989ec0d7c55726

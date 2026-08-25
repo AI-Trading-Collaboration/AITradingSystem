@@ -1,0 +1,152 @@
+schema_version: qc_qqq_options_growth_action_value_real_review_execution_freeze.v1
+policy_id: qc_qqq_options_growth_action_value_real_review_execution_v2
+policy_version: 2.0.0
+status: OWNER_FROZEN_NON_EXECUTABLE_DATA_RESEARCH_BLOCKED_PRE_DISPATCH_SOURCE_CONTRACT
+task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
+owner_instruction:
+  decision_id: owner_decision:TRADING-2542E:2026-08-25:exact_freeze_policy_draft_1_and_authorize_1202_pit_dq_veto_series_v1
+  exact_draft_freeze_approval: APPROVED_EXACTLY_AS_DRAFTED_NON_EXECUTABLE_DATA_RESEARCH
+  exact_1202_session_veto_series_generation_authorized: true
+  exact_1202_session_veto_series_admission_authorized: true
+  real_dq_or_backtest_requires_manifest_replay_pass: true
+  authorization_state: EXACT_PREAUTHORIZED
+  authorization_consumption_state: UNCONSUMED_NO_BACKTEST_DISPATCH
+approved_draft_binding:
+  path: config/research/qc_qqq_options_growth_action_value_real_review_execution_v1.yaml
+  policy_id: qc_qqq_options_growth_action_value_real_review_execution_v1
+  policy_version: 1.0.0-draft.1
+  file_sha256: 03edd3868da276be69652cd9854f0201934a6cf2fa4eb5c40bfcfb4ff06206c1
+  canonical_sha256: 7daa5d1cb212051aab34d2af6477ee410ea8492f62c74da7417174ec3586e717
+  disposition: APPROVED_PREDECESSOR_RETAINED_IMMUTABLE
+  immutable: true
+frozen_rule_surface:
+  source_rule: EXACT_APPROVED_DRAFT_CANONICAL_SECTIONS
+  exact_sections:
+    - authority_bindings
+    - scope_binding
+    - provider_adapter
+    - contributor_selection
+    - growth_state_mapping
+    - action_sizing
+    - defensive_veto_input
+    - external_scope
+  workflow_state_transition_only: true
+  predecessor_bytes_may_change: false
+  successor_may_override_rule_values: false
+  result_visible_when_values_selected: false
+source_readiness_authority:
+  capability_graph:
+    path: config/research/growth_tilt_baseline_capability_graph.yaml
+    file_sha256: 0c9c0cb85237473a638bf0018269099dac1073e21290c3172e18123669000702
+    graph_id: growth_tilt_baseline_capability_graph_v1
+    status: REVIEWED_READ_ONLY_INVENTORY
+  current_runtime_producer:
+    path: src/ai_trading_system/channel_specific_first_layer_v3.py
+    file_sha256: 4234752a805dd68a137a1881ae119099c49c8447e78ea35d76a76768f51e92e1
+    accepted_role: SOURCE_READINESS_EVIDENCE_ONLY_NOT_ADMITTED_SERIES
+veto_series_contract:
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  expected_session_count: 1202
+  target_session_inventory_lf_sha256: d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0
+  required_veto_types:
+    - risk_off_veto
+    - volatility_veto
+    - event_risk_veto
+    - trend_break_veto
+    - tqqq_veto
+  candidate_growth_allowed_rule: ALL_REQUIRED_VETOES_EXACTLY_FALSE
+  missing_unknown_or_non_pit_outcome: INVALID
+  constant_false_fill_allowed: false
+  retained_series_truncation_as_pit_authority_allowed: false
+  all_rows_require_source_code_data_available_at_and_dq_identity: true
+  exact_common_session_inventory_required: true
+  source_components:
+    - veto_id: risk_off_veto
+      capability_id: hard_veto_risk_off
+      graph_readiness: BLOCKED
+      graph_pit_lineage_status: BLOCKED_AMBIGUOUS_GROWTH_ALLOWED_ALIAS
+      source_contract_state: BLOCKED_AMBIGUOUS_RISK_ON_ALIAS
+      series_generation_allowed: false
+    - veto_id: volatility_veto
+      capability_id: hard_veto_volatility
+      graph_readiness: READY
+      graph_pit_lineage_status: VALID
+      source_contract_state: SOURCE_CONTRACT_READY_SERIES_NOT_GENERATED
+      series_generation_allowed: true
+    - veto_id: event_risk_veto
+      capability_id: hard_veto_event_risk
+      graph_readiness: BLOCKED
+      graph_pit_lineage_status: BLOCKED_NO_PIT_CONTRACT
+      source_contract_state: BLOCKED_NO_PIT_CONTRACT
+      series_generation_allowed: false
+    - veto_id: trend_break_veto
+      capability_id: hard_veto_trend_break
+      graph_readiness: BLOCKED
+      graph_pit_lineage_status: BLOCKED_NO_CALLABLE_PRODUCER
+      source_contract_state: BLOCKED_NO_CALLABLE_PRODUCER
+      series_generation_allowed: false
+    - veto_id: tqqq_veto
+      capability_id: hard_veto_tqqq
+      graph_readiness: READY
+      graph_pit_lineage_status: VALID
+      source_contract_state: BLOCKED_CONSTANT_TRUE_NO_TQQQ_GUARD_INCOMPATIBLE_WITH_REQUIRED_FALSE
+      series_generation_allowed: false
+  ready_source_contracts:
+    - volatility_veto
+  unresolved_source_contracts:
+    - risk_off_veto
+    - event_risk_veto
+    - trend_break_veto
+    - tqqq_veto
+  current_series_admission_state: BLOCKED_NO_COMPLETE_FIVE_VETO_PIT_SOURCE_CONTRACT
+  admission_terminal: NOT_ADMITTED
+manifest_gate:
+  exact_r1_manifest_generation_allowed: false
+  manifest_replay_state: NOT_EXECUTED
+  real_data_read_allowed_after_replay_pass_only: true
+  provider_query_allowed_after_replay_pass_only: true
+  real_dq_allowed_after_replay_pass_only: true
+  zero_order_backtest_allowed_after_replay_pass_only: true
+  current_technical_validation_state: BLOCKED_PRE_DISPATCH_VETO_SOURCE_CONTRACT
+  next_required_state: ALL_FIVE_VETO_SOURCE_CONTRACTS_VERSIONED_AND_LOCALLY_VALIDATED
+external_scope:
+  platform: QuantConnect
+  target_clone_project_id: 35444189
+  original_project_id: 34808569
+  maximum_existing_clone_mutations: 1
+  maximum_saves: 1
+  maximum_candidate_builds: 1
+  maximum_zero_order_backtests: 1
+  maximum_retries: 0
+  maximum_new_clones: 0
+  maximum_exact_date_provider_queries: 1
+  exact_date_provider_query_source_date: '2022-08-26'
+  original_project_mutations: 0
+  raw_option_rows_exported: 0
+  contract_identifiers_exported: 0
+  object_store_writes: 0
+  public_shares: 0
+  orders: 0
+  fills: 0
+  positions: 0
+safety:
+  non_executable_data_research_only: true
+  policy_values_frozen: true
+  candidate_generation_allowed: false
+  manifest_generation_allowed: false
+  cache_read_authorized: false
+  provider_query_authorized: false
+  real_dq_authorized_now: false
+  real_run_dispatch_authorized: false
+  parameter_search_allowed: false
+  threshold_after_result_allowed: false
+  raw_option_rows_allowed: false
+  order_generation_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none
