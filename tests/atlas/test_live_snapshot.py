@@ -108,10 +108,10 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
-        "veto / option-signal architecture 与 compatibility map 已按 exact identity 冻结；四项 "
-        "mandatory source 已拆分为 architecture readiness、candidate evidence 与 successor "
-        "admission，当前 admitted=0/4，缺 independent producer、formula/threshold、timing 或 "
-        "exact inventory 时在 R1 manifest 前停止，series、真实 DQ 与 backtest 继续关闭"
+        "四项 mandatory veto 的 producer-contract draft 已形成并绑定 source-wave 与 candidate "
+        "evidence exact identity；当前仍是 0/4 admitted，volatility 仅为 callable candidate、"
+        "scheduled event PIT incomplete、broad-market 与 trend producer 尚不可调用，所有 exact "
+        "threshold 均未冻结，series、R1 manifest、真实 DQ 与 backtest 继续关闭"
     )
 
 

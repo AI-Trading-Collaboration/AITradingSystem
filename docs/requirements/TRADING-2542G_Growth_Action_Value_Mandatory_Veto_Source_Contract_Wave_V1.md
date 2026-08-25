@@ -94,6 +94,16 @@ market-clear `false`。最终 join 仍要求 DQ=`PASS`、action guard=`PASS` 且
   exact-freeze、typed blocker、forbidden dependency、missing-as-clear、series/manifest/external safety
   negative tests。
 
+S3 producer-contract draft 另新增：
+
+- `config/research/qc_qqq_options_growth_action_value_mandatory_veto_producer_contract_draft_v1.yaml`：
+  四类候选 producer 的输入独立性、结构公式、PIT/时钟、待冻结 decision inventory 与 blocker；
+- `src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_producer_contract_draft.py`：
+  strict typed loader，重放 source-wave exact identity 与 candidate evidence hashes；
+- `tests/test_growth_action_value_mandatory_veto_producer_contract_draft.py`：
+  0/4 admission、pilot threshold、event `published_at`/revision、forbidden dependency、T+1 与
+  execution safety 的正负向验证。
+
 Validator 必须重放 TRADING-2542F architecture loader，而不是只相信配置中复制的哈希；所有绑定文件
 必须位于 project root、不是 symlink、file/canonical SHA 同时匹配。artifact 不包含 series、return、
 weight、backtest id 或 result-derived value。
@@ -180,8 +190,8 @@ evidence roles：
 
 ## 8. Lifecycle 与安全边界
 
-- frozen base：`1a3c3ef6eb51292de25bcf452aeacf4f0d20f012`；
-- branch：`codex/trading-2542g-veto-source-contracts`；
+- current S3 frozen base：`16162ad9bbd0c7c0bcc3a79c5fe38f2e8571e77b`；
+- current S3 branch：`codex/trading-2542g-veto-producer-draft`；
 - workspace：复用 `D:\Work\AITradingSystem`，不创建额外 worktree/clone/cache；
 - known-unrelated exclusion：`docs/research/growth_tilt_owner_diagnosis_pack.md` 不读、不 hash、不
   diff、不 stage、不修改；
@@ -230,3 +240,10 @@ evidence roles：
   子阶段。该阶段只整理结构、候选 provenance 与待冻结 decision inventory，保持 admitted=`0/4`，
   不读取 provider/cache，不生成 series/R1 manifest，不运行真实 DQ/backtest，
   orders/fills/positions/production/broker=`0`。
+- 2026-08-25：S3 producer-contract draft 已实现并由 strict loader 重放。draft file/canonical
+  SHA-256=`8bd9799b42a0d2f547afbb5bb8708775bef0de35d504197b117ed210e49a6baa`/
+  `a6e3ff096d5c5c6df6ec76756581bf0262be4988b696cb2cfb6457dd1b07f063`；四类 row 仍为
+  `0/4 admitted`，terminal=`OWNER_EXACT_FREEZE_REQUIRED_0_OF_4_ADMITTED`。其中 realized-volatility
+  仅是 callable candidate，scheduled-event 明确为 PIT incomplete，broad-market/trend producer 仍未
+  callable；所有 exact threshold 保持 `null`。producer-draft + source-wave focused/adjacent=
+  `36 passed`；未读取真实数据，series/R1/provider/cache/真实 DQ/backtest 与交易边界继续关闭。

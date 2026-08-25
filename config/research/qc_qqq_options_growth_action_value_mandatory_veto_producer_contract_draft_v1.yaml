@@ -1,0 +1,390 @@
+schema_version: growth_action_value_mandatory_veto_producer_contract_draft.v1
+policy_id: qc_qqq_options_growth_action_value_mandatory_veto_producer_contract_draft_v1
+policy_version: 1.0.0-draft.1
+status: OWNER_REVIEW_REQUIRED_0_OF_4_ADMITTED
+task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+source_wave_binding:
+  path: config/research/qc_qqq_options_growth_action_value_mandatory_veto_source_contract_wave_v1.yaml
+  file_sha256: 76e38c969ee0849c77ac4012b72d0e65115f0a3448ecb276c9ca8cfef5faf8b5
+  canonical_sha256: 0f8204170b4c8810cf2685e63dd5035801cef79788932b63cdf5691c1ba28e26
+  immutable: true
+owner_scope:
+  instruction_ref: owner_instruction:TRADING-2542G:2026-08-25:continue_non_executable_producer_contract_draft_v1
+  producer_contract_drafting_authorized: true
+  exact_producer_formula_or_threshold_freeze_granted: false
+  source_admission_authorized: false
+  veto_series_generation_authorized: false
+  r1_manifest_generation_authorized: false
+  real_data_dq_or_backtest_authorized: false
+  authorization_state: STANDING_OWNER_SCOPE
+target_inventory:
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  expected_session_count: 1202
+  target_session_inventory_lf_sha256: d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0
+required_decision_dimensions:
+  - independent_input_universe
+  - structural_formula
+  - exact_formula
+  - window_inventory
+  - threshold_inventory
+  - decision_as_of
+  - available_at
+  - missing_and_malformed_terminals
+  - exact_1202_session_inventory
+producer_contracts:
+  - veto_id: broad_market_risk_off_veto
+    source_independence_class: BROAD_MARKET_INDEPENDENT_SOURCE
+    draft_producer_id: qqq_options_growth_action_value_broad_market_risk_off_candidate_v1
+    producer_state: PLANNED_INDEPENDENT_PRODUCER_NOT_CALLABLE
+    draft_status: OWNER_EXACT_FREEZE_REQUIRED
+    input_contract:
+      allowed_input_fields:
+        - SPY.exchange_session
+        - SPY.adjusted_close
+        - SPY.available_at
+      price_adjustment_rule: SPLIT_AND_DISTRIBUTION_ADJUSTED_DAILY_CLOSE
+      input_identity_state: PROPOSED_OWNER_REVIEW_REQUIRED
+    structural_formula:
+      formula_category: BROAD_MARKET_TREND_AND_DRAWDOWN_STATE
+      ordered_components:
+        - BROAD_MARKET_TREND_STATE
+        - BROAD_MARKET_DRAWDOWN_STATE
+      combination_rule: OWNER_DECISION_REQUIRED
+      exact_formula_frozen: false
+    timing_contract:
+      decision_as_of: TARGET_QQQ_SESSION_OFFICIAL_CLOSE
+      available_at: AFTER_BOUND_SPY_SESSION_CLOSE_AND_DQ_PASS
+      effective_session: NEXT_VALID_QQQ_EXCHANGE_SESSION
+      timing_state: STRUCTURE_PROPOSAL_OWNER_FREEZE_REQUIRED
+      same_session_action_allowed: false
+      cross_date_fallback_allowed: false
+    pit_contract:
+      required_source_fields:
+        - exchange_session
+        - adjusted_close
+        - available_at
+        - source_identity
+      published_at_required: false
+      event_date_can_substitute_for_published_at: false
+      revision_identity_required: false
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+    threshold_decisions:
+      - decision_id: broad_market_proxy_universe
+        candidate_provenance: SPY_ONLY_STRUCTURE_PROPOSAL
+        exact_value: null
+        owner_freeze_state: PENDING_OWNER_EXACT_FREEZE
+      - decision_id: trend_window_and_reference
+        candidate_provenance: null
+        exact_value: null
+        owner_freeze_state: PENDING_OWNER_EXACT_FREEZE
+      - decision_id: drawdown_window_and_threshold
+        candidate_provenance: config/etf_portfolio/risk.yaml#regime_rules_REFERENCE_ONLY
+        exact_value: null
+        owner_freeze_state: PENDING_OWNER_EXACT_FREEZE
+      - decision_id: component_combination_rule
+        candidate_provenance: src/ai_trading_system/etf_portfolio/regime.py_REFERENCE_ONLY_MIXES_QQQ
+        exact_value: null
+        owner_freeze_state: PENDING_OWNER_EXACT_FREEZE
+    candidate_evidence:
+      - path: src/ai_trading_system/etf_portfolio/regime.py
+        file_sha256: ba2467d0fe3e51a7072cf5d865385f334d923980a77eb4bc0294a79e94467dd0
+        role: REFERENCE_IMPLEMENTATION_MIXES_QQQ_NOT_ADMITTED
+        admitted_as_producer_authority: false
+      - path: config/etf_portfolio/risk.yaml
+        file_sha256: 77f93f4af740ba659e477fd91cbdf3ee16543356b18c8eb69c3100f82d029725
+        role: REFERENCE_THRESHOLDS_NOT_OWNER_FROZEN_FOR_SUCCESSOR
+        admitted_as_producer_authority: false
+    producer_contract_admitted: false
+    exact_1202_session_inventory_admitted: false
+    series_generation_allowed: false
+    blocker_codes:
+      - CALLABLE_INDEPENDENT_PRODUCER_MISSING
+      - PROXY_UNIVERSE_NOT_OWNER_FROZEN
+      - EXACT_FORMULA_WINDOW_AND_THRESHOLD_NOT_FROZEN
+      - TIMING_NOT_OWNER_FROZEN
+      - EXACT_1202_INVENTORY_NOT_ADMITTED
+  - veto_id: realized_volatility_veto
+    source_independence_class: REALIZED_VOLATILITY_INDEPENDENT_SOURCE
+    draft_producer_id: volatility_compression_free_v1_candidate_adapter
+    producer_state: CALLABLE_CANDIDATE_NOT_SUCCESSOR_ADMITTED
+    draft_status: OWNER_EXACT_FREEZE_REQUIRED
+    input_contract:
+      allowed_input_fields:
+        - QQQ.exchange_session
+        - QQQ.adjusted_close
+        - QQQ.available_at
+        - VIX.observation_date
+        - VIX.vix_level
+        - VIX.available_at
+      price_adjustment_rule: QQQ_SPLIT_AND_DISTRIBUTION_ADJUSTED_CLOSE_WITH_BOUND_VIX_OBSERVATION
+      input_identity_state: CALLABLE_CANDIDATE_INPUTS_OWNER_REVIEW_REQUIRED
+    structural_formula:
+      formula_category: TRAILING_REALIZED_VOLATILITY_AND_VIX_PERCENTILE_STATE
+      ordered_components:
+        - QQQ_TRAILING_REALIZED_VOLATILITY
+        - VIX_TRAILING_PERCENTILE_STATE
+        - OPTIONAL_REALIZED_VOLATILITY_COMPARISON
+      combination_rule: OWNER_DECISION_REQUIRED
+      exact_formula_frozen: false
+    timing_contract:
+      decision_as_of: TARGET_QQQ_SESSION_OFFICIAL_CLOSE
+      available_at: AFTER_BOUND_QQQ_CLOSE_AND_VIX_OBSERVATION_ARE_AVAILABLE_AND_DQ_PASS
+      effective_session: NEXT_VALID_QQQ_EXCHANGE_SESSION
+      timing_state: STRUCTURE_PROPOSAL_OWNER_FREEZE_REQUIRED
+      same_session_action_allowed: false
+      cross_date_fallback_allowed: false
+    pit_contract:
+      required_source_fields:
+        - exchange_session
+        - adjusted_close
+        - vix_level
+        - available_at
+        - source_identity
+      published_at_required: false
+      event_date_can_substitute_for_published_at: false
+      revision_identity_required: false
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+    threshold_decisions:
+      - decision_id: realized_volatility_windows
+        candidate_provenance: config/research/free_feature_policy.yaml#volatility_compression_free_v1.realized_vol_windows_trading_days_PILOT_ONLY
+        exact_value: null
+        owner_freeze_state: PENDING_OWNER_EXACT_FREEZE
+      - decision_id: vix_percentile_lookback
+        candidate_provenance: config/research/free_feature_policy.yaml#volatility_compression_free_v1.vix_percentile_lookback_days_PILOT_ONLY
+        exact_value: null
+        owner_freeze_state: PENDING_OWNER_EXACT_FREEZE
+      - decision_id: vix_stress_threshold
+        candidate_provenance: config/research/free_feature_policy.yaml#volatility_compression_free_v1.stress_percentile_min_PILOT_ONLY
+        exact_value: null
+        owner_freeze_state: PENDING_OWNER_EXACT_FREEZE
+      - decision_id: realized_volatility_boolean_threshold_and_combination
+        candidate_provenance: src/ai_trading_system/channel_specific_first_layer_v3.py_LEGACY_ONLY_NOT_ADMITTED
+        exact_value: null
+        owner_freeze_state: PENDING_OWNER_EXACT_FREEZE
+    candidate_evidence:
+      - path: src/ai_trading_system/features/volatility_compression_free.py
+        file_sha256: 2d116f9cb0bb1813e97c95d28e37f687a7b730837caeb7b2ab19b9164df54035
+        role: CALLABLE_CANDIDATE_PRODUCER_NOT_ADMITTED
+        admitted_as_producer_authority: false
+      - path: config/research/free_feature_policy.yaml
+        file_sha256: 72346086f5436373c346f13a75c7d7ceecc1c88c94e6a2e6e6bd973db6e8b8c1
+        role: PILOT_THRESHOLD_PROVENANCE_ONLY_NOT_OWNER_FROZEN
+        admitted_as_producer_authority: false
+    producer_contract_admitted: false
+    exact_1202_session_inventory_admitted: false
+    series_generation_allowed: false
+    blocker_codes:
+      - SUCCESSOR_ADAPTER_IDENTITY_NOT_OWNER_FROZEN
+      - EXACT_FORMULA_WINDOWS_THRESHOLDS_AND_COMBINATION_NOT_FROZEN
+      - VIX_AVAILABLE_AT_CONTRACT_NOT_OWNER_FROZEN
+      - EXACT_1202_INVENTORY_NOT_ADMITTED
+  - veto_id: scheduled_event_risk_veto
+    source_independence_class: PIT_SCHEDULED_EVENT_CALENDAR_SOURCE
+    draft_producer_id: macro_event_calendar_free_v1_pit_hardening_candidate
+    producer_state: CALLABLE_CANDIDATE_PIT_INCOMPLETE
+    draft_status: OWNER_EXACT_FREEZE_REQUIRED
+    input_contract:
+      allowed_input_fields:
+        - event_authority
+        - event_type
+        - scheduled_for
+        - published_at
+        - revision_id
+        - source_identity
+      price_adjustment_rule: NOT_APPLICABLE_SCHEDULED_EVENT_CALENDAR
+      input_identity_state: PUBLISHED_AT_AND_REVISION_SCHEMA_REQUIRED_BEFORE_ADMISSION
+    structural_formula:
+      formula_category: PIT_SCHEDULED_EVENT_PROXIMITY_STATE
+      ordered_components:
+        - OWNER_FROZEN_EVENT_TAXONOMY
+        - PUBLISHED_SCHEDULE_PROXIMITY
+        - OPTIONAL_EVENT_CLUSTER_STATE
+      combination_rule: OWNER_DECISION_REQUIRED
+      exact_formula_frozen: false
+    timing_contract:
+      decision_as_of: TARGET_QQQ_SESSION_DECISION_FRONTIER
+      available_at: PUBLISHED_AT_MUST_NOT_EXCEED_DECISION_FRONTIER
+      effective_session: NEXT_VALID_QQQ_EXCHANGE_SESSION
+      timing_state: STRUCTURE_PROPOSAL_OWNER_FREEZE_REQUIRED
+      same_session_action_allowed: false
+      cross_date_fallback_allowed: false
+    pit_contract:
+      required_source_fields:
+        - event_authority
+        - event_type
+        - scheduled_for
+        - published_at
+        - revision_id
+        - source_identity
+      published_at_required: true
+      event_date_can_substitute_for_published_at: false
+      revision_identity_required: true
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+    threshold_decisions:
+      - decision_id: admitted_event_authorities_and_taxonomy
+        candidate_provenance: config/research/free_feature_family_registry_v2.yaml#macro_event_calendar_free_v1_DIAGNOSTIC_ONLY
+        exact_value: null
+        owner_freeze_state: PENDING_OWNER_EXACT_FREEZE
+      - decision_id: pre_event_and_post_event_windows
+        candidate_provenance: config/research/free_feature_policy.yaml#event_risk_free_v1_PILOT_ONLY
+        exact_value: null
+        owner_freeze_state: PENDING_OWNER_EXACT_FREEZE
+      - decision_id: event_score_or_boolean_threshold
+        candidate_provenance: config/research/free_feature_policy.yaml#event_risk_free_v1_PILOT_ONLY
+        exact_value: null
+        owner_freeze_state: PENDING_OWNER_EXACT_FREEZE
+      - decision_id: source_precedence_and_revision_treatment
+        candidate_provenance: null
+        exact_value: null
+        owner_freeze_state: PENDING_OWNER_EXACT_FREEZE
+    candidate_evidence:
+      - path: src/ai_trading_system/features/macro_event_calendar_free.py
+        file_sha256: 7df466ea28ececd9c8740ae70b11d3b061dd0d1bca178131449d295c213dae24
+        role: CALLABLE_CANDIDATE_EVENT_DATE_IS_NOT_PUBLISHED_AT
+        admitted_as_producer_authority: false
+      - path: src/ai_trading_system/features/event_risk_free.py
+        file_sha256: 9c1221004bccfaaeec13c4568f3a13ac23b2c1aa8a627a5ff5637d0a3f17fe53
+        role: DIAGNOSTIC_COMPOSITE_CANDIDATE_NOT_MANDATORY_VETO
+        admitted_as_producer_authority: false
+      - path: config/research/free_feature_family_registry_v2.yaml
+        file_sha256: c64445cb86cf21fd62f76808c5c8692001dd302c8f7d720378649975e3508cf2
+        role: PIT_WARNING_DIAGNOSTIC_ONLY_AUTHORITY
+        admitted_as_producer_authority: false
+      - path: config/research/free_feature_policy.yaml
+        file_sha256: 72346086f5436373c346f13a75c7d7ceecc1c88c94e6a2e6e6bd973db6e8b8c1
+        role: PILOT_WINDOW_AND_WEIGHT_PROVENANCE_ONLY
+        admitted_as_producer_authority: false
+    producer_contract_admitted: false
+    exact_1202_session_inventory_admitted: false
+    series_generation_allowed: false
+    blocker_codes:
+      - PUBLISHED_AT_AND_REVISION_SCHEMA_NOT_IMPLEMENTED
+      - EVENT_AUTHORITY_SET_NOT_OWNER_FROZEN
+      - EXACT_WINDOWS_SCORE_THRESHOLD_AND_SOURCE_PRECEDENCE_NOT_FROZEN
+      - EXACT_1202_INVENTORY_NOT_ADMITTED
+  - veto_id: underlying_trend_break_veto
+    source_independence_class: QQQ_UNDERLYING_INDEPENDENT_SOURCE
+    draft_producer_id: qqq_underlying_trend_break_candidate_v1
+    producer_state: PLANNED_DEDICATED_PRODUCER_NOT_CALLABLE
+    draft_status: OWNER_EXACT_FREEZE_REQUIRED
+    input_contract:
+      allowed_input_fields:
+        - QQQ.exchange_session
+        - QQQ.adjusted_close
+        - QQQ.available_at
+      price_adjustment_rule: SPLIT_AND_DISTRIBUTION_ADJUSTED_QQQ_DAILY_CLOSE
+      input_identity_state: PROPOSED_OWNER_REVIEW_REQUIRED
+    structural_formula:
+      formula_category: QQQ_UNDERLYING_TREND_BREAK_STATE
+      ordered_components:
+        - QQQ_TREND_REFERENCE_STATE
+        - QQQ_BREAK_MAGNITUDE_STATE
+        - OPTIONAL_RECOVERY_HYSTERESIS_STATE
+      combination_rule: OWNER_DECISION_REQUIRED
+      exact_formula_frozen: false
+    timing_contract:
+      decision_as_of: TARGET_QQQ_SESSION_OFFICIAL_CLOSE
+      available_at: AFTER_BOUND_QQQ_SESSION_CLOSE_AND_DQ_PASS
+      effective_session: NEXT_VALID_QQQ_EXCHANGE_SESSION
+      timing_state: STRUCTURE_PROPOSAL_OWNER_FREEZE_REQUIRED
+      same_session_action_allowed: false
+      cross_date_fallback_allowed: false
+    pit_contract:
+      required_source_fields:
+        - exchange_session
+        - adjusted_close
+        - available_at
+        - source_identity
+      published_at_required: false
+      event_date_can_substitute_for_published_at: false
+      revision_identity_required: false
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+    threshold_decisions:
+      - decision_id: trend_reference_family_and_window
+        candidate_provenance: config/research/protocols/dynamic_trend_thresholds.yaml#threshold_dependencies_RESEARCH_PROTOCOL_ONLY
+        exact_value: null
+        owner_freeze_state: PENDING_OWNER_EXACT_FREEZE
+      - decision_id: break_magnitude_and_confirmation
+        candidate_provenance: null
+        exact_value: null
+        owner_freeze_state: PENDING_OWNER_EXACT_FREEZE
+      - decision_id: recovery_and_hysteresis
+        candidate_provenance: src/ai_trading_system/etf_portfolio/regime.py_REFERENCE_ONLY_NOT_DEDICATED
+        exact_value: null
+        owner_freeze_state: PENDING_OWNER_EXACT_FREEZE
+    candidate_evidence:
+      - path: src/ai_trading_system/etf_portfolio/regime.py
+        file_sha256: ba2467d0fe3e51a7072cf5d865385f334d923980a77eb4bc0294a79e94467dd0
+        role: REFERENCE_TREND_LOGIC_NOT_DEDICATED_SUCCESSOR_PRODUCER
+        admitted_as_producer_authority: false
+      - path: config/research/protocols/dynamic_trend_thresholds.yaml
+        file_sha256: e90c0bc5b41be0d8195e1139b1ad7e042c7daf47e4d042009ea9fce093d8e794
+        role: RESEARCH_THRESHOLD_PROTOCOL_NOT_EXACT_FORMULA_AUTHORITY
+        admitted_as_producer_authority: false
+    producer_contract_admitted: false
+    exact_1202_session_inventory_admitted: false
+    series_generation_allowed: false
+    blocker_codes:
+      - CALLABLE_DEDICATED_PRODUCER_MISSING
+      - EXACT_TREND_REFERENCE_BREAK_AND_RECOVERY_FORMULA_NOT_FROZEN
+      - TIMING_NOT_OWNER_FROZEN
+      - EXACT_1202_INVENTORY_NOT_ADMITTED
+dependency_policy:
+  forbidden_producer_inputs:
+    - selected_call_contract_identity
+    - selected_put_contract_identity
+    - selected_pair_checksum
+    - selected_call_activity
+    - selected_put_activity
+    - option_alpha_state
+    - growth_allowed
+    - growth_active
+    - growth_inactive
+    - candidate_target_weights
+    - candidate_return
+    - v4_result
+    - result_dependent_contributor_universe
+  option_or_result_dependency_allowed: false
+  broad_market_may_read_qqq_or_growth_state: false
+  event_date_may_substitute_for_published_at: false
+  pilot_threshold_may_be_labeled_owner_frozen: false
+  shared_session_clock_and_target_inventory_allowed: true
+aggregate_state:
+  admitted_producer_contracts: []
+  unresolved_producer_contracts:
+    - broad_market_risk_off_veto
+    - realized_volatility_veto
+    - scheduled_event_risk_veto
+    - underlying_trend_break_veto
+  terminal: OWNER_EXACT_FREEZE_REQUIRED_0_OF_4_ADMITTED
+  next_legal_action: OWNER_REVIEW_EXACT_PRODUCER_FORMULA_THRESHOLD_TIMING_AND_INVENTORY
+  source_wave_terminal_preserved: BLOCKED_PRE_R1_MANIFEST_INCOMPLETE_MANDATORY_SOURCE_CONTRACTS
+safety:
+  non_executable_data_research_only: true
+  producer_contract_draft_only: true
+  exact_formula_or_threshold_frozen: false
+  source_contract_admission_allowed: false
+  veto_series_generation_allowed: false
+  r1_manifest_generation_allowed: false
+  cache_read_authorized: false
+  provider_query_authorized: false
+  real_dq_authorized: false
+  backtest_authorized: false
+  parameter_or_threshold_search_allowed: false
+  constant_false_fill_allowed: false
+  retained_series_truncation_allowed: false
+  cross_date_fallback_allowed: false
+  orders_allowed: false
+  fills_allowed: false
+  positions_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_effect: none
+  broker_action: none

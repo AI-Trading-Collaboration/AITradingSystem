@@ -266,7 +266,8 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "DISCLOSED_RESULT_BLIND_VETO_OPTION_ARCHITECTURE_OWNER_EXACT_FROZEN"
     )
     assert coverage_by_task["TRADING-2542G"] == (
-        "DISCLOSED_MANDATORY_VETO_SOURCE_CONTRACT_TYPED_BLOCKERS_PRE_R1"
+        "DISCLOSED_MANDATORY_VETO_PRODUCER_CONTRACT_DRAFT_"
+        "OWNER_EXACT_FREEZE_REQUIRED"
     )
     assert coverage_by_task["TRADING-2543"] == (
         "LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_COMPLETE"

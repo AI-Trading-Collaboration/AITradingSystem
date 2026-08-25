@@ -9393,6 +9393,43 @@ admission。尤其 `realized_volatility_veto` 保留旧 architecture 的 ready �
 与 timing contract 冻结前不得升级为已接纳 source。option selected pair/activity、alpha state、candidate
 weights/return 与 result-dependent bucket 全部禁止进入 mandatory source。
 
+### TRADING-2542G mandatory veto producer-contract draft
+
+Owner 的“继续推进”只授权 S3 non-executable producer-contract drafting，没有精确冻结公式、窗口、
+阈值或 exact inventory。`growth_action_value_mandatory_veto_producer_contract_draft.v1` 精确绑定上述
+source-wave file/canonical SHA，并逐文件绑定候选 code/policy provenance；绑定只是审计证据，不构成
+producer authority 或 source admission。
+
+```text
+frozen 2542G source-wave identity
+  -> four ordered producer-contract draft rows
+       -> broad_market_risk_off_veto
+            SPY-only independent input proposal; planned producer not callable
+            trend/drawdown formula, windows and thresholds = owner decision required
+       -> realized_volatility_veto
+            volatility_compression_free_v1 = callable candidate only
+            pilot windows/thresholds = provenance only; exact values remain null
+       -> scheduled_event_risk_veto
+            macro-event candidate = PIT incomplete
+            authority + scheduled_for + published_at + revision_id required
+            event_date cannot substitute for published_at
+       -> underlying_trend_break_veto
+            QQQ-only dedicated producer proposal; not callable
+            reference/break/recovery formula and thresholds = owner decision required
+  -> every row: T decision -> next valid QQQ session; no cross-date fallback
+  -> missing = INSUFFICIENT; malformed authority = INVALID
+  -> admitted producer contracts = 0 / 4
+  -> terminal = OWNER_EXACT_FREEZE_REQUIRED_0_OF_4_ADMITTED
+  -> series / R1 manifest / cache / provider / real DQ / backtest = false
+  -> orders / fills / positions / production / broker = 0
+```
+
+所有 selected option contract/activity、`growth_allowed`、candidate weights/return 和 result-dependent
+字段均是 producer 禁止输入。strict loader 会重放 source-wave identity 与每个 candidate evidence hash，
+并拒绝把 pilot threshold 标成 exact-frozen、把 missing 变成 market-clear `false`、把任一 row 升级为
+admitted，或打开 series/manifest/真实数据/交易开关。下一合法动作仍是 Project Owner 逐项审阅并精确
+冻结 producer/formula/threshold/timing/inventory；这一步本身也不自动授权真实 DQ 或 backtest。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

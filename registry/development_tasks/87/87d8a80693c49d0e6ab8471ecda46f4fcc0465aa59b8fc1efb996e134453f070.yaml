@@ -13,25 +13,26 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / implement and validate non-executable four-veto producer-contract
-    draft; Project Owner retains exact-freeze decision
-  requirement_refs: []
+  next_owner: Project Owner / exact-freeze each producer formula threshold timing
+    and exact inventory; real DQ and backtest remain separately unauthorized
+  requirement_refs:
+  - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Build result-blind producer draft rows
-    for broad-market risk-off, realized volatility, scheduled-event risk and QQQ trend
-    break; bind candidate code/policy provenance and PIT timing while keeping exact
-    formulas/thresholds and all 0/4 admissions blocked for Owner freeze.
+  unstructured_legacy_blocker_or_next_step: The non-executable four-veto producer-contract
+    draft is implemented and validated, but admitted producer contracts remain 0/4.
+    Broad-market and QQQ trend producers are not callable, volatility is only a candidate
+    with pilot threshold provenance, and scheduled-event PIT published_at/revision
+    authority is incomplete. Stop before series and R1 manifest.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Strict draft loader replays the frozen 2542G source-wave identity and candidate
-      evidence hashes; four ordered rows expose independent inputs, structural formula,
-      decision/availability timing, PIT requirements and threshold decision inventory;
-      pilot thresholds cannot be represented as Owner-frozen; event_date cannot substitute
-      for published_at; terminal remains OWNER_EXACT_FREEZE_REQUIRED_0_OF_4_ADMITTED;
-      series/R1/provider/cache/real-DQ/backtest/trading flags remain closed; focused
-      and governed validation PASS.
+    text: Draft loader must replay the frozen source-wave identity and candidate evidence
+      hashes; four ordered rows must retain independent inputs, structural formula,
+      timing, PIT requirements and null exact thresholds; event_date cannot replace
+      published_at; all rows remain unadmitted until separate Owner exact-freeze;
+      series/R1/provider/cache/real-DQ/backtest/trading flags stay closed; governed
+      validation and Atlas freshness PASS.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -146,31 +147,69 @@ events:
   - change:trading-2542g-producer-contract-draft-resume-20260825-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-e6210c3ed1a848ccfe5c507587be0074
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-25T13:18:07Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-producer-draft-owner-blocked-20260825-v1
+  lane_id: null
+  base_commit: 16162ad9bbd0c7c0bcc3a79c5fe38f2e8571e77b
+  previous_state_event_id: task-event-e6210c3ed1a848ccfe5c507587be0074
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / exact-freeze each producer formula threshold timing
+      and exact inventory; real DQ and backtest remain separately unauthorized
+    blocker_or_next_step: The non-executable four-veto producer-contract draft is
+      implemented and validated, but admitted producer contracts remain 0/4. Broad-market
+      and QQQ trend producers are not callable, volatility is only a candidate with
+      pilot threshold provenance, and scheduled-event PIT published_at/revision authority
+      is incomplete. Stop before series and R1 manifest.
+    acceptance_criteria: Draft loader must replay the frozen source-wave identity
+      and candidate evidence hashes; four ordered rows must retain independent inputs,
+      structural formula, timing, PIT requirements and null exact thresholds; event_date
+      cannot replace published_at; all rows remain unadmitted until separate Owner
+      exact-freeze; series/R1/provider/cache/real-DQ/backtest/trading flags stay closed;
+      governed validation and Atlas freshness PASS.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      producer draft file/canonical SHA=8bd9799b42a0d2f547afbb5bb8708775bef0de35d504197b117ed210e49a6baa/a6e3ff096d5c5c6df6ec76756581bf0262be4988b696cb2cfb6457dd1b07f063;
+      terminal=OWNER_EXACT_FREEZE_REQUIRED_0_OF_4_ADMITTED; focused/adjacent=36 passed;
+      formal publication validation follows; no real data, series, R1 manifest, DQ
+      or backtest; orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-producer-draft-owner-blocked-20260825-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-dd05f2e57455f2b6fec403c97682942b
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
-  - IN_PROGRESS
-  - Codex / implement and validate non-executable four-veto producer-contract draft;
-    Project Owner retains exact-freeze decision
-  - Build result-blind producer draft rows for broad-market risk-off, realized volatility,
-    scheduled-event risk and QQQ trend break; bind candidate code/policy provenance
-    and PIT timing while keeping exact formulas/thresholds and all 0/4 admissions
-    blocked for Owner freeze.
-  - Strict draft loader replays the frozen 2542G source-wave identity and candidate
-    evidence hashes; four ordered rows expose independent inputs, structural formula,
-    decision/availability timing, PIT requirements and threshold decision inventory;
-    pilot thresholds cannot be represented as Owner-frozen; event_date cannot substitute
-    for published_at; terminal remains OWNER_EXACT_FREEZE_REQUIRED_0_OF_4_ADMITTED;
-    series/R1/provider/cache/real-DQ/backtest/trading flags remain closed; focused
-    and governed validation PASS.
-  - Owner instruction=2026-08-25 continue; scope=non-executable DATA_RESEARCH producer-contract
-    drafting only; supporting requirement updated with S3.1/S3.2; no real data or
-    backtest; orders/fills/positions/production/broker=0.
-  docs_links: []
+  - BLOCKED_OWNER_INPUT
+  - Project Owner / exact-freeze each producer formula threshold timing and exact
+    inventory; real DQ and backtest remain separately unauthorized
+  - The non-executable four-veto producer-contract draft is implemented and validated,
+    but admitted producer contracts remain 0/4. Broad-market and QQQ trend producers
+    are not callable, volatility is only a candidate with pilot threshold provenance,
+    and scheduled-event PIT published_at/revision authority is incomplete. Stop before
+    series and R1 manifest.
+  - Draft loader must replay the frozen source-wave identity and candidate evidence
+    hashes; four ordered rows must retain independent inputs, structural formula,
+    timing, PIT requirements and null exact thresholds; event_date cannot replace
+    published_at; all rows remain unadmitted until separate Owner exact-freeze; series/R1/provider/cache/real-DQ/backtest/trading
+    flags stay closed; governed validation and Atlas freshness PASS.
+  - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+    producer draft file/canonical SHA=8bd9799b42a0d2f547afbb5bb8708775bef0de35d504197b117ed210e49a6baa/a6e3ff096d5c5c6df6ec76756581bf0262be4988b696cb2cfb6457dd1b07f063;
+    terminal=OWNER_EXACT_FREEZE_REQUIRED_0_OF_4_ADMITTED; focused/adjacent=36 passed;
+    formal publication validation follows; no real data, series, R1 manifest, DQ or
+    backtest; orders/fills/positions/production/broker=0.'
+  docs_links:
+  - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 513be2e999357b9ca41f9731a469fa313f62139b337b5a767383a68bfe82f0b1
-last_event_id: task-event-e6210c3ed1a848ccfe5c507587be0074
+  canonical_row_sha256: fe15280be62ad49bdc9b54aba2c41cb6ad9925dbd3c089cb77c96177108fabab
+last_event_id: task-event-dd05f2e57455f2b6fec403c97682942b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 8114773f51774b52971e6876d16c97203203ba035351ecdb3dff4ed24850f4d5
+fragment_checksum: c466aa2dd90290b118b91b99cf7cdd6ee9124cf34b2dd99a3a6560975cdab69b

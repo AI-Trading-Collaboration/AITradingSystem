@@ -9,7 +9,7 @@ classified_through_task_id: TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READE
 current_mainline_task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
 largest_blocker_task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
 next_legal_action_task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
-status_object_zh: veto / option-signal architecture 与 compatibility map 已按 exact identity 冻结；四项 mandatory source 已拆分为 architecture readiness、candidate evidence 与 successor admission，当前 admitted=0/4，缺 independent producer、formula/threshold、timing 或 exact inventory 时在 R1 manifest 前停止，series、真实 DQ 与 backtest 继续关闭
+status_object_zh: 四项 mandatory veto 的 producer-contract draft 已形成并绑定 source-wave 与 candidate evidence exact identity；当前仍是 0/4 admitted，volatility 仅为 callable candidate、scheduled event PIT incomplete、broad-market 与 trend producer 尚不可调用，所有 exact threshold 均未冻结，series、R1 manifest、真实 DQ 与 backtest 继续关闭
 evidence_evaluated_at: null
 task_status_mapping:
   DONE: PASS
