@@ -1,0 +1,100 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
+  task_id_sha256: 4ec36238c5bdd33783fc8a047b0be6131cda1543fd92893cca36f3d55142ed2a
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
+  title: null
+  domain: Growth action-value veto / option-signal result-blind serial architecture
+    contract V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex / implement and validate the non-executable serial architecture
+    contract before Owner exact freeze
+  requirement_refs:
+  - docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 'Implement the approved layered successor:
+    separate DQ qualification, QQQ/SGOV action guards, four orthogonal market-state
+    vetoes, option alpha and optional independent option-risk diagnostics without
+    modifying frozen V1/V2/DQ-PIT-V3/exact-sheet-V4.'
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Preserve immutable authority hashes; reject alpha-to-veto dependency, risk_off
+      growth_allowed alias, tqqq market-veto use, missing-as-clear and selected-pair
+      option-risk inputs; update system flow; keep series/manifest/provider/cache/real-DQ/backtest/orders/fills/positions/production/broker
+      disabled; finish validated draft for Owner exact freeze.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-25T07:04:27Z'
+  actor: integration-coordinator
+  change_id: trading-2542f-register-20260825-v1
+  lane_id: null
+  base_commit: 5996affa2a458e3792cc1c06d6c383f8e7ad1298
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
+    - Growth action-value veto / option-signal result-blind serial architecture contract
+      V1
+    - P0
+    - IN_PROGRESS
+    - Codex / implement and validate the non-executable serial architecture contract
+      before Owner exact freeze
+    - 'Implement the approved layered successor: separate DQ qualification, QQQ/SGOV
+      action guards, four orthogonal market-state vetoes, option alpha and optional
+      independent option-risk diagnostics without modifying frozen V1/V2/DQ-PIT-V3/exact-sheet-V4.'
+    - Preserve immutable authority hashes; reject alpha-to-veto dependency, risk_off
+      growth_allowed alias, tqqq market-veto use, missing-as-clear and selected-pair
+      option-risk inputs; update system flow; keep series/manifest/provider/cache/real-DQ/backtest/orders/fills/positions/production/broker
+      disabled; finish validated draft for Owner exact freeze.
+    - 'Supporting requirement: docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md.
+      owner_decision=owner_decision:TRADING-2542F:2026-08-25:authorize_serial_veto_option_architecture_contract_wave_v1;
+      governed_mode=SINGLE_LANE_SERIAL_CONTRACT_WAVE; external_action=none; production_effect=none;
+      broker_action=none.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2542f-register-20260825-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5ba9c706b18b2998553835712fb47bfc
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
+  - Growth action-value veto / option-signal result-blind serial architecture contract
+    V1
+  - P0
+  - IN_PROGRESS
+  - Codex / implement and validate the non-executable serial architecture contract
+    before Owner exact freeze
+  - 'Implement the approved layered successor: separate DQ qualification, QQQ/SGOV
+    action guards, four orthogonal market-state vetoes, option alpha and optional
+    independent option-risk diagnostics without modifying frozen V1/V2/DQ-PIT-V3/exact-sheet-V4.'
+  - Preserve immutable authority hashes; reject alpha-to-veto dependency, risk_off
+    growth_allowed alias, tqqq market-veto use, missing-as-clear and selected-pair
+    option-risk inputs; update system flow; keep series/manifest/provider/cache/real-DQ/backtest/orders/fills/positions/production/broker
+    disabled; finish validated draft for Owner exact freeze.
+  - 'Supporting requirement: docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md.
+    owner_decision=owner_decision:TRADING-2542F:2026-08-25:authorize_serial_veto_option_architecture_contract_wave_v1;
+    governed_mode=SINGLE_LANE_SERIAL_CONTRACT_WAVE; external_action=none; production_effect=none;
+    broker_action=none.'
+  docs_links:
+  - docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md
+  terminal: false
+  canonical_row_sha256: f5f5e3d3d8ffddd7d7e9a51e01ba0d296d0f660ea523062486d6e614879050b3
+last_event_id: task-event-5ba9c706b18b2998553835712fb47bfc
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 6ef04ce096d91aecd0655a358113f049a1d4bd07cbc1ee0573e5fbb88997f7d6
