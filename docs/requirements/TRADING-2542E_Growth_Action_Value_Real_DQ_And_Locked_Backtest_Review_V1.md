@@ -294,3 +294,9 @@ boolean series，因此草案明确记录
   `outputs/validation_runtime/full_20260825T021532Z/test_runtime_summary.json`。v5 以该 Full artifact 为
   exact parent，新增最小 TRADING-2542E compatibility successor，绑定最终 module/test/manifest 哈希，
   然后只允许 parent-bound `failure_fix_rerun`；external counters 与 authorization consumption 继续为 0。
+- 2026-08-25：v5 successor 设计在 parent-bound Full 初段引发大量历史 compatibility current-authority
+  级联失败，表明新增 latest section 会扩大 append-only authority 拓扑，不是修复 v4 三项旧哈希的最小
+  方案。该 Full 被 fail-closed 中止，v5 transaction 失败释放且不发布。v6 移除 v5 successor 与对应测试
+  扩面，保留既有 2542D latest-section 拓扑；在所有最终 source bytes 稳定后，按原 generator 机械重建
+  architecture manifests 与 2542D compatibility fragments/index，再执行原 v4 Full artifact 绑定的
+  `failure_fix_rerun`。这次回退不触及 research policy、DQ/PIT 或外部计数。

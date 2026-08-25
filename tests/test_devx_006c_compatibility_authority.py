@@ -34,9 +34,6 @@ DEVX_009_SECTION = (
 TRADING_2542D_SECTION = (
     "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1"
 )
-TRADING_2542E_SECTION = (
-    "phase_trading_2542e_growth_action_value_real_review_predispatch_policy_draft_v1"
-)
 
 
 def _write_fixture_authority(
@@ -141,11 +138,11 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 314
+    assert len(merged) == 313
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == TRADING_2542E_SECTION
+    assert next(reversed(merged)) == TRADING_2542D_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
@@ -183,16 +180,6 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
         "expected_nonempty_zero_observed_terminal": "INVALID",
         "right_censor_after_transitive_cluster_merge": True,
         "cost_reconciliation_session_keyed": True,
-    }
-    assert merged[TRADING_2542E_SECTION]["predispatch_contract"] == {
-        "policy_id": "qc_qqq_options_growth_action_value_real_review_execution_v1",
-        "policy_version": "1.0.0-draft.1",
-        "policy_status": "DRAFT_FOR_OWNER_EXACT_FREEZE",
-        "owner_exact_value_freeze_state": "PENDING_OWNER_REVIEW",
-        "exact_1202_session_pit_dq_veto_series_admitted": False,
-        "real_run_dispatch_authorized": False,
-        "authorization_consumed": False,
-        "external_counter_sum": 0,
     }
     assert merged[DEVX_006C_SECTION]["authority_contract"] == {
         "dual_write": False,

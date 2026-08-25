@@ -86,9 +86,6 @@ DEVX_009_PUBLICATION_FENCE_PHASE_KEY = (
 TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_PHASE_KEY = (
     "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1"
 )
-TRADING_2542E_REAL_REVIEW_PREDISPATCH_POLICY_PHASE_KEY = (
-    "phase_trading_2542e_growth_action_value_real_review_predispatch_policy_draft_v1"
-)
 TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
         ("docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md"),
@@ -197,7 +194,6 @@ def _assert_historical_source_is_current_or_superseded(
             TRADING_2542C_REMEDIATION_PHASE_KEY,
             DEVX_009_PUBLICATION_FENCE_PHASE_KEY,
             TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_PHASE_KEY,
-            TRADING_2542E_REAL_REVIEW_PREDISPATCH_POLICY_PHASE_KEY,
         }
     ):
         section_ids = list(baseline)
