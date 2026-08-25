@@ -73,23 +73,21 @@ DEVX_006C_COMPATIBILITY_AUTHORITY_PHASE_KEY = (
 DEVX_006D_REPORT_CATALOG_FLOW_AUTHORITY_PHASE_KEY = (
     "phase_devx_006d_report_catalog_flow_lossless_fragmentation"
 )
-ARCH_005_S5_CANONICAL_TASK_SOURCE_PHASE_KEY = (
-    "phase_arch_005_s5_canonical_task_source_cutover"
-)
+ARCH_005_S5_CANONICAL_TASK_SOURCE_PHASE_KEY = "phase_arch_005_s5_canonical_task_source_cutover"
 DEVX_007_EXPLICIT_SUBMISSION_PHASE_KEY = (
     "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2"
 )
 TRADING_2542C_REMEDIATION_PHASE_KEY = (
-    "phase_trading_2542c_growth_action_value_independent_review_"
-    "remediation_and_freeze_readiness_v1"
+    "phase_trading_2542c_growth_action_value_independent_review_remediation_and_freeze_readiness_v1"
 )
 DEVX_009_PUBLICATION_FENCE_PHASE_KEY = (
-    "phase_devx_009_parallel_integration_publication_fence_and_"
-    "generated_state_rebuild_v1"
+    "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1"
 )
 TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_PHASE_KEY = (
-    "phase_trading_2542d_growth_action_value_dq_pit_and_sample_"
-    "semantics_freeze_correction_v1"
+    "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1"
+)
+TRADING_2542E_REAL_REVIEW_PREDISPATCH_POLICY_PHASE_KEY = (
+    "phase_trading_2542e_growth_action_value_real_review_predispatch_policy_draft_v1"
 )
 TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
@@ -194,12 +192,13 @@ def _assert_historical_source_is_current_or_superseded(
             TRADING_2504_OWNER_DECISION_MANIFEST_PHASE_KEY,
             DEVX_006C_COMPATIBILITY_AUTHORITY_PHASE_KEY,
             DEVX_006D_REPORT_CATALOG_FLOW_AUTHORITY_PHASE_KEY,
-                ARCH_005_S5_CANONICAL_TASK_SOURCE_PHASE_KEY,
-                DEVX_007_EXPLICIT_SUBMISSION_PHASE_KEY,
-                TRADING_2542C_REMEDIATION_PHASE_KEY,
-                DEVX_009_PUBLICATION_FENCE_PHASE_KEY,
-                TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_PHASE_KEY,
-            }
+            ARCH_005_S5_CANONICAL_TASK_SOURCE_PHASE_KEY,
+            DEVX_007_EXPLICIT_SUBMISSION_PHASE_KEY,
+            TRADING_2542C_REMEDIATION_PHASE_KEY,
+            DEVX_009_PUBLICATION_FENCE_PHASE_KEY,
+            TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_PHASE_KEY,
+            TRADING_2542E_REAL_REVIEW_PREDISPATCH_POLICY_PHASE_KEY,
+        }
     ):
         section_ids = list(baseline)
         assert TRADING_2492_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_PHASE_KEY in section_ids

@@ -286,3 +286,11 @@ boolean series，因此草案明确记录
   `outputs/validation_runtime/architecture-fitness_20260825T013154Z/test_runtime_summary.json`；v2 已失败
   释放。v3 扩展 exact `tests/test_arch_004g_deprecation.py` path，同步 inventory identity/count 并重新生成
   architecture manifests 后再从 Architecture 开始完整验证；外部运行与授权消费计数保持 0。
+- 2026-08-25：v4 candidate `1344f50f30605aa78bdb1398a37bc97739f1b658` 的 Architecture
+  `878 passed`、Contract `278 passed`、Integration `995 passed`、Reproducibility `24 passed`；Full 为
+  `9541 passed / 3 failed / 3 skipped`。三项失败同源：v4 修正 test 与 generated test manifest 后，
+  compatibility authority latest successor 仍绑定旧哈希，且 index 指向被 generator 清理的旧 fragment；
+  没有 policy、DQ/PIT、selection、signal、weight 或 Atlas reader-semantics 失败。失败证据为
+  `outputs/validation_runtime/full_20260825T021532Z/test_runtime_summary.json`。v5 以该 Full artifact 为
+  exact parent，新增最小 TRADING-2542E compatibility successor，绑定最终 module/test/manifest 哈希，
+  然后只允许 parent-bound `failure_fix_rerun`；external counters 与 authorization consumption 继续为 0。

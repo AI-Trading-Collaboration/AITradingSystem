@@ -700,8 +700,7 @@ def build_repository_authority(
             )
         )
     trading_2542c_policy_path = (
-        root
-        / "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v3.yaml"
+        root / "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v3.yaml"
     )
     if trading_2542c_policy_path.exists():
         trading_2542c_section_id, trading_2542c_section = _trading_2542c_section(
@@ -724,9 +723,7 @@ def build_repository_authority(
                 trading_2542c_fragment_bytes,
             )
         )
-    devx_009_policy_path = (
-        root / "config/architecture/arch_005_integration_publication_fence.yaml"
-    )
+    devx_009_policy_path = root / "config/architecture/arch_005_integration_publication_fence.yaml"
     if devx_009_policy_path.exists():
         devx_009_section_id, devx_009_section = _devx_009_section(
             root,
@@ -745,8 +742,7 @@ def build_repository_authority(
             )
         )
     trading_2542d_policy_path = (
-        root
-        / "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v4.yaml"
+        root / "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v4.yaml"
     )
     if trading_2542d_policy_path.exists():
         trading_2542d_section_id, trading_2542d_section = _trading_2542d_section(
@@ -767,6 +763,30 @@ def build_repository_authority(
                 trading_2542d_relative,
                 trading_2542d_record,
                 trading_2542d_fragment_bytes,
+            )
+        )
+    trading_2542e_policy_path = (
+        root / "config/research/qc_qqq_options_growth_action_value_real_review_execution_v1.yaml"
+    )
+    if trading_2542e_policy_path.exists():
+        trading_2542e_section_id, trading_2542e_section = _trading_2542e_section(
+            root,
+            policy=policy,
+        )
+        (
+            trading_2542e_relative,
+            trading_2542e_record,
+            trading_2542e_fragment_bytes,
+        ) = render_fragment(
+            section_id=trading_2542e_section_id,
+            section=trading_2542e_section,
+        )
+        rendered_fragments.append(
+            (
+                trading_2542e_section_id,
+                trading_2542e_relative,
+                trading_2542e_record,
+                trading_2542e_fragment_bytes,
             )
         )
     index, index_bytes = render_index(
@@ -844,9 +864,7 @@ def _preserved_fragment_chain(
         expected_sections
     ):
         _fail("AUTHORITY_PRESERVED_INDEX_SECTION_DRIFT", index_path)
-    fragment_root = PurePosixPath(
-        _portable_path(policy["fragment_root"], "fragment_root")
-    )
+    fragment_root = PurePosixPath(_portable_path(policy["fragment_root"], "fragment_root"))
     fragments: list[tuple[str, str, dict[str, Any], bytes]] = []
     for position, raw_entry in enumerate(raw_entries):
         entry = _mapping(raw_entry, f"preserved_index.entries[{position}]")
@@ -1194,13 +1212,9 @@ def _arch_005_s5_section(
     source_paths = list(dict.fromkeys([*inherited_source_paths, *s5_source_paths]))
     retired_shadow_authorities = _retired_task_shadow_authorities(root)
     retired_shadow_fragment_paths = [
-        path
-        for authority in retired_shadow_authorities
-        for path in authority["fragment_paths"]
+        path for authority in retired_shadow_authorities for path in authority["fragment_paths"]
     ]
-    superseded_paths = list(
-        dict.fromkeys([*source_paths, *retired_shadow_fragment_paths])
-    )
+    superseded_paths = list(dict.fromkeys([*source_paths, *retired_shadow_fragment_paths]))
     task_count = _positive_or_zero_int(index.get("task_count"), "arch_005_s5.task_count")
     fragment_count = _positive_or_zero_int(
         index.get("fragment_count"),
@@ -1295,16 +1309,12 @@ def _devx_007_v2_section(
     v2_policy_path = "config/architecture/devx_007_web_pro_git_review_skill_authority.yaml"
     v2_policy = _mapping(
         load_strict_yaml_text(
-            _regular_path(root, v2_policy_path, "devx_007_v2_policy").read_text(
-                encoding="utf-8"
-            ),
+            _regular_path(root, v2_policy_path, "devx_007_v2_policy").read_text(encoding="utf-8"),
             label=v2_policy_path,
         ),
         "devx_007_v2_policy",
     )
-    if v2_policy.get("schema_version") != (
-        "devx_007_web_pro_git_review_skill_authority.v2"
-    ):
+    if v2_policy.get("schema_version") != ("devx_007_web_pro_git_review_skill_authority.v2"):
         _fail("AUTHORITY_DEVX_007_V2_SCHEMA", v2_policy_path)
     if v2_policy.get("status") != "ACTIVE":
         _fail("AUTHORITY_DEVX_007_V2_STATUS", v2_policy_path)
@@ -1352,9 +1362,7 @@ def _devx_007_v2_section(
         "sources": [_source_record(root, path) for path in source_paths],
         "supersession": {
             "historical_hashes_rewritten": False,
-            "inherited_supersession_authority": (
-                "phase_arch_005_s5_canonical_task_source_cutover"
-            ),
+            "inherited_supersession_authority": ("phase_arch_005_s5_canonical_task_source_cutover"),
             "current_hash_authority": f"{section_id}.sources",
         },
         "production_effect": _string(
@@ -1378,8 +1386,7 @@ def _trading_2542c_section(
         "remediation_and_freeze_readiness_v1"
     )
     task_id = (
-        "TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_"
-        "REMEDIATION_AND_FREEZE_READINESS_V1"
+        "TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1"
     )
     source_paths = [
         "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
@@ -1456,13 +1463,9 @@ def _devx_009_section(
     policy: Mapping[str, Any],
 ) -> tuple[str, dict[str, Any]]:
     section_id = (
-        "phase_devx_009_parallel_integration_publication_fence_and_"
-        "generated_state_rebuild_v1"
+        "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1"
     )
-    task_id = (
-        "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_"
-        "GENERATED_STATE_REBUILD_V1"
-    )
+    task_id = "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1"
     source_paths = [
         "AGENTS.md",
         "config/architecture/arch_005_integration_publication_fence.yaml",
@@ -1501,20 +1504,11 @@ def _devx_009_section(
         "scripts/architecture_arch005_task_source.py",
         "scripts/architecture_devex.py",
         "scripts/run_validation_tier.py",
-        (
-            "src/ai_trading_system/platform/architecture/"
-            "compatibility_authority.py"
-        ),
-        (
-            "src/ai_trading_system/platform/architecture/"
-            "integration_publication_fence.py"
-        ),
+        ("src/ai_trading_system/platform/architecture/compatibility_authority.py"),
+        ("src/ai_trading_system/platform/architecture/integration_publication_fence.py"),
         "src/ai_trading_system/strategy_growth_action_value_dq_pit_contract.py",
         "src/ai_trading_system/strategy_growth_action_value_dq_pit_contract_v2.py",
-        (
-            "src/ai_trading_system/"
-            "strategy_growth_action_value_freeze_readiness_contract.py"
-        ),
+        ("src/ai_trading_system/strategy_growth_action_value_freeze_readiness_contract.py"),
         "tests/test_arch_004_refactor_policy.py",
         "tests/test_arch_004g_deprecation.py",
         "tests/test_arch_005_integration_publication_fence.py",
@@ -1532,10 +1526,7 @@ def _devx_009_section(
         "tests/test_trading2452_architecture_contract.py",
         "tests/test_validation_tier_script.py",
         "tools/codex_skills/run-governed-development/agents/openai.yaml",
-        (
-            "tools/codex_skills/run-governed-development/references/"
-            "workflow-modes.md"
-        ),
+        ("tools/codex_skills/run-governed-development/references/workflow-modes.md"),
         "tools/codex_skills/run-governed-development/scripts/preflight.py",
         "tools/codex_skills/run-governed-development/SKILL.md",
     ]
@@ -1569,8 +1560,7 @@ def _devx_009_section(
     ]
     return section_id, {
         "schema_version": (
-            "devx_009_parallel_integration_publication_fence_and_"
-            "generated_state_rebuild.v1"
+            "devx_009_parallel_integration_publication_fence_and_generated_state_rebuild.v1"
         ),
         "task_id": task_id,
         "status": "DONE",
@@ -1631,13 +1621,9 @@ def _trading_2542d_section(
     policy: Mapping[str, Any],
 ) -> tuple[str, dict[str, Any]]:
     section_id = (
-        "phase_trading_2542d_growth_action_value_dq_pit_and_sample_"
-        "semantics_freeze_correction_v1"
+        "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1"
     )
-    task_id = (
-        "TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_"
-        "SEMANTICS_FREEZE_CORRECTION_V1"
-    )
+    task_id = "TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1"
     source_paths = [
         "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
         "config/atlas/live_snapshot.yaml",
@@ -1668,10 +1654,7 @@ def _trading_2542d_section(
         "scripts/render_atlas_strategy_research_page.py",
         "src/ai_trading_system/platform/architecture/compatibility_authority.py",
         "src/ai_trading_system/strategy_growth_action_value_dq_pit_contract_v3.py",
-        (
-            "src/ai_trading_system/"
-            "strategy_growth_action_value_freeze_readiness_contract_v4.py"
-        ),
+        ("src/ai_trading_system/strategy_growth_action_value_freeze_readiness_contract_v4.py"),
         "tests/atlas/test_cited_query_renderer.py",
         "tests/atlas/test_historical_projection_review.py",
         "tests/atlas/test_live_snapshot.py",
@@ -1707,8 +1690,7 @@ def _trading_2542d_section(
     ]
     return section_id, {
         "schema_version": (
-            "trading_2542d_growth_action_value_dq_pit_and_sample_semantics_"
-            "freeze_correction.v1"
+            "trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction.v1"
         ),
         "task_id": task_id,
         "status": "ACTIVE_DRAFT_PENDING_OWNER_FREEZE_DECISION",
@@ -1742,15 +1724,11 @@ def _trading_2542d_section(
             "index_sha256": _digest(report_flow_index_content),
             "target_count": len(report_flow_targets),
             "entry_count": sum(
-                _positive_or_zero_int(
-                    target.get("entry_count"), "trading_2542d.entry_count"
-                )
+                _positive_or_zero_int(target.get("entry_count"), "trading_2542d.entry_count")
                 for target in report_flow_targets
             ),
             "fragment_count": sum(
-                _positive_or_zero_int(
-                    target.get("fragment_count"), "trading_2542d.fragment_count"
-                )
+                _positive_or_zero_int(target.get("fragment_count"), "trading_2542d.fragment_count")
                 for target in report_flow_targets
             ),
             "current_hash_authority": f"{section_id}.sources",
@@ -1760,6 +1738,88 @@ def _trading_2542d_section(
             "non_executable_pilot_values_freeze_ready": True,
             "real_dq_or_empirical_run_authorized": False,
             "owner_exact_freeze_approval_required": True,
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _trading_2542e_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_trading_2542e_growth_action_value_real_review_predispatch_policy_draft_v1"
+    task_id = "TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1"
+    source_paths = sorted(
+        [
+            "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+            "config/atlas/live_snapshot.yaml",
+            "config/atlas/page_effectiveness.yaml",
+            ("config/research/qc_qqq_options_growth_action_value_real_review_execution_v1.yaml"),
+            (
+                "docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_"
+                "Locked_Backtest_Review_V1.md"
+            ),
+            "docs/system_flow.md",
+            "docs/task_register.md",
+            "docs/task_register_completed.md",
+            "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+            "inputs/architecture/arch_004e_architecture_fitness.yaml",
+            "inputs/architecture/arch_004e_module_manifest.yaml",
+            "inputs/architecture/arch_004e_test_manifest.yaml",
+            "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+            "inputs/architecture/arch_005_task_registry_index.yaml",
+            "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+            (
+                "registry/development_tasks/bd/"
+                "bd0967ddf0b08d45db4208c9fd8fdd604e2424d06d3b0560ba3b2fd5d56dbf88.yaml"
+            ),
+            "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+            ("src/ai_trading_system/qqq_options_research/growth_action_value_real_review.py"),
+            "tests/atlas/test_live_snapshot.py",
+            "tests/atlas/test_page_effectiveness.py",
+            "tests/test_arch_004g_deprecation.py",
+            "tests/test_arch_005_s5_task_source_cutover.py",
+            "tests/test_devx_006c_compatibility_authority.py",
+            "tests/test_devx_006d_report_catalog_flow_authority.py",
+            "tests/test_qqq_options_growth_action_value_real_review.py",
+            "tests/test_trading2452_architecture_contract.py",
+        ],
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": (
+            "trading_2542e_growth_action_value_real_review_predispatch_policy_draft.v1"
+        ),
+        "task_id": task_id,
+        "status": "BLOCKED_OWNER_EXACT_FREEZE_AND_VETO_SERIES",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_trading_2542d_growth_action_value_dq_pit_and_sample_"
+                "semantics_freeze_correction_v1"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "predispatch_contract": {
+            "policy_id": "qc_qqq_options_growth_action_value_real_review_execution_v1",
+            "policy_version": "1.0.0-draft.1",
+            "policy_status": "DRAFT_FOR_OWNER_EXACT_FREEZE",
+            "owner_exact_value_freeze_state": "PENDING_OWNER_REVIEW",
+            "exact_1202_session_pit_dq_veto_series_admitted": False,
+            "real_run_dispatch_authorized": False,
+            "authorization_consumed": False,
+            "external_counter_sum": 0,
+        },
+        "adapter_contract": {
+            "daily_option_universe_role": "PRIOR_CATALOG_AND_OPEN_INTEREST_ONLY",
+            "minute_quote_bar_end_time_role": "QUOTE_END_FRESHNESS_CLOCK",
+            "minute_trade_bar_role": "DECISION_AS_OF_CUMULATIVE_VOLUME",
+            "daily_universe_end_time_is_minute_quote_end": False,
         },
         "production_effect": "none",
         "broker_action": "none",
