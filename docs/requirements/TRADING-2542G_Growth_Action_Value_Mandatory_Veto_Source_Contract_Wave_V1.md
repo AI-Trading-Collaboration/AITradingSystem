@@ -5,7 +5,7 @@
 - task id：`TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1`；
 - priority：`P0`；
 - governed mode：`SINGLE_LANE` serial consumer-contract wave；
-- current status：`IN_PROGRESS_NON_EXECUTABLE_SOURCE_CONTRACT_DRAFT`；
+- current status：`IN_PROGRESS_NON_EXECUTABLE_PRODUCER_CONTRACT_DRAFT`；
 - Owner decision：
   `owner_decision:TRADING-2542F-2542G:2026-08-25:approve_exact_architecture_freeze_and_source_contract_followup_v1`；
 - 授权边界：只允许本地、result-blind、non-executable `DATA_RESEARCH` 合同与 synthetic
@@ -127,6 +127,43 @@ weight、backtest id 或 result-derived value。
 对每个 source 单独审阅 producer、formula category、threshold、decision-as-of/available-at、missing
 terminal 与 exact inventory。任何一个不完整，都继续 fail closed；不得因此运行真实数据或 backtest。
 
+Owner 于 2026-08-25 指示“继续推进”后，S3 先增加一个不产生 admission 的 producer-contract
+draft 子阶段。该指示允许 Codex 整理候选 producer、结构公式、PIT 时钟、输入 schema 和阈值来源，
+但不等于 Owner 已精确冻结任何公式或阈值，也不授权 series、R1 manifest、provider/cache、真实 DQ
+或 backtest。
+
+#### S3.1：四类 producer contract draft
+
+| veto | candidate producer boundary | 可直接冻结的结构 | 继续保留的 Owner blocker |
+| --- | --- | --- | --- |
+| `broad_market_risk_off_veto` | 独立 broad-market daily-price producer；候选 universe 只允许 broad-market proxy，不读取 option alpha、`growth_allowed` 或 candidate result | 输入独立性、T 日 close 后可用、T+1 消费、missing=`INSUFFICIENT`、malformed=`INVALID` | exact proxy universe、trend/drawdown 公式、窗口与阈值 |
+| `realized_volatility_veto` | 复用 `volatility_compression_free_v1` 作为 candidate evidence；QQQ adjusted-close realized vol 与 VIX percentile 均不得读取 option result | callable candidate identity、price/VIX 字段、T 日 close/发布后可用、pilot policy provenance | successor exact formula、窗口、VIX/realized-vol threshold 与组合逻辑 |
+| `scheduled_event_risk_veto` | scheduled-release calendar contract；每条事件必须有 authority、`scheduled_for`、`published_at`、revision/source identity | event taxonomy proposal、PIT 字段、仅使用决策时已发布日历、missing/malformed terminal | exact event set、pre/post window、score/boolean threshold、source precedence |
+| `underlying_trend_break_veto` | 专用 QQQ underlying daily-price producer，不复用 broad-market veto 或 option state | QQQ-only input、T 日 close 后计算、T+1 消费、无 cross-date fallback | moving-average/drawdown/trend-score 公式、窗口、阈值与 recovery/hysteresis |
+
+draft artifact 必须绑定本 V1 source-wave file/canonical SHA 和所有 candidate code/policy bytes，区分
+`STRUCTURE_PROPOSAL`、`PILOT_THRESHOLD_PROVENANCE_ONLY` 与
+`BLOCKED_OWNER_EXACT_FREEZE`。四类 row 均保持 `admitted=false`，aggregate 仍为 `0/4`；validator
+必须拒绝：
+
+- option contract、selected activity、`growth_allowed` 或 result-derived input；
+- 把 pilot threshold 标成 Owner-frozen；
+- 把 `event_date` 自动等同于 `published_at`；
+- 把 missing/malformed 解释为 veto clear；
+- 生成 boolean series、R1 manifest、真实 inventory hash 或任何交易输出。
+
+#### S3.2：验收与退出条件
+
+1. strict loader 重放 source-wave exact identity 与所有候选 evidence hash；
+2. 四个 ordered producer draft rows 具有独立 inputs、structural formula、timing、PIT 与 threshold
+   decision inventory；
+3. validator 明确输出 `OWNER_EXACT_FREEZE_REQUIRED_0_OF_4_ADMITTED`；
+4. focused/adjacent、Ruff、mypy、py_compile、Architecture/Contract/Integration/Reproducibility/Full
+   按适用门禁 PASS；
+5. Atlas 显示 producer draft 已完成、真实 source admission 仍阻塞；
+6. 下一状态仍由 Owner 对 exact producer/formula/threshold/timing 逐项冻结决定，不能由代码或测试
+   自动升级。
+
 ## 7. Path、contract 与 evidence claims
 
 task-owned paths：本 requirement、两份新 config、typed loader 与 focused tests。
@@ -187,3 +224,9 @@ evidence roles：
   2,277,444 bytes）。v2 已失败释放、未生成 candidate、未运行 Full。使用 builder 自身的 exact splitter/
   digest 只读计算新 seal=`2,277,444 bytes / 7ed40a...e33b / git blob cf275f...89a1 /
   1099 entries`，仅同步 reviewed source identity 与对应 frozen regression；不改变策略、DQ/PIT 或授权。
+- 2026-08-25：上一候选已以 `16162ad9bbd0c7c0bcc3a79c5fe38f2e8571e77b` 完成 Full
+  `9589 passed / 3 skipped` 并 ordinary-push 到 `origin/main`。Owner 随后指示“继续推进”；READ_ONLY
+  与 SINGLE_LANE START/LANE preflight 均 PASS，选择复用当前 task 的 S3 producer-contract draft
+  子阶段。该阶段只整理结构、候选 provenance 与待冻结 decision inventory，保持 admitted=`0/4`，
+  不读取 provider/cache，不生成 series/R1 manifest，不运行真实 DQ/backtest，
+  orders/fills/positions/production/broker=`0`。
