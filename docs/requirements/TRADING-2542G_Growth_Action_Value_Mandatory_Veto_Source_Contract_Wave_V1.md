@@ -247,3 +247,9 @@ evidence roles：
   仅是 callable candidate，scheduled-event 明确为 PIT incomplete，broad-market/trend producer 仍未
   callable；所有 exact threshold 保持 `null`。producer-draft + source-wave focused/adjacent=
   `36 passed`；未读取真实数据，series/R1/provider/cache/真实 DQ/backtest 与交易边界继续关闭。
+- 2026-08-25：final publication v1 的 canonical-task、architecture-manifests 与 Atlas rebuild 均已
+  通过，report-flow builder 随后以 `RCF_SOURCE_SEAL_DRIFT` 拒绝新增本节数据流后的旧
+  `docs/system_flow.md` seal（expected `2,277,444` bytes，actual `2,279,738` bytes）。v1 已失败释放，
+  未生成 candidate、未运行 Full。使用 builder 的 `EXACT_BLANK_LINE_BLOCKS_V1` 与 Git blob 算法只读
+  计算 reviewed successor seal=`2,279,738 bytes / 75804e...3590 / cf427e...067d / 1,103 entries`；
+  仅同步 source identity 与 frozen regression，不改变 veto、DQ/PIT、阈值或授权语义。
