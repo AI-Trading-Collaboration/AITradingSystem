@@ -221,3 +221,7 @@ evidence roles：
   `main=origin/main=5996affa2a458e3792cc1c06d6c383f8e7ad1298`、active lease=0、
   worktree audit PASS。选择 `SINGLE_LANE` serial contract wave；未生成 veto series/R1 manifest，
   未读取 provider/cache，未运行真实 DQ/backtest，orders/fills/positions/production/broker=0。
+- 2026-08-25：registration transaction v1 完成 canonical task registration 后，self-hosted
+  task-source focused test 机械发现 task count 仍冻结为 `1026`、实际为 `1027`；v1 以 FAIL 释放，
+  未发布、未绕过测试。v2 精确扩展 `tests/test_arch_005_s5_task_source_cutover.py` path，只同步该
+  canonical registry invariant，不改变任何策略、DQ/PIT、数据或执行语义。
