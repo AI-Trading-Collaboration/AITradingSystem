@@ -9270,33 +9270,39 @@ authority。真实证据仍只能由另一个固定 code/data identity、zero-or
 ## TRADING-2542E real-DQ / locked-backtest predispatch policy gate
 
 Project Owner 已对一次真实 DQ 与 locked zero-order backtest 复核给出 exact-scope 授权，但授权与
-executable policy completeness 分轴管理。predispatch inventory 在任何新 provider/result 可见前发现：
+executable policy completeness 分轴管理。Owner 进一步授权 Codex 起草结果前 policy pack；该流程授权
+不等于对尚未展示数值的 exact freeze。当前数据流为：
 
 ```text
 Owner exact authorization (unconsumed)
   + frozen DQ/PIT V3 and exact sheet V4
   + TRADING-2541 transport completeness = 1202/1202
-  -> executable policy inventory
-       -> qqq_options_deterministic_selection_v1.selection_authorized = false
-       -> DTE / moneyness / delta / deterministic rank = UNKNOWN_REQUIRES_POLICY_REVIEW
-       -> qqq_options_signal_export_v1.etf_signal_mapping_allowed = false
-       -> growth-state formula / effective-session mapping = not frozen
-       -> bounded QQQ/SGOV action sizing and target weights = not frozen
-       -> daily-chain quote_end and exact-prior OI source/available-at lineage = not proven
-  -> cannot build V3 per-session expected contributor manifest
-  -> cannot build a result-prelocked candidate return / turnover / event series
-  -> technical_validation_state = BLOCKED_PRE_DISPATCH_POLICY_INPUT
+  -> qc_qqq_options_growth_action_value_real_review_execution_v1 (draft.1)
+       -> selection: 1 CALL + 1 PUT; DTE 7/14/21; moneyness 0.05;
+          prior delta 0.30/0.40/0.55; V3 120s / 0.20 / OI 10 / volume 1
+       -> rank: DTE distance -> delta distance -> spread -> -OI -> -volume -> stable SID
+       -> daily OptionUniverse.Time/EndTime = prior catalog/OI source + available-at only
+       -> minute QuoteBar.EndTime = quote_end; minute TradeBar = decision-as-of volume
+       -> signal: selected call volume/OI > selected put volume/OI
+       -> effective session = next valid QQQ exchange session
+       -> action: inactive/veto 50/50 QQQ/SGOV; active 60/40; research only
+       -> typed/hash/canonical/negative validation PASS
+       -> status = DRAFT_FOR_OWNER_EXACT_FREEZE; dispatch flags remain false
+  -> hard-veto input gate
+       -> five vetoes must all be exact false; missing = INVALID
+       -> retained label series extends beyond 2025-12-02 and is secondary_cross_checked
+       -> exact 1202-session PIT+DQ veto series = BLOCKED_NO_EXACT_1202_SESSION_PIT_DQ_SERIES
+  -> technical_validation_state = DRAFT_READY_FOR_OWNER_REVIEW_WITH_EXPLICIT_VETO_INPUT_BLOCKER
   -> authorization_consumption_state = UNCONSUMED_NO_BACKTEST_DISPATCH
   -> clone mutation / save / build / backtest / provider query / order / fill = 0
 ```
 
-不得以“全链全部是 contributor”、结果后挑选 contract、latest OI 冒充 exact-prior OI、event time
-冒充 quote-end，或自创 QQQ/SGOV 权重作为 workaround。下一合法节点是：在任何真实结果可见前新增并
-由 Owner review 的 versioned policy pack，精确冻结 contributor eligibility/rank、derived options
-growth-state 与有效 session、action sizing，以及 provider timestamp/OI adapter lineage。只有该 policy
-进入 authority、exact candidate/R1 manifest 完成验证和 ordinary publication 后，才允许消费唯一
-external run。Atlas current mainline/blocker/next action 均投影 TRADING-2542E；这次页面变化不运行数据、
-回测或交易。
+LEAN `BaseChainUniverseData.EndTime=Time+OneDay` 只证明 universe row available-at；`OptionUniverse`
+row 不含 bid/ask quote timestamp，因此不能再把日级 `Time/EndTime` 冒充 V3 的 120 秒 quote clock。
+下一合法节点是 Owner 对上列 exact values/formulas 作出 exact freeze，并允许生成/接纳 exact 1202-session
+PIT+DQ veto series。两项都满足、policy 与 candidate/R1 manifest 普通发布且 replay PASS 后，才允许消费
+唯一 external run。Atlas current mainline/blocker/next action 继续投影 TRADING-2542E；本次草案不读取
+provider/cache、不运行回测或交易，external counters 全为 0。
 
 ## Coordinator integration publication fence（DEVX-009）
 

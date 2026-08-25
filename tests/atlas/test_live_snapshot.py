@@ -41,7 +41,7 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
-    assert bundle.research_state_as_of.startswith("2026-08-24T")
+    assert bundle.research_state_as_of.startswith("2026-08-25T")
     assert bundle.evidence_evaluated_at is None
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
@@ -108,9 +108,8 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
-        "真实 DQ 与锁定回测已获范围授权但尚未消费；当前缺少结果前冻结的 "
-        "contributor、options growth-state、QQQ/SGOV action sizing 与 "
-        "provider timestamp/OI lineage policy"
+        "真实 DQ 与锁定回测授权尚未消费；selection/signal/weight/minute-provider 草案已完成"
+        "本地验证，当前等待 Owner exact freeze，并缺 exact 1202-session PIT+DQ hard-veto series"
     )
 
 

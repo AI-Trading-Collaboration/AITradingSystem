@@ -1,0 +1,233 @@
+schema_version: qc_qqq_options_growth_action_value_real_review_execution_policy.v1
+policy_id: qc_qqq_options_growth_action_value_real_review_execution_v1
+policy_version: 1.0.0-draft.1
+status: DRAFT_FOR_OWNER_EXACT_FREEZE
+task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
+owner_process_authorization:
+  decision_id: owner_decision:TRADING-2542E:2026-08-25:authorize_policy_pack_drafting_and_continue_review_v1
+  drafting_authorized: true
+  exact_value_freeze_state: PENDING_OWNER_REVIEW
+  real_run_scope_authorized: true
+  real_run_dispatch_authorized: false
+  authorization_consumption_state: UNCONSUMED_NO_BACKTEST_DISPATCH
+  rationale: >-
+    Owner authorized preparation of one result-blind policy pack and continuation of
+    review. Unseen investment-facing values remain proposals until the Owner freezes
+    this exact version; a real dispatch cannot consume the standing single-run scope
+    before that decision.
+policy_metadata:
+  owner: project_owner_and_strategy_research_governance
+  prepared_by: codex_research_coordinator
+  rationale: >-
+    Close the predispatch contributor, options-state, research-weight and provider-time
+    gaps without editing frozen DQ/PIT V3 or exact sheet V4 and without inferring minute
+    quote time from daily OptionUniverse availability.
+  intended_effect: >-
+    Make every candidate-forming input visible and deterministic before the only real
+    run, while keeping the proposal non-dispatchable and fail closed on missing PIT,
+    defensive-veto or exact-session evidence.
+  validation_plan: >-
+    Validate exact authority hashes, typed schema, threshold inheritance, chronological
+    source mapping, deterministic rank, signal/action formulas, single-use action maxima,
+    canonical serialization, tamper rejection and all safety flags before Owner review.
+  review_condition: >-
+    Owner must review and freeze the exact draft version, all values and every named
+    formula before a candidate or R1 manifest may become dispatchable.
+  expiry_condition: >-
+    Draft expires on any bound authority, LEAN engine/tier, primary-window, provider
+    timestamp, defensive-veto source or project identity change; a change requires a
+    new version and another exact Owner freeze.
+authority_bindings:
+  dq_pit_v3:
+    path: config/research/strategy_growth_action_value_canonical_dq_pit_contract_v3.yaml
+    file_sha256: 96eafe7525704a8e0e260c9ed344adf3420f7e1c977e877a557856258fee3144
+    canonical_sha256: e8e180b147e1a88dad3776f886b8eb7398481b1518785b6a2243ae795f4a6ede
+    immutable: true
+  exact_sheet_v4:
+    path: config/research/strategy_growth_action_value_threshold_exact_value_sheet_v4.yaml
+    file_sha256: c90c4cc22b8918e90641bf0553416a68458433bea750bd2064fcf98df7886215
+    canonical_sha256: 00198bb84cd57f518d0370035b5a5a38b12c9804880d7bf1e475ddd80a77bfc2
+    immutable: true
+  exposure_matched_comparator:
+    path: config/research/exposure_matched_no_signal_comparator_contract_v1.yaml
+    file_sha256: 4ced9407b8b8bca7b973c34016868fbf3151017bcc0b8ab67db449a0fed3b850
+    accepted_role: EXACT_FORMULA_INPUT_PENDING_SAME_OWNER_FREEZE
+  historical_selection_source:
+    path: config/research/qc_qqq_options_bounded_cloud_pilot_owner_review_proposal_v1.yaml
+    file_sha256: 9b3e50731663871e01626f0360c717ecdd14278c63f81e74ed79c4c2fd4041de
+    accepted_role: HISTORICAL_VALUE_SOURCE_ONLY_NOT_CURRENT_AUTHORITY
+  risk_veto_policy:
+    path: config/research/risk_on_veto_policy.yaml
+    file_sha256: f4d3486a3043786bbb034f002eb0b3c2f97c480499f56492bd54482adad5da40
+    accepted_role: VETO_TAXONOMY_ONLY_SERIES_REQUIRES_SEPARATE_EXACT_ADMISSION
+scope_binding:
+  hypothesis_id: BASELINE_BOUNDED_QQQ_GROWTH_OVERLAY_NON_BETA_ACTION_VALUE_V1
+  selected_data_lane: QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE
+  baseline_id: equal_risk_qqq_sgov
+  comparator_id: exposure_matched_no_signal
+  action_universe: [QQQ, SGOV]
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  expected_session_count: 1202
+  target_session_inventory_lf_sha256: d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0
+  pre_window_prior_session: '2021-02-19'
+  random_seed: 2542
+  bootstrap_resamples: 10000
+provider_adapter:
+  provider: QuantConnect_US_Equity_Options_AlgoSeek
+  storage_timezone: UTC
+  exchange_timezone: America/New_York
+  catalog_and_open_interest:
+    source_type: OptionUniverse
+    source_date_field: Time
+    available_at_field: EndTime
+    exact_available_at_rule: END_TIME_EQUALS_TIME_PLUS_ONE_CALENDAR_DAY
+    target_session_catalog_rule: PREVIOUS_QQQ_EXCHANGE_SESSION_SOURCE_ROW
+    target_session_open_interest_rule: PREVIOUS_QQQ_EXCHANGE_SESSION_SOURCE_ROW
+    first_target_source_row: '2021-02-19'
+    exact_source_date_required: true
+    cross_date_fallback_allowed: false
+    current_session_open_interest_allowed: false
+  quote:
+    source_type: MINUTE_QUOTE_BAR
+    bid_field: Bid.Close
+    ask_field: Ask.Close
+    quote_end_field: EndTime
+    available_at_field: DELIVERY_FRONTIER_UTC
+    source_date_rule: QUOTE_BAR_EXCHANGE_DATE_EQUALS_TARGET_SESSION
+    decision_time_new_york: '15:59:00'
+    last_completed_bar_only: true
+    max_quote_age_seconds: 120
+    daily_option_universe_time_as_quote_end_allowed: false
+  volume:
+    source_type: MINUTE_TRADE_BAR
+    field: Volume
+    aggregation: SUM_FROM_REGULAR_SESSION_OPEN_THROUGH_DECISION_AS_OF_INCLUSIVE
+    available_at_field: DELIVERY_FRONTIER_UTC
+    source_date_rule: TRADE_BAR_EXCHANGE_DATE_EQUALS_TARGET_SESSION
+    end_of_day_or_revised_volume_allowed: false
+  missing_or_timestamp_drift_outcome: INVALID
+contributor_selection:
+  policy_state: PROPOSED_OWNER_REVIEW_REQUIRED
+  option_rights: [CALL, PUT]
+  selected_contract_count_per_right: 1
+  total_expected_contributor_count_per_session: 2
+  eligibility_order:
+    - EXACT_PRIOR_CATALOG_AND_OI
+    - RIGHT
+    - DTE
+    - ABSOLUTE_MONEYNESS_DEVIATION
+    - ABSOLUTE_PRIOR_DAY_DELTA
+    - SAME_SESSION_QUOTE_DOMAIN_AND_AGE
+    - SAME_SESSION_RELATIVE_SPREAD
+    - PRIOR_SESSION_OPEN_INTEREST
+    - DECISION_AS_OF_CUMULATIVE_VOLUME
+  min_dte: 7
+  target_dte: 14
+  max_dte: 21
+  max_abs_moneyness_deviation: '0.05'
+  min_abs_prior_day_delta: '0.30'
+  target_abs_prior_day_delta: '0.40'
+  max_abs_prior_day_delta: '0.55'
+  max_quote_age_seconds: 120
+  max_relative_spread: '0.20'
+  min_prior_session_open_interest: 10
+  min_decision_as_of_cumulative_volume: 1
+  deterministic_rank_components:
+    - ABSOLUTE_DTE_DISTANCE
+    - ABSOLUTE_DELTA_DISTANCE
+    - RELATIVE_SPREAD
+    - NEGATIVE_PRIOR_SESSION_OPEN_INTEREST
+    - NEGATIVE_DECISION_AS_OF_CUMULATIVE_VOLUME
+    - STABLE_OPTION_SID
+  expected_manifest_rule: SORTED_UNIQUE_SELECTED_CALL_AND_PUT_SID_HASH_ONLY
+  raw_or_hashed_sid_export_allowed: false
+  missing_either_right_outcome: INSUFFICIENT
+  invalid_row_before_exclusion_outcome: INVALID
+growth_state_mapping:
+  policy_state: PROPOSED_OWNER_REVIEW_REQUIRED
+  source_session_rule: TARGET_SESSION_MINUTE_DATA_THROUGH_15_59_NEW_YORK
+  selected_call_activity_formula: CALL_DECISION_AS_OF_CUMULATIVE_VOLUME_DIVIDED_BY_CALL_PRIOR_SESSION_OPEN_INTEREST
+  selected_put_activity_formula: PUT_DECISION_AS_OF_CUMULATIVE_VOLUME_DIVIDED_BY_PUT_PRIOR_SESSION_OPEN_INTEREST
+  activation_rule: CALL_ACTIVITY_STRICTLY_GREATER_THAN_PUT_ACTIVITY
+  equality_rule: GROWTH_INACTIVE
+  active_state: GROWTH_ACTIVE
+  inactive_state: GROWTH_INACTIVE
+  effective_session_rule: NEXT_VALID_QQQ_EXCHANGE_SESSION
+  signal_lag_sessions: 1
+  missing_input_outcome: INSUFFICIENT
+  invalid_input_outcome: INVALID
+  same_session_weight_application_allowed: false
+action_sizing:
+  policy_state: PROPOSED_OWNER_REVIEW_REQUIRED
+  baseline_research_weights: {QQQ: '0.50', SGOV: '0.50'}
+  growth_active_research_weights: {QQQ: '0.60', SGOV: '0.40'}
+  growth_inactive_research_weights: {QQQ: '0.50', SGOV: '0.50'}
+  any_hard_veto_active_research_weights: {QQQ: '0.50', SGOV: '0.50'}
+  maximum_qqq_increment_over_baseline: '0.10'
+  weight_sum_required: '1.00'
+  long_only: true
+  uses_leverage_etf: false
+  uses_options_position: false
+  borrowed_leverage_allowed: false
+  effective_timing: PRIOR_SESSION_SIGNAL_FOR_NEXT_SESSION_OPENING_RESEARCH_WEIGHTS
+  derived_fill_rule: DIFFERENCE_BETWEEN_OPENING_PRE_TRADE_AND_TARGET_NOTIONAL_AT_SESSION_OPEN
+  lean_order_api_allowed: false
+  official_target_weights: false
+defensive_veto_input:
+  required: true
+  taxonomy_policy_id: risk_on_veto_policy_v1
+  required_veto_types:
+    - risk_off_veto
+    - volatility_veto
+    - event_risk_veto
+    - trend_break_veto
+    - tqqq_veto
+  candidate_growth_allowed_rule: ALL_REQUIRED_VETOES_EXACTLY_FALSE
+  missing_veto_interpreted_as_clear: false
+  missing_or_non_pit_veto_outcome: INVALID
+  current_series_admission_state: BLOCKED_NO_EXACT_1202_SESSION_PIT_DQ_SERIES
+  required_before_exact_freeze: >-
+    Bind one exact 2021-02-22..2025-12-02 boolean series with source code/data
+    hashes, available-at timestamps and a visible DQ gate; retained diagnostic
+    output ending after 2025-12-02 is not admitted by this draft.
+external_scope:
+  platform: QuantConnect
+  target_clone_project_id: 35444189
+  original_project_id: 34808569
+  maximum_existing_clone_mutations: 1
+  maximum_saves: 1
+  maximum_candidate_builds: 1
+  maximum_zero_order_backtests: 1
+  maximum_retries: 0
+  maximum_new_clones: 0
+  maximum_exact_date_provider_queries: 1
+  exact_date_provider_query_source_date: '2022-08-26'
+  original_project_mutations: 0
+  raw_option_rows_exported: 0
+  contract_identifiers_exported: 0
+  object_store_writes: 0
+  public_shares: 0
+  orders: 0
+  fills: 0
+  positions: 0
+safety:
+  proposal_only: true
+  policy_values_frozen: false
+  candidate_generation_allowed: false
+  manifest_generation_allowed: false
+  cache_read_authorized: false
+  provider_query_authorized: false
+  real_run_dispatch_authorized: false
+  result_visible_when_values_selected: false
+  parameter_search_allowed: false
+  threshold_after_result_allowed: false
+  raw_option_rows_allowed: false
+  order_generation_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

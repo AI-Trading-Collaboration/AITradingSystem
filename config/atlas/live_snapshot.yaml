@@ -9,7 +9,7 @@ classified_through_task_id: TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READE
 current_mainline_task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
 largest_blocker_task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
 next_legal_action_task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
-status_object_zh: 真实 DQ 与锁定回测已获范围授权但尚未消费；当前缺少结果前冻结的 contributor、options growth-state、QQQ/SGOV action sizing 与 provider timestamp/OI lineage policy
+status_object_zh: 真实 DQ 与锁定回测授权尚未消费；selection/signal/weight/minute-provider 草案已完成本地验证，当前等待 Owner exact freeze，并缺 exact 1202-session PIT+DQ hard-veto series
 evidence_evaluated_at: null
 task_status_mapping:
   DONE: PASS

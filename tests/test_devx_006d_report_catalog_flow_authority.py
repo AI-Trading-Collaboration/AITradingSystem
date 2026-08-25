@@ -183,12 +183,12 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
             "1e24f6155953cb89f6854a252504c50d2f544fe350b03d32c2fe05830e82c5be",
             558,
         ),
-        (
-            "system_flow",
-            "docs/system_flow.md",
-            "f35ca3fd74327c30fd41cf97c7b0a1a5af613e00dae0a2c52d745bb281f5c580",
-            1090,
-        ),
+            (
+                "system_flow",
+                "docs/system_flow.md",
+                "d5c848fdf435b3dd98d50241a8f0f68295d48e9151179b0c82d3baea0e979678",
+                1090,
+            ),
     ],
 )
 def test_each_shadow_render_is_byte_identical_and_fully_covered(

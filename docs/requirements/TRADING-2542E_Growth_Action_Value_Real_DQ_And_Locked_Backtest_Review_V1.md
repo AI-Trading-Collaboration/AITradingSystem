@@ -29,6 +29,13 @@ governed mode：`SINGLE_LANE`
 Owner decision id：
 `owner_decision:TRADING-2542E:2026-08-25:authorize_one_locked_real_dq_and_zero_order_backtest_review_v1`。
 
+同日，Project Owner 进一步回复“授权”，批准 Codex 先起草并校验结果前 policy pack，再继续复核。
+该流程授权固定为：
+`owner_decision:TRADING-2542E:2026-08-25:authorize_policy_pack_drafting_and_continue_review_v1`。
+它解除“是否允许准备草案”的阻塞，但不把尚未向 Owner 展示的 selection、signal 或 target-weight
+数值视为已逐项审阅。任何真实 backtest dispatch 仍须等待一个 exact-value freeze decision；在该决定
+前 authorization 保持未消费、外部计数保持 0。
+
 ## 2. 上游 authority 与不可变身份
 
 - DQ/PIT V3：
@@ -117,10 +124,39 @@ joint precedence 固定为 `INVALID > FAIL > INSUFFICIENT > PASS`；不允许七
 
 ## 6. 分阶段实施
 
+### 6.0 Owner exact-freeze 草案（结果前）
+
+草案 authority：
+`config/research/qc_qqq_options_growth_action_value_real_review_execution_v1.yaml`；状态严格为
+`DRAFT_FOR_OWNER_EXACT_FREEZE`，file/canonical SHA-256 分别为
+`03edd3868da276be69652cd9854f0201934a6cf2fa4eb5c40bfcfb4ff06206c1` /
+`7daa5d1cb212051aab34d2af6477ee410ea8492f62c74da7417174ec3586e717`。
+
+Owner 需要一次性复核的 exact surface：
+
+| surface | proposed exact value / formula |
+| --- | --- |
+| contributor | 每 session 精确选 `1 CALL + 1 PUT`；DTE=`7/14/21`；abs moneyness `<=0.05`；prior-day abs delta=`0.30/0.40/0.55`；quote age `<=120s`；spread `<=0.20`；exact-prior OI `>=10`；decision-as-of volume `>=1` |
+| deterministic rank | `DTE distance -> delta distance -> spread -> -prior OI -> -decision volume -> stable SID`；manifest 只保存 sorted/unique selected-pair checksum，禁止导出 SID |
+| provider time | prior catalog/OI 只取前一 QQQ exchange session 的日级 `OptionUniverse.Time` row，`EndTime=Time+1 day` 为 available-at；quote 只取 target session 最后完成的 minute `QuoteBar`，decision=`15:59 America/New_York`；volume 只累计 minute `TradeBar` 至该 decision |
+| growth state | `call_activity=call cumulative volume/call prior OI`；`put_activity=put cumulative volume/put prior OI`；仅当 call activity 严格大于 put activity 时为 `GROWTH_ACTIVE`，相等为 inactive；信号只在下一有效 QQQ session 生效 |
+| action sizing | baseline/inactive/hard-veto=`QQQ 0.50 + SGOV 0.50`；growth active=`QQQ 0.60 + SGOV 0.40`；QQQ 最大增量=`0.10`；只生成 research weights 与 fills-equivalent trace，不调用 LEAN order API，不是 official weights |
+| hard veto | `risk_off/volatility/event_risk/trend_break/tqqq` 五类必须全部 exact false 才允许 growth；missing 不得解释为 clear，结果为 `INVALID` |
+| external/safety | clone=`35444189`、original=`34808569`；mutation/save/build/backtest/query maxima=`1/1/1/1/1`，retry/new clone/orders/fills/positions/raw rows/SID export=`0`；freeze 前 candidate/manifest/provider/dispatch 全部 false |
+
+当前 retained `risk_on_veto_labels_v3.csv` 延伸到 `2026-06-26`，其 summary 为
+`secondary_cross_checked`，不是本任务所需 exact `2021-02-22..2025-12-02 / 1202-session` PIT+DQ
+boolean series，因此草案明确记录
+`BLOCKED_NO_EXACT_1202_SESSION_PIT_DQ_SERIES`。这不是把 missing 当 false；exact freeze 后必须先生成或
+接纳 hash-bound veto series，无法满足时在真实 dispatch 前 typed stop。
+
 ### S0：任务与授权合同
 
 - canonical task registration 与本 requirement；
-- 新建 versioned R1 execution manifest、run scope、typed validator 和 negative tests；
+- 先新建 `DRAFT_FOR_OWNER_EXACT_FREEZE` 的 versioned policy pack、typed validator 和 negative tests；
+- 草案必须把每个 selection、signal、action-size、provider-time 与 defensive-veto 输入值一次性展示给
+  Owner；逐项 freeze 前不得生成可 dispatch 的 R1 manifest；
+- exact freeze 后再新建 versioned R1 execution manifest 与 run scope；
 - 记录 exact code/data identity、action maxima、zero-order/zero-fill boundary 与退出条件。
 
 ### S1：locked candidate
@@ -182,6 +218,9 @@ joint precedence 固定为 `INVALID > FAIL > INSUFFICIENT > PASS`；不允许七
   `etf_signal_mapping_allowed=false`；preregistration 只定义“bounded QQQ/SGOV reallocation”，没有
   冻结 growth-state formula、trigger、目标 QQQ/SGOV 权重或 action sizing。因此无法构造 V3 要求的
   per-session expected contributor manifest，也无法形成结果前锁定的 candidate return series。
+- 2026-08-25：Owner 已授权起草 policy pack 并继续复核。该授权只推进草案与本地验证，不替代对
+  未展示数值的 exact freeze。治理状态先转为 `IN_PROGRESS`；真实 run authorization consumption 仍为
+  `UNCONSUMED_NO_BACKTEST_DISPATCH`，所有 external counters 仍为 0。
 - 2026-08-25：QuantConnect 官方 Equity Options handling-data 文档说明 `OptionContract.open_interest`
   是每日计算一次的 latest value，并另提供 `History<OpenInterest>` 获取历史 OI，但没有证明当前 daily
   chain 属性本身携带 V3 所要求的 exact-prior-session source/available-at identity；同页示例可读取
@@ -191,6 +230,22 @@ joint precedence 固定为 `INVALID > FAIL > INSUFFICIENT > PASS`；不允许七
   `https://www.quantconnect.com/docs/v2/writing-algorithms/historical-data/asset-classes/equity-options`。
   在这些语义被 versioned adapter contract 明确前，不能把 event time 或 latest OI 静默当作 frozen
   V3 的 quote-end/exact-prior evidence。
+- 2026-08-25：进一步核对 LEAN 官方源码后确认，`BaseChainUniverseData.EndTime` 明确定义为
+  `Time + OneDay`，语义是 universe row 的 available-at；`OptionUniverse`/base row 只提供 OHLC、
+  volume、open interest、IV 与 Greeks，不提供 bid/ask `QuoteBar.EndTime`。LEAN option data format
+  另明确 quote 与 trade 数据是 minute 数据。因此 2541 的日级 `Time/EndTime` 不能被静默解释为
+  V3 的 120 秒 `quote_end` 证据。adapter 草案必须把日级 `OptionUniverse` 限于 prior-session
+  catalog/OI，并把 same-session quote/volume 绑定到 minute `QuoteBar`/`TradeBar` 的真实 end time；
+  minute lineage 或 exact-prior row 不可得时必须 typed fail closed。
+- 2026-08-25：`DRAFT_FOR_OWNER_EXACT_FREEZE` policy、strict typed loader、authority-hash replay、
+  canonical seal 和 negative tests 已完成。exact policy file/canonical SHA-256 为
+  `03edd3868da276be69652cd9854f0201934a6cf2fa4eb5c40bfcfb4ff06206c1` /
+  `7daa5d1cb212051aab34d2af6477ee410ea8492f62c74da7417174ec3586e717`；focused=`12 passed`，
+  与 DQ V3、V4、measurement、2541 recovery 相邻回归=`90 passed`，Ruff 与 strict mypy PASS。
+  Atlas live/page/cited/historical 非 stale-page 聚焦回归=`46 passed`；exact-commit canonical page
+  检查保留到 candidate commit 后重建再完整运行，不以 skip 或弱化断言替代。
+  loader terminal 为 `DRAFT_READY_FOR_OWNER_REVIEW_WITH_EXPLICIT_VETO_INPUT_BLOCKER`；未运行 provider、
+  cache、QuantConnect 或 backtest，authorization 未消费、external counters 全为 0。
 - 2026-08-25：本次 external authorization 保持
   `EXACT_PREAUTHORIZED / UNCONSUMED_NO_BACKTEST_DISPATCH`；technical state 为
   `BLOCKED_PRE_DISPATCH_POLICY_INPUT`。clone mutation/save/build/backtest/provider query/order/fill
@@ -217,3 +272,9 @@ joint precedence 固定为 `INVALID > FAIL > INSUFFICIENT > PASS`；不允许七
   validation 自身 PASS，未发生研究语义、DQ 或策略失败。失败证据为
   `outputs/validation_runtime/full_20260824T180511Z/test_runtime_summary.json`；v4 以该 artifact 为 exact
   parent，只同步两项 coverage expectation 并执行 parent-bound `failure_fix_rerun`。
+- 2026-08-25：Owner 对 policy-pack drafting 的后继授权已绑定到 publication transaction
+  `trading-2542e-policy-draft-20260825-v2`。canonical task source、architecture manifests、report-flow
+  authority 与 compatibility authority 已按固定顺序重建；159 项并行 policy/adjacent/governance/Atlas
+  聚焦回归仅发现 `system_flow` shadow test 的旧静态 SHA，按新 source seal 同步后该组 15 项通过。
+  这次修正只更新审计身份，不改变 policy 数值、DQ/PIT、strategy result 或外部授权消费状态；provider、
+  cache、clone mutation/save/build/backtest/query/order/fill/position 计数继续全部为 0。

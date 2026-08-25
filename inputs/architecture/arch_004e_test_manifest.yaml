@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1313
-test_count: 1253
+test_file_count: 1314
+test_count: 1254
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_live_snapshot
   path: tests/atlas/test_live_snapshot.py
-  sha256: 6b9b8cf96d52107d17a49ca85199deb7394fc35eb5f19ba4da5715318b4931af
+  sha256: 6bf4aefc770420468aed09f3d9d0beef62de4461beb81a977e1a915c657ad59c
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -203,7 +203,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_page_effectiveness
   path: tests/atlas/test_page_effectiveness.py
-  sha256: a99c44edc00c36396b96217f8418115f36ae83dc8267466db79b2da2ef911589
+  sha256: b21e9971b776f2db9c8ef7008a4aec31c4a626d2a579af6fb83b5dc822d65c58
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -15025,6 +15025,22 @@ tests:
 - test_id: tests.test_qqq_options_final_never_chain_provider_transport_attribution_proposal
   path: tests/test_qqq_options_final_never_chain_provider_transport_attribution_proposal.py
   sha256: 1cd346ecd1c1a4849f77422428247170adbf32a1a324679fbb8bb1f1ef8459ac
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_qqq_options_growth_action_value_real_review
+  path: tests/test_qqq_options_growth_action_value_real_review.py
+  sha256: 03b73eae9e803dfa49b582453a04ee1d6a9cf565881ced93d6493b5d20c1e2c7
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
