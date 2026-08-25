@@ -416,3 +416,12 @@ evidence roles：
   本波次只刷新与实际仓库计数一致的 deterministic removal-blocking ratchet，不改变任何弃用 lifecycle、
   veto 语义、DQ/PIT、阈值或授权边界。修正后必须以新 candidate 与新 publication transaction 重跑全部
   formal tiers。
+- 2026-08-26：publication v2 acquire 命令误用了 PowerShell 保留变量 `$args`，导致 immutable
+  transaction 只登记了末端 resource paths、未登记 owned paths 与 generator order；
+  `GENERATED_REBUILD_PRE` 以 `PUBLICATION_GENERATOR_ORDER_MISMATCH` 正确拒绝。由于同一 shell 行仍继续
+  启动了 architecture generator，产生的唯一 tracked byte 是
+  `inputs/architecture/arch_004e_test_manifest.yaml` 中上述测试文件 SHA 的确定性刷新；该 byte 已以
+  incident-preservation commit `cffce3b0d` 保存，但不作为合格 generated evidence。v2 在 worktree 恢复
+  clean 后按 FAIL 释放；后续 v3 必须使用非保留参数变量、先重放 transaction claims，再从五项 generator
+  顺序的第一项完整重建。未读取 known-unrelated 文件、provider/cache 或真实数据，未触发 DQ/backtest/
+  execution/broker。
