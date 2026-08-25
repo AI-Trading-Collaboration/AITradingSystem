@@ -278,3 +278,11 @@ boolean series，因此草案明确记录
   聚焦回归仅发现 `system_flow` shadow test 的旧静态 SHA，按新 source seal 同步后该组 15 项通过。
   这次修正只更新审计身份，不改变 policy 数值、DQ/PIT、strategy result 或外部授权消费状态；provider、
   cache、clone mutation/save/build/backtest/query/order/fill/position 计数继续全部为 0。
+- 2026-08-25：v2 candidate `5b33bb5c6c0c8ad9e324b3463670abacc24feff9` 的 Atlas exact-commit
+  rebuild 17 个产物、页面 20 项聚焦验证均 PASS；Architecture 正式档为 `876 passed / 2 failed`。
+  两项失败分别是新增一个 module/test 后 deprecation inventory 的旧静态 identity/count，以及在更新
+  report-flow test source seal 后尚未再次生成的 test manifest，均不涉及 policy、DQ/PIT 或策略语义。
+  失败证据固定为
+  `outputs/validation_runtime/architecture-fitness_20260825T013154Z/test_runtime_summary.json`；v2 已失败
+  释放。v3 扩展 exact `tests/test_arch_004g_deprecation.py` path，同步 inventory identity/count 并重新生成
+  architecture manifests 后再从 Architecture 开始完整验证；外部运行与授权消费计数保持 0。
