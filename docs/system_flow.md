@@ -9500,6 +9500,33 @@ exclusive、pairwise/Jaccard、union、episode、recovery、event-only、alpha-a
 FAIL/INSUFFICIENT/INVALID descriptive schema；不得包含 weights、returns 或 V4 result。下一合法动作是
 Owner 对全部四项 V2 bytes 分别 exact-freeze 或退回修改；partial freeze 仍不得生成 series。
 
+### TRADING-2542G S4B Owner exact-semantics freeze admission
+
+Owner 的后续“继续吧”在已展示的两份 S4A V2 exact file/canonical SHA 上重放，只接纳 immutable
+calculation/time/state 与四项 veto semantics；它不把 draft 原文件改写为 frozen status，也不等于 producer、
+observed inventory、DQ 或 series admission。独立
+`growth_action_value_mandatory_veto_exact_semantics_freeze_admission.v1` 同时绑定两份 authority，并把
+Owner freeze 与 runtime/source readiness 拆成两个机械状态。
+
+```text
+immutable S4A calculation semantics + four typed V2 objects
+  -> exact file/canonical identity replay
+  -> atomic Owner freeze = 4 / 4
+       broad SPY / VIX+QQQ volatility / official event / QQQ stateful trend
+  -> producer callable + synthetic conformance admitted = 0 / 4
+  -> exact 1202-session observed inventory admitted = 0 / 4
+  -> series generation = false
+  -> terminal = OWNER_EXACT_FROZEN_4_OF_4_PRODUCER_UNADMITTED_0_OF_4
+  -> next exact-base wave = non-executable synthetic producer/adapters only
+  -> provider / cache / real DQ / backtest / orders / fills / positions / production / broker = 0
+```
+
+本 serial wave 必须先独立发布；producer/adapters consumer wave 只能从其新的 exact main base 开始。
+因此 Owner freeze 消除了“公式和状态机是否获准”的阻塞，但仍保留四个真实 source-readiness 阻塞：
+dedicated SPY producer、VIX/QQQ successor adapter conformance、official-event PIT coverage adapter，以及
+QQQ stateful producer/checkpoint replay。任何 partial row、伪造 inventory SHA、missing-as-false 或外部/
+execution flag 开启都由 strict loader fail closed。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

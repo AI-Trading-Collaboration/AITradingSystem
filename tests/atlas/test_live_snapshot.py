@@ -108,11 +108,12 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
-        "四项 mandatory veto 已进入 S4A exact-semantics V2 draft：SPY broad-market、"
-        "VIX/QQQ volatility、official scheduled-event 与 QQQ trend-break 的 operator、"
-        "rolling、PIT/revision/coverage 和 state transition 已改为 typed contract；"
-        "V2 bytes 尚未 Owner exact-freeze，Owner-frozen/admitted 仍为 0/4，producer、"
-        "series、R1 manifest、真实 DQ 与 backtest 继续关闭"
+        "四项 mandatory veto 的 S4A V2 operator、rolling、PIT/revision/coverage 与 "
+        "state transition 已由 Owner exact-freeze 4/4；S4B 正以独立 immutable admission "
+        "artifact 发布该决策，但 producer callable/synthetic conformance 与 exact-1202 "
+        "observed inventory 仍为 0/4，series、R1 manifest、provider/cache、真实 DQ 与 "
+        "backtest 继续关闭；下一合法动作是从 S4B 新 exact main base 启动 non-executable "
+        "synthetic producer/adapters wave"
     )
 
 

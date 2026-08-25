@@ -386,6 +386,14 @@ evidence roles：
   main=origin/main=`79427bb32c1e57a818d901f154ebdcdecb07add9`、active lease=0。选择最小 serial
   freeze-admission wave；synthetic producer/adapters 必须从本波发布后的新 exact base 另行开始，真实数据、
   provider/cache、DQ/backtest/series 与 orders/fills/positions/production/broker 仍未授权。
+- 2026-08-26：S4B freeze-admission file/canonical SHA-256=
+  `ef075527750efd24433eafbd8a2e586104562868f4ce2b666043069fe5368765`/
+  `97f3678417b5dcb0a4965a308953552d17d17e4cb947532316dceca2506df147`；strict loader 递归重放
+  S4A V2 与 calculation-semantics exact identities，aggregate=`OWNER_EXACT_FROZEN_4_OF_4_PRODUCER_UNADMITTED_0_OF_4`。
+  freeze-admission + S4A V2 + source-wave adjacent=`62 passed`，Ruff、strict mypy、py_compile PASS；
+  Owner freeze 与 producer/inventory admission 已机械分离，provider/cache/真实数据/series/R1/DQ/backtest/
+  orders/fills/positions/production/broker 仍为 0。正式 formal tiers 与 generated authority freshness 绑定
+  最终 publication candidate 运行。
 
 - 2026-08-25：Owner 同意已解释的后续方案，并精确冻结 architecture/compatibility 上述四项 SHA；
   READ_ONLY audit 确认 main=origin/main=`1a3c3ef6eb51292de25bcf452aeacf4f0d20f012`、active
