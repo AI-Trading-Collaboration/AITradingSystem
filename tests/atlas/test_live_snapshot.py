@@ -104,13 +104,14 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2542F_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2542G_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
-        "veto / option-signal result-blind architecture 草案已验证；DQ、action guard、四项独立 "
-        "market-state veto、option alpha 与 optional option-risk diagnostic 已分层，当前等待 "
-        "Owner exact freeze，series、manifest、真实 DQ 与 backtest 继续关闭"
+        "veto / option-signal architecture 与 compatibility map 已按 exact identity 冻结；四项 "
+        "mandatory source 已拆分为 architecture readiness、candidate evidence 与 successor "
+        "admission，当前 admitted=0/4，缺 independent producer、formula/threshold、timing 或 "
+        "exact inventory 时在 R1 manifest 前停止，series、真实 DQ 与 backtest 继续关闭"
     )
 
 

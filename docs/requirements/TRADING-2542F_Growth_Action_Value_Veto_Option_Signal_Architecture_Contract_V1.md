@@ -252,3 +252,10 @@ evidence roles：
   Atlas coverage 后实际为 `72`。v3 已以失败 Full artifact
   `outputs/validation_runtime/full_20260825T075816Z/test_runtime_summary.json` 释放；v4 精确新增该测试 path、
   绑定 parent artifact，并仅同步 71→72 后以 `failure_fix_rerun` 重跑 Full。无策略语义、真实数据或执行变更。
+- 2026-08-25：Owner 精确冻结 architecture file/canonical SHA-256=
+  `9b4856614298d64b2c8b5897980735a9e2a19c46fecb6c2362cb750ae13b136d`/
+  `88e1283b0333bafca24779c9c527d362acef40b65d4cff1a9d081ded07ac70e4` 与 compatibility
+  file/canonical SHA-256=`c5867551aec4f152256219e4fb19b7c52ec5a6b7f8d8c316961d33a75749679d`/
+  `067a6b23daa1bfff22a6d4f4fcb773346a7d866e21cf2adb759acde75d04f524`，并批准按既定边界进入
+  独立的 TRADING-2542G source-contract wave。授权仍仅限 non-executable DATA_RESEARCH；未授权
+  series/R1 manifest/provider/cache/真实 DQ/backtest/orders/fills/positions/production/broker。

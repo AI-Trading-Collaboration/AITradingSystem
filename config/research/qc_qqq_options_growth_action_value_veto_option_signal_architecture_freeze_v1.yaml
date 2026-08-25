@@ -1,0 +1,60 @@
+schema_version: growth_action_value_veto_option_signal_architecture_freeze.v1
+freeze_id: qc_qqq_options_growth_action_value_veto_option_signal_architecture_freeze_v1
+freeze_version: 1.0.0
+status: OWNER_EXACT_FROZEN_NON_EXECUTABLE_SOURCE_CONTRACT_WAVE_ONLY
+task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+owner_instruction:
+  decision_id: owner_decision:TRADING-2542F-2542G:2026-08-25:approve_exact_architecture_freeze_and_source_contract_followup_v1
+  architecture_and_compatibility_exact_freeze_approved: true
+  result_blind_source_contract_wave_authorized: true
+  concrete_formula_or_threshold_exact_freeze_granted: false
+  veto_series_generation_authorized: false
+  r1_manifest_generation_authorized: false
+  real_data_dq_or_backtest_authorized: false
+  authorization_state: EXACT_PREAUTHORIZED
+approved_bindings:
+  - path: config/research/qc_qqq_options_growth_action_value_veto_option_signal_architecture_v1.yaml
+    artifact_id: qc_qqq_options_growth_action_value_veto_option_signal_architecture_v1
+    artifact_version: 1.0.0-draft.1
+    file_sha256: 9b4856614298d64b2c8b5897980735a9e2a19c46fecb6c2362cb750ae13b136d
+    canonical_sha256: 88e1283b0333bafca24779c9c527d362acef40b65d4cff1a9d081ded07ac70e4
+    role: OWNER_EXACT_FROZEN_ARCHITECTURE_AUTHORITY
+    disposition: APPROVED_PREDECESSOR_RETAINED_IMMUTABLE
+    immutable: true
+  - path: config/research/qc_qqq_options_growth_action_value_legacy_veto_compatibility_map_v1.yaml
+    artifact_id: qc_qqq_options_growth_action_value_legacy_veto_compatibility_map_v1
+    artifact_version: 1.0.0-draft.1
+    file_sha256: c5867551aec4f152256219e4fb19b7c52ec5a6b7f8d8c316961d33a75749679d
+    canonical_sha256: 067a6b23daa1bfff22a6d4f4fcb773346a7d866e21cf2adb759acde75d04f524
+    role: OWNER_EXACT_FROZEN_LEGACY_COMPATIBILITY_AUTHORITY
+    disposition: APPROVED_PREDECESSOR_RETAINED_IMMUTABLE
+    immutable: true
+frozen_semantics:
+  successor_market_veto_taxonomy:
+    - broad_market_risk_off_veto
+    - realized_volatility_veto
+    - scheduled_event_risk_veto
+    - underlying_trend_break_veto
+  historical_tqqq_role: NO_LEVERAGE_ETF_ACTION_GUARD
+  dq_is_market_veto: false
+  option_alpha_is_market_veto: false
+  concrete_source_contract_values_selected: false
+  predecessor_bytes_may_change: false
+  successor_may_override_approved_architecture: false
+safety:
+  non_executable_data_research_only: true
+  source_contract_drafting_allowed: true
+  veto_series_generation_allowed: false
+  r1_manifest_generation_allowed: false
+  cache_read_authorized: false
+  provider_query_authorized: false
+  real_dq_authorized: false
+  backtest_authorized: false
+  threshold_or_formula_search_allowed: false
+  orders_allowed: false
+  fills_allowed: false
+  positions_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_effect: none
+  broker_action: none

@@ -1,0 +1,239 @@
+schema_version: growth_action_value_mandatory_veto_source_contract_wave.v1
+policy_id: qc_qqq_options_growth_action_value_mandatory_veto_source_contract_wave_v1
+policy_version: 1.0.0-draft.1
+status: TYPED_BLOCKERS_PRE_R1_NON_EXECUTABLE_DRAFT
+task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+architecture_freeze:
+  path: config/research/qc_qqq_options_growth_action_value_veto_option_signal_architecture_freeze_v1.yaml
+  freeze_id: qc_qqq_options_growth_action_value_veto_option_signal_architecture_freeze_v1
+  freeze_version: 1.0.0
+  file_sha256: 414626c92a140a780b602c122adce17d0039ec0f9bcd6fa326b9518ffa35ed83
+  canonical_sha256: 6cc4ab50beed6f9b2e89e969099203cf684cb7021600d2fffa5b7c44b46712c6
+  immutable: true
+target_inventory:
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  expected_session_count: 1202
+  target_session_inventory_lf_sha256: d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0
+required_source_identity_fields:
+  - source_contract_sha256
+  - independent_producer_identity
+  - formula_category
+  - decision_as_of
+  - available_at
+  - missing_terminal
+  - exact_1202_session_inventory
+source_contracts:
+  - veto_id: broad_market_risk_off_veto
+    legacy_field: risk_off_veto
+    source_independence_class: BROAD_MARKET_INDEPENDENT_SOURCE
+    architecture_readiness_state: BLOCKED_INDEPENDENT_PRODUCER_NOT_FROZEN
+    proposed_formula_category: BROAD_MARKET_PRICE_AND_MACRO_STATE
+    formula_category_state: DRAFT_REQUIRES_OWNER_EXACT_FREEZE
+    successor_admission_state: BLOCKED_INDEPENDENT_PRODUCER_FORMULA_AND_TIMING_NOT_FROZEN
+    blocker_codes:
+      - INDEPENDENT_PRODUCER_IDENTITY_MISSING
+      - FORMULA_AND_THRESHOLD_AUTHORITY_NOT_FROZEN
+      - DECISION_AS_OF_AND_AVAILABLE_AT_NOT_FROZEN
+      - EXACT_1202_INVENTORY_NOT_ADMITTED
+      - GROWTH_ALLOWED_ALIAS_FORBIDDEN
+    required_identity:
+      source_contract_sha256: null
+      independent_producer_identity: null
+      formula_category: null
+      threshold_policy_id: null
+      decision_as_of: null
+      available_at: null
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+      exact_1202_session_inventory:
+        required: true
+        target_inventory_lf_sha256: d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0
+        admitted: false
+        observed_inventory_lf_sha256: null
+    candidate_evidence:
+      - path: config/research/growth_tilt_baseline_capability_graph.yaml
+        file_sha256: 0c9c0cb85237473a638bf0018269099dac1073e21290c3172e18123669000702
+        role: BLOCKER_AUTHORITY_READINESS_ONLY
+        admitted_as_successor_source: false
+      - path: src/ai_trading_system/channel_specific_first_layer_v3.py
+        file_sha256: 4234752a805dd68a137a1881ae119099c49c8447e78ea35d76a76768f51e92e1
+        role: REJECTED_GROWTH_ALLOWED_ALIAS_EVIDENCE
+        admitted_as_successor_source: false
+    option_alpha_input_allowed: false
+    result_input_allowed: false
+    series_generation_allowed: false
+  - veto_id: realized_volatility_veto
+    legacy_field: volatility_veto
+    source_independence_class: REALIZED_VOLATILITY_INDEPENDENT_SOURCE
+    architecture_readiness_state: SOURCE_CONTRACT_READY_SERIES_NOT_GENERATED
+    proposed_formula_category: TRAILING_REALIZED_VOLATILITY_AND_COMPRESSION
+    formula_category_state: DRAFT_REQUIRES_OWNER_EXACT_FREEZE
+    successor_admission_state: BLOCKED_SUCCESSOR_THRESHOLD_PRODUCER_AND_TIMING_NOT_FROZEN
+    blocker_codes:
+      - SUCCESSOR_PRODUCER_IDENTITY_MISSING
+      - LEGACY_RUNTIME_THRESHOLDS_NOT_SEPARATE_OWNER_AUTHORITY
+      - DECISION_AS_OF_AND_AVAILABLE_AT_NOT_FROZEN
+      - EXACT_1202_INVENTORY_NOT_ADMITTED
+    required_identity:
+      source_contract_sha256: null
+      independent_producer_identity: null
+      formula_category: null
+      threshold_policy_id: null
+      decision_as_of: null
+      available_at: null
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+      exact_1202_session_inventory:
+        required: true
+        target_inventory_lf_sha256: d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0
+        admitted: false
+        observed_inventory_lf_sha256: null
+    candidate_evidence:
+      - path: config/research/growth_tilt_baseline_capability_graph.yaml
+        file_sha256: 0c9c0cb85237473a638bf0018269099dac1073e21290c3172e18123669000702
+        role: LEGACY_READY_ROLE_EVIDENCE_ONLY
+        admitted_as_successor_source: false
+      - path: src/ai_trading_system/channel_specific_first_layer_v3.py
+        file_sha256: 4234752a805dd68a137a1881ae119099c49c8447e78ea35d76a76768f51e92e1
+        role: LEGACY_CALLABLE_RUNTIME_NOT_SUCCESSOR_CONTRACT
+        admitted_as_successor_source: false
+      - path: src/ai_trading_system/features/volatility_compression_free.py
+        file_sha256: 2d116f9cb0bb1813e97c95d28e37f687a7b730837caeb7b2ab19b9164df54035
+        role: CANDIDATE_DERIVED_FEATURE_PRODUCER_NOT_ADMITTED
+        admitted_as_successor_source: false
+      - path: config/research/free_feature_policy.yaml
+        file_sha256: 72346086f5436373c346f13a75c7d7ceecc1c88c94e6a2e6e6bd973db6e8b8c1
+        role: CANDIDATE_THRESHOLD_POLICY_NOT_OWNER_FROZEN
+        admitted_as_successor_source: false
+    option_alpha_input_allowed: false
+    result_input_allowed: false
+    series_generation_allowed: false
+  - veto_id: scheduled_event_risk_veto
+    legacy_field: event_risk_veto
+    source_independence_class: PIT_SCHEDULED_EVENT_CALENDAR_SOURCE
+    architecture_readiness_state: BLOCKED_PIT_SOURCE_NOT_FROZEN
+    proposed_formula_category: PIT_SCHEDULED_MACRO_EVENT_WINDOW
+    formula_category_state: DRAFT_REQUIRES_OWNER_EXACT_FREEZE
+    successor_admission_state: BLOCKED_PUBLISHED_AT_EVENT_SET_WINDOW_AND_THRESHOLD_NOT_FROZEN
+    blocker_codes:
+      - PIT_PUBLISHED_AT_AUTHORITY_MISSING
+      - EVENT_SET_WINDOW_AND_THRESHOLD_NOT_FROZEN
+      - INDEPENDENT_PRODUCER_IDENTITY_MISSING
+      - EXACT_1202_INVENTORY_NOT_ADMITTED
+    required_identity:
+      source_contract_sha256: null
+      independent_producer_identity: null
+      formula_category: null
+      threshold_policy_id: null
+      decision_as_of: null
+      available_at: null
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+      exact_1202_session_inventory:
+        required: true
+        target_inventory_lf_sha256: d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0
+        admitted: false
+        observed_inventory_lf_sha256: null
+    candidate_evidence:
+      - path: config/research/growth_tilt_baseline_capability_graph.yaml
+        file_sha256: 0c9c0cb85237473a638bf0018269099dac1073e21290c3172e18123669000702
+        role: BLOCKER_AUTHORITY_READINESS_ONLY
+        admitted_as_successor_source: false
+      - path: src/ai_trading_system/features/macro_event_calendar_free.py
+        file_sha256: 7df466ea28ececd9c8740ae70b11d3b061dd0d1bca178131449d295c213dae24
+        role: PIT_PUBLISHED_AT_CONTRACT_CANDIDATE_NOT_ADMITTED
+        admitted_as_successor_source: false
+      - path: src/ai_trading_system/features/event_risk_free.py
+        file_sha256: 9c1221004bccfaaeec13c4568f3a13ac23b2c1aa8a627a5ff5637d0a3f17fe53
+        role: DIAGNOSTIC_ONLY_COMPOSITE_NOT_ADMITTED
+        admitted_as_successor_source: false
+      - path: config/research/free_feature_family_registry_v2.yaml
+        file_sha256: c64445cb86cf21fd62f76808c5c8692001dd302c8f7d720378649975e3508cf2
+        role: PIT_WARNING_DIAGNOSTIC_ONLY_AUTHORITY
+        admitted_as_successor_source: false
+    option_alpha_input_allowed: false
+    result_input_allowed: false
+    series_generation_allowed: false
+  - veto_id: underlying_trend_break_veto
+    legacy_field: trend_break_veto
+    source_independence_class: QQQ_UNDERLYING_INDEPENDENT_SOURCE
+    architecture_readiness_state: BLOCKED_ADAPTER_CONTRACT_NOT_FROZEN
+    proposed_formula_category: QQQ_UNDERLYING_PRICE_TREND_BREAK
+    formula_category_state: DRAFT_REQUIRES_OWNER_EXACT_FREEZE
+    successor_admission_state: BLOCKED_CALLABLE_PRODUCER_FORMULA_AND_TIMING_NOT_FROZEN
+    blocker_codes:
+      - CALLABLE_PRODUCER_IDENTITY_MISSING
+      - FORMULA_AND_THRESHOLD_AUTHORITY_NOT_FROZEN
+      - DECISION_AS_OF_AND_AVAILABLE_AT_NOT_FROZEN
+      - EXACT_1202_INVENTORY_NOT_ADMITTED
+    required_identity:
+      source_contract_sha256: null
+      independent_producer_identity: null
+      formula_category: null
+      threshold_policy_id: null
+      decision_as_of: null
+      available_at: null
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+      exact_1202_session_inventory:
+        required: true
+        target_inventory_lf_sha256: d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0
+        admitted: false
+        observed_inventory_lf_sha256: null
+    candidate_evidence:
+      - path: config/research/growth_tilt_baseline_capability_graph.yaml
+        file_sha256: 0c9c0cb85237473a638bf0018269099dac1073e21290c3172e18123669000702
+        role: NO_CALLABLE_PRODUCER_BLOCKER_AUTHORITY
+        admitted_as_successor_source: false
+    option_alpha_input_allowed: false
+    result_input_allowed: false
+    series_generation_allowed: false
+dependency_policy:
+  forbidden_source_inputs:
+    - selected_call_contract_identity
+    - selected_put_contract_identity
+    - selected_pair_checksum
+    - selected_call_activity
+    - selected_put_activity
+    - growth_active
+    - growth_inactive
+    - candidate_target_weights
+    - candidate_return
+    - v4_result
+    - result_dependent_contributor_universe
+  growth_allowed_alias_allowed: false
+  selected_pair_or_activity_allowed: false
+  result_dependent_formula_or_bucket_allowed: false
+  shared_clock_and_target_inventory_allowed: true
+aggregate_state:
+  admitted_source_contracts: []
+  unresolved_source_contracts:
+    - broad_market_risk_off_veto
+    - realized_volatility_veto
+    - scheduled_event_risk_veto
+    - underlying_trend_break_veto
+  terminal: BLOCKED_PRE_R1_MANIFEST_INCOMPLETE_MANDATORY_SOURCE_CONTRACTS
+  missing_required_source_outcome: INSUFFICIENT_EVIDENCE_TO_BUILD_R1_MANIFEST
+  malformed_authority_outcome: PRE_RUN_AUTHORITY_INVALID
+safety:
+  non_executable_data_research_only: true
+  concrete_formula_or_threshold_frozen: false
+  veto_series_generation_allowed: false
+  r1_manifest_generation_allowed: false
+  cache_read_authorized: false
+  provider_query_authorized: false
+  real_dq_authorized: false
+  backtest_authorized: false
+  constant_false_fill_allowed: false
+  retained_series_truncation_allowed: false
+  cross_date_fallback_allowed: false
+  orders_allowed: false
+  fills_allowed: false
+  positions_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_effect: none
+  broker_action: none

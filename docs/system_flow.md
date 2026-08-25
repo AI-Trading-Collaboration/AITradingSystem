@@ -9310,14 +9310,13 @@ Owner exact authorization + exact draft freeze (unconsumed)
 
 LEAN `BaseChainUniverseData.EndTime=Time+OneDay` 只证明 universe row available-at；`OptionUniverse`
 row 不含 bid/ask quote timestamp，因此不能再把日级 `Time/EndTime` 冒充 V3 的 120 秒 quote clock。
-下一合法节点是 TRADING-2542F 的 result-blind serial architecture contract wave，而不是直接为旧
-five-veto taxonomy 生成 series。该节点先把 DQ qualification、action-universe guard、market-state
-veto、option alpha 与 optional option-risk diagnostic 分层，并把 `tqqq_veto` 迁移为历史兼容的
-no-leverage action guard。只有新 architecture 获得 Owner exact-freeze，后继任务才能分别冻结
-independent source contract。全部 mandatory source contract 本地验证后，才能生成 exact 1202-session
-series 和 candidate/R1 manifest；只有自动 replay 为 `PASS` 后，才允许读取真实 cache/provider、运行
-真实 DQ 或消费唯一 zero-order backtest。当前没有 provider/cache 读取、回测或交易，external counters
-全为 0。
+TRADING-2542F 已完成 result-blind serial architecture contract，并由 Owner 按 exact file/canonical
+SHA 冻结；它不是旧 five-veto taxonomy 的 series 生成器。当前合法节点是 TRADING-2542G：先把
+architecture readiness、candidate evidence 与 successor source admission 分开，再逐类冻结 independent
+producer、formula/threshold authority、decision-as-of、`available_at` 与 exact inventory。全部 mandatory
+source contract 本地验证后，后续任务才可讨论 exact 1202-session series 和 candidate/R1 manifest；只有
+独立授权且自动 replay 为 `PASS` 后，才允许读取真实 cache/provider、运行真实 DQ 或消费唯一 zero-order
+backtest。当前没有 provider/cache 读取、回测或交易，external counters 全为 0。
 
 ## TRADING-2542F veto / option-signal result-blind serial architecture contract
 
@@ -9354,9 +9353,45 @@ immutable execution V1/V2 + unchanged DQ/PIT V3 + unchanged exact sheet V4
 mandatory source 缺少 `source_contract_sha256`、independent producer、decision-as-of、`available_at`、
 missing terminal 或 exact 1202-session inventory 时，terminal 固定为
 `INSUFFICIENT_EVIDENCE_TO_BUILD_R1_MANIFEST`；authority malformed 时为
-`PRE_RUN_AUTHORITY_INVALID`。两者都必须在 R1 manifest 前停止。当前 architecture status=
-`DRAFT_FOR_OWNER_EXACT_FREEZE_NON_EXECUTABLE`，不授权 veto series、provider/cache、真实 DQ、backtest、
-orders/fills/positions、paper/live、production 或 broker。
+`PRE_RUN_AUTHORITY_INVALID`。两者都必须在 R1 manifest 前停止。原 architecture bytes/status/version
+保持 immutable；新的 freeze-admission artifact 单独记录 Owner exact-freeze，不把原草案原地改名或改写。
+
+## TRADING-2542G mandatory veto source-contract readiness wave
+
+`growth_action_value_veto_option_signal_architecture_freeze.v1` 绑定 TRADING-2542F architecture 与 legacy
+compatibility map 的 exact file/canonical SHA，并明确只授权 result-blind source-contract drafting；具体
+formula/threshold、series、manifest、真实数据与 backtest 均未授权。
+
+`growth_action_value_mandatory_veto_source_contract_wave.v1` 是非执行 readiness authority。它不生成 veto
+值，而是把四个 source 的 required identity、candidate evidence role 与 blocker 固定为可机械验证的状态：
+
+```text
+Owner exact-frozen architecture + compatibility map
+  -> architecture freeze admission (original bytes immutable)
+  -> four ordered mandatory source rows
+       -> broad_market_risk_off_veto
+            architecture = blocked; growth_allowed alias = forbidden
+            successor = producer/formula/timing not frozen
+       -> realized_volatility_veto
+            architecture legacy role = ready / series not generated
+            successor = independent producer/threshold/timing not frozen
+       -> scheduled_event_risk_veto
+            macro/event features = PIT-warning or diagnostic candidate only
+            successor = published-at/event-set/window/threshold not frozen
+       -> underlying_trend_break_veto
+            capability graph = no callable producer
+            successor = producer/formula/timing not frozen
+  -> admitted_source_contracts = 0 / 4
+  -> terminal = BLOCKED_PRE_R1_MANIFEST_INCOMPLETE_MANDATORY_SOURCE_CONTRACTS
+  -> veto series / R1 manifest / cache / provider / real DQ / backtest = false
+  -> orders / fills / positions / production / broker = 0
+```
+
+每个 row 的 missing terminal=`INSUFFICIENT`、malformed terminal=`INVALID`；二者都不是 market-clear
+`false`。candidate module/config 即使 hash-bound，也只作为 readiness evidence，不自动取得 successor
+admission。尤其 `realized_volatility_veto` 保留旧 architecture 的 ready 事实，但在独立 threshold authority
+与 timing contract 冻结前不得升级为已接纳 source。option selected pair/activity、alpha state、candidate
+weights/return 与 result-dependent bucket 全部禁止进入 mandatory source。
 
 ## Coordinator integration publication fence（DEVX-009）
 

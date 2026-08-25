@@ -1,0 +1,147 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  task_id_sha256: 87d8a80693c49d0e6ab8471ecda46f4fcc0465aa59b8fc1efb996e134453f070
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  title: null
+  domain: Growth action-value mandatory veto source-contract readiness wave V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner / exact-freeze concrete producer, formula or threshold,
+    timing and inventory contract for each mandatory veto in a separate reviewed successor
+  requirement_refs:
+  - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: The exact architecture freeze and typed
+    readiness wave are implemented, but admitted source contracts remain 0/4. Broad-market
+    risk-off lacks an independent producer; realized volatility lacks successor threshold
+    and timing authority; scheduled events lack PIT published-at and event-window
+    authority; trend break lacks a callable QQQ-underlying producer. Stop before R1
+    manifest.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Current wave passes when exact architecture and compatibility hashes replay
+      unchanged, four ordered rows expose all required identity fields and stable
+      blockers, alpha or result dependencies and missing-as-clear are rejected, Atlas
+      shows 2542F frozen and 2542G current, and all series/manifest/provider/cache/real-DQ/backtest/trading
+      flags remain closed. Any future source admission requires separate Owner exact-freeze
+      of producer/formula/threshold/timing/exact-1202 identity.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-25T11:15:35Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-register-20260825-v1
+  lane_id: null
+  base_commit: 1a3c3ef6eb51292de25bcf452aeacf4f0d20f012
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+    - Growth action-value mandatory veto source-contract readiness wave V1
+    - P0
+    - IN_PROGRESS
+    - Codex / implement and validate exact-freeze admission plus typed four-source
+      readiness contracts
+    - Bind the Owner-frozen architecture without changing its bytes, then mechanically
+      separate candidate evidence from admitted producer/formula/timing/inventory
+      identity for all four mandatory vetoes. Stop before R1 manifest while any source
+      remains incomplete.
+    - Preserve exact architecture/compatibility hashes; strict loader replays immutable
+      authority; four ordered source rows expose typed blockers and reject alpha/result
+      dependencies; no threshold invention, constant-false fill, series, manifest,
+      provider/cache, real DQ/backtest or trading actions; system flow and governed
+      tests PASS.
+    - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      owner_decision=owner_decision:TRADING-2542F-2542G:2026-08-25:approve_exact_architecture_freeze_and_source_contract_followup_v1;
+      governed_mode=SINGLE_LANE_SERIAL_CONTRACT_WAVE; external_action=none; production_effect=none;
+      broker_action=none.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2542g-register-20260825-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8a75195edb20164de2078903e13fd778
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-25T11:34:57Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-source-readiness-owner-blocked-20260825-v1
+  lane_id: null
+  base_commit: 1a3c3ef6eb51292de25bcf452aeacf4f0d20f012
+  previous_state_event_id: task-event-8a75195edb20164de2078903e13fd778
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / exact-freeze concrete producer, formula or threshold,
+      timing and inventory contract for each mandatory veto in a separate reviewed
+      successor
+    blocker_or_next_step: The exact architecture freeze and typed readiness wave are
+      implemented, but admitted source contracts remain 0/4. Broad-market risk-off
+      lacks an independent producer; realized volatility lacks successor threshold
+      and timing authority; scheduled events lack PIT published-at and event-window
+      authority; trend break lacks a callable QQQ-underlying producer. Stop before
+      R1 manifest.
+    acceptance_criteria: Current wave passes when exact architecture and compatibility
+      hashes replay unchanged, four ordered rows expose all required identity fields
+      and stable blockers, alpha or result dependencies and missing-as-clear are rejected,
+      Atlas shows 2542F frozen and 2542G current, and all series/manifest/provider/cache/real-DQ/backtest/trading
+      flags remain closed. Any future source admission requires separate Owner exact-freeze
+      of producer/formula/threshold/timing/exact-1202 identity.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      freeze file/canonical SHA=414626c92a140a780b602c122adce17d0039ec0f9bcd6fa326b9518ffa35ed83/6cc4ab50beed6f9b2e89e969099203cf684cb7021600d2fffa5b7c44b46712c6;
+      source-wave file/canonical SHA=76e38c969ee0849c77ac4012b72d0e65115f0a3448ecb276c9ca8cfef5faf8b5/0f8204170b4c8810cf2685e63dd5035801cef79788932b63cdf5691c1ba28e26;
+      focused=57 passed; task-source=9 passed; formal publication validation follows
+      on the exact candidate; no series/manifest/provider/cache/real DQ/backtest;
+      orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-source-readiness-owner-blocked-20260825-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-50ea28a8a5e6b715273a181b57e6f817
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  - Growth action-value mandatory veto source-contract readiness wave V1
+  - P0
+  - BLOCKED_OWNER_INPUT
+  - Project Owner / exact-freeze concrete producer, formula or threshold, timing and
+    inventory contract for each mandatory veto in a separate reviewed successor
+  - The exact architecture freeze and typed readiness wave are implemented, but admitted
+    source contracts remain 0/4. Broad-market risk-off lacks an independent producer;
+    realized volatility lacks successor threshold and timing authority; scheduled
+    events lack PIT published-at and event-window authority; trend break lacks a callable
+    QQQ-underlying producer. Stop before R1 manifest.
+  - Current wave passes when exact architecture and compatibility hashes replay unchanged,
+    four ordered rows expose all required identity fields and stable blockers, alpha
+    or result dependencies and missing-as-clear are rejected, Atlas shows 2542F frozen
+    and 2542G current, and all series/manifest/provider/cache/real-DQ/backtest/trading
+    flags remain closed. Any future source admission requires separate Owner exact-freeze
+    of producer/formula/threshold/timing/exact-1202 identity.
+  - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+    freeze file/canonical SHA=414626c92a140a780b602c122adce17d0039ec0f9bcd6fa326b9518ffa35ed83/6cc4ab50beed6f9b2e89e969099203cf684cb7021600d2fffa5b7c44b46712c6;
+    source-wave file/canonical SHA=76e38c969ee0849c77ac4012b72d0e65115f0a3448ecb276c9ca8cfef5faf8b5/0f8204170b4c8810cf2685e63dd5035801cef79788932b63cdf5691c1ba28e26;
+    focused=57 passed; task-source=9 passed; formal publication validation follows
+    on the exact candidate; no series/manifest/provider/cache/real DQ/backtest; orders/fills/positions/production/broker=0.'
+  docs_links:
+  - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
+  terminal: false
+  canonical_row_sha256: 19cec164a1c287629cacb86fc1348f2bf958e6583fbbce35035387747d9afd7d
+last_event_id: task-event-50ea28a8a5e6b715273a181b57e6f817
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 5a1d5ded8df34c084f45636168a1e85b825ced6b1bb4854e8c8e4882c3c97e84

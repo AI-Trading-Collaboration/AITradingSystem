@@ -1,7 +1,7 @@
 schema_version: atlas_page_effectiveness_policy.v1
 policy_id: atlas_strategy_research_page_effectiveness_v1
-policy_version: 3.1.0
-status: REVIEWED_LIVE_SNAPSHOT_IDENTITY_CONTRACT_V3_SUCCESSOR_COVERAGE_REFRESH
+policy_version: 3.2.0
+status: REVIEWED_LIVE_SNAPSHOT_IDENTITY_CONTRACT_V3_SOURCE_CONTRACT_COVERAGE_REFRESH
 owner: Atlas page engineering owner
 primary_research_start: '2021-02-22'
 canonical_page_path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html
@@ -27,6 +27,8 @@ relevant_source_paths:
   - config/atlas/status_explanation_authority.yaml
   - config/atlas/work_progress_explanation.yaml
   - config/atlas/source_registry.yaml
+  - config/research/qc_qqq_options_growth_action_value_veto_option_signal_architecture_freeze_v1.yaml
+  - config/research/qc_qqq_options_growth_action_value_mandatory_veto_source_contract_wave_v1.yaml
   - inputs/architecture/arch_005_task_registry_index.yaml
   - inputs/research/qqq_options/trading_2533_session_finalization_dq_pit_evidence_admission_v1/dq_pit_evidence_admission.json
   - inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v3/export_safe_terminal_evidence.json
@@ -44,6 +46,7 @@ relevant_source_paths:
   - src/ai_trading_system/atlas/rendered_term_inventory.py
   - src/ai_trading_system/atlas/status_explanation_projection.py
   - src/ai_trading_system/atlas/work_progress_projection.py
+  - src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_source_contract.py
   - src/ai_trading_system/contracts/strategy_research_page_effectiveness.py
   - src/ai_trading_system/contracts/strategy_research_qqq_options_projection.py
   - src/ai_trading_system/contracts/strategy_research_reader_projection.py
@@ -327,8 +330,12 @@ task_sources:
     reader_summary_zh: 2542E 的 exact policy freeze 与 exact 1202-session veto-series 生成/接纳授权已收到，但授权仍未消费、所有外部计数仍为 0。已批准 draft bytes 保持不可变，V2 successor 只绑定 frozen rule surface 与 readiness；当前仅 volatility_veto source contract ready，risk_off_veto 语义歧义，event_risk_veto/trend_break_veto 缺 PIT producer，现有 tqqq_veto 又是与“必须 false”不兼容的常量 true no-TQQQ guard。禁止用旧 secondary_cross_checked labels 裁切或 false-fill；四项 source contract 未逐项闭合前，exact series、R1 manifest、provider、真实 DQ 和 backtest 继续关闭。production/broker effect=none。
   - task_id: TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
     requirement_path: docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md
-    coverage: DISCLOSED_RESULT_BLIND_VETO_OPTION_ARCHITECTURE_DRAFT_OWNER_FREEZE_REQUIRED
-    reader_summary_zh: 2542F 已把旧 five-veto 的历史兼容角色与新 consumer 分开，并将 DQ qualification、QQQ/SGOV action guard、四项独立 market-state veto、selected CALL/PUT alpha 和 optional derived-only option-risk diagnostic 分层。tqqq_veto 只映射为 no-leverage action guard；risk_off 禁止使用 growth_allowed 反向 alias；selected pair/activity/result 字段被 schema 禁止进入 veto。architecture 与 compatibility map 已完成本地验证但仍待 Owner exact freeze；veto series、R1 manifest、provider/cache、真实 DQ、backtest、production 与 broker 保持关闭。
+    coverage: DISCLOSED_RESULT_BLIND_VETO_OPTION_ARCHITECTURE_OWNER_EXACT_FROZEN
+    reader_summary_zh: 2542F 已把旧 five-veto 的历史兼容角色与新 consumer 分开，并将 DQ qualification、QQQ/SGOV action guard、四项独立 market-state veto、selected CALL/PUT alpha 和 optional derived-only option-risk diagnostic 分层。tqqq_veto 只映射为 no-leverage action guard；risk_off 禁止使用 growth_allowed 反向 alias；selected pair/activity/result 字段被 schema 禁止进入 veto。Project Owner 已按 architecture 与 compatibility map 的 exact file/canonical SHA 完成冻结，原草案 bytes/status/version 保持 immutable；这只允许后续 non-executable source-contract wave，不授权 series、R1 manifest、provider/cache、真实 DQ、backtest、production 或 broker。
+  - task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+    requirement_path: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
+    coverage: DISCLOSED_MANDATORY_VETO_SOURCE_CONTRACT_TYPED_BLOCKERS_PRE_R1
+    reader_summary_zh: 2542G 已用独立 freeze-admission artifact 绑定 Owner 批准的 architecture/compatibility exact identity，并把四项 mandatory veto 的 architecture readiness、candidate evidence 与 successor admission 分开。当前 admitted source=0/4：risk-off 禁止 growth_allowed alias；volatility 保留 legacy ready 事实但 successor producer/threshold/timing 未冻结；scheduled event 仍缺 published-at/event-set/window authority；trend break 仍缺 callable QQQ-underlying producer。missing=INSUFFICIENT、malformed=INVALID，均不得 false-fill；series、R1 manifest、provider/cache、真实 DQ、backtest、orders/fills/positions/production/broker 继续关闭。
   - task_id: TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1
     requirement_path: docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md
     coverage: LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_COMPLETE
