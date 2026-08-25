@@ -13,26 +13,24 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / exact-freeze each producer formula threshold timing
-    and exact inventory; real DQ and backtest remain separately unauthorized
-  requirement_refs:
-  - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
+  next_owner: Codex / prepare result-blind Owner exact-freeze decision pack; Project
+    Owner retains exact admission decision
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: The non-executable four-veto producer-contract
-    draft is implemented and validated, but admitted producer contracts remain 0/4.
-    Broad-market and QQQ trend producers are not callable, volatility is only a candidate
-    with pilot threshold provenance, and scheduled-event PIT published_at/revision
-    authority is incomplete. Stop before series and R1 manifest.
+  unstructured_legacy_blocker_or_next_step: Convert all four producer-contract draft
+    rows into explicit recommended decision objects for producer, formula, threshold,
+    timing, PIT and inventory review. Keep proposals unadmitted and stop before series/R1/provider/cache/real
+    DQ/backtest.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Draft loader must replay the frozen source-wave identity and candidate evidence
-      hashes; four ordered rows must retain independent inputs, structural formula,
-      timing, PIT requirements and null exact thresholds; event_date cannot replace
-      published_at; all rows remain unadmitted until separate Owner exact-freeze;
-      series/R1/provider/cache/real-DQ/backtest/trading flags stay closed; governed
-      validation and Atlas freshness PASS.
+    text: Decision-pack loader replays the immutable producer-draft identity and candidate
+      evidence; four ordered rows expose one recommended choice plus rejected alternatives
+      and evidence class for every decision dimension; recommendation values remain
+      PROPOSAL_NOT_OWNER_FROZEN, admitted stays 0/4, exact inventory observed hash
+      stays null, and all real-data/execution flags remain closed; focused and governed
+      validation PASS.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -183,33 +181,64 @@ events:
   - change:trading-2542g-producer-draft-owner-blocked-20260825-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-dd05f2e57455f2b6fec403c97682942b
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-25T15:27:25Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-freeze-pack-resume-20260826-v2
+  lane_id: null
+  base_commit: 138d1fdfa12c9ffc0f5dcf7dbfaaf3e0314254be
+  previous_state_event_id: task-event-dd05f2e57455f2b6fec403c97682942b
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / prepare result-blind Owner exact-freeze decision pack; Project
+      Owner retains exact admission decision
+    blocker_or_next_step: Convert all four producer-contract draft rows into explicit
+      recommended decision objects for producer, formula, threshold, timing, PIT and
+      inventory review. Keep proposals unadmitted and stop before series/R1/provider/cache/real
+      DQ/backtest.
+    acceptance_criteria: Decision-pack loader replays the immutable producer-draft
+      identity and candidate evidence; four ordered rows expose one recommended choice
+      plus rejected alternatives and evidence class for every decision dimension;
+      recommendation values remain PROPOSAL_NOT_OWNER_FROZEN, admitted stays 0/4,
+      exact inventory observed hash stays null, and all real-data/execution flags
+      remain closed; focused and governed validation PASS.
+    notes: Owner instruction=2026-08-26 continue; interpreted as authorization to
+      draft an exact-freeze decision pack, not approval of formula/threshold bytes
+      or source admission. Scope=non-executable DATA_RESEARCH only; real data, DQ,
+      backtest, series, R1 manifest, orders/fills/positions/production/broker=0.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-freeze-pack-resume-20260826-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-22ba5fe25a7f0cd1f811075ade05fa54
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner / exact-freeze each producer formula threshold timing and exact
-    inventory; real DQ and backtest remain separately unauthorized
-  - The non-executable four-veto producer-contract draft is implemented and validated,
-    but admitted producer contracts remain 0/4. Broad-market and QQQ trend producers
-    are not callable, volatility is only a candidate with pilot threshold provenance,
-    and scheduled-event PIT published_at/revision authority is incomplete. Stop before
-    series and R1 manifest.
-  - Draft loader must replay the frozen source-wave identity and candidate evidence
-    hashes; four ordered rows must retain independent inputs, structural formula,
-    timing, PIT requirements and null exact thresholds; event_date cannot replace
-    published_at; all rows remain unadmitted until separate Owner exact-freeze; series/R1/provider/cache/real-DQ/backtest/trading
-    flags stay closed; governed validation and Atlas freshness PASS.
-  - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    producer draft file/canonical SHA=8bd9799b42a0d2f547afbb5bb8708775bef0de35d504197b117ed210e49a6baa/a6e3ff096d5c5c6df6ec76756581bf0262be4988b696cb2cfb6457dd1b07f063;
-    terminal=OWNER_EXACT_FREEZE_REQUIRED_0_OF_4_ADMITTED; focused/adjacent=36 passed;
-    formal publication validation follows; no real data, series, R1 manifest, DQ or
-    backtest; orders/fills/positions/production/broker=0.'
-  docs_links:
-  - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
+  - IN_PROGRESS
+  - Codex / prepare result-blind Owner exact-freeze decision pack; Project Owner retains
+    exact admission decision
+  - Convert all four producer-contract draft rows into explicit recommended decision
+    objects for producer, formula, threshold, timing, PIT and inventory review. Keep
+    proposals unadmitted and stop before series/R1/provider/cache/real DQ/backtest.
+  - Decision-pack loader replays the immutable producer-draft identity and candidate
+    evidence; four ordered rows expose one recommended choice plus rejected alternatives
+    and evidence class for every decision dimension; recommendation values remain
+    PROPOSAL_NOT_OWNER_FROZEN, admitted stays 0/4, exact inventory observed hash stays
+    null, and all real-data/execution flags remain closed; focused and governed validation
+    PASS.
+  - Owner instruction=2026-08-26 continue; interpreted as authorization to draft an
+    exact-freeze decision pack, not approval of formula/threshold bytes or source
+    admission. Scope=non-executable DATA_RESEARCH only; real data, DQ, backtest, series,
+    R1 manifest, orders/fills/positions/production/broker=0.
+  docs_links: []
   terminal: false
-  canonical_row_sha256: fe15280be62ad49bdc9b54aba2c41cb6ad9925dbd3c089cb77c96177108fabab
-last_event_id: task-event-dd05f2e57455f2b6fec403c97682942b
+  canonical_row_sha256: 60213b19d78823dd0b91e5c4005e31fffa9c2bf5b486a8553bbb46b8213f7271
+last_event_id: task-event-22ba5fe25a7f0cd1f811075ade05fa54
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: c466aa2dd90290b118b91b99cf7cdd6ee9124cf34b2dd99a3a6560975cdab69b
+fragment_checksum: 4bf29fc9db73fc5b01d2c4aa5ff3ee1b02fe1e9ab06779510b5b972a23172e49
