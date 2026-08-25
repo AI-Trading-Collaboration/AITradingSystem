@@ -5,11 +5,13 @@
 - task id：`TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1`；
 - priority：`P0`；
 - governed mode：`SINGLE_LANE` serial consumer-contract wave；
-- current status：`BLOCKED_OWNER_INPUT_EXACT_SEMANTICS_V2_DRAFT_READY_FOR_FREEZE`；
+- current status：`IN_PROGRESS_S4B_EXACT_SEMANTICS_FREEZE_ADMISSION`；
 - Owner decision：
   `owner_decision:TRADING-2542F-2542G:2026-08-25:approve_exact_architecture_freeze_and_source_contract_followup_v1`；
 - S4A Owner decision：
   `owner_decision:TRADING-2542G:S4A:2026-08-26:authorize_exact_calculation_time_state_contract_v2`；
+- S4B Owner decision：
+  `owner_decision:TRADING-2542G:S4B:2026-08-26:freeze_s4a_v2_exact_semantics_and_continue_non_executable_admission_v1`；
 - 授权边界：只允许本地、result-blind、non-executable `DATA_RESEARCH` 合同与 synthetic
   validation；不授权 veto series、R1 manifest、provider/cache query、真实 DQ、backtest、
   orders、fills、positions、paper、live、production 或 broker action。
@@ -308,6 +310,48 @@ episode count/duration、trend recovery lag、event-only blocked sessions、alph
 5. aggregate 仍为 `OWNER_EXACT_FREEZE_REQUIRED_0_OF_4_ADMITTED`，任何 partial approval 不得生成 series；
 6. 后续 producer/adapters synthetic implementation 只有在四项 V2 全部 Owner exact-freeze 后另行开始。
 
+### S4B：Owner exact-freeze admission（最小 serial contract wave）
+
+Owner 于 2026-08-26 在收到 S4A 两份 V2 authority 的精确 file/canonical SHA、当前唯一阻塞项与
+安全边界后指示“继续吧”。按照 R1 standing owner scope replay，本指示精确冻结以下两份已发布
+authority，并授权生成一个独立、non-executable freeze-admission artifact；不得改写原 authority bytes：
+
+| authority | file SHA-256 | canonical SHA-256 |
+| --- | --- | --- |
+| calculation semantics V1 | `813c2eb2bb0d4b4f7673048889b66fa843b739a48405cc2e87272d925dd7b0d0` | `824ef20a66e4eba3c2841489cae8b03ff3a6cad4f73003469c086d8e09237cf1` |
+| owner-freeze decision pack V2 | `d08480c07047e636f8b4a8208ec60406acd5debdc60f30541411310e401b789f` | `99ed7dbdac82faf594633ab25be1ffb1417709030af0817fb19c4ace332dc389` |
+
+本波必须把两种状态机械分开：
+
+- `owner_exact_frozen=4/4` 只表示四项 operator/window/threshold/time/PIT/revision/coverage/state
+  语义已作为 immutable policy authority 接纳；
+- `producer_contract_admitted=0/4` 表示尚无任何 producer/adaptor 通过独立 callable identity、synthetic
+  conformance、PIT/DQ contract 与 exact inventory admission；
+- `exact_1202_session_inventory_admitted=0/4`、`series_generation_allowed=false`，不得把 Owner freeze
+  推断成 observed data admission、DQ PASS、backtest authority 或 investment conclusion；
+- producer/adapters synthetic implementation 必须在本 serial freeze wave 发布后的新 exact main base
+  另行开始，不能和 freeze authority 在同一 stale-base consumer wave 内混合；
+- 真实数据、provider/cache query、真实 DQ/backtest 与 exact series 仍需 manifest replay PASS 后另行授权，
+  orders/fills/positions/paper/live/production/broker 始终为 0。
+
+本阶段新增：
+
+- `config/research/qc_qqq_options_growth_action_value_mandatory_veto_exact_semantics_freeze_admission_v1.yaml`；
+- `src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_exact_semantics_freeze_admission.py`；
+- `tests/test_growth_action_value_mandatory_veto_exact_semantics_freeze_admission.py`。
+
+验收标准：
+
+1. strict loader 必须重放 S4A V2 loader，并同时校验两份 immutable authority 的 file/canonical SHA；
+2. 四项 veto 按固定顺序一次性冻结；缺一项、partial freeze、recommendation identity 漂移或原文件 bytes
+   漂移均 fail closed；
+3. aggregate 精确为 `OWNER_EXACT_FROZEN_4_OF_4_PRODUCER_UNADMITTED_0_OF_4`，四项 producer、observed
+   inventory 与 series flag 继续为 false/null；
+4. negative tests 拒绝 owner/admission 状态混淆、伪造 observed inventory、开启 provider/DQ/backtest/
+   execution flag，以及 threshold/formula authority 漂移；
+5. focused/adjacent、Ruff、strict mypy、py_compile 与适用 formal tiers PASS；本波发布后才允许从新 exact
+   main base 启动 separate synthetic producer/adapters consumer wave。
+
 ## 7. Path、contract 与 evidence claims
 
 task-owned paths：本 requirement、两份新 config、typed loader 与 focused tests。
@@ -335,6 +379,13 @@ evidence roles：
   仍以独立 Owner exact-freeze 为前提。
 
 ## 9. 进度记录
+
+- 2026-08-26：Owner 在收到 S4A V2 两份精确 file/canonical SHA 与“唯一阻塞为 exact-freeze”的说明后
+  指示“继续吧”；按 standing owner scope replay，S4B 只接纳四项 exact semantics 为 immutable policy，
+  不接纳 producer、observed inventory 或 series。READ_ONLY 与 SINGLE_LANE START/LANE preflight PASS，
+  main=origin/main=`79427bb32c1e57a818d901f154ebdcdecb07add9`、active lease=0。选择最小 serial
+  freeze-admission wave；synthetic producer/adapters 必须从本波发布后的新 exact base 另行开始，真实数据、
+  provider/cache、DQ/backtest/series 与 orders/fills/positions/production/broker 仍未授权。
 
 - 2026-08-25：Owner 同意已解释的后续方案，并精确冻结 architecture/compatibility 上述四项 SHA；
   READ_ONLY audit 确认 main=origin/main=`1a3c3ef6eb51292de25bcf452aeacf4f0d20f012`、active
