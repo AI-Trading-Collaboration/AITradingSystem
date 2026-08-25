@@ -14,23 +14,24 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / implement and validate the non-executable serial architecture
-    contract before Owner exact freeze
+  next_owner: Project Owner / exact-freeze the result-blind architecture and legacy
+    compatibility map before any source-contract wave
   requirement_refs:
   - docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 'Implement the approved layered successor:
-    separate DQ qualification, QQQ/SGOV action guards, four orthogonal market-state
-    vetoes, option alpha and optional independent option-risk diagnostics without
-    modifying frozen V1/V2/DQ-PIT-V3/exact-sheet-V4.'
+  unstructured_legacy_blocker_or_next_step: The serial architecture contract is implemented
+    and locally validated, but it remains a non-executable draft. No mandatory source
+    wave, veto series or R1 manifest may begin until Owner exact-freezes the architecture
+    taxonomy, layer semantics, tqqq action-guard migration, event split and alpha-to-veto
+    dependency ban.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Preserve immutable authority hashes; reject alpha-to-veto dependency, risk_off
-      growth_allowed alias, tqqq market-veto use, missing-as-clear and selected-pair
-      option-risk inputs; update system flow; keep series/manifest/provider/cache/real-DQ/backtest/orders/fills/positions/production/broker
-      disabled; finish validated draft for Owner exact freeze.
+    text: Owner exact-freezes architecture file/canonical SHA-256 9b4856614298d64b2c8b5897980735a9e2a19c46fecb6c2362cb750ae13b136d/88e1283b0333bafca24779c9c527d362acef40b65d4cff1a9d081ded07ac70e4
+      and compatibility-map file/canonical SHA-256 c5867551aec4f152256219e4fb19b7c52ec5a6b7f8d8c316961d33a75749679d/067a6b23daa1bfff22a6d4f4fcb773346a7d866e21cf2adb759acde75d04f524;
+      then a separate result-blind source-contract task freezes each mandatory producer/available-at/missing
+      terminal/exact 1202 identity before any R1 manifest, real DQ or backtest.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -71,30 +72,136 @@ events:
   - change:trading-2542f-register-20260825-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-5ba9c706b18b2998553835712fb47bfc
+- schema_version: task_event.v1
+  task_id: TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-25T07:23:18Z'
+  actor: integration-coordinator
+  change_id: trading-2542f-draft-ready-owner-freeze-20260825-v1
+  lane_id: null
+  base_commit: 53ad989a76282a816917f4da091b2c5d1f0d2435
+  previous_state_event_id: task-event-5ba9c706b18b2998553835712fb47bfc
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / exact-freeze the result-blind architecture and legacy
+      compatibility map before any source-contract wave
+    blocker_or_next_step: The serial architecture contract is implemented and locally
+      validated, but it remains a non-executable draft. No mandatory source wave,
+      veto series or R1 manifest may begin until Owner exact-freezes the architecture
+      taxonomy, layer semantics, tqqq action-guard migration, event split and alpha-to-veto
+      dependency ban.
+    acceptance_criteria: Owner exact-freezes architecture file/canonical SHA-256 9b4856614298d64b2c8b5897980735a9e2a19c46fecb6c2362cb750ae13b136d/88e1283b0333bafca24779c9c527d362acef40b65d4cff1a9d081ded07ac70e4
+      and compatibility-map file/canonical SHA-256 c5867551aec4f152256219e4fb19b7c52ec5a6b7f8d8c316961d33a75749679d/067a6b23daa1bfff22a6d4f4fcb773346a7d866e21cf2adb759acde75d04f524;
+      then a separate result-blind source-contract task freezes each mandatory producer/available-at/missing
+      terminal/exact 1202 identity before any R1 manifest, real DQ or backtest.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md.
+      terminal=DRAFT_READY_FOR_OWNER_EXACT_FREEZE_NO_EXECUTION_AUTHORITY; focused/adjacent=66
+      passed; Ruff/mypy/py_compile PASS; veto series/R1 manifest/provider/cache/real
+      DQ/backtest not run; orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542f-draft-ready-owner-freeze-20260825-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8c43cf8a2156d88aa6bbddc1b3be365d
+- schema_version: task_event.v1
+  task_id: TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-25T07:25:23Z'
+  actor: integration-coordinator
+  change_id: trading-2542f-publication-v2-scope-binding-20260825
+  lane_id: null
+  base_commit: 53ad989a76282a816917f4da091b2c5d1f0d2435
+  previous_state_event_id: task-event-8c43cf8a2156d88aa6bbddc1b3be365d
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / exact-freeze the result-blind architecture and legacy
+      compatibility map before any source-contract wave
+    blocker_or_next_step: The serial architecture contract is implemented and locally
+      validated, but it remains a non-executable draft. No mandatory source wave,
+      veto series or R1 manifest may begin until Owner exact-freezes the architecture
+      taxonomy, layer semantics, tqqq action-guard migration, event split and alpha-to-veto
+      dependency ban.
+    acceptance_criteria: Owner exact-freezes architecture file/canonical SHA-256 9b4856614298d64b2c8b5897980735a9e2a19c46fecb6c2362cb750ae13b136d/88e1283b0333bafca24779c9c527d362acef40b65d4cff1a9d081ded07ac70e4
+      and compatibility-map file/canonical SHA-256 c5867551aec4f152256219e4fb19b7c52ec5a6b7f8d8c316961d33a75749679d/067a6b23daa1bfff22a6d4f4fcb773346a7d866e21cf2adb759acde75d04f524;
+      then a separate result-blind source-contract task freezes each mandatory producer/available-at/missing
+      terminal/exact 1202 identity before any R1 manifest, real DQ or backtest.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md.
+      terminal=DRAFT_READY_FOR_OWNER_EXACT_FREEZE_NO_EXECUTION_AUTHORITY; architecture
+      file/canonical SHA=9b4856614298d64b2c8b5897980735a9e2a19c46fecb6c2362cb750ae13b136d/88e1283b0333bafca24779c9c527d362acef40b65d4cff1a9d081ded07ac70e4;
+      compatibility file/canonical SHA=c5867551aec4f152256219e4fb19b7c52ec5a6b7f8d8c316961d33a75749679d/067a6b23daa1bfff22a6d4f4fcb773346a7d866e21cf2adb759acde75d04f524;
+      publication=v2 after v1 typed scope-expansion failure; no series/manifest/provider/cache/real
+      DQ/backtest; orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542f-publication-v2-scope-binding-20260825
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-90ecf62817f1487297e2f298d08deb29
+- schema_version: task_event.v1
+  task_id: TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-25T07:39:35Z'
+  actor: integration-coordinator
+  change_id: trading-2542f-publication-v3-path-containment-20260825
+  lane_id: null
+  base_commit: 53ad989a76282a816917f4da091b2c5d1f0d2435
+  previous_state_event_id: task-event-90ecf62817f1487297e2f298d08deb29
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / exact-freeze the result-blind architecture and legacy
+      compatibility map before any source-contract wave
+    blocker_or_next_step: The serial architecture contract is implemented and locally
+      validated, but it remains a non-executable draft. No mandatory source wave,
+      veto series or R1 manifest may begin until Owner exact-freezes the architecture
+      taxonomy, layer semantics, tqqq action-guard migration, event split and alpha-to-veto
+      dependency ban.
+    acceptance_criteria: Owner exact-freezes architecture file/canonical SHA-256 9b4856614298d64b2c8b5897980735a9e2a19c46fecb6c2362cb750ae13b136d/88e1283b0333bafca24779c9c527d362acef40b65d4cff1a9d081ded07ac70e4
+      and compatibility-map file/canonical SHA-256 c5867551aec4f152256219e4fb19b7c52ec5a6b7f8d8c316961d33a75749679d/067a6b23daa1bfff22a6d4f4fcb773346a7d866e21cf2adb759acde75d04f524;
+      then a separate result-blind source-contract task freezes each mandatory producer/available-at/missing
+      terminal/exact 1202 identity before any R1 manifest, real DQ or backtest.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md.
+      terminal=DRAFT_READY_FOR_OWNER_EXACT_FREEZE_NO_EXECUTION_AUTHORITY; architecture
+      file/canonical SHA=9b4856614298d64b2c8b5897980735a9e2a19c46fecb6c2362cb750ae13b136d/88e1283b0333bafca24779c9c527d362acef40b65d4cff1a9d081ded07ac70e4;
+      compatibility file/canonical SHA=c5867551aec4f152256219e4fb19b7c52ec5a6b7f8d8c316961d33a75749679d/067a6b23daa1bfff22a6d4f4fcb773346a7d866e21cf2adb759acde75d04f524;
+      publication=v3 after v2 fail-closed post-generator path-containment finding;
+      no series/manifest/provider/cache/real DQ/backtest; orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542f-publication-v3-path-containment-20260825
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0f050efcfad25006a1301db572e45291
 projection:
   legacy_first_eight_cells:
   - TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
   - Growth action-value veto / option-signal result-blind serial architecture contract
     V1
   - P0
-  - IN_PROGRESS
-  - Codex / implement and validate the non-executable serial architecture contract
-    before Owner exact freeze
-  - 'Implement the approved layered successor: separate DQ qualification, QQQ/SGOV
-    action guards, four orthogonal market-state vetoes, option alpha and optional
-    independent option-risk diagnostics without modifying frozen V1/V2/DQ-PIT-V3/exact-sheet-V4.'
-  - Preserve immutable authority hashes; reject alpha-to-veto dependency, risk_off
-    growth_allowed alias, tqqq market-veto use, missing-as-clear and selected-pair
-    option-risk inputs; update system flow; keep series/manifest/provider/cache/real-DQ/backtest/orders/fills/positions/production/broker
-    disabled; finish validated draft for Owner exact freeze.
+  - BLOCKED_OWNER_INPUT
+  - Project Owner / exact-freeze the result-blind architecture and legacy compatibility
+    map before any source-contract wave
+  - The serial architecture contract is implemented and locally validated, but it
+    remains a non-executable draft. No mandatory source wave, veto series or R1 manifest
+    may begin until Owner exact-freezes the architecture taxonomy, layer semantics,
+    tqqq action-guard migration, event split and alpha-to-veto dependency ban.
+  - Owner exact-freezes architecture file/canonical SHA-256 9b4856614298d64b2c8b5897980735a9e2a19c46fecb6c2362cb750ae13b136d/88e1283b0333bafca24779c9c527d362acef40b65d4cff1a9d081ded07ac70e4
+    and compatibility-map file/canonical SHA-256 c5867551aec4f152256219e4fb19b7c52ec5a6b7f8d8c316961d33a75749679d/067a6b23daa1bfff22a6d4f4fcb773346a7d866e21cf2adb759acde75d04f524;
+    then a separate result-blind source-contract task freezes each mandatory producer/available-at/missing
+    terminal/exact 1202 identity before any R1 manifest, real DQ or backtest.
   - 'Supporting requirement: docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md.
-    owner_decision=owner_decision:TRADING-2542F:2026-08-25:authorize_serial_veto_option_architecture_contract_wave_v1;
-    governed_mode=SINGLE_LANE_SERIAL_CONTRACT_WAVE; external_action=none; production_effect=none;
-    broker_action=none.'
+    terminal=DRAFT_READY_FOR_OWNER_EXACT_FREEZE_NO_EXECUTION_AUTHORITY; architecture
+    file/canonical SHA=9b4856614298d64b2c8b5897980735a9e2a19c46fecb6c2362cb750ae13b136d/88e1283b0333bafca24779c9c527d362acef40b65d4cff1a9d081ded07ac70e4;
+    compatibility file/canonical SHA=c5867551aec4f152256219e4fb19b7c52ec5a6b7f8d8c316961d33a75749679d/067a6b23daa1bfff22a6d4f4fcb773346a7d866e21cf2adb759acde75d04f524;
+    publication=v3 after v2 fail-closed post-generator path-containment finding; no
+    series/manifest/provider/cache/real DQ/backtest; orders/fills/positions/production/broker=0.'
   docs_links:
   - docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md
   terminal: false
-  canonical_row_sha256: f5f5e3d3d8ffddd7d7e9a51e01ba0d296d0f660ea523062486d6e614879050b3
-last_event_id: task-event-5ba9c706b18b2998553835712fb47bfc
+  canonical_row_sha256: 3d43f1dc11b638531246429197db4b5f3f811ba1b45b489b86659785078e31b9
+last_event_id: task-event-0f050efcfad25006a1301db572e45291
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 6ef04ce096d91aecd0655a358113f049a1d4bd07cbc1ee0573e5fbb88997f7d6
+fragment_checksum: f69181e7d5bb16abc7154c91528595645906417ef86f70c63cf2bda87957004f

@@ -9310,12 +9310,53 @@ Owner exact authorization + exact draft freeze (unconsumed)
 
 LEAN `BaseChainUniverseData.EndTime=Time+OneDay` 只证明 universe row available-at；`OptionUniverse`
 row 不含 bid/ask quote timestamp，因此不能再把日级 `Time/EndTime` 冒充 V3 的 120 秒 quote clock。
-下一合法节点不再是重复 freeze，而是为 `risk_off/event_risk/trend_break/tqqq` 四项建立逐项
-versioned、PIT-approved、available-at 可重放且与本任务 `QQQ/SGOV` action universe 语义兼容的
-source contract。全部五项 source contract 本地验证后，才能生成并接纳 exact 1202-session series，
-再形成普通发布的 candidate/R1 manifest。只有自动 replay 为 `PASS` 后，才允许读取真实 cache/provider、
-运行真实 DQ 或消费唯一 zero-order backtest。当前没有 provider/cache 读取、回测或交易，
-external counters 全为 0。
+下一合法节点是 TRADING-2542F 的 result-blind serial architecture contract wave，而不是直接为旧
+five-veto taxonomy 生成 series。该节点先把 DQ qualification、action-universe guard、market-state
+veto、option alpha 与 optional option-risk diagnostic 分层，并把 `tqqq_veto` 迁移为历史兼容的
+no-leverage action guard。只有新 architecture 获得 Owner exact-freeze，后继任务才能分别冻结
+independent source contract。全部 mandatory source contract 本地验证后，才能生成 exact 1202-session
+series 和 candidate/R1 manifest；只有自动 replay 为 `PASS` 后，才允许读取真实 cache/provider、运行
+真实 DQ 或消费唯一 zero-order backtest。当前没有 provider/cache 读取、回测或交易，external counters
+全为 0。
+
+## TRADING-2542F veto / option-signal result-blind serial architecture contract
+
+`growth_action_value_veto_option_signal_architecture.v1` 是新 successor family 的第一份 schema，
+`policy_family_generation=RESULT_BLIND_SUCCESSOR_V3`；这里的 V3 表示 execution-policy family successor，
+不改写或取代独立的 DQ/PIT V3。旧 execution V1/V2、DQ/PIT V3、exact sheet V4 与 legacy five-veto
+labels 全部保持 immutable。`growth_action_value_legacy_veto_compatibility_map.v1` 只定义历史 replay 与
+新 consumer 的显式边界，不允许直接把旧字段当作新 gate。
+
+```text
+immutable execution V1/V2 + unchanged DQ/PIT V3 + unchanged exact sheet V4
+  + legacy five-veto compatibility map
+  -> L0 authority / PIT identity
+  -> L1 DQ qualification: PASS | FAIL | INSUFFICIENT | INVALID
+       -> non-PASS cannot become market clear
+  -> L2 action-universe constraints
+       -> QQQ/SGOV only; no options position; no TQQQ/QLD; no borrowed leverage
+       -> historical tqqq_veto => NO_LEVERAGE_ETF_ACTION_GUARD
+  -> L3 four orthogonal mandatory market-state veto contracts
+       -> broad_market_risk_off_veto: independent producer required
+       -> realized_volatility_veto: compatible source role, series not generated
+       -> scheduled_event_risk_veto: PIT calendar source required
+       -> underlying_trend_break_veto: independent QQQ underlying adapter required
+  -> L4 selected CALL/PUT activity alpha
+       -> alpha only; selected pair/activity/result fields forbidden as veto inputs
+  -> L5 optional independent option-risk diagnostics
+       -> pre-selection fixed buckets; derived-only; raw rows/SID=0
+       -> current full IV/skew/term surface = NOT_ADMITTED / DEFERRED
+  -> L6 next-session join
+       -> only DQ PASS + action guard PASS + four market vetoes exact false may consume alpha
+       -> series/weights/R1 manifest generation = false in this draft
+```
+
+mandatory source 缺少 `source_contract_sha256`、independent producer、decision-as-of、`available_at`、
+missing terminal 或 exact 1202-session inventory 时，terminal 固定为
+`INSUFFICIENT_EVIDENCE_TO_BUILD_R1_MANIFEST`；authority malformed 时为
+`PRE_RUN_AUTHORITY_INVALID`。两者都必须在 R1 manifest 前停止。当前 architecture status=
+`DRAFT_FOR_OWNER_EXACT_FREEZE_NON_EXECUTABLE`，不授权 veto series、provider/cache、真实 DQ、backtest、
+orders/fills/positions、paper/live、production 或 broker。
 
 ## Coordinator integration publication fence（DEVX-009）
 

@@ -1,0 +1,64 @@
+schema_version: growth_action_value_legacy_veto_compatibility_map.v1
+map_id: qc_qqq_options_growth_action_value_legacy_veto_compatibility_map_v1
+map_version: 1.0.0-draft.1
+status: DRAFT_FOR_OWNER_EXACT_FREEZE
+task_id: TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
+execution_v1:
+  path: config/research/qc_qqq_options_growth_action_value_real_review_execution_v1.yaml
+  file_sha256: 03edd3868da276be69652cd9854f0201934a6cf2fa4eb5c40bfcfb4ff06206c1
+  canonical_sha256: 7daa5d1cb212051aab34d2af6477ee410ea8492f62c74da7417174ec3586e717
+  role: IMMUTABLE_LEGACY_POLICY_AUTHORITY
+  immutable: true
+execution_v2:
+  path: config/research/qc_qqq_options_growth_action_value_real_review_execution_v2.yaml
+  file_sha256: f02df23a4bd36069f5fe09354a3ce8480583fc451b71ec511bc3ba2da27780f2
+  canonical_sha256: 9b39a1cf6d1ad48c427755f07c592610ae2ad94055af4aab79d3327bf4e82456
+  role: IMMUTABLE_LEGACY_POLICY_AUTHORITY
+  immutable: true
+legacy_taxonomy:
+  - risk_off_veto
+  - volatility_veto
+  - event_risk_veto
+  - trend_break_veto
+  - tqqq_veto
+mapping:
+  - legacy_field: risk_off_veto
+    successor_field: broad_market_risk_off_veto
+    successor_role: MARKET_STATE_VETO_REQUIRES_INDEPENDENT_PRODUCER
+    current_state: BLOCKED_OWNER_EXACT_FREEZE
+    legacy_bytes_retained: true
+    direct_successor_consumption_allowed: false
+  - legacy_field: volatility_veto
+    successor_field: realized_volatility_veto
+    successor_role: MARKET_STATE_VETO_COMPATIBLE_SOURCE_ROLE
+    current_state: SOURCE_CONTRACT_READY_SERIES_NOT_GENERATED
+    legacy_bytes_retained: true
+    direct_successor_consumption_allowed: false
+  - legacy_field: event_risk_veto
+    successor_field: scheduled_event_risk_veto
+    successor_role: SCHEDULED_EVENT_VETO_OPTION_EVENT_DIAGNOSTIC_SPLIT
+    current_state: BLOCKED_OWNER_EXACT_FREEZE
+    legacy_bytes_retained: true
+    direct_successor_consumption_allowed: false
+  - legacy_field: trend_break_veto
+    successor_field: underlying_trend_break_veto
+    successor_role: ORTHOGONAL_QQQ_UNDERLYING_MARKET_STATE_VETO
+    current_state: BLOCKED_OWNER_EXACT_FREEZE
+    legacy_bytes_retained: true
+    direct_successor_consumption_allowed: false
+  - legacy_field: tqqq_veto
+    successor_field: NO_LEVERAGE_ETF_ACTION_GUARD
+    successor_role: ACTION_UNIVERSE_GUARD_COMPATIBILITY_ONLY
+    current_state: REMOVED_FROM_SUCCESSOR_MARKET_CLEAR_GATE
+    legacy_bytes_retained: true
+    direct_successor_consumption_allowed: false
+safety:
+  legacy_replay_allowed: true
+  legacy_field_deletion_allowed: false
+  legacy_field_in_place_rename_allowed: false
+  retained_label_truncation_allowed: false
+  missing_unknown_or_non_pit_as_false_allowed: false
+  predecessor_rule_override_allowed: false
+  external_action: none
+  production_effect: none
+  broker_action: none

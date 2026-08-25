@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BLOCKED_OWNER_INPUT`（合同草案已实现并验证；等待 Owner exact-freeze）
 
 governed mode：`SINGLE_LANE` serial contract wave
 
@@ -209,8 +209,8 @@ evidence roles：
 - registration branch：`codex/trading-2542f-register`；
 - implementation branch：`codex/trading-2542f-veto-option-architecture`；
 - repository workspace：复用 `D:\Work\AITradingSystem`，不创建额外 worktree/clone/cache；
-- registration branch 只包含 canonical task event、本 requirement 与 deterministic task views/index；
-- registration 发布并清理后，从新的 exact local main 创建 implementation branch；
+- registration commits 作为正式 implementation lane 的祖先保留；不单独发布中间 registration candidate；
+- 最终实现候选只发布一次，并在 closeout 后清理 task branch；
 - known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` 不得读取、hash、diff、stage 或修改；
 - recovery：所有 tracked bytes 由 Git/main 恢复；没有外部 dataset、provider artifact 或 broker state；
 - exit condition：合同草案验证、普通发布与 task 状态更新完成；Owner exact-freeze 前保持 non-executable。
@@ -225,3 +225,24 @@ evidence roles：
   task-source focused test 机械发现 task count 仍冻结为 `1026`、实际为 `1027`；v1 以 FAIL 释放，
   未发布、未绕过测试。v2 精确扩展 `tests/test_arch_005_s5_task_source_cutover.py` path，只同步该
   canonical registry invariant，不改变任何策略、DQ/PIT、数据或执行语义。
+- 2026-08-25：registration transaction v2 的 task-source focused test=`9 passed`。为避免中间
+  registration candidate 与最终实现各运行一次完整 Full，v2 未发布并以 FAIL 释放；已提交登记 bytes
+  直接作为 `codex/trading-2542f-veto-option-architecture` 的祖先，然后 SINGLE_LANE LANE preflight
+  PASS。该收敛不跳过最终候选的正式 validation、publication fence、local-main fast-forward 或普通 push。
+- 2026-08-25：result-blind architecture 与 legacy compatibility map 已实现。architecture
+  file/canonical SHA-256=`9b4856614298d64b2c8b5897980735a9e2a19c46fecb6c2362cb750ae13b136d` /
+  `88e1283b0333bafca24779c9c527d362acef40b65d4cff1a9d081ded07ac70e4`；compatibility map
+  file/canonical SHA-256=`c5867551aec4f152256219e4fb19b7c52ec5a6b7f8d8c316961d33a75749679d` /
+  `067a6b23daa1bfff22a6d4f4fcb773346a7d866e21cf2adb759acde75d04f524`。focused/adjacent=
+  `66 passed`，Ruff、strict mypy、py_compile PASS。terminal=
+  `DRAFT_READY_FOR_OWNER_EXACT_FREEZE_NO_EXECUTION_AUTHORITY`；veto series/R1 manifest/provider/cache/
+  real DQ/backtest 均未运行，orders/fills/positions/production/broker=0。
+- 2026-08-25：publication transaction v1 在任何 official generator 或 Full 前发现
+  `tests/atlas/test_historical_projection_review.py` 也冻结了 2542E 后继 coverage 顺序，但该路径未在
+  v1 shared claim 中声明；v1 按 scope-expansion fail closed 并释放。v2 一次性加入该精确 consumer，
+  继续绑定同一 frozen base/lane head；不修改 architecture 数值或放宽执行边界。
+- 2026-08-25：publication transaction v2 在 `GENERATED_REBUILD_POST` 后的提交前语义审阅中发现
+  authority loader 的相对路径仍需显式拒绝 `..` traversal。v2 未在 post-generator 状态继续写入，按
+  fail-closed 规则释放；v3 复用相同 frozen base/lane head 与精确 path claims，直接修复 root containment、
+  增加 typed rejection 回归测试并从头 replay generator/validation。该修复不改变 veto taxonomy、阈值、
+  DQ/PIT、数据权限或执行边界。

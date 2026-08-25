@@ -104,13 +104,13 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2542E_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2542F_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
-        "exact policy freeze 与 1202-session veto-series 授权已接纳且尚未消费；volatility "
-        "source ready，但 risk_off/event_risk/trend_break/tqqq 四项 PIT source contract "
-        "未闭合，manifest、真实 DQ 与 backtest 继续关闭"
+        "veto / option-signal result-blind architecture 草案已验证；DQ、action guard、四项独立 "
+        "market-state veto、option alpha 与 optional option-risk diagnostic 已分层，当前等待 "
+        "Owner exact freeze，series、manifest、真实 DQ 与 backtest 继续关闭"
     )
 
 

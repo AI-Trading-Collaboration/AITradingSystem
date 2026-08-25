@@ -325,6 +325,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md
     coverage: DISCLOSED_EXACT_POLICY_FREEZE_ACCEPTED_VETO_SOURCE_CONTRACT_BLOCKED
     reader_summary_zh: 2542E 的 exact policy freeze 与 exact 1202-session veto-series 生成/接纳授权已收到，但授权仍未消费、所有外部计数仍为 0。已批准 draft bytes 保持不可变，V2 successor 只绑定 frozen rule surface 与 readiness；当前仅 volatility_veto source contract ready，risk_off_veto 语义歧义，event_risk_veto/trend_break_veto 缺 PIT producer，现有 tqqq_veto 又是与“必须 false”不兼容的常量 true no-TQQQ guard。禁止用旧 secondary_cross_checked labels 裁切或 false-fill；四项 source contract 未逐项闭合前，exact series、R1 manifest、provider、真实 DQ 和 backtest 继续关闭。production/broker effect=none。
+  - task_id: TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
+    requirement_path: docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md
+    coverage: DISCLOSED_RESULT_BLIND_VETO_OPTION_ARCHITECTURE_DRAFT_OWNER_FREEZE_REQUIRED
+    reader_summary_zh: 2542F 已把旧 five-veto 的历史兼容角色与新 consumer 分开，并将 DQ qualification、QQQ/SGOV action guard、四项独立 market-state veto、selected CALL/PUT alpha 和 optional derived-only option-risk diagnostic 分层。tqqq_veto 只映射为 no-leverage action guard；risk_off 禁止使用 growth_allowed 反向 alias；selected pair/activity/result 字段被 schema 禁止进入 veto。architecture 与 compatibility map 已完成本地验证但仍待 Owner exact freeze；veto series、R1 manifest、provider/cache、真实 DQ、backtest、production 与 broker 保持关闭。
   - task_id: TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1
     requirement_path: docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md
     coverage: LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_COMPLETE
