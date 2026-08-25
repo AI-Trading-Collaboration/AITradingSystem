@@ -15,7 +15,8 @@ task_record:
   accountable_owner: null
   next_owner: Codex / prepare result-blind Owner exact-freeze decision pack; Project
     Owner retains exact admission decision
-  requirement_refs: []
+  requirement_refs:
+  - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
@@ -215,6 +216,41 @@ events:
   - change:trading-2542g-freeze-pack-resume-20260826-v2
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-22ba5fe25a7f0cd1f811075ade05fa54
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-25T15:40:38Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-freeze-pack-requirement-binding-20260826-v1
+  lane_id: null
+  base_commit: 3ba5cb5e3c0dcac6fb63388d8b6ba9bdb6a7f0d7
+  previous_state_event_id: task-event-22ba5fe25a7f0cd1f811075ade05fa54
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / prepare result-blind Owner exact-freeze decision pack; Project
+      Owner retains exact admission decision
+    blocker_or_next_step: Convert all four producer-contract draft rows into explicit
+      recommended decision objects for producer, formula, threshold, timing, PIT and
+      inventory review. Keep proposals unadmitted and stop before series/R1/provider/cache/real
+      DQ/backtest.
+    acceptance_criteria: Decision-pack loader replays the immutable producer-draft
+      identity and candidate evidence; four ordered rows expose one recommended choice
+      plus rejected alternatives and evidence class for every decision dimension;
+      recommendation values remain PROPOSAL_NOT_OWNER_FROZEN, admitted stays 0/4,
+      exact inventory observed hash stays null, and all real-data/execution flags
+      remain closed; focused and governed validation PASS.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      Owner instruction=2026-08-26 continue; interpreted as authorization to draft
+      an exact-freeze decision pack, not approval of formula/threshold bytes or source
+      admission. Scope=non-executable DATA_RESEARCH only; real data, DQ, backtest,
+      series, R1 manifest, orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-freeze-pack-requirement-binding-20260826-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-241285cda64aa06460b9b5cc32196f3c
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
@@ -232,13 +268,15 @@ projection:
     PROPOSAL_NOT_OWNER_FROZEN, admitted stays 0/4, exact inventory observed hash stays
     null, and all real-data/execution flags remain closed; focused and governed validation
     PASS.
-  - Owner instruction=2026-08-26 continue; interpreted as authorization to draft an
+  - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+    Owner instruction=2026-08-26 continue; interpreted as authorization to draft an
     exact-freeze decision pack, not approval of formula/threshold bytes or source
     admission. Scope=non-executable DATA_RESEARCH only; real data, DQ, backtest, series,
-    R1 manifest, orders/fills/positions/production/broker=0.
-  docs_links: []
+    R1 manifest, orders/fills/positions/production/broker=0.'
+  docs_links:
+  - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 60213b19d78823dd0b91e5c4005e31fffa9c2bf5b486a8553bbb46b8213f7271
-last_event_id: task-event-22ba5fe25a7f0cd1f811075ade05fa54
+  canonical_row_sha256: be419b29dc8c63887db3947515942d58bca5e3ed87f9879c07b9c7c45c2121b0
+last_event_id: task-event-241285cda64aa06460b9b5cc32196f3c
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 4bf29fc9db73fc5b01d2c4aa5ff3ee1b02fe1e9ab06779510b5b972a23172e49
+fragment_checksum: 6a11d1496c6eee181887e1adb12fd05361825859fad57432f740460477dbf232

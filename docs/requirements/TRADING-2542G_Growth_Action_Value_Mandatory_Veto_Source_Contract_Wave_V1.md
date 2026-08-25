@@ -5,7 +5,7 @@
 - task id：`TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1`；
 - priority：`P0`；
 - governed mode：`SINGLE_LANE` serial consumer-contract wave；
-- current status：`IN_PROGRESS_NON_EXECUTABLE_PRODUCER_CONTRACT_DRAFT`；
+- current status：`IN_PROGRESS_NON_EXECUTABLE_OWNER_FREEZE_DECISION_PACK_DRAFT`；
 - Owner decision：
   `owner_decision:TRADING-2542F-2542G:2026-08-25:approve_exact_architecture_freeze_and_source_contract_followup_v1`；
 - 授权边界：只允许本地、result-blind、non-executable `DATA_RESEARCH` 合同与 synthetic
@@ -174,6 +174,35 @@ draft artifact 必须绑定本 V1 source-wave file/canonical SHA 和所有 candi
 6. 下一状态仍由 Owner 对 exact producer/formula/threshold/timing 逐项冻结决定，不能由代码或测试
    自动升级。
 
+### S4：Owner exact-freeze decision pack draft
+
+Owner 于 2026-08-26 再次指示“继续”。该指示允许 Codex 把 S3 的空 decision inventory 收敛成一组
+可逐项批准或退回修改的推荐对象，但仍不等于 Owner 已批准其中任何值。S4 新增
+`growth_action_value_mandatory_veto_owner_freeze_decision_pack_draft.v1`，精确绑定 S3 producer draft
+file/canonical SHA，并保持 `0/4 admitted`。
+
+四项 recommendation 固定为 result-blind、compatibility-anchored proposal：
+
+| veto | 推荐 producer / 公式 | recommendation evidence role | 仍阻塞 admission 的条件 |
+| --- | --- | --- | --- |
+| `broad_market_risk_off_veto` | SPY-only；`close < SMA200 OR drawdown63 <= -10%`；T close 后、T+1 消费 | 复用既有 SPY 200-session 与 63-session/-10% 边界，只作 Owner review proposal | Owner 未冻结；dedicated producer 未实现；未观察 exact-1202 inventory |
+| `realized_volatility_veto` | `VIX percentile252 >= 0.75 OR QQQ annualized RV20 > 0.25`；T+1 消费 | free-feature stress percentile 与 legacy RV20 边界的兼容性 proposal | Owner 未冻结；successor adapter/VIX available-at 未冻结；未观察 inventory |
+| `scheduled_event_risk_veto` | 仅 Federal Reserve/BLS/BEA official schedule；若 next QQQ session 有任一 admitted event 则 veto | 不使用 event result/weight；只使用 `published_at <= decision_as_of` 的最新 official revision | Owner 未冻结；published-at/revision schema 与 official adapters 未实现；未观察 inventory |
+| `underlying_trend_break_veto` | QQQ-only；`close < SMA200 AND drawdown63 <= -12%` 进入；连续 2 日 `close >= SMA200` 恢复 | 复用既有 QQQ 200-session 与 63-session/-12% 边界，新增明确 hysteresis proposal | Owner 未冻结；dedicated stateful producer/initialization 未实现；未观察 inventory |
+
+这些数值是明确记录的 temporary review baseline，不是 active threshold policy：
+
+- calibration status=`UNVALIDATED_NO_REAL_DATA_OR_BACKTEST`；
+- recommendation 不得驱动 runtime、DQ、series、manifest、backtest 或投资结论；
+- Owner 必须对四项分别 exact-freeze；partial freeze 也不能生成 series；
+- review/expiry condition=`BEFORE_ANY_SOURCE_CONTRACT_ADMISSION_OR_SERIES_GENERATION`；
+- 如 Owner 退回任一 recommendation，修改必须产生新版本与新 file/canonical identity，不改写本草案；
+- 真实 DQ/backtest 即使四项全部冻结，仍需另行授权且必须先通过 manifest replay。
+
+S4 strict loader 必须重放 S3 producer draft loader，而不是只相信复制的 SHA；拒绝 broad producer 读取
+QQQ、trend producer 读取 SPY、event source 使用 convenience-provider fill、`event_date` 代替
+`published_at`、Owner-freeze/admission flag 变真、observed inventory 伪造或任何外部/交易开关开启。
+
 ## 7. Path、contract 与 evidence claims
 
 task-owned paths：本 requirement、两份新 config、typed loader 与 focused tests。
@@ -190,8 +219,8 @@ evidence roles：
 
 ## 8. Lifecycle 与安全边界
 
-- current S3 frozen base：`16162ad9bbd0c7c0bcc3a79c5fe38f2e8571e77b`；
-- current S3 branch：`codex/trading-2542g-veto-producer-draft`；
+- current S4 frozen base：`138d1fdfa12c9ffc0f5dcf7dbfaaf3e0314254be`；
+- current S4 branch：`codex/trading-2542g-veto-owner-freeze-pack`；
 - workspace：复用 `D:\Work\AITradingSystem`，不创建额外 worktree/clone/cache；
 - known-unrelated exclusion：`docs/research/growth_tilt_owner_diagnosis_pack.md` 不读、不 hash、不
   diff、不 stage、不修改；
@@ -253,3 +282,11 @@ evidence roles：
   未生成 candidate、未运行 Full。使用 builder 的 `EXACT_BLANK_LINE_BLOCKS_V1` 与 Git blob 算法只读
   计算 reviewed successor seal=`2,279,738 bytes / 75804e...3590 / cf427e...067d / 1,103 entries`；
   仅同步 source identity 与 frozen regression，不改变 veto、DQ/PIT、阈值或授权语义。
+- 2026-08-26：上一 S3 candidate 已以 `138d1fdfa12c9ffc0f5dcf7dbfaaf3e0314254be` 完成 Full
+  `9606 passed / 3 skipped` 并 ordinary-push 到 `origin/main`。Owner 再次指示“继续”；READ_ONLY 与
+  SINGLE_LANE START/LANE preflight PASS，canonical task 已恢复为 `IN_PROGRESS`。S4 decision-pack
+  draft file/canonical SHA-256=`4f188c6e10758a32984bb92c3252507636686f97404c4491df014c1d22807479`/
+  `c8838a4baef788a6b936e4e098658413e2c563e169f1ec4a5da8ec7318c9e4af`；四个 recommendation object
+  ready for Owner review，但 owner-frozen/admitted 仍为 `0/4`。S4 + S3 + source-wave focused=
+  `53 passed`；Ruff、strict mypy、py_compile PASS。未读取 provider/cache 或真实数据，未生成 series/R1
+  manifest，未运行真实 DQ/backtest，orders/fills/positions/production/broker=`0`。

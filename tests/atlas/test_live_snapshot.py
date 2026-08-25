@@ -108,10 +108,10 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
-        "四项 mandatory veto 的 producer-contract draft 已形成并绑定 source-wave 与 candidate "
-        "evidence exact identity；当前仍是 0/4 admitted，volatility 仅为 callable candidate、"
-        "scheduled event PIT incomplete、broad-market 与 trend producer 尚不可调用，所有 exact "
-        "threshold 均未冻结，series、R1 manifest、真实 DQ 与 backtest 继续关闭"
+        "四项 mandatory veto 已形成 S4 Owner exact-freeze decision pack draft：SPY broad-market、"
+        "VIX/QQQ realized-vol、official scheduled-event 与 QQQ trend-break 均有明确 "
+        "recommendation object；这些值仍是未回测的 compatibility-anchored proposal，"
+        "Owner-frozen/admitted 仍为 0/4，series、R1 manifest、真实 DQ 与 backtest 继续关闭"
     )
 
 

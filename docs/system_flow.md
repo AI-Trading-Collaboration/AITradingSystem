@@ -9430,6 +9430,40 @@ frozen 2542G source-wave identity
 admitted，或打开 series/manifest/真实数据/交易开关。下一合法动作仍是 Project Owner 逐项审阅并精确
 冻结 producer/formula/threshold/timing/inventory；这一步本身也不自动授权真实 DQ 或 backtest。
 
+### TRADING-2542G Owner exact-freeze decision pack draft
+
+2026-08-26 的 Owner“继续”被解释为允许编制可批准的 exact-freeze decision pack，而不是把任一
+recommendation 自动标成 Owner-frozen。`growth_action_value_mandatory_veto_owner_freeze_decision_pack_draft.v1`
+精确绑定 S3 producer draft 的 file/canonical identity，并把兼容性 anchor 转成四个明确 proposal：
+
+```text
+S3 producer-contract draft (0 / 4 admitted)
+  -> S4 four reviewable recommendation objects
+       -> broad_market_risk_off_veto
+            SPY-only: below SMA200 OR 63-session drawdown <= -10%
+       -> realized_volatility_veto
+            VIX percentile252 >= 0.75 OR QQQ annualized RV20 > 25%
+       -> scheduled_event_risk_veto
+            official Federal Reserve / BLS / BEA event scheduled next QQQ session
+            published_at <= T decision frontier; latest eligible revision only
+       -> underlying_trend_break_veto
+            enter: QQQ below SMA200 AND drawdown63 <= -12%
+            clear: two consecutive QQQ closes at or above SMA200
+  -> recommendation evidence = compatibility-anchored, unvalidated, no backtest
+  -> Owner-frozen producer contracts = 0 / 4
+  -> admitted producer contracts = 0 / 4
+  -> observed exact-1202 inventory SHA = null
+  -> terminal = OWNER_EXACT_FREEZE_DECISION_REQUIRED_0_OF_4_ADMITTED
+  -> runtime / series / R1 / provider / cache / real DQ / backtest = false
+  -> orders / fills / positions / production / broker = 0
+```
+
+strict loader 重放 parent producer-draft loader，因此也递归重放 source-wave 与 candidate evidence hashes。
+proposal values 不能驱动 runtime；partial Owner freeze 不能生成 series。event row 只允许 exact official
+authority 且禁止 cross-provider fill；missing=`INSUFFICIENT`、malformed=`INVALID`，均不得解释为 veto
+clear。下一合法动作是 Owner 对四个 recommendation 分别 exact-freeze 或明确退回修改；即便全部冻结，
+真实 DQ/backtest 仍需独立授权并先通过 manifest replay。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

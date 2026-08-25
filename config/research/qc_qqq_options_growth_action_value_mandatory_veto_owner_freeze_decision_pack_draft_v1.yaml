@@ -1,0 +1,345 @@
+schema_version: growth_action_value_mandatory_veto_owner_freeze_decision_pack_draft.v1
+policy_id: qc_qqq_options_growth_action_value_mandatory_veto_owner_freeze_decision_pack_draft_v1
+policy_version: 1.0.0-draft.1
+status: OWNER_EXACT_FREEZE_DECISION_REQUIRED_0_OF_4_ADMITTED
+task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+producer_draft_binding:
+  path: config/research/qc_qqq_options_growth_action_value_mandatory_veto_producer_contract_draft_v1.yaml
+  file_sha256: 8bd9799b42a0d2f547afbb5bb8708775bef0de35d504197b117ed210e49a6baa
+  canonical_sha256: a6e3ff096d5c5c6df6ec76756581bf0262be4988b696cb2cfb6457dd1b07f063
+  immutable: true
+owner_scope:
+  instruction_ref: owner_instruction:TRADING-2542G:2026-08-26:continue_prepare_exact_freeze_decision_pack_v1
+  decision_pack_drafting_authorized: true
+  recommendation_values_are_owner_frozen: false
+  producer_contract_admission_authorized: false
+  veto_series_generation_authorized: false
+  r1_manifest_generation_authorized: false
+  real_data_dq_or_backtest_authorized: false
+  authorization_state: STANDING_OWNER_SCOPE
+target_inventory:
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  expected_session_count: 1202
+  target_session_inventory_lf_sha256: d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0
+review_policy:
+  evidence_role: COMPATIBILITY_ANCHORED_OWNER_REVIEW_PROPOSAL
+  calibration_status: UNVALIDATED_NO_REAL_DATA_OR_BACKTEST
+  recommendation_values_may_drive_runtime: false
+  owner_must_freeze_each_veto_separately: true
+  partial_owner_freeze_may_generate_series: false
+  expiry_condition: BEFORE_ANY_SOURCE_CONTRACT_ADMISSION_OR_SERIES_GENERATION
+  missing_terminal: INSUFFICIENT
+  malformed_authority_terminal: INVALID
+decision_rows:
+  - veto_id: broad_market_risk_off_veto
+    recommendation_id: broad_market_risk_off_spy_sma200_drawdown63_v1_proposal
+    recommendation_state: RECOMMENDED_PROPOSAL_NOT_OWNER_FROZEN
+    producer_decision:
+      producer_id: qqq_options_growth_action_value_broad_market_risk_off_v1
+      callable_state: IMPLEMENTATION_REQUIRED_AFTER_OWNER_FREEZE
+      independent_input_universe:
+        - SPY.exchange_session
+        - SPY.adjusted_close
+        - SPY.available_at
+        - SPY.source_identity
+      forbidden_input_classes:
+        - QQQ_OR_GROWTH_STATE
+        - OPTION_CONTRACT_OR_ACTIVITY
+        - RESULT_DERIVED_VALUE
+    formula_decision:
+      formula_category: BROAD_MARKET_TREND_OR_DRAWDOWN_STATE
+      exact_formula: veto = (SPY.adjusted_close < SMA(SPY.adjusted_close, 200 sessions)) OR (SPY.adjusted_close / rolling_max(SPY.adjusted_close, 63 sessions) - 1 <= -0.10)
+      window_inventory:
+        moving_average_sessions: 200
+        drawdown_sessions: 63
+      threshold_inventory:
+        drawdown_fraction_lte: -0.10
+      combination_rule: OR
+      entry_confirmation_sessions: 1
+      recovery_rule: CLEAR_WHEN_BOTH_COMPONENTS_FALSE
+      rationale: Preserves the existing SPY 200-session and 63-session/-10% compatibility anchors while removing QQQ, growth_allowed and option-result dependencies.
+    timing_decision:
+      decision_as_of: TARGET_QQQ_SESSION_OFFICIAL_CLOSE
+      available_at: AFTER_BOUND_SPY_SESSION_CLOSE_AND_DQ_PASS
+      effective_session: NEXT_VALID_QQQ_EXCHANGE_SESSION
+      same_session_action_allowed: false
+      cross_date_fallback_allowed: false
+    pit_decision:
+      required_source_fields:
+        - exchange_session
+        - adjusted_close
+        - available_at
+        - source_identity
+      published_at_required: false
+      revision_identity_required: false
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+    provenance_refs:
+      - config/etf_portfolio/risk.yaml#regime_rules.risk_off_spy_drawdown_63d
+      - src/ai_trading_system/etf_portfolio/regime.py#SPY_above_ma_200_reference_only
+    rejected_alternatives:
+      - growth_allowed inverse alias
+      - SPY and QQQ composite producer
+      - option-alpha or selected-contract input
+    open_evidence_blockers:
+      - OWNER_EXACT_FREEZE_NOT_GRANTED
+      - DEDICATED_CALLABLE_PRODUCER_NOT_IMPLEMENTED
+      - EXACT_1202_SESSION_INVENTORY_NOT_OBSERVED_OR_ADMITTED
+    decision_object_complete_for_owner_review: true
+    owner_exact_freeze_granted: false
+    producer_contract_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    series_generation_allowed: false
+  - veto_id: realized_volatility_veto
+    recommendation_id: realized_volatility_vix252_or_qqq_rv20_v1_proposal
+    recommendation_state: RECOMMENDED_PROPOSAL_NOT_OWNER_FROZEN
+    producer_decision:
+      producer_id: volatility_compression_free_v1_successor_adapter
+      callable_state: CALLABLE_CANDIDATE_ADAPTER_REVIEW_REQUIRED
+      independent_input_universe:
+        - QQQ.exchange_session
+        - QQQ.adjusted_close
+        - QQQ.available_at
+        - QQQ.source_identity
+        - VIX.observation_date
+        - VIX.vix_level
+        - VIX.available_at
+        - VIX.source_identity
+      forbidden_input_classes:
+        - OPTION_CONTRACT_OR_ACTIVITY
+        - GROWTH_ALLOWED_OR_CANDIDATE_RESULT
+    formula_decision:
+      formula_category: VIX_PERCENTILE_OR_QQQ_REALIZED_VOLATILITY_STATE
+      exact_formula: veto = (rolling_percentile_rank(VIX.vix_level, 252 sessions) >= 0.75) OR (annualized_std(QQQ.adjusted_close.pct_change(), 20 sessions) > 0.25)
+      window_inventory:
+        vix_percentile_sessions: 252
+        realized_volatility_sessions: 20
+        annualization_sessions: 252
+      threshold_inventory:
+        vix_percentile_gte: 0.75
+        realized_volatility_fraction_gt: 0.25
+      combination_rule: OR
+      entry_confirmation_sessions: 1
+      recovery_rule: CLEAR_WHEN_BOTH_COMPONENTS_FALSE
+      rationale: Uses the existing free-feature VIX stress percentile and legacy 20-session annualized-volatility boundary without importing the legacy growth_allowed alias.
+    timing_decision:
+      decision_as_of: TARGET_QQQ_SESSION_OFFICIAL_CLOSE
+      available_at: AFTER_BOUND_QQQ_CLOSE_AND_VIX_OBSERVATION_ARE_AVAILABLE_AND_DQ_PASS
+      effective_session: NEXT_VALID_QQQ_EXCHANGE_SESSION
+      same_session_action_allowed: false
+      cross_date_fallback_allowed: false
+    pit_decision:
+      required_source_fields:
+        - exchange_session
+        - adjusted_close
+        - vix_level
+        - available_at
+        - source_identity
+      published_at_required: false
+      revision_identity_required: false
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+    provenance_refs:
+      - config/research/free_feature_policy.yaml#volatility_compression_free_v1.stress_percentile_min
+      - src/ai_trading_system/features/volatility_compression_free.py#realized_vol_20d
+      - src/ai_trading_system/channel_specific_first_layer_v3.py#legacy_realized_vol_20d_gt_0_25
+    rejected_alternatives:
+      - volatility_compression_score probability threshold
+      - rates-liquidity composite
+      - missing VIX treated as normal volatility
+    open_evidence_blockers:
+      - OWNER_EXACT_FREEZE_NOT_GRANTED
+      - SUCCESSOR_ADAPTER_IDENTITY_NOT_FROZEN
+      - VIX_AVAILABLE_AT_CONTRACT_NOT_FROZEN
+      - EXACT_1202_SESSION_INVENTORY_NOT_OBSERVED_OR_ADMITTED
+    decision_object_complete_for_owner_review: true
+    owner_exact_freeze_granted: false
+    producer_contract_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    series_generation_allowed: false
+  - veto_id: scheduled_event_risk_veto
+    recommendation_id: scheduled_event_official_next_session_any_v1_proposal
+    recommendation_state: RECOMMENDED_PROPOSAL_NOT_OWNER_FROZEN
+    producer_decision:
+      producer_id: official_macro_release_calendar_pit_v1
+      callable_state: PIT_SCHEMA_AND_ADAPTER_IMPLEMENTATION_REQUIRED_AFTER_OWNER_FREEZE
+      independent_input_universe:
+        - event_authority
+        - event_type
+        - scheduled_for
+        - published_at
+        - revision_id
+        - source_identity
+      forbidden_input_classes:
+        - EVENT_DATE_AS_PUBLISHED_AT
+        - OPTION_CONTRACT_OR_ACTIVITY
+        - MARKET_OR_RESULT_DERIVED_EVENT_SCORE
+    formula_decision:
+      formula_category: OFFICIAL_SCHEDULE_NEXT_SESSION_BOOLEAN_STATE
+      exact_formula: veto = any(admitted_event.scheduled_for occurs during NEXT_VALID_QQQ_EXCHANGE_SESSION and admitted_event.published_at <= decision_as_of)
+      window_inventory:
+        pre_event_qqq_sessions: 1
+        post_event_qqq_sessions: 0
+      threshold_inventory:
+        qualifying_event_count_gte: 1
+      combination_rule: ANY_EVENT
+      entry_confirmation_sessions: 1
+      recovery_rule: CLEAR_AFTER_SCHEDULED_EVENT_SESSION_IF_NO_NEXT_SESSION_EVENT
+      rationale: Uses only information published by the decision frontier and avoids result-dependent event weights or post-release values.
+    timing_decision:
+      decision_as_of: TARGET_QQQ_SESSION_OFFICIAL_CLOSE
+      available_at: LATEST_OFFICIAL_SCHEDULE_REVISION_PUBLISHED_NO_LATER_THAN_DECISION_AS_OF
+      effective_session: NEXT_VALID_QQQ_EXCHANGE_SESSION
+      same_session_action_allowed: false
+      cross_date_fallback_allowed: false
+    pit_decision:
+      required_source_fields:
+        - event_authority
+        - event_type
+        - scheduled_for
+        - published_at
+        - revision_id
+        - source_identity
+      published_at_required: true
+      revision_identity_required: true
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+    admitted_event_taxonomy:
+      - authority: FEDERAL_RESERVE
+        event_types:
+          - FOMC_RATE_DECISION
+      - authority: BLS
+        event_types:
+          - CPI
+          - NONFARM_PAYROLLS
+      - authority: BEA
+        event_types:
+          - PCE_PRICE_INDEX
+          - GDP_ADVANCE_ESTIMATE
+    source_precedence: EXACT_OFFICIAL_AUTHORITY_ONLY_NO_CROSS_PROVIDER_FILL
+    revision_treatment: USE_LATEST_REVISION_WITH_PUBLISHED_AT_LTE_DECISION_AS_OF
+    provenance_refs:
+      - src/ai_trading_system/features/macro_event_calendar_free.py#event_taxonomy_reference_only
+      - config/research/free_feature_policy.yaml#event_risk_free_v1_PILOT_ONLY
+    rejected_alternatives:
+      - event_date substituted for published_at
+      - weighted diagnostic event_risk_score
+      - provider convenience calendar without official publication lineage
+    open_evidence_blockers:
+      - OWNER_EXACT_FREEZE_NOT_GRANTED
+      - PUBLISHED_AT_AND_REVISION_SCHEMA_NOT_IMPLEMENTED
+      - OFFICIAL_SOURCE_ADAPTERS_NOT_IMPLEMENTED
+      - EXACT_1202_SESSION_INVENTORY_NOT_OBSERVED_OR_ADMITTED
+    decision_object_complete_for_owner_review: true
+    owner_exact_freeze_granted: false
+    producer_contract_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    series_generation_allowed: false
+  - veto_id: underlying_trend_break_veto
+    recommendation_id: qqq_sma200_drawdown63_confirmed_recovery_v1_proposal
+    recommendation_state: RECOMMENDED_PROPOSAL_NOT_OWNER_FROZEN
+    producer_decision:
+      producer_id: qqq_underlying_trend_break_v1
+      callable_state: IMPLEMENTATION_REQUIRED_AFTER_OWNER_FREEZE
+      independent_input_universe:
+        - QQQ.exchange_session
+        - QQQ.adjusted_close
+        - QQQ.available_at
+        - QQQ.source_identity
+      forbidden_input_classes:
+        - SPY_OR_BROAD_MARKET_VETO_STATE
+        - OPTION_CONTRACT_OR_ACTIVITY
+        - GROWTH_ALLOWED_OR_CANDIDATE_RESULT
+    formula_decision:
+      formula_category: QQQ_TREND_AND_DRAWDOWN_BREAK_WITH_RECOVERY_HYSTERESIS
+      exact_formula: enter_veto = (QQQ.adjusted_close < SMA(QQQ.adjusted_close, 200 sessions)) AND (QQQ.adjusted_close / rolling_max(QQQ.adjusted_close, 63 sessions) - 1 <= -0.12); clear_veto = two consecutive QQQ sessions with adjusted_close >= SMA200
+      window_inventory:
+        moving_average_sessions: 200
+        drawdown_sessions: 63
+        recovery_confirmation_sessions: 2
+      threshold_inventory:
+        drawdown_fraction_lte: -0.12
+        recovery_close_vs_sma200_gte: 0.0
+      combination_rule: ENTER_AND_RECOVERY_HYSTERESIS
+      entry_confirmation_sessions: 1
+      recovery_rule: TWO_CONSECUTIVE_CLOSES_AT_OR_ABOVE_SMA200
+      rationale: Retains the existing QQQ 200-session and 63-session/-12% compatibility anchors while creating a dedicated QQQ-only state distinct from the SPY broad-market veto.
+    timing_decision:
+      decision_as_of: TARGET_QQQ_SESSION_OFFICIAL_CLOSE
+      available_at: AFTER_BOUND_QQQ_SESSION_CLOSE_AND_DQ_PASS
+      effective_session: NEXT_VALID_QQQ_EXCHANGE_SESSION
+      same_session_action_allowed: false
+      cross_date_fallback_allowed: false
+    pit_decision:
+      required_source_fields:
+        - exchange_session
+        - adjusted_close
+        - available_at
+        - source_identity
+      published_at_required: false
+      revision_identity_required: false
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+    provenance_refs:
+      - config/etf_portfolio/risk.yaml#regime_rules.risk_off_qqq_drawdown_63d
+      - src/ai_trading_system/etf_portfolio/regime.py#QQQ_above_ma_200_reference_only
+    rejected_alternatives:
+      - dynamic threshold selected from candidate results
+      - SPY or broad-market veto reuse
+      - same-session action
+    open_evidence_blockers:
+      - OWNER_EXACT_FREEZE_NOT_GRANTED
+      - DEDICATED_CALLABLE_PRODUCER_NOT_IMPLEMENTED
+      - RECOVERY_STATE_INITIALIZATION_NOT_IMPLEMENTED
+      - EXACT_1202_SESSION_INVENTORY_NOT_OBSERVED_OR_ADMITTED
+    decision_object_complete_for_owner_review: true
+    owner_exact_freeze_granted: false
+    producer_contract_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    series_generation_allowed: false
+aggregate_state:
+  decision_objects_ready_for_owner_review:
+    - broad_market_risk_off_veto
+    - realized_volatility_veto
+    - scheduled_event_risk_veto
+    - underlying_trend_break_veto
+  owner_frozen_producer_contracts: []
+  admitted_producer_contracts: []
+  unresolved_producer_contracts:
+    - broad_market_risk_off_veto
+    - realized_volatility_veto
+    - scheduled_event_risk_veto
+    - underlying_trend_break_veto
+  terminal: OWNER_EXACT_FREEZE_DECISION_REQUIRED_0_OF_4_ADMITTED
+  next_legal_action: OWNER_REVIEW_AND_EXACT_FREEZE_EACH_RECOMMENDATION_OR_RETURN_WITH_CHANGES
+  producer_draft_terminal_preserved: OWNER_EXACT_FREEZE_REQUIRED_0_OF_4_ADMITTED
+safety:
+  non_executable_data_research_only: true
+  decision_pack_draft_only: true
+  recommendation_values_are_runtime_policy: false
+  exact_formula_or_threshold_owner_frozen: false
+  source_contract_admission_allowed: false
+  veto_series_generation_allowed: false
+  r1_manifest_generation_allowed: false
+  cache_read_authorized: false
+  provider_query_authorized: false
+  real_dq_authorized: false
+  backtest_authorized: false
+  parameter_or_threshold_search_allowed: false
+  constant_false_fill_allowed: false
+  retained_series_truncation_allowed: false
+  cross_date_fallback_allowed: false
+  orders_allowed: false
+  fills_allowed: false
+  positions_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_effect: none
+  broker_action: none

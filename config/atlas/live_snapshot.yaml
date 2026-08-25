@@ -9,7 +9,7 @@ classified_through_task_id: TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READE
 current_mainline_task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
 largest_blocker_task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
 next_legal_action_task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
-status_object_zh: 四项 mandatory veto 的 producer-contract draft 已形成并绑定 source-wave 与 candidate evidence exact identity；当前仍是 0/4 admitted，volatility 仅为 callable candidate、scheduled event PIT incomplete、broad-market 与 trend producer 尚不可调用，所有 exact threshold 均未冻结，series、R1 manifest、真实 DQ 与 backtest 继续关闭
+status_object_zh: 四项 mandatory veto 已形成 S4 Owner exact-freeze decision pack draft：SPY broad-market、VIX/QQQ realized-vol、official scheduled-event 与 QQQ trend-break 均有明确 recommendation object；这些值仍是未回测的 compatibility-anchored proposal，Owner-frozen/admitted 仍为 0/4，series、R1 manifest、真实 DQ 与 backtest 继续关闭
 evidence_evaluated_at: null
 task_status_mapping:
   DONE: PASS
