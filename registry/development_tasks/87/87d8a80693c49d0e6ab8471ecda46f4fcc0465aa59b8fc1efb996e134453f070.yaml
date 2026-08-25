@@ -13,25 +13,26 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / prepare result-blind Owner exact-freeze decision pack; Project
-    Owner retains exact admission decision
+  next_owner: Project Owner / exact-freeze or return changes for each of the four
+    S4 recommendation objects; real DQ and backtest remain separately unauthorized
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Convert all four producer-contract draft
-    rows into explicit recommended decision objects for producer, formula, threshold,
-    timing, PIT and inventory review. Keep proposals unadmitted and stop before series/R1/provider/cache/real
-    DQ/backtest.
+  unstructured_legacy_blocker_or_next_step: The result-blind S4 decision pack now
+    provides one explicit compatibility-anchored producer/formula/threshold/timing/PIT
+    recommendation for each mandatory veto. Owner-frozen/admitted remains 0/4; stop
+    before producer implementation, exact inventory observation, series and R1 manifest
+    until each recommendation is separately frozen or revised.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Decision-pack loader replays the immutable producer-draft identity and candidate
-      evidence; four ordered rows expose one recommended choice plus rejected alternatives
-      and evidence class for every decision dimension; recommendation values remain
-      PROPOSAL_NOT_OWNER_FROZEN, admitted stays 0/4, exact inventory observed hash
-      stays null, and all real-data/execution flags remain closed; focused and governed
-      validation PASS.
+    text: Strict loader must replay the S3 producer-draft exact identity and four
+      ordered S4 decision objects; SPY broad-market, VIX/QQQ realized-vol, official-event
+      PIT and QQQ trend-break recommendations remain unvalidated proposals, Owner-frozen/admitted
+      stays 0/4, observed inventory stays null, partial freeze cannot generate series,
+      and all provider/cache/real-DQ/backtest/trading flags stay closed; governed
+      validation and Atlas freshness PASS.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -251,32 +252,70 @@ events:
   - change:trading-2542g-freeze-pack-requirement-binding-20260826-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-241285cda64aa06460b9b5cc32196f3c
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-25T15:47:07Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-freeze-pack-owner-review-blocked-20260826-v1
+  lane_id: null
+  base_commit: efd23c2a36e8fbec39f4bfc3bf52faf698f3687a
+  previous_state_event_id: task-event-241285cda64aa06460b9b5cc32196f3c
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / exact-freeze or return changes for each of the four
+      S4 recommendation objects; real DQ and backtest remain separately unauthorized
+    blocker_or_next_step: The result-blind S4 decision pack now provides one explicit
+      compatibility-anchored producer/formula/threshold/timing/PIT recommendation
+      for each mandatory veto. Owner-frozen/admitted remains 0/4; stop before producer
+      implementation, exact inventory observation, series and R1 manifest until each
+      recommendation is separately frozen or revised.
+    acceptance_criteria: Strict loader must replay the S3 producer-draft exact identity
+      and four ordered S4 decision objects; SPY broad-market, VIX/QQQ realized-vol,
+      official-event PIT and QQQ trend-break recommendations remain unvalidated proposals,
+      Owner-frozen/admitted stays 0/4, observed inventory stays null, partial freeze
+      cannot generate series, and all provider/cache/real-DQ/backtest/trading flags
+      stay closed; governed validation and Atlas freshness PASS.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      Decision-pack draft file/canonical SHA=4f188c6e10758a32984bb92c3252507636686f97404c4491df014c1d22807479/c8838a4baef788a6b936e4e098658413e2c563e169f1ec4a5da8ec7318c9e4af;
+      terminal=OWNER_EXACT_FREEZE_DECISION_REQUIRED_0_OF_4_ADMITTED; core focused=53
+      passed; Atlas=37 passed; task-source=9 passed; Ruff/strict mypy/py_compile PASS.
+      No provider/cache/real data, series, R1 manifest, DQ or backtest; orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-freeze-pack-owner-review-blocked-20260826-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e1737588665d6239c54cfa51b2b7c739
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
-  - IN_PROGRESS
-  - Codex / prepare result-blind Owner exact-freeze decision pack; Project Owner retains
-    exact admission decision
-  - Convert all four producer-contract draft rows into explicit recommended decision
-    objects for producer, formula, threshold, timing, PIT and inventory review. Keep
-    proposals unadmitted and stop before series/R1/provider/cache/real DQ/backtest.
-  - Decision-pack loader replays the immutable producer-draft identity and candidate
-    evidence; four ordered rows expose one recommended choice plus rejected alternatives
-    and evidence class for every decision dimension; recommendation values remain
-    PROPOSAL_NOT_OWNER_FROZEN, admitted stays 0/4, exact inventory observed hash stays
-    null, and all real-data/execution flags remain closed; focused and governed validation
-    PASS.
+  - BLOCKED_OWNER_INPUT
+  - Project Owner / exact-freeze or return changes for each of the four S4 recommendation
+    objects; real DQ and backtest remain separately unauthorized
+  - The result-blind S4 decision pack now provides one explicit compatibility-anchored
+    producer/formula/threshold/timing/PIT recommendation for each mandatory veto.
+    Owner-frozen/admitted remains 0/4; stop before producer implementation, exact
+    inventory observation, series and R1 manifest until each recommendation is separately
+    frozen or revised.
+  - Strict loader must replay the S3 producer-draft exact identity and four ordered
+    S4 decision objects; SPY broad-market, VIX/QQQ realized-vol, official-event PIT
+    and QQQ trend-break recommendations remain unvalidated proposals, Owner-frozen/admitted
+    stays 0/4, observed inventory stays null, partial freeze cannot generate series,
+    and all provider/cache/real-DQ/backtest/trading flags stay closed; governed validation
+    and Atlas freshness PASS.
   - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    Owner instruction=2026-08-26 continue; interpreted as authorization to draft an
-    exact-freeze decision pack, not approval of formula/threshold bytes or source
-    admission. Scope=non-executable DATA_RESEARCH only; real data, DQ, backtest, series,
-    R1 manifest, orders/fills/positions/production/broker=0.'
+    Decision-pack draft file/canonical SHA=4f188c6e10758a32984bb92c3252507636686f97404c4491df014c1d22807479/c8838a4baef788a6b936e4e098658413e2c563e169f1ec4a5da8ec7318c9e4af;
+    terminal=OWNER_EXACT_FREEZE_DECISION_REQUIRED_0_OF_4_ADMITTED; core focused=53
+    passed; Atlas=37 passed; task-source=9 passed; Ruff/strict mypy/py_compile PASS.
+    No provider/cache/real data, series, R1 manifest, DQ or backtest; orders/fills/positions/production/broker=0.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: be419b29dc8c63887db3947515942d58bca5e3ed87f9879c07b9c7c45c2121b0
-last_event_id: task-event-241285cda64aa06460b9b5cc32196f3c
+  canonical_row_sha256: b691962f177ce71cc65089eef63a37ac7a1efa0175a7975b28a8232e9db49221
+last_event_id: task-event-e1737588665d6239c54cfa51b2b7c739
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 6a11d1496c6eee181887e1adb12fd05361825859fad57432f740460477dbf232
+fragment_checksum: b341fea152c5566be433b6680a52c8def28c07500eeb32fc9fee26becef161d2
