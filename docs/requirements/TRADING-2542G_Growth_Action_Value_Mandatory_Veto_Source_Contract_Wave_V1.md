@@ -405,4 +405,14 @@ evidence roles：
   Atlas adjacent=`97 passed`，Ruff、strict mypy、py_compile PASS。V2 bytes 尚未 Owner exact-freeze，
   owner-frozen/admitted 仍为 `0/4`；未实现 producer，未读取 provider/cache 或真实数据，未生成
   series/R1 manifest，未运行真实 DQ/backtest，orders/fills/positions/production/broker=`0`；正式
-  Architecture/Contract/Integration/Reproducibility/Full 绑定最终 publication candidate 运行。
+   Architecture/Contract/Integration/Reproducibility/Full 绑定最终 publication candidate 运行。
+- 2026-08-26：candidate `5cfe9df194ce62ccb32d218c8610500fe832de16` 的 formal
+  Architecture Fitness=`877 passed / 1 failed`；唯一失败为新增一个 typed loader module 与一个
+  synthetic test file 后，ARCH-004G repository inventory 从 `1156/1318` 漂移到 `1157/1319`，
+  inventory id 从 `arch_004g_deprecation_inventory_6688790249e4cce3a8c1` 变为
+  `arch_004g_deprecation_inventory_f3e9b45084cb2290f70b`。publication transaction
+  `trading-2542g-s4a-publication-20260826-v1` 已按 FAIL 释放，证据保留在
+  `outputs/validation_runtime/architecture-fitness_20260825T182521Z/test_runtime_summary.json`；
+  本波次只刷新与实际仓库计数一致的 deterministic removal-blocking ratchet，不改变任何弃用 lifecycle、
+  veto 语义、DQ/PIT、阈值或授权边界。修正后必须以新 candidate 与新 publication transaction 重跑全部
+  formal tiers。
