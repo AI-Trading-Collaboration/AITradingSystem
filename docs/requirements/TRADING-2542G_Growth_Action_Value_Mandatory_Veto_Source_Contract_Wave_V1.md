@@ -425,3 +425,11 @@ evidence roles：
   clean 后按 FAIL 释放；后续 v3 必须使用非保留参数变量、先重放 transaction claims，再从五项 generator
   顺序的第一项完整重建。未读取 known-unrelated 文件、provider/cache 或真实数据，未触发 DQ/backtest/
   execution/broker。
+- 2026-08-26：v3 candidate `53e80e7d12c64ae8336f49c04746799ce3a64194` 的 Architecture/
+  Contract/Integration/Reproducibility 分别 `878/278/995/24 passed`；Full=`9646 passed / 3 skipped /
+  1 failed`。唯一失败为 local ignored Atlas canonical page 仍绑定 generator 前 source commit
+  `9d50bf25703e63c8c8539ab9c41736304b8452a1`，而最终 candidate 已因 compatibility-authority rebuild
+  前进到 `53e80e7d...`；exact-commit freshness test 正确 fail closed。v3 已用
+  `outputs/validation_runtime/full_20260825T185227Z/test_runtime_summary.json` 作为 immutable parent evidence
+  按 FAIL 释放，未集成、未推送。下一 v4 从新的精确 lane head 完整回放 generator，并在最终 candidate
+  identity 不再变化后重新 hydrate Atlas；Full 必须使用 `failure_fix_rerun` 且绑定上述 failed Full parent。
