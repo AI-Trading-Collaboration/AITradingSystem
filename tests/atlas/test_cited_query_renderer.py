@@ -296,7 +296,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="71"' in html
+    assert 'data-task-coverage-count="72"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html

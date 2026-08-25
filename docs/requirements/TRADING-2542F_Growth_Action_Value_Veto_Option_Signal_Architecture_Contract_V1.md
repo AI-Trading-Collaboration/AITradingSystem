@@ -246,3 +246,9 @@ evidence roles：
   fail-closed 规则释放；v3 复用相同 frozen base/lane head 与精确 path claims，直接修复 root containment、
   增加 typed rejection 回归测试并从头 replay generator/validation。该修复不改变 veto taxonomy、阈值、
   DQ/PIT、数据权限或执行边界。
+- 2026-08-25：v3 candidate `78e77012d4e86636355236a842ce7e003cd05bcf` 的正式 Architecture/
+  Contract/Integration/Reproducibility 全部 PASS；首次 Full=`9569 passed, 3 skipped, 1 failed`。唯一失败为
+  `tests/atlas/test_cited_query_renderer.py` 仍冻结旧 `data-task-coverage-count=71`，而本任务加入 canonical
+  Atlas coverage 后实际为 `72`。v3 已以失败 Full artifact
+  `outputs/validation_runtime/full_20260825T075816Z/test_runtime_summary.json` 释放；v4 精确新增该测试 path、
+  绑定 parent artifact，并仅同步 71→72 后以 `failure_fix_rerun` 重跑 Full。无策略语义、真实数据或执行变更。

@@ -27,7 +27,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_cited_query_renderer
   path: tests/atlas/test_cited_query_renderer.py
-  sha256: b0dc1cf7b9c0720e6523068b15f60ae63568e2020ad76880c16da45fabb7e733
+  sha256: 6be1117625e118b135b1e84ac1e96bfddbea8bcad051791db7c2527fe41215a7
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

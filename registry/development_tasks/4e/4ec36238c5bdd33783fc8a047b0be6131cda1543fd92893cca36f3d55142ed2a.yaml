@@ -175,6 +175,41 @@ events:
   - change:trading-2542f-publication-v3-path-containment-20260825
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-0f050efcfad25006a1301db572e45291
+- schema_version: task_event.v1
+  task_id: TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-25T08:22:31Z'
+  actor: integration-coordinator
+  change_id: trading-2542f-full-failure-fix-20260825-v4
+  lane_id: null
+  base_commit: 78e77012d4e86636355236a842ce7e003cd05bcf
+  previous_state_event_id: task-event-0f050efcfad25006a1301db572e45291
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / exact-freeze the result-blind architecture and legacy
+      compatibility map before any source-contract wave
+    blocker_or_next_step: The serial architecture contract is implemented and locally
+      validated, but it remains a non-executable draft. No mandatory source wave,
+      veto series or R1 manifest may begin until Owner exact-freezes the architecture
+      taxonomy, layer semantics, tqqq action-guard migration, event split and alpha-to-veto
+      dependency ban.
+    acceptance_criteria: Owner exact-freezes architecture file/canonical SHA-256 9b4856614298d64b2c8b5897980735a9e2a19c46fecb6c2362cb750ae13b136d/88e1283b0333bafca24779c9c527d362acef40b65d4cff1a9d081ded07ac70e4
+      and compatibility-map file/canonical SHA-256 c5867551aec4f152256219e4fb19b7c52ec5a6b7f8d8c316961d33a75749679d/067a6b23daa1bfff22a6d4f4fcb773346a7d866e21cf2adb759acde75d04f524;
+      then a separate result-blind source-contract task freezes each mandatory producer/available-at/missing
+      terminal/exact 1202 identity before any R1 manifest, real DQ or backtest.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md.
+      candidate=78e77012d4e86636355236a842ce7e003cd05bcf; Architecture=878 PASS; Contract=278
+      PASS; Integration=995 PASS; Reproducibility=24 PASS; first Full=9569 passed/3
+      skipped/1 stale Atlas coverage-count failure; v4 binds parent Full and changes
+      only 71 to 72 before failure_fix_rerun; no series/manifest/provider/cache/real
+      DQ/backtest; orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542f-full-failure-fix-20260825-v4
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-704d70b8096d94b2f8dd579123ab102d
 projection:
   legacy_first_eight_cells:
   - TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
@@ -193,15 +228,15 @@ projection:
     then a separate result-blind source-contract task freezes each mandatory producer/available-at/missing
     terminal/exact 1202 identity before any R1 manifest, real DQ or backtest.
   - 'Supporting requirement: docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md.
-    terminal=DRAFT_READY_FOR_OWNER_EXACT_FREEZE_NO_EXECUTION_AUTHORITY; architecture
-    file/canonical SHA=9b4856614298d64b2c8b5897980735a9e2a19c46fecb6c2362cb750ae13b136d/88e1283b0333bafca24779c9c527d362acef40b65d4cff1a9d081ded07ac70e4;
-    compatibility file/canonical SHA=c5867551aec4f152256219e4fb19b7c52ec5a6b7f8d8c316961d33a75749679d/067a6b23daa1bfff22a6d4f4fcb773346a7d866e21cf2adb759acde75d04f524;
-    publication=v3 after v2 fail-closed post-generator path-containment finding; no
-    series/manifest/provider/cache/real DQ/backtest; orders/fills/positions/production/broker=0.'
+    candidate=78e77012d4e86636355236a842ce7e003cd05bcf; Architecture=878 PASS; Contract=278
+    PASS; Integration=995 PASS; Reproducibility=24 PASS; first Full=9569 passed/3
+    skipped/1 stale Atlas coverage-count failure; v4 binds parent Full and changes
+    only 71 to 72 before failure_fix_rerun; no series/manifest/provider/cache/real
+    DQ/backtest; orders/fills/positions/production/broker=0.'
   docs_links:
   - docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md
   terminal: false
-  canonical_row_sha256: 3d43f1dc11b638531246429197db4b5f3f811ba1b45b489b86659785078e31b9
-last_event_id: task-event-0f050efcfad25006a1301db572e45291
+  canonical_row_sha256: 3c70536f762ee523bfea8c51c40e1b8df5a237192bd2aaa69f9634784b63b14b
+last_event_id: task-event-704d70b8096d94b2f8dd579123ab102d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f69181e7d5bb16abc7154c91528595645906417ef86f70c63cf2bda87957004f
+fragment_checksum: 4e91c27c586e0086d895afca3465ac189189959aa5a29460c71fc58e7d271ba4

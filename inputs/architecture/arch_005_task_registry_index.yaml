@@ -14,7 +14,7 @@ fragment_count: 1027
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 7ea1cbb906fe35d9c89543c689c76a47066322b8194d98180a5baa5bd1e34695
+final_chain_sha256: db212466aea06aa9dbe23731efbb29d002de9a7fe91ef2c2e9b4fb80caebb8b3
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 0c3efea17f7c4a4cae0488be7b40116560b065ec6ee1c53818e0ff1fdaa31509
 templates:
@@ -8239,17 +8239,17 @@ fragments:
   entry_sha256: 367c8ad9905ddb003f19add73b9c35e2639c64b595189246a5b9cceda34a9b91
 - task_id: TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
   path: registry/development_tasks/4e/4ec36238c5bdd33783fc8a047b0be6131cda1543fd92893cca36f3d55142ed2a.yaml
-  file_sha256: 3990766066d70e0465b766e5176e14a521a6247ead9c4facc4281cec4969e59a
-  fragment_checksum: f69181e7d5bb16abc7154c91528595645906417ef86f70c63cf2bda87957004f
+  file_sha256: bcb8e4e1fd1a30009b6cdd42a6e60205e012d2412253d014db6796a1d555e2e0
+  fragment_checksum: 4e91c27c586e0086d895afca3465ac189189959aa5a29460c71fc58e7d271ba4
   partition: active
   order: 1027
   previous_entry_sha256: 367c8ad9905ddb003f19add73b9c35e2639c64b595189246a5b9cceda34a9b91
-  entry_sha256: 7ea1cbb906fe35d9c89543c689c76a47066322b8194d98180a5baa5bd1e34695
+  entry_sha256: db212466aea06aa9dbe23731efbb29d002de9a7fe91ef2c2e9b4fb80caebb8b3
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 602e5629198a1e9d60306ee8e284ef140b59c68674cac9a111bb257380ab4eca
-  byte_count: 1758202
+  sha256: aa3555213a11ccef5f953ce067670074e6d303a65c6ef4dbbf326e70dd2c845f
+  byte_count: 1758015
   row_count: 505
   generated_do_not_edit: true
 - partition: completed
@@ -10058,7 +10058,14 @@ governance_cycles:
   change_id: trading-2542f-publication-v3-path-containment-20260825
   event_count: 4
   production_effect: none
-governance_cycle_count: 257
+- cycle_id: arch-005-s5-cycle-258
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
+  change_id: trading-2542f-full-failure-fix-20260825-v4
+  event_count: 5
+  production_effect: none
+governance_cycle_count: 258
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -10072,4 +10079,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: b8be7574018b6483638ce227e674aa59565350e8f86071e928cf933ea9609034
+index_checksum: c0820415729510ec18b878b2685ffd66d57897ee40b3eac30ccb4dca1d363531
