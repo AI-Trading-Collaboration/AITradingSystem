@@ -13,25 +13,25 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / exact-freeze or return changes for all four S4A V2 typed
-    contract objects; producer implementation, real DQ and backtest remain separately
-    unauthorized
+  next_owner: Codex / publish the exact-semantics freeze-admission serial wave; producer
+    implementation starts only from the resulting new exact main base
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: The S4A V2 exact-semantics draft is implemented
-    and focused-validated. Owner must separately exact-freeze or return changes for
-    all four typed objects before any producer/adapter implementation. Partial freeze
-    cannot generate series.
+  unstructured_legacy_blocker_or_next_step: Replay and bind calculation-semantics
+    file/canonical SHA 813c2eb2bb0d4b4f7673048889b66fa843b739a48405cc2e87272d925dd7b0d0/824ef20a66e4eba3c2841489cae8b03ff3a6cad4f73003469c086d8e09237cf1
+    and V2 decision-pack file/canonical SHA d08480c07047e636f8b4a8208ec60406acd5debdc60f30541411310e401b789f/99ed7dbdac82faf594633ab25be1ffb1417709030af0817fb19c4ace332dc389
+    in a new immutable admission artifact. Mark Owner exact-frozen 4/4 while producer
+    contracts and observed inventory remain 0/4 and series remains prohibited.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: PASS when calculation-semantics file/canonical SHA 813c2eb2bb0d4b4f7673048889b66fa843b739a48405cc2e87272d925dd7b0d0/824ef20a66e4eba3c2841489cae8b03ff3a6cad4f73003469c086d8e09237cf1
-      and V2 decision-pack file/canonical SHA d08480c07047e636f8b4a8208ec60406acd5debdc60f30541411310e401b789f/99ed7dbdac82faf594633ab25be1ffb1417709030af0817fb19c4ace332dc389
-      are reviewed; all four operator/window/time/PIT/revision/coverage/state objects
-      are frozen together or returned with a new version; 0/4 admission and all execution
-      flags stay closed.
+    text: Strict loader replays the immutable S4A V2 loader and both exact authority
+      identities; all four veto objects freeze atomically in fixed order; partial
+      freeze, authority drift, producer admission, observed inventory or any provider/DQ/backtest/execution
+      flag fails closed; aggregate is OWNER_EXACT_FROZEN_4_OF_4_PRODUCER_UNADMITTED_0_OF_4;
+      focused and governed validation plus generated authority freshness PASS.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -354,30 +354,69 @@ events:
   - change:trading-2542g-s4a-owner-review-routing-20260826-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-31297b514d896800737054fc699fb2cb
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-25T23:39:19Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s4b-freeze-admission-resume-20260826-v1
+  lane_id: null
+  base_commit: b3833563e20173941b70e199eb6b3e4213c66046
+  previous_state_event_id: task-event-31297b514d896800737054fc699fb2cb
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / publish the exact-semantics freeze-admission serial wave;
+      producer implementation starts only from the resulting new exact main base
+    blocker_or_next_step: Replay and bind calculation-semantics file/canonical SHA
+      813c2eb2bb0d4b4f7673048889b66fa843b739a48405cc2e87272d925dd7b0d0/824ef20a66e4eba3c2841489cae8b03ff3a6cad4f73003469c086d8e09237cf1
+      and V2 decision-pack file/canonical SHA d08480c07047e636f8b4a8208ec60406acd5debdc60f30541411310e401b789f/99ed7dbdac82faf594633ab25be1ffb1417709030af0817fb19c4ace332dc389
+      in a new immutable admission artifact. Mark Owner exact-frozen 4/4 while producer
+      contracts and observed inventory remain 0/4 and series remains prohibited.
+    acceptance_criteria: Strict loader replays the immutable S4A V2 loader and both
+      exact authority identities; all four veto objects freeze atomically in fixed
+      order; partial freeze, authority drift, producer admission, observed inventory
+      or any provider/DQ/backtest/execution flag fails closed; aggregate is OWNER_EXACT_FROZEN_4_OF_4_PRODUCER_UNADMITTED_0_OF_4;
+      focused and governed validation plus generated authority freshness PASS.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      Owner instruction=2026-08-26 continue, replayed against the exact hashes previously
+      presented as owner_decision:TRADING-2542G:S4B:2026-08-26:freeze_s4a_v2_exact_semantics_and_continue_non_executable_admission_v1.
+      Scope is the smallest serial non-executable DATA_RESEARCH freeze-admission wave
+      only; producer/adapter implementation follows from the new exact base; no provider/cache/real
+      data/series/R1/DQ/backtest; orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s4b-freeze-admission-resume-20260826-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0cc9a4c73cbef400e285c3db98887465
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner / exact-freeze or return changes for all four S4A V2 typed contract
-    objects; producer implementation, real DQ and backtest remain separately unauthorized
-  - The S4A V2 exact-semantics draft is implemented and focused-validated. Owner must
-    separately exact-freeze or return changes for all four typed objects before any
-    producer/adapter implementation. Partial freeze cannot generate series.
-  - PASS when calculation-semantics file/canonical SHA 813c2eb2bb0d4b4f7673048889b66fa843b739a48405cc2e87272d925dd7b0d0/824ef20a66e4eba3c2841489cae8b03ff3a6cad4f73003469c086d8e09237cf1
+  - IN_PROGRESS
+  - Codex / publish the exact-semantics freeze-admission serial wave; producer implementation
+    starts only from the resulting new exact main base
+  - Replay and bind calculation-semantics file/canonical SHA 813c2eb2bb0d4b4f7673048889b66fa843b739a48405cc2e87272d925dd7b0d0/824ef20a66e4eba3c2841489cae8b03ff3a6cad4f73003469c086d8e09237cf1
     and V2 decision-pack file/canonical SHA d08480c07047e636f8b4a8208ec60406acd5debdc60f30541411310e401b789f/99ed7dbdac82faf594633ab25be1ffb1417709030af0817fb19c4ace332dc389
-    are reviewed; all four operator/window/time/PIT/revision/coverage/state objects
-    are frozen together or returned with a new version; 0/4 admission and all execution
-    flags stay closed.
+    in a new immutable admission artifact. Mark Owner exact-frozen 4/4 while producer
+    contracts and observed inventory remain 0/4 and series remains prohibited.
+  - Strict loader replays the immutable S4A V2 loader and both exact authority identities;
+    all four veto objects freeze atomically in fixed order; partial freeze, authority
+    drift, producer admission, observed inventory or any provider/DQ/backtest/execution
+    flag fails closed; aggregate is OWNER_EXACT_FROZEN_4_OF_4_PRODUCER_UNADMITTED_0_OF_4;
+    focused and governed validation plus generated authority freshness PASS.
   - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    Adjacent focused=97 passed; Ruff/strict mypy/py_compile PASS; formal validation
-    follows on the publication candidate. S4 V1 immutable; V2 result-blind non-executable
-    draft only; no producer/provider/cache/real data/series/R1/DQ/backtest; orders/fills/positions/production/broker=0.'
+    Owner instruction=2026-08-26 continue, replayed against the exact hashes previously
+    presented as owner_decision:TRADING-2542G:S4B:2026-08-26:freeze_s4a_v2_exact_semantics_and_continue_non_executable_admission_v1.
+    Scope is the smallest serial non-executable DATA_RESEARCH freeze-admission wave
+    only; producer/adapter implementation follows from the new exact base; no provider/cache/real
+    data/series/R1/DQ/backtest; orders/fills/positions/production/broker=0.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 13bf633ecd604ce76bc10cc07311ec952f24b070abff7314174e1467a0e06c7e
-last_event_id: task-event-31297b514d896800737054fc699fb2cb
+  canonical_row_sha256: 4ee88ab72fa5e5214828793a7095e6280700e5db822f9350b3bd389e62f45fab
+last_event_id: task-event-0cc9a4c73cbef400e285c3db98887465
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 35119384cbd19fb4d97522a06e1fc885208d3f9c20cee927f087e7e0d13f0549
+fragment_checksum: 816956f05f7066dc44e3601fad7652c741550d1aaf2303d6dd481b3ad64087e5
