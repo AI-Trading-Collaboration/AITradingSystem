@@ -5,7 +5,7 @@
 - task id：`TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1`；
 - priority：`P0`；
 - governed mode：`SINGLE_LANE` serial consumer-contract wave；
-- current status：`IN_PROGRESS_NON_EXECUTABLE_EXACT_SEMANTICS_CONTRACT_V2_DRAFT`；
+- current status：`BLOCKED_OWNER_INPUT_EXACT_SEMANTICS_V2_DRAFT_READY_FOR_FREEZE`；
 - Owner decision：
   `owner_decision:TRADING-2542F-2542G:2026-08-25:approve_exact_architecture_freeze_and_source_contract_followup_v1`；
 - S4A Owner decision：
