@@ -181,3 +181,9 @@ evidence roles：
   fail closed。原因是新 page source 尚未形成 exact lane commit，不能把旧 HEAD 冒充新 source identity；
   v1 已释放、未生成 candidate、未写新 canonical page、未运行 Full。下一事务先绑定包含全部 page source 的
   精确 lane head，再从 `canonical-task-source` 起完整重放五类 generator；不绕过 exact-commit check。
+- 2026-08-25：lane commit `eecba8a53e568f9f5930a44c275e90ef0da41f52` 建立后，publication v2
+  的 task-source、architecture-manifests 与 Atlas 17-artifact rebuild 均 PASS；report-flow builder 随后
+  以 `RCF_SOURCE_SEAL_DRIFT` 拒绝旧 `docs/system_flow.md` seal（expected 2,275,242 bytes，actual
+  2,277,444 bytes）。v2 已失败释放、未生成 candidate、未运行 Full。使用 builder 自身的 exact splitter/
+  digest 只读计算新 seal=`2,277,444 bytes / 7ed40a...e33b / git blob cf275f...89a1 /
+  1099 entries`，仅同步 reviewed source identity 与对应 frozen regression；不改变策略、DQ/PIT 或授权。
