@@ -9464,6 +9464,42 @@ authority 且禁止 cross-provider fill；missing=`INSUFFICIENT`、malformed=`IN
 clear。下一合法动作是 Owner 对四个 recommendation 分别 exact-freeze 或明确退回修改；即便全部冻结，
 真实 DQ/backtest 仍需独立授权并先通过 manifest replay。
 
+### TRADING-2542G S4A exact calculation/time/state contract V2 draft
+
+Owner 的“参考这个结论推进”只授权 S4A serial contract wave，不是对尚未生成 bytes 的 exact-freeze。
+`growth_action_value_mandatory_veto_calculation_semantics.v1` 先统一冻结 session/window、带 timezone 的
+decision/availability clock、adjusted-close vintage、warm-up 分离和 fail-closed terminal；
+`growth_action_value_mandatory_veto_owner_freeze_decision_pack_draft.v2` 再以四个独立 typed model 绑定
+公式 operator tree、rolling estimator、event revision/coverage 与 trend state machine。V2 strict loader
+递归重放 immutable S4 V1 file/canonical identity 和 semantics identity。
+
+```text
+immutable S4 V1 proposal (0 / 4 admitted)
+  + shared exact-semantics authority
+       -> QQQ target calendar / bound source-session windows / full warm-up
+       -> exact post-close decision cutoff; available_at <= decision_as_of
+       -> no fill / no interpolation / no compressed missing sessions
+       -> missing = INSUFFICIENT; malformed = INVALID; no formula short-circuit
+  -> S4A four typed V2 objects
+       -> broad SPY: full SMA200 / drawdown63; LT + LTE; OR
+       -> volatility: full VIX252 average-rank + QQQ 21 closes / 20 simple returns
+            ddof=1; sqrt(252); implied-stress component explicitly named
+       -> scheduled event: official Fed/BLS/BEA exact taxonomy
+            decision_as_of < scheduled_for <= next action session close
+            revision/cancel/reschedule + three-authority coverage receipt
+       -> QQQ trend: UNKNOWN / CLEAR / VETO_ACTIVE
+            pre-target replay; two valid-session recovery; missing -> UNKNOWN
+  -> orthogonality = semantic/input separation only, not empirical independence
+  -> Owner-frozen/admitted = 0 / 4; observed inventory SHA = null
+  -> producer / series / R1 / provider / cache / real DQ / backtest = false
+  -> orders / fills / positions / production / broker = 0
+```
+
+四项 union 可能过严，但本波次不读取 observed series。首次真实观察前只允许预先冻结 per-veto、
+exclusive、pairwise/Jaccard、union、episode、recovery、event-only、alpha-available-but-blocked 与
+FAIL/INSUFFICIENT/INVALID descriptive schema；不得包含 weights、returns 或 V4 result。下一合法动作是
+Owner 对全部四项 V2 bytes 分别 exact-freeze 或退回修改；partial freeze 仍不得生成 series。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

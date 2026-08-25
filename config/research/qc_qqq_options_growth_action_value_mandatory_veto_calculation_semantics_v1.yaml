@@ -1,0 +1,88 @@
+schema_version: growth_action_value_mandatory_veto_calculation_semantics.v1
+policy_id: qc_qqq_options_growth_action_value_mandatory_veto_calculation_semantics_v1
+policy_version: 1.0.0-draft.1
+status: RESULT_BLIND_EXACT_SEMANTICS_DRAFT_NOT_OWNER_FROZEN
+task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+owner_scope:
+  decision_ref: owner_decision:TRADING-2542G:S4A:2026-08-26:authorize_exact_calculation_time_state_contract_v2
+  exact_semantics_drafting_authorized: true
+  generated_bytes_are_owner_frozen: false
+  producer_implementation_authorized: false
+  real_data_or_backtest_authorized: false
+  authorization_state: EXACT_PREAUTHORIZED
+calendar_contract:
+  target_calendar_identity: QQQ_EXCHANGE_SESSIONS
+  source_window_axis: BOUND_SOURCE_EXCHANGE_SESSIONS
+  next_session_definition: NEXT_VALID_QQQ_EXCHANGE_SESSION
+  target_inventory_excludes_warmup: true
+  source_warmup_inventory_required: true
+  session_gaps_may_be_compressed: false
+  same_session_action_allowed: false
+  cross_date_fallback_allowed: false
+clock_contract:
+  timestamp_requirement: IANA_TIMEZONE_AND_UTC_OFFSET
+  decision_cutoff: TARGET_QQQ_SESSION_EXACT_POST_CLOSE_RESEARCH_CUTOFF
+  availability_predicate: MAX_REQUIRED_INPUT_AVAILABLE_AT_LTE_DECISION_AS_OF
+  action_cutoff_predicate: DECISION_AS_OF_LT_NEXT_SESSION_ACTION_CUTOFF
+  early_close_and_holiday_calendar_required: true
+price_contract:
+  price_field: adjusted_close
+  adjustment_basis_identity_required: true
+  corporate_action_vintage_required: true
+  source_snapshot_sha256_required: true
+  sma_method: ARITHMETIC_MEAN
+  rolling_window_includes_current_session: true
+  full_minimum_observations_required: true
+  drawdown_reference: ROLLING_MAX_INCLUSIVE_CURRENT
+  forward_fill_allowed: false
+  interpolation_allowed: false
+  duplicate_session_terminal: INVALID
+terminal_policy:
+  missing_terminal: INSUFFICIENT
+  malformed_authority_terminal: INVALID
+  formula_short_circuit_before_all_components_qualified: false
+  missing_may_be_interpreted_as_false: false
+  event_empty_rows_may_prove_false: false
+  invalid_checkpoint_may_continue: false
+state_contract:
+  allowed_states:
+    - UNKNOWN
+    - CLEAR
+    - VETO_ACTIVE
+  initial_state: UNKNOWN
+  known_state_required_before_target_inventory: true
+  missing_observation_interrupts_recovery: true
+  missing_observation_next_state: UNKNOWN
+  malformed_observation_requires_checkpoint_replay: true
+overlap_contract:
+  orthogonality_claim: SEMANTIC_AND_INPUT_SEPARATION_ONLY_NOT_EMPIRICAL_INDEPENDENCE
+  empirical_independence_claim_allowed: false
+  result_blind_descriptive_evidence_fields:
+    - per_veto_true_count_and_rate
+    - exclusive_true_count_and_rate
+    - pairwise_overlap_and_jaccard
+    - union_blocked_session_count_and_rate
+    - episode_count_median_and_max_duration
+    - trend_recovery_lag
+    - event_only_blocked_sessions
+    - alpha_available_but_gate_blocked_sessions
+    - fail_insufficient_invalid_inventory
+  returns_or_weights_allowed_in_first_observation: false
+safety:
+  non_executable_data_research_only: true
+  contract_draft_only: true
+  producer_implementation_allowed: false
+  series_generation_allowed: false
+  r1_manifest_generation_allowed: false
+  cache_read_authorized: false
+  provider_query_authorized: false
+  real_dq_authorized: false
+  backtest_authorized: false
+  parameter_or_threshold_search_allowed: false
+  orders_allowed: false
+  fills_allowed: false
+  positions_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_effect: none
+  broker_action: none

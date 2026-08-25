@@ -1,0 +1,465 @@
+schema_version: growth_action_value_mandatory_veto_owner_freeze_decision_pack_draft.v2
+policy_id: qc_qqq_options_growth_action_value_mandatory_veto_owner_freeze_decision_pack_draft_v2
+policy_version: 2.0.0-draft.1
+status: OWNER_EXACT_FREEZE_REQUIRED_0_OF_4_ADMITTED
+task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+predecessor_binding:
+  path: config/research/qc_qqq_options_growth_action_value_mandatory_veto_owner_freeze_decision_pack_draft_v1.yaml
+  file_sha256: 4f188c6e10758a32984bb92c3252507636686f97404c4491df014c1d22807479
+  canonical_sha256: c8838a4baef788a6b936e4e098658413e2c563e169f1ec4a5da8ec7318c9e4af
+  immutable: true
+calculation_semantics_binding:
+  path: config/research/qc_qqq_options_growth_action_value_mandatory_veto_calculation_semantics_v1.yaml
+  file_sha256: 813c2eb2bb0d4b4f7673048889b66fa843b739a48405cc2e87272d925dd7b0d0
+  canonical_sha256: 824ef20a66e4eba3c2841489cae8b03ff3a6cad4f73003469c086d8e09237cf1
+  immutable: true
+owner_scope:
+  decision_ref: owner_decision:TRADING-2542G:S4A:2026-08-26:authorize_exact_calculation_time_state_contract_v2
+  v2_contract_drafting_authorized: true
+  v2_bytes_are_owner_frozen: false
+  producer_implementation_authorized: false
+  source_admission_authorized: false
+  real_data_or_backtest_authorized: false
+  authorization_state: EXACT_PREAUTHORIZED
+target_inventory:
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  expected_session_count: 1202
+  target_session_inventory_lf_sha256: d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0
+review_policy:
+  evidence_role: RESULT_BLIND_EXACT_SEMANTICS_OWNER_REVIEW_PROPOSAL
+  calibration_status: UNVALIDATED_NO_REAL_DATA_OR_BACKTEST
+  orthogonality_claim: SEMANTIC_AND_INPUT_SEPARATION_ONLY_NOT_EMPIRICAL_INDEPENDENCE
+  recommendation_values_may_drive_runtime: false
+  owner_must_freeze_each_veto_separately: true
+  partial_owner_freeze_may_generate_series: false
+  expiry_condition: BEFORE_ANY_SOURCE_CONTRACT_ADMISSION_OR_SERIES_GENERATION
+decision_rows:
+  - veto_id: broad_market_risk_off_veto
+    recommendation_id: broad_market_risk_off_spy_sma200_drawdown63_v2_exact_semantics_proposal
+    recommendation_state: EXACT_SEMANTICS_PROPOSAL_NOT_OWNER_FROZEN
+    producer_contract:
+      producer_id: qqq_options_growth_action_value_broad_market_risk_off_v1
+      callable_state: IMPLEMENTATION_REQUIRED_AFTER_OWNER_FREEZE
+      independent_input_universe:
+        - SPY.exchange_session
+        - SPY.adjusted_close
+        - SPY.available_at
+        - SPY.source_identity
+        - SPY.adjustment_vintage
+        - SPY.source_snapshot_sha256
+      forbidden_input_classes:
+        - QQQ_OR_GROWTH_STATE
+        - OPTION_CONTRACT_OR_ACTIVITY
+        - RESULT_DERIVED_VALUE
+    formula_contract:
+      formula_category: BROAD_MARKET_TREND_OR_DRAWDOWN_STATE
+      combination_rule: OR
+      comparisons:
+        - component_id: SPY_CLOSE_LT_SMA200
+          left_metric: SPY.adjusted_close
+          operator: LT
+          right_operand: SPY.SMA200
+          right_numeric: null
+        - component_id: SPY_DRAWDOWN63_LTE_NEGATIVE_0_10
+          left_metric: SPY.drawdown63
+          operator: LTE
+          right_operand: CONSTANT_FRACTION
+          right_numeric: -0.10
+      full_component_qualification_required_before_evaluation: true
+      exact_human_rendering: veto = (SPY.adjusted_close < SPY.SMA200) OR (SPY.drawdown63 <= -0.10)
+    rolling_contract:
+      source_window_axis: BOUND_SPY_EXCHANGE_SESSIONS
+      sma_method: ARITHMETIC_MEAN
+      moving_average_sessions: 200
+      sma_min_valid_observations: 200
+      drawdown_sessions: 63
+      drawdown_min_valid_observations: 63
+      window_includes_current_session: true
+      drawdown_reference: ROLLING_MAX_INCLUSIVE_CURRENT
+      forward_fill_allowed: false
+      interpolation_allowed: false
+      duplicate_session_terminal: INVALID
+    entry_recovery_contract:
+      state_style: STATELESS_SESSION_BOOLEAN
+      entry_confirmation_sessions: 1
+      recovery_rule: CLEAR_WHEN_BOTH_COMPONENTS_FALSE
+      extra_hysteresis_allowed: false
+    timing_contract:
+      decision_as_of: EXACT_POST_CLOSE_RESEARCH_CUTOFF_BOUND_TO_TARGET_QQQ_SESSION
+      available_at_predicate: MAX_REQUIRED_INPUT_AVAILABLE_AT_LTE_DECISION_AS_OF
+      effective_session: NEXT_VALID_QQQ_EXCHANGE_SESSION
+      action_cutoff_predicate: DECISION_AS_OF_LT_NEXT_SESSION_ACTION_CUTOFF
+      same_session_action_allowed: false
+      cross_date_fallback_allowed: false
+    pit_contract:
+      required_source_fields:
+        - exchange_session
+        - adjusted_close
+        - available_at
+        - source_identity
+        - adjustment_vintage
+        - source_snapshot_sha256
+      adjusted_close_basis_and_vintage_required: true
+      published_at_required: false
+      revision_identity_required: false
+      no_fill_or_interpolation: true
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+    provenance_statement: COMPONENT_ANCHORS_REUSED_WITH_NEW_SPY_ONLY_OR_SEMANTICS_NOT_LEGACY_REGIME_INHERITANCE
+    open_evidence_blockers:
+      - OWNER_EXACT_FREEZE_NOT_GRANTED
+      - DEDICATED_CALLABLE_PRODUCER_NOT_IMPLEMENTED
+      - EXACT_SOURCE_IDENTITY_NOT_ADMITTED
+      - EXACT_1202_SESSION_INVENTORY_NOT_OBSERVED_OR_ADMITTED
+    owner_exact_freeze_granted: false
+    producer_contract_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    series_generation_allowed: false
+  - veto_id: realized_volatility_veto
+    recommendation_id: realized_volatility_vix252_or_qqq_rv20_v2_exact_semantics_proposal
+    recommendation_state: EXACT_SEMANTICS_PROPOSAL_NOT_OWNER_FROZEN
+    producer_contract:
+      producer_id: volatility_compression_free_v1_successor_adapter
+      callable_state: CALLABLE_CANDIDATE_ADAPTER_REVIEW_REQUIRED
+      independent_input_universe:
+        - QQQ.exchange_session
+        - QQQ.adjusted_close
+        - QQQ.available_at
+        - QQQ.source_identity
+        - QQQ.adjustment_vintage
+        - VIX.observation_session
+        - VIX.vix_level
+        - VIX.published_at
+        - VIX.available_at
+        - VIX.revision_id
+        - VIX.source_identity
+        - VIX.source_snapshot_sha256
+      forbidden_input_classes:
+        - OPTION_CONTRACT_OR_ACTIVITY
+        - GROWTH_ALLOWED_OR_CANDIDATE_RESULT
+    formula_contract:
+      formula_category: VIX_IMPLIED_STRESS_OR_QQQ_REALIZED_VOLATILITY_STATE
+      combination_rule: OR
+      comparisons:
+        - component_id: VIX_PERCENTILE252_GTE_0_75
+          left_metric: VIX.percentile252
+          operator: GTE
+          right_operand: CONSTANT_FRACTION
+          right_numeric: 0.75
+        - component_id: QQQ_ANNUALIZED_RV20_GT_0_25
+          left_metric: QQQ.annualized_rv20
+          operator: GT
+          right_operand: CONSTANT_FRACTION
+          right_numeric: 0.25
+      full_component_qualification_required_before_evaluation: true
+      exact_human_rendering: veto = (VIX.percentile252 >= 0.75) OR (QQQ.annualized_rv20 > 0.25)
+    rolling_contract:
+      source_window_axis: BOUND_QQQ_AND_VIX_EXCHANGE_SESSIONS
+      vix_percentile_sessions: 252
+      vix_min_valid_observations: 252
+      vix_window_includes_current_observation: true
+      vix_tie_method: AVERAGE_RANK
+      vix_rank_denominator: VALID_OBSERVATION_COUNT
+      qqq_close_observations: 21
+      realized_volatility_return_observations: 20
+      return_type: SIMPLE
+      pct_change_fill_method: NONE
+      standard_deviation_ddof: 1
+      annualization_sessions: 252
+      annualization_scaling: SQRT
+      session_gap_compression_allowed: false
+      forward_fill_allowed: false
+    component_semantics:
+      vix_component_role: IMPLIED_VOLATILITY_STRESS_PROXY
+      qqq_component_role: REALIZED_VOLATILITY
+      whole_veto_may_be_described_as_pure_realized_volatility: false
+    timing_contract:
+      decision_as_of: EXACT_POST_CLOSE_RESEARCH_CUTOFF_BOUND_TO_TARGET_QQQ_SESSION
+      available_at_predicate: MAX_REQUIRED_INPUT_AVAILABLE_AT_LTE_DECISION_AS_OF
+      effective_session: NEXT_VALID_QQQ_EXCHANGE_SESSION
+      action_cutoff_predicate: DECISION_AS_OF_LT_NEXT_SESSION_ACTION_CUTOFF
+      same_session_action_allowed: false
+      cross_date_fallback_allowed: false
+    pit_contract:
+      required_source_fields:
+        - QQQ.exchange_session
+        - QQQ.adjusted_close
+        - QQQ.available_at
+        - QQQ.source_identity
+        - QQQ.adjustment_vintage
+        - VIX.observation_session
+        - VIX.vix_level
+        - VIX.published_at
+        - VIX.available_at
+        - VIX.revision_id
+        - VIX.source_identity
+        - VIX.source_snapshot_sha256
+      adjusted_close_basis_and_vintage_required: true
+      published_at_required: true
+      revision_identity_required: true
+      no_fill_or_interpolation: true
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+    provenance_statement: PILOT_COMPONENT_ANCHORS_ONLY_CURRENT_CANDIDATE_MIN_PERIODS_NOT_ADMITTED
+    open_evidence_blockers:
+      - OWNER_EXACT_FREEZE_NOT_GRANTED
+      - SUCCESSOR_ADAPTER_IDENTITY_NOT_FROZEN
+      - VIX_SOURCE_AND_AVAILABLE_AT_CONTRACT_NOT_ADMITTED
+      - EXACT_1202_SESSION_INVENTORY_NOT_OBSERVED_OR_ADMITTED
+    owner_exact_freeze_granted: false
+    producer_contract_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    series_generation_allowed: false
+  - veto_id: scheduled_event_risk_veto
+    recommendation_id: scheduled_event_official_next_session_any_v2_exact_semantics_proposal
+    recommendation_state: EXACT_SEMANTICS_PROPOSAL_NOT_OWNER_FROZEN
+    producer_contract:
+      producer_id: official_macro_release_calendar_pit_v1
+      callable_state: PIT_SCHEMA_AND_ADAPTER_IMPLEMENTATION_REQUIRED_AFTER_OWNER_FREEZE
+      independent_input_universe:
+        - event_authority
+        - event_type
+        - stable_event_key
+        - scheduled_for
+        - published_at
+        - revision_id
+        - revision_action
+        - source_identity
+        - source_snapshot_sha256
+        - coverage_through
+      forbidden_input_classes:
+        - EVENT_DATE_AS_PUBLISHED_AT
+        - OPTION_CONTRACT_OR_ACTIVITY
+        - MARKET_OR_RESULT_DERIVED_EVENT_SCORE
+    formula_contract:
+      formula_category: OFFICIAL_SCHEDULE_NEXT_SESSION_BOOLEAN_STATE
+      combination_rule: ANY_EVENT
+      comparisons:
+        - component_id: ADMITTED_EVENT_COUNT_GTE_1
+          left_metric: admitted_event_count
+          operator: GTE
+          right_operand: CONSTANT_COUNT
+          right_numeric: 1
+      full_component_qualification_required_before_evaluation: true
+      exact_human_rendering: veto = any(active official revision with decision_as_of < scheduled_for <= next_action_session_close)
+    event_contract:
+      admitted_event_taxonomy:
+        - authority: FEDERAL_RESERVE
+          event_types:
+            - FOMC_RATE_DECISION
+        - authority: BLS
+          event_types:
+            - CPI
+            - NONFARM_PAYROLLS
+        - authority: BEA
+          event_types:
+            - PCE_PRICE_INDEX
+            - GDP_ADVANCE_ESTIMATE
+      pre_event_qqq_sessions: 1
+      post_event_qqq_sessions: 0
+      scheduled_for_timestamp_required: true
+      mapping_interval: DECISION_AS_OF_LT_SCHEDULED_FOR_LTE_NEXT_ACTION_SESSION_CLOSE
+      premarket_and_in_session_event_blocks_next_action_session: true
+      after_close_event_maps_to_following_action_session: true
+      source_precedence: EXACT_OFFICIAL_AUTHORITY_ONLY_NO_CROSS_PROVIDER_FILL
+      unscheduled_interventions_in_scope: false
+      event_results_or_weights_allowed: false
+    revision_contract:
+      stable_event_key_required: true
+      revision_id_required: true
+      published_at_required: true
+      deterministic_revision_ordering_required: true
+      reschedule_supersedes_prior_revision: true
+      cancel_revision_supported: true
+      same_published_at_conflict_terminal: INVALID
+      post_decision_revision_may_rewrite_history: false
+    coverage_contract:
+      required_authorities:
+        - FEDERAL_RESERVE
+        - BLS
+        - BEA
+      coverage_receipt_required_to_emit_false: true
+      coverage_horizon: NEXT_ACTION_SESSION_CLOSE
+      empty_rows_may_prove_false: false
+      parser_taxonomy_must_match_exact_official_identity: true
+    timing_contract:
+      decision_as_of: EXACT_POST_CLOSE_RESEARCH_CUTOFF_BOUND_TO_TARGET_QQQ_SESSION
+      available_at_predicate: LATEST_ACTIVE_REVISION_PUBLISHED_AT_LTE_DECISION_AS_OF
+      effective_session: NEXT_VALID_QQQ_EXCHANGE_SESSION
+      action_cutoff_predicate: DECISION_AS_OF_LT_NEXT_SESSION_ACTION_CUTOFF
+      same_session_action_allowed: false
+      cross_date_fallback_allowed: false
+    pit_contract:
+      required_source_fields:
+        - event_authority
+        - event_type
+        - stable_event_key
+        - scheduled_for
+        - published_at
+        - revision_id
+        - revision_action
+        - source_identity
+        - source_snapshot_sha256
+        - coverage_through
+      adjusted_close_basis_and_vintage_required: false
+      published_at_required: true
+      revision_identity_required: true
+      no_fill_or_interpolation: true
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+    provenance_statement: NEW_RESULT_BLIND_OFFICIAL_ONLY_ANY_EVENT_ONE_ZERO_POLICY_NOT_LEGACY_WEIGHTED_FIVE_DAY_POLICY
+    open_evidence_blockers:
+      - OWNER_EXACT_FREEZE_NOT_GRANTED
+      - OFFICIAL_ADAPTERS_AND_REVISION_SCHEMA_NOT_IMPLEMENTED
+      - THREE_AUTHORITY_COVERAGE_LINEAGE_NOT_ADMITTED
+      - EXACT_1202_SESSION_INVENTORY_NOT_OBSERVED_OR_ADMITTED
+    owner_exact_freeze_granted: false
+    producer_contract_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    series_generation_allowed: false
+  - veto_id: underlying_trend_break_veto
+    recommendation_id: qqq_sma200_drawdown63_confirmed_recovery_v2_exact_semantics_proposal
+    recommendation_state: EXACT_SEMANTICS_PROPOSAL_NOT_OWNER_FROZEN
+    producer_contract:
+      producer_id: qqq_underlying_trend_break_v1
+      callable_state: IMPLEMENTATION_REQUIRED_AFTER_OWNER_FREEZE
+      independent_input_universe:
+        - QQQ.exchange_session
+        - QQQ.adjusted_close
+        - QQQ.available_at
+        - QQQ.source_identity
+        - QQQ.adjustment_vintage
+        - QQQ.source_snapshot_sha256
+      forbidden_input_classes:
+        - SPY_OR_BROAD_MARKET_VETO_STATE
+        - OPTION_CONTRACT_OR_ACTIVITY
+        - GROWTH_ALLOWED_OR_CANDIDATE_RESULT
+    formula_contract:
+      formula_category: QQQ_TREND_AND_DRAWDOWN_BREAK_WITH_RECOVERY_HYSTERESIS
+      combination_rule: AND
+      comparisons:
+        - component_id: QQQ_CLOSE_LT_SMA200
+          left_metric: QQQ.adjusted_close
+          operator: LT
+          right_operand: QQQ.SMA200
+          right_numeric: null
+        - component_id: QQQ_DRAWDOWN63_LTE_NEGATIVE_0_12
+          left_metric: QQQ.drawdown63
+          operator: LTE
+          right_operand: CONSTANT_FRACTION
+          right_numeric: -0.12
+      full_component_qualification_required_before_evaluation: true
+      exact_human_rendering: enter_veto = (QQQ.adjusted_close < QQQ.SMA200) AND (QQQ.drawdown63 <= -0.12)
+    rolling_contract:
+      source_window_axis: BOUND_QQQ_EXCHANGE_SESSIONS
+      sma_method: ARITHMETIC_MEAN
+      moving_average_sessions: 200
+      sma_min_valid_observations: 200
+      drawdown_sessions: 63
+      drawdown_min_valid_observations: 63
+      window_includes_current_session: true
+      drawdown_reference: ROLLING_MAX_INCLUSIVE_CURRENT
+      forward_fill_allowed: false
+      interpolation_allowed: false
+      duplicate_session_terminal: INVALID
+    state_contract:
+      allowed_states:
+        - UNKNOWN
+        - CLEAR
+        - VETO_ACTIVE
+      initial_state: UNKNOWN
+      pre_target_replay_required: true
+      known_state_required_before_target_inventory: true
+      entry_confirmation_sessions: 1
+      entry_rule: CLOSE_LT_SMA200_AND_DRAWDOWN63_LTE_NEGATIVE_0_12
+      persistence_rule: REMAIN_ACTIVE_UNTIL_EXACT_RECOVERY
+      recovery_confirmation_sessions: 2
+      recovery_rule: TWO_CONSECUTIVE_VALID_QQQ_SESSIONS_CLOSE_GTE_SMA200
+      recovery_equality: GTE
+      entry_drawdown_controls_persistence_or_clear: false
+      missing_observation_interrupts_recovery: true
+      missing_observation_next_state: UNKNOWN
+      malformed_observation_terminal: INVALID
+      replay_from_affected_checkpoint_required: true
+      checkpoint_identity_fields:
+        - producer_version
+        - source_inventory_sha256
+        - state_checkpoint_sha256
+    timing_contract:
+      decision_as_of: EXACT_POST_CLOSE_RESEARCH_CUTOFF_BOUND_TO_TARGET_QQQ_SESSION
+      available_at_predicate: MAX_REQUIRED_INPUT_AVAILABLE_AT_LTE_DECISION_AS_OF
+      effective_session: NEXT_VALID_QQQ_EXCHANGE_SESSION
+      action_cutoff_predicate: DECISION_AS_OF_LT_NEXT_SESSION_ACTION_CUTOFF
+      same_session_action_allowed: false
+      cross_date_fallback_allowed: false
+    pit_contract:
+      required_source_fields:
+        - exchange_session
+        - adjusted_close
+        - available_at
+        - source_identity
+        - adjustment_vintage
+        - source_snapshot_sha256
+      adjusted_close_basis_and_vintage_required: true
+      published_at_required: false
+      revision_identity_required: false
+      no_fill_or_interpolation: true
+      missing_terminal: INSUFFICIENT
+      malformed_authority_terminal: INVALID
+    provenance_statement: COMPONENT_ANCHORS_REUSED_WITH_NEW_QQQ_ONLY_STATE_MACHINE_NOT_LEGACY_REGIME_INHERITANCE
+    open_evidence_blockers:
+      - OWNER_EXACT_FREEZE_NOT_GRANTED
+      - DEDICATED_CALLABLE_PRODUCER_NOT_IMPLEMENTED
+      - PRE_TARGET_STATE_REPLAY_NOT_IMPLEMENTED
+      - EXACT_1202_SESSION_INVENTORY_NOT_OBSERVED_OR_ADMITTED
+    owner_exact_freeze_granted: false
+    producer_contract_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    series_generation_allowed: false
+aggregate_state:
+  exact_semantics_objects_ready_for_owner_review:
+    - broad_market_risk_off_veto
+    - realized_volatility_veto
+    - scheduled_event_risk_veto
+    - underlying_trend_break_veto
+  owner_frozen_producer_contracts: []
+  admitted_producer_contracts: []
+  unresolved_producer_contracts:
+    - broad_market_risk_off_veto
+    - realized_volatility_veto
+    - scheduled_event_risk_veto
+    - underlying_trend_break_veto
+  terminal: OWNER_EXACT_FREEZE_REQUIRED_0_OF_4_ADMITTED
+  next_legal_action: OWNER_REVIEW_AND_EXACT_FREEZE_ALL_FOUR_V2_OBJECTS_OR_RETURN_WITH_CHANGES
+  predecessor_terminal_preserved: OWNER_EXACT_FREEZE_DECISION_REQUIRED_0_OF_4_ADMITTED
+safety:
+  non_executable_data_research_only: true
+  exact_semantics_contract_draft_only: true
+  recommendation_values_are_runtime_policy: false
+  owner_exact_freeze_granted_for_any_veto: false
+  producer_implementation_allowed: false
+  source_contract_admission_allowed: false
+  veto_series_generation_allowed: false
+  r1_manifest_generation_allowed: false
+  cache_read_authorized: false
+  provider_query_authorized: false
+  real_dq_authorized: false
+  backtest_authorized: false
+  parameter_or_threshold_search_allowed: false
+  constant_false_fill_allowed: false
+  retained_series_truncation_allowed: false
+  cross_date_fallback_allowed: false
+  orders_allowed: false
+  fills_allowed: false
+  positions_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_effect: none
+  broker_action: none

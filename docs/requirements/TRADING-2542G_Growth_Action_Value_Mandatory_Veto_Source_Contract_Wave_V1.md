@@ -5,9 +5,11 @@
 - task id：`TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1`；
 - priority：`P0`；
 - governed mode：`SINGLE_LANE` serial consumer-contract wave；
-- current status：`IN_PROGRESS_NON_EXECUTABLE_OWNER_FREEZE_DECISION_PACK_DRAFT`；
+- current status：`IN_PROGRESS_NON_EXECUTABLE_EXACT_SEMANTICS_CONTRACT_V2_DRAFT`；
 - Owner decision：
   `owner_decision:TRADING-2542F-2542G:2026-08-25:approve_exact_architecture_freeze_and_source_contract_followup_v1`；
+- S4A Owner decision：
+  `owner_decision:TRADING-2542G:S4A:2026-08-26:authorize_exact_calculation_time_state_contract_v2`；
 - 授权边界：只允许本地、result-blind、non-executable `DATA_RESEARCH` 合同与 synthetic
   validation；不授权 veto series、R1 manifest、provider/cache query、真实 DQ、backtest、
   orders、fills、positions、paper、live、production 或 broker action。
@@ -203,6 +205,109 @@ S4 strict loader 必须重放 S3 producer draft loader，而不是只相信复�
 QQQ、trend producer 读取 SPY、event source 使用 convenience-provider fill、`event_date` 代替
 `published_at`、Owner-freeze/admission flag 变真、observed inventory 伪造或任何外部/交易开关开启。
 
+### S4A：四项 exact calculation/time/state contract V2
+
+Owner 于 2026-08-26 指示“参考这个结论推进”，接受网页版 Pro 对 S4 四项均为
+`ACCEPT_WITH_EXACT_CONTRACT_EDITS` 的规划意见，并授权先实施最小 serial contract wave。该指示仅授权
+生成新的 non-executable V2 draft、typed semantics 与 synthetic validation；它不等于 Owner 已对尚未
+生成的 V2 bytes 作 exact-freeze，也不授权 producer implementation、provider/cache、真实数据、veto
+series、R1 manifest、真实 DQ、backtest、threshold search、orders/fills/positions、paper/live、production
+或 broker action。S4 V1 file/canonical bytes 继续 immutable，V2 使用新的 version、file SHA 与 canonical
+SHA。
+
+#### S4A.1 共同 calculation、time 与 terminal 语义
+
+V2 必须把 S4 V1 的自由字符串和通用 window/threshold dict 收敛为逐 veto typed objects，并机械冻结：
+
+- `target_calendar_identity=QQQ_EXCHANGE_SESSIONS`，所有 rolling window 以绑定的 exchange session
+  计数，不按自然日计数，不压缩缺失 session；
+- price rolling 都包含当前 source session，使用完整 minimum observations；target inventory 与
+  pre-target warm-up inventory 分开，warm-up 不得扩入 1202-session target result inventory；
+- price 数据禁止 forward fill/interpolation；duplicate/conflicting session 为 `INVALID`；缺 observation、
+  warm-up 或无法证明 `available_at <= decision_as_of` 为 `INSUFFICIENT`；
+- `decision_as_of`、`available_at`、`scheduled_for` 与 next-action cutoff 必须是带 timezone、可机械比较的
+  timestamp；消费只允许 next valid QQQ session，不允许 same-session 或 cross-date fallback；
+- adjusted-close 必须绑定 adjustment basis、corporate-action vintage、source identity 与 snapshot SHA；
+- 任一 mandatory component 不完整时，`OR`/`AND` 都不得 short-circuit 产出 boolean；source qualification
+  terminal 先于 formula evaluation；
+- formula 使用 typed operator tree；validator 必须拒绝 ticker、operator、comparison equality、window、
+  threshold、clock、PIT、terminal 或 state transition 的未授权漂移；
+- `missing_terminal=INSUFFICIENT`、`malformed_authority_terminal=INVALID`；V2 继续保持
+  `owner_exact_freeze_granted=false`、`producer_contract_admitted=false`、
+  `observed_inventory_lf_sha256=null` 与 `series_generation_allowed=false`。
+
+#### S4A.2 四项精确语义
+
+`broad_market_risk_off_veto`：
+
+- 保留 SPY-only、`close < SMA200 OR drawdown63 <= -0.10`、stateless one-session entry/clear；
+- `SMA200=ARITHMETIC_MEAN`，完整 200 个 SPY sessions；drawdown 使用完整 63-session、包含当前 session 的
+  rolling max；两个 component 都合格后才计算 OR；
+- 明确这是“复用 component anchors 并改变 producer universe/combination semantics”的新 pilot policy，
+  不得宣称整体继承旧 `regime.py` 行为。
+
+`realized_volatility_veto`：
+
+- 保留 `VIX percentile252 >= 0.75 OR QQQ annualized RV20 > 0.25`；VIX component 必须标为
+  implied-volatility stress proxy，不得把整行误称为纯 realized volatility；
+- VIX percentile 要求完整 252 个 bound-session observations，包含当前 observation，tie method 固定为
+  average-rank，禁止沿用 candidate code 的 20-row minimum periods；
+- RV20 固定为 21 个连续完整 QQQ closes 形成 20 个 simple returns，`fill_method=None` 等价语义、sample
+  standard deviation `ddof=1`、annualization=`sqrt(252)`；
+- 必须绑定 VIX authority/provider、level definition、observation/session mapping、published/available
+  timestamp、revision policy 与 snapshot checksum。
+
+`scheduled_event_risk_veto`：
+
+- 只允许 Federal Reserve/FOMC rate decision、BLS CPI、BLS nonfarm payrolls、BEA PCE price index 与
+  BEA GDP advance estimate；只使用 official authority，不允许 convenience-provider fill；
+- 对 decision session `T` 的 exact post-close cutoff，action session 为 next valid QQQ session；active
+  revision 满足 `decision_as_of < scheduled_for <= next_action_session_close` 时 veto=true，next-session
+  pre-market/in-session event 阻断该 action session，after-close event 映射到再下一 action session；
+- stable event key、revision id、`published_at`、deterministic ordering、reschedule supersession、cancel
+  handling 与 same-published-at conflict terminal 必须机械冻结；decision 后发布的 revision 不得回写历史；
+- event=false 必须同时具备 Fed/BLS/BEA 三套 snapshot coverage receipt，且 coverage 至少覆盖 next action
+  session close；无 row 或空查询不得替代 coverage proof；unscheduled intervention 不属于本 veto。
+
+`underlying_trend_break_veto`：
+
+- 保留 QQQ-only；entry=`close < SMA200 AND drawdown63 <= -0.12`；recovery 为连续两个有效 QQQ
+  sessions `close >= SMA200`；entry drawdown 只控制进入，不控制 persistence/clear；
+- typed state 固定为 `UNKNOWN|CLEAR|VETO_ACTIVE`，初始状态不得默认为 clear；从 exact pre-target replay
+  inventory 起重放，target start 前必须解析为 known state；
+- missing observation 使当前 terminal=`INSUFFICIENT`、中断 recovery streak，并使后续 state 回到
+  `UNKNOWN`，直到 entry 或 two-session clear 条件重新建立；malformed authority 使受影响 replay chain
+  为 `INVALID`，修复后必须从 checkpoint 重放；
+- state checkpoint 必须绑定 producer version、source inventory SHA 与 deterministic replay identity。
+
+#### S4A.3 重叠声明、产物与验收
+
+V2 只允许声明
+`orthogonality_claim=SEMANTIC_AND_INPUT_SEPARATION_ONLY_NOT_EMPIRICAL_INDEPENDENCE`；SPY/QQQ、OR/AND 与
+hysteresis 差异不能证明低相关。四项 union 可能过严，但本阶段不得读取 observed series。首次观察前只
+冻结 descriptive evidence schema：per-veto/exclusive hit、pairwise Jaccard、union blocked sessions、
+episode count/duration、trend recovery lag、event-only blocked sessions、alpha-available-but-blocked sessions
+与 missing/FAIL/INSUFFICIENT/INVALID inventory；不得包含 candidate weights、returns 或 V4 result。
+
+本阶段新增：
+
+- `config/research/qc_qqq_options_growth_action_value_mandatory_veto_calculation_semantics_v1.yaml`；
+- `config/research/qc_qqq_options_growth_action_value_mandatory_veto_owner_freeze_decision_pack_draft_v2.yaml`；
+- `src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_owner_freeze_decision_pack_draft_v2.py`；
+- `tests/test_growth_action_value_mandatory_veto_owner_freeze_decision_pack_draft_v2.py`。
+
+验收标准：
+
+1. V2 loader 重放 immutable S4 V1 file/canonical identity 与新的 calculation semantics identity；
+2. 四项使用独立 typed model，formula operator tree、rolling、time/PIT、revision、coverage、state 与
+   terminal 均可机械验证；
+3. negative tests 拒绝 operator/window/threshold/ticker drift、missing-as-false、event date 代替
+   `published_at`、same-session/cross-date fallback、非法 state transition 及 admission flag 伪造；
+4. focused/adjacent、Ruff、strict mypy、py_compile 及适用 Architecture/Contract/Integration/
+   Reproducibility/Full PASS；
+5. aggregate 仍为 `OWNER_EXACT_FREEZE_REQUIRED_0_OF_4_ADMITTED`，任何 partial approval 不得生成 series；
+6. 后续 producer/adapters synthetic implementation 只有在四项 V2 全部 Owner exact-freeze 后另行开始。
+
 ## 7. Path、contract 与 evidence claims
 
 task-owned paths：本 requirement、两份新 config、typed loader 与 focused tests。
@@ -290,3 +395,14 @@ evidence roles：
   ready for Owner review，但 owner-frozen/admitted 仍为 `0/4`。S4 + S3 + source-wave focused=
   `53 passed`；Ruff、strict mypy、py_compile PASS。未读取 provider/cache 或真实数据，未生成 series/R1
   manifest，未运行真实 DQ/backtest，orders/fills/positions/production/broker=`0`。
+- 2026-08-26：Owner 指示“参考这个结论推进”，授权 S4A non-executable serial V2 contract wave；
+  canonical task 已恢复为 `IN_PROGRESS`。calculation-semantics file/canonical SHA-256=
+  `813c2eb2bb0d4b4f7673048889b66fa843b739a48405cc2e87272d925dd7b0d0`/
+  `824ef20a66e4eba3c2841489cae8b03ff3a6cad4f73003469c086d8e09237cf1`；V2 decision-pack
+  file/canonical SHA-256=`d08480c07047e636f8b4a8208ec60406acd5debdc60f30541411310e401b789f`/
+  `99ed7dbdac82faf594633ab25be1ffb1417709030af0817fb19c4ace332dc389`。四项 operator、full-window、
+  time/PIT、event revision/coverage 与 trend state transition 已改为 typed contract；V2+V1+S3+source-wave+
+  Atlas adjacent=`97 passed`，Ruff、strict mypy、py_compile PASS。V2 bytes 尚未 Owner exact-freeze，
+  owner-frozen/admitted 仍为 `0/4`；未实现 producer，未读取 provider/cache 或真实数据，未生成
+  series/R1 manifest，未运行真实 DQ/backtest，orders/fills/positions/production/broker=`0`；正式
+  Architecture/Contract/Integration/Reproducibility/Full 绑定最终 publication candidate 运行。

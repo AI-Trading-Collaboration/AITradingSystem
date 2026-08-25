@@ -9,7 +9,7 @@ classified_through_task_id: TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READE
 current_mainline_task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
 largest_blocker_task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
 next_legal_action_task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
-status_object_zh: 四项 mandatory veto 已形成 S4 Owner exact-freeze decision pack draft：SPY broad-market、VIX/QQQ realized-vol、official scheduled-event 与 QQQ trend-break 均有明确 recommendation object；这些值仍是未回测的 compatibility-anchored proposal，Owner-frozen/admitted 仍为 0/4，series、R1 manifest、真实 DQ 与 backtest 继续关闭
+status_object_zh: 四项 mandatory veto 已进入 S4A exact-semantics V2 draft：SPY broad-market、VIX/QQQ volatility、official scheduled-event 与 QQQ trend-break 的 operator、rolling、PIT/revision/coverage 和 state transition 已改为 typed contract；V2 bytes 尚未 Owner exact-freeze，Owner-frozen/admitted 仍为 0/4，producer、series、R1 manifest、真实 DQ 与 backtest 继续关闭
 evidence_evaluated_at: null
 task_status_mapping:
   DONE: PASS
