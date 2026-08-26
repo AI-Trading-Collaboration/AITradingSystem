@@ -5,7 +5,7 @@
 - task id：`TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1`；
 - priority：`P0`；
 - governed mode：`SINGLE_LANE` serial consumer-contract wave；
-- current status：`IN_PROGRESS_S4B_EXACT_SEMANTICS_FREEZE_ADMISSION`；
+- current status：`IN_PROGRESS_S5_SYNTHETIC_PRODUCER_CONFORMANCE`；
 - Owner decision：
   `owner_decision:TRADING-2542F-2542G:2026-08-25:approve_exact_architecture_freeze_and_source_contract_followup_v1`；
 - S4A Owner decision：
@@ -352,6 +352,54 @@ authority，并授权生成一个独立、non-executable freeze-admission artifa
 5. focused/adjacent、Ruff、strict mypy、py_compile 与适用 formal tiers PASS；本波发布后才允许从新 exact
    main base 启动 separate synthetic producer/adapters consumer wave。
 
+### S5：non-executable synthetic producer/adapters conformance
+
+S4B 已以 candidate/main/origin SHA `be2492b53f53fc6d89145cb1ccbdec5e3296e15e` 独立发布，满足
+“consumer 只能从新的 exact main base 开始”的 serial contract fence。S4B Owner decision 已明确授权
+separate synthetic producer follow-up；本阶段据此实现纯内存、无 provider/cache IO 的四类 callable
+conformance，不需要也不推断新的 Owner threshold/formula decision。
+
+S5 只允许实现以下机械行为：
+
+- shared clock：所有 timestamp 必须 timezone-aware，先验证 `available_at <= decision_as_of < action_cutoff`，
+  same-session 与 cross-date fallback 均不存在；
+- broad SPY：完整 200-session arithmetic SMA 与完整 63-session inclusive-current drawdown，严格执行
+  `close < SMA200 OR drawdown63 <= -0.10`；任一 window 不完整不得 short-circuit；
+- volatility：完整 252-observation VIX average-rank percentile，与 21 QQQ closes 形成 20 simple returns、
+  `ddof=1`、`sqrt(252)` annualized RV；严格执行 `VIX percentile >= 0.75 OR RV20 > 0.25`；
+- scheduled event：只接受 frozen Fed/BLS/BEA taxonomy；按 `published_at <= decision_as_of` 选 active
+  revision，处理 reschedule/cancel/same-published-at conflict，并要求三 authority coverage receipts 覆盖
+  next action close 后才允许返回 clear；
+- QQQ trend：entry=`close < SMA200 AND drawdown63 <= -0.12`；active persistence 忽略 entry drawdown，
+  连续两个 valid `close >= SMA200` 才 clear；missing 产生 `INSUFFICIENT`、中断 streak 并令 next state
+  `UNKNOWN`，malformed 产生 `INVALID`；checkpoint identity 必须绑定 producer/source inventory/state SHA。
+
+新增 contract artifact 必须精确绑定 S4B freeze-admission file/canonical SHA=
+`ef075527750efd24433eafbd8a2e586104562868f4ce2b666043069fe5368765`/
+`97f3678417b5dcb0a4965a308953552d17d17e4cb947532316dceca2506df147`，并把四项状态写为
+`SYNTHETIC_CALLABLE_CONFORMANCE_IMPLEMENTED_NOT_SOURCE_ADMITTED`。这只把 callable/synthetic conformance
+推进到 `4/4`；`producer_contract_admitted`、real-source PIT/DQ identity 与 exact-1202 observed inventory
+仍保持 `0/4`，不得生成 series/R1 manifest。
+
+本阶段新增：
+
+- `config/research/qc_qqq_options_growth_action_value_mandatory_veto_synthetic_producer_contract_v1.yaml`；
+- `src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_synthetic_producer_contract.py`；
+- `src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_synthetic_producers.py`；
+- `tests/test_growth_action_value_mandatory_veto_synthetic_producers.py`。
+
+验收标准：
+
+1. contract loader 重放 S4B strict loader 与 exact file/canonical identity，四个 callable id 顺序和 frozen
+   recommendation/producer id 完全一致；
+2. synthetic tests 覆盖所有 equality 边界、完整 window、OR/AND no-short-circuit、VIX tie、RV estimator、
+   event revision/coverage 以及 trend UNKNOWN/recovery/checkpoint transition；
+3. wrong ticker、wrong window、naive/late timestamp、NaN/invalid price、event conflict、missing coverage、
+   fabricated source admission/inventory/series 或 execution flag 均 fail closed；
+4. aggregate=`SYNTHETIC_CALLABLE_CONFORMANCE_READY_4_OF_4_SOURCE_UNADMITTED_0_OF_4`，下一合法动作仅为
+   reviewed real-source adapter contract/inventory admission planning，不是 provider query、DQ、series 或 backtest；
+5. focused/adjacent、Ruff、strict mypy、py_compile、generated freshness 与 formal tiers PASS。
+
 ## 7. Path、contract 与 evidence claims
 
 task-owned paths：本 requirement、两份新 config、typed loader 与 focused tests。
@@ -394,6 +442,11 @@ evidence roles：
   Owner freeze 与 producer/inventory admission 已机械分离，provider/cache/真实数据/series/R1/DQ/backtest/
   orders/fills/positions/production/broker 仍为 0。正式 formal tiers 与 generated authority freshness 绑定
   最终 publication candidate 运行。
+- 2026-08-26：S4B candidate=`be2492b53f53fc6d89145cb1ccbdec5e3296e15e` 已完成 Architecture/
+  Contract/Integration/Reproducibility=`878/278/995/24 passed`，Full=`9666 passed / 3 skipped`，并
+  ordinary-push 后验证 `main=origin/main=candidate`。publication transaction v3 completed、lease released，
+  临时 task branch 已删除。S5 从该新 exact base 以独立 SINGLE_LANE 开始；仍无 provider/cache/真实数据/
+  series/R1/DQ/backtest，orders/fills/positions/production/broker=0。
 
 - 2026-08-25：Owner 同意已解释的后续方案，并精确冻结 architecture/compatibility 上述四项 SHA；
   READ_ONLY audit 确认 main=origin/main=`1a3c3ef6eb51292de25bcf452aeacf4f0d20f012`、active
