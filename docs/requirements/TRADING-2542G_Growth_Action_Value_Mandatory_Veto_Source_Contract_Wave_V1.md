@@ -5,7 +5,7 @@
 - task id：`TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1`；
 - priority：`P0`；
 - governed mode：`SINGLE_LANE` serial consumer-contract wave；
-- current status：`IN_PROGRESS_S8_PIT_RECEIPT_ADAPTER_IMPLEMENTATION`；
+- current status：`IN_PROGRESS_S9_MANIFEST_REPLAY_CAPABILITY_GATE`；
 - Owner decision：
   `owner_decision:TRADING-2542F-2542G:2026-08-25:approve_exact_architecture_freeze_and_source_contract_followup_v1`；
 - S4A Owner decision：
@@ -16,9 +16,15 @@
   `owner_decision:TRADING-2542G:S7:2026-08-26:freeze_s6_real_source_adapter_manifest_inventory_contract_v1`；
 - S8 continuation：Owner 于 2026-08-26 指示“继续”，按 S7 已冻结的
   `separate_non_executable_adapter_implementation_followup_authorized=true` 边界启动独立 consumer wave；
-- 授权边界：只允许本地、result-blind、non-executable `DATA_RESEARCH` 合同与 synthetic
+- S9 Owner decision：
+  `owner_decision:TRADING-2542G:S9:2026-08-26:authorize_manifest_replay_source_admission_continue_v1`；
+- S8 授权边界：只允许本地、result-blind、non-executable `DATA_RESEARCH` 合同与 synthetic
   validation；不授权 veto series、R1 manifest、provider/cache query、真实 DQ、backtest、
-  orders、fills、positions、paper、live、production 或 broker action。
+  orders、fills、positions、paper、live、production 或 broker action；
+- S9 授权边界：允许生成并自动执行 exact manifest replay/source-admission capability gate；只有
+  replay=`PASS` 才允许在固定 request maxima 内读取真实 provider payload。若任一 historical
+  `available_at`、event schedule revision vintage、endpoint 或 session identity 无法证明，必须在
+  provider query 前 typed stop。真实 DQ/backtest 仍不授权，orders/fills/positions/production/broker=`0`。
 
 Owner 已逐项接纳并精确冻结以下已发布草案，原文件必须保持 immutable：
 
@@ -562,6 +568,82 @@ market cache 或 source file。synthetic fixture 的 checksum 只证明 parser/c
 5. focused/adjacent、Ruff、strict mypy、py_compile、generated freshness 与 formal tiers PASS；下一合法动作
    仍需 Project Owner 对 exact manifest replay/source/inventory admission 另行授权。
 
+### S9：exact manifest replay capability gate
+
+Owner 于 2026-08-26 在收到 S8 exact hashes、`4/4` synthetic adapter conformance 与剩余
+source/inventory admission blocker 后指示“好的，你继续”。本阶段把该指示解释为对 exact manifest
+replay/source-admission gate 的 standing owner scope，不把它扩大为真实 DQ、backtest、series、交易或
+生产授权。
+
+S9 必须先解决两个 predecessor contract 冲突，不能直接 replay 旧 execution V2：
+
+1. immutable execution V1/V2 仍把 historical `tqqq_veto` 列为第五个必须 exact-false 的 market-state
+   veto；TRADING-2542F architecture V1 已把它正确迁移为独立
+   `NO_LEVERAGE_ETF_ACTION_GUARD`，新的 mandatory market-state gate 只有四项；
+2. S8 pure adapter 可以验证调用方注入的 `available_at`/`published_at`，但当前真实 provider/capture
+   surface 尚未证明能够产生这些历史 PIT 字段。把当前下载时间、session 次日或页面 last-modified
+   推断成 2021–2025 的历史可用时间属于伪造 evidence，禁止使用。
+
+#### S9.1 successor bridge 与 exact identity
+
+新增 manifest replay gate 必须同时绑定且递归重放：
+
+- execution V2 file/canonical SHA-256=
+  `f02df23a4bd36069f5fe09354a3ce8480583fc451b71ec511bc3ba2da27780f2`/
+  `9b39a1cf6d1ad48c427755f07c592610ae2ad94055af4aab79d3327bf4e82456`；
+- architecture V1 file/canonical SHA-256=
+  `9b4856614298d64b2c8b5897980735a9e2a19c46fecb6c2362cb750ae13b136d`/
+  `88e1283b0333bafca24779c9c527d362acef40b65d4cff1a9d081ded07ac70e4`；
+- S8 adapter contract file/canonical SHA-256=
+  `00cda4f20b10729a085967085b000497344c540dc87d4ed9b7cd8f5a360672e9`/
+  `1eddecaa2a7809c98cbdd7d2418826ec99a470861b064116b2d4cf828403efe7`；
+- exact session source
+  `inputs/research/qqq_options/trading_2537_exact_date_provider_catalog_attribution_correction_v2/run_scope.json`
+  file SHA-256=`04376415dd9f6310aa796a930465f875d51effd6f681cfb2ac9da21bbde7191a`，
+  ordered count=`1202`、LF SHA-256=
+  `d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0`。
+
+successor bridge 只允许把旧 `tqqq_veto` 移出 market-state conjunction 并绑定为 action guard；不得修改
+V1/V2 的 contributor、growth-state、QQQ/SGOV weights、PIT、threshold、requested/evaluated range 或
+zero-execution rules。
+
+#### S9.2 pre-query capability gates
+
+manifest replay 在任何 provider/cache/market-file 读取前必须机械检查：
+
+| source surface | 当前 capability blocker | query disposition |
+| --- | --- | --- |
+| FMP SPY/QQQ | `FmpPriceProvider` 返回当前 normalized price frame，但没有逐历史 row 的 source-proven `available_at` receipt | `BLOCKED_PRE_QUERY` |
+| official Cboe VIX | full-history CSV 没有逐历史 row 的 publication/availability vintage | `BLOCKED_PRE_QUERY` |
+| Federal Reserve FOMC | consolidated calendar 可显示历史 meeting/statement，但当前 adapter 没有 schedule revision publication ledger | `BLOCKED_PRE_QUERY` |
+| BLS CPI/NFP | current/year schedule pages 未绑定可重放的 revision `published_at` vintage | `BLOCKED_PRE_QUERY` |
+| BEA PCE/GDP advance | S8 冻结 endpoint=`https://apps.bea.gov/api/data` 是 data API，不是 release-schedule revision authority | `BLOCKED_PRE_QUERY` |
+
+当前 S9 预期 terminal 固定为
+`MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE`；这表示授权已重放但
+技术 gate 未通过，不得伪报为 authorization failure。actual provider/cache/file query count、orders、fills、
+positions、production、broker 必须全部为 `0`。只有后续 versioned PIT archive/adapter contract 能证明
+上述字段后，才允许生成新的 manifest version 并消费真实 query maxima。
+
+本阶段新增：
+
+- `config/research/qc_qqq_options_growth_action_value_mandatory_veto_manifest_replay_gate_v1.yaml`；
+- `src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_manifest_replay_gate.py`；
+- `tests/test_growth_action_value_mandatory_veto_manifest_replay_gate.py`。
+
+验收标准：
+
+1. strict loader 递归重放 execution V2、architecture V1、S8 与 exact-1202 session source 的 file/canonical/
+   ordered inventory identity；
+2. successor bridge 机械证明 four-veto conjunction 与独立 action guard，不改写任何 immutable predecessor；
+3. replay report 分轴记录 `authorization_state=STANDING_OWNER_SCOPE` 与 technical blocker，并在 capability
+   gate 未全 PASS 时保持所有真实读取 counters 为 0；
+4. negative tests 拒绝 predecessor/session/code SHA drift、重新引入 tqqq market veto、伪造
+   available-at/published-at、endpoint 替换、query counter 非零、real DQ/backtest/series/execution flag；
+5. focused/adjacent、Ruff、strict mypy、py_compile、generated freshness 与 formal tiers PASS；发布后的
+   exact candidate 自动 replay，预期在 provider query 前 typed stop，并把下一 owner/engineering blocker
+   收敛到 historical PIT receipt capability，而不是继续要求重复授权。
+
 ## 7. Path、contract 与 evidence claims
 
 task-owned paths：本 requirement、逐阶段 immutable config、typed loader/pure adapter 与 focused tests。
@@ -578,17 +660,28 @@ evidence roles：
 
 ## 8. Lifecycle 与安全边界
 
-- current S8 frozen base：`107c4b53b5e68d384cafafac79939c4cbdd7654a`；
-- current S8 branch：`codex/trading-2542g-s8-pit-receipt-adapters`；
+- current S9 frozen base：`cfb3c8559cbbc38aecf0b0a291456bc3411f9162`；
+- current S9 branch：`codex/trading-2542g-s9-manifest-replay-gate`；
 - workspace：复用 `D:\Work\AITradingSystem`，不创建额外 worktree/clone/cache；
 - known-unrelated exclusion：`docs/research/growth_tilt_owner_diagnosis_pack.md` 不读、不 hash、不
   diff、不 stage、不修改；
-- external action=`none`，production effect=`none`，broker action=`none`；
+- S9 pre-query external action maxima：provider/network/cache/market-file reads=`0` until replay PASS；
+  production effect=`none`，broker action=`none`；
 - recovery：tracked bytes 由 Git/main 恢复；没有 provider、dataset、backtest 或 broker state；
 - exit condition：validated non-executable readiness artifact 发布，后续具体 source formula/threshold
   仍以独立 Owner exact-freeze 为前提。
 
 ## 9. 进度记录
+
+- 2026-08-26：S8 candidate=`cfb3c8559cbbc38aecf0b0a291456bc3411f9162` 已完成 Architecture/
+  Contract/Integration/Reproducibility=`878/278/995/24 passed`，Full=`9743 passed / 3 skipped`，并
+  ordinary-push 后验证 `main=origin/main=candidate`。Owner 在收到下一步需 separately authorize exact
+  manifest replay/source admission 的说明后指示“好的，你继续”；S9 SINGLE_LANE START/LANE preflight
+  PASS，选择 pre-query manifest replay capability gate。静态能力审计确认旧 execution V2 的 five-veto
+  surface 已被 architecture V1 的 four-veto + action-guard successor 取代，同时 FMP/Cboe historical
+  `available_at`、Fed/BLS schedule revision vintage 与 BEA schedule endpoint 尚不能被当前真实 adapter
+  证明；S9 在这些 gate PASS 前保持 provider/network/cache/market-file query=0，真实 DQ/backtest/series
+  与 orders/fills/positions/production/broker=0。
 
 - 2026-08-26：S7 candidate=`107c4b53b5e68d384cafafac79939c4cbdd7654a` 已完成 Architecture/
   Contract/Integration/Reproducibility=`878/278/995/24 passed`，Full=`9726 passed / 3 skipped`，并
