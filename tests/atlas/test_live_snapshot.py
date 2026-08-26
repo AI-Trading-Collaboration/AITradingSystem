@@ -108,12 +108,13 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
-        "四项 mandatory veto semantics 已 Owner exact-freeze 4/4，S5 已实现 SPY、VIX/QQQ、"
-        "official-event PIT 与 QQQ trend state machine 的纯内存 synthetic callable "
-        "conformance 4/4；这不是 real producer/source admission，真实 source identity、"
-        "PIT/DQ conformance 与 exact-1202 observed inventory 仍为 0/4，series、R1 "
-        "manifest、provider/cache、真实 DQ 与 backtest 继续关闭；下一合法动作仅为 reviewed "
-        "real-source adapter contract 与 exact inventory admission 规划"
+        "四项 mandatory veto semantics 已 Owner exact-freeze 4/4，S5 synthetic callable "
+        "conformance 已达 4/4；S6 已完成 FMP SPY/QQQ、official Cboe VIX、diagnostic "
+        "second source、planned Fed/BLS/BEA capture、exact-1202 inventory 与 14 项 "
+        "manifest replay gate 的 non-executable review pack，当前为 review-ready 4/4 "
+        "但 real source identity、observed PIT/DQ inventory 与 admission 仍为 0/4；"
+        "下一合法动作仅为 Owner 对 S6 exact file/canonical identity 的合同评审，不是 "
+        "provider query、adapter execution、series、真实 DQ 或 backtest"
     )
 
 

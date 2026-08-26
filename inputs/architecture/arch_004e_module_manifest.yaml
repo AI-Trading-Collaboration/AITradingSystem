@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1160
+module_count: 1161
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -16997,6 +16997,26 @@ modules:
 - module_id: src.ai_trading_system.qqq_options_research.growth_action_value_mandatory_veto_producer_contract_draft
   path: src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_producer_contract_draft.py
   sha256: f064458b3017d8a3a05a848dc386d989a7608107bddaa9a9a576674e4ad12e56
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.qqq_options_research.growth_action_value_mandatory_veto_real_source_adapter_admission_review
+  path: src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_real_source_adapter_admission_review.py
+  sha256: 5071d4476ef1f71afaeddc5ad899423951dd500f289013be7c97a05005721b06
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
