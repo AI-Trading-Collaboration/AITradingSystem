@@ -13,6 +13,7 @@ from typing import Literal, Self
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.platform.artifacts import write_bytes_atomic
 from ai_trading_system.qqq_options_research import (
     growth_action_value_mandatory_veto_pit_receipt_adapter_contract as s8,
 )
@@ -603,7 +604,7 @@ def main(argv: list[str] | None = None) -> int:
     report = run_mandatory_veto_manifest_replay(repository_context=context)
     output = args.output if args.output.is_absolute() else PROJECT_ROOT / args.output
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_bytes(report.canonical_bytes)
+    write_bytes_atomic(output, report.canonical_bytes)
     print(report.model_dump_json(indent=2))
     return 0
 

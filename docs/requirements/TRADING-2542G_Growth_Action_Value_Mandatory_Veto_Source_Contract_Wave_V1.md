@@ -674,9 +674,14 @@ evidence roles：
 ## 9. 进度记录
 
 - 2026-08-26：S9 strict gate 已实现并完成本地 focused/adjacent validation。policy file/canonical
-  SHA-256=`46fca457b25b40b409568cb75e080e51104c79963e6097683c53747a8a9038c8`/
-  `f5cee930aaa9817088895e6fc8ef1bd65ce2f4418b8da8c0ebecd184993b25f6`，绑定的 replay executor
-  SHA-256=`fbc4d2ec92972d17c508b8ade178d5d4cb879aafec71daf9853aefe08a78e99f`。
+  初版 policy file/canonical SHA-256=`46fca457b25b40b409568cb75e080e51104c79963e6097683c53747a8a9038c8`/
+  `f5cee930aaa9817088895e6fc8ef1bd65ce2f4418b8da8c0ebecd184993b25f6`。首次 formal Architecture
+  tier=`876 passed / 2 failed`，精确发现新增 module manifest freshness 与 CLI direct writer ratchet；没有
+  降级为 serial PASS 或绕过。CLI 已改用 canonical `write_bytes_atomic`，更新后 policy file/canonical
+  SHA-256=`4516b74310e446954fcac0fd1988852e613b0a5647fb7286210d82d605304787`/
+  `4833df465f3aae498ca9bbefcbd2764a21c5dab810e5dec720d37352f77abc4e`，绑定的 replay executor
+  SHA-256=`139936d26522e629e90bae5d850f55a2871318b83153be9fdcff5948daccbc8f`；architecture manifest
+  由官方 generator 在 failure-fix candidate 重建。
   authority、exact-1202 session 与 four-veto + action-guard compatibility replay 全部 `PASS`；五个
   source capability row 均在 query 前给出 typed blocker，整体 terminal=
   `MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE`。focused + Atlas=

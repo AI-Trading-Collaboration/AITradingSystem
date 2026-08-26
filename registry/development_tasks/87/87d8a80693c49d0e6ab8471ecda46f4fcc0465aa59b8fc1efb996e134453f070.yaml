@@ -725,6 +725,50 @@ events:
   - change:trading-2542g-s9-capability-blocked-20260826-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-5301ccb857912f69af6e67d22b8c3701
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-26T14:20:00Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s9-publication-20260826-v2
+  lane_id: null
+  base_commit: c7c299d7034c6d5853a939707c00671ee526f99d
+  previous_state_event_id: task-event-5301ccb857912f69af6e67d22b8c3701
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / provide or approve a versioned historical PIT receipt
+      authority for FMP, Cboe, Fed, BLS and BEA; Codex reruns S9 only after the exact
+      source contract is reviewable
+    blocker_or_next_step: 'S9 replayed execution V2, successor architecture V1, S8
+      and the exact 1202-session inventory successfully, but the source capability
+      gate stopped before every provider query: FMP and Cboe cannot prove historical
+      per-row available_at/publication vintage, Fed and BLS lack replayable schedule
+      revision ledgers, and the frozen BEA data endpoint is not schedule revision
+      authority. Do not infer historical PIT timestamps or run provider, DQ, series
+      or backtest.'
+    acceptance_criteria: Current S9 wave passes when exact authority, executor code,
+      ordered-session and four-veto plus action-guard identities replay; the five
+      typed source blockers yield MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE;
+      authorization remains STANDING_OWNER_SCOPE while technical_validation_state
+      is BLOCKED; all network/provider/cache/market-file/source-admission/series/DQ/backtest/orders/fills/positions/production/broker
+      counters remain zero; focused, adjacent and governed publication validation
+      plus Atlas freshness PASS. A successor gate may proceed only after exact historical
+      PIT receipt authority is reviewed.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      Failure-fix policy file/canonical SHA=4516b74310e446954fcac0fd1988852e613b0a5647fb7286210d82d605304787/4833df465f3aae498ca9bbefcbd2764a21c5dab810e5dec720d37352f77abc4e;
+      replay executor SHA=139936d26522e629e90bae5d850f55a2871318b83153be9fdcff5948daccbc8f;
+      initial formal Architecture=876 passed / 2 failed due module-manifest freshness
+      and direct-writer ratchet; CLI corrected to canonical write_bytes_atomic and
+      official architecture generator scheduled in this transaction. Focused plus
+      Atlas=19 passed; full mandatory-veto adjacent=224 passed; no provider/network/cache/market-file
+      query, no real data, source admission, series, DQ or backtest; orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s9-publication-20260826-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-460f503801349aa0deb11feb1c8faa0b
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
@@ -749,14 +793,17 @@ projection:
     Atlas freshness PASS. A successor gate may proceed only after exact historical
     PIT receipt authority is reviewed.
   - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    S9 policy file/canonical SHA=46fca457b25b40b409568cb75e080e51104c79963e6097683c53747a8a9038c8/f5cee930aaa9817088895e6fc8ef1bd65ce2f4418b8da8c0ebecd184993b25f6;
-    replay executor SHA=fbc4d2ec92972d17c508b8ade178d5d4cb879aafec71daf9853aefe08a78e99f;
-    focused plus Atlas=19 passed; full mandatory-veto adjacent=224 passed; no provider/network/cache/market-file
+    Failure-fix policy file/canonical SHA=4516b74310e446954fcac0fd1988852e613b0a5647fb7286210d82d605304787/4833df465f3aae498ca9bbefcbd2764a21c5dab810e5dec720d37352f77abc4e;
+    replay executor SHA=139936d26522e629e90bae5d850f55a2871318b83153be9fdcff5948daccbc8f;
+    initial formal Architecture=876 passed / 2 failed due module-manifest freshness
+    and direct-writer ratchet; CLI corrected to canonical write_bytes_atomic and official
+    architecture generator scheduled in this transaction. Focused plus Atlas=19 passed;
+    full mandatory-veto adjacent=224 passed; no provider/network/cache/market-file
     query, no real data, source admission, series, DQ or backtest; orders/fills/positions/production/broker=0.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: ebd3d4957563607d846dbd4e895c2d1bf1d8e8f7629d4a71b6341f44a1f4b472
-last_event_id: task-event-5301ccb857912f69af6e67d22b8c3701
+  canonical_row_sha256: a1aa90919545334b33a366b477fef6bc44e60eabb7c6c78aa0c28bd1ca2f7db4
+last_event_id: task-event-460f503801349aa0deb11feb1c8faa0b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 04eb7f0e168940556c134d5935844febf3a40342cebc154f1b1720e7551917bc
+fragment_checksum: cda389fcdc7102d961f3ae95533f586c58a4ff0386331b5775029d8f7015401e

@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1324
-test_count: 1264
+test_file_count: 1325
+test_count: 1265
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_live_snapshot
   path: tests/atlas/test_live_snapshot.py
-  sha256: 286d4d62a0c56feeb428806349e6842ca04bd2baec94456eb32baa390a3756d8
+  sha256: b46835bce744c7f21d1e1607b7e64f19c9a92ef2fcf4fb34c79aa245c970f1e7
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -12577,6 +12577,22 @@ tests:
 - test_id: tests.test_growth_action_value_mandatory_veto_exact_semantics_freeze_admission
   path: tests/test_growth_action_value_mandatory_veto_exact_semantics_freeze_admission.py
   sha256: 9127ef8fb3e47aa090517ba346987bdb87ed711ee897b3d0df8afddcb441a4e1
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_growth_action_value_mandatory_veto_manifest_replay_gate
+  path: tests/test_growth_action_value_mandatory_veto_manifest_replay_gate.py
+  sha256: be0835471b6906123bb0f9b73acaba349254d5b100f182625c0217aaf28c6b4b
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
