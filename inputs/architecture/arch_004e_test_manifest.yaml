@@ -12592,7 +12592,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_growth_action_value_mandatory_veto_manifest_replay_gate
   path: tests/test_growth_action_value_mandatory_veto_manifest_replay_gate.py
-  sha256: be0835471b6906123bb0f9b73acaba349254d5b100f182625c0217aaf28c6b4b
+  sha256: e52666eadee30fffedd01f0165bcb6e450088a2dae42d3187ca7eb9604cb1438
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
