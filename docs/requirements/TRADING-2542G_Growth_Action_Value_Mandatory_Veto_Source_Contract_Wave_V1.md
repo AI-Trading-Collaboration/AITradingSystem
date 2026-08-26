@@ -400,6 +400,69 @@ S5 只允许实现以下机械行为：
    reviewed real-source adapter contract/inventory admission planning，不是 provider query、DQ、series 或 backtest；
 5. focused/adjacent、Ruff、strict mypy、py_compile、generated freshness 与 formal tiers PASS。
 
+### S6：真实来源 adapter 与 exact-1202 inventory 接纳评审包（当前阶段）
+
+Owner 于 2026-08-26 同意 Codex 独立准备后续评审材料。本授权只覆盖可静态重放的
+non-executable `DATA_RESEARCH` 合同、纯内存 receipt validator、manifest/inventory 规划和 Owner
+决策矩阵；不覆盖 provider query、cache/真实数据读取、source/inventory admission、veto series/R1、
+真实 DQ/backtest 或任何交易动作。
+
+新增 artifact 必须精确绑定 S5 synthetic producer contract file/canonical SHA=
+`14a8995e0bcb5cdc1a5fccb67d6389c5e72fb65ce1efdb926d1f9520e1d4d314`/
+`c064ec2418f43184e89fdecdf1ced60c932b15e5de6b6548fa01dc6af99ac95c`，并保持 S5 四项
+exact semantics/callable surface 不变。评审包使用以下 candidate，candidate 不等于 admitted：
+
+1. broad-market 与 trend 的 SPY/QQQ EOD 候选为 `FmpPriceProvider`/
+   `fmp_eod_daily_prices`；必须固定 endpoint/params、raw/adjusted close、corporate-action adjustment
+   basis/vintage、`available_at`、download time、row count、snapshot checksum 和 symbol identity。
+   `MarketstackPriceProvider` 仅可做独立 second-source reconciliation；Yahoo 不能成为 fallback；
+2. volatility 的 VIX 候选为 official `CboeVixPriceProvider`/
+   `cboe_vix_historical`；必须固定 official endpoint、VIX level 定义、session/timezone 映射、
+   `available_at`、snapshot checksum 和与 QQQ session 的 join 规则。FRED `VIXCLS` 只可诊断交叉核对，
+   不能补值或覆盖 official Cboe；
+3. event 候选必须由 Federal Reserve FOMC calendar、BLS release schedule、BEA release metadata 三个
+   official capture-only adapter 共同组成；必须保存 stable event key、exact taxonomy、revision/action、
+   scheduled time、official `published_at`/capture time、`available_at`、coverage-through、snapshot checksum、
+   cancellation/reschedule/conflict 语义。任一 authority coverage receipt 缺失时不得输出 clear；
+4. trend 与 volatility QQQ 复用同一份已接纳 QQQ snapshot identity，但各自拥有独立 consumer binding；
+   trend 还必须保存 replay start、initial checkpoint、state transition lineage 和 target-start checkpoint。
+
+exact-1202 inventory 规划固定 project default target start=`2021-02-22`、target session count=`1202`、
+calendar=`QQQ exchange sessions`。实际 target end、session-list LF SHA、四类 source snapshot SHA、row count
+和 observed coverage 在未来受权 manifest replay 前必须为 `null`；不得根据墙钟日期或本地 cache 推测。
+warmup 与 1202 个 target sessions 必须分开计数：SPY/QQQ SMA200 至少 199 个先行 session、VIX percentile252
+至少 251 个、QQQ RV20 至少 19 个；stateful trend 还需从可证明的 initial checkpoint 连续重放到 target
+start，不得把“199 个最小公式 warmup”冒充完整 state lineage。
+
+未来 admission manifest replay 必须同时验证：exact code/policy/calendar/source identities、request params、
+schema、ticker/universe、timezone/availability、duplicates/gaps/conflicts、corporate-action vintage、warmup 与
+target 分离、1202 exact session equality、cross-source reconciliation、event 三 authority coverage、trend
+checkpoint lineage、artifact checksum、actual counters，以及 orders/fills/positions/production/broker=`0`。
+任一 gate 失败或字段缺失均 fail closed；评审包自身不能执行 replay。
+
+本阶段新增：
+
+- `config/research/qc_qqq_options_growth_action_value_mandatory_veto_real_source_adapter_admission_review_v1.yaml`；
+- `src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_real_source_adapter_admission_review.py`；
+- `tests/test_growth_action_value_mandatory_veto_real_source_adapter_admission_review.py`。
+
+Owner 一次性决策面必须逐项显示 candidate provider/adapter、source class、endpoint identity、required
+receipt/inventory fields、禁止替代来源、未满足 blocker、推荐决定与其精确影响。默认且唯一合法的当前结果为
+`OWNER_REVIEW_READY_REAL_SOURCE_ADMISSION_NOT_GRANTED_0_OF_4`；`candidate_ready_for_review=true` 不能被
+解释为 `real_source_identity_admitted=true` 或 `exact_1202_session_inventory_admitted=true`。
+
+验收标准：
+
+1. strict loader 重放 S5 exact file/canonical identity，并校验四项 veto/callable/producer 顺序不漂移；
+2. config 精确包含四类 source candidate、三个 official event authority、exact-1202 inventory 模板、
+   manifest replay gates、Owner decision rows 与全关闭 authorization/safety surface；
+3. 纯内存 validator 只接收显式 mapping，不包含 network/filesystem/cache/provider code path；完整 planning
+   receipt 可得到 `REVIEW_READY_NOT_ADMITTED`，缺字段、未知字段、hash/timestamp/session/count/coverage/
+   checkpoint/reconciliation/admission/execution 伪造均拒绝；
+4. observed inventory/source admission 均保持 `0/4`，所有 observed hash/end/row count 为 `null`，不生成
+   series/R1，不运行真实 DQ/backtest；
+5. focused/adjacent、Ruff、strict mypy、py_compile、generated freshness 与 formal tiers PASS。
+
 ## 7. Path、contract 与 evidence claims
 
 task-owned paths：本 requirement、两份新 config、typed loader 与 focused tests。
