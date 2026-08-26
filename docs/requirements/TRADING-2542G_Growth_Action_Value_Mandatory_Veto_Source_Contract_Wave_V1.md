@@ -692,6 +692,9 @@ evidence roles：
   `2295512 bytes / c019cf452293a1cba3fa6626c3282a6c1f6f5860a0ac4b13fd0c4d40619401eb /
   git blob 6e6c0376844986397ce7e8cd00f7ccfdf1a0bde8 / 1135 entries`，后续 failure-fix transaction
   只运行 official compatibility/report-flow/Atlas generators，并以失败 Full artifact 为 parent 重跑。
+  首次 official report-flow + compatibility rebuild 后，原 7 项中 5 项已通过；focused 仅剩 2 个 total
+  entry-count regression 仍为 `3060`，已按 `1371 + 558 + 1135 = 3064` 同步并重新生成 compatibility
+  authority。Atlas 留到 clean exact candidate 上单独重建，避免把 dirty task/source bytes 冒充 exact commit。
   authority、exact-1202 session 与 four-veto + action-guard compatibility replay 全部 `PASS`；五个
   source capability row 均在 query 前给出 typed blocker，整体 terminal=
   `MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE`。focused + Atlas=
