@@ -685,7 +685,13 @@ evidence roles：
   `arch_004g_deprecation_inventory` frozen regression 仍绑定 S8 的 `1164/1324` module/test counts；已按
   generator 输出同步到 S9 `1165/1325` 与 inventory id
   `arch_004g_deprecation_inventory_64e7ee83696d68abb801`，不改变任何 deprecation lifecycle 或 direct-writer
-  allowance。
+  allowance。第三轮 Architecture=`878 passed`，Contract/Integration/Reproducibility=
+  `278/995/24 passed`；首次 Full=`9749 passed / 3 skipped / 7 failed`。7 项均为 `docs/system_flow.md`、
+  deprecation regression 与 Atlas page bytes 尚未进入 compatibility/report-flow/Atlas generated authority；
+  S9 loader、source gate、DQ、策略与交易边界没有失败。新 system-flow reviewed source seal=
+  `2295512 bytes / c019cf452293a1cba3fa6626c3282a6c1f6f5860a0ac4b13fd0c4d40619401eb /
+  git blob 6e6c0376844986397ce7e8cd00f7ccfdf1a0bde8 / 1135 entries`，后续 failure-fix transaction
+  只运行 official compatibility/report-flow/Atlas generators，并以失败 Full artifact 为 parent 重跑。
   authority、exact-1202 session 与 four-veto + action-guard compatibility replay 全部 `PASS`；五个
   source capability row 均在 query 前给出 typed blocker，整体 terminal=
   `MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE`。focused + Atlas=
