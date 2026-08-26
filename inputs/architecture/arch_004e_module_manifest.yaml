@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1162
+module_count: 1164
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -16977,6 +16977,46 @@ modules:
 - module_id: src.ai_trading_system.qqq_options_research.growth_action_value_mandatory_veto_owner_freeze_decision_pack_draft_v2
   path: src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_owner_freeze_decision_pack_draft_v2.py
   sha256: 1626e44ba047b4c9c76eaa21b63cc615fe2ddab4fb487b3d25748bfea193c0bc
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.qqq_options_research.growth_action_value_mandatory_veto_pit_receipt_adapter_contract
+  path: src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_pit_receipt_adapter_contract.py
+  sha256: b54c3ad7f9cb4c34716ec9ba7866e0f10006a347f27772520b94b6061d018a38
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.qqq_options_research.growth_action_value_mandatory_veto_pit_receipt_adapters
+  path: src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_pit_receipt_adapters.py
+  sha256: b9153d22a41df8c9bd1324b206835de8184e85f7d9734a5dd2c83eef260094ad
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
