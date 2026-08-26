@@ -596,6 +596,16 @@ evidence roles：
   SINGLE_LANE START/LANE preflight PASS，选择纯内存 PIT receipt-bound adapter wave。S8 不访问
   provider/network/cache/filesystem market data，不运行 manifest replay/真实 DQ/backtest，不生成
   series/R1；orders/fills/positions/production/broker=0。
+- 2026-08-26：S8 PIT receipt adapter contract file/canonical SHA-256=
+  `00cda4f20b10729a085967085b000497344c540dc87d4ed9b7cd8f5a360672e9`/
+  `1eddecaa2a7809c98cbdd7d2418826ec99a470861b064116b2d4cf828403efe7`。FMP SPY/QQQ、official
+  Cboe VIX 与 official Fed/BLS/BEA capture receipt 已实现为纯 caller-injected mapping/rows adapter；
+  checksum、PIT timestamp、exact session、adjustment、three-authority coverage、revision conflict 与 trend
+  supplemental binding 均 fail closed。S8 focused=`17 passed`，完整 mandatory-veto authority adjacent=
+  `173 passed`，Ruff、strict mypy、py_compile PASS；terminal=
+  `SYNTHETIC_PIT_RECEIPT_ADAPTER_CONFORMANCE_READY_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4`。没有
+  provider/network/cache/filesystem market-data IO、observed manifest/inventory、series/R1、真实 DQ/backtest
+  或交易动作；正式 generated freshness 与 formal tiers 绑定最终 publication candidate 运行。
 
 - 2026-08-26：Owner 在收到 S6 精确 file/canonical SHA 与“合同冻结不等于 source/inventory admission”
   的说明后指示“继续推进”。READ_ONLY audit 与 SINGLE_LANE START/LANE preflight PASS，

@@ -1,0 +1,199 @@
+schema_version: growth_action_value_mandatory_veto_pit_receipt_adapter_contract.v1
+policy_id: qc_qqq_options_growth_action_value_mandatory_veto_pit_receipt_adapter_contract_v1
+policy_version: 1.0.0
+status: SYNTHETIC_PIT_RECEIPT_ADAPTER_CONFORMANCE_READY_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4
+task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+s7_contract_binding:
+  path: config/research/qc_qqq_options_growth_action_value_mandatory_veto_real_source_adapter_contract_freeze_admission_v1.yaml
+  artifact_id: qc_qqq_options_growth_action_value_mandatory_veto_real_source_adapter_contract_freeze_admission_v1
+  file_sha256: d4e431350c0220934d48482e1cfd02287b06f291f8903f58901d75735d8b1636
+  canonical_sha256: 3344d14fd7b94b6951a8f676e77674c50b1dbe38820f83b6c45f96d4727a8405
+  role: OWNER_EXACT_FROZEN_ADAPTER_MANIFEST_INVENTORY_CONTRACT
+  immutable: true
+implementation_scope:
+  instruction_ref: owner_instruction:TRADING-2542G:S8:2026-08-26:continue_non_executable_pit_receipt_adapter_implementation_v1
+  predecessor_followup_authorization_replayed: true
+  caller_injected_mapping_and_rows_only: true
+  contract_loader_may_read_tracked_authority_files: true
+  adapter_network_provider_cache_or_market_file_io_allowed: false
+  checksum_algorithm: SHA256_CANONICAL_JSON_SORTED_KEYS_UTF8_LF_V1
+  real_payload_execution_observed: false
+  authorization_state: STANDING_OWNER_SCOPE
+adapter_specs:
+  - adapter_id: FmpPricePITReceiptAdapter
+    adapter_kind: PRICE
+    candidate_id: fmp_spy_qqq_eod_adjusted_v1
+    predecessor_adapter_id: FmpPriceProvider
+    provider_or_authority: Financial Modeling Prep
+    source_id: fmp_eod_daily_prices
+    endpoint: "https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted; https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted"
+    timestamp_timezone: America/New_York
+    allowed_tickers: [SPY, QQQ]
+    event_taxonomy: []
+    request_parameter_keys: [symbol, from, to, interval, raw_price_mode, adjusted_price_mode]
+    fixed_request_parameters:
+      interval: daily
+      raw_price_mode: non-split-adjusted
+      adjusted_price_mode: dividend-adjusted
+    receipt_field_names: [schema_version, candidate_id, provider, source_id, endpoint, request_parameters, ticker, provider_symbol_alias, adjustment_basis, adjustment_vintage, session_timezone, available_at, downloaded_at, row_count, checksum]
+    row_field_names: [session, ticker, provider_symbol_alias, raw_close, dividend_adjusted_close, available_at]
+    implementation_state: PURE_IN_MEMORY_SYNTHETIC_CONFORMANCE_IMPLEMENTED
+    real_payload_execution_observed: false
+    adapter_implementation_admitted: false
+  - adapter_id: CboeVixPITReceiptAdapter
+    adapter_kind: VIX
+    candidate_id: cboe_vix_index_daily_v1
+    predecessor_adapter_id: CboeVixPriceProvider
+    provider_or_authority: Cboe Global Markets
+    source_id: cboe_vix_daily_prices
+    endpoint: https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv
+    timestamp_timezone: America/Chicago
+    allowed_tickers: [VIX]
+    event_taxonomy: []
+    request_parameter_keys: [ticker, from, to, interval, content]
+    fixed_request_parameters:
+      interval: daily
+      content: full_history_csv
+    receipt_field_names: [schema_version, candidate_id, provider, source_id, endpoint, request_parameters, ticker, adjustment_basis, session_timezone, level_definition, revision_policy, available_at, downloaded_at, row_count, checksum]
+    row_field_names: [session, ticker, close, adjusted_close, available_at]
+    implementation_state: PURE_IN_MEMORY_SYNTHETIC_CONFORMANCE_IMPLEMENTED
+    real_payload_execution_observed: false
+    adapter_implementation_admitted: false
+  - adapter_id: FederalReserveFomcSchedulePITReceiptAdapter
+    adapter_kind: EVENT
+    candidate_id: federal_reserve_fomc_schedule_capture_v1
+    predecessor_adapter_id: FederalReserveFomcScheduleAdapterPlanned
+    provider_or_authority: Federal Reserve Board
+    source_id: federal_reserve_fomc_calendar
+    endpoint: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
+    timestamp_timezone: America/New_York
+    allowed_tickers: []
+    event_taxonomy: [FOMC_RATE_DECISION]
+    request_parameter_keys: [event_types, capture_mode, coverage_start, coverage_end]
+    fixed_request_parameters:
+      capture_mode: official_schedule
+    receipt_field_names: [schema_version, candidate_id, authority, source_id, endpoint, request_parameters, session_timezone, captured_at, available_at, coverage_through, row_count, checksum]
+    row_field_names: [stable_event_key, event_type, revision_id, revision_action, scheduled_for, source_published_at, captured_at, available_at]
+    implementation_state: PURE_IN_MEMORY_SYNTHETIC_CONFORMANCE_IMPLEMENTED
+    real_payload_execution_observed: false
+    adapter_implementation_admitted: false
+  - adapter_id: BlsReleaseSchedulePITReceiptAdapter
+    adapter_kind: EVENT
+    candidate_id: bls_release_schedule_capture_v1
+    predecessor_adapter_id: BlsReleaseScheduleAdapterPlanned
+    provider_or_authority: Bureau of Labor Statistics
+    source_id: bls_release_calendar
+    endpoint: https://www.bls.gov/schedule/news_release/
+    timestamp_timezone: America/New_York
+    allowed_tickers: []
+    event_taxonomy: [CPI, NONFARM_PAYROLLS]
+    request_parameter_keys: [event_types, capture_mode, coverage_start, coverage_end]
+    fixed_request_parameters:
+      capture_mode: official_schedule
+    receipt_field_names: [schema_version, candidate_id, authority, source_id, endpoint, request_parameters, session_timezone, captured_at, available_at, coverage_through, row_count, checksum]
+    row_field_names: [stable_event_key, event_type, revision_id, revision_action, scheduled_for, source_published_at, captured_at, available_at]
+    implementation_state: PURE_IN_MEMORY_SYNTHETIC_CONFORMANCE_IMPLEMENTED
+    real_payload_execution_observed: false
+    adapter_implementation_admitted: false
+  - adapter_id: BeaReleaseSchedulePITReceiptAdapter
+    adapter_kind: EVENT
+    candidate_id: bea_release_schedule_capture_v1
+    predecessor_adapter_id: BeaReleaseScheduleAdapterPlanned
+    provider_or_authority: Bureau of Economic Analysis
+    source_id: bea_release_metadata
+    endpoint: https://apps.bea.gov/api/data
+    timestamp_timezone: America/New_York
+    allowed_tickers: []
+    event_taxonomy: [PCE_PRICE_INDEX, GDP_ADVANCE_ESTIMATE]
+    request_parameter_keys: [event_types, capture_mode, coverage_start, coverage_end]
+    fixed_request_parameters:
+      capture_mode: official_schedule
+    receipt_field_names: [schema_version, candidate_id, authority, source_id, endpoint, request_parameters, session_timezone, captured_at, available_at, coverage_through, row_count, checksum]
+    row_field_names: [stable_event_key, event_type, revision_id, revision_action, scheduled_for, source_published_at, captured_at, available_at]
+    implementation_state: PURE_IN_MEMORY_SYNTHETIC_CONFORMANCE_IMPLEMENTED
+    real_payload_execution_observed: false
+    adapter_implementation_admitted: false
+veto_bindings:
+  - veto_id: broad_market_risk_off_veto
+    producer_id: qqq_options_growth_action_value_broad_market_risk_off_v1
+    callable_name: evaluate_broad_market_risk_off
+    receipt_adapter_ids: [FmpPricePITReceiptAdapter]
+    primary_candidate_ids: [fmp_spy_qqq_eod_adjusted_v1]
+    supplemental_receipt_fields: []
+    synthetic_adapter_conformance_ready: true
+    adapter_implementation_admitted: false
+    real_source_identity_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    observed_manifest_sha256: null
+  - veto_id: realized_volatility_veto
+    producer_id: volatility_compression_free_v1_successor_adapter
+    callable_name: evaluate_realized_volatility_veto
+    receipt_adapter_ids: [FmpPricePITReceiptAdapter, CboeVixPITReceiptAdapter]
+    primary_candidate_ids: [fmp_spy_qqq_eod_adjusted_v1, cboe_vix_index_daily_v1]
+    supplemental_receipt_fields: []
+    synthetic_adapter_conformance_ready: true
+    adapter_implementation_admitted: false
+    real_source_identity_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    observed_manifest_sha256: null
+  - veto_id: scheduled_event_risk_veto
+    producer_id: official_macro_release_calendar_pit_v1
+    callable_name: evaluate_scheduled_event_risk
+    receipt_adapter_ids: [FederalReserveFomcSchedulePITReceiptAdapter, BlsReleaseSchedulePITReceiptAdapter, BeaReleaseSchedulePITReceiptAdapter]
+    primary_candidate_ids: [federal_reserve_fomc_schedule_capture_v1, bls_release_schedule_capture_v1, bea_release_schedule_capture_v1]
+    supplemental_receipt_fields: []
+    synthetic_adapter_conformance_ready: true
+    adapter_implementation_admitted: false
+    real_source_identity_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    observed_manifest_sha256: null
+  - veto_id: underlying_trend_break_veto
+    producer_id: qqq_underlying_trend_break_v1
+    callable_name: evaluate_underlying_trend_break
+    receipt_adapter_ids: [FmpPricePITReceiptAdapter]
+    primary_candidate_ids: [fmp_spy_qqq_eod_adjusted_v1]
+    supplemental_receipt_fields: [replay_start, initial_checkpoint_sha256, target_start_checkpoint_sha256, state_transition_lineage_sha256]
+    synthetic_adapter_conformance_ready: true
+    adapter_implementation_admitted: false
+    real_source_identity_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    observed_manifest_sha256: null
+aggregate_state:
+  synthetic_adapter_conformance_ready_vetoes: [broad_market_risk_off_veto, realized_volatility_veto, scheduled_event_risk_veto, underlying_trend_break_veto]
+  admitted_adapter_implementations: []
+  admitted_real_source_identities: []
+  admitted_exact_1202_session_inventories: []
+  observed_manifest_replays: []
+  terminal: SYNTHETIC_PIT_RECEIPT_ADAPTER_CONFORMANCE_READY_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4
+  next_legal_action: OWNER_AUTHORIZED_EXACT_MANIFEST_REPLAY_AND_SEPARATE_SOURCE_INVENTORY_ADMISSION
+safety:
+  non_executable_data_research_only: true
+  pure_adapter_execution_on_injected_synthetic_payload_allowed: true
+  filesystem_market_data_read_allowed: false
+  network_io_allowed: false
+  provider_query_authorized: false
+  cache_read_authorized: false
+  real_data_read_authorized: false
+  real_payload_adapter_execution_authorized: false
+  real_source_admission_allowed: false
+  exact_inventory_admission_allowed: false
+  manifest_replay_allowed: false
+  veto_series_generation_allowed: false
+  r1_manifest_generation_allowed: false
+  real_dq_authorized: false
+  backtest_authorized: false
+  parameter_or_threshold_search_allowed: false
+  constant_false_fill_allowed: false
+  missing_as_clear_allowed: false
+  cross_date_fallback_allowed: false
+  orders_allowed: false
+  fills_allowed: false
+  positions_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_effect: none
+  broker_action: none
