@@ -1,0 +1,117 @@
+schema_version: growth_action_value_mandatory_veto_synthetic_producer_contract.v1
+policy_id: qc_qqq_options_growth_action_value_mandatory_veto_synthetic_producer_contract_v1
+policy_version: 1.0.0
+status: SYNTHETIC_CALLABLE_CONFORMANCE_READY_4_OF_4_SOURCE_UNADMITTED_0_OF_4
+task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+freeze_admission_binding:
+  path: config/research/qc_qqq_options_growth_action_value_mandatory_veto_exact_semantics_freeze_admission_v1.yaml
+  file_sha256: ef075527750efd24433eafbd8a2e586104562868f4ce2b666043069fe5368765
+  canonical_sha256: 97f3678417b5dcb0a4965a308953552d17d17e4cb947532316dceca2506df147
+  immutable: true
+authorization_scope:
+  decision_ref: owner_decision:TRADING-2542G:S4B:2026-08-26:freeze_s4a_v2_exact_semantics_and_continue_non_executable_admission_v1
+  separate_synthetic_producer_followup_authorized: true
+  pure_in_memory_synthetic_conformance_only: true
+  real_source_adapter_admission_authorized: false
+  exact_inventory_or_series_authorized: false
+  provider_cache_dq_or_backtest_authorized: false
+  authorization_state: STANDING_OWNER_SCOPE
+producer_rows:
+  - veto_id: broad_market_risk_off_veto
+    recommendation_id: broad_market_risk_off_spy_sma200_drawdown63_v2_exact_semantics_proposal
+    producer_id: qqq_options_growth_action_value_broad_market_risk_off_v1
+    callable_name: evaluate_broad_market_risk_off
+    conformance_state: SYNTHETIC_CALLABLE_CONFORMANCE_IMPLEMENTED_NOT_SOURCE_ADMITTED
+    exact_semantics_owner_frozen: true
+    synthetic_callable_conformance_implemented: true
+    producer_contract_admitted: false
+    real_source_identity_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    series_generation_allowed: false
+    remaining_blockers:
+      - REAL_SPY_SOURCE_IDENTITY_AND_ADJUSTMENT_VINTAGE_NOT_ADMITTED
+      - REAL_PIT_DQ_CONFORMANCE_NOT_OBSERVED
+      - EXACT_1202_INVENTORY_NOT_ADMITTED
+  - veto_id: realized_volatility_veto
+    recommendation_id: realized_volatility_vix252_or_qqq_rv20_v2_exact_semantics_proposal
+    producer_id: volatility_compression_free_v1_successor_adapter
+    callable_name: evaluate_realized_volatility_veto
+    conformance_state: SYNTHETIC_CALLABLE_CONFORMANCE_IMPLEMENTED_NOT_SOURCE_ADMITTED
+    exact_semantics_owner_frozen: true
+    synthetic_callable_conformance_implemented: true
+    producer_contract_admitted: false
+    real_source_identity_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    series_generation_allowed: false
+    remaining_blockers:
+      - REAL_QQQ_VIX_SOURCE_AND_AVAILABILITY_IDENTITY_NOT_ADMITTED
+      - REAL_PIT_DQ_CONFORMANCE_NOT_OBSERVED
+      - EXACT_1202_INVENTORY_NOT_ADMITTED
+  - veto_id: scheduled_event_risk_veto
+    recommendation_id: scheduled_event_official_next_session_any_v2_exact_semantics_proposal
+    producer_id: official_macro_release_calendar_pit_v1
+    callable_name: evaluate_scheduled_event_risk
+    conformance_state: SYNTHETIC_CALLABLE_CONFORMANCE_IMPLEMENTED_NOT_SOURCE_ADMITTED
+    exact_semantics_owner_frozen: true
+    synthetic_callable_conformance_implemented: true
+    producer_contract_admitted: false
+    real_source_identity_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    series_generation_allowed: false
+    remaining_blockers:
+      - REAL_OFFICIAL_EVENT_ADAPTER_AND_COVERAGE_RECEIPTS_NOT_ADMITTED
+      - REAL_PIT_DQ_CONFORMANCE_NOT_OBSERVED
+      - EXACT_1202_INVENTORY_NOT_ADMITTED
+  - veto_id: underlying_trend_break_veto
+    recommendation_id: qqq_sma200_drawdown63_confirmed_recovery_v2_exact_semantics_proposal
+    producer_id: qqq_underlying_trend_break_v1
+    callable_name: evaluate_underlying_trend_break
+    conformance_state: SYNTHETIC_CALLABLE_CONFORMANCE_IMPLEMENTED_NOT_SOURCE_ADMITTED
+    exact_semantics_owner_frozen: true
+    synthetic_callable_conformance_implemented: true
+    producer_contract_admitted: false
+    real_source_identity_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    series_generation_allowed: false
+    remaining_blockers:
+      - REAL_QQQ_SOURCE_AND_CHECKPOINT_LINEAGE_NOT_ADMITTED
+      - REAL_PIT_DQ_CONFORMANCE_NOT_OBSERVED
+      - EXACT_1202_INVENTORY_NOT_ADMITTED
+aggregate_state:
+  synthetic_callable_conformance_ready:
+    - broad_market_risk_off_veto
+    - realized_volatility_veto
+    - scheduled_event_risk_veto
+    - underlying_trend_break_veto
+  admitted_producer_contracts: []
+  admitted_real_source_identities: []
+  admitted_exact_1202_session_inventories: []
+  terminal: SYNTHETIC_CALLABLE_CONFORMANCE_READY_4_OF_4_SOURCE_UNADMITTED_0_OF_4
+  next_legal_action: REVIEW_REAL_SOURCE_ADAPTER_CONTRACT_AND_EXACT_INVENTORY_ADMISSION_PLAN
+safety:
+  non_executable_data_research_only: true
+  pure_in_memory_synthetic_inputs_only: true
+  filesystem_or_network_io_allowed_in_producers: false
+  real_source_contract_admission_allowed: false
+  exact_inventory_admission_allowed: false
+  veto_series_generation_allowed: false
+  r1_manifest_generation_allowed: false
+  cache_read_authorized: false
+  provider_query_authorized: false
+  real_dq_authorized: false
+  backtest_authorized: false
+  parameter_or_threshold_search_allowed: false
+  constant_false_fill_allowed: false
+  missing_as_clear_allowed: false
+  cross_date_fallback_allowed: false
+  orders_allowed: false
+  fills_allowed: false
+  positions_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_effect: none
+  broker_action: none

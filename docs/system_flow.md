@@ -9527,6 +9527,31 @@ dedicated SPY producer、VIX/QQQ successor adapter conformance、official-event 
 QQQ stateful producer/checkpoint replay。任何 partial row、伪造 inventory SHA、missing-as-false 或外部/
 execution flag 开启都由 strict loader fail closed。
 
+### TRADING-2542G S5 synthetic producer/adapters conformance
+
+S5 从 S4B 已发布的 exact main 开始，只实现纯内存 callable conformance。新的
+`growth_action_value_mandatory_veto_synthetic_producer_contract.v1` 重放 S4B file/canonical identity，
+把“代码能否严格执行 frozen semantics”与“真实 source 是否通过 PIT/DQ/admission”继续分开。
+
+```text
+S4B Owner-frozen exact semantics (4 / 4)
+  -> typed synthetic inputs + timezone-aware research clock
+  -> SPY full SMA200 / drawdown63 evaluator
+  -> VIX252 average-rank + QQQ RV20(ddof=1, sqrt252) evaluator
+  -> official Fed/BLS/BEA revision + coverage evaluator
+  -> QQQ UNKNOWN/CLEAR/VETO_ACTIVE checkpoint transition evaluator
+  -> synthetic callable conformance = 4 / 4
+  -> real producer/source identity admission = 0 / 4
+  -> exact 1202-session observed inventory admission = 0 / 4
+  -> series / R1 / provider / cache / real DQ / backtest = false
+  -> orders / fills / positions / production / broker = 0
+```
+
+四个 evaluator 不读取 filesystem、cache、network 或 provider。任一不完整 window、late/naive timestamp、
+official coverage 缺口或 trend unknown state 返回 `INSUFFICIENT`；错误 ticker、NaN、冲突 revision 或无效
+checkpoint 返回 `INVALID`，不得 short-circuit 或解释为 clear。下一合法动作仅为 reviewed real-source adapter
+contract 与 exact inventory admission 规划；在此之前不得生成 veto series 或 R1 manifest。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

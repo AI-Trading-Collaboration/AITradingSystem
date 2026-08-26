@@ -447,6 +447,14 @@ evidence roles：
   ordinary-push 后验证 `main=origin/main=candidate`。publication transaction v3 completed、lease released，
   临时 task branch 已删除。S5 从该新 exact base 以独立 SINGLE_LANE 开始；仍无 provider/cache/真实数据/
   series/R1/DQ/backtest，orders/fills/positions/production/broker=0。
+- 2026-08-26：S5 synthetic producer contract file/canonical SHA-256=
+  `14a8995e0bcb5cdc1a5fccb67d6389c5e72fb65ce1efdb926d1f9520e1d4d314`/
+  `c064ec2418f43184e89fdecdf1ced60c932b15e5de6b6548fa01dc6af99ac95c`；四个纯内存
+  evaluator 已实现 exact windows/operators/clock/revision/coverage/state transition，terminal=
+  `SYNTHETIC_CALLABLE_CONFORMANCE_READY_4_OF_4_SOURCE_UNADMITTED_0_OF_4`。首轮 S5+S4B adjacent=
+  `33 passed`，扩展 S5/S4B/S4A/source/Atlas adjacent=`99 passed`，Ruff、strict mypy、py_compile PASS；
+  未读取 filesystem market data、cache、network 或
+  provider，未生成 series/R1，未运行真实 DQ/backtest，orders/fills/positions/production/broker=0。
 
 - 2026-08-25：Owner 同意已解释的后续方案，并精确冻结 architecture/compatibility 上述四项 SHA；
   READ_ONLY audit 确认 main=origin/main=`1a3c3ef6eb51292de25bcf452aeacf4f0d20f012`、active

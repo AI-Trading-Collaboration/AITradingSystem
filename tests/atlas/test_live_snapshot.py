@@ -41,7 +41,7 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
-    assert bundle.research_state_as_of.startswith("2026-08-25T")
+    assert bundle.research_state_as_of.startswith("2026-08-26T")
     assert bundle.evidence_evaluated_at is None
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
@@ -108,12 +108,12 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
-        "四项 mandatory veto 的 S4A V2 operator、rolling、PIT/revision/coverage 与 "
-        "state transition 已由 Owner exact-freeze 4/4；S4B 正以独立 immutable admission "
-        "artifact 发布该决策，但 producer callable/synthetic conformance 与 exact-1202 "
-        "observed inventory 仍为 0/4，series、R1 manifest、provider/cache、真实 DQ 与 "
-        "backtest 继续关闭；下一合法动作是从 S4B 新 exact main base 启动 non-executable "
-        "synthetic producer/adapters wave"
+        "四项 mandatory veto semantics 已 Owner exact-freeze 4/4，S5 已实现 SPY、VIX/QQQ、"
+        "official-event PIT 与 QQQ trend state machine 的纯内存 synthetic callable "
+        "conformance 4/4；这不是 real producer/source admission，真实 source identity、"
+        "PIT/DQ conformance 与 exact-1202 observed inventory 仍为 0/4，series、R1 "
+        "manifest、provider/cache、真实 DQ 与 backtest 继续关闭；下一合法动作仅为 reviewed "
+        "real-source adapter contract 与 exact inventory admission 规划"
     )
 
 
