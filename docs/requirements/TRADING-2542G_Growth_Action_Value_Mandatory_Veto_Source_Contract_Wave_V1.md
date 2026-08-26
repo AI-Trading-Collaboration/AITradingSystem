@@ -5,7 +5,7 @@
 - task id：`TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1`；
 - priority：`P0`；
 - governed mode：`SINGLE_LANE` serial consumer-contract wave；
-- current status：`IN_PROGRESS_S7_REAL_SOURCE_ADAPTER_CONTRACT_FREEZE_ADMISSION`；
+- current status：`IN_PROGRESS_S8_PIT_RECEIPT_ADAPTER_IMPLEMENTATION`；
 - Owner decision：
   `owner_decision:TRADING-2542F-2542G:2026-08-25:approve_exact_architecture_freeze_and_source_contract_followup_v1`；
 - S4A Owner decision：
@@ -14,6 +14,8 @@
   `owner_decision:TRADING-2542G:S4B:2026-08-26:freeze_s4a_v2_exact_semantics_and_continue_non_executable_admission_v1`；
 - S7 Owner decision：
   `owner_decision:TRADING-2542G:S7:2026-08-26:freeze_s6_real_source_adapter_manifest_inventory_contract_v1`；
+- S8 continuation：Owner 于 2026-08-26 指示“继续”，按 S7 已冻结的
+  `separate_non_executable_adapter_implementation_followup_authorized=true` 边界启动独立 consumer wave；
 - 授权边界：只允许本地、result-blind、non-executable `DATA_RESEARCH` 合同与 synthetic
   validation；不授权 veto series、R1 manifest、provider/cache query、真实 DQ、backtest、
   orders、fills、positions、paper、live、production 或 broker action。
@@ -509,9 +511,60 @@ provider/cache/真实数据，也不生成 observed manifest、inventory、serie
 5. focused/adjacent、Ruff、strict mypy、py_compile 与适用 formal tiers PASS；发布后才允许从新 exact main
    开始 separate adapter implementation wave。
 
+### S8：pure in-memory PIT receipt-bound adapter implementation
+
+S7 已以 candidate/main/origin SHA `107c4b53b5e68d384cafafac79939c4cbdd7654a` 独立发布，满足
+“adapter implementation 只能从新的 exact main base 开始”的 serial contract fence。Owner 于
+2026-08-26 再次指示“继续”，本阶段据此实现 S7 已授权的 non-executable adapter consumer wave；该指示
+不授权 provider/network/cache/filesystem market-data IO、manifest replay、真实 source/inventory
+admission、veto series/R1、真实 DQ、backtest 或任何交易动作。
+
+本阶段把“真实来源 adapter 的数据获取”与“已获取 receipt/payload 的机械验证和规范化”分离。S8 只实现
+后者：adapter 必须以调用方显式注入的 mapping/rows 为输入，不得导入或调用现有 provider client，不得打开
+market cache 或 source file。synthetic fixture 的 checksum 只证明 parser/conformance，不得写入 S6/S7
+保留为 `null` 的 observed source、target inventory 或 checkpoint 字段。
+
+四项实现边界固定如下：
+
+1. `broad_market_risk_off_veto`：接收 frozen FMP `SPY` daily-price receipt；验证 provider/source/
+   endpoint/request params、symbol、timezone-aware `downloaded_at`/`available_at`、raw/adjusted close、
+   adjustment basis/vintage、row count、payload checksum、schema、duplicate/gap/conflict 与 session order；
+2. `realized_volatility_veto`：接收同一 frozen FMP `QQQ` receipt 与 official Cboe `VIX` receipt；Cboe
+   adapter 额外验证 official endpoint、VIX level identity、America/Chicago observation mapping、revision
+   policy、snapshot checksum 与 QQQ-session join identity；FRED 仍只可 diagnostic，不得补值；
+3. `scheduled_event_risk_veto`：接收 Federal Reserve、BLS、BEA 三个 official capture receipt；验证
+   stable event key、frozen taxonomy、revision id/action、`scheduled_for`、official `published_at`、
+   `captured_at`、`available_at`、`coverage_through`、snapshot checksum、cancel/reschedule/supersession、
+   same-published-at conflict 与 deterministic order；三 authority coverage 缺一即 fail closed；
+4. `underlying_trend_break_veto`：复用已验证的 frozen FMP `QQQ` receipt bytes，但建立独立 consumer
+   binding；只验证 adapter/input identity，不生成 trend state、checkpoint、target inventory 或 veto series。
+
+新增：
+
+- `config/research/qc_qqq_options_growth_action_value_mandatory_veto_pit_receipt_adapter_contract_v1.yaml`；
+- `src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_pit_receipt_adapter_contract.py`；
+- `src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_pit_receipt_adapters.py`；
+- `tests/test_growth_action_value_mandatory_veto_pit_receipt_adapters.py`。
+
+验收标准：
+
+1. S8 strict contract loader 递归重放 S7 loader 与 S7 exact file/canonical SHA，并校验四项 frozen
+   decision row、candidate/endpoint/receipt-field identity 不漂移；
+2. pure adapters 只接收显式 mapping/rows，完整 synthetic FMP SPY/QQQ、official Cboe VIX 与 official
+   Fed/BLS/BEA receipts 可得到 typed normalized receipt；未知字段、错误 ticker/provider/endpoint/params、
+   naive/late timestamp、checksum/row-count/schema drift、NaN、duplicate、gap/conflict 或 event coverage/
+   revision drift均 fail closed；
+3. adapter conformance 精确为 `4/4`，aggregate=
+   `SYNTHETIC_PIT_RECEIPT_ADAPTER_CONFORMANCE_READY_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4`；
+4. `adapter_implementation_admitted`、`real_source_identity_admitted`、
+   `exact_1202_session_inventory_admitted` 继续为 `0/4`，所有 observed evidence 继续为 `null`，
+   manifest replay/series/real DQ/backtest/execution flag 全部为 false；
+5. focused/adjacent、Ruff、strict mypy、py_compile、generated freshness 与 formal tiers PASS；下一合法动作
+   仍需 Project Owner 对 exact manifest replay/source/inventory admission 另行授权。
+
 ## 7. Path、contract 与 evidence claims
 
-task-owned paths：本 requirement、两份新 config、typed loader 与 focused tests。
+task-owned paths：本 requirement、逐阶段 immutable config、typed loader/pure adapter 与 focused tests。
 
 coordinator-owned paths：TRADING-2542F/2542G canonical fragments、task index/views、
 `docs/system_flow.md`、Atlas/architecture/report-flow generated authority及其 exact freshness tests。
@@ -525,8 +578,8 @@ evidence roles：
 
 ## 8. Lifecycle 与安全边界
 
-- current S7 frozen base：`36ec9fb3c9e534b2d910a46e4e216b169da9e046`；
-- current S7 branch：`codex/trading-2542g-s7-adapter-contract-freeze`；
+- current S8 frozen base：`107c4b53b5e68d384cafafac79939c4cbdd7654a`；
+- current S8 branch：`codex/trading-2542g-s8-pit-receipt-adapters`；
 - workspace：复用 `D:\Work\AITradingSystem`，不创建额外 worktree/clone/cache；
 - known-unrelated exclusion：`docs/research/growth_tilt_owner_diagnosis_pack.md` 不读、不 hash、不
   diff、不 stage、不修改；
@@ -536,6 +589,13 @@ evidence roles：
   仍以独立 Owner exact-freeze 为前提。
 
 ## 9. 进度记录
+
+- 2026-08-26：S7 candidate=`107c4b53b5e68d384cafafac79939c4cbdd7654a` 已完成 Architecture/
+  Contract/Integration/Reproducibility=`878/278/995/24 passed`，Full=`9726 passed / 3 skipped`，并
+  ordinary-push 后验证 `main=origin/main=candidate`。Owner 指示“继续”；S8 READ_ONLY 与
+  SINGLE_LANE START/LANE preflight PASS，选择纯内存 PIT receipt-bound adapter wave。S8 不访问
+  provider/network/cache/filesystem market data，不运行 manifest replay/真实 DQ/backtest，不生成
+  series/R1；orders/fills/positions/production/broker=0。
 
 - 2026-08-26：Owner 在收到 S6 精确 file/canonical SHA 与“合同冻结不等于 source/inventory admission”
   的说明后指示“继续推进”。READ_ONLY audit 与 SINGLE_LANE START/LANE preflight PASS，
