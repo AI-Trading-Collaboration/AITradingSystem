@@ -13,26 +13,27 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / review and exact-freeze the S6 adapter, manifest and
-    inventory contract; Codex may implement adapters or replay only after the resulting
-    scope permits it
+  next_owner: Codex / implement and validate the non-executable S7 exact adapter-manifest-inventory
+    contract freeze admission; real adapter implementation starts only from the resulting
+    new exact main
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Review S6 file/canonical identity d0adae89a1faf7c160cf82edc9d51ede74fa2ea279fcc2526c009752a9a5b57e/be705f1b46431e432169b186db6d336bb68d51cf296ca08ca5d6cca465ffc6e3
-    and decide whether to freeze the FMP, Cboe, official Fed/BLS/BEA capture, exact-1202
-    inventory and manifest replay contract. Source/inventory admission remains 0/4
-    and real execution remains prohibited.
+  unstructured_legacy_blocker_or_next_step: Replay and bind S6 file/canonical identity
+    d0adae89a1faf7c160cf82edc9d51ede74fa2ea279fcc2526c009752a9a5b57e/be705f1b46431e432169b186db6d336bb68d51cf296ca08ca5d6cca465ffc6e3
+    in a new immutable admission artifact. Freeze all four review rows atomically
+    while real source identity, observed exact-1202 inventory and manifest replay
+    remain unadmitted and prohibited.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Owner decision is bound to the exact S6 file/canonical identity and separately
-      states contract freeze versus future source admission; until a later exact manifest
-      replay PASS, all real_source_identity_admitted, exact_1202_session_inventory_admitted
-      and observed evidence fields remain empty; any authorized follow-up preserves
-      non-executable DATA_RESEARCH and zero orders/fills/positions/production/broker;
-      S6 focused, adjacent and governed publication validation PASS.
+    text: Strict loader replays the immutable S6 loader and exact authority identity;
+      all four veto adapter/manifest/inventory contract rows freeze atomically in
+      fixed order; partial freeze, source/inventory admission, observed evidence,
+      manifest execution or any provider/cache/real-data/DQ/backtest/execution flag
+      fails closed; aggregate is OWNER_ADAPTER_MANIFEST_CONTRACT_FROZEN_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4;
+      focused and governed validation plus generated authority freshness PASS.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -500,35 +501,72 @@ events:
   - change:trading-2542g-s6-owner-review-ready-20260826-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-467e33c822758fe817f34d1d5ba4963c
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-26T09:00:01Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s7-contract-freeze-resume-20260826-v1
+  lane_id: null
+  base_commit: 36ec9fb3c9e534b2d910a46e4e216b169da9e046
+  previous_state_event_id: task-event-467e33c822758fe817f34d1d5ba4963c
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / implement and validate the non-executable S7 exact adapter-manifest-inventory
+      contract freeze admission; real adapter implementation starts only from the
+      resulting new exact main
+    blocker_or_next_step: Replay and bind S6 file/canonical identity d0adae89a1faf7c160cf82edc9d51ede74fa2ea279fcc2526c009752a9a5b57e/be705f1b46431e432169b186db6d336bb68d51cf296ca08ca5d6cca465ffc6e3
+      in a new immutable admission artifact. Freeze all four review rows atomically
+      while real source identity, observed exact-1202 inventory and manifest replay
+      remain unadmitted and prohibited.
+    acceptance_criteria: Strict loader replays the immutable S6 loader and exact authority
+      identity; all four veto adapter/manifest/inventory contract rows freeze atomically
+      in fixed order; partial freeze, source/inventory admission, observed evidence,
+      manifest execution or any provider/cache/real-data/DQ/backtest/execution flag
+      fails closed; aggregate is OWNER_ADAPTER_MANIFEST_CONTRACT_FROZEN_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4;
+      focused and governed validation plus generated authority freshness PASS.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      Owner instruction=2026-08-26 continue, replayed against the exact S6 hashes
+      previously presented as owner_decision:TRADING-2542G:S7:2026-08-26:freeze_s6_real_source_adapter_manifest_inventory_contract_v1.
+      Scope is the smallest serial non-executable DATA_RESEARCH freeze-admission wave
+      only; real adapter implementation follows from the new exact base; no provider/cache/real
+      data/manifest replay/series/R1/DQ/backtest; orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s7-contract-freeze-resume-20260826-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-39def172b2e0f43779c63a002c7c7211
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
   - IN_PROGRESS
-  - Project Owner / review and exact-freeze the S6 adapter, manifest and inventory
-    contract; Codex may implement adapters or replay only after the resulting scope
-    permits it
-  - Review S6 file/canonical identity d0adae89a1faf7c160cf82edc9d51ede74fa2ea279fcc2526c009752a9a5b57e/be705f1b46431e432169b186db6d336bb68d51cf296ca08ca5d6cca465ffc6e3
-    and decide whether to freeze the FMP, Cboe, official Fed/BLS/BEA capture, exact-1202
-    inventory and manifest replay contract. Source/inventory admission remains 0/4
-    and real execution remains prohibited.
-  - Owner decision is bound to the exact S6 file/canonical identity and separately
-    states contract freeze versus future source admission; until a later exact manifest
-    replay PASS, all real_source_identity_admitted, exact_1202_session_inventory_admitted
-    and observed evidence fields remain empty; any authorized follow-up preserves
-    non-executable DATA_RESEARCH and zero orders/fills/positions/production/broker;
-    S6 focused, adjacent and governed publication validation PASS.
+  - Codex / implement and validate the non-executable S7 exact adapter-manifest-inventory
+    contract freeze admission; real adapter implementation starts only from the resulting
+    new exact main
+  - Replay and bind S6 file/canonical identity d0adae89a1faf7c160cf82edc9d51ede74fa2ea279fcc2526c009752a9a5b57e/be705f1b46431e432169b186db6d336bb68d51cf296ca08ca5d6cca465ffc6e3
+    in a new immutable admission artifact. Freeze all four review rows atomically
+    while real source identity, observed exact-1202 inventory and manifest replay
+    remain unadmitted and prohibited.
+  - Strict loader replays the immutable S6 loader and exact authority identity; all
+    four veto adapter/manifest/inventory contract rows freeze atomically in fixed
+    order; partial freeze, source/inventory admission, observed evidence, manifest
+    execution or any provider/cache/real-data/DQ/backtest/execution flag fails closed;
+    aggregate is OWNER_ADAPTER_MANIFEST_CONTRACT_FROZEN_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4;
+    focused and governed validation plus generated authority freshness PASS.
   - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    S6 review pack implements seven explicit source candidates, four veto decision
-    rows, exact-1202 target/warmup/state-lineage planning, 14 replay gates and a pure
-    in-memory planning receipt validator. Focused=15 passed; adjacent=125 passed;
-    Ruff/strict mypy/py_compile PASS. No provider/cache/real data/adapter execution/observed
-    inventory/manifest/series/R1/real DQ/backtest; orders/fills/positions/production/broker=0.'
+    Owner instruction=2026-08-26 continue, replayed against the exact S6 hashes previously
+    presented as owner_decision:TRADING-2542G:S7:2026-08-26:freeze_s6_real_source_adapter_manifest_inventory_contract_v1.
+    Scope is the smallest serial non-executable DATA_RESEARCH freeze-admission wave
+    only; real adapter implementation follows from the new exact base; no provider/cache/real
+    data/manifest replay/series/R1/DQ/backtest; orders/fills/positions/production/broker=0.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 7f646dc3cb6dec64882e793c91980af10e699f6e9dd399ed340ea44eed619b41
-last_event_id: task-event-467e33c822758fe817f34d1d5ba4963c
+  canonical_row_sha256: 371c1dbfaa1873c1b97338062e08d51a83cd6687f689bc170a1cc5c0e4662608
+last_event_id: task-event-39def172b2e0f43779c63a002c7c7211
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 383c6466e88c89bb6d5b63602e130f212e5b71fee1b804e552ade5afb80a1445
+fragment_checksum: ace26d77c3cc49db1d15fff84aae72e8fd18d786c0291d0bd44cab9ab223db62

@@ -5,13 +5,15 @@
 - task id：`TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1`；
 - priority：`P0`；
 - governed mode：`SINGLE_LANE` serial consumer-contract wave；
-- current status：`IN_PROGRESS_S5_SYNTHETIC_PRODUCER_CONFORMANCE`；
+- current status：`IN_PROGRESS_S7_REAL_SOURCE_ADAPTER_CONTRACT_FREEZE_ADMISSION`；
 - Owner decision：
   `owner_decision:TRADING-2542F-2542G:2026-08-25:approve_exact_architecture_freeze_and_source_contract_followup_v1`；
 - S4A Owner decision：
   `owner_decision:TRADING-2542G:S4A:2026-08-26:authorize_exact_calculation_time_state_contract_v2`；
 - S4B Owner decision：
   `owner_decision:TRADING-2542G:S4B:2026-08-26:freeze_s4a_v2_exact_semantics_and_continue_non_executable_admission_v1`；
+- S7 Owner decision：
+  `owner_decision:TRADING-2542G:S7:2026-08-26:freeze_s6_real_source_adapter_manifest_inventory_contract_v1`；
 - 授权边界：只允许本地、result-blind、non-executable `DATA_RESEARCH` 合同与 synthetic
   validation；不授权 veto series、R1 manifest、provider/cache query、真实 DQ、backtest、
   orders、fills、positions、paper、live、production 或 broker action。
@@ -463,6 +465,50 @@ receipt/inventory fields、禁止替代来源、未满足 blocker、推荐决定
    series/R1，不运行真实 DQ/backtest；
 5. focused/adjacent、Ruff、strict mypy、py_compile、generated freshness 与 formal tiers PASS。
 
+### S7：S6 adapter、manifest 与 inventory 合同 exact-freeze admission
+
+Owner 于 2026-08-26 在收到 S6 精确 file/canonical SHA 与“合同冻结不等于真实来源接纳”的边界后
+指示“继续推进”。本指示精确冻结 S6 review pack 的 adapter candidate、manifest replay gate、
+exact-1202 inventory plan 与四项 Owner decision surface；S6 原 bytes 保持 immutable：
+
+| authority | file SHA-256 | canonical SHA-256 |
+| --- | --- | --- |
+| S6 real-source adapter admission review V1 | `d0adae89a1faf7c160cf82edc9d51ede74fa2ea279fcc2526c009752a9a5b57e` | `be705f1b46431e432169b186db6d336bb68d51cf296ca08ca5d6cca465ffc6e3` |
+
+本最小 serial freeze-admission wave 只记录 immutable Owner decision，不实现或执行 adapter，不读取
+provider/cache/真实数据，也不生成 observed manifest、inventory、series、DQ 或 backtest。四项状态必须
+机械分离：
+
+- `owner_adapter_manifest_contract_frozen=4/4`：只表示 S6 的 candidate/source class/endpoint identity、
+  receipt fields、exact-1202 plan、warmup/state lineage 与 14 项 replay gate 已作为后续实现合同冻结；
+- `adapter_implementation_admitted=0/4`：既有 FMP/Cboe candidate 未绑定本合同的 PIT/DQ receipt，
+  Fed/BLS/BEA capture adapter 仍为 planned；
+- `real_source_identity_admitted=0/4`、`exact_1202_session_inventory_admitted=0/4`：所有 observed
+  target end/session SHA/source SHA/row count/coverage/checkpoint 继续为 `null`；
+- `manifest_replay_allowed=false`、`series_generation_allowed=false`、`real_dq_allowed=false`、
+  `backtest_allowed=false`；真实 DQ/backtest 仍只能在未来独立实现、exact manifest replay PASS 与
+  separate admission 后另行授权；
+- 下一合法动作只允许从本波发布后的新 exact `main` 启动 separate non-executable adapter
+  implementation，不得在本波 stale base 内混合 consumer implementation。
+
+本阶段新增：
+
+- `config/research/qc_qqq_options_growth_action_value_mandatory_veto_real_source_adapter_contract_freeze_admission_v1.yaml`；
+- `src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_real_source_adapter_contract_freeze_admission.py`；
+- `tests/test_growth_action_value_mandatory_veto_real_source_adapter_contract_freeze_admission.py`。
+
+验收标准：
+
+1. strict loader 递归重放 S6 loader，并同时校验 immutable S6 file/canonical SHA；
+2. 四项 veto decision row 按 S6 固定顺序原子冻结；缺一项、partial freeze、candidate/inventory/gate
+   surface drift 或原文件 bytes 漂移均 fail closed；
+3. aggregate 精确为
+   `OWNER_ADAPTER_MANIFEST_CONTRACT_FROZEN_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4`；
+4. negative tests 拒绝 adapter/source/inventory admission、observed evidence、manifest replay、provider/cache/
+   real-data/DQ/backtest/series/execution flag 或 threshold/formula/callable identity 漂移；
+5. focused/adjacent、Ruff、strict mypy、py_compile 与适用 formal tiers PASS；发布后才允许从新 exact main
+   开始 separate adapter implementation wave。
+
 ## 7. Path、contract 与 evidence claims
 
 task-owned paths：本 requirement、两份新 config、typed loader 与 focused tests。
@@ -479,8 +525,8 @@ evidence roles：
 
 ## 8. Lifecycle 与安全边界
 
-- current S4 frozen base：`138d1fdfa12c9ffc0f5dcf7dbfaaf3e0314254be`；
-- current S4 branch：`codex/trading-2542g-veto-owner-freeze-pack`；
+- current S7 frozen base：`36ec9fb3c9e534b2d910a46e4e216b169da9e046`；
+- current S7 branch：`codex/trading-2542g-s7-adapter-contract-freeze`；
 - workspace：复用 `D:\Work\AITradingSystem`，不创建额外 worktree/clone/cache；
 - known-unrelated exclusion：`docs/research/growth_tilt_owner_diagnosis_pack.md` 不读、不 hash、不
   diff、不 stage、不修改；
@@ -490,6 +536,13 @@ evidence roles：
   仍以独立 Owner exact-freeze 为前提。
 
 ## 9. 进度记录
+
+- 2026-08-26：Owner 在收到 S6 精确 file/canonical SHA 与“合同冻结不等于 source/inventory admission”
+  的说明后指示“继续推进”。READ_ONLY audit 与 SINGLE_LANE START/LANE preflight PASS，
+  main=origin/main=`36ec9fb3c9e534b2d910a46e4e216b169da9e046`、active lease=0。选择最小 S7 serial
+  freeze-admission wave；本波只绑定 S6 immutable identity 并冻结四项 adapter/manifest/inventory 合同，
+  source/inventory admission 继续为 0/4；不访问 provider/cache/真实数据，不执行 manifest、series、真实
+  DQ/backtest，orders/fills/positions/production/broker=0。
 
 - 2026-08-26：Owner 在收到 S4A V2 两份精确 file/canonical SHA 与“唯一阻塞为 exact-freeze”的说明后
   指示“继续吧”；按 standing owner scope replay，S4B 只接纳四项 exact semantics 为 immutable policy，
