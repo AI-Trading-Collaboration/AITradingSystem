@@ -9,7 +9,7 @@ classified_through_task_id: TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READE
 current_mainline_task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
 largest_blocker_task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
 next_legal_action_task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
-status_object_zh: 四项 mandatory veto semantics 已 Owner exact-freeze 4/4，S5 已实现 SPY、VIX/QQQ、official-event PIT 与 QQQ trend state machine 的纯内存 synthetic callable conformance 4/4；这不是 real producer/source admission，真实 source identity、PIT/DQ conformance 与 exact-1202 observed inventory 仍为 0/4，series、R1 manifest、provider/cache、真实 DQ 与 backtest 继续关闭；下一合法动作仅为 reviewed real-source adapter contract 与 exact inventory admission 规划
+status_object_zh: 四项 mandatory veto semantics 已 Owner exact-freeze 4/4，S5 synthetic callable conformance 已达 4/4；S6 已完成 FMP SPY/QQQ、official Cboe VIX、diagnostic second source、planned Fed/BLS/BEA capture、exact-1202 inventory 与 14 项 manifest replay gate 的 non-executable review pack，当前为 review-ready 4/4 但 real source identity、observed PIT/DQ inventory 与 admission 仍为 0/4；下一合法动作仅为 Owner 对 S6 exact file/canonical identity 的合同评审，不是 provider query、adapter execution、series、真实 DQ 或 backtest
 evidence_evaluated_at: null
 task_status_mapping:
   DONE: PASS

@@ -9552,6 +9552,40 @@ official coverage 缺口或 trend unknown state 返回 `INSUFFICIENT`；错误 t
 checkpoint 返回 `INVALID`，不得 short-circuit 或解释为 clear。下一合法动作仅为 reviewed real-source adapter
 contract 与 exact inventory admission 规划；在此之前不得生成 veto series 或 R1 manifest。
 
+### TRADING-2542G S6 real-source adapter/inventory admission review
+
+S6 把“真实来源如何接入”整理成可精确评审但不可执行的 typed contract。它递归重放 S5 exact
+file/canonical identity；现有 `FmpPriceProvider`、`CboeVixPriceProvider` 只登记为待 PIT receipt 绑定的
+candidate，Marketstack/FRED 只登记为 diagnostic second source，Fed/BLS/BEA event capture adapter 明确
+保持 `PLANNED_CAPTURE_ADAPTER_NOT_IMPLEMENTED`。candidate-ready 不等于 source-admitted。
+
+```text
+S5 synthetic callable conformance (4 / 4)
+  -> exact S5 file/canonical identity replay
+  -> FMP SPY/QQQ primary-price candidate
+  -> official Cboe VIX primary-index candidate
+  -> Marketstack/FRED diagnostic-only reconciliation
+  -> planned official Fed/BLS/BEA capture contracts
+  -> exact-1202 target plan (start 2021-02-22; observed end/hash/count = null)
+       + SPY SMA200 warmup >= 199 sessions
+       + QQQ RV20 warmup >= 19 sessions
+       + VIX percentile252 warmup >= 251 sessions
+       + QQQ trend warmup >= 199 sessions + continuous state/checkpoint replay
+  -> 14 fail-closed manifest replay gates
+  -> pure in-memory planning receipt validator
+  -> review ready = 4 / 4
+  -> admitted source identities / inventories / observed replays = 0 / 4 / 0
+  -> terminal = OWNER_REVIEW_READY_REAL_SOURCE_ADMISSION_NOT_GRANTED_0_OF_4
+  -> provider / cache / adapter execution / series / R1 / real DQ / backtest = false
+  -> orders / fills / positions / production / broker = 0
+```
+
+未来若 Owner 只冻结本 review contract，也只会授权独立后续 adapter implementation/manifest replay
+准备；真正 source/inventory admission 仍必须等待 exact manifest replay PASS 后另行明确接纳。缺少 endpoint/
+request params、adjustment vintage、`available_at`、three-authority coverage、QQQ exact-session equality、
+trend checkpoint lineage 或 zero-execution counters 时均 fail closed，且不得用 Yahoo、local cache、
+cross-date fill、FRED VIXCLS 或 manual calendar 静默补齐。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个
