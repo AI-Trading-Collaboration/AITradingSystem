@@ -57,12 +57,12 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-WAVE19_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_b192862209ae51b21019"
+WAVE19_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_64e7ee83696d68abb801"
 WAVE19_CURRENT_REPOSITORY_COUNTS = {
-    # TRADING-2542G S8 adds a typed contract loader, one pure receipt-adapter
-    # module, and one synthetic conformance test; no deprecation lifecycle changes.
-    "python_module_count": 1164,
-    "python_test_file_count": 1324,
+    # TRADING-2542G S9 adds one typed manifest-replay gate and one focused test;
+    # no deprecation lifecycle or direct-writer allowance changes.
+    "python_module_count": 1165,
+    "python_test_file_count": 1325,
     "direct_writer_current_count": 856,
 }
 WAVE19_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(

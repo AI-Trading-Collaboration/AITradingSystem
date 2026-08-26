@@ -681,7 +681,11 @@ evidence roles：
   SHA-256=`4516b74310e446954fcac0fd1988852e613b0a5647fb7286210d82d605304787`/
   `4833df465f3aae498ca9bbefcbd2764a21c5dab810e5dec720d37352f77abc4e`，绑定的 replay executor
   SHA-256=`139936d26522e629e90bae5d850f55a2871318b83153be9fdcff5948daccbc8f`；architecture manifest
-  由官方 generator 在 failure-fix candidate 重建。
+  由官方 generator 在 failure-fix candidate 重建。第二轮 Architecture=`877 passed / 1 failed`，仅剩
+  `arch_004g_deprecation_inventory` frozen regression 仍绑定 S8 的 `1164/1324` module/test counts；已按
+  generator 输出同步到 S9 `1165/1325` 与 inventory id
+  `arch_004g_deprecation_inventory_64e7ee83696d68abb801`，不改变任何 deprecation lifecycle 或 direct-writer
+  allowance。
   authority、exact-1202 session 与 four-veto + action-guard compatibility replay 全部 `PASS`；五个
   source capability row 均在 query 前给出 typed blocker，整体 terminal=
   `MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE`。focused + Atlas=
