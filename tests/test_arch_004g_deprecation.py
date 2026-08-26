@@ -57,12 +57,12 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-WAVE18_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_fceeb8d3808417812a3f"
+WAVE18_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_3532be1dba62747f722d"
 WAVE18_CURRENT_REPOSITORY_COUNTS = {
-    # TRADING-2542G S6 adds one typed non-executable review loader and its
-    # focused fail-closed test module; no deprecation lifecycle changes.
-    "python_module_count": 1161,
-    "python_test_file_count": 1322,
+    # TRADING-2542G S7 adds one typed non-executable freeze-admission loader
+    # and its focused fail-closed test module; no deprecation lifecycle changes.
+    "python_module_count": 1162,
+    "python_test_file_count": 1323,
     "direct_writer_current_count": 856,
 }
 WAVE18_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(

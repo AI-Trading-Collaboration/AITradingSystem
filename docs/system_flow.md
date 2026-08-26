@@ -9586,6 +9586,36 @@ request params、adjustment vintage、`available_at`、three-authority coverage�
 trend checkpoint lineage 或 zero-execution counters 时均 fail closed，且不得用 Yahoo、local cache、
 cross-date fill、FRED VIXCLS 或 manual calendar 静默补齐。
 
+### TRADING-2542G S7 adapter/manifest/inventory contract freeze admission
+
+S7 不修改 S6 review pack，而是以精确 file/canonical SHA 递归重放并记录 Owner exact-freeze。
+冻结对象包含 7 个 source candidate、4 个 review/decision row、exact-1202 target/warmup/state-lineage
+plan 与 14 项 manifest replay gate；合同冻结只决定后续 adapter 应如何实现和验收，不构成任何 observed
+source、inventory、DQ 或 series 证据。
+
+```text
+S6 review authority (file SHA d0adae89... / canonical SHA be705f1b...)
+  -> immutable authority replay
+  -> seven source candidate identities frozen
+  -> four adapter / manifest / inventory decision rows frozen atomically
+  -> exact-1202 target start / count / warmup / state-lineage contract frozen
+  -> fourteen manifest replay gates frozen
+  -> owner adapter-manifest contract frozen = 4 / 4
+  -> adapter implementation admitted = 0 / 4
+  -> real source identity admitted = 0 / 4
+  -> exact 1202-session observed inventory admitted = 0 / 4
+  -> observed manifest replay = 0
+  -> terminal = OWNER_ADAPTER_MANIFEST_CONTRACT_FROZEN_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4
+  -> provider / cache / adapter execution / manifest replay / series / R1 = false
+  -> real DQ / backtest = false
+  -> orders / fills / positions / production / broker = 0
+```
+
+下一合法动作只能从 S7 发布后的新 exact `main` 开始独立 non-executable adapter implementation，使用
+synthetic fixtures 验证 PIT receipt、event revision/coverage 与 checkpoint binding。provider query、真实
+数据读取、manifest replay、source/inventory admission、真实 DQ 与 backtest 仍需后续独立门禁和授权，不能
+由 S7 freeze receipt 自动升级。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个
