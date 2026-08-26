@@ -28,6 +28,7 @@ DEFAULT_MANDATORY_VETO_MANIFEST_REPLAY_GATE_PATH = Path(
 )
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
+_GIT_OBJECT_ID = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 _TERMINAL: Literal[
     "MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE"
 ] = "MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE"
@@ -372,8 +373,8 @@ class RepositoryReplayContext(_StrictModel):
     @field_validator("candidate_sha", "local_main_sha", "origin_main_sha")
     @classmethod
     def validate_sha(cls, value: str) -> str:
-        if not _SHA256.fullmatch(value):
-            raise ValueError("invalid lowercase Git SHA-256")
+        if not _GIT_OBJECT_ID.fullmatch(value):
+            raise ValueError("invalid lowercase Git object id")
         return value
 
     @model_validator(mode="after")

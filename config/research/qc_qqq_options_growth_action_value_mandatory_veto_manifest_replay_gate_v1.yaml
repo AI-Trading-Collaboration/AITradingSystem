@@ -42,7 +42,7 @@ exact_session_inventory:
   ordered_session_ids_lf_sha256: d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0
 replay_executor:
   path: src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_manifest_replay_gate.py
-  file_sha256: 139936d26522e629e90bae5d850f55a2871318b83153be9fdcff5948daccbc8f
+  file_sha256: a564908f1d48cb69fb9cbf343a7e3f7f52643ecd333eb9be57ee294ab8846ccf
   role: TRACKED_STATIC_MANIFEST_REPLAY_EXECUTOR
   immutable_for_report: true
 successor_compatibility_bridge:

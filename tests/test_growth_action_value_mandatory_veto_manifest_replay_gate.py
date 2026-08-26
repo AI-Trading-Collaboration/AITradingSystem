@@ -117,6 +117,64 @@ def test_repository_context_fails_closed_off_main() -> None:
         )
 
 
+@pytest.mark.parametrize("length", (40, 64))
+def test_repository_context_accepts_supported_git_object_ids(length: int) -> None:
+    context = _context("a" * length)
+
+    assert len(context.candidate_sha) == length
+
+
+@pytest.mark.parametrize(
+    "value",
+    (
+        "a" * 39,
+        "a" * 41,
+        "a" * 63,
+        "a" * 65,
+        "A" * 40,
+        "g" * 40,
+    ),
+)
+def test_repository_context_rejects_invalid_git_object_ids(value: str) -> None:
+    with pytest.raises(ValidationError, match="invalid lowercase Git object id"):
+        _context(value)
+
+
+def test_cli_emits_typed_blocked_report_for_sha1_repository(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sha = "a" * 40
+
+    def fake_git_value(*args: str, project_root: Path) -> str:
+        assert project_root == PROJECT_ROOT
+        if args == ("branch", "--show-current"):
+            return "main"
+        assert args in {
+            ("rev-parse", "HEAD"),
+            ("rev-parse", "main"),
+            ("rev-parse", "refs/remotes/origin/main"),
+        }
+        return sha
+
+    monkeypatch.setattr(replay_gate, "_git_value", fake_git_value)
+    output = tmp_path / "manifest_replay_report.json"
+
+    assert (
+        replay_gate.main(
+            ["--output", str(output), "--worktree-audit-status", "PASS"]
+        )
+        == 0
+    )
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["repository_context"]["candidate_sha"] == sha
+    assert payload["terminal"] == (
+        "MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_"
+        "SOURCE_RECEIPT_CAPABILITY_INCOMPLETE"
+    )
+    assert set(payload["actual_counters"].values()) == {0}
+
+
 def test_policy_rejects_query_permission_drift() -> None:
     policy = replay_gate.load_mandatory_veto_manifest_replay_gate().policy
     payload = copy.deepcopy(policy.model_dump(mode="json"))

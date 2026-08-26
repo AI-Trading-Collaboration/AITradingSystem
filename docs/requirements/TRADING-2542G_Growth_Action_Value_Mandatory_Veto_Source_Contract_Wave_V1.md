@@ -682,6 +682,11 @@ evidence roles：
   lowercase 40/64 位 Git object id、拒绝其他长度/字符，补真实 CLI 40 位回归测试；完成前保持
   provider/network/cache/market-file、source admission、series、真实 DQ/backtest 与
   orders/fills/positions/production/broker 全部为 `0`，且不改变五项 PIT source blocker 或 Owner blocker。
+  修复后 policy file/canonical SHA-256=`54458cc019fd0bdfa67d4a4d2f6836777afdd86b3709932ee70a68cb0fd89364`/
+  `7bfed1414ce85b777acdc807f0e425d1752dd7331de347b84e08b154b03aed10`，executor SHA-256=
+  `a564908f1d48cb69fb9cbf343a7e3f7f52643ecd333eb9be57ee294ab8846ccf`；focused=`22 passed`，
+  full mandatory-veto adjacent=`233 passed`，Ruff、strict mypy、py_compile PASS。真实 main CLI 只允许在
+  final candidate 发布并满足 `HEAD=main=origin/main` 后重放。
 
 - 2026-08-26：S9 strict gate 已实现并完成本地 focused/adjacent validation。policy file/canonical
   初版 policy file/canonical SHA-256=`46fca457b25b40b409568cb75e080e51104c79963e6097683c53747a8a9038c8`/
