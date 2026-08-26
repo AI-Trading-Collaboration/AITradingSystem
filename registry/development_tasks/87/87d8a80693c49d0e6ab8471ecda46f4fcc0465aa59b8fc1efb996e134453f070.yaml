@@ -13,28 +13,25 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / separately authorize exact manifest replay and real
-    source/inventory admission scope; real DQ and backtest remain gated on replay
-    PASS
+  next_owner: Codex / implement, validate and publish the S9 exact manifest replay
+    capability gate; Project Owner retains real DQ/backtest authorization
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S8 pure injected PIT receipt adapters
-    and synthetic conformance are complete 4/4, but no provider/network/cache/market-file
-    IO or real payload has run. Exact manifest replay, source identity admission and
-    exact-1202 observed inventory still require a separate Owner scope; stop before
-    real data, series, DQ or backtest.
+  unstructured_legacy_blocker_or_next_step: Build a successor bridge from immutable
+    execution V2 to the four mandatory market-state vetoes plus independent no-leverage
+    action guard, then auto-replay exact code/session/source capability identities.
+    Stop before every provider/cache/market-file query if historical available_at,
+    event revision vintage or endpoint authority is not mechanically proven.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: S8 strict loader replays S7 exact file/canonical identity; FMP SPY/QQQ,
-      official Cboe VIX and official Fed/BLS/BEA injected receipts validate frozen
-      endpoint/request/ticker/checksum/PIT/session/revision/coverage surfaces; aggregate
-      is SYNTHETIC_PIT_RECEIPT_ADAPTER_CONFORMANCE_READY_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4;
-      adapter/source/inventory admission and observed manifest remain 0/4/null; all
-      real-data/series/DQ/backtest/execution flags stay closed; generated freshness
-      and governed publication validation PASS.
+    text: S9 strict loader replays execution V2, architecture V1, S8 and exact 1202-session
+      identities; authorization and technical state remain separate; current capability
+      gaps yield MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE
+      with all provider/network/cache/file/DQ/backtest/series/execution counters zero;
+      focused and governed publication validation plus Atlas freshness PASS.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -649,33 +646,64 @@ events:
   - change:trading-2542g-s8-synthetic-adapters-ready-20260826-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-bc0946f4dd6d0a241fcd0ffe7753f1b6
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-26T13:47:19Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s9-task-resume-20260826-v1
+  lane_id: null
+  base_commit: e6263679356f7a196cd85ee562ebe355f3e7a9c3
+  previous_state_event_id: task-event-bc0946f4dd6d0a241fcd0ffe7753f1b6
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / implement, validate and publish the S9 exact manifest replay
+      capability gate; Project Owner retains real DQ/backtest authorization
+    blocker_or_next_step: Build a successor bridge from immutable execution V2 to
+      the four mandatory market-state vetoes plus independent no-leverage action guard,
+      then auto-replay exact code/session/source capability identities. Stop before
+      every provider/cache/market-file query if historical available_at, event revision
+      vintage or endpoint authority is not mechanically proven.
+    acceptance_criteria: S9 strict loader replays execution V2, architecture V1, S8
+      and exact 1202-session identities; authorization and technical state remain
+      separate; current capability gaps yield MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE
+      with all provider/network/cache/file/DQ/backtest/series/execution counters zero;
+      focused and governed publication validation plus Atlas freshness PASS.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      Owner instruction=2026-08-26 好的，你继续; normalized decision=owner_decision:TRADING-2542G:S9:2026-08-26:authorize_manifest_replay_source_admission_continue_v1;
+      governed mode=SINGLE_LANE serial successor gate; production_effect=none; broker_action=none.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s9-task-resume-20260826-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a2379cf912552d38041c3683b109390e
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner / separately authorize exact manifest replay and real source/inventory
-    admission scope; real DQ and backtest remain gated on replay PASS
-  - S8 pure injected PIT receipt adapters and synthetic conformance are complete 4/4,
-    but no provider/network/cache/market-file IO or real payload has run. Exact manifest
-    replay, source identity admission and exact-1202 observed inventory still require
-    a separate Owner scope; stop before real data, series, DQ or backtest.
-  - S8 strict loader replays S7 exact file/canonical identity; FMP SPY/QQQ, official
-    Cboe VIX and official Fed/BLS/BEA injected receipts validate frozen endpoint/request/ticker/checksum/PIT/session/revision/coverage
-    surfaces; aggregate is SYNTHETIC_PIT_RECEIPT_ADAPTER_CONFORMANCE_READY_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4;
-    adapter/source/inventory admission and observed manifest remain 0/4/null; all
-    real-data/series/DQ/backtest/execution flags stay closed; generated freshness
-    and governed publication validation PASS.
+  - IN_PROGRESS
+  - Codex / implement, validate and publish the S9 exact manifest replay capability
+    gate; Project Owner retains real DQ/backtest authorization
+  - Build a successor bridge from immutable execution V2 to the four mandatory market-state
+    vetoes plus independent no-leverage action guard, then auto-replay exact code/session/source
+    capability identities. Stop before every provider/cache/market-file query if historical
+    available_at, event revision vintage or endpoint authority is not mechanically
+    proven.
+  - S9 strict loader replays execution V2, architecture V1, S8 and exact 1202-session
+    identities; authorization and technical state remain separate; current capability
+    gaps yield MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE
+    with all provider/network/cache/file/DQ/backtest/series/execution counters zero;
+    focused and governed publication validation plus Atlas freshness PASS.
   - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    S8 contract file/canonical SHA=00cda4f20b10729a085967085b000497344c540dc87d4ed9b7cd8f5a360672e9/1eddecaa2a7809c98cbdd7d2418826ec99a470861b064116b2d4cf828403efe7;
-    focused=17 passed; full veto authority adjacent=173 passed; Ruff/strict mypy/py_compile
-    PASS. No provider/network/cache/filesystem market-data IO, real payload, observed
-    inventory/manifest, series/R1, real DQ/backtest; orders/fills/positions/production/broker=0.'
+    Owner instruction=2026-08-26 好的，你继续; normalized decision=owner_decision:TRADING-2542G:S9:2026-08-26:authorize_manifest_replay_source_admission_continue_v1;
+    governed mode=SINGLE_LANE serial successor gate; production_effect=none; broker_action=none.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 02f6dd44dde9122b7d44318248ac21170db1409f25e7d5fc246245a087186a04
-last_event_id: task-event-bc0946f4dd6d0a241fcd0ffe7753f1b6
+  canonical_row_sha256: 9fcbe8a4b212e621150b5f093a86d3951bdf51ebf1cfb852cbe753e29e609433
+last_event_id: task-event-a2379cf912552d38041c3683b109390e
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 8d2ff2c17999b129a0bccdf2ab92f261532b784304bc99862b5df8609a84b62d
+fragment_checksum: 00ab31e48ff1689de06fdc18f2de2f7d3f31c60623f96b00f9599567470f8e40
