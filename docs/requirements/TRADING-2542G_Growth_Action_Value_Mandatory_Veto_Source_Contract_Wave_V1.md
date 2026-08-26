@@ -543,6 +543,14 @@ evidence roles：
   freeze-admission wave；本波只绑定 S6 immutable identity 并冻结四项 adapter/manifest/inventory 合同，
   source/inventory admission 继续为 0/4；不访问 provider/cache/真实数据，不执行 manifest、series、真实
   DQ/backtest，orders/fills/positions/production/broker=0。
+- 2026-08-26：S7 freeze-admission file/canonical SHA-256=
+  `d4e431350c0220934d48482e1cfd02287b06f291f8903f58901d75735d8b1636`/
+  `3344d14fd7b94b6951a8f676e77674c50b1dbe38820f83b6c45f96d4727a8405`；strict loader 递归重放 S6
+  exact identity、7 个 candidate、4 个 review/decision row、exact-1202 warmup/state surface 与 14 项
+  manifest gate，aggregate=
+  `OWNER_ADAPTER_MANIFEST_CONTRACT_FROZEN_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4`。S7+S6 focused=
+  `46 passed`，Ruff、strict mypy、py_compile PASS；adapter implementation、provider/cache/真实数据、
+  observed inventory/manifest、series/R1、真实 DQ/backtest 与交易动作仍全部关闭。
 
 - 2026-08-26：Owner 在收到 S4A V2 两份精确 file/canonical SHA 与“唯一阻塞为 exact-freeze”的说明后
   指示“继续吧”；按 standing owner scope replay，S4B 只接纳四项 exact semantics 为 immutable policy，
