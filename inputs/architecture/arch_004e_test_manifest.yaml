@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1320
-test_count: 1260
+test_file_count: 1321
+test_count: 1261
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_live_snapshot
   path: tests/atlas/test_live_snapshot.py
-  sha256: 34eab27412a1f594ea93f55431bbaf1f335b97a5d3dfc8f60c34bf1c3f3932ff
+  sha256: 5bb75511303a97e675a695192b759b9210ce54b060ab6208bc9744c833e521f6
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8470,7 +8470,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 608522dfa6de6bea06d0522ff54b44af5c6b082da60dcb3b0c24de2bbdf8c9bc
+  sha256: af867850731538418672d9d712b8e9d63d48742b182a12eee60ab5d686e1d8c5
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -10410,7 +10410,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: f821cd0fc5712856f27f500a714ae0c73ffc5ce8350dcd029540732786003e80
+  sha256: ad82cddb1e62823e658d953e8075e461a532d966a8436cecb7e4b99a96281ebe
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -12641,6 +12641,22 @@ tests:
 - test_id: tests.test_growth_action_value_mandatory_veto_source_contract
   path: tests/test_growth_action_value_mandatory_veto_source_contract.py
   sha256: 7011d89fea57c8a76513226afd09e1cd49f005eeb98f20b7f963af1f16d99907
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_growth_action_value_mandatory_veto_synthetic_producers
+  path: tests/test_growth_action_value_mandatory_veto_synthetic_producers.py
+  sha256: 629c8ddd335de9b00245ba7f6e1b8bd2cd4fff0e89377c75b20b2cc6fd8c6bb5
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
