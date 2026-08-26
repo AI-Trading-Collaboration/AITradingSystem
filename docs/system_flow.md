@@ -9656,6 +9656,36 @@ synthetic fixture checksum 与 checkpoint hash 只证明 parser/conformance，�
 或 manifest evidence。下一合法动作要求 Project Owner 另行授权 exact manifest replay 和 source/inventory
 admission；真实 DQ/backtest 仍只能在 replay PASS 后按独立门禁推进。
 
+### TRADING-2542G S9 exact manifest replay capability gate
+
+S9 在 Owner standing scope 下只执行 tracked authority、successor compatibility 与 exact-session inventory
+的静态 manifest replay；授权状态与技术有效性分轴记录。旧 execution V2 继续 immutable，successor bridge
+只把历史 `tqqq_veto` 从 market-state conjunction 移到
+`NO_LEVERAGE_ETF_ACTION_GUARD`，四项 mandatory market-state veto 的语义和顺序不变。
+
+```text
+execution V2 + successor architecture V1 + S8 receipt contract + exact 1202 sessions
+  -> exact file / canonical / ordered-session identity replay = PASS
+  -> legacy four market fields => successor four mandatory veto ids = PASS
+  -> historical tqqq_veto => NO_LEVERAGE_ETF_ACTION_GUARD = PASS
+  -> pre-query source receipt capability gate
+       -> FMP SPY / QQQ historical per-row available_at + adjustment vintage = UNPROVEN
+       -> Cboe VIX historical publication / availability vintage = UNPROVEN
+       -> Federal Reserve FOMC schedule revision publication ledger = UNAVAILABLE
+       -> BLS CPI / NFP schedule revision publication ledger = UNAVAILABLE
+       -> frozen BEA data API endpoint is not schedule revision authority
+  -> authority / session / compatibility replay = PASS / PASS / PASS
+  -> source capability replay = BLOCKED
+  -> terminal = MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE
+  -> provider / network / cache / market-file / real payload reads = 0
+  -> source admission / veto series / real DQ / backtest = 0
+  -> orders / fills / positions / production / broker = 0
+```
+
+该 terminal 不是 authorization failure，也不是把当前网页或下载时间回填成历史 `available_at` 的许可。
+只有 versioned PIT archive 或经 review 的 source receipt authority 能证明上述历史字段后，才可生成新的
+manifest gate 版本并重新 replay；本版本不得查询 provider，更不得继续到 DQ、series 或 backtest。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

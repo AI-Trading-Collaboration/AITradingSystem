@@ -5,7 +5,7 @@
 - task id：`TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1`；
 - priority：`P0`；
 - governed mode：`SINGLE_LANE` serial consumer-contract wave；
-- current status：`IN_PROGRESS_S9_MANIFEST_REPLAY_CAPABILITY_GATE`；
+- current status：`BLOCKED_S9_HISTORICAL_PIT_RECEIPT_AUTHORITY`；
 - Owner decision：
   `owner_decision:TRADING-2542F-2542G:2026-08-25:approve_exact_architecture_freeze_and_source_contract_followup_v1`；
 - S4A Owner decision：
@@ -672,6 +672,19 @@ evidence roles：
   仍以独立 Owner exact-freeze 为前提。
 
 ## 9. 进度记录
+
+- 2026-08-26：S9 strict gate 已实现并完成本地 focused/adjacent validation。policy file/canonical
+  SHA-256=`46fca457b25b40b409568cb75e080e51104c79963e6097683c53747a8a9038c8`/
+  `f5cee930aaa9817088895e6fc8ef1bd65ce2f4418b8da8c0ebecd184993b25f6`，绑定的 replay executor
+  SHA-256=`fbc4d2ec92972d17c508b8ade178d5d4cb879aafec71daf9853aefe08a78e99f`。
+  authority、exact-1202 session 与 four-veto + action-guard compatibility replay 全部 `PASS`；五个
+  source capability row 均在 query 前给出 typed blocker，整体 terminal=
+  `MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE`。focused + Atlas=
+  `19 passed`，完整 mandatory-veto adjacent=`224 passed`，Ruff/strict mypy PASS。task 状态转为
+  `BLOCKED_OWNER_INPUT`，但阻塞内容是需要可评审的 versioned historical PIT receipt authority 或
+  source-contract correction，不是再次授权 replay。provider/network/cache/market-file、source admission、
+  series、真实 DQ/backtest 与 orders/fills/positions/production/broker 全为 `0`；formal publication validation
+  绑定最终 candidate 运行。
 
 - 2026-08-26：S8 candidate=`cfb3c8559cbbc38aecf0b0a291456bc3411f9162` 已完成 Architecture/
   Contract/Integration/Reproducibility=`878/278/995/24 passed`，Full=`9743 passed / 3 skipped`，并

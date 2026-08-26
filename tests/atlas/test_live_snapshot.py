@@ -81,8 +81,7 @@ def test_live_snapshot_is_not_the_old_fixture_only_title_and_summary_mutation() 
     assert live.current_snapshot.snapshot_id != synthetic.snapshot_id
     assert len(live.current_snapshot.nodes) > len(synthetic.nodes)
     assert any(
-        item.source_ref_id.startswith("live-task-event-")
-        for item in live.current_snapshot.sources
+        item.source_ref_id.startswith("live-task-event-") for item in live.current_snapshot.sources
     )
 
 
@@ -109,14 +108,15 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
         "四项 mandatory veto semantics 已 Owner exact-freeze 4/4，S5 synthetic callable "
-        "conformance 已达 4/4；S7 已 exact-freeze S6 的 adapter/manifest/exact-1202 "
-        "合同；S8 已实现 caller-injected、无 network/cache/filesystem market-data IO "
-        "的 FMP SPY/QQQ、official Cboe VIX 与 official Fed/BLS/BEA PIT receipt "
-        "adapters，synthetic adapter conformance=4/4，但 adapter implementation "
-        "admission、real source identity、observed PIT/DQ inventory、manifest replay "
-        "与 admission 仍为 0/4；下一合法动作仅为 Project Owner 另行授权 exact manifest "
-        "replay 与 source/inventory admission，真实 DQ/backtest 仍须 replay PASS，"
-        "不是自动运行 provider、series 或交易"
+        "与 S8 pure PIT receipt adapter conformance 均为 4/4；S9 已在 standing owner "
+        "scope 下精确重放 execution V2、successor architecture V1、S8 contract 与 exact "
+        "1202-session inventory，authority/session/four-veto+action-guard compatibility "
+        "均 PASS；但 FMP/Cboe 缺少可证明的历史 available-at/publication vintage，Fed/BLS "
+        "缺 schedule revision ledger，S8 冻结的 BEA data API 也不是 schedule revision "
+        "authority，因此 manifest replay 在 provider query 前 typed BLOCKED，真实读取、"
+        "source admission、series、DQ、backtest 与 orders/fills/positions/production/broker "
+        "全为 0；下一合法动作是提供或评审可重放的 historical PIT receipt authority 后"
+        "生成新版 gate，不再重复要求 replay 授权"
     )
 
 
