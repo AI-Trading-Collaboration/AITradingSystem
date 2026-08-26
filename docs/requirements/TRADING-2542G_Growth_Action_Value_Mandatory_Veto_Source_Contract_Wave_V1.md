@@ -518,6 +518,14 @@ evidence roles：
   `33 passed`，扩展 S5/S4B/S4A/source/Atlas adjacent=`99 passed`，Ruff、strict mypy、py_compile PASS；
   未读取 filesystem market data、cache、network 或
   provider，未生成 series/R1，未运行真实 DQ/backtest，orders/fills/positions/production/broker=0。
+- 2026-08-26：Owner 指示 Codex 先独立准备后续内容；S6 real-source admission review
+  file/canonical SHA-256=`d0adae89a1faf7c160cf82edc9d51ede74fa2ea279fcc2526c009752a9a5b57e`/
+  `be705f1b46431e432169b186db6d336bb68d51cf296ca08ca5d6cca465ffc6e3`。评审包固定 FMP
+  SPY/QQQ、official Cboe VIX、Marketstack/FRED diagnostic-only 以及 planned Fed/BLS/BEA official capture
+  contracts，定义 exact-1202 target/warmup/state lineage、14 项 manifest replay gate 和 Owner 决策矩阵；
+  terminal=`OWNER_REVIEW_READY_REAL_SOURCE_ADMISSION_NOT_GRANTED_0_OF_4`。focused=`15 passed`，S6+S5+
+  prior authority adjacent=`125 passed`，Ruff、strict mypy、py_compile PASS；没有 provider query、cache/
+  真实数据读取、adapter execution、observed inventory/manifest、series/R1、真实 DQ/backtest 或交易动作。
 
 - 2026-08-25：Owner 同意已解释的后续方案，并精确冻结 architecture/compatibility 上述四项 SHA；
   READ_ONLY audit 确认 main=origin/main=`1a3c3ef6eb51292de25bcf452aeacf4f0d20f012`、active

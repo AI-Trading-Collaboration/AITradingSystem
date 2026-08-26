@@ -1,0 +1,255 @@
+schema_version: growth_action_value_mandatory_veto_real_source_adapter_admission_review.v1
+policy_id: qc_qqq_options_growth_action_value_mandatory_veto_real_source_adapter_admission_review_v1
+policy_version: 1.0.0-draft.1
+status: OWNER_REVIEW_READY_REAL_SOURCE_ADMISSION_NOT_GRANTED_0_OF_4
+task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+synthetic_producer_binding:
+  path: config/research/qc_qqq_options_growth_action_value_mandatory_veto_synthetic_producer_contract_v1.yaml
+  file_sha256: 14a8995e0bcb5cdc1a5fccb67d6389c5e72fb65ce1efdb926d1f9520e1d4d314
+  canonical_sha256: c064ec2418f43184e89fdecdf1ced60c932b15e5de6b6548fa01dc6af99ac95c
+  immutable: true
+authorization_scope:
+  instruction_ref: owner_instruction:TRADING-2542G:S6:2026-08-26:prepare_non_executable_real_source_review_pack_v1
+  review_contract_preparation_authorized: true
+  in_memory_planning_receipt_validation_authorized: true
+  provider_query_authorized: false
+  cache_or_real_data_read_authorized: false
+  adapter_execution_authorized: false
+  source_or_inventory_admission_authorized: false
+  manifest_replay_or_series_authorized: false
+  real_dq_or_backtest_authorized: false
+  authorization_state: STANDING_OWNER_SCOPE
+source_candidates:
+  - candidate_id: fmp_spy_qqq_eod_adjusted_v1
+    provider: Financial Modeling Prep
+    source_id: fmp_eod_daily_prices
+    source_class: PAID_VENDOR_PRIMARY_CANDIDATE
+    adapter_id: FmpPriceProvider
+    implementation_state: EXISTING_ADAPTER_REQUIRES_PIT_RECEIPT_BINDING
+    endpoint: "https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted; https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted"
+    request_scope: [SPY, QQQ, daily, raw_close, dividend_adjusted_close]
+    timestamp_timezone: America/New_York
+    official_source: false
+    permitted_role: PRIMARY_PRICE_CANDIDATE
+    live_probe_performed: false
+    admitted: false
+  - candidate_id: marketstack_spy_qqq_second_source_v1
+    provider: Marketstack
+    source_id: marketstack_eod_daily_prices
+    source_class: PAID_VENDOR_SECOND_SOURCE_ONLY
+    adapter_id: MarketstackPriceProvider
+    implementation_state: EXISTING_ADAPTER_DIAGNOSTIC_ONLY
+    endpoint: https://api.marketstack.com/v2/eod
+    request_scope: [SPY, QQQ, daily, raw_close, adjusted_close_crosscheck]
+    timestamp_timezone: UTC
+    official_source: false
+    permitted_role: SECOND_SOURCE_RECONCILIATION_ONLY
+    live_probe_performed: false
+    admitted: false
+  - candidate_id: cboe_vix_index_daily_v1
+    provider: Cboe Global Markets
+    source_id: cboe_vix_daily_prices
+    source_class: OFFICIAL_PRIMARY_CANDIDATE
+    adapter_id: CboeVixPriceProvider
+    implementation_state: EXISTING_ADAPTER_REQUIRES_PIT_RECEIPT_BINDING
+    endpoint: https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv
+    request_scope: [VIX, daily, index_level_ohlc, close_equals_adjusted_close]
+    timestamp_timezone: America/Chicago
+    official_source: true
+    permitted_role: PRIMARY_VIX_INDEX_CANDIDATE
+    live_probe_performed: false
+    admitted: false
+  - candidate_id: fred_vixcls_diagnostic_crosscheck_v1
+    provider: Federal Reserve Economic Data
+    source_id: fred_market_series
+    source_class: PUBLIC_DIAGNOSTIC_SECOND_SOURCE_ONLY
+    adapter_id: FredRateProvider
+    implementation_state: EXISTING_ADAPTER_DIAGNOSTIC_ONLY
+    endpoint: https://fred.stlouisfed.org/graph/fredgraph.csv
+    request_scope: [VIXCLS, daily, diagnostic_crosscheck]
+    timestamp_timezone: America/New_York
+    official_source: true
+    permitted_role: DIAGNOSTIC_CROSSCHECK_ONLY
+    live_probe_performed: false
+    admitted: false
+  - candidate_id: federal_reserve_fomc_schedule_capture_v1
+    provider: Federal Reserve Board
+    source_id: federal_reserve_fomc_calendar
+    source_class: OFFICIAL_EVENT_CAPTURE_CANDIDATE
+    adapter_id: FederalReserveFomcScheduleAdapterPlanned
+    implementation_state: PLANNED_CAPTURE_ADAPTER_NOT_IMPLEMENTED
+    endpoint: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
+    request_scope: [FOMC_RATE_DECISION]
+    timestamp_timezone: America/New_York
+    official_source: true
+    permitted_role: OFFICIAL_EVENT_COVERAGE_CANDIDATE
+    live_probe_performed: false
+    admitted: false
+  - candidate_id: bls_release_schedule_capture_v1
+    provider: Bureau of Labor Statistics
+    source_id: bls_release_calendar
+    source_class: OFFICIAL_EVENT_CAPTURE_CANDIDATE
+    adapter_id: BlsReleaseScheduleAdapterPlanned
+    implementation_state: PLANNED_CAPTURE_ADAPTER_NOT_IMPLEMENTED
+    endpoint: https://www.bls.gov/schedule/news_release/
+    request_scope: [CPI, NONFARM_PAYROLLS]
+    timestamp_timezone: America/New_York
+    official_source: true
+    permitted_role: OFFICIAL_EVENT_COVERAGE_CANDIDATE
+    live_probe_performed: false
+    admitted: false
+  - candidate_id: bea_release_schedule_capture_v1
+    provider: Bureau of Economic Analysis
+    source_id: bea_release_metadata
+    source_class: OFFICIAL_EVENT_CAPTURE_CANDIDATE
+    adapter_id: BeaReleaseScheduleAdapterPlanned
+    implementation_state: PLANNED_CAPTURE_ADAPTER_NOT_IMPLEMENTED
+    endpoint: https://apps.bea.gov/api/data
+    request_scope: [PCE, GDP_ADVANCE]
+    timestamp_timezone: America/New_York
+    official_source: true
+    permitted_role: OFFICIAL_EVENT_COVERAGE_CANDIDATE
+    live_probe_performed: false
+    admitted: false
+review_rows:
+  - veto_id: broad_market_risk_off_veto
+    producer_id: qqq_options_growth_action_value_broad_market_risk_off_v1
+    callable_name: evaluate_broad_market_risk_off
+    primary_candidate_ids: [fmp_spy_qqq_eod_adjusted_v1]
+    diagnostic_candidate_ids: [marketstack_spy_qqq_second_source_v1]
+    consumer_bindings: [SPY_RAW_CLOSE, SPY_DIVIDEND_ADJUSTED_CLOSE, QQQ_EXCHANGE_SESSION]
+    required_receipt_fields: [provider, source_id, endpoint, request_parameters, ticker, provider_symbol_alias, adjustment_basis, adjustment_vintage, available_at, downloaded_at, row_count, checksum, schema_version]
+    forbidden_substitutes: [YAHOO_PRIMARY_OR_FALLBACK, MARKETSTACK_PRIMARY_OVERRIDE, LOCAL_CACHE_GAP_FILL]
+    candidate_ready_for_review: true
+    recommended_current_decision: FREEZE_REVIEW_CONTRACT_ONLY
+    future_admission_condition: EXACT_MANIFEST_REPLAY_PASS_AND_NEW_OWNER_ADMISSION
+    real_source_identity_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    remaining_blockers: [FMP_ADJUSTMENT_VINTAGE_UNBOUND, SPY_PIT_AVAILABILITY_UNOBSERVED, EXACT_1202_INVENTORY_UNOBSERVED]
+  - veto_id: realized_volatility_veto
+    producer_id: volatility_compression_free_v1_successor_adapter
+    callable_name: evaluate_realized_volatility_veto
+    primary_candidate_ids: [fmp_spy_qqq_eod_adjusted_v1, cboe_vix_index_daily_v1]
+    diagnostic_candidate_ids: [marketstack_spy_qqq_second_source_v1, fred_vixcls_diagnostic_crosscheck_v1]
+    consumer_bindings: [QQQ_DIVIDEND_ADJUSTED_CLOSE, VIX_OFFICIAL_INDEX_CLOSE, QQQ_EXCHANGE_SESSION]
+    required_receipt_fields: [provider, source_id, endpoint, request_parameters, ticker, adjustment_basis, session_timezone, available_at, downloaded_at, row_count, checksum, schema_version]
+    forbidden_substitutes: [FRED_VIXCLS_FILL_OR_OVERRIDE, YAHOO_PRIMARY_OR_FALLBACK, CROSS_DATE_VIX_FILL, LOCAL_CACHE_GAP_FILL]
+    candidate_ready_for_review: true
+    recommended_current_decision: FREEZE_REVIEW_CONTRACT_ONLY
+    future_admission_condition: EXACT_MANIFEST_REPLAY_PASS_AND_NEW_OWNER_ADMISSION
+    real_source_identity_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    remaining_blockers: [QQQ_ADJUSTMENT_VINTAGE_UNBOUND, CBOE_VIX_AVAILABLE_AT_UNOBSERVED, VIX_QQQ_SESSION_JOIN_UNOBSERVED, EXACT_1202_INVENTORY_UNOBSERVED]
+  - veto_id: scheduled_event_risk_veto
+    producer_id: official_macro_release_calendar_pit_v1
+    callable_name: evaluate_scheduled_event_risk
+    primary_candidate_ids: [federal_reserve_fomc_schedule_capture_v1, bls_release_schedule_capture_v1, bea_release_schedule_capture_v1]
+    diagnostic_candidate_ids: []
+    consumer_bindings: [FOMC_RATE_DECISION, CPI, NONFARM_PAYROLLS, PCE, GDP_ADVANCE, QQQ_NEXT_ACTION_SESSION]
+    required_receipt_fields: [authority, source_id, endpoint, request_parameters, stable_event_key, event_type, revision_id, revision_action, scheduled_for, source_published_at, captured_at, available_at, coverage_through, row_count, checksum, schema_version]
+    forbidden_substitutes: [FRED_RELEASE_CALENDAR_MODEL_READY, MANUAL_CALENDAR_WITHOUT_PUBLISHED_AT, MISSING_AUTHORITY_AS_CLEAR, CROSS_DATE_EVENT_FILL]
+    candidate_ready_for_review: true
+    recommended_current_decision: FREEZE_REVIEW_CONTRACT_ONLY
+    future_admission_condition: THREE_AUTHORITY_MANIFEST_REPLAY_PASS_AND_NEW_OWNER_ADMISSION
+    real_source_identity_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    remaining_blockers: [THREE_CAPTURE_ADAPTERS_NOT_IMPLEMENTED, OFFICIAL_PUBLISHED_AT_POLICY_UNOBSERVED, THREE_AUTHORITY_COVERAGE_UNOBSERVED, EXACT_1202_INVENTORY_UNOBSERVED]
+  - veto_id: underlying_trend_break_veto
+    producer_id: qqq_underlying_trend_break_v1
+    callable_name: evaluate_underlying_trend_break
+    primary_candidate_ids: [fmp_spy_qqq_eod_adjusted_v1]
+    diagnostic_candidate_ids: [marketstack_spy_qqq_second_source_v1]
+    consumer_bindings: [QQQ_RAW_CLOSE, QQQ_DIVIDEND_ADJUSTED_CLOSE, QQQ_EXCHANGE_SESSION, TREND_STATE_CHECKPOINT]
+    required_receipt_fields: [provider, source_id, endpoint, request_parameters, ticker, provider_symbol_alias, adjustment_basis, adjustment_vintage, available_at, downloaded_at, row_count, checksum, schema_version, replay_start, initial_checkpoint_sha256, target_start_checkpoint_sha256, state_transition_lineage_sha256]
+    forbidden_substitutes: [YAHOO_PRIMARY_OR_FALLBACK, MARKETSTACK_PRIMARY_OVERRIDE, STATE_RESET_AT_TARGET_START, LOCAL_CACHE_GAP_FILL]
+    candidate_ready_for_review: true
+    recommended_current_decision: FREEZE_REVIEW_CONTRACT_ONLY
+    future_admission_condition: EXACT_MANIFEST_AND_CHECKPOINT_REPLAY_PASS_AND_NEW_OWNER_ADMISSION
+    real_source_identity_admitted: false
+    exact_1202_session_inventory_admitted: false
+    observed_inventory_lf_sha256: null
+    remaining_blockers: [QQQ_ADJUSTMENT_VINTAGE_UNBOUND, PRE_TARGET_STATE_LINEAGE_UNOBSERVED, TARGET_START_CHECKPOINT_UNOBSERVED, EXACT_1202_INVENTORY_UNOBSERVED]
+exact_inventory_plan:
+  calendar_authority_id: qqq_exact_1202_session_sheet_v4
+  calendar_policy_state: POLICY_FROZEN_OBSERVED_IDENTITY_UNBOUND
+  target_start: "2021-02-22"
+  target_session_count: 1202
+  target_end: null
+  target_session_list_lf_sha256: null
+  observed_target_session_count: null
+  warmup_separate_from_target: true
+  warmup_rows:
+    - consumer_id: broad_market_risk_off_veto_SPY
+      minimum_pre_target_sessions: 199
+      continuous_state_replay_required: false
+    - consumer_id: realized_volatility_veto_QQQ_RV20
+      minimum_pre_target_sessions: 19
+      continuous_state_replay_required: false
+    - consumer_id: realized_volatility_veto_VIX_PERCENTILE252
+      minimum_pre_target_sessions: 251
+      continuous_state_replay_required: false
+    - consumer_id: underlying_trend_break_veto_QQQ
+      minimum_pre_target_sessions: 199
+      continuous_state_replay_required: true
+  observed_source_snapshot_sha256: null
+  observed_manifest_sha256: null
+manifest_replay_plan:
+  executable_in_this_artifact: false
+  replay_status: NOT_RUN_NOT_AUTHORIZED
+  required_gates: [EXACT_CODE_AND_POLICY_IDENTITIES, EXACT_QQQ_CALENDAR_IDENTITY, EXACT_PROVIDER_ENDPOINT_AND_REQUEST_PARAMS, SCHEMA_AND_TICKER_IDENTITY, TIMEZONE_AND_AVAILABLE_AT, DUPLICATE_GAP_AND_CONFLICT_FREE, CORPORATE_ACTION_ADJUSTMENT_VINTAGE, WARMUP_TARGET_SEPARATION, EXACT_1202_SESSION_EQUALITY, SECOND_SOURCE_RECONCILIATION, THREE_OFFICIAL_EVENT_COVERAGE_RECEIPTS, TREND_CHECKPOINT_AND_STATE_LINEAGE, ARTIFACT_CHECKSUMS_AND_ACTUAL_COUNTERS, ZERO_EXECUTION_COUNTERS]
+  observed_gate_results: []
+  technical_validation_state: NOT_RUN
+  source_admission_on_replay_pass: false
+owner_decision_rows:
+  - veto_id: broad_market_risk_off_veto
+    candidate_contract_decision: REVIEW_READY_NOT_FROZEN
+    recommended_owner_action: APPROVE_CONTRACT_FOR_FUTURE_MANIFEST_REPLAY_ONLY
+    admission_decision: DEFER_UNTIL_EXACT_REPLAY_PASS
+  - veto_id: realized_volatility_veto
+    candidate_contract_decision: REVIEW_READY_NOT_FROZEN
+    recommended_owner_action: APPROVE_CONTRACT_FOR_FUTURE_MANIFEST_REPLAY_ONLY
+    admission_decision: DEFER_UNTIL_EXACT_REPLAY_PASS
+  - veto_id: scheduled_event_risk_veto
+    candidate_contract_decision: REVIEW_READY_NOT_FROZEN
+    recommended_owner_action: APPROVE_CONTRACT_FOR_FUTURE_ADAPTER_IMPLEMENTATION_AND_MANIFEST_REPLAY_ONLY
+    admission_decision: DEFER_UNTIL_THREE_AUTHORITY_REPLAY_PASS
+  - veto_id: underlying_trend_break_veto
+    candidate_contract_decision: REVIEW_READY_NOT_FROZEN
+    recommended_owner_action: APPROVE_CONTRACT_FOR_FUTURE_MANIFEST_AND_CHECKPOINT_REPLAY_ONLY
+    admission_decision: DEFER_UNTIL_EXACT_REPLAY_PASS
+aggregate_state:
+  review_ready_veto_ids: [broad_market_risk_off_veto, realized_volatility_veto, scheduled_event_risk_veto, underlying_trend_break_veto]
+  admitted_real_source_identities: []
+  admitted_exact_1202_session_inventories: []
+  observed_manifest_replays: []
+  terminal: OWNER_REVIEW_READY_REAL_SOURCE_ADMISSION_NOT_GRANTED_0_OF_4
+  next_legal_action: OWNER_REVIEW_OF_ADAPTER_AND_MANIFEST_CONTRACT_WITHOUT_SOURCE_ADMISSION
+safety:
+  non_executable_data_research_only: true
+  filesystem_io_allowed_in_receipt_validator: false
+  network_io_allowed: false
+  provider_query_authorized: false
+  cache_read_authorized: false
+  real_data_read_authorized: false
+  adapter_execution_authorized: false
+  real_source_admission_allowed: false
+  exact_inventory_admission_allowed: false
+  manifest_replay_allowed: false
+  veto_series_generation_allowed: false
+  r1_manifest_generation_allowed: false
+  real_dq_authorized: false
+  backtest_authorized: false
+  parameter_or_threshold_search_allowed: false
+  constant_false_fill_allowed: false
+  missing_as_clear_allowed: false
+  cross_date_fallback_allowed: false
+  orders_allowed: false
+  fills_allowed: false
+  positions_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_effect: none
+  broker_action: none
