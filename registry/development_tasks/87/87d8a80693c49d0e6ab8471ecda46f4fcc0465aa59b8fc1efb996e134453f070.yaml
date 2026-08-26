@@ -13,25 +13,28 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / implement and validate S8 pure in-memory PIT receipt-bound adapters
-    with synthetic fixtures; Project Owner retains manifest replay and source/inventory
-    admission authority
-  requirement_refs: []
+  next_owner: Project Owner / separately authorize exact manifest replay and real
+    source/inventory admission scope; real DQ and backtest remain gated on replay
+    PASS
+  requirement_refs:
+  - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Implement receipt-bound FMP SPY/QQQ, official
-    Cboe VIX and official Fed/BLS/BEA capture adapters as injected pure functions
-    from S7 exact main. Do not perform network/provider/cache/filesystem market-data
-    IO, manifest replay, real DQ, backtest or series generation.
+  unstructured_legacy_blocker_or_next_step: S8 pure injected PIT receipt adapters
+    and synthetic conformance are complete 4/4, but no provider/network/cache/market-file
+    IO or real payload has run. Exact manifest replay, source identity admission and
+    exact-1202 observed inventory still require a separate Owner scope; stop before
+    real data, series, DQ or backtest.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: S8 strict contract loader replays S7 exact file/canonical identity and four
-      frozen decision rows; pure injected adapters validate exact source/endpoint/request/ticker/time/PIT/checksum/schema
-      and event revision/coverage semantics against synthetic fixtures; conformance
-      reaches 4/4 while adapter/source/exact-1202 inventory admission remains 0/4,
-      observed evidence remains null, manifest/series/real DQ/backtest/execution stays
-      prohibited, and focused/governed publication validation PASS.
+    text: S8 strict loader replays S7 exact file/canonical identity; FMP SPY/QQQ,
+      official Cboe VIX and official Fed/BLS/BEA injected receipts validate frozen
+      endpoint/request/ticker/checksum/PIT/session/revision/coverage surfaces; aggregate
+      is SYNTHETIC_PIT_RECEIPT_ADAPTER_CONFORMANCE_READY_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4;
+      adapter/source/inventory admission and observed manifest remain 0/4/null; all
+      real-data/series/DQ/backtest/execution flags stay closed; generated freshness
+      and governed publication validation PASS.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -608,32 +611,71 @@ events:
   - change:trading-2542g-s8-pit-receipt-adapters-resume-20260826-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-6230a8e02e8d5e23e28b53d578fe352b
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-26T11:59:02Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s8-synthetic-adapters-ready-20260826-v1
+  lane_id: null
+  base_commit: 3acfdf4e4d0bbebc0a57f70e6d9089c321e3a3ba
+  previous_state_event_id: task-event-6230a8e02e8d5e23e28b53d578fe352b
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / separately authorize exact manifest replay and real
+      source/inventory admission scope; real DQ and backtest remain gated on replay
+      PASS
+    blocker_or_next_step: S8 pure injected PIT receipt adapters and synthetic conformance
+      are complete 4/4, but no provider/network/cache/market-file IO or real payload
+      has run. Exact manifest replay, source identity admission and exact-1202 observed
+      inventory still require a separate Owner scope; stop before real data, series,
+      DQ or backtest.
+    acceptance_criteria: S8 strict loader replays S7 exact file/canonical identity;
+      FMP SPY/QQQ, official Cboe VIX and official Fed/BLS/BEA injected receipts validate
+      frozen endpoint/request/ticker/checksum/PIT/session/revision/coverage surfaces;
+      aggregate is SYNTHETIC_PIT_RECEIPT_ADAPTER_CONFORMANCE_READY_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4;
+      adapter/source/inventory admission and observed manifest remain 0/4/null; all
+      real-data/series/DQ/backtest/execution flags stay closed; generated freshness
+      and governed publication validation PASS.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      S8 contract file/canonical SHA=00cda4f20b10729a085967085b000497344c540dc87d4ed9b7cd8f5a360672e9/1eddecaa2a7809c98cbdd7d2418826ec99a470861b064116b2d4cf828403efe7;
+      focused=17 passed; full veto authority adjacent=173 passed; Ruff/strict mypy/py_compile
+      PASS. No provider/network/cache/filesystem market-data IO, real payload, observed
+      inventory/manifest, series/R1, real DQ/backtest; orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s8-synthetic-adapters-ready-20260826-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-bc0946f4dd6d0a241fcd0ffe7753f1b6
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
-  - IN_PROGRESS
-  - Codex / implement and validate S8 pure in-memory PIT receipt-bound adapters with
-    synthetic fixtures; Project Owner retains manifest replay and source/inventory
-    admission authority
-  - Implement receipt-bound FMP SPY/QQQ, official Cboe VIX and official Fed/BLS/BEA
-    capture adapters as injected pure functions from S7 exact main. Do not perform
-    network/provider/cache/filesystem market-data IO, manifest replay, real DQ, backtest
-    or series generation.
-  - S8 strict contract loader replays S7 exact file/canonical identity and four frozen
-    decision rows; pure injected adapters validate exact source/endpoint/request/ticker/time/PIT/checksum/schema
-    and event revision/coverage semantics against synthetic fixtures; conformance
-    reaches 4/4 while adapter/source/exact-1202 inventory admission remains 0/4, observed
-    evidence remains null, manifest/series/real DQ/backtest/execution stays prohibited,
-    and focused/governed publication validation PASS.
-  - Owner instruction=2026-08-26 continue; scope=separate S8 non-executable DATA_RESEARCH
-    adapter implementation authorized by published S7. Frozen base/main/origin=107c4b53b5e68d384cafafac79939c4cbdd7654a;
-    no provider/network/cache/filesystem market-data IO, no real data or manifest
-    replay; orders/fills/positions/production/broker=0.
-  docs_links: []
+  - BLOCKED_OWNER_INPUT
+  - Project Owner / separately authorize exact manifest replay and real source/inventory
+    admission scope; real DQ and backtest remain gated on replay PASS
+  - S8 pure injected PIT receipt adapters and synthetic conformance are complete 4/4,
+    but no provider/network/cache/market-file IO or real payload has run. Exact manifest
+    replay, source identity admission and exact-1202 observed inventory still require
+    a separate Owner scope; stop before real data, series, DQ or backtest.
+  - S8 strict loader replays S7 exact file/canonical identity; FMP SPY/QQQ, official
+    Cboe VIX and official Fed/BLS/BEA injected receipts validate frozen endpoint/request/ticker/checksum/PIT/session/revision/coverage
+    surfaces; aggregate is SYNTHETIC_PIT_RECEIPT_ADAPTER_CONFORMANCE_READY_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4;
+    adapter/source/inventory admission and observed manifest remain 0/4/null; all
+    real-data/series/DQ/backtest/execution flags stay closed; generated freshness
+    and governed publication validation PASS.
+  - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+    S8 contract file/canonical SHA=00cda4f20b10729a085967085b000497344c540dc87d4ed9b7cd8f5a360672e9/1eddecaa2a7809c98cbdd7d2418826ec99a470861b064116b2d4cf828403efe7;
+    focused=17 passed; full veto authority adjacent=173 passed; Ruff/strict mypy/py_compile
+    PASS. No provider/network/cache/filesystem market-data IO, real payload, observed
+    inventory/manifest, series/R1, real DQ/backtest; orders/fills/positions/production/broker=0.'
+  docs_links:
+  - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: ec515c5eea3563fa189aefd373c5ba74d8b46a7592f7f8e323126a4d080aea2c
-last_event_id: task-event-6230a8e02e8d5e23e28b53d578fe352b
+  canonical_row_sha256: 02f6dd44dde9122b7d44318248ac21170db1409f25e7d5fc246245a087186a04
+last_event_id: task-event-bc0946f4dd6d0a241fcd0ffe7753f1b6
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: e49276a9ac75f48dbfc1a31a8e7f11684580765b6376583998e29380caf8c610
+fragment_checksum: 8d2ff2c17999b129a0bccdf2ab92f261532b784304bc99862b5df8609a84b62d

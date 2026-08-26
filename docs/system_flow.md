@@ -9616,6 +9616,46 @@ synthetic fixtures 验证 PIT receipt、event revision/coverage 与 checkpoint b
 数据读取、manifest replay、source/inventory admission、真实 DQ 与 backtest 仍需后续独立门禁和授权，不能
 由 S7 freeze receipt 自动升级。
 
+### TRADING-2542G S8 pure PIT receipt-bound adapter implementation
+
+S8 从 S7 已发布的 exact main `107c4b53b5e68d384cafafac79939c4cbdd7654a` 开始，只实现 caller
+显式注入 payload/rows 后的 receipt 校验与规范化，不把数据获取或真实 source observation 藏进 adapter。
+tracked contract loader 可以只读重放 S7 authority；pure adapter module 不导入 provider client，不打开
+market cache/source file，也不发起 network 请求。
+
+```text
+S7 frozen adapter / manifest / exact-1202 contract (4 / 4)
+  -> exact S7 file/canonical identity replay
+  -> caller-injected synthetic receipt adapters
+       -> FMP SPY / QQQ
+            endpoint + request params + ticker/alias + raw/adjusted close
+            adjustment vintage + timezone-aware available/downloaded timestamps
+            exact expected sessions + row count + canonical payload checksum
+       -> official Cboe VIX
+            official endpoint + VIX level/revision identity
+            America/Chicago mapping + close == adjusted_close
+            exact QQQ-session join; no FRED fill or cross-date fallback
+       -> official Federal Reserve / BLS / BEA capture receipts
+            frozen taxonomy + stable event key + revision/action
+            source_published_at <= captured_at <= available_at <= decision_as_of
+            cancel/reschedule/conflict + deterministic order
+            all three coverage receipts required even when one payload has zero rows
+       -> QQQ trend supplemental consumer binding
+            source receipt checksum + replay start + synthetic checkpoint/lineage hashes
+  -> synthetic PIT receipt adapter conformance = 4 / 4
+  -> adapter implementation admission = 0 / 4
+  -> real source identity / exact-1202 inventory admission = 0 / 4
+  -> observed manifest replay = 0
+  -> terminal = SYNTHETIC_PIT_RECEIPT_ADAPTER_CONFORMANCE_READY_4_OF_4_REAL_SOURCE_UNADMITTED_0_OF_4
+  -> provider / network / cache / filesystem market-data IO = false
+  -> manifest replay / series / R1 / real DQ / backtest = false
+  -> orders / fills / positions / production / broker = 0
+```
+
+synthetic fixture checksum 与 checkpoint hash 只证明 parser/conformance，不得写入 observed source、inventory
+或 manifest evidence。下一合法动作要求 Project Owner 另行授权 exact manifest replay 和 source/inventory
+admission；真实 DQ/backtest 仍只能在 replay PASS 后按独立门禁推进。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

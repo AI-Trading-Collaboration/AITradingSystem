@@ -109,13 +109,14 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
         "四项 mandatory veto semantics 已 Owner exact-freeze 4/4，S5 synthetic callable "
-        "conformance 已达 4/4；S6 real-source review pack 的 FMP/Cboe、diagnostic second "
-        "source、planned Fed/BLS/BEA capture、exact-1202 inventory 与 14 项 manifest "
-        "gate 已由 S7 exact-freeze 为 adapter/manifest/inventory 合同 4/4，但 adapter "
-        "implementation、real source identity、observed PIT/DQ inventory、manifest "
-        "replay 与 admission 仍为 0/4；下一合法动作仅为从 S7 发布后的新 exact main "
-        "开始 separate non-executable adapter implementation，不是 provider query、"
-        "真实数据、series、真实 DQ 或 backtest"
+        "conformance 已达 4/4；S7 已 exact-freeze S6 的 adapter/manifest/exact-1202 "
+        "合同；S8 已实现 caller-injected、无 network/cache/filesystem market-data IO "
+        "的 FMP SPY/QQQ、official Cboe VIX 与 official Fed/BLS/BEA PIT receipt "
+        "adapters，synthetic adapter conformance=4/4，但 adapter implementation "
+        "admission、real source identity、observed PIT/DQ inventory、manifest replay "
+        "与 admission 仍为 0/4；下一合法动作仅为 Project Owner 另行授权 exact manifest "
+        "replay 与 source/inventory admission，真实 DQ/backtest 仍须 replay PASS，"
+        "不是自动运行 provider、series 或交易"
     )
 
 
