@@ -13,24 +13,24 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / publish the exact-semantics freeze-admission serial wave; producer
-    implementation starts only from the resulting new exact main base
+  next_owner: Codex / implement and validate four non-executable in-memory synthetic
+    producer/adapters from S4B exact main; real-source admission remains later
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Replay and bind calculation-semantics
-    file/canonical SHA 813c2eb2bb0d4b4f7673048889b66fa843b739a48405cc2e87272d925dd7b0d0/824ef20a66e4eba3c2841489cae8b03ff3a6cad4f73003469c086d8e09237cf1
-    and V2 decision-pack file/canonical SHA d08480c07047e636f8b4a8208ec60406acd5debdc60f30541411310e401b789f/99ed7dbdac82faf594633ab25be1ffb1417709030af0817fb19c4ace332dc389
-    in a new immutable admission artifact. Mark Owner exact-frozen 4/4 while producer
-    contracts and observed inventory remain 0/4 and series remains prohibited.
+  unstructured_legacy_blocker_or_next_step: Implement strict shared clock and exact
+    broad-SPY, VIX/QQQ volatility, official-event revision/coverage, and QQQ trend
+    state-machine conformance. Bind S4B freeze-admission exact identity; advance synthetic
+    callable conformance to 4/4 while producer/source/inventory admission remains
+    0/4.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Strict loader replays the immutable S4A V2 loader and both exact authority
-      identities; all four veto objects freeze atomically in fixed order; partial
-      freeze, authority drift, producer admission, observed inventory or any provider/DQ/backtest/execution
-      flag fails closed; aggregate is OWNER_EXACT_FROZEN_4_OF_4_PRODUCER_UNADMITTED_0_OF_4;
+    text: Contract loader replays S4B exact file/canonical identity; pure in-memory
+      producers mechanically implement all frozen windows/operators/timestamps/revision/coverage/state
+      transitions and fail closed on malformed or incomplete inputs; aggregate is
+      SYNTHETIC_CALLABLE_CONFORMANCE_READY_4_OF_4_SOURCE_UNADMITTED_0_OF_4; no provider/cache/real-data/series/R1/DQ/backtest/execution;
       focused and governed validation plus generated authority freshness PASS.
   production_effect: none
   broker_action: none
@@ -390,33 +390,66 @@ events:
   - change:trading-2542g-s4b-freeze-admission-resume-20260826-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-0cc9a4c73cbef400e285c3db98887465
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-26T01:38:50Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s5-synthetic-conformance-resume-20260826-v1
+  lane_id: null
+  base_commit: ec8bc60ef2b34fb6b0c36078eb171b4057f84756
+  previous_state_event_id: task-event-0cc9a4c73cbef400e285c3db98887465
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / implement and validate four non-executable in-memory synthetic
+      producer/adapters from S4B exact main; real-source admission remains later
+    blocker_or_next_step: Implement strict shared clock and exact broad-SPY, VIX/QQQ
+      volatility, official-event revision/coverage, and QQQ trend state-machine conformance.
+      Bind S4B freeze-admission exact identity; advance synthetic callable conformance
+      to 4/4 while producer/source/inventory admission remains 0/4.
+    acceptance_criteria: Contract loader replays S4B exact file/canonical identity;
+      pure in-memory producers mechanically implement all frozen windows/operators/timestamps/revision/coverage/state
+      transitions and fail closed on malformed or incomplete inputs; aggregate is
+      SYNTHETIC_CALLABLE_CONFORMANCE_READY_4_OF_4_SOURCE_UNADMITTED_0_OF_4; no provider/cache/real-data/series/R1/DQ/backtest/execution;
+      focused and governed validation plus generated authority freshness PASS.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      S4B final main/origin=be2492b53f53fc6d89145cb1ccbdec5e3296e15e and Full=9666
+      passed/3 skipped. S5 authorization inherits S4B separate_synthetic_producer_followup_authorized=true
+      plus current owner continuation; pure synthetic DATA_RESEARCH only; no external
+      action, orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s5-synthetic-conformance-resume-20260826-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-852dab03e11b74bbb7de2556c8b38dec
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
   - IN_PROGRESS
-  - Codex / publish the exact-semantics freeze-admission serial wave; producer implementation
-    starts only from the resulting new exact main base
-  - Replay and bind calculation-semantics file/canonical SHA 813c2eb2bb0d4b4f7673048889b66fa843b739a48405cc2e87272d925dd7b0d0/824ef20a66e4eba3c2841489cae8b03ff3a6cad4f73003469c086d8e09237cf1
-    and V2 decision-pack file/canonical SHA d08480c07047e636f8b4a8208ec60406acd5debdc60f30541411310e401b789f/99ed7dbdac82faf594633ab25be1ffb1417709030af0817fb19c4ace332dc389
-    in a new immutable admission artifact. Mark Owner exact-frozen 4/4 while producer
-    contracts and observed inventory remain 0/4 and series remains prohibited.
-  - Strict loader replays the immutable S4A V2 loader and both exact authority identities;
-    all four veto objects freeze atomically in fixed order; partial freeze, authority
-    drift, producer admission, observed inventory or any provider/DQ/backtest/execution
-    flag fails closed; aggregate is OWNER_EXACT_FROZEN_4_OF_4_PRODUCER_UNADMITTED_0_OF_4;
-    focused and governed validation plus generated authority freshness PASS.
+  - Codex / implement and validate four non-executable in-memory synthetic producer/adapters
+    from S4B exact main; real-source admission remains later
+  - Implement strict shared clock and exact broad-SPY, VIX/QQQ volatility, official-event
+    revision/coverage, and QQQ trend state-machine conformance. Bind S4B freeze-admission
+    exact identity; advance synthetic callable conformance to 4/4 while producer/source/inventory
+    admission remains 0/4.
+  - Contract loader replays S4B exact file/canonical identity; pure in-memory producers
+    mechanically implement all frozen windows/operators/timestamps/revision/coverage/state
+    transitions and fail closed on malformed or incomplete inputs; aggregate is SYNTHETIC_CALLABLE_CONFORMANCE_READY_4_OF_4_SOURCE_UNADMITTED_0_OF_4;
+    no provider/cache/real-data/series/R1/DQ/backtest/execution; focused and governed
+    validation plus generated authority freshness PASS.
   - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    Owner instruction=2026-08-26 continue, replayed against the exact hashes previously
-    presented as owner_decision:TRADING-2542G:S4B:2026-08-26:freeze_s4a_v2_exact_semantics_and_continue_non_executable_admission_v1.
-    Scope is the smallest serial non-executable DATA_RESEARCH freeze-admission wave
-    only; producer/adapter implementation follows from the new exact base; no provider/cache/real
-    data/series/R1/DQ/backtest; orders/fills/positions/production/broker=0.'
+    S4B final main/origin=be2492b53f53fc6d89145cb1ccbdec5e3296e15e and Full=9666 passed/3
+    skipped. S5 authorization inherits S4B separate_synthetic_producer_followup_authorized=true
+    plus current owner continuation; pure synthetic DATA_RESEARCH only; no external
+    action, orders/fills/positions/production/broker=0.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 4ee88ab72fa5e5214828793a7095e6280700e5db822f9350b3bd389e62f45fab
-last_event_id: task-event-0cc9a4c73cbef400e285c3db98887465
+  canonical_row_sha256: 217399e4ced355d21a743ccade02357cb35e583be4207e85ff4ae93687ed0f39
+last_event_id: task-event-852dab03e11b74bbb7de2556c8b38dec
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 816956f05f7066dc44e3601fad7652c741550d1aaf2303d6dd481b3ad64087e5
+fragment_checksum: 81e023f76bcbc402c87ff46e1f13a93e19b1a5105c4f81a9f85fcc44c115164c
