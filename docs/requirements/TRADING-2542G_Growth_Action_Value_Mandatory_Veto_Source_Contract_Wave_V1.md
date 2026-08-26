@@ -673,6 +673,16 @@ evidence roles：
 
 ## 9. 进度记录
 
+- 2026-08-27：S9 candidate=`b63bd87270926bfbd361cb7ac32682eb485fe3e0` 已完成
+  Architecture/Contract/Integration/Reproducibility=`878/278/995/24 passed`，最终 Full=
+  `9756 passed / 3 skipped`，并 ordinary-push 后验证 `main=origin/main=candidate`。发布后的真实仓库
+  static manifest replay 在任何 provider query 前暴露运行时校验缺陷：`RepositoryReplayContext` 将
+  `candidate_sha/local_main_sha/origin_main_sha` 错用 64 位 SHA-256 validator，而本仓库 Git object id 为
+  40 位 SHA-1，导致 Pydantic `ValidationError`，未能产出预期 typed BLOCKED report。修复波次必须接受
+  lowercase 40/64 位 Git object id、拒绝其他长度/字符，补真实 CLI 40 位回归测试；完成前保持
+  provider/network/cache/market-file、source admission、series、真实 DQ/backtest 与
+  orders/fills/positions/production/broker 全部为 `0`，且不改变五项 PIT source blocker 或 Owner blocker。
+
 - 2026-08-26：S9 strict gate 已实现并完成本地 focused/adjacent validation。policy file/canonical
   初版 policy file/canonical SHA-256=`46fca457b25b40b409568cb75e080e51104c79963e6097683c53747a8a9038c8`/
   `f5cee930aaa9817088895e6fc8ef1bd65ce2f4418b8da8c0ebecd184993b25f6`。首次 formal Architecture

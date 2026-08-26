@@ -14,28 +14,29 @@ task_record:
   priority: P0
   accountable_owner: null
   next_owner: Project Owner / provide or approve a versioned historical PIT receipt
-    authority for FMP, Cboe, Fed, BLS and BEA; Codex reruns S9 only after the exact
-    source contract is reviewable
+    authority for FMP, Cboe, Fed, BLS and BEA; Codex first repairs the published static
+    replay Git object-id validator and then reruns S9 without provider access
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 'S9 replayed execution V2, successor architecture
-    V1, S8 and the exact 1202-session inventory successfully, but the source capability
-    gate stopped before every provider query: FMP and Cboe cannot prove historical
-    per-row available_at/publication vintage, Fed and BLS lack replayable schedule
-    revision ledgers, and the frozen BEA data endpoint is not schedule revision authority.
-    Do not infer historical PIT timestamps or run provider, DQ, series or backtest.'
+  unstructured_legacy_blocker_or_next_step: Published S9 authority and full validation
+    passed, but the first real-repository static replay stopped before report generation
+    because RepositoryReplayContext incorrectly required 64-character SHA-256 values
+    for 40-character Git SHA-1 commit ids. Repair the typed Git object-id validator
+    and CLI regression first; after that, the substantive blocker remains the five
+    historical PIT receipt capabilities. Do not query providers or run DQ, series
+    or backtest.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Current S9 wave passes when exact authority, executor code, ordered-session
-      and four-veto plus action-guard identities replay; the five typed source blockers
-      yield MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE;
+    text: Current S9 repair passes when lowercase 40- and 64-character Git object
+      ids are accepted, all other lengths or non-hex values are rejected, the published-main
+      CLI emits MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE,
       authorization remains STANDING_OWNER_SCOPE while technical_validation_state
-      is BLOCKED; all network/provider/cache/market-file/source-admission/series/DQ/backtest/orders/fills/positions/production/broker
-      counters remain zero; focused, adjacent and governed publication validation
-      plus Atlas freshness PASS. A successor gate may proceed only after exact historical
+      is BLOCKED, and all network/provider/cache/market-file/source-admission/series/DQ/backtest/orders/fills/positions/production/broker
+      counters remain zero. Focused, adjacent, governed publication validation and
+      Atlas freshness must PASS. A successor gate may proceed only after exact historical
       PIT receipt authority is reviewed.
   production_effect: none
   broker_action: none
@@ -949,6 +950,51 @@ events:
   - change:trading-2542g-s9-task-binding-repair-20260827-v7
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-c8ddabe56c935d154f1ea8fb10e8acef
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-26T17:56:00Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s9-git-object-id-task-source-20260827-v13
+  lane_id: null
+  base_commit: b63bd87270926bfbd361cb7ac32682eb485fe3e0
+  previous_state_event_id: task-event-c8ddabe56c935d154f1ea8fb10e8acef
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / provide or approve a versioned historical PIT receipt
+      authority for FMP, Cboe, Fed, BLS and BEA; Codex first repairs the published
+      static replay Git object-id validator and then reruns S9 without provider access
+    blocker_or_next_step: Published S9 authority and full validation passed, but the
+      first real-repository static replay stopped before report generation because
+      RepositoryReplayContext incorrectly required 64-character SHA-256 values for
+      40-character Git SHA-1 commit ids. Repair the typed Git object-id validator
+      and CLI regression first; after that, the substantive blocker remains the five
+      historical PIT receipt capabilities. Do not query providers or run DQ, series
+      or backtest.
+    acceptance_criteria: Current S9 repair passes when lowercase 40- and 64-character
+      Git object ids are accepted, all other lengths or non-hex values are rejected,
+      the published-main CLI emits MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE,
+      authorization remains STANDING_OWNER_SCOPE while technical_validation_state
+      is BLOCKED, and all network/provider/cache/market-file/source-admission/series/DQ/backtest/orders/fills/positions/production/broker
+      counters remain zero. Focused, adjacent, governed publication validation and
+      Atlas freshness must PASS. A successor gate may proceed only after exact historical
+      PIT receipt authority is reviewed.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      S9 candidate b63bd87270926bfbd361cb7ac32682eb485fe3e0 completed Architecture/Contract/Integration/Reproducibility=878/278/995/24
+      and Full=9756 passed/3 skipped, then ordinary-pushed with main=origin/main=candidate.
+      The post-publication static CLI invoked no provider, cache, market file, DQ,
+      series, backtest or trading action, but failed before report creation because
+      the replay context reused a SHA-256-only validator for Git commit identity.
+      This follow-up records a narrow 40/64 lowercase Git object-id validator repair
+      and real 40-character CLI regression; five PIT source blockers and BLOCKED_OWNER_INPUT
+      remain unchanged.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s9-git-object-id-task-source-20260827-v13
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-4188737dda03b5b4e2eccbdf19161b49
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
@@ -956,36 +1002,34 @@ projection:
   - P0
   - BLOCKED_OWNER_INPUT
   - Project Owner / provide or approve a versioned historical PIT receipt authority
-    for FMP, Cboe, Fed, BLS and BEA; Codex reruns S9 only after the exact source contract
-    is reviewable
-  - 'S9 replayed execution V2, successor architecture V1, S8 and the exact 1202-session
-    inventory successfully, but the source capability gate stopped before every provider
-    query: FMP and Cboe cannot prove historical per-row available_at/publication vintage,
-    Fed and BLS lack replayable schedule revision ledgers, and the frozen BEA data
-    endpoint is not schedule revision authority. Do not infer historical PIT timestamps
-    or run provider, DQ, series or backtest.'
-  - Current S9 wave passes when exact authority, executor code, ordered-session and
-    four-veto plus action-guard identities replay; the five typed source blockers
-    yield MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE;
+    for FMP, Cboe, Fed, BLS and BEA; Codex first repairs the published static replay
+    Git object-id validator and then reruns S9 without provider access
+  - Published S9 authority and full validation passed, but the first real-repository
+    static replay stopped before report generation because RepositoryReplayContext
+    incorrectly required 64-character SHA-256 values for 40-character Git SHA-1 commit
+    ids. Repair the typed Git object-id validator and CLI regression first; after
+    that, the substantive blocker remains the five historical PIT receipt capabilities.
+    Do not query providers or run DQ, series or backtest.
+  - Current S9 repair passes when lowercase 40- and 64-character Git object ids are
+    accepted, all other lengths or non-hex values are rejected, the published-main
+    CLI emits MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE,
     authorization remains STANDING_OWNER_SCOPE while technical_validation_state is
-    BLOCKED; all network/provider/cache/market-file/source-admission/series/DQ/backtest/orders/fills/positions/production/broker
-    counters remain zero; focused, adjacent and governed publication validation plus
-    Atlas freshness PASS. A successor gate may proceed only after exact historical
+    BLOCKED, and all network/provider/cache/market-file/source-admission/series/DQ/backtest/orders/fills/positions/production/broker
+    counters remain zero. Focused, adjacent, governed publication validation and Atlas
+    freshness must PASS. A successor gate may proceed only after exact historical
     PIT receipt authority is reviewed.
   - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    Current policy file/canonical SHA=4516b74310e446954fcac0fd1988852e613b0a5647fb7286210d82d605304787/4833df465f3aae498ca9bbefcbd2764a21c5dab810e5dec720d37352f77abc4e;
-    executor SHA=139936d26522e629e90bae5d850f55a2871318b83153be9fdcff5948daccbc8f.
-    Formal pre-Full tiers=878/278/995/24 passed; failed Full=9749 passed/3 skipped/7
-    generated-authority failures. Report-flow/compatibility focused=35 passed after
-    exact 3064 total-entry correction. First Atlas render failed closed because prior
-    task notes omitted this Supporting requirement binding and projection requirement_refs
-    became empty; this event restores the exact path before clean exact-commit Atlas
-    rebuild. Final Full remains a failure_fix_rerun bound to full_20260826T144308Z.
-    No real data/provider/DQ/backtest/trading action occurred.'
+    S9 candidate b63bd87270926bfbd361cb7ac32682eb485fe3e0 completed Architecture/Contract/Integration/Reproducibility=878/278/995/24
+    and Full=9756 passed/3 skipped, then ordinary-pushed with main=origin/main=candidate.
+    The post-publication static CLI invoked no provider, cache, market file, DQ, series,
+    backtest or trading action, but failed before report creation because the replay
+    context reused a SHA-256-only validator for Git commit identity. This follow-up
+    records a narrow 40/64 lowercase Git object-id validator repair and real 40-character
+    CLI regression; five PIT source blockers and BLOCKED_OWNER_INPUT remain unchanged.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 0588cc27f41ebcdb30a9140fb9d61a29acf02947585882179bef967cdae61796
-last_event_id: task-event-c8ddabe56c935d154f1ea8fb10e8acef
+  canonical_row_sha256: bc5283995d89a5e91ee34ffe3f91bdbcf490ab5d2c9f82f323dfd71268807ed7
+last_event_id: task-event-4188737dda03b5b4e2eccbdf19161b49
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: de81fbd75a8d486cc2558f6f00a4ab7a08237aa919c31e89ed85c342b2b0a420
+fragment_checksum: b0f2c94522742cf0dfbef6ec86e1f0d6efa1a166f5c51600eecb6a36cc39404a
