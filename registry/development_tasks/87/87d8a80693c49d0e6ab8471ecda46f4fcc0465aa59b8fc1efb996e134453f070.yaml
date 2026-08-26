@@ -16,7 +16,8 @@ task_record:
   next_owner: Project Owner / provide or approve a versioned historical PIT receipt
     authority for FMP, Cboe, Fed, BLS and BEA; Codex reruns S9 only after the exact
     source contract is reviewable
-  requirement_refs: []
+  requirement_refs:
+  - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
@@ -902,6 +903,52 @@ events:
   - change:trading-2542g-s9-compat-count-rebuild-20260827-v5
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-33a69f7d2794d6cfc9023ecf3fc7a8bd
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-26T15:39:00Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s9-task-binding-repair-20260827-v7
+  lane_id: null
+  base_commit: 2635dc80e1f4c0ae4a00acb679732703aa651dd3
+  previous_state_event_id: task-event-33a69f7d2794d6cfc9023ecf3fc7a8bd
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / provide or approve a versioned historical PIT receipt
+      authority for FMP, Cboe, Fed, BLS and BEA; Codex reruns S9 only after the exact
+      source contract is reviewable
+    blocker_or_next_step: 'S9 replayed execution V2, successor architecture V1, S8
+      and the exact 1202-session inventory successfully, but the source capability
+      gate stopped before every provider query: FMP and Cboe cannot prove historical
+      per-row available_at/publication vintage, Fed and BLS lack replayable schedule
+      revision ledgers, and the frozen BEA data endpoint is not schedule revision
+      authority. Do not infer historical PIT timestamps or run provider, DQ, series
+      or backtest.'
+    acceptance_criteria: Current S9 wave passes when exact authority, executor code,
+      ordered-session and four-veto plus action-guard identities replay; the five
+      typed source blockers yield MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE;
+      authorization remains STANDING_OWNER_SCOPE while technical_validation_state
+      is BLOCKED; all network/provider/cache/market-file/source-admission/series/DQ/backtest/orders/fills/positions/production/broker
+      counters remain zero; focused, adjacent and governed publication validation
+      plus Atlas freshness PASS. A successor gate may proceed only after exact historical
+      PIT receipt authority is reviewed.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      Current policy file/canonical SHA=4516b74310e446954fcac0fd1988852e613b0a5647fb7286210d82d605304787/4833df465f3aae498ca9bbefcbd2764a21c5dab810e5dec720d37352f77abc4e;
+      executor SHA=139936d26522e629e90bae5d850f55a2871318b83153be9fdcff5948daccbc8f.
+      Formal pre-Full tiers=878/278/995/24 passed; failed Full=9749 passed/3 skipped/7
+      generated-authority failures. Report-flow/compatibility focused=35 passed after
+      exact 3064 total-entry correction. First Atlas render failed closed because
+      prior task notes omitted this Supporting requirement binding and projection
+      requirement_refs became empty; this event restores the exact path before clean
+      exact-commit Atlas rebuild. Final Full remains a failure_fix_rerun bound to
+      full_20260826T144308Z. No real data/provider/DQ/backtest/trading action occurred.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s9-task-binding-repair-20260827-v7
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c8ddabe56c935d154f1ea8fb10e8acef
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
@@ -925,17 +972,20 @@ projection:
     counters remain zero; focused, adjacent and governed publication validation plus
     Atlas freshness PASS. A successor gate may proceed only after exact historical
     PIT receipt authority is reviewed.
-  - Current S9 policy file/canonical SHA=4516b74310e446954fcac0fd1988852e613b0a5647fb7286210d82d605304787/4833df465f3aae498ca9bbefcbd2764a21c5dab810e5dec720d37352f77abc4e;
+  - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+    Current policy file/canonical SHA=4516b74310e446954fcac0fd1988852e613b0a5647fb7286210d82d605304787/4833df465f3aae498ca9bbefcbd2764a21c5dab810e5dec720d37352f77abc4e;
     executor SHA=139936d26522e629e90bae5d850f55a2871318b83153be9fdcff5948daccbc8f.
-    Formal pre-Full tiers=878/278/995/24 passed; failed Full=9749 passed / 3 skipped
-    / 7 generated-authority freshness failures. Official report-flow plus compatibility
-    rebuild fixed five; remaining two total-entry regressions corrected from 3060
-    to 3064 and compatibility authority rebuilt. Atlas exact-commit render follows
-    only after this source-prep candidate is clean; final Full uses full_20260826T144308Z
-    as failed parent. No real data/provider/DQ/backtest/trading action occurred.
-  docs_links: []
+    Formal pre-Full tiers=878/278/995/24 passed; failed Full=9749 passed/3 skipped/7
+    generated-authority failures. Report-flow/compatibility focused=35 passed after
+    exact 3064 total-entry correction. First Atlas render failed closed because prior
+    task notes omitted this Supporting requirement binding and projection requirement_refs
+    became empty; this event restores the exact path before clean exact-commit Atlas
+    rebuild. Final Full remains a failure_fix_rerun bound to full_20260826T144308Z.
+    No real data/provider/DQ/backtest/trading action occurred.'
+  docs_links:
+  - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 7f31b4f5c8266f7843d3040cde16e3dbf9fd217c2132021e2253494831c74cb7
-last_event_id: task-event-33a69f7d2794d6cfc9023ecf3fc7a8bd
+  canonical_row_sha256: 0588cc27f41ebcdb30a9140fb9d61a29acf02947585882179bef967cdae61796
+last_event_id: task-event-c8ddabe56c935d154f1ea8fb10e8acef
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 9d3d46aac68930ea639b09a14cd85501ee41dcc44e32a966ce59542785ae4be1
+fragment_checksum: de81fbd75a8d486cc2558f6f00a4ab7a08237aa919c31e89ed85c342b2b0a420

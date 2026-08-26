@@ -695,6 +695,9 @@ evidence roles：
   首次 official report-flow + compatibility rebuild 后，原 7 项中 5 项已通过；focused 仅剩 2 个 total
   entry-count regression 仍为 `3060`，已按 `1371 + 558 + 1135 = 3064` 同步并重新生成 compatibility
   authority。Atlas 留到 clean exact candidate 上单独重建，避免把 dirty task/source bytes 冒充 exact commit。
+  首次 Atlas render 又因最新 task event notes 未携带 `Supporting requirement:` 而 fail closed，canonical
+  projection 的 `requirement_refs` 变为空；这是 task-source binding 问题。后续 event 必须重新携带本
+  requirement exact path，并在 clean commit 后再运行 Atlas generator。
   authority、exact-1202 session 与 four-veto + action-guard compatibility replay 全部 `PASS`；五个
   source capability row 均在 query 前给出 typed blocker，整体 terminal=
   `MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE`。focused + Atlas=
