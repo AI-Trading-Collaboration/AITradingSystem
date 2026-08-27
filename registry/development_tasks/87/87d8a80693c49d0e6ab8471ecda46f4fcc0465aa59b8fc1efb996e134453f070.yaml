@@ -13,28 +13,26 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / complete the S11 deterministic architecture-ratchet failure-fix
-    and governed publication; after the new exact main, start the separate official-schedule
-    inventory and unsent vendor-evidence packet lanes
+  next_owner: Codex / rebuild final S11 generated authority from the two-count correction,
+    rerun formal tiers, and execute parent-bound Full failure_fix_rerun before integration
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Synchronize only the official 1167-module/1327-test
-    deprecation inventory regression, rebuild all generated authorities from the corrected
-    exact lane head, and rerun Architecture/Contract/Integration/Reproducibility/Full.
-    After S11 publication, exact historical authority and coverage remain 0/5; vendor
-    contact/purchase, provider query, source admission, real DQ/backtest and execution
-    still require separate gates.
+  unstructured_legacy_blocker_or_next_step: Replace only the two stale report-flow
+    aggregate entry-count regressions 3068->3072, rebuild architecture/Atlas/report-flow/compatibility
+    authority from one exact lane head, rerun formal tiers, and run Full with immutable
+    parent full_20260827T145645Z. Do not alter the S11 source contract or contact/query
+    any provider.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: S11 strict contract and all focused/formal/Full validation pass on one exact
-      candidate; generated Atlas, architecture, report-flow and compatibility authorities
-      are fresh; terminal remains S11_STATIC_AUTHORITY_RECEIPT_CONTRACT_FROZEN_HISTORICAL_COVERAGE_UNPROVEN;
-      candidate family approved is 1/5 but exact authority/coverage/admission/runtime/remediation
-      are 0/5; all external/data/execution counters remain zero. Follow-on evidence
-      lanes must start from the published exact main and cannot auto-promote any state.
+    text: Focused report-flow regression passes; final generated authorities are fresh;
+      Architecture/Contract/Integration/Reproducibility PASS; parent-bound failure_fix_rerun
+      Full removes exactly the two stale aggregate-count failures; S11 terminal and
+      five-source states remain unchanged; all external/data/execution counters remain
+      zero; local main and remote main equal the validated candidate after ordinary
+      push.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -1272,41 +1270,75 @@ events:
   - change:trading-2542g-s11-architecture-failure-fix-20260827-v7
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-230130fc8118a2f2186a01b633e5aada
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-27T15:28:09Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s11-full-failure-fix-20260828-v11
+  lane_id: null
+  base_commit: a137bbcc818d6479a18592d6d72eecf07a67d468
+  previous_state_event_id: task-event-230130fc8118a2f2186a01b633e5aada
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / rebuild final S11 generated authority from the two-count correction,
+      rerun formal tiers, and execute parent-bound Full failure_fix_rerun before integration
+    blocker_or_next_step: Replace only the two stale report-flow aggregate entry-count
+      regressions 3068->3072, rebuild architecture/Atlas/report-flow/compatibility
+      authority from one exact lane head, rerun formal tiers, and run Full with immutable
+      parent full_20260827T145645Z. Do not alter the S11 source contract or contact/query
+      any provider.
+    acceptance_criteria: Focused report-flow regression passes; final generated authorities
+      are fresh; Architecture/Contract/Integration/Reproducibility PASS; parent-bound
+      failure_fix_rerun Full removes exactly the two stale aggregate-count failures;
+      S11 terminal and five-source states remain unchanged; all external/data/execution
+      counters remain zero; local main and remote main equal the validated candidate
+      after ordinary push.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      First actual S11 Full=9829 passed/3 skipped/2 failed at outputs/validation_runtime/full_20260827T145645Z/test_runtime_summary.json
+      SHA=ae2149d9bc216231d7130f6de3c7e3eb9bd7d11cb5678f01c438a0f350f516a8. Both failures
+      are stale aggregate entry_count=3068 versus generated 3072 after four new system_flow
+      blocks; focused report-flow suite after 3068->3072=15 passed and Ruff PASS.
+      No S11 loader, DQ/PIT, Atlas, execution or safety test failed. Vendor contact/purchase,
+      provider/network/cache/market-file, real payload, source admission, veto series,
+      real DQ/backtest, orders/fills/positions/production/broker remain 0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s11-full-failure-fix-20260828-v11
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ded01e0b4fce90080215850c1a02d39f
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
   - IN_PROGRESS
-  - Codex / complete the S11 deterministic architecture-ratchet failure-fix and governed
-    publication; after the new exact main, start the separate official-schedule inventory
-    and unsent vendor-evidence packet lanes
-  - Synchronize only the official 1167-module/1327-test deprecation inventory regression,
-    rebuild all generated authorities from the corrected exact lane head, and rerun
-    Architecture/Contract/Integration/Reproducibility/Full. After S11 publication,
-    exact historical authority and coverage remain 0/5; vendor contact/purchase, provider
-    query, source admission, real DQ/backtest and execution still require separate
-    gates.
-  - S11 strict contract and all focused/formal/Full validation pass on one exact candidate;
-    generated Atlas, architecture, report-flow and compatibility authorities are fresh;
-    terminal remains S11_STATIC_AUTHORITY_RECEIPT_CONTRACT_FROZEN_HISTORICAL_COVERAGE_UNPROVEN;
-    candidate family approved is 1/5 but exact authority/coverage/admission/runtime/remediation
-    are 0/5; all external/data/execution counters remain zero. Follow-on evidence
-    lanes must start from the published exact main and cannot auto-promote any state.
+  - Codex / rebuild final S11 generated authority from the two-count correction, rerun
+    formal tiers, and execute parent-bound Full failure_fix_rerun before integration
+  - Replace only the two stale report-flow aggregate entry-count regressions 3068->3072,
+    rebuild architecture/Atlas/report-flow/compatibility authority from one exact
+    lane head, rerun formal tiers, and run Full with immutable parent full_20260827T145645Z.
+    Do not alter the S11 source contract or contact/query any provider.
+  - Focused report-flow regression passes; final generated authorities are fresh;
+    Architecture/Contract/Integration/Reproducibility PASS; parent-bound failure_fix_rerun
+    Full removes exactly the two stale aggregate-count failures; S11 terminal and
+    five-source states remain unchanged; all external/data/execution counters remain
+    zero; local main and remote main equal the validated candidate after ordinary
+    push.
   - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    S11 source/canonical SHA=32071acfde9aa4c432f26964a839fe288de69f1e1a6fce99a2c07431e2a4caa7/f8aa502366a9e952810c25510e758bd8f1d0a2492535056f46cda730cf05ba10;
-    focused S11+S10=66 passed. Publication v4 generated authorities PASS; Architecture=877
-    passed/1 failed solely because the frozen deprecation regression retained S10
-    counts 1166/1326 while official inventory is 1167/1327, artifact outputs/validation_runtime/architecture-fitness_20260827T134856Z/test_runtime_summary.json
-    SHA=2d6ba37afa25017c42946f4d3eb9efa03746950d7af79e4ba520485b2e9abd8c. Corrected
-    focused deprecation suite=9 passed; no deprecation lifecycle, strategy, DQ/PIT
-    or authorization semantics changed. Vendor contact/purchase, provider/network/cache/market-file,
-    real payload, source admission, veto series, real DQ/backtest, orders/fills/positions/production/broker
-    remain 0.'
+    First actual S11 Full=9829 passed/3 skipped/2 failed at outputs/validation_runtime/full_20260827T145645Z/test_runtime_summary.json
+    SHA=ae2149d9bc216231d7130f6de3c7e3eb9bd7d11cb5678f01c438a0f350f516a8. Both failures
+    are stale aggregate entry_count=3068 versus generated 3072 after four new system_flow
+    blocks; focused report-flow suite after 3068->3072=15 passed and Ruff PASS. No
+    S11 loader, DQ/PIT, Atlas, execution or safety test failed. Vendor contact/purchase,
+    provider/network/cache/market-file, real payload, source admission, veto series,
+    real DQ/backtest, orders/fills/positions/production/broker remain 0.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 7fd6c9fff9572656028b5551d724289ee5f8c4533726392433dc0071ee86d0b3
-last_event_id: task-event-230130fc8118a2f2186a01b633e5aada
+  canonical_row_sha256: 91d12d4e7f7393bd7f1d88bb896eb7807875733ac14f05951f76e5f7221c022c
+last_event_id: task-event-ded01e0b4fce90080215850c1a02d39f
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: bd8cf659debbff9e0e960319d5cdba9afdd8f7740e855a2126721132ae331764
+fragment_checksum: ec68d07efb9a318c30efa9b6eba0cffe9cd609d6ebb5870561affde5a92806fc

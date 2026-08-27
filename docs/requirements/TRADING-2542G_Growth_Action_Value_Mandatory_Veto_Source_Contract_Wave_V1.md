@@ -811,6 +811,16 @@ evidence roles：
 
 ## 9. 进度记录
 
+- 2026-08-28：candidate=`a137bbcc818d6479a18592d6d72eecf07a67d468` 的五类 generated authority 与
+  Architecture/Contract/Integration/Reproducibility=`878/278/995/24 passed`；首次实际 Full=
+  `9829 passed / 3 skipped / 2 failed`。两个失败均来自
+  `tests/test_devx_006d_report_catalog_flow_authority.py` 的 aggregate entry count 仍固定为 `3068`，而
+  S11 在 `docs/system_flow.md` 新增 4 个 lossless block 后官方 report-flow authority 已正确产出 `3072`；
+  单 target 的 `1143` regression、source seal、fragments 与 compatibility authority 均已一致。失败 Full=
+  `outputs/validation_runtime/full_20260827T145645Z/test_runtime_summary.json`，SHA-256=
+  `ae2149d9bc216231d7130f6de3c7e3eb9bd7d11cb5678f01c438a0f350f516a8`。v9 已 fail-closed 释放；
+  failure-fix 只同步两个 aggregate 常量，并以该 Full 为 immutable parent 完整重建、重跑 formal 与
+  `failure_fix_rerun`，不改变 report-flow source、策略、DQ/PIT 或授权边界。
 - 2026-08-27：failure-fix candidate=`9f3e4b8d920f50383c5acb7180df29363577b891` 的
   Architecture/Contract/Integration/Reproducibility=`878/278/995/24 passed`。在启动 Full 前，coordinator
   先手动 checkpoint `FULL_DISPATCHED`，随后 `run_validation_tier.py full` 因其必须从
