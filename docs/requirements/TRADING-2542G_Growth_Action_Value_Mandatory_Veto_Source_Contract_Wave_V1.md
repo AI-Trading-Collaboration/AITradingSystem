@@ -745,6 +745,16 @@ evidence roles：
   fail-closed 释放；没有 generated/candidate/Full/main/remote mutation。最终发布使用包含全部 S10、shared、
   generator 与 formal resource claims 的新 transaction。provider/network/cache/market-file、source
   admission、series、真实 DQ/backtest 与 orders/fills/positions/production/broker 继续为 `0`。
+- 2026-08-27：S10 candidate `8c54a54fa77d0291508b5fe7967081725c5c742d` 的
+  Architecture/Contract/Integration/Reproducibility=`878/278/995/24 passed`；首次 Full=
+  `9784 passed / 3 skipped / 3 failed`。三个失败全部由 Atlas S10 expectation 修复后再次生成
+  `arch_004e_test_manifest.yaml`，但 compatibility authority 尚绑定前一 manifest hash 所致：两项历史
+  compatibility source-current 检查发现 current SHA 滞后，一项 authority freshness 指向已被新 index
+  取代的 fragment path。S10 loader、五项 blocker、Atlas renderer、DQ/PIT 与交易边界没有失败。
+  failure-fix 只刷新 task progress 与 current compatibility authority；最终 Full 必须使用
+  `outputs/validation_runtime/full_20260827T025319Z/test_runtime_summary.json`（SHA-256=
+  `8d80a5752a7ff5003841b295d890d3d2cd05d4679831ad3ffb81860597524c7f`）作为 immutable parent，
+  不允许用 focused/serial PASS 替代。
 
 - 2026-08-27：S9 candidate=`b63bd87270926bfbd361cb7ac32682eb485fe3e0` 已完成
   Architecture/Contract/Integration/Reproducibility=`878/278/995/24 passed`，最终 Full=

@@ -14,28 +14,25 @@ task_record:
   priority: P0
   accountable_owner: null
   next_owner: Project Owner / provide or exact-approve one historical PIT archive/source
-    identity for each of FMP, Cboe, Fed, BLS and BEA; Codex then builds a separate
-    static freeze-admission wave before rerunning S9
+    identity for each of FMP, Cboe, Fed, BLS and BEA; Codex first completes the compatibility-only
+    Full failure-fix rerun
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S10 now makes all five authority choices
-    reviewable, but selected archive/source identity, historical coverage proof, source
-    admission and remediated blockers remain 0/5. Forward-only capture cannot unblock
-    the 2021-02-22 primary window, inferred timestamps are rejected, and BEA still
-    requires a corrected official schedule authority. Do not query providers or run
-    series, DQ or backtest.
+  unstructured_legacy_blocker_or_next_step: S10 semantics and focused/formal pre-Full
+    validation pass. The first Full found only stale compatibility authority after
+    the Atlas regression test changed the generated test-manifest hash. Rebuild current
+    compatibility authority, rerun formal tiers, and bind failed Full parent full_20260827T025319Z;
+    do not alter any source blocker or query provider.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: S10 passes when its exact file/canonical identity replays S9 and the five
-      ordered blockers, every row exposes acceptable historical authority classes,
-      exact receipt/coverage needs, forward-only impact and rejected substitutes,
-      terminal is OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED,
-      and all provider/network/cache/market-file/source-admission/series/real-DQ/backtest/orders/fills/positions/production/broker
-      counters remain zero. A successor freeze wave requires exact Owner archive/source
-      identities.
+    text: Failure-fix passes when current compatibility authority binds the exact
+      latest test manifest, the three prior Full failures are removed, Architecture/Contract/Integration/Reproducibility
+      and parent-bound Full PASS, Atlas remains exact-commit fresh, S10 terminal remains
+      OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED, and all external/data/execution
+      counters remain zero.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -1111,6 +1108,43 @@ events:
   - change:trading-2542g-s10-decision-pack-owner-review-20260827-v2
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-8314c4aae17d602c1028010fe28a889a
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-27T03:25:01Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s10-full-parent-compatibility-fix-20260827-v6
+  lane_id: null
+  base_commit: 8c54a54fa77d0291508b5fe7967081725c5c742d
+  previous_state_event_id: task-event-8314c4aae17d602c1028010fe28a889a
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / provide or exact-approve one historical PIT archive/source
+      identity for each of FMP, Cboe, Fed, BLS and BEA; Codex first completes the
+      compatibility-only Full failure-fix rerun
+    blocker_or_next_step: S10 semantics and focused/formal pre-Full validation pass.
+      The first Full found only stale compatibility authority after the Atlas regression
+      test changed the generated test-manifest hash. Rebuild current compatibility
+      authority, rerun formal tiers, and bind failed Full parent full_20260827T025319Z;
+      do not alter any source blocker or query provider.
+    acceptance_criteria: Failure-fix passes when current compatibility authority binds
+      the exact latest test manifest, the three prior Full failures are removed, Architecture/Contract/Integration/Reproducibility
+      and parent-bound Full PASS, Atlas remains exact-commit fresh, S10 terminal remains
+      OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED, and all external/data/execution
+      counters remain zero.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      First Full=9784 passed/3 skipped/3 failed; immutable parent=outputs/validation_runtime/full_20260827T025319Z/test_runtime_summary.json
+      SHA=8d80a5752a7ff5003841b295d890d3d2cd05d4679831ad3ffb81860597524c7f. All three
+      failures are stale current compatibility bindings after the Atlas test-manifest
+      refresh; S10 logic, DQ/PIT and safety boundaries did not fail. No provider/network/cache/market-file/source-admission/series/real
+      DQ/backtest/trading action occurred.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s10-full-parent-compatibility-fix-20260827-v6
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5bd6f9df95dc3ab9cc6a32cb5a2a8577
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
@@ -1118,30 +1152,28 @@ projection:
   - P0
   - BLOCKED_OWNER_INPUT
   - Project Owner / provide or exact-approve one historical PIT archive/source identity
-    for each of FMP, Cboe, Fed, BLS and BEA; Codex then builds a separate static freeze-admission
-    wave before rerunning S9
-  - S10 now makes all five authority choices reviewable, but selected archive/source
-    identity, historical coverage proof, source admission and remediated blockers
-    remain 0/5. Forward-only capture cannot unblock the 2021-02-22 primary window,
-    inferred timestamps are rejected, and BEA still requires a corrected official
-    schedule authority. Do not query providers or run series, DQ or backtest.
-  - S10 passes when its exact file/canonical identity replays S9 and the five ordered
-    blockers, every row exposes acceptable historical authority classes, exact receipt/coverage
-    needs, forward-only impact and rejected substitutes, terminal is OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED,
-    and all provider/network/cache/market-file/source-admission/series/real-DQ/backtest/orders/fills/positions/production/broker
-    counters remain zero. A successor freeze wave requires exact Owner archive/source
-    identities.
+    for each of FMP, Cboe, Fed, BLS and BEA; Codex first completes the compatibility-only
+    Full failure-fix rerun
+  - S10 semantics and focused/formal pre-Full validation pass. The first Full found
+    only stale compatibility authority after the Atlas regression test changed the
+    generated test-manifest hash. Rebuild current compatibility authority, rerun formal
+    tiers, and bind failed Full parent full_20260827T025319Z; do not alter any source
+    blocker or query provider.
+  - Failure-fix passes when current compatibility authority binds the exact latest
+    test manifest, the three prior Full failures are removed, Architecture/Contract/Integration/Reproducibility
+    and parent-bound Full PASS, Atlas remains exact-commit fresh, S10 terminal remains
+    OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED, and all external/data/execution
+    counters remain zero.
   - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    S10 decision pack file/canonical SHA=110830c6c14cf7112db2b0a9cefcd516650db66e0f3f7317ea4d6f266356d1fb/f13ec082d07f5fd33bfb2c2dab40d999d2a146afb35bfbf4cf92ed7e8a9cd1d3;
-    mandatory-veto adjacent=235 passed; Ruff/strict mypy/py_compile PASS. Task-activation
-    transaction v1 failed closed after its limited task-source phase and released
-    its lease; no generated/candidate/Full/main/remote mutation resulted. Source admission
-    and external counters remain zero; final governed authority rebuild, Atlas and
-    formal publication validation follow.'
+    First Full=9784 passed/3 skipped/3 failed; immutable parent=outputs/validation_runtime/full_20260827T025319Z/test_runtime_summary.json
+    SHA=8d80a5752a7ff5003841b295d890d3d2cd05d4679831ad3ffb81860597524c7f. All three
+    failures are stale current compatibility bindings after the Atlas test-manifest
+    refresh; S10 logic, DQ/PIT and safety boundaries did not fail. No provider/network/cache/market-file/source-admission/series/real
+    DQ/backtest/trading action occurred.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 2a71b8a9cd40ec3c813c919e8d4906ed909c25083303b47c5f1b397ced9b7f71
-last_event_id: task-event-8314c4aae17d602c1028010fe28a889a
+  canonical_row_sha256: 69b0024b945fcba41b4b48c56e2f1a58d329c6b4edb0e7d7368460b9d009d263
+last_event_id: task-event-5bd6f9df95dc3ab9cc6a32cb5a2a8577
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: e5b72280310a711e495da7d4666423861fa81b5e7540361b84356df8abb5baf7
+fragment_checksum: 7725229158b8587811e0a80c254be9c4edfc6083d52ee4cafa81d7b4fb98dd02
