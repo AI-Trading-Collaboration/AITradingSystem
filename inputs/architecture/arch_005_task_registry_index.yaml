@@ -14,7 +14,7 @@ fragment_count: 1028
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 56eb979279b9bbcf2d619eff08dbbbb1c31e91a325596778f696016bc0173fca
+final_chain_sha256: 4ec7b6c8d2cdc48e4946a138a00e6ee1364d5299810face5e4afa9ac15d393e8
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 0c3efea17f7c4a4cae0488be7b40116560b065ec6ee1c53818e0ff1fdaa31509
 templates:
@@ -8247,17 +8247,17 @@ fragments:
   entry_sha256: a095f484e33e4c4459d294acd379fb83cd00e0d64bae7b2beb5b9d1f03111498
 - task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   path: registry/development_tasks/87/87d8a80693c49d0e6ab8471ecda46f4fcc0465aa59b8fc1efb996e134453f070.yaml
-  file_sha256: 722e4d7c9eaa27489fb694274682a0eb0dc90dd6570fbacb34e055163821f5d0
-  fragment_checksum: 85347418bb21b7193460dccb1f363d7f116279e8e71255740dab5f6110b99f3d
+  file_sha256: d2aba7d099e40b1d1196b2172af8c37453c60df0f6c1de5ab00a8b77da65116a
+  fragment_checksum: e5b72280310a711e495da7d4666423861fa81b5e7540361b84356df8abb5baf7
   partition: active
   order: 1028
   previous_entry_sha256: a095f484e33e4c4459d294acd379fb83cd00e0d64bae7b2beb5b9d1f03111498
-  entry_sha256: 56eb979279b9bbcf2d619eff08dbbbb1c31e91a325596778f696016bc0173fca
+  entry_sha256: 4ec7b6c8d2cdc48e4946a138a00e6ee1364d5299810face5e4afa9ac15d393e8
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: fc870d638df68229191166c3fd5ee34669a2e708a7e954bc0f7e3aef54d10bb2
-  byte_count: 1757911
+  sha256: 3ba01d2b46ec12462d211835e0b2ca754b66c031af8d167c8bfb03885eb8ab41
+  byte_count: 1758282
   row_count: 505
   generated_do_not_edit: true
 - partition: completed
@@ -10276,7 +10276,14 @@ governance_cycles:
   change_id: trading-2542g-s10-task-activation-20260827-v1
   event_count: 27
   production_effect: none
-governance_cycle_count: 287
+- cycle_id: arch-005-s5-cycle-288
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  change_id: trading-2542g-s10-decision-pack-owner-review-20260827-v2
+  event_count: 28
+  production_effect: none
+governance_cycle_count: 288
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -10290,4 +10297,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: b61d328972ff65cfeada73f285e3ed421d4527cb283dac821624449df2d0454a
+index_checksum: b88a618817cb95a9de6ea4d5051b1c3e42afef825665ec18267e91ac6860d259

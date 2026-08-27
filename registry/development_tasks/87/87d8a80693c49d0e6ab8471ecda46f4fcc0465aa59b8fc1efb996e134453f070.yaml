@@ -13,24 +13,29 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / implement and validate the non-executable S10 historical PIT
-    receipt authority decision pack; Project Owner retains exact archive/source selection
+  next_owner: Project Owner / provide or exact-approve one historical PIT archive/source
+    identity for each of FMP, Cboe, Fed, BLS and BEA; Codex then builds a separate
+    static freeze-admission wave before rerunning S9
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Convert the five S9 historical PIT capability
-    blockers into ordered authority-class, minimum receipt/coverage, forward-only
-    impact and rejected-substitute decision rows. Do not select or admit an archive/source
-    and do not query providers.
+  unstructured_legacy_blocker_or_next_step: S10 now makes all five authority choices
+    reviewable, but selected archive/source identity, historical coverage proof, source
+    admission and remediated blockers remain 0/5. Forward-only capture cannot unblock
+    the 2021-02-22 primary window, inferred timestamps are rejected, and BEA still
+    requires a corrected official schedule authority. Do not query providers or run
+    series, DQ or backtest.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: S10 strict loader replays the exact S9 file/canonical identity and all five
-      blocker rows; acceptable authority classes, minimum receipts, primary-window
-      coverage, forward-only limitation and rejected inference are explicit; terminal
-      remains OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED; provider/network/cache/market-file/source-admission/series/real-DQ/backtest/orders/fills/positions/production/broker
-      counters stay zero; focused and governed publication validation PASS.
+    text: S10 passes when its exact file/canonical identity replays S9 and the five
+      ordered blockers, every row exposes acceptable historical authority classes,
+      exact receipt/coverage needs, forward-only impact and rejected substitutes,
+      terminal is OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED,
+      and all provider/network/cache/market-file/source-admission/series/real-DQ/backtest/orders/fills/positions/production/broker
+      counters remain zero. A successor freeze wave requires exact Owner archive/source
+      identities.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -1065,31 +1070,78 @@ events:
   - change:trading-2542g-s10-task-activation-20260827-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-60fdd3e3e239d1853f9af150b647db3d
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-27T02:08:04Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s10-decision-pack-owner-review-20260827-v2
+  lane_id: null
+  base_commit: be054cfe639c3345f35467bd77f059d7e19ae93c
+  previous_state_event_id: task-event-60fdd3e3e239d1853f9af150b647db3d
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / provide or exact-approve one historical PIT archive/source
+      identity for each of FMP, Cboe, Fed, BLS and BEA; Codex then builds a separate
+      static freeze-admission wave before rerunning S9
+    blocker_or_next_step: S10 now makes all five authority choices reviewable, but
+      selected archive/source identity, historical coverage proof, source admission
+      and remediated blockers remain 0/5. Forward-only capture cannot unblock the
+      2021-02-22 primary window, inferred timestamps are rejected, and BEA still requires
+      a corrected official schedule authority. Do not query providers or run series,
+      DQ or backtest.
+    acceptance_criteria: S10 passes when its exact file/canonical identity replays
+      S9 and the five ordered blockers, every row exposes acceptable historical authority
+      classes, exact receipt/coverage needs, forward-only impact and rejected substitutes,
+      terminal is OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED,
+      and all provider/network/cache/market-file/source-admission/series/real-DQ/backtest/orders/fills/positions/production/broker
+      counters remain zero. A successor freeze wave requires exact Owner archive/source
+      identities.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      S10 decision pack file/canonical SHA=110830c6c14cf7112db2b0a9cefcd516650db66e0f3f7317ea4d6f266356d1fb/f13ec082d07f5fd33bfb2c2dab40d999d2a146afb35bfbf4cf92ed7e8a9cd1d3;
+      mandatory-veto adjacent=235 passed; Ruff/strict mypy/py_compile PASS. Task-activation
+      transaction v1 failed closed after its limited task-source phase and released
+      its lease; no generated/candidate/Full/main/remote mutation resulted. Source
+      admission and external counters remain zero; final governed authority rebuild,
+      Atlas and formal publication validation follow.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s10-decision-pack-owner-review-20260827-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8314c4aae17d602c1028010fe28a889a
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
-  - IN_PROGRESS
-  - Codex / implement and validate the non-executable S10 historical PIT receipt authority
-    decision pack; Project Owner retains exact archive/source selection
-  - Convert the five S9 historical PIT capability blockers into ordered authority-class,
-    minimum receipt/coverage, forward-only impact and rejected-substitute decision
-    rows. Do not select or admit an archive/source and do not query providers.
-  - S10 strict loader replays the exact S9 file/canonical identity and all five blocker
-    rows; acceptable authority classes, minimum receipts, primary-window coverage,
-    forward-only limitation and rejected inference are explicit; terminal remains
-    OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED; provider/network/cache/market-file/source-admission/series/real-DQ/backtest/orders/fills/positions/production/broker
-    counters stay zero; focused and governed publication validation PASS.
+  - BLOCKED_OWNER_INPUT
+  - Project Owner / provide or exact-approve one historical PIT archive/source identity
+    for each of FMP, Cboe, Fed, BLS and BEA; Codex then builds a separate static freeze-admission
+    wave before rerunning S9
+  - S10 now makes all five authority choices reviewable, but selected archive/source
+    identity, historical coverage proof, source admission and remediated blockers
+    remain 0/5. Forward-only capture cannot unblock the 2021-02-22 primary window,
+    inferred timestamps are rejected, and BEA still requires a corrected official
+    schedule authority. Do not query providers or run series, DQ or backtest.
+  - S10 passes when its exact file/canonical identity replays S9 and the five ordered
+    blockers, every row exposes acceptable historical authority classes, exact receipt/coverage
+    needs, forward-only impact and rejected substitutes, terminal is OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED,
+    and all provider/network/cache/market-file/source-admission/series/real-DQ/backtest/orders/fills/positions/production/broker
+    counters remain zero. A successor freeze wave requires exact Owner archive/source
+    identities.
   - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    Owner instruction=2026-08-27 好的，你继续推进; normalized as owner_instruction:TRADING-2542G:S10:2026-08-27:continue_non_executable_historical_pit_authority_decision_pack_v1.
-    Scope is draft-only non-executable DATA_RESEARCH; no source/archive selection
-    or admission, provider/network/cache/market-file IO, series, real DQ/backtest
-    or trading action; orders/fills/positions/production/broker=0.'
+    S10 decision pack file/canonical SHA=110830c6c14cf7112db2b0a9cefcd516650db66e0f3f7317ea4d6f266356d1fb/f13ec082d07f5fd33bfb2c2dab40d999d2a146afb35bfbf4cf92ed7e8a9cd1d3;
+    mandatory-veto adjacent=235 passed; Ruff/strict mypy/py_compile PASS. Task-activation
+    transaction v1 failed closed after its limited task-source phase and released
+    its lease; no generated/candidate/Full/main/remote mutation resulted. Source admission
+    and external counters remain zero; final governed authority rebuild, Atlas and
+    formal publication validation follow.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 1d1ff2d1600035f6e917f919f649c5d607f568aa956f71d1d6b8eb5e51bf656a
-last_event_id: task-event-60fdd3e3e239d1853f9af150b647db3d
+  canonical_row_sha256: 2a71b8a9cd40ec3c813c919e8d4906ed909c25083303b47c5f1b397ced9b7f71
+last_event_id: task-event-8314c4aae17d602c1028010fe28a889a
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 85347418bb21b7193460dccb1f363d7f116279e8e71255740dab5f6110b99f3d
+fragment_checksum: e5b72280310a711e495da7d4666423861fa81b5e7540361b84356df8abb5baf7
