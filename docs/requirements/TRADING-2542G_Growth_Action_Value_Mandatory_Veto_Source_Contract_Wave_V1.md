@@ -5,7 +5,7 @@
 - task id：`TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1`；
 - priority：`P0`；
 - governed mode：`SINGLE_LANE` serial consumer-contract wave；
-- current status：`BLOCKED_S9_HISTORICAL_PIT_RECEIPT_AUTHORITY`；
+- current status：`IN_PROGRESS_S10_HISTORICAL_PIT_RECEIPT_AUTHORITY_DECISION_PACK_DRAFT`；
 - Owner decision：
   `owner_decision:TRADING-2542F-2542G:2026-08-25:approve_exact_architecture_freeze_and_source_contract_followup_v1`；
 - S4A Owner decision：
@@ -644,6 +644,62 @@ positions、production、broker 必须全部为 `0`。只有后续 versioned PIT
    exact candidate 自动 replay，预期在 provider query 前 typed stop，并把下一 owner/engineering blocker
    收敛到 historical PIT receipt capability，而不是继续要求重复授权。
 
+### S10：historical PIT receipt authority 决策包草案
+
+Owner 于 2026-08-27 指示“好的，你继续推进”。本阶段把该指示解释为允许 Codex 在现有
+non-executable `DATA_RESEARCH` 边界内，把 S9 的五个 source capability blocker 收敛为可逐项审阅的
+historical PIT authority 决策对象；该指示不等于 Owner 已选定、提供或冻结任何 archive/provider，
+也不改变 S9 的 `BLOCKED_PRE_QUERY`、四项 veto exact semantics 或 exact-1202 session inventory。
+
+S10 必须机械区分四类 evidence：
+
+1. `PROVIDER_NATIVE_VERSIONED_AS_OF_ARCHIVE`：provider 能按历史 as-of 重放原始 payload、schema、
+   revision/adjustment vintage 与 availability receipt；可作为 primary-window authority candidate；
+2. `IMMUTABLE_TIMESTAMPED_CAPTURE_OF_FROZEN_SOURCE`：保存 frozen source 原始 bytes、可信 capture
+   timestamp、request/endpoint identity、checksum 与 supersession ledger；可作为 candidate，但 exact
+   archive identity 与覆盖率仍需 Owner 单独冻结；
+3. `FORWARD_ONLY_CAPTURE_LEDGER`：只能支持首次可靠 capture 之后的 forward research，不能回填
+   2021-02-22 起的 primary window，也不能让 S9 historical replay PASS；
+4. `INFERRED_OR_CURRENT_STATE_SUBSTITUTE`：以当前下载时间、页面 `Last-Modified`、session+1、文件
+   日期或今日 endpoint 内容反推历史 `available_at`/`published_at`；一律 rejected，不得用于 PIT、DQ、
+   series、backtest 或投资结论。
+
+五项决策面固定如下，recommendation 只表示设计建议，不表示 authority admission：
+
+| blocker | primary-window 可接受 authority candidate | forward-only 价值 | 明确拒绝项 |
+| --- | --- | --- | --- |
+| FMP SPY/QQQ | provider-native historical as-of archive，或 Owner 提供且可验证的逐 snapshot immutable ledger；必须含 per-row `available_at`、adjustment/corporate-action vintage、request、schema 与 checksum | 从首次 capture 起建立新 ledger | 当前 normalized frame、download time 或 session+1 冒充 historical PIT |
+| Cboe VIX | versioned official CSV snapshot archive，或可信时间戳的 frozen official-source capture ledger；必须含 publication/capture vintage、level/session mapping 与 checksum | 从首次 capture 起支持 forward VIX receipt | 当前 full-history CSV 的页面/文件时间回填到每个历史 row |
+| Federal Reserve FOMC | official versioned schedule archive，或可信时间戳的 official-page capture ledger；必须含 stable event key、revision/action、`published_at`/`captured_at`、coverage 与 supersession | 从首次 capture 起建立 schedule revision ledger | 用 meeting/result date、当前 consolidated calendar 或声明发布时间代替 schedule revision history |
+| BLS CPI/NFP | official versioned schedule archive，或可信时间戳的 official-page capture ledger；字段与 Fed 同级 | 从首次 capture 起建立 schedule revision ledger | 用 release result、当前年度 schedule 或 event date 反推 historical publication |
+| BEA PCE/GDP advance | 先把 frozen data API 修正为 official release-schedule authority，再绑定 versioned archive/capture ledger；必须含 taxonomy、revision、coverage 与 checksum | 从新 schedule authority 首次 capture 起可积累 | 继续把 `https://apps.bea.gov/api/data` 当作 release-schedule revision authority |
+
+组合推荐固定为
+`ACQUIRE_OR_PROVIDE_EXACT_HISTORICAL_PIT_AUTHORITY_FOR_ALL_FIVE_THEN_CREATE_SEPARATE_FREEZE_WAVE`。
+它是保持已冻结四-veto semantics、primary research window 与 historical/live 可比性的唯一直接路径。
+如果五项中任一只能得到 forward capture，S10 必须继续显示 primary-window replay blocked；是否把
+`scheduled_event_risk_veto` 改为 forward-only diagnostic、是否缩短窗口或是否建立 governed sensitivity
+角色，均属于新的 architecture/research-window Owner 决策，不能由本决策包默认采用。
+
+本阶段新增：
+
+- `config/research/qc_qqq_options_growth_action_value_mandatory_veto_historical_pit_receipt_authority_decision_pack_v1.yaml`；
+- `src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_historical_pit_receipt_authority_decision_pack.py`；
+- `tests/test_growth_action_value_mandatory_veto_historical_pit_receipt_authority_decision_pack.py`。
+
+验收标准：
+
+1. strict loader 递归重放 S9 policy 的 exact file/canonical identity 与五个 blocker row；
+2. 五个 ordered decision row 必须包含 acceptable authority classes、minimum receipt/coverage contract、
+   forward-only impact、rejected substitutes 与 Owner decision state；
+3. aggregate 固定为 `OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED`，任何 row 都不得
+   标记 selected/admitted/remediated，S9 继续为 technical `BLOCKED`；
+4. negative tests 拒绝删除 blocker、把 forward capture 计为 historical coverage、接受 inferred
+   timestamp、把 BEA data API 保留为 schedule authority、开启 provider/query/source admission/series/
+   real DQ/backtest/execution；
+5. focused/adjacent、Ruff、strict mypy、py_compile、generated freshness 与 formal tiers PASS；下一合法动作
+   是 Owner 提供或精确批准五项 archive/source identity 后建立独立 freeze-admission wave，不是直接 query。
+
 ## 7. Path、contract 与 evidence claims
 
 task-owned paths：本 requirement、逐阶段 immutable config、typed loader/pure adapter 与 focused tests。
@@ -672,6 +728,23 @@ evidence roles：
   仍以独立 Owner exact-freeze 为前提。
 
 ## 9. 进度记录
+
+- 2026-08-27：Owner 指示“好的，你继续推进”；READ_ONLY 与 SINGLE_LANE START/LANE preflight PASS，
+  main=origin/main=`45618688e05fa67531950da93a81861a410dadff`、active lease=0。选择 S10
+  non-executable historical PIT receipt authority decision-pack draft：只把 S9 五个 blocker 收敛成
+  authority class、minimum receipt/coverage、forward-only impact 与 rejected substitute，不选择或接纳
+  source/archive，不运行 provider/cache/market-file、真实 DQ/backtest/series，
+  orders/fills/positions/production/broker=`0`。
+- 2026-08-27：S10 decision pack file/canonical SHA-256=
+  `110830c6c14cf7112db2b0a9cefcd516650db66e0f3f7317ea4d6f266356d1fb`/
+  `f13ec082d07f5fd33bfb2c2dab40d999d2a146afb35bfbf4cf92ed7e8a9cd1d3`；strict loader 递归重放
+  S9 exact identity、五个 blocker/endpoint 与 exact primary window，aggregate=
+  `OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED`。S10 + 完整 mandatory-veto
+  adjacent=`235 passed`，Ruff、strict mypy、py_compile PASS。task-activation publication v1 在
+  `TASK_SOURCE_PRE_WRITE` 后因其只声明 task-source paths、不能作为最终 publication transaction 而按
+  fail-closed 释放；没有 generated/candidate/Full/main/remote mutation。最终发布使用包含全部 S10、shared、
+  generator 与 formal resource claims 的新 transaction。provider/network/cache/market-file、source
+  admission、series、真实 DQ/backtest 与 orders/fills/positions/production/broker 继续为 `0`。
 
 - 2026-08-27：S9 candidate=`b63bd87270926bfbd361cb7ac32682eb485fe3e0` 已完成
   Architecture/Contract/Integration/Reproducibility=`878/278/995/24 passed`，最终 Full=

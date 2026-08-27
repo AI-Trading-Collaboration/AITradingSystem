@@ -9686,6 +9686,41 @@ execution V2 + successor architecture V1 + S8 receipt contract + exact 1202 sess
 只有 versioned PIT archive 或经 review 的 source receipt authority 能证明上述历史字段后，才可生成新的
 manifest gate 版本并重新 replay；本版本不得查询 provider，更不得继续到 DQ、series 或 backtest。
 
+### TRADING-2542G S10 historical PIT receipt authority decision pack
+
+S10 不改变 S9 gate，也不选择真实 source。它把五个 pre-query blocker 转换为逐来源的 Owner 决策面，
+明确 historical authority、forward-only capture 与禁止的 timestamp inference 三者不能互换。
+
+```text
+S9 exact policy + five ordered typed blockers + exact 2021-02-22..2025-12-02 / 1202 sessions
+  -> replay exact S9 file / canonical / blocker / endpoint identity
+  -> acceptable historical authority candidate
+       -> provider-native versioned as-of archive, or
+       -> official versioned source archive, or
+       -> immutable trusted-timestamp capture of the frozen source
+  -> forward-only capture ledger
+       -> useful only after first reliable capture
+       -> does not count as historical coverage
+       -> does not unblock the primary research window
+  -> rejected substitutes
+       -> current download / page / file timestamp as historical available_at
+       -> session+1 as source-proven available_at
+       -> current consolidated schedule or release result as revision ledger
+       -> BEA data API as release-schedule authority
+  -> exact archive/source selected = 0 / 5
+  -> historical coverage proven = 0 / 5
+  -> source contract admitted = 0 / 5
+  -> terminal = OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED
+  -> provider / network / cache / market-file / real payload reads = 0
+  -> source admission / veto series / real DQ / backtest = 0
+  -> orders / fills / positions / production / broker = 0
+```
+
+保持已冻结四-veto semantics 与 primary research window 的推荐路径是：Owner 提供或精确批准五项
+versioned archive/source identity，随后另建 static freeze-admission wave，再重新执行 S9 manifest replay。
+若只能获得 forward capture，是否调整 event veto 角色或研究窗口属于新的 architecture/window 决策，
+不得在 S10 中静默降级。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

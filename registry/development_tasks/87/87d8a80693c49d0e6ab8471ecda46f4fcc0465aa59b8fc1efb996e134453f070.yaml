@@ -13,30 +13,24 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / provide or approve a versioned historical PIT receipt
-    authority for FMP, Cboe, Fed, BLS and BEA; Codex reruns S9 only after the exact
-    source contract is reviewable
+  next_owner: Codex / implement and validate the non-executable S10 historical PIT
+    receipt authority decision pack; Project Owner retains exact archive/source selection
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 'The static replay Git object-id defect
-    is repaired and locally validated. The remaining substantive S9 blocker is unchanged:
-    FMP and Cboe cannot prove historical per-row available_at/publication vintage,
-    Fed and BLS lack replayable schedule revision ledgers, and the frozen BEA data
-    endpoint is not schedule revision authority. Do not infer historical PIT timestamps
-    or run provider, DQ, series or backtest.'
+  unstructured_legacy_blocker_or_next_step: Convert the five S9 historical PIT capability
+    blockers into ordered authority-class, minimum receipt/coverage, forward-only
+    impact and rejected-substitute decision rows. Do not select or admit an archive/source
+    and do not query providers.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Current S9 wave passes when lowercase 40- and 64-character Git object ids
-      are accepted, all other lengths or non-hex values are rejected, the published-main
-      CLI emits MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE,
-      authorization remains STANDING_OWNER_SCOPE while technical_validation_state
-      is BLOCKED, and all network/provider/cache/market-file/source-admission/series/DQ/backtest/orders/fills/positions/production/broker
-      counters remain zero. Focused, adjacent, governed publication validation and
-      Atlas freshness must PASS. A successor gate may proceed only after exact historical
-      PIT receipt authority is reviewed.
+    text: S10 strict loader replays the exact S9 file/canonical identity and all five
+      blocker rows; acceptable authority classes, minimum receipts, primary-window
+      coverage, forward-only limitation and rejected inference are explicit; terminal
+      remains OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED; provider/network/cache/market-file/source-admission/series/real-DQ/backtest/orders/fills/positions/production/broker
+      counters stay zero; focused and governed publication validation PASS.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -1037,40 +1031,65 @@ events:
   - change:trading-2542g-s9-git-object-id-task-progress-20260827-v14
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-848a62c225d59df45d9f08acc3c8ea4a
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-27T01:24:05Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s10-task-activation-20260827-v1
+  lane_id: null
+  base_commit: 45618688e05fa67531950da93a81861a410dadff
+  previous_state_event_id: task-event-848a62c225d59df45d9f08acc3c8ea4a
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / implement and validate the non-executable S10 historical PIT
+      receipt authority decision pack; Project Owner retains exact archive/source
+      selection
+    blocker_or_next_step: Convert the five S9 historical PIT capability blockers into
+      ordered authority-class, minimum receipt/coverage, forward-only impact and rejected-substitute
+      decision rows. Do not select or admit an archive/source and do not query providers.
+    acceptance_criteria: S10 strict loader replays the exact S9 file/canonical identity
+      and all five blocker rows; acceptable authority classes, minimum receipts, primary-window
+      coverage, forward-only limitation and rejected inference are explicit; terminal
+      remains OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED; provider/network/cache/market-file/source-admission/series/real-DQ/backtest/orders/fills/positions/production/broker
+      counters stay zero; focused and governed publication validation PASS.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      Owner instruction=2026-08-27 好的，你继续推进; normalized as owner_instruction:TRADING-2542G:S10:2026-08-27:continue_non_executable_historical_pit_authority_decision_pack_v1.
+      Scope is draft-only non-executable DATA_RESEARCH; no source/archive selection
+      or admission, provider/network/cache/market-file IO, series, real DQ/backtest
+      or trading action; orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s10-task-activation-20260827-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-60fdd3e3e239d1853f9af150b647db3d
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner / provide or approve a versioned historical PIT receipt authority
-    for FMP, Cboe, Fed, BLS and BEA; Codex reruns S9 only after the exact source contract
-    is reviewable
-  - 'The static replay Git object-id defect is repaired and locally validated. The
-    remaining substantive S9 blocker is unchanged: FMP and Cboe cannot prove historical
-    per-row available_at/publication vintage, Fed and BLS lack replayable schedule
-    revision ledgers, and the frozen BEA data endpoint is not schedule revision authority.
-    Do not infer historical PIT timestamps or run provider, DQ, series or backtest.'
-  - Current S9 wave passes when lowercase 40- and 64-character Git object ids are
-    accepted, all other lengths or non-hex values are rejected, the published-main
-    CLI emits MANIFEST_REPLAY_BLOCKED_PRE_PROVIDER_QUERY_SOURCE_RECEIPT_CAPABILITY_INCOMPLETE,
-    authorization remains STANDING_OWNER_SCOPE while technical_validation_state is
-    BLOCKED, and all network/provider/cache/market-file/source-admission/series/DQ/backtest/orders/fills/positions/production/broker
-    counters remain zero. Focused, adjacent, governed publication validation and Atlas
-    freshness must PASS. A successor gate may proceed only after exact historical
-    PIT receipt authority is reviewed.
+  - IN_PROGRESS
+  - Codex / implement and validate the non-executable S10 historical PIT receipt authority
+    decision pack; Project Owner retains exact archive/source selection
+  - Convert the five S9 historical PIT capability blockers into ordered authority-class,
+    minimum receipt/coverage, forward-only impact and rejected-substitute decision
+    rows. Do not select or admit an archive/source and do not query providers.
+  - S10 strict loader replays the exact S9 file/canonical identity and all five blocker
+    rows; acceptable authority classes, minimum receipts, primary-window coverage,
+    forward-only limitation and rejected inference are explicit; terminal remains
+    OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED; provider/network/cache/market-file/source-admission/series/real-DQ/backtest/orders/fills/positions/production/broker
+    counters stay zero; focused and governed publication validation PASS.
   - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    Git object-id repair policy file/canonical SHA=54458cc019fd0bdfa67d4a4d2f6836777afdd86b3709932ee70a68cb0fd89364/7bfed1414ce85b777acdc807f0e425d1752dd7331de347b84e08b154b03aed10;
-    executor SHA=a564908f1d48cb69fb9cbf343a7e3f7f52643ecd333eb9be57ee294ab8846ccf.
-    RepositoryReplayContext accepts lowercase 40/64 object ids and rejects invalid
-    length, uppercase or non-hex. Focused=22 passed; complete mandatory-veto adjacent=233
-    passed; Ruff, strict mypy and py_compile PASS. No real provider/cache/market file,
-    DQ, series, backtest or trading action occurred. The task remains BLOCKED_OWNER_INPUT
-    solely for the five historical PIT receipt capabilities.'
+    Owner instruction=2026-08-27 好的，你继续推进; normalized as owner_instruction:TRADING-2542G:S10:2026-08-27:continue_non_executable_historical_pit_authority_decision_pack_v1.
+    Scope is draft-only non-executable DATA_RESEARCH; no source/archive selection
+    or admission, provider/network/cache/market-file IO, series, real DQ/backtest
+    or trading action; orders/fills/positions/production/broker=0.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 3de7d85168f033d96053b95dac2d0b8163bfeb0d143fe49f9b4c72d9e0fea0e5
-last_event_id: task-event-848a62c225d59df45d9f08acc3c8ea4a
+  canonical_row_sha256: 1d1ff2d1600035f6e917f919f649c5d607f568aa956f71d1d6b8eb5e51bf656a
+last_event_id: task-event-60fdd3e3e239d1853f9af150b647db3d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 73b97cda67f9d2003056a016134bee4c30acff4e94b9c24b495117c9cad6f4da
+fragment_checksum: 85347418bb21b7193460dccb1f363d7f116279e8e71255740dab5f6110b99f3d
