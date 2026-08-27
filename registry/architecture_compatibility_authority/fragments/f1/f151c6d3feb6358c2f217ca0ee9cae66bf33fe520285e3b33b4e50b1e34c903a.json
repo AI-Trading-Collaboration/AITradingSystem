@@ -29,7 +29,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "c0e2c35d1ea5fa5f893cd753dcb03f9499e82a79839e209115c7b5b5a6beece2"
+        "sha256": "410292a43656ffe189c0ab54a02700c288296b50f7148f32ef67cc9d77864d78"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -49,12 +49,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "8d991a920607d8fcac1201175c830cde7a054a286a58a55c9cef50a3bbcc43c0"
+        "sha256": "4bd58c572606ea39d0dcce104e5a84ccd0e628c0f15b96148619969cb2d2be80"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "5d1d16ad21fc9f7b3b73b83e44303121a2465e8677290a7237cd8e71c409bb7c"
+        "sha256": "91cf17a4d1b17d09e3545e50fd0d7adb0e54b8b7a662822a461839cdee342c2d"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -79,7 +79,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "d648637a0e72102e476e50ce1bf74d9bf5db402373b7a5eca4afdb4ef4870863"
+        "sha256": "e981bb9932f965eb63d301889e7631c4e6f0709fc1ca144623c84f24b219c565"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -132,5 +132,5 @@
     "task_id": "DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL"
   },
   "section_id": "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2",
-  "section_sha256": "b2ada4f29c5631a3d15b96391a4aa01272d2a3e83eca4eda377d90f89a13bc9f"
+  "section_sha256": "f151c6d3feb6358c2f217ca0ee9cae66bf33fe520285e3b33b4e50b1e34c903a"
 }
