@@ -41,7 +41,7 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
-    assert bundle.research_state_as_of.startswith("2026-08-26T")
+    assert bundle.research_state_as_of.startswith("2026-08-27T")
     assert bundle.evidence_evaluated_at is None
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
@@ -108,15 +108,16 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
         "四项 mandatory veto semantics 已 Owner exact-freeze 4/4，S5 synthetic callable "
-        "与 S8 pure PIT receipt adapter conformance 均为 4/4；S9 已在 standing owner "
-        "scope 下精确重放 execution V2、successor architecture V1、S8 contract 与 exact "
-        "1202-session inventory，authority/session/four-veto+action-guard compatibility "
-        "均 PASS；但 FMP/Cboe 缺少可证明的历史 available-at/publication vintage，Fed/BLS "
-        "缺 schedule revision ledger，S8 冻结的 BEA data API 也不是 schedule revision "
-        "authority，因此 manifest replay 在 provider query 前 typed BLOCKED，真实读取、"
-        "source admission、series、DQ、backtest 与 orders/fills/positions/production/broker "
-        "全为 0；下一合法动作是提供或评审可重放的 historical PIT receipt authority 后"
-        "生成新版 gate，不再重复要求 replay 授权"
+        "与 S8 pure PIT receipt adapter conformance 均为 4/4；S9 authority/session/"
+        "four-veto+action-guard compatibility replay 均 PASS，但五项 historical PIT "
+        "source capability 仍在 provider query 前 typed BLOCKED；S10 已把 FMP、Cboe、"
+        "Fed、BLS、BEA blocker 收敛为 ordered authority class、minimum receipt/coverage、"
+        "forward-only impact 与 rejected substitute 决策包，exact archive/source selected、"
+        "historical coverage proven、source admitted 均为 0/5，forward capture 不得冒充 "
+        "2021-02-22 起 primary window 的历史覆盖；真实读取、series、DQ、backtest 与 "
+        "orders/fills/positions/production/broker 全为 0；下一合法动作是 Owner 提供或精确批准"
+        "五项 archive/source identity，另建 static freeze-admission wave 后再重放 S9，不是直接"
+        "查询 provider"
     )
 
 
