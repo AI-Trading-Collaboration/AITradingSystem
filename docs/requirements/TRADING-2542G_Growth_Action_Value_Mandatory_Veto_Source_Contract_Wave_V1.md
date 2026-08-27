@@ -811,6 +811,14 @@ evidence roles：
 
 ## 9. 进度记录
 
+- 2026-08-27：failure-fix candidate=`9f3e4b8d920f50383c5acb7180df29363577b891` 的
+  Architecture/Contract/Integration/Reproducibility=`878/278/995/24 passed`。在启动 Full 前，coordinator
+  先手动 checkpoint `FULL_DISPATCHED`，随后 `run_validation_tier.py full` 因其必须从
+  `FORMAL_VALIDATION_PRE` 自行原子完成 dispatch 而以 `PUBLICATION_PHASE_MISMATCH` 拒绝；pytest 未启动，
+  没有 Full result 或数据/执行动作。v8 已以 immutable dispatch claim
+  `0336dcc6de95eae3e7120f83c18930da8ad1285884504df8891474d9fb08e98a` fail-closed 释放。下一事务
+  不手工写 `FULL_DISPATCHED`，由 Full runner 完整执行 validate → dispatch → pytest → result；不得把 v8
+  的无测试 dispatch claim 当作 Full evidence。
 - 2026-08-27：S11 publication v4 的五类 generated authority 全部重建 PASS，candidate=
   `491988d256ddc95745e90b6e84934fbcf2daf4eb`；首次 Architecture formal=`877 passed / 1 failed`。
   唯一失败是 `tests/test_arch_004g_deprecation.py` 仍冻结 S10 的 `1166 modules / 1326 tests`，而官方
