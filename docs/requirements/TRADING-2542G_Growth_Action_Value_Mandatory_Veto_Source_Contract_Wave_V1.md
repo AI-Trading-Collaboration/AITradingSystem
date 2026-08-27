@@ -811,6 +811,16 @@ evidence roles：
 
 ## 9. 进度记录
 
+- 2026-08-27：S11 source-preparation commit=`139c3a86d24b307d4613bd52b3a5a65014df5a25`；
+  config file/canonical SHA-256=`32071acfde9aa4c432f26964a839fe288de69f1e1a6fce99a2c07431e2a4caa7`/
+  `f8aa502366a9e952810c25510e758bd8f1d0a2492535056f46cda730cf05ba10`，S11+S10 focused=
+  `66 passed`，Ruff、strict mypy、py_compile 与 strict load PASS。publication v3 的 canonical task、
+  architecture manifests 与 Atlas 17-artifact rebuild PASS；report-flow builder 随后以
+  `RCF_SOURCE_SEAL_DRIFT` 拒绝 S11 新增流程后的旧 `docs/system_flow.md` seal（expected
+  `2,297,456` bytes，actual `2,299,528` bytes）。v3 已 fail-closed 释放、未生成 candidate、未运行
+  formal/Full、未集成或推送。通过 builder 的 `EXACT_BLANK_LINE_BLOCKS_V1` 与 Git blob 算法只读计算
+  reviewed successor seal=`2,299,528 bytes / a86a05...1d20 / 7b49ee...1f2c / 1,143 entries`；
+  只同步 source identity 与对应 frozen regression，不改变五项 blocker、veto、DQ/PIT 或授权语义。
 - 2026-08-27：Owner 指示“好的，你继续推进”；READ_ONLY 与 SINGLE_LANE START/LANE preflight PASS，
   main=origin/main=`45618688e05fa67531950da93a81861a410dadff`、active lease=0。选择 S10
   non-executable historical PIT receipt authority decision-pack draft：只把 S9 五个 blocker 收敛成

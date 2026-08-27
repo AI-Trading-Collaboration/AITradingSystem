@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1326
-test_count: 1266
+test_file_count: 1327
+test_count: 1267
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -12593,6 +12593,22 @@ tests:
 - test_id: tests.test_growth_action_value_mandatory_veto_historical_pit_receipt_authority_decision_pack
   path: tests/test_growth_action_value_mandatory_veto_historical_pit_receipt_authority_decision_pack.py
   sha256: dbabba45c0d7de8b0fb0d253c08277a10e51ed8efde54bb23a47677d05bb3f21
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_growth_action_value_mandatory_veto_historical_pit_static_authority_receipt_contract
+  path: tests/test_growth_action_value_mandatory_veto_historical_pit_static_authority_receipt_contract.py
+  sha256: e1a6e3f3b3f9d2fc688a91174227949caafffafe1fbaf72fd09c28a3b00d9579
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
