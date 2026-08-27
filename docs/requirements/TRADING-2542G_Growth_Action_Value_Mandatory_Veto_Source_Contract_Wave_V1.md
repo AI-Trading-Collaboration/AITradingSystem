@@ -811,6 +811,16 @@ evidence roles：
 
 ## 9. 进度记录
 
+- 2026-08-28：failure-fix candidate=`de11ef4453d326195f05886bff7059ae99f4cf86` 的 parent-bound
+  Architecture/Contract/Integration/Reproducibility=`878/278/995/24 passed`；Full=
+  `9830 passed / 3 skipped / 1 failed`，上一轮两个 report-flow aggregate failure 已消失。唯一剩余失败为
+  local ignored Atlas canonical page 的 `repository_commit=58f0f4c9...`，而 compatibility-authority rebuild
+  后最终 tracked candidate=`de11ef445...`；`test_local_canonical_page_uses_current_successor_identity_when_available`
+  因 exact-commit mismatch 正确 fail-closed。失败 Full=
+  `outputs/validation_runtime/full_20260827T154449Z/test_runtime_summary.json`，SHA-256=
+  `a26536b1382cb080a5486590dd60b312ef2613dbe3970beeacea79f658e98790`。v11 已失败释放；下一事务必须先
+  完成全部 tracked generated commit，再以最终 candidate SHA 重新 hydrate Atlas ignored artifact，然后才
+  进入 formal 与 parent-bound Full。不得把 generator 前 page identity 视为 current，也不得改变 S11 语义。
 - 2026-08-28：candidate=`a137bbcc818d6479a18592d6d72eecf07a67d468` 的五类 generated authority 与
   Architecture/Contract/Integration/Reproducibility=`878/278/995/24 passed`；首次实际 Full=
   `9829 passed / 3 skipped / 2 failed`。两个失败均来自

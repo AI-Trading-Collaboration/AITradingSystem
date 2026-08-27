@@ -14,7 +14,7 @@ fragment_count: 1028
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 6149f2aed3c90356cc9f169e70cb48b5e5f968311606af54929d29ce81877ae5
+final_chain_sha256: c8faf0c76f24dd92623763177b209ace5f2007780e38fb8a602d21e85be3d7e2
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 0c3efea17f7c4a4cae0488be7b40116560b065ec6ee1c53818e0ff1fdaa31509
 templates:
@@ -8247,17 +8247,17 @@ fragments:
   entry_sha256: a095f484e33e4c4459d294acd379fb83cd00e0d64bae7b2beb5b9d1f03111498
 - task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   path: registry/development_tasks/87/87d8a80693c49d0e6ab8471ecda46f4fcc0465aa59b8fc1efb996e134453f070.yaml
-  file_sha256: b0a1388928a8bd9f66793720dc06834f402ceec3b240b0a152db0f63d455f9cc
-  fragment_checksum: ec68d07efb9a318c30efa9b6eba0cffe9cd609d6ebb5870561affde5a92806fc
+  file_sha256: edb652929c23a0dc9756b708c0f3e64cbe3df2d7034b0066f9f48d71ad98bc9f
+  fragment_checksum: a90c69c34646b9d30198065481e516d104ad3756e69f52f54c7a9a122f6900d5
   partition: active
   order: 1028
   previous_entry_sha256: a095f484e33e4c4459d294acd379fb83cd00e0d64bae7b2beb5b9d1f03111498
-  entry_sha256: 6149f2aed3c90356cc9f169e70cb48b5e5f968311606af54929d29ce81877ae5
+  entry_sha256: c8faf0c76f24dd92623763177b209ace5f2007780e38fb8a602d21e85be3d7e2
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 410292a43656ffe189c0ab54a02700c288296b50f7148f32ef67cc9d77864d78
-  byte_count: 1758129
+  sha256: 494c68f151fb0a52cc5215b0ca2d50ae05bfd0dcbf4ecd406c2042fda778b656
+  byte_count: 1758289
   row_count: 505
   generated_do_not_edit: true
 - partition: completed
@@ -10318,7 +10318,14 @@ governance_cycles:
   change_id: trading-2542g-s11-full-failure-fix-20260828-v11
   event_count: 33
   production_effect: none
-governance_cycle_count: 293
+- cycle_id: arch-005-s5-cycle-294
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  change_id: trading-2542g-s11-atlas-final-hydration-20260828-v12
+  event_count: 34
+  production_effect: none
+governance_cycle_count: 294
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -10332,4 +10339,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 19dc068deb8643cf3167de9d69eec762ec4fdbddf853bf0eba806d5377407a87
+index_checksum: ee5bfd4d2029995f07464524de96ec935ff6539c852bddac6acd1130f00ab77f

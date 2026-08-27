@@ -13,26 +13,27 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / rebuild final S11 generated authority from the two-count correction,
-    rerun formal tiers, and execute parent-bound Full failure_fix_rerun before integration
+  next_owner: Codex / freeze the final task-source bytes, rebuild all generated authority,
+    hydrate Atlas from the post-generator final candidate SHA, then execute latest-parent-bound
+    formal and Full validation
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Replace only the two stale report-flow
-    aggregate entry-count regressions 3068->3072, rebuild architecture/Atlas/report-flow/compatibility
-    authority from one exact lane head, rerun formal tiers, and run Full with immutable
-    parent full_20260827T145645Z. Do not alter the S11 source contract or contact/query
-    any provider.
+  unstructured_legacy_blocker_or_next_step: The two report-flow failures are removed.
+    The only remaining Full failure is local ignored Atlas repository_commit bound
+    to the generator-input lane head rather than the post-compatibility candidate.
+    In the next final transaction, finish tracked generated commit first, rerender
+    Atlas with that exact candidate SHA, validate Atlas freshness, then run formal
+    tiers and Full with parent full_20260827T154449Z.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Focused report-flow regression passes; final generated authorities are fresh;
-      Architecture/Contract/Integration/Reproducibility PASS; parent-bound failure_fix_rerun
-      Full removes exactly the two stale aggregate-count failures; S11 terminal and
-      five-source states remain unchanged; all external/data/execution counters remain
-      zero; local main and remote main equal the validated candidate after ordinary
-      push.
+    text: Atlas ignored canonical page and sidecars bind the exact final tracked candidate
+      after all generated commits; Atlas focused freshness passes; Architecture/Contract/Integration/Reproducibility
+      PASS; parent-bound failure_fix_rerun Full removes the sole Atlas commit mismatch;
+      S11 terminal and five-source states remain unchanged; every external/data/execution
+      counter remains zero; ordinary integration verifies local main=remote main=candidate.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -1309,36 +1310,78 @@ events:
   - change:trading-2542g-s11-full-failure-fix-20260828-v11
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-ded01e0b4fce90080215850c1a02d39f
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-27T16:16:50Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s11-atlas-final-hydration-20260828-v12
+  lane_id: null
+  base_commit: de11ef4453d326195f05886bff7059ae99f4cf86
+  previous_state_event_id: task-event-ded01e0b4fce90080215850c1a02d39f
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / freeze the final task-source bytes, rebuild all generated
+      authority, hydrate Atlas from the post-generator final candidate SHA, then execute
+      latest-parent-bound formal and Full validation
+    blocker_or_next_step: The two report-flow failures are removed. The only remaining
+      Full failure is local ignored Atlas repository_commit bound to the generator-input
+      lane head rather than the post-compatibility candidate. In the next final transaction,
+      finish tracked generated commit first, rerender Atlas with that exact candidate
+      SHA, validate Atlas freshness, then run formal tiers and Full with parent full_20260827T154449Z.
+    acceptance_criteria: Atlas ignored canonical page and sidecars bind the exact
+      final tracked candidate after all generated commits; Atlas focused freshness
+      passes; Architecture/Contract/Integration/Reproducibility PASS; parent-bound
+      failure_fix_rerun Full removes the sole Atlas commit mismatch; S11 terminal
+      and five-source states remain unchanged; every external/data/execution counter
+      remains zero; ordinary integration verifies local main=remote main=candidate.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      Parent-bound formal=878/278/995/24 passed. Full outputs/validation_runtime/full_20260827T154449Z/test_runtime_summary.json
+      SHA=a26536b1382cb080a5486590dd60b312ef2613dbe3970beeacea79f658e98790 produced
+      9830 passed/3 skipped/1 failed. Sole failure: ignored Atlas page repository_commit=58f0f4c9...
+      while final candidate=de11ef445...; both report-flow aggregate failures are
+      gone. No S11 loader, DQ/PIT, strategy, execution or safety test failed. Vendor
+      contact/purchase, provider/network/cache/market-file, real payload, source admission,
+      veto series, real DQ/backtest, orders/fills/positions/production/broker remain
+      0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s11-atlas-final-hydration-20260828-v12
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-efd01c8b598bdb168f0ddc5261017a81
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
   - IN_PROGRESS
-  - Codex / rebuild final S11 generated authority from the two-count correction, rerun
-    formal tiers, and execute parent-bound Full failure_fix_rerun before integration
-  - Replace only the two stale report-flow aggregate entry-count regressions 3068->3072,
-    rebuild architecture/Atlas/report-flow/compatibility authority from one exact
-    lane head, rerun formal tiers, and run Full with immutable parent full_20260827T145645Z.
-    Do not alter the S11 source contract or contact/query any provider.
-  - Focused report-flow regression passes; final generated authorities are fresh;
-    Architecture/Contract/Integration/Reproducibility PASS; parent-bound failure_fix_rerun
-    Full removes exactly the two stale aggregate-count failures; S11 terminal and
-    five-source states remain unchanged; all external/data/execution counters remain
-    zero; local main and remote main equal the validated candidate after ordinary
-    push.
+  - Codex / freeze the final task-source bytes, rebuild all generated authority, hydrate
+    Atlas from the post-generator final candidate SHA, then execute latest-parent-bound
+    formal and Full validation
+  - The two report-flow failures are removed. The only remaining Full failure is local
+    ignored Atlas repository_commit bound to the generator-input lane head rather
+    than the post-compatibility candidate. In the next final transaction, finish tracked
+    generated commit first, rerender Atlas with that exact candidate SHA, validate
+    Atlas freshness, then run formal tiers and Full with parent full_20260827T154449Z.
+  - Atlas ignored canonical page and sidecars bind the exact final tracked candidate
+    after all generated commits; Atlas focused freshness passes; Architecture/Contract/Integration/Reproducibility
+    PASS; parent-bound failure_fix_rerun Full removes the sole Atlas commit mismatch;
+    S11 terminal and five-source states remain unchanged; every external/data/execution
+    counter remains zero; ordinary integration verifies local main=remote main=candidate.
   - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    First actual S11 Full=9829 passed/3 skipped/2 failed at outputs/validation_runtime/full_20260827T145645Z/test_runtime_summary.json
-    SHA=ae2149d9bc216231d7130f6de3c7e3eb9bd7d11cb5678f01c438a0f350f516a8. Both failures
-    are stale aggregate entry_count=3068 versus generated 3072 after four new system_flow
-    blocks; focused report-flow suite after 3068->3072=15 passed and Ruff PASS. No
-    S11 loader, DQ/PIT, Atlas, execution or safety test failed. Vendor contact/purchase,
+    Parent-bound formal=878/278/995/24 passed. Full outputs/validation_runtime/full_20260827T154449Z/test_runtime_summary.json
+    SHA=a26536b1382cb080a5486590dd60b312ef2613dbe3970beeacea79f658e98790 produced
+    9830 passed/3 skipped/1 failed. Sole failure: ignored Atlas page repository_commit=58f0f4c9...
+    while final candidate=de11ef445...; both report-flow aggregate failures are gone.
+    No S11 loader, DQ/PIT, strategy, execution or safety test failed. Vendor contact/purchase,
     provider/network/cache/market-file, real payload, source admission, veto series,
     real DQ/backtest, orders/fills/positions/production/broker remain 0.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 91d12d4e7f7393bd7f1d88bb896eb7807875733ac14f05951f76e5f7221c022c
-last_event_id: task-event-ded01e0b4fce90080215850c1a02d39f
+  canonical_row_sha256: 56a57087107fdfcc31a2fb29365c1815e6f3cc184f2a1236f0d054ead72c5eac
+last_event_id: task-event-efd01c8b598bdb168f0ddc5261017a81
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: ec68d07efb9a318c30efa9b6eba0cffe9cd609d6ebb5870561affde5a92806fc
+fragment_checksum: a90c69c34646b9d30198065481e516d104ad3756e69f52f54c7a9a122f6900d5
