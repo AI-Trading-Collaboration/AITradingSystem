@@ -5,7 +5,7 @@
 - task id：`TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1`；
 - priority：`P0`；
 - governed mode：`SINGLE_LANE` serial consumer-contract wave；
-- current status：`IN_PROGRESS_S10_HISTORICAL_PIT_RECEIPT_AUTHORITY_DECISION_PACK_DRAFT`；
+- current status：`IN_PROGRESS_S11_HISTORICAL_PIT_STATIC_AUTHORITY_RECEIPT_CONTRACT`；
 - Owner decision：
   `owner_decision:TRADING-2542F-2542G:2026-08-25:approve_exact_architecture_freeze_and_source_contract_followup_v1`；
 - S4A Owner decision：
@@ -18,6 +18,8 @@
   `separate_non_executable_adapter_implementation_followup_authorized=true` 边界启动独立 consumer wave；
 - S9 Owner decision：
   `owner_decision:TRADING-2542G:S9:2026-08-26:authorize_manifest_replay_source_admission_continue_v1`；
+- S11 Owner decision：
+  `owner_decision:TRADING-2542G:S11:2026-08-27:adopt_web_pro_static_authority_receipt_contract_sequence_v1`；
 - S8 授权边界：只允许本地、result-blind、non-executable `DATA_RESEARCH` 合同与 synthetic
   validation；不授权 veto series、R1 manifest、provider/cache query、真实 DQ、backtest、
   orders、fills、positions、paper、live、production 或 broker action；
@@ -699,6 +701,86 @@ S10 必须机械区分四类 evidence：
    real DQ/backtest/execution；
 5. focused/adjacent、Ruff、strict mypy、py_compile、generated freshness 与 formal tiers PASS；下一合法动作
    是 Owner 提供或精确批准五项 archive/source identity 后建立独立 freeze-admission wave，不是直接 query。
+
+### S11：historical PIT static authority/receipt contract（最小 serial contract wave）
+
+Owner 于 2026-08-27 在只读来源发现和 Web Pro exact-commit 复核后指示“采纳 Pro 的建议继续推进”。
+本阶段据此冻结共享的 authority、receipt、revision、coverage proof 和状态分离合同，并固定五项候选
+处置状态；不把候选 family、公开产品范围或最终日历升级为 exact authority、historical coverage、
+source admission 或真实数据授权。
+
+S10 compatibility-only failure-fix 已先在 exact commit
+`5635010dc2bf8e2fa2f68fc78723b5aff380c85d` 上完成。Architecture/Contract/Integration/
+Reproducibility=`878/278/995/24 passed`；parent-bound Full=
+`9787 passed / 3 skipped`，artifact=`outputs/validation_runtime/full_20260827T123031Z/`
+`test_runtime_summary.json`，SHA-256=
+`253cf9d4b8437232650cf03011b4122c64742fe00336f3f641b38ff36c59fa3d`。失败 parent 仍为
+`outputs/validation_runtime/full_20260827T025319Z/test_runtime_summary.json`。该 closeout 只证明当前
+compatibility authority 与 Atlas/test-manifest freshness，不改变 S10 五项 blocker。
+
+#### S11.1 五项候选处置
+
+| source | frozen candidate disposition | 本阶段允许的最窄边界 | 仍未满足 |
+| --- | --- | --- | --- |
+| FMP | `VENDOR_EVIDENCE_REQUIRED` | 冻结 capability/license/fee evidence contract；准备但不发送询价 packet | versioned/as-of payload、row `available_at`、corporate-action vintage、reissue/supersession、许可与报价 |
+| Cboe | `VENDOR_EVIDENCE_REQUIRED` | 冻结 Main Channel EOD candidate family 与 evidence contract；准备但不发送询价 packet | 原始逐日交付、correction/reissue、delivery receipt、digest/supersession、许可与报价 |
+| Fed | `FREEZE_CANDIDATE` | 冻结 2021--2025 official annual tentative FOMC schedule press-release family、source role 与 precedence | exact bytes/digest、完整 amendment inventory、逐 cutoff coverage；不得计为 exact authority 或 coverage PASS |
+| BLS | `INVENTORY_ONLY` | 盘点 annual schedule、official notices 与可信 capture 候选 | initial/revision/final 完整链、digest、trusted-capture policy 与逐 cutoff coverage |
+| BEA | `INVENTORY_ONLY` | 把 data API 降为 rejected schedule authority，盘点 SCB/update/archive 候选 | 可复取 official schedule identity、更新前版本、revision diff、digest 与逐 cutoff coverage |
+
+以上五行只冻结 `candidate_disposition`；只有 Fed 的 authority family/role/precedence 可以标为
+`candidate_source_approved=true`。五项 `exact_authority_identity_frozen`、
+`historical_coverage_proven`、`source_contract_admitted`、`runtime_authorized` 和
+`blocker_remediated` 均保持 false。`FREEZE_CANDIDATE` 不得被计入 S10 的 exact authority 计数。
+
+#### S11.2 共享静态合同
+
+1. `authority_class` 沿用 S10 三种可接纳 historical class，不增加 inferred/current-state class；
+2. `authority_role` 显式区分 initial schedule、revision notice、immutable capture、terminal
+   reconciliation 与 result-release-not-schedule-authority；price/VIX 另有独立 publication role；
+3. receipt identity 必须绑定 source/document id、exact URL、immutable payload SHA-256、version/revision、
+   `available_at`、capture authority 与 supersession lineage；`downloaded_at` 只允许 audit，不得作为 PIT；
+4. schedule ledger append-only，至少支持 `ADD|MOVE|TIME_CHANGE|CANCEL|RESTORE|METADATA_CORRECTION`；
+   stable event key 不得只用可变的 `scheduled_for`，被 supersede 的 revision 不得删除；
+5. current/final calendar 只能承担 `TERMINAL_RECONCILIATION_ONLY`，不能证明历史 cutoff 当时可见状态；
+6. `available_at_precision=DATE_ONLY` 在没有 Owner-frozen conservative cutoff policy 时不得跨越 intraday
+   cutoff；event date、scheduled time、page Last-Modified、download time 或 session+1 均不得推断
+   `available_at`；
+7. inventory 可以记录 `REGULAR_SCHEDULED|SPECIAL_OR_EMERGENCY|NOTATION_VOTE|RESCHEDULE_NOTICE|`
+   `CANCELLATION|RESTORATION`，但只有既有 frozen event type 精确映射成功的 row 才能影响 veto；未映射
+   event 返回 `INSUFFICIENT_OWNER_EVENT_TAXONOMY_REQUIRED`，不得自动扩张 event universe；
+8. 对每个 exact-1202 decision cutoff，只能选择 `available_at <= cutoff` 的最新 admitted revision，并证明
+   coverage 到 next action close、无 later-revision leakage、无 unresolved conflict、receipt lineage 完整；
+9. FMP/Cboe 仍需分别证明 frozen warm-up、adjustment/reissue lineage 与 license；1202 个 target row
+   存在不能替代 warm-up 或 historical version coverage；
+10. `candidate_source_approved`、`exact_authority_identity_frozen`、`source_contract_admitted`、
+    `historical_coverage_proven` 与 `runtime_authorized` 为独立状态，任何前态都不得自动升级后态。
+
+#### S11.3 产物、验证与退出条件
+
+新增：
+
+- `config/research/qc_qqq_options_growth_action_value_mandatory_veto_historical_pit_static_authority_receipt_contract_v1.yaml`；
+- `src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_historical_pit_static_authority_receipt_contract.py`；
+- `tests/test_growth_action_value_mandatory_veto_historical_pit_static_authority_receipt_contract.py`。
+
+验收标准：
+
+1. strict loader 递归重放 S10 exact file/canonical identity、五个 blocker row 与 exact-1202 window；
+2. 五项 ordered source row 精确为 FMP/Cboe=`VENDOR_EVIDENCE_REQUIRED`、Fed=`FREEZE_CANDIDATE`、
+   BLS/BEA=`INVENTORY_ONLY`，但 exact authority/coverage/admission/runtime/remediation 仍为 0/5；
+3. receipt、schedule revision、event taxonomy、cutoff coverage、falsification 与状态机均为 typed contract；
+4. negative tests 拒绝 current/final source 冒充历史 ledger、推断 timestamp、date-only intraday crossing、
+   deletion of superseded rows、partial source freeze 生成 series、capability evidence 自动授权 query/DQ/backtest；
+5. aggregate terminal 固定为
+   `S11_STATIC_AUTHORITY_RECEIPT_CONTRACT_FROZEN_HISTORICAL_COVERAGE_UNPROVEN`；S9/S10 仍保持技术阻塞；
+6. focused/adjacent、Ruff、strict mypy、py_compile、Architecture/Contract/Integration/Reproducibility/Full
+   与 generated freshness PASS；所有 provider/network/cache/market-file/source-admission/series/real-DQ/
+   backtest/orders/fills/positions/production/broker counters 保持 0。
+
+S11 发布后才允许从同一 exact main base 拆分 official-schedule inventory 与 vendor evidence packet 两条
+只读 evidence lane。实际 vendor contact、付费、真实 payload、DQ、series 或 backtest 都需要新的独立
+Owner 授权。
 
 ## 7. Path、contract 与 evidence claims
 

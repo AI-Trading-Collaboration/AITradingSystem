@@ -13,26 +13,27 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / provide or exact-approve one historical PIT archive/source
-    identity for each of FMP, Cboe, Fed, BLS and BEA; Codex first completes the compatibility-only
-    Full failure-fix rerun
+  next_owner: Codex / freeze the S11 source-preparation commit, then rebuild canonical/generated
+    authorities and execute governed formal validation
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S10 semantics and focused/formal pre-Full
-    validation pass. The first Full found only stale compatibility authority after
-    the Atlas regression test changed the generated test-manifest hash. Rebuild current
-    compatibility authority, rerun formal tiers, and bind failed Full parent full_20260827T025319Z;
-    do not alter any source blocker or query provider.
+  unstructured_legacy_blocker_or_next_step: S11 static contract now loads fail-closed
+    and focused S11+S10 regression passes. Preserve the exact source-preparation bytes,
+    reacquire publication authority from that clean lane head, rebuild shared/generated
+    authorities in declared order, then run Architecture/Contract/Integration/Reproducibility/Full.
+    Do not contact vendors, query providers, admit sources, generate series, or run
+    real DQ/backtest.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Failure-fix passes when current compatibility authority binds the exact
-      latest test manifest, the three prior Full failures are removed, Architecture/Contract/Integration/Reproducibility
-      and parent-bound Full PASS, Atlas remains exact-commit fresh, S10 terminal remains
-      OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED, and all external/data/execution
-      counters remain zero.
+    text: Strict S11 loader replays S10 exact file/canonical identity, five ordered
+      blocker rows and the exact 1202-session window; typed receipt/revision/taxonomy/cutoff/falsification/state-separation
+      contracts reject inferred timestamps and automatic promotion; generated authorities
+      are fresh; Architecture/Contract/Integration/Reproducibility/Full PASS; terminal
+      is S11_STATIC_AUTHORITY_RECEIPT_CONTRACT_FROZEN_HISTORICAL_COVERAGE_UNPROVEN;
+      all external/data/execution counters remain zero.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -1145,35 +1146,120 @@ events:
   - change:trading-2542g-s10-full-parent-compatibility-fix-20260827-v6
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-5bd6f9df95dc3ab9cc6a32cb5a2a8577
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-27T13:07:28Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s11-task-activation-20260827-v1
+  lane_id: null
+  base_commit: 5635010dc2bf8e2fa2f68fc78723b5aff380c85d
+  previous_state_event_id: task-event-5bd6f9df95dc3ab9cc6a32cb5a2a8577
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / implement and validate S11 static authority-receipt contract;
+      Project Owner retains exact source, vendor-contact, real-query, DQ and backtest
+      decisions
+    blocker_or_next_step: Freeze the shared historical PIT authority, receipt, schedule-revision,
+      cutoff-coverage, falsification and independent state contract. Record FMP/Cboe
+      as VENDOR_EVIDENCE_REQUIRED, Fed as FREEZE_CANDIDATE, and BLS/BEA as INVENTORY_ONLY
+      while exact authority, coverage, admission, runtime authorization and blocker
+      remediation stay 0/5.
+    acceptance_criteria: Strict S11 loader replays S10 exact file/canonical identity,
+      five ordered blocker rows and the exact 1202-session window; typed receipt/revision/taxonomy/cutoff/falsification/state-separation
+      contracts reject inferred timestamps, final-calendar historical use, date-only
+      intraday crossing, deleted superseded revisions, partial-freeze series and capability-to-runtime
+      escalation; terminal is S11_STATIC_AUTHORITY_RECEIPT_CONTRACT_FROZEN_HISTORICAL_COVERAGE_UNPROVEN;
+      focused/formal/Full and generated freshness PASS; every external/data/execution
+      counter remains zero.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      Owner decision=owner_decision:TRADING-2542G:S11:2026-08-27:adopt_web_pro_static_authority_receipt_contract_sequence_v1;
+      advisory=https://chatgpt.com/c/6a8ff3ee-54f4-83ee-8198-30e841924387; D0 exact
+      base=5635010dc2bf8e2fa2f68fc78723b5aff380c85d; parent-bound Full=9787 passed/3
+      skipped at outputs/validation_runtime/full_20260827T123031Z/test_runtime_summary.json
+      SHA=253cf9d4b8437232650cf03011b4122c64742fe00336f3f641b38ff36c59fa3d. Scope=non-executable
+      DATA_RESEARCH static contract only; no vendor contact/purchase, provider/network/cache/market-file,
+      source admission, series, real DQ/backtest; orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s11-task-activation-20260827-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-41bfdfb0044a8930b9c65b83c9928e1f
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-27T13:34:00Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s11-static-contract-focused-pass-20260827-v2
+  lane_id: null
+  base_commit: 5635010dc2bf8e2fa2f68fc78723b5aff380c85d
+  previous_state_event_id: task-event-41bfdfb0044a8930b9c65b83c9928e1f
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / freeze the S11 source-preparation commit, then rebuild canonical/generated
+      authorities and execute governed formal validation
+    blocker_or_next_step: S11 static contract now loads fail-closed and focused S11+S10
+      regression passes. Preserve the exact source-preparation bytes, reacquire publication
+      authority from that clean lane head, rebuild shared/generated authorities in
+      declared order, then run Architecture/Contract/Integration/Reproducibility/Full.
+      Do not contact vendors, query providers, admit sources, generate series, or
+      run real DQ/backtest.
+    acceptance_criteria: Strict S11 loader replays S10 exact file/canonical identity,
+      five ordered blocker rows and the exact 1202-session window; typed receipt/revision/taxonomy/cutoff/falsification/state-separation
+      contracts reject inferred timestamps and automatic promotion; generated authorities
+      are fresh; Architecture/Contract/Integration/Reproducibility/Full PASS; terminal
+      is S11_STATIC_AUTHORITY_RECEIPT_CONTRACT_FROZEN_HISTORICAL_COVERAGE_UNPROVEN;
+      all external/data/execution counters remain zero.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      S11 config file/canonical SHA=32071acfde9aa4c432f26964a839fe288de69f1e1a6fce99a2c07431e2a4caa7/f8aa502366a9e952810c25510e758bd8f1d0a2492535056f46cda730cf05ba10;
+      loader SHA=b0afd1b20d7b328c8358f727ce7faa29391fea3d4c2ed2eebe1239748ad38c33;
+      test SHA=e1a6e3f3b3f9d2fc688a91174227949caaffafe1fbaf72fd09c28a3b00d9579. Focused
+      parallel regression=66 passed; Ruff/strict mypy/py_compile/load PASS. Candidate
+      family approved=1/5 (Fed family/role only); exact authority/coverage/admission/runtime/remediation=0/5.
+      Vendor contact/purchase, provider/network/cache/market-file, real payload, source
+      admission, veto series, real DQ/backtest, orders/fills/positions/production/broker
+      all remain 0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s11-static-contract-focused-pass-20260827-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e76ef573d74c2df17705d0065020e7ce
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner / provide or exact-approve one historical PIT archive/source identity
-    for each of FMP, Cboe, Fed, BLS and BEA; Codex first completes the compatibility-only
-    Full failure-fix rerun
-  - S10 semantics and focused/formal pre-Full validation pass. The first Full found
-    only stale compatibility authority after the Atlas regression test changed the
-    generated test-manifest hash. Rebuild current compatibility authority, rerun formal
-    tiers, and bind failed Full parent full_20260827T025319Z; do not alter any source
-    blocker or query provider.
-  - Failure-fix passes when current compatibility authority binds the exact latest
-    test manifest, the three prior Full failures are removed, Architecture/Contract/Integration/Reproducibility
-    and parent-bound Full PASS, Atlas remains exact-commit fresh, S10 terminal remains
-    OWNER_EXACT_HISTORICAL_PIT_AUTHORITY_REQUIRED_0_OF_5_REMEDIATED, and all external/data/execution
-    counters remain zero.
+  - IN_PROGRESS
+  - Codex / freeze the S11 source-preparation commit, then rebuild canonical/generated
+    authorities and execute governed formal validation
+  - S11 static contract now loads fail-closed and focused S11+S10 regression passes.
+    Preserve the exact source-preparation bytes, reacquire publication authority from
+    that clean lane head, rebuild shared/generated authorities in declared order,
+    then run Architecture/Contract/Integration/Reproducibility/Full. Do not contact
+    vendors, query providers, admit sources, generate series, or run real DQ/backtest.
+  - Strict S11 loader replays S10 exact file/canonical identity, five ordered blocker
+    rows and the exact 1202-session window; typed receipt/revision/taxonomy/cutoff/falsification/state-separation
+    contracts reject inferred timestamps and automatic promotion; generated authorities
+    are fresh; Architecture/Contract/Integration/Reproducibility/Full PASS; terminal
+    is S11_STATIC_AUTHORITY_RECEIPT_CONTRACT_FROZEN_HISTORICAL_COVERAGE_UNPROVEN;
+    all external/data/execution counters remain zero.
   - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    First Full=9784 passed/3 skipped/3 failed; immutable parent=outputs/validation_runtime/full_20260827T025319Z/test_runtime_summary.json
-    SHA=8d80a5752a7ff5003841b295d890d3d2cd05d4679831ad3ffb81860597524c7f. All three
-    failures are stale current compatibility bindings after the Atlas test-manifest
-    refresh; S10 logic, DQ/PIT and safety boundaries did not fail. No provider/network/cache/market-file/source-admission/series/real
-    DQ/backtest/trading action occurred.'
+    S11 config file/canonical SHA=32071acfde9aa4c432f26964a839fe288de69f1e1a6fce99a2c07431e2a4caa7/f8aa502366a9e952810c25510e758bd8f1d0a2492535056f46cda730cf05ba10;
+    loader SHA=b0afd1b20d7b328c8358f727ce7faa29391fea3d4c2ed2eebe1239748ad38c33; test
+    SHA=e1a6e3f3b3f9d2fc688a91174227949caaffafe1fbaf72fd09c28a3b00d9579. Focused parallel
+    regression=66 passed; Ruff/strict mypy/py_compile/load PASS. Candidate family
+    approved=1/5 (Fed family/role only); exact authority/coverage/admission/runtime/remediation=0/5.
+    Vendor contact/purchase, provider/network/cache/market-file, real payload, source
+    admission, veto series, real DQ/backtest, orders/fills/positions/production/broker
+    all remain 0.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 69b0024b945fcba41b4b48c56e2f1a58d329c6b4edb0e7d7368460b9d009d263
-last_event_id: task-event-5bd6f9df95dc3ab9cc6a32cb5a2a8577
+  canonical_row_sha256: 3d35f091c963a83016148c46c259c9e7d7d15481e9ef7d80e7486428e565ca61
+last_event_id: task-event-e76ef573d74c2df17705d0065020e7ce
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 7725229158b8587811e0a80c254be9c4edfc6083d52ee4cafa81d7b4fb98dd02
+fragment_checksum: df63e91992e67fc2b7b8e1c4adcd8826da217b40a590e417b71197e0ac791242

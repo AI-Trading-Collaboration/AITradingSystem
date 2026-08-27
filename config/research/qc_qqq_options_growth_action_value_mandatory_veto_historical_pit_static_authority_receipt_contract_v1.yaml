@@ -1,0 +1,452 @@
+schema_version: growth_action_value_mandatory_veto_historical_pit_static_authority_receipt_contract.v1
+policy_id: qc_qqq_options_growth_action_value_mandatory_veto_historical_pit_static_authority_receipt_contract_v1
+policy_version: 1.0.0
+status: OWNER_APPROVED_STATIC_CONTRACT_HISTORICAL_COVERAGE_UNPROVEN
+task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+owner_scope:
+  instruction_ref: owner_decision:TRADING-2542G:S11:2026-08-27:adopt_web_pro_static_authority_receipt_contract_sequence_v1
+  scope: NON_EXECUTABLE_DATA_RESEARCH_STATIC_AUTHORITY_RECEIPT_CONTRACT_ONLY
+  candidate_disposition_freeze_allowed: true
+  candidate_authority_family_freeze_allowed: true
+  exact_authority_selection_allowed: false
+  vendor_contact_allowed: false
+  paid_product_purchase_allowed: false
+  provider_query_allowed: false
+predecessor_binding:
+  policy_id: qc_qqq_options_growth_action_value_mandatory_veto_historical_pit_receipt_authority_decision_pack_v1
+  path: config/research/qc_qqq_options_growth_action_value_mandatory_veto_historical_pit_receipt_authority_decision_pack_v1.yaml
+  file_sha256: 110830c6c14cf7112db2b0a9cefcd516650db66e0f3f7317ea4d6f266356d1fb
+  canonical_sha256: f13ec082d07f5fd33bfb2c2dab40d999d2a146afb35bfbf4cf92ed7e8a9cd1d3
+  role: S10_HISTORICAL_PIT_AUTHORITY_DECISION_SURFACE
+  immutable: true
+compatibility_closeout:
+  candidate_sha: 5635010dc2bf8e2fa2f68fc78723b5aff380c85d
+  failed_parent_path: outputs/validation_runtime/full_20260827T025319Z/test_runtime_summary.json
+  failed_parent_sha256: 8d80a5752a7ff5003841b295d890d3d2cd05d4679831ad3ffb81860597524c7f
+  passing_full_path: outputs/validation_runtime/full_20260827T123031Z/test_runtime_summary.json
+  passing_full_sha256: 253cf9d4b8437232650cf03011b4122c64742fe00336f3f641b38ff36c59fa3d
+  passing_full_result: 9787_PASSED_3_SKIPPED
+  changes_source_blockers: false
+primary_research_window:
+  exchange_calendar: XNYS
+  requested_start: 2021-02-22
+  requested_end: 2025-12-02
+  exact_session_count: 1202
+  ordered_session_ids_lf_sha256: d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0
+  primary_window_change_allowed: false
+authority_class_policy:
+  historical_candidate_classes:
+    - PROVIDER_NATIVE_VERSIONED_AS_OF_ARCHIVE
+    - OFFICIAL_VERSIONED_SOURCE_ARCHIVE
+    - IMMUTABLE_TIMESTAMPED_CAPTURE_OF_FROZEN_SOURCE
+  forward_only_class: FORWARD_ONLY_CAPTURE_LEDGER
+  rejected_class: INFERRED_OR_CURRENT_STATE_SUBSTITUTE
+  forward_only_counts_as_historical_coverage: false
+  inferred_timestamp_counts_as_pit_evidence: false
+  current_endpoint_state_counts_as_historical_vintage: false
+authority_role_policy:
+  allowed_roles:
+    - HISTORICAL_PRICE_PUBLICATION_AUTHORITY
+    - HISTORICAL_VOLATILITY_PUBLICATION_AUTHORITY
+    - INITIAL_SCHEDULE_AUTHORITY
+    - REVISION_NOTICE_AUTHORITY
+    - IMMUTABLE_CAPTURE_AUTHORITY
+    - TERMINAL_RECONCILIATION_ONLY
+    - RESULT_RELEASE_NOT_SCHEDULE_AUTHORITY
+  terminal_reconciliation_counts_as_historical_available_at: false
+  result_release_counts_as_schedule_authority: false
+receipt_identity_contract:
+  required_fields:
+    - authority_id
+    - authority_class
+    - authority_role
+    - source_document_id
+    - source_url
+    - payload_sha256
+    - source_native_version_id
+    - published_at
+    - available_at
+    - available_at_precision
+    - trusted_captured_at
+    - capture_authority_id
+    - receipt_id
+    - supersedes_receipt_id
+    - downloaded_at_audit_only
+  downloaded_at_role: AUDIT_ONLY_NOT_PIT
+  date_only_intraday_cutoff_policy: INSUFFICIENT_UNLESS_OWNER_FROZEN_CONSERVATIVE_MAPPING
+  prohibited_available_at_inference:
+    - DOWNLOADED_AT_AS_AVAILABLE_AT
+    - CURRENT_PAGE_LAST_MODIFIED_AS_HISTORICAL_AVAILABLE_AT
+    - SCHEDULED_FOR_AS_AVAILABLE_AT
+    - EVENT_OR_RESULT_DATE_AS_AVAILABLE_AT
+    - SESSION_PLUS_ONE_AS_SOURCE_PROVEN_AVAILABLE_AT
+schedule_revision_ledger_contract:
+  required_fields:
+    - authority_id
+    - authority_role
+    - source_document_id
+    - source_url
+    - payload_sha256
+    - source_year
+    - stable_event_key
+    - event_taxonomy_id
+    - reference_period_or_meeting_ordinal
+    - scheduled_for
+    - revision_action
+    - source_native_revision_id
+    - revision_id
+    - published_at
+    - available_at
+    - available_at_precision
+    - trusted_captured_at
+    - capture_authority_id
+    - supersedes_revision_id
+    - supersession_reason
+    - coverage_through
+    - receipt_id
+    - downloaded_at_audit_only
+  revision_actions: [ADD, MOVE, TIME_CHANGE, CANCEL, RESTORE, METADATA_CORRECTION]
+  append_only: true
+  stable_event_key_may_use_scheduled_for_only: false
+  superseded_revisions_retained: true
+  move_then_restore_records_two_revisions: true
+  current_or_final_calendar_role: TERMINAL_RECONCILIATION_ONLY
+  final_calendar_can_supply_historical_available_at: false
+event_taxonomy_contract:
+  inventory_categories:
+    - REGULAR_SCHEDULED
+    - SPECIAL_OR_EMERGENCY
+    - NOTATION_VOTE
+    - RESCHEDULE_NOTICE
+    - CANCELLATION
+    - RESTORATION
+  frozen_veto_event_type_ids:
+    - FEDERAL_RESERVE:FOMC_RATE_DECISION
+    - BLS:CPI
+    - BLS:NONFARM_PAYROLLS
+    - BEA:PCE_PRICE_INDEX
+    - BEA:GDP_ADVANCE_ESTIMATE
+  only_exact_frozen_event_type_ids_affect_veto: true
+  special_or_emergency_default: INVENTORY_ONLY_NOT_VETO_ELIGIBLE
+  notation_vote_default: INVENTORY_ONLY_NOT_VETO_ELIGIBLE
+  unmapped_event_terminal: INSUFFICIENT_OWNER_EVENT_TAXONOMY_REQUIRED
+  architecture_expansion_allowed: false
+cutoff_coverage_contract:
+  decision_cutoff_scope: EXACT_1202_ORDERED_DECISION_CUTOFFS
+  selected_revision_rule: LATEST_ADMITTED_REVISION_WITH_AVAILABLE_AT_LTE_CUTOFF
+  required_coverage_through: NEXT_ACTION_SESSION_CLOSE
+  later_revision_leakage_allowed: false
+  unresolved_conflict_allowed: false
+  complete_receipt_lineage_required: true
+  exact_warmup_and_state_lineage_required: true
+  target_row_count_alone_proves_coverage: false
+state_separation_contract:
+  ordered_states:
+    - CANDIDATE_SOURCE_APPROVED
+    - EXACT_AUTHORITY_IDENTITY_FROZEN
+    - SOURCE_CONTRACT_ADMITTED
+    - HISTORICAL_COVERAGE_PROVEN
+    - STATIC_MANIFEST_REPLAY_PASS
+    - REAL_SOURCE_QUERY_AUTHORIZED
+    - OBSERVED_INVENTORY_ADMITTED
+    - REAL_DQ_AUTHORIZED
+    - REAL_DQ_PASS
+    - VETO_SERIES_GENERATION_AUTHORIZED
+    - BACKTEST_AUTHORIZED
+    - BACKTEST_VALIDITY_REVIEWED
+    - PAPER_LIVE_PRODUCTION_BROKER_AUTHORIZED
+  automatic_state_promotion_allowed: false
+  partial_source_freeze_can_generate_series: false
+  source_capability_implies_investment_value: false
+source_rows:
+  - ordinal: 1
+    candidate_id: fmp_spy_qqq_eod_adjusted_v1
+    blocker_reason_code: FMP_HISTORICAL_ROW_AVAILABLE_AT_UNPROVEN
+    provider_or_authority: Financial Modeling Prep
+    candidate_disposition: VENDOR_EVIDENCE_REQUIRED
+    disposition_frozen: true
+    candidate_authority_family: VENDOR_CERTIFIED_VERSIONED_AS_OF_SPY_QQQ_EOD_ARCHIVE
+    candidate_authority_family_frozen: false
+    candidate_source_approved: false
+    acceptable_historical_authority_classes:
+      - PROVIDER_NATIVE_VERSIONED_AS_OF_ARCHIVE
+      - IMMUTABLE_TIMESTAMPED_CAPTURE_OF_FROZEN_SOURCE
+    authority_roles: [HISTORICAL_PRICE_PUBLICATION_AUTHORITY]
+    reference_locators:
+      - https://site.financialmodelingprep.com/developer/docs/stable
+      - https://site.financialmodelingprep.com/datasets/market-data-historic
+      - https://site.financialmodelingprep.com/developer/docs/changelog
+      - https://site.financialmodelingprep.com/developer/docs/pricing
+    rejected_authority_locators: []
+    cost_state: PUBLIC_PREMIUM_APPROX_USD_59_MONTH_ANNUAL_BILLING_ENTERPRISE_QUOTE_REQUIRED
+    evidence_packet_state: PREPARE_NOT_SENT
+    required_next_evidence:
+      - ORIGINAL_PUBLICATION_OR_DELIVERY_TIMESTAMP
+      - HISTORICAL_VERSION_RETENTION
+      - CORRECTION_AND_REISSUE_HANDLING
+      - PAYLOAD_CHECKSUM
+      - SUPERSESSION_RELATIONSHIP
+      - CORPORATE_ACTION_VINTAGE
+      - EXACT_TARGET_AND_WARMUP_COVERAGE
+      - INTERNAL_RESEARCH_LICENSE_RIGHTS
+      - CURRENT_PRICE_AND_TERM_VALIDITY
+    selected_authority_class: null
+    exact_authority_identity: null
+    exact_authority_identity_frozen: false
+    historical_coverage_proven: false
+    source_contract_admitted: false
+    runtime_authorized: false
+    blocker_remediated: false
+  - ordinal: 2
+    candidate_id: cboe_vix_index_daily_v1
+    blocker_reason_code: CBOE_VIX_HISTORICAL_PUBLICATION_VINTAGE_UNPROVEN
+    provider_or_authority: Cboe Global Markets
+    candidate_disposition: VENDOR_EVIDENCE_REQUIRED
+    disposition_frozen: true
+    candidate_authority_family: CBOE_DATASHOP_MAIN_CHANNEL_END_OF_DAY_VIX_DAILY_FILES
+    candidate_authority_family_frozen: false
+    candidate_source_approved: false
+    acceptable_historical_authority_classes:
+      - OFFICIAL_VERSIONED_SOURCE_ARCHIVE
+      - IMMUTABLE_TIMESTAMPED_CAPTURE_OF_FROZEN_SOURCE
+    authority_roles: [HISTORICAL_VOLATILITY_PUBLICATION_AUTHORITY]
+    reference_locators:
+      - https://www.cboe.com/tradable_products/vix/vix_historical_data
+      - https://datashop.cboe.com/main-channel-end-of-day-summary
+      - https://datashop.cboe.com/faqs
+      - https://datashop.cboe.com/data-policies
+    rejected_authority_locators:
+      - https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv
+    cost_state: PUBLIC_FIXED_PRICE_UNVERIFIED_QUOTE_REQUIRED
+    evidence_packet_state: PREPARE_NOT_SENT
+    required_next_evidence:
+      - ORIGINAL_DELIVERY_TIMESTAMP
+      - HISTORICAL_DAILY_FILE_RETENTION
+      - CORRECTION_AND_REISSUE_HANDLING
+      - PAYLOAD_CHECKSUM
+      - SUPERSESSION_RELATIONSHIP
+      - EXACT_TARGET_PLUS_251_PRETARGET_COVERAGE
+      - INTERNAL_RESEARCH_LICENSE_RIGHTS
+      - CURRENT_PRICE_AND_TERM_VALIDITY
+    selected_authority_class: null
+    exact_authority_identity: null
+    exact_authority_identity_frozen: false
+    historical_coverage_proven: false
+    source_contract_admitted: false
+    runtime_authorized: false
+    blocker_remediated: false
+  - ordinal: 3
+    candidate_id: federal_reserve_fomc_schedule_capture_v1
+    blocker_reason_code: FED_FOMC_REVISION_LEDGER_UNAVAILABLE
+    provider_or_authority: Federal Reserve Board
+    candidate_disposition: FREEZE_CANDIDATE
+    disposition_frozen: true
+    candidate_authority_family: FEDERAL_RESERVE_ANNUAL_TENTATIVE_FOMC_SCHEDULE_PRESS_RELEASE_SERIES_2021_2025
+    candidate_authority_family_frozen: true
+    candidate_source_approved: true
+    acceptable_historical_authority_classes:
+      - OFFICIAL_VERSIONED_SOURCE_ARCHIVE
+      - IMMUTABLE_TIMESTAMPED_CAPTURE_OF_FROZEN_SOURCE
+    authority_roles: [INITIAL_SCHEDULE_AUTHORITY, TERMINAL_RECONCILIATION_ONLY]
+    reference_locators:
+      - https://www.federalreserve.gov/newsevents/pressreleases/monetary20200702a.htm
+      - https://www.federalreserve.gov/newsevents/pressreleases/monetary20210604a.htm
+      - https://www.federalreserve.gov/newsevents/pressreleases/monetary20220624a.htm
+      - https://www.federalreserve.gov/newsevents/pressreleases/monetary20230623a.htm
+      - https://www.federalreserve.gov/newsevents/pressreleases/monetary20240809a.htm
+      - https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
+    rejected_authority_locators: []
+    cost_state: PUBLIC_OFFICIAL_NO_LICENSE_FEE_IDENTIFIED
+    evidence_packet_state: EXACT_URL_DIGEST_REVISION_INVENTORY_NOT_GENERATED
+    required_next_evidence:
+      - EXACT_DOCUMENT_BYTES_AND_SHA256
+      - EXHAUSTIVE_SCHEDULE_AMENDMENT_INVENTORY
+      - EVENT_TAXONOMY_MAPPING
+      - SOURCE_NATIVE_OR_CANONICAL_REVISION_ID
+      - AVAILABLE_AT_AND_PRECISION
+      - SUPERSESSION_LINEAGE
+      - EVERY_CUTOFF_THROUGH_NEXT_ACTION_CLOSE_COVERAGE
+    selected_authority_class: null
+    exact_authority_identity: null
+    exact_authority_identity_frozen: false
+    historical_coverage_proven: false
+    source_contract_admitted: false
+    runtime_authorized: false
+    blocker_remediated: false
+  - ordinal: 4
+    candidate_id: bls_release_schedule_capture_v1
+    blocker_reason_code: BLS_RELEASE_SCHEDULE_REVISION_LEDGER_UNAVAILABLE
+    provider_or_authority: Bureau of Labor Statistics
+    candidate_disposition: INVENTORY_ONLY
+    disposition_frozen: true
+    candidate_authority_family: BLS_ANNUAL_RELEASE_SCHEDULE_AND_OFFICIAL_RESCHEDULE_NOTICE_ARCHIVE
+    candidate_authority_family_frozen: false
+    candidate_source_approved: false
+    acceptable_historical_authority_classes:
+      - OFFICIAL_VERSIONED_SOURCE_ARCHIVE
+      - IMMUTABLE_TIMESTAMPED_CAPTURE_OF_FROZEN_SOURCE
+    authority_roles: [INITIAL_SCHEDULE_AUTHORITY, REVISION_NOTICE_AUTHORITY, TERMINAL_RECONCILIATION_ONLY]
+    reference_locators:
+      - https://www.bls.gov/schedule/2021/
+      - https://www.bls.gov/schedule/2022/
+      - https://www.bls.gov/schedule/2023/
+      - https://www.bls.gov/schedule/2024/
+      - https://www.bls.gov/schedule/2025/
+    rejected_authority_locators: []
+    cost_state: PUBLIC_OFFICIAL_NO_LICENSE_FEE_IDENTIFIED
+    evidence_packet_state: ARCHIVE_INVENTORY_NOT_GENERATED
+    required_next_evidence:
+      - INITIAL_SCHEDULE_DOCUMENT_BYTES_AND_SHA256
+      - OFFICIAL_RESCHEDULE_AND_CANCELLATION_NOTICES
+      - TRUSTED_CAPTURE_POLICY_DECISION
+      - EXHAUSTIVE_SNAPSHOT_AND_REVISION_INVENTORY
+      - AVAILABLE_AT_AND_PRECISION
+      - SUPERSESSION_LINEAGE
+      - EVERY_CUTOFF_THROUGH_NEXT_ACTION_CLOSE_COVERAGE
+    selected_authority_class: null
+    exact_authority_identity: null
+    exact_authority_identity_frozen: false
+    historical_coverage_proven: false
+    source_contract_admitted: false
+    runtime_authorized: false
+    blocker_remediated: false
+  - ordinal: 5
+    candidate_id: bea_release_schedule_capture_v1
+    blocker_reason_code: BEA_FROZEN_ENDPOINT_NOT_SCHEDULE_REVISION_AUTHORITY
+    provider_or_authority: Bureau of Economic Analysis
+    candidate_disposition: INVENTORY_ONLY
+    disposition_frozen: true
+    candidate_authority_family: BEA_SCB_ANNUAL_SCHEDULE_UPDATE_NOTICE_AND_ARCHIVED_RELEASE_SERIES
+    candidate_authority_family_frozen: false
+    candidate_source_approved: false
+    acceptable_historical_authority_classes:
+      - OFFICIAL_VERSIONED_SOURCE_ARCHIVE
+      - IMMUTABLE_TIMESTAMPED_CAPTURE_OF_FROZEN_SOURCE
+    authority_roles: [INITIAL_SCHEDULE_AUTHORITY, REVISION_NOTICE_AUTHORITY, TERMINAL_RECONCILIATION_ONLY]
+    reference_locators:
+      - https://www.bea.gov/about/policies-and-information/priorities-and-schedules-posting-content
+      - https://apps.bea.gov/scb/issues/2022/12-december/1222-news-releases-2023.htm
+    rejected_authority_locators:
+      - https://apps.bea.gov/api/data
+    cost_state: PUBLIC_OFFICIAL_NO_LICENSE_FEE_IDENTIFIED
+    evidence_packet_state: ARCHIVE_INVENTORY_NOT_GENERATED_FIVE_PROMPT_PDF_URLS_RETURNED_404
+    required_next_evidence:
+      - CORRECTED_OFFICIAL_SCHEDULE_DOCUMENT_IDENTITY
+      - INITIAL_AND_UPDATED_DOCUMENT_BYTES_AND_SHA256
+      - OFFICIAL_UPDATE_NOTICES
+      - TRUSTED_CAPTURE_POLICY_DECISION
+      - EXHAUSTIVE_SNAPSHOT_AND_REVISION_INVENTORY
+      - AVAILABLE_AT_AND_PRECISION
+      - SUPERSESSION_LINEAGE
+      - EVERY_CUTOFF_THROUGH_NEXT_ACTION_CLOSE_COVERAGE
+    selected_authority_class: null
+    exact_authority_identity: null
+    exact_authority_identity_frozen: false
+    historical_coverage_proven: false
+    source_contract_admitted: false
+    runtime_authorized: false
+    blocker_remediated: false
+falsification_axes:
+  - axis_id: AUTHORITY_IDENTITY_AND_CLASS
+    pass_action: LOCK_THIS_AXIS_ONLY
+    fail_action: REJECT_CANDIDATE_SEARCH_ALTERNATE
+    insufficient_action: KEEP_UNFROZEN_AND_BLOCKED
+    invalid_action: QUARANTINE_EVIDENCE_AND_STOP_LANE
+  - axis_id: IMMUTABLE_BYTES_AND_DIGEST
+    pass_action: BIND_EXACT_DIGEST_AND_RECEIPT
+    fail_action: REJECT_CANDIDATE_UNSTABLE_OR_UNRETAINED
+    insufficient_action: KEEP_BLOCKED_MISSING_DIGEST_OR_INVENTORY
+    invalid_action: QUARANTINE_DIGEST_MISMATCH_OR_CONTENT_DRIFT
+  - axis_id: HISTORICAL_AVAILABLE_AT
+    pass_action: ADMIT_RECEIPT_TO_CUTOFF_REPLAY_ONLY
+    fail_action: REJECT_CANDIDATE_NO_HISTORICAL_PUBLICATION_VINTAGE
+    insufficient_action: KEEP_BLOCKED_TIMESTAMP_UNPROVEN
+    invalid_action: REJECT_INFERRED_OR_CURRENT_TIMESTAMP
+  - axis_id: ADJUSTMENT_OR_REVISION_LINEAGE
+    pass_action: BIND_COMPLETE_APPEND_ONLY_LINEAGE
+    fail_action: REJECT_CANDIDATE_IRRECOVERABLE_LINEAGE_GAP
+    insufficient_action: KEEP_BLOCKED_REISSUE_OR_SUPERSESSION_UNKNOWN
+    invalid_action: QUARANTINE_LATER_REVISION_OVERWRITE_OR_DELETION
+  - axis_id: EVENT_UNIVERSE_AND_TAXONOMY
+    pass_action: MAP_EXACT_FROZEN_EVENT_TYPE_IDS_ONLY
+    fail_action: REJECT_AUTHORITY_MISSING_FROZEN_EVENT_TYPE
+    insufficient_action: REQUIRE_OWNER_TAXONOMY_DECISION
+    invalid_action: REJECT_LANE_LOCAL_EVENT_UNIVERSE_DRIFT
+  - axis_id: EXACT_WINDOW_COVERAGE
+    pass_action: BIND_EXACT_1202_WARMUP_STATE_AND_CUTOFF_PROOF
+    fail_action: REJECT_CANDIDATE_PROVEN_COVERAGE_GAP
+    insufficient_action: KEEP_BLOCKED_INVENTORY_INCOMPLETE
+    invalid_action: REJECT_FINAL_ROW_COUNT_OR_LATER_REVISION_AS_COVERAGE
+  - axis_id: LICENSE_AND_INTERNAL_USE
+    pass_action: BIND_EXACT_PERMITTED_USE
+    fail_action: REJECT_CANDIDATE_PROHIBITED_USE
+    insufficient_action: KEEP_BLOCKED_TERMS_OR_PRICE_UNCONFIRMED
+    invalid_action: REJECT_GUESSED_LICENSE_SCOPE
+  - axis_id: ADAPTER_AND_MANIFEST_COMPATIBILITY
+    pass_action: BIND_EXISTING_CONTRACT_FIELDS_WITHOUT_DRIFT
+    fail_action: REJECT_CANDIDATE_MISSING_REQUIRED_FIELDS
+    insufficient_action: KEEP_BLOCKED_MAPPING_INCOMPLETE
+    invalid_action: REJECT_SILENT_FIELD_DELETION_OR_SEMANTIC_CHANGE
+  - axis_id: STATE_SEPARATION
+    pass_action: ADVANCE_ONLY_THE_PROVEN_STATE
+    fail_action: REJECT_NON_SEPARABLE_FLOW
+    insufficient_action: KEEP_BLOCKED_STATE_UNDEFINED
+    invalid_action: REJECT_CAPABILITY_TO_RUNTIME_OR_INVESTMENT_ESCALATION
+  - axis_id: SAFETY_COUNTERS
+    pass_action: KEEP_ALL_COUNTERS_ZERO_UNTIL_SEPARATE_GATE
+    fail_action: STOP_ON_UNAUTHORIZED_ACTION
+    insufficient_action: KEEP_BLOCKED_AUDIT_COUNTERS_INCOMPLETE
+    invalid_action: QUARANTINE_HIDDEN_RESET_OR_UNATTRIBUTED_COUNTER
+aggregate:
+  source_row_count: 5
+  disposition_frozen_count: 5
+  candidate_source_approved_count: 1
+  exact_authority_identity_frozen_count: 0
+  historical_coverage_proven_count: 0
+  source_contract_admitted_count: 0
+  runtime_authorized_count: 0
+  remediated_blocker_count: 0
+  s10_technical_validation_state: BLOCKED
+  s9_manifest_replay_state: BLOCKED
+  next_legal_action: BUILD_READ_ONLY_OFFICIAL_SCHEDULE_INVENTORY_AND_VENDOR_EVIDENCE_PACKETS_NOT_SENT
+  terminal: S11_STATIC_AUTHORITY_RECEIPT_CONTRACT_FROZEN_HISTORICAL_COVERAGE_UNPROVEN
+actual_counters:
+  network_request_count: 0
+  provider_query_attempt_count: 0
+  vendor_contact_count: 0
+  paid_product_purchase_count: 0
+  cache_read_count: 0
+  market_data_file_read_count: 0
+  real_market_payload_download_count: 0
+  real_payload_adapter_execution_count: 0
+  source_inventory_admission_count: 0
+  veto_series_generation_count: 0
+  real_dq_run_count: 0
+  backtest_run_count: 0
+  orders: 0
+  fills: 0
+  positions: 0
+  production_effect_count: 0
+  broker_action_count: 0
+safety:
+  non_executable_data_research_only: true
+  static_tracked_authority_reads_allowed: true
+  provider_query_allowed: false
+  vendor_contact_allowed: false
+  paid_product_purchase_allowed: false
+  network_io_allowed: false
+  cache_read_allowed: false
+  market_data_file_read_allowed: false
+  real_market_payload_download_allowed: false
+  real_payload_adapter_execution_allowed: false
+  source_inventory_admission_allowed: false
+  veto_series_generation_allowed: false
+  real_dq_allowed: false
+  backtest_allowed: false
+  orders_allowed: false
+  fills_allowed: false
+  positions_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_effect: none
+  broker_action: none

@@ -9721,6 +9721,40 @@ versioned archive/source identity，随后另建 static freeze-admission wave，
 若只能获得 forward capture，是否调整 event veto 角色或研究窗口属于新的 architecture/window 决策，
 不得在 S10 中静默降级。
 
+### TRADING-2542G S11 historical PIT static authority/receipt contract
+
+S11 递归 replay S10，并在不接触 provider、真实 payload、DQ 或 backtest 的前提下，冻结五项来源
+共用的 authority role、receipt identity、schedule revision、cutoff coverage 与状态迁移契约。
+S10 compatibility closeout 的 parent-bound Full PASS 只证明既有边界可复现，不改变任何来源 blocker。
+
+```text
+S10 exact identity + five blockers + exact 1202 sessions + D0 parent-bound Full PASS
+  -> freeze common authority classes and authority roles
+  -> freeze receipt identity and prohibit inferred historical available_at
+  -> freeze append-only schedule revision ledger
+       -> superseded revisions retained
+       -> move-then-restore records two revisions
+       -> current/final calendar is terminal reconciliation only
+  -> freeze event taxonomy, cutoff coverage and explicit state separation
+  -> five-source candidate disposition
+       -> FMP / Cboe = VENDOR_EVIDENCE_REQUIRED, packet prepare-only / not sent
+       -> Federal Reserve = FREEZE_CANDIDATE family/role/precedence only
+       -> BLS / BEA = INVENTORY_ONLY
+  -> candidate family approved = 1 / 5
+  -> exact authority identity frozen = 0 / 5
+  -> historical coverage proven = 0 / 5
+  -> source contract admitted / runtime authorized / blocker remediated = 0 / 5
+  -> terminal = S11_STATIC_AUTHORITY_RECEIPT_CONTRACT_FROZEN_HISTORICAL_COVERAGE_UNPROVEN
+  -> vendor contact / purchase / provider query / real payload = 0
+  -> source admission / veto series / real DQ / backtest = 0
+  -> orders / fills / positions / production / broker = 0
+```
+
+S11 后续只能从新 exact base 分拆受审查的 evidence lane：官方 schedule inventory 可以验证
+locator、digest、revision 与 coverage；FMP/Cboe vendor packet 只能形成待 Owner 批准的询证材料。
+只有 exact authority identity 与完整窗口 coverage 都通过 static admission，才可另行授权 S9 manifest
+replay；候选 family、最终日历、目标行数或下载时间都不能自动推进状态。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个
