@@ -57,12 +57,12 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-WAVE20_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_6ca9507b910381d44a7a"
+WAVE20_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_65f81781bf916306f464"
 WAVE20_CURRENT_REPOSITORY_COUNTS = {
-    # TRADING-2542G S10 adds one typed authority decision pack and one focused test;
+    # TRADING-2542G S11 adds one typed static authority contract and one focused test;
     # no deprecation lifecycle or direct-writer allowance changes.
-    "python_module_count": 1166,
-    "python_test_file_count": 1326,
+    "python_module_count": 1167,
+    "python_test_file_count": 1327,
     "direct_writer_current_count": 856,
 }
 WAVE20_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(

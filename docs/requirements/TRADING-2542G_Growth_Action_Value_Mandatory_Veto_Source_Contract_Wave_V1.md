@@ -811,6 +811,15 @@ evidence roles：
 
 ## 9. 进度记录
 
+- 2026-08-27：S11 publication v4 的五类 generated authority 全部重建 PASS，candidate=
+  `491988d256ddc95745e90b6e84934fbcf2daf4eb`；首次 Architecture formal=`877 passed / 1 failed`。
+  唯一失败是 `tests/test_arch_004g_deprecation.py` 仍冻结 S10 的 `1166 modules / 1326 tests`，而官方
+  generator 已确定性产出 S11 的 `1167 / 1327` 与 inventory id
+  `arch_004g_deprecation_inventory_65f81781bf916306f464`。失败 artifact=
+  `outputs/validation_runtime/architecture-fitness_20260827T134856Z/test_runtime_summary.json`，SHA-256=
+  `2d6ba37afa25017c42946f4d3eb9efa03746950d7af79e4ba520485b2e9abd8c`；v4 已 fail-closed 释放，
+  未运行后续 formal/Full、未集成或推送。failure-fix 只同步 repository-count ratchet 后完整重放生成与
+  formal tiers，不改变 deprecation lifecycle、五项 blocker、veto、DQ/PIT 或授权边界。
 - 2026-08-27：S11 source-preparation commit=`139c3a86d24b307d4613bd52b3a5a65014df5a25`；
   config file/canonical SHA-256=`32071acfde9aa4c432f26964a839fe288de69f1e1a6fce99a2c07431e2a4caa7`/
   `f8aa502366a9e952810c25510e758bd8f1d0a2492535056f46cda730cf05ba10`，S11+S10 focused=

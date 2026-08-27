@@ -13,27 +13,28 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / freeze the S11 source-preparation commit, then rebuild canonical/generated
-    authorities and execute governed formal validation
+  next_owner: Codex / complete the S11 deterministic architecture-ratchet failure-fix
+    and governed publication; after the new exact main, start the separate official-schedule
+    inventory and unsent vendor-evidence packet lanes
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S11 static contract now loads fail-closed
-    and focused S11+S10 regression passes. Preserve the exact source-preparation bytes,
-    reacquire publication authority from that clean lane head, rebuild shared/generated
-    authorities in declared order, then run Architecture/Contract/Integration/Reproducibility/Full.
-    Do not contact vendors, query providers, admit sources, generate series, or run
-    real DQ/backtest.
+  unstructured_legacy_blocker_or_next_step: Synchronize only the official 1167-module/1327-test
+    deprecation inventory regression, rebuild all generated authorities from the corrected
+    exact lane head, and rerun Architecture/Contract/Integration/Reproducibility/Full.
+    After S11 publication, exact historical authority and coverage remain 0/5; vendor
+    contact/purchase, provider query, source admission, real DQ/backtest and execution
+    still require separate gates.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Strict S11 loader replays S10 exact file/canonical identity, five ordered
-      blocker rows and the exact 1202-session window; typed receipt/revision/taxonomy/cutoff/falsification/state-separation
-      contracts reject inferred timestamps and automatic promotion; generated authorities
-      are fresh; Architecture/Contract/Integration/Reproducibility/Full PASS; terminal
-      is S11_STATIC_AUTHORITY_RECEIPT_CONTRACT_FROZEN_HISTORICAL_COVERAGE_UNPROVEN;
-      all external/data/execution counters remain zero.
+    text: S11 strict contract and all focused/formal/Full validation pass on one exact
+      candidate; generated Atlas, architecture, report-flow and compatibility authorities
+      are fresh; terminal remains S11_STATIC_AUTHORITY_RECEIPT_CONTRACT_FROZEN_HISTORICAL_COVERAGE_UNPROVEN;
+      candidate family approved is 1/5 but exact authority/coverage/admission/runtime/remediation
+      are 0/5; all external/data/execution counters remain zero. Follow-on evidence
+      lanes must start from the published exact main and cannot auto-promote any state.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -1228,38 +1229,84 @@ events:
   - change:trading-2542g-s11-static-contract-focused-pass-20260827-v2
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-e76ef573d74c2df17705d0065020e7ce
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-27T14:05:20Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s11-architecture-failure-fix-20260827-v7
+  lane_id: null
+  base_commit: 491988d256ddc95745e90b6e84934fbcf2daf4eb
+  previous_state_event_id: task-event-e76ef573d74c2df17705d0065020e7ce
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / complete the S11 deterministic architecture-ratchet failure-fix
+      and governed publication; after the new exact main, start the separate official-schedule
+      inventory and unsent vendor-evidence packet lanes
+    blocker_or_next_step: Synchronize only the official 1167-module/1327-test deprecation
+      inventory regression, rebuild all generated authorities from the corrected exact
+      lane head, and rerun Architecture/Contract/Integration/Reproducibility/Full.
+      After S11 publication, exact historical authority and coverage remain 0/5; vendor
+      contact/purchase, provider query, source admission, real DQ/backtest and execution
+      still require separate gates.
+    acceptance_criteria: S11 strict contract and all focused/formal/Full validation
+      pass on one exact candidate; generated Atlas, architecture, report-flow and
+      compatibility authorities are fresh; terminal remains S11_STATIC_AUTHORITY_RECEIPT_CONTRACT_FROZEN_HISTORICAL_COVERAGE_UNPROVEN;
+      candidate family approved is 1/5 but exact authority/coverage/admission/runtime/remediation
+      are 0/5; all external/data/execution counters remain zero. Follow-on evidence
+      lanes must start from the published exact main and cannot auto-promote any state.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      S11 source/canonical SHA=32071acfde9aa4c432f26964a839fe288de69f1e1a6fce99a2c07431e2a4caa7/f8aa502366a9e952810c25510e758bd8f1d0a2492535056f46cda730cf05ba10;
+      focused S11+S10=66 passed. Publication v4 generated authorities PASS; Architecture=877
+      passed/1 failed solely because the frozen deprecation regression retained S10
+      counts 1166/1326 while official inventory is 1167/1327, artifact outputs/validation_runtime/architecture-fitness_20260827T134856Z/test_runtime_summary.json
+      SHA=2d6ba37afa25017c42946f4d3eb9efa03746950d7af79e4ba520485b2e9abd8c. Corrected
+      focused deprecation suite=9 passed; no deprecation lifecycle, strategy, DQ/PIT
+      or authorization semantics changed. Vendor contact/purchase, provider/network/cache/market-file,
+      real payload, source admission, veto series, real DQ/backtest, orders/fills/positions/production/broker
+      remain 0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s11-architecture-failure-fix-20260827-v7
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-230130fc8118a2f2186a01b633e5aada
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
   - IN_PROGRESS
-  - Codex / freeze the S11 source-preparation commit, then rebuild canonical/generated
-    authorities and execute governed formal validation
-  - S11 static contract now loads fail-closed and focused S11+S10 regression passes.
-    Preserve the exact source-preparation bytes, reacquire publication authority from
-    that clean lane head, rebuild shared/generated authorities in declared order,
-    then run Architecture/Contract/Integration/Reproducibility/Full. Do not contact
-    vendors, query providers, admit sources, generate series, or run real DQ/backtest.
-  - Strict S11 loader replays S10 exact file/canonical identity, five ordered blocker
-    rows and the exact 1202-session window; typed receipt/revision/taxonomy/cutoff/falsification/state-separation
-    contracts reject inferred timestamps and automatic promotion; generated authorities
-    are fresh; Architecture/Contract/Integration/Reproducibility/Full PASS; terminal
-    is S11_STATIC_AUTHORITY_RECEIPT_CONTRACT_FROZEN_HISTORICAL_COVERAGE_UNPROVEN;
-    all external/data/execution counters remain zero.
+  - Codex / complete the S11 deterministic architecture-ratchet failure-fix and governed
+    publication; after the new exact main, start the separate official-schedule inventory
+    and unsent vendor-evidence packet lanes
+  - Synchronize only the official 1167-module/1327-test deprecation inventory regression,
+    rebuild all generated authorities from the corrected exact lane head, and rerun
+    Architecture/Contract/Integration/Reproducibility/Full. After S11 publication,
+    exact historical authority and coverage remain 0/5; vendor contact/purchase, provider
+    query, source admission, real DQ/backtest and execution still require separate
+    gates.
+  - S11 strict contract and all focused/formal/Full validation pass on one exact candidate;
+    generated Atlas, architecture, report-flow and compatibility authorities are fresh;
+    terminal remains S11_STATIC_AUTHORITY_RECEIPT_CONTRACT_FROZEN_HISTORICAL_COVERAGE_UNPROVEN;
+    candidate family approved is 1/5 but exact authority/coverage/admission/runtime/remediation
+    are 0/5; all external/data/execution counters remain zero. Follow-on evidence
+    lanes must start from the published exact main and cannot auto-promote any state.
   - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    S11 config file/canonical SHA=32071acfde9aa4c432f26964a839fe288de69f1e1a6fce99a2c07431e2a4caa7/f8aa502366a9e952810c25510e758bd8f1d0a2492535056f46cda730cf05ba10;
-    loader SHA=b0afd1b20d7b328c8358f727ce7faa29391fea3d4c2ed2eebe1239748ad38c33; test
-    SHA=e1a6e3f3b3f9d2fc688a91174227949caaffafe1fbaf72fd09c28a3b00d9579. Focused parallel
-    regression=66 passed; Ruff/strict mypy/py_compile/load PASS. Candidate family
-    approved=1/5 (Fed family/role only); exact authority/coverage/admission/runtime/remediation=0/5.
-    Vendor contact/purchase, provider/network/cache/market-file, real payload, source
-    admission, veto series, real DQ/backtest, orders/fills/positions/production/broker
-    all remain 0.'
+    S11 source/canonical SHA=32071acfde9aa4c432f26964a839fe288de69f1e1a6fce99a2c07431e2a4caa7/f8aa502366a9e952810c25510e758bd8f1d0a2492535056f46cda730cf05ba10;
+    focused S11+S10=66 passed. Publication v4 generated authorities PASS; Architecture=877
+    passed/1 failed solely because the frozen deprecation regression retained S10
+    counts 1166/1326 while official inventory is 1167/1327, artifact outputs/validation_runtime/architecture-fitness_20260827T134856Z/test_runtime_summary.json
+    SHA=2d6ba37afa25017c42946f4d3eb9efa03746950d7af79e4ba520485b2e9abd8c. Corrected
+    focused deprecation suite=9 passed; no deprecation lifecycle, strategy, DQ/PIT
+    or authorization semantics changed. Vendor contact/purchase, provider/network/cache/market-file,
+    real payload, source admission, veto series, real DQ/backtest, orders/fills/positions/production/broker
+    remain 0.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 3d35f091c963a83016148c46c259c9e7d7d15481e9ef7d80e7486428e565ca61
-last_event_id: task-event-e76ef573d74c2df17705d0065020e7ce
+  canonical_row_sha256: 7fd6c9fff9572656028b5551d724289ee5f8c4533726392433dc0071ee86d0b3
+last_event_id: task-event-230130fc8118a2f2186a01b633e5aada
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: df63e91992e67fc2b7b8e1c4adcd8826da217b40a590e417b71197e0ac791242
+fragment_checksum: bd8cf659debbff9e0e960319d5cdba9afdd8f7740e855a2126721132ae331764
