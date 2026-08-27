@@ -9755,6 +9755,41 @@ locator、digest、revision 与 coverage；FMP/Cboe vendor packet 只能形成�
 只有 exact authority identity 与完整窗口 coverage 都通过 static admission，才可另行授权 S9 manifest
 replay；候选 family、最终日历、目标行数或下载时间都不能自动推进状态。
 
+### TRADING-2542G S12 five-source candidate evidence review
+
+S12 递归 replay S11 exact identity，在 Owner 已授权的只读 discovery 边界内固化公开 documentation
+观察结果。它把 nominal product/document coverage、PIT/revision proof、公开价格参考和 exact required-scope
+quote 分离，不把可访问网页或 current archive page 解释成历史 authority。
+
+```text
+S11 exact identity + five frozen source states + exact 1202 sessions
+  -> read-only public documentation discovery
+       -> FMP / Cboe vendor product pages and public price references
+       -> Fed timestamped tentative-schedule releases and final calendar
+       -> BLS annual schedule/result archives
+       -> BEA 2021-2025 annual PDF identities, SCB schedule and update-notice example
+  -> nominal 2021-2025 scope located = 5 / 5
+  -> exact remote bytes / digest / historical available_at = 0 / 5
+  -> complete revision or reissue ledger / exact cutoff coverage = 0 / 5
+  -> recommendation only
+       -> FMP / Cboe keep VENDOR_EVIDENCE_REQUIRED
+       -> Fed retain frozen candidate family
+       -> BLS / BEA request Owner freeze decision after exact-document inventory
+  -> candidate family approved remains 1 / 5
+  -> exact authority / historical coverage / admission / runtime / remediation = 0 / 5
+  -> Owner decision requests
+       -> approve vendor inquiry send (R2; currently false)
+       -> approve official-document exact freeze inventory (R1; currently false)
+  -> terminal = S12_OWNER_APPROVAL_PACKET_READY_EXACT_HISTORICAL_COVERAGE_UNPROVEN_0_OF_5
+  -> vendor contact / purchase / provider API / official file download / real payload = 0
+  -> source admission / veto series / real DQ / backtest = 0
+  -> orders / fills / positions / production / broker = 0
+```
+
+浏览器工具没有提供 exact HTTP request count，因此 S12 记录 public discovery 已发生且
+`count_recorded=false`，不以虚构的零计数替代审计事实。下一步必须由 Owner 精确选择上述两项审批；
+无论批准哪项，都不自动改变 source state 或授权真实数据与策略运行。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

@@ -13,27 +13,27 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / freeze the final task-source bytes, rebuild all generated authority,
-    hydrate Atlas from the post-generator final candidate SHA, then execute latest-parent-bound
-    formal and Full validation
+  next_owner: Codex / complete S12 static five-source candidate evidence review and
+    submit exact approval matrix to Owner
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: The two report-flow failures are removed.
-    The only remaining Full failure is local ignored Atlas repository_commit bound
-    to the generator-input lane head rather than the post-compatibility candidate.
-    In the next final transaction, finish tracked generated commit first, rerender
-    Atlas with that exact candidate SHA, validate Atlas freshness, then run formal
-    tiers and Full with parent full_20260827T154449Z.
+  unstructured_legacy_blocker_or_next_step: Public discovery can identify candidate
+    families and nominal coverage, but FMP/Cboe vendor lineage and the Fed/BLS/BEA
+    complete schedule revision ledger remain unproven. Build a non-executable static
+    review with URLs, public coverage, fees, gaps and typed approval requests; do
+    not contact vendors, buy data, download market payload, admit sources, run DQ/backtest
+    or generate series.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Atlas ignored canonical page and sidecars bind the exact final tracked candidate
-      after all generated commits; Atlas focused freshness passes; Architecture/Contract/Integration/Reproducibility
-      PASS; parent-bound failure_fix_rerun Full removes the sole Atlas commit mismatch;
-      S11 terminal and five-source states remain unchanged; every external/data/execution
-      counter remains zero; ordinary integration verifies local main=remote main=candidate.
+    text: S12 recursively binds the immutable S11 contract; covers FMP, Cboe, Fed,
+      BLS and BEA in fixed order; separates documented product/year coverage from
+      historical PIT revision proof; records public fee evidence and unknown quote
+      fields; keeps exact authority, coverage, admission, runtime and remediation
+      at 0/5; focused/formal validation and generated freshness PASS; provider payload/DQ/backtest/orders/fills/positions/production/broker
+      remain 0.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -1351,37 +1351,76 @@ events:
   - change:trading-2542g-s11-atlas-final-hydration-20260828-v12
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-efd01c8b598bdb168f0ddc5261017a81
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-27T17:51:38Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s12-source-evidence-review-activation-20260828-v1
+  lane_id: null
+  base_commit: e91dc67474a226906e246a459552af493fc46d3a
+  previous_state_event_id: task-event-efd01c8b598bdb168f0ddc5261017a81
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / complete S12 static five-source candidate evidence review
+      and submit exact approval matrix to Owner
+    blocker_or_next_step: Public discovery can identify candidate families and nominal
+      coverage, but FMP/Cboe vendor lineage and the Fed/BLS/BEA complete schedule
+      revision ledger remain unproven. Build a non-executable static review with URLs,
+      public coverage, fees, gaps and typed approval requests; do not contact vendors,
+      buy data, download market payload, admit sources, run DQ/backtest or generate
+      series.
+    acceptance_criteria: S12 recursively binds the immutable S11 contract; covers
+      FMP, Cboe, Fed, BLS and BEA in fixed order; separates documented product/year
+      coverage from historical PIT revision proof; records public fee evidence and
+      unknown quote fields; keeps exact authority, coverage, admission, runtime and
+      remediation at 0/5; focused/formal validation and generated freshness PASS;
+      provider payload/DQ/backtest/orders/fills/positions/production/broker remain
+      0.
+    notes: 'Owner instructed continuation after confirming no immediate submission
+      is required. Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      S11 published at e91dc67474a226906e246a459552af493fc46d3a with Full 9831 passed/3
+      skipped. S12 is approval-preparation only: public web discovery and static metadata
+      may be recorded, but vendor contact/purchase, account access, API calls, real
+      payload, source admission, veto series, real DQ/backtest and all execution remain
+      prohibited.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s12-source-evidence-review-activation-20260828-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f4648073b02ab9d46c26fa94a8e50ac0
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
   - IN_PROGRESS
-  - Codex / freeze the final task-source bytes, rebuild all generated authority, hydrate
-    Atlas from the post-generator final candidate SHA, then execute latest-parent-bound
-    formal and Full validation
-  - The two report-flow failures are removed. The only remaining Full failure is local
-    ignored Atlas repository_commit bound to the generator-input lane head rather
-    than the post-compatibility candidate. In the next final transaction, finish tracked
-    generated commit first, rerender Atlas with that exact candidate SHA, validate
-    Atlas freshness, then run formal tiers and Full with parent full_20260827T154449Z.
-  - Atlas ignored canonical page and sidecars bind the exact final tracked candidate
-    after all generated commits; Atlas focused freshness passes; Architecture/Contract/Integration/Reproducibility
-    PASS; parent-bound failure_fix_rerun Full removes the sole Atlas commit mismatch;
-    S11 terminal and five-source states remain unchanged; every external/data/execution
-    counter remains zero; ordinary integration verifies local main=remote main=candidate.
-  - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    Parent-bound formal=878/278/995/24 passed. Full outputs/validation_runtime/full_20260827T154449Z/test_runtime_summary.json
-    SHA=a26536b1382cb080a5486590dd60b312ef2613dbe3970beeacea79f658e98790 produced
-    9830 passed/3 skipped/1 failed. Sole failure: ignored Atlas page repository_commit=58f0f4c9...
-    while final candidate=de11ef445...; both report-flow aggregate failures are gone.
-    No S11 loader, DQ/PIT, strategy, execution or safety test failed. Vendor contact/purchase,
-    provider/network/cache/market-file, real payload, source admission, veto series,
-    real DQ/backtest, orders/fills/positions/production/broker remain 0.'
+  - Codex / complete S12 static five-source candidate evidence review and submit exact
+    approval matrix to Owner
+  - Public discovery can identify candidate families and nominal coverage, but FMP/Cboe
+    vendor lineage and the Fed/BLS/BEA complete schedule revision ledger remain unproven.
+    Build a non-executable static review with URLs, public coverage, fees, gaps and
+    typed approval requests; do not contact vendors, buy data, download market payload,
+    admit sources, run DQ/backtest or generate series.
+  - S12 recursively binds the immutable S11 contract; covers FMP, Cboe, Fed, BLS and
+    BEA in fixed order; separates documented product/year coverage from historical
+    PIT revision proof; records public fee evidence and unknown quote fields; keeps
+    exact authority, coverage, admission, runtime and remediation at 0/5; focused/formal
+    validation and generated freshness PASS; provider payload/DQ/backtest/orders/fills/positions/production/broker
+    remain 0.
+  - 'Owner instructed continuation after confirming no immediate submission is required.
+    Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+    S11 published at e91dc67474a226906e246a459552af493fc46d3a with Full 9831 passed/3
+    skipped. S12 is approval-preparation only: public web discovery and static metadata
+    may be recorded, but vendor contact/purchase, account access, API calls, real
+    payload, source admission, veto series, real DQ/backtest and all execution remain
+    prohibited.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: 56a57087107fdfcc31a2fb29365c1815e6f3cc184f2a1236f0d054ead72c5eac
-last_event_id: task-event-efd01c8b598bdb168f0ddc5261017a81
+  canonical_row_sha256: a9604b33e9e06267cc0febc2855a8846f25b072197c81359883a9dc5224f3a3e
+last_event_id: task-event-f4648073b02ab9d46c26fa94a8e50ac0
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: a90c69c34646b9d30198065481e516d104ad3756e69f52f54c7a9a122f6900d5
+fragment_checksum: 473c474118c28e33c07ac6cea45e5fe81b252d12852198cc1dc4928f5c069a2b

@@ -782,6 +782,51 @@ S11 发布后才允许从同一 exact main base 拆分 official-schedule invento
 只读 evidence lane。实际 vendor contact、付费、真实 payload、DQ、series 或 backtest 都需要新的独立
 Owner 授权。
 
+### S12：五来源公开证据复核与 Owner 决策包
+
+Owner 于 2026-08-28 授权对 FMP、Cboe、Fed、BLS、BEA 进行只读来源发现和候选评估，要求优先
+official 或 vendor-native versioned archive，并先提交候选来源、覆盖证明、费用和缺口；未授权购买、
+真实市场 payload、DQ 或 backtest。S12 只固化公开页面观察结果和下一步审批请求，不下载或 hash
+远端 schedule 文件，不联系供应商，也不改变 S11 的 source state。
+
+#### S12.1 复核结论
+
+| source | 公开证据能证明 | 公开证据不能证明 | 建议（仍需 Owner 批准） |
+| --- | --- | --- | --- |
+| FMP | dividend-adjusted EOD 产品定义、名义历史范围与公开 self-serve 价格参考 | per-row historical `available_at`、versioned/as-of archive、adjustment/reissue lineage、required-scope license/quote | 保持 `VENDOR_EVIDENCE_REQUIRED`，另行批准后再发送询证 |
+| Cboe | Main Channel EOD 包含 VIX、名义历史范围与 next-trading-day delivery 描述 | 原始 daily receipt/digest、correction/reissue/supersession、required product quote/license | 保持 `VENDOR_EVIDENCE_REQUIRED`，All Access 价格仅作旁证，不替代产品报价 |
+| Fed | 2021--2025 timestamped annual tentative-schedule press-release family 与 official calendar | 完整 amendment/reschedule/cancel ledger、exact bytes/digest、逐 cutoff coverage | 保留既有 `FREEZE_CANDIDATE` family，不升级 exact authority |
+| BLS | official archived annual schedule index、annual pages、CPI/NFP result archive | initial/revision/final 的完整版本链、可信 `available_at`、exact bytes/digest | exact-document inventory 后建议 Owner 决定是否升级 candidate family |
+| BEA | 2021--2025 official annual PDF identity、SCB schedule、update notice example 与 result archive | superseded schedule bytes、完整 revision notice set、逐 revision lineage 与 cutoff coverage | 修正 S11 的 locator 缺口；exact-document inventory 后建议 Owner 决定是否升级 candidate family |
+
+`nominal_2021_2025_scope_located=true` 只说明公开产品或官方 document family 的标称日期范围覆盖研究窗，
+不等价于 exact remote bytes、historical `available_at`、revision/reissue lineage 或 exact-1202 cutoff
+coverage。FMP 的 USD 0/22/59/149 和 Cboe All Access 的 trial/2499/4599 等值只能作为公开价格参考，
+不得解释成 required-scope 报价、许可或购买建议。
+
+#### S12.2 状态、审批面与退出条件
+
+1. S12 递归绑定 S11 exact file SHA-256=`32071acfde9aa4c432f26964a839fe288de69f1e1a6fce99a2c07431e2a4caa7`
+   与 canonical SHA-256=`f8aa502366a9e952810c25510e758bd8f1d0a2492535056f46cda730cf05ba10`；
+2. 五项 `candidate_source_approved` 状态精确保持 1/5（仅 Fed），所有推荐均不得自动改变该状态；
+3. `exact_authority_identity_frozen`、`historical_coverage_proven`、`source_contract_admitted`、
+   `runtime_authorized` 与 `blocker_remediated` 保持 0/5；
+4. 待 Owner 分别决定：是否允许向 FMP/Cboe 发送窄范围 capability/license/quote 询证；是否允许对
+   Fed/BLS/BEA official schedule metadata documents 做 bounded download、exact digest inventory 和
+   revision-gap analysis；两项批准都不自动授权 provider query、admission、DQ、series 或 backtest；
+5. 浏览器执行过公开 documentation discovery，但浏览器工具未提供可审计的 exact HTTP request count；
+   S12 显式记录 `count_recorded=false`，不伪造零计数。provider API query、vendor contact、purchase、
+   official document file download、real payload、cache/market-file read、admission、series、DQ、backtest、
+   orders/fills/positions/production/broker 实际计数均为 0；
+6. terminal 固定为
+   `S12_OWNER_APPROVAL_PACKET_READY_EXACT_HISTORICAL_COVERAGE_UNPROVEN_0_OF_5`。
+
+新增：
+
+- `config/research/qc_qqq_options_growth_action_value_mandatory_veto_historical_pit_source_candidate_evidence_review_v1.yaml`；
+- `src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_historical_pit_source_candidate_evidence_review.py`；
+- `tests/test_growth_action_value_mandatory_veto_historical_pit_source_candidate_evidence_review.py`。
+
 ## 7. Path、contract 与 evidence claims
 
 task-owned paths：本 requirement、逐阶段 immutable config、typed loader/pure adapter 与 focused tests。
@@ -811,6 +856,12 @@ evidence roles：
 
 ## 9. 进度记录
 
+- 2026-08-28：S12 只读公开来源复核已形成 strict owner-review draft。新增五项 ordered evidence rows、
+  公开 locator、nominal coverage/PIT proof 分离、fee reference/required-scope quote 分离及两项独立 Owner
+  decision request；递归绑定 S11 exact identity，保持 candidate approved=1/5，exact authority/coverage/
+  admission/runtime/remediation=0/5。S12+S11 focused parallel=`61 passed`，Ruff、strict mypy、py_compile
+  与 strict load PASS；未下载 official schedule 文件、未查询 provider、未联系 vendor、未购买，也未运行
+  DQ/series/backtest。待完成 generated authority rebuild 与 formal validation 后发布评审包。
 - 2026-08-28：failure-fix candidate=`de11ef4453d326195f05886bff7059ae99f4cf86` 的 parent-bound
   Architecture/Contract/Integration/Reproducibility=`878/278/995/24 passed`；Full=
   `9830 passed / 3 skipped / 1 failed`，上一轮两个 report-flow aggregate failure 已消失。唯一剩余失败为

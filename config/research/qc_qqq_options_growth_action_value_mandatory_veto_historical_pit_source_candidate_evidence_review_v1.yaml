@@ -1,0 +1,490 @@
+schema_version: growth_action_value_mandatory_veto_historical_pit_source_candidate_evidence_review.v1
+policy_id: qc_qqq_options_growth_action_value_mandatory_veto_historical_pit_source_candidate_evidence_review_v1
+policy_version: 1.0.0-draft.1
+status: OWNER_REVIEW_PACKET_READY_NO_AUTHORITY_ADMISSION
+task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+discovery_as_of: 2026-08-28
+
+owner_scope:
+  instruction_ref: owner_instruction:TRADING-2542G:S12:2026-08-28:continue_read_only_five_source_discovery
+  scope: NON_EXECUTABLE_DATA_RESEARCH_SOURCE_CANDIDATE_REVIEW_ONLY
+  public_documentation_discovery_allowed: true
+  vendor_contact_allowed: false
+  paid_product_purchase_allowed: false
+  provider_api_query_allowed: false
+  official_document_payload_download_allowed: false
+  real_market_payload_download_allowed: false
+
+predecessor_binding:
+  policy_id: qc_qqq_options_growth_action_value_mandatory_veto_historical_pit_static_authority_receipt_contract_v1
+  path: config/research/qc_qqq_options_growth_action_value_mandatory_veto_historical_pit_static_authority_receipt_contract_v1.yaml
+  file_sha256: 32071acfde9aa4c432f26964a839fe288de69f1e1a6fce99a2c07431e2a4caa7
+  canonical_sha256: f8aa502366a9e952810c25510e758bd8f1d0a2492535056f46cda730cf05ba10
+  role: S11_STATIC_AUTHORITY_RECEIPT_CONTRACT
+  immutable: true
+
+primary_research_window:
+  exchange_calendar: XNYS
+  requested_start: 2021-02-22
+  requested_end: 2025-12-02
+  exact_session_count: 1202
+  ordered_session_ids_lf_sha256: d43f2c34d7fc00d1f45b726b18cd21d21faa26fd56e1226bb1845b3bbc7d12c0
+  primary_window_change_allowed: false
+
+source_rows:
+  - ordinal: 1
+    candidate_id: fmp_spy_qqq_eod_adjusted_v1
+    provider_or_authority: Financial Modeling Prep
+    predecessor_candidate_disposition: VENDOR_EVIDENCE_REQUIRED
+    predecessor_candidate_source_approved: false
+    public_evidence_locators:
+      - evidence_id: fmp_dividend_adjusted_eod_documentation
+        url: https://site.financialmodelingprep.com/developer/docs/stable/historical-price-eod-dividend-adjusted
+        source_role: VENDOR_PRODUCT_DOCUMENTATION
+        observed_claim: Public documentation describes dividend-adjusted EOD price and volume output, but the reviewed page does not document per-row historical available_at, native as-of versions, or correction supersession lineage.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: fmp_public_pricing_reference
+        url: https://site.financialmodelingprep.com/pricing-plans
+        source_role: VENDOR_PRICING_REFERENCE
+        observed_claim: Public self-serve tiers show free Basic EOD and annual-billing monthly references of USD 22 Starter, USD 59 Premium, and USD 149 Ultimate; this is not an exact quote or license proof for the required historical PIT scope.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+    coverage_assessment:
+      evidence_class: VENDOR_PRODUCT_DOCUMENTATION_ONLY
+      nominal_scope: Dividend-adjusted EOD documentation and plans advertising up to five years, thirty years, or full history were located; exact SPY/QQQ rows and publication vintages were not queried.
+      nominal_2021_2025_scope_located: true
+      exact_remote_bytes_and_digests_frozen: false
+      per_row_historical_available_at_proven: false
+      complete_revision_or_reissue_ledger_proven: false
+      exact_1202_cutoff_coverage_proven: false
+    fee_evidence:
+      fee_state: PUBLISHED_SELF_SERVE_REFERENCE_NOT_REQUIRED_SCOPE_QUOTE
+      published_reference_points:
+        - BASIC_EOD_USD_0_PUBLIC_REFERENCE
+        - STARTER_USD_22_PER_MONTH_BILLED_ANNUALLY_PUBLIC_REFERENCE
+        - PREMIUM_USD_59_PER_MONTH_BILLED_ANNUALLY_PUBLIC_REFERENCE
+        - ULTIMATE_USD_149_PER_MONTH_BILLED_ANNUALLY_PUBLIC_REFERENCE
+      exact_required_scope_quote_obtained: false
+      internal_research_license_rights_proven: false
+      purchase_authorized: false
+    key_gaps:
+      - PROVIDER_NATIVE_VERSIONED_OR_AS_OF_ARCHIVE_UNPROVEN
+      - PER_ROW_HISTORICAL_AVAILABLE_AT_UNPROVEN
+      - CORPORATE_ACTION_VINTAGE_AND_REISSUE_LINEAGE_UNPROVEN
+      - SPY_QQQ_EXACT_WINDOW_AND_WARMUP_COVERAGE_UNPROVEN
+      - INTERNAL_RESEARCH_LICENSE_AND_EXACT_REQUIRED_SCOPE_QUOTE_UNPROVEN
+    recommendation: KEEP_VENDOR_EVIDENCE_REQUIRED
+    recommendation_requires_owner_approval: true
+    candidate_source_approved_after_review: false
+    exact_authority_identity: null
+    exact_authority_identity_frozen: false
+    historical_coverage_proven: false
+    source_contract_admitted: false
+    runtime_authorized: false
+    blocker_remediated: false
+
+  - ordinal: 2
+    candidate_id: cboe_vix_index_daily_v1
+    provider_or_authority: Cboe Global Markets
+    predecessor_candidate_disposition: VENDOR_EVIDENCE_REQUIRED
+    predecessor_candidate_source_approved: false
+    public_evidence_locators:
+      - evidence_id: cboe_main_channel_eod_summary
+        url: https://datashop.cboe.com/main-channel-end-of-day-summary
+        source_role: VENDOR_PRODUCT_DOCUMENTATION
+        observed_claim: Official product documentation states that Main Channel EOD includes VIX, has history from January 1975 for active symbols, and is distributed shortly after the next trading day opens; correction and immutable delivery lineage are not documented on the reviewed page.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: cboe_main_channel_tick_data
+        url: https://datashop.cboe.com/main-channel-tick-data
+        source_role: VENDOR_PRODUCT_DOCUMENTATION
+        observed_claim: Official product documentation states Main Channel tick history from January 2004 and describes the same daily delivery timing; it does not prove the required daily VIX correction ledger.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: cboe_all_access_api_pricing_reference
+        url: https://datashop.cboe.com/cboe-all-access-api
+        source_role: VENDOR_PRICING_REFERENCE
+        observed_claim: The separate All Access API page provides a free-trial reference and Tier 3/Tier 4 monthly references of USD 2499 and USD 4599, with licensed-data costs potentially additional; these values are not a quote for the selected EOD product.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: cboe_academic_discount_reference
+        url: https://datashop.cboe.com/academic-discount
+        source_role: VENDOR_PRICING_REFERENCE
+        observed_claim: A 50 percent academic discount with a USD 500 minimum is publicly described for qualifying users; eligibility is not assumed for this project.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+    coverage_assessment:
+      evidence_class: VENDOR_PRODUCT_DOCUMENTATION_ONLY
+      nominal_scope: Main Channel EOD nominal history covers the research window and includes VIX, but no product bytes, delivery receipts, or corrections were obtained.
+      nominal_2021_2025_scope_located: true
+      exact_remote_bytes_and_digests_frozen: false
+      per_row_historical_available_at_proven: false
+      complete_revision_or_reissue_ledger_proven: false
+      exact_1202_cutoff_coverage_proven: false
+    fee_evidence:
+      fee_state: PRODUCT_QUOTE_UNKNOWN_ALL_ACCESS_REFERENCE_NOT_SUBSTITUTE
+      published_reference_points:
+        - MAIN_CHANNEL_EOD_SELECTION_DEPENDENT_SUBTOTAL_NOT_CAPTURED
+        - ALL_ACCESS_API_FREE_TRIAL_500_POINTS_PER_DAY_REFERENCE_ONLY
+        - ALL_ACCESS_API_TIER_3_USD_2499_PER_MONTH_REFERENCE_ONLY
+        - ALL_ACCESS_API_TIER_4_USD_4599_PER_MONTH_REFERENCE_ONLY
+        - ACADEMIC_DISCOUNT_50_PERCENT_USD_500_MINIMUM_ELIGIBILITY_NOT_ASSUMED
+      exact_required_scope_quote_obtained: false
+      internal_research_license_rights_proven: false
+      purchase_authorized: false
+    key_gaps:
+      - EXACT_VIX_DAILY_PRODUCT_CONFIGURATION_AND_QUOTE_UNPROVEN
+      - ORIGINAL_DAILY_DELIVERY_RECEIPTS_AND_DIGESTS_UNPROVEN
+      - CORRECTION_REISSUE_AND_SUPERSESSION_LINEAGE_UNPROVEN
+      - HISTORICAL_PUBLICATION_VINTAGE_AND_AVAILABLE_AT_UNPROVEN
+      - INTERNAL_RESEARCH_LICENSE_RIGHTS_UNPROVEN
+    recommendation: KEEP_VENDOR_EVIDENCE_REQUIRED
+    recommendation_requires_owner_approval: true
+    candidate_source_approved_after_review: false
+    exact_authority_identity: null
+    exact_authority_identity_frozen: false
+    historical_coverage_proven: false
+    source_contract_admitted: false
+    runtime_authorized: false
+    blocker_remediated: false
+
+  - ordinal: 3
+    candidate_id: federal_reserve_fomc_schedule_capture_v1
+    provider_or_authority: Federal Reserve Board
+    predecessor_candidate_disposition: FREEZE_CANDIDATE
+    predecessor_candidate_source_approved: true
+    public_evidence_locators:
+      - evidence_id: fed_fomc_2021_tentative_schedule_press_release
+        url: https://www.federalreserve.gov/newsevents/pressreleases/monetary20200702a.htm
+        source_role: OFFICIAL_INITIAL_SCHEDULE
+        observed_claim: Timestamped official press release announces the tentative 2021 FOMC meeting schedule.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: fed_fomc_2022_tentative_schedule_press_release
+        url: https://www.federalreserve.gov/newsevents/pressreleases/monetary20210604a.htm
+        source_role: OFFICIAL_INITIAL_SCHEDULE
+        observed_claim: Official press release identifies the tentative 2022 meeting schedule.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: fed_fomc_2023_tentative_schedule_press_release
+        url: https://www.federalreserve.gov/newsevents/pressreleases/monetary20220624a.htm
+        source_role: OFFICIAL_INITIAL_SCHEDULE
+        observed_claim: Official press release identifies the tentative 2023 meeting schedule.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: fed_fomc_2024_tentative_schedule_press_release
+        url: https://www.federalreserve.gov/newsevents/pressreleases/monetary20230623a.htm
+        source_role: OFFICIAL_INITIAL_SCHEDULE
+        observed_claim: Official press release identifies the tentative 2024 meeting schedule.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: fed_fomc_2025_2026_tentative_schedule_press_release
+        url: https://www.federalreserve.gov/newsevents/pressreleases/monetary20240809a.htm
+        source_role: OFFICIAL_INITIAL_SCHEDULE
+        observed_claim: Official press release identifies tentative 2025 and 2026 meeting schedules.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: fed_current_and_historical_fomc_calendars
+        url: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
+        source_role: OFFICIAL_FINAL_OR_ARCHIVED_SCHEDULE
+        observed_claim: Official calendar exposes meeting information for the relevant years and states that each meeting date is tentative until confirmed at the immediately preceding meeting; the current page is terminal reconciliation, not a historical revision ledger.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+    coverage_assessment:
+      evidence_class: OFFICIAL_INITIAL_SCHEDULE_FAMILY_AND_FINAL_CALENDAR_LOCATED
+      nominal_scope: Timestamped annual tentative-schedule releases cover 2021 through 2025 and the official calendar supports terminal reconciliation.
+      nominal_2021_2025_scope_located: true
+      exact_remote_bytes_and_digests_frozen: false
+      per_row_historical_available_at_proven: false
+      complete_revision_or_reissue_ledger_proven: false
+      exact_1202_cutoff_coverage_proven: false
+    fee_evidence:
+      fee_state: PUBLIC_OFFICIAL_NO_ACCESS_FEE_IDENTIFIED
+      published_reference_points:
+        - PUBLIC_OFFICIAL_WEB_ACCESS_NO_FEE_IDENTIFIED
+      exact_required_scope_quote_obtained: false
+      internal_research_license_rights_proven: false
+      purchase_authorized: false
+    key_gaps:
+      - EXACT_DOCUMENT_BYTES_AND_DIGESTS_NOT_FROZEN
+      - COMPLETE_AMENDMENT_RESCHEDULE_CANCELLATION_LEDGER_UNPROVEN
+      - PER_REVISION_AVAILABLE_AT_AND_SUPERSESSION_CHAIN_UNPROVEN
+      - EXACT_1202_DECISION_CUTOFF_COVERAGE_UNPROVEN
+    recommendation: RETAIN_FROZEN_CANDIDATE_FAMILY
+    recommendation_requires_owner_approval: true
+    candidate_source_approved_after_review: true
+    exact_authority_identity: null
+    exact_authority_identity_frozen: false
+    historical_coverage_proven: false
+    source_contract_admitted: false
+    runtime_authorized: false
+    blocker_remediated: false
+
+  - ordinal: 4
+    candidate_id: bls_release_schedule_capture_v1
+    provider_or_authority: Bureau of Labor Statistics
+    predecessor_candidate_disposition: INVENTORY_ONLY
+    predecessor_candidate_source_approved: false
+    public_evidence_locators:
+      - evidence_id: bls_archived_release_schedule_index
+        url: https://www.bls.gov/bls/archived_sched.htm
+        source_role: OFFICIAL_FINAL_OR_ARCHIVED_SCHEDULE
+        observed_claim: Official archive index links annual release schedules including 2021 through 2025.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: bls_2021_release_schedule
+        url: https://www.bls.gov/schedule/2021/home.htm
+        source_role: OFFICIAL_FINAL_OR_ARCHIVED_SCHEDULE
+        observed_claim: Official annual schedule exposes release dates and times and monthly last-modified labels.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: bls_2022_release_schedule
+        url: https://www.bls.gov/schedule/2022/home.htm
+        source_role: OFFICIAL_FINAL_OR_ARCHIVED_SCHEDULE
+        observed_claim: Official annual schedule supports nominal 2022 release-calendar inventory.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: bls_2024_release_schedule
+        url: https://www.bls.gov/schedule/2024/
+        source_role: OFFICIAL_FINAL_OR_ARCHIVED_SCHEDULE
+        observed_claim: Official annual schedule supports nominal 2024 release-calendar inventory.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: bls_current_cpi_schedule
+        url: https://www.bls.gov/schedule/news_release/cpi.htm
+        source_role: OFFICIAL_FINAL_OR_ARCHIVED_SCHEDULE
+        observed_claim: Official CPI schedule states that the calendar is updated as needed, but the current page does not preserve every prior version.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: bls_archived_cpi_releases
+        url: https://www.bls.gov/bls/news-release/cpi.htm
+        source_role: OFFICIAL_RESULT_RELEASE_ARCHIVE
+        observed_claim: Official archive provides CPI result releases; result releases do not substitute for schedule revision authority.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: bls_archived_employment_situation_releases
+        url: https://www.bls.gov/bls/news-release/empsit.htm
+        source_role: OFFICIAL_RESULT_RELEASE_ARCHIVE
+        observed_claim: Official archive provides Employment Situation result releases; result releases do not prove the historical schedule state at each cutoff.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+    coverage_assessment:
+      evidence_class: OFFICIAL_ANNUAL_ARCHIVE_AND_RESULT_RELEASE_ARCHIVES_LOCATED
+      nominal_scope: The official archived schedule index covers 2021 through 2025 and CPI/Employment Situation release archives support terminal result reconciliation.
+      nominal_2021_2025_scope_located: true
+      exact_remote_bytes_and_digests_frozen: false
+      per_row_historical_available_at_proven: false
+      complete_revision_or_reissue_ledger_proven: false
+      exact_1202_cutoff_coverage_proven: false
+    fee_evidence:
+      fee_state: PUBLIC_OFFICIAL_NO_ACCESS_FEE_IDENTIFIED
+      published_reference_points:
+        - PUBLIC_OFFICIAL_WEB_ACCESS_NO_FEE_IDENTIFIED
+      exact_required_scope_quote_obtained: false
+      internal_research_license_rights_proven: false
+      purchase_authorized: false
+    key_gaps:
+      - INITIAL_SCHEDULE_AND_EACH_REVISION_VERSION_CHAIN_UNPROVEN
+      - LAST_MODIFIED_LABEL_NOT_ACCEPTED_AS_HISTORICAL_AVAILABLE_AT
+      - EXACT_DOCUMENT_BYTES_AND_DIGESTS_NOT_FROZEN
+      - CPI_AND_NONFARM_PAYROLLS_EXACT_1202_CUTOFF_COVERAGE_UNPROVEN
+    recommendation: PROMOTE_TO_OWNER_FREEZE_CANDIDATE_AFTER_EXACT_DOCUMENT_INVENTORY
+    recommendation_requires_owner_approval: true
+    candidate_source_approved_after_review: false
+    exact_authority_identity: null
+    exact_authority_identity_frozen: false
+    historical_coverage_proven: false
+    source_contract_admitted: false
+    runtime_authorized: false
+    blocker_remediated: false
+
+  - ordinal: 5
+    candidate_id: bea_release_schedule_capture_v1
+    provider_or_authority: Bureau of Economic Analysis
+    predecessor_candidate_disposition: INVENTORY_ONLY
+    predecessor_candidate_source_approved: false
+    public_evidence_locators:
+      - evidence_id: bea_2021_annual_schedule_pdf
+        url: https://www.bea.gov/system/files/2020-12/2021%20News%20Release%20Schedule_0.pdf
+        source_role: OFFICIAL_INITIAL_SCHEDULE
+        observed_claim: Official BEA-hosted annual schedule PDF identity was located for 2021; exact bytes were not downloaded or retained.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: bea_2022_annual_schedule_pdf
+        url: https://www.bea.gov/system/files/2021-10/2022-News-Release-Schedule.pdf
+        source_role: OFFICIAL_INITIAL_SCHEDULE
+        observed_claim: Official BEA-hosted annual schedule PDF identity was located for 2022; exact bytes were not downloaded or retained.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: bea_2023_annual_schedule_pdf
+        url: https://www.bea.gov/system/files/2022-10/2023-News-Release-Schedule.pdf
+        source_role: OFFICIAL_INITIAL_SCHEDULE
+        observed_claim: Official BEA-hosted annual schedule PDF identity was located for 2023; exact bytes were not downloaded or retained.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: bea_2024_annual_schedule_pdf
+        url: https://www.bea.gov/system/files/2024-06/2024-News-Release-Schedule.pdf
+        source_role: OFFICIAL_INITIAL_SCHEDULE
+        observed_claim: Official BEA-hosted annual schedule PDF identity was located for 2024; exact bytes were not downloaded or retained.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: bea_2025_annual_schedule_pdf
+        url: https://www.bea.gov/system/files/2024-09/2025-News-Release-Schedule.pdf
+        source_role: OFFICIAL_INITIAL_SCHEDULE
+        observed_claim: Official BEA-hosted annual schedule PDF identity was located for 2025; exact bytes were not downloaded or retained.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: bea_2023_scb_schedule_page
+        url: https://apps.bea.gov/scb/issues/2022/12-december/1222-news-releases-2023.htm
+        source_role: OFFICIAL_FINAL_OR_ARCHIVED_SCHEDULE
+        observed_claim: Official SCB page states that the 2023 schedule was updated after initial publication, establishing revision awareness but not preserving the superseded bytes.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: bea_news_archive
+        url: https://www.bea.gov/news/archive
+        source_role: OFFICIAL_RESULT_RELEASE_ARCHIVE
+        observed_claim: Official archive supports terminal result-release reconciliation but is not a complete schedule revision ledger.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: bea_schedule_publication_policy
+        url: https://www.bea.gov/about/policies-and-information/priorities-and-schedules-posting-content
+        source_role: OFFICIAL_PUBLICATION_POLICY
+        observed_claim: Official policy describes schedule publication timing and archived news-release history; it does not supply exact historical schedule versions.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+      - evidence_id: bea_2023_benchmark_reschedule_notice
+        url: https://www.bea.gov/news/blog/2023-09-05/benchmark-updates-gdp-and-more-starting-sept-28
+        source_role: OFFICIAL_REVISION_NOTICE_EXAMPLE
+        observed_claim: Official notice describes a concrete rescheduling event and says the release schedule will be updated; this is an example, not proof of an exhaustive revision ledger.
+        discovery_as_of: 2026-08-28
+        exact_remote_bytes_captured: false
+        remote_payload_sha256: null
+    coverage_assessment:
+      evidence_class: OFFICIAL_ANNUAL_PDF_SCB_SCHEDULE_AND_UPDATE_NOTICE_FAMILY_LOCATED
+      nominal_scope: Official annual PDF identities cover 2021 through 2025, while SCB and update notices provide final-calendar and example-revision evidence.
+      nominal_2021_2025_scope_located: true
+      exact_remote_bytes_and_digests_frozen: false
+      per_row_historical_available_at_proven: false
+      complete_revision_or_reissue_ledger_proven: false
+      exact_1202_cutoff_coverage_proven: false
+    fee_evidence:
+      fee_state: PUBLIC_OFFICIAL_NO_ACCESS_FEE_IDENTIFIED
+      published_reference_points:
+        - PUBLIC_OFFICIAL_WEB_ACCESS_NO_FEE_IDENTIFIED
+      exact_required_scope_quote_obtained: false
+      internal_research_license_rights_proven: false
+      purchase_authorized: false
+    key_gaps:
+      - EXACT_ANNUAL_DOCUMENT_BYTES_AND_DIGESTS_NOT_FROZEN
+      - SUPERSEDED_SCHEDULE_BYTES_AND_COMPLETE_REVISION_NOTICE_SET_UNPROVEN
+      - PER_REVISION_AVAILABLE_AT_AND_SUPERSESSION_CHAIN_UNPROVEN
+      - PCE_AND_GDP_ADVANCE_EXACT_1202_CUTOFF_COVERAGE_UNPROVEN
+    recommendation: PROMOTE_TO_OWNER_FREEZE_CANDIDATE_AFTER_EXACT_DOCUMENT_INVENTORY
+    recommendation_requires_owner_approval: true
+    candidate_source_approved_after_review: false
+    exact_authority_identity: null
+    exact_authority_identity_frozen: false
+    historical_coverage_proven: false
+    source_contract_admitted: false
+    runtime_authorized: false
+    blocker_remediated: false
+
+owner_decision_requests:
+  - request_id: APPROVE_VENDOR_EVIDENCE_INQUIRY_SEND
+    candidate_ids:
+      - fmp_spy_qqq_eod_adjusted_v1
+      - cboe_vix_index_daily_v1
+    risk_tier: R2_MATERIAL_EXTERNAL_CHANGE
+    requested_action: Permit sending a narrowly scoped capability, historical-version lineage, internal-use license, and exact-price inquiry to FMP and Cboe; no purchase or provider data query.
+    approval_granted_in_this_artifact: false
+    automatic_source_state_change_allowed: false
+  - request_id: APPROVE_OFFICIAL_DOCUMENT_EXACT_FREEZE_INVENTORY
+    candidate_ids:
+      - federal_reserve_fomc_schedule_capture_v1
+      - bls_release_schedule_capture_v1
+      - bea_release_schedule_capture_v1
+    risk_tier: R1_BOUNDED_RESEARCH_SANDBOX
+    requested_action: Permit bounded download and immutable digest inventory of official schedule metadata documents only, followed by revision-gap analysis; no market payload, DQ, series, or backtest.
+    approval_granted_in_this_artifact: false
+    automatic_source_state_change_allowed: false
+
+aggregate:
+  source_row_count: 5
+  candidate_source_approved_count: 1
+  exact_authority_identity_frozen_count: 0
+  historical_coverage_proven_count: 0
+  source_contract_admitted_count: 0
+  runtime_authorized_count: 0
+  remediated_blocker_count: 0
+  owner_decision_request_count: 2
+  next_legal_action: OWNER_REVIEWS_VENDOR_INQUIRY_AND_OFFICIAL_DOCUMENT_FREEZE_REQUESTS
+  terminal: S12_OWNER_APPROVAL_PACKET_READY_EXACT_HISTORICAL_COVERAGE_UNPROVEN_0_OF_5
+
+observed_external_activity:
+  public_documentation_web_discovery_performed: true
+  exact_browser_http_request_count_recorded: false
+  exact_browser_http_request_count: null
+  provider_api_query_attempt_count: 0
+  vendor_contact_count: 0
+  paid_product_purchase_count: 0
+  official_document_payload_download_count: 0
+  real_market_payload_download_count: 0
+  cache_read_count: 0
+  market_data_file_read_count: 0
+  source_inventory_admission_count: 0
+  veto_series_generation_count: 0
+  real_dq_run_count: 0
+  backtest_run_count: 0
+  orders: 0
+  fills: 0
+  positions: 0
+  production_effect_count: 0
+  broker_action_count: 0
+
+safety:
+  non_executable_data_research_only: true
+  public_documentation_web_discovery_allowed: true
+  provider_api_query_allowed: false
+  vendor_contact_allowed: false
+  paid_product_purchase_allowed: false
+  official_document_payload_download_allowed: false
+  real_market_payload_download_allowed: false
+  source_inventory_admission_allowed: false
+  veto_series_generation_allowed: false
+  real_dq_allowed: false
+  backtest_allowed: false
+  orders_allowed: false
+  fills_allowed: false
+  positions_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_effect: none
+  broker_action: none
