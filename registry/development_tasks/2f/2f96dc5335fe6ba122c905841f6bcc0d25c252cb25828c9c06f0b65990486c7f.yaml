@@ -14,23 +14,24 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / implement and validate the strict non-executable source-readiness
-    and 37-slot owner-review draft
+  next_owner: Project Owner / exact-freeze the reviewed draft file and canonical hashes,
+    then authorize regeneration/admission of the exact 1202-session signal package;
+    QC run remains separately authorized
   requirement_refs:
   - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Audit the existing first-layer trend-state
-    source without treating POC/source evidence as an exact 1202-session artifact;
-    draft the compatible call-or-flat mapping and complete option implementation policy
-    while keeping every executable and external action gate closed.
+  unstructured_legacy_blocker_or_next_step: 'The compatible call-or-flat mapping and
+    all 37 TRADING-2509 successor-slot proposals are now explicit and mechanically
+    replayable, but first_layer_composer_v2 remains semantic source evidence only:
+    no exact 2021-02-22..2025-12-02 signal package exists and no proposal row is Owner-frozen.'
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Strict loader proves exact predecessor hashes, five-state mapping, complete
-      TRADING-2509 successor-slot coverage, proposed pilot values and fail-closed
-      safety; Owner later freezes exact policy and a regenerated 1202-session signal
-      package before any separate QC authorization.
+    text: Owner exact-freezes draft file/canonical SHA 22335aa324ffb13c9917b65ad57f51916831ecd95c05fe357f7faa13f74b57d0/45c247010f47ad3172215f90aa7c9cd40044b5332284e1789095d230075a5d83;
+      a regenerated exact 1202-session one-row-per-XNYS-session package binds code/config/input/DQ/PIT
+      identity; manifest replay passes before a separate bounded QC authorization.
+      No raw option export/local repricing/paper/live/broker/production.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -71,29 +72,62 @@ events:
   - change:trading-2542i-register-20260829-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-39a43e3125ab057d3e42f80a2a8e14e7
+- schema_version: task_event.v1
+  task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-28T16:55:12.2012586Z'
+  actor: integration-coordinator
+  change_id: trading-2542i-owner-review-draft-ready-20260829-v1
+  lane_id: null
+  base_commit: 3c26bf859a0f16387f196e9d17e9cb070b1d12ad
+  previous_state_event_id: task-event-39a43e3125ab057d3e42f80a2a8e14e7
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / exact-freeze the reviewed draft file and canonical
+      hashes, then authorize regeneration/admission of the exact 1202-session signal
+      package; QC run remains separately authorized
+    blocker_or_next_step: 'The compatible call-or-flat mapping and all 37 TRADING-2509
+      successor-slot proposals are now explicit and mechanically replayable, but first_layer_composer_v2
+      remains semantic source evidence only: no exact 2021-02-22..2025-12-02 signal
+      package exists and no proposal row is Owner-frozen.'
+    acceptance_criteria: Owner exact-freezes draft file/canonical SHA 22335aa324ffb13c9917b65ad57f51916831ecd95c05fe357f7faa13f74b57d0/45c247010f47ad3172215f90aa7c9cd40044b5332284e1789095d230075a5d83;
+      a regenerated exact 1202-session one-row-per-XNYS-session package binds code/config/input/DQ/PIT
+      identity; manifest replay passes before a separate bounded QC authorization.
+      No raw option export/local repricing/paper/live/broker/production.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
+      focused policy+Atlas=38 passed; Ruff/strict mypy/py_compile PASS; terminal=OWNER_EXACT_FREEZE_AND_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST;
+      QC/provider/real DQ/backtest/orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542i-owner-review-draft-ready-20260829-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8e7ec232ccf91d9f01175e0c17f98264
 projection:
   legacy_first_eight_cells:
   - TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
   - QQQ options exact signal source and implementation policy owner-review draft V1
   - P0
-  - IN_PROGRESS
-  - Codex / implement and validate the strict non-executable source-readiness and
-    37-slot owner-review draft
-  - Audit the existing first-layer trend-state source without treating POC/source
-    evidence as an exact 1202-session artifact; draft the compatible call-or-flat
-    mapping and complete option implementation policy while keeping every executable
-    and external action gate closed.
-  - Strict loader proves exact predecessor hashes, five-state mapping, complete TRADING-2509
-    successor-slot coverage, proposed pilot values and fail-closed safety; Owner later
-    freezes exact policy and a regenerated 1202-session signal package before any
-    separate QC authorization.
+  - BLOCKED_OWNER_INPUT
+  - Project Owner / exact-freeze the reviewed draft file and canonical hashes, then
+    authorize regeneration/admission of the exact 1202-session signal package; QC
+    run remains separately authorized
+  - 'The compatible call-or-flat mapping and all 37 TRADING-2509 successor-slot proposals
+    are now explicit and mechanically replayable, but first_layer_composer_v2 remains
+    semantic source evidence only: no exact 2021-02-22..2025-12-02 signal package
+    exists and no proposal row is Owner-frozen.'
+  - Owner exact-freezes draft file/canonical SHA 22335aa324ffb13c9917b65ad57f51916831ecd95c05fe357f7faa13f74b57d0/45c247010f47ad3172215f90aa7c9cd40044b5332284e1789095d230075a5d83;
+    a regenerated exact 1202-session one-row-per-XNYS-session package binds code/config/input/DQ/PIT
+    identity; manifest replay passes before a separate bounded QC authorization. No
+    raw option export/local repricing/paper/live/broker/production.
   - 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
-    scope=non-executable DATA_RESEARCH; current_terminal=OWNER_EXACT_FREEZE_AND_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST;
-    real DQ/QC/backtest/provider/raw payload/orders/fills/positions/paper/live/production/broker=0/false/none.'
+    focused policy+Atlas=38 passed; Ruff/strict mypy/py_compile PASS; terminal=OWNER_EXACT_FREEZE_AND_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST;
+    QC/provider/real DQ/backtest/orders/fills/positions/production/broker=0.'
   docs_links:
   - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
   terminal: false
-  canonical_row_sha256: 58fc2276f68fe440025d549fbdd4762086823bb83b886466b3919269afe2e108
-last_event_id: task-event-39a43e3125ab057d3e42f80a2a8e14e7
+  canonical_row_sha256: 5b3a6a83baed1475b9eaab7adee1d81bc9f5922ebc4ee8f15ecef46387476b1e
+last_event_id: task-event-8e7ec232ccf91d9f01175e0c17f98264
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b166ca1d3f3cefa3bbb77e295af737e1d302a3e8d78160849ebfa76513d1fa94
+fragment_checksum: 01b18f8599661d5721a182ebbb92cb06a601145cc53f66e7893c7934e41a8435

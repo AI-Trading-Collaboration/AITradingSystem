@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BLOCKED_OWNER_INPUT`
 
 Owner 指令：Project Owner 已确认继续按“既有趋势信号只负责方向，QuantConnect 只负责期权实现与
 收益计算”的路径推进。该指令授权形成可复核草案，不等同于 exact policy freeze，也不授权真实
@@ -220,3 +220,10 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   active lease=0、worktree audit PASS。审计确认 first-layer 五态可作为推荐语义来源，但现有 artifact 仅为
   2023-02-22 起的 source evidence/POC，不能冒充 2021-02-22 起 exact package。本波只形成严格
   non-executable draft，不访问 QuantConnect、不运行真实 DQ/backtest。
+- 2026-08-29：strict draft policy 已实现，file/canonical SHA-256=
+  `22335aa324ffb13c9917b65ad57f51916831ecd95c05fe357f7faa13f74b57d0`/
+  `45c247010f47ad3172215f90aa7c9cd40044b5332284e1789095d230075a5d83`。五态 call-or-flat mapping、
+  37-slot exact-once inventory、pilot selection/execution/accounting/lifecycle/result proposals、predecessor
+  hashes 与 zero-execution safety 均可机械重放；focused policy + Atlas suite=`38 passed`，Ruff、strict
+  mypy、py_compile PASS。任务转为 `BLOCKED_OWNER_INPUT`：Owner 尚未 exact-freeze 本草案，完整
+  1202-session signal package 尚未生成；QC/provider/real DQ/backtest/orders/fills/positions/production/broker=0。
