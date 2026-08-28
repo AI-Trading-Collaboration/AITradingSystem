@@ -14,22 +14,26 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / implement and validate the non-executable scope-correction contract
+  next_owner: Project Owner / exact-freeze the retained signal identity, source-enum
+    mapping and reviewed selection/execution/accounting/lifecycle policy values before
+    any QC research run
   requirement_refs:
   - docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Freeze the existing-strategy-signal to
-    QuantConnect option-implementation boundary; classify TRADING-2542G source work
-    as optional overlay rather than baseline blocker; keep all executable policy values
-    and external runs fail closed.
+  unstructured_legacy_blocker_or_next_step: 'Static scope-correction contract is implemented:
+    existing strategy signal is sole direction authority, QC owns option implementation/P&L,
+    and FMP/Cboe/Fed/BLS/BEA are optional overlays. No retained exact signal package
+    or reviewed mapping exists, and all executable option policy axes remain OWNER_REVIEW_REQUIRED_BASELINE;
+    therefore no legal manifest or backtest can be dispatched.'
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Bind immutable 2478/2483/2499/2541 and 2542E/F/G lineage; define baseline
-      versus optional overlay, local versus QC authority, paired comparator and typed
-      stops; strict loader/tests/system flow PASS; no QC access, real DQ/backtest,
-      raw option payload, orders, fills, positions, production or broker action.
+    text: Owner exact-freezes the signal artifact and source-enum to LONG_CALL/LONG_PUT/FLAT
+      mapping, including defensive/SGOV handling, plus all relevant TRADING-2509 selection/execution/accounting/lifecycle
+      slots. A separate bounded QC authorization then requires exact manifest replay
+      PASS; local repricing/raw option export remain prohibited and paper/live/broker/production
+      remain zero.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -69,29 +73,68 @@ events:
   - change:trading-2542h-register-20260828-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-312ab043bec9f0d14be66c018130bb8f
+- schema_version: task_event.v1
+  task_id: TRADING-2542H_QQQ_OPTIONS_FROZEN_SIGNAL_IMPLEMENTATION_RETEST_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-28T09:45:14Z'
+  actor: integration-coordinator
+  change_id: trading-2542h-static-contract-ready-owner-policy-block-20260828-v1
+  lane_id: null
+  base_commit: d4dc45e7d541d57774455ee1a98931fb677a8e01
+  previous_state_event_id: task-event-312ab043bec9f0d14be66c018130bb8f
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / exact-freeze the retained signal identity, source-enum
+      mapping and reviewed selection/execution/accounting/lifecycle policy values
+      before any QC research run
+    blocker_or_next_step: 'Static scope-correction contract is implemented: existing
+      strategy signal is sole direction authority, QC owns option implementation/P&L,
+      and FMP/Cboe/Fed/BLS/BEA are optional overlays. No retained exact signal package
+      or reviewed mapping exists, and all executable option policy axes remain OWNER_REVIEW_REQUIRED_BASELINE;
+      therefore no legal manifest or backtest can be dispatched.'
+    acceptance_criteria: Owner exact-freezes the signal artifact and source-enum to
+      LONG_CALL/LONG_PUT/FLAT mapping, including defensive/SGOV handling, plus all
+      relevant TRADING-2509 selection/execution/accounting/lifecycle slots. A separate
+      bounded QC authorization then requires exact manifest replay PASS; local repricing/raw
+      option export remain prohibited and paper/live/broker/production remain zero.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md.
+      contract file/canonical SHA=d86e294f2be3ad8b8f601953ecd5e2b90d71317bca6dd197096de0db196dc80a/133eb368414d9f93429818a8a098df4d9bd0eed994ef58ca3b7615f31363d496;
+      terminal=OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST; focused/adjacent=91
+      passed plus Atlas targeted PASS; QC/provider/real DQ/backtest not run; orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542h-static-contract-ready-owner-policy-block-20260828-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-da091d0f1360058f09714f99e996e3b5
 projection:
   legacy_first_eight_cells:
   - TRADING-2542H_QQQ_OPTIONS_FROZEN_SIGNAL_IMPLEMENTATION_RETEST_CONTRACT_V1
   - QQQ options frozen-signal implementation retest scope-correction contract V1
   - P0
-  - IN_PROGRESS
-  - Codex / implement and validate the non-executable scope-correction contract
-  - Freeze the existing-strategy-signal to QuantConnect option-implementation boundary;
-    classify TRADING-2542G source work as optional overlay rather than baseline blocker;
-    keep all executable policy values and external runs fail closed.
-  - Bind immutable 2478/2483/2499/2541 and 2542E/F/G lineage; define baseline versus
-    optional overlay, local versus QC authority, paired comparator and typed stops;
-    strict loader/tests/system flow PASS; no QC access, real DQ/backtest, raw option
-    payload, orders, fills, positions, production or broker action.
+  - BLOCKED_OWNER_INPUT
+  - Project Owner / exact-freeze the retained signal identity, source-enum mapping
+    and reviewed selection/execution/accounting/lifecycle policy values before any
+    QC research run
+  - 'Static scope-correction contract is implemented: existing strategy signal is
+    sole direction authority, QC owns option implementation/P&L, and FMP/Cboe/Fed/BLS/BEA
+    are optional overlays. No retained exact signal package or reviewed mapping exists,
+    and all executable option policy axes remain OWNER_REVIEW_REQUIRED_BASELINE; therefore
+    no legal manifest or backtest can be dispatched.'
+  - Owner exact-freezes the signal artifact and source-enum to LONG_CALL/LONG_PUT/FLAT
+    mapping, including defensive/SGOV handling, plus all relevant TRADING-2509 selection/execution/accounting/lifecycle
+    slots. A separate bounded QC authorization then requires exact manifest replay
+    PASS; local repricing/raw option export remain prohibited and paper/live/broker/production
+    remain zero.
   - 'Supporting requirement: docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md.
-    owner_decision=owner_decision:TRADING-2542H:2026-08-28:adopt_quantconnect_frozen_signal_implementation_retest_path_v1;
-    governed_mode=SINGLE_LANE_SERIAL_CONTRACT_WAVE; scope=non-executable DATA_RESEARCH;
-    current_terminal=OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST; production_effect=none;
-    broker_action=none.'
+    contract file/canonical SHA=d86e294f2be3ad8b8f601953ecd5e2b90d71317bca6dd197096de0db196dc80a/133eb368414d9f93429818a8a098df4d9bd0eed994ef58ca3b7615f31363d496;
+    terminal=OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST; focused/adjacent=91 passed
+    plus Atlas targeted PASS; QC/provider/real DQ/backtest not run; orders/fills/positions/production/broker=0.'
   docs_links:
   - docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md
   terminal: false
-  canonical_row_sha256: aa1873e0a46b6d8c03423ea2babb218949f8ddb59705a3120c875e6ca34df4ec
-last_event_id: task-event-312ab043bec9f0d14be66c018130bb8f
+  canonical_row_sha256: 32666e8ab3a18088c465279b7b6c0de14a2b70bb7b6be28cc8b0b6589a7ddc95
+last_event_id: task-event-da091d0f1360058f09714f99e996e3b5
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: a9559e8bbda8853485078e6b2668c618ef470ba4c81c8dbb6f4dcdcd8c9b3d4f
+fragment_checksum: f3bc4b4aaf02d7a8faa9b1dea1986555303660ea6db43b4d5b03f9d8b3f83c2b
