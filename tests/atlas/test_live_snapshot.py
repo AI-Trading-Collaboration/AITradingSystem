@@ -41,7 +41,7 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
-    assert bundle.research_state_as_of.startswith("2026-08-27T")
+    assert bundle.research_state_as_of.startswith("2026-08-28T")
     assert bundle.evidence_evaluated_at is None
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
