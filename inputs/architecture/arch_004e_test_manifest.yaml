@@ -8470,7 +8470,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 826f2e40c011dcec48db9f11708c6cc4c06dab701106453719d1ca42efb62b78
+  sha256: 6d6dd1edb9bf18e1b8fa8ea2668b477470326c27babd786d4100c2e92a0688bb
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -10410,7 +10410,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 80c28ee9e6ce92113751f9c07c77ec301f61e96fa0209040d9b5324a733abeb2
+  sha256: 5e5925715c322917c239cbd556c083842331dce9b7e4273ad855dab81452215f
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
