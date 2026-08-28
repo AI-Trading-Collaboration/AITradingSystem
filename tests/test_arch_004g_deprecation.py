@@ -57,12 +57,12 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-WAVE20_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_951a458aab5264701eb0"
+WAVE20_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_510d8920b8f15331fbfa"
 WAVE20_CURRENT_REPOSITORY_COUNTS = {
-    # TRADING-2542G S13 adds one typed evidence-receipt loader and one focused test;
+    # TRADING-2542H adds one frozen-signal retest contract loader and one focused test;
     # no deprecation lifecycle or direct-writer allowance changes.
-    "python_module_count": 1169,
-    "python_test_file_count": 1329,
+    "python_module_count": 1170,
+    "python_test_file_count": 1330,
     "direct_writer_current_count": 856,
 }
 WAVE20_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(
