@@ -876,6 +876,23 @@ source admission、veto series、real DQ、backtest、orders、fills、positions
 5. 临时 workspace 按上述 lifecycle 清理或带 typed blocker 保留；
 6. focused/adjacent、Ruff、strict mypy、py_compile 与适用 formal tiers PASS，所有禁止计数保持 0。
 
+执行结果：
+
+- FMP/Cboe 两份 inquiry packet 已生成，但 vendor form submission/message sent 均为 0。FMP 缺授权 sender
+  email；Cboe 缺 first/last name、phone、email、company，且需要 CAPTCHA 与浏览器 action-time confirmation；
+  因此没有伪造身份、读取浏览器保存身份或把 prepared packet 记为 sent；
+- controlled official-metadata HTTP request attempts=`33`；exact retained documents=`18`，其中 Fed=`6`、
+  BEA=`12`；failed attempts=`15`，其中 BLS HTTP 403=`10`、BEA 旧 `/system/files/...` locator HTTP 404=`5`；
+- BEA 五个 PDF 已通过同一官方站点的 `/sites/default/files/...` corrected locator 成功保留；PDF metadata
+  与页内 `Last updated` 表明取得的是 later-updated current bytes，不是各年度 initial/superseded version chain；
+- BLS 页面可在浏览器显示，但 scripted byte-exact retrieval 对 controlled 与 browser-like user-agent 都返回
+  HTTP 403；未用 rendered/browser export 冒充 remote bytes；
+- staging 在 loader 逐文件复算 canonical size/SHA、确认无活动依赖与无唯一未保留 evidence 后已清理：
+  `43 files / 36,968 bytes`；删除的中间 headers/error bodies 不可从本机恢复，成功 bytes 与结构化失败回执
+  已保留在 canonical path；
+- exact authority、historical coverage、source admission、runtime 与 blocker remediation 继续为 0/5；
+  terminal=`S13_EVIDENCE_RECEIPTS_READY_VENDOR_SEND_AND_BLS_EXACT_BYTES_BLOCKED`。
+
 ## 7. Path、contract 与 evidence claims
 
 task-owned paths：本 requirement、逐阶段 immutable config、typed loader/pure adapter 与 focused tests。
@@ -905,6 +922,16 @@ evidence roles：
 
 ## 9. 进度记录
 
+- 2026-08-28：Owner 回复“批准”，S13 将 S12 两项请求分别记录为 R2/R1
+  `EXACT_PREAUTHORIZED`。FMP/Cboe packet 已准备但因授权 sender identity/channel、browser action-time
+  confirmation 与 Cboe CAPTCHA 缺失而未发送，vendor contact=`0`。Fed/BEA exact schedule metadata 已保留
+  `6/12` 份，BLS `10` 次 exact-byte 请求均 HTTP 403，BEA 五个旧 locator 404 后由官方 corrected locator
+  成功获取；总 HTTP attempts=`33`、retained=`18`、failed=`15`。没有 provider API、purchase、真实
+  market payload、source admission、veto series、real DQ/backtest 或 execution；exact authority/coverage/
+  admission/runtime/remediation 仍为 `0/5`。S13 config file/canonical SHA-256=
+  `8d78ce94339c122fc6c47494e1c629b26a22a603c9d54989a0c29aacd231eca4`/
+  `03d01fb8bc1f94396d026f97bce4617e456519b89d0faccb6f88e493710473d1`；mandatory-veto adjacent=
+  `298 passed`，Ruff、strict mypy、py_compile、strict load PASS；staging 已清理 `43 files / 36,968 bytes`。
 - 2026-08-28：S12 只读公开来源复核已形成 strict owner-review draft。新增五项 ordered evidence rows、
   公开 locator、nominal coverage/PIT proof 分离、fee reference/required-scope quote 分离及两项独立 Owner
   decision request；递归绑定 S11 exact identity，保持 candidate approved=1/5，exact authority/coverage/

@@ -9790,6 +9790,44 @@ S11 exact identity + five frozen source states + exact 1202 sessions
 `count_recorded=false`，不以虚构的零计数替代审计事实。下一步必须由 Owner 精确选择上述两项审批；
 无论批准哪项，都不自动改变 source state 或授权真实数据与策略运行。
 
+### TRADING-2542G S13 authorized source-evidence acquisition receipt
+
+S13 把 Owner 对 S12 两项请求的“批准”分别绑定到 R2 vendor inquiry 与 R1 official schedule metadata
+inventory；authorization state 与 technical validation state 始终分轴。FMP/Cboe 只生成可审计询证稿，
+在缺少授权 sender identity、浏览器 action-time confirmation 以及 Cboe CAPTCHA 处理时停止，不把 opened
+contact page 或 prepared packet 计为 sent/contact。Fed/BLS/BEA 只获取 schedule metadata，不接触 provider
+data API 或真实市场/宏观结果 payload。
+
+```text
+S12 exact identity + two Owner approvals = EXACT_PREAUTHORIZED
+  -> vendor evidence inquiry branch
+       -> FMP packet prepared; sender email missing -> not submitted
+       -> Cboe packet prepared; name/phone/email/company + CAPTCHA missing -> not submitted
+       -> vendor contact = 0 / 2
+  -> official schedule metadata branch
+       -> controlled HTTP attempts = 33
+       -> Fed exact current bytes retained = 6
+       -> BLS exact bytes retained = 0; 10 attempts return HTTP 403
+       -> BEA exact current bytes retained = 12
+            -> five S12 /system/files PDF locators return HTTP 404
+            -> corrected official /sites/default/files PDF locators succeed
+       -> retained exact documents = 18; failed HTTP attempts = 15
+  -> revision-gap assessment
+       -> Fed complete amendment/reschedule/cancellation ledger unproven
+       -> BLS exact-byte acquisition and revision chain blocked
+       -> BEA retained PDFs are later-updated versions; superseded bytes unproven
+  -> exact authority / historical coverage / admission / runtime / remediation = 0 / 5
+  -> terminal = S13_EVIDENCE_RECEIPTS_READY_VENDOR_SEND_AND_BLS_EXACT_BYTES_BLOCKED
+  -> provider API / purchase / real payload / source admission / veto series = 0
+  -> real DQ / backtest / orders / fills / positions / production / broker = 0
+```
+
+每个 retained receipt 都绑定 exact URL、retrieval UTC、HTTP/content metadata、byte count、SHA-256 与
+canonical path。HTTP `Last-Modified` 和本次 retrieval time 只用于下载审计，不能生成 historical
+`available_at`/`published_at`。只有后续独立 review/freeze 能升级 candidate/authority/coverage 状态；S13
+本身仍是 non-executable evidence receipt。byte-exact staging 在 canonical receipt 重放 PASS 后已清理
+`43 files / 36,968 bytes`；成功 bytes 与结构化失败回执保留，临时 headers/error bodies 不可恢复。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

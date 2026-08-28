@@ -1,0 +1,620 @@
+schema_version: growth_action_value_mandatory_veto_historical_pit_source_evidence_acquisition_receipt.v1
+policy_id: qc_qqq_options_growth_action_value_mandatory_veto_historical_pit_source_evidence_acquisition_receipt_v1
+policy_version: 1.0.0-draft.1
+status: AUTHORIZED_EVIDENCE_ACQUISITION_EXECUTED_PARTIAL
+task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+executed_as_of: 2026-08-28
+
+predecessor_binding:
+  policy_id: qc_qqq_options_growth_action_value_mandatory_veto_historical_pit_source_candidate_evidence_review_v1
+  path: config/research/qc_qqq_options_growth_action_value_mandatory_veto_historical_pit_source_candidate_evidence_review_v1.yaml
+  file_sha256: 459de4560d569db917024f6efc3f2f46e5487f98ba9bf2dc580fcc0a25e10fb9
+  canonical_sha256: 4900d472ba79091fc17701d17fd2ed20f925d28b55927249af0d3665e97ef82d
+  role: S12_SOURCE_CANDIDATE_EVIDENCE_REVIEW
+  immutable: true
+
+owner_approvals:
+  - ordinal: 1
+    request_id: APPROVE_VENDOR_EVIDENCE_INQUIRY_SEND
+    risk_tier: R2_MATERIAL_EXTERNAL_CHANGE
+    authorization_state: EXACT_PREAUTHORIZED
+    owner_instruction_ref: owner_instruction:TRADING-2542G:S13:2026-08-28:approve_both_s12_requests
+    approval_scope: PREPARE_AND_ATTEMPT_FMP_CBOE_CAPABILITY_LICENSE_QUOTE_INQUIRIES_NO_PURCHASE_NO_PROVIDER_API
+    automatic_technical_state_change_allowed: false
+  - ordinal: 2
+    request_id: APPROVE_OFFICIAL_DOCUMENT_EXACT_FREEZE_INVENTORY
+    risk_tier: R1_BOUNDED_RESEARCH_SANDBOX
+    authorization_state: EXACT_PREAUTHORIZED
+    owner_instruction_ref: owner_instruction:TRADING-2542G:S13:2026-08-28:approve_both_s12_requests
+    approval_scope: DOWNLOAD_HASH_AND_REVIEW_FED_BLS_BEA_OFFICIAL_SCHEDULE_METADATA_ONLY
+    automatic_technical_state_change_allowed: false
+
+vendor_inquiry_packet:
+  path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/vendor_inquiry_packet.md
+  file_sha256: 0ee237ed0c999d57dfe705cc0f28cd4506ec339c1490888b1110bf1a61415f99
+  byte_count: 3927
+  packet_state: PREPARED_NOT_SENT
+  vendor_rows:
+    - ordinal: 1
+      vendor: FMP
+      candidate_id: fmp_spy_qqq_eod_adjusted_v1
+      official_contact_url: https://site.financialmodelingprep.com/contact
+      official_contact_email_observed: info@financialmodelingprep.com
+      contact_surface_inspected: true
+      required_identity_fields:
+        - SENDER_EMAIL
+      captcha_observed: false
+      browser_action_time_confirmation_required: true
+      form_submission_attempted: false
+      message_sent: false
+      sent_receipt: null
+      send_state: SEND_BLOCKED_MISSING_AUTHORIZED_SENDER_IDENTITY_OR_CHANNEL
+    - ordinal: 2
+      vendor: CBOE_DATASHOP
+      candidate_id: cboe_vix_index_daily_v1
+      official_contact_url: https://datashop.cboe.com/data-products#contact-us
+      official_contact_email_observed: null
+      contact_surface_inspected: true
+      required_identity_fields:
+        - FIRST_NAME
+        - LAST_NAME
+        - PHONE
+        - EMAIL
+        - COMPANY
+      captcha_observed: true
+      browser_action_time_confirmation_required: true
+      form_submission_attempted: false
+      message_sent: false
+      sent_receipt: null
+      send_state: SEND_BLOCKED_MISSING_AUTHORIZED_SENDER_IDENTITY_OR_CHANNEL_AND_CAPTCHA_CONFIRMATION
+
+official_document_receipts:
+  - ordinal: 1
+    authority: FED
+    document_id: fed_fomc_2021_tentative_schedule_press_release
+    source_role: OFFICIAL_INITIAL_SCHEDULE
+    locator_disposition: S12_EXACT_LOCATOR
+    requested_url: https://www.federalreserve.gov/newsevents/pressreleases/monetary20200702a.htm
+    retrieved_at: 2026-08-28T01:51:02.0334975Z
+    http_status: 200
+    content_type: text/html
+    response_last_modified: Thu, 26 Feb 2026 22:36:17 GMT
+    response_etag: null
+    byte_count: 80453
+    sha256: a510002170c92b5dc2ead2a8b52db27fd0e9a6a1011ee5fd08e564bdf04a543d
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/fed/monetary20200702a.html
+  - ordinal: 2
+    authority: FED
+    document_id: fed_fomc_2022_tentative_schedule_press_release
+    source_role: OFFICIAL_INITIAL_SCHEDULE
+    locator_disposition: S12_EXACT_LOCATOR
+    requested_url: https://www.federalreserve.gov/newsevents/pressreleases/monetary20210604a.htm
+    retrieved_at: 2026-08-28T01:51:04.9232121Z
+    http_status: 200
+    content_type: text/html
+    response_last_modified: Thu, 26 Feb 2026 22:32:47 GMT
+    response_etag: null
+    byte_count: 80455
+    sha256: 81bf39f9dbfcdcb792fad6e29593790ac1fc02a81afab270382e254749d7b64a
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/fed/monetary20210604a.html
+  - ordinal: 3
+    authority: FED
+    document_id: fed_fomc_2023_tentative_schedule_press_release
+    source_role: OFFICIAL_INITIAL_SCHEDULE
+    locator_disposition: S12_EXACT_LOCATOR
+    requested_url: https://www.federalreserve.gov/newsevents/pressreleases/monetary20220624a.htm
+    retrieved_at: 2026-08-28T01:51:05.5394493Z
+    http_status: 200
+    content_type: text/html
+    response_last_modified: Thu, 26 Feb 2026 22:30:26 GMT
+    response_etag: null
+    byte_count: 80645
+    sha256: bdf5f3f80185ba5a74f47ac7b2a7835b45ff7de33e0e2bdbb1e4310a2d24256f
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/fed/monetary20220624a.html
+  - ordinal: 4
+    authority: FED
+    document_id: fed_fomc_2024_tentative_schedule_press_release
+    source_role: OFFICIAL_INITIAL_SCHEDULE
+    locator_disposition: S12_EXACT_LOCATOR
+    requested_url: https://www.federalreserve.gov/newsevents/pressreleases/monetary20230623a.htm
+    retrieved_at: 2026-08-28T01:51:06.1843190Z
+    http_status: 200
+    content_type: text/html
+    response_last_modified: Thu, 26 Feb 2026 22:28:06 GMT
+    response_etag: null
+    byte_count: 80601
+    sha256: 3727543c1bd5f1beb05728f2e48bcb522ca23b93a9451df77adee1214b55aba9
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/fed/monetary20230623a.html
+  - ordinal: 5
+    authority: FED
+    document_id: fed_fomc_2025_2026_tentative_schedule_press_release
+    source_role: OFFICIAL_INITIAL_SCHEDULE
+    locator_disposition: S12_EXACT_LOCATOR
+    requested_url: https://www.federalreserve.gov/newsevents/pressreleases/monetary20240809a.htm
+    retrieved_at: 2026-08-28T01:51:06.8222901Z
+    http_status: 200
+    content_type: text/html
+    response_last_modified: Thu, 26 Feb 2026 22:25:46 GMT
+    response_etag: null
+    byte_count: 81588
+    sha256: 595457a435c50e43d87baeaab14cfed3461b2c154d9a4188dbc1002e1c7bad81
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/fed/monetary20240809a.html
+  - ordinal: 6
+    authority: FED
+    document_id: fed_current_and_historical_fomc_calendars
+    source_role: OFFICIAL_FINAL_OR_ARCHIVED_SCHEDULE
+    locator_disposition: S12_EXACT_LOCATOR
+    requested_url: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
+    retrieved_at: 2026-08-28T01:51:07.4416483Z
+    http_status: 200
+    content_type: text/html
+    response_last_modified: Wed, 19 Aug 2026 18:00:38 GMT
+    response_etag: null
+    byte_count: 164831
+    sha256: 0ecd641278f6c350ba611555047f230ede10d2148f07072541e27d29fed23119
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/fed/fomccalendars.html
+  - ordinal: 7
+    authority: BEA
+    document_id: bea_2021_annual_schedule_pdf
+    source_role: OFFICIAL_INITIAL_SCHEDULE
+    locator_disposition: S12_LOCATOR_STALE_CORRECTED_OFFICIAL_PATH
+    requested_url: https://www.bea.gov/sites/default/files/2020-12/2021%20News%20Release%20Schedule_0.pdf
+    retrieved_at: 2026-08-28T01:55:13.8679680Z
+    http_status: 200
+    content_type: application/pdf
+    response_last_modified: Wed, 13 Oct 2021 16:23:55 GMT
+    response_etag: '"21564-5ce3e636dfcc0"'
+    byte_count: 136548
+    sha256: 9aabdf16d5dcc9abfb7975194f333e1a77f8bcc3a2c92d6f60bda78f3b0fb092
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/bea/2021_news_release_schedule.pdf
+  - ordinal: 8
+    authority: BEA
+    document_id: bea_2022_annual_schedule_pdf
+    source_role: OFFICIAL_INITIAL_SCHEDULE
+    locator_disposition: S12_LOCATOR_STALE_CORRECTED_OFFICIAL_PATH
+    requested_url: https://www.bea.gov/sites/default/files/2021-10/2022-News-Release-Schedule.pdf
+    retrieved_at: 2026-08-28T01:55:15.3387890Z
+    http_status: 200
+    content_type: application/pdf
+    response_last_modified: Tue, 20 Sep 2022 15:26:17 GMT
+    response_etag: '"225e3-5e91d730b5840"'
+    byte_count: 140771
+    sha256: 72c22af8658fd1262bae0186866d73fa1a26185845834f08246d45f686cf8457
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/bea/2022_news_release_schedule.pdf
+  - ordinal: 9
+    authority: BEA
+    document_id: bea_2023_annual_schedule_pdf
+    source_role: OFFICIAL_INITIAL_SCHEDULE
+    locator_disposition: S12_LOCATOR_STALE_CORRECTED_OFFICIAL_PATH
+    requested_url: https://www.bea.gov/sites/default/files/2022-10/2023-News-Release-Schedule.pdf
+    retrieved_at: 2026-08-28T01:55:16.7705953Z
+    http_status: 200
+    content_type: application/pdf
+    response_last_modified: Tue, 28 Nov 2023 16:13:20 GMT
+    response_etag: '"21cbf-60b38b26fa800"'
+    byte_count: 138431
+    sha256: ebc48953d96e36ca4b562be5442855d06ec9635a0648bd5450ad54818281b58d
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/bea/2023_news_release_schedule.pdf
+  - ordinal: 10
+    authority: BEA
+    document_id: bea_2024_annual_schedule_pdf
+    source_role: OFFICIAL_INITIAL_SCHEDULE
+    locator_disposition: S12_LOCATOR_STALE_CORRECTED_OFFICIAL_PATH
+    requested_url: https://www.bea.gov/sites/default/files/2024-06/2024-News-Release-Schedule.pdf
+    retrieved_at: 2026-08-28T01:55:18.2014023Z
+    http_status: 200
+    content_type: application/pdf
+    response_last_modified: Thu, 05 Dec 2024 20:28:33 GMT
+    response_etag: '"22fd5-6288bbdf85e40"'
+    byte_count: 143317
+    sha256: 719dc3ce213ab53f87b5d57bc595c17eed6672e840d37b16ee4fefc9075af923
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/bea/2024_news_release_schedule.pdf
+  - ordinal: 11
+    authority: BEA
+    document_id: bea_2025_annual_schedule_pdf
+    source_role: OFFICIAL_INITIAL_SCHEDULE
+    locator_disposition: S12_LOCATOR_STALE_CORRECTED_OFFICIAL_PATH
+    requested_url: https://www.bea.gov/sites/default/files/2024-09/2025-News-Release-Schedule.pdf
+    retrieved_at: 2026-08-28T01:55:19.6882157Z
+    http_status: 200
+    content_type: application/pdf
+    response_last_modified: Fri, 27 Jun 2025 14:29:02 GMT
+    response_etag: '"31813-6388e7fdd8780"'
+    byte_count: 202771
+    sha256: dfb73c8a4a9e159a27d136d33d30336500675bbc2689e27d41356a3102d726e5
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/bea/2025_news_release_schedule.pdf
+  - ordinal: 12
+    authority: BEA
+    document_id: bea_2023_scb_schedule_page
+    source_role: OFFICIAL_FINAL_OR_ARCHIVED_SCHEDULE
+    locator_disposition: S12_EXACT_LOCATOR
+    requested_url: https://apps.bea.gov/scb/issues/2022/12-december/1222-news-releases-2023.htm
+    retrieved_at: 2026-08-28T01:53:03.9824865Z
+    http_status: 200
+    content_type: text/html
+    response_last_modified: null
+    response_etag: null
+    byte_count: 44363
+    sha256: 65fe4b574140cd6c8bdae26256df1d589c0b8125e5f6fa72f71c5acef1df3713
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/bea/scb_2023_schedule.html
+  - ordinal: 13
+    authority: BEA
+    document_id: bea_news_archive
+    source_role: OFFICIAL_RESULT_RELEASE_ARCHIVE
+    locator_disposition: S12_EXACT_LOCATOR
+    requested_url: https://www.bea.gov/news/archive
+    retrieved_at: 2026-08-28T01:53:05.2563513Z
+    http_status: 200
+    content_type: text/html; charset=UTF-8
+    response_last_modified: Fri, 28 Aug 2026 00:00:56 GMT
+    response_etag: '"1787875256"'
+    byte_count: 65223
+    sha256: 1978d09412e29f36f786562fea8642e1107d6072c832986a796c6cb44b63cf62
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/bea/news_archive.html
+  - ordinal: 14
+    authority: BEA
+    document_id: bea_schedule_publication_policy
+    source_role: OFFICIAL_PUBLICATION_POLICY
+    locator_disposition: S12_EXACT_LOCATOR
+    requested_url: https://www.bea.gov/about/policies-and-information/priorities-and-schedules-posting-content
+    retrieved_at: 2026-08-28T01:53:06.6143342Z
+    http_status: 200
+    content_type: text/html; charset=UTF-8
+    response_last_modified: Fri, 28 Aug 2026 00:39:18 GMT
+    response_etag: '"1787877558"'
+    byte_count: 39975
+    sha256: 7c88b69251a0dcea1d4d636cb1d6466c5b908e0b0982e33c6ceb1e53ceaeba31
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/bea/schedule_publication_policy.html
+  - ordinal: 15
+    authority: BEA
+    document_id: bea_2023_benchmark_reschedule_notice
+    source_role: OFFICIAL_REVISION_NOTICE_EXAMPLE
+    locator_disposition: S12_EXACT_LOCATOR
+    requested_url: https://www.bea.gov/news/blog/2023-09-05/benchmark-updates-gdp-and-more-starting-sept-28
+    retrieved_at: 2026-08-28T01:53:07.8291487Z
+    http_status: 200
+    content_type: text/html; charset=UTF-8
+    response_last_modified: Fri, 28 Aug 2026 00:02:49 GMT
+    response_etag: '"1787875369"'
+    byte_count: 42329
+    sha256: 9f252afdb7ac6bb1f223cd0c99b676eeaf0d1ad761766ecd1f483394ccbb3890
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/bea/benchmark_reschedule_notice_2023-09-05.html
+  - ordinal: 16
+    authority: BEA
+    document_id: bea_2021_scb_schedule_page_same_family
+    source_role: OFFICIAL_FINAL_OR_ARCHIVED_SCHEDULE
+    locator_disposition: S13_SAME_FAMILY_ADDITION
+    requested_url: https://apps.bea.gov/scb/issues/2020/12-december/1220-news-releases-2021.htm
+    retrieved_at: 2026-08-28T01:55:21.2712291Z
+    http_status: 200
+    content_type: text/html
+    response_last_modified: null
+    response_etag: null
+    byte_count: 44252
+    sha256: 8fac5e872a44224be1b5862a777988ff6b3146a0b6870270d557285a48a47660
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/bea/scb_2021_schedule.html
+  - ordinal: 17
+    authority: BEA
+    document_id: bea_2022_scb_schedule_page_same_family
+    source_role: OFFICIAL_FINAL_OR_ARCHIVED_SCHEDULE
+    locator_disposition: S13_SAME_FAMILY_ADDITION
+    requested_url: https://apps.bea.gov/scb/issues/2021/12-december/1221-news-releases-2022.htm
+    retrieved_at: 2026-08-28T01:55:22.6021974Z
+    http_status: 200
+    content_type: text/html
+    response_last_modified: null
+    response_etag: null
+    byte_count: 44420
+    sha256: 47859f2f99508bf6e398b85fff35c9d3d437b1444cd4b7b4cc7f2e2cc36094c6
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/bea/scb_2022_schedule.html
+  - ordinal: 18
+    authority: BEA
+    document_id: bea_2024_scb_schedule_page_same_family
+    source_role: OFFICIAL_FINAL_OR_ARCHIVED_SCHEDULE
+    locator_disposition: S13_SAME_FAMILY_ADDITION
+    requested_url: https://apps.bea.gov/scb/issues/2023/12-december/1223-news-releases-2024.htm
+    retrieved_at: 2026-08-28T01:55:23.8188107Z
+    http_status: 200
+    content_type: text/html
+    response_last_modified: null
+    response_etag: null
+    byte_count: 44004
+    sha256: 0ec88d0496139e85f6d440aa3d033b0f385ff2d880ec82ae78e4a024aa28d2ae
+    retained_path: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/bea/scb_2024_schedule.html
+
+failed_official_document_attempts:
+  - ordinal: 1
+    authority: BLS
+    document_id: bls_archived_release_schedule_index
+    requested_url: https://www.bls.gov/bls/archived_sched.htm
+    retrieved_at: 2026-08-28T01:51:45.0241669Z
+    transport_profile: CONTROLLED_METADATA_USER_AGENT
+    curl_exit: 0
+    http_status: 403
+    content_type: text/html
+    response_byte_count: 1323
+    retained_as_authority: false
+    reason_code: BLS_AUTOMATED_EXACT_BYTE_DOWNLOAD_FORBIDDEN_HTTP_403
+  - ordinal: 2
+    authority: BLS
+    document_id: bls_archived_release_schedule_index_browser_profile_retry
+    requested_url: https://www.bls.gov/bls/archived_sched.htm
+    retrieved_at: 2026-08-28T01:52:18.1422700Z
+    transport_profile: BROWSER_LIKE_USER_AGENT_RETRY
+    curl_exit: 0
+    http_status: 403
+    content_type: text/html
+    response_byte_count: 1323
+    retained_as_authority: false
+    reason_code: BLS_AUTOMATED_EXACT_BYTE_DOWNLOAD_FORBIDDEN_HTTP_403
+  - ordinal: 3
+    authority: BLS
+    document_id: bls_2021_release_schedule
+    requested_url: https://www.bls.gov/schedule/2021/home.htm
+    retrieved_at: 2026-08-28T01:51:45.4028620Z
+    transport_profile: CONTROLLED_METADATA_USER_AGENT
+    curl_exit: 0
+    http_status: 403
+    content_type: text/html
+    response_byte_count: 1323
+    retained_as_authority: false
+    reason_code: BLS_AUTOMATED_EXACT_BYTE_DOWNLOAD_FORBIDDEN_HTTP_403
+  - ordinal: 4
+    authority: BLS
+    document_id: bls_2022_release_schedule
+    requested_url: https://www.bls.gov/schedule/2022/home.htm
+    retrieved_at: 2026-08-28T01:51:45.7583705Z
+    transport_profile: CONTROLLED_METADATA_USER_AGENT
+    curl_exit: 0
+    http_status: 403
+    content_type: text/html
+    response_byte_count: 1323
+    retained_as_authority: false
+    reason_code: BLS_AUTOMATED_EXACT_BYTE_DOWNLOAD_FORBIDDEN_HTTP_403
+  - ordinal: 5
+    authority: BLS
+    document_id: bls_2023_release_schedule_same_family
+    requested_url: https://www.bls.gov/schedule/2023/home.htm
+    retrieved_at: 2026-08-28T01:51:46.1458941Z
+    transport_profile: CONTROLLED_METADATA_USER_AGENT
+    curl_exit: 0
+    http_status: 403
+    content_type: text/html
+    response_byte_count: 1323
+    retained_as_authority: false
+    reason_code: BLS_AUTOMATED_EXACT_BYTE_DOWNLOAD_FORBIDDEN_HTTP_403
+  - ordinal: 6
+    authority: BLS
+    document_id: bls_2024_release_schedule
+    requested_url: https://www.bls.gov/schedule/2024/
+    retrieved_at: 2026-08-28T01:51:46.5108805Z
+    transport_profile: CONTROLLED_METADATA_USER_AGENT
+    curl_exit: 0
+    http_status: 403
+    content_type: text/html
+    response_byte_count: 1323
+    retained_as_authority: false
+    reason_code: BLS_AUTOMATED_EXACT_BYTE_DOWNLOAD_FORBIDDEN_HTTP_403
+  - ordinal: 7
+    authority: BLS
+    document_id: bls_2025_release_schedule_same_family
+    requested_url: https://www.bls.gov/schedule/2025/home.htm
+    retrieved_at: 2026-08-28T01:51:46.8673302Z
+    transport_profile: CONTROLLED_METADATA_USER_AGENT
+    curl_exit: 0
+    http_status: 403
+    content_type: text/html
+    response_byte_count: 1323
+    retained_as_authority: false
+    reason_code: BLS_AUTOMATED_EXACT_BYTE_DOWNLOAD_FORBIDDEN_HTTP_403
+  - ordinal: 8
+    authority: BLS
+    document_id: bls_current_cpi_schedule
+    requested_url: https://www.bls.gov/schedule/news_release/cpi.htm
+    retrieved_at: 2026-08-28T01:51:47.2401956Z
+    transport_profile: CONTROLLED_METADATA_USER_AGENT
+    curl_exit: 0
+    http_status: 403
+    content_type: text/html
+    response_byte_count: 1323
+    retained_as_authority: false
+    reason_code: BLS_AUTOMATED_EXACT_BYTE_DOWNLOAD_FORBIDDEN_HTTP_403
+  - ordinal: 9
+    authority: BLS
+    document_id: bls_archived_cpi_releases
+    requested_url: https://www.bls.gov/bls/news-release/cpi.htm
+    retrieved_at: 2026-08-28T01:51:47.5784859Z
+    transport_profile: CONTROLLED_METADATA_USER_AGENT
+    curl_exit: 0
+    http_status: 403
+    content_type: text/html
+    response_byte_count: 1323
+    retained_as_authority: false
+    reason_code: BLS_AUTOMATED_EXACT_BYTE_DOWNLOAD_FORBIDDEN_HTTP_403
+  - ordinal: 10
+    authority: BLS
+    document_id: bls_archived_employment_situation_releases
+    requested_url: https://www.bls.gov/bls/news-release/empsit.htm
+    retrieved_at: 2026-08-28T01:51:47.9308964Z
+    transport_profile: CONTROLLED_METADATA_USER_AGENT
+    curl_exit: 0
+    http_status: 403
+    content_type: text/html
+    response_byte_count: 1323
+    retained_as_authority: false
+    reason_code: BLS_AUTOMATED_EXACT_BYTE_DOWNLOAD_FORBIDDEN_HTTP_403
+  - ordinal: 11
+    authority: BEA
+    document_id: bea_2021_annual_schedule_pdf_stale_s12_locator
+    requested_url: https://www.bea.gov/system/files/2020-12/2021%20News%20Release%20Schedule_0.pdf
+    retrieved_at: 2026-08-28T01:52:56.3931832Z
+    transport_profile: CONTROLLED_METADATA_USER_AGENT
+    curl_exit: 0
+    http_status: 404
+    content_type: text/html; charset=UTF-8
+    response_byte_count: 36210
+    retained_as_authority: false
+    reason_code: BEA_S12_SYSTEM_FILES_LOCATOR_STALE_HTTP_404
+  - ordinal: 12
+    authority: BEA
+    document_id: bea_2022_annual_schedule_pdf_stale_s12_locator
+    requested_url: https://www.bea.gov/system/files/2021-10/2022-News-Release-Schedule.pdf
+    retrieved_at: 2026-08-28T01:52:57.3642238Z
+    transport_profile: CONTROLLED_METADATA_USER_AGENT
+    curl_exit: 0
+    http_status: 404
+    content_type: text/html; charset=UTF-8
+    response_byte_count: 36200
+    retained_as_authority: false
+    reason_code: BEA_S12_SYSTEM_FILES_LOCATOR_STALE_HTTP_404
+  - ordinal: 13
+    authority: BEA
+    document_id: bea_2023_annual_schedule_pdf_stale_s12_locator
+    requested_url: https://www.bea.gov/system/files/2022-10/2023-News-Release-Schedule.pdf
+    retrieved_at: 2026-08-28T01:52:59.4159727Z
+    transport_profile: CONTROLLED_METADATA_USER_AGENT
+    curl_exit: 0
+    http_status: 404
+    content_type: text/html; charset=UTF-8
+    response_byte_count: 36200
+    retained_as_authority: false
+    reason_code: BEA_S12_SYSTEM_FILES_LOCATOR_STALE_HTTP_404
+  - ordinal: 14
+    authority: BEA
+    document_id: bea_2024_annual_schedule_pdf_stale_s12_locator
+    requested_url: https://www.bea.gov/system/files/2024-06/2024-News-Release-Schedule.pdf
+    retrieved_at: 2026-08-28T01:53:01.0026790Z
+    transport_profile: CONTROLLED_METADATA_USER_AGENT
+    curl_exit: 0
+    http_status: 404
+    content_type: text/html; charset=UTF-8
+    response_byte_count: 36200
+    retained_as_authority: false
+    reason_code: BEA_S12_SYSTEM_FILES_LOCATOR_STALE_HTTP_404
+  - ordinal: 15
+    authority: BEA
+    document_id: bea_2025_annual_schedule_pdf_stale_s12_locator
+    requested_url: https://www.bea.gov/system/files/2024-09/2025-News-Release-Schedule.pdf
+    retrieved_at: 2026-08-28T01:53:02.5527289Z
+    transport_profile: CONTROLLED_METADATA_USER_AGENT
+    curl_exit: 0
+    http_status: 404
+    content_type: text/html; charset=UTF-8
+    response_byte_count: 36200
+    retained_as_authority: false
+    reason_code: BEA_S12_SYSTEM_FILES_LOCATOR_STALE_HTTP_404
+
+revision_gap_assessment:
+  - ordinal: 1
+    authority: FED
+    exact_document_receipt_count: 6
+    nominal_2021_2025_scope_located: true
+    exact_current_bytes_retained: true
+    initial_schedule_family_evidence_present: true
+    complete_revision_or_reissue_ledger_proven: false
+    historical_available_at_proven: false
+    exact_1202_cutoff_coverage_proven: false
+    blocker: CURRENTLY_RETAINED_PAGES_DO_NOT_PROVE_COMPLETE_AMENDMENT_RESCHEDULE_CANCELLATION_LEDGER
+  - ordinal: 2
+    authority: BLS
+    exact_document_receipt_count: 0
+    nominal_2021_2025_scope_located: true
+    exact_current_bytes_retained: false
+    initial_schedule_family_evidence_present: false
+    complete_revision_or_reissue_ledger_proven: false
+    historical_available_at_proven: false
+    exact_1202_cutoff_coverage_proven: false
+    blocker: EXACT_BYTE_ACQUISITION_BLOCKED_HTTP_403_AND_REVISION_CHAIN_UNPROVEN
+  - ordinal: 3
+    authority: BEA
+    exact_document_receipt_count: 12
+    nominal_2021_2025_scope_located: true
+    exact_current_bytes_retained: true
+    initial_schedule_family_evidence_present: false
+    complete_revision_or_reissue_ledger_proven: false
+    historical_available_at_proven: false
+    exact_1202_cutoff_coverage_proven: false
+    blocker: ANNUAL_PDFS_ARE_LATER_UPDATED_VERSIONS_AND_SUPERSEDED_BYTES_REVISION_CHAIN_REMAIN_UNPROVEN
+
+source_state:
+  source_row_count: 5
+  candidate_source_approved_count: 1
+  exact_authority_identity_frozen_count: 0
+  historical_coverage_proven_count: 0
+  source_contract_admitted_count: 0
+  runtime_authorized_count: 0
+  remediated_blocker_count: 0
+
+observed_external_activity:
+  browser_contact_surface_inspection_performed: true
+  exact_browser_http_request_count_recorded: false
+  exact_browser_http_request_count: null
+  vendor_inquiry_packet_prepared_count: 2
+  vendor_form_submission_attempt_count: 0
+  vendor_contact_count: 0
+  provider_api_query_attempt_count: 0
+  official_metadata_http_request_attempt_count: 33
+  official_document_exact_bytes_retained_count: 18
+  official_document_failed_http_attempt_count: 15
+  official_metadata_file_read_for_validation_count: 18
+  paid_product_purchase_count: 0
+  real_market_payload_download_count: 0
+  cache_read_count: 0
+  market_data_file_read_count: 0
+  source_inventory_admission_count: 0
+  veto_series_generation_count: 0
+  real_dq_run_count: 0
+  backtest_run_count: 0
+  orders: 0
+  fills: 0
+  positions: 0
+  production_effect_count: 0
+  broker_action_count: 0
+
+temporary_workspace:
+  path: D:/Work/AITradingSystem/.tmp/trading-2542g-s13-official-metadata
+  owner_task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  purpose: BYTE_EXACT_HTTP_STAGING_AND_FAILURE_HEADER_CAPTURE
+  unique_evidence_remaining_after_canonical_receipt_write: false
+  active_process_dependency: false
+  cleanup_authorized_after_validation: true
+  cleanup_completed: true
+  removed_file_count: 43
+  released_byte_count: 36968
+  removed_staging_recoverable: false
+  retained_destination: inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1
+  recoverability: VERIFIED_SUCCESS_BYTES_AND_RECEIPTS_RETAINED_IN_GIT_FAILURE_BODIES_DISPOSABLE
+
+safety:
+  non_executable_data_research_only: true
+  vendor_contact_allowed_with_exact_scope: true
+  official_schedule_metadata_download_allowed: true
+  provider_api_query_allowed: false
+  paid_product_purchase_allowed: false
+  real_market_payload_download_allowed: false
+  source_inventory_admission_allowed: false
+  veto_series_generation_allowed: false
+  real_dq_allowed: false
+  backtest_allowed: false
+  orders_allowed: false
+  fills_allowed: false
+  positions_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_effect: none
+  broker_action: none
+
+aggregate:
+  owner_approval_count: 2
+  vendor_packet_ready_count: 2
+  vendor_message_sent_count: 0
+  official_document_receipt_count: 18
+  official_authority_with_any_exact_receipt_count: 2
+  official_authority_with_complete_historical_coverage_count: 0
+  exact_authority_identity_frozen_count: 0
+  historical_coverage_proven_count: 0
+  source_contract_admitted_count: 0
+  runtime_authorized_count: 0
+  blocker_remediated_count: 0
+  next_legal_action: OWNER_SUPPLIES_VENDOR_SENDER_IDENTITY_AND_CONFIRMS_SUBMISSION_THEN_ENGINEERING_RESOLVES_BLS_EXACT_BYTE_ACCESS
+  terminal: S13_EVIDENCE_RECEIPTS_READY_VENDOR_SEND_AND_BLS_EXACT_BYTES_BLOCKED

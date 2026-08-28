@@ -16,3 +16,6 @@
 *.xlsx binary
 *.pptx binary
 *.docx binary
+
+# Immutable upstream evidence: preserve provider bytes and suppress source-style whitespace checks.
+inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/official_documents/**/*.html binary
