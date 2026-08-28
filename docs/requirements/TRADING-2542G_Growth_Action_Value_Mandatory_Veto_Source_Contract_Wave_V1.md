@@ -827,6 +827,55 @@ coverage。FMP 的 USD 0/22/59/149 和 Cboe All Access 的 trial/2499/4599 等�
 - `src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_historical_pit_source_candidate_evidence_review.py`；
 - `tests/test_growth_action_value_mandatory_veto_historical_pit_source_candidate_evidence_review.py`。
 
+### S13：Owner 授权后的来源证据获取与执行回执
+
+Owner 于 2026-08-28 回复“批准”，本阶段将其精确绑定为同时批准 S12 的两项待决请求：
+
+1. FMP/Cboe 窄范围 capability、historical-version lineage、internal-use license 与 exact-price
+   询证，`risk_tier=R2_MATERIAL_EXTERNAL_CHANGE`、`authorization_state=EXACT_PREAUTHORIZED`；不得购买、
+   不得调用 provider data API，也不得获取真实市场 payload；
+2. Fed/BLS/BEA 官方 schedule metadata documents 的 bounded download、exact digest inventory 与
+   revision-gap analysis，`risk_tier=R1_BOUNDED_RESEARCH_SANDBOX`、
+   `authorization_state=EXACT_PREAUTHORIZED`；只允许下载 S12 已列或同 family 的官方 schedule、policy、
+   revision notice、archive-index metadata，不得下载或解析真实宏观结果 payload。
+
+授权只决定是否允许执行外部动作，不自动改变技术证据状态。S13 必须分别记录 action attempted、sent、
+downloaded、HTTP failure 与 typed blocker 的实际计数；如果供应商发送需要尚未提供的 sender name、email、
+company 或已登录发送 channel，必须保持 draft/packet 可审计并以
+`SEND_BLOCKED_MISSING_AUTHORIZED_SENDER_IDENTITY_OR_CHANNEL` 停止，不得伪造身份或把 prepared 计为 sent。
+
+官方 metadata acquisition 的每项 receipt 至少绑定 authority、document id、exact URL、retrieval UTC、
+HTTP status、content type、响应 ETag/Last-Modified（若有）、byte count、SHA-256、canonical retained path 与
+下载结果。网页/PDF 当前下载时间只用于 audit，不得冒充 historical `available_at`、`published_at` 或
+schedule revision time；即使 nominal year coverage 与 exact bytes 都取得，也不能自动证明 complete revision
+ledger 或 exact-1202 cutoff coverage。
+
+临时 workspace lifecycle 固定如下：
+
+- owner=`TRADING-2542G`，purpose=`S13 official schedule metadata byte-exact HTTP staging`；
+- absolute path=`D:\Work\AITradingSystem\.tmp\trading-2542g-s13-official-metadata`；
+- verified destination=`inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1/`；
+- exit condition：逐文件校验 manifest 中的 size/SHA 与目标 bytes 一致、确认无活动进程依赖且无唯一未保留
+  evidence 后移除 staging；canonical retained bytes 与 receipt manifest 由 Git 恢复，remote official URL
+  仅作为再取候选，不保证未来 bytes 不变；
+- 若 acquisition 中止或 bytes 无法验证，则保留 staging 并在 canonical task 中记录 path、风险、next owner
+  与具体退出条件，不得静默清理。
+
+S13 新增 non-executable contract/receipt artifact、strict loader、focused tests 与 canonical metadata evidence
+inventory；其 aggregate 在实际执行前不得预填。无论下载或询证结果如何，以下状态在本阶段均保持 false/0：
+`exact_authority_identity_frozen`、`historical_coverage_proven`、`source_contract_admitted`、
+`runtime_authorized`、`blocker_remediated`、provider API query、real market payload、cache/market-file read、
+source admission、veto series、real DQ、backtest、orders、fills、positions、production 与 broker。
+
+验收标准：
+
+1. strict loader 递归重放 S12 exact file/canonical identity 与两个 Owner decision request；
+2. 两个 approval 精确为 `EXACT_PREAUTHORIZED`，但 authorization 与 technical validation 分轴；
+3. 官方 metadata receipt 的 URL/HTTP metadata/size/SHA/retained path 可重放，失败项和 revision gap 不被隐藏；
+4. FMP/Cboe packet、attempt/sent receipt 与 sender/channel blocker精确反映实际外部动作；
+5. 临时 workspace 按上述 lifecycle 清理或带 typed blocker 保留；
+6. focused/adjacent、Ruff、strict mypy、py_compile 与适用 formal tiers PASS，所有禁止计数保持 0。
+
 ## 7. Path、contract 与 evidence claims
 
 task-owned paths：本 requirement、逐阶段 immutable config、typed loader/pure adapter 与 focused tests。

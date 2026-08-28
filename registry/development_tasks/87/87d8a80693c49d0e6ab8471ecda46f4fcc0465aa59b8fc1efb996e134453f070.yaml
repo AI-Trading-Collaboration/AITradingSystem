@@ -13,27 +13,29 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / complete S12 static five-source candidate evidence review and
-    submit exact approval matrix to Owner
+  next_owner: Codex / execute the Owner-approved S13 vendor inquiry and official schedule
+    metadata digest inventory, then submit actual receipts and remaining PIT gaps
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Public discovery can identify candidate
-    families and nominal coverage, but FMP/Cboe vendor lineage and the Fed/BLS/BEA
-    complete schedule revision ledger remain unproven. Build a non-executable static
-    review with URLs, public coverage, fees, gaps and typed approval requests; do
-    not contact vendors, buy data, download market payload, admit sources, run DQ/backtest
-    or generate series.
+  unstructured_legacy_blocker_or_next_step: 'S12 public discovery is complete. Execute
+    only the two newly approved evidence actions: (1) attempt narrowly scoped FMP/Cboe
+    capability, lineage, internal-use license and exact-price inquiries without purchase
+    or provider API query; (2) download only listed Fed/BLS/BEA official schedule
+    metadata documents, retain exact bytes and hashes, and analyze revision gaps.
+    Missing sender identity/channel must be typed as a send blocker, not bypassed.'
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: S12 recursively binds the immutable S11 contract; covers FMP, Cboe, Fed,
-      BLS and BEA in fixed order; separates documented product/year coverage from
-      historical PIT revision proof; records public fee evidence and unknown quote
-      fields; keeps exact authority, coverage, admission, runtime and remediation
-      at 0/5; focused/formal validation and generated freshness PASS; provider payload/DQ/backtest/orders/fills/positions/production/broker
-      remain 0.
+    text: S13 binds the immutable S12 file/canonical identity and records both approvals
+      as EXACT_PREAUTHORIZED on separate R2/R1 axes; official metadata downloads record
+      URL, retrieval UTC, HTTP metadata, byte count and SHA-256; vendor actions record
+      exact attempted/sent counters and any identity/channel blocker; temporary workspace
+      lifecycle is explicit; exact authority/coverage/admission/runtime/remediation
+      remain unpromoted unless separately reviewed; provider API, real market payload,
+      source admission, veto series, real DQ, backtest, orders/fills/positions/production/broker
+      remain 0; focused and governed validation PASS.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -1391,36 +1393,87 @@ events:
   - change:trading-2542g-s12-source-evidence-review-activation-20260828-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-f4648073b02ab9d46c26fa94a8e50ac0
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-28T01:42:57Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-s13-authorized-evidence-acquisition-20260828-v1
+  lane_id: null
+  base_commit: 41ee0aebd412bb4696aad15e27b7f4dede98e008
+  previous_state_event_id: task-event-f4648073b02ab9d46c26fa94a8e50ac0
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / execute the Owner-approved S13 vendor inquiry and official
+      schedule metadata digest inventory, then submit actual receipts and remaining
+      PIT gaps
+    blocker_or_next_step: 'S12 public discovery is complete. Execute only the two
+      newly approved evidence actions: (1) attempt narrowly scoped FMP/Cboe capability,
+      lineage, internal-use license and exact-price inquiries without purchase or
+      provider API query; (2) download only listed Fed/BLS/BEA official schedule metadata
+      documents, retain exact bytes and hashes, and analyze revision gaps. Missing
+      sender identity/channel must be typed as a send blocker, not bypassed.'
+    acceptance_criteria: S13 binds the immutable S12 file/canonical identity and records
+      both approvals as EXACT_PREAUTHORIZED on separate R2/R1 axes; official metadata
+      downloads record URL, retrieval UTC, HTTP metadata, byte count and SHA-256;
+      vendor actions record exact attempted/sent counters and any identity/channel
+      blocker; temporary workspace lifecycle is explicit; exact authority/coverage/admission/runtime/remediation
+      remain unpromoted unless separately reviewed; provider API, real market payload,
+      source admission, veto series, real DQ, backtest, orders/fills/positions/production/broker
+      remain 0; focused and governed validation PASS.
+    notes: 'Owner instruction=2026-08-28 批准, interpreted as approval of both pending
+      S12 requests. Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      authorization_state vendor inquiry=EXACT_PREAUTHORIZED (R2); official schedule
+      metadata download/inventory=EXACT_PREAUTHORIZED (R1). No purchase, provider
+      data API, real market payload, DQ, veto series, backtest or execution. Temporary
+      acquisition path, if needed, will be D:/Work/AITradingSystem/.tmp/trading-2542g-s13-official-metadata;
+      owner=TRADING-2542G; purpose=byte-exact HTTP staging before checksum verification;
+      exit=move verified bytes/manifest to inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1
+      and remove staging after unique-evidence audit; recovery=official URLs plus
+      retained canonical bytes/hashes.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-s13-authorized-evidence-acquisition-20260828-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-32e4cfd89a89c600e372f1e096719435
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
   - IN_PROGRESS
-  - Codex / complete S12 static five-source candidate evidence review and submit exact
-    approval matrix to Owner
-  - Public discovery can identify candidate families and nominal coverage, but FMP/Cboe
-    vendor lineage and the Fed/BLS/BEA complete schedule revision ledger remain unproven.
-    Build a non-executable static review with URLs, public coverage, fees, gaps and
-    typed approval requests; do not contact vendors, buy data, download market payload,
-    admit sources, run DQ/backtest or generate series.
-  - S12 recursively binds the immutable S11 contract; covers FMP, Cboe, Fed, BLS and
-    BEA in fixed order; separates documented product/year coverage from historical
-    PIT revision proof; records public fee evidence and unknown quote fields; keeps
-    exact authority, coverage, admission, runtime and remediation at 0/5; focused/formal
-    validation and generated freshness PASS; provider payload/DQ/backtest/orders/fills/positions/production/broker
-    remain 0.
-  - 'Owner instructed continuation after confirming no immediate submission is required.
-    Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    S11 published at e91dc67474a226906e246a459552af493fc46d3a with Full 9831 passed/3
-    skipped. S12 is approval-preparation only: public web discovery and static metadata
-    may be recorded, but vendor contact/purchase, account access, API calls, real
-    payload, source admission, veto series, real DQ/backtest and all execution remain
-    prohibited.'
+  - Codex / execute the Owner-approved S13 vendor inquiry and official schedule metadata
+    digest inventory, then submit actual receipts and remaining PIT gaps
+  - 'S12 public discovery is complete. Execute only the two newly approved evidence
+    actions: (1) attempt narrowly scoped FMP/Cboe capability, lineage, internal-use
+    license and exact-price inquiries without purchase or provider API query; (2)
+    download only listed Fed/BLS/BEA official schedule metadata documents, retain
+    exact bytes and hashes, and analyze revision gaps. Missing sender identity/channel
+    must be typed as a send blocker, not bypassed.'
+  - S13 binds the immutable S12 file/canonical identity and records both approvals
+    as EXACT_PREAUTHORIZED on separate R2/R1 axes; official metadata downloads record
+    URL, retrieval UTC, HTTP metadata, byte count and SHA-256; vendor actions record
+    exact attempted/sent counters and any identity/channel blocker; temporary workspace
+    lifecycle is explicit; exact authority/coverage/admission/runtime/remediation
+    remain unpromoted unless separately reviewed; provider API, real market payload,
+    source admission, veto series, real DQ, backtest, orders/fills/positions/production/broker
+    remain 0; focused and governed validation PASS.
+  - 'Owner instruction=2026-08-28 批准, interpreted as approval of both pending S12
+    requests. Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+    authorization_state vendor inquiry=EXACT_PREAUTHORIZED (R2); official schedule
+    metadata download/inventory=EXACT_PREAUTHORIZED (R1). No purchase, provider data
+    API, real market payload, DQ, veto series, backtest or execution. Temporary acquisition
+    path, if needed, will be D:/Work/AITradingSystem/.tmp/trading-2542g-s13-official-metadata;
+    owner=TRADING-2542G; purpose=byte-exact HTTP staging before checksum verification;
+    exit=move verified bytes/manifest to inputs/research/qqq_options/trading_2542g_s13_source_evidence_acquisition_v1
+    and remove staging after unique-evidence audit; recovery=official URLs plus retained
+    canonical bytes/hashes.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
   terminal: false
-  canonical_row_sha256: a9604b33e9e06267cc0febc2855a8846f25b072197c81359883a9dc5224f3a3e
-last_event_id: task-event-f4648073b02ab9d46c26fa94a8e50ac0
+  canonical_row_sha256: 78349e6e8db1517dc4157d08d714cb49a002e28d930af034ab0b7a0407ef8b55
+last_event_id: task-event-32e4cfd89a89c600e372f1e096719435
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 473c474118c28e33c07ac6cea45e5fe81b252d12852198cc1dc4928f5c069a2b
+fragment_checksum: e482470d1278196ed2ef989ad547d557617d5ce35e54cf221e1fa73b30cdb58a
