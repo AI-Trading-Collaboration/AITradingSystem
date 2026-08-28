@@ -259,3 +259,8 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   mypy、py_compile PASS，新增合同及 2483/2499/2542F 邻接测试=`91 passed`。当前 terminal 仍为
   `OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST`；provider/QC/real DQ/backtest/orders/fills/positions/
   production/broker=`0`。
+- 2026-08-28：TRADING-2542E 与 TRADING-2542G 均只通过 append-only canonical task event 转为
+  `BASELINE_DONE`；未修改其 requirement、config、loader、test 或 retained evidence bytes。2542E role=
+  `LEGACY_HISTORY_ONLY`，2542G role=`OPTIONAL_RESULT_BLIND_RISK_OVERLAY_NOT_BASELINE_BLOCKER`。Atlas live
+  snapshot 与 system flow 已把 current mainline/largest blocker/next legal action 指向 2542H；当前仍不授权
+  provider/QC/real DQ/backtest/orders/fills/positions/production/broker。

@@ -9828,6 +9828,44 @@ canonical path。HTTP `Last-Modified` 和本次 retrieval time 只用于下载�
 本身仍是 non-executable evidence receipt。byte-exact staging 在 canonical receipt 重放 PASS 后已清理
 `43 files / 36,968 bytes`；成功 bytes 与结构化失败回执保留，临时 headers/error bodies 不可恢复。
 
+## TRADING-2542H frozen signal → QuantConnect option implementation retest
+
+TRADING-2542H 恢复 QQQ options 链路的原始职责：现有策略是唯一方向事实，QuantConnect 是期权
+选约、成交、生命周期和 P&L 环境。TRADING-2542E/F/G bytes 保留为 immutable history；FMP、Cboe
+VIX、Fed、BLS、BEA 统一降为可选、result-blind overlay，不再阻塞 baseline retest。
+
+```text
+existing governed strategy facts
+  -> exact frozen signal artifact + source/cutoff/session/code/policy identity
+       -> missing exact package = MISSING_FROZEN_SIGNAL_IDENTITY
+  -> reviewed source-signal -> LONG_CALL / LONG_PUT / FLAT mapping
+       -> defensive / SGOV / neutral mapping cannot be defaulted
+       -> option chain / selected contract / result cannot drive direction
+  -> immutable QuantConnect research run manifest
+       -> manifest replay must PASS before any separately authorized external run
+  -> QuantConnect QQQ option chain
+       -> reviewed result-blind selector
+       -> reviewed quote/fill/fee/slippage policy
+       -> reviewed lifecycle/mark/accounting policy
+       -> QC cash / equity / P&L ledger
+  -> export-safe run/result evidence
+       -> identity + LEAN version + requested/evaluated range + DQ/PIT
+       -> selection/no-contract + fill/reject/cancel + lifecycle counts
+       -> fee/slippage + cash/equity/return/drawdown + terminal
+       -> no raw option rows / complete chain / contract quote history export
+  -> local exact replay and same-signal paired review
+       -> UNDERLYING_IMPLEMENTATION
+       -> OPTIONIZED_IMPLEMENTATION
+       -> optional overlay remains a separate lane
+```
+
+TRADING-2541 V3 的 `1202/1202`、`unresolved=0` 与 exact-date recovery 只证明 QC chain transport
+和 source/availability-date 可用性，不证明收益。当前 retained signal package 缺失，2483 ETF mapping
+仍未 Owner freeze，selection/execution/accounting/lifecycle policy 仍为
+`OWNER_REVIEW_REQUIRED_BASELINE`；因此本 contract terminal 固定为
+`OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST`。本节点不访问 QuantConnect，不运行真实 DQ/backtest，
+不下载 market payload，orders/fills/positions/production/broker=`0`。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

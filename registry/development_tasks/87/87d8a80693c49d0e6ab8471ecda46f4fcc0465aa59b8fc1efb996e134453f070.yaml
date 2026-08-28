@@ -13,30 +13,25 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / provide authorized sender identity and action-time send
-    confirmation for FMP/Cboe; Codex / resolve BLS byte-exact access through a separately
-    reviewed transport
+  next_owner: None for baseline / optional overlay may resume only through a separately
+    selected successor task
   requirement_refs:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
+  - docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S13 evidence acquisition is implemented
-    and focused validation passes. FMP requires sender email; Cboe requires first/last
-    name, phone, email, company, CAPTCHA and browser action-time confirmation, so
-    no representational message was submitted. BLS exact-byte automated GET returned
-    HTTP 403 under both controlled and browser-like profiles; visible browser DOM/export
-    is not accepted as exact remote bytes. Fed/BEA current exact bytes do not prove
-    a complete historical revision ledger.
+  unstructured_legacy_blocker_or_next_step: FMP, Cboe VIX, Fed, BLS and BEA historical
+    PIT authority remains incomplete but is no longer a prerequisite for the original
+    QQQ options implementation retest. Preserve all TRADING-2542G contracts and receipts
+    as optional result-blind overlay evidence; baseline continuation is TRADING-2542H.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Next progress requires either (a) authorized sender identity plus immediate
-      destination-specific confirmation before FMP/Cboe submission, with exact sent
-      receipts, and (b) a reviewed BLS exact-byte capture transport or Owner-approved
-      evidence-role change. Any later source freeze must separately prove authority
-      identity, complete revision lineage and exact-1202 cutoff coverage. Provider
-      API, purchase, real market payload, admission, veto series, real DQ/backtest
-      and execution remain prohibited.
+    text: 'PASS: existing TRADING-2542G bytes and source receipts remain immutable;
+      the five sources are classified OPTIONAL_RESULT_BLIND_RISK_OVERLAY, missing
+      evidence does not block baseline, and no overlay may alter the frozen direction
+      signal. Any overlay execution requires its own manifest, DQ/PIT admission and
+      authorization.'
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -1484,41 +1479,66 @@ events:
   - change:trading-2542g-s13-evidence-receipt-focused-pass-20260828-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-a2c41a0fa682b7ae517c459cb75d511c
+- schema_version: task_event.v1
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-28T09:07:27Z'
+  actor: integration-coordinator
+  change_id: trading-2542g-optional-overlay-baseline-done-20260828-v1
+  lane_id: null
+  base_commit: b640349f1761c44b56a0cf2e9d0e17739462cc78
+  previous_state_event_id: task-event-a2c41a0fa682b7ae517c459cb75d511c
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: None for baseline / optional overlay may resume only through a separately
+      selected successor task
+    blocker_or_next_step: FMP, Cboe VIX, Fed, BLS and BEA historical PIT authority
+      remains incomplete but is no longer a prerequisite for the original QQQ options
+      implementation retest. Preserve all TRADING-2542G contracts and receipts as
+      optional result-blind overlay evidence; baseline continuation is TRADING-2542H.
+    acceptance_criteria: 'PASS: existing TRADING-2542G bytes and source receipts remain
+      immutable; the five sources are classified OPTIONAL_RESULT_BLIND_RISK_OVERLAY,
+      missing evidence does not block baseline, and no overlay may alter the frozen
+      direction signal. Any overlay execution requires its own manifest, DQ/PIT admission
+      and authorization.'
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
+      Successor requirement: docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md.
+      owner_decision=owner_decision:TRADING-2542H:2026-08-28:adopt_quantconnect_frozen_signal_implementation_retest_path_v1;
+      disposition=OPTIONAL_RESULT_BLIND_RISK_OVERLAY_NOT_BASELINE_BLOCKER; provider
+      API/purchase/real payload/series/DQ/backtest/orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542g-optional-overlay-baseline-done-20260828-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e0d446b164dd270d4ac46f5b520344e1
 projection:
   legacy_first_eight_cells:
   - TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   - Growth action-value mandatory veto source-contract readiness wave V1
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner / provide authorized sender identity and action-time send confirmation
-    for FMP/Cboe; Codex / resolve BLS byte-exact access through a separately reviewed
-    transport
-  - S13 evidence acquisition is implemented and focused validation passes. FMP requires
-    sender email; Cboe requires first/last name, phone, email, company, CAPTCHA and
-    browser action-time confirmation, so no representational message was submitted.
-    BLS exact-byte automated GET returned HTTP 403 under both controlled and browser-like
-    profiles; visible browser DOM/export is not accepted as exact remote bytes. Fed/BEA
-    current exact bytes do not prove a complete historical revision ledger.
-  - Next progress requires either (a) authorized sender identity plus immediate destination-specific
-    confirmation before FMP/Cboe submission, with exact sent receipts, and (b) a reviewed
-    BLS exact-byte capture transport or Owner-approved evidence-role change. Any later
-    source freeze must separately prove authority identity, complete revision lineage
-    and exact-1202 cutoff coverage. Provider API, purchase, real market payload, admission,
-    veto series, real DQ/backtest and execution remain prohibited.
+  - BASELINE_DONE
+  - None for baseline / optional overlay may resume only through a separately selected
+    successor task
+  - FMP, Cboe VIX, Fed, BLS and BEA historical PIT authority remains incomplete but
+    is no longer a prerequisite for the original QQQ options implementation retest.
+    Preserve all TRADING-2542G contracts and receipts as optional result-blind overlay
+    evidence; baseline continuation is TRADING-2542H.
+  - 'PASS: existing TRADING-2542G bytes and source receipts remain immutable; the
+    five sources are classified OPTIONAL_RESULT_BLIND_RISK_OVERLAY, missing evidence
+    does not block baseline, and no overlay may alter the frozen direction signal.
+    Any overlay execution requires its own manifest, DQ/PIT admission and authorization.'
   - 'Supporting requirement: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md.
-    S13 config file/canonical SHA=8d78ce94339c122fc6c47494e1c629b26a22a603c9d54989a0c29aacd231eca4/03d01fb8bc1f94396d026f97bce4617e456519b89d0faccb6f88e493710473d1;
-    loader SHA=45014289fc8e0c42307037d4a7a4abab309c34eaaa9c349f6b0c78aab4c64202; test
-    SHA=57f63b7406d82bcf5b8b72d00e6e9cbca93c45e9dc1332765f884ce2daa94f08; inquiry
-    packet SHA=0ee237ed0c999d57dfe705cc0f28cd4506ec339c1490888b1110bf1a61415f99. HTTP
-    attempts=33, retained exact docs=18 (Fed 6/BEA 12), failed=15 (BLS 403 x10/BEA
-    stale locator 404 x5), vendor sent=0. Mandatory-veto adjacent=298 passed; Ruff/strict
-    mypy/py_compile/load PASS. Staging removed=43 files/36968 bytes; retained evidence
-    is canonical. exact authority/coverage/admission/runtime/remediation=0/5; provider
+    Successor requirement: docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md.
+    owner_decision=owner_decision:TRADING-2542H:2026-08-28:adopt_quantconnect_frozen_signal_implementation_retest_path_v1;
+    disposition=OPTIONAL_RESULT_BLIND_RISK_OVERLAY_NOT_BASELINE_BLOCKER; provider
     API/purchase/real payload/series/DQ/backtest/orders/fills/positions/production/broker=0.'
   docs_links:
   - docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
+  - docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md
   terminal: false
-  canonical_row_sha256: 9ef511fcbcd58225ed1dd50ac75dff10b5be756b4c6f82364aa31e3fb0995350
-last_event_id: task-event-a2c41a0fa682b7ae517c459cb75d511c
+  canonical_row_sha256: 2f105ce71a9296ef22db902cf9acf7d6c19006a4c3ba689d8f20b6b4a647f9d1
+last_event_id: task-event-e0d446b164dd270d4ac46f5b520344e1
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 39bb30012d91eaff3c38321cf444950ad0168ca9c08887f1c6acc8053055a453
+fragment_checksum: c47bbe9449618cb9c4fc5b3702662bf6e35ff8a1139ca11ad555d390ec8cd7f0

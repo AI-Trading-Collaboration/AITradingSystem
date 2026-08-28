@@ -80,7 +80,7 @@ def _rendered(
 def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 73
+    assert len(policy.task_sources) == 74
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
@@ -93,6 +93,7 @@ def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None
         "TRADING-2542E",
         "TRADING-2542F",
         "TRADING-2542G",
+        "TRADING-2542H",
         "TRADING-2543",
         "TRADING-2544",
         "TRADING-2545",
@@ -121,7 +122,7 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
     assert manifest.schema_version == "strategy_research_page_effectiveness.v3"
-    assert len(manifest.task_coverage) == 73
+    assert len(manifest.task_coverage) == 74
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
@@ -134,6 +135,7 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "TRADING-2542E",
         "TRADING-2542F",
         "TRADING-2542G",
+        "TRADING-2542H",
         "TRADING-2543",
         "TRADING-2544",
         "TRADING-2545",
@@ -259,15 +261,16 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "NON_EXECUTABLE_DATA_RESEARCH"
     )
     assert coverage_by_task["TRADING-2542E"] == (
-        "DISCLOSED_EXACT_POLICY_FREEZE_ACCEPTED_"
-        "VETO_SOURCE_CONTRACT_BLOCKED"
+        "DISCLOSED_IMMUTABLE_HISTORY_NOT_CURRENT_BASELINE_BLOCKER"
     )
     assert coverage_by_task["TRADING-2542F"] == (
         "DISCLOSED_RESULT_BLIND_VETO_OPTION_ARCHITECTURE_OWNER_EXACT_FROZEN"
     )
     assert coverage_by_task["TRADING-2542G"] == (
-        "DISCLOSED_MANDATORY_VETO_EXACT_SEMANTICS_V2_DRAFT_"
-        "0_OF_4_ADMITTED"
+        "DISCLOSED_OPTIONAL_RESULT_BLIND_OVERLAY_NOT_BASELINE_BLOCKER"
+    )
+    assert coverage_by_task["TRADING-2542H"] == (
+        "DISCLOSED_CURRENT_BASELINE_OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST"
     )
     assert coverage_by_task["TRADING-2543"] == (
         "LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_COMPLETE"

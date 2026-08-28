@@ -326,16 +326,20 @@ task_sources:
     reader_summary_zh: 2542D 依据第二轮 exact-commit Web Pro review 新建 DQ/PIT V3 与 exact sheet V4，修正首日 pre-window prior、excluded invalid 传播、zero contributor terminal、typed run authority、cluster-level right censor 与 session-keyed cost reconciliation。Project Owner 已批准 DQ/PIT V3 与全部八轴完全按草案冻结，仅限不可执行数据研究；1202-session synthetic authority 仍只证明机械合同可达，真实 provider/cache/DQ/backtest、经验研究、投资结论、生产与交易动作保持关闭并需另行授权。
   - task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
     requirement_path: docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md
-    coverage: DISCLOSED_EXACT_POLICY_FREEZE_ACCEPTED_VETO_SOURCE_CONTRACT_BLOCKED
-    reader_summary_zh: 2542E 的 exact policy freeze 与 exact 1202-session veto-series 生成/接纳授权已收到，但授权仍未消费、所有外部计数仍为 0。已批准 draft bytes 保持不可变，V2 successor 只绑定 frozen rule surface 与 readiness；当前仅 volatility_veto source contract ready，risk_off_veto 语义歧义，event_risk_veto/trend_break_veto 缺 PIT producer，现有 tqqq_veto 又是与“必须 false”不兼容的常量 true no-TQQQ guard。禁止用旧 secondary_cross_checked labels 裁切或 false-fill；四项 source contract 未逐项闭合前，exact series、R1 manifest、provider、真实 DQ 和 backtest 继续关闭。production/broker effect=none。
+    coverage: DISCLOSED_IMMUTABLE_HISTORY_NOT_CURRENT_BASELINE_BLOCKER
+    reader_summary_zh: 2542E 的 exact policy freeze 与零订单 review 保留为 immutable historical evidence；它不再是原始 QQQ options implementation retest 的 baseline blocker，也不授权真实 DQ/backtest。当前 baseline successor 是 TRADING-2542H，仍需 exact signal package、方向映射和 execution policy freeze。
   - task_id: TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
     requirement_path: docs/requirements/TRADING-2542F_Growth_Action_Value_Veto_Option_Signal_Architecture_Contract_V1.md
     coverage: DISCLOSED_RESULT_BLIND_VETO_OPTION_ARCHITECTURE_OWNER_EXACT_FROZEN
     reader_summary_zh: 2542F 已把旧 five-veto 的历史兼容角色与新 consumer 分开，并将 DQ qualification、QQQ/SGOV action guard、四项独立 market-state veto、selected CALL/PUT alpha 和 optional derived-only option-risk diagnostic 分层。tqqq_veto 只映射为 no-leverage action guard；risk_off 禁止使用 growth_allowed 反向 alias；selected pair/activity/result 字段被 schema 禁止进入 veto。Project Owner 已按 architecture 与 compatibility map 的 exact file/canonical SHA 完成冻结，原草案 bytes/status/version 保持 immutable；这只允许后续 non-executable source-contract wave，不授权 series、R1 manifest、provider/cache、真实 DQ、backtest、production 或 broker。
   - task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
     requirement_path: docs/requirements/TRADING-2542G_Growth_Action_Value_Mandatory_Veto_Source_Contract_Wave_V1.md
-    coverage: DISCLOSED_MANDATORY_VETO_EXACT_SEMANTICS_V2_DRAFT_0_OF_4_ADMITTED
-    reader_summary_zh: 2542G 已按外部 Pro“四项均需精确合同修改”的意见进入 S4A serial contract wave：共同 semantics 冻结 bound-session window、exact post-close cutoff、adjusted-close vintage、warm-up 与 fail-closed terminal；V2 分别机械定义 SPY SMA200/drawdown63 OR、完整 VIX252 与 QQQ RV20、Fed/BLS/BEA revision/coverage、QQQ 未知/清晰/阻断中状态重放。该 V2 仍是 result-blind non-executable draft，尚未 Owner exact-freeze 或 source-admit；0/4、observed inventory=null，producer、series、R1 manifest、provider/cache、真实 DQ、backtest、orders/fills/positions/production/broker 继续关闭。
+    coverage: DISCLOSED_OPTIONAL_RESULT_BLIND_OVERLAY_NOT_BASELINE_BLOCKER
+    reader_summary_zh: 2542G 的 FMP、Cboe VIX、Fed、BLS、BEA contracts 与 evidence receipts 保留为 optional result-blind overlay history；其 historical PIT authority 缺口仍存在，但缺失不再阻塞 baseline。任何 overlay 只能通过独立 manifest、DQ/PIT 与授权恢复，且不得改变 frozen direction signal。
+  - task_id: TRADING-2542H_QQQ_OPTIONS_FROZEN_SIGNAL_IMPLEMENTATION_RETEST_CONTRACT_V1
+    requirement_path: docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md
+    coverage: DISCLOSED_CURRENT_BASELINE_OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST
+    reader_summary_zh: 当前主线把既有策略信号作为唯一方向事实，QuantConnect 负责 QQQ 期权选约、成交、生命周期和 P&L。1202/1202 chain transport 已证明，但 retained exact signal package、看涨/看跌/空仓动作映射及 selection/execution/accounting/lifecycle Owner policy 尚未冻结，所以当前仍是“精确策略参数冻结前不得回测”；本阶段不运行真实 DQ/backtest，orders/fills/positions/production/broker=0。
   - task_id: TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1
     requirement_path: docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md
     coverage: LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_COMPLETE

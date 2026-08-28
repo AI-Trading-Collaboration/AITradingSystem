@@ -103,21 +103,19 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2542G_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2542H_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
-        "四项 mandatory veto semantics 已 Owner exact-freeze 4/4，S5 synthetic callable "
-        "与 S8 pure PIT receipt adapter conformance 均为 4/4；S9 authority/session/"
-        "four-veto+action-guard compatibility replay 均 PASS，但五项 historical PIT "
-        "source capability 仍在 provider query 前 typed BLOCKED；S10 已把 FMP、Cboe、"
-        "Fed、BLS、BEA blocker 收敛为 ordered authority class、minimum receipt/coverage、"
-        "forward-only impact 与 rejected substitute 决策包，exact archive/source selected、"
-        "historical coverage proven、source admitted 均为 0/5，forward capture 不得冒充 "
-        "2021-02-22 起 primary window 的历史覆盖；真实读取、series、DQ、backtest 与 "
-        "orders/fills/positions/production/broker 全为 0；下一合法动作是 Owner 提供或精确批准"
-        "五项 archive/source identity，另建 static freeze-admission wave 后再重放 S9，不是直接"
-        "查询 provider"
+        "QQQ options 链路已恢复为“既有策略信号是唯一方向事实，QuantConnect 负责选约、成交、"
+        "生命周期与 P&L”；TRADING-2541 V3 已证明目标窗口 option chain 1202/1202、"
+        "unresolved=0，但只证明 transport/PIT 可用性，不证明策略收益；TRADING-2542E/F/G "
+        "bytes 保留为 immutable history，FMP、Cboe VIX、Fed、BLS、BEA 改为 optional "
+        "result-blind overlay，不再阻塞 baseline；当前唯一基线 blocker 是 retained exact "
+        "signal package、signal 到 LONG_CALL/LONG_PUT/FLAT mapping 以及 selection/execution/"
+        "accounting/lifecycle Owner policy 尚未 exact-freeze；真实 DQ/backtest、QuantConnect "
+        "project mutation 与 orders/fills/positions/production/broker 全为 0；下一合法动作是完成 "
+        "TRADING-2542H exact policy freeze，再单独授权一次 bounded QC research backtest"
     )
 
 

@@ -13,27 +13,24 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / approve versioned PIT source contracts for risk_off,
-    event_risk, trend_break and tqqq vetoes
+  next_owner: None / retained immutable historical exact-freeze and zero-order review
+    evidence; current baseline successor is TRADING-2542H
   requirement_refs:
   - docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md
+  - docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Exact freeze is complete, but only volatility_veto
-    has a compatible PIT source contract. risk_off is an ambiguous risk-on alias;
-    event_risk has no PIT contract; trend_break has no callable producer; current
-    tqqq_veto is constant true and incompatible with the frozen all-false growth gate
-    for a QQQ/SGOV-only action universe. No exact five-veto series or R1 manifest
-    can be legally generated.
+  unstructured_legacy_blocker_or_next_step: The five-veto path is no longer a prerequisite
+    for the original QQQ options implementation retest. Preserve all TRADING-2542E
+    bytes and evidence; consume them only as historical lineage. Baseline work continues
+    through TRADING-2542H with the existing strategy signal as sole directional authority.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Owner approves for each unresolved veto an exact source/formula, code/data
-      identity, decision/available-at timing, missing/unknown outcome and versioned
-      PIT contract; tqqq must use a semantically compatible non-constant market-state
-      source or the frozen policy must be superseded and re-frozen. Then generate/admit
-      exactly 1202 rows, publish/replay the exact R1 manifest, and only replay PASS
-      may permit one real DQ/zero-order backtest with retry/raw rows/SID/orders/fills/positions/production/broker=0.
+    text: 'PASS: historical frozen identities remain unchanged, TRADING-2542E is not
+      used as a baseline run blocker, and any future reuse is explicit optional-overlay
+      or legacy replay only. Current executable research still requires TRADING-2542H
+      exact signal mapping/policy freeze and separate QC authorization.'
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -245,35 +242,63 @@ events:
   - change:trading-2542e-exact-freeze-source-readiness-block-v3
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-7db393625eaf935257955511780665fe
+- schema_version: task_event.v1
+  task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-28T09:06:28Z'
+  actor: integration-coordinator
+  change_id: trading-2542e-scope-corrected-to-history-20260828-v1
+  lane_id: null
+  base_commit: b640349f1761c44b56a0cf2e9d0e17739462cc78
+  previous_state_event_id: task-event-7db393625eaf935257955511780665fe
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: None / retained immutable historical exact-freeze and zero-order review
+      evidence; current baseline successor is TRADING-2542H
+    blocker_or_next_step: The five-veto path is no longer a prerequisite for the original
+      QQQ options implementation retest. Preserve all TRADING-2542E bytes and evidence;
+      consume them only as historical lineage. Baseline work continues through TRADING-2542H
+      with the existing strategy signal as sole directional authority.
+    acceptance_criteria: 'PASS: historical frozen identities remain unchanged, TRADING-2542E
+      is not used as a baseline run blocker, and any future reuse is explicit optional-overlay
+      or legacy replay only. Current executable research still requires TRADING-2542H
+      exact signal mapping/policy freeze and separate QC authorization.'
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md.
+      Successor requirement: docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md.
+      owner_decision=owner_decision:TRADING-2542H:2026-08-28:adopt_quantconnect_frozen_signal_implementation_retest_path_v1;
+      immutable_predecessor_bytes=true; real DQ/backtest not run; orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542e-scope-corrected-to-history-20260828-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-4d45ee148b551327670013fe5c9279fd
 projection:
   legacy_first_eight_cells:
   - TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
   - Growth action-value real DQ/PIT and locked zero-order backtest review V1
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner / approve versioned PIT source contracts for risk_off, event_risk,
-    trend_break and tqqq vetoes
-  - Exact freeze is complete, but only volatility_veto has a compatible PIT source
-    contract. risk_off is an ambiguous risk-on alias; event_risk has no PIT contract;
-    trend_break has no callable producer; current tqqq_veto is constant true and incompatible
-    with the frozen all-false growth gate for a QQQ/SGOV-only action universe. No
-    exact five-veto series or R1 manifest can be legally generated.
-  - Owner approves for each unresolved veto an exact source/formula, code/data identity,
-    decision/available-at timing, missing/unknown outcome and versioned PIT contract;
-    tqqq must use a semantically compatible non-constant market-state source or the
-    frozen policy must be superseded and re-frozen. Then generate/admit exactly 1202
-    rows, publish/replay the exact R1 manifest, and only replay PASS may permit one
-    real DQ/zero-order backtest with retry/raw rows/SID/orders/fills/positions/production/broker=0.
+  - BASELINE_DONE
+  - None / retained immutable historical exact-freeze and zero-order review evidence;
+    current baseline successor is TRADING-2542H
+  - The five-veto path is no longer a prerequisite for the original QQQ options implementation
+    retest. Preserve all TRADING-2542E bytes and evidence; consume them only as historical
+    lineage. Baseline work continues through TRADING-2542H with the existing strategy
+    signal as sole directional authority.
+  - 'PASS: historical frozen identities remain unchanged, TRADING-2542E is not used
+    as a baseline run blocker, and any future reuse is explicit optional-overlay or
+    legacy replay only. Current executable research still requires TRADING-2542H exact
+    signal mapping/policy freeze and separate QC authorization.'
   - 'Supporting requirement: docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md.
-    owner_decision=owner_decision:TRADING-2542E:2026-08-25:exact_freeze_policy_draft_1_and_authorize_1202_pit_dq_veto_series_v1;
-    V2 file/canonical SHA=f02df23a4bd36069f5fe09354a3ce8480583fc451b71ec511bc3ba2da27780f2/9b39a1cf6d1ad48c427755f07c592610ae2ad94055af4aab79d3327bf4e82456;
-    terminal=OWNER_FROZEN_BLOCKED_PRE_DISPATCH_VETO_SOURCE_CONTRACT; focused=20 passed;
-    source-adjacent=38 passed; Atlas=20 passed; Ruff/mypy PASS; authorization=EXACT_PREAUTHORIZED/UNCONSUMED;
-    all external counters=0; production_effect=none; broker_action=none.'
+    Successor requirement: docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md.
+    owner_decision=owner_decision:TRADING-2542H:2026-08-28:adopt_quantconnect_frozen_signal_implementation_retest_path_v1;
+    immutable_predecessor_bytes=true; real DQ/backtest not run; orders/fills/positions/production/broker=0.'
   docs_links:
   - docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md
+  - docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md
   terminal: false
-  canonical_row_sha256: 288bcdf0b96731d7725e96110c47f7558fff0dd7c2803d4e6a55d99cad0fe398
-last_event_id: task-event-7db393625eaf935257955511780665fe
+  canonical_row_sha256: 8eab52f3c6423e8dca3da8c472cb36d4d660378ab63b6f3b7a59d47fbe64d220
+last_event_id: task-event-4d45ee148b551327670013fe5c9279fd
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 92d74d936ffabcea63c531d56bdb14009f2360f7a6ef3d0630989ec0d7c55726
+fragment_checksum: 34bcd80498688f6bc0c33b956e6d241792d9c90f80a112a926dd42680b0d44c5

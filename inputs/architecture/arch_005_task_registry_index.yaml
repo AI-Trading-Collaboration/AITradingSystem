@@ -14,7 +14,7 @@ fragment_count: 1029
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 5a9c16aa520a98170fb18957979c132161aac390319e4020fd0742699132e34e
+final_chain_sha256: 9a01d3f696b5ca2f1477372b3a3595967923d48048267472c1d7240d559f1d15
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 0c3efea17f7c4a4cae0488be7b40116560b065ec6ee1c53818e0ff1fdaa31509
 templates:
@@ -8231,41 +8231,41 @@ fragments:
   entry_sha256: f8ffa4eca1cf7ea090e92a3c150fdee5a5a22bf5b1a356cb212f89f42b64adc9
 - task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
   path: registry/development_tasks/bd/bd0967ddf0b08d45db4208c9fd8fdd604e2424d06d3b0560ba3b2fd5d56dbf88.yaml
-  file_sha256: c3fee32bd050c193e34c27487f446503369d9579f3b7ac37dd04cce984cfe7f7
-  fragment_checksum: 92d74d936ffabcea63c531d56bdb14009f2360f7a6ef3d0630989ec0d7c55726
+  file_sha256: 4ef31e989f8300e16891dc7aa4c1c569cb6cf11fb106d36407c5db2b23b50ba7
+  fragment_checksum: 34bcd80498688f6bc0c33b956e6d241792d9c90f80a112a926dd42680b0d44c5
   partition: active
   order: 1026
   previous_entry_sha256: f8ffa4eca1cf7ea090e92a3c150fdee5a5a22bf5b1a356cb212f89f42b64adc9
-  entry_sha256: 367c8ad9905ddb003f19add73b9c35e2639c64b595189246a5b9cceda34a9b91
+  entry_sha256: d202214ed048cc32e15ac8433ecbf5674577211318d67c41e4d7bc71e5fdd92e
 - task_id: TRADING-2542F_GROWTH_ACTION_VALUE_VETO_OPTION_SIGNAL_ARCHITECTURE_CONTRACT_V1
   path: registry/development_tasks/4e/4ec36238c5bdd33783fc8a047b0be6131cda1543fd92893cca36f3d55142ed2a.yaml
   file_sha256: 535102ce45cf7da019c720d26d38be6b1f6b0ed4e9cb6ffa8bb85bc7b86c14cc
   fragment_checksum: fcb2a6b8841d631c7e7a2afd4e286c868186766a2805f4d75fb667f7414d7798
   partition: completed
   order: 1027
-  previous_entry_sha256: 367c8ad9905ddb003f19add73b9c35e2639c64b595189246a5b9cceda34a9b91
-  entry_sha256: a095f484e33e4c4459d294acd379fb83cd00e0d64bae7b2beb5b9d1f03111498
+  previous_entry_sha256: d202214ed048cc32e15ac8433ecbf5674577211318d67c41e4d7bc71e5fdd92e
+  entry_sha256: 384e6dfdf1dffa03228f07d76f1f032ab173ee7eca1e2db2c009ea85e504065f
 - task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
   path: registry/development_tasks/87/87d8a80693c49d0e6ab8471ecda46f4fcc0465aa59b8fc1efb996e134453f070.yaml
-  file_sha256: eedf9a145e15451c0df7cc0019dfb0ad87658360f5205d4fb69cc4d64048e821
-  fragment_checksum: 39bb30012d91eaff3c38321cf444950ad0168ca9c08887f1c6acc8053055a453
+  file_sha256: cc0e3f6212f92b656fe616462196b4c44b2d9f23efba0f8450172a199bf4887c
+  fragment_checksum: c47bbe9449618cb9c4fc5b3702662bf6e35ff8a1139ca11ad555d390ec8cd7f0
   partition: active
   order: 1028
-  previous_entry_sha256: a095f484e33e4c4459d294acd379fb83cd00e0d64bae7b2beb5b9d1f03111498
-  entry_sha256: 25462910e362e989a465c274b3d20457a8e974f085d6b59eb3221ce193dadb5e
+  previous_entry_sha256: 384e6dfdf1dffa03228f07d76f1f032ab173ee7eca1e2db2c009ea85e504065f
+  entry_sha256: 2b24d2c58e934d27191f0da2ea4dcfdb3e651d07a30a3cee63f04e235292497e
 - task_id: TRADING-2542H_QQQ_OPTIONS_FROZEN_SIGNAL_IMPLEMENTATION_RETEST_CONTRACT_V1
   path: registry/development_tasks/70/70c3249b98f16e8f5910a811ebafaf881864128fec97d09544282a18d42e14fc.yaml
   file_sha256: 52f6e4d4d99636ccce5f8006cebcd47d91c28400a09569f1b6fd75e71de45a9a
   fragment_checksum: a9559e8bbda8853485078e6b2668c618ef470ba4c81c8dbb6f4dcdcd8c9b3d4f
   partition: active
   order: 1029
-  previous_entry_sha256: 25462910e362e989a465c274b3d20457a8e974f085d6b59eb3221ce193dadb5e
-  entry_sha256: 5a9c16aa520a98170fb18957979c132161aac390319e4020fd0742699132e34e
+  previous_entry_sha256: 2b24d2c58e934d27191f0da2ea4dcfdb3e651d07a30a3cee63f04e235292497e
+  entry_sha256: 9a01d3f696b5ca2f1477372b3a3595967923d48048267472c1d7240d559f1d15
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 40c825d3900895296d5604fe413a09eb3a09e4347e153868a5252123926209ce
-  byte_count: 1759831
+  sha256: 685cadd5be4b4ec7e4fad1d03553c1964003f2a4e7501ae270b6dadbcf4969b0
+  byte_count: 1758477
   row_count: 506
   generated_do_not_edit: true
 - partition: completed
@@ -10361,7 +10361,21 @@ governance_cycles:
   change_id: trading-2542h-register-20260828-v1
   event_count: 1
   production_effect: none
-governance_cycle_count: 298
+- cycle_id: arch-005-s5-cycle-299
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
+  change_id: trading-2542e-scope-corrected-to-history-20260828-v1
+  event_count: 7
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-300
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2542G_GROWTH_ACTION_VALUE_MANDATORY_VETO_SOURCE_CONTRACT_WAVE_V1
+  change_id: trading-2542g-optional-overlay-baseline-done-20260828-v1
+  event_count: 38
+  production_effect: none
+governance_cycle_count: 300
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -10375,4 +10389,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 2f045a1f4c391469f5bdd836a76b7b2fba90b655b8ca0a36030ac9fea0e82702
+index_checksum: 7feafd71f6fe42fa218aeb1fc121196f9d5448d9fc4efd5a2b86ac3082f4d2ef
