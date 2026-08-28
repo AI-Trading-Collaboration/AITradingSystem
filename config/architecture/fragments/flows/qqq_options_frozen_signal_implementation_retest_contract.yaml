@@ -1,0 +1,19 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.qqq_options_frozen_signal_implementation_retest_contract
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: trading_2542h_frozen_signal_to_quantconnect_option_implementation_scope_correction
+stages:
+  - retain_2542e_f_g_bytes_as_immutable_history
+  - classify_fmp_cboe_fed_bls_bea_as_optional_result_blind_overlay
+  - require_exact_existing_strategy_signal_identity
+  - require_reviewed_signal_to_long_call_long_put_flat_mapping
+  - build_and_replay_immutable_quantconnect_run_manifest
+  - select_qqq_contract_by_reviewed_result_blind_policy_inside_quantconnect
+  - simulate_fill_fee_slippage_lifecycle_mark_cash_equity_and_pnl_inside_quantconnect
+  - return_export_safe_identity_counts_and_aggregate_results
+  - locally_admit_same_signal_underlying_and_optionized_paired_comparator
+  - stop_before_backtest_until_all_owner_policy_slots_and_external_authorization_are_exact
+compatibility_flow_entry_required: false
+generated_source_of_truth_active: false

@@ -1,0 +1,222 @@
+schema_version: qqq_options_frozen_signal_implementation_retest_contract.v1
+contract_id: qc_qqq_options_frozen_signal_implementation_retest_contract_v1
+contract_version: 1.0.0-draft.1
+status: STATIC_CONTRACT_READY_OWNER_EXACT_POLICY_FREEZE_REQUIRED
+task_id: TRADING-2542H_QQQ_OPTIONS_FROZEN_SIGNAL_IMPLEMENTATION_RETEST_CONTRACT_V1
+owner_decision_id: owner_decision:TRADING-2542H:2026-08-28:adopt_quantconnect_frozen_signal_implementation_retest_path_v1
+scope: NON_EXECUTABLE_DATA_RESEARCH
+authority_bindings:
+  - path: config/research/qqq_options_signal_export_v1.yaml
+    file_sha256: cf9d6ba3044bdf1d601de1ae7fe6f82fa3e26cc7811dc50160d24dfc902259e9
+    role: SIGNAL_PACKAGE_CONTRACT
+    immutable: true
+  - path: config/research/qqq_options_deterministic_selection_v1.yaml
+    file_sha256: bbb51a147e89dd279f35ed005810b7274c1ac2ff302df492c183e2f7f2abad30
+    role: DETERMINISTIC_SELECTOR_MECHANICS
+    immutable: true
+  - path: config/research/qqq_options_minute_execution_reality_v1.yaml
+    file_sha256: 8c8823ddcc509e7dfdb81803a6fe7099b1ff44fccefc5a607c2a9abc7875226a
+    role: EXECUTION_REALITY_MECHANICS
+    immutable: true
+  - path: config/research/qqq_options_cash_premium_settlement_accounting_v1.yaml
+    file_sha256: faa2659ee141cb2209686c3eadee31059ee660c3cc6d6dd3e63e259f23b1484e
+    role: CASH_ACCOUNTING_MECHANICS
+    immutable: true
+  - path: config/research/qqq_options_lifecycle_expiry_corporate_action_safety_v1.yaml
+    file_sha256: 1798b6696e0f31571f9242a4276a06530fb951d15f250a2ef6756ac547037582
+    role: LIFECYCLE_MECHANICS
+    immutable: true
+  - path: config/research/qqq_options_daily_primary_backtest_contract_v1.yaml
+    file_sha256: 4a060600ef9d532e75449a09628a54b84c9b68eca41989e1e4ed18de54b3109a
+    role: DAILY_PRIMARY_CONTRACT
+    immutable: true
+  - path: config/research/qqq_options_owner_decision_manifest_v2.yaml
+    file_sha256: d4f7fb3ffb196ce65000ec24fc302c44395a9d3c4dad3e2e5554683639f9ca79
+    role: OWNER_DECISION_SLOT_INVENTORY
+    immutable: true
+  - path: inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v3/export_safe_terminal_evidence.json
+    file_sha256: 2f34deae52a7a5911918e008b93daf1a356ef3b872431a3dd5dbe0136ad75b42
+    role: QC_CHAIN_COVERAGE_EVIDENCE
+    immutable: true
+  - path: config/research/qc_qqq_options_growth_action_value_real_review_execution_v2.yaml
+    file_sha256: f02df23a4bd36069f5fe09354a3ce8480583fc451b71ec511bc3ba2da27780f2
+    role: LEGACY_2542E_HISTORY_ONLY
+    immutable: true
+  - path: config/research/qc_qqq_options_growth_action_value_veto_option_signal_architecture_freeze_v1.yaml
+    file_sha256: 414626c92a140a780b602c122adce17d0039ec0f9bcd6fa326b9518ffa35ed83
+    role: LEGACY_2542F_HISTORY_ONLY
+    immutable: true
+  - path: config/research/qc_qqq_options_growth_action_value_mandatory_veto_historical_pit_source_candidate_evidence_review_v1.yaml
+    file_sha256: 459de4560d569db917024f6efc3f2f46e5487f98ba9bf2dc580fcc0a25e10fb9
+    role: OPTIONAL_2542G_OVERLAY_EVIDENCE_ONLY
+    immutable: true
+  - path: config/research/strategy_growth_action_value_threshold_exact_value_sheet_v4.yaml
+    file_sha256: c90c4cc22b8918e90641bf0553416a68458433bea750bd2064fcf98df7886215
+    role: LEGACY_NON_OPTIONS_VALUE_SHEET_HISTORY_ONLY
+    immutable: true
+research_scope:
+  ticker: QQQ
+  calendar: XNYS
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  expected_session_count: 1202
+  primary_role: PRIMARY
+  legacy_2022_12_01_is_default: false
+qc_chain_coverage:
+  technical_validation_state: PASS
+  expected_session_count: 1202
+  observed_session_count: 1202
+  unresolved_session_count: 0
+  normal_slice_session_count: 1201
+  recovered_session_count: 1
+  recovered_contract_count: 6496
+  chain_presence_status: PASS_WITH_EXACT_DATE_PROVIDER_HISTORY_RECOVERY
+  data_quality_status: PASS_FOR_RESEARCH_TRANSPORT_COMPLETENESS
+  point_in_time_status: PASS_FOR_EXACT_SOURCE_AND_AVAILABILITY_DATE
+  strategy_engine_status: NOT_IN_SCOPE_ZERO_ORDER_VALIDATION
+  proves_strategy_return: false
+responsibility_split:
+  local:
+    - FREEZE_EXISTING_SIGNAL_IDENTITY
+    - FREEZE_MAPPING_AND_POLICY
+    - BUILD_AND_REPLAY_RUN_MANIFEST
+    - ADMIT_EXPORT_SAFE_RESULT_EVIDENCE
+    - VALIDATE_PAIRED_COMPARATOR_IDENTITY_AND_AGGREGATES
+  quantconnect:
+    - PROVIDE_QQQ_OPTION_CHAIN
+    - SELECT_CONTRACT_BY_REVIEWED_RESULT_BLIND_POLICY
+    - SIMULATE_EXECUTION_FILL_FEES_AND_SLIPPAGE
+    - PROCESS_POSITION_LIFECYCLE_AND_MARKS
+    - CALCULATE_CASH_EQUITY_AND_PNL
+  local_option_repricing_allowed: false
+  quantconnect_direction_signal_allowed: false
+baseline_required:
+  - FROZEN_STRATEGY_SIGNAL_IDENTITY
+  - REVIEWED_SIGNAL_TO_OPTION_ACTION_MAPPING
+  - QC_QQQ_OPTION_CHAIN_AND_FIELD_SOURCE_IDENTITY
+  - RESULT_BLIND_DETERMINISTIC_SELECTION_POLICY
+  - EXECUTION_FILL_FEE_AND_SLIPPAGE_POLICY
+  - LIFECYCLE_MARK_AND_ACCOUNTING_POLICY
+  - EXACT_RUN_DQ_PIT_AND_EXPORT_SAFE_RESULT_IDENTITY
+  - SAME_SIGNAL_UNDERLYING_AND_OPTIONIZED_COMPARATOR
+optional_overlays:
+  - provider: FMP_SPY_QQQ
+    role: OPTIONAL_RESULT_BLIND_RISK_OVERLAY
+    mandatory_for_baseline: false
+    direction_signal_allowed: false
+    missing_blocks_baseline: false
+  - provider: CBOE_VIX
+    role: OPTIONAL_RESULT_BLIND_RISK_OVERLAY
+    mandatory_for_baseline: false
+    direction_signal_allowed: false
+    missing_blocks_baseline: false
+  - provider: FED_SCHEDULE
+    role: OPTIONAL_RESULT_BLIND_RISK_OVERLAY
+    mandatory_for_baseline: false
+    direction_signal_allowed: false
+    missing_blocks_baseline: false
+  - provider: BLS_SCHEDULE
+    role: OPTIONAL_RESULT_BLIND_RISK_OVERLAY
+    mandatory_for_baseline: false
+    direction_signal_allowed: false
+    missing_blocks_baseline: false
+  - provider: BEA_SCHEDULE
+    role: OPTIONAL_RESULT_BLIND_RISK_OVERLAY
+    mandatory_for_baseline: false
+    direction_signal_allowed: false
+    missing_blocks_baseline: false
+signal_mapping:
+  source_signal_artifact_status: MISSING_EXACT_RETAINED_PACKAGE
+  source_signal_enum_status: UNBOUND
+  target_option_signal_enum:
+    - LONG_CALL
+    - LONG_PUT
+    - FLAT
+  mapping_status: UNKNOWN_REQUIRES_OWNER_REVIEW
+  mapping_rows: []
+  defensive_or_sgov_mapping: UNKNOWN_REQUIRES_OWNER_REVIEW
+  option_or_result_input_allowed: false
+  missing_source_signal_terminal: INVALID
+  effective_session_rule: NEXT_VALID_XNYS_SESSION
+policy_gates:
+  selection_status: OWNER_REVIEW_REQUIRED_BASELINE
+  execution_status: OWNER_REVIEW_REQUIRED_BASELINE
+  accounting_status: OWNER_REVIEW_REQUIRED_BASELINE
+  lifecycle_status: OWNER_REVIEW_REQUIRED_BASELINE
+  selection_frozen: false
+  execution_frozen: false
+  accounting_frozen: false
+  lifecycle_frozen: false
+  quantconnect_engine_defaults_allowed: false
+paired_comparator:
+  same_frozen_signal_identity_required: true
+  required_implementations:
+    - UNDERLYING_IMPLEMENTATION
+    - OPTIONIZED_IMPLEMENTATION
+  optional_overlay_is_separate_lane: true
+  result_blind_parameter_freeze_required: true
+export_safe_result:
+  required_fields:
+    - RUN_PROJECT_BACKTEST_IDENTITY
+    - REPOSITORY_CODE_POLICY_MANIFEST_SHA
+    - LEAN_VERSION
+    - REQUESTED_AND_EVALUATED_RANGE
+    - SESSION_INVENTORY_AND_DQ_PIT
+    - SIGNAL_AND_MAPPING_IDENTITY
+    - SELECTION_AND_NO_CONTRACT_COUNTS
+    - INTENT_SUBMIT_FILL_REJECT_CANCEL_COUNTS
+    - LIFECYCLE_DISPOSITION_COUNTS
+    - FEE_SLIPPAGE_CASH_EQUITY_RETURN_DRAWDOWN
+    - TERMINAL_AND_COMPARATOR_IDENTITY
+  raw_option_rows_allowed: false
+  complete_chain_export_allowed: false
+  contract_quote_history_export_allowed: false
+  local_substitute_pnl_allowed: false
+stop_policy:
+  reason_codes:
+    - MISSING_FROZEN_SIGNAL_IDENTITY
+    - UNREVIEWED_SIGNAL_MAPPING
+    - OPTION_ALPHA_LEAKAGE
+    - UNFROZEN_SELECTION_POLICY
+    - UNFROZEN_EXECUTION_POLICY
+    - UNFROZEN_ACCOUNTING_POLICY
+    - UNFROZEN_LIFECYCLE_POLICY
+    - FIELD_SOURCE_UNPROVEN
+    - MULTIPLIER_UNPROVEN
+    - MARK_POLICY_UNSPECIFIED
+    - RUN_IDENTITY_UNSPECIFIED
+    - MANIFEST_REPLAY_NOT_PASS
+    - INSUFFICIENT_PLATFORM_EVIDENCE
+    - IMMUTABLE_LINEAGE_MUTATION
+    - EXTERNAL_RUN_NOT_AUTHORIZED
+  terminal_precedence:
+    - INVALID
+    - FAIL
+    - INSUFFICIENT
+    - PASS
+  missing_unknown_or_not_evaluated_can_pass: false
+  cross_date_fallback_allowed: false
+  result_after_parameter_freeze_allowed: true
+safety:
+  static_contract_authorized: true
+  signal_mapping_frozen: false
+  executable_policy_frozen: false
+  manifest_generation_authorized: false
+  manifest_replay_executed: false
+  real_dq_authorized: false
+  qc_backtest_authorized: false
+  qc_project_mutation_authorized: false
+  provider_query_authorized: false
+  raw_option_payload_download_or_export_allowed: false
+  orders: 0
+  fills: 0
+  positions: 0
+  investment_interpretation_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none
+terminal: OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST

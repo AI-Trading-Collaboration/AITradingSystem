@@ -1,0 +1,97 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2542H_QQQ_OPTIONS_FROZEN_SIGNAL_IMPLEMENTATION_RETEST_CONTRACT_V1
+  task_id_sha256: 70c3249b98f16e8f5910a811ebafaf881864128fec97d09544282a18d42e14fc
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2542H_QQQ_OPTIONS_FROZEN_SIGNAL_IMPLEMENTATION_RETEST_CONTRACT_V1
+  title: null
+  domain: QQQ options frozen-signal implementation retest scope-correction contract
+    V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex / implement and validate the non-executable scope-correction contract
+  requirement_refs:
+  - docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Freeze the existing-strategy-signal to
+    QuantConnect option-implementation boundary; classify TRADING-2542G source work
+    as optional overlay rather than baseline blocker; keep all executable policy values
+    and external runs fail closed.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Bind immutable 2478/2483/2499/2541 and 2542E/F/G lineage; define baseline
+      versus optional overlay, local versus QC authority, paired comparator and typed
+      stops; strict loader/tests/system flow PASS; no QC access, real DQ/backtest,
+      raw option payload, orders, fills, positions, production or broker action.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2542H_QQQ_OPTIONS_FROZEN_SIGNAL_IMPLEMENTATION_RETEST_CONTRACT_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-28T08:51:05Z'
+  actor: integration-coordinator
+  change_id: trading-2542h-register-20260828-v1
+  lane_id: null
+  base_commit: 8b677b452f6ec5810ccfaecbdf61664ac0a1f2c3
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2542H_QQQ_OPTIONS_FROZEN_SIGNAL_IMPLEMENTATION_RETEST_CONTRACT_V1
+    - QQQ options frozen-signal implementation retest scope-correction contract V1
+    - P0
+    - IN_PROGRESS
+    - Codex / implement and validate the non-executable scope-correction contract
+    - Freeze the existing-strategy-signal to QuantConnect option-implementation boundary;
+      classify TRADING-2542G source work as optional overlay rather than baseline
+      blocker; keep all executable policy values and external runs fail closed.
+    - Bind immutable 2478/2483/2499/2541 and 2542E/F/G lineage; define baseline versus
+      optional overlay, local versus QC authority, paired comparator and typed stops;
+      strict loader/tests/system flow PASS; no QC access, real DQ/backtest, raw option
+      payload, orders, fills, positions, production or broker action.
+    - 'Supporting requirement: docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md.
+      owner_decision=owner_decision:TRADING-2542H:2026-08-28:adopt_quantconnect_frozen_signal_implementation_retest_path_v1;
+      governed_mode=SINGLE_LANE_SERIAL_CONTRACT_WAVE; scope=non-executable DATA_RESEARCH;
+      current_terminal=OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST; production_effect=none;
+      broker_action=none.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2542h-register-20260828-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-312ab043bec9f0d14be66c018130bb8f
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2542H_QQQ_OPTIONS_FROZEN_SIGNAL_IMPLEMENTATION_RETEST_CONTRACT_V1
+  - QQQ options frozen-signal implementation retest scope-correction contract V1
+  - P0
+  - IN_PROGRESS
+  - Codex / implement and validate the non-executable scope-correction contract
+  - Freeze the existing-strategy-signal to QuantConnect option-implementation boundary;
+    classify TRADING-2542G source work as optional overlay rather than baseline blocker;
+    keep all executable policy values and external runs fail closed.
+  - Bind immutable 2478/2483/2499/2541 and 2542E/F/G lineage; define baseline versus
+    optional overlay, local versus QC authority, paired comparator and typed stops;
+    strict loader/tests/system flow PASS; no QC access, real DQ/backtest, raw option
+    payload, orders, fills, positions, production or broker action.
+  - 'Supporting requirement: docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md.
+    owner_decision=owner_decision:TRADING-2542H:2026-08-28:adopt_quantconnect_frozen_signal_implementation_retest_path_v1;
+    governed_mode=SINGLE_LANE_SERIAL_CONTRACT_WAVE; scope=non-executable DATA_RESEARCH;
+    current_terminal=OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST; production_effect=none;
+    broker_action=none.'
+  docs_links:
+  - docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md
+  terminal: false
+  canonical_row_sha256: aa1873e0a46b6d8c03423ea2babb218949f8ddb59705a3120c875e6ca34df4ec
+last_event_id: task-event-312ab043bec9f0d14be66c018130bb8f
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: a9559e8bbda8853485078e6b2668c618ef470ba4c81c8dbb6f4dcdcd8c9b3d4f
