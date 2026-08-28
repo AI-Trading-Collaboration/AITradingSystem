@@ -367,6 +367,7 @@ def test_local_canonical_page_uses_current_successor_identity_when_available() -
             "TRADING-2542E",
             "TRADING-2542F",
             "TRADING-2542G",
+            "TRADING-2542H",
             "TRADING-2543",
             "TRADING-2544",
             "TRADING-2545",
