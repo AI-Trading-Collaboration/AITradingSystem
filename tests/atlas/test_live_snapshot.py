@@ -103,19 +103,21 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2542H_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2542I_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
-        "QQQ options 链路已恢复为“既有策略信号是唯一方向事实，QuantConnect 负责选约、成交、"
+        "QQQ options 链路保持“既有策略信号是唯一方向事实，QuantConnect 负责选约、成交、"
         "生命周期与 P&L”；TRADING-2541 V3 已证明目标窗口 option chain 1202/1202、"
-        "unresolved=0，但只证明 transport/PIT 可用性，不证明策略收益；TRADING-2542E/F/G "
-        "bytes 保留为 immutable history，FMP、Cboe VIX、Fed、BLS、BEA 改为 optional "
-        "result-blind overlay，不再阻塞 baseline；当前唯一基线 blocker 是 retained exact "
-        "signal package、signal 到 LONG_CALL/LONG_PUT/FLAT mapping 以及 selection/execution/"
-        "accounting/lifecycle Owner policy 尚未 exact-freeze；真实 DQ/backtest、QuantConnect "
-        "project mutation 与 orders/fills/positions/production/broker 全为 0；下一合法动作是完成 "
-        "TRADING-2542H exact policy freeze，再单独授权一次 bounded QC research backtest"
+        "unresolved=0，但只证明 transport/PIT 可用性，不证明策略收益；TRADING-2542I 已把 "
+        "first_layer_composer_v2 五态列为推荐语义候选，并提出 risk_on/constructive→LONG_CALL、"
+        "neutral/defensive/risk_off→FLAT 以及完整 37-slot implementation policy 草案，LONG_PUT "
+        "只保留为独立 sensitivity；既有 signal artifact 只有 2023-02-22 起的 source evidence/"
+        "POC，不能冒充 2021-02-22 起 exact 1202-session package，全部草案行仍 owner_frozen=false；"
+        "真实 DQ/backtest、QuantConnect project mutation、provider/raw payload 与 orders/fills/"
+        "positions/production/broker 全为 0；下一合法动作是 Owner exact-freeze TRADING-2542I "
+        "草案并补齐 exact signal package，manifest replay PASS 后再单独授权一次 bounded QC "
+        "research backtest"
     )
 
 

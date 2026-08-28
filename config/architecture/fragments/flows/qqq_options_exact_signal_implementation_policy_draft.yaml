@@ -1,0 +1,19 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.qqq_options_exact_signal_implementation_policy_draft
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: trading_2542i_existing_trend_semantics_to_non_executable_option_policy_owner_review_draft
+stages:
+  - audit_first_layer_composer_v2_as_semantic_candidate_not_exact_primary_window_package
+  - propose_risk_on_and_constructive_to_long_call
+  - propose_neutral_defensive_and_risk_off_to_flat
+  - reserve_long_put_for_a_separate_sensitivity_lane
+  - require_regenerated_exact_1202_session_signal_package_with_dq_pit_identity
+  - expand_all_37_trading_2509_successor_slots_into_owner_review_proposals
+  - keep_quantconnect_defaults_manifest_generation_and_external_run_disabled
+  - require_owner_exact_file_and_canonical_hash_freeze
+  - require_signal_package_and_manifest_replay_pass
+  - stop_before_quantconnect_until_separate_bounded_run_authorization
+compatibility_flow_entry_required: false
+generated_source_of_truth_active: false

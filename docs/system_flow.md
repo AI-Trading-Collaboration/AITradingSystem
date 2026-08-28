@@ -9866,6 +9866,38 @@ TRADING-2541 V3 的 `1202/1202`、`unresolved=0` 与 exact-date recovery 只证�
 `OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST`。本节点不访问 QuantConnect，不运行真实 DQ/backtest，
 不下载 market payload，orders/fills/positions/production/broker=`0`。
 
+## TRADING-2542I exact signal source + option implementation policy draft
+
+TRADING-2542I 把 2542H 的 Owner 输入面展开为可机械复核、不可执行的 successor draft。现有
+`first_layer_composer_v2:trend_state` 五态是推荐的方向语义候选，但其既有 artifact 只有
+2023-02-22 起的 source evidence/POC，不能冒充 2021-02-22 起 exact 1202-session signal package。
+
+```text
+first_layer_composer_v2 trend_state semantics
+  -> risk_on / constructive -> proposed LONG_CALL
+  -> neutral / defensive / risk_off -> proposed FLAT
+       -> defensive / SGOV de-risking is not LONG_PUT alpha
+       -> LONG_PUT remains separate sensitivity-only
+  -> require regenerated exact 1202-session package
+       -> exact one-row-per-XNYS-session coverage
+       -> exact code/config/input/DQ/PIT/source cutoff identity
+       -> POC rewrap / forward-fill / manual CSV cannot supply authority
+  -> non-executable 37-slot TRADING-2509 owner-review draft
+       -> selection: call-only DTE/delta/moneyness/quote/spread/OI/stable rank
+       -> execution: next-independent-minute quote-side limit/cost/timeout/no retry
+       -> accounting: cash/premium cap/multiplier/reservation/rounding/settlement
+       -> lifecycle: one position/flat exit/expiry guard/no exercise or assignment
+       -> admission: exact coverage/cash facts/paired comparator/no result selection
+  -> Owner exact file + canonical hash freeze (not completed)
+  -> exact signal package + manifest replay PASS (not completed)
+  -x-> QuantConnect/project/backtest/real DQ/provider/raw payload/orders/fills/positions
+```
+
+草案值是首次 bounded baseline 的 result-blind pilot proposal，不是后验最优值或当前可执行 policy。
+所有 37 个 successor slots 都保持 `owner_frozen=false`；engine defaults、manifest generation 与外部 run
+仍关闭，terminal 固定为 `OWNER_EXACT_FREEZE_AND_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST`。本节点不读取
+raw option payload、不运行真实 DQ/backtest，paper/live/production/broker=`false/none`。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

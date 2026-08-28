@@ -1,0 +1,13 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_exact_signal_implementation_policy_draft
+fragment_kind: module
+owner: options_research_contract_governance
+module_prefix: src/ai_trading_system/qqq_options_research/exact_signal_implementation_policy_draft.py
+public_contracts:
+  - DEFAULT_EXACT_SIGNAL_IMPLEMENTATION_POLICY_DRAFT_PATH
+  - ExactSignalImplementationPolicyDraft
+  - ExactSignalImplementationPolicyDraftError
+  - ExactSignalImplementationPolicyDraftLoadResult
+  - load_exact_signal_implementation_policy_draft
+compatibility_facades: []
+deprecation_status: active_reference_architecture

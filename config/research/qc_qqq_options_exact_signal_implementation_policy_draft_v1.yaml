@@ -1,0 +1,196 @@
+schema_version: qqq_options_exact_signal_implementation_policy_draft.v1
+draft_id: qc_qqq_options_exact_signal_implementation_policy_draft_v1
+draft_version: 1.0.0-draft.1
+status: OWNER_REVIEW_DRAFT_NON_EXECUTABLE
+task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+scope: NON_EXECUTABLE_DATA_RESEARCH
+authority_bindings:
+  - {path: config/research/first_layer_composer_v2.yaml, file_sha256: 24ec583e1afbf01c3ddb16b43eaef6b2479ea67be6df87a1508e831b1585ffc3, role: SOURCE_SIGNAL_SEMANTIC_CANDIDATE, immutable: true}
+  - {path: config/research/qqq_options_signal_export_v1.yaml, file_sha256: cf9d6ba3044bdf1d601de1ae7fe6f82fa3e26cc7811dc50160d24dfc902259e9, role: SIGNAL_PACKAGE_MECHANICS, immutable: true}
+  - {path: config/research/qqq_options_deterministic_selection_v1.yaml, file_sha256: bbb51a147e89dd279f35ed005810b7274c1ac2ff302df492c183e2f7f2abad30, role: SELECTION_MECHANICS, immutable: true}
+  - {path: config/research/qqq_options_minute_execution_reality_v1.yaml, file_sha256: 8c8823ddcc509e7dfdb81803a6fe7099b1ff44fccefc5a607c2a9abc7875226a, role: EXECUTION_MECHANICS, immutable: true}
+  - {path: config/research/qqq_options_cash_premium_settlement_accounting_v1.yaml, file_sha256: faa2659ee141cb2209686c3eadee31059ee660c3cc6d6dd3e63e259f23b1484e, role: ACCOUNTING_MECHANICS, immutable: true}
+  - {path: config/research/qqq_options_lifecycle_expiry_corporate_action_safety_v1.yaml, file_sha256: 1798b6696e0f31571f9242a4276a06530fb951d15f250a2ef6756ac547037582, role: LIFECYCLE_MECHANICS, immutable: true}
+  - {path: config/research/qqq_options_daily_primary_backtest_contract_v1.yaml, file_sha256: 4a060600ef9d532e75449a09628a54b84c9b68eca41989e1e4ed18de54b3109a, role: DAILY_PRIMARY_CONTRACT, immutable: true}
+  - {path: config/research/qqq_options_owner_decision_manifest_v2.yaml, file_sha256: d4f7fb3ffb196ce65000ec24fc302c44395a9d3c4dad3e2e5554683639f9ca79, role: OWNER_SLOT_CATALOG_V2, immutable: true}
+  - {path: inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v3/export_safe_terminal_evidence.json, file_sha256: 2f34deae52a7a5911918e008b93daf1a356ef3b872431a3dd5dbe0136ad75b42, role: QC_CHAIN_COVERAGE_EVIDENCE, immutable: true}
+  - {path: config/research/qc_qqq_options_frozen_signal_implementation_retest_contract_v1.yaml, file_sha256: d86e294f2be3ad8b8f601953ecd5e2b90d71317bca6dd197096de0db196dc80a, role: FROZEN_SIGNAL_RETEST_BOUNDARY, immutable: true}
+research_window:
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  expected_session_count: 1202
+  calendar: XNYS
+  role: PRIMARY
+source_candidate:
+  producer_id: first_layer_composer_v2
+  source_locator: outputs/research_trends/models/first_layer_composer_v2_predictions.csv:trend_state
+  source_policy_status: pilot_baseline
+  source_role: RECOMMENDED_SEMANTIC_SOURCE_NOT_EXACT_PACKAGE_READY
+  source_enum: [risk_on, constructive, neutral, defensive, risk_off]
+  documented_actual_start: '2023-02-22'
+  documented_actual_end: '2026-03-27'
+  raw_row_count: 2205
+  unique_dated_signal_count: 777
+  primary_start_covered: false
+  retained_exact_1202_session_package_present: false
+  poc_rewrap_admissible_as_exact_package: false
+  required_next_artifact: REGENERATED_EXACT_ONE_ROW_PER_XNYS_SESSION_WITH_CODE_CONFIG_INPUT_DQ_PIT_IDENTITY
+signal_mapping:
+  status: PROPOSED_OWNER_REVIEW_NOT_FROZEN
+  baseline_actions: [LONG_CALL, FLAT]
+  long_put_baseline_allowed: false
+  long_put_role: SEPARATE_SENSITIVITY_ONLY
+  option_or_result_input_allowed: false
+  effective_session_rule: NEXT_VALID_XNYS_SESSION
+  missing_or_unknown_terminal: INVALID_SOURCE_SIGNAL
+  rows:
+    - {source_state: risk_on, option_action: LONG_CALL}
+    - {source_state: constructive, option_action: LONG_CALL}
+    - {source_state: neutral, option_action: FLAT}
+    - {source_state: defensive, option_action: FLAT}
+    - {source_state: risk_off, option_action: FLAT}
+selection_proposal:
+  underlying: QQQ
+  option_right: CALL
+  long_premium_only: true
+  single_leg_only: true
+  min_dte_inclusive: 30
+  target_dte: 35
+  max_dte_inclusive: 45
+  delta_source: PRIOR_COMPLETED_SESSION_MODEL
+  min_abs_delta_inclusive: 0.45
+  target_abs_delta: 0.50
+  max_abs_delta_inclusive: 0.60
+  moneyness_definition: UNDERLYING_PRICE_DIVIDED_BY_STRIKE
+  min_moneyness_inclusive: 0.90
+  max_moneyness_inclusive: 1.10
+  max_quote_age_seconds: 60
+  quote_integrity: TWO_SIDED_NON_CROSSED_POSITIVE_ASK
+  spread_definition: ASK_MINUS_BID_DIVIDED_BY_MID
+  max_relative_spread: 0.20
+  min_prior_session_open_interest: 100
+  volume_floor_disposition: PROPOSE_G5_NOT_APPLICABLE_LOOKAHEAD_AND_REDUNDANCY
+  rank_components: [ABS_DELTA_DISTANCE, ABS_DTE_DISTANCE, RELATIVE_SPREAD, OPEN_INTEREST_DESC, EXPIRY, STRIKE, SID]
+  no_contract_disposition: NO_ELIGIBLE_CONTRACT_PRESERVE_CASH_NO_RELAXATION
+execution_proposal:
+  selection_time_rule: AFTER_FIRST_COMPLETE_DPLUS1_MINUTE_BAR
+  submit_time_rule: NEXT_INDEPENDENT_MINUTE_AFTER_SELECTION
+  entry_order: ASK_SIDE_MARKETABLE_LIMIT
+  exit_order: BID_SIDE_MARKETABLE_LIMIT
+  adverse_price_adjustment_per_share_usd: 0.01
+  fee_per_contract_per_side_usd: 0.65
+  cancel_after_minutes: 5
+  same_session_retry_allowed: false
+  contract_substitution_after_failure_allowed: false
+  max_contracts_per_order: 1
+  partial_fill_disposition: PROPOSE_G5_NOT_APPLICABLE_INTEGER_SINGLE_CONTRACT
+  daily_close_fill_allowed: false
+  same_bar_fill_allowed: false
+  mid_or_last_fill_allowed: false
+  fill_forward_allowed: false
+accounting_proposal:
+  currency: USD
+  account_type: CASH
+  initial_cash_usd: 100000.00
+  premium_budget_fraction_of_pretrade_nav: 0.02
+  max_open_contracts: 1
+  required_platform_multiplier: 100
+  reservation_rule: LIMIT_PREMIUM_TIMES_MULTIPLIER_PLUS_ENTRY_FEE_BUFFER
+  fee_buffer_per_contract_usd: 0.65
+  cash_quantum_usd: 0.01
+  rounding_mode: ROUND_HALF_EVEN
+  cost_basis_method: FIFO
+  include_fees_in_cost_basis: true
+  sell_proceeds_settlement_lag_xnys_sessions: 1
+  idle_cash_carry: ZERO_RETURN_BASELINE
+  cash_carry_comparator: SEPARATE_SGOV_CARRY_COMPARATOR
+  negative_settled_cash_allowed: false
+  margin_allowed: false
+lifecycle_proposal:
+  max_simultaneous_positions: 1
+  exit_on_flat_signal: NEXT_LEGAL_EXECUTION_EVENT
+  pre_expiry_guard_xnys_sessions: 7
+  atomic_or_same_session_roll_allowed: false
+  fresh_next_session_reentry_allowed: true
+  exercise_allowed: false
+  assignment_allowed: false
+  share_delivery_allowed: false
+  corporate_action_ambiguity_disposition: INVALID_RUN
+  terminal_mark: VALID_BID_LIQUIDATION_VALUE
+  max_mark_quote_age_seconds: 60
+  missing_mark_disposition: INSUFFICIENT_PLATFORM_EVIDENCE
+result_admission:
+  exact_session_coverage_required: true
+  no_contract_no_fill_cancel_retained_as_cash_facts: true
+  invalid_run_in_aggregate_allowed: false
+  preregistered_baseline_count: 1
+  sensitivity_result_selection_allowed: false
+  same_signal_paired_comparator_required: true
+  underlying_implementation_id: UNDERLYING_IMPLEMENTATION
+  optionized_implementation_id: OPTIONIZED_IMPLEMENTATION
+  maximum_interpretation: RESEARCH_COMPARISON_ONLY
+  investment_promotion_allowed: false
+  raw_option_rows_allowed: false
+  local_option_repricing_allowed: false
+slot_proposals:
+  - {slot_id: ACC_CASH_CARRY_BENCHMARK, canonical_group: accounting, proposal_action: PROPOSE_G2, proposal_ref: accounting_proposal.idle_cash_carry, owner_frozen: false}
+  - {slot_id: ACC_CASH_RESERVATION, canonical_group: accounting, proposal_action: PROPOSE_G2, proposal_ref: accounting_proposal.reservation_rule, owner_frozen: false}
+  - {slot_id: ACC_COST_BASIS_CONVENTION, canonical_group: accounting, proposal_action: PROPOSE_G2, proposal_ref: accounting_proposal.cost_basis_method, owner_frozen: false}
+  - {slot_id: ACC_DQ_PIT_REPRO, canonical_group: acceptance, proposal_action: PROPOSE_G2, proposal_ref: result_admission.exact_session_coverage_required, owner_frozen: false}
+  - {slot_id: ACC_EVENT_IDENTITY_INVARIANT, canonical_group: accounting, proposal_action: PROPOSE_G2, proposal_ref: accounting_proposal.cash_quantum_usd, owner_frozen: false}
+  - {slot_id: ACC_FEE_SCHEDULE, canonical_group: accounting, proposal_action: PROPOSE_G2, proposal_ref: execution_proposal.fee_per_contract_per_side_usd, owner_frozen: false}
+  - {slot_id: ACC_INITIAL_CASH, canonical_group: accounting, proposal_action: PROPOSE_G2, proposal_ref: accounting_proposal.initial_cash_usd, owner_frozen: false}
+  - {slot_id: ACC_INVESTMENT_PROMOTION, canonical_group: acceptance, proposal_action: PROPOSE_G5_NOT_APPLICABLE, proposal_ref: result_admission.investment_promotion_allowed, owner_frozen: false}
+  - {slot_id: ACC_METRIC_BENCHMARK_IDENTITY, canonical_group: acceptance, proposal_action: PROPOSE_G2, proposal_ref: result_admission.same_signal_paired_comparator_required, owner_frozen: false}
+  - {slot_id: ACC_RESEARCH_MULTIPLICITY_CONTROL, canonical_group: acceptance, proposal_action: PROPOSE_G2, proposal_ref: result_admission.preregistered_baseline_count, owner_frozen: false}
+  - {slot_id: ACC_RESULT_INCLUSION, canonical_group: acceptance, proposal_action: PROPOSE_G2, proposal_ref: result_admission.invalid_run_in_aggregate_allowed, owner_frozen: false}
+  - {slot_id: ACC_ROUNDING_RECONCILIATION, canonical_group: accounting, proposal_action: PROPOSE_G2, proposal_ref: accounting_proposal.rounding_mode, owner_frozen: false}
+  - {slot_id: ACC_SAMPLE_COVERAGE, canonical_group: acceptance, proposal_action: PROPOSE_G2, proposal_ref: research_window.expected_session_count, owner_frozen: false}
+  - {slot_id: ACC_SETTLEMENT_TIMING, canonical_group: accounting, proposal_action: PROPOSE_G2, proposal_ref: accounting_proposal.sell_proceeds_settlement_lag_xnys_sessions, owner_frozen: false}
+  - {slot_id: ACC_SIZING_EXPOSURE, canonical_group: accounting, proposal_action: PROPOSE_G2, proposal_ref: accounting_proposal.premium_budget_fraction_of_pretrade_nav, owner_frozen: false}
+  - {slot_id: EXE_CANCEL_REJECT_NO_FILL, canonical_group: execution, proposal_action: PROPOSE_G2, proposal_ref: execution_proposal.cancel_after_minutes, owner_frozen: false}
+  - {slot_id: EXE_EXECUTION_OBSERVATION_SOURCE, canonical_group: execution, proposal_action: PROPOSE_G2, proposal_ref: execution_proposal.entry_order, owner_frozen: false}
+  - {slot_id: EXE_LATENCY, canonical_group: execution, proposal_action: PROPOSE_G2, proposal_ref: execution_proposal.submit_time_rule, owner_frozen: false}
+  - {slot_id: EXE_MARKETABLE_LIMIT, canonical_group: execution, proposal_action: PROPOSE_G2, proposal_ref: execution_proposal.adverse_price_adjustment_per_share_usd, owner_frozen: false}
+  - {slot_id: EXE_PARTIAL_FILL, canonical_group: execution, proposal_action: PROPOSE_G5_NOT_APPLICABLE, proposal_ref: execution_proposal.partial_fill_disposition, owner_frozen: false}
+  - {slot_id: EXE_QUOTE_DISPOSITION, canonical_group: execution, proposal_action: PROPOSE_G2, proposal_ref: selection_proposal.quote_integrity, owner_frozen: false}
+  - {slot_id: EXE_SLIPPAGE, canonical_group: execution, proposal_action: PROPOSE_G2, proposal_ref: execution_proposal.adverse_price_adjustment_per_share_usd, owner_frozen: false}
+  - {slot_id: LIFE_ASSIGNMENT_POLICY, canonical_group: lifecycle, proposal_action: PROPOSE_G2, proposal_ref: lifecycle_proposal.assignment_allowed, owner_frozen: false}
+  - {slot_id: LIFE_CLOSE_HOLD_POLICY, canonical_group: lifecycle, proposal_action: PROPOSE_G2, proposal_ref: lifecycle_proposal.exit_on_flat_signal, owner_frozen: false}
+  - {slot_id: LIFE_EXERCISE_POLICY, canonical_group: lifecycle, proposal_action: PROPOSE_G2, proposal_ref: lifecycle_proposal.exercise_allowed, owner_frozen: false}
+  - {slot_id: LIFE_EXPIRY_EXIT_GUARD, canonical_group: lifecycle, proposal_action: PROPOSE_G2, proposal_ref: lifecycle_proposal.pre_expiry_guard_xnys_sessions, owner_frozen: false}
+  - {slot_id: LIFE_POSITION_STATE_TRANSITION, canonical_group: lifecycle, proposal_action: PROPOSE_G2, proposal_ref: lifecycle_proposal.max_simultaneous_positions, owner_frozen: false}
+  - {slot_id: LIFE_ROLL_AUTHORIZATION, canonical_group: lifecycle, proposal_action: PROPOSE_G2, proposal_ref: lifecycle_proposal.atomic_or_same_session_roll_allowed, owner_frozen: false}
+  - {slot_id: LIFE_TERMINAL_VALUATION, canonical_group: lifecycle, proposal_action: PROPOSE_G2, proposal_ref: lifecycle_proposal.terminal_mark, owner_frozen: false}
+  - {slot_id: SEL_DELTA_SOURCE_RANGE, canonical_group: selection, proposal_action: PROPOSE_G2, proposal_ref: selection_proposal.target_abs_delta, owner_frozen: false}
+  - {slot_id: SEL_DTE_WINDOW, canonical_group: selection, proposal_action: PROPOSE_G2, proposal_ref: selection_proposal.target_dte, owner_frozen: false}
+  - {slot_id: SEL_MONEYNESS_RANGE, canonical_group: selection, proposal_action: PROPOSE_G2, proposal_ref: selection_proposal.moneyness_definition, owner_frozen: false}
+  - {slot_id: SEL_OPEN_INTEREST_FLOOR, canonical_group: selection, proposal_action: PROPOSE_G2, proposal_ref: selection_proposal.min_prior_session_open_interest, owner_frozen: false}
+  - {slot_id: SEL_QUOTE_FRESHNESS, canonical_group: selection, proposal_action: PROPOSE_G2, proposal_ref: selection_proposal.max_quote_age_seconds, owner_frozen: false}
+  - {slot_id: SEL_RANK_PRIORITY, canonical_group: selection, proposal_action: PROPOSE_G2, proposal_ref: selection_proposal.rank_components, owner_frozen: false}
+  - {slot_id: SEL_SPREAD_LIMIT, canonical_group: selection, proposal_action: PROPOSE_G2, proposal_ref: selection_proposal.max_relative_spread, owner_frozen: false}
+  - {slot_id: SEL_VOLUME_FLOOR, canonical_group: selection, proposal_action: PROPOSE_G5_NOT_APPLICABLE, proposal_ref: selection_proposal.volume_floor_disposition, owner_frozen: false}
+safety:
+  draft_authorized: true
+  owner_exact_freeze: false
+  exact_signal_package_present: false
+  executable_policy_authorized: false
+  manifest_generation_authorized: false
+  manifest_replay_executed: false
+  real_dq_authorized: false
+  qc_backtest_authorized: false
+  qc_project_mutation_authorized: false
+  provider_query_authorized: false
+  raw_option_payload_download_or_export_allowed: false
+  orders: 0
+  fills: 0
+  positions: 0
+  investment_interpretation_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none
+terminal: OWNER_EXACT_FREEZE_AND_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST
