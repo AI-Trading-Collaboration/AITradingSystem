@@ -268,6 +268,14 @@ evaluation window 或 executable scope 变更都必须重新审阅。
 ### S3：bounded QuantConnect run（已授权，仍受 S2D PASS 前置约束）
 
 - 只在 S2D PASS 后提交一次固定 project/code/manifest/maxima 的 R1 research sandbox run；
+- 固定 existing clone project=`35444189`，原 project=`34808569` 只读保护；不再 clone 或创建 project；
+- 将 1202 日 exact package 机械压缩为 83 个连续状态 transition；不得删除短期状态或改变 D+1 生效日；
+- `main.py`、execution policy、offline generator、frozen authorities、package receipt/index/run manifest、
+  research window 与 action maxima 均由 SHA-256/manifest 绑定；canonical replay=`PASS` 才可 dispatch；
+- 允许上限为 project mutation/save/automatic build/cloud backtest=`1/1/1/1`，retry=`0`；第一次 dispatch
+  或任一 identity drift 后 authority 立即失效；
+- QC 内只允许 frozen `LONG_CALL/FLAT` 的 simulated orders，单笔/持仓最多 1 contract，总 submissions/fills
+  各不超过 1202；provider query、raw payload download/export、Object Store、public share 均为 0；
 - 本地只接纳 export-safe aggregate/identity evidence；
 - paper/live/production/broker/orders outside QC simulation=`0`。
 
@@ -279,6 +287,10 @@ Task-owned：
 - `config/research/qc_qqq_options_exact_signal_implementation_policy_draft_v1.yaml`；
 - `src/ai_trading_system/qqq_options_research/exact_signal_implementation_policy_draft.py`；
 - `tests/test_qqq_options_exact_signal_implementation_policy_draft.py`；
+- `config/research/qc_qqq_options_exact_signal_implementation_backtest_execution_v1.yaml`；
+- `src/ai_trading_system/qqq_options_research/exact_signal_implementation_backtest_execution.py`；
+- `tests/test_qqq_options_exact_signal_implementation_backtest_execution.py`；
+- `inputs/research/qqq_options/trading_2542i_exact_signal_implementation_backtest_execution_v1/`；
 - 对应 architecture module/flow fragments。
 
 Coordinator-owned：canonical task source/index/views、`docs/system_flow.md`、Atlas current-state projection、
@@ -302,25 +314,45 @@ generated architecture/report-flow/compatibility authority 与 formal validation
 - `qc_project_mutation_authorized=true` only for one fixed bounded DATA_RESEARCH project action after that PASS；
 - `provider_query=false`；
 - `raw_option_payload_download_or_export=false`；
-- `orders/fills/positions=0`；
+- `orders/fills/positions outside QC simulation=0`；
 - `paper/live/production/broker=false/none`；
-- terminal=`EXACT_SIGNAL_PACKAGE_REPLAY_PASS_QC_FIXED_MANIFEST_REQUIRED`。
+- terminal=`QC_FIXED_MANIFEST_REPLAY_PASS_READY_FOR_SINGLE_DISPATCH`。
 - `exact_window_canonical_dq_status=PASS`；
 - `regenerated_signal_unique_sessions=630/1202`；
 - `regenerated_signal_missing_sessions=572`；
 - `regenerated_signal_duplicate_sessions/excess_rows=588/1134`；
 - `regenerated_signal_non_xnys_decision_at_rows=73`；
-- `signal_source_admission=REJECT`；
-- `signal_package_writer/manifest_replay/quantconnect=NOT_RUN`。
+- `signal_source_admission=PASS`；
+- `signal_package_writer/manifest_replay=PASS`；
+- `quantconnect=NOT_RUN`；
 - `operational_forecast_development_validation=SYNTHETIC_ONLY`；
 - `operational_forecast_real_materialization=V3_PASS`；
 - `v1_failed_dq_receipt_sha256=84bf76d8634732dbd7dcb482e96591a848fea706aa3745346ba138ccd0de7a05`；
 - `v2_failed_dq_receipt_sha256=ea039e75f0e17ee8bffe3fdc90e891d5afa776fac0abd362b3ac7ed69d98ac55`；
 - `v3_real_materialization_receipt_sha256=f508581f98b1fa64763b8488568cf0631bfa260fea2b7aa55f9d7f5a0590a230`；
 - `v3_manifest_replay_receipt_sha256=1106de7d6e9b63a20d9e68d7228267ea6777a84b2ea1de16215699d3fa7cd9bc`；
-- `conditional_quantconnect_backtest=AUTHORIZED_NOT_RUN_READY_FOR_SEPARATE_FIXED_MANIFEST_WAVE`；
+- `qc_execution_manifest_replay=PASS`；
+- `qc_signal_transition_count=83`；
+- `qc_main_py_bytes=14556`；
+- `conditional_quantconnect_backtest=AUTHORIZED_NOT_RUN_READY_FOR_SINGLE_DISPATCH`；
 
 ## 9. 进度记录
+
+- 2026-08-30：publication transaction
+  `trading-2542i-qc-bounded-retest-20260830-v2` 完成 task-source pre-write 后按 `FAILED` 释放。原因是 Atlas
+  authority 必须读取包含 execution policy、generator、package、tests 与 task event 的精确 committed lane，
+  不能把 dirty task bytes 归到旧 `a8676a9d...`。v2 未进入 generated rebuild/candidate/formal validation，
+  未发生 local main/push 或 QuantConnect mutation/build/backtest；本任务先形成 exact lane commit，后继
+  transaction 再从该 SHA 依序重放 architecture、Atlas、report-flow 与 compatibility generators。
+- 2026-08-30：Owner 再次确认授权 fixed clone single-run wave。S2D v3 前置证据已经发布到 local/origin
+  `main=a8676a9d53081d8ae5fe6baf9c1523da1df6a0ab`；exact source admission、TRADING-2483 canonical
+  package replay 均为 `PASS`。新增 owner-authorized execution policy、offline strict loader/renderer、
+  83-transition single-file `main.py`、sealed execution manifest 与 replay receipt。candidate code=`14556`
+  bytes，低于 FREE project `32768` bytes；manifest replay=`PASS`，focused parallel suite=`8 passed`。
+  固定目标 clone=`35444189`，原 project=`34808569` 禁止修改；下一步必须先完成 governed generated/formal
+  validation，再按 replayed manifest 至多保存、自动 build、backtest 各一次，失败不自动重试。当前尚未发生
+  QuantConnect mutation/build/backtest；QC simulation 外 orders/fills/positions、provider/raw/paper/live/
+  production/broker 仍为 `0/false/none`。
 
 - 2026-08-29：Owner 指示继续推进既有趋势信号到 QuantConnect option implementation retest 的后续计划。
   READ_ONLY governed preflight PASS；local main=origin/main=`57abd3c65b88d740f7e50b9eff06c3e9bc1cb42e`、

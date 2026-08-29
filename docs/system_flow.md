@@ -9952,6 +9952,41 @@ package/adapter policy v2 修复后，attempt v2 已通过 training scope，但�
 `2021-02-22` 开始而在 exact-cash scope 产生 `DQ_WINDOW_MISMATCH`。v3 明确该 pre-evaluation SGOV scope
 为 primary-only，primary evaluation 仍强制跨源核验；v1/v2 receipt 与输出均保留且不得覆盖。
 
+S2D v3 现已完成三段 canonical DQ、exact source admission 与 TRADING-2483 package replay，形成
+`1202/1202` 的 immutable `LONG_CALL/FLAT` package。S3 不再新增趋势判断链路，而是把连续相同状态机械压缩为
+83 个 D+1 effective transitions，并生成单文件 QuantConnect candidate：
+
+```text
+TRADING-2542I real-v3 package (1202 daily signals; DQ/PIT/replay PASS)
+  -> exact_signal_implementation_backtest_execution offline loader
+       -> replay frozen draft file/canonical SHA + freeze/source/QC adapter authorities
+       -> replay package receipt / signal index / run manifest exact hashes
+       -> compress only consecutive identical actions: 1202 rows -> 83 effective transitions
+       -> render main.py (single file; < 32768 bytes)
+       -> seal execution_manifest.json
+            project = existing clone 35444189; original 34808569 protected
+            project mutation/save/build/backtest maxima = 1/1/1/1; retry = 0
+            external provider query/raw export/object store/public share = 0
+            outside-QC orders/fills/positions = 0
+       -> canonical rebuild and manifest_replay_receipt.json
+            PASS is necessary before the one external dispatch
+  -> QuantConnect DATA_RESEARCH simulation only
+       -> prior-session OptionUniverse delta/OI eligibility
+       -> current minute two-sided quote/moneyness/spread eligibility
+       -> next-independent-minute marketable limit + adverse USD 0.01/share
+       -> USD 0.65/contract/side; cash account; 2% premium cap; one contract
+       -> 5-minute cancel/no same-session retry; 7-XNYS-session expiry guard
+       -> normalized same-signal QQQ quote comparator (virtual; no QQQ order)
+  -> one export-safe terminal aggregate
+       -> no contract SID/raw option row/chain/quote history/object-store export
+       -> no paper/live/production/broker path
+```
+
+该 execution manifest 是一次性 R1 research authority，不是可复用的策略运行许可：fixed project/code/package/
+window/maxima 任一漂移或第一次 backtest dispatch 都使其失效；build/backtest 失败时停止并报告，不自动保存、
+重试、换项目或放宽选约规则。QC simulated order 只用于计算期权实现收益，不改变既有趋势信号，也不把期权
+结果回流到趋势模型。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

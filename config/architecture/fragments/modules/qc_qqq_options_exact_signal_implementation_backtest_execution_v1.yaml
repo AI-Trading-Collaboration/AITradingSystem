@@ -1,0 +1,15 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qc_qqq_options_exact_signal_implementation_backtest_execution_v1
+fragment_kind: module
+owner: strategy_research_and_external_platform_engineering
+module_prefix: src/ai_trading_system/qqq_options_research/exact_signal_implementation_backtest_execution.py
+public_contracts:
+  - ExactSignalImplementationBacktestExecutionError
+  - SignalTransition
+  - ExecutionPolicy
+  - BuiltExecutionPackage
+  - load_execution_policy
+  - build_execution_package
+  - replay_execution_package
+compatibility_facades: []
+deprecation_status: active_reference_architecture

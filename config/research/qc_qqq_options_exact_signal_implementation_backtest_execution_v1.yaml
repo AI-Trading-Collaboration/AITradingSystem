@@ -1,0 +1,165 @@
+schema_version: qc_qqq_options_exact_signal_implementation_backtest_execution_policy.v1
+policy_id: qc_qqq_options_exact_signal_implementation_backtest_execution_v1
+policy_version: 1.0.0
+status: OWNER_AUTHORIZED_SINGLE_BOUNDED_QC_DATA_RESEARCH_EXECUTION
+task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+owner: project_owner
+owner_decision_ids:
+  - owner_decision:TRADING-2542I:2026-08-29:authorize_real_materialization_and_conditional_qc_v1
+  - owner_decision:TRADING-2542I:2026-08-30:authorize_fixed_clone_single_qc_retest_v1
+authorization_state: STANDING_OWNER_SCOPE
+scope: NON_EXECUTABLE_DATA_RESEARCH
+repository:
+  remote_url: https://github.com/JIEJOE0331/AITradingSystem.git
+  frozen_base_commit: a8676a9d53081d8ae5fe6baf9c1523da1df6a0ab
+  branch: codex/trading-2542i-qc-bounded-retest
+quantconnect_target:
+  organization_tier: FREE
+  project_id: 35444189
+  expected_project_name: Clone of Sleepy Yellow-Green Shark
+  protected_original_project_id: 34808569
+  protected_original_project_name: Sleepy Yellow-Green Shark
+  algorithm_language: Python
+  expected_node: B-MICRO
+  expected_node_cores: 2
+  expected_node_memory_gb: 8
+  project_file: main.py
+  maximum_project_file_bytes: 32768
+authority_bindings:
+  - path: config/research/qc_qqq_options_exact_signal_implementation_policy_draft_v1.yaml
+    file_sha256: 22335aa324ffb13c9917b65ad57f51916831ecd95c05fe357f7faa13f74b57d0
+    canonical_sha256: 45c247010f47ad3172215f90aa7c9cd40044b5332284e1789095d230075a5d83
+    role: OWNER_EXACT_FROZEN_POLICY
+  - path: config/research/qc_qqq_options_exact_signal_implementation_policy_freeze_admission_v1.yaml
+    file_sha256: a89c3c245795bda3733b9579cbb0f78cf16b5f30ec6115217acab10b26b72d34
+    role: OWNER_FREEZE_ADMISSION
+  - path: config/research/qc_qqq_options_exact_signal_package_admission_v1.yaml
+    file_sha256: 097ad9409e18311326b4d875c83c2f2a7cf30508092766c27cdd7ec35986d8da
+    role: EXACT_SOURCE_ADMISSION_POLICY
+  - path: config/research/qc_qqq_options_project_adapter_contract_v2.yaml
+    file_sha256: 081db02fc0d3d1e9e7880a22ce562d0e74ae2693212e7afda7b7344b33347cd1
+    role: QC_PROJECT_ADAPTER
+  - path: config/research/qqq_options_signal_export_v2.yaml
+    file_sha256: d6cae89234380794eae841c71a69c1cf9bde237d3a0d5f4c74081f99c3b0dac9
+    role: SIGNAL_PACKAGE_POLICY
+  - path: outputs/research_trends/operational_forecast/trading_2542i_real_v3/real_materialization_receipt.json
+    file_sha256: f508581f98b1fa64763b8488568cf0631bfa260fea2b7aa55f9d7f5a0590a230
+    role: REAL_DQ_MATERIALIZATION_RECEIPT
+  - path: outputs/research_trends/operational_forecast/trading_2542i_real_v3/manifest_replay_receipt.json
+    file_sha256: 1106de7d6e9b63a20d9e68d7228267ea6777a84b2ea1de16215699d3fa7cd9bc
+    role: SIGNAL_PACKAGE_MANIFEST_REPLAY
+signal_package:
+  root: outputs/qqq_options/signal_packages/trading_2542i_operational_forecast_real_v3
+  run_id: trading_2542i_operational_forecast_real_v3
+  expected_session_count: 1202
+  expected_transition_count: 83
+  package_receipt_sha256: 7cb8807c5938be5453e49c392e3173aca38e10643c643c28b335914196eda494
+  signal_index_sha256: d2af99e55d8f9a69a14d4479eb7ba1fd2aeed323c457ae10705a140c7a62ffda
+  run_manifest_sha256: 214192b58ef7d1965ffba2c0ab658b0cb5768f8856db78c18a1b53ea35d0238b
+  normalized_signal_source_sha256: 4d26b56bcfc1b21764cb90373fb2da9134838e6c42709b80ba7cbbf0856703f1
+research_window:
+  calendar: XNYS
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  expected_session_count: 1202
+  role: PRIMARY
+implementation:
+  underlying: QQQ
+  direction_mapping: {LONG_CALL: LONG_CALL, FLAT: FLAT}
+  effective_session_rule: NEXT_VALID_XNYS_SESSION
+  option_right: CALL
+  long_premium_only: true
+  single_leg_only: true
+  min_dte_inclusive: 30
+  target_dte: 35
+  max_dte_inclusive: 45
+  delta_source: PRIOR_COMPLETED_SESSION_OPTION_UNIVERSE
+  min_abs_delta_inclusive: 0.45
+  target_abs_delta: 0.50
+  max_abs_delta_inclusive: 0.60
+  min_moneyness_inclusive: 0.90
+  max_moneyness_inclusive: 1.10
+  max_quote_age_seconds: 60
+  max_relative_spread: 0.20
+  min_prior_session_open_interest: 100
+  rank_components: [ABS_DELTA_DISTANCE, ABS_DTE_DISTANCE, RELATIVE_SPREAD, OPEN_INTEREST_DESC, EXPIRY, STRIKE, SID]
+  selection_time_rule: AFTER_FIRST_COMPLETE_DPLUS1_MINUTE_BAR
+  submit_time_rule: NEXT_INDEPENDENT_MINUTE_AFTER_SELECTION
+  adverse_price_adjustment_per_share_usd: 0.01
+  fee_per_contract_per_side_usd: 0.65
+  cancel_after_minutes: 5
+  same_session_retry_allowed: false
+  contract_substitution_after_failure_allowed: false
+  max_contracts_per_order: 1
+  initial_cash_usd: 100000.00
+  premium_budget_fraction_of_pretrade_nav: 0.02
+  max_open_contracts: 1
+  required_platform_multiplier: 100
+  pre_expiry_guard_xnys_sessions: 7
+  fill_forward_allowed: false
+  exercise_allowed: false
+  assignment_allowed: false
+  share_delivery_allowed: false
+  terminal_mark: VALID_BID_LIQUIDATION_VALUE
+  maximum_terminal_mark_quote_age_seconds: 60
+paired_comparator:
+  implementation_id: UNDERLYING_IMPLEMENTATION
+  method: NORMALIZED_ONE_SHARE_QQQ_QUOTE_LEDGER
+  signal_identity: SAME_EFFECTIVE_LONG_CALL_FLAT_TRANSITIONS
+  entry_mark: CURRENT_QQQ_ASK_AT_SAME_SIGNAL_NEXT_INDEPENDENT_MINUTE_EVENT
+  exit_mark: CURRENT_QQQ_BID_AT_SAME_SIGNAL_NEXT_INDEPENDENT_MINUTE_EVENT
+  sizing_or_capital_assumption: NONE_NORMALIZED_RETURN_ONLY
+  order_submission_allowed: false
+  fee_or_slippage_assumption: NONE
+action_maxima:
+  quantconnect_project_mutations: 1
+  quantconnect_project_saves: 1
+  quantconnect_automatic_builds: 1
+  quantconnect_cloud_backtests: 1
+  quantconnect_retries: 0
+  quantconnect_project_clones: 0
+  quantconnect_project_deletions: 0
+  external_provider_queries: 0
+  raw_option_payload_downloads: 0
+  raw_option_payload_exports: 0
+  object_store_writes: 0
+  public_shares: 0
+  custom_terminal_aggregate_logs: 1
+  custom_chart_series: 0
+  maximum_runtime_seconds: 3600
+  maximum_simulated_order_submissions: 1202
+  maximum_simulated_fills: 1202
+  maximum_simultaneous_positions: 1
+  maximum_contracts_per_simulated_order: 1
+  orders_outside_qc_simulation: 0
+  fills_outside_qc_simulation: 0
+  positions_outside_qc_simulation: 0
+dispatch_gate:
+  exact_manifest_replay_required: true
+  project_identity_visible_match_required: true
+  main_py_visible_hash_match_required: true
+  automatic_retry_allowed: false
+  invalidated_after_first_backtest_dispatch: true
+  failure_disposition: STOP_AND_REPORT_NO_RETRY
+result_boundary:
+  exact_session_coverage_required: true
+  no_contract_no_fill_cancel_retained_as_cash_facts: true
+  invalid_run_in_aggregate_allowed: false
+  same_signal_paired_comparator_required: true
+  maximum_interpretation: RESEARCH_COMPARISON_ONLY
+  raw_option_rows_allowed: false
+  contract_identifiers_exported: false
+  local_option_repricing_allowed: false
+safety:
+  non_executable_data_research_only: true
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  promotion_allowed: false
+  provider_purchase_allowed: false
+  broker_action: none
+  production_effect: none
+review_condition: Review before any project, package, policy, code, window, threshold, resource, export, retry, provider, production, or broker boundary changes.
+expiry_condition: This authority expires immediately after the first QuantConnect backtest dispatch or any failed identity/manifest replay.
