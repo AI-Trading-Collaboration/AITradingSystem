@@ -117,7 +117,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "5a6d64584e9e7e21c5bb65433464aea52502b30bd511cb2126fb099fe5ef760d"
+        "sha256": "32b07d53507e9bf301c89b65244fb51392e2e482675dab5750229df093ba28ca"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -207,7 +207,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "0cbf96486508ece4e989757811fedebae26bdbdeaa934e0104235516d1b556dd"
+        "sha256": "6618c283b763145b2b492b50bd8dc17d9760d342b4dafbd02931c925573d83c5"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -327,5 +327,5 @@
     "task_id": "TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1"
   },
   "section_id": "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1",
-  "section_sha256": "1e21ad2a003a9ee1800ec85207d6a37f49af135f64af22bc8055eb106a1d622f"
+  "section_sha256": "1934d456a2bc052901a69d62e134088582f6bc5cf1287439f0f960254d6617ef"
 }
