@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 144
+fragment_count: 146
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 08a928d51eb1e643c482b92772078547045b965c51db58c161078b019efcd204
+  current_sha256: a4248239b3f3b61c4971e819c91c5381070767b996ba281afa85c981d3ef365a
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 59
+  fragment_count: 60
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -79,6 +79,7 @@ targets:
   - config/architecture/fragments/flows/qqq_options_exact_date_subscription_recovery.yaml
   - config/architecture/fragments/flows/qqq_options_exact_signal_implementation_policy_draft.yaml
   - config/architecture/fragments/flows/qqq_options_exact_signal_implementation_policy_freeze_admission.yaml
+  - config/architecture/fragments/flows/qqq_options_exact_signal_package_admission.yaml
   - config/architecture/fragments/flows/qqq_options_final_never_chain_provider_transport_attribution_proposal.yaml
   - config/architecture/fragments/flows/qqq_options_frozen_signal_implementation_retest_contract.yaml
   - config/architecture/fragments/flows/qqq_options_minute_execution.yaml
@@ -426,6 +427,13 @@ fragments:
   target_id: system_flow
   path: config/architecture/fragments/flows/qqq_options_exact_signal_implementation_policy_freeze_admission.yaml
   sha256: 394744bd6228d8603f4839b927fa3be45871234ef4d85c78f3ea40567c36c836
+  generated_source_of_truth_active: false
+- fragment_id: flow.qqq_options_exact_signal_package_admission
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/qqq_options_exact_signal_package_admission.yaml
+  sha256: 1286ffcf5fbded6f4f0ca1384ff9ffaffc439234b78b73f32a0fbcf2a6add7e4
   generated_source_of_truth_active: false
 - fragment_id: flow.qqq_options_final_never_chain_provider_transport_attribution_proposal
   fragment_kind: flow
@@ -853,6 +861,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/qqq_options_exact_signal_implementation_policy_freeze_admission.yaml
   sha256: 67b0f31a944f1da068b209f654706d28e430cffdb2bda733107254bdd86e1c18
+  generated_source_of_truth_active: false
+- fragment_id: module.qqq_options_exact_signal_package_admission
+  fragment_kind: module
+  owner: options_research_contract_governance
+  target_id: null
+  path: config/architecture/fragments/modules/qqq_options_exact_signal_package_admission.yaml
+  sha256: 2825f8909837b061fbe4a372cfd2b07cc23fdee0c703b03d9ec24b510be6198f
   generated_source_of_truth_active: false
 - fragment_id: module.qqq_options_final_never_chain_provider_transport_attribution_proposal
   fragment_kind: module

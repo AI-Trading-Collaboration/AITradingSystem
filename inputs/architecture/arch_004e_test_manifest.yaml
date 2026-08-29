@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1332
-test_count: 1272
+test_file_count: 1333
+test_count: 1273
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_live_snapshot
   path: tests/atlas/test_live_snapshot.py
-  sha256: a41e3c424c6c0f10a7d607665417e397e3427870d490666f57884bb85099741d
+  sha256: 7170850ee2cefacea3464c7cbdfedf7336012d0b558e97904f5853ba972c3b87
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10410,7 +10410,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: bc47e06320e6db60240ab202d611d4cfbc4e22e684e3a9cea52ffd6f23427c41
+  sha256: c8ba0da79195cb7300003599ecb29745b59e53fa18fe215da0a934577ee73e26
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -15281,6 +15281,22 @@ tests:
 - test_id: tests.test_qqq_options_exact_signal_implementation_policy_freeze_admission
   path: tests/test_qqq_options_exact_signal_implementation_policy_freeze_admission.py
   sha256: a98ba6820b78be3baef776f9e325da088c821b86ffcde37a5ee50ba802f584dd
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_qqq_options_exact_signal_package_admission
+  path: tests/test_qqq_options_exact_signal_package_admission.py
+  sha256: fd5e36640013e92561c5cbfbca76e3d1dc619f00da42abb49ebab2aa50a88069
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
