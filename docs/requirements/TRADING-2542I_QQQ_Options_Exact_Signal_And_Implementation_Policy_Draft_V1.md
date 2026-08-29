@@ -452,3 +452,11 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   `bb26e2c07d9bf80b58338548921c002e5d9827c1bd83d4783f8ffc00e8198b38`、git blob=
   `4c451ddc0b2f021715d834867c25f93d5f134e3f`，entry count 仍为 `558`；下一 transaction 从包含该
   seal config/test 的 exact lane head 重放全部五类 generator，不绕过 source seal gate。
+- 2026-08-29：publication transaction
+  `trading-2542i-materialization-publication-20260829-v7` 在 artifact-catalog successor seal 已通过后，继续
+  以 `RCF_SOURCE_SEAL_DRIFT` 拒绝旧 `docs/system_flow.md` identity；新增 real materialization/DQ/package
+  flow 使 byte count=`2312640`、file/LF SHA-256=
+  `d2e60201fd2ad741025b7b936c829af567cba57e7be83ed363da69dceddaba5b`、git blob=
+  `712f7a43019d2775867cc4d73cf1b662999a126d`、entry count=`1160`。v7 已按 `FAILED` 释放，未形成
+  candidate、formal validation、main/push 或 QuantConnect dispatch；下一 transaction 从包含两项
+  successor seal 的 exact lane head 完整重放五类 generator。
