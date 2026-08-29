@@ -2841,7 +2841,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.rate_data_quality_attribution
   path: src/ai_trading_system/contracts/rate_data_quality_attribution.py
-  sha256: 5ae0324e7a1923a6d2846a659bb75df71a41ef74e7ce199541f0b41ff90a8ffa
+  sha256: e654d7341b04409068df08ff50857154e1a77fa4937a114686a19c776d992d73
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -15409,7 +15409,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.compatibility_authority
   path: src/ai_trading_system/platform/architecture/compatibility_authority.py
-  sha256: 42be7fb50d20fe176304046e2cffbb6ddf4b8cbb34c4ea9d264d3fab6e8f4ad5
+  sha256: 67a6c3d5be65ce1052212cdeef8e8aa83ae23360c97f08acf87e299e61dd38da
   rule_id: platform_architecture
   owner_profile: platform
   owners:

@@ -15744,7 +15744,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_rate_issue_attribution_contract
   path: tests/test_rate_issue_attribution_contract.py
-  sha256: ca01ae8f26820b76936259c8fc45a4267869b4239723d1735cfad70865c5de1b
+  sha256: efee9231cb3e915b0f97755d28dc6f5723ffa94fc9f6d22d79f5a5d2e6a5b6f8
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

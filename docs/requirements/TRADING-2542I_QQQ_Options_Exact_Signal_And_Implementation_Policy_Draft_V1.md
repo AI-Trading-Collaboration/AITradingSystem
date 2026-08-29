@@ -521,3 +521,13 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   Architecture 失败后中止，Integration、Reproducibility、Full、local main、push 与 QuantConnect 均未运行。
   v15 只把上述 6 个精确路径加入最新 successor 的 `superseded_live_source_paths`/`sources` 并重建
   authority，不改写历史 section，也不改变趋势或期权逻辑。
+- 2026-08-29：v15 将 6 路径 compatibility 修复形成 exact lane commit
+  `3e8df2093b32c2cda1b09a9336dd9710fa9819a0`；定向 compatibility suite=`218 passed`。v16 formal
+  Architecture=`878 passed`、Contract=`278 passed`、Integration=`995 passed`、Reproducibility=`24 passed`；
+  Full=`9945 passed / 3 skipped / 8 failed`，runtime summary SHA-256=
+  `9496cace36c2a030385664da65b83a1e196cf40825e411c315d6ce5b763bc26d`。8 项失败同源：approved rate
+  attribution decision 仍绑定旧 review-pack id/SHA，而内容派生的新 pack 已以 id
+  `dq_rate_issue_attribution_review_34ea0d1bce5e7a0bc67d83b5`、SHA-256
+  `008e085a64ee3867472daf2f4fd9a328d393eb9d75c7f5398919c1be27266996` validation PASS。v17 只重绑
+  decision config、runtime constant 与 exact-binding test，并让最新 compatibility successor 接管这 3 个
+  live paths；decision id/version、6 个 approved sites、阈值、scope、DQ/PIT 与执行边界保持不变。

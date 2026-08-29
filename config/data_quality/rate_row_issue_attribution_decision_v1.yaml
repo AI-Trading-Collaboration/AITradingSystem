@@ -7,8 +7,8 @@ decided_at: "2026-07-28"
 owner: data_platform_rate_quality_owner
 review_pack:
   path: inputs/data_quality/rate_issue_attribution_review_pack_v1.json
-  pack_id: dq_rate_issue_attribution_review_216045a1ebe282194028e1f8
-  sha256: 1c50337d9443fdea422373c2a275cfa87265d753140be0d66d5db44488752abf
+  pack_id: dq_rate_issue_attribution_review_34ea0d1bce5e7a0bc67d83b5
+  sha256: 008e085a64ee3867472daf2f4fd9a328d393eb9d75c7f5398919c1be27266996
 approved_source_role: primary_macro_rates
 approved_sites:
   - site_id: dq_issue_site_0e7f3d74bfa489801c83

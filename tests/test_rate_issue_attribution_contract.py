@@ -61,7 +61,7 @@ def test_decision_binds_exact_current_review_pack() -> None:
     decision = load_rate_row_issue_attribution_decision()
 
     assert decision.authority_id.endswith("@1.0.0")
-    assert decision.review_pack_id == ("dq_rate_issue_attribution_review_216045a1ebe282194028e1f8")
+    assert decision.review_pack_id == ("dq_rate_issue_attribution_review_34ea0d1bce5e7a0bc67d83b5")
     assert len(decision.approved_sites) == 6
     assert decision.approved_source_role == PRIMARY_MACRO_RATES_SOURCE_ROLE
 
