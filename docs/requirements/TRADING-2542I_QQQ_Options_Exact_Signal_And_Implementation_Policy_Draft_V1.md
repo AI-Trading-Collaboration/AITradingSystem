@@ -257,8 +257,9 @@ evaluation window 或 executable scope 变更都必须重新审阅。
   改写为 PASS；
 - 以独立 execution policy 绑定已发布的 `first_layer_operational_forecast_producer_v1@1.0.0`，不回写其
   synthetic-development safety bytes；
-- canonical DQ 分成三个互补且不伪造上市前历史的 scope：`QQQ/TQQQ/SHY + rates` 从 2018-01-02、
-  `SGOV + rates` 从 2020-05-28、`QQQ/TQQQ/SGOV + rates` primary evaluation 从 2021-02-22；
+- canonical DQ 分成三个互补且不伪造上市前或 secondary-source 历史的 scope：`QQQ/TQQQ/SHY + rates`
+  从 2018-01-02 且要求 secondary；`SGOV + rates` 从 2020-05-28 为 primary-only（本地 Marketstack SGOV
+  从 2021-02-22 才开始）；`QQQ/TQQQ/SGOV + rates` primary evaluation 从 2021-02-22 且要求 secondary；
 - 每个 scope 必须通过 typed download publication、canonical receipt verification 与 exact checksum replay；
 - real producer receipt 必须绑定三组 DQ、源 cache、policy、code、predictions 与 fit audit identity，并证明
   `1202/1202`、unique、label maturity、terminal emission、evaluation proxy rows=0、forward-label columns=0；
@@ -312,8 +313,9 @@ generated architecture/report-flow/compatibility authority 与 formal validation
 - `signal_source_admission=REJECT`；
 - `signal_package_writer/manifest_replay/quantconnect=NOT_RUN`。
 - `operational_forecast_development_validation=SYNTHETIC_ONLY`；
-- `operational_forecast_real_materialization=V1_DQ_FAIL_CALENDAR_CONTRACT_CORRECTION_IN_PROGRESS`；
+- `operational_forecast_real_materialization=V2_DQ_FAIL_SGOV_SECONDARY_COVERAGE_SEGMENTATION_IN_PROGRESS`；
 - `v1_failed_dq_receipt_sha256=84bf76d8634732dbd7dcb482e96591a848fea706aa3745346ba138ccd0de7a05`；
+- `v2_failed_dq_receipt_sha256=ea039e75f0e17ee8bffe3fdc90e891d5afa776fac0abd362b3ac7ed69d98ac55`；
 - `conditional_quantconnect_backtest=AUTHORIZED_NOT_RUN_WAITING_MANIFEST_REPLAY`；
 
 ## 9. 进度记录
@@ -424,3 +426,9 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   `84bf76d8634732dbd7dcb482e96591a848fea706aa3745346ba138ccd0de7a05`；没有 producer、signal package、
   manifest replay 或 QuantConnect dispatch。官方 NYSE `RB-18-06` 证明该日为全日休市，因此先执行最小
   shared-calendar contract correction；v1 现场保留，新 attempt 使用独立 v2 identity，禁止覆盖旧证据。
+- 2026-08-29：attempt v2 已证明 `training_proxy_history` DQ 通过，随后 `exact_sgov_history` 以
+  `DQ_WINDOW_MISMATCH` fail-closed。primary SGOV/rates 覆盖 `2020-05-28..2025-12-02`，但本地 Marketstack
+  SGOV 从 `2021-02-22` 才开始，导致 common coverage 被截断；这不是 SGOV 主源缺行。v2 receipt SHA-256=
+  `ea039e75f0e17ee8bffe3fdc90e891d5afa776fac0abd362b3ac7ed69d98ac55`。v3 对 pre-evaluation SGOV
+  scope 明确 `require_secondary_prices=false`，primary evaluation 仍保持 mandatory secondary reconciliation；
+  禁止填充 secondary 历史或删除 v2 现场，QuantConnect 仍为 NOT_RUN。

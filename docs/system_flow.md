@@ -9917,9 +9917,9 @@ first_layer_composer_v2 trend_state semantics
        -> decision_at = exact next valid XNYS session
        -> exact 1202 unique rows and terminal 2025-12-02 emission are required
   -> owner-authorized segmented real materialization
-       -> 2018-01-02 QQQ/TQQQ/SHY + rates training scope canonical DQ
-       -> 2020-05-28 SGOV + rates exact-cash scope canonical DQ
-       -> 2021-02-22 QQQ/TQQQ/SGOV + rates primary evaluation canonical DQ
+       -> 2018-01-02 QQQ/TQQQ/SHY + rates training scope canonical DQ with secondary
+       -> 2020-05-28 SGOV + rates exact-cash scope primary-only DQ; secondary begins 2021-02-22
+       -> 2021-02-22 QQQ/TQQQ/SGOV + rates primary evaluation canonical DQ with secondary
        -> bind all three receipt/report/cache-lineage identities into one producer receipt
        -> require 1202/1202 unique rows, mature labels, terminal emission and zero evaluation proxy
        -> existing exact source admission PASS before package generation
@@ -9941,6 +9941,10 @@ synthetic 1202/1202 验证并发布。Owner 随后授权分段 extended-history 
 source admission 与 TRADING-2483 canonical manifest replay；只有全部 PASS 后才允许一次 bounded QuantConnect
 `DATA_RESEARCH` backtest。当前执行波仍把 cloud dispatch 关在 replay 后继，provider/raw payload/local option
 repricing 与 paper/live/production/broker 保持 `false/none`，QC simulation 之外 orders/fills/positions=`0`。
+真实 attempt v1 因遗漏 `2018-12-05` XNYS 特殊休市 fail-closed；calendar `1.1.0`、旧 `1.0.0` archive 与
+package/adapter policy v2 修复后，attempt v2 已通过 training scope，但因 SGOV secondary cache 只从
+`2021-02-22` 开始而在 exact-cash scope 产生 `DQ_WINDOW_MISMATCH`。v3 明确该 pre-evaluation SGOV scope
+为 primary-only，primary evaluation 仍强制跨源核验；v1/v2 receipt 与输出均保留且不得覆盖。
 
 ## Coordinator integration publication fence（DEVX-009）
 

@@ -1,6 +1,6 @@
 schema_version: first_layer_operational_forecast_real_materialization_policy.v1
 policy_id: first_layer_operational_forecast_real_materialization_v1
-policy_version: 1.1.0
+policy_version: 1.2.0
 status: OWNER_AUTHORIZED_NON_EXECUTABLE_DATA_RESEARCH
 owner: project_owner
 owner_decision_id: owner_decision:TRADING-2542I:2026-08-29:authorize_real_materialization_and_conditional_qc_v1
@@ -45,7 +45,7 @@ dq_scopes:
     requested_end: '2025-12-02'
     expected_price_tickers: [SGOV]
     expected_rate_series: [DGS10, DGS2, DTWEXBGS]
-    require_secondary_prices: true
+    require_secondary_prices: false
   - scope_id: primary_evaluation
     requested_start: '2021-02-22'
     requested_end: '2025-12-02'
@@ -64,9 +64,9 @@ producer_execution:
     risk_off: FLAT
     risk_on: LONG_CALL
   initial_cash_usd: '100000'
-  package_run_id: trading_2542i_operational_forecast_real_v2
-  package_lineage_id: trading-2542i-operational-forecast-real-v2
-  output_root: outputs/research_trends/operational_forecast/trading_2542i_real_v2
+  package_run_id: trading_2542i_operational_forecast_real_v3
+  package_lineage_id: trading-2542i-operational-forecast-real-v3
+  output_root: outputs/research_trends/operational_forecast/trading_2542i_real_v3
   package_output_root: outputs/qqq_options/signal_packages
   canonical_replay_required: true
 safety:
@@ -92,4 +92,6 @@ review_condition: >-
   Any input path, DQ scope, XNYS calendar authority, asset availability boundary, price
   field, producer authority, mapping, primary window, package identity, or safety-boundary
   change requires a new reviewed version. QuantConnect dispatch remains a separate
-  post-replay execution wave. The v2 identity preserves immutable v1 failed-attempt evidence.
+  post-replay execution wave. The v3 identity preserves immutable v1 and v2
+  failed-attempt evidence. The exact SGOV pre-evaluation scope is primary-only because
+  the admitted secondary cache begins 2021-02-22; primary evaluation remains cross-source.

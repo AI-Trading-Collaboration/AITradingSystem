@@ -147,7 +147,7 @@ class DQScopePolicy(_StrictModel):
     requested_end: date
     expected_price_tickers: tuple[str, ...]
     expected_rate_series: tuple[str, ...]
-    require_secondary_prices: Literal[True]
+    require_secondary_prices: bool
 
     @model_validator(mode="after")
     def validate_scope(self) -> Self:
@@ -165,8 +165,8 @@ class ProducerExecutionPolicy(_StrictModel):
     required_dq_scope_ids: tuple[str, ...]
     exact_signal_mapping: dict[str, Literal["LONG_CALL", "FLAT"]]
     initial_cash_usd: Decimal
-    package_run_id: Literal["trading_2542i_operational_forecast_real_v2"]
-    package_lineage_id: Literal["trading-2542i-operational-forecast-real-v2"]
+    package_run_id: Literal["trading_2542i_operational_forecast_real_v3"]
+    package_lineage_id: Literal["trading-2542i-operational-forecast-real-v3"]
     output_root: str
     package_output_root: str
     canonical_replay_required: Literal[True]
@@ -214,7 +214,7 @@ class RealMaterializationPolicy(_StrictModel):
         "first_layer_operational_forecast_real_materialization_policy.v1"
     ]
     policy_id: Literal["first_layer_operational_forecast_real_materialization_v1"]
-    policy_version: Literal["1.1.0"]
+    policy_version: Literal["1.2.0"]
     status: Literal["OWNER_AUTHORIZED_NON_EXECUTABLE_DATA_RESEARCH"]
     owner: Literal["project_owner"]
     owner_decision_id: Literal[
@@ -242,6 +242,12 @@ class RealMaterializationPolicy(_StrictModel):
         )
         if observed != _EXPECTED_SCOPE_ROWS:
             raise ValueError("segmented DQ scope contract drifted")
+        if tuple(scope.require_secondary_prices for scope in self.dq_scopes) != (
+            True,
+            False,
+            True,
+        ):
+            raise ValueError("segmented secondary-source requirement drifted")
         if not self.review_condition.strip():
             raise ValueError("review_condition is required")
         return self
@@ -424,7 +430,7 @@ def run_real_operational_forecast_materialization(
         run_id=policy.producer_execution.package_run_id,
         signals=normalized_signals,
         source_artifact=SignalSourceArtifact(
-            artifact_id="first-layer-operational-forecast-real-v2",
+            artifact_id="first-layer-operational-forecast-real-v3",
             locator=normalized_path.relative_to(root).as_posix(),
             sha256=hashlib.sha256(normalized_bytes).hexdigest(),
             byte_count=len(normalized_bytes),
@@ -531,7 +537,7 @@ def _run_scoped_dq(
     project_root: Path,
 ) -> ScopedDQRun:
     output_root.mkdir(parents=True, exist_ok=False)
-    source_specs = (
+    source_specs: list[tuple[str, str, str, str, tuple[str, ...]]] = [
         (
             "prices",
             policy.inputs.prices_path,
@@ -546,14 +552,17 @@ def _run_scoped_dq(
             "series",
             scope.expected_rate_series,
         ),
-        (
-            "secondary_prices",
-            policy.inputs.secondary_prices_path,
-            "prices_marketstack_daily.csv",
-            "ticker",
-            scope.expected_price_tickers,
-        ),
-    )
+    ]
+    if scope.require_secondary_prices:
+        source_specs.append(
+            (
+                "secondary_prices",
+                policy.inputs.secondary_prices_path,
+                "prices_marketstack_daily.csv",
+                "ticker",
+                scope.expected_price_tickers,
+            )
+        )
     artifacts: list[DownloadArtifactCandidate] = []
     bindings: list[DownloadSourceBinding] = []
     lineage_inputs: list[dict[str, Any]] = []
@@ -696,7 +705,11 @@ def _run_scoped_dq(
         execution.receipt_path,
         expected_as_of=scope.requested_end,
         expected_policy_path=Path(policy.authorities.data_quality_policy.path),
-        expected_input_roles=_DQ_INPUT_ROLES,
+        expected_input_roles=(
+            _DQ_INPUT_ROLES
+            if scope.require_secondary_prices
+            else ("prices", "rates")
+        ),
         project_root=project_root,
     )
     return ScopedDQRun(

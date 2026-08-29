@@ -14,7 +14,7 @@ fragment_count: 1030
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 9ae2c1202ee1f9bc38be582d25dcf948f566ce77a2af6f6f3171768aaa7a5600
+final_chain_sha256: 733e6b09c0f188f965df183dbf58936a19b72253e43887e6280a250e8c2ad679
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 0c3efea17f7c4a4cae0488be7b40116560b065ec6ee1c53818e0ff1fdaa31509
 templates:
@@ -8263,17 +8263,17 @@ fragments:
   entry_sha256: 77e76fb4c66f01fce81a9a27fc7dc6f555311f47567bbd565b2c74e38ced62d9
 - task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
   path: registry/development_tasks/2f/2f96dc5335fe6ba122c905841f6bcc0d25c252cb25828c9c06f0b65990486c7f.yaml
-  file_sha256: 15464abead9a156e3b6497e2b7919e364a9b1b2124864d736b946d4aa9090bc1
-  fragment_checksum: 714cf34517eb50adc7bbda8a69b06d51d8acaeaabbd115f76c82c6e82c934edc
+  file_sha256: eb34b6cb6f81c27fa9c05e020bca9c6009bfe8bf65572c7aaa04c4dc3668a2d9
+  fragment_checksum: c4c27edac1c6bbb3f58e331372107c4e25beed33983f7de65b9ec13be1fb82ec
   partition: active
   order: 1030
   previous_entry_sha256: 77e76fb4c66f01fce81a9a27fc7dc6f555311f47567bbd565b2c74e38ced62d9
-  entry_sha256: 9ae2c1202ee1f9bc38be582d25dcf948f566ce77a2af6f6f3171768aaa7a5600
+  entry_sha256: 733e6b09c0f188f965df183dbf58936a19b72253e43887e6280a250e8c2ad679
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 9c58a4347dc294696d734f50adad4132ef2088b0beced70a2d8e8c81a4db65af
-  byte_count: 1760747
+  sha256: 290f6aeb754d17274fa6d0237713678dbfa5f991bb3fea3255d3087c9add5d87
+  byte_count: 1760556
   row_count: 507
   generated_do_not_edit: true
 - partition: completed
@@ -10481,7 +10481,14 @@ governance_cycles:
   change_id: trading-2542i-calendar-gap-recovery-20260829-v1
   event_count: 13
   production_effect: none
-governance_cycle_count: 314
+- cycle_id: arch-005-s5-cycle-315
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+  change_id: trading-2542i-sgov-secondary-coverage-recovery-20260829-v1
+  event_count: 14
+  production_effect: none
+governance_cycle_count: 315
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -10495,4 +10502,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 082a2d88c545ed08e047124c12d07a4e5cb7cba6bc5e99b6ad6a366aaea28f43
+index_checksum: 24b5e8f2f8efc76fea1b339bab081d70fdc2b77b5fcfbf429b1a720c1dd03088
