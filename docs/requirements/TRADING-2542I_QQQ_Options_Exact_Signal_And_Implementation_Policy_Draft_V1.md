@@ -443,3 +443,12 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   `1106de7d6e9b63a20d9e68d7228267ea6777a84b2ea1de16215699d3fa7cd9bc`。本波不具 dispatch
   authority，QuantConnect 仍为 `AUTHORIZED_LATER_WAVE_NOT_RUN`；下一步先发布本证据，再建立 exact
   project/code/package/maxima 的单次 QC manifest wave。
+- 2026-08-29：publication transaction
+  `trading-2542i-materialization-publication-20260829-v6` 完成 canonical task、architecture manifest 与
+  Atlas rebuild 后，report-flow authority 以 `RCF_SOURCE_SEAL_DRIFT` fail closed；原因是本任务新增的
+  artifact catalog 条目使 `docs/artifact_catalog.md` 从 frozen source identity 合法前进。v6 已按
+  `FAILED` 释放，candidate/formal validation/local main/push/QuantConnect 均未发生。reviewed successor
+  seal 为 byte count=`2003593`、file/LF SHA-256=
+  `bb26e2c07d9bf80b58338548921c002e5d9827c1bd83d4783f8ffc00e8198b38`、git blob=
+  `4c451ddc0b2f021715d834867c25f93d5f134e3f`，entry count 仍为 `558`；下一 transaction 从包含该
+  seal config/test 的 exact lane head 重放全部五类 generator，不绕过 source seal gate。
