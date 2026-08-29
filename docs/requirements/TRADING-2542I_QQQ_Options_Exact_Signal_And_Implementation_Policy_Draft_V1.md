@@ -563,3 +563,20 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   `008e085a64ee3867472daf2f4fd9a328d393eb9d75c7f5398919c1be27266996` validation PASS。v17 只重绑
   decision config、runtime constant 与 exact-binding test，并让最新 compatibility successor 接管这 3 个
   live paths；decision id/version、6 个 approved sites、阈值、scope、DQ/PIT 与执行边界保持不变。
+- 2026-08-30：bounded QC implementation package 已以 candidate/main/origin SHA
+  `3ae3da386fb9eb817468f1e46346800fc6835cfd` 发布；focused=`254 passed`，formal Architecture=
+  `878 passed`、Contract=`278 passed`、Integration=`995 passed`、Reproducibility=`24 passed`。首轮 Full
+  因 ignored Atlas page 仍绑定 pre-candidate SHA 而以 `9960 passed / 3 skipped / 1 failed` fail-closed；
+  v4 精确重渲染候选 identity 后，`failure_fix_rerun` Full=`9961 passed / 3 skipped`，runtime summary
+  SHA-256=`e3671eaaa5d91faf7d1d6ca73cf43a83d7626d259373fe17ff217284c9a064c9`。
+- 2026-08-30：execution manifest replay PASS 后，仅克隆项目 `35444189` 被写入 exact `main.py`；可见
+  内容按 LF 归一化为 `14556` bytes、SHA-256
+  `e0732c8bd4cb679011f50243f72d76372544ab18424a4e8ba7eebcab05c4d3d5`。QuantConnect 在编辑器保存后
+  自动构建一次并成功，随后协调器又误触发一次未列入 manifest 的手动 Cloud Build；第二次构建也成功，
+  但违反 exact external-action allowlist。该 attempt 已隔离为
+  `UNAUTHORIZED_ACTION_INCIDENT / QUARANTINED_NO_BACKTEST_DISPATCH`，incident artifact SHA-256=
+  `d0bab9c78d9faa0df75e652d7df665f5d8ae10bc9f65b3519adc17e8a4b4500a`。本 attempt 的
+  `cloud_backtests=0`、原项目 `34808569` mutation=`0`、QC 外 orders/fills/positions=`0/0/0`、
+  provider/raw option payload/object store/public share/paper/live/production/broker=`0/false/none`。
+  在 Project Owner 重新明确处置前，不得点击 Backtest、不得把两次成功 build 解释为合规复测证据，
+  也不得自动重试、创建新 clone 或删除现场。
