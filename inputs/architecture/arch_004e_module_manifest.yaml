@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1175
+module_count: 1177
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -3773,7 +3773,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.quality_execution
   path: src/ai_trading_system/data/quality_execution.py
-  sha256: d25039fb456048eb02df3de0ebd1d5248115a998c7cc3598a3c1c14c3475537d
+  sha256: 766fe1029d868e3f4ac10c4f3418e08f52ec9962305007b9a77eefb7cb248ee5
   rule_id: data
   owner_profile: data
   owners:
@@ -10067,7 +10067,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.first_layer_operational_forecast_real_materialization
   path: src/ai_trading_system/first_layer_operational_forecast_real_materialization.py
-  sha256: e37dd49428f973429db1ba52c5a07bc51b25290765551f4cc7359d486b35d64b
+  sha256: 0c83e5ec184cee3f029fc24c591267fe1a0dbe8b403dbe28de08af7641205099
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -15409,7 +15409,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.compatibility_authority
   path: src/ai_trading_system/platform/architecture/compatibility_authority.py
-  sha256: 1940ce56cf6ea08bf864a401f6d2b978c1b926297047005743eafa80fc9524ed
+  sha256: b2ffdb5c1f3e5c7fc95f129b49c5c1612440235755ff89dea81d097802f8742e
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -16456,7 +16456,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.qqq_options_capability_discovery_authorization
   path: src/ai_trading_system/qqq_options_capability_discovery_authorization.py
-  sha256: a28018378c44c3504ec828a01656ca3a8f2c8eca377d2fbca1700805c06c422a
+  sha256: 21d15bab1043dc1902a006e0a8a682d45a218a9bf6cbefca0aa7965c1fa4bc73
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -17816,7 +17816,27 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.qqq_options_research.qc_project_adapter
   path: src/ai_trading_system/qqq_options_research/qc_project_adapter.py
-  sha256: 93969cd496525ae1eb0931ad0b8ceae53e7ed5c0e2c4fe0b6c2a5416e437727c
+  sha256: 86420ad9875cac47c5317ceeeda8892f5aa8d2ad310a0fe84ac7762fa4cf90a8
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.qqq_options_research.qc_project_adapter_v2
+  path: src/ai_trading_system/qqq_options_research/qc_project_adapter_v2.py
+  sha256: 04e9c62e945e90ed55a1a9bbb6bc2a4e320d0a3b370c80969ff58f5f2668e260
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -17896,7 +17916,27 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.qqq_options_research.signal_package
   path: src/ai_trading_system/qqq_options_research/signal_package.py
-  sha256: 7fe12342da25c74b98a986a0f93f87bf3b8b597ddb7b32c30e6c859396b7687b
+  sha256: ada45b6768b50180f2c21a54b0bed8c3bbf2b1a16ca965767b32569c0fce0cac
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.qqq_options_research.signal_package_v2
+  path: src/ai_trading_system/qqq_options_research/signal_package_v2.py
+  sha256: 03d6cd9089a3235abb0377f97f617a429d77afa8226284a19701bcbb46dc49d2
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -21968,7 +22008,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_calendar
   path: src/ai_trading_system/trading_calendar.py
-  sha256: ec34df0b571b9250579499d4227f08c809cb79ec6f648c37445488a2c82de8d7
+  sha256: cd1ee82b32474077700c5b78974b9d3817980bc1a8e9e6181193bff39cb0e4ed
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -24316,7 +24356,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.us_equity_special_closure_policy
   path: src/ai_trading_system/us_equity_special_closure_policy.py
-  sha256: 8000d0e7b96b085a6cfabffffa08debd62d13f1c12329c1628cddb9144149b14
+  sha256: 8e617dc159475f84a9fd0d50b51feb08ccbd39445c5d2e460be8e6cc00ab9a5e
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

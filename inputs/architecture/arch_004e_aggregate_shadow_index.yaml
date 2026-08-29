@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 150
+fragment_count: 152
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,7 +34,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: d2e60201fd2ad741025b7b936c829af567cba57e7be83ed363da69dceddaba5b
+  current_sha256: 96a35240c63b263640be1bf3664aa979dac0651562399ef6fd7accbbd3d6ef3a
   fragment_root: config/architecture/fragments/flows
   fragment_count: 62
   fragment_paths:
@@ -801,6 +801,13 @@ fragments:
   path: config/architecture/fragments/modules/qc_qqq_options_project_adapter.yaml
   sha256: 541aab357a56d4de5c2c7ffacfad7d372e5a646856bbdf40f4fca712efc4d50c
   generated_source_of_truth_active: false
+- fragment_id: module.qc_qqq_options_project_adapter_v2
+  fragment_kind: module
+  owner: external_platform_engineering
+  target_id: null
+  path: config/architecture/fragments/modules/qc_qqq_options_project_adapter_v2.yaml
+  sha256: 860bcff7137c13e5c0c8082a79cbcae3f051aca47a3f8e224a1f6e3d4f3eea88
+  generated_source_of_truth_active: false
 - fragment_id: module.qqq_options_cash_accounting
   fragment_kind: module
   owner: options_portfolio_accounting_engineering
@@ -1024,6 +1031,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/qqq_options_signal_package.yaml
   sha256: 9f7dd68271603a79fffdea6c26dfe6b66ec23d3411d517268e13cdfc10d9b3e6
+  generated_source_of_truth_active: false
+- fragment_id: module.qqq_options_signal_package_v2
+  fragment_kind: module
+  owner: research_engineering
+  target_id: null
+  path: config/architecture/fragments/modules/qqq_options_signal_package_v2.yaml
+  sha256: 336a70e36dec82f5695b3ca6601e701e89938aa7ff0843eee51585013626c9db
   generated_source_of_truth_active: false
 - fragment_id: module.qqq_options_staged_dq_pit_readiness
   fragment_kind: module

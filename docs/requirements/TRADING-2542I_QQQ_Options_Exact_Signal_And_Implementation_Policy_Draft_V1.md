@@ -500,4 +500,7 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   并让 current-default DQ fixture 声明 1.1.0；不得改写历史政策或放宽 replay/DQ gate。聚焦回归进一步
   证明 frozen v1 module 必须继续解析其原 1.0.0 calendar，而 current DQ/trading/v2 consumer 必须解析
   active 1.1.0；因此 calendar module 提供显式 legacy/current path 分离，且 2026-08-04 capability-discovery
-  authorization 仅在 path 与旧 hash 同时精确匹配时解析 immutable 1.0.0 archive。
+  authorization 仅在 path 与旧 hash 同时精确匹配时解析 immutable 1.0.0 archive。ARCH-005M1 Batch4 的
+  历史 `trading_calendar.py` bytes 以 SHA-256
+  `ec34df0b571b9250579499d4227f08c809cb79ec6f648c37445488a2c82de8d7` 存入 architecture archive snapshot，
+  使历史 replay 与 active current-calendar 文案/路径可同时成立。

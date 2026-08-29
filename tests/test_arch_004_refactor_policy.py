@@ -753,6 +753,9 @@ ARCH_005M1_BATCH4_FROZEN_PATH_REPLAYS = {
     "config/data/us_equity_special_closure_registry.yaml": (
         "config/data/archive/us_equity_special_closure_registry_1_0_0.yaml"
     ),
+    "src/ai_trading_system/trading_calendar.py": (
+        "inputs/architecture/archive/arch_005m1_batch4/trading_calendar.py.snapshot"
+    ),
 }
 OPS_070_STABLE_RELEASE_SECTION = "phase_ops_070_stable_ops_deployment_release"
 OPS_070_STABLE_RELEASE_BASE_COMMIT = "00d98ddaa2828852c1086ea9176935643e11e205"

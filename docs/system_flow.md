@@ -897,7 +897,9 @@ package layout、lag、DQ/PIT、raw-export 与 no-cloud-run 边界，只升级 c
 `signal_package.py` / `qc_project_adapter.py` 保持历史 exact-frozen bytes；v2 支持隔离在
 `signal_package_v2.py` / `qc_project_adapter_v2.py`，不得通过改写 v1 module hash 追认新能力。旧 v1
 option module import symbol 与 2026-08-04 capability-discovery authorization 的精确旧 calendar hash 只解析
-到 1.0.0 archive；canonical DQ、trading calendar 与 v2 consumer 均显式使用 current 1.1.0 path。
+到 1.0.0 archive；canonical DQ、trading calendar 与 v2 consumer 均显式使用 current 1.1.0 path。变更前
+`trading_calendar.py` 的 ARCH-005M1 Batch4 精确字节另保存在
+`inputs/architecture/archive/arch_005m1_batch4/trading_calendar.py.snapshot`，历史断言只重放该 snapshot。
 
 prices/rates继续拒绝NaN/Inf；canonical pointer、immutable member、source allocation、manifest、
 legacy projection、session policy、calendar authority或window任一不一致均在receipt/downstream前

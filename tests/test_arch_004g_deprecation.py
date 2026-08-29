@@ -57,11 +57,11 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-WAVE20_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_c78d774fd3eba11a1b82"
+WAVE20_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_f3def1d8a5dd34d2a5f6"
 WAVE20_CURRENT_REPOSITORY_COUNTS = {
-    # TRADING-2542I adds the governed real materializer and calendar replay coverage;
-    # no deprecation lifecycle or direct-writer allowance changes.
-    "python_module_count": 1175,
+    # TRADING-2542I adds the governed real materializer plus isolated v2 signal
+    # package/QC adapter modules; no deprecation lifecycle or writer allowance changes.
+    "python_module_count": 1177,
     "python_test_file_count": 1335,
     "direct_writer_current_count": 856,
 }
