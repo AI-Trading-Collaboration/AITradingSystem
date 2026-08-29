@@ -20,6 +20,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH = Path(
     "config/data/us_equity_special_closure_registry.yaml"
 )
+US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_RELATIVE_PATH = Path(
+    "config/data/archive/us_equity_special_closure_registry_1_0_0.yaml"
+)
+US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_SHA256 = (
+    "c0469a17a775df2dcde503c254c22db0cc7d8ad6e3a5884f2ed43c88e4dfbda4"
+)
 DEFAULT_US_EQUITY_SPECIAL_CLOSURE_POLICY_PATH = (
     PROJECT_ROOT / US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH
 )
@@ -208,6 +214,32 @@ def load_us_equity_special_closure_policy(
         closures=closures,
         path=resolved_path,
         sha256=sha256(policy_bytes).hexdigest(),
+    )
+
+
+def load_us_equity_special_closure_policy_by_identity(
+    *,
+    policy_version: str,
+    policy_sha256: str,
+    project_root: Path = PROJECT_ROOT,
+) -> UsEquitySpecialClosurePolicy:
+    """Resolve current or archived reviewed calendar bytes by exact identity."""
+
+    candidates = [project_root / US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH]
+    if (
+        policy_version == "1.0.0"
+        and policy_sha256 == US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_SHA256
+    ):
+        candidates.append(
+            project_root / US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_RELATIVE_PATH
+        )
+    for candidate in candidates:
+        loaded = load_us_equity_special_closure_policy(candidate)
+        if loaded.policy_version == policy_version and loaded.sha256 == policy_sha256:
+            return loaded
+    raise ValueError(
+        "reviewed US equity special-closure policy identity is unavailable: "
+        f"version={policy_version}; sha256={policy_sha256}"
     )
 
 

@@ -59,6 +59,19 @@ _CHECKED_AT = datetime(2021, 2, 26, 23, 0, tzinfo=UTC)
 _CREATED_AT = datetime(2021, 3, 1, 12, 0, tzinfo=UTC)
 
 
+def test_signal_export_v2_binds_current_reviewed_calendar() -> None:
+    loaded = load_qqq_options_signal_export_policy(
+        Path("config/research/qqq_options_signal_export_v2.yaml")
+    )
+
+    assert loaded.policy.policy_id == "qqq_options_signal_export_v2"
+    assert loaded.policy.policy_version == "2.0.0"
+    assert loaded.policy.calendar_policy_version == "1.1.0"
+    assert loaded.policy.calendar_policy_sha256 == (
+        "375dd5e07b57208c5afb700d4fec96fdb3c95b29d562b553c3ecc5c4e6f97416"
+    )
+
+
 @dataclass(frozen=True)
 class _DQContext:
     root: Path
@@ -222,6 +235,7 @@ def _copy_authority_files(root: Path) -> None:
         Path("src/ai_trading_system/trading_calendar.py"),
         Path("src/ai_trading_system/us_equity_special_closure_policy.py"),
         Path("config/data/us_equity_special_closure_registry.yaml"),
+        Path("config/data/archive/us_equity_special_closure_registry_1_0_0.yaml"),
         Path("config/research/qqq_options_shared_contract_v1.yaml"),
         Path("config/research/qqq_options_dq_pit_identity_v1.yaml"),
         Path("config/research/qqq_options_signal_export_v1.yaml"),
@@ -230,6 +244,11 @@ def _copy_authority_files(root: Path) -> None:
         target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(PROJECT_ROOT / relative, target)
+    shutil.copy2(
+        PROJECT_ROOT
+        / "config/data/archive/us_equity_special_closure_registry_1_0_0.yaml",
+        root / "config/data/us_equity_special_closure_registry.yaml",
+    )
 
 
 def _publish_cache(root: Path, *, prices_path: Path, rates_path: Path) -> None:

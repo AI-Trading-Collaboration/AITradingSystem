@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from datetime import date
 from hashlib import sha256
 from math import nan
 from pathlib import Path
@@ -11,8 +12,10 @@ import yaml
 
 from ai_trading_system.us_equity_special_closure_policy import (
     DEFAULT_US_EQUITY_SPECIAL_CLOSURE_POLICY_PATH,
+    US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_SHA256,
     US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH,
     load_us_equity_special_closure_policy,
+    load_us_equity_special_closure_policy_by_identity,
 )
 
 
@@ -41,14 +44,44 @@ def test_reviewed_policy_exposes_exact_receipt_binding_metadata() -> None:
         "config/data/us_equity_special_closure_registry.yaml"
     )
     assert policy.policy_id == "us_equity_special_closure_registry"
-    assert policy.policy_version == "1.0.0"
+    assert policy.policy_version == "1.1.0"
     assert policy.schema_version == "us_equity_special_closure_registry.v1"
     assert policy.status == "reviewed_active"
     assert policy.calendar_id == "XNYS"
     assert policy.path == policy_path
     assert policy.sha256 == sha256(policy_path.read_bytes()).hexdigest()
-    assert policy.closures[0].source.publisher == "New York Stock Exchange"
-    assert policy.closures[0].source.url.startswith("https://www.nyse.com/")
+    assert tuple(closure.closure_date.isoformat() for closure in policy.closures) == (
+        "2018-12-05",
+        "2025-01-09",
+    )
+    assert policy.closures[0].reason == (
+        "President George H. W. Bush National Day of Mourning"
+    )
+    assert all(
+        closure.source.publisher == "New York Stock Exchange"
+        and closure.source.url.startswith("https://www.nyse.com/")
+        for closure in policy.closures
+    )
+
+
+def test_exact_identity_loader_replays_archived_calendar_without_mutating_current() -> None:
+    archived = load_us_equity_special_closure_policy_by_identity(
+        policy_version="1.0.0",
+        policy_sha256=US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_SHA256,
+    )
+
+    assert archived.policy_version == "1.0.0"
+    assert archived.sha256 == US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_SHA256
+    assert tuple(item.closure_date for item in archived.closures) == (date(2025, 1, 9),)
+    assert archived.path != DEFAULT_US_EQUITY_SPECIAL_CLOSURE_POLICY_PATH.resolve()
+
+
+def test_exact_identity_loader_rejects_unregistered_archive_identity() -> None:
+    with pytest.raises(ValueError, match="identity is unavailable"):
+        load_us_equity_special_closure_policy_by_identity(
+            policy_version="1.0.0",
+            policy_sha256="a" * 64,
+        )
 
 
 def test_policy_rejects_duplicate_calendar_date(tmp_path: Path) -> None:

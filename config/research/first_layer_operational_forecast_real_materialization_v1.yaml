@@ -1,6 +1,6 @@
 schema_version: first_layer_operational_forecast_real_materialization_policy.v1
 policy_id: first_layer_operational_forecast_real_materialization_v1
-policy_version: 1.0.0
+policy_version: 1.1.0
 status: OWNER_AUTHORIZED_NON_EXECUTABLE_DATA_RESEARCH
 owner: project_owner
 owner_decision_id: owner_decision:TRADING-2542I:2026-08-29:authorize_real_materialization_and_conditional_qc_v1
@@ -12,15 +12,18 @@ authorities:
   data_quality_policy:
     path: config/data_quality.yaml
     sha256: e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82
+  xnys_special_closure_policy:
+    path: config/data/us_equity_special_closure_registry.yaml
+    sha256: 375dd5e07b57208c5afb700d4fec96fdb3c95b29d562b553c3ecc5c4e6f97416
   exact_signal_admission_policy:
     path: config/research/qc_qqq_options_exact_signal_package_admission_v1.yaml
     sha256: 097ad9409e18311326b4d875c83c2f2a7cf30508092766c27cdd7ec35986d8da
   signal_export_policy:
-    path: config/research/qqq_options_signal_export_v1.yaml
-    sha256: cf9d6ba3044bdf1d601de1ae7fe6f82fa3e26cc7811dc50160d24dfc902259e9
+    path: config/research/qqq_options_signal_export_v2.yaml
+    sha256: d6cae89234380794eae841c71a69c1cf9bde237d3a0d5f4c74081f99c3b0dac9
   project_adapter_policy:
-    path: config/research/qc_qqq_options_project_adapter_contract_v1.yaml
-    sha256: b9e48f0b53a6259a5bbc9594cbe1929721568d1723d498591ce14b8e3be92616
+    path: config/research/qc_qqq_options_project_adapter_contract_v2.yaml
+    sha256: 081db02fc0d3d1e9e7880a22ce562d0e74ae2693212e7afda7b7344b33347cd1
 inputs:
   prices_path: data/raw/prices_daily.csv
   rates_path: data/raw/rates_daily.csv
@@ -61,9 +64,9 @@ producer_execution:
     risk_off: FLAT
     risk_on: LONG_CALL
   initial_cash_usd: '100000'
-  package_run_id: trading_2542i_operational_forecast_real_v1
-  package_lineage_id: trading-2542i-operational-forecast-real-v1
-  output_root: outputs/research_trends/operational_forecast/trading_2542i_real_v1
+  package_run_id: trading_2542i_operational_forecast_real_v2
+  package_lineage_id: trading-2542i-operational-forecast-real-v2
+  output_root: outputs/research_trends/operational_forecast/trading_2542i_real_v2
   package_output_root: outputs/qqq_options/signal_packages
   canonical_replay_required: true
 safety:
@@ -86,6 +89,7 @@ safety:
   production_allowed: false
   broker_action: none
 review_condition: >-
-  Any input path, DQ scope, asset availability boundary, price field, producer authority,
-  mapping, primary window, package identity, or safety-boundary change requires a new
-  reviewed version. QuantConnect dispatch remains a separate post-replay execution wave.
+  Any input path, DQ scope, XNYS calendar authority, asset availability boundary, price
+  field, producer authority, mapping, primary window, package identity, or safety-boundary
+  change requires a new reviewed version. QuantConnect dispatch remains a separate
+  post-replay execution wave. The v2 identity preserves immutable v1 failed-attempt evidence.

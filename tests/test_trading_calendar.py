@@ -53,19 +53,35 @@ def test_primary_research_window_start_is_a_regular_trading_day() -> None:
     assert session.is_trading_day is True
 
 
-def test_special_full_day_closure_uses_reviewed_xnys_authority() -> None:
-    closure_date = date(2025, 1, 9)
+@pytest.mark.parametrize(
+    ("closure_date", "reason", "previous_session"),
+    [
+        (
+            date(2018, 12, 5),
+            "President George H. W. Bush National Day of Mourning",
+            date(2018, 12, 4),
+        ),
+        (
+            date(2025, 1, 9),
+            "President Jimmy Carter National Day of Mourning",
+            date(2025, 1, 8),
+        ),
+    ],
+)
+def test_special_full_day_closure_uses_reviewed_xnys_authority(
+    closure_date: date,
+    reason: str,
+    previous_session: date,
+) -> None:
     session = us_equity_market_session(closure_date)
 
-    assert us_equity_full_day_holidays(2025)[closure_date] == (
-        "President Jimmy Carter National Day of Mourning"
-    )
+    assert us_equity_full_day_holidays(closure_date.year)[closure_date] == reason
     assert not is_us_equity_trading_day(closure_date)
     assert session.session_status == "CLOSED_MARKET"
     assert session.session_kind == "SPECIAL_FULL_DAY_CLOSURE"
-    assert session.reason == "President Jimmy Carter National Day of Mourning"
-    assert session.previous_trading_day == date(2025, 1, 8)
-    assert "us_equity_special_closure_registry@1.0.0" in session.calendar_source
+    assert session.reason == reason
+    assert session.previous_trading_day == previous_session
+    assert "us_equity_special_closure_registry@1.1.0" in session.calendar_source
     assert "sha256=" in session.calendar_source
     assert session.calendar_source == us_equity_calendar_source()
 

@@ -1,6 +1,6 @@
 schema_version: us_equity_special_closure_registry.v1
 policy_id: us_equity_special_closure_registry
-policy_version: 1.1.0
+policy_version: 1.0.0
 status: reviewed_active
 calendar_id: XNYS
 owner: data_platform_owner + project_owner
@@ -23,16 +23,6 @@ source_requirements:
   accepted_https_hosts:
     - www.nyse.com
 closures:
-  - date: "2018-12-05"
-    calendar_id: XNYS
-    closure_type: FULL_DAY
-    reason: President George H. W. Bush National Day of Mourning
-    source:
-      source_class: official_exchange_notice
-      publisher: New York Stock Exchange
-      document_title: NYSE Arca Options RB-18-06 / NYSE American RB-18-176
-      url: https://www.nyse.com/publicdocs/nyse/markets/arca-options/rule-interpretations/2018/NYSE%20Arca%20Options%2018-06.pdf
-      published_on: "2018-12-03"
   - date: "2025-01-09"
     calendar_id: XNYS
     closure_type: FULL_DAY

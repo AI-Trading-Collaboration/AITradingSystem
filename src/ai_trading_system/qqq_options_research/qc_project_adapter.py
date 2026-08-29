@@ -221,8 +221,11 @@ class QCProjectAdapterSafety(_StrictModel):
 
 class QCProjectAdapterPolicy(_StrictModel):
     schema_version: Literal["qc_qqq_options_project_adapter_policy.v1"]
-    policy_id: Literal["qc_qqq_options_project_adapter_contract_v1"]
-    policy_version: Literal["1.0.0"]
+    policy_id: Literal[
+        "qc_qqq_options_project_adapter_contract_v1",
+        "qc_qqq_options_project_adapter_contract_v2",
+    ]
+    policy_version: Literal["1.0.0", "2.0.0"]
     status: Literal["REVIEWED_OFFLINE_CONTRACT_BASELINE"]
     owner: str
     owner_instruction: str
@@ -278,6 +281,11 @@ class QCProjectAdapterPolicy(_StrictModel):
 
     @model_validator(mode="after")
     def _validate_contract_freeze(self) -> Self:
+        if (self.policy_id, self.policy_version) not in {
+            ("qc_qqq_options_project_adapter_contract_v1", "1.0.0"),
+            ("qc_qqq_options_project_adapter_contract_v2", "2.0.0"),
+        }:
+            raise ValueError("adapter policy id/version pair drifted")
         if self.primary_research_start != date(2021, 2, 22):
             raise ValueError("primary research start must remain 2021-02-22")
         if self.approved_non_primary_authority_count != 0:
@@ -319,8 +327,11 @@ class QCProjectAdapterDescriptor(_StrictModel):
     run_id: str
     created_at_utc: datetime
     repository_code_sha: str
-    adapter_policy_id: Literal["qc_qqq_options_project_adapter_contract_v1"]
-    adapter_policy_version: Literal["1.0.0"]
+    adapter_policy_id: Literal[
+        "qc_qqq_options_project_adapter_contract_v1",
+        "qc_qqq_options_project_adapter_contract_v2",
+    ]
+    adapter_policy_version: Literal["1.0.0", "2.0.0"]
     adapter_policy_sha256: str
     signal_export_policy_sha256: str
     shared_contract_sha256: str
@@ -410,6 +421,11 @@ class QCProjectAdapterDescriptor(_StrictModel):
 
     @model_validator(mode="after")
     def _validate_descriptor(self, info: ValidationInfo) -> Self:
+        if (self.adapter_policy_id, self.adapter_policy_version) not in {
+            ("qc_qqq_options_project_adapter_contract_v1", "1.0.0"),
+            ("qc_qqq_options_project_adapter_contract_v2", "2.0.0"),
+        }:
+            raise ValueError("adapter descriptor policy id/version pair drifted")
         if not (
             self.requested_start <= self.evaluated_start <= self.evaluated_end
             <= self.requested_end

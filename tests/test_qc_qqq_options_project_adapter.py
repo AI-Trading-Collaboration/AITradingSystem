@@ -47,6 +47,19 @@ _DQ_RECEIPT_SHA = "c" * 64
 _DQ_REPORT_SHA = "d" * 64
 
 
+def test_adapter_v2_binds_signal_export_v2_without_cloud_authority() -> None:
+    loaded = load_qc_qqq_options_project_adapter_policy(
+        Path("config/research/qc_qqq_options_project_adapter_contract_v2.yaml")
+    )
+
+    assert loaded.policy.policy_id == "qc_qqq_options_project_adapter_contract_v2"
+    assert loaded.policy.policy_version == "2.0.0"
+    assert loaded.policy.signal_export_policy_sha256 == (
+        "d6cae89234380794eae841c71a69c1cf9bde237d3a0d5f4c74081f99c3b0dac9"
+    )
+    assert loaded.policy.safety.cloud_run_authorized is False
+
+
 @dataclass(frozen=True)
 class _AdapterContext:
     package_root: Path

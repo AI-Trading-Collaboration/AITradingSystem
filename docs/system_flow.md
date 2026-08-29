@@ -882,12 +882,18 @@ source event的`canonical_price_session_normalization_audit.v1`冻结policy path
 逐source-event输入/输出/排除日期和raw response commitment。canonical rows没有免检名单，仍与股票/ETF
 共同按XNYS decision sessions执行coverage与per-ticker internal-gap gate。
 
-`config/data/us_equity_special_closure_registry.yaml`是versioned XNYS特殊全日休市权威，首条reviewed记录为
-`2025-01-09`；session resolver、DQ expected sessions、previous/latest trading day和partial-day判定共用
+`config/data/us_equity_special_closure_registry.yaml`是versioned XNYS特殊全日休市权威，reviewed记录覆盖
+`2018-12-05`与`2025-01-09`两次总统全国哀悼日休市；session resolver、DQ expected sessions、
+previous/latest trading day和partial-day判定共用
 同一loader。canonical DQ validator v2把registry的policy/schema/version/calendar/path/SHA写入exact
 invocation，并把calendar实现与policy loader加入implementation-source binding；runner执行中policy漂移、
 verifier重验时policy或实现漂移均fail closed。`config/data_quality.yaml` v2另把AMZN/GOOG/NVDA/TQQQ五条
 权威复核split事件从未知adjustment warning转为reviewed INFO，未登记跳变仍为WARNING。
+
+`config/data/archive/us_equity_special_closure_registry_1_0_0.yaml`按原 SHA 保留旧 calendar bytes；历史
+attribution与 TRADING-2483 v1 policy 只能按 exact version/SHA 解析该归档，不能从当前文件反推旧事实。
+新 `qqq_options_signal_export_v2` 与 `qc_qqq_options_project_adapter_contract_v2` 绑定当前 `1.1.0`，保留原
+package layout、lag、DQ/PIT、raw-export 与 no-cloud-run 边界，只升级 calendar identity。
 
 prices/rates继续拒绝NaN/Inf；canonical pointer、immutable member、source allocation、manifest、
 legacy projection、session policy、calendar authority或window任一不一致均在receipt/downstream前

@@ -19,6 +19,16 @@ def test_real_materialization_policy_freezes_segmented_dq_and_safety() -> None:
     loaded = load_real_materialization_policy()
 
     assert loaded.policy.authorization_state == "EXACT_PREAUTHORIZED"
+    assert loaded.policy.policy_version == "1.1.0"
+    assert loaded.policy.authorities.xnys_special_closure_policy.path == (
+        "config/data/us_equity_special_closure_registry.yaml"
+    )
+    assert loaded.policy.authorities.signal_export_policy.path.endswith(
+        "qqq_options_signal_export_v2.yaml"
+    )
+    assert loaded.policy.authorities.project_adapter_policy.path.endswith(
+        "qc_qqq_options_project_adapter_contract_v2.yaml"
+    )
     assert tuple(scope.scope_id for scope in loaded.policy.dq_scopes) == (
         "training_proxy_history",
         "exact_sgov_history",
@@ -27,6 +37,7 @@ def test_real_materialization_policy_freezes_segmented_dq_and_safety() -> None:
     assert loaded.policy.dq_scopes[0].expected_price_tickers == ("QQQ", "SHY", "TQQQ")
     assert loaded.policy.dq_scopes[1].requested_start == date(2020, 5, 28)
     assert loaded.policy.producer_execution.expected_session_count == 1202
+    assert loaded.policy.producer_execution.package_run_id.endswith("_v2")
     assert loaded.policy.safety.real_cache_materialization_allowed is True
     assert loaded.policy.safety.quantconnect_backtest_allowed_in_this_materialization_wave is False
     assert loaded.policy.safety.maximum_quantconnect_backtests_in_this_materialization_wave == 0

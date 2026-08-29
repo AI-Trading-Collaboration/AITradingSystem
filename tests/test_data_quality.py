@@ -688,6 +688,38 @@ def test_explicit_window_ignores_weekend_and_market_holiday_gaps(
     } & _issue_codes(report)
 
 
+def test_explicit_window_ignores_reviewed_2018_special_closure_gap(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path, tickers=["MSFT"])
+    _write_price_dates(prices_path, ("2018-12-04", "2018-12-06"))
+    publication = _publish_quality_cache(
+        tmp_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        requested_start=date(2018, 12, 4),
+        requested_end=date(2018, 12, 6),
+        published_at=datetime(2018, 12, 7, tzinfo=UTC),
+    )
+
+    report = validate_data_cache(
+        prices_path=publication.legacy_prices_path,
+        rates_path=publication.legacy_rates_path,
+        expected_price_tickers=["MSFT"],
+        expected_rate_series=[],
+        quality_config=load_data_quality(),
+        as_of=date(2018, 12, 6),
+        manifest_path=publication.legacy_manifest_path,
+        requested_window=(date(2018, 12, 4), date(2018, 12, 6)),
+    )
+
+    assert not {
+        "prices_requested_window_coverage_missing",
+        "prices_internal_trading_day_gap",
+        "prices_non_market_session_date",
+    } & _issue_codes(report)
+
+
 def test_explicit_window_rejects_window_without_trading_session(
     tmp_path: Path,
 ) -> None:

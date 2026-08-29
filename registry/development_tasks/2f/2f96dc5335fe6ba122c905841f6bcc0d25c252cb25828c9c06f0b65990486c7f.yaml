@@ -14,31 +14,29 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / run segmented canonical extended-history DQ, materialize and
-    admit the exact 1202-session operational source, replay TRADING-2483 manifest,
-    and only after PASS prepare one bounded QuantConnect research backtest
+  next_owner: Codex / add the officially sourced 2018-12-05 XNYS full-day closure
+    to the shared reviewed calendar, validate calendar and DQ consumers, then rerun
+    segmented real materialization as a new immutable attempt
   requirement_refs:
   - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 'Project Owner replied 授权了 after the producer
-    fix and the explicit statement that the next stage is real extended-history DQ/materialization
-    plus backtest authorization. Bind this authorization to non-executable DATA_RESEARCH:
-    first prove 2018 QQQ/TQQQ/SHY training coverage, 2020-05-28 SGOV exact coverage
-    and required rates through 2025-12-02; materialize one exact row per 1202 evaluation
-    sessions; require source admission and TRADING-2483 canonical manifest replay
-    PASS before any cloud dispatch.'
+  unstructured_legacy_blocker_or_next_step: The first authorized real materialization
+    attempt failed closed in training_proxy_history DQ because the shared XNYS special-closure
+    registry omitted 2018-12-05. NYSE Regulatory Bulletin RB-18-06 states that exchanges
+    were closed that day for the National Day of Mourning for President George H.
+    W. Bush. Preserve failed attempt v1 and its DQ receipt; apply the smallest shared-calendar
+    contract correction before any 1202-session source/package or QuantConnect dispatch.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Three bounded DQ identities cover training proxy, exact SGOV cash history
-      and the primary evaluation window; producer receipt binds exact code/config/input/DQ/PIT
-      identities and yields 1202/1202 unique sessions with zero evaluation proxy rows
-      and no forward-label columns; exact source admission PASS; immutable TRADING-2483
-      package canonical replay PASS. Only then may one manifest-bounded QuantConnect
-      research backtest be dispatched. No provider purchase/raw option export/local
-      repricing/gap fill/trend redesign; orders/fills/positions outside QC simulation=0
-      and paper/live/production/broker remain false/none.
+    text: Versioned reviewed XNYS closure policy includes 2018-12-05 with official
+      NYSE source and regression coverage; DQ no longer classifies that date as an
+      internal trading-day gap; failed v1 evidence remains immutable; a new v2 materialization
+      attempt must pass all three DQ scopes, yield 1202 unique operational rows with
+      zero evaluation proxy rows, pass source admission and canonical TRADING-2483
+      package replay before the conditional single bounded QuantConnect research run.
+      Provider/raw option/local repricing/paper/live/production/broker remain prohibited.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -494,37 +492,77 @@ events:
   - change:trading-2542i-real-materialization-authorized-20260829-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-2e5cfdd535fba2227ab125b5af871e68
+- schema_version: task_event.v1
+  task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-29T09:32:05.8327472Z'
+  actor: integration-coordinator
+  change_id: trading-2542i-calendar-gap-recovery-20260829-v1
+  lane_id: null
+  base_commit: a45cf6acbf95c1e0617ad5ff315dda9803c8b39e
+  previous_state_event_id: task-event-2e5cfdd535fba2227ab125b5af871e68
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / add the officially sourced 2018-12-05 XNYS full-day closure
+      to the shared reviewed calendar, validate calendar and DQ consumers, then rerun
+      segmented real materialization as a new immutable attempt
+    blocker_or_next_step: The first authorized real materialization attempt failed
+      closed in training_proxy_history DQ because the shared XNYS special-closure
+      registry omitted 2018-12-05. NYSE Regulatory Bulletin RB-18-06 states that exchanges
+      were closed that day for the National Day of Mourning for President George H.
+      W. Bush. Preserve failed attempt v1 and its DQ receipt; apply the smallest shared-calendar
+      contract correction before any 1202-session source/package or QuantConnect dispatch.
+    acceptance_criteria: Versioned reviewed XNYS closure policy includes 2018-12-05
+      with official NYSE source and regression coverage; DQ no longer classifies that
+      date as an internal trading-day gap; failed v1 evidence remains immutable; a
+      new v2 materialization attempt must pass all three DQ scopes, yield 1202 unique
+      operational rows with zero evaluation proxy rows, pass source admission and
+      canonical TRADING-2483 package replay before the conditional single bounded
+      QuantConnect research run. Provider/raw option/local repricing/paper/live/production/broker
+      remain prohibited.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
+      Failed DQ receipt=outputs/data_quality/executions/dq_execution_952100b6a1f486c68b159335aa63f727c95efddae88e730a188aab0ef95a99f9/receipt.json
+      SHA-256 84bf76d8634732dbd7dcb482e96591a848fea706aa3745346ba138ccd0de7a05; official
+      source=https://www.nyse.com/publicdocs/nyse/markets/arca-options/rule-interpretations/2018/NYSE%20Arca%20Options%2018-06.pdf;
+      QuantConnect NOT_RUN.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542i-calendar-gap-recovery-20260829-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2404161f330c22dd895af3c25a1d031c
 projection:
   legacy_first_eight_cells:
   - TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
   - QQQ options exact signal source and implementation policy owner-review draft V1
   - P0
   - IN_PROGRESS
-  - Codex / run segmented canonical extended-history DQ, materialize and admit the
-    exact 1202-session operational source, replay TRADING-2483 manifest, and only
-    after PASS prepare one bounded QuantConnect research backtest
-  - 'Project Owner replied 授权了 after the producer fix and the explicit statement that
-    the next stage is real extended-history DQ/materialization plus backtest authorization.
-    Bind this authorization to non-executable DATA_RESEARCH: first prove 2018 QQQ/TQQQ/SHY
-    training coverage, 2020-05-28 SGOV exact coverage and required rates through 2025-12-02;
-    materialize one exact row per 1202 evaluation sessions; require source admission
-    and TRADING-2483 canonical manifest replay PASS before any cloud dispatch.'
-  - Three bounded DQ identities cover training proxy, exact SGOV cash history and
-    the primary evaluation window; producer receipt binds exact code/config/input/DQ/PIT
-    identities and yields 1202/1202 unique sessions with zero evaluation proxy rows
-    and no forward-label columns; exact source admission PASS; immutable TRADING-2483
-    package canonical replay PASS. Only then may one manifest-bounded QuantConnect
-    research backtest be dispatched. No provider purchase/raw option export/local
-    repricing/gap fill/trend redesign; orders/fills/positions outside QC simulation=0
-    and paper/live/production/broker remain false/none.
+  - Codex / add the officially sourced 2018-12-05 XNYS full-day closure to the shared
+    reviewed calendar, validate calendar and DQ consumers, then rerun segmented real
+    materialization as a new immutable attempt
+  - The first authorized real materialization attempt failed closed in training_proxy_history
+    DQ because the shared XNYS special-closure registry omitted 2018-12-05. NYSE Regulatory
+    Bulletin RB-18-06 states that exchanges were closed that day for the National
+    Day of Mourning for President George H. W. Bush. Preserve failed attempt v1 and
+    its DQ receipt; apply the smallest shared-calendar contract correction before
+    any 1202-session source/package or QuantConnect dispatch.
+  - Versioned reviewed XNYS closure policy includes 2018-12-05 with official NYSE
+    source and regression coverage; DQ no longer classifies that date as an internal
+    trading-day gap; failed v1 evidence remains immutable; a new v2 materialization
+    attempt must pass all three DQ scopes, yield 1202 unique operational rows with
+    zero evaluation proxy rows, pass source admission and canonical TRADING-2483 package
+    replay before the conditional single bounded QuantConnect research run. Provider/raw
+    option/local repricing/paper/live/production/broker remain prohibited.
   - 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
-    Owner instruction 2026-08-29: 授权了. Authorization state=EXACT_PREAUTHORIZED for
-    extended real-cache DQ/materialization and the conditional single bounded QuantConnect
-    research backtest only after exact manifest replay PASS; no R3 action.'
+    Failed DQ receipt=outputs/data_quality/executions/dq_execution_952100b6a1f486c68b159335aa63f727c95efddae88e730a188aab0ef95a99f9/receipt.json
+    SHA-256 84bf76d8634732dbd7dcb482e96591a848fea706aa3745346ba138ccd0de7a05; official
+    source=https://www.nyse.com/publicdocs/nyse/markets/arca-options/rule-interpretations/2018/NYSE%20Arca%20Options%2018-06.pdf;
+    QuantConnect NOT_RUN.'
   docs_links:
   - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
   terminal: false
-  canonical_row_sha256: 4f34e8e9c82b8e0383d8335dc0f60026ed91ed820d506a1d92585207e511553e
-last_event_id: task-event-2e5cfdd535fba2227ab125b5af871e68
+  canonical_row_sha256: 3d0d2d5ae663d8eaec18633ccc401642bd600d7d0d03cbab88c8b53c17af41d8
+last_event_id: task-event-2404161f330c22dd895af3c25a1d031c
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b237a7851bff25c567acede7e8f7feb3113f3d9ee36346d2e8ecd8d27ff75705
+fragment_checksum: 714cf34517eb50adc7bbda8a69b06d51d8acaeaabbd115f76c82c6e82c934edc

@@ -14,7 +14,7 @@ from typing import Any
 
 from ai_trading_system.trading_calendar import NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE
 from ai_trading_system.us_equity_special_closure_policy import (
-    load_us_equity_special_closure_policy,
+    load_us_equity_special_closure_policy_by_identity,
 )
 from ai_trading_system.yaml_loader import (
     StrictYamlError,
@@ -560,15 +560,7 @@ def load_price_non_market_session_attribution_decision(
         calendar,
         "special_closure_policy_path",
     )
-    try:
-        special_policy = load_us_equity_special_closure_policy(
-            _resolve_bound_path(resolved_root, special_closure_policy_path)
-        )
-    except ValueError as exc:
-        raise DataQualityAttributionContractError(
-            "SPECIAL_CLOSURE_POLICY_REVIEW_REQUIRED",
-            "special-closure policy is unavailable or invalid",
-        ) from exc
+    _resolve_bound_path(resolved_root, special_closure_policy_path)
     special_closure_policy_id = _required_text(
         calendar,
         "special_closure_policy_id",
@@ -581,6 +573,17 @@ def load_price_non_market_session_attribution_decision(
         calendar,
         "special_closure_policy_sha256",
     )
+    try:
+        special_policy = load_us_equity_special_closure_policy_by_identity(
+            policy_version=special_closure_policy_version,
+            policy_sha256=special_closure_policy_sha256,
+            project_root=resolved_root,
+        )
+    except ValueError as exc:
+        raise DataQualityAttributionContractError(
+            "SPECIAL_CLOSURE_POLICY_REVIEW_REQUIRED",
+            "special-closure policy is unavailable or invalid",
+        ) from exc
     if (
         special_policy.policy_id != special_closure_policy_id
         or special_policy.policy_version != special_closure_policy_version
@@ -860,7 +863,7 @@ def _function_ast_hash(source_path: Path, function_name: str) -> str:
             f"expected one function named {function_name}",
         )
     try:
-        canonical_dump = ast.dump(
+        canonical_dump = ast.dump(  # type: ignore[call-arg]  # Python 3.13+ runtime
             matches[0],
             annotate_fields=True,
             include_attributes=False,

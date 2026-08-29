@@ -249,6 +249,12 @@ evaluation window 或 executable scope 变更都必须重新审阅。
 
 ### S2D：extended-history real materialization 与 manifest replay（当前）
 
+- S2D-0 先执行共享 XNYS calendar contract audit。首次真实 attempt v1 已 fail-closed：canonical DQ
+  把 `2018-12-05` 识别为 `prices_internal_trading_day_gap`；NYSE 官方 `RB-18-06` 明确该日因
+  President George H. W. Bush National Day of Mourning 全日休市。必须先把该事实加入 reviewed
+  `us_equity_special_closure_registry` 并通过 calendar/DQ 回归；旧 `1.0.0` bytes 按 exact SHA 归档供旧
+  attribution/package replay，新 package/adapter policy v2 只绑定 `1.1.0`；不得删除、覆盖或把 v1 FAIL
+  改写为 PASS；
 - 以独立 execution policy 绑定已发布的 `first_layer_operational_forecast_producer_v1@1.0.0`，不回写其
   synthetic-development safety bytes；
 - canonical DQ 分成三个互补且不伪造上市前历史的 scope：`QQQ/TQQQ/SHY + rates` 从 2018-01-02、
@@ -306,7 +312,8 @@ generated architecture/report-flow/compatibility authority 与 formal validation
 - `signal_source_admission=REJECT`；
 - `signal_package_writer/manifest_replay/quantconnect=NOT_RUN`。
 - `operational_forecast_development_validation=SYNTHETIC_ONLY`；
-- `operational_forecast_real_materialization=AUTHORIZED_NOT_RUN`；
+- `operational_forecast_real_materialization=V1_DQ_FAIL_CALENDAR_CONTRACT_CORRECTION_IN_PROGRESS`；
+- `v1_failed_dq_receipt_sha256=84bf76d8634732dbd7dcb482e96591a848fea706aa3745346ba138ccd0de7a05`；
 - `conditional_quantconnect_backtest=AUTHORIZED_NOT_RUN_WAITING_MANIFEST_REPLAY`；
 
 ## 9. 进度记录
@@ -412,3 +419,8 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   “授权了”；本轮把该指令绑定到 S2D extended-history real DQ/materialization、exact source admission、
   TRADING-2483 package canonical replay，以及仅在全部 PASS 后的一次 bounded QuantConnect DATA_RESEARCH
   backtest。R3、付费/provider/raw payload、本地 option repricing 与 QC 之外的 order/fill/position 仍为 0。
+- 2026-08-29：首次 S2D real attempt v1 在 `training_proxy_history` canonical DQ fail-closed，唯一 blocking
+  issue 为 `prices_internal_trading_day_gap`，样例是 QQQ/SHY/TQQQ 均缺 `2018-12-05`。DQ receipt SHA-256=
+  `84bf76d8634732dbd7dcb482e96591a848fea706aa3745346ba138ccd0de7a05`；没有 producer、signal package、
+  manifest replay 或 QuantConnect dispatch。官方 NYSE `RB-18-06` 证明该日为全日休市，因此先执行最小
+  shared-calendar contract correction；v1 现场保留，新 attempt 使用独立 v2 identity，禁止覆盖旧证据。
