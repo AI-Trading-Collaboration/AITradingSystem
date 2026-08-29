@@ -203,7 +203,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_page_effectiveness
   path: tests/atlas/test_page_effectiveness.py
-  sha256: 1891e31805319a4b4f547c84e0a348c36d7093db78e1ceb5fe85f75bbe12b2b8
+  sha256: 53c927b1345319f7423192602eac89f264433f91a7135e5557dc86a6dc72d0fb
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8470,7 +8470,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 2321ce66fd2308b7a6186f9c4db718812d59ca081031c323c1f234cc8ebc02c0
+  sha256: f8de8352893e80bf8e32075c9800c225d6246ff64ff2d78057b5e2d11bbc4517
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
