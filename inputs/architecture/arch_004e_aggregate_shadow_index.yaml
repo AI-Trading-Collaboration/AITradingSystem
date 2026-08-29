@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 152
+fragment_count: 153
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,7 +34,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 96a35240c63b263640be1bf3664aa979dac0651562399ef6fd7accbbd3d6ef3a
+  current_sha256: 6778847671e5574a0d8b8157671d8bf96a27e687c90726f12a71283345fe9f03
   fragment_root: config/architecture/fragments/flows
   fragment_count: 62
   fragment_paths:
@@ -758,6 +758,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/qc_qqq_options_daily_capability_gate_retry_review.yaml
   sha256: 6d07c7ee1a04ad3811535e6244fa6dc88b44d5583ca2c6aba9721ea5d5787c23
+  generated_source_of_truth_active: false
+- fragment_id: module.qc_qqq_options_exact_signal_implementation_backtest_execution_v1
+  fragment_kind: module
+  owner: strategy_research_and_external_platform_engineering
+  target_id: null
+  path: config/architecture/fragments/modules/qc_qqq_options_exact_signal_implementation_backtest_execution_v1.yaml
+  sha256: 3dd04061c1036716d4687a4f83378807950e8750f5ea0e215c634d6ea3f5aab0
   generated_source_of_truth_active: false
 - fragment_id: module.qc_qqq_options_license_export_due_diligence
   fragment_kind: module
