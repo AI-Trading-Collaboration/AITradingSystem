@@ -320,3 +320,14 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   v17 transaction 声明，未越权写入；v17 已释放 lease。后继 transaction 必须显式声明
   `tests/test_devx_006d_report_catalog_flow_authority.py`，并从包含 seal config/test 更新的 exact lane head
   重跑 architecture、Atlas、report-flow 与 compatibility authority。
+- 2026-08-29：publication transaction
+  `trading-2542i-exact-signal-admission-20260829-v18` 完成五类 generated authority 重建并形成候选
+  `148e2c59ee78ed29df72f87778eff66ac4f96eb5`，但首个 formal `architecture-fitness` 在并行执行中
+  以 `876 passed / 2 failed` fail closed；runtime artifact 位于
+  `outputs/validation_runtime/architecture-fitness_20260829T051448Z/test_runtime_summary.json`。两项失败同源：
+  Atlas coverage frozen assertion 在 `GENERATED_REBUILD_POST` 后加入，使 architecture manifest stale；同时
+  TRADING-2542I 新增 module/test 后 deprecation repository count 应从 `1172/1332` 更新为 `1173/1333`，
+  inventory id 实测为 `arch_004g_deprecation_inventory_ed9b563f19b9fa354286`。由于对应
+  `tests/test_arch_004g_deprecation.py` 未在 v18 声明，不在原 transaction 上越权修补；contract、
+  integration、reproducibility、full、local main 与 push 均未运行。后继 transaction 必须显式声明该
+  frozen test，重跑全部 generated authority 和五级 formal validation。
