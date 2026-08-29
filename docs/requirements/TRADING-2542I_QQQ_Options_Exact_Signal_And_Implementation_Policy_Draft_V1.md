@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`BLOCKED_OWNER_INPUT`
+状态：`IN_PROGRESS`
 
 Owner 指令：Project Owner 已确认继续按“既有趋势信号只负责方向，QuantConnect 只负责期权实现与
 收益计算”的路径推进，并于 2026-08-29 指示“好的，那就冻结吧，你继续推进”。该指令 exact-freeze
@@ -20,6 +20,14 @@ Owner 指令：Project Owner 已确认继续按“既有趋势信号只负责方
 不得为了补齐期权输入而修改趋势模型 policy、缩短训练窗口、使用 warm-start diagnostic、填充 `FLAT`
 或跨 session forward-fill。QuantConnect project mutation/backtest、raw option payload、orders、fills、
 positions、paper、live、production 与 broker action 仍未授权。
+
+Project Owner 在 generic operational forecast producer 修复并发布后回复“授权了”。本次授权精确绑定为：
+允许读取现有真实 cache，按分段资产可用期运行 `2018-01-02..2025-12-02` extended-history canonical DQ，
+物化并接纳 exact `1202/1202` operational source，生成 TRADING-2483 immutable signal package 并执行
+canonical manifest replay；只有上述 replay=`PASS` 后，才允许提交一次 fixed-project/fixed-code/fixed-manifest/
+fixed-maxima 的 bounded QuantConnect `DATA_RESEARCH` backtest。该授权不允许购买数据、provider query、raw
+option payload 导出、本地 option repricing、趋势模型重设计、paper/live/production/broker，QC simulation
+之外的 orders/fills/positions 必须为 0。
 
 production effect：`none`
 
@@ -239,9 +247,20 @@ research/diagnostic evidence；新 producer 仅复用其方向语义和冻结 po
 forecast source。任何 scorecard weight、composer precedence、training window、label horizon、cash proxy、
 evaluation window 或 executable scope 变更都必须重新审阅。
 
-### S3：bounded QuantConnect run（需再次单独授权）
+### S2D：extended-history real materialization 与 manifest replay（当前）
 
-- 只在 S2 PASS 后提交固定 project/code/manifest/maxima 的 R1 research sandbox run；
+- 以独立 execution policy 绑定已发布的 `first_layer_operational_forecast_producer_v1@1.0.0`，不回写其
+  synthetic-development safety bytes；
+- canonical DQ 分成三个互补且不伪造上市前历史的 scope：`QQQ/TQQQ/SHY + rates` 从 2018-01-02、
+  `SGOV + rates` 从 2020-05-28、`QQQ/TQQQ/SGOV + rates` primary evaluation 从 2021-02-22；
+- 每个 scope 必须通过 typed download publication、canonical receipt verification 与 exact checksum replay；
+- real producer receipt 必须绑定三组 DQ、源 cache、policy、code、predictions 与 fit audit identity，并证明
+  `1202/1202`、unique、label maturity、terminal emission、evaluation proxy rows=0、forward-label columns=0；
+- 只有 existing exact source admission 与 TRADING-2483 package canonical replay 同时 PASS，才进入 S3。
+
+### S3：bounded QuantConnect run（已授权，仍受 S2D PASS 前置约束）
+
+- 只在 S2D PASS 后提交一次固定 project/code/manifest/maxima 的 R1 research sandbox run；
 - 本地只接纳 export-safe aggregate/identity evidence；
 - paper/live/production/broker/orders outside QC simulation=`0`。
 
@@ -270,9 +289,11 @@ generated architecture/report-flow/compatibility authority 与 formal validation
 - `signal_package_preparation_authorized=true`；
 - `real_dq_and_existing_producer_regeneration_authorized=true`；
 - `generic_operational_forecast_contract_and_implementation_authorized=true`；
-- `extended_training_history_real_dq_or_materialization_authorized=false`；
+- `extended_training_history_real_dq_or_materialization_authorized=true`；
 - `manifest_generation_authorized=true` only when exact source/DQ/PIT identity and 1202/1202 coverage PASS；
-- `qc_backtest/qc_project_mutation/provider_query=false`；
+- `qc_backtest_authorized=true` only after exact source admission and TRADING-2483 manifest replay PASS；
+- `qc_project_mutation_authorized=true` only for one fixed bounded DATA_RESEARCH project action after that PASS；
+- `provider_query=false`；
 - `raw_option_payload_download_or_export=false`；
 - `orders/fills/positions=0`；
 - `paper/live/production/broker=false/none`；
@@ -285,6 +306,8 @@ generated architecture/report-flow/compatibility authority 与 formal validation
 - `signal_source_admission=REJECT`；
 - `signal_package_writer/manifest_replay/quantconnect=NOT_RUN`。
 - `operational_forecast_development_validation=SYNTHETIC_ONLY`；
+- `operational_forecast_real_materialization=AUTHORIZED_NOT_RUN`；
+- `conditional_quantconnect_backtest=AUTHORIZED_NOT_RUN_WAITING_MANIFEST_REPLAY`；
 
 ## 9. 进度记录
 
@@ -384,3 +407,8 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   live status 的 exact commit，不能把 dirty working-tree bytes 归到旧 HEAD。实现和 focused validation
   结果保留并先形成可审计 lane commit；后继 transaction 从该 exact lane head 重新取得，再按 generator
   order 重建 architecture、Atlas、report-flow 与 compatibility authority。
+- 2026-08-29：generic operational forecast producer 已通过 final Full=`9940 passed / 3 skipped` 并以
+  `a45cf6acbf95c1e0617ad5ff315dda9803c8b39e` 发布到 local/remote `main`。Project Owner 随后回复
+  “授权了”；本轮把该指令绑定到 S2D extended-history real DQ/materialization、exact source admission、
+  TRADING-2483 package canonical replay，以及仅在全部 PASS 后的一次 bounded QuantConnect DATA_RESEARCH
+  backtest。R3、付费/provider/raw payload、本地 option repricing 与 QC 之外的 order/fill/position 仍为 0。

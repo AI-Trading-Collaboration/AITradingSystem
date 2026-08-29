@@ -1,0 +1,21 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.first_layer_operational_forecast_real_materialization
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: trading_2542i_real_operational_forecast_materialization
+stages:
+  - bind_owner_authorization_without_mutating_synthetic_development_policy_bytes
+  - publish_2018_qqq_tqqq_shy_training_proxy_cache_scope
+  - publish_2020_05_28_sgov_exact_cash_cache_scope
+  - publish_2021_02_22_primary_evaluation_cache_scope
+  - require_all_three_canonical_dq_receipts_and_byte_replay_pass
+  - build_real_operational_forecast_from_exact_segmented_input_identity
+  - require_1202_unique_sessions_mature_labels_terminal_emission_and_zero_evaluation_proxy
+  - run_existing_exact_source_admission_and_stop_on_any_reject
+  - map_five_states_to_frozen_long_call_or_flat_daily_signals
+  - build_immutable_trading_2483_signal_package
+  - reconstruct_and_compare_every_package_byte_for_manifest_replay
+  - leave_quantconnect_dispatch_for_separate_post_replay_wave
+compatibility_flow_entry_required: false
+generated_source_of_truth_active: false

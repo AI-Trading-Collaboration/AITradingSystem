@@ -1,0 +1,91 @@
+schema_version: first_layer_operational_forecast_real_materialization_policy.v1
+policy_id: first_layer_operational_forecast_real_materialization_v1
+policy_version: 1.0.0
+status: OWNER_AUTHORIZED_NON_EXECUTABLE_DATA_RESEARCH
+owner: project_owner
+owner_decision_id: owner_decision:TRADING-2542I:2026-08-29:authorize_real_materialization_and_conditional_qc_v1
+authorization_state: EXACT_PREAUTHORIZED
+authorities:
+  operational_forecast_policy:
+    path: config/research/first_layer_operational_forecast_producer_v1.yaml
+    sha256: 938be28f5778b78f2a709abf3bf61cb3b748cf0cb1aa816fa911d670d053ed40
+  data_quality_policy:
+    path: config/data_quality.yaml
+    sha256: e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82
+  exact_signal_admission_policy:
+    path: config/research/qc_qqq_options_exact_signal_package_admission_v1.yaml
+    sha256: 097ad9409e18311326b4d875c83c2f2a7cf30508092766c27cdd7ec35986d8da
+  signal_export_policy:
+    path: config/research/qqq_options_signal_export_v1.yaml
+    sha256: cf9d6ba3044bdf1d601de1ae7fe6f82fa3e26cc7811dc50160d24dfc902259e9
+  project_adapter_policy:
+    path: config/research/qc_qqq_options_project_adapter_contract_v1.yaml
+    sha256: b9e48f0b53a6259a5bbc9594cbe1929721568d1723d498591ce14b8e3be92616
+inputs:
+  prices_path: data/raw/prices_daily.csv
+  rates_path: data/raw/rates_daily.csv
+  secondary_prices_path: data/raw/prices_marketstack_daily.csv
+  price_value_column: adj_close
+  rate_value_column: value
+  source_kind: LEGACY_LOCAL_CACHE_IMPORT
+  origin_status: OPAQUE_LEGACY
+  provider_query_allowed: false
+dq_scopes:
+  - scope_id: training_proxy_history
+    requested_start: '2018-01-02'
+    requested_end: '2025-12-02'
+    expected_price_tickers: [QQQ, SHY, TQQQ]
+    expected_rate_series: [DGS10, DGS2, DTWEXBGS]
+    require_secondary_prices: true
+  - scope_id: exact_sgov_history
+    requested_start: '2020-05-28'
+    requested_end: '2025-12-02'
+    expected_price_tickers: [SGOV]
+    expected_rate_series: [DGS10, DGS2, DTWEXBGS]
+    require_secondary_prices: true
+  - scope_id: primary_evaluation
+    requested_start: '2021-02-22'
+    requested_end: '2025-12-02'
+    expected_price_tickers: [QQQ, SGOV, TQQQ]
+    expected_rate_series: [DGS10, DGS2, DTWEXBGS]
+    require_secondary_prices: true
+producer_execution:
+  evaluation_start: '2021-02-22'
+  evaluation_end: '2025-12-02'
+  expected_session_count: 1202
+  required_dq_scope_ids: [training_proxy_history, exact_sgov_history, primary_evaluation]
+  exact_signal_mapping:
+    constructive: LONG_CALL
+    defensive: FLAT
+    neutral: FLAT
+    risk_off: FLAT
+    risk_on: LONG_CALL
+  initial_cash_usd: '100000'
+  package_run_id: trading_2542i_operational_forecast_real_v1
+  package_lineage_id: trading-2542i-operational-forecast-real-v1
+  output_root: outputs/research_trends/operational_forecast/trading_2542i_real_v1
+  package_output_root: outputs/qqq_options/signal_packages
+  canonical_replay_required: true
+safety:
+  scope: NON_EXECUTABLE_DATA_RESEARCH
+  real_cache_materialization_allowed: true
+  manifest_generation_allowed_after_all_gates_pass: true
+  quantconnect_backtest_allowed_in_this_materialization_wave: false
+  maximum_quantconnect_backtests_in_this_materialization_wave: 0
+  provider_query_allowed: false
+  paid_purchase_allowed: false
+  raw_option_payload_allowed: false
+  local_option_repricing_allowed: false
+  trend_model_redesign_allowed: false
+  gap_fill_allowed: false
+  orders_outside_qc_simulation: 0
+  fills_outside_qc_simulation: 0
+  positions_outside_qc_simulation: 0
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_action: none
+review_condition: >-
+  Any input path, DQ scope, asset availability boundary, price field, producer authority,
+  mapping, primary window, package identity, or safety-boundary change requires a new
+  reviewed version. QuantConnect dispatch remains a separate post-replay execution wave.

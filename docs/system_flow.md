@@ -9910,8 +9910,17 @@ first_layer_composer_v2 trend_state semantics
        -> date/known_at/available_at = completed XNYS feature session
        -> decision_at = exact next valid XNYS session
        -> exact 1202 unique rows and terminal 2025-12-02 emission are required
+  -> owner-authorized segmented real materialization
+       -> 2018-01-02 QQQ/TQQQ/SHY + rates training scope canonical DQ
+       -> 2020-05-28 SGOV + rates exact-cash scope canonical DQ
+       -> 2021-02-22 QQQ/TQQQ/SGOV + rates primary evaluation canonical DQ
+       -> bind all three receipt/report/cache-lineage identities into one producer receipt
+       -> require 1202/1202 unique rows, mature labels, terminal emission and zero evaluation proxy
+       -> existing exact source admission PASS before package generation
+       -> TRADING-2483 immutable package canonical byte reconstruction PASS
+       -> only then may the separately bounded one-run QuantConnect wave dispatch
   -x-> gap fill / warm-start diagnostic / training-window reduction / manual CSV
-  -x-> QuantConnect/project/backtest/provider/raw payload/orders/fills/positions
+  -x-> provider purchase/query / raw option payload / local option repricing / R3 actions
 ```
 
 被冻结的值是首次 bounded baseline 的 result-blind pilot policy，不是后验最优值或当前可执行 policy。
@@ -9921,10 +9930,11 @@ exact-window canonical DQ=`PASS`，但冻结 producer 的 coverage/uniqueness/se
 因此没有生成 signal package，也没有运行 manifest replay 或 QuantConnect。Owner 随后批准先修复通用
 first-layer operational forecast producer；新合同不使用期权数据重做方向判断，而是固定评估窗前训练历史、
 SHY→SGOV training-only cash-reference lineage、20-session label maturity、504-session rolling fit、21-session
-refit、无 forward-label 的逐日发射、unique latest-fit selection 与 next-XNYS timing。当前波只实现合同和离线
-synthetic 验证；extended real-cache DQ/materialization、TRADING-2483 manifest replay 与 QuantConnect 仍未运行。
-terminal 保持
-`OWNER_EXACT_POLICY_FROZEN_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST`；paper/live/production/broker=`false/none`。
+refit、无 forward-label 的逐日发射、unique latest-fit selection 与 next-XNYS timing。该 producer 已完成
+synthetic 1202/1202 验证并发布。Owner 随后授权分段 extended-history real DQ/materialization、existing exact
+source admission 与 TRADING-2483 canonical manifest replay；只有全部 PASS 后才允许一次 bounded QuantConnect
+`DATA_RESEARCH` backtest。当前执行波仍把 cloud dispatch 关在 replay 后继，provider/raw payload/local option
+repricing 与 paper/live/production/broker 保持 `false/none`，QC simulation 之外 orders/fills/positions=`0`。
 
 ## Coordinator integration publication fence（DEVX-009）
 

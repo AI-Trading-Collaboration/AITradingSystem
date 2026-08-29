@@ -14,28 +14,31 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / separately authorize extended 2018-01-02..2025-12-02
-    training-history DQ and exact 1202-session real-cache source materialization;
-    QuantConnect remains a later separate authorization
+  next_owner: Codex / run segmented canonical extended-history DQ, materialize and
+    admit the exact 1202-session operational source, replay TRADING-2483 manifest,
+    and only after PASS prepare one bounded QuantConnect research backtest
   requirement_refs:
   - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: The generic producer contract and implementation
-    now preserve the existing four scorecards/five-state composer while fixing mature-label
-    PIT, unique latest-fit selection, terminal feature-only emission and next-XNYS
-    timing. Synthetic 1202/1202 output passes the existing exact source admission.
-    Real extended-history DQ/materialization was not authorized or run, so no real
-    source package, TRADING-2483 manifest replay or QuantConnect result exists.
+  unstructured_legacy_blocker_or_next_step: 'Project Owner replied 授权了 after the producer
+    fix and the explicit statement that the next stage is real extended-history DQ/materialization
+    plus backtest authorization. Bind this authorization to non-executable DATA_RESEARCH:
+    first prove 2018 QQQ/TQQQ/SHY training coverage, 2020-05-28 SGOV exact coverage
+    and required rates through 2025-12-02; materialize one exact row per 1202 evaluation
+    sessions; require source admission and TRADING-2483 canonical manifest replay
+    PASS before any cloud dispatch.'
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: After separate authorization, run canonical extended-history DQ for QQQ/TQQQ/SHY
-      from 2018-01-02, SGOV from 2020-05-28 and required rates; bind exact input/code/config
-      identity; materialize the real 2021-02-22..2025-12-02 1202-session source; require
-      operational receipt and existing exact source admission PASS, then run TRADING-2483
-      package manifest replay. QuantConnect/backtest remains separately authorized.
-      No gap fill, proxy in evaluation, option-driven trend redesign, orders/fills/positions/paper/live/production/broker.
+    text: Three bounded DQ identities cover training proxy, exact SGOV cash history
+      and the primary evaluation window; producer receipt binds exact code/config/input/DQ/PIT
+      identities and yields 1202/1202 unique sessions with zero evaluation proxy rows
+      and no forward-label columns; exact source admission PASS; immutable TRADING-2483
+      package canonical replay PASS. Only then may one manifest-bounded QuantConnect
+      research backtest be dispatched. No provider purchase/raw option export/local
+      repricing/gap fill/trend redesign; orders/fills/positions outside QC simulation=0
+      and paper/live/production/broker remain false/none.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -451,36 +454,77 @@ events:
   - change:trading-2542i-operational-forecast-producer-20260829-v3
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-d3711ca122d343428609bce220d0fc51
+- schema_version: task_event.v1
+  task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-29T09:14:06.2547302Z'
+  actor: integration-coordinator
+  change_id: trading-2542i-real-materialization-authorized-20260829-v1
+  lane_id: null
+  base_commit: a45cf6acbf95c1e0617ad5ff315dda9803c8b39e
+  previous_state_event_id: task-event-d3711ca122d343428609bce220d0fc51
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / run segmented canonical extended-history DQ, materialize and
+      admit the exact 1202-session operational source, replay TRADING-2483 manifest,
+      and only after PASS prepare one bounded QuantConnect research backtest
+    blocker_or_next_step: 'Project Owner replied 授权了 after the producer fix and the
+      explicit statement that the next stage is real extended-history DQ/materialization
+      plus backtest authorization. Bind this authorization to non-executable DATA_RESEARCH:
+      first prove 2018 QQQ/TQQQ/SHY training coverage, 2020-05-28 SGOV exact coverage
+      and required rates through 2025-12-02; materialize one exact row per 1202 evaluation
+      sessions; require source admission and TRADING-2483 canonical manifest replay
+      PASS before any cloud dispatch.'
+    acceptance_criteria: Three bounded DQ identities cover training proxy, exact SGOV
+      cash history and the primary evaluation window; producer receipt binds exact
+      code/config/input/DQ/PIT identities and yields 1202/1202 unique sessions with
+      zero evaluation proxy rows and no forward-label columns; exact source admission
+      PASS; immutable TRADING-2483 package canonical replay PASS. Only then may one
+      manifest-bounded QuantConnect research backtest be dispatched. No provider purchase/raw
+      option export/local repricing/gap fill/trend redesign; orders/fills/positions
+      outside QC simulation=0 and paper/live/production/broker remain false/none.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
+      Owner instruction 2026-08-29: 授权了. Authorization state=EXACT_PREAUTHORIZED for
+      extended real-cache DQ/materialization and the conditional single bounded QuantConnect
+      research backtest only after exact manifest replay PASS; no R3 action.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542i-real-materialization-authorized-20260829-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2e5cfdd535fba2227ab125b5af871e68
 projection:
   legacy_first_eight_cells:
   - TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
   - QQQ options exact signal source and implementation policy owner-review draft V1
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner / separately authorize extended 2018-01-02..2025-12-02 training-history
-    DQ and exact 1202-session real-cache source materialization; QuantConnect remains
-    a later separate authorization
-  - The generic producer contract and implementation now preserve the existing four
-    scorecards/five-state composer while fixing mature-label PIT, unique latest-fit
-    selection, terminal feature-only emission and next-XNYS timing. Synthetic 1202/1202
-    output passes the existing exact source admission. Real extended-history DQ/materialization
-    was not authorized or run, so no real source package, TRADING-2483 manifest replay
-    or QuantConnect result exists.
-  - After separate authorization, run canonical extended-history DQ for QQQ/TQQQ/SHY
-    from 2018-01-02, SGOV from 2020-05-28 and required rates; bind exact input/code/config
-    identity; materialize the real 2021-02-22..2025-12-02 1202-session source; require
-    operational receipt and existing exact source admission PASS, then run TRADING-2483
-    package manifest replay. QuantConnect/backtest remains separately authorized.
-    No gap fill, proxy in evaluation, option-driven trend redesign, orders/fills/positions/paper/live/production/broker.
+  - IN_PROGRESS
+  - Codex / run segmented canonical extended-history DQ, materialize and admit the
+    exact 1202-session operational source, replay TRADING-2483 manifest, and only
+    after PASS prepare one bounded QuantConnect research backtest
+  - 'Project Owner replied 授权了 after the producer fix and the explicit statement that
+    the next stage is real extended-history DQ/materialization plus backtest authorization.
+    Bind this authorization to non-executable DATA_RESEARCH: first prove 2018 QQQ/TQQQ/SHY
+    training coverage, 2020-05-28 SGOV exact coverage and required rates through 2025-12-02;
+    materialize one exact row per 1202 evaluation sessions; require source admission
+    and TRADING-2483 canonical manifest replay PASS before any cloud dispatch.'
+  - Three bounded DQ identities cover training proxy, exact SGOV cash history and
+    the primary evaluation window; producer receipt binds exact code/config/input/DQ/PIT
+    identities and yields 1202/1202 unique sessions with zero evaluation proxy rows
+    and no forward-label columns; exact source admission PASS; immutable TRADING-2483
+    package canonical replay PASS. Only then may one manifest-bounded QuantConnect
+    research backtest be dispatched. No provider purchase/raw option export/local
+    repricing/gap fill/trend redesign; orders/fills/positions outside QC simulation=0
+    and paper/live/production/broker remain false/none.
   - 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
-    Development evidence before formal tiers: synthetic generic producer + existing
-    admission + Atlas focused suite=17 passed; Ruff, strict mypy and py_compile PASS.
-    Extended real DQ/materialization/package manifest replay/QuantConnect/backtest=NOT_RUN;
-    orders/fills/positions/paper/live/production/broker=0/false/none.'
+    Owner instruction 2026-08-29: 授权了. Authorization state=EXACT_PREAUTHORIZED for
+    extended real-cache DQ/materialization and the conditional single bounded QuantConnect
+    research backtest only after exact manifest replay PASS; no R3 action.'
   docs_links:
   - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
   terminal: false
-  canonical_row_sha256: e47b7b2c6a781b637dbf088c9085971580946511d35872cc758cc1db71c16e07
-last_event_id: task-event-d3711ca122d343428609bce220d0fc51
+  canonical_row_sha256: 4f34e8e9c82b8e0383d8335dc0f60026ed91ed820d506a1d92585207e511553e
+last_event_id: task-event-2e5cfdd535fba2227ab125b5af871e68
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 63e62267511c13cc01c19995a9519ca6c17b73ea7248ab83db9a7f77cc1d3236
+fragment_checksum: b237a7851bff25c567acede7e8f7feb3113f3d9ee36346d2e8ecd8d27ff75705
