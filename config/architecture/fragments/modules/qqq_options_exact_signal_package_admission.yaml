@@ -1,0 +1,19 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_exact_signal_package_admission
+fragment_kind: module
+owner: options_research_contract_governance
+module_prefix: src/ai_trading_system/qqq_options_research/exact_signal_package_admission.py
+public_contracts:
+  - DEFAULT_EXACT_SIGNAL_PACKAGE_ADMISSION_POLICY_PATH
+  - ExactSignalPackageAdmissionError
+  - ExactSignalPackageAdmissionPolicy
+  - ExactSignalPackageAdmissionReceipt
+  - ExactWindowDataQualityRun
+  - SignalSourceAudit
+  - audit_first_layer_signal_source
+  - build_exact_signal_package_admission_receipt
+  - load_exact_signal_package_admission_policy
+  - run_exact_window_canonical_data_quality
+  - write_exact_signal_package_admission_receipt
+compatibility_facades: []
+deprecation_status: active_reference_architecture

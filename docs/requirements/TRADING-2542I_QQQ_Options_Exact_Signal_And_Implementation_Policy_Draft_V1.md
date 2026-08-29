@@ -7,16 +7,19 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BLOCKED_OWNER_INPUT`
 
 Owner 指令：Project Owner 已确认继续按“既有趋势信号只负责方向，QuantConnect 只负责期权实现与
 收益计算”的路径推进，并于 2026-08-29 指示“好的，那就冻结吧，你继续推进”。该指令 exact-freeze
 `qc_qqq_options_exact_signal_implementation_policy_draft_v1@1.0.0-draft.1` 的 file/canonical SHA
 `22335aa324ffb13c9917b65ad57f51916831ecd95c05fe357f7faa13f74b57d0`/
 `45c247010f47ad3172215f90aa7c9cd40044b5332284e1789095d230075a5d83` 及全部 37 个 proposal rows，
-授权继续推进 non-executable `DATA_RESEARCH` signal-package preparation；不授权真实 DQ、QuantConnect
-project mutation/backtest、raw option payload、orders、fills、positions、paper、live、production 或
-broker action。
+授权继续推进 non-executable `DATA_RESEARCH` signal-package preparation。Project Owner 随后于同日对
+此前请求的“真实 DQ-backed producer regeneration/admission”回复“授权”，因此 S2B 允许读取现有真实
+缓存、运行 exact-window canonical DQ、按原有 `first_layer_composer_v2` 语义再生成并接纳候选 package；
+不得为了补齐期权输入而修改趋势模型 policy、缩短训练窗口、使用 warm-start diagnostic、填充 `FLAT`
+或跨 session forward-fill。QuantConnect project mutation/backtest、raw option payload、orders、fills、
+positions、paper、live、production 与 broker action 仍未授权。
 
 production effect：`none`
 
@@ -194,8 +197,20 @@ manifest replay 与所有 predecessor hashes PASS 后，才能另立 executable-
   2021-02-22..2025-12-02 全部 1202 个 XNYS sessions 且一日一行时，才能接纳 package；
 - 缺 session、重复 session、unknown state、POC rewrap、手工 CSV、跨日填充或无 DQ/PIT identity
   一律 typed reject；
-- 本轮不运行真实 DQ 或 producer regeneration。若生成完整 package 需要读取真实 cache 并执行 DQ，
-  必须先获得单独授权。
+- Owner 已单独授权读取现有真实 cache、运行 canonical real DQ 与既有 producer regeneration/admission；
+- regeneration 必须保持原有趋势模型 policy、训练窗口、feature/label 语义和 PIT cutoff 不变，不得把
+  coverage 问题转化为针对期权的趋势模型重设计；
+- 若原 producer 在冻结语义下仍不能覆盖 1202 sessions，则形成 exact typed blocker 与 DQ/coverage
+  证据，不生成 signal package，不以 `FLAT`、warm-start diagnostic、POC rewrap 或手工行绕过。
+
+S2B 已按 Owner 授权执行。exact-window canonical DQ=`PASS`，说明 QQQ/SGOV/TQQQ、
+DGS10/DGS2/DTWEXBGS 与 secondary cross-check 数据本身不是当前 blocker；冻结 producer 再生成后只有
+`630/1202` 个唯一 session，缺 `572`，存在 `588` 个重复 session / `1134` 个多余行，并有 `73` 行
+`decision_at` 落在非 XNYS session。source admission 因此为 `REJECT`，TRADING-2483 package writer、
+manifest replay 与 QuantConnect 均未运行。下一步需要 Owner 审阅独立 operational forecast producer
+合同：是否允许声明 evaluation window 之前的训练历史、把 label construction 与 prediction emission
+解耦以覆盖末端、从 overlapping walk-forward folds 形成唯一 out-of-sample session row，以及统一
+next-XNYS timing；这些都不能作为“期权适配”静默改进现有趋势 policy。
 
 ### S3：bounded QuantConnect run（需再次单独授权）
 
@@ -226,12 +241,20 @@ generated architecture/report-flow/compatibility authority 与 formal validation
 - `owner_exact_freeze=true`；
 - `exact_1202_session_signal_package_present=false`；
 - `signal_package_preparation_authorized=true`；
-- `manifest_generation_authorized=false`（完整 source/DQ/PIT identity 接纳前）；
-- `real_dq/qc_backtest/qc_project_mutation/provider_query=false`；
+- `real_dq_and_existing_producer_regeneration_authorized=true`；
+- `manifest_generation_authorized=true` only when exact source/DQ/PIT identity and 1202/1202 coverage PASS；
+- `qc_backtest/qc_project_mutation/provider_query=false`；
 - `raw_option_payload_download_or_export=false`；
 - `orders/fills/positions=0`；
 - `paper/live/production/broker=false/none`；
 - terminal=`OWNER_EXACT_POLICY_FROZEN_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST`。
+- `exact_window_canonical_dq_status=PASS`；
+- `regenerated_signal_unique_sessions=630/1202`；
+- `regenerated_signal_missing_sessions=572`；
+- `regenerated_signal_duplicate_sessions/excess_rows=588/1134`；
+- `regenerated_signal_non_xnys_decision_at_rows=73`；
+- `signal_source_admission=REJECT`；
+- `signal_package_writer/manifest_replay/quantconnect=NOT_RUN`。
 
 ## 9. 进度记录
 
@@ -259,3 +282,32 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   `owner_frozen=false`/`owner_exact_freeze=false` bytes 未被回写。focused freeze/draft/Atlas suite=
   `62 passed`；Ruff、strict mypy、py_compile PASS。exact signal package 仍为 0/1202 admitted，下一步
   需要 Owner 单独授权真实 DQ-backed producer regeneration；QuantConnect backtest 仍需再单独授权。
+- 2026-08-29：Project Owner 对上述单独授权请求回复“授权”。本轮把授权精确绑定到现有真实缓存的
+  exact-window canonical DQ、冻结 `first_layer_composer_v2` 语义下的 regeneration、1202-session
+  coverage/lineage/manifest replay 与 package admission；不授权修改趋势模型以适配期权，也不授权
+  QuantConnect、raw option payload 或任何 execution/broker action。
+- 2026-08-29：S2B 真实复核完成。先对当前 full cache 直接运行 exact historical DQ，确认其因 current
+  manifest window、截止日后的 price/rate rows 与 out-of-scope VIX session 记录而 fail closed；随后使用
+  独立 exact-date/identity projection，绑定 full-cache SHA/row lineage，以
+  `LEGACY_LOCAL_CACHE_IMPORT / OPAQUE_LEGACY` 发布 isolated canonical download transaction，未冒充 live
+  provider 或原始下载。最终 exact requested/evaluated `2021-02-22..2025-12-02` canonical DQ=`PASS`，
+  receipt/report SHA-256=`425c10b33fe1d5e5868cab3496cb7c8ff7ce971ebc60b74a6a4333486f72a841`/
+  `715934220efc952e04a7868f18ba5dbf4c874e9772377c5e9330308b01d60ce8`。
+- 2026-08-29：在不改 `first_layer_composer_v2` policy、训练窗口、feature/label 语义或 PIT cutoff 的
+  条件下完成 producer 再生成；producer terminal=`WINDOW_COVERAGE_INCOMPLETE`。生成 source SHA-256=
+  `731f77584c5cb6edb8dce878937e5c918192f3fbbd9c89c907d870c43d08d677`，共 1764 行，但只覆盖
+  630 个唯一 XNYS session（2023-02-22..2025-08-26），缺 572，重复 session=588、excess rows=1134，
+  non-XNYS `decision_at` rows=73。exact admission receipt/report/lineage SHA-256=
+  `c61ae393b2ed08021ce15da927b3cef25c66289fb38511ab1faa4bc196bb9837`/
+  `4ecabbf06c0b7d572010d9c493a7e9e6b72af5f53eb83ef47627cab1888547f4`/
+  `6475186902cb48b4bf9029bc2d2f5148601f19aac6ba0eaa06c284771c063cde`。terminal typed
+  `REJECT / NOT_RUN_SOURCE_REJECTED`；没有调用 package writer、manifest replay 或 QuantConnect。
+  任务转为 `BLOCKED_OWNER_INPUT`，等待单独审阅 operational forecast producer 合同，而不是用期权
+  数据重做方向模型。
+- 2026-08-29：publication transaction
+  `trading-2542i-exact-signal-admission-20260829-v15` 在 `TASK_SOURCE_PRE_WRITE` 后按 `FAILED` 释放，
+  candidate/full/main/push 均未发生。原因是现有 producer runner 把若干 review authority 写到全局 tracked
+  路径，且 Atlas authority 要求 page source 先形成 exact lane commit。所有额外 tracked side effect 已按
+  pre-run HEAD 精确复原并经 governed worktree audit 确认不再 dirty；真实再生成的 source、DQ 与 admission
+  证据保留在本任务隔离输出和上述 immutable hashes。后继 transaction 必须从 exact lane commit 重开，
+  不绕过 Atlas exact-commit 或 declared-path gate。

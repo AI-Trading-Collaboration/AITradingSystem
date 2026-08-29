@@ -1,0 +1,88 @@
+schema_version: qc_qqq_options_exact_signal_package_admission_policy.v1
+policy_id: qc_qqq_options_exact_signal_package_admission_v1
+policy_version: 1.0.0
+status: OWNER_AUTHORIZED_NON_EXECUTABLE_DATA_RESEARCH
+owner: project_owner
+owner_decision_id: owner_decision:TRADING-2542I:2026-08-29:authorize_real_dq_existing_producer_regeneration_v1
+research_window:
+  calendar: XNYS
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  expected_session_count: 1202
+data_quality:
+  policy_path: config/data_quality.yaml
+  policy_sha256: e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82
+  input_prices_path: data/raw/prices_daily.csv
+  input_rates_path: data/raw/rates_daily.csv
+  input_secondary_prices_path: data/raw/prices_marketstack_daily.csv
+  expected_price_tickers:
+    - QQQ
+    - SGOV
+    - TQQQ
+  expected_rate_series:
+    - DGS10
+    - DGS2
+    - DTWEXBGS
+  require_secondary_prices: true
+  materialization: EXACT_DATE_AND_IDENTITY_FILTER_ONLY
+  publication_source_kind: LEGACY_LOCAL_CACHE_IMPORT
+  origin_status: OPAQUE_LEGACY
+  canonical_execution_required: true
+  exact_pass_required: true
+producer:
+  producer_id: first_layer_composer_v2
+  producer_policy_path: config/research/first_layer_composer_v2.yaml
+  producer_policy_sha256: 24ec583e1afbf01c3ddb16b43eaef6b2479ea67be6df87a1508e831b1585ffc3
+  coverage_policy_path: config/research/first_layer_walk_forward_coverage_policy_v2.yaml
+  coverage_policy_sha256: 9fdb23e4ff9b51852fc3de12c2ccb2848b149b0f8086a3a36c021491da9bea5f
+  output_relative_path: models/first_layer_composer_v2_predictions.csv
+  date_column: date
+  state_column: trend_state
+  model_id_column: model_id
+  expected_model_id: first_layer_composer_v2
+  expected_research_window_id: exact_three_asset_validated
+  allowed_states:
+    - constructive
+    - defensive
+    - neutral
+    - risk_off
+    - risk_on
+signal_mapping:
+  constructive: LONG_CALL
+  defensive: FLAT
+  neutral: FLAT
+  risk_off: FLAT
+  risk_on: LONG_CALL
+authorities:
+  exact_freeze_admission_path: config/research/qc_qqq_options_exact_signal_implementation_policy_freeze_admission_v1.yaml
+  exact_freeze_admission_sha256: a89c3c245795bda3733b9579cbb0f78cf16b5f30ec6115217acab10b26b72d34
+  signal_export_policy_path: config/research/qqq_options_signal_export_v1.yaml
+  signal_export_policy_sha256: cf9d6ba3044bdf1d601de1ae7fe6f82fa3e26cc7811dc50160d24dfc902259e9
+prohibited_transformations:
+  - CROSS_SESSION_FORWARD_FILL
+  - FLAT_GAP_FILL
+  - MANUAL_CSV_ROWS
+  - POC_REWRAP
+  - TRAINING_WINDOW_REDUCTION
+  - TREND_POLICY_CHANGE_FOR_OPTIONS
+  - WARM_START_DIAGNOSTIC
+safety:
+  scope: NON_EXECUTABLE_DATA_RESEARCH
+  quantconnect_project_mutation_allowed: false
+  quantconnect_backtest_allowed: false
+  provider_query_allowed: false
+  raw_option_payload_allowed: false
+  orders: 0
+  fills: 0
+  positions: 0
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_action: none
+review_condition: >-
+  只有 exact-window canonical DQ PASS，且冻结 producer 在不改变 policy、训练窗口、feature/label
+  或 PIT cutoff 的前提下生成 1202/1202 XNYS sessions、一日一行、无 unknown state 的 source，
+  才允许调用既有 TRADING-2483 signal-package writer；任一 coverage、duplicate、identity 或 DQ
+  失败都必须 typed reject，且不得生成 package 或触发 QuantConnect。

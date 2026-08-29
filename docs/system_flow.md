@@ -9891,16 +9891,28 @@ first_layer_composer_v2 trend_state semantics
        -> accounting: cash/premium cap/multiplier/reservation/rounding/settlement
        -> lifecycle: one position/flat exit/expiry guard/no exercise or assignment
        -> admission: exact coverage/cash facts/paired comparator/no result selection
-  -> exact signal package + manifest replay PASS (not completed; no fabricated fill)
-  -x-> QuantConnect/project/backtest/real DQ/provider/raw payload/orders/fills/positions
+  -> owner-authorized exact-window real DQ preparation
+       -> existing cache exact date/identity projection with upstream SHA lineage
+       -> isolated canonical download publication; origin=OPAQUE_LEGACY
+       -> canonical DQ requested=evaluated=2021-02-22..2025-12-02 PASS
+  -> frozen producer regeneration without policy/training-window/feature-label changes
+       -> unique sessions=630/1202; observed=2023-02-22..2025-08-26
+       -> missing sessions=572
+       -> duplicate sessions=588; duplicate excess rows=1134
+       -> decision_at on non-session rows=73
+       -> typed source admission REJECT / package writer NOT_RUN
+  -x-> gap fill / warm-start diagnostic / training-window reduction / manual CSV
+  -x-> QuantConnect/project/backtest/provider/raw payload/orders/fills/positions
 ```
 
 被冻结的值是首次 bounded baseline 的 result-blind pilot policy，不是后验最优值或当前可执行 policy。
 原 draft 中 37 个 `owner_frozen=false` 字段不回写；独立 freeze admission 绑定整个 draft 双 SHA，表达
-37/37 已冻结。signal-package preparation 已授权，但 generation/admission、engine defaults、R1 manifest 与
-外部 run 仍关闭，terminal 固定为
-`OWNER_EXACT_POLICY_FROZEN_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST`。本节点不读取 raw option payload、不运行
-真实 DQ/backtest，paper/live/production/broker=`false/none`。
+37/37 已冻结。signal-package preparation 与 real DQ-backed existing-producer regeneration 已获授权并执行：
+exact-window canonical DQ=`PASS`，但冻结 producer 的 coverage/uniqueness/session timing admission=`REJECT`，
+因此没有生成 signal package，也没有运行 manifest replay 或 QuantConnect。下一步不能靠期权数据适配趋势
+模型，而需要单独审阅 first-layer operational forecast producer 的训练历史边界、无 forward-label 末端发射、
+walk-forward overlap 去重和 next-XNYS timing 合同。terminal 保持
+`OWNER_EXACT_POLICY_FROZEN_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST`；paper/live/production/broker=`false/none`。
 
 ## Coordinator integration publication fence（DEVX-009）
 
