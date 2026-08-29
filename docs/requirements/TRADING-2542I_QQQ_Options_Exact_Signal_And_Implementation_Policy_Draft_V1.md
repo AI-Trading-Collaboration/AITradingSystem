@@ -331,3 +331,12 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   `tests/test_arch_004g_deprecation.py` 未在 v18 声明，不在原 transaction 上越权修补；contract、
   integration、reproducibility、full、local main 与 push 均未运行。后继 transaction 必须显式声明该
   frozen test，重跑全部 generated authority 和五级 formal validation。
+- 2026-08-29：publication transaction
+  `trading-2542i-exact-signal-admission-20260829-v19` 形成候选
+  `ec394443d873426b6ced0422d6c042442bc3baee`；architecture-fitness=`878 passed`、
+  contract-validation=`278 passed`、integration=`995 passed`、reproducibility=`24 passed`。Full 未实际
+  启动：coordinator 提前手动 checkpoint 到 `FULL_DISPATCHED`，而 `run_validation_tier.py full` 要求由
+  runner 从 `FORMAL_VALIDATION_PRE` 原子校验并自行推进该阶段，因此以
+  `PUBLICATION_PHASE_MISMATCH` fail closed。没有 Full pytest、local main、push、DQ/backtest 或外部动作。
+  v19 必须按 `FAILED` 释放；后继 transaction 不再手动发送 `FULL_DISPATCHED`，由 Full runner 管理该
+  checkpoint 与 `FORMAL_VALIDATION_RESULT`。
