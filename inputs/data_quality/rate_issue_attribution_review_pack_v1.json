@@ -8,7 +8,7 @@
     "runtime_contract_change_authorized": false,
     "source_owner_decision_recorded": false
   },
-  "c1_inventory_id": "dq_issue_attribution_inventory_3075487848a6d6b56087c34a",
+  "c1_inventory_id": "dq_issue_attribution_inventory_8e8b3981d478574ee87d989a",
   "candidates": [
     {
       "affected_price_tickers": [],
@@ -373,7 +373,7 @@
     {
       "path": "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.json",
       "role": "c1_readiness_inventory",
-      "sha256": "3378dd95b2a8226a5e0835b84382236983f72dab2d90f3569f1cfa957b6f9324",
+      "sha256": "0bad8e6beab4e83d221b225c5b0c8d5a2eae2588be9d7ebc802039b0763c49ff",
       "size_bytes": 85438
     },
     {
@@ -433,7 +433,7 @@
     },
     "suspicious_daily_change_abs": 0.75
   },
-  "review_pack_id": "dq_rate_issue_attribution_review_216045a1ebe282194028e1f8",
+  "review_pack_id": "dq_rate_issue_attribution_review_34ea0d1bce5e7a0bc67d83b5",
   "safety": {
     "broker_action": "none",
     "cached_data_mutated": false,

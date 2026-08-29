@@ -24,7 +24,7 @@
       "static_code": null
     }
   ],
-  "inventory_id": "dq_issue_attribution_inventory_3075487848a6d6b56087c34a",
+  "inventory_id": "dq_issue_attribution_inventory_8e8b3981d478574ee87d989a",
   "noncanonical_constructor_sites": [
     {
       "code_expression": "research_backfill_source_warning",
@@ -2265,8 +2265,8 @@
     },
     {
       "path": "src/ai_trading_system/data/quality_execution.py",
-      "sha256": "d25039fb456048eb02df3de0ebd1d5248115a998c7cc3598a3c1c14c3475537d",
-      "size_bytes": 70020
+      "sha256": "766fe1029d868e3f4ac10c4f3418e08f52ec9962305007b9a77eefb7cb248ee5",
+      "size_bytes": 70060
     }
   ],
   "status": "SOURCE_OWNER_REVIEW_REQUIRED",

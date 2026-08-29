@@ -504,3 +504,10 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   历史 `trading_calendar.py` bytes 以 SHA-256
   `ec34df0b571b9250579499d4227f08c809cb79ec6f648c37445488a2c82de8d7` 存入 architecture archive snapshot，
   使历史 replay 与 active current-calendar 文案/路径可同时成立。
+- 2026-08-29：v13 formal Architecture=`878 passed`、Contract=`278 passed`、Integration=`995 passed`、
+  Reproducibility=`24 passed`；Full=`9945 passed / 3 skipped / 8 failed`，runtime summary SHA-256=
+  `7af9ba0ca723138ffe01ee10932d8fdf4a2dd71c702c2a26c7e39980bb753d3b`。8 项失败是同一内容派生证据
+  根因：`quality_execution.py` current/legacy calendar path 分离后，tracked DQ issue attribution inventory
+  仍绑定旧 source SHA，继而使 rate issue review pack 的 current-inventory gate 级联失败。v13 已按 `FAILED`
+  释放，未发生 main/push/QuantConnect dispatch。已按既有官方 builder 顺序重建 inventory 与 rate review
+  pack，两者 validation 均 `PASS`；不改变 DQ issue semantics、source-owner decisions 或 isolation authority。
