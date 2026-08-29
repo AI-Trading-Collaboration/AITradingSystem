@@ -17,7 +17,8 @@ task_record:
   next_owner: Project Owner / review the quarantined QuantConnect build-count incident
     and either retrospectively admit the exact clone state for one backtest or authorize
     a fresh isolated attempt with new manifest
-  requirement_refs: []
+  requirement_refs:
+  - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
@@ -802,6 +803,44 @@ events:
   - change:trading-2542i-qc-incident-admission-20260830-v5
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-4c083dcb24fffc7a8d8d360853ff3282
+- schema_version: task_event.v1
+  task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-29T18:28:00Z'
+  actor: integration-coordinator
+  change_id: trading-2542i-qc-incident-binding-fix-20260830-v7
+  lane_id: null
+  base_commit: 2ad11fdd087c1b75f37a33309ea90cacf820b969
+  previous_state_event_id: task-event-4c083dcb24fffc7a8d8d360853ff3282
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / review the quarantined QuantConnect build-count incident
+      and either retrospectively admit the exact clone state for one backtest or authorize
+      a fresh isolated attempt with new manifest
+    blocker_or_next_step: Clone project 35444189 contains the exact main.py and both
+      observed builds succeeded, but one automatic build plus one unmanifested manual
+      Cloud Build exceeded the exact external-action allowlist. The attempt is quarantined;
+      cloud_backtests=0 and no further QC action is authorized.
+    acceptance_criteria: 'Owner must choose an exact reviewed disposition: (A) retrospectively
+      admit only the current clone code/build state and separately authorize exactly
+      one backtest with no further save/build/retry, or (B) keep this attempt quarantined
+      and authorize a new isolated clone/project plus successor manifest and maxima.
+      In either case original project 34808569 remains immutable; raw option export/local
+      repricing/provider/paper/live/production/broker and QC-external orders/fills/positions
+      remain zero.'
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
+      Incident artifact outputs/validation_runtime/trading_2542i_qc_bounded_retest_20260830_incident_v1.json
+      SHA-256 d0bab9c78d9faa0df75e652d7df665f5d8ae10bc9f65b3519adc17e8a4b4500a. Exact
+      visible LF-normalized main.py SHA-256 e0732c8bd4cb679011f50243f72d76372544ab18424a4e8ba7eebcab05c4d3d5;
+      observed automatic build PASS 08b0fd-52ae2f and unmanifested manual build PASS
+      262fdb-52ae2f; backtest=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542i-qc-incident-binding-fix-20260830-v7
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5361b1d367aaa932d44de3f0295f2524
 projection:
   legacy_first_eight_cells:
   - TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
@@ -821,14 +860,16 @@ projection:
     a new isolated clone/project plus successor manifest and maxima. In either case
     original project 34808569 remains immutable; raw option export/local repricing/provider/paper/live/production/broker
     and QC-external orders/fills/positions remain zero.'
-  - Incident artifact outputs/validation_runtime/trading_2542i_qc_bounded_retest_20260830_incident_v1.json
+  - 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
+    Incident artifact outputs/validation_runtime/trading_2542i_qc_bounded_retest_20260830_incident_v1.json
     SHA-256 d0bab9c78d9faa0df75e652d7df665f5d8ae10bc9f65b3519adc17e8a4b4500a. Exact
     visible LF-normalized main.py SHA-256 e0732c8bd4cb679011f50243f72d76372544ab18424a4e8ba7eebcab05c4d3d5;
     observed automatic build PASS 08b0fd-52ae2f and unmanifested manual build PASS
-    262fdb-52ae2f; backtest=0.
-  docs_links: []
+    262fdb-52ae2f; backtest=0.'
+  docs_links:
+  - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
   terminal: false
-  canonical_row_sha256: 6769bd372c2afaa28830fd917849a8b4a99e727d3884a89b8938079ed3919291
-last_event_id: task-event-4c083dcb24fffc7a8d8d360853ff3282
+  canonical_row_sha256: 355b9f13e3d6ea9c0edd486805504b050a13521946fd7eb00cec720fd4d89a9f
+last_event_id: task-event-5361b1d367aaa932d44de3f0295f2524
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: cc8eb6f6aadbe6bf74aa6db43da71ea3500bb867b09d2d9c157cbd249fc5434f
+fragment_checksum: 1b7f0ca19c313a9e9ca70bc07ec9c05282ec9f953a5ca77aa65a9906fddd66ff
