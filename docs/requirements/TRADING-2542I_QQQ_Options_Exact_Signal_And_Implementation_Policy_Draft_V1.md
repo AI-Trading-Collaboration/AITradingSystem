@@ -460,3 +460,11 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   `712f7a43019d2775867cc4d73cf1b662999a126d`、entry count=`1160`。v7 已按 `FAILED` 释放，未形成
   candidate、formal validation、main/push 或 QuantConnect dispatch；下一 transaction 从包含两项
   successor seal 的 exact lane head 完整重放五类 generator。
+- 2026-08-29：publication transaction
+  `trading-2542i-materialization-publication-20260829-v8` 完成全部五类 generated authority rebuild，随后
+  focused/adjacent 回归以 `260 passed / 3 failed` fail closed。失败均为已声明且可精确修正的 frozen
+  freshness assertion：report-flow successor 总 entry count 应由 `3088` 更新为 `3089`；deprecation
+  repository count 应为 `1175 modules / 1335 tests`，inventory id=
+  `arch_004g_deprecation_inventory_c78d774fd3eba11a1b82`，direct-writer count 仍为 `856`。v8 已按
+  `FAILED` 释放，未形成 candidate、formal validation、main/push 或 QuantConnect dispatch；后继
+  transaction 必须从包含上述 frozen assertion 的 exact lane head 重建 architecture manifest 后再验证。

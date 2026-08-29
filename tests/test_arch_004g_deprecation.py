@@ -57,12 +57,12 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-WAVE20_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_f7da8832b70f68311016"
+WAVE20_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_c78d774fd3eba11a1b82"
 WAVE20_CURRENT_REPOSITORY_COUNTS = {
-    # TRADING-2542I adds the generic operational forecast module and focused test;
+    # TRADING-2542I adds the governed real materializer and calendar replay coverage;
     # no deprecation lifecycle or direct-writer allowance changes.
-    "python_module_count": 1174,
-    "python_test_file_count": 1334,
+    "python_module_count": 1175,
+    "python_test_file_count": 1335,
     "direct_writer_current_count": 856,
 }
 WAVE20_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(
