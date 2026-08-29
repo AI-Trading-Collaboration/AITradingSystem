@@ -9901,6 +9901,15 @@ first_layer_composer_v2 trend_state semantics
        -> duplicate sessions=588; duplicate excess rows=1134
        -> decision_at on non-session rows=73
        -> typed source admission REJECT / package writer NOT_RUN
+  -> generic operational forecast producer repair (non-executable)
+       -> training history begins before the 2021-02-22 evaluation boundary
+       -> SHY return splice is training-initialization-only before SGOV inception
+       -> each fit selects the latest 504 labels whose 20-session outcome has matured
+       -> thresholds refit every 21 sessions; each evaluation session selects one latest fit
+       -> predictions are emitted from features without joining forward labels
+       -> date/known_at/available_at = completed XNYS feature session
+       -> decision_at = exact next valid XNYS session
+       -> exact 1202 unique rows and terminal 2025-12-02 emission are required
   -x-> gap fill / warm-start diagnostic / training-window reduction / manual CSV
   -x-> QuantConnect/project/backtest/provider/raw payload/orders/fills/positions
 ```
@@ -9909,9 +9918,12 @@ first_layer_composer_v2 trend_state semantics
 原 draft 中 37 个 `owner_frozen=false` 字段不回写；独立 freeze admission 绑定整个 draft 双 SHA，表达
 37/37 已冻结。signal-package preparation 与 real DQ-backed existing-producer regeneration 已获授权并执行：
 exact-window canonical DQ=`PASS`，但冻结 producer 的 coverage/uniqueness/session timing admission=`REJECT`，
-因此没有生成 signal package，也没有运行 manifest replay 或 QuantConnect。下一步不能靠期权数据适配趋势
-模型，而需要单独审阅 first-layer operational forecast producer 的训练历史边界、无 forward-label 末端发射、
-walk-forward overlap 去重和 next-XNYS timing 合同。terminal 保持
+因此没有生成 signal package，也没有运行 manifest replay 或 QuantConnect。Owner 随后批准先修复通用
+first-layer operational forecast producer；新合同不使用期权数据重做方向判断，而是固定评估窗前训练历史、
+SHY→SGOV training-only cash-reference lineage、20-session label maturity、504-session rolling fit、21-session
+refit、无 forward-label 的逐日发射、unique latest-fit selection 与 next-XNYS timing。当前波只实现合同和离线
+synthetic 验证；extended real-cache DQ/materialization、TRADING-2483 manifest replay 与 QuantConnect 仍未运行。
+terminal 保持
 `OWNER_EXACT_POLICY_FROZEN_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST`；paper/live/production/broker=`false/none`。
 
 ## Coordinator integration publication fence（DEVX-009）

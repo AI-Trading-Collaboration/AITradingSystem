@@ -107,19 +107,18 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at is None
     assert bundle.status_object_zh == (
-        "QQQ options 链路保持“既有策略信号是唯一方向事实，QuantConnect 负责选约、成交、"
-        "生命周期与 P&L”；TRADING-2541 V3 已证明目标窗口 option chain 1202/1202、"
-        "unresolved=0，但只证明 transport/PIT 可用性，不证明策略收益；Project Owner 已 "
-        "exact-freeze TRADING-2542I draft 双 SHA、risk_on/constructive→LONG_CALL、neutral/"
-        "defensive/risk_off→FLAT 以及完整 37/37 implementation policy，原 draft bytes/status/"
-        "version 保持 immutable，LONG_PUT 只保留为独立 sensitivity，并授权 existing-cache real DQ "
-        "与冻结 producer 再生成；2021-02-22..2025-12-02 exact-window canonical DQ 已 PASS，但 "
-        "first_layer_composer_v2 在不改 policy、训练窗口和 feature/label 时只产生 630/1202 个唯一 "
-        "session（2023-02-22..2025-08-26），缺 572、重复 session 588 个/多余行 1134，另有 73 行 "
-        "decision_at 落在非交易日，故 signal admission=REJECT，package writer、manifest replay 与 "
-        "QuantConnect 均未运行；下一合法动作是单独审阅 operational forecast producer 的训练历史、"
-        "末端无 forward-label 发射、overlap 去重与 next-XNYS timing 合同，而不是用期权数据重做趋势"
-        "判断；provider/raw option payload/orders/fills/positions/production/broker 全为 0"
+        "QQQ options 链路继续使用既有 first_layer_composer_v2 五态作为唯一方向事实，未新增期权"
+        "专用趋势模型；旧 research producer 的 630/1202 coverage、重复 rows 和 BDay timing 问题"
+        "已由独立 generic operational forecast producer 修复：保留四个 scorecard、五态 precedence、"
+        "504-session train window、20-session label horizon 与 21-session refit，显式治理评估窗前 "
+        "SHY→SGOV training-only cash reference，只使用 fit 当日已经成熟的 labels，每个 evaluation "
+        "session 只选择最近一次 fit，并以 feature-only emission 覆盖末端、以 next-XNYS 生成 "
+        "decision_at；synthetic exact-window 验证已产生 1202/1202 unique rows、末端 "
+        "2025-12-02 row、evaluation proxy rows=0，且无 forward-label column；extended-history "
+        "real DQ/materialization、TRADING-2483 package/manifest replay 与 QuantConnect 仍未授权"
+        "或运行，下一合法动作是单独批准 "
+        "extended training-history DQ 与 exact source materialization；provider/raw option payload/"
+        "orders/fills/positions/paper/live/production/broker 全为 0"
     )
 
 

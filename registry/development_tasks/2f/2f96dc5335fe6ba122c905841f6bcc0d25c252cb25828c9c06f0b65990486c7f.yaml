@@ -14,32 +14,28 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / review and authorize a separately governed operational
-    forecast producer contract covering pre-evaluation training history, label-free
-    terminal prediction emission, unique out-of-sample fold selection, and next-XNYS
-    timing; QuantConnect remains unauthorized
+  next_owner: Project Owner / separately authorize extended 2018-01-02..2025-12-02
+    training-history DQ and exact 1202-session real-cache source materialization;
+    QuantConnect remains a later separate authorization
   requirement_refs:
   - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 'Exact-window canonical DQ now PASSes,
-    but unchanged first_layer_composer_v2 regeneration is not an operational one-row-per-session
-    forecast source: 630/1202 unique sessions over 2023-02-22..2025-08-26, 572 missing,
-    588 duplicate sessions with 1134 excess rows, and 73 non-XNYS decision_at rows.
-    Typed source admission is REJECT and no signal package, manifest replay, or QuantConnect
-    run was produced.'
+  unstructured_legacy_blocker_or_next_step: The generic producer contract and implementation
+    now preserve the existing four scorecards/five-state composer while fixing mature-label
+    PIT, unique latest-fit selection, terminal feature-only emission and next-XNYS
+    timing. Synthetic 1202/1202 output passes the existing exact source admission.
+    Real extended-history DQ/materialization was not authorized or run, so no real
+    source package, TRADING-2483 manifest replay or QuantConnect result exists.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: A separately reviewed producer contract must preserve trend direction semantics
-      while explicitly governing training history before the 2021-02-22 evaluation
-      start, prediction emission without future-label dependence through 2025-12-02,
-      exactly one out-of-sample row per 1202 XNYS sessions, and next-XNYS timing.
-      Then canonical DQ, source admission, TRADING-2483 package generation, and manifest
-      replay must PASS before any separately authorized QuantConnect research backtest.
-      No gap fill, warm-start diagnostic, training-window reduction, options-driven
-      trend redesign, provider/raw payload/order/fill/position/paper/live/production/broker
-      action.
+    text: After separate authorization, run canonical extended-history DQ for QQQ/TQQQ/SHY
+      from 2018-01-02, SGOV from 2020-05-28 and required rates; bind exact input/code/config
+      identity; materialize the real 2021-02-22..2025-12-02 1202-session source; require
+      operational receipt and existing exact source admission PASS, then run TRADING-2483
+      package manifest replay. QuantConnect/backtest remains separately authorized.
+      No gap fill, proxy in evaluation, option-driven trend redesign, orders/fills/positions/paper/live/production/broker.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -337,38 +333,154 @@ events:
   - change:trading-2542i-real-dq-pass-producer-admission-rejected-20260829-v2
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-f962aa1778f2572dddb152507d4a032a
+- schema_version: task_event.v1
+  task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-29T06:58:16.9045375Z'
+  actor: integration-coordinator
+  change_id: trading-2542i-operational-forecast-producer-20260829-v1
+  lane_id: null
+  base_commit: 27ff2d6457255027c4c649014d2a1e9d454ac1dd
+  previous_state_event_id: task-event-f962aa1778f2572dddb152507d4a032a
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / implement and validate the separately governed generic first-layer
+      operational forecast producer; keep QuantConnect and backtest unauthorized
+    blocker_or_next_step: Project Owner instructed to fix the generic producer. Implement
+      explicit pre-evaluation training history, maturity-aware 20-session labels,
+      frozen 504-session rolling fits refreshed every 21 sessions, label-free terminal
+      emission, exactly one OOS row per requested XNYS session, and exact next-XNYS
+      timing. Pre-SGOV cash-reference proxy must be explicit training-only lineage;
+      no training-window reduction, warm-start, gap fill, option-driven direction
+      redesign, QuantConnect, backtest or execution.
+    acceptance_criteria: Reviewed v1 producer contract and implementation preserve
+      first_layer_composer_v2 five-state direction semantics, MODEL_SPECS, composer
+      precedence, 504-session training window, 20-session label horizon and 21-session
+      refit cadence; synthetic golden/negative tests prove label maturity, no future-label
+      dependency, unique full-window emission and next-XNYS timing. Extended real-cache
+      training/DQ, exact 1202-session materialization, TRADING-2483 manifest replay
+      and QuantConnect remain separate later actions and are not run in this development
+      wave.
+    notes: 'Owner instruction 2026-08-29: 好的，那先修复吧. Bound to generic non-executable
+      DATA_RESEARCH producer contract/implementation and offline synthetic validation
+      only. SHY may serve only as explicitly identified pre-SGOV training cash-reference
+      proxy; evaluated trend semantics and options mapping remain unchanged. orders/fills/positions/paper/live/production/broker=0/false/none.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542i-operational-forecast-producer-20260829-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f537548641c326af8b9dd8c977d3d1c5
+- schema_version: task_event.v1
+  task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-29T07:08:15.6210006Z'
+  actor: integration-coordinator
+  change_id: trading-2542i-operational-forecast-producer-20260829-v2
+  lane_id: null
+  base_commit: 27ff2d6457255027c4c649014d2a1e9d454ac1dd
+  previous_state_event_id: task-event-f537548641c326af8b9dd8c977d3d1c5
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / implement and validate the separately governed generic first-layer
+      operational forecast producer; keep QuantConnect and backtest unauthorized
+    blocker_or_next_step: Project Owner instructed to fix the generic producer. Implement
+      explicit pre-evaluation training history, maturity-aware 20-session labels,
+      frozen 504-session rolling fits refreshed every 21 sessions, label-free terminal
+      emission, exactly one OOS row per requested XNYS session, and exact next-XNYS
+      timing. Pre-SGOV cash-reference proxy must be explicit training-only lineage;
+      no training-window reduction, warm-start, gap fill, option-driven direction
+      redesign, QuantConnect, backtest or execution.
+    acceptance_criteria: Reviewed v1 producer contract and implementation preserve
+      first_layer_composer_v2 five-state direction semantics, MODEL_SPECS, composer
+      precedence, 504-session training window, 20-session label horizon and 21-session
+      refit cadence; synthetic golden/negative tests prove label maturity, no future-label
+      dependency, unique full-window emission and next-XNYS timing. Extended real-cache
+      training/DQ, exact 1202-session materialization, TRADING-2483 manifest replay
+      and QuantConnect remain separate later actions and are not run in this development
+      wave.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
+      Owner instruction 2026-08-29: 好的，那先修复吧. Bound to generic non-executable DATA_RESEARCH
+      producer contract/implementation and offline synthetic validation only. SHY
+      may serve only as explicitly identified pre-SGOV training cash-reference proxy;
+      evaluated trend semantics and options mapping remain unchanged. orders/fills/positions/paper/live/production/broker=0/false/none.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542i-operational-forecast-producer-20260829-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3721cbbe65234f492942dc883e03e8d2
+- schema_version: task_event.v1
+  task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-29T07:13:32.9871977Z'
+  actor: integration-coordinator
+  change_id: trading-2542i-operational-forecast-producer-20260829-v3
+  lane_id: null
+  base_commit: 27ff2d6457255027c4c649014d2a1e9d454ac1dd
+  previous_state_event_id: task-event-3721cbbe65234f492942dc883e03e8d2
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / separately authorize extended 2018-01-02..2025-12-02
+      training-history DQ and exact 1202-session real-cache source materialization;
+      QuantConnect remains a later separate authorization
+    blocker_or_next_step: The generic producer contract and implementation now preserve
+      the existing four scorecards/five-state composer while fixing mature-label PIT,
+      unique latest-fit selection, terminal feature-only emission and next-XNYS timing.
+      Synthetic 1202/1202 output passes the existing exact source admission. Real
+      extended-history DQ/materialization was not authorized or run, so no real source
+      package, TRADING-2483 manifest replay or QuantConnect result exists.
+    acceptance_criteria: After separate authorization, run canonical extended-history
+      DQ for QQQ/TQQQ/SHY from 2018-01-02, SGOV from 2020-05-28 and required rates;
+      bind exact input/code/config identity; materialize the real 2021-02-22..2025-12-02
+      1202-session source; require operational receipt and existing exact source admission
+      PASS, then run TRADING-2483 package manifest replay. QuantConnect/backtest remains
+      separately authorized. No gap fill, proxy in evaluation, option-driven trend
+      redesign, orders/fills/positions/paper/live/production/broker.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
+      Development evidence before formal tiers: synthetic generic producer + existing
+      admission + Atlas focused suite=17 passed; Ruff, strict mypy and py_compile
+      PASS. Extended real DQ/materialization/package manifest replay/QuantConnect/backtest=NOT_RUN;
+      orders/fills/positions/paper/live/production/broker=0/false/none.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542i-operational-forecast-producer-20260829-v3
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d3711ca122d343428609bce220d0fc51
 projection:
   legacy_first_eight_cells:
   - TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
   - QQQ options exact signal source and implementation policy owner-review draft V1
   - P0
   - BLOCKED_OWNER_INPUT
-  - Project Owner / review and authorize a separately governed operational forecast
-    producer contract covering pre-evaluation training history, label-free terminal
-    prediction emission, unique out-of-sample fold selection, and next-XNYS timing;
-    QuantConnect remains unauthorized
-  - 'Exact-window canonical DQ now PASSes, but unchanged first_layer_composer_v2 regeneration
-    is not an operational one-row-per-session forecast source: 630/1202 unique sessions
-    over 2023-02-22..2025-08-26, 572 missing, 588 duplicate sessions with 1134 excess
-    rows, and 73 non-XNYS decision_at rows. Typed source admission is REJECT and no
-    signal package, manifest replay, or QuantConnect run was produced.'
-  - A separately reviewed producer contract must preserve trend direction semantics
-    while explicitly governing training history before the 2021-02-22 evaluation start,
-    prediction emission without future-label dependence through 2025-12-02, exactly
-    one out-of-sample row per 1202 XNYS sessions, and next-XNYS timing. Then canonical
-    DQ, source admission, TRADING-2483 package generation, and manifest replay must
-    PASS before any separately authorized QuantConnect research backtest. No gap fill,
-    warm-start diagnostic, training-window reduction, options-driven trend redesign,
-    provider/raw payload/order/fill/position/paper/live/production/broker action.
+  - Project Owner / separately authorize extended 2018-01-02..2025-12-02 training-history
+    DQ and exact 1202-session real-cache source materialization; QuantConnect remains
+    a later separate authorization
+  - The generic producer contract and implementation now preserve the existing four
+    scorecards/five-state composer while fixing mature-label PIT, unique latest-fit
+    selection, terminal feature-only emission and next-XNYS timing. Synthetic 1202/1202
+    output passes the existing exact source admission. Real extended-history DQ/materialization
+    was not authorized or run, so no real source package, TRADING-2483 manifest replay
+    or QuantConnect result exists.
+  - After separate authorization, run canonical extended-history DQ for QQQ/TQQQ/SHY
+    from 2018-01-02, SGOV from 2020-05-28 and required rates; bind exact input/code/config
+    identity; materialize the real 2021-02-22..2025-12-02 1202-session source; require
+    operational receipt and existing exact source admission PASS, then run TRADING-2483
+    package manifest replay. QuantConnect/backtest remains separately authorized.
+    No gap fill, proxy in evaluation, option-driven trend redesign, orders/fills/positions/paper/live/production/broker.
   - 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
-    Real DQ receipt/report SHA-256 425c10b33fe1d5e5868cab3496cb7c8ff7ce971ebc60b74a6a4333486f72a841/715934220efc952e04a7868f18ba5dbf4c874e9772377c5e9330308b01d60ce8;
-    source SHA-256 731f77584c5cb6edb8dce878937e5c918192f3fbbd9c89c907d870c43d08d677;
-    admission receipt/report/lineage SHA-256 c61ae393b2ed08021ce15da927b3cef25c66289fb38511ab1faa4bc196bb9837/4ecabbf06c0b7d572010d9c493a7e9e6b72af5f53eb83ef47627cab1888547f4/6475186902cb48b4bf9029bc2d2f5148601f19aac6ba0eaa06c284771c063cde.
-    QuantConnect/provider/raw option payload/orders/fills/positions/production/broker=NOT_RUN/0/none.'
+    Development evidence before formal tiers: synthetic generic producer + existing
+    admission + Atlas focused suite=17 passed; Ruff, strict mypy and py_compile PASS.
+    Extended real DQ/materialization/package manifest replay/QuantConnect/backtest=NOT_RUN;
+    orders/fills/positions/paper/live/production/broker=0/false/none.'
   docs_links:
   - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
   terminal: false
-  canonical_row_sha256: c25c01c7aca63a3e38b3c577cd7e285642413cdb1778be77429055ca928f7edf
-last_event_id: task-event-f962aa1778f2572dddb152507d4a032a
+  canonical_row_sha256: e47b7b2c6a781b637dbf088c9085971580946511d35872cc758cc1db71c16e07
+last_event_id: task-event-d3711ca122d343428609bce220d0fc51
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: e6b79368309726c22e18f40a34b19aaac2488b807b4c4f99b06db9a8dd26ed35
+fragment_checksum: 63e62267511c13cc01c19995a9519ca6c17b73ea7248ab83db9a7f77cc1d3236

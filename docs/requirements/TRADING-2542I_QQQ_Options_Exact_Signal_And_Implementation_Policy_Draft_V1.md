@@ -212,6 +212,33 @@ manifest replay 与 QuantConnect 均未运行。下一步需要 Owner 审阅独�
 解耦以覆盖末端、从 overlapping walk-forward folds 形成唯一 out-of-sample session row，以及统一
 next-XNYS timing；这些都不能作为“期权适配”静默改进现有趋势 policy。
 
+### S2C：generic operational forecast producer repair（当前）
+
+Owner 已指示“先修复”，授权范围绑定到通用 first-layer producer 合同、实现与 synthetic validation，
+不是趋势到期权策略转换，也不授权 extended real-cache materialization 或 QuantConnect/backtest。V1 合同：
+
+- 保持 `MODEL_SPECS` 四个 scorecard、`first_layer_composer_v2` 五态 precedence、504-session rolling
+  train window、20-session label horizon、0.65 positive-score quantile、各 model positive sample floor 与
+  21-session refit cadence；
+- evaluation window 固定为 `2021-02-22..2025-12-02` 的 1202 个 XNYS sessions；训练历史从
+  `2018-01-02` 开始，以容纳 126-session feature warm-up、504 个成熟训练样本与 20-session label maturity；
+- SGOV 上市前只允许 SHY daily return 作为显式 `TRAINING_INITIALIZATION_ONLY` cash-reference proxy，
+  通过 return splice 连接到 SGOV；evaluation window 内 proxy row 必须为 0，不能把 proxy 结果冒充 exact
+  evaluation input；
+- 每次 fit 只选择 `label_end_session <= fit_session` 的最新 504 个样本，消除原 offline validation 把
+  尚未成熟 forward outcome 带入训练的 PIT 风险；
+- 每个 evaluation session 只使用最近一次 fit，禁止 overlapping validation rows 重复发射；prediction
+  不 join 当日/未来 label，因此末端 2025-12-02 仍可合法发射；
+- `date/known_at/available_at` 表示已完成 feature session，`decision_at` 必须是 exact next valid XNYS
+  session，不再使用普通 `BDay(1)`；
+- producer 必须先看到 extended-history DQ=`PASS` 与 exact DQ identity 才允许运行；本开发波只用 synthetic
+  frame 验证上述合同，不读取或物化扩展真实训练窗，不生成 options signal package。
+
+这不是对旧 research artifact 的覆写。旧 `first_layer_composer_v2_predictions.csv` 继续作为 immutable
+research/diagnostic evidence；新 producer 仅复用其方向语义和冻结 policy，以单独版本输出 operational
+forecast source。任何 scorecard weight、composer precedence、training window、label horizon、cash proxy、
+evaluation window 或 executable scope 变更都必须重新审阅。
+
 ### S3：bounded QuantConnect run（需再次单独授权）
 
 - 只在 S2 PASS 后提交固定 project/code/manifest/maxima 的 R1 research sandbox run；
@@ -242,6 +269,8 @@ generated architecture/report-flow/compatibility authority 与 formal validation
 - `exact_1202_session_signal_package_present=false`；
 - `signal_package_preparation_authorized=true`；
 - `real_dq_and_existing_producer_regeneration_authorized=true`；
+- `generic_operational_forecast_contract_and_implementation_authorized=true`；
+- `extended_training_history_real_dq_or_materialization_authorized=false`；
 - `manifest_generation_authorized=true` only when exact source/DQ/PIT identity and 1202/1202 coverage PASS；
 - `qc_backtest/qc_project_mutation/provider_query=false`；
 - `raw_option_payload_download_or_export=false`；
@@ -255,6 +284,7 @@ generated architecture/report-flow/compatibility authority 与 formal validation
 - `regenerated_signal_non_xnys_decision_at_rows=73`；
 - `signal_source_admission=REJECT`；
 - `signal_package_writer/manifest_replay/quantconnect=NOT_RUN`。
+- `operational_forecast_development_validation=SYNTHETIC_ONLY`；
 
 ## 9. 进度记录
 
@@ -340,3 +370,17 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   `PUBLICATION_PHASE_MISMATCH` fail closed。没有 Full pytest、local main、push、DQ/backtest 或外部动作。
   v19 必须按 `FAILED` 释放；后继 transaction 不再手动发送 `FULL_DISPATCHED`，由 Full runner 管理该
   checkpoint 与 `FORMAL_VALIDATION_RESULT`。
+- 2026-08-29：Owner 指示“好的，那先修复吧”，任务恢复为 `IN_PROGRESS`。授权仅覆盖通用 first-layer
+  operational forecast producer 的 policy、实现和 synthetic validation；不把期权结果作为趋势 feature/
+  label，不运行 extended real-cache materialization、TRADING-2483 manifest replay、QuantConnect 或回测。
+  V1 选择显式 training-only SHY→SGOV return splice，使 2018 起现有训练历史能够容纳 126-session feature
+  warm-up、504 个成熟样本和 20-session label maturity；evaluation 从 2021-02-22 起仅使用 SGOV。producer
+  把 label construction 与 feature-only emission 解耦，每 21 sessions refit、每个 session 只选最近 fit，
+  并以 exact next-XNYS 取代 `BDay(1)`。
+- 2026-08-29：publication transaction
+  `trading-2542i-operational-forecast-20260829-v2` 在 `TASK_SOURCE_PRE_WRITE` 后按 `FAILED` 释放，
+  candidate/formal validation/local main/push 均未发生。原因是 transaction 在 task-owned implementation
+  尚未形成 exact lane commit 前取得；Atlas authority 必须绑定包含 producer policy、实现、task event 与
+  live status 的 exact commit，不能把 dirty working-tree bytes 归到旧 HEAD。实现和 focused validation
+  结果保留并先形成可审计 lane commit；后继 transaction 从该 exact lane head 重新取得，再按 generator
+  order 重建 architecture、Atlas、report-flow 与 compatibility authority。

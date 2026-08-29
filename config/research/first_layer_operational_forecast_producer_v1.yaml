@@ -1,0 +1,108 @@
+schema_version: first_layer_operational_forecast_producer_policy.v1
+policy_id: first_layer_operational_forecast_producer_v1
+policy_version: 1.0.0
+status: OWNER_APPROVED_NON_EXECUTABLE_DATA_RESEARCH
+owner: project_owner
+owner_decision_id: owner_decision:TRADING-2542I:2026-08-29:fix_generic_operational_forecast_producer_v1
+policy_metadata:
+  rationale: >-
+    first_layer_composer_v2 的研究型 overlapping validation rows 不能充当逐日 operational
+    forecast source。本合同保持原四个 scorecard、五态 composer、504-session 训练窗、
+    20-session label horizon 与 21-session refit cadence，只把训练、标签成熟和逐日发射边界
+    明确化。
+  intended_effect: >-
+    在不依赖当日或未来 label 的前提下，为 primary evaluation window 的每个 XNYS session
+    产生唯一一行 OOS trend_state，并把 decision_at 精确映射到 next XNYS session。
+  validation_evidence: >-
+    TRADING-2542I synthetic golden/negative tests must prove exact session coverage, fixed-window
+    fits, label maturity, label-free terminal emission, unique rows and next-XNYS timing before
+    any real-cache materialization is considered.
+  review_condition: >-
+    Review before changing training history, cash-reference proxy, train window, label horizon,
+    refit cadence, scorecard weights, composer precedence, evaluation window or executable scope.
+evaluation_window:
+  calendar: XNYS
+  start: '2021-02-22'
+  end: '2025-12-02'
+  expected_session_count: 1202
+  research_window_id: exact_three_asset_validated
+training_history:
+  start: '2018-01-02'
+  feature_warmup_sessions: 126
+  required_price_assets:
+    - QQQ
+    - TQQQ
+    - SHY
+    - SGOV
+  required_rate_series:
+    - DGS10
+    - DGS2
+    - DTWEXBGS
+  cash_reference:
+    proxy_asset: SHY
+    exact_asset: SGOV
+    exact_asset_start: '2020-05-28'
+    transition_rule: RETURN_SPLICE_PROXY_UNTIL_FIRST_VALID_EXACT_RETURN
+    proxy_role: TRAINING_INITIALIZATION_ONLY
+    proxy_allowed_on_or_after_evaluation_start: false
+walk_forward:
+  mode: ROLLING_FIXED
+  train_window_sessions: 504
+  label_horizon_sessions: 20
+  refit_step_sessions: 21
+  label_maturity_rule: LABEL_END_SESSION_ON_OR_BEFORE_FIT_SESSION
+  fold_selection_rule: MOST_RECENT_FIT_EXACTLY_ONCE_PER_EVALUATION_SESSION
+  terminal_emission_rule: FEATURES_ONLY_NO_FORWARD_LABEL_JOIN
+model_contract:
+  model_id: first_layer_composer_v2
+  model_version: first_layer_composer_v2
+  model_specs_sha256: a9c91fd50e7d59f9efbd320be805fd98a683abf19ac083854585ad0c5d626870
+  required_model_ids:
+    - do_not_de_risk_model_v1
+    - stay_constructive_model_v1
+    - add_risk_model_v1
+    - high_confidence_risk_on_model_v1
+  allowed_states:
+    - constructive
+    - defensive
+    - neutral
+    - risk_off
+    - risk_on
+authorities:
+  threshold_policy:
+    path: config/research/first_layer_threshold_policy_v2.yaml
+    sha256: 9ba69cb281910f94e6cc49cea7a86555ad9f676e9bf81011b21d69fb216b470b
+  composer_policy:
+    path: config/research/first_layer_composer_v2.yaml
+    sha256: 24ec583e1afbf01c3ddb16b43eaef6b2479ea67be6df87a1508e831b1585ffc3
+  label_taxonomy:
+    path: config/research/upper_state_label_taxonomy_v2.yaml
+    sha256: f156ed90ca6f2038a7a69d86790a62e92b8f1ab0d2abf7ec4f3b2d209c5fb309
+  action_value_policy:
+    path: config/research/action_value_score_policy_v2.yaml
+    sha256: d29c935167c3b15b9263af53287c32ecfb150bded20e859dd9ea4d359264ff05
+  frozen_probe_registry:
+    path: config/research/dynamic_second_layer_probe_registry_v2.yaml
+    sha256: 28ca2980406e590861d9184b7469d733bb8983a184824a7a5e8098ba72271679
+output_contract:
+  date_semantics: COMPLETED_XNYS_FEATURE_SESSION
+  known_at_semantics: SAME_COMPLETED_XNYS_SESSION
+  available_at_semantics: SAME_COMPLETED_XNYS_SESSION
+  decision_at_semantics: NEXT_VALID_XNYS_SESSION
+  exactly_one_row_per_evaluation_session: true
+  forward_label_columns_allowed: false
+  cross_session_fill_allowed: false
+safety:
+  scope: NON_EXECUTABLE_DATA_RESEARCH
+  real_cache_materialization_authorized_in_this_wave: false
+  quantconnect_project_mutation_allowed: false
+  quantconnect_backtest_allowed: false
+  provider_query_allowed: false
+  raw_option_payload_allowed: false
+  orders: 0
+  fills: 0
+  positions: 0
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_action: none

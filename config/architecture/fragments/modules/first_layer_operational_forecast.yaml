@@ -1,0 +1,16 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.first_layer_operational_forecast
+fragment_kind: module
+owner: research_governance
+module_prefix: src/ai_trading_system/first_layer_operational_forecast.py
+public_contracts:
+  - DEFAULT_OPERATIONAL_FORECAST_POLICY_PATH
+  - LoadedOperationalForecastPolicy
+  - OperationalForecastError
+  - OperationalForecastProducerPolicy
+  - OperationalForecastResult
+  - build_operational_forecast_series
+  - load_operational_forecast_policy
+  - write_operational_forecast_artifacts
+compatibility_facades: []
+deprecation_status: active_reference_architecture
