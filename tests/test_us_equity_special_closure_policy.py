@@ -11,6 +11,7 @@ import pytest
 import yaml
 
 from ai_trading_system.us_equity_special_closure_policy import (
+    CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH,
     DEFAULT_US_EQUITY_SPECIAL_CLOSURE_POLICY_PATH,
     US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_SHA256,
     US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH,
@@ -40,8 +41,11 @@ def test_reviewed_policy_exposes_exact_receipt_binding_metadata() -> None:
     policy_path = DEFAULT_US_EQUITY_SPECIAL_CLOSURE_POLICY_PATH.resolve()
     policy = load_us_equity_special_closure_policy(policy_path)
 
-    assert US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix() == (
+    assert CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix() == (
         "config/data/us_equity_special_closure_registry.yaml"
+    )
+    assert US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix() == (
+        "config/data/archive/us_equity_special_closure_registry_1_0_0.yaml"
     )
     assert policy.policy_id == "us_equity_special_closure_registry"
     assert policy.policy_version == "1.1.0"

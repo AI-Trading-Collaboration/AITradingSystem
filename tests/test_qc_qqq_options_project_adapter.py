@@ -31,6 +31,9 @@ from ai_trading_system.qqq_options_research.qc_project_adapter import (
     load_qc_qqq_options_project_adapter_policy,
     load_qqq_options_signal_package_for_qc,
 )
+from ai_trading_system.qqq_options_research.qc_project_adapter_v2 import (
+    load_qc_qqq_options_project_adapter_policy as load_qc_qqq_options_project_adapter_policy_v2,
+)
 from ai_trading_system.qqq_options_research.signal_package import (
     QQQOptionsSignalIndex,
     QQQOptionsSignalPackage,
@@ -48,7 +51,7 @@ _DQ_REPORT_SHA = "d" * 64
 
 
 def test_adapter_v2_binds_signal_export_v2_without_cloud_authority() -> None:
-    loaded = load_qc_qqq_options_project_adapter_policy(
+    loaded = load_qc_qqq_options_project_adapter_policy_v2(
         Path("config/research/qc_qqq_options_project_adapter_contract_v2.yaml")
     )
 

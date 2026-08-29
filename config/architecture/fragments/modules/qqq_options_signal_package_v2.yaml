@@ -1,0 +1,22 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_signal_package_v2
+fragment_kind: module
+owner: research_engineering
+module_prefix: src/ai_trading_system/qqq_options_research/signal_package_v2.py
+public_contracts:
+  - NormalizedDailySignalInput
+  - ResearchWindowRole
+  - ReviewedResearchWindowAuthority
+  - SignalSourceArtifact
+  - SignalArtifactDigest
+  - QQQOptionsSignalIndex
+  - QQQOptionsSignalPackageReceipt
+  - QQQOptionsSignalExportPolicy
+  - QQQOptionsSignalPackage
+  - load_qqq_options_signal_export_policy
+  - next_us_equity_trading_session
+  - resolve_normalized_signal_effective_session
+  - build_qqq_options_signal_package
+  - write_qqq_options_signal_package
+compatibility_facades: []
+deprecation_status: active_reference_architecture

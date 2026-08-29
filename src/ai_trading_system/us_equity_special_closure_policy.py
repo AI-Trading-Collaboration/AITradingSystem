@@ -17,17 +17,23 @@ from ai_trading_system.yaml_loader import (
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH = Path(
-    "config/data/us_equity_special_closure_registry.yaml"
-)
 US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_RELATIVE_PATH = Path(
     "config/data/archive/us_equity_special_closure_registry_1_0_0.yaml"
+)
+# Historical v1 option modules import this exact name and are frozen by file hash.
+# Keep the legacy symbol bound to its immutable 1.0.0 bytes; current consumers
+# must use the explicitly named current path below.
+US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH = (
+    US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_RELATIVE_PATH
+)
+CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH = Path(
+    "config/data/us_equity_special_closure_registry.yaml"
 )
 US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_SHA256 = (
     "c0469a17a775df2dcde503c254c22db0cc7d8ad6e3a5884f2ed43c88e4dfbda4"
 )
 DEFAULT_US_EQUITY_SPECIAL_CLOSURE_POLICY_PATH = (
-    PROJECT_ROOT / US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH
+    PROJECT_ROOT / CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH
 )
 US_EQUITY_SPECIAL_CLOSURE_SCHEMA_VERSION = "us_equity_special_closure_registry.v1"
 US_EQUITY_SPECIAL_CLOSURE_POLICY_ID = "us_equity_special_closure_registry"
@@ -225,7 +231,9 @@ def load_us_equity_special_closure_policy_by_identity(
 ) -> UsEquitySpecialClosurePolicy:
     """Resolve current or archived reviewed calendar bytes by exact identity."""
 
-    candidates = [project_root / US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH]
+    candidates = [
+        project_root / CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH
+    ]
     if (
         policy_version == "1.0.0"
         and policy_sha256 == US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_SHA256

@@ -16,6 +16,11 @@ from ai_trading_system.qqq_options_capability_admission import (
     verify_qc_qqq_options_capability_admission_receipt,
 )
 from ai_trading_system.trading_calendar import us_equity_market_session
+from ai_trading_system.us_equity_special_closure_policy import (
+    CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH,
+    US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_RELATIVE_PATH,
+    US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_SHA256,
+)
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_QC_QQQ_OPTIONS_CAPABILITY_DISCOVERY_AUTHORIZATION_PATH = Path(
@@ -73,8 +78,16 @@ def load_qc_qqq_options_capability_discovery_authorization(
         }
         resolved_bindings: dict[str, Path] = {}
         for field, (relative_path, expected_sha256) in bound_paths.items():
+            binding_path = Path(relative_path)
+            if (
+                field == "calendar policy"
+                and binding_path
+                == CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH
+                and expected_sha256 == US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_SHA256
+            ):
+                binding_path = US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_RELATIVE_PATH
             resolved = _require_bound_regular_file(
-                Path(relative_path),
+                binding_path,
                 project_root=resolved_root,
                 field=field,
             )

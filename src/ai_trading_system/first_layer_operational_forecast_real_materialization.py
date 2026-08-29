@@ -41,11 +41,11 @@ from ai_trading_system.qqq_options_research.exact_signal_package_admission impor
     load_exact_signal_package_admission_policy,
     write_exact_signal_package_admission_receipt,
 )
-from ai_trading_system.qqq_options_research.qc_project_adapter import (
+from ai_trading_system.qqq_options_research.qc_project_adapter_v2 import (
     LoadedQQQOptionsSignalPackage,
     load_qqq_options_signal_package_for_qc,
 )
-from ai_trading_system.qqq_options_research.signal_package import (
+from ai_trading_system.qqq_options_research.signal_package_v2 import (
     NormalizedDailySignalInput,
     SignalSourceArtifact,
     build_qqq_options_signal_package,

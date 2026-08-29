@@ -50,6 +50,9 @@ from ai_trading_system.qqq_options_research.signal_package import (
     resolve_normalized_signal_effective_session,
     write_qqq_options_signal_package,
 )
+from ai_trading_system.qqq_options_research.signal_package_v2 import (
+    load_qqq_options_signal_export_policy as load_qqq_options_signal_export_policy_v2,
+)
 
 _REPOSITORY_SHA = "a" * 40
 _DQ_BYTES_STATUS = Literal["PASS", "PASS_WITH_WARNINGS", "FAIL"]
@@ -60,7 +63,7 @@ _CREATED_AT = datetime(2021, 3, 1, 12, 0, tzinfo=UTC)
 
 
 def test_signal_export_v2_binds_current_reviewed_calendar() -> None:
-    loaded = load_qqq_options_signal_export_policy(
+    loaded = load_qqq_options_signal_export_policy_v2(
         Path("config/research/qqq_options_signal_export_v2.yaml")
     )
 

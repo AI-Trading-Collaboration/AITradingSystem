@@ -893,7 +893,11 @@ verifier重验时policy或实现漂移均fail closed。`config/data_quality.yaml
 `config/data/archive/us_equity_special_closure_registry_1_0_0.yaml`按原 SHA 保留旧 calendar bytes；历史
 attribution与 TRADING-2483 v1 policy 只能按 exact version/SHA 解析该归档，不能从当前文件反推旧事实。
 新 `qqq_options_signal_export_v2` 与 `qc_qqq_options_project_adapter_contract_v2` 绑定当前 `1.1.0`，保留原
-package layout、lag、DQ/PIT、raw-export 与 no-cloud-run 边界，只升级 calendar identity。
+package layout、lag、DQ/PIT、raw-export 与 no-cloud-run 边界，只升级 calendar identity。v1
+`signal_package.py` / `qc_project_adapter.py` 保持历史 exact-frozen bytes；v2 支持隔离在
+`signal_package_v2.py` / `qc_project_adapter_v2.py`，不得通过改写 v1 module hash 追认新能力。旧 v1
+option module import symbol 与 2026-08-04 capability-discovery authorization 的精确旧 calendar hash 只解析
+到 1.0.0 archive；canonical DQ、trading calendar 与 v2 consumer 均显式使用 current 1.1.0 path。
 
 prices/rates继续拒绝NaN/Inf；canonical pointer、immutable member、source allocation、manifest、
 legacy projection、session policy、calendar authority或window任一不一致均在receipt/downstream前

@@ -5,8 +5,8 @@ from datetime import UTC, date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 from ai_trading_system.us_equity_special_closure_policy import (
+    CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH,
     US_EQUITY_DECISION_CALENDAR_ID,
-    US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH,
     UsEquitySpecialClosure,
     default_us_equity_special_closure_policy,
 )
@@ -16,7 +16,7 @@ NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE = (
     "Martin Luther King Jr. Day, Washington's Birthday, Good Friday, "
     "Memorial Day, Juneteenth (2022 onward), Independence Day, Labor Day, "
     "Thanksgiving Day, and Christmas Day; combined with the reviewed "
-    f"{US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix()} registry."
+    f"{CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix()} registry."
 )
 NYSE_PARTIAL_TRADING_DAY_CALENDAR_SOURCE = (
     "NYSE scheduled partial trading day baseline: Independence Day Eve when it "

@@ -55,7 +55,7 @@ from ai_trading_system.data.quality import (
     validate_data_cache,
 )
 from ai_trading_system.us_equity_special_closure_policy import (
-    US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH,
+    CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH,
     UsEquitySpecialClosurePolicy,
     load_us_equity_special_closure_policy,
 )
@@ -293,7 +293,7 @@ def load_reviewed_data_quality_policy(
 
 
 def _load_reviewed_calendar_policy(root: Path) -> UsEquitySpecialClosurePolicy:
-    relative = US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix()
+    relative = CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix()
     try:
         return load_us_equity_special_closure_policy(root / Path(relative))
     except ValueError as exc:
@@ -454,7 +454,7 @@ def run_canonical_data_quality_execution(
         mismatch_code="DQ_POLICY_SHA_MISMATCH",
     )
     _assert_file_unchanged(
-        US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix(),
+        CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix(),
         calendar_policy.path,
         expected_sha256=calendar_policy.sha256,
         mismatch_code="DQ_CALENDAR_POLICY_SHA_MISMATCH",
@@ -1180,7 +1180,7 @@ def _invocation_bindings(
         ),
         "calendar_id": calendar_policy.calendar_id,
         "calendar_policy_id": calendar_policy.policy_id,
-        "calendar_policy_path": US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix(),
+        "calendar_policy_path": CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix(),
         "calendar_policy_schema_version": calendar_policy.schema_version,
         "calendar_policy_sha256": calendar_policy.sha256,
         "calendar_policy_version": calendar_policy.policy_version,
@@ -1502,7 +1502,7 @@ def _verify_calendar_policy_invocation(
     invocation: Mapping[str, object],
     project_root: Path,
 ) -> None:
-    expected_path = US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix()
+    expected_path = CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix()
     if invocation.get("calendar_policy_path") != expected_path:
         raise DataQualityExecutionError(
             "DQ_CALENDAR_POLICY_PATH_MISMATCH",

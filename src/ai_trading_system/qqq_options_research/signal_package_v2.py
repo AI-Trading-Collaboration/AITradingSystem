@@ -42,13 +42,12 @@ from ai_trading_system.trading_calendar import (
 )
 from ai_trading_system.us_equity_special_closure_policy import (
     US_EQUITY_DECISION_CALENDAR_ID,
-    US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH,
-    load_us_equity_special_closure_policy,
+    load_us_equity_special_closure_policy_by_identity,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_QQQ_OPTIONS_SIGNAL_EXPORT_POLICY_PATH = Path(
-    "config/research/qqq_options_signal_export_v1.yaml"
+    "config/research/qqq_options_signal_export_v2.yaml"
 )
 
 _SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
@@ -321,8 +320,8 @@ class QQQOptionsSignalPackageReceipt(_StrictModel):
     created_at_utc: datetime
     producer_version: str
     repository_code_sha: str
-    policy_id: Literal["qqq_options_signal_export_v1"]
-    policy_version: Literal["1.0.0"]
+    policy_id: Literal["qqq_options_signal_export_v1", "qqq_options_signal_export_v2"]
+    policy_version: Literal["1.0.0", "2.0.0"]
     policy_sha256: str
     shared_contract_sha256: str
     shared_policy_sha256: str
@@ -379,6 +378,11 @@ class QQQOptionsSignalPackageReceipt(_StrictModel):
 
     @model_validator(mode="after")
     def _validate_receipt(self, info: ValidationInfo) -> Self:
+        if (self.policy_id, self.policy_version) not in {
+            ("qqq_options_signal_export_v1", "1.0.0"),
+            ("qqq_options_signal_export_v2", "2.0.0"),
+        }:
+            raise ValueError("signal package policy id/version pair drifted")
         paths = tuple(item.relative_path for item in self.daily_signal_artifacts)
         if not paths or paths != tuple(sorted(paths)) or len(paths) != len(set(paths)):
             raise ValueError("daily signal receipt artifacts must be sorted and unique")
@@ -446,8 +450,8 @@ class QQQOptionsSignalPackageReceipt(_StrictModel):
 
 class QQQOptionsSignalExportPolicy(_StrictModel):
     schema_version: Literal["qqq_options_signal_export_policy.v1"]
-    policy_id: Literal["qqq_options_signal_export_v1"]
-    policy_version: Literal["1.0.0"]
+    policy_id: Literal["qqq_options_signal_export_v1", "qqq_options_signal_export_v2"]
+    policy_version: Literal["1.0.0", "2.0.0"]
     status: Literal["REVIEWED_OFFLINE_BASELINE"]
     owner: str
     owner_instruction: str
@@ -461,7 +465,7 @@ class QQQOptionsSignalExportPolicy(_StrictModel):
     dq_pit_policy_sha256: str
     calendar_id: Literal["XNYS"]
     calendar_policy_id: Literal["us_equity_special_closure_registry"]
-    calendar_policy_version: Literal["1.0.0"]
+    calendar_policy_version: Literal["1.0.0", "1.1.0"]
     calendar_policy_sha256: str
     input_mode: Literal["PRE_NORMALIZED_ONLY"]
     approved_signal_values: tuple[SignalDirection, ...]
@@ -512,6 +516,11 @@ class QQQOptionsSignalExportPolicy(_StrictModel):
 
     @model_validator(mode="after")
     def _validate_freeze(self) -> Self:
+        if (self.policy_id, self.policy_version) not in {
+            ("qqq_options_signal_export_v1", "1.0.0"),
+            ("qqq_options_signal_export_v2", "2.0.0"),
+        }:
+            raise ValueError("signal export policy id/version pair drifted")
         if self.shared_contract_sha256 != QQQ_OPTIONS_CONTRACT_SHA256:
             raise ValueError("2483 policy must bind the reviewed 2481 contract hash")
         if self.approved_signal_values != _APPROVED_SIGNAL_VALUES:
@@ -575,8 +584,10 @@ def load_qqq_options_signal_export_policy(
         policy = QQQOptionsSignalExportPolicy.model_validate(payload, strict=False)
         shared = load_qqq_options_shared_contract_policy(project_root=project_root)
         dq = load_qqq_options_dq_pit_identity_policy(project_root=project_root)
-        calendar = load_us_equity_special_closure_policy(
-            project_root / US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH
+        calendar = load_us_equity_special_closure_policy_by_identity(
+            policy_version=policy.calendar_policy_version,
+            policy_sha256=policy.calendar_policy_sha256,
+            project_root=project_root,
         )
         if policy.shared_policy_sha256 != shared.policy_sha256:
             raise ValueError("2483 policy must bind the exact 2481 policy bytes")
@@ -824,8 +835,10 @@ def build_qqq_options_signal_package(
         report_sha256=dq_receipt.report.sha256,
     )
 
-    calendar = load_us_equity_special_closure_policy(
-        project_root / US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH
+    calendar = load_us_equity_special_closure_policy_by_identity(
+        policy_version=policy.calendar_policy_version,
+        policy_sha256=policy.calendar_policy_sha256,
+        project_root=project_root,
     )
     expected_sessions = _evaluated_sessions(evaluated_start, evaluated_end)
     by_session: dict[date, NormalizedDailySignalInput] = {}

@@ -487,3 +487,17 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   `e5f883c74d33179010c42bf38039c1ad5ae0140780d259a3ce9e824f0a030ba8`；v10 已按 `FAILED`
   释放。修复必须让该历史断言用 archive path 对比原 commit path，保留 active 1.1.0 与历史 1.0.0 双重
   immutability；不得回退日历修复或改写历史 compatibility section。
+- 2026-08-29：publication transaction
+  `trading-2542i-materialization-publication-20260829-v11` 的 formal Architecture=`878 passed`、
+  Contract=`278 passed`、Integration=`995 passed`、Reproducibility=`24 passed`；Full=
+  `9852 passed / 3 skipped / 101 failed`，runtime summary SHA-256=
+  `077a7e491eac2b398338c20b5fa839031b9fd1034a714899a8cadce6f5677e3f`。失败集中于两个治理兼容性
+  根因：DQ execution discovery fixture 复制 active calendar 1.1.0 bytes 却仍声明 version 1.0.0；新 calendar
+  identity 支持直接改变了 TRADING-2483/2484 已 exact-freeze 的 v1 module bytes。v11 已按 `FAILED` 释放，
+  未发生 local main/push/QuantConnect dispatch。修复边界冻结为：把 v1 module 恢复到原 LF SHA-256
+  `ada45b6768b50180f2c21a54b0bed8c3bbf2b1a16ca965767b32569c0fce0cac` /
+  `86420ad9875cac47c5317ceeeda8892f5aa8d2ad310a0fe84ac7762fa4cf90a8`，把 1.1.0 支持隔离到 v2 module，
+  并让 current-default DQ fixture 声明 1.1.0；不得改写历史政策或放宽 replay/DQ gate。聚焦回归进一步
+  证明 frozen v1 module 必须继续解析其原 1.0.0 calendar，而 current DQ/trading/v2 consumer 必须解析
+  active 1.1.0；因此 calendar module 提供显式 legacy/current path 分离，且 2026-08-04 capability-discovery
+  authorization 仅在 path 与旧 hash 同时精确匹配时解析 immutable 1.0.0 archive。

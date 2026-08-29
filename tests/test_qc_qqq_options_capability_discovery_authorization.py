@@ -33,7 +33,7 @@ BOUND_PATHS = (
         "qc_qqq_options_admission_"
         "e3a987b2b671e922175b35783dded6f4bbfa51dd5aaa523f415547026434ba04.json"
     ),
-    Path("config/data/us_equity_special_closure_registry.yaml"),
+    Path("config/data/archive/us_equity_special_closure_registry_1_0_0.yaml"),
     Path("config/research/dynamic_walk_forward_policy.yaml"),
 )
 

@@ -377,7 +377,7 @@ def _receipt(
                     "us_equity_special_closure_registry.v1"
                 ),
                 "calendar_policy_sha256": calendar_policy_sha256,
-                "calendar_policy_version": "1.0.0",
+                "calendar_policy_version": "1.1.0",
                 "evaluated_window": DataQualityDateWindow(date(2021, 2, 22), AS_OF).to_dict(),
                 "execution_profile_id": profile_id,
                 "execution_profile_config_path": (
