@@ -311,3 +311,12 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   pre-run HEAD 精确复原并经 governed worktree audit 确认不再 dirty；真实再生成的 source、DQ 与 admission
   证据保留在本任务隔离输出和上述 immutable hashes。后继 transaction 必须从 exact lane commit 重开，
   不绕过 Atlas exact-commit 或 declared-path gate。
+- 2026-08-29：publication transaction
+  `trading-2542i-exact-signal-admission-20260829-v17` 在 `GENERATED_REBUILD_PRE` 后按 `FAILED` 释放，
+  candidate/full/main/push 均未发生。`docs/system_flow.md` 本次新增 flow 后，report-flow source seal 从旧值
+  发生预期漂移；重算结果为 byte count=`2309725`、file/LF SHA-256=
+  `a4248239b3f3b61c4971e819c91c5381070767b996ba281afa85c981d3ef365a`、git blob=
+  `f2b382eeacd169cbd30f22b603dd8855701e9e11`，entry count 仍为 `1159`。由于对应 frozen test 路径未在
+  v17 transaction 声明，未越权写入；v17 已释放 lease。后继 transaction 必须显式声明
+  `tests/test_devx_006d_report_catalog_flow_authority.py`，并从包含 seal config/test 更新的 exact lane head
+  重跑 architecture、Atlas、report-flow 与 compatibility authority。
