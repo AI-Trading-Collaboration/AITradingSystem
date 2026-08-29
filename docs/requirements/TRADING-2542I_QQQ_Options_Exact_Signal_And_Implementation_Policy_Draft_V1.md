@@ -511,3 +511,13 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   仍绑定旧 source SHA，继而使 rate issue review pack 的 current-inventory gate 级联失败。v13 已按 `FAILED`
   释放，未发生 main/push/QuantConnect dispatch。已按既有官方 builder 顺序重建 inventory 与 rate review
   pack，两者 validation 均 `PASS`；不改变 DQ issue semantics、source-owner decisions 或 isolation authority。
+- 2026-08-29：publication transaction
+  `trading-2542i-materialization-publication-20260829-v14` 在 refreshed DQ evidence 已形成候选
+  `7322ba0f3e95fcd565e026c8bea941511a1e37a1` 后运行 Architecture，结果为
+  `766 passed / 112 failed`，runtime summary SHA-256=
+  `6c48eaae2b96ed201f3bfec53357f54898e7121c9cba9cefcb8765a6a3230f27`。112 项失败同源：最新
+  TRADING-2542D compatibility successor 尚未接管两份 DQ 派生报告、两份 JSON evidence 与两份
+  validation JSON 的新 hash；历史 section 与 DQ/PIT/策略/执行语义本身没有失败。Contract 在确认
+  Architecture 失败后中止，Integration、Reproducibility、Full、local main、push 与 QuantConnect 均未运行。
+  v15 只把上述 6 个精确路径加入最新 successor 的 `superseded_live_source_paths`/`sources` 并重建
+  authority，不改写历史 section，也不改变趋势或期权逻辑。

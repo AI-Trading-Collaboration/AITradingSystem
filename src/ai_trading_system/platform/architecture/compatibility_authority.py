@@ -1609,6 +1609,8 @@ def _trading_2542d_section(
         "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v3.yaml",
         "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v3.yaml",
         "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v4.yaml",
+        "docs/data_quality/dq_issue_attribution_readiness_inventory_v1.md",
+        "docs/data_quality/rate_issue_attribution_review_pack_v1.md",
         (
             "docs/requirements/TRADING-2542D_Growth_Action_Value_DQ_PIT_And_"
             "Sample_Semantics_Freeze_Correction_V1.md"
@@ -1624,6 +1626,10 @@ def _trading_2542d_section(
         "inputs/architecture/arch_005_task_registry_index.yaml",
         "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
         "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+        "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.json",
+        "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.validation.json",
+        "inputs/data_quality/rate_issue_attribution_review_pack_v1.json",
+        "inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json",
         (
             "registry/development_tasks/56/"
             "5639c736aba8144507f4ba4b544ee0a4bd15bc19750824abcb588c8f0a325b8e.yaml"
