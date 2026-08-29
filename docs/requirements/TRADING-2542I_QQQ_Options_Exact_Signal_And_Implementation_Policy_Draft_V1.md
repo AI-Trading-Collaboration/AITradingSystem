@@ -468,3 +468,13 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   `arch_004g_deprecation_inventory_c78d774fd3eba11a1b82`，direct-writer count 仍为 `856`。v8 已按
   `FAILED` 释放，未形成 candidate、formal validation、main/push 或 QuantConnect dispatch；后继
   transaction 必须从包含上述 frozen assertion 的 exact lane head 重建 architecture manifest 后再验证。
+- 2026-08-29：publication transaction
+  `trading-2542i-materialization-publication-20260829-v9` 的 focused/adjacent=`263 passed`，候选=
+  `5ce80319b7bc4499b40cbd62a95061912d57f78d`；首个 formal Architecture=`763 passed / 115 failed`。
+  115 项失败均由同一 compatibility successor coverage 缺口级联：最新 2542D source-hash authority 未接管
+  本任务改动的 10 个既有 live-source 路径（日历 registry/policy、DQ attribution、signal package、QC
+  adapter 及其 tests）。失败 runtime summary SHA-256=
+  `0f5ce8e5c421ef7e7548a8b96e6df5158dfc95da66a1308aee40897c5b780150`。v9 已按 `FAILED`
+  释放；Contract/Integration/Reproducibility/Full/main/push/QuantConnect 均未运行。修复仅向最新
+  successor 的 `superseded_live_source_paths`/`sources` 增加精确 10 路径，不改写任何历史 section，且不改变
+  数据流、DQ/PIT、策略或执行边界。

@@ -1604,6 +1604,7 @@ def _trading_2542d_section(
         "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
         "config/atlas/live_snapshot.yaml",
         "config/atlas/page_effectiveness.yaml",
+        "config/data/us_equity_special_closure_registry.yaml",
         "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v2.yaml",
         "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v3.yaml",
         "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v3.yaml",
@@ -1628,9 +1629,13 @@ def _trading_2542d_section(
             "5639c736aba8144507f4ba4b544ee0a4bd15bc19750824abcb588c8f0a325b8e.yaml"
         ),
         "scripts/render_atlas_strategy_research_page.py",
+        "src/ai_trading_system/contracts/data_quality_attribution.py",
         "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "src/ai_trading_system/qqq_options_research/qc_project_adapter.py",
+        "src/ai_trading_system/qqq_options_research/signal_package.py",
         "src/ai_trading_system/strategy_growth_action_value_dq_pit_contract_v3.py",
         ("src/ai_trading_system/strategy_growth_action_value_freeze_readiness_contract_v4.py"),
+        "src/ai_trading_system/us_equity_special_closure_policy.py",
         "tests/atlas/test_cited_query_renderer.py",
         "tests/atlas/test_historical_projection_review.py",
         "tests/atlas/test_live_snapshot.py",
@@ -1638,11 +1643,16 @@ def _trading_2542d_section(
         "tests/test_arch_004_refactor_policy.py",
         "tests/test_arch_004g_deprecation.py",
         "tests/test_arch_005_s5_task_source_cutover.py",
+        "tests/test_data_quality.py",
         "tests/test_devx_006c_compatibility_authority.py",
         "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "tests/test_qc_qqq_options_project_adapter.py",
+        "tests/test_qqq_options_signal_package.py",
         "tests/test_strategy_growth_action_value_dq_pit_contract_v3.py",
         "tests/test_strategy_growth_action_value_freeze_readiness_contract_v4.py",
         "tests/test_trading2452_architecture_contract.py",
+        "tests/test_trading_calendar.py",
+        "tests/test_us_equity_special_closure_policy.py",
     ]
     source_paths = sorted(source_paths, key=str.casefold)
     report_flow_index_path = (
