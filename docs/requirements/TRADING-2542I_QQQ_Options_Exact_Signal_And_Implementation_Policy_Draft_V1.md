@@ -478,3 +478,12 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   释放；Contract/Integration/Reproducibility/Full/main/push/QuantConnect 均未运行。修复仅向最新
   successor 的 `superseded_live_source_paths`/`sources` 增加精确 10 路径，不改写任何历史 section，且不改变
   数据流、DQ/PIT、策略或执行边界。
+- 2026-08-29：publication transaction
+  `trading-2542i-materialization-publication-20260829-v10` 在 successor coverage 修复后，代表性 compatibility
+  focused=`16 passed`，formal Architecture 收敛至 `877 passed / 1 failed`。唯一失败为 Batch4 历史冻结
+  测试仍直接要求 active `us_equity_special_closure_registry.yaml` 等于旧 1.0.0 commit 字节，未识别本任务已把
+  exact 1.0.0 bytes 归档到 `config/data/archive/us_equity_special_closure_registry_1_0_0.yaml` 后才把 active
+  policy 升至 1.1.0。失败 artifact SHA-256=
+  `e5f883c74d33179010c42bf38039c1ad5ae0140780d259a3ce9e824f0a030ba8`；v10 已按 `FAILED`
+  释放。修复必须让该历史断言用 archive path 对比原 commit path，保留 active 1.1.0 与历史 1.0.0 双重
+  immutability；不得回退日历修复或改写历史 compatibility section。

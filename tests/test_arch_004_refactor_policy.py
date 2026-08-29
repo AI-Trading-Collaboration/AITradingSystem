@@ -749,6 +749,11 @@ ARCH_005M1_BATCH4_FROZEN_PATHS = frozenset(
         "src/ai_trading_system/yaml_loader.py",
     }
 )
+ARCH_005M1_BATCH4_FROZEN_PATH_REPLAYS = {
+    "config/data/us_equity_special_closure_registry.yaml": (
+        "config/data/archive/us_equity_special_closure_registry_1_0_0.yaml"
+    ),
+}
 OPS_070_STABLE_RELEASE_SECTION = "phase_ops_070_stable_ops_deployment_release"
 OPS_070_STABLE_RELEASE_BASE_COMMIT = "00d98ddaa2828852c1086ea9176935643e11e205"
 OPS_070_STABLE_RELEASE_BASELINE_GIT_BLOB = "2872030cfea709051e775d868797cae834d0185d"
@@ -22388,9 +22393,13 @@ def test_arch_005m1_batch4_is_current_hash_authority() -> None:
         assert _source_sha256(source) == source["sha256"], source["path"]
 
     for path in ARCH_005M1_BATCH4_FROZEN_PATHS:
-        source = {"path": path, "hash_normalization": "git_eol_lf"}
-        assert _raw_source_sha256(source) == _source_sha256_at_commit(
-            source,
+        historical_source = {"path": path, "hash_normalization": "git_eol_lf"}
+        replay_source = {
+            "path": ARCH_005M1_BATCH4_FROZEN_PATH_REPLAYS.get(path, path),
+            "hash_normalization": "git_eol_lf",
+        }
+        assert _raw_source_sha256(replay_source) == _source_sha256_at_commit(
+            historical_source,
             ARCH_005M1_BATCH4_BASE_COMMIT,
         )
     assert phase["implementation"] == {
