@@ -27,7 +27,7 @@
       "fragment_count": 192,
       "fragment_shadow_active": false,
       "index_path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-      "index_sha256": "43bc32409d9338a174640656b79b4c2722fab1bc123ea2abb814c166f012b431",
+      "index_sha256": "e367aafb22fd8e60f4a05eaa57ec03a7ab5b11c0903e3db904955661d834de26",
       "source_of_truth": "LEGACY_MONOLITH",
       "target_count": 3
     },
@@ -42,12 +42,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
-        "sha256": "24fb263cf73fc5035719069b64495466fdb4122512fb3be409cad85e3d26787c"
+        "sha256": "d3fa03b6d381f1b0dcc13e0e93a35080aae8dae88106a551a3bb430ccd2606df"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "config/atlas/live_snapshot.yaml",
-        "sha256": "8538199b14ce4792dd1200f894c75c681cf1cc501147d73500a06881e96935c8"
+        "sha256": "cb467a42b18e3a2a799298f6763f38528c1e14615ec0526dfaa2a1f1e448c468"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -82,12 +82,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/system_flow.md",
-        "sha256": "a4248239b3f3b61c4971e819c91c5381070767b996ba281afa85c981d3ef365a"
+        "sha256": "9bf86d53cdd4a5aea97f7d94e96acd96ee52c5b18eb2c4066b6fa2e259fb4ddd"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "b315eb0cb50a78927cfe1f3d13004d3a73719a5217687ba8776d57c4f51487f4"
+        "sha256": "ff4eb1948cfc8c75b40a6984ced862941be7fecc9e9601cf866b82aed4dd7d08"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -97,37 +97,37 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "30a25a0825b87751446026c6755e1f29386c06bb920c2f6cb04e409b00656874"
+        "sha256": "f7769ac1ad9de24a74cce0cbe22d6a8f3a52a8cef2d77cf1640b14b5600863b1"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
-        "sha256": "0ff64a2ceae4e9f78255f6fcd219c22466288170b1afba156bfce7156d491e6a"
+        "sha256": "57937163eb0ce1829ec25ce6180a0737925ff4593fc0c929b57bf734c9b4b7ff"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "d665d43a89eed590711ab4c54a15bf74bb6c39d8fbf3a8cd7faeb1dc50c54da6"
+        "sha256": "222708718a8c5468f3a2019842e102877c034c9682970e75a7f85bd7c797c59e"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "4dad65642bce3e601aaaadf6bddea30223b9b868cc971534d98ad31842cf4d71"
+        "sha256": "0fcebbec42ff4dfa536256e6233ca042c9b0876fcd4b6c59f7f4d32d0c1dabda"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
-        "sha256": "52c2a8a78e5fe6ede9b2f2c960bcafe09ef9e696bbd76f5a5488d979588d6088"
+        "sha256": "cf0632a327b09e2c55cc087cc57cb293dd2408904d616d879646629c3b78bf6f"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "965e6e42662320ed4ea0af6ec1ccecfe91998a43526762067aaf134bb5a45dec"
+        "sha256": "4bc3c2b2cb47fd8898807f4f24aff6bad3dbf968d53b66b7b9c8fc547aafe216"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-        "sha256": "43bc32409d9338a174640656b79b4c2722fab1bc123ea2abb814c166f012b431"
+        "sha256": "e367aafb22fd8e60f4a05eaa57ec03a7ab5b11c0903e3db904955661d834de26"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -172,7 +172,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/atlas/test_live_snapshot.py",
-        "sha256": "7170850ee2cefacea3464c7cbdfedf7336012d0b558e97904f5853ba972c3b87"
+        "sha256": "5db349ffa3a73056e9bcfe9f70799adbe9e234331fefe730fe5e194f36931308"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -187,7 +187,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004g_deprecation.py",
-        "sha256": "f8de8352893e80bf8e32075c9800c225d6246ff64ff2d78057b5e2d11bbc4517"
+        "sha256": "4a488bb11020aa09a255c9ede627dfeaf223e8a383f4d69fe9005d2213eaa088"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -202,7 +202,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "c8ba0da79195cb7300003599ecb29745b59e53fa18fe215da0a934577ee73e26"
+        "sha256": "4d8566d2edcc6e0dd56245741609302609ea74d9d83f842657a3a13eaccae66a"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -267,5 +267,5 @@
     "task_id": "TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1"
   },
   "section_id": "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1",
-  "section_sha256": "59e8df5f2d3f870586600d99069da44b67f66df58ca106053f4451f850ef1f87"
+  "section_sha256": "fd6840ef64af99ac2efa7fdddbf74187aa0c8fe2489e9de72dbc876fb967787b"
 }

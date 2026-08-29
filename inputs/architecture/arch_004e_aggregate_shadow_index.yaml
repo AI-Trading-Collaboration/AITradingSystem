@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 146
+fragment_count: 148
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: a4248239b3f3b61c4971e819c91c5381070767b996ba281afa85c981d3ef365a
+  current_sha256: 9bf86d53cdd4a5aea97f7d94e96acd96ee52c5b18eb2c4066b6fa2e259fb4ddd
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 60
+  fragment_count: 61
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -47,6 +47,7 @@ targets:
   - config/architecture/fragments/flows/atlas_status_explanation_contract.yaml
   - config/architecture/fragments/flows/atlas_work_progress_explanation_page.yaml
   - config/architecture/fragments/flows/data_quality_capability.yaml
+  - config/architecture/fragments/flows/first_layer_operational_forecast.yaml
   - config/architecture/fragments/flows/growth_tilt_candidate_family_closure.yaml
   - config/architecture/fragments/flows/owner_daily_brief.yaml
   - config/architecture/fragments/flows/qc_qqq_options_bounded_cloud_pilot.yaml
@@ -203,6 +204,13 @@ fragments:
   target_id: system_flow
   path: config/architecture/fragments/flows/data_quality_capability.yaml
   sha256: 6dc9d594fe04d4c7923a9f71861a816ff33a286071a3191bdd4663afaef002b4
+  generated_source_of_truth_active: false
+- fragment_id: flow.first_layer_operational_forecast
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/first_layer_operational_forecast.yaml
+  sha256: 1067627e4eed2b4c057f12f3ce52249727c507a8c6ca33388257658e22b886ce
   generated_source_of_truth_active: false
 - fragment_id: flow.growth_tilt_candidate_family_closure
   fragment_kind: flow
@@ -658,6 +666,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/data_quality_capability_discovery.yaml
   sha256: 8e3b2858572886d9cee994176af06e572a5b7d059d89467bfeb2ae660aadf811
+  generated_source_of_truth_active: false
+- fragment_id: module.first_layer_operational_forecast
+  fragment_kind: module
+  owner: research_governance
+  target_id: null
+  path: config/architecture/fragments/modules/first_layer_operational_forecast.yaml
+  sha256: f6af39230f7f5d5a412c47317c6842aaad38e9343253a7831cb95e448a5bb03e
   generated_source_of_truth_active: false
 - fragment_id: module.qc_qqq_options_bounded_cloud_pilot
   fragment_kind: module
