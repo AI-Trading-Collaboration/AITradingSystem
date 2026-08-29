@@ -57,12 +57,12 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-WAVE20_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_019f5c6d635c6edefe02"
+WAVE20_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_c99b485888cf2f69e7c5"
 WAVE20_CURRENT_REPOSITORY_COUNTS = {
-    # TRADING-2542I adds one exact-signal policy loader and one focused test;
-    # no deprecation lifecycle or direct-writer allowance changes.
-    "python_module_count": 1171,
-    "python_test_file_count": 1331,
+    # TRADING-2542I adds the exact-freeze admission loader and focused test after
+    # the draft loader; no deprecation lifecycle or direct-writer allowance changes.
+    "python_module_count": 1172,
+    "python_test_file_count": 1332,
     "direct_writer_current_count": 856,
 }
 WAVE20_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(
