@@ -42,7 +42,7 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
     assert bundle.research_state_as_of.startswith("2026-08-29T")
-    assert bundle.evidence_evaluated_at is None
+    assert bundle.evidence_evaluated_at == "2026-08-29T09:52:54.398060+00:00"
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
     assert bundle.current_diff.after_snapshot_id == bundle.current_snapshot.snapshot_id
@@ -105,20 +105,17 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
 
     assert policy.current_mainline_task_id.startswith("TRADING-2542I_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
-    assert bundle.evidence_evaluated_at is None
+    assert bundle.evidence_evaluated_at == "2026-08-29T09:52:54.398060+00:00"
     assert bundle.status_object_zh == (
         "QQQ options 链路继续使用既有 first_layer_composer_v2 五态作为唯一方向事实，未新增期权"
-        "专用趋势模型；旧 research producer 的 630/1202 coverage、重复 rows 和 BDay timing 问题"
-        "已由独立 generic operational forecast producer 修复：保留四个 scorecard、五态 precedence、"
-        "504-session train window、20-session label horizon 与 21-session refit，显式治理评估窗前 "
-        "SHY→SGOV training-only cash reference，只使用 fit 当日已经成熟的 labels，每个 evaluation "
-        "session 只选择最近一次 fit，并以 feature-only emission 覆盖末端、以 next-XNYS 生成 "
-        "decision_at；synthetic exact-window 验证已产生 1202/1202 unique rows、末端 "
-        "2025-12-02 row、evaluation proxy rows=0，且无 forward-label column；extended-history "
-        "real DQ/materialization、TRADING-2483 package/manifest replay 与 QuantConnect 仍未授权"
-        "或运行，下一合法动作是单独批准 "
-        "extended training-history DQ 与 exact source materialization；provider/raw option payload/"
-        "orders/fills/positions/paper/live/production/broker 全为 0"
+        "专用趋势模型；generic operational forecast producer 已在真实缓存上通过三段 canonical DQ，"
+        "按 2021-02-22..2025-12-02 主窗口生成 1202/1202 个唯一 session，evaluation proxy "
+        "rows=0；existing exact source admission 与信号包 v2 canonical replay "
+        "均 PASS。上述结果只证明方向信号与 package 可审计，不证明期权收益；QuantConnect 仍为 "
+        "AUTHORIZED_LATER_WAVE_NOT_RUN。下一合法动作是先固定 project/code/package/maxima 并自动 "
+        "replay manifest，再执行至多一次 bounded 只读研究 backtest；provider/raw option "
+        "export/local repricing/paper/live/production/broker 保持关闭，QC simulation 之外 "
+        "orders/fills/positions=0"
     )
 
 

@@ -342,8 +342,8 @@ task_sources:
     reader_summary_zh: 当前主线把既有策略信号作为唯一方向事实，QuantConnect 负责 QQQ 期权选约、成交、生命周期和 P&L。1202/1202 chain transport 已证明，但 retained exact signal package、看涨/看跌/空仓动作映射及 selection/execution/accounting/lifecycle Owner policy 尚未冻结，所以当前仍是“精确策略参数冻结前不得回测”；本阶段不运行真实 DQ/backtest，orders/fills/positions/production/broker=0。
   - task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
     requirement_path: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
-    coverage: DISCLOSED_REAL_DQ_PASS_FROZEN_PRODUCER_SIGNAL_ADMISSION_REJECTED_NO_BACKTEST
-    reader_summary_zh: 2542I 已由 Project Owner exact-freeze whole-draft 双 SHA、五态看涨或空仓 mapping 与全部 37 项期权 implementation policy，并授权 existing-cache real DQ 与冻结 producer 再生成。2021-02-22..2025-12-02 exact-window canonical DQ 已 PASS；但不改 policy、训练窗口和 feature/label 的 first_layer_composer_v2 只产生 630/1202 个唯一 session（2023-02-22..2025-08-26），缺 572、重复 session 588 个/多余行 1134，并有 73 行 decision_at 落在非交易日，故 typed admission=REJECT，未生成 signal package、未运行 manifest replay 或 QuantConnect。下一步是单独审阅 operational forecast producer 合同，不是用期权数据重做趋势判断；provider/raw option payload/orders/fills/positions/production/broker 均为零。
+    coverage: DISCLOSED_REAL_DQ_AND_EXACT_PACKAGE_REPLAY_PASS_QC_AUTHORIZED_NOT_RUN
+    reader_summary_zh: 2542I 已在真实缓存上完成三段 canonical DQ，并以 generic operational forecast producer 生成 2021-02-22..2025-12-02 exact 1202/1202 unique sessions，evaluation proxy rows=0。existing exact source admission 与信号包 v2 canonical reconstruction 均 PASS；失败的 v1/v2 attempts 保留为不可覆盖证据。该结果不证明期权收益；QuantConnect 尚未运行，下一步只允许先固定并 replay exact project/code/package/maxima manifest，再执行至多一次 bounded 只读研究 backtest。provider/raw option export/local repricing/paper/live/production/broker 保持关闭，QC simulation 之外 orders/fills/positions=0。
   - task_id: TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1
     requirement_path: docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md
     coverage: LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_COMPLETE

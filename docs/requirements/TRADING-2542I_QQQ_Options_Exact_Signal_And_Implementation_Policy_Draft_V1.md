@@ -292,7 +292,7 @@ generated architecture/report-flow/compatibility authority 与 formal validation
 - `scope=non-executable DATA_RESEARCH`；
 - `draft_authorized=true`；
 - `owner_exact_freeze=true`；
-- `exact_1202_session_signal_package_present=false`；
+- `exact_1202_session_signal_package_present=true`；
 - `signal_package_preparation_authorized=true`；
 - `real_dq_and_existing_producer_regeneration_authorized=true`；
 - `generic_operational_forecast_contract_and_implementation_authorized=true`；
@@ -304,7 +304,7 @@ generated architecture/report-flow/compatibility authority 与 formal validation
 - `raw_option_payload_download_or_export=false`；
 - `orders/fills/positions=0`；
 - `paper/live/production/broker=false/none`；
-- terminal=`OWNER_EXACT_POLICY_FROZEN_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST`。
+- terminal=`EXACT_SIGNAL_PACKAGE_REPLAY_PASS_QC_FIXED_MANIFEST_REQUIRED`。
 - `exact_window_canonical_dq_status=PASS`；
 - `regenerated_signal_unique_sessions=630/1202`；
 - `regenerated_signal_missing_sessions=572`；
@@ -313,10 +313,12 @@ generated architecture/report-flow/compatibility authority 与 formal validation
 - `signal_source_admission=REJECT`；
 - `signal_package_writer/manifest_replay/quantconnect=NOT_RUN`。
 - `operational_forecast_development_validation=SYNTHETIC_ONLY`；
-- `operational_forecast_real_materialization=V2_DQ_FAIL_SGOV_SECONDARY_COVERAGE_SEGMENTATION_IN_PROGRESS`；
+- `operational_forecast_real_materialization=V3_PASS`；
 - `v1_failed_dq_receipt_sha256=84bf76d8634732dbd7dcb482e96591a848fea706aa3745346ba138ccd0de7a05`；
 - `v2_failed_dq_receipt_sha256=ea039e75f0e17ee8bffe3fdc90e891d5afa776fac0abd362b3ac7ed69d98ac55`；
-- `conditional_quantconnect_backtest=AUTHORIZED_NOT_RUN_WAITING_MANIFEST_REPLAY`；
+- `v3_real_materialization_receipt_sha256=f508581f98b1fa64763b8488568cf0631bfa260fea2b7aa55f9d7f5a0590a230`；
+- `v3_manifest_replay_receipt_sha256=1106de7d6e9b63a20d9e68d7228267ea6777a84b2ea1de16215699d3fa7cd9bc`；
+- `conditional_quantconnect_backtest=AUTHORIZED_NOT_RUN_READY_FOR_SEPARATE_FIXED_MANIFEST_WAVE`；
 
 ## 9. 进度记录
 
@@ -432,3 +434,12 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   `ea039e75f0e17ee8bffe3fdc90e891d5afa776fac0abd362b3ac7ed69d98ac55`。v3 对 pre-evaluation SGOV
   scope 明确 `require_secondary_prices=false`，primary evaluation 仍保持 mandatory secondary reconciliation；
   禁止填充 secondary 历史或删除 v2 现场，QuantConnect 仍为 NOT_RUN。
+- 2026-08-29：attempt v3 对 SGOV pre-evaluation scope 使用显式 primary-only DQ，training 与 primary
+  evaluation scope 仍要求 secondary；三段 canonical DQ 均 PASS。generic producer 以 exact code
+  `328c0f0cc68921212f56640e0b8a4fce01e44ee4` 生成 `1202/1202` unique sessions、evaluation proxy
+  rows=`0`；exact source admission=`PASS`，TRADING-2483 signal package canonical reconstruction=`PASS`。
+  materialization receipt/manifest replay SHA-256 分别为
+  `f508581f98b1fa64763b8488568cf0631bfa260fea2b7aa55f9d7f5a0590a230` /
+  `1106de7d6e9b63a20d9e68d7228267ea6777a84b2ea1de16215699d3fa7cd9bc`。本波不具 dispatch
+  authority，QuantConnect 仍为 `AUTHORIZED_LATER_WAVE_NOT_RUN`；下一步先发布本证据，再建立 exact
+  project/code/package/maxima 的单次 QC manifest wave。

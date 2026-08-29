@@ -14,28 +14,30 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / preserve failed v2, make the pre-evaluation SGOV DQ scope primary-only
-    because secondary coverage begins 2021-02-22, retain mandatory secondary reconciliation
-    in the primary evaluation scope, then rerun as immutable v3
-  requirement_refs: []
+  next_owner: Codex / publish the exact v3 materialization evidence, then prepare
+    and replay one fixed-manifest QuantConnect DATA_RESEARCH backtest wave under the
+    existing conditional Owner authorization
+  requirement_refs:
+  - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 'Attempt v2 passed training_proxy_history
-    after the calendar correction but failed exact_sgov_history with DQ_WINDOW_MISMATCH:
-    primary SGOV and rates cover 2020-05-28..2025-12-02, while the local Marketstack
-    secondary cache begins only 2021-02-22 and shrinks common coverage. Do not fill
-    or relabel secondary history. The smallest truthful segmentation is primary-only
-    SGOV DQ for the pre-evaluation listing interval, plus the existing mandatory secondary
-    cross-check for the 2021-02-22..2025-12-02 primary evaluation scope.'
+  unstructured_legacy_blocker_or_next_step: Real materialization v3 PASSed all three
+    segmented canonical DQ scopes, produced 1202/1202 unique operational forecast
+    sessions with zero evaluation proxy rows, passed exact source admission, and passed
+    TRADING-2483 v2 package canonical reconstruction. QuantConnect remains NOT_RUN
+    because the materialization receipt itself does not dispatch; the next wave must
+    freeze exact project/code/package/manifest/maxima and replay authorization before
+    the one permitted external run.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: V2 failed receipt and output remain immutable; v3 policy explicitly freezes
-      exact_sgov_history require_secondary_prices=false while training_proxy_history
-      and primary_evaluation remain true; receipt-role verification is scope-specific;
-      regression proves omitted secondary cannot be silently reintroduced or treated
-      as covered. All three v3 DQ scopes, 1202/1202 source admission and TRADING-2483
-      v2 package canonical replay must PASS before any QuantConnect run.
+    text: Materialization receipt SHA-256 f508581f98b1fa64763b8488568cf0631bfa260fea2b7aa55f9d7f5a0590a230
+      and manifest replay SHA-256 1106de7d6e9b63a20d9e68d7228267ea6777a84b2ea1de16215699d3fa7cd9bc
+      remain immutable and published; formal validation passes. A separate post-replay
+      manifest fixes one QC research project/backtest, primary window 2021-02-22..2025-12-02,
+      code/package identities and all action maxima. Dispatch at most once only after
+      automatic replay PASS; no paid/provider/raw export/local repricing/paper/live/production/broker
+      or orders/fills/positions outside QC simulation.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -569,34 +571,119 @@ events:
   - change:trading-2542i-sgov-secondary-coverage-recovery-20260829-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-e2f304c2e555b95e198130a98dd6f5f5
+- schema_version: task_event.v1
+  task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-29T09:58:59.3708770Z'
+  actor: integration-coordinator
+  change_id: trading-2542i-real-materialization-v3-pass-20260829-v1
+  lane_id: null
+  base_commit: a45cf6acbf95c1e0617ad5ff315dda9803c8b39e
+  previous_state_event_id: task-event-e2f304c2e555b95e198130a98dd6f5f5
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / publish the exact v3 materialization evidence, then prepare
+      and replay one fixed-manifest QuantConnect DATA_RESEARCH backtest wave under
+      the existing conditional Owner authorization
+    blocker_or_next_step: Real materialization v3 PASSed all three segmented canonical
+      DQ scopes, produced 1202/1202 unique operational forecast sessions with zero
+      evaluation proxy rows, passed exact source admission, and passed TRADING-2483
+      v2 package canonical reconstruction. QuantConnect remains NOT_RUN because the
+      materialization receipt itself does not dispatch; the next wave must freeze
+      exact project/code/package/manifest/maxima and replay authorization before the
+      one permitted external run.
+    acceptance_criteria: Materialization receipt SHA-256 f508581f98b1fa64763b8488568cf0631bfa260fea2b7aa55f9d7f5a0590a230
+      and manifest replay SHA-256 1106de7d6e9b63a20d9e68d7228267ea6777a84b2ea1de16215699d3fa7cd9bc
+      remain immutable and published; formal validation passes. A separate post-replay
+      manifest fixes one QC research project/backtest, primary window 2021-02-22..2025-12-02,
+      code/package identities and all action maxima. Dispatch at most once only after
+      automatic replay PASS; no paid/provider/raw export/local repricing/paper/live/production/broker
+      or orders/fills/positions outside QC simulation.
+    notes: V3 code SHA=328c0f0cc68921212f56640e0b8a4fce01e44ee4; segmented DQ identity=3816b9b1b43267654f699241cdaaff0727886615271651233489c0b2cda832eb;
+      predictions SHA=efc285466efb1d99ce57d691078d43f7f2cb169e68a5cd719b1de5d8967fc2da;
+      normalized source SHA=4d26b56bcfc1b21764cb90373fb2da9134838e6c42709b80ba7cbbf0856703f1;
+      package receipt SHA=7cb8807c5938be5453e49c392e3173aca38e10643c643c28b335914196eda494;
+      source admission=PASS; QuantConnect=AUTHORIZED_LATER_WAVE_NOT_RUN.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542i-real-materialization-v3-pass-20260829-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-402025c1037b98709a452abd2107d89a
+- schema_version: task_event.v1
+  task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-29T10:02:45.0851161Z'
+  actor: integration-coordinator
+  change_id: trading-2542i-real-materialization-v3-pass-20260829-v2
+  lane_id: null
+  base_commit: a45cf6acbf95c1e0617ad5ff315dda9803c8b39e
+  previous_state_event_id: task-event-402025c1037b98709a452abd2107d89a
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / publish the exact v3 materialization evidence, then prepare
+      and replay one fixed-manifest QuantConnect DATA_RESEARCH backtest wave under
+      the existing conditional Owner authorization
+    blocker_or_next_step: Real materialization v3 PASSed all three segmented canonical
+      DQ scopes, produced 1202/1202 unique operational forecast sessions with zero
+      evaluation proxy rows, passed exact source admission, and passed TRADING-2483
+      v2 package canonical reconstruction. QuantConnect remains NOT_RUN because the
+      materialization receipt itself does not dispatch; the next wave must freeze
+      exact project/code/package/manifest/maxima and replay authorization before the
+      one permitted external run.
+    acceptance_criteria: Materialization receipt SHA-256 f508581f98b1fa64763b8488568cf0631bfa260fea2b7aa55f9d7f5a0590a230
+      and manifest replay SHA-256 1106de7d6e9b63a20d9e68d7228267ea6777a84b2ea1de16215699d3fa7cd9bc
+      remain immutable and published; formal validation passes. A separate post-replay
+      manifest fixes one QC research project/backtest, primary window 2021-02-22..2025-12-02,
+      code/package identities and all action maxima. Dispatch at most once only after
+      automatic replay PASS; no paid/provider/raw export/local repricing/paper/live/production/broker
+      or orders/fills/positions outside QC simulation.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
+      V3 code SHA=328c0f0cc68921212f56640e0b8a4fce01e44ee4; segmented DQ identity=3816b9b1b43267654f699241cdaaff0727886615271651233489c0b2cda832eb;
+      predictions SHA=efc285466efb1d99ce57d691078d43f7f2cb169e68a5cd719b1de5d8967fc2da;
+      normalized source SHA=4d26b56bcfc1b21764cb90373fb2da9134838e6c42709b80ba7cbbf0856703f1;
+      package receipt SHA=7cb8807c5938be5453e49c392e3173aca38e10643c643c28b335914196eda494;
+      source admission=PASS; QuantConnect=AUTHORIZED_LATER_WAVE_NOT_RUN.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542i-real-materialization-v3-pass-20260829-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-56146040d692ac5a1a699778841eb9fd
 projection:
   legacy_first_eight_cells:
   - TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
   - QQQ options exact signal source and implementation policy owner-review draft V1
   - P0
   - IN_PROGRESS
-  - Codex / preserve failed v2, make the pre-evaluation SGOV DQ scope primary-only
-    because secondary coverage begins 2021-02-22, retain mandatory secondary reconciliation
-    in the primary evaluation scope, then rerun as immutable v3
-  - 'Attempt v2 passed training_proxy_history after the calendar correction but failed
-    exact_sgov_history with DQ_WINDOW_MISMATCH: primary SGOV and rates cover 2020-05-28..2025-12-02,
-    while the local Marketstack secondary cache begins only 2021-02-22 and shrinks
-    common coverage. Do not fill or relabel secondary history. The smallest truthful
-    segmentation is primary-only SGOV DQ for the pre-evaluation listing interval,
-    plus the existing mandatory secondary cross-check for the 2021-02-22..2025-12-02
-    primary evaluation scope.'
-  - V2 failed receipt and output remain immutable; v3 policy explicitly freezes exact_sgov_history
-    require_secondary_prices=false while training_proxy_history and primary_evaluation
-    remain true; receipt-role verification is scope-specific; regression proves omitted
-    secondary cannot be silently reintroduced or treated as covered. All three v3
-    DQ scopes, 1202/1202 source admission and TRADING-2483 v2 package canonical replay
-    must PASS before any QuantConnect run.
-  - V2 exact_sgov_history DQ receipt=outputs/data_quality/executions/dq_execution_b56fb32020b7c11c924135f65a713ec0ec9c8934035c8457ab146a2bf7a9bcfe/receipt.json;
-    status=FAIL; report SHA-256 a47c478a03d8c486b01eb1af3eb55e3bdd326eeddcf5433f82e8be72c6ede74f;
-    evaluated start=2021-02-22 vs requested 2020-05-28; QuantConnect NOT_RUN.
-  docs_links: []
+  - Codex / publish the exact v3 materialization evidence, then prepare and replay
+    one fixed-manifest QuantConnect DATA_RESEARCH backtest wave under the existing
+    conditional Owner authorization
+  - Real materialization v3 PASSed all three segmented canonical DQ scopes, produced
+    1202/1202 unique operational forecast sessions with zero evaluation proxy rows,
+    passed exact source admission, and passed TRADING-2483 v2 package canonical reconstruction.
+    QuantConnect remains NOT_RUN because the materialization receipt itself does not
+    dispatch; the next wave must freeze exact project/code/package/manifest/maxima
+    and replay authorization before the one permitted external run.
+  - Materialization receipt SHA-256 f508581f98b1fa64763b8488568cf0631bfa260fea2b7aa55f9d7f5a0590a230
+    and manifest replay SHA-256 1106de7d6e9b63a20d9e68d7228267ea6777a84b2ea1de16215699d3fa7cd9bc
+    remain immutable and published; formal validation passes. A separate post-replay
+    manifest fixes one QC research project/backtest, primary window 2021-02-22..2025-12-02,
+    code/package identities and all action maxima. Dispatch at most once only after
+    automatic replay PASS; no paid/provider/raw export/local repricing/paper/live/production/broker
+    or orders/fills/positions outside QC simulation.
+  - 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
+    V3 code SHA=328c0f0cc68921212f56640e0b8a4fce01e44ee4; segmented DQ identity=3816b9b1b43267654f699241cdaaff0727886615271651233489c0b2cda832eb;
+    predictions SHA=efc285466efb1d99ce57d691078d43f7f2cb169e68a5cd719b1de5d8967fc2da;
+    normalized source SHA=4d26b56bcfc1b21764cb90373fb2da9134838e6c42709b80ba7cbbf0856703f1;
+    package receipt SHA=7cb8807c5938be5453e49c392e3173aca38e10643c643c28b335914196eda494;
+    source admission=PASS; QuantConnect=AUTHORIZED_LATER_WAVE_NOT_RUN.'
+  docs_links:
+  - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
   terminal: false
-  canonical_row_sha256: 2dab196f73f94d57fbb10388266f57ae0adb1563eb3b99f595924d5a2019e5cd
-last_event_id: task-event-e2f304c2e555b95e198130a98dd6f5f5
+  canonical_row_sha256: 6ad6f55fd6982d944ddea5c930184b8d27cf3faa5a47cfa95bfcdf1f3654d2c4
+last_event_id: task-event-56146040d692ac5a1a699778841eb9fd
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: c4c27edac1c6bbb3f58e331372107c4e25beed33983f7de65b9ec13be1fb82ec
+fragment_checksum: e76864ea19fa265cf54843071cb2c4d07831c94f5aadee2a5c3e7d856e8145a2
