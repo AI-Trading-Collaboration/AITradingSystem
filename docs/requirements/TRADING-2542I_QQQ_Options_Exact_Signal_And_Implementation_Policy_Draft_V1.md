@@ -7,12 +7,16 @@
 
 优先级：`P0`
 
-状态：`BLOCKED_OWNER_INPUT`
+状态：`IN_PROGRESS`
 
 Owner 指令：Project Owner 已确认继续按“既有趋势信号只负责方向，QuantConnect 只负责期权实现与
-收益计算”的路径推进。该指令授权形成可复核草案，不等同于 exact policy freeze，也不授权真实
-DQ、QuantConnect project mutation/backtest、raw option payload、orders、fills、positions、paper、live、
-production 或 broker action。
+收益计算”的路径推进，并于 2026-08-29 指示“好的，那就冻结吧，你继续推进”。该指令 exact-freeze
+`qc_qqq_options_exact_signal_implementation_policy_draft_v1@1.0.0-draft.1` 的 file/canonical SHA
+`22335aa324ffb13c9917b65ad57f51916831ecd95c05fe357f7faa13f74b57d0`/
+`45c247010f47ad3172215f90aa7c9cd40044b5332284e1789095d230075a5d83` 及全部 37 个 proposal rows，
+授权继续推进 non-executable `DATA_RESEARCH` signal-package preparation；不授权真实 DQ、QuantConnect
+project mutation/backtest、raw option payload、orders、fills、positions、paper、live、production 或
+broker action。
 
 production effect：`none`
 
@@ -151,7 +155,10 @@ effective session 继承 TRADING-2483：D session close 后生成，D+1 首个�
    execution/accounting/lifecycle/result admission 与 safety boundary；
 4. 拒绝 extra/missing slot、duplicate slot、unknown mapping、LONG_PUT baseline、engine default、raw export、
    executable flag 或 external action；
-5. 固定 terminal=`OWNER_EXACT_FREEZE_AND_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST`。
+5. 原 draft loader 固定 predecessor terminal=
+   `OWNER_EXACT_FREEZE_AND_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST`；独立 freeze admission 在双 SHA 与
+   37/37 replay PASS 后固定 successor terminal=
+   `OWNER_EXACT_POLICY_FROZEN_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST`。
 
 只有 Owner 后续对 exact draft file SHA/canonical SHA 明确冻结，并且 exact 1202-session signal package、
 manifest replay 与所有 predecessor hashes PASS 后，才能另立 executable-research-only manifest。该 freeze
@@ -171,12 +178,24 @@ manifest replay 与所有 predecessor hashes PASS 后，才能另立 executable-
 - 覆盖完整 mapping、37-slot inventory 与 safety boundary；
 - 更新 system flow 与 Atlas 当前 blocker/next action。
 
-### S2：Owner exact freeze（后续）
+### S2：Owner exact freeze（当前）
 
-- Owner 审阅 exact file/canonical SHA 与全部 policy rows；
-- exact-freeze source producer、完整 1202-session signal package 和 mapping；
-- 所有 policy predecessor/slot/manifest replay PASS；
+- Owner 已审阅并 exact-freeze draft file/canonical SHA、五态 mapping 与全部 37 个 policy rows；
+- 原 draft bytes/status/version 保持 immutable，不在原文件内改写 `owner_frozen`；
+- 新增独立 freeze admission，机械绑定 Owner 指令、draft 双 SHA、mapping 与完整 slot inventory；
+- signal package 尚未生成或接纳；当前 retained source 从 2023-02-22 开始，不能补齐、forward-fill 或
+  伪装成 2021-02-22 起 exact 1202-session authority；
 - 本阶段仍保持 QC run/order/fill/position=0。
+
+### S2B：exact signal package preparation（当前后继）
+
+- 只允许构建/复核 fail-closed producer、coverage、lineage 与 manifest replay 门禁；
+- 只有 governed producer 同时绑定 exact code/config/input/DQ/PIT identity、覆盖
+  2021-02-22..2025-12-02 全部 1202 个 XNYS sessions 且一日一行时，才能接纳 package；
+- 缺 session、重复 session、unknown state、POC rewrap、手工 CSV、跨日填充或无 DQ/PIT identity
+  一律 typed reject；
+- 本轮不运行真实 DQ 或 producer regeneration。若生成完整 package 需要读取真实 cache 并执行 DQ，
+  必须先获得单独授权。
 
 ### S3：bounded QuantConnect run（需再次单独授权）
 
@@ -204,14 +223,15 @@ generated architecture/report-flow/compatibility authority 与 formal validation
 
 - `scope=non-executable DATA_RESEARCH`；
 - `draft_authorized=true`；
-- `owner_exact_freeze=false`；
+- `owner_exact_freeze=true`；
 - `exact_1202_session_signal_package_present=false`；
-- `manifest_generation_authorized=false`；
+- `signal_package_preparation_authorized=true`；
+- `manifest_generation_authorized=false`（完整 source/DQ/PIT identity 接纳前）；
 - `real_dq/qc_backtest/qc_project_mutation/provider_query=false`；
 - `raw_option_payload_download_or_export=false`；
 - `orders/fills/positions=0`；
 - `paper/live/production/broker=false/none`；
-- terminal=`OWNER_EXACT_FREEZE_AND_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST`。
+- terminal=`OWNER_EXACT_POLICY_FROZEN_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST`。
 
 ## 9. 进度记录
 
@@ -227,3 +247,15 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   hashes 与 zero-execution safety 均可机械重放；focused policy + Atlas suite=`38 passed`，Ruff、strict
   mypy、py_compile PASS。任务转为 `BLOCKED_OWNER_INPUT`：Owner 尚未 exact-freeze 本草案，完整
   1202-session signal package 尚未生成；QC/provider/real DQ/backtest/orders/fills/positions/production/broker=0。
+- 2026-08-29：Project Owner 指示“好的，那就冻结吧，你继续推进”，因此 exact-freeze 上述 draft 双 SHA、
+  五态 call-or-flat mapping 与 37/37 proposal rows。为保持已批准 bytes 不变，冻结状态由独立 admission
+  表达，不回写原 draft。任务转回 `IN_PROGRESS`，继续实现 non-executable freeze replay 与 exact signal
+  readiness gate；现有 source 缺少 2021-02-22..2023-02-21 历史且真实 DQ 未授权，禁止 gap fill、POC
+  rewrap、manifest dispatch 或 QuantConnect backtest。
+- 2026-08-29：独立 freeze admission 已实现，file/canonical SHA-256=
+  `a89c3c245795bda3733b9579cbb0f78cf16b5f30ec6115217acab10b26b72d34`/
+  `86c6e774e387782788281e370a844dec1f0061d784d62e14ffe02b4e44087017`。loader 机械重放获批
+  draft 双 SHA、完整 section inventory、五态 mapping 与 37/37 slot IDs，并证明原 draft 中
+  `owner_frozen=false`/`owner_exact_freeze=false` bytes 未被回写。focused freeze/draft/Atlas suite=
+  `62 passed`；Ruff、strict mypy、py_compile PASS。exact signal package 仍为 0/1202 admitted，下一步
+  需要 Owner 单独授权真实 DQ-backed producer regeneration；QuantConnect backtest 仍需再单独授权。

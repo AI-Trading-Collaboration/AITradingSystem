@@ -9868,35 +9868,39 @@ TRADING-2541 V3 的 `1202/1202`、`unresolved=0` 与 exact-date recovery 只证�
 
 ## TRADING-2542I exact signal source + option implementation policy draft
 
-TRADING-2542I 把 2542H 的 Owner 输入面展开为可机械复核、不可执行的 successor draft。现有
+TRADING-2542I 把 2542H 的 Owner 输入面展开为可机械复核、不可执行的 successor draft。Project
+Owner 已 exact-freeze 该 draft 的 file/canonical SHA、五态 mapping 和全部 37 个 successor slots；
+冻结由独立 admission 表达，原 draft bytes/status/version 保持 immutable。现有
 `first_layer_composer_v2:trend_state` 五态是推荐的方向语义候选，但其既有 artifact 只有
 2023-02-22 起的 source evidence/POC，不能冒充 2021-02-22 起 exact 1202-session signal package。
 
 ```text
 first_layer_composer_v2 trend_state semantics
-  -> risk_on / constructive -> proposed LONG_CALL
-  -> neutral / defensive / risk_off -> proposed FLAT
+  -> risk_on / constructive -> frozen LONG_CALL
+  -> neutral / defensive / risk_off -> frozen FLAT
        -> defensive / SGOV de-risking is not LONG_PUT alpha
        -> LONG_PUT remains separate sensitivity-only
   -> require regenerated exact 1202-session package
        -> exact one-row-per-XNYS-session coverage
        -> exact code/config/input/DQ/PIT/source cutoff identity
        -> POC rewrap / forward-fill / manual CSV cannot supply authority
-  -> non-executable 37-slot TRADING-2509 owner-review draft
+  -> immutable whole-draft file/canonical SHA freeze admission PASS
+  -> non-executable 37-slot TRADING-2509 policy freeze 37/37 PASS
        -> selection: call-only DTE/delta/moneyness/quote/spread/OI/stable rank
        -> execution: next-independent-minute quote-side limit/cost/timeout/no retry
        -> accounting: cash/premium cap/multiplier/reservation/rounding/settlement
        -> lifecycle: one position/flat exit/expiry guard/no exercise or assignment
        -> admission: exact coverage/cash facts/paired comparator/no result selection
-  -> Owner exact file + canonical hash freeze (not completed)
-  -> exact signal package + manifest replay PASS (not completed)
+  -> exact signal package + manifest replay PASS (not completed; no fabricated fill)
   -x-> QuantConnect/project/backtest/real DQ/provider/raw payload/orders/fills/positions
 ```
 
-草案值是首次 bounded baseline 的 result-blind pilot proposal，不是后验最优值或当前可执行 policy。
-所有 37 个 successor slots 都保持 `owner_frozen=false`；engine defaults、manifest generation 与外部 run
-仍关闭，terminal 固定为 `OWNER_EXACT_FREEZE_AND_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST`。本节点不读取
-raw option payload、不运行真实 DQ/backtest，paper/live/production/broker=`false/none`。
+被冻结的值是首次 bounded baseline 的 result-blind pilot policy，不是后验最优值或当前可执行 policy。
+原 draft 中 37 个 `owner_frozen=false` 字段不回写；独立 freeze admission 绑定整个 draft 双 SHA，表达
+37/37 已冻结。signal-package preparation 已授权，但 generation/admission、engine defaults、R1 manifest 与
+外部 run 仍关闭，terminal 固定为
+`OWNER_EXACT_POLICY_FROZEN_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST`。本节点不读取 raw option payload、不运行
+真实 DQ/backtest，paper/live/production/broker=`false/none`。
 
 ## Coordinator integration publication fence（DEVX-009）
 

@@ -1,0 +1,134 @@
+schema_version: qqq_options_exact_signal_implementation_policy_freeze_admission.v1
+admission_id: qc_qqq_options_exact_signal_implementation_policy_freeze_admission_v1
+admission_version: 1.0.0
+status: OWNER_EXACT_POLICY_FROZEN_SIGNAL_PACKAGE_UNADMITTED
+task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+scope: NON_EXECUTABLE_DATA_RESEARCH
+owner_decision:
+  decision_ref: owner_decision:TRADING-2542I:2026-08-29:freeze_exact_signal_implementation_policy_and_continue_non_executable_signal_preparation_v1
+  approved_instruction: 好的，那就冻结吧，你继续推进
+  exact_draft_freeze_granted: true
+  five_state_mapping_frozen: true
+  all_37_successor_slots_frozen: true
+  whole_draft_surface_frozen: true
+  predecessor_bytes_must_remain_immutable: true
+  signal_package_preparation_authorized: true
+  real_dq_or_backtest_authorized: false
+  authorization_state: EXACT_PREAUTHORIZED
+authority_binding:
+  path: config/research/qc_qqq_options_exact_signal_implementation_policy_draft_v1.yaml
+  artifact_id: qc_qqq_options_exact_signal_implementation_policy_draft_v1
+  artifact_version: 1.0.0-draft.1
+  file_sha256: 22335aa324ffb13c9917b65ad57f51916831ecd95c05fe357f7faa13f74b57d0
+  canonical_sha256: 45c247010f47ad3172215f90aa7c9cd40044b5332284e1789095d230075a5d83
+  role: OWNER_EXACT_FROZEN_WHOLE_DRAFT_AUTHORITY
+  immutable: true
+frozen_surface:
+  whole_draft_frozen: true
+  draft_status_preserved: OWNER_REVIEW_DRAFT_NON_EXECUTABLE
+  frozen_sections:
+    - research_window
+    - source_candidate
+    - signal_mapping
+    - selection_proposal
+    - execution_proposal
+    - accounting_proposal
+    - lifecycle_proposal
+    - result_admission
+    - slot_proposals
+    - safety
+  baseline_actions: [LONG_CALL, FLAT]
+  long_put_baseline_allowed: false
+  long_put_role: SEPARATE_SENSITIVITY_ONLY
+  signal_mapping_rows:
+    - {source_state: risk_on, option_action: LONG_CALL}
+    - {source_state: constructive, option_action: LONG_CALL}
+    - {source_state: neutral, option_action: FLAT}
+    - {source_state: defensive, option_action: FLAT}
+    - {source_state: risk_off, option_action: FLAT}
+  frozen_slot_count: 37
+  frozen_slot_ids:
+    - ACC_CASH_CARRY_BENCHMARK
+    - ACC_CASH_RESERVATION
+    - ACC_COST_BASIS_CONVENTION
+    - ACC_DQ_PIT_REPRO
+    - ACC_EVENT_IDENTITY_INVARIANT
+    - ACC_FEE_SCHEDULE
+    - ACC_INITIAL_CASH
+    - ACC_INVESTMENT_PROMOTION
+    - ACC_METRIC_BENCHMARK_IDENTITY
+    - ACC_RESEARCH_MULTIPLICITY_CONTROL
+    - ACC_RESULT_INCLUSION
+    - ACC_ROUNDING_RECONCILIATION
+    - ACC_SAMPLE_COVERAGE
+    - ACC_SETTLEMENT_TIMING
+    - ACC_SIZING_EXPOSURE
+    - EXE_CANCEL_REJECT_NO_FILL
+    - EXE_EXECUTION_OBSERVATION_SOURCE
+    - EXE_LATENCY
+    - EXE_MARKETABLE_LIMIT
+    - EXE_PARTIAL_FILL
+    - EXE_QUOTE_DISPOSITION
+    - EXE_SLIPPAGE
+    - LIFE_ASSIGNMENT_POLICY
+    - LIFE_CLOSE_HOLD_POLICY
+    - LIFE_EXERCISE_POLICY
+    - LIFE_EXPIRY_EXIT_GUARD
+    - LIFE_POSITION_STATE_TRANSITION
+    - LIFE_ROLL_AUTHORIZATION
+    - LIFE_TERMINAL_VALUATION
+    - SEL_DELTA_SOURCE_RANGE
+    - SEL_DTE_WINDOW
+    - SEL_MONEYNESS_RANGE
+    - SEL_OPEN_INTEREST_FLOOR
+    - SEL_QUOTE_FRESHNESS
+    - SEL_RANK_PRIORITY
+    - SEL_SPREAD_LIMIT
+    - SEL_VOLUME_FLOOR
+  all_slots_owner_frozen: true
+signal_package_state:
+  producer_id: first_layer_composer_v2
+  source_locator: outputs/research_trends/models/first_layer_composer_v2_predictions.csv:trend_state
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  calendar: XNYS
+  expected_session_count: 1202
+  documented_source_start: '2023-02-22'
+  documented_source_end: '2026-03-27'
+  exact_1202_session_package_present: false
+  exact_1202_session_package_admitted: false
+  observed_package_sha256: null
+  manifest_replay_executed: false
+  manifest_replay_status: NOT_RUN_MISSING_EXACT_SIGNAL_PACKAGE
+  missing_rows_may_be_filled: false
+  poc_rewrap_allowed: false
+  manual_csv_allowed: false
+  cross_session_fill_allowed: false
+  next_legal_action: BUILD_AND_REVIEW_FAIL_CLOSED_EXACT_SIGNAL_GENERATION_MANIFEST_AFTER_REAL_DQ_AUTHORIZATION
+  blockers:
+    - SOURCE_PRIMARY_START_NOT_COVERED
+    - EXACT_1202_SESSION_PACKAGE_MISSING
+    - CODE_CONFIG_INPUT_DQ_PIT_IDENTITY_MISSING
+    - REAL_DQ_NOT_AUTHORIZED
+safety:
+  non_executable_data_research_only: true
+  owner_exact_freeze_admission_only: true
+  signal_package_preparation_authorized: true
+  signal_package_generation_authorized: false
+  exact_signal_package_admission_allowed: false
+  executable_policy_authorized: false
+  r1_manifest_generation_authorized: false
+  real_dq_authorized: false
+  qc_backtest_authorized: false
+  qc_project_mutation_authorized: false
+  provider_query_authorized: false
+  raw_option_payload_download_or_export_allowed: false
+  parameter_or_threshold_search_allowed: false
+  orders: 0
+  fills: 0
+  positions: 0
+  paper_allowed: false
+  live_allowed: false
+  production_effect: none
+  broker_action: none
+terminal: OWNER_EXACT_POLICY_FROZEN_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST

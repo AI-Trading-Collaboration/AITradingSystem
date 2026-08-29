@@ -41,7 +41,7 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
-    assert bundle.research_state_as_of.startswith("2026-08-28T")
+    assert bundle.research_state_as_of.startswith("2026-08-29T")
     assert bundle.evidence_evaluated_at is None
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
@@ -109,15 +109,15 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.status_object_zh == (
         "QQQ options 链路保持“既有策略信号是唯一方向事实，QuantConnect 负责选约、成交、"
         "生命周期与 P&L”；TRADING-2541 V3 已证明目标窗口 option chain 1202/1202、"
-        "unresolved=0，但只证明 transport/PIT 可用性，不证明策略收益；TRADING-2542I 已把 "
-        "first_layer_composer_v2 五态列为推荐语义候选，并提出 risk_on/constructive→LONG_CALL、"
-        "neutral/defensive/risk_off→FLAT 以及完整 37-slot implementation policy 草案，LONG_PUT "
-        "只保留为独立 sensitivity；既有 signal artifact 只有 2023-02-22 起的 source evidence/"
-        "POC，不能冒充 2021-02-22 起 exact 1202-session package，全部草案行仍 owner_frozen=false；"
-        "真实 DQ/backtest、QuantConnect project mutation、provider/raw payload 与 orders/fills/"
-        "positions/production/broker 全为 0；下一合法动作是 Owner exact-freeze TRADING-2542I "
-        "草案并补齐 exact signal package，manifest replay PASS 后再单独授权一次 bounded QC "
-        "research backtest"
+        "unresolved=0，但只证明 transport/PIT 可用性，不证明策略收益；Project Owner 已 "
+        "exact-freeze TRADING-2542I draft 双 SHA、risk_on/constructive→LONG_CALL、neutral/"
+        "defensive/risk_off→FLAT 以及完整 37/37 implementation policy，原 draft bytes/status/"
+        "version 保持 immutable，LONG_PUT 只保留为独立 sensitivity；既有 signal artifact 只有 "
+        "2023-02-22 起的 source evidence/POC，不能冒充或填补 2021-02-22 起 exact 1202-session "
+        "package，因此 package generation/admission 与 manifest replay 仍关闭；真实 DQ/backtest、"
+        "QuantConnect project mutation、provider/raw payload 与 orders/fills/positions/production/"
+        "broker 全为 0；下一合法动作是在单独授权真实 DQ 后构建并复核 fail-closed exact signal "
+        "generation manifest，PASS 后再单独授权 bounded QC research backtest"
     )
 
 

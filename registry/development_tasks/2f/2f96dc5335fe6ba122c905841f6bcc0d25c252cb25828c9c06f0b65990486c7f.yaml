@@ -14,24 +14,27 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / exact-freeze the reviewed draft file and canonical hashes,
-    then authorize regeneration/admission of the exact 1202-session signal package;
-    QC run remains separately authorized
+  next_owner: Project Owner / separately authorize bounded real-DQ-backed regeneration
+    and admission of the existing first_layer_composer_v2 exact 1202-session signal
+    package; QuantConnect backtest remains a later separate authorization
   requirement_refs:
   - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 'The compatible call-or-flat mapping and
-    all 37 TRADING-2509 successor-slot proposals are now explicit and mechanically
-    replayable, but first_layer_composer_v2 remains semantic source evidence only:
-    no exact 2021-02-22..2025-12-02 signal package exists and no proposal row is Owner-frozen.'
+  unstructured_legacy_blocker_or_next_step: 'Exact policy freeze is complete through
+    immutable admission file/canonical SHA a89c3c245795bda3733b9579cbb0f78cf16b5f30ec6115217acab10b26b72d34/86c6e774e387782788281e370a844dec1f0061d784d62e14ffe02b4e44087017
+    with 37/37 slots and call-or-flat mapping replayed. The sole baseline blocker
+    is now the absent exact 2021-02-22..2025-12-02 signal package: retained first_layer_composer_v2
+    evidence begins 2023-02-22, and real DQ-backed regeneration is not authorized.'
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Owner exact-freezes draft file/canonical SHA 22335aa324ffb13c9917b65ad57f51916831ecd95c05fe357f7faa13f74b57d0/45c247010f47ad3172215f90aa7c9cd40044b5332284e1789095d230075a5d83;
-      a regenerated exact 1202-session one-row-per-XNYS-session package binds code/config/input/DQ/PIT
-      identity; manifest replay passes before a separate bounded QC authorization.
-      No raw option export/local repricing/paper/live/broker/production.
+    text: After separate authorization, a governed producer must regenerate exactly
+      one signal per 1202 XNYS sessions with exact code/config/input/DQ/PIT identity
+      and manifest replay PASS. Missing/duplicate/unknown rows, gap fill, POC rewrap,
+      manual CSV and cross-session fill reject. Only then may a separately authorized
+      bounded QuantConnect research backtest be prepared; raw option export/local
+      repricing/paper/live/broker/production remain prohibited.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -104,30 +107,143 @@ events:
   - change:trading-2542i-owner-review-draft-ready-20260829-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-8e7ec232ccf91d9f01175e0c17f98264
+- schema_version: task_event.v1
+  task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-29T01:58:02.9636529Z'
+  actor: integration-coordinator
+  change_id: trading-2542i-owner-exact-policy-freeze-20260829-v1
+  lane_id: null
+  base_commit: 8217c393f8866d3c2c56e457d46d14651e8998e4
+  previous_state_event_id: task-event-8e7ec232ccf91d9f01175e0c17f98264
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / preserve the approved draft bytes, implement exact freeze
+      admission and a fail-closed 1202-session signal-package readiness boundary;
+      do not run real DQ or QuantConnect
+    blocker_or_next_step: Project Owner has now exact-frozen draft file/canonical
+      SHA 22335aa324ffb13c9917b65ad57f51916831ecd95c05fe357f7faa13f74b57d0/45c247010f47ad3172215f90aa7c9cd40044b5332284e1789095d230075a5d83
+      and all 37 proposal rows for non-executable DATA_RESEARCH. The exact 2021-02-22..2025-12-02
+      one-row-per-XNYS-session signal package is still absent; current retained first_layer_composer_v2
+      evidence begins 2023-02-22, so no gap fill, POC rewrap or fabricated row is
+      admissible.
+    acceptance_criteria: An immutable freeze admission replays the approved draft
+      file/canonical hashes, freezes the five-state call-or-flat mapping and all 37
+      slots exactly once, and keeps executable policy/QC/backtest/provider/raw payload/orders/fills/positions/paper/live/production/broker
+      closed. Exact signal generation/admission must fail closed until a governed
+      producer supplies exact 1202-session code/config/input/DQ/PIT identity and manifest
+      replay PASS.
+    notes: 'Owner instruction 2026-08-29: 好的，那就冻结吧，你继续推进. Interpreted as exact policy
+      freeze plus continued non-executable signal-package preparation only; real DQ
+      and QuantConnect backtest remain unauthorized.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542i-owner-exact-policy-freeze-20260829-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ae22e248ffeba5bacd6d490aa72f4f1b
+- schema_version: task_event.v1
+  task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-29T02:13:17.4880129Z'
+  actor: integration-coordinator
+  change_id: trading-2542i-owner-exact-policy-freeze-20260829-v1
+  lane_id: null
+  base_commit: 8217c393f8866d3c2c56e457d46d14651e8998e4
+  previous_state_event_id: task-event-ae22e248ffeba5bacd6d490aa72f4f1b
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / preserve the approved draft bytes, implement exact freeze
+      admission and a fail-closed 1202-session signal-package readiness boundary;
+      do not run real DQ or QuantConnect
+    blocker_or_next_step: Project Owner has now exact-frozen draft file/canonical
+      SHA 22335aa324ffb13c9917b65ad57f51916831ecd95c05fe357f7faa13f74b57d0/45c247010f47ad3172215f90aa7c9cd40044b5332284e1789095d230075a5d83
+      and all 37 proposal rows for non-executable DATA_RESEARCH. The exact 2021-02-22..2025-12-02
+      one-row-per-XNYS-session signal package is still absent; current retained first_layer_composer_v2
+      evidence begins 2023-02-22, so no gap fill, POC rewrap or fabricated row is
+      admissible.
+    acceptance_criteria: An immutable freeze admission replays the approved draft
+      file/canonical hashes, freezes the five-state call-or-flat mapping and all 37
+      slots exactly once, and keeps executable policy/QC/backtest/provider/raw payload/orders/fills/positions/paper/live/production/broker
+      closed. Exact signal generation/admission must fail closed until a governed
+      producer supplies exact 1202-session code/config/input/DQ/PIT identity and manifest
+      replay PASS.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
+      Owner instruction 2026-08-29 exact-freezes the policy and authorizes continued
+      non-executable signal-package preparation only; real DQ and QuantConnect backtest
+      remain unauthorized.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542i-owner-exact-policy-freeze-20260829-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-32139a8949b2dc2b3a4c193dce92ac9b
+- schema_version: task_event.v1
+  task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-29T02:19:50.2887277Z'
+  actor: integration-coordinator
+  change_id: trading-2542i-owner-exact-policy-freeze-20260829-v1
+  lane_id: null
+  base_commit: 8217c393f8866d3c2c56e457d46d14651e8998e4
+  previous_state_event_id: task-event-32139a8949b2dc2b3a4c193dce92ac9b
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / separately authorize bounded real-DQ-backed regeneration
+      and admission of the existing first_layer_composer_v2 exact 1202-session signal
+      package; QuantConnect backtest remains a later separate authorization
+    blocker_or_next_step: 'Exact policy freeze is complete through immutable admission
+      file/canonical SHA a89c3c245795bda3733b9579cbb0f78cf16b5f30ec6115217acab10b26b72d34/86c6e774e387782788281e370a844dec1f0061d784d62e14ffe02b4e44087017
+      with 37/37 slots and call-or-flat mapping replayed. The sole baseline blocker
+      is now the absent exact 2021-02-22..2025-12-02 signal package: retained first_layer_composer_v2
+      evidence begins 2023-02-22, and real DQ-backed regeneration is not authorized.'
+    acceptance_criteria: After separate authorization, a governed producer must regenerate
+      exactly one signal per 1202 XNYS sessions with exact code/config/input/DQ/PIT
+      identity and manifest replay PASS. Missing/duplicate/unknown rows, gap fill,
+      POC rewrap, manual CSV and cross-session fill reject. Only then may a separately
+      authorized bounded QuantConnect research backtest be prepared; raw option export/local
+      repricing/paper/live/broker/production remain prohibited.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
+      Freeze admission focused suite plus draft and Atlas=62 passed; Ruff/strict mypy/py_compile
+      PASS. terminal=OWNER_EXACT_POLICY_FROZEN_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST;
+      real DQ/QC/backtest/provider/raw payload/orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542i-owner-exact-policy-freeze-20260829-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-41563ce74bcc32a18221456f11ebe36d
 projection:
   legacy_first_eight_cells:
   - TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
   - QQQ options exact signal source and implementation policy owner-review draft V1
   - P0
   - BLOCKED_OWNER_INPUT
-  - Project Owner / exact-freeze the reviewed draft file and canonical hashes, then
-    authorize regeneration/admission of the exact 1202-session signal package; QC
-    run remains separately authorized
-  - 'The compatible call-or-flat mapping and all 37 TRADING-2509 successor-slot proposals
-    are now explicit and mechanically replayable, but first_layer_composer_v2 remains
-    semantic source evidence only: no exact 2021-02-22..2025-12-02 signal package
-    exists and no proposal row is Owner-frozen.'
-  - Owner exact-freezes draft file/canonical SHA 22335aa324ffb13c9917b65ad57f51916831ecd95c05fe357f7faa13f74b57d0/45c247010f47ad3172215f90aa7c9cd40044b5332284e1789095d230075a5d83;
-    a regenerated exact 1202-session one-row-per-XNYS-session package binds code/config/input/DQ/PIT
-    identity; manifest replay passes before a separate bounded QC authorization. No
-    raw option export/local repricing/paper/live/broker/production.
+  - Project Owner / separately authorize bounded real-DQ-backed regeneration and admission
+    of the existing first_layer_composer_v2 exact 1202-session signal package; QuantConnect
+    backtest remains a later separate authorization
+  - 'Exact policy freeze is complete through immutable admission file/canonical SHA
+    a89c3c245795bda3733b9579cbb0f78cf16b5f30ec6115217acab10b26b72d34/86c6e774e387782788281e370a844dec1f0061d784d62e14ffe02b4e44087017
+    with 37/37 slots and call-or-flat mapping replayed. The sole baseline blocker
+    is now the absent exact 2021-02-22..2025-12-02 signal package: retained first_layer_composer_v2
+    evidence begins 2023-02-22, and real DQ-backed regeneration is not authorized.'
+  - After separate authorization, a governed producer must regenerate exactly one
+    signal per 1202 XNYS sessions with exact code/config/input/DQ/PIT identity and
+    manifest replay PASS. Missing/duplicate/unknown rows, gap fill, POC rewrap, manual
+    CSV and cross-session fill reject. Only then may a separately authorized bounded
+    QuantConnect research backtest be prepared; raw option export/local repricing/paper/live/broker/production
+    remain prohibited.
   - 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
-    focused policy+Atlas=38 passed; Ruff/strict mypy/py_compile PASS; terminal=OWNER_EXACT_FREEZE_AND_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST;
-    QC/provider/real DQ/backtest/orders/fills/positions/production/broker=0.'
+    Freeze admission focused suite plus draft and Atlas=62 passed; Ruff/strict mypy/py_compile
+    PASS. terminal=OWNER_EXACT_POLICY_FROZEN_SIGNAL_PACKAGE_REQUIRED_NO_BACKTEST;
+    real DQ/QC/backtest/provider/raw payload/orders/fills/positions/production/broker=0.'
   docs_links:
   - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
   terminal: false
-  canonical_row_sha256: 5b3a6a83baed1475b9eaab7adee1d81bc9f5922ebc4ee8f15ecef46387476b1e
-last_event_id: task-event-8e7ec232ccf91d9f01175e0c17f98264
+  canonical_row_sha256: b1ddcda2de36e92ff0a865f2f4d512e1dd84e9d0ff3f3bfbf81fdf365475500b
+last_event_id: task-event-41563ce74bcc32a18221456f11ebe36d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 01b18f8599661d5721a182ebbb92cb06a601145cc53f66e7893c7934e41a8435
+fragment_checksum: 3b66ba11f89a755f908a0cc71e3f8df6d4340a82a10da55073eb86bf6cd4fc73
