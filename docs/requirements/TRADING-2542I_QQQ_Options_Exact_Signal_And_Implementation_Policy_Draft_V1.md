@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`BLOCKED_OWNER_INPUT`
+状态：`COMPLETED`
 
 Owner 指令：Project Owner 已确认继续按“既有趋势信号只负责方向，QuantConnect 只负责期权实现与
 收益计算”的路径推进，并于 2026-08-29 指示“好的，那就冻结吧，你继续推进”。该指令 exact-freeze
@@ -38,6 +38,14 @@ QuantConnect 将两个额外 Cloud Build 作为该点击的内部副作用执行
 build=`0` 上限。该结果因此保留但隔离，等待 Owner 决定是否追认这两个平台自动副作用并接纳仅含聚合
 字段的结果；在此之前不得把结果用于 DQ/PIT、策略选择、参数更新、生产或投资结论，也不得再执行任何
 QC action。
+
+Project Owner 随后于 2026-08-30 将单次 backtest dispatch 内由 QuantConnect 自动产生的 Cloud Build
+`e826e3-52ae2f` 与 `749e6f-52ae2f` 追认为 `RETROSPECTIVELY_REVIEWED`，并明确接纳 backtest
+`f2879a3cee7ec4e0b68b4f943aafd1f8` 的 export-safe aggregate result，仅限 non-executable
+`DATA_RESEARCH`。该接纳不授权任何新的 save、build、backtest、retry、raw option export、provider、
+Object Store、public share、paper、live、production、broker 或 QC 外 orders/fills/positions。原 incident
+bytes 保持不可变；本次只改变 authorization/admission disposition，不改变代码、数据、DQ/PIT、趋势信号、
+期权实现政策或既有运行事实。
 
 production effect：`none`
 
@@ -275,7 +283,7 @@ evaluation window 或 executable scope 变更都必须重新审阅。
   `1202/1202`、unique、label maturity、terminal emission、evaluation proxy rows=0、forward-label columns=0；
 - 只有 existing exact source admission 与 TRADING-2483 package canonical replay 同时 PASS，才进入 S3。
 
-### S3：bounded QuantConnect run（已授权，仍受 S2D PASS 前置约束）
+### S3：bounded QuantConnect run（已完成，聚合结果仅限研究准入）
 
 - 只在 S2D PASS 后提交一次固定 project/code/manifest/maxima 的 R1 research sandbox run；
 - 固定 existing clone project=`35444189`，原 project=`34808569` 只读保护；不再 clone 或创建 project；
@@ -288,6 +296,12 @@ evaluation window 或 executable scope 变更都必须重新审阅。
   各不超过 1202；provider query、raw payload download/export、Object Store、public share 均为 0；
 - 本地只接纳 export-safe aggregate/identity evidence；
 - paper/live/production/broker/orders outside QC simulation=`0`。
+
+S3 已完成：单次 dispatch、exact code/package identity、1202-session 范围和 export-safe aggregate 结果均已
+保留。平台自动产生的两个额外 Cloud Build 经 Owner 追认为 `RETROSPECTIVELY_REVIEWED` 后，不再构成
+authorization blocker；backtest aggregate 以 `PASS_EXPORT_SAFE_AGGREGATE_ONLY` 接纳。该状态不把
+`4.48%` 净收益解释为策略有效：本次 Sharpe=`-1.872`、PSR=`0`，结果只能作为后续独立、预注册的研究比较
+输入，不能用于自动参数更新、投资推广或 production/broker 决策。
 
 ## 7. 文件权属与生命周期
 
@@ -344,7 +358,7 @@ generated architecture/report-flow/compatibility authority 与 formal validation
 - `qc_execution_manifest_replay=PASS`；
 - `qc_signal_transition_count=83`；
 - `qc_main_py_bytes=14556`；
-- `conditional_quantconnect_backtest=ONE_DISPATCH_COMPLETED_RESULT_QUARANTINED`；
+- `conditional_quantconnect_backtest=ONE_DISPATCH_COMPLETED_RESULT_ADMITTED_RESEARCH_ONLY`；
 - `quantconnect_backtest_id=f2879a3cee7ec4e0b68b4f943aafd1f8`；
 - `quantconnect_backtest_dispatch_count=1`；
 - `quantconnect_automatic_builds_after_dispatch=2`；
@@ -352,8 +366,11 @@ generated architecture/report-flow/compatibility authority 与 formal validation
 - `quantconnect_aggregate_end_equity_usd=104479.60`；
 - `quantconnect_aggregate_net_profit_percent=4.48`；
 - `quantconnect_aggregate_total_orders/entries/exits/cancels=116/58/58/0`；
-- `quantconnect_result_admitted=false`；
-- terminal=`QC_SINGLE_BACKTEST_COMPLETED_RESULT_QUARANTINED_OWNER_REVIEW_REQUIRED`；
+- `quantconnect_authorization_state=RETROSPECTIVELY_REVIEWED`；
+- `quantconnect_technical_validation_state=PASS_EXPORT_SAFE_AGGREGATE_ONLY`；
+- `quantconnect_result_admitted=true`；
+- `quantconnect_result_scope=NON_EXECUTABLE_DATA_RESEARCH_ONLY`；
+- terminal=`QC_SINGLE_BACKTEST_RESULT_ADMITTED_RESEARCH_ONLY_TASK_COMPLETE`；
 
 ## 9. 进度记录
 
@@ -623,3 +640,17 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   以官方 generator 顺序刷新 architecture/compatibility authority，并从最终 candidate exact SHA 重渲染
   ignored Atlas page。不得改写历史 hash、放宽测试、串行代替并行 PASS，或执行任何 QuantConnect action；
   后继 Full 必须以本失败 artifact 作为 `failure_fix_rerun` parent。
+- 2026-08-30：incident publication v6 已修复 Atlas 日期、canonical page identity 与 compatibility
+  successor freshness，formal Architecture=`878 passed`、Contract=`278 passed`、Integration=`995 passed`、
+  Reproducibility=`24 passed`、Full=`9961 passed / 3 skipped`；Full runtime summary SHA-256=
+  `3867b6573f0f7693d7f538ee92d0a42e9b71db70d056e0ecfcda64593a1a7d44`，candidate/local/remote main=
+  `17b4810542a51d506eb3d5f66c4df1c1246fa86d`。publication transaction outcome=`COMPLETED`、lease=`RELEASED`；
+  未发生新的 QuantConnect action。
+- 2026-08-30：Project Owner 追认单次 backtest dispatch 内由 QuantConnect 自动产生的 Cloud Build
+  `e826e3-52ae2f` 与 `749e6f-52ae2f` 为 `RETROSPECTIVELY_REVIEWED`，并接纳 backtest
+  `f2879a3cee7ec4e0b68b4f943aafd1f8` 的 export-safe aggregate result，仅限 non-executable
+  `DATA_RESEARCH`。incident/result artifact SHA-256=
+  `384da42316b1dba5c338f6d48f607ffc8b0b2570732ffdef9bd6d0d8661e5bf6` 保持不变；authorization 与
+  technical validation 分别记录为 `RETROSPECTIVELY_REVIEWED` / `PASS_EXPORT_SAFE_AGGREGATE_ONLY`。
+  本次只准入已存在的聚合事实，不授权任何新 save/build/backtest/retry、raw option export、provider、
+  Object Store、public share、paper/live/production/broker 或 QC 外 orders/fills/positions；任务验收完成。
