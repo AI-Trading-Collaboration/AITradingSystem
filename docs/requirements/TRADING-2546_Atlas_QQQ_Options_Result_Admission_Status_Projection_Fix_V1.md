@@ -144,3 +144,8 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   pre-regeneration failure`；唯一失败是 ignored canonical Atlas page/sidecar 尚未重建，全部 source、policy、
   reader projection、negative drift 与 task-source count 用例均通过。下一步只提交经验证的本任务来源，
   再从该 exact SHA 重建 canonical 页面；不会把 stale generated page 当成实现失败或用手工改页绕过 writer。
+- 2026-08-30：来源已形成 exact lane commit
+  `2f7ccc8513aafa06b9d7a50d8f609cdfaef8ef07`。transaction v3 尝试把已经 terminal 的 2546
+  恢复为 active 时被 canonical task state machine 以 `DONE->IN_PROGRESS` 非法转换安全拒绝；没有 task
+  event 或其他 tracked write。2546 的完成历史保持不可变，剩余 exact-source 页面重建、formal validation
+  与 publication closeout 改由一个窄范围 successor task 承接，不篡改 2546 终态，也不新增外部研究动作。
