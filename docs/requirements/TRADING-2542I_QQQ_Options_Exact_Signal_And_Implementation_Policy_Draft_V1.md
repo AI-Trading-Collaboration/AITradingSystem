@@ -613,3 +613,13 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   `QUARANTINED_PENDING_OWNER_REVIEW`。结果不得进入 DQ/PIT、selection、engine、production 或投资结论；
   原项目 `34808569` mutation=`0`，QC 外 orders/fills/positions=`0/0/0`，raw option payload、Object
   Store、public share、paper/live/production/broker=`0/false/none`，且不再执行任何 QC action。
+- 2026-08-30：incident publication v3 的 formal Architecture=`878 passed`、Contract=`278 passed`、
+  Integration=`995 passed`、Reproducibility=`24 passed`；Full=`9956 passed / 3 skipped / 5 failed`，
+  runtime summary SHA-256=
+  `b0975be24977be05bff6ea80c16f5b37475a973006cd7659c87e7c324e9d76be`。五项失败来自同一收口缺口：
+  task event 将 `research_state_as_of` 合法推进到 2026-08-30，但 Atlas frozen assertion 与 ignored
+  canonical page 未刷新；`docs/task_register.md` 新 hash 也未被最新 compatibility successor 接管，导致
+  expected current fragment 尚未物化。v3 transaction 已按 `FAILED` 释放；修复只更新 Atlas 日期断言、
+  以官方 generator 顺序刷新 architecture/compatibility authority，并从最终 candidate exact SHA 重渲染
+  ignored Atlas page。不得改写历史 hash、放宽测试、串行代替并行 PASS，或执行任何 QuantConnect action；
+  后继 Full 必须以本失败 artifact 作为 `failure_fix_rerun` parent。
