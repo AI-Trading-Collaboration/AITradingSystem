@@ -13157,6 +13157,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         DEVX_009_PUBLICATION_FENCE_SECTION,
         TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION,
         PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION,
+        DEVX_011_WORKFLOW_HEALTH_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -13207,25 +13208,6 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         # path. Earlier sections preserve their captured bytes while the new EOF
         # section owns the current live hash.
         mismatches = mismatches - TRADING_2493_QC_OWNER_STAGE_GATE_SIGNOFF_2492_SUCCESSOR_ONLY_PATHS
-    if (
-        DEVX_011_WORKFLOW_HEALTH_SECTION in baseline
-        and stop_section != DEVX_011_WORKFLOW_HEALTH_SECTION
-    ):
-        # DEVX-011 is the EOF current-hash authority for its exact workflow,
-        # cadence, reporting and generated-control paths. Earlier sections keep
-        # immutable captured hashes without treating these governed successors
-        # as unexplained live drift.
-        devx_011_paths = frozenset(
-            str(path)
-            for path in baseline[DEVX_011_WORKFLOW_HEALTH_SECTION][
-                "superseded_live_source_paths"
-            ]
-        )
-        stop_section_paths = frozenset(
-            str(path)
-            for path in baseline[stop_section].get("superseded_live_source_paths", [])
-        )
-        mismatches = mismatches - (devx_011_paths - stop_section_paths)
     return mismatches
 
 

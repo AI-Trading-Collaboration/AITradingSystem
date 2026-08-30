@@ -1,0 +1,137 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-011A_WORKFLOW_HEALTH_COMPATIBILITY_CLOSEOUT
+  task_id_sha256: d7c8b96d795de9c8b6dacfde04cfd29521b33dffe4cda4fca26f5abf9a0164e0
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-011A_WORKFLOW_HEALTH_COMPATIBILITY_CLOSEOUT
+  title: null
+  domain: Developer experience / workflow health compatibility closeout
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 'Project owner: review weekly workflow-health candidates after four
+    validated observations'
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: No implementation blocker; accumulate
+    four validated weekly observations before policy threshold retuning or authorizing
+    a separate optimization task
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Owner-aware historical successor ownership preserved; Architecture/Contract/Integration/Reproducibility/Full
+      PASS; local main=origin/main=final candidate; production_effect=none
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-011A_WORKFLOW_HEALTH_COMPATIBILITY_CLOSEOUT
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-30T20:04:30Z'
+  actor: integration-coordinator
+  change_id: devx-011a-workflow-health-registration-20260831-v1
+  lane_id: null
+  base_commit: 1aa68cd3778f21005b1eb60308e8b13c2759903d
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-011A_WORKFLOW_HEALTH_COMPATIBILITY_CLOSEOUT
+    - Developer experience / workflow health compatibility closeout
+    - P1
+    - IN_PROGRESS
+    - Codex engineering coordinator：修复 v7 唯一 historical successor ownership failure
+      并完成正式发布
+    - 详见 `docs/requirements/DEVX-011_Governed_Workflow_Health_Control_Loop_V1.md`。依赖
+      DEVX-011 候选 1aa68cd；不得绕过终态不可逆、历史 hash 或正式门禁。
+    - 保留 post-stop successor ownership；Architecture/Contract/Integration/Reproducibility/Full
+      PASS；local main=origin/main=final candidate；production_effect=none。
+    - 2026-08-31：从 DEVX-011 过早 DONE 状态分拆的窄范围 successor；失败证据 outputs/validation_runtime/architecture-fitness_20260830T195305Z/test_runtime_summary.json。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-011a-workflow-health-registration-20260831-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c003034ea88eeabf5cc02f452af36810
+- schema_version: task_event.v1
+  task_id: DEVX-011A_WORKFLOW_HEALTH_COMPATIBILITY_CLOSEOUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T20:07:30Z'
+  actor: integration-coordinator
+  change_id: devx-011a-workflow-health-closeout-20260831-v1-prevalidation
+  lane_id: null
+  base_commit: 1aa68cd3778f21005b1eb60308e8b13c2759903d
+  previous_state_event_id: task-event-c003034ea88eeabf5cc02f452af36810
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 'Codex engineering coordinator: refresh authorities and prevalidate
+      Architecture before terminal transition'
+    blocker_or_next_step: No implementation blocker; run generated authority replay
+      and full Architecture prevalidation on the owner-aware historical mismatch fix
+    acceptance_criteria: Preserve post-stop successor ownership; Architecture/Contract/Integration/Reproducibility/Full
+      PASS; local main=origin/main=final candidate; production_effect=none
+    notes: '2026-08-31: owner-aware DEVX-011 retroactive path logic passes DEVX-003,
+      TRADING-2458 and TRADING-2504 historical samples; repository/latest failures
+      are expected stale-generator signals after successor registration'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-011a-workflow-health-closeout-20260831-v1-prevalidation
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-128079baefddbdf61b449b62ed1387ce
+- schema_version: task_event.v1
+  task_id: DEVX-011A_WORKFLOW_HEALTH_COMPATIBILITY_CLOSEOUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T20:22:00Z'
+  actor: integration-coordinator
+  change_id: devx-011a-workflow-health-closeout-20260831-v3
+  lane_id: null
+  base_commit: 1aa68cd3778f21005b1eb60308e8b13c2759903d
+  previous_state_event_id: task-event-128079baefddbdf61b449b62ed1387ce
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 'Project owner: review weekly workflow-health candidates after four
+      validated observations'
+    blocker_or_next_step: No implementation blocker; accumulate four validated weekly
+      observations before policy threshold retuning or authorizing a separate optimization
+      task
+    acceptance_criteria: Owner-aware historical successor ownership preserved; Architecture/Contract/Integration/Reproducibility/Full
+      PASS; local main=origin/main=final candidate; production_effect=none
+    notes: '2026-08-31: prevalidation PASS (Architecture 880, Contract 278, Integration
+      995, Reproducibility 24); final completion is fail-closed on v3 formal gates,
+      Full, ordinary push, SHA equality and release receipt'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-011a-workflow-health-closeout-20260831-v3
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-170f95bf234d75a0cb16613384210c4f
+projection:
+  legacy_first_eight_cells:
+  - DEVX-011A_WORKFLOW_HEALTH_COMPATIBILITY_CLOSEOUT
+  - Developer experience / workflow health compatibility closeout
+  - P1
+  - DONE
+  - 'Project owner: review weekly workflow-health candidates after four validated
+    observations'
+  - No implementation blocker; accumulate four validated weekly observations before
+    policy threshold retuning or authorizing a separate optimization task
+  - Owner-aware historical successor ownership preserved; Architecture/Contract/Integration/Reproducibility/Full
+    PASS; local main=origin/main=final candidate; production_effect=none
+  - '2026-08-31: prevalidation PASS (Architecture 880, Contract 278, Integration 995,
+    Reproducibility 24); final completion is fail-closed on v3 formal gates, Full,
+    ordinary push, SHA equality and release receipt'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: d87c8e7b8e718524fc13d8625d9029779eb750b1ad69f761211e4771923223dd
+last_event_id: task-event-170f95bf234d75a0cb16613384210c4f
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: ad6a24c04f86cc93dc0191b1d7ff508ae3f62953158fafaa78c0ba2bc4740b05
