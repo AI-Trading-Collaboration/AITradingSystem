@@ -1782,6 +1782,10 @@ def _prod_004_section(
         "docs/runbook_daily_ops.md",
         "docs/system_flow.md",
         "docs/task_register.md",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
         "inputs/architecture/arch_005_task_registry_index.yaml",
         "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
         (

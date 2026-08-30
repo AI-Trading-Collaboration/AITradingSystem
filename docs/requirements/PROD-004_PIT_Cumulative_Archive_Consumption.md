@@ -105,7 +105,7 @@ source catalog、payload 存在性、checksum、字节数、row count、日期�
 - task branch：`codex/prod-004-pit-cumulative-consumption`；
 - 本任务复用主 checkout，不创建临时 worktree、clone 或外部 cache；
 - publication transaction：
-  `prod-004-pit-cumulative-consumption-20260831-v4`；
+  `prod-004-pit-cumulative-consumption-20260831-v5`；
 - 完成条件：candidate 通过正式验证，local `main` fast-forward，普通 push 后
   `local main = origin/main = candidate`，publication lease 正常释放；若 remote diverge、
   非 fast-forward 或出现未归属变更则停止。
@@ -136,3 +136,9 @@ source catalog、payload 存在性、checksum、字节数、row count、日期�
   顺序不合规，因此 v3 以 FAILED 释放 lease，并把生成索引作为事故证据；该次输出不作为
   发布 PASS evidence。v4 复用同一候选与已声明范围，从 `TASK_SOURCE_PRE_WRITE` 开始严格串行
   执行 checkpoint、三类 generated authority rebuild 与正式验证。
+- 2026-08-31：v4 的 compatibility 全量测试 `205 passed`、PIT 与相邻治理测试
+  `146 passed`，但正式 `architecture-fitness` 为 `878 passed, 1 failed`；唯一失败是新增
+  module/test 导致 `module_manifest`、`test_manifest` 与 `aggregate_shadow_index` deterministic
+  rebuild 不一致。v4 以该 runtime artifact 作为 FAILED evidence 释放 lease。v5 新增
+  `architecture-manifests` generator，并把四份 ARCH-004E generated authority 纳入 PROD-004
+  successor source set，按声明顺序重建后再从新候选执行正式五门。

@@ -58,7 +58,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/requirements/PROD-004_PIT_Cumulative_Archive_Consumption.md",
-        "sha256": "531ec5a9cd8cf1a0ffeb6a56ce63dffcfeecb390e0368aa638a48e05b6401fef"
+        "sha256": "f583ec7402b9e9b7202ee9d29a22c7040aa83a5ec1e25bc0f186055550e06442"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -74,6 +74,26 @@
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
         "sha256": "8fc57891cc9c72f1407586981713cd1501fc4baacf9c90bc39366a9a2ac68059"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "sha256": "bff6b80b8fbee0ca21ea938feec88256e23a0167db85a90dd6c6d36c0fa1e3bb"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "sha256": "d37548b32134edaf691cc9284af22b62e29ccac528085f6bc11ad7d5252efe50"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_module_manifest.yaml",
+        "sha256": "df5941710855563871f56a456e0f49961657a8dc0bd2576afe3e09809563f5f7"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_test_manifest.yaml",
+        "sha256": "c7aaad1b52fc82404b2ec1457bff35aab1e17ca803a177dcc103bab8206f0a3a"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -123,7 +143,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
-        "sha256": "f7e14f85f80378cc6840b64b762c5bea6b52a3cc083230d5db3e58015cb94a9d"
+        "sha256": "1d1af4ef7a0278a0a5dca44110c15fc1d819e61126a4a8b6adaa5068fcddde0d"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -180,6 +200,10 @@
       "docs/runbook_daily_ops.md",
       "docs/system_flow.md",
       "docs/task_register.md",
+      "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+      "inputs/architecture/arch_004e_architecture_fitness.yaml",
+      "inputs/architecture/arch_004e_module_manifest.yaml",
+      "inputs/architecture/arch_004e_test_manifest.yaml",
       "inputs/architecture/arch_005_task_registry_index.yaml",
       "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
       "registry/development_tasks/09/09c1c512d95624d2f7900d3d5afdef258c36c149419f762eaa3b460d9553c435.yaml",
@@ -208,5 +232,5 @@
     "task_id": "PROD-004"
   },
   "section_id": "phase_prod_004_pit_cumulative_archive_consumption_v1",
-  "section_sha256": "99c5de6ff43ad3c5874583a131de7d25397b60cd59815b57cd0acc520f69e3f1"
+  "section_sha256": "cf86fe34d08c22fb43eb34e1caad79a892b37318186b16b6a1f763db8c798893"
 }
