@@ -105,7 +105,7 @@ source catalog、payload 存在性、checksum、字节数、row count、日期�
 - task branch：`codex/prod-004-pit-cumulative-consumption`；
 - 本任务复用主 checkout，不创建临时 worktree、clone 或外部 cache；
 - publication transaction：
-  `prod-004-pit-cumulative-consumption-20260831-v7`；
+  `prod-004-pit-cumulative-consumption-20260831-v8`；
 - 完成条件：candidate 通过正式验证，local `main` fast-forward，普通 push 后
   `local main = origin/main = candidate`，publication lease 正常释放；若 remote diverge、
   非 fast-forward 或出现未归属变更则停止。
@@ -157,3 +157,9 @@ source catalog、payload 存在性、checksum、字节数、row count、日期�
   candidate commit 前以 FAILED 释放。v7 恢复 policy 固定顺序；ignored Atlas sidecars 在 authority
   生成阶段执行一次，并在所有 tracked 生成物提交为 final candidate 后再次通过同一官方 renderer
   刷新 exact-commit identity，随后才运行 focused 与 formal validation。
+- 2026-08-31：v7 在 canonical task/index 与 architecture manifest 形成可供 Atlas 引用的中间
+  commit 后，254 项 compatibility/Atlas/generated focused 回归全部 PASS；但事务仍声明旧 lane
+  head，`GENERATED_REBUILD_POST` 以 `PUBLICATION_LANE_HEAD_DRIFT` fail closed。v7 释放且不把该
+  focused PASS 充当发布证据。v8 以已审计中间 commit
+  `d56eea953c7a14df6f79b76ebaa10c980383d4b7` 为 lane head，复用同一失败 Full parent，重新执行
+  完整生成序列与最终门禁。
