@@ -1,7 +1,7 @@
 schema_version: atlas_page_effectiveness_policy.v1
 policy_id: atlas_strategy_research_page_effectiveness_v1
-policy_version: 3.4.0
-status: REVIEWED_LIVE_SNAPSHOT_IDENTITY_CONTRACT_V3_SOURCE_CONTRACT_COVERAGE_REFRESH
+policy_version: 3.5.0
+status: REVIEWED_LIVE_SNAPSHOT_IDENTITY_CONTRACT_V3_PAIRED_COMPARATOR_COVERAGE_REFRESH
 owner: Atlas page engineering owner
 primary_research_start: '2021-02-22'
 canonical_page_path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html
@@ -29,6 +29,7 @@ relevant_source_paths:
   - config/atlas/source_registry.yaml
   - config/research/qc_qqq_options_growth_action_value_veto_option_signal_architecture_freeze_v1.yaml
   - config/research/qc_qqq_options_growth_action_value_mandatory_veto_source_contract_wave_v1.yaml
+  - config/research/qc_qqq_options_paired_comparison_contract_v1.yaml
   - inputs/architecture/arch_005_task_registry_index.yaml
   - inputs/research/qqq_options/trading_2533_session_finalization_dq_pit_evidence_admission_v1/dq_pit_evidence_admission.json
   - inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v3/export_safe_terminal_evidence.json
@@ -47,6 +48,7 @@ relevant_source_paths:
   - src/ai_trading_system/atlas/status_explanation_projection.py
   - src/ai_trading_system/atlas/work_progress_projection.py
   - src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_source_contract.py
+  - src/ai_trading_system/qqq_options_research/paired_comparison_contract.py
   - src/ai_trading_system/contracts/strategy_research_page_effectiveness.py
   - src/ai_trading_system/contracts/strategy_research_qqq_options_projection.py
   - src/ai_trading_system/contracts/strategy_research_reader_projection.py
@@ -364,6 +366,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md
     coverage: ATLAS_EXACT_SOURCE_REBUILD_AND_PUBLICATION_CLOSEOUT_COMPLETE
     reader_summary_zh: 2547 只承接 2546 完成后的 exact-source 页面重建、正式验证和发布收口，不改变 2542I 已接纳的研究聚合结果，不冻结新的期权策略参数，也不授权新的 QuantConnect、数据提供方、生产或 broker 动作。
+  - task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
+    requirement_path: docs/requirements/TRADING-2548_QQQ_Options_Paired_Comparator_Estimand_And_Export_Contract_V1.md
+    coverage: DISCLOSED_PAIRED_COMPARATOR_CONTRACT_DRAFT_OWNER_EXACT_FREEZE_REQUIRED_NO_BACKTEST
+    reader_summary_zh: 2548 已在不改变 first_layer_composer_v2 唯一方向信号和 37-slot option baseline 的前提下，完成只读 paired-comparison draft：primary 固定为同信号 fully-funded QQQ cash account，primary estimand 固定为 common-capital return difference，资本占用时长视图只作不可覆盖 primary 的 secondary，diagnostics 仅限 SGOV carry 与 QQQ 买入并持有。现有 4.48% 结果仍只证明 capability，不含 paired outcome；当前等待 Owner 按 exact file/canonical SHA 冻结，且不授权 exporter、manifest、DQ、QuantConnect 或 backtest。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

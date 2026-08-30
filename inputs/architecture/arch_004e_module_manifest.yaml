@@ -409,7 +409,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.live_snapshot
   path: src/ai_trading_system/atlas/live_snapshot.py
-  sha256: f684e9f172bf6c57c9fffaad983504b829f568de75b3b6632650c50e6067f90f
+  sha256: 6bb6630bc119234150160faa33872eba82448916394b05608a6a33da8b40b1db
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

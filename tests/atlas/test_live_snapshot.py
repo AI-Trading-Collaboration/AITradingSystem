@@ -94,7 +94,7 @@ def test_unclassified_successor_is_detected_before_live_projection() -> None:
     without_latest = replace(policy, task_sources=policy.task_sources[:-1])
 
     assert unclassified_page_successors(registry, without_latest) == (
-        "TRADING-2547_ATLAS_QQQ_OPTIONS_EXACT_SOURCE_REBUILD_PUBLICATION_CLOSEOUT_V1",
+        "TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1",
     )
 
 
@@ -106,19 +106,21 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2542I_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2548_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at == "2026-08-30T02:47:04.4564323+00:00"
     assert bundle.status_object_zh == (
         "QQQ options 链路继续使用既有 first_layer_composer_v2 五态作为唯一方向事实，未新增期权"
-        "专用趋势模型。2021-02-22..2025-12-02 exact 1202-session signal/package/DQ replay 已通过，"
-        "单次 bounded QuantConnect backtest f2879a3cee7ec4e0b68b4f943aafd1f8 已完成；平台自动 "
-        "Cloud Build e826e3-52ae2f 与 749e6f-52ae2f 已由 Owner 事后完成范围复核，平台聚合字段"
-        "也通过限定范围的技术复核，仅作为不可执行的数据研究接纳。期末权益 104479.60、净收益 "
-        "4.48%、费用 75.40、订单/进入/退出/取消=116/58/58/0；Sharpe=-1.872、PSR=0，正收益"
-        "不证明策略有效。任何后继比较必须另行预注册；当前不授权新的保存、构建、回测、重试、"
-        "原始期权数据或 provider 输出、Object Store、公开分享、paper/live/production/broker 或 "
-        "QC 外 orders/fills/positions。"
+        "专用趋势模型。2021-02-22..2025-12-02 exact 1202-session signal/package/DQ replay 与单次 "
+        "bounded QuantConnect baseline 已完成；其 4.48% 聚合结果仅作为不可执行 capability/"
+        "diagnostic evidence 接纳，Sharpe=-1.872、PSR=0，不能证明策略有效或期权优于标的。"
+        "TRADING-2548 已完成只读 paired-comparison draft：primary comparator 为同信号 fully-funded "
+        "QQQ cash account，primary estimand 为 common-capital return difference，"
+        "资本占用时长视图仅作 secondary，diagnostics 限于 SGOV carry 与 QQQ 买入并持有。"
+        "当前最大阻塞是 Owner 尚未按 final file/canonical SHA exact-freeze 该 contract；"
+        "冻结前不授权 "
+        "exporter、manifest、DQ、QuantConnect save/build/backtest/retry、原始期权数据、provider/"
+        "Object Store/public share、paper/live/production/broker 或 QC 外 orders/fills/positions。"
     )
 
 
@@ -145,6 +147,8 @@ def test_reader_decision_projection_separates_transport_from_dq_pit_promotion() 
     assert "净收益 +4.48%" in visible
     assert "Sharpe=-1.872" in visible
     assert "不再运行外部回测平台" in visible
+    assert "规范化哈希精确冻结" in visible
+    assert "离线合成导出与校验波" in visible
     assert "QC_AUTHORIZED_NOT_RUN" not in visible
     assert "仍有 1 天全日未出现期权链" not in visible
     assert "先解释唯一缺链交易日" not in visible

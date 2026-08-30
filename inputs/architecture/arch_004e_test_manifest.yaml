@@ -27,7 +27,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_cited_query_renderer
   path: tests/atlas/test_cited_query_renderer.py
-  sha256: be26948e06cc6f7c7293a2dce87cb7b55b1f9d33f23fba828090fadb003c82aa
+  sha256: 8ff6b0378d1577d203c2b1bf8cc432fc00e833e222c9e197a966efcd2d22f844
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_live_snapshot
   path: tests/atlas/test_live_snapshot.py
-  sha256: 783ab6281696eca1cad5be5df1be60564895c433eaad704b16fd0a3a0acc089d
+  sha256: eacbff0c4ddb7786e4e2e9a3894e0c0c3c0fc06cd3e7f7e5281212dd69eded2d
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -203,7 +203,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_page_effectiveness
   path: tests/atlas/test_page_effectiveness.py
-  sha256: d9b9c41663d2fd970f1242f0a52d569c79861f16c2f678c3acd7017775820886
+  sha256: 300d87c61ee1eb22699a9ef2888a0e0c6fbb3f667f74af8fbda91d232df33bf0
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10410,7 +10410,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: b3373bda8e7e2d833ca6898fffb4fe59b230d0694761f4174513b0ee679cceee
+  sha256: 7799e16d71e7f1a0c1790c208ae9548eead1a9de4b6a1ad5565fc1820950ab51
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

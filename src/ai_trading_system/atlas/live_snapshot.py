@@ -623,8 +623,9 @@ def build_reader_decision_projection(
             item_id="CURRENT_DECISION",
             label_zh="01 · 当前决定",
             text_zh=(
-                "期权实现 baseline 已完成并仅限研究接纳；当前不形成策略结论，"
-                "也不再运行外部回测平台。"
+                "期权实现 baseline 已完成并仅限研究接纳；paired comparator 草案已完成但尚待 "
+                "项目负责人按最终文件与规范化哈希精确冻结，当前不形成策略结论，也不再运行"
+                "外部回测平台。"
             ),
             source_task_ids=current_decision_sources,
         ),
@@ -638,8 +639,9 @@ def build_reader_decision_projection(
             item_id="CURRENT_WORK",
             label_zh="03 · 现在在查什么",
             text_zh=(
-                "当前只解释这次基线结果，并准备另行讨论同一趋势信号怎样映射为期权实现、"
-                "如何设置 paired comparator 与风险预算；尚未冻结后继研究任务。"
+                "当前已把同一趋势信号的 fully-funded QQQ primary comparator、common-capital "
+                "primary estimand、不可覆盖 primary 的资本占用时长 secondary，以及两项"
+                "诊断边界写入 non-executable contract draft。"
             ),
             source_task_ids=work_sources,
         ),
@@ -647,8 +649,9 @@ def build_reader_decision_projection(
             item_id="NEXT_STEP",
             label_zh="04 · 下一步",
             text_zh=(
-                "先单独预注册趋势到期权实现及同信号对照方案；在新任务和精确授权形成前，"
-                "不得 save、build、backtest、retry 或执行其他外部平台动作。"
+                "下一步只由项目负责人按最终文件和规范化哈希精确冻结对照合同；冻结后才能另立"
+                "离线合成导出与校验波。当前不得 save、build、backtest、retry 或执行其他"
+                "外部平台动作。"
             ),
             source_task_ids=next_sources,
         ),
@@ -667,8 +670,8 @@ def build_reader_decision_projection(
             item_id="CURRENT_RESEARCH_MAINLINE",
             label_zh="01 · 当前主线",
             text_zh=(
-                "QQQ 期权实现基线已经完成；当前主线是解释已接纳结果，并在独立任务中设计"
-                "同一趋势信号的标的实现与期权实现对照。"
+                "QQQ 期权实现基线已经完成；当前主线是 exact-freeze 已完成设计的同信号、"
+                "同资本标的实现与期权实现对照 contract。"
             ),
             source_task_ids=current_decision_sources,
         ),
@@ -676,7 +679,8 @@ def build_reader_decision_projection(
             item_id="LARGEST_CURRENT_BLOCKER",
             label_zh="02 · 最大阻塞",
             text_zh=(
-                f"{limitation_text}后继 comparison 尚未预注册，且当前没有新的外部回测授权。"
+                f"{limitation_text}paired-comparison contract 尚未由 Owner 按 final file/canonical "
+                "SHA exact-freeze，且当前没有 exporter 或新外部回测授权。"
             ),
             source_task_ids=why_sources,
         ),
@@ -685,8 +689,8 @@ def build_reader_decision_projection(
             label_zh="03 · 已做到什么",
             text_zh=(
                 f"受治理链路已确认 {observed}/{expected} 个交易日并完成一次 bounded baseline；"
-                "平台聚合字段已通过限定范围的技术复核，但这只接纳聚合研究事实，"
-                "不是策略通过。"
+                "平台聚合字段已通过限定范围的技术复核，并已完成 result-blind comparator "
+                "contract draft，但这些只属于工程与聚合研究事实，不是策略通过。"
             ),
             source_task_ids=work_sources,
         ),

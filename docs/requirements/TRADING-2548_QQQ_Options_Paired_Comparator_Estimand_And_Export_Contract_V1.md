@@ -344,3 +344,14 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   Full、main/push 或外部动作。v2 transaction 显式扩展 `tests/test_arch_004g_deprecation.py` shared claim，
   只把 inventory ID 与 module/test count 同步到 generator 已证明的 `1179/1337`；未改变任何 deprecation
   lifecycle 或 writer allowance。重建后 generators=`PASS`，对应 focused=`47 passed`。
+- 2026-08-30：v2 candidate `0ab075e7729828bdb757c13526df9b36bdccb39c` 的 Architecture=
+  `878 passed`、Contract=`278 passed`、Integration=`995 passed`、Reproducibility=`24 passed`；Full=
+  `9971 passed / 14 failed / 3 skipped`。14 项失败全部由同一根因触发：新增 canonical task
+  TRADING-2548 尚未进入 Atlas successor classification，页面因此按设计 fail closed 为
+  `UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED`。v2 Full 证据已 immutable 保存并以 FAILED 释放 transaction，
+  未发布 main、未 push、未运行外部动作。
+- 2026-08-30：failure-fix v3 只试图扩展 Atlas source classification 与 reader projection；聚焦回归发现
+  cited-query coverage count test 也必须同步，但该文件未列入 v3 精确路径声明，因此 transaction 在 candidate
+  commit 前按 FAILED 释放，没有越权修改。v4 已扩展该测试路径并绑定 parent Full summary
+  `outputs/validation_runtime/full_20260830T113951Z/test_runtime_summary.json`；本波仍不改变 paired contract、
+  frozen signal、37-slot baseline、existing aggregate 或 safety authority，只允许一次 `failure_fix_rerun` Full。
