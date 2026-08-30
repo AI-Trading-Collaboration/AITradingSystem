@@ -8176,6 +8176,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: workflow_health
+    title: Governed Developer Workflow Health
+    group: governance
+    cadence: weekly
+    audience: operator
+    owner: system
+    command: aits reports workflow-health --as-of YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/workflow_health_????-??-??.json
+      - outputs/reports/workflow_health_????-??-??.md
+    freshness_sla_days: 7
+    freshness_rationale: A validated current-week artifact is required before the first non-trivial tracked development mutation so recurring governance and validation friction remains visible.
+    owner_action: review_stable_optimization_candidates_and_authorize_any_follow_up_separately
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: workflow_health_validation
+    title: Governed Developer Workflow Health Validation
+    group: governance
+    cadence: weekly
+    audience: operator
+    owner: system
+    command: aits reports validate-workflow-health --latest
+    artifact_globs:
+      - outputs/reports/workflow_health_validation_????-??-??.json
+      - outputs/reports/workflow_health_validation_????-??-??.md
+    freshness_sla_days: 7
+    freshness_rationale: Workflow health telemetry must retain complete schema, source coverage disclosure, stable candidate identity, and review-only safety invariants before review.
+    owner_action: fix_telemetry_or_safety_validation_blockers_before_using_candidates
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: artifact_lifecycle_inventory
     title: Artifact Lifecycle Inventory
     group: governance

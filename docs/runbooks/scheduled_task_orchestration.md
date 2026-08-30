@@ -109,7 +109,14 @@ Weekly 任务在 `config/scheduled_tasks.yaml` 中登记；daily-run只生成逐
 - weight candidate evaluation
 - weight promotion gate
 - research governance summary review
+- governed developer workflow health review（每个 ISO 周首个非平凡 tracked mutation 前；已有当周 validated artifact 时复用）
 - Dynamic v3 rescue artifact validation / stale review / governance validate / research index / observe-only shadow monitor
+
+`weekly_workflow_health_review` 只读取 validation runtime、publication transaction 和 Git
+main history，输出只读 health report / validation / `PROPOSED_REVIEW_ONLY` candidates。
+它不读取 market cache，不要求 `aits validate-data`，也不自动 dispatch candidate、修改
+task register、放宽门禁或触发 production/broker。当前仍由 unified periodic plan 发现 due
+状态，`automatic_command_dispatch_enabled=false` 保持不变。
 
 Weekly 输出必须声明实际 research window 与 requested/evaluated range；默认 primary conclusion window 从 `2021-02-22` 开始。若显式使用 `ai_after_chatgpt` / `2022-12-01`，必须标为 historical comparison、AI-cycle attribution 或 sensitivity/stress，而不是默认或更严格的 minimum bound。
 

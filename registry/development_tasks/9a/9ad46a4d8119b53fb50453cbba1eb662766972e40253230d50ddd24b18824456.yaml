@@ -1,0 +1,113 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-011_GOVERNED_WORKFLOW_HEALTH_CONTROL_LOOP_V1
+  task_id_sha256: 9ad46a4d8119b53fb50453cbba1eb662766972e40253230d50ddd24b18824456
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-011_GOVERNED_WORKFLOW_HEALTH_CONTROL_LOOP_V1
+  title: null
+  domain: Developer experience / governed weekly workflow health control loop
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Project owner：review weekly candidates after four observations; authorize
+    any follow-up as a separate canonical task
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: V1 complete with no implementation blocker;
+    accumulate four validated weekly observations before threshold retuning
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Policy-backed 7-day validation/transaction/Git metrics；stable review-only
+      candidates；CLI report + validation；weekly periodic registry and Codex once-per-week
+      trigger；focused/formal/Full PASS；production_effect=none
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-011_GOVERNED_WORKFLOW_HEALTH_CONTROL_LOOP_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-30T18:54:40.2428237Z'
+  actor: integration-coordinator
+  change_id: devx-011-registration-20260831-v1
+  lane_id: null
+  base_commit: 961d65a9743a354994c319dfa102acddb28cab21
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-011_GOVERNED_WORKFLOW_HEALTH_CONTROL_LOOP_V1
+    - Developer experience / governed weekly workflow health control loop
+    - P1
+    - IN_PROGRESS
+    - Codex engineering coordinator：实现 V1 并收集四个 weekly observations 后复核 policy
+    - 详见 `docs/requirements/DEVX-011_Governed_Workflow_Health_Control_Loop_V1.md`。无
+      implementation blocker；V1 只读采集现有工程证据，不自动放宽门禁、修改任务状态或执行优化。
+    - Policy-backed 7-day validation/transaction/Git metrics；稳定去重 optimization candidates；CLI
+      report + validation；weekly periodic registry 与 Codex once-per-week self-trigger；focused/formal/Full
+      PASS；production_effect=none。
+    - 2026-08-31：Owner 同意继续推进；登记 V1，先实现自动发现、只读周报和候选去重，优化执行仍需 reviewed task。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-011-registration-20260831-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b376fb735bd19551ff44fb5c33ec76a9
+- schema_version: task_event.v1
+  task_id: DEVX-011_GOVERNED_WORKFLOW_HEALTH_CONTROL_LOOP_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T19:14:00Z'
+  actor: integration-coordinator
+  change_id: devx-011-workflow-health-implementation-20260831-v1
+  lane_id: null
+  base_commit: 961d65a9743a354994c319dfa102acddb28cab21
+  previous_state_event_id: task-event-b376fb735bd19551ff44fb5c33ec76a9
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: Project owner：review weekly candidates after four observations; authorize
+      any follow-up as a separate canonical task
+    blocker_or_next_step: V1 complete with no implementation blocker; accumulate four
+      validated weekly observations before threshold retuning
+    acceptance_criteria: Policy-backed 7-day validation/transaction/Git metrics；stable
+      review-only candidates；CLI report + validation；weekly periodic registry and
+      Codex once-per-week trigger；focused/formal/Full PASS；production_effect=none
+    notes: 2026-08-31：V1 implementation and documentation complete；focused validation
+      80 passed；real bundle validation PASS with 280 summaries, 192 transactions,
+      13 review-only candidates；final formal validation and publication remain bound
+      to transaction devx-011-workflow-health-implementation-20260831-v1
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-011-workflow-health-implementation-20260831-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-add835c1e06702ba468e7e3e0f6efe41
+projection:
+  legacy_first_eight_cells:
+  - DEVX-011_GOVERNED_WORKFLOW_HEALTH_CONTROL_LOOP_V1
+  - Developer experience / governed weekly workflow health control loop
+  - P1
+  - DONE
+  - Project owner：review weekly candidates after four observations; authorize any
+    follow-up as a separate canonical task
+  - V1 complete with no implementation blocker; accumulate four validated weekly observations
+    before threshold retuning
+  - Policy-backed 7-day validation/transaction/Git metrics；stable review-only candidates；CLI
+    report + validation；weekly periodic registry and Codex once-per-week trigger；focused/formal/Full
+    PASS；production_effect=none
+  - 2026-08-31：V1 implementation and documentation complete；focused validation 80
+    passed；real bundle validation PASS with 280 summaries, 192 transactions, 13 review-only
+    candidates；final formal validation and publication remain bound to transaction
+    devx-011-workflow-health-implementation-20260831-v1
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 59089ca32d88a67c61e96db29e4100ba6660c5d1474a8ffe0efe0d9966511c1e
+last_event_id: task-event-add835c1e06702ba468e7e3e0f6efe41
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: f6a2ee8d11c9dfed8145c7437edb4afec65b239fa35ead7852c0da80ab537322

@@ -54,6 +54,7 @@ def test_scheduled_tasks_config_registers_required_cadences_and_safety() -> None
         "weekly_weight_candidate_evaluation",
         "weekly_weight_promotion_gate",
         "weekly_research_governance_summary_review",
+        "weekly_workflow_health_review",
         "weekly_dynamic_v3_rescue_artifact_validate",
         "weekly_dynamic_v3_rescue_artifact_stale",
         "weekly_dynamic_v3_rescue_governance_validate",

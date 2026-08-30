@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1180
+module_count: 1182
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -1833,7 +1833,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.reports
   path: src/ai_trading_system/cli_commands/reports.py
-  sha256: 682359fc44903788a38ed3669de679489cd130ae09881f73215f01b12b5f74c8
+  sha256: f53e7a6f91af4c7de21a470d7dc0818efaa92b6d7d30f4db726e2d659faae43b
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -2472,6 +2472,28 @@ modules:
 - module_id: src.ai_trading_system.cli_commands.watchlist
   path: src/ai_trading_system/cli_commands/watchlist.py
   sha256: 44a1a9bb509d35f72a340ecaa258e04e8e687b5eefbb58a9e4d2598db5d19961
+  rule_id: cli_commands
+  owner_profile: platform
+  owners:
+    code_owner: platform_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: platform_io
+    runtime_owner: platform_operations
+  layer: interface
+  category: cli_adapters
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_cli*.py
+  - tests/test_etf_cli_aliases.py
+  validation_tiers:
+  - fast-unit
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.cli_commands.workflow_health_reports
+  path: src/ai_trading_system/cli_commands/workflow_health_reports.py
+  sha256: 70cfa6ed7fcd09ecb5dfaf8710b8bedd6a0e76b9fb5398c679d6557e9fe56002
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -19203,6 +19225,28 @@ modules:
 - module_id: src.ai_trading_system.reports.waiver_inventory
   path: src/ai_trading_system/reports/waiver_inventory.py
   sha256: 4efa36b562b59bbe09a435c4bdf5d5ae1dd084fff406836cce5b80154fbea34a
+  rule_id: reports
+  owner_profile: reporting
+  owners:
+    code_owner: reporting_platform
+    policy_owner: reporting_governance
+    data_owner: data_governance
+    artifact_owner: reporting_governance
+    runtime_owner: reporting_operations
+  layer: interface
+  category: reporting
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_report*.py
+  - tests/test_reader_brief*.py
+  validation_tiers:
+  - report-validation
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.reports.workflow_health
+  path: src/ai_trading_system/reports/workflow_health.py
+  sha256: 314b0d519fd36fb0d073d3e178bfb81e65acce7fee66ccbbbdcce2c33a298cc2
   rule_id: reports
   owner_profile: reporting
   owners:

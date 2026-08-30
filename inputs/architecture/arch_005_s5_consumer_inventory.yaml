@@ -1,10 +1,10 @@
 schema_version: arch_005_s5_consumer_inventory.v1
 status: PASS
 source_of_truth: ARCH_005_TASK_REGISTRY
-consumer_count: 135
+consumer_count: 136
 runtime_consumer_count: 8
 script_consumer_count: 3
-test_consumer_count: 124
+test_consumer_count: 125
 manual_semantic_runtime_consumer_count: 0
 manual_writer_count: 0
 consumers:
@@ -1113,6 +1113,14 @@ consumers:
   manual_semantic_runtime_consumer: false
   manual_writer: false
   rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_workflow_health.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
 production_effect: none
 broker_action: none
-inventory_checksum: 88689c740acf452cc8e821000b2887dfc05058176354bb63ffc7c3cb274204aa
+inventory_checksum: fc2fb43f9bff4f938a2866e46866cc790253753e3fc8b8d7298bc4cf6c4a1671

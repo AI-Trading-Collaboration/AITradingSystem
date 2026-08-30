@@ -7,16 +7,16 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 1035
+task_count: 1036
 active_task_count: 507
-completed_task_count: 528
-fragment_count: 1035
+completed_task_count: 529
+fragment_count: 1036
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: dfce0150dd7f4e4518c95adb8e6674e50df7f95104f27c68229c134ab41c8aaf
+final_chain_sha256: 65cc937dc39fd82c1fa669a41dade457941103ef520708d4fb86c4726f98777d
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
-consumer_inventory_sha256: 0c3efea17f7c4a4cae0488be7b40116560b065ec6ee1c53818e0ff1fdaa31509
+consumer_inventory_sha256: 247d44a02a96b3540e6a9ce30a837fbf8caa4c46d4022fddafc524e5ab57baa8
 templates:
 - partition: active
   path: inputs/architecture/arch_005_s5_active_view_template.md
@@ -8309,6 +8309,14 @@ fragments:
   order: 1035
   previous_entry_sha256: ae7de462cc1ddf0cad9dc3ef4ccd2837961d63074b4bcda2c05a58d3ca48a18e
   entry_sha256: dfce0150dd7f4e4518c95adb8e6674e50df7f95104f27c68229c134ab41c8aaf
+- task_id: DEVX-011_GOVERNED_WORKFLOW_HEALTH_CONTROL_LOOP_V1
+  path: registry/development_tasks/9a/9ad46a4d8119b53fb50453cbba1eb662766972e40253230d50ddd24b18824456.yaml
+  file_sha256: 2a903416c20707a24457e68e8097ca0b1056d4b8d73c0c2e5e8cee346d4e83ae
+  fragment_checksum: f6a2ee8d11c9dfed8145c7437edb4afec65b239fa35ead7852c0da80ab537322
+  partition: completed
+  order: 1036
+  previous_entry_sha256: dfce0150dd7f4e4518c95adb8e6674e50df7f95104f27c68229c134ab41c8aaf
+  entry_sha256: 65cc937dc39fd82c1fa669a41dade457941103ef520708d4fb86c4726f98777d
 generated_views:
 - partition: active
   path: docs/task_register.md
@@ -8318,9 +8326,9 @@ generated_views:
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
-  sha256: 2ab0ee72005ed1f85549fe8fd1bd7777f7b2bc66f4275ce7d5b13e5bea6c96f7
-  byte_count: 1126271
-  row_count: 528
+  sha256: 95293560ce70daf584ceec057cc58c87831501c201706ecaa20d0b809ee568d3
+  byte_count: 1127163
+  row_count: 529
   generated_do_not_edit: true
 governance_cycles:
 - cycle_id: arch-005-s5-cycle-1-final-import-cutover
@@ -10703,7 +10711,21 @@ governance_cycles:
   change_id: prod-004-pit-cumulative-consumption-20260831-v6-full-failure-fix
   event_count: 4
   production_effect: none
-governance_cycle_count: 340
+- cycle_id: arch-005-s5-cycle-341
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: DEVX-011_GOVERNED_WORKFLOW_HEALTH_CONTROL_LOOP_V1
+  change_id: devx-011-registration-20260831-v1
+  event_count: 1
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-342
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: DEVX-011_GOVERNED_WORKFLOW_HEALTH_CONTROL_LOOP_V1
+  change_id: devx-011-workflow-health-implementation-20260831-v1
+  event_count: 2
+  production_effect: none
+governance_cycle_count: 342
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -10717,4 +10739,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 4cd60d2f57d1ac58042e64782d8bb138f252df056deeb189cb79536c01721357
+index_checksum: a895ad09f328ba21b05a2a21f67d53003a619bff72bfb87a13d2fcf3527a7cc5

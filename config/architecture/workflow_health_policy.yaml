@@ -1,0 +1,102 @@
+schema_version: workflow_health_policy.v1
+policy_version: DEVX-011@1.0.0
+policy_metadata:
+  owner: Project Owner / Codex engineering coordinator
+  status: pilot_baseline
+  rationale: >
+    Convert existing validation, publication and Git evidence into a weekly,
+    read-only developer workflow health review without weakening any governed
+    quality, integration or publication gate.
+  intended_effect: >
+    Surface high-cost repeated failures and authority amplification early,
+    produce stable review-only optimization candidates, and prevent accepted
+    improvements from being lost in chat history.
+  validation_evidence: >
+    DEVX-011 synthetic collector and CLI contract tests plus Architecture,
+    Contract, Integration, Reproducibility and Full validation on the final
+    candidate.
+  review_condition: >
+    Review thresholds after four real weekly observations or earlier if the
+    report repeatedly produces false-positive candidates.
+cadence:
+  cadence_id: weekly
+  lookback_days: 7
+  timestamp_basis: UTC_CALENDAR_DAY_HALF_OPEN
+  automatic_command_dispatch_enabled: false
+sources:
+  validation_summary_glob: outputs/validation_runtime/**/test_runtime_summary.json
+  publication_transaction_root: outputs/architecture/arch_005_integration_publication_fence/transactions
+  git_ref: main
+  implementation_path_prefixes:
+    - src/
+  authority_path_prefixes:
+    - AGENTS.md
+    - .codex/
+    - config/
+    - docs/
+    - inputs/architecture/
+    - registry/
+    - scripts/architecture_
+  administrative_stop:
+    exact_generator_ids:
+      - canonical-task-source
+    last_non_terminal_phases:
+      - TASK_SOURCE_PRE_WRITE
+candidate_rules:
+  failed_full_runtime:
+    enabled: true
+    priority: P0
+    minimum_failed_runs: 2
+    minimum_failed_runtime_ratio: 0.20
+    recommended_experiment: >
+      Move the dominant failed-test cluster to the earliest compatible focused
+      or generated-authority validation boundary and compare avoided Full time.
+  early_transaction_churn:
+    enabled: true
+    priority: P1
+    minimum_failed_terminals: 3
+    minimum_failed_ratio: 0.25
+    recommended_experiment: >
+      Add a read-only sequence and path-claim precheck before acquiring the
+      publication transaction; do not relax the publication fence.
+  authority_only_amplification:
+    enabled: true
+    priority: P1
+    minimum_commit_count: 20
+    minimum_authority_only_ratio: 0.50
+    recommended_experiment: >
+      Identify the highest-frequency generated/shared authority and batch one
+      reviewed rebuild at the natural integration boundary.
+  task_retry_churn:
+    enabled: true
+    priority: P1
+    minimum_transaction_count: 5
+    minimum_failed_ratio: 0.50
+    maximum_candidates: 5
+    recommended_experiment: >
+      Review the task transaction phase sequence and remove one reproducible
+      pre-candidate retry cause while preserving fail-closed semantics.
+  duplicate_validation_dispatch:
+    enabled: true
+    priority: P2
+    minimum_group_size: 3
+    minimum_duplicate_group_count: 1
+    recommended_experiment: >
+      Reuse an exact-SHA exact-tier PASS artifact only where current provenance
+      policy already permits it; otherwise improve dispatch deduplication.
+  validation_failure_cluster:
+    enabled: true
+    priority: P1
+    minimum_failed_summaries: 3
+    minimum_cluster_count: 3
+    maximum_candidates: 5
+    recommended_experiment: >
+      Add the repeated test-file cluster to the earliest compatible focused
+      validation set and measure false-positive and avoided-runtime impact.
+safety_boundary:
+  production_effect: none
+  broker_action: none
+  data_quality_status: NOT_APPLICABLE_DEVELOPER_TELEMETRY
+  automatic_execution_allowed: false
+  task_register_mutation_allowed: false
+  gate_relaxation_allowed: false

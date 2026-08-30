@@ -10099,3 +10099,9 @@ generator 顺序和 candidate lineage。stale main、plan tamper、lease expiry�
 remote divergence 或 cleanup 不完整会在下一次写入前 fail closed。canonical task fragment/event 仍是事实源；
 两份 task-register Markdown、index 及其他 current authority 只能由各自官方 generator 在最终树重建一次。
 本流程不读取市场数据，不改变 DQ/PIT、策略、回测、模型、神经网络、production 或 broker 状态。
+
+## DEVX-011 Governed Developer Workflow Health
+
+DEVX-011 后，developer workflow 形成 owner-gated 的周度只读健康闭环：`config/architecture/workflow_health_policy.yaml` 定义 7-day UTC half-open window、source scopes、administrative-stop 分类和候选阈值；`aits reports workflow-health --as-of YYYY-MM-DD` 读取 validation runtime summaries、ARCH-005 publication transactions 与 `git main` history，生成 `workflow_health_YYYY-MM-DD.json/md`、`workflow_optimization_candidates_YYYY-MM-DD.json`，随后以同一 bundle 生成 `workflow_health_validation_YYYY-MM-DD.json/md`。`config/scheduled_tasks.yaml` 将其登记为统一 periodic orchestration 下的 weekly/date-gated task，`AGENTS.md` 要求每个 ISO 周首个 non-trivial tracked mutation 前复用或生成当周 validated artifact。
+
+该闭环只把 high Full failure runtime、early transaction churn、authority-only amplification、per-task retries、duplicate validation 和 recurring failure clusters 转成 fingerprint 稳定的 review-only candidate；它不会自动登记任务、修改代码/配置、放宽 validation gate、运行 market DQ、改变投资结论或触发 production/broker。任何后续优化仍需 owner 决策、canonical task registration 与独立 governed implementation。

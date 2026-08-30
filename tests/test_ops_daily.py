@@ -934,7 +934,7 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     assert order_candidate["would_submit_order"] is False
     periodic_plan = json.loads(periodic_plan_json.read_text(encoding="utf-8"))
     assert periodic_plan["schema_version"] == "periodic_operations_plan.v1"
-    assert len(periodic_plan["entries"]) == 41
+    assert len(periodic_plan["entries"]) == 42
     assert periodic_plan["automatic_command_dispatch_enabled"] is False
     assert all(entry["command_executed"] is False for entry in periodic_plan["entries"])
 
@@ -1088,7 +1088,7 @@ def test_periodic_dispatch_cli_requires_evidence_and_uses_controlled_runtime(
     assert plan_path.exists()
     payload = json.loads(plan_path.read_text(encoding="utf-8"))
     assert payload["automatic_command_dispatch_enabled"] is False
-    assert len(payload["entries"]) == 41
+    assert len(payload["entries"]) == 42
 
 
 def test_periodic_dispatch_cli_fails_without_manual_confirmation() -> None:

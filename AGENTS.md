@@ -125,6 +125,22 @@ Run serial pytest only for explicit reproduction or debugging of a
 parallelism-related failure, and make that exception visible in the validation
 notes. Do not silently replace a failed parallel run with a serial PASS.
 
+## Periodic Developer Workflow Health
+
+Before the first non-trivial tracked development mutation in each ISO week,
+check whether the current week already has a validated
+`workflow_health_YYYY-MM-DD.json` artifact. If not, first read
+`docs/operations/operations_runbook.md`, then run:
+
+`aits reports workflow-health --as-of <today>`
+
+This is a read-only developer-telemetry review. It does not replace task
+registration, data quality, validation, publication, local-main, or remote-push
+gates. Optimization candidates remain `PROPOSED_REVIEW_ONLY`; do not mutate the
+canonical task register, change code, relax a gate, or execute an optimization
+unless the project owner accepts it and a governed task is registered. Reuse a
+validated artifact from the same ISO week instead of generating duplicates.
+
 ## Heuristic and Threshold Governance
 
 Investment-facing heuristics are model policy, not incidental code.

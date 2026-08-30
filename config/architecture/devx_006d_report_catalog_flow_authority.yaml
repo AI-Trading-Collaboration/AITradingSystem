@@ -12,29 +12,29 @@ targets:
     path: config/report_registry.yaml
     format: YAML_REPORT_REGISTRY
     splitter: YAML_REPORT_ITEMS_WITH_PREFIX_V1
-    byte_count: 1814070
-    file_sha256: c25f1dac0a6c2822dc88f0ae0a06b93af2a21b7004abba3dd7400df93faae1af
-    lf_sha256: c25f1dac0a6c2822dc88f0ae0a06b93af2a21b7004abba3dd7400df93faae1af
-    git_blob: 696096ab2c12069106bb741442f53b2dcda787ab
-    entry_count: 1371
+    byte_count: 1815658
+    file_sha256: 6a0bf55252d5fecf4d02707a30d1eefd8d936a3e30bfc1773013ee07c945dacb
+    lf_sha256: 6a0bf55252d5fecf4d02707a30d1eefd8d936a3e30bfc1773013ee07c945dacb
+    git_blob: 7786b0d7ec819ebf37fc89e1889e556fdb5ca57a
+    entry_count: 1373
   - target_id: artifact_catalog
     path: docs/artifact_catalog.md
     format: MARKDOWN
     splitter: EXACT_BLANK_LINE_BLOCKS_V1
-    byte_count: 2004280
-    file_sha256: 818de891030c5cf9c3ff83a74b1f4441c444ed77d38e2011c0fb007774cf1737
-    lf_sha256: 818de891030c5cf9c3ff83a74b1f4441c444ed77d38e2011c0fb007774cf1737
-    git_blob: 2d7f8e6bfcce73253f8baccd3e9066c5cc16cd0f
-    entry_count: 558
+    byte_count: 2006010
+    file_sha256: fc9d41aa86780ed8c40d51b78c54b8e463927a16005ff18f34d0eb763a778d89
+    lf_sha256: fc9d41aa86780ed8c40d51b78c54b8e463927a16005ff18f34d0eb763a778d89
+    git_blob: b1ec6aa2228283f6ff6b8596460060ba6fc68aa7
+    entry_count: 560
   - target_id: system_flow
     path: docs/system_flow.md
     format: MARKDOWN
     splitter: EXACT_BLANK_LINE_BLOCKS_V1
-    byte_count: 2321747
-    file_sha256: 77330f305e62718892d65fab4592648f6e057689eb90005763a6cf5d95e2cd73
-    lf_sha256: 77330f305e62718892d65fab4592648f6e057689eb90005763a6cf5d95e2cd73
-    git_blob: 983410ebb2834dda92f12430b15ad2304abd4e1f
-    entry_count: 1171
+    byte_count: 2323048
+    file_sha256: 330236d7f6a16d1b916ceb86e3e1d974ee58a3df5ac2a824882d04bb918a874c
+    lf_sha256: 330236d7f6a16d1b916ceb86e3e1d974ee58a3df5ac2a824882d04bb918a874c
+    git_blob: 2911755fdd609cfce5b02ed93dbda0f788139589
+    entry_count: 1174
 contract:
   source_of_truth: LEGACY_MONOLITH
   fragment_shadow_active: false

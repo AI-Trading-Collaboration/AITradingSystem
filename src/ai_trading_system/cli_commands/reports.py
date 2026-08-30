@@ -40,6 +40,9 @@ from ai_trading_system.cli_commands.report_index_commands import (
     validate_waiver_inventory_command,  # noqa: F401 - re-exported for direct CLI compatibility.
     waiver_inventory_command,  # noqa: F401 - re-exported for direct CLI compatibility.
 )
+from ai_trading_system.cli_commands.workflow_health_reports import (
+    register_workflow_health_report_commands,
+)
 from ai_trading_system.config import (
     PROJECT_ROOT,
     configured_price_tickers,
@@ -534,6 +537,7 @@ owner_decision_audit_log_app = typer.Typer(
 reports_app.add_typer(owner_decision_audit_log_app, name="owner-decision-audit-log")
 console = Console()
 register_engineering_report_commands(reports_app)
+register_workflow_health_report_commands(reports_app)
 register_report_index_commands(reports_app)
 
 
