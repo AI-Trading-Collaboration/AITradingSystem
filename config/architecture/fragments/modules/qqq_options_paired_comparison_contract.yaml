@@ -1,0 +1,13 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_paired_comparison_contract
+fragment_kind: module
+owner: options_research_contract_governance
+module_prefix: src/ai_trading_system/qqq_options_research/paired_comparison_contract.py
+public_contracts:
+  - DEFAULT_PAIRED_COMPARISON_CONTRACT_PATH
+  - PairedComparisonContract
+  - PairedComparisonContractError
+  - PairedComparisonContractLoadResult
+  - load_paired_comparison_contract
+compatibility_facades: []
+deprecation_status: active_reference_architecture

@@ -1,0 +1,293 @@
+schema_version: qqq_options_paired_comparison_contract.v1
+contract_id: qc_qqq_options_paired_comparison_contract_v1
+contract_version: 1.0.0-draft.1
+status: STATIC_CONTRACT_READY_OWNER_EXACT_FREEZE_REQUIRED
+task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
+owner_decision_id: owner_decision:TRADING-2548:2026-08-30:adopt_paired_comparator_contract_wave_v1
+scope: NON_EXECUTABLE_DATA_RESEARCH
+authority_bindings:
+  - path: config/research/qc_qqq_options_exact_signal_implementation_policy_draft_v1.yaml
+    file_sha256: 22335aa324ffb13c9917b65ad57f51916831ecd95c05fe357f7faa13f74b57d0
+    role: FROZEN_SIGNAL_IMPLEMENTATION_POLICY
+    immutable: true
+  - path: config/research/qc_qqq_options_exact_signal_implementation_policy_freeze_admission_v1.yaml
+    file_sha256: a89c3c245795bda3733b9579cbb0f78cf16b5f30ec6115217acab10b26b72d34
+    role: OWNER_FREEZE_ADMISSION
+    immutable: true
+  - path: config/research/qc_qqq_options_exact_signal_implementation_backtest_execution_v1.yaml
+    file_sha256: 0d48cc3080b2ce3730c1f97c0a8ae77969617b22eb60ccc5c32ca586bce548b1
+    role: SINGLE_RUN_EXECUTION_POLICY
+    immutable: true
+  - path: registry/development_tasks/2f/2f96dc5335fe6ba122c905841f6bcc0d25c252cb25828c9c06f0b65990486c7f.yaml
+    file_sha256: 0542c21857d39c81a65a0719843eb73658985db739035a889baf2719be492821
+    role: TERMINAL_RESULT_ADMISSION_EVENT
+    immutable: true
+frozen_inheritance:
+  direction_signal_id: first_layer_composer_v2:trend_state
+  direction_model_change_allowed: false
+  source_signal_states: [risk_on, constructive, neutral, defensive, risk_off]
+  option_actions: [LONG_CALL, LONG_CALL, FLAT, FLAT, FLAT]
+  mapping_frozen: true
+  long_put_in_baseline: false
+  option_policy_slot_count: 37
+  option_policy_mutation_allowed: false
+  calendar: XNYS
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  expected_session_count: 1202
+  expected_transition_count: 83
+existing_result:
+  backtest_id: f2879a3cee7ec4e0b68b4f943aafd1f8
+  authorization_state: RETROSPECTIVELY_REVIEWED
+  technical_validation_state: PASS_EXPORT_SAFE_AGGREGATE_ONLY
+  evidence_role: CAPABILITY_AND_DIAGNOSTIC_EVIDENCE_ONLY
+  baseline_role: FROZEN_BASELINE_SINGLE_RUN_AGGREGATE
+  paired_comparator_outcome: INSUFFICIENT_PLATFORM_EVIDENCE
+  end_equity_usd: '104479.60'
+  net_profit_percent: '4.48'
+  fees_usd: '75.40'
+  orders: 116
+  entries: 58
+  exits: 58
+  cancels: 0
+  can_select_comparator: false
+  can_select_normalization: false
+  can_select_window: false
+  can_change_baseline: false
+primary_comparator:
+  implementation_id: UNDERLYING_IMPLEMENTATION
+  method: SAME_SIGNAL_FULLY_FUNDED_QQQ_CASH_ACCOUNT
+  version: 1.0.0-draft.1
+  initial_cash_usd: '100000.00'
+  long_call_exposure: UNLEVERED_LONG_QQQ
+  flat_exposure: ZERO_RETURN_CASH
+  same_signal_package_required: true
+  same_mapping_required: true
+  same_effective_session_required: true
+  same_event_clock_required: true
+  entry_mark: CURRENT_QQQ_ASK_AT_SAME_LEGAL_EVENT
+  exit_mark: CURRENT_QQQ_BID_AT_SAME_LEGAL_EVENT
+  virtual_ledger_only: true
+  order_submission_allowed: false
+  no_eligible_contract_treatment: RETAIN_UNDERLYING_SIGNAL_EXPOSURE
+  option_lifecycle_forces_underlying_roll: false
+  negative_cash_allowed: false
+  margin_allowed: false
+  leverage_allowed: false
+  short_qqq_allowed: false
+  fill_forward_allowed: false
+primary_estimand:
+  view_id: COMMON_CAPITAL_ACCOUNT_VIEW
+  optionized_initial_cash_usd: '100000.00'
+  underlying_initial_cash_usd: '100000.00'
+  headline_metric: OPTIONIZED_NET_RETURN_MINUS_UNDERLYING_IMPLEMENTATION_NET_RETURN
+  pass_rule: STRICTLY_POSITIVE_RETURN_DELTA_WITH_ALL_GATES_PASS
+  fail_rule: NONPOSITIVE_RETURN_DELTA_WITH_VALID_COMPLETE_EVIDENCE
+  result_blind_freeze_required: true
+  negative_result_is_valid: true
+  parameter_change_or_retry_on_failure_allowed: false
+secondary_view:
+  view_id: CAPITAL_AT_RISK_TIME_VIEW
+  option_measure: ENTRY_PREMIUM_DEBIT_TIMES_HOLDING_TIME
+  underlying_measure: DEPLOYED_QQQ_CAPITAL_TIMES_HOLDING_TIME
+  role: MANDATORY_EXPLANATORY_SECONDARY
+  may_override_primary: false
+  conflicting_direction_terminal: MIXED_IMPLEMENTATION_TRADEOFF
+diagnostics:
+  named:
+    - diagnostic_id: SGOV_CARRY_COMPARATOR
+      role: CONTEXT_ONLY_NOT_PRIMARY_PASS_FAIL
+      preregistered: true
+    - diagnostic_id: QQQ_BUY_AND_HOLD
+      role: CONTEXT_ONLY_NOT_PRIMARY_PASS_FAIL
+      preregistered: true
+  legacy_one_share_role: EVENT_CLOCK_AND_QUOTE_PATH_DIAGNOSTIC
+  maximum_primary_comparators: 1
+  maximum_named_diagnostics: 2
+  post_result_addition_allowed: false
+  realized_delta_without_continuous_platform_evidence: INSUFFICIENT_PLATFORM_EVIDENCE
+  local_delta_reconstruction_allowed: false
+export_safe_fields:
+  identity:
+    - RUN_ID
+    - PROJECT_ID
+    - BACKTEST_ID
+    - REPOSITORY_EXACT_COMMIT
+    - QC_CODE_FILE_SHA256
+    - POLICY_FILE_SHA256
+    - POLICY_CANONICAL_SHA256
+    - FREEZE_ADMISSION_FILE_SHA256
+    - COMPARATOR_CONTRACT_FILE_SHA256
+    - COMPARATOR_CONTRACT_CANONICAL_SHA256
+    - SIGNAL_PACKAGE_RECEIPT_SHA256
+    - SIGNAL_INDEX_SHA256
+    - NORMALIZED_SIGNAL_SOURCE_SHA256
+    - RUN_MANIFEST_SHA256
+    - LEAN_VERSION
+    - PLATFORM_VERSION
+    - CLOUD_BUILD_IDENTITIES
+    - REQUESTED_DATE_RANGE
+    - EVALUATED_DATE_RANGE
+    - CALENDAR_ID
+    - SESSION_COUNT
+  dq_signal:
+    - CANONICAL_DQ_RECEIPT_IDENTITY
+    - DATA_QUALITY_STATUS
+    - POINT_IN_TIME_STATUS
+    - MANIFEST_REPLAY_STATUS
+    - EXPECTED_SIGNAL_SESSION_COUNT
+    - OBSERVED_SIGNAL_SESSION_COUNT
+    - MISSING_SIGNAL_SESSION_COUNT
+    - DUPLICATE_SIGNAL_SESSION_COUNT
+    - UNKNOWN_SIGNAL_COUNT
+    - EXPECTED_TRANSITION_COUNT
+    - OBSERVED_TRANSITION_COUNT
+    - SIGNAL_MAPPING_IDENTITY
+  events:
+    - SELECTION_ATTEMPT_COUNT
+    - ELIGIBLE_SELECTION_COUNT
+    - NO_ELIGIBLE_CONTRACT_COUNT
+    - ENTRY_INTENT_COUNT
+    - ENTRY_SUBMIT_COUNT
+    - ENTRY_FILL_COUNT
+    - ENTRY_REJECT_COUNT
+    - ENTRY_TIMEOUT_COUNT
+    - ENTRY_CANCEL_COUNT
+    - EXIT_FILL_COUNT
+    - EXIT_FLAT_COUNT
+    - EXIT_PRE_EXPIRY_GUARD_COUNT
+    - EXIT_TERMINAL_COUNT
+    - FRESH_REENTRY_COUNT
+    - INVALID_LIFECYCLE_COUNT
+    - MISSING_TERMINAL_MARK_COUNT
+    - EVENT_RECONCILIATION_STATUS
+  accounts:
+    - OPTIONIZED_START_EQUITY_USD
+    - OPTIONIZED_END_EQUITY_USD
+    - OPTIONIZED_NET_PNL_USD
+    - OPTIONIZED_NET_RETURN
+    - OPTIONIZED_FEES_USD
+    - OPTIONIZED_SPREAD_SLIPPAGE_COST_USD
+    - OPTIONIZED_MIN_CASH_USD
+    - OPTIONIZED_ENDING_CASH_USD
+    - OPTIONIZED_PEAK_EQUITY_USD
+    - OPTIONIZED_MAX_DRAWDOWN
+    - OPTIONIZED_TIME_IN_MARKET
+    - UNDERLYING_START_EQUITY_USD
+    - UNDERLYING_END_EQUITY_USD
+    - UNDERLYING_NET_PNL_USD
+    - UNDERLYING_NET_RETURN
+    - UNDERLYING_FEES_USD
+    - UNDERLYING_SPREAD_SLIPPAGE_COST_USD
+    - UNDERLYING_MIN_CASH_USD
+    - UNDERLYING_ENDING_CASH_USD
+    - UNDERLYING_PEAK_EQUITY_USD
+    - UNDERLYING_MAX_DRAWDOWN
+    - UNDERLYING_TIME_IN_MARKET
+  risk:
+    - GROSS_PREMIUM_DEBIT_USD
+    - MAX_ENTRY_PREMIUM_AT_RISK_USD
+    - AVERAGE_PREMIUM_UTILIZATION
+    - MAX_PREMIUM_UTILIZATION
+    - PREMIUM_AT_RISK_HOLDING_TIME
+    - QQQ_DEPLOYED_CAPITAL_HOLDING_TIME
+    - ENTRY_DELTA_NOTIONAL_USD
+    - AVERAGE_DELTA_NOTIONAL_USD
+    - MAX_DELTA_NOTIONAL_USD
+    - DELTA_OBSERVATION_COUNT
+    - DELTA_MISSING_COUNT
+    - TIME_IN_MARKET_SESSIONS
+    - TIME_IN_MARKET_MINUTES
+  comparator:
+    - COMPARATOR_ID
+    - COMPARATOR_VERSION
+    - COMPARATOR_CONTRACT_SHA256
+    - SIGNAL_IDENTITY_MATCH
+    - LONG_EPISODE_COUNT
+    - FLAT_EPISODE_COUNT
+    - EFFECTIVE_EVENT_ALIGNMENT_COUNT
+    - EFFECTIVE_EVENT_MISMATCH_COUNT
+    - ENTRY_QUOTE_AVAILABLE_COUNT
+    - ENTRY_QUOTE_MISSING_COUNT
+    - EXIT_QUOTE_AVAILABLE_COUNT
+    - EXIT_QUOTE_MISSING_COUNT
+    - PRIMARY_RETURN_DELTA
+    - PRIMARY_DRAWDOWN_DELTA
+    - SECONDARY_CAPITAL_AT_RISK_TIME_RESULT
+    - PREREGISTERED_NAMED_DIAGNOSTIC_RESULTS
+  raw_option_rows_allowed: false
+  complete_chain_allowed: false
+  contract_identifiers_allowed: false
+  contract_quote_history_allowed: false
+  local_option_repricing_input_allowed: false
+calendar_diagnostics:
+  partitions:
+    - {partition_id: PRIMARY_WINDOW_CALENDAR_2021, start: '2021-02-22', end: '2021-12-31'}
+    - {partition_id: CALENDAR_2022, start: '2022-01-01', end: '2022-12-31'}
+    - {partition_id: CALENDAR_2023, start: '2023-01-01', end: '2023-12-31'}
+    - {partition_id: CALENDAR_2024, start: '2024-01-01', end: '2024-12-31'}
+    - {partition_id: PRIMARY_WINDOW_CALENDAR_2025, start: '2025-01-01', end: '2025-12-02'}
+  exact_once_required: true
+  independent_backtests: false
+  refit_or_policy_reselection_allowed: false
+  zero_event_year_disposition: RETAIN_ZERO_EVENT_COUNT
+  post_result_window_addition_allowed: false
+falsification:
+  terminal_precedence: [INVALID, FAIL, INSUFFICIENT, PASS]
+  allowed_statuses: [PASS, FAIL, INSUFFICIENT, INVALID]
+  axes:
+    - {axis_id: FROZEN_SIGNAL_IDENTITY, pass_when: ALL_SIGNAL_PACKAGE_AND_SOURCE_IDENTITIES_EXACT, fail_when: VALIDATED_SIGNAL_SEMANTICS_DIFFER_FROM_FROZEN_MAPPING, insufficient_when: REQUIRED_SIGNAL_IDENTITY_EVIDENCE_MISSING, invalid_when: SIGNAL_OR_MAPPING_HASH_DRIFT_OR_OPTION_ALPHA_INPUT}
+    - {axis_id: SESSION_COVERAGE, pass_when: EXPECTED_OBSERVED_UNIQUE_SESSIONS_EQUAL_1202, fail_when: VALIDATED_SESSION_GAP_DUPLICATE_OR_UNKNOWN_EXISTS, insufficient_when: SESSION_INVENTORY_NOT_EXPORTED, invalid_when: WINDOW_OR_CALENDAR_CHANGED_AFTER_FREEZE}
+    - {axis_id: DQ_PIT_MANIFEST, pass_when: DQ_PIT_AND_MANIFEST_REPLAY_ALL_PASS, fail_when: VALIDATED_DQ_PIT_OR_REPLAY_FAILURE, insufficient_when: DQ_PIT_OR_REPLAY_EVIDENCE_MISSING, invalid_when: DQ_RECEIPT_OR_MANIFEST_IDENTITY_DRIFT}
+    - {axis_id: FROZEN_37_SLOT_POLICY, pass_when: ALL_37_FROZEN_SLOTS_EXACT, fail_when: PLATFORM_CANNOT_IMPLEMENT_A_FROZEN_SLOT, insufficient_when: SLOT_REPLAY_EVIDENCE_MISSING, invalid_when: ANY_SLOT_CHANGED_OR_ENGINE_DEFAULT_SUBSTITUTED}
+    - {axis_id: OPTION_ALPHA_ISOLATION, pass_when: OPTION_DATA_NEVER_INFLUENCES_DIRECTION_SIGNAL, fail_when: VALIDATED_DIRECTION_SIGNAL_DEPENDS_ON_OPTION_DATA, insufficient_when: SIGNAL_INPUT_LINEAGE_INCOMPLETE, invalid_when: RESULT_OPTION_OR_CHAIN_DATA_LEAKS_INTO_SIGNAL_OR_POLICY}
+    - {axis_id: COMPARATOR_CONTRACT, pass_when: ONE_PRIMARY_COMPARATOR_EXACT_AND_SIGNAL_MATCHED, fail_when: PLATFORM_CANNOT_MAINTAIN_REQUIRED_LEDGER, insufficient_when: COMPARATOR_PLATFORM_EVIDENCE_MISSING, invalid_when: COMPARATOR_CHANGED_AFTER_FREEZE_OR_SUBMITS_ORDERS}
+    - {axis_id: CAPITAL_NORMALIZATION, pass_when: BOTH_PRIMARY_ACCOUNTS_START_WITH_USD_100000, fail_when: VALIDATED_ACCOUNTING_SHOWS_NONCOMPARABLE_CAPITAL_BASE, insufficient_when: START_CAPITAL_OR_LEDGER_EVIDENCE_MISSING, invalid_when: LEVERAGE_MARGIN_NEGATIVE_CASH_OR_POST_RESULT_NORMALIZATION}
+    - {axis_id: EVENT_ALIGNMENT, pass_when: ALL_EFFECTIVE_EVENTS_RECONCILE_WITH_ZERO_MISMATCH, fail_when: VALIDATED_NONZERO_EFFECTIVE_EVENT_MISMATCH, insufficient_when: EVENT_ALIGNMENT_COUNTS_MISSING, invalid_when: EVENT_CLOCK_OR_QUOTE_SIDE_CHANGED_AFTER_FREEZE}
+    - {axis_id: ACCOUNTING, pass_when: BOTH_LEDGER_CHRONOLOGIES_AND_BALANCES_RECONCILE, fail_when: VALIDATED_LEDGER_RECONCILIATION_FAILURE, insufficient_when: REQUIRED_ACCOUNT_AGGREGATE_MISSING, invalid_when: LOCAL_OPTION_REPRICING_OR_UNFROZEN_ACCOUNTING_SUBSTITUTE}
+    - {axis_id: RISK_FIELDS, pass_when: ALL_MANDATORY_RISK_FIELDS_FINITE_AND_RECONCILED, fail_when: VALIDATED_RISK_FIELD_RECONCILIATION_FAILURE, insufficient_when: MANDATORY_RISK_FIELD_OR_DELTA_SAMPLING_EVIDENCE_MISSING, invalid_when: LOCAL_GREEK_RECONSTRUCTION_OR_NONAUTHORITATIVE_SUBSTITUTE}
+    - {axis_id: EXPORT_SAFETY, pass_when: ONLY_PREREGISTERED_AGGREGATE_FIELDS_EXPORTED, fail_when: VALIDATED_REQUIRED_EXPORT_FIELD_OMITTED, insufficient_when: EXPORT_INVENTORY_EVIDENCE_MISSING, invalid_when: RAW_OPTION_CHAIN_CONTRACT_ROW_QUOTE_HISTORY_OR_SID_EXPORTED}
+    - {axis_id: PLATFORM_IDENTITY, pass_when: RUN_PROJECT_CODE_LEAN_BUILD_IDENTITIES_EXACT, fail_when: VALIDATED_PLATFORM_IDENTITY_UNSUPPORTED, insufficient_when: LEAN_BUILD_OR_PROJECT_IDENTITY_MISSING, invalid_when: PROJECT_CODE_POLICY_OR_BUILD_IDENTITY_DRIFT}
+    - {axis_id: CALENDAR_SUBPERIOD_COMPLETENESS, pass_when: FIVE_FIXED_PARTITIONS_COVER_PRIMARY_WINDOW_EXACTLY_ONCE, fail_when: VALIDATED_PARTITION_GAP_OVERLAP_OR_DROPPED_ZERO_EVENT_YEAR, insufficient_when: SUBPERIOD_AGGREGATE_MISSING, invalid_when: POST_RESULT_WINDOW_ADDED_REMOVED_OR_RELABELED}
+    - {axis_id: MULTIPLICITY, pass_when: ONE_PRIMARY_AND_AT_MOST_TWO_NAMED_DIAGNOSTICS_ONLY, fail_when: VALIDATED_PREREGISTERED_DIAGNOSTIC_CANNOT_BE_COMPUTED, insufficient_when: DIAGNOSTIC_INVENTORY_EVIDENCE_MISSING, invalid_when: POST_RESULT_COMPARATOR_BENCHMARK_OR_SENSITIVITY_ADDED}
+    - {axis_id: PRIMARY_IMPLEMENTATION_ESTIMAND, pass_when: RETURN_DELTA_STRICTLY_POSITIVE_WITH_ALL_GATES_PASS, fail_when: RETURN_DELTA_NONPOSITIVE_WITH_VALID_COMPLETE_EVIDENCE, insufficient_when: PAIRED_RETURN_DELTA_NOT_COMPUTABLE_FROM_PLATFORM_EVIDENCE, invalid_when: RESULT_USED_TO_SELECT_COMPARATOR_NORMALIZATION_WINDOW_OR_BASELINE}
+    - {axis_id: EXTERNAL_AUTHORIZATION, pass_when: EXACT_SEPARATE_RUN_AUTHORITY_AND_ALL_ACTION_MAXIMA_SATISFIED, fail_when: OWNER_EXPLICITLY_DENIES_OR_EXPIRES_AUTHORITY_BEFORE_DISPATCH, insufficient_when: OWNER_RUN_AUTHORITY_NOT_GRANTED, invalid_when: UNAUTHORIZED_SAVE_BUILD_BACKTEST_RETRY_EXPORT_OR_PROVIDER_ACTION}
+  missing_unknown_or_not_evaluated_can_pass: false
+  fail_action: STOP_AND_REPORT_NO_PARAMETER_CHANGE_NO_RETRY
+  insufficient_action: RETAIN_GAP_NO_LOCAL_SUBSTITUTE
+  invalid_action: QUARANTINE_NO_ADMISSION
+interpretation:
+  maximum_interpretation: RESEARCH_IMPLEMENTATION_COMPARISON_ONLY
+  signal_alpha_proven: false
+  robustness_proven: false
+  investability_proven: false
+  production_readiness_proven: false
+  broker_eligibility_proven: false
+safety:
+  static_contract_authorized: true
+  owner_exact_frozen: false
+  qc_exporter_implementation_authorized: false
+  local_result_admission_implementation_authorized: false
+  run_manifest_generation_authorized: false
+  real_dq_authorized: false
+  quantconnect_save_authorized: false
+  quantconnect_build_authorized: false
+  quantconnect_backtest_authorized: false
+  quantconnect_retry_authorized: false
+  provider_query_or_purchase_authorized: false
+  raw_option_payload_download_or_export_allowed: false
+  object_store_write_allowed: false
+  public_share_allowed: false
+  orders_outside_qc_simulation: 0
+  fills_outside_qc_simulation: 0
+  positions_outside_qc_simulation: 0
+  investment_conclusion_generated: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none
+terminal: OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FREEZE_REQUIRED_NO_BACKTEST

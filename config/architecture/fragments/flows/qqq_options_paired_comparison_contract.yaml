@@ -1,0 +1,19 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.qqq_options_paired_comparison_contract
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: trading_2548_same_signal_paired_comparator_estimand_and_export_contract
+stages:
+  - bind_frozen_first_layer_composer_v2_signal_and_37_slot_option_policy
+  - retain_existing_qc_aggregate_as_capability_and_diagnostic_evidence_only
+  - replace_primary_one_share_diagnostic_with_fully_funded_same_signal_qqq_cash_ledger
+  - freeze_common_capital_account_view_as_primary_estimand
+  - retain_capital_at_risk_time_as_mandatory_non_overriding_secondary_view
+  - cap_comparator_multiplicity_at_one_primary_and_two_named_diagnostics
+  - freeze_export_safe_identity_event_account_risk_and_comparator_fields
+  - partition_same_run_into_five_fixed_calendar_diagnostics
+  - evaluate_sixteen_fail_closed_falsification_axes
+  - stop_for_owner_exact_contract_freeze_before_exporter_manifest_or_backtest
+compatibility_flow_entry_required: false
+generated_source_of_truth_active: false
