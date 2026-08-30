@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_live_snapshot
   path: tests/atlas/test_live_snapshot.py
-  sha256: 6135fc21d53c4fb849df24d20638a6f4ba93467240f37cf5b6499cc2c677a0ec
+  sha256: a52d74cf485daccf9ae7e5af03dcd05fa10af134eafdc604312e608a1b92069b
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
