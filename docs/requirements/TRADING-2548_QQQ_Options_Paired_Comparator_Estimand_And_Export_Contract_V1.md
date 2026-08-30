@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BLOCKED_OWNER_INPUT`
 
 Owner 指令：Project Owner 在完成 exact commit
 `d5ff6dd9f8b84274bfc945ad8bd86fcecb92a8ed` 的网页版 ChatGPT Pro 规划审阅后指示
@@ -331,3 +331,10 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   `6f77cf17af6e435799a2e86e1fb6a81936368e053b2367efb3a8e2be13412267`。这些 SHA 仍是 lane draft
   身份，只有 final integrated tree 发布后才提交 Owner exact freeze；本轮无 QuantConnect、DQ、provider、
   raw option 或 backtest action。
+- 2026-08-30：integration revalidation plan
+  `integration-revalidation-ce0014943e91bcd4911c`=`READY_FOR_SINGLE_INTEGRATION_CANDIDATE`，publication
+  transaction `trading-2548-paired-comparator-contract-20260830-v1` 的 governed `INTEGRATION` preflight=
+  `PASS`。同一 transaction 已把 canonical task 状态推进到 `BLOCKED_OWNER_INPUT`，并按固定顺序完成
+  task-source、architecture manifests、report-flow 与 compatibility authority rebuild；generator validation=
+  `PASS`，相邻 focused pytest-xdist=`62 passed`。最终 candidate/formal tiers/Full/main/push 继续由该 transaction
+  收口；不新增 QuantConnect 或其他外部动作。

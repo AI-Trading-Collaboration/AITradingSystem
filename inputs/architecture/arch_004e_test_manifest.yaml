@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1336
-test_count: 1276
+test_file_count: 1337
+test_count: 1277
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -8682,7 +8682,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s5_task_source_cutover
   path: tests/test_arch_005_s5_task_source_cutover.py
-  sha256: 59fbca4fdf772fb4d9a2378c5da5e88cee900a9beb2efdd9912e40529deb1fc4
+  sha256: e2600c8923813418e7f0e86e830d2191c0ca1d182dfdb9cfa0f9ad81297e705b
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -10410,7 +10410,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 3f4f804ba7ffb2d73863eb6c2d0e4a87b1a58e40dc23fcd5ec21f811b2713e47
+  sha256: b3373bda8e7e2d833ca6898fffb4fe59b230d0694761f4174513b0ee679cceee
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -15457,6 +15457,22 @@ tests:
 - test_id: tests.test_qqq_options_owner_policy_adoption_contract
   path: tests/test_qqq_options_owner_policy_adoption_contract.py
   sha256: aa070eeef46cd4c3ff36a9ce2bb3ed754e70b3a9e7da91b499fd7730d2a209da
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_qqq_options_paired_comparison_contract
+  path: tests/test_qqq_options_paired_comparison_contract.py
+  sha256: c3424c6f0d583a04b9ba8d3b8d892b8470421686a9c3b6a2a7fe08137b1e2590
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

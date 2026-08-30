@@ -10002,6 +10002,43 @@ window/maxima 任一漂移或第一次 backtest dispatch 都使其失效；build
 重试、换项目或放宽选约规则。QC simulated order 只用于计算期权实现收益，不改变既有趋势信号，也不把期权
 结果回流到趋势模型。
 
+## TRADING-2548 same-signal paired comparator estimand and export contract
+
+TRADING-2548 在已准入的单次 TRADING-2542I aggregate 之后增加一条只读、不可执行的 paired-comparison
+contract 边。既有 `first_layer_composer_v2:trend_state`、五态 `LONG_CALL/FLAT` mapping、37-slot option
+implementation baseline、`2021-02-22..2025-12-02` XNYS 1202-session window 均保持 immutable；不会因为
+期权结果重做趋势判断。backtest `f2879a3cee7ec4e0b68b4f943aafd1f8` 的 `4.48%` 仍只属于
+`CAPABILITY_AND_DIAGNOSTIC_EVIDENCE_ONLY`，当前 paired outcome 固定为
+`INSUFFICIENT_PLATFORM_EVIDENCE`，不得用于选择 comparator、normalization、window 或 baseline。
+
+```text
+frozen first_layer_composer_v2 signal/package + frozen 37-slot option implementation
+  -> existing QC aggregate retained as capability/diagnostic evidence only
+  -> primary comparator = UNDERLYING_IMPLEMENTATION
+       method = SAME_SIGNAL_FULLY_FUNDED_QQQ_CASH_ACCOUNT
+       LONG_CALL -> unlevered QQQ; FLAT -> zero-return cash
+       same USD 100,000 capital, signal, mapping, effective session and event clock
+       QQQ ask entry / bid exit virtual ledger; comparator order submission = false
+  -> primary estimand = COMMON_CAPITAL_ACCOUNT_VIEW
+       optionized net return - underlying implementation net return
+  -> mandatory secondary = CAPITAL_AT_RISK_TIME_VIEW
+       explanatory only; cannot override primary; conflict -> MIXED_IMPLEMENTATION_TRADEOFF
+  -> diagnostics bounded at SGOV carry + QQQ buy-and-hold
+       legacy one-share ledger = event-clock/quote-path diagnostic only
+  -> export-safe aggregate identity / DQ-signal / event / account / risk / comparator fields
+       fixed 2021 partial + 2022 + 2023 + 2024 + 2025 partial calendar partitions
+       16 axes; INVALID > FAIL > INSUFFICIENT > PASS
+  -x-> result-selected benchmark / raw option rows / local option repricing / new trend model
+  -x-> QC exporter / result admission consumer / run manifest / DQ / save / build / backtest / retry
+```
+
+当前 strict contract status=`STATIC_CONTRACT_READY_OWNER_EXACT_FREEZE_REQUIRED`，terminal=
+`OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FREEZE_REQUIRED_NO_BACKTEST`。本波只发布 YAML、loader、negative/
+golden tests 与 architecture authority；`owner_exact_frozen=false`，所有 QuantConnect、provider、raw payload、
+Object Store、public share、paper/live/production/broker 权限保持关闭，QC simulation 之外
+orders/fills/positions=`0`。只有 Owner 后续按 exact file/canonical SHA 冻结本 contract，才可另立 offline
+synthetic exporter/validator 波；真实 paired run 仍需更晚的独立 preregistration 与授权。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

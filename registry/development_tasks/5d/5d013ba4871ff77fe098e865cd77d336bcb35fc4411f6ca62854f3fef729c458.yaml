@@ -13,22 +13,22 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex / implement and validate the serial non-executable comparator
-    contract; Project Owner later exact-freezes final file/canonical SHA
+  next_owner: Project Owner / exact-freeze final comparator contract file and canonical
+    SHA before any successor exporter work
   requirement_refs:
   - docs/requirements/TRADING-2548_QQQ_Options_Paired_Comparator_Estimand_And_Export_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Freeze one same-signal fully-funded QQQ/cash
-    primary comparator, common-capital primary estimand, capital-at-risk-time secondary
-    view, bounded diagnostics, export-safe schema and typed stop matrix without changing
-    the frozen signal or 37-slot option baseline.
+  unstructured_legacy_blocker_or_next_step: Strict paired-comparison draft is complete;
+    Owner must exact-freeze its final file/canonical SHA. No exporter, manifest, DQ,
+    QuantConnect or backtest action is authorized.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Strict loader and tests prove exact predecessor identity, comparator multiplicity,
-      normalization, calendar partitions, 16-axis PASS/FAIL/INSUFFICIENT/INVALID handling
-      and zero external authority; finish at OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FREEZE_REQUIRED_NO_BACKTEST.
+    text: Strict loader and tests bind exact predecessors, one fully funded same-signal
+      QQQ primary comparator, common-capital primary estimand, non-overriding capital-at-risk-time
+      secondary, exactly two named diagnostics, fixed five calendar partitions, export-safe
+      fields and all 16 fail-closed axes; terminal remains OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FREEZE_REQUIRED_NO_BACKTEST.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -67,28 +67,63 @@ events:
   - change:trading-2548-register-20260830-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-76847d8a785a94be07ea57699050fef3
+- schema_version: task_event.v1
+  task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T11:07:40.7221797Z'
+  actor: integration-coordinator
+  change_id: trading-2548-paired-comparator-contract-20260830-v1
+  lane_id: null
+  base_commit: 291f6bb60168fa9f78bcb82f3fa5caffcfb0f0c6
+  previous_state_event_id: task-event-76847d8a785a94be07ea57699050fef3
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / exact-freeze final comparator contract file and canonical
+      SHA before any successor exporter work
+    blocker_or_next_step: Strict paired-comparison draft is complete; Owner must exact-freeze
+      its final file/canonical SHA. No exporter, manifest, DQ, QuantConnect or backtest
+      action is authorized.
+    acceptance_criteria: Strict loader and tests bind exact predecessors, one fully
+      funded same-signal QQQ primary comparator, common-capital primary estimand,
+      non-overriding capital-at-risk-time secondary, exactly two named diagnostics,
+      fixed five calendar partitions, export-safe fields and all 16 fail-closed axes;
+      terminal remains OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FREEZE_REQUIRED_NO_BACKTEST.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2548_QQQ_Options_Paired_Comparator_Estimand_And_Export_Contract_V1.md.
+      Contract file SHA-256 8c748634f6869eb4d4e9dfb14493acd072d146074ce7e86462eec0adae15714a;
+      canonical SHA-256 6f77cf17af6e435799a2e86e1fb6a81936368e053b2367efb3a8e2be13412267.
+      Focused pytest-xdist=23 passed; Ruff/strict mypy/py_compile=PASS. No QuantConnect/provider/raw
+      option/DQ/backtest/order/fill/position/paper/live/production/broker action.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2548-paired-comparator-contract-20260830-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-edb0498c8b78902d85e368e7a3f080e0
 projection:
   legacy_first_eight_cells:
   - TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
   - QQQ options paired comparator estimand and export contract V1
   - P0
-  - IN_PROGRESS
-  - Codex / implement and validate the serial non-executable comparator contract;
-    Project Owner later exact-freezes final file/canonical SHA
-  - Freeze one same-signal fully-funded QQQ/cash primary comparator, common-capital
-    primary estimand, capital-at-risk-time secondary view, bounded diagnostics, export-safe
-    schema and typed stop matrix without changing the frozen signal or 37-slot option
-    baseline.
-  - Strict loader and tests prove exact predecessor identity, comparator multiplicity,
-    normalization, calendar partitions, 16-axis PASS/FAIL/INSUFFICIENT/INVALID handling
-    and zero external authority; finish at OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FREEZE_REQUIRED_NO_BACKTEST.
+  - BLOCKED_OWNER_INPUT
+  - Project Owner / exact-freeze final comparator contract file and canonical SHA
+    before any successor exporter work
+  - Strict paired-comparison draft is complete; Owner must exact-freeze its final
+    file/canonical SHA. No exporter, manifest, DQ, QuantConnect or backtest action
+    is authorized.
+  - Strict loader and tests bind exact predecessors, one fully funded same-signal
+    QQQ primary comparator, common-capital primary estimand, non-overriding capital-at-risk-time
+    secondary, exactly two named diagnostics, fixed five calendar partitions, export-safe
+    fields and all 16 fail-closed axes; terminal remains OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FREEZE_REQUIRED_NO_BACKTEST.
   - 'Supporting requirement: docs/requirements/TRADING-2548_QQQ_Options_Paired_Comparator_Estimand_And_Export_Contract_V1.md.
-    scope=NON_EXECUTABLE_DATA_RESEARCH; QuantConnect/provider/real DQ/backtest/run
-    manifest/orders/fills/positions/paper/live/production/broker=0/false/none.'
+    Contract file SHA-256 8c748634f6869eb4d4e9dfb14493acd072d146074ce7e86462eec0adae15714a;
+    canonical SHA-256 6f77cf17af6e435799a2e86e1fb6a81936368e053b2367efb3a8e2be13412267.
+    Focused pytest-xdist=23 passed; Ruff/strict mypy/py_compile=PASS. No QuantConnect/provider/raw
+    option/DQ/backtest/order/fill/position/paper/live/production/broker action.'
   docs_links:
   - docs/requirements/TRADING-2548_QQQ_Options_Paired_Comparator_Estimand_And_Export_Contract_V1.md
   terminal: false
-  canonical_row_sha256: e0d2eb322178bdc625c9401251d825a30909cb6f86bd9a677420f3e4ede7469b
-last_event_id: task-event-76847d8a785a94be07ea57699050fef3
+  canonical_row_sha256: b78b6800a6f6fc7e8e4fe58124d201e57528343eb322358982e390a64e8aaa4c
+last_event_id: task-event-edb0498c8b78902d85e368e7a3f080e0
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 399a711718cef78527b7fac01eb5b7810c6e1bff54e0c673cdaa50731650ccf1
+fragment_checksum: 3105527f7f51a1fe42d31ed35075eb74a862978ce5a2f5b4c585804548c721cb
