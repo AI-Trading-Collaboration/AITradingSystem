@@ -208,8 +208,8 @@ Coordinator/shared paths：
 - [x] weekly cadence 进入统一 periodic plan，但 automatic dispatch 仍关闭；
 - [x] unified periodic plan 的 once-per-week date gate 有 current-week artifact 去重；
 - [x] report registry、artifact catalog、runbook、system flow 与 CLI 一致；
-- [ ] focused/formal/Full validation PASS；
-- [ ] local main 与 origin/main 等于 final candidate；
+- [x] focused/formal/Full validation PASS；
+- [x] local main 与 origin/main 等于 final candidate；
 - [x] 无 market cache、strategy、weight、production、broker/order 变更。
 
 ## 11. Progress log
@@ -228,3 +228,4 @@ Coordinator/shared paths：
 - 2026-08-31：DEVX-011A v3 final candidate `df349268bda10386eda487ecb7958ccdc5df50d8` 的正式 Architecture/Contract/Integration/Reproducibility 分别为 `880/278/995/24 passed`，但 Full 为 `9700 passed / 327 failed / 3 skipped`，证据 `outputs/validation_runtime/full_20260830T203347Z/test_runtime_summary.json`。325 项级联失败统一来自两条 growth-action-value 根契约对 `AGENTS.md` 的旧 `PROJECT_ENGINEERING_RULES` SHA 直接绑定，另 2 项来自 DEVX-011 错误声明了未改动的 `tests/test_trading2452_architecture_contract.py` 为 current authority。v3 已 fail closed，未合入 main。
 - 2026-08-31：不重写任何历史投资 policy/config hash，也不为 developer telemetry 放宽其直接绑定。窄范围 successor `DEVX-011B_WORKFLOW_HEALTH_ROOT_RULE_DECOUPLING_CLOSEOUT` 将撤销根 `AGENTS.md` 变更、从 DEVX-011 source authority 移除 `AGENTS.md` 与未改动的 TRADING-2452 测试，并把周期自发行为收敛到现有 unified periodic plan 的 date-gated discovery；这样保留自动发现/去重能力，同时不触碰研究语义。
 - 2026-08-31：DEVX-011B v1 将 Full 的 327 个 last-failed 收敛为 `335 passed / 3 failed`。其中两项证明 `docs/system_flow.md` 与 `tests/test_arch_004g_deprecation.py` 等合法 DEVX-011 current-authority path 仍需由 TRADING-2452 helper 显式承认新 section；因此重新纳入实际修改的 `tests/test_trading2452_architecture_contract.py` 并只追加 DEVX-011 section key。最后一项是本地 hydrated、ignored Atlas page-effectiveness sidecar 仍绑定 `main@961d65a...`，须在 final candidate commit 后用官方 renderer 按 exact commit 重建，不修改其研究结论或人工验收状态。
+- 2026-08-31：DEVX-011B v2 的两个 helper 测试 PASS，prevalidation candidate `943ff8ab5cbe50564ea29c998e59aae88490d303` 以官方 renderer 重建 17 个 Atlas ignored artifacts，renderer `status=PASS`，最后 3 项回归 `3 passed`。最终完成标记与验收勾选仅在 parent-bound transaction `devx-011b-workflow-health-decoupling-20260831-v3` 的正式四层门禁、`failure_fix_rerun` Full、普通推送、SHA equality 与 released receipt 全部 PASS 时生效；final commit 后必须再次按其 exact SHA 重建 Atlas，且人工 visual/comprehension 状态不变。

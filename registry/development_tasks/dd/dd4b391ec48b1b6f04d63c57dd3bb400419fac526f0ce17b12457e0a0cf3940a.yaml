@@ -13,19 +13,20 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 'Codex engineering coordinator: validate explicit DEVX-011 helper successor
-    and rebuild ignored Atlas page on exact candidate'
+  next_owner: 'Project owner: review weekly workflow-health candidates after four
+    validated observations'
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: No code blocker; create prevalidation
-    candidate, render Atlas page-effectiveness for its exact commit, then rerun the
-    three remaining last-failed tests
+  unstructured_legacy_blocker_or_next_step: No implementation blocker; accumulate
+    four validated weekly observations before authorizing any separate optimization
+    task or policy threshold retuning
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Root hash cascade eliminated; TRADING-2452 helper accepts explicit DEVX-011
-      authority; exact-candidate Atlas sidecar PASS; failure-fix Full PASS; production_effect=none
+    text: Root AGENTS hash restored; unified periodic date gate retained; prior 327
+      Full failures eliminated; exact final Atlas renderer PASS; parent-bound failure-fix
+      Full PASS; local main=origin/main=final candidate; production_effect=none
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -117,23 +118,56 @@ events:
   - change:devx-011b-workflow-health-decoupling-20260831-v2-prevalidation
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-aa23682b4f5e592d0824b1684bd4bd5d
+- schema_version: task_event.v1
+  task_id: DEVX-011B_WORKFLOW_HEALTH_ROOT_RULE_DECOUPLING_CLOSEOUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T21:15:00Z'
+  actor: integration-coordinator
+  change_id: devx-011b-workflow-health-decoupling-20260831-v3
+  lane_id: null
+  base_commit: 943ff8ab5cbe50564ea29c998e59aae88490d303
+  previous_state_event_id: task-event-aa23682b4f5e592d0824b1684bd4bd5d
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 'Project owner: review weekly workflow-health candidates after four
+      validated observations'
+    blocker_or_next_step: No implementation blocker; accumulate four validated weekly
+      observations before authorizing any separate optimization task or policy threshold
+      retuning
+    acceptance_criteria: Root AGENTS hash restored; unified periodic date gate retained;
+      prior 327 Full failures eliminated; exact final Atlas renderer PASS; parent-bound
+      failure-fix Full PASS; local main=origin/main=final candidate; production_effect=none
+    notes: '2026-08-31: v2 prevalidation root growth 2 PASS, Full last-failed 335
+      PASS / 3 FAIL, final three regression PASS after explicit DEVX-011 helper authority
+      and exact-commit Atlas rebuild; final completion fail-closed on v3 formal, parent-bound
+      Full, push and release'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-011b-workflow-health-decoupling-20260831-v3
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d4e40be504329bdc423aed4815bb1892
 projection:
   legacy_first_eight_cells:
   - DEVX-011B_WORKFLOW_HEALTH_ROOT_RULE_DECOUPLING_CLOSEOUT
   - Developer experience / workflow health root-rule decoupling closeout
   - P1
-  - IN_PROGRESS
-  - 'Codex engineering coordinator: validate explicit DEVX-011 helper successor and
-    rebuild ignored Atlas page on exact candidate'
-  - No code blocker; create prevalidation candidate, render Atlas page-effectiveness
-    for its exact commit, then rerun the three remaining last-failed tests
-  - Root hash cascade eliminated; TRADING-2452 helper accepts explicit DEVX-011 authority;
-    exact-candidate Atlas sidecar PASS; failure-fix Full PASS; production_effect=none
-  - '2026-08-31: v1 last-failed 335 passed / 3 failed; two explicit helper-authority
-    gaps and one expected exact-commit Atlas hydration gap remain'
+  - DONE
+  - 'Project owner: review weekly workflow-health candidates after four validated
+    observations'
+  - No implementation blocker; accumulate four validated weekly observations before
+    authorizing any separate optimization task or policy threshold retuning
+  - Root AGENTS hash restored; unified periodic date gate retained; prior 327 Full
+    failures eliminated; exact final Atlas renderer PASS; parent-bound failure-fix
+    Full PASS; local main=origin/main=final candidate; production_effect=none
+  - '2026-08-31: v2 prevalidation root growth 2 PASS, Full last-failed 335 PASS /
+    3 FAIL, final three regression PASS after explicit DEVX-011 helper authority and
+    exact-commit Atlas rebuild; final completion fail-closed on v3 formal, parent-bound
+    Full, push and release'
   docs_links: []
-  terminal: false
-  canonical_row_sha256: 6b365bcf1a577aa3336ace84612a4b8fb8263d62f16683ea571b6f85f185c184
-last_event_id: task-event-aa23682b4f5e592d0824b1684bd4bd5d
+  terminal: true
+  canonical_row_sha256: fa5cbc19e7b90a8fd7384bf033220d075e107e7a731569ad3026e3d861377fd3
+last_event_id: task-event-d4e40be504329bdc423aed4815bb1892
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: c1b16d96f7c8b840827e974ff5aa4182d4644988460a622492deff63e99b90c6
+fragment_checksum: 94d98d22e0d8d48dda94fd8d6f4442911347ad62d9b0491bb0acd37c1783bd01

@@ -73,7 +73,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "08e2e5b3e60ec8999b37b62c847620a743004a2fb62d462be50511a537d72563"
+        "sha256": "922e61595fbc52747bb98fbe2e6f3e3facd2443f7481999cbb02c8250db0ed70"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -98,7 +98,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "d703541d456710fae561679ef5271ba0c0640f7ec3bb37b0cbc9b571a5f0b4a1"
+        "sha256": "05e2577f4037e71b08d37b07ef803f62c73052f382550138eb987860c294803c"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -238,5 +238,5 @@
     "task_id": "PROD-004"
   },
   "section_id": "phase_prod_004_pit_cumulative_archive_consumption_v1",
-  "section_sha256": "715c0194f8bf69d8e36ae782c90f7304d19b78ea21bd6f9865aa12cc2bfbb84d"
+  "section_sha256": "29edf1ecacd1efae12a155ea4b59d3a680cdf7c83af30da9601eb794a86dee8a"
 }
