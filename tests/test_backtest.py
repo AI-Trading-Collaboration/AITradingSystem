@@ -1737,9 +1737,72 @@ def test_backtest_pit_coverage_cli_reports_forward_archive_readiness(
     assert "captured_at_forward_only=3" in text
 
 
-def _write_pit_payload(path: Path) -> Path:
+def test_backtest_pit_coverage_cli_defaults_to_cumulative_raw_discovery(
+    tmp_path: Path,
+) -> None:
+    raw_root = tmp_path / "data" / "raw"
+    for day in (1, 2, 3):
+        _write_pit_payload(
+            raw_root
+            / "daily_input_capture"
+            / f"2026-05-{day:02d}"
+            / "fmp_forward_pit"
+            / "nvda"
+            / f"fmp_forward_pit_nvda_2026-05-{day:02d}.json",
+            downloaded_at=datetime(2026, 5, day, 12, 0, tzinfo=UTC),
+        )
+    cumulative_manifest = tmp_path / "pit_snapshots" / "cumulative_manifest.csv"
+    output_path = tmp_path / "backtest_pit_coverage.md"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "backtest-pit-coverage",
+            "--raw-root",
+            str(raw_root),
+            "--cumulative-manifest-path",
+            str(cumulative_manifest),
+            "--as-of",
+            "2026-05-04",
+            "--output-path",
+            str(output_path),
+            "--min-forward-days",
+            "2",
+            "--max-staleness-days",
+            "2",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert cumulative_manifest.exists()
+    assert "PIT 覆盖验证状态：PASS" in result.output
+    text = output_path.read_text(encoding="utf-8")
+    assert str(cumulative_manifest) in text
+    assert "| valuation_expectations | B | 3 | 3 | 0 |" in text
+
+
+def _write_pit_payload(
+    path: Path,
+    *,
+    downloaded_at: datetime | None = None,
+) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"records": [{"symbol": "NVDA"}]}), encoding="utf-8")
+    payload: dict[str, object] = {"records": [{"symbol": "NVDA"}]}
+    if downloaded_at is not None:
+        payload.update(
+            {
+                "provider": "Financial Modeling Prep",
+                "source_type": "paid_vendor",
+                "ticker": "NVDA",
+                "downloaded_at": downloaded_at.isoformat(),
+                "endpoint": (
+                    "https://financialmodelingprep.com/stable/analyst-estimates"
+                ),
+                "request_parameters": {"symbol": "NVDA"},
+                "row_count": 1,
+            }
+        )
+    path.write_text(json.dumps(payload), encoding="utf-8")
     return path
 
 

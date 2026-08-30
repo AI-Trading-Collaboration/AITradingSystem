@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: PROD-004
   task_id_sha256: 09c1c512d95624d2f7900d3d5afdef258c36c149419f762eaa3b460d9553c435
 task_record:
+  schema_version: task_record.v1
   task_id: PROD-004
   title: null
   domain: 趋势判断/PIT 估值样本成熟度
@@ -12,21 +13,21 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统验证 + 时间窗口
-  requirement_refs: []
+  next_owner: 系统验证 + operations release
+  requirement_refs:
+  - docs/requirements/PROD-004_PIT_Cumulative_Archive_Consumption.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: '`DATA-003/BACKTEST-002/BTINPUT-001` 已完成
-    forward-only PIT 快照、回测可信度标签和覆盖诊断；下一步等待自建 PIT 样本自然积累，并用覆盖报告判断何时可提升估值/预期结论可信度'
+  unstructured_legacy_blocker_or_next_step: 实现和真实数据只读 smoke 已完成；继续执行 generated authority、architecture/contract/integration/reproducibility/Full
+    门禁，合格后按默认规则集成发布。active runtime promotion 由后续 reviewed operations release 负责。
   acceptance_criteria:
-  - criterion_id: legacy_markdown
-    text: '`aits backtest-pit-coverage` 能给出 core universe 的可用样本起始日期、覆盖率和 A/B readiness；`score-daily`
-      对 `eps_revision_90d_pct`、valuation percentile 和 vendor/self-archived PIT 来源的限制声明与实际覆盖一致；历史不足时继续降级，不得用采集日视图伪装
-      signal_date 可见数据'
+  - criterion_id: legacy_compatibility
+    text: 默认累计 coverage 必须校验 legacy + daily capture raw 并输出 B/A readiness，显式 manifest
+      保持兼容；daily valuation 只写当前日隔离目录并读取 canonical 累计 PIT/valuation history；历史不足继续降级，strict
+      PIT A 级不得由 captured snapshot 冒充。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 8cb8a538632f575d50568937ef4fca27dfd15357950cfaea68d626c4947420aa
   cell_count: 8
@@ -83,26 +84,82 @@ events:
   evidence_refs:
   - sha256:8cb8a538632f575d50568937ef4fca27dfd15357950cfaea68d626c4947420aa
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: PROD-004
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T16:18:00+00:00'
+  actor: integration-coordinator
+  change_id: prod-004-pit-cumulative-consumption-20260831-v1-start
+  lane_id: null
+  base_commit: ab2c7077ec38d92d40d2b9143a595b7508885949
+  previous_state_event_id: legacy-import-8cb8a538632f575d50568937
+  from_status: BLOCKED_EXTERNAL
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 系统验证
+    blocker_or_next_step: 按 docs/requirements/PROD-004_PIT_Cumulative_Archive_Consumption.md
+      实现累计 PIT manifest、coverage 默认消费与 daily valuation 累计历史读取；strict PIT A 级仍依赖外部
+      archive，本轮不补造历史。
+    acceptance_criteria: backtest-pit-coverage 未显式 manifest 时确定性重建并校验 legacy + daily
+      capture 累计索引，显式 manifest 保持兼容；daily valuation 当前日隔离写入且只读 canonical 累计 PIT/valuation
+      历史，未来与同日快照不得进入历史；报告继续披露 B/A readiness 和限制。
+    notes: 2026-08-31 owner 要求继续推进；只读盘点观察到 4,808 个快照、2,069,507 条原始记录、87 个 UTC 可见日期、17
+      个 ticker，物理积累已超过 60 日 B 级门槛，当前缺口是默认消费者仍指向单日目录。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:prod-004-pit-cumulative-consumption-20260831-v1-start
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ee5c31ece56ef7f4a5417b1c0b843279
+- schema_version: task_event.v1
+  task_id: PROD-004
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T16:25:00+00:00'
+  actor: integration-coordinator
+  change_id: prod-004-pit-cumulative-consumption-20260831-v1-validating
+  lane_id: null
+  base_commit: ab2c7077ec38d92d40d2b9143a595b7508885949
+  previous_state_event_id: task-event-ee5c31ece56ef7f4a5417b1c0b843279
+  from_status: IN_PROGRESS
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统验证 + operations release
+    blocker_or_next_step: 实现和真实数据只读 smoke 已完成；继续执行 generated authority、architecture/contract/integration/reproducibility/Full
+      门禁，合格后按默认规则集成发布。active runtime promotion 由后续 reviewed operations release 负责。
+    acceptance_criteria: 默认累计 coverage 必须校验 legacy + daily capture raw 并输出 B/A readiness，显式
+      manifest 保持兼容；daily valuation 只写当前日隔离目录并读取 canonical 累计 PIT/valuation history；历史不足继续降级，strict
+      PIT A 级不得由 captured snapshot 冒充。
+    notes: 2026-08-31 focused Ruff PASS；并行 focused pytest 116 passed。独立 ops runtime
+      只读 smoke：4,808 snapshots、2,069,507 rows、87 dates、17 tickers，manifest/coverage
+      PASS，valuation_expectations=B，first B=2026-07-18，latest=2026-08-29，A unavailable；valuation
+      history=1,211，PIT analyst history=1,169，无 history issue；active runtime 未写入。详见
+      docs/requirements/PROD-004_PIT_Cumulative_Archive_Consumption.md。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:prod-004-pit-cumulative-consumption-20260831-v1-validating
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-6e91844c9b844c1fe513b04857428b7e
 projection:
   legacy_first_eight_cells:
   - PROD-004
   - 趋势判断/PIT 估值样本成熟度
   - P1
-  - BLOCKED_EXTERNAL
-  - 系统验证 + 时间窗口
-  - '`DATA-003/BACKTEST-002/BTINPUT-001` 已完成 forward-only PIT 快照、回测可信度标签和覆盖诊断；下一步等待自建
-    PIT 样本自然积累，并用覆盖报告判断何时可提升估值/预期结论可信度'
-  - '`aits backtest-pit-coverage` 能给出 core universe 的可用样本起始日期、覆盖率和 A/B readiness；`score-daily`
-    对 `eps_revision_90d_pct`、valuation percentile 和 vendor/self-archived PIT 来源的限制声明与实际覆盖一致；历史不足时继续降级，不得用采集日视图伪装
-    signal_date 可见数据'
-  - '2026-05-06: 从 `PROD-001` 拆出，原因：owner 已决定不购买或伪造历史 PIT；剩余工作是持续验证 forward-only 样本成熟度，而不是继续推进总控任务。2026-05-10:
-    owner 再次要求继续积累 forward-only PIT；本轮只刷新覆盖报告和运行状态，不回填历史 PIT。2026-05-10: 测试最后交易日流程时确认，若在
-    2026-05-10 对 2026-05-08 执行 live `pit-snapshots fetch-fmp-forward`，`available_time`
-    会晚于 as_of 并被 `ops health` 正确阻断；历史交易日应使用 `ops replay-day` 的 cache-only/隔离视图，而不是用
-    live daily-run 伪造 PIT。'
-  docs_links: []
+  - VALIDATING
+  - 系统验证 + operations release
+  - 实现和真实数据只读 smoke 已完成；继续执行 generated authority、architecture/contract/integration/reproducibility/Full
+    门禁，合格后按默认规则集成发布。active runtime promotion 由后续 reviewed operations release 负责。
+  - 默认累计 coverage 必须校验 legacy + daily capture raw 并输出 B/A readiness，显式 manifest 保持兼容；daily
+    valuation 只写当前日隔离目录并读取 canonical 累计 PIT/valuation history；历史不足继续降级，strict PIT
+    A 级不得由 captured snapshot 冒充。
+  - 2026-08-31 focused Ruff PASS；并行 focused pytest 116 passed。独立 ops runtime 只读 smoke：4,808
+    snapshots、2,069,507 rows、87 dates、17 tickers，manifest/coverage PASS，valuation_expectations=B，first
+    B=2026-07-18，latest=2026-08-29，A unavailable；valuation history=1,211，PIT analyst
+    history=1,169，无 history issue；active runtime 未写入。详见 docs/requirements/PROD-004_PIT_Cumulative_Archive_Consumption.md。
+  docs_links:
+  - docs/requirements/PROD-004_PIT_Cumulative_Archive_Consumption.md
   terminal: false
-  canonical_row_sha256: 8cb8a538632f575d50568937ef4fca27dfd15357950cfaea68d626c4947420aa
-last_event_id: legacy-import-8cb8a538632f575d50568937
+  canonical_row_sha256: 7a0b0278da636401a1d493a0920e7a67897b69c2c32b08fd315684546114d75f
+last_event_id: task-event-6e91844c9b844c1fe513b04857428b7e
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 225081814ef694d293e7898cce1754502a2eda39addd0a40cc78dc9ba66fd50a
+fragment_checksum: b0414bb3ea468066e91b068fea3cc012a20140f99a21c47e7e857c31e76458a4

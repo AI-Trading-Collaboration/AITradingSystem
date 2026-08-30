@@ -1932,17 +1932,51 @@ def _load_fmp_valuation_history(
     tickers: tuple[str, ...],
     issues: list[FmpValuationFetchIssue],
 ) -> tuple[LoadedValuationSnapshot, ...]:
-    store = load_valuation_snapshot_store(input_path)
-    for load_error in store.load_errors:
-        issues.append(
-            FmpValuationFetchIssue(
-                severity=ValuationIssueSeverity.WARNING,
-                code="valuation_history_load_error",
-                message=f"{load_error.path}: {load_error.message}",
+    input_paths = (
+        [input_path]
+        if input_path.is_file()
+        else sorted(input_path.rglob("fmp_*_valuation_*.yaml"))
+        if input_path.is_dir()
+        else []
+    )
+    loaded_snapshots: list[LoadedValuationSnapshot] = []
+    for history_path in input_paths:
+        store = load_valuation_snapshot_store(history_path)
+        for load_error in store.load_errors:
+            issues.append(
+                FmpValuationFetchIssue(
+                    severity=ValuationIssueSeverity.WARNING,
+                    code="valuation_history_load_error",
+                    message=f"{load_error.path}: {load_error.message}",
+                )
             )
-        )
+        loaded_snapshots.extend(store.loaded)
+
     ticker_set = set(tickers)
-    return tuple(loaded for loaded in store.loaded if loaded.snapshot.ticker.upper() in ticker_set)
+    filtered = [
+        loaded
+        for loaded in loaded_snapshots
+        if loaded.snapshot.ticker.upper() in ticker_set
+    ]
+    unique: dict[str, LoadedValuationSnapshot] = {}
+    for loaded in filtered:
+        snapshot_id = loaded.snapshot.snapshot_id
+        existing = unique.get(snapshot_id)
+        if existing is not None:
+            issues.append(
+                FmpValuationFetchIssue(
+                    severity=ValuationIssueSeverity.ERROR,
+                    code="duplicate_valuation_history_snapshot_id",
+                    ticker=loaded.snapshot.ticker,
+                    message=(
+                        f"重复 valuation history snapshot_id={snapshot_id}: "
+                        f"{existing.path}, {loaded.path}"
+                    ),
+                )
+            )
+            continue
+        unique[snapshot_id] = loaded
+    return tuple(unique[snapshot_id] for snapshot_id in sorted(unique))
 
 
 def _fmp_analyst_history_paths(path: Path) -> list[Path]:

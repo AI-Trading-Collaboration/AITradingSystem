@@ -183,6 +183,37 @@ def test_reviewed_policy_governs_source_control_and_recovery_modes() -> None:
     } == {"HISTORICAL_RECAPTURE_FORBIDDEN"}
 
 
+def test_fmp_valuation_capture_reads_canonical_history_but_writes_current_day(
+    tmp_path: Path,
+) -> None:
+    policy_path = tmp_path / "capture_policy.yaml"
+    _write_policy(policy_path, tmp_path)
+    policy = load_daily_input_capture_policy(policy_path, project_root=tmp_path)
+    paths = daily_input_capture_paths(date(2026, 7, 27), policy=policy)
+    components = build_daily_input_capture_components(
+        as_of=date(2026, 7, 27),
+        paths=paths,
+        policy=policy,
+        project_root=tmp_path,
+    )
+    component = next(item for item in components if item.component_id == "fmp_valuation")
+
+    def option_path(option: str) -> Path:
+        index = component.command.index(option)
+        return Path(component.command[index + 1])
+
+    assert option_path("--output-dir") == paths.valuation_dir
+    assert option_path("--analyst-history-dir") == (
+        paths.analyst_history_dir
+    )
+    assert option_path("--pit-normalized-path") == (
+        tmp_path / "data" / "processed" / "pit_snapshots"
+    )
+    assert option_path("--valuation-history-dir") == (
+        tmp_path / "data" / "external"
+    )
+
+
 def _capture_valid_official_policy_evidence(tmp_path: Path):
     as_of = date(2026, 7, 27)
     policy_path = tmp_path / "capture_policy.yaml"

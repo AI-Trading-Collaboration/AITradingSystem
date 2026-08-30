@@ -4159,7 +4159,8 @@ flowchart TD
         FMP["Financial Modeling Prep API<br/>historical-price-eod/non-split-adjusted + dividend-adjusted / quote / TTM metrics / ratios / estimates<br/>price target / ratings / earnings calendar<br/>provider symbol alias 可审计记录"]
         CBOEVIX["Cboe VIX official historical data<br/>VIX_History.csv<br/>^VIX OHLC / no volume"]
         EODHDT["EODHD Earnings Trends API<br/>calendar/trends<br/>epsTrendCurrent / epsTrend90daysAgo"]
-        PITMAN["data/raw/pit_snapshots/manifest.csv<br/>forward-only PIT raw snapshot manifest<br/>available_time / checksum / row count"]
+        PITMAN["data/raw/pit_snapshots/manifest.csv<br/>当日 forward-only PIT raw snapshot manifest<br/>available_time / checksum / row count"]
+        PITCMAN["data/raw/pit_snapshots/cumulative_manifest.csv<br/>legacy + daily immutable capture 累计索引<br/>snapshot_id 冲突 fail closed"]
     end
 
     subgraph Cache["本地缓存"]
@@ -4218,15 +4219,16 @@ flowchart TD
         TSMPR["outputs/reports/tsm_ir_pdf_text_YYYY-MM-DD.md"]
         TSMR["outputs/reports/tsm_ir_quarterly_YYYY_Qn_YYYY-MM-DD.md"]
         TSMBR["outputs/reports/tsm_ir_quarterly_batch_YYYY-MM-DD.md"]
-        FMPH["data/raw/fmp_analyst_estimates/<ticker>/*.json<br/>FMP analyst estimates 原始历史快照<br/>文件名含 captured_at / downloaded_at / checksum，避免覆盖 PIT manifest payload"]
+        FMPH["data/raw/fmp_analyst_estimates/<ticker>/*.json +<br/>data/raw/daily_input_capture/YYYY-MM-DD/fmp_analyst_estimates/**<br/>FMP analyst estimates immutable 原始历史快照"]
         FMPVH["data/raw/fmp_historical_valuation/*.json<br/>FMP historical key-metrics/ratios 原始响应"]
-        FMPFP["data/raw/fmp_forward_pit/*.json<br/>FMP forward-only PIT raw archive"]
+        FMPFP["data/raw/fmp_forward_pit/*.json +<br/>data/raw/daily_input_capture/YYYY-MM-DD/fmp_forward_pit/**<br/>FMP forward-only PIT raw archive"]
         FMPFPN["data/processed/pit_snapshots/fmp_forward_pit_YYYY-MM-DD.csv<br/>FMP as-of 标准化索引<br/>normalized_id 使用有界 ASCII slug + checksum"]
         FMPFPR["outputs/reports/fmp_forward_pit_fetch_YYYY-MM-DD.md<br/>FMP PIT 抓取报告"]
         EODHDTR["data/raw/eodhd_earnings_trends/*.json<br/>EODHD Earnings Trends 原始响应"]
         PITF["aits pit-snapshots fetch-fmp-forward<br/>抓取 FMP estimates / price target / ratings / earnings calendar"]
         PITP["aits pit-snapshots project-fmp-forward-capture<br/>retained raw exact replay 到 canonical normalized/report<br/>不请求 provider"]
-        PITB["aits pit-snapshots build-manifest<br/>从现有 FMP/EODHD raw cache 建立通用 PIT manifest<br/>daily 要求 fmp_forward_pit kind 非空"]
+        PITB["aits pit-snapshots build-manifest<br/>从当日 FMP/EODHD raw cache 建立 PIT manifest<br/>daily 要求 fmp_forward_pit kind 非空"]
+        PITBC["aits pit-snapshots build-cumulative-manifest<br/>或 backtest-pit-coverage 默认模式<br/>确定性扫描 legacy + 逐日 capture raw"]
         PITV["aits pit-snapshots validate<br/>校验 PIT manifest / payload checksum / available_time / required kind"]
         PITR["outputs/reports/pit_snapshots_validation_YYYY-MM-DD.md<br/>PIT 快照归档质量报告"]
         OPRAW["data/raw/official_policy_sources/YYYY-MM-DD/*<br/>官方来源 raw payload、row count 和 sha256"]
@@ -4278,7 +4280,7 @@ flowchart TD
     subgraph Backtest["历史回测"]
         BT["aits backtest"]
         BTG["aits backtest-input-gaps"]
-        BTPC["aits backtest-pit-coverage<br/>forward-only PIT 覆盖持续验证"]
+        BTPC["aits backtest-pit-coverage<br/>默认重建累计 manifest；显式 manifest 保持兼容<br/>forward-only PIT 覆盖持续验证"]
         BPCR["outputs/backtests/backtest_pit_coverage_YYYY-MM-DD.md<br/>B/A readiness、历史 C 级原因和升级日期"]
         BWATCH["point-in-time 观察池<br/>按 signal_date 过滤 lifecycle 可见 ticker"]
         BSEC["point-in-time SEC 基本面特征<br/>按 signal_date 只读已披露 companyfacts 与 TSM IR"]
@@ -4613,7 +4615,7 @@ flowchart TD
     end
 
     subgraph Valuation["估值与拥挤度复核"]
-        VF["aits valuation fetch-fmp"]
+        VF["aits valuation fetch-fmp<br/>当前日隔离写入 + canonical 累计 PIT/valuation history 只读"]
         VHF["aits valuation fetch-fmp-valuation-history"]
         VET["aits valuation fetch-eodhd-trends"]
         VFR["outputs/reports/fmp_valuation_fetch_YYYY-MM-DD.md"]
@@ -5317,7 +5319,7 @@ flowchart TD
     REX --> BTG
     REXATT --> BTG
     BTG --> BIG
-    PITMAN --> BTPC
+    PITCMAN --> BTPC
     BTPC --> BPCR
     BT --> BSEC
     BT --> BVAL
@@ -6096,6 +6098,12 @@ flowchart TD
     PITB --> PITMAN
     PITMAN --> PITV
     PITV --> PITR
+    FMPH --> PITBC
+    FMPVH --> PITBC
+    FMPFP --> PITBC
+    EODHDTR --> PITBC
+    PITBC --> PITCMAN
+    VS -. "历史 valuation snapshots（含 daily capture 子目录）" .-> VF
     FMPH --> VFH
     VFH --> VFHR
     VSCSV --> VI

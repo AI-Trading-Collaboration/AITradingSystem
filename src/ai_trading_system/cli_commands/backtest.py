@@ -155,8 +155,11 @@ from ai_trading_system.historical_inputs import (
     build_historical_valuation_review_report,
 )
 from ai_trading_system.pit_snapshots import (
-    DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
+    DEFAULT_CUMULATIVE_PIT_SNAPSHOT_MANIFEST_PATH,
+    DEFAULT_PIT_RAW_ROOT,
+    discover_cumulative_pit_raw_snapshots,
     validate_pit_snapshot_manifest,
+    write_pit_snapshot_manifest,
 )
 from ai_trading_system.prediction_ledger import (
     DEFAULT_PREDICTION_OUTCOMES_PATH,
@@ -1746,9 +1749,24 @@ def backtest_input_gaps(
 
 def backtest_pit_coverage(
     manifest_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "显式 PIT raw snapshot manifest CSV；未提供时从 raw root "
+                "重建累计 manifest。"
+            )
+        ),
+    ] = None,
+    raw_root: Annotated[
         Path,
-        typer.Option(help="PIT raw snapshot manifest CSV 路径。"),
-    ] = DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
+        typer.Option(
+            help="累计模式的 PIT raw 根目录；扫描 legacy 与逐日 capture 子目录。"
+        ),
+    ] = DEFAULT_PIT_RAW_ROOT,
+    cumulative_manifest_path: Annotated[
+        Path,
+        typer.Option(help="累计模式生成的 PIT manifest CSV 路径。"),
+    ] = DEFAULT_CUMULATIVE_PIT_SNAPSHOT_MANIFEST_PATH,
     data_sources_path: Annotated[
         Path,
         typer.Option(help="数据源目录 YAML 路径，用于校验授权和 provider 信息。"),
@@ -1793,10 +1811,26 @@ def backtest_pit_coverage(
     if resolved_max_staleness_days < 0:
         raise typer.BadParameter("最新快照最大允许日龄不能为负数。")
 
+    data_sources = load_data_sources(data_sources_path)
+    resolved_manifest_path = manifest_path
+    if resolved_manifest_path is None:
+        try:
+            cumulative_records = discover_cumulative_pit_raw_snapshots(
+                raw_root=raw_root,
+                data_sources=data_sources,
+            )
+        except ValueError as exc:
+            console.print(f"[red]累计 PIT manifest 发现失败：{exc}[/red]")
+            raise typer.Exit(code=1) from exc
+        resolved_manifest_path = write_pit_snapshot_manifest(
+            cumulative_records,
+            cumulative_manifest_path,
+        )
+
     validation_report = validate_pit_snapshot_manifest(
-        input_path=manifest_path,
+        input_path=resolved_manifest_path,
         as_of=coverage_date,
-        data_sources=load_data_sources(data_sources_path),
+        data_sources=data_sources,
     )
     report = build_backtest_pit_coverage_report(
         validation_report,

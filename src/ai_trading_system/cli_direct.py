@@ -525,6 +525,7 @@ def _dispatch(args: list[str]) -> None:
                 _optional_path(args, "--pit-normalized-path")
                 or valuation_cli.DEFAULT_FMP_FORWARD_PIT_NORMALIZED_DIR
             ),
+            valuation_history_dir=_optional_path(args, "--valuation-history-dir"),
             output_path=_optional_path(args, "--output-path"),
             validation_report_path=_optional_path(
                 args,

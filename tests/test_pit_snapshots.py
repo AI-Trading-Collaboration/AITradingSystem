@@ -7,6 +7,7 @@ from hashlib import sha256
 from pathlib import Path
 
 import yaml
+from pytest import raises
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
@@ -16,6 +17,7 @@ from ai_trading_system.pit_snapshots import (
     PIT_SNAPSHOT_SCHEMA_VERSION,
     PitSnapshotIssueSeverity,
     PitSnapshotManifestRecord,
+    discover_cumulative_pit_raw_snapshots,
     discover_existing_pit_raw_snapshots,
     render_pit_snapshot_validation_report,
     validate_pit_snapshot_manifest,
@@ -218,6 +220,121 @@ def test_discover_existing_pit_raw_snapshots_keeps_same_day_reruns_unique(
     assert len(records) == 2
     assert len({record.snapshot_id for record in records}) == 2
     assert report.status == "PASS"
+
+
+def test_discover_cumulative_pit_raw_snapshots_reads_legacy_and_daily_capture(
+    tmp_path: Path,
+) -> None:
+    raw_root = tmp_path / "data" / "raw"
+    _write_raw_payload(
+        raw_root
+        / "fmp_analyst_estimates"
+        / "nvda"
+        / "fmp_analyst_estimates_nvda_2026-05-01.json",
+        downloaded_at=datetime(2026, 5, 1, 12, 0, tzinfo=UTC),
+    )
+    for day in (2, 3):
+        _write_raw_payload(
+            raw_root
+            / "daily_input_capture"
+            / f"2026-05-{day:02d}"
+            / "fmp_forward_pit"
+            / "nvda"
+            / f"fmp_forward_pit_nvda_2026-05-{day:02d}.json",
+            downloaded_at=datetime(2026, 5, day, 12, 0, tzinfo=UTC),
+        )
+    _write_raw_payload(
+        raw_root
+        / "daily_input_capture"
+        / "not-a-date"
+        / "fmp_forward_pit"
+        / "nvda"
+        / "ignored.json",
+        downloaded_at=datetime(2026, 5, 4, 12, 0, tzinfo=UTC),
+    )
+
+    records = discover_cumulative_pit_raw_snapshots(
+        raw_root=raw_root,
+        data_sources=_data_sources(),
+        project_root=tmp_path,
+    )
+
+    assert len(records) == 3
+    assert tuple(record.snapshot_id for record in records) == tuple(
+        sorted(record.snapshot_id for record in records)
+    )
+    assert {record.available_time[:10] for record in records} == {
+        "2026-05-01",
+        "2026-05-02",
+        "2026-05-03",
+    }
+
+
+def test_discover_cumulative_pit_raw_snapshots_rejects_conflicting_snapshot_id(
+    tmp_path: Path,
+) -> None:
+    raw_root = tmp_path / "data" / "raw"
+    downloaded_at = datetime(2026, 5, 2, 12, 0, tzinfo=UTC)
+    _write_raw_payload(
+        raw_root / "fmp_forward_pit" / "nvda" / "legacy.json",
+        downloaded_at=downloaded_at,
+    )
+    _write_raw_payload(
+        raw_root
+        / "daily_input_capture"
+        / "2026-05-02"
+        / "fmp_forward_pit"
+        / "nvda"
+        / "capture.json",
+        downloaded_at=downloaded_at,
+    )
+
+    with raises(ValueError, match="conflicting PIT snapshot_id"):
+        discover_cumulative_pit_raw_snapshots(
+            raw_root=raw_root,
+            data_sources=_data_sources(),
+            project_root=tmp_path,
+        )
+
+
+def test_pit_snapshots_cli_build_cumulative_manifest(tmp_path: Path) -> None:
+    raw_root = tmp_path / "data" / "raw"
+    _write_raw_payload(
+        raw_root
+        / "daily_input_capture"
+        / "2026-05-02"
+        / "fmp_forward_pit"
+        / "nvda"
+        / "fmp_forward_pit_nvda_2026-05-02.json",
+        downloaded_at=datetime(2026, 5, 2, 12, 0, tzinfo=UTC),
+    )
+    output_path = tmp_path / "pit_snapshots" / "cumulative_manifest.csv"
+    report_path = tmp_path / "pit_snapshot_validation.md"
+    data_sources_path = _write_data_sources_config(tmp_path / "data_sources.yaml")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "pit-snapshots",
+            "build-cumulative-manifest",
+            "--raw-root",
+            str(raw_root),
+            "--output-path",
+            str(output_path),
+            "--data-sources-path",
+            str(data_sources_path),
+            "--as-of",
+            "2026-05-03",
+            "--validation-report-path",
+            str(report_path),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert output_path.exists()
+    assert report_path.exists()
+    assert "累计 PIT" in result.output
+    assert "快照数：1" in result.output
 
 
 def test_pit_snapshots_cli_validate_writes_report(tmp_path: Path) -> None:

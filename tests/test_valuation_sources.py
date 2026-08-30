@@ -404,6 +404,89 @@ def test_fetch_fmp_valuation_snapshots_calculates_local_valuation_percentile(
     assert "missing_valuation_percentile_history" not in {issue.code for issue in report.issues}
 
 
+def test_fetch_fmp_valuation_snapshots_reads_recursive_history_and_ignores_unrelated_yaml(
+    tmp_path: Path,
+) -> None:
+    valuation_history_root = tmp_path / "external"
+    write_valuation_snapshots_as_yaml(
+        [
+            _fmp_history_snapshot(
+                as_of=date(2026, 2, 2),
+                forward_pe=20,
+                ev_sales=10,
+                peg=1.0,
+            ),
+            _fmp_history_snapshot(
+                as_of=date(2026, 3, 2),
+                forward_pe=25,
+                ev_sales=15,
+                peg=1.2,
+            ),
+            _fmp_history_snapshot(
+                as_of=date(2026, 4, 2),
+                forward_pe=40,
+                ev_sales=30,
+                peg=2.0,
+            ),
+        ],
+        valuation_history_root
+        / "daily_input_capture"
+        / "2026-04-02"
+        / "valuation_snapshots",
+    )
+    (valuation_history_root / "unrelated.yaml").write_text(
+        "not_a_valuation_snapshot: true\n",
+        encoding="utf-8",
+    )
+
+    report = fetch_fmp_valuation_snapshots(
+        ["NVDA"],
+        "test-key",
+        date(2026, 5, 2),
+        provider=_FakeFmpProvider(),
+        valuation_history_dir=valuation_history_root,
+        captured_at=date(2026, 5, 2),
+    )
+
+    assert report.historical_valuation_snapshot_count == 3
+    assert report.snapshots[0].valuation_percentile == approx(66.6666667)
+    assert "valuation_history_load_error" not in {issue.code for issue in report.issues}
+
+
+def test_fetch_fmp_valuation_snapshots_rejects_duplicate_recursive_history_id(
+    tmp_path: Path,
+) -> None:
+    history = _fmp_history_snapshot(
+        as_of=date(2026, 4, 2),
+        forward_pe=40,
+        ev_sales=30,
+        peg=2.0,
+    )
+    valuation_history_root = tmp_path / "external"
+    write_valuation_snapshots_as_yaml([history], valuation_history_root / "legacy")
+    write_valuation_snapshots_as_yaml(
+        [history],
+        valuation_history_root
+        / "daily_input_capture"
+        / "2026-04-02"
+        / "valuation_snapshots",
+    )
+
+    report = fetch_fmp_valuation_snapshots(
+        ["NVDA"],
+        "test-key",
+        date(2026, 5, 2),
+        provider=_FakeFmpProvider(),
+        valuation_history_dir=valuation_history_root,
+        captured_at=date(2026, 5, 2),
+    )
+
+    assert not report.passed
+    assert "duplicate_valuation_history_snapshot_id" in {
+        issue.code for issue in report.issues
+    }
+
+
 def test_fetch_fmp_historical_valuation_snapshots_generates_percentile_history(
     tmp_path: Path,
 ) -> None:
@@ -618,8 +701,10 @@ def test_valuation_fetch_fmp_cli_writes_yaml_and_reports(
 ) -> None:
     output_dir = tmp_path / "valuation_snapshots"
     analyst_history_dir = tmp_path / "fmp_analyst_estimates"
+    valuation_history_dir = tmp_path / "valuation_history"
     fetch_report_path = tmp_path / "fmp_fetch.md"
     validation_report_path = tmp_path / "valuation_validation.md"
+    observed: dict[str, object] = {}
 
     def fake_fetch(
         tickers: list[str] | tuple[str, ...],
@@ -632,6 +717,7 @@ def test_valuation_fetch_fmp_cli_writes_yaml_and_reports(
         captured_at: date | None = None,
         analyst_estimate_limit: int = 10,
     ) -> Any:
+        observed["valuation_history_dir"] = valuation_history_dir
         return fetch_fmp_valuation_snapshots(
             tickers,
             api_key,
@@ -658,6 +744,8 @@ def test_valuation_fetch_fmp_cli_writes_yaml_and_reports(
             str(output_dir),
             "--analyst-history-dir",
             str(analyst_history_dir),
+            "--valuation-history-dir",
+            str(valuation_history_dir),
             "--as-of",
             "2026-05-02",
             "--output-path",
@@ -680,6 +768,7 @@ def test_valuation_fetch_fmp_cli_writes_yaml_and_reports(
     )
     assert fetch_report_path.exists()
     assert validation_report_path.exists()
+    assert observed["valuation_history_dir"] == valuation_history_dir
 
 
 def test_valuation_fetch_fmp_valuation_history_cli_writes_raw_yaml_and_reports(

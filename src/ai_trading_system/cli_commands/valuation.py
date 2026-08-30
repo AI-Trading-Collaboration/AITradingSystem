@@ -84,6 +84,15 @@ def fetch_fmp_valuations(
             )
         ),
     ] = DEFAULT_FMP_FORWARD_PIT_NORMALIZED_DIR,
+    valuation_history_dir: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "读取历史 FMP valuation YAML 的文件或目录；"
+                "未提供时沿用 output-dir。"
+            )
+        ),
+    ] = None,
     as_of: Annotated[
         str | None,
         typer.Option(help="估值评估日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -131,7 +140,7 @@ def fetch_fmp_valuations(
             fetch_date,
             analyst_history_dir=analyst_history_dir,
             pit_normalized_path=pit_normalized_path,
-            valuation_history_dir=output_dir,
+            valuation_history_dir=valuation_history_dir or output_dir,
             captured_at=fetch_date,
             analyst_estimate_limit=analyst_estimate_limit,
         )

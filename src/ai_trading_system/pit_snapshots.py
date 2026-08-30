@@ -113,6 +113,10 @@ PIT_SOURCE_TYPES = {
 
 DEFAULT_PIT_SNAPSHOT_DIR = PROJECT_ROOT / "data" / "raw" / "pit_snapshots"
 DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH = DEFAULT_PIT_SNAPSHOT_DIR / "manifest.csv"
+DEFAULT_CUMULATIVE_PIT_SNAPSHOT_MANIFEST_PATH = (
+    DEFAULT_PIT_SNAPSHOT_DIR / "cumulative_manifest.csv"
+)
+DEFAULT_PIT_RAW_ROOT = PROJECT_ROOT / "data" / "raw"
 PIT_SNAPSHOT_SCHEMA_VERSION = "1"
 PIT_SNAPSHOT_PARSER_VERSION = "pit_snapshot_manifest_v1"
 PIT_SNAPSHOT_KINDS = (
@@ -433,6 +437,55 @@ def discover_existing_pit_raw_snapshots(
     return tuple(sorted(records, key=lambda record: record.snapshot_id))
 
 
+def discover_cumulative_pit_raw_snapshots(
+    *,
+    raw_root: Path = DEFAULT_PIT_RAW_ROOT,
+    data_sources: DataSourcesConfig | None = None,
+    project_root: Path = PROJECT_ROOT,
+) -> tuple[PitSnapshotManifestRecord, ...]:
+    """Discover retained PIT payloads across legacy and date-scoped capture roots."""
+    discovery_roots = [raw_root]
+    daily_capture_root = raw_root / "daily_input_capture"
+    if daily_capture_root.is_dir():
+        discovery_roots.extend(
+            path
+            for path in sorted(daily_capture_root.iterdir())
+            if path.is_dir() and _is_iso_date_directory(path.name)
+        )
+
+    discovered: list[PitSnapshotManifestRecord] = []
+    for discovery_root in discovery_roots:
+        discovered.extend(
+            discover_existing_pit_raw_snapshots(
+                fmp_analyst_history_dir=discovery_root / "fmp_analyst_estimates",
+                fmp_historical_valuation_dir=(
+                    discovery_root / "fmp_historical_valuation"
+                ),
+                eodhd_earnings_trends_dir=(
+                    discovery_root / "eodhd_earnings_trends"
+                ),
+                fmp_forward_pit_dir=discovery_root / "fmp_forward_pit",
+                data_sources=data_sources,
+                project_root=project_root,
+            )
+        )
+
+    records_by_id: dict[str, PitSnapshotManifestRecord] = {}
+    for record in sorted(
+        discovered,
+        key=lambda item: (item.snapshot_id, item.raw_payload_path),
+    ):
+        existing = records_by_id.get(record.snapshot_id)
+        if existing is not None and existing != record:
+            raise ValueError(
+                "conflicting PIT snapshot_id maps to multiple retained payloads: "
+                f"{record.snapshot_id} ({existing.raw_payload_path}, "
+                f"{record.raw_payload_path})"
+            )
+        records_by_id[record.snapshot_id] = record
+    return tuple(records_by_id[snapshot_id] for snapshot_id in sorted(records_by_id))
+
+
 def write_pit_snapshot_manifest(
     records: tuple[PitSnapshotManifestRecord, ...] | list[PitSnapshotManifestRecord],
     output_path: Path,
@@ -707,6 +760,13 @@ def _normalized_required_snapshot_kinds(value: tuple[str, ...]) -> tuple[str, ..
     if unsupported:
         raise ValueError(f"unsupported required snapshot kinds: {', '.join(unsupported)}")
     return normalized
+
+
+def _is_iso_date_directory(value: str) -> bool:
+    try:
+        return date.fromisoformat(value).isoformat() == value
+    except ValueError:
+        return False
 
 
 def _snapshot_kind_from_snapshot_id(snapshot_id: str) -> str:

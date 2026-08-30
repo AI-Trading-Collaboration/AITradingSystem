@@ -201,6 +201,7 @@ def test_cli_direct_dispatches_capture_and_date_scoped_source_paths(
     pit_validation_report = tmp_path / "reports" / "pit_validation.md"
     sec_raw = tmp_path / "raw" / "sec"
     valuation_dir = tmp_path / "external" / "valuation"
+    valuation_history_dir = tmp_path / "external" / "history"
     analyst_dir = tmp_path / "raw" / "analyst"
     valuation_fetch_report = tmp_path / "reports" / "valuation_fetch.md"
     valuation_validation_report = tmp_path / "reports" / "valuation_validation.md"
@@ -317,6 +318,8 @@ def test_cli_direct_dispatches_capture_and_date_scoped_source_paths(
                 str(analyst_dir),
                 "--pit-normalized-path",
                 str(pit_normalized),
+                "--valuation-history-dir",
+                str(valuation_history_dir),
                 "--output-path",
                 str(valuation_fetch_report),
                 "--validation-report-path",
@@ -367,6 +370,7 @@ def test_cli_direct_dispatches_capture_and_date_scoped_source_paths(
     assert calls["valuation"]["output_dir"] == valuation_dir
     assert calls["valuation"]["analyst_history_dir"] == analyst_dir
     assert calls["valuation"]["pit_normalized_path"] == pit_normalized
+    assert calls["valuation"]["valuation_history_dir"] == valuation_history_dir
     assert calls["valuation"]["output_path"] == valuation_fetch_report
     assert calls["valuation"]["validation_report_path"] == valuation_validation_report
     assert calls["official"]["raw_dir"] == official_raw

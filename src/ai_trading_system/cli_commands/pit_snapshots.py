@@ -34,8 +34,11 @@ from ai_trading_system.fmp_forward_pit import (
     write_fmp_forward_pit_raw_payloads,
 )
 from ai_trading_system.pit_snapshots import (
+    DEFAULT_CUMULATIVE_PIT_SNAPSHOT_MANIFEST_PATH,
+    DEFAULT_PIT_RAW_ROOT,
     DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
     default_pit_snapshot_validation_report_path,
+    discover_cumulative_pit_raw_snapshots,
     discover_existing_pit_raw_snapshots,
     validate_pit_snapshot_manifest,
     write_pit_snapshot_manifest,
@@ -233,6 +236,63 @@ def build_pit_snapshot_manifest_command(
     console.print(f"报告：{report_path}")
     console.print(f"快照数：{report.snapshot_count}；原始记录数：{report.row_count}")
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@pit_snapshots_app.command("build-cumulative-manifest")
+def build_cumulative_pit_snapshot_manifest_command(
+    raw_root: Annotated[
+        Path,
+        typer.Option(
+            help="PIT raw 根目录；扫描 legacy 子目录和 daily_input_capture/YYYY-MM-DD。"
+        ),
+    ] = DEFAULT_PIT_RAW_ROOT,
+    output_path: Annotated[
+        Path,
+        typer.Option(help="累计 PIT raw snapshot manifest CSV 输出路径。"),
+    ] = DEFAULT_CUMULATIVE_PIT_SNAPSHOT_MANIFEST_PATH,
+    data_sources_path: Annotated[
+        Path,
+        typer.Option(help="数据源目录 YAML 路径，用于补充授权字段。"),
+    ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown PIT 快照质量报告输出路径。"),
+    ] = None,
+) -> None:
+    """从 legacy 与逐日 immutable capture raw 生成累计 PIT manifest。"""
+    manifest_date = _parse_date(as_of) if as_of else date.today()
+    data_sources = load_data_sources(data_sources_path)
+    try:
+        records = discover_cumulative_pit_raw_snapshots(
+            raw_root=raw_root,
+            data_sources=data_sources,
+        )
+    except ValueError as exc:
+        console.print(f"[red]累计 PIT manifest 发现失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    manifest_path = write_pit_snapshot_manifest(records, output_path)
+    report_path = validation_report_path or default_pit_snapshot_validation_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        manifest_date,
+    )
+    report = validate_pit_snapshot_manifest(
+        input_path=manifest_path,
+        as_of=manifest_date,
+        data_sources=data_sources,
+    )
+    write_pit_snapshot_validation_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"生成累计 PIT manifest：{manifest_path}")
+    console.print(f"[{status_style}]PIT 快照归档状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(f"快照数：{report.snapshot_count}；原始记录数：{report.row_count}")
     if not report.passed:
         raise typer.Exit(code=1)
 
