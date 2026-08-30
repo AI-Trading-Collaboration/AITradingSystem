@@ -1919,7 +1919,6 @@ def _devx_011_section(
     section_id = "phase_devx_011_governed_workflow_health_control_loop_v1"
     source_paths = sorted(
         [
-            "AGENTS.md",
             "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
             "config/architecture/workflow_health_policy.yaml",
             "config/report_registry.yaml",

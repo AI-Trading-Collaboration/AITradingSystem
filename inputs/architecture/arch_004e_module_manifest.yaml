@@ -15431,7 +15431,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.compatibility_authority
   path: src/ai_trading_system/platform/architecture/compatibility_authority.py
-  sha256: f0500aac20554a3a9557ec964860566e36ae6c4368097645cc4ccb283cd625e1
+  sha256: 9e8d888c4766f71b3cab115edc1de711288fc4eac9ba4804547ece752002224c
   rule_id: platform_architecture
   owner_profile: platform
   owners:

@@ -36,7 +36,7 @@ V1 采用 owner-gated control loop：
 4. 人工准入：candidate 只有在 owner 接受并另行登记 canonical task 后才可进入实现；
 5. 受治理执行：任何接受的优化仍遵守现有 task registration、publication fence、validation、local-main 和 ordinary push 门禁。
 
-V1 不引入第二个 scheduler。它登记到 `config/scheduled_tasks.yaml` 的 weekly cadence，由统一 periodic operations plan 发现 due 状态；当前 `automatic_command_dispatch_enabled=false` 边界保持不变。为形成 Codex 自发行为，根 `AGENTS.md` 增加低成本规则：每个 ISO 周第一次非平凡 tracked mutation 前，如果本周没有已验证的 workflow-health artifact，则先读取 operations runbook 并生成/校验一次只读报告。
+V1 不引入第二个 scheduler。它登记到 `config/scheduled_tasks.yaml` 的 weekly cadence，由统一 daily scheduler 入口和 periodic operations plan 自动发现 due 状态；当前 `automatic_command_dispatch_enabled=false` 边界保持不变。系统自发行为停在“周期发现、去重、生成受治理执行计划”边界，实际命令仍由现有 controlled runtime/operator 路径执行，不把 developer telemetry 规则写入被投资研究契约直接哈希绑定的根 `AGENTS.md`。
 
 ## 4. 范围
 
@@ -153,10 +153,10 @@ fail-closed 校验 schema/type、policy binding、window、summary counts、cand
 - weekly scheduled task；
 - report registry 与 artifact catalog；
 - operations runbook / scheduled orchestration；
-- root `AGENTS.md` 的 once-per-ISO-week self-trigger；
+- unified periodic plan 的 once-per-ISO-week date gate 与 current-week artifact 去重；
 - `docs/system_flow.md`。
 
-验收：不进入 daily trading chain、不自动 dispatch、不新增外部 scheduler；Codex 规则只在缺少当周 validated artifact 时执行。
+验收：不进入 daily trading chain、不自动 dispatch、不新增外部 scheduler；统一 periodic plan 只在缺少当周 validated artifact 时将该任务标记 due。
 
 ### S4 — 生成状态、验证与发布
 
@@ -180,7 +180,6 @@ Task-owned paths：
 
 Coordinator/shared paths：
 
-- `AGENTS.md`
 - `src/ai_trading_system/cli_commands/reports.py`
 - `config/scheduled_tasks.yaml`
 - `config/report_registry.yaml`
@@ -207,17 +206,17 @@ Coordinator/shared paths：
 - [x] candidate id 跨日期稳定，安全标志不可放宽；
 - [x] report/candidate/validation artifacts 可由 CLI 生成和复核；
 - [x] weekly cadence 进入统一 periodic plan，但 automatic dispatch 仍关闭；
-- [x] Codex once-per-week self-trigger 有 current-week artifact 去重；
+- [x] unified periodic plan 的 once-per-week date gate 有 current-week artifact 去重；
 - [x] report registry、artifact catalog、runbook、system flow 与 CLI 一致；
-- [x] focused/formal/Full validation PASS；
-- [x] local main 与 origin/main 等于 final candidate；
+- [ ] focused/formal/Full validation PASS；
+- [ ] local main 与 origin/main 等于 final candidate；
 - [x] 无 market cache、strategy、weight、production、broker/order 变更。
 
 ## 11. Progress log
 
 - 2026-08-31：Owner 同意继续推进本优化线；只读审计、V1 决策、policy baseline、阶段拆分与安全边界完成。
 - 2026-08-31：等待并审计 PROD-004 唯一 publication lease；观察到 stale manifest、Full compatibility/Atlas failure、generator ordering 与 lane-head drift 的真实成本。PROD-004 最终发布到 `main@961d65a9743a354994c319dfa102acddb28cab21` 后释放；DEVX-011 从该 exact base 启动，不创建临时 worktree。
-- 2026-08-31：V1 collector、policy、CLI、validation、weekly cadence、Codex self-trigger、report/catalog/runbook/system-flow 文档完成。Synthetic + integration-focused validation 为 `80 passed`；真实 7 日报告读取 280 个 validation summaries、192 个 publication transactions，生成 13 个稳定 review-only candidates，bundle validation 为 `PASS`（9 checks、0 failed、0 warnings）。最终 formal tiers、Full、main/origin SHA equality 与 cleanup 由 `devx-011-workflow-health-implementation-20260831-v1` publication receipt 绑定；若任一门禁失败，本完成声明随事务 fail closed 并进入 successor transaction 修复。
+- 2026-08-31：V1 collector、policy、CLI、validation、weekly cadence、unified-periodic date gate、report/catalog/runbook/system-flow 文档完成。Synthetic + integration-focused validation 为 `80 passed`；真实 7 日报告读取 280 个 validation summaries、192 个 publication transactions，生成 13 个稳定 review-only candidates，bundle validation 为 `PASS`（9 checks、0 failed、0 warnings）。最终 formal tiers、Full、main/origin SHA equality 与 cleanup 由 publication receipt 绑定；若任一门禁失败，本完成声明随事务 fail closed 并进入 successor transaction 修复。
 - 2026-08-31：v1 因 report/catalog/flow source seal policy 未声明而失败释放；v2 补齐 policy 后，authority replay PASS，但静态 seal 验收仍锁在 3100 entries，失败释放；v3 同步为 3107 entries 后 focused `124 passed`，候选 `2fdb800841e6663ced1540d14c71baa9ee0c9694` 的 formal Architecture 暴露 122 个冻结基线失败（weekly/report/task/deprecation counts 与缺少 DEVX-011 compatibility successor），artifact 为 `outputs/validation_runtime/architecture-fitness_20260830T192604Z/test_runtime_summary.json`。v4 作为最小 serial contract wave，追加 DEVX-011 fragment authority 与 exact current ratchets，不重写 immutable legacy compatibility baseline。
 - 2026-08-31：v4 生成 9-section compatibility chain 后，冻结基线 focused 从 122 个失败收敛到 89 个；剩余项统一归因于 historical mismatch helper 尚未纳入 DEVX-011 retroactive successor，另有一项 report-flow 测试仍断言 PROD-004 为 latest。v5 只补这两个 contract hooks，并重新生成/验证全部 authority。
 - 2026-08-31：v5 抽样 5 项中 3 项 PASS，余下 2 项证明通用 authority loop 不会消除“被测 section 自身或更晚 owner”路径的合法 EOF supersession。v6 按既有 successor special-case 模式，仅对 DEVX-011 明确登记的 exact paths 消除早期 historical live-drift 误报；历史记录 bytes 与 hash 不改写。
@@ -226,3 +225,6 @@ Coordinator/shared paths：
 - 2026-08-31：canonical task source 按终态不可逆规则拒绝将已过早标记 `DONE` 的 DEVX-011 重开为 `IN_PROGRESS`；不修改该生命周期不变量。后续正式门禁修复与发布由窄范围 successor `DEVX-011A_WORKFLOW_HEALTH_COMPATIBILITY_CLOSEOUT` 承接，继续复用本 requirement、exact base 与失败证据；原 DEVX-011 的“formal/Full PASS、main/origin equality”验收在 successor 完成前保持未勾选。
 - 2026-08-31：DEVX-011A 登记后 task registry 为 1037 项（508 active / 529 completed）；owner-aware 历史 mismatch 修正使原失败的 `TRADING-2458` 与 DEVX-003、TRADING-2504 样本同时 PASS。v1 预验证事务刷新了 9-section compatibility chain；v2 同步新增任务带来的 frozen task-count ratchet 后再执行完整 Architecture 预验证。
 - 2026-08-31：DEVX-011A v2 完整预验证通过：Architecture `880 passed`、Contract `278 passed`、Integration `995 passed`、Reproducibility `24 passed`。最终完成标记、local-main/origin equality 与本节验收勾选仅在 publication transaction `devx-011a-workflow-health-closeout-20260831-v3` 的 final candidate、正式门禁、Full、普通推送及 released receipt 全部 PASS 时生效；任一失败均使该完成声明 fail closed，并由新的 successor 承接，不改写终态历史。
+- 2026-08-31：DEVX-011A v3 final candidate `df349268bda10386eda487ecb7958ccdc5df50d8` 的正式 Architecture/Contract/Integration/Reproducibility 分别为 `880/278/995/24 passed`，但 Full 为 `9700 passed / 327 failed / 3 skipped`，证据 `outputs/validation_runtime/full_20260830T203347Z/test_runtime_summary.json`。325 项级联失败统一来自两条 growth-action-value 根契约对 `AGENTS.md` 的旧 `PROJECT_ENGINEERING_RULES` SHA 直接绑定，另 2 项来自 DEVX-011 错误声明了未改动的 `tests/test_trading2452_architecture_contract.py` 为 current authority。v3 已 fail closed，未合入 main。
+- 2026-08-31：不重写任何历史投资 policy/config hash，也不为 developer telemetry 放宽其直接绑定。窄范围 successor `DEVX-011B_WORKFLOW_HEALTH_ROOT_RULE_DECOUPLING_CLOSEOUT` 将撤销根 `AGENTS.md` 变更、从 DEVX-011 source authority 移除 `AGENTS.md` 与未改动的 TRADING-2452 测试，并把周期自发行为收敛到现有 unified periodic plan 的 date-gated discovery；这样保留自动发现/去重能力，同时不触碰研究语义。
+- 2026-08-31：DEVX-011B v1 将 Full 的 327 个 last-failed 收敛为 `335 passed / 3 failed`。其中两项证明 `docs/system_flow.md` 与 `tests/test_arch_004g_deprecation.py` 等合法 DEVX-011 current-authority path 仍需由 TRADING-2452 helper 显式承认新 section；因此重新纳入实际修改的 `tests/test_trading2452_architecture_contract.py` 并只追加 DEVX-011 section key。最后一项是本地 hydrated、ignored Atlas page-effectiveness sidecar 仍绑定 `main@961d65a...`，须在 final candidate commit 后用官方 renderer 按 exact commit 重建，不修改其研究结论或人工验收状态。

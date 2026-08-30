@@ -1,0 +1,139 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-011B_WORKFLOW_HEALTH_ROOT_RULE_DECOUPLING_CLOSEOUT
+  task_id_sha256: dd4b391ec48b1b6f04d63c57dd3bb400419fac526f0ce17b12457e0a0cf3940a
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-011B_WORKFLOW_HEALTH_ROOT_RULE_DECOUPLING_CLOSEOUT
+  title: null
+  domain: Developer experience / workflow health root-rule decoupling closeout
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 'Codex engineering coordinator: validate explicit DEVX-011 helper successor
+    and rebuild ignored Atlas page on exact candidate'
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: No code blocker; create prevalidation
+    candidate, render Atlas page-effectiveness for its exact commit, then rerun the
+    three remaining last-failed tests
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Root hash cascade eliminated; TRADING-2452 helper accepts explicit DEVX-011
+      authority; exact-candidate Atlas sidecar PASS; failure-fix Full PASS; production_effect=none
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-011B_WORKFLOW_HEALTH_ROOT_RULE_DECOUPLING_CLOSEOUT
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-30T20:59:30Z'
+  actor: integration-coordinator
+  change_id: devx-011b-workflow-health-registration-20260831-v1
+  lane_id: null
+  base_commit: df349268bda10386eda487ecb7958ccdc5df50d8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-011B_WORKFLOW_HEALTH_ROOT_RULE_DECOUPLING_CLOSEOUT
+    - Developer experience / workflow health root-rule decoupling closeout
+    - P1
+    - IN_PROGRESS
+    - Codex engineering coordinator：移除 root-rule hash coupling 并完成 Full failure-fix
+      rerun
+    - 详见 `docs/requirements/DEVX-011_Governed_Workflow_Health_Control_Loop_V1.md`。依赖
+      DEVX-011A Full 失败证据；不得改写历史 investment policy/config hash。
+    - 撤销 AGENTS.md 变更并保留 unified periodic date gate；移除未改动 TRADING-2452 test 的错误 current-authority
+      声明；目标 Full 失败簇归零、local main=origin/main=final candidate。
+    - 2026-08-31：由 DEVX-011A v3 Full 9700 passed / 327 failed 分拆；325 项来自 PROJECT_ENGINEERING_RULES
+      旧 SHA 绑定，2 项来自过宽 source authority。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-011b-workflow-health-registration-20260831-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-72dbc156caefedff5a19c5a2e64ea714
+- schema_version: task_event.v1
+  task_id: DEVX-011B_WORKFLOW_HEALTH_ROOT_RULE_DECOUPLING_CLOSEOUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T21:03:00Z'
+  actor: integration-coordinator
+  change_id: devx-011b-workflow-health-decoupling-20260831-v1-prevalidation
+  lane_id: null
+  base_commit: df349268bda10386eda487ecb7958ccdc5df50d8
+  previous_state_event_id: task-event-72dbc156caefedff5a19c5a2e64ea714
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 'Codex engineering coordinator: rebuild authorities and validate the
+      two Full failure clusters'
+    blocker_or_next_step: No implementation blocker; verify AGENTS.md exact historical
+      hash restoration, growth root contracts, narrowed compatibility authority and
+      parent Full failure cluster elimination
+    acceptance_criteria: AGENTS.md SHA restored to 3acc539e; unified periodic date
+      gate retained; 325 PROJECT_ENGINEERING_RULES and 2 TRADING-2452 failures eliminated;
+      failure-fix Full PASS; production_effect=none
+    notes: '2026-08-31: root AGENTS change removed without editing historical investment
+      configs; DEVX-011 source list no longer claims AGENTS.md or unchanged tests/test_trading2452_architecture_contract.py;
+      two root growth tests pass'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-011b-workflow-health-decoupling-20260831-v1-prevalidation
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7a54250028d92279a7f4a1542960d8aa
+- schema_version: task_event.v1
+  task_id: DEVX-011B_WORKFLOW_HEALTH_ROOT_RULE_DECOUPLING_CLOSEOUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T21:10:00Z'
+  actor: integration-coordinator
+  change_id: devx-011b-workflow-health-decoupling-20260831-v2-prevalidation
+  lane_id: null
+  base_commit: df349268bda10386eda487ecb7958ccdc5df50d8
+  previous_state_event_id: task-event-7a54250028d92279a7f4a1542960d8aa
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 'Codex engineering coordinator: validate explicit DEVX-011 helper
+      successor and rebuild ignored Atlas page on exact candidate'
+    blocker_or_next_step: No code blocker; create prevalidation candidate, render
+      Atlas page-effectiveness for its exact commit, then rerun the three remaining
+      last-failed tests
+    acceptance_criteria: Root hash cascade eliminated; TRADING-2452 helper accepts
+      explicit DEVX-011 authority; exact-candidate Atlas sidecar PASS; failure-fix
+      Full PASS; production_effect=none
+    notes: '2026-08-31: v1 last-failed 335 passed / 3 failed; two explicit helper-authority
+      gaps and one expected exact-commit Atlas hydration gap remain'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-011b-workflow-health-decoupling-20260831-v2-prevalidation
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-aa23682b4f5e592d0824b1684bd4bd5d
+projection:
+  legacy_first_eight_cells:
+  - DEVX-011B_WORKFLOW_HEALTH_ROOT_RULE_DECOUPLING_CLOSEOUT
+  - Developer experience / workflow health root-rule decoupling closeout
+  - P1
+  - IN_PROGRESS
+  - 'Codex engineering coordinator: validate explicit DEVX-011 helper successor and
+    rebuild ignored Atlas page on exact candidate'
+  - No code blocker; create prevalidation candidate, render Atlas page-effectiveness
+    for its exact commit, then rerun the three remaining last-failed tests
+  - Root hash cascade eliminated; TRADING-2452 helper accepts explicit DEVX-011 authority;
+    exact-candidate Atlas sidecar PASS; failure-fix Full PASS; production_effect=none
+  - '2026-08-31: v1 last-failed 335 passed / 3 failed; two explicit helper-authority
+    gaps and one expected exact-commit Atlas hydration gap remain'
+  docs_links: []
+  terminal: false
+  canonical_row_sha256: 6b365bcf1a577aa3336ace84612a4b8fb8263d62f16683ea571b6f85f185c184
+last_event_id: task-event-aa23682b4f5e592d0824b1684bd4bd5d
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: c1b16d96f7c8b840827e974ff5aa4182d4644988460a622492deff63e99b90c6
