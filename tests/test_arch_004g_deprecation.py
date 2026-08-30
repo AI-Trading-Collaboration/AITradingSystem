@@ -57,12 +57,12 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-WAVE20_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_9a59624673b4b749a96f"
+WAVE20_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_7de172205bf54ef82d64"
 WAVE20_CURRENT_REPOSITORY_COUNTS = {
-    # TRADING-2542I adds the bounded QC execution generator and its exact replay
-    # test; no deprecation lifecycle or writer allowance changes.
-    "python_module_count": 1178,
-    "python_test_file_count": 1336,
+    # TRADING-2548 adds one non-executable paired-comparison contract loader and
+    # its exact replay tests; no deprecation lifecycle or writer allowance changes.
+    "python_module_count": 1179,
+    "python_test_file_count": 1337,
     "direct_writer_current_count": 856,
 }
 WAVE20_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(

@@ -338,3 +338,9 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   task-source、architecture manifests、report-flow 与 compatibility authority rebuild；generator validation=
   `PASS`，相邻 focused pytest-xdist=`62 passed`。最终 candidate/formal tiers/Full/main/push 继续由该 transaction
   收口；不新增 QuantConnect 或其他外部动作。
+- 2026-08-30：v1 candidate `06247d1f7fd81450ca43066ce9a8c9c2246fdc45` 的 Integration=
+  `995 passed`、Reproducibility=`24 passed`；Architecture 与 Contract 各只有同一个失败：新增 module/test 后
+  `arch_004g_deprecation_inventory` 的 frozen ID/count 断言仍为旧值。v1 失败证据保留并释放 lease，没有运行
+  Full、main/push 或外部动作。v2 transaction 显式扩展 `tests/test_arch_004g_deprecation.py` shared claim，
+  只把 inventory ID 与 module/test count 同步到 generator 已证明的 `1179/1337`；未改变任何 deprecation
+  lifecycle 或 writer allowance。重建后 generators=`PASS`，对应 focused=`47 passed`。
