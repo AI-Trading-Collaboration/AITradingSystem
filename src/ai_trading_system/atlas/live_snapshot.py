@@ -623,9 +623,8 @@ def build_reader_decision_projection(
             item_id="CURRENT_DECISION",
             label_zh="01 · 当前决定",
             text_zh=(
-                "期权实现 baseline 已完成并仅限研究接纳；paired comparator 草案已完成但尚待 "
-                "项目负责人按最终文件与规范化哈希精确冻结，当前不形成策略结论，也不再运行"
-                "外部回测平台。"
+                "期权实现 baseline 已完成并仅限研究接纳；paired comparator 合同已经项目负责人"
+                "按最终文件与规范化哈希精确冻结，当前不形成策略结论，也不再运行外部回测平台。"
             ),
             source_task_ids=current_decision_sources,
         ),
@@ -641,7 +640,7 @@ def build_reader_decision_projection(
             text_zh=(
                 "当前已把同一趋势信号的 fully-funded QQQ primary comparator、common-capital "
                 "primary estimand、不可覆盖 primary 的资本占用时长 secondary，以及两项"
-                "诊断边界写入 non-executable contract draft。"
+                "诊断边界写入 non-executable contract，并由独立冻结准入记录固化。"
             ),
             source_task_ids=work_sources,
         ),
@@ -649,9 +648,8 @@ def build_reader_decision_projection(
             item_id="NEXT_STEP",
             label_zh="04 · 下一步",
             text_zh=(
-                "下一步只由项目负责人按最终文件和规范化哈希精确冻结对照合同；冻结后才能另立"
-                "离线合成导出与校验波。当前不得 save、build、backtest、retry 或执行其他"
-                "外部平台动作。"
+                "当前没有自动后继动作；如需继续，项目负责人须另行授权新的离线合成导出与校验"
+                "任务。当前不得 save、build、backtest、retry 或执行其他外部平台动作。"
             ),
             source_task_ids=next_sources,
         ),

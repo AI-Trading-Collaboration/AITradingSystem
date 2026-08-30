@@ -14,7 +14,7 @@ fragment_count: 1035
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: bbaa5437267cdc26ceef53f7cf525717509d82de90c6690c263637546adf1ec0
+final_chain_sha256: cde253ec6469ff92e1f926a5e4974b5804b303ead0668bd9f6b39aa2171fb1a3
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 0c3efea17f7c4a4cae0488be7b40116560b065ec6ee1c53818e0ff1fdaa31509
 templates:
@@ -8303,17 +8303,17 @@ fragments:
   entry_sha256: 50edd8b3e9bd829727017364450d3feefaf6db150d72f6a0c82798a344b5da98
 - task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
   path: registry/development_tasks/5d/5d013ba4871ff77fe098e865cd77d336bcb35fc4411f6ca62854f3fef729c458.yaml
-  file_sha256: d7b0f21930300eb7bc280778cf9d52d8342df5bd97d81456b43d779a2e448651
-  fragment_checksum: 3105527f7f51a1fe42d31ed35075eb74a862978ce5a2f5b4c585804548c721cb
+  file_sha256: 71b49b74602e4193e0d758a0f0617a93a5a17615736529d6dbe73fd7a686d4bb
+  fragment_checksum: df56da812f2decc45df06e4349edaad315f3b22ab23dbeebdbba48df0bd31d80
   partition: active
   order: 1035
   previous_entry_sha256: 50edd8b3e9bd829727017364450d3feefaf6db150d72f6a0c82798a344b5da98
-  entry_sha256: bbaa5437267cdc26ceef53f7cf525717509d82de90c6690c263637546adf1ec0
+  entry_sha256: cde253ec6469ff92e1f926a5e4974b5804b303ead0668bd9f6b39aa2171fb1a3
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: bc70a43502ae06ab53ed0f93743df876aae61a11aa47dfe8cefdcdbcf08a380a
-  byte_count: 1760136
+  sha256: 895ef15092211ec43bf0f53e42b23a53cd49436afaa27fa833da8c5f42b174e6
+  byte_count: 1760635
   row_count: 507
   generated_do_not_edit: true
 - partition: completed
@@ -10668,7 +10668,21 @@ governance_cycles:
   change_id: trading-2548-paired-comparator-contract-20260830-v1
   event_count: 2
   production_effect: none
-governance_cycle_count: 335
+- cycle_id: arch-005-s5-cycle-336
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
+  change_id: trading-2548-owner-exact-freeze-resume-20260831-v2
+  event_count: 3
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-337
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
+  change_id: trading-2548-paired-comparator-freeze-admission-baseline-done-20260831-v2
+  event_count: 4
+  production_effect: none
+governance_cycle_count: 337
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -10682,4 +10696,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 19b15e5c385f1b5026d52b3eaa43366581a3236f7f9aad04974c80726a755746
+index_checksum: 55495214e825aff4968866092ad8a4c683c973a9fd6a2e7d7317bf0633de84d7

@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`BLOCKED_OWNER_INPUT`
+状态：`BASELINE_DONE`
 
 Owner 指令：Project Owner 在完成 exact commit
 `d5ff6dd9f8b84274bfc945ad8bd86fcecb92a8ed` 的网页版 ChatGPT Pro 规划审阅后指示
@@ -18,6 +18,15 @@ baseline，不访问 QuantConnect，不运行真实 DQ/backtest。
 
 Owner decision：
 `owner_decision:TRADING-2548:2026-08-30:adopt_paired_comparator_contract_wave_v1`
+
+Owner exact-freeze decision：
+`owner_decision:TRADING-2548:2026-08-30:freeze_paired_comparison_contract_v1`
+
+Owner 已按 artifact/version、file SHA prefix `8c748634…` 与 canonical SHA prefix `6f77cf17…`
+精确冻结 `qc_qqq_options_paired_comparison_contract_v1@1.0.0-draft.1` 的全部
+comparator/estimand/export/calendar/falsification/safety 规则。本决定只授权独立、不可执行的
+freeze-admission 固化；不授权 exporter、manifest、DQ、QuantConnect save/build/backtest/retry、raw option
+export、provider/Object Store/public share、paper/live/production/broker。
 
 production effect：`none`
 
@@ -257,6 +266,15 @@ Mandatory axes：
 - 任务转为 `BLOCKED_OWNER_INPUT`，等待 Owner exact-freeze contract file/canonical SHA；
 - exact freeze 前 terminal=`OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FREEZE_REQUIRED_NO_BACKTEST`。
 
+### S4：Owner exact-freeze admission
+
+- 保持已批准 contract 原文件、draft status 与 `owner_exact_frozen=false` bytes 不变；
+- 新增独立 strict freeze-admission，绑定完整 file/canonical SHA；
+- 机械 replay primary comparator、primary/secondary estimand、两个 diagnostics、五个 calendar partitions、
+  16 个 falsification axes 与全部 safety 关闭项；
+- 当前 paired outcome 继续为 `INSUFFICIENT_PLATFORM_EVIDENCE`；
+- 完成本 task 后不自动建立或授权 exporter、manifest、DQ 或 QuantConnect successor。
+
 ## 8. Acceptance criteria
 
 1. frozen signal、mapping、37-slot policy 与 historical run evidence bytes 不变；
@@ -269,6 +287,9 @@ Mandatory axes：
 8. 16 mandatory axes 的四态机械规则 exact-once；
 9. no parameter search、baseline mutation、QC/run manifest/external action；
 10. `investment_conclusion_generated=false`、`production_effect=none`、`broker_action=none`。
+11. 独立 freeze-admission 精确绑定 file SHA
+    `8c748634f6869eb4d4e9dfb14493acd072d146074ce7e86462eec0adae15714a` 与 canonical SHA
+    `6f77cf17af6e435799a2e86e1fb6a81936368e053b2367efb3a8e2be13412267`，且不修改被批准文件。
 
 ## 9. Path ownership 与生命周期
 
@@ -278,6 +299,9 @@ Task-owned：
 - `config/research/qc_qqq_options_paired_comparison_contract_v1.yaml`；
 - `src/ai_trading_system/qqq_options_research/paired_comparison_contract.py`；
 - `tests/test_qqq_options_paired_comparison_contract.py`；
+- `config/research/qc_qqq_options_paired_comparison_contract_freeze_admission_v1.yaml`；
+- `src/ai_trading_system/qqq_options_research/paired_comparison_contract_freeze_admission.py`；
+- `tests/test_qqq_options_paired_comparison_contract_freeze_admission.py`；
 - 对应 architecture module/flow fragments。
 
 Coordinator-owned：
@@ -300,7 +324,7 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
 - `five_state_mapping_frozen=true`；
 - `frozen_37_slot_baseline_mutation_allowed=false`；
 - `paired_comparator_outcome=INSUFFICIENT_PLATFORM_EVIDENCE`；
-- `comparator_contract_exact_frozen=false`；
+- `comparator_contract_exact_frozen=true`（通过独立 freeze-admission；原 contract bytes 不变）；
 - `qc_exporter_implementation_authorized=false`；
 - `local_result_admission_implementation_authorized=false`；
 - `run_manifest_generation_authorized=false`；
@@ -310,7 +334,8 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
 - `raw_option_payload_download_or_export=false`；
 - `paper/live/production/broker=false/none`；
 - `orders/fills/positions outside QC simulation=0`；
-- terminal=`OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FREEZE_REQUIRED_NO_BACKTEST`。
+- successor task implicitly created=`false`；
+- terminal=`OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FROZEN_NO_SUCCESSOR_AUTHORITY`。
 
 ## 11. 进度记录
 
@@ -358,3 +383,22 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   validation 前按 FAILED 释放。v5 已完整声明这两项测试路径并绑定 parent Full summary
   `outputs/validation_runtime/full_20260830T113951Z/test_runtime_summary.json`；本波仍不改变 paired contract、
   frozen signal、37-slot baseline、existing aggregate 或 safety authority，只允许一次 `failure_fix_rerun` Full。
+- 2026-08-30：v5 candidate `de27dda5040a8023926c31f86669f40e82e27b9a` 的 Architecture=`878 passed`、
+  Contract=`278 passed`、Integration=`995 passed`、Reproducibility=`24 passed`、Full=
+  `9985 passed / 3 skipped`；已完成 local/main 与 origin/main 普通发布并释放 transaction/lease。随后 Owner
+  精确批准 file SHA prefix `8c748634…` / canonical SHA prefix `6f77cf17…` 的全部 contract surface，仅限
+  non-executable DATA_RESEARCH，并明确否定所有 successor/external authority。当前 S4 只构建独立
+  freeze-admission，保持被批准 contract bytes 与既有 aggregate 不变。
+- 2026-08-30：S4 strict freeze-admission 已完成。admission file SHA-256=
+  `fbedb47e5f2a748dc75669faabee9641ba7e0596de4ad8c340ed7ebcbd4c5c76`、canonical SHA-256=
+  `d7b2fac5c0607cf343aeeed5cf7d6d3162af6b9fa8d1f2c26dd7a2fb2d0c5071`；loader 重放并确认被批准
+  contract file/canonical SHA 仍分别为 `8c748634f6869eb4d4e9dfb14493acd072d146074ce7e86462eec0adae15714a` /
+  `6f77cf17af6e435799a2e86e1fb6a81936368e053b2367efb3a8e2be13412267`。受影响聚焦 pytest-xdist=
+  `98 passed`，Ruff/strict mypy/py_compile=`PASS`。本 task 的 contract+freeze-admission 范围完成；没有创建
+  successor task，也没有运行 exporter、manifest、DQ、QuantConnect、provider、raw option 或交易动作。
+- 2026-08-31：首个 unpublished freeze-admission candidate
+  `70b517db4574da82ce4df596dee9e60c182b7d0c` 在 `INTEGRATION` preflight 前把 task 提前推进为 terminal
+  `DONE`，门禁按设计以 `TASK_NOT_REGISTERED` 拒绝。transaction v1 已按 `FAILED` 释放，未运行 formal/Full，
+  未集成 main、未推送、未触发任何外部动作；该候选仅保留为可恢复审计证据。v2 从原 exact main
+  `de27dda5040a8023926c31f86669f40e82e27b9a` 重建同一实现，以 nonterminal `BASELINE_DONE` 表达
+  “当前 contract scope 完成但无 successor authority”，从而保持 INTEGRATION/CLOSEOUT 顺序合法。

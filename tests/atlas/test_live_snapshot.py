@@ -45,7 +45,7 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
     assert bundle.research_state_as_of.startswith("2026-08-30T")
-    assert bundle.evidence_evaluated_at == "2026-08-30T02:47:04.4564323+00:00"
+    assert bundle.evidence_evaluated_at == "2026-08-30T14:41:12.7758385+00:00"
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
     assert bundle.current_diff.after_snapshot_id == bundle.current_snapshot.snapshot_id
@@ -108,17 +108,18 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
 
     assert policy.current_mainline_task_id.startswith("TRADING-2548_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
-    assert bundle.evidence_evaluated_at == "2026-08-30T02:47:04.4564323+00:00"
+    assert bundle.evidence_evaluated_at == "2026-08-30T14:41:12.7758385+00:00"
     assert bundle.status_object_zh == (
         "QQQ options 链路继续使用既有 first_layer_composer_v2 五态作为唯一方向事实，未新增期权"
         "专用趋势模型。2021-02-22..2025-12-02 exact 1202-session signal/package/DQ replay 与单次 "
         "bounded QuantConnect baseline 已完成；其 4.48% 聚合结果仅作为不可执行 capability/"
         "diagnostic evidence 接纳，Sharpe=-1.872、PSR=0，不能证明策略有效或期权优于标的。"
-        "TRADING-2548 已完成只读 paired-comparison draft：primary comparator 为同信号 fully-funded "
+        "TRADING-2548 paired-comparison contract 已按 exact file/canonical SHA 冻结："
+        "primary comparator 为同信号 fully-funded "
         "QQQ cash account，primary estimand 为 common-capital return difference，"
         "资本占用时长视图仅作 secondary，diagnostics 限于 SGOV carry 与 QQQ 买入并持有。"
-        "当前最大阻塞是 Owner 尚未按 final file/canonical SHA exact-freeze 该 contract；"
-        "冻结前不授权 "
+        "当前 paired outcome 仍为 INSUFFICIENT_PLATFORM_EVIDENCE，且没有自动 successor authority；"
+        "若继续需另行授权新任务。本次不授权 "
         "exporter、manifest、DQ、QuantConnect save/build/backtest/retry、原始期权数据、provider/"
         "Object Store/public share、paper/live/production/broker 或 QC 外 orders/fills/positions。"
     )
@@ -148,7 +149,8 @@ def test_reader_decision_projection_separates_transport_from_dq_pit_promotion() 
     assert "Sharpe=-1.872" in visible
     assert "不再运行外部回测平台" in visible
     assert "规范化哈希精确冻结" in visible
-    assert "离线合成导出与校验波" in visible
+    assert "没有自动后继动作" in visible
+    assert "另行授权新的离线合成导出与校验任务" in visible
     assert "QC_AUTHORIZED_NOT_RUN" not in visible
     assert "仍有 1 天全日未出现期权链" not in visible
     assert "先解释唯一缺链交易日" not in visible

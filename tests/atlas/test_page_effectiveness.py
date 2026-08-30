@@ -296,8 +296,8 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "ATLAS_EXACT_SOURCE_REBUILD_AND_PUBLICATION_CLOSEOUT_COMPLETE"
     )
     assert coverage_by_task["TRADING-2548"] == (
-        "DISCLOSED_PAIRED_COMPARATOR_CONTRACT_DRAFT_"
-        "OWNER_EXACT_FREEZE_REQUIRED_NO_BACKTEST"
+        "DISCLOSED_PAIRED_COMPARATOR_CONTRACT_EXACT_FROZEN_"
+        "NO_SUCCESSOR_AUTHORITY"
     )
     assert len(manifest.source_artifacts) == len(
         load_page_effectiveness_policy(repository_root=ROOT).relevant_source_paths

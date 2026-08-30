@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 155
+fragment_count: 157
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 0f4b7507b07f7d9482a7cea25b1cc1a3023c08e89a8345308afa162f2c96e046
+  current_sha256: e61ce204fcb298b3ce78a51d71faf3cfae8bd35d6de024d0cc0f565b0bddf0aa
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 63
+  fragment_count: 64
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -89,6 +89,7 @@ targets:
   - config/architecture/fragments/flows/qqq_options_owner_decision_manifest_v2.yaml
   - config/architecture/fragments/flows/qqq_options_owner_policy_adoption_contract.yaml
   - config/architecture/fragments/flows/qqq_options_paired_comparison_contract.yaml
+  - config/architecture/fragments/flows/qqq_options_paired_comparison_contract_freeze_admission.yaml
   - config/architecture/fragments/flows/qqq_options_position_lifecycle.yaml
   - config/architecture/fragments/flows/qqq_options_primary_window_daily_slice_failure_fix.yaml
   - config/architecture/fragments/flows/qqq_options_primary_window_daily_slice_zero_order_revalidation.yaml
@@ -500,6 +501,13 @@ fragments:
   target_id: system_flow
   path: config/architecture/fragments/flows/qqq_options_paired_comparison_contract.yaml
   sha256: 27502e37c395d19d072f9675355749cae81d0c2ea3ca48b843663127ff0ad86e
+  generated_source_of_truth_active: false
+- fragment_id: flow.qqq_options_paired_comparison_contract_freeze_admission
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/qqq_options_paired_comparison_contract_freeze_admission.yaml
+  sha256: 313cdf8f3e26bc64b3b66b6a671129abc3d51b0ca81d3d9856597e94a4fa35c1
   generated_source_of_truth_active: false
 - fragment_id: flow.qqq_options_position_lifecycle
   fragment_kind: flow
@@ -969,6 +977,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/qqq_options_paired_comparison_contract.yaml
   sha256: 65a2f4ce089f9cc8fc5a91ca4e97ca315fc034b29bd64df9b402bcdab206e45e
+  generated_source_of_truth_active: false
+- fragment_id: module.qqq_options_paired_comparison_contract_freeze_admission
+  fragment_kind: module
+  owner: options_research_contract_governance
+  target_id: null
+  path: config/architecture/fragments/modules/qqq_options_paired_comparison_contract_freeze_admission.yaml
+  sha256: e99c9ea302c3baea643c90df3dd6a921dbea2bd6b64372c02d35e0bb31d0a201
   generated_source_of_truth_active: false
 - fragment_id: module.qqq_options_position_lifecycle
   fragment_kind: module

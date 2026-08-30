@@ -1,0 +1,110 @@
+schema_version: qqq_options_paired_comparison_contract_freeze_admission.v1
+admission_id: qc_qqq_options_paired_comparison_contract_freeze_admission_v1
+admission_version: 1.0.0
+status: OWNER_EXACT_PAIRED_COMPARATOR_CONTRACT_FROZEN_NO_SUCCESSOR_AUTHORITY
+task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
+scope: NON_EXECUTABLE_DATA_RESEARCH
+owner_decision:
+  decision_ref: owner_decision:TRADING-2548:2026-08-30:freeze_paired_comparison_contract_v1
+  approved_instruction: >-
+    批准 `qc_qqq_options_paired_comparison_contract_v1@1.0.0-draft.1`（file SHA
+    `8c748634…` / canonical SHA `6f77cf17…`）全部所列
+    comparator/estimand/export/calendar/falsification/safety 规则按草案精确冻结；仅限
+    non-executable DATA_RESEARCH；不授权 exporter、manifest、DQ、QuantConnect
+    save/build/backtest/retry、raw option export、provider/Object Store/public
+    share、paper/live/production/broker。
+  exact_contract_freeze_granted: true
+  full_contract_surface_frozen: true
+  predecessor_bytes_must_remain_immutable: true
+  approved_file_sha_prefix: 8c748634
+  approved_canonical_sha_prefix: 6f77cf17
+  successor_implementation_authorized: false
+  authorization_state: EXACT_PREAUTHORIZED
+authority_binding:
+  path: config/research/qc_qqq_options_paired_comparison_contract_v1.yaml
+  artifact_id: qc_qqq_options_paired_comparison_contract_v1
+  artifact_version: 1.0.0-draft.1
+  file_sha256: 8c748634f6869eb4d4e9dfb14493acd072d146074ce7e86462eec0adae15714a
+  canonical_sha256: 6f77cf17af6e435799a2e86e1fb6a81936368e053b2367efb3a8e2be13412267
+  role: OWNER_EXACT_FROZEN_PAIRED_COMPARISON_CONTRACT
+  immutable: true
+frozen_surface:
+  whole_contract_frozen: true
+  contract_status_preserved: STATIC_CONTRACT_READY_OWNER_EXACT_FREEZE_REQUIRED
+  frozen_sections:
+    - authority_bindings
+    - frozen_inheritance
+    - existing_result
+    - primary_comparator
+    - primary_estimand
+    - secondary_view
+    - diagnostics
+    - export_safe_fields
+    - calendar_diagnostics
+    - falsification
+    - interpretation
+    - safety
+  primary_comparator_method: SAME_SIGNAL_FULLY_FUNDED_QQQ_CASH_ACCOUNT
+  primary_estimand_view: COMMON_CAPITAL_ACCOUNT_VIEW
+  secondary_view: CAPITAL_AT_RISK_TIME_VIEW
+  named_diagnostic_ids: [SGOV_CARRY_COMPARATOR, QQQ_BUY_AND_HOLD]
+  calendar_partition_ids:
+    - PRIMARY_WINDOW_CALENDAR_2021
+    - CALENDAR_2022
+    - CALENDAR_2023
+    - CALENDAR_2024
+    - PRIMARY_WINDOW_CALENDAR_2025
+  falsification_axis_ids:
+    - FROZEN_SIGNAL_IDENTITY
+    - SESSION_COVERAGE
+    - DQ_PIT_MANIFEST
+    - FROZEN_37_SLOT_POLICY
+    - OPTION_ALPHA_ISOLATION
+    - COMPARATOR_CONTRACT
+    - CAPITAL_NORMALIZATION
+    - EVENT_ALIGNMENT
+    - ACCOUNTING
+    - RISK_FIELDS
+    - EXPORT_SAFETY
+    - PLATFORM_IDENTITY
+    - CALENDAR_SUBPERIOD_COMPLETENESS
+    - MULTIPLICITY
+    - PRIMARY_IMPLEMENTATION_ESTIMAND
+    - EXTERNAL_AUTHORIZATION
+  existing_result_disposition_preserved: INSUFFICIENT_PLATFORM_EVIDENCE
+  draft_owner_exact_frozen_flag_preserved: false
+  owner_exact_frozen_via_separate_admission: true
+successor_state:
+  paired_comparator_outcome: INSUFFICIENT_PLATFORM_EVIDENCE
+  empirical_comparison_completed: false
+  current_contract_task_complete_after_admission: true
+  successor_task_implicitly_created: false
+  next_legal_action: OWNER_SEPARATE_SUCCESSOR_SCOPE_REQUIRED_NO_AUTOMATIC_FOLLOW_ON
+safety:
+  non_executable_data_research_only: true
+  owner_exact_freeze_admission_only: true
+  comparator_contract_mutation_allowed: false
+  qc_exporter_implementation_authorized: false
+  local_result_admission_implementation_authorized: false
+  run_manifest_generation_authorized: false
+  real_dq_authorized: false
+  quantconnect_save_authorized: false
+  quantconnect_build_authorized: false
+  quantconnect_backtest_authorized: false
+  quantconnect_retry_authorized: false
+  provider_query_or_purchase_authorized: false
+  raw_option_payload_download_or_export_allowed: false
+  object_store_write_allowed: false
+  public_share_allowed: false
+  parameter_or_threshold_search_allowed: false
+  orders_outside_qc_simulation: 0
+  fills_outside_qc_simulation: 0
+  positions_outside_qc_simulation: 0
+  investment_conclusion_generated: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none
+terminal: OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FROZEN_NO_SUCCESSOR_AUTHORITY

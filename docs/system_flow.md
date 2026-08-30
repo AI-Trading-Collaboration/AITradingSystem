@@ -10039,9 +10039,20 @@ Object Store、public share、paper/live/production/broker 权限保持关闭，
 orders/fills/positions=`0`。只有 Owner 后续按 exact file/canonical SHA 冻结本 contract，才可另立 offline
 synthetic exporter/validator 波；真实 paired run 仍需更晚的独立 preregistration 与授权。
 
-Atlas live snapshot/page-effectiveness 同步把 TRADING-2548 分类为当前主线和最大阻塞：页面只展示上述 draft、
-既有 aggregate 的 capability 限制与 Owner exact-freeze 下一步，不再显示“后继 comparison 尚未预注册”的陈旧
-说明。该投影不生成投资结论，也不授予 exporter、DQ 或 QuantConnect 权限。
+Owner 随后按 file SHA `8c748634f6869eb4d4e9dfb14493acd072d146074ce7e86462eec0adae15714a` 与
+canonical SHA `6f77cf17af6e435799a2e86e1fb6a81936368e053b2367efb3a8e2be13412267` 精确冻结该 whole-draft
+surface。冻结通过独立 `qc_qqq_options_paired_comparison_contract_freeze_admission_v1` 固化，不改写已批准
+contract 的 draft status 或 `owner_exact_frozen=false` bytes；admission 会机械 replay 一个 primary、一个
+不可覆盖的 secondary、两个 diagnostics、五个 calendar partitions、16 个 falsification axes 与全部安全
+关闭项。当前 paired outcome 仍为 `INSUFFICIENT_PLATFORM_EVIDENCE`，terminal 变为
+`OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FROZEN_NO_SUCCESSOR_AUTHORITY`；本次批准不自动建立或授权
+exporter、manifest、DQ、QuantConnect、provider、raw payload、Object Store、public share、paper/live/
+production/broker successor。
+
+Atlas live snapshot/page-effectiveness 同步把 TRADING-2548 分类为 exact-frozen、无 successor authority：页面
+只展示已冻结 comparator contract、既有 aggregate 的 capability 限制与“若继续需另行授权新任务”的停点，
+不再显示“等待 Owner exact-freeze”的陈旧说明。该投影不生成投资结论，也不授予 exporter、DQ 或
+QuantConnect 权限。
 
 ## Coordinator integration publication fence（DEVX-009）
 

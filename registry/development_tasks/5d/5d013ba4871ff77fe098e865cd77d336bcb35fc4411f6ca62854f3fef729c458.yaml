@@ -13,22 +13,24 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / exact-freeze final comparator contract file and canonical
-    SHA before any successor exporter work
+  next_owner: Project Owner / separately authorize a new successor task only if offline
+    exporter or later paired research should proceed
   requirement_refs:
   - docs/requirements/TRADING-2548_QQQ_Options_Paired_Comparator_Estimand_And_Export_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Strict paired-comparison draft is complete;
-    Owner must exact-freeze its final file/canonical SHA. No exporter, manifest, DQ,
-    QuantConnect or backtest action is authorized.
+  unstructured_legacy_blocker_or_next_step: The paired comparator contract and exact
+    freeze admission scope are complete. No successor task or exporter, manifest,
+    DQ, QuantConnect, provider, raw option, production or broker authority exists
+    in this decision.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Strict loader and tests bind exact predecessors, one fully funded same-signal
-      QQQ primary comparator, common-capital primary estimand, non-overriding capital-at-risk-time
-      secondary, exactly two named diagnostics, fixed five calendar partitions, export-safe
-      fields and all 16 fail-closed axes; terminal remains OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FREEZE_REQUIRED_NO_BACKTEST.
+    text: Strict freeze-admission binds comparator contract file SHA-256 8c748634f6869eb4d4e9dfb14493acd072d146074ce7e86462eec0adae15714a
+      and canonical SHA-256 6f77cf17af6e435799a2e86e1fb6a81936368e053b2367efb3a8e2be13412267;
+      preserves approved draft bytes/status, freezes the full comparator/estimand/export/calendar/falsification/safety
+      surface, keeps all successor and external gates closed, and closes this contract
+      scope at BASELINE_DONE without any empirical run.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -100,30 +102,111 @@ events:
   - change:trading-2548-paired-comparator-contract-20260830-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-edb0498c8b78902d85e368e7a3f080e0
+- schema_version: task_event.v1
+  task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T15:06:31.2955188Z'
+  actor: integration-coordinator
+  change_id: trading-2548-owner-exact-freeze-resume-20260831-v2
+  lane_id: null
+  base_commit: de27dda5040a8023926c31f86669f40e82e27b9a
+  previous_state_event_id: task-event-edb0498c8b78902d85e368e7a3f080e0
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex / publish the exact paired-comparator freeze-admission serial
+      wave and close at BASELINE_DONE without successor execution
+    blocker_or_next_step: Owner exact freeze is granted for the bound comparator contract;
+      implement and validate a separate immutable freeze admission. Exporter, manifest,
+      DQ, QuantConnect save/build/backtest/retry, raw option export, provider/Object
+      Store/public share, paper/live/production/broker remain unauthorized.
+    acceptance_criteria: Strict freeze-admission loader binds comparator contract
+      file SHA-256 8c748634f6869eb4d4e9dfb14493acd072d146074ce7e86462eec0adae15714a
+      and canonical SHA-256 6f77cf17af6e435799a2e86e1fb6a81936368e053b2367efb3a8e2be13412267;
+      preserves approved draft bytes/status, freezes the full comparator/estimand/export/calendar/falsification/safety
+      surface, keeps all successor and external gates closed, passes governed validation,
+      and closes this contract scope at BASELINE_DONE without any empirical run.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2548_QQQ_Options_Paired_Comparator_Estimand_And_Export_Contract_V1.md.
+      Owner decision owner_decision:TRADING-2548:2026-08-30:freeze_paired_comparison_contract_v1;
+      authorization_state=EXACT_PREAUTHORIZED; scope=NON_EXECUTABLE_DATA_RESEARCH;
+      no exporter, manifest, DQ, QuantConnect action, raw option payload, provider/Object
+      Store/public share, paper/live/production/broker or QC-external orders/fills/positions.
+      Prior unpublished v1 candidate 70b517db4574da82ce4df596dee9e60c182b7d0c was
+      rejected because terminal DONE is ineligible at INTEGRATION; v2 preserves append-only
+      authority and uses nonterminal BASELINE_DONE.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2548-owner-exact-freeze-resume-20260831-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2b8616fe70ddbf6756e3ae07cba4aa96
+- schema_version: task_event.v1
+  task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T15:08:33.3338965Z'
+  actor: integration-coordinator
+  change_id: trading-2548-paired-comparator-freeze-admission-baseline-done-20260831-v2
+  lane_id: null
+  base_commit: de27dda5040a8023926c31f86669f40e82e27b9a
+  previous_state_event_id: task-event-2b8616fe70ddbf6756e3ae07cba4aa96
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner / separately authorize a new successor task only if
+      offline exporter or later paired research should proceed
+    blocker_or_next_step: The paired comparator contract and exact freeze admission
+      scope are complete. No successor task or exporter, manifest, DQ, QuantConnect,
+      provider, raw option, production or broker authority exists in this decision.
+    acceptance_criteria: Strict freeze-admission binds comparator contract file SHA-256
+      8c748634f6869eb4d4e9dfb14493acd072d146074ce7e86462eec0adae15714a and canonical
+      SHA-256 6f77cf17af6e435799a2e86e1fb6a81936368e053b2367efb3a8e2be13412267; preserves
+      approved draft bytes/status, freezes the full comparator/estimand/export/calendar/falsification/safety
+      surface, keeps all successor and external gates closed, and closes this contract
+      scope at BASELINE_DONE without any empirical run.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2548_QQQ_Options_Paired_Comparator_Estimand_And_Export_Contract_V1.md.
+      Owner decision owner_decision:TRADING-2548:2026-08-30:freeze_paired_comparison_contract_v1;
+      authorization_state=EXACT_PREAUTHORIZED; admission file SHA-256 fbedb47e5f2a748dc75669faabee9641ba7e0596de4ad8c340ed7ebcbd4c5c76;
+      admission canonical SHA-256 d7b2fac5c0607cf343aeeed5cf7d6d3162af6b9fa8d1f2c26dd7a2fb2d0c5071;
+      focused pytest-xdist=98 passed; Ruff/strict mypy/py_compile=PASS; prior unpublished
+      terminal-state candidate 70b517db4574da82ce4df596dee9e60c182b7d0c was rejected
+      before formal validation; scope=NON_EXECUTABLE_DATA_RESEARCH; no exporter, manifest,
+      DQ, QuantConnect action, raw option payload, provider/Object Store/public share,
+      paper/live/production/broker or QC-external orders/fills/positions.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2548-paired-comparator-freeze-admission-baseline-done-20260831-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fe3503c82d898ecf3eaaa52795ef613b
 projection:
   legacy_first_eight_cells:
   - TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
   - QQQ options paired comparator estimand and export contract V1
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner / exact-freeze final comparator contract file and canonical SHA
-    before any successor exporter work
-  - Strict paired-comparison draft is complete; Owner must exact-freeze its final
-    file/canonical SHA. No exporter, manifest, DQ, QuantConnect or backtest action
-    is authorized.
-  - Strict loader and tests bind exact predecessors, one fully funded same-signal
-    QQQ primary comparator, common-capital primary estimand, non-overriding capital-at-risk-time
-    secondary, exactly two named diagnostics, fixed five calendar partitions, export-safe
-    fields and all 16 fail-closed axes; terminal remains OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FREEZE_REQUIRED_NO_BACKTEST.
+  - BASELINE_DONE
+  - Project Owner / separately authorize a new successor task only if offline exporter
+    or later paired research should proceed
+  - The paired comparator contract and exact freeze admission scope are complete.
+    No successor task or exporter, manifest, DQ, QuantConnect, provider, raw option,
+    production or broker authority exists in this decision.
+  - Strict freeze-admission binds comparator contract file SHA-256 8c748634f6869eb4d4e9dfb14493acd072d146074ce7e86462eec0adae15714a
+    and canonical SHA-256 6f77cf17af6e435799a2e86e1fb6a81936368e053b2367efb3a8e2be13412267;
+    preserves approved draft bytes/status, freezes the full comparator/estimand/export/calendar/falsification/safety
+    surface, keeps all successor and external gates closed, and closes this contract
+    scope at BASELINE_DONE without any empirical run.
   - 'Supporting requirement: docs/requirements/TRADING-2548_QQQ_Options_Paired_Comparator_Estimand_And_Export_Contract_V1.md.
-    Contract file SHA-256 8c748634f6869eb4d4e9dfb14493acd072d146074ce7e86462eec0adae15714a;
-    canonical SHA-256 6f77cf17af6e435799a2e86e1fb6a81936368e053b2367efb3a8e2be13412267.
-    Focused pytest-xdist=23 passed; Ruff/strict mypy/py_compile=PASS. No QuantConnect/provider/raw
-    option/DQ/backtest/order/fill/position/paper/live/production/broker action.'
+    Owner decision owner_decision:TRADING-2548:2026-08-30:freeze_paired_comparison_contract_v1;
+    authorization_state=EXACT_PREAUTHORIZED; admission file SHA-256 fbedb47e5f2a748dc75669faabee9641ba7e0596de4ad8c340ed7ebcbd4c5c76;
+    admission canonical SHA-256 d7b2fac5c0607cf343aeeed5cf7d6d3162af6b9fa8d1f2c26dd7a2fb2d0c5071;
+    focused pytest-xdist=98 passed; Ruff/strict mypy/py_compile=PASS; prior unpublished
+    terminal-state candidate 70b517db4574da82ce4df596dee9e60c182b7d0c was rejected
+    before formal validation; scope=NON_EXECUTABLE_DATA_RESEARCH; no exporter, manifest,
+    DQ, QuantConnect action, raw option payload, provider/Object Store/public share,
+    paper/live/production/broker or QC-external orders/fills/positions.'
   docs_links:
   - docs/requirements/TRADING-2548_QQQ_Options_Paired_Comparator_Estimand_And_Export_Contract_V1.md
   terminal: false
-  canonical_row_sha256: b78b6800a6f6fc7e8e4fe58124d201e57528343eb322358982e390a64e8aaa4c
-last_event_id: task-event-edb0498c8b78902d85e368e7a3f080e0
+  canonical_row_sha256: d332ca6aa06973ec6e6bd941bdf24d52fe567ca85592a3632d9f1bfeb17e94b3
+last_event_id: task-event-fe3503c82d898ecf3eaaa52795ef613b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 3105527f7f51a1fe42d31ed35075eb74a862978ce5a2f5b4c585804548c721cb
+fragment_checksum: df56da812f2decc45df06e4349edaad315f3b22ab23dbeebdbba48df0bd31d80
