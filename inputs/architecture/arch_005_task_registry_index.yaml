@@ -14,7 +14,7 @@ fragment_count: 1030
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: de2c91254bb99730a755ce54e6234767b59110ce266c4ad2837a362962010e25
+final_chain_sha256: 7b5e52f623d750f41405cc4e480c7c9cd545d1ad73a5fa7366c417e0ee19cdfe
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 0c3efea17f7c4a4cae0488be7b40116560b065ec6ee1c53818e0ff1fdaa31509
 templates:
@@ -8263,17 +8263,17 @@ fragments:
   entry_sha256: 77e76fb4c66f01fce81a9a27fc7dc6f555311f47567bbd565b2c74e38ced62d9
 - task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
   path: registry/development_tasks/2f/2f96dc5335fe6ba122c905841f6bcc0d25c252cb25828c9c06f0b65990486c7f.yaml
-  file_sha256: e516362a4ea214784696a36a76ff9734bce248db3ac4e64a16c9614e74feb5b2
-  fragment_checksum: 1b7f0ca19c313a9e9ca70bc07ec9c05282ec9f953a5ca77aa65a9906fddd66ff
+  file_sha256: f0d790f794d06bb5bbe58b2e33a5c126088b4d6f7160066e9650b82b428edc55
+  fragment_checksum: 2837139e57543e5cebf2edc84142734a9f4e0e7549591b35b3b34779bed610cb
   partition: active
   order: 1030
   previous_entry_sha256: 77e76fb4c66f01fce81a9a27fc7dc6f555311f47567bbd565b2c74e38ced62d9
-  entry_sha256: de2c91254bb99730a755ce54e6234767b59110ce266c4ad2837a362962010e25
+  entry_sha256: 7b5e52f623d750f41405cc4e480c7c9cd545d1ad73a5fa7366c417e0ee19cdfe
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 5de61f184a69268b69047dd66e87e7f87540996fc01073d809a924cf00a901eb
-  byte_count: 1760518
+  sha256: 28a4b5801e40065cf062dad48b28e459423585ff48d67d63b20c792b1cf7e267
+  byte_count: 1760665
   row_count: 507
   generated_do_not_edit: true
 - partition: completed
@@ -10537,7 +10537,14 @@ governance_cycles:
   change_id: trading-2542i-qc-incident-binding-fix-20260830-v7
   event_count: 21
   production_effect: none
-governance_cycle_count: 322
+- cycle_id: arch-005-s5-cycle-323
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+  change_id: trading-2542i-qc-backtest-incident-20260830-v3
+  event_count: 22
+  production_effect: none
+governance_cycle_count: 323
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -10551,4 +10558,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: ef9c40ddc9cd661b928239cd42fd26f820d5c350b603b015be9cd9dfef5e1a89
+index_checksum: 8abef5a89162eccd1be5ae65363fb57515609a37807e3ac73a50d221c55c964d
