@@ -105,7 +105,7 @@ source catalog、payload 存在性、checksum、字节数、row count、日期�
 - task branch：`codex/prod-004-pit-cumulative-consumption`；
 - 本任务复用主 checkout，不创建临时 worktree、clone 或外部 cache；
 - publication transaction：
-  `prod-004-pit-cumulative-consumption-20260831-v5`；
+  `prod-004-pit-cumulative-consumption-20260831-v7`；
 - 完成条件：candidate 通过正式验证，local `main` fast-forward，普通 push 后
   `local main = origin/main = candidate`，publication lease 正常释放；若 remote diverge、
   非 fast-forward 或出现未归属变更则停止。
@@ -142,3 +142,18 @@ source catalog、payload 存在性、checksum、字节数、row count、日期�
   rebuild 不一致。v4 以该 runtime artifact 作为 FAILED evidence 释放 lease。v5 新增
   `architecture-manifests` generator，并把四份 ARCH-004E generated authority 纳入 PROD-004
   successor source set，按声明顺序重建后再从新候选执行正式五门。
+- 2026-08-31：v5 candidate `c3a66ef02f664b05d71e6ea0cb12f05b3afe9894` 的正式
+  Architecture / Contract / Integration / Reproducibility 分别为 `879 / 278 / 995 / 24`
+  PASS；Full 为 `10018 passed / 3 failed / 3 skipped`。其中 2 项失败来自历史架构合同的
+  current-authority 白名单尚未接纳 PROD-004 successor，1 项来自本地 ignored Atlas canonical
+  page sidecar 仍绑定旧 semantic-source hashes。PIT 业务与集成路径无失败。v5 已绑定
+  `outputs/validation_runtime/full_20260830T173132Z/test_runtime_summary.json` 作为 FAILED evidence
+  释放；v6 只修正过时的兼容性断言、刷新相应 generated authority，并在最终 commit 上通过
+  官方 renderer 重建 `outputs/atlas/strategy_research_cited_query/trading_2470_v1/**`。不删除页面
+  以迫使测试 skip，不写 operations runtime，也不改变 PIT 数据、阈值或投资结论。
+- 2026-08-31：v6 在 `GENERATED_REBUILD_PRE` 前复核发现 publication policy 强制的生成器顺序
+  为 canonical task、architecture manifests、Atlas authority、report-flow、compatibility；初始
+  执行计划把 Atlas final-commit sidecar rebuild 与该 authority 顺序混为一谈。v6 在正式生成和
+  candidate commit 前以 FAILED 释放。v7 恢复 policy 固定顺序；ignored Atlas sidecars 在 authority
+  生成阶段执行一次，并在所有 tracked 生成物提交为 final candidate 后再次通过同一官方 renderer
+  刷新 exact-commit identity，随后才运行 focused 与 formal validation。

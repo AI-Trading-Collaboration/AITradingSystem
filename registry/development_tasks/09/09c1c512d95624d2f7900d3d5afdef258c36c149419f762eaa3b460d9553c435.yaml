@@ -14,8 +14,7 @@ task_record:
   priority: P1
   accountable_owner: null
   next_owner: 系统验证 + operations release
-  requirement_refs:
-  - docs/requirements/PROD-004_PIT_Cumulative_Archive_Consumption.md
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
@@ -140,6 +139,36 @@ events:
   - change:prod-004-pit-cumulative-consumption-20260831-v1-validating
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-6e91844c9b844c1fe513b04857428b7e
+- schema_version: task_event.v1
+  task_id: PROD-004
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T17:58:00+00:00'
+  actor: integration-coordinator
+  change_id: prod-004-pit-cumulative-consumption-20260831-v6-full-failure-fix
+  lane_id: null
+  base_commit: c3a66ef02f664b05d71e6ea0cb12f05b3afe9894
+  previous_state_event_id: task-event-6e91844c9b844c1fe513b04857428b7e
+  from_status: VALIDATING
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统验证 + operations release
+    blocker_or_next_step: 实现和真实数据只读 smoke 已完成；继续执行 generated authority、architecture/contract/integration/reproducibility/Full
+      门禁，合格后按默认规则集成发布。active runtime promotion 由后续 reviewed operations release 负责。
+    acceptance_criteria: 默认累计 coverage 必须校验 legacy + daily capture raw 并输出 B/A readiness，显式
+      manifest 保持兼容；daily valuation 只写当前日隔离目录并读取 canonical 累计 PIT/valuation history；历史不足继续降级，strict
+      PIT A 级不得由 captured snapshot 冒充。
+    notes: 2026-08-31 v5 formal Architecture/Contract/Integration/Reproducibility
+      为 879/278/995/24 PASS；Full 10018 passed、3 failed、3 skipped。失败限于 2 个 historical
+      compatibility current-authority 白名单遗漏 PROD-004 successor，以及本地 ignored Atlas
+      page sidecar semantic-source drift；PIT 业务与集成路径无失败。v6 绑定失败 Full artifact，仅修正过时断言、刷新
+      generated authority，并在 final commit 上官方重建本地 Atlas sidecars；operations runtime
+      不写入。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:prod-004-pit-cumulative-consumption-20260831-v6-full-failure-fix
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-20bef5f8ba37d22928a3364cad73226e
 projection:
   legacy_first_eight_cells:
   - PROD-004
@@ -152,14 +181,14 @@ projection:
   - 默认累计 coverage 必须校验 legacy + daily capture raw 并输出 B/A readiness，显式 manifest 保持兼容；daily
     valuation 只写当前日隔离目录并读取 canonical 累计 PIT/valuation history；历史不足继续降级，strict PIT
     A 级不得由 captured snapshot 冒充。
-  - 2026-08-31 focused Ruff PASS；并行 focused pytest 116 passed。独立 ops runtime 只读 smoke：4,808
-    snapshots、2,069,507 rows、87 dates、17 tickers，manifest/coverage PASS，valuation_expectations=B，first
-    B=2026-07-18，latest=2026-08-29，A unavailable；valuation history=1,211，PIT analyst
-    history=1,169，无 history issue；active runtime 未写入。详见 docs/requirements/PROD-004_PIT_Cumulative_Archive_Consumption.md。
-  docs_links:
-  - docs/requirements/PROD-004_PIT_Cumulative_Archive_Consumption.md
+  - 2026-08-31 v5 formal Architecture/Contract/Integration/Reproducibility 为 879/278/995/24
+    PASS；Full 10018 passed、3 failed、3 skipped。失败限于 2 个 historical compatibility current-authority
+    白名单遗漏 PROD-004 successor，以及本地 ignored Atlas page sidecar semantic-source drift；PIT
+    业务与集成路径无失败。v6 绑定失败 Full artifact，仅修正过时断言、刷新 generated authority，并在 final commit
+    上官方重建本地 Atlas sidecars；operations runtime 不写入。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 7a0b0278da636401a1d493a0920e7a67897b69c2c32b08fd315684546114d75f
-last_event_id: task-event-6e91844c9b844c1fe513b04857428b7e
+  canonical_row_sha256: b8d7f04c0180da341f0f87783f443cb574c2a19d2854af4e8b3e8031e22f91a3
+last_event_id: task-event-20bef5f8ba37d22928a3364cad73226e
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b0414bb3ea468066e91b068fea3cc012a20140f99a21c47e7e857c31e76458a4
+fragment_checksum: cceb9dbb2c52de90fc693f14dc8c8cb2bf0a92a29c09faf7321467e974b3ea33

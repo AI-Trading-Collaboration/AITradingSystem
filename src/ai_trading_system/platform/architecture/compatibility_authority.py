@@ -1807,6 +1807,7 @@ def _prod_004_section(
         "tests/test_devx_006c_compatibility_authority.py",
         "tests/test_devx_006d_report_catalog_flow_authority.py",
         "tests/test_pit_snapshots.py",
+        "tests/test_trading2452_architecture_contract.py",
         "tests/test_valuation_sources.py",
     ]
     source_paths = sorted(source_paths, key=str.casefold)
