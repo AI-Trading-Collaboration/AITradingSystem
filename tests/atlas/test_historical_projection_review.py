@@ -374,6 +374,7 @@ def test_local_canonical_page_uses_current_successor_identity_when_available() -
             "TRADING-2545",
             "TRADING-2546",
             "TRADING-2547",
+            "TRADING-2548",
         ]
         assert validation_sidecar["status"] == "PASS"
         assert validation_sidecar["manifest_sha256"] == manifest.content_sha256

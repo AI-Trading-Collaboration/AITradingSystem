@@ -352,6 +352,9 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   未发布 main、未 push、未运行外部动作。
 - 2026-08-30：failure-fix v3 只试图扩展 Atlas source classification 与 reader projection；聚焦回归发现
   cited-query coverage count test 也必须同步，但该文件未列入 v3 精确路径声明，因此 transaction 在 candidate
-  commit 前按 FAILED 释放，没有越权修改。v4 已扩展该测试路径并绑定 parent Full summary
+  commit 前按 FAILED 释放，没有越权修改。v4 扩展该路径并形成 candidate
+  `59a463012e56b17eca39fa80ce06c72095527d3a`；exact-commit 页面 writer/replay 已 PASS，但 local canonical
+  test 随后证明 historical projection 的 frozen task list 也需同步 2548。该文件未列入 v4，故 v4 在 formal
+  validation 前按 FAILED 释放。v5 已完整声明这两项测试路径并绑定 parent Full summary
   `outputs/validation_runtime/full_20260830T113951Z/test_runtime_summary.json`；本波仍不改变 paired contract、
   frozen signal、37-slot baseline、existing aggregate 或 safety authority，只允许一次 `failure_fix_rerun` Full。
