@@ -296,7 +296,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="75"' in html
+    assert 'data-task-coverage-count="76"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html
@@ -472,7 +472,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert "1201 个最终看到 option chain，仅 1 个全日未见" in html
     assert "1019 个是当天先出现无链 Slice、后来恢复的提前结算混淆" in html
     assert "当前：完成整体可信性与参数依据复核" in rendered_text
-    assert "无需再次解释缺链日，也不授权新的外部平台运行" in rendered_text
+    assert "先单独预注册趋势到期权实现及同信号对照方案" in rendered_text
     assert "2516 v2 token 也已签署并在唯一一次 Cloud run 尝试中消费" in html
     assert "9518360aeb329219cd83e78442a1d229" in html
     assert "Option filter 已以显式 list[Symbol] 完成 versioned failure-fix" in html
@@ -636,6 +636,11 @@ def test_renderer_follows_why_first_section_and_term_interaction_contract() -> N
     assert "1201 个 normal session + 1 个 exact-date recovery" in l0_text
     assert "unresolved=0" in l0_text
     assert "合计 1202/1202" in l0_text
+    assert "净收益 +4.48%" in l0_text
+    assert "Sharpe=-1.872" in l0_text
+    assert "当前进入第 03 步" in l0_text
+    assert "AUTHORIZED_LATER_WAVE_NOT_RUN" not in l0_text
+    assert "当前停在第 02 步" not in l0_text
     assert "仍有 1 天全日未出现期权链" not in l0_text
     assert "先解释唯一缺链交易日" not in l0_text
     assert 'class="term-trigger"' not in l0_html

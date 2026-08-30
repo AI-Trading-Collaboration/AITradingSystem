@@ -7,7 +7,10 @@ from dataclasses import replace
 from datetime import timedelta
 from pathlib import Path
 
+import pytest
+
 from ai_trading_system.atlas.live_snapshot import (
+    AtlasLiveSnapshotError,
     build_live_snapshot_bundle,
     build_reader_decision_projection,
     load_live_snapshot_policy,
@@ -42,7 +45,7 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
     assert bundle.research_state_as_of.startswith("2026-08-30T")
-    assert bundle.evidence_evaluated_at == "2026-08-29T09:52:54.398060+00:00"
+    assert bundle.evidence_evaluated_at == "2026-08-30T02:47:04.4564323+00:00"
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
     assert bundle.current_diff.after_snapshot_id == bundle.current_snapshot.snapshot_id
@@ -91,7 +94,7 @@ def test_unclassified_successor_is_detected_before_live_projection() -> None:
     without_latest = replace(policy, task_sources=policy.task_sources[:-1])
 
     assert unclassified_page_successors(registry, without_latest) == (
-        "TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READER_CARD_REPAIR_V1",
+        "TRADING-2546_ATLAS_QQQ_OPTIONS_RESULT_ADMISSION_STATUS_PROJECTION_FIX_V1",
     )
 
 
@@ -105,17 +108,17 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
 
     assert policy.current_mainline_task_id.startswith("TRADING-2542I_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
-    assert bundle.evidence_evaluated_at == "2026-08-29T09:52:54.398060+00:00"
+    assert bundle.evidence_evaluated_at == "2026-08-30T02:47:04.4564323+00:00"
     assert bundle.status_object_zh == (
         "QQQ options 链路继续使用既有 first_layer_composer_v2 五态作为唯一方向事实，未新增期权"
-        "专用趋势模型；generic operational forecast producer 已在真实缓存上通过三段 canonical DQ，"
-        "按 2021-02-22..2025-12-02 主窗口生成 1202/1202 个唯一 session，evaluation proxy "
-        "rows=0；existing exact source admission 与信号包 v2 canonical replay "
-        "均 PASS。上述结果只证明方向信号与 package 可审计，不证明期权收益；QuantConnect 仍为 "
-        "AUTHORIZED_LATER_WAVE_NOT_RUN。下一合法动作是先固定 project/code/package/maxima 并自动 "
-        "replay manifest，再执行至多一次 bounded 只读研究 backtest；provider/raw option "
-        "export/local repricing/paper/live/production/broker 保持关闭，QC simulation 之外 "
-        "orders/fills/positions=0"
+        "专用趋势模型。2021-02-22..2025-12-02 exact 1202-session signal/package/DQ replay 已通过，"
+        "单次 bounded QuantConnect backtest f2879a3cee7ec4e0b68b4f943aafd1f8 已完成；平台自动 "
+        "Cloud Build e826e3-52ae2f 与 749e6f-52ae2f 已由 Owner 事后完成范围复核，平台聚合字段"
+        "也通过限定范围的技术复核，仅作为不可执行的数据研究接纳。期末权益 104479.60、净收益 "
+        "4.48%、费用 75.40、订单/进入/退出/取消=116/58/58/0；Sharpe=-1.872、PSR=0，正收益"
+        "不证明策略有效。任何后继比较必须另行预注册；当前不授权新的保存、构建、回测、重试、"
+        "原始期权数据或 provider 输出、Object Store、公开分享、paper/live/production/broker 或 "
+        "QC 外 orders/fills/positions。"
     )
 
 
@@ -139,8 +142,45 @@ def test_reader_decision_projection_separates_transport_from_dq_pit_promotion() 
     )
     visible = " ".join(item.text_zh for item in projection.reader_cards)
     assert "合计 1202/1202" in visible
+    assert "净收益 +4.48%" in visible
+    assert "Sharpe=-1.872" in visible
+    assert "不再运行外部回测平台" in visible
+    assert "QC_AUTHORIZED_NOT_RUN" not in visible
     assert "仍有 1 天全日未出现期权链" not in visible
     assert "先解释唯一缺链交易日" not in visible
+
+
+def test_reader_decision_projection_rejects_stale_result_admission_state() -> None:
+    manifest = build_page_effectiveness_manifest(repository_root=ROOT)
+    policy = load_live_snapshot_policy(repository_root=ROOT)
+    stale_status = tuple(
+        replace(item, task_status="BLOCKED_OWNER_INPUT")
+        if item.task_id.startswith("TRADING-2542I_")
+        else item
+        for item in manifest.task_coverage
+    )
+    with pytest.raises(AtlasLiveSnapshotError, match="RESULT_ADMISSION_TASK_NOT_DONE"):
+        build_reader_decision_projection(
+            repository_root=ROOT,
+            coverage=stale_status,
+            policy=policy,
+        )
+
+    stale_coverage = tuple(
+        replace(
+            item,
+            coverage="DISCLOSED_REAL_DQ_AND_EXACT_PACKAGE_REPLAY_PASS_QC_AUTHORIZED_NOT_RUN",
+        )
+        if item.task_id.startswith("TRADING-2542I_")
+        else item
+        for item in manifest.task_coverage
+    )
+    with pytest.raises(AtlasLiveSnapshotError, match="RESULT_ADMISSION_COVERAGE_STALE"):
+        build_reader_decision_projection(
+            repository_root=ROOT,
+            coverage=stale_coverage,
+            policy=policy,
+        )
 
 
 def test_canonical_writer_has_no_test_fixture_dependency(tmp_path: Path) -> None:

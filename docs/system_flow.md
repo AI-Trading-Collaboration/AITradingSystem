@@ -241,6 +241,16 @@ projection，再解析最终 `index.html` 的四张可见卡并逐项核对文�
 predecessor 覆盖 successor、把 transport PASS 提升成 DQ/PIT PASS、旧 next action 或 rendered-card drift
 均 fail closed，不能获得 `CURRENT`。该修复不改变研究窗口、阈值政策、策略结论或任何外部/生产/交易权限。
 
+TRADING-2546 在 `TRADING-2542I` terminal result admission 与 Atlas current-state projection 之间增加
+result-authority replay。builder 要求 2542I canonical task 为 `DONE`，latest event 与 task fragment/hash
+一致，并精确包含 `RETROSPECTIVELY_REVIEWED`、`PASS_EXPORT_SAFE_AGGREGATE_ONLY`、backtest
+`f2879a3cee7ec4e0b68b4f943aafd1f8`、1202-session window、准入 aggregate 及
+Sharpe=`-1.872`/PSR=`0` 限制；旧 `QC_AUTHORIZED_NOT_RUN` coverage 或非 terminal 状态均 fail closed。
+2542H 继续作为 historical scope-correction predecessor，不能覆盖 2542I。首屏决定卡、quick answers、
+system orientation 与 live summary 统一表达“单次 baseline 已仅限研究接纳、不能证明策略有效、任何
+follow-on comparison 必须另行预注册、当前没有新 QC authority”。该投影不导入 raw option rows、未准入
+comparator 或 contract identifiers，不改变趋势信号、已接纳结果、投资结论或任何外部/生产/broker 权限。
+
 TRADING-2506 在八阶段流程节点中新增独立的工作进展解释合同。每个节点先回答“为什么需要这一步、
 具体做什么、工程能力做到哪里、本次页面看到什么状态、对研究结论有什么影响、预期产物、完成后怎样
 被使用、不能说明什么、何时再做”，再把 TRADING-2495 的状态限制与技术依据收进折叠区。工程能力、

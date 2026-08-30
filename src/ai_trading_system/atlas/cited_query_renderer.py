@@ -2357,7 +2357,7 @@ def _render_trust_strip(showcase: AtlasCitedQueryShowcase) -> str:
             <li data-system-stage="HUMAN_DECISION"><span>03 · 形成结论</span><strong>只说现有数据真正支持的部分</strong></li>
             <li data-system-stage="AUTHORIZED_EXECUTION"><span>04 · 决定行动</span><strong>由人工决定是否继续，页面不会自行执行</strong></li>
           </ol>
-          <p class="system-orientation-current" data-reader-decision-projection-sha256="{decision.content_sha256}" data-dq-pit-promoted="false"><strong>当前停在第 02 步：</strong>期权链传递已补齐为 {decision.observed_session_count}/{decision.expected_session_count}，但整体数据可信性尚未提升为通过；当前要完成参数依据、负责人和独立复核，尚未进入策略评价。</p>
+          <p class="system-orientation-current" data-reader-decision-projection-sha256="{decision.content_sha256}" data-dq-pit-promoted="false" data-qc-result-admitted="true" data-result-scope="NON_EXECUTABLE_DATA_RESEARCH_ONLY"><strong>当前进入第 03 步：</strong>{escape(decision.reader_cards[0].text_zh)} {escape(decision.reader_cards[-1].text_zh)}</p>
         </div>
       </header>
       <p class="trust-stop" data-always-visible="critical-risk">本页只解释研究状态，不提供投资建议，也不会运行策略、连接外部系统或下单。</p>

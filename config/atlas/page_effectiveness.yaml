@@ -338,12 +338,12 @@ task_sources:
     reader_summary_zh: 2542G 的 FMP、Cboe VIX、Fed、BLS、BEA contracts 与 evidence receipts 保留为 optional result-blind overlay history；其 historical PIT authority 缺口仍存在，但缺失不再阻塞 baseline。任何 overlay 只能通过独立 manifest、DQ/PIT 与授权恢复，且不得改变 frozen direction signal。
   - task_id: TRADING-2542H_QQQ_OPTIONS_FROZEN_SIGNAL_IMPLEMENTATION_RETEST_CONTRACT_V1
     requirement_path: docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md
-    coverage: DISCLOSED_CURRENT_BASELINE_OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST
-    reader_summary_zh: 当前主线把既有策略信号作为唯一方向事实，QuantConnect 负责 QQQ 期权选约、成交、生命周期和 P&L。1202/1202 chain transport 已证明，但 retained exact signal package、看涨/看跌/空仓动作映射及 selection/execution/accounting/lifecycle Owner policy 尚未冻结，所以当前仍是“精确策略参数冻结前不得回测”；本阶段不运行真实 DQ/backtest，orders/fills/positions/production/broker=0。
+    coverage: DISCLOSED_HISTORICAL_SCOPE_CORRECTION_SUPERSEDED_BY_2542I_RESULT_ADMISSION
+    reader_summary_zh: 2542H 作为 immutable historical scope-correction predecessor 保留：既有趋势信号只负责方向，QuantConnect 负责期权实现和 P&L。其当时缺少 exact signal package、方向映射和 implementation policy 的 blocker 已由 2542I 后继解决，不得再把 2542H 的旧“policy freeze required/no backtest”状态冒充当前阻塞。
   - task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
     requirement_path: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
-    coverage: DISCLOSED_REAL_DQ_AND_EXACT_PACKAGE_REPLAY_PASS_QC_AUTHORIZED_NOT_RUN
-    reader_summary_zh: 2542I 已在真实缓存上完成三段 canonical DQ，并以 generic operational forecast producer 生成 2021-02-22..2025-12-02 exact 1202/1202 unique sessions，evaluation proxy rows=0。existing exact source admission 与信号包 v2 canonical reconstruction 均 PASS；失败的 v1/v2 attempts 保留为不可覆盖证据。该结果不证明期权收益；QuantConnect 尚未运行，下一步只允许先固定并 replay exact project/code/package/maxima manifest，再执行至多一次 bounded 只读研究 backtest。provider/raw option export/local repricing/paper/live/production/broker 保持关闭，QC simulation 之外 orders/fills/positions=0。
+    coverage: DISCLOSED_SINGLE_QC_BACKTEST_AGGREGATE_ADMITTED_RESEARCH_ONLY_NO_NEW_ACTION
+    reader_summary_zh: 2542I 已完成真实缓存三段质量检查、2021-02-22..2025-12-02 exact 1202-session signal/package replay 和一次 bounded QuantConnect backtest f2879a3cee7ec4e0b68b4f943aafd1f8。自动 Cloud Build e826e3-52ae2f 与 749e6f-52ae2f 已由 Owner 事后完成范围复核；平台聚合字段也通过限定范围的技术复核，仅作为不可执行的数据研究接纳：期末权益/净收益/费用/订单/进入/退出/取消=104479.60/4.48%/75.40/116/58/58/0。Sharpe=-1.872、PSR=0，因此不能把正收益解释为策略有效。任何后继比较必须另行预注册；当前不授权新的保存、构建、回测、重试或其他外部、生产、broker 动作。
   - task_id: TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1
     requirement_path: docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md
     coverage: LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_COMPLETE
@@ -356,6 +356,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2545_Atlas_Current_State_Dominance_And_Reader_Card_Repair_V1.md
     coverage: ATLAS_CURRENT_STATE_SUCCESSOR_DOMINANCE_AND_VISIBLE_READER_CARD_REPAIR_COMPLETE
     reader_summary_zh: 2545 已修复 Atlas 首屏把 TRADING-2533 历史 DQ/PIT admission 冒充当前 transport 状态的问题。TRADING-2541 的 normal=1201、recovered=1、unresolved=0、sessions=1202/1202 当前事实现在支配历史 transport 缺口，同时 dq_pit_promoted=false 保持独立 fail closed；首屏可见决定卡、why-first 因果回答与 source refs 使用同一可重放投影，并由 page-effectiveness validator 独立核验最终 HTML。本任务不提升 DQ/PIT、策略、生产或交易状态。
+  - task_id: TRADING-2546_ATLAS_QQQ_OPTIONS_RESULT_ADMISSION_STATUS_PROJECTION_FIX_V1
+    requirement_path: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md
+    coverage: ATLAS_QQQ_OPTIONS_RESULT_ADMISSION_STATUS_PROJECTION_REPAIR_COMPLETE
+    reader_summary_zh: 2546 修复 Atlas 在 2542I terminal 后仍显示 QC-not-run 的陈旧状态。当前 live snapshot、首屏决定卡、why-first 回答和 task coverage 统一显示：单次 backtest aggregate 已仅限研究接纳，Sharpe/PSR 限制禁止策略推广，任何 follow-on comparison 必须另行预注册，且当前不授权新的 QuantConnect 或其他外部、生产、broker 动作。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

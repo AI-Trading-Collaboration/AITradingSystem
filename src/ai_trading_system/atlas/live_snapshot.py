@@ -66,6 +66,15 @@ _QQQ_TRANSPORT_RECOVERY_TASK_ID = (
 _ATLAS_READER_REPAIR_TASK_ID = (
     "TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READER_CARD_REPAIR_V1"
 )
+_QQQ_RESULT_ADMISSION_TASK_ID = (
+    "TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1"
+)
+_ATLAS_RESULT_STATUS_REPAIR_TASK_ID = (
+    "TRADING-2546_ATLAS_QQQ_OPTIONS_RESULT_ADMISSION_STATUS_PROJECTION_FIX_V1"
+)
+_QQQ_RESULT_ADMISSION_COVERAGE = (
+    "DISCLOSED_SINGLE_QC_BACKTEST_AGGREGATE_ADMITTED_RESEARCH_ONLY_NO_NEW_ACTION"
+)
 _GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 _STATUS_MAPPING = {
     "DONE": "PASS",
@@ -342,7 +351,7 @@ def _task_sources(
     limitation = (
         "这是 canonical task 治理状态，不是策略有效性、收益或风险证据。" + time_note
     )
-    shared = {
+    shared: dict[str, Any] = {
         "source_kind": ExplorerSourceKind.GIT_AUTHORITY,
         "exact_commit": exact_commit,
         "as_of": task_time,
@@ -432,8 +441,8 @@ def _load_qqq_transport_recovery_facts(*, repository_root: Path) -> Mapping[str,
         "production_effect": "none",
         "broker_action": "none",
     }
-    for field, expected in expected_identity.items():
-        if payload.get(field) != expected:
+    for field, expected_value in expected_identity.items():
+        if payload.get(field) != expected_value:
             raise AtlasLiveSnapshotError(
                 f"ATLAS_READER_RECOVERY_EVIDENCE_IDENTITY_INVALID:{field}"
             )
@@ -470,6 +479,89 @@ def _load_qqq_transport_recovery_facts(*, repository_root: Path) -> Mapping[str,
     return payload
 
 
+def _load_qqq_result_admission_facts(
+    *, repository_root: Path, coverage: PageTaskCoverage
+) -> Mapping[str, object]:
+    if coverage.task_id != _QQQ_RESULT_ADMISSION_TASK_ID:
+        raise AtlasLiveSnapshotError("ATLAS_QQQ_RESULT_ADMISSION_TASK_ID_INVALID")
+    if coverage.task_status != "DONE":
+        raise AtlasLiveSnapshotError("ATLAS_QQQ_RESULT_ADMISSION_TASK_NOT_DONE")
+    if coverage.coverage != _QQQ_RESULT_ADMISSION_COVERAGE:
+        raise AtlasLiveSnapshotError("ATLAS_QQQ_RESULT_ADMISSION_COVERAGE_STALE")
+    fragment_path = repository_root / coverage.task_fragment_path
+    try:
+        raw = fragment_path.read_bytes()
+        fragment = yaml.safe_load(raw)
+    except (OSError, UnicodeError, yaml.YAMLError) as exc:
+        raise AtlasLiveSnapshotError("ATLAS_QQQ_RESULT_ADMISSION_FRAGMENT_UNREADABLE") from exc
+    if hashlib.sha256(raw).hexdigest() != coverage.task_fragment_sha256:
+        raise AtlasLiveSnapshotError("ATLAS_QQQ_RESULT_ADMISSION_FRAGMENT_HASH_DRIFT")
+    root = _mapping(fragment, "result_admission_fragment")
+    events = root.get("events")
+    if not isinstance(events, list):
+        raise AtlasLiveSnapshotError("ATLAS_QQQ_RESULT_ADMISSION_EVENTS_INVALID")
+    latest = next(
+        (
+            _mapping(item, "result_admission_event")
+            for item in events
+            if isinstance(item, Mapping) and item.get("event_id") == coverage.task_event_id
+        ),
+        None,
+    )
+    if latest is None or root.get("last_event_id") != coverage.task_event_id:
+        raise AtlasLiveSnapshotError("ATLAS_QQQ_RESULT_ADMISSION_EVENT_ID_DRIFT")
+    if latest.get("to_status") != "DONE" or latest.get("occurred_at") != coverage.task_event_at:
+        raise AtlasLiveSnapshotError("ATLAS_QQQ_RESULT_ADMISSION_TERMINAL_EVENT_INVALID")
+    event_payload = _mapping(latest.get("payload"), "result_admission_event_payload")
+    required_tokens = {
+        "next_owner": (
+            "separately preregistered non-executable DATA_RESEARCH task",
+            "no further QuantConnect action is authorized",
+        ),
+        "blocker_or_next_step": (
+            "No remaining blocker for this baseline wave",
+            "admitted research-only",
+            "do not run save/build/backtest/retry",
+        ),
+        "acceptance_criteria": (
+            "e826e3-52ae2f",
+            "749e6f-52ae2f",
+            "f2879a3cee7ec4e0b68b4f943aafd1f8",
+            "non-executable DATA_RESEARCH",
+        ),
+        "notes": (
+            "Authorization state=RETROSPECTIVELY_REVIEWED",
+            "technical validation state=PASS_EXPORT_SAFE_AGGREGATE_ONLY",
+            "104479.60/4.48%/75.40/116/58/58/0",
+            "Sharpe=-1.872 and PSR=0",
+        ),
+    }
+    for field, tokens in required_tokens.items():
+        value = str(event_payload.get(field, ""))
+        if any(token not in value for token in tokens):
+            raise AtlasLiveSnapshotError(
+                f"ATLAS_QQQ_RESULT_ADMISSION_EVENT_PAYLOAD_INVALID:{field}"
+            )
+    return {
+        "backtest_id": "f2879a3cee7ec4e0b68b4f943aafd1f8",
+        "requested_window": "2021-02-22..2025-12-02",
+        "evaluated_window": "2021-02-22..2025-12-02",
+        "expected_sessions": 1202,
+        "end_equity_usd": "104479.60",
+        "net_profit_percent": "4.48",
+        "fees_usd": "75.40",
+        "orders": 116,
+        "entries": 58,
+        "exits": 58,
+        "cancels": 0,
+        "sharpe": "-1.872",
+        "psr": "0",
+        "authorization_state": "RETROSPECTIVELY_REVIEWED",
+        "technical_validation_state": "PASS_EXPORT_SAFE_AGGREGATE_ONLY",
+        "scope": "non-executable DATA_RESEARCH",
+    }
+
+
 def build_reader_decision_projection(
     *,
     repository_root: Path,
@@ -479,10 +571,17 @@ def build_reader_decision_projection(
     historical_dq = _coverage_by_id(coverage, _QQQ_HISTORICAL_DQ_TASK_ID)
     recovery = _coverage_by_id(coverage, _QQQ_TRANSPORT_RECOVERY_TASK_ID)
     reader_repair = _coverage_by_id(coverage, _ATLAS_READER_REPAIR_TASK_ID)
+    result_status_repair = _coverage_by_id(
+        coverage, _ATLAS_RESULT_STATUS_REPAIR_TASK_ID
+    )
     mainline = _coverage_by_id(coverage, policy.current_mainline_task_id)
     blocker = _coverage_by_id(coverage, policy.largest_blocker_task_id)
     next_step = _coverage_by_id(coverage, policy.next_legal_action_task_id)
     evidence = _load_qqq_transport_recovery_facts(repository_root=repository_root)
+    result = _load_qqq_result_admission_facts(
+        repository_root=repository_root,
+        coverage=_coverage_by_id(coverage, _QQQ_RESULT_ADMISSION_TASK_ID),
+    )
     normal = int(evidence["normal_slice_session_count"])
     recovered = int(evidence["recovered_session_count"])
     unresolved = int(evidence["unresolved_session_count"])
@@ -493,39 +592,54 @@ def build_reader_decision_projection(
         f"{recovered} 个 exact-date recovery，unresolved={unresolved}，"
         f"合计 {observed}/{expected}。"
     )
-    authority_text = (
-        "但整体数据可信性尚未提升为通过，参数依据、负责人和独立复核仍未完成。"
+    result_text = (
+        f"单次 QQQ options baseline 已按 {result['requested_window']} 的 "
+        f"{result['expected_sessions']} 个 session 完成；export-safe aggregate 为净收益 "
+        f"+{result['net_profit_percent']}%、期末权益 ${result['end_equity_usd']}、费用 "
+        f"${result['fees_usd']}，订单/进入/退出/取消={result['orders']}/"
+        f"{result['entries']}/{result['exits']}/{result['cancels']}。"
+    )
+    limitation_text = (
+        f"该结果仅限不可执行数据研究；Sharpe={result['sharpe']}、PSR={result['psr']}，"
+        "正收益不能证明策略有效、稳健或可投资。"
     )
     current_decision_sources = _reader_decision_sources(
-        recovery, mainline, blocker, reader_repair
+        recovery, mainline, blocker, reader_repair, result_status_repair
     )
     why_sources = _reader_decision_sources(
-        historical_dq, recovery, blocker, reader_repair
+        historical_dq, recovery, mainline, blocker, reader_repair, result_status_repair
     )
-    work_sources = _reader_decision_sources(recovery, mainline, blocker, reader_repair)
-    next_sources = _reader_decision_sources(recovery, next_step, reader_repair)
+    work_sources = _reader_decision_sources(
+        recovery, mainline, blocker, reader_repair, result_status_repair
+    )
+    next_sources = _reader_decision_sources(
+        mainline, next_step, reader_repair, result_status_repair
+    )
     prohibited_sources = _reader_decision_sources(
-        recovery, mainline, blocker, reader_repair
+        recovery, mainline, blocker, reader_repair, result_status_repair
     )
     reader_cards = (
         AtlasReaderDecisionItem(
             item_id="CURRENT_DECISION",
             label_zh="01 · 当前决定",
-            text_zh="暂不继续形成策略结论；期权链传递已修复，整体可信性与策略研究仍保持关闭。",
+            text_zh=(
+                "期权实现 baseline 已完成并仅限研究接纳；当前不形成策略结论，"
+                "也不再运行外部回测平台。"
+            ),
             source_task_ids=current_decision_sources,
         ),
         AtlasReaderDecisionItem(
             item_id="WHY_PAUSED",
             label_zh="02 · 为什么",
-            text_zh=f"{transport_text}{authority_text}",
+            text_zh=f"{transport_text}{result_text}{limitation_text}",
             source_task_ids=why_sources,
         ),
         AtlasReaderDecisionItem(
             item_id="CURRENT_WORK",
             label_zh="03 · 现在在查什么",
             text_zh=(
-                "当前把已补齐的期权链传递与尚未完成的整体可信性、参数依据和人工复核分开判断，"
-                "避免工程检查通过冒充策略通过。"
+                "当前只解释这次基线结果，并准备另行讨论同一趋势信号怎样映射为期权实现、"
+                "如何设置 paired comparator 与风险预算；尚未冻结后继研究任务。"
             ),
             source_task_ids=work_sources,
         ),
@@ -533,8 +647,8 @@ def build_reader_decision_projection(
             item_id="NEXT_STEP",
             label_zh="04 · 下一步",
             text_zh=(
-                "将最新传递验证结果纳入整体可信性复核，并完成参数依据、负责人和独立复核；"
-                "无需再次解释缺链日，也不授权新的外部平台运行。"
+                "先单独预注册趋势到期权实现及同信号对照方案；在新任务和精确授权形成前，"
+                "不得 save、build、backtest、retry 或执行其他外部平台动作。"
             ),
             source_task_ids=next_sources,
         ),
@@ -543,8 +657,8 @@ def build_reader_decision_projection(
         item_id="PROHIBITED_INFERENCES",
         label_zh="04 · 不能推出什么",
         text_zh=(
-            "不能把期权链传递完整解释为整体数据可信、参数获批、策略有效、收益稳健或风险可接受，"
-            "更不表示可以投资、部署或交易。"
+            "不能把 +4.48% 正收益解释为策略有效、风险调整表现合格或期权优于标的；"
+            "也不表示可以投资、部署、交易或自动调参。"
         ),
         source_task_ids=prohibited_sources,
     )
@@ -553,23 +667,26 @@ def build_reader_decision_projection(
             item_id="CURRENT_RESEARCH_MAINLINE",
             label_zh="01 · 当前主线",
             text_zh=(
-                "QQQ 期权数据车道继续保留；期权链传递已补齐，当前主线转为整体可信性、"
-                "参数依据与独立复核。"
+                "QQQ 期权实现基线已经完成；当前主线是解释已接纳结果，并在独立任务中设计"
+                "同一趋势信号的标的实现与期权实现对照。"
             ),
             source_task_ids=current_decision_sources,
         ),
         AtlasReaderDecisionItem(
             item_id="LARGEST_CURRENT_BLOCKER",
             label_zh="02 · 最大阻塞",
-            text_zh=f"{transport_text}{authority_text}",
+            text_zh=(
+                f"{limitation_text}后继 comparison 尚未预注册，且当前没有新的外部回测授权。"
+            ),
             source_task_ids=why_sources,
         ),
         AtlasReaderDecisionItem(
             item_id="ENGINEERING_VS_RESEARCH_EVIDENCE",
             label_zh="03 · 已做到什么",
             text_zh=(
-                f"受治理的外部验证已确认 {observed}/{expected} 个交易日的期权链传递完整；"
-                "这只修复数据传递工程缺口，没有把整体可信性提升为通过，也不是盈利或风险证据。"
+                f"受治理链路已确认 {observed}/{expected} 个交易日并完成一次 bounded baseline；"
+                "平台聚合字段已通过限定范围的技术复核，但这只接纳聚合研究事实，"
+                "不是策略通过。"
             ),
             source_task_ids=work_sources,
         ),
@@ -584,8 +701,8 @@ def build_reader_decision_projection(
             item_id="INVESTMENT_ORDER_ENGINE_AUTHORITY",
             label_zh="06 · 现在能否投资或下单",
             text_zh=(
-                "不能。期权合约选择和真实策略执行引擎保持关闭，订单和成交均为 0；"
-                "本页不授权外部动作、生产或交易。"
+                "不能。已接纳结果仅限不可执行数据研究；本页不授权新回测、外部动作、"
+                "生产、broker 或真实交易。"
             ),
             source_task_ids=prohibited_sources,
         ),

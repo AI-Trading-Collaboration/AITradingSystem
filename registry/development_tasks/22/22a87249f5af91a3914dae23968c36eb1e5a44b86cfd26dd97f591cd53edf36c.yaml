@@ -1,0 +1,135 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2546_ATLAS_QQQ_OPTIONS_RESULT_ADMISSION_STATUS_PROJECTION_FIX_V1
+  task_id_sha256: 22a87249f5af91a3914dae23968c36eb1e5a44b86cfd26dd97f591cd53edf36c
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2546_ATLAS_QQQ_OPTIONS_RESULT_ADMISSION_STATUS_PROJECTION_FIX_V1
+  title: null
+  domain: Atlas / QQQ options admitted-result current-state projection repair V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner / discuss a separately preregistered trend-to-options
+    implementation and paired-comparator research task; no new QuantConnect action
+    is authorized
+  requirement_refs:
+  - docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: No remaining Atlas status-projection implementation
+    blocker. Preserve the admitted research-only aggregate and no-new-QC boundary;
+    any follow-on strategy design or backtest requires a separate governed task and
+    exact authorization.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Atlas limits TRADING-2542H to historical predecessor, projects TRADING-2542I
+      as the terminal single-backtest research-only authority, shows 2021-02-22..2025-12-02
+      / 1202 sessions / 104479.60 / 4.48% / 75.40 / 116/58/58/0 and Sharpe=-1.872
+      / PSR=0 limitations, rejects stale QC-not-run state, and authorizes no external
+      or trading action.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2546_ATLAS_QQQ_OPTIONS_RESULT_ADMISSION_STATUS_PROJECTION_FIX_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-30T14:47:52.4115248+09:00'
+  actor: integration-coordinator
+  change_id: trading-2546-atlas-qc-status-register-20260830-v1
+  lane_id: null
+  base_commit: 705ba295690e86e3de566629795da15fd4287cfc
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2546_ATLAS_QQQ_OPTIONS_RESULT_ADMISSION_STATUS_PROJECTION_FIX_V1
+    - Atlas / QQQ options admitted-result current-state projection repair V1
+    - P0
+    - IN_PROGRESS
+    - Codex Atlas coordinator
+    - 修复 Atlas 中陈旧的 QC-not-run 状态，生成并验证与 TRADING-2542I terminal authority 一致的当前页面；不访问
+      QuantConnect。
+    - Atlas 将 2542H 限定为 historical predecessor，并显示 2542I 单次 backtest aggregate 已以
+      RETROSPECTIVELY_REVIEWED / PASS_EXPORT_SAFE_AGGREGATE_ONLY 仅限研究准入；不再建议立即运行 backtest；focused
+      与正式验证 PASS。
+    - 'Supporting requirement: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md.
+      Owner instruction: 先修复，后续再讨论趋势到期权策略与回测。production_effect=none; broker_action=none;
+      external_action=none.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2546-atlas-qc-status-register-20260830-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d53ae5c7c04982da5d7bf97d454be663
+- schema_version: task_event.v1
+  task_id: TRADING-2546_ATLAS_QQQ_OPTIONS_RESULT_ADMISSION_STATUS_PROJECTION_FIX_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T15:08:17.9996148+09:00'
+  actor: integration-coordinator
+  change_id: trading-2546-atlas-qc-status-complete-20260830-v2
+  lane_id: null
+  base_commit: 705ba295690e86e3de566629795da15fd4287cfc
+  previous_state_event_id: task-event-d53ae5c7c04982da5d7bf97d454be663
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner / discuss a separately preregistered trend-to-options
+      implementation and paired-comparator research task; no new QuantConnect action
+      is authorized
+    blocker_or_next_step: No remaining Atlas status-projection implementation blocker.
+      Preserve the admitted research-only aggregate and no-new-QC boundary; any follow-on
+      strategy design or backtest requires a separate governed task and exact authorization.
+    acceptance_criteria: Atlas limits TRADING-2542H to historical predecessor, projects
+      TRADING-2542I as the terminal single-backtest research-only authority, shows
+      2021-02-22..2025-12-02 / 1202 sessions / 104479.60 / 4.48% / 75.40 / 116/58/58/0
+      and Sharpe=-1.872 / PSR=0 limitations, rejects stale QC-not-run state, and authorizes
+      no external or trading action.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md.
+      Governed INTEGRATION preflight PASS while task remained active. Focused terminology
+      failure was corrected by keeping exact technical identifiers in audit authority
+      and using reader-safe Chinese in visible surfaces. Final generated-authority
+      rebuild and formal validation run on the exact candidate under publication transaction
+      trading-2546-atlas-qc-status-repair-20260830-v2. production_effect=none; broker_action=none;
+      QuantConnect action=none.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2546-atlas-qc-status-complete-20260830-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8e6cf38a6db6bd9e6627d2edc6c7a751
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2546_ATLAS_QQQ_OPTIONS_RESULT_ADMISSION_STATUS_PROJECTION_FIX_V1
+  - Atlas / QQQ options admitted-result current-state projection repair V1
+  - P0
+  - DONE
+  - Project Owner / discuss a separately preregistered trend-to-options implementation
+    and paired-comparator research task; no new QuantConnect action is authorized
+  - No remaining Atlas status-projection implementation blocker. Preserve the admitted
+    research-only aggregate and no-new-QC boundary; any follow-on strategy design
+    or backtest requires a separate governed task and exact authorization.
+  - Atlas limits TRADING-2542H to historical predecessor, projects TRADING-2542I as
+    the terminal single-backtest research-only authority, shows 2021-02-22..2025-12-02
+    / 1202 sessions / 104479.60 / 4.48% / 75.40 / 116/58/58/0 and Sharpe=-1.872 /
+    PSR=0 limitations, rejects stale QC-not-run state, and authorizes no external
+    or trading action.
+  - 'Supporting requirement: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md.
+    Governed INTEGRATION preflight PASS while task remained active. Focused terminology
+    failure was corrected by keeping exact technical identifiers in audit authority
+    and using reader-safe Chinese in visible surfaces. Final generated-authority rebuild
+    and formal validation run on the exact candidate under publication transaction
+    trading-2546-atlas-qc-status-repair-20260830-v2. production_effect=none; broker_action=none;
+    QuantConnect action=none.'
+  docs_links:
+  - docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md
+  terminal: true
+  canonical_row_sha256: 2d06539474d1df057c1022fd3d51c1e2b36a6b9f47b2cc38ffb44ae430a6b87c
+last_event_id: task-event-8e6cf38a6db6bd9e6627d2edc6c7a751
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: f6e4f4ac0d2d728dc49257f7a4bb7ba4f07492a829c4d147ce1a6064c47ff7e4

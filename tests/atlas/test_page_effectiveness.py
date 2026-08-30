@@ -80,7 +80,7 @@ def _rendered(
 def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 75
+    assert len(policy.task_sources) == 76
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
@@ -98,6 +98,7 @@ def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None
         "TRADING-2543",
         "TRADING-2544",
         "TRADING-2545",
+        "TRADING-2546",
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -123,7 +124,7 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
     assert manifest.schema_version == "strategy_research_page_effectiveness.v3"
-    assert len(manifest.task_coverage) == 75
+    assert len(manifest.task_coverage) == 76
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
@@ -141,6 +142,7 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "TRADING-2543",
         "TRADING-2544",
         "TRADING-2545",
+        "TRADING-2546",
     ]
     coverage_by_task = {
         item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
@@ -272,16 +274,19 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "DISCLOSED_OPTIONAL_RESULT_BLIND_OVERLAY_NOT_BASELINE_BLOCKER"
     )
     assert coverage_by_task["TRADING-2542H"] == (
-        "DISCLOSED_CURRENT_BASELINE_OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST"
+        "DISCLOSED_HISTORICAL_SCOPE_CORRECTION_SUPERSEDED_BY_2542I_RESULT_ADMISSION"
     )
     assert coverage_by_task["TRADING-2542I"] == (
-        "DISCLOSED_REAL_DQ_AND_EXACT_PACKAGE_REPLAY_PASS_QC_AUTHORIZED_NOT_RUN"
+        "DISCLOSED_SINGLE_QC_BACKTEST_AGGREGATE_ADMITTED_RESEARCH_ONLY_NO_NEW_ACTION"
     )
     assert coverage_by_task["TRADING-2543"] == (
         "LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_COMPLETE"
     )
     assert coverage_by_task["TRADING-2544"] == (
         "DISCLOSED_DIRECTION_ONLY_PROPOSED_OWNER_AUTHORIZATION_REQUIRED"
+    )
+    assert coverage_by_task["TRADING-2546"] == (
+        "ATLAS_QQQ_OPTIONS_RESULT_ADMISSION_STATUS_PROJECTION_REPAIR_COMPLETE"
     )
     assert len(manifest.source_artifacts) == len(
         load_page_effectiveness_policy(repository_root=ROOT).relevant_source_paths
