@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`COMPLETED`
+状态：`IN_PROGRESS`
 
 Owner 指令：Project Owner 已确认继续按“既有趋势信号只负责方向，QuantConnect 只负责期权实现与
 收益计算”的路径推进，并于 2026-08-29 指示“好的，那就冻结吧，你继续推进”。该指令 exact-freeze
@@ -654,3 +654,10 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   technical validation 分别记录为 `RETROSPECTIVELY_REVIEWED` / `PASS_EXPORT_SAFE_AGGREGATE_ONLY`。
   本次只准入已存在的聚合事实，不授权任何新 save/build/backtest/retry、raw option export、provider、
   Object Store、public share、paper/live/production/broker 或 QC 外 orders/fills/positions；任务验收完成。
+- 2026-08-30：result-admission publication v1 在候选
+  `4cda4b15a670ae3a9c06a7de3d57d26848cffd70` 上因治理顺序 fail-closed：任务先写入 terminal `DONE`，
+  随后的 `INTEGRATION` preflight 按规则只接受 active task，返回 `TASK_NOT_REGISTERED`。v1 blocker evidence
+  SHA-256=`1ae2cfb10d2740d79a39b6ed04317e7ec1a29c6b07c22d0d01afd81c1e409da0`；transaction 已以
+  `FAILED` 释放，未运行 formal validation、未合入 main、未 push，也未发生任何新 QuantConnect action。
+  v2 从纯 task-owned 授权记录提交恢复：先在 canonical task 仍 active 时通过 `INTEGRATION` preflight，
+  再追加 terminal event 和重建 generated authority；不改写 append-only 历史。
