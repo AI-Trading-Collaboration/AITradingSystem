@@ -178,6 +178,13 @@ Task-owned paths：
 - `tests/test_workflow_health.py`
 - `docs/requirements/DEVX-011_Governed_Workflow_Health_Control_Loop_V1.md`
 
+DEVX-011C/DEVX-011D successor closeout owned paths：
+
+- `src/ai_trading_system/platform/architecture/checkout_guard.py`
+- `src/ai_trading_system/platform/architecture/compatibility_authority.py`
+- `tests/test_arch_005_s4d_checkout_guard.py`
+- `docs/requirements/DEVX-011_Governed_Workflow_Health_Control_Loop_V1.md`
+
 Coordinator/shared paths：
 
 - `src/ai_trading_system/cli_commands/reports.py`
@@ -229,3 +236,8 @@ Coordinator/shared paths：
 - 2026-08-31：不重写任何历史投资 policy/config hash，也不为 developer telemetry 放宽其直接绑定。窄范围 successor `DEVX-011B_WORKFLOW_HEALTH_ROOT_RULE_DECOUPLING_CLOSEOUT` 将撤销根 `AGENTS.md` 变更、从 DEVX-011 source authority 移除 `AGENTS.md` 与未改动的 TRADING-2452 测试，并把周期自发行为收敛到现有 unified periodic plan 的 date-gated discovery；这样保留自动发现/去重能力，同时不触碰研究语义。
 - 2026-08-31：DEVX-011B v1 将 Full 的 327 个 last-failed 收敛为 `335 passed / 3 failed`。其中两项证明 `docs/system_flow.md` 与 `tests/test_arch_004g_deprecation.py` 等合法 DEVX-011 current-authority path 仍需由 TRADING-2452 helper 显式承认新 section；因此重新纳入实际修改的 `tests/test_trading2452_architecture_contract.py` 并只追加 DEVX-011 section key。最后一项是本地 hydrated、ignored Atlas page-effectiveness sidecar 仍绑定 `main@961d65a...`，须在 final candidate commit 后用官方 renderer 按 exact commit 重建，不修改其研究结论或人工验收状态。
 - 2026-08-31：DEVX-011B v2 的两个 helper 测试 PASS，prevalidation candidate `943ff8ab5cbe50564ea29c998e59aae88490d303` 以官方 renderer 重建 17 个 Atlas ignored artifacts，renderer `status=PASS`，最后 3 项回归 `3 passed`。最终完成标记与验收勾选仅在 parent-bound transaction `devx-011b-workflow-health-decoupling-20260831-v3` 的正式四层门禁、`failure_fix_rerun` Full、普通推送、SHA equality 与 released receipt 全部 PASS 时生效；final commit 后必须再次按其 exact SHA 重建 Atlas，且人工 visual/comprehension 状态不变。
+- 2026-08-31：DEVX-011B v3 final candidate `5817839be7a38861bd174b12d9a5abcf0f3e18a2` 的 Architecture/Contract/Integration/Reproducibility 分别为 `880/278/995/24 passed`；parent-bound Full 为 `10026 passed / 1 failed / 3 skipped`，证据 `outputs/validation_runtime/full_20260830T212818Z/test_runtime_summary.json`。唯一失败是 `test_concurrent_overlapping_writers_produce_exactly_one_active_decision` 在 Windows 临时 checkout 中并发执行普通 `git status` 时遇到 `.git/index: Permission denied`；没有 DEVX-011 功能失败或兼容性级联。v3 已按 `FAILED` 释放，未合入 main。
+- 2026-08-31：相同 `-n 16 --dist loadfile` 聚焦测试连续 20 轮为 `0/20` 失败，证明竞态为低概率但不能废弃正式失败证据。窄范围 successor `DEVX-011C_WORKFLOW_HEALTH_CHECKOUT_GIT_STATUS_CONCURRENCY_CLOSEOUT` 负责使 checkout dirty audit 禁用 Git optional locks/index refresh、增加命令级契约测试，并用该失败 Full 作为 parent 执行新的 `failure_fix_rerun`；不得通过串行 PASS、盲目 retry 或放宽 checkout fail-closed 语义关闭问题。
+- 2026-08-31：DEVX-011C 让 `collect_checkout_dirty_paths` 在继承原进程环境的同时固定 `GIT_OPTIONAL_LOCKS=0`，因此 audit 仍读取相同 index/worktree 状态，但不再由 `git status` 刷新 index。新增命令环境契约、并发 writer、精确 exclusion 回归为 `3 passed`，checkout-guard 整文件与 task-count ratchet 为 `22 passed`，Ruff PASS。上方正式门禁与 SHA equality 勾选只在 transaction `devx-011c-checkout-git-status-concurrency-20260831-v4` 的四层 formal、parent-bound Full、普通推送及 released receipt 全部 PASS 时成立；任一失败继续 fail closed，不能引用聚焦测试替代。
+- 2026-08-31：DEVX-011C v4 在 candidate commit 前的历史冻结聚焦测试 fail closed：`_latest_active_source_mismatches` 正确识别 `src/ai_trading_system/platform/architecture/checkout_guard.py` 与 `tests/test_arch_005_s4d_checkout_guard.py` 尚未由 DEVX-011 current section 接管。v4 已失败释放且未扩大锁定 claims；DEVX-011D 使用新事务显式声明 `compatibility_authority.py`，把这两个实际修改路径及 DEVX-011C/011D canonical task fragments 纳入 append-only current authority，再重跑同一历史契约。上方两项验收恢复为未完成，直到 v5 formal、Full、push 与 receipt 全部 PASS。
+- 2026-08-31：DEVX-011D source ownership 修正后的历史 frozen baseline、DEVX-011 latest authority、两项跨版本 source audit、checkout-guard 整文件及 1040-task ratchet 合计 `26 passed`，Ruff PASS。上方两项验收勾选仅在 transaction `devx-011d-checkout-compatibility-closeout-20260831-v5` 的正式四层门禁、以 `full_20260830T212818Z` 为 parent 的 Full、普通推送、SHA equality 与 released receipt 全部 PASS 时成立；任一失败由新 successor 承接。

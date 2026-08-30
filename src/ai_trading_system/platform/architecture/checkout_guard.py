@@ -1198,6 +1198,10 @@ def collect_checkout_dirty_paths(
     exclusions: Sequence[str],
 ) -> tuple[str, ...]:
     root = project_root.resolve()
+    git_environment = os.environ.copy()
+    # A dirty-path audit is read-only. Prevent `git status` from refreshing the
+    # index, which can transiently deny concurrent readers on Windows.
+    git_environment["GIT_OPTIONAL_LOCKS"] = "0"
     args = [
         "status",
         "--porcelain=v1",
@@ -1214,6 +1218,7 @@ def collect_checkout_dirty_paths(
             cwd=root,
             check=False,
             capture_output=True,
+            env=git_environment,
         )
     except OSError as exc:
         raise CheckoutGuardError("CHECKOUT_GIT_STATUS_EXECUTION", str(exc)) from exc

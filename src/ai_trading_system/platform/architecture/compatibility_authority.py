@@ -1945,14 +1945,24 @@ def _devx_011_section(
                 "registry/development_tasks/9a/"
                 "9ad46a4d8119b53fb50453cbba1eb662766972e40253230d50ddd24b18824456.yaml"
             ),
+            (
+                "registry/development_tasks/9b/"
+                "9b5b97b624376702351d03e57e6ec2a0003742fa336920c87ffe862ea8e2d051.yaml"
+            ),
+            (
+                "registry/development_tasks/eb/"
+                "eb173d62a0fb99025f71cfd1eb155b45b1d388accaf681c4afc1645c68de6a2c.yaml"
+            ),
             "src/ai_trading_system/cli_commands/reports.py",
             "src/ai_trading_system/cli_commands/workflow_health_reports.py",
+            "src/ai_trading_system/platform/architecture/checkout_guard.py",
             "src/ai_trading_system/platform/architecture/compatibility_authority.py",
             "src/ai_trading_system/reports/workflow_health.py",
             "tests/test_arch_004_refactor_policy.py",
             "tests/test_arch_004f1_operations_control_plane.py",
             "tests/test_arch_004f3_reporting_architecture.py",
             "tests/test_arch_004g_deprecation.py",
+            "tests/test_arch_005_s4d_checkout_guard.py",
             "tests/test_arch_005_s5_task_source_cutover.py",
             "tests/test_devx_006c_compatibility_authority.py",
             "tests/test_devx_006d_report_catalog_flow_authority.py",

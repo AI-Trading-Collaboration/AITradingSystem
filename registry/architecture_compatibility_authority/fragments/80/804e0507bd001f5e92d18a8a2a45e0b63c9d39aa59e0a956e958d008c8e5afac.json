@@ -77,12 +77,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "75ec8c45059725c18d4bbcbe92451872ca10485ee4166d16a954591f2a205a2c"
+        "sha256": "8661fc751afd61c00d89ef4535722f60745180d7040168d424d1a6d1beca7222"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "b7a8ea4bcefdaf33e274a411ea843d40e3d91efcbc2c29796822f8c9e3aa3bff"
+        "sha256": "b6d6f884358d48c8c756068e22928102a8f39c6a1a5a5100a2c2b38d683b40a1"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -92,7 +92,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "05e2577f4037e71b08d37b07ef803f62c73052f382550138eb987860c294803c"
+        "sha256": "15097886f882075f2f6fe9d66e1ce739e2bf3ffc15c5b237bc0757e4502c0b45"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -107,7 +107,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
-        "sha256": "9e8d888c4766f71b3cab115edc1de711288fc4eac9ba4804547ece752002224c"
+        "sha256": "65d74f9e1c78e7a1e93ba1c562be614e9f288baead6f36aa2e5e8fd1e7f36f8c"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -152,7 +152,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_005_s5_task_source_cutover.py",
-        "sha256": "f1aaaa8a9e8fc2aff8b0512b9186c8e4f430f8e7ca6eb495cd9aeacb723d2d53"
+        "sha256": "c24e9139306d6756b6558de294632bca325df2139ac4b5fa2bdd49db1a4111c4"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -223,5 +223,5 @@
     "task_id": "TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1"
   },
   "section_id": "phase_trading_2542c_growth_action_value_independent_review_remediation_and_freeze_readiness_v1",
-  "section_sha256": "181290900c23fc24cd05cb84dae2aff412dd82038367ec8ba239dfb0290815e2"
+  "section_sha256": "804e0507bd001f5e92d18a8a2a45e0b63c9d39aa59e0a956e958d008c8e5afac"
 }

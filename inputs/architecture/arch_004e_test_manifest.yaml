@@ -8634,7 +8634,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s4d_checkout_guard
   path: tests/test_arch_005_s4d_checkout_guard.py
-  sha256: 5c563c9f242bcfd5ae19ae958c058b5b5d3bd02bda34e60d2daecafd70f4544c
+  sha256: 42481b8f5b2002f7dae6384924024f76198de8450a22a8c16d2aaf453d234e40
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -8682,7 +8682,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s5_task_source_cutover
   path: tests/test_arch_005_s5_task_source_cutover.py
-  sha256: f1aaaa8a9e8fc2aff8b0512b9186c8e4f430f8e7ca6eb495cd9aeacb723d2d53
+  sha256: c24e9139306d6756b6558de294632bca325df2139ac4b5fa2bdd49db1a4111c4
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality

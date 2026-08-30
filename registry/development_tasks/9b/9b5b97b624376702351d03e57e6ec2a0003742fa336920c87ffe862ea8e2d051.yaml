@@ -1,0 +1,115 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-011C_WORKFLOW_HEALTH_CHECKOUT_GIT_STATUS_CONCURRENCY_CLOSEOUT
+  task_id_sha256: 9b5b97b624376702351d03e57e6ec2a0003742fa336920c87ffe862ea8e2d051
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-011C_WORKFLOW_HEALTH_CHECKOUT_GIT_STATUS_CONCURRENCY_CLOSEOUT
+  title: null
+  domain: Developer experience / checkout-guard Git status concurrency closeout
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 'Project owner: review weekly workflow-health candidates after four
+    validated observations'
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: No implementation blocker; final completion
+    remains fail-closed on v4 formal tiers, parent-bound Full, ordinary push and release
+    receipt
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: GIT_OPTIONAL_LOCKS=0 on dirty-path audit; checkout guard and command-contract
+      regression PASS; parent-bound failure-fix Full PASS; local main=origin/main=final
+      candidate; production_effect=none
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-011C_WORKFLOW_HEALTH_CHECKOUT_GIT_STATUS_CONCURRENCY_CLOSEOUT
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-30T21:57:00Z'
+  actor: integration-coordinator
+  change_id: devx-011c-checkout-git-status-concurrency-registration-20260831-v1
+  lane_id: null
+  base_commit: 5817839be7a38861bd174b12d9a5abcf0f3e18a2
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-011C_WORKFLOW_HEALTH_CHECKOUT_GIT_STATUS_CONCURRENCY_CLOSEOUT
+    - Developer experience / checkout-guard Git status concurrency closeout
+    - P1
+    - IN_PROGRESS
+    - Codex engineering coordinator：将审计型 Git status 变为无 optional-lock 副作用并完成 Full
+      failure-fix rerun
+    - 详见 `docs/requirements/DEVX-011_Governed_Workflow_Health_Control_Loop_V1.md`。依赖
+      DEVX-011B Full 的单点 Windows `.git/index` permission failure 证据。
+    - '`collect_checkout_dirty_paths` 禁用 optional locks；命令契约与并发回归通过；parent-bound Full
+      PASS；local main=origin/main=final candidate；production_effect=none。'
+    - 2026-08-31：DEVX-011B v3 Full 为 10026 passed / 1 failed / 3 skipped；唯一失败来自临时
+      checkout 的并发 `git status` index 竞态，20 轮聚焦并行复现未再次触发。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-011c-checkout-git-status-concurrency-registration-20260831-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f673606adbaabb149653aeb74c008f61
+- schema_version: task_event.v1
+  task_id: DEVX-011C_WORKFLOW_HEALTH_CHECKOUT_GIT_STATUS_CONCURRENCY_CLOSEOUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T22:03:00Z'
+  actor: integration-coordinator
+  change_id: devx-011c-checkout-git-status-concurrency-closeout-20260831-v1
+  lane_id: null
+  base_commit: 5817839be7a38861bd174b12d9a5abcf0f3e18a2
+  previous_state_event_id: task-event-f673606adbaabb149653aeb74c008f61
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 'Project owner: review weekly workflow-health candidates after four
+      validated observations'
+    blocker_or_next_step: No implementation blocker; final completion remains fail-closed
+      on v4 formal tiers, parent-bound Full, ordinary push and release receipt
+    acceptance_criteria: GIT_OPTIONAL_LOCKS=0 on dirty-path audit; checkout guard
+      and command-contract regression PASS; parent-bound failure-fix Full PASS; local
+      main=origin/main=final candidate; production_effect=none
+    notes: '2026-08-31: DEVX-011B Full 10026 PASS / 1 FAIL / 3 skipped isolated Windows
+      index permission race; 20-round parallel reproduction 0 failures; no-optional-lock
+      implementation plus full checkout-guard file and task-count ratchet 22 PASS;
+      completion is valid only if v4 closes PASS'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-011c-checkout-git-status-concurrency-closeout-20260831-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d6b7eb1228c4bd6897d5ec7c77d3473c
+projection:
+  legacy_first_eight_cells:
+  - DEVX-011C_WORKFLOW_HEALTH_CHECKOUT_GIT_STATUS_CONCURRENCY_CLOSEOUT
+  - Developer experience / checkout-guard Git status concurrency closeout
+  - P1
+  - DONE
+  - 'Project owner: review weekly workflow-health candidates after four validated
+    observations'
+  - No implementation blocker; final completion remains fail-closed on v4 formal tiers,
+    parent-bound Full, ordinary push and release receipt
+  - GIT_OPTIONAL_LOCKS=0 on dirty-path audit; checkout guard and command-contract
+    regression PASS; parent-bound failure-fix Full PASS; local main=origin/main=final
+    candidate; production_effect=none
+  - '2026-08-31: DEVX-011B Full 10026 PASS / 1 FAIL / 3 skipped isolated Windows index
+    permission race; 20-round parallel reproduction 0 failures; no-optional-lock implementation
+    plus full checkout-guard file and task-count ratchet 22 PASS; completion is valid
+    only if v4 closes PASS'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: a1d09936c2b36774e21ed581b7f8cfbc1f5f85c20af0e298bcd73a6c95a0a20c
+last_event_id: task-event-d6b7eb1228c4bd6897d5ec7c77d3473c
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 964e5238537c146664b88232ed185ef79521924a7c01754a06b08b8ea9fd438b

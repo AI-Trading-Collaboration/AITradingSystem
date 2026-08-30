@@ -315,6 +315,27 @@ def test_declared_dirty_mutation_is_attributed_and_unrelated_exact_path_is_exclu
     handle.release(outcome="completed", at=NOW + timedelta(seconds=1))
 
 
+def test_dirty_path_audit_disables_git_optional_locks(
+    git_checkout: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observed_environment: dict[str, str] = {}
+
+    def fake_run(
+        args: list[str],
+        **kwargs: object,
+    ) -> subprocess.CompletedProcess[bytes]:
+        environment = kwargs.get("env")
+        assert isinstance(environment, dict)
+        observed_environment.update(environment)
+        return subprocess.CompletedProcess(args, 0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(checkout_guard_module.subprocess, "run", fake_run)
+
+    assert collect_checkout_dirty_paths(git_checkout, exclusions=()) == ()
+    assert observed_environment["GIT_OPTIONAL_LOCKS"] == "0"
+
+
 def test_worktree_audit_excludes_known_unrelated_from_all_git_checks(
     git_checkout: Path,
 ) -> None:

@@ -15339,7 +15339,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.checkout_guard
   path: src/ai_trading_system/platform/architecture/checkout_guard.py
-  sha256: fc121dfc2a85b84b350e942ef8b4ae47d74a3f0d156e972c3b424f49e4e2561e
+  sha256: 21dc83b213c2a7d50aa5cbc9393fec4c65ea9a40f018c8d9afd5e46afbd290a1
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -15431,7 +15431,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.compatibility_authority
   path: src/ai_trading_system/platform/architecture/compatibility_authority.py
-  sha256: 9e8d888c4766f71b3cab115edc1de711288fc4eac9ba4804547ece752002224c
+  sha256: 65d74f9e1c78e7a1e93ba1c562be614e9f288baead6f36aa2e5e8fd1e7f36f8c
   rule_id: platform_architecture
   owner_profile: platform
   owners:
