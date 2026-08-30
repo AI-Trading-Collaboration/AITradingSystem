@@ -1,0 +1,125 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-009B_REPORT_FLOW_SEAL_ASSERTION_FAILURE_FIX_V1
+  task_id_sha256: 4bcf29f6be666fa4c13d6182171f5d0d975828deb80893560049daf704ac9476
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-009B_REPORT_FLOW_SEAL_ASSERTION_FAILURE_FIX_V1
+  title: null
+  domain: Report-flow reviewed seal assertion failure-fix V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex architecture validation coordinator / complete parent-bound Full
+    rerun and publication; then Project Owner may discuss a separate trend-to-options
+    strategy task
+  requirement_refs:
+  - docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: No remaining assertion implementation
+    blocker. Rebuild shared authorities, form the failure-fix candidate, render Atlas
+    from its exact SHA, and require one parent-bound Full PASS before publication.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: The 24-test focused reproduction passes; authority asserts 3094/a00bf713.../1165
+      and task count 1034; a new candidate passes failure_fix_rerun Full bound to
+      the failed parent artifact; production/broker/external action remain none.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-009B_REPORT_FLOW_SEAL_ASSERTION_FAILURE_FIX_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-30T07:41:26.2428179Z'
+  actor: integration-coordinator
+  change_id: devx-009b-report-flow-seal-register-20260830-v1
+  lane_id: null
+  base_commit: ebb5bb5fce2ef058ed9c70f2ba2f94b5cfd7310e
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-009B_REPORT_FLOW_SEAL_ASSERTION_FAILURE_FIX_V1
+    - Report-flow reviewed seal assertion failure-fix V1
+    - P0
+    - IN_PROGRESS
+    - Codex architecture validation coordinator
+    - 同步 Full 暴露的三个旧 report-flow seal 测试常量并运行 parent-bound failure-fix validation；不修改已审阅
+      source bytes 或研究逻辑。
+    - Exact tests assert aggregate entries=3094、system-flow SHA=a00bf713…、block count=1165，canonical
+      task count 同步；focused reproduction PASS，new candidate Full PASS with parent
+      artifact；production/broker/external action=none。
+    - 'Supporting requirement: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md.
+      Parent Full: outputs/validation_runtime/full_20260830T071030Z/test_runtime_summary.json.
+      Narrow assertion-only failure fix.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-009b-report-flow-seal-register-20260830-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0c2b1d4f6c97d96614cc49144ef985e3
+- schema_version: task_event.v1
+  task_id: DEVX-009B_REPORT_FLOW_SEAL_ASSERTION_FAILURE_FIX_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T07:45:11.6997882Z'
+  actor: integration-coordinator
+  change_id: devx-009b-report-flow-seal-complete-20260830-v1
+  lane_id: null
+  base_commit: ebb5bb5fce2ef058ed9c70f2ba2f94b5cfd7310e
+  previous_state_event_id: task-event-0c2b1d4f6c97d96614cc49144ef985e3
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Codex architecture validation coordinator / complete parent-bound
+      Full rerun and publication; then Project Owner may discuss a separate trend-to-options
+      strategy task
+    blocker_or_next_step: No remaining assertion implementation blocker. Rebuild shared
+      authorities, form the failure-fix candidate, render Atlas from its exact SHA,
+      and require one parent-bound Full PASS before publication.
+    acceptance_criteria: The 24-test focused reproduction passes; authority asserts
+      3094/a00bf713.../1165 and task count 1034; a new candidate passes failure_fix_rerun
+      Full bound to the failed parent artifact; production/broker/external action
+      remain none.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md.
+      Parent Full c97b4060... recorded 9959 passed/3 failed/3 skipped; all three failures
+      were stale reviewed-seal assertions. Focused parallel reproduction after exact
+      assertion fix: 24 passed. No system-flow, business, Atlas or external action
+      change.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-009b-report-flow-seal-complete-20260830-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fb5b75079df6de63e77d4f403722c40c
+projection:
+  legacy_first_eight_cells:
+  - DEVX-009B_REPORT_FLOW_SEAL_ASSERTION_FAILURE_FIX_V1
+  - Report-flow reviewed seal assertion failure-fix V1
+  - P0
+  - DONE
+  - Codex architecture validation coordinator / complete parent-bound Full rerun and
+    publication; then Project Owner may discuss a separate trend-to-options strategy
+    task
+  - No remaining assertion implementation blocker. Rebuild shared authorities, form
+    the failure-fix candidate, render Atlas from its exact SHA, and require one parent-bound
+    Full PASS before publication.
+  - The 24-test focused reproduction passes; authority asserts 3094/a00bf713.../1165
+    and task count 1034; a new candidate passes failure_fix_rerun Full bound to the
+    failed parent artifact; production/broker/external action remain none.
+  - 'Supporting requirement: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md.
+    Parent Full c97b4060... recorded 9959 passed/3 failed/3 skipped; all three failures
+    were stale reviewed-seal assertions. Focused parallel reproduction after exact
+    assertion fix: 24 passed. No system-flow, business, Atlas or external action change.'
+  docs_links:
+  - docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md
+  terminal: true
+  canonical_row_sha256: 9220cb8286c2d295c8ca4954159a31d0c9767799babd95c742cbf7e26289ebce
+last_event_id: task-event-fb5b75079df6de63e77d4f403722c40c
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: d854d405289ba7c7fadbf339c234093cf2b4c72e1874c86358f8ebe48d48dfe9

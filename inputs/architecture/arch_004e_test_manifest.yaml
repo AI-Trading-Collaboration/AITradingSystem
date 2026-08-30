@@ -8682,7 +8682,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s5_task_source_cutover
   path: tests/test_arch_005_s5_task_source_cutover.py
-  sha256: 67967ed9624fe597e2cd872ab764e3eb3b893c66eca0ddd5cda0d50f6bd84966
+  sha256: 59fbca4fdf772fb4d9a2378c5da5e88cee900a9beb2efdd9912e40529deb1fc4
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -10410,7 +10410,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 49aa9a458ede06d514de5ae8302a6f44d5941fc019941231c48e1c44c61ba0a9
+  sha256: 3f4f804ba7ffb2d73863eb6c2d0e4a87b1a58e40dc23fcd5ec21f811b2713e47
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

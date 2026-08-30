@@ -179,3 +179,12 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   compatibility tracked generators 均 `PASS`，并完成 `GENERATED_REBUILD_POST`。Atlas generator 的可审计
   执行点明确放在 candidate commit 之后，因为其合同要求所有 page source（包括 terminal task index）已经
   精确提交；这不是跳过 generator，而是把 ignored page/sidecars 绑定到即将形成的 final candidate SHA。
+- 2026-08-30：candidate `ebb5bb5fce2ef058ed9c70f2ba2f94b5cfd7310e` 的分层正式验证全部 PASS：
+  Architecture=`878 passed`、Contract=`278 passed`、Integration=`995 passed`、Reproducibility=`24 passed`；
+  exact-candidate Atlas focused=`57 passed`。唯一 Full 运行
+  `outputs/validation_runtime/full_20260830T071030Z/test_runtime_summary.json` 为
+  `9959 passed / 3 failed / 3 skipped`。三项失败均为同一 reviewed report-flow seal 的旧测试常量：总 entry
+  仍断言 3092、system-flow SHA 仍为 677884…、block count 仍为 1163，而 generator/authority 已正确为
+  3094 / a00bf7… / 1165；无产品逻辑、Atlas、期权结果或安全边界失败。失败 transaction 已保留并释放。
+  DEVX-009B failure-fix 只同步这三个冻结断言与 canonical task count，并以该失败 Full 作为 parent；不得
+  修改 system-flow bytes、研究语义或外部权限。

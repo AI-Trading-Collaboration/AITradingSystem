@@ -122,7 +122,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register_completed.md",
-        "sha256": "23924546c71e64a252374ed16b315cda5138e91511e3b6fbc4945059b1d58d9b"
+        "sha256": "2ab0ee72005ed1f85549fe8fd1bd7777f7b2bc66f4275ce7d5b13e5bea6c96f7"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -142,7 +142,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "06d1faf7117b5643188652bba4aef1b893f14d99e30b992e98aba481a9d17d98"
+        "sha256": "675eb320d9f5e73232c1e60e3f43f2db81a32f0ed17d8809e2cb06991e7b5f93"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -157,7 +157,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "675d030d132c0cbbbed77061fde33da8283e21726e33001e4a3273f318d3220c"
+        "sha256": "571ca91b6a591c7a78a680ca4b07c5edb0aca38b3ff140a6211677db4b982e2f"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -237,7 +237,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_005_s5_task_source_cutover.py",
-        "sha256": "67967ed9624fe597e2cd872ab764e3eb3b893c66eca0ddd5cda0d50f6bd84966"
+        "sha256": "59fbca4fdf772fb4d9a2378c5da5e88cee900a9beb2efdd9912e40529deb1fc4"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -247,7 +247,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "49aa9a458ede06d514de5ae8302a6f44d5941fc019941231c48e1c44c61ba0a9"
+        "sha256": "3f4f804ba7ffb2d73863eb6c2d0e4a87b1a58e40dc23fcd5ec21f811b2713e47"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -387,5 +387,5 @@
     "task_id": "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1"
   },
   "section_id": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1",
-  "section_sha256": "ddfd151e69b61296f1481bbf20fed038f2beedf8bf0eab20db45120fdd5cf81e"
+  "section_sha256": "53803bb4860ea85aed81900386409be6c53119303078c785d8c1b093c0ce5dde"
 }
