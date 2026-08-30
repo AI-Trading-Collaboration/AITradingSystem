@@ -765,6 +765,30 @@ def build_repository_authority(
                 trading_2542d_fragment_bytes,
             )
         )
+    prod_004_requirement_path = (
+        root / "docs/requirements/PROD-004_PIT_Cumulative_Archive_Consumption.md"
+    )
+    if prod_004_requirement_path.exists():
+        prod_004_section_id, prod_004_section = _prod_004_section(
+            root,
+            policy=policy,
+        )
+        (
+            prod_004_relative,
+            prod_004_record,
+            prod_004_fragment_bytes,
+        ) = render_fragment(
+            section_id=prod_004_section_id,
+            section=prod_004_section,
+        )
+        rendered_fragments.append(
+            (
+                prod_004_section_id,
+                prod_004_relative,
+                prod_004_record,
+                prod_004_fragment_bytes,
+            )
+        )
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -1738,6 +1762,119 @@ def _trading_2542d_section(
             "non_executable_pilot_values_freeze_ready": True,
             "real_dq_or_empirical_run_authorized": False,
             "owner_exact_freeze_approval_required": True,
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _prod_004_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_prod_004_pit_cumulative_archive_consumption_v1"
+    source_paths = [
+        "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+        "docs/artifact_catalog.md",
+        "docs/operations/operations_runbook.md",
+        "docs/requirements/PROD-004_PIT_Cumulative_Archive_Consumption.md",
+        "docs/runbook_daily_ops.md",
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "inputs/architecture/arch_005_task_registry_index.yaml",
+        "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+        (
+            "registry/development_tasks/09/"
+            "09c1c512d95624d2f7900d3d5afdef258c36c149419f762eaa3b460d9553c435.yaml"
+        ),
+        "src/ai_trading_system/cli_commands/backtest.py",
+        "src/ai_trading_system/cli_commands/pit_snapshots.py",
+        "src/ai_trading_system/cli_commands/valuation.py",
+        "src/ai_trading_system/cli_direct.py",
+        "src/ai_trading_system/daily_input_capture.py",
+        "src/ai_trading_system/pit_snapshots.py",
+        "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "src/ai_trading_system/valuation_sources.py",
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_backtest.py",
+        "tests/test_cli_direct.py",
+        "tests/test_daily_input_capture.py",
+        "tests/test_devx_006c_compatibility_authority.py",
+        "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "tests/test_pit_snapshots.py",
+        "tests/test_valuation_sources.py",
+    ]
+    source_paths = sorted(source_paths, key=str.casefold)
+    report_flow_index_path = (
+        "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json"
+    )
+    report_flow_index_content = _regular_path(
+        root,
+        report_flow_index_path,
+        "prod_004.report_flow_index",
+    ).read_bytes()
+    report_flow_index = _strict_json_bytes(
+        report_flow_index_content,
+        report_flow_index_path,
+    )
+    raw_report_flow_targets = report_flow_index.get("targets")
+    if not isinstance(raw_report_flow_targets, list) or not raw_report_flow_targets:
+        _fail("AUTHORITY_PROD_004_REPORT_FLOW_TARGETS_INVALID", report_flow_index_path)
+    report_flow_targets = [
+        _mapping(target, f"prod_004.report_flow_targets[{position}]")
+        for position, target in enumerate(raw_report_flow_targets)
+    ]
+    return section_id, {
+        "schema_version": "prod_004_pit_cumulative_archive_consumption.v1",
+        "task_id": "PROD-004",
+        "status": "VALIDATING",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_trading_2542d_growth_action_value_dq_pit_and_sample_"
+                "semantics_freeze_correction_v1"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "pit_consumption_contract": {
+            "primary_research_start": "2021-02-22",
+            "default_manifest_mode": "CUMULATIVE_ARCHIVE_DISCOVERY",
+            "explicit_manifest_compatibility_preserved": True,
+            "daily_capture_date_directories_must_be_iso": True,
+            "conflicting_snapshot_id_fails_closed": True,
+            "valuation_history_recursive_pattern_restricted": True,
+            "duplicate_valuation_snapshot_id_fails_closed": True,
+            "strict_pit_grade_a_inferred": False,
+        },
+        "report_catalog_flow_successor": {
+            "source_of_truth": report_flow_index["source_of_truth"],
+            "fragment_shadow_active": False,
+            "index_path": report_flow_index_path,
+            "index_sha256": _digest(report_flow_index_content),
+            "target_count": len(report_flow_targets),
+            "entry_count": sum(
+                _positive_or_zero_int(target.get("entry_count"), "prod_004.entry_count")
+                for target in report_flow_targets
+            ),
+            "fragment_count": sum(
+                _positive_or_zero_int(
+                    target.get("fragment_count"),
+                    "prod_004.fragment_count",
+                )
+                for target in report_flow_targets
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "safety": {
+            "historical_pit_backfill_performed": False,
+            "provider_request_performed": False,
+            "operations_runtime_promoted": False,
+            "production_effect": "none",
+            "broker_action": "none",
         },
         "production_effect": "none",
         "broker_action": "none",

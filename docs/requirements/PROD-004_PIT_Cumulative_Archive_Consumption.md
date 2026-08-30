@@ -105,7 +105,7 @@ source catalog、payload 存在性、checksum、字节数、row count、日期�
 - task branch：`codex/prod-004-pit-cumulative-consumption`；
 - 本任务复用主 checkout，不创建临时 worktree、clone 或外部 cache；
 - publication transaction：
-  `prod-004-pit-cumulative-consumption-20260831-v2`；
+  `prod-004-pit-cumulative-consumption-20260831-v4`；
 - 完成条件：candidate 通过正式验证，local `main` fast-forward，普通 push 后
   `local main = origin/main = candidate`，publication lease 正常释放；若 remote diverge、
   非 fast-forward 或出现未归属变更则停止。
@@ -126,3 +126,13 @@ source catalog、payload 存在性、checksum、字节数、row count、日期�
   文件，v1 以 FAILED 释放 lease。v2 增加
   `tests/test_devx_006d_report_catalog_flow_authority.py` 后重新 acquire，作为本次唯一继续发布
   transaction；没有复用失败测试作为 PASS evidence。
+- 2026-08-31：v2 的 `architecture-fitness` 发现 3 个既有 PIT 接口文件发生了受控变更，
+  但 compatibility authority 尚未追加 PROD-004 接管节，导致 116 个历史 current-hash
+  权威断言连锁失败；业务测试没有失败。v2 连同该正式失败 artifact 以 FAILED 释放 lease，
+  未把失败结果重解释为 PASS。v3 增加 compatibility generator、index/fragment 与 contract
+  test 声明范围，追加 `phase_prod_004_pit_cumulative_archive_consumption_v1` 后从新候选重跑。
+- 2026-08-31：v3 在 source-seal 检查与 compatibility build 并行调度时，build 先于
+  `GENERATED_REBUILD_PRE` checkpoint 写入已声明 generated 路径。不存在路径越权，但阶段
+  顺序不合规，因此 v3 以 FAILED 释放 lease，并把生成索引作为事故证据；该次输出不作为
+  发布 PASS evidence。v4 复用同一候选与已声明范围，从 `TASK_SOURCE_PRE_WRITE` 开始严格串行
+  执行 checkpoint、三类 generated authority rebuild 与正式验证。

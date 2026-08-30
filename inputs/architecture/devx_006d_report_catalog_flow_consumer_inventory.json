@@ -111,11 +111,11 @@
           "target_path": "config/report_registry.yaml"
         },
         {
-          "literal_count": 3,
+          "literal_count": 4,
           "target_path": "docs/artifact_catalog.md"
         },
         {
-          "literal_count": 5,
+          "literal_count": 6,
           "target_path": "docs/system_flow.md"
         }
       ],

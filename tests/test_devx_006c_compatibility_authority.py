@@ -34,6 +34,7 @@ DEVX_009_SECTION = (
 TRADING_2542D_SECTION = (
     "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1"
 )
+PROD_004_SECTION = "phase_prod_004_pit_cumulative_archive_consumption_v1"
 
 
 def _write_fixture_authority(
@@ -138,11 +139,11 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 313
+    assert len(merged) == 314
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == TRADING_2542D_SECTION
+    assert next(reversed(merged)) == PROD_004_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
@@ -180,6 +181,16 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
         "expected_nonempty_zero_observed_terminal": "INVALID",
         "right_censor_after_transitive_cluster_merge": True,
         "cost_reconciliation_session_keyed": True,
+    }
+    assert merged[PROD_004_SECTION]["pit_consumption_contract"] == {
+        "primary_research_start": "2021-02-22",
+        "default_manifest_mode": "CUMULATIVE_ARCHIVE_DISCOVERY",
+        "explicit_manifest_compatibility_preserved": True,
+        "daily_capture_date_directories_must_be_iso": True,
+        "conflicting_snapshot_id_fails_closed": True,
+        "valuation_history_recursive_pattern_restricted": True,
+        "duplicate_valuation_snapshot_id_fails_closed": True,
+        "strict_pit_grade_a_inferred": False,
     }
     assert merged[DEVX_006C_SECTION]["authority_contract"] == {
         "dual_write": False,

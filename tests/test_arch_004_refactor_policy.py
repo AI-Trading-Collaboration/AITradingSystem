@@ -3892,7 +3892,10 @@ TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION = (
     "phase_trading_2542d_growth_action_value_dq_pit_and_sample_"
     "semantics_freeze_correction_v1"
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION
+PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION = (
+    "phase_prod_004_pit_cumulative_archive_consumption_v1"
+)
+LATEST_COMPATIBILITY_SECTION = PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -13058,6 +13061,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         DEVX_007_V2_SECTION,
         DEVX_009_PUBLICATION_FENCE_SECTION,
         TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION,
+        PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13148,6 +13152,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         DEVX_007_V2_SECTION,
         DEVX_009_PUBLICATION_FENCE_SECTION,
         TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION,
+        PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -14088,7 +14093,31 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION in baseline:
+    if PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION in baseline:
+        phase = baseline[PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION]
+        current_superseded_paths = frozenset(
+            str(path) for path in phase["superseded_live_source_paths"]
+        )
+        assert (
+            _latest_active_source_mismatches(PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION)
+            <= current_superseded_paths
+        )
+        inherited_superseded_paths = frozenset(
+            str(path)
+            for section in (
+                DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION,
+                DEVX_009_PUBLICATION_FENCE_SECTION,
+                TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION,
+            )
+            for path in baseline[section]["superseded_live_source_paths"]
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2504_qqq_options_owner_decision_manifest_all_current_authority_paths()
+            | inherited_superseded_paths
+            | current_superseded_paths
+        )
+        authority_section = PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION
+    elif TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION in baseline:
         phase = baseline[TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION]
         current_superseded_paths = frozenset(
             str(path) for path in phase["superseded_live_source_paths"]
@@ -24318,7 +24347,7 @@ def test_devx_007_v2_has_trading_2542c_and_devx_009_successor_authority() -> Non
     assert list(baseline).index(TRADING_2542C_REVIEW_REMEDIATION_SECTION) < list(
         baseline
     ).index(DEVX_009_PUBLICATION_FENCE_SECTION)
-    assert next(reversed(baseline)) == TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION
+    assert next(reversed(baseline)) == PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION
     phase = baseline[DEVX_007_V2_SECTION]
     assert phase["schema_version"] == (
         "devx_007_web_pro_git_review_skill_explicit_submission.v2"
@@ -24397,6 +24426,57 @@ def test_devx_009_is_latest_append_only_publication_authority() -> None:
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
         assert _source_sha256(source) == source["sha256"], source["path"]
+    assert phase["production_effect"] == "none"
+    assert phase["broker_action"] == "none"
+
+
+def test_prod_004_is_latest_cumulative_pit_consumption_authority() -> None:
+    baseline = _compatibility_baseline()
+    assert list(baseline).index(TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION) < list(
+        baseline
+    ).index(PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION)
+    assert next(reversed(baseline)) == PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION
+    phase = baseline[PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION]
+
+    assert phase["schema_version"] == "prod_004_pit_cumulative_archive_consumption.v1"
+    assert phase["task_id"] == "PROD-004"
+    assert phase["status"] == "VALIDATING"
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (
+            TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION
+        ),
+        "current_hash_authority": (
+            f"{PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION}.sources"
+        ),
+    }
+    assert phase["pit_consumption_contract"] == {
+        "primary_research_start": "2021-02-22",
+        "default_manifest_mode": "CUMULATIVE_ARCHIVE_DISCOVERY",
+        "explicit_manifest_compatibility_preserved": True,
+        "daily_capture_date_directories_must_be_iso": True,
+        "conflicting_snapshot_id_fails_closed": True,
+        "valuation_history_recursive_pattern_restricted": True,
+        "duplicate_valuation_snapshot_id_fails_closed": True,
+        "strict_pit_grade_a_inferred": False,
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert set(source_paths) == set(phase["superseded_live_source_paths"])
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["report_catalog_flow_successor"]["current_hash_authority"] == (
+        f"{PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION}.sources"
+    )
+    assert phase["safety"] == {
+        "historical_pit_backfill_performed": False,
+        "provider_request_performed": False,
+        "operations_runtime_promoted": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
     assert phase["production_effect"] == "none"
     assert phase["broker_action"] == "none"
 

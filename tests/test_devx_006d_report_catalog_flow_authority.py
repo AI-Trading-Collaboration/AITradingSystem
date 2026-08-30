@@ -146,15 +146,11 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     merged = load_compatibility_authority()
     section = merged["phase_devx_006d_report_catalog_flow_lossless_fragmentation"]
     fragment_authority = section["report_catalog_flow_fragment_authority"]
-    successor = merged[
-        "phase_trading_2542d_growth_action_value_dq_pit_and_sample_"
-        "semantics_freeze_correction_v1"
-    ]["report_catalog_flow_successor"]
+    successor = merged["phase_prod_004_pit_cumulative_archive_consumption_v1"][
+        "report_catalog_flow_successor"
+    ]
 
-    assert next(reversed(merged)) == (
-        "phase_trading_2542d_growth_action_value_dq_pit_and_sample_"
-        "semantics_freeze_correction_v1"
-    )
+    assert next(reversed(merged)) == "phase_prod_004_pit_cumulative_archive_consumption_v1"
     assert fragment_authority["source_of_truth"] == "LEGACY_MONOLITH"
     assert fragment_authority["fragment_shadow_active"] is False
     assert fragment_authority["target_count"] == 3
