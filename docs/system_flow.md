@@ -306,18 +306,23 @@ terminology policy SHA-256，并逐条保存 normalized surface、DOM locator、
 中文目的、动作与边界；新 HTML 的 Owner visual 与 reader comprehension 均为 `PENDING_REVIEW`，自动化
 不得代签。2522 已完成唯一 v4 Cloud run，但所有 chain session 被组合 transport gate 拒绝，当前仍无
 DQ/PIT-admitted 策略证据；2528 已实现严格离线 per-axis 诊断合同，只确认 chain presence，其他轴保持
-`NOT_EVALUATED`，组合根因保持 unresolved。2524--2527-A 已在同一受治理候选中形成
-可重放的读者投影链：`reader_projection_contract.v1` 冻结 `PROBLEM -> CONSTRAINT -> CHOICE -> EVIDENCE ->
-RESULT -> NEXT_STEP` 的 source-bound why-first 因果链、六问到五个 cited-query 问题的 typed mapping 与
-`READER_DEFAULT / RESEARCH_DRILLDOWN / AUDIT_STRATUM` 信息层级；`reader_state_semantics.v2` 将状态限定到
-具体对象，并并列研究状态、证据评估与页面来源 commit 日期、snapshot change、下一合法动作和禁止推断。renderer 按九段合同
-先展示为什么、问题、变化与结论边界，再由单层 research drilldown 承载八阶段流程、QQQ 投影和结果账本；
-术语首次出现提供 hover/focus/tap 共享短定义与完整定义链接，重复出现不增加 tab stop。最终 HTML 写入前
-`reader_accessibility_validation.v1` 对 DOM 顺序、标题、无嵌套 disclosure、术语描述目标和卡片预算
-fail closed，并将 exact HTML hash 写入 sidecar。`reader_comprehension_protocol.v1` 只准备场景、事实问题与
-记录结构；Owner 尚未批准样本、阈值、critical-error 和 reviewer policy，真实 pilot 尚未执行，因此
-Owner visual 与 reader comprehension 均保持 `PENDING_REVIEW`。该链不改变研究窗口、DQ/PIT、策略结论、
-engine、order、production 或 broker 权限，也不自动签署人工验收。
+`NOT_EVALUATED`，组合根因保持 unresolved。2524--2527-A 已在同一受治理候选中形成可重放的读者投影基础：
+`PROBLEM -> CONSTRAINT -> CHOICE -> EVIDENCE -> RESULT -> NEXT_STEP` source-bound 因果链、六问到五个
+cited-query 问题的 typed mapping、对象化状态、三类日期语义、单层 disclosure 和 accessibility gate 均保留。
+
+TRADING-2549 在 task register 与 Atlas renderer 之上新增单一
+`evidence_first_research_portfolio.v1` 调度权威。它冻结当前 primary evidence question、七级证据阶梯、
+`EMPIRICAL_EVIDENCE / DIRECT_EXPERIMENT_ENABLER / MANDATORY_CORRECTNESS` 三类 P0 admission、phase switch、
+stop/successor 与 reopen 条件；工程 blocker 解除后必须把下一 P0 交还 empirical experiment，页面或便利性
+工作默认不得继续占用 P0。Atlas `reader_projection_contract` 升级为 evidence-first Entry V2：L0 只显示紧凑
+时效/安全条以及研究问题、当前 verdict、证据阶梯、下一实验、停止条件和禁止推断；既有 why-first chain、
+五个 cited-query 问题、snapshot change、三轴验收、flow、QQQ projection 和 result ledger 全部进入一个默认
+关闭的“研究细节”入口，task/hash/receipt/manifest/完整账本只从独立 audit 入口到达。最终 HTML 写入前，
+`reader_accessibility_validation.v1` 仍对九段 DOM 顺序、唯一 h1、无嵌套 disclosure、术语描述目标和卡片预算
+fail closed，并将 exact HTML hash 写入 sidecar。`reader_comprehension_protocol.v1` 的人工样本、阈值、
+critical-error 与 reviewer policy 仍未由 Owner 批准，因此新页面的 Owner visual 与 reader comprehension
+保持 `PENDING_REVIEW`。该波不运行经验研究，不改变 research window、DQ/PIT、既有结果、engine、order、
+production 或 broker 权限，也不自动签署人工验收。
 
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
@@ -383,7 +388,8 @@ flowchart LR
     OAUTH["TRADING-2501 Owner-accepted review authority<br/>A/B/C layers + 13 exact source receipts"] --> OPROJ["TRADING-2503 QQQ Options projection<br/>4 reader groups / 5 status layers / aggregate NO-GO"]
     OPROJ --> OVAL["Independent source + policy validation<br/>2492 order / 2493 dominance / no strategy PASS"]
     OVAL --> XRENDER
-    RCONTRACT["TRADING-2524 reader projection contract<br/>why-first chain + 9 sections + L0/L1/audit"] --> XRENDER
+    PORT["TRADING-2549 evidence-first portfolio<br/>primary question + ladder + P0 phase switch"] --> RCONTRACT["Reader Entry V2 contract<br/>compact L0 + one closed L1 + audit"]
+    RCONTRACT --> XRENDER
     RSTATE["TRADING-2525 object-qualified state semantics<br/>dates + change + next action + prohibited inference"] --> XRENDER
     TPROFILE["TRADING-2523 reader profile + terminology authority<br/>unique classes / explicit aliases / plain Chinese"] --> TINV["Full rendered-text inventory<br/>visible + disclosure + ARIA/title + audit raw IDs"]
     XRENDER --> TINV
@@ -391,6 +397,7 @@ flowchart LR
     A11Y --> XART["Deterministic static page + live snapshot/diff JSON artifacts<br/>technical authority folded under audit disclosure"]
     CPROTO["TRADING-2527 comprehension protocol<br/>Owner policy slots remain PENDING"] --> REVIEWS
     TASKREG["ARCH-005 S5 canonical task registry<br/>reviewed task set + requirement refs + last events"] --> EFF["TRADING-2505/2523B/2543/2545 page effectiveness v3<br/>live source + rendered decision semantics + visual + reader layers"]
+    TASKREG --> PORT
     XART --> EFF
     RDEC --> EFF
     EFF --> BVIS["Loopback HTTP + Playwright<br/>desktop / tablet / mobile / accessibility / DOM / screenshots"]

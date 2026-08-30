@@ -138,7 +138,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     html = render_cited_query_html(showcase)
     rendered_text = unescape(re.sub(r"<[^>]+>", "", html)).replace("完整定义", "")
     for expected in (
-        "这项策略研究为什么还不能继续",
+        "冻结的第一层五态组合信号",
         "在这个整体上下文下，本次研究为什么按现在的顺序推进",
         "我们真正要回答什么",
         "为什么选择当前研究路径",
@@ -296,7 +296,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="78"' in html
+    assert 'data-task-coverage-count="80"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html
@@ -598,7 +598,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert "<iframe" not in html
 
 
-def test_renderer_follows_why_first_section_and_term_interaction_contract() -> None:
+def test_renderer_follows_evidence_first_reader_entry_contract() -> None:
     showcase = _showcase()
     html = render_cited_query_html(showcase)
     expected_order = tuple(item.value for item in ReaderSectionId)
@@ -612,16 +612,24 @@ def test_renderer_follows_why_first_section_and_term_interaction_contract() -> N
     assert html.index('data-reader-section="WHY_CONTEXT"') < html.index(
         'id="reader-terminology-guide"'
     )
+    gateway = html.index('class="research-details-gateway"')
+    hidden_body = html.index('id="research-drilldown-body"')
+    assert html.index('data-reader-section="WHY_CONTEXT"') < gateway < hidden_body
+    for section_id in expected_order[2:-1]:
+        assert hidden_body < html.index(f'data-reader-section="{section_id}"')
+    assert html.index('data-reader-section="AUDIT_DESTINATIONS"') > html.index(
+        'data-reader-section="RESEARCH_DRILLDOWN"'
+    )
     assert html.count('<li class="causal-node" data-causal-node="') == 6
     assert html.count('data-causal-edge="') == 5
-    system_context = html.index('data-reader-overview="SYSTEM_CONTEXT"')
     research_closure = html.index('data-reader-context="RESEARCH_CLOSURE"')
     local_chain = html.index('data-reader-context="CURRENT_LOCAL_CHAIN"')
     first_causal_node = html.index('<li class="causal-node" data-causal-node="')
-    assert system_context < research_closure < local_chain < first_causal_node
-    assert html.count('data-system-stage="') == 4
-    assert "这项策略研究为什么还不能继续？" in html
-    assert "系统怎样从想法走到行动" in html
+    assert hidden_body < research_closure < local_chain < first_causal_node
+    assert 'data-reader-overview="SYSTEM_CONTEXT"' not in html
+    assert html.count('data-system-stage="') == 0
+    assert "冻结的第一层五态组合信号" in html
+    assert "我们已经知道什么，还缺什么？" in html
     assert "当前决定、原因和下一步" in html
     assert html.count('class="reader-decision-card"') == 4
     assert 'class="reader-plain-flow"' in html
@@ -629,40 +637,33 @@ def test_renderer_follows_why_first_section_and_term_interaction_contract() -> N
     assert "为什么策略研究之前会被关闭" not in html
 
     l0_start = html.index('data-reader-section="TRUST_STRIP"')
-    l1_start = html.index('<details class="local-research-explanation"')
+    l1_start = html.index('class="research-details-gateway"')
     l0_html = html[l0_start:l1_start]
     l0_text = unescape(re.sub(r"<[^>]+>", " ", l0_html))
-    for decision_kind in ("CURRENT_DECISION", "WHY_PAUSED", "CURRENT_WORK", "NEXT_STEP"):
-        assert l0_html.count(f'data-reader-decision="{decision_kind}"') == 1
-    assert "1201 个 normal session + 1 个 exact-date recovery" in l0_text
-    assert "unresolved=0" in l0_text
-    assert "合计 1202/1202" in l0_text
-    assert "净收益 +4.48%" in l0_text
-    assert "Sharpe=-1.872" in l0_text
-    assert "当前进入第 03 步" in l0_text
-    assert "AUTHORIZED_LATER_WAVE_NOT_RUN" not in l0_text
-    assert "当前停在第 02 步" not in l0_text
-    assert "仍有 1 天全日未出现期权链" not in l0_text
-    assert "先解释唯一缺链交易日" not in l0_text
+    assert l0_html.count('class="evidence-step ') == 7
+    assert l0_text.count("已具备") == 3
+    assert "尚未判定" in l0_text
+    assert "尚未运行" in l0_text
+    assert "尚未建立" in l0_text
+    assert "不具备资格" in l0_text
+    assert "1,202 个交易日五态信号" in l0_text
+    assert "只有“保留”" not in l0_text
+    assert "“保留”才进入期权实现对比" in l0_text
+    assert "不能据此推出" in l0_text
+    assert "查看研究细节" not in l0_text
+    assert 'data-reader-decision="' not in l0_html
+    assert "净收益 +4.48%" not in l0_text
+    assert "Sharpe=-1.872" not in l0_text
     assert 'class="term-trigger"' not in l0_html
     for forbidden_term in (
-        "主研究窗口",
-        "关键证据",
-        "准入门槛",
-        "数据质量",
-        "时点可得性",
-        "来源准入",
-        "可信证据",
-        "检查轴",
-        "严格离线诊断",
-        "DQ/PIT",
-        "admission",
-        "axis",
-        "G2",
-        "G3",
         "TRADING-",
+        "SHA-256",
+        "receipt",
+        "manifest",
     ):
         assert forbidden_term not in l0_text
+    assert 'class="research-drilldown-body" hidden' in html
+    assert ">查看研究细节</button>" in html
     assert "TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1" in html
     assert 'data-term-first="true"' in html
     assert 'data-term-first="false"' in html

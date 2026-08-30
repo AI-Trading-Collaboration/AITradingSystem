@@ -7,14 +7,14 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 1040
-active_task_count: 507
+task_count: 1042
+active_task_count: 509
 completed_task_count: 533
-fragment_count: 1040
+fragment_count: 1042
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: c46166e7e65956ce838a3cd86bbbd910fa8b0c10cbfeb1e4bf84f22337c0cab7
+final_chain_sha256: fb7297d53da4f6fc490237bc6242385337735be50e0f6116fe299081baf94e47
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 247d44a02a96b3540e6a9ce30a837fbf8caa4c46d4022fddafc524e5ab57baa8
 templates:
@@ -8349,12 +8349,28 @@ fragments:
   order: 1040
   previous_entry_sha256: 580d7eb168eb9896e2c820b47e4567c8da53b3a5a3b001b8f192ff668c48bce3
   entry_sha256: c46166e7e65956ce838a3cd86bbbd910fa8b0c10cbfeb1e4bf84f22337c0cab7
+- task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+  path: registry/development_tasks/24/24bd96eb6e8bd4949d02cb250b48e528e213dd91d93e7bb77879d4255006e8b8.yaml
+  file_sha256: d2037c92003c57bc575342b7b3826fa1ed3fbfbc126ea44f0e70885293ebf374
+  fragment_checksum: 455b7e5cab4ad5f8d7666d581922fde5fbf24d42d794bd52d40debca611108d5
+  partition: active
+  order: 1041
+  previous_entry_sha256: c46166e7e65956ce838a3cd86bbbd910fa8b0c10cbfeb1e4bf84f22337c0cab7
+  entry_sha256: f22dd09fa5f5d711178c8011c3ee434d03c5ab9a00f2d3ee5735f0d63d3e5d10
+- task_id: TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
+  path: registry/development_tasks/57/57dfda101620b07f2089c5438205ef0710fcbb2aac1f3c5ea9c74bbf4f61390d.yaml
+  file_sha256: 8bbd5b5c57d34f12cc0359edcccac7c4962c8eea9177d8a5fc8ccc55e6079b58
+  fragment_checksum: 18856b31c1ebf39eff83a760a93c31ef38f8ab44737b41166b87ef7c6ed397d9
+  partition: active
+  order: 1042
+  previous_entry_sha256: f22dd09fa5f5d711178c8011c3ee434d03c5ab9a00f2d3ee5735f0d63d3e5d10
+  entry_sha256: fb7297d53da4f6fc490237bc6242385337735be50e0f6116fe299081baf94e47
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 922e61595fbc52747bb98fbe2e6f3e3facd2443f7481999cbb02c8250db0ed70
-  byte_count: 1760511
-  row_count: 507
+  sha256: cadf71b87567eaf38054946bd406b9eb84e4d3037e8b72a49cb46b4444ac4286
+  byte_count: 1763034
+  row_count: 509
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
@@ -10834,7 +10850,21 @@ governance_cycles:
   change_id: devx-011d-checkout-compatibility-closeout-20260831-v1
   event_count: 2
   production_effect: none
-governance_cycle_count: 353
+- cycle_id: arch-005-s5-cycle-354
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+  change_id: trading-2550-register-frozen-signal-value-confirmation-v1
+  event_count: 1
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-355
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
+  change_id: trading-2549-registration-final-candidate-v1
+  event_count: 1
+  production_effect: none
+governance_cycle_count: 355
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -10848,4 +10878,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 9b8870fd7b8e66b993ab51ced991b1cbcfce67f76657f6238cc0a6ad5dc78dd8
+index_checksum: 48d2ca285eeec38496eb54d319d4f665cdf4f123ec3064ac57a3ae188223e05f

@@ -1,0 +1,70 @@
+schema_version: evidence_first_research_portfolio.v1
+policy_id: evidence_first_research_portfolio_v1
+policy_version: 1.0.0
+status: REVIEWED_OWNER_SELECTED
+owner_decision: owner_decision:TRADING-2549:2026-08-31:adopt_evidence_first_research_portfolio_and_reader_entry_reset_v1
+research_goal_zh: 在严格遵守当时可得信息、合理成本和可重放条件下，高效证伪或保留可能有研究价值的策略，为人工投资判断提供可解释证据。
+primary_evidence_question:
+  question_id: SIGNAL_VALUE_FIRST_LAYER_COMPOSER_V2
+  question_zh: 冻结的第一层五态组合信号，在固定资本、固定时钟、固定成本和预先登记的比较基准下，是否提供值得保留的增量价值？
+  current_verdict: UNRESOLVED
+  next_experiment_id: FROZEN_SIGNAL_VALUE_CONFIRMATION
+  allowed_verdicts: [RETAIN, REJECT, INSUFFICIENT]
+  historical_window_role: REUSED_DEVELOPMENT_CONFIRMATION
+  primary_research_start: '2021-02-22'
+evidence_ladder:
+  - evidence_id: ENGINEERING_REPRODUCIBILITY
+    label_zh: 工程可复现性
+    state: READY
+    explanation_zh: 代码、配置、输入与结果身份可以重放；这不证明策略有效。
+  - evidence_id: PRIMARY_WINDOW_DQ_PIT
+    label_zh: 数据与时点正确性
+    state: READY
+    explanation_zh: 主窗口的数据完整性、当时可得性和输入身份已通过当前受控链路。
+  - evidence_id: EXACT_SIGNAL_PACKAGE
+    label_zh: 冻结信号包
+    state: READY
+    explanation_zh: 已有 2021-02-22..2025-12-02 的 exact 1202-session 五态信号包。
+  - evidence_id: SIGNAL_VALUE
+    label_zh: 信号价值
+    state: UNRESOLVED
+    explanation_zh: 尚无一次不调参、同资本、预注册 benchmark 的清晰 verdict。
+  - evidence_id: IMPLEMENTATION_VALUE
+    label_zh: 实现方式价值
+    state: NOT_RUN
+    explanation_zh: 同信号、同资本的 QQQ 与 option implementation paired comparison 尚未运行。
+  - evidence_id: ROBUSTNESS
+    label_zh: 稳健性与未来证据
+    state: NOT_ESTABLISHED
+    explanation_zh: 旧窗口已被反复使用，真正独立确认需要协议冻结后继续积累未来交易日。
+  - evidence_id: PRODUCTION
+    label_zh: 实盘资格
+    state: NOT_ELIGIBLE
+    explanation_zh: 当前只限研究，不具备模拟盘、实盘、生产或交易资格。
+p0_admission:
+  allowed_classes: [EMPIRICAL_EVIDENCE, DIRECT_EXPERIMENT_ENABLER, MANDATORY_CORRECTNESS]
+  default_denied_class: PUBLISHING_OR_CONVENIENCE
+  required_fields: [research_question_id, decision_enabled, evidence_type, blocked_experiment, stop_condition, successor_condition]
+  no_automatic_successor: true
+phase_switch:
+  ready_conditions: [data_ready, dq_pit_pass, frozen_input, preregistered_benchmark_metric, executable_research_path]
+  next_p0_when_ready: EMPIRICAL_EVIDENCE
+  drift_status: RESEARCH_PRIORITY_DRIFT
+reopen_policy:
+  allowed_triggers: [NEW_PIT_APPROVED_DATA, NEW_ECONOMIC_MECHANISM, CONCLUSION_CHANGING_IMPLEMENTATION_ERROR, NEW_PROSPECTIVE_EVIDENCE]
+  forbidden_reasons: [THRESHOLD_CHANGE_ONLY, ADVERSE_PERIOD_REMOVAL, POST_RESULT_BENCHMARK_ADDITION, GATE_TAXONOMY_CHANGE_ONLY, MODEL_COMPLEXITY_ONLY, SUNK_ENGINEERING_COST]
+reader_entry:
+  l0_sections: [RESEARCH_QUESTION, CURRENT_VERDICT, EVIDENCE_LADDER, NEXT_EXPERIMENT, STOP_CONDITION]
+  l1_entry_label_zh: 查看研究细节
+  audit_entry_label_zh: 查看审计依据
+  l0_forbidden_payloads: [task_id, contract_id, slot_count, raw_enum, sha256, receipt, manifest, full_ledger, transport_axis, page_acceptance_matrix]
+  next_experiment_zh: 先使用冻结的 1,202 个交易日五态信号，完成一次不调参、同资本、同成本的信号价值确认；在得到“保留”结论前，不把期权实现对比提升为主线。
+  stop_condition_zh: “保留”才进入期权实现对比；“否决”则关闭这条实现路线的最高优先级；“证据不足”只补充被明确指出的未来证据。
+  prohibited_inference_zh: 工程、数据质量、页面或单次期权回测通过，都不能替代信号价值、实现方式价值或稳健性结论。
+safety:
+  empirical_run_authorized: false
+  quantconnect_action_authorized: false
+  external_provider_action_authorized: false
+  investment_conclusion_generated: false
+  production_effect: none
+  broker_action: none

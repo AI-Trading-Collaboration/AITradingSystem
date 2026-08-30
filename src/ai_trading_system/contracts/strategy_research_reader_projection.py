@@ -68,8 +68,7 @@ class ReaderCausalEdgeKind(StrEnum):
 
 def canonical_json_bytes(payload: object) -> bytes:
     return (
-        json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        + "\n"
+        json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
     ).encode("utf-8")
 
 
@@ -338,9 +337,7 @@ class ReaderTermInteractionContract:
             short_definition_route=str(payload["short_definition_route"]),
             long_definition_route=str(payload["long_definition_route"]),
             raw_identifier_route=str(payload["raw_identifier_route"]),
-            unavailable_interaction_fallback=str(
-                payload["unavailable_interaction_fallback"]
-            ),
+            unavailable_interaction_fallback=str(payload["unavailable_interaction_fallback"]),
         )
 
 
@@ -355,13 +352,16 @@ class ReaderAttentionBudget:
     audit_payload_default_visible: bool
 
     EXPECTED_FIRST_SCREEN_FIELDS: ClassVar[tuple[str, ...]] = (
-        "trust_strip",
-        "current_problem",
-        "why_chain_summary",
-        "conclusion_boundary",
-        "largest_blocker",
+        "freshness",
+        "evidence_date",
+        "primary_evidence_question",
+        "current_verdict",
+        "evidence_ladder",
+        "next_experiment",
+        "stop_condition",
         "prohibited_inference",
-        "next_legal_action",
+        "production_effect",
+        "broker_action",
     )
 
     def __post_init__(self) -> None:
@@ -405,9 +405,7 @@ class ReaderAttentionBudget:
                 payload["first_screen_required_fields"],
                 "attention_budget.first_screen_required_fields",
             ),
-            max_reader_decisions_per_l0_card=int(
-                str(payload["max_reader_decisions_per_l0_card"])
-            ),
+            max_reader_decisions_per_l0_card=int(str(payload["max_reader_decisions_per_l0_card"])),
             max_primary_disclosures_per_l1_card=int(
                 str(payload["max_primary_disclosures_per_l1_card"])
             ),
@@ -612,9 +610,7 @@ class StrategyResearchReaderProjectionContract:
     safety: ReaderProjectionSafety
 
     EXPECTED_SECTION_ORDER: ClassVar[tuple[ReaderSectionId, ...]] = tuple(ReaderSectionId)
-    EXPECTED_CAUSAL_NODES: ClassVar[tuple[ReaderCausalNodeKind, ...]] = tuple(
-        ReaderCausalNodeKind
-    )
+    EXPECTED_CAUSAL_NODES: ClassVar[tuple[ReaderCausalNodeKind, ...]] = tuple(ReaderCausalNodeKind)
     EXPECTED_CAUSAL_EDGES: ClassVar[
         tuple[tuple[ReaderCausalNodeKind, ReaderCausalEdgeKind, ReaderCausalNodeKind], ...]
     ] = (
@@ -652,16 +648,17 @@ class StrategyResearchReaderProjectionContract:
         if tuple(item.section_id for item in self.section_slots) != self.EXPECTED_SECTION_ORDER:
             raise ReaderProjectionContractError("READER_PROJECTION_SECTION_ORDER_INVALID")
         expected_layers = (
-            *(ReaderProjectionLayer.READER_DEFAULT for _ in range(7)),
-            ReaderProjectionLayer.RESEARCH_DRILLDOWN,
+            ReaderProjectionLayer.READER_DEFAULT,
+            ReaderProjectionLayer.READER_DEFAULT,
+            *(ReaderProjectionLayer.RESEARCH_DRILLDOWN for _ in range(6)),
             ReaderProjectionLayer.AUDIT_STRATUM,
         )
         if tuple(item.layer for item in self.section_slots) != expected_layers:
             raise ReaderProjectionContractError("READER_PROJECTION_SECTION_LAYER_INVALID")
         if tuple(item.default_visible for item in self.section_slots) != (
-            *(True for _ in range(7)),
-            False,
-            False,
+            True,
+            True,
+            *(False for _ in range(7)),
         ):
             raise ReaderProjectionContractError("READER_PROJECTION_SECTION_VISIBILITY_INVALID")
         page_questions = tuple(item.page_question_id for item in self.question_mappings)
@@ -686,13 +683,14 @@ class StrategyResearchReaderProjectionContract:
             for field in section.always_visible_fields
         }
         required_visible = {
-            "current_problem",
-            "largest_blocker",
-            "conclusion_boundary",
-            "critical_risk",
+            "freshness",
+            "evidence_date",
+            "primary_evidence_question",
+            "current_verdict",
+            "evidence_ladder",
+            "next_experiment",
+            "stop_condition",
             "prohibited_inference",
-            "next_legal_action",
-            "strategy_conclusion_pass_count",
             "production_effect",
             "broker_action",
         }
@@ -726,9 +724,7 @@ class StrategyResearchReaderProjectionContract:
         return hashlib.sha256(self.canonical_bytes).hexdigest()
 
     @classmethod
-    def from_dict(
-        cls, payload: Mapping[str, object]
-    ) -> StrategyResearchReaderProjectionContract:
+    def from_dict(cls, payload: Mapping[str, object]) -> StrategyResearchReaderProjectionContract:
         expected = {
             "schema_version",
             "contract_id",
@@ -783,15 +779,11 @@ class StrategyResearchReaderProjectionContract:
             interfaces=ReaderProjectionInterfaces.from_dict(
                 _mapping(payload["interfaces"], "contract.interfaces")
             ),
-            safety=ReaderProjectionSafety.from_dict(
-                _mapping(payload["safety"], "contract.safety")
-            ),
+            safety=ReaderProjectionSafety.from_dict(_mapping(payload["safety"], "contract.safety")),
         )
 
     @classmethod
-    def from_yaml_bytes(
-        cls, payload: bytes
-    ) -> StrategyResearchReaderProjectionContract:
+    def from_yaml_bytes(cls, payload: bytes) -> StrategyResearchReaderProjectionContract:
         try:
             decoded = yaml.safe_load(payload.decode("utf-8"))
         except (UnicodeDecodeError, yaml.YAMLError) as exc:

@@ -1,0 +1,95 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
+  task_id_sha256: 57dfda101620b07f2089c5438205ef0710fcbb2aac1f3c5ea9c74bbf4f61390d
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
+  title: null
+  domain: Research governance + Atlas / evidence-first research portfolio and reader
+    entry reset
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex coordinator：完成 clean candidate INTEGRATION、formal tiers、local/origin
+    main publication 与清理；Project Owner：随后观察重心与读者体验
+  requirement_refs:
+  - docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Evidence-first steering、Reader Entry V2
+    与 TRADING-2550 proposed handoff 已实现；当前仅余 candidate-bound integration/formal/publication
+    gates，signal value 仍为 UNRESOLVED。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 冻结 primary evidence question、P0 admission classes、必填 decision fields、empirical
+      phase-switch/reopen/no-auto-successor；Atlas L0 只显示研究问题、当前 verdict、证据阶梯、下一实验、停止条件，L1/audit
+      默认关闭；保留 source binding/accessibility/PENDING human review；登记下一 frozen signal-value
+      umbrella task；不运行数据、回测、QC、production 或 broker。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-31T09:02:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2549-registration-final-candidate-v1
+  lane_id: null
+  base_commit: a2ddfac116fc54a2b14026b4373427dd70663141
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    legacy_projection:
+    - TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
+    - Research governance + Atlas / evidence-first research portfolio and reader entry
+      reset
+    - P0
+    - VALIDATING
+    - Codex coordinator：完成 clean candidate INTEGRATION、formal tiers、local/origin main
+      publication 与清理；Project Owner：随后观察重心与读者体验
+    - Evidence-first steering、Reader Entry V2 与 TRADING-2550 proposed handoff 已实现；当前仅余
+      candidate-bound integration/formal/publication gates，signal value 仍为 UNRESOLVED。
+    - 冻结 primary evidence question、P0 admission classes、必填 decision fields、empirical
+      phase-switch/reopen/no-auto-successor；Atlas L0 只显示研究问题、当前 verdict、证据阶梯、下一实验、停止条件，L1/audit
+      默认关闭；保留 source binding/accessibility/PENDING human review；登记下一 frozen signal-value
+      umbrella task；不运行数据、回测、QC、production 或 broker。
+    - 'Supporting requirement: docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md.
+      status=VALIDATING until candidate-bound INTEGRATION passes; task_class=MANDATORY_CORRECTNESS+DIRECT_EXPERIMENT_ENABLER;
+      production_effect=none; broker_action=none.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2549-registration-final-candidate-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-987100a040a3cef57aed1751c989feb7
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
+  - Research governance + Atlas / evidence-first research portfolio and reader entry
+    reset
+  - P0
+  - VALIDATING
+  - Codex coordinator：完成 clean candidate INTEGRATION、formal tiers、local/origin main
+    publication 与清理；Project Owner：随后观察重心与读者体验
+  - Evidence-first steering、Reader Entry V2 与 TRADING-2550 proposed handoff 已实现；当前仅余
+    candidate-bound integration/formal/publication gates，signal value 仍为 UNRESOLVED。
+  - 冻结 primary evidence question、P0 admission classes、必填 decision fields、empirical
+    phase-switch/reopen/no-auto-successor；Atlas L0 只显示研究问题、当前 verdict、证据阶梯、下一实验、停止条件，L1/audit
+    默认关闭；保留 source binding/accessibility/PENDING human review；登记下一 frozen signal-value
+    umbrella task；不运行数据、回测、QC、production 或 broker。
+  - 'Supporting requirement: docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md.
+    status=VALIDATING until candidate-bound INTEGRATION passes; task_class=MANDATORY_CORRECTNESS+DIRECT_EXPERIMENT_ENABLER;
+    production_effect=none; broker_action=none.'
+  docs_links:
+  - docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md
+  terminal: false
+  canonical_row_sha256: 4b2813aa26cbfc20c8ef2c7fb84f2b99dffd7a8468c3839ab98b70ae5d20ed39
+last_event_id: task-event-987100a040a3cef57aed1751c989feb7
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 18856b31c1ebf39eff83a760a93c31ef38f8ab44737b41166b87ef7c6ed397d9

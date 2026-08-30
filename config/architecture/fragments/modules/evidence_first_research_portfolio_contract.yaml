@@ -1,0 +1,14 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.evidence_first_research_portfolio_contract
+fragment_kind: module
+owner: strategy_research_governance
+module_prefix: src/ai_trading_system/contracts/evidence_first_research_portfolio.py
+public_contracts:
+  - EvidenceFirstPortfolioError
+  - EvidenceFirstResearchPortfolio
+  - EvidenceLadderItem
+  - EvidenceState
+  - P0AdmissionClass
+  - load_evidence_first_research_portfolio
+compatibility_facades: []
+deprecation_status: active_reference_architecture

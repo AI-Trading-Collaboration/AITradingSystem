@@ -372,6 +372,14 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2548_QQQ_Options_Paired_Comparator_Estimand_And_Export_Contract_V1.md
     coverage: DISCLOSED_PAIRED_COMPARATOR_CONTRACT_EXACT_FROZEN_NO_SUCCESSOR_AUTHORITY
     reader_summary_zh: 2548 已在不改变 first_layer_composer_v2 唯一方向信号和 37-slot option baseline 的前提下，按 exact file/canonical SHA 冻结只读 paired-comparison contract：primary 固定为同信号 fully-funded QQQ cash account，primary estimand 固定为 common-capital return difference，资本占用时长视图只作不可覆盖 primary 的 secondary，diagnostics 仅限 SGOV carry 与 QQQ 买入并持有。现有 4.48% 结果仍只证明 capability，不含 paired outcome；当前没有自动 successor authority，若继续需另行授权新任务，且本次不授权 exporter、manifest、DQ、QuantConnect 或 backtest。
+  - task_id: TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
+    requirement_path: docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md
+    coverage: EVIDENCE_FIRST_RESEARCH_STEERING_AND_READER_ENTRY_RESET_IN_PROGRESS
+    reader_summary_zh: 2549 依据 Owner 决定把研究组合改为 evidence-first：最高优先级只接受经验增证、直接实验使能和强制正确性三类工作，并把当前主问题冻结为第一层五态组合信号是否具备值得保留的增量价值。Atlas 默认页只呈现主问题、当前结论、证据阶梯、下一实验和停止条件；工程、任务、哈希、账本与审计细节下沉到按需入口。本任务不授权经验运行、外部提供方、QuantConnect、生产或 broker 动作，也不生成投资结论。
+  - task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+    requirement_path: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md
+    coverage: PROPOSED_EMPIRICAL_SIGNAL_VALUE_HANDOFF_NO_RUN_AUTHORITY
+    reader_summary_zh: 2550 是 evidence-first portfolio 选定的下一项经验研究 umbrella task，目前仅为 PROPOSED。它将冻结 primary comparator、metric、capital、clock、cost 与 RETAIN/REJECT/INSUFFICIENT reducer，随后才可另行申请一次 bounded signal-value confirmation；本记录没有运行实验、读取新市场数据或调用 QuantConnect/provider，也不授权 paper/live/production/broker。只有 RETAIN 才允许把期权 paired comparison 提升为后继主问题。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

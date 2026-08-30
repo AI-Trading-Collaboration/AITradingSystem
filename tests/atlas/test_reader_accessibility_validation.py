@@ -86,9 +86,7 @@ def test_accessibility_validator_requires_real_description_target() -> None:
     invalid = _valid_html().replace(b'id="term-evidence"', b'id="other-term"', 1)
     result = validate_reader_accessibility(invalid)
 
-    assert any(
-        item.code == "TERM_DESCRIPTION_TARGET_MISSING" for item in result.violations
-    )
+    assert any(item.code == "TERM_DESCRIPTION_TARGET_MISSING" for item in result.violations)
 
 
 def test_accessibility_validator_rejects_reader_section_reordering() -> None:

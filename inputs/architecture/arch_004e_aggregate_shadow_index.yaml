@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 157
+fragment_count: 159
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 24dd0705b061bba9ecd25609f37ac9e86d552007a995bba6e12488c52229ea85
+  current_sha256: f394c9046eeb04807234ad974b62a02d42e0db7b922b2b5696d0e8ee59639e07
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 64
+  fragment_count: 65
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -47,6 +47,7 @@ targets:
   - config/architecture/fragments/flows/atlas_status_explanation_contract.yaml
   - config/architecture/fragments/flows/atlas_work_progress_explanation_page.yaml
   - config/architecture/fragments/flows/data_quality_capability.yaml
+  - config/architecture/fragments/flows/evidence_first_research_portfolio_and_reader_entry.yaml
   - config/architecture/fragments/flows/first_layer_operational_forecast.yaml
   - config/architecture/fragments/flows/first_layer_operational_forecast_real_materialization.yaml
   - config/architecture/fragments/flows/growth_tilt_candidate_family_closure.yaml
@@ -207,6 +208,13 @@ fragments:
   target_id: system_flow
   path: config/architecture/fragments/flows/data_quality_capability.yaml
   sha256: 6dc9d594fe04d4c7923a9f71861a816ff33a286071a3191bdd4663afaef002b4
+  generated_source_of_truth_active: false
+- fragment_id: flow.evidence_first_research_portfolio_and_reader_entry
+  fragment_kind: flow
+  owner: strategy_research_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/evidence_first_research_portfolio_and_reader_entry.yaml
+  sha256: d06ffa53cd83b81c8d9ef97f25026347bc3d5b046b04d8ce5afcd3748a200d9b
   generated_source_of_truth_active: false
 - fragment_id: flow.first_layer_operational_forecast
   fragment_kind: flow
@@ -690,6 +698,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/data_quality_capability_discovery.yaml
   sha256: 8e3b2858572886d9cee994176af06e572a5b7d059d89467bfeb2ae660aadf811
+  generated_source_of_truth_active: false
+- fragment_id: module.evidence_first_research_portfolio_contract
+  fragment_kind: module
+  owner: strategy_research_governance
+  target_id: null
+  path: config/architecture/fragments/modules/evidence_first_research_portfolio_contract.yaml
+  sha256: dc513e736b24db3bc5af9be7c7ae40e2abcbb316d72b25ab8de0693a1d033168
   generated_source_of_truth_active: false
 - fragment_id: module.first_layer_operational_forecast
   fragment_kind: module

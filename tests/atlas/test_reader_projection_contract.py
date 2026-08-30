@@ -37,11 +37,12 @@ def _contract() -> StrategyResearchReaderProjectionContract:
 def test_reader_projection_contract_roundtrips_deterministically() -> None:
     contract = _contract()
 
-    assert contract.contract_id == "atlas_reader_why_first_progressive_disclosure_v1"
+    assert contract.contract_id == "atlas_reader_evidence_first_entry_v2"
     assert contract.status == "REVIEWED_SERIAL_CONTRACT"
-    assert StrategyResearchReaderProjectionContract.from_dict(
-        contract.to_dict()
-    ).canonical_bytes == contract.canonical_bytes
+    assert (
+        StrategyResearchReaderProjectionContract.from_dict(contract.to_dict()).canonical_bytes
+        == contract.canonical_bytes
+    )
     assert contract.content_sha256 == hashlib.sha256(contract.canonical_bytes).hexdigest()
 
 
@@ -50,20 +51,24 @@ def test_reader_projection_contract_freezes_why_first_section_order() -> None:
 
     assert tuple(item.section_id for item in contract.section_slots) == tuple(ReaderSectionId)
     assert tuple(item.layer for item in contract.section_slots) == (
-        *(ReaderProjectionLayer.READER_DEFAULT for _ in range(7)),
-        ReaderProjectionLayer.RESEARCH_DRILLDOWN,
+        ReaderProjectionLayer.READER_DEFAULT,
+        ReaderProjectionLayer.READER_DEFAULT,
+        *(ReaderProjectionLayer.RESEARCH_DRILLDOWN for _ in range(6)),
         ReaderProjectionLayer.AUDIT_STRATUM,
     )
-    assert all(item.default_visible for item in contract.section_slots[:7])
-    assert all(not item.default_visible for item in contract.section_slots[7:])
+    assert all(item.default_visible for item in contract.section_slots[:2])
+    assert all(not item.default_visible for item in contract.section_slots[2:])
     assert contract.attention_budget.first_screen_required_fields == (
-        "trust_strip",
-        "current_problem",
-        "why_chain_summary",
-        "conclusion_boundary",
-        "largest_blocker",
+        "freshness",
+        "evidence_date",
+        "primary_evidence_question",
+        "current_verdict",
+        "evidence_ladder",
+        "next_experiment",
+        "stop_condition",
         "prohibited_inference",
-        "next_legal_action",
+        "production_effect",
+        "broker_action",
     )
     assert contract.attention_budget.glossary_position == "AFTER_READER_MAINLINE"
 
@@ -83,9 +88,7 @@ def test_reader_projection_contract_requires_source_bound_causal_chain() -> None
     contract = _contract()
 
     assert contract.causal_nodes == tuple(ReaderCausalNodeKind)
-    assert tuple(item.relation for item in contract.causal_edges) == tuple(
-        ReaderCausalEdgeKind
-    )
+    assert tuple(item.relation for item in contract.causal_edges) == tuple(ReaderCausalEdgeKind)
     assert contract.source_binding.required is True
     assert contract.source_binding.renderer_inference_allowed is False
     assert contract.source_binding.missing_causal_fact_status == "INSUFFICIENT"
@@ -139,9 +142,7 @@ def test_reader_projection_contract_requires_accessible_inline_term_interaction(
             "READER_PROJECTION_SOURCE_BINDING_INVALID",
         ),
         (
-            lambda payload: payload["term_interaction"].__setitem__(
-                "title_only_allowed", True
-            ),
+            lambda payload: payload["term_interaction"].__setitem__("title_only_allowed", True),
             "READER_PROJECTION_TERM_INTERACTION_INVALID",
         ),
         (

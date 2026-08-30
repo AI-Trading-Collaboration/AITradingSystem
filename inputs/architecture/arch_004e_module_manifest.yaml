@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1182
+module_count: 1183
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -189,7 +189,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.cited_query_renderer
   path: src/ai_trading_system/atlas/cited_query_renderer.py
-  sha256: 7dbf33239c7017293b80f29542f7e64b9a146d98658813eb9a7c0e4a1b5f43c1
+  sha256: 0efe0b46cbc4be9c3154adc15ed52ca17bd09b5df62dda7fb04f0d19efa3fdc4
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -2751,6 +2751,28 @@ modules:
   - architecture-fitness
   - contract-validation
   shared_integration: false
+- module_id: src.ai_trading_system.contracts.evidence_first_research_portfolio
+  path: src/ai_trading_system/contracts/evidence_first_research_portfolio.py
+  sha256: e21f2baa52a00fa22ae8fe165ed4e141ce1458902dcc393a92355d3c3e6ef653
+  rule_id: contracts
+  owner_profile: architecture
+  owners:
+    code_owner: architecture_governance
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: architecture_governance
+    runtime_owner: architecture_governance
+  layer: contracts
+  category: semantic_and_platform_contracts
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004*.py
+  - tests/test_core_contracts.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
 - module_id: src.ai_trading_system.contracts.operations
   path: src/ai_trading_system/contracts/operations.py
   sha256: bb2c86e3446f80b7e46fe6f21770eda236dfe8bfeb74b4fa9cb2cd1680b8db45
@@ -3149,7 +3171,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.strategy_research_reader_projection
   path: src/ai_trading_system/contracts/strategy_research_reader_projection.py
-  sha256: b3958d31cf03ca22dc604adb33bd12feaf30ed7401a6920f44d1a8c677199f2f
+  sha256: 26e10459599519d793c5085a7fbb0e6060684827111d08bb444349098b2d4332
   rule_id: contracts
   owner_profile: architecture
   owners:

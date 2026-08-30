@@ -1,0 +1,94 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+  task_id_sha256: 24bd96eb6e8bd4949d02cb250b48e528e213dd91d93e7bb77879d4255006e8b8
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+  title: null
+  domain: Strategy research / frozen first-layer signal value confirmation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Strategy research coordinator：先冻结 outcome-blind comparator/metric/capital/clock/cost/reducer
+    与 bounded run manifest；Project Owner：复核会影响投资解释的 metric、threshold 和 stop rule
+  requirement_refs:
+  - docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 当前 exact 1,202-session signal package
+    已具备；blocker 是 primary comparator、metric、成本、资本与 RETAIN/REJECT/INSUFFICIENT reducer
+    尚未在 outcome-blind 状态冻结，且本记录不授权 empirical run。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 同一 umbrella task 内完成预注册、DQ/PIT/identity/resource gates 与独立 replay；随后仅在适用授权下运行一次冻结
+      signal-value confirmation，输出严格为 RETAIN/REJECT/INSUFFICIENT；RETAIN 才进入期权 paired
+      comparison，REJECT 关闭该实现路线 P0，INSUFFICIENT 只补明确 prospective evidence；production/broker=none。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-31T09:00:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2550-register-frozen-signal-value-confirmation-v1
+  lane_id: null
+  base_commit: a2ddfac116fc54a2b14026b4373427dd70663141
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    legacy_projection:
+    - TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+    - Strategy research / frozen first-layer signal value confirmation
+    - P0
+    - PROPOSED
+    - Strategy research coordinator：先冻结 outcome-blind comparator/metric/capital/clock/cost/reducer
+      与 bounded run manifest；Project Owner：复核会影响投资解释的 metric、threshold 和 stop rule
+    - 当前 exact 1,202-session signal package 已具备；blocker 是 primary comparator、metric、成本、资本与
+      RETAIN/REJECT/INSUFFICIENT reducer 尚未在 outcome-blind 状态冻结，且本记录不授权 empirical
+      run。
+    - 同一 umbrella task 内完成预注册、DQ/PIT/identity/resource gates 与独立 replay；随后仅在适用授权下运行一次冻结
+      signal-value confirmation，输出严格为 RETAIN/REJECT/INSUFFICIENT；RETAIN 才进入期权 paired
+      comparison，REJECT 关闭该实现路线 P0，INSUFFICIENT 只补明确 prospective evidence；production/broker=none。
+    - 'Supporting requirement: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md.
+      research_question_id=SIGNAL_VALUE_FIRST_LAYER_COMPOSER_V2; evidence_type=EMPIRICAL_EVIDENCE;
+      blocked_experiment=none; no automatic governance successor; registered by TRADING-2549
+      S3; no data/backtest/QuantConnect/provider/paper/live/production/broker action
+      authorized.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2550-register-frozen-signal-value-confirmation-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-9ac1e70d98fa28cf4f0bb7e516a738fe
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+  - Strategy research / frozen first-layer signal value confirmation
+  - P0
+  - PROPOSED
+  - Strategy research coordinator：先冻结 outcome-blind comparator/metric/capital/clock/cost/reducer
+    与 bounded run manifest；Project Owner：复核会影响投资解释的 metric、threshold 和 stop rule
+  - 当前 exact 1,202-session signal package 已具备；blocker 是 primary comparator、metric、成本、资本与
+    RETAIN/REJECT/INSUFFICIENT reducer 尚未在 outcome-blind 状态冻结，且本记录不授权 empirical run。
+  - 同一 umbrella task 内完成预注册、DQ/PIT/identity/resource gates 与独立 replay；随后仅在适用授权下运行一次冻结
+    signal-value confirmation，输出严格为 RETAIN/REJECT/INSUFFICIENT；RETAIN 才进入期权 paired
+    comparison，REJECT 关闭该实现路线 P0，INSUFFICIENT 只补明确 prospective evidence；production/broker=none。
+  - 'Supporting requirement: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md.
+    research_question_id=SIGNAL_VALUE_FIRST_LAYER_COMPOSER_V2; evidence_type=EMPIRICAL_EVIDENCE;
+    blocked_experiment=none; no automatic governance successor; registered by TRADING-2549
+    S3; no data/backtest/QuantConnect/provider/paper/live/production/broker action
+    authorized.'
+  docs_links:
+  - docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md
+  terminal: false
+  canonical_row_sha256: 9e80177e892fb8c585c2d55b7d741403635d02fb3d772f90d6a35f0c1c1a30b0
+last_event_id: task-event-9ac1e70d98fa28cf4f0bb7e516a738fe
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 455b7e5cab4ad5f8d7666d581922fde5fbf24d42d794bd52d40debca611108d5

@@ -1,15 +1,15 @@
 schema_version: atlas_live_snapshot_policy.v1
 policy_id: atlas_live_canonical_snapshot_v1
-policy_version: 1.7.0
+policy_version: 1.9.0
 status: REVIEWED_FAIL_CLOSED_LIVE_PROJECTION
 owner: Atlas strategy research publishing coordinator
 historical_source_registry_path: config/atlas/source_registry.yaml
 page_effectiveness_policy_path: config/atlas/page_effectiveness.yaml
-classified_through_task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
-current_mainline_task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
-largest_blocker_task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
-next_legal_action_task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
-status_object_zh: QQQ options 链路继续使用既有 first_layer_composer_v2 五态作为唯一方向事实，未新增期权专用趋势模型。2021-02-22..2025-12-02 exact 1202-session signal/package/DQ replay 与单次 bounded QuantConnect baseline 已完成；其 4.48% 聚合结果仅作为不可执行 capability/diagnostic evidence 接纳，Sharpe=-1.872、PSR=0，不能证明策略有效或期权优于标的。TRADING-2548 paired-comparison contract 已按 exact file/canonical SHA 冻结：primary comparator 为同信号 fully-funded QQQ cash account，primary estimand 为 common-capital return difference，资本占用时长视图仅作 secondary，diagnostics 限于 SGOV carry 与 QQQ 买入并持有。当前 paired outcome 仍为 INSUFFICIENT_PLATFORM_EVIDENCE，且没有自动 successor authority；若继续需另行授权新任务。本次不授权 exporter、manifest、DQ、QuantConnect save/build/backtest/retry、原始期权数据、provider/Object Store/public share、paper/live/production/broker 或 QC 外 orders/fills/positions。
+classified_through_task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+current_mainline_task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+largest_blocker_task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+next_legal_action_task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+status_object_zh: 当前研究组合已按 Owner 决定切换为 evidence-first。工程可复现性、主窗口数据与时点正确性、冻结的 1,202 个交易日五态信号包已经具备；真正未解决的是该信号在固定资本、时钟、成本和预先登记基准下是否提供值得保留的增量价值。下一项 empirical umbrella task 已登记为 PROPOSED，只允许先冻结 outcome-blind comparator、metric、capital、clock、cost 与 RETAIN/REJECT/INSUFFICIENT reducer；在得到“保留”结论前，不把期权实现对比提升为主线。页面与工程完善不得替代信号价值、实现方式价值或稳健性结论。本记录不授权经验运行、QuantConnect、外部提供方、paper/live/production/broker，也不生成投资结论。
 evidence_evaluated_at: '2026-08-30T14:41:12.7758385+00:00'
 task_status_mapping:
   DONE: PASS

@@ -44,7 +44,7 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
-    assert bundle.research_state_as_of.startswith("2026-08-30T")
+    assert bundle.research_state_as_of.startswith("2026-08-31T")
     assert bundle.evidence_evaluated_at == "2026-08-30T14:41:12.7758385+00:00"
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
@@ -94,7 +94,7 @@ def test_unclassified_successor_is_detected_before_live_projection() -> None:
     without_latest = replace(policy, task_sources=policy.task_sources[:-1])
 
     assert unclassified_page_successors(registry, without_latest) == (
-        "TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1",
+        "TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1",
     )
 
 
@@ -106,22 +106,17 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2548_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2550_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at == "2026-08-30T14:41:12.7758385+00:00"
     assert bundle.status_object_zh == (
-        "QQQ options 链路继续使用既有 first_layer_composer_v2 五态作为唯一方向事实，未新增期权"
-        "专用趋势模型。2021-02-22..2025-12-02 exact 1202-session signal/package/DQ replay 与单次 "
-        "bounded QuantConnect baseline 已完成；其 4.48% 聚合结果仅作为不可执行 capability/"
-        "diagnostic evidence 接纳，Sharpe=-1.872、PSR=0，不能证明策略有效或期权优于标的。"
-        "TRADING-2548 paired-comparison contract 已按 exact file/canonical SHA 冻结："
-        "primary comparator 为同信号 fully-funded "
-        "QQQ cash account，primary estimand 为 common-capital return difference，"
-        "资本占用时长视图仅作 secondary，diagnostics 限于 SGOV carry 与 QQQ 买入并持有。"
-        "当前 paired outcome 仍为 INSUFFICIENT_PLATFORM_EVIDENCE，且没有自动 successor authority；"
-        "若继续需另行授权新任务。本次不授权 "
-        "exporter、manifest、DQ、QuantConnect save/build/backtest/retry、原始期权数据、provider/"
-        "Object Store/public share、paper/live/production/broker 或 QC 外 orders/fills/positions。"
+        "当前研究组合已按 Owner 决定切换为 evidence-first。工程可复现性、主窗口数据与时点正确性、"
+        "冻结的 1,202 个交易日五态信号包已经具备；真正未解决的是该信号在固定资本、时钟、成本和"
+        "预先登记基准下是否提供值得保留的增量价值。下一项 empirical umbrella task 已登记为 "
+        "PROPOSED，只允许先冻结 outcome-blind comparator、metric、capital、clock、cost 与 "
+        "RETAIN/REJECT/INSUFFICIENT reducer；在得到“保留”结论前，不把期权实现对比提升为主线。"
+        "页面与工程完善不得替代信号价值、实现方式价值或稳健性结论。本记录不授权经验运行、"
+        "QuantConnect、外部提供方、paper/live/production/broker，也不生成投资结论。"
     )
 
 

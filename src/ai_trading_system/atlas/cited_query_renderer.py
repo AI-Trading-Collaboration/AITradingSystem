@@ -63,6 +63,11 @@ from ai_trading_system.atlas.work_progress_projection import (
     validate_work_progress_bundle,
     work_progress_validation_json_bytes,
 )
+from ai_trading_system.contracts.evidence_first_research_portfolio import (
+    EvidenceFirstResearchPortfolio,
+    EvidenceState,
+    load_evidence_first_research_portfolio,
+)
 from ai_trading_system.contracts.strategy_research_cited_query import (
     CITED_QUERY_QUESTION_CATALOG,
     CitedQueryAnswerStatus,
@@ -197,6 +202,7 @@ class AtlasCitedQueryShowcase:
     reader_terminology: ReaderTerminologyPolicy
     reader_projection_contract: StrategyResearchReaderProjectionContract
     reader_projection_contract_sha256: str
+    evidence_first_portfolio: EvidenceFirstResearchPortfolio
     reader_state: ReaderStateProjection
     page_effectiveness: StrategyResearchPageEffectivenessManifest
 
@@ -441,9 +447,11 @@ def build_cited_query_showcase(
         if repository_root is None
         else repository_root.resolve()
     )
+    source_payloads = snapshot_payload.get("sources")
+    if not isinstance(source_payloads, list):
+        raise ValueError("ATLAS_CITED_QUERY_SOURCE_LIST_INVALID")
     source_commits = {
-        str(item.get("exact_commit", "")) for item in snapshot_payload.get("sources", [])
-        if isinstance(item, Mapping)
+        str(item.get("exact_commit", "")) for item in source_payloads if isinstance(item, Mapping)
     }
     if len(source_commits) != 1:
         raise ValueError("ATLAS_CITED_QUERY_SOURCE_COMMIT_SET_INVALID")
@@ -496,6 +504,7 @@ def build_cited_query_showcase(
     reader_projection_contract = StrategyResearchReaderProjectionContract.from_yaml_bytes(
         reader_projection_contract_bytes
     )
+    evidence_first_portfolio = load_evidence_first_research_portfolio(repository_root=root)
     page_effectiveness = build_page_effectiveness_manifest(
         repository_root=root,
         source_snapshot_commit=source_snapshot_commit,
@@ -541,6 +550,7 @@ def build_cited_query_showcase(
         reader_projection_contract_sha256=hashlib.sha256(
             reader_projection_contract_bytes
         ).hexdigest(),
+        evidence_first_portfolio=evidence_first_portfolio,
         reader_state=reader_state,
         page_effectiveness=page_effectiveness,
     )
@@ -2225,7 +2235,9 @@ def _build_why_first_projection(
     cards = {item.item_id: item for item in decision.reader_cards}
     quick = {item.item_id: item for item in decision.quick_answers}
 
-    def item_sources(item_id: str, *, quick_answer: bool = False) -> tuple[_ReaderCausalSource, ...]:
+    def item_sources(
+        item_id: str, *, quick_answer: bool = False
+    ) -> tuple[_ReaderCausalSource, ...]:
         selected = quick[item_id] if quick_answer else cards[item_id]
         return tuple(
             _coverage_source(_task_coverage_by_id(manifest, task_id))
@@ -2260,17 +2272,13 @@ def _build_why_first_projection(
             kind=ReaderCausalNodeKind.EVIDENCE,
             question_zh="这条路径目前拿到了什么证据？",
             answer_zh=quick["ENGINEERING_VS_RESEARCH_EVIDENCE"].text_zh,
-            sources=item_sources(
-                "ENGINEERING_VS_RESEARCH_EVIDENCE", quick_answer=True
-            ),
+            sources=item_sources("ENGINEERING_VS_RESEARCH_EVIDENCE", quick_answer=True),
         ),
         _ReaderCausalNode(
             kind=ReaderCausalNodeKind.RESULT,
             question_zh="现有证据只支持什么结论？",
             answer_zh=(
-                cards["CURRENT_DECISION"].text_zh
-                + " "
-                + quick["PROHIBITED_INFERENCES"].text_zh
+                cards["CURRENT_DECISION"].text_zh + " " + quick["PROHIBITED_INFERENCES"].text_zh
             ),
             sources=(qqq_source, *item_sources("CURRENT_DECISION")),
         ),
@@ -2318,54 +2326,84 @@ _CAUSAL_EDGE_LABELS = {
     ReaderCausalEdgeKind.TRIGGERS: "因此触发",
 }
 
+_EVIDENCE_STATE_PRESENTATION = {
+    EvidenceState.READY: ("已具备", "evidence-ready"),
+    EvidenceState.UNRESOLVED: ("尚未判定", "evidence-unresolved"),
+    EvidenceState.NOT_RUN: ("尚未运行", "evidence-not-run"),
+    EvidenceState.NOT_ESTABLISHED: ("尚未建立", "evidence-not-established"),
+    EvidenceState.NOT_ELIGIBLE: ("不具备资格", "evidence-not-eligible"),
+}
+
 
 def _render_trust_strip(showcase: AtlasCitedQueryShowcase) -> str:
     manifest = showcase.page_effectiveness
     state = showcase.reader_state
-    decision = _reader_decision_projection(showcase)
-    acceptance = {item.track: item for item in manifest.acceptance}
-    context_source_refs = " ".join(
-        dict.fromkeys(
-            (
-                showcase.reader_projection_contract.contract_id,
-                *(
-                    task_id
-                    for item in (*decision.reader_cards, *decision.quick_answers)
-                    for task_id in item.source_task_ids
-                ),
-            )
-        )
-    )
     return f"""
     <section class="trust-strip" data-reader-section="TRUST_STRIP" data-reader-card="trust-strip" data-page-freshness="{escape(manifest.freshness_status.value)}" data-source-commit="{escape(manifest.repository_commit)}">
-      <div class="trust-grid" aria-label="页面身份与安全边界">
-        <p data-always-visible="source_commit">代码版本：已锁定，完整值可在页末核对。</p>
-        <p><span data-always-visible="evidence_date">研究状态截至：{escape(state.dates.research_state_as_of)}</span><span data-always-visible="page_date">页面来源 commit 时间：{escape(state.dates.page_source_commit_at)}</span></p>
-        <p><span data-always-visible="freshness">页面状态：{escape(_PAGE_FRESHNESS_LABELS[manifest.freshness_status])}</span><span data-always-visible="engineering_validation">工程检查：{escape(_PAGE_ACCEPTANCE_LABELS[acceptance[PageAcceptanceTrack.ENGINEERING_VALIDATION].status])}</span></p>
-        <p><span data-always-visible="owner_visual_review">视觉检查：{escape(_PAGE_ACCEPTANCE_LABELS[acceptance[PageAcceptanceTrack.OWNER_VISUAL_REVIEW].status])}</span><span data-always-visible="reader_comprehension_review">理解检查：{escape(_PAGE_ACCEPTANCE_LABELS[acceptance[PageAcceptanceTrack.READER_COMPREHENSION_REVIEW].status])}</span></p>
-        <p class="trust-grid-boundary"><span data-always-visible="strategy_conclusion_pass_count">策略结论：尚未形成</span><span data-always-visible="production_effect">生产动作：无</span><span data-always-visible="broker_action">交易动作：无</span></p>
+      <div class="compact-trust" aria-label="页面时效与安全边界">
+        <span data-always-visible="freshness">{escape(_PAGE_FRESHNESS_LABELS[manifest.freshness_status])}</span>
+        <span data-always-visible="evidence_date">研究状态截至 {escape(state.dates.research_state_as_of)}</span>
+        <span data-always-visible="page_date">页面来源 {escape(state.dates.page_source_commit_at)}</span>
+        <span data-always-visible="production_effect">只读研究 · 无生产动作</span>
+        <span data-always-visible="broker_action">无交易动作</span>
       </div>
-      <header>
-        <p class="eyebrow">策略研究说明 · 只读页面</p>
-        <h1 data-always-visible="current_problem" data-reader-claim-source-refs="{escape(context_source_refs)}">这项策略研究为什么还不能继续？</h1>
-        <p class="lead">这套系统不会直接给出买卖答案。它先确认数据可靠，再评价策略，最后由人工决定是否继续。</p>
-        <div class="system-orientation" data-reader-overview="SYSTEM_CONTEXT" data-context-source-refs="{escape(context_source_refs)}">
-          <p class="system-orientation-title">系统怎样从想法走到行动</p>
-          <ol>
-            <li data-system-stage="RESEARCH_QUESTION"><span>01 · 提出问题</span><strong>先说明真正想判断什么</strong></li>
-            <li data-system-stage="TRUSTED_EVIDENCE"><span>02 · 检查数据</span><strong>确认用于判断的数据完整可靠</strong></li>
-            <li data-system-stage="HUMAN_DECISION"><span>03 · 形成结论</span><strong>只说现有数据真正支持的部分</strong></li>
-            <li data-system-stage="AUTHORIZED_EXECUTION"><span>04 · 决定行动</span><strong>由人工决定是否继续，页面不会自行执行</strong></li>
-          </ol>
-          <p class="system-orientation-current" data-reader-decision-projection-sha256="{decision.content_sha256}" data-dq-pit-promoted="false" data-qc-result-admitted="true" data-result-scope="NON_EXECUTABLE_DATA_RESEARCH_ONLY"><strong>当前进入第 03 步：</strong>{escape(decision.reader_cards[0].text_zh)} {escape(decision.reader_cards[-1].text_zh)}</p>
-        </div>
-      </header>
-      <p class="trust-stop" data-always-visible="critical-risk">本页只解释研究状态，不提供投资建议，也不会运行策略、连接外部系统或下单。</p>
     </section>
     """
 
 
-def _render_why_context(showcase: AtlasCitedQueryShowcase) -> str:
+def _render_reader_entry(showcase: AtlasCitedQueryShowcase) -> str:
+    portfolio = showcase.evidence_first_portfolio
+    signal_value = next(
+        item for item in portfolio.evidence_ladder if item.evidence_id == "SIGNAL_VALUE"
+    )
+    ladder = "".join(
+        (
+            f'<li class="evidence-step {_EVIDENCE_STATE_PRESENTATION[item.state][1]}">'
+            f'<span class="evidence-state">{escape(_EVIDENCE_STATE_PRESENTATION[item.state][0])}</span>'
+            f"<strong>{escape(item.label_zh)}</strong>"
+            f"<p>{escape(item.explanation_zh)}</p></li>"
+        )
+        for item in portfolio.evidence_ladder
+    )
+    return f"""
+    <section class="reader-entry" data-reader-section="WHY_CONTEXT" data-reader-card="reader-entry" aria-labelledby="reader-entry-title">
+      <header class="reader-entry-header">
+        <p class="eyebrow">策略研究 · 当前主问题</p>
+        <h1 id="reader-entry-title" data-always-visible="primary_evidence_question">{escape(portfolio.question_zh)}</h1>
+        <p class="lead">{escape(portfolio.research_goal_zh)}</p>
+      </header>
+      <div class="reader-entry-body">
+        <section class="verdict-banner" aria-labelledby="current-verdict-title">
+          <p class="section-kicker">CURRENT VERDICT</p>
+          <h2 id="current-verdict-title">当前结论</h2>
+          <p data-always-visible="current_verdict"><strong>尚未判定。</strong>{escape(signal_value.explanation_zh)}</p>
+        </section>
+        <section class="evidence-ladder-section" aria-labelledby="evidence-ladder-title">
+          <div class="reader-section-heading compact-heading">
+            <p class="section-kicker">证据阶梯</p>
+            <h2 id="evidence-ladder-title">我们已经知道什么，还缺什么？</h2>
+          </div>
+          <ol class="evidence-ladder" data-always-visible="evidence_ladder">{ladder}</ol>
+        </section>
+        <div class="reader-action-grid">
+          <article class="reader-action next-experiment">
+            <p class="section-kicker">NEXT EXPERIMENT</p>
+            <h2>下一项实验</h2>
+            <p data-always-visible="next_experiment">{escape(portfolio.next_experiment_zh)}</p>
+          </article>
+          <article class="reader-action stop-condition">
+            <p class="section-kicker">STOP CONDITION</p>
+            <h2>做到哪里就停</h2>
+            <p data-always-visible="stop_condition">{escape(portfolio.stop_condition_zh)}</p>
+          </article>
+        </div>
+        <p class="reader-safety" data-always-visible="prohibited_inference"><strong>不能据此推出：</strong>{escape(portfolio.prohibited_inference_zh)}</p>
+      </div>
+    </section>
+    """
+
+
+def _render_causal_context(showcase: AtlasCitedQueryShowcase) -> str:
     nodes, edges = _build_why_first_projection(showcase)
     decision = _reader_decision_projection(showcase)
     context_source_refs = " ".join(
@@ -2393,13 +2431,9 @@ def _render_why_context(showcase: AtlasCitedQueryShowcase) -> str:
             f"{escape(item.text_zh)}</strong></article>"
         )
 
-    decision_cards = "".join(
-        render_decision_card(item) for item in decision.reader_cards
-    )
+    decision_cards = "".join(render_decision_card(item) for item in decision.reader_cards)
     prohibited = next(
-        item
-        for item in decision.quick_answers
-        if item.item_id == "PROHIBITED_INFERENCES"
+        item for item in decision.quick_answers if item.item_id == "PROHIBITED_INFERENCES"
     )
 
     node_cards: list[str] = []
@@ -2442,7 +2476,7 @@ def _render_why_context(showcase: AtlasCitedQueryShowcase) -> str:
         for source_ref, locator, source_sha in sorted(audit_sources)
     )
     return f"""
-    <section class="why-context" data-reader-section="WHY_CONTEXT" data-reader-card="why-context" aria-labelledby="why-context-title" data-reader-decision-projection-sha256="{decision.content_sha256}">
+    <section class="why-context" data-reader-card="why-context" aria-labelledby="why-context-title" data-reader-decision-projection-sha256="{decision.content_sha256}">
       <div class="reader-section-heading">
         <p class="section-kicker">20 秒先看懂</p>
         <h2 id="why-context-title">当前决定、原因和下一步</h2>
@@ -2594,22 +2628,42 @@ def _render_flow_position(showcase: AtlasCitedQueryShowcase) -> str:
 
 def _render_research_drilldown(
     *,
+    causal_context: str,
+    canonical_questions: str,
+    change_summary: str,
+    conclusion_boundary: str,
+    acceptance_axes: str,
+    flow_position: str,
     system_flow: str,
     qqq_options_projection: str,
     result_ledger: str,
+    entry_label_zh: str,
 ) -> str:
     return f"""
-    <section class="research-drilldown" data-reader-section="RESEARCH_DRILLDOWN" aria-labelledby="research-drilldown-title">
+    <section class="research-details-gateway" data-reader-layer="research" aria-labelledby="research-details-gateway-title">
       <div class="reader-section-heading">
         <p class="section-kicker">DETAILS ON DEMAND</p>
-        <h2 id="research-drilldown-title">需要核对节点、结果和归因时，再进入研究细节</h2>
-        <p data-always-visible="drilldown-purpose">以下内容服务于“为什么得到这个结论”的核对，不是新的研究主线。</p>
-        <button class="drilldown-toggle" type="button" aria-expanded="false" aria-controls="research-drilldown-body">展开研究流程、QQQ 投影与完整结果</button>
+        <h2 id="research-details-gateway-title">想知道为什么，再进入研究细节</h2>
+        <p>历史判断、五个固定问题、流程、结果和归因都保留在这里，但不会挤占默认阅读路径。</p>
+        <button class="drilldown-toggle" type="button" aria-expanded="false" aria-controls="research-drilldown-body">{escape(entry_label_zh)}</button>
       </div>
       <div id="research-drilldown-body" class="research-drilldown-body" hidden>
-        {system_flow}
-        {qqq_options_projection}
-        {result_ledger}
+        {causal_context}
+        {canonical_questions}
+        {change_summary}
+        {conclusion_boundary}
+        {acceptance_axes}
+        {flow_position}
+        <section class="research-drilldown" data-reader-section="RESEARCH_DRILLDOWN" aria-labelledby="research-drilldown-title">
+          <div class="reader-section-heading">
+            <p class="section-kicker">FULL RESEARCH MATERIAL</p>
+            <h2 id="research-drilldown-title">研究流程、策略投影与完整结果</h2>
+            <p data-always-visible="drilldown-purpose">以下内容只用于核对结论来源，不构成新的研究结论。</p>
+          </div>
+          {system_flow}
+          {qqq_options_projection}
+          {result_ledger}
+        </section>
       </div>
     </section>
     """
@@ -2629,7 +2683,7 @@ def _render_audit_destinations(
         f"<code>{escape(item.task_id)}</code>"
         f"<span>{escape(item.reader_summary_zh)}</span></li>"
         for item in manifest.task_coverage
-        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2542
+        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2550
     )
     return f"""
     <section class="audit-destinations" data-reader-section="AUDIT_DESTINATIONS" data-task-coverage-count="{len(manifest.task_coverage)}" aria-labelledby="audit-destinations-title">
@@ -2650,6 +2704,7 @@ def _render_audit_destinations(
           <p>Diff <code>{escape(diff_id)}</code></p>
           <p>repository commit <code>{escape(manifest.repository_commit)}</code></p>
           <p>reader projection contract SHA-256 <code>{escape(showcase.reader_projection_contract_sha256)}</code></p>
+          <p>evidence-first portfolio SHA-256 <code>{escape(showcase.evidence_first_portfolio.content_sha256)}</code></p>
           <p>independent_validation=<code>PASS</code> · manual_review_only=<code>true</code> · production_effect=<code>none</code> · broker_action=<code>none</code></p>
         </details>
       </footer>
@@ -2742,8 +2797,8 @@ _READER_INTERACTION_SCRIPT = """<script>
       drilldown.setAttribute('aria-expanded', String(!expanded));
       drilldownBody.hidden = expanded;
       drilldown.textContent = expanded
-        ? '展开研究流程、QQQ 投影与完整结果'
-        : '收起研究流程、QQQ 投影与完整结果';
+        ? '查看研究细节'
+        : '收起研究细节';
     });
   }
 })();
@@ -2772,16 +2827,24 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     snapshot_id = str(showcase.snapshot_payload["snapshot_id"])
     diff_id = str(showcase.diff_payload["diff_id"])
     trust_strip = _render_trust_strip(showcase)
-    why_context = _render_why_context(showcase)
+    reader_entry = _render_reader_entry(showcase)
+    causal_context = _render_causal_context(showcase)
     canonical_questions = _render_canonical_questions(navigation, cards)
     change_summary = _render_change_summary(showcase)
     conclusion_boundary = _render_conclusion_boundary(showcase)
     acceptance_axes = _render_acceptance_axes(showcase)
     flow_position = _render_flow_position(showcase)
     research_drilldown = _render_research_drilldown(
+        causal_context=causal_context,
+        canonical_questions=canonical_questions,
+        change_summary=change_summary,
+        conclusion_boundary=conclusion_boundary,
+        acceptance_axes=acceptance_axes,
+        flow_position=flow_position,
         system_flow=system_flow,
         qqq_options_projection=qqq_options_projection,
         result_ledger=result_ledger,
+        entry_label_zh=showcase.evidence_first_portfolio.l1_entry_label_zh,
     )
     audit_destinations = _render_audit_destinations(
         showcase=showcase,
@@ -3259,16 +3322,47 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .term-popover::before {{ display:block; content:attr(data-term-short); font-weight:650; overflow-wrap:anywhere; }}
     .term-full-link {{ display:block; margin-top:.52rem; padding-top:.42rem; border-top:1px solid #ffffff2e; color:#b9dbff; font-size:.66rem; font-weight:850; text-decoration:underline; text-underline-offset:.16rem; }}
     .term-full-link:focus-visible {{ outline:2px solid #fff; outline-offset:2px; border-radius:.18rem; }}
-    .trust-strip,.why-context,.causal-audit-section,.canonical-questions,.change-summary,.conclusion-boundary,.acceptance-axes,.flow-position,.research-drilldown,.audit-destinations {{ margin:0 0 1.35rem; border:1px solid var(--line); border-radius:1rem; background:#fff; box-shadow:0 10px 30px #12213a0a; overflow:visible; }}
-    .trust-strip {{ overflow:hidden; border:0; }}
-    .trust-strip > header {{ padding:2.4rem 1.6rem; }}
-    .trust-strip > header h1 {{ font-size:clamp(2rem,5vw,3.8rem); }}
-    .trust-grid {{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.55rem; padding:1rem 1.2rem; background:#fff; }}
-    .trust-grid p {{ margin:0; padding:.62rem .7rem; border:1px solid #dbe4ef; border-radius:.55rem; color:#43526a; background:#f8fafc; font-size:.7rem; line-height:1.4; }}
-    .trust-grid p span {{ display:block; }}
-    .trust-grid p span + span {{ margin-top:.16rem; }}
-    .trust-grid-boundary {{ color:#714155!important; border-color:#ead1da!important; background:#fff7f9!important; }}
-    .trust-stop {{ margin:0; padding:.8rem 1.2rem; color:#6f4d0a; background:#fff3d8; border-top:1px solid #efd79f; font-weight:850; }}
+    .trust-strip,.reader-entry,.research-details-gateway,.why-context,.causal-audit-section,.canonical-questions,.change-summary,.conclusion-boundary,.acceptance-axes,.flow-position,.research-drilldown,.audit-destinations {{ margin:0 0 1.35rem; border:1px solid var(--line); border-radius:1rem; background:#fff; box-shadow:0 10px 30px #12213a0a; overflow:visible; }}
+    .trust-strip {{ margin-bottom:.75rem; overflow:hidden; border:0; border-radius:.72rem; box-shadow:none; }}
+    .compact-trust {{ display:flex; flex-wrap:wrap; gap:.35rem .55rem; padding:.58rem .75rem; color:#516078; background:#e9eef5; font-size:.66rem; font-weight:800; }}
+    .compact-trust span {{ padding:.16rem .46rem; border-radius:999px; background:#fff; }}
+    .compact-trust span:nth-last-child(-n+2) {{ color:#0d6259; background:#e5f6f1; }}
+    .reader-entry {{ overflow:hidden; border:0; box-shadow:0 16px 38px #12213a12; }}
+    .reader-entry-header {{ padding:2.25rem clamp(1.2rem,4vw,3.2rem); background:linear-gradient(135deg,#102743,#244f83 68%,#1f756f); }}
+    .reader-entry-header h1 {{ max-width:960px; margin:.32rem 0 .75rem; font-size:clamp(2rem,4.8vw,3.65rem); line-height:1.08; letter-spacing:-.035em; }}
+    .reader-entry-header .lead {{ max-width:900px; }}
+    .reader-entry-body {{ padding:1.35rem; }}
+    .verdict-banner {{ display:grid; grid-template-columns:minmax(145px,.28fr) minmax(0,1fr); gap:.3rem 1.1rem; align-items:center; padding:1rem 1.1rem; border:1px solid #e0c783; border-radius:.78rem; background:#fff9e8; }}
+    .verdict-banner .section-kicker,.verdict-banner h2,.verdict-banner p {{ margin:0; }}
+    .verdict-banner .section-kicker {{ grid-column:1; }}
+    .verdict-banner h2 {{ grid-column:1; font-size:1.28rem; }}
+    .verdict-banner > p:last-child {{ grid-column:2; grid-row:1 / span 2; color:#5f4814; }}
+    .verdict-banner strong {{ display:block; margin-bottom:.2rem; color:#8a5f08; font-size:1.08rem; }}
+    .evidence-ladder-section {{ margin-top:1.2rem; }}
+    .compact-heading {{ padding:.2rem 0 .7rem; }}
+    .evidence-ladder {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.65rem; margin:0; padding:0; list-style:none; }}
+    .evidence-step {{ min-width:0; padding:.82rem .88rem; border:1px solid #dce4ee; border-top:4px solid #8a98aa; border-radius:.65rem; background:#f9fbfd; }}
+    .evidence-step strong,.evidence-step p {{ display:block; }}
+    .evidence-step strong {{ margin:.36rem 0 .18rem; font-size:.82rem; }}
+    .evidence-step p {{ margin:0; color:#57667b; font-size:.7rem; line-height:1.48; }}
+    .evidence-state {{ display:inline-block; padding:.12rem .42rem; border-radius:999px; color:#536276; background:#e8edf3; font-size:.61rem; font-weight:900; }}
+    .evidence-ready {{ border-top-color:#2d8a6e; }}
+    .evidence-ready .evidence-state {{ color:#14614e; background:#e0f3eb; }}
+    .evidence-unresolved {{ border-top-color:#b07a17; background:#fffaf0; }}
+    .evidence-unresolved .evidence-state {{ color:#79530e; background:#ffedc8; }}
+    .evidence-not-eligible {{ border-top-color:#a8495c; background:#fff8fa; }}
+    .evidence-not-eligible .evidence-state {{ color:#813648; background:#f8e5e9; }}
+    .reader-action-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.75rem; margin-top:1.15rem; }}
+    .reader-action {{ padding:1rem 1.05rem; border:1px solid #cbdbea; border-radius:.75rem; background:#f5f9fe; }}
+    .reader-action.stop-condition {{ border-color:#d9c88f; background:#fffaf0; }}
+    .reader-action .section-kicker,.reader-action h2,.reader-action > p:last-child {{ margin:0; }}
+    .reader-action h2 {{ margin:.14rem 0 .3rem; font-size:1.12rem; }}
+    .reader-action > p:last-child {{ color:#4f5f75; font-size:.8rem; }}
+    .reader-entry .reader-safety {{ margin-top:1rem; }}
+    .research-details-gateway {{ border-style:dashed; background:#fbfcfe; box-shadow:none; }}
+    .research-details-gateway > .reader-section-heading {{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.1rem 1rem; align-items:center; }}
+    .research-details-gateway > .reader-section-heading .section-kicker,.research-details-gateway > .reader-section-heading h2,.research-details-gateway > .reader-section-heading p {{ grid-column:1; }}
+    .research-details-gateway > .reader-section-heading .drilldown-toggle {{ grid-column:2; grid-row:1 / span 3; margin:0; }}
     .reader-section-heading {{ padding:1.25rem 1.35rem .9rem; }}
     .reader-section-heading h2 {{ margin:.18rem 0 .35rem; font-size:clamp(1.35rem,2.7vw,2rem); line-height:1.2; }}
     .reader-section-heading > p:last-child {{ max-width:780px; margin:.25rem 0 0; color:var(--muted); }}
@@ -3338,9 +3432,9 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .audit-destinations .terminology-guide-intro,.audit-destinations .terminology-grid {{ width:auto; margin-left:1rem; margin-right:1rem; }}
     code {{ overflow-wrap:anywhere; }}
     footer {{ margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; overflow-wrap:anywhere; }}
-    @media (max-width:900px) {{ .trust-grid,.reader-decision-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .system-orientation ol {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .causal-chain {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .date-context {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .progress-matrix-grid,.progress-matrix-heading {{ grid-template-columns:1fr; }} .strategy-conclusion-count {{ width:170px; }} }}
+    @media (max-width:900px) {{ .evidence-ladder {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .reader-decision-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .system-orientation ol {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .causal-chain {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .date-context {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .progress-matrix-grid,.progress-matrix-heading {{ grid-template-columns:1fr; }} .strategy-conclusion-count {{ width:170px; }} }}
     @media (max-width:900px) {{ .effectiveness-title-row,.effectiveness-boundary,.flow-heading,.qqq-title-row {{ grid-template-columns:1fr; display:grid; }} .you-are-here,.qqq-count {{ margin-top:1rem; }} .qqq-count {{ width:142px; }} .qqq-task-list {{ grid-template-columns:1fr; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel,.result-ledger-intro {{ grid-template-columns:1fr; }} .historical-lane-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} nav,.result-ledger-grid {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
-    @media (max-width:620px) {{ .trust-grid,.system-orientation ol,.reader-decision-grid,.reader-plain-flow,.causal-chain,.why-boundary-grid,.date-context,.acceptance-axis-grid,.flow-position-grid,.terminology-grid,.metrics,nav,.reader-answer-grid,.effectiveness-review-grid,.effectiveness-audit dl,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail,.qqq-reader-boundary,.qqq-group-boundary,.qqq-reader-grid,.work-reader-grid,.progress-dimension-grid,.concept-grid {{ grid-template-columns:1fr; }} .trust-strip > header {{ padding:1.8rem 1rem; }} .trust-grid {{ padding:.8rem; }} .research-closure,.local-research-explanation {{ margin-left:.8rem; margin-right:.8rem; }} .reader-plain-flow {{ gap:1.15rem; }} .reader-plain-flow li::after {{ right:50%; top:auto; bottom:-1.05rem; content:"↓"; transform:translateX(50%); }} .page-effectiveness,.flow-map,.result-ledger,.qqq-projection {{ padding:1rem; }} .successor-coverage li {{ grid-template-columns:1fr; }} .qqq-decision {{ grid-template-columns:1fr; }} .qqq-decision-label {{ padding:.7rem .85rem; }} .qqq-task-identity {{ align-items:flex-start; flex-direction:column; }} .qqq-layer-row {{ grid-template-columns:1fr; gap:.05rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
+    @media (max-width:620px) {{ .evidence-ladder,.reader-action-grid,.system-orientation ol,.reader-decision-grid,.reader-plain-flow,.causal-chain,.why-boundary-grid,.date-context,.acceptance-axis-grid,.flow-position-grid,.terminology-grid,.metrics,nav,.reader-answer-grid,.effectiveness-review-grid,.effectiveness-audit dl,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail,.qqq-reader-boundary,.qqq-group-boundary,.qqq-reader-grid,.work-reader-grid,.progress-dimension-grid,.concept-grid {{ grid-template-columns:1fr; }} .reader-entry-header {{ padding:1.65rem 1rem; }} .reader-entry-body {{ padding:.85rem; }} .verdict-banner {{ display:block; }} .verdict-banner h2 {{ margin:.12rem 0 .35rem; }} .research-details-gateway > .reader-section-heading {{ display:block; }} .research-details-gateway > .reader-section-heading .drilldown-toggle {{ width:100%; margin-top:.75rem; }} .research-closure,.local-research-explanation {{ margin-left:.8rem; margin-right:.8rem; }} .reader-plain-flow {{ gap:1.15rem; }} .reader-plain-flow li::after {{ right:50%; top:auto; bottom:-1.05rem; content:"↓"; transform:translateX(50%); }} .page-effectiveness,.flow-map,.result-ledger,.qqq-projection {{ padding:1rem; }} .successor-coverage li {{ grid-template-columns:1fr; }} .qqq-decision {{ grid-template-columns:1fr; }} .qqq-decision-label {{ padding:.7rem .85rem; }} .qqq-task-identity {{ align-items:flex-start; flex-direction:column; }} .qqq-layer-row {{ grid-template-columns:1fr; gap:.05rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
     @media (prefers-reduced-motion:reduce) {{ html {{ scroll-behavior:auto; }} .stage-disclosure-cue i {{ transition:none; }} }}
     @media print {{ body {{ background:#fff; }} nav {{ display:none; }} .stage-drilldown {{ display:block!important; }} .answer-card {{ break-inside:avoid; box-shadow:none; }} }}
   </style>
@@ -3350,12 +3444,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
   {term_definition_bank}
   <main id="main-content">
     {trust_strip}
-    {why_context}
-    {canonical_questions}
-    {change_summary}
-    {conclusion_boundary}
-    {acceptance_axes}
-    {flow_position}
+    {reader_entry}
     {research_drilldown}
     {audit_destinations}
   </main>
@@ -3498,7 +3587,10 @@ def write_cited_query_artifacts(
     }
     payloads = {
         name: (
-            (json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+            (
+                json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+                + "\n"
+            ).encode("utf-8")
             if isinstance(payload, Mapping)
             else payload
         )
