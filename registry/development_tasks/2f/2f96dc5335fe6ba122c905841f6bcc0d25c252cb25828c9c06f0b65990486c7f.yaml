@@ -14,27 +14,25 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / review the two automatic Cloud Build side effects of
-    the single authorized QuantConnect backtest and decide whether to admit the quarantined
-    aggregate result
+  next_owner: Project Owner / any follow-on strategy comparison must be a separately
+    preregistered non-executable DATA_RESEARCH task; no further QuantConnect action
+    is authorized
   requirement_refs:
   - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: The exactly authorized single backtest
-    completed, but the Backtest Project click caused two additional automatic Cloud
-    Builds despite the retrospectively reviewed remaining build maximum of zero. Backtest
-    result and identity evidence are preserved and technically coherent at the visible
-    aggregate level, but remain quarantined; no further QuantConnect action is authorized.
+  unstructured_legacy_blocker_or_next_step: No remaining blocker for this baseline
+    wave. The two platform-automatic Cloud Builds are RETROSPECTIVELY_REVIEWED and
+    the existing backtest export-safe aggregate is admitted research-only; do not
+    run save/build/backtest/retry or promote the result.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Owner must either retrospectively review both platform-automatic build side
-      effects and explicitly admit only the export-safe aggregate result, or keep
-      the result quarantined. Admission must not authorize another save, build, backtest,
-      retry, raw option export, provider action, Object Store write, public share,
-      paper/live/production/broker action, or QC-external order/fill/position. Original
-      project 34808569 remains immutable.
+    text: 'Achieved: owner retrospectively reviewed automatic builds e826e3-52ae2f
+      and 749e6f-52ae2f; backtest f2879a3cee7ec4e0b68b4f943aafd1f8 aggregate admitted
+      only as non-executable DATA_RESEARCH; incident bytes remain immutable; no new
+      QC/provider/raw/Object Store/share/paper/live/production/broker action and QC-external
+      orders/fills/positions remain zero.'
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -920,38 +918,75 @@ events:
   - change:trading-2542i-qc-backtest-incident-20260830-v6
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-e42e940095049a83fa2bc9e4f5f740b9
+- schema_version: task_event.v1
+  task_id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T02:47:04.4564323Z'
+  actor: integration-coordinator
+  change_id: trading-2542i-qc-result-admission-20260830-v2
+  lane_id: null
+  base_commit: 19c65908f42f625ef3c81e35e1080c1337a7ba87
+  previous_state_event_id: task-event-e42e940095049a83fa2bc9e4f5f740b9
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner / any follow-on strategy comparison must be a separately
+      preregistered non-executable DATA_RESEARCH task; no further QuantConnect action
+      is authorized
+    blocker_or_next_step: No remaining blocker for this baseline wave. The two platform-automatic
+      Cloud Builds are RETROSPECTIVELY_REVIEWED and the existing backtest export-safe
+      aggregate is admitted research-only; do not run save/build/backtest/retry or
+      promote the result.
+    acceptance_criteria: 'Achieved: owner retrospectively reviewed automatic builds
+      e826e3-52ae2f and 749e6f-52ae2f; backtest f2879a3cee7ec4e0b68b4f943aafd1f8 aggregate
+      admitted only as non-executable DATA_RESEARCH; incident bytes remain immutable;
+      no new QC/provider/raw/Object Store/share/paper/live/production/broker action
+      and QC-external orders/fills/positions remain zero.'
+    notes: 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
+      Incident/result artifact SHA-256 384da42316b1dba5c338f6d48f607ffc8b0b2570732ffdef9bd6d0d8661e5bf6
+      remains immutable. Authorization state=RETROSPECTIVELY_REVIEWED; technical validation
+      state=PASS_EXPORT_SAFE_AGGREGATE_ONLY; admitted aggregate end equity/net profit/fees/orders/entries/exits/cancels=104479.60/4.48%/75.40/116/58/58/0.
+      Sharpe=-1.872 and PSR=0 prohibit interpreting positive return as strategy proof.
+      Publication v1 failed before formal validation because terminal state preceded
+      INTEGRATION preflight; blocker evidence SHA-256 1ae2cfb10d2740d79a39b6ed04317e7ec1a29c6b07c22d0d01afd81c1e409da0.
+      V2 INTEGRATION preflight PASS while task remained active; no new QuantConnect
+      action occurred.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2542i-qc-result-admission-20260830-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e6a3355453c60b3c7aac403a4adb75fe
 projection:
   legacy_first_eight_cells:
   - TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
   - QQQ options exact signal source and implementation policy owner-review draft V1
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner / review the two automatic Cloud Build side effects of the single
-    authorized QuantConnect backtest and decide whether to admit the quarantined aggregate
-    result
-  - The exactly authorized single backtest completed, but the Backtest Project click
-    caused two additional automatic Cloud Builds despite the retrospectively reviewed
-    remaining build maximum of zero. Backtest result and identity evidence are preserved
-    and technically coherent at the visible aggregate level, but remain quarantined;
-    no further QuantConnect action is authorized.
-  - Owner must either retrospectively review both platform-automatic build side effects
-    and explicitly admit only the export-safe aggregate result, or keep the result
-    quarantined. Admission must not authorize another save, build, backtest, retry,
-    raw option export, provider action, Object Store write, public share, paper/live/production/broker
-    action, or QC-external order/fill/position. Original project 34808569 remains
-    immutable.
+  - DONE
+  - Project Owner / any follow-on strategy comparison must be a separately preregistered
+    non-executable DATA_RESEARCH task; no further QuantConnect action is authorized
+  - No remaining blocker for this baseline wave. The two platform-automatic Cloud
+    Builds are RETROSPECTIVELY_REVIEWED and the existing backtest export-safe aggregate
+    is admitted research-only; do not run save/build/backtest/retry or promote the
+    result.
+  - 'Achieved: owner retrospectively reviewed automatic builds e826e3-52ae2f and 749e6f-52ae2f;
+    backtest f2879a3cee7ec4e0b68b4f943aafd1f8 aggregate admitted only as non-executable
+    DATA_RESEARCH; incident bytes remain immutable; no new QC/provider/raw/Object
+    Store/share/paper/live/production/broker action and QC-external orders/fills/positions
+    remain zero.'
   - 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md.
-    Incident/result artifact SHA-256 384da42316b1dba5c338f6d48f607ffc8b0b2570732ffdef9bd6d0d8661e5bf6.
-    Publication v3 Full=9956 passed/3 skipped/5 failed; failed runtime summary SHA-256
-    b0975be24977be05bff6ea80c16f5b37475a973006cd7659c87e7c324e9d76be. Failures are
-    confined to stale Atlas date/canonical-page identity and unrefreshed compatibility
-    successor for the new task-register hash. V6 performs exact generated-authority
-    repair and must use v3 as failure_fix_rerun parent. No new QuantConnect action;
-    result admission=false; production/broker=none.'
+    Incident/result artifact SHA-256 384da42316b1dba5c338f6d48f607ffc8b0b2570732ffdef9bd6d0d8661e5bf6
+    remains immutable. Authorization state=RETROSPECTIVELY_REVIEWED; technical validation
+    state=PASS_EXPORT_SAFE_AGGREGATE_ONLY; admitted aggregate end equity/net profit/fees/orders/entries/exits/cancels=104479.60/4.48%/75.40/116/58/58/0.
+    Sharpe=-1.872 and PSR=0 prohibit interpreting positive return as strategy proof.
+    Publication v1 failed before formal validation because terminal state preceded
+    INTEGRATION preflight; blocker evidence SHA-256 1ae2cfb10d2740d79a39b6ed04317e7ec1a29c6b07c22d0d01afd81c1e409da0.
+    V2 INTEGRATION preflight PASS while task remained active; no new QuantConnect
+    action occurred.'
   docs_links:
   - docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md
-  terminal: false
-  canonical_row_sha256: a0560ce8da219c3660dc54df76b487e530334dfd0b5f737a0b3b42285da2f3c3
-last_event_id: task-event-e42e940095049a83fa2bc9e4f5f740b9
+  terminal: true
+  canonical_row_sha256: 6f18248804dcdc2c11f105f3984ee4f2bbe1e43c2cd11deb01971c61e0457c19
+last_event_id: task-event-e6a3355453c60b3c7aac403a4adb75fe
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b4f9f396ab290745153f7ec124bad22713ee9a52156db557b620f13eaffdc30e
+fragment_checksum: b0346e6c578dfb390f72ff0121b4910bb8a581f2593cb648fd5ad2181b5c1270
