@@ -789,6 +789,31 @@ def build_repository_authority(
                 prod_004_fragment_bytes,
             )
         )
+    devx_011_requirement_path = (
+        root
+        / "docs/requirements/DEVX-011_Governed_Workflow_Health_Control_Loop_V1.md"
+    )
+    if devx_011_requirement_path.exists():
+        devx_011_section_id, devx_011_section = _devx_011_section(
+            root,
+            policy=policy,
+        )
+        (
+            devx_011_relative,
+            devx_011_record,
+            devx_011_fragment_bytes,
+        ) = render_fragment(
+            section_id=devx_011_section_id,
+            section=devx_011_section,
+        )
+        rendered_fragments.append(
+            (
+                devx_011_section_id,
+                devx_011_relative,
+                devx_011_record,
+                devx_011_fragment_bytes,
+            )
+        )
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -1878,6 +1903,144 @@ def _prod_004_section(
             "historical_pit_backfill_performed": False,
             "provider_request_performed": False,
             "operations_runtime_promoted": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _devx_011_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_devx_011_governed_workflow_health_control_loop_v1"
+    source_paths = sorted(
+        [
+            "AGENTS.md",
+            "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+            "config/architecture/workflow_health_policy.yaml",
+            "config/report_registry.yaml",
+            "config/scheduled_tasks.yaml",
+            "docs/artifact_catalog.md",
+            "docs/operations/operations_runbook.md",
+            (
+                "docs/requirements/"
+                "DEVX-011_Governed_Workflow_Health_Control_Loop_V1.md"
+            ),
+            "docs/runbooks/scheduled_task_orchestration.md",
+            "docs/system_flow.md",
+            "docs/task_register_completed.md",
+            "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+            "inputs/architecture/arch_004e_architecture_fitness.yaml",
+            "inputs/architecture/arch_004e_module_manifest.yaml",
+            "inputs/architecture/arch_004e_test_manifest.yaml",
+            "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+            "inputs/architecture/arch_005_s5_consumer_inventory.yaml",
+            "inputs/architecture/arch_005_task_registry_index.yaml",
+            "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+            "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+            (
+                "registry/development_tasks/9a/"
+                "9ad46a4d8119b53fb50453cbba1eb662766972e40253230d50ddd24b18824456.yaml"
+            ),
+            "src/ai_trading_system/cli_commands/reports.py",
+            "src/ai_trading_system/cli_commands/workflow_health_reports.py",
+            "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+            "src/ai_trading_system/reports/workflow_health.py",
+            "tests/test_arch_004_refactor_policy.py",
+            "tests/test_arch_004f1_operations_control_plane.py",
+            "tests/test_arch_004f3_reporting_architecture.py",
+            "tests/test_arch_004g_deprecation.py",
+            "tests/test_arch_005_s5_task_source_cutover.py",
+            "tests/test_devx_006c_compatibility_authority.py",
+            "tests/test_devx_006d_report_catalog_flow_authority.py",
+            "tests/test_ops_daily.py",
+            "tests/test_scheduled_tasks.py",
+            "tests/test_trading2452_architecture_contract.py",
+            "tests/test_workflow_health.py",
+        ],
+        key=str.casefold,
+    )
+    report_flow_index_path = (
+        "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json"
+    )
+    report_flow_index_content = _regular_path(
+        root,
+        report_flow_index_path,
+        "devx_011.report_flow_index",
+    ).read_bytes()
+    report_flow_index = _strict_json_bytes(
+        report_flow_index_content,
+        report_flow_index_path,
+    )
+    raw_report_flow_targets = report_flow_index.get("targets")
+    if not isinstance(raw_report_flow_targets, list) or not raw_report_flow_targets:
+        _fail("AUTHORITY_DEVX_011_REPORT_FLOW_TARGETS_INVALID", report_flow_index_path)
+    report_flow_targets = [
+        _mapping(target, f"devx_011.report_flow_targets[{position}]")
+        for position, target in enumerate(raw_report_flow_targets)
+    ]
+    return section_id, {
+        "schema_version": "devx_011_governed_workflow_health_control_loop.v1",
+        "task_id": "DEVX-011_GOVERNED_WORKFLOW_HEALTH_CONTROL_LOOP_V1",
+        "status": "DONE",
+        "owner_decision": (
+            "owner_decision:DEVX-011:2026-08-31:"
+            "proceed-governed-workflow-health-v1"
+        ),
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_prod_004_pit_cumulative_archive_consumption_v1"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "workflow_health_contract": {
+            "window_days": 7,
+            "window_timezone": "UTC",
+            "telemetry_sources": [
+                "validation_runtime",
+                "publication_transactions",
+                "git_main_history",
+            ],
+            "candidate_fingerprint_stable_across_dates": True,
+            "candidate_review_only": True,
+            "weekly_self_trigger_enabled": True,
+            "automatic_dispatch_enabled": False,
+            "task_or_code_mutation_allowed": False,
+            "validation_gate_change_allowed": False,
+        },
+        "report_catalog_flow_successor": {
+            "source_of_truth": report_flow_index["source_of_truth"],
+            "fragment_shadow_active": False,
+            "index_path": report_flow_index_path,
+            "index_sha256": _digest(report_flow_index_content),
+            "target_count": len(report_flow_targets),
+            "entry_count": sum(
+                _positive_or_zero_int(target.get("entry_count"), "devx_011.entry_count")
+                for target in report_flow_targets
+            ),
+            "fragment_count": sum(
+                _positive_or_zero_int(
+                    target.get("fragment_count"),
+                    "devx_011.fragment_count",
+                )
+                for target in report_flow_targets
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "safety": {
+            "market_cache_read": False,
+            "strategy_or_weight_changed": False,
+            "automatic_task_mutation": False,
+            "automatic_code_mutation": False,
+            "validation_gate_relaxed": False,
             "production_effect": "none",
             "broker_action": "none",
         },

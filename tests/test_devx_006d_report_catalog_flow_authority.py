@@ -150,7 +150,9 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         "report_catalog_flow_successor"
     ]
 
-    assert next(reversed(merged)) == "phase_prod_004_pit_cumulative_archive_consumption_v1"
+    assert next(reversed(merged)) == (
+        "phase_devx_011_governed_workflow_health_control_loop_v1"
+    )
     assert fragment_authority["source_of_truth"] == "LEGACY_MONOLITH"
     assert fragment_authority["fragment_shadow_active"] is False
     assert fragment_authority["target_count"] == 3

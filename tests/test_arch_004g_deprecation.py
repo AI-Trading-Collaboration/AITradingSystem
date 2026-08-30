@@ -57,18 +57,18 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-WAVE21_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_7b155ef6e8bbebcd8fe5"
+WAVE21_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_ec6a3c523f3068b66383"
 WAVE21_CURRENT_REPOSITORY_COUNTS = {
-    # TRADING-2548 exact freeze adds one non-executable admission loader and its
-    # exact replay tests; no deprecation lifecycle or writer allowance changes.
-    "python_module_count": 1180,
-    "python_test_file_count": 1338,
+    # DEVX-011 adds two workflow-health modules and one exact replay test; no
+    # deprecation lifecycle or writer allowance changes.
+    "python_module_count": 1182,
+    "python_test_file_count": 1339,
     "direct_writer_current_count": 856,
 }
 WAVE21_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(
     zip(
         WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS,
-        (105, 33, 29, 25),
+        (105, 33, 30, 25),
         strict=True,
     )
 )

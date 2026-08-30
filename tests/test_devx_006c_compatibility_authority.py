@@ -35,6 +35,7 @@ TRADING_2542D_SECTION = (
     "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1"
 )
 PROD_004_SECTION = "phase_prod_004_pit_cumulative_archive_consumption_v1"
+DEVX_011_SECTION = "phase_devx_011_governed_workflow_health_control_loop_v1"
 
 
 def _write_fixture_authority(
@@ -139,11 +140,11 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 314
+    assert len(merged) == 315
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == PROD_004_SECTION
+    assert next(reversed(merged)) == DEVX_011_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
@@ -191,6 +192,21 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
         "valuation_history_recursive_pattern_restricted": True,
         "duplicate_valuation_snapshot_id_fails_closed": True,
         "strict_pit_grade_a_inferred": False,
+    }
+    assert merged[DEVX_011_SECTION]["workflow_health_contract"] == {
+        "window_days": 7,
+        "window_timezone": "UTC",
+        "telemetry_sources": [
+            "validation_runtime",
+            "publication_transactions",
+            "git_main_history",
+        ],
+        "candidate_fingerprint_stable_across_dates": True,
+        "candidate_review_only": True,
+        "weekly_self_trigger_enabled": True,
+        "automatic_dispatch_enabled": False,
+        "task_or_code_mutation_allowed": False,
+        "validation_gate_change_allowed": False,
     }
     assert merged[DEVX_006C_SECTION]["authority_contract"] == {
         "dual_write": False,

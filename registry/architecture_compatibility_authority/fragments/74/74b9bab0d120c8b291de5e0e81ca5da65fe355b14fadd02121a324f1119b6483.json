@@ -21,7 +21,7 @@
     },
     "report_catalog_flow_successor": {
       "consumer_inventory_path": "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
-      "consumer_inventory_sha256": "07fd06145f2e548730c2f439099335e11065578fd4319cab1480424d01f4400f",
+      "consumer_inventory_sha256": "938c3b63c12776178de8fff4c475852563b3e520662f41db8258c4c2e4028e24",
       "current_hash_authority": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1.sources",
       "entry_count": 3107,
       "fragment_count": 192,
@@ -137,12 +137,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "6203204a8a23aab321945a9541728db4c331585453dcd2ff69746b7903ee47ba"
+        "sha256": "7857f0e77dce7679563631f11675f54e201aa4de36f9566b8ef6ad838d3a27dd"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "0c871577c105d8740d8b383f5f1dc7742e15f937a73b9f87fb9da90a57e674ee"
+        "sha256": "3190e5bb694dd6a6e42c964e62999a425e208377c5240d934f1a41a8bf995bdd"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -167,7 +167,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
-        "sha256": "07fd06145f2e548730c2f439099335e11065578fd4319cab1480424d01f4400f"
+        "sha256": "938c3b63c12776178de8fff4c475852563b3e520662f41db8258c4c2e4028e24"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -197,7 +197,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
-        "sha256": "6ed568ad6b7c4c9c7c30781956a7de73466986cbc7ef832b56bbaa10a84c9c7b"
+        "sha256": "f0500aac20554a3a9557ec964860566e36ae6c4368097645cc4ccb283cd625e1"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -222,12 +222,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "4e11b9cc8f5c8bae0a4a1ea2aa0d89e50c2eb0c0aa5de12278bf9b61e2fb83f4"
+        "sha256": "c8d014a12e71e13123e743894500b98bb17de943d0eae5eb0351de35ceb0f732"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004g_deprecation.py",
-        "sha256": "d576d89886c596efbd47549066be7f51e98f7ed897ab64ac34e6cc9ac4d17c46"
+        "sha256": "f5ca34ab6db425c340305bd798e2ccd70e5fc55d245c08e3f27baa0c9308688d"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -237,17 +237,17 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_005_s5_task_source_cutover.py",
-        "sha256": "e2600c8923813418e7f0e86e830d2191c0ca1d182dfdb9cfa0f9ad81297e705b"
+        "sha256": "7f00b0a52a06a107f70569e47bd4d9791ba9c71897d249eef6c64b8a1808898a"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006c_compatibility_authority.py",
-        "sha256": "4b9db01b36eface3f5f8ed7c93f94ba2bb7a5f5fe78d6467433bd5a3296c391c"
+        "sha256": "c17a94eb8b7f8d8477a93c06ae7e6965973d40f86aedeaa6764969a87a16d623"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "d0ac292424dd7d9f45b8be9078073167d239ee7f73d684ad613af27114f928b5"
+        "sha256": "9edd76340e12316a7f6d86581d2d47d5c24523136eb58864079362e835771947"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -387,5 +387,5 @@
     "task_id": "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1"
   },
   "section_id": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1",
-  "section_sha256": "f23a10db185dad6ba3f02296b37ca7a21d1298448adb292c1e317d04b233ac00"
+  "section_sha256": "74b9bab0d120c8b291de5e0e81ca5da65fe355b14fadd02121a324f1119b6483"
 }

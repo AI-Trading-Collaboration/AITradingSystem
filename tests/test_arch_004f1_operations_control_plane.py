@@ -328,7 +328,7 @@ def test_periodic_policy_covers_all_non_daily_cadences_without_dispatch() -> Non
     assert all(item.due_policy.requires_owner_gate for item in policy.cadence_controls)
 
 
-def test_periodic_plan_accounts_for_all_41_tasks_and_round_trips() -> None:
+def test_periodic_plan_accounts_for_all_42_tasks_and_round_trips() -> None:
     as_of = date(2026, 7, 10)
     generated_at = datetime(2026, 7, 11, tzinfo=UTC)
     contexts = build_periodic_due_contexts_from_daily(
@@ -343,7 +343,7 @@ def test_periodic_plan_accounts_for_all_41_tasks_and_round_trips() -> None:
         contexts=contexts,
     )
 
-    assert len(plan.entries) == 41
+    assert len(plan.entries) == 42
     assert PeriodicOperationsPlan.from_dict(plan.to_dict()) == plan
     assert plan.automatic_command_dispatch_enabled is False
     assert all(entry.command_executed is False for entry in plan.entries)
@@ -877,7 +877,7 @@ def test_all_registered_tasks_are_inventoryable_via_explicit_bindings() -> None:
         )
         total += len(assessment.workflow_spec.steps)
 
-    assert total == 80
+    assert total == 81
 
 
 def test_daily_adapter_preserves_order_explicit_dag_and_legacy_commands() -> None:
