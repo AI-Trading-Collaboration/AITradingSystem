@@ -251,6 +251,11 @@ system orientation 与 live summary 统一表达“单次 baseline 已仅限研�
 follow-on comparison 必须另行预注册、当前没有新 QC authority”。该投影不导入 raw option rows、未准入
 comparator 或 contract identifiers，不改变趋势信号、已接纳结果、投资结论或任何外部/生产/broker 权限。
 
+TRADING-2547 是 2546 terminal 后的 publication-only successor：它只把自身登记为 Atlas 已分类的
+exact-source rebuild/validation/closeout 事件，使 successor freshness gate 不会把治理收口任务误判为新的
+研究主线。current mainline、largest blocker 与 next legal research action 仍由 2542I 的研究事实决定；
+2547 不改变 result-authority replay、期权实现参数、信号、DQ/PIT、回测结果或任何外部/生产/broker 权限。
+
 TRADING-2506 在八阶段流程节点中新增独立的工作进展解释合同。每个节点先回答“为什么需要这一步、
 具体做什么、工程能力做到哪里、本次页面看到什么状态、对研究结论有什么影响、预期产物、完成后怎样
 被使用、不能说明什么、何时再做”，再把 TRADING-2495 的状态限制与技术依据收进折叠区。工程能力、

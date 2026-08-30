@@ -149,3 +149,13 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   恢复为 active 时被 canonical task state machine 以 `DONE->IN_PROGRESS` 非法转换安全拒绝；没有 task
   event 或其他 tracked write。2546 的完成历史保持不可变，剩余 exact-source 页面重建、formal validation
   与 publication closeout 改由一个窄范围 successor task 承接，不篡改 2546 终态，也不新增外部研究动作。
+- 2026-08-30：已登记 active successor
+  `TRADING-2547_ATLAS_QQQ_OPTIONS_EXACT_SOURCE_REBUILD_PUBLICATION_CLOSEOUT_V1` 并通过 governed
+  `INTEGRATION` preflight。focused negative check 随即确认 freshness gate 会正确拒绝未分类的 2547；
+  因此 2547 只新增 publication-only coverage/classified-through 记录并同步相邻 count tests，current
+  mainline/blocker/next research action 仍保持 2542I。先把这组最小来源变更形成 exact active-task lane
+  commit，再开启下一 transaction 完成 terminal event 和全部 generator；不以关闭 freshness gate 绕过。
+- 2026-08-30：2547 publication-only coverage 后的并行 focused validation（排除待 exact-commit 重建的
+  ignored canonical page 用例）为 `56 passed`。transaction 2547-v1 已按 `FAILED` 释放，仅因为其 frozen
+  lane head 早于必要的 2547 classification 来源；无 candidate/formal/main/push/QC 动作。当前形成包含 active
+  2547 task event、分类来源和通过测试的 exact lane commit，下一 transaction 才追加 terminal event 并生成。

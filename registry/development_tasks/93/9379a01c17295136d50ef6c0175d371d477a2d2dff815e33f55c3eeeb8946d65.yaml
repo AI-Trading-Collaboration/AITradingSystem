@@ -1,0 +1,83 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2547_ATLAS_QQQ_OPTIONS_EXACT_SOURCE_REBUILD_PUBLICATION_CLOSEOUT_V1
+  task_id_sha256: 9379a01c17295136d50ef6c0175d371d477a2d2dff815e33f55c3eeeb8946d65
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2547_ATLAS_QQQ_OPTIONS_EXACT_SOURCE_REBUILD_PUBLICATION_CLOSEOUT_V1
+  title: null
+  domain: Atlas / QQQ options exact-source rebuild and publication closeout V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex Atlas publication coordinator
+  requirement_refs:
+  - docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 从 exact lane commit 重建 canonical Atlas
+    页面与共享 authority，完成正式验证和安全发布；不访问 QuantConnect。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: ignored canonical Atlas page/sidecars 在 final exact candidate 上为 PASS/CURRENT，全部
+      required validation tiers PASS，local main 与 origin/main 等于 candidate；external/production/broker
+      action 均为 none。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2547_ATLAS_QQQ_OPTIONS_EXACT_SOURCE_REBUILD_PUBLICATION_CLOSEOUT_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-30T06:26:23.1749181Z'
+  actor: integration-coordinator
+  change_id: trading-2547-atlas-qc-publication-register-20260830-v1
+  lane_id: null
+  base_commit: c95c4745547ca818fba2dbcd91d823a81f0babe3
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2547_ATLAS_QQQ_OPTIONS_EXACT_SOURCE_REBUILD_PUBLICATION_CLOSEOUT_V1
+    - Atlas / QQQ options exact-source rebuild and publication closeout V1
+    - P0
+    - IN_PROGRESS
+    - Codex Atlas publication coordinator
+    - 从 exact lane commit 重建 canonical Atlas 页面与共享 authority，完成正式验证和安全发布；不访问 QuantConnect。
+    - ignored canonical Atlas page/sidecars 在 final exact candidate 上为 PASS/CURRENT，全部
+      required validation tiers PASS，local main 与 origin/main 等于 candidate；external/production/broker
+      action 均为 none。
+    - 'Supporting requirement: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md.
+      Successor closeout of terminal TRADING-2546; no strategy parameter freeze and
+      no new backtest authority.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2547-atlas-qc-publication-register-20260830-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e71984900a8d791c2b55076052e7a6ae
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2547_ATLAS_QQQ_OPTIONS_EXACT_SOURCE_REBUILD_PUBLICATION_CLOSEOUT_V1
+  - Atlas / QQQ options exact-source rebuild and publication closeout V1
+  - P0
+  - IN_PROGRESS
+  - Codex Atlas publication coordinator
+  - 从 exact lane commit 重建 canonical Atlas 页面与共享 authority，完成正式验证和安全发布；不访问 QuantConnect。
+  - ignored canonical Atlas page/sidecars 在 final exact candidate 上为 PASS/CURRENT，全部
+    required validation tiers PASS，local main 与 origin/main 等于 candidate；external/production/broker
+    action 均为 none。
+  - 'Supporting requirement: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md.
+    Successor closeout of terminal TRADING-2546; no strategy parameter freeze and
+    no new backtest authority.'
+  docs_links:
+  - docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md
+  terminal: false
+  canonical_row_sha256: cc20c9a45b3cd697207863e8a4c44892616f8eccd2587392330b4f3beb848636
+last_event_id: task-event-e71984900a8d791c2b55076052e7a6ae
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 40d7548b7e389cd8c3cbc420b8a1261da1920e61d956d7748a4e33489088548f

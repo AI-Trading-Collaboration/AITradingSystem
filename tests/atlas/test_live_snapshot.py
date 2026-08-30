@@ -94,7 +94,7 @@ def test_unclassified_successor_is_detected_before_live_projection() -> None:
     without_latest = replace(policy, task_sources=policy.task_sources[:-1])
 
     assert unclassified_page_successors(registry, without_latest) == (
-        "TRADING-2546_ATLAS_QQQ_OPTIONS_RESULT_ADMISSION_STATUS_PROJECTION_FIX_V1",
+        "TRADING-2547_ATLAS_QQQ_OPTIONS_EXACT_SOURCE_REBUILD_PUBLICATION_CLOSEOUT_V1",
     )
 
 

@@ -1,6 +1,6 @@
 schema_version: atlas_page_effectiveness_policy.v1
 policy_id: atlas_strategy_research_page_effectiveness_v1
-policy_version: 3.3.0
+policy_version: 3.4.0
 status: REVIEWED_LIVE_SNAPSHOT_IDENTITY_CONTRACT_V3_SOURCE_CONTRACT_COVERAGE_REFRESH
 owner: Atlas page engineering owner
 primary_research_start: '2021-02-22'
@@ -360,6 +360,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md
     coverage: ATLAS_QQQ_OPTIONS_RESULT_ADMISSION_STATUS_PROJECTION_REPAIR_COMPLETE
     reader_summary_zh: 2546 修复 Atlas 在 2542I terminal 后仍显示 QC-not-run 的陈旧状态。当前 live snapshot、首屏决定卡、why-first 回答和 task coverage 统一显示：单次 backtest aggregate 已仅限研究接纳，Sharpe/PSR 限制禁止策略推广，任何 follow-on comparison 必须另行预注册，且当前不授权新的 QuantConnect 或其他外部、生产、broker 动作。
+  - task_id: TRADING-2547_ATLAS_QQQ_OPTIONS_EXACT_SOURCE_REBUILD_PUBLICATION_CLOSEOUT_V1
+    requirement_path: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md
+    coverage: ATLAS_EXACT_SOURCE_REBUILD_AND_PUBLICATION_CLOSEOUT_COMPLETE
+    reader_summary_zh: 2547 只承接 2546 完成后的 exact-source 页面重建、正式验证和发布收口，不改变 2542I 已接纳的研究聚合结果，不冻结新的期权策略参数，也不授权新的 QuantConnect、数据提供方、生产或 broker 动作。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW
