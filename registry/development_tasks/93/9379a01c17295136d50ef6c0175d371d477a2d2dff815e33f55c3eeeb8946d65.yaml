@@ -13,19 +13,23 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex Atlas publication coordinator
+  next_owner: Project Owner / discuss a separately preregistered trend-to-options
+    implementation and paired-comparator research task; no new QuantConnect action
+    is authorized
   requirement_refs:
   - docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 从 exact lane commit 重建 canonical Atlas
-    页面与共享 authority，完成正式验证和安全发布；不访问 QuantConnect。
+  unstructured_legacy_blocker_or_next_step: No remaining Atlas exact-source rebuild
+    blocker. Preserve the admitted research-only aggregate and no-new-QC boundary;
+    discuss signal-to-option implementation and paired comparator in a separate governed
+    task before any new backtest.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: ignored canonical Atlas page/sidecars 在 final exact candidate 上为 PASS/CURRENT，全部
-      required validation tiers PASS，local main 与 origin/main 等于 candidate；external/production/broker
-      action 均为 none。
+    text: Canonical Atlas page/sidecars are rebuilt from the final exact candidate
+      and validate PASS/CURRENT; all required formal tiers pass; local main and origin/main
+      equal the candidate; external/production/broker action remain none.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -60,24 +64,63 @@ events:
   - change:trading-2547-atlas-qc-publication-register-20260830-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-e71984900a8d791c2b55076052e7a6ae
+- schema_version: task_event.v1
+  task_id: TRADING-2547_ATLAS_QQQ_OPTIONS_EXACT_SOURCE_REBUILD_PUBLICATION_CLOSEOUT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T06:36:22.3853337Z'
+  actor: integration-coordinator
+  change_id: trading-2547-atlas-qc-publication-complete-20260830-v2
+  lane_id: null
+  base_commit: d6f45851d95b530aa35c59dd8ecae93b5dcd977b
+  previous_state_event_id: task-event-e71984900a8d791c2b55076052e7a6ae
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner / discuss a separately preregistered trend-to-options
+      implementation and paired-comparator research task; no new QuantConnect action
+      is authorized
+    blocker_or_next_step: No remaining Atlas exact-source rebuild blocker. Preserve
+      the admitted research-only aggregate and no-new-QC boundary; discuss signal-to-option
+      implementation and paired comparator in a separate governed task before any
+      new backtest.
+    acceptance_criteria: Canonical Atlas page/sidecars are rebuilt from the final
+      exact candidate and validate PASS/CURRENT; all required formal tiers pass; local
+      main and origin/main equal the candidate; external/production/broker action
+      remain none.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md.
+      Active-task exact lane d6f45851d95b530aa35c59dd8ecae93b5dcd977b and governed
+      INTEGRATION preflight PASS under trading-2547-atlas-qc-publication-closeout-20260830-v2.
+      Focused source validation 56 passed before terminalization. QuantConnect/provider/backtest/orders/fills/positions/production/broker
+      action=none.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2547-atlas-qc-publication-complete-20260830-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-6932ae2bcba5aab63f48f4f5d9422a6a
 projection:
   legacy_first_eight_cells:
   - TRADING-2547_ATLAS_QQQ_OPTIONS_EXACT_SOURCE_REBUILD_PUBLICATION_CLOSEOUT_V1
   - Atlas / QQQ options exact-source rebuild and publication closeout V1
   - P0
-  - IN_PROGRESS
-  - Codex Atlas publication coordinator
-  - 从 exact lane commit 重建 canonical Atlas 页面与共享 authority，完成正式验证和安全发布；不访问 QuantConnect。
-  - ignored canonical Atlas page/sidecars 在 final exact candidate 上为 PASS/CURRENT，全部
-    required validation tiers PASS，local main 与 origin/main 等于 candidate；external/production/broker
-    action 均为 none。
+  - DONE
+  - Project Owner / discuss a separately preregistered trend-to-options implementation
+    and paired-comparator research task; no new QuantConnect action is authorized
+  - No remaining Atlas exact-source rebuild blocker. Preserve the admitted research-only
+    aggregate and no-new-QC boundary; discuss signal-to-option implementation and
+    paired comparator in a separate governed task before any new backtest.
+  - Canonical Atlas page/sidecars are rebuilt from the final exact candidate and validate
+    PASS/CURRENT; all required formal tiers pass; local main and origin/main equal
+    the candidate; external/production/broker action remain none.
   - 'Supporting requirement: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md.
-    Successor closeout of terminal TRADING-2546; no strategy parameter freeze and
-    no new backtest authority.'
+    Active-task exact lane d6f45851d95b530aa35c59dd8ecae93b5dcd977b and governed INTEGRATION
+    preflight PASS under trading-2547-atlas-qc-publication-closeout-20260830-v2. Focused
+    source validation 56 passed before terminalization. QuantConnect/provider/backtest/orders/fills/positions/production/broker
+    action=none.'
   docs_links:
   - docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md
-  terminal: false
-  canonical_row_sha256: cc20c9a45b3cd697207863e8a4c44892616f8eccd2587392330b4f3beb848636
-last_event_id: task-event-e71984900a8d791c2b55076052e7a6ae
+  terminal: true
+  canonical_row_sha256: a628e4d04e4b126e573543bad6a3f497e2417f4da445d1a7417dd840a0829e60
+last_event_id: task-event-6932ae2bcba5aab63f48f4f5d9422a6a
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 40d7548b7e389cd8c3cbc420b8a1261da1920e61d956d7748a4e33489088548f
+fragment_checksum: ea4868ee6ed9c7ee0f50a6611a50ad14de2016b26a2deb2279bee7e714a5b826

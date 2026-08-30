@@ -159,3 +159,14 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   ignored canonical page 用例）为 `56 passed`。transaction 2547-v1 已按 `FAILED` 释放，仅因为其 frozen
   lane head 早于必要的 2547 classification 来源；无 candidate/formal/main/push/QC 动作。当前形成包含 active
   2547 task event、分类来源和通过测试的 exact lane commit，下一 transaction 才追加 terminal event 并生成。
+- 2026-08-30：transaction 2547-v2 在 active-task exact lane
+  `d6f45851d95b530aa35c59dd8ecae93b5dcd977b` 上通过 `INTEGRATION` 并 terminalize 2547；task source 与
+  architecture generators PASS。Atlas writer 正确拒绝把 terminal task-index dirty bytes 归到旧 lane SHA，
+  report-flow generator 随后以 `RCF_SOURCE_SEAL_DRIFT` 拒绝 system-flow 新字节。v2 不形成 candidate，不运行
+  formal/main/push/QC。后继用非 TRADING 的窄范围 architecture recovery task 审阅新 source seal；tracked
+  generators 先完成，candidate commit 后再用其 exact SHA 生成 ignored Atlas 页面，避免继续增加研究 successor。
+- 2026-08-30：已独立重算并审阅 `docs/system_flow.md` source seal：byte_count=`2317077`、
+  SHA-256=`a00bf7131f2d219c61e98e7646184b5c934d5c511176372ddfa8e9a360024540`、
+  git blob=`17dedb3c027e01ab6cc0d25926a698391840b4bd`、blank-line block count=`1165`。
+  更新 reviewed seal 后 report-flow build=`PASS`（3094 entries / 192 fragments），compatibility build=`PASS`；
+  该动作只接纳本任务已审阅的 flow 文档字节，不改变 runtime、研究或交易语义。
