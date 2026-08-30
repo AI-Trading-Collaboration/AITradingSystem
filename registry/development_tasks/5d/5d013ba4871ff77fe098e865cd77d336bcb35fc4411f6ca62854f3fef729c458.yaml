@@ -1,0 +1,94 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
+  task_id_sha256: 5d013ba4871ff77fe098e865cd77d336bcb35fc4411f6ca62854f3fef729c458
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
+  title: null
+  domain: QQQ options paired comparator estimand and export contract V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex / implement and validate the serial non-executable comparator
+    contract; Project Owner later exact-freezes final file/canonical SHA
+  requirement_refs:
+  - docs/requirements/TRADING-2548_QQQ_Options_Paired_Comparator_Estimand_And_Export_Contract_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Freeze one same-signal fully-funded QQQ/cash
+    primary comparator, common-capital primary estimand, capital-at-risk-time secondary
+    view, bounded diagnostics, export-safe schema and typed stop matrix without changing
+    the frozen signal or 37-slot option baseline.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Strict loader and tests prove exact predecessor identity, comparator multiplicity,
+      normalization, calendar partitions, 16-axis PASS/FAIL/INSUFFICIENT/INVALID handling
+      and zero external authority; finish at OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FREEZE_REQUIRED_NO_BACKTEST.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-30T10:44:44.9473418Z'
+  actor: integration-coordinator
+  change_id: trading-2548-register-20260830-v1
+  lane_id: null
+  base_commit: d5ff6dd9f8b84274bfc945ad8bd86fcecb92a8ed
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
+    - QQQ options paired comparator estimand and export contract V1
+    - P0
+    - IN_PROGRESS
+    - Codex / implement and validate the serial non-executable comparator contract;
+      Project Owner later exact-freezes final file/canonical SHA
+    - Freeze one same-signal fully-funded QQQ/cash primary comparator, common-capital
+      primary estimand, capital-at-risk-time secondary view, bounded diagnostics,
+      export-safe schema and typed stop matrix without changing the frozen signal
+      or 37-slot option baseline.
+    - Strict loader and tests prove exact predecessor identity, comparator multiplicity,
+      normalization, calendar partitions, 16-axis PASS/FAIL/INSUFFICIENT/INVALID handling
+      and zero external authority; finish at OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FREEZE_REQUIRED_NO_BACKTEST.
+    - 'Supporting requirement: docs/requirements/TRADING-2548_QQQ_Options_Paired_Comparator_Estimand_And_Export_Contract_V1.md.
+      scope=NON_EXECUTABLE_DATA_RESEARCH; QuantConnect/provider/real DQ/backtest/run
+      manifest/orders/fills/positions/paper/live/production/broker=0/false/none.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2548-register-20260830-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-76847d8a785a94be07ea57699050fef3
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2548_QQQ_OPTIONS_PAIRED_COMPARATOR_ESTIMAND_AND_EXPORT_CONTRACT_V1
+  - QQQ options paired comparator estimand and export contract V1
+  - P0
+  - IN_PROGRESS
+  - Codex / implement and validate the serial non-executable comparator contract;
+    Project Owner later exact-freezes final file/canonical SHA
+  - Freeze one same-signal fully-funded QQQ/cash primary comparator, common-capital
+    primary estimand, capital-at-risk-time secondary view, bounded diagnostics, export-safe
+    schema and typed stop matrix without changing the frozen signal or 37-slot option
+    baseline.
+  - Strict loader and tests prove exact predecessor identity, comparator multiplicity,
+    normalization, calendar partitions, 16-axis PASS/FAIL/INSUFFICIENT/INVALID handling
+    and zero external authority; finish at OWNER_PAIRED_COMPARATOR_CONTRACT_EXACT_FREEZE_REQUIRED_NO_BACKTEST.
+  - 'Supporting requirement: docs/requirements/TRADING-2548_QQQ_Options_Paired_Comparator_Estimand_And_Export_Contract_V1.md.
+    scope=NON_EXECUTABLE_DATA_RESEARCH; QuantConnect/provider/real DQ/backtest/run
+    manifest/orders/fills/positions/paper/live/production/broker=0/false/none.'
+  docs_links:
+  - docs/requirements/TRADING-2548_QQQ_Options_Paired_Comparator_Estimand_And_Export_Contract_V1.md
+  terminal: false
+  canonical_row_sha256: e0d2eb322178bdc625c9401251d825a30909cb6f86bd9a677420f3e4ede7469b
+last_event_id: task-event-76847d8a785a94be07ea57699050fef3
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 399a711718cef78527b7fac01eb5b7810c6e1bff54e0c673cdaa50731650ccf1

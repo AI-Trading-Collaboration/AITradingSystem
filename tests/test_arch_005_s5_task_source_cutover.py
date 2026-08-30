@@ -63,7 +63,7 @@ def test_repository_canonical_registry_is_active_and_self_hosted() -> None:
     assert registry.index["source_of_truth"] == CANONICAL_SOURCE
     assert registry.index["cutover_performed"] is True
     assert registry.index["legacy_markdown_writable"] is False
-    assert registry.index["task_count"] == len(registry.fragments) == 1034
+    assert registry.index["task_count"] == len(registry.fragments) == 1035
     assert registry.index["missing_task_count"] == 0
     assert registry.index["duplicate_task_count"] == 0
     assert registry.index["governance_cycle_count"] >= 2
