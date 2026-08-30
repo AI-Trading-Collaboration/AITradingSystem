@@ -170,3 +170,12 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   git blob=`17dedb3c027e01ab6cc0d25926a698391840b4bd`、blank-line block count=`1165`。
   更新 reviewed seal 后 report-flow build=`PASS`（3094 entries / 192 fragments），compatibility build=`PASS`；
   该动作只接纳本任务已审阅的 flow 文档字节，不改变 runtime、研究或交易语义。
+- 2026-08-30：architecture-only recovery task
+  `DEVX-009A_ATLAS_EXACT_CANDIDATE_PUBLICATION_RECOVERY_V1` 已登记、在 exact seal lane
+  `4fa5aff563cf39eec17b842fd245808239233c5c` 上通过 governed `INTEGRATION` preflight 并 terminalize。
+  该 task ID 不进入 `TRADING-*` successor freshness 集合；最终 tracked generators/candidate 由同一 transaction
+  收口，Atlas ignored 页面只在 candidate commit 后按其 exact SHA 生成。外部研究与交易动作仍为 none。
+- 2026-08-30：DEVX-009A transaction 的 canonical task source、architecture manifests、report-flow 与
+  compatibility tracked generators 均 `PASS`，并完成 `GENERATED_REBUILD_POST`。Atlas generator 的可审计
+  执行点明确放在 candidate commit 之后，因为其合同要求所有 page source（包括 terminal task index）已经
+  精确提交；这不是跳过 generator，而是把 ignored page/sidecars 绑定到即将形成的 final candidate SHA。

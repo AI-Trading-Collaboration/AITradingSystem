@@ -1,0 +1,125 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-009A_ATLAS_EXACT_CANDIDATE_PUBLICATION_RECOVERY_V1
+  task_id_sha256: 636a87fcb55f98ebfe9285668105d57a4719a9cf1813553f7ddcbc8e9c479232
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-009A_ATLAS_EXACT_CANDIDATE_PUBLICATION_RECOVERY_V1
+  title: null
+  domain: Atlas exact-candidate publication recovery V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner / discuss a separately preregistered trend-to-options
+    implementation and paired-comparator research task; no new QuantConnect action
+    is authorized
+  requirement_refs:
+  - docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: No remaining architecture publication
+    recovery blocker after final candidate validation and publication. Preserve the
+    admitted research-only result; discuss any new option implementation/backtest
+    under a separate TRADING task.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: All tracked authorities rebuild and validate on one candidate; the candidate
+      exact SHA renders Atlas page/sidecars PASS/CURRENT; required tiers pass; local
+      main=origin/main=candidate; external/production/broker action remain none.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-009A_ATLAS_EXACT_CANDIDATE_PUBLICATION_RECOVERY_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-30T06:47:14.7070780Z'
+  actor: integration-coordinator
+  change_id: devx-009a-atlas-publication-register-20260830-v1
+  lane_id: null
+  base_commit: 4fa5aff563cf39eec17b842fd245808239233c5c
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-009A_ATLAS_EXACT_CANDIDATE_PUBLICATION_RECOVERY_V1
+    - Atlas exact-candidate publication recovery V1
+    - P0
+    - IN_PROGRESS
+    - Codex architecture publication coordinator
+    - 在 reviewed report-flow source seal 基线上完成 canonical task/generator candidate、exact-candidate
+      Atlas render、formal validation 与安全发布；不改变研究语义或访问 QuantConnect。
+    - 所有 tracked authority 在 one candidate 中重建并验证；candidate commit 后 Atlas ignored
+      page/sidecars 以 exact SHA 为 PASS/CURRENT；required tiers PASS；local main=origin/main=candidate；production/broker/external
+      action=none。
+    - 'Supporting requirement: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md.
+      Architecture-only recovery successor; deliberately outside TRADING task sequence
+      so it cannot alter Atlas research successor classification.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-009a-atlas-publication-register-20260830-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-85a081c9f70717217bd8921c556d9fbc
+- schema_version: task_event.v1
+  task_id: DEVX-009A_ATLAS_EXACT_CANDIDATE_PUBLICATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-30T06:48:23.1455944Z'
+  actor: integration-coordinator
+  change_id: devx-009a-atlas-publication-complete-20260830-v1
+  lane_id: null
+  base_commit: 4fa5aff563cf39eec17b842fd245808239233c5c
+  previous_state_event_id: task-event-85a081c9f70717217bd8921c556d9fbc
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner / discuss a separately preregistered trend-to-options
+      implementation and paired-comparator research task; no new QuantConnect action
+      is authorized
+    blocker_or_next_step: No remaining architecture publication recovery blocker after
+      final candidate validation and publication. Preserve the admitted research-only
+      result; discuss any new option implementation/backtest under a separate TRADING
+      task.
+    acceptance_criteria: All tracked authorities rebuild and validate on one candidate;
+      the candidate exact SHA renders Atlas page/sidecars PASS/CURRENT; required tiers
+      pass; local main=origin/main=candidate; external/production/broker action remain
+      none.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md.
+      Governed INTEGRATION preflight PASS from reviewed report-flow seal lane 4fa5aff563cf39eec17b842fd245808239233c5c.
+      This architecture-only task is outside the TRADING successor sequence and does
+      not change Atlas research classification or authorize QuantConnect.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-009a-atlas-publication-complete-20260830-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-9c313a7a1012ed397cb58316e864f3c5
+projection:
+  legacy_first_eight_cells:
+  - DEVX-009A_ATLAS_EXACT_CANDIDATE_PUBLICATION_RECOVERY_V1
+  - Atlas exact-candidate publication recovery V1
+  - P0
+  - DONE
+  - Project Owner / discuss a separately preregistered trend-to-options implementation
+    and paired-comparator research task; no new QuantConnect action is authorized
+  - No remaining architecture publication recovery blocker after final candidate validation
+    and publication. Preserve the admitted research-only result; discuss any new option
+    implementation/backtest under a separate TRADING task.
+  - All tracked authorities rebuild and validate on one candidate; the candidate exact
+    SHA renders Atlas page/sidecars PASS/CURRENT; required tiers pass; local main=origin/main=candidate;
+    external/production/broker action remain none.
+  - 'Supporting requirement: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md.
+    Governed INTEGRATION preflight PASS from reviewed report-flow seal lane 4fa5aff563cf39eec17b842fd245808239233c5c.
+    This architecture-only task is outside the TRADING successor sequence and does
+    not change Atlas research classification or authorize QuantConnect.'
+  docs_links:
+  - docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md
+  terminal: true
+  canonical_row_sha256: 22d61875f5630324b6f464938c593fdd829b933356383e2df76bc5d1ae3151bb
+last_event_id: task-event-9c313a7a1012ed397cb58316e864f3c5
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: e3198b4f53d0770a50a512fa17be58e30105093b90f8b77f33a7d36bf0a9d549
