@@ -1,13 +1,13 @@
 # TRADING-2542I：QQQ Options Exact Signal And Implementation Policy Draft V1
 
-最后更新：2026-08-29
+最后更新：2026-08-30
 
 稳定任务 ID：
 `TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1`
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BLOCKED_OWNER_INPUT`
 
 Owner 指令：Project Owner 已确认继续按“既有趋势信号只负责方向，QuantConnect 只负责期权实现与
 收益计算”的路径推进，并于 2026-08-29 指示“好的，那就冻结吧，你继续推进”。该指令 exact-freeze
@@ -28,6 +28,16 @@ canonical manifest replay；只有上述 replay=`PASS` 后，才允许提交一�
 fixed-maxima 的 bounded QuantConnect `DATA_RESEARCH` backtest。该授权不允许购买数据、provider query、raw
 option payload 导出、本地 option repricing、趋势模型重设计、paper/live/production/broker，QC simulation
 之外的 orders/fills/positions 必须为 0。
+
+Project Owner 于 2026-08-30 追认项目 `35444189` 的 exact code 与此前两次成功构建为
+`RETROSPECTIVELY_REVIEWED`，并授权“不再保存、构建或重试，直接且仅运行 1 次 bounded
+DATA_RESEARCH backtest”。dispatch 前再次复核可见项目、代码 LF byte count=`14556` 与 SHA-256
+`e0732c8bd4cb679011f50243f72d76372544ab18424a4e8ba7eebcab05c4d3d5`，原 manifest replay=`PASS`；
+唯一一次 `Backtest Project` 点击成功创建并完成 backtest `f2879a3cee7ec4e0b68b4f943aafd1f8`。但是
+QuantConnect 将两个额外 Cloud Build 作为该点击的内部副作用执行，超出 Owner 明确冻结的新增
+build=`0` 上限。该结果因此保留但隔离，等待 Owner 决定是否追认这两个平台自动副作用并接纳仅含聚合
+字段的结果；在此之前不得把结果用于 DQ/PIT、策略选择、参数更新、生产或投资结论，也不得再执行任何
+QC action。
 
 production effect：`none`
 
@@ -334,7 +344,16 @@ generated architecture/report-flow/compatibility authority 与 formal validation
 - `qc_execution_manifest_replay=PASS`；
 - `qc_signal_transition_count=83`；
 - `qc_main_py_bytes=14556`；
-- `conditional_quantconnect_backtest=AUTHORIZED_NOT_RUN_READY_FOR_SINGLE_DISPATCH`；
+- `conditional_quantconnect_backtest=ONE_DISPATCH_COMPLETED_RESULT_QUARANTINED`；
+- `quantconnect_backtest_id=f2879a3cee7ec4e0b68b4f943aafd1f8`；
+- `quantconnect_backtest_dispatch_count=1`；
+- `quantconnect_automatic_builds_after_dispatch=2`；
+- `quantconnect_automatic_retry_count=0`；
+- `quantconnect_aggregate_end_equity_usd=104479.60`；
+- `quantconnect_aggregate_net_profit_percent=4.48`；
+- `quantconnect_aggregate_total_orders/entries/exits/cancels=116/58/58/0`；
+- `quantconnect_result_admitted=false`；
+- terminal=`QC_SINGLE_BACKTEST_COMPLETED_RESULT_QUARANTINED_OWNER_REVIEW_REQUIRED`；
 
 ## 9. 进度记录
 
@@ -580,3 +599,17 @@ generated architecture/report-flow/compatibility authority 与 formal validation
   provider/raw option payload/object store/public share/paper/live/production/broker=`0/false/none`。
   在 Project Owner 重新明确处置前，不得点击 Backtest、不得把两次成功 build 解释为合规复测证据，
   也不得自动重试、创建新 clone 或删除现场。
+- 2026-08-30：Project Owner 将上述 clone code 与两次成功 build 追认为
+  `RETROSPECTIVELY_REVIEWED`，并明确授权不再保存、构建或重试、直接且仅运行一次 bounded
+  DATA_RESEARCH backtest。追认凭据 SHA-256=
+  `05ceceba573beb7f6e84750bfc1518a3c04099b90347c8922173ee71df075614`；dispatch 前可见项目与 exact
+  `main.py` SHA 再次匹配，execution manifest replay=`PASS`。唯一一次 Backtest 点击创建并完成
+  `Smooth Apricot Dogfish` / `f2879a3cee7ec4e0b68b4f943aafd1f8`，运行 `110.65` 秒、处理
+  `16,387,252` 个 data points；聚合结果为 start/end equity `$100,000.00/$104,479.60`、net profit
+  `4.48%`、fees `$75.40`、orders/entries/exits/cancels=`116/58/58/0`。同一次点击却由平台自动产生
+  两个新 Cloud Build（`e826e3-52ae2f`、`749e6f-52ae2f`），超出追认凭据冻结的新增 build=`0`；没有
+  manual build、save、code mutation 或 retry。新 incident/result artifact SHA-256=
+  `384da42316b1dba5c338f6d48f607ffc8b0b2570732ffdef9bd6d0d8661e5bf6`，状态为
+  `QUARANTINED_PENDING_OWNER_REVIEW`。结果不得进入 DQ/PIT、selection、engine、production 或投资结论；
+  原项目 `34808569` mutation=`0`，QC 外 orders/fills/positions=`0/0/0`，raw option payload、Object
+  Store、public share、paper/live/production/broker=`0/false/none`，且不再执行任何 QC action。
