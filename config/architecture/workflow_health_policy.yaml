@@ -1,20 +1,21 @@
 schema_version: workflow_health_policy.v1
-policy_version: DEVX-011@1.0.0
+policy_version: DEVX-012@1.1.0
 policy_metadata:
   owner: Project Owner / Codex engineering coordinator
-  status: pilot_baseline
+  status: controlled_automatic_report_generation
   rationale: >
     Convert existing validation, publication and Git evidence into a weekly,
     read-only developer workflow health review without weakening any governed
     quality, integration or publication gate.
   intended_effect: >
     Surface high-cost repeated failures and authority amplification early,
-    produce stable review-only optimization candidates, and prevent accepted
-    improvements from being lost in chat history.
+    automatically produce one validated bundle per ISO week through the existing
+    daily automation, compare it with the prior validated week, and keep all
+    optimization candidates review-only.
   validation_evidence: >
-    DEVX-011 synthetic collector and CLI contract tests plus Architecture,
-    Contract, Integration, Reproducibility and Full validation on the final
-    candidate.
+    DEVX-011 collector/CLI contract plus DEVX-012 ISO-week dedup, checkout
+    identity, trend comparison and cycle-receipt tests; Architecture, Contract,
+    Integration, Reproducibility and Full validation on the final candidate.
   review_condition: >
     Review thresholds after four real weekly observations or earlier if the
     report repeatedly produces false-positive candidates.
@@ -22,7 +23,16 @@ cadence:
   cadence_id: weekly
   lookback_days: 7
   timestamp_basis: UTC_CALENDAR_DAY_HALF_OPEN
-  automatic_command_dispatch_enabled: false
+  automatic_command_dispatch_enabled: true
+  automatic_report_generation:
+    enabled: true
+    existing_automation_id: aitradingsystem-pit
+    owner_decision_id: owner_decision:DEVX-012:2026-08-31:auto-trigger-workflow-health-existing-daily-automation-v1
+    trigger_path: EXISTING_DAILY_AUTOMATION_POST_STAGE
+    deduplication_basis: ISO_WEEK_VALIDATED_BUNDLE
+    failure_retry: NEXT_EXISTING_DAILY_AUTOMATION_INVOCATION
+    required_checkout_identity: LOCAL_MAIN_EQUALS_ORIGIN_MAIN_EQUALS_HEAD
+    automatic_optimization_execution: false
 sources:
   validation_summary_glob: outputs/validation_runtime/**/test_runtime_summary.json
   publication_transaction_root: outputs/architecture/arch_005_integration_publication_fence/transactions

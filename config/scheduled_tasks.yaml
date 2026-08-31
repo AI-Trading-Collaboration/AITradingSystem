@@ -690,10 +690,10 @@ cadences:
         command: aits reports research-governance-summary --latest
         production_effect: none
       - task_id: weekly_workflow_health_review
-        title: Governed developer workflow health review
-        command: aits reports workflow-health --as-of {as_of}
-        date_gate: "Once per ISO week before the first non-trivial tracked development mutation; reuse an already validated current-week artifact."
-        trigger_condition: "Read-only developer telemetry review; candidate output is review-only and cannot mutate tasks, code, validation gates, production, or broker state."
+        title: Automatic governed developer workflow health review
+        command: aits reports ensure-workflow-health --as-of {as_of}
+        date_gate: "The existing aitradingsystem-pit automation invokes the idempotent gate after its single daily-run stage; reuse an independently validated current-ISO-week bundle and retry only after a failed or blocked receipt."
+        trigger_condition: "Automatic report generation and week-over-week outcome review only; candidate output remains review-only and cannot mutate tasks, code, validation gates, production, or broker state. No second scheduler is allowed."
         data_quality_gate: "Not applicable to developer telemetry; the report must state data_quality_status=NOT_APPLICABLE_DEVELOPER_TELEMETRY and must not read market caches."
         manual_review_required: true
         production_effect: none

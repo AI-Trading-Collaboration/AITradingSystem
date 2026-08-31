@@ -814,6 +814,31 @@ def build_repository_authority(
                 devx_011_fragment_bytes,
             )
         )
+    devx_012_requirement_path = (
+        root
+        / "docs/requirements/DEVX-012_Automatic_Workflow_Health_Trigger_And_Outcome_Review_V1.md"
+    )
+    if devx_012_requirement_path.exists():
+        devx_012_section_id, devx_012_section = _devx_012_section(
+            root,
+            policy=policy,
+        )
+        (
+            devx_012_relative,
+            devx_012_record,
+            devx_012_fragment_bytes,
+        ) = render_fragment(
+            section_id=devx_012_section_id,
+            section=devx_012_section,
+        )
+        rendered_fragments.append(
+            (
+                devx_012_section_id,
+                devx_012_relative,
+                devx_012_record,
+                devx_012_fragment_bytes,
+            )
+        )
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -2039,6 +2064,129 @@ def _devx_011_section(
                 _positive_or_zero_int(
                     target.get("fragment_count"),
                     "devx_011.fragment_count",
+                )
+                for target in report_flow_targets
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "safety": {
+            "market_cache_read": False,
+            "strategy_or_weight_changed": False,
+            "automatic_task_mutation": False,
+            "automatic_code_mutation": False,
+            "validation_gate_relaxed": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _devx_012_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1"
+    source_paths = sorted(
+        [
+            "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+            "config/architecture/workflow_health_policy.yaml",
+            "config/report_registry.yaml",
+            "config/scheduled_tasks.yaml",
+            "docs/artifact_catalog.md",
+            "docs/operations/operations_runbook.md",
+            (
+                "docs/requirements/"
+                "DEVX-012_Automatic_Workflow_Health_Trigger_And_Outcome_Review_V1.md"
+            ),
+            "docs/runbooks/scheduled_task_orchestration.md",
+            "docs/system_flow.md",
+            "docs/task_register.md",
+            "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+            "inputs/architecture/arch_005_task_registry_index.yaml",
+            "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+            "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+            (
+                "registry/development_tasks/32/"
+                "329b8ec19d9613571c38d8882c7221180604b9eccaf091b243ece160f6ce2e11.yaml"
+            ),
+            "src/ai_trading_system/cli_commands/workflow_health_reports.py",
+            "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+            "src/ai_trading_system/reports/workflow_health.py",
+            "tests/test_arch_004_refactor_policy.py",
+            "tests/test_arch_004g_deprecation.py",
+            "tests/test_devx_006c_compatibility_authority.py",
+            "tests/test_trading2452_architecture_contract.py",
+            "tests/test_workflow_health.py",
+        ],
+        key=str.casefold,
+    )
+    report_flow_index_path = (
+        "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json"
+    )
+    report_flow_index_content = _regular_path(
+        root,
+        report_flow_index_path,
+        "devx_012.report_flow_index",
+    ).read_bytes()
+    report_flow_index = _strict_json_bytes(
+        report_flow_index_content,
+        report_flow_index_path,
+    )
+    raw_report_flow_targets = report_flow_index.get("targets")
+    if not isinstance(raw_report_flow_targets, list) or not raw_report_flow_targets:
+        _fail("AUTHORITY_DEVX_012_REPORT_FLOW_TARGETS_INVALID", report_flow_index_path)
+    report_flow_targets = [
+        _mapping(target, f"devx_012.report_flow_targets[{position}]")
+        for position, target in enumerate(raw_report_flow_targets)
+    ]
+    return section_id, {
+        "schema_version": "devx_012_automatic_workflow_health_trigger.v1",
+        "task_id": "DEVX-012_AUTOMATIC_WORKFLOW_HEALTH_TRIGGER_AND_OUTCOME_REVIEW_V1",
+        "status": "DONE",
+        "owner_decision": (
+            "owner_decision:DEVX-012:2026-08-31:"
+            "auto-trigger-workflow-health-existing-daily-automation-v1"
+        ),
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_devx_011_governed_workflow_health_control_loop_v1"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "workflow_health_automatic_cycle": {
+            "existing_automation_id": "aitradingsystem-pit",
+            "second_scheduler_created": False,
+            "iso_week_validated_bundle_deduplication": True,
+            "failed_or_blocked_retry_on_next_existing_invocation": True,
+            "main_origin_head_identity_required": True,
+            "automatic_report_generation_enabled": True,
+            "automatic_optimization_execution_enabled": False,
+            "candidate_task_or_code_mutation_allowed": False,
+            "validation_gate_change_allowed": False,
+            "prior_validated_week_metric_comparison": True,
+            "candidate_lifecycle_reported": True,
+        },
+        "report_catalog_flow_successor": {
+            "source_of_truth": report_flow_index["source_of_truth"],
+            "fragment_shadow_active": False,
+            "index_path": report_flow_index_path,
+            "index_sha256": _digest(report_flow_index_content),
+            "target_count": len(report_flow_targets),
+            "entry_count": sum(
+                _positive_or_zero_int(target.get("entry_count"), "devx_012.entry_count")
+                for target in report_flow_targets
+            ),
+            "fragment_count": sum(
+                _positive_or_zero_int(
+                    target.get("fragment_count"),
+                    "devx_012.fragment_count",
                 )
                 for target in report_flow_targets
             ),

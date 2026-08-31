@@ -17,6 +17,7 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 REPORT_SCHEMA_VERSION = "workflow_health_report.v1"
 CANDIDATE_SCHEMA_VERSION = "workflow_optimization_candidates.v1"
 VALIDATION_SCHEMA_VERSION = "workflow_health_validation.v1"
+CYCLE_RECEIPT_SCHEMA_VERSION = "workflow_health_cycle_receipt.v1"
 REPORT_TYPE = "workflow_health"
 CANDIDATE_REPORT_TYPE = "workflow_optimization_candidates"
 VALIDATION_REPORT_TYPE = "workflow_health_validation"
@@ -29,6 +30,7 @@ DEFAULT_REPORTS_DIR = PROJECT_ROOT / "outputs" / "reports"
 _FAILED_NODE_RE = re.compile(r"(?:FAILED|ERROR)\s+([^\s]+?\.py(?:::[^\s]+)*)")
 _RUN_ID_TIMESTAMP_RE = re.compile(r"(\d{8}T\d{6}Z)")
 _DATE_TOKEN_RE = re.compile(r"(20\d{6})")
+_WORKFLOW_HEALTH_REPORT_RE = re.compile(r"workflow_health_(\d{4}-\d{2}-\d{2})\.json$")
 
 
 def default_workflow_health_json_path(output_dir: Path, as_of: date) -> Path:
@@ -49,6 +51,10 @@ def default_workflow_health_validation_json_path(output_dir: Path, as_of: date) 
 
 def default_workflow_health_validation_markdown_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"workflow_health_validation_{as_of.isoformat()}.md"
+
+
+def default_workflow_health_cycle_receipt_path(output_dir: Path, as_of: date) -> Path:
+    return output_dir / f"workflow_health_cycle_receipt_{as_of.isoformat()}.json"
 
 
 def latest_workflow_health_json_path(output_dir: Path) -> Path | None:
@@ -80,6 +86,22 @@ def load_workflow_health_policy(path: Path = DEFAULT_POLICY_PATH) -> dict[str, A
     cadence = policy.get("cadence")
     if not isinstance(cadence, Mapping) or int(cadence.get("lookback_days", 0)) <= 0:
         raise ValueError(f"workflow health policy lookback_days must be positive: {path}")
+    automatic = cadence.get("automatic_report_generation")
+    expected_automatic = {
+        "enabled": True,
+        "existing_automation_id": "aitradingsystem-pit",
+        "deduplication_basis": "ISO_WEEK_VALIDATED_BUNDLE",
+        "failure_retry": "NEXT_EXISTING_DAILY_AUTOMATION_INVOCATION",
+    }
+    if not isinstance(automatic, Mapping) or any(
+        automatic.get(key) != value for key, value in expected_automatic.items()
+    ):
+        raise ValueError(f"workflow health automatic report policy is incomplete: {path}")
+    if cadence.get("automatic_command_dispatch_enabled") is not True:
+        raise ValueError(f"workflow health automatic report generation is disabled: {path}")
+    owner_decision_id = str(automatic.get("owner_decision_id", ""))
+    if not owner_decision_id.startswith("owner_decision:DEVX-012:"):
+        raise ValueError(f"workflow health automatic report owner decision is invalid: {path}")
     safety = policy.get("safety_boundary")
     expected_safety = {
         "production_effect": PRODUCTION_EFFECT,
@@ -105,6 +127,7 @@ def build_workflow_health_payloads(
     policy_path: Path = DEFAULT_POLICY_PATH,
     generated_at: datetime | None = None,
     git_commit_records: Sequence[Mapping[str, Any]] | None = None,
+    history_dir: Path | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     policy = load_workflow_health_policy(policy_path)
     lookback_days = int(policy["cadence"]["lookback_days"])
@@ -152,6 +175,15 @@ def build_workflow_health_payloads(
         "git": git_metrics,
     }
     candidates = _build_candidates(metrics=metrics, policy=policy)
+    previous_bundle = _latest_previous_validated_bundle(
+        reports_dir=(history_dir or project_root / "outputs" / "reports"),
+        as_of=as_of,
+    )
+    optimization_progress = _build_optimization_progress(
+        metrics=metrics,
+        candidates=candidates,
+        previous_bundle=previous_bundle,
+    )
     policy_sha256 = _sha256_path(policy_path)
     git_ref = str(policy["sources"].get("git_ref", "main"))
     git_head = _resolve_git_ref(project_root, git_ref, telemetry_gaps)
@@ -162,6 +194,7 @@ def build_workflow_health_payloads(
         "git_ref": git_ref,
         "git_head": git_head,
         "metrics": metrics,
+        "optimization_progress": optimization_progress,
     }
     report_id = f"workflow-health-{_stable_hash(report_identity)[:20]}"
     for candidate in candidates:
@@ -225,16 +258,19 @@ def build_workflow_health_payloads(
             "candidate_ids": [item["candidate_id"] for item in candidates],
             "artifact": f"workflow_optimization_candidates_{as_of.isoformat()}.json",
         },
+        "optimization_progress": optimization_progress,
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": BROKER_ACTION,
         "data_quality_status": DATA_QUALITY_STATUS,
         "market_data_read": False,
-        "automatic_command_dispatch_enabled": False,
+        "automatic_command_dispatch_enabled": True,
+        "automatic_report_generation_only": True,
         "reader_brief": {
             "summary": (
                 f"研发流程健康状态 {status}；validation={validation['summary_count']}，"
                 f"publication transactions={publication['transaction_count']}，"
-                f"optimization candidates={len(candidates)}。"
+                f"optimization candidates={len(candidates)}；"
+                f"outcome={optimization_progress['status']}。"
             ),
             "key_result": status,
             "next_action": (
@@ -249,6 +285,383 @@ def build_workflow_health_payloads(
         },
     }
     return report, candidate_bundle
+
+
+def latest_current_week_validated_bundle(
+    *, reports_dir: Path, as_of: date
+) -> dict[str, Any] | None:
+    return _latest_validated_bundle(
+        reports_dir=reports_dir,
+        as_of=as_of,
+        same_iso_week=True,
+    )
+
+
+def build_workflow_health_cycle_receipt(
+    *,
+    as_of: date,
+    action: str,
+    status: str,
+    owner_decision_id: str,
+    checkout_identity: Mapping[str, Any],
+    report: Mapping[str, Any] | None = None,
+    candidate_bundle: Mapping[str, Any] | None = None,
+    validation: Mapping[str, Any] | None = None,
+    artifact_paths: Sequence[Path] = (),
+    blocker_codes: Sequence[str] = (),
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    iso = as_of.isocalendar()
+    commitments = []
+    for path in sorted(artifact_paths, key=lambda item: str(item)):
+        if path.exists() and path.is_file():
+            commitments.append(
+                {
+                    "path": str(path),
+                    "size_bytes": path.stat().st_size,
+                    "sha256": _sha256_path(path),
+                }
+            )
+    return {
+        "schema_version": CYCLE_RECEIPT_SCHEMA_VERSION,
+        "report_type": "workflow_health_cycle_receipt",
+        "as_of": as_of.isoformat(),
+        "iso_week": f"{iso.year}-W{iso.week:02d}",
+        "generated_at": (generated_at or datetime.now(tz=UTC)).astimezone(UTC).isoformat(),
+        "action": action,
+        "status": status,
+        "owner_decision_id": owner_decision_id,
+        "existing_automation_id": "aitradingsystem-pit",
+        "source_report_id": None if report is None else report.get("report_id"),
+        "candidate_count": (
+            0 if candidate_bundle is None else int(candidate_bundle.get("candidate_count", 0))
+        ),
+        "optimization_progress_status": (
+            None
+            if report is None
+            else dict(report.get("optimization_progress", {})).get("status")
+        ),
+        "validation_status": (
+            None if validation is None else validation.get("validation_status")
+        ),
+        "checkout_identity": dict(checkout_identity),
+        "artifact_commitments": commitments,
+        "blocker_codes": sorted(set(str(item) for item in blocker_codes if str(item))),
+        "automatic_report_generation": True,
+        "automatic_optimization_execution": False,
+        "task_register_mutation_allowed": False,
+        "gate_relaxation_allowed": False,
+        "market_data_read": False,
+        "data_quality_status": DATA_QUALITY_STATUS,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": BROKER_ACTION,
+    }
+
+
+def resolve_workflow_health_checkout_identity(
+    *, project_root: Path, governed_paths: Sequence[Path]
+) -> tuple[dict[str, Any], tuple[str, ...]]:
+    blockers: list[str] = []
+
+    def git(*args: str) -> tuple[int, str]:
+        completed = subprocess.run(
+            ["git", "-C", str(project_root), *args],
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+        return completed.returncode, completed.stdout.strip()
+
+    values: dict[str, str | None] = {}
+    for key, args in (
+        ("branch", ("branch", "--show-current")),
+        ("head", ("rev-parse", "HEAD")),
+        ("local_main", ("rev-parse", "refs/heads/main")),
+        ("origin_main", ("rev-parse", "refs/remotes/origin/main")),
+    ):
+        return_code, value = git(*args)
+        if return_code != 0 or not value:
+            blockers.append(f"GIT_{key.upper()}_UNAVAILABLE")
+            values[key] = None
+        else:
+            values[key] = value
+    if values.get("branch") != "main":
+        blockers.append("CHECKOUT_BRANCH_NOT_MAIN")
+    if not (
+        values.get("head")
+        and values.get("head") == values.get("local_main") == values.get("origin_main")
+    ):
+        blockers.append("CHECKOUT_MAIN_ORIGIN_IDENTITY_MISMATCH")
+
+    relative_paths: list[str] = []
+    resolved_root = project_root.resolve()
+    for path in governed_paths:
+        try:
+            relative_path = path.resolve().relative_to(resolved_root).as_posix()
+            relative_paths.append(relative_path)
+        except ValueError:
+            blockers.append("GOVERNED_PATH_OUTSIDE_PROJECT_ROOT")
+            continue
+        if not path.exists() or not path.is_file():
+            blockers.append(f"GOVERNED_PATH_MISSING:{relative_path}")
+            continue
+        return_code, _ = git("ls-files", "--error-unmatch", "--", relative_path)
+        if return_code != 0:
+            blockers.append(f"GOVERNED_PATH_UNTRACKED:{relative_path}")
+    if relative_paths:
+        for code, diff_args in (
+            ("GOVERNED_PATHS_UNSTAGED_DIRTY", ("diff", "--quiet", "--")),
+            ("GOVERNED_PATHS_STAGED_DIRTY", ("diff", "--cached", "--quiet", "--")),
+        ):
+            return_code, _ = git(*diff_args, *relative_paths)
+            if return_code != 0:
+                blockers.append(code)
+    return (
+        {
+            "project_root": str(project_root.resolve()),
+            "branch": values.get("branch"),
+            "head": values.get("head"),
+            "local_main": values.get("local_main"),
+            "origin_main": values.get("origin_main"),
+            "governed_paths": sorted(relative_paths),
+        },
+        tuple(sorted(set(blockers))),
+    )
+
+
+def _build_optimization_progress(
+    *,
+    metrics: Mapping[str, Any],
+    candidates: Sequence[Mapping[str, Any]],
+    previous_bundle: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    current_candidate_ids = sorted(str(item.get("candidate_id")) for item in candidates)
+    if previous_bundle is None:
+        return {
+            "status": "NO_BASELINE",
+            "baseline_as_of": None,
+            "baseline_report_id": None,
+            "metric_comparisons": [],
+            "improved_metric_ids": [],
+            "regressed_metric_ids": [],
+            "unchanged_metric_ids": [],
+            "candidate_lifecycle": {
+                "new_candidate_ids": current_candidate_ids,
+                "recurring_candidate_ids": [],
+                "resolved_candidate_ids": [],
+            },
+            "summary": "没有更早且可独立重验的 weekly bundle；本周作为后续趋势基线。",
+            "causal_claim_allowed": False,
+        }
+
+    previous_report = dict(previous_bundle["report"])
+    previous_candidates = dict(previous_bundle["candidates"])
+    previous_metrics = dict(previous_report.get("metrics", {}))
+    metric_specs = (
+        (
+            "failed_validation_runtime_ratio",
+            _ratio(
+                float(dict(metrics.get("validation", {})).get("failed_elapsed_seconds", 0)),
+                float(dict(metrics.get("validation", {})).get("elapsed_seconds", 0)),
+            ),
+            _ratio(
+                float(
+                    dict(previous_metrics.get("validation", {})).get(
+                        "failed_elapsed_seconds", 0
+                    )
+                ),
+                float(dict(previous_metrics.get("validation", {})).get("elapsed_seconds", 0)),
+            ),
+        ),
+        (
+            "failed_full_runtime_ratio",
+            float(dict(metrics.get("validation", {})).get("failed_full_runtime_ratio", 0)),
+            float(
+                dict(previous_metrics.get("validation", {})).get(
+                    "failed_full_runtime_ratio", 0
+                )
+            ),
+        ),
+        (
+            "failed_full_count",
+            float(dict(metrics.get("validation", {})).get("failed_full_count", 0)),
+            float(dict(previous_metrics.get("validation", {})).get("failed_full_count", 0)),
+        ),
+        (
+            "non_admin_failed_terminal_ratio",
+            float(
+                dict(metrics.get("publication", {})).get(
+                    "non_admin_failed_terminal_ratio", 0
+                )
+            ),
+            float(
+                dict(previous_metrics.get("publication", {})).get(
+                    "non_admin_failed_terminal_ratio", 0
+                )
+            ),
+        ),
+        (
+            "authority_only_commit_ratio",
+            float(dict(metrics.get("git", {})).get("authority_only_commit_ratio", 0)),
+            float(
+                dict(previous_metrics.get("git", {})).get("authority_only_commit_ratio", 0)
+            ),
+        ),
+        (
+            "duplicate_validation_group_count",
+            float(
+                dict(metrics.get("validation", {})).get(
+                    "duplicate_validation_group_count", 0
+                )
+            ),
+            float(
+                dict(previous_metrics.get("validation", {})).get(
+                    "duplicate_validation_group_count", 0
+                )
+            ),
+        ),
+        (
+            "optimization_candidate_count",
+            float(len(candidates)),
+            float(previous_candidates.get("candidate_count", 0)),
+        ),
+    )
+    comparisons: list[dict[str, Any]] = []
+    for metric_id, current_value, previous_value in metric_specs:
+        delta = round(current_value - previous_value, 6)
+        classification = "UNCHANGED"
+        if delta < 0:
+            classification = "IMPROVED"
+        elif delta > 0:
+            classification = "REGRESSED"
+        comparisons.append(
+            {
+                "metric_id": metric_id,
+                "direction": "LOWER_IS_BETTER",
+                "previous_value": round(previous_value, 6),
+                "current_value": round(current_value, 6),
+                "delta": delta,
+                "classification": classification,
+            }
+        )
+    improved = sorted(
+        item["metric_id"] for item in comparisons if item["classification"] == "IMPROVED"
+    )
+    regressed = sorted(
+        item["metric_id"] for item in comparisons if item["classification"] == "REGRESSED"
+    )
+    unchanged = sorted(
+        item["metric_id"] for item in comparisons if item["classification"] == "UNCHANGED"
+    )
+    if improved and regressed:
+        status = "MIXED"
+    elif improved:
+        status = "IMPROVED"
+    elif regressed:
+        status = "REGRESSED"
+    else:
+        status = "STABLE"
+    previous_candidate_ids = {
+        str(item.get("candidate_id")) for item in _records(previous_candidates.get("candidates"))
+    }
+    current_candidate_id_set = set(current_candidate_ids)
+    lifecycle = {
+        "new_candidate_ids": sorted(current_candidate_id_set - previous_candidate_ids),
+        "recurring_candidate_ids": sorted(current_candidate_id_set & previous_candidate_ids),
+        "resolved_candidate_ids": sorted(previous_candidate_ids - current_candidate_id_set),
+    }
+    return {
+        "status": status,
+        "baseline_as_of": previous_report.get("as_of"),
+        "baseline_report_id": previous_report.get("report_id"),
+        "metric_comparisons": comparisons,
+        "improved_metric_ids": improved,
+        "regressed_metric_ids": regressed,
+        "unchanged_metric_ids": unchanged,
+        "candidate_lifecycle": lifecycle,
+        "summary": (
+            f"相对 {previous_report.get('as_of')}：改善 {len(improved)} 项，"
+            f"回退 {len(regressed)} 项，持平 {len(unchanged)} 项；"
+            f"新增候选 {len(lifecycle['new_candidate_ids'])}，"
+            f"持续候选 {len(lifecycle['recurring_candidate_ids'])}，"
+            f"已消退候选 {len(lifecycle['resolved_candidate_ids'])}。"
+        ),
+        "causal_claim_allowed": False,
+    }
+
+
+def _latest_previous_validated_bundle(
+    *, reports_dir: Path, as_of: date
+) -> dict[str, Any] | None:
+    return _latest_validated_bundle(reports_dir=reports_dir, as_of=as_of, same_iso_week=False)
+
+
+def _latest_validated_bundle(
+    *, reports_dir: Path, as_of: date, same_iso_week: bool
+) -> dict[str, Any] | None:
+    if not reports_dir.exists():
+        return None
+    current_week = as_of.isocalendar()[:2]
+    candidates: list[tuple[date, Path]] = []
+    for path in reports_dir.glob("workflow_health_????-??-??.json"):
+        match = _WORKFLOW_HEALTH_REPORT_RE.fullmatch(path.name)
+        if match is None:
+            continue
+        try:
+            report_date = date.fromisoformat(match.group(1))
+        except ValueError:
+            continue
+        if report_date > as_of:
+            continue
+        matches_week = report_date.isocalendar()[:2] == current_week
+        if matches_week is not same_iso_week:
+            continue
+        candidates.append((report_date, path))
+    for report_date, report_path in sorted(candidates, reverse=True):
+        candidate_path = default_workflow_candidates_json_path(reports_dir, report_date)
+        report_markdown_path = default_workflow_health_markdown_path(reports_dir, report_date)
+        validation_path = default_workflow_health_validation_json_path(
+            reports_dir, report_date
+        )
+        validation_markdown_path = default_workflow_health_validation_markdown_path(
+            reports_dir, report_date
+        )
+        if not all(
+            path.exists()
+            for path in (
+                candidate_path,
+                report_markdown_path,
+                validation_path,
+                validation_markdown_path,
+            )
+        ):
+            continue
+        try:
+            report = _read_json_object(report_path)
+            candidate_bundle = _read_json_object(candidate_path)
+            stored_validation = _read_json_object(validation_path)
+            validation = validate_workflow_health_payloads(report, candidate_bundle)
+        except (OSError, ValueError, json.JSONDecodeError, TypeError):
+            continue
+        if validation["validation_status"] not in {"PASS", "PASS_WITH_WARNINGS"}:
+            continue
+        if (
+            stored_validation.get("source_report_id") != report.get("report_id")
+            or stored_validation.get("validation_status") != validation["validation_status"]
+        ):
+            continue
+        return {
+            "report": report,
+            "candidates": candidate_bundle,
+            "validation": validation,
+            "report_path": report_path,
+            "report_markdown_path": report_markdown_path,
+            "candidate_path": candidate_path,
+            "validation_path": validation_path,
+            "validation_markdown_path": validation_markdown_path,
+        }
+    return None
 
 
 def validate_workflow_health_payloads(
@@ -326,6 +739,42 @@ def validate_workflow_health_payloads(
         and report.get("market_data_read") is False,
         "developer telemetry must not claim or consume market data quality evidence",
     )
+    progress = report.get("optimization_progress")
+    progress_candidate_lifecycle = (
+        progress.get("candidate_lifecycle") if isinstance(progress, Mapping) else None
+    )
+    current_candidate_ids = set(candidate_ids)
+    lifecycle_current_ids = set()
+    lifecycle_resolved_ids: set[str] = set()
+    if isinstance(progress_candidate_lifecycle, Mapping):
+        lifecycle_current_ids = {
+            str(item)
+            for key in ("new_candidate_ids", "recurring_candidate_ids")
+            for item in progress_candidate_lifecycle.get(key, [])
+        }
+        lifecycle_resolved_ids = {
+            str(item) for item in progress_candidate_lifecycle.get("resolved_candidate_ids", [])
+        }
+    check(
+        "optimization_progress_contract",
+        isinstance(progress, Mapping)
+        and progress.get("status")
+        in {"NO_BASELINE", "IMPROVED", "REGRESSED", "MIXED", "STABLE"}
+        and isinstance(progress.get("metric_comparisons"), list)
+        and isinstance(progress_candidate_lifecycle, Mapping)
+        and lifecycle_current_ids == current_candidate_ids
+        and not (lifecycle_resolved_ids & current_candidate_ids),
+        "optimization progress must bind current candidates and use a supported status",
+    )
+    check(
+        "automatic_report_only_boundary",
+        report.get("automatic_command_dispatch_enabled") is True
+        and report.get("automatic_report_generation_only") is True
+        and candidate_bundle.get("automatic_execution_allowed") is False
+        and candidate_bundle.get("task_register_mutation_allowed") is False
+        and candidate_bundle.get("gate_relaxation_allowed") is False,
+        "automatic dispatch may generate reports only and must not execute optimization work",
+    )
     window = report.get("window")
     check(
         "window_contract",
@@ -368,6 +817,7 @@ def render_workflow_health_markdown(report: Mapping[str, Any]) -> str:
     validation = dict(report.get("metrics", {}).get("validation", {}))
     publication = dict(report.get("metrics", {}).get("publication", {}))
     git_metrics = dict(report.get("metrics", {}).get("git", {}))
+    progress = dict(report.get("optimization_progress", {}))
     lines = [
         f"# 研发流程健康周报（{report.get('as_of')}）",
         "",
@@ -422,6 +872,33 @@ def render_workflow_health_markdown(report: Mapping[str, Any]) -> str:
             f"|`{item['task_id']}`|{item['transaction_count']}|"
             f"{item['failed_terminal_count']}|{item['administrative_stop_count']}|"
         )
+    lines.extend(
+        [
+            "",
+            "## 优化成果回顾",
+            "",
+            f"- 结论：`{progress.get('status', 'NO_BASELINE')}`",
+            f"- 对比基线：`{progress.get('baseline_as_of') or 'NONE'}`",
+            f"- 摘要：{progress.get('summary', '暂无可信历史基线。')}",
+            "",
+            "|指标|上期|本期|Delta|分类|",
+            "|---|---:|---:|---:|---|",
+        ]
+    )
+    for item in progress.get("metric_comparisons", []):
+        lines.append(
+            f"|`{item.get('metric_id')}`|{item.get('previous_value')}|"
+            f"{item.get('current_value')}|{item.get('delta')}|`{item.get('classification')}`|"
+        )
+    lifecycle = dict(progress.get("candidate_lifecycle", {}))
+    lines.extend(
+        [
+            "",
+            f"- 新增候选：{len(lifecycle.get('new_candidate_ids', []))}",
+            f"- 持续候选：{len(lifecycle.get('recurring_candidate_ids', []))}",
+            f"- 已消退候选：{len(lifecycle.get('resolved_candidate_ids', []))}",
+        ]
+    )
     candidate_ids = report.get("optimization_candidates", {}).get("candidate_ids", [])
     lines.extend(["", "## 优化候选", ""])
     if candidate_ids:
@@ -496,6 +973,10 @@ def write_workflow_health_validation_json(payload: Mapping[str, Any], path: Path
 
 def write_workflow_health_validation_markdown(payload: Mapping[str, Any], path: Path) -> Path:
     return write_text_atomic(path, render_workflow_health_validation_markdown(payload)).path
+
+
+def write_workflow_health_cycle_receipt(payload: Mapping[str, Any], path: Path) -> Path:
+    return write_json_atomic(path, dict(payload), sort_keys=True).path
 
 
 def _collect_validation_metrics(

@@ -36,6 +36,7 @@ TRADING_2542D_SECTION = (
 )
 PROD_004_SECTION = "phase_prod_004_pit_cumulative_archive_consumption_v1"
 DEVX_011_SECTION = "phase_devx_011_governed_workflow_health_control_loop_v1"
+DEVX_012_SECTION = "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1"
 
 
 def _write_fixture_authority(
@@ -140,11 +141,11 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 315
+    assert len(merged) == 316
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == DEVX_011_SECTION
+    assert next(reversed(merged)) == DEVX_012_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
@@ -207,6 +208,19 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
         "automatic_dispatch_enabled": False,
         "task_or_code_mutation_allowed": False,
         "validation_gate_change_allowed": False,
+    }
+    assert merged[DEVX_012_SECTION]["workflow_health_automatic_cycle"] == {
+        "existing_automation_id": "aitradingsystem-pit",
+        "second_scheduler_created": False,
+        "iso_week_validated_bundle_deduplication": True,
+        "failed_or_blocked_retry_on_next_existing_invocation": True,
+        "main_origin_head_identity_required": True,
+        "automatic_report_generation_enabled": True,
+        "automatic_optimization_execution_enabled": False,
+        "candidate_task_or_code_mutation_allowed": False,
+        "validation_gate_change_allowed": False,
+        "prior_validated_week_metric_comparison": True,
+        "candidate_lifecycle_reported": True,
     }
     assert merged[DEVX_006C_SECTION]["authority_contract"] == {
         "dual_write": False,

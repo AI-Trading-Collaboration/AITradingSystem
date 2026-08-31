@@ -8182,12 +8182,13 @@ reports:
     cadence: weekly
     audience: operator
     owner: system
-    command: aits reports workflow-health --as-of YYYY-MM-DD
+    command: aits reports ensure-workflow-health --as-of YYYY-MM-DD
     artifact_globs:
       - outputs/reports/workflow_health_????-??-??.json
       - outputs/reports/workflow_health_????-??-??.md
+      - outputs/run_control/workflow_health/workflow_health_cycle_receipt_????-??-??.json
     freshness_sla_days: 7
-    freshness_rationale: A validated current-week artifact is required before the first non-trivial tracked development mutation so recurring governance and validation friction remains visible.
+    freshness_rationale: The existing daily automation maintains one independently validated bundle per ISO week and compares it with the prior validated week so recurring friction and measured improvement remain visible.
     owner_action: review_stable_optimization_candidates_and_authorize_any_follow_up_separately
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false

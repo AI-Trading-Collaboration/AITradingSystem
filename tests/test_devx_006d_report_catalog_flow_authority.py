@@ -151,7 +151,7 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     ]
 
     assert next(reversed(merged)) == (
-        "phase_devx_011_governed_workflow_health_control_loop_v1"
+        "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1"
     )
     assert fragment_authority["source_of_truth"] == "LEGACY_MONOLITH"
     assert fragment_authority["fragment_shadow_active"] is False
@@ -172,19 +172,19 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         (
             "report_registry",
             "config/report_registry.yaml",
-            "6a0bf55252d5fecf4d02707a30d1eefd8d936a3e30bfc1773013ee07c945dacb",
+            "8544313ef42e43c2792dfb934bbd55030bb25f53b227593681c70e92b398920d",
             1373,
         ),
         (
             "artifact_catalog",
             "docs/artifact_catalog.md",
-            "b56951aa0e9d7404217e7f20d5c144db32e89736dd9dc6b9fefb1d1c92bde454",
+            "8921e1ff718fd4465d2fd34e1bfa9a9b34df347d8837b74cd30cc752903276fa",
             560,
         ),
         (
             "system_flow",
             "docs/system_flow.md",
-            "f394c9046eeb04807234ad974b62a02d42e0db7b922b2b5696d0e8ee59639e07",
+            "fc1be8a2fab42edabef9f28af45f095cb6adc40bb7bda12c1a09744dbbcdd3d2",
             1175,
         ),
     ],

@@ -86,7 +86,7 @@ paper-shadow/weekly/readiness/owner evidence 缺失时保留 placeholder 和 war
 `INSUFFICIENT_DATA` 表示 availability；topology、安全边界和 strict data/PIT 仍 fail closed。
 该机制不建立第二 scheduler、不扩展 provider budget、不写 weights，也不触发 broker/trading。
 
-F1.5在每次`daily-run`的canonical metadata目录additive写`periodic_operations_plan_YYYY-MM-DD.json`。该文件覆盖14 weekly、6 biweekly、6 monthly和15 ad-hoc任务，每项独立保存one-step WorkflowSpec、typed due resolution、non-executing RunLedger和原command template；缺DQ/artifact/owner evidence的due项BLOCKED，非period-end或event未触发项NOT_DUE。`automatic_command_dispatch_enabled=false`，因此daily trigger不执行这些命令。Operator只有在持有完整evidence/owner decision时才可显式调用`aits ops periodic-dispatch ... --confirm-manual-dispatch`；未解析`{...}`/`<...>`、自然语言manual checkpoint、非allowlist前缀、duplicate/concurrent/attempt exhausted均fail closed。该manual command不是外部scheduler entry。
+F1.5在每次`daily-run`的canonical metadata目录additive写`periodic_operations_plan_YYYY-MM-DD.json`。该文件覆盖14 weekly、6 biweekly、6 monthly和15 ad-hoc任务，每项独立保存one-step WorkflowSpec、typed due resolution、non-executing RunLedger和原command template；缺DQ/artifact/owner evidence的due项BLOCKED，非period-end或event未触发项NOT_DUE。generic periodic dispatcher 的`automatic_command_dispatch_enabled=false`保持不变，因此daily trigger不执行这些研究/治理命令。Operator只有在持有完整evidence/owner decision时才可显式调用`aits ops periodic-dispatch ... --confirm-manual-dispatch`；未解析`{...}`/`<...>`、自然语言manual checkpoint、非allowlist前缀、duplicate/concurrent/attempt exhausted均fail closed。该manual command不是外部scheduler entry。DEVX-012 仅为 developer telemetry 增加一个独立的 exact allowlist：existing `aitradingsystem-pit` automation 在同一 invocation 的唯一 daily-run 阶段之后调用 `aits reports ensure-workflow-health`；这不启用 generic automatic non-daily dispatch，也不创建第二 scheduler。
 
 ## Closed-Market Mode
 
@@ -99,7 +99,7 @@ F1.5在每次`daily-run`的canonical metadata目录additive写`periodic_operatio
 
 ## Weekly Cadence
 
-Weekly 任务在 `config/scheduled_tasks.yaml` 中登记；daily-run只生成逐项due/blocked/not-due评估，不自动执行：
+Weekly 任务在 `config/scheduled_tasks.yaml` 中登记；daily-run只生成逐项due/blocked/not-due评估，不自动执行。唯一例外是 existing Codex automation 同一 invocation 中 exact allowlisted 的 workflow-health developer-telemetry post-stage：
 
 - backtest
 - backtest robustness
@@ -109,14 +109,18 @@ Weekly 任务在 `config/scheduled_tasks.yaml` 中登记；daily-run只生成逐
 - weight candidate evaluation
 - weight promotion gate
 - research governance summary review
-- governed developer workflow health review（每个 ISO 周首个非平凡 tracked mutation 前；已有当周 validated artifact 时复用）
+- governed developer workflow health review（existing daily automation post-stage 自动检查；同一 ISO 周已有 independently validated artifact 时复用）
 - Dynamic v3 rescue artifact validation / stale review / governance validate / research index / observe-only shadow monitor
 
 `weekly_workflow_health_review` 只读取 validation runtime、publication transaction 和 Git
-main history，输出只读 health report / validation / `PROPOSED_REVIEW_ONLY` candidates。
-它不读取 market cache，不要求 `aits validate-data`，也不自动 dispatch candidate、修改
-task register、放宽门禁或触发 production/broker。当前仍由 unified periodic plan 发现 due
-状态，`automatic_command_dispatch_enabled=false` 保持不变。
+main history，输出只读 health report / validation / `PROPOSED_REVIEW_ONLY` candidates，
+并与最近一个更早且 independently validated 的 weekly bundle 比较 metric delta 与 candidate
+lifecycle。`aits reports ensure-workflow-health` 要求 exact main/origin/HEAD identity，按 ISO week
+independent validation 去重，写 `workflow_health_cycle_receipt.v1`；invalid/blocked/failed 不算完成，
+下一次 existing daily invocation 可重试。它不读取 market cache，不要求 `aits validate-data`，
+也不自动 dispatch candidate、修改 task register、放宽门禁或触发 production/broker。generic
+periodic `automatic_command_dispatch_enabled=false` 保持不变；只有 workflow-health report generation
+policy 为 true，且不得扩大到其他 task id。
 
 Weekly 输出必须声明实际 research window 与 requested/evaluated range；默认 primary conclusion window 从 `2021-02-22` 开始。若显式使用 `ai_after_chatgpt` / `2022-12-01`，必须标为 historical comparison、AI-cycle attribution 或 sensitivity/stress，而不是默认或更严格的 minimum bound。
 

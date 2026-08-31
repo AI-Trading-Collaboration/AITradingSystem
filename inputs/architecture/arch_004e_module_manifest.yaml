@@ -2493,7 +2493,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.workflow_health_reports
   path: src/ai_trading_system/cli_commands/workflow_health_reports.py
-  sha256: 70cfa6ed7fcd09ecb5dfaf8710b8bedd6a0e76b9fb5398c679d6557e9fe56002
+  sha256: b03f6d2bd02449c9d51b283e56f8d13db9eacb28bd630910f1c0972ed8b48963
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -15453,7 +15453,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.compatibility_authority
   path: src/ai_trading_system/platform/architecture/compatibility_authority.py
-  sha256: 65d74f9e1c78e7a1e93ba1c562be614e9f288baead6f36aa2e5e8fd1e7f36f8c
+  sha256: 4c08c1f275b8b1f60059ec86f6fd210f23abdbb2633c4f03c926a606a2482807
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -19268,7 +19268,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.reports.workflow_health
   path: src/ai_trading_system/reports/workflow_health.py
-  sha256: 314b0d519fd36fb0d073d3e178bfb81e65acce7fee66ccbbbdcce2c33a298cc2
+  sha256: 2b62de43c032bce4bf7060fc86b09cef180cbf564d8af2de514f5298349d150f
   rule_id: reports
   owner_profile: reporting
   owners:

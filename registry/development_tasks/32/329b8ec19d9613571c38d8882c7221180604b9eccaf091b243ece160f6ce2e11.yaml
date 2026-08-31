@@ -1,0 +1,107 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-012_AUTOMATIC_WORKFLOW_HEALTH_TRIGGER_AND_OUTCOME_REVIEW_V1
+  task_id_sha256: 329b8ec19d9613571c38d8882c7221180604b9eccaf091b243ece160f6ce2e11
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-012_AUTOMATIC_WORKFLOW_HEALTH_TRIGGER_AND_OUTCOME_REVIEW_V1
+  title: null
+  domain: Developer experience / automatic workflow health trigger and outcome review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Project owner：复核每周 workflow-health 优化候选；新的优化落地继续单独登记 canonical task
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 无 implementation blocker；existing aitradingsystem-pit
+    automation 在 repo 发布后更新，自动阶段仅生成/校验报告
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Existing daily automation 内 ISO-week 自动生成/去重；可信 previous bundle 趋势与 candidate
+      lifecycle；失败不覆盖且可重试；review-only safety；focused/formal/Full PASS；main/origin
+      equality；automation ACTIVE
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-012_AUTOMATIC_WORKFLOW_HEALTH_TRIGGER_AND_OUTCOME_REVIEW_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-31T02:11:47.6835942Z'
+  actor: integration-coordinator
+  change_id: devx-012-candidate-registration-20260831-v3
+  lane_id: null
+  base_commit: 7c687124801064a3878aa122a33f2d9b2e9a7fb5
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-012_AUTOMATIC_WORKFLOW_HEALTH_TRIGGER_AND_OUTCOME_REVIEW_V1
+    - Developer experience / automatic workflow health trigger and outcome review
+    - P1
+    - IN_PROGRESS
+    - Codex engineering coordinator：完成 latest-main 协调候选、正式验证和 existing automation
+      更新
+    - 无 implementation blocker；复用 existing aitradingsystem-pit post-stage，不创建第二 scheduler
+    - ISO-week 自动生成/去重；previous validated week 趋势与 candidate lifecycle；失败不覆盖且可重试；review-only
+      safety；formal/Full PASS；main/origin equality；automation ACTIVE
+    - 2026-08-31：latest-main candidate 依据 integration-revalidation-9eeaf505d1e76959c949
+      完成共享域协调，待生成物重建和正式验证。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-012-candidate-registration-20260831-v3
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-79e9d5a9677d895ac72aeff39dac3314
+- schema_version: task_event.v1
+  task_id: DEVX-012_AUTOMATIC_WORKFLOW_HEALTH_TRIGGER_AND_OUTCOME_REVIEW_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-31T02:12:10.8988614Z'
+  actor: integration-coordinator
+  change_id: devx-012-workflow-health-automatic-cycle-closeout-20260831-v3
+  lane_id: null
+  base_commit: 7c687124801064a3878aa122a33f2d9b2e9a7fb5
+  previous_state_event_id: task-event-79e9d5a9677d895ac72aeff39dac3314
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: Project owner：复核每周 workflow-health 优化候选；新的优化落地继续单独登记 canonical task
+    blocker_or_next_step: 无 implementation blocker；existing aitradingsystem-pit automation
+      在 repo 发布后更新，自动阶段仅生成/校验报告
+    acceptance_criteria: Existing daily automation 内 ISO-week 自动生成/去重；可信 previous
+      bundle 趋势与 candidate lifecycle；失败不覆盖且可重试；review-only safety；focused/formal/Full
+      PASS；main/origin equality；automation ACTIVE
+    notes: DEVX-012 implemented ensure-workflow-health, validated weekly dedup, immutable
+      invalid-date evidence, trend comparison and review-only safety; base drift reconciled
+      under integration-revalidation-9eeaf505d1e76959c949.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-012-workflow-health-automatic-cycle-closeout-20260831-v3
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-19ae7c7b92e73d33710440ee4013179d
+projection:
+  legacy_first_eight_cells:
+  - DEVX-012_AUTOMATIC_WORKFLOW_HEALTH_TRIGGER_AND_OUTCOME_REVIEW_V1
+  - Developer experience / automatic workflow health trigger and outcome review
+  - P1
+  - DONE
+  - Project owner：复核每周 workflow-health 优化候选；新的优化落地继续单独登记 canonical task
+  - 无 implementation blocker；existing aitradingsystem-pit automation 在 repo 发布后更新，自动阶段仅生成/校验报告
+  - Existing daily automation 内 ISO-week 自动生成/去重；可信 previous bundle 趋势与 candidate
+    lifecycle；失败不覆盖且可重试；review-only safety；focused/formal/Full PASS；main/origin equality；automation
+    ACTIVE
+  - DEVX-012 implemented ensure-workflow-health, validated weekly dedup, immutable
+    invalid-date evidence, trend comparison and review-only safety; base drift reconciled
+    under integration-revalidation-9eeaf505d1e76959c949.
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 8a7d0a40c709ecb5a78e24818ffd4de01638183ae6dfbf411292840814357344
+last_event_id: task-event-19ae7c7b92e73d33710440ee4013179d
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: cdd0b4608fae03c8b4dab3fcb6d6e78bb57a9feb24c553af162eedadd409c69a

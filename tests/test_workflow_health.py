@@ -12,8 +12,18 @@ from ai_trading_system.cli import app
 from ai_trading_system.reports.workflow_health import (
     DEFAULT_POLICY_PATH,
     build_workflow_health_payloads,
+    default_workflow_candidates_json_path,
+    default_workflow_health_json_path,
+    default_workflow_health_markdown_path,
+    default_workflow_health_validation_json_path,
+    default_workflow_health_validation_markdown_path,
     render_workflow_health_markdown,
     validate_workflow_health_payloads,
+    write_workflow_candidates_json,
+    write_workflow_health_json,
+    write_workflow_health_markdown,
+    write_workflow_health_validation_json,
+    write_workflow_health_validation_markdown,
 )
 
 AS_OF = date(2026, 8, 31)
@@ -249,6 +259,239 @@ def test_workflow_health_cli_writes_and_revalidates_bundle(tmp_path: Path) -> No
     assert payload["market_data_read"] is False
 
 
+def test_workflow_health_compares_previous_validated_week_and_candidate_lifecycle(
+    tmp_path: Path,
+) -> None:
+    policy_path = _write_policy(tmp_path, permissive=True)
+    reports_dir = tmp_path / "outputs" / "reports"
+    previous_as_of = date(2026, 8, 24)
+    _write_validation_summary(
+        tmp_path,
+        run_id="full_20260823T010000Z",
+        tier="full",
+        status="FAIL",
+        elapsed=600,
+        commit="d" * 40,
+    )
+    previous, previous_candidates = build_workflow_health_payloads(
+        as_of=previous_as_of,
+        project_root=tmp_path,
+        policy_path=policy_path,
+        generated_at=datetime(2026, 8, 24, 12, tzinfo=UTC),
+        git_commit_records=[{"commit": "1" * 40, "paths": ["docs/system_flow.md"]}],
+        history_dir=reports_dir,
+    )
+    previous_validation = validate_workflow_health_payloads(previous, previous_candidates)
+    _write_bundle(
+        reports_dir,
+        previous_as_of,
+        previous,
+        previous_candidates,
+        previous_validation,
+    )
+    _write_validation_summary(
+        tmp_path,
+        run_id="full_20260830T010000Z",
+        tier="full",
+        status="PASS",
+        elapsed=300,
+        commit="e" * 40,
+    )
+
+    current, current_candidates = build_workflow_health_payloads(
+        as_of=AS_OF,
+        project_root=tmp_path,
+        policy_path=policy_path,
+        generated_at=GENERATED_AT,
+        git_commit_records=[{"commit": "2" * 40, "paths": ["src/example.py"]}],
+        history_dir=reports_dir,
+    )
+    validation = validate_workflow_health_payloads(current, current_candidates)
+    progress = current["optimization_progress"]
+
+    assert validation["validation_status"] in {"PASS", "PASS_WITH_WARNINGS"}
+    assert progress["baseline_as_of"] == previous_as_of.isoformat()
+    assert progress["status"] in {"IMPROVED", "MIXED"}
+    assert "failed_full_runtime_ratio" in progress["improved_metric_ids"]
+    assert set(progress["candidate_lifecycle"]["resolved_candidate_ids"])
+    assert "优化成果回顾" in render_workflow_health_markdown(current)
+
+
+def test_ensure_workflow_health_reuses_current_week_without_rewriting_bundle(
+    tmp_path: Path,
+) -> None:
+    policy_path = _write_policy(tmp_path, permissive=False)
+    _init_git_repository(tmp_path, with_origin_main=True)
+    reports_dir = tmp_path / "outputs" / "reports"
+    receipt_dir = tmp_path / "outputs" / "run_control" / "workflow_health"
+    runner = CliRunner()
+    first = runner.invoke(
+        app,
+        [
+            "reports",
+            "workflow-health",
+            "--as-of",
+            AS_OF.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+            "--project-root",
+            str(tmp_path),
+            "--policy-path",
+            str(policy_path),
+        ],
+        env={"COLUMNS": "180"},
+        terminal_width=180,
+    )
+    report_path = default_workflow_health_json_path(reports_dir, AS_OF)
+    original_bytes = report_path.read_bytes()
+
+    ensured = runner.invoke(
+        app,
+        [
+            "reports",
+            "ensure-workflow-health",
+            "--as-of",
+            AS_OF.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+            "--receipt-dir",
+            str(receipt_dir),
+            "--project-root",
+            str(tmp_path),
+            "--policy-path",
+            str(policy_path),
+        ],
+        env={"COLUMNS": "180"},
+        terminal_width=180,
+    )
+    receipt = json.loads(
+        (receipt_dir / f"workflow_health_cycle_receipt_{AS_OF.isoformat()}.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert first.exit_code == 0, first.output
+    assert ensured.exit_code == 0, ensured.output
+    assert report_path.read_bytes() == original_bytes
+    assert receipt["action"] == "ALREADY_CURRENT"
+    assert receipt["status"] == "PASS"
+    assert receipt["automatic_optimization_execution"] is False
+
+
+def test_ensure_workflow_health_generates_missing_bundle_and_receipt(tmp_path: Path) -> None:
+    policy_path = _write_policy(tmp_path, permissive=False)
+    _init_git_repository(tmp_path, with_origin_main=True)
+    reports_dir = tmp_path / "outputs" / "reports"
+    receipt_dir = tmp_path / "outputs" / "run_control" / "workflow_health"
+    runner = CliRunner()
+
+    ensured = runner.invoke(
+        app,
+        [
+            "reports",
+            "ensure-workflow-health",
+            "--as-of",
+            AS_OF.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+            "--receipt-dir",
+            str(receipt_dir),
+            "--project-root",
+            str(tmp_path),
+            "--policy-path",
+            str(policy_path),
+        ],
+        env={"COLUMNS": "180"},
+        terminal_width=180,
+    )
+    receipt = json.loads(
+        (receipt_dir / f"workflow_health_cycle_receipt_{AS_OF.isoformat()}.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert ensured.exit_code == 0, ensured.output
+    assert receipt["action"] == "GENERATED"
+    assert receipt["status"] == "PASS"
+    assert receipt["optimization_progress_status"] == "NO_BASELINE"
+    assert len(receipt["artifact_commitments"]) == 5
+
+
+def test_ensure_workflow_health_blocks_invalid_same_date_bundle_without_overwrite(
+    tmp_path: Path,
+) -> None:
+    policy_path = _write_policy(tmp_path, permissive=False)
+    _init_git_repository(tmp_path, with_origin_main=True)
+    reports_dir = tmp_path / "outputs" / "reports"
+    receipt_dir = tmp_path / "outputs" / "run_control" / "workflow_health"
+    invalid_path = default_workflow_health_json_path(reports_dir, AS_OF)
+    invalid_path.parent.mkdir(parents=True)
+    invalid_path.write_text("{invalid", encoding="utf-8")
+    original_bytes = invalid_path.read_bytes()
+    runner = CliRunner()
+
+    ensured = runner.invoke(
+        app,
+        [
+            "reports",
+            "ensure-workflow-health",
+            "--as-of",
+            AS_OF.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+            "--receipt-dir",
+            str(receipt_dir),
+            "--project-root",
+            str(tmp_path),
+            "--policy-path",
+            str(policy_path),
+        ],
+        env={"COLUMNS": "180"},
+        terminal_width=180,
+    )
+    receipt = json.loads(
+        (receipt_dir / f"workflow_health_cycle_receipt_{AS_OF.isoformat()}.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert ensured.exit_code == 1
+    assert invalid_path.read_bytes() == original_bytes
+    assert receipt["action"] == "BLOCKED_INVALID_CURRENT_DATE_BUNDLE"
+    assert receipt["status"] == "BLOCKED"
+
+    retry_date = date(2026, 9, 1)
+    retry = runner.invoke(
+        app,
+        [
+            "reports",
+            "ensure-workflow-health",
+            "--as-of",
+            retry_date.isoformat(),
+            "--reports-dir",
+            str(reports_dir),
+            "--receipt-dir",
+            str(receipt_dir),
+            "--project-root",
+            str(tmp_path),
+            "--policy-path",
+            str(policy_path),
+        ],
+        env={"COLUMNS": "180"},
+        terminal_width=180,
+    )
+    retry_receipt = json.loads(
+        (
+            receipt_dir
+            / f"workflow_health_cycle_receipt_{retry_date.isoformat()}.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert retry.exit_code == 0, retry.output
+    assert retry_receipt["action"] == "GENERATED"
+    assert retry_receipt["status"] == "PASS"
+
+
 def _write_policy(tmp_path: Path, *, permissive: bool) -> Path:
     payload = yaml.safe_load(DEFAULT_POLICY_PATH.read_text(encoding="utf-8"))
     if permissive:
@@ -333,16 +576,55 @@ def _write_transaction(
         )
 
 
-def _init_git_repository(path: Path) -> None:
+def _write_bundle(
+    reports_dir: Path,
+    report_date: date,
+    report: dict[str, object],
+    candidates: dict[str, object],
+    validation: dict[str, object],
+) -> None:
+    write_workflow_health_json(
+        report, default_workflow_health_json_path(reports_dir, report_date)
+    )
+    write_workflow_health_markdown(
+        report, default_workflow_health_markdown_path(reports_dir, report_date)
+    )
+    write_workflow_candidates_json(
+        candidates, default_workflow_candidates_json_path(reports_dir, report_date)
+    )
+    write_workflow_health_validation_json(
+        validation,
+        default_workflow_health_validation_json_path(reports_dir, report_date),
+    )
+    write_workflow_health_validation_markdown(
+        validation,
+        default_workflow_health_validation_markdown_path(reports_dir, report_date),
+    )
+
+
+def _init_git_repository(path: Path, *, with_origin_main: bool = False) -> None:
     subprocess.run(["git", "init", "-b", "main", str(path)], check=True, capture_output=True)
     subprocess.run(["git", "-C", str(path), "config", "user.email", "test@example.com"], check=True)
     subprocess.run(["git", "-C", str(path), "config", "user.name", "Test"], check=True)
     marker = path / "README.md"
     marker.write_text("test\n", encoding="utf-8")
-    subprocess.run(["git", "-C", str(path), "add", "README.md"], check=True)
+    for relative_path in (
+        "src/ai_trading_system/reports/workflow_health.py",
+        "src/ai_trading_system/cli_commands/workflow_health_reports.py",
+        "config/scheduled_tasks.yaml",
+    ):
+        governed_path = path / relative_path
+        governed_path.parent.mkdir(parents=True, exist_ok=True)
+        governed_path.write_text(f"fixture: {relative_path}\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(path), "add", "."], check=True)
     subprocess.run(
         ["git", "-C", str(path), "commit", "-m", "test"], check=True, capture_output=True
     )
+    if with_origin_main:
+        subprocess.run(
+            ["git", "-C", str(path), "update-ref", "refs/remotes/origin/main", "HEAD"],
+            check=True,
+        )
 
 
 def _git_head(path: Path) -> str:

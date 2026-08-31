@@ -92,6 +92,9 @@ PROD_004_PIT_CUMULATIVE_CONSUMPTION_PHASE_KEY = (
 DEVX_011_WORKFLOW_HEALTH_PHASE_KEY = (
     "phase_devx_011_governed_workflow_health_control_loop_v1"
 )
+DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_PHASE_KEY = (
+    "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1"
+)
 TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
         ("docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md"),
@@ -202,6 +205,7 @@ def _assert_historical_source_is_current_or_superseded(
             TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_PHASE_KEY,
             PROD_004_PIT_CUMULATIVE_CONSUMPTION_PHASE_KEY,
             DEVX_011_WORKFLOW_HEALTH_PHASE_KEY,
+            DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_PHASE_KEY,
         }
     ):
         section_ids = list(baseline)

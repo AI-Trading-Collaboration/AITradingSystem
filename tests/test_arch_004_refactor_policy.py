@@ -3898,7 +3898,10 @@ PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION = (
 DEVX_011_WORKFLOW_HEALTH_SECTION = (
     "phase_devx_011_governed_workflow_health_control_loop_v1"
 )
-LATEST_COMPATIBILITY_SECTION = DEVX_011_WORKFLOW_HEALTH_SECTION
+DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION = (
+    "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1"
+)
+LATEST_COMPATIBILITY_SECTION = DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -24513,9 +24516,9 @@ def test_prod_004_is_latest_cumulative_pit_consumption_authority() -> None:
     assert phase["broker_action"] == "none"
 
 
-def test_devx_011_is_latest_governed_workflow_health_authority() -> None:
+def test_devx_011_governed_workflow_health_authority_remains_historical() -> None:
     baseline = _compatibility_baseline()
-    assert next(reversed(baseline)) == DEVX_011_WORKFLOW_HEALTH_SECTION
+    assert next(reversed(baseline)) == DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION
     phase = baseline[DEVX_011_WORKFLOW_HEALTH_SECTION]
 
     assert phase["schema_version"] == (
@@ -24556,6 +24559,59 @@ def test_devx_011_is_latest_governed_workflow_health_authority() -> None:
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
     assert phase["report_catalog_flow_successor"]["entry_count"] == 3108
     assert phase["report_catalog_flow_successor"]["fragment_count"] == 192
+    assert phase["safety"] == {
+        "market_cache_read": False,
+        "strategy_or_weight_changed": False,
+        "automatic_task_mutation": False,
+        "automatic_code_mutation": False,
+        "validation_gate_relaxed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+    assert phase["production_effect"] == "none"
+    assert phase["broker_action"] == "none"
+
+
+def test_devx_012_is_latest_automatic_workflow_health_cycle_authority() -> None:
+    baseline = _compatibility_baseline()
+    assert next(reversed(baseline)) == DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION
+    phase = baseline[DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION]
+
+    assert phase["schema_version"] == "devx_012_automatic_workflow_health_trigger.v1"
+    assert phase["task_id"] == (
+        "DEVX-012_AUTOMATIC_WORKFLOW_HEALTH_TRIGGER_AND_OUTCOME_REVIEW_V1"
+    )
+    assert phase["status"] == "DONE"
+    assert phase["owner_decision"] == (
+        "owner_decision:DEVX-012:2026-08-31:"
+        "auto-trigger-workflow-health-existing-daily-automation-v1"
+    )
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": DEVX_011_WORKFLOW_HEALTH_SECTION,
+        "current_hash_authority": (
+            f"{DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION}.sources"
+        ),
+    }
+    assert phase["workflow_health_automatic_cycle"] == {
+        "existing_automation_id": "aitradingsystem-pit",
+        "second_scheduler_created": False,
+        "iso_week_validated_bundle_deduplication": True,
+        "failed_or_blocked_retry_on_next_existing_invocation": True,
+        "main_origin_head_identity_required": True,
+        "automatic_report_generation_enabled": True,
+        "automatic_optimization_execution_enabled": False,
+        "candidate_task_or_code_mutation_allowed": False,
+        "validation_gate_change_allowed": False,
+        "prior_validated_week_metric_comparison": True,
+        "candidate_lifecycle_reported": True,
+    }
+    source_paths = [str(source["path"]) for source in phase["sources"]]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert set(source_paths) == set(phase["superseded_live_source_paths"])
+    for source in phase["sources"]:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
     assert phase["safety"] == {
         "market_cache_read": False,
         "strategy_or_weight_changed": False,
