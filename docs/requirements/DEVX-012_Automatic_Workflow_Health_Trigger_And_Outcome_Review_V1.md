@@ -181,3 +181,11 @@ Local automation state（Git 外、发布后更新）：
 - 2026-08-31：focused workflow-health tests 与 Ruff PASS；开发期间 local `main` 从 frozen base
   `a2ddfac1` 前进，按治理要求保留 frozen lane 并在自然集成边界生成 base-drift plan，不执行隐式
   rebase/merge。
+- 2026-08-31：最终候选 `30fc15ad` 的 Architecture / Contract / Integration /
+  Reproducibility 分别为 `882 / 278 / 995 / 24` PASS；首次 Full 为
+  `10039 passed / 1 failed / 3 skipped`。唯一失败来自本地 ignored Atlas canonical bundle 仍绑定
+  `a2ddfac1`，按官方 renderer 刷新到最终候选后，live validation 已恢复 `CURRENT / PASS`；聚焦
+  复现进一步确认 `tests/atlas/test_historical_projection_review.py` 的 reviewed-successor 白名单只到
+  `TRADING-2548`，而当前合法 coverage 已包含 `TRADING-2549` 与 `TRADING-2550`。v12 已绑定原始
+  Full FAIL artifact 并按失败释放；后续只扩展该显式测试 authority、刷新 generated authority 与
+  final-commit Atlas ignored bundle，再以失败 Full artifact 为 parent 执行正式重验和 Full rerun。

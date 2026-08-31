@@ -18,11 +18,13 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 无 implementation blocker；Full dispatch
-    由 runner 从 FORMAL_VALIDATION_PRE 原子推进，禁止手工重复 checkpoint
+  unstructured_legacy_blocker_or_next_step: 首次 Full 的唯一失败已定位为 Atlas ignored bundle
+    旧 identity 与 reviewed-successor 测试白名单滞后；按官方 renderer、显式 authority 修正与 failure_fix_rerun
+    收口
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: task_count ratchet=1046；final formal tiers 与 Full PASS；local main=origin/main；existing
+    text: task_count ratchet=1046；Atlas canonical CURRENT/PASS 且 successor whitelist
+      覆盖 TRADING-2549/2550；final formal tiers 与 failure-fix Full PASS；local main=origin/main；existing
       automation ACTIVE；cleanup complete
   production_effect: none
   broker_action: none
@@ -82,6 +84,33 @@ events:
   - change:devx-012d-full-dispatch-protocol-closeout-20260831-v12
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-6695841a2c4a1980095244c2435cd461
+- schema_version: task_event.v1
+  task_id: DEVX-012D_FULL_DISPATCH_PROTOCOL_RETRY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-31T04:39:56.0792016Z'
+  actor: integration-coordinator
+  change_id: devx-012d-atlas-successor-full-rerun-20260831-v13
+  lane_id: null
+  base_commit: 30fc15ad9118767b06ea10fd7af069004bd1a96b
+  previous_state_event_id: task-event-6695841a2c4a1980095244c2435cd461
+  from_status: DONE
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: Project owner：复核自动周报中的 review-only candidates
+    blocker_or_next_step: 首次 Full 的唯一失败已定位为 Atlas ignored bundle 旧 identity 与 reviewed-successor
+      测试白名单滞后；按官方 renderer、显式 authority 修正与 failure_fix_rerun 收口
+    acceptance_criteria: task_count ratchet=1046；Atlas canonical CURRENT/PASS 且 successor
+      whitelist 覆盖 TRADING-2549/2550；final formal tiers 与 failure-fix Full PASS；local
+      main=origin/main；existing automation ACTIVE；cleanup complete
+    notes: v12 Full=10039 passed/1 failed/3 skipped；失败 artifact 保留并释放。v13 绑定该 parent，只扩展
+      reviewed-successor 测试 authority、刷新 generated authority 与 final-commit ignored
+      Atlas bundle。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-012d-atlas-successor-full-rerun-20260831-v13
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7c9d9dcda8ce51d59704d9bd39066375
 projection:
   legacy_first_eight_cells:
   - DEVX-012D_FULL_DISPATCH_PROTOCOL_RETRY_V1
@@ -89,15 +118,17 @@ projection:
   - P1
   - DONE
   - Project owner：复核自动周报中的 review-only candidates
-  - 无 implementation blocker；Full dispatch 由 runner 从 FORMAL_VALIDATION_PRE 原子推进，禁止手工重复
-    checkpoint
-  - task_count ratchet=1046；final formal tiers 与 Full PASS；local main=origin/main；existing
+  - 首次 Full 的唯一失败已定位为 Atlas ignored bundle 旧 identity 与 reviewed-successor 测试白名单滞后；按官方
+    renderer、显式 authority 修正与 failure_fix_rerun 收口
+  - task_count ratchet=1046；Atlas canonical CURRENT/PASS 且 successor whitelist 覆盖
+    TRADING-2549/2550；final formal tiers 与 failure-fix Full PASS；local main=origin/main；existing
     automation ACTIVE；cleanup complete
-  - v10 pre-test dispatch mismatch was fail-closed before pytest; v12 delegates the
-    only FULL_DISPATCHED transition to run_validation_tier.py.
+  - v12 Full=10039 passed/1 failed/3 skipped；失败 artifact 保留并释放。v13 绑定该 parent，只扩展
+    reviewed-successor 测试 authority、刷新 generated authority 与 final-commit ignored
+    Atlas bundle。
   docs_links: []
   terminal: true
-  canonical_row_sha256: 4c1c8718968949d2d0b960988de73dfccf3d2c0005b64d808ca5488a9aece143
-last_event_id: task-event-6695841a2c4a1980095244c2435cd461
+  canonical_row_sha256: 92e79f79ca9a57937c5e8851d77e24e94cdccb3497caf75d5d649eb3e86a161f
+last_event_id: task-event-7c9d9dcda8ce51d59704d9bd39066375
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: d98f76aabc3af4eeec7a0ec93645dc055d3264aae2435b49e08e132bd1fd2cf2
+fragment_checksum: a7e45459c0fc74aee57e92ae9be4e166e3355fab11531e33afb121a8b3464deb
