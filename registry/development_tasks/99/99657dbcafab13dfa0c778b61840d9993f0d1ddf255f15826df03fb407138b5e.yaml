@@ -1,0 +1,79 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-012B_AUTOMATIC_WORKFLOW_HEALTH_PUBLICATION_CLOSEOUT_V1
+  task_id_sha256: 99657dbcafab13dfa0c778b61840d9993f0d1ddf255f15826df03fb407138b5e
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-012B_AUTOMATIC_WORKFLOW_HEALTH_PUBLICATION_CLOSEOUT_V1
+  title: null
+  domain: Developer experience / DEVX-012 governed publication closeout
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Codex integration coordinator：完成 formal/Full、main/origin publish、existing
+    automation update 与 cleanup
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: DEVX-012 implementation candidate 已完成；需按
+    active closeout task 正确通过 integration/CLOSEOUT preflight
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: DEVX-012 candidate formal tiers 与 Full PASS；local main=origin/main；aitradingsystem-pit
+      保持 ACTIVE 且只新增 weekly post-stage；branches cleanup
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-012B_AUTOMATIC_WORKFLOW_HEALTH_PUBLICATION_CLOSEOUT_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-31T02:28:24.7290301Z'
+  actor: integration-coordinator
+  change_id: devx-012b-closeout-registration-20260831-v6
+  lane_id: null
+  base_commit: 47f53f4cad4cb9214d9eb940fb336e225877e83e
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-012B_AUTOMATIC_WORKFLOW_HEALTH_PUBLICATION_CLOSEOUT_V1
+    - Developer experience / DEVX-012 governed publication closeout
+    - P1
+    - IN_PROGRESS
+    - Codex integration coordinator：完成 formal/Full、main/origin publish、existing automation
+      update 与 cleanup
+    - DEVX-012 implementation candidate 已完成；需按 active closeout task 正确通过 integration/CLOSEOUT
+      preflight
+    - DEVX-012 candidate formal tiers 与 Full PASS；local main=origin/main；aitradingsystem-pit
+      保持 ACTIVE 且只新增 weekly post-stage；branches cleanup
+    - 2026-08-31：因 DEVX-012 本体已 terminal，创建 append-only closeout task 承载正式集成与自动任务更新，不重写父任务历史。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-012b-closeout-registration-20260831-v6
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-475394fcaaa4c5cd0911fdf7a411eff7
+projection:
+  legacy_first_eight_cells:
+  - DEVX-012B_AUTOMATIC_WORKFLOW_HEALTH_PUBLICATION_CLOSEOUT_V1
+  - Developer experience / DEVX-012 governed publication closeout
+  - P1
+  - IN_PROGRESS
+  - Codex integration coordinator：完成 formal/Full、main/origin publish、existing automation
+    update 与 cleanup
+  - DEVX-012 implementation candidate 已完成；需按 active closeout task 正确通过 integration/CLOSEOUT
+    preflight
+  - DEVX-012 candidate formal tiers 与 Full PASS；local main=origin/main；aitradingsystem-pit
+    保持 ACTIVE 且只新增 weekly post-stage；branches cleanup
+  - 2026-08-31：因 DEVX-012 本体已 terminal，创建 append-only closeout task 承载正式集成与自动任务更新，不重写父任务历史。
+  docs_links: []
+  terminal: false
+  canonical_row_sha256: 7a6c066e82fe0c6bb0f45f2d2145e208b37d895d62f6f7a083d96f57db03a636
+last_event_id: task-event-475394fcaaa4c5cd0911fdf7a411eff7
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 02d62b40be94cf660b5eec45a7d51887503113ed5fc8db3d75be1a216a37390b
