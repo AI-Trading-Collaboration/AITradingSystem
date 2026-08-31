@@ -14,16 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex coordinator：完成 clean candidate INTEGRATION、formal tiers、local/origin
-    main publication 与清理；Project Owner：随后观察重心与读者体验
+  next_owner: Project Owner：观察后续 P0 是否回到 empirical evidence 与 Reader Entry V2 的实际读者体验；TRADING-2550
+    owner：在 result-blind 状态冻结实验设计后再申请运行授权
   requirement_refs:
   - docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Evidence-first steering、Reader Entry V2
-    与 TRADING-2550 proposed handoff 已实现；当前仅余 candidate-bound integration/formal/publication
-    gates，signal value 仍为 UNRESOLVED。
+  unstructured_legacy_blocker_or_next_step: TRADING-2549 implementation and candidate-bound
+    INTEGRATION complete；Owner visual / reader comprehension 保持 PENDING_REVIEW。下一研究主线仅为
+    PROPOSED TRADING-2550，尚未运行经验实验。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 冻结 primary evidence question、P0 admission classes、必填 decision fields、empirical
@@ -68,28 +68,60 @@ events:
   - change:trading-2549-registration-final-candidate-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-987100a040a3cef57aed1751c989feb7
+- schema_version: task_event.v1
+  task_id: TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-31T09:03:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2549-final-candidate-closeout-v1
+  lane_id: null
+  base_commit: 7da367eb1cb3216d50e28969ca54233c5aa2f06d
+  previous_state_event_id: task-event-987100a040a3cef57aed1751c989feb7
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：观察后续 P0 是否回到 empirical evidence 与 Reader Entry V2 的实际读者体验；TRADING-2550
+      owner：在 result-blind 状态冻结实验设计后再申请运行授权
+    blocker_or_next_step: TRADING-2549 implementation and candidate-bound INTEGRATION
+      complete；Owner visual / reader comprehension 保持 PENDING_REVIEW。下一研究主线仅为 PROPOSED
+      TRADING-2550，尚未运行经验实验。
+    acceptance_criteria: 冻结 primary evidence question、P0 admission classes、必填 decision
+      fields、empirical phase-switch/reopen/no-auto-successor；Atlas L0 只显示研究问题、当前 verdict、证据阶梯、下一实验、停止条件，L1/audit
+      默认关闭；保留 source binding/accessibility/PENDING human review；登记下一 frozen signal-value
+      umbrella task；不运行数据、回测、QC、production 或 broker。
+    notes: 'Supporting requirement: docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md.
+      candidate-bound plan=integration-revalidation-971bf03dd535d86f01b1，decision=READY_FOR_SINGLE_INTEGRATION_CANDIDATE，INTEGRATION
+      preflight=PASS；final formal validation/publication 由 transaction trading-2549-final-publication-20260831-v11
+      继续 fail closed。signal value=UNRESOLVED；Owner visual / reader comprehension=PENDING_REVIEW；production_effect=none；broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2549-final-candidate-closeout-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-44d2a159f9e3c8de27594d9d7f052a3d
 projection:
   legacy_first_eight_cells:
   - TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
   - Research governance + Atlas / evidence-first research portfolio and reader entry
     reset
   - P0
-  - VALIDATING
-  - Codex coordinator：完成 clean candidate INTEGRATION、formal tiers、local/origin main
-    publication 与清理；Project Owner：随后观察重心与读者体验
-  - Evidence-first steering、Reader Entry V2 与 TRADING-2550 proposed handoff 已实现；当前仅余
-    candidate-bound integration/formal/publication gates，signal value 仍为 UNRESOLVED。
+  - DONE
+  - Project Owner：观察后续 P0 是否回到 empirical evidence 与 Reader Entry V2 的实际读者体验；TRADING-2550
+    owner：在 result-blind 状态冻结实验设计后再申请运行授权
+  - TRADING-2549 implementation and candidate-bound INTEGRATION complete；Owner visual
+    / reader comprehension 保持 PENDING_REVIEW。下一研究主线仅为 PROPOSED TRADING-2550，尚未运行经验实验。
   - 冻结 primary evidence question、P0 admission classes、必填 decision fields、empirical
     phase-switch/reopen/no-auto-successor；Atlas L0 只显示研究问题、当前 verdict、证据阶梯、下一实验、停止条件，L1/audit
     默认关闭；保留 source binding/accessibility/PENDING human review；登记下一 frozen signal-value
     umbrella task；不运行数据、回测、QC、production 或 broker。
   - 'Supporting requirement: docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md.
-    status=VALIDATING until candidate-bound INTEGRATION passes; task_class=MANDATORY_CORRECTNESS+DIRECT_EXPERIMENT_ENABLER;
-    production_effect=none; broker_action=none.'
+    candidate-bound plan=integration-revalidation-971bf03dd535d86f01b1，decision=READY_FOR_SINGLE_INTEGRATION_CANDIDATE，INTEGRATION
+    preflight=PASS；final formal validation/publication 由 transaction trading-2549-final-publication-20260831-v11
+    继续 fail closed。signal value=UNRESOLVED；Owner visual / reader comprehension=PENDING_REVIEW；production_effect=none；broker_action=none。'
   docs_links:
   - docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md
-  terminal: false
-  canonical_row_sha256: 4b2813aa26cbfc20c8ef2c7fb84f2b99dffd7a8468c3839ab98b70ae5d20ed39
-last_event_id: task-event-987100a040a3cef57aed1751c989feb7
+  terminal: true
+  canonical_row_sha256: a31d636aa320365163de21bc8d04c0fabbcc6eb6b9e6d78bf396b7c37d84457b
+last_event_id: task-event-44d2a159f9e3c8de27594d9d7f052a3d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 18856b31c1ebf39eff83a760a93c31ef38f8ab44737b41166b87ef7c6ed397d9
+fragment_checksum: dfcae243e6c2716c2238daac8aa80177f0650dd2feef10b4ecb9eee45a0d77bc

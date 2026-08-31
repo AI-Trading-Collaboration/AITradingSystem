@@ -4,7 +4,7 @@
 
 - stable task id：`TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1`
 - priority：`P0`
-- status：`VALIDATING`
+- status：`DONE`
 - governed mode：`SINGLE_LANE`
 - task class：`MANDATORY_CORRECTNESS + DIRECT_EXPERIMENT_ENABLER`
 - production effect：`none`
@@ -241,3 +241,9 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   失败 transaction evidence 均保留；同一 worktree 从 `a2ddfac116` 重组 final candidate，先以
   `VALIDATING` task state 和 candidate-bound plan 通过 INTEGRATION，再在正式发布 transaction 的
   `TASK_SOURCE_PRE_WRITE` 阶段归档为 `DONE`。不创建新的治理 successor，不绕过 terminal-state 或 plan gate。
+- 2026-08-31：clean pre-integration candidate `7da367eb1` 从最新 `main=a2ddfac116` 构建；
+  `integration-revalidation-971bf03dd535d86f01b1` 重算结果为
+  `READY_FOR_SINGLE_INTEGRATION_CANDIDATE`、blocker=`0`、overlap=`0`。在 2549 保持 `VALIDATING` 时，
+  `SINGLE_LANE / INTEGRATION / contract-change` preflight 对 exact candidate、task、claims、plan、lease 与
+  `trading-2549-final-publication-20260831-v11` 返回 `PASS`；随后才由 canonical writer 转为 `DONE`。
+  `TRADING-2550` 继续为 `PROPOSED`，没有执行数据下载、backtest、QuantConnect 或任何外部/生产/broker 动作。
