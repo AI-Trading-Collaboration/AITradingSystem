@@ -14,7 +14,7 @@ fragment_count: 1048
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 483856bd4c7082ed8f19959ab8a56d4da94e2497fd5eb271d240084567138173
+final_chain_sha256: 8f25802ca240a664bb165408d16f223db39d7ff05f01a111dd808d34bf132919
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 247d44a02a96b3540e6a9ce30a837fbf8caa4c46d4022fddafc524e5ab57baa8
 templates:
@@ -8407,17 +8407,17 @@ fragments:
   entry_sha256: b0175f5b30bbeeeff0ab532ef231e1281047ce2d8cfca07538a390570b56c945
 - task_id: TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1
   path: registry/development_tasks/a0/a012cd1d1c058443e90f278f942f806e88636f89560ed190b61a2e548fa0a183.yaml
-  file_sha256: 3d0e8432c2cb8934d9c20628c19b48fd1ec393e6625072534b65357b7b35a841
-  fragment_checksum: fb9e5dcba55e07391fc44749eb06a6401caee4d178d845a89f6abee4ae1e5449
+  file_sha256: 72596d1c7471af3397631232231cf966e4fa71c8a11bef9a83a4caabc0139950
+  fragment_checksum: 5b27a202c828e0cec6f668587eddf05b41d06736ade37cd584a5e3c85803f8ba
   partition: active
   order: 1048
   previous_entry_sha256: b0175f5b30bbeeeff0ab532ef231e1281047ce2d8cfca07538a390570b56c945
-  entry_sha256: 483856bd4c7082ed8f19959ab8a56d4da94e2497fd5eb271d240084567138173
+  entry_sha256: 8f25802ca240a664bb165408d16f223db39d7ff05f01a111dd808d34bf132919
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: f45fd96b23d39ee2eb09fe38d46e279b474f0cff88b5f9ed121d8dfb370fc1cf
-  byte_count: 1763230
+  sha256: bce74b7be5f5b55403871df6258d5c942da80e73e3aa688d0fc43c74ad0d32af
+  byte_count: 1763269
   row_count: 509
   generated_do_not_edit: true
 - partition: completed
@@ -11066,7 +11066,14 @@ governance_cycles:
   change_id: trading-2551-full-failure-fix-v1
   event_count: 4
   production_effect: none
-governance_cycle_count: 377
+- cycle_id: arch-005-s5-cycle-378
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1
+  change_id: trading-2551-final-candidate-ready-v1
+  event_count: 5
+  production_effect: none
+governance_cycle_count: 378
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -11080,4 +11087,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 5f7beacb22383523d44a79d034da42ed1df2d6898c72eed4579f7611ef434bef
+index_checksum: 0f057878d92da1fef354e557c8abb82f8dceed0932f2424112d7db50621138a2
