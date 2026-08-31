@@ -99,6 +99,38 @@ events:
   - change:trading-2549-final-candidate-closeout-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-44d2a159f9e3c8de27594d9d7f052a3d
+- schema_version: task_event.v1
+  task_id: TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-31T09:22:37+09:00'
+  actor: integration-coordinator
+  change_id: trading-2549-architecture-failure-fix-v1
+  lane_id: null
+  base_commit: 6d9e64537d8014ab6ecdf1f6ff16f021fe4cb475
+  previous_state_event_id: task-event-44d2a159f9e3c8de27594d9d7f052a3d
+  from_status: DONE
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：观察后续 P0 是否回到 empirical evidence 与 Reader Entry V2 的实际读者体验；TRADING-2550
+      owner：在 result-blind 状态冻结实验设计后再申请运行授权
+    blocker_or_next_step: TRADING-2549 implementation and candidate-bound INTEGRATION
+      complete；Owner visual / reader comprehension 保持 PENDING_REVIEW。下一研究主线仅为 PROPOSED
+      TRADING-2550，尚未运行经验实验。
+    acceptance_criteria: 冻结 primary evidence question、P0 admission classes、必填 decision
+      fields、empirical phase-switch/reopen/no-auto-successor；Atlas L0 只显示研究问题、当前 verdict、证据阶梯、下一实验、停止条件，L1/audit
+      默认关闭；保留 source binding/accessibility/PENDING human review；登记下一 frozen signal-value
+      umbrella task；不运行数据、回测、QC、production 或 broker。
+    notes: 'Supporting requirement: docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md.
+      candidate-bound INTEGRATION=PASS；v11 Architecture=879 passed / 2 failed，失败 artifact=outputs/validation_runtime/architecture-fitness_20260831T001527Z/test_runtime_summary.json。两项均为本次新增
+      1 module + 1 test 和 system-flow block 导致的 exact generated expectation drift：deprecation
+      inventory id/count 与 DEVX-011 report-flow aggregate count；无实质架构违规。v12 显式刷新机械
+      expectation 后以同一 16-worker tier 重跑。signal value=UNRESOLVED；human reviews=PENDING_REVIEW；production_effect=none；broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2549-architecture-failure-fix-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-405039952f727797a8a031157e676ca2
 projection:
   legacy_first_eight_cells:
   - TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
@@ -115,13 +147,14 @@ projection:
     默认关闭；保留 source binding/accessibility/PENDING human review；登记下一 frozen signal-value
     umbrella task；不运行数据、回测、QC、production 或 broker。
   - 'Supporting requirement: docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md.
-    candidate-bound plan=integration-revalidation-971bf03dd535d86f01b1，decision=READY_FOR_SINGLE_INTEGRATION_CANDIDATE，INTEGRATION
-    preflight=PASS；final formal validation/publication 由 transaction trading-2549-final-publication-20260831-v11
-    继续 fail closed。signal value=UNRESOLVED；Owner visual / reader comprehension=PENDING_REVIEW；production_effect=none；broker_action=none。'
+    candidate-bound INTEGRATION=PASS；v11 Architecture=879 passed / 2 failed，失败 artifact=outputs/validation_runtime/architecture-fitness_20260831T001527Z/test_runtime_summary.json。两项均为本次新增
+    1 module + 1 test 和 system-flow block 导致的 exact generated expectation drift：deprecation
+    inventory id/count 与 DEVX-011 report-flow aggregate count；无实质架构违规。v12 显式刷新机械 expectation
+    后以同一 16-worker tier 重跑。signal value=UNRESOLVED；human reviews=PENDING_REVIEW；production_effect=none；broker_action=none。'
   docs_links:
   - docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md
   terminal: true
-  canonical_row_sha256: a31d636aa320365163de21bc8d04c0fabbcc6eb6b9e6d78bf396b7c37d84457b
-last_event_id: task-event-44d2a159f9e3c8de27594d9d7f052a3d
+  canonical_row_sha256: 4a235b73302e81e31ad049c01b274b4a9c55e4db4a85365aaf95225c25362d60
+last_event_id: task-event-405039952f727797a8a031157e676ca2
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: dfcae243e6c2716c2238daac8aa80177f0650dd2feef10b4ecb9eee45a0d77bc
+fragment_checksum: 48698ff6aa0c4f9c84b6320952cefbce97698f2f5e15c0140dd537914073d054

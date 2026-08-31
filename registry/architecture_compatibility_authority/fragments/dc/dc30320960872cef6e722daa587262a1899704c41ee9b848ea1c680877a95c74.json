@@ -82,7 +82,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "c320eaf45557c677db3771eb540d88371e5c0e5b6ae70126b0906dfa3102a67d"
+        "sha256": "590cb0340a9692e5935ade0e5e1a31f4be6448e8e40a7b240cd74c36b0a28d4e"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -92,7 +92,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "759d3cc45c01168b033a94cfda86a00dae975e6f883f7752c8a66bb84a091707"
+        "sha256": "d9fe2dd810ffb56908ab8bbd87b0b2112b4334a2faa324d657a75afae0461ffe"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -147,7 +147,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004g_deprecation.py",
-        "sha256": "f5ca34ab6db425c340305bd798e2ccd70e5fc55d245c08e3f27baa0c9308688d"
+        "sha256": "d385b73f42c52b5970b2e957d5d55f95dbef672e8f7499da2166897019622f9b"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -223,5 +223,5 @@
     "task_id": "TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1"
   },
   "section_id": "phase_trading_2542c_growth_action_value_independent_review_remediation_and_freeze_readiness_v1",
-  "section_sha256": "041eb13ae0b4fbd4014e4e4ecc7928a38a3ef7ff5f63080d1565560e0be6a69e"
+  "section_sha256": "dc30320960872cef6e722daa587262a1899704c41ee9b848ea1c680877a95c74"
 }

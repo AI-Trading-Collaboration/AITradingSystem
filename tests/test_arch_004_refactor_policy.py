@@ -24554,7 +24554,7 @@ def test_devx_011_is_latest_governed_workflow_health_authority() -> None:
     for source in phase["sources"]:
         assert source["hash_normalization"] == "git_eol_lf"
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
-    assert phase["report_catalog_flow_successor"]["entry_count"] == 3107
+    assert phase["report_catalog_flow_successor"]["entry_count"] == 3108
     assert phase["report_catalog_flow_successor"]["fragment_count"] == 192
     assert phase["safety"] == {
         "market_cache_read": False,

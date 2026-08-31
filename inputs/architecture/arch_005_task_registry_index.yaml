@@ -14,7 +14,7 @@ fragment_count: 1042
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: b4fbe45ce2c7f915c6fb05a13f283a851bd9989ee234907b062de134c7b3295b
+final_chain_sha256: e2f40d140d6cf23f755b5e5f53f40566f6aa253d4b4ca8d408e3d1acb23d94e7
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 247d44a02a96b3540e6a9ce30a837fbf8caa4c46d4022fddafc524e5ab57baa8
 templates:
@@ -8359,12 +8359,12 @@ fragments:
   entry_sha256: f22dd09fa5f5d711178c8011c3ee434d03c5ab9a00f2d3ee5735f0d63d3e5d10
 - task_id: TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
   path: registry/development_tasks/57/57dfda101620b07f2089c5438205ef0710fcbb2aac1f3c5ea9c74bbf4f61390d.yaml
-  file_sha256: 643fd4407cff10b88780ae1b57b5b3efdb696075725b58a9f92dc325ca0ddebe
-  fragment_checksum: dfcae243e6c2716c2238daac8aa80177f0650dd2feef10b4ecb9eee45a0d77bc
+  file_sha256: 7369fdfd63bc068a34cad81a157bbc4e2622f1f1b91ef61d63ed233a28bd28af
+  fragment_checksum: 48698ff6aa0c4f9c84b6320952cefbce97698f2f5e15c0140dd537914073d054
   partition: completed
   order: 1042
   previous_entry_sha256: f22dd09fa5f5d711178c8011c3ee434d03c5ab9a00f2d3ee5735f0d63d3e5d10
-  entry_sha256: b4fbe45ce2c7f915c6fb05a13f283a851bd9989ee234907b062de134c7b3295b
+  entry_sha256: e2f40d140d6cf23f755b5e5f53f40566f6aa253d4b4ca8d408e3d1acb23d94e7
 generated_views:
 - partition: active
   path: docs/task_register.md
@@ -8374,8 +8374,8 @@ generated_views:
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
-  sha256: 32affc80028b990f97848fbe01e7a5220e22d19a5271032cbdeb6315d4fc9d69
-  byte_count: 1131931
+  sha256: f8cbf9ff586aef6c8b3304bea6cf67a39c3dc3c8b18290de60420cd025bdc25d
+  byte_count: 1132110
   row_count: 534
   generated_do_not_edit: true
 governance_cycles:
@@ -10871,7 +10871,14 @@ governance_cycles:
   change_id: trading-2549-final-candidate-closeout-v1
   event_count: 2
   production_effect: none
-governance_cycle_count: 356
+- cycle_id: arch-005-s5-cycle-357
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
+  change_id: trading-2549-architecture-failure-fix-v1
+  event_count: 3
+  production_effect: none
+governance_cycle_count: 357
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -10885,4 +10892,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 5261b097126c3383acba3637c90f705193e1809a67f7bd6e4a1449f415774b27
+index_checksum: 9b4b6d5b95dae8aa916c7d10814ffe248a8abfdfc006438e416d3e4d9766c22d

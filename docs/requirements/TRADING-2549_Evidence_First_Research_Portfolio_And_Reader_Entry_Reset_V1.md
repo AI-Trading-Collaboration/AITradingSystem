@@ -253,3 +253,11 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   `true` 并展示既有研究材料，再次点击可关闭；console error/warning=`0/0`。相较旧页约 14,407px desktop、
   29,970px mobile 的默认长度，当前入口显著缩短。截图人工观察未发现文字截断、卡片溢出或移动端按钮不可达，
   但这仍只是自动化/实施者检查，Owner visual 与 reader comprehension 必须保持 `PENDING_REVIEW`。
+- 2026-08-31：v11 Architecture formal tier 使用 16 workers 运行 `881` tests，结果为
+  `879 passed / 2 failed`；immutable failure artifact 为
+  `outputs/validation_runtime/architecture-fitness_20260831T001527Z/test_runtime_summary.json`。两项失败均为
+  exact generated expectation 随动：新增一个 contract module 与一个 test 后 deprecation inventory 从
+  `1182/1339` 变为 `1183/1340` 并产生新 inventory id；system-flow 新增一个 block 后 DEVX-011 聚合计数从
+  `3107` 变为 `3108`。generated inventory 与 report-flow authority 本身均已重建且 PASS；v12 只更新对应
+  exact regression expectations，并要求原 16-worker Architecture tier 完整重跑，不改生命周期、writer allowance、
+  研究结论或安全边界。
