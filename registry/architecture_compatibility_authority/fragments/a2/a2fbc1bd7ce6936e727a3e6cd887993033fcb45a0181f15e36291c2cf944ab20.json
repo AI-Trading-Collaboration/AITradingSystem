@@ -49,12 +49,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "5493b1a80c578e8d0d53c5056e3129ef24f9645a033f841a575dc469750cdc71"
+        "sha256": "f9c592ea3cdd9936dd41e8c00a85f16951b1ced8ef728db56afad8a84995dad9"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "a6f04815ba78030dd5871c7af9f12f18910f0c74b2168641cae0160bfb292496"
+        "sha256": "3f1f38887de3c299fbdfbd2a1f054bcd267a14fa8a6fa31dfe4ea8c00ea9c06f"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -132,5 +132,5 @@
     "task_id": "DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL"
   },
   "section_id": "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2",
-  "section_sha256": "2dd65a8a50607099bbe5005e147759bf3e73cb8869fb750106b03ad5d360bf83"
+  "section_sha256": "a2fbc1bd7ce6936e727a3e6cd887993033fcb45a0181f15e36291c2cf944ab20"
 }

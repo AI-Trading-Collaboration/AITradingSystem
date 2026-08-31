@@ -82,7 +82,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "5493b1a80c578e8d0d53c5056e3129ef24f9645a033f841a575dc469750cdc71"
+        "sha256": "f9c592ea3cdd9936dd41e8c00a85f16951b1ced8ef728db56afad8a84995dad9"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -92,7 +92,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "a6f04815ba78030dd5871c7af9f12f18910f0c74b2168641cae0160bfb292496"
+        "sha256": "3f1f38887de3c299fbdfbd2a1f054bcd267a14fa8a6fa31dfe4ea8c00ea9c06f"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -127,7 +127,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/atlas/test_historical_projection_review.py",
-        "sha256": "192335388f7e772e2408706029080533468e7b3529a3777b85d22f2dc5545b6c"
+        "sha256": "a6475ee9e6403c8ef8a098fb2ccb424451158868b0a69fbefa5e8ed268b08d64"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -152,7 +152,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_005_s5_task_source_cutover.py",
-        "sha256": "356a9dbca69ee37613bfe7e781e4f185196bae78bf99021434ddd586122898c2"
+        "sha256": "5efd0b852456618b9a3f90ca1faa2c0bcad9e4fadf30658ca5b846a00b9a3ff9"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -223,5 +223,5 @@
     "task_id": "TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1"
   },
   "section_id": "phase_trading_2542c_growth_action_value_independent_review_remediation_and_freeze_readiness_v1",
-  "section_sha256": "7953c9d8f247e6375a73d99bc50a2bbae6f9a70886e8c0e9c10b0dc9e40ba466"
+  "section_sha256": "1b6d543e764520da779e89370de6eb7120cf5661a8f3d3f1671ca9b52d7bd10d"
 }

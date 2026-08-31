@@ -155,7 +155,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_historical_projection_review
   path: tests/atlas/test_historical_projection_review.py
-  sha256: 192335388f7e772e2408706029080533468e7b3529a3777b85d22f2dc5545b6c
+  sha256: a6475ee9e6403c8ef8a098fb2ccb424451158868b0a69fbefa5e8ed268b08d64
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8698,7 +8698,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s5_task_source_cutover
   path: tests/test_arch_005_s5_task_source_cutover.py
-  sha256: 356a9dbca69ee37613bfe7e781e4f185196bae78bf99021434ddd586122898c2
+  sha256: 5efd0b852456618b9a3f90ca1faa2c0bcad9e4fadf30658ca5b846a00b9a3ff9
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
