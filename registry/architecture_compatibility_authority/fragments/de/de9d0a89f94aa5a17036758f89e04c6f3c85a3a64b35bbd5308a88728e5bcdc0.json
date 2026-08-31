@@ -18,7 +18,7 @@
       "fragment_count": 192,
       "fragment_shadow_active": false,
       "index_path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-      "index_sha256": "5be92f13beac48dd8fd9e8dddd1929f0630d30da259cd2244fd29956fc203591",
+      "index_sha256": "173e85cd6b810e7d0f1430fa7d89bfb0732ea1553e19e405aa98e08a8773746e",
       "source_of_truth": "LEGACY_MONOLITH",
       "target_count": 3
     },
@@ -36,7 +36,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
-        "sha256": "42b1dd0532fae196e41d53d9c203b9ab6100bb3f001b2c3a7123027ef7038fd5"
+        "sha256": "a04161c20cd8a7dac827e93d022f7235be9096e02995bfe033ba1c2b2e3566c0"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -76,27 +76,27 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/system_flow.md",
-        "sha256": "e8d235811c92abf14f7297fb9be23e8613699ba681976d408263da9e4522c2e9"
+        "sha256": "ecf106dd390737140c83271c2d689526be802c86c69b39b3b73641d0d08fce6b"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "e355d97a6778f65e37e16cb80f611a1f83d69d86f41e6c071c68a9aec88169f4"
+        "sha256": "01a0c9b14170b7ba2e6c9814a9fa10e2b92971bc790e2dc926b452980a85f6a5"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
-        "sha256": "90287a76c4623f6aec872e668b4ef264a316bb04349ea8f963042619c8a74061"
+        "sha256": "c05037dbea49ffa55a5ab271ffcd10399ff0684988d46ca6c3e5dcd987d81af0"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "d08eb87f9eb43b2d1b414ae5496ab9c60adee114bde775ef5e798d41c8329f7e"
+        "sha256": "c4a13d23a89defbea4ce7079691a041e84f58ba0d702baf514eb50f4d173c020"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-        "sha256": "5be92f13beac48dd8fd9e8dddd1929f0630d30da259cd2244fd29956fc203591"
+        "sha256": "173e85cd6b810e7d0f1430fa7d89bfb0732ea1553e19e405aa98e08a8773746e"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -196,5 +196,5 @@
     }
   },
   "section_id": "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1",
-  "section_sha256": "d5907b220ae88da14b4d66a3230f7b6471e7b1ae2f3341cbe032ac3affdcb6d7"
+  "section_sha256": "de9d0a89f94aa5a17036758f89e04c6f3c85a3a64b35bbd5308a88728e5bcdc0"
 }

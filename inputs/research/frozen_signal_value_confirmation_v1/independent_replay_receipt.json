@@ -1,0 +1,1 @@
+{"broker_action":"none","production_effect":"none","reconciliation":{"candidate_drawdown_abs_diff_pp":3.375077994860476e-14,"candidate_final_value_abs_diff":1.4551915228366852e-10,"comparator_drawdown_abs_diff_pp":0.0,"comparator_final_value_abs_diff":0.0},"schema_version":"frozen_signal_value_confirmation_independent_replay.v1","status":"PASS","tolerance":1e-08}

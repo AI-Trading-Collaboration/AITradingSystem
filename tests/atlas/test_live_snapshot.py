@@ -45,7 +45,7 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
     assert bundle.research_state_as_of.startswith("2026-09-01T")
-    assert bundle.evidence_evaluated_at == "2026-08-30T14:41:12.7758385+00:00"
+    assert bundle.evidence_evaluated_at == "2026-09-01T00:00:00+00:00"
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
     assert bundle.current_diff.after_snapshot_id == bundle.current_snapshot.snapshot_id
@@ -108,21 +108,16 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
 
     assert policy.current_mainline_task_id.startswith("TRADING-2550_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
-    assert bundle.evidence_evaluated_at == "2026-08-30T14:41:12.7758385+00:00"
+    assert bundle.evidence_evaluated_at == "2026-09-01T00:00:00+00:00"
     assert bundle.status_object_zh == (
-        "当前研究组合已按 Owner 决定切换为 evidence-first。工程可复现性、主窗口数据与时点正确性、"
-        "冻结的 1,202 个交易日五态信号包已经具备；真正未解决的是该信号在固定资本、时钟、成本和"
-        "预先登记基准下是否提供值得保留的增量价值。TRADING-2550 的 result-blind draft.1 已按 exact "
-        "file/canonical SHA 冻结：同一信号映射为 fully-funded QQQ/零收益现金，primary comparator "
-        "固定为 exposure-matched static QQQ/现金，共同资本为 USD 100,000，使用 adjusted-close "
-        "时钟、"
-        "5 bps 单边成本、净总收益差与 drawdown non-regression guard。该冻结只完成研究规则，不产生"
-        "经验结果；signal-value verdict 仍为 UNRESOLVED，且尚未读取市场结果、运行 DQ、signal-value "
-        "confirmation、backtest、QuantConnect 或 provider/cache。只有未来另行授权的 bounded run "
-        "得出 "
-        "RETAIN，才把期权实现对比提升为主线。页面与工程完善不得替代"
-        "信号价值、实现方式价值或稳健性结论，也不表示可以 paper/live/production/broker 或形成"
-        "投资结论。"
+        "当前研究组合已按 Owner 决定切换为 evidence-first。TRADING-2550 的 result-blind draft.1、"
+        "exact freeze admission 与一次性 bounded run manifest 已精确重放；冻结的 1,202 个交易日五态"
+        "信号在 2021-02-22..2025-12-02 主窗口上完成 canonical DQ、local confirmation 与 independent "
+        "replay，且全部 PASS。Candidate 相对 exposure-matched static QQQ/现金 comparator 的净总收益差"
+        "为 +13.745976956735603 个百分点，最大回撤幅度差为 -3.4293901783962415 个百分点，冻结 reducer "
+        "因而输出 RETAIN。该结论只保留 first_layer_composer_v2 信号价值，不证明期权实现价值、稳健性、"
+        "pristine OOS 或生产资格。下一合法动作仅为 Owner review conditional options paired comparison；"
+        "当前不授权新的 QuantConnect、options/provider、backtest、paper/live/production/broker 或交易动作。"
     )
 
 

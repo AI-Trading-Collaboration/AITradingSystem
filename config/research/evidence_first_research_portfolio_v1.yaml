@@ -7,8 +7,8 @@ research_goal_zh: 在严格遵守当时可得信息、合理成本和可重放�
 primary_evidence_question:
   question_id: SIGNAL_VALUE_FIRST_LAYER_COMPOSER_V2
   question_zh: 冻结的第一层五态组合信号，在固定资本、固定时钟、固定成本和预先登记的比较基准下，是否提供值得保留的增量价值？
-  current_verdict: UNRESOLVED
-  next_experiment_id: FROZEN_SIGNAL_VALUE_CONFIRMATION
+  current_verdict: RETAIN
+  next_experiment_id: OWNER_REVIEW_CONDITIONAL_OPTIONS_PAIRED_COMPARISON
   allowed_verdicts: [RETAIN, REJECT, INSUFFICIENT]
   historical_window_role: REUSED_DEVELOPMENT_CONFIRMATION
   primary_research_start: '2021-02-22'
@@ -27,8 +27,8 @@ evidence_ladder:
     explanation_zh: 已有 2021-02-22..2025-12-02 的 exact 1202-session 五态信号包。
   - evidence_id: SIGNAL_VALUE
     label_zh: 信号价值
-    state: UNRESOLVED
-    explanation_zh: 尚无一次不调参、同资本、预注册 benchmark 的清晰 verdict。
+    state: RETAIN
+    explanation_zh: 唯一 bounded confirmation 已按预注册同资本 benchmark 完成；净总收益差为 +13.745976956735603 个百分点，预注册风险守门未恶化，冻结 reducer 输出 RETAIN。
   - evidence_id: IMPLEMENTATION_VALUE
     label_zh: 实现方式价值
     state: NOT_RUN
@@ -58,7 +58,7 @@ reader_entry:
   l1_entry_label_zh: 查看研究细节
   audit_entry_label_zh: 查看审计依据
   l0_forbidden_payloads: [task_id, contract_id, slot_count, raw_enum, sha256, receipt, manifest, full_ledger, transport_axis, page_acceptance_matrix]
-  next_experiment_zh: 先使用冻结的 1,202 个交易日五态信号，完成一次不调参、同资本、同成本的信号价值确认；在得到“保留”结论前，不把期权实现对比提升为主线。
+  next_experiment_zh: 信号价值已得到“保留”结论；下一合法动作仅为人工复核是否启动同信号、同资本的 QQQ 与期权实现 paired comparison，当前不自动创建或执行该实验。
   stop_condition_zh: “保留”才进入期权实现对比；“否决”则关闭这条实现路线的最高优先级；“证据不足”只补充被明确指出的未来证据。
   prohibited_inference_zh: 工程、数据质量、页面或单次期权回测通过，都不能替代信号价值、实现方式价值或稳健性结论。
 safety:

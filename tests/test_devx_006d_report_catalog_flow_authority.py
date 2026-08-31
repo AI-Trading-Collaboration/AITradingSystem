@@ -184,7 +184,7 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         (
             "system_flow",
             "docs/system_flow.md",
-            "e8d235811c92abf14f7297fb9be23e8613699ba681976d408263da9e4522c2e9",
+            "ecf106dd390737140c83271c2d689526be802c86c69b39b3b73641d0d08fce6b",
             1177,
         ),
     ],

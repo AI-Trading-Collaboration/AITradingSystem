@@ -378,12 +378,12 @@ task_sources:
     reader_summary_zh: 2549 依据 Owner 决定把研究组合改为 evidence-first：最高优先级只接受经验增证、直接实验使能和强制正确性三类工作，并把当前主问题冻结为第一层五态组合信号是否具备值得保留的增量价值。Atlas 默认页只呈现主问题、当前结论、证据阶梯、下一实验和停止条件；工程、任务、哈希、账本与审计细节下沉到按需入口。本任务不授权经验运行、外部提供方、QuantConnect、生产或 broker 动作，也不生成投资结论。
   - task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
     requirement_path: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md
-    coverage: SIGNAL_VALUE_PREREGISTRATION_EXACT_FROZEN_NO_EMPIRICAL_RUN_AUTHORITY
-    reader_summary_zh: 2550 是 evidence-first portfolio 选定的下一项经验研究 umbrella task。result-blind draft.1 已按 exact file/canonical SHA 冻结，并由独立 admission 保持原草案 bytes/status 不变：exact-bind 1,202-session first_layer_composer_v2 signal identity，以 fully-funded QQQ/零收益现金 candidate 对比 exposure-matched static QQQ/现金，固定 USD 100,000 common capital、adjusted-close 时钟、5 bps 单边成本、净总收益差、drawdown non-regression 与 INSUFFICIENT/REJECT/RETAIN precedence。冻结不等于经验验证，当前 verdict 仍为 UNRESOLVED；没有读取市场结果、运行 DQ/confirmation/backtest 或调用 QuantConnect/provider/cache，也不授权 paper/live/production/broker。只有未来另行授权的 bounded run 得出 RETAIN，才允许把期权 paired comparison 提升为后继主问题。
+    coverage: SIGNAL_VALUE_BOUNDED_CONFIRMATION_RETAIN_AGGREGATE_ADMITTED
+    reader_summary_zh: 2550 的唯一 bounded confirmation 已按 exact preregistration、freeze admission、run authorization 与 committed manifest 完成：manifest replay、canonical DQ、local confirmation、independent replay 各精确一次且 PASS。Candidate 相对 exposure-matched static QQQ/现金 comparator 的净总收益差为 +13.745976956735603 个百分点，最大回撤幅度差为 -3.4293901783962415 个百分点，冻结 reducer 输出 RETAIN。该 aggregate-only 结果只保留信号价值，不证明 options implementation、稳健性、pristine OOS 或生产资格；下一动作仅为 Owner review conditional options paired comparison，当前没有新的 QuantConnect/options/provider/backtest 或交易权限。
   - task_id: TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1
     requirement_path: docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md
-    coverage: TERMINAL_VERDICT_CONTRACT_SERIAL_WAVE_IN_PROGRESS
-    reader_summary_zh: 2551 是 2550 结果接入前的最小 serial contract wave，只扩展共享 evidence portfolio 与 Atlas reader 对 RETAIN、REJECT、INSUFFICIENT 的确定性表达和 exact next-action 配对；它不改变 confirmation 数值、admission 或研究结论，也不授权新的数据、DQ、backtest、QuantConnect、provider、生产或交易动作。
+    coverage: TERMINAL_VERDICT_CONTRACT_SERIAL_WAVE_COMPLETE
+    reader_summary_zh: 2551 已完成 2550 结果接入前的最小 serial contract wave，共享 evidence portfolio 与 Atlas reader 可确定性表达 RETAIN、REJECT、INSUFFICIENT 并强制 exact next-action 与 SIGNAL_VALUE ladder 一致。该 contract 不改变 confirmation 数值或 admission，也不授权新的数据、DQ、backtest、QuantConnect、provider、生产或交易动作。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

@@ -642,11 +642,12 @@ def test_renderer_follows_evidence_first_reader_entry_contract() -> None:
     l0_text = unescape(re.sub(r"<[^>]+>", " ", l0_html))
     assert l0_html.count('class="evidence-step ') == 7
     assert l0_text.count("已具备") == 3
-    assert "尚未判定" in l0_text
+    assert "保留" in l0_text
+    assert "paired comparison" in l0_text
     assert "尚未运行" in l0_text
     assert "尚未建立" in l0_text
     assert "不具备资格" in l0_text
-    assert "1,202 个交易日五态信号" in l0_text
+    assert "1202-session 五态信号包" in l0_text
     assert "只有“保留”" not in l0_text
     assert "“保留”才进入期权实现对比" in l0_text
     assert "不能据此推出" in l0_text

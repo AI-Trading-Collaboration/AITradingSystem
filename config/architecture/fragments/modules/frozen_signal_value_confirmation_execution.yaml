@@ -1,0 +1,25 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.frozen_signal_value_confirmation_execution
+fragment_kind: module
+owner: strategy_research_governance
+module_prefix: src/ai_trading_system/research_quality/frozen_signal_value_confirmation_execution.py
+public_contracts:
+  - DEFAULT_AUTHORIZATION_PATH
+  - DEFAULT_MANIFEST_PATH
+  - FrozenSignalValueConfirmationExecutionError
+  - LoadedExecutionManifest
+  - LoadedRunAuthorization
+  - ManifestInputBinding
+  - PortfolioMetrics
+  - SignalPlan
+  - calculate_candidate_primary
+  - calculate_independent_replay
+  - calculate_static_comparator_primary
+  - execute_bounded_confirmation
+  - load_execution_manifest
+  - load_run_authorization
+  - load_signal_plan
+  - reduce_verdict
+  - replay_execution_manifest
+compatibility_facades: []
+deprecation_status: active_reference_architecture

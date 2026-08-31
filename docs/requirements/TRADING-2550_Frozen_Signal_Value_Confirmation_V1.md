@@ -4,7 +4,7 @@
 
 - stable task id：`TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1`
 - priority：`P0`
-- status：`BASELINE_DONE`（`draft.1` 已按 exact file/canonical SHA 冻结；经验运行仍未授权）
+- status：`BASELINE_DONE`（唯一 bounded empirical confirmation 已完成并准入；frozen verdict=`RETAIN`）
 - task class / evidence type：`EMPIRICAL_EVIDENCE`
 - research question id：`SIGNAL_VALUE_FIRST_LAYER_COMPOSER_V2`
 - production effect：`none`
@@ -19,6 +19,12 @@
 Owner 已按 exact file/canonical SHA 批准并冻结 outcome-blind `draft.1`。批准通过独立 immutable
 freeze admission 接纳，不改写获批草案 bytes/status；它仍不授权读取市场结果、DQ、收益计算、confirmation、
 backtest、QuantConnect、外部提供方、cache、paper/live/production/broker，也不生成投资结论。
+
+2026-09-01 的后续 Owner 决定另行激活一次 bounded `DATA_RESEARCH` run：只读访问 allowlisted
+既有 QQQ adjusted-close，`manifest replay / canonical DQ / local confirmation / independent replay`
+各最多一次；download、cache mutation、QuantConnect、option/provider、paper/live/production/broker
+以及 orders/fills/positions 继续为零。该授权不改写 preregistration 或 freeze admission，而由独立
+`frozen_signal_value_confirmation_run_authorization_v1` 绑定和消费。
 
 ## 2. P0 admission fields
 
@@ -124,6 +130,36 @@ cache mutation、QuantConnect、option backtest、provider、orders/fills/positi
 - next legal action 仅为未来另行取得 exact bounded-run authorization；本次批准不隐式创建 successor，
   不允许读取/下载市场数据、DQ、confirmation/backtest、QuantConnect/provider/cache 或任何交易动作。
 
+### 3.7 exact bounded run authorization
+
+- authorization：`frozen_signal_value_confirmation_run_authorization_v1@1.0.0`；
+- Owner decision：
+  `owner_decision:TRADING-2550:2026-09-01:authorize_bounded_signal_value_confirmation_v1`；
+- authorization state：`EXACT_PREAUTHORIZED`；
+- 允许：只读既有 allowlisted QQQ adjusted-close、manifest replay=`1`、canonical DQ=`1`、local
+  signal-value confirmation=`1`、independent replay=`1`；
+- 禁止：data download、cache mutation、QuantConnect、option data/backtest、provider、paper/live/
+  production/broker、orders/fills/positions；
+- 只接纳 aggregate terminal result；raw market/option payload 不进入结果 artifact；
+- 任一 exact identity、DQ/PIT、coverage、accounting/cost 或 replay gate 失败，直接按冻结 reducer
+  输出 `INSUFFICIENT`，不得重试、替换输入或扩大授权。
+
+### 3.8 bounded result 与准入
+
+- execution manifest file/canonical SHA：`6051ad6c48b8d402c646945e4f33442f11d0435cb0228c125384776afd7c30d3` /
+  `5dd18a206ad80c983db8584431074888b6bcc9fe9130d76a366377388770b32e`；
+- actual counters：manifest replay=`1`、canonical DQ=`1`、local confirmation=`1`、independent
+  replay=`1`；download/cache mutation/QuantConnect/options/provider/orders/fills/positions=`0`；
+- canonical DQ：`PASS`，errors=`0`、warnings=`0`，requested/evaluated 均为
+  `2021-02-22..2025-12-02`；
+- candidate net total return=`45.27935887187362%`，exposure-matched comparator=`31.533381915138015%`，
+  primary estimand=`+13.745976956735603 percentage points`；
+- candidate max-drawdown magnitude=`9.647781253983167%`，comparator=`13.077171432379409%`，
+  delta=`-3.4293901783962415 percentage points`；
+- independent replay=`PASS`，全部 reconciliation difference 小于 `1e-8`；
+- frozen reducer verdict=`RETAIN`，只允许打开 conditional options paired-comparison 的 Owner review；
+  它不证明 options implementation value、robustness、pristine OOS 或 production eligibility。
+
 ## 4. Acceptance criteria
 
 1. 预注册发生在任何 outcome 可见之前；
@@ -139,10 +175,14 @@ cache mutation、QuantConnect、option backtest、provider、orders/fills/positi
 
 - 已解除 blocker：`draft.1` 的 comparator、`5 bps` cost、zero return threshold、zero drawdown-regression
   guard 与三态 reducer 已获 Owner exact file/canonical SHA freeze；
-- 当前未完成项：尚无 signal-value empirical verdict，也没有数据读取、DQ、confirmation 或 backtest 权限；
-- next owner：Project Owner 仅在希望启动一次 bounded empirical confirmation 时，另行批准 exact run scope；
-- exit condition：未来运行 manifest 与全部 identity/DQ/PIT/resource gate 通过独立验证并取得适用授权后，
-  才可进入 bounded empirical run。本次 freeze admission 本身以 `BASELINE_DONE` 收口。
+- 当前已完成项：bounded manifest、canonical DQ、local confirmation、independent replay 与 aggregate
+  result 均完成，frozen verdict=`RETAIN`；
+- 已解除收口依赖：TRADING-2551 已把 evidence-first reader contract 扩展到 terminal
+  `RETAIN / REJECT / INSUFFICIENT`，无需硬编码页面或绕过共享 contract；
+- next owner：Project Owner 仅复核是否开启 conditional options paired comparison；当前没有任何新的
+  QuantConnect/options/provider/backtest 或交易权限；
+- exit condition：result admission 与 consumer projection 精确重放 aggregate result，任务保持
+  `BASELINE_DONE` 且不自动创建或执行 successor；任何新 options manifest/DQ/backtest 仍需另行授权。
 
 ## 6. 进度记录
 
@@ -162,3 +202,19 @@ cache mutation、QuantConnect、option backtest、provider、orders/fills/positi
   estimand/threshold/drawdown/reducer surface，并把经验 verdict 保持为 `UNRESOLVED`。本次只限
   non-executable `DATA_RESEARCH`；没有读取/下载市场数据，没有运行 DQ、confirmation/backtest 或调用
   QuantConnect/provider/cache，paper/live/production/broker 与 orders/fills/positions 仍为 false/0。
+- 2026-09-01：Owner 另行授权 exact bounded empirical confirmation，只读既有 allowlisted QQQ
+  adjusted-close，四项执行上限为 `manifest replay=1 / canonical DQ=1 / local confirmation=1 /
+  independent replay=1`；download、cache mutation、QuantConnect、options/provider、paper/live/
+  production/broker 与 orders/fills/positions 为零。任务重新进入 `IN_PROGRESS`，先冻结 run
+  authorization/manifest 与 fail-closed executor，再消费唯一运行配额。
+- 2026-09-01：唯一 bounded dispatch 完成。manifest replay、canonical DQ、local confirmation、
+  independent replay 各一次且全部 PASS；frozen reducer 机械输出 `RETAIN`。Candidate 对 exposure-matched
+  comparator 的 net total-return difference 为 `+13.745976956735603 percentage points`，max-drawdown
+  magnitude delta 为 `-3.4293901783962415 percentage points`。未下载/修改缓存，未调用 QuantConnect、
+  option/provider、paper/live/production/broker，orders/fills/positions=`0/0/0`。现有 reader contract
+  无法表示 terminal verdict，按 no-silent-workaround 规则先执行最小 serial contract wave。
+- 2026-09-01：TRADING-2551 terminal-verdict contract 已以 `main=b704784e...` 发布；旧 lane 到最新
+  `main` 的 drift plan `integration-revalidation-ac8786f156b0dffad7ae` 已验证并由 coordinator 精确复核。
+  集成只保留 task-owned policy/code/aggregate evidence，`docs/system_flow.md` 手工协调，task/Atlas 与
+  architecture/report-flow/compatibility authority 从最终树重建。临时 manifest/plan 仅存放于
+  `outputs/architecture/`，closeout 后删除；不重跑 confirmation，也不扩大任何外部或交易权限。

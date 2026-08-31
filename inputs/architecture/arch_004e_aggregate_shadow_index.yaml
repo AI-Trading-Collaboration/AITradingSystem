@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 163
+fragment_count: 165
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: e8d235811c92abf14f7297fb9be23e8613699ba681976d408263da9e4522c2e9
+  current_sha256: ecf106dd390737140c83271c2d689526be802c86c69b39b3b73641d0d08fce6b
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 67
+  fragment_count: 68
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -50,6 +50,7 @@ targets:
   - config/architecture/fragments/flows/evidence_first_research_portfolio_and_reader_entry.yaml
   - config/architecture/fragments/flows/first_layer_operational_forecast.yaml
   - config/architecture/fragments/flows/first_layer_operational_forecast_real_materialization.yaml
+  - config/architecture/fragments/flows/frozen_signal_value_confirmation_execution.yaml
   - config/architecture/fragments/flows/frozen_signal_value_confirmation_preregistration.yaml
   - config/architecture/fragments/flows/frozen_signal_value_confirmation_preregistration_freeze_admission.yaml
   - config/architecture/fragments/flows/growth_tilt_candidate_family_closure.yaml
@@ -231,6 +232,13 @@ fragments:
   target_id: system_flow
   path: config/architecture/fragments/flows/first_layer_operational_forecast_real_materialization.yaml
   sha256: 83be70eca5b890cfe1368569c4bde48a12faf89d6ad8581c205df1404a4e5ea6
+  generated_source_of_truth_active: false
+- fragment_id: flow.frozen_signal_value_confirmation_execution
+  fragment_kind: flow
+  owner: strategy_research_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/frozen_signal_value_confirmation_execution.yaml
+  sha256: 8f5d43d881a24ba8194929419dd28b8668e6d0e8bd257044d1c986404bc83315
   generated_source_of_truth_active: false
 - fragment_id: flow.frozen_signal_value_confirmation_preregistration
   fragment_kind: flow
@@ -735,6 +743,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/first_layer_operational_forecast_real_materialization.yaml
   sha256: bbcc97dca991ce17ff31dfff61dee81d707535ca6ae96efc2411d7a9d62560e6
+  generated_source_of_truth_active: false
+- fragment_id: module.frozen_signal_value_confirmation_execution
+  fragment_kind: module
+  owner: strategy_research_governance
+  target_id: null
+  path: config/architecture/fragments/modules/frozen_signal_value_confirmation_execution.yaml
+  sha256: 5e0d5854b6ddecbb972c8c84d5867c85d0c5e927f77cad8de8f4b076cbb552f2
   generated_source_of_truth_active: false
 - fragment_id: module.frozen_signal_value_confirmation_preregistration
   fragment_kind: module

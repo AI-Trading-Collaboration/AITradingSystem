@@ -343,9 +343,15 @@ primary metric 是 net total-return difference，`>0` 且 max-drawdown magnitude
 identity/DQ/PIT/replay/coverage/accounting/independent replay 任一不足先归 `INSUFFICIENT`，其余负面结果为
 `REJECT`。Owner 已按 file SHA `507ab3dd…` / canonical SHA `7d12dd62…` 精确冻结所列 surface；admission
 通过 exact identity 与 semantic replay 接纳该决定，同时保持原草案 `DRAFT_OWNER_REVIEW_REQUIRED` bytes/status
-不变。当前 signal-value verdict 仍为 `UNRESOLVED`，data read/download、DQ、confirmation、backtest、
-QuantConnect、provider/cache、option data、paper/live/production/broker 和 orders/fills/positions 全为 false/0；
-future envelope 只有在未来另获 exact bounded-run authorization 后才可能激活，本次冻结不授予执行权限。
+不变。后续 Owner decision 通过独立 `frozen_signal_value_confirmation_run_authorization.v1` 激活并消费了
+严格一次性的 bounded `DATA_RESEARCH` 路径：committed manifest 与 allowlisted input/code identity 重放、
+canonical DQ、local signal-value confirmation 和独立算术 replay 各精确一次且全部 PASS。主窗口仍为
+`2021-02-22..2025-12-02` 的 1,202 sessions；candidate 相对 exposure-matched comparator 的净总收益差为
+`+13.745976956735603 pp`，max-drawdown magnitude delta 为 `-3.4293901783962415 pp`，冻结 reducer 因而
+输出 `RETAIN`。TRADING-2551 共享 contract 机械把 `SIGNAL_VALUE` 与 current verdict 同步为 `RETAIN`，
+下一动作仅为 Owner review conditional options paired comparison；它不自动授权或运行 options comparison。
+data download、cache mutation、QuantConnect、option/provider、paper/live/production/broker 与
+orders/fills/positions 全部保持为零。
 
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段

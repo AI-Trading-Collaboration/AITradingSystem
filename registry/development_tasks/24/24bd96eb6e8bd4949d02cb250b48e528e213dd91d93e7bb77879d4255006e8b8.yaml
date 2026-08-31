@@ -13,23 +13,22 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner：仅在希望启动一次 bounded signal-value empirical confirmation 时，另行批准
-    exact run scope；当前无 successor 或执行权限。
+  next_owner: Project Owner：复核是否开启 conditional options paired comparison；当前未授权任何新的
+    QuantConnect/options/provider/backtest 或交易动作。
   requirement_refs:
   - docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Preregistration draft.1 与 exact freeze
-    admission 已完成；signal-value verdict 仍为 UNRESOLVED。任何市场数据读取/下载、DQ、confirmation/backtest、QuantConnect/provider/cache、paper/live/production/broker
-    或 orders/fills/positions 均未获本次授权。
+  unstructured_legacy_blocker_or_next_step: 唯一 bounded confirmation 与 aggregate result
+    admission 已完成，frozen verdict=RETAIN；详细证据见 [TRADING-2550 requirement](docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md)。下一合法动作仅为
+    Owner review，不自动启动 options paired comparison。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Strict freeze-admission binds predecessor file SHA-256 507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa,
-      canonical SHA-256 7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c
-      and authority-set SHA-256 45d508d563b46b0929d80687155213d265399a4f105da69f31810780a34c754f;
-      preserves approved bytes/status, replays the full listed surface, leaves verdict
-      unresolved, and keeps every empirical/external/production/broker gate closed.
+    text: Exact preregistration/freeze admission/run authorization/manifest identity
+      PASS；manifest replay/canonical DQ/local confirmation/independent replay 各精确一次且
+      PASS；terminal verdict=RETAIN，aggregate-only；Atlas terminal projection 与独立证据重放
+      PASS；download/cache mutation/QuantConnect/options/provider/paper/live/production/broker/orders/fills/positions=0。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -202,33 +201,94 @@ events:
   - change:trading-2550-owner-freeze-admission-baseline-done-20260901-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-709a84b2595f27e4b6f5dcaec4f66f0b
+- schema_version: task_event.v1
+  task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-01T07:27:20+09:00'
+  actor: integration-coordinator
+  change_id: trading-2550-bounded-confirmation-execution-admitted-v1
+  lane_id: null
+  base_commit: b704784ee583a066e1f55c554ec71380f184624b
+  previous_state_event_id: task-event-709a84b2595f27e4b6f5dcaec4f66f0b
+  from_status: BASELINE_DONE
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Integration coordinator：接纳唯一 bounded run 的 preserved aggregate evidence，并完成
+      terminal RETAIN consumer projection；不得重跑 confirmation。
+    blocker_or_next_step: Owner exact bounded authorization 已消费：manifest replay/canonical
+      DQ/local confirmation/independent replay 各一次且 PASS；详细证据见 [TRADING-2550 requirement](docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md)。仅剩结果准入与
+      Atlas terminal projection。
+    acceptance_criteria: Exact preregistration/freeze admission/run authorization/manifest
+      identity PASS；manifest replay/canonical DQ/local confirmation/independent replay
+      各精确一次且 PASS；terminal verdict 仅 RETAIN/REJECT/INSUFFICIENT；aggregate-only；所有禁止动作计数为
+      0。
+    notes: 2026-09-01：Owner authorization_state=EXACT_PREAUTHORIZED，maxima=1/1/1/1
+      已全部精确消费。canonical DQ 与 independent replay PASS；primary estimand +13.745976956735603
+      pp、max-drawdown delta -3.4293901783962415 pp；frozen reducer=RETAIN。download/cache
+      mutation/QuantConnect/options/provider/paper/live/production/broker/orders/fills/positions=0；不允许
+      retry。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2550-bounded-confirmation-execution-admitted-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2fb22bbdc9e6510c9585e4a472845d84
+- schema_version: task_event.v1
+  task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-01T07:27:55+09:00'
+  actor: integration-coordinator
+  change_id: trading-2550-bounded-confirmation-retain-admitted-v1
+  lane_id: null
+  base_commit: b704784ee583a066e1f55c554ec71380f184624b
+  previous_state_event_id: task-event-2fb22bbdc9e6510c9585e4a472845d84
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：复核是否开启 conditional options paired comparison；当前未授权任何新的
+      QuantConnect/options/provider/backtest 或交易动作。
+    blocker_or_next_step: 唯一 bounded confirmation 与 aggregate result admission 已完成，frozen
+      verdict=RETAIN；详细证据见 [TRADING-2550 requirement](docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md)。下一合法动作仅为
+      Owner review，不自动启动 options paired comparison。
+    acceptance_criteria: Exact preregistration/freeze admission/run authorization/manifest
+      identity PASS；manifest replay/canonical DQ/local confirmation/independent replay
+      各精确一次且 PASS；terminal verdict=RETAIN，aggregate-only；Atlas terminal projection
+      与独立证据重放 PASS；download/cache mutation/QuantConnect/options/provider/paper/live/production/broker/orders/fills/positions=0。
+    notes: 2026-09-01：1202-session confirmation 在 2021-02-22..2025-12-02 上得出 primary
+      estimand +13.745976956735603 pp、max-drawdown delta -3.4293901783962415 pp，independent
+      replay PASS，frozen verdict RETAIN。共享 terminal-verdict contract 已发布至 main=b704784e；base-drift
+      plan integration-revalidation-ac8786f156b0dffad7ae 已审阅，仅协调重建 system flow/task/Atlas
+      派生物；不重跑 confirmation。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2550-bounded-confirmation-retain-admitted-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fccb59dff6b8d31aa3cc9dda6c20689d
 projection:
   legacy_first_eight_cells:
   - TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
   - Strategy research / frozen first-layer signal value confirmation
   - P0
   - BASELINE_DONE
-  - Project Owner：仅在希望启动一次 bounded signal-value empirical confirmation 时，另行批准 exact
-    run scope；当前无 successor 或执行权限。
-  - Preregistration draft.1 与 exact freeze admission 已完成；signal-value verdict 仍为 UNRESOLVED。任何市场数据读取/下载、DQ、confirmation/backtest、QuantConnect/provider/cache、paper/live/production/broker
-    或 orders/fills/positions 均未获本次授权。
-  - Strict freeze-admission binds predecessor file SHA-256 507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa,
-    canonical SHA-256 7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c
-    and authority-set SHA-256 45d508d563b46b0929d80687155213d265399a4f105da69f31810780a34c754f;
-    preserves approved bytes/status, replays the full listed surface, leaves verdict
-    unresolved, and keeps every empirical/external/production/broker gate closed.
-  - 'Supporting requirement: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md.
-    Owner decision owner_decision:TRADING-2550:2026-09-01:freeze_signal_value_confirmation_preregistration_v1;
-    authorization_state=EXACT_PREAUTHORIZED; admission file SHA-256 17e068eacd9b7972b2fb7562dacd7c4a7ad31dc0b0f18159e2d69e4286ec05e2;
-    admission canonical SHA-256 9317e249f084c1f7f86f418c5cc8d70a696ba0ac5113afc1f25f2af032f68570;
-    admission/preregistration pytest-xdist=34 passed; Atlas corrected targeted assertion
-    PASS; Ruff/strict mypy PASS. scope=NON_EXECUTABLE_DATA_RESEARCH; no market data,
-    DQ, confirmation/backtest, QuantConnect/provider/cache, paper/live/production/broker
-    or orders/fills/positions.'
+  - Project Owner：复核是否开启 conditional options paired comparison；当前未授权任何新的 QuantConnect/options/provider/backtest
+    或交易动作。
+  - 唯一 bounded confirmation 与 aggregate result admission 已完成，frozen verdict=RETAIN；详细证据见
+    [TRADING-2550 requirement](docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md)。下一合法动作仅为
+    Owner review，不自动启动 options paired comparison。
+  - Exact preregistration/freeze admission/run authorization/manifest identity PASS；manifest
+    replay/canonical DQ/local confirmation/independent replay 各精确一次且 PASS；terminal
+    verdict=RETAIN，aggregate-only；Atlas terminal projection 与独立证据重放 PASS；download/cache
+    mutation/QuantConnect/options/provider/paper/live/production/broker/orders/fills/positions=0。
+  - 2026-09-01：1202-session confirmation 在 2021-02-22..2025-12-02 上得出 primary estimand
+    +13.745976956735603 pp、max-drawdown delta -3.4293901783962415 pp，independent replay
+    PASS，frozen verdict RETAIN。共享 terminal-verdict contract 已发布至 main=b704784e；base-drift
+    plan integration-revalidation-ac8786f156b0dffad7ae 已审阅，仅协调重建 system flow/task/Atlas
+    派生物；不重跑 confirmation。
   docs_links:
   - docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md
   terminal: false
-  canonical_row_sha256: 397e16551ffe375e881de166a013b1a551c70472d36e2748a70b2efb368bea0e
-last_event_id: task-event-709a84b2595f27e4b6f5dcaec4f66f0b
+  canonical_row_sha256: 34699597179ebc6c63828dd6234191881c5fc2475e4cdae990ae6085a4bc3428
+last_event_id: task-event-fccb59dff6b8d31aa3cc9dda6c20689d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 8c7942c470d64af98d42f65aa70bef35306eb457fe3b7fc7edd20b61f4fb753e
+fragment_checksum: 0d5c141f1215d1f214843bc796d4f09fb4c341988458395b7ae36baa0160e7ae

@@ -1,0 +1,102 @@
+schema_version: frozen_signal_value_confirmation_run_authorization.v1
+authorization_id: frozen_signal_value_confirmation_run_authorization_v1
+authorization_version: 1.0.0
+status: OWNER_EXACT_BOUNDED_CONFIRMATION_AUTHORIZED
+task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+scope: BOUNDED_DATA_RESEARCH_CONFIRMATION
+owner_decision:
+  decision_ref: owner_decision:TRADING-2550:2026-09-01:authorize_bounded_signal_value_confirmation_v1
+  approved_instruction: '授权 TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1 按已冻结 admission 执行一次 bounded DATA_RESEARCH confirmation：允许只读访问既有 QQQ adjusted-close 数据，manifest replay=1、canonical DQ=1、local confirmation=1、independent replay=1；data download/cache mutation/QuantConnect/options/provider/paper/live/production/broker/orders/fills/positions=0。'
+  authorization_state: EXACT_PREAUTHORIZED
+  exact_bounded_run_granted: true
+preregistration_binding:
+  path: config/research/frozen_signal_value_confirmation_preregistration_v1.yaml
+  artifact_id: frozen_signal_value_confirmation_preregistration_v1
+  artifact_version: 1.0.0-draft.1
+  file_sha256: 507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa
+  canonical_sha256: 7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c
+  authority_set_sha256: 45d508d563b46b0929d80687155213d265399a4f105da69f31810780a34c754f
+freeze_admission_binding:
+  path: config/research/frozen_signal_value_confirmation_preregistration_freeze_admission_v1.yaml
+  artifact_id: frozen_signal_value_confirmation_preregistration_freeze_admission_v1
+  artifact_version: 1.0.0
+  file_sha256: 17e068eacd9b7972b2fb7562dacd7c4a7ad31dc0b0f18159e2d69e4286ec05e2
+  canonical_sha256: 9317e249f084c1f7f86f418c5cc8d70a696ba0ac5113afc1f25f2af032f68570
+  required_status: OWNER_EXACT_PREREGISTRATION_FROZEN_NO_EMPIRICAL_RUN_AUTHORITY
+input_allowlist:
+  signal_index:
+    path: outputs/qqq_options/signal_packages/trading_2542i_operational_forecast_real_v3/signal_index.json
+    sha256: d2af99e55d8f9a69a14d4479eb7ba1fd2aeed323c457ae10705a140c7a62ffda
+    expected_sessions: 1202
+  real_dq_materialization_receipt:
+    path: outputs/research_trends/operational_forecast/trading_2542i_real_v3/real_materialization_receipt.json
+    sha256: f508581f98b1fa64763b8488568cf0631bfa260fea2b7aa55f9d7f5a0590a230
+  signal_package_manifest_replay_receipt:
+    path: outputs/research_trends/operational_forecast/trading_2542i_real_v3/manifest_replay_receipt.json
+    sha256: 1106de7d6e9b63a20d9e68d7228267ea6777a84b2ea1de16215699d3fa7cd9bc
+  canonical_prices:
+    path: outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/prices_daily.csv
+    sha256: 903689623b83bd6b84ce1e9d5e932848cb656b5a2fae1ae31553ba9004482e7e
+    allowed_identity: QQQ
+    allowed_field: adj_close
+  canonical_rates:
+    path: outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/rates_daily.csv
+    sha256: 7829d8ee44fe2ed39a130c9d5224e077c8b03b31990176f188315ebfc5b85e33
+    use: CANONICAL_DQ_ONLY
+  canonical_secondary_prices:
+    path: outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/prices_marketstack_daily.csv
+    sha256: 6cd92d32cefae7fc2ce316db67df51b5b9b3fde5f0b99f53ae4a8da28cba2dc1
+    use: CANONICAL_DQ_ONLY
+  canonical_download_manifest:
+    path: outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/download_manifest.csv
+    sha256: 7f116e0b0e2480805157dce28a518f183d24927cb52a82acb91851d6eabaa4cb
+    use: CANONICAL_DQ_ONLY
+  data_quality_policy:
+    path: config/data_quality.yaml
+    sha256: e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82
+    use: CANONICAL_DQ_ONLY
+  us_equity_calendar_policy:
+    path: config/data/us_equity_special_closure_registry.yaml
+    sha256: 375dd5e07b57208c5afb700d4fec96fdb3c95b29d562b553c3ecc5c4e6f97416
+    use: CANONICAL_DQ_AND_SIGNAL_LAG_ONLY
+run_envelope:
+  manifest_replays: 1
+  canonical_dq_runs: 1
+  local_signal_value_confirmations: 1
+  independent_replays: 1
+  data_downloads: 0
+  cache_mutations: 0
+  quantconnect_actions: 0
+  option_backtests: 0
+  external_provider_actions: 0
+  orders: 0
+  fills: 0
+  positions: 0
+result_boundary:
+  allowed_verdicts: [RETAIN, REJECT, INSUFFICIENT]
+  aggregate_result_only: true
+  raw_market_payload_export_allowed: false
+  raw_option_export_allowed: false
+  terminal_artifact_schema: frozen_signal_value_confirmation_result.v1
+safety:
+  outcome_access_authorized: true
+  market_data_read_authorized: true
+  market_data_read_scope: EXISTING_ALLOWLISTED_QQQ_ADJUSTED_CLOSE_ONLY
+  manifest_replay_authorized: true
+  canonical_dq_authorized: true
+  local_signal_value_confirmation_authorized: true
+  independent_replay_authorized: true
+  local_backtest_authorized_only_as_frozen_confirmation: true
+  data_download_authorized: false
+  cache_mutation_authorized: false
+  quantconnect_authorized: false
+  option_data_use_authorized: false
+  option_backtest_authorized: false
+  provider_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none
+terminal: OWNER_EXACT_BOUNDED_CONFIRMATION_AUTHORIZED_NOT_YET_CONSUMED

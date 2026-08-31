@@ -1,0 +1,96 @@
+schema_version: frozen_signal_value_confirmation_result_admission.v1
+admission_id: frozen_signal_value_confirmation_result_admission_v1
+admission_version: 1.0.0
+status: TECHNICALLY_VALIDATED_AGGREGATE_RETAIN_ADMITTED
+task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+scope: BOUNDED_DATA_RESEARCH_CONFIRMATION_RESULT
+authorization_state: EXACT_PREAUTHORIZED
+technical_validation_state: PASS
+authorization_binding:
+  path: config/research/frozen_signal_value_confirmation_run_authorization_v1.yaml
+  file_sha256: 550f80b8262e1f4f6f9ba750bc611e54dcf4b597fbbe652b15c30d4261754808
+  canonical_sha256: 02badb09fd5383a14100d4ac1fa36cb69a43a72a1617c3c798c10011aeea084d
+manifest_binding:
+  path: inputs/research/frozen_signal_value_confirmation_v1/execution_manifest.json
+  file_sha256: 6051ad6c48b8d402c646945e4f33442f11d0435cb0228c125384776afd7c30d3
+  canonical_sha256: 5dd18a206ad80c983db8584431074888b6bcc9fe9130d76a366377388770b32e
+  implementation_commit_sha: d3b2861f75b1e9e75735909759d05d9fa2c3db37
+  runtime_git_head: f7a4c6374626eb19acfd89c6bdd41ca334896b2b
+evidence_bindings:
+  - role: RUN_ATTEMPT_CONSUMPTION
+    path: inputs/research/frozen_signal_value_confirmation_v1/run_attempt_consumption_receipt.json
+    file_sha256: ec4756372b93fa4f8ab81068b52c5394a229894ac6c8fc5b2e27c02217dcfd81
+  - role: MANIFEST_REPLAY
+    path: inputs/research/frozen_signal_value_confirmation_v1/manifest_replay_receipt.json
+    file_sha256: 038b59e2dcedf3a5a59258b5355a9808037eb52039516b6772cb3563625b297b
+  - role: CANONICAL_DQ
+    path: inputs/research/frozen_signal_value_confirmation_v1/canonical_dq_receipt.json
+    file_sha256: 7af54cbde36e0522c43267653e15960e9991167136afbd6cc4f21b8a1f0397a0
+  - role: INDEPENDENT_REPLAY
+    path: inputs/research/frozen_signal_value_confirmation_v1/independent_replay_receipt.json
+    file_sha256: e64f0bbed81caf29afaabef228284c547399cd4ddfb5b26decafa946475a7b83
+  - role: AGGREGATE_RESULT
+    path: inputs/research/frozen_signal_value_confirmation_v1/aggregate_result.json
+    file_sha256: c0cb0e8b28eb60735ba0fb17e2ad7313d3c1a82cbc399e5eec7a555d9bec4cf9
+run_accounting:
+  manifest_replays: 1
+  canonical_dq_runs: 1
+  local_signal_value_confirmations: 1
+  independent_replays: 1
+  data_downloads: 0
+  cache_mutations: 0
+  quantconnect_actions: 0
+  option_backtests: 0
+  external_provider_actions: 0
+  orders: 0
+  fills: 0
+  positions: 0
+dq_pit:
+  status: PASS
+  error_count: 0
+  warning_count: 0
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  canonical_receipt_path: outputs/data_quality/executions/dq_execution_54bdeb092af212e810d857db2d640efc91e209d4426ca46f566b59f23168ddac/receipt.json
+  canonical_receipt_sha256: d8b93dccc1c7e2b804d450fcc8bbe6cce0169659c84f971255e6ec06d637aa62
+  canonical_report_path: outputs/data_quality/reports/5ec1cff6beda0e17d7722d0c5ceab20f92aea4fa5d2b808fad09f382e6915cb0/data_quality_report.md
+  canonical_report_sha256: 5ec1cff6beda0e17d7722d0c5ceab20f92aea4fa5d2b808fad09f382e6915cb0
+result:
+  verdict: RETAIN
+  stop_action: OPEN_OWNER_REVIEW_FOR_CONDITIONAL_OPTIONS_PAIRED_COMPARISON
+  historical_window_role: REUSED_DEVELOPMENT_CONFIRMATION
+  signal_session_count: 1202
+  return_interval_count: 1201
+  long_interval_count: 385
+  exposure_matched_comparator_weight: 0.3205661948376353
+  candidate_net_total_return_pct: 45.27935887187362
+  comparator_net_total_return_pct: 31.533381915138015
+  net_total_return_difference_percentage_points: 13.745976956735603
+  candidate_max_drawdown_magnitude_pct: 9.647781253983167
+  comparator_max_drawdown_magnitude_pct: 13.077171432379409
+  max_drawdown_magnitude_delta_percentage_points: -3.4293901783962415
+  independent_replay_status: PASS
+interpretation_boundary:
+  signal_value_retained_for_conditional_implementation_review: true
+  proves_options_implementation_value: false
+  proves_robustness_or_pristine_oos: false
+  investment_conclusion_generated: false
+  automatic_successor_created: false
+  next_legal_action: OWNER_REVIEW_FOR_CONDITIONAL_OPTIONS_PAIRED_COMPARISON_ONLY
+safety:
+  aggregate_result_only: true
+  raw_market_payload_exported: false
+  raw_option_payload_exported: false
+  further_confirmation_authorized: false
+  quantconnect_authorized: false
+  option_backtest_authorized: false
+  provider_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none
+terminal: RETAIN_SIGNAL_VALUE_ONLY_OWNER_REVIEW_REQUIRED_FOR_OPTIONS_IMPLEMENTATION_COMPARISON

@@ -33,8 +33,11 @@ def test_evidence_first_portfolio_roundtrips_and_freezes_primary_question() -> N
     policy = _policy()
 
     assert policy.question_id == "SIGNAL_VALUE_FIRST_LAYER_COMPOSER_V2"
-    assert policy.current_verdict is EvidenceState.UNRESOLVED
-    assert policy.next_experiment_id == "FROZEN_SIGNAL_VALUE_CONFIRMATION"
+    assert policy.current_verdict is EvidenceState.RETAIN
+    assert (
+        policy.next_experiment_id
+        == "OWNER_REVIEW_CONDITIONAL_OPTIONS_PAIRED_COMPARISON"
+    )
     assert policy.historical_window_role == "REUSED_DEVELOPMENT_CONFIRMATION"
     assert (
         EvidenceFirstResearchPortfolio.from_dict(policy.to_dict()).canonical_bytes
@@ -54,7 +57,7 @@ def test_evidence_first_portfolio_makes_empirical_work_the_next_ready_p0() -> No
         EvidenceState.READY,
         EvidenceState.READY,
         EvidenceState.READY,
-        EvidenceState.UNRESOLVED,
+        EvidenceState.RETAIN,
         EvidenceState.NOT_RUN,
         EvidenceState.NOT_ESTABLISHED,
         EvidenceState.NOT_ELIGIBLE,
@@ -100,6 +103,9 @@ def test_evidence_first_portfolio_rejects_terminal_verdict_action_mismatch() -> 
     payload = copy.deepcopy(_payload())
     payload["primary_evidence_question"]["current_verdict"] = "RETAIN"
     payload["evidence_ladder"][3]["state"] = "RETAIN"
+    payload["primary_evidence_question"][
+        "next_experiment_id"
+    ] = "FROZEN_SIGNAL_VALUE_CONFIRMATION"
 
     with pytest.raises(EvidenceFirstPortfolioError, match="EVIDENCE_FIRST_NEXT_EXPERIMENT_INVALID"):
         EvidenceFirstResearchPortfolio.from_dict(payload)
@@ -111,6 +117,7 @@ def test_evidence_first_portfolio_rejects_terminal_verdict_ladder_mismatch() -> 
     payload["primary_evidence_question"][
         "next_experiment_id"
     ] = "OWNER_REVIEW_CONDITIONAL_OPTIONS_PAIRED_COMPARISON"
+    payload["evidence_ladder"][3]["state"] = "UNRESOLVED"
 
     with pytest.raises(EvidenceFirstPortfolioError, match="EVIDENCE_FIRST_LADDER_STATE_INVALID"):
         EvidenceFirstResearchPortfolio.from_dict(payload)
