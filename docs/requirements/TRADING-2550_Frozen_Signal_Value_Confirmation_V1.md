@@ -218,3 +218,7 @@ cache mutation、QuantConnect、option backtest、provider、orders/fills/positi
   集成只保留 task-owned policy/code/aggregate evidence，`docs/system_flow.md` 手工协调，task/Atlas 与
   architecture/report-flow/compatibility authority 从最终树重建。临时 manifest/plan 仅存放于
   `outputs/architecture/`，closeout 后删除；不重跑 confirmation，也不扩大任何外部或交易权限。
+- 2026-09-01：首个集成候选 `296e04d0...` 的 formal Architecture tier 在 882 项中仅发现
+  `tests/test_arch_004g_deprecation.py` 仍冻结新增 executor 前的 inventory identity/count；其余 881 项
+  PASS。该失败不涉及 empirical result、DQ 或 replay。失败 publication transaction 已留存并释放，
+  后续候选只更新确定性 architecture ratchet 并重建关联 authority，不重跑 confirmation。

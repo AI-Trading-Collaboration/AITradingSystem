@@ -57,13 +57,13 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-WAVE21_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_196c3d552f48e6696afd"
+WAVE21_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_30f582d31e56ffc1b8c2"
 WAVE21_CURRENT_REPOSITORY_COUNTS = {
-    # TRADING-2550 adds the non-executable preregistration and separate freeze-
-    # admission modules plus their focused tests. It does not change runtime
-    # deprecation lifecycle or writer allowances.
-    "python_module_count": 1185,
-    "python_test_file_count": 1342,
+    # TRADING-2550 now also includes the bounded confirmation executor and its
+    # focused test file. This changes inventory identity/counts only; it does
+    # not change runtime deprecation lifecycle or writer allowances.
+    "python_module_count": 1186,
+    "python_test_file_count": 1343,
     "direct_writer_current_count": 856,
 }
 WAVE21_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(

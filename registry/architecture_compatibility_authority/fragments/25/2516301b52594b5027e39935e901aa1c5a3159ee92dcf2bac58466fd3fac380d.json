@@ -131,7 +131,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004g_deprecation.py",
-        "sha256": "cf78130582a34c5d0ae81791cc3690880d15fd4505e241c84abef453850b94cf"
+        "sha256": "e026e686cb00aa95bb97915211036a5c27fb2e94492b2e4e55bb5ba70ef022e9"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -196,5 +196,5 @@
     }
   },
   "section_id": "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1",
-  "section_sha256": "de9d0a89f94aa5a17036758f89e04c6f3c85a3a64b35bbd5308a88728e5bcdc0"
+  "section_sha256": "2516301b52594b5027e39935e901aa1c5a3159ee92dcf2bac58466fd3fac380d"
 }
