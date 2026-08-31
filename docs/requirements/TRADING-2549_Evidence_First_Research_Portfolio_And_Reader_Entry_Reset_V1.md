@@ -247,3 +247,9 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   `SINGLE_LANE / INTEGRATION / contract-change` preflight 对 exact candidate、task、claims、plan、lease 与
   `trading-2549-final-publication-20260831-v11` 返回 `PASS`；随后才由 canonical writer 转为 `DONE`。
   `TRADING-2550` 继续为 `PROPOSED`，没有执行数据下载、backtest、QuantConnect 或任何外部/生产/broker 动作。
+- 2026-08-31：对 candidate `0cebccbb0` 的 exact-commit HTML 完成本地 Playwright 自动检查：desktop
+  `1440×900` 默认态 `scrollHeight=1945`、mobile `390×844` 默认态 `scrollHeight=3111`，两者均满足
+  `scrollWidth=clientWidth`、无横向溢出；默认态唯一 `h1`，研究细节按钮 `aria-expanded=false`，点击后变为
+  `true` 并展示既有研究材料，再次点击可关闭；console error/warning=`0/0`。相较旧页约 14,407px desktop、
+  29,970px mobile 的默认长度，当前入口显著缩短。截图人工观察未发现文字截断、卡片溢出或移动端按钮不可达，
+  但这仍只是自动化/实施者检查，Owner visual 与 reader comprehension 必须保持 `PENDING_REVIEW`。
