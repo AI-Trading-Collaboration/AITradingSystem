@@ -29,32 +29,32 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "b593636a99cfa50062e712c145c06c1c4d30697290525b28f130edcd2dad7f97"
+        "sha256": "8171b3fc63a9a4d659e0ac36c9ef19f5e8f3369ad4fa64a93fcf3c1a68b4428b"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "3e9af1df2ed180a4a6a636500d8e66724c41a64f20743614e155a39e14375a78"
+        "sha256": "02a25ec5cb9086321c44ba787de2786ece1affd9764bc01161c433f5491f8eae"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
-        "sha256": "fa719f3c3330dbd6e723279fb4357a64ff60827433176501940f8188db6533f3"
+        "sha256": "9e30a6230147e75a19f9106a5b608205e8f484c7ac142d15f64be39d3fc07b8b"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "8bbb8b5ed9a1afd2ced2a1ba238269c656fb047d9ef4cafc8e81e66fc965823d"
+        "sha256": "c818009bb8ab20bea9a6f8e54c98e2846d1a7624b5afc4b8d205241c882a72a9"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "72648434d2c68fb8c63d8b959f7694a50dffdd207552ce6086900ae6f08d6997"
+        "sha256": "eba74784bf8c4e1b06b49e52ae1845250a3b7b3a8c6b17e93d1ce6c4a964d569"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "1334641871258e72f939ab98c97449cfab44fc540709fe04fba32b9e09d60194"
+        "sha256": "1916ccfe91b6a866dd3c426219d4567c0900d57042d189d27b4b27ec1828f870"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -132,5 +132,5 @@
     "task_id": "DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL"
   },
   "section_id": "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2",
-  "section_sha256": "416330c68d4380fa6df3c84fe67b4e3ef1a11f7e946db31eb72df113813b569e"
+  "section_sha256": "1c7e6f03842ea7b9d0b02e411fb4ab125969cb1f88625f2383708af1409d3d6c"
 }

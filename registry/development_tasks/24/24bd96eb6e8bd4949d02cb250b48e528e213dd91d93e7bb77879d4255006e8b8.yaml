@@ -13,23 +13,23 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner：复核 frozen_signal_value_confirmation_preregistration_v1@1.0.0-draft.1
-    exact file/canonical SHA，并选择接纳、要求修订或拒绝；strategy coordinator 在此前不得读取 outcome 或运行
-    DQ/confirmation。
+  next_owner: Project Owner：仅在希望启动一次 bounded signal-value empirical confirmation 时，另行批准
+    exact run scope；当前无 successor 或执行权限。
   requirement_refs:
   - docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: result-blind draft.1 已形成；唯一 blocker 是
-    comparator、5 bps cost、zero excess-return threshold、zero drawdown-regression guard
-    与三态 reducer 尚无 Owner exact SHA approval。当前 data read/DQ/backtest/QuantConnect/provider/orders/fills/positions
-    均未授权。
+  unstructured_legacy_blocker_or_next_step: Preregistration draft.1 与 exact freeze
+    admission 已完成；signal-value verdict 仍为 UNRESOLVED。任何市场数据读取/下载、DQ、confirmation/backtest、QuantConnect/provider/cache、paper/live/production/broker
+    或 orders/fills/positions 均未获本次授权。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Owner exact-review draft identity 后，只有另行 bounded authorization 与 manifest
-      replay/DQ/PIT PASS 才可运行一次 local signal-value confirmation；输出仅 RETAIN/REJECT/INSUFFICIENT，RETAIN
-      才打开 options paired-comparison review。
+    text: Strict freeze-admission binds predecessor file SHA-256 507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa,
+      canonical SHA-256 7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c
+      and authority-set SHA-256 45d508d563b46b0929d80687155213d265399a4f105da69f31810780a34c754f;
+      preserves approved bytes/status, replays the full listed surface, leaves verdict
+      unresolved, and keeps every empirical/external/production/broker gate closed.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -103,31 +103,132 @@ events:
   - change:trading-2550-draft-owner-review-handoff-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-ba4aa86dc50a3f14151907dabb90d23b
+- schema_version: task_event.v1
+  task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-31T15:14:54.6829941Z'
+  actor: integration-coordinator
+  change_id: trading-2550-owner-exact-freeze-resume-20260901-v1
+  lane_id: null
+  base_commit: e747fd2473ec1555793f6690f053da75ff17d572
+  previous_state_event_id: task-event-ba4aa86dc50a3f14151907dabb90d23b
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：发布 exact preregistration freeze admission serial wave，并在不读取数据、不运行
+      DQ/confirmation/backtest/QuantConnect 的前提下收口为 BASELINE_DONE。
+    blocker_or_next_step: Owner 已对 bound draft.1 的 full signal/comparator/accounting/cost/estimand/threshold/drawdown/reducer
+      surface 给出 exact file/canonical SHA 冻结批准；当前仅实施独立 immutable freeze admission。任何市场数据读取/下载、DQ、confirmation/backtest、QuantConnect/provider/cache
+      或 orders/fills/positions 仍未授权。
+    acceptance_criteria: Strict freeze-admission 必须绑定 file SHA-256 507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa
+      与 canonical SHA-256 7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c，保持批准草案
+      bytes/status 不变，完整重放 frozen surface，并确保全部 empirical/external/production/broker
+      gate 关闭。
+    notes: Owner decision owner_decision:TRADING-2550:2026-09-01:freeze_signal_value_confirmation_preregistration_v1;
+      authorization_state=EXACT_PREAUTHORIZED; scope=NON_EXECUTABLE_DATA_RESEARCH;
+      user expressly did not authorize market data read/download, DQ, confirmation/backtest,
+      QuantConnect/provider/cache, paper/live/production/broker, orders/fills/positions.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2550-owner-exact-freeze-resume-20260901-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0185f877d8e53e0401f73d80b0d3b421
+- schema_version: task_event.v1
+  task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-31T15:28:51.1957537Z'
+  actor: integration-coordinator
+  change_id: trading-2550-owner-exact-freeze-resume-requirement-binding-20260901-v1
+  lane_id: null
+  base_commit: e747fd2473ec1555793f6690f053da75ff17d572
+  previous_state_event_id: task-event-0185f877d8e53e0401f73d80b0d3b421
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：发布 exact preregistration freeze admission serial wave，并在不读取数据、不运行
+      DQ/confirmation/backtest/QuantConnect 的前提下收口为 BASELINE_DONE。
+    blocker_or_next_step: Owner 已对 bound draft.1 的 full signal/comparator/accounting/cost/estimand/threshold/drawdown/reducer
+      surface 给出 exact file/canonical SHA 冻结批准；当前仅实施独立 immutable freeze admission。任何市场数据读取/下载、DQ、confirmation/backtest、QuantConnect/provider/cache
+      或 orders/fills/positions 仍未授权。
+    acceptance_criteria: Strict freeze-admission 必须绑定 file SHA-256 507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa
+      与 canonical SHA-256 7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c，保持批准草案
+      bytes/status 不变，完整重放 frozen surface，并确保全部 empirical/external/production/broker
+      gate 关闭。
+    notes: 'Supporting requirement: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md.
+      Owner decision owner_decision:TRADING-2550:2026-09-01:freeze_signal_value_confirmation_preregistration_v1;
+      authorization_state=EXACT_PREAUTHORIZED; scope=NON_EXECUTABLE_DATA_RESEARCH;
+      user expressly did not authorize market data read/download, DQ, confirmation/backtest,
+      QuantConnect/provider/cache, paper/live/production/broker, orders/fills/positions.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2550-owner-exact-freeze-resume-requirement-binding-20260901-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-51e320f3ce90b737848a1ce1a14928ed
+- schema_version: task_event.v1
+  task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-31T15:37:26.9606998Z'
+  actor: integration-coordinator
+  change_id: trading-2550-owner-freeze-admission-baseline-done-20260901-v1
+  lane_id: null
+  base_commit: e747fd2473ec1555793f6690f053da75ff17d572
+  previous_state_event_id: task-event-51e320f3ce90b737848a1ce1a14928ed
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：仅在希望启动一次 bounded signal-value empirical confirmation
+      时，另行批准 exact run scope；当前无 successor 或执行权限。
+    blocker_or_next_step: Preregistration draft.1 与 exact freeze admission 已完成；signal-value
+      verdict 仍为 UNRESOLVED。任何市场数据读取/下载、DQ、confirmation/backtest、QuantConnect/provider/cache、paper/live/production/broker
+      或 orders/fills/positions 均未获本次授权。
+    acceptance_criteria: Strict freeze-admission binds predecessor file SHA-256 507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa,
+      canonical SHA-256 7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c
+      and authority-set SHA-256 45d508d563b46b0929d80687155213d265399a4f105da69f31810780a34c754f;
+      preserves approved bytes/status, replays the full listed surface, leaves verdict
+      unresolved, and keeps every empirical/external/production/broker gate closed.
+    notes: 'Supporting requirement: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md.
+      Owner decision owner_decision:TRADING-2550:2026-09-01:freeze_signal_value_confirmation_preregistration_v1;
+      authorization_state=EXACT_PREAUTHORIZED; admission file SHA-256 17e068eacd9b7972b2fb7562dacd7c4a7ad31dc0b0f18159e2d69e4286ec05e2;
+      admission canonical SHA-256 9317e249f084c1f7f86f418c5cc8d70a696ba0ac5113afc1f25f2af032f68570;
+      admission/preregistration pytest-xdist=34 passed; Atlas corrected targeted assertion
+      PASS; Ruff/strict mypy PASS. scope=NON_EXECUTABLE_DATA_RESEARCH; no market data,
+      DQ, confirmation/backtest, QuantConnect/provider/cache, paper/live/production/broker
+      or orders/fills/positions.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2550-owner-freeze-admission-baseline-done-20260901-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-709a84b2595f27e4b6f5dcaec4f66f0b
 projection:
   legacy_first_eight_cells:
   - TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
   - Strategy research / frozen first-layer signal value confirmation
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner：复核 frozen_signal_value_confirmation_preregistration_v1@1.0.0-draft.1
-    exact file/canonical SHA，并选择接纳、要求修订或拒绝；strategy coordinator 在此前不得读取 outcome 或运行
-    DQ/confirmation。
-  - result-blind draft.1 已形成；唯一 blocker 是 comparator、5 bps cost、zero excess-return
-    threshold、zero drawdown-regression guard 与三态 reducer 尚无 Owner exact SHA approval。当前
-    data read/DQ/backtest/QuantConnect/provider/orders/fills/positions 均未授权。
-  - Owner exact-review draft identity 后，只有另行 bounded authorization 与 manifest replay/DQ/PIT
-    PASS 才可运行一次 local signal-value confirmation；输出仅 RETAIN/REJECT/INSUFFICIENT，RETAIN
-    才打开 options paired-comparison review。
+  - BASELINE_DONE
+  - Project Owner：仅在希望启动一次 bounded signal-value empirical confirmation 时，另行批准 exact
+    run scope；当前无 successor 或执行权限。
+  - Preregistration draft.1 与 exact freeze admission 已完成；signal-value verdict 仍为 UNRESOLVED。任何市场数据读取/下载、DQ、confirmation/backtest、QuantConnect/provider/cache、paper/live/production/broker
+    或 orders/fills/positions 均未获本次授权。
+  - Strict freeze-admission binds predecessor file SHA-256 507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa,
+    canonical SHA-256 7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c
+    and authority-set SHA-256 45d508d563b46b0929d80687155213d265399a4f105da69f31810780a34c754f;
+    preserves approved bytes/status, replays the full listed surface, leaves verdict
+    unresolved, and keeps every empirical/external/production/broker gate closed.
   - 'Supporting requirement: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md.
-    draft file SHA=507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa;
-    canonical SHA=7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c;
-    authority-set SHA=45d508d563b46b0929d80687155213d265399a4f105da69f31810780a34c754f.
-    Focused pytest-xdist 43 passed; Ruff/mypy PASS. No market payload/DQ/backtest/external
-    action.'
+    Owner decision owner_decision:TRADING-2550:2026-09-01:freeze_signal_value_confirmation_preregistration_v1;
+    authorization_state=EXACT_PREAUTHORIZED; admission file SHA-256 17e068eacd9b7972b2fb7562dacd7c4a7ad31dc0b0f18159e2d69e4286ec05e2;
+    admission canonical SHA-256 9317e249f084c1f7f86f418c5cc8d70a696ba0ac5113afc1f25f2af032f68570;
+    admission/preregistration pytest-xdist=34 passed; Atlas corrected targeted assertion
+    PASS; Ruff/strict mypy PASS. scope=NON_EXECUTABLE_DATA_RESEARCH; no market data,
+    DQ, confirmation/backtest, QuantConnect/provider/cache, paper/live/production/broker
+    or orders/fills/positions.'
   docs_links:
   - docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md
   terminal: false
-  canonical_row_sha256: 6a2b802c31d9dafaa01efa04acf03e5055e5d4bc19b4be1647d4ab979a91db70
-last_event_id: task-event-ba4aa86dc50a3f14151907dabb90d23b
+  canonical_row_sha256: 397e16551ffe375e881de166a013b1a551c70472d36e2748a70b2efb368bea0e
+last_event_id: task-event-709a84b2595f27e4b6f5dcaec4f66f0b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 70d110f4553cad6883d65c65089c8a16f9633c38e7e233aa43c5c876323ff693
+fragment_checksum: 8c7942c470d64af98d42f65aa70bef35306eb457fe3b7fc7edd20b61f4fb753e

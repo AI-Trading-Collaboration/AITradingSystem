@@ -1,0 +1,85 @@
+schema_version: frozen_signal_value_confirmation_preregistration_freeze_admission.v1
+admission_id: frozen_signal_value_confirmation_preregistration_freeze_admission_v1
+admission_version: 1.0.0
+status: OWNER_EXACT_PREREGISTRATION_FROZEN_NO_EMPIRICAL_RUN_AUTHORITY
+task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+scope: NON_EXECUTABLE_DATA_RESEARCH
+owner_decision:
+  decision_ref: owner_decision:TRADING-2550:2026-09-01:freeze_signal_value_confirmation_preregistration_v1
+  approved_instruction: '批准 `frozen_signal_value_confirmation_preregistration_v1@1.0.0-draft.1`（file SHA `507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa` / canonical SHA `7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c`）全部所列 signal identity、candidate、exposure-matched comparator、USD 100,000 common capital、adjusted-close calendar、5 bps one-way cost、primary estimand、zero thresholds、drawdown non-regression 与 reducer precedence 规则按草案精确冻结；仅限 non-executable DATA_RESEARCH；不授权市场数据读取或下载、DQ、confirmation/backtest、QuantConnect/provider/cache、paper/live/production/broker 或任何 orders/fills/positions。'
+  exact_preregistration_freeze_granted: true
+  full_listed_surface_frozen: true
+  predecessor_bytes_must_remain_immutable: true
+  approved_file_sha256: 507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa
+  approved_canonical_sha256: 7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c
+  empirical_run_authorized: false
+  authorization_state: EXACT_PREAUTHORIZED
+authority_binding:
+  path: config/research/frozen_signal_value_confirmation_preregistration_v1.yaml
+  artifact_id: frozen_signal_value_confirmation_preregistration_v1
+  artifact_version: 1.0.0-draft.1
+  file_sha256: 507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa
+  canonical_sha256: 7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c
+  authority_set_sha256: 45d508d563b46b0929d80687155213d265399a4f105da69f31810780a34c754f
+  role: OWNER_EXACT_FROZEN_SIGNAL_VALUE_PREREGISTRATION
+  immutable: true
+frozen_surface:
+  frozen_sections:
+    - signal_identity
+    - candidate_implementation
+    - primary_comparator
+    - accounting_and_clock
+    - cost_model
+    - primary_metric
+    - falsification_guard
+    - verdict_reducer
+    - safety
+  predecessor_policy_status_preserved: DRAFT_OWNER_REVIEW_REQUIRED
+  predecessor_owner_review_state_preserved: OWNER_REVIEW_REQUIRED
+  owner_exact_frozen_via_separate_admission: true
+  signal_package_id: trading_2542i_operational_forecast_real_v3
+  signal_session_count: 1202
+  return_interval_count: 1201
+  candidate_implementation_id: FROZEN_SIGNAL_FULLY_FUNDED_QQQ_ZERO_RETURN_CASH
+  primary_comparator_id: EXPOSURE_MATCHED_STATIC_QQQ_ZERO_RETURN_CASH
+  initial_capital_usd: 100000
+  price_field: ADJUSTED_CLOSE
+  return_clock: EFFECTIVE_SESSION_CLOSE_TO_NEXT_XNYS_SESSION_CLOSE
+  one_way_cost_bps: 5.0
+  primary_metric_id: NET_TOTAL_RETURN_DIFFERENCE_PERCENTAGE_POINTS
+  return_threshold_strictly_greater_than: 0.0
+  drawdown_guard_id: MAX_DRAWDOWN_MAGNITUDE_NON_REGRESSION
+  drawdown_threshold_less_than_or_equal_to: 0.0
+  reducer_precedence: [INSUFFICIENT, REJECT, RETAIN]
+empirical_state:
+  signal_value_verdict: UNRESOLVED
+  empirical_confirmation_completed: false
+  preregistration_freeze_complete_after_admission: true
+  task_status_after_admission: BASELINE_DONE
+  successor_task_implicitly_created: false
+  next_legal_action: OWNER_SEPARATE_EXACT_BOUNDED_RUN_AUTHORIZATION_REQUIRED
+safety:
+  non_executable_data_research_only: true
+  owner_exact_freeze_admission_only: true
+  predecessor_policy_mutation_allowed: false
+  outcome_access_authorized: false
+  market_data_read_authorized: false
+  market_data_download_authorized: false
+  dq_authorized: false
+  confirmation_authorized: false
+  backtest_authorized: false
+  quantconnect_authorized: false
+  provider_authorized: false
+  cache_mutation_authorized: false
+  option_data_use_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_allowed: false
+  orders: 0
+  fills: 0
+  positions: 0
+  investment_conclusion_generated: false
+  production_effect: none
+  broker_action: none
+terminal: OWNER_EXACT_PREREGISTRATION_FROZEN_NO_EMPIRICAL_RUN_AUTHORITY

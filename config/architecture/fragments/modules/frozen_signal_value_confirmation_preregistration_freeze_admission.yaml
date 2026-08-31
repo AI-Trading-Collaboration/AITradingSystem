@@ -1,0 +1,13 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.frozen_signal_value_confirmation_preregistration_freeze_admission
+fragment_kind: module
+owner: strategy_research_governance
+module_prefix: src/ai_trading_system/research_quality/frozen_signal_value_confirmation_preregistration_freeze_admission.py
+public_contracts:
+  - DEFAULT_FROZEN_SIGNAL_VALUE_CONFIRMATION_PREREGISTRATION_FREEZE_ADMISSION_PATH
+  - FrozenSignalValuePreregistrationFreezeAdmission
+  - FrozenSignalValuePreregistrationFreezeAdmissionError
+  - FrozenSignalValuePreregistrationFreezeAdmissionLoadResult
+  - load_frozen_signal_value_confirmation_preregistration_freeze_admission
+compatibility_facades: []
+deprecation_status: active_reference_architecture

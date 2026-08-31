@@ -472,7 +472,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert "1201 个最终看到 option chain，仅 1 个全日未见" in html
     assert "1019 个是当天先出现无链 Slice、后来恢复的提前结算混淆" in html
     assert "当前：完成整体可信性与参数依据复核" in rendered_text
-    assert "下一步仅由项目负责人接纳、要求修订或拒绝 draft.1 的 exact identity" in rendered_text
+    assert "未来另行批准 exact bounded-run scope" in rendered_text
     assert "不得读取市场结果、运行 DQ" in rendered_text
     assert "2516 v2 token 也已签署并在唯一一次 Cloud run 尝试中消费" in html
     assert "9518360aeb329219cd83e78442a1d229" in html

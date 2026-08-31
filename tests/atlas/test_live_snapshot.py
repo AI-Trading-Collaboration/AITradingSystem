@@ -112,12 +112,15 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.status_object_zh == (
         "当前研究组合已按 Owner 决定切换为 evidence-first。工程可复现性、主窗口数据与时点正确性、"
         "冻结的 1,202 个交易日五态信号包已经具备；真正未解决的是该信号在固定资本、时钟、成本和"
-        "预先登记基准下是否提供值得保留的增量价值。TRADING-2550 已形成 result-blind draft.1：同一"
-        "信号映射为 fully-funded QQQ/零收益现金，并提议使用 exposure-matched static QQQ/现金 "
-        "comparator、共同资本和时钟、5 bps 单边成本、净总收益差与 drawdown non-regression guard。"
-        "当前等待项目负责人输入与 exact file/canonical SHA 复核；尚未读取市场结果、运行 "
-        "DQ、signal-value confirmation、backtest、QuantConnect 或 provider。只有最终规则获批且未来"
-        "另行授权的 bounded run 得出 RETAIN，才把期权实现对比提升为主线。页面与工程完善不得替代"
+        "预先登记基准下是否提供值得保留的增量价值。TRADING-2550 的 result-blind draft.1 已按 exact "
+        "file/canonical SHA 冻结：同一信号映射为 fully-funded QQQ/零收益现金，primary comparator "
+        "固定为 exposure-matched static QQQ/现金，共同资本为 USD 100,000，使用 adjusted-close "
+        "时钟、"
+        "5 bps 单边成本、净总收益差与 drawdown non-regression guard。该冻结只完成研究规则，不产生"
+        "经验结果；signal-value verdict 仍为 UNRESOLVED，且尚未读取市场结果、运行 DQ、signal-value "
+        "confirmation、backtest、QuantConnect 或 provider/cache。只有未来另行授权的 bounded run "
+        "得出 "
+        "RETAIN，才把期权实现对比提升为主线。页面与工程完善不得替代"
         "信号价值、实现方式价值或稳健性结论，也不表示可以 paper/live/production/broker 或形成"
         "投资结论。"
     )
@@ -146,9 +149,9 @@ def test_reader_decision_projection_separates_transport_from_dq_pit_promotion() 
     assert "净收益 +4.48%" in visible
     assert "Sharpe=-1.872" in visible
     assert "不得读取市场结果、运行 DQ" in visible
-    assert "按 exact file/canonical SHA 复核" in visible
-    assert "下一步仅由项目负责人接纳、要求修订或拒绝 draft.1" in visible
-    assert "未来 bounded run 另行授权" in visible
+    assert "已按 exact file/canonical SHA 冻结" in visible
+    assert "未来另行批准 exact bounded-run scope" in visible
+    assert "尚无经验 verdict" in visible
     assert "QC_AUTHORIZED_NOT_RUN" not in visible
     assert "仍有 1 天全日未出现期权链" not in visible
     assert "先解释唯一缺链交易日" not in visible

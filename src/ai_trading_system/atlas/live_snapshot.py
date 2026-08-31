@@ -623,9 +623,9 @@ def build_reader_decision_projection(
             item_id="CURRENT_DECISION",
             label_zh="01 · 当前决定",
             text_zh=(
-                "第一层五态信号的价值仍未解决；result-blind draft.1 已形成，但 comparator、"
-                "5 bps 成本、zero-return threshold、drawdown guard 与三态 reducer 仍等待项目负责人"
-                "按 exact file/canonical SHA 复核，当前不形成策略结论。"
+                "第一层五态信号的价值仍未解决；result-blind draft.1 已按 exact file/canonical "
+                "SHA 冻结 comparator、5 bps 成本、zero-return threshold、drawdown guard 与三态 "
+                "reducer，但尚无经验 verdict，当前不形成策略结论。"
             ),
             source_task_ids=current_decision_sources,
         ),
@@ -649,9 +649,9 @@ def build_reader_decision_projection(
             item_id="NEXT_STEP",
             label_zh="04 · 下一步",
             text_zh=(
-                "下一步仅由项目负责人接纳、要求修订或拒绝 draft.1 的 exact identity。"
-                "在规则获批和未来 bounded run 另行授权前，不得读取市场结果、运行 DQ、"
-                "signal-value confirmation、backtest、QuantConnect 或 provider。"
+                "下一步只有在项目负责人未来另行批准 exact bounded-run scope 后，才可准备并重放"
+                "一次性 manifest/DQ/confirmation 门禁；当前不得读取市场结果、运行 DQ、"
+                "signal-value confirmation、backtest、QuantConnect 或 provider/cache。"
             ),
             source_task_ids=next_sources,
         ),
@@ -679,8 +679,8 @@ def build_reader_decision_projection(
             item_id="LARGEST_CURRENT_BLOCKER",
             label_zh="02 · 最大阻塞",
             text_zh=(
-                f"{limitation_text}signal-value draft.1 尚未由 Owner 按 final file/canonical SHA "
-                "exact-freeze，且当前没有 outcome access、DQ 或经验运行授权。"
+                f"{limitation_text}signal-value draft.1 已 exact-freeze，但没有 outcome access、"
+                "DQ 或经验运行授权，因此 signal-value verdict 仍为 UNRESOLVED。"
             ),
             source_task_ids=why_sources,
         ),
@@ -690,7 +690,7 @@ def build_reader_decision_projection(
             text_zh=(
                 f"受治理链路已确认 {observed}/{expected} 个交易日并完成一次 bounded baseline；"
                 "平台聚合字段已通过限定范围的技术复核，并已完成 signal-value result-blind "
-                "preregistration draft，但这些只属于工程与研究设计事实，不是策略通过。"
+                "preregistration exact freeze，但这些只属于工程与研究设计事实，不是策略通过。"
             ),
             source_task_ids=work_sources,
         ),

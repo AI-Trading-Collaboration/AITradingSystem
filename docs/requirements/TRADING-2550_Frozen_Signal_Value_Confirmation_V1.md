@@ -1,10 +1,10 @@
 # TRADING-2550：Frozen Signal Value Confirmation V1
 
-最后更新：2026-08-31
+最后更新：2026-09-01
 
 - stable task id：`TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1`
 - priority：`P0`
-- status：`BLOCKED_OWNER_INPUT`（`draft.1` 已形成，等待 exact file/canonical SHA 复核）
+- status：`BASELINE_DONE`（`draft.1` 已按 exact file/canonical SHA 冻结；经验运行仍未授权）
 - task class / evidence type：`EMPIRICAL_EVIDENCE`
 - research question id：`SIGNAL_VALUE_FIRST_LAYER_COMPOSER_V2`
 - production effect：`none`
@@ -16,9 +16,9 @@
 组合信号，在固定资本、固定时钟、固定成本和结果不可见时预先登记的比较基准下，是否提供值得保留的增量
 价值。它不得在同一任务中修改信号、搜索参数、删除不利时期或事后添加 benchmark。
 
-本轮 Owner 已授权继续推进 outcome-blind 预注册设计，但没有授权读取市场结果、DQ、收益计算、回测、
-QuantConnect、外部提供方、paper/live/production/broker，也不生成投资结论。预注册草案必须先形成 exact
-file/canonical SHA，再由 Owner 对会影响投资解释的比较方法、成本、阈值与 stop rule 作独立复核。
+Owner 已按 exact file/canonical SHA 批准并冻结 outcome-blind `draft.1`。批准通过独立 immutable
+freeze admission 接纳，不改写获批草案 bytes/status；它仍不授权读取市场结果、DQ、收益计算、confirmation、
+backtest、QuantConnect、外部提供方、cache、paper/live/production/broker，也不生成投资结论。
 
 ## 2. P0 admission fields
 
@@ -106,8 +106,23 @@ cache mutation、QuantConnect、option backtest、provider、orders/fills/positi
 - file SHA-256：`507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa`；
 - canonical SHA-256：`7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c`；
 - authority-set SHA-256：`45d508d563b46b0929d80687155213d265399a4f105da69f31810780a34c754f`；
-- current decision state：`OWNER_REVIEW_REQUIRED`；
+- current decision state：原草案 bytes 保持 `OWNER_REVIEW_REQUIRED`，独立 admission 记录
+  `OWNER_EXACT_PREREGISTRATION_FROZEN_NO_EMPIRICAL_RUN_AUTHORITY`；
 - execution activation：`false`。
+
+### 3.6 exact freeze admission
+
+- admission：`frozen_signal_value_confirmation_preregistration_freeze_admission_v1@1.0.0`；
+- Owner decision：
+  `owner_decision:TRADING-2550:2026-09-01:freeze_signal_value_confirmation_preregistration_v1`；
+- authorization state：`EXACT_PREAUTHORIZED`；
+- exact-freeze surface：signal identity、candidate、exposure-matched comparator、USD 100,000 common
+  capital、adjusted-close calendar、5 bps one-way cost、primary estimand、zero thresholds、drawdown
+  non-regression 与 reducer precedence；
+- predecessor file/canonical/authority-set SHA 必须继续精确重放，草案不因接纳而被改写；
+- signal-value verdict 仍为 `UNRESOLVED`，empirical confirmation completed=`false`；
+- next legal action 仅为未来另行取得 exact bounded-run authorization；本次批准不隐式创建 successor，
+  不允许读取/下载市场数据、DQ、confirmation/backtest、QuantConnect/provider/cache 或任何交易动作。
 
 ## 4. Acceptance criteria
 
@@ -122,12 +137,12 @@ cache mutation、QuantConnect、option backtest、provider、orders/fills/positi
 
 ## 5. 当前 blocker 与 next owner
 
-- blocker：`draft.1` 已在 outcome-blind 状态形成并通过 focused mechanical validation，但 comparator、`5 bps`
-  cost、zero return threshold、zero drawdown-regression guard 与 reducer 仍是 proposed policy，尚无 Owner exact
-  file/canonical SHA approval；
-- next owner：Project Owner 复核并选择接纳、要求修订或拒绝 `draft.1`；strategy research coordinator 不得在
-  Owner decision 前读取 outcome 或执行 manifest/DQ/confirmation；
-- exit condition：预注册合同与运行 manifest 通过独立验证且取得适用授权后，才可进入 bounded empirical run。
+- 已解除 blocker：`draft.1` 的 comparator、`5 bps` cost、zero return threshold、zero drawdown-regression
+  guard 与三态 reducer 已获 Owner exact file/canonical SHA freeze；
+- 当前未完成项：尚无 signal-value empirical verdict，也没有数据读取、DQ、confirmation 或 backtest 权限；
+- next owner：Project Owner 仅在希望启动一次 bounded empirical confirmation 时，另行批准 exact run scope；
+- exit condition：未来运行 manifest 与全部 identity/DQ/PIT/resource gate 通过独立验证并取得适用授权后，
+  才可进入 bounded empirical run。本次 freeze admission 本身以 `BASELINE_DONE` 收口。
 
 ## 6. 进度记录
 
@@ -140,3 +155,10 @@ cache mutation、QuantConnect、option backtest、provider、orders/fills/positi
   没有读取 signal payload、市场结果或 option data，没有运行 DQ、confirmation、backtest、QuantConnect/provider，
   orders/fills/positions=`0/0/0`。focused pytest-xdist=`9 passed`；当前转为 `BLOCKED_OWNER_INPUT`，等待 exact
   draft identity 复核，不自动触发经验运行。
+- 2026-09-01：Owner 按完整 file SHA
+  `507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa` 与 canonical SHA
+  `7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c` 精确冻结全部所列规则。
+  独立 freeze admission 保留原草案 bytes/status，机械重放 signal/candidate/comparator/accounting/cost/
+  estimand/threshold/drawdown/reducer surface，并把经验 verdict 保持为 `UNRESOLVED`。本次只限
+  non-executable `DATA_RESEARCH`；没有读取/下载市场数据，没有运行 DQ、confirmation/backtest 或调用
+  QuantConnect/provider/cache，paper/live/production/broker 与 orders/fills/positions 仍为 false/0。
