@@ -14,13 +14,15 @@ task_record:
   priority: P0
   accountable_owner: null
   next_owner: TRADING-2550 integration coordinator
-  requirement_refs: []
+  requirement_refs:
+  - docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 共享 terminal verdict contract、canonical
-    requirement binding、report-flow shadow 与 Atlas/canonical count 已收敛；完成 final formal
-    validation/publication 后，TRADING-2550 从新 exact main 基线接入已保全 RETAIN result。
+  unstructured_legacy_blocker_or_next_step: 共享 terminal verdict contract 与 deterministic
+    failure-fix 已收敛；详细证据见 [TRADING-2551 requirement](docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md)。完成
+    final formal validation/publication 后，TRADING-2550 从新 exact main 基线接入已保全 RETAIN
+    result。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: RETAIN/REJECT/INSUFFICIENT 与 exact next-action、SIGNAL_VALUE ladder 一致性及
@@ -169,6 +171,35 @@ events:
   - change:trading-2551-final-candidate-ready-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-53d74439eba6e41ccdaca4752ff940e7
+- schema_version: task_event.v1
+  task_id: TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-01T06:16:17+09:00'
+  actor: integration-coordinator
+  change_id: trading-2551-requirement-binding-restore-v1
+  lane_id: null
+  base_commit: 98b60ff3d46c994eb0738be2982751424039dec8
+  previous_state_event_id: task-event-53d74439eba6e41ccdaca4752ff940e7
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: TRADING-2550 integration coordinator
+    blocker_or_next_step: 共享 terminal verdict contract 与 deterministic failure-fix
+      已收敛；详细证据见 [TRADING-2551 requirement](docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md)。完成
+      final formal validation/publication 后，TRADING-2550 从新 exact main 基线接入已保全 RETAIN
+      result。
+    acceptance_criteria: RETAIN/REJECT/INSUFFICIENT 与 exact next-action、SIGNAL_VALUE
+      ladder 一致性及 Atlas 动态渲染均 fail closed；UNRESOLVED 向后兼容；正式 architecture/contract/integration/reproducibility/Full
+      PASS；production_effect=none、broker_action=none。
+    notes: 2026-09-01：恢复 canonical task blocker 中的规范 requirement Markdown binding；前一
+      candidate 被 Atlas exact-commit 门禁以 PAGE_EFFECTIVENESS_TASK_REQUIREMENT_BINDING_INVALID
+      正确拒绝，未进入 formal validation。此修复不改变 contract、结果或授权边界，也不重跑 confirmation。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2551-requirement-binding-restore-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-11ef0de8523fc69491a1bc3df4acfcae
 projection:
   legacy_first_eight_cells:
   - TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1
@@ -176,18 +207,20 @@ projection:
   - P0
   - BASELINE_DONE
   - TRADING-2550 integration coordinator
-  - 共享 terminal verdict contract、canonical requirement binding、report-flow shadow
-    与 Atlas/canonical count 已收敛；完成 final formal validation/publication 后，TRADING-2550
-    从新 exact main 基线接入已保全 RETAIN result。
+  - 共享 terminal verdict contract 与 deterministic failure-fix 已收敛；详细证据见 [TRADING-2551
+    requirement](docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md)。完成
+    final formal validation/publication 后，TRADING-2550 从新 exact main 基线接入已保全 RETAIN
+    result。
   - RETAIN/REJECT/INSUFFICIENT 与 exact next-action、SIGNAL_VALUE ladder 一致性及 Atlas
     动态渲染均 fail closed；UNRESOLVED 向后兼容；正式 architecture/contract/integration/reproducibility/Full
     PASS；production_effect=none、broker_action=none。
-  - 2026-09-01：确定性 failure-fix 已完成；final candidate 的 architecture-fitness 为 882 passed。首次
-    Full 的 32 项 binding/freshness 根因已逐项修复，2 项 MemoryError 测试已在 2-worker parallel 单独
-    PASS；接下来以原失败 Full 为 parent、8-worker 执行唯一 final Full rerun。不重跑 confirmation。
-  docs_links: []
+  - 2026-09-01：恢复 canonical task blocker 中的规范 requirement Markdown binding；前一 candidate
+    被 Atlas exact-commit 门禁以 PAGE_EFFECTIVENESS_TASK_REQUIREMENT_BINDING_INVALID 正确拒绝，未进入
+    formal validation。此修复不改变 contract、结果或授权边界，也不重跑 confirmation。
+  docs_links:
+  - docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md
   terminal: false
-  canonical_row_sha256: ad66fe58f4ccc1f469b6184ac89776115e644db1f27cf6d194245eabda7ad88a
-last_event_id: task-event-53d74439eba6e41ccdaca4752ff940e7
+  canonical_row_sha256: 9d8a9d413c826943dfb7fb1bd7e82ef64ce3c5f6438a05ad0da9c6355e027c82
+last_event_id: task-event-11ef0de8523fc69491a1bc3df4acfcae
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 5b27a202c828e0cec6f668587eddf05b41d06736ade37cd584a5e3c85803f8ba
+fragment_checksum: 5cdaf166dba7716784584a02152972ae3c0d24f8be2f2f36825cb9051a1b2a3d
