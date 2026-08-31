@@ -1,0 +1,79 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-012D_FULL_DISPATCH_PROTOCOL_RETRY_V1
+  task_id_sha256: bc68189fe3c7dc3bd921e532a700d47a29e8a989d507ca3181266ce97493d8d2
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-012D_FULL_DISPATCH_PROTOCOL_RETRY_V1
+  title: null
+  domain: Developer experience / Full dispatch protocol retry
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Codex integration coordinator：在新 transaction 的 FORMAL_VALIDATION_PRE
+    直接调用 Full runner
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Parent transaction v10 在 Full 启动前因重复 FULL_DISPATCHED
+    被 runner fail-closed；无测试执行、无 Full artifact
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: task_count ratchet=1046；formal tiers retained PASS；Full runner 自行 dispatch
+      并 PASS；main/origin publish；automation update；cleanup
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-012D_FULL_DISPATCH_PROTOCOL_RETRY_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-31T03:12:24.2553198Z'
+  actor: integration-coordinator
+  change_id: devx-012d-full-dispatch-retry-registration-20260831-v11
+  lane_id: null
+  base_commit: caab44818d2e57b9c4217c81fd207a8cd230bc3d
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-012D_FULL_DISPATCH_PROTOCOL_RETRY_V1
+    - Developer experience / Full dispatch protocol retry
+    - P1
+    - IN_PROGRESS
+    - Codex integration coordinator：在新 transaction 的 FORMAL_VALIDATION_PRE 直接调用 Full
+      runner
+    - Parent transaction v10 在 Full 启动前因重复 FULL_DISPATCHED 被 runner fail-closed；无测试执行、无
+      Full artifact
+    - task_count ratchet=1046；formal tiers retained PASS；Full runner 自行 dispatch 并
+      PASS；main/origin publish；automation update；cleanup
+    - 2026-08-31：纯调度协议重试，不改功能/策略/gate；v10 失败 closeout receipt 保留。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-012d-full-dispatch-retry-registration-20260831-v11
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8939aee38291c687e2b9b1d09528d8b0
+projection:
+  legacy_first_eight_cells:
+  - DEVX-012D_FULL_DISPATCH_PROTOCOL_RETRY_V1
+  - Developer experience / Full dispatch protocol retry
+  - P1
+  - IN_PROGRESS
+  - Codex integration coordinator：在新 transaction 的 FORMAL_VALIDATION_PRE 直接调用 Full
+    runner
+  - Parent transaction v10 在 Full 启动前因重复 FULL_DISPATCHED 被 runner fail-closed；无测试执行、无
+    Full artifact
+  - task_count ratchet=1046；formal tiers retained PASS；Full runner 自行 dispatch 并 PASS；main/origin
+    publish；automation update；cleanup
+  - 2026-08-31：纯调度协议重试，不改功能/策略/gate；v10 失败 closeout receipt 保留。
+  docs_links: []
+  terminal: false
+  canonical_row_sha256: 3d0ab5c85f25ef7dfe79b650b1b17c91c738d23d6332c91fb0868d48f41af284
+last_event_id: task-event-8939aee38291c687e2b9b1d09528d8b0
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 76549f675c187a67a2491b8b2b5ab16db9d504a2da655eb8b40a99aff2ac2603
