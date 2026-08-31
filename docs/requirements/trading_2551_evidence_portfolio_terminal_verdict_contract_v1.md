@@ -43,3 +43,4 @@ DQ、confirmation、backtest、QuantConnect、provider 或交易动作。
 ## 状态
 
 - 2026-09-01：因 TRADING-2550 的技术有效 `RETAIN` 结果暴露共享 contract 表达缺口，创建最小 serial contract wave；状态 `IN_PROGRESS`。
+- 2026-09-01：共享 enum、verdict/next-action/ladder invariant、Atlas 动态渲染与页面来源分类已实现；focused Atlas validation 为 17 passed。任务进入 `BASELINE_DONE`，待正式验证和 publication fence 收口后供 TRADING-2550 从新 exact `main` 基线接入结果。
