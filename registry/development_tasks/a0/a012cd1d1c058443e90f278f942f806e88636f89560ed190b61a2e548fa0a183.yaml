@@ -14,13 +14,14 @@ task_record:
   priority: P0
   accountable_owner: null
   next_owner: 系统实现
-  requirement_refs: []
+  requirement_refs:
+  - docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 正式 architecture suite 877 passed / 5 failed；刷新
-    canonical task-count assertion、architecture manifests 与 append-only compatibility
-    authority 后重跑正式验证，不改变 contract semantics。
+  unstructured_legacy_blocker_or_next_step: 修复首次 Full 暴露的 canonical requirement binding
+    与 report-flow shadow freshness；详细拆解见 [TRADING-2551 requirement](docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md)。随后以失败
+    Full artifact 为 parent、较低并行 worker 重跑。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: RETAIN/REJECT/INSUFFICIENT 与 exact next-action、SIGNAL_VALUE ladder 一致性及
@@ -113,6 +114,34 @@ events:
   - change:trading-2551-formal-failure-fix-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-1d8a9c7a4016ab7e2cbc17cad91c057a
+- schema_version: task_event.v1
+  task_id: TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-01T05:25:03+09:00'
+  actor: integration-coordinator
+  change_id: trading-2551-full-failure-fix-v1
+  lane_id: null
+  base_commit: f4d114b785a69f85e812e4e5ff2cd49e402ad2b5
+  previous_state_event_id: task-event-1d8a9c7a4016ab7e2cbc17cad91c057a
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    blocker_or_next_step: 修复首次 Full 暴露的 canonical requirement binding 与 report-flow
+      shadow freshness；详细拆解见 [TRADING-2551 requirement](docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md)。随后以失败
+      Full artifact 为 parent、较低并行 worker 重跑。
+    acceptance_criteria: RETAIN/REJECT/INSUFFICIENT 与 exact next-action、SIGNAL_VALUE
+      ladder 一致性及 Atlas 动态渲染均 fail closed；UNRESOLVED 向后兼容；正式 architecture/contract/integration/reproducibility/Full
+      PASS；production_effect=none、broker_action=none。
+    notes: 2026-09-01：首次 Full 为 10046 passed / 34 failed / 3 skipped。32 项收敛到 task
+      requirement ref 未提取和 report-flow shadow authority 未刷新；2 项为并行资源压力 MemoryError。失败
+      artifact full_20260831T195432Z 已保全；不重跑 confirmation。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2551-full-failure-fix-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-bd2dcbcf6340732c5a3694198fa42117
 projection:
   legacy_first_eight_cells:
   - TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1
@@ -120,17 +149,19 @@ projection:
   - P0
   - IN_PROGRESS
   - 系统实现
-  - 正式 architecture suite 877 passed / 5 failed；刷新 canonical task-count assertion、architecture
-    manifests 与 append-only compatibility authority 后重跑正式验证，不改变 contract semantics。
+  - 修复首次 Full 暴露的 canonical requirement binding 与 report-flow shadow freshness；详细拆解见
+    [TRADING-2551 requirement](docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md)。随后以失败
+    Full artifact 为 parent、较低并行 worker 重跑。
   - RETAIN/REJECT/INSUFFICIENT 与 exact next-action、SIGNAL_VALUE ladder 一致性及 Atlas
     动态渲染均 fail closed；UNRESOLVED 向后兼容；正式 architecture/contract/integration/reproducibility/Full
     PASS；production_effect=none、broker_action=none。
-  - 2026-09-01：首次 formal architecture-fitness 在 877 passed 后因新增任务数断言和 docs/system_flow
-    的 generated/append-only authority 尚未刷新而 5 failed；这是治理派生物 freshness 问题，不是 contract
-    语义失败。进入 failure-fix，不运行任何新数据或 confirmation。
-  docs_links: []
+  - 2026-09-01：首次 Full 为 10046 passed / 34 failed / 3 skipped。32 项收敛到 task requirement
+    ref 未提取和 report-flow shadow authority 未刷新；2 项为并行资源压力 MemoryError。失败 artifact full_20260831T195432Z
+    已保全；不重跑 confirmation。
+  docs_links:
+  - docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md
   terminal: false
-  canonical_row_sha256: baa755b7abdbeabc0716cdd90f10f89036ca8b1bf4e01e354047cb36dd738dd2
-last_event_id: task-event-1d8a9c7a4016ab7e2cbc17cad91c057a
+  canonical_row_sha256: d87fd2b4da6bc6a550895d64b8d71c7a63582fe524854e846e43dd959ec2fbe5
+last_event_id: task-event-bd2dcbcf6340732c5a3694198fa42117
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 5d967555a7cb7184a710632ad89c8272fe63d643f9c1841a2f86f75fafb337da
+fragment_checksum: fb9e5dcba55e07391fc44749eb06a6401caee4d178d845a89f6abee4ae1e5449

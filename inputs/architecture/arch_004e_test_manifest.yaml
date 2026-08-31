@@ -27,7 +27,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_cited_query_renderer
   path: tests/atlas/test_cited_query_renderer.py
-  sha256: f55c09f02f7901ea4de8fdd8126eaa76406f584ea8d0ab0157ac7c859b0cf621
+  sha256: 1a1de4736b7b36cacff7d695a0be909b9608cd5ff0f0d12e965d679fe87f5d73
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10426,7 +10426,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 71b0d536c572cf64280b7825e1d44395f90cfacda1937c8d687056f21f78fc88
+  sha256: 59750a2888855ff78b92a5a235890121b2238a6f502d6564c6cc65adb1e77ba7
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
