@@ -189,3 +189,9 @@ Local automation state（Git 外、发布后更新）：
   `TRADING-2548`，而当前合法 coverage 已包含 `TRADING-2549` 与 `TRADING-2550`。v12 已绑定原始
   Full FAIL artifact 并按失败释放；后续只扩展该显式测试 authority、刷新 generated authority 与
   final-commit Atlas ignored bundle，再以失败 Full artifact 为 parent 执行正式重验和 Full rerun。
+- 2026-08-31：`DEVX-012E_ATLAS_SUCCESSOR_AUTHORITY_FULL_RERUN_V1` 以 P1 active task 登记，
+  task count=`1047`，SINGLE_LANE coordinator/LANE preflight PASS。实现仅把 historical projection
+  测试的显式 reviewed-successor 列表追加 `TRADING-2549/2550`，并同步 task-count ratchet；首次
+  focused 为 `22 passed / 1 failed`，唯一失败发生在 successor 列表断言之前，原因是 task-source
+  与测试文件更新后 ignored Atlas bundle 按设计再次变旧，须在 generated wave 和 final commit
+  后由官方 renderer 刷新，不按 flake 或 skip 处理。

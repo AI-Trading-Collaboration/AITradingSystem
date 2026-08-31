@@ -1,0 +1,106 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-012E_ATLAS_SUCCESSOR_AUTHORITY_FULL_RERUN_V1
+  task_id_sha256: dbf366be747dccab34bc52ed1b1e6e5062f60d89c86d991f7520c6c1149b6325
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-012E_ATLAS_SUCCESSOR_AUTHORITY_FULL_RERUN_V1
+  title: null
+  domain: Developer experience / Atlas successor authority Full rerun
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Project owner：复核自动周报中的 review-only candidates
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 实现已完成；按 v15 事务刷新 generated authority 与
+    final-commit Atlas ignored bundle，并绑定 prior Full FAIL 执行正式重验/发布
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: task_count ratchet=1047；显式 successor whitelist 含 TRADING-2549/2550；Atlas
+      CURRENT/PASS；focused/formal/failure-fix Full PASS；local main=origin/main；existing
+      automation ACTIVE；cleanup complete
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-012E_ATLAS_SUCCESSOR_AUTHORITY_FULL_RERUN_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-31T04:43:22.3134621Z'
+  actor: integration-coordinator
+  change_id: devx-012e-atlas-successor-authority-20260831-v15
+  lane_id: null
+  base_commit: 1cf6fd7b4011b981f6a092eea860a05bc003b225
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-012E_ATLAS_SUCCESSOR_AUTHORITY_FULL_RERUN_V1
+    - Developer experience / Atlas successor authority Full rerun
+    - P1
+    - IN_PROGRESS
+    - Codex integration coordinator：扩展 reviewed-successor authority、刷新 final-commit
+      Atlas bundle 并完成 failure-fix Full
+    - 首次 Full 唯一失败已定位：ignored Atlas bundle 旧 identity；刷新后仅剩测试白名单未覆盖 TRADING-2549/2550
+    - task_count ratchet=1047；显式 successor whitelist 含 TRADING-2549/2550；Atlas CURRENT/PASS；focused/formal/Full
+      PASS；main/origin/automation/cleanup 完成
+    - 详见 docs/requirements/DEVX-012_Automatic_Workflow_Health_Trigger_And_Outcome_Review_V1.md；不改页面语义、策略、DQ、生产或
+      broker 边界。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-012e-atlas-successor-authority-20260831-v15
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5693c019c9cba79d8f6550c5818df512
+- schema_version: task_event.v1
+  task_id: DEVX-012E_ATLAS_SUCCESSOR_AUTHORITY_FULL_RERUN_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-31T04:46:36.5719640Z'
+  actor: integration-coordinator
+  change_id: devx-012e-atlas-successor-authority-20260831-v15
+  lane_id: null
+  base_commit: 1cf6fd7b4011b981f6a092eea860a05bc003b225
+  previous_state_event_id: task-event-5693c019c9cba79d8f6550c5818df512
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: Project owner：复核自动周报中的 review-only candidates
+    blocker_or_next_step: 实现已完成；按 v15 事务刷新 generated authority 与 final-commit Atlas
+      ignored bundle，并绑定 prior Full FAIL 执行正式重验/发布
+    acceptance_criteria: task_count ratchet=1047；显式 successor whitelist 含 TRADING-2549/2550；Atlas
+      CURRENT/PASS；focused/formal/failure-fix Full PASS；local main=origin/main；existing
+      automation ACTIVE；cleanup complete
+    notes: Preflight PASS；仅修改 reviewed-successor test authority 和 task-count ratchet。首次
+      focused=22 passed/1 stale ignored-bundle failure；不得 skip，generated wave 后由官方
+      renderer 刷新并复验。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-012e-atlas-successor-authority-20260831-v15
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-53396df55d9f51a66ac040d1b47dcf24
+projection:
+  legacy_first_eight_cells:
+  - DEVX-012E_ATLAS_SUCCESSOR_AUTHORITY_FULL_RERUN_V1
+  - Developer experience / Atlas successor authority Full rerun
+  - P1
+  - DONE
+  - Project owner：复核自动周报中的 review-only candidates
+  - 实现已完成；按 v15 事务刷新 generated authority 与 final-commit Atlas ignored bundle，并绑定 prior
+    Full FAIL 执行正式重验/发布
+  - task_count ratchet=1047；显式 successor whitelist 含 TRADING-2549/2550；Atlas CURRENT/PASS；focused/formal/failure-fix
+    Full PASS；local main=origin/main；existing automation ACTIVE；cleanup complete
+  - Preflight PASS；仅修改 reviewed-successor test authority 和 task-count ratchet。首次 focused=22
+    passed/1 stale ignored-bundle failure；不得 skip，generated wave 后由官方 renderer 刷新并复验。
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 53740856a5e863d3f1ed6640446a59adf93413e1760965197e07712691d12264
+last_event_id: task-event-53396df55d9f51a66ac040d1b47dcf24
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: de865801ebe32ba93f4eb11265de89c2b4e6728d2805ef0ca681220126873a16
