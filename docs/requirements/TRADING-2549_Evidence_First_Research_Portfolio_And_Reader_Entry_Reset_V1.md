@@ -118,10 +118,11 @@ comprehension PASS。页面默认内容显著变短后，2526-B/2527-B 仍需绑
 
 ### S1：evidence-first steering serial contract
 
-- 在 `AGENTS.md` 增加 Evidence-First Research Portfolio Discipline；
 - 新增 strict portfolio policy、loader 与 focused negative/golden tests；
 - 冻结 primary question、evidence ladder、P0 admission classes、必填字段、phase switch、reopen 和
   no-automatic-successor 规则；
+- 根 `AGENTS.md` 是既有冻结策略契约的 exact authority，本任务不改变其 bytes；evidence-first steering
+  由独立 reviewed policy、canonical task/requirement 和下一 empirical handoff 承载，避免批量重签历史投资契约；
 - 不建立第二套 task registry、锁、scheduler 或 publication queue。
 
 ### S2：Reader Entry V2 serial consumer wave
@@ -170,7 +171,6 @@ Task-owned paths：
 
 Coordinator-owned paths：
 
-- `AGENTS.md`；
 - canonical task fragments/index/views；
 - `docs/system_flow.md`、artifact/report registry；
 - architecture/report-flow/compatibility generated authority；
@@ -209,7 +209,7 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
 - 2026-08-31：S0 registration boundary 完成并形成独立注册 commit `c12b2ce06`；随后
   `SINGLE_LANE/LANE --contract-change` preflight PASS。S1 已新增 strict
   `evidence_first_research_portfolio.v1` policy/loader/tests，并把 evidence-first P0 admission、phase switch、
-  no-automatic-successor 与 reopen 规则写入 `AGENTS.md`。S2 已将 `reader_projection_contract` 升级为 Entry V2，
+  no-automatic-successor 与 reopen 规则冻结在独立 reviewed policy。S2 已将 `reader_projection_contract` 升级为 Entry V2，
   Atlas live/page policy 前移到本任务，renderer 默认只投影主问题、`UNRESOLVED`、七级证据阶梯、下一实验、
   stop condition 和禁止推断；既有 why-first、五问、change、acceptance、flow、QQQ projection 与 ledger 统一
   下沉到单一默认关闭 L1，audit 继续独立关闭。首轮 focused pytest 暴露术语大小写与页面 successor 分类
@@ -261,3 +261,24 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   `3107` 变为 `3108`。generated inventory 与 report-flow authority 本身均已重建且 PASS；v12 只更新对应
   exact regression expectations，并要求原 16-worker Architecture tier 完整重跑，不改生命周期、writer allowance、
   研究结论或安全边界。
+- 2026-08-31：v12 前置正式层级全部 PASS：Architecture=`881 passed`、Contract=`278 passed`、
+  Integration=`995 passed`、Reproducibility=`24 passed`。随后 Full 在 16 workers 下得到
+  `9692 passed / 340 failed / 6 skipped`，immutable failure artifact 为
+  `outputs/validation_runtime/full_20260831T003810Z/test_runtime_summary.json`，SHA-256=
+  `17556bee6a1d66536b5599e48152eb63815afb3ef02d513c699e5fc8c756579f`。失败收敛为三类：新增
+  `AGENTS.md` 段落使历史冻结策略 authority `PROJECT_ENGINEERING_RULES` 哈希级联失配；Atlas task source
+  数量从 78 增至 80 后两条 exact expectation 未刷新；隔离 worktree 缺少历史本地证据。v13 采用最小正确
+  修正：撤回根 `AGENTS.md` bytes 变化，保留独立 evidence-first policy/loader/tests；刷新 80 的页面期望；
+  不批量重签历史投资契约，也不把 Full 失败降格为局部 PASS。
+- 2026-08-31：为 parent-bound failure-fix Full 建立最小 validation snapshot，只从主 checkout 同字节复制
+  `outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_dq_gate.json`、
+  `outputs/research_trends/operational_forecast/trading_2542i_real_v3/real_materialization_receipt.json` 和
+  `.../manifest_replay_receipt.json`，以及 1,205 文件、3,478,266 bytes 的 exact frozen signal package 目录
+  `outputs/qqq_options/signal_packages/trading_2542i_operational_forecast_real_v3/` 到当前 task worktree 的相同
+  repository-relative 路径。owner=`TRADING-2549`；
+  purpose=让隔离 worktree 重放既有只读测试依赖；这些 bytes 不构成本任务新研究证据。exit condition=parent-bound
+  Full 与 closeout 完成、确认无进程依赖后删除复制文件/目录及由此产生的空目录；canonical source 仍保留在主
+  checkout，因此 snapshot 删除后可由原来源恢复。
+- 2026-08-31：v13 根因代表集先以 16 workers 得到 `6 passed`；随后使用 pytest last-failed cache 对 v12
+  仍记录的其余失败集合完整并行复验，结果为 `334 passed`。因此上一轮 340 failures 已全部被原失败 nodeid
+  集合覆盖并转绿；未使用串行测试、未删除失败证据、未放宽历史 authority hash 或运行任何 empirical action。

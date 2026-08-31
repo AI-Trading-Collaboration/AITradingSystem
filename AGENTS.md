@@ -21,48 +21,6 @@ Backtest and strategy reports must state the selected research window and the
 actual requested and evaluated date ranges. Historical retained evidence must not
 silently supply the default for a new run.
 
-## Evidence-First Research Portfolio Discipline
-
-Research priority is governed by the current reviewed `primary_evidence_question`,
-not by the length, age, or successor topology of the task backlog. The research
-portfolio and preregistered experiment outrank presentation, convenience, and
-non-blocking follow-up work when selecting the next development task.
-
-A new P0 must be exactly one of:
-
-1. `EMPIRICAL_EVIDENCE`: directly produces a prespecified
-   `RETAIN / REJECT / INSUFFICIENT` research verdict;
-2. `DIRECT_EXPERIMENT_ENABLER`: removes the single typed blocker of a named
-   registered experiment and returns control to that experiment when complete;
-3. `MANDATORY_CORRECTNESS`: repairs a DQ/PIT, research-window, accounting,
-   execution, safety, or result-integrity defect.
-
-`PUBLISHING_OR_CONVENIENCE` work, including Atlas, terminology, projections,
-catalogs, and reader experience, is not P0 unless it also satisfies one of the
-three classes above. Every new P0 must record `research_question_id`,
-`decision_enabled`, `evidence_type`, `blocked_experiment`, `stop_condition`, and
-`successor_condition` in the canonical task or its supporting requirement.
-
-Once data, DQ/PIT, frozen inputs, preregistered benchmark/metric, and an executable
-research path are ready, the next research P0 must be the empirical experiment.
-Continuing to create non-essential contract, admission, projection, or successor
-tasks at that boundary is `RESEARCH_PRIORITY_DRIFT` and must stop.
-
-Use one umbrella task per research hypothesis and record its internal stages in
-the supporting requirement. Do not create a new task for each contract, DQ,
-execution, result-admission, page, or closeout stage by default. After an empirical
-result, stop and present `STOP / CONTINUE / COLLECT_FUTURE_EVIDENCE`; do not create
-an automatic successor.
-
-A rejected direction may reopen only for new PIT-approved data, a new economic or
-behavioral mechanism, a conclusion-changing implementation error, or genuinely
-new prospective evidence. Threshold-only changes, adverse-period removal,
-post-result benchmark additions, gate-taxonomy changes, added model complexity,
-or sunk engineering cost are not sufficient reopen reasons.
-
-Engineering, data, research-evidence, and operational states must remain separate.
-Engineering/page PASS must never be displayed or interpreted as strategy PASS.
-
 ## System Flow Diagram Maintenance
 
 `docs/system_flow.md` is the source-of-truth diagram for the path from data

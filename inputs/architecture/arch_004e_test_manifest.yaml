@@ -219,7 +219,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_page_effectiveness
   path: tests/atlas/test_page_effectiveness.py
-  sha256: 1a1461d5072f79127a911723ec9bc16438a12e381c1d8ba7d1ccbdc502d7f43a
+  sha256: 47038d8fbb43d4c1b34df349ab7c5a034d2473d4cab448d3ffbd48a92def282a
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

@@ -14,22 +14,22 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner：观察后续 P0 是否回到 empirical evidence 与 Reader Entry V2 的实际读者体验；TRADING-2550
-    owner：在 result-blind 状态冻结实验设计后再申请运行授权
+  next_owner: Codex coordinator：撤回根 AGENTS 字节变更、刷新页面任务源期望、导入最小历史验证证据并完成 parent-bound
+    Full；Project Owner：随后观察重心与读者体验
   requirement_refs:
   - docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: TRADING-2549 implementation and candidate-bound
-    INTEGRATION complete；Owner visual / reader comprehension 保持 PENDING_REVIEW。下一研究主线仅为
-    PROPOSED TRADING-2550，尚未运行经验实验。
+  unstructured_legacy_blocker_or_next_step: v12 Full=9692 passed / 340 failed / 6
+    skipped。失败已收敛为 AGENTS.md 权威哈希级联、页面 task source 78→80 的 exact expectation，以及隔离
+    worktree 缺少三份历史本地证据；v13 进行最小修正并以 failure_fix_rerun 绑定失败 parent。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 冻结 primary evidence question、P0 admission classes、必填 decision fields、empirical
       phase-switch/reopen/no-auto-successor；Atlas L0 只显示研究问题、当前 verdict、证据阶梯、下一实验、停止条件，L1/audit
       默认关闭；保留 source binding/accessibility/PENDING human review；登记下一 frozen signal-value
-      umbrella task；不运行数据、回测、QC、production 或 broker。
+      umbrella task；不运行数据、回测、QC、production 或 broker；正式 Full 必须 parent-bound PASS。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -131,6 +131,37 @@ events:
   - change:trading-2549-architecture-failure-fix-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-405039952f727797a8a031157e676ca2
+- schema_version: task_event.v1
+  task_id: TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-31T10:10:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2549-full-failure-fix-v1
+  lane_id: null
+  base_commit: 9d3726d24d1f81279b13ee488a23377c6fcd011a
+  previous_state_event_id: task-event-405039952f727797a8a031157e676ca2
+  from_status: DONE
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Codex coordinator：撤回根 AGENTS 字节变更、刷新页面任务源期望、导入最小历史验证证据并完成 parent-bound
+      Full；Project Owner：随后观察重心与读者体验
+    blocker_or_next_step: v12 Full=9692 passed / 340 failed / 6 skipped。失败已收敛为 AGENTS.md
+      权威哈希级联、页面 task source 78→80 的 exact expectation，以及隔离 worktree 缺少三份历史本地证据；v13
+      进行最小修正并以 failure_fix_rerun 绑定失败 parent。
+    acceptance_criteria: 冻结 primary evidence question、P0 admission classes、必填 decision
+      fields、empirical phase-switch/reopen/no-auto-successor；Atlas L0 只显示研究问题、当前 verdict、证据阶梯、下一实验、停止条件，L1/audit
+      默认关闭；保留 source binding/accessibility/PENDING human review；登记下一 frozen signal-value
+      umbrella task；不运行数据、回测、QC、production 或 broker；正式 Full 必须 parent-bound PASS。
+    notes: 'Supporting requirement: docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md.
+      v12 failure artifact=outputs/validation_runtime/full_20260831T003810Z/test_runtime_summary.json，SHA-256=17556bee6a1d66536b5599e48152eb63815afb3ef02d513c699e5fc8c756579f。v13
+      保留独立 evidence-first policy/loader/tests，但撤回 AGENTS.md 新段落以避免重签历史冻结投资契约；导入最小验证快照后必须清理；signal
+      value=UNRESOLVED；production_effect=none；broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2549-full-failure-fix-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ab0b4371403902a654ec0478f4eb6f9c
 projection:
   legacy_first_eight_cells:
   - TRADING-2549_EVIDENCE_FIRST_RESEARCH_PORTFOLIO_AND_READER_ENTRY_RESET_V1
@@ -138,23 +169,23 @@ projection:
     reset
   - P0
   - DONE
-  - Project Owner：观察后续 P0 是否回到 empirical evidence 与 Reader Entry V2 的实际读者体验；TRADING-2550
-    owner：在 result-blind 状态冻结实验设计后再申请运行授权
-  - TRADING-2549 implementation and candidate-bound INTEGRATION complete；Owner visual
-    / reader comprehension 保持 PENDING_REVIEW。下一研究主线仅为 PROPOSED TRADING-2550，尚未运行经验实验。
+  - Codex coordinator：撤回根 AGENTS 字节变更、刷新页面任务源期望、导入最小历史验证证据并完成 parent-bound Full；Project
+    Owner：随后观察重心与读者体验
+  - v12 Full=9692 passed / 340 failed / 6 skipped。失败已收敛为 AGENTS.md 权威哈希级联、页面 task
+    source 78→80 的 exact expectation，以及隔离 worktree 缺少三份历史本地证据；v13 进行最小修正并以 failure_fix_rerun
+    绑定失败 parent。
   - 冻结 primary evidence question、P0 admission classes、必填 decision fields、empirical
     phase-switch/reopen/no-auto-successor；Atlas L0 只显示研究问题、当前 verdict、证据阶梯、下一实验、停止条件，L1/audit
     默认关闭；保留 source binding/accessibility/PENDING human review；登记下一 frozen signal-value
-    umbrella task；不运行数据、回测、QC、production 或 broker。
+    umbrella task；不运行数据、回测、QC、production 或 broker；正式 Full 必须 parent-bound PASS。
   - 'Supporting requirement: docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md.
-    candidate-bound INTEGRATION=PASS；v11 Architecture=879 passed / 2 failed，失败 artifact=outputs/validation_runtime/architecture-fitness_20260831T001527Z/test_runtime_summary.json。两项均为本次新增
-    1 module + 1 test 和 system-flow block 导致的 exact generated expectation drift：deprecation
-    inventory id/count 与 DEVX-011 report-flow aggregate count；无实质架构违规。v12 显式刷新机械 expectation
-    后以同一 16-worker tier 重跑。signal value=UNRESOLVED；human reviews=PENDING_REVIEW；production_effect=none；broker_action=none。'
+    v12 failure artifact=outputs/validation_runtime/full_20260831T003810Z/test_runtime_summary.json，SHA-256=17556bee6a1d66536b5599e48152eb63815afb3ef02d513c699e5fc8c756579f。v13
+    保留独立 evidence-first policy/loader/tests，但撤回 AGENTS.md 新段落以避免重签历史冻结投资契约；导入最小验证快照后必须清理；signal
+    value=UNRESOLVED；production_effect=none；broker_action=none。'
   docs_links:
   - docs/requirements/TRADING-2549_Evidence_First_Research_Portfolio_And_Reader_Entry_Reset_V1.md
   terminal: true
-  canonical_row_sha256: 4a235b73302e81e31ad049c01b274b4a9c55e4db4a85365aaf95225c25362d60
-last_event_id: task-event-405039952f727797a8a031157e676ca2
+  canonical_row_sha256: 86846db7facff748810fbc27cff2548d7bf6a9705e8ee5b7a0c85d3982a953b2
+last_event_id: task-event-ab0b4371403902a654ec0478f4eb6f9c
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 48698ff6aa0c4f9c84b6320952cefbce97698f2f5e15c0140dd537914073d054
+fragment_checksum: 561769faf6f866561759c7b138dcae2ecd165d1031d0253a812583290c5ec775

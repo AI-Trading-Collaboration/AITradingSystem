@@ -80,7 +80,7 @@ def _rendered(
 def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 78
+    assert len(policy.task_sources) == 80
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
@@ -101,6 +101,8 @@ def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None
         "TRADING-2546",
         "TRADING-2547",
         "TRADING-2548",
+        "TRADING-2549",
+        "TRADING-2550",
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -126,7 +128,7 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
     assert manifest.schema_version == "strategy_research_page_effectiveness.v3"
-    assert len(manifest.task_coverage) == 78
+    assert len(manifest.task_coverage) == 80
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
@@ -147,6 +149,8 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "TRADING-2546",
         "TRADING-2547",
         "TRADING-2548",
+        "TRADING-2549",
+        "TRADING-2550",
     ]
     coverage_by_task = {
         item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
