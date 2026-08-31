@@ -24380,7 +24380,7 @@ def test_devx_007_v2_has_trading_2542c_and_devx_009_successor_authority() -> Non
     assert list(baseline).index(TRADING_2542C_REVIEW_REMEDIATION_SECTION) < list(
         baseline
     ).index(DEVX_009_PUBLICATION_FENCE_SECTION)
-    assert next(reversed(baseline)) == DEVX_011_WORKFLOW_HEALTH_SECTION
+    assert next(reversed(baseline)) == DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION
     phase = baseline[DEVX_007_V2_SECTION]
     assert phase["schema_version"] == (
         "devx_007_web_pro_git_review_skill_explicit_submission.v2"

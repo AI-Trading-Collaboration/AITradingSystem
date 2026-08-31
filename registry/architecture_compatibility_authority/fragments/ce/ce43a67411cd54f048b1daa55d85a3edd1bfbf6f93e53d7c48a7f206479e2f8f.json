@@ -91,7 +91,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "d72ac8afe21eb278c063f0805e6918a324b07d70e11bb95d118e787cb4bd95e5"
+        "sha256": "cc4b7bb26292b26a1f7e637a6ea6a4c0ac10fa68ed7c1381a2389f972abcefed"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -126,7 +126,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "25843bf5f9a836b8c765570f82b01b83545b0b4e06d1c5c9a5de2ebdc39cc185"
+        "sha256": "350481f743b7a2c6d0cf5e10196d37d1a806a7721e41eda883a30cd2379f7c2a"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -196,5 +196,5 @@
     }
   },
   "section_id": "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1",
-  "section_sha256": "7921e9d176da4ad5b6d23f783ec23387fbb6cd217e8a53b517c7929f3eebfc4e"
+  "section_sha256": "ce43a67411cd54f048b1daa55d85a3edd1bfbf6f93e53d7c48a7f206479e2f8f"
 }

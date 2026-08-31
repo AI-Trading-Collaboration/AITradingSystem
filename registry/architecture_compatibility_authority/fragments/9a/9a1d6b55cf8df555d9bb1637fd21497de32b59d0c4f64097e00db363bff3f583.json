@@ -112,7 +112,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register_completed.md",
-        "sha256": "4dbc5897946159b6131a03fee0bd6f980afa47e0b3072292711cc19040aa1f50"
+        "sha256": "51557b71312df9958afd1c836fa49ad4f5c777e7bdb4f6bde9c4cba585da5635"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -132,7 +132,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "982aebc5258438625fc068beb5304915d69705fb3bc5ae0943c18dd5d0ba0def"
+        "sha256": "2ffd0da8cc242100e1e3a98abded1be288907c6ba3d1fc6a6ebfffe602d83979"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -142,7 +142,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "d72ac8afe21eb278c063f0805e6918a324b07d70e11bb95d118e787cb4bd95e5"
+        "sha256": "cc4b7bb26292b26a1f7e637a6ea6a4c0ac10fa68ed7c1381a2389f972abcefed"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -262,7 +262,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "25843bf5f9a836b8c765570f82b01b83545b0b4e06d1c5c9a5de2ebdc39cc185"
+        "sha256": "350481f743b7a2c6d0cf5e10196d37d1a806a7721e41eda883a30cd2379f7c2a"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -272,7 +272,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_005_s5_task_source_cutover.py",
-        "sha256": "f12724247b7699092cc93d78c3689f9186ded1bbb1bc6359e6ce1c65530eb270"
+        "sha256": "af9b0dbd4c557557024df0f85c7a75782891b4dd9e9276e1b0a20e433e0a01c3"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -411,5 +411,5 @@
     "task_id": "TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1"
   },
   "section_id": "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1",
-  "section_sha256": "06374d9ac28c7860f4ba9a7738c4453eb7e62f315f4018d34a7d37c5cab6c607"
+  "section_sha256": "9a1d6b55cf8df555d9bb1637fd21497de32b59d0c4f64097e00db363bff3f583"
 }
