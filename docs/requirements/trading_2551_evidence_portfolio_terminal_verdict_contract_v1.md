@@ -1,0 +1,45 @@
+# TRADING-2551 Evidence Portfolio Terminal Verdict Contract V1
+
+## 背景
+
+`TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1` 已按冻结 admission 完成一次 bounded
+`DATA_RESEARCH` confirmation，并产生技术有效的 `RETAIN` aggregate result。现有
+`EvidenceFirstResearchPortfolio` 共享 contract 只允许 `UNRESOLVED`，Atlas reader 也把
+“尚未判定”硬编码为唯一展示，因此无法在不绕过 contract 的前提下接纳终态结果。
+
+本任务是最小 serial contract wave。它只扩展共享状态机与确定性展示语义，不修改
+TRADING-2550 的数值、阈值、reducer precedence 或 admission，也不触发新的数据访问、
+DQ、confirmation、backtest、QuantConnect、provider 或交易动作。
+
+## 冻结设计
+
+1. `EvidenceState` 增加 `RETAIN`、`REJECT`、`INSUFFICIENT` 三个 terminal verdict。
+2. `current_verdict` 允许 `UNRESOLVED` 及上述三个 terminal verdict。
+3. `next_experiment` 与 verdict 精确配对：
+   - `UNRESOLVED` -> `FROZEN_SIGNAL_VALUE_CONFIRMATION`
+   - `RETAIN` -> `OWNER_REVIEW_CONDITIONAL_OPTIONS_PAIRED_COMPARISON`
+   - `REJECT` -> `OPTIONS_IMPLEMENTATION_P0_CLOSED`
+   - `INSUFFICIENT` -> `EXPLICIT_PROSPECTIVE_EVIDENCE_ONLY`
+4. evidence ladder 的 `SIGNAL_VALUE` 节点状态必须等于 `current_verdict`；其余冻结节点不变。
+5. Atlas reader 从 contract 状态确定性渲染 verdict，不再硬编码“尚未判定”。
+
+## 实施步骤
+
+1. 扩展 contract enum、跨字段 invariant 与失败信息。
+2. 扩展 Atlas presentation mapping 和动态 verdict 文案。
+3. 增加四种 verdict 的 contract/renderer 测试及非法配对 negative tests。
+4. 更新 `docs/system_flow.md`，运行 focused、impact、architecture、contract、integration、
+   reproducibility 与 Full 验证。
+5. 经 publication fence 集成并发布到 `main`；随后 TRADING-2550 从该精确新基线完成结果接入。
+
+## 验收标准
+
+- 四个 verdict 及其 exact next-action 配对均可构造并确定性渲染。
+- 任意 verdict/next-action 错配或 ladder 不一致均 fail closed。
+- 现有 `UNRESOLVED` 配置保持向后兼容。
+- 不修改 TRADING-2550 aggregate result、DQ/replay receipts 或 frozen admission。
+- `production_effect=none`，`broker_action=none`，所有外部研究和交易动作计数为 0。
+
+## 状态
+
+- 2026-09-01：因 TRADING-2550 的技术有效 `RETAIN` 结果暴露共享 contract 表达缺口，创建最小 serial contract wave；状态 `IN_PROGRESS`。

@@ -324,6 +324,14 @@ critical-error 与 reviewer policy 仍未由 Owner 批准，因此新页面的 O
 保持 `PENDING_REVIEW`。该波不运行经验研究，不改变 research window、DQ/PIT、既有结果、engine、order、
 production 或 broker 权限，也不自动签署人工验收。
 
+TRADING-2551 以最小 serial contract wave 扩展该共享 portfolio：`SIGNAL_VALUE` 与
+`current_verdict` 现在可保持 `UNRESOLVED`，也可在受治理结果 admission 后同步进入
+`RETAIN / REJECT / INSUFFICIENT`；每个 verdict 都绑定唯一 next-action id，任意 verdict、
+next action 与 evidence-ladder 错配均 fail closed。Atlas verdict banner 与 ladder 状态从同一
+contract 确定性渲染，不再把“尚未判定”硬编码为唯一结果。该波只建立终态表达能力，现有
+`UNRESOLVED` 配置与输出保持向后兼容；它不接纳具体结果，也不运行数据、DQ、confirmation、
+backtest、QuantConnect、provider、production、broker 或交易动作。
+
 TRADING-2550 在该 portfolio 后增加 `frozen_signal_value_confirmation_preregistration_policy.v1`
 结果不可见草案及独立 `frozen_signal_value_confirmation_preregistration_freeze_admission.v1`，而不是新增期权趋势模型。草案 exact-bind 既有 1,202-session
 `first_layer_composer_v2` signal package/index/materialization/replay identity，把 `constructive/risk_on`
@@ -403,7 +411,8 @@ flowchart LR
     OAUTH["TRADING-2501 Owner-accepted review authority<br/>A/B/C layers + 13 exact source receipts"] --> OPROJ["TRADING-2503 QQQ Options projection<br/>4 reader groups / 5 status layers / aggregate NO-GO"]
     OPROJ --> OVAL["Independent source + policy validation<br/>2492 order / 2493 dominance / no strategy PASS"]
     OVAL --> XRENDER
-    PORT["TRADING-2549 evidence-first portfolio<br/>primary question + ladder + P0 phase switch"] --> RCONTRACT["Reader Entry V2 contract<br/>compact L0 + one closed L1 + audit"]
+    PORT["TRADING-2549 evidence-first portfolio<br/>primary question + ladder + P0 phase switch"] --> VSTATE["TRADING-2551 terminal verdict contract<br/>exact next action + ladder consistency"]
+    VSTATE --> RCONTRACT["Reader Entry V2 contract<br/>compact L0 + one closed L1 + audit"]
     RCONTRACT --> XRENDER
     RSTATE["TRADING-2525 object-qualified state semantics<br/>dates + change + next action + prohibited inference"] --> XRENDER
     TPROFILE["TRADING-2523 reader profile + terminology authority<br/>unique classes / explicit aliases / plain Chinese"] --> TINV["Full rendered-text inventory<br/>visible + disclosure + ARIA/title + audit raw IDs"]

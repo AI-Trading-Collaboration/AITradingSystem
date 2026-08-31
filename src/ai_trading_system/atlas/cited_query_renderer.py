@@ -2329,10 +2329,17 @@ _CAUSAL_EDGE_LABELS = {
 _EVIDENCE_STATE_PRESENTATION = {
     EvidenceState.READY: ("已具备", "evidence-ready"),
     EvidenceState.UNRESOLVED: ("尚未判定", "evidence-unresolved"),
+    EvidenceState.RETAIN: ("保留", "evidence-retain"),
+    EvidenceState.REJECT: ("拒绝", "evidence-reject"),
+    EvidenceState.INSUFFICIENT: ("证据不足", "evidence-insufficient"),
     EvidenceState.NOT_RUN: ("尚未运行", "evidence-not-run"),
     EvidenceState.NOT_ESTABLISHED: ("尚未建立", "evidence-not-established"),
     EvidenceState.NOT_ELIGIBLE: ("不具备资格", "evidence-not-eligible"),
 }
+
+
+def _verdict_label_zh(state: EvidenceState) -> str:
+    return f"{_EVIDENCE_STATE_PRESENTATION[state][0]}。"
 
 
 def _render_trust_strip(showcase: AtlasCitedQueryShowcase) -> str:
@@ -2376,7 +2383,7 @@ def _render_reader_entry(showcase: AtlasCitedQueryShowcase) -> str:
         <section class="verdict-banner" aria-labelledby="current-verdict-title">
           <p class="section-kicker">CURRENT VERDICT</p>
           <h2 id="current-verdict-title">当前结论</h2>
-          <p data-always-visible="current_verdict"><strong>尚未判定。</strong>{escape(signal_value.explanation_zh)}</p>
+          <p data-always-visible="current_verdict"><strong>{escape(_verdict_label_zh(portfolio.current_verdict))}</strong>{escape(signal_value.explanation_zh)}</p>
         </section>
         <section class="evidence-ladder-section" aria-labelledby="evidence-ladder-title">
           <div class="reader-section-heading compact-heading">
@@ -3350,6 +3357,12 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .evidence-ready .evidence-state {{ color:#14614e; background:#e0f3eb; }}
     .evidence-unresolved {{ border-top-color:#b07a17; background:#fffaf0; }}
     .evidence-unresolved .evidence-state {{ color:#79530e; background:#ffedc8; }}
+    .evidence-retain {{ border-top-color:#2d8a6e; background:#f4fcf8; }}
+    .evidence-retain .evidence-state {{ color:#14614e; background:#d8f0e6; }}
+    .evidence-reject {{ border-top-color:#a8495c; background:#fff8fa; }}
+    .evidence-reject .evidence-state {{ color:#813648; background:#f8e5e9; }}
+    .evidence-insufficient {{ border-top-color:#b07a17; background:#fffaf0; }}
+    .evidence-insufficient .evidence-state {{ color:#79530e; background:#ffedc8; }}
     .evidence-not-eligible {{ border-top-color:#a8495c; background:#fff8fa; }}
     .evidence-not-eligible .evidence-state {{ color:#813648; background:#f8e5e9; }}
     .reader-action-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.75rem; margin-top:1.15rem; }}

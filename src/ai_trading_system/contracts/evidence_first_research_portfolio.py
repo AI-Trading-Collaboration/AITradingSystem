@@ -18,6 +18,9 @@ class EvidenceFirstPortfolioError(ValueError):
 class EvidenceState(StrEnum):
     READY = "READY"
     UNRESOLVED = "UNRESOLVED"
+    RETAIN = "RETAIN"
+    REJECT = "REJECT"
+    INSUFFICIENT = "INSUFFICIENT"
     NOT_RUN = "NOT_RUN"
     NOT_ESTABLISHED = "NOT_ESTABLISHED"
     NOT_ELIGIBLE = "NOT_ELIGIBLE"
@@ -108,15 +111,22 @@ class EvidenceFirstResearchPortfolio:
         "ROBUSTNESS",
         "PRODUCTION",
     )
-    EXPECTED_LADDER_STATES: ClassVar[tuple[EvidenceState, ...]] = (
+    EXPECTED_LADDER_STATE_PREFIX: ClassVar[tuple[EvidenceState, ...]] = (
         EvidenceState.READY,
         EvidenceState.READY,
         EvidenceState.READY,
-        EvidenceState.UNRESOLVED,
+    )
+    EXPECTED_LADDER_STATE_SUFFIX: ClassVar[tuple[EvidenceState, ...]] = (
         EvidenceState.NOT_RUN,
         EvidenceState.NOT_ESTABLISHED,
         EvidenceState.NOT_ELIGIBLE,
     )
+    VERDICT_NEXT_EXPERIMENT: ClassVar[Mapping[EvidenceState, str]] = {
+        EvidenceState.UNRESOLVED: "FROZEN_SIGNAL_VALUE_CONFIRMATION",
+        EvidenceState.RETAIN: "OWNER_REVIEW_CONDITIONAL_OPTIONS_PAIRED_COMPARISON",
+        EvidenceState.REJECT: "OPTIONS_IMPLEMENTATION_P0_CLOSED",
+        EvidenceState.INSUFFICIENT: "EXPLICIT_PROSPECTIVE_EVIDENCE_ONLY",
+    }
     REQUIRED_P0_FIELDS: ClassVar[tuple[str, ...]] = (
         "research_question_id",
         "decision_enabled",
@@ -176,9 +186,9 @@ class EvidenceFirstResearchPortfolio:
             raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_POLICY_STATE_INVALID")
         if self.question_id != "SIGNAL_VALUE_FIRST_LAYER_COMPOSER_V2":
             raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_PRIMARY_QUESTION_INVALID")
-        if self.current_verdict is not EvidenceState.UNRESOLVED:
+        if self.current_verdict not in self.VERDICT_NEXT_EXPERIMENT:
             raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_CURRENT_VERDICT_INVALID")
-        if self.next_experiment_id != "FROZEN_SIGNAL_VALUE_CONFIRMATION":
+        if self.next_experiment_id != self.VERDICT_NEXT_EXPERIMENT[self.current_verdict]:
             raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_NEXT_EXPERIMENT_INVALID")
         if self.allowed_verdicts != ("RETAIN", "REJECT", "INSUFFICIENT"):
             raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_VERDICTS_INVALID")
@@ -188,7 +198,12 @@ class EvidenceFirstResearchPortfolio:
             raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_RESEARCH_START_INVALID")
         if tuple(item.evidence_id for item in self.evidence_ladder) != self.EXPECTED_LADDER_IDS:
             raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_LADDER_ORDER_INVALID")
-        if tuple(item.state for item in self.evidence_ladder) != self.EXPECTED_LADDER_STATES:
+        expected_ladder_states = (
+            *self.EXPECTED_LADDER_STATE_PREFIX,
+            self.current_verdict,
+            *self.EXPECTED_LADDER_STATE_SUFFIX,
+        )
+        if tuple(item.state for item in self.evidence_ladder) != expected_ladder_states:
             raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_LADDER_STATE_INVALID")
         if self.allowed_p0_classes != tuple(P0AdmissionClass):
             raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_P0_CLASSES_INVALID")

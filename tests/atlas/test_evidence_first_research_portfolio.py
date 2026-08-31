@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from ai_trading_system.atlas.cited_query_renderer import _verdict_label_zh
 from ai_trading_system.contracts.evidence_first_research_portfolio import (
     EvidenceFirstPortfolioError,
     EvidenceFirstResearchPortfolio,
@@ -58,6 +59,61 @@ def test_evidence_first_portfolio_makes_empirical_work_the_next_ready_p0() -> No
         EvidenceState.NOT_ESTABLISHED,
         EvidenceState.NOT_ELIGIBLE,
     )
+
+
+@pytest.mark.parametrize(
+    ("verdict", "next_experiment", "label_zh"),
+    [
+        (EvidenceState.UNRESOLVED, "FROZEN_SIGNAL_VALUE_CONFIRMATION", "尚未判定。"),
+        (
+            EvidenceState.RETAIN,
+            "OWNER_REVIEW_CONDITIONAL_OPTIONS_PAIRED_COMPARISON",
+            "保留。",
+        ),
+        (EvidenceState.REJECT, "OPTIONS_IMPLEMENTATION_P0_CLOSED", "拒绝。"),
+        (
+            EvidenceState.INSUFFICIENT,
+            "EXPLICIT_PROSPECTIVE_EVIDENCE_ONLY",
+            "证据不足。",
+        ),
+    ],
+)
+def test_evidence_first_portfolio_supports_exact_terminal_verdict_transitions(
+    verdict: EvidenceState,
+    next_experiment: str,
+    label_zh: str,
+) -> None:
+    payload = copy.deepcopy(_payload())
+    payload["primary_evidence_question"]["current_verdict"] = verdict.value
+    payload["primary_evidence_question"]["next_experiment_id"] = next_experiment
+    payload["evidence_ladder"][3]["state"] = verdict.value
+
+    policy = EvidenceFirstResearchPortfolio.from_dict(payload)
+
+    assert policy.current_verdict is verdict
+    assert policy.next_experiment_id == next_experiment
+    assert policy.evidence_ladder[3].state is verdict
+    assert _verdict_label_zh(verdict) == label_zh
+
+
+def test_evidence_first_portfolio_rejects_terminal_verdict_action_mismatch() -> None:
+    payload = copy.deepcopy(_payload())
+    payload["primary_evidence_question"]["current_verdict"] = "RETAIN"
+    payload["evidence_ladder"][3]["state"] = "RETAIN"
+
+    with pytest.raises(EvidenceFirstPortfolioError, match="EVIDENCE_FIRST_NEXT_EXPERIMENT_INVALID"):
+        EvidenceFirstResearchPortfolio.from_dict(payload)
+
+
+def test_evidence_first_portfolio_rejects_terminal_verdict_ladder_mismatch() -> None:
+    payload = copy.deepcopy(_payload())
+    payload["primary_evidence_question"]["current_verdict"] = "RETAIN"
+    payload["primary_evidence_question"][
+        "next_experiment_id"
+    ] = "OWNER_REVIEW_CONDITIONAL_OPTIONS_PAIRED_COMPARISON"
+
+    with pytest.raises(EvidenceFirstPortfolioError, match="EVIDENCE_FIRST_LADDER_STATE_INVALID"):
+        EvidenceFirstResearchPortfolio.from_dict(payload)
 
 
 def test_evidence_first_portfolio_freezes_reader_and_safety_boundaries() -> None:

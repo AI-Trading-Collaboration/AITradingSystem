@@ -1,0 +1,81 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1
+  task_id_sha256: a012cd1d1c058443e90f278f942f806e88636f89560ed190b61a2e548fa0a183
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1
+  title: null
+  domain: 期权研究/共享 evidence portfolio terminal verdict contract
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 实施最小 serial contract wave；扩展 EvidenceFirstResearchPortfolio
+    与 Atlas reader 对 RETAIN/REJECT/INSUFFICIENT 的确定性表达，随后允许 TRADING-2550 从新基线接入已保全结果；详细拆解见
+    docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 四种 verdict 与 exact next-action 配对可构造并确定性渲染；错配及 ladder 不一致 fail closed；UNRESOLVED
+      向后兼容；focused/impact/architecture/contract/integration/reproducibility/Full PASS；production_effect=none、broker_action=none
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-01T04:09:03+09:00'
+  actor: integration-coordinator
+  change_id: trading-2551-register-v1
+  lane_id: null
+  base_commit: 7b19f13b42ff4a5f2663a0d1c69260d8ea05ec92
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1
+    - 期权研究/共享 evidence portfolio terminal verdict contract
+    - P0
+    - IN_PROGRESS
+    - 系统实现
+    - 实施最小 serial contract wave；扩展 EvidenceFirstResearchPortfolio 与 Atlas reader 对
+      RETAIN/REJECT/INSUFFICIENT 的确定性表达，随后允许 TRADING-2550 从新基线接入已保全结果；详细拆解见 docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md
+    - 四种 verdict 与 exact next-action 配对可构造并确定性渲染；错配及 ladder 不一致 fail closed；UNRESOLVED
+      向后兼容；focused/impact/architecture/contract/integration/reproducibility/Full PASS；production_effect=none、broker_action=none
+    - 2026-09-01：TRADING-2550 技术有效 RETAIN 结果暴露共享 contract 只能表达 UNRESOLVED；创建最小 serial
+      contract wave，不修改 confirmation 数值、admission 或触发任何新外部研究/交易动作。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2551-register-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c85c8e5c0f7dc25a59488deaf7474688
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1
+  - 期权研究/共享 evidence portfolio terminal verdict contract
+  - P0
+  - IN_PROGRESS
+  - 系统实现
+  - 实施最小 serial contract wave；扩展 EvidenceFirstResearchPortfolio 与 Atlas reader 对 RETAIN/REJECT/INSUFFICIENT
+    的确定性表达，随后允许 TRADING-2550 从新基线接入已保全结果；详细拆解见 docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md
+  - 四种 verdict 与 exact next-action 配对可构造并确定性渲染；错配及 ladder 不一致 fail closed；UNRESOLVED
+    向后兼容；focused/impact/architecture/contract/integration/reproducibility/Full PASS；production_effect=none、broker_action=none
+  - 2026-09-01：TRADING-2550 技术有效 RETAIN 结果暴露共享 contract 只能表达 UNRESOLVED；创建最小 serial
+    contract wave，不修改 confirmation 数值、admission 或触发任何新外部研究/交易动作。
+  docs_links:
+  - docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md
+  terminal: false
+  canonical_row_sha256: a91e57da8432f3477a4cdeec926fc2f4d22862a92769e24736a308427d409dc2
+last_event_id: task-event-c85c8e5c0f7dc25a59488deaf7474688
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: bccd787a81d1b4f0901027a75e7236d4e3464494988ef75ab2f863042aa0ed39
