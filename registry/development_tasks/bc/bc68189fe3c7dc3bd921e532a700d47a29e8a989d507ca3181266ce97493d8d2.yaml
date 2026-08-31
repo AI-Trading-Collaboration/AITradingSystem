@@ -13,18 +13,17 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Codex integration coordinator：在新 transaction 的 FORMAL_VALIDATION_PRE
-    直接调用 Full runner
+  next_owner: Project owner：复核自动周报中的 review-only candidates
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Parent transaction v10 在 Full 启动前因重复 FULL_DISPATCHED
-    被 runner fail-closed；无测试执行、无 Full artifact
+  unstructured_legacy_blocker_or_next_step: 无 implementation blocker；Full dispatch
+    由 runner 从 FORMAL_VALIDATION_PRE 原子推进，禁止手工重复 checkpoint
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: task_count ratchet=1046；formal tiers retained PASS；Full runner 自行 dispatch
-      并 PASS；main/origin publish；automation update；cleanup
+    text: task_count ratchet=1046；final formal tiers 与 Full PASS；local main=origin/main；existing
+      automation ACTIVE；cleanup complete
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -58,22 +57,47 @@ events:
   - change:devx-012d-full-dispatch-retry-registration-20260831-v11
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-8939aee38291c687e2b9b1d09528d8b0
+- schema_version: task_event.v1
+  task_id: DEVX-012D_FULL_DISPATCH_PROTOCOL_RETRY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-31T03:14:10.5273549Z'
+  actor: integration-coordinator
+  change_id: devx-012d-full-dispatch-protocol-closeout-20260831-v12
+  lane_id: null
+  base_commit: 401c490e1d55c1f562ca0e4fae4c9160964a6ec0
+  previous_state_event_id: task-event-8939aee38291c687e2b9b1d09528d8b0
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: Project owner：复核自动周报中的 review-only candidates
+    blocker_or_next_step: 无 implementation blocker；Full dispatch 由 runner 从 FORMAL_VALIDATION_PRE
+      原子推进，禁止手工重复 checkpoint
+    acceptance_criteria: task_count ratchet=1046；final formal tiers 与 Full PASS；local
+      main=origin/main；existing automation ACTIVE；cleanup complete
+    notes: v10 pre-test dispatch mismatch was fail-closed before pytest; v12 delegates
+      the only FULL_DISPATCHED transition to run_validation_tier.py.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-012d-full-dispatch-protocol-closeout-20260831-v12
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-6695841a2c4a1980095244c2435cd461
 projection:
   legacy_first_eight_cells:
   - DEVX-012D_FULL_DISPATCH_PROTOCOL_RETRY_V1
   - Developer experience / Full dispatch protocol retry
   - P1
-  - IN_PROGRESS
-  - Codex integration coordinator：在新 transaction 的 FORMAL_VALIDATION_PRE 直接调用 Full
-    runner
-  - Parent transaction v10 在 Full 启动前因重复 FULL_DISPATCHED 被 runner fail-closed；无测试执行、无
-    Full artifact
-  - task_count ratchet=1046；formal tiers retained PASS；Full runner 自行 dispatch 并 PASS；main/origin
-    publish；automation update；cleanup
-  - 2026-08-31：纯调度协议重试，不改功能/策略/gate；v10 失败 closeout receipt 保留。
+  - DONE
+  - Project owner：复核自动周报中的 review-only candidates
+  - 无 implementation blocker；Full dispatch 由 runner 从 FORMAL_VALIDATION_PRE 原子推进，禁止手工重复
+    checkpoint
+  - task_count ratchet=1046；final formal tiers 与 Full PASS；local main=origin/main；existing
+    automation ACTIVE；cleanup complete
+  - v10 pre-test dispatch mismatch was fail-closed before pytest; v12 delegates the
+    only FULL_DISPATCHED transition to run_validation_tier.py.
   docs_links: []
-  terminal: false
-  canonical_row_sha256: 3d0ab5c85f25ef7dfe79b650b1b17c91c738d23d6332c91fb0868d48f41af284
-last_event_id: task-event-8939aee38291c687e2b9b1d09528d8b0
+  terminal: true
+  canonical_row_sha256: 4c1c8718968949d2d0b960988de73dfccf3d2c0005b64d808ca5488a9aece143
+last_event_id: task-event-6695841a2c4a1980095244c2435cd461
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 76549f675c187a67a2491b8b2b5ab16db9d504a2da655eb8b40a99aff2ac2603
+fragment_checksum: d98f76aabc3af4eeec7a0ec93645dc055d3264aae2435b49e08e132bd1fd2cf2
