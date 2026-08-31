@@ -13,13 +13,14 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: TRADING-2550 integration coordinator
+  next_owner: 系统实现
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 共享 terminal verdict contract 已实现；完成正式
-    validation/publication 后，TRADING-2550 从新 exact main 基线接入已保全 RETAIN result。
+  unstructured_legacy_blocker_or_next_step: 正式 architecture suite 877 passed / 5 failed；刷新
+    canonical task-count assertion、architecture manifests 与 append-only compatibility
+    authority 后重跑正式验证，不改变 contract semantics。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: RETAIN/REJECT/INSUFFICIENT 与 exact next-action、SIGNAL_VALUE ladder 一致性及
@@ -84,23 +85,52 @@ events:
   - change:trading-2551-baseline-done-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-f8584e213318c5f3ed04d80679bfdada
+- schema_version: task_event.v1
+  task_id: TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-01T04:36:45+09:00'
+  actor: integration-coordinator
+  change_id: trading-2551-formal-failure-fix-v1
+  lane_id: null
+  base_commit: 75fe57602a72c7b5976b1daed22b82a4e431ff1b
+  previous_state_event_id: task-event-f8584e213318c5f3ed04d80679bfdada
+  from_status: BASELINE_DONE
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: 系统实现
+    blocker_or_next_step: 正式 architecture suite 877 passed / 5 failed；刷新 canonical
+      task-count assertion、architecture manifests 与 append-only compatibility authority
+      后重跑正式验证，不改变 contract semantics。
+    acceptance_criteria: RETAIN/REJECT/INSUFFICIENT 与 exact next-action、SIGNAL_VALUE
+      ladder 一致性及 Atlas 动态渲染均 fail closed；UNRESOLVED 向后兼容；正式 architecture/contract/integration/reproducibility/Full
+      PASS；production_effect=none、broker_action=none。
+    notes: 2026-09-01：首次 formal architecture-fitness 在 877 passed 后因新增任务数断言和 docs/system_flow
+      的 generated/append-only authority 尚未刷新而 5 failed；这是治理派生物 freshness 问题，不是 contract
+      语义失败。进入 failure-fix，不运行任何新数据或 confirmation。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2551-formal-failure-fix-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-1d8a9c7a4016ab7e2cbc17cad91c057a
 projection:
   legacy_first_eight_cells:
   - TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1
   - 期权研究/共享 evidence portfolio terminal verdict contract
   - P0
-  - BASELINE_DONE
-  - TRADING-2550 integration coordinator
-  - 共享 terminal verdict contract 已实现；完成正式 validation/publication 后，TRADING-2550 从新
-    exact main 基线接入已保全 RETAIN result。
+  - IN_PROGRESS
+  - 系统实现
+  - 正式 architecture suite 877 passed / 5 failed；刷新 canonical task-count assertion、architecture
+    manifests 与 append-only compatibility authority 后重跑正式验证，不改变 contract semantics。
   - RETAIN/REJECT/INSUFFICIENT 与 exact next-action、SIGNAL_VALUE ladder 一致性及 Atlas
     动态渲染均 fail closed；UNRESOLVED 向后兼容；正式 architecture/contract/integration/reproducibility/Full
     PASS；production_effect=none、broker_action=none。
-  - 2026-09-01：最小 serial contract wave 实现完成；focused Atlas 17 passed，首轮未分类 successor
-    门禁已按页面来源政策正式登记后通过。未运行任何新数据、DQ、confirmation、backtest、QuantConnect/provider 或交易动作。
+  - 2026-09-01：首次 formal architecture-fitness 在 877 passed 后因新增任务数断言和 docs/system_flow
+    的 generated/append-only authority 尚未刷新而 5 failed；这是治理派生物 freshness 问题，不是 contract
+    语义失败。进入 failure-fix，不运行任何新数据或 confirmation。
   docs_links: []
   terminal: false
-  canonical_row_sha256: ff340dbc84b12cb4bce6bdac7c46ee3b2b63d4cffc950d150b7772e5ba2b23f4
-last_event_id: task-event-f8584e213318c5f3ed04d80679bfdada
+  canonical_row_sha256: baa755b7abdbeabc0716cdd90f10f89036ca8b1bf4e01e354047cb36dd738dd2
+last_event_id: task-event-1d8a9c7a4016ab7e2cbc17cad91c057a
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 2a3e524d336e824fac18cf4d959dc30a02168eea072ca48444bd8ae071ebad93
+fragment_checksum: 5d967555a7cb7184a710632ad89c8272fe63d643f9c1841a2f86f75fafb337da

@@ -44,3 +44,4 @@ DQ、confirmation、backtest、QuantConnect、provider 或交易动作。
 
 - 2026-09-01：因 TRADING-2550 的技术有效 `RETAIN` 结果暴露共享 contract 表达缺口，创建最小 serial contract wave；状态 `IN_PROGRESS`。
 - 2026-09-01：共享 enum、verdict/next-action/ladder invariant、Atlas 动态渲染与页面来源分类已实现；focused Atlas validation 为 17 passed。任务进入 `BASELINE_DONE`，待正式验证和 publication fence 收口后供 TRADING-2550 从新 exact `main` 基线接入结果。
+- 2026-09-01：首次正式 architecture-fitness 为 877 passed / 5 failed；失败仅来自新增 canonical task 的冻结计数，以及 `docs/system_flow.md` 变更后的 architecture manifests 与 append-only compatibility authority 尚未刷新。任务暂回 `IN_PROGRESS` 执行 deterministic generator refresh；contract 语义测试未失败，也未重跑任何数据或 confirmation。

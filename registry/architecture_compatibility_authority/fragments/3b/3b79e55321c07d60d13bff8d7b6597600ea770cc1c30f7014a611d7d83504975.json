@@ -68,17 +68,17 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/system_flow.md",
-        "sha256": "23c6afa98c660536b653e316e55511a9bdfc480652382bcda80370480df78337"
+        "sha256": "e8d235811c92abf14f7297fb9be23e8613699ba681976d408263da9e4522c2e9"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "8171b3fc63a9a4d659e0ac36c9ef19f5e8f3369ad4fa64a93fcf3c1a68b4428b"
+        "sha256": "81d5dff64dce9529129f45d4ab6088ae3a8848ea2928c982638624b5939eb79e"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "02a25ec5cb9086321c44ba787de2786ece1affd9764bc01161c433f5491f8eae"
+        "sha256": "3d19c005ebd384d14f52eb06442d623dbe756f316ae56dd825dd10d42a37a34b"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -88,17 +88,17 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "c818009bb8ab20bea9a6f8e54c98e2846d1a7624b5afc4b8d205241c882a72a9"
+        "sha256": "15d1313e2720f8dccfdfada140c9a6fe39f1fb109f1af361d362c3aa078b629a"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "91adc7ac2aedca36f0799667eeeddbf28dcd2a1bbad34c4b5f70f5f8b7412ae8"
+        "sha256": "9254c1cb3d6a92f4f1c874c52ff5d6d541add042342474c62e565b5f867891d0"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "1916ccfe91b6a866dd3c426219d4567c0900d57042d189d27b4b27ec1828f870"
+        "sha256": "4711beb4bc5f62fe230d4faa6b225c418e3548ba51872accf26c8199cc74fb85"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -238,5 +238,5 @@
     "task_id": "PROD-004"
   },
   "section_id": "phase_prod_004_pit_cumulative_archive_consumption_v1",
-  "section_sha256": "2787e0e25468c4b92ceea362764c633020c3762514c68fdec0836a10ecc0205b"
+  "section_sha256": "3b79e55321c07d60d13bff8d7b6597600ea770cc1c30f7014a611d7d83504975"
 }
