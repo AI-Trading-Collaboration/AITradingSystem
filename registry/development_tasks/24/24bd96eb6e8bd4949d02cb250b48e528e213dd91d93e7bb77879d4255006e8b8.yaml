@@ -13,21 +13,23 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Strategy research coordinator：先冻结 outcome-blind comparator/metric/capital/clock/cost/reducer
-    与 bounded run manifest；Project Owner：复核会影响投资解释的 metric、threshold 和 stop rule
+  next_owner: Project Owner：复核 frozen_signal_value_confirmation_preregistration_v1@1.0.0-draft.1
+    exact file/canonical SHA，并选择接纳、要求修订或拒绝；strategy coordinator 在此前不得读取 outcome 或运行
+    DQ/confirmation。
   requirement_refs:
   - docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 当前 exact 1,202-session signal package
-    已具备；blocker 是 primary comparator、metric、成本、资本与 RETAIN/REJECT/INSUFFICIENT reducer
-    尚未在 outcome-blind 状态冻结，且本记录不授权 empirical run。
+  unstructured_legacy_blocker_or_next_step: result-blind draft.1 已形成；唯一 blocker 是
+    comparator、5 bps cost、zero excess-return threshold、zero drawdown-regression guard
+    与三态 reducer 尚无 Owner exact SHA approval。当前 data read/DQ/backtest/QuantConnect/provider/orders/fills/positions
+    均未授权。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 同一 umbrella task 内完成预注册、DQ/PIT/identity/resource gates 与独立 replay；随后仅在适用授权下运行一次冻结
-      signal-value confirmation，输出严格为 RETAIN/REJECT/INSUFFICIENT；RETAIN 才进入期权 paired
-      comparison，REJECT 关闭该实现路线 P0，INSUFFICIENT 只补明确 prospective evidence；production/broker=none。
+    text: Owner exact-review draft identity 后，只有另行 bounded authorization 与 manifest
+      replay/DQ/PIT PASS 才可运行一次 local signal-value confirmation；输出仅 RETAIN/REJECT/INSUFFICIENT，RETAIN
+      才打开 options paired-comparison review。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -67,28 +69,65 @@ events:
   - change:trading-2550-register-frozen-signal-value-confirmation-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-9ac1e70d98fa28cf4f0bb7e516a738fe
+- schema_version: task_event.v1
+  task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-31T06:53:26.7109374Z'
+  actor: integration-coordinator
+  change_id: trading-2550-draft-owner-review-handoff-v1
+  lane_id: null
+  base_commit: 14e9723cf6ea72d3eeabcbae6a03494eb423c013
+  previous_state_event_id: task-event-9ac1e70d98fa28cf4f0bb7e516a738fe
+  from_status: PROPOSED
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner：复核 frozen_signal_value_confirmation_preregistration_v1@1.0.0-draft.1
+      exact file/canonical SHA，并选择接纳、要求修订或拒绝；strategy coordinator 在此前不得读取 outcome
+      或运行 DQ/confirmation。
+    blocker_or_next_step: result-blind draft.1 已形成；唯一 blocker 是 comparator、5 bps cost、zero
+      excess-return threshold、zero drawdown-regression guard 与三态 reducer 尚无 Owner
+      exact SHA approval。当前 data read/DQ/backtest/QuantConnect/provider/orders/fills/positions
+      均未授权。
+    acceptance_criteria: Owner exact-review draft identity 后，只有另行 bounded authorization
+      与 manifest replay/DQ/PIT PASS 才可运行一次 local signal-value confirmation；输出仅 RETAIN/REJECT/INSUFFICIENT，RETAIN
+      才打开 options paired-comparison review。
+    notes: 'Supporting requirement: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md.
+      draft file SHA=507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa;
+      canonical SHA=7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c;
+      authority-set SHA=45d508d563b46b0929d80687155213d265399a4f105da69f31810780a34c754f.
+      Focused pytest-xdist 43 passed; Ruff/mypy PASS. No market payload/DQ/backtest/external
+      action.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2550-draft-owner-review-handoff-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ba4aa86dc50a3f14151907dabb90d23b
 projection:
   legacy_first_eight_cells:
   - TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
   - Strategy research / frozen first-layer signal value confirmation
   - P0
-  - PROPOSED
-  - Strategy research coordinator：先冻结 outcome-blind comparator/metric/capital/clock/cost/reducer
-    与 bounded run manifest；Project Owner：复核会影响投资解释的 metric、threshold 和 stop rule
-  - 当前 exact 1,202-session signal package 已具备；blocker 是 primary comparator、metric、成本、资本与
-    RETAIN/REJECT/INSUFFICIENT reducer 尚未在 outcome-blind 状态冻结，且本记录不授权 empirical run。
-  - 同一 umbrella task 内完成预注册、DQ/PIT/identity/resource gates 与独立 replay；随后仅在适用授权下运行一次冻结
-    signal-value confirmation，输出严格为 RETAIN/REJECT/INSUFFICIENT；RETAIN 才进入期权 paired
-    comparison，REJECT 关闭该实现路线 P0，INSUFFICIENT 只补明确 prospective evidence；production/broker=none。
+  - BLOCKED_OWNER_INPUT
+  - Project Owner：复核 frozen_signal_value_confirmation_preregistration_v1@1.0.0-draft.1
+    exact file/canonical SHA，并选择接纳、要求修订或拒绝；strategy coordinator 在此前不得读取 outcome 或运行
+    DQ/confirmation。
+  - result-blind draft.1 已形成；唯一 blocker 是 comparator、5 bps cost、zero excess-return
+    threshold、zero drawdown-regression guard 与三态 reducer 尚无 Owner exact SHA approval。当前
+    data read/DQ/backtest/QuantConnect/provider/orders/fills/positions 均未授权。
+  - Owner exact-review draft identity 后，只有另行 bounded authorization 与 manifest replay/DQ/PIT
+    PASS 才可运行一次 local signal-value confirmation；输出仅 RETAIN/REJECT/INSUFFICIENT，RETAIN
+    才打开 options paired-comparison review。
   - 'Supporting requirement: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md.
-    research_question_id=SIGNAL_VALUE_FIRST_LAYER_COMPOSER_V2; evidence_type=EMPIRICAL_EVIDENCE;
-    blocked_experiment=none; no automatic governance successor; registered by TRADING-2549
-    S3; no data/backtest/QuantConnect/provider/paper/live/production/broker action
-    authorized.'
+    draft file SHA=507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa;
+    canonical SHA=7d12dd62127cb02676d4e18510c06fddc9e2a0afa03ec2f0e758ba6143bed88c;
+    authority-set SHA=45d508d563b46b0929d80687155213d265399a4f105da69f31810780a34c754f.
+    Focused pytest-xdist 43 passed; Ruff/mypy PASS. No market payload/DQ/backtest/external
+    action.'
   docs_links:
   - docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md
   terminal: false
-  canonical_row_sha256: 9e80177e892fb8c585c2d55b7d741403635d02fb3d772f90d6a35f0c1c1a30b0
-last_event_id: task-event-9ac1e70d98fa28cf4f0bb7e516a738fe
+  canonical_row_sha256: 6a2b802c31d9dafaa01efa04acf03e5055e5d4bc19b4be1647d4ab979a91db70
+last_event_id: task-event-ba4aa86dc50a3f14151907dabb90d23b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 455b7e5cab4ad5f8d7666d581922fde5fbf24d42d794bd52d40debca611108d5
+fragment_checksum: 70d110f4553cad6883d65c65089c8a16f9633c38e7e233aa43c5c876323ff693

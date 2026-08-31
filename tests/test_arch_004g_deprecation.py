@@ -57,13 +57,12 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-WAVE21_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_993fd5c2b246bcef9d3c"
+WAVE21_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_080d4d7ff5fda53ee337"
 WAVE21_CURRENT_REPOSITORY_COUNTS = {
-    # TRADING-2549 adds one evidence-first contract module and one focused test;
-    # DEVX-012 changes only governed documentation reachability, not runtime
-    # deprecation lifecycle or writer allowances.
-    "python_module_count": 1183,
-    "python_test_file_count": 1340,
+    # TRADING-2550 adds one non-executable preregistration module and one focused
+    # test; it does not change runtime deprecation lifecycle or writer allowances.
+    "python_module_count": 1184,
+    "python_test_file_count": 1341,
     "direct_writer_current_count": 856,
 }
 WAVE21_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(

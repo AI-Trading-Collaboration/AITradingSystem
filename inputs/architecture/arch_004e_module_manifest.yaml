@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1183
+module_count: 1184
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -409,7 +409,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.live_snapshot
   path: src/ai_trading_system/atlas/live_snapshot.py
-  sha256: 3e14a7ff6b02cc6e5028ca111f02322b8d1a2d5e7ac0d5004cb25fdf77c2caba
+  sha256: e657310e9314283274d33535f83daf664af9e3e243d23eca174fe4fd049191cd
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -19657,6 +19657,28 @@ modules:
 - module_id: src.ai_trading_system.research_quality.__init__
   path: src/ai_trading_system/research_quality/__init__.py
   sha256: b1f9fea8e325bc38f59608122e6e87f7441a599be358b3722379578dfdbdfa7b
+  rule_id: research_quality
+  owner_profile: research
+  owners:
+    code_owner: research_platform
+    policy_owner: research_governance
+    data_owner: research_data_governance
+    artifact_owner: research_governance
+    runtime_owner: research_operations
+  layer: domain
+  category: research_quality
+  public_contract: false
+  deprecation_status: active
+  test_globs:
+  - tests/research_quality/test_*.py
+  - tests/research_strategies/test_*.py
+  validation_tiers:
+  - slow-research-regression
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.research_quality.frozen_signal_value_confirmation_preregistration
+  path: src/ai_trading_system/research_quality/frozen_signal_value_confirmation_preregistration.py
+  sha256: 3392f739e73beae848479448d9e6c0e08d363db524800c436adaf7618285c6c7
   rule_id: research_quality
   owner_profile: research
   owners:

@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1340
-test_count: 1280
+test_file_count: 1341
+test_count: 1281
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -27,7 +27,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_cited_query_renderer
   path: tests/atlas/test_cited_query_renderer.py
-  sha256: 6f8d1bde5fb3f3c974555b0478a6c9d8965fe18eaf62407f4f4cef85a037c66d
+  sha256: fe2e8d99db85421b9b3dcfbd8676afea7d2a2853c63417fce3092256f893750a
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -203,7 +203,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_live_snapshot
   path: tests/atlas/test_live_snapshot.py
-  sha256: 91011ce9671424497cacfec245204cef8a2c722c0381133fce7d1a8810df4c3d
+  sha256: 229a6ac7078cc94ae147a9707010f8ffc08b6fef8a397dc3819817d192ba82a3
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -12545,6 +12545,22 @@ tests:
 - test_id: tests.test_free_feature_pit_contract
   path: tests/test_free_feature_pit_contract.py
   sha256: e6dba45e2c5e7d65c16ef3c75b656305ec8c9aad9c4b7df328f24b376646627c
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_frozen_signal_value_confirmation_preregistration
+  path: tests/test_frozen_signal_value_confirmation_preregistration.py
+  sha256: a8e6850196404aaf91cab73cd177ea442d38280117da1860a7ce20c316e7e648
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
