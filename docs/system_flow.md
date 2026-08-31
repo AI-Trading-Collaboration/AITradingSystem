@@ -324,6 +324,19 @@ critical-error 与 reviewer policy 仍未由 Owner 批准，因此新页面的 O
 保持 `PENDING_REVIEW`。该波不运行经验研究，不改变 research window、DQ/PIT、既有结果、engine、order、
 production 或 broker 权限，也不自动签署人工验收。
 
+TRADING-2550 在该 portfolio 后增加单一 `frozen_signal_value_confirmation_preregistration_policy.v1`
+结果不可见草案，而不是新增期权趋势模型。它 exact-bind 既有 1,202-session
+`first_layer_composer_v2` signal package/index/materialization/replay identity，把 `constructive/risk_on`
+映射为 fully-funded QQQ，其余三态映射为 zero-return cash；唯一 primary comparator 在价格结果加载前按
+`LONG exposure return intervals / 1201` 计算固定 QQQ 权重，首日买入后持有固定 shares，因而比较的是
+同计划平均 QQQ exposure 下的 timing increment。Candidate/comparator 共用 USD 100,000、adjusted-close
+event clock、5 bps one-way traded-notional cost、terminal liquidation 与 no-imputation accounting。草案的
+primary metric 是 net total-return difference，`>0` 且 max-drawdown magnitude 不回归才提议 `RETAIN`；
+identity/DQ/PIT/replay/coverage/accounting/independent replay 任一不足先归 `INSUFFICIENT`，其余负面结果为
+`REJECT`。当前 status=`DRAFT_OWNER_REVIEW_REQUIRED`：data read、DQ、confirmation、backtest、QuantConnect、
+provider、option data、paper/live/production/broker 和 orders/fills/positions 全为 false/0；future envelope
+只是等待 exact file/canonical SHA 复核的一次性申请模板，不授予当前执行权限。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，

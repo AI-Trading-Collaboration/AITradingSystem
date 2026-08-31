@@ -1,0 +1,18 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.frozen_signal_value_confirmation_preregistration
+fragment_kind: module
+owner: strategy_research_governance
+module_prefix: src/ai_trading_system/research_quality/frozen_signal_value_confirmation_preregistration.py
+public_contracts:
+  - DEFAULT_FROZEN_SIGNAL_VALUE_CONFIRMATION_PREREGISTRATION_PATH
+  - AuthorityBinding
+  - AuthorityObservation
+  - AuthoritySemanticFact
+  - FrozenSignalValueConfirmationPreregistrationPolicy
+  - FrozenSignalValuePreregistrationError
+  - FrozenSignalValuePreregistrationLoadResult
+  - PreregistrationActionRequest
+  - assert_preregistration_action_allowed
+  - load_frozen_signal_value_confirmation_preregistration
+compatibility_facades: []
+deprecation_status: active_reference_architecture

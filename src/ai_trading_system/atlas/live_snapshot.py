@@ -623,8 +623,9 @@ def build_reader_decision_projection(
             item_id="CURRENT_DECISION",
             label_zh="01 · 当前决定",
             text_zh=(
-                "期权实现 baseline 已完成并仅限研究接纳；paired comparator 合同已经项目负责人"
-                "按最终文件与规范化哈希精确冻结，当前不形成策略结论，也不再运行外部回测平台。"
+                "第一层五态信号的价值仍未解决；result-blind draft.1 已形成，但 comparator、"
+                "5 bps 成本、zero-return threshold、drawdown guard 与三态 reducer 仍等待项目负责人"
+                "按 exact file/canonical SHA 复核，当前不形成策略结论。"
             ),
             source_task_ids=current_decision_sources,
         ),
@@ -638,9 +639,9 @@ def build_reader_decision_projection(
             item_id="CURRENT_WORK",
             label_zh="03 · 现在在查什么",
             text_zh=(
-                "当前已把同一趋势信号的 fully-funded QQQ primary comparator、common-capital "
-                "primary estimand、不可覆盖 primary 的资本占用时长 secondary，以及两项"
-                "诊断边界写入 non-executable contract，并由独立冻结准入记录固化。"
+                "当前草案只把同一冻结趋势信号映射为 fully-funded QQQ/零收益现金，并与"
+                "result-blind exposure-matched static QQQ/现金 primary comparator 比较；"
+                "不使用 option data，也不新建趋势判断链。"
             ),
             source_task_ids=work_sources,
         ),
@@ -648,8 +649,9 @@ def build_reader_decision_projection(
             item_id="NEXT_STEP",
             label_zh="04 · 下一步",
             text_zh=(
-                "当前没有自动后继动作；如需继续，项目负责人须另行授权新的离线合成导出与校验"
-                "任务。当前不得 save、build、backtest、retry 或执行其他外部平台动作。"
+                "下一步仅由项目负责人接纳、要求修订或拒绝 draft.1 的 exact identity。"
+                "在规则获批和未来 bounded run 另行授权前，不得读取市场结果、运行 DQ、"
+                "signal-value confirmation、backtest、QuantConnect 或 provider。"
             ),
             source_task_ids=next_sources,
         ),
@@ -668,8 +670,8 @@ def build_reader_decision_projection(
             item_id="CURRENT_RESEARCH_MAINLINE",
             label_zh="01 · 当前主线",
             text_zh=(
-                "QQQ 期权实现基线已经完成；当前主线是 exact-freeze 已完成设计的同信号、"
-                "同资本标的实现与期权实现对照 contract。"
+                "当前主线是先判断冻结的 first_layer_composer_v2 五态信号本身是否有可保留的"
+                "增量价值；期权只保留为 RETAIN 后的条件实现对比。"
             ),
             source_task_ids=current_decision_sources,
         ),
@@ -677,8 +679,8 @@ def build_reader_decision_projection(
             item_id="LARGEST_CURRENT_BLOCKER",
             label_zh="02 · 最大阻塞",
             text_zh=(
-                f"{limitation_text}paired-comparison contract 尚未由 Owner 按 final file/canonical "
-                "SHA exact-freeze，且当前没有 exporter 或新外部回测授权。"
+                f"{limitation_text}signal-value draft.1 尚未由 Owner 按 final file/canonical SHA "
+                "exact-freeze，且当前没有 outcome access、DQ 或经验运行授权。"
             ),
             source_task_ids=why_sources,
         ),
@@ -687,8 +689,8 @@ def build_reader_decision_projection(
             label_zh="03 · 已做到什么",
             text_zh=(
                 f"受治理链路已确认 {observed}/{expected} 个交易日并完成一次 bounded baseline；"
-                "平台聚合字段已通过限定范围的技术复核，并已完成 result-blind comparator "
-                "contract draft，但这些只属于工程与聚合研究事实，不是策略通过。"
+                "平台聚合字段已通过限定范围的技术复核，并已完成 signal-value result-blind "
+                "preregistration draft，但这些只属于工程与研究设计事实，不是策略通过。"
             ),
             source_task_ids=work_sources,
         ),

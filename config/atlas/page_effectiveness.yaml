@@ -378,8 +378,8 @@ task_sources:
     reader_summary_zh: 2549 依据 Owner 决定把研究组合改为 evidence-first：最高优先级只接受经验增证、直接实验使能和强制正确性三类工作，并把当前主问题冻结为第一层五态组合信号是否具备值得保留的增量价值。Atlas 默认页只呈现主问题、当前结论、证据阶梯、下一实验和停止条件；工程、任务、哈希、账本与审计细节下沉到按需入口。本任务不授权经验运行、外部提供方、QuantConnect、生产或 broker 动作，也不生成投资结论。
   - task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
     requirement_path: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md
-    coverage: PROPOSED_EMPIRICAL_SIGNAL_VALUE_HANDOFF_NO_RUN_AUTHORITY
-    reader_summary_zh: 2550 是 evidence-first portfolio 选定的下一项经验研究 umbrella task，目前仅为 PROPOSED。它将冻结 primary comparator、metric、capital、clock、cost 与 RETAIN/REJECT/INSUFFICIENT reducer，随后才可另行申请一次 bounded signal-value confirmation；本记录没有运行实验、读取新市场数据或调用 QuantConnect/provider，也不授权 paper/live/production/broker。只有 RETAIN 才允许把期权 paired comparison 提升为后继主问题。
+    coverage: SIGNAL_VALUE_PREREGISTRATION_DRAFT_OWNER_REVIEW_REQUIRED_NO_RUN_AUTHORITY
+    reader_summary_zh: 2550 是 evidence-first portfolio 选定的下一项经验研究 umbrella task，result-blind draft.1 已形成但仍等待项目负责人输入。草案 exact-bind 1,202-session first_layer_composer_v2 signal identity，提议用 fully-funded QQQ/零收益现金 candidate 对比 exposure-matched static QQQ/现金，以共同资本、时钟、5 bps 单边成本、净总收益差与 drawdown non-regression guard 机械归约 RETAIN/REJECT/INSUFFICIENT。当前只等待 Owner 按 exact file/canonical SHA 复核；没有读取市场结果、运行 DQ/confirmation/backtest 或调用 QuantConnect/provider，也不授权 paper/live/production/broker。只有 RETAIN 才允许把期权 paired comparison 提升为后继主问题。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

@@ -1,0 +1,207 @@
+schema_version: frozen_signal_value_confirmation_preregistration_policy.v1
+policy_id: frozen_signal_value_confirmation_preregistration_v1
+policy_version: 1.0.0-draft.1
+policy_status: DRAFT_OWNER_REVIEW_REQUIRED
+task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+owner_review:
+  decision_state: OWNER_REVIEW_REQUIRED
+  result_blind_draft: true
+  exact_file_and_canonical_sha_approval_required: true
+  approval_must_cover:
+    - SIGNAL_TO_EXPOSURE_MAPPING
+    - EXPOSURE_MATCHED_COMPARATOR
+    - FIVE_BPS_ONE_WAY_COST
+    - ZERO_EXCESS_RETURN_THRESHOLD
+    - ZERO_DRAWDOWN_REGRESSION_GUARD
+    - THREE_STATE_REDUCER_AND_STOP_RULES
+  execution_activation_allowed: false
+research_question:
+  question_id: SIGNAL_VALUE_FIRST_LAYER_COMPOSER_V2
+  question_zh: 冻结的第一层五态组合信号，在同资本、同事件时钟、同成本模型和结果不可见时登记的 exposure-matched comparator 下，是否提供值得保留的增量价值？
+  allowed_verdicts: [RETAIN, REJECT, INSUFFICIENT]
+  option_data_used: false
+  option_strategy_evaluated: false
+  new_trend_model_created: false
+signal_identity:
+  package_id: trading_2542i_operational_forecast_real_v3
+  package_root: outputs/qqq_options/signal_packages/trading_2542i_operational_forecast_real_v3
+  signal_index_sha256: d2af99e55d8f9a69a14d4479eb7ba1fd2aeed323c457ae10705a140c7a62ffda
+  materialization_receipt_sha256: f508581f98b1fa64763b8488568cf0631bfa260fea2b7aa55f9d7f5a0590a230
+  manifest_replay_receipt_sha256: 1106de7d6e9b63a20d9e68d7228267ea6777a84b2ea1de16215699d3fa7cd9bc
+  producer_id: first_layer_composer_v2
+  state_field: trend_state
+  action_field: signal
+  calendar: XNYS
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  expected_signal_sessions: 1202
+  expected_return_intervals: 1201
+  allowed_states: [constructive, defensive, neutral, risk_off, risk_on]
+  expected_actions: [FLAT, LONG_CALL]
+candidate_implementation:
+  implementation_id: FROZEN_SIGNAL_FULLY_FUNDED_QQQ_ZERO_RETURN_CASH
+  state_to_target_qqq_weight:
+    constructive: 1.0
+    defensive: 0.0
+    neutral: 0.0
+    risk_off: 0.0
+    risk_on: 1.0
+  residual_asset: ZERO_RETURN_CASH
+  leverage_allowed: false
+  short_allowed: false
+  options_allowed: false
+  parameter_search_allowed: false
+  mapping_change_after_outcome_allowed: false
+primary_comparator:
+  comparator_id: EXPOSURE_MATCHED_STATIC_QQQ_ZERO_RETURN_CASH
+  role: PRIMARY
+  target_qqq_weight_formula: LONG_EXPOSURE_RETURN_INTERVAL_COUNT_DIVIDED_BY_1201
+  formula_inputs_available_before_price_outcomes: true
+  allocation_rule: BUY_ONCE_AT_FIRST_EVALUABLE_CLOSE_HOLD_CONSTANT_SHARES_LIQUIDATE_AT_FINAL_CLOSE
+  residual_asset: ZERO_RETURN_CASH
+  outcome_dependent_fit_allowed: false
+  post_result_comparator_addition_allowed: false
+diagnostics:
+  - diagnostic_id: QQQ_BUY_AND_HOLD
+    verdict_role: CONTEXT_ONLY
+  - diagnostic_id: CALENDAR_YEAR_AND_PRE_2023_POST_2022_SLICES
+    verdict_role: CONCENTRATION_DISCLOSURE_ONLY
+accounting_and_clock:
+  initial_capital_usd: 100000
+  price_field: ADJUSTED_CLOSE
+  return_clock: EFFECTIVE_SESSION_CLOSE_TO_NEXT_XNYS_SESSION_CLOSE
+  signal_lag_sessions: 1
+  effective_session_rule: NEXT_VALID_US_EQUITY_SESSION
+  candidate_rebalances_only_on_target_change: true
+  comparator_rebalances_after_initial_allocation: false
+  terminal_liquidation_required: true
+  fractional_shares_allowed: true
+  negative_cash_allowed: false
+  missing_price_imputation_allowed: false
+  fill_forward_allowed: false
+cost_model:
+  model_id: FIXED_TRADED_NOTIONAL_BPS
+  one_way_cost_bps: 5.0
+  applies_to: [INITIAL_ALLOCATION, TARGET_CHANGE, TERMINAL_LIQUIDATION]
+  same_formula_for_candidate_and_comparator: true
+  financing_cost: ZERO_BECAUSE_BORROWING_PROHIBITED
+  idle_cash_return: 0.0
+primary_metric:
+  metric_id: NET_TOTAL_RETURN_DIFFERENCE_PERCENTAGE_POINTS
+  formula: CANDIDATE_NET_TOTAL_RETURN_MINUS_COMPARATOR_NET_TOTAL_RETURN
+  retain_threshold_strictly_greater_than: 0.0
+  missing_value_status: INSUFFICIENT
+falsification_guard:
+  guard_id: MAX_DRAWDOWN_MAGNITUDE_NON_REGRESSION
+  formula: CANDIDATE_MAX_DRAWDOWN_MAGNITUDE_MINUS_COMPARATOR_MAX_DRAWDOWN_MAGNITUDE
+  retain_threshold_less_than_or_equal_to: 0.0
+  missing_value_status: INSUFFICIENT
+verdict_reducer:
+  precedence: [INSUFFICIENT, REJECT, RETAIN]
+  insufficient_if_any:
+    - POLICY_OR_AUTHORITY_IDENTITY_MISMATCH
+    - SIGNAL_PACKAGE_OR_INDEX_IDENTITY_MISMATCH
+    - MANIFEST_REPLAY_NOT_PASS
+    - CANONICAL_DQ_PIT_NOT_PASS
+    - REQUESTED_OR_EVALUATED_RANGE_MISMATCH
+    - SIGNAL_SESSION_COUNT_NOT_1202
+    - RETURN_INTERVAL_COUNT_NOT_1201
+    - MISSING_DUPLICATE_UNKNOWN_OR_IMPUTED_INPUT
+    - ACCOUNTING_OR_COST_RECONCILIATION_NOT_PASS
+    - PRIMARY_METRIC_OR_DRAWDOWN_GUARD_MISSING
+    - INDEPENDENT_REPLAY_NOT_PASS
+  retain_if_all:
+    - PRIMARY_METRIC_STRICTLY_GREATER_THAN_ZERO
+    - MAX_DRAWDOWN_MAGNITUDE_DELTA_LESS_THAN_OR_EQUAL_TO_ZERO
+  reject_if_any:
+    - PRIMARY_METRIC_LESS_THAN_OR_EQUAL_TO_ZERO
+    - MAX_DRAWDOWN_MAGNITUDE_DELTA_GREATER_THAN_ZERO
+  stop_actions:
+    RETAIN: OPEN_OWNER_REVIEW_FOR_CONDITIONAL_OPTIONS_PAIRED_COMPARISON
+    REJECT: CLOSE_OPTIONS_IMPLEMENTATION_P0_ROUTE_NO_PARAMETER_RESCUE
+    INSUFFICIENT: COLLECT_ONLY_EXPLICITLY_IDENTIFIED_PROSPECTIVE_EVIDENCE
+evidence_role_boundary:
+  historical_window_role: REUSED_DEVELOPMENT_CONFIRMATION
+  historical_result_can_be_called_pristine_oos: false
+  prospective_start_rule: FIRST_XNYS_SESSION_AFTER_FINAL_POLICY_APPROVAL
+  prospective_sessions_may_only_confirm_frozen_rules: true
+  historical_period_deletion_allowed: false
+  post_result_threshold_change_allowed: false
+result_admission:
+  exact_policy_identity_required: true
+  exact_signal_identity_required: true
+  canonical_dq_pit_pass_required: true
+  manifest_replay_pass_required: true
+  independent_replay_pass_required: true
+  raw_market_payload_export_allowed: false
+  aggregate_result_only: true
+future_run_envelope:
+  status: SPECIFICATION_ONLY_NOT_AUTHORIZED
+  activation_requires_new_exact_owner_authorization: true
+  proposed_maxima_after_activation:
+    manifest_replays: 1
+    canonical_dq_runs: 1
+    local_signal_value_confirmations: 1
+    independent_replays: 1
+    data_downloads: 0
+    cache_mutations: 0
+    quantconnect_actions: 0
+    option_backtests: 0
+    external_provider_actions: 0
+    orders: 0
+    fills: 0
+    positions: 0
+  terminal_artifact: frozen_signal_value_confirmation_result.v1
+authorities:
+  - authority_id: EVIDENCE_FIRST_PORTFOLIO
+    path: config/research/evidence_first_research_portfolio_v1.yaml
+    file_sha256: 2df617dc247e509cb94799dda10e4c75ed1e8f1fc069a47466267125e39b8a05
+    semantic_facts:
+      - {dotted_path: primary_evidence_question.question_id, expected_json: '"SIGNAL_VALUE_FIRST_LAYER_COMPOSER_V2"'}
+      - {dotted_path: primary_evidence_question.current_verdict, expected_json: '"UNRESOLVED"'}
+      - {dotted_path: primary_evidence_question.next_experiment_id, expected_json: '"FROZEN_SIGNAL_VALUE_CONFIRMATION"'}
+      - {dotted_path: safety.empirical_run_authorized, expected_json: 'false'}
+  - authority_id: FIRST_LAYER_COMPOSER_V2_POLICY
+    path: config/research/first_layer_composer_v2.yaml
+    file_sha256: 24ec583e1afbf01c3ddb16b43eaef6b2479ea67be6df87a1508e831b1585ffc3
+    semantic_facts:
+      - {dotted_path: policy_id, expected_json: '"first_layer_composer_v2"'}
+      - {dotted_path: output_contract.forbidden_columns, expected_json: '["QQQ","SGOV","TQQQ","weight","target_weight","actual_weight"]'}
+      - {dotted_path: safety_boundary.production_allowed, expected_json: 'false'}
+  - authority_id: EXACT_SIGNAL_PACKAGE_ADMISSION
+    path: config/research/qc_qqq_options_exact_signal_package_admission_v1.yaml
+    file_sha256: 097ad9409e18311326b4d875c83c2f2a7cf30508092766c27cdd7ec35986d8da
+    semantic_facts:
+      - {dotted_path: research_window.expected_session_count, expected_json: '1202'}
+      - {dotted_path: producer.producer_id, expected_json: '"first_layer_composer_v2"'}
+      - {dotted_path: signal_mapping, expected_json: '{"constructive":"LONG_CALL","defensive":"FLAT","neutral":"FLAT","risk_off":"FLAT","risk_on":"LONG_CALL"}'}
+      - {dotted_path: safety.quantconnect_backtest_allowed, expected_json: 'false'}
+  - authority_id: EXACT_SIGNAL_EXECUTION_IDENTITY
+    path: config/research/qc_qqq_options_exact_signal_implementation_backtest_execution_v1.yaml
+    file_sha256: 0d48cc3080b2ce3730c1f97c0a8ae77969617b22eb60ccc5c32ca586bce548b1
+    semantic_facts:
+      - {dotted_path: signal_package.signal_index_sha256, expected_json: '"d2af99e55d8f9a69a14d4479eb7ba1fd2aeed323c457ae10705a140c7a62ffda"'}
+      - {dotted_path: signal_package.expected_session_count, expected_json: '1202'}
+      - {dotted_path: research_window.requested_start, expected_json: '"2021-02-22"'}
+      - {dotted_path: research_window.evaluated_end, expected_json: '"2025-12-02"'}
+safety:
+  policy_or_threshold_finally_approved: false
+  outcome_access_authorized: false
+  market_data_read_authorized: false
+  data_download_authorized: false
+  dq_authorized: false
+  local_signal_value_confirmation_authorized: false
+  backtest_authorized: false
+  quantconnect_authorized: false
+  external_provider_authorized: false
+  raw_option_export_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  orders: 0
+  fills: 0
+  positions: 0
+  production_effect: none
+  broker_action: none
