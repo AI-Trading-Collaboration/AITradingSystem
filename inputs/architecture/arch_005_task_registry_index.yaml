@@ -8,13 +8,13 @@ legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
 task_count: 1044
-active_task_count: 509
-completed_task_count: 535
+active_task_count: 508
+completed_task_count: 536
 fragment_count: 1044
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 9770ce9a505277e644077c441c2239a84d16d29e8b853bd07305c0bc54a45e35
+final_chain_sha256: 15c1063e112178e2826ef8e75da559bede73213aeff5b4cc8965e550fa011c7b
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 247d44a02a96b3540e6a9ce30a837fbf8caa4c46d4022fddafc524e5ab57baa8
 templates:
@@ -8375,24 +8375,24 @@ fragments:
   entry_sha256: 2c768c2d4a5f5b7d6de35933779482ef8c7cf4e23b7a1bfcd8a44b77be74877b
 - task_id: DEVX-012B_AUTOMATIC_WORKFLOW_HEALTH_PUBLICATION_CLOSEOUT_V1
   path: registry/development_tasks/99/99657dbcafab13dfa0c778b61840d9993f0d1ddf255f15826df03fb407138b5e.yaml
-  file_sha256: 655d87ea62f1b09c3f4a71ff81306ffd0e5e68a62444e358c0d708cba566b24d
-  fragment_checksum: 02d62b40be94cf660b5eec45a7d51887503113ed5fc8db3d75be1a216a37390b
-  partition: active
+  file_sha256: dfffa781375a1e8ecd116f0faec46c183bb4eede8f195e944fecc2736be63958
+  fragment_checksum: e1082c6fb08c81ac27a86a00d677ba89edc0920db841d9d4c1da44791790da66
+  partition: completed
   order: 1044
   previous_entry_sha256: 2c768c2d4a5f5b7d6de35933779482ef8c7cf4e23b7a1bfcd8a44b77be74877b
-  entry_sha256: 9770ce9a505277e644077c441c2239a84d16d29e8b853bd07305c0bc54a45e35
+  entry_sha256: 15c1063e112178e2826ef8e75da559bede73213aeff5b4cc8965e550fa011c7b
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 8a8d30833ecf2124ca279598ebb519b5386e8b74fa84c8409e2dacf98bac8187
-  byte_count: 1762482
-  row_count: 509
+  sha256: 25292b5d6d88986ecf3d0322af9414ded87a38dc0d414b3ded714fa8eefc25b3
+  byte_count: 1761804
+  row_count: 508
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
-  sha256: e2763e19775f2b303796d0825d7e15d2baca81ec9734e2e083e59e27f75b6d76
-  byte_count: 1132902
-  row_count: 535
+  sha256: 4dbc5897946159b6131a03fee0bd6f980afa47e0b3072292711cc19040aa1f50
+  byte_count: 1133601
+  row_count: 536
   generated_do_not_edit: true
 governance_cycles:
 - cycle_id: arch-005-s5-cycle-1-final-import-cutover
@@ -10922,7 +10922,14 @@ governance_cycles:
   change_id: devx-012b-closeout-registration-20260831-v6
   event_count: 1
   production_effect: none
-governance_cycle_count: 361
+- cycle_id: arch-005-s5-cycle-362
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: DEVX-012B_AUTOMATIC_WORKFLOW_HEALTH_PUBLICATION_CLOSEOUT_V1
+  change_id: devx-012b-workflow-health-publication-closeout-20260831-v8
+  event_count: 2
+  production_effect: none
+governance_cycle_count: 362
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -10936,4 +10943,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 089329b4e11bb4bb742cd480b5b1d3c3f345403dbb7b3ecf8aed14a53f97cda1
+index_checksum: 45ceb7e93b2f7774216c13ac83eca94efb6d02403274a8b39d46c4ef72f03b68

@@ -13,14 +13,13 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Codex integration coordinator：完成 formal/Full、main/origin publish、existing
-    automation update 与 cleanup
+  next_owner: Project owner：复核自动周报中的 review-only optimization candidates
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: DEVX-012 implementation candidate 已完成；需按
-    active closeout task 正确通过 integration/CLOSEOUT preflight
+  unstructured_legacy_blocker_or_next_step: 无 implementation blocker；正式证据、main/origin
+    publication 与 automation state 由 publication transaction v8 closeout receipt 绑定
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: DEVX-012 candidate formal tiers 与 Full PASS；local main=origin/main；aitradingsystem-pit
@@ -58,22 +57,49 @@ events:
   - change:devx-012b-closeout-registration-20260831-v6
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-475394fcaaa4c5cd0911fdf7a411eff7
+- schema_version: task_event.v1
+  task_id: DEVX-012B_AUTOMATIC_WORKFLOW_HEALTH_PUBLICATION_CLOSEOUT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-31T02:30:28.6743660Z'
+  actor: integration-coordinator
+  change_id: devx-012b-workflow-health-publication-closeout-20260831-v8
+  lane_id: null
+  base_commit: f7ac5092967f6054afc58005145c6ff4576dacbb
+  previous_state_event_id: task-event-475394fcaaa4c5cd0911fdf7a411eff7
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: Project owner：复核自动周报中的 review-only optimization candidates
+    blocker_or_next_step: 无 implementation blocker；正式证据、main/origin publication 与
+      automation state 由 publication transaction v8 closeout receipt 绑定
+    acceptance_criteria: DEVX-012 candidate formal tiers 与 Full PASS；local main=origin/main；aitradingsystem-pit
+      保持 ACTIVE 且只新增 weekly post-stage；branches cleanup
+    notes: Integration preflight PASS on active closeout task; terminal projection
+      is committed on the final candidate and remains subject to fail-closed formal
+      validation/publication transaction v8.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-012b-workflow-health-publication-closeout-20260831-v8
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a829138f5f358f2dcfc823517f98470c
 projection:
   legacy_first_eight_cells:
   - DEVX-012B_AUTOMATIC_WORKFLOW_HEALTH_PUBLICATION_CLOSEOUT_V1
   - Developer experience / DEVX-012 governed publication closeout
   - P1
-  - IN_PROGRESS
-  - Codex integration coordinator：完成 formal/Full、main/origin publish、existing automation
-    update 与 cleanup
-  - DEVX-012 implementation candidate 已完成；需按 active closeout task 正确通过 integration/CLOSEOUT
-    preflight
+  - DONE
+  - Project owner：复核自动周报中的 review-only optimization candidates
+  - 无 implementation blocker；正式证据、main/origin publication 与 automation state 由 publication
+    transaction v8 closeout receipt 绑定
   - DEVX-012 candidate formal tiers 与 Full PASS；local main=origin/main；aitradingsystem-pit
     保持 ACTIVE 且只新增 weekly post-stage；branches cleanup
-  - 2026-08-31：因 DEVX-012 本体已 terminal，创建 append-only closeout task 承载正式集成与自动任务更新，不重写父任务历史。
+  - Integration preflight PASS on active closeout task; terminal projection is committed
+    on the final candidate and remains subject to fail-closed formal validation/publication
+    transaction v8.
   docs_links: []
-  terminal: false
-  canonical_row_sha256: 7a6c066e82fe0c6bb0f45f2d2145e208b37d895d62f6f7a083d96f57db03a636
-last_event_id: task-event-475394fcaaa4c5cd0911fdf7a411eff7
+  terminal: true
+  canonical_row_sha256: ee0a25bb4db1c8bdf79031973f97ff1df7531546775e04e4d20176de3b9c8600
+last_event_id: task-event-a829138f5f358f2dcfc823517f98470c
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 02d62b40be94cf660b5eec45a7d51887503113ed5fc8db3d75be1a216a37390b
+fragment_checksum: e1082c6fb08c81ac27a86a00d677ba89edc0920db841d9d4c1da44791790da66
