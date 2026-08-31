@@ -1,0 +1,77 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-012C_FORMAL_VALIDATION_RATCHET_REMEDIATION_V1
+  task_id_sha256: 96027ff6e1d75b1ad7ca49514c5da4bc59cb491dfc587c720c4d90d1251dde5d
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-012C_FORMAL_VALIDATION_RATCHET_REMEDIATION_V1
+  title: null
+  domain: Developer experience / DEVX-012 formal validation ratchet remediation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Codex integration coordinator：修正两个精确 architecture ratchet、重建权威并重跑 formal/Full
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 'Parent architecture failure artifact:
+    outputs/validation_runtime/devx012b_architecture_20260831/test_runtime_summary.json'
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: task_count ratchet=1045 after this task registration；latest compatibility
+      section=DEVX-012；Architecture/Contract/Integration/Reproducibility/Full PASS；publish/automation
+      closeout
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-012C_FORMAL_VALIDATION_RATCHET_REMEDIATION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-31T02:45:43.7562598Z'
+  actor: integration-coordinator
+  change_id: devx-012c-formal-ratchet-registration-20260831-v9
+  lane_id: null
+  base_commit: 0f8f859c935e4e1a26fa9f9455984c2157ae4f38
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-012C_FORMAL_VALIDATION_RATCHET_REMEDIATION_V1
+    - Developer experience / DEVX-012 formal validation ratchet remediation
+    - P1
+    - IN_PROGRESS
+    - Codex integration coordinator：修正两个精确 architecture ratchet、重建权威并重跑 formal/Full
+    - 'Parent architecture failure artifact: outputs/validation_runtime/devx012b_architecture_20260831/test_runtime_summary.json'
+    - task_count ratchet=1045 after this task registration；latest compatibility section=DEVX-012；Architecture/Contract/Integration/Reproducibility/Full
+      PASS；publish/automation closeout
+    - 2026-08-31：仅修复 canonical task count 与 latest section 两个断言；不放宽 gate，不改变 workflow-health
+      行为。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-012c-formal-ratchet-registration-20260831-v9
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fd53b95d6d3437f66c2abd0a01b47109
+projection:
+  legacy_first_eight_cells:
+  - DEVX-012C_FORMAL_VALIDATION_RATCHET_REMEDIATION_V1
+  - Developer experience / DEVX-012 formal validation ratchet remediation
+  - P1
+  - IN_PROGRESS
+  - Codex integration coordinator：修正两个精确 architecture ratchet、重建权威并重跑 formal/Full
+  - 'Parent architecture failure artifact: outputs/validation_runtime/devx012b_architecture_20260831/test_runtime_summary.json'
+  - task_count ratchet=1045 after this task registration；latest compatibility section=DEVX-012；Architecture/Contract/Integration/Reproducibility/Full
+    PASS；publish/automation closeout
+  - 2026-08-31：仅修复 canonical task count 与 latest section 两个断言；不放宽 gate，不改变 workflow-health
+    行为。
+  docs_links: []
+  terminal: false
+  canonical_row_sha256: c705c0644b7aa22d524598c345fdf3a7c17dbc56755bd734d14b83b1fc029354
+last_event_id: task-event-fd53b95d6d3437f66c2abd0a01b47109
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: dd451f98f6fe4d16511b8e8aef755ac222a33fc4633a9c7894242faa5cb12204
