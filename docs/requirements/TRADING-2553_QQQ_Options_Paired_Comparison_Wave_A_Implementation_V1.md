@@ -170,3 +170,14 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   local/origin `main`。最终 transaction `trading-2553-wave-a-final-20260901-v3` 从该 exact HEAD
   获取 authority，canonical task 已转为 `BASELINE_DONE`。这表示 fixture baseline 完成，不表示真实 paired
   evidence、DQ、QuantConnect run 或策略结论通过。
+- 2026-09-01：最新 main 上的 canonical task 登记、task-count ratchet、architecture manifest 与
+  compatibility current-hash authority 已完成串行修复。第一次正式 Full 在候选
+  `aa977ee0ef34599bff88786cb96b3becdb793093` 得到 `10074 passed / 27 failed / 6 skipped`；
+  13 项为 Atlas 尚未按最终 exact commit 重建，另外 14 项为隔离 worktree 缺少两个既有聚合验证
+  fixture，并非 Wave A comparator/reducer 逻辑失败。
+- 为完成 clean-worktree Full，仅允许从共享本地 checkout 逐字节复制以下两个 ignored、aggregate-only
+  fixture 到本任务 worktree 的相同路径：
+  `outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_dq_gate.json` 与
+  `outputs/research_trends/operational_forecast/trading_2542i_real_v3/real_materialization_receipt.json`。
+  目的仅为复现既有测试依赖；不读取或复制 raw market/options payload，不写 cache，不用于 TRADING-2553
+  结论。退出条件为 final Full 完成且 summary 已落入 canonical validation runtime；随后删除这两个临时副本。

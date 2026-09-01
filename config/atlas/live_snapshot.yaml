@@ -1,15 +1,15 @@
 schema_version: atlas_live_snapshot_policy.v1
 policy_id: atlas_live_canonical_snapshot_v1
-policy_version: 1.12.0
+policy_version: 1.13.0
 status: REVIEWED_FAIL_CLOSED_LIVE_PROJECTION
 owner: Atlas strategy research publishing coordinator
 historical_source_registry_path: config/atlas/source_registry.yaml
 page_effectiveness_policy_path: config/atlas/page_effectiveness.yaml
-classified_through_task_id: TRADING-2552_QQQ_OPTIONS_CONDITIONAL_PAIRED_COMPARISON_OWNER_REVIEW_V1
-current_mainline_task_id: TRADING-2552_QQQ_OPTIONS_CONDITIONAL_PAIRED_COMPARISON_OWNER_REVIEW_V1
-largest_blocker_task_id: TRADING-2552_QQQ_OPTIONS_CONDITIONAL_PAIRED_COMPARISON_OWNER_REVIEW_V1
-next_legal_action_task_id: TRADING-2552_QQQ_OPTIONS_CONDITIONAL_PAIRED_COMPARISON_OWNER_REVIEW_V1
-status_object_zh: 当前研究组合维持 evidence-first。TRADING-2550 已证明冻结的 1,202-session first_layer_composer_v2 五态信号相对 exposure-matched static QQQ/现金 comparator 值得保留，但不证明期权实现价值。TRADING-2552 已完成 conditional options paired-comparison Owner review：现有趋势数据与 exact signal package 足够；旧 QuantConnect one-share QQQ quote ledger 不能回答冻结的 USD 100,000 common-capital primary estimand。当前 blocker 是 fully-funded virtual QQQ/cash comparator、export-safe aggregate、local admission/independent replay、exact manifest 与独立 QuantConnect run authority尚未分波实现或批准，不是趋势或期权市场数据缺口。下一合法动作仅为 Owner 另行授权 non-executable Wave A implementation；当前不授权 exporter、manifest、DQ、QuantConnect save/build/backtest/retry、options/provider、raw option export、paper/live/production/broker 或任何交易动作。
+classified_through_task_id: TRADING-2553_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_A_IMPLEMENTATION_V1
+current_mainline_task_id: TRADING-2553_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_A_IMPLEMENTATION_V1
+largest_blocker_task_id: TRADING-2553_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_A_IMPLEMENTATION_V1
+next_legal_action_task_id: TRADING-2553_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_A_IMPLEMENTATION_V1
+status_object_zh: 当前研究组合维持 evidence-first。TRADING-2550 已证明冻结的 1,202-session first_layer_composer_v2 五态信号相对 exposure-matched static QQQ/现金 comparator 值得保留，但不证明期权实现价值。TRADING-2553 已完成 non-executable Wave A fixture baseline：fully-funded virtual QQQ/cash Decimal ledger、exact 101-field aggregate-only admission、deterministic QC helper fragment 与 16-axis independent replay/reducer 均通过合成验证；没有读取真实市场或 signal package，没有生成 manifest，也没有运行 DQ 或 QuantConnect。当前 blocker 已收窄为尚未冻结的 underlying comparator fee semantics、exact Wave B run package/manifest 与独立 bounded QuantConnect run authority，不是趋势或期权市场数据缺口。当前 paired outcome 仍为 INSUFFICIENT_PLATFORM_EVIDENCE；不授权真实数据读取、exporter/manifest/DQ、QuantConnect save/build/backtest/retry、options/provider、raw option export、paper/live/production/broker 或任何交易动作。
 evidence_evaluated_at: '2026-09-01T00:00:00+00:00'
 task_status_mapping:
   DONE: PASS

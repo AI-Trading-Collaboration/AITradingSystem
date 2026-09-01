@@ -70,9 +70,11 @@ def test_live_snapshot_is_not_the_old_fixture_only_title_and_summary_mutation() 
         generated_at=historical.generated_at + timedelta(days=1),
         sources=historical.sources,
         nodes=tuple(
-            replace(item, summary=item.summary + " 已增加引用式问答入口。")
-            if item.node_id == "program-strategy-research"
-            else item
+            (
+                replace(item, summary=item.summary + " 已增加引用式问答入口。")
+                if item.node_id == "program-strategy-research"
+                else item
+            )
             for item in historical.nodes
         ),
         edges=historical.edges,
@@ -94,7 +96,7 @@ def test_unclassified_successor_is_detected_before_live_projection() -> None:
     without_latest = replace(policy, task_sources=policy.task_sources[:-1])
 
     assert unclassified_page_successors(registry, without_latest) == (
-        "TRADING-2552_QQQ_OPTIONS_CONDITIONAL_PAIRED_COMPARISON_OWNER_REVIEW_V1",
+        "TRADING-2553_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_A_IMPLEMENTATION_V1",
     )
 
 
@@ -106,19 +108,21 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2552_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2553_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at == "2026-09-01T00:00:00+00:00"
     assert bundle.status_object_zh == (
         "当前研究组合维持 evidence-first。TRADING-2550 已证明冻结的 1,202-session "
-        "first_layer_composer_v2 五态信号相对 exposure-matched static QQQ/现金 comparator 值得保留，"
-        "但不证明期权实现价值。TRADING-2552 已完成 conditional options paired-comparison Owner review："
-        "现有趋势数据与 exact signal package 足够；旧 QuantConnect one-share QQQ quote ledger 不能回答冻结的 "
-        "USD 100,000 common-capital primary estimand。当前 blocker 是 fully-funded virtual QQQ/cash "
-        "comparator、export-safe aggregate、local admission/independent replay、exact manifest 与独立 "
-        "QuantConnect run authority尚未分波实现或批准，不是趋势或期权市场数据缺口。下一合法动作仅为 Owner "
-        "另行授权 non-executable Wave A implementation；当前不授权 exporter、manifest、DQ、QuantConnect "
-        "save/build/backtest/retry、options/provider、raw option export、paper/live/production/broker 或任何交易动作。"
+        "first_layer_composer_v2 五态信号相对 exposure-matched static QQQ/现金 comparator "
+        "值得保留，但不证明期权实现价值。TRADING-2553 已完成 non-executable Wave A fixture "
+        "baseline：fully-funded virtual QQQ/cash Decimal ledger、exact 101-field aggregate-only "
+        "admission、deterministic QC helper fragment 与 16-axis independent replay/reducer "
+        "均通过合成验证；没有读取真实市场或 signal package，没有生成 manifest，也没有运行 DQ 或 "
+        "QuantConnect。当前 blocker 已收窄为尚未冻结的 underlying comparator fee semantics、exact "
+        "Wave B run package/manifest 与独立 bounded QuantConnect run authority，不是趋势或期权市场"
+        "数据缺口。当前 paired outcome 仍为 INSUFFICIENT_PLATFORM_EVIDENCE；不授权真实数据读取、"
+        "exporter/manifest/DQ、QuantConnect save/build/backtest/retry、options/provider、"
+        "raw option export、paper/live/production/broker 或任何交易动作。"
     )
 
 
@@ -157,9 +161,11 @@ def test_reader_decision_projection_rejects_stale_result_admission_state() -> No
     manifest = build_page_effectiveness_manifest(repository_root=ROOT)
     policy = load_live_snapshot_policy(repository_root=ROOT)
     stale_status = tuple(
-        replace(item, task_status="BLOCKED_OWNER_INPUT")
-        if item.task_id.startswith("TRADING-2542I_")
-        else item
+        (
+            replace(item, task_status="BLOCKED_OWNER_INPUT")
+            if item.task_id.startswith("TRADING-2542I_")
+            else item
+        )
         for item in manifest.task_coverage
     )
     with pytest.raises(AtlasLiveSnapshotError, match="RESULT_ADMISSION_TASK_NOT_DONE"):
@@ -170,12 +176,14 @@ def test_reader_decision_projection_rejects_stale_result_admission_state() -> No
         )
 
     stale_coverage = tuple(
-        replace(
-            item,
-            coverage="DISCLOSED_REAL_DQ_AND_EXACT_PACKAGE_REPLAY_PASS_QC_AUTHORIZED_NOT_RUN",
+        (
+            replace(
+                item,
+                coverage="DISCLOSED_REAL_DQ_AND_EXACT_PACKAGE_REPLAY_PASS_QC_AUTHORIZED_NOT_RUN",
+            )
+            if item.task_id.startswith("TRADING-2542I_")
+            else item
         )
-        if item.task_id.startswith("TRADING-2542I_")
-        else item
         for item in manifest.task_coverage
     )
     with pytest.raises(AtlasLiveSnapshotError, match="RESULT_ADMISSION_COVERAGE_STALE"):

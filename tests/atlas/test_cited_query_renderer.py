@@ -107,12 +107,14 @@ def _showcase(
         page_engineering_status=page_engineering_status,
         page_engineering_evidence_refs=(
             (
-                "docs/requirements/"
-                "TRADING-2508_Atlas_Engineering_Research_Acceptance_Progress_Matrix_V1.md"
-            ),
-        )
-        if page_engineering_status is PageAcceptanceStatus.PASS
-        else (),
+                (
+                    "docs/requirements/"
+                    "TRADING-2508_Atlas_Engineering_Research_Acceptance_Progress_Matrix_V1.md"
+                ),
+            )
+            if page_engineering_status is PageAcceptanceStatus.PASS
+            else ()
+        ),
         page_reader_comprehension_review=page_reader_comprehension_review,
     )
 
@@ -296,7 +298,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="82"' in html
+    assert 'data-task-coverage-count="83"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html

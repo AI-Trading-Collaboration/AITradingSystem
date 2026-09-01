@@ -10114,6 +10114,39 @@ Atlas live snapshot/page-effectiveness 同步把 TRADING-2548 分类为 exact-fr
 不再显示“等待 Owner exact-freeze”的陈旧说明。该投影不生成投资结论，也不授予 exporter、DQ 或
 QuantConnect 权限。
 
+## TRADING-2553 paired comparison Wave A fixture-only implementation
+
+TRADING-2553 把 Owner 已批准的 Wave A 收敛为纯本地、不可执行的工程 baseline，不改变趋势信号、
+37-slot option policy、冻结 estimand 或既有 QuantConnect aggregate。它只在 synthetic/golden/negative
+fixtures 上实现 fully-funded QQQ/cash comparator、精确 aggregate 接纳、QC helper fragment 与独立
+16-axis replay/reducer；不会读取真实市场或 signal package，也不会生成 manifest 或调用 QuantConnect。
+
+```text
+exact-frozen paired contract + freeze admission
+  -> pure Decimal fully-funded QQQ/cash virtual ledger
+       LONG_CALL event -> integer QQQ shares at ask, explicit fee, cash >= 0
+       FLAT event      -> close virtual shares at bid, explicit fee
+       no eligible option contract -> comparator signal exposure unchanged
+       chronological observations -> equity / drawdown / capital-time aggregates
+  -> exact 101-field export-safe aggregate admission
+       exact field set + canonical JSON/SHA + authority identity replay
+       nested raw chain/row/SID/contract quote-history keys -> reject
+  -> deterministic LF-only QuantConnect comparator helper fragment
+       no runnable main.py / project target / save / build / dispatch surface
+  -> independent ReplayContext evidence
+       1202 sessions + 37 slots + five fixed partitions + platform/accounting proofs
+  -> exact 16 falsification axes
+       INVALID > FAIL > INSUFFICIENT > PASS
+  -x-> real data / cache mutation / DQ / manifest / QuantConnect / backtest / retry
+  -x-> raw option export / Object Store / provider / public share / trading actions
+```
+
+underlying QQQ fee rate 没有在已冻结 paired contract 中定义，因此 Wave A 不暗设真实运行 fee：每个
+fixture event 必须明示非负 fee。Wave B 在任何 exact manifest 或真实平台动作前，仍须单独冻结
+QuantConnect comparator fee semantics、exact run package 与 bounded authority。故 Wave A 的 synthetic
+PASS 只证明本地实现和 fail-closed 边界可重放，不是 platform evidence，也不改变当前 paired outcome=
+`INSUFFICIENT_PLATFORM_EVIDENCE`；外部动作、backtest、orders/fills/positions 均保持 `0`。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个
