@@ -12685,9 +12685,9 @@
       "target_id": "artifact_catalog"
     },
     {
-      "coverage_bytes": 2327802,
+      "coverage_bytes": 2328913,
       "coverage_percent": 100,
-      "entry_count": 1177,
+      "entry_count": 1178,
       "entry_order": [
         {
           "byte_count": 28,
@@ -12868,6 +12868,12 @@
           "entry_id": "system_flow:block:4adb7c3d0eef54b1ecc9a7ce7ca11c442a7786f3507ca9b6ea9e0c75858dd23d",
           "partition": "0a",
           "raw_sha256": "4adb7c3d0eef54b1ecc9a7ce7ca11c442a7786f3507ca9b6ea9e0c75858dd23d"
+        },
+        {
+          "byte_count": 1111,
+          "entry_id": "system_flow:block:3bc050333ceda5fcd24d55411b01199dfbb509973eaadf3aec8a99054a96b037",
+          "partition": "3b",
+          "raw_sha256": "3bc050333ceda5fcd24d55411b01199dfbb509973eaadf3aec8a99054a96b037"
         },
         {
           "byte_count": 413,
@@ -19752,8 +19758,8 @@
           "raw_sha256": "c7e1653dccf5d99f0b32424f4afa82c5c7817fd3e5dbb2d41cd2c55b9fc92a0d"
         }
       ],
-      "entry_order_sha256": "f1dafa76e5aab0b2122e214225ca2b26d2e91c382222f2625abb530bba61e127",
-      "final_chain_sha256": "5f16737d5f52d30eca635d277693ea446592da35a1b0a24e07ac3070300e5bb0",
+      "entry_order_sha256": "6c87bd2fd85e5f2657d6319fb5cbd73fd2adf524d98318129f36961ca21efd1f",
+      "final_chain_sha256": "c051312f6cb56640db75d99cc6f4bb3bcf6e3fb2925647ab3ddb308969374edc",
       "format": "MARKDOWN",
       "fragment_count": 64,
       "fragments": [
@@ -20230,52 +20236,52 @@
           "previous_fragment_sha256": "3ae6359eb4a4150e5678322d699cf03b682dc0c7f91e00198ef49d8021426511"
         },
         {
-          "chain_sha256": "15f192a3a78caa37c18fdda67a28945a44b1df0e50c229ffe3c8751ebccfe445",
-          "entry_count": 13,
-          "fragment_path": "registry/report_catalog_flow_authority/fragments/system_flow/3b/2e1d2deb8925c9e794d64e4a456b4409f76144ff92a5300e0e9c3b1c6496aeed.json",
-          "fragment_sha256": "2e1d2deb8925c9e794d64e4a456b4409f76144ff92a5300e0e9c3b1c6496aeed",
+          "chain_sha256": "279ca6eda498f3f51b372c22216b67a2246f3fc9471e9c6495c0f716e4d696bf",
+          "entry_count": 14,
+          "fragment_path": "registry/report_catalog_flow_authority/fragments/system_flow/3b/e14f3e6a538ec751c78e80fbbc22486ad7db46a22222011c63c8f3352b301e2f.json",
+          "fragment_sha256": "e14f3e6a538ec751c78e80fbbc22486ad7db46a22222011c63c8f3352b301e2f",
           "partition": "3b",
           "previous_fragment_sha256": "36bf654c4198de9c3129515546aabf804b9c4ec39fa8b68a1652e8ec72cf9bbb"
         },
         {
-          "chain_sha256": "1adad6553fc25c33aa57c3d9708e39326c51c9db5280e8260215a18ac26e2ddb",
+          "chain_sha256": "7ff97ab1da32b9f733ccd1f84c25f401c7727a0ca145ef8285b614ef4ffb3305",
           "entry_count": 12,
           "fragment_path": "registry/report_catalog_flow_authority/fragments/system_flow/3c/3b06c397fe899fd9561ba246d596112e2a1b767d75e0039a2f23fc6b495ca22b.json",
           "fragment_sha256": "3b06c397fe899fd9561ba246d596112e2a1b767d75e0039a2f23fc6b495ca22b",
           "partition": "3c",
-          "previous_fragment_sha256": "15f192a3a78caa37c18fdda67a28945a44b1df0e50c229ffe3c8751ebccfe445"
+          "previous_fragment_sha256": "279ca6eda498f3f51b372c22216b67a2246f3fc9471e9c6495c0f716e4d696bf"
         },
         {
-          "chain_sha256": "968b322f7efdf35f42a5126cf4f5a6e599d851ff82939b2c6c965116d0c5ff14",
+          "chain_sha256": "bd91915fdbc03c9f6f221be1d8d7bda653c8e800622618f3c068a3c0f5f050d1",
           "entry_count": 25,
           "fragment_path": "registry/report_catalog_flow_authority/fragments/system_flow/3d/02db71d8ad8005fdb6edc199a80ff9cb29d49356987cd6ec281a00ec3bb2d159.json",
           "fragment_sha256": "02db71d8ad8005fdb6edc199a80ff9cb29d49356987cd6ec281a00ec3bb2d159",
           "partition": "3d",
-          "previous_fragment_sha256": "1adad6553fc25c33aa57c3d9708e39326c51c9db5280e8260215a18ac26e2ddb"
+          "previous_fragment_sha256": "7ff97ab1da32b9f733ccd1f84c25f401c7727a0ca145ef8285b614ef4ffb3305"
         },
         {
-          "chain_sha256": "b1265b289d6bada7f67c50a7ba14387c530a58d09b3f989170e50e78d7e45ebc",
+          "chain_sha256": "694fdd634f4a67d9bb421011a572ad30f5c65bcd6e9c96f1c2171dc413ab6fc2",
           "entry_count": 19,
           "fragment_path": "registry/report_catalog_flow_authority/fragments/system_flow/3e/0a20f5a0bd4727825d4255f6d991c5cfb50d022700bfc2e88757a48fb36430f9.json",
           "fragment_sha256": "0a20f5a0bd4727825d4255f6d991c5cfb50d022700bfc2e88757a48fb36430f9",
           "partition": "3e",
-          "previous_fragment_sha256": "968b322f7efdf35f42a5126cf4f5a6e599d851ff82939b2c6c965116d0c5ff14"
+          "previous_fragment_sha256": "bd91915fdbc03c9f6f221be1d8d7bda653c8e800622618f3c068a3c0f5f050d1"
         },
         {
-          "chain_sha256": "5f16737d5f52d30eca635d277693ea446592da35a1b0a24e07ac3070300e5bb0",
+          "chain_sha256": "c051312f6cb56640db75d99cc6f4bb3bcf6e3fb2925647ab3ddb308969374edc",
           "entry_count": 18,
           "fragment_path": "registry/report_catalog_flow_authority/fragments/system_flow/3f/76bf4a7ebb6c0864736a634d9978b9b926f5515dc7c5c280da1799cc92dc4f5b.json",
           "fragment_sha256": "76bf4a7ebb6c0864736a634d9978b9b926f5515dc7c5c280da1799cc92dc4f5b",
           "partition": "3f",
-          "previous_fragment_sha256": "b1265b289d6bada7f67c50a7ba14387c530a58d09b3f989170e50e78d7e45ebc"
+          "previous_fragment_sha256": "694fdd634f4a67d9bb421011a572ad30f5c65bcd6e9c96f1c2171dc413ab6fc2"
         }
       ],
       "path": "docs/system_flow.md",
       "source_seal": {
-        "byte_count": 2327802,
-        "file_sha256": "d1bc2a9e77260756186e6f8dfdc80ac427269dd1b24779938b7849db4e63f287",
-        "git_blob": "0b3f5f6e3e557b926d21349b44907bf9e63a82bb",
-        "lf_sha256": "d1bc2a9e77260756186e6f8dfdc80ac427269dd1b24779938b7849db4e63f287"
+        "byte_count": 2328913,
+        "file_sha256": "f777cef82e7deede672c81fa33402ca2c443e67dd6c2d0a4d988642dff0342a5",
+        "git_blob": "25365d7f36088d46a818bbb4961a2da3f08bf161",
+        "lf_sha256": "f777cef82e7deede672c81fa33402ca2c443e67dd6c2d0a4d988642dff0342a5"
       },
       "splitter": "EXACT_BLANK_LINE_BLOCKS_V1",
       "target_id": "system_flow"
