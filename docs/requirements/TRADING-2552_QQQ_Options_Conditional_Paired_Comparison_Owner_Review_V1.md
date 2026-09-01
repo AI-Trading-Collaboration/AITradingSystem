@@ -4,7 +4,7 @@
 
 - stable task id：`TRADING-2552_QQQ_OPTIONS_CONDITIONAL_PAIRED_COMPARISON_OWNER_REVIEW_V1`
 - priority：`P0`
-- status：`IN_PROGRESS`
+- status：`BASELINE_DONE`
 - task class：`NON_EXECUTABLE_OWNER_REVIEW`
 - production effect：`none`
 - broker action：`none`
