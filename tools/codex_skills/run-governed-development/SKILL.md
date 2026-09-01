@@ -88,6 +88,11 @@ ownership rules, integration topology, validation, and cleanup.
   `--publication-transaction` to task-source, validation, `INTEGRATION`, and
   `CLOSEOUT` preflight commands. The transaction reuses the S4D
   `FileExecutionLeaseStore`; do not add or emulate a second lock.
+- For a reviewed base-drift plan, acquire the transaction from the clean exact
+  latest-main coordinator candidate base. `INTEGRATION` preflight binds the
+  plan's frozen lane identity separately from the transaction's latest-main
+  candidate identity; never rewrite the plan's lane head to make those values
+  appear equal.
 
 ## Integrate and Close
 

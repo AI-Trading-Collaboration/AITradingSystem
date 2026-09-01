@@ -1,0 +1,112 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-010_BASE_DRIFT_PUBLICATION_PREFLIGHT_BINDING
+  task_id_sha256: ed9b5c41aebdc727869718a0dadc86a30c8c7a370111c39fb8383ca1a590ee86
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-010_BASE_DRIFT_PUBLICATION_PREFLIGHT_BINDING
+  title: null
+  domain: Base drift publication/preflight exact binding
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: System validation / integration coordinator
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Implementation and focused validation
+    are complete; publish only if generated authorities and all formal tiers including
+    Full pass on the exact candidate.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: INTEGRATION preflight independently binds the frozen plan lane, exact latest-main
+      transaction candidate base, plan id/SHA and reviewed reconciliation; mismatch/tamper/serial/phase
+      gates fail closed; canonical/installed parity and final formal validation pass.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-010_BASE_DRIFT_PUBLICATION_PREFLIGHT_BINDING
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-01T06:00:59.2419627+00:00'
+  actor: integration-coordinator
+  change_id: devx-010-register-20260901-v1
+  lane_id: null
+  base_commit: a6a0343b8afc975cbd17d39c63b75becead316b3
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-010_BASE_DRIFT_PUBLICATION_PREFLIGHT_BINDING
+    - Base drift publication/preflight exact binding
+    - P0
+    - IN_PROGRESS
+    - Codex / integration coordinator
+    - Fix the governed control-plane contradiction that prevents a reviewed frozen-lane
+      base-drift plan from binding to a latest-main publication candidate.
+    - INTEGRATION preflight must independently bind frozen lane identity, latest-main
+      candidate base, exact transaction plan id/SHA and reviewed reconciliation; drift/tamper/serial/phase
+      gates remain fail closed.
+    - 'Supporting requirement: docs/requirements/DEVX-010_Base_Drift_Publication_Preflight_Binding_V1.md.
+      production_effect=none; broker_action=none.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-010-register-20260901-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-25c790cb84a99a214389a6f8d63cef27
+- schema_version: task_event.v1
+  task_id: DEVX-010_BASE_DRIFT_PUBLICATION_PREFLIGHT_BINDING
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-01T06:06:40.8302588+00:00'
+  actor: integration-coordinator
+  change_id: devx-010-implementation-complete-20260901-v1
+  lane_id: null
+  base_commit: a6a0343b8afc975cbd17d39c63b75becead316b3
+  previous_state_event_id: task-event-25c790cb84a99a214389a6f8d63cef27
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: System validation / integration coordinator
+    blocker_or_next_step: Implementation and focused validation are complete; publish
+      only if generated authorities and all formal tiers including Full pass on the
+      exact candidate.
+    acceptance_criteria: INTEGRATION preflight independently binds the frozen plan
+      lane, exact latest-main transaction candidate base, plan id/SHA and reviewed
+      reconciliation; mismatch/tamper/serial/phase gates fail closed; canonical/installed
+      parity and final formal validation pass.
+    notes: Canonical and installed skill bytes are identical across 5 tracked files;
+      skill quick validation PASS; ruff PASS; focused pytest-xdist 46 passed; production_effect=none;
+      broker_action=none.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-010-implementation-complete-20260901-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-94e145bb98af887a8fe5d220015254bb
+projection:
+  legacy_first_eight_cells:
+  - DEVX-010_BASE_DRIFT_PUBLICATION_PREFLIGHT_BINDING
+  - Base drift publication/preflight exact binding
+  - P0
+  - BASELINE_DONE
+  - System validation / integration coordinator
+  - Implementation and focused validation are complete; publish only if generated
+    authorities and all formal tiers including Full pass on the exact candidate.
+  - INTEGRATION preflight independently binds the frozen plan lane, exact latest-main
+    transaction candidate base, plan id/SHA and reviewed reconciliation; mismatch/tamper/serial/phase
+    gates fail closed; canonical/installed parity and final formal validation pass.
+  - Canonical and installed skill bytes are identical across 5 tracked files; skill
+    quick validation PASS; ruff PASS; focused pytest-xdist 46 passed; production_effect=none;
+    broker_action=none.
+  docs_links: []
+  terminal: false
+  canonical_row_sha256: cd5aa3dca314bfef84f71922a6246b3b196e8a956d4a2e9e762718d9f642c176
+last_event_id: task-event-94e145bb98af887a8fe5d220015254bb
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 95890f03baaeb1bf27667b9f3f2aec2b198799a04f2756dadc5cb3b6f6ce089d

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -404,6 +405,7 @@ def evaluate_base_drift(
     head: str,
     expected_base_is_head_ancestor: bool | None,
     integration_plan: dict[str, Any] | None,
+    publication_transaction: dict[str, Any] | None,
     reviewed_reconciliation_plan_id: str | None,
 ) -> tuple[list[dict[str, str]], list[dict[str, str]], list[dict[str, str]]]:
     blockers: list[dict[str, str]] = []
@@ -434,11 +436,55 @@ def evaluate_base_drift(
             }
         )
         return blockers, serial, warnings
+    coordinator_candidate_binding = stage == "INTEGRATION" and publication_transaction is not None
     expected_bindings = {
         "frozen_base": expected_base,
-        "lane_head": head,
         "latest_main": local_main,
     }
+    if coordinator_candidate_binding:
+        transaction_bindings = {
+            "expected_main_sha": local_main,
+            "lane_head_sha": head,
+        }
+        for field, expected in transaction_bindings.items():
+            if publication_transaction.get(field) != expected:
+                blockers.append(
+                    {
+                        "code": "PUBLICATION_CANDIDATE_BASE_BINDING_MISMATCH",
+                        "detail": (f"{field}:{publication_transaction.get(field)!r}!={expected!r}"),
+                    }
+                )
+        if head != local_main:
+            blockers.append(
+                {
+                    "code": "PUBLICATION_CANDIDATE_BASE_NOT_EXACT_MAIN",
+                    "detail": f"head={head};local_main={local_main}",
+                }
+            )
+        transaction_plan = publication_transaction.get("integration_revalidation_plan")
+        plan_id = integration_plan.get("plan_id")
+        plan_file_sha = integration_plan.get("_binding_file_sha256")
+        if not isinstance(transaction_plan, dict):
+            blockers.append(
+                {
+                    "code": "PUBLICATION_INTEGRATION_PLAN_BINDING_MISSING",
+                    "detail": str(plan_id),
+                }
+            )
+        else:
+            for field, expected in {
+                "id": plan_id,
+                "sha256": plan_file_sha,
+            }.items():
+                if transaction_plan.get(field) != expected:
+                    blockers.append(
+                        {
+                            "code": "PUBLICATION_INTEGRATION_PLAN_BINDING_MISMATCH",
+                            "detail": (f"{field}:{transaction_plan.get(field)!r}!={expected!r}"),
+                        }
+                    )
+    else:
+        expected_bindings["lane_head"] = head
     for field, expected in expected_bindings.items():
         if integration_plan.get(field) != expected:
             blockers.append(
@@ -544,6 +590,8 @@ def load_validated_integration_plan(
         raise PreflightError(f"integration revalidation plan is unreadable: {exc}") from exc
     if not isinstance(payload, dict):
         raise PreflightError("integration revalidation plan must be a JSON object")
+    payload["_binding_file_sha256"] = hashlib.sha256(plan_path.read_bytes()).hexdigest()
+    payload["_binding_path"] = plan_path.relative_to(repo).as_posix()
     return payload
 
 
@@ -615,6 +663,31 @@ def load_publication_transaction(
             }
         )
         return None, blockers
+    try:
+        transaction_path = _resolve_repo_file(
+            repo,
+            transaction_argument,
+            "publication transaction",
+        )
+        transaction = json.loads(transaction_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError, PreflightError) as exc:
+        blockers.append(
+            {
+                "code": "PUBLICATION_TRANSACTION_INVALID",
+                "detail": str(exc),
+            }
+        )
+        return None, blockers
+    if not isinstance(transaction, dict):
+        blockers.append(
+            {
+                "code": "PUBLICATION_TRANSACTION_INVALID",
+                "detail": "transaction must be a JSON object",
+            }
+        )
+        return None, blockers
+    payload["lane_head_sha"] = transaction.get("lane_head_sha")
+    payload["integration_revalidation_plan"] = transaction.get("integration_revalidation_plan")
     return payload, blockers
 
 
@@ -819,6 +892,7 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
         head=state["head"],
         expected_base_is_head_ancestor=expected_base_is_head_ancestor,
         integration_plan=integration_plan,
+        publication_transaction=publication_transaction,
         reviewed_reconciliation_plan_id=args.reviewed_reconciliation_plan_id,
     )
     blockers.extend(base_blockers)

@@ -48,20 +48,25 @@ python scripts/architecture_arch005_integration_revalidation.py plan `
 ```
 
 Before coordinator shared/generated mutation, acquire one publication transaction
-from the current exact lane head and expected local main. Declare every task,
+from the clean exact latest-main coordinator candidate base and expected local main.
+When a validated base-drift plan is present, the plan continues to bind the frozen
+task lane while the transaction binds this separate candidate base. Declare every task,
 coordinator, generated, and formal-artifact path up front:
 
 ```powershell
 python scripts/architecture_arch005_publication_fence.py acquire `
   --transaction-id <TRANSACTION_ID> --task-id <TASK_ID> `
   --change-id <CHANGE_ID> --thread-id <THREAD_ID> `
-  --frozen-base <FROZEN_BASE> --lane-head <LANE_HEAD> `
+  --frozen-base <FROZEN_BASE> --lane-head <CANDIDATE_BASE> `
   --expected-main <LOCAL_MAIN> `
   --owned-path <TASK_PATH> --shared-path <COORDINATOR_PATH> `
   --generator-id canonical-task-source
 ```
 
-The returned `integration_publication_fence.v1` path is immutable. Advance it to
+Do not replace the plan's frozen `lane_head` with `<CANDIDATE_BASE>`; preflight
+independently verifies the plan id/SHA, frozen lane, latest main, transaction
+candidate base, and reviewed reconciliation id. The returned
+`integration_publication_fence.v1` path is immutable. Advance it to
 `TASK_SOURCE_PRE_WRITE` before `task_source.py register|update|build|refresh-consumers`,
 then wrap the declared official generator order with `GENERATED_REBUILD_PRE` and
 `GENERATED_REBUILD_POST`. Plan bytes, expected main, lease state, dirty attribution,

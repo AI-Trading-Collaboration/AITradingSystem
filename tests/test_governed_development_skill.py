@@ -339,6 +339,7 @@ def _base_drift(
         "head": "c" * 40,
         "expected_base_is_head_ancestor": True,
         "integration_plan": None,
+        "publication_transaction": None,
         "reviewed_reconciliation_plan_id": None,
     }
     arguments.update(overrides)
@@ -444,6 +445,101 @@ def test_exact_reviewed_reconciliation_id_keeps_lane_without_rebuild() -> None:
             "detail": plan["plan_id"],
         }
     ]
+
+
+def test_reviewed_reconciliation_binds_latest_main_publication_candidate() -> None:
+    plan = {
+        "plan_id": "integration-revalidation-reconcile",
+        "plan_sha256": "d" * 64,
+        "_binding_file_sha256": "e" * 64,
+        "frozen_base": "a" * 40,
+        "lane_head": "c" * 40,
+        "latest_main": "b" * 40,
+        "decision": "RECONCILIATION_REQUIRED",
+        "candidate_creation_allowed": False,
+        "reviewed_reconciliation_required": True,
+    }
+    transaction = {
+        "expected_main_sha": "b" * 40,
+        "lane_head_sha": "b" * 40,
+        "integration_revalidation_plan": {
+            "id": plan["plan_id"],
+            "sha256": plan["_binding_file_sha256"],
+        },
+    }
+    blockers, serial, warnings = _base_drift(
+        head="b" * 40,
+        integration_plan=plan,
+        publication_transaction=transaction,
+        reviewed_reconciliation_plan_id=plan["plan_id"],
+    )
+    assert blockers == []
+    assert serial == []
+    assert warnings == [
+        {
+            "code": "REVIEWED_BASE_DRIFT_RECONCILIATION",
+            "detail": plan["plan_id"],
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    ("transaction_override", "expected_code"),
+    [
+        (
+            {"expected_main_sha": "f" * 40},
+            "PUBLICATION_CANDIDATE_BASE_BINDING_MISMATCH",
+        ),
+        (
+            {"lane_head_sha": "f" * 40},
+            "PUBLICATION_CANDIDATE_BASE_BINDING_MISMATCH",
+        ),
+        (
+            {"integration_revalidation_plan": None},
+            "PUBLICATION_INTEGRATION_PLAN_BINDING_MISSING",
+        ),
+        (
+            {
+                "integration_revalidation_plan": {
+                    "id": "wrong-plan",
+                    "sha256": "e" * 64,
+                }
+            },
+            "PUBLICATION_INTEGRATION_PLAN_BINDING_MISMATCH",
+        ),
+    ],
+)
+def test_publication_candidate_base_binding_drift_fails_closed(
+    transaction_override: dict[str, object],
+    expected_code: str,
+) -> None:
+    plan = {
+        "plan_id": "integration-revalidation-reconcile",
+        "plan_sha256": "d" * 64,
+        "_binding_file_sha256": "e" * 64,
+        "frozen_base": "a" * 40,
+        "lane_head": "c" * 40,
+        "latest_main": "b" * 40,
+        "decision": "RECONCILIATION_REQUIRED",
+        "candidate_creation_allowed": False,
+        "reviewed_reconciliation_required": True,
+    }
+    transaction: dict[str, object] = {
+        "expected_main_sha": "b" * 40,
+        "lane_head_sha": "b" * 40,
+        "integration_revalidation_plan": {
+            "id": plan["plan_id"],
+            "sha256": plan["_binding_file_sha256"],
+        },
+    }
+    transaction.update(transaction_override)
+    blockers, _, _ = _base_drift(
+        head="b" * 40,
+        integration_plan=plan,
+        publication_transaction=transaction,
+        reviewed_reconciliation_plan_id=plan["plan_id"],
+    )
+    assert expected_code in {row["code"] for row in blockers}
 
 
 def test_drift_plan_must_bind_exact_lane_and_latest_main() -> None:
