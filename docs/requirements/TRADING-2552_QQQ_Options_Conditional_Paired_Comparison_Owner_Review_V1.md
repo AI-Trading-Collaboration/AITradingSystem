@@ -185,3 +185,12 @@ fast-forward 到 local/origin `main`、canonical evidence 已保全、无进程�
   将精确复制既有留存 evidence、把本 review 投影为 `OWNER_REVIEW_COMPLETE_SEPARATE_WAVE_A_AUTHORITY_REQUIRED`，
   重建 Atlas/report-flow/architecture/compatibility authorities，并以该 Full 作为 immutable parent 执行
   唯一 `failure_fix_rerun`。QuantConnect、市场数据、provider、DQ、backtest 与交易 counters 继续为零。
+- 2026-09-01：Atlas successor 分类聚焦回归=`47 passed / 1 skipped`，既有 O1 DQ receipt 与 2542I exact
+  package 环境回归=`19 passed`；canonical Atlas writer 在 exact commit `a43b7c731…` 上重建为
+  `CURRENT`，coverage=`82`、validation=`PASS`。随后 report-flow builder 正确以
+  `RCF_SOURCE_SEAL_DRIFT` 拒绝旧 `docs/system_flow.md` seal：reviewed 新 identity 为
+  byte_count=`2328913`、file/LF SHA-256=
+  `f777cef82e7deede672c81fa33402ca2c443e67dd6c2d0a4d988642dff0342a5`、git blob=
+  `25365d7f36088d46a818bbb4961a2da3f08bf161`、blank-line block count=`1178`。该 gate 不允许 builder
+  自动接纳文档漂移；后继 transaction 将显式声明 report-flow policy/test 路径、更新这组 reviewed seal
+  与相邻 total-entry assertions，再完整重建 authority。此修复不改变研究结论或任何外部权限。
