@@ -311,3 +311,10 @@ projection，不改变任何冻结研究结论、阈值、证据身份或执行�
   行随后仍写入 generator post/candidate-pre checkpoint，因此整笔 transaction 判定为失败证据，不把后续
   checkpoint 解释为 generator PASS，也不提交为合格 source-stage。该尝试没有追加 task event；后继只使用
   post-cutover consumer refresh/validation 路径，并以新 transaction 重放。
+- 2026-09-02：final v4 的 architecture manifests 与 exact-commit Atlas 17-artifact rebuild 均 PASS；
+  report-flow 随后按设计以 `RCF_SOURCE_SEAL_DRIFT` 拒绝新增 `docs/system_flow.md` block。精确新 seal 为
+  `2332683 bytes / SHA-256 54517a1089750ab9458015b0566c0fd4ce5250b83c1ae3884335c456dc71c033 /
+  git blob a8f8fdf5e4befd88baca91faf7c4ee8a9f80c637 / 1183 entries`，policy/test 更新后 report-flow
+  build=`PASS, 3116 entries, 192 fragments`。由于 seal policy/test 是在本次 architecture generator 之后才
+  修改，v4 停止并按 `FAILED` 保全，不把错序 generator 当作成功；新 source-stage 将严格按 architecture
+  → report-flow → compatibility 重建并形成 clean exact source commit。
