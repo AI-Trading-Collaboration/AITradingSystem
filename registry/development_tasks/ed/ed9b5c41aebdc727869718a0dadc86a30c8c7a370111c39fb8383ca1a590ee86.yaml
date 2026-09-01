@@ -18,9 +18,9 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Implementation and focused validation
-    are complete; publish only if generated authorities and all formal tiers including
-    Full pass on the exact candidate.
+  unstructured_legacy_blocker_or_next_step: v1 immutable Architecture failure identified
+    one stale exact task-count ratchet; v2 updates 1049 to the canonical generated
+    count 1050 and reruns all formal gates.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: INTEGRATION preflight independently binds the frozen plan lane, exact latest-main
@@ -89,6 +89,35 @@ events:
   - change:devx-010-implementation-complete-20260901-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-94e145bb98af887a8fe5d220015254bb
+- schema_version: task_event.v1
+  task_id: DEVX-010_BASE_DRIFT_PUBLICATION_PREFLIGHT_BINDING
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-01T06:31:23.2898029+00:00'
+  actor: integration-coordinator
+  change_id: devx-010-architecture-ratchet-fix-20260901-v2
+  lane_id: null
+  base_commit: 5abbd3adb8d16b85a91fe4365ea993c192c1f4ff
+  previous_state_event_id: task-event-94e145bb98af887a8fe5d220015254bb
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: System validation / integration coordinator
+    blocker_or_next_step: v1 immutable Architecture failure identified one stale exact
+      task-count ratchet; v2 updates 1049 to the canonical generated count 1050 and
+      reruns all formal gates.
+    acceptance_criteria: INTEGRATION preflight independently binds the frozen plan
+      lane, exact latest-main transaction candidate base, plan id/SHA and reviewed
+      reconciliation; mismatch/tamper/serial/phase gates fail closed; canonical/installed
+      parity and final formal validation pass.
+    notes: v1 Architecture=881 passed/1 failed; only stale task_count assertion after
+      DEVX-010 registration. v1 released FAILED. v2 claims the exact test path; no
+      schema or business behavior change; production_effect=none; broker_action=none.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-010-architecture-ratchet-fix-20260901-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ad325791c278412c111115ab9529e7a4
 projection:
   legacy_first_eight_cells:
   - DEVX-010_BASE_DRIFT_PUBLICATION_PREFLIGHT_BINDING
@@ -96,17 +125,17 @@ projection:
   - P0
   - BASELINE_DONE
   - System validation / integration coordinator
-  - Implementation and focused validation are complete; publish only if generated
-    authorities and all formal tiers including Full pass on the exact candidate.
+  - v1 immutable Architecture failure identified one stale exact task-count ratchet;
+    v2 updates 1049 to the canonical generated count 1050 and reruns all formal gates.
   - INTEGRATION preflight independently binds the frozen plan lane, exact latest-main
     transaction candidate base, plan id/SHA and reviewed reconciliation; mismatch/tamper/serial/phase
     gates fail closed; canonical/installed parity and final formal validation pass.
-  - Canonical and installed skill bytes are identical across 5 tracked files; skill
-    quick validation PASS; ruff PASS; focused pytest-xdist 46 passed; production_effect=none;
-    broker_action=none.
+  - v1 Architecture=881 passed/1 failed; only stale task_count assertion after DEVX-010
+    registration. v1 released FAILED. v2 claims the exact test path; no schema or
+    business behavior change; production_effect=none; broker_action=none.
   docs_links: []
   terminal: false
-  canonical_row_sha256: cd5aa3dca314bfef84f71922a6246b3b196e8a956d4a2e9e762718d9f642c176
-last_event_id: task-event-94e145bb98af887a8fe5d220015254bb
+  canonical_row_sha256: 38433c29aaad14df3fcd371514aea9c8286284f5c63f7e8d9f4f595c9718ca01
+last_event_id: task-event-ad325791c278412c111115ab9529e7a4
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 95890f03baaeb1bf27667b9f3f2aec2b198799a04f2756dadc5cb3b6f6ce089d
+fragment_checksum: 358a1970640e9be7f19212be62077a40d492d4e8670e981a7711c655e6e59cfa

@@ -86,3 +86,8 @@ RISK-012 coordinator candidate workspace，直到 RISK-012 完成 main/promotion
   expected-main/lane-head/plan missing/id drift fail-closed 回归；skill quick validation、Ruff 与
   pytest-xdist `46 passed`，canonical/installed 5 个 tracked files byte parity PASS。正式 generated/formal
   gates 仍绑定当前 publication transaction 后执行。
+- 2026-09-01：v1 Architecture 完整执行为 `881 passed / 1 failed`；唯一失败是 canonical task
+  registry 新增 DEVX-010 后，self-hosted exact-count ratchet 仍为 `1049`。失败 artifact=
+  `outputs/validation_runtime/architecture-fitness_20260901T061840Z/test_runtime_summary.json`，v1 已
+  fail closed 并释放 lease。v2 明确扩展 `tests/test_arch_005_s5_task_source_cutover.py`，把 reviewed
+  exact count 更新为 `1050`；不改变 registry schema、task semantics 或任何业务路径。
