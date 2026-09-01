@@ -7,14 +7,14 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 1050
-active_task_count: 511
+task_count: 1051
+active_task_count: 512
 completed_task_count: 539
-fragment_count: 1050
+fragment_count: 1051
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 05acea678767c31a61b4569cb7ca555430b26d4a43aa28e87d4d2be93d788c23
+final_chain_sha256: 891d08fab4a0c02d8e659d2606b8cdcc3ccc9b82316f17b3a35a8bb16ab90a62
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 247d44a02a96b3540e6a9ce30a837fbf8caa4c46d4022fddafc524e5ab57baa8
 templates:
@@ -8429,12 +8429,20 @@ fragments:
   order: 1050
   previous_entry_sha256: 4ab7b3fdf76d88601f76abca398af833f58ccbfa2d79c103476a7fd865b428e1
   entry_sha256: 05acea678767c31a61b4569cb7ca555430b26d4a43aa28e87d4d2be93d788c23
+- task_id: TRADING-2553_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_A_IMPLEMENTATION_V1
+  path: registry/development_tasks/44/4435146c3fe26d8d5002c9e7a18500ebfc3f111781b92aff37d87175ecb6fa64.yaml
+  file_sha256: 25abc017f702b4c8a68891d31b75afcfd9fab7e5e9322e568403eda69b4d9b96
+  fragment_checksum: 0e11a4b67a138251a4435e42a7e9f244e944a077e2989be44e62af62f813d01f
+  partition: active
+  order: 1051
+  previous_entry_sha256: 05acea678767c31a61b4569cb7ca555430b26d4a43aa28e87d4d2be93d788c23
+  entry_sha256: 891d08fab4a0c02d8e659d2606b8cdcc3ccc9b82316f17b3a35a8bb16ab90a62
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 483c3ee4e30aa6dc801a80fe9370e99435fd461e310b0d03b78a8b27e3d97e99
-  byte_count: 1764869
-  row_count: 511
+  sha256: f08fd580bcb64c664605cd1c099520305b518af67e2737c55b4904ebb5cafcb0
+  byte_count: 1765994
+  row_count: 512
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
@@ -11152,7 +11160,14 @@ governance_cycles:
   change_id: risk-012-unknown-id-failclosed-20260901-v17
   event_count: 2
   production_effect: none
-governance_cycle_count: 387
+- cycle_id: arch-005-s5-cycle-388
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: TRADING-2553_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_A_IMPLEMENTATION_V1
+  change_id: trading-2553-wave-a-mainline-register-20260901-v1
+  event_count: 1
+  production_effect: none
+governance_cycle_count: 388
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -11166,4 +11181,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 20e64c446e6262d2a7188d753e0e5816b0aba8ee293925f36890dcbc384f5a04
+index_checksum: 12b987f59257ac9202bf517859012acfca0e20b65ec8b8722e67ade02f4a3579

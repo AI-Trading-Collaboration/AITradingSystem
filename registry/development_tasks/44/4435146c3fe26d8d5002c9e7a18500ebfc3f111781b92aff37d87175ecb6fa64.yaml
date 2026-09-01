@@ -1,0 +1,96 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2553_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_A_IMPLEMENTATION_V1
+  task_id_sha256: 4435146c3fe26d8d5002c9e7a18500ebfc3f111781b92aff37d87175ecb6fa64
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2553_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_A_IMPLEMENTATION_V1
+  title: null
+  domain: QQQ options paired comparison Wave A non-executable implementation V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner / separately review and authorize Wave B fee semantics,
+    exact package/manifest and bounded QuantConnect run
+  requirement_refs:
+  - docs/requirements/TRADING-2553_QQQ_Options_Paired_Comparison_Wave_A_Implementation_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Wave A fixture implementation is complete.
+    Any real paired evidence remains blocked on separately frozen underlying comparator
+    fee semantics, exact Wave B run package/manifest, DQ and bounded QuantConnect
+    authority.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Wave A exact-binds the frozen TRADING-2548 contract, requires explicit fees,
+      enforces the exact 101-field aggregate surface and account identities, renders
+      a deterministic non-runnable QC helper fragment, replays all 16 axes with frozen
+      precedence, passes synthetic/golden/negative and Atlas tests, and keeps all
+      data/external/trading counters at zero.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2553_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_A_IMPLEMENTATION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-01T10:27:46Z'
+  actor: integration-coordinator
+  change_id: trading-2553-wave-a-mainline-register-20260901-v1
+  lane_id: null
+  base_commit: a8a07155aea49fd3599cc4cbe7c0fe63bbcde0b7
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    legacy_projection:
+    - TRADING-2553_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_A_IMPLEMENTATION_V1
+    - QQQ options paired comparison Wave A non-executable implementation V1
+    - P0
+    - BASELINE_DONE
+    - Project Owner / separately review and authorize Wave B fee semantics, exact
+      package/manifest and bounded QuantConnect run
+    - Wave A fixture implementation is complete. Any real paired evidence remains
+      blocked on separately frozen underlying comparator fee semantics, exact Wave
+      B run package/manifest, DQ and bounded QuantConnect authority.
+    - Wave A exact-binds the frozen TRADING-2548 contract, requires explicit fees,
+      enforces the exact 101-field aggregate surface and account identities, renders
+      a deterministic non-runnable QC helper fragment, replays all 16 axes with frozen
+      precedence, passes synthetic/golden/negative and Atlas tests, and keeps all
+      data/external/trading counters at zero.
+    - 'Supporting requirement: docs/requirements/TRADING-2553_QQQ_Options_Paired_Comparison_Wave_A_Implementation_V1.md.
+      scope=NON_EXECUTABLE_DATA_RESEARCH_IMPLEMENTATION; manifest/market-data/DQ/QuantConnect/provider/orders/fills/positions/paper/live/production/broker=0/false/none.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2553-wave-a-mainline-register-20260901-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-4162cf0f2a903c3f194951077ab4db2f
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2553_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_A_IMPLEMENTATION_V1
+  - QQQ options paired comparison Wave A non-executable implementation V1
+  - P0
+  - BASELINE_DONE
+  - Project Owner / separately review and authorize Wave B fee semantics, exact package/manifest
+    and bounded QuantConnect run
+  - Wave A fixture implementation is complete. Any real paired evidence remains blocked
+    on separately frozen underlying comparator fee semantics, exact Wave B run package/manifest,
+    DQ and bounded QuantConnect authority.
+  - Wave A exact-binds the frozen TRADING-2548 contract, requires explicit fees, enforces
+    the exact 101-field aggregate surface and account identities, renders a deterministic
+    non-runnable QC helper fragment, replays all 16 axes with frozen precedence, passes
+    synthetic/golden/negative and Atlas tests, and keeps all data/external/trading
+    counters at zero.
+  - 'Supporting requirement: docs/requirements/TRADING-2553_QQQ_Options_Paired_Comparison_Wave_A_Implementation_V1.md.
+    scope=NON_EXECUTABLE_DATA_RESEARCH_IMPLEMENTATION; manifest/market-data/DQ/QuantConnect/provider/orders/fills/positions/paper/live/production/broker=0/false/none.'
+  docs_links:
+  - docs/requirements/TRADING-2553_QQQ_Options_Paired_Comparison_Wave_A_Implementation_V1.md
+  terminal: false
+  canonical_row_sha256: a207d9cf8e29bbf0c0bfd5cfda874cc1544f0d2fd3c7e41a048ab78090c9be4a
+last_event_id: task-event-4162cf0f2a903c3f194951077ab4db2f
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 0e11a4b67a138251a4435e42a7e9f244e944a077e2989be44e62af62f813d01f
