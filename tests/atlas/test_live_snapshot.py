@@ -44,7 +44,7 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
-    assert bundle.research_state_as_of.startswith("2026-09-01T")
+    assert bundle.research_state_as_of.startswith("2026-09-02T")
     assert bundle.evidence_evaluated_at == "2026-09-01T00:00:00+00:00"
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
@@ -148,10 +148,18 @@ def test_reader_decision_projection_separates_transport_from_dq_pit_promotion() 
     assert "合计 1202/1202" in visible
     assert "净收益 +4.48%" in visible
     assert "Sharpe=-1.872" in visible
-    assert "不得读取市场结果、运行 DQ" in visible
-    assert "已按 exact file/canonical SHA 冻结" in visible
-    assert "未来另行批准 exact bounded-run scope" in visible
-    assert "尚无经验 verdict" in visible
+    assert "当前结论为“保留信号价值”" in visible
+    assert "fixture-only Wave A 已完成" in visible
+    assert "Wave B exact package/manifest" in visible
+    assert "Wave C 单次 QuantConnect run" in visible
+    all_reader_text = " ".join(
+        item.text_zh for item in (*projection.reader_cards, *projection.quick_answers)
+    )
+    assert "verdict=RETAIN" in all_reader_text
+    assert "INSUFFICIENT_PLATFORM_EVIDENCE" in all_reader_text
+    assert "signal-value verdict 仍为 UNRESOLVED" not in all_reader_text
+    assert "尚无经验 verdict" not in all_reader_text
+    assert "未来另行批准 exact bounded-run scope" not in all_reader_text
     assert "QC_AUTHORIZED_NOT_RUN" not in visible
     assert "仍有 1 天全日未出现期权链" not in visible
     assert "先解释唯一缺链交易日" not in visible

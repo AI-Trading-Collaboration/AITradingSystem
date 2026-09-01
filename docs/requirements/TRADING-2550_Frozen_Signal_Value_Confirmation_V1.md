@@ -160,6 +160,32 @@ cache mutation、QuantConnect、option backtest、provider、orders/fills/positi
 - frozen reducer verdict=`RETAIN`，只允许打开 conditional options paired-comparison 的 Owner review；
   它不证明 options implementation value、robustness、pristine OOS 或 production eligibility。
 
+### 3.9 Atlas reader-entry 可读性澄清
+
+2026-09-01 Project Owner 要求先试行 Web Pro 对 Atlas L0 的可读性建议。本波仅调整 reader
+projection，不改变任何冻结研究结论、阈值、证据身份或执行权限：
+
+- 页首必须声明“本页仅展示当前策略研究主线，不代表整个系统总体进展”，避免新读者把单页当作全系统
+  仪表盘；
+- H1 使用“这个信号，值得继续研究吗？”的普通语言入口；冻结的 exact primary question 紧随其后完整
+  展示，不修改 portfolio authority，也不以简化标题替代审计问题；
+- 在保留七级证据阶梯的同时，以三个彼此独立的摘要分别说明 evidence/engineering readiness、当前
+  research conclusion 与 production/trading eligibility；上游 `READY` 不得被解释为下游自动晋级；
+- terminal verdict 继续精确投影为 `RETAIN`：仅表示冻结比较下保留 signal value，不能改写为策略整体
+  已验证、robustness 已建立或 production-ready；
+- 首屏 verdict banner 用普通语言解释“为什么继续研究”以及仍未证明什么；精确数值、reducer 与 evidence
+  explanation 继续保留在七级阶梯和审计层，不从 authority 删除；
+- 下一动作必须反映最新 governed successor 状态：conditional paired-comparison Owner review 与
+  fixture-only Wave A 已完成；当前等待的是 Project Owner 另行冻结 underlying comparator fee semantics
+  并批准 Wave B exact package/manifest，Wave C 单次 QuantConnect run 仍需再次独立授权；
+- 默认折叠的 L1 研究详情必须与 L0 从同一 projected evidence-first portfolio 读取 terminal verdict、
+  next action 与禁止推论；不得在 L0 显示 `RETAIN` 时继续硬编码“尚无经验 verdict”、`UNRESOLVED`
+  或“等待 signal-value confirmation”的旧状态；
+- L0 继续隐藏 task id、commit SHA、manifest id 等审计标识；详细身份只留在既有 L2 审计层。
+
+本波不读取或下载市场数据，不运行 DQ、confirmation/backtest，不调用 QuantConnect/options/provider/cache，
+也不产生 paper/live/production/broker、orders/fills/positions 动作。
+
 ## 4. Acceptance criteria
 
 1. 预注册发生在任何 outcome 可见之前；
@@ -170,6 +196,11 @@ cache mutation、QuantConnect、option backtest、provider、orders/fills/positi
 6. 任一 DQ/PIT、identity、manifest、resource 或 replay gate 失败时 fail closed；
 7. 运行需在未来单独通过 governed preflight 和适用的 R1/R2/R3 授权边界；
 8. `production_effect=none`、`broker_action=none`。
+9. Atlas L0 明示页面范围、三个独立进展面与阶段不可自动晋级；页面明确说明 Owner review 与 fixture-only
+   Wave A 已完成，而 Wave B exact package/manifest 与 Wave C bounded QuantConnect run 尚未授权、未开始；
+   浏览器与自动化测试共同验证该 reader projection。
+10. Atlas L0 与默认折叠的 L1 研究详情从同一 terminal portfolio projection 读取 `RETAIN` 与下一动作，
+    展开详情后不得出现旧的 `UNRESOLVED` 或等待 signal-value confirmation 文案。
 
 ## 5. 当前 blocker 与 next owner
 
@@ -179,8 +210,11 @@ cache mutation、QuantConnect、option backtest、provider、orders/fills/positi
   result 均完成，frozen verdict=`RETAIN`；
 - 已解除收口依赖：TRADING-2551 已把 evidence-first reader contract 扩展到 terminal
   `RETAIN / REJECT / INSUFFICIENT`，无需硬编码页面或绕过共享 contract；
-- next owner：Project Owner 仅复核是否开启 conditional options paired comparison；当前没有任何新的
-  QuantConnect/options/provider/backtest 或交易权限；
+- 已完成后继：TRADING-2552 conditional paired-comparison Owner review 与 TRADING-2553 fixture-only
+  Wave A 已进入 latest `main`；Wave A 仅证明本地 ledger/admission/replay 工程边界，不是 platform evidence；
+- next owner：Project Owner 仅可另行冻结 underlying comparator fee semantics 并批准 Wave B exact
+  package/manifest；Wave C 单次 bounded QuantConnect run 仍需再次独立授权。当前没有新的真实数据读取、
+  DQ、QuantConnect/options/provider/backtest 或交易权限；
 - exit condition：result admission 与 consumer projection 精确重放 aggregate result，任务保持
   `BASELINE_DONE` 且不自动创建或执行 successor；任何新 options manifest/DQ/backtest 仍需另行授权。
 
@@ -228,3 +262,34 @@ cache mutation、QuantConnect、option backtest、provider、orders/fills/positi
   `RETAIN`，破坏 immutable authority identity。v4 修复恢复该冻结文件原字节，只允许 Atlas 经
   result-admission、evidence SHA、aggregate counter/DQ/replay/safety 全部校验后构造只读 terminal
   projection；prior failed Full 作为 `failure_fix_rerun` parent 绑定，不重跑 confirmation。
+- 2026-09-01：Owner 要求先试行 Web Pro 的 reader-entry 建议；任务为该 reader-projection-only wave
+  暂时恢复 `IN_PROGRESS`。实现范围固定为页首 scope 声明、三条独立进展摘要、阶段不可自动晋级提示与
+  下一动作授权状态；terminal verdict 仍为 `RETAIN`，七级证据阶梯与 L2 审计链保持不变。本波没有新
+  research run、external action 或 production/broker 权限。
+- 2026-09-01：真实浏览器展开“研究细节”后发现既有 L1 仍硬编码 `UNRESOLVED`，与 L0 的 terminal
+  `RETAIN` 冲突。修复把 L1 当前决定、当前工作、最大阻塞、下一步与禁止推论改为从同一 projected
+  evidence-first portfolio 派生；历史期权 baseline 只保留为明确标注的背景，不再冒充当前主线结论。
+- 2026-09-01：canonical writer 因已登记但尚未接入 Atlas classification 的 `TRADING-2552` 按设计
+  fail closed，且本波 task index 尚未进入 exact commit。为完成可读性试改的浏览器核验，隔离预览复用
+  上一次已验证 snapshot/diff payload，只重跑当前 renderer、terminal reader projection 与 accessibility
+  validator；它不能证明 latest task coverage、exact-commit freshness 或 page-effectiveness acceptance，
+  不得替代正式目录。退出条件是 TRADING-2552 完成分类、最终候选提交后由 canonical writer 重建并验证。
+- 2026-09-02：`TRADING-2552` 与 `TRADING-2553` 已先后进入 latest local/origin `main`；reader-entry
+  lane 保留在 frozen base `9e2e3f04a0092c5fe1477b88842135aa01834654`，以 governed
+  `integration_revalidation_plan.v1` 协调到最新主线。integration worktree 固定为
+  `D:\Work\AITradingSystem_trading2550_reader_entry_integration`，owner=`TRADING-2550`，purpose=从
+  latest `main` 协调 reader renderer/tests/system-flow/task state、重建 canonical Atlas 与 formal
+  authority，并形成唯一发布候选；exit condition=候选已进入 local/origin `main`、正式证据已保全、无进程
+  依赖且 tracked/untracked/ignored 审计无唯一内容。删除 allowlist 仅限该精确路径，满足退出条件后使用
+  `git worktree remove` 并 `git worktree prune`；tracked bytes 可由 Git 恢复，未保全的 ignored bytes
+  清理后不可恢复。临时 manifest/plan 只位于 `outputs/architecture/`，收口后删除。
+- 2026-09-02：latest-main reconciliation 保持 frozen signal verdict=`RETAIN` 与全部研究数值不变，只把
+  L0/L1 当前进展更新为 TRADING-2552 review complete、TRADING-2553 fixture-only Wave A complete，且
+  Wave B fee semantics/exact manifest 与 Wave C single bounded QuantConnect run 均未授权、未开始。该协调
+  不读取真实数据，不运行 DQ、confirmation/backtest 或外部平台，不产生 production/broker/trading effect。
+- 2026-09-02：final publication v2 在 Atlas exact-source generator 前按计划以 `FAILED` 释放；原因是
+  renderer、live projection、tests 与 `docs/system_flow.md` 必须先进入 task-branch exact source commit，不能
+  把 dirty bytes 归到旧 `HEAD=d72350d8...`。随后 source-stage v1 仅声明 canonical task-source generator，
+  并重放当前 `IN_PROGRESS` projection。该重放复用了先前 change id，append-only registry 因而保留一条
+  语义等价的 `IN_PROGRESS -> IN_PROGRESS` 事件；它没有改变 task projection、研究结论或执行权限，后续
+  final closeout 使用新的唯一 change id，不删除或改写该审计事件。

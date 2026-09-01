@@ -30,6 +30,7 @@ from ai_trading_system.contracts import (
     StrategyResearchStatusExplanationBundle,
     StrategyResearchWorkProgressBundle,
 )
+from ai_trading_system.contracts.evidence_first_research_portfolio import EvidenceState
 from ai_trading_system.contracts.strategy_research_page_effectiveness import (
     PageAcceptanceRecord,
     PageAcceptanceStatus,
@@ -474,8 +475,9 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert "1201 个最终看到 option chain，仅 1 个全日未见" in html
     assert "1019 个是当天先出现无链 Slice、后来恢复的提前结算混淆" in html
     assert "当前：完成整体可信性与参数依据复核" in rendered_text
-    assert "未来另行批准 exact bounded-run scope" in rendered_text
-    assert "不得读取市场结果、运行 DQ" in rendered_text
+    assert "Wave B exact package/manifest" in rendered_text
+    assert "Wave C 单次 QuantConnect run" in rendered_text
+    assert "尚未生成真实运行 manifest，也未运行 DQ 或 QuantConnect" in rendered_text
     assert "2516 v2 token 也已签署并在唯一一次 Cloud run 尝试中消费" in html
     assert "9518360aeb329219cd83e78442a1d229" in html
     assert "Option filter 已以显式 list[Symbol] 完成 versioned failure-fix" in html
@@ -642,6 +644,30 @@ def test_renderer_follows_evidence_first_reader_entry_contract() -> None:
     l1_start = html.index('class="research-details-gateway"')
     l0_html = html[l0_start:l1_start]
     l0_text = unescape(re.sub(r"<[^>]+>", " ", l0_html))
+    assert "本页仅展示当前策略研究主线，不代表整个系统总体进展" in l0_text
+    assert "这个信号，值得继续研究吗？" in l0_text
+    assert "本页正在验证" in l0_text
+    assert showcase.evidence_first_portfolio.question_zh in l0_text
+    progress_order = (
+        'data-reader-progress="evidence_engineering"',
+        'data-reader-progress="research_conclusion"',
+        'data-reader-progress="production_eligibility"',
+    )
+    assert l0_html.count('class="reader-progress-card ') == 3
+    assert tuple(l0_html.index(item) for item in progress_order) == tuple(
+        sorted(l0_html.index(item) for item in progress_order)
+    )
+    assert "研究输入已就绪" in l0_text
+    assert "保留信号价值" in l0_text
+    assert "按事先写好的比较方法，结果支持继续研究这个信号" in l0_text
+    assert "交易与生产" in l0_text
+    assert "不具备模拟盘、实盘、生产或交易资格" in l0_text
+    assert "各阶段独立判断" in l0_text
+    assert "不代表后一阶段会自动通过或自动启动" in l0_text
+    assert "等待后继研究授权" in l0_text
+    assert "工程基线已完成；真实运行包与平台验证仍未授权、未开始" in l0_text
+    assert "先冻结标的基准费用规则并批准真实运行包" in l0_text
+    assert "仍需再次单独授权" in l0_text
     assert l0_html.count('class="evidence-step ') == 7
     assert l0_text.count("已具备") == 3
     assert "保留" in l0_text
@@ -665,6 +691,14 @@ def test_renderer_follows_evidence_first_reader_entry_contract() -> None:
         "manifest",
     ):
         assert forbidden_term not in l0_text
+    l1_text = unescape(re.sub(r"<[^>]+>", " ", html[l1_start:]))
+    assert "当前结论为“保留信号价值”" in l1_text
+    assert "fixture-only Wave A 已完成" in l1_text
+    assert "Wave B exact package/manifest" in l1_text
+    assert "Wave C 单次 QuantConnect run" in l1_text
+    assert "signal-value verdict 仍为 UNRESOLVED" not in l1_text
+    assert "尚无经验 verdict" not in l1_text
+    assert "未来另行批准 exact bounded-run scope" not in l1_text
     assert 'class="research-drilldown-body" hidden' in html
     assert ">查看研究细节</button>" in html
     assert "TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1" in html
@@ -688,6 +722,64 @@ def test_renderer_follows_evidence_first_reader_entry_contract() -> None:
     assert 'lang="zh-CN"' in html
     assert len(showcase.responses) == 5
     assert all(item.status == "PASS" for item in showcase.validations)
+
+
+@pytest.mark.parametrize(
+    ("verdict", "next_experiment_id", "status_zh", "boundary_zh"),
+    (
+        (
+            EvidenceState.UNRESOLVED,
+            "FROZEN_SIGNAL_VALUE_CONFIRMATION",
+            "等待单独授权",
+            "当前未开始",
+        ),
+        (
+            EvidenceState.RETAIN,
+            "OWNER_REVIEW_CONDITIONAL_OPTIONS_PAIRED_COMPARISON",
+            "等待后继研究授权",
+            "真实运行包与平台验证仍未授权、未开始",
+        ),
+        (
+            EvidenceState.REJECT,
+            "OPTIONS_IMPLEMENTATION_P0_CLOSED",
+            "当前路线已关闭",
+            "不创建新的期权实现最高优先级实验",
+        ),
+        (
+            EvidenceState.INSUFFICIENT,
+            "EXPLICIT_PROSPECTIVE_EVIDENCE_ONLY",
+            "等待证据范围复核",
+            "当前未授权、未开始",
+        ),
+    ),
+)
+def test_reader_entry_next_action_status_tracks_each_terminal_verdict(
+    verdict: EvidenceState,
+    next_experiment_id: str,
+    status_zh: str,
+    boundary_zh: str,
+) -> None:
+    showcase = _showcase()
+    portfolio = showcase.evidence_first_portfolio
+    ladder = tuple(
+        replace(item, state=verdict) if item.evidence_id == "SIGNAL_VALUE" else item
+        for item in portfolio.evidence_ladder
+    )
+    projected = replace(
+        portfolio,
+        current_verdict=verdict,
+        next_experiment_id=next_experiment_id,
+        evidence_ladder=ladder,
+        next_experiment_zh="按当前 verdict 的受治理边界处理下一步。",
+    )
+
+    html = render_cited_query_html(replace(showcase, evidence_first_portfolio=projected))
+    l0_start = html.index('data-reader-section="TRUST_STRIP"')
+    l1_start = html.index('class="research-details-gateway"')
+    l0_text = unescape(re.sub(r"<[^>]+>", " ", html[l0_start:l1_start]))
+
+    assert status_zh in l0_text
+    assert boundary_zh in l0_text
 
 
 def test_progress_matrix_uses_independent_page_acceptance_facts() -> None:

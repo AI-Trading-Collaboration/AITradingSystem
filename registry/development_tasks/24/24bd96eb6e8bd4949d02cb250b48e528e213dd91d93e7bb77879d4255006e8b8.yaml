@@ -13,22 +13,24 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner：复核是否开启 conditional options paired comparison；当前未授权任何新的
-    QuantConnect/options/provider/backtest 或交易动作。
+  next_owner: Codex：在 latest main 上完成 reader-entry domain reconciliation、canonical
+    Atlas 重建、正式验证与浏览器复核，然后收口为 BASELINE_DONE。
   requirement_refs:
   - docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 唯一 bounded confirmation 与 aggregate result
-    admission 已完成，frozen verdict=RETAIN；详细证据见 [TRADING-2550 requirement](docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md)。下一合法动作仅为
-    Owner review，不自动启动 options paired comparison。
+  unstructured_legacy_blocker_or_next_step: TRADING-2552 review 与 TRADING-2553 Wave
+    A 已进入 local/origin main；剩余工作是把 frozen reader-entry lane 按 reviewed base-drift
+    plan 协调到最新语义，重建 canonical page/authority 并完成 formal acceptance。不得重跑 confirmation
+    或启动 Wave B/C。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Exact preregistration/freeze admission/run authorization/manifest identity
-      PASS；manifest replay/canonical DQ/local confirmation/independent replay 各精确一次且
-      PASS；terminal verdict=RETAIN，aggregate-only；Atlas terminal projection 与独立证据重放
-      PASS；download/cache mutation/QuantConnect/options/provider/paper/live/production/broker/orders/fills/positions=0。
+    text: Atlas L0 明示单页范围、普通语言研究问题和三条独立进展；L0/L1 同源显示 signal verdict=RETAIN，同时准确说明
+      TRADING-2552 review 与 TRADING-2553 fixture-only Wave A 已完成、Wave B exact manifest
+      与 Wave C QuantConnect run 未授权；旧 UNRESOLVED/等待 paired-review 文案不得出现；canonical
+      exact-commit writer、page-effectiveness、focused/formal tiers 和真实浏览器桌面/移动端核验全部
+      PASS。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -265,30 +267,93 @@ events:
   - change:trading-2550-bounded-confirmation-retain-admitted-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-fccb59dff6b8d31aa3cc9dda6c20689d
+- schema_version: task_event.v1
+  task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-02T01:41:54.2181855+09:00'
+  actor: integration-coordinator
+  change_id: trading-2550-reader-entry-base-drift-resume-20260902-v1
+  lane_id: null
+  base_commit: d72350d8c63ea591b11e3b2987304765d832459e
+  previous_state_event_id: task-event-fccb59dff6b8d31aa3cc9dda6c20689d
+  from_status: BASELINE_DONE
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：在 latest main 上完成 reader-entry domain reconciliation、canonical
+      Atlas 重建、正式验证与浏览器复核，然后收口为 BASELINE_DONE。
+    blocker_or_next_step: TRADING-2552 review 与 TRADING-2553 Wave A 已进入 local/origin
+      main；剩余工作是把 frozen reader-entry lane 按 reviewed base-drift plan 协调到最新语义，重建 canonical
+      page/authority 并完成 formal acceptance。不得重跑 confirmation 或启动 Wave B/C。
+    acceptance_criteria: Atlas L0 明示单页范围、普通语言研究问题和三条独立进展；L0/L1 同源显示 signal verdict=RETAIN，同时准确说明
+      TRADING-2552 review 与 TRADING-2553 fixture-only Wave A 已完成、Wave B exact manifest
+      与 Wave C QuantConnect run 未授权；旧 UNRESOLVED/等待 paired-review 文案不得出现；canonical
+      exact-commit writer、page-effectiveness、focused/formal tiers 和真实浏览器桌面/移动端核验全部
+      PASS。
+    notes: 'Supporting requirement: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md.
+      Reviewed reconciliation plan=integration-revalidation-555931dd849d832932bc;
+      frozen lane=008e062b2ab1f65f69c0c436d9d9caffc8cd40dd; latest main=d72350d8c63ea591b11e3b2987304765d832459e.
+      production_effect=none; broker_action=none; no data/DQ/confirmation/backtest/QuantConnect/provider/cache/orders/fills/positions.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2550-reader-entry-base-drift-resume-20260902-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-740113a4df3da31f6ba341d6002a4708
+- schema_version: task_event.v1
+  task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-02T01:41:54.2181855+09:00'
+  actor: integration-coordinator
+  change_id: trading-2550-reader-entry-base-drift-resume-20260902-v1
+  lane_id: null
+  base_commit: d72350d8c63ea591b11e3b2987304765d832459e
+  previous_state_event_id: task-event-740113a4df3da31f6ba341d6002a4708
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：在 latest main 上完成 reader-entry domain reconciliation、canonical
+      Atlas 重建、正式验证与浏览器复核，然后收口为 BASELINE_DONE。
+    blocker_or_next_step: TRADING-2552 review 与 TRADING-2553 Wave A 已进入 local/origin
+      main；剩余工作是把 frozen reader-entry lane 按 reviewed base-drift plan 协调到最新语义，重建 canonical
+      page/authority 并完成 formal acceptance。不得重跑 confirmation 或启动 Wave B/C。
+    acceptance_criteria: Atlas L0 明示单页范围、普通语言研究问题和三条独立进展；L0/L1 同源显示 signal verdict=RETAIN，同时准确说明
+      TRADING-2552 review 与 TRADING-2553 fixture-only Wave A 已完成、Wave B exact manifest
+      与 Wave C QuantConnect run 未授权；旧 UNRESOLVED/等待 paired-review 文案不得出现；canonical
+      exact-commit writer、page-effectiveness、focused/formal tiers 和真实浏览器桌面/移动端核验全部
+      PASS。
+    notes: 'Supporting requirement: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md.
+      Reviewed reconciliation plan=integration-revalidation-555931dd849d832932bc;
+      frozen lane=008e062b2ab1f65f69c0c436d9d9caffc8cd40dd; latest main=d72350d8c63ea591b11e3b2987304765d832459e.
+      production_effect=none; broker_action=none; no data/DQ/confirmation/backtest/QuantConnect/provider/cache/orders/fills/positions.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2550-reader-entry-base-drift-resume-20260902-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3341c332f87e87d3e84779b80419aa8f
 projection:
   legacy_first_eight_cells:
   - TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
   - Strategy research / frozen first-layer signal value confirmation
   - P0
-  - BASELINE_DONE
-  - Project Owner：复核是否开启 conditional options paired comparison；当前未授权任何新的 QuantConnect/options/provider/backtest
-    或交易动作。
-  - 唯一 bounded confirmation 与 aggregate result admission 已完成，frozen verdict=RETAIN；详细证据见
-    [TRADING-2550 requirement](docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md)。下一合法动作仅为
-    Owner review，不自动启动 options paired comparison。
-  - Exact preregistration/freeze admission/run authorization/manifest identity PASS；manifest
-    replay/canonical DQ/local confirmation/independent replay 各精确一次且 PASS；terminal
-    verdict=RETAIN，aggregate-only；Atlas terminal projection 与独立证据重放 PASS；download/cache
-    mutation/QuantConnect/options/provider/paper/live/production/broker/orders/fills/positions=0。
-  - 2026-09-01：1202-session confirmation 在 2021-02-22..2025-12-02 上得出 primary estimand
-    +13.745976956735603 pp、max-drawdown delta -3.4293901783962415 pp，independent replay
-    PASS，frozen verdict RETAIN。共享 terminal-verdict contract 已发布至 main=b704784e；base-drift
-    plan integration-revalidation-ac8786f156b0dffad7ae 已审阅，仅协调重建 system flow/task/Atlas
-    派生物；不重跑 confirmation。
+  - IN_PROGRESS
+  - Codex：在 latest main 上完成 reader-entry domain reconciliation、canonical Atlas 重建、正式验证与浏览器复核，然后收口为
+    BASELINE_DONE。
+  - TRADING-2552 review 与 TRADING-2553 Wave A 已进入 local/origin main；剩余工作是把 frozen
+    reader-entry lane 按 reviewed base-drift plan 协调到最新语义，重建 canonical page/authority
+    并完成 formal acceptance。不得重跑 confirmation 或启动 Wave B/C。
+  - Atlas L0 明示单页范围、普通语言研究问题和三条独立进展；L0/L1 同源显示 signal verdict=RETAIN，同时准确说明 TRADING-2552
+    review 与 TRADING-2553 fixture-only Wave A 已完成、Wave B exact manifest 与 Wave C QuantConnect
+    run 未授权；旧 UNRESOLVED/等待 paired-review 文案不得出现；canonical exact-commit writer、page-effectiveness、focused/formal
+    tiers 和真实浏览器桌面/移动端核验全部 PASS。
+  - 'Supporting requirement: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md.
+    Reviewed reconciliation plan=integration-revalidation-555931dd849d832932bc; frozen
+    lane=008e062b2ab1f65f69c0c436d9d9caffc8cd40dd; latest main=d72350d8c63ea591b11e3b2987304765d832459e.
+    production_effect=none; broker_action=none; no data/DQ/confirmation/backtest/QuantConnect/provider/cache/orders/fills/positions.'
   docs_links:
   - docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md
   terminal: false
-  canonical_row_sha256: 34699597179ebc6c63828dd6234191881c5fc2475e4cdae990ae6085a4bc3428
-last_event_id: task-event-fccb59dff6b8d31aa3cc9dda6c20689d
+  canonical_row_sha256: d7ef797078dada70582a117c60eab5fd8440bcbbbdc03f7ec9b420633a43a65b
+last_event_id: task-event-3341c332f87e87d3e84779b80419aa8f
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 0d5c141f1215d1f214843bc796d4f09fb4c341988458395b7ae36baa0160e7ae
+fragment_checksum: c4a21b9fff5946e591b7a0944d5f7433532d14ed3897d2b603ef8eec00aa1dc0

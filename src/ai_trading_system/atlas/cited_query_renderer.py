@@ -2339,6 +2339,55 @@ _EVIDENCE_STATE_PRESENTATION = {
     EvidenceState.NOT_ELIGIBLE: ("不具备资格", "evidence-not-eligible"),
 }
 
+_RESEARCH_PROGRESS_PRESENTATION = {
+    EvidenceState.UNRESOLVED: (
+        "尚待判定",
+        "这个信号是否比同资金基准更有价值，尚未完成预先约定的比较；实现方式与稳健性也没有结论。",
+        "summary-pending",
+    ),
+    EvidenceState.RETAIN: (
+        "保留信号价值",
+        "按事先写好的比较方法，结果支持继续研究这个信号；但实现方式是否有效、未来是否稳健，仍未证明。",
+        "summary-retain",
+    ),
+    EvidenceState.REJECT: (
+        "否决当前路线",
+        "按事先写好的比较方法，结果不支持继续这条路线；不能在看到结果后改参数再宣称通过。",
+        "summary-reject",
+    ),
+    EvidenceState.INSUFFICIENT: (
+        "证据仍不足",
+        "现有证据还不能支持保留或否决；只能补充当前结论明确指出的未来证据。",
+        "summary-pending",
+    ),
+}
+
+_NEXT_ACTION_PRESENTATION = {
+    EvidenceState.UNRESOLVED: (
+        "等待单独授权",
+        "冻结信号价值确认未获本页授权，当前未开始。",
+    ),
+    EvidenceState.RETAIN: (
+        "等待后继研究授权",
+        "工程基线已完成；真实运行包与平台验证仍未授权、未开始。",
+    ),
+    EvidenceState.REJECT: (
+        "当前路线已关闭",
+        "不创建新的期权实现最高优先级实验。",
+    ),
+    EvidenceState.INSUFFICIENT: (
+        "等待证据范围复核",
+        "只可补充明确的未来证据；相关工作当前未授权、未开始。",
+    ),
+}
+
+_NEXT_EXPERIMENT_PRESENTATION = {
+    EvidenceState.RETAIN: (
+        "先冻结标的基准费用规则并批准真实运行包；之后若要做一次受限平台验证，"
+        "仍需再次单独授权。"
+    ),
+}
+
 
 def _verdict_label_zh(state: EvidenceState) -> str:
     return f"{_EVIDENCE_STATE_PRESENTATION[state][0]}。"
@@ -2362,9 +2411,24 @@ def _render_trust_strip(showcase: AtlasCitedQueryShowcase) -> str:
 
 def _render_reader_entry(showcase: AtlasCitedQueryShowcase) -> str:
     portfolio = showcase.evidence_first_portfolio
-    signal_value = next(
-        item for item in portfolio.evidence_ladder if item.evidence_id == "SIGNAL_VALUE"
+    evidence_by_id = {item.evidence_id: item for item in portfolio.evidence_ladder}
+    research_status, research_summary, research_tone = _RESEARCH_PROGRESS_PRESENTATION[
+        portfolio.current_verdict
+    ]
+    next_action_status, next_action_boundary = _NEXT_ACTION_PRESENTATION[portfolio.current_verdict]
+    readiness_items = tuple(
+        evidence_by_id[item_id]
+        for item_id in (
+            "ENGINEERING_REPRODUCIBILITY",
+            "PRIMARY_WINDOW_DQ_PIT",
+            "EXACT_SIGNAL_PACKAGE",
+        )
     )
+    if any(item.state is not EvidenceState.READY for item in readiness_items):
+        raise ValueError("ATLAS_READER_ENTRY_READINESS_STATE_INVALID")
+    production = evidence_by_id["PRODUCTION"]
+    if production.state is not EvidenceState.NOT_ELIGIBLE:
+        raise ValueError("ATLAS_READER_ENTRY_PRODUCTION_STATE_INVALID")
     ladder = "".join(
         (
             f'<li class="evidence-step {_EVIDENCE_STATE_PRESENTATION[item.state][1]}">'
@@ -2378,19 +2442,45 @@ def _render_reader_entry(showcase: AtlasCitedQueryShowcase) -> str:
     <section class="reader-entry" data-reader-section="WHY_CONTEXT" data-reader-card="reader-entry" aria-labelledby="reader-entry-title">
       <header class="reader-entry-header">
         <p class="eyebrow">策略研究 · 当前主问题</p>
-        <h1 id="reader-entry-title" data-always-visible="primary_evidence_question">{escape(portfolio.question_zh)}</h1>
+        <p class="reader-entry-scope" data-always-visible="page_scope">本页仅展示当前策略研究主线，不代表整个系统总体进展。</p>
+        <h1 id="reader-entry-title">这个信号，值得继续研究吗？</h1>
+        <p class="reader-entry-question" data-always-visible="primary_evidence_question"><strong>本页正在验证：</strong>{escape(portfolio.question_zh)}</p>
         <p class="lead">{escape(portfolio.research_goal_zh)}</p>
       </header>
       <div class="reader-entry-body">
         <section class="verdict-banner" aria-labelledby="current-verdict-title">
           <p class="section-kicker">CURRENT VERDICT</p>
           <h2 id="current-verdict-title">当前结论</h2>
-          <p data-always-visible="current_verdict"><strong>{escape(_verdict_label_zh(portfolio.current_verdict))}</strong>{escape(signal_value.explanation_zh)}</p>
+          <p data-always-visible="current_verdict"><strong>{escape(_verdict_label_zh(portfolio.current_verdict))}</strong>{escape(research_summary)}</p>
+        </section>
+        <section class="reader-progress-summary" aria-labelledby="reader-progress-title">
+          <div class="reader-section-heading compact-heading">
+            <p class="section-kicker">三句话看进展</p>
+            <h2 id="reader-progress-title">三个方面分别走到哪里？</h2>
+          </div>
+          <div class="reader-progress-grid" data-always-visible="independent_progress_summary">
+            <article class="reader-progress-card summary-ready" data-reader-progress="evidence_engineering">
+              <span>证据与工程</span>
+              <strong>研究输入已就绪</strong>
+              <p>工程重放、数据与时点检查、冻结信号包均已完成；这只表示受控研究链路可以复核。</p>
+            </article>
+            <article class="reader-progress-card {escape(research_tone)}" data-reader-progress="research_conclusion">
+              <span>研究结论</span>
+              <strong>{escape(research_status)}</strong>
+              <p>{escape(research_summary)}</p>
+            </article>
+            <article class="reader-progress-card summary-ineligible" data-reader-progress="production_eligibility">
+              <span>交易与生产</span>
+              <strong>{escape(_EVIDENCE_STATE_PRESENTATION[production.state][0])}</strong>
+              <p>当前仅限研究，不具备模拟盘、实盘、生产或交易资格。</p>
+            </article>
+          </div>
         </section>
         <section class="evidence-ladder-section" aria-labelledby="evidence-ladder-title">
           <div class="reader-section-heading compact-heading">
             <p class="section-kicker">证据阶梯</p>
             <h2 id="evidence-ladder-title">我们已经知道什么，还缺什么？</h2>
+            <p class="evidence-ladder-boundary">各阶段独立判断：前一阶段完成，不代表后一阶段会自动通过或自动启动。</p>
           </div>
           <ol class="evidence-ladder" data-always-visible="evidence_ladder">{ladder}</ol>
         </section>
@@ -2398,7 +2488,8 @@ def _render_reader_entry(showcase: AtlasCitedQueryShowcase) -> str:
           <article class="reader-action next-experiment">
             <p class="section-kicker">NEXT EXPERIMENT</p>
             <h2>下一项实验</h2>
-            <p data-always-visible="next_experiment">{escape(portfolio.next_experiment_zh)}</p>
+            <p class="next-action-status" data-always-visible="next_action_status"><span>当前状态</span><strong>{escape(next_action_status)}</strong> · {escape(next_action_boundary)}</p>
+            <p data-always-visible="next_experiment">{escape(_NEXT_EXPERIMENT_PRESENTATION.get(portfolio.current_verdict, portfolio.next_experiment_zh))}</p>
           </article>
           <article class="reader-action stop-condition">
             <p class="section-kicker">STOP CONDITION</p>
@@ -3340,6 +3431,9 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .reader-entry-header {{ padding:2.25rem clamp(1.2rem,4vw,3.2rem); background:linear-gradient(135deg,#102743,#244f83 68%,#1f756f); }}
     .reader-entry-header h1 {{ max-width:960px; margin:.32rem 0 .75rem; font-size:clamp(2rem,4.8vw,3.65rem); line-height:1.08; letter-spacing:-.035em; }}
     .reader-entry-header .lead {{ max-width:900px; }}
+    .reader-entry-scope {{ display:inline-block; margin:.45rem 0 .2rem; padding:.42rem .68rem; border:1px solid #ffffff52; border-radius:.55rem; color:#eaf4ff; background:#071a2d59; font-size:.72rem; font-weight:800; }}
+    .reader-entry-question {{ max-width:980px; margin:0 0 .7rem; color:#deebf8; font-size:.82rem; line-height:1.55; }}
+    .reader-entry-question strong {{ color:#fff; }}
     .reader-entry-body {{ padding:1.35rem; }}
     .verdict-banner {{ display:grid; grid-template-columns:minmax(145px,.28fr) minmax(0,1fr); gap:.3rem 1.1rem; align-items:center; padding:1rem 1.1rem; border:1px solid #e0c783; border-radius:.78rem; background:#fff9e8; }}
     .verdict-banner .section-kicker,.verdict-banner h2,.verdict-banner p {{ margin:0; }}
@@ -3347,8 +3441,22 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .verdict-banner h2 {{ grid-column:1; font-size:1.28rem; }}
     .verdict-banner > p:last-child {{ grid-column:2; grid-row:1 / span 2; color:#5f4814; }}
     .verdict-banner strong {{ display:block; margin-bottom:.2rem; color:#8a5f08; font-size:1.08rem; }}
+    .reader-progress-summary {{ margin-top:1.2rem; }}
+    .reader-progress-grid {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.7rem; }}
+    .reader-progress-card {{ min-width:0; padding:.95rem 1rem; border:1px solid #d7e1ed; border-left:5px solid #72839a; border-radius:.72rem; background:#f8fafc; }}
+    .reader-progress-card > span,.reader-progress-card > strong {{ display:block; }}
+    .reader-progress-card > span {{ color:#64758a; font-size:.64rem; font-weight:900; letter-spacing:.05em; }}
+    .reader-progress-card > strong {{ margin:.3rem 0 .25rem; color:#243c5c; font-size:1rem; }}
+    .reader-progress-card > p {{ margin:0; color:#56667b; font-size:.75rem; line-height:1.55; }}
+    .reader-progress-card.summary-ready,.reader-progress-card.summary-retain {{ border-left-color:#2d8a6e; background:#f2faf7; }}
+    .reader-progress-card.summary-ready > strong,.reader-progress-card.summary-retain > strong {{ color:#14614e; }}
+    .reader-progress-card.summary-pending {{ border-left-color:#b07a17; background:#fffaf0; }}
+    .reader-progress-card.summary-pending > strong {{ color:#79530e; }}
+    .reader-progress-card.summary-reject,.reader-progress-card.summary-ineligible {{ border-left-color:#a8495c; background:#fff8fa; }}
+    .reader-progress-card.summary-reject > strong,.reader-progress-card.summary-ineligible > strong {{ color:#813648; }}
     .evidence-ladder-section {{ margin-top:1.2rem; }}
     .compact-heading {{ padding:.2rem 0 .7rem; }}
+    .compact-heading .evidence-ladder-boundary {{ margin:.35rem 0 0; color:#5c6b7f; font-size:.74rem; font-weight:750; }}
     .evidence-ladder {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.65rem; margin:0; padding:0; list-style:none; }}
     .evidence-step {{ min-width:0; padding:.82rem .88rem; border:1px solid #dce4ee; border-top:4px solid #8a98aa; border-radius:.65rem; background:#f9fbfd; }}
     .evidence-step strong,.evidence-step p {{ display:block; }}
@@ -3372,6 +3480,9 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .reader-action.stop-condition {{ border-color:#d9c88f; background:#fffaf0; }}
     .reader-action .section-kicker,.reader-action h2,.reader-action > p:last-child {{ margin:0; }}
     .reader-action h2 {{ margin:.14rem 0 .3rem; font-size:1.12rem; }}
+    .reader-action .next-action-status {{ margin:.2rem 0 .55rem; padding:.5rem .62rem; border:1px solid #9acfc6; border-radius:.5rem; color:#285b54; background:#e9f7f4; font-size:.72rem; line-height:1.5; }}
+    .next-action-status span {{ display:block; color:#58766f; font-size:.59rem; font-weight:900; letter-spacing:.04em; }}
+    .next-action-status strong {{ color:#0c6259; }}
     .reader-action > p:last-child {{ color:#4f5f75; font-size:.8rem; }}
     .reader-entry .reader-safety {{ margin-top:1rem; }}
     .research-details-gateway {{ border-style:dashed; background:#fbfcfe; box-shadow:none; }}
@@ -3447,7 +3558,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .audit-destinations .terminology-guide-intro,.audit-destinations .terminology-grid {{ width:auto; margin-left:1rem; margin-right:1rem; }}
     code {{ overflow-wrap:anywhere; }}
     footer {{ margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; overflow-wrap:anywhere; }}
-    @media (max-width:900px) {{ .evidence-ladder {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .reader-decision-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .system-orientation ol {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .causal-chain {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .date-context {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .progress-matrix-grid,.progress-matrix-heading {{ grid-template-columns:1fr; }} .strategy-conclusion-count {{ width:170px; }} }}
+    @media (max-width:900px) {{ .evidence-ladder {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .reader-progress-grid {{ grid-template-columns:1fr; }} .reader-decision-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .system-orientation ol {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .causal-chain {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .date-context {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .progress-matrix-grid,.progress-matrix-heading {{ grid-template-columns:1fr; }} .strategy-conclusion-count {{ width:170px; }} }}
     @media (max-width:900px) {{ .effectiveness-title-row,.effectiveness-boundary,.flow-heading,.qqq-title-row {{ grid-template-columns:1fr; display:grid; }} .you-are-here,.qqq-count {{ margin-top:1rem; }} .qqq-count {{ width:142px; }} .qqq-task-list {{ grid-template-columns:1fr; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel,.result-ledger-intro {{ grid-template-columns:1fr; }} .historical-lane-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} nav,.result-ledger-grid {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
     @media (max-width:620px) {{ .evidence-ladder,.reader-action-grid,.system-orientation ol,.reader-decision-grid,.reader-plain-flow,.causal-chain,.why-boundary-grid,.date-context,.acceptance-axis-grid,.flow-position-grid,.terminology-grid,.metrics,nav,.reader-answer-grid,.effectiveness-review-grid,.effectiveness-audit dl,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail,.qqq-reader-boundary,.qqq-group-boundary,.qqq-reader-grid,.work-reader-grid,.progress-dimension-grid,.concept-grid {{ grid-template-columns:1fr; }} .reader-entry-header {{ padding:1.65rem 1rem; }} .reader-entry-body {{ padding:.85rem; }} .verdict-banner {{ display:block; }} .verdict-banner h2 {{ margin:.12rem 0 .35rem; }} .research-details-gateway > .reader-section-heading {{ display:block; }} .research-details-gateway > .reader-section-heading .drilldown-toggle {{ width:100%; margin-top:.75rem; }} .research-closure,.local-research-explanation {{ margin-left:.8rem; margin-right:.8rem; }} .reader-plain-flow {{ gap:1.15rem; }} .reader-plain-flow li::after {{ right:50%; top:auto; bottom:-1.05rem; content:"↓"; transform:translateX(50%); }} .page-effectiveness,.flow-map,.result-ledger,.qqq-projection {{ padding:1rem; }} .successor-coverage li {{ grid-template-columns:1fr; }} .qqq-decision {{ grid-template-columns:1fr; }} .qqq-decision-label {{ padding:.7rem .85rem; }} .qqq-task-identity {{ align-items:flex-start; flex-direction:column; }} .qqq-layer-row {{ grid-template-columns:1fr; gap:.05rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
     @media (prefers-reduced-motion:reduce) {{ html {{ scroll-behavior:auto; }} .stage-disclosure-cue i {{ transition:none; }} }}
@@ -3569,7 +3680,7 @@ def write_cited_query_artifacts(
         html_bytes=html_bytes,
         policy=showcase.reader_terminology,
     )
-    payloads = {
+    raw_payloads: dict[str, bytes | Mapping[str, object]] = {
         "comparison_snapshot.json": showcase.before_payload,
         "current_diff.json": showcase.diff_payload,
         "current_snapshot.json": showcase.snapshot_payload,
@@ -3600,7 +3711,7 @@ def write_cited_query_artifacts(
         ),
         "work_progress_explanations.json": showcase.work_progress.canonical_bytes,
     }
-    payloads = {
+    payloads: dict[str, bytes] = {
         name: (
             (
                 json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
@@ -3609,7 +3720,7 @@ def write_cited_query_artifacts(
             if isinstance(payload, Mapping)
             else payload
         )
-        for name, payload in payloads.items()
+        for name, payload in raw_payloads.items()
     }
     artifacts: list[AtlasCitedQueryRenderedArtifact] = []
     for name, payload in payloads.items():

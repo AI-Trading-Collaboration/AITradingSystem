@@ -20,6 +20,10 @@ from ai_trading_system.atlas.page_effectiveness import (
 )
 from ai_trading_system.atlas.snapshot_builder import build_atlas_bundle
 from ai_trading_system.atlas.snapshot_diff import build_snapshot_diff
+from ai_trading_system.contracts.evidence_first_research_portfolio import (
+    EvidenceState,
+    load_projected_evidence_first_research_portfolio,
+)
 from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.contracts.strategy_research_cited_query import CitedQueryQuestionId
 from ai_trading_system.contracts.strategy_research_explorer import (
@@ -57,8 +61,7 @@ _QQQ_RECOVERY_EVIDENCE_PATH = (
     "export_safe_terminal_evidence.json"
 )
 _QQQ_HISTORICAL_DQ_TASK_ID = (
-    "TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_"
-    "EVIDENCE_ADMISSION_V1"
+    "TRADING-2533_QC_QQQ_OPTIONS_SESSION_FINALIZATION_V2_EXPORT_SAFE_DQ_PIT_EVIDENCE_ADMISSION_V1"
 )
 _QQQ_TRANSPORT_RECOVERY_TASK_ID = (
     "TRADING-2541_QC_QQQ_OPTIONS_EXACT_DATE_SUBSCRIPTION_MISSING_REMEDIATION_V1"
@@ -103,6 +106,95 @@ _READER_TEXT_REPLACEMENTS = {
     "AUTHORITY_UNAVAILABLE": "权威尚不可用",
     "false-risk-off": "错误避险",
     "slice": "Slice",
+}
+
+_READER_VERDICT_DECISION_ZH = {
+    EvidenceState.UNRESOLVED: (
+        "冻结的第一层五态信号尚未形成经验结论；已完成的工程与研究设计准备不能替代"
+        " signal-value verdict。"
+    ),
+    EvidenceState.RETAIN: (
+        "冻结的第一层五态信号已完成预先登记的同资本比较，当前结论为“保留信号价值”。"
+        "这只支持继续研究，不证明期权实现、稳健性或生产资格。"
+    ),
+    EvidenceState.REJECT: (
+        "冻结的第一层五态信号当前结论为“不保留信号价值”；该结果关闭这条实现路线的"
+        "最高优先级，不支持继续推进期权实现比较。"
+    ),
+    EvidenceState.INSUFFICIENT: (
+        "冻结的第一层五态信号当前结论为“证据不足”；现有证据不能支持保留或否决，"
+        "也不能据此推进期权实现比较。"
+    ),
+}
+
+_READER_VERDICT_WORK_ZH = {
+    EvidenceState.UNRESOLVED: (
+        "当前只保留已冻结的 signal-value confirmation 设计；若要运行，仍需另行精确授权，"
+        "不得把方案就绪写成经验结果。"
+    ),
+    EvidenceState.RETAIN: (
+        "conditional paired-comparison Owner review 与 fixture-only Wave A 已完成：已建立同资本 "
+        "virtual QQQ/cash ledger、aggregate-only admission 与 16-axis replay；尚未生成真实运行 "
+        "manifest，也未运行 DQ 或 QuantConnect。"
+    ),
+    EvidenceState.REJECT: (
+        "当前不再为该信号推进期权实现 P0；只有新的治理决定改变研究问题时，才会重新定义后续工作。"
+    ),
+    EvidenceState.INSUFFICIENT: (
+        "当前只能界定缺失的 prospective evidence；不得用重复运行或未预先登记的分析补写结论。"
+    ),
+}
+
+_READER_VERDICT_NEXT_ZH = {
+    EvidenceState.UNRESOLVED: (
+        "下一步仅可在 Project Owner 另行批准 exact bounded-run scope 后运行冻结的 signal-value "
+        "confirmation；当前未授权、未开始。"
+    ),
+    EvidenceState.RETAIN: (
+        "下一步只能由 Project Owner 另行冻结 underlying comparator fee semantics 并批准 Wave B "
+        "exact package/manifest；Wave C 单次 QuantConnect run 仍需再次独立授权，当前均未授权、"
+        "未开始。"
+    ),
+    EvidenceState.REJECT: (
+        "下一步是保持 options implementation P0 关闭；当前没有新的实现比较或回测动作。"
+    ),
+    EvidenceState.INSUFFICIENT: (
+        "下一步只能由 Project Owner 复核是否补充被明确指出的 prospective evidence；"
+        "当前没有自动重跑或实现比较。"
+    ),
+}
+
+_READER_VERDICT_BLOCKER_ZH = {
+    EvidenceState.UNRESOLVED: (
+        "当前最大阻塞是 signal-value confirmation 尚无单独运行授权，因此 verdict 仍为 UNRESOLVED。"
+    ),
+    EvidenceState.RETAIN: (
+        "当前最大阻塞已不是 signal verdict 或 Wave A 工程，而是未冻结的 fee semantics、Wave B "
+        "exact manifest 与独立 bounded QuantConnect run authority。"
+    ),
+    EvidenceState.REJECT: (
+        "当前不是等待工程解阻；冻结 verdict 已否决继续推进该实现路线的最高优先级。"
+    ),
+    EvidenceState.INSUFFICIENT: (
+        "当前最大阻塞是预先登记的证据不足；只有明确的 prospective evidence 才能重新打开判断。"
+    ),
+}
+
+_READER_VERDICT_MAINLINE_ZH = {
+    EvidenceState.UNRESOLVED: (
+        "当前主线是先判断冻结的 first_layer_composer_v2 五态信号本身是否有可保留的增量价值；"
+        "期权只保留为 RETAIN 后的条件实现对比。"
+    ),
+    EvidenceState.RETAIN: (
+        "当前主线已进入 conditional options paired-comparison 的受限工程准备：signal verdict 已为 "
+        "RETAIN，fixture-only Wave A 已完成，但真实平台证据仍为 INSUFFICIENT_PLATFORM_EVIDENCE。"
+    ),
+    EvidenceState.REJECT: (
+        "冻结信号价值已被否决，当前主线保持 options implementation P0 关闭，不推进实现比较。"
+    ),
+    EvidenceState.INSUFFICIENT: (
+        "冻结信号价值证据仍不足，当前主线只能界定明确的 prospective evidence，不推进实现比较。"
+    ),
 }
 
 
@@ -272,9 +364,12 @@ def load_live_snapshot_policy(
         raise AtlasLiveSnapshotError("ATLAS_LIVE_POLICY_SCHEMA_INVALID")
     if str(payload.get("status")) != "REVIEWED_FAIL_CLOSED_LIVE_PROJECTION":
         raise AtlasLiveSnapshotError("ATLAS_LIVE_POLICY_STATUS_INVALID")
-    mapping = {str(key): str(value) for key, value in _mapping(
-        payload.get("task_status_mapping"), "task_status_mapping"
-    ).items()}
+    mapping = {
+        str(key): str(value)
+        for key, value in _mapping(
+            payload.get("task_status_mapping"), "task_status_mapping"
+        ).items()
+    }
     if mapping != _STATUS_MAPPING:
         raise AtlasLiveSnapshotError("ATLAS_LIVE_TASK_STATUS_MAPPING_INVALID")
     safety = _mapping(payload.get("safety"), "safety")
@@ -348,9 +443,7 @@ def _task_sources(
         if coverage.task_event_time_basis == "EVENT_OCCURRED_AT"
         else "legacy event 未记录 occurred_at；as_of 仅使用 event base commit 时间。"
     )
-    limitation = (
-        "这是 canonical task 治理状态，不是策略有效性、收益或风险证据。" + time_note
-    )
+    limitation = "这是 canonical task 治理状态，不是策略有效性、收益或风险证据。" + time_note
     shared: dict[str, Any] = {
         "source_kind": ExplorerSourceKind.GIT_AUTHORITY,
         "exact_commit": exact_commit,
@@ -379,9 +472,7 @@ def _task_sources(
     )
 
 
-def _coverage_by_id(
-    coverage: tuple[PageTaskCoverage, ...], task_id: str
-) -> PageTaskCoverage:
+def _coverage_by_id(coverage: tuple[PageTaskCoverage, ...], task_id: str) -> PageTaskCoverage:
     matches = tuple(item for item in coverage if item.task_id == task_id)
     if len(matches) != 1:
         raise AtlasLiveSnapshotError(f"ATLAS_LIVE_TASK_ROLE_NOT_COVERED:{task_id}")
@@ -425,9 +516,7 @@ def _load_qqq_transport_recovery_facts(*, repository_root: Path) -> Mapping[str,
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise AtlasLiveSnapshotError("ATLAS_READER_RECOVERY_EVIDENCE_INVALID") from exc
     expected_identity = {
-        "schema_version": (
-            "qc_qqq_options_exact_date_subscription_recovery_terminal_evidence.v1"
-        ),
+        "schema_version": ("qc_qqq_options_exact_date_subscription_recovery_terminal_evidence.v1"),
         "task_id": _QQQ_TRANSPORT_RECOVERY_TASK_ID,
         "status": "EXPORT_SAFE_TERMINAL_EVIDENCE_COLLECTED",
         "technical_validation_state": "PASS",
@@ -443,9 +532,7 @@ def _load_qqq_transport_recovery_facts(*, repository_root: Path) -> Mapping[str,
     }
     for field, expected_value in expected_identity.items():
         if payload.get(field) != expected_value:
-            raise AtlasLiveSnapshotError(
-                f"ATLAS_READER_RECOVERY_EVIDENCE_IDENTITY_INVALID:{field}"
-            )
+            raise AtlasLiveSnapshotError(f"ATLAS_READER_RECOVERY_EVIDENCE_IDENTITY_INVALID:{field}")
     integer_fields = (
         "normal_slice_session_count",
         "recovered_session_count",
@@ -568,12 +655,13 @@ def build_reader_decision_projection(
     coverage: tuple[PageTaskCoverage, ...],
     policy: AtlasLiveSnapshotPolicy,
 ) -> AtlasReaderDecisionProjection:
+    portfolio = load_projected_evidence_first_research_portfolio(repository_root=repository_root)
+    verdict = portfolio.current_verdict
+    signal_value = portfolio.evidence_ladder[3]
     historical_dq = _coverage_by_id(coverage, _QQQ_HISTORICAL_DQ_TASK_ID)
     recovery = _coverage_by_id(coverage, _QQQ_TRANSPORT_RECOVERY_TASK_ID)
     reader_repair = _coverage_by_id(coverage, _ATLAS_READER_REPAIR_TASK_ID)
-    result_status_repair = _coverage_by_id(
-        coverage, _ATLAS_RESULT_STATUS_REPAIR_TASK_ID
-    )
+    result_status_repair = _coverage_by_id(coverage, _ATLAS_RESULT_STATUS_REPAIR_TASK_ID)
     mainline = _coverage_by_id(coverage, policy.current_mainline_task_id)
     blocker = _coverage_by_id(coverage, policy.largest_blocker_task_id)
     next_step = _coverage_by_id(coverage, policy.next_legal_action_task_id)
@@ -623,36 +711,29 @@ def build_reader_decision_projection(
             item_id="CURRENT_DECISION",
             label_zh="01 · 当前决定",
             text_zh=(
-                "第一层五态信号的价值仍未解决；result-blind draft.1 已按 exact file/canonical "
-                "SHA 冻结 comparator、5 bps 成本、zero-return threshold、drawdown guard 与三态 "
-                "reducer，但尚无经验 verdict，当前不形成策略结论。"
+                f"{_READER_VERDICT_DECISION_ZH[verdict]}研究证据摘要：{signal_value.explanation_zh}"
             ),
             source_task_ids=current_decision_sources,
         ),
         AtlasReaderDecisionItem(
             item_id="WHY_PAUSED",
             label_zh="02 · 为什么",
-            text_zh=f"{transport_text}{result_text}{limitation_text}",
+            text_zh=(
+                f"历史期权链路背景：{transport_text}历史单次期权 baseline 背景：{result_text}"
+                f"{limitation_text}这些背景不能替代当前 signal-value verdict，也不能授权下一阶段。"
+            ),
             source_task_ids=why_sources,
         ),
         AtlasReaderDecisionItem(
             item_id="CURRENT_WORK",
             label_zh="03 · 现在在查什么",
-            text_zh=(
-                "当前草案只把同一冻结趋势信号映射为 fully-funded QQQ/零收益现金，并与"
-                "result-blind exposure-matched static QQQ/现金 primary comparator 比较；"
-                "不使用 option data，也不新建趋势判断链。"
-            ),
+            text_zh=_READER_VERDICT_WORK_ZH[verdict],
             source_task_ids=work_sources,
         ),
         AtlasReaderDecisionItem(
             item_id="NEXT_STEP",
             label_zh="04 · 下一步",
-            text_zh=(
-                "下一步只有在项目负责人未来另行批准 exact bounded-run scope 后，才可准备并重放"
-                "一次性 manifest/DQ/confirmation 门禁；当前不得读取市场结果、运行 DQ、"
-                "signal-value confirmation、backtest、QuantConnect 或 provider/cache。"
-            ),
+            text_zh=_READER_VERDICT_NEXT_ZH[verdict],
             source_task_ids=next_sources,
         ),
     )
@@ -660,8 +741,8 @@ def build_reader_decision_projection(
         item_id="PROHIBITED_INFERENCES",
         label_zh="04 · 不能推出什么",
         text_zh=(
-            "不能把 +4.48% 正收益解释为策略有效、风险调整表现合格或期权优于标的；"
-            "也不表示可以投资、部署、交易或自动调参。"
+            f"{portfolio.prohibited_inference_zh}尤其不能把上述 +4.48% 单次期权 baseline 解释为"
+            "策略有效、风险调整表现合格或期权优于标的；也不表示可以投资、部署、交易或自动调参。"
         ),
         source_task_ids=prohibited_sources,
     )
@@ -669,28 +750,23 @@ def build_reader_decision_projection(
         AtlasReaderDecisionItem(
             item_id="CURRENT_RESEARCH_MAINLINE",
             label_zh="01 · 当前主线",
-            text_zh=(
-                "当前主线是先判断冻结的 first_layer_composer_v2 五态信号本身是否有可保留的"
-                "增量价值；期权只保留为 RETAIN 后的条件实现对比。"
-            ),
+            text_zh=_READER_VERDICT_MAINLINE_ZH[verdict],
             source_task_ids=current_decision_sources,
         ),
         AtlasReaderDecisionItem(
             item_id="LARGEST_CURRENT_BLOCKER",
             label_zh="02 · 最大阻塞",
-            text_zh=(
-                f"{limitation_text}signal-value draft.1 已 exact-freeze，但没有 outcome access、"
-                "DQ 或经验运行授权，因此 signal-value verdict 仍为 UNRESOLVED。"
-            ),
+            text_zh=f"{_READER_VERDICT_BLOCKER_ZH[verdict]}{limitation_text}",
             source_task_ids=why_sources,
         ),
         AtlasReaderDecisionItem(
             item_id="ENGINEERING_VS_RESEARCH_EVIDENCE",
             label_zh="03 · 已做到什么",
             text_zh=(
-                f"受治理链路已确认 {observed}/{expected} 个交易日并完成一次 bounded baseline；"
-                "平台聚合字段已通过限定范围的技术复核，并已完成 signal-value result-blind "
-                "preregistration exact freeze，但这些只属于工程与研究设计事实，不是策略通过。"
+                f"受治理链路已确认 {observed}/{expected} 个交易日；signal-value 的 canonical DQ、"
+                "一次 bounded confirmation 与 independent replay 已完成，当前 "
+                f"verdict={verdict.value}。"
+                "这些证据仍不证明期权实现价值、稳健性或生产资格。"
             ),
             source_task_ids=work_sources,
         ),
@@ -895,9 +971,7 @@ def build_live_snapshot_bundle(
         target_ids={
             CitedQueryQuestionId.RESEARCH_MAINLINE_SUMMARY: "program-strategy-research",
             CitedQueryQuestionId.RESULT_AND_STATUS: "live-current-blocker-result",
-            CitedQueryQuestionId.ATTRIBUTION_AND_LIMITATIONS: (
-                "live-current-blocker-attribution"
-            ),
+            CitedQueryQuestionId.ATTRIBUTION_AND_LIMITATIONS: ("live-current-blocker-attribution"),
             CitedQueryQuestionId.SNAPSHOT_CHANGE_EXPLANATION: program_change[0].change_id,
             CitedQueryQuestionId.SOURCE_LINEAGE: _source_ids(mainline)[1],
         },

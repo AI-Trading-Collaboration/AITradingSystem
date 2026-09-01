@@ -10147,6 +10147,13 @@ QuantConnect comparator fee semantics、exact run package 与 bounded authority�
 PASS 只证明本地实现和 fail-closed 边界可重放，不是 platform evidence，也不改变当前 paired outcome=
 `INSUFFICIENT_PLATFORM_EVIDENCE`；外部动作、backtest、orders/fills/positions 均保持 `0`。
 
+TRADING-2550 的 Atlas reader-entry projection 在该 Wave A 状态之后继续从同一 frozen evidence-first
+portfolio 读取 signal verdict=`RETAIN`，但把“当前工作 / 最大阻塞 / 下一步”与 latest governed successor
+同步：TRADING-2552 Owner review 与 TRADING-2553 fixture-only Wave A 已完成；L0 用普通语言说明研究输入、
+研究结论、production eligibility 三个独立进展面，并隐藏 task/SHA/manifest 审计标识；L1 明示剩余边界为
+underlying comparator fee semantics、Wave B exact package/manifest 与 Wave C 独立 bounded QuantConnect
+authority。该只读投影不改变 signal package、paired contract、research result 或任何 DQ/PIT/执行权限。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个
