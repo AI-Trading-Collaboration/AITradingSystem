@@ -356,6 +356,17 @@ Owner review conditional options paired comparison；它不自动授权或运行
 data download、cache mutation、QuantConnect、option/provider、paper/live/production/broker 与
 orders/fills/positions 全部保持为零。
 
+TRADING-2552 不增加新的趋势、期权定价、数据下载或回测链，只在 Atlas 的只读 current-state
+projection 中登记 conditional options paired-comparison Owner review。该 review 继续复用 TRADING-2550
+已保留的 1,202-session exact direction signal，并把当前 blocker 明确定位为后继 QuantConnect research
+implementation 尚缺 fully-funded virtual QQQ/cash comparator、export-safe aggregate、local admission/
+independent replay、exact manifest 与独立 run authority；旧 one-share QQQ quote ledger 不得被重新解释为
+冻结的 USD 100,000 common-capital primary estimand。Atlas successor freshness gate 将 TRADING-2552 分类为
+`OWNER_REVIEW_COMPLETE_SEPARATE_WAVE_A_AUTHORITY_REQUIRED`，下一动作仅为 Owner 另行授权 fixture-only、
+non-executable Wave A；Wave B manifest 与 Wave C single backtest 仍是独立后继授权。该投影不改变 signal、
+37-slot option policy、paired contract、历史 aggregate 或 DQ/PIT，也不授权 QuantConnect、provider、raw option
+export、paper/live/production/broker 或 orders/fills/positions。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，

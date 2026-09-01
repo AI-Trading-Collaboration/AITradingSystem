@@ -1,7 +1,7 @@
 schema_version: atlas_page_effectiveness_policy.v1
 policy_id: atlas_strategy_research_page_effectiveness_v1
-policy_version: 3.6.0
-status: REVIEWED_LIVE_SNAPSHOT_IDENTITY_CONTRACT_V3_PAIRED_COMPARATOR_EXACT_FREEZE_REFRESH
+policy_version: 3.7.0
+status: REVIEWED_LIVE_SNAPSHOT_IDENTITY_CONTRACT_V3_CONDITIONAL_PAIRED_OWNER_REVIEW_REFRESH
 owner: Atlas page engineering owner
 primary_research_start: '2021-02-22'
 canonical_page_path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html
@@ -384,6 +384,10 @@ task_sources:
     requirement_path: docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md
     coverage: TERMINAL_VERDICT_CONTRACT_SERIAL_WAVE_COMPLETE
     reader_summary_zh: 2551 已完成 2550 结果接入前的最小 serial contract wave，共享 evidence portfolio 与 Atlas reader 可确定性表达 RETAIN、REJECT、INSUFFICIENT 并强制 exact next-action 与 SIGNAL_VALUE ladder 一致。该 contract 不改变 confirmation 数值或 admission，也不授权新的数据、DQ、backtest、QuantConnect、provider、生产或交易动作。
+  - task_id: TRADING-2552_QQQ_OPTIONS_CONDITIONAL_PAIRED_COMPARISON_OWNER_REVIEW_V1
+    requirement_path: docs/requirements/TRADING-2552_QQQ_Options_Conditional_Paired_Comparison_Owner_Review_V1.md
+    coverage: CONDITIONAL_PAIRED_COMPARISON_OWNER_REVIEW_COMPLETE_WAVE_A_AUTHORITY_REQUIRED
+    reader_summary_zh: 2552 已完成 conditional options paired-comparison 的本地不可执行 Owner review。结论是现有趋势数据与 1202-session exact signal package 足够，无需为期权重建趋势判断链；旧 QuantConnect one-share QQQ quote ledger 不能回答冻结的 USD 100,000 common-capital primary estimand。当前缺口是 fully-funded virtual QQQ/cash comparator、export-safe aggregate、local admission/independent replay、exact manifest 与独立 QuantConnect run authority，必须按 Wave A/B/C 分开授权。当前 paired outcome 仍为“平台证据不足”；本任务不授权 exporter、manifest、DQ、QuantConnect、provider、raw option export、生产、broker 或任何交易动作。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

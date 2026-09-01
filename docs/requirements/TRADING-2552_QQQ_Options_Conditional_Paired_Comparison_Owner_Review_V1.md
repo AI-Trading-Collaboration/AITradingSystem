@@ -143,9 +143,11 @@ precedence 输出 `INSUFFICIENT`/`INVALID`，不得本地替代。
 
 ## 6. Path ownership 与生命周期
 
-本任务只拥有本 supporting requirement 和 canonical task event。它不创建临时 worktree/clone/cache，不修改
-`docs/system_flow.md`，因为此次 review 没有改变任何 CLI、data flow、DQ gate、backtest behavior 或 report
-consumer。known-unrelated exclusion
+本任务原始 review bytes 只拥有本 supporting requirement 和 canonical task event；review 不改变任何 CLI、
+data flow、DQ gate 或 backtest behavior。正式 Full 验证发现新增 task 必须进入 Atlas successor policy，否则
+current-state projection 会按设计 fail closed。因此 failure-fix 额外拥有 `config/atlas/live_snapshot.yaml`、
+`config/atlas/page_effectiveness.yaml` 与对应 `tests/atlas/` 断言，并按 report-output 维护规则同步
+`docs/system_flow.md`。这只是 read-only report projection 分类，不改变策略、数据、DQ 或交易链。known-unrelated exclusion
 `docs/research/growth_tilt_owner_diagnosis_pack.md` 不读取、不 hash、不 diff、不 stage、不修改。
 
 正式验证期间共享主 checkout 被另一任务切换分支。为避免干扰该任务，failure-fix 收口使用独立临时 Git
@@ -177,3 +179,9 @@ fast-forward 到 local/origin `main`、canonical evidence 已保全、无进程�
   当前仅缺 fully-funded comparator、aggregate exporter、local admission/replay、exact manifest 和独立
   QuantConnect run authority。task-owned review bytes 已完成，等待 canonical task 状态与 formal
   publication 收口；external/data/trading counters 继续为零。
+- 2026-09-01：parent Full `full_20260901T023827Z` 得到 `10062 passed / 27 failed / 6 skipped`。
+  其中 14 项来自隔离 worktree 未携带既有 ignored retained receipts/signal-package evidence，13 项来自
+  TRADING-2552 尚未在 Atlas successor policy 分类；两类均不涉及研究数值或外部运行失败。failure-fix
+  将精确复制既有留存 evidence、把本 review 投影为 `OWNER_REVIEW_COMPLETE_SEPARATE_WAVE_A_AUTHORITY_REQUIRED`，
+  重建 Atlas/report-flow/architecture/compatibility authorities，并以该 Full 作为 immutable parent 执行
+  唯一 `failure_fix_rerun`。QuantConnect、市场数据、provider、DQ、backtest 与交易 counters 继续为零。

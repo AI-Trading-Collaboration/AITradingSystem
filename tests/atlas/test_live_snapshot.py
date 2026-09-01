@@ -94,7 +94,7 @@ def test_unclassified_successor_is_detected_before_live_projection() -> None:
     without_latest = replace(policy, task_sources=policy.task_sources[:-1])
 
     assert unclassified_page_successors(registry, without_latest) == (
-        "TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1",
+        "TRADING-2552_QQQ_OPTIONS_CONDITIONAL_PAIRED_COMPARISON_OWNER_REVIEW_V1",
     )
 
 
@@ -106,18 +106,19 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2550_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2552_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at == "2026-09-01T00:00:00+00:00"
     assert bundle.status_object_zh == (
-        "当前研究组合已按 Owner 决定切换为 evidence-first。TRADING-2550 的 result-blind draft.1、"
-        "exact freeze admission 与一次性 bounded run manifest 已精确重放；冻结的 1,202 个交易日五态"
-        "信号在 2021-02-22..2025-12-02 主窗口上完成 canonical DQ、local confirmation 与 independent "
-        "replay，且全部 PASS。Candidate 相对 exposure-matched static QQQ/现金 comparator 的净总收益差"
-        "为 +13.745976956735603 个百分点，最大回撤幅度差为 -3.4293901783962415 个百分点，冻结 reducer "
-        "因而输出 RETAIN。该结论只保留 first_layer_composer_v2 信号价值，不证明期权实现价值、稳健性、"
-        "pristine OOS 或生产资格。下一合法动作仅为 Owner review conditional options paired comparison；"
-        "当前不授权新的 QuantConnect、options/provider、backtest、paper/live/production/broker 或交易动作。"
+        "当前研究组合维持 evidence-first。TRADING-2550 已证明冻结的 1,202-session "
+        "first_layer_composer_v2 五态信号相对 exposure-matched static QQQ/现金 comparator 值得保留，"
+        "但不证明期权实现价值。TRADING-2552 已完成 conditional options paired-comparison Owner review："
+        "现有趋势数据与 exact signal package 足够；旧 QuantConnect one-share QQQ quote ledger 不能回答冻结的 "
+        "USD 100,000 common-capital primary estimand。当前 blocker 是 fully-funded virtual QQQ/cash "
+        "comparator、export-safe aggregate、local admission/independent replay、exact manifest 与独立 "
+        "QuantConnect run authority尚未分波实现或批准，不是趋势或期权市场数据缺口。下一合法动作仅为 Owner "
+        "另行授权 non-executable Wave A implementation；当前不授权 exporter、manifest、DQ、QuantConnect "
+        "save/build/backtest/retry、options/provider、raw option export、paper/live/production/broker 或任何交易动作。"
     )
 
 
