@@ -148,6 +148,13 @@ precedence 输出 `INSUFFICIENT`/`INVALID`，不得本地替代。
 consumer。known-unrelated exclusion
 `docs/research/growth_tilt_owner_diagnosis_pack.md` 不读取、不 hash、不 diff、不 stage、不修改。
 
+正式验证期间共享主 checkout 被另一任务切换分支。为避免干扰该任务，failure-fix 收口使用独立临时 Git
+worktree `D:\Work\AITradingSystem_trading2552_owner_review`，owner=`TRADING-2552`，purpose=重建
+architecture manifest/compatibility authority、运行 final validation 并形成唯一候选。exit condition=候选已
+fast-forward 到 local/origin `main`、canonical evidence 已保全、无进程依赖且 tracked/untracked/ignored 审计
+无唯一内容；满足后用 `git worktree remove` 清理并 `git worktree prune`。删除 allowlist 仅限该精确路径，
+合入前可通过 Git 历史恢复，清理后临时未提交内容不可恢复。
+
 ## 7. 当前 terminal
 
 - review decision：`READY_FOR_SEPARATELY_AUTHORIZED_NON_EXECUTABLE_IMPLEMENTATION_WAVE`；
