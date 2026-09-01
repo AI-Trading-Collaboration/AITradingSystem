@@ -8698,7 +8698,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s5_task_source_cutover
   path: tests/test_arch_005_s5_task_source_cutover.py
-  sha256: cf0e2236e9c2e017e0888f78e4fdeb3c49249b229aa6c6358101105fd1aa99e0
+  sha256: b9db69d5830d974df886eba22bbcf94f45d1abb74097c8ee1ebfa7e729be4dca
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
