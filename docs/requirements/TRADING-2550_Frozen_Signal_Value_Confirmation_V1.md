@@ -222,3 +222,9 @@ cache mutation、QuantConnect、option backtest、provider、orders/fills/positi
   `tests/test_arch_004g_deprecation.py` 仍冻结新增 executor 前的 inventory identity/count；其余 881 项
   PASS。该失败不涉及 empirical result、DQ 或 replay。失败 publication transaction 已留存并释放，
   后续候选只更新确定性 architecture ratchet 并重建关联 authority，不重跑 confirmation。
+- 2026-09-01：failure-fix 候选 `afd4b2a4...` 的 Architecture/Contract/Integration/Reproducibility 分别
+  `882/278/995/24 PASS`；Full 为 `10084 passed / 3 skipped / 6 failed`。6 项同根因：集成曾直接把
+  preregistration SHA 锁定的 `evidence_first_research_portfolio_v1.yaml` 从 `UNRESOLVED` 改为
+  `RETAIN`，破坏 immutable authority identity。v4 修复恢复该冻结文件原字节，只允许 Atlas 经
+  result-admission、evidence SHA、aggregate counter/DQ/replay/safety 全部校验后构造只读 terminal
+  projection；prior failed Full 作为 `failure_fix_rerun` parent 绑定，不重跑 confirmation。

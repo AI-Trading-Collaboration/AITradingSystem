@@ -189,7 +189,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.cited_query_renderer
   path: src/ai_trading_system/atlas/cited_query_renderer.py
-  sha256: f5da5a82b74a24e996d733a20f42ce508bd1df26cd12ce13d732665c0cb418ca
+  sha256: b02407d621770548874b4a2c68d58f9579453db954a880153c7b0aed973f9def
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -2753,7 +2753,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.evidence_first_research_portfolio
   path: src/ai_trading_system/contracts/evidence_first_research_portfolio.py
-  sha256: 1b7edc0918a24bd1ab1fe18fec1352630d4509dd3753d5cefa2e52e83e8cbc1a
+  sha256: 1f38d26a2107c537b98be5cb87e52c2567ac064e9559c313f4ed6f6deb7d9573
   rule_id: contracts
   owner_profile: architecture
   owners:

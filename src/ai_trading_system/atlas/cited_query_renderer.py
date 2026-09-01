@@ -66,7 +66,7 @@ from ai_trading_system.atlas.work_progress_projection import (
 from ai_trading_system.contracts.evidence_first_research_portfolio import (
     EvidenceFirstResearchPortfolio,
     EvidenceState,
-    load_evidence_first_research_portfolio,
+    load_projected_evidence_first_research_portfolio,
 )
 from ai_trading_system.contracts.strategy_research_cited_query import (
     CITED_QUERY_QUESTION_CATALOG,
@@ -504,7 +504,9 @@ def build_cited_query_showcase(
     reader_projection_contract = StrategyResearchReaderProjectionContract.from_yaml_bytes(
         reader_projection_contract_bytes
     )
-    evidence_first_portfolio = load_evidence_first_research_portfolio(repository_root=root)
+    evidence_first_portfolio = load_projected_evidence_first_research_portfolio(
+        repository_root=root
+    )
     page_effectiveness = build_page_effectiveness_manifest(
         repository_root=root,
         source_snapshot_commit=source_snapshot_commit,

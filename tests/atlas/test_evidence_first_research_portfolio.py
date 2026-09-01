@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import shutil
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,7 @@ from ai_trading_system.contracts.evidence_first_research_portfolio import (
     EvidenceFirstResearchPortfolio,
     EvidenceState,
     P0AdmissionClass,
+    load_projected_evidence_first_research_portfolio,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -29,25 +31,29 @@ def _policy() -> EvidenceFirstResearchPortfolio:
     return EvidenceFirstResearchPortfolio.from_yaml_bytes(POLICY_PATH.read_bytes())
 
 
+def _projected_policy() -> EvidenceFirstResearchPortfolio:
+    return load_projected_evidence_first_research_portfolio(repository_root=PROJECT_ROOT)
+
+
 def test_evidence_first_portfolio_roundtrips_and_freezes_primary_question() -> None:
     policy = _policy()
 
     assert policy.question_id == "SIGNAL_VALUE_FIRST_LAYER_COMPOSER_V2"
-    assert policy.current_verdict is EvidenceState.RETAIN
-    assert (
-        policy.next_experiment_id
-        == "OWNER_REVIEW_CONDITIONAL_OPTIONS_PAIRED_COMPARISON"
-    )
+    assert policy.current_verdict is EvidenceState.UNRESOLVED
+    assert policy.next_experiment_id == "FROZEN_SIGNAL_VALUE_CONFIRMATION"
     assert policy.historical_window_role == "REUSED_DEVELOPMENT_CONFIRMATION"
     assert (
         EvidenceFirstResearchPortfolio.from_dict(policy.to_dict()).canonical_bytes
         == policy.canonical_bytes
     )
     assert policy.content_sha256 == hashlib.sha256(policy.canonical_bytes).hexdigest()
+    assert hashlib.sha256(POLICY_PATH.read_bytes()).hexdigest() == (
+        "2df617dc247e509cb94799dda10e4c75ed1e8f1fc069a47466267125e39b8a05"
+    )
 
 
 def test_evidence_first_portfolio_makes_empirical_work_the_next_ready_p0() -> None:
-    policy = _policy()
+    policy = _projected_policy()
 
     assert policy.allowed_p0_classes == tuple(P0AdmissionClass)
     assert policy.next_p0_when_ready is P0AdmissionClass.EMPIRICAL_EVIDENCE
@@ -62,6 +68,49 @@ def test_evidence_first_portfolio_makes_empirical_work_the_next_ready_p0() -> No
         EvidenceState.NOT_ESTABLISHED,
         EvidenceState.NOT_ELIGIBLE,
     )
+
+
+def test_terminal_projection_verifies_admission_and_preserves_frozen_base() -> None:
+    base = _policy()
+    projected = _projected_policy()
+
+    assert base.current_verdict is EvidenceState.UNRESOLVED
+    assert projected.current_verdict is EvidenceState.RETAIN
+    assert (
+        projected.next_experiment_id
+        == "OWNER_REVIEW_CONDITIONAL_OPTIONS_PAIRED_COMPARISON"
+    )
+    assert projected.evidence_ladder[3].state is EvidenceState.RETAIN
+    assert "+13.745976956735603 个百分点" in projected.evidence_ladder[3].explanation_zh
+    assert projected.empirical_run_authorized is False
+    assert projected.quantconnect_action_authorized is False
+    assert projected.production_effect == "none"
+    assert projected.broker_action == "none"
+
+
+def test_terminal_projection_fails_closed_on_bound_aggregate_tamper(tmp_path: Path) -> None:
+    config_dir = tmp_path / "config/research"
+    config_dir.mkdir(parents=True)
+    for name in (
+        "evidence_first_research_portfolio_v1.yaml",
+        "frozen_signal_value_confirmation_result_admission_v1.yaml",
+        "frozen_signal_value_confirmation_run_authorization_v1.yaml",
+    ):
+        shutil.copy2(PROJECT_ROOT / "config/research" / name, config_dir / name)
+    evidence_dir = tmp_path / "inputs/research/frozen_signal_value_confirmation_v1"
+    shutil.copytree(
+        PROJECT_ROOT / "inputs/research/frozen_signal_value_confirmation_v1", evidence_dir
+    )
+    aggregate_path = evidence_dir / "aggregate_result.json"
+    aggregate_path.write_text(
+        aggregate_path.read_text(encoding="utf-8") + "\n", encoding="utf-8"
+    )
+
+    with pytest.raises(
+        EvidenceFirstPortfolioError,
+        match="EVIDENCE_FIRST_RESULT_BINDING_DRIFT:evidence_binding:AGGREGATE_RESULT",
+    ):
+        load_projected_evidence_first_research_portfolio(repository_root=tmp_path)
 
 
 @pytest.mark.parametrize(

@@ -348,8 +348,11 @@ identity/DQ/PIT/replay/coverage/accounting/independent replay 任一不足先归
 canonical DQ、local signal-value confirmation 和独立算术 replay 各精确一次且全部 PASS。主窗口仍为
 `2021-02-22..2025-12-02` 的 1,202 sessions；candidate 相对 exposure-matched comparator 的净总收益差为
 `+13.745976956735603 pp`，max-drawdown magnitude delta 为 `-3.4293901783962415 pp`，冻结 reducer 因而
-输出 `RETAIN`。TRADING-2551 共享 contract 机械把 `SIGNAL_VALUE` 与 current verdict 同步为 `RETAIN`，
-下一动作仅为 Owner review conditional options paired comparison；它不自动授权或运行 options comparison。
+输出 `RETAIN`。预注册 SHA 锁定的 `evidence_first_research_portfolio_v1.yaml` 继续保持获批时的
+`UNRESOLVED` 原字节；Atlas 不回写该冻结 authority，而是经独立 result-admission overlay 校验
+authorization/manifest/evidence file SHA、aggregate counters、DQ、independent replay、reducer 与全部零动作
+safety 后，才在只读 projection 中把 `SIGNAL_VALUE` 与 current verdict 机械同步为 `RETAIN`。下一动作仅为
+Owner review conditional options paired comparison；它不自动授权或运行 options comparison。
 data download、cache mutation、QuantConnect、option/provider、paper/live/production/broker 与
 orders/fills/positions 全部保持为零。
 

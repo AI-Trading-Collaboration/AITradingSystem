@@ -10,9 +10,23 @@ from typing import Any, ClassVar
 
 import yaml
 
+from ai_trading_system.yaml_loader import load_strict_yaml_text
+
 
 class EvidenceFirstPortfolioError(ValueError):
     pass
+
+
+_FROZEN_BASE_FILE_SHA256 = "2df617dc247e509cb94799dda10e4c75ed1e8f1fc069a47466267125e39b8a05"
+_RESULT_ADMISSION_PATH = Path(
+    "config/research/frozen_signal_value_confirmation_result_admission_v1.yaml"
+)
+_RETAIN_STOP_ACTION = "OPEN_OWNER_REVIEW_FOR_CONDITIONAL_OPTIONS_PAIRED_COMPARISON"
+_RETAIN_NEXT_EXPERIMENT = "OWNER_REVIEW_CONDITIONAL_OPTIONS_PAIRED_COMPARISON"
+_RETAIN_NEXT_EXPERIMENT_ZH = (
+    "信号价值已得到“保留”结论；下一合法动作仅为人工复核是否启动同信号、同资本的 "
+    "QQQ 与期权实现 paired comparison，当前不自动创建或执行该实验。"
+)
 
 
 class EvidenceState(StrEnum):
@@ -410,3 +424,231 @@ def load_evidence_first_research_portfolio(
     return EvidenceFirstResearchPortfolio.from_yaml_bytes(
         (repository_root / "config/research/evidence_first_research_portfolio_v1.yaml").read_bytes()
     )
+
+
+def load_projected_evidence_first_research_portfolio(
+    *, repository_root: Path
+) -> EvidenceFirstResearchPortfolio:
+    """Project a validated terminal result without mutating the frozen portfolio bytes."""
+
+    base_path = repository_root / "config/research/evidence_first_research_portfolio_v1.yaml"
+    base_raw = base_path.read_bytes()
+    base = EvidenceFirstResearchPortfolio.from_yaml_bytes(base_raw)
+    admission_path = repository_root / _RESULT_ADMISSION_PATH
+    if not admission_path.is_file():
+        return base
+    if hashlib.sha256(base_raw).hexdigest() != _FROZEN_BASE_FILE_SHA256:
+        raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_FROZEN_BASE_IDENTITY_DRIFT")
+
+    admission = _mapping(
+        load_strict_yaml_text(
+            admission_path.read_text(encoding="utf-8"), label=str(_RESULT_ADMISSION_PATH)
+        ),
+        "result_admission",
+    )
+    _validate_result_admission_header(admission)
+    for field in ("authorization_binding", "manifest_binding"):
+        _validate_file_binding(
+            repository_root=repository_root,
+            binding=_mapping(admission.get(field), field),
+            field=field,
+        )
+    evidence = admission.get("evidence_bindings")
+    if not isinstance(evidence, list) or not evidence:
+        raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_RESULT_EVIDENCE_BINDINGS_INVALID")
+    bindings: dict[str, Mapping[str, Any]] = {}
+    for item in evidence:
+        binding = _mapping(item, "evidence_binding")
+        role = _required(binding.get("role"), "evidence_binding.role")
+        if role in bindings:
+            raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_RESULT_EVIDENCE_ROLE_DUPLICATE")
+        _validate_file_binding(
+            repository_root=repository_root,
+            binding=binding,
+            field=f"evidence_binding:{role}",
+        )
+        bindings[role] = binding
+    if set(bindings) != {
+        "RUN_ATTEMPT_CONSUMPTION",
+        "MANIFEST_REPLAY",
+        "CANONICAL_DQ",
+        "INDEPENDENT_REPLAY",
+        "AGGREGATE_RESULT",
+    }:
+        raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_RESULT_EVIDENCE_ROLES_INVALID")
+
+    aggregate_path = _repository_file(
+        repository_root,
+        _required(bindings["AGGREGATE_RESULT"].get("path"), "aggregate_result.path"),
+        "aggregate_result.path",
+    )
+    aggregate = _mapping(
+        json.loads(aggregate_path.read_text(encoding="utf-8")), "aggregate_result"
+    )
+    _validate_retain_aggregate(admission=admission, aggregate=aggregate, base=base)
+    return _project_retain(base=base, aggregate=aggregate)
+
+
+def _validate_result_admission_header(admission: Mapping[str, Any]) -> None:
+    expected = {
+        "schema_version": "frozen_signal_value_confirmation_result_admission.v1",
+        "admission_id": "frozen_signal_value_confirmation_result_admission_v1",
+        "admission_version": "1.0.0",
+        "status": "TECHNICALLY_VALIDATED_AGGREGATE_RETAIN_ADMITTED",
+        "task_id": "TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1",
+        "scope": "BOUNDED_DATA_RESEARCH_CONFIRMATION_RESULT",
+        "authorization_state": "EXACT_PREAUTHORIZED",
+        "technical_validation_state": "PASS",
+    }
+    if any(admission.get(key) != value for key, value in expected.items()):
+        raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_RESULT_ADMISSION_HEADER_INVALID")
+
+
+def _validate_file_binding(
+    *, repository_root: Path, binding: Mapping[str, Any], field: str
+) -> None:
+    path = _repository_file(
+        repository_root, _required(binding.get("path"), f"{field}.path"), f"{field}.path"
+    )
+    expected_sha256 = _required(binding.get("file_sha256"), f"{field}.file_sha256")
+    if hashlib.sha256(path.read_bytes()).hexdigest() != expected_sha256:
+        raise EvidenceFirstPortfolioError(f"EVIDENCE_FIRST_RESULT_BINDING_DRIFT:{field}")
+
+
+def _repository_file(repository_root: Path, relative: str, field: str) -> Path:
+    root = repository_root.resolve()
+    path = (root / relative).resolve()
+    if not path.is_relative_to(root) or not path.is_file():
+        raise EvidenceFirstPortfolioError(f"EVIDENCE_FIRST_RESULT_FILE_INVALID:{field}")
+    return path
+
+
+def _validate_retain_aggregate(
+    *,
+    admission: Mapping[str, Any],
+    aggregate: Mapping[str, Any],
+    base: EvidenceFirstResearchPortfolio,
+) -> None:
+    result = _mapping(admission.get("result"), "result_admission.result")
+    run_accounting = _mapping(admission.get("run_accounting"), "result_admission.run_accounting")
+    dq_pit = _mapping(admission.get("dq_pit"), "result_admission.dq_pit")
+    interpretation = _mapping(
+        admission.get("interpretation_boundary"), "result_admission.interpretation_boundary"
+    )
+    safety = _mapping(admission.get("safety"), "result_admission.safety")
+    expected_ones = {
+        "manifest_replays",
+        "canonical_dq_runs",
+        "local_signal_value_confirmations",
+        "independent_replays",
+    }
+    expected_zeros = {
+        "data_downloads",
+        "cache_mutations",
+        "quantconnect_actions",
+        "option_backtests",
+        "external_provider_actions",
+        "orders",
+        "fills",
+        "positions",
+    }
+    if any(run_accounting.get(key) != 1 for key in expected_ones) or any(
+        run_accounting.get(key) != 0 for key in expected_zeros
+    ):
+        raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_RESULT_RUN_ACCOUNTING_INVALID")
+    if (
+        dq_pit.get("status") != "PASS"
+        or dq_pit.get("error_count") != 0
+        or dq_pit.get("warning_count") != 0
+        or dq_pit.get("requested_start") != base.primary_research_start
+        or dq_pit.get("evaluated_start") != base.primary_research_start
+        or dq_pit.get("requested_end") != "2025-12-02"
+        or dq_pit.get("evaluated_end") != "2025-12-02"
+    ):
+        raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_RESULT_DQ_INVALID")
+    if (
+        result.get("verdict") != "RETAIN"
+        or result.get("stop_action") != _RETAIN_STOP_ACTION
+        or result.get("historical_window_role") != base.historical_window_role
+        or result.get("signal_session_count") != 1202
+        or result.get("return_interval_count") != 1201
+        or result.get("independent_replay_status") != "PASS"
+        or float(result.get("net_total_return_difference_percentage_points", 0.0)) <= 0.0
+        or float(result.get("max_drawdown_magnitude_delta_percentage_points", 1.0)) > 0.0
+    ):
+        raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_RESULT_RETAIN_SEMANTICS_INVALID")
+    if (
+        interpretation.get("signal_value_retained_for_conditional_implementation_review") is not True
+        or interpretation.get("proves_options_implementation_value") is not False
+        or interpretation.get("proves_robustness_or_pristine_oos") is not False
+        or interpretation.get("investment_conclusion_generated") is not False
+        or interpretation.get("automatic_successor_created") is not False
+        or interpretation.get("next_legal_action")
+        != "OWNER_REVIEW_FOR_CONDITIONAL_OPTIONS_PAIRED_COMPARISON_ONLY"
+    ):
+        raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_RESULT_INTERPRETATION_INVALID")
+    required_false = {
+        "raw_market_payload_exported",
+        "raw_option_payload_exported",
+        "further_confirmation_authorized",
+        "quantconnect_authorized",
+        "option_backtest_authorized",
+        "provider_authorized",
+        "paper_allowed",
+        "live_allowed",
+        "production_allowed",
+        "broker_allowed",
+    }
+    if (
+        safety.get("aggregate_result_only") is not True
+        or any(safety.get(key) is not False for key in required_false)
+        or safety.get("production_effect") != "none"
+        or safety.get("broker_action") != "none"
+    ):
+        raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_RESULT_SAFETY_INVALID")
+    aggregate_counters = _mapping(aggregate.get("actual_counters"), "aggregate.actual_counters")
+    aggregate_dq = _mapping(aggregate.get("canonical_dq"), "aggregate.canonical_dq")
+    aggregate_replay = _mapping(aggregate.get("independent_replay"), "aggregate.independent_replay")
+    aggregate_estimand = _mapping(aggregate.get("primary_estimand"), "aggregate.primary_estimand")
+    aggregate_guard = _mapping(aggregate.get("falsification_guard"), "aggregate.falsification_guard")
+    if (
+        aggregate.get("schema_version") != "frozen_signal_value_confirmation_result.v1"
+        or aggregate.get("status") != "TERMINAL"
+        or aggregate.get("task_id") != "TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1"
+        or aggregate.get("verdict") != result.get("verdict")
+        or aggregate.get("stop_action") != result.get("stop_action")
+        or aggregate.get("historical_window_role") != result.get("historical_window_role")
+        or aggregate.get("signal_session_count") != result.get("signal_session_count")
+        or aggregate.get("return_interval_count") != result.get("return_interval_count")
+        or aggregate_dq.get("status") != "PASS"
+        or aggregate_replay.get("status") != "PASS"
+        or aggregate_estimand.get("net_total_return_difference_percentage_points")
+        != result.get("net_total_return_difference_percentage_points")
+        or aggregate_guard.get("max_drawdown_magnitude_delta_percentage_points")
+        != result.get("max_drawdown_magnitude_delta_percentage_points")
+        or aggregate_counters != run_accounting
+    ):
+        raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_RESULT_AGGREGATE_MISMATCH")
+
+
+def _project_retain(
+    *, base: EvidenceFirstResearchPortfolio, aggregate: Mapping[str, Any]
+) -> EvidenceFirstResearchPortfolio:
+    payload = base.to_dict()
+    question = _mapping(payload["primary_evidence_question"], "projection.question")
+    question["current_verdict"] = EvidenceState.RETAIN.value
+    question["next_experiment_id"] = _RETAIN_NEXT_EXPERIMENT
+    ladder = payload["evidence_ladder"]
+    if not isinstance(ladder, list):
+        raise EvidenceFirstPortfolioError("EVIDENCE_FIRST_RESULT_PROJECTION_LADDER_INVALID")
+    signal_value = _mapping(ladder[3], "projection.signal_value")
+    signal_value["state"] = EvidenceState.RETAIN.value
+    estimand = _mapping(aggregate.get("primary_estimand"), "projection.primary_estimand")
+    signal_value["explanation_zh"] = (
+        "唯一 bounded confirmation 已按预注册同资本 benchmark 完成；净总收益差为 "
+        f"+{estimand['net_total_return_difference_percentage_points']} 个百分点，"
+        "预注册风险守门未恶化，冻结 reducer 输出 RETAIN。"
+    )
+    reader = _mapping(payload["reader_entry"], "projection.reader_entry")
+    reader["next_experiment_zh"] = _RETAIN_NEXT_EXPERIMENT_ZH
+    return EvidenceFirstResearchPortfolio.from_dict(payload)
