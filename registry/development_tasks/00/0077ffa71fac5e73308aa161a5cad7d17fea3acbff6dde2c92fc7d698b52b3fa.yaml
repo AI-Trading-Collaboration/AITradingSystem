@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: RISK-012
   task_id_sha256: 0077ffa71fac5e73308aa161a5cad7d17fea3acbff6dde2c92fc7d698b52b3fa
 task_record:
+  schema_version: task_record.v1
   task_id: RISK-012
   title: null
   domain: 风险事件/LLM 正式评估准入
@@ -12,23 +13,24 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统验证 + 项目 owner
-  requirement_refs:
-  - docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md
+  next_owner: Codex engineering coordinator + Project Owner
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md`；已实现
-    LLM formal assessment 准入；后续如需调整 LLM watch/active 映射或人工复核替代关系，应新建或重开任务
+  unstructured_legacy_blocker_or_next_step: 修复 LLM formal unknown matched_risk_ids
+    准入并为 retained invalid occurrence 提供 hash-bound governed quarantine；完成 focused/formal
+    validation、main push、release promotion 后仅在合法 provider-ready 新 as_of ordinary daily
+    验收。
   acceptance_criteria:
-  - criterion_id: legacy_markdown
-    text: 提供命令把 `risk_event_prereview_queue.json` 转换为正式 risk occurrence YAML 与 LLM
-      formal attestation；日报政策/地缘模块必须显示 `llm_formal_assessment` 来源类型，置信度低于人工复核；LLM
-      formal evidence 最高按 B 级处理，默认不能单独触发 position gate；输出保留 model、request id、checksum、status/level
-      suggestion、confidence 和“未人工复核”声明；系统流图、README、测试同步更新
+  - criterion_id: legacy_compatibility
+    text: Producer 仅接受 reviewed risk config 中的 event_id；任一 unmatched ID 在写件前产生 typed
+      ERROR，整批零 occurrence/零 attestation；quarantine 保留原始 bytes/path/SHA/size/reason/authorization
+      并从 active non-recursive store 排除，post-validation PASS；不得放宽 unknown_risk_event_id
+      validator、不得补造 risk rule、不得同 as_of ordinary/recovery 绕过；目标并行 pytest、formal tiers、runtime
+      promotion 和新 as_of daily 验收通过或报告新的真实 blocker。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: a4207a4393ed9c6bdb818c2132ddfc75b5734d08760c99576530aaf271a6f9da
   cell_count: 8
@@ -87,28 +89,57 @@ events:
   evidence_refs:
   - sha256:a4207a4393ed9c6bdb818c2132ddfc75b5734d08760c99576530aaf271a6f9da
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: RISK-012
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-01T17:10:41.9508281+09:00'
+  actor: codex-automation
+  change_id: risk-012-unknown-id-failclosed-20260901-v17
+  lane_id: null
+  base_commit: 43a3d7169afbd0c4db2f6d952577fc00bef912cf
+  previous_state_event_id: legacy-import-a4207a4393ed9c6bdb818c21
+  from_status: BASELINE_DONE
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex engineering coordinator + Project Owner
+    blocker_or_next_step: 修复 LLM formal unknown matched_risk_ids 准入并为 retained invalid
+      occurrence 提供 hash-bound governed quarantine；完成 focused/formal validation、main
+      push、release promotion 后仅在合法 provider-ready 新 as_of ordinary daily 验收。
+    acceptance_criteria: Producer 仅接受 reviewed risk config 中的 event_id；任一 unmatched
+      ID 在写件前产生 typed ERROR，整批零 occurrence/零 attestation；quarantine 保留原始 bytes/path/SHA/size/reason/authorization
+      并从 active non-recursive store 排除，post-validation PASS；不得放宽 unknown_risk_event_id
+      validator、不得补造 risk rule、不得同 as_of ordinary/recovery 绕过；目标并行 pytest、formal tiers、runtime
+      promotion 和新 as_of daily 验收通过或报告新的真实 blocker。
+    notes: 2026-09-01 daily_ops_run:2026-08-31:20260901T003624Z 在 score_daily 因 data_center_farmland_federal_benefit_restriction_candidate
+      未登记而 FAIL；用户明确要求先耐久修复后重跑。任务从 BASELINE_DONE 重开，operational severity 按 P0 处理但保留
+      canonical legacy priority 字段。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:risk-012-unknown-id-failclosed-20260901-v17
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d29e0195dcecdf3349e26c0353f337a9
 projection:
   legacy_first_eight_cells:
   - RISK-012
   - 风险事件/LLM 正式评估准入
   - P1
-  - BASELINE_DONE
-  - 系统验证 + 项目 owner
-  - 详细拆解见 `docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md`；已实现 LLM
-    formal assessment 准入；后续如需调整 LLM watch/active 映射或人工复核替代关系，应新建或重开任务
-  - 提供命令把 `risk_event_prereview_queue.json` 转换为正式 risk occurrence YAML 与 LLM formal
-    attestation；日报政策/地缘模块必须显示 `llm_formal_assessment` 来源类型，置信度低于人工复核；LLM formal evidence
-    最高按 B 级处理，默认不能单独触发 position gate；输出保留 model、request id、checksum、status/level suggestion、confidence
-    和“未人工复核”声明；系统流图、README、测试同步更新
-  - '2026-05-10: 新增并进入实现，原因：owner 明确要求参考 LLM 复核结果作为正式评估结果，先不通过人工复核。2026-05-10: 从 IN_PROGRESS
-    改为 BASELINE_DONE，原因：新增 `aits risk-events apply-llm-formal-assessment`、LLM formal
-    occurrence/attestation 写入、日报 `llm_formal_assessment` 来源类型和较低置信度、系统流图、README、需求文档和测试；真实
-    2026-05-10 队列写入 5 条 watch occurrence 和 1 条 LLM formal attestation，validate-occurrences
-    PASS；验证通过 `ruff check src tests`、CLI help、完整 `pytest -q` 444 passed。'
-  docs_links:
-  - docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md
+  - IN_PROGRESS
+  - Codex engineering coordinator + Project Owner
+  - 修复 LLM formal unknown matched_risk_ids 准入并为 retained invalid occurrence 提供 hash-bound
+    governed quarantine；完成 focused/formal validation、main push、release promotion 后仅在合法
+    provider-ready 新 as_of ordinary daily 验收。
+  - Producer 仅接受 reviewed risk config 中的 event_id；任一 unmatched ID 在写件前产生 typed ERROR，整批零
+    occurrence/零 attestation；quarantine 保留原始 bytes/path/SHA/size/reason/authorization
+    并从 active non-recursive store 排除，post-validation PASS；不得放宽 unknown_risk_event_id
+    validator、不得补造 risk rule、不得同 as_of ordinary/recovery 绕过；目标并行 pytest、formal tiers、runtime
+    promotion 和新 as_of daily 验收通过或报告新的真实 blocker。
+  - 2026-09-01 daily_ops_run:2026-08-31:20260901T003624Z 在 score_daily 因 data_center_farmland_federal_benefit_restriction_candidate
+    未登记而 FAIL；用户明确要求先耐久修复后重跑。任务从 BASELINE_DONE 重开，operational severity 按 P0 处理但保留
+    canonical legacy priority 字段。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: a4207a4393ed9c6bdb818c2132ddfc75b5734d08760c99576530aaf271a6f9da
-last_event_id: legacy-import-a4207a4393ed9c6bdb818c21
+  canonical_row_sha256: 9f56144012b8be1063ca2e5b41c3e6eac7f0159ec258df5a152c6600aa035621
+last_event_id: task-event-d29e0195dcecdf3349e26c0353f337a9
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 1dd5c1199d840c9e841d3f222551817688cd8dd5079f76c970b2f956aa32f0dc
+fragment_checksum: 862abe2324ad8e20d10602127da129e90569f35b493f955cd84c6191e1560274

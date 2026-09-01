@@ -2163,7 +2163,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.risk_events
   path: src/ai_trading_system/cli_commands/risk_events.py
-  sha256: 351b6b6db4b077365b20cd1c0a0e7b7611098aa876fdce12195e99545326d8ab
+  sha256: 7b3f3903ddab6ed20fdcbe3152f2425877f139bac19902b53fe45cde3989c38d
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -15453,7 +15453,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.compatibility_authority
   path: src/ai_trading_system/platform/architecture/compatibility_authority.py
-  sha256: 4c08c1f275b8b1f60059ec86f6fd210f23abdbb2633c4f03c926a606a2482807
+  sha256: e15a355bdee284a9aad2850c05e21d7fa8650f35c4182587c41939111e85d81e
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -21224,7 +21224,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.risk_event_llm_formal
   path: src/ai_trading_system/risk_event_llm_formal.py
-  sha256: 367680b817597efa5e4d003649fd0f0b01195ccef582fc350c3a80a5d2389d45
+  sha256: af70b5d1e6c72c7ca43ca18401c5fa9bd700d986ac850d6be35421aad26e6e29
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -21284,7 +21284,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.risk_events
   path: src/ai_trading_system/risk_events.py
-  sha256: db422deb48ea5e438339bfbaded9993a06d4e2ee68830c9eaf1116e957792ab7
+  sha256: 00d138a02582406478b2d76688461ee3ecb1e70000791f2c676a09ff826a2a97
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

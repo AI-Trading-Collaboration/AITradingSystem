@@ -790,8 +790,7 @@ def build_repository_authority(
             )
         )
     devx_011_requirement_path = (
-        root
-        / "docs/requirements/DEVX-011_Governed_Workflow_Health_Control_Loop_V1.md"
+        root / "docs/requirements/DEVX-011_Governed_Workflow_Health_Control_Loop_V1.md"
     )
     if devx_011_requirement_path.exists():
         devx_011_section_id, devx_011_section = _devx_011_section(
@@ -837,6 +836,30 @@ def build_repository_authority(
                 devx_012_relative,
                 devx_012_record,
                 devx_012_fragment_bytes,
+            )
+        )
+    risk_012_requirement_path = (
+        root / "docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md"
+    )
+    if risk_012_requirement_path.exists():
+        risk_012_section_id, risk_012_section = _risk_012_section(
+            root,
+            policy=policy,
+        )
+        (
+            risk_012_relative,
+            risk_012_record,
+            risk_012_fragment_bytes,
+        ) = render_fragment(
+            section_id=risk_012_section_id,
+            section=risk_012_section,
+        )
+        rendered_fragments.append(
+            (
+                risk_012_section_id,
+                risk_012_relative,
+                risk_012_record,
+                risk_012_fragment_bytes,
             )
         )
     index, index_bytes = render_index(
@@ -1950,10 +1973,7 @@ def _devx_011_section(
             "config/scheduled_tasks.yaml",
             "docs/artifact_catalog.md",
             "docs/operations/operations_runbook.md",
-            (
-                "docs/requirements/"
-                "DEVX-011_Governed_Workflow_Health_Control_Loop_V1.md"
-            ),
+            ("docs/requirements/DEVX-011_Governed_Workflow_Health_Control_Loop_V1.md"),
             "docs/runbooks/scheduled_task_orchestration.md",
             "docs/system_flow.md",
             "docs/task_register_completed.md",
@@ -2022,8 +2042,7 @@ def _devx_011_section(
         "task_id": "DEVX-011_GOVERNED_WORKFLOW_HEALTH_CONTROL_LOOP_V1",
         "status": "DONE",
         "owner_decision": (
-            "owner_decision:DEVX-011:2026-08-31:"
-            "proceed-governed-workflow-health-v1"
+            "owner_decision:DEVX-011:2026-08-31:proceed-governed-workflow-health-v1"
         ),
         "authority_contract": dict(_mapping(policy["contract"], "contract")),
         "superseded_live_source_paths": source_paths,
@@ -2198,6 +2217,86 @@ def _devx_012_section(
             "automatic_task_mutation": False,
             "automatic_code_mutation": False,
             "validation_gate_relaxed": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _risk_012_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_risk_012_unknown_risk_event_id_fail_closed_v1"
+    source_paths = sorted(
+        [
+            "README.md",
+            "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+            "docs/artifact_catalog.md",
+            "docs/operations/operations_runbook.md",
+            "docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md",
+            "docs/system_flow.md",
+            "docs/task_register.md",
+            "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+            "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+            "inputs/architecture/arch_005_task_registry_index.yaml",
+            (
+                "registry/development_tasks/00/"
+                "0077ffa71fac5e73308aa161a5cad7d17fea3acbff6dde2c92fc7d698b52b3fa.yaml"
+            ),
+            "src/ai_trading_system/cli_commands/risk_events.py",
+            "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+            "src/ai_trading_system/risk_event_llm_formal.py",
+            "src/ai_trading_system/risk_events.py",
+            "tests/test_arch_004_refactor_policy.py",
+            "tests/test_devx_006c_compatibility_authority.py",
+            "tests/test_devx_006d_report_catalog_flow_authority.py",
+            "tests/test_risk_event_llm_formal.py",
+            "tests/test_trading2452_architecture_contract.py",
+        ],
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "risk_012_unknown_risk_event_id_fail_closed.v1",
+        "task_id": "RISK-012",
+        "status": "IN_PROGRESS",
+        "owner_decision": "owner_instruction:2026-09-01:fix_then_rerun",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "risk_event_admission_contract": {
+            "reviewed_config_required": True,
+            "unknown_matched_id_is_error": True,
+            "batch_error_writes_zero_occurrences": True,
+            "batch_error_writes_zero_attestations": True,
+            "known_match_preferred_from_mixed_list": True,
+            "validator_relaxed": False,
+        },
+        "quarantine_contract": {
+            "direct_child_only": True,
+            "configured_event_rejected": True,
+            "alpha_or_gate_usage_rejected": True,
+            "exact_source_bytes_preserved": True,
+            "sha256_receipt_bound": True,
+            "idempotent_replay_validated": True,
+            "active_store_post_validation_required": True,
+        },
+        "safety": {
+            "risk_rule_auto_created": False,
+            "historical_evidence_rewritten": False,
+            "same_as_of_recovery_allowed": False,
+            "provider_request_performed": False,
+            "strategy_or_weight_changed": False,
             "production_effect": "none",
             "broker_action": "none",
         },

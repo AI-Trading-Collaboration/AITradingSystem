@@ -78,6 +78,7 @@ from ai_trading_system.risk_events import (
     default_risk_event_occurrence_report_path,
     default_risk_events_report_path,
     load_risk_event_occurrence_store,
+    quarantine_unknown_risk_event_occurrence,
     validate_risk_event_occurrence_store,
     validate_risk_events_config,
     write_risk_event_occurrence_review_report,
@@ -253,6 +254,73 @@ def list_risk_event_occurrences(
         )
 
 
+@risk_events_app.command("quarantine-unknown-occurrence")
+def quarantine_unknown_risk_event_occurrence_command(
+    occurrence_path: Annotated[
+        Path,
+        typer.Option(
+            help="需要隔离的 unknown-ID occurrence YAML；必须是 occurrence root 的直接子文件。"
+        ),
+    ],
+    authorization_id: Annotated[
+        str,
+        typer.Option(help="Owner 授权或受治理变更 ID；会写入 immutable quarantine receipt。"),
+    ],
+    as_of: Annotated[
+        str,
+        typer.Option(help="隔离后校验日期，格式为 YYYY-MM-DD。"),
+    ],
+    input_dir: Annotated[
+        Path,
+        typer.Option(help="active 风险事件 occurrence root。"),
+    ] = DEFAULT_RISK_EVENT_OCCURRENCES_PATH,
+    config_path: Annotated[
+        Path,
+        typer.Option(help="reviewed 风险事件配置，用于证明 event_id 未登记。"),
+    ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="隔离后 active occurrence 校验报告。"),
+    ] = None,
+) -> None:
+    """保留原始 bytes 并把一个 unknown-ID occurrence 移出 active store。"""
+
+    validation_date = _parse_date(as_of)
+    report_path = validation_report_path or default_risk_event_occurrence_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+    risk_events = load_risk_events(config_path)
+    try:
+        result = quarantine_unknown_risk_event_occurrence(
+            occurrence_path,
+            occurrence_root=input_dir,
+            risk_events=risk_events,
+            authorization_id=authorization_id,
+        )
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]Unknown-ID occurrence quarantine 失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(input_dir),
+        risk_events=risk_events,
+        as_of=validation_date,
+    )
+    review_report = build_risk_event_occurrence_review_report(validation_report)
+    write_risk_event_occurrence_review_report(review_report, report_path)
+    console.print(
+        "[green]Unknown-ID occurrence 已受治理隔离。[/green] "
+        f"event_id={result.event_id}；reuse={'是' if result.idempotent_reuse else '否'}"
+    )
+    console.print(f"Quarantine 文件：{result.quarantined_path}")
+    console.print(f"Quarantine receipt：{result.receipt_path}")
+    console.print(f"隔离后校验报告：{report_path}")
+    if not validation_report.passed:
+        console.print("[red]隔离动作已保留，但 active occurrence store 仍存在其他校验错误。[/red]")
+        raise typer.Exit(code=1)
+
+
 @risk_events_app.command("record-review-attestation")
 def record_risk_event_review_attestation_command(
     output_dir: Annotated[
@@ -352,7 +420,9 @@ def record_risk_event_review_attestation_command(
     status_style = (
         "green"
         if review_report.status == "PASS"
-        else "yellow" if validation_report.passed else "red"
+        else "yellow"
+        if validation_report.passed
+        else "red"
     )
     console.print(f"风险事件复核声明：{written_path}")
     console.print(f"[{status_style}]风险事件发生记录状态：{review_report.status}[/{status_style}]")
@@ -408,12 +478,11 @@ def import_risk_event_occurrences_csv_command(
         "green" if import_report.status == "PASS" else "yellow" if import_report.passed else "red"
     )
     console.print(
-        f"[{status_style}]风险事件发生记录 CSV 导入状态："
-        f"{import_report.status}[/{status_style}]"
+        f"[{status_style}]风险事件发生记录 CSV 导入状态：{import_report.status}[/{status_style}]"
     )
     console.print(f"导入报告：{import_report_output}")
     console.print(
-        f"CSV 行数：{import_report.row_count}；" f"发生记录：{import_report.occurrence_count}"
+        f"CSV 行数：{import_report.row_count}；发生记录：{import_report.occurrence_count}"
     )
     console.print(f"错误数：{import_report.error_count}；警告数：{import_report.warning_count}")
     if not import_report.passed:
@@ -431,7 +500,9 @@ def import_risk_event_occurrences_csv_command(
     validation_style = (
         "green"
         if validation_report.status == "PASS"
-        else "yellow" if validation_report.passed else "red"
+        else "yellow"
+        if validation_report.passed
+        else "red"
     )
     console.print(f"写入 YAML：{len(written_paths)} 个文件 -> {output_dir}")
     console.print(
@@ -476,10 +547,7 @@ def fetch_official_policy_sources_command(
     download_manifest_path: Annotated[
         Path,
         typer.Option(help="统一 download_manifest.csv 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "download_manifest.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "download_manifest.csv",
     congress_api_key_env: Annotated[
         str,
         typer.Option(help="读取 Congress.gov API key 的环境变量名。"),
@@ -568,9 +636,7 @@ def triage_official_policy_candidates_command(
     write_risk_event_candidate_triage_report(report, report_path)
 
     status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
-    console.print(
-        f"[{status_style}]官方候选 AI 模块 triage 状态：" f"{report.status}[/{status_style}]"
-    )
+    console.print(f"[{status_style}]官方候选 AI 模块 triage 状态：{report.status}[/{status_style}]")
     console.print(f"报告：{report_path}")
     console.print(f"输入候选：{candidate_input_path}")
     console.print(
@@ -763,7 +829,7 @@ def precheck_triaged_official_candidates_with_openai_command(
 
     status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
     console.print(
-        f"[{status_style}]高优先级官方候选 OpenAI 预审状态：" f"{report.status}[/{status_style}]"
+        f"[{status_style}]高优先级官方候选 OpenAI 预审状态：{report.status}[/{status_style}]"
     )
     console.print(f"报告：{report_path}")
     console.print(f"官方候选 CSV：{official_candidates_path}")
@@ -891,7 +957,9 @@ def apply_llm_formal_assessment_command(
     validation_style = (
         "green"
         if validation_report.status == "PASS"
-        else "yellow" if validation_report.passed else "red"
+        else "yellow"
+        if validation_report.passed
+        else "red"
     )
     console.print(f"写入 YAML：{len(written_paths)} 个文件 -> {output_dir}")
     console.print(
@@ -1019,7 +1087,7 @@ def precheck_risk_events_with_openai_command(
     write_risk_event_prereview_import_report(report, report_path)
 
     status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
-    console.print(f"[{status_style}]风险事件 OpenAI 预审状态：" f"{report.status}[/{status_style}]")
+    console.print(f"[{status_style}]风险事件 OpenAI 预审状态：{report.status}[/{status_style}]")
     console.print(f"预审报告：{report_path}")
     console.print(
         f"LLM request profile：{profile.profile_id}；"
@@ -1079,7 +1147,7 @@ def import_risk_event_prereview_csv_command(
         "green" if import_report.status == "PASS" else "yellow" if import_report.passed else "red"
     )
     console.print(
-        f"[{status_style}]风险事件 OpenAI 预审导入状态：" f"{import_report.status}[/{status_style}]"
+        f"[{status_style}]风险事件 OpenAI 预审导入状态：{import_report.status}[/{status_style}]"
     )
     console.print(f"导入报告：{report_path}")
     console.print(
@@ -1132,7 +1200,9 @@ def validate_risk_event_occurrences(
     status_style = (
         "green"
         if review_report.status == "PASS"
-        else "yellow" if validation_report.passed else "red"
+        else "yellow"
+        if validation_report.passed
+        else "red"
     )
     console.print(f"[{status_style}]风险事件发生记录状态：{review_report.status}[/{status_style}]")
     console.print(f"报告：{report_path}")

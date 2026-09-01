@@ -152,7 +152,7 @@ def build_llm_formal_assessment_report(
                 severity=LlmFormalAssessmentIssueSeverity.ERROR,
                 code="llm_formal_assessment_unknown_queue_schema",
                 message=(
-                    "风险事件预审队列 schema_version 不匹配：" f"{payload.get('schema_version')}"
+                    f"风险事件预审队列 schema_version 不匹配：{payload.get('schema_version')}"
                 ),
             )
         )
@@ -165,9 +165,26 @@ def build_llm_formal_assessment_report(
             )
         )
 
-    known_risk_ids = (
-        {rule.event_id for rule in risk_events.event_rules} if risk_events is not None else set()
-    )
+    if risk_events is None:
+        issues.append(
+            LlmFormalAssessmentIssue(
+                severity=LlmFormalAssessmentIssueSeverity.ERROR,
+                code="llm_formal_assessment_risk_config_required",
+                message="LLM formal assessment 必须绑定 reviewed risk event config。",
+            )
+        )
+        return LlmFormalAssessmentReport(
+            input_path=input_path,
+            input_checksum_sha256=checksum,
+            as_of=as_of,
+            generated_at=generated_time,
+            records=(),
+            occurrences=(),
+            attestation=None,
+            issues=tuple(issues),
+        )
+
+    known_risk_ids = {rule.event_id for rule in risk_events.event_rules}
     records: list[RiskEventPreReviewRecord] = []
     occurrences: list[RiskEventOccurrence] = []
     for index, raw_record in enumerate(payload.get("records", []), start=1):
@@ -197,6 +214,21 @@ def build_llm_formal_assessment_report(
             continue
         event_id = _select_event_id(record, known_risk_ids)
         if not event_id:
+            if record.matched_risk_ids:
+                issues.append(
+                    LlmFormalAssessmentIssue(
+                        severity=LlmFormalAssessmentIssueSeverity.ERROR,
+                        code="llm_formal_assessment_unknown_risk_id",
+                        precheck_id=record.precheck_id,
+                        message=(
+                            f"{record.precheck_id} 的 matched_risk_ids="
+                            f"{','.join(record.matched_risk_ids)} 均未在 reviewed risk "
+                            "config 中登记；"
+                            "整批停止写入 occurrence/attestation。"
+                        ),
+                    )
+                )
+                continue
             issues.append(
                 LlmFormalAssessmentIssue(
                     severity=LlmFormalAssessmentIssueSeverity.WARNING,
@@ -227,6 +259,18 @@ def build_llm_formal_assessment_report(
                     ),
                 )
             )
+
+    if any(issue.severity == LlmFormalAssessmentIssueSeverity.ERROR for issue in issues):
+        return LlmFormalAssessmentReport(
+            input_path=input_path,
+            input_checksum_sha256=checksum,
+            as_of=as_of,
+            generated_at=generated_time,
+            records=tuple(records),
+            occurrences=(),
+            attestation=None,
+            issues=tuple(issues),
+        )
 
     attestation = (
         _build_llm_formal_attestation(
@@ -512,11 +556,10 @@ def _evidence_sources(record: RiskEventPreReviewRecord) -> list[RiskEventEvidenc
 
 
 def _select_event_id(record: RiskEventPreReviewRecord, known_risk_ids: set[str]) -> str:
-    if known_risk_ids:
-        for risk_id in record.matched_risk_ids:
-            if risk_id in known_risk_ids:
-                return risk_id
-    return record.matched_risk_ids[0] if record.matched_risk_ids else ""
+    for risk_id in record.matched_risk_ids:
+        if risk_id in known_risk_ids:
+            return risk_id
+    return ""
 
 
 def _occurrence_status(status_suggestion: str) -> str:

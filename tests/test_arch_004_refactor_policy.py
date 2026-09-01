@@ -3881,27 +3881,23 @@ DEVX_007_V2_SOURCE_PATHS = frozenset(
 )
 LATEST_COMPATIBILITY_SECTION = DEVX_007_V2_SECTION
 TRADING_2542C_REVIEW_REMEDIATION_SECTION = (
-    "phase_trading_2542c_growth_action_value_independent_review_"
-    "remediation_and_freeze_readiness_v1"
+    "phase_trading_2542c_growth_action_value_independent_review_remediation_and_freeze_readiness_v1"
 )
 DEVX_009_PUBLICATION_FENCE_SECTION = (
-    "phase_devx_009_parallel_integration_publication_fence_and_"
-    "generated_state_rebuild_v1"
+    "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1"
 )
 TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION = (
-    "phase_trading_2542d_growth_action_value_dq_pit_and_sample_"
-    "semantics_freeze_correction_v1"
+    "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1"
 )
-PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION = (
-    "phase_prod_004_pit_cumulative_archive_consumption_v1"
-)
-DEVX_011_WORKFLOW_HEALTH_SECTION = (
-    "phase_devx_011_governed_workflow_health_control_loop_v1"
-)
+PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION = "phase_prod_004_pit_cumulative_archive_consumption_v1"
+DEVX_011_WORKFLOW_HEALTH_SECTION = "phase_devx_011_governed_workflow_health_control_loop_v1"
 DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION = (
     "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1"
 )
-LATEST_COMPATIBILITY_SECTION = DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION
+RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION = (
+    "phase_risk_012_unknown_risk_event_id_fail_closed_v1"
+)
+LATEST_COMPATIBILITY_SECTION = RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -13069,6 +13065,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION,
         PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION,
         DEVX_011_WORKFLOW_HEALTH_SECTION,
+        RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13161,6 +13158,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION,
         PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION,
         DEVX_011_WORKFLOW_HEALTH_SECTION,
+        RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -14101,7 +14099,34 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if DEVX_011_WORKFLOW_HEALTH_SECTION in baseline:
+    if RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION in baseline:
+        phase = baseline[RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION]
+        current_superseded_paths = frozenset(
+            str(path) for path in phase["superseded_live_source_paths"]
+        )
+        assert (
+            _latest_active_source_mismatches(RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION)
+            <= current_superseded_paths
+        )
+        inherited_superseded_paths = frozenset(
+            str(path)
+            for section in (
+                DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION,
+                DEVX_009_PUBLICATION_FENCE_SECTION,
+                TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION,
+                PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION,
+                DEVX_011_WORKFLOW_HEALTH_SECTION,
+                DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION,
+            )
+            for path in baseline[section]["superseded_live_source_paths"]
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2504_qqq_options_owner_decision_manifest_all_current_authority_paths()
+            | inherited_superseded_paths
+            | current_superseded_paths
+        )
+        authority_section = RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION
+    elif DEVX_011_WORKFLOW_HEALTH_SECTION in baseline:
         phase = baseline[DEVX_011_WORKFLOW_HEALTH_SECTION]
         current_superseded_paths = frozenset(
             str(path) for path in phase["superseded_live_source_paths"]
@@ -14199,10 +14224,7 @@ def _source_sha256(source: dict[str, object]) -> str:
         current_superseded_paths = frozenset(
             str(path) for path in phase["superseded_live_source_paths"]
         )
-        assert (
-            _latest_active_source_mismatches(DEVX_007_V2_SECTION)
-            <= current_superseded_paths
-        )
+        assert _latest_active_source_mismatches(DEVX_007_V2_SECTION) <= current_superseded_paths
         inherited_superseded_paths = frozenset(
             str(path)
             for path in baseline[DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION][
@@ -24377,14 +24399,12 @@ def test_devx_007_v2_has_trading_2542c_and_devx_009_successor_authority() -> Non
     assert list(baseline).index(DEVX_007_V2_SECTION) < list(baseline).index(
         TRADING_2542C_REVIEW_REMEDIATION_SECTION
     )
-    assert list(baseline).index(TRADING_2542C_REVIEW_REMEDIATION_SECTION) < list(
-        baseline
-    ).index(DEVX_009_PUBLICATION_FENCE_SECTION)
-    assert next(reversed(baseline)) == DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION
-    phase = baseline[DEVX_007_V2_SECTION]
-    assert phase["schema_version"] == (
-        "devx_007_web_pro_git_review_skill_explicit_submission.v2"
+    assert list(baseline).index(TRADING_2542C_REVIEW_REMEDIATION_SECTION) < list(baseline).index(
+        DEVX_009_PUBLICATION_FENCE_SECTION
     )
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
+    phase = baseline[DEVX_007_V2_SECTION]
+    assert phase["schema_version"] == ("devx_007_web_pro_git_review_skill_explicit_submission.v2")
     assert phase["status"] == "ACTIVE"
     assert phase["task_id"] == "DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL"
     assert phase["exact_start_base"] == "4eef79bd1614a7736a51cbf215cd69458041143c"
@@ -24404,12 +24424,12 @@ def test_devx_007_v2_has_trading_2542c_and_devx_009_successor_authority() -> Non
     superseded = set(phase["superseded_live_source_paths"])
     assert superseded == DEVX_007_V2_SOURCE_PATHS
     assert _latest_active_source_mismatches(DEVX_007_V2_SECTION) == (
-            DEVX_007_V2_SOURCE_PATHS
-            - {
-                "config/architecture/devx_007_web_pro_git_review_skill_authority.yaml",
-                "registry/development_tasks/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml",
-                "tests/test_trading2452_architecture_contract.py",
-            }
+        DEVX_007_V2_SOURCE_PATHS
+        - {
+            "config/architecture/devx_007_web_pro_git_review_skill_authority.yaml",
+            "registry/development_tasks/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml",
+            "tests/test_trading2452_architecture_contract.py",
+        }
     )
     assert phase["supersession"] == {
         "historical_hashes_rewritten": False,
@@ -24432,12 +24452,10 @@ def test_devx_009_is_latest_append_only_publication_authority() -> None:
     phase = baseline[DEVX_009_PUBLICATION_FENCE_SECTION]
 
     assert phase["schema_version"] == (
-        "devx_009_parallel_integration_publication_fence_and_"
-        "generated_state_rebuild.v1"
+        "devx_009_parallel_integration_publication_fence_and_generated_state_rebuild.v1"
     )
     assert phase["task_id"] == (
-        "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_"
-        "GENERATED_STATE_REBUILD_V1"
+        "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1"
     )
     assert phase["status"] == "DONE"
     assert phase["publication_contract"] == {
@@ -24468,9 +24486,9 @@ def test_prod_004_is_latest_cumulative_pit_consumption_authority() -> None:
     assert list(baseline).index(TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION) < list(
         baseline
     ).index(PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION)
-    assert list(baseline).index(PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION) < list(
-        baseline
-    ).index(DEVX_011_WORKFLOW_HEALTH_SECTION)
+    assert list(baseline).index(PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION) < list(baseline).index(
+        DEVX_011_WORKFLOW_HEALTH_SECTION
+    )
     phase = baseline[PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION]
 
     assert phase["schema_version"] == "prod_004_pit_cumulative_archive_consumption.v1"
@@ -24478,12 +24496,8 @@ def test_prod_004_is_latest_cumulative_pit_consumption_authority() -> None:
     assert phase["status"] == "VALIDATING"
     assert phase["supersession"] == {
         "historical_hashes_rewritten": False,
-        "inherited_supersession_authority": (
-            TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION
-        ),
-        "current_hash_authority": (
-            f"{PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION}.sources"
-        ),
+        "inherited_supersession_authority": (TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION),
+        "current_hash_authority": (f"{PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION}.sources"),
     }
     assert phase["pit_consumption_contract"] == {
         "primary_research_start": "2021-02-22",
@@ -24518,12 +24532,10 @@ def test_prod_004_is_latest_cumulative_pit_consumption_authority() -> None:
 
 def test_devx_011_governed_workflow_health_authority_remains_historical() -> None:
     baseline = _compatibility_baseline()
-    assert next(reversed(baseline)) == DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[DEVX_011_WORKFLOW_HEALTH_SECTION]
 
-    assert phase["schema_version"] == (
-        "devx_011_governed_workflow_health_control_loop.v1"
-    )
+    assert phase["schema_version"] == ("devx_011_governed_workflow_health_control_loop.v1")
     assert phase["task_id"] == "DEVX-011_GOVERNED_WORKFLOW_HEALTH_CONTROL_LOOP_V1"
     assert phase["status"] == "DONE"
     assert phase["owner_decision"] == (
@@ -24531,9 +24543,7 @@ def test_devx_011_governed_workflow_health_authority_remains_historical() -> Non
     )
     assert phase["supersession"] == {
         "historical_hashes_rewritten": False,
-        "inherited_supersession_authority": (
-            PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION
-        ),
+        "inherited_supersession_authority": (PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION),
         "current_hash_authority": f"{DEVX_011_WORKFLOW_HEALTH_SECTION}.sources",
     }
     assert phase["workflow_health_contract"] == {
@@ -24572,15 +24582,13 @@ def test_devx_011_governed_workflow_health_authority_remains_historical() -> Non
     assert phase["broker_action"] == "none"
 
 
-def test_devx_012_is_latest_automatic_workflow_health_cycle_authority() -> None:
+def test_devx_012_automatic_workflow_health_cycle_authority_remains_historical() -> None:
     baseline = _compatibility_baseline()
-    assert next(reversed(baseline)) == DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION]
 
     assert phase["schema_version"] == "devx_012_automatic_workflow_health_trigger.v1"
-    assert phase["task_id"] == (
-        "DEVX-012_AUTOMATIC_WORKFLOW_HEALTH_TRIGGER_AND_OUTCOME_REVIEW_V1"
-    )
+    assert phase["task_id"] == ("DEVX-012_AUTOMATIC_WORKFLOW_HEALTH_TRIGGER_AND_OUTCOME_REVIEW_V1")
     assert phase["status"] == "DONE"
     assert phase["owner_decision"] == (
         "owner_decision:DEVX-012:2026-08-31:"
@@ -24589,9 +24597,7 @@ def test_devx_012_is_latest_automatic_workflow_health_cycle_authority() -> None:
     assert phase["supersession"] == {
         "historical_hashes_rewritten": False,
         "inherited_supersession_authority": DEVX_011_WORKFLOW_HEALTH_SECTION,
-        "current_hash_authority": (
-            f"{DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION}.sources"
-        ),
+        "current_hash_authority": (f"{DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION}.sources"),
     }
     assert phase["workflow_health_automatic_cycle"] == {
         "existing_automation_id": "aitradingsystem-pit",
@@ -24618,6 +24624,56 @@ def test_devx_012_is_latest_automatic_workflow_health_cycle_authority() -> None:
         "automatic_task_mutation": False,
         "automatic_code_mutation": False,
         "validation_gate_relaxed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+    assert phase["production_effect"] == "none"
+    assert phase["broker_action"] == "none"
+
+
+def test_risk_012_is_latest_unknown_risk_event_id_fail_closed_authority() -> None:
+    baseline = _compatibility_baseline()
+    assert next(reversed(baseline)) == RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION
+    phase = baseline[RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION]
+
+    assert phase["schema_version"] == "risk_012_unknown_risk_event_id_fail_closed.v1"
+    assert phase["task_id"] == "RISK-012"
+    assert phase["status"] == "IN_PROGRESS"
+    assert phase["owner_decision"] == "owner_instruction:2026-09-01:fix_then_rerun"
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION),
+        "current_hash_authority": (f"{RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION}.sources"),
+    }
+    assert phase["risk_event_admission_contract"] == {
+        "reviewed_config_required": True,
+        "unknown_matched_id_is_error": True,
+        "batch_error_writes_zero_occurrences": True,
+        "batch_error_writes_zero_attestations": True,
+        "known_match_preferred_from_mixed_list": True,
+        "validator_relaxed": False,
+    }
+    assert phase["quarantine_contract"] == {
+        "direct_child_only": True,
+        "configured_event_rejected": True,
+        "alpha_or_gate_usage_rejected": True,
+        "exact_source_bytes_preserved": True,
+        "sha256_receipt_bound": True,
+        "idempotent_replay_validated": True,
+        "active_store_post_validation_required": True,
+    }
+    source_paths = [str(source["path"]) for source in phase["sources"]]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert set(source_paths) == set(phase["superseded_live_source_paths"])
+    for source in phase["sources"]:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["safety"] == {
+        "risk_rule_auto_created": False,
+        "historical_evidence_rewritten": False,
+        "same_as_of_recovery_allowed": False,
+        "provider_request_performed": False,
+        "strategy_or_weight_changed": False,
         "production_effect": "none",
         "broker_action": "none",
     }

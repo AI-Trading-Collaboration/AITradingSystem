@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import hashlib
+import json
+import os
 from collections import defaultdict
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import UTC, date, datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal
@@ -183,6 +186,20 @@ class RiskEventOccurrenceStore:
     loaded: tuple[LoadedRiskEventOccurrence, ...] = field(default_factory=tuple)
     review_attestations: tuple[LoadedRiskEventReviewAttestation, ...] = field(default_factory=tuple)
     load_errors: tuple[RiskEventOccurrenceLoadError, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True)
+class RiskEventOccurrenceQuarantineResult:
+    source_path: Path
+    quarantined_path: Path
+    receipt_path: Path
+    occurrence_id: str
+    event_id: str
+    source_size_bytes: int
+    source_sha256: str
+    quarantined_at: datetime
+    authorization_id: str
+    idempotent_reuse: bool = False
 
 
 @dataclass(frozen=True)
@@ -412,6 +429,105 @@ def load_risk_event_occurrence_store(input_path: Path | str) -> RiskEventOccurre
         loaded=tuple(loaded),
         review_attestations=tuple(attestations),
         load_errors=tuple(load_errors),
+    )
+
+
+def quarantine_unknown_risk_event_occurrence(
+    source_path: Path | str,
+    *,
+    occurrence_root: Path | str,
+    risk_events: RiskEventsConfig,
+    authorization_id: str,
+    quarantined_at: datetime | None = None,
+) -> RiskEventOccurrenceQuarantineResult:
+    """Move one unknown-ID occurrence out of the active store with immutable evidence."""
+
+    authorization = authorization_id.strip()
+    if not authorization:
+        raise ValueError("authorization_id is required")
+
+    root = Path(occurrence_root).resolve(strict=True)
+    if not root.is_dir():
+        raise ValueError("occurrence_root must be a directory")
+    requested_source = Path(source_path)
+    source = requested_source if requested_source.is_absolute() else root / requested_source
+    source = source.resolve(strict=False)
+    if source.parent != root:
+        raise ValueError("occurrence source must be a direct child of occurrence_root")
+    if source.suffix.lower() not in {".yaml", ".yml"}:
+        raise ValueError("occurrence source must be a YAML file")
+
+    quarantine_dir = root / "quarantine"
+    target = quarantine_dir / source.name
+    receipt_path = quarantine_dir / f"{source.stem}.quarantine_receipt.json"
+    if not source.exists():
+        return _reuse_risk_event_quarantine_receipt(
+            source=source,
+            target=target,
+            receipt_path=receipt_path,
+            authorization_id=authorization,
+        )
+    if not source.is_file():
+        raise ValueError("occurrence source must be a regular file")
+    if target.exists() or receipt_path.exists():
+        raise FileExistsError("quarantine target or receipt already exists while source is active")
+
+    store = load_risk_event_occurrence_store(source)
+    if store.load_errors or len(store.loaded) != 1 or store.review_attestations:
+        raise ValueError("quarantine source must contain exactly one valid occurrence")
+    occurrence = store.loaded[0].occurrence
+    known_risk_ids = {rule.event_id for rule in risk_events.event_rules}
+    if occurrence.event_id in known_risk_ids:
+        raise ValueError("configured risk event occurrence cannot be quarantined as unknown")
+    if occurrence.used_in_alpha or occurrence.used_in_gate:
+        raise ValueError("occurrence used in alpha or a gate requires separate owner review")
+
+    source_bytes = source.read_bytes()
+    source_sha256 = hashlib.sha256(source_bytes).hexdigest()
+    source_size_bytes = len(source_bytes)
+    effective_time = quarantined_at or datetime.now(tz=UTC)
+    if effective_time.tzinfo is None or effective_time.utcoffset() is None:
+        raise ValueError("quarantined_at must be timezone-aware")
+    effective_time = effective_time.astimezone(UTC)
+
+    payload = {
+        "schema_version": "risk_event_occurrence_quarantine.v1",
+        "status": "QUARANTINED",
+        "reason_code": "UNKNOWN_RISK_EVENT_ID",
+        "authorization_id": authorization,
+        "quarantined_at": effective_time.isoformat(),
+        "occurrence_id": occurrence.occurrence_id,
+        "event_id": occurrence.event_id,
+        "source_path": source.name,
+        "quarantined_path": f"quarantine/{source.name}",
+        "source_size_bytes": source_size_bytes,
+        "source_sha256": source_sha256,
+        "active_store_excluded": True,
+        "source_bytes_preserved": True,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+    quarantine_dir.mkdir(parents=False, exist_ok=True)
+    os.replace(source, target)
+    try:
+        _verify_quarantined_bytes(target, source_size_bytes, source_sha256)
+        _write_quarantine_receipt(receipt_path, payload)
+    except Exception:
+        if target.exists() and not source.exists():
+            os.replace(target, source)
+            _verify_quarantined_bytes(source, source_size_bytes, source_sha256)
+        raise
+
+    return RiskEventOccurrenceQuarantineResult(
+        source_path=source,
+        quarantined_path=target,
+        receipt_path=receipt_path,
+        occurrence_id=occurrence.occurrence_id,
+        event_id=occurrence.event_id,
+        source_size_bytes=source_size_bytes,
+        source_sha256=source_sha256,
+        quarantined_at=effective_time,
+        authorization_id=authorization,
     )
 
 
@@ -893,6 +1009,93 @@ def write_risk_event_review_attestation(
     with output_path.open("w", encoding="utf-8") as file:
         yaml.safe_dump(payload, file, allow_unicode=True, sort_keys=False)
     return output_path
+
+
+def _reuse_risk_event_quarantine_receipt(
+    *,
+    source: Path,
+    target: Path,
+    receipt_path: Path,
+    authorization_id: str,
+) -> RiskEventOccurrenceQuarantineResult:
+    if not target.is_file() or not receipt_path.is_file():
+        raise FileNotFoundError(source)
+    try:
+        payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise ValueError(f"quarantine receipt is unreadable: {exc}") from exc
+    required = {
+        "schema_version": "risk_event_occurrence_quarantine.v1",
+        "status": "QUARANTINED",
+        "reason_code": "UNKNOWN_RISK_EVENT_ID",
+        "authorization_id": authorization_id,
+        "source_path": source.name,
+        "quarantined_path": f"quarantine/{source.name}",
+        "active_store_excluded": True,
+        "source_bytes_preserved": True,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+    for field_name, expected in required.items():
+        if payload.get(field_name) != expected:
+            raise ValueError(f"quarantine receipt field mismatch: {field_name}")
+    source_size_bytes = payload.get("source_size_bytes")
+    source_sha256 = payload.get("source_sha256")
+    if not isinstance(source_size_bytes, int) or source_size_bytes < 1:
+        raise ValueError("quarantine receipt source_size_bytes is invalid")
+    if not isinstance(source_sha256, str) or len(source_sha256) != 64:
+        raise ValueError("quarantine receipt source_sha256 is invalid")
+    _verify_quarantined_bytes(target, source_size_bytes, source_sha256)
+    try:
+        effective_time = datetime.fromisoformat(str(payload.get("quarantined_at")))
+    except ValueError as exc:
+        raise ValueError("quarantine receipt quarantined_at is invalid") from exc
+    if effective_time.tzinfo is None or effective_time.utcoffset() is None:
+        raise ValueError("quarantine receipt quarantined_at must be timezone-aware")
+    occurrence_id = payload.get("occurrence_id")
+    event_id = payload.get("event_id")
+    if not isinstance(occurrence_id, str) or not occurrence_id:
+        raise ValueError("quarantine receipt occurrence_id is invalid")
+    if not isinstance(event_id, str) or not event_id:
+        raise ValueError("quarantine receipt event_id is invalid")
+    return RiskEventOccurrenceQuarantineResult(
+        source_path=source,
+        quarantined_path=target,
+        receipt_path=receipt_path,
+        occurrence_id=occurrence_id,
+        event_id=event_id,
+        source_size_bytes=source_size_bytes,
+        source_sha256=source_sha256,
+        quarantined_at=effective_time.astimezone(UTC),
+        authorization_id=authorization_id,
+        idempotent_reuse=True,
+    )
+
+
+def _verify_quarantined_bytes(path: Path, expected_size: int, expected_sha256: str) -> None:
+    observed = path.read_bytes()
+    if len(observed) != expected_size:
+        raise ValueError("quarantined occurrence size mismatch")
+    if hashlib.sha256(observed).hexdigest() != expected_sha256:
+        raise ValueError("quarantined occurrence SHA-256 mismatch")
+
+
+def _write_quarantine_receipt(path: Path, payload: Mapping[str, Any]) -> None:
+    encoded = (json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode(
+        "utf-8"
+    )
+    temp_path = path.with_name(f".{path.name}.tmp")
+    created_temp = False
+    try:
+        with temp_path.open("xb") as file:
+            created_temp = True
+            file.write(encoded)
+            file.flush()
+            os.fsync(file.fileno())
+        os.replace(temp_path, path)
+    finally:
+        if created_temp and temp_path.exists():
+            temp_path.unlink()
 
 
 def _occurrence_yaml_paths(path: Path) -> list[Path]:
