@@ -1,0 +1,94 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2552_QQQ_OPTIONS_CONDITIONAL_PAIRED_COMPARISON_OWNER_REVIEW_V1
+  task_id_sha256: 3ebed1b59c63096f198c4df644818cd85123ef667fb871f60903596ba3b2b7fc
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2552_QQQ_OPTIONS_CONDITIONAL_PAIRED_COMPARISON_OWNER_REVIEW_V1
+  title: null
+  domain: QQQ options conditional paired comparison Owner review V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex / validate and close the non-executable review; Project Owner
+    separately authorizes any Wave A implementation
+  requirement_refs:
+  - docs/requirements/TRADING-2552_QQQ_Options_Conditional_Paired_Comparison_Owner_Review_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Complete an auditable local review of
+    the TRADING-2550 RETAIN handoff against the exact-frozen TRADING-2548 paired-comparison
+    contract, identify reusable authorities and typed engineering gaps, and keep every
+    external or empirical gate closed.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Review exact-binds the retained signal result and frozen comparator contract,
+      distinguishes the obsolete one-share diagnostic from the required USD 100,000
+      fully-funded QQQ/cash ledger, and separates implementation, manifest, and single
+      QC run into independently authorized waves.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2552_QQQ_OPTIONS_CONDITIONAL_PAIRED_COMPARISON_OWNER_REVIEW_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-01T01:58:43.9223918Z'
+  actor: integration-coordinator
+  change_id: trading-2552-register-20260901-v1
+  lane_id: null
+  base_commit: 942b3e61d70f72251d23ffa79553e389897c2c0e
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2552_QQQ_OPTIONS_CONDITIONAL_PAIRED_COMPARISON_OWNER_REVIEW_V1
+    - QQQ options conditional paired comparison Owner review V1
+    - P0
+    - IN_PROGRESS
+    - Codex / validate and close the non-executable review; Project Owner separately
+      authorizes any Wave A implementation
+    - Complete an auditable local review of the TRADING-2550 RETAIN handoff against
+      the exact-frozen TRADING-2548 paired-comparison contract, identify reusable
+      authorities and typed engineering gaps, and keep every external or empirical
+      gate closed.
+    - Review exact-binds the retained signal result and frozen comparator contract,
+      distinguishes the obsolete one-share diagnostic from the required USD 100,000
+      fully-funded QQQ/cash ledger, and separates implementation, manifest, and single
+      QC run into independently authorized waves.
+    - 'Supporting requirement: docs/requirements/TRADING-2552_QQQ_Options_Conditional_Paired_Comparison_Owner_Review_V1.md.
+      scope=NON_EXECUTABLE_OWNER_REVIEW; market data/DQ/exporter/manifest/QuantConnect/provider/orders/fills/positions/paper/live/production/broker=0/false/none.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2552-register-20260901-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-4902713154611d87baab58eec41e8b5c
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2552_QQQ_OPTIONS_CONDITIONAL_PAIRED_COMPARISON_OWNER_REVIEW_V1
+  - QQQ options conditional paired comparison Owner review V1
+  - P0
+  - IN_PROGRESS
+  - Codex / validate and close the non-executable review; Project Owner separately
+    authorizes any Wave A implementation
+  - Complete an auditable local review of the TRADING-2550 RETAIN handoff against
+    the exact-frozen TRADING-2548 paired-comparison contract, identify reusable authorities
+    and typed engineering gaps, and keep every external or empirical gate closed.
+  - Review exact-binds the retained signal result and frozen comparator contract,
+    distinguishes the obsolete one-share diagnostic from the required USD 100,000
+    fully-funded QQQ/cash ledger, and separates implementation, manifest, and single
+    QC run into independently authorized waves.
+  - 'Supporting requirement: docs/requirements/TRADING-2552_QQQ_Options_Conditional_Paired_Comparison_Owner_Review_V1.md.
+    scope=NON_EXECUTABLE_OWNER_REVIEW; market data/DQ/exporter/manifest/QuantConnect/provider/orders/fills/positions/paper/live/production/broker=0/false/none.'
+  docs_links:
+  - docs/requirements/TRADING-2552_QQQ_Options_Conditional_Paired_Comparison_Owner_Review_V1.md
+  terminal: false
+  canonical_row_sha256: 6af8aef9a08a58880beb51faf01f035f7358ad4f92a46481b90a53cfbf3bf554
+last_event_id: task-event-4902713154611d87baab58eec41e8b5c
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 5fb1cef7433a8f4549e091b2040d1e6850933f9306c336c0837b8c86ab1b8314
