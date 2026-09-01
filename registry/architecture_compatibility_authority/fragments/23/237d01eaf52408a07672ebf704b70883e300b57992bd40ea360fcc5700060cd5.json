@@ -23,11 +23,11 @@
     "production_effect": "none",
     "report_catalog_flow_successor": {
       "current_hash_authority": "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1.sources",
-      "entry_count": 3111,
+      "entry_count": 3115,
       "fragment_count": 192,
       "fragment_shadow_active": false,
       "index_path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-      "index_sha256": "24e8fb0defa82dcf2ac2b80e70fdd02c975bbc855852b21b59610c3e81ee86d5",
+      "index_sha256": "db222f0f32597a291b08971c14cff50e6befecd0e9955b5946f3fb3946a738f4",
       "source_of_truth": "LEGACY_MONOLITH",
       "target_count": 3
     },
@@ -42,17 +42,17 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
-        "sha256": "57b8c64105f8213de000761bb47d7ce84e065323b843c371fc52c654fdcc76d6"
+        "sha256": "5c5642b7dbe255c9a3c2000c571fb93fa2bf9b7b3e3444ecf2abff3f01f8f861"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "config/atlas/live_snapshot.yaml",
-        "sha256": "fc8d1c474c482392b7c2fd8fe8ef141cf5e147f46c835b23603aa98f3d27410c"
+        "sha256": "519e5b19c3b1f8e0e8866ab600d1cd7f7bee1047a2def53fc036693bfbee5ef7"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "config/atlas/page_effectiveness.yaml",
-        "sha256": "c3988798afd463fd93d87cff5446a1b4211a349a7492b5897d19c14045fd9699"
+        "sha256": "044e39bf0b0f8d0c8031fa942d6476b42c9f0a3671d71e18a1392e49575ef787"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -102,7 +102,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/system_flow.md",
-        "sha256": "d49b6a21e55089a71c535592589c6c3b296faecaee2b67a1fdb587470eb5f90e"
+        "sha256": "6f2c5e394e1845c7388279bf6392c23c19ebdf0e91b3b7e8fb6bf15c5a80ce12"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -117,27 +117,27 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "fad03fca6709987cc00a6bac2de25221735597587b1e521aae6e3a6da20ad889"
+        "sha256": "33e431d2205465803eaebb1ecf3ca823e90481dca24b46dbe06c106dd9f68c9a"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
-        "sha256": "685662eb14a188f70b1ad5b895bc510552dc80561aadb6382870c0f4043b2310"
+        "sha256": "8d56e6dfc9a2b6d6a2ad12be622902622459d491cfac8e9c993a5932f01dcdc3"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "507c81d1d9d930d1c4429e780c2424d313719db299472552f10279b070fd8879"
+        "sha256": "01fca26e0f5c2e754af358eb89543fd17580604060e482f918ab3d252abff3f5"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "c5d5d2046a3ee872adefc6bf143ad74bb49e6258cfb60bcb25cac22aa68b92d2"
+        "sha256": "fd151f04bebd0967a8581b5b89c9a71aeca2f7e956f7f59d4444c2bc5443660c"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
-        "sha256": "c05037dbea49ffa55a5ab271ffcd10399ff0684988d46ca6c3e5dcd987d81af0"
+        "sha256": "3628ad3d573d89b6bb732d53ef89b5bbbaa4b5b58f59a3c2e789bc578cd3cebd"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -147,7 +147,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-        "sha256": "24e8fb0defa82dcf2ac2b80e70fdd02c975bbc855852b21b59610c3e81ee86d5"
+        "sha256": "db222f0f32597a291b08971c14cff50e6befecd0e9955b5946f3fb3946a738f4"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -242,22 +242,22 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/atlas/test_cited_query_renderer.py",
-        "sha256": "5d7f8d1a2bb08e77ad71d939ddc1ecc0fef488faa8b3e7d71bac762bb73f26fd"
+        "sha256": "7a017acb12e4bcff698f51c1527e926e749e57aa6dee30afe59ef89ca86f0d9f"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/atlas/test_historical_projection_review.py",
-        "sha256": "7d8537dd3267268702efe29301737ad94d941220396e0a3c08fa06896d0d4322"
+        "sha256": "c9569225255052b62e1f5cfd6c13b92c6061e9581c3c84d8bbfbca9f01194832"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/atlas/test_live_snapshot.py",
-        "sha256": "81b2e0cb32764dca042c8d70f2ffefa6e77adda59bb1c47bf97a5b92b66c9a4c"
+        "sha256": "bd7061f7885146a814874efbf0221a90718f173c51d3724c58a9649460e6d628"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/atlas/test_page_effectiveness.py",
-        "sha256": "8b373eb5d3f88005c9972ee122cbb61634b8fa86addb777fe6c39f2dd019a8e6"
+        "sha256": "c9e61fd9742d1a49770ff0669b444e4f4e9408e2f656ed25271d6af2181ac97e"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -292,7 +292,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "5036fae7e1dc800c07bf00fcdaead8572169735f74d1e84e360ce302b37e1a65"
+        "sha256": "aa653d31952cd2de0d7fccdbe74d01627e2e2135cad6b577115e3aa46ae6b2cc"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -411,5 +411,5 @@
     "task_id": "TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1"
   },
   "section_id": "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1",
-  "section_sha256": "2c00a7fbdf80b73be0d79460e2536aecb7a30e7b235314f90388ee6bb612dcc8"
+  "section_sha256": "237d01eaf52408a07672ebf704b70883e300b57992bd40ea360fcc5700060cd5"
 }

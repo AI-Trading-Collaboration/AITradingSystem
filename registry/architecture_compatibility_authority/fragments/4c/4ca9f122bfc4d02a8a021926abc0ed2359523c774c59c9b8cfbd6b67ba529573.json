@@ -23,11 +23,11 @@
       "consumer_inventory_path": "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
       "consumer_inventory_sha256": "921a4e7c9fcf168681f70b12ece7e2e884e41d3790f4b489e19f47ed1be64e42",
       "current_hash_authority": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1.sources",
-      "entry_count": 3111,
+      "entry_count": 3115,
       "fragment_count": 192,
       "fragment_shadow_active": false,
       "index_path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-      "index_sha256": "24e8fb0defa82dcf2ac2b80e70fdd02c975bbc855852b21b59610c3e81ee86d5",
+      "index_sha256": "db222f0f32597a291b08971c14cff50e6befecd0e9955b5946f3fb3946a738f4",
       "source_of_truth": "LEGACY_MONOLITH",
       "target_count": 3
     },
@@ -52,7 +52,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
-        "sha256": "57b8c64105f8213de000761bb47d7ce84e065323b843c371fc52c654fdcc76d6"
+        "sha256": "5c5642b7dbe255c9a3c2000c571fb93fa2bf9b7b3e3444ecf2abff3f01f8f861"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -112,7 +112,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/system_flow.md",
-        "sha256": "d49b6a21e55089a71c535592589c6c3b296faecaee2b67a1fdb587470eb5f90e"
+        "sha256": "6f2c5e394e1845c7388279bf6392c23c19ebdf0e91b3b7e8fb6bf15c5a80ce12"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -127,27 +127,27 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "fad03fca6709987cc00a6bac2de25221735597587b1e521aae6e3a6da20ad889"
+        "sha256": "33e431d2205465803eaebb1ecf3ca823e90481dca24b46dbe06c106dd9f68c9a"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
-        "sha256": "685662eb14a188f70b1ad5b895bc510552dc80561aadb6382870c0f4043b2310"
+        "sha256": "8d56e6dfc9a2b6d6a2ad12be622902622459d491cfac8e9c993a5932f01dcdc3"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "507c81d1d9d930d1c4429e780c2424d313719db299472552f10279b070fd8879"
+        "sha256": "01fca26e0f5c2e754af358eb89543fd17580604060e482f918ab3d252abff3f5"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "c5d5d2046a3ee872adefc6bf143ad74bb49e6258cfb60bcb25cac22aa68b92d2"
+        "sha256": "fd151f04bebd0967a8581b5b89c9a71aeca2f7e956f7f59d4444c2bc5443660c"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
-        "sha256": "c05037dbea49ffa55a5ab271ffcd10399ff0684988d46ca6c3e5dcd987d81af0"
+        "sha256": "3628ad3d573d89b6bb732d53ef89b5bbbaa4b5b58f59a3c2e789bc578cd3cebd"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -162,7 +162,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-        "sha256": "24e8fb0defa82dcf2ac2b80e70fdd02c975bbc855852b21b59610c3e81ee86d5"
+        "sha256": "db222f0f32597a291b08971c14cff50e6befecd0e9955b5946f3fb3946a738f4"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -247,7 +247,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "5036fae7e1dc800c07bf00fcdaead8572169735f74d1e84e360ce302b37e1a65"
+        "sha256": "aa653d31952cd2de0d7fccdbe74d01627e2e2135cad6b577115e3aa46ae6b2cc"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -387,5 +387,5 @@
     "task_id": "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1"
   },
   "section_id": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1",
-  "section_sha256": "37ee961eb7393190f1a105f822d9fec75dca59393d73aac288db7d3f2c7fd5d8"
+  "section_sha256": "4ca9f122bfc4d02a8a021926abc0ed2359523c774c59c9b8cfbd6b67ba529573"
 }
