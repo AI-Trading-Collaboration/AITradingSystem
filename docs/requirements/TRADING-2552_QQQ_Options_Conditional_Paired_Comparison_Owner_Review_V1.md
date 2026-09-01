@@ -164,3 +164,9 @@ consumer。known-unrelated exclusion
 - 2026-09-01：Owner 批准打开 conditional paired-comparison review。READ_ONLY governed preflight=
   `PASS`，local/main/origin main=`942b3e61d70f72251d23ffa79553e389897c2c0e`，active lease=`0`，
   governed worktree audit=`PASS`；本轮只登记 review，不访问 QuantConnect 或市场数据。
+- 2026-09-01：复核已完成。TRADING-2550 result admission、TRADING-2548 contract/freeze-admission 与
+  TRADING-2542I execution policy 的精确身份均保持不变；聚焦 pytest-xdist=`76 passed`。结论为
+  `READY_FOR_SEPARATELY_AUTHORIZED_NON_EXECUTABLE_IMPLEMENTATION_WAVE`：现有趋势信号与数据足够，
+  当前仅缺 fully-funded comparator、aggregate exporter、local admission/replay、exact manifest 和独立
+  QuantConnect run authority。task-owned review bytes 已完成，等待 canonical task 状态与 formal
+  publication 收口；external/data/trading counters 继续为零。
