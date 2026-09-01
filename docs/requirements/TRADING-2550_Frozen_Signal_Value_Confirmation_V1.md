@@ -318,3 +318,10 @@ projection，不改变任何冻结研究结论、阈值、证据身份或执行�
   build=`PASS, 3116 entries, 192 fragments`。由于 seal policy/test 是在本次 architecture generator 之后才
   修改，v4 停止并按 `FAILED` 保全，不把错序 generator 当作成功；新 source-stage 将严格按 architecture
   → report-flow → compatibility 重建并形成 clean exact source commit。
+- 2026-09-02：final v5 architecture-fitness=`881 passed / 2 failed`，artifact=
+  `outputs/validation_runtime/architecture-fitness_20260901T171447Z/test_runtime_summary.json`，已按 FAIL
+  immutable 保全且未启动 Full。一项失败是 DEVX-011 current report-flow successor ratchet 仍为 `3115`，
+  已校准为 `3116`；另一项是 `architecture_devex.py` 通过 original-checkout editable import 执行时，
+  deprecation generator 的 default root 错指 original checkout，写出 1186/1343 inventory，而 candidate
+  测试实际为 1187/1344。后继显式从 candidate `src` 加载同一 generator，保留 `pytest-xdist`，不使用
+  serial PASS 掩盖该失败，也不修改 deprecation lifecycle/阈值。
