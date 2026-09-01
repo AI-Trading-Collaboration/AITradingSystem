@@ -293,3 +293,21 @@ projection，不改变任何冻结研究结论、阈值、证据身份或执行�
   并重放当前 `IN_PROGRESS` projection。该重放复用了先前 change id，append-only registry 因而保留一条
   语义等价的 `IN_PROGRESS -> IN_PROGRESS` 事件；它没有改变 task projection、研究结论或执行权限，后续
   final closeout 使用新的唯一 change id，不删除或改写该审计事件。
+- 2026-09-02：source commit=`e2011691bb8aa7835df68873db4b5cc929830f80`；reader renderer/live
+  projection focused suite 使用 `pytest-xdist` 得到 `24 passed`，Ruff PASS，changed-source mypy strict
+  (`--follow-imports=skip`) PASS。普通 strict mypy 的 transitive import 扫描报告 latest-main 既有 48 项
+  contracts/Atlas typing 告警，本次两个 changed modules 没有新增 direct error，不用 serial pytest 覆盖该
+  事实。final v3 transaction 精确绑定同一 reviewed base-drift plan、source HEAD、expected main 与 active
+  lease。skill INTEGRATION helper 因两阶段 source commit 导致 `HEAD != local main` 而阻断；v2 已在 exact
+  main 对同一 reconciliation plan 通过 INTEGRATION，本阶段按 TRADING-2553 既有 exact-source precedent
+  手工重放 plan/lease/main/dirty attribution，不提前推进 main，也不降低后续 formal validation 门槛。
+- 2026-09-02：final v3 在 task source 转为 `BASELINE_DONE` 后、任何 authority generator 前停止并以
+  `FAILED` 释放。terminal task event 与新增进度说明本身也是 Atlas exact source，必须先进入 task branch
+  commit；因此继续使用第二个窄化 source-stage transaction，只执行无新事件的 canonical task-source build
+  与 dirty attribution，再从新的 clean exact HEAD 获取 final transaction。v3 未运行 Atlas writer、formal
+  Full、main fast-forward、push、数据、DQ 或外部动作。
+- 2026-09-02：source-stage v2 误用 initial-cutover `task_source build`，该命令以
+  `V2_FINAL_IMPORT_COUNT: rows=1051 fragments=974` 正确拒绝 post-cutover registry；PowerShell 同一命令
+  行随后仍写入 generator post/candidate-pre checkpoint，因此整笔 transaction 判定为失败证据，不把后续
+  checkpoint 解释为 generator PASS，也不提交为合格 source-stage。该尝试没有追加 task event；后继只使用
+  post-cutover consumer refresh/validation 路径，并以新 transaction 重放。
