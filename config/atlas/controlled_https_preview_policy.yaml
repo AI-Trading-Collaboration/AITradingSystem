@@ -1,0 +1,50 @@
+schema_version: atlas_controlled_https_preview_policy.v1
+policy_id: atlas_controlled_https_preview_policy_v1
+policy_version: 0.1.0-draft.1
+status: PENDING_OWNER_DECISION
+owner: Project Owner
+task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
+writer_version: atlas_controlled_https_preview_writer.v1
+owner_decision_slots:
+  hosting_provider: PENDING_OWNER_DECISION
+  https_origin: PENDING_OWNER_DECISION
+  private_access_mode: PENDING_OWNER_DECISION
+  ttl_hours: PENDING_OWNER_DECISION
+  cost_ceiling_usd: PENDING_OWNER_DECISION
+  retention_days: PENDING_OWNER_DECISION
+  browser_matrix: PENDING_OWNER_DECISION
+  viewport_matrix: PENDING_OWNER_DECISION
+  assistive_technology_matrix: PENDING_OWNER_DECISION
+  cleanup_authority: PENDING_OWNER_DECISION
+asset_policy:
+  required_entrypoint: index.html
+  manifest_name: controlled_https_preview_manifest.json
+  allowed_media_types:
+    .css: text/css
+    .html: text/html
+    .js: text/javascript
+    .json: application/json
+    .png: image/png
+    .svg: image/svg+xml
+    .webp: image/webp
+security:
+  exact_allowlist_required: true
+  exact_response_bytes_required: true
+  regular_files_only: true
+  symlinks_forbidden: true
+  directory_listing_forbidden: true
+  external_network_references_forbidden: true
+  local_network_references_forbidden: true
+  runtime_injection_forbidden: true
+  authenticated_private_origin_required: true
+  public_share_forbidden: true
+  indexing_forbidden: true
+  expired_or_unauthorized_fail_closed: true
+safety:
+  local_bundle_generation_authorized: false
+  external_deployment_authorized: false
+  browser_automation_authorized: false
+  market_data_inclusion_authorized: false
+  credentials_inclusion_authorized: false
+  production_effect: none
+  broker_action: none

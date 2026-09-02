@@ -5,7 +5,8 @@
 - stable task id：`TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1`
 - priority：`P1`
 - status：`IN_PROGRESS`（2526-A strategy-evidence lane）
-- proposed governed mode：2524 `DUAL_LANE` 的 strategy-evidence worker + coordinator final gate
+- governed mode：既有 2526-A/2526-B 保留原 `DUAL_LANE` 证据拓扑；长期 HTTPS preview
+  本地实现波使用独立 `SINGLE_LANE`，最终 endpoint/Browser gate 仍由 coordinator 串行执行
 - contract change：`true`（accessible reader/research interaction contract）
 - predecessor gate：2523 已关闭且 2524-S0 `reader_projection_contract.v1` 已进入 local `main`
 - production effect：`none`
@@ -70,6 +71,43 @@ Project Owner 于 2026-09-02 要求把本地 `file://` / loopback Browser policy
 实现前需另行冻结 hosting/provider、private access、TTL、cost ceiling、retention、browser/viewport/AT
 matrix 与 cleanup authority；这些是工程和外部动作边界，不影响任何投资解释、DQ/PIT、research window、
 策略 verdict 或生产资格。
+
+### 3.2 长期 preview 本地实现波（2026-09-02 启动）
+
+Project Owner 于 2026-09-02 指示启动 TRADING-2526。该指示授权本地、non-deploying 的合同与验证器实现，
+不构成 hosting/cloud/project/public write、付费资源或 endpoint 创建的 R2 授权。本波按以下顺序执行：
+
+1. **S0 policy preparation**：增加 exact-byte policy，明确 provider、private access、TTL、cost ceiling、
+   retention、browser/viewport/AT matrix 与 cleanup authority 均为 `PENDING_OWNER_DECISION`；任何待决字段
+   都必须阻止真实 bundle/deployment readiness；
+2. **S1 local contract**：实现 provider-neutral allowlist manifest、regular-file/no-symlink containment、
+   SHA-256/size/media-type、source commit、writer version、TTL/authorization 与 safety boundary 绑定；
+3. **S2 fail-closed replay**：对 traversal、symlink、missing/extra asset、hash drift、expired TTL、
+   unauthorized origin、external/data/localhost/private-network reference 与 runtime injection 全部拒绝；
+4. **S3 governed closeout**：更新 `docs/system_flow.md` 与 canonical task state，运行 focused/formal/Full，
+   从最终 exact tree 重建 generated authority；本波完成后只可记为 local baseline，不能记为 2526-B PASS；
+5. **S4 external follow-on**：仅在 Owner 另行冻结全部 policy slots 并给出 exact R2 指令后，才允许创建
+   private HTTPS endpoint、执行 Browser/mobile/keyboard/AT/audit replay，并在 TTL 后生成 cleanup receipt。
+
+本地实现 task-owned paths：
+
+- `config/atlas/controlled_https_preview_policy.yaml`；
+- `src/ai_trading_system/atlas/controlled_https_preview.py`；
+- `tests/atlas/test_controlled_https_preview.py`；
+- `config/architecture/fragments/modules/controlled_https_preview.yaml`；
+- `config/architecture/fragments/flows/controlled_https_preview.yaml`。
+
+coordinator-owned paths 包括本 requirement、`docs/system_flow.md`、canonical task registry/generated views、
+architecture/report-flow/compatibility authority 与 formal validation evidence。不得与正在推进的 TRADING-2554
+共享 publication fence 或并发 Full；若 local `main` 前进，保留 frozen lane，并在 integration boundary
+生成 `integration_revalidation_plan.v1`。
+
+复用既有 audited worktree `D:\Work\AITradingSystem_trading2526_2527_evidence`，新分支为
+`codex/trading-2526-controlled-https-preview`，frozen base=
+`17189fc1680b4bc989b3f102b62e44216ed7e84c`。原 2526-A/2527-A commit `2f8f24031...` 与主线为 patch-equivalent，
+worktree 在复用前 audit=`PASS`，仅含可再生 tool caches。新用途只限本节 paths；exit condition 是本波
+candidate 已进入 local/origin `main`、formal evidence 已保全、无进程依赖且 tracked/untracked/ignored
+审计无唯一内容。满足条件后移除该 worktree；tracked bytes 可由 Git 恢复，未保留的 tool caches 不可恢复。
 
 ## 4. 两阶段执行与 path claims
 
@@ -156,3 +194,7 @@ STOP CONDITION：任何“简化”导致 provenance 不可达，或移动端视
   TTL、cost ceiling、retention、browser/viewport/AT matrix 与任何 R2 外部写入的 exact authorization 尚未
   冻结。Exit condition 是同一 exact HTML SHA 通过受允许 HTTPS origin 完成 Browser/mobile/keyboard/AT/
   audit replay，并由 TTL cleanup receipt 证明 endpoint 已撤销且 canonical evidence 保留完整。
+- 2026-09-02：Project Owner 指示“启动 2526”。SINGLE_LANE START/LANE preflight 从 exact
+  `main=17189fc1680b4bc989b3f102b62e44216ed7e84c` 通过，`contract_change=true` 未触发额外 serial wave；
+  本轮只实现本地 policy/manifest/replay baseline，不创建或访问 HTTPS endpoint，不消费 hosting/cloud/
+  paid resource，不签署 Browser、keyboard、screen-reader、AT、audit 或 comprehension PASS。

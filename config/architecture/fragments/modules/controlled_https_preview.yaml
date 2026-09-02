@@ -1,0 +1,21 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.controlled_https_preview
+fragment_kind: module
+owner: atlas_publishing_experience
+module_prefix: src/ai_trading_system/atlas/controlled_https_preview.py
+public_contracts:
+  - ControlledHttpsPreviewError
+  - ControlledHttpsPreviewPolicy
+  - PreviewAssetIdentity
+  - ControlledHttpsPreviewManifest
+  - ExternalPreviewAuthorization
+  - PreviewReplayReceipt
+  - load_controlled_https_preview_policy
+  - build_controlled_preview_manifest
+  - write_controlled_preview_bundle
+  - load_controlled_preview_manifest
+  - replay_controlled_preview_bundle
+  - bind_external_preview_authorization
+  - validate_https_endpoint_bytes
+compatibility_facades: []
+deprecation_status: active_reference_architecture

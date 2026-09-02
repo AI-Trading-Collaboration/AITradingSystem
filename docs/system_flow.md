@@ -324,6 +324,17 @@ critical-error 与 reviewer policy 仍未由 Owner 批准，因此新页面的 O
 保持 `PENDING_REVIEW`。该波不运行经验研究，不改变 research window、DQ/PIT、既有结果、engine、order、
 production 或 broker 权限，也不自动签署人工验收。
 
+TRADING-2526 的长期受控 HTTPS preview 在 canonical Atlas writer 与 Browser/AT 验收之间增加独立、
+provider-neutral 的本地合同层。`controlled_https_preview_policy.v1` 当前保持
+`PENDING_OWNER_DECISION`，provider、private access、HTTPS origin、TTL、cost ceiling、retention、
+browser/viewport/AT matrix 与 cleanup authority 未冻结时，真实 bundle/deployment readiness 必须失败。
+获批的本地 policy 只能从显式 relative-path allowlist 读取 regular、non-symlink files，绑定 source commit、
+writer、media type、size、SHA-256、asset-set identity 与 TTL，拒绝 traversal、missing/extra asset、external/
+local-network reference 和 runtime network API；atomic local bundle 与 replay 必须 exact-byte 一致。真实 HTTPS
+endpoint 仍需另行 exact R2 authorization，且 origin、authorization ref、expiry 与每个 response byte 均须重放；
+本地合同 PASS 不能代签 Browser、keyboard、screen-reader、AT、audit 或 comprehension PASS，也不进入市场
+数据、DQ、backtest、production 或 broker 路径。
+
 TRADING-2551 以最小 serial contract wave 扩展该共享 portfolio：`SIGNAL_VALUE` 与
 `current_verdict` 现在可保持 `UNRESOLVED`，也可在受治理结果 admission 后同步进入
 `RETAIN / REJECT / INSUFFICIENT`；每个 verdict 都绑定唯一 next-action id，任意 verdict、

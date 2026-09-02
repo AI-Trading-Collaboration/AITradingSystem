@@ -1,0 +1,21 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.controlled_https_preview
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: trading_2526_atlas_controlled_https_preview
+stages:
+  - exact_pending_owner_policy_load_and_sha256_binding
+  - approved_local_bundle_policy_gate
+  - explicit_relative_path_allowlist_and_regular_file_containment
+  - asset_media_type_size_and_sha256_identity
+  - external_local_network_and_runtime_injection_rejection
+  - deterministic_manifest_and_atomic_local_bundle_write
+  - local_file_set_hash_ttl_and_reference_replay
+  - separate_exact_r2_authorization_binding
+  - https_origin_expiry_and_exact_response_byte_replay
+  - independent_browser_mobile_keyboard_at_and_audit_follow_on
+  - endpoint_withdrawal_and_cleanup_receipt_follow_on
+  - no_market_data_dq_backtest_production_or_broker_action
+compatibility_flow_entry_required: false
+generated_source_of_truth_active: false
