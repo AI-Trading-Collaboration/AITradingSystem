@@ -86,7 +86,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
-        "sha256": "dd9d68f5ddc6385273c662c1444116c0b3ae8dcff40da781c5ac4bab22362ece"
+        "sha256": "c05037dbea49ffa55a5ab271ffcd10399ff0684988d46ca6c3e5dcd987d81af0"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -196,5 +196,5 @@
     }
   },
   "section_id": "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1",
-  "section_sha256": "1b4bb32e87abbc74e85cbed88315591abe06a6e20f535628597067e470f15748"
+  "section_sha256": "46510333b149de65cda6f8edf2337df40917f55263b44e7f40bc032d6ded9f75"
 }

@@ -148,3 +148,7 @@ backtest 仍需单独、精确授权。
   `integration-revalidation-48786aab6434a3c90e08`，canonical task registration 后
   `SINGLE_LANE/LANE` preflight PASS。先前 `v5` 因 INTEGRATION preflight 时序错误以 FAIL
   终止，未导致任何数据、外部平台或交易动作。
+- 2026-09-02：正式 architecture-fitness 首轮 883 项中 882 PASS；唯一失败为本任务把
+  canonical task-count 测试从 `1051` 更新到 `1052` 后，`arch_004e_test_manifest` 未同步
+  新文件哈希。`v6` 已绑定失败摘要后终止；`v7` 显式声明 `architecture-manifests` 后再按
+  顺序运行 `compatibility-authority`，修复范围仅为生成 authority freshness。
