@@ -13,22 +13,25 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / exact-freeze fee semantics and authorize non-executable
-    Wave B package/manifest generation
-  requirement_refs: []
+  next_owner: Project Owner / exact-freeze fee semantics and separately authorize
+    non-executable Wave B package/manifest generation
+  requirement_refs:
+  - docs/requirements/TRADING-2554_QQQ_Options_Paired_Comparison_Wave_B_Owner_Review_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Wave A is complete, but underlying comparator
-    fee semantics remain unfrozen. No exact package or manifest may be generated until
-    owner approval.
+  unstructured_legacy_blocker_or_next_step: The non-executable fee-semantics draft
+    is ready, but the recommendation remains unfrozen. No Wave B package, manifest,
+    data read, DQ, QuantConnect run, provider action, or trading action is authorized
+    before exact owner approval.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Owner-review YAML exact-binds the frozen paired contract, Wave A helper
-      and prior QC source; recommends same-run QQQ Security fee model via non-submitted
-      hypothetical orders, freezes fully-funded quantity/accounting and compatibility
-      boundaries, keeps all data/external/trading counters at zero, and architecture
-      manifest/deprecation generation resolves the active worktree root reproducibly.
+      and prior QC source; recommends the same-run QQQ Security fee model via non-submitted
+      hypothetical orders; freezes fully-funded quantity/accounting and exact 101-field
+      compatibility boundaries; Atlas classifies the task as exact-owner-freeze required;
+      focused and formal failure-fix validation pass with all external/data/trading
+      counters at zero.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -97,26 +100,68 @@ events:
   - change:trading-2554-owner-review-worktree-root-fix-20260902-v8
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-0defcd21e0c6fb9041386d093ac60618
+- schema_version: task_event.v1
+  task_id: TRADING-2554_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_B_OWNER_REVIEW_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-02T16:54:24.8058666Z'
+  actor: integration-coordinator
+  change_id: trading-2554-atlas-source-staging-20260903-v16
+  lane_id: null
+  base_commit: f8858103ee679d85266b2d46284ba1cd4290124d
+  previous_state_event_id: task-event-0defcd21e0c6fb9041386d093ac60618
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / exact-freeze fee semantics and separately authorize
+      non-executable Wave B package/manifest generation
+    blocker_or_next_step: The non-executable fee-semantics draft is ready, but the
+      recommendation remains unfrozen. No Wave B package, manifest, data read, DQ,
+      QuantConnect run, provider action, or trading action is authorized before exact
+      owner approval.
+    acceptance_criteria: Owner-review YAML exact-binds the frozen paired contract,
+      Wave A helper and prior QC source; recommends the same-run QQQ Security fee
+      model via non-submitted hypothetical orders; freezes fully-funded quantity/accounting
+      and exact 101-field compatibility boundaries; Atlas classifies the task as exact-owner-freeze
+      required; focused and formal failure-fix validation pass with all external/data/trading
+      counters at zero.
+    notes: 'Supporting requirement: [TRADING-2554 requirement](docs/requirements/TRADING-2554_QQQ_Options_Paired_Comparison_Wave_B_Owner_Review_V1.md).
+      v15 formal architecture/contract/integration/reproducibility passed; Full recorded
+      10,103 PASS / 27 FAIL / 6 SKIP. Failure-fix imports exact canonical ignored
+      validation locators and adds missing Atlas 2554 classification. Owner visual
+      review remains pending; no Wave B, QC, provider, production, broker, or trading
+      authority.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2554-atlas-source-staging-20260903-v16
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-50e92b7acb290c74f5774e1f0689cc6b
 projection:
   legacy_first_eight_cells:
   - TRADING-2554_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_B_OWNER_REVIEW_V1
   - QQQ options paired comparison Wave B fee semantics owner review V1
   - P0
   - BLOCKED_OWNER_INPUT
-  - Project Owner / exact-freeze fee semantics and authorize non-executable Wave B
-    package/manifest generation
-  - Wave A is complete, but underlying comparator fee semantics remain unfrozen. No
-    exact package or manifest may be generated until owner approval.
+  - Project Owner / exact-freeze fee semantics and separately authorize non-executable
+    Wave B package/manifest generation
+  - The non-executable fee-semantics draft is ready, but the recommendation remains
+    unfrozen. No Wave B package, manifest, data read, DQ, QuantConnect run, provider
+    action, or trading action is authorized before exact owner approval.
   - Owner-review YAML exact-binds the frozen paired contract, Wave A helper and prior
-    QC source; recommends same-run QQQ Security fee model via non-submitted hypothetical
-    orders, freezes fully-funded quantity/accounting and compatibility boundaries,
-    keeps all data/external/trading counters at zero, and architecture manifest/deprecation
-    generation resolves the active worktree root reproducibly.
-  - Formal architecture acceptance exposed process-global checkout fallback in architecture_devex
-    deprecation generation; fix directly and add worktree-root regression coverage.
-  docs_links: []
+    QC source; recommends the same-run QQQ Security fee model via non-submitted hypothetical
+    orders; freezes fully-funded quantity/accounting and exact 101-field compatibility
+    boundaries; Atlas classifies the task as exact-owner-freeze required; focused
+    and formal failure-fix validation pass with all external/data/trading counters
+    at zero.
+  - 'Supporting requirement: [TRADING-2554 requirement](docs/requirements/TRADING-2554_QQQ_Options_Paired_Comparison_Wave_B_Owner_Review_V1.md).
+    v15 formal architecture/contract/integration/reproducibility passed; Full recorded
+    10,103 PASS / 27 FAIL / 6 SKIP. Failure-fix imports exact canonical ignored validation
+    locators and adds missing Atlas 2554 classification. Owner visual review remains
+    pending; no Wave B, QC, provider, production, broker, or trading authority.'
+  docs_links:
+  - docs/requirements/TRADING-2554_QQQ_Options_Paired_Comparison_Wave_B_Owner_Review_V1.md
   terminal: false
-  canonical_row_sha256: 6de9068ffd4562e0c0807c2dbfbb10d98a6bfb4255bd7ec634b9b9a4217d5b02
-last_event_id: task-event-0defcd21e0c6fb9041386d093ac60618
+  canonical_row_sha256: 1cc6eb4c80b13a5c8d033b489a9d3b22ed1cba8debafee492f62cf1f9995a890
+last_event_id: task-event-50e92b7acb290c74f5774e1f0689cc6b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 632923f6e81a32e474a995965cbbebb7069083da1869bd889f8bcd149fb3d39a
+fragment_checksum: 37ca85859f0e408e6c43fa72e3d3dd7a8677fd3e505629c290c27b1b4b9f1c16

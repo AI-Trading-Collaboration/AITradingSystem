@@ -1,7 +1,7 @@
 schema_version: atlas_page_effectiveness_policy.v1
 policy_id: atlas_strategy_research_page_effectiveness_v1
-policy_version: 3.8.0
-status: REVIEWED_LIVE_SNAPSHOT_IDENTITY_CONTRACT_V3_PAIRED_WAVE_A_FIXTURE_BASELINE_REFRESH
+policy_version: 3.9.0
+status: REVIEWED_LIVE_SNAPSHOT_IDENTITY_CONTRACT_V3_WAVE_B_OWNER_REVIEW_REFRESH
 owner: Atlas page engineering owner
 primary_research_start: '2021-02-22'
 canonical_page_path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html
@@ -31,7 +31,9 @@ relevant_source_paths:
   - config/research/qc_qqq_options_growth_action_value_mandatory_veto_source_contract_wave_v1.yaml
   - config/research/qc_qqq_options_paired_comparison_contract_v1.yaml
   - config/research/qc_qqq_options_paired_comparison_contract_freeze_admission_v1.yaml
+  - config/research/qc_qqq_options_paired_comparison_wave_b_owner_review_v1.yaml
   - docs/requirements/TRADING-2553_QQQ_Options_Paired_Comparison_Wave_A_Implementation_V1.md
+  - docs/requirements/TRADING-2554_QQQ_Options_Paired_Comparison_Wave_B_Owner_Review_V1.md
   - inputs/architecture/arch_005_task_registry_index.yaml
   - inputs/research/qqq_options/trading_2533_session_finalization_dq_pit_evidence_admission_v1/dq_pit_evidence_admission.json
   - inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v3/export_safe_terminal_evidence.json
@@ -394,6 +396,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2553_QQQ_Options_Paired_Comparison_Wave_A_Implementation_V1.md
     coverage: PAIRED_COMPARISON_WAVE_A_FIXTURE_BASELINE_COMPLETE_WAVE_B_AUTHORITY_REQUIRED
     reader_summary_zh: 2553 已在 synthetic/golden/negative fixtures 上完成 non-executable Wave A baseline：同信号 fully-funded QQQ/cash Decimal ledger 使用 ask entry、bid exit、显式 fee 与 nonnegative-cash gate；aggregate admission 精确限制为冻结的 101 个字段并拒绝 raw option surface；deterministic QC helper 只是 fragment，不是 runnable main.py；独立 replay 按 16 轴和 INVALID > FAIL > INSUFFICIENT > PASS 收口。没有读取真实市场或 signal package、生成 manifest、运行 DQ 或调用 QuantConnect；当前 paired outcome 仍为平台证据不足。若继续，必须另行冻结 fee semantics、Wave B exact package/manifest 并取得独立 bounded run authority。
+  - task_id: TRADING-2554_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_B_OWNER_REVIEW_V1
+    requirement_path: docs/requirements/TRADING-2554_QQQ_Options_Paired_Comparison_Wave_B_Owner_Review_V1.md
+    coverage: WAVE_B_FEE_SEMANTICS_OWNER_REVIEW_PUBLISHED_EXACT_OWNER_FREEZE_REQUIRED
+    reader_summary_zh: 2554 已提交本地不可执行的 Wave B fee semantics Owner review 草案：推荐由同一 QC algorithm 实例通过未提交的 hypothetical QQQ MarketOrder 调用 QQQ Security fee model，并明确 fully-funded integer quantity、ask entry/bid exit、nonnegative-cash 与 exact 101-field aggregate-only 兼容边界。该推荐尚未获得 Project Owner 的 exact freeze，任务仍在等待 Project Owner 输入；本草案不生成 Wave B package/manifest，不读取真实市场或 signal package，不运行 DQ 或 QuantConnect，也不授权 provider、raw option export、paper/live/production/broker 或任何交易动作。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

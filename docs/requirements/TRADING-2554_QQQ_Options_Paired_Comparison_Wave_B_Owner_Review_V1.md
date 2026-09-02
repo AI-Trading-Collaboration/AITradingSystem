@@ -186,3 +186,41 @@ backtest 仍需单独、精确授权。
   已绑定并终止事务；`v15` 扩展该测试路径后同步完整 count/ID，再重建所有声明 authority。
 - 2026-09-03：`v15` 重建后，deprecation + 全历史 compatibility 聚焦回归以 218/218
   PASS，确认新 inventory ID、1,346 test-file count 与所有 successor/hash authority 一致。
+- 2026-09-03：`v15` 正式门禁依次完成 architecture-fitness 883/883 PASS、
+  contract-validation 278/278 PASS、integration 995/995 PASS、reproducibility 24/24 PASS；
+  Full 以 10,103 PASS / 27 FAIL / 6 SKIP 终止并被 publication fence 原子记录。27 项失败
+  分为三类：9 项缺少 canonical O1 retained DQ gate，5 项缺少 TRADING-2542I retained
+  operational receipts/signal package，13 项因 Atlas page-effectiveness 只分类到 2553、未纳入
+  最新 canonical task 2554。前两类是 isolated worktree 缺失 Git-ignored retained evidence，
+  第三类是必须直接修复的当前发布分类缺口；均不改变本任务的 fee recommendation、研究结论
+  或授权边界。
+- 2026-09-03：为 failure-fix rerun 建立只读验证快照计划，owner 为 TRADING-2554 publication
+  coordinator；来源限定为 canonical workspace `D:\Work\AITradingSystem\outputs`，目标限定为
+  当前 task worktree 下三处原 locator：
+  `outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_dq_gate.json`、
+  `outputs/research_trends/operational_forecast/trading_2542i_real_v3/{real_materialization_receipt.json,manifest_replay_receipt.json}`
+  与 `outputs/qqq_options/signal_packages/trading_2542i_operational_forecast_real_v3/`。用途仅为重放
+  已冻结的 validation fixture/evidence locator，不运行数据下载、DQ、QuantConnect 或交易。
+  复制前后必须核对 exact file SHA、文件数、字节数与 deterministic tree digest；这些副本不构成
+  新证据且无唯一内容，退出条件为 failure-fix Full 与发布收口完成、确认 canonical 原件仍存在后
+  随 task worktree 删除。
+- 2026-09-03：受控快照复制完成并逐项复核：O1 gate 为 4,057 bytes / SHA
+  `ca02b4310f99d664bb8d987debd4900f4367935b3938663c7a633400d988a1ca`；TRADING-2542I
+  materialization receipt 为 3,086 bytes / SHA
+  `f508581f98b1fa64763b8488568cf0631bfa260fea2b7aa55f9d7f5a0590a230`，manifest replay
+  receipt 为 834 bytes / SHA
+  `1106de7d6e9b63a20d9e68d7228267ea6777a84b2ea1de16215699d3fa7cd9bc`；signal package
+  为 1,205 files / 3,478,266 bytes / deterministic tree SHA
+  `a23841931320832b8e58ea3de143db52446922e5658c42708173068a9459b45f`。source 与 destination
+  identity 全部一致；复制动作只恢复 isolated validation locator，不改变 technical evidence
+  或 authorization state。
+- 2026-09-03：首次 Atlas failure-fix focused run 为 38 PASS / 32 FAIL / 1 SKIP；所有 32 项
+  都由 canonical task 2554 的 `requirement_refs` 为空触发
+  `PAGE_EFFECTIVENESS_TASK_REQUIREMENT_BINDING_INVALID`。`v16` 直接通过 canonical task writer
+  在 progress notes 加入 requirement Markdown binding，并把最新 Full 失败、快照与 Atlas 分类
+  修复同步到 task projection；不放宽 Atlas 门禁。
+- 2026-09-03：requirement binding 修正后，第二轮 focused run 为 63 PASS / 7 FAIL / 1 SKIP；
+  7 项都由 reader summary 直接暴露 raw `BLOCKED_OWNER_INPUT` 而触发 terminology gate。
+  页面摘要改用“等待 Project Owner 输入”，canonical task status 保持不变；第三轮同一
+  pytest-xdist suite 为 70 PASS / 1 SKIP，确认 Atlas 分类、retained O1 gate 与 TRADING-2542I
+  operational evidence locator 均可在隔离 worktree 重放。
