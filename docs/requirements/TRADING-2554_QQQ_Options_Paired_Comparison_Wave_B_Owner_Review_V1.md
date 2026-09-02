@@ -180,3 +180,9 @@ backtest 仍需单独、精确授权。
 - 2026-09-03：`v14` 按顺序重建 architecture/report-flow/compatibility authority 后，
   聚焦回归以 `pytest-xdist -n 16 --dist loadfile` 完成 248/248 PASS；历史 hash-authority、
   active-worktree root regression、report-flow seal 与 canonical task-source 同时通过。
+- 2026-09-03：`v14` 正式 architecture-fitness 为 882 PASS / 1 FAIL；唯一失败是新增独立
+  regression 文件令 deprecation inventory 的测试文件数从 1,345 增至 1,346，冻结 ID
+  从 `f463b2da…` 变为生成器产出的 `ab70e213…`，而 deprecation 测试仍保留旧值。失败摘要
+  已绑定并终止事务；`v15` 扩展该测试路径后同步完整 count/ID，再重建所有声明 authority。
+- 2026-09-03：`v15` 重建后，deprecation + 全历史 compatibility 聚焦回归以 218/218
+  PASS，确认新 inventory ID、1,346 test-file count 与所有 successor/hash authority 一致。
