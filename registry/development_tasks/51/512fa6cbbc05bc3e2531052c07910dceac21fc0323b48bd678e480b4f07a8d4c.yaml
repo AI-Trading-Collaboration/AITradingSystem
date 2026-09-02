@@ -13,19 +13,20 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex strategy-evidence coordinator：修复 Atlas successor classification，完成
-    failure-fix formal validation 与登记基线 ordinary publication
+  next_owner: Codex strategy-evidence coordinator：刷新 report-flow authority，完成第二次 failure-fix
+    formal validation 与登记基线 ordinary publication
   requirement_refs:
   - docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md
+  - docs/system_flow.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 首次 Full 10119 passed/14 failed，唯一根因是 TRADING-2555
-    未分类 Atlas successor；修复后重跑 formal tiers；F1 仍等待 F0 exact publication
+  unstructured_legacy_blocker_or_next_step: 第二次 Full 10130 passed/3 failed，仅因 system_flow
+    source seal/shadow 未刷新；补齐 report-flow-authority 后重跑；F1 仍等待 F0 exact publication
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 登记波次把 TRADING-2555 纳入 Atlas current successor projection，并使 failure-fix
-      Full 与 ordinary publication PASS；随后 F0 policy/loader/tests exact-bind 既定结果盲合同；本任务零实证运行
+    text: report-flow source seal、fragment shadow、tests 与 current system_flow exact
+      一致；failure-fix Full 与 ordinary publication PASS；随后从登记基线集成结果盲 F0；本任务零实证运行
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -120,27 +121,55 @@ events:
   - change:trading-2555-task-requirement-binding-fix-v7
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-1a7a7f9b09bfc4abd2e92fcd21567524
+- schema_version: task_event.v1
+  task_id: TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-02T20:45:49.1972377Z'
+  actor: integration-coordinator
+  change_id: trading-2555-report-flow-authority-failure-fix-v10
+  lane_id: null
+  base_commit: a87f79bcb504ac25c01b880c998003120d6a54e3
+  previous_state_event_id: task-event-1a7a7f9b09bfc4abd2e92fcd21567524
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex strategy-evidence coordinator：刷新 report-flow authority，完成第二次
+      failure-fix formal validation 与登记基线 ordinary publication
+    blocker_or_next_step: 第二次 Full 10130 passed/3 failed，仅因 system_flow source seal/shadow
+      未刷新；补齐 report-flow-authority 后重跑；F1 仍等待 F0 exact publication
+    acceptance_criteria: report-flow source seal、fragment shadow、tests 与 current system_flow
+      exact 一致；failure-fix Full 与 ordinary publication PASS；随后从登记基线集成结果盲 F0；本任务零实证运行
+    notes: 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。第二次
+      Full artifact outputs/validation_runtime/full_20260902T201401Z/test_runtime_summary.json，SHA-256=28726d6e1ab38f5963639a1f41a9a096bd06ecfa9247f495733ac81c74ef0a57；10130
+      passed/3 failed/3 skipped，三项均为 docs/system_flow.md 的 report-flow source seal/shadow
+      未刷新。Atlas 52 focused tests PASS；DQ/backtest/external/production/broker action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2555-report-flow-authority-failure-fix-v10
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-dc595214bfadc1d979706292a35e6740
 projection:
   legacy_first_eight_cells:
   - TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
   - Strategy research / first-layer composer v2 foundational falsification contract
   - P0
   - IN_PROGRESS
-  - Codex strategy-evidence coordinator：修复 Atlas successor classification，完成 failure-fix
+  - Codex strategy-evidence coordinator：刷新 report-flow authority，完成第二次 failure-fix
     formal validation 与登记基线 ordinary publication
-  - 首次 Full 10119 passed/14 failed，唯一根因是 TRADING-2555 未分类 Atlas successor；修复后重跑 formal
-    tiers；F1 仍等待 F0 exact publication
-  - 登记波次把 TRADING-2555 纳入 Atlas current successor projection，并使 failure-fix Full 与
-    ordinary publication PASS；随后 F0 policy/loader/tests exact-bind 既定结果盲合同；本任务零实证运行
-  - 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。首次
-    Full artifact outputs/validation_runtime/full_20260902T185116Z/test_runtime_summary.json，SHA-256=9bf085614ab876202974a3da99172027b63cf3c4604c77c730d1c0f4070bd6e1；10119
-    passed/14 failed/3 skipped，14 项均由 ATLAS_LIVE_UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED:TRADING-2555
-    派生。按 fail-closed 规则新增 Atlas task classification、更新 system flow 与相关测试；DQ/backtest/external/production/broker
-    action=none。'
+  - 第二次 Full 10130 passed/3 failed，仅因 system_flow source seal/shadow 未刷新；补齐 report-flow-authority
+    后重跑；F1 仍等待 F0 exact publication
+  - report-flow source seal、fragment shadow、tests 与 current system_flow exact 一致；failure-fix
+    Full 与 ordinary publication PASS；随后从登记基线集成结果盲 F0；本任务零实证运行
+  - 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。第二次
+    Full artifact outputs/validation_runtime/full_20260902T201401Z/test_runtime_summary.json，SHA-256=28726d6e1ab38f5963639a1f41a9a096bd06ecfa9247f495733ac81c74ef0a57；10130
+    passed/3 failed/3 skipped，三项均为 docs/system_flow.md 的 report-flow source seal/shadow
+    未刷新。Atlas 52 focused tests PASS；DQ/backtest/external/production/broker action=none。'
   docs_links:
   - docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md
+  - docs/system_flow.md
   terminal: false
-  canonical_row_sha256: 9507085fde0403897b0fb33b720838e69bf7c37a169988234dbf98baa3357ac8
-last_event_id: task-event-1a7a7f9b09bfc4abd2e92fcd21567524
+  canonical_row_sha256: fcf045e91d5235c1d3e0df3693055b43a51063a380f3d3c6ccbd641a80744d5e
+last_event_id: task-event-dc595214bfadc1d979706292a35e6740
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 035b81cdf3d8ed39839ac88e5647fc027baa37a93bc423cc8c675da4017c8fe7
+fragment_checksum: f8e8e167b8839f112484ed40285d406d06bff8b7842553e602f96c54623706f2

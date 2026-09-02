@@ -178,3 +178,8 @@ broker。`INSUFFICIENT` 不等于失败，但保持 Wave B/C HOLD。
   TRADING-2555 未进入 Atlas successor classification 派生。按 fail-closed 原因修复 Atlas task coverage、
   current mainline 与 system-flow 投影后，必须绑定该 failed parent 执行 `failure_fix_rerun`，不得把首次
   Full 记为 PASS。
+- Atlas failure-fix 后的第二次 Full=`10130 passed / 3 failed / 3 skipped`；artifact 为
+  `outputs/validation_runtime/full_20260902T201401Z/test_runtime_summary.json`（SHA-256
+  `28726d6e1ab38f5963639a1f41a9a096bd06ecfa9247f495733ac81c74ef0a57`）。Atlas 失败已清零，剩余三项
+  全部是 `docs/system_flow.md` 更新后 DEVX-006D report-flow source seal、lossless shadow 与固定测试哈希未刷新；
+  下一次 `failure_fix_rerun` 必须绑定该第二次失败 artifact，并运行官方 `report-flow-authority` generator。
