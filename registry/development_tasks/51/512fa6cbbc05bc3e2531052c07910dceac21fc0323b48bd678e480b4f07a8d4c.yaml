@@ -13,19 +13,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex strategy-evidence coordinator：修正 Architecture 历史 report-flow entry-count
-    ratchet，完成 failure-fix formal validation 与登记基线 ordinary publication
+  next_owner: Codex strategy-evidence coordinator：刷新 Atlas research-state 日期 ratchet
+    与 exact-commit canonical page，完成 failure-fix formal validation 和 ordinary publication
   requirement_refs:
   - docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 第三次 formal Architecture 882 passed/1 failed，唯一根因是历史
-    successor entry_count 仍为 3118 而官方 authority 已为 3122；修正该固定测试后重跑；F1 仍等待 F0 exact
-    publication
+  unstructured_legacy_blocker_or_next_step: 第四次 Full 10131 passed/2 failed，仅因 Atlas
+    research_state_as_of 仍固定 2026-09-02 且 ignored canonical page 绑定旧提交；同步 2026-09-03
+    currentness 并在候选提交后精确重渲染；F1 仍等待 F0 exact publication
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Architecture 历史 successor ratchet 与 current report-flow authority entry_count=3122
+    text: Atlas live snapshot 日期、canonical ignored artifact 与最终 candidate exact commit
       一致；failure-fix formal tiers、Full 与 ordinary publication PASS；随后从登记基线集成结果盲 F0；本任务零实证运行
   production_effect: none
   broker_action: none
@@ -179,27 +179,59 @@ events:
   - change:trading-2555-architecture-ratchet-final-rerun-v12
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-550bfc7eea3aadc3c45f38d7931184e8
+- schema_version: task_event.v1
+  task_id: TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T06:50:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2555-atlas-currentness-final-rerun-v13
+  lane_id: null
+  base_commit: 95acb6806daf2bcac6a46b69b5f53993fe8f189d
+  previous_state_event_id: task-event-550bfc7eea3aadc3c45f38d7931184e8
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex strategy-evidence coordinator：刷新 Atlas research-state 日期 ratchet
+      与 exact-commit canonical page，完成 failure-fix formal validation 和 ordinary publication
+    blocker_or_next_step: 第四次 Full 10131 passed/2 failed，仅因 Atlas research_state_as_of
+      仍固定 2026-09-02 且 ignored canonical page 绑定旧提交；同步 2026-09-03 currentness 并在候选提交后精确重渲染；F1
+      仍等待 F0 exact publication
+    acceptance_criteria: Atlas live snapshot 日期、canonical ignored artifact 与最终 candidate
+      exact commit 一致；failure-fix formal tiers、Full 与 ordinary publication PASS；随后从登记基线集成结果盲
+      F0；本任务零实证运行
+    notes: 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。第四次
+      Full artifact outputs/validation_runtime/full_20260902T211845Z/test_runtime_summary.json，SHA-256=91805034ced9ca8c8d7e23647f0e247693d32cfa818d3215aecdb59e36e31aa1；10131
+      passed/2 failed/3 skipped。两项均为 Atlas currentness：research_state_as_of 实际 2026-09-03T06:15:00+09:00，而测试仍固定
+      2026-09-02；本地 ignored canonical page 仍绑定旧 exact commit。核心策略合同、交易引擎及其余测试通过；DQ/backtest/bootstrap/external/production/broker
+      均未运行。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2555-atlas-currentness-final-rerun-v13
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-067084ba7d016e7179a35ba3aa4e27c3
 projection:
   legacy_first_eight_cells:
   - TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
   - Strategy research / first-layer composer v2 foundational falsification contract
   - P0
   - IN_PROGRESS
-  - Codex strategy-evidence coordinator：修正 Architecture 历史 report-flow entry-count
-    ratchet，完成 failure-fix formal validation 与登记基线 ordinary publication
-  - 第三次 formal Architecture 882 passed/1 failed，唯一根因是历史 successor entry_count 仍为 3118
-    而官方 authority 已为 3122；修正该固定测试后重跑；F1 仍等待 F0 exact publication
-  - Architecture 历史 successor ratchet 与 current report-flow authority entry_count=3122
-    一致；failure-fix formal tiers、Full 与 ordinary publication PASS；随后从登记基线集成结果盲 F0；本任务零实证运行
-  - 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。第三次
-    formal Architecture artifact outputs/validation_runtime/architecture-fitness_20260902T205217Z/test_runtime_summary.json，SHA-256=c48f0fdc5b879677d0b7f71d0db09e96143615b89d4d706e817d5a6c50bb58d2；882
-    passed/1 failed，唯一失败 tests/test_arch_004_refactor_policy.py::test_devx_011_governed_workflow_health_authority_remains_historical
-    为 report_catalog_flow_successor.entry_count 3118→3122 的历史固定值未同步。DQ/backtest/bootstrap/external/production/broker
+  - Codex strategy-evidence coordinator：刷新 Atlas research-state 日期 ratchet 与 exact-commit
+    canonical page，完成 failure-fix formal validation 和 ordinary publication
+  - 第四次 Full 10131 passed/2 failed，仅因 Atlas research_state_as_of 仍固定 2026-09-02 且
+    ignored canonical page 绑定旧提交；同步 2026-09-03 currentness 并在候选提交后精确重渲染；F1 仍等待 F0
+    exact publication
+  - Atlas live snapshot 日期、canonical ignored artifact 与最终 candidate exact commit 一致；failure-fix
+    formal tiers、Full 与 ordinary publication PASS；随后从登记基线集成结果盲 F0；本任务零实证运行
+  - 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。第四次
+    Full artifact outputs/validation_runtime/full_20260902T211845Z/test_runtime_summary.json，SHA-256=91805034ced9ca8c8d7e23647f0e247693d32cfa818d3215aecdb59e36e31aa1；10131
+    passed/2 failed/3 skipped。两项均为 Atlas currentness：research_state_as_of 实际 2026-09-03T06:15:00+09:00，而测试仍固定
+    2026-09-02；本地 ignored canonical page 仍绑定旧 exact commit。核心策略合同、交易引擎及其余测试通过；DQ/backtest/bootstrap/external/production/broker
     均未运行。'
   docs_links:
   - docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md
   terminal: false
-  canonical_row_sha256: f0ef43a166e30eca359fa4fb248ee61a8ef3563f08547a57662d39a6ac3abbc5
-last_event_id: task-event-550bfc7eea3aadc3c45f38d7931184e8
+  canonical_row_sha256: f0370523b0b0779852333b5b8e8cd1e42ca9686a76185fa7535ec61412c94f8a
+last_event_id: task-event-067084ba7d016e7179a35ba3aa4e27c3
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: cb1785477f9346ee30bd8c4327d7b7f9f7a25d5f9a3b0dfc872a88a63a190650
+fragment_checksum: 9c1a104e3ff59c2cd111c07af6c9cce3898e6c8e2ead12d8e5b66b1427993807
