@@ -20,15 +20,13 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: F0 结果盲 policy、strict loader、authority
-    replay、四态 reducer 与 synthetic/negative tests 已实现；F1 尚未成为独立 canonical task，且 canonical
-    DQ、市场数据、bootstrap、回测及独立 replay 均未被 F0 授权
+  unstructured_legacy_blocker_or_next_step: F0 formal Architecture 882 passed/1 failed；唯一根因是新增
+    1 个 module 与 1 个 test 后 deprecation inventory 已为 1189/1347，而固定测试仍绑定 1188/1346；同步
+    ratchet 后重跑全部正式门禁
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: F0 exact policy/loader/tests、Atlas 与 system flow 同步，focused/static/formal
-      tiers/Full 与 ordinary publication PASS；任何 F1 必须从已发布 F0 exact commit 另行登记，固定
-      maxima 后才可执行；Wave B 最多 OWNER_REVIEW_REQUIRED，Wave C/production/broker 永不由 F0
-      授权
+    text: deprecation inventory ID/count ratchet 与官方 generator 精确一致；F0 Architecture/Contract/Integration/Reproducibility/Full
+      和 ordinary publication PASS；F1 仅能从已发布 F0 exact commit 另行登记授权
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -243,6 +241,37 @@ events:
   - change:trading-2555-foundational-falsification-f0-v14
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-54421bb7df63a42947b8d4b153cbedfe
+- schema_version: task_event.v1
+  task_id: TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T08:20:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2555-f0-deprecation-ratchet-v16
+  lane_id: null
+  base_commit: a371d3a448628ef0ccc4c701813a9c9b2b0d6253
+  previous_state_event_id: task-event-54421bb7df63a42947b8d4b153cbedfe
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner / Codex strategy-evidence coordinator：基于 F0 exact-main commit
+      另行登记并审核 F1 empirical run envelope
+    blocker_or_next_step: F0 formal Architecture 882 passed/1 failed；唯一根因是新增 1 个 module
+      与 1 个 test 后 deprecation inventory 已为 1189/1347，而固定测试仍绑定 1188/1346；同步 ratchet
+      后重跑全部正式门禁
+    acceptance_criteria: deprecation inventory ID/count ratchet 与官方 generator 精确一致；F0
+      Architecture/Contract/Integration/Reproducibility/Full 和 ordinary publication
+      PASS；F1 仅能从已发布 F0 exact commit 另行登记授权
+    notes: 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。F0
+      首次 Architecture artifact outputs/validation_runtime/architecture-fitness_20260902T230950Z/test_runtime_summary.json，SHA-256=f156c257f3e2cfa095724befde34fb55a2c8351023493449274367e19ec3cffb；882
+      passed/1 failed，唯一失败为 tests/test_arch_004g_deprecation.py 的旧 inventory ID/count
+      ratchet。策略合同、Atlas focused 与 report-flow focused 均已通过；未读取市场缓存，未运行 DQ、真实回测、bootstrap
+      或外部动作。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2555-f0-deprecation-ratchet-v16
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-80bdf30a64301ca122144ded084c7a9a
 projection:
   legacy_first_eight_cells:
   - TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
@@ -251,20 +280,19 @@ projection:
   - BASELINE_DONE
   - 项目 owner / Codex strategy-evidence coordinator：基于 F0 exact-main commit 另行登记并审核
     F1 empirical run envelope
-  - F0 结果盲 policy、strict loader、authority replay、四态 reducer 与 synthetic/negative tests
-    已实现；F1 尚未成为独立 canonical task，且 canonical DQ、市场数据、bootstrap、回测及独立 replay 均未被 F0
-    授权
-  - F0 exact policy/loader/tests、Atlas 与 system flow 同步，focused/static/formal tiers/Full
-    与 ordinary publication PASS；任何 F1 必须从已发布 F0 exact commit 另行登记，固定 maxima 后才可执行；Wave
-    B 最多 OWNER_REVIEW_REQUIRED，Wave C/production/broker 永不由 F0 授权
+  - F0 formal Architecture 882 passed/1 failed；唯一根因是新增 1 个 module 与 1 个 test 后 deprecation
+    inventory 已为 1189/1347，而固定测试仍绑定 1188/1346；同步 ratchet 后重跑全部正式门禁
+  - deprecation inventory ID/count ratchet 与官方 generator 精确一致；F0 Architecture/Contract/Integration/Reproducibility/Full
+    和 ordinary publication PASS；F1 仅能从已发布 F0 exact commit 另行登记授权
   - 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。F0
-    policy file/canonical/authority-set SHA-256 分别为 54dc349be1ec5670f9e02fc74e9467b668b2311a7dadbdc22680c8c605a824ad、ea6b51baf7d8bdfec2454fb037131a199736e6cacb1eecdc35e01701f5357818、a07e63c9f3ba035d94cfdbf18bc096b69380e4baf1b003540390b66d4ec44fe3；核心
-    20 passed，Ruff、strict mypy、compileall PASS。F0 仍在 formal/publication 收口；未读取市场缓存，未运行
-    DQ、真实回测、bootstrap、QuantConnect/provider，production_effect=none，broker_action=none。'
+    首次 Architecture artifact outputs/validation_runtime/architecture-fitness_20260902T230950Z/test_runtime_summary.json，SHA-256=f156c257f3e2cfa095724befde34fb55a2c8351023493449274367e19ec3cffb；882
+    passed/1 failed，唯一失败为 tests/test_arch_004g_deprecation.py 的旧 inventory ID/count
+    ratchet。策略合同、Atlas focused 与 report-flow focused 均已通过；未读取市场缓存，未运行 DQ、真实回测、bootstrap
+    或外部动作。'
   docs_links:
   - docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md
   terminal: false
-  canonical_row_sha256: 8aaefbc778c7b800b975b3f21f7915cb65ee1ad768bd85ea160ab179152aa6d6
-last_event_id: task-event-54421bb7df63a42947b8d4b153cbedfe
+  canonical_row_sha256: a972389a0557badf5e4ceae4ae53f5633e07b64efacdc4c9bfae8a16908c509c
+last_event_id: task-event-80bdf30a64301ca122144ded084c7a9a
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 87712fdfbb2dde21d4d5477641470641811af1d0f82b0379ef552d641db236e0
+fragment_checksum: d09cda70a8eea1156ce7f83b88f8e42742d10f7bb32007c8547c56d5fee9d379

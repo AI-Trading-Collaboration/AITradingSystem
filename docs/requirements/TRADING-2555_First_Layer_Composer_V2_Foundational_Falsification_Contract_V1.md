@@ -205,3 +205,8 @@ broker。`INSUFFICIENT` 不等于失败，但保持 Wave B/C HOLD。
   `a07e63c9f3ba035d94cfdbf18bc096b69380e4baf1b003540390b66d4ec44fe3`；核心 focused=
   `20 passed`，Ruff、strict mypy、compileall PASS。该基线本身不读取市场缓存、不运行 DQ/回测/bootstrap，
   也不授权 QuantConnect/provider、Options Wave B/C、paper/live/production/broker 或交易动作。
+- F0 首次 formal Architecture=`882 passed / 1 failed`；artifact 为
+  `outputs/validation_runtime/architecture-fitness_20260902T230950Z/test_runtime_summary.json`（SHA-256
+  `f156c257f3e2cfa095724befde34fb55a2c8351023493449274367e19ec3cffb`）。唯一失败是新增 1 个 module 与
+  1 个 test 后官方 deprecation inventory 已更新为 `1189/1347`，而固定测试仍绑定 `1188/1346` 及旧
+  inventory ID；本波次只同步该治理 ratchet 后重跑全部正式门禁，不改变 F0 policy 或投资解释。
