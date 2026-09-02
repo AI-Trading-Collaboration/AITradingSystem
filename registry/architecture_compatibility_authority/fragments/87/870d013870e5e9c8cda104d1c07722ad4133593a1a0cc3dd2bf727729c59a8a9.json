@@ -43,7 +43,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
-        "sha256": "43720cd3d9db2c9d5c0f90542a291b13e3472d18b10c0d411e431b6a859dc2e5"
+        "sha256": "54429ee8d8437eb5df47e8a3292248a89267ad25f0fef9e8ab5f3aa9018fe510"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -63,22 +63,22 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/system_flow.md",
-        "sha256": "cfc0a6a3944d870fe6b099756f1a381b158269beed9291ec9939ab225e3eaa5d"
+        "sha256": "a3465cca85e92c42c70d809a1583779ebf4aa07237119ac684cb5694926d653a"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "6183ba0130d31e12615c7acde5210acfa9cc8eb5b2e495711551b441e04c4747"
+        "sha256": "e10e7d0bc03d5dad41e9fcb8ce4135a01348ed994d193973b43d353a7bae1d1f"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "beced68640ca3fe98c91f1e9d8af68fa3fcccb78d4a805ed6dc2d367c84186a3"
+        "sha256": "3371fb2953e9154b964cfbccb8d46ab15aecb5d1cbcc07d0cad869c6ff557b7f"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-        "sha256": "66d3abd7829625ccbdf09a46c51eacb234261015a20050a0f0936ba7f45c2c6a"
+        "sha256": "f926049e49290550c235d82d428a215445cbdd1d6f013bc6474fd3626dccd65e"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -128,7 +128,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "53aed7f9f1bd1b2fe31e15cfae34d939d78503caa99afb583cf52e46b0e8862c"
+        "sha256": "447dee890ce89759d267e0089ae5bc1365120484553b38d15153dec88dbb64e3"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -172,5 +172,5 @@
     "task_id": "RISK-012"
   },
   "section_id": "phase_risk_012_unknown_risk_event_id_fail_closed_v1",
-  "section_sha256": "9f6a948053ba6d22630b10cc3fcfd6e6999cfdb044920c4e6d239fe24e521680"
+  "section_sha256": "870d013870e5e9c8cda104d1c07722ad4133593a1a0cc3dd2bf727729c59a8a9"
 }

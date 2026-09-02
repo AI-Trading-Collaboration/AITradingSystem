@@ -24,6 +24,7 @@ MODULE_MANIFEST_PATH = PROJECT_ROOT / "inputs/architecture/arch_004e_module_mani
 TEST_MANIFEST_PATH = PROJECT_ROOT / "inputs/architecture/arch_004e_test_manifest.yaml"
 AGGREGATE_INDEX_PATH = PROJECT_ROOT / "inputs/architecture/arch_004e_aggregate_shadow_index.yaml"
 FITNESS_PATH = PROJECT_ROOT / "inputs/architecture/arch_004e_architecture_fitness.yaml"
+DEPRECATION_POLICY_PATH = PROJECT_ROOT / "config/architecture/arch_004g_deprecation_policy.yaml"
 DEPRECATION_INVENTORY_PATH = (
     PROJECT_ROOT / "inputs/architecture/arch_004g_deprecation_inventory.yaml"
 )
@@ -82,7 +83,11 @@ def _generate() -> int:
     fitness = _fitness()
     write_generated_architecture_artifact(FITNESS_PATH, fitness)
     if fitness["status"] == "PASS":
-        deprecation_inventory = scan_deprecation_inventory(load_deprecation_policy())
+        deprecation_inventory = scan_deprecation_inventory(
+            load_deprecation_policy(DEPRECATION_POLICY_PATH),
+            project_root=PROJECT_ROOT,
+            architecture_fitness_path=FITNESS_PATH,
+        )
         write_generated_architecture_artifact(
             DEPRECATION_INVENTORY_PATH,
             deprecation_inventory.to_dict(),

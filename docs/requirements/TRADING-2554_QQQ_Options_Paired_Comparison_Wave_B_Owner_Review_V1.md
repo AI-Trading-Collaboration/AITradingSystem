@@ -152,3 +152,15 @@ backtest 仍需单独、精确授权。
   canonical task-count 测试从 `1051` 更新到 `1052` 后，`arch_004e_test_manifest` 未同步
   新文件哈希。`v6` 已绑定失败摘要后终止；`v7` 显式声明 `architecture-manifests` 后再按
   顺序运行 `compatibility-authority`，修复范围仅为生成 authority freshness。
+- 2026-09-02：完整重跑进一步定位 `architecture_devex.py generate` 的 deprecation
+  scanner 使用 process-global 原始 checkout，生成清单记录 1,343 个测试文件而 active
+  worktree 实际为 1,345。任务 acceptance 已追加 active-worktree root 可重放要求；`v8`
+  直接修复 root/policy/fitness path 传递并增加 regression test，不采用手工覆盖清单。
+- 2026-09-02：`docs/system_flow.md` 增加同一 active-worktree root 约束后，report-flow
+  source seal 按设计拒绝旧绑定；`v8` 未越界修改未声明 policy 并以 FAIL 终止。`v9`
+  精确更新 system-flow seal 为 2,334,273 bytes、SHA `a3465cca…`、Git blob
+  `cf6c2467…`、1,185 entries，再按官方生成顺序重建全部派生 authority。
+- 2026-09-02：report-flow 定向测试随后仅报告 3 个旧冻结常量（总 entry、system-flow
+  SHA、system-flow entry count）；`v9` 因未声明该测试路径而终止。`v10` 精确同步为
+  3,118 total entries、SHA `a3465cca…` 与 1,185 system-flow entries，并重新生成依赖
+  该测试哈希的 architecture/compatibility authority。

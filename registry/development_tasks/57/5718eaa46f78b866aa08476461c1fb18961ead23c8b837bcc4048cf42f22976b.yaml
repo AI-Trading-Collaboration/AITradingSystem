@@ -15,8 +15,7 @@ task_record:
   accountable_owner: null
   next_owner: Project Owner / exact-freeze fee semantics and authorize non-executable
     Wave B package/manifest generation
-  requirement_refs:
-  - docs/requirements/TRADING-2554_QQQ_Options_Paired_Comparison_Wave_B_Owner_Review_V1.md
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
@@ -28,7 +27,8 @@ task_record:
     text: Owner-review YAML exact-binds the frozen paired contract, Wave A helper
       and prior QC source; recommends same-run QQQ Security fee model via non-submitted
       hypothetical orders, freezes fully-funded quantity/accounting and compatibility
-      boundaries, and keeps all data/external/trading counters at zero.
+      boundaries, keeps all data/external/trading counters at zero, and architecture
+      manifest/deprecation generation resolves the active worktree root reproducibly.
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -66,6 +66,37 @@ events:
   - change:trading-2554-owner-review-publication-20260902-v6
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-66e1102fa4a8abf2f38421e3adc122dd
+- schema_version: task_event.v1
+  task_id: TRADING-2554_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_B_OWNER_REVIEW_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-02T14:47:03.4860796Z'
+  actor: integration-coordinator
+  change_id: trading-2554-owner-review-worktree-root-fix-20260902-v8
+  lane_id: null
+  base_commit: 2b7dffea9dfb76199d73d56429170516140d3d1c
+  previous_state_event_id: task-event-66e1102fa4a8abf2f38421e3adc122dd
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / exact-freeze fee semantics and authorize non-executable
+      Wave B package/manifest generation
+    blocker_or_next_step: Wave A is complete, but underlying comparator fee semantics
+      remain unfrozen. No exact package or manifest may be generated until owner approval.
+    acceptance_criteria: Owner-review YAML exact-binds the frozen paired contract,
+      Wave A helper and prior QC source; recommends same-run QQQ Security fee model
+      via non-submitted hypothetical orders, freezes fully-funded quantity/accounting
+      and compatibility boundaries, keeps all data/external/trading counters at zero,
+      and architecture manifest/deprecation generation resolves the active worktree
+      root reproducibly.
+    notes: Formal architecture acceptance exposed process-global checkout fallback
+      in architecture_devex deprecation generation; fix directly and add worktree-root
+      regression coverage.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2554-owner-review-worktree-root-fix-20260902-v8
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0defcd21e0c6fb9041386d093ac60618
 projection:
   legacy_first_eight_cells:
   - TRADING-2554_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_B_OWNER_REVIEW_V1
@@ -79,14 +110,13 @@ projection:
   - Owner-review YAML exact-binds the frozen paired contract, Wave A helper and prior
     QC source; recommends same-run QQQ Security fee model via non-submitted hypothetical
     orders, freezes fully-funded quantity/accounting and compatibility boundaries,
-    and keeps all data/external/trading counters at zero.
-  - 'Supporting requirement: docs/requirements/TRADING-2554_QQQ_Options_Paired_Comparison_Wave_B_Owner_Review_V1.md.
-    Approval object: config/research/qc_qqq_options_paired_comparison_wave_b_owner_review_v1.yaml.
-    scope=NON_EXECUTABLE_DATA_RESEARCH; manifest/data/DQ/QuantConnect/provider/orders/fills/positions/paper/live/production/broker=0/false/none.'
-  docs_links:
-  - docs/requirements/TRADING-2554_QQQ_Options_Paired_Comparison_Wave_B_Owner_Review_V1.md
+    keeps all data/external/trading counters at zero, and architecture manifest/deprecation
+    generation resolves the active worktree root reproducibly.
+  - Formal architecture acceptance exposed process-global checkout fallback in architecture_devex
+    deprecation generation; fix directly and add worktree-root regression coverage.
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 0cc42ef99041837d91e14d9a2aff4cb6cb85b40b6f0abb288c7d6944b8c6f6bb
-last_event_id: task-event-66e1102fa4a8abf2f38421e3adc122dd
+  canonical_row_sha256: 6de9068ffd4562e0c0807c2dbfbb10d98a6bfb4255bd7ec634b9b9a4217d5b02
+last_event_id: task-event-0defcd21e0c6fb9041386d093ac60618
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: c4705612df61dd806e64acaf101cbfa39c7f904746885e102cd5bfd4303b0389
+fragment_checksum: 632923f6e81a32e474a995965cbbebb7069083da1869bd889f8bcd149fb3d39a
