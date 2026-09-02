@@ -68,12 +68,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "1ff8d14831f8d4f6e84429b8e53d5a3196798ed1b2240279cae5a2c03a345b30"
+        "sha256": "73f885962b54462bfa714c5da1ecf2e1fae7aba90a5d8c610c1be1f0ebbdbfd6"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "21210380e54f9e66283b4baff821f912f64d2484abd4dc6c92521495379474c4"
+        "sha256": "072326449c1bdbb9de07eb14bbad33f31e9fddf5d3d2c30b6d754c560f9f53ec"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -118,7 +118,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "d1aeca73e1977addd122c23be307d8ae3f82d2bc8e16aa919f24f9008e1cf105"
+        "sha256": "ecf2766ab6871878d4e0b232852db3be0ef88d4cab1b02c05266d486248ae86b"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -172,5 +172,5 @@
     "task_id": "RISK-012"
   },
   "section_id": "phase_risk_012_unknown_risk_event_id_fail_closed_v1",
-  "section_sha256": "1833b2862ad4a64f28222f7b49ad5bdfcda7423db54cce99147656561319f947"
+  "section_sha256": "4c513633fd28acc8c9b6fe6c73c7c76fe72d5e16b2fae2408c7b3bfb156315ea"
 }

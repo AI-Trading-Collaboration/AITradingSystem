@@ -183,3 +183,8 @@ broker。`INSUFFICIENT` 不等于失败，但保持 Wave B/C HOLD。
   `28726d6e1ab38f5963639a1f41a9a096bd06ecfa9247f495733ac81c74ef0a57`）。Atlas 失败已清零，剩余三项
   全部是 `docs/system_flow.md` 更新后 DEVX-006D report-flow source seal、lossless shadow 与固定测试哈希未刷新；
   下一次 `failure_fix_rerun` 必须绑定该第二次失败 artifact，并运行官方 `report-flow-authority` generator。
+- report-flow authority 刷新后的第三次 formal Architecture=`882 passed / 1 failed`；artifact 为
+  `outputs/validation_runtime/architecture-fitness_20260902T205217Z/test_runtime_summary.json`（SHA-256
+  `c48f0fdc5b879677d0b7f71d0db09e96143615b89d4d706e817d5a6c50bb58d2`）。唯一失败是
+  `test_devx_011_governed_workflow_health_authority_remains_historical` 仍把 successor `entry_count` 固定为
+  `3118`，而官方重建后的 current authority 为 `3122`；本波次只同步该历史 ratchet 后重跑 formal tiers。

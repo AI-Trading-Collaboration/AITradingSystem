@@ -13,20 +13,20 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex strategy-evidence coordinator：刷新 report-flow authority，完成第二次 failure-fix
-    formal validation 与登记基线 ordinary publication
+  next_owner: Codex strategy-evidence coordinator：修正 Architecture 历史 report-flow entry-count
+    ratchet，完成 failure-fix formal validation 与登记基线 ordinary publication
   requirement_refs:
   - docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md
-  - docs/system_flow.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 第二次 Full 10130 passed/3 failed，仅因 system_flow
-    source seal/shadow 未刷新；补齐 report-flow-authority 后重跑；F1 仍等待 F0 exact publication
+  unstructured_legacy_blocker_or_next_step: 第三次 formal Architecture 882 passed/1 failed，唯一根因是历史
+    successor entry_count 仍为 3118 而官方 authority 已为 3122；修正该固定测试后重跑；F1 仍等待 F0 exact
+    publication
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: report-flow source seal、fragment shadow、tests 与 current system_flow exact
-      一致；failure-fix Full 与 ordinary publication PASS；随后从登记基线集成结果盲 F0；本任务零实证运行
+    text: Architecture 历史 successor ratchet 与 current report-flow authority entry_count=3122
+      一致；failure-fix formal tiers、Full 与 ordinary publication PASS；随后从登记基线集成结果盲 F0；本任务零实证运行
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -149,27 +149,57 @@ events:
   - change:trading-2555-report-flow-authority-failure-fix-v10
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-dc595214bfadc1d979706292a35e6740
+- schema_version: task_event.v1
+  task_id: TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T06:15:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2555-architecture-ratchet-final-rerun-v12
+  lane_id: null
+  base_commit: a4917830a6d0c5143788ec5c83abc53d052dde51
+  previous_state_event_id: task-event-dc595214bfadc1d979706292a35e6740
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex strategy-evidence coordinator：修正 Architecture 历史 report-flow
+      entry-count ratchet，完成 failure-fix formal validation 与登记基线 ordinary publication
+    blocker_or_next_step: 第三次 formal Architecture 882 passed/1 failed，唯一根因是历史 successor
+      entry_count 仍为 3118 而官方 authority 已为 3122；修正该固定测试后重跑；F1 仍等待 F0 exact publication
+    acceptance_criteria: Architecture 历史 successor ratchet 与 current report-flow authority
+      entry_count=3122 一致；failure-fix formal tiers、Full 与 ordinary publication PASS；随后从登记基线集成结果盲
+      F0；本任务零实证运行
+    notes: 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。第三次
+      formal Architecture artifact outputs/validation_runtime/architecture-fitness_20260902T205217Z/test_runtime_summary.json，SHA-256=c48f0fdc5b879677d0b7f71d0db09e96143615b89d4d706e817d5a6c50bb58d2；882
+      passed/1 failed，唯一失败 tests/test_arch_004_refactor_policy.py::test_devx_011_governed_workflow_health_authority_remains_historical
+      为 report_catalog_flow_successor.entry_count 3118→3122 的历史固定值未同步。DQ/backtest/bootstrap/external/production/broker
+      均未运行。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2555-architecture-ratchet-final-rerun-v12
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-550bfc7eea3aadc3c45f38d7931184e8
 projection:
   legacy_first_eight_cells:
   - TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
   - Strategy research / first-layer composer v2 foundational falsification contract
   - P0
   - IN_PROGRESS
-  - Codex strategy-evidence coordinator：刷新 report-flow authority，完成第二次 failure-fix
-    formal validation 与登记基线 ordinary publication
-  - 第二次 Full 10130 passed/3 failed，仅因 system_flow source seal/shadow 未刷新；补齐 report-flow-authority
-    后重跑；F1 仍等待 F0 exact publication
-  - report-flow source seal、fragment shadow、tests 与 current system_flow exact 一致；failure-fix
-    Full 与 ordinary publication PASS；随后从登记基线集成结果盲 F0；本任务零实证运行
-  - 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。第二次
-    Full artifact outputs/validation_runtime/full_20260902T201401Z/test_runtime_summary.json，SHA-256=28726d6e1ab38f5963639a1f41a9a096bd06ecfa9247f495733ac81c74ef0a57；10130
-    passed/3 failed/3 skipped，三项均为 docs/system_flow.md 的 report-flow source seal/shadow
-    未刷新。Atlas 52 focused tests PASS；DQ/backtest/external/production/broker action=none。'
+  - Codex strategy-evidence coordinator：修正 Architecture 历史 report-flow entry-count
+    ratchet，完成 failure-fix formal validation 与登记基线 ordinary publication
+  - 第三次 formal Architecture 882 passed/1 failed，唯一根因是历史 successor entry_count 仍为 3118
+    而官方 authority 已为 3122；修正该固定测试后重跑；F1 仍等待 F0 exact publication
+  - Architecture 历史 successor ratchet 与 current report-flow authority entry_count=3122
+    一致；failure-fix formal tiers、Full 与 ordinary publication PASS；随后从登记基线集成结果盲 F0；本任务零实证运行
+  - 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。第三次
+    formal Architecture artifact outputs/validation_runtime/architecture-fitness_20260902T205217Z/test_runtime_summary.json，SHA-256=c48f0fdc5b879677d0b7f71d0db09e96143615b89d4d706e817d5a6c50bb58d2；882
+    passed/1 failed，唯一失败 tests/test_arch_004_refactor_policy.py::test_devx_011_governed_workflow_health_authority_remains_historical
+    为 report_catalog_flow_successor.entry_count 3118→3122 的历史固定值未同步。DQ/backtest/bootstrap/external/production/broker
+    均未运行。'
   docs_links:
   - docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md
-  - docs/system_flow.md
   terminal: false
-  canonical_row_sha256: fcf045e91d5235c1d3e0df3693055b43a51063a380f3d3c6ccbd641a80744d5e
-last_event_id: task-event-dc595214bfadc1d979706292a35e6740
+  canonical_row_sha256: f0ef43a166e30eca359fa4fb248ee61a8ef3563f08547a57662d39a6ac3abbc5
+last_event_id: task-event-550bfc7eea3aadc3c45f38d7931184e8
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f8e8e167b8839f112484ed40285d406d06bff8b7842553e602f96c54623706f2
+fragment_checksum: cb1785477f9346ee30bd8c4327d7b7f9f7a25d5f9a3b0dfc872a88a63a190650
