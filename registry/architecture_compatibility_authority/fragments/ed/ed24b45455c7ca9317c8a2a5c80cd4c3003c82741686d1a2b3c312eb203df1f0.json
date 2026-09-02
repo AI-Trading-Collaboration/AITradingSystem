@@ -117,7 +117,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "be21e546fa86cbd5d23420d49cb59960327d8bc16e51516b7a27132b9595279d"
+        "sha256": "6183ba0130d31e12615c7acde5210acfa9cc8eb5b2e495711551b441e04c4747"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -157,7 +157,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "e2f30b8bca2fca01850b06b88e60176bcb1b0caa1fc5508155acf2675b7d1ace"
+        "sha256": "beced68640ca3fe98c91f1e9d8af68fa3fcccb78d4a805ed6dc2d367c84186a3"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -237,7 +237,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_005_s5_task_source_cutover.py",
-        "sha256": "ede03b30a28f4412ba138e23352a6c4d8918b854c4f7d9cc2649c94f9e6f3e82"
+        "sha256": "81a2f2664ca6520898f3dc2a0aeac4238cc500932345ffe4b91ca82ce8d42c6e"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -387,5 +387,5 @@
     "task_id": "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1"
   },
   "section_id": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1",
-  "section_sha256": "fd02251423ce3a339de3bf779372b27929d0de3857495850e9289393f53faad9"
+  "section_sha256": "ed24b45455c7ca9317c8a2a5c80cd4c3003c82741686d1a2b3c312eb203df1f0"
 }

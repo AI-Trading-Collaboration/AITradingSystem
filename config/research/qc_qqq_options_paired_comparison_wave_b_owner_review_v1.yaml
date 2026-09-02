@@ -1,0 +1,158 @@
+schema_version: qqq_options_paired_comparison_wave_b_owner_review.v1
+review_id: qc_qqq_options_paired_comparison_wave_b_owner_review_v1
+review_version: 1.0.0-draft.1
+status: OWNER_REVIEW_REQUIRED
+task_id: TRADING-2554_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_B_OWNER_REVIEW_V1
+scope: NON_EXECUTABLE_DATA_RESEARCH
+executable: false
+
+authority_bindings:
+  - path: config/research/qc_qqq_options_paired_comparison_contract_v1.yaml
+    file_sha256: 8c748634f6869eb4d4e9dfb14493acd072d146074ce7e86462eec0adae15714a
+    canonical_sha256: 6f77cf17af6e435799a2e86e1fb6a81936368e053b2367efb3a8e2be13412267
+    role: FROZEN_PAIRED_COMPARISON_CONTRACT
+    immutable: true
+  - path: config/research/qc_qqq_options_paired_comparison_contract_freeze_admission_v1.yaml
+    file_sha256: fbedb47e5f2a748dc75669faabee9641ba7e0596de4ad8c340ed7ebcbd4c5c76
+    canonical_sha256: d7b2fac5c0607cf343aeeed5cf7d6d3162af6b9fa8d1f2c26dd7a2fb2d0c5071
+    role: OWNER_FREEZE_ADMISSION
+    immutable: true
+  - path: src/ai_trading_system/qqq_options_research/paired_comparison_wave_a.py
+    file_sha256: cee20b68964f4e25b43329935d395302d81e9322358dc814672b4c942a8c32f2
+    role: WAVE_A_NON_EXECUTABLE_LEDGER_AND_ADMISSION
+    immutable: true
+  - path: src/ai_trading_system/qqq_options_research/exact_signal_implementation_backtest_execution.py
+    file_sha256: 2c9996081088c24741723a3582fc4612d6523dea276a9a89730d4dfec36a728b
+    role: PREVIOUS_BOUNDED_QC_IMPLEMENTATION_SOURCE
+    immutable: true
+
+decision_context:
+  primary_comparator: SAME_SIGNAL_FULLY_FUNDED_QQQ_CASH_ACCOUNT
+  initial_cash_usd: '100000.00'
+  entry_mark: CURRENT_QQQ_ASK_AT_SAME_LEGAL_EVENT
+  exit_mark: CURRENT_QQQ_BID_AT_SAME_LEGAL_EVENT
+  virtual_ledger_only: true
+  qqq_order_submission_allowed: false
+  negative_cash_allowed: false
+  unresolved_wave_a_input: UNDERLYING_COMPARATOR_FEE_SEMANTICS
+  current_qc_brokerage_model: DefaultBrokerageModel
+  current_qc_account_type: CASH
+  current_qc_equity_fee_model: InteractiveBrokersFeeModel
+
+recommended_owner_decision:
+  decision_id: SAME_RUN_QQQ_SECURITY_FEE_MODEL_NON_SUBMITTED_PROBE
+  rationale:
+    - Preserve the frozen fully-funded QQQ/cash estimand without silently assuming zero fees.
+    - Reuse the exact QQQ Security fee model and exact LEAN build already bound by the future run manifest.
+    - Avoid duplicating a provider formula that can drift from the platform implementation.
+    - Keep the comparator virtual; no QQQ order is submitted and no QQQ fill or position is created.
+  fee_semantics:
+    source: QQQ_SECURITY_FEE_MODEL_GET_ORDER_FEE
+    expected_fee_model_type: InteractiveBrokersFeeModel
+    brokerage_model: DefaultBrokerageModel
+    account_type: CASH
+    exact_lean_build_identity_required: true
+    fee_probe_order_type: MarketOrder
+    fee_probe_order_is_local_object_only: true
+    fee_probe_submitted_to_transactions: false
+    fee_probe_order_ticket_created: false
+    fee_probe_fill_created: false
+    fee_probe_position_created: false
+    fee_currency: USD
+    fee_must_be_finite: true
+    fee_must_be_nonnegative: true
+  entry_quantity_rule:
+    description: >-
+      At the same legal event, choose the greatest integer q greater than or equal to zero
+      for which q * current_qqq_ask + same_run_buy_fee(q) is less than or equal to current cash.
+    initial_upper_bound: FLOOR_CURRENT_CASH_DIVIDED_BY_CURRENT_QQQ_ASK
+    solver: MONOTONE_DESCENDING_UNTIL_AFFORDABLE
+    zero_share_treatment: RETAIN_CASH_AND_RECORD_ZERO_DEPLOYMENT
+    cash_update: CASH_MINUS_Q_TIMES_ASK_MINUS_BUY_FEE
+  exit_rule:
+    description: >-
+      At the same legal event, value the full virtual share inventory at current QQQ bid,
+      compute the same-run sell fee for the negative hypothetical quantity, then add
+      q * bid - sell_fee to cash and set virtual shares to zero.
+    partial_exit_allowed: false
+    cash_update: CASH_PLUS_Q_TIMES_BID_MINUS_SELL_FEE
+  spread_and_slippage:
+    spread_charged_by_quote_sides: true
+    additional_underlying_slippage_usd: '0.00'
+    additional_underlying_slippage_model_allowed: false
+  accounting:
+    fee_accrual_field: UNDERLYING_FEES_USD
+    spread_slippage_field: UNDERLYING_SPREAD_SLIPPAGE_COST_USD
+    negative_cash_tolerance_usd: '0.00'
+    fee_or_cash_rounding_override_allowed: false
+
+compatibility_fence:
+  direction_signal_change_allowed: false
+  signal_package_change_allowed: false
+  option_policy_change_allowed: false
+  option_fee_model_change_allowed: false
+  option_fee_model: USD_0_65_PER_ABSOLUTE_CONTRACT
+  option_adverse_limit_fill_change_allowed: false
+  option_adverse_limit_fill_usd: '0.01'
+  primary_comparator_change_allowed: false
+  primary_estimand_change_allowed: false
+  initial_capital_change_allowed: false
+  calendar_or_window_change_allowed: false
+  export_contract_change_allowed: false
+  export_field_count: 101
+  new_export_field_allowed: false
+  local_option_repricing_allowed: false
+
+future_wave_b_package_requirements:
+  exact_project_target_required: true
+  exact_main_py_lf_sha256_required: true
+  exact_lean_build_identity_required: true
+  exact_signal_package_identity_required: true
+  exact_comparator_contract_identity_required: true
+  exact_owner_review_identity_required: true
+  manifest_replay_required_before_any_dispatch: true
+  aggregate_only_export_required: true
+  raw_option_export_allowed: false
+  comparator_order_submission_allowed: false
+  fee_model_type_mismatch_action: FAIL_CLOSED_BEFORE_BACKTEST_LOGIC
+  fee_nonfinite_or_negative_action: FAIL_CLOSED
+  unaffordable_quantity_action: DECREMENT_UNTIL_AFFORDABLE_OR_RETAIN_CASH
+  post_result_fee_change_allowed: false
+
+rejected_alternatives:
+  - alternative_id: ZERO_UNDERLYING_FEE
+    reason: CHANGES_PRIMARY_ESTIMAND_WITHOUT_FROZEN_PLATFORM_SUPPORT
+  - alternative_id: HARDCODE_CURRENT_IB_EQUITY_FORMULA
+    reason: DUPLICATES_PLATFORM_LOGIC_AND_CAN_DRIFT_FROM_EXACT_LEAN_BUILD
+  - alternative_id: SUBMIT_REAL_QQQ_COMPARATOR_ORDERS
+    reason: VIOLATES_FROZEN_VIRTUAL_LEDGER_AND_ZERO_QQQ_ORDER_BOUNDARY
+  - alternative_id: INFER_FEE_AFTER_RESULT
+    reason: POST_RESULT_ESTIMAND_CHANGE_PROHIBITED
+
+authorization_boundary:
+  authorized_now:
+    owner_review_draft: 1
+    local_static_validation: 1
+  not_authorized_now:
+    runnable_exporter: 0
+    run_manifest: 0
+    market_data_read_or_download: 0
+    dq: 0
+    quantconnect_save: 0
+    quantconnect_build: 0
+    quantconnect_backtest: 0
+    quantconnect_retry: 0
+    provider_or_object_store: 0
+    raw_option_export: 0
+    public_share: 0
+    paper_live_production_broker: 0
+    orders_fills_positions: 0
+
+owner_approval_effect:
+  exact_freeze_of_this_draft: true
+  authorize_non_executable_wave_b_package_and_manifest_generation: true
+  authorize_quantconnect_action: false
+  authorize_data_or_backtest: false
+  next_separate_authority: ONE_BOUNDED_QUANTCONNECT_DATA_RESEARCH_BACKTEST
+
+terminal: OWNER_EXACT_FREEZE_REQUIRED_NO_MANIFEST_NO_DATA_NO_QUANTCONNECT
