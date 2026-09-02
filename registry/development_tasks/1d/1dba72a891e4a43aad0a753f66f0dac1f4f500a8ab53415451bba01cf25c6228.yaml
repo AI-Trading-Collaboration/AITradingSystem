@@ -13,23 +13,24 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Atlas/DevEx coordinator：冻结长期受控 HTTPS preview 的 provider、private access、TTL、cost、retention、browser/viewport/AT
-    matrix 与 cleanup authority；任何 R2 外部写入须另取 exact Owner 授权。
+  next_owner: Project Owner：冻结 hosting/provider、private access、HTTPS origin、TTL、cost
+    ceiling、retention、browser/viewport/AT matrix 与 cleanup authority；真实 endpoint/cloud
+    write 另需 exact R2 授权。
   requirement_refs:
   - docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Owner 已完成 TRADING-2550 exact 页面 desktop/mobile
-    人工视觉验收，但 agent Browser 仍因 file URL policy 未执行。长期方案等待 hosting/provider、private
-    access、TTL、cost ceiling、retention、browser matrix 与 R2 authorization 冻结；不得用 localhost、alternate
-    browser、raw CDP、data URL 或未治理公开站点绕过。
+  unstructured_legacy_blocker_or_next_step: 本地 pending-owner policy、allowlist manifest/atomic
+    bundle、exact-byte replay、separate R2 binding 与 endpoint validator 已完成；current
+    policy 因全部 Owner slots 待决而 fail closed。2526-B 仍等待 policy freeze、R2 endpoint authority
+    与同一 exact HTML 的 Browser/mobile/keyboard/AT/audit replay。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 从 clean exact commit 生成 allowlisted private HTTPS bundle；manifest 绑定 task/source
-      commit/HTML 与 asset SHA-256/writer/TTL/authorization，实际响应 exact-byte 一致且 unauthorized/expired/missing
-      asset fail closed；独立完成 Browser/mobile/keyboard/AT/audit replay evidence，Owner
-      visual 与 comprehension 不由自动化代签；TTL 后 endpoint 撤销并生成 cleanup receipt。
+    text: 本地 policy 未获 Owner 决策时拒绝 bundle readiness；获批 synthetic policy 下 deterministic
+      allowlist/manifest/write/replay 与 traversal/symlink/missing/extra/hash/network/runtime/origin/expiry
+      negative gates 通过。真实 private HTTPS endpoint 必须另获 exact R2、响应 bytes 与 manifest
+      SHA 一致并在 TTL 后撤销；不得把本地 PASS 或 Owner visual 代签 2526-B/2527-B。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -212,31 +213,67 @@ events:
   - change:trading-2526-controlled-https-preview-todo-20260902-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-48277e2bb5815554f45d189ee4241a75
+- schema_version: task_event.v1
+  task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-02T06:34:14.4149373Z'
+  actor: integration-coordinator
+  change_id: trading-2526-controlled-preview-local-baseline-20260902-v1
+  lane_id: null
+  base_commit: 6afba2bbf1257d8e62a37647c5bf2032283b755d
+  previous_state_event_id: task-event-48277e2bb5815554f45d189ee4241a75
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Project Owner：冻结 hosting/provider、private access、HTTPS origin、TTL、cost
+      ceiling、retention、browser/viewport/AT matrix 与 cleanup authority；真实 endpoint/cloud
+      write 另需 exact R2 授权。
+    blocker_or_next_step: 本地 pending-owner policy、allowlist manifest/atomic bundle、exact-byte
+      replay、separate R2 binding 与 endpoint validator 已完成；current policy 因全部 Owner
+      slots 待决而 fail closed。2526-B 仍等待 policy freeze、R2 endpoint authority 与同一 exact
+      HTML 的 Browser/mobile/keyboard/AT/audit replay。
+    acceptance_criteria: 本地 policy 未获 Owner 决策时拒绝 bundle readiness；获批 synthetic policy
+      下 deterministic allowlist/manifest/write/replay 与 traversal/symlink/missing/extra/hash/network/runtime/origin/expiry
+      negative gates 通过。真实 private HTTPS endpoint 必须另获 exact R2、响应 bytes 与 manifest
+      SHA 一致并在 TTL 后撤销；不得把本地 PASS 或 Owner visual 代签 2526-B/2527-B。
+    notes: 'Supporting requirement: docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md.
+      Source commit=6afba2bbf1257d8e62a37647c5bf2032283b755d; focused new module=11
+      passed; expanded Atlas excluding expected stale generated manifest=48 passed;
+      Ruff PASS; changed-source strict mypy PASS. No hosting/cloud/project/public
+      write, paid resource, real bundle, endpoint, Browser automation, market data,
+      DQ, backtest, production or broker action.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2526-controlled-preview-local-baseline-20260902-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-035c548dd7fa2bd2cf3bc34528a1f310
 projection:
   legacy_first_eight_cells:
   - TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
   - Atlas strategy research page / accessible research drilldown and audit linkage
   - P1
-  - IN_PROGRESS
-  - Atlas/DevEx coordinator：冻结长期受控 HTTPS preview 的 provider、private access、TTL、cost、retention、browser/viewport/AT
-    matrix 与 cleanup authority；任何 R2 外部写入须另取 exact Owner 授权。
-  - Owner 已完成 TRADING-2550 exact 页面 desktop/mobile 人工视觉验收，但 agent Browser 仍因 file
-    URL policy 未执行。长期方案等待 hosting/provider、private access、TTL、cost ceiling、retention、browser
-    matrix 与 R2 authorization 冻结；不得用 localhost、alternate browser、raw CDP、data URL
-    或未治理公开站点绕过。
-  - 从 clean exact commit 生成 allowlisted private HTTPS bundle；manifest 绑定 task/source
-    commit/HTML 与 asset SHA-256/writer/TTL/authorization，实际响应 exact-byte 一致且 unauthorized/expired/missing
-    asset fail closed；独立完成 Browser/mobile/keyboard/AT/audit replay evidence，Owner
-    visual 与 comprehension 不由自动化代签；TTL 后 endpoint 撤销并生成 cleanup receipt。
+  - BASELINE_DONE
+  - Project Owner：冻结 hosting/provider、private access、HTTPS origin、TTL、cost ceiling、retention、browser/viewport/AT
+    matrix 与 cleanup authority；真实 endpoint/cloud write 另需 exact R2 授权。
+  - 本地 pending-owner policy、allowlist manifest/atomic bundle、exact-byte replay、separate
+    R2 binding 与 endpoint validator 已完成；current policy 因全部 Owner slots 待决而 fail closed。2526-B
+    仍等待 policy freeze、R2 endpoint authority 与同一 exact HTML 的 Browser/mobile/keyboard/AT/audit
+    replay。
+  - 本地 policy 未获 Owner 决策时拒绝 bundle readiness；获批 synthetic policy 下 deterministic
+    allowlist/manifest/write/replay 与 traversal/symlink/missing/extra/hash/network/runtime/origin/expiry
+    negative gates 通过。真实 private HTTPS endpoint 必须另获 exact R2、响应 bytes 与 manifest
+    SHA 一致并在 TTL 后撤销；不得把本地 PASS 或 Owner visual 代签 2526-B/2527-B。
   - 'Supporting requirement: docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md.
-    Owner requested long-term TODO on 2026-09-02. TRADING-2550 exact HTML SHA-256=bea2de7359efffcfb981a6067e58d297b821dc415be6f5078267ff5d9b36a609;
-    OWNER_MANUAL_VISUAL_PASS; agent Browser=NOT_EXECUTED_URL_POLICY. This update does
-    not authorize hosting/cloud/project/public writes and does not sign keyboard/screen-reader/AT/audit/comprehension.
-    production_effect=none; broker_action=none.'
+    Source commit=6afba2bbf1257d8e62a37647c5bf2032283b755d; focused new module=11
+    passed; expanded Atlas excluding expected stale generated manifest=48 passed;
+    Ruff PASS; changed-source strict mypy PASS. No hosting/cloud/project/public write,
+    paid resource, real bundle, endpoint, Browser automation, market data, DQ, backtest,
+    production or broker action.'
   docs_links:
   - docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md
   terminal: false
-  canonical_row_sha256: 45472041beae990ba43f7f7619976d4983b5c1363097ca3dd0d39674211ba792
-last_event_id: task-event-48277e2bb5815554f45d189ee4241a75
+  canonical_row_sha256: 1655c0a1e23b8c569701f3d165b413d3c76d5c153c398834b32cb5d35416b1f7
+last_event_id: task-event-035c548dd7fa2bd2cf3bc34528a1f310
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: fc1330ee561a4baf371587cf6c188e4b70b91bc89e529289770fe3b0176c2517
+fragment_checksum: d54950520aa90e0864ab7230078f12174f3f26b6af9af4b6e06ea9a77e962724

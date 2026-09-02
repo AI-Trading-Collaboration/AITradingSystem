@@ -4,7 +4,7 @@
 
 - stable task id：`TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1`
 - priority：`P1`
-- status：`IN_PROGRESS`（2526-A strategy-evidence lane）
+- status：`BASELINE_DONE`（本地 accessibility 与 controlled-preview contract 已实现；2526-B 外部验收仍待决）
 - governed mode：既有 2526-A/2526-B 保留原 `DUAL_LANE` 证据拓扑；长期 HTTPS preview
   本地实现波使用独立 `SINGLE_LANE`，最终 endpoint/Browser gate 仍由 coordinator 串行执行
 - contract change：`true`（accessible reader/research interaction contract）
@@ -198,3 +198,10 @@ STOP CONDITION：任何“简化”导致 provenance 不可达，或移动端视
   `main=17189fc1680b4bc989b3f102b62e44216ed7e84c` 通过，`contract_change=true` 未触发额外 serial wave；
   本轮只实现本地 policy/manifest/replay baseline，不创建或访问 HTTPS endpoint，不消费 hosting/cloud/
   paid resource，不签署 Browser、keyboard、screen-reader、AT、audit 或 comprehension PASS。
+- 2026-09-02：本地 source commit=`6afba2bbf1257d8e62a37647c5bf2032283b755d`。新增 pending-owner
+  exact-byte policy、provider-neutral manifest/bundle/replay、separate R2 authorization binding 与 endpoint
+  exact-response validator；traversal、symlink、missing/extra/hash drift、external/data/local-network reference、
+  runtime network API、unauthorized origin 与 expiry 均 fail closed。新模块 focused=`11 passed`；扩展 Atlas
+  focused 除预期 stale architecture manifest 外为 `48 passed`；Ruff PASS，changed-source strict mypy
+  (`--follow-imports=skip`) PASS。architecture manifest 将在 publication fence 的正式 generator order 中重建；
+  current policy 仍为 `PENDING_OWNER_DECISION`，故未生成真实 bundle/endpoint，2526-B 未完成。
