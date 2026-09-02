@@ -4,7 +4,7 @@
 
 稳定任务 ID：`TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1`
 
-状态：`IN_PROGRESS`（F0 实现已完成，登记/Atlas failure-fix 与正式发布尚未收口）
+状态：`BASELINE_DONE`（F0 结果盲合同基线完成；任何 F1 实证运行必须另行登记和授权）
 
 Owner 指令：2026-09-03，参考 Web Pro 对 frozen signal-value confirmation 的复核建议，继续推进基础有效性分析与研究。
 
@@ -194,3 +194,14 @@ broker。`INSUFFICIENT` 不等于失败，但保持 Wave B/C HOLD。
   currentness：新增任务事件把 `research_state_as_of` 推进到 2026-09-03，而测试仍固定 2026-09-02；本地
   ignored canonical page 仍绑定较早 exact commit。下一波只同步日期 ratchet，并在候选提交后按该 exact commit
   重新渲染 canonical page；不改变策略合同或投资解释。
+- 前置治理/Atlas failure-fix 候选已以 commit `a858f61f4b69c8fb8ee2ccc7dc4da3ff2ce9cd9c` ordinary-push
+  至 `main`；正式 Full=`10133 passed / 3 skipped`，artifact 为
+  `outputs/validation_runtime/full_20260902T220845Z/test_runtime_summary.json`（SHA-256
+  `aba3e6f61003a723c4119e75ad77dc02007a894ec0cc8a2b5275ddcfaa7d8545`）。
+- F0 exact policy、strict loader、authority replay、四态 reducer 与 synthetic/negative tests 已进入当前候选；
+  policy file/canonical/authority-set SHA-256 分别为
+  `54dc349be1ec5670f9e02fc74e9467b668b2311a7dadbdc22680c8c605a824ad`、
+  `ea6b51baf7d8bdfec2454fb037131a199736e6cacb1eecdc35e01701f5357818`、
+  `a07e63c9f3ba035d94cfdbf18bc096b69380e4baf1b003540390b66d4ec44fe3`；核心 focused=
+  `20 passed`，Ruff、strict mypy、compileall PASS。该基线本身不读取市场缓存、不运行 DQ/回测/bootstrap，
+  也不授权 QuantConnect/provider、Options Wave B/C、paper/live/production/broker 或交易动作。

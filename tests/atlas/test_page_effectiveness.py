@@ -319,7 +319,7 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "WAVE_B_FEE_SEMANTICS_OWNER_REVIEW_PUBLISHED_" "EXACT_OWNER_FREEZE_REQUIRED"
     )
     assert coverage_by_task["TRADING-2555"] == (
-        "FOUNDATIONAL_SIGNAL_FALSIFICATION_CONTRACT_IN_PROGRESS_NO_EMPIRICAL_RESULT"
+        "FOUNDATIONAL_SIGNAL_FALSIFICATION_F0_BASELINE_DONE_NO_EMPIRICAL_RESULT"
     )
     assert len(manifest.source_artifacts) == len(
         load_page_effectiveness_policy(repository_root=ROOT).relevant_source_paths

@@ -114,12 +114,13 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.status_object_zh == (
         "当前研究组合维持 evidence-first。TRADING-2550 已证明冻结的 1,202-session "
         "first_layer_composer_v2 五态信号相对 exposure-matched static QQQ/现金 comparator "
-        "值得保留，但该 RETAIN 只是受限 aggregate-only 结论。TRADING-2555 当前只推进 "
-        "result-blind 基础有效性证伪合同：冻结 2021-02-22 至 2025-12-02 的 primary window、"
+        "值得保留，但该 RETAIN 只是受限 aggregate-only 结论。TRADING-2555 已完成 "
+        "result-blind F0 基础有效性证伪合同基线：冻结 2021-02-22 至 2025-12-02 的 primary window、"
         "同信号 exposure-matched comparator、10 个诊断轴、MBB 21/63（seed=2555、10000 reps）、"
         "5/10/15/20bps、SGOV carry diagnostic 与 INVALID > FAIL > INSUFFICIENT > PASS reducer，"
-        "并建立 strict loader、authority replay 和 synthetic/negative tests。尚未执行 canonical "
-        "DQ、真实市场回测、bootstrap 或任何外部平台动作，因此当前没有新的策略有效性结论；"
+        "并由 strict loader、authority replay 和 synthetic/negative tests fail closed。F0 没有执行 "
+        "canonical DQ、真实市场回测、bootstrap 或任何外部平台动作，因此没有新增策略有效性结论；"
+        "后继 F1 必须从 F0 exact-main commit 另行登记和授权。"
         "QQQ Options Wave B/C 保持 HOLD，paper/live/production/broker 与任何交易动作均未授权。"
     )
 

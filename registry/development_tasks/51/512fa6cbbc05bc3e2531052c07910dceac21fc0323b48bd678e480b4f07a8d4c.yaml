@@ -13,20 +13,22 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex strategy-evidence coordinator：刷新 Atlas research-state 日期 ratchet
-    与 exact-commit canonical page，完成 failure-fix formal validation 和 ordinary publication
+  next_owner: 项目 owner / Codex strategy-evidence coordinator：基于 F0 exact-main commit
+    另行登记并审核 F1 empirical run envelope
   requirement_refs:
   - docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 第四次 Full 10131 passed/2 failed，仅因 Atlas
-    research_state_as_of 仍固定 2026-09-02 且 ignored canonical page 绑定旧提交；同步 2026-09-03
-    currentness 并在候选提交后精确重渲染；F1 仍等待 F0 exact publication
+  unstructured_legacy_blocker_or_next_step: F0 结果盲 policy、strict loader、authority
+    replay、四态 reducer 与 synthetic/negative tests 已实现；F1 尚未成为独立 canonical task，且 canonical
+    DQ、市场数据、bootstrap、回测及独立 replay 均未被 F0 授权
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Atlas live snapshot 日期、canonical ignored artifact 与最终 candidate exact commit
-      一致；failure-fix formal tiers、Full 与 ordinary publication PASS；随后从登记基线集成结果盲 F0；本任务零实证运行
+    text: F0 exact policy/loader/tests、Atlas 与 system flow 同步，focused/static/formal
+      tiers/Full 与 ordinary publication PASS；任何 F1 必须从已发布 F0 exact commit 另行登记，固定
+      maxima 后才可执行；Wave B 最多 OWNER_REVIEW_REQUIRED，Wave C/production/broker 永不由 F0
+      授权
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -210,28 +212,59 @@ events:
   - change:trading-2555-atlas-currentness-final-rerun-v13
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-067084ba7d016e7179a35ba3aa4e27c3
+- schema_version: task_event.v1
+  task_id: TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T07:10:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2555-foundational-falsification-f0-v14
+  lane_id: null
+  base_commit: a858f61f4b69c8fb8ee2ccc7dc4da3ff2ce9cd9c
+  previous_state_event_id: task-event-067084ba7d016e7179a35ba3aa4e27c3
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner / Codex strategy-evidence coordinator：基于 F0 exact-main commit
+      另行登记并审核 F1 empirical run envelope
+    blocker_or_next_step: F0 结果盲 policy、strict loader、authority replay、四态 reducer
+      与 synthetic/negative tests 已实现；F1 尚未成为独立 canonical task，且 canonical DQ、市场数据、bootstrap、回测及独立
+      replay 均未被 F0 授权
+    acceptance_criteria: F0 exact policy/loader/tests、Atlas 与 system flow 同步，focused/static/formal
+      tiers/Full 与 ordinary publication PASS；任何 F1 必须从已发布 F0 exact commit 另行登记，固定
+      maxima 后才可执行；Wave B 最多 OWNER_REVIEW_REQUIRED，Wave C/production/broker 永不由 F0
+      授权
+    notes: 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。F0
+      policy file/canonical/authority-set SHA-256 分别为 54dc349be1ec5670f9e02fc74e9467b668b2311a7dadbdc22680c8c605a824ad、ea6b51baf7d8bdfec2454fb037131a199736e6cacb1eecdc35e01701f5357818、a07e63c9f3ba035d94cfdbf18bc096b69380e4baf1b003540390b66d4ec44fe3；核心
+      20 passed，Ruff、strict mypy、compileall PASS。F0 仍在 formal/publication 收口；未读取市场缓存，未运行
+      DQ、真实回测、bootstrap、QuantConnect/provider，production_effect=none，broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2555-foundational-falsification-f0-v14
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-54421bb7df63a42947b8d4b153cbedfe
 projection:
   legacy_first_eight_cells:
   - TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
   - Strategy research / first-layer composer v2 foundational falsification contract
   - P0
-  - IN_PROGRESS
-  - Codex strategy-evidence coordinator：刷新 Atlas research-state 日期 ratchet 与 exact-commit
-    canonical page，完成 failure-fix formal validation 和 ordinary publication
-  - 第四次 Full 10131 passed/2 failed，仅因 Atlas research_state_as_of 仍固定 2026-09-02 且
-    ignored canonical page 绑定旧提交；同步 2026-09-03 currentness 并在候选提交后精确重渲染；F1 仍等待 F0
-    exact publication
-  - Atlas live snapshot 日期、canonical ignored artifact 与最终 candidate exact commit 一致；failure-fix
-    formal tiers、Full 与 ordinary publication PASS；随后从登记基线集成结果盲 F0；本任务零实证运行
-  - 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。第四次
-    Full artifact outputs/validation_runtime/full_20260902T211845Z/test_runtime_summary.json，SHA-256=91805034ced9ca8c8d7e23647f0e247693d32cfa818d3215aecdb59e36e31aa1；10131
-    passed/2 failed/3 skipped。两项均为 Atlas currentness：research_state_as_of 实际 2026-09-03T06:15:00+09:00，而测试仍固定
-    2026-09-02；本地 ignored canonical page 仍绑定旧 exact commit。核心策略合同、交易引擎及其余测试通过；DQ/backtest/bootstrap/external/production/broker
-    均未运行。'
+  - BASELINE_DONE
+  - 项目 owner / Codex strategy-evidence coordinator：基于 F0 exact-main commit 另行登记并审核
+    F1 empirical run envelope
+  - F0 结果盲 policy、strict loader、authority replay、四态 reducer 与 synthetic/negative tests
+    已实现；F1 尚未成为独立 canonical task，且 canonical DQ、市场数据、bootstrap、回测及独立 replay 均未被 F0
+    授权
+  - F0 exact policy/loader/tests、Atlas 与 system flow 同步，focused/static/formal tiers/Full
+    与 ordinary publication PASS；任何 F1 必须从已发布 F0 exact commit 另行登记，固定 maxima 后才可执行；Wave
+    B 最多 OWNER_REVIEW_REQUIRED，Wave C/production/broker 永不由 F0 授权
+  - 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。F0
+    policy file/canonical/authority-set SHA-256 分别为 54dc349be1ec5670f9e02fc74e9467b668b2311a7dadbdc22680c8c605a824ad、ea6b51baf7d8bdfec2454fb037131a199736e6cacb1eecdc35e01701f5357818、a07e63c9f3ba035d94cfdbf18bc096b69380e4baf1b003540390b66d4ec44fe3；核心
+    20 passed，Ruff、strict mypy、compileall PASS。F0 仍在 formal/publication 收口；未读取市场缓存，未运行
+    DQ、真实回测、bootstrap、QuantConnect/provider，production_effect=none，broker_action=none。'
   docs_links:
   - docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md
   terminal: false
-  canonical_row_sha256: f0370523b0b0779852333b5b8e8cd1e42ca9686a76185fa7535ec61412c94f8a
-last_event_id: task-event-067084ba7d016e7179a35ba3aa4e27c3
+  canonical_row_sha256: 8aaefbc778c7b800b975b3f21f7915cb65ee1ad768bd85ea160ab179152aa6d6
+last_event_id: task-event-54421bb7df63a42947b8d4b153cbedfe
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 9c1a104e3ff59c2cd111c07af6c9cce3898e6c8e2ead12d8e5b66b1427993807
+fragment_checksum: 87712fdfbb2dde21d4d5477641470641811af1d0f82b0379ef552d641db236e0

@@ -1,0 +1,311 @@
+schema_version: first_layer_composer_v2_foundational_falsification_preregistration.v1
+policy_id: first_layer_composer_v2_foundational_falsification_preregistration_v1
+policy_version: 1.0.0
+policy_status: OWNER_DIRECTED_RESULT_BLIND_CONTRACT
+task_id: TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
+owner: project_owner
+approval_ref: owner_instruction:TRADING-2555:2026-09-03:continue_foundational_validation
+policy_metadata:
+  rationale: >-
+    TRADING-2550 retained a narrow QQQ/cash timing signal on a reused development
+    window, while Web Pro identified unresolved episode concentration, serial
+    dependence, cost/carry sensitivity and policy-consumption drift. Freeze those
+    diagnostics before any new result is computed so an unfavorable result cannot
+    be repaired through post-result selection.
+  intended_effect: >-
+    Permit one separately registered local foundational falsification run without
+    changing the signal, model, threshold, comparator, primary window or decision
+    boundary, while keeping QQQ Options Wave B/C and every production path closed.
+  validation_plan:
+    - strict policy and authority identity replay
+    - exact diagnostic inventory and reducer fixture tests
+    - negative tests for window, block, cost, axis and safety drift
+    - focused parallel pytest and applicable formal validation
+  review_condition: >-
+    Any change after empirical diagnostics become visible requires a separately
+    versioned contract and must disclose the visible result; V1 cannot be edited
+    to rescue or promote the signal.
+
+known_result_boundary:
+  result_visibility: PARTIAL_PREEXISTING
+  known_before_freeze:
+    - TRADING_2550_RETAIN
+    - PRIMARY_5_BPS_PAIRED_EXCESS_13_745976956735603_PP
+    - PRIMARY_DRAWDOWN_DELTA_MINUS_3_4293901783962415_PP
+    - ANNUAL_LONG_CALL_FRACTIONS
+    - UNIVERSAL_DEFENSIVE_REGRESSION_HISTORY
+  not_yet_computed:
+    - CALENDAR_YEAR_RETURN_ATTRIBUTION
+    - CONTIGUOUS_EPISODE_ATTRIBUTION
+    - LEAVE_ONE_CALENDAR_YEAR_OUT
+    - PAIRED_MOVING_BLOCK_BOOTSTRAP
+    - COST_SENSITIVITY_FULL_RECOMPUTATION
+    - SGOV_CARRY_SENSITIVITY
+    - STATE_TRANSITION_ATTRIBUTION
+    - SOURCE_REVISION_DIFF
+  historical_window_role: REUSED_DEVELOPMENT_CONFIRMATION
+  pristine_oos_claim_allowed: false
+  post_result_parameter_rescue_allowed: false
+
+primary_identity:
+  producer_id: first_layer_composer_v2
+  calendar: XNYS
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  expected_signal_sessions: 1202
+  expected_return_intervals: 1201
+  price_field: ADJUSTED_CLOSE
+  return_clock: EFFECTIVE_SESSION_CLOSE_TO_NEXT_XNYS_SESSION_CLOSE
+  signal_lag_sessions: 1
+  candidate_id: FROZEN_SIGNAL_FULLY_FUNDED_QQQ_ZERO_RETURN_CASH
+  candidate_state_to_qqq_weight:
+    constructive: 1.0
+    defensive: 0.0
+    neutral: 0.0
+    risk_off: 0.0
+    risk_on: 1.0
+  comparator_id: EXPOSURE_MATCHED_STATIC_QQQ_ZERO_RETURN_CASH
+  comparator_weight_formula: LONG_EXPOSURE_RETURN_INTERVAL_COUNT_DIVIDED_BY_1201
+  primary_idle_cash_asset: ZERO_RETURN_CASH
+  primary_one_way_cost_bps: 5.0
+  same_cost_formula_for_candidate_and_comparator: true
+  leverage_allowed: false
+  short_allowed: false
+  options_allowed: false
+
+diagnostic_inventory:
+  - diagnostic_id: POLICY_CONSUMPTION_INVENTORY
+    required: true
+    verdict_role: VALIDITY_INPUT
+  - diagnostic_id: CALENDAR_YEAR_ATTRIBUTION
+    required: true
+    verdict_role: ROBUSTNESS_INPUT
+  - diagnostic_id: CONTIGUOUS_EPISODE_ATTRIBUTION
+    required: true
+    verdict_role: CONCENTRATION_DISCLOSURE
+  - diagnostic_id: LEAVE_ONE_CALENDAR_YEAR_OUT
+    required: true
+    verdict_role: ROBUSTNESS_INPUT
+  - diagnostic_id: PAIRED_MOVING_BLOCK_BOOTSTRAP
+    required: true
+    verdict_role: UNCERTAINTY_INPUT
+  - diagnostic_id: COST_SENSITIVITY
+    required: true
+    verdict_role: FRAGILITY_DISCLOSURE
+  - diagnostic_id: SGOV_CARRY_SENSITIVITY
+    required: true
+    verdict_role: FRAGILITY_DISCLOSURE
+  - diagnostic_id: STATE_TRANSITION_ATTRIBUTION
+    required: true
+    verdict_role: INTERPRETATION_DISCLOSURE
+  - diagnostic_id: SELECTION_HISTORY_INVENTORY
+    required: true
+    verdict_role: VALIDITY_INPUT
+  - diagnostic_id: SOURCE_REVISION_DIFF
+    required: true
+    verdict_role: VALIDITY_INPUT
+
+calendar_year_contract:
+  ordered_years: [2021, 2022, 2023, 2024, 2025]
+  partial_years: [2021, 2025]
+  interval_attribution: LEFT_ENDPOINT_SESSION_YEAR
+  leave_one_year_rule: REMOVE_YEAR_INTERVALS_THEN_COMPOUND_REMAINING_IN_ORIGINAL_ORDER
+  retraining_allowed: false
+  threshold_refit_allowed: false
+
+bootstrap_contract:
+  method: PAIRED_CIRCULAR_MOVING_BLOCK_BOOTSTRAP
+  input_series: SAME_SESSION_CANDIDATE_MINUS_COMPARATOR_DAILY_NET_RETURN
+  block_lengths_sessions: [21, 63]
+  random_seed: 2555
+  replicates_per_block_length: 10000
+  interval_percentiles: [2.5, 50.0, 97.5]
+  report_nonpositive_probability: true
+  parameter_search_allowed: false
+
+sensitivity_contract:
+  primary_one_way_cost_bps: 5.0
+  diagnostic_one_way_cost_bps: [10.0, 15.0, 20.0]
+  cost_application: FULL_RECOMPUTATION_BOTH_CANDIDATE_AND_COMPARATOR
+  break_even_output: DISCRETE_BRACKET_ONLY
+  cash_carry_asset: SGOV
+  cash_carry_role: DIAGNOSTIC_ONLY
+  primary_cash_replacement_allowed: false
+
+state_transition_contract:
+  ordered_states: [risk_off, defensive, neutral, constructive, risk_on]
+  exposure_actions: [FLAT, LONG_CALL]
+  forward_horizons_sessions: [1, 5, 20]
+  immature_tail_status: MISSING
+  confidence_probability_claim_allowed: false
+
+policy_consumption_inventory:
+  allowed_statuses:
+    - DECLARED_AND_CONSUMED
+    - DECLARED_NOT_CONSUMED
+    - CODE_ONLY
+    - NOT_APPLICABLE
+  entries:
+    - field_id: threshold_selection.positive_score_quantile
+      authority_id: FIRST_LAYER_THRESHOLD_POLICY_V2
+      expected_status: DECLARED_AND_CONSUMED
+    - field_id: positive_sample_floor
+      authority_id: FIRST_LAYER_THRESHOLD_POLICY_V2
+      expected_status: DECLARED_AND_CONSUMED
+    - field_id: threshold_selection.negative_score_quantile
+      authority_id: FIRST_LAYER_THRESHOLD_POLICY_V2
+      expected_status: DECLARED_NOT_CONSUMED
+    - field_id: threshold_selection.min_predicted_share
+      authority_id: FIRST_LAYER_THRESHOLD_POLICY_V2
+      expected_status: DECLARED_NOT_CONSUMED
+    - field_id: threshold_selection.max_predicted_share
+      authority_id: FIRST_LAYER_THRESHOLD_POLICY_V2
+      expected_status: DECLARED_NOT_CONSUMED
+    - field_id: score_weights.missed_upside_penalty
+      authority_id: ACTION_VALUE_SCORE_POLICY_V2
+      expected_status: DECLARED_NOT_CONSUMED
+    - field_id: score_weights.net_of_cost_penalty
+      authority_id: ACTION_VALUE_SCORE_POLICY_V2
+      expected_status: DECLARED_NOT_CONSUMED
+    - field_id: score_weights.tqqq_penalty
+      authority_id: ACTION_VALUE_SCORE_POLICY_V2
+      expected_status: DECLARED_NOT_CONSUMED
+    - field_id: tqqq.penalty_per_weight
+      authority_id: ACTION_VALUE_SCORE_POLICY_V2
+      expected_status: DECLARED_AND_CONSUMED
+  old_model_wiring_change_allowed: false
+
+reducer:
+  precedence: [INVALID, FAIL, INSUFFICIENT, PASS]
+  invalid_if_any:
+    - IDENTITY_OR_HASH_INVALID
+    - DQ_OR_PIT_NOT_PASS
+    - WINDOW_OR_SESSION_COUNT_MISMATCH
+    - SIGNAL_LAG_OR_COMPARATOR_MISMATCH
+    - MANIFEST_OR_INDEPENDENT_REPLAY_NOT_PASS
+    - OUTPUT_SCHEMA_INVALID
+  fail_if_any:
+    - PRIMARY_5_BPS_PAIRED_EXCESS_LESS_THAN_OR_EQUAL_TO_ZERO
+    - ANY_BOOTSTRAP_97_5_PERCENTILE_LESS_THAN_OR_EQUAL_TO_ZERO
+  insufficient_if_any:
+    - REQUIRED_DIAGNOSTIC_INCOMPLETE
+    - ANY_BOOTSTRAP_2_5_PERCENTILE_LESS_THAN_OR_EQUAL_TO_ZERO
+    - ANY_LEAVE_ONE_CALENDAR_YEAR_OUT_EXCESS_LESS_THAN_OR_EQUAL_TO_ZERO
+  pass_if_all:
+    - ALL_IDENTITIES_AND_REPLAYS_VALID
+    - ALL_REQUIRED_DIAGNOSTICS_COMPLETE
+    - PRIMARY_5_BPS_PAIRED_EXCESS_STRICTLY_GREATER_THAN_ZERO
+    - BOTH_BOOTSTRAP_2_5_PERCENTILES_STRICTLY_GREATER_THAN_ZERO
+    - ALL_LEAVE_ONE_CALENDAR_YEAR_OUT_EXCESSES_STRICTLY_GREATER_THAN_ZERO
+  conclusion_by_status:
+    INVALID: FOUNDATIONAL_EVIDENCE_INVALID
+    FAIL: FOUNDATIONAL_NARROW_SIGNAL_VALUE_FAILED_STOP_NO_RESCUE
+    INSUFFICIENT: FOUNDATIONAL_NARROW_SIGNAL_VALUE_INSUFFICIENT_HOLD
+    PASS: FOUNDATIONAL_NARROW_SIGNAL_VALUE_SUPPORTED
+  qqq_options_wave_b_by_status:
+    INVALID: HOLD
+    FAIL: STOP
+    INSUFFICIENT: HOLD
+    PASS: OWNER_REVIEW_REQUIRED
+  qqq_options_wave_c_by_status:
+    INVALID: NOT_AUTHORIZED
+    FAIL: NOT_AUTHORIZED
+    INSUFFICIENT: NOT_AUTHORIZED
+    PASS: NOT_AUTHORIZED
+  production_allowed_by_status:
+    INVALID: false
+    FAIL: false
+    INSUFFICIENT: false
+    PASS: false
+
+successor_run_envelope:
+  status: SPECIFICATION_ONLY_NOT_AUTHORIZED_BY_F0
+  requires_new_canonical_task: true
+  requires_exact_f0_main_commit: true
+  proposed_maxima:
+    canonical_dq_runs: 1
+    manifest_replays: 1
+    local_foundational_runs: 1
+    independent_replays: 1
+    data_downloads: 0
+    cache_mutations: 0
+    quantconnect_actions: 0
+    option_backtests: 0
+    provider_actions: 0
+    orders: 0
+    fills: 0
+    positions: 0
+  terminal_artifact: first_layer_composer_v2_foundational_falsification_result.v1
+
+authority_bindings:
+  - authority_id: TRADING_2550_PREREGISTRATION
+    path: config/research/frozen_signal_value_confirmation_preregistration_v1.yaml
+    file_sha256: 507ab3dd3610971c0962fa093cec0c7f09e1b816f694b7dd946c4b9703013dfa
+    semantic_facts:
+      - {dotted_path: task_id, expected_json: '"TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1"'}
+      - {dotted_path: signal_identity.expected_signal_sessions, expected_json: '1202'}
+      - {dotted_path: cost_model.one_way_cost_bps, expected_json: '5.0'}
+      - {dotted_path: evidence_role_boundary.historical_window_role, expected_json: '"REUSED_DEVELOPMENT_CONFIRMATION"'}
+  - authority_id: TRADING_2550_RESULT_ADMISSION
+    path: config/research/frozen_signal_value_confirmation_result_admission_v1.yaml
+    file_sha256: 38221eb705893b61da27c06ee623d1e237084bfc38222fb60b8a5d69b88d7127
+    semantic_facts:
+      - {dotted_path: technical_validation_state, expected_json: '"PASS"'}
+      - {dotted_path: dq_pit.status, expected_json: '"PASS"'}
+      - {dotted_path: result.verdict, expected_json: '"RETAIN"'}
+      - {dotted_path: result.return_interval_count, expected_json: '1201'}
+      - {dotted_path: interpretation_boundary.proves_robustness_or_pristine_oos, expected_json: 'false'}
+  - authority_id: FIRST_LAYER_COMPOSER_V2
+    path: config/research/first_layer_composer_v2.yaml
+    file_sha256: 24ec583e1afbf01c3ddb16b43eaef6b2479ea67be6df87a1508e831b1585ffc3
+    semantic_facts:
+      - {dotted_path: policy_id, expected_json: '"first_layer_composer_v2"'}
+      - {dotted_path: safety_boundary.production_allowed, expected_json: 'false'}
+  - authority_id: FIRST_LAYER_THRESHOLD_POLICY_V2
+    path: config/research/first_layer_threshold_policy_v2.yaml
+    file_sha256: 9ba69cb281910f94e6cc49cea7a86555ad9f676e9bf81011b21d69fb216b470b
+    semantic_facts:
+      - {dotted_path: threshold_selection.positive_score_quantile, expected_json: '0.65'}
+      - {dotted_path: threshold_selection.negative_score_quantile, expected_json: '0.85'}
+      - {dotted_path: safety_boundary.production_allowed, expected_json: 'false'}
+  - authority_id: ACTION_VALUE_SCORE_POLICY_V2
+    path: config/research/action_value_score_policy_v2.yaml
+    file_sha256: d29c935167c3b15b9263af53287c32ecfb150bded20e859dd9ea4d359264ff05
+    semantic_facts:
+      - {dotted_path: score_weights.missed_upside_penalty, expected_json: '0.6'}
+      - {dotted_path: score_weights.net_of_cost_penalty, expected_json: '1.0'}
+      - {dotted_path: score_weights.tqqq_penalty, expected_json: '0.35'}
+      - {dotted_path: tqqq.penalty_per_weight, expected_json: '0.2'}
+  - authority_id: FIRST_LAYER_OPERATIONAL_FORECAST_SOURCE
+    path: src/ai_trading_system/first_layer_operational_forecast.py
+    file_sha256: f2ce0c2d37ddd043cd27e169727c6312602096c1de59374d73b0b17755ec41e4
+    semantic_facts: []
+  - authority_id: UPPER_STATE_LABEL_FEATURE_RESET_SOURCE
+    path: src/ai_trading_system/upper_state_label_feature_reset.py
+    file_sha256: 264717c5554bfa2eef37bb9cd178be79e2c3801561879882a01a003f512fc4ef
+    semantic_facts: []
+
+safety:
+  result_blind_contract_only: true
+  empirical_diagnostic_access_authorized: false
+  market_data_read_authorized: false
+  dq_authorized: false
+  backtest_authorized: false
+  parameter_change_allowed: false
+  threshold_change_allowed: false
+  comparator_change_allowed: false
+  quantconnect_authorized: false
+  provider_authorized: false
+  options_wave_b_authorized: false
+  options_wave_c_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_allowed: false
+  orders: 0
+  fills: 0
+  positions: 0
+  production_effect: none
+  broker_action: none

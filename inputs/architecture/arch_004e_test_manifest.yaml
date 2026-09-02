@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1346
-test_count: 1286
+test_file_count: 1347
+test_count: 1287
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -219,7 +219,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_live_snapshot
   path: tests/atlas/test_live_snapshot.py
-  sha256: b8cda6a2e3b6902d5ba4b7441cc8ed992dc6f2e74357ff6ea462f0a9011f433b
+  sha256: 33bf37eb75fd459345a2bf7a83e12e6b6a5deccbfa44db6311578a5ca196ea2f
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -235,7 +235,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_page_effectiveness
   path: tests/atlas/test_page_effectiveness.py
-  sha256: df0ce386a2dbd7c0677bbf055bdb8e9539e6c7af4655f8c1114c563d8a886b96
+  sha256: 40b9e315847ce3abc965248fae5e2a0e9321018843f8e050cd828deb53575729
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10458,7 +10458,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 03e7bc6e401c5fe905dffdabac38fca9437807029d69341e9e4bb9c4fcc529cf
+  sha256: 5b28324bce882664e3666ef8b447353e53dcd9a7c595b426559ff041ba973cb7
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -12209,6 +12209,22 @@ tests:
 - test_id: tests.test_first_layer_defensive_regression_diagnosis
   path: tests/test_first_layer_defensive_regression_diagnosis.py
   sha256: 29d7b4163b8dd7ab6afe0c12685dc7bc66ba331fc0b72f9df861cacd60546918
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_first_layer_foundational_falsification_contract
+  path: tests/test_first_layer_foundational_falsification_contract.py
+  sha256: cc3757cda4520a41cac4c4fdbc1e7f5eac39ca44558347683c9bf8a121d55526
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
