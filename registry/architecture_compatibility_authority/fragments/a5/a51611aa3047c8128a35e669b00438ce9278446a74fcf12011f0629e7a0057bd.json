@@ -91,7 +91,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
-        "sha256": "8aeb45b822301bbea3ed07f2328f2893a7395ed989a660ca138e74024409d5af"
+        "sha256": "c529e3b50abeb96e021875222e3be1709e5ec3a41ab78b507d59f8735a06a4e7"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -101,12 +101,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "31f8240933a16cea45a03978883657ba833b7da3e11a2fcc324882fb701ac73e"
+        "sha256": "c3b6b2186ba70187856af997fa2435aaa32edbbab430e62ef88094ec34a32732"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
-        "sha256": "dd9d68f5ddc6385273c662c1444116c0b3ae8dcff40da781c5ac4bab22362ece"
+        "sha256": "48c82717f5ee0b80467b9abc4f68a4b37c017a0016ad6e3d71d059e3b799bda5"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -171,7 +171,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "715f71f0ea3d0ff685804bb21b3f49cec58b827aa2e0f4bdce866041c25c3e49"
+        "sha256": "d1aeca73e1977addd122c23be307d8ae3f82d2bc8e16aa919f24f9008e1cf105"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -294,5 +294,5 @@
     }
   },
   "section_id": "phase_devx_011_governed_workflow_health_control_loop_v1",
-  "section_sha256": "74e6ab0e2431b3da5d2a62f1409560394325c5fd97145659a0c0939ece3c1ea5"
+  "section_sha256": "a51611aa3047c8128a35e669b00438ce9278446a74fcf12011f0629e7a0057bd"
 }

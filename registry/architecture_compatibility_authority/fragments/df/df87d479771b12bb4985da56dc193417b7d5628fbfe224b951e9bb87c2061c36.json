@@ -118,7 +118,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "715f71f0ea3d0ff685804bb21b3f49cec58b827aa2e0f4bdce866041c25c3e49"
+        "sha256": "d1aeca73e1977addd122c23be307d8ae3f82d2bc8e16aa919f24f9008e1cf105"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -172,5 +172,5 @@
     "task_id": "RISK-012"
   },
   "section_id": "phase_risk_012_unknown_risk_event_id_fail_closed_v1",
-  "section_sha256": "870d013870e5e9c8cda104d1c07722ad4133593a1a0cc3dd2bf727729c59a8a9"
+  "section_sha256": "df87d479771b12bb4985da56dc193417b7d5628fbfe224b951e9bb87c2061c36"
 }

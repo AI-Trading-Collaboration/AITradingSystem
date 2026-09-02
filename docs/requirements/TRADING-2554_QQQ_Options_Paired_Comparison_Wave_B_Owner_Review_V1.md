@@ -164,3 +164,19 @@ backtest 仍需单独、精确授权。
   SHA、system-flow entry count）；`v9` 因未声明该测试路径而终止。`v10` 精确同步为
   3,118 total entries、SHA `a3465cca…` 与 1,185 system-flow entries，并重新生成依赖
   该测试哈希的 architecture/compatibility authority。
+- 2026-09-03：`v10` 正式 architecture-fitness 为 762 PASS / 122 FAIL；全部失败均由
+  regression test 直接写入历史 hash-authority 文件 `tests/test_arch_004e_devex.py` 导致，
+  失败摘要已绑定并终止事务。修复保留同一 regression 语义，但把新增测试移入独立
+  `tests/test_architecture_devex_worktree_root.py`，避免改写历史 source bytes；随后必须重建
+  test/deprecation/compatibility authority 并从 clean committed candidate 重跑正式门禁。
+- 2026-09-03：`v12` 因缺少强制的 `TASK_SOURCE_PRE_WRITE` 顺序检查点而拒绝进入
+  `GENERATED_REBUILD_PRE`；其 lease 已以 FAIL 释放。`v13` 从相同 clean committed HEAD
+  重新获取 fence，并显式通过该检查点后才重放全部声明 generator；先前生成字节不作为
+  正式通过证据。
+- 2026-09-03：`v13` 聚焦回归将历史 hash failures 从 122 项消除至 0，最终结果为
+  247 PASS / 1 FAIL；唯一剩余失败是 `DEVX-011` 历史测试仍断言 report-flow successor
+  总数 `3117`，而当前 sealed authority 为 `3118`。由于该测试路径未在 `v13` 声明，事务
+  已终止；`v14` 扩展精确路径后才同步此单一常量并重建 authority。
+- 2026-09-03：`v14` 按顺序重建 architecture/report-flow/compatibility authority 后，
+  聚焦回归以 `pytest-xdist -n 16 --dist loadfile` 完成 248/248 PASS；历史 hash-authority、
+  active-worktree root regression、report-flow seal 与 canonical task-source 同时通过。
