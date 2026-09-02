@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -1086,6 +1087,22 @@ def _check_metric_values(
 ) -> None:
     non_negative_keywords = ("pe", "p_e", "ps", "p_s", "ev_sales", "peg", "multiple")
     for metric in (*snapshot.valuation_metrics, *snapshot.expectation_metrics):
+        if not math.isfinite(metric.value):
+            issues.append(
+                ValuationIssue(
+                    severity=ValuationIssueSeverity.ERROR,
+                    code="non_finite_metric_value",
+                    snapshot_id=snapshot.snapshot_id,
+                    ticker=snapshot.ticker,
+                    path=path,
+                    message=f"估值或预期指标 {metric.metric_id} 必须是有限数值。",
+                )
+            )
+
+    # Expectation metrics such as eps_revision_90d_pct are signed changes.  Keep
+    # the non-negative multiple invariant scoped to the valuation-metric family
+    # instead of inferring semantics from a substring shared by "eps" and "pe".
+    for metric in snapshot.valuation_metrics:
         metric_key = metric.metric_id.lower()
         if any(keyword in metric_key for keyword in non_negative_keywords) and metric.value < 0:
             issues.append(

@@ -4688,7 +4688,7 @@ flowchart TD
         VFH["aits valuation validate-fmp-history"]
         VFHR["outputs/reports/fmp_analyst_history_validation_YYYY-MM-DD.md"]
         VL["aits valuation list"]
-        VV["aits valuation validate"]
+        VV["aits valuation validate<br/>全部 metric finite；valuation multiples 非负<br/>expectation signed percent（如 eps_revision_90d_pct）可为负"]
         VR["aits valuation review"]
         VVR["outputs/reports/valuation_validation_YYYY-MM-DD.md"]
         VRR["outputs/reports/valuation_review_YYYY-MM-DD.md"]

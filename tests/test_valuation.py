@@ -197,6 +197,44 @@ def test_validate_valuation_snapshot_store_rejects_negative_multiple(tmp_path: P
     assert "negative_valuation_multiple" in {issue.code for issue in report.issues}
 
 
+def test_validate_valuation_snapshot_store_accepts_negative_eps_revision(
+    tmp_path: Path,
+) -> None:
+    snapshot_path = tmp_path / "nvda.yaml"
+    _write_valid_snapshot(
+        snapshot_path,
+        include_eps_revision=True,
+        eps_revision_90d_pct=-12.5,
+    )
+
+    report = validate_valuation_snapshot_store(
+        store=load_valuation_snapshot_store(snapshot_path),
+        universe=load_universe(),
+        watchlist=load_watchlist(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.passed is True
+    assert "negative_valuation_multiple" not in {issue.code for issue in report.issues}
+
+
+def test_validate_valuation_snapshot_store_rejects_non_finite_metric(
+    tmp_path: Path,
+) -> None:
+    snapshot_path = tmp_path / "nvda.yaml"
+    _write_valid_snapshot(snapshot_path, forward_pe=float("nan"))
+
+    report = validate_valuation_snapshot_store(
+        store=load_valuation_snapshot_store(snapshot_path),
+        universe=load_universe(),
+        watchlist=load_watchlist(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.passed is False
+    assert "non_finite_metric_value" in {issue.code for issue in report.issues}
+
+
 def test_render_and_write_valuation_reports(tmp_path: Path) -> None:
     snapshot_path = tmp_path / "nvda.yaml"
     _write_valid_snapshot(snapshot_path)
@@ -394,6 +432,7 @@ def _write_valid_snapshot(
     valuation_percentile: float | None = 82.0,
     overall_assessment: str = "expensive",
     include_eps_revision: bool = False,
+    eps_revision_90d_pct: float = 4.0,
     point_in_time_class: str = "captured_snapshot",
     history_source_class: str = "unknown",
     confidence_level: str = "medium",
@@ -403,9 +442,9 @@ def _write_valid_snapshot(
     captured_date = captured_at or as_of
     percentile_value = "null" if valuation_percentile is None else str(valuation_percentile)
     eps_revision = (
-        """
+        f"""
   - metric_id: eps_revision_90d_pct
-    value: 4.0
+    value: {eps_revision_90d_pct}
     unit: percent
     period: trailing_90d
     source_field: analyst-estimates.epsAvg

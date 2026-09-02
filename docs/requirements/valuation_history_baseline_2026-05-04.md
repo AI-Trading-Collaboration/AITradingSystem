@@ -1,8 +1,8 @@
 # 估值历史样本 baseline 方案
 
-状态：BASELINE_DONE
+状态：IN_PROGRESS
 
-最后更新：2026-05-10
+最后更新：2026-09-02
 
 关联任务：`DATA-001`、`DATA-003`、`VALUATION-002`、`BTINPUT-001`
 
@@ -49,3 +49,6 @@ owner 决策：先实现低成本 baseline，提高当前日报的估值/预期�
 - 2026-05-04：baseline 已完成。新增 `aits valuation fetch-eodhd-trends`、EODHD 原始 payload 审计、合并估值快照、中文拉取报告、数据源目录、系统流图和测试；`python -m ruff check src tests` 与 `python -m pytest -q` 通过。完整 `DONE` 仍依赖真实 PIT estimates/archive。
 - 2026-05-04：owner 决策不购买或伪造历史 PIT estimates/archive；历史采购、历史接入和历史补数继续暂缓，baseline 继续明确 `captured_at_forward_only` 和回填分布限制；forward-only 自建快照归档另由 `DATA-003` 和 `docs/requirements/pit_snapshot_archive_2026-05-04.md` 承接。
 - 2026-05-10：owner 确认 `EODHD_API_KEY` 应已提供；本机环境已验证该变量存在但未输出密钥值。EODHD Earnings Trends baseline 可继续作为当前 `eps_revision_90d_pct` 补充来源，仍不改变采集日前严格 PIT 回测限制。
+- 2026-09-02：`daily_ops_run:2026-09-01:20260902T060818Z` 暴露 validator 语义缺陷：旧实现把 valuation 与 expectation metrics 合并后按 metric id 子串判断“估值倍数”，导致 signed `eps_revision_90d_pct=-12.5` 因包含 `pe` 子串而被误报 `negative_valuation_multiple`。修复边界固定为：所有 metric value 必须 finite；只有 `valuation_metrics` 中的倍数类指标要求非负；`expectation_metrics` 的 signed percent 可为负。该修复不改变 PIT 可见性、估值阈值、评分权重或生产边界。相同 run 的 Cboe/Federal Register TLS EOF 是独立 external provider blocker，继续 fail closed，不由本修复降级或绕过。
+- 2026-09-02：closeout 检查期间曾执行未携带已登记 exclusion 的 repository-wide `git status` / `git diff`，按 checkout audit 规则记为审计事件；输出未包含 excluded `docs/research/growth_tilt_owner_diagnosis_pack.md` 内容，未读取、哈希或修改该文件。后续 repository-wide 检查统一改用 `architecture_arch005_checkout_guard.py worktree-audit`，退出条件为 governed audit 与 attribution PASS。
+- 2026-09-02：首个 exact candidate Full=`10118 passed / 5 skipped / 1 failed`，唯一失败是 worktree 内 hydrated ignored Atlas page sidecar 已失去 successor identity；失败 artifact=`outputs/validation_runtime/full_20260902T071909Z/test_runtime_summary.json`。17 个旧 artifact 已逐项记录 size/SHA-256 并可逆隔离，focused 用例按合同变为 skip；未把旧页提升为 CURRENT。随后 main 前进到 `d9f0cd94474e2d9f2412d3858882c8b4ecc52dc2`，drift plan=`integration-revalidation-d183b2bfef647b2efa48` 判定 domain-only reconciliation；最终 candidate 从最新 main 重放 task-only 估值修复，并由官方 generators 重建所有共享权威。

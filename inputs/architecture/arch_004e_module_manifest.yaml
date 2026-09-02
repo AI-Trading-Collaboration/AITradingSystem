@@ -24608,7 +24608,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.valuation
   path: src/ai_trading_system/valuation.py
-  sha256: 38b2426cb0acc5cfa8be4b36e83ea0c6310e19585bfb24cc5393b3158bc57fee
+  sha256: d8b09f40e5929106a5f9eb345a18eb3751414f065395c98808b00d035cf09bad
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
