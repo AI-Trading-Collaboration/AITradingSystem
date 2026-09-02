@@ -1,0 +1,85 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
+  task_id_sha256: 512fa6cbbc05bc3e2531052c07910dceac21fc0323b48bd678e480b4f07a8d4c
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
+  title: null
+  domain: Strategy research / first-layer composer v2 foundational falsification contract
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex strategy-evidence coordinator：从登记基线重建并发布 result-blind F0 contract；后继任务只在本合同
+    exact main 后运行 F1
+  requirement_refs:
+  - docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: F0 合同实现待从冻结 lane 集成；F1 等待本合同 exact publication、新
+    canonical task、canonical DQ/manifest replay；QQQ Options Wave B/C 保持 HOLD
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 冻结 primary/window/comparator、10 个诊断轴、MBB 21/63（seed=2555、10000 reps）、5/10/15/20bps、SGOV
+      diagnostic 与 INVALID>FAIL>INSUFFICIENT>PASS；strict loader/tests；本任务零实证运行
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-02T18:33:18.1115851Z'
+  actor: integration-coordinator
+  change_id: trading-2555-task-registration-prerequisite-v6
+  lane_id: null
+  base_commit: accae71a6bbe9abae2803bf200ec5b0c875993ba
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
+    - Strategy research / first-layer composer v2 foundational falsification contract
+    - P0
+    - IN_PROGRESS
+    - Codex strategy-evidence coordinator：从登记基线重建并发布 result-blind F0 contract；后继任务只在本合同
+      exact main 后运行 F1
+    - F0 合同实现待从冻结 lane 集成；F1 等待本合同 exact publication、新 canonical task、canonical DQ/manifest
+      replay；QQQ Options Wave B/C 保持 HOLD
+    - 冻结 primary/window/comparator、10 个诊断轴、MBB 21/63（seed=2555、10000 reps）、5/10/15/20bps、SGOV
+      diagnostic 与 INVALID>FAIL>INSUFFICIENT>PASS；strict loader/tests；本任务零实证运行
+    - 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。2026-09-03
+      Owner 指示参考 Web Pro 建议继续基础有效性研究；先独立发布 canonical task registration，再从其 exact main
+      集成 F0；DQ/backtest/external/production/broker action=none。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2555-task-registration-prerequisite-v6
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d4ef874fcd0a22ca28730eed200f1392
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1
+  - Strategy research / first-layer composer v2 foundational falsification contract
+  - P0
+  - IN_PROGRESS
+  - Codex strategy-evidence coordinator：从登记基线重建并发布 result-blind F0 contract；后继任务只在本合同
+    exact main 后运行 F1
+  - F0 合同实现待从冻结 lane 集成；F1 等待本合同 exact publication、新 canonical task、canonical DQ/manifest
+    replay；QQQ Options Wave B/C 保持 HOLD
+  - 冻结 primary/window/comparator、10 个诊断轴、MBB 21/63（seed=2555、10000 reps）、5/10/15/20bps、SGOV
+    diagnostic 与 INVALID>FAIL>INSUFFICIENT>PASS；strict loader/tests；本任务零实证运行
+  - 'Supporting requirement: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md。2026-09-03
+    Owner 指示参考 Web Pro 建议继续基础有效性研究；先独立发布 canonical task registration，再从其 exact main
+    集成 F0；DQ/backtest/external/production/broker action=none。'
+  docs_links:
+  - docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md
+  terminal: false
+  canonical_row_sha256: d15238c8cae681891b95397547e886bc305e1225c489fe4356072184c660aee2
+last_event_id: task-event-d4ef874fcd0a22ca28730eed200f1392
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 3289b85dc513e5e7370af5a778f171c25a00ec357388de1a19b55a7987cab5a3
