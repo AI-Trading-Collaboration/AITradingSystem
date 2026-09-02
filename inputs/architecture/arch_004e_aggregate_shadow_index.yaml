@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 165
+fragment_count: 167
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 54517a1089750ab9458015b0566c0fd4ce5250b83c1ae3884335c456dc71c033
+  current_sha256: 0f674c4941d8bfc5038fe98876747a0cbec8036dc1b759350be488daf0797c53
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 68
+  fragment_count: 69
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -46,6 +46,7 @@ targets:
   - config/architecture/fragments/flows/atlas_reader_status_explanation_page.yaml
   - config/architecture/fragments/flows/atlas_status_explanation_contract.yaml
   - config/architecture/fragments/flows/atlas_work_progress_explanation_page.yaml
+  - config/architecture/fragments/flows/controlled_https_preview.yaml
   - config/architecture/fragments/flows/data_quality_capability.yaml
   - config/architecture/fragments/flows/evidence_first_research_portfolio_and_reader_entry.yaml
   - config/architecture/fragments/flows/first_layer_operational_forecast.yaml
@@ -204,6 +205,13 @@ fragments:
   target_id: system_flow
   path: config/architecture/fragments/flows/atlas_work_progress_explanation_page.yaml
   sha256: ff4536a9336a6c3dab34dc2eb93ecae80122eeee8e2f983d7156fa8d21a12963
+  generated_source_of_truth_active: false
+- fragment_id: flow.controlled_https_preview
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/controlled_https_preview.yaml
+  sha256: 76fb6a4b7275e0a1affabbf0f588822f1a67b4cbef979940d85bdbeab393753c
   generated_source_of_truth_active: false
 - fragment_id: flow.data_quality_capability
   fragment_kind: flow
@@ -708,6 +716,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/atlas_work_progress_explanation.yaml
   sha256: 88d90be8ac4c30e7120d62fcee0101b1cc63bf933e588febf5c495682f58fa8a
+  generated_source_of_truth_active: false
+- fragment_id: module.controlled_https_preview
+  fragment_kind: module
+  owner: atlas_publishing_experience
+  target_id: null
+  path: config/architecture/fragments/modules/controlled_https_preview.yaml
+  sha256: 1c63bd79d9626d969097e7cb7a5cc44678f957d4d837ee06a6bc104600159dd4
   generated_source_of_truth_active: false
 - fragment_id: module.data_quality_capability
   fragment_kind: module
