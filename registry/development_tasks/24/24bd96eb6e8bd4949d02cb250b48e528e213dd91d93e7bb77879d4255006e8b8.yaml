@@ -14,22 +14,23 @@ task_record:
   priority: P0
   accountable_owner: null
   next_owner: Project Owner：若继续研究，先另行冻结 underlying comparator fee semantics 并批准 Wave
-    B exact package/manifest；Wave C 单次 bounded QuantConnect run 仍需再次独立授权。
+    B exact package/manifest；Wave C 单次 bounded QuantConnect run 仍需再次独立授权。长期 Browser
+    审阅入口由 TRADING-2526 的 Atlas/DevEx coordinator 承接。
   requirement_refs:
   - docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Reader-entry reconciliation 已完成：signal
-    verdict 保持 RETAIN，TRADING-2552 review 与 TRADING-2553 fixture-only Wave A 显示为已完成。当前
-    blocker 是未冻结的 fee semantics、Wave B exact manifest 与独立 Wave C run authority；不得自动启动真实数据、DQ
-    或 QuantConnect。
+  unstructured_legacy_blocker_or_next_step: Reader-entry exact 页面已由 Owner 完成 desktop/mobile
+    人工视觉验收；agent Browser 自动化因 file URL policy 保持 NOT_EXECUTED_URL_POLICY。长期受控 HTTPS
+    preview 已纳入 TRADING-2526；Wave B/C 仍受 fee semantics、exact manifest 与独立 run authority
+    阻塞。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: Atlas L0 明示单页范围、普通语言研究问题、三条独立进展和阶段不可自动晋级；L0/L1 同源显示 RETAIN、Wave A complete
-      及 Wave B/C unauthorized，且不出现旧 UNRESOLVED/等待 paired-review 文案；focused xdist=24
-      passed、Ruff PASS、changed-source mypy PASS；canonical exact-commit writer、page-effectiveness、formal
-      tiers 与真实浏览器桌面/移动端在 final publication transaction 中重建并验证。
+    text: Atlas L0/L1 同源显示 RETAIN、Wave A complete 与 Wave B/C unauthorized；focused、formal
+      split tiers 和 Full 通过；Owner 对 exact HTML 完成 desktop/mobile 人工视觉验收。不得把 OWNER_MANUAL_VISUAL_PASS
+      记为 Browser 自动化、keyboard、screen-reader、AT、audit replay 或 comprehension PASS；长期
+      exact-byte HTTPS review surface 由 TRADING-2526 验收。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -361,6 +362,40 @@ events:
   - change:trading-2550-reader-entry-baseline-done-20260902-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-55f1d01caed56e0095aeeba123c75b26
+- schema_version: task_event.v1
+  task_id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-02T10:59:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2550-owner-manual-visual-pass-20260902-v1
+  lane_id: null
+  base_commit: 35e11715f6ff9e6fa6316a79ce8311083f0a3a4b
+  previous_state_event_id: task-event-55f1d01caed56e0095aeeba123c75b26
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：若继续研究，先另行冻结 underlying comparator fee semantics 并批准
+      Wave B exact package/manifest；Wave C 单次 bounded QuantConnect run 仍需再次独立授权。长期
+      Browser 审阅入口由 TRADING-2526 的 Atlas/DevEx coordinator 承接。
+    blocker_or_next_step: Reader-entry exact 页面已由 Owner 完成 desktop/mobile 人工视觉验收；agent
+      Browser 自动化因 file URL policy 保持 NOT_EXECUTED_URL_POLICY。长期受控 HTTPS preview 已纳入
+      TRADING-2526；Wave B/C 仍受 fee semantics、exact manifest 与独立 run authority 阻塞。
+    acceptance_criteria: Atlas L0/L1 同源显示 RETAIN、Wave A complete 与 Wave B/C unauthorized；focused、formal
+      split tiers 和 Full 通过；Owner 对 exact HTML 完成 desktop/mobile 人工视觉验收。不得把 OWNER_MANUAL_VISUAL_PASS
+      记为 Browser 自动化、keyboard、screen-reader、AT、audit replay 或 comprehension PASS；长期
+      exact-byte HTTPS review surface 由 TRADING-2526 验收。
+    notes: 'Supporting requirement: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md.
+      Candidate=35e11715f6ff9e6fa6316a79ce8311083f0a3a4b; exact HTML SHA-256=bea2de7359efffcfb981a6067e58d297b821dc415be6f5078267ff5d9b36a609;
+      Owner result=OWNER_MANUAL_VISUAL_PASS; agent Browser=NOT_EXECUTED_URL_POLICY;
+      Full PASS artifact SHA-256=e18099b1f6803f7c13b9aed4a06efb3e867767fa45ef844564bd3267a107c427.
+      No data/DQ/backtest/QuantConnect/provider/cache/orders/fills/positions; production_effect=none;
+      broker_action=none.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2550-owner-manual-visual-pass-20260902-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-56c1f4ff81541da2b6d02144495d5542
 projection:
   legacy_first_eight_cells:
   - TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
@@ -368,22 +403,25 @@ projection:
   - P0
   - BASELINE_DONE
   - Project Owner：若继续研究，先另行冻结 underlying comparator fee semantics 并批准 Wave B exact
-    package/manifest；Wave C 单次 bounded QuantConnect run 仍需再次独立授权。
-  - Reader-entry reconciliation 已完成：signal verdict 保持 RETAIN，TRADING-2552 review 与
-    TRADING-2553 fixture-only Wave A 显示为已完成。当前 blocker 是未冻结的 fee semantics、Wave B
-    exact manifest 与独立 Wave C run authority；不得自动启动真实数据、DQ 或 QuantConnect。
-  - Atlas L0 明示单页范围、普通语言研究问题、三条独立进展和阶段不可自动晋级；L0/L1 同源显示 RETAIN、Wave A complete 及 Wave
-    B/C unauthorized，且不出现旧 UNRESOLVED/等待 paired-review 文案；focused xdist=24 passed、Ruff
-    PASS、changed-source mypy PASS；canonical exact-commit writer、page-effectiveness、formal
-    tiers 与真实浏览器桌面/移动端在 final publication transaction 中重建并验证。
+    package/manifest；Wave C 单次 bounded QuantConnect run 仍需再次独立授权。长期 Browser 审阅入口由
+    TRADING-2526 的 Atlas/DevEx coordinator 承接。
+  - Reader-entry exact 页面已由 Owner 完成 desktop/mobile 人工视觉验收；agent Browser 自动化因 file
+    URL policy 保持 NOT_EXECUTED_URL_POLICY。长期受控 HTTPS preview 已纳入 TRADING-2526；Wave
+    B/C 仍受 fee semantics、exact manifest 与独立 run authority 阻塞。
+  - Atlas L0/L1 同源显示 RETAIN、Wave A complete 与 Wave B/C unauthorized；focused、formal
+    split tiers 和 Full 通过；Owner 对 exact HTML 完成 desktop/mobile 人工视觉验收。不得把 OWNER_MANUAL_VISUAL_PASS
+    记为 Browser 自动化、keyboard、screen-reader、AT、audit replay 或 comprehension PASS；长期
+    exact-byte HTTPS review surface 由 TRADING-2526 验收。
   - 'Supporting requirement: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md.
-    Source commit=e2011691bb8aa7835df68873db4b5cc929830f80; reviewed plan=integration-revalidation-555931dd849d832932bc;
-    final transaction=trading-2550-reader-entry-final-20260902-v3. No data/DQ/confirmation/backtest/QuantConnect/provider/cache/orders/fills/positions;
-    production_effect=none; broker_action=none.'
+    Candidate=35e11715f6ff9e6fa6316a79ce8311083f0a3a4b; exact HTML SHA-256=bea2de7359efffcfb981a6067e58d297b821dc415be6f5078267ff5d9b36a609;
+    Owner result=OWNER_MANUAL_VISUAL_PASS; agent Browser=NOT_EXECUTED_URL_POLICY;
+    Full PASS artifact SHA-256=e18099b1f6803f7c13b9aed4a06efb3e867767fa45ef844564bd3267a107c427.
+    No data/DQ/backtest/QuantConnect/provider/cache/orders/fills/positions; production_effect=none;
+    broker_action=none.'
   docs_links:
   - docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md
   terminal: false
-  canonical_row_sha256: 9a44bd28e064b3a0db5828e2ded3c30a04f89c9416d3cfa9439d9fb8497d469a
-last_event_id: task-event-55f1d01caed56e0095aeeba123c75b26
+  canonical_row_sha256: c16f3d8e7909cb10f868d5dcadbe4fe31c8b5bf354d8c6c3629cede80e921883
+last_event_id: task-event-56c1f4ff81541da2b6d02144495d5542
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b200834f5b19de2b405449e956111a0e1aa81371f4643ee81194c3207ea39b10
+fragment_checksum: 05edb2ba63277be7e425ebaad785c49b4752ddf25c1fe1d4d907a55045ffbcb2

@@ -1,6 +1,6 @@
 # TRADING-2526：Atlas 可访问研究展开与审计链接 V1
 
-最后更新：2026-08-16
+最后更新：2026-09-02
 
 - stable task id：`TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1`
 - priority：`P1`
@@ -43,6 +43,34 @@ alternatives、mobile task order、audit linkage 与可回滚样式。
 禁止：删除 raw lineage、隐藏关键风险、无语义自定义控件、视觉顺序与 DOM 顺序不一致、用 hover-only
 解释、用自动化 accessibility PASS 代签人类理解。
 
+### 3.1 长期受控 HTTPS preview 方案
+
+Project Owner 于 2026-09-02 要求把本地 `file://` / loopback Browser policy 阻塞转为长期 TODO。本任务
+承接该方案，不新建重复 task ID。目标是提供一个 browser-policy 允许、exact-byte 可验证且不扩大数据或
+发布权限的 HTTPS review surface：
+
+1. 由受治理的 preview writer 从一个 clean exact commit 生成 review bundle；bundle 只包含 allowlisted
+   Atlas HTML、同源静态 assets 与验证 sidecars，不包含市场数据、raw payload、credentials、cookies、
+   browser profile、repository 其他文件或目录索引；
+2. preview manifest 必须绑定 task id、source commit、HTML SHA-256、每个 asset SHA-256、writer version、
+   生成时间、TTL/expiry、authorization state、`production_effect=none` 与 `broker_action=none`；
+3. review endpoint 使用 browser-policy 允许的 HTTPS origin，默认 private/authenticated、不可索引、不可
+   public-share；任何真实 cloud/project write、外部托管、付费资源或公开链接在执行前单独按 R2 取得 exact
+   Owner 授权。本 TODO 本身不授权部署；
+4. endpoint 必须按 exact manifest 提供不可变 bytes，禁止运行时注入、第三方脚本、外部字体/analytics、
+   跨 bundle 路径访问或从 HTTPS 页面回连 localhost/private network；identity mismatch、expired TTL、
+   missing asset 或 unauthorized origin 均 fail closed；
+5. browser evidence receipt 绑定 exact preview URL identity、HTML SHA、browser/version、OS、viewport matrix、
+   desktop/mobile screenshots、keyboard/reflow/audit replay 与 accessibility sidecar；自动化 Browser、Owner
+   visual、assistive-technology 和 reader-comprehension 继续作为独立 acceptance tracks；
+6. preview 完成或 TTL 到期后必须撤销 endpoint 并生成 cleanup receipt，记录删除目标、retained canonical
+   evidence、released size 与 recoverability。不得用临时 localhost、alternate browser、raw CDP、data URL
+   或复制到未治理公开站点绕过安全策略。
+
+实现前需另行冻结 hosting/provider、private access、TTL、cost ceiling、retention、browser/viewport/AT
+matrix 与 cleanup authority；这些是工程和外部动作边界，不影响任何投资解释、DQ/PIT、research window、
+策略 verdict 或生产资格。
+
 ## 4. 两阶段执行与 path claims
 
 ### 2526-A：与 2525 并行的 evidence lane
@@ -79,6 +107,11 @@ keyboard/screen-reader logs、desktop/mobile screenshots 与 rollback plan。
 320px reflow、desktop/mobile visual regression、no nested details、focus restoration、chart/table alternatives、
 audit identity replay 与 provenance reachability。
 
+长期 HTTPS preview 还必须产出 allowlist bundle manifest、authorization/TTL receipt、exact-byte browser
+evidence receipt 与 cleanup receipt。验证需证明 manifest 中的 HTML/asset SHA-256 与 endpoint 实际响应
+一致，expired/unauthorized/missing-asset 情形 fail closed，并对 endpoint 撤销与 retained canonical evidence
+完成可重放核验。
+
 ## 6. Exit、falsification 与 downstream gate
 
 Exit criteria：核心任务可由键盘和辅助技术完成；无 nested details；移动端 DOM/视觉顺序一致；关键风险
@@ -114,3 +147,12 @@ STOP CONDITION：任何“简化”导致 provenance 不可达，或移动端视
   `file://` 页面时被 in-app Browser URL 安全策略 fail closed，页面未被浏览器控制或重载；按 no-workaround
   纪律未改用 alternate browser、raw CDP 或临时 loopback 绕过。下一步需要一个由浏览器策略允许的审阅入口，
   再对同一 exact bytes 执行 desktop/mobile/keyboard/assistive-technology 与 audit destination replay。
+- 2026-09-02：Project Owner 已对 TRADING-2550 exact HTML SHA-256=
+  `bea2de7359efffcfb981a6067e58d297b821dc415be6f5078267ff5d9b36a609` 完成 desktop/mobile 人工视觉验收，
+  结果记为 `OWNER_MANUAL_VISUAL_PASS`；agent Browser 自动化仍为 `NOT_EXECUTED_URL_POLICY`，且本次人工
+  通过不代签 2526-B 的 keyboard、screen-reader、assistive-technology、audit replay 或 reader-
+  comprehension tracks。Owner 同时要求把长期受控 HTTPS preview 记入 TODO，故本任务继续保持
+  `IN_PROGRESS`；next owner=`Atlas/DevEx coordinator`，当前 blockers 为 hosting/provider、private access、
+  TTL、cost ceiling、retention、browser/viewport/AT matrix 与任何 R2 外部写入的 exact authorization 尚未
+  冻结。Exit condition 是同一 exact HTML SHA 通过受允许 HTTPS origin 完成 Browser/mobile/keyboard/AT/
+  audit replay，并由 TTL cleanup receipt 证明 endpoint 已撤销且 canonical evidence 保留完整。

@@ -1,6 +1,6 @@
 # TRADING-2550：Frozen Signal Value Confirmation V1
 
-最后更新：2026-09-01
+最后更新：2026-09-02
 
 - stable task id：`TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1`
 - priority：`P0`
@@ -201,6 +201,9 @@ projection，不改变任何冻结研究结论、阈值、证据身份或执行�
    浏览器与自动化测试共同验证该 reader projection。
 10. Atlas L0 与默认折叠的 L1 研究详情从同一 terminal portfolio projection 读取 `RETAIN` 与下一动作，
     展开详情后不得出现旧的 `UNRESOLVED` 或等待 signal-value confirmation 文案。
+11. Project Owner 对 exact HTML 的 desktop/mobile 人工浏览器验收为 `OWNER_MANUAL_VISUAL_PASS`；
+    agent Browser automation 因本地 `file://` / loopback URL policy 保持
+    `NOT_EXECUTED_URL_POLICY`，两者必须独立披露，人工 PASS 不得反写为自动化 Browser PASS。
 
 ## 5. 当前 blocker 与 next owner
 
@@ -215,6 +218,9 @@ projection，不改变任何冻结研究结论、阈值、证据身份或执行�
 - next owner：Project Owner 仅可另行冻结 underlying comparator fee semantics 并批准 Wave B exact
   package/manifest；Wave C 单次 bounded QuantConnect run 仍需再次独立授权。当前没有新的真实数据读取、
   DQ、QuantConnect/options/provider/backtest 或交易权限；
+- Atlas browser 长期工程后续由既有
+  `TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1` 承接：构建 browser-policy
+  允许、exact-byte 可验证、私有且有生命周期的 HTTPS preview，不为本任务新增重复 successor；
 - exit condition：result admission 与 consumer projection 精确重放 aggregate result，任务保持
   `BASELINE_DONE` 且不自动创建或执行 successor；任何新 options manifest/DQ/backtest 仍需另行授权。
 
@@ -325,3 +331,26 @@ projection，不改变任何冻结研究结论、阈值、证据身份或执行�
   deprecation generator 的 default root 错指 original checkout，写出 1186/1343 inventory，而 candidate
   测试实际为 1187/1344。后继显式从 candidate `src` 加载同一 generator，保留 `pytest-xdist`，不使用
   serial PASS 掩盖该失败，也不修改 deprecation lifecycle/阈值。
+- 2026-09-02：候选 `35e11715f6ff9e6fa6316a79ce8311083f0a3a4b` 的 focused Atlas
+  suite=`24 passed`；Architecture/Contract/Integration/Reproducibility 分别为
+  `883/278/995/24 passed`。首轮 Full v7 因 integration worktree 缺少两个既有 ignored authority
+  roots 而得到 `14 failed / 10103 passed / 5 skipped`，失败全部为 local evidence path not found，未涉及
+  Atlas 断言。将原始 checkout 的 O1 DQ gate、两份 exact-signal receipt 与 1205-file signal package 作为
+  exact-hash validation snapshot 后，focused failure set=`19 passed`；parent-bound v8 Full 为
+  `10117 passed / 5 skipped / 644 warnings`，summary=
+  `outputs/validation_runtime/full_20260901T181331Z/test_runtime_summary.json`，summary SHA-256=
+  `e18099b1f6803f7c13b9aed4a06efb3e867767fa45ef844564bd3267a107c427`。
+- 2026-09-02：Project Owner 在
+  `outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html` 对同一 exact page 完成 desktop/mobile
+  人工浏览器验收并明确回复“验收通过”，状态记录为 `OWNER_MANUAL_VISUAL_PASS`。该 HTML SHA-256=
+  `bea2de7359efffcfb981a6067e58d297b821dc415be6f5078267ff5d9b36a609`；in-app Browser 自动化仍因
+  local URL policy 保持 `NOT_EXECUTED_URL_POLICY`。长期方案不新建重复任务，转入既有 TRADING-2526。
+- 2026-09-02：用于 v8 Full 的一次性 validation snapshot 仍保留在 integration worktree：
+  `outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z`（1 file / 4057 bytes）、
+  `outputs/research_trends/operational_forecast/trading_2542i_real_v3`（2 files / 3920 bytes）与
+  `outputs/qqq_options/signal_packages/trading_2542i_operational_forecast_real_v3`（1205 files /
+  3478266 bytes）。全部 bytes 与原始 checkout canonical evidence 哈希一致且无唯一证据；宿主策略拒绝
+  `Remove-Item`，包括单文件 fixed `LiteralPath` 删除，因此未绕过。风险仅为约 3.49 MB 的 ignored duplicate
+  residue，不改变 runtime、研究结论或生产状态。next owner=TRADING-2550 coordinator；exit condition=候选已进入
+  local/origin `main`、无活跃验证进程、原始证据仍可恢复后，通过受审计的整 worktree cleanup 一并移除并记录
+  released size。
