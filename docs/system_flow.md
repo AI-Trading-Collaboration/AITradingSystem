@@ -10167,6 +10167,26 @@ portfolio 读取 signal verdict=`RETAIN`，但把“当前工作 / 最大阻塞 
 underlying comparator fee semantics、Wave B exact package/manifest 与 Wave C 独立 bounded QuantConnect
 authority。该只读投影不改变 signal package、paired contract、research result 或任何 DQ/PIT/执行权限。
 
+## TRADING-2555 foundational falsification contract-only successor
+
+TRADING-2555 把 TRADING-2550 的受限 `RETAIN` 后续工作切换到 result-blind 基础有效性证伪合同，并在
+Atlas successor gate 中登记为当前研究主线。页面只投影冻结的 research window、exposure-matched
+comparator、10 个诊断轴、MBB 21/63、交易成本与 SGOV carry sensitivity 以及四态 reducer；它不会把
+合同完成显示为经验验证通过，也不会读取新的市场数据或提升 Options Wave B/C、paper/live、production、
+broker 权限。
+
+```text
+TRADING-2550 bounded aggregate RETAIN
+  -> TRADING-2555 result-blind F0 contract / strict authority replay / synthetic tests
+  -> independent F1 only after exact-main publication + canonical DQ/manifest replay
+  -x-> parameter rescue / new empirical conclusion / Options Wave B or C / trading action
+```
+
+Atlas `classified_through_task_id`、`current_mainline_task_id`、`largest_blocker_task_id` 与
+`next_legal_action_task_id` 同步指向 TRADING-2555；page-effectiveness task source 明示
+`FOUNDATIONAL_SIGNAL_FALSIFICATION_CONTRACT_IN_PROGRESS_NO_EMPIRICAL_RESULT`。任何未分类 successor 都继续
+fail closed，而 F0 尚未 ordinary-published 或 F1 尚未独立登记时，页面不得显示新的信号有效性结论。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

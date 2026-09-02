@@ -4,7 +4,7 @@
 
 稳定任务 ID：`TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1`
 
-状态：`BASELINE_DONE`
+状态：`IN_PROGRESS`（F0 实现已完成，登记/Atlas failure-fix 与正式发布尚未收口）
 
 Owner 指令：2026-09-03，参考 Web Pro 对 frozen signal-value confirmation 的复核建议，继续推进基础有效性分析与研究。
 
@@ -170,3 +170,11 @@ broker。`INSUFFICIENT` 不等于失败，但保持 Wave B/C HOLD。
   refresh。latest-main candidate 已用 canonical writer 合并 TRADING-2554/2555，task count=`1053`，官方 DevEx 与
   compatibility generators 均 validate PASS；第一轮六项失败加本任务/2550 adjacent 的 focused replacement=
   `92 passed`。
+- 登记前置候选 `c538ca0f79815ca1b76aa090d597c6b5a559cd74` 的 Architecture=`883 passed`、
+  Contract=`278 passed`、Integration=`995 passed`、Reproducibility=`24 passed`；首次 Full=
+  `10119 passed / 14 failed / 3 skipped`。失败 artifact 为
+  `outputs/validation_runtime/full_20260902T185116Z/test_runtime_summary.json`（SHA-256
+  `9bf085614ab876202974a3da99172027b63cf3c4604c77c730d1c0f4070bd6e1`）；14 项全部由新增
+  TRADING-2555 未进入 Atlas successor classification 派生。按 fail-closed 原因修复 Atlas task coverage、
+  current mainline 与 system-flow 投影后，必须绑定该 failed parent 执行 `failure_fix_rerun`，不得把首次
+  Full 记为 PASS。

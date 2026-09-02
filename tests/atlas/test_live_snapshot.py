@@ -96,7 +96,7 @@ def test_unclassified_successor_is_detected_before_live_projection() -> None:
     without_latest = replace(policy, task_sources=policy.task_sources[:-1])
 
     assert unclassified_page_successors(registry, without_latest) == (
-        "TRADING-2554_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_B_OWNER_REVIEW_V1",
+        "TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1",
     )
 
 
@@ -108,22 +108,19 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2554_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2555_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at == "2026-09-01T00:00:00+00:00"
     assert bundle.status_object_zh == (
         "当前研究组合维持 evidence-first。TRADING-2550 已证明冻结的 1,202-session "
         "first_layer_composer_v2 五态信号相对 exposure-matched static QQQ/现金 comparator "
-        "值得保留，但不证明期权实现价值。TRADING-2553 已完成 non-executable Wave A fixture "
-        "baseline。TRADING-2554 已提交 non-executable Wave B fee semantics Owner review 草案："
-        "推荐在同一 QC algorithm 实例内以未提交 hypothetical QQQ MarketOrder 调用 QQQ Security "
-        "fee model，并保留 fully-funded integer quantity、ask entry/bid exit、nonnegative-cash "
-        "与 exact 101-field aggregate-only 边界；该推荐尚未获得 Project Owner exact freeze。"
-        "当前 blocker 是 Owner 对推荐语义的精确冻结，以及其后另行授权的 Wave B exact package/"
-        "manifest、DQ 与独立 bounded QuantConnect run，不是趋势或期权市场数据缺口。当前 paired "
-        "outcome 仍为 INSUFFICIENT_PLATFORM_EVIDENCE；本草案不授权真实数据读取、exporter/"
-        "manifest/DQ、QuantConnect save/build/backtest/retry、options/provider、raw option "
-        "export、paper/live/production/broker 或任何交易动作。"
+        "值得保留，但该 RETAIN 只是受限 aggregate-only 结论。TRADING-2555 当前只推进 "
+        "result-blind 基础有效性证伪合同：冻结 2021-02-22 至 2025-12-02 的 primary window、"
+        "同信号 exposure-matched comparator、10 个诊断轴、MBB 21/63（seed=2555、10000 reps）、"
+        "5/10/15/20bps、SGOV carry diagnostic 与 INVALID > FAIL > INSUFFICIENT > PASS reducer，"
+        "并建立 strict loader、authority replay 和 synthetic/negative tests。尚未执行 canonical "
+        "DQ、真实市场回测、bootstrap 或任何外部平台动作，因此当前没有新的策略有效性结论；"
+        "QQQ Options Wave B/C 保持 HOLD，paper/live/production/broker 与任何交易动作均未授权。"
     )
 
 
