@@ -101,7 +101,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "0c66954e05496ed33ecdd8335e6968523b30b832abcce52dd19e31e881981c46"
+        "sha256": "ca5a0ec91ab14fa8e731f530a2bbdfd4890112349eccf3740f8e1f69ed8f8610"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -116,7 +116,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "3371fb2953e9154b964cfbccb8d46ab15aecb5d1cbcc07d0cad869c6ff557b7f"
+        "sha256": "b70711d7db046a89fb662bd01693167e932aee6574a726b87af9ddaeaf4118c5"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -294,5 +294,5 @@
     }
   },
   "section_id": "phase_devx_011_governed_workflow_health_control_loop_v1",
-  "section_sha256": "fe24b4bb341b0fbec100a997a0835768105fd270d9a8c12a3a1b740f62ae5d2c"
+  "section_sha256": "817af4ae5ea5a8cb835b29d657e843359fcaf3f1f602f4d7fd9d75415e401a72"
 }
