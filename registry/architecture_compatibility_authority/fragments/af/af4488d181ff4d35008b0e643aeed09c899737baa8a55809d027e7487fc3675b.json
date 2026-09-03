@@ -128,7 +128,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "5b28324bce882664e3666ef8b447353e53dcd9a7c595b426559ff041ba973cb7"
+        "sha256": "4b2eb056e35cad47854b207cb7d08ab86e5f44c630c9cd037f2d464e286374d2"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -172,5 +172,5 @@
     "task_id": "RISK-012"
   },
   "section_id": "phase_risk_012_unknown_risk_event_id_fail_closed_v1",
-  "section_sha256": "af357dec7f7fb10597c02e2bd4bdab764b80b6ec753e302a77e33ada0786e72a"
+  "section_sha256": "af4488d181ff4d35008b0e643aeed09c899737baa8a55809d027e7487fc3675b"
 }
