@@ -45,7 +45,7 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
     assert bundle.research_state_as_of.startswith("2026-09-03T")
-    assert bundle.evidence_evaluated_at == "2026-09-03T04:22:54.1021586+00:00"
+    assert bundle.evidence_evaluated_at == "2026-09-03T08:03:07.6304015+00:00"
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
     assert bundle.current_diff.after_snapshot_id == bundle.current_snapshot.snapshot_id
@@ -119,7 +119,7 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         "真实 +13.745976956735628 个百分点 excess 位于 placebo 第 80.0 百分位，但 2,000 个 placebo 不低于"
         "真实值，单侧 p=0.20007999200079993，冻结 reducer 因此输出 "
         "TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO。真实最大回撤 9.602605144610187% 较好，但在合同中仅是"
-        "描述性证据，不能覆盖主统计量。TRADING-2557 继续维持 INSUFFICIENT/HOLD；不得重跑、事后改参数或"
+        "描述性证据，不能覆盖主统计量。2557 继续维持 INSUFFICIENT/HOLD；不得重跑、事后改参数或"
         "提高本候选研究优先级，也不支持 QQQ Options Wave B/C、paper/live/production/broker 或任何交易动作。"
         "未来如继续，只能另行登记新的 prospective OOS。"
     )

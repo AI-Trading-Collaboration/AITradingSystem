@@ -433,7 +433,7 @@ task_sources:
   - task_id: TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
     requirement_path: docs/requirements/TRADING-2558_First_Layer_Composer_V2_Matched_Placebo_Falsification_V1.md
     coverage: MATCHED_PLACEBO_TIMING_NOT_DISTINGUISHED_RESEARCH_PRIORITY_NOT_RAISED
-    reader_summary_zh: 2558 已完成一次 write-once matched-placebo 时点证伪。10,000 draws 分别排列 41 个 LONG run 与 40 个内部 FLAT gap，同时固定 385 个 LONG interval、边界、82 个交易事件、5 bps 成本和 exposure-matched comparator；manifest replay、canonical DQ、本地 run、independent replay 为 1/1/1/1 且 PASS，其他动作均为 0。真实 +13.745976956735628 个百分点 excess 位于第 80.0 百分位，但 2,000 个 placebo 不低于真实值，单侧 p=0.20007999200079993，故未区分真实时点与同形态随机安排。最大回撤优势仅作描述性证据；TRADING-2557 保持 INSUFFICIENT/HOLD，本候选不提高 prospective OOS、Options 或生产优先级，且不得重跑或事后参数救援。
+    reader_summary_zh: 2558 已完成一次 write-once matched-placebo 时点证伪。10,000 draws 分别排列 41 个 LONG run 与 40 个内部 FLAT gap，同时固定 385 个 LONG interval、边界、82 个交易事件、5 bps 成本和 exposure-matched comparator；manifest replay、canonical DQ、本地 run、independent replay 为 1/1/1/1 且 PASS，其他动作均为 0。真实 +13.745976956735628 个百分点 excess 位于第 80.0 百分位，但 2,000 个 placebo 不低于真实值，单侧 p=0.20007999200079993，故未区分真实时点与同形态随机安排。最大回撤优势仅作描述性证据；2557 保持 INSUFFICIENT/HOLD，本候选不提高 prospective OOS、Options 或生产优先级，且不得重跑或事后参数救援。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW
