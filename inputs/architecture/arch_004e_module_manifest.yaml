@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1190
+module_count: 1191
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -10072,6 +10072,26 @@ modules:
 - module_id: src.ai_trading_system.first_layer_foundational_falsification_execution
   path: src/ai_trading_system/first_layer_foundational_falsification_execution.py
   sha256: 8feb16c9328eac48c8751b2a664d21b0bcb495889653e8db352f28836444730f
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.first_layer_foundational_falsification_execution_v2
+  path: src/ai_trading_system/first_layer_foundational_falsification_execution_v2.py
+  sha256: 00b75a97617ba0292b9fcb93af77b181e5db81166c9583c75e50fce68123b62c
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
