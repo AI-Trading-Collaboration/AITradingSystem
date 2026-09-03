@@ -10458,7 +10458,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: e19e729f3b94eb238a640a1605c12313936d725f0357636c2685ea8daf0d9c6d
+  sha256: 77fc1873a8dc9384d673a04380cf281f4553e4fc44e56d6b4b0b0dc000721aef
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -18498,7 +18498,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_trading2452_architecture_contract
   path: tests/test_trading2452_architecture_contract.py
-  sha256: 2d0624e400f310887b27e14c4cefcf65f5dcfa84192fdc2516b9fac83481a794
+  sha256: 3b3efb97ea1ba3f1580ec1f3ca6dcf917408cacee261df590e04dc17938fa045
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

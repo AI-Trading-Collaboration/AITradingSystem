@@ -151,7 +151,7 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     ]
 
     assert next(reversed(merged)) == (
-        "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1"
+        "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1"
     )
     assert fragment_authority["source_of_truth"] == "LEGACY_MONOLITH"
     assert fragment_authority["fragment_shadow_active"] is False
@@ -162,7 +162,7 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     assert successor["source_of_truth"] == "LEGACY_MONOLITH"
     assert successor["fragment_shadow_active"] is False
     assert successor["target_count"] == 3
-    assert successor["entry_count"] == 3135
+    assert successor["entry_count"] == 3136
     assert successor["fragment_count"] == 192
 
 
@@ -184,8 +184,8 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         (
             "system_flow",
             "docs/system_flow.md",
-            "99e980c509726e83415d8486b089179b3b3fcb43dc8f8061a00d6b0c762093d0",
-            1202,
+            "fa388d8c0ba7f36dbcdbd938a9682a16a8742135f2a9dd88c3f278df014203a1",
+            1203,
         ),
     ],
 )

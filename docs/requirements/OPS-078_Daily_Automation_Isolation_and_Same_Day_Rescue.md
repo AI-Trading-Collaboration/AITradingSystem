@@ -136,3 +136,56 @@ actual automation 原位更新和 runtime-local binding preflight。本阶段不
 runtime 业务逻辑、provider、DQ/PIT/score 或 production effect。失败 artifact 保存在
 `outputs/validation_runtime/architecture-fitness_20260903T122818Z/test_runtime_summary.json`，v2 transaction
 已正式关闭；v3 对两处计数作耐久修复并要求从新 candidate 重跑全部六级正式 validation。
+
+v3 新候选的五个前置 tier 全部通过：`fast-unit=350`、`Architecture=885`、`Contract=278`、
+`Integration=995`、`Reproducibility=24`。正式 Full 为 `10170 passed / 22 failed / 6 skipped`，失败
+artifact=`outputs/validation_runtime/full_20260903T130803Z/test_runtime_summary.json`。其中 4 项是 OPS-078
+成为 latest compatibility successor、system-flow 更新后测试仍保留旧 successor/SHA/count；18 项是在隔离
+worktree 中缺少既有 Git-ignored retained evidence locator。v4 只修正 current-authority assertions，并按既有
+TRADING-2500/2549/2553/2554 hydration 合同，从 canonical development checkout 向相同相对路径复制并逐项
+复核以下只读 evidence roots：
+
+- `outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_dq_gate.json`；
+- `outputs/research_trends/operational_forecast/trading_2542i_real_v3/`；
+- `outputs/qqq_options/signal_packages/trading_2542i_operational_forecast_real_v3/`；
+- `outputs/research/first_layer_composer_v2_foundational_falsification_v1/`；
+- `outputs/research/first_layer_composer_v2_foundational_falsification_failure_fix_v1/`；
+- `outputs/research/first_layer_composer_v2_matched_placebo_v1/`。
+
+这些副本只恢复 frozen tests 的 repository-relative locator，不是新 DQ、研究或投资 evidence，不执行
+provider、research run、production 或 broker action。复制前要求目标不存在、source 位于 canonical root、
+destination 位于 OPS-078 lane；复制后按每个 root 的 sorted relative path、size 与 SHA-256 生成确定性
+inventory 并与 source 一致。退出条件是 parent-bound Full 与发布收口完成、canonical source 仍存在且 hash
+一致；随后随 exact worktree 清理，不能将副本发布进 Git 或 runtime deployment。
+
+v4 hydration 已完成 source/destination 独立 inventory 等值复核（tree digest 输入为按相对路径排序的
+`path<TAB>size<TAB>sha256` UTF-8 行）：
+
+- O1 DQ gate：`1 file / 4,057 bytes / tree_sha256=556ee31b…66849`；文件 SHA-256 仍为
+  `ca02b431…a1ca`；
+- TRADING-2542I real materialization：`69 files / 6,690,288 bytes /
+  tree_sha256=992bb8db…7c911`；
+- TRADING-2542I signal package：`1,205 files / 3,478,266 bytes /
+  tree_sha256=8954df51…866b6`；
+- foundational falsification v1：`6 files / 7,742 bytes / tree_sha256=f6bc55d5…27a6`；
+- foundational failure-fix v1：`5 files / 41,469 bytes / tree_sha256=d6675e58…e953`；
+- matched-placebo v1：`5 files / 11,153 bytes / tree_sha256=d8225ca3…f4f5`。
+
+所有 destination 在复制前均不存在；hydration 后未修改 canonical source，也未运行任何被复制 artifact 的
+producer。后续 cleanup 必须再次计算相同 inventory，并确认 canonical source 仍匹配后随 worktree 移除。
+
+hydration 后对 prior Full failed set 执行 16-worker `--lf`：21 个仍存在的 node 中 `20 passed / 1
+failed`；唯一失败是历史 successor payload 已随 authoritative report-flow 更新为 `entry_count=3136`，而
+`tests/test_devx_006d_report_catalog_flow_authority.py` 仍断言 3135。另一个旧 system-flow 参数化 node id
+因 expected SHA/count 更新而不再存在，不能用 cache absence 视为 PASS。v4 已以失败证据关闭；v5 将该
+successor expectation 同步为 3136、重新生成全部 authority，并显式运行包含新参数化 node 的等价完整集合。
+
+v5 的显式 69-test 等价集合为 `68 passed / 1 failed`。唯一失败是同步 system-flow SHA 时把 authority
+给出的 `fa388d8c0ba7f36dbcdbd938a9682a16a8742135f2a9dd88c3f278df014203a1` 抄成了错误中段；
+render bytes、index 和 live file 本身始终一致。v5 已失败关闭；v6 只纠正该 exact SHA transcription，
+重新生成依赖该 test hash 的 architecture/compatibility authority，并从完整 69-test 集合复验。
+
+v6 把 Full-failure 等价集合与 OPS-078 核心/架构回归合并为 137 项，结果 `137 passed`，Ruff
+`PASS`；Black 仅要求格式化新增的 successor 常量。因为该 test file 参与 compatibility source hash，v6
+未在 generated-post 后直接修改并沿用旧 authority，而是失败关闭；v7 在 generator 前执行格式化并重新
+生成全部依赖 authority，随后须重跑同一 137-test suite 与 parent-bound Full。

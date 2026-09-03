@@ -13,21 +13,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex engineering coordinator：修复 architecture-fitness freshness、从新候选完成六级正式验证、main
-    push、exact release promotion 与 automation binding；operations owner：复核下一 provider-ready
-    ordinary daily
+  next_owner: Codex engineering coordinator：格式化新增 successor 常量、重建 authority、重跑 137
+    focused 与 parent-bound Full；operations owner：复核下一 provider-ready ordinary daily
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 首个正式 architecture-fitness 为 883 passed
-    / 2 failed：canonical task count 1057→1058 与 report/catalog entry count 3135→3136
-    两个 repository-wide 常量未同步；执行耐久修复并从新 candidate 重跑全部正式 tier。
+  unstructured_legacy_blocker_or_next_step: v6 合并 focused suite 为 137 passed；Ruff
+    PASS，Black 仅要求格式化 tests/test_trading2452_architecture_contract.py。该文件参与 compatibility
+    hash，v6 已关闭，v7 在 generator 前格式化并完整重建。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: projectless carrier、无 project id/cwds；单 scheduler 09:30/17:30 双窗口，每 invocation
-      最多一次 trigger；rescue 受 fresh-key/lock/terminal disposition 约束；expected as_of
-      无 artifact 必须 EXPECTED_AS_OF_NOT_RECORDED；六级正式验证、普通 push、promotion/binding PASS；production_effect=none，无
+    text: projectless carrier、无 project id/cwds；单 scheduler 双窗口、每 invocation 一次 trigger；gap/rescue
+      gates；137 focused、静态格式、parent-bound Full、普通 push、promotion/binding PASS；production_effect=none，无
       weights/broker/trading。
   production_effect: none
   broker_action: none
@@ -129,28 +127,149 @@ events:
   - change:OPS-078-ARCHITECTURE-FRESHNESS-FIX-V1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-6bc9614cb9c12d89c987426b0b2ff181
+- schema_version: task_event.v1
+  task_id: OPS-078_DAILY_AUTOMATION_ISOLATION_AND_SAME_DAY_RESCUE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T22:52:55.2783948+09:00'
+  actor: integration-coordinator
+  change_id: OPS-078-FULL-FAILURE-CLASSIFICATION-V1
+  lane_id: null
+  base_commit: 486db83ba99448e1fc5d9c73f1f51434a14e8f31
+  previous_state_event_id: task-event-6bc9614cb9c12d89c987426b0b2ff181
+  from_status: VALIDATING
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator：修复 OPS-078 current-authority assertions、按既有
+      exact-hash contract hydrate isolated-worktree retained evidence、执行 parent-bound
+      Full；operations owner：复核下一 provider-ready ordinary daily
+    blocker_or_next_step: 首个 formal Full 为 10170 passed / 22 failed / 6 skipped：4
+      个 current-authority freshness assertions；其余 18 个由 isolated worktree 缺少已受治理的
+      canonical ignored retained evidence locator 导致。禁止盲重试；v4 绑定 failed Full parent、补
+      exact test path，并按既有 hydration hash contract恢复只读 fixture。
+    acceptance_criteria: projectless carrier、无 project id/cwds；单 scheduler 09:30/17:30
+      双窗口，每 invocation 最多一次 trigger；rescue 受 fresh-key/lock/terminal disposition 约束；expected
+      as_of 无 artifact 必须 EXPECTED_AS_OF_NOT_RECORDED；current authority/frozen fixture
+      在 isolated worktree 可重放；parent-bound Full、普通 push、promotion/binding PASS；production_effect=none，无
+      weights/broker/trading。
+    notes: 2026-09-03：v3 前置 fast-unit/Architecture/Contract/Integration/Reproducibility
+      为 350/885/278/995/24 PASS；Full=10170 PASS/22 FAIL/6 SKIP。四项为 OPS-078 successor
+      与 system-flow SHA/count旧断言；18项缺 O1 DQ、2542I materialization/signal package、2556/2557/2558
+      first-layer ignored evidence。v4 仅更新 current authority 并 exact-hash hydrate canonical
+      bytes，不运行 provider/DQ/research/trading。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:OPS-078-FULL-FAILURE-CLASSIFICATION-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d8ad267d4000eedb26d2344e965e586b
+- schema_version: task_event.v1
+  task_id: OPS-078_DAILY_AUTOMATION_ISOLATION_AND_SAME_DAY_RESCUE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T22:57:35.9121844+09:00'
+  actor: integration-coordinator
+  change_id: OPS-078-FULL-FAILED-SET-FOCUSED-V1
+  lane_id: null
+  base_commit: 486db83ba99448e1fc5d9c73f1f51434a14e8f31
+  previous_state_event_id: task-event-d8ad267d4000eedb26d2344e965e586b
+  from_status: VALIDATING
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator：同步最后一处 report-flow successor count、重建
+      authority、显式复跑 Full failed set 与 parent-bound Full；operations owner：复核下一 provider-ready
+      ordinary daily
+    blocker_or_next_step: hydration 后 prior Full last-failed 集合为 20 passed / 1 failed；唯一失败是
+      phase_prod_004 report_catalog_flow_successor 实际 entry_count=3136、测试仍断言3135。v4
+      已关闭；v5 同步该 current successor expectation 并完整重建。
+    acceptance_criteria: projectless carrier、无 project id/cwds；单 scheduler 09:30/17:30
+      双窗口，每 invocation 最多一次 trigger；rescue 受 fresh-key/lock/terminal disposition 约束；expected
+      as_of 无 artifact 必须 EXPECTED_AS_OF_NOT_RECORDED；Full failed set 与 parent-bound
+      Full 全 PASS；普通 push、promotion/binding PASS；production_effect=none，无 weights/broker/trading。
+    notes: 2026-09-03：六个 exact hydration root source/destination inventory 一致；pytest
+      --lf 选择 21 个现存 node，20 PASS，唯一 stale successor count 3135→3136。另一个旧参数化 node
+      id 因 system-flow expected SHA/count更新而不再存在，v5 将显式运行等价完整节点集合。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:OPS-078-FULL-FAILED-SET-FOCUSED-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-24de8ab7fa93cc4f0ad0f450a62e175b
+- schema_version: task_event.v1
+  task_id: OPS-078_DAILY_AUTOMATION_ISOLATION_AND_SAME_DAY_RESCUE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T23:01:10.3406924+09:00'
+  actor: integration-coordinator
+  change_id: OPS-078-SYSTEM-FLOW-SHA-CORRECTION-V1
+  lane_id: null
+  base_commit: 486db83ba99448e1fc5d9c73f1f51434a14e8f31
+  previous_state_event_id: task-event-24de8ab7fa93cc4f0ad0f450a62e175b
+  from_status: VALIDATING
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator：修正 system-flow exact SHA transcription、重建
+      authority、复跑 69-test failed-equivalent set 与 parent-bound Full；operations owner：复核下一
+      provider-ready ordinary daily
+    blocker_or_next_step: v5 显式 failed-equivalent suite 为 68 passed / 1 failed；唯一失败是测试中手工同步的
+      system-flow SHA 中段抄写错误，render/index/current file 实际一致。v6 使用 authority 输出的 exact
+      fa388d8c0ba7f36d…4203a1 并重建。
+    acceptance_criteria: projectless carrier、无 project id/cwds；单 scheduler 09:30/17:30
+      双窗口，每 invocation 最多一次 trigger；gap visibility 与 rescue gates；69-test failed-equivalent
+      set、parent-bound Full、普通 push、promotion/binding PASS；production_effect=none，无
+      weights/broker/trading。
+    notes: 2026-09-03：v5 的 69-test suite 只剩 system-flow expected SHA transcription
+      mismatch；未发现 hydration、scheduler、DQ/PIT、first-layer 或 QQQ execution semantic
+      failure。v5 已失败关闭，v6 不复用其通过声明。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:OPS-078-SYSTEM-FLOW-SHA-CORRECTION-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8870520c3b3cdab2debb84123700728c
+- schema_version: task_event.v1
+  task_id: OPS-078_DAILY_AUTOMATION_ISOLATION_AND_SAME_DAY_RESCUE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T23:06:38.8507321+09:00'
+  actor: integration-coordinator
+  change_id: OPS-078-FOCUSED-FORMAT-FIX-V1
+  lane_id: null
+  base_commit: 486db83ba99448e1fc5d9c73f1f51434a14e8f31
+  previous_state_event_id: task-event-8870520c3b3cdab2debb84123700728c
+  from_status: VALIDATING
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator：格式化新增 successor 常量、重建 authority、重跑 137
+      focused 与 parent-bound Full；operations owner：复核下一 provider-ready ordinary daily
+    blocker_or_next_step: v6 合并 focused suite 为 137 passed；Ruff PASS，Black 仅要求格式化
+      tests/test_trading2452_architecture_contract.py。该文件参与 compatibility hash，v6
+      已关闭，v7 在 generator 前格式化并完整重建。
+    acceptance_criteria: projectless carrier、无 project id/cwds；单 scheduler 双窗口、每 invocation
+      一次 trigger；gap/rescue gates；137 focused、静态格式、parent-bound Full、普通 push、promotion/binding
+      PASS；production_effect=none，无 weights/broker/trading。
+    notes: 2026-09-03：功能/历史 replay/authority 137 tests 全 PASS；只剩 Black formatting。为避免
+      stale generated hashes，不在 v6 generated-post 后静默改字节，转由 v7 重放 generator order。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:OPS-078-FOCUSED-FORMAT-FIX-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d503ab35af0b475518cbd1ab4613f572
 projection:
   legacy_first_eight_cells:
   - OPS-078_DAILY_AUTOMATION_ISOLATION_AND_SAME_DAY_RESCUE
   - Operations / daily automation isolated carrier and same-day rescue window
   - P0
   - VALIDATING
-  - Codex engineering coordinator：修复 architecture-fitness freshness、从新候选完成六级正式验证、main
-    push、exact release promotion 与 automation binding；operations owner：复核下一 provider-ready
-    ordinary daily
-  - 首个正式 architecture-fitness 为 883 passed / 2 failed：canonical task count 1057→1058
-    与 report/catalog entry count 3135→3136 两个 repository-wide 常量未同步；执行耐久修复并从新 candidate
-    重跑全部正式 tier。
-  - projectless carrier、无 project id/cwds；单 scheduler 09:30/17:30 双窗口，每 invocation
-    最多一次 trigger；rescue 受 fresh-key/lock/terminal disposition 约束；expected as_of 无
-    artifact 必须 EXPECTED_AS_OF_NOT_RECORDED；六级正式验证、普通 push、promotion/binding PASS；production_effect=none，无
+  - Codex engineering coordinator：格式化新增 successor 常量、重建 authority、重跑 137 focused 与
+    parent-bound Full；operations owner：复核下一 provider-ready ordinary daily
+  - v6 合并 focused suite 为 137 passed；Ruff PASS，Black 仅要求格式化 tests/test_trading2452_architecture_contract.py。该文件参与
+    compatibility hash，v6 已关闭，v7 在 generator 前格式化并完整重建。
+  - projectless carrier、无 project id/cwds；单 scheduler 双窗口、每 invocation 一次 trigger；gap/rescue
+    gates；137 focused、静态格式、parent-bound Full、普通 push、promotion/binding PASS；production_effect=none，无
     weights/broker/trading。
-  - 2026-09-03：v2 candidate bffb11dc4 的 fast-unit 350 passed；architecture-fitness
-    883 passed / 2 failed，定位为新增 task/report entry 后两处精确计数测试未同步。v2 已保留失败 artifact 并关闭；v3
-    补齐 path claim，禁止盲重试。
+  - 2026-09-03：功能/历史 replay/authority 137 tests 全 PASS；只剩 Black formatting。为避免 stale
+    generated hashes，不在 v6 generated-post 后静默改字节，转由 v7 重放 generator order。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 5f506cdbfa436c2afbc4890521db28e60b2701065d933baae89f09344894baad
-last_event_id: task-event-6bc9614cb9c12d89c987426b0b2ff181
+  canonical_row_sha256: 92ae5c09131cfd05a9fdb639e5815e9528fcf92c8659515a6fdec021ed5d0454
+last_event_id: task-event-d503ab35af0b475518cbd1ab4613f572
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 8d544029baa28173a1bc08acf60a43d7e53972e330e35b2bbd1737433e4781f0
+fragment_checksum: 4ad91fbb3c4e6b64b4bbbb09d783e63c34d8d5f8892f2c299b49475a7125ffc6

@@ -68,12 +68,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "085e6cfed76fcfb519ff5aa7f34a69500166c3a69b484ab18b536700ccb012ed"
+        "sha256": "9b25cb1961c8a11240c59d9e53818aa45a3540c10785d59240a4b7e107953d2d"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "33d0a7aca4a0db77ab1fd3f263e022b81168097ec032ecd5d9f0463d6d03f638"
+        "sha256": "1b4fc41d01f1b4b6b2a5df42deff485b23fb70125d9ed9417ca655e001378478"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -133,7 +133,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "e19e729f3b94eb238a640a1605c12313936d725f0357636c2685ea8daf0d9c6d"
+        "sha256": "77fc1873a8dc9384d673a04380cf281f4553e4fc44e56d6b4b0b0dc000721aef"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -143,7 +143,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_trading2452_architecture_contract.py",
-        "sha256": "2d0624e400f310887b27e14c4cefcf65f5dcfa84192fdc2516b9fac83481a794"
+        "sha256": "3b3efb97ea1ba3f1580ec1f3ca6dcf917408cacee261df590e04dc17938fa045"
       }
     ],
     "status": "IN_PROGRESS",
@@ -178,5 +178,5 @@
     "task_id": "RISK-012"
   },
   "section_id": "phase_risk_012_unknown_risk_event_id_fail_closed_v1",
-  "section_sha256": "546f801633ccedaeecfd0790bf657ac6051e6d1f430c1db378627b649844fbd8"
+  "section_sha256": "f521f7cb758966d574adfedc140e3e9f342588faedb5862f527c540fd546568d"
 }
