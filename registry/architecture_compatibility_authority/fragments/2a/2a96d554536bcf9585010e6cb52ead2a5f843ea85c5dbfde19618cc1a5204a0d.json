@@ -73,7 +73,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "f1c0bcc7a3bf6903f03c8037a93bfb3efa0764caf4700ecaa2e77ac38ca281c6"
+        "sha256": "085e6cfed76fcfb519ff5aa7f34a69500166c3a69b484ab18b536700ccb012ed"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -93,12 +93,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "fad505e6dece69eeb4ba4291105feea23388ccd9759c4d36295aeb116256407c"
+        "sha256": "522f1a8635d3769addce19461feda4d1641faa2f8643c57e77738107bd388497"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "1931dd22771101ca78bd15808a9c3878e03a169dfbb4f76bb0d73152f8347f4d"
+        "sha256": "33d0a7aca4a0db77ab1fd3f263e022b81168097ec032ecd5d9f0463d6d03f638"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -153,7 +153,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "8da1a734b3811d959b43d259fbb9d7e2082a389644a10ff71abf6ef6d16ead62"
+        "sha256": "1d94738b87b47c7449c25542715aa7afc10ec94608903673f9f184dfeedc9896"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -238,5 +238,5 @@
     "task_id": "PROD-004"
   },
   "section_id": "phase_prod_004_pit_cumulative_archive_consumption_v1",
-  "section_sha256": "647acc13b7f8ff70b2e8e65da7d530caab59504312727966c6059a775594f5b0"
+  "section_sha256": "2a96d554536bcf9585010e6cb52ead2a5f843ea85c5dbfde19618cc1a5204a0d"
 }

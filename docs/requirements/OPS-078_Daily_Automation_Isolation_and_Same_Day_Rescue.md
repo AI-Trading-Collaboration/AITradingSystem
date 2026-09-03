@@ -129,3 +129,10 @@ candidate binding、正式 validation 与 publication closeout，不复用 v1 �
 validation、普通 main push、exact release promotion、
 actual automation 原位更新和 runtime-local binding preflight。本阶段不调用 `aits ops daily-run`，不补写
 历史 gap，也不宣称 2026-09-02/2026-09-03 数据已完整。
+
+首个正式候选 `bffb11dc497ccee272c4009fed0ab28a72b750a5` 的 `fast-unit` 为
+`350 passed`；`architecture-fitness` 为 `883 passed / 2 failed`。两个失败均为新增 canonical task
+和 system-flow entry 后 repository-wide 精确计数测试未同步（`1057→1058`、`3135→3136`），不涉及
+runtime 业务逻辑、provider、DQ/PIT/score 或 production effect。失败 artifact 保存在
+`outputs/validation_runtime/architecture-fitness_20260903T122818Z/test_runtime_summary.json`，v2 transaction
+已正式关闭；v3 对两处计数作耐久修复并要求从新 candidate 重跑全部六级正式 validation。
