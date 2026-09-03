@@ -1,0 +1,86 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1
+  task_id_sha256: e87eec369479e0e4e8184221f3e112f28bc534bcb4b77a0bcc9239cbec47f025
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1
+  title: null
+  domain: Strategy research / first-layer composer v2 foundational falsification empirical
+    run
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex strategy-evidence coordinator：冻结 F1 authorization/manifest，实现并执行一次
+    canonical DQ、一次本地诊断和一次独立重放
+  requirement_refs:
+  - docs/requirements/TRADING-2556_First_Layer_Composer_V2_Foundational_Falsification_Empirical_Run_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 等待结果盲实现与 exact manifest；任何输入身份或 DQ/PIT
+    失败均 fail closed，且不得事后调整窗口、阈值、comparator 或 reducer
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: F0 exact main=fcb2a420；10 个诊断、授权计数、aggregate-only 输出、独立重放、Atlas/system flow、formal/Full
+      和 ordinary publication 全部通过
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-03T09:45:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2556-f1-task-registration-v1
+  lane_id: null
+  base_commit: fcb2a420ed1489189ea1ec9a323724943dcaee52
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1
+    - Strategy research / first-layer composer v2 foundational falsification empirical
+      run
+    - P0
+    - IN_PROGRESS
+    - Codex strategy-evidence coordinator：冻结 F1 authorization/manifest，实现并执行一次 canonical
+      DQ、一次本地诊断和一次独立重放
+    - 等待结果盲实现与 exact manifest；任何输入身份或 DQ/PIT 失败均 fail closed，且不得事后调整窗口、阈值、comparator
+      或 reducer
+    - F0 exact main=fcb2a420；10 个诊断、授权计数、aggregate-only 输出、独立重放、Atlas/system flow、formal/Full
+      和 ordinary publication 全部通过
+    - 'Supporting requirement: docs/requirements/TRADING-2556_First_Layer_Composer_V2_Foundational_Falsification_Empirical_Run_V1.md。Owner
+      在 F0 发布后指示继续，authorization_state=STANDING_OWNER_SCOPE；download/cache mutation/QuantConnect/options/provider/orders/fills/positions/paper/live/production/broker=0/false/none。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2556-f1-task-registration-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-558cd6146f68b06664101d265445778c
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1
+  - Strategy research / first-layer composer v2 foundational falsification empirical
+    run
+  - P0
+  - IN_PROGRESS
+  - Codex strategy-evidence coordinator：冻结 F1 authorization/manifest，实现并执行一次 canonical
+    DQ、一次本地诊断和一次独立重放
+  - 等待结果盲实现与 exact manifest；任何输入身份或 DQ/PIT 失败均 fail closed，且不得事后调整窗口、阈值、comparator
+    或 reducer
+  - F0 exact main=fcb2a420；10 个诊断、授权计数、aggregate-only 输出、独立重放、Atlas/system flow、formal/Full
+    和 ordinary publication 全部通过
+  - 'Supporting requirement: docs/requirements/TRADING-2556_First_Layer_Composer_V2_Foundational_Falsification_Empirical_Run_V1.md。Owner
+    在 F0 发布后指示继续，authorization_state=STANDING_OWNER_SCOPE；download/cache mutation/QuantConnect/options/provider/orders/fills/positions/paper/live/production/broker=0/false/none。'
+  docs_links:
+  - docs/requirements/TRADING-2556_First_Layer_Composer_V2_Foundational_Falsification_Empirical_Run_V1.md
+  terminal: false
+  canonical_row_sha256: 8adea0901e376af140dce2960d604a01b2e1e7bbbbeabfe599f91e2c86231106
+last_event_id: task-event-558cd6146f68b06664101d265445778c
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 90fe265274c1830092847dcc02fb9787bef6429406b36cae7d979940c9f93eee
