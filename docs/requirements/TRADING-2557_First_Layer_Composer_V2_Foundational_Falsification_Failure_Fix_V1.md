@@ -8,7 +8,7 @@ Owner 指令：`owner_instruction:TRADING-2557:2026-09-03:exact_schema_only_fail
 
 授权状态：`EXACT_PREAUTHORIZED`
 
-状态：`VALIDATING`
+状态：`BASELINE_DONE`
 
 ## 1. 目标与解释边界
 

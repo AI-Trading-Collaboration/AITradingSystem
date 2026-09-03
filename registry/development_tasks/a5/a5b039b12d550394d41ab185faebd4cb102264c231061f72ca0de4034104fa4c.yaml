@@ -14,18 +14,18 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex integration coordinator：完成 Atlas/system flow、generated authority、formal/Full、local-main
-    fast-forward 与 ordinary push
+  next_owner: Project Owner / strategy research：维持 HOLD；如需继续，另行预注册真正独立的新证据阶段并明确授权
   requirement_refs:
   - docs/requirements/TRADING-2557_First_Layer_Composer_V2_Foundational_Falsification_Failure_Fix_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 唯一运行已产出 INSUFFICIENT/HOLD；需完成生成权威刷新和正式验证，禁止重跑或事后参数救援
+  unstructured_legacy_blocker_or_next_step: 当前 reused-development-window 证据为 INSUFFICIENT：bootstrap
+    下界跨 0 且 leave-2022-out 为负；禁止重跑、阈值救援或推进 Options Wave B/C
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: schema-only 修复、V1 绑定、EXACT_PREAUTHORIZED、1/1/1/1、DQ/independent replay、aggregate
-      admission 已满足；待 Atlas/system flow、formal/Full 和发布门禁 PASS
+    text: schema-only 修复、V1 immutable binding、EXACT_PREAUTHORIZED 1/1/1/1、DQ/independent
+      replay、aggregate admission、Atlas/system flow 与正式发布证据全部绑定；后续独立研究另立任务
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -173,26 +173,53 @@ events:
   - change:TRADING-2557-REQUIREMENT-BINDING-20260903
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-6807338f707c4d88ecd3965c7599c43b
+- schema_version: task_event.v1
+  task_id: TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T13:41:59.1725646+09:00'
+  actor: codex-coordinator
+  change_id: TRADING-2557-BASELINE-DONE-20260903
+  lane_id: null
+  base_commit: aca705e2d03d5c6378d26e1ba0e07d5ce4b8d406
+  previous_state_event_id: task-event-6807338f707c4d88ecd3965c7599c43b
+  from_status: VALIDATING
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner / strategy research：维持 HOLD；如需继续，另行预注册真正独立的新证据阶段并明确授权
+    blocker_or_next_step: 当前 reused-development-window 证据为 INSUFFICIENT：bootstrap
+      下界跨 0 且 leave-2022-out 为负；禁止重跑、阈值救援或推进 Options Wave B/C
+    acceptance_criteria: schema-only 修复、V1 immutable binding、EXACT_PREAUTHORIZED 1/1/1/1、DQ/independent
+      replay、aggregate admission、Atlas/system flow 与正式发布证据全部绑定；后续独立研究另立任务
+    notes: '[Supporting requirement](docs/requirements/TRADING-2557_First_Layer_Composer_V2_Foundational_Falsification_Failure_Fix_V1.md)。唯一
+      V2 attempt 结论=INSUFFICIENT/HOLD；5bps paired excess=+13.745976956735628pp，21/63-session
+      bootstrap 2.5% lower=-34.943648104514985/-31.97461050658123pp，leave-2022-out=-5.048443883389609pp。EXACT_PREAUTHORIZED
+      计数=1/1/1/1，其余=0；DQ/independent replay PASS。无 pristine OOS、Options、生产或交易授权。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2557-BASELINE-DONE-20260903
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-38aa3814ee1c9ca9495bdccb2dc37ac4
 projection:
   legacy_first_eight_cells:
   - TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
   - Strategy research / first-layer composer v2 foundational falsification schema-only
     failure-fix
   - P0
-  - VALIDATING
-  - Codex integration coordinator：完成 Atlas/system flow、generated authority、formal/Full、local-main
-    fast-forward 与 ordinary push
-  - 唯一运行已产出 INSUFFICIENT/HOLD；需完成生成权威刷新和正式验证，禁止重跑或事后参数救援
-  - schema-only 修复、V1 绑定、EXACT_PREAUTHORIZED、1/1/1/1、DQ/independent replay、aggregate
-    admission 已满足；待 Atlas/system flow、formal/Full 和发布门禁 PASS
+  - BASELINE_DONE
+  - Project Owner / strategy research：维持 HOLD；如需继续，另行预注册真正独立的新证据阶段并明确授权
+  - 当前 reused-development-window 证据为 INSUFFICIENT：bootstrap 下界跨 0 且 leave-2022-out
+    为负；禁止重跑、阈值救援或推进 Options Wave B/C
+  - schema-only 修复、V1 immutable binding、EXACT_PREAUTHORIZED 1/1/1/1、DQ/independent
+    replay、aggregate admission、Atlas/system flow 与正式发布证据全部绑定；后续独立研究另立任务
   - '[Supporting requirement](docs/requirements/TRADING-2557_First_Layer_Composer_V2_Foundational_Falsification_Failure_Fix_V1.md)。唯一
-    V2 attempt 已按 EXACT_PREAUTHORIZED 完成：manifest replay/canonical DQ/local bounded
-    run/independent replay=1/1/1/1；其他计数=0。DQ 与 independent replay PASS；冻结 reducer=INSUFFICIENT/HOLD；不得重跑或事后参数救援，Wave
-    B/C 与生产/交易权限保持关闭。'
+    V2 attempt 结论=INSUFFICIENT/HOLD；5bps paired excess=+13.745976956735628pp，21/63-session
+    bootstrap 2.5% lower=-34.943648104514985/-31.97461050658123pp，leave-2022-out=-5.048443883389609pp。EXACT_PREAUTHORIZED
+    计数=1/1/1/1，其余=0；DQ/independent replay PASS。无 pristine OOS、Options、生产或交易授权。'
   docs_links:
   - docs/requirements/TRADING-2557_First_Layer_Composer_V2_Foundational_Falsification_Failure_Fix_V1.md
   terminal: false
-  canonical_row_sha256: fb4b783f6d9c1969055a25b10caa4138ee484e87b941a87c4d67fb42a99f0ed9
-last_event_id: task-event-6807338f707c4d88ecd3965c7599c43b
+  canonical_row_sha256: b7d85b17e1b6fc41f940eefa0e138024ad3f606b55e36cbb2fa8a9db0e22f702
+last_event_id: task-event-38aa3814ee1c9ca9495bdccb2dc37ac4
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 420f134c7b993749bd9716c4eb37f5a8c51e11d2147087bd9253db044c6ee6e4
+fragment_checksum: 78565cca5f4c5bb9060ce93bf1bd30153f93ba1c5afa2f2372d30c5b416be61a
