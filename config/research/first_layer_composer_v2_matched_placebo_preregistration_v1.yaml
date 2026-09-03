@@ -1,0 +1,104 @@
+schema_version: first_layer_composer_v2_matched_placebo_preregistration.v1
+policy_id: first_layer_composer_v2_matched_placebo_preregistration_v1
+policy_version: 1.0.0
+policy_status: OWNER_DIRECTED_PARTIAL_PRIOR_VISIBILITY_CONTRACT
+task_id: TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
+owner: project_owner
+approval_ref: owner_instruction:TRADING-2558:2026-09-03:continue_low_cost_validation
+
+known_result_boundary:
+  result_visibility: PARTIAL_PRIOR_VISIBILITY
+  historical_window_role: REUSED_DEVELOPMENT_CONFIRMATION
+  pristine_out_of_sample_claim_allowed: false
+  matched_placebo_distribution_visible_before_freeze: false
+  post_result_parameter_rescue_allowed: false
+
+primary_identity:
+  producer_id: first_layer_composer_v2
+  calendar: XNYS
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  expected_signal_sessions: 1202
+  expected_return_intervals: 1201
+  expected_long_intervals: 385
+  expected_long_episodes: 41
+  signal_lag_sessions: 1
+  candidate_id: FROZEN_SIGNAL_FULLY_FUNDED_QQQ_ZERO_RETURN_CASH
+  comparator_id: EXPOSURE_MATCHED_STATIC_QQQ_ZERO_RETURN_CASH
+  comparator_weight_formula: LONG_EXPOSURE_RETURN_INTERVAL_COUNT_DIVIDED_BY_1201
+  primary_one_way_cost_bps: 5.0
+  primary_idle_cash_asset: ZERO_RETURN_CASH
+
+matched_placebo_contract:
+  construction: PERMUTE_LONG_RUN_AND_INTERIOR_FLAT_GAP_LENGTH_MULTISETS_INDEPENDENTLY
+  leading_flat_boundary_gap: FIXED
+  trailing_flat_boundary_gap: FIXED
+  long_interval_count: EXACT_MATCH_REQUIRED
+  long_episode_count: EXACT_MATCH_REQUIRED
+  long_run_length_multiset: EXACT_MATCH_REQUIRED
+  interior_flat_gap_length_multiset: EXACT_MATCH_REQUIRED
+  boundary_states: EXACT_MATCH_REQUIRED
+  accounting_trade_event_count: EXACT_MATCH_REQUIRED
+  random_seed: 2558
+  draws: 10000
+  permutation_key: SHA256_SEED_DRAW_STREAM_INDEX_ASCENDING
+  parameter_search_allowed: false
+
+statistics:
+  primary_statistic: OBSERVED_5_BPS_PAIRED_EXCESS_VS_MATCHED_PLACEBO_EXCESS
+  one_sided_p_value: ONE_PLUS_PLACEBO_GREATER_THAN_OR_EQUAL_OBSERVED_DIVIDED_BY_DRAWS_PLUS_ONE
+  observed_percentile: EMPIRICAL_CDF_LESS_THAN_OR_EQUAL
+  quantile_method: LINEAR_TYPE_7
+  placebo_percentiles: [2.5, 50.0, 97.5]
+  max_drawdown_role: DESCRIPTIVE_ONLY
+
+pilot_reducer:
+  alpha: 0.05
+  status: TEMPORARY_PILOT_BASELINE
+  owner_reviewer: Project Owner / strategy research
+  rationale: Common one-sided randomization-test research threshold; not an investment gate.
+  review_condition: Review after the write-once result is available.
+  exit_condition: Replace with prospective OOS policy or archive the candidate.
+  precedence:
+    - INVALID
+    - TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO
+    - TIMING_DISTINGUISHED_DIAGNOSTIC_ONLY
+  not_distinguished_if: p_value_strictly_greater_than_0_05
+  distinguished_diagnostic_only_if: p_value_less_than_or_equal_to_0_05
+  trading_2557_status_must_remain: INSUFFICIENT
+  qqq_options_wave_b: HOLD
+  qqq_options_wave_c: NOT_AUTHORIZED
+  production_allowed: false
+
+run_envelope:
+  manifest_replays: 1
+  canonical_dq_runs: 1
+  local_matched_placebo_runs: 1
+  independent_replays: 1
+  data_downloads: 0
+  cache_mutations: 0
+  quantconnect_actions: 0
+  option_backtests: 0
+  external_provider_actions: 0
+  orders: 0
+  fills: 0
+  positions: 0
+
+safety:
+  aggregate_result_only: true
+  raw_market_payload_export_allowed: false
+  raw_signal_payload_export_allowed: false
+  placebo_path_export_allowed: false
+  data_download_authorized: false
+  cache_mutation_authorized: false
+  quantconnect_authorized: false
+  option_backtest_authorized: false
+  provider_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

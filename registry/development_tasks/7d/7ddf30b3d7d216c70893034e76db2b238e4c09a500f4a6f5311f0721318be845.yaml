@@ -1,0 +1,78 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
+  task_id_sha256: 7ddf30b3d7d216c70893034e76db2b238e4c09a500f4a6f5311f0721318be845
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
+  title: null
+  domain: Strategy research / first-layer composer v2 matched-placebo timing falsification
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex strategy-evidence coordinator：冻结并执行一次 matched-placebo 本地有界验证
+  requirement_refs:
+  - docs/requirements/TRADING-2558_First_Layer_Composer_V2_Matched_Placebo_Falsification_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 必须先锁定 10,000 draws、seed=2558、episode/gap
+    preserving 算法、alpha=0.05 pilot reducer、输入身份和 1/1/1/1 计数；任一漂移 fail closed
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 实际 exposure/accounting 与 TRADING-2557 对账；placebo 精确保留 LONG count、run/gap
+      多重集、边界、换手与成本；DQ/manifest/独立重放/正式验证和普通发布通过
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-03T16:45:26.6711246+09:00'
+  actor: integration-coordinator
+  change_id: trading-2558-matched-placebo-task-registration-v1
+  lane_id: null
+  base_commit: ea8937b2a07f5c4fc52ba1c437566017be137baa
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
+    - Strategy research / first-layer composer v2 matched-placebo timing falsification
+    - P0
+    - IN_PROGRESS
+    - Codex strategy-evidence coordinator：冻结并执行一次 matched-placebo 本地有界验证
+    - 必须先锁定 10,000 draws、seed=2558、episode/gap preserving 算法、alpha=0.05 pilot reducer、输入身份和
+      1/1/1/1 计数；任一漂移 fail closed
+    - 实际 exposure/accounting 与 TRADING-2557 对账；placebo 精确保留 LONG count、run/gap 多重集、边界、换手与成本；DQ/manifest/独立重放/正式验证和普通发布通过
+    - 'Supporting requirement: docs/requirements/TRADING-2558_First_Layer_Composer_V2_Matched_Placebo_Falsification_V1.md。authorization_state=STANDING_OWNER_SCOPE；仅本地
+      R1 research；download/cache mutation/provider/QuantConnect/options/paper/live/production/broker/orders/fills/positions=0。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2558-matched-placebo-task-registration-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-01b7b158188be28bca50a678c237f9a5
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
+  - Strategy research / first-layer composer v2 matched-placebo timing falsification
+  - P0
+  - IN_PROGRESS
+  - Codex strategy-evidence coordinator：冻结并执行一次 matched-placebo 本地有界验证
+  - 必须先锁定 10,000 draws、seed=2558、episode/gap preserving 算法、alpha=0.05 pilot reducer、输入身份和
+    1/1/1/1 计数；任一漂移 fail closed
+  - 实际 exposure/accounting 与 TRADING-2557 对账；placebo 精确保留 LONG count、run/gap 多重集、边界、换手与成本；DQ/manifest/独立重放/正式验证和普通发布通过
+  - 'Supporting requirement: docs/requirements/TRADING-2558_First_Layer_Composer_V2_Matched_Placebo_Falsification_V1.md。authorization_state=STANDING_OWNER_SCOPE；仅本地
+    R1 research；download/cache mutation/provider/QuantConnect/options/paper/live/production/broker/orders/fills/positions=0。'
+  docs_links:
+  - docs/requirements/TRADING-2558_First_Layer_Composer_V2_Matched_Placebo_Falsification_V1.md
+  terminal: false
+  canonical_row_sha256: adab9052e06930ed14aaa9e6af81e9ab279ae9b2c8a7530dacc5d07572346e5f
+last_event_id: task-event-01b7b158188be28bca50a678c237f9a5
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 8467cb6efd2cad361c6d07110836170d0a71271fd30b4bc9b8d73df391199785
