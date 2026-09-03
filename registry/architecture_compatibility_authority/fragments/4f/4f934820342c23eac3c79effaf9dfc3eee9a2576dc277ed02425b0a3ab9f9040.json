@@ -93,7 +93,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "971d1fd8b1d5a6eeea751a17ae136298ee699fdd2f208a3f745b021f579ce41c"
+        "sha256": "6195e88d5012fac51d79a6928ecd68c785bca40af4108b2cedc706c47b1f711b"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -153,7 +153,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "ecf2766ab6871878d4e0b232852db3be0ef88d4cab1b02c05266d486248ae86b"
+        "sha256": "aa44f038e2579423df6a7a66ad436bd9f69ac876abb26b9c7e83360f6a70f6ed"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -238,5 +238,5 @@
     "task_id": "PROD-004"
   },
   "section_id": "phase_prod_004_pit_cumulative_archive_consumption_v1",
-  "section_sha256": "14907e5e3901d145e8ebe170506683d1eb2f7af0f72aaa84910071d554717b67"
+  "section_sha256": "4f934820342c23eac3c79effaf9dfc3eee9a2576dc277ed02425b0a3ab9f9040"
 }
