@@ -638,6 +638,21 @@ def _validate_trading_2557_bindings(*, project_root: Path) -> None:
     _expect(result["qqq_options_wave_c"], "NOT_AUTHORIZED", "trading_2557.wave_c")
 
 
+def _trading_2557_primary_result(*, project_root: Path) -> Mapping[str, Any]:
+    result_path = project_root / TRADING_2557_BINDINGS["trading_2557_aggregate_result"][0]
+    result = _mapping(json.loads(result_path.read_bytes()), "trading_2557_result")
+    primary = _mapping(result["primary_5_bps"], "trading_2557.primary_5_bps")
+    _expect(result["signal_session_count"], EXPECTED_SESSIONS, "trading_2557.sessions")
+    _expect(result["return_interval_count"], EXPECTED_INTERVALS, "trading_2557.intervals")
+    _expect(result["long_interval_count"], EXPECTED_LONG_INTERVALS, "trading_2557.long_count")
+    _expect(
+        result["exposure_matched_comparator_weight"],
+        EXPECTED_LONG_INTERVALS / EXPECTED_INTERVALS,
+        "trading_2557.comparator_weight",
+    )
+    return primary
+
+
 def load_run_authorization(
     path: Path = DEFAULT_AUTHORIZATION_PATH,
     *,
@@ -921,6 +936,31 @@ def execute_matched_placebo_falsification(
             seed=RANDOM_SEED,
             draws=PLACEBO_DRAWS,
         )
+        prior_primary = _trading_2557_primary_result(project_root=root)
+        accounting_reconciliation = {
+            "observed_candidate_net_total_return_abs_diff": abs(
+                distribution.observed_excess_percentage_points
+                + distribution.comparator_net_total_return_pct
+                - float(prior_primary["candidate_net_total_return_pct"])
+            ),
+            "observed_candidate_max_drawdown_abs_diff": abs(
+                distribution.observed_max_drawdown_magnitude_pct
+                - float(prior_primary["candidate_max_drawdown_magnitude_pct"])
+            ),
+            "comparator_net_total_return_abs_diff": abs(
+                distribution.comparator_net_total_return_pct
+                - float(prior_primary["comparator_net_total_return_pct"])
+            ),
+            "observed_paired_excess_abs_diff": abs(
+                distribution.observed_excess_percentage_points
+                - float(prior_primary["paired_excess_percentage_points"])
+            ),
+        }
+        if any(value > f1.RECONCILIATION_TOLERANCE for value in accounting_reconciliation.values()):
+            raise MatchedPlaceboExecutionError(
+                "MPF_TRADING_2557_ACCOUNTING_DRIFT",
+                json.dumps(accounting_reconciliation, sort_keys=True),
+            )
         summary = summarize_distribution(distribution)
 
         counters["independent_replays"] = 1
@@ -966,7 +1006,12 @@ def execute_matched_placebo_falsification(
             "observed_5_bps_paired_excess_percentage_points": (
                 distribution.observed_excess_percentage_points
             ),
+            "observed_candidate_net_total_return_pct": (
+                distribution.observed_excess_percentage_points
+                + distribution.comparator_net_total_return_pct
+            ),
             "comparator_net_total_return_pct": (distribution.comparator_net_total_return_pct),
+            "trading_2557_accounting_reconciliation": accounting_reconciliation,
             "matched_placebo": summary,
             "manifest_file_sha256": manifest.file_sha256,
             "manifest_canonical_sha256": manifest.canonical_sha256,
