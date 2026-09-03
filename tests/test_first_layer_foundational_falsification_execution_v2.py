@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from pathlib import Path
 
 import pytest
@@ -75,3 +76,21 @@ def test_v2_reuses_frozen_v1_research_identity() -> None:
     assert subject.DEFAULT_MANIFEST_PATH != v1.DEFAULT_MANIFEST_PATH
     assert subject.DEFAULT_AUTHORIZATION_PATH != v1.DEFAULT_AUTHORIZATION_PATH
     assert subject.DEFAULT_OUTPUT_DIR != v1.DEFAULT_OUTPUT_DIR
+
+
+def test_exact_authorization_and_manifest_preserve_v1_input_contract() -> None:
+    authorization = subject.load_run_authorization(project_root=ROOT)
+    manifest = subject.load_execution_manifest(project_root=ROOT, authorization=authorization)
+    v1_manifest = json.loads((ROOT / subject.V1_MANIFEST_PATH).read_bytes())
+
+    assert authorization.payload["owner_decision"]["authorization_state"] == ("EXACT_PREAUTHORIZED")
+    assert authorization.payload["run_envelope"] == subject.EXPECTED_COUNTERS
+    assert manifest.payload["input_bindings"] == v1_manifest["input_bindings"]
+    assert manifest.payload["run_envelope"] == v1_manifest["run_envelope"]
+    assert manifest.payload["code_binding"] == {
+        "implementation_commit_sha": "a1b345b14bfc7bbf5f2f3068613c4405df37ed68",
+        "module_path": (
+            "src/ai_trading_system/first_layer_foundational_falsification_execution_v2.py"
+        ),
+        "module_sha256": "00b75a97617ba0292b9fcb93af77b181e5db81166c9583c75e50fce68123b62c",
+    }

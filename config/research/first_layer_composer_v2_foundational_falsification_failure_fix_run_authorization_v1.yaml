@@ -1,0 +1,124 @@
+schema_version: first_layer_composer_v2_foundational_falsification_failure_fix_run_authorization.v1
+authorization_id: first_layer_composer_v2_foundational_falsification_failure_fix_run_authorization_v1
+authorization_version: 1.0.0
+status: OWNER_EXACT_SCHEMA_ONLY_FAILURE_FIX_AUTHORIZED
+task_id: TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
+scope: R1_BOUNDED_RESEARCH_SANDBOX
+owner_decision:
+  decision_ref: owner_instruction:TRADING-2557:2026-09-03:exact_schema_only_failure_fix_1_1_1_1
+  approved_instruction: >-
+    只修正传给 BootstrapInterval 的字段过滤，不改变窗口、信号、模型、阈值、成本、
+    bootstrap draws 或 reducer；授权 manifest replay 1 次、canonical DQ 1 次、本地
+    bounded run 1 次和 independent replay 1 次；不授权数据下载、cache mutation、
+    QuantConnect、期权回测、provider 或任何交易行为。
+  authorization_state: EXACT_PREAUTHORIZED
+  exact_bounded_run_granted: true
+v1_failure_binding:
+  v1_module:
+    path: src/ai_trading_system/first_layer_foundational_falsification_execution.py
+    sha256: 8feb16c9328eac48c8751b2a664d21b0bcb495889653e8db352f28836444730f
+  v1_manifest:
+    path: inputs/research/first_layer_composer_v2_foundational_falsification_v1/execution_manifest.json
+    sha256: a35124945fbfbebceb7a111dda8fe3c0d5e6edade7faa42fa931335c855a9777
+  v1_terminal_result:
+    path: outputs/research/first_layer_composer_v2_foundational_falsification_v1/aggregate_result.json
+    sha256: 1f0de3193b4807ed091636d4808847e9529679085d207690b2b588a8d6baaebc
+  v1_result_admission:
+    path: config/research/first_layer_composer_v2_foundational_falsification_result_admission_v1.yaml
+    sha256: acbdf9279e51e2e6308c7f51531afc8b553e6f0604247804e6e18c6dfac99d64
+f0_binding:
+  path: config/research/first_layer_composer_v2_foundational_falsification_preregistration_v1.yaml
+  exact_main_commit: fcb2a420ed1489189ea1ec9a323724943dcaee52
+  file_sha256: 54dc349be1ec5670f9e02fc74e9467b668b2311a7dadbdc22680c8c605a824ad
+  canonical_sha256: ea6b51baf7d8bdfec2454fb037131a199736e6cacb1eecdc35e01701f5357818
+  authority_set_sha256: a07e63c9f3ba035d94cfdbf18bc096b69380e4baf1b003540390b66d4ec44fe3
+input_allowlist:
+  signal_index:
+    path: outputs/qqq_options/signal_packages/trading_2542i_operational_forecast_real_v3/signal_index.json
+    sha256: d2af99e55d8f9a69a14d4479eb7ba1fd2aeed323c457ae10705a140c7a62ffda
+    size_bytes: 214177
+  real_dq_materialization_receipt:
+    path: outputs/research_trends/operational_forecast/trading_2542i_real_v3/real_materialization_receipt.json
+    sha256: f508581f98b1fa64763b8488568cf0631bfa260fea2b7aa55f9d7f5a0590a230
+    size_bytes: 3086
+  signal_package_manifest_replay_receipt:
+    path: outputs/research_trends/operational_forecast/trading_2542i_real_v3/manifest_replay_receipt.json
+    sha256: 1106de7d6e9b63a20d9e68d7228267ea6777a84b2ea1de16215699d3fa7cd9bc
+    size_bytes: 834
+  operational_predictions:
+    path: outputs/research_trends/operational_forecast/trading_2542i_real_v3/producer/first_layer_composer_v2_operational_predictions.csv
+    sha256: efc285466efb1d99ce57d691078d43f7f2cb169e68a5cd719b1de5d8967fc2da
+    size_bytes: 727007
+  canonical_prices:
+    path: outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/prices_daily.csv
+    sha256: 903689623b83bd6b84ce1e9d5e932848cb656b5a2fae1ae31553ba9004482e7e
+    size_bytes: 320728
+    result_use: QQQ_AND_SGOV_ONLY
+  canonical_rates:
+    path: outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/rates_daily.csv
+    sha256: 7829d8ee44fe2ed39a130c9d5224e077c8b03b31990176f188315ebfc5b85e33
+    size_bytes: 85790
+    result_use: CANONICAL_DQ_ONLY
+  canonical_secondary_prices:
+    path: outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/prices_marketstack_daily.csv
+    sha256: 6cd92d32cefae7fc2ce316db67df51b5b9b3fde5f0b99f53ae4a8da28cba2dc1
+    size_bytes: 216505
+    result_use: CANONICAL_DQ_ONLY
+  canonical_download_manifest:
+    path: outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/download_manifest.csv
+    sha256: 7f116e0b0e2480805157dce28a518f183d24927cb52a82acb91851d6eabaa4cb
+    size_bytes: 7240
+    result_use: CANONICAL_DQ_ONLY
+  data_quality_policy:
+    path: config/data_quality.yaml
+    sha256: e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82
+    size_bytes: 9002
+    result_use: CANONICAL_DQ_ONLY
+  us_equity_calendar_policy:
+    path: config/data/us_equity_special_closure_registry.yaml
+    sha256: 375dd5e07b57208c5afb700d4fec96fdb3c95b29d562b553c3ecc5c4e6f97416
+    size_bytes: 1959
+    result_use: DQ_AND_SIGNAL_LAG_ONLY
+  trading_2550_execution_manifest:
+    path: inputs/research/frozen_signal_value_confirmation_v1/execution_manifest.json
+    sha256: 6051ad6c48b8d402c646945e4f33442f11d0435cb0228c125384776afd7c30d3
+    size_bytes: 4072
+    result_use: SOURCE_REVISION_DIFF_ONLY
+run_envelope:
+  manifest_replays: 1
+  canonical_dq_runs: 1
+  local_foundational_runs: 1
+  independent_replays: 1
+  data_downloads: 0
+  cache_mutations: 0
+  quantconnect_actions: 0
+  option_backtests: 0
+  external_provider_actions: 0
+  orders: 0
+  fills: 0
+  positions: 0
+result_boundary:
+  aggregate_result_only: true
+  raw_market_payload_export_allowed: false
+  raw_signal_payload_export_allowed: false
+  terminal_artifact_schema: first_layer_composer_v2_foundational_falsification_failure_fix_result.v1
+safety:
+  outcome_access_authorized: true
+  market_data_read_authorized: true
+  manifest_replay_authorized: true
+  canonical_dq_authorized: true
+  local_foundational_run_authorized: true
+  independent_replay_authorized: true
+  data_download_authorized: false
+  cache_mutation_authorized: false
+  quantconnect_authorized: false
+  option_data_use_authorized: false
+  option_backtest_authorized: false
+  provider_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none
+terminal: OWNER_EXACT_SCHEMA_ONLY_FAILURE_FIX_AUTHORIZED_NOT_YET_CONSUMED

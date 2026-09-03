@@ -1,0 +1,132 @@
+schema_version: first_layer_composer_v2_foundational_falsification_failure_fix_result_admission.v1
+admission_id: first_layer_composer_v2_foundational_falsification_failure_fix_result_admission_v1
+admission_version: 1.0.0
+status: TERMINAL_INSUFFICIENT_EVIDENCE_ADMITTED
+task_id: TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
+scope: R1_BOUNDED_RESEARCH_SANDBOX_RESULT
+authorization_state: EXACT_PREAUTHORIZED
+technical_validation_state: PASS
+foundational_status: INSUFFICIENT
+conclusion: FOUNDATIONAL_NARROW_SIGNAL_VALUE_INSUFFICIENT_HOLD
+reason_codes:
+  - ANY_BOOTSTRAP_2_5_PERCENTILE_LESS_THAN_OR_EQUAL_TO_ZERO
+  - ANY_LEAVE_ONE_CALENDAR_YEAR_OUT_EXCESS_LESS_THAN_OR_EQUAL_TO_ZERO
+authorization_binding:
+  path: config/research/first_layer_composer_v2_foundational_falsification_failure_fix_run_authorization_v1.yaml
+  file_sha256: 0c980179b23bc133433eaea588155cb5368bcccb2d127e2830c089700b248137
+  canonical_sha256: df4c4282af1f166308a8c1f351ee551d251b7e936cf868c0956d7af8797f6b8b
+manifest_binding:
+  path: inputs/research/first_layer_composer_v2_foundational_falsification_failure_fix_v1/execution_manifest.json
+  file_sha256: cce50b9fbfb5902e2b63168b380c1a4e3dc67d90dee737fa80e047cbff54b3bf
+  canonical_sha256: 038f50fcba7406b603550095760a1f41a7a0abab5f34dfc3c957f6d9b201a901
+  implementation_commit_sha: a1b345b14bfc7bbf5f2f3068613c4405df37ed68
+  runtime_git_head: a1b345b14bfc7bbf5f2f3068613c4405df37ed68
+v1_failure_binding:
+  module_sha256: 8feb16c9328eac48c8751b2a664d21b0bcb495889653e8db352f28836444730f
+  manifest_sha256: a35124945fbfbebceb7a111dda8fe3c0d5e6edade7faa42fa931335c855a9777
+  terminal_result_sha256: 1f0de3193b4807ed091636d4808847e9529679085d207690b2b588a8d6baaebc
+  result_admission_sha256: acbdf9279e51e2e6308c7f51531afc8b553e6f0604247804e6e18c6dfac99d64
+evidence_bindings:
+  - role: RUN_ATTEMPT_CONSUMPTION
+    path: outputs/research/first_layer_composer_v2_foundational_falsification_failure_fix_v1/run_attempt_consumption_receipt.json
+    file_sha256: f76cbab177a409e5e0da9976602a7833bc2a62c0df862281028f4f8f8ff15902
+  - role: MANIFEST_REPLAY
+    path: outputs/research/first_layer_composer_v2_foundational_falsification_failure_fix_v1/manifest_replay_receipt.json
+    file_sha256: b517947725a569189e383d49a5ddc435d14778250783e3f9994199153500f851
+  - role: CANONICAL_DQ
+    path: outputs/research/first_layer_composer_v2_foundational_falsification_failure_fix_v1/canonical_dq_receipt.json
+    file_sha256: d6ef507b977827c924c91b43ff7addec4a20ecdcfa003729add8d05c2386011c
+  - role: INDEPENDENT_REPLAY
+    path: outputs/research/first_layer_composer_v2_foundational_falsification_failure_fix_v1/independent_replay_receipt.json
+    file_sha256: 2bf69476ce96c6f23f46fc82ae0e35125fc6822b0e25e374747a50b1a0a5d35f
+  - role: AGGREGATE_RESULT
+    path: outputs/research/first_layer_composer_v2_foundational_falsification_failure_fix_v1/aggregate_result.json
+    file_sha256: 76024a73b47414a40f35f6ebb72d41a0dd1fc80421f80ec168a37b6b9f429d2e
+run_accounting:
+  manifest_replays: 1
+  canonical_dq_runs: 1
+  local_foundational_runs: 1
+  independent_replays: 1
+  data_downloads: 0
+  cache_mutations: 0
+  quantconnect_actions: 0
+  option_backtests: 0
+  external_provider_actions: 0
+  orders: 0
+  fills: 0
+  positions: 0
+dq_pit:
+  status: PASS
+  error_count: 0
+  warning_count: 0
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  canonical_receipt_path: outputs/data_quality/executions/dq_execution_332edc1dd16f749bb37308dcc617f7261c03f74f672be1a61ac6427746a4a11f/receipt.json
+  canonical_receipt_sha256: c4f9e7c2c2b1c1789faa00908bfaf64a7b9f1cb75a18f44324f2e25992b10f63
+  canonical_report_path: outputs/data_quality/reports/2eec167af8823672b789535f75efed71d811c74781ba17fa6d2998ca1ef70f1d/data_quality_report.md
+  canonical_report_sha256: 2eec167af8823672b789535f75efed71d811c74781ba17fa6d2998ca1ef70f1d
+independent_replay:
+  status: PASS
+  tolerance: 1.0e-8
+  candidate_final_value_abs_diff: 1.4551915228366852e-10
+  comparator_final_value_abs_diff: 1.1641532182693481e-10
+primary_5_bps:
+  candidate_net_total_return_pct: 45.279358871873754
+  candidate_max_drawdown_magnitude_pct: 9.602605144610187
+  exposure_matched_comparator_net_total_return_pct: 31.533381915138126
+  exposure_matched_comparator_max_drawdown_magnitude_pct: 13.077171432379409
+  paired_excess_percentage_points: 13.745976956735628
+robustness:
+  bootstrap:
+    - block_length_sessions: 21
+      percentile_2_5: -34.943648104514985
+      percentile_50: 13.27556022227031
+      percentile_97_5: 68.86415693727369
+      probability_excess_less_than_or_equal_to_zero: 0.2863
+      replicates: 10000
+      random_seed: 2555
+    - block_length_sessions: 63
+      percentile_2_5: -31.97461050658123
+      percentile_50: 13.445421839812452
+      percentile_97_5: 76.21661502490532
+      probability_excess_less_than_or_equal_to_zero: 0.2993
+      replicates: 10000
+      random_seed: 2555
+  leave_one_year_out:
+    '2021': 13.051985743668833
+    '2022': -5.048443883389609
+    '2023': 3.84945706136628
+    '2024': 22.669083837284784
+    '2025': 15.662858145882176
+  cost_sensitivity_excess_percentage_points:
+    5_bps: 13.745976956735628
+    10_bps: 7.962862451977596
+    15_bps: 2.414162909158655
+    20_bps: -2.90954119533826
+  discrete_cost_break_even_bracket: BETWEEN_15_AND_20_BPS
+interpretation_boundary:
+  valid_execution_generated: true
+  empirical_diagnostics_admitted: true
+  foundational_evidence_sufficient: false
+  signal_effect_estimate_positive: true
+  robustness_thresholds_passed: false
+  reused_development_window: true
+  pristine_out_of_sample_claim: false
+  post_result_parameter_rescue_allowed: false
+  next_action: HOLD_NO_PROMOTION_NEW_PREREGISTERED_EVIDENCE_REQUIRED
+safety:
+  aggregate_result_only: true
+  raw_market_payload_exported: false
+  raw_signal_payload_exported: false
+  quantconnect_authorized: false
+  option_backtest_authorized: false
+  provider_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none
+terminal: INSUFFICIENT_HOLD_SINGLE_ATTEMPT_CONSUMED_NO_RERUN_NO_PROMOTION

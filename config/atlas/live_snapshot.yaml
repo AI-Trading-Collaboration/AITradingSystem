@@ -1,16 +1,16 @@
 schema_version: atlas_live_snapshot_policy.v1
 policy_id: atlas_live_canonical_snapshot_v1
-policy_version: 1.17.0
+policy_version: 1.18.0
 status: REVIEWED_FAIL_CLOSED_LIVE_PROJECTION
 owner: Atlas strategy research publishing coordinator
 historical_source_registry_path: config/atlas/source_registry.yaml
 page_effectiveness_policy_path: config/atlas/page_effectiveness.yaml
-classified_through_task_id: TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1
-current_mainline_task_id: TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1
-largest_blocker_task_id: TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1
-next_legal_action_task_id: TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1
-status_object_zh: 当前研究组合维持 evidence-first。TRADING-2550 的 +13.745976956735603 个百分点 RETAIN 仍只是 reused-development-window 的受限 aggregate-only 结论；TRADING-2555 已冻结基础可证伪 F0 合同。TRADING-2556 的唯一 F1 V1 attempt 完成 exact manifest replay、canonical DQ（PASS，0 error/0 warning）和独立会计重放（PASS），但在把 bootstrap aggregate 送入严格 reducer model 时因 audit-only extra fields 触发 terminal INVALID，最终 artifact 没有接纳任何收益诊断，所以不能据此判断信号有效或无效。同一 manifest 不得重跑；下一合法动作只能是另行登记、绑定本次失败且不改变窗口、信号、成本、bootstrap、诊断或 reducer 的 schema-only corrective run。QQQ Options Wave B/C 保持 HOLD，paper/live/production/broker 与任何交易动作均未授权。
-evidence_evaluated_at: '2026-09-03T01:10:24.156693+00:00'
+classified_through_task_id: TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
+current_mainline_task_id: TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
+largest_blocker_task_id: TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
+next_legal_action_task_id: TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
+status_object_zh: 当前研究组合维持 evidence-first。TRADING-2557 在 EXACT_PREAUTHORIZED 下只修正 BootstrapInterval 五字段投影，唯一运行的 manifest replay、canonical DQ、本地 bounded run 和 independent replay 均精确执行一次，DQ 与独立对账 PASS，其他外部或交易动作均为 0。5 bps 下 candidate 相对 exposure-matched comparator 的净总收益差为 +13.745976956735628 个百分点，candidate 最大回撤幅度更低 3.474566287769222 个百分点；但 21/63-session bootstrap 的 2.5% 下界均显著低于 0，且排除 2022 后 excess 为 -5.048443883389609 个百分点，冻结 reducer 因此输出 INSUFFICIENT / HOLD。该结果说明点估计值得保留观察，但稳健性证据不足；不得重跑或事后改阈值，也不支持 QQQ Options Wave B/C、paper/live/production/broker 或任何交易动作。下一步只能另行预注册真正独立的新证据阶段。
+evidence_evaluated_at: '2026-09-03T04:22:54.1021586+00:00'
 task_status_mapping:
   DONE: PASS
   BASELINE_DONE: LIMITED

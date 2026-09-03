@@ -10211,6 +10211,35 @@ F0 exact policy + F1 authorization + committed manifest
 manifest 和 output root，绑定本次 terminal failure，并仅过滤 reducer 所需字段。窗口、信号、输入、成本、
 bootstrap draws、诊断定义和 reducer 不得改变。
 
+## TRADING-2557 foundational falsification F1 schema-only correction
+
+TRADING-2557 在 Owner 的 `EXACT_PREAUTHORIZED` 下使用独立 V2 module、authorization、manifest 与
+write-once output；它精确绑定 TRADING-2556 的 V1 module、manifest、terminal result 和 result admission。
+V2 只在 reducer 边界把 bootstrap aggregate 显式投影为五个 `BootstrapInterval` 字段，仍在 aggregate
+diagnostics 保留 `replicates=10000` 与 `random_seed=2555`，不改变任何研究计算或阈值。
+
+```text
+V1 terminal INVALID evidence + exact Owner authorization
+  -> V2 manifest replay [1, PASS]
+  -> canonical DQ 2021-02-22..2025-12-02 [1, PASS, 0 error / 0 warning]
+  -> frozen candidate/comparator + diagnostics [1]
+  -> independent accounting replay [1, PASS, tolerance 1e-8]
+  -> five-field BootstrapInterval adapter; audit fields remain in diagnostics
+  -> frozen reducer [INSUFFICIENT / HOLD]
+  -x-> same-manifest rerun / threshold rescue / Options Wave B or C / trading action
+```
+
+5 bps 下 candidate 与 exposure-matched comparator 的净总收益分别为 `45.279358871873754%` 与
+`31.533381915138126%`，paired excess 为 `+13.745976956735628` 个百分点，candidate 最大回撤幅度低
+`3.474566287769222` 个百分点。然而 21/63-session bootstrap 的 2.5% 下界分别为
+`-34.943648104514985` 与 `-31.97461050658123` 个百分点；排除 2022 后 excess 为
+`-5.048443883389609` 个百分点。冻结 reducer 因此输出 `INSUFFICIENT`，而不是 `PASS`。
+
+该结果只表明点估计仍值得观察，稳健性证据不足；研究窗口为 reused-development-window，包含 partial-year，
+不是 pristine OOS。Manifest replay/canonical DQ/local bounded run/independent replay 已精确消费 `1/1/1/1`；
+download、cache mutation、QuantConnect、option/provider、paper/live/production/broker/order/fill/position 均为
+0/false/none。后续若继续，必须另行预注册新的独立证据阶段，不能重跑或事后修改模型、阈值与 reducer。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

@@ -8,7 +8,7 @@ Owner 指令：`owner_instruction:TRADING-2557:2026-09-03:exact_schema_only_fail
 
 授权状态：`EXACT_PREAUTHORIZED`
 
-状态：`IN_PROGRESS`
+状态：`VALIDATING`
 
 ## 1. 目标与解释边界
 
@@ -112,3 +112,16 @@ terminal artifact；不得以历史 DQ 文字代替本次运行的可重放 gate
 - 2026-09-03：只读代码审查确认唯一修复点位于 V1 `FoundationalDiagnosticSummary` 构造前的
   `BootstrapInterval.model_validate(row)`；正确修复是 V2 显式字段投影，不是放宽 strict schema，也不是
   修改 bootstrap 输出、统计参数或 V1 历史文件。
+- 2026-09-03：schema-only V2 executor 已绑定实现 commit
+  `a1b345b14bfc7bbf5f2f3068613c4405df37ed68`；V1 module SHA-256 仍为
+  `8feb16c9328eac48c8751b2a664d21b0bcb495889653e8db352f28836444730f`。唯一受权运行已消费完毕，
+  manifest replay/canonical DQ/local bounded run/independent replay 为 `1/1/1/1`，其余计数均为 0。
+- 2026-09-03：canonical DQ 为 PASS（0 error/0 warning），requested/evaluated range 均为
+  `2021-02-22..2025-12-02`；独立重放 PASS，candidate/comparator final-value diff 分别为
+  `1.4551915228366852e-10` 与 `1.1641532182693481e-10`，小于 `1e-8`。
+- 2026-09-03：冻结 reducer 输出 `INSUFFICIENT / HOLD`。5 bps 下 candidate 净收益为
+  `45.279358871873754%`，exposure-matched comparator 为 `31.533381915138126%`，paired excess 为
+  `+13.745976956735628` 个百分点；但 21/63-session bootstrap 的 2.5% 下界分别为
+  `-34.943648104514985` 与 `-31.97461050658123` 个百分点，且排除 2022 后 excess 为
+  `-5.048443883389609` 个百分点，触发两个预注册稳健性门槛。该结果不支持推进 options Wave B/C，
+  不构成 pristine OOS 或生产资格；若继续，只能另行预注册新的独立证据阶段，不能事后调整阈值救援。

@@ -80,7 +80,7 @@ def _rendered(
 def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 86
+    assert len(policy.task_sources) == 87
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
@@ -109,6 +109,7 @@ def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None
         "TRADING-2554",
         "TRADING-2555",
         "TRADING-2556",
+        "TRADING-2557",
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -134,7 +135,7 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
     assert manifest.schema_version == "strategy_research_page_effectiveness.v3"
-    assert len(manifest.task_coverage) == 86
+    assert len(manifest.task_coverage) == 87
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
         "TRADING-2523A",
@@ -163,6 +164,7 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "TRADING-2554",
         "TRADING-2555",
         "TRADING-2556",
+        "TRADING-2557",
     ]
     coverage_by_task = {
         item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
@@ -324,6 +326,9 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
     )
     assert coverage_by_task["TRADING-2556"] == (
         "FOUNDATIONAL_F1_V1_TERMINAL_INVALID_SCHEMA_ADAPTATION_NO_EMPIRICAL_CONCLUSION"
+    )
+    assert coverage_by_task["TRADING-2557"] == (
+        "FOUNDATIONAL_F1_SCHEMA_FIX_VALID_EXECUTION_INSUFFICIENT_HOLD"
     )
     assert len(manifest.source_artifacts) == len(
         load_page_effectiveness_policy(repository_root=ROOT).relevant_source_paths
