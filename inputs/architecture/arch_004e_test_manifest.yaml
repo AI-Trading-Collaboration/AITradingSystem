@@ -10458,7 +10458,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 42972720f09dccfe122837fd6483d5adafcb724b1f1192520a4e7dd7e767ac88
+  sha256: 9dd70831b4524c487b7f110b14e4c0f55a6830e9a09d6a798f1f52c54f1db87f
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

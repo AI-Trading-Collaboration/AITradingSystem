@@ -43,7 +43,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
-        "sha256": "64388ea359020bd8ae0f0f336152a271ff3e52046442301f346c34864ed62617"
+        "sha256": "ccb3147939fb7eb6ee7f43a77b7ac2ee223eb600d1630f938586358894820d0a"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -63,7 +63,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/system_flow.md",
-        "sha256": "5384db891dc646f3e1f986ab65c535c4d8d7ab1edc45b6e4a2008bf4fabf1dda"
+        "sha256": "99e980c509726e83415d8486b089179b3b3fcb43dc8f8061a00d6b0c762093d0"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -73,12 +73,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "2acb01a528c93d884d2d0cbce3a0c3e18c7f2bd9a832bb32a1cf22d06a1ed7a5"
+        "sha256": "548cf6e4e03fa99b336d435b639cf45470896e7121ce73bd8efb1268f42305fb"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-        "sha256": "ca9bd20481059bf8432c2bc17555172a71dbf9497b084c554afadd8202a5a554"
+        "sha256": "ea930c5f3aaf767570a8c4f8c70002def5c269ba7a3256d7c7fa85e40a2a5cd3"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -133,7 +133,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "42972720f09dccfe122837fd6483d5adafcb724b1f1192520a4e7dd7e767ac88"
+        "sha256": "9dd70831b4524c487b7f110b14e4c0f55a6830e9a09d6a798f1f52c54f1db87f"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -178,5 +178,5 @@
     "task_id": "RISK-012"
   },
   "section_id": "phase_risk_012_unknown_risk_event_id_fail_closed_v1",
-  "section_sha256": "ab6d6e2178040adec33a70edef391ef68703a279710ef524adf4581886d6b262"
+  "section_sha256": "135979bbadee8530a1eea253cabe42ac53d92b69747c5d43b1e70f8f1c426aff"
 }

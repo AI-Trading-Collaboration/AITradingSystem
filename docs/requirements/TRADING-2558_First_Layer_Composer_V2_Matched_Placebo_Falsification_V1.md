@@ -154,3 +154,11 @@ precedence：
 - 2026-09-03：publication transaction v3 已通过 canonical writer 追加纠正事件，恢复
   `requirement_refs` 指向本文档；没有改写历史事件，也没有重算或重跑研究。该 task-source identity
   提交后，后续发布事务将从新的 clean exact HEAD 重放全部 generator。
+- 2026-09-03：Atlas policy 已将 2558 分类为
+  `MATCHED_PLACEBO_TIMING_NOT_DISTINGUISHED_RESEARCH_PRIORITY_NOT_RAISED`；17 个页面 artifact 从 exact
+  commit 成功重建。publication v4 随后在 report-flow generator 以旧 `docs/system_flow.md` source seal
+  fail closed；按 builder 的 `EXACT_BLANK_LINE_BLOCKS_V1` 只读重算并冻结新 seal：`2,341,997 bytes /`
+  `99e980c509726e83415d8486b089179b3b3fcb43dc8f8061a00d6b0c762093d0 /`
+  `git blob 579321aac106b03d85cd9284dce258a394974ad2 / 1,202 entries`。report-flow 与
+  compatibility authority 重建/validate 均 PASS，相关 focused parallel pytest `29 passed`；未改变
+  研究结果或再次消费 1/1/1/1 额度。
