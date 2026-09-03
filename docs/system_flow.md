@@ -1097,6 +1097,11 @@ control-plane 阻断；若已有 terminal parent，则继续按 OPS-071/073 的 
 输出 `EXPECTED_AS_OF_NOT_RECORDED`，不能因旧 gap ledger 的 `MISSED=0` 推断数据完整。Development
 checkout 的 Atlas/workflow-health post-stage blocker 与 daily business trigger 分离，避免用户 worktree
 lease 反向制造采集缺口；该隔离不放宽任何 DQ/PIT、release、production 或 broker gate。
+Scheduler policy 迁移替换 active deployment receipt 时，现存 receipt 要么仍通过当前 policy，要么必须
+以 exact `deployment_id + release commit + size + SHA-256` 命中 reviewed prior-active allowlist，并继续
+通过 content-derived id、runtime identity 与 safety boundary 检查；未登记或任一 byte drift 都在 active
+receipt 写入前阻断。该 allowlist 只承接一份明确旧 receipt，不把旧 RRULE/target/cwd 解释成当前合同，
+也不授权 daily/provider/DQ/PIT/score 或 production effect。
 
 ```mermaid
 flowchart LR
@@ -1108,7 +1113,8 @@ flowchart LR
     SELF --> DEPLOYED["DEPLOYED<br/>exact runtime switched"]
     DEPLOYED --> API["Update the one Codex automation<br/>projectless isolated carrier<br/>09:30 primary + 17:30 rescue<br/>no mutable release SHA"]
     API --> OBS["Fresh actual config observation<br/>prompt/config SHA + updated-at<br/>two windows + no project/cwd"]
-    OBS --> ACCEPT["SCHEDULER_BOUND active receipt<br/>independent clone + runtime/environment fingerprint"]
+    OBS --> PRIOR["Prior active roll-forward gate<br/>current policy OR exact reviewed<br/>id + commit + size + SHA-256"]
+    PRIOR --> ACCEPT["SCHEDULER_BOUND active receipt<br/>independent clone + runtime/environment fingerprint"]
     ACCEPT --> WINDOW{"Invocation window<br/>PRIMARY or SAME_DAY_RESCUE"}
     WINDOW -->|"terminal evidence current"| SKIP["RESCUE_NOT_NEEDED<br/>no business trigger"]
     WINDOW -->|"fresh key + no lock + accepted release"| TRIG["Only external trigger<br/>max once per invocation<br/>aits ops daily-run"]

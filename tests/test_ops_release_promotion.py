@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -120,6 +121,13 @@ def test_policy_fails_closed_on_latest_and_scheduler_duplication() -> None:
     )
     assert policy.scheduler_per_invocation_business_trigger_max == 1
     assert policy.scheduler_same_entry_for_all_windows is True
+    assert policy.version == "2.1.0"
+    assert len(policy.prior_active_acceptance_allowlist) == 1
+    prior = policy.prior_active_acceptance_allowlist[0]
+    assert prior.deployment_id == "ops_deployment_13d42bc41d6fcb3228f8abf28d1717807544b66b"
+    assert prior.release_commit == "ea8937b2a07f5c4fc52ba1c437566017be137baa"
+    assert prior.size_bytes == 10907
+    assert prior.sha256 == "b2dd9727ec7afdd7792244b3d6b571b907f92ca6a7f58017604add4bab95b94d"
     assert policy.pre_release_canary_runner_schema == "pytest_incident_regression.v1"
     assert set(policy.pre_release_canary_required_scenarios) == set(INCIDENT_TEST_NODES)
 
@@ -635,6 +643,141 @@ def test_deployment_acceptance_rejects_forbidden_credential_name(
             credential_attestation_ref="owner_attestation:OPS-070:credentials:minimal-v1",
             owner_decision_ref="owner_decision:OPS-070:2026-07-27:accept-deployment",
             observed_at=OBSERVED_AT,
+        )
+
+
+def test_activation_allows_only_exact_reviewed_prior_active_receipt(
+    release_repository: ReleaseRepository,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    development, commit, validations, critical = release_repository
+    candidate = build_ops_release_candidate(
+        project_root=development,
+        candidate_commit=commit,
+        validation_artifact_paths=validations,
+        critical_path_commitments=critical,
+        owner_decision_ref="owner_decision:OPS-078:2026-09-04:approve-release",
+        observed_at=OBSERVED_AT,
+    )
+    runtime = tmp_path / "runtime"
+    _clone_independent(development, runtime, commit)
+    _copy_validation_artifacts(development, runtime, validations)
+    candidate_path = (
+        runtime / "outputs" / "operations" / "deployment" / "evidence" / "candidate.json"
+    )
+    write_json_atomic(candidate_path, candidate)
+    runtime_python = runtime / ".venv" / "Scripts" / "python.exe"
+    runtime_python.parent.mkdir(parents=True)
+    runtime_python.write_bytes(b"runtime")
+    monkeypatch.setattr(
+        promotion,
+        "_runtime_probe",
+        lambda **_: _probe_payload(runtime, runtime_python),
+    )
+    scheduler = _scheduler_observation(runtime, runtime_python)
+    promotion_event = _promotion_event(runtime, candidate, candidate_path)
+    current = build_ops_deployment_acceptance(
+        release_candidate=candidate,
+        release_candidate_path=candidate_path,
+        runtime_root=runtime,
+        development_root=development,
+        runtime_python=runtime_python,
+        scheduler_observation=scheduler,
+        promotion_event_path=promotion_event,
+        credential_names=["FMP_API_KEY", "SEC_USER_AGENT"],
+        credential_attestation_ref="owner_attestation:OPS-078:credentials:minimal-v1",
+        owner_decision_ref="owner_decision:OPS-078:2026-09-04:accept-deployment",
+        observed_at=OBSERVED_AT,
+    )
+    prior = json.loads(json.dumps(current))
+    prior["scheduler"]["rrule"] = (
+        "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU;" "BYHOUR=9;BYMINUTE=30;BYSECOND=0"
+    )
+    prior["deployment_id"] = promotion._content_id("ops_deployment_", prior, "deployment_id")
+    active_path = runtime / "outputs" / "operations" / "deployment" / "active.json"
+    write_json_atomic(active_path, prior)
+    current["previous_acceptance"] = promotion._single_file_commitment(
+        active_path,
+        root=active_path.parent,
+    )
+    current["deployment_id"] = promotion._content_id("ops_deployment_", current, "deployment_id")
+    policy = load_ops_release_promotion_policy()
+    exact = promotion.PriorActiveAcceptanceCommitment(
+        deployment_id=prior["deployment_id"],
+        release_commit=prior["release"]["candidate_commit"],
+        size_bytes=active_path.stat().st_size,
+        sha256=sha256_path(active_path),
+    )
+    monkeypatch.setattr(
+        promotion,
+        "load_ops_release_promotion_policy",
+        lambda _path=promotion.DEFAULT_OPS_RELEASE_PROMOTION_POLICY_PATH: replace(
+            policy,
+            prior_active_acceptance_allowlist=(exact,),
+        ),
+    )
+
+    assert activate_ops_deployment(current, runtime_root=runtime) == active_path
+    assert json.loads(active_path.read_text(encoding="utf-8")) == current
+
+
+def test_activation_rejects_tampered_or_unreviewed_prior_active_receipt(
+    tmp_path: Path,
+) -> None:
+    active_path = tmp_path / "active.json"
+    payload = {
+        "schema_version": "ops_deployment_acceptance.v2",
+        "status": "ACTIVE_OWNER_ACCEPTED",
+        "release_lifecycle_state": "SCHEDULER_BOUND",
+        "deployment_id": "ops_deployment_unreviewed",
+        "release": {"candidate_commit": "a" * 40},
+        "runtime": {"head_commit": "a" * 40},
+        "production_effect": "none",
+        "production_weight_write": False,
+        "active_shadow_weight_write": False,
+        "broker_action": False,
+        "trading_action": False,
+    }
+    write_json_atomic(active_path, payload)
+
+    with pytest.raises(
+        OpsReleasePromotionError,
+        match="DEPLOYMENT_PREVIOUS_ACCEPTANCE_NOT_ALLOWLISTED",
+    ):
+        promotion._validate_prior_active_acceptance_rollforward(
+            payload,
+            active_path=active_path,
+            policy=load_ops_release_promotion_policy(),
+            current_policy_error=OpsReleasePromotionError(
+                "DEPLOYMENT_SCHEDULER_BINDING_MISMATCH",
+                "rrule",
+            ),
+        )
+
+    exact = promotion.PriorActiveAcceptanceCommitment(
+        deployment_id=payload["deployment_id"],
+        release_commit=payload["release"]["candidate_commit"],
+        size_bytes=active_path.stat().st_size,
+        sha256=sha256_path(active_path),
+    )
+    policy = replace(
+        load_ops_release_promotion_policy(),
+        prior_active_acceptance_allowlist=(exact,),
+    )
+    active_path.write_bytes(active_path.read_bytes() + b"\n")
+    with pytest.raises(
+        OpsReleasePromotionError,
+        match="DEPLOYMENT_PREVIOUS_ACCEPTANCE_NOT_ALLOWLISTED",
+    ):
+        promotion._validate_prior_active_acceptance_rollforward(
+            payload,
+            active_path=active_path,
+            policy=policy,
+            current_policy_error=OpsReleasePromotionError(
+                "DEPLOYMENT_SCHEDULER_BINDING_MISMATCH",
+                "rrule",
+            ),
         )
 
 

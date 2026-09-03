@@ -100,6 +100,13 @@
   closed。状态分别是 `CODE_FIXED`、`DEPLOYED`、`SCHEDULER_BOUND`；只有下一严格更新的
   provider-ready `as_of` ordinary daily 全链完成后才是 `OPERATIONALLY_ACCEPTED`。发布、观察和
   acceptance 本身不运行 daily，scheduler entry 仍只能有一个。
+- `deployment-acceptance --activate` 替换 active receipt 前，必须先验证现存 active receipt。若 scheduler/
+  release policy 已发生受审迁移，旧 receipt 不得被新 policy 宽松重解释；只有它的
+  `deployment_id`、`release.candidate_commit`、文件 size 与 SHA-256 同时命中新 policy 中的 exact
+  `prior_active_acceptance_allowlist`，且 receipt schema/status/lifecycle、content-derived id、runtime
+  release identity 与 no-production/no-broker safety boundary 均有效时，才可作为一次 roll-forward
+  predecessor。任何字节篡改、未登记 receipt、宽松 scheduler-field compatibility 或 hash/identity
+  mismatch 都必须 fail closed，保持 active receipt 原始 bytes 不变；不得手工改 receipt 以完成迁移。
 - OPS-078 起，唯一 `aitradingsystem-pit` Codex automation 使用 `projectless` 隔离 carrier，actual
   config 不得包含 development project id，`cwds` 必须精确为 Codex projectless local serializer 的
   neutral home sentinel `["~"]`，任何 development/runtime/project 或其他 cwd 均 fail closed；启动后

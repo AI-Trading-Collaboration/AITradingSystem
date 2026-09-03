@@ -104,13 +104,18 @@ provider/capture 影响、next window/next owner 和 exit condition。此对账�
 7. 只有后续真实 provider-ready ordinary daily 全链 PASS 才能把业务状态称为
    `OPERATIONALLY_ACCEPTED`；本任务工程完成最多为 `SCHEDULER_BOUND`。
 8. `production_effect=none`；不写 production/active-shadow weights，不触发 broker/order/trading。
+9. Scheduler/release policy 迁移时，旧 active receipt 只有同时命中 reviewed
+   `deployment_id + release_commit + size + SHA-256` allowlist，并通过 schema/status/lifecycle、
+   content-derived id、runtime identity 与 safety boundary 检查，才能成为 roll-forward predecessor；
+   tamper、未登记 receipt 或宽松 field compatibility 必须在 active receipt 写入前阻断。
 
 ## 临时 workspace 生命周期
 
 - owner：`OPS-078` coordinator；
 - purpose：隔离 task registration、implementation、validation、integration 与 release evidence；
 - path：`D:\Work\AITradingSystem_ops078_lane`；
-- branch：`codex/ops-078-daily-isolation`；
+- branches：`codex/ops-078-daily-isolation`、`codex/ops-078-carrier-sentinel-fix`、
+  `codex/ops-078-acceptance-rollforward`；
 - frozen base：`eab7971d3a41f4802f110200d70620df443341be`；
 - exit condition：candidate 完成普通 main push、runtime exact promotion、existing automation 原位更新、
   scheduler binding/preflight 验证且所有唯一 evidence 进入 canonical durable location 后，审计
@@ -206,3 +211,15 @@ v8 focused=`28 passed`，Ruff/Black 均 PASS；首次 generator replay 在 repor
 `2343730 bytes / SHA-256=497e3a0832a37d793d08a26331f51744c4b98b26f5f50261cff68051feef50e2 /
 git_blob=2a3bfc990675114e5e9f1f5ef39023ec610e0ab0`，而 DEVX-006D policy 仍固定 v7 bytes。v8 未提交并已
 以 FAIL 释放；v9 同步这组 exact source seal 后必须从头重放全部 generator，不复用 v8 的中间输出。
+
+v9 candidate `3048a2178a383c7f240cb1e9c8aafa53a796913c` 已完成六层正式验证，Full=
+`10193 passed / 6 skipped / 0 failed`，并已普通 push、promotion 至 runtime 与完成 actual projectless
+双窗口 scheduler observation。首次 deployment activation 在写 active receipt 前以
+`DEPLOYMENT_SCHEDULER_BINDING_MISMATCH` fail closed：activation 用 v9 双窗口 policy 重新验证旧 active
+receipt 的单窗口 RRULE。旧 active receipt 保持
+`deployment_id=ops_deployment_13d42bc41d6fcb3228f8abf28d1717807544b66b`、
+`release_commit=ea8937b2a07f5c4fc52ba1c437566017be137baa`、`10907 bytes`、
+`SHA-256=b2dd9727ec7afdd7792244b3d6b571b907f92ca6a7f58017604add4bab95b94d` 原始 bytes；runtime HEAD 已
+切换到 v9 但 release 仍未激活，未调用 daily/provider/DQ/PIT/score。v10 以这四项 exact commitment
+建立 reviewed prior-active roll-forward gate，并测试未登记/tampered receipt 继续阻断；不使用宽松
+schema、RRULE、target 或 cwd compatibility。

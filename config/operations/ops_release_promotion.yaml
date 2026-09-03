@@ -1,9 +1,9 @@
 schema_version: ops_release_promotion_policy.v2
 policy_id: ops_release_promotion_v2
-version: 2.0.0
+version: 2.1.0
 status: REVIEWED_OWNER_GATED
 owner: operations_owner_and_project_owner
-reviewed_at: 2026-07-27
+reviewed_at: 2026-09-04
 rationale: >
   Ops releases must be selected explicitly from validated, pushed remote main
   and promoted through a journaled transaction. The active deployment receipt
@@ -12,7 +12,8 @@ rationale: >
   release state, or repair a failed promotion.
   The automation carrier is projectless and isolated from the development
   checkout; the same scheduler entry owns both the primary and same-day rescue
-  invocation windows.
+  invocation windows. A scheduler-policy migration may replace an older active
+  receipt only when its complete immutable file identity is explicitly reviewed.
   Permanent runtime-generated state uses an exact, receipt-bound local Git
   exclusion contract so development checkout dirty semantics remain strict.
 repository:
@@ -26,6 +27,13 @@ receipts:
   legacy_deployment_acceptance_schema: ops_deployment_acceptance.v1
   legacy_active_release_commits:
     - 12f1e6458e5af4b7ced444e0f4fdc25365afe965
+  # Policy migrations may roll forward only from these exact immutable active
+  # receipt bytes. This is not a schema or scheduler-field compatibility bypass.
+  prior_active_acceptance_allowlist:
+    - deployment_id: ops_deployment_13d42bc41d6fcb3228f8abf28d1717807544b66b
+      release_commit: ea8937b2a07f5c4fc52ba1c437566017be137baa
+      size_bytes: 10907
+      sha256: b2dd9727ec7afdd7792244b3d6b571b907f92ca6a7f58017604add4bab95b94d
   promotion_transaction_schema: ops_release_promotion_transaction.v1
   active_receipt_relative_path: outputs/operations/deployment/active.json
   history_relative_path: outputs/operations/deployment/history

@@ -83,6 +83,14 @@ class OpsReleasePromotionError(RuntimeError):
 
 
 @dataclass(frozen=True)
+class PriorActiveAcceptanceCommitment:
+    deployment_id: str
+    release_commit: str
+    size_bytes: int
+    sha256: str
+
+
+@dataclass(frozen=True)
 class OpsReleasePromotionPolicy:
     policy_id: str
     version: str
@@ -119,6 +127,7 @@ class OpsReleasePromotionPolicy:
     required_environment_names: tuple[str, ...]
     legacy_deployment_acceptance_schema: str
     legacy_active_release_commits: tuple[str, ...]
+    prior_active_acceptance_allowlist: tuple[PriorActiveAcceptanceCommitment, ...]
     release_identity_authority: str
     legacy_release_assertion_name: str
     legacy_release_assertion_mode: str
@@ -306,6 +315,9 @@ def load_ops_release_promotion_policy(
         legacy_active_release_commits=_text_tuple(
             receipts.get("legacy_active_release_commits"),
             "legacy_active_release_commits",
+        ),
+        prior_active_acceptance_allowlist=_prior_active_acceptance_commitments(
+            receipts.get("prior_active_acceptance_allowlist"),
         ),
         release_identity_authority=_text(
             scheduler.get("release_identity_authority"),
@@ -2010,7 +2022,15 @@ def activate_ops_deployment(
     history_root = _safe_runtime_path(root, policy.history_relative_path)
     if active_path.exists():
         existing = _read_json_mapping(active_path)
-        validate_ops_deployment_acceptance(existing, policy=policy)
+        try:
+            validate_ops_deployment_acceptance(existing, policy=policy)
+        except OpsReleasePromotionError as current_policy_error:
+            _validate_prior_active_acceptance_rollforward(
+                existing,
+                active_path=active_path,
+                policy=policy,
+                current_policy_error=current_policy_error,
+            )
         if dict(existing) == dict(payload):
             return active_path
         previous_commitment = payload.get("previous_acceptance")
@@ -2042,6 +2062,111 @@ def activate_ops_deployment(
         )
     write_json_atomic(active_path, dict(payload))
     return active_path
+
+
+def _validate_prior_active_acceptance_rollforward(
+    payload: Mapping[str, object],
+    *,
+    active_path: Path,
+    policy: OpsReleasePromotionPolicy,
+    current_policy_error: OpsReleasePromotionError,
+) -> None:
+    """Admit one immutable predecessor receipt during a reviewed policy migration."""
+
+    if not active_path.is_file() or active_path.is_symlink():
+        raise OpsReleasePromotionError(
+            "DEPLOYMENT_PREVIOUS_ACCEPTANCE_FILE_REQUIRED",
+            str(active_path),
+        ) from current_policy_error
+    deployment_id = _text(payload.get("deployment_id"), "deployment_id")
+    release = _mapping(payload.get("release"), "release")
+    release_commit = _text(release.get("candidate_commit"), "release.candidate_commit")
+    size_bytes = active_path.stat().st_size
+    sha256 = _sha256_file(active_path)
+    matches = [
+        row
+        for row in policy.prior_active_acceptance_allowlist
+        if row.deployment_id == deployment_id
+        and row.release_commit == release_commit
+        and row.size_bytes == size_bytes
+        and row.sha256 == sha256
+    ]
+    if len(matches) != 1:
+        raise OpsReleasePromotionError(
+            "DEPLOYMENT_PREVIOUS_ACCEPTANCE_NOT_ALLOWLISTED",
+            (
+                f"deployment_id={deployment_id};release_commit={release_commit};"
+                f"size_bytes={size_bytes};sha256={sha256};"
+                f"current_policy_error={current_policy_error.code}"
+            ),
+        ) from current_policy_error
+    if (
+        payload.get("schema_version") != _DEPLOYMENT_ACCEPTANCE_SCHEMA
+        or payload.get("status") != "ACTIVE_OWNER_ACCEPTED"
+        or payload.get("release_lifecycle_state") != "SCHEDULER_BOUND"
+    ):
+        raise OpsReleasePromotionError(
+            "DEPLOYMENT_PREVIOUS_ACCEPTANCE_STATE_INVALID",
+            deployment_id,
+        ) from current_policy_error
+    runtime = _mapping(payload.get("runtime"), "runtime")
+    if runtime.get("head_commit") != release_commit:
+        raise OpsReleasePromotionError(
+            "DEPLOYMENT_PREVIOUS_ACCEPTANCE_RUNTIME_MISMATCH",
+            deployment_id,
+        ) from current_policy_error
+    _require_safety_boundary(payload, "previous_deployment")
+    expected_id = _content_id("ops_deployment_", payload, "deployment_id")
+    if deployment_id != expected_id:
+        raise OpsReleasePromotionError(
+            "DEPLOYMENT_PREVIOUS_ACCEPTANCE_ID_MISMATCH",
+            f"expected={expected_id};observed={deployment_id}",
+        ) from current_policy_error
+
+
+def _prior_active_acceptance_commitments(
+    value: object,
+) -> tuple[PriorActiveAcceptanceCommitment, ...]:
+    rows = _mapping_rows(value, "prior_active_acceptance_allowlist")
+    parsed: list[PriorActiveAcceptanceCommitment] = []
+    for index, row in enumerate(rows):
+        deployment_id = _text(
+            row.get("deployment_id"),
+            f"prior_active_acceptance_allowlist[{index}].deployment_id",
+        )
+        release_commit = _text(
+            row.get("release_commit"),
+            f"prior_active_acceptance_allowlist[{index}].release_commit",
+        )
+        _require_commit(release_commit, "prior_active_acceptance.release_commit")
+        size_bytes = _positive_int(
+            row.get("size_bytes"),
+            f"prior_active_acceptance_allowlist[{index}].size_bytes",
+        )
+        sha256 = _text(
+            row.get("sha256"),
+            f"prior_active_acceptance_allowlist[{index}].sha256",
+        )
+        if not re.fullmatch(r"[0-9a-f]{64}", sha256):
+            raise OpsReleasePromotionError(
+                "PROMOTION_POLICY_PRIOR_ACCEPTANCE_SHA",
+                sha256,
+            )
+        parsed.append(
+            PriorActiveAcceptanceCommitment(
+                deployment_id=deployment_id,
+                release_commit=release_commit,
+                size_bytes=size_bytes,
+                sha256=sha256,
+            )
+        )
+    identities = [(row.deployment_id, row.release_commit) for row in parsed]
+    if len(set(identities)) != len(identities):
+        raise OpsReleasePromotionError(
+            "PROMOTION_POLICY_PRIOR_ACCEPTANCE_DUPLICATE",
+            repr(identities),
+        )
+    return tuple(parsed)
 
 
 def promote_ops_release(
