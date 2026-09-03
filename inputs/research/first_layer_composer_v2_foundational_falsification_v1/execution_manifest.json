@@ -1,0 +1,115 @@
+{
+  "aggregate_result_only": true,
+  "authorization_binding": {
+    "canonical_sha256": "1c3cda4cd874bb43c7cfbf0ca43ff11fc2847575d84f7de9b1ee35f50ebe84bc",
+    "file_sha256": "332a5dcf94872d3d7a4695e08525f6b9aedac7ceaf70abd131952e7ca6ce576d",
+    "path": "config/research/first_layer_composer_v2_foundational_falsification_run_authorization_v1.yaml"
+  },
+  "broker_action": "none",
+  "code_binding": {
+    "implementation_commit_sha": "0c57f57ce743528e23083551aef3ab7eab51ca70",
+    "module_path": "src/ai_trading_system/first_layer_foundational_falsification_execution.py",
+    "module_sha256": "8feb16c9328eac48c8751b2a664d21b0bcb495889653e8db352f28836444730f"
+  },
+  "evaluated_end": "2025-12-02",
+  "evaluated_start": "2021-02-22",
+  "expected_return_intervals": 1201,
+  "expected_signal_sessions": 1202,
+  "f0_binding": {
+    "authority_set_sha256": "a07e63c9f3ba035d94cfdbf18bc096b69380e4baf1b003540390b66d4ec44fe3",
+    "canonical_sha256": "ea6b51baf7d8bdfec2454fb037131a199736e6cacb1eecdc35e01701f5357818",
+    "exact_main_commit": "fcb2a420ed1489189ea1ec9a323724943dcaee52",
+    "file_sha256": "54dc349be1ec5670f9e02fc74e9467b668b2311a7dadbdc22680c8c605a824ad",
+    "path": "config/research/first_layer_composer_v2_foundational_falsification_preregistration_v1.yaml"
+  },
+  "input_bindings": [
+    {
+      "path": "outputs/qqq_options/signal_packages/trading_2542i_operational_forecast_real_v3/signal_index.json",
+      "role": "signal_index",
+      "sha256": "d2af99e55d8f9a69a14d4479eb7ba1fd2aeed323c457ae10705a140c7a62ffda",
+      "size_bytes": 214177
+    },
+    {
+      "path": "outputs/research_trends/operational_forecast/trading_2542i_real_v3/real_materialization_receipt.json",
+      "role": "real_dq_materialization_receipt",
+      "sha256": "f508581f98b1fa64763b8488568cf0631bfa260fea2b7aa55f9d7f5a0590a230",
+      "size_bytes": 3086
+    },
+    {
+      "path": "outputs/research_trends/operational_forecast/trading_2542i_real_v3/manifest_replay_receipt.json",
+      "role": "signal_package_manifest_replay_receipt",
+      "sha256": "1106de7d6e9b63a20d9e68d7228267ea6777a84b2ea1de16215699d3fa7cd9bc",
+      "size_bytes": 834
+    },
+    {
+      "path": "outputs/research_trends/operational_forecast/trading_2542i_real_v3/producer/first_layer_composer_v2_operational_predictions.csv",
+      "role": "operational_predictions",
+      "sha256": "efc285466efb1d99ce57d691078d43f7f2cb169e68a5cd719b1de5d8967fc2da",
+      "size_bytes": 727007
+    },
+    {
+      "path": "outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/prices_daily.csv",
+      "role": "canonical_prices",
+      "sha256": "903689623b83bd6b84ce1e9d5e932848cb656b5a2fae1ae31553ba9004482e7e",
+      "size_bytes": 320728
+    },
+    {
+      "path": "outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/rates_daily.csv",
+      "role": "canonical_rates",
+      "sha256": "7829d8ee44fe2ed39a130c9d5224e077c8b03b31990176f188315ebfc5b85e33",
+      "size_bytes": 85790
+    },
+    {
+      "path": "outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/prices_marketstack_daily.csv",
+      "role": "canonical_secondary_prices",
+      "sha256": "6cd92d32cefae7fc2ce316db67df51b5b9b3fde5f0b99f53ae4a8da28cba2dc1",
+      "size_bytes": 216505
+    },
+    {
+      "path": "outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/download_manifest.csv",
+      "role": "canonical_download_manifest",
+      "sha256": "7f116e0b0e2480805157dce28a518f183d24927cb52a82acb91851d6eabaa4cb",
+      "size_bytes": 7240
+    },
+    {
+      "path": "config/data_quality.yaml",
+      "role": "data_quality_policy",
+      "sha256": "e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82",
+      "size_bytes": 9002
+    },
+    {
+      "path": "config/data/us_equity_special_closure_registry.yaml",
+      "role": "us_equity_calendar_policy",
+      "sha256": "375dd5e07b57208c5afb700d4fec96fdb3c95b29d562b553c3ecc5c4e6f97416",
+      "size_bytes": 1959
+    },
+    {
+      "path": "inputs/research/frozen_signal_value_confirmation_v1/execution_manifest.json",
+      "role": "trading_2550_execution_manifest",
+      "sha256": "6051ad6c48b8d402c646945e4f33442f11d0435cb0228c125384776afd7c30d3",
+      "size_bytes": 4072
+    }
+  ],
+  "manifest_id": "first_layer_composer_v2_foundational_falsification_v1",
+  "production_effect": "none",
+  "requested_end": "2025-12-02",
+  "requested_start": "2021-02-22",
+  "run_envelope": {
+    "cache_mutations": 0,
+    "canonical_dq_runs": 1,
+    "data_downloads": 0,
+    "external_provider_actions": 0,
+    "fills": 0,
+    "independent_replays": 1,
+    "local_foundational_runs": 1,
+    "manifest_replays": 1,
+    "option_backtests": 0,
+    "orders": 0,
+    "positions": 0,
+    "quantconnect_actions": 0
+  },
+  "schema_version": "first_layer_composer_v2_foundational_falsification_execution_manifest.v1",
+  "status": "FROZEN_READY_FOR_SINGLE_DISPATCH",
+  "task_id": "TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1",
+  "terminal_artifact": "first_layer_composer_v2_foundational_falsification_result.v1"
+}

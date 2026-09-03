@@ -13,6 +13,7 @@ from ai_trading_system.first_layer_foundational_falsification_execution import (
     contiguous_episode_attribution,
     cost_sensitivity,
     leave_one_year_out,
+    load_execution_manifest,
     load_run_authorization,
     paired_circular_moving_block_bootstrap,
     sgov_carry_sensitivity,
@@ -60,6 +61,18 @@ def test_real_authorization_is_standing_scope_and_zero_external_action() -> None
         "positions",
     ):
         assert loaded.payload["run_envelope"][field] == 0
+
+
+def test_real_execution_manifest_binds_implementation_and_exact_inputs() -> None:
+    authorization = load_run_authorization()
+    manifest = load_execution_manifest(authorization=authorization)
+    assert manifest.payload["code_binding"]["implementation_commit_sha"] == (
+        "0c57f57ce743528e23083551aef3ab7eab51ca70"
+    )
+    assert [binding.role for binding in manifest.inputs] == list(
+        authorization.payload["input_allowlist"]
+    )
+    assert manifest.payload["aggregate_result_only"] is True
 
 
 def test_interval_paths_reconcile_to_trading_2550_accounting() -> None:
