@@ -33,7 +33,7 @@ targets:
     byte_count: 2346399
     file_sha256: 3cb1c19813e87b88428ed15dbb3713cde5eaa87368b03dc6c112ffbd017451de
     lf_sha256: 3cb1c19813e87b88428ed15dbb3713cde5eaa87368b03dc6c112ffbd017451de
-    git_blob: b8ce2f7b3aa06a6a49e1c6790cceaaa5dfe9881f
+    git_blob: 9d73995dcc71e67dccaabacc9a5043ed2e881231
     entry_count: 1207
 contract:
   source_of_truth: LEGACY_MONOLITH
