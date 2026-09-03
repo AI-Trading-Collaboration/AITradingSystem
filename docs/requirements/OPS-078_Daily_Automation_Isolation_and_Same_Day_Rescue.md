@@ -223,3 +223,13 @@ receipt 的单窗口 RRULE。旧 active receipt 保持
 切换到 v9 但 release 仍未激活，未调用 daily/provider/DQ/PIT/score。v10 以这四项 exact commitment
 建立 reviewed prior-active roll-forward gate，并测试未登记/tampered receipt 继续阻断；不使用宽松
 schema、RRULE、target 或 cwd compatibility。
+
+v10 candidate `20f969236a0abd956bf2f0800d74c39545226cea` 的 `fast-unit=350 passed`；首次
+Architecture 为 `884 passed / 1 failed`，唯一失败
+`tests/test_arch_004e_devex.py::test_architecture_fitness_passes_and_detects_stale_manifest`
+显示 module manifest、test manifest 与 aggregate shadow index 未按候选重建。根因是 coordinator
+把 publication generator id `architecture-manifests` 错映射为 `architecture_arch005_registry.py
+generate`，而正式 writer 应为 `scripts/architecture_devex.py generate`。失败 artifact=
+`outputs/validation_runtime/architecture-fitness_20260903T181337Z/test_runtime_summary.json`；v10 已以
+FAILED 释放，v11 使用正确 writer 重建全部 architecture manifests、report-flow/compatibility authority，
+提交新候选并从头重跑六层正式验证，不复用 v10 的 fast-unit PASS 声明。
