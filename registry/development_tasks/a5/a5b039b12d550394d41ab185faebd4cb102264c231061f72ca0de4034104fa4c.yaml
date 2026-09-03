@@ -1,0 +1,144 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
+  task_id_sha256: a5b039b12d550394d41ab185faebd4cb102264c231061f72ca0de4034104fa4c
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
+  title: null
+  domain: Strategy research / first-layer composer v2 foundational falsification schema-only
+    failure-fix
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex strategy-evidence coordinator：实现并验证 BootstrapInterval 五字段 adapter，冻结新
+    authorization/manifest 后消费唯一 1/1/1/1 本地研究运行
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 必须先证明只过滤传给 strict reducer model 的字段且全部研究不变量未变；任一
+    V1 绑定、输入身份、DQ/PIT 或授权计数漂移均 fail closed
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 新版本化模块仅改变 BootstrapInterval 字段过滤；V1 failure/admission/input identity 精确绑定；1/1/1/1
+      运行、aggregate-only admission、Atlas/system flow、formal/Full 和普通发布全部通过
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-03T12:59:04.4626222+09:00'
+  actor: integration-coordinator
+  change_id: trading-2557-f1-failure-fix-task-registration-v1
+  lane_id: null
+  base_commit: 0925dda66cb74c8ceaaf47a39a6540859ba5ae6e
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
+    - Strategy research / first-layer composer v2 foundational falsification schema-only
+      failure-fix
+    - P0
+    - IN_PROGRESS
+    - Codex strategy-evidence coordinator：实现并验证 BootstrapInterval 五字段 adapter，冻结新
+      authorization/manifest 后消费唯一 1/1/1/1 本地研究运行
+    - 必须先证明只过滤传给 strict reducer model 的字段且全部研究不变量未变；任一 V1 绑定、输入身份、DQ/PIT 或授权计数漂移均
+      fail closed
+    - 新版本化模块仅改变 BootstrapInterval 字段过滤；V1 failure/admission/input identity 精确绑定；1/1/1/1
+      运行、aggregate-only admission、Atlas/system flow、formal/Full 和普通发布全部通过
+    - 'Supporting requirement: docs/requirements/TRADING-2557_First_Layer_Composer_V2_Foundational_Falsification_Failure_Fix_V1.md。authorization_state=EXACT_PREAUTHORIZED；DATA_RESEARCH
+      only；download/cache mutation/QuantConnect/options/provider/orders/fills/positions/paper/live/production/broker=0/false/none。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2557-f1-failure-fix-task-registration-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c3023d3b814ecb0c5ce91baca6d3060a
+- schema_version: task_event.v1
+  task_id: TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T13:10:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2557-f1-failure-fix-authorization-clarification-v1
+  lane_id: null
+  base_commit: 0925dda66cb74c8ceaaf47a39a6540859ba5ae6e
+  previous_state_event_id: task-event-c3023d3b814ecb0c5ce91baca6d3060a
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex strategy-evidence coordinator：实现并验证 BootstrapInterval 五字段 adapter，冻结新
+      authorization/manifest 后消费唯一 1/1/1/1 本地研究运行
+    blocker_or_next_step: 必须先证明只过滤传给 strict reducer model 的字段且全部研究不变量未变；任一 V1 绑定、输入身份、DQ/PIT
+      或授权计数漂移均 fail closed
+    acceptance_criteria: 新版本化模块仅改变 BootstrapInterval 字段过滤；V1 failure/admission/input
+      identity 精确绑定；1/1/1/1 运行、aggregate-only admission、Atlas/system flow、formal/Full
+      和普通发布全部通过
+    notes: 'Supporting requirement: docs/requirements/TRADING-2557_First_Layer_Composer_V2_Foundational_Falsification_Failure_Fix_V1.md。authorization_state=STANDING_OWNER_SCOPE，来源为
+      Owner 在 TRADING-2556 发布后要求继续；DATA_RESEARCH only；download/cache mutation/QuantConnect/options/provider/orders/fills/positions/paper/live/production/broker=0/false/none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2557-f1-failure-fix-authorization-clarification-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a3d48f916010eb4df7413cf82b1df838
+- schema_version: task_event.v1
+  task_id: TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T13:10:53.6830666+09:00'
+  actor: codex-coordinator
+  change_id: TRADING-2557-EXACT-AUTH-CORRECTION-20260903
+  lane_id: null
+  base_commit: 0925dda66cb74c8ceaaf47a39a6540859ba5ae6e
+  previous_state_event_id: task-event-a3d48f916010eb4df7413cf82b1df838
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex strategy-evidence coordinator：实现并验证 BootstrapInterval 五字段 adapter，冻结新
+      authorization/manifest 后消费唯一 1/1/1/1 本地研究运行
+    blocker_or_next_step: 必须先证明只过滤传给 strict reducer model 的字段且全部研究不变量未变；任一 V1 绑定、输入身份、DQ/PIT
+      或授权计数漂移均 fail closed
+    acceptance_criteria: 新版本化模块仅改变 BootstrapInterval 字段过滤；V1 failure/admission/input
+      identity 精确绑定；1/1/1/1 运行、aggregate-only admission、Atlas/system flow、formal/Full
+      和普通发布全部通过
+    notes: Owner 已通过 source_thread_id=01a05dc6-6ace-7183-84ed-207f088dd4b3 明确精确授权
+      TRADING-2557 F1 failure-fix；authorization_state=EXACT_PREAUTHORIZED。仅允许 BootstrapInterval
+      字段过滤修正；manifest replay=1、canonical DQ=1、local bounded run=1、independent replay=1；窗口、信号、模型、阈值、成本、bootstrap
+      draws、reducer 不变；下载、cache mutation、QuantConnect、期权回测、provider、paper/live/production/broker/order/fill/position
+      全部为 0。此前 STANDING_OWNER_SCOPE 事件保留为历史错误，本事件追加纠正。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2557-EXACT-AUTH-CORRECTION-20260903
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2f2c31bb875cf21887a306ca153258bf
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
+  - Strategy research / first-layer composer v2 foundational falsification schema-only
+    failure-fix
+  - P0
+  - IN_PROGRESS
+  - Codex strategy-evidence coordinator：实现并验证 BootstrapInterval 五字段 adapter，冻结新 authorization/manifest
+    后消费唯一 1/1/1/1 本地研究运行
+  - 必须先证明只过滤传给 strict reducer model 的字段且全部研究不变量未变；任一 V1 绑定、输入身份、DQ/PIT 或授权计数漂移均 fail
+    closed
+  - 新版本化模块仅改变 BootstrapInterval 字段过滤；V1 failure/admission/input identity 精确绑定；1/1/1/1
+    运行、aggregate-only admission、Atlas/system flow、formal/Full 和普通发布全部通过
+  - Owner 已通过 source_thread_id=01a05dc6-6ace-7183-84ed-207f088dd4b3 明确精确授权 TRADING-2557
+    F1 failure-fix；authorization_state=EXACT_PREAUTHORIZED。仅允许 BootstrapInterval 字段过滤修正；manifest
+    replay=1、canonical DQ=1、local bounded run=1、independent replay=1；窗口、信号、模型、阈值、成本、bootstrap
+    draws、reducer 不变；下载、cache mutation、QuantConnect、期权回测、provider、paper/live/production/broker/order/fill/position
+    全部为 0。此前 STANDING_OWNER_SCOPE 事件保留为历史错误，本事件追加纠正。
+  docs_links: []
+  terminal: false
+  canonical_row_sha256: 29251599f0441e57546e1e754268a6d7de310e62dc23c66d69094bcec489f5fe
+last_event_id: task-event-2f2c31bb875cf21887a306ca153258bf
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 8cb35515a888ba1eaf0212fde40ba140c6aee2bbed10bfb4d5eeaa19b2f2ab4a
