@@ -14,7 +14,8 @@ task_record:
   priority: P0
   accountable_owner: null
   next_owner: Project Owner：维持 TRADING-2557 INSUFFICIENT/HOLD；本候选不提高后续研究优先级
-  requirement_refs: []
+  requirement_refs:
+  - docs/requirements/TRADING-2558_First_Layer_Composer_V2_Matched_Placebo_Falsification_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
@@ -83,6 +84,33 @@ events:
   - change:trading-2558-matched-placebo-terminal-result-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-4c1a34c79c530d5a5bc311ab7466ec80
+- schema_version: task_event.v1
+  task_id: TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T17:20:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2558-requirement-ref-correction-v1
+  lane_id: null
+  base_commit: c9f037b10cce112d4d7a9de0265f0097f7d7a5ac
+  previous_state_event_id: task-event-4c1a34c79c530d5a5bc311ab7466ec80
+  from_status: DONE
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：维持 TRADING-2557 INSUFFICIENT/HOLD；本候选不提高后续研究优先级
+    blocker_or_next_step: matched-placebo 单侧 p=0.20007999200079993，未区分真实时点与同形态随机安排；不得重跑或参数补救，未来仅可由新的
+      prospective OOS 政策另行登记
+    acceptance_criteria: Manifest replay/DQ/local run/independent replay 已按 1/1/1/1
+      PASS；10,000 draws 保持 385 LONG intervals、41 episodes、run/gap 多重集、边界、82 trade
+      events 与 5 bps 成本；独立重放差异 0；禁用动作均为 0
+    notes: 'Supporting requirement: docs/requirements/TRADING-2558_First_Layer_Composer_V2_Matched_Placebo_Falsification_V1.md。Result
+      admission: config/research/first_layer_composer_v2_matched_placebo_result_admission_v1.yaml。aggregate
+      result SHA-256=410ec5522d40ba59019597235722dd6ea2e9b909c37a1ee7d60bc00d8f5780b6；technical_validation_state=PASS；reducer_status=TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO；production_effect=none，broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2558-requirement-ref-correction-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-db7ec0ba49789d3dc3f5bd6241963333
 projection:
   legacy_first_eight_cells:
   - TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
@@ -95,11 +123,13 @@ projection:
   - Manifest replay/DQ/local run/independent replay 已按 1/1/1/1 PASS；10,000 draws 保持
     385 LONG intervals、41 episodes、run/gap 多重集、边界、82 trade events 与 5 bps 成本；独立重放差异
     0；禁用动作均为 0
-  - 'Result admission: config/research/first_layer_composer_v2_matched_placebo_result_admission_v1.yaml。aggregate
+  - 'Supporting requirement: docs/requirements/TRADING-2558_First_Layer_Composer_V2_Matched_Placebo_Falsification_V1.md。Result
+    admission: config/research/first_layer_composer_v2_matched_placebo_result_admission_v1.yaml。aggregate
     result SHA-256=410ec5522d40ba59019597235722dd6ea2e9b909c37a1ee7d60bc00d8f5780b6；technical_validation_state=PASS；reducer_status=TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO；production_effect=none，broker_action=none。'
-  docs_links: []
+  docs_links:
+  - docs/requirements/TRADING-2558_First_Layer_Composer_V2_Matched_Placebo_Falsification_V1.md
   terminal: true
-  canonical_row_sha256: 1b65483ff57346837eec0ca04dcb149e4df7d79a3c12f913354c06c03f7c79d8
-last_event_id: task-event-4c1a34c79c530d5a5bc311ab7466ec80
+  canonical_row_sha256: 8f145dde41e0be4aece9154fbe15776a8a6ac3c18b03fb7e86eeab1fd53d553e
+last_event_id: task-event-db7ec0ba49789d3dc3f5bd6241963333
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 3fab92b114ca81759c80c9bef93d77b31f210a081d40e2b12c3ee0855e13998b
+fragment_checksum: a94bcc5fb5adc59ca04e95fd8fdf0b9a5cadd5555fbb5e6acff4ef37141fb751

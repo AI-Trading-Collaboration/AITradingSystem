@@ -151,3 +151,6 @@ precedence：
   Atlas 分类与读者摘要；同时发现 canonical task terminal update 的 notes 未保留 `Supporting requirement:`
   前缀，导致派生 `requirement_refs` 为空。后续事务必须通过 canonical writer 追加纠正事件，恢复同一
   requirement ref，再从 generator order 起完整重放。
+- 2026-09-03：publication transaction v3 已通过 canonical writer 追加纠正事件，恢复
+  `requirement_refs` 指向本文档；没有改写历史事件，也没有重算或重跑研究。该 task-source identity
+  提交后，后续发布事务将从新的 clean exact HEAD 重放全部 generator。
