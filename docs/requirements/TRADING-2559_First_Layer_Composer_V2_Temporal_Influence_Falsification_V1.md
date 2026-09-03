@@ -221,3 +221,8 @@ LONG episode，因此本任务不重复年度归因或 matched-placebo，也不�
   为 frozen base、`71d6134ad7ed109647d8d41b6373d338d9773ebb`（加本记录后的 exact lane head）为 lane、
   `73a1015ccc7567d2c88f15ba953c136cac12a890` 为 latest main，重新生成独立 v2 manifest/plan。
   只允许重整合、共享 authority 重建和正式验证；不重跑研究，`1/1/1/1` 与所有禁止项计数不变。
+- 2026-09-04：v9 在 latest-main coordinator tree 上通过 canonical writer 精确重放四个既有 task
+  events；四个 event id 与 fragment checksum 均未变化，task-source validate PASS（1059 tasks，
+  518 active，541 completed）。由于 Atlas generator 必须绑定包含最新 task index/view 的已提交 exact
+  source，v9 在 generator 前以 failed 关闭；先提交 task-source 生成视图，再由 v10 从该 clean source
+  commit 完整运行五个 generator。未运行研究、DQ、provider 或任何交易动作。
