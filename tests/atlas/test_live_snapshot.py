@@ -96,7 +96,7 @@ def test_unclassified_successor_is_detected_before_live_projection() -> None:
     without_latest = replace(policy, task_sources=policy.task_sources[:-1])
 
     assert unclassified_page_successors(registry, without_latest) == (
-        "TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1",
+        "TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1",
     )
 
 
@@ -108,19 +108,20 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2557_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2558_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
-    assert bundle.evidence_evaluated_at == "2026-09-03T04:22:54.1021586+00:00"
+    assert bundle.evidence_evaluated_at == "2026-09-03T08:03:07.6304015+00:00"
     assert bundle.status_object_zh == (
-        "当前研究组合维持 evidence-first。TRADING-2557 在 EXACT_PREAUTHORIZED 下只修正 "
-        "BootstrapInterval 五字段投影，唯一运行的 manifest replay、canonical DQ、本地 bounded run "
-        "和 independent replay 均精确执行一次，DQ 与独立对账 PASS，其他外部或交易动作均为 0。"
-        "5 bps 下 candidate 相对 exposure-matched comparator 的净总收益差为 "
-        "+13.745976956735628 个百分点，candidate 最大回撤幅度更低 3.474566287769222 个百分点；"
-        "但 21/63-session bootstrap 的 2.5% 下界均显著低于 0，且排除 2022 后 excess 为 "
-        "-5.048443883389609 个百分点，冻结 reducer 因此输出 INSUFFICIENT / HOLD。该结果说明点估计"
-        "值得保留观察，但稳健性证据不足；不得重跑或事后改阈值，也不支持 QQQ Options Wave B/C、"
-        "paper/live/production/broker 或任何交易动作。下一步只能另行预注册真正独立的新证据阶段。"
+        "当前研究组合维持 evidence-first。TRADING-2558 在 STANDING_OWNER_SCOPE 下完成一次 write-once "
+        "matched-placebo 时点证伪：manifest replay、canonical DQ、本地 10,000-draw run 与 independent "
+        "replay 精确执行 1/1/1/1，DQ 为 PASS 且独立重放差异为 0，所有外部或交易动作均为 0。该检验保持 "
+        "385 个 LONG interval、41 个 episode、run/gap 长度多重集、边界、82 个交易事件与 5 bps 成本不变；"
+        "真实 +13.745976956735628 个百分点 excess 位于 placebo 第 80.0 百分位，但 2,000 个 placebo 不低于"
+        "真实值，单侧 p=0.20007999200079993，冻结 reducer 因此输出 "
+        "TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO。真实最大回撤 9.602605144610187% 较好，但在合同中仅是"
+        "描述性证据，不能覆盖主统计量。TRADING-2557 继续维持 INSUFFICIENT/HOLD；不得重跑、事后改参数或"
+        "提高本候选研究优先级，也不支持 QQQ Options Wave B/C、paper/live/production/broker 或任何交易动作。"
+        "未来如继续，只能另行登记新的 prospective OOS。"
     )
 
 

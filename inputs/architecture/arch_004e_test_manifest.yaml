@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1349
-test_count: 1289
+test_file_count: 1350
+test_count: 1290
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -171,7 +171,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_historical_projection_review
   path: tests/atlas/test_historical_projection_review.py
-  sha256: 393e954aba0a400cf016c1e9f18a314ca91fbfa4a7c1bfc20c6546bb2e5c2dfe
+  sha256: 1ecd36a2b87d4190c85e5d5a1503c4523aa06811aebd434bca06d77de76f7b94
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -219,7 +219,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_live_snapshot
   path: tests/atlas/test_live_snapshot.py
-  sha256: 9c10971e90fbb850de5bd3459e182afea7a7a89c33eeab15ad586c0db8d7a5a9
+  sha256: 49b9f2f7e295f1740a4f67dbcf0352ca613c06da532f0b2872c27066527b63a1
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -235,7 +235,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_page_effectiveness
   path: tests/atlas/test_page_effectiveness.py
-  sha256: 5a5c59869d9055ee460c941dabf0e55b2715d4e84c762a15976f1d48d0e4c700
+  sha256: 351e3cb2b69774e241a7e8b26cea2cef273c9b8dd8b378811b4b4acd2a0eb112
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -12273,6 +12273,22 @@ tests:
 - test_id: tests.test_first_layer_gate_policy_v2_reconciliation
   path: tests/test_first_layer_gate_policy_v2_reconciliation.py
   sha256: 487d62607e94af54881036bce058b1690c37b665cecc253dfcde6979a949bc5c
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_first_layer_matched_placebo_falsification
+  path: tests/test_first_layer_matched_placebo_falsification.py
+  sha256: 6f3f6bf2544133aaa0552234c864074b3b98a7b641aa87751fbd0f8e9ea9f32a
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

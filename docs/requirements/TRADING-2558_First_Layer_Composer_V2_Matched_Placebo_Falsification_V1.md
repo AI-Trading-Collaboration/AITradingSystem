@@ -144,3 +144,10 @@ precedence：
   中有 `2,000` 个不低于真实值，单侧 `p=0.20007999200079993`，故冻结 reducer 输出
   `TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO`。所有禁止动作计数为 0；TRADING-2557 仍为
   `INSUFFICIENT/HOLD`，不支持提高 prospective OOS、Options 或生产优先级。
+- 2026-09-03：publication transaction v1 在 `GENERATED_REBUILD_PRE` 因最初声明的 lane head 仍是
+  frozen base 而 fail closed；v2 从已提交结果 identity 重启后，Atlas generator 以
+  `ATLAS_LIVE_UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED` 拒绝旧 2557 页面。两次失败均未覆盖 Atlas
+  canonical page、未运行 Full、未改变研究结果，也未再次消费研究/DQ/replay 额度。已显式新增 2558
+  Atlas 分类与读者摘要；同时发现 canonical task terminal update 的 notes 未保留 `Supporting requirement:`
+  前缀，导致派生 `requirement_refs` 为空。后续事务必须通过 canonical writer 追加纠正事件，恢复同一
+  requirement ref，再从 generator order 起完整重放。
