@@ -1,0 +1,123 @@
+schema_version: first_layer_composer_v2_matched_placebo_run_authorization.v1
+authorization_id: first_layer_composer_v2_matched_placebo_run_authorization_v1
+authorization_version: 1.0.0
+status: OWNER_STANDING_SCOPE_BOUNDED_MATCHED_PLACEBO_AUTHORIZED
+task_id: TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
+scope: R1_BOUNDED_RESEARCH_SANDBOX
+owner_decision:
+  decision_ref: owner_instruction:TRADING-2558:2026-09-03:continue_low_cost_validation
+  approved_instruction: 继续推进低成本验证；按已提出的 matched-placebo 证伪设计执行。
+  authorization_state: STANDING_OWNER_SCOPE
+  exact_bounded_run_granted: true
+policy_binding:
+  path: config/research/first_layer_composer_v2_matched_placebo_preregistration_v1.yaml
+  file_sha256: d7bee6fbb152b9c4d598daf644c52d4fc8cd2712afb04fb7261b7bf9d10a8bd2
+  canonical_sha256: 4fa22bbf5b2df719fb2e11b9a6806945ba08e7b467e4744c792e13e225de6727
+input_allowlist:
+  matched_placebo_preregistration:
+    path: config/research/first_layer_composer_v2_matched_placebo_preregistration_v1.yaml
+    sha256: d7bee6fbb152b9c4d598daf644c52d4fc8cd2712afb04fb7261b7bf9d10a8bd2
+    size_bytes: 3782
+  signal_index:
+    path: outputs/qqq_options/signal_packages/trading_2542i_operational_forecast_real_v3/signal_index.json
+    sha256: d2af99e55d8f9a69a14d4479eb7ba1fd2aeed323c457ae10705a140c7a62ffda
+    size_bytes: 214177
+  real_dq_materialization_receipt:
+    path: outputs/research_trends/operational_forecast/trading_2542i_real_v3/real_materialization_receipt.json
+    sha256: f508581f98b1fa64763b8488568cf0631bfa260fea2b7aa55f9d7f5a0590a230
+    size_bytes: 3086
+  signal_package_manifest_replay_receipt:
+    path: outputs/research_trends/operational_forecast/trading_2542i_real_v3/manifest_replay_receipt.json
+    sha256: 1106de7d6e9b63a20d9e68d7228267ea6777a84b2ea1de16215699d3fa7cd9bc
+    size_bytes: 834
+  operational_predictions:
+    path: outputs/research_trends/operational_forecast/trading_2542i_real_v3/producer/first_layer_composer_v2_operational_predictions.csv
+    sha256: efc285466efb1d99ce57d691078d43f7f2cb169e68a5cd719b1de5d8967fc2da
+    size_bytes: 727007
+  canonical_prices:
+    path: outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/prices_daily.csv
+    sha256: 903689623b83bd6b84ce1e9d5e932848cb656b5a2fae1ae31553ba9004482e7e
+    size_bytes: 320728
+  canonical_rates:
+    path: outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/rates_daily.csv
+    sha256: 7829d8ee44fe2ed39a130c9d5224e077c8b03b31990176f188315ebfc5b85e33
+    size_bytes: 85790
+  canonical_secondary_prices:
+    path: outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/prices_marketstack_daily.csv
+    sha256: 6cd92d32cefae7fc2ce316db67df51b5b9b3fde5f0b99f53ae4a8da28cba2dc1
+    size_bytes: 216505
+  canonical_download_manifest:
+    path: outputs/qqq_options/signal_sources/trading_2542i_exact_signal_admission_v1/canonical_download/download_manifest.csv
+    sha256: 7f116e0b0e2480805157dce28a518f183d24927cb52a82acb91851d6eabaa4cb
+    size_bytes: 7240
+  data_quality_policy:
+    path: config/data_quality.yaml
+    sha256: e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82
+    size_bytes: 9002
+  us_equity_calendar_policy:
+    path: config/data/us_equity_special_closure_registry.yaml
+    sha256: 375dd5e07b57208c5afb700d4fec96fdb3c95b29d562b553c3ecc5c4e6f97416
+    size_bytes: 1959
+  trading_2550_execution_manifest:
+    path: inputs/research/frozen_signal_value_confirmation_v1/execution_manifest.json
+    sha256: 6051ad6c48b8d402c646945e4f33442f11d0435cb0228c125384776afd7c30d3
+    size_bytes: 4072
+  trading_2557_module:
+    path: src/ai_trading_system/first_layer_foundational_falsification_execution_v2.py
+    sha256: 00b75a97617ba0292b9fcb93af77b181e5db81166c9583c75e50fce68123b62c
+    size_bytes: 28644
+  trading_2557_authorization:
+    path: config/research/first_layer_composer_v2_foundational_falsification_failure_fix_run_authorization_v1.yaml
+    sha256: 0c980179b23bc133433eaea588155cb5368bcccb2d127e2830c089700b248137
+    size_bytes: 6170
+  trading_2557_manifest:
+    path: inputs/research/first_layer_composer_v2_foundational_falsification_failure_fix_v1/execution_manifest.json
+    sha256: cce50b9fbfb5902e2b63168b380c1a4e3dc67d90dee737fa80e047cbff54b3bf
+    size_bytes: 6140
+  trading_2557_aggregate_result:
+    path: outputs/research/first_layer_composer_v2_foundational_falsification_failure_fix_v1/aggregate_result.json
+    sha256: 76024a73b47414a40f35f6ebb72d41a0dd1fc80421f80ec168a37b6b9f429d2e
+    size_bytes: 35802
+  trading_2557_result_admission:
+    path: config/research/first_layer_composer_v2_foundational_falsification_failure_fix_result_admission_v1.yaml
+    sha256: e0d42e6a36f5bc65981d040c55684aa7b852c7d69c54f19f65a4461396f87c60
+    size_bytes: 6202
+run_envelope:
+  manifest_replays: 1
+  canonical_dq_runs: 1
+  local_matched_placebo_runs: 1
+  independent_replays: 1
+  data_downloads: 0
+  cache_mutations: 0
+  quantconnect_actions: 0
+  option_backtests: 0
+  external_provider_actions: 0
+  orders: 0
+  fills: 0
+  positions: 0
+result_boundary:
+  aggregate_result_only: true
+  raw_market_payload_export_allowed: false
+  raw_signal_payload_export_allowed: false
+  placebo_path_export_allowed: false
+  terminal_artifact_schema: first_layer_composer_v2_matched_placebo_result.v1
+safety:
+  outcome_access_authorized: true
+  market_data_read_authorized: true
+  manifest_replay_authorized: true
+  canonical_dq_authorized: true
+  local_matched_placebo_run_authorized: true
+  independent_replay_authorized: true
+  data_download_authorized: false
+  cache_mutation_authorized: false
+  quantconnect_authorized: false
+  option_data_use_authorized: false
+  option_backtest_authorized: false
+  provider_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none
+terminal: OWNER_STANDING_SCOPE_BOUNDED_MATCHED_PLACEBO_NOT_YET_CONSUMED

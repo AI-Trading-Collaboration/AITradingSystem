@@ -33,6 +33,25 @@ def test_preregistration_freezes_identity_statistics_and_zero_external_actions()
         assert policy.payload["run_envelope"][field] == 0
 
 
+def test_real_authorization_and_manifest_bind_frozen_implementation_and_inputs() -> None:
+    policy = subject.load_preregistration(project_root=ROOT)
+    authorization = subject.load_run_authorization(project_root=ROOT, policy=policy)
+    manifest = subject.load_execution_manifest(project_root=ROOT, authorization=authorization)
+
+    assert authorization.payload["owner_decision"]["authorization_state"] == (
+        "STANDING_OWNER_SCOPE"
+    )
+    assert authorization.payload["run_envelope"] == subject.EXPECTED_COUNTERS
+    assert manifest.payload["code_binding"] == {
+        "implementation_commit_sha": "bd00069d0cd56dc2135ab61e70663f7e38b7d037",
+        "module_path": ("src/ai_trading_system/first_layer_matched_placebo_falsification.py"),
+        "module_sha256": ("d72f7b9294cc7b8030a9eb8a3a04559bb64b433c0179810a12f83d6807e3e20d"),
+    }
+    assert tuple(binding.role for binding in manifest.inputs) == subject.INPUT_ROLES
+    assert manifest.payload["random_seed"] == subject.RANDOM_SEED
+    assert manifest.payload["placebo_draws"] == subject.PLACEBO_DRAWS
+
+
 def test_shape_extraction_and_reconstruction_preserve_all_invariants() -> None:
     targets = _targets()
     shape = subject.extract_exposure_shape(targets)

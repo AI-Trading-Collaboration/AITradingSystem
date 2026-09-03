@@ -133,3 +133,8 @@ precedence：
   shape/turnover invariant 检查、主账户计算与独立账户重放实现；focused parallel pytest
   `9 passed`，Ruff PASS。尚未读取 matched-placebo 结果，正式 manifest replay、DQ、研究 run 与
   independent replay 计数均仍为 `0/1`。
+- 2026-09-03：实现身份固定为 commit `bd00069d0cd56dc2135ab61e70663f7e38b7d037`、
+  module SHA-256 `d72f7b9294cc7b8030a9eb8a3a04559bb64b433c0179810a12f83d6807e3e20d`；
+  standing-scope authorization 与 execution manifest 已逐字节绑定 preregistration、TRADING-2557
+  终态证据及全部既有本地输入。loader/core focused parallel pytest `10 passed`，正式 1/1/1/1
+  计数仍未消费。
