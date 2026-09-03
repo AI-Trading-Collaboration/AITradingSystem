@@ -8,7 +8,7 @@ Owner 指令：2026-09-03，在已完成低成本 retained-result review 后“�
 
 授权状态：`STANDING_OWNER_SCOPE`
 
-状态：`IN_PROGRESS`
+状态：`DONE`
 
 ## 1. 目标与解释边界
 
@@ -138,3 +138,9 @@ precedence：
   standing-scope authorization 与 execution manifest 已逐字节绑定 preregistration、TRADING-2557
   终态证据及全部既有本地输入。loader/core focused parallel pytest `10 passed`，正式 1/1/1/1
   计数仍未消费。
+- 2026-09-03：唯一正式 attempt 已完成。Manifest replay 与 canonical DQ 均 PASS，DQ 为 0 error /
+  0 warning；实际计数 `1/1/1/1`，独立重放的 placebo excess 与 drawdown 最大绝对差均为 `0.0`。
+  真实 paired excess `+13.745976956735628pp` 位于 matched-placebo 第 `80.0` 百分位；10,000 draws
+  中有 `2,000` 个不低于真实值，单侧 `p=0.20007999200079993`，故冻结 reducer 输出
+  `TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO`。所有禁止动作计数为 0；TRADING-2557 仍为
+  `INSUFFICIENT/HOLD`，不支持提高 prospective OOS、Options 或生产优先级。

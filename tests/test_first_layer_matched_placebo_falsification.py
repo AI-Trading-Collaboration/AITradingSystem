@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 import pytest
 
 from ai_trading_system import first_layer_matched_placebo_falsification as subject
+from ai_trading_system.yaml_loader import load_strict_yaml_text
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -50,6 +52,24 @@ def test_real_authorization_and_manifest_bind_frozen_implementation_and_inputs()
     assert tuple(binding.role for binding in manifest.inputs) == subject.INPUT_ROLES
     assert manifest.payload["random_seed"] == subject.RANDOM_SEED
     assert manifest.payload["placebo_draws"] == subject.PLACEBO_DRAWS
+
+
+def test_terminal_result_admission_binds_write_once_evidence() -> None:
+    path = ROOT / "config/research/first_layer_composer_v2_matched_placebo_result_admission_v1.yaml"
+    admission = load_strict_yaml_text(path.read_text(encoding="utf-8"), label=path.as_posix())
+
+    assert admission["technical_validation_state"] == "PASS"
+    assert admission["result"]["reducer_status"] == (
+        "TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO"
+    )
+    assert admission["result"]["one_sided_p_value"] == 0.20007999200079993
+    assert admission["invariant_validation"]["independent_replay_status"] == "PASS"
+    assert admission["interpretation_boundary"]["supports_signal_validity_claim"] is False
+    assert admission["interpretation_boundary"]["same_manifest_rerun_allowed"] is False
+    for binding in admission["evidence_bindings"]:
+        evidence = ROOT / binding["path"]
+        assert evidence.is_file()
+        assert hashlib.sha256(evidence.read_bytes()).hexdigest() == binding["file_sha256"]
 
 
 def test_shape_extraction_and_reconstruction_preserve_all_invariants() -> None:

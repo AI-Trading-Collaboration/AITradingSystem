@@ -10249,6 +10249,31 @@ V1 terminal INVALID evidence + exact Owner authorization
 download、cache mutation、QuantConnect、option/provider、paper/live/production/broker/order/fill/position 均为
 0/false/none。后续若继续，必须另行预注册新的独立证据阶段，不能重跑或事后修改模型、阈值与 reducer。
 
+## TRADING-2558 matched-placebo timing falsification
+
+TRADING-2558 在不改变 TRADING-2557 窗口、信号、lag、暴露、5 bps 成本或 comparator 的前提下，固定
+`seed=2558` 与 `10,000` draws，将 41 个 LONG run length 和 40 个内部 FLAT gap length 分别随机排列，
+同时保持 leading/trailing FLAT boundary、385 个 LONG interval、82 个账户交易事件和全部长度多重集。
+每个 placebo 都通过相同 QQQ/cash 会计路径复算；输出只保留分布摘要和目标集合 digest，不导出逐日路径。
+
+```text
+TRADING-2557 INSUFFICIENT + exact retained inputs
+  -> matched-placebo manifest replay [1, PASS]
+  -> canonical DQ 2021-02-22..2025-12-02 [1, PASS, 0 error / 0 warning]
+  -> 10,000 shape/turnover-matched deterministic placements [1]
+  -> independent deterministic accounting replay [1, PASS, exact aggregate match]
+  -> observed excess percentile=80.0; exceedance=2,000; one-sided p=0.20007999200079993
+  -> TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO
+  -x-> rerun / parameter rescue / Options Wave B or C / production or trading action
+```
+
+Placebo excess 的 2.5%/50%/97.5% 分位数为 `-53.82451790621349 / -10.437498863962224 /
+47.64569290565998` 个百分点；真实最大回撤 `9.602605144610187%` 虽优于绝大多数 placebo（经验 CDF
+`1.66%`），但回撤在该合同中仅为描述性指标，不能覆盖主统计量 `p>0.05`。这仍是 reused-development、
+partial-prior-visibility 诊断，不是 pristine OOS；因此不支持把信号有效性升级，也不提高 prospective OOS
+优先级。实际 manifest replay/DQ/local run/independent replay 为 `1/1/1/1`，下载、缓存修改、provider、
+QuantConnect、期权回测、paper/live/production/broker/order/fill/position 均为 0/false/none。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

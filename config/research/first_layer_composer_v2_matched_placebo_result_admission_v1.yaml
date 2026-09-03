@@ -1,0 +1,117 @@
+schema_version: first_layer_composer_v2_matched_placebo_result_admission.v1
+admission_id: first_layer_composer_v2_matched_placebo_result_admission_v1
+admission_version: 1.0.0
+status: ADMITTED_DIAGNOSTIC_TIMING_NOT_DISTINGUISHED
+task_id: TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
+authorization_state: STANDING_OWNER_SCOPE
+technical_validation_state: PASS
+
+identity:
+  historical_window_role: REUSED_DEVELOPMENT_CONFIRMATION
+  prior_visibility: PARTIAL_PRIOR_VISIBILITY
+  pristine_out_of_sample_claim: false
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  signal_sessions: 1202
+  return_intervals: 1201
+  signal_lag_sessions: 1
+  long_intervals: 385
+  long_episodes: 41
+  one_way_cost_bps: 5.0
+  random_seed: 2558
+  placebo_draws: 10000
+
+data_quality:
+  status: PASS
+  error_count: 0
+  warning_count: 0
+  receipt_path: outputs/data_quality/executions/dq_execution_bdd0b5d2e6f714739577d09dc394fd7239b2c44915afc9bf8ccce710d8a74888/receipt.json
+  receipt_sha256: db9d81c0ddf0cfe19651b8a0bfc2e595ebe45c3bde61eb1d389ec094c6208e22
+  report_path: outputs/data_quality/reports/df3a17051337529caa1bd827c7c06d604b4a8c3c41386cbb0120ad226beb43f9/data_quality_report.md
+  report_sha256: df3a17051337529caa1bd827c7c06d604b4a8c3c41386cbb0120ad226beb43f9
+
+result:
+  reducer_status: TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO
+  observed_candidate_net_total_return_pct: 45.279358871873754
+  exposure_matched_comparator_net_total_return_pct: 31.533381915138126
+  observed_paired_excess_percentage_points: 13.745976956735628
+  observed_excess_percentile: 80.0
+  placebo_excess_greater_than_or_equal_observed_count: 2000
+  one_sided_p_value: 0.20007999200079993
+  pilot_alpha: 0.05
+  placebo_excess_percentage_points:
+    percentile_2_5: -53.82451790621349
+    percentile_50: -10.437498863962224
+    percentile_97_5: 47.64569290565998
+  observed_max_drawdown_magnitude_pct: 9.602605144610187
+  observed_max_drawdown_empirical_cdf_percentile: 1.66
+  placebo_max_drawdown_magnitude_pct:
+    percentile_2_5: 10.324660173103547
+    percentile_50: 23.154970703063753
+    percentile_97_5: 41.49206866531371
+
+invariant_validation:
+  accounting_trade_event_count: 82
+  leading_flat_boundary_count: 31
+  trailing_flat_boundary_count: 35
+  shape_and_turnover_match_all_draws: true
+  trading_2557_accounting_max_abs_diff: 0.0
+  independent_replay_status: PASS
+  independent_max_placebo_excess_abs_diff: 0.0
+  independent_max_placebo_drawdown_abs_diff: 0.0
+  target_inventory_sha256: 24d10a936bdc0e6f357fe3937c4d5ff92b4f63608d83aac155ff3a3f7458d224
+
+run_envelope_actual:
+  manifest_replays: 1
+  canonical_dq_runs: 1
+  local_matched_placebo_runs: 1
+  independent_replays: 1
+  data_downloads: 0
+  cache_mutations: 0
+  quantconnect_actions: 0
+  option_backtests: 0
+  external_provider_actions: 0
+  orders: 0
+  fills: 0
+  positions: 0
+
+evidence_bindings:
+  - role: preregistration
+    path: config/research/first_layer_composer_v2_matched_placebo_preregistration_v1.yaml
+    file_sha256: d7bee6fbb152b9c4d598daf644c52d4fc8cd2712afb04fb7261b7bf9d10a8bd2
+  - role: authorization
+    path: config/research/first_layer_composer_v2_matched_placebo_run_authorization_v1.yaml
+    file_sha256: 776eabe088490f62157aab3d6c456e3ba21b71a206d40ca5d757b8bbf96cb8c0
+  - role: execution_manifest
+    path: inputs/research/first_layer_composer_v2_matched_placebo_v1/execution_manifest.json
+    file_sha256: ebc4c5a5b79925481d889447d968becbd0fd70a7be3970758dab2e243d2fd96c
+  - role: run_attempt_consumption
+    path: outputs/research/first_layer_composer_v2_matched_placebo_v1/run_attempt_consumption_receipt.json
+    file_sha256: 6576d68ac82d3fbd13e84f1df6bac28dc893b8296ba5cf463e8dc0e162b6f77e
+  - role: manifest_replay
+    path: outputs/research/first_layer_composer_v2_matched_placebo_v1/manifest_replay_receipt.json
+    file_sha256: e4672139b4a6ec3a1cf534878c6ea297d928825f39623f4165646dd72b88e7f5
+  - role: canonical_dq
+    path: outputs/research/first_layer_composer_v2_matched_placebo_v1/canonical_dq_receipt.json
+    file_sha256: c556d858ed45b697f9577a7c525afda60e9f0df8c4f59d58260e276d91720d8c
+  - role: independent_replay
+    path: outputs/research/first_layer_composer_v2_matched_placebo_v1/independent_replay_receipt.json
+    file_sha256: 2077cb912769549dde3909d9ac210243321e8de7ba8e644858c234f83f3f1e24
+  - role: aggregate_result
+    path: outputs/research/first_layer_composer_v2_matched_placebo_v1/aggregate_result.json
+    file_sha256: 410ec5522d40ba59019597235722dd6ea2e9b909c37a1ee7d60bc00d8f5780b6
+
+interpretation_boundary:
+  timing_edge_distinguished_from_matched_placebo: false
+  supports_signal_validity_claim: false
+  supports_prospective_oos_priority: false
+  trading_2557_status: INSUFFICIENT
+  qqq_options_wave_b: HOLD
+  qqq_options_wave_c: NOT_AUTHORIZED
+  parameter_rescue_allowed: false
+  same_manifest_rerun_allowed: false
+  production_allowed: false
+  production_effect: none
+  broker_action: none
