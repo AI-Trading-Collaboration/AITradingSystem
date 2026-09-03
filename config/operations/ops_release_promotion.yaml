@@ -1,13 +1,15 @@
-schema_version: ops_release_promotion_policy.v1
-policy_id: ops_release_promotion_v1
-version: 1.2.0
+schema_version: ops_release_promotion_policy.v2
+policy_id: ops_release_promotion_v2
+version: 2.0.0
 status: REVIEWED_OWNER_GATED
 owner: operations_owner_and_project_owner
 reviewed_at: 2026-07-27
 rationale: >
   Ops releases must be selected explicitly from validated, pushed remote main
-  and promoted through a journaled transaction. Daily execution must never
-  select latest main, mutate release state, or repair a failed promotion.
+  and promoted through a journaled transaction. The active deployment receipt
+  is the only mutable release authority; the external automation must not keep
+  a second release SHA. Daily execution must never select latest main, mutate
+  release state, or repair a failed promotion.
   Permanent runtime-generated state uses an exact, receipt-bound local Git
   exclusion contract so development checkout dirty semantics remain strict.
 repository:
@@ -17,7 +19,10 @@ repository:
   independent_git_common_dir_required: true
 receipts:
   release_candidate_schema: ops_release_candidate.v1
-  deployment_acceptance_schema: ops_deployment_acceptance.v1
+  deployment_acceptance_schema: ops_deployment_acceptance.v2
+  legacy_deployment_acceptance_schema: ops_deployment_acceptance.v1
+  legacy_active_release_commits:
+    - 12f1e6458e5af4b7ced444e0f4fdc25365afe965
   promotion_transaction_schema: ops_release_promotion_transaction.v1
   active_receipt_relative_path: outputs/operations/deployment/active.json
   history_relative_path: outputs/operations/deployment/history
@@ -35,6 +40,7 @@ receipts:
     - config/architecture/arch_005_s4d_checkout_guard.yaml
     - config/operations/ops_release_promotion.yaml
     - config/operations/ops_scheduler_checkout.yaml
+    - config/operations/aitradingsystem_pit_automation_prompt.md
     - docs/operations/operations_runbook.md
     - pyproject.toml
     - src/ai_trading_system/cli_commands/ops.py
@@ -71,10 +77,29 @@ scheduler:
   required_environment_names:
     - AITS_EXTERNAL_SCHEDULER
     - AITS_OPS_CHECKOUT_ROOT
-    - AITS_OPS_RELEASE_COMMIT
     - AITS_DEVELOPMENT_CHECKOUT_ROOT
     - AITS_OPS_DEPLOYMENT_RECEIPT
     - AITS_OPS_PYTHON
+  release_identity_authority: active_deployment_receipt
+  legacy_release_assertion_name: AITS_OPS_RELEASE_COMMIT
+  legacy_release_assertion_mode: exact_match_if_present
+  observation_schema: ops_scheduler_observation.v2
+  canonical_prompt_relative_path: config/operations/aitradingsystem_pit_automation_prompt.md
+  expected_status: ACTIVE
+  expected_rrule: FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU;BYHOUR=9;BYMINUTE=30;BYSECOND=0
+  expected_model: gpt-5.6-sol
+  expected_reasoning_effort: xhigh
+  expected_execution_environment: local
+  expected_target_type: project
+  observation_must_not_predate_promotion: true
+pre_release_canary:
+  schema_version: ops_release_preflight_canary.v1
+  runner_schema_version: pytest_incident_regression.v1
+  required: true
+  provider_request_performed: false
+  required_scenarios:
+    - risk_event_unknown_id_referential_integrity
+    - signed_eps_revision_90d_pct
 credentials:
   allowed_secret_names:
     - FMP_API_KEY

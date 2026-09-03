@@ -49,6 +49,8 @@ class OpsSchedulerCheckoutPolicy:
     development_checkout_root_name: str
     deployment_receipt_name: str
     runtime_python_name: str
+    release_identity_authority: str
+    legacy_release_assertion_mode: str
     expected_remote: str
     reviewed_remote_ref: str
     exact_release_commit_required: bool
@@ -69,6 +71,7 @@ class OpsSchedulerCheckoutPolicy:
     new_business_scheduler_entry_allowed: bool
     activation_mode: str
     acceptance_schema: str
+    legacy_acceptance_schema: str
     active_receipt_relative_path: str
     runtime_python_must_be_below_checkout: bool
     imported_package_must_be_below_checkout: bool
@@ -87,7 +90,7 @@ def load_ops_scheduler_checkout_policy(
     payload = safe_load_yaml_path(path)
     if not isinstance(payload, Mapping):
         raise ValueError("ops scheduler checkout policy must be a mapping")
-    if payload.get("schema_version") != "ops_scheduler_checkout_policy.v3":
+    if payload.get("schema_version") != "ops_scheduler_checkout_policy.v4":
         raise ValueError("unsupported ops scheduler checkout policy schema")
     if payload.get("status") != "REVIEWED_RECEIPT_GATED_DEPLOYMENT":
         raise ValueError("ops scheduler checkout policy must remain receipt gated")
@@ -154,6 +157,14 @@ def load_ops_scheduler_checkout_policy(
         runtime_python_name=_text(
             environment.get("runtime_python_name"),
             "runtime_python_name",
+        ),
+        release_identity_authority=_text(
+            environment.get("release_identity_authority"),
+            "release_identity_authority",
+        ),
+        legacy_release_assertion_mode=_text(
+            environment.get("legacy_release_assertion_mode"),
+            "legacy_release_assertion_mode",
         ),
         expected_remote=_text(repository.get("expected_remote"), "expected_remote"),
         reviewed_remote_ref=_text(
@@ -226,6 +237,10 @@ def load_ops_scheduler_checkout_policy(
             deployment.get("acceptance_schema"),
             "acceptance_schema",
         ),
+        legacy_acceptance_schema=_text(
+            deployment.get("legacy_acceptance_schema"),
+            "legacy_acceptance_schema",
+        ),
         active_receipt_relative_path=_relative_text(
             deployment.get("active_receipt_relative_path"),
             "active_receipt_relative_path",
@@ -268,7 +283,10 @@ def load_ops_scheduler_checkout_policy(
         or not policy.parent_bytes_must_remain_immutable
         or policy.new_business_scheduler_entry_allowed
         or policy.activation_mode != "ACTIVE_OWNER_ACCEPTED_RECEIPT_REQUIRED"
-        or policy.acceptance_schema != "ops_deployment_acceptance.v1"
+        or policy.acceptance_schema != "ops_deployment_acceptance.v2"
+        or policy.legacy_acceptance_schema != "ops_deployment_acceptance.v1"
+        or policy.release_identity_authority != "active_deployment_receipt"
+        or policy.legacy_release_assertion_mode != "exact_match_if_present"
         or not policy.runtime_python_must_be_below_checkout
         or not policy.imported_package_must_be_below_checkout
         or policy.scheduler_entry_count != 1
@@ -382,11 +400,36 @@ def inspect_ops_scheduler_checkout(
     if configured_root is None:
         raw_root = checked_env.get(policy.checkout_root_name)
         configured_root = Path(raw_root) if raw_root else None
-    configured_commit = release_commit or checked_env.get(policy.release_commit_name)
+    legacy_release_assertion = release_commit or checked_env.get(policy.release_commit_name)
     configured_receipt = deployment_receipt_path
     if configured_receipt is None:
         raw_receipt = checked_env.get(policy.deployment_receipt_name)
         configured_receipt = Path(raw_receipt) if raw_receipt else None
+    resolved_receipt = configured_receipt.resolve() if configured_receipt is not None else None
+    receipt_payload: Mapping[str, object] | None = None
+    receipt_preload_error: str | None = None
+    receipt_release_commit: str | None = None
+    if require_active_deployment and resolved_receipt is not None:
+        try:
+            loaded_receipt = json.loads(resolved_receipt.read_text(encoding="utf-8"))
+            if not isinstance(loaded_receipt, Mapping):
+                raise ValueError("active deployment receipt must be mapping")
+            release_payload = loaded_receipt.get("release")
+            if not isinstance(release_payload, Mapping):
+                raise ValueError("active deployment receipt release must be mapping")
+            raw_commit = release_payload.get("candidate_commit")
+            if not isinstance(raw_commit, str) or not _COMMIT_PATTERN.fullmatch(raw_commit):
+                raise ValueError("active deployment receipt release commit invalid")
+            receipt_payload = loaded_receipt
+            receipt_release_commit = raw_commit
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            receipt_preload_error = f"{type(exc).__name__}: {exc}"
+    configured_commit = (
+        receipt_release_commit
+        if require_active_deployment
+        and policy.release_identity_authority == "active_deployment_receipt"
+        else legacy_release_assertion
+    )
     configured_python = runtime_python
     if configured_python is None:
         raw_python = checked_env.get(policy.runtime_python_name)
@@ -448,6 +491,36 @@ def inspect_ops_scheduler_checkout(
         _COMMIT_PATTERN.fullmatch(configured_commit)
     )
     check("release_commit_format", commit_valid, configured_commit)
+    check(
+        "release_identity_authority",
+        (
+            not require_active_deployment
+            or (
+                policy.release_identity_authority == "active_deployment_receipt"
+                and receipt_release_commit is not None
+                and receipt_preload_error is None
+            )
+        ),
+        {
+            "authority": policy.release_identity_authority,
+            "receipt_release_commit": receipt_release_commit,
+            "preload_error": receipt_preload_error,
+        },
+    )
+    legacy_assertion_valid = legacy_release_assertion is None or (
+        isinstance(legacy_release_assertion, str)
+        and bool(_COMMIT_PATTERN.fullmatch(legacy_release_assertion))
+        and legacy_release_assertion == receipt_release_commit
+    )
+    check(
+        "legacy_release_assertion",
+        (not require_active_deployment) or legacy_assertion_valid,
+        {
+            "mode": policy.legacy_release_assertion_mode,
+            "provided": legacy_release_assertion is not None,
+            "matches_receipt": legacy_assertion_valid,
+        },
+    )
 
     head_commit: str | None = None
     remote: str | None = None
@@ -556,12 +629,12 @@ def inspect_ops_scheduler_checkout(
             "matches": current_checkout_matches,
         },
     )
-    receipt_payload: Mapping[str, object] | None = None
-    receipt_error: str | None = None
-    resolved_receipt = configured_receipt.resolve() if configured_receipt is not None else None
+    receipt_error: str | None = receipt_preload_error
     resolved_python = configured_python.resolve() if configured_python is not None else None
     if require_active_deployment:
         try:
+            if receipt_error is not None:
+                raise ValueError(receipt_error)
             if resolved_root is None or development_root is None:
                 raise ValueError("checkout roots unavailable")
             if resolved_receipt is None or not resolved_receipt.is_file():
@@ -571,10 +644,8 @@ def inspect_ops_scheduler_checkout(
                 raise ValueError(f"active deployment receipt path mismatch: {resolved_receipt}")
             if resolved_python is None:
                 raise ValueError("runtime python missing")
-            loaded = json.loads(resolved_receipt.read_text(encoding="utf-8"))
-            if not isinstance(loaded, Mapping):
-                raise ValueError("active deployment receipt must be mapping")
-            receipt_payload = loaded
+            if receipt_payload is None:
+                raise ValueError("active deployment receipt was not preloaded")
             promotion_policy = load_ops_release_promotion_policy(
                 resolved_root / "config" / "operations" / "ops_release_promotion.yaml"
             )
@@ -624,6 +695,12 @@ def inspect_ops_scheduler_checkout(
         "checks": checks,
         "checkout_root": str(resolved_root) if resolved_root else None,
         "release_commit": configured_commit,
+        "release_identity_authority": policy.release_identity_authority,
+        "release_commit_source": (
+            "active_deployment_receipt" if require_active_deployment else "explicit_preflight"
+        ),
+        "legacy_release_assertion_provided": legacy_release_assertion is not None,
+        "legacy_release_assertion_matches_receipt": legacy_assertion_valid,
         "head_commit": head_commit,
         "reviewed_remote_commit": remote_commit,
         "git_common_dir": ops_git_common_dir,
@@ -640,6 +717,7 @@ def inspect_ops_scheduler_checkout(
         "scheduler_installed": active,
         "scheduler_enabled": active,
         "owner_deployment_required": not active,
+        "release_lifecycle_state": "SCHEDULER_BOUND" if not failed and active else "DEPLOYED",
         "production_effect": "none",
         "production_weight_write": False,
         "active_shadow_weight_write": False,

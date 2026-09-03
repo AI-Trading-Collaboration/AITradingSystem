@@ -96,6 +96,9 @@ DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_PHASE_KEY = (
 RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_PHASE_KEY = (
     "phase_risk_012_unknown_risk_event_id_fail_closed_v1"
 )
+OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_PHASE_KEY = (
+    "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1"
+)
 TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
         ("docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md"),
@@ -208,6 +211,7 @@ def _assert_historical_source_is_current_or_superseded(
             DEVX_011_WORKFLOW_HEALTH_PHASE_KEY,
             DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_PHASE_KEY,
             RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_PHASE_KEY,
+            OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_PHASE_KEY,
         }
     ):
         section_ids = list(baseline)

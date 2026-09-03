@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -13,10 +13,13 @@ from ai_trading_system.ops_release_promotion import (
     activate_ops_deployment,
     build_ops_deployment_acceptance,
     build_ops_release_candidate,
+    build_ops_release_preflight_canary,
     inspect_runtime_provenance,
     install_ops_runtime_git_exclusions,
     load_ops_release_promotion_policy,
+    observe_codex_automation_config,
     promote_ops_release,
+    run_ops_release_incident_regressions,
     validate_ops_deployment_acceptance,
     validate_ops_release_candidate,
     validate_scheduler_observation,
@@ -33,6 +36,16 @@ REQUIRED_VALIDATION_TIERS = (
     "reproducibility",
     "full",
 )
+INCIDENT_TEST_NODES = {
+    "risk_event_unknown_id_referential_integrity": (
+        "tests/test_risk_event_llm_formal.py::"
+        "test_llm_formal_unknown_risk_id_fails_before_any_output"
+    ),
+    "signed_eps_revision_90d_pct": (
+        "tests/test_valuation.py::"
+        "test_validate_valuation_snapshot_store_accepts_negative_eps_revision"
+    ),
+}
 
 
 def test_current_effective_weights_is_runtime_only_not_tracked() -> None:
@@ -59,6 +72,7 @@ REQUIRED_CRITICAL_PATHS = (
     "config/architecture/arch_005_s4d_checkout_guard.yaml",
     "config/operations/ops_release_promotion.yaml",
     "config/operations/ops_scheduler_checkout.yaml",
+    "config/operations/aitradingsystem_pit_automation_prompt.md",
     "docs/operations/operations_runbook.md",
     "pyproject.toml",
     "src/ai_trading_system/cli_commands/ops.py",
@@ -96,6 +110,8 @@ def test_policy_fails_closed_on_latest_and_scheduler_duplication() -> None:
     assert policy.pre_switch_checkout_policy_source == "coordinator_candidate"
     assert policy.scheduler_entry_count == 1
     assert policy.windows_task_scheduler_entries_allowed is False
+    assert policy.pre_release_canary_runner_schema == "pytest_incident_regression.v1"
+    assert set(policy.pre_release_canary_required_scenarios) == set(INCIDENT_TEST_NODES)
 
 
 def test_release_candidate_binds_remote_validation_and_critical_hashes(
@@ -121,9 +137,9 @@ def test_release_candidate_binds_remote_validation_and_critical_hashes(
     assert payload["remote"]["reviewed_ref_commit"] == commit
     assert payload["validation_artifacts"][0]["validation_status"] == "PASS"
     assert payload["validation_artifacts"][0]["validation_git_commit"] == commit
-    assert {
-        row["validation_tier"] for row in payload["validation_artifacts"]
-    } == set(REQUIRED_VALIDATION_TIERS)
+    assert {row["validation_tier"] for row in payload["validation_artifacts"]} == set(
+        REQUIRED_VALIDATION_TIERS
+    )
     assert all(
         "absolute_path" not in row
         for row in (
@@ -150,6 +166,57 @@ def test_release_candidate_rejects_failed_validation(
             owner_decision_ref="owner_decision:OPS-070:2026-07-27:approve-release",
             observed_at=OBSERVED_AT,
         )
+
+
+def test_release_canary_rejects_provider_request_claim(
+    release_repository: ReleaseRepository,
+) -> None:
+    root, commit, _validations, _critical = release_repository
+    scenario_root = root / "outputs" / "operations" / "deployment" / "evidence" / "scenarios"
+    paths = tuple(sorted(scenario_root.glob("*.json")))
+    payload = json.loads(paths[0].read_text(encoding="utf-8"))
+    payload["provider_request_performed"] = True
+    write_json_atomic(paths[0], payload)
+
+    with pytest.raises(
+        OpsReleasePromotionError,
+        match="RELEASE_CANARY_PROVIDER_REQUEST_FORBIDDEN",
+    ):
+        build_ops_release_preflight_canary(
+            candidate_commit=commit,
+            scenario_evidence_paths=paths,
+            project_root=root,
+            policy_path=root / "config" / "operations" / "ops_release_promotion.yaml",
+            observed_at=OBSERVED_AT,
+        )
+
+
+def test_release_canary_runner_uses_exact_parallel_test_nodes(
+    release_repository: ReleaseRepository,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root, commit, _validations, _critical = release_repository
+    calls: list[tuple[str, ...]] = []
+    monkeypatch.setattr(promotion, "_git_text", lambda *_args: commit)
+
+    def fake_run(args: tuple[str, ...], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append(tuple(args))
+        return subprocess.CompletedProcess(args, 0, stdout="1 passed\n", stderr="")
+
+    monkeypatch.setattr(promotion.subprocess, "run", fake_run)
+    output_dir = root / "outputs" / "canary-runner-fixture"
+    paths = run_ops_release_incident_regressions(
+        candidate_commit=commit,
+        project_root=root,
+        output_dir=output_dir,
+        policy_path=root / "config" / "operations" / "ops_release_promotion.yaml",
+        observed_at=OBSERVED_AT,
+    )
+
+    assert len(paths) == len(INCIDENT_TEST_NODES)
+    assert {call[-2] for call in calls} == set(INCIDENT_TEST_NODES.values())
+    assert all(call[1:7] == ("-m", "pytest", "-n", "16", "--dist", "loadfile") for call in calls)
+    assert all(json.loads(path.read_text(encoding="utf-8"))["status"] == "PASS" for path in paths)
 
 
 def test_release_candidate_rejects_validation_from_another_commit(
@@ -293,9 +360,7 @@ def test_runtime_provenance_rejects_global_editable_import(
             "executable": str(runtime_python),
             "module_file": str(development / "src" / "ai_trading_system" / "__init__.py"),
             "project_root": str(development),
-            "installed_distributions": [
-                {"name": "ai-trading-system", "version": "0.1.0"}
-            ],
+            "installed_distributions": [{"name": "ai-trading-system", "version": "0.1.0"}],
         },
     )
 
@@ -324,12 +389,9 @@ def test_runtime_provenance_uses_runtime_policy_after_switch(
         "_runtime_probe",
         lambda **_: _probe_payload(runtime, runtime_python),
     )
-    (
-        development
-        / "config"
-        / "architecture"
-        / "arch_005_s4d_checkout_guard.yaml"
-    ).write_text("schema_version: retired_policy.v0\n", encoding="utf-8")
+    (development / "config" / "architecture" / "arch_005_s4d_checkout_guard.yaml").write_text(
+        "schema_version: retired_policy.v0\n", encoding="utf-8"
+    )
 
     payload = inspect_runtime_provenance(
         runtime_root=runtime,
@@ -360,13 +422,9 @@ def test_runtime_probe_removes_coordinator_python_path(
             stdout=json.dumps(
                 {
                     "executable": str(runtime_python),
-                    "module_file": str(
-                        runtime / "src" / "ai_trading_system" / "__init__.py"
-                    ),
+                    "module_file": str(runtime / "src" / "ai_trading_system" / "__init__.py"),
                     "project_root": str(runtime),
-                    "installed_distributions": [
-                        {"name": "ai-trading-system", "version": "0.1.0"}
-                    ],
+                    "installed_distributions": [{"name": "ai-trading-system", "version": "0.1.0"}],
                 }
             ),
             stderr="",
@@ -420,10 +478,7 @@ def test_runtime_git_exclusion_install_is_exact_and_rejects_unknown_rules(
         install_ops_runtime_git_exclusions(
             runtime_root=runtime,
             development_root=development,
-            policy_path=development
-            / "config"
-            / "operations"
-            / "ops_release_promotion.yaml",
+            policy_path=development / "config" / "operations" / "ops_release_promotion.yaml",
             observed_at=OBSERVED_AT,
         )
 
@@ -446,12 +501,7 @@ def test_deployment_acceptance_binds_unique_scheduler_and_credentials(
     _clone_independent(development, runtime, commit)
     _copy_validation_artifacts(development, runtime, validations)
     candidate_path = (
-        runtime
-        / "outputs"
-        / "operations"
-        / "deployment"
-        / "evidence"
-        / "candidate.json"
+        runtime / "outputs" / "operations" / "deployment" / "evidence" / "candidate.json"
     )
     write_json_atomic(candidate_path, candidate)
     runtime_python = runtime / ".venv" / "Scripts" / "python.exe"
@@ -481,9 +531,7 @@ def test_deployment_acceptance_binds_unique_scheduler_and_credentials(
 
     validate_ops_deployment_acceptance(payload)
     assert payload["status"] == "ACTIVE_OWNER_ACCEPTED"
-    assert payload["runtime"]["git_common_dir"] != payload["runtime"][
-        "development_git_common_dir"
-    ]
+    assert payload["runtime"]["git_common_dir"] != payload["runtime"]["development_git_common_dir"]
     assert payload["runtime"]["installed_distributions"] == [
         {"name": "ai-trading-system", "version": "0.1.0"},
         {"name": "PyYAML", "version": "6.0.2"},
@@ -505,6 +553,25 @@ def test_deployment_acceptance_binds_unique_scheduler_and_credentials(
     assert payload["scheduler"]["entry_count"] == 1
     assert payload["credentials"]["secret_values_recorded"] is False
     assert payload["production_effect"] == "none"
+    stale_scheduler = json.loads(json.dumps(scheduler))
+    stale_scheduler["observed_at"] = (OBSERVED_AT - timedelta(seconds=45)).isoformat()
+    with pytest.raises(
+        OpsReleasePromotionError,
+        match="DEPLOYMENT_SCHEDULER_OBSERVATION_STALE",
+    ):
+        build_ops_deployment_acceptance(
+            release_candidate=candidate,
+            release_candidate_path=candidate_path,
+            runtime_root=runtime,
+            development_root=development,
+            runtime_python=runtime_python,
+            scheduler_observation=stale_scheduler,
+            promotion_event_path=promotion_event,
+            credential_names=["FMP_API_KEY", "SEC_USER_AGENT"],
+            credential_attestation_ref="owner_attestation:OPS-077:credentials:minimal-v1",
+            owner_decision_ref="owner_decision:OPS-077:reject-stale-observation",
+            observed_at=OBSERVED_AT,
+        )
     active_path = activate_ops_deployment(payload, runtime_root=runtime)
     repeated_path = activate_ops_deployment(payload, runtime_root=runtime)
     assert active_path == repeated_path
@@ -529,12 +596,7 @@ def test_deployment_acceptance_rejects_forbidden_credential_name(
     _clone_independent(development, runtime, commit)
     _copy_validation_artifacts(development, runtime, validations)
     candidate_path = (
-        runtime
-        / "outputs"
-        / "operations"
-        / "deployment"
-        / "evidence"
-        / "candidate.json"
+        runtime / "outputs" / "operations" / "deployment" / "evidence" / "candidate.json"
     )
     write_json_atomic(candidate_path, candidate)
     runtime_python = runtime / ".venv" / "Scripts" / "python.exe"
@@ -631,6 +693,31 @@ def test_scheduler_observation_rejects_duplicate_or_wrong_entry(
         )
 
 
+def test_scheduler_observation_rejects_prompt_drift(tmp_path: Path) -> None:
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    runtime_python = runtime / ".venv" / "Scripts" / "python.exe"
+    _scheduler_observation(runtime, runtime_python)
+    automation_path = runtime.parent / "automation.toml"
+    automation_path.write_text(
+        automation_path.read_text(encoding="utf-8").replace(
+            "固定运营根",
+            "漂移运营根",
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(OpsReleasePromotionError, match="SCHEDULER_PROMPT_DRIFT"):
+        observe_codex_automation_config(
+            automation_path=automation_path,
+            runtime_root=runtime,
+            runtime_python=runtime_python,
+            policy_path=runtime / "config" / "operations" / "ops_release_promotion.yaml",
+            observed_at=OBSERVED_AT,
+        )
+
+
 def test_promotion_rejects_missing_runtime_without_creating_it(
     tmp_path: Path,
 ) -> None:
@@ -658,12 +745,7 @@ def test_promotion_switches_exact_commit_and_writes_append_only_events(
 ) -> None:
     development = tmp_path / "development"
     _init_release_repo(development)
-    checkout_policy = (
-        development
-        / "config"
-        / "architecture"
-        / "arch_005_s4d_checkout_guard.yaml"
-    )
+    checkout_policy = development / "config" / "architecture" / "arch_005_s4d_checkout_guard.yaml"
     checkout_policy.write_text(
         "schema_version: arch_005_s4d_checkout_guard_policy.v1\n",
         encoding="utf-8",
@@ -674,10 +756,7 @@ def test_promotion_switches_exact_commit_and_writes_append_only_events(
     repository_root = Path(__file__).resolve().parents[1]
     checkout_policy.write_text(
         (
-            repository_root
-            / "config"
-            / "architecture"
-            / "arch_005_s4d_checkout_guard.yaml"
+            repository_root / "config" / "architecture" / "arch_005_s4d_checkout_guard.yaml"
         ).read_text(encoding="utf-8"),
         encoding="utf-8",
     )
@@ -705,6 +784,8 @@ def test_promotion_switches_exact_commit_and_writes_append_only_events(
     )
     candidate_path = tmp_path / "candidate.json"
     write_json_atomic(candidate_path, candidate)
+    development_anchor = tmp_path / "development-anchor"
+    _clone_independent(development, development_anchor, candidate_commit)
     runtime = tmp_path / "runtime"
     _clone_independent(development, runtime, previous_commit)
     _git(runtime, "update-ref", "refs/remotes/origin/main", candidate_commit)
@@ -729,20 +810,19 @@ def test_promotion_switches_exact_commit_and_writes_append_only_events(
     payload, event_path = promote_ops_release(
         coordinator_root=development,
         runtime_root=runtime,
-        development_root=development,
+        development_root=development_anchor,
         release_candidate_path=candidate_path,
         runtime_python=runtime_python,
         observed_at=OBSERVED_AT,
     )
 
     assert payload["state"] == "PROMOTED_NOT_ACTIVATED"
+    assert payload["runtime"]["development_checkout_root"] == str(development_anchor.resolve())
     assert _git(runtime, "rev-parse", "HEAD") == candidate_commit
     for source in validations:
         copied = runtime / source.relative_to(development)
         assert copied.read_bytes() == source.read_bytes()
-    canonical_candidate = Path(
-        payload["release_candidate_receipt"]["absolute_path"]
-    )
+    canonical_candidate = Path(payload["release_candidate_receipt"]["absolute_path"])
     assert canonical_candidate.is_relative_to(runtime)
     assert canonical_candidate.is_file()
     event_names = sorted(path.name for path in event_path.parent.glob("*.json"))
@@ -751,9 +831,7 @@ def test_promotion_switches_exact_commit_and_writes_append_only_events(
         "02_SWITCHED.json",
         "03_PROMOTED_NOT_ACTIVATED.json",
     ]
-    assert not (
-        runtime / "outputs" / "operations" / "deployment" / "promotion.lock"
-    ).exists()
+    assert not (runtime / "outputs" / "operations" / "deployment" / "promotion.lock").exists()
 
 
 def test_coordinator_policy_still_blocks_dirty_old_runtime(
@@ -761,12 +839,7 @@ def test_coordinator_policy_still_blocks_dirty_old_runtime(
 ) -> None:
     development = tmp_path / "development"
     _init_release_repo(development)
-    checkout_policy = (
-        development
-        / "config"
-        / "architecture"
-        / "arch_005_s4d_checkout_guard.yaml"
-    )
+    checkout_policy = development / "config" / "architecture" / "arch_005_s4d_checkout_guard.yaml"
     checkout_policy.write_text(
         "schema_version: arch_005_s4d_checkout_guard_policy.v1\n",
         encoding="utf-8",
@@ -777,10 +850,7 @@ def test_coordinator_policy_still_blocks_dirty_old_runtime(
     repository_root = Path(__file__).resolve().parents[1]
     checkout_policy.write_text(
         (
-            repository_root
-            / "config"
-            / "architecture"
-            / "arch_005_s4d_checkout_guard.yaml"
+            repository_root / "config" / "architecture" / "arch_005_s4d_checkout_guard.yaml"
         ).read_text(encoding="utf-8"),
         encoding="utf-8",
     )
@@ -900,26 +970,51 @@ def test_promotion_blocks_active_daily_lease_before_switch(
 
 
 def _scheduler_observation(runtime: Path, runtime_python: Path) -> dict[str, object]:
-    return {
-        "schema_version": "ops_scheduler_observation.v1",
-        "provider": "codex_automation",
-        "scheduler_id": "aitradingsystem-pit",
-        "entry_count": 1,
-        "enabled": True,
-        "windows_task_scheduler_entry_count": 0,
-        "unified_external_trigger": ["aits", "ops", "daily-run"],
-        "working_directory": str(runtime),
-        "runtime_python": str(runtime_python),
-        "environment_names": [
-            "AITS_EXTERNAL_SCHEDULER",
-            "AITS_OPS_CHECKOUT_ROOT",
-            "AITS_OPS_RELEASE_COMMIT",
-            "AITS_DEVELOPMENT_CHECKOUT_ROOT",
-            "AITS_OPS_DEPLOYMENT_RECEIPT",
-            "AITS_OPS_PYTHON",
-        ],
-        "observed_at": OBSERVED_AT.isoformat(),
-    }
+    repository_root = Path(__file__).resolve().parents[1]
+    operations_root = runtime / "config" / "operations"
+    operations_root.mkdir(parents=True, exist_ok=True)
+    for name in (
+        "aitradingsystem_pit_automation_prompt.md",
+        "ops_release_promotion.yaml",
+    ):
+        target = operations_root / name
+        if not target.exists():
+            target.write_bytes((repository_root / "config" / "operations" / name).read_bytes())
+    prompt = (
+        (operations_root / "aitradingsystem_pit_automation_prompt.md")
+        .read_text(encoding="utf-8")
+        .replace("\r\n", "\n")
+        .rstrip("\n")
+    )
+    automation_path = runtime.parent / "automation.toml"
+    automation_path.write_text(
+        "\n".join(
+            (
+                'id = "aitradingsystem-pit"',
+                'name = "AITradingSystem PIT Daily"',
+                f"prompt = {json.dumps(prompt, ensure_ascii=False)}",
+                'status = "ACTIVE"',
+                'rrule = "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU;BYHOUR=9;BYMINUTE=30;BYSECOND=0"',
+                'model = "gpt-5.6-sol"',
+                'reasoning_effort = "xhigh"',
+                'execution_environment = "local"',
+                f"updated_at = {int((OBSERVED_AT - timedelta(minutes=1)).timestamp() * 1000)}",
+                "",
+                "[target]",
+                'type = "project"',
+                'project_id = "fixture-project"',
+                "",
+            )
+        ),
+        encoding="utf-8",
+    )
+    return observe_codex_automation_config(
+        automation_path=automation_path,
+        runtime_root=runtime,
+        runtime_python=runtime_python,
+        policy_path=runtime / "config" / "operations" / "ops_release_promotion.yaml",
+        observed_at=OBSERVED_AT,
+    )
 
 
 def _promotion_event(
@@ -945,6 +1040,7 @@ def _promotion_event(
             "state": "PROMOTED_NOT_ACTIVATED",
             "release_id": candidate["release_id"],
             "candidate_commit": candidate["candidate_commit"],
+            "observed_at": (OBSERVED_AT - timedelta(seconds=30)).isoformat(),
             "release_candidate_receipt": {
                 "path": candidate_path.name,
                 "absolute_path": str(candidate_path.resolve()),
@@ -985,6 +1081,57 @@ def _write_validation_artifacts(root: Path, commit: str) -> tuple[Path, ...]:
             },
         )
         paths.append(path)
+    scenario_root = root / "outputs" / "operations" / "deployment" / "evidence" / "scenarios"
+    scenario_paths: list[Path] = []
+    for scenario_id, test_node_id in INCIDENT_TEST_NODES.items():
+        scenario_path = scenario_root / f"{scenario_id}.json"
+        write_json_atomic(
+            scenario_path,
+            {
+                "schema_version": "ops_release_incident_regression.v1",
+                "scenario_id": scenario_id,
+                "status": "PASS",
+                "git_commit": commit,
+                "test_node_id": test_node_id,
+                "provider_request_performed": False,
+                "runner": {
+                    "schema_version": "pytest_incident_regression.v1",
+                    "python_executable": "fixture-python",
+                    "pytest_args": [
+                        "-m",
+                        "pytest",
+                        "-n",
+                        "16",
+                        "--dist",
+                        "loadfile",
+                        test_node_id,
+                        "-q",
+                    ],
+                    "return_code": 0,
+                    "stdout_sha256": "0" * 64,
+                    "stderr_sha256": "0" * 64,
+                    "provider_credential_names_removed": [],
+                    "executed_at": OBSERVED_AT.isoformat(),
+                },
+                "production_effect": "none",
+                "production_weight_write": False,
+                "active_shadow_weight_write": False,
+                "broker_action": False,
+                "trading_action": False,
+            },
+        )
+        scenario_paths.append(scenario_path)
+    canary = build_ops_release_preflight_canary(
+        candidate_commit=commit,
+        scenario_evidence_paths=scenario_paths,
+        project_root=root,
+        policy_path=root / "config" / "operations" / "ops_release_promotion.yaml",
+        observed_at=OBSERVED_AT,
+    )
+    write_json_atomic(
+        root / "outputs" / "operations" / "deployment" / "evidence" / "pre_release_canary.json",
+        canary,
+    )
     return tuple(paths)
 
 
@@ -994,6 +1141,11 @@ def _copy_validation_artifacts(
     paths: tuple[Path, ...],
 ) -> None:
     for source in paths:
+        target = target_root / source.relative_to(source_root)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(source.read_bytes())
+    evidence_root = source_root / "outputs" / "operations" / "deployment" / "evidence"
+    for source in evidence_root.rglob("*.json"):
         target = target_root / source.relative_to(source_root)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(source.read_bytes())

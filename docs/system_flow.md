@@ -1062,12 +1062,14 @@ recapture。queue 不自动执行、不改旧 terminal、不产生 strict PIT �
 
 S4 的稳定部署补强把 path-level checkout 分离升级为 receipt-gated independent clone。
 Release candidate 必须等于 reviewed `origin/main` exact commit，并冻结 candidate-bound 六类
-正式 validation、固定关键 policy/CLI/module/runbook/`pyproject.toml` hashes 与
+正式 validation、exact candidate 上自动执行的 zero-provider incident regression canary、固定关键
+policy/canonical automation prompt/CLI/module/runbook/`pyproject.toml` hashes 与
 checkout-relative path；显式 promotion 使用 lock、active daily lease exclusion、validation
-evidence 到 permanent runtime 的原子迁移、切换后 live revalidation、append-only transaction
+与 canary evidence 到 permanent runtime 的原子迁移、切换后 live revalidation、append-only transaction
 journal 和失败回滚，绝不自动选择 latest 或清理 runtime。Deployment acceptance 进一步绑定
 不同 Git common dir、runtime-local Python/editable import root、installed-distribution
-inventory/fingerprint、唯一 Codex automation observed state、required env 名称和最小
+inventory/fingerprint、唯一 Codex automation actual config/prompt SHA、updated-at、schedule/model/
+reasoning/status/target、required stable env 名称和最小
 credential-scope attestation。Permanent runtime 的 Git metadata 还必须安装并冻结 reviewed
 exact runtime-generated exclusions（仅 `outputs/artifacts/data/derived`），receipt/preflight
 逐 byte live revalidate；development dirty semantics 不变。跨 release pre-switch clean audit
@@ -1077,19 +1079,25 @@ schema 不参与解析，且不得靠手工 checkout 或复制 policy 绕过。�
 active receipt live validation 改由 exact runtime release 自身的 checkout policy 完成，
 development root 仅证明 Git common-dir 隔离，因此 temporary lane 可按生命周期清理；
 runtime Python probe 清除继承的 `PYTHONPATH`/`PYTHONHOME`，避免 coordinator source 污染
-runtime-local import identity。Active
-receipt、marker、release、remote、clean audit、runtime executable/import 任一缺失或漂移均 fail
-closed。`daily-run` 先取得 checkout WRITE lease，再执行并写 scheduler preflight；人工运行只有
+runtime-local import identity。OPS-077 起，active receipt 是 release identity 的唯一可变 authority，
+external automation 不再设置 mutable `AITS_OPS_RELEASE_COMMIT`；legacy env 若存在只做 exact-match
+assertion。Active receipt、fresh scheduler binding、marker、release、remote、clean audit、runtime
+executable/import 任一缺失或漂移均 fail closed。`daily-run` 先取得 checkout WRITE lease，再从
+receipt 派生 exact commit 并执行/写 scheduler preflight；人工运行只有
 显式 `--manual-execution` 才可进入，active scheduler checkout 禁止混用 manual mode。
 
 ```mermaid
 flowchart LR
-    EXCLUDE["Reviewed runtime-only Git exclusions<br/>exact bytes + SHA + patterns"] --> RC["Owner-approved release candidate<br/>remote main + exact six-tier evidence"]
+    EXCLUDE["Reviewed runtime-only Git exclusions<br/>exact bytes + SHA + patterns"] --> CANARY["Pre-release incident canary<br/>exact candidate + parallel pytest<br/>zero provider request"]
+    CANARY --> RC["Owner-approved release candidate<br/>remote main + six-tier evidence<br/>canary + canonical prompt hashes"]
     RC --> AUDIT["Pre-switch runtime clean audit<br/>candidate policy + exact runtime target"]
     AUDIT --> PROMOTE["Locked exact promotion<br/>portable evidence copy + revalidation + rollback"]
     PROMOTE --> SELF["Post-switch self-audit<br/>runtime policy + sanitized Python probe"]
-    SELF --> ACCEPT["Active deployment receipt<br/>independent clone + runtime/environment fingerprint + scheduler observation"]
-    ACCEPT --> TRIG["Only external trigger<br/>aits ops daily-run"]
+    SELF --> DEPLOYED["DEPLOYED<br/>exact runtime switched"]
+    DEPLOYED --> API["Update the one Codex automation<br/>canonical stable prompt<br/>no mutable release SHA"]
+    API --> OBS["Fresh actual config observation<br/>prompt/config SHA + updated-at<br/>schedule/model/status/target"]
+    OBS --> ACCEPT["SCHEDULER_BOUND active receipt<br/>independent clone + runtime/environment fingerprint"]
+    ACCEPT --> TRIG["Only external trigger<br/>aits ops daily-run<br/>release from active receipt"]
     TRIG --> WRITE["Checkout WRITE lease"]
     WRITE --> PREFLIGHT["Receipt-gated scheduler checkout preflight"]
     PREFLIGHT --> CAPTURE["capture_daily_inputs umbrella"]
@@ -1122,6 +1130,7 @@ flowchart LR
     STOPCAP --> CLOSECAP
     FINALCAP --> CLOSECAP
     CLOSECAP --> TERM["Strict terminal PASS / BLOCKED / FAILED"]
+    TERM -->|"new provider-ready ordinary PASS"| OA["OPERATIONALLY_ACCEPTED"]
     REC -.-> SAFE_CAP["No automatic recovery<br/>no backfilled strict PIT<br/>no weights / broker / trading"]
 ```
 

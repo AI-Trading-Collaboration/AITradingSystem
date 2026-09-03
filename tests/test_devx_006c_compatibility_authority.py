@@ -38,6 +38,7 @@ PROD_004_SECTION = "phase_prod_004_pit_cumulative_archive_consumption_v1"
 DEVX_011_SECTION = "phase_devx_011_governed_workflow_health_control_loop_v1"
 DEVX_012_SECTION = "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1"
 RISK_012_SECTION = "phase_risk_012_unknown_risk_event_id_fail_closed_v1"
+OPS_077_SECTION = "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1"
 
 
 def _write_fixture_authority(
@@ -142,11 +143,11 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 317
+    assert len(merged) == 318
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == RISK_012_SECTION
+    assert next(reversed(merged)) == OPS_077_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (

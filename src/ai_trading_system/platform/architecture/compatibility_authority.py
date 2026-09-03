@@ -862,6 +862,30 @@ def build_repository_authority(
                 risk_012_fragment_bytes,
             )
         )
+    ops_077_requirement_path = (
+        root / "docs/requirements/OPS-077_Atomic_Release_Scheduler_Binding_and_Canary.md"
+    )
+    if ops_077_requirement_path.exists():
+        ops_077_section_id, ops_077_section = _ops_077_section(
+            root,
+            policy=policy,
+        )
+        (
+            ops_077_relative,
+            ops_077_record,
+            ops_077_fragment_bytes,
+        ) = render_fragment(
+            section_id=ops_077_section_id,
+            section=ops_077_section,
+        )
+        rendered_fragments.append(
+            (
+                ops_077_section_id,
+                ops_077_relative,
+                ops_077_record,
+                ops_077_fragment_bytes,
+            )
+        )
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -2252,6 +2276,7 @@ def _risk_012_section(
             "src/ai_trading_system/risk_event_llm_formal.py",
             "src/ai_trading_system/risk_events.py",
             "tests/test_arch_004_refactor_policy.py",
+            "tests/test_arch_005_s5_task_source_cutover.py",
             "tests/test_devx_006c_compatibility_authority.py",
             "tests/test_devx_006d_report_catalog_flow_authority.py",
             "tests/test_risk_event_llm_formal.py",
@@ -2297,6 +2322,107 @@ def _risk_012_section(
             "same_as_of_recovery_allowed": False,
             "provider_request_performed": False,
             "strategy_or_weight_changed": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _ops_077_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1"
+    source_paths = sorted(
+        [
+            "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+            "config/operations/aitradingsystem_pit_automation_prompt.md",
+            "config/operations/ops_release_promotion.yaml",
+            "config/operations/ops_scheduler_checkout.yaml",
+            "docs/operations/operations_runbook.md",
+            "docs/requirements/OPS-077_Atomic_Release_Scheduler_Binding_and_Canary.md",
+            "docs/system_flow.md",
+            "docs/task_register.md",
+            "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+            "inputs/architecture/arch_004e_architecture_fitness.yaml",
+            "inputs/architecture/arch_004e_module_manifest.yaml",
+            "inputs/architecture/arch_004e_test_manifest.yaml",
+            "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+            "inputs/architecture/arch_005_task_registry_index.yaml",
+            "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+            (
+                "registry/development_tasks/64/"
+                "64ace5865c3262fa0e9483b1eb6ebca98fde3a3ae2f959f8c84ffe6285bddbf9.yaml"
+            ),
+            "src/ai_trading_system/cli_commands/ops.py",
+            "src/ai_trading_system/ops_release_promotion.py",
+            "src/ai_trading_system/ops_scheduler_checkout.py",
+            "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+            "tests/test_arch_004_refactor_policy.py",
+            "tests/test_devx_006c_compatibility_authority.py",
+            "tests/test_devx_006d_report_catalog_flow_authority.py",
+            "tests/test_ops_release_promotion.py",
+            "tests/test_ops_scheduler_checkout.py",
+            "tests/test_trading2452_architecture_contract.py",
+        ],
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "ops_077_atomic_release_scheduler_binding_and_canary.v1",
+        "task_id": "OPS-077_ATOMIC_RELEASE_SCHEDULER_BINDING_AND_CANARY",
+        "status": "VALIDATING",
+        "owner_decision": "owner_instruction:OPS-077:2026-09-03:continue-root-prevention-fix",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_risk_012_unknown_risk_event_id_fail_closed_v1"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "release_identity_contract": {
+            "mutable_authority": "active_deployment_receipt",
+            "automation_release_sha_allowed": False,
+            "legacy_release_assertion_mode": "exact_match_if_present",
+            "daily_and_recovery_derive_release_from_receipt": True,
+        },
+        "scheduler_binding_contract": {
+            "schema_version": "ops_scheduler_observation.v2",
+            "canonical_prompt_hash_required": True,
+            "actual_config_hash_required": True,
+            "config_updated_at_required": True,
+            "observation_must_not_predate_promotion": True,
+            "scheduler_entry_count": 1,
+        },
+        "pre_release_canary_contract": {
+            "schema_version": "ops_release_preflight_canary.v1",
+            "runner_schema_version": "pytest_incident_regression.v1",
+            "exact_candidate_required": True,
+            "parallel_pytest_required": True,
+            "provider_request_performed": False,
+            "required_scenarios": [
+                "risk_event_unknown_id_referential_integrity",
+                "signed_eps_revision_90d_pct",
+            ],
+        },
+        "release_lifecycle": [
+            "CODE_FIXED",
+            "DEPLOYED",
+            "SCHEDULER_BOUND",
+            "OPERATIONALLY_ACCEPTED",
+        ],
+        "safety": {
+            "second_scheduler_created": False,
+            "same_as_of_ordinary_allowed": False,
+            "validation_gate_relaxed": False,
+            "production_weight_write": False,
+            "active_shadow_weight_write": False,
+            "provider_request_performed_by_canary": False,
             "production_effect": "none",
             "broker_action": "none",
         },

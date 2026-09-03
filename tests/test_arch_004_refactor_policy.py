@@ -3897,7 +3897,10 @@ DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION = (
 RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION = (
     "phase_risk_012_unknown_risk_event_id_fail_closed_v1"
 )
-LATEST_COMPATIBILITY_SECTION = RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION
+OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION = (
+    "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1"
+)
+LATEST_COMPATIBILITY_SECTION = OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -13066,6 +13069,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION,
         DEVX_011_WORKFLOW_HEALTH_SECTION,
         RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION,
+        OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13159,6 +13163,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION,
         DEVX_011_WORKFLOW_HEALTH_SECTION,
         RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION,
+        OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -14099,7 +14104,35 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION in baseline:
+    if OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION in baseline:
+        phase = baseline[OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION]
+        current_superseded_paths = frozenset(
+            str(path) for path in phase["superseded_live_source_paths"]
+        )
+        assert (
+            _latest_active_source_mismatches(OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION)
+            <= current_superseded_paths
+        )
+        inherited_superseded_paths = frozenset(
+            str(path)
+            for section in (
+                DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION,
+                DEVX_009_PUBLICATION_FENCE_SECTION,
+                TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION,
+                PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION,
+                DEVX_011_WORKFLOW_HEALTH_SECTION,
+                DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION,
+                RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION,
+            )
+            for path in baseline[section]["superseded_live_source_paths"]
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2504_qqq_options_owner_decision_manifest_all_current_authority_paths()
+            | inherited_superseded_paths
+            | current_superseded_paths
+        )
+        authority_section = OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION
+    elif RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION in baseline:
         phase = baseline[RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION]
         current_superseded_paths = frozenset(
             str(path) for path in phase["superseded_live_source_paths"]
@@ -24631,9 +24664,11 @@ def test_devx_012_automatic_workflow_health_cycle_authority_remains_historical()
     assert phase["broker_action"] == "none"
 
 
-def test_risk_012_is_latest_unknown_risk_event_id_fail_closed_authority() -> None:
+def test_risk_012_unknown_risk_event_id_fail_closed_authority_is_retained() -> None:
     baseline = _compatibility_baseline()
-    assert next(reversed(baseline)) == RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION
+    assert list(baseline).index(RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION) < list(
+        baseline
+    ).index(OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION)
     phase = baseline[RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION]
 
     assert phase["schema_version"] == "risk_012_unknown_risk_event_id_fail_closed.v1"
@@ -24674,6 +24709,73 @@ def test_risk_012_is_latest_unknown_risk_event_id_fail_closed_authority() -> Non
         "same_as_of_recovery_allowed": False,
         "provider_request_performed": False,
         "strategy_or_weight_changed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+    assert phase["production_effect"] == "none"
+    assert phase["broker_action"] == "none"
+
+
+def test_ops_077_is_latest_atomic_release_scheduler_binding_authority() -> None:
+    baseline = _compatibility_baseline()
+    assert next(reversed(baseline)) == OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION
+    phase = baseline[OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION]
+
+    assert phase["schema_version"] == ("ops_077_atomic_release_scheduler_binding_and_canary.v1")
+    assert phase["task_id"] == "OPS-077_ATOMIC_RELEASE_SCHEDULER_BINDING_AND_CANARY"
+    assert phase["status"] == "VALIDATING"
+    assert phase["owner_decision"] == (
+        "owner_instruction:OPS-077:2026-09-03:continue-root-prevention-fix"
+    )
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION),
+        "current_hash_authority": (f"{OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION}.sources"),
+    }
+    assert phase["release_identity_contract"] == {
+        "mutable_authority": "active_deployment_receipt",
+        "automation_release_sha_allowed": False,
+        "legacy_release_assertion_mode": "exact_match_if_present",
+        "daily_and_recovery_derive_release_from_receipt": True,
+    }
+    assert phase["scheduler_binding_contract"] == {
+        "schema_version": "ops_scheduler_observation.v2",
+        "canonical_prompt_hash_required": True,
+        "actual_config_hash_required": True,
+        "config_updated_at_required": True,
+        "observation_must_not_predate_promotion": True,
+        "scheduler_entry_count": 1,
+    }
+    assert phase["pre_release_canary_contract"] == {
+        "schema_version": "ops_release_preflight_canary.v1",
+        "runner_schema_version": "pytest_incident_regression.v1",
+        "exact_candidate_required": True,
+        "parallel_pytest_required": True,
+        "provider_request_performed": False,
+        "required_scenarios": [
+            "risk_event_unknown_id_referential_integrity",
+            "signed_eps_revision_90d_pct",
+        ],
+    }
+    assert phase["release_lifecycle"] == [
+        "CODE_FIXED",
+        "DEPLOYED",
+        "SCHEDULER_BOUND",
+        "OPERATIONALLY_ACCEPTED",
+    ]
+    source_paths = [str(source["path"]) for source in phase["sources"]]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert set(source_paths) == set(phase["superseded_live_source_paths"])
+    for source in phase["sources"]:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["safety"] == {
+        "second_scheduler_created": False,
+        "same_as_of_ordinary_allowed": False,
+        "validation_gate_relaxed": False,
+        "production_weight_write": False,
+        "active_shadow_weight_write": False,
+        "provider_request_performed_by_canary": False,
         "production_effect": "none",
         "broker_action": "none",
     }

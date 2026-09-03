@@ -105,9 +105,12 @@ from ai_trading_system.ops_release_promotion import (
     activate_ops_deployment,
     build_ops_deployment_acceptance,
     build_ops_release_candidate,
+    build_ops_release_preflight_canary,
     install_ops_runtime_git_exclusions,
     load_ops_release_promotion_policy,
+    observe_codex_automation_config,
     promote_ops_release,
+    run_ops_release_incident_regressions,
 )
 from ai_trading_system.ops_scheduler_checkout import (
     DEFAULT_OPS_SCHEDULER_CHECKOUT_POLICY_PATH,
@@ -301,31 +304,19 @@ def pipeline_health_command(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "prices_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "raw"
-    / "rates_daily.csv",
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     features_path: Annotated[
         Path,
         typer.Option(help="每日特征 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "processed"
-    / "features_daily.csv",
+    ] = PROJECT_ROOT / "data" / "processed" / "features_daily.csv",
     scores_path: Annotated[
         Path,
         typer.Option(help="每日评分 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
-    / "processed"
-    / "scores_daily.csv",
+    ] = PROJECT_ROOT / "data" / "processed" / "scores_daily.csv",
     data_quality_report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 数据质量报告路径。"),
@@ -632,8 +623,7 @@ def validate_daily_inputs_command(
     console.print(f"Issue count：{validation.get('issue_count', len(validation['issues']))}")
     queue_style = "green" if recovery_validation["status"] == "PASS" else "red"
     console.print(
-        f"[{queue_style}]Recovery queue validation："
-        f"{recovery_validation['status']}[/{queue_style}]"
+        f"[{queue_style}]Recovery queue validation：{recovery_validation['status']}[/{queue_style}]"
     )
     console.print(f"Recovery queue：{paths.recovery_queue_json}")
     console.print("production_effect=none；weights/broker/trading action=false")
@@ -673,17 +663,11 @@ def scheduler_checkout_preflight_command(
     output_json: Annotated[
         Path,
         typer.Option(help="preflight JSON 输出路径。"),
-    ] = PROJECT_ROOT
-    / "outputs"
-    / "reports"
-    / "ops_scheduler_checkout_preflight.json",
+    ] = PROJECT_ROOT / "outputs" / "reports" / "ops_scheduler_checkout_preflight.json",
     output_markdown: Annotated[
         Path,
         typer.Option(help="preflight Markdown 输出路径。"),
-    ] = PROJECT_ROOT
-    / "outputs"
-    / "reports"
-    / "ops_scheduler_checkout_preflight.md",
+    ] = PROJECT_ROOT / "outputs" / "reports" / "ops_scheduler_checkout_preflight.md",
 ) -> None:
     """只读检查 pinned clean ops checkout；不安装或启用 scheduler。"""
     try:
@@ -747,6 +731,12 @@ def ops_release_candidate_command(
             help="可重复；必须与 reviewed policy 的 required critical path 集合完全相同。",
         ),
     ],
+    pre_release_canary: Annotated[
+        Path,
+        typer.Option(
+            help="candidate-bound、zero-provider-request pre-release canary JSON。",
+        ),
+    ],
     output_json: Annotated[
         Path,
         typer.Option(help="release candidate receipt JSON 输出路径。"),
@@ -767,6 +757,7 @@ def ops_release_candidate_command(
             candidate_commit=candidate_commit,
             validation_artifact_paths=validation_artifact,
             critical_path_commitments=critical_path,
+            pre_release_canary_path=pre_release_canary,
             owner_decision_ref=owner_decision_ref,
             previous_release_commit=previous_release_commit,
             policy_path=policy_path,
@@ -779,6 +770,97 @@ def ops_release_candidate_command(
     console.print("[green]Ops release candidate：PASS[/green]")
     console.print(f"release_id={payload['release_id']}；JSON={output_json}")
     console.print("production_effect=none；weights/broker/trading action=false")
+
+
+@ops_app.command("release-canary")
+def ops_release_canary_command(
+    candidate_commit: Annotated[
+        str,
+        typer.Option(help="待发布 candidate 的 exact 40-char commit。"),
+    ],
+    output_json: Annotated[
+        Path,
+        typer.Option(help="pre-release canary JSON 输出路径。"),
+    ],
+    scenario_output_dir: Annotated[
+        Path | None,
+        typer.Option(help="incident regression 证据目录；默认 output JSON 同级 scenarios/。"),
+    ] = None,
+    python_executable: Annotated[
+        Path | None,
+        typer.Option(help="用于并行 pytest canary 的 Python；默认当前解释器。"),
+    ] = None,
+    policy_path: Annotated[
+        Path,
+        typer.Option(help="reviewed release promotion policy。"),
+    ] = DEFAULT_OPS_RELEASE_PROMOTION_POLICY_PATH,
+) -> None:
+    """运行并聚合历史 incident regression；不请求 provider、不运行 daily。"""
+    try:
+        scenario_evidence = run_ops_release_incident_regressions(
+            candidate_commit=candidate_commit,
+            project_root=PROJECT_ROOT,
+            output_dir=scenario_output_dir or (output_json.parent / "scenarios"),
+            python_executable=python_executable,
+            policy_path=policy_path,
+        )
+        payload = build_ops_release_preflight_canary(
+            candidate_commit=candidate_commit,
+            scenario_evidence_paths=scenario_evidence,
+            project_root=PROJECT_ROOT,
+            policy_path=policy_path,
+        )
+        write_json_atomic(output_json, payload)
+    except (OSError, ValueError, OpsReleasePromotionError) as exc:
+        console.print(f"[red]Ops release canary：BLOCKED ({exc})[/red]")
+        console.print("provider_request_performed=false；production_effect=none")
+        raise typer.Exit(code=1) from exc
+    console.print("[green]Ops release canary：PASS[/green]")
+    console.print(f"canary_id={payload['canary_id']}；JSON={output_json}")
+    console.print("provider_request_performed=false；weights/broker/trading action=false")
+
+
+@ops_app.command("scheduler-observe-codex")
+def ops_scheduler_observe_codex_command(
+    automation_path: Annotated[
+        Path,
+        typer.Option(help="Codex automation.toml 的只读绝对路径。"),
+    ],
+    runtime_root: Annotated[
+        Path,
+        typer.Option(help="独立 permanent runtime root。"),
+    ],
+    output_json: Annotated[
+        Path,
+        typer.Option(help="fresh scheduler observation JSON 输出路径。"),
+    ],
+    runtime_python: Annotated[
+        Path | None,
+        typer.Option(help="runtime-local Python；默认读取 promotion policy 相对路径。"),
+    ] = None,
+    policy_path: Annotated[
+        Path,
+        typer.Option(help="reviewed release promotion policy。"),
+    ] = DEFAULT_OPS_RELEASE_PROMOTION_POLICY_PATH,
+) -> None:
+    """从实际 Codex config 生成 canonical-prompt-bound scheduler observation。"""
+    try:
+        policy = load_ops_release_promotion_policy(policy_path)
+        selected_python = runtime_python or (runtime_root / policy.runtime_python_relative_path)
+        payload = observe_codex_automation_config(
+            automation_path=automation_path,
+            runtime_root=runtime_root,
+            runtime_python=selected_python,
+            policy_path=policy_path,
+        )
+        write_json_atomic(output_json, payload)
+    except (OSError, ValueError, OpsReleasePromotionError) as exc:
+        console.print(f"[red]Codex scheduler observation：BLOCKED ({exc})[/red]")
+        console.print("automation_mutation=false；daily_run=false；production_effect=none")
+        raise typer.Exit(code=1) from exc
+    console.print("[green]Codex scheduler observation：PASS[/green]")
+    console.print(f"JSON={output_json}；prompt_sha256={payload['prompt']['semantic_sha256']}")
+    console.print("automation_mutation=false；daily_run=false；production_effect=none")
 
 
 @ops_app.command("runtime-git-exclusions-install")
@@ -1068,7 +1150,9 @@ def daily_ops_plan_command(
     style = (
         "green"
         if status == "READY"
-        else "yellow" if status in {"READY_WITH_SKIPS", "READY_WITH_BLOCKED_BRANCHES"} else "red"
+        else "yellow"
+        if status in {"READY_WITH_SKIPS", "READY_WITH_BLOCKED_BRANCHES"}
+        else "red"
     )
     missing_env = plan.missing_env_vars(os.environ)
     console.print(f"[{style}]每日运行计划：{status}[/{style}]")
@@ -1675,7 +1759,7 @@ def _validate_daily_ops_finalization_closure(
     if evidence.get("status") != finalization.status:
         raise DailyOpsCanonicalFinalizationError(
             "DAILY_FINALIZATION_EVIDENCE_STATUS_MISMATCH",
-            (f"expected={finalization.status!r} " f"actual={evidence.get('status')!r}"),
+            (f"expected={finalization.status!r} actual={evidence.get('status')!r}"),
             evidence_path=finalization.finalization_evidence_path,
         )
     if evidence.get("as_of") != run_report.plan.as_of.isoformat():
@@ -1740,7 +1824,7 @@ def _validate_daily_ops_finalization_closure(
     ):
         raise DailyOpsCanonicalFinalizationError(
             "DAILY_FINALIZATION_READER_BINDING_CONTRACT_INVALID",
-            (f"binding_type={binding.get('binding_type')!r} " f"as_of={binding.get('as_of')!r}"),
+            (f"binding_type={binding.get('binding_type')!r} as_of={binding.get('as_of')!r}"),
             evidence_path=finalization.finalization_evidence_path,
         )
     reader_outputs_present = len(finalization.reader_brief_final_paths) >= 2
@@ -2352,7 +2436,7 @@ def _checkout_guarded_daily_command(command: Callable[..., None]) -> Callable[..
                         "(OPS_DAILY_EXECUTION_MODE_CONFLICT)[/red]"
                     )
                     console.print(
-                        "provider_request=false；cache_mutation=false；" "production_effect=none"
+                        "provider_request=false；cache_mutation=false；production_effect=none"
                     )
                     raise typer.Exit(code=1)
                 if not scheduler_context and not manual_execution:
@@ -2365,7 +2449,7 @@ def _checkout_guarded_daily_command(command: Callable[..., None]) -> Callable[..
                         "scheduler 必须提供 reviewed marker/receipt env。"
                     )
                     console.print(
-                        "provider_request=false；cache_mutation=false；" "production_effect=none"
+                        "provider_request=false；cache_mutation=false；production_effect=none"
                     )
                     raise typer.Exit(code=1)
                 if scheduler_context:
@@ -2400,8 +2484,7 @@ def _checkout_guarded_daily_command(command: Callable[..., None]) -> Callable[..
                             f"({','.join(str(item) for item in blocker_codes)})[/red]"
                         )
                         console.print(
-                            "provider_request=false；cache_mutation=false；"
-                            "production_effect=none"
+                            "provider_request=false；cache_mutation=false；production_effect=none"
                         )
                         raise typer.Exit(code=1)
                 command(*args, **kwargs)
@@ -2497,9 +2580,7 @@ def daily_ops_run_command(
     run_output_root: Annotated[
         Path,
         typer.Option(help="Canonical run bundle 根目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
-    / "runs",
+    ] = PROJECT_ROOT / "outputs" / "runs",
     run_id: Annotated[
         str | None,
         typer.Option(help="可选固定 run id；默认由 as_of 和 UTC 时间生成。"),
@@ -3454,7 +3535,7 @@ def _planned_daily_data_quality_as_of(
             step.command,
             DataQualityExecutionError(
                 "DQ_AS_OF_MISMATCH",
-                (f"expected={fallback_as_of.isoformat()} " f"actual={parsed_as_of.isoformat()}"),
+                (f"expected={fallback_as_of.isoformat()} actual={parsed_as_of.isoformat()}"),
             ),
         )
     return parsed_as_of, step.command, None
@@ -3655,22 +3736,32 @@ def _build_daily_terminal_recovery_request(
         return None
     if any(value is None or not value.strip() for value in supplied):
         raise ValueError(
-            "recovery_parent_run_id、recovery_from_step、recovery_reason_code " "必须同时完整提供"
+            "recovery_parent_run_id、recovery_from_step、recovery_reason_code 必须同时完整提供"
         )
     assert parent_run_id is not None
     assert recovery_from_step is not None
     assert recovery_reason_code is not None
 
-    current_release_commit = env.get("AITS_OPS_RELEASE_COMMIT", "").strip().lower()
     deployment_receipt_raw = env.get("AITS_OPS_DEPLOYMENT_RECEIPT", "").strip()
-    if not current_release_commit:
-        raise ValueError("terminal recovery requires AITS_OPS_RELEASE_COMMIT")
     if not deployment_receipt_raw:
         raise ValueError("terminal recovery requires AITS_OPS_DEPLOYMENT_RECEIPT")
     deployment_receipt_path = Path(deployment_receipt_raw).resolve()
     deployment_payload = load_strict_json_path(deployment_receipt_path)
     if not isinstance(deployment_payload, Mapping):
         raise ValueError("active deployment receipt must be a JSON object")
+    release_payload = deployment_payload.get("release")
+    if not isinstance(release_payload, Mapping):
+        raise ValueError("active deployment receipt release must be a JSON object")
+    current_release_commit = str(release_payload.get("candidate_commit", "")).strip().lower()
+    if len(current_release_commit) != 40 or any(
+        character not in "0123456789abcdef" for character in current_release_commit
+    ):
+        raise ValueError("active deployment receipt candidate_commit is invalid")
+    legacy_release_assertion = env.get("AITS_OPS_RELEASE_COMMIT", "").strip().lower()
+    if legacy_release_assertion and legacy_release_assertion != current_release_commit:
+        raise ValueError(
+            "legacy AITS_OPS_RELEASE_COMMIT must exactly match active deployment receipt"
+        )
 
     manifest_matches: list[tuple[Path, Mapping[str, object]]] = []
     daily_root = run_output_root.resolve() / "daily"
@@ -3886,7 +3977,9 @@ def historical_replay_day_command(
     style = (
         "green"
         if status in {"PASS", "PASS_INVENTORY"}
-        else "yellow" if status == "INCOMPLETE_REPLAY" else "red"
+        else "yellow"
+        if status == "INCOMPLETE_REPLAY"
+        else "red"
     )
     console.print(f"[{style}]历史交易日回放：{status}[/{style}]")
     console.print(f"Replay bundle：{replay_run.paths.root}")

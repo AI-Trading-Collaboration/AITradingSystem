@@ -1,0 +1,90 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: OPS-077_ATOMIC_RELEASE_SCHEDULER_BINDING_AND_CANARY
+  task_id_sha256: 64ace5865c3262fa0e9483b1eb6ebca98fde3a3ae2f959f8c84ffe6285bddbf9
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-077_ATOMIC_RELEASE_SCHEDULER_BINDING_AND_CANARY
+  title: null
+  domain: Operations / atomic release scheduler binding and pre-release canary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex：完成 c78d latest-main reconciliation、正式 validation、main push、release
+    promotion 与唯一 Codex automation fresh binding；operations owner：等待下一 provider-ready
+    ordinary daily 运营验收
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 第二次 main drift 已由 plan e36dc867 审核为 RECONCILIATION_REQUIRED；当前在
+    c78d latest main 上重建 1056-task authority 并重放已聚焦修复。OPERATIONALLY_ACCEPTED 仍需下一
+    provider-ready ordinary daily 全链 PASS。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Active receipt 是唯一 mutable release authority；automation 无 SHA；daily/recovery
+      从 receipt 派生 release；actual config/prompt fresh observation；exact-candidate
+      zero-provider canary；final Full PASS；single scheduler；无 weights/broker action。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: OPS-077_ATOMIC_RELEASE_SCHEDULER_BINDING_AND_CANARY
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-03T15:05:00+09:00'
+  actor: integration-coordinator
+  change_id: OPS-077-ATOMIC-BINDING-V10-REGISTER
+  lane_id: null
+  base_commit: c78d3849fe8482a4a1092a38c9a9a61a09f84d07
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    legacy_projection:
+    - OPS-077_ATOMIC_RELEASE_SCHEDULER_BINDING_AND_CANARY
+    - Operations / atomic release scheduler binding and pre-release canary
+    - P0
+    - VALIDATING
+    - Codex：完成 c78d latest-main reconciliation、正式 validation、main push、release promotion
+      与唯一 Codex automation fresh binding；operations owner：等待下一 provider-ready ordinary
+      daily 运营验收
+    - 第二次 main drift 已由 plan e36dc867 审核为 RECONCILIATION_REQUIRED；当前在 c78d latest
+      main 上重建 1056-task authority 并重放已聚焦修复。OPERATIONALLY_ACCEPTED 仍需下一 provider-ready
+      ordinary daily 全链 PASS。
+    - Active receipt 是唯一 mutable release authority；automation 无 SHA；daily/recovery
+      从 receipt 派生 release；actual config/prompt fresh observation；exact-candidate
+      zero-provider canary；final Full PASS；single scheduler；无 weights/broker action。
+    - 2026-09-03：v7 Full 10149 PASS/18 FAIL 已分型并修复，49 个失败文件聚焦 PASS；v8 五个非 Full 层 PASS，但发现另一条更早
+      Full 后主动终止本任务的竞争运行并释放事务。main 随后推进到 TRADING-2557 c78d，v10 重新协调。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:OPS-077-ATOMIC-BINDING-V10-REGISTER
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d41e6cb34fd2b09bd1e624be0ad2ea36
+projection:
+  legacy_first_eight_cells:
+  - OPS-077_ATOMIC_RELEASE_SCHEDULER_BINDING_AND_CANARY
+  - Operations / atomic release scheduler binding and pre-release canary
+  - P0
+  - VALIDATING
+  - Codex：完成 c78d latest-main reconciliation、正式 validation、main push、release promotion
+    与唯一 Codex automation fresh binding；operations owner：等待下一 provider-ready ordinary
+    daily 运营验收
+  - 第二次 main drift 已由 plan e36dc867 审核为 RECONCILIATION_REQUIRED；当前在 c78d latest main
+    上重建 1056-task authority 并重放已聚焦修复。OPERATIONALLY_ACCEPTED 仍需下一 provider-ready ordinary
+    daily 全链 PASS。
+  - Active receipt 是唯一 mutable release authority；automation 无 SHA；daily/recovery 从
+    receipt 派生 release；actual config/prompt fresh observation；exact-candidate zero-provider
+    canary；final Full PASS；single scheduler；无 weights/broker action。
+  - 2026-09-03：v7 Full 10149 PASS/18 FAIL 已分型并修复，49 个失败文件聚焦 PASS；v8 五个非 Full 层 PASS，但发现另一条更早
+    Full 后主动终止本任务的竞争运行并释放事务。main 随后推进到 TRADING-2557 c78d，v10 重新协调。
+  docs_links: []
+  terminal: false
+  canonical_row_sha256: 76bdecc616026fc8b9af030ee8f1f07726940280b4d32eef494041425b2cbbc4
+last_event_id: task-event-d41e6cb34fd2b09bd1e624be0ad2ea36
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 6d8b8869523495bebd9e1922129534ce5162a6f4df6a0562260e07d676262233

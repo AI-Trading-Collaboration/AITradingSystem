@@ -1,14 +1,14 @@
-schema_version: ops_scheduler_checkout_policy.v3
-policy_id: ops_scheduler_checkout_v3
-version: 3.0.0
+schema_version: ops_scheduler_checkout_policy.v4
+policy_id: ops_scheduler_checkout_v4
+version: 4.0.0
 status: REVIEWED_RECEIPT_GATED_DEPLOYMENT
 owner: operations_owner_and_project_owner
 reviewed_at: 2026-07-27
 rationale: >
   Daily provider capture must run from an owner-accepted exact release in an
-  independent Git clone with a runtime-local executable. A different path alone
-  is insufficient because linked worktrees share Git metadata and a global
-  editable aits entrypoint can still execute development code.
+  independent Git clone with a runtime-local executable. Release identity comes
+  only from the active deployment receipt; a legacy environment SHA is an
+  optional exact-match assertion and can never override the receipt.
 environment:
   scheduler_marker_name: AITS_EXTERNAL_SCHEDULER
   scheduler_marker_value: "1"
@@ -17,6 +17,8 @@ environment:
   development_checkout_root_name: AITS_DEVELOPMENT_CHECKOUT_ROOT
   deployment_receipt_name: AITS_OPS_DEPLOYMENT_RECEIPT
   runtime_python_name: AITS_OPS_PYTHON
+  release_identity_authority: active_deployment_receipt
+  legacy_release_assertion_mode: exact_match_if_present
 repository:
   expected_remote: git@github.com:AI-Trading-Collaboration/AITradingSystem.git
   reviewed_remote_ref: refs/remotes/origin/main
@@ -48,7 +50,8 @@ terminal_parent_routing:
   new_business_scheduler_entry_allowed: false
 deployment:
   activation_mode: ACTIVE_OWNER_ACCEPTED_RECEIPT_REQUIRED
-  acceptance_schema: ops_deployment_acceptance.v1
+  acceptance_schema: ops_deployment_acceptance.v2
+  legacy_acceptance_schema: ops_deployment_acceptance.v1
   active_receipt_relative_path: outputs/operations/deployment/active.json
   runtime_python_must_be_below_checkout: true
   imported_package_must_be_below_checkout: true

@@ -4,7 +4,7 @@ import json
 import subprocess
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -42,6 +42,10 @@ def test_policy_requires_receipt_gated_independent_clone() -> None:
     assert policy.separate_periodic_scheduler_entries_allowed is False
     assert policy.independent_git_common_dir_required is True
     assert policy.activation_mode == "ACTIVE_OWNER_ACCEPTED_RECEIPT_REQUIRED"
+    assert policy.release_identity_authority == "active_deployment_receipt"
+    assert policy.legacy_release_assertion_mode == "exact_match_if_present"
+    assert policy.acceptance_schema == "ops_deployment_acceptance.v2"
+    assert policy.legacy_acceptance_schema == "ops_deployment_acceptance.v1"
     assert policy.scheduler_provider == "codex_automation"
     assert policy.scheduler_entry_count == 1
     assert policy.windows_task_scheduler_entries_allowed is False
@@ -287,7 +291,7 @@ def test_valid_active_receipt_authorizes_scheduler_mode(
         lambda *_args, **_kwargs: None,
     )
 
-    env = _scheduler_env(development, checkout, commit)
+    env = _scheduler_env(development, checkout, None)
     env["AITS_OPS_DEPLOYMENT_RECEIPT"] = str(receipt)
     env["AITS_OPS_PYTHON"] = str(runtime_python)
     payload = inspect_ops_scheduler_checkout(
@@ -302,6 +306,131 @@ def test_valid_active_receipt_authorizes_scheduler_mode(
     assert payload["scheduler_installed"] is True
     assert payload["scheduler_enabled"] is True
     assert payload["owner_deployment_required"] is False
+    assert payload["release_commit"] == commit
+    assert payload["release_commit_source"] == "active_deployment_receipt"
+    assert payload["legacy_release_assertion_provided"] is False
+
+
+def test_active_receipt_rejects_mismatched_legacy_release_assertion(
+    independent_checkouts: tuple[Path, Path, str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    development, checkout, commit = independent_checkouts
+    receipt = checkout / "outputs" / "operations" / "deployment" / "active.json"
+    receipt.parent.mkdir(parents=True)
+    receipt.write_text(
+        json.dumps(
+            {
+                "deployment_id": "ops_deployment_fixture",
+                "release": {"candidate_commit": commit},
+            }
+        ),
+        encoding="utf-8",
+    )
+    runtime_python = checkout / ".venv" / "Scripts" / "python.exe"
+    runtime_python.parent.mkdir(parents=True)
+    runtime_python.write_bytes(b"fixture")
+    monkeypatch.setattr(
+        scheduler_checkout,
+        "load_ops_release_promotion_policy",
+        lambda *_args, **_kwargs: object(),
+    )
+    monkeypatch.setattr(
+        scheduler_checkout,
+        "validate_ops_deployment_acceptance",
+        lambda *_args, **_kwargs: None,
+    )
+    env = _scheduler_env(development, checkout, "0" * 40)
+    env["AITS_OPS_DEPLOYMENT_RECEIPT"] = str(receipt)
+    env["AITS_OPS_PYTHON"] = str(runtime_python)
+
+    payload = inspect_ops_scheduler_checkout(
+        project_root=checkout,
+        env=env,
+        require_current_process_checkout=True,
+        require_active_deployment=True,
+    )
+
+    assert payload["status"] == "BLOCKED"
+    assert "OPS_CHECKOUT_LEGACY_RELEASE_ASSERTION" in payload["blocker_codes"]
+    assert payload["release_commit"] == commit
+    assert payload["legacy_release_assertion_matches_receipt"] is False
+
+
+def test_terminal_recovery_derives_current_release_from_active_receipt(
+    tmp_path: Path,
+) -> None:
+    commit = "a" * 40
+    parent_commit = "b" * 40
+    run_root = tmp_path / "runs"
+    manifest_path = run_root / "daily" / "2026-08-31" / "parent" / "manifest.json"
+    manifest_path.parent.mkdir(parents=True)
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "run_id": "parent-run",
+                "as_of": "2026-08-31",
+                "git_commit": parent_commit,
+            }
+        ),
+        encoding="utf-8",
+    )
+    receipt = tmp_path / "active.json"
+    receipt.write_text(
+        json.dumps({"release": {"candidate_commit": commit}}),
+        encoding="utf-8",
+    )
+
+    request = ops_cli._build_daily_terminal_recovery_request(
+        as_of=date(2026, 8, 31),
+        run_output_root=run_root,
+        parent_run_id="parent-run",
+        recovery_from_step="artifact_lineage",
+        recovery_reason_code="FIXED_CODE_DEFECT",
+        requested_at=datetime.now(tz=UTC),
+        env={"AITS_OPS_DEPLOYMENT_RECEIPT": str(receipt)},
+    )
+
+    assert request is not None
+    assert request.current_release_commit == commit
+    assert request.parent_release_commit == parent_commit
+
+
+def test_terminal_recovery_rejects_mismatched_legacy_release_assertion(
+    tmp_path: Path,
+) -> None:
+    run_root = tmp_path / "runs"
+    manifest_path = run_root / "daily" / "2026-08-31" / "parent" / "manifest.json"
+    manifest_path.parent.mkdir(parents=True)
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "run_id": "parent-run",
+                "as_of": "2026-08-31",
+                "git_commit": "b" * 40,
+            }
+        ),
+        encoding="utf-8",
+    )
+    receipt = tmp_path / "active.json"
+    receipt.write_text(
+        json.dumps({"release": {"candidate_commit": "a" * 40}}),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="must exactly match active deployment receipt"):
+        ops_cli._build_daily_terminal_recovery_request(
+            as_of=date(2026, 8, 31),
+            run_output_root=run_root,
+            parent_run_id="parent-run",
+            recovery_from_step="artifact_lineage",
+            recovery_reason_code="FIXED_CODE_DEFECT",
+            requested_at=datetime.now(tz=UTC),
+            env={
+                "AITS_OPS_DEPLOYMENT_RECEIPT": str(receipt),
+                "AITS_OPS_RELEASE_COMMIT": "c" * 40,
+            },
+        )
 
 
 def test_scheduler_preflight_writes_only_inside_checkout_write_guard(
@@ -332,11 +461,13 @@ def test_scheduler_preflight_writes_only_inside_checkout_write_guard(
     monkeypatch.setattr(
         ops_cli,
         "inspect_ops_scheduler_checkout",
-        lambda **_: calls.append("preflight_inspected")
-        or {
-            "status": "BLOCKED",
-            "blocker_codes": ["OPS_CHECKOUT_ACTIVE_DEPLOYMENT_RECEIPT"],
-        },
+        lambda **_: (
+            calls.append("preflight_inspected")
+            or {
+                "status": "BLOCKED",
+                "blocker_codes": ["OPS_CHECKOUT_ACTIVE_DEPLOYMENT_RECEIPT"],
+            }
+        ),
     )
     monkeypatch.setattr(
         ops_cli,
@@ -429,13 +560,19 @@ def test_daily_run_without_scheduler_or_manual_mode_fails_closed(
     assert calls == ["guard"]
 
 
-def _scheduler_env(development: Path, checkout: Path, commit: str) -> dict[str, str]:
-    return {
+def _scheduler_env(
+    development: Path,
+    checkout: Path,
+    commit: str | None,
+) -> dict[str, str]:
+    payload = {
         "AITS_EXTERNAL_SCHEDULER": "1",
         "AITS_OPS_CHECKOUT_ROOT": str(checkout),
-        "AITS_OPS_RELEASE_COMMIT": commit,
         "AITS_DEVELOPMENT_CHECKOUT_ROOT": str(development),
     }
+    if commit is not None:
+        payload["AITS_OPS_RELEASE_COMMIT"] = commit
+    return payload
 
 
 def _init_repo(root: Path, content: str) -> str:

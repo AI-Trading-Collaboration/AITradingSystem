@@ -45,11 +45,13 @@
   `fast-unit`、`architecture-fitness`、`contract-validation`、`integration`、
   `reproducibility`、`full` 六类 PASS validation artifacts（集合必须 exact、不得缺失或
   重复）；receipt 中的 validation/critical commitment 必须使用 checkout-relative path，
-  promotion 要把六类 evidence 原子复制到 permanent runtime 同相对路径并在切换后重验，
+  promotion 要把六类 evidence、pre-release canary 与 canary scenario evidence 原子复制到
+  permanent runtime 同相对路径并在切换后重验，
   不得依赖可清理 development lane 的绝对路径。关键 commitment 集合固定覆盖 promotion/
-  scheduler/checkout policies、CLI/modules、runbook 与 `pyproject.toml`。runtime-local
+  scheduler/checkout policies、canonical automation prompt、CLI/modules、runbook 与
+  `pyproject.toml`。runtime-local
   `.venv/Scripts/python.exe`、完整 installed-distribution inventory/fingerprint 与 active
-  `ops_deployment_acceptance.v1` receipt；仅换 cwd、linked worktree 或全局 editable
+  `ops_deployment_acceptance.v2` receipt；仅换 cwd、linked worktree 或全局 editable
   `aits` 均 fail closed。Permanent runtime 另须由 installer 把 reviewed exact
   `/outputs/`、`/artifacts/`、`/data/derived/` patterns 写入该 independent clone 自己的
   `.git/info/exclude`；只允许替换空白/注释-only 初始文件，既有未知 rule、缺失/额外
@@ -82,6 +84,22 @@
   并要求 FMP credential group 与 `SEC_USER_AGENT`；broker/production/active-shadow
   credential 均禁止。工程/promotion/acceptance 固定 `production_effect=none` 且不运行
   daily；只有下一合法 provider-ready session 的唯一 trigger 才能做运营验收。
+- OPS-077 起，active deployment receipt 是 scheduler release identity 的唯一可变 authority。
+  Canonical Codex automation prompt 位于
+  `config/operations/aitradingsystem_pit_automation_prompt.md`，只设置稳定 runtime/receipt/Python
+  环境，不得硬编码或设置 `AITS_OPS_RELEASE_COMMIT`。`aits ops daily-run` 在 provider、cache、
+  report mutation 前先从 active receipt 取得 exact commit 并复用 scheduler checkout preflight；
+  legacy `AITS_OPS_RELEASE_COMMIT` 若存在，只能作为与 receipt exact-match 的 migration assertion，
+  mismatch 必须阻断且不能覆盖 receipt。发布顺序固定为：formal validation →
+  `aits ops release-canary`（exact candidate 上以 `pytest -n 16 --dist loadfile` 自动运行 unknown
+  risk ID 与 signed `eps_revision_90d_pct` 两条 zero-provider incident regression）→
+  `release-candidate` → `release-promote` → 通过 Codex automation API 原位更新唯一 entry →
+  `scheduler-observe-codex` 读取 actual `automation.toml` 并绑定 config/prompt SHA、updated-at、
+  schedule/model/reasoning/status/target → `deployment-acceptance`。scheduler observation 必须不早于
+  当前 promotion event，prompt 或 config bytes 漂移、旧 observation 复用、duplicate entry 都 fail
+  closed。状态分别是 `CODE_FIXED`、`DEPLOYED`、`SCHEDULER_BOUND`；只有下一严格更新的
+  provider-ready `as_of` ordinary daily 全链完成后才是 `OPERATIONALLY_ACCEPTED`。发布、观察和
+  acceptance 本身不运行 daily，scheduler entry 仍只能有一个。
 - Wave14稳定commit/push后的运营修复验收仍只能以`aits ops daily-run`作为唯一外部scheduler trigger，并选择最近已完成且超过provider-ready buffer的U.S. equity trading day。不得删除或手改2026-07-22既有FAILED state/ledger；若新as-of可执行，则使用其正常run-control key验证download→strict DQ→PIT→score→dashboard/latest→Reader Brief全链，并按due条件记录其他cadence为EXECUTED/SKIPPED/LIMITED/INSUFFICIENT_DATA。该验收不写production或active shadow weights，不触发broker/order/trading。
 - 人工运行登记任务应使用`aits ops periodic-dispatch`并显式提供`--task-id`、daily/DQ canonical status、`--data-quality-evidence-id`、至少一个`--source-artifact-id`、`--owner-decision-id`和`--confirm-manual-dispatch`；ad-hoc另需`--explicit-trigger`。该入口复用workflow/date lock、idempotency、attempt和terminal RunLedger，未解析placeholder或非allowlist命令前缀会在runner前BLOCKED。`config/operations/periodic_control.yaml`仍固定`automatic_command_dispatch_enabled=false`，不得把人工入口登记为第二个外部scheduler。
 - `scheduled_tasks.yaml` 的 daily task可用 `activation_condition=always|trading_day_only|closed_market_only` 声明 market-session条件；未声明等同 `always`，未知值加载失败。每个 daily task 还必须显式声明 `dependencies`；未知、重复、自依赖、逆序依赖、未知 capture component 或带依赖的 `always_run` 在配置加载时 fail closed。Conditional alternative（例如 trading-day capture 与 closed-market live fetch）按实际 plan 过滤后进入同一 canonical WorkflowSpec。`ops_daily.py`与canonical shadow/runtime spec必须使用同一activation和DAG解析，不允许重新硬编码另一套条件。

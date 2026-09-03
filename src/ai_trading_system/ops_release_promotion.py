@@ -5,6 +5,8 @@ import json
 import os
 import re
 import subprocess
+import sys
+import tomllib
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -20,8 +22,25 @@ DEFAULT_OPS_RELEASE_PROMOTION_POLICY_PATH = (
 )
 _COMMIT_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 _RELEASE_CANDIDATE_SCHEMA = "ops_release_candidate.v1"
-_DEPLOYMENT_ACCEPTANCE_SCHEMA = "ops_deployment_acceptance.v1"
+_DEPLOYMENT_ACCEPTANCE_SCHEMA = "ops_deployment_acceptance.v2"
+_LEGACY_DEPLOYMENT_ACCEPTANCE_SCHEMA = "ops_deployment_acceptance.v1"
 _PROMOTION_TRANSACTION_SCHEMA = "ops_release_promotion_transaction.v1"
+_SCHEDULER_OBSERVATION_SCHEMA = "ops_scheduler_observation.v2"
+_SCHEDULER_BINDING_SCHEMA = "ops_scheduler_binding.v2"
+_PRE_RELEASE_CANARY_SCHEMA = "ops_release_preflight_canary.v1"
+_INCIDENT_REGRESSION_RUNNER_SCHEMA = "pytest_incident_regression.v1"
+# These node IDs are release invariants: each reproduces a real zero-provider
+# incident class and must run on the exact candidate before promotion.
+_INCIDENT_REGRESSION_TEST_NODES = {
+    "risk_event_unknown_id_referential_integrity": (
+        "tests/test_risk_event_llm_formal.py::"
+        "test_llm_formal_unknown_risk_id_fails_before_any_output"
+    ),
+    "signed_eps_revision_90d_pct": (
+        "tests/test_valuation.py::"
+        "test_validate_valuation_snapshot_store_accepts_negative_eps_revision"
+    ),
+}
 _REQUIRED_VALIDATION_TIERS = (
     "fast-unit",
     "architecture-fitness",
@@ -35,6 +54,7 @@ _REQUIRED_CRITICAL_PATHS = (
     "config/architecture/arch_005_s4d_checkout_guard.yaml",
     "config/operations/ops_release_promotion.yaml",
     "config/operations/ops_scheduler_checkout.yaml",
+    "config/operations/aitradingsystem_pit_automation_prompt.md",
     "docs/operations/operations_runbook.md",
     "pyproject.toml",
     "src/ai_trading_system/cli_commands/ops.py",
@@ -93,6 +113,25 @@ class OpsReleasePromotionPolicy:
     unified_external_trigger: tuple[str, ...]
     windows_task_scheduler_entries_allowed: bool
     required_environment_names: tuple[str, ...]
+    legacy_deployment_acceptance_schema: str
+    legacy_active_release_commits: tuple[str, ...]
+    release_identity_authority: str
+    legacy_release_assertion_name: str
+    legacy_release_assertion_mode: str
+    scheduler_observation_schema: str
+    canonical_prompt_relative_path: str
+    expected_scheduler_status: str
+    expected_scheduler_rrule: str
+    expected_scheduler_model: str
+    expected_scheduler_reasoning_effort: str
+    expected_scheduler_execution_environment: str
+    expected_scheduler_target_type: str
+    observation_must_not_predate_promotion: bool
+    pre_release_canary_schema: str
+    pre_release_canary_runner_schema: str
+    pre_release_canary_required: bool
+    pre_release_canary_provider_request_performed: bool
+    pre_release_canary_required_scenarios: tuple[str, ...]
     allowed_secret_names: tuple[str, ...]
     required_credential_groups: tuple[tuple[str, ...], ...]
     forbidden_name_patterns: tuple[str, ...]
@@ -104,7 +143,7 @@ def load_ops_release_promotion_policy(
     payload = safe_load_yaml_path(path)
     if not isinstance(payload, Mapping):
         raise OpsReleasePromotionError("PROMOTION_POLICY_INVALID", "payload must be mapping")
-    if payload.get("schema_version") != "ops_release_promotion_policy.v1":
+    if payload.get("schema_version") != "ops_release_promotion_policy.v2":
         raise OpsReleasePromotionError(
             "PROMOTION_POLICY_SCHEMA",
             str(payload.get("schema_version")),
@@ -116,6 +155,7 @@ def load_ops_release_promotion_policy(
     promotion = _mapping(payload.get("promotion"), "promotion")
     runtime = _mapping(payload.get("runtime"), "runtime")
     scheduler = _mapping(payload.get("scheduler"), "scheduler")
+    canary = _mapping(payload.get("pre_release_canary"), "pre_release_canary")
     credentials = _mapping(payload.get("credentials"), "credentials")
     safety = _mapping(payload.get("safety"), "safety")
     _require_exact_mapping(
@@ -249,6 +289,82 @@ def load_ops_release_promotion_policy(
             scheduler.get("required_environment_names"),
             "required_environment_names",
         ),
+        legacy_deployment_acceptance_schema=_text(
+            receipts.get("legacy_deployment_acceptance_schema"),
+            "legacy_deployment_acceptance_schema",
+        ),
+        legacy_active_release_commits=_text_tuple(
+            receipts.get("legacy_active_release_commits"),
+            "legacy_active_release_commits",
+        ),
+        release_identity_authority=_text(
+            scheduler.get("release_identity_authority"),
+            "release_identity_authority",
+        ),
+        legacy_release_assertion_name=_text(
+            scheduler.get("legacy_release_assertion_name"),
+            "legacy_release_assertion_name",
+        ),
+        legacy_release_assertion_mode=_text(
+            scheduler.get("legacy_release_assertion_mode"),
+            "legacy_release_assertion_mode",
+        ),
+        scheduler_observation_schema=_text(
+            scheduler.get("observation_schema"),
+            "observation_schema",
+        ),
+        canonical_prompt_relative_path=_relative_policy_path(
+            scheduler.get("canonical_prompt_relative_path"),
+            "canonical_prompt_relative_path",
+        ),
+        expected_scheduler_status=_text(
+            scheduler.get("expected_status"),
+            "expected_status",
+        ),
+        expected_scheduler_rrule=_text(
+            scheduler.get("expected_rrule"),
+            "expected_rrule",
+        ),
+        expected_scheduler_model=_text(
+            scheduler.get("expected_model"),
+            "expected_model",
+        ),
+        expected_scheduler_reasoning_effort=_text(
+            scheduler.get("expected_reasoning_effort"),
+            "expected_reasoning_effort",
+        ),
+        expected_scheduler_execution_environment=_text(
+            scheduler.get("expected_execution_environment"),
+            "expected_execution_environment",
+        ),
+        expected_scheduler_target_type=_text(
+            scheduler.get("expected_target_type"),
+            "expected_target_type",
+        ),
+        observation_must_not_predate_promotion=_bool(
+            scheduler.get("observation_must_not_predate_promotion"),
+            "observation_must_not_predate_promotion",
+        ),
+        pre_release_canary_schema=_text(
+            canary.get("schema_version"),
+            "pre_release_canary.schema_version",
+        ),
+        pre_release_canary_runner_schema=_text(
+            canary.get("runner_schema_version"),
+            "pre_release_canary.runner_schema_version",
+        ),
+        pre_release_canary_required=_bool(
+            canary.get("required"),
+            "pre_release_canary.required",
+        ),
+        pre_release_canary_provider_request_performed=_bool(
+            canary.get("provider_request_performed"),
+            "pre_release_canary.provider_request_performed",
+        ),
+        pre_release_canary_required_scenarios=_text_tuple(
+            canary.get("required_scenarios"),
+            "pre_release_canary.required_scenarios",
+        ),
         allowed_secret_names=_text_tuple(
             credentials.get("allowed_secret_names"),
             "allowed_secret_names",
@@ -271,6 +387,8 @@ def load_ops_release_promotion_policy(
         or policy.pre_switch_checkout_policy_source != "coordinator_candidate"
         or policy.required_validation_tiers != _REQUIRED_VALIDATION_TIERS
         or policy.required_critical_paths != _REQUIRED_CRITICAL_PATHS
+        or policy.legacy_deployment_acceptance_schema != _LEGACY_DEPLOYMENT_ACCEPTANCE_SCHEMA
+        or any(not _COMMIT_PATTERN.fullmatch(row) for row in policy.legacy_active_release_commits)
         or not policy.installed_distribution_inventory_required
         or not policy.git_exclude_managed
         or policy.git_exclude_patterns != _RUNTIME_GIT_EXCLUDE_PATTERNS
@@ -279,6 +397,19 @@ def load_ops_release_promotion_policy(
         or policy.scheduler_entry_count != 1
         or policy.unified_external_trigger != ("aits", "ops", "daily-run")
         or policy.windows_task_scheduler_entries_allowed
+        or policy.release_identity_authority != "active_deployment_receipt"
+        or policy.legacy_release_assertion_name != "AITS_OPS_RELEASE_COMMIT"
+        or policy.legacy_release_assertion_mode != "exact_match_if_present"
+        or policy.scheduler_observation_schema != _SCHEDULER_OBSERVATION_SCHEMA
+        or policy.expected_scheduler_status != "ACTIVE"
+        or policy.expected_scheduler_execution_environment != "local"
+        or policy.expected_scheduler_target_type != "project"
+        or not policy.observation_must_not_predate_promotion
+        or policy.pre_release_canary_schema != _PRE_RELEASE_CANARY_SCHEMA
+        or policy.pre_release_canary_runner_schema != _INCIDENT_REGRESSION_RUNNER_SCHEMA
+        or not policy.pre_release_canary_required
+        or policy.pre_release_canary_provider_request_performed
+        or set(policy.pre_release_canary_required_scenarios) != set(_INCIDENT_REGRESSION_TEST_NODES)
     ):
         raise OpsReleasePromotionError(
             "PROMOTION_POLICY_SAFETY_INVARIANT",
@@ -293,6 +424,7 @@ def build_ops_release_candidate(
     candidate_commit: str,
     validation_artifact_paths: Sequence[Path],
     critical_path_commitments: Sequence[Path],
+    pre_release_canary_path: Path | None = None,
     owner_decision_ref: str,
     previous_release_commit: str | None = None,
     policy_path: Path = DEFAULT_OPS_RELEASE_PROMOTION_POLICY_PATH,
@@ -348,6 +480,28 @@ def build_ops_release_candidate(
     if not critical:
         raise OpsReleasePromotionError("RELEASE_CRITICAL_COMMITMENTS_MISSING", "empty")
     _validate_required_critical_paths(critical, policy.required_critical_paths)
+    selected_canary_path = pre_release_canary_path or (
+        root / "outputs" / "operations" / "deployment" / "evidence" / "pre_release_canary.json"
+    )
+    canary_payload = _read_json_mapping(selected_canary_path)
+    validate_ops_release_preflight_canary(
+        canary_payload,
+        policy=policy,
+        expected_commit=candidate_commit,
+        verify_live_artifacts=True,
+        artifact_root=root,
+    )
+    canary_commitment = {
+        **_portable_file_commitment(selected_canary_path.resolve(), root=root),
+        "schema_version": canary_payload["schema_version"],
+        "status": canary_payload["status"],
+        "candidate_commit": canary_payload["candidate_commit"],
+        "provider_request_performed": canary_payload["provider_request_performed"],
+        "scenario_ids": [
+            row["scenario_id"]
+            for row in _mapping_rows(canary_payload.get("scenarios"), "canary.scenarios")
+        ],
+    }
     payload: dict[str, object] = {
         "schema_version": _RELEASE_CANDIDATE_SCHEMA,
         "status": "OWNER_APPROVED",
@@ -364,6 +518,7 @@ def build_ops_release_candidate(
         },
         "validation_artifacts": validations,
         "critical_path_commitments": critical,
+        "pre_release_canary": canary_commitment,
         "generated_at": timestamp.isoformat(),
         **_safety_boundary(),
     }
@@ -440,6 +595,24 @@ def validate_ops_release_candidate(
         payload.get("critical_path_commitments"),
         checked_policy.required_critical_paths,
     )
+    canary_summary = _mapping(payload.get("pre_release_canary"), "pre_release_canary")
+    _validate_portable_commitment_row(
+        canary_summary,
+        verify_live=verify_live_artifacts,
+        artifact_root=artifact_root,
+    )
+    _validate_pre_release_canary_summary(canary_summary, checked_policy, commit)
+    if verify_live_artifacts:
+        if artifact_root is None:
+            raise OpsReleasePromotionError("RELEASE_ARTIFACT_ROOT_REQUIRED", "pre_release_canary")
+        canary_path = _resolve_portable_commitment_path(artifact_root, canary_summary)
+        validate_ops_release_preflight_canary(
+            _read_json_mapping(canary_path),
+            policy=checked_policy,
+            expected_commit=commit,
+            verify_live_artifacts=True,
+            artifact_root=artifact_root,
+        )
     _require_safety_boundary(payload, "release")
     release_id = _text(payload.get("release_id"), "release_id")
     expected_id = _content_id("ops_release_", payload, "release_id")
@@ -448,6 +621,335 @@ def validate_ops_release_candidate(
             "RELEASE_RECEIPT_ID_MISMATCH",
             f"expected={expected_id};observed={release_id}",
         )
+
+
+def build_ops_release_preflight_canary(
+    *,
+    candidate_commit: str,
+    scenario_evidence_paths: Sequence[Path],
+    project_root: Path = PROJECT_ROOT,
+    policy_path: Path = DEFAULT_OPS_RELEASE_PROMOTION_POLICY_PATH,
+    observed_at: datetime | None = None,
+) -> dict[str, object]:
+    """Aggregate exact, zero-provider incident regressions for release admission."""
+
+    policy = load_ops_release_promotion_policy(policy_path)
+    _require_commit(candidate_commit, "candidate_commit")
+    root = project_root.resolve()
+    scenarios: list[dict[str, object]] = []
+    seen: set[str] = set()
+    for path in scenario_evidence_paths:
+        resolved = path.resolve()
+        payload = _read_json_mapping(resolved)
+        if payload.get("schema_version") != "ops_release_incident_regression.v1":
+            raise OpsReleasePromotionError(
+                "RELEASE_CANARY_SCENARIO_SCHEMA",
+                str(payload.get("schema_version")),
+            )
+        scenario_id = _text(payload.get("scenario_id"), "scenario_id")
+        if scenario_id in seen:
+            raise OpsReleasePromotionError("RELEASE_CANARY_SCENARIO_DUPLICATE", scenario_id)
+        seen.add(scenario_id)
+        expected_node = _INCIDENT_REGRESSION_TEST_NODES.get(scenario_id)
+        if expected_node is None:
+            raise OpsReleasePromotionError("RELEASE_CANARY_SCENARIO_UNKNOWN", scenario_id)
+        _validate_incident_regression_evidence(
+            payload,
+            scenario_id=scenario_id,
+            candidate_commit=candidate_commit,
+            expected_test_node=expected_node,
+            policy=policy,
+        )
+        scenarios.append(
+            {
+                "scenario_id": scenario_id,
+                "status": "PASS",
+                "git_commit": candidate_commit,
+                "provider_request_performed": False,
+                "test_node_id": expected_node,
+                "evidence": _portable_file_commitment(resolved, root=root),
+            }
+        )
+    required = set(policy.pre_release_canary_required_scenarios)
+    if seen != required:
+        raise OpsReleasePromotionError(
+            "RELEASE_CANARY_SCENARIO_SET_MISMATCH",
+            f"expected={','.join(sorted(required))};observed={','.join(sorted(seen))}",
+        )
+    scenarios.sort(key=lambda row: str(row["scenario_id"]))
+    result: dict[str, object] = {
+        "schema_version": policy.pre_release_canary_schema,
+        "status": "PASS",
+        "candidate_commit": candidate_commit,
+        "provider_request_performed": False,
+        "scenarios": scenarios,
+        "generated_at": _aware(observed_at).isoformat(),
+        **_safety_boundary(),
+    }
+    result["canary_id"] = _content_id("ops_release_canary_", result, "canary_id")
+    validate_ops_release_preflight_canary(
+        result,
+        policy=policy,
+        expected_commit=candidate_commit,
+        verify_live_artifacts=True,
+        artifact_root=root,
+    )
+    return result
+
+
+def run_ops_release_incident_regressions(
+    *,
+    candidate_commit: str,
+    project_root: Path = PROJECT_ROOT,
+    output_dir: Path | None = None,
+    python_executable: Path | None = None,
+    policy_path: Path = DEFAULT_OPS_RELEASE_PROMOTION_POLICY_PATH,
+    observed_at: datetime | None = None,
+) -> tuple[Path, ...]:
+    """Run exact-candidate incident tests and write zero-provider audit evidence."""
+
+    policy = load_ops_release_promotion_policy(policy_path)
+    _require_commit(candidate_commit, "candidate_commit")
+    root = project_root.resolve()
+    head = _git_text(root, "rev-parse", "HEAD")
+    if head != candidate_commit:
+        raise OpsReleasePromotionError(
+            "RELEASE_CANARY_HEAD_MISMATCH",
+            f"head={head};candidate={candidate_commit}",
+        )
+    executable = (python_executable or Path(sys.executable)).resolve()
+    if not executable.is_file():
+        raise OpsReleasePromotionError(
+            "RELEASE_CANARY_PYTHON_MISSING",
+            str(executable),
+        )
+    evidence_root = (
+        output_dir.resolve()
+        if output_dir is not None
+        else root / "outputs" / "operations" / "deployment" / "evidence" / "scenarios"
+    )
+    evidence_root.mkdir(parents=True, exist_ok=True)
+    paths: list[Path] = []
+    for scenario_id in policy.pre_release_canary_required_scenarios:
+        test_node = _INCIDENT_REGRESSION_TEST_NODES[scenario_id]
+        pytest_args = (
+            "-m",
+            "pytest",
+            "-n",
+            "16",
+            "--dist",
+            "loadfile",
+            test_node,
+            "-q",
+        )
+        environment = os.environ.copy()
+        environment["PYTHONPATH"] = str(root / "src")
+        removed_credentials = sorted(
+            name for name in policy.allowed_secret_names if environment.pop(name, None) is not None
+        )
+        started_at = _aware(observed_at)
+        try:
+            completed = subprocess.run(
+                (str(executable), *pytest_args),
+                cwd=root,
+                env=environment,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        except OSError as exc:
+            raise OpsReleasePromotionError(
+                "RELEASE_CANARY_EXECUTION_FAILED",
+                f"{scenario_id}:{type(exc).__name__}:{exc}",
+            ) from exc
+        stdout = completed.stdout or ""
+        stderr = completed.stderr or ""
+        payload: dict[str, object] = {
+            "schema_version": "ops_release_incident_regression.v1",
+            "scenario_id": scenario_id,
+            "status": "PASS" if completed.returncode == 0 else "FAIL",
+            "git_commit": candidate_commit,
+            "test_node_id": test_node,
+            "provider_request_performed": False,
+            "runner": {
+                "schema_version": policy.pre_release_canary_runner_schema,
+                "python_executable": str(executable),
+                "pytest_args": list(pytest_args),
+                "return_code": completed.returncode,
+                "stdout_sha256": hashlib.sha256(stdout.encode("utf-8")).hexdigest(),
+                "stderr_sha256": hashlib.sha256(stderr.encode("utf-8")).hexdigest(),
+                "provider_credential_names_removed": removed_credentials,
+                "executed_at": started_at.isoformat(),
+            },
+            **_safety_boundary(),
+        }
+        path = evidence_root / f"{scenario_id}.json"
+        write_json_atomic(path, payload)
+        if completed.returncode != 0:
+            raise OpsReleasePromotionError(
+                "RELEASE_CANARY_SCENARIO_NOT_PASS",
+                f"{scenario_id}:return_code={completed.returncode}:evidence={path}",
+            )
+        _validate_incident_regression_evidence(
+            payload,
+            scenario_id=scenario_id,
+            candidate_commit=candidate_commit,
+            expected_test_node=test_node,
+            policy=policy,
+        )
+        paths.append(path)
+    return tuple(paths)
+
+
+def validate_ops_release_preflight_canary(
+    payload: Mapping[str, object],
+    *,
+    policy: OpsReleasePromotionPolicy | None = None,
+    expected_commit: str | None = None,
+    verify_live_artifacts: bool = False,
+    artifact_root: Path | None = None,
+) -> None:
+    checked_policy = policy or load_ops_release_promotion_policy()
+    if payload.get("schema_version") != checked_policy.pre_release_canary_schema:
+        raise OpsReleasePromotionError(
+            "RELEASE_CANARY_SCHEMA",
+            str(payload.get("schema_version")),
+        )
+    if payload.get("status") != "PASS":
+        raise OpsReleasePromotionError("RELEASE_CANARY_NOT_PASS", str(payload.get("status")))
+    commit = _text(payload.get("candidate_commit"), "candidate_commit")
+    _require_commit(commit, "candidate_commit")
+    if expected_commit is not None and commit != expected_commit:
+        raise OpsReleasePromotionError(
+            "RELEASE_CANARY_COMMIT_MISMATCH",
+            f"expected={expected_commit};observed={commit}",
+        )
+    if payload.get("provider_request_performed") is not False:
+        raise OpsReleasePromotionError("RELEASE_CANARY_PROVIDER_REQUEST_FORBIDDEN", commit)
+    rows = _mapping_rows(payload.get("scenarios"), "canary.scenarios")
+    scenario_ids = [_text(row.get("scenario_id"), "scenario_id") for row in rows]
+    if len(scenario_ids) != len(set(scenario_ids)):
+        raise OpsReleasePromotionError("RELEASE_CANARY_SCENARIO_DUPLICATE", ",".join(scenario_ids))
+    if set(scenario_ids) != set(checked_policy.pre_release_canary_required_scenarios):
+        raise OpsReleasePromotionError(
+            "RELEASE_CANARY_SCENARIO_SET_MISMATCH",
+            ",".join(sorted(scenario_ids)),
+        )
+    for row in rows:
+        scenario_id = _text(row.get("scenario_id"), "scenario_id")
+        if (
+            row.get("status") != "PASS"
+            or row.get("git_commit") != commit
+            or row.get("provider_request_performed") is not False
+            or row.get("test_node_id") != _INCIDENT_REGRESSION_TEST_NODES.get(scenario_id)
+        ):
+            raise OpsReleasePromotionError("RELEASE_CANARY_SCENARIO_INVALID", scenario_id)
+        evidence = _mapping(row.get("evidence"), "scenario.evidence")
+        _validate_portable_commitment_row(
+            evidence,
+            verify_live=verify_live_artifacts,
+            artifact_root=artifact_root,
+        )
+        if verify_live_artifacts:
+            if artifact_root is None:
+                raise OpsReleasePromotionError(
+                    "RELEASE_ARTIFACT_ROOT_REQUIRED",
+                    f"canary scenario {scenario_id}",
+                )
+            evidence_path = _resolve_portable_commitment_path(artifact_root, evidence)
+            _validate_incident_regression_evidence(
+                _read_json_mapping(evidence_path),
+                scenario_id=scenario_id,
+                candidate_commit=commit,
+                expected_test_node=_INCIDENT_REGRESSION_TEST_NODES[scenario_id],
+                policy=checked_policy,
+            )
+    _require_safety_boundary(payload, "pre-release canary")
+    canary_id = _text(payload.get("canary_id"), "canary_id")
+    expected_id = _content_id("ops_release_canary_", payload, "canary_id")
+    if canary_id != expected_id:
+        raise OpsReleasePromotionError(
+            "RELEASE_CANARY_ID_MISMATCH",
+            f"expected={expected_id};observed={canary_id}",
+        )
+
+
+def _validate_incident_regression_evidence(
+    payload: Mapping[str, object],
+    *,
+    scenario_id: str,
+    candidate_commit: str,
+    expected_test_node: str,
+    policy: OpsReleasePromotionPolicy,
+) -> None:
+    if payload.get("schema_version") != "ops_release_incident_regression.v1":
+        raise OpsReleasePromotionError(
+            "RELEASE_CANARY_SCENARIO_SCHEMA",
+            str(payload.get("schema_version")),
+        )
+    if payload.get("scenario_id") != scenario_id:
+        raise OpsReleasePromotionError("RELEASE_CANARY_SCENARIO_ID_MISMATCH", scenario_id)
+    if payload.get("status") != "PASS":
+        raise OpsReleasePromotionError("RELEASE_CANARY_SCENARIO_NOT_PASS", scenario_id)
+    if payload.get("git_commit") != candidate_commit:
+        raise OpsReleasePromotionError(
+            "RELEASE_CANARY_SCENARIO_COMMIT_MISMATCH",
+            scenario_id,
+        )
+    if payload.get("test_node_id") != expected_test_node:
+        raise OpsReleasePromotionError(
+            "RELEASE_CANARY_TEST_NODE_MISMATCH",
+            scenario_id,
+        )
+    if payload.get("provider_request_performed") is not False:
+        raise OpsReleasePromotionError(
+            "RELEASE_CANARY_PROVIDER_REQUEST_FORBIDDEN",
+            scenario_id,
+        )
+    runner = _mapping(payload.get("runner"), "scenario.runner")
+    if runner.get("schema_version") != policy.pre_release_canary_runner_schema:
+        raise OpsReleasePromotionError("RELEASE_CANARY_RUNNER_SCHEMA", scenario_id)
+    expected_args = [
+        "-m",
+        "pytest",
+        "-n",
+        "16",
+        "--dist",
+        "loadfile",
+        expected_test_node,
+        "-q",
+    ]
+    if runner.get("pytest_args") != expected_args or runner.get("return_code") != 0:
+        raise OpsReleasePromotionError("RELEASE_CANARY_RUNNER_RESULT", scenario_id)
+    for field in ("stdout_sha256", "stderr_sha256"):
+        if not re.fullmatch(r"[0-9a-f]{64}", _text(runner.get(field), field)):
+            raise OpsReleasePromotionError("RELEASE_CANARY_RUNNER_DIGEST", scenario_id)
+    removed = runner.get("provider_credential_names_removed")
+    if not isinstance(removed, list) or not all(isinstance(row, str) for row in removed):
+        raise OpsReleasePromotionError("RELEASE_CANARY_RUNNER_CREDENTIALS", scenario_id)
+    if set(removed) - set(policy.allowed_secret_names):
+        raise OpsReleasePromotionError("RELEASE_CANARY_RUNNER_CREDENTIALS", scenario_id)
+    _parse_aware_datetime(runner.get("executed_at"), "scenario.runner.executed_at")
+    _require_safety_boundary(payload, f"canary scenario {scenario_id}")
+
+
+def _validate_pre_release_canary_summary(
+    payload: Mapping[str, object],
+    policy: OpsReleasePromotionPolicy,
+    commit: str,
+) -> None:
+    if (
+        payload.get("schema_version") != policy.pre_release_canary_schema
+        or payload.get("status") != "PASS"
+        or payload.get("candidate_commit") != commit
+        or payload.get("provider_request_performed") is not False
+    ):
+        raise OpsReleasePromotionError("RELEASE_CANARY_SUMMARY_INVALID", commit)
+    raw_ids = payload.get("scenario_ids")
+    if not isinstance(raw_ids, list) or not all(isinstance(row, str) for row in raw_ids):
+        raise OpsReleasePromotionError("RELEASE_CANARY_SUMMARY_SCENARIOS", str(raw_ids))
+    if set(raw_ids) != set(policy.pre_release_canary_required_scenarios):
+        raise OpsReleasePromotionError("RELEASE_CANARY_SCENARIO_SET_MISMATCH", ",".join(raw_ids))
 
 
 def install_ops_runtime_git_exclusions(
@@ -612,9 +1114,8 @@ def inspect_runtime_provenance(
             "RUNTIME_EXECUTABLE_MISMATCH",
             f"expected={python_path};observed={observed_executable}",
         )
-    if (
-        checked_policy.imported_package_must_be_below_checkout
-        and not module_file.is_relative_to(root)
+    if checked_policy.imported_package_must_be_below_checkout and not module_file.is_relative_to(
+        root
     ):
         raise OpsReleasePromotionError(
             "RUNTIME_PACKAGE_OUTSIDE_CHECKOUT",
@@ -701,15 +1202,30 @@ def build_ops_deployment_acceptance(
             "DEPLOYMENT_PROMOTION_EVENT_STATE",
             str(promotion_event.get("state")),
         )
-    if (
-        promotion_event.get("candidate_commit")
-        != release_candidate.get("candidate_commit")
-        or promotion_event.get("release_id") != release_candidate.get("release_id")
-    ):
+    if promotion_event.get("candidate_commit") != release_candidate.get(
+        "candidate_commit"
+    ) or promotion_event.get("release_id") != release_candidate.get("release_id"):
         raise OpsReleasePromotionError(
             "DEPLOYMENT_PROMOTION_EVENT_RELEASE_MISMATCH",
             str(promotion_event_path),
         )
+    if policy.observation_must_not_predate_promotion:
+        scheduler_observed_at = _parse_aware_datetime(
+            scheduler.get("observed_at"),
+            "scheduler.observed_at",
+        )
+        promotion_observed_at = _parse_aware_datetime(
+            promotion_event.get("observed_at"),
+            "promotion_event.observed_at",
+        )
+        if scheduler_observed_at < promotion_observed_at:
+            raise OpsReleasePromotionError(
+                "DEPLOYMENT_SCHEDULER_OBSERVATION_STALE",
+                (
+                    f"scheduler={scheduler_observed_at.isoformat()};"
+                    f"promotion={promotion_observed_at.isoformat()}"
+                ),
+            )
     event_candidate_receipt = _mapping(
         promotion_event.get("release_candidate_receipt"),
         "promotion_event.release_candidate_receipt",
@@ -780,6 +1296,7 @@ def build_ops_deployment_acceptance(
     payload: dict[str, object] = {
         "schema_version": _DEPLOYMENT_ACCEPTANCE_SCHEMA,
         "status": "ACTIVE_OWNER_ACCEPTED",
+        "release_lifecycle_state": "SCHEDULER_BOUND",
         "policy_id": policy.policy_id,
         "policy_version": policy.version,
         "owner_decision_ref": owner_decision_ref,
@@ -823,7 +1340,7 @@ def validate_scheduler_observation(
     policy: OpsReleasePromotionPolicy | None = None,
 ) -> dict[str, object]:
     checked_policy = policy or load_ops_release_promotion_policy()
-    if payload.get("schema_version") != "ops_scheduler_observation.v1":
+    if payload.get("schema_version") != checked_policy.scheduler_observation_schema:
         raise OpsReleasePromotionError(
             "SCHEDULER_OBSERVATION_SCHEMA",
             str(payload.get("schema_version")),
@@ -834,6 +1351,11 @@ def validate_scheduler_observation(
         "entry_count": checked_policy.scheduler_entry_count,
         "enabled": True,
         "windows_task_scheduler_entry_count": 0,
+        "status": checked_policy.expected_scheduler_status,
+        "rrule": checked_policy.expected_scheduler_rrule,
+        "model": checked_policy.expected_scheduler_model,
+        "reasoning_effort": checked_policy.expected_scheduler_reasoning_effort,
+        "execution_environment": checked_policy.expected_scheduler_execution_environment,
     }
     for field, value in expected.items():
         if payload.get(field) != value:
@@ -860,15 +1382,89 @@ def validate_scheduler_observation(
             str(executable),
         )
     environment_names = _text_tuple(payload.get("environment_names"), "environment_names")
-    missing_environment = sorted(
-        set(checked_policy.required_environment_names) - set(environment_names)
-    )
-    if missing_environment:
+    if set(environment_names) != set(checked_policy.required_environment_names):
         raise OpsReleasePromotionError(
-            "SCHEDULER_ENVIRONMENT_CONTRACT_MISSING",
-            ",".join(missing_environment),
+            "SCHEDULER_ENVIRONMENT_CONTRACT_MISMATCH",
+            (
+                f"expected={','.join(checked_policy.required_environment_names)};"
+                f"observed={','.join(environment_names)}"
+            ),
+        )
+    if checked_policy.legacy_release_assertion_name in environment_names:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_MUTABLE_RELEASE_AUTHORITY_FORBIDDEN",
+            checked_policy.legacy_release_assertion_name,
+        )
+    target = _mapping(payload.get("target"), "target")
+    if target.get("type") != checked_policy.expected_scheduler_target_type:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_TARGET_MISMATCH",
+            str(target.get("type")),
+        )
+    config = _mapping(payload.get("config"), "config")
+    config_path = Path(_text(config.get("absolute_path"), "config.absolute_path")).resolve()
+    _validate_commitment_row(config, True)
+    try:
+        config_payload = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_CONFIG_READ_FAILED",
+            f"{config_path}:{type(exc).__name__}:{exc}",
+        ) from exc
+    live_fields = {
+        "scheduler_id": config_payload.get("id"),
+        "status": config_payload.get("status"),
+        "rrule": config_payload.get("rrule"),
+        "model": config_payload.get("model"),
+        "reasoning_effort": config_payload.get("reasoning_effort"),
+        "execution_environment": config_payload.get("execution_environment"),
+        "target": config_payload.get("target"),
+    }
+    drift = [field for field, value in live_fields.items() if payload.get(field) != value]
+    if drift:
+        raise OpsReleasePromotionError("SCHEDULER_CONFIG_OBSERVATION_DRIFT", ",".join(drift))
+    prompt = _mapping(payload.get("prompt"), "prompt")
+    canonical_path = (
+        runtime_root.resolve() / checked_policy.canonical_prompt_relative_path
+    ).resolve()
+    expected_prompt_path = Path(
+        _text(prompt.get("canonical_absolute_path"), "prompt.canonical_absolute_path")
+    ).resolve()
+    if expected_prompt_path != canonical_path or not canonical_path.is_file():
+        raise OpsReleasePromotionError(
+            "SCHEDULER_CANONICAL_PROMPT_PATH_MISMATCH",
+            str(expected_prompt_path),
+        )
+    canonical_bytes = canonical_path.read_bytes()
+    canonical_text = _canonical_prompt_text(canonical_bytes, canonical_path)
+    actual_prompt = _text(config_payload.get("prompt"), "config.prompt")
+    if actual_prompt != canonical_text:
+        raise OpsReleasePromotionError("SCHEDULER_PROMPT_DRIFT", str(config_path))
+    expected_file_sha = hashlib.sha256(canonical_bytes).hexdigest()
+    expected_semantic_sha = hashlib.sha256(canonical_text.encode("utf-8")).hexdigest()
+    if (
+        prompt.get("canonical_path") != checked_policy.canonical_prompt_relative_path
+        or prompt.get("canonical_file_sha256") != expected_file_sha
+        or prompt.get("semantic_sha256") != expected_semantic_sha
+    ):
+        raise OpsReleasePromotionError("SCHEDULER_PROMPT_COMMITMENT_MISMATCH", str(config_path))
+    observed_at = _parse_aware_datetime(payload.get("observed_at"), "observed_at")
+    config_updated_at = _parse_automation_updated_at(
+        config_payload.get("updated_at"),
+        "config.updated_at",
+    )
+    if payload.get("config_updated_at") != config_updated_at.isoformat():
+        raise OpsReleasePromotionError(
+            "SCHEDULER_CONFIG_UPDATED_AT_MISMATCH",
+            str(payload.get("config_updated_at")),
+        )
+    if config_updated_at > observed_at:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_OBSERVATION_PREDATES_CONFIG",
+            observed_at.isoformat(),
         )
     return {
+        "schema_version": _SCHEDULER_BINDING_SCHEMA,
         "provider": checked_policy.scheduler_provider,
         "scheduler_id": checked_policy.scheduler_id,
         "entry_count": checked_policy.scheduler_entry_count,
@@ -878,8 +1474,198 @@ def validate_scheduler_observation(
         "working_directory": str(working_directory),
         "runtime_python": str(executable),
         "environment_names": sorted(environment_names),
-        "observed_at": _text(payload.get("observed_at"), "observed_at"),
+        "status": checked_policy.expected_scheduler_status,
+        "rrule": checked_policy.expected_scheduler_rrule,
+        "model": checked_policy.expected_scheduler_model,
+        "reasoning_effort": checked_policy.expected_scheduler_reasoning_effort,
+        "execution_environment": checked_policy.expected_scheduler_execution_environment,
+        "target": dict(target),
+        "config": dict(config),
+        "config_updated_at": config_updated_at.isoformat(),
+        "prompt": dict(prompt),
+        "release_identity_authority": checked_policy.release_identity_authority,
+        "mutable_release_environment_present": False,
+        "observed_at": observed_at.isoformat(),
     }
+
+
+def observe_codex_automation_config(
+    *,
+    automation_path: Path,
+    runtime_root: Path,
+    runtime_python: Path,
+    policy_path: Path = DEFAULT_OPS_RELEASE_PROMOTION_POLICY_PATH,
+    observed_at: datetime | None = None,
+) -> dict[str, object]:
+    """Read the actual Codex automation config and bind it to the canonical prompt."""
+
+    policy = load_ops_release_promotion_policy(policy_path)
+    path = automation_path.resolve()
+    if not path.is_file() or path.is_symlink():
+        raise OpsReleasePromotionError("SCHEDULER_CONFIG_FILE_REQUIRED", str(path))
+    try:
+        raw = path.read_bytes()
+        config = tomllib.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_CONFIG_READ_FAILED",
+            f"{path}:{type(exc).__name__}:{exc}",
+        ) from exc
+    prompt_value = _text(config.get("prompt"), "config.prompt")
+    canonical_path = (runtime_root.resolve() / policy.canonical_prompt_relative_path).resolve()
+    if not canonical_path.is_file():
+        raise OpsReleasePromotionError(
+            "SCHEDULER_CANONICAL_PROMPT_MISSING",
+            str(canonical_path),
+        )
+    canonical_bytes = canonical_path.read_bytes()
+    canonical_text = _canonical_prompt_text(canonical_bytes, canonical_path)
+    if prompt_value != canonical_text:
+        raise OpsReleasePromotionError("SCHEDULER_PROMPT_DRIFT", str(path))
+    target = _mapping(config.get("target"), "config.target")
+    timestamp = _aware(observed_at)
+    config_updated_at = _parse_automation_updated_at(config.get("updated_at"), "config.updated_at")
+    if config_updated_at > timestamp:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_OBSERVATION_PREDATES_CONFIG",
+            timestamp.isoformat(),
+        )
+    payload: dict[str, object] = {
+        "schema_version": policy.scheduler_observation_schema,
+        "provider": policy.scheduler_provider,
+        "scheduler_id": config.get("id"),
+        "entry_count": 1,
+        "enabled": config.get("status") == policy.expected_scheduler_status,
+        "windows_task_scheduler_entry_count": 0,
+        "unified_external_trigger": list(policy.unified_external_trigger),
+        "working_directory": str(runtime_root.resolve()),
+        "runtime_python": str(runtime_python.resolve()),
+        "environment_names": list(policy.required_environment_names),
+        "status": config.get("status"),
+        "rrule": config.get("rrule"),
+        "model": config.get("model"),
+        "reasoning_effort": config.get("reasoning_effort"),
+        "execution_environment": config.get("execution_environment"),
+        "target": dict(target),
+        "config": {
+            "path": str(path),
+            "absolute_path": str(path),
+            "size_bytes": len(raw),
+            "sha256": hashlib.sha256(raw).hexdigest(),
+        },
+        "config_updated_at": config_updated_at.isoformat(),
+        "prompt": {
+            "canonical_path": policy.canonical_prompt_relative_path,
+            "canonical_absolute_path": str(canonical_path),
+            "canonical_file_sha256": hashlib.sha256(canonical_bytes).hexdigest(),
+            "semantic_sha256": hashlib.sha256(canonical_text.encode("utf-8")).hexdigest(),
+        },
+        "observed_at": timestamp.isoformat(),
+    }
+    validate_scheduler_observation(
+        payload,
+        runtime_root=runtime_root,
+        runtime_python=runtime_python,
+        policy=policy,
+    )
+    return payload
+
+
+def _validate_scheduler_binding_record(
+    payload: Mapping[str, object],
+    *,
+    policy: OpsReleasePromotionPolicy,
+    runtime_root: Path | None,
+    verify_live: bool,
+) -> None:
+    expected = {
+        "schema_version": _SCHEDULER_BINDING_SCHEMA,
+        "provider": policy.scheduler_provider,
+        "scheduler_id": policy.scheduler_id,
+        "entry_count": policy.scheduler_entry_count,
+        "enabled": True,
+        "windows_task_scheduler_entry_count": 0,
+        "status": policy.expected_scheduler_status,
+        "rrule": policy.expected_scheduler_rrule,
+        "model": policy.expected_scheduler_model,
+        "reasoning_effort": policy.expected_scheduler_reasoning_effort,
+        "execution_environment": policy.expected_scheduler_execution_environment,
+        "release_identity_authority": policy.release_identity_authority,
+        "mutable_release_environment_present": False,
+    }
+    for field, expected_value in expected.items():
+        if payload.get(field) != expected_value:
+            raise OpsReleasePromotionError(
+                "DEPLOYMENT_SCHEDULER_BINDING_MISMATCH",
+                f"{field}={payload.get(field)!r}",
+            )
+    environment_names = _text_tuple(payload.get("environment_names"), "environment_names")
+    if set(environment_names) != set(policy.required_environment_names):
+        raise OpsReleasePromotionError(
+            "DEPLOYMENT_SCHEDULER_ENVIRONMENT_MISMATCH",
+            ",".join(environment_names),
+        )
+    if policy.legacy_release_assertion_name in environment_names:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_MUTABLE_RELEASE_AUTHORITY_FORBIDDEN",
+            policy.legacy_release_assertion_name,
+        )
+    target = _mapping(payload.get("target"), "scheduler.target")
+    if target.get("type") != policy.expected_scheduler_target_type:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_TARGET_MISMATCH",
+            str(target.get("type")),
+        )
+    config = _mapping(payload.get("config"), "scheduler.config")
+    _validate_commitment_row(config, verify_live)
+    prompt = _mapping(payload.get("prompt"), "scheduler.prompt")
+    canonical_path_text = _text(
+        prompt.get("canonical_absolute_path"),
+        "scheduler.prompt.canonical_absolute_path",
+    )
+    if prompt.get("canonical_path") != policy.canonical_prompt_relative_path:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_PROMPT_COMMITMENT_MISMATCH",
+            str(prompt.get("canonical_path")),
+        )
+    for field in ("canonical_file_sha256", "semantic_sha256"):
+        value = _text(prompt.get(field), f"scheduler.prompt.{field}")
+        if not re.fullmatch(r"[0-9a-f]{64}", value):
+            raise OpsReleasePromotionError("SCHEDULER_PROMPT_COMMITMENT_MISMATCH", field)
+    observed_at = _parse_aware_datetime(payload.get("observed_at"), "scheduler.observed_at")
+    config_updated_at = _parse_aware_datetime(
+        payload.get("config_updated_at"),
+        "scheduler.config_updated_at",
+    )
+    if config_updated_at > observed_at:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_OBSERVATION_PREDATES_CONFIG",
+            observed_at.isoformat(),
+        )
+    if verify_live:
+        if runtime_root is None:
+            raise OpsReleasePromotionError(
+                "DEPLOYMENT_LIVE_ARGUMENT_MISSING",
+                "runtime_root for scheduler binding",
+            )
+        canonical_path = Path(canonical_path_text).resolve()
+        expected_path = (runtime_root.resolve() / policy.canonical_prompt_relative_path).resolve()
+        if canonical_path != expected_path or not canonical_path.is_file():
+            raise OpsReleasePromotionError(
+                "SCHEDULER_CANONICAL_PROMPT_PATH_MISMATCH",
+                str(canonical_path),
+            )
+        canonical_bytes = canonical_path.read_bytes()
+        canonical_text = _canonical_prompt_text(canonical_bytes, canonical_path)
+        if (
+            prompt.get("canonical_file_sha256") != hashlib.sha256(canonical_bytes).hexdigest()
+            or prompt.get("semantic_sha256")
+            != hashlib.sha256(canonical_text.encode("utf-8")).hexdigest()
+        ):
+            raise OpsReleasePromotionError(
+                "SCHEDULER_PROMPT_COMMITMENT_MISMATCH",
+                str(canonical_path),
+            )
 
 
 def validate_ops_deployment_acceptance(
@@ -892,26 +1678,46 @@ def validate_ops_deployment_acceptance(
     verify_live_runtime: bool = False,
 ) -> None:
     checked_policy = policy or load_ops_release_promotion_policy()
-    if payload.get("schema_version") != _DEPLOYMENT_ACCEPTANCE_SCHEMA:
+    schema = payload.get("schema_version")
+    if schema not in {
+        _DEPLOYMENT_ACCEPTANCE_SCHEMA,
+        checked_policy.legacy_deployment_acceptance_schema,
+    }:
         raise OpsReleasePromotionError(
             "DEPLOYMENT_RECEIPT_SCHEMA",
-            str(payload.get("schema_version")),
+            str(schema),
         )
+    legacy = schema == checked_policy.legacy_deployment_acceptance_schema
     if payload.get("status") != "ACTIVE_OWNER_ACCEPTED":
         raise OpsReleasePromotionError(
             "DEPLOYMENT_RECEIPT_STATUS",
             str(payload.get("status")),
         )
-    if payload.get("policy_id") != checked_policy.policy_id:
-        raise OpsReleasePromotionError("DEPLOYMENT_POLICY_ID", str(payload.get("policy_id")))
-    if payload.get("policy_version") != checked_policy.version:
-        raise OpsReleasePromotionError(
-            "DEPLOYMENT_POLICY_VERSION",
-            str(payload.get("policy_version")),
-        )
     release = _mapping(payload.get("release"), "release")
     release_commit = _text(release.get("candidate_commit"), "release.candidate_commit")
     _require_commit(release_commit, "release.candidate_commit")
+    if legacy:
+        if release_commit not in checked_policy.legacy_active_release_commits:
+            raise OpsReleasePromotionError(
+                "DEPLOYMENT_LEGACY_RELEASE_NOT_ALLOWLISTED",
+                release_commit,
+            )
+    else:
+        if payload.get("policy_id") != checked_policy.policy_id:
+            raise OpsReleasePromotionError(
+                "DEPLOYMENT_POLICY_ID",
+                str(payload.get("policy_id")),
+            )
+        if payload.get("policy_version") != checked_policy.version:
+            raise OpsReleasePromotionError(
+                "DEPLOYMENT_POLICY_VERSION",
+                str(payload.get("policy_version")),
+            )
+        if payload.get("release_lifecycle_state") != "SCHEDULER_BOUND":
+            raise OpsReleasePromotionError(
+                "DEPLOYMENT_LIFECYCLE_STATE",
+                str(payload.get("release_lifecycle_state")),
+            )
     _validate_commitment_row(
         _mapping(release.get("receipt"), "release.receipt"),
         verify_live_runtime,
@@ -929,9 +1735,7 @@ def validate_ops_deployment_acceptance(
     installed_distributions = _normalize_distribution_inventory(
         runtime.get("installed_distributions")
     )
-    expected_environment_fingerprint = _distribution_fingerprint(
-        installed_distributions
-    )
+    expected_environment_fingerprint = _distribution_fingerprint(installed_distributions)
     if runtime.get("environment_fingerprint") != expected_environment_fingerprint:
         raise OpsReleasePromotionError(
             "DEPLOYMENT_ENVIRONMENT_FINGERPRINT_MISMATCH",
@@ -944,6 +1748,13 @@ def validate_ops_deployment_acceptance(
         raise OpsReleasePromotionError(
             "RUNTIME_DISTRIBUTION_MISSING",
             checked_policy.distribution_name,
+        )
+    if not legacy:
+        _validate_scheduler_binding_record(
+            _mapping(payload.get("scheduler"), "scheduler"),
+            policy=checked_policy,
+            runtime_root=runtime_root,
+            verify_live=verify_live_runtime,
         )
     credentials = _mapping(payload.get("credentials"), "credentials")
     if credentials.get("secret_values_recorded") is not False:
@@ -959,9 +1770,7 @@ def validate_ops_deployment_acceptance(
             "DEPLOYMENT_CREDENTIAL_SCOPE_UNKNOWN",
             ",".join(sorted(set(secret_names) - set(checked_policy.allowed_secret_names))),
         )
-    expected_groups = [
-        list(group) for group in checked_policy.required_credential_groups
-    ]
+    expected_groups = [list(group) for group in checked_policy.required_credential_groups]
     if credentials.get("required_groups_satisfied") != expected_groups:
         raise OpsReleasePromotionError(
             "DEPLOYMENT_CREDENTIAL_GROUP_ATTESTATION",
@@ -1015,15 +1824,35 @@ def validate_ops_deployment_acceptance(
             "environment_fingerprint",
         )
         drift = [
-            field
-            for field in live_fields
-            if runtime.get(field) != observed_runtime.get(field)
+            field for field in live_fields if runtime.get(field) != observed_runtime.get(field)
         ]
         if drift:
             raise OpsReleasePromotionError(
                 "DEPLOYMENT_RUNTIME_DRIFT",
                 ",".join(drift),
             )
+        if not legacy:
+            promotion_path = Path(
+                _text(
+                    _mapping(payload.get("promotion_event"), "promotion_event").get(
+                        "absolute_path"
+                    ),
+                    "promotion_event.absolute_path",
+                )
+            ).resolve()
+            promotion_payload = _read_json_mapping(promotion_path)
+            scheduler_payload = _mapping(payload.get("scheduler"), "scheduler")
+            if _parse_aware_datetime(
+                scheduler_payload.get("observed_at"),
+                "scheduler.observed_at",
+            ) < _parse_aware_datetime(
+                promotion_payload.get("observed_at"),
+                "promotion_event.observed_at",
+            ):
+                raise OpsReleasePromotionError(
+                    "DEPLOYMENT_SCHEDULER_OBSERVATION_STALE",
+                    str(promotion_path),
+                )
 
 
 def activate_ops_deployment(
@@ -1111,7 +1940,7 @@ def promote_ops_release(
         candidate,
         policy=policy,
         verify_live_artifacts=True,
-        artifact_root=development_root,
+        artifact_root=coordinator,
     )
     candidate_commit = _text(candidate.get("candidate_commit"), "candidate_commit")
     lock_path = _safe_runtime_path(root, policy.lock_relative_path)
@@ -1122,9 +1951,10 @@ def promote_ops_release(
         / release_id
         / "release_candidate.json"
     )
-    transaction_id = "ops_promotion_" + hashlib.sha256(
-        f"{candidate_commit}|{timestamp.isoformat()}".encode()
-    ).hexdigest()[:24]
+    transaction_id = (
+        "ops_promotion_"
+        + hashlib.sha256(f"{candidate_commit}|{timestamp.isoformat()}".encode()).hexdigest()[:24]
+    )
     lock_payload = {
         "schema_version": "ops_release_promotion_lock.v1",
         "transaction_id": transaction_id,
@@ -1188,7 +2018,7 @@ def promote_ops_release(
         )
         _copy_release_validation_evidence(
             candidate,
-            source_root=development_root.resolve(),
+            source_root=coordinator,
             target_root=root,
             transaction_id=transaction_id,
         )
@@ -1317,22 +2147,14 @@ def _active_checkout_leases(
     guard = CheckoutLeaseGuard(
         project_root=runtime_root,
         policy_path=(
-            policy_source_root
-            / "config"
-            / "architecture"
-            / "arch_005_s4d_checkout_guard.yaml"
+            policy_source_root / "config" / "architecture" / "arch_005_s4d_checkout_guard.yaml"
         ),
         parallel_policy_path=(
-            policy_source_root
-            / "config"
-            / "architecture"
-            / "arch_005_parallel_control_policy.yaml"
+            policy_source_root / "config" / "architecture" / "arch_005_parallel_control_policy.yaml"
         ),
     )
     replay = guard.replay()
-    return tuple(
-        sorted(lease.lease_id for lease in replay.lease_heads if lease.state == "ACTIVE")
-    )
+    return tuple(sorted(lease.lease_id for lease in replay.lease_heads if lease.state == "ACTIVE"))
 
 
 def _runtime_probe(
@@ -1424,9 +2246,7 @@ def _distribution_fingerprint(rows: Sequence[Mapping[str, str]]) -> str:
 
 
 def _runtime_git_exclude_bytes(policy: OpsReleasePromotionPolicy) -> bytes:
-    text = "\n".join(
-        (_RUNTIME_GIT_EXCLUDE_HEADER, *policy.git_exclude_patterns, "")
-    )
+    text = "\n".join((_RUNTIME_GIT_EXCLUDE_HEADER, *policy.git_exclude_patterns, ""))
     return text.encode("utf-8")
 
 
@@ -1477,24 +2297,12 @@ def _governed_dirty_paths(
     *,
     policy_source_root: Path | None = None,
 ) -> tuple[str, ...]:
-    policy_root = (
-        root.resolve()
-        if policy_source_root is None
-        else policy_source_root.resolve()
-    )
+    policy_root = root.resolve() if policy_source_root is None else policy_source_root.resolve()
     guard = CheckoutLeaseGuard(
         project_root=root,
-        policy_path=(
-            policy_root
-            / "config"
-            / "architecture"
-            / "arch_005_s4d_checkout_guard.yaml"
-        ),
+        policy_path=(policy_root / "config" / "architecture" / "arch_005_s4d_checkout_guard.yaml"),
         parallel_policy_path=(
-            policy_root
-            / "config"
-            / "architecture"
-            / "arch_005_parallel_control_policy.yaml"
+            policy_root / "config" / "architecture" / "arch_005_parallel_control_policy.yaml"
         ),
     )
     dirty_paths: tuple[str, ...] = guard.audit_worktree().dirty_paths
@@ -1508,14 +2316,31 @@ def _copy_release_validation_evidence(
     target_root: Path,
     transaction_id: str,
 ) -> None:
-    rows = candidate.get("validation_artifacts")
-    if not isinstance(rows, list) or not rows:
+    validation_rows = candidate.get("validation_artifacts")
+    if not isinstance(validation_rows, list) or not validation_rows:
         raise OpsReleasePromotionError(
             "RELEASE_VALIDATION_EVIDENCE_MISSING",
             "empty",
         )
-    for raw in rows:
-        row = _mapping(raw, "validation_artifact")
+
+    canary_row = _mapping(candidate.get("pre_release_canary"), "pre_release_canary")
+    canary_source = _resolve_portable_commitment_path(source_root, canary_row)
+    canary_payload = _read_json_mapping(canary_source)
+    scenario_rows = [
+        _mapping(row.get("evidence"), "canary.scenario.evidence")
+        for row in _mapping_rows(canary_payload.get("scenarios"), "canary.scenarios")
+    ]
+    rows = [
+        *(_mapping(raw, "validation_artifact") for raw in validation_rows),
+        *scenario_rows,
+        canary_row,
+    ]
+    copied_paths: set[str] = set()
+    for row in rows:
+        relative = _text(row.get("path"), "path")
+        if relative in copied_paths:
+            continue
+        copied_paths.add(relative)
         source = _resolve_portable_commitment_path(source_root, row)
         target = _resolve_portable_commitment_path(target_root, row)
         if target.exists():
@@ -1664,10 +2489,7 @@ def _validate_required_validation_tiers(
     if set(observed) != set(required_tiers):
         raise OpsReleasePromotionError(
             "RELEASE_VALIDATION_TIER_SET_MISMATCH",
-            (
-                f"expected={','.join(required_tiers)};"
-                f"observed={','.join(sorted(observed))}"
-            ),
+            (f"expected={','.join(required_tiers)};observed={','.join(sorted(observed))}"),
         )
 
 
@@ -1678,17 +2500,14 @@ def _validate_required_critical_paths(
     if not isinstance(value, list):
         raise OpsReleasePromotionError("RELEASE_CRITICAL_PATHS_INVALID", "not-list")
     observed = [
-        _text(_mapping(row, "critical_path_commitment").get("path"), "path")
-        for row in value
+        _text(_mapping(row, "critical_path_commitment").get("path"), "path") for row in value
     ]
     if len(observed) != len(set(observed)):
         raise OpsReleasePromotionError(
             "RELEASE_CRITICAL_PATH_DUPLICATE",
             ",".join(observed),
         )
-    if tuple(sorted(observed, key=str.casefold)) != tuple(
-        sorted(required_paths, key=str.casefold)
-    ):
+    if tuple(sorted(observed, key=str.casefold)) != tuple(sorted(required_paths, key=str.casefold)):
         raise OpsReleasePromotionError(
             "RELEASE_CRITICAL_PATH_SET_MISMATCH",
             (
@@ -1766,9 +2585,7 @@ def _resolve_portable_commitment_path(
 ) -> Path:
     relative = Path(_text(row.get("path"), "path"))
     path = (root.resolve() / relative).resolve()
-    if relative.is_absolute() or ".." in relative.parts or not path.is_relative_to(
-        root.resolve()
-    ):
+    if relative.is_absolute() or ".." in relative.parts or not path.is_relative_to(root.resolve()):
         raise OpsReleasePromotionError(
             "RELEASE_COMMITMENT_PATH_INVALID",
             str(relative),
@@ -1969,6 +2786,48 @@ def _mapping(value: object, field: str) -> Mapping[str, object]:
     if not isinstance(value, Mapping):
         raise OpsReleasePromotionError("RECEIPT_FIELD_MAPPING", field)
     return value
+
+
+def _mapping_rows(value: object, field: str) -> list[Mapping[str, object]]:
+    if not isinstance(value, list) or not value:
+        raise OpsReleasePromotionError("RECEIPT_MAPPING_ROWS_REQUIRED", field)
+    return [_mapping(row, field) for row in value]
+
+
+def _canonical_prompt_text(raw: bytes, path: Path) -> str:
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_CANONICAL_PROMPT_ENCODING",
+            str(path),
+        ) from exc
+    normalized_newlines = text.replace("\r\n", "\n")
+    if "\r" in normalized_newlines:
+        raise OpsReleasePromotionError("SCHEDULER_CANONICAL_PROMPT_INVALID", str(path))
+    normalized = (
+        normalized_newlines[:-1] if normalized_newlines.endswith("\n") else normalized_newlines
+    )
+    if not normalized:
+        raise OpsReleasePromotionError("SCHEDULER_CANONICAL_PROMPT_INVALID", str(path))
+    return normalized
+
+
+def _parse_aware_datetime(value: object, field: str) -> datetime:
+    text = _text(value, field)
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError as exc:
+        raise OpsReleasePromotionError("RECEIPT_TIMESTAMP_INVALID", field) from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise OpsReleasePromotionError("RECEIPT_TIMESTAMP_TIMEZONE_REQUIRED", field)
+    return parsed
+
+
+def _parse_automation_updated_at(value: object, field: str) -> datetime:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise OpsReleasePromotionError("SCHEDULER_CONFIG_UPDATED_AT_INVALID", field)
+    return datetime.fromtimestamp(value / 1000, tz=UTC)
 
 
 def _text(value: object, field: str) -> str:
