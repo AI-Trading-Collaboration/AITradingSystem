@@ -1,0 +1,96 @@
+schema_version: first_layer_composer_v2_foundational_falsification_result_admission.v1
+admission_id: first_layer_composer_v2_foundational_falsification_result_admission_v1
+admission_version: 1.0.0
+status: TERMINAL_INVALID_EXECUTION_ADMITTED
+task_id: TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1
+scope: R1_BOUNDED_RESEARCH_SANDBOX_RESULT
+authorization_state: STANDING_OWNER_SCOPE
+technical_validation_state: INVALID
+authorization_binding:
+  path: config/research/first_layer_composer_v2_foundational_falsification_run_authorization_v1.yaml
+  file_sha256: 332a5dcf94872d3d7a4695e08525f6b9aedac7ceaf70abd131952e7ca6ce576d
+  canonical_sha256: 1c3cda4cd874bb43c7cfbf0ca43ff11fc2847575d84f7de9b1ee35f50ebe84bc
+manifest_binding:
+  path: inputs/research/first_layer_composer_v2_foundational_falsification_v1/execution_manifest.json
+  file_sha256: a35124945fbfbebceb7a111dda8fe3c0d5e6edade7faa42fa931335c855a9777
+  canonical_sha256: 537f871c57e950ec622ccd474b2203d0c6432f41fa25f21a566ad81f1fddc4df
+  implementation_commit_sha: 0c57f57ce743528e23083551aef3ab7eab51ca70
+  runtime_git_head: 5152db5b4c4b08314feaa256acd96926c0bfc35d
+evidence_bindings:
+  - role: RUN_ATTEMPT_CONSUMPTION
+    path: outputs/research/first_layer_composer_v2_foundational_falsification_v1/run_attempt_consumption_receipt.json
+    file_sha256: 98e1bd85bf5449f42db35e63597dbccd311bf9473d34cfe76fc389866db4d8d8
+  - role: MANIFEST_REPLAY
+    path: outputs/research/first_layer_composer_v2_foundational_falsification_v1/manifest_replay_receipt.json
+    file_sha256: 653cb939cbbcfd4fa213f07914e98afc2be6e02f19df92a37d88ff0c40fbd7c5
+  - role: CANONICAL_DQ
+    path: outputs/research/first_layer_composer_v2_foundational_falsification_v1/canonical_dq_receipt.json
+    file_sha256: e3781f14a977fd4510531d49bab5aa5c5511d0ad46451a5328265893374bd774
+  - role: INDEPENDENT_REPLAY
+    path: outputs/research/first_layer_composer_v2_foundational_falsification_v1/independent_replay_receipt.json
+    file_sha256: bbe5aabaa06711769ce5fcfe6b9e5289785063e3a33b7619dfbafff705155f57
+  - role: FAILURE_RECEIPT
+    path: outputs/research/first_layer_composer_v2_foundational_falsification_v1/failure_receipt.json
+    file_sha256: 1f0de3193b4807ed091636d4808847e9529679085d207690b2b588a8d6baaebc
+  - role: AGGREGATE_RESULT
+    path: outputs/research/first_layer_composer_v2_foundational_falsification_v1/aggregate_result.json
+    file_sha256: 1f0de3193b4807ed091636d4808847e9529679085d207690b2b588a8d6baaebc
+run_accounting:
+  manifest_replays: 1
+  canonical_dq_runs: 1
+  local_foundational_runs: 1
+  independent_replays: 1
+  data_downloads: 0
+  cache_mutations: 0
+  quantconnect_actions: 0
+  option_backtests: 0
+  external_provider_actions: 0
+  orders: 0
+  fills: 0
+  positions: 0
+dq_pit:
+  status: PASS
+  error_count: 0
+  warning_count: 0
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  canonical_receipt_path: outputs/data_quality/executions/dq_execution_9914f0987fd6a553d3bc4adf4bc0441f7c57bbeb16e874822015872b4a7b4e8d/receipt.json
+  canonical_receipt_sha256: a9242d7b9c92b75c97372057cded091d62e65f6e9612c5c6812bcaf389ce864f
+  canonical_report_path: outputs/data_quality/reports/7d0bcf45a356df7d8bedcb54b6f904b1f5c4ab159839e527b6aa207432794977/data_quality_report.md
+  canonical_report_sha256: 7d0bcf45a356df7d8bedcb54b6f904b1f5c4ab159839e527b6aa207432794977
+independent_replay:
+  status: PASS
+  tolerance: 1.0e-8
+  candidate_final_value_abs_diff: 1.4551915228366852e-10
+  comparator_final_value_abs_diff: 1.1641532182693481e-10
+failure:
+  code: F1_UNEXPECTED_FAILURE
+  stage: RESULT_SCHEMA_ADAPTATION
+  message: >-
+    Bootstrap aggregate rows contained audit-only replicates/random_seed fields that the strict
+    BootstrapInterval reducer input model forbids. No empirical aggregate was admitted.
+  market_or_strategy_failure: false
+  parameter_or_threshold_change_required: false
+interpretation_boundary:
+  valid_foundational_signal_conclusion_generated: false
+  empirical_diagnostics_admitted: false
+  f1_v1_attempt_consumed: true
+  same_manifest_rerun_allowed: false
+  only_separately_registered_schema_only_corrective_run_may_proceed: true
+  post_result_parameter_rescue_allowed: false
+safety:
+  aggregate_result_only: true
+  raw_market_payload_exported: false
+  raw_signal_payload_exported: false
+  quantconnect_authorized: false
+  option_backtest_authorized: false
+  provider_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none
+terminal: INVALID_F1_V1_ATTEMPT_CONSUMED_NO_SAME_MANIFEST_RERUN

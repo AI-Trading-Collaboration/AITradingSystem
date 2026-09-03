@@ -8,7 +8,7 @@ Owner 指令：`owner_instruction:TRADING-2556:2026-09-03:continue_foundational_
 
 授权状态：`STANDING_OWNER_SCOPE`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE_TERMINAL_INVALID`
 
 ## 1. 目标与解释边界
 
@@ -127,3 +127,10 @@ bootstrap 97.5% 上界 `<=0` 为 `FAIL`；任一 bootstrap 2.5% 下界 `<=0`、�
 - 2026-09-03：Owner 在 F0 发布后指示“继续”，按 F0 successor envelope 解释为有界本地 F1 研究的
   `STANDING_OWNER_SCOPE`；不扩展为外部平台、数据下载、缓存修改、期权、paper/live、production 或 broker
   授权。任务登记阶段尚未读取市场数据、运行 DQ、计算 bootstrap 或查看新增实证结果。
+- 2026-09-03：唯一 F1 V1 dispatch 已消耗。Manifest replay、canonical DQ（PASS，0 error/0 warning）、
+  主路径与 TRADING-2550 独立会计重放均完成；但在把 bootstrap aggregate 转换为严格 reducer input 时，
+  审计字段 `replicates`/`random_seed` 被直接传入不接受额外字段的 `BootstrapInterval`，导致 terminal
+  `INVALID`。`aggregate_result.json` 未接纳任何收益诊断，因此本次失败不能用于判断信号有效或无效。
+- 2026-09-03：V1 output 保留且禁止覆盖，同一 manifest 不得重跑。正确修复是新建版本化任务与新模块路径，
+  仅过滤 reducer 所需的五个字段；窗口、信号、输入、成本、bootstrap draws、诊断和 reducer 均不得改变，
+  并显式绑定本次失败 admission。不得在 V1 文件上做破坏历史 replay 的原地修改。

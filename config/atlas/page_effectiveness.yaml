@@ -1,7 +1,7 @@
 schema_version: atlas_page_effectiveness_policy.v1
 policy_id: atlas_strategy_research_page_effectiveness_v1
-policy_version: 3.11.0
-status: REVIEWED_LIVE_SNAPSHOT_IDENTITY_CONTRACT_V3_FOUNDATIONAL_F0_BASELINE
+policy_version: 3.12.0
+status: REVIEWED_LIVE_SNAPSHOT_IDENTITY_CONTRACT_V3_FOUNDATIONAL_F1_INVALID
 owner: Atlas page engineering owner
 primary_research_start: '2021-02-22'
 canonical_page_path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html
@@ -36,6 +36,10 @@ relevant_source_paths:
   - docs/requirements/TRADING-2554_QQQ_Options_Paired_Comparison_Wave_B_Owner_Review_V1.md
   - docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md
   - config/research/first_layer_composer_v2_foundational_falsification_preregistration_v1.yaml
+  - docs/requirements/TRADING-2556_First_Layer_Composer_V2_Foundational_Falsification_Empirical_Run_V1.md
+  - config/research/first_layer_composer_v2_foundational_falsification_run_authorization_v1.yaml
+  - inputs/research/first_layer_composer_v2_foundational_falsification_v1/execution_manifest.json
+  - config/research/first_layer_composer_v2_foundational_falsification_result_admission_v1.yaml
   - inputs/architecture/arch_005_task_registry_index.yaml
   - inputs/research/qqq_options/trading_2533_session_finalization_dq_pit_evidence_admission_v1/dq_pit_evidence_admission.json
   - inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v3/export_safe_terminal_evidence.json
@@ -54,6 +58,7 @@ relevant_source_paths:
   - src/ai_trading_system/atlas/status_explanation_projection.py
   - src/ai_trading_system/atlas/work_progress_projection.py
   - src/ai_trading_system/first_layer_foundational_falsification_contract.py
+  - src/ai_trading_system/first_layer_foundational_falsification_execution.py
   - src/ai_trading_system/qqq_options_research/growth_action_value_mandatory_veto_source_contract.py
   - src/ai_trading_system/qqq_options_research/paired_comparison_contract.py
   - src/ai_trading_system/qqq_options_research/paired_comparison_contract_freeze_admission.py
@@ -407,6 +412,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2555_First_Layer_Composer_V2_Foundational_Falsification_Contract_V1.md
     coverage: FOUNDATIONAL_SIGNAL_FALSIFICATION_F0_BASELINE_DONE_NO_EMPIRICAL_RESULT
     reader_summary_zh: 2555 已完成 first_layer_composer_v2 基础有效性证伪 F0 合同基线。exact policy、strict loader、authority replay、policy-consumption inventory、10 个诊断轴、MBB 21/63（seed=2555、10000 reps）、5/10/15/20bps、SGOV carry diagnostic 与 INVALID > FAIL > INSUFFICIENT > PASS reducer 已由 synthetic/negative tests 固定；F0 没有执行 canonical DQ、真实市场回测、bootstrap 或任何外部平台动作，因此不新增策略有效性结论。后继 F1 必须从 F0 exact-main commit 另行登记和授权；2550 的 RETAIN 仍是受限 aggregate-only 结论，QQQ Options Wave B/C 保持 HOLD，paper/live/production/broker 与交易权限均未授权。
+  - task_id: TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1
+    requirement_path: docs/requirements/TRADING-2556_First_Layer_Composer_V2_Foundational_Falsification_Empirical_Run_V1.md
+    coverage: FOUNDATIONAL_F1_V1_TERMINAL_INVALID_SCHEMA_ADAPTATION_NO_EMPIRICAL_CONCLUSION
+    reader_summary_zh: 2556 已按 F0 exact-main、既有 Owner 授权范围和 committed manifest 消耗唯一 F1 V1 attempt。Manifest replay、canonical DQ（PASS，0 error/0 warning）与独立会计重放均通过；结果装配阶段把 audit-only replicates/random_seed 字段直接送入禁止 extra fields 的 BootstrapInterval，因而 terminal INVALID。Aggregate result 没有接纳收益诊断，不能证明信号有效或无效；同 manifest 禁止重跑。后续仅可另行登记并绑定本次失败的 schema-only corrective run，不得改变窗口、信号、输入、成本、bootstrap draws、诊断或 reducer；QQQ Options Wave B/C、paper/live/production/broker 与交易权限继续关闭。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

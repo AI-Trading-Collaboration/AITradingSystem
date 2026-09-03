@@ -14,19 +14,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex strategy-evidence coordinator：冻结 F1 authorization/manifest，实现并执行一次
-    canonical DQ、一次本地诊断和一次独立重放
+  next_owner: Codex strategy-evidence coordinator：先发布 V1 terminal INVALID 证据；后续仅可在新任务中做
+    schema-only corrective run
   requirement_refs:
   - docs/requirements/TRADING-2556_First_Layer_Composer_V2_Foundational_Falsification_Empirical_Run_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 等待结果盲实现与 exact manifest；任何输入身份或 DQ/PIT
-    失败均 fail closed，且不得事后调整窗口、阈值、comparator 或 reducer
+  unstructured_legacy_blocker_or_next_step: 唯一 V1 attempt 已因 BootstrapInterval extra-field
+    schema adaptation 缺陷终止；同 manifest 禁止重跑，必须新建版本化任务、模块、authorization 与 manifest，并保持全部统计参数不变
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: F0 exact main=fcb2a420；10 个诊断、授权计数、aggregate-only 输出、独立重放、Atlas/system flow、formal/Full
-      和 ordinary publication 全部通过
+    text: V1 INVALID admission、DQ PASS 与 independent replay PASS 被哈希绑定；无收益结论被接纳；同
+      manifest rerun=false；后续纠正必须单独登记且只改 schema adaptation
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -62,25 +62,79 @@ events:
   - change:trading-2556-f1-task-registration-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-558cd6146f68b06664101d265445778c
+- schema_version: task_event.v1
+  task_id: TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T10:35:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2556-f1-v1-terminal-invalid-admission
+  lane_id: null
+  base_commit: 5152db5b4c4b08314feaa256acd96926c0bfc35d
+  previous_state_event_id: task-event-558cd6146f68b06664101d265445778c
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Codex strategy-evidence coordinator：先发布 V1 terminal INVALID 证据；后续仅可在新任务中做
+      schema-only corrective run
+    blocker_or_next_step: 唯一 V1 attempt 已因 BootstrapInterval extra-field schema adaptation
+      缺陷终止；同 manifest 禁止重跑，必须新建版本化任务、模块、authorization 与 manifest，并保持全部统计参数不变
+    acceptance_criteria: V1 INVALID admission、DQ PASS 与 independent replay PASS 被哈希绑定；无收益结论被接纳；同
+      manifest rerun=false；后续纠正必须单独登记且只改 schema adaptation
+    notes: F1 V1 result SHA=1f0de3193b4807ed091636d4808847e9529679085d207690b2b588a8d6baaebc；failure=F1_UNEXPECTED_FAILURE；DQ
+      0 error/0 warning；production/broker/orders/fills/positions=none/none/0/0/0。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2556-f1-v1-terminal-invalid-admission
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f6ed7eaec3813344b350b7fc3946b0d1
+- schema_version: task_event.v1
+  task_id: TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T10:42:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2556-f1-v1-terminal-invalid-requirement-binding
+  lane_id: null
+  base_commit: 5152db5b4c4b08314feaa256acd96926c0bfc35d
+  previous_state_event_id: task-event-f6ed7eaec3813344b350b7fc3946b0d1
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Codex strategy-evidence coordinator：先发布 V1 terminal INVALID 证据；后续仅可在新任务中做
+      schema-only corrective run
+    blocker_or_next_step: 唯一 V1 attempt 已因 BootstrapInterval extra-field schema adaptation
+      缺陷终止；同 manifest 禁止重跑，必须新建版本化任务、模块、authorization 与 manifest，并保持全部统计参数不变
+    acceptance_criteria: V1 INVALID admission、DQ PASS 与 independent replay PASS 被哈希绑定；无收益结论被接纳；同
+      manifest rerun=false；后续纠正必须单独登记且只改 schema adaptation
+    notes: 'Supporting requirement: docs/requirements/TRADING-2556_First_Layer_Composer_V2_Foundational_Falsification_Empirical_Run_V1.md。F1
+      V1 result SHA=1f0de3193b4807ed091636d4808847e9529679085d207690b2b588a8d6baaebc；failure=F1_UNEXPECTED_FAILURE；DQ
+      0 error/0 warning；production/broker/orders/fills/positions=none/none/0/0/0。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2556-f1-v1-terminal-invalid-requirement-binding
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5146eb0ff39f498599555962bca28b4b
 projection:
   legacy_first_eight_cells:
   - TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1
   - Strategy research / first-layer composer v2 foundational falsification empirical
     run
   - P0
-  - IN_PROGRESS
-  - Codex strategy-evidence coordinator：冻结 F1 authorization/manifest，实现并执行一次 canonical
-    DQ、一次本地诊断和一次独立重放
-  - 等待结果盲实现与 exact manifest；任何输入身份或 DQ/PIT 失败均 fail closed，且不得事后调整窗口、阈值、comparator
-    或 reducer
-  - F0 exact main=fcb2a420；10 个诊断、授权计数、aggregate-only 输出、独立重放、Atlas/system flow、formal/Full
-    和 ordinary publication 全部通过
-  - 'Supporting requirement: docs/requirements/TRADING-2556_First_Layer_Composer_V2_Foundational_Falsification_Empirical_Run_V1.md。Owner
-    在 F0 发布后指示继续，authorization_state=STANDING_OWNER_SCOPE；download/cache mutation/QuantConnect/options/provider/orders/fills/positions/paper/live/production/broker=0/false/none。'
+  - BASELINE_DONE
+  - Codex strategy-evidence coordinator：先发布 V1 terminal INVALID 证据；后续仅可在新任务中做 schema-only
+    corrective run
+  - 唯一 V1 attempt 已因 BootstrapInterval extra-field schema adaptation 缺陷终止；同 manifest
+    禁止重跑，必须新建版本化任务、模块、authorization 与 manifest，并保持全部统计参数不变
+  - V1 INVALID admission、DQ PASS 与 independent replay PASS 被哈希绑定；无收益结论被接纳；同 manifest
+    rerun=false；后续纠正必须单独登记且只改 schema adaptation
+  - 'Supporting requirement: docs/requirements/TRADING-2556_First_Layer_Composer_V2_Foundational_Falsification_Empirical_Run_V1.md。F1
+    V1 result SHA=1f0de3193b4807ed091636d4808847e9529679085d207690b2b588a8d6baaebc；failure=F1_UNEXPECTED_FAILURE；DQ
+    0 error/0 warning；production/broker/orders/fills/positions=none/none/0/0/0。'
   docs_links:
   - docs/requirements/TRADING-2556_First_Layer_Composer_V2_Foundational_Falsification_Empirical_Run_V1.md
   terminal: false
-  canonical_row_sha256: 8adea0901e376af140dce2960d604a01b2e1e7bbbbeabfe599f91e2c86231106
-last_event_id: task-event-558cd6146f68b06664101d265445778c
+  canonical_row_sha256: 8a6e4937587e1b89b302bd3b66b70211101c3f3a67d2543df16dded2ac188002
+last_event_id: task-event-5146eb0ff39f498599555962bca28b4b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 90fe265274c1830092847dcc02fb9787bef6429406b36cae7d979940c9f93eee
+fragment_checksum: 82ed884589bef30d318ea76e5bc894348cc4b0b253a24ace39c9077cfd51e7c9

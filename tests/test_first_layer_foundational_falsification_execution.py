@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 from datetime import date, timedelta
+from pathlib import Path
 
 import pytest
 
@@ -23,6 +25,9 @@ from ai_trading_system.research_quality.frozen_signal_value_confirmation_executi
     calculate_candidate_primary,
     calculate_static_comparator_primary,
 )
+from ai_trading_system.yaml_loader import load_strict_yaml_text
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _plan() -> DiagnosticPlan:
@@ -73,6 +78,23 @@ def test_real_execution_manifest_binds_implementation_and_exact_inputs() -> None
         authorization.payload["input_allowlist"]
     )
     assert manifest.payload["aggregate_result_only"] is True
+
+
+def test_terminal_invalid_admission_binds_the_consumed_attempt() -> None:
+    path = (
+        ROOT / "config/research/"
+        "first_layer_composer_v2_foundational_falsification_result_admission_v1.yaml"
+    )
+    payload = load_strict_yaml_text(path.read_text(encoding="utf-8"), label=path.as_posix())
+    assert payload["technical_validation_state"] == "INVALID"
+    assert payload["dq_pit"]["status"] == "PASS"
+    assert payload["independent_replay"]["status"] == "PASS"
+    assert payload["interpretation_boundary"]["empirical_diagnostics_admitted"] is False
+    assert payload["interpretation_boundary"]["same_manifest_rerun_allowed"] is False
+    for binding in payload["evidence_bindings"]:
+        evidence = ROOT / binding["path"]
+        assert evidence.is_file()
+        assert hashlib.sha256(evidence.read_bytes()).hexdigest() == binding["file_sha256"]
 
 
 def test_interval_paths_reconcile_to_trading_2550_accounting() -> None:

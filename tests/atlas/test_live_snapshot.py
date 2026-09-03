@@ -45,7 +45,7 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
     assert bundle.research_state_as_of.startswith("2026-09-03T")
-    assert bundle.evidence_evaluated_at == "2026-09-01T00:00:00+00:00"
+    assert bundle.evidence_evaluated_at == "2026-09-03T01:10:24.156693+00:00"
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
     assert bundle.current_diff.after_snapshot_id == bundle.current_snapshot.snapshot_id
@@ -96,7 +96,7 @@ def test_unclassified_successor_is_detected_before_live_projection() -> None:
     without_latest = replace(policy, task_sources=policy.task_sources[:-1])
 
     assert unclassified_page_successors(registry, without_latest) == (
-        "TRADING-2555_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_CONTRACT_V1",
+        "TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1",
     )
 
 
@@ -108,20 +108,19 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2555_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2556_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
-    assert bundle.evidence_evaluated_at == "2026-09-01T00:00:00+00:00"
+    assert bundle.evidence_evaluated_at == "2026-09-03T01:10:24.156693+00:00"
     assert bundle.status_object_zh == (
-        "当前研究组合维持 evidence-first。TRADING-2550 已证明冻结的 1,202-session "
-        "first_layer_composer_v2 五态信号相对 exposure-matched static QQQ/现金 comparator "
-        "值得保留，但该 RETAIN 只是受限 aggregate-only 结论。TRADING-2555 已完成 "
-        "result-blind F0 基础有效性证伪合同基线：冻结 2021-02-22 至 2025-12-02 的 primary window、"
-        "同信号 exposure-matched comparator、10 个诊断轴、MBB 21/63（seed=2555、10000 reps）、"
-        "5/10/15/20bps、SGOV carry diagnostic 与 INVALID > FAIL > INSUFFICIENT > PASS reducer，"
-        "并由 strict loader、authority replay 和 synthetic/negative tests fail closed。F0 没有执行 "
-        "canonical DQ、真实市场回测、bootstrap 或任何外部平台动作，因此没有新增策略有效性结论；"
-        "后继 F1 必须从 F0 exact-main commit 另行登记和授权。"
-        "QQQ Options Wave B/C 保持 HOLD，paper/live/production/broker 与任何交易动作均未授权。"
+        "当前研究组合维持 evidence-first。TRADING-2550 的 +13.745976956735603 个百分点 RETAIN "
+        "仍只是 reused-development-window 的受限 aggregate-only 结论；TRADING-2555 已冻结"
+        "基础可证伪 F0 合同。TRADING-2556 的唯一 F1 V1 attempt 完成 exact manifest replay、"
+        "canonical DQ（PASS，0 error/0 warning）和独立会计重放（PASS），但在把 bootstrap "
+        "aggregate 送入严格 reducer model 时因 audit-only extra fields 触发 terminal INVALID，"
+        "最终 artifact 没有接纳任何收益诊断，所以不能据此判断信号有效或无效。同一 manifest "
+        "不得重跑；下一合法动作只能是另行登记、绑定本次失败且不改变窗口、信号、成本、bootstrap、"
+        "诊断或 reducer 的 schema-only corrective run。QQQ Options Wave B/C "
+        "保持 HOLD，paper/live/production/broker 与任何交易动作均未授权。"
     )
 
 

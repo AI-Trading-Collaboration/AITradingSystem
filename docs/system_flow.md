@@ -10188,6 +10188,29 @@ Atlas `classified_through_task_id`、`current_mainline_task_id`、`largest_block
 fail closed；F1 尚未独立登记、绑定 F0 exact-main commit 并取得 bounded run authority 时，页面不得显示新的
 信号有效性结论。
 
+## TRADING-2556 foundational falsification F1 V1 terminal invalid
+
+TRADING-2556 从 F0 exact-main commit 独立登记，以 `STANDING_OWNER_SCOPE`、exact input hashes 和 committed
+execution manifest 执行唯一一次本地 F1 V1。Manifest replay、canonical DQ（`PASS`，0 error/0 warning）和
+TRADING-2550 会计口径独立重放均通过；运行没有下载数据、修改缓存、访问 QuantConnect/options/provider，亦无
+paper/live/production/broker/order/fill/position 动作。
+
+```text
+F0 exact policy + F1 authorization + committed manifest
+  -> manifest replay [PASS]
+  -> canonical DQ 2021-02-22..2025-12-02 [PASS]
+  -> primary/diagnostic computation + independent accounting replay [PASS]
+  -> BootstrapInterval strict reducer adaptation [INVALID: audit-only extra fields]
+  -> aggregate_result accepts no empirical return diagnostics
+  -x-> same-manifest rerun / signal verdict / parameter rescue / Wave B or C
+```
+
+失败点是结果 schema adaptation：bootstrap aggregate 行的 `replicates`、`random_seed` 审计字段被直接传给
+禁止 extra fields 的 `BootstrapInterval`。该失败不是市场或策略否证，也没有产生可接纳的有效性结论。V1 output
+和 result admission 按 SHA 保留，同一 manifest 不得覆盖或重跑；后续只能新建任务、模块路径、authorization、
+manifest 和 output root，绑定本次 terminal failure，并仅过滤 reducer 所需字段。窗口、信号、输入、成本、
+bootstrap draws、诊断定义和 reducer 不得改变。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个
