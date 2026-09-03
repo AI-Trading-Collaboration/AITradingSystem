@@ -1087,7 +1087,8 @@ receipt 派生 exact commit 并执行/写 scheduler preflight；人工运行只�
 显式 `--manual-execution` 才可进入，active scheduler checkout 禁止混用 manual mode。
 
 OPS-078 将 scheduler carrier 从 development project 改为 projectless 隔离上下文，actual
-automation config 必须无 project id、无 development `cwds`。唯一 scheduler entry 的同一 RRULE
+automation config 必须无 project id，`cwds` 只允许 Codex projectless local serializer 的 exact
+neutral home sentinel `["~"]`；development/runtime/project 或其他 cwd 全部 fail closed。唯一 scheduler entry 的同一 RRULE
 提供 Asia/Tokyo 09:30 `PRIMARY` 与 17:30 `SAME_DAY_RESCUE` 两个 invocation window，但每个
 invocation 仍最多一次业务 trigger。第二窗口只补救“早间尚未产生业务 state/side effect”的
 control-plane 阻断；若已有 terminal parent，则继续按 OPS-071/073 的 recovery/disposition contract

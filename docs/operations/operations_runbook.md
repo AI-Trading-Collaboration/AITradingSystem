@@ -101,7 +101,9 @@
   provider-ready `as_of` ordinary daily 全链完成后才是 `OPERATIONALLY_ACCEPTED`。发布、观察和
   acceptance 本身不运行 daily，scheduler entry 仍只能有一个。
 - OPS-078 起，唯一 `aitradingsystem-pit` Codex automation 使用 `projectless` 隔离 carrier，actual
-  config 不得包含 development project id 或 `cwds`；启动后第一步进入 permanent independent
+  config 不得包含 development project id，`cwds` 必须精确为 Codex projectless local serializer 的
+  neutral home sentinel `["~"]`，任何 development/runtime/project 或其他 cwd 均 fail closed；启动后
+  第一项动作进入 permanent independent
   runtime clone。该 carrier 只隔离 Codex 控制面，业务 checkout、runtime Python、exact release、
   active receipt 和 Git common-dir 证明仍全部绑定 `D:\Work\AITradingSystem_ops_runtime`，不得改回
   linked worktree、共享 development checkout 或自动追随 mutable main。现有单一 scheduler entry

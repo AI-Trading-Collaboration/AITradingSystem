@@ -94,7 +94,10 @@ scheduler:
   expected_reasoning_effort: xhigh
   expected_execution_environment: local
   expected_target_type: projectless
-  expected_cwds_empty: true
+  # Codex serializes a projectless local carrier with this neutral home sentinel.
+  # Any development, runtime, project, or other cwd remains forbidden.
+  expected_cwds:
+    - "~"
   carrier_mode: PROJECTLESS_ISOLATED
   local_timezone: Asia/Tokyo
   invocation_windows:

@@ -13,20 +13,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex engineering coordinator：格式化新增 successor 常量、重建 authority、重跑 137
-    focused 与 parent-bound Full；operations owner：复核下一 provider-ready ordinary daily
+  next_owner: Codex engineering coordinator：同步 OPS-078 v8 system-flow exact seal，重建
+    report/compatibility authority，提交并重跑正式验证、push、promotion/binding；operations owner：复核下一真实
+    daily
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: v6 合并 focused suite 为 137 passed；Ruff
-    PASS，Black 仅要求格式化 tests/test_trading2452_architecture_contract.py。该文件参与 compatibility
-    hash，v6 已关闭，v7 在 generator 前格式化并完整重建。
+  unstructured_legacy_blocker_or_next_step: v8 focused=28 PASS、Ruff/Black PASS；generator
+    在 report-flow build 以 RCF_SOURCE_SEAL_DRIFT fail closed，实际 system_flow size=2343730、SHA-256=497e3a0832a37d793d08a26331f51744c4b98b26f5f50261cff68051feef50e2、blob=2a3bfc990675114e5e9f1f5ef39023ec610e0ab0。v9
+    同步 exact authority 后重放全部 generator。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: projectless carrier、无 project id/cwds；单 scheduler 双窗口、每 invocation 一次 trigger；gap/rescue
-      gates；137 focused、静态格式、parent-bound Full、普通 push、promotion/binding PASS；production_effect=none，无
-      weights/broker/trading。
+    text: actual config 必须 target=projectless、cwds exact ["~"]；system-flow authority
+      与 live bytes exact；单 scheduler 双窗口、每 invocation 一次 trigger；fresh observation、deployment
+      acceptance、runtime preflight 与 Full PASS；production_effect=none。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -252,24 +253,87 @@ events:
   - change:OPS-078-FOCUSED-FORMAT-FIX-V1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-d503ab35af0b475518cbd1ab4613f572
+- schema_version: task_event.v1
+  task_id: OPS-078_DAILY_AUTOMATION_ISOLATION_AND_SAME_DAY_RESCUE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-04T00:49:55.7137339+09:00'
+  actor: integration-coordinator
+  change_id: OPS-078-ACTUAL-PROJECTLESS-CWD-SENTINEL-FIX-V1
+  lane_id: null
+  base_commit: 96663843dc7119338524155315d6d3f8dfb77814
+  previous_state_event_id: task-event-d503ab35af0b475518cbd1ab4613f572
+  from_status: VALIDATING
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator：将 actual projectless cwds=["~"] 建模为唯一
+      neutral carrier sentinel，重新生成 authority、Full、push、promotion 与 scheduler binding；operations
+      owner：复核下一真实 daily
+    blocker_or_next_step: actual Codex automation API 已生成 target=projectless、cwds=["~"]；v1
+      policy 的 expected_cwds_empty 错把 neutral home sentinel 判为 development cwd，runtime
+      observation fail closed。v8 需显式 allowlist exact ["~"] 并继续拒绝 development path，然后从新
+      candidate 完整验证和发布。
+    acceptance_criteria: actual config 必须 target=projectless 且 cwds exact ["~"]，不得包含
+      development/runtime/project cwd；单 scheduler 双窗口、每 invocation 一次 trigger；fresh
+      observation、deployment acceptance、runtime preflight 与 Full PASS；production_effect=none，无
+      weights/broker/trading。
+    notes: 2026-09-04：第一版 96663843 已 Full 10192 PASS/6 SKIP、普通 push、runtime promotion
+      到 PROMOTED_NOT_ACTIVATED、automation 原位 projectless/双窗口更新；actual serializer 写入
+      cwds=["~"]，observation 以 SCHEDULER_DEVELOPMENT_CWD_FORBIDDEN 阻断。未激活 deployment、未运行
+      daily，进入 v8 durable normalization fix。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:OPS-078-ACTUAL-PROJECTLESS-CWD-SENTINEL-FIX-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c0d87b24a8054458b76153f3efb0d140
+- schema_version: task_event.v1
+  task_id: OPS-078_DAILY_AUTOMATION_ISOLATION_AND_SAME_DAY_RESCUE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-04T01:01:44.2595512+09:00'
+  actor: integration-coordinator
+  change_id: OPS-078-SYSTEM-FLOW-SOURCE-SEAL-FIX-V1
+  lane_id: null
+  base_commit: 96663843dc7119338524155315d6d3f8dfb77814
+  previous_state_event_id: task-event-c0d87b24a8054458b76153f3efb0d140
+  from_status: VALIDATING
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator：同步 OPS-078 v8 system-flow exact seal，重建
+      report/compatibility authority，提交并重跑正式验证、push、promotion/binding；operations owner：复核下一真实
+      daily
+    blocker_or_next_step: v8 focused=28 PASS、Ruff/Black PASS；generator 在 report-flow
+      build 以 RCF_SOURCE_SEAL_DRIFT fail closed，实际 system_flow size=2343730、SHA-256=497e3a0832a37d793d08a26331f51744c4b98b26f5f50261cff68051feef50e2、blob=2a3bfc990675114e5e9f1f5ef39023ec610e0ab0。v9
+      同步 exact authority 后重放全部 generator。
+    acceptance_criteria: actual config 必须 target=projectless、cwds exact ["~"]；system-flow
+      authority 与 live bytes exact；单 scheduler 双窗口、每 invocation 一次 trigger；fresh observation、deployment
+      acceptance、runtime preflight 与 Full PASS；production_effect=none。
+    notes: 2026-09-04：v8 未提交，report-flow source seal mismatch 前停止；transaction FAIL/lease
+      RELEASED。v9 不复用其 generated PASS，只同步 exact reviewed source identity并完整重放。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:OPS-078-SYSTEM-FLOW-SOURCE-SEAL-FIX-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ad7caa5937fc723b74aa822926c0ccd8
 projection:
   legacy_first_eight_cells:
   - OPS-078_DAILY_AUTOMATION_ISOLATION_AND_SAME_DAY_RESCUE
   - Operations / daily automation isolated carrier and same-day rescue window
   - P0
   - VALIDATING
-  - Codex engineering coordinator：格式化新增 successor 常量、重建 authority、重跑 137 focused 与
-    parent-bound Full；operations owner：复核下一 provider-ready ordinary daily
-  - v6 合并 focused suite 为 137 passed；Ruff PASS，Black 仅要求格式化 tests/test_trading2452_architecture_contract.py。该文件参与
-    compatibility hash，v6 已关闭，v7 在 generator 前格式化并完整重建。
-  - projectless carrier、无 project id/cwds；单 scheduler 双窗口、每 invocation 一次 trigger；gap/rescue
-    gates；137 focused、静态格式、parent-bound Full、普通 push、promotion/binding PASS；production_effect=none，无
-    weights/broker/trading。
-  - 2026-09-03：功能/历史 replay/authority 137 tests 全 PASS；只剩 Black formatting。为避免 stale
-    generated hashes，不在 v6 generated-post 后静默改字节，转由 v7 重放 generator order。
+  - Codex engineering coordinator：同步 OPS-078 v8 system-flow exact seal，重建 report/compatibility
+    authority，提交并重跑正式验证、push、promotion/binding；operations owner：复核下一真实 daily
+  - v8 focused=28 PASS、Ruff/Black PASS；generator 在 report-flow build 以 RCF_SOURCE_SEAL_DRIFT
+    fail closed，实际 system_flow size=2343730、SHA-256=497e3a0832a37d793d08a26331f51744c4b98b26f5f50261cff68051feef50e2、blob=2a3bfc990675114e5e9f1f5ef39023ec610e0ab0。v9
+    同步 exact authority 后重放全部 generator。
+  - actual config 必须 target=projectless、cwds exact ["~"]；system-flow authority 与 live
+    bytes exact；单 scheduler 双窗口、每 invocation 一次 trigger；fresh observation、deployment
+    acceptance、runtime preflight 与 Full PASS；production_effect=none。
+  - 2026-09-04：v8 未提交，report-flow source seal mismatch 前停止；transaction FAIL/lease
+    RELEASED。v9 不复用其 generated PASS，只同步 exact reviewed source identity并完整重放。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 92ae5c09131cfd05a9fdb639e5815e9528fcf92c8659515a6fdec021ed5d0454
-last_event_id: task-event-d503ab35af0b475518cbd1ab4613f572
+  canonical_row_sha256: 5b52e245819015b78646c87c25443ea1bc441e37b5494877d9f74e0ccde28152
+last_event_id: task-event-ad7caa5937fc723b74aa822926c0ccd8
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 4ad91fbb3c4e6b64b4bbbb09d783e63c34d8d5f8892f2c299b49475a7125ffc6
+fragment_checksum: d24f1b8c6365eccccd80cd0e522158e8c69a47e60b150e955f094149e011ca0c

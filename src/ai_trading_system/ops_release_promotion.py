@@ -130,7 +130,7 @@ class OpsReleasePromotionPolicy:
     expected_scheduler_reasoning_effort: str
     expected_scheduler_execution_environment: str
     expected_scheduler_target_type: str
-    expected_scheduler_cwds_empty: bool
+    expected_scheduler_cwds: tuple[str, ...]
     scheduler_carrier_mode: str
     scheduler_local_timezone: str
     scheduler_invocation_windows: tuple[tuple[str, int, int], ...]
@@ -351,9 +351,9 @@ def load_ops_release_promotion_policy(
             scheduler.get("expected_target_type"),
             "expected_target_type",
         ),
-        expected_scheduler_cwds_empty=_bool(
-            scheduler.get("expected_cwds_empty"),
-            "expected_cwds_empty",
+        expected_scheduler_cwds=_text_tuple(
+            scheduler.get("expected_cwds"),
+            "expected_cwds",
         ),
         scheduler_carrier_mode=_text(
             scheduler.get("carrier_mode"),
@@ -438,7 +438,7 @@ def load_ops_release_promotion_policy(
         or policy.expected_scheduler_status != "ACTIVE"
         or policy.expected_scheduler_execution_environment != "local"
         or policy.expected_scheduler_target_type != "projectless"
-        or not policy.expected_scheduler_cwds_empty
+        or policy.expected_scheduler_cwds != ("~",)
         or policy.scheduler_carrier_mode != "PROJECTLESS_ISOLATED"
         or policy.scheduler_local_timezone != "Asia/Tokyo"
         or policy.scheduler_invocation_windows != _EXPECTED_SCHEDULER_INVOCATION_WINDOWS
@@ -1455,10 +1455,13 @@ def validate_scheduler_observation(
             str(target.get("project_id")),
         )
     observed_cwds = payload.get("cwds")
-    if not isinstance(observed_cwds, list) or observed_cwds:
+    if (
+        not isinstance(observed_cwds, list)
+        or tuple(observed_cwds) != checked_policy.expected_scheduler_cwds
+    ):
         raise OpsReleasePromotionError(
             "SCHEDULER_DEVELOPMENT_CWD_FORBIDDEN",
-            repr(observed_cwds),
+            (f"expected={checked_policy.expected_scheduler_cwds!r};" f"observed={observed_cwds!r}"),
         )
     observed_windows = _scheduler_invocation_windows(
         payload.get("invocation_windows"),
@@ -1561,7 +1564,7 @@ def validate_scheduler_observation(
             checked_policy.scheduler_same_entry_for_all_windows
         ),
         "target": dict(target),
-        "cwds": [],
+        "cwds": list(observed_cwds),
         "config": dict(config),
         "config_updated_at": config_updated_at.isoformat(),
         "prompt": dict(prompt),
@@ -1722,10 +1725,10 @@ def _validate_scheduler_binding_record(
             str(target.get("project_id")),
         )
     cwds = payload.get("cwds")
-    if not isinstance(cwds, list) or cwds:
+    if not isinstance(cwds, list) or tuple(cwds) != policy.expected_scheduler_cwds:
         raise OpsReleasePromotionError(
             "SCHEDULER_DEVELOPMENT_CWD_FORBIDDEN",
-            repr(cwds),
+            f"expected={policy.expected_scheduler_cwds!r};observed={cwds!r}",
         )
     if (
         _scheduler_invocation_windows(

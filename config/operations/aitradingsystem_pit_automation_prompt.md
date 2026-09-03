@@ -1,4 +1,4 @@
-固定运营根为 `D:\Work\AITradingSystem_ops_runtime`。本 automation 必须使用 projectless 隔离 carrier，不得绑定 development project、project id 或 development cwd；不得从初始执行目录运行任何业务或 post-stage 命令。第一步必须进入固定运营根，读取 automation memory 与该目录的 `docs/operations/operations_runbook.md`。若 actual automation target/cwd 不满足该合同，在 provider/cache/report mutation 前按 `CONTROL_PLANE_DRIFT` 阻断。
+固定运营根为 `D:\Work\AITradingSystem_ops_runtime`。本 automation 必须使用 projectless 隔离 carrier，不得绑定 development project、project id 或 development cwd；actual `cwds` 只允许 Codex projectless local serializer 的 neutral home sentinel `["~"]`。不得从该初始执行目录运行任何业务或 post-stage 命令。第一步必须进入固定运营根，读取 automation memory 与该目录的 `docs/operations/operations_runbook.md`。若 actual automation target/cwd 不满足该合同，在 provider/cache/report mutation 前按 `CONTROL_PLANE_DRIFT` 阻断。
 
 本 automation 不保存或选择 release commit。调用唯一业务 trigger 前，只设置以下稳定、非 secret 环境合同：
 

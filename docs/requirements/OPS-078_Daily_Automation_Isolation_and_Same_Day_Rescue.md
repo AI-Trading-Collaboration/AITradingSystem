@@ -86,11 +86,13 @@ provider/capture 影响、next window/next owner 和 exit condition。此对账�
 
 ## 验收标准
 
-1. Canonical policy 明确 `projectless` carrier，actual automation config 不得携带 project target、
-   project id 或 development cwd；business runtime 仍为 independent clone。
+1. Canonical policy 明确 `projectless` carrier，actual automation config 不得携带 project target 或
+   project id；`cwds` 只允许 Codex projectless local serializer 的 exact neutral home sentinel `["~"]`，
+   development/runtime/project 或其他 cwd 均拒绝；business runtime 仍为 independent clone。
 2. Actual scheduler 仍为 1 个 entry，RRULE 精确包含 09:30 与 17:30 两个 JST window，每 invocation
    最多一次 `aits ops daily-run`。
-3. Scheduler observation 对 actual config bytes、prompt hash、updated-at、target、无 cwd、双窗口和
+3. Scheduler observation 对 actual config bytes、prompt hash、updated-at、target、exact neutral
+   carrier cwd sentinel、双窗口和
    single-entry 约束独立验证；任一 drift fail closed。
 4. Rescue window 测试覆盖 primary PASS、pre-trigger blocker 后 fresh ordinary、nonrecoverable terminal
    WAIT、active lock/state blocker 与禁止 same-as-of ordinary。
@@ -117,7 +119,7 @@ provider/capture 影响、next window/next owner 和 exit condition。此对账�
 
 ## 当前状态
 
-2026-09-03：任务进入 `VALIDATING`。已实现 projectless/无 cwd scheduler binding、单 entry 双窗口、
+2026-09-03：任务进入 `VALIDATING`。已实现 projectless/无 development cwd scheduler binding、单 entry 双窗口、
 每 invocation 单 trigger、gap visibility classifier、canonical prompt、runbook 和 system-flow 更新；
 核心实现与 architecture authority 的最终并行 focused validation 为 `54 passed`，Ruff、Black、
 architecture manifest、report/catalog authority、compatibility authority 与 canonical task source 均为
@@ -189,3 +191,18 @@ v6 把 Full-failure 等价集合与 OPS-078 核心/架构回归合并为 137 项
 `PASS`；Black 仅要求格式化新增的 successor 常量。因为该 test file 参与 compatibility source hash，v6
 未在 generated-post 后直接修改并沿用旧 authority，而是失败关闭；v7 在 generator 前执行格式化并重新
 生成全部依赖 authority，随后须重跑同一 137-test suite 与 parent-bound Full。
+
+2026-09-04：v7 candidate `96663843dc7119338524155315d6d3f8dfb77814` 已完成六层正式验证，
+Full=`10192 passed / 6 skipped / 0 failed`，普通 push 后 runtime promotion 达到
+`PROMOTED_NOT_ACTIVATED`，existing automation 已原位改为 `target=projectless` 与 09:30/17:30 双窗口。
+Actual Codex serializer 同时写入 `cwds=["~"]`，而 v7 policy 的 `expected_cwds_empty=true` 将该 neutral
+carrier sentinel 误判为 development cwd；runtime-local scheduler observation 因
+`SCHEDULER_DEVELOPMENT_CWD_FORBIDDEN` fail closed。未激活 deployment、未运行 daily、无 provider 或
+production effect。v8 将该实际产品合同耐久建模为 exact allowlist `["~"]`；空值、development/runtime/
+project 或其他 cwd 均继续拒绝，并从新 candidate 重跑 authority、formal validation、promotion 与 binding。
+
+v8 focused=`28 passed`，Ruff/Black 均 PASS；首次 generator replay 在 report-flow build 以
+`RCF_SOURCE_SEAL_DRIFT` fail closed，因为上述 system-flow 文档更新后的 exact identity 已变为
+`2343730 bytes / SHA-256=497e3a0832a37d793d08a26331f51744c4b98b26f5f50261cff68051feef50e2 /
+git_blob=2a3bfc990675114e5e9f1f5ef39023ec610e0ab0`，而 DEVX-006D policy 仍固定 v7 bytes。v8 未提交并已
+以 FAIL 释放；v9 同步这组 exact source seal 后必须从头重放全部 generator，不复用 v8 的中间输出。
