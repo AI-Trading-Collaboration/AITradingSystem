@@ -113,7 +113,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "607366d06f5c6304911497cec718d32e9e5c52e6238d135b8a37f621f3f60b0d"
+        "sha256": "be12b5b550cbdc1dad8fe8ec4c9c1d301ddb4287d8e1c88354a662a24d96296e"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -158,7 +158,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "41448b6ea6e1c5d2ae6dbec5b627ac6492b18e0b0ef0bd919563a46e1ee35849"
+        "sha256": "20527ede1887a67fafd53f0c6b3c7cc53ef6fca550f7e61f9c4e25f5dbd2f6f8"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -223,5 +223,5 @@
     "task_id": "OPS-077_ATOMIC_RELEASE_SCHEDULER_BINDING_AND_CANARY"
   },
   "section_id": "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1",
-  "section_sha256": "df722ce321ac28f32effd3b116a4e0103e698fe6bcfb17e33bfcdcb701f51811"
+  "section_sha256": "adeed5f18563cda4edb94a531470f9ef558087e267ae17ba1d372464056eaf66"
 }
