@@ -1,0 +1,112 @@
+schema_version: first_layer_composer_v2_temporal_influence_preregistration.v1
+policy_id: first_layer_composer_v2_temporal_influence_preregistration_v1
+policy_version: 1.0.0
+policy_status: OWNER_DIRECTED_PARTIAL_PRIOR_VISIBILITY_CONTRACT
+task_id: TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+owner: project_owner
+approval_ref: owner_instruction:TRADING-2559:2026-09-03:continue_low_cost_validation
+
+known_result_boundary:
+  result_visibility: PARTIAL_PRIOR_VISIBILITY
+  historical_window_role: REUSED_DEVELOPMENT_CONFIRMATION
+  pristine_out_of_sample_claim_allowed: false
+  trading_2557_result_known: true
+  trading_2558_result_known: true
+  temporal_and_influence_results_visible_before_freeze: false
+  post_result_parameter_rescue_allowed: false
+
+primary_identity:
+  producer_id: first_layer_composer_v2
+  calendar: XNYS
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  expected_signal_sessions: 1202
+  expected_return_intervals: 1201
+  expected_long_intervals: 385
+  expected_long_episodes: 41
+  signal_lag_sessions: 1
+  candidate_id: FROZEN_SIGNAL_FULLY_FUNDED_QQQ_ZERO_RETURN_CASH
+  comparator_id: EXPOSURE_MATCHED_STATIC_QQQ_ZERO_RETURN_CASH
+  primary_one_way_cost_bps: 5.0
+  primary_idle_cash_asset: ZERO_RETURN_CASH
+  expected_primary_paired_excess_percentage_points: 13.745976956735628
+
+temporal_displacement_contract:
+  shift_sessions: [-10, -5, -2, -1, 0, 1, 2, 5, 10]
+  maximum_absolute_shift_sessions: 10
+  common_interval_index_start_inclusive: 10
+  common_interval_index_end_exclusive: 1191
+  expected_common_return_intervals: 1181
+  target_formula: SHIFTED_TARGET_AT_I_EQUALS_FROZEN_TARGET_AT_I_MINUS_SHIFT
+  negative_shift_role: NON_CAUSAL_ANTICIPATORY_CONTROL_ONLY
+  positive_shift_role: ADDITIONAL_EXECUTION_DELAY_AFTER_EXISTING_ONE_SESSION_LAG
+  comparator_weight_formula: SHIFT_PATH_LONG_COUNT_DIVIDED_BY_1181
+  candidate_and_comparator_cost_bps: 5.0
+  best_shift_tie_break: SMALLEST_NUMERIC_SHIFT
+  parameter_search_allowed: false
+
+episode_influence_contract:
+  construction: SET_ONE_CONTIGUOUS_LONG_EPISODE_TO_FLAT
+  expected_episode_count: 41
+  all_other_targets_unchanged: true
+  comparator_weight_formula: REMAINING_LONG_COUNT_DIVIDED_BY_1201
+  candidate_and_comparator_cost_bps: 5.0
+  original_accounting_reconciliation_tolerance: 1.0e-10
+  independent_replay_tolerance: 1.0e-10
+  concentration_boundary: ANY_REMATCHED_LEAVE_ONE_EPISODE_PAIRED_EXCESS_LESS_THAN_OR_EQUAL_TO_ZERO
+  parameter_search_allowed: false
+
+pilot_reducer:
+  status: TEMPORARY_PILOT_BASELINE
+  owner_reviewer: Project Owner / strategy research
+  rationale: Natural zero-excess falsification boundaries and a floating-point-only tie tolerance; not an investment gate.
+  review_condition: Review after the write-once result is available.
+  exit_condition: Proceed to separately preregistered feature ablation only if useful, or wait for prospective OOS.
+  precedence:
+    - INVALID
+    - SINGLE_EPISODE_DEPENDENT
+    - ONE_SESSION_DELAY_FRAGILE
+    - ANTICIPATORY_ALIGNMENT_DOMINATES
+    - LOW_COST_ROBUSTNESS_NOT_DISCONFIRMED_DIAGNOSTIC_ONLY
+  single_episode_dependent_if: any_rematched_leave_one_episode_paired_excess_less_than_or_equal_to_zero
+  one_session_delay_fragile_if: shift_plus_one_paired_excess_less_than_or_equal_to_zero
+  anticipatory_alignment_dominates_if: best_shift_is_negative_and_exceeds_shift_zero_by_more_than_1e_minus_12
+  prior_trading_2557_status_must_remain: INSUFFICIENT
+  prior_trading_2558_status_must_remain: TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO
+  research_priority_increase_allowed: false
+  qqq_options_wave_b: HOLD
+  qqq_options_wave_c: NOT_AUTHORIZED
+  production_allowed: false
+
+run_envelope:
+  manifest_replays: 1
+  canonical_dq_runs: 1
+  local_temporal_influence_runs: 1
+  independent_replays: 1
+  data_downloads: 0
+  cache_mutations: 0
+  quantconnect_actions: 0
+  option_backtests: 0
+  external_provider_actions: 0
+  orders: 0
+  fills: 0
+  positions: 0
+
+safety:
+  aggregate_result_only: true
+  raw_market_payload_export_allowed: false
+  raw_signal_payload_export_allowed: false
+  shifted_target_payload_export_allowed: false
+  data_download_authorized: false
+  cache_mutation_authorized: false
+  quantconnect_authorized: false
+  option_backtest_authorized: false
+  provider_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

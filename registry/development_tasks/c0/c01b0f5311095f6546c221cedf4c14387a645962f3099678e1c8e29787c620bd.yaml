@@ -1,0 +1,165 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+  task_id_sha256: c01b0f5311095f6546c221cedf4c14387a645962f3099678e1c8e29787c620bd
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+  title: null
+  domain: Strategy research / first-layer composer v2 temporal displacement and episode
+    influence falsification
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner：保持候选低优先级；如继续仅登记新的 prospective OOS，不重跑或参数救援
+  requirement_refs:
+  - docs/requirements/TRADING-2559_First_Layer_Composer_V2_Temporal_Influence_Falsification_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 当前证据显示 SINGLE_EPISODE_DEPENDENT 且 ANTICIPATORY_ALIGNMENT_DOMINATES；等待自然成熟
+    prospective OOS 或另行批准独立预注册证据
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: failure-fix 1/1/1/1 与 independent replay PASS；canonical DQ PASS；结果 admission、Atlas、system
+      flow、正式验证、main/origin 发布完成；禁止动作均为 0
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-03T21:34:20.2454486+09:00'
+  actor: integration-coordinator
+  change_id: trading-2559-temporal-influence-task-registration-v1
+  lane_id: null
+  base_commit: eab7971d3a41f4802f110200d70620df443341be
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+    - Strategy research / first-layer composer v2 temporal displacement and episode
+      influence falsification
+    - P0
+    - IN_PROGRESS
+    - Codex strategy-evidence coordinator：冻结并执行一次本地时间位移与 episode 影响度证伪
+    - 必须先锁定 shift 集合、common-window、rematched comparator、reducer、输入身份与 1/1/1/1 上限；任一漂移
+      fail closed
+    - 九个 shift 与 41 个 leave-one-episode 结果确定性复算一致；canonical DQ/manifest/独立重放/正式验证通过；禁止动作均为
+      0
+    - 'Supporting requirement: docs/requirements/TRADING-2559_First_Layer_Composer_V2_Temporal_Influence_Falsification_V1.md。authorization_state=STANDING_OWNER_SCOPE；仅本地
+      R1 bounded research；download/cache mutation/provider/QuantConnect/options/paper/live/production/broker/orders/fills/positions=0。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2559-temporal-influence-task-registration-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-522b69fef14d350ef38d10578745202c
+- schema_version: task_event.v1
+  task_id: TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T21:49:13.7815184+09:00'
+  actor: integration-coordinator
+  change_id: trading-2559-first-attempt-failed-v1
+  lane_id: null
+  base_commit: f16749c9edbfb1c3fba2b8b743f98c464a383a76
+  previous_state_event_id: task-event-522b69fef14d350ef38d10578745202c
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner：如需继续，明确授权一次仅修正 TRADING-2558 最大回撤嵌套字段投影的 failure-fix
+      1/1/1/1 重跑
+    blocker_or_next_step: 首个 write-once attempt 因读取不存在的顶层 observed_max_drawdown_magnitude_pct
+      fail closed；正确权威路径为 matched_placebo.observed_max_drawdown_magnitude_pct；需新 failure-fix
+      授权，禁止直接覆盖或重跑
+    acceptance_criteria: 修复仅限最大回撤对账字段投影；新 manifest/output identity；manifest replay/DQ/local/independent
+      replay 最多各 1；窗口、shift、episode、模型、阈值、成本、comparator、reducer 与输入不变；全部禁止动作保持 0
+    notes: 'Supporting requirement: docs/requirements/TRADING-2559_First_Layer_Composer_V2_Temporal_Influence_Falsification_V1.md。Failed
+      evidence: outputs/research/first_layer_composer_v2_temporal_influence_v1/aggregate_result.json；SHA-256=4d4516737551ed7328d2925482c39c09ed299e1db7da46220d8541f87e2f6ef0；actual
+      counters=1/1/1/0；technical_validation_state=INVALID；production_effect=none；broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2559-first-attempt-failed-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a936c9dbd108bf17f1b42d813e14a3c4
+- schema_version: task_event.v1
+  task_id: TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T22:57:56.8721295+09:00'
+  actor: integration-coordinator
+  change_id: trading-2559-failure-fix-owner-approval-v1
+  lane_id: null
+  base_commit: c80b3243933b9a24f510696baff2256b4b8e3093
+  previous_state_event_id: task-event-a936c9dbd108bf17f1b42d813e14a3c4
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex strategy-evidence coordinator：按精确授权修正嵌套字段投影并执行一次新 failure-fix
+      1/1/1/1
+    blocker_or_next_step: 仅允许修正 matched_placebo.observed_max_drawdown_magnitude_pct
+      投影、补实际 schema 回归、严格绑定新 authorization/manifest/output；不得改变研究设计或覆盖旧证据
+    acceptance_criteria: 新 failure-fix manifest replay/DQ/local/independent replay
+      精确 1/1/1/1；窗口、shift、episode、模型、阈值、成本、comparator、reducer、输入不变；旧失败 evidence immutable；全部禁止动作保持
+      0
+    notes: 'Supporting requirement: docs/requirements/TRADING-2559_First_Layer_Composer_V2_Temporal_Influence_Falsification_V1.md。Owner于2026-09-03回复“批准”精确
+      failure-fix；authorization_state=EXACT_PREAUTHORIZED；新输出=outputs/research/first_layer_composer_v2_temporal_influence_failure_fix_v1/；production_effect=none；broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2559-failure-fix-owner-approval-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-38f452b7a8693d0904e394273d3bb288
+- schema_version: task_event.v1
+  task_id: TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-03T23:11:11.3533566+09:00'
+  actor: integration-coordinator
+  change_id: trading-2559-temporal-influence-terminal-v1
+  lane_id: null
+  base_commit: bced2c8024414f954512636fe2a1d7d116640390
+  previous_state_event_id: task-event-38f452b7a8693d0904e394273d3bb288
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：保持候选低优先级；如继续仅登记新的 prospective OOS，不重跑或参数救援
+    blocker_or_next_step: 当前证据显示 SINGLE_EPISODE_DEPENDENT 且 ANTICIPATORY_ALIGNMENT_DOMINATES；等待自然成熟
+      prospective OOS 或另行批准独立预注册证据
+    acceptance_criteria: failure-fix 1/1/1/1 与 independent replay PASS；canonical DQ
+      PASS；结果 admission、Atlas、system flow、正式验证、main/origin 发布完成；禁止动作均为 0
+    notes: 'Supporting requirement: docs/requirements/TRADING-2559_First_Layer_Composer_V2_Temporal_Influence_Falsification_V1.md。authorization_state=EXACT_PREAUTHORIZED；technical_validation_state=PASS；aggregate
+      SHA-256=db8f2b9ffd33b08132c8c3798248351883cffdc39bedacb12378d45b77ecaea9；episode
+      12 删除后 excess=-2.56913050870304pp；shift +2=-1.6675372437030163pp；production_effect=none；broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2559-temporal-influence-terminal-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fa9026dc70f4b02894162299644c2c03
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+  - Strategy research / first-layer composer v2 temporal displacement and episode
+    influence falsification
+  - P0
+  - DONE
+  - Project Owner：保持候选低优先级；如继续仅登记新的 prospective OOS，不重跑或参数救援
+  - 当前证据显示 SINGLE_EPISODE_DEPENDENT 且 ANTICIPATORY_ALIGNMENT_DOMINATES；等待自然成熟 prospective
+    OOS 或另行批准独立预注册证据
+  - failure-fix 1/1/1/1 与 independent replay PASS；canonical DQ PASS；结果 admission、Atlas、system
+    flow、正式验证、main/origin 发布完成；禁止动作均为 0
+  - 'Supporting requirement: docs/requirements/TRADING-2559_First_Layer_Composer_V2_Temporal_Influence_Falsification_V1.md。authorization_state=EXACT_PREAUTHORIZED；technical_validation_state=PASS；aggregate
+    SHA-256=db8f2b9ffd33b08132c8c3798248351883cffdc39bedacb12378d45b77ecaea9；episode
+    12 删除后 excess=-2.56913050870304pp；shift +2=-1.6675372437030163pp；production_effect=none；broker_action=none。'
+  docs_links:
+  - docs/requirements/TRADING-2559_First_Layer_Composer_V2_Temporal_Influence_Falsification_V1.md
+  terminal: true
+  canonical_row_sha256: dcfd9ab38cd2d5eba04aac5c3a97a9cf1b6029b9eb3d6b60c4ed9e39ab933c44
+last_event_id: task-event-fa9026dc70f4b02894162299644c2c03
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 1b3a612d809cb18be45ee1cc1c7bfeb216893019ab95cef7c771e31aebd1480d

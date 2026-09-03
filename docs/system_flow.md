@@ -10298,6 +10298,35 @@ partial-prior-visibility 诊断，不是 pristine OOS；因此不支持把信号
 优先级。实际 manifest replay/DQ/local run/independent replay 为 `1/1/1/1`，下载、缓存修改、provider、
 QuantConnect、期权回测、paper/live/production/broker/order/fill/position 均为 0/false/none。
 
+## TRADING-2559 temporal displacement 与 episode influence falsification
+
+TRADING-2559 复用相同 `2021-02-22..2025-12-02` 主窗口、385 个 LONG interval、41 个 LONG
+episode、one-session lag、5 bps 成本和 exposure-matched QQQ/cash comparator，不改变模型、阈值或
+reducer。原 attempt 因把 TRADING-2558 最大回撤读成不存在的顶层字段而 fail closed；failure-fix 仅将
+对账投影指向权威的 `matched_placebo.observed_max_drawdown_magnitude_pct`，旧失败证据保持 immutable。
+
+```text
+TRADING-2558 aggregate + frozen temporal/episode policy
+  -> exact failure-fix authorization + manifest replay [1, PASS]
+  -> canonical DQ 2021-02-22..2025-12-02 [1, PASS, 0 error / 0 warning]
+  -> common-window shifts [-10,-5,-2,-1,0,1,2,5,10] [1]
+  -> 41 rematched leave-one-episode paths [same local run]
+  -> independent deterministic replay [1, PASS, max diff 6.82e-13]
+  -> episode 12 deletion: excess +13.746pp -> -2.569pp
+  -> shift +2: excess -1.668pp; noncausal shift -2 dominates
+  -> SINGLE_EPISODE_DEPENDENT + ANTICIPATORY_ALIGNMENT_DOMINATES
+  -x-> rerun / parameter rescue / Options Wave B or C / production or trading action
+```
+
+Temporal common window 为 `2021-03-08..2025-11-17`、1181 个 return interval；`shift=0/+1/+2`
+paired excess 分别为 `+10.410605362323075/+5.537673124193127/-1.6675372437030163` 个百分点。
+非因果 anticipatory `shift=-2` 的 `+142.10847322324653` 个百分点只能视为时点/状态持续性诊断，不能
+视为可执行收益。删除 episode 12（`2023-03-16..2023-08-10`，101 intervals）后 rematched excess
+为 `-2.56913050870304` 个百分点，因此优势不具备单 episode 独立性。该 reused-development-window
+结果不支持提高信号有效性、prospective OOS 或 Options 优先级；TRADING-2557/2558 的
+`INSUFFICIENT/HOLD` 与 `TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO` 保持不变。实际运行计数精确
+为 `1/1/1/1`，所有外部或交易动作均为 0/false/none。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

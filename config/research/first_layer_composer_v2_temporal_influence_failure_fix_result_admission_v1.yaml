@@ -1,0 +1,129 @@
+schema_version: first_layer_composer_v2_temporal_influence_failure_fix_result_admission.v1
+admission_id: first_layer_composer_v2_temporal_influence_failure_fix_result_admission_v1
+admission_version: 1.0.0
+status: ADMITTED_DIAGNOSTIC_SINGLE_EPISODE_DEPENDENT
+task_id: TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+authorization_state: EXACT_PREAUTHORIZED
+technical_validation_state: PASS
+
+identity:
+  historical_window_role: REUSED_DEVELOPMENT_CONFIRMATION
+  prior_visibility: PARTIAL_PRIOR_VISIBILITY
+  pristine_out_of_sample_claim: false
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  evaluated_start: '2021-02-22'
+  evaluated_end: '2025-12-02'
+  temporal_common_start: '2021-03-08'
+  temporal_common_end: '2025-11-17'
+  signal_sessions: 1202
+  return_intervals: 1201
+  temporal_common_return_intervals: 1181
+  signal_lag_sessions: 1
+  long_intervals: 385
+  long_episodes: 41
+  one_way_cost_bps: 5.0
+  shift_sessions: [-10, -5, -2, -1, 0, 1, 2, 5, 10]
+
+data_quality:
+  status: PASS
+  error_count: 0
+  warning_count: 0
+  receipt_path: outputs/data_quality/executions/dq_execution_46bdd8d9232147d021f2588e4cb81b329e61d88eaa23d11e2728f35d4dbe61a7/receipt.json
+  receipt_sha256: 6a3796c2b400341602d14b26b6f721aa60bb630064ede0d58e603189ba079649
+  report_path: outputs/data_quality/reports/af8f73d84185eea76ca55f493cff74c1dfc609769b5ca07f4fc0cb850e93a1cf/data_quality_report.md
+  report_sha256: af8f73d84185eea76ca55f493cff74c1dfc609769b5ca07f4fc0cb850e93a1cf
+
+result:
+  reducer_status: SINGLE_EPISODE_DEPENDENT
+  reason_codes:
+    - SINGLE_EPISODE_DEPENDENT
+    - ANTICIPATORY_ALIGNMENT_DOMINATES
+  baseline_full_window_candidate_net_total_return_pct: 45.279358871873754
+  baseline_full_window_comparator_net_total_return_pct: 31.533381915138126
+  baseline_full_window_paired_excess_percentage_points: 13.745976956735628
+  temporal_common_shift_zero_paired_excess_percentage_points: 10.410605362323075
+  shift_plus_one_paired_excess_percentage_points: 5.537673124193127
+  shift_plus_two_paired_excess_percentage_points: -1.6675372437030163
+  best_shift_sessions: -2
+  best_shift_paired_excess_percentage_points: 142.10847322324653
+  anticipatory_alignment_dominates: true
+  minimum_leave_one_episode_id: 12
+  minimum_leave_one_episode_start: '2023-03-16'
+  minimum_leave_one_episode_end: '2023-08-10'
+  minimum_leave_one_episode_removed_intervals: 101
+  minimum_leave_one_episode_paired_excess_percentage_points: -2.56913050870304
+  largest_excess_drop_percentage_points: 16.31510746543867
+  nonpositive_leave_one_episode_count: 1
+
+invariant_validation:
+  trading_2558_candidate_net_total_return_abs_diff: 0.0
+  trading_2558_candidate_max_drawdown_abs_diff: 0.0
+  trading_2558_comparator_net_total_return_abs_diff: 0.0
+  trading_2558_comparator_weight_abs_diff: 0.0
+  trading_2558_paired_excess_abs_diff: 0.0
+  independent_replay_status: PASS
+  independent_maximum_metric_abs_diff: 6.821210263296962e-13
+  reconciliation_tolerance: 1.0e-10
+  temporal_target_inventory_sha256: 0d454a5a42f21daae545b2083cd3230aee727cce171bf064b50d7d953f081f61
+  episode_target_inventory_sha256: f3ae1d83529b176f89a11d5cebd34c21ff6c3f1780301eb2dbfcbfa26060ad27
+
+run_envelope_actual:
+  manifest_replays: 1
+  canonical_dq_runs: 1
+  local_temporal_influence_runs: 1
+  independent_replays: 1
+  data_downloads: 0
+  cache_mutations: 0
+  quantconnect_actions: 0
+  option_backtests: 0
+  external_provider_actions: 0
+  orders: 0
+  fills: 0
+  positions: 0
+
+evidence_bindings:
+  - role: preregistration
+    path: config/research/first_layer_composer_v2_temporal_influence_preregistration_v1.yaml
+    file_sha256: 76ada2389c8d29a674ee2472ce73a3771fee1ff48935fb3d9cb6203e769e305a
+  - role: failure_fix_authorization
+    path: config/research/first_layer_composer_v2_temporal_influence_failure_fix_run_authorization_v1.yaml
+    file_sha256: b1919b40f59ed72ed50bc53bd404fc49a2c783e690dc3b735ae3383f71f7519f
+  - role: failure_fix_execution_manifest
+    path: inputs/research/first_layer_composer_v2_temporal_influence_failure_fix_v1/execution_manifest.json
+    file_sha256: fe0fc329de26052638722dac1b532a80bffc573754ddecbc43403d192bdd590b
+  - role: failed_parent_aggregate_result
+    path: outputs/research/first_layer_composer_v2_temporal_influence_v1/aggregate_result.json
+    file_sha256: 4d4516737551ed7328d2925482c39c09ed299e1db7da46220d8541f87e2f6ef0
+  - role: run_attempt_consumption
+    path: outputs/research/first_layer_composer_v2_temporal_influence_failure_fix_v1/run_attempt_consumption_receipt.json
+    file_sha256: a7622fd396b020c0abcc8c72da320ba2d7d5e5b6e22e011d4d259a5b97c5e134
+  - role: manifest_replay
+    path: outputs/research/first_layer_composer_v2_temporal_influence_failure_fix_v1/manifest_replay_receipt.json
+    file_sha256: a0f782cb15d4641fe55ccda324c63044588b31bfdb28d8cc56578cb93c46bdbb
+  - role: canonical_dq
+    path: outputs/research/first_layer_composer_v2_temporal_influence_failure_fix_v1/canonical_dq_receipt.json
+    file_sha256: f355e29927d031c2381e1458af0744b7b034fff1da08db59cb2f6b4e689ad718
+  - role: independent_replay
+    path: outputs/research/first_layer_composer_v2_temporal_influence_failure_fix_v1/independent_replay_receipt.json
+    file_sha256: d0743dcc71f3cc683a8edfac2f6ae9e622fd7021bb7ffb42d5b45b72da41f8cf
+  - role: aggregate_result
+    path: outputs/research/first_layer_composer_v2_temporal_influence_failure_fix_v1/aggregate_result.json
+    file_sha256: db8f2b9ffd33b08132c8c3798248351883cffdc39bedacb12378d45b77ecaea9
+
+interpretation_boundary:
+  single_episode_independence_supported: false
+  one_session_delay_positive_excess_retained: true
+  two_session_delay_positive_excess_retained: false
+  anticipatory_control_dominance_observed: true
+  supports_signal_validity_claim: false
+  supports_prospective_oos_priority_increase: false
+  trading_2557_status: INSUFFICIENT
+  trading_2558_status: TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO
+  qqq_options_wave_b: HOLD
+  qqq_options_wave_c: NOT_AUTHORIZED
+  parameter_rescue_allowed: false
+  same_manifest_rerun_allowed: false
+  production_allowed: false
+  production_effect: none
+  broker_action: none

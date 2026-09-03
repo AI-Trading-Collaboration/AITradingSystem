@@ -1,16 +1,16 @@
 schema_version: atlas_live_snapshot_policy.v1
 policy_id: atlas_live_canonical_snapshot_v1
-policy_version: 1.19.0
+policy_version: 1.20.0
 status: REVIEWED_FAIL_CLOSED_LIVE_PROJECTION
 owner: Atlas strategy research publishing coordinator
 historical_source_registry_path: config/atlas/source_registry.yaml
 page_effectiveness_policy_path: config/atlas/page_effectiveness.yaml
-classified_through_task_id: TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
-current_mainline_task_id: TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
-largest_blocker_task_id: TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
-next_legal_action_task_id: TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
-status_object_zh: 当前研究组合维持 evidence-first。TRADING-2558 在 STANDING_OWNER_SCOPE 下完成一次 write-once matched-placebo 时点证伪：manifest replay、canonical DQ、本地 10,000-draw run 与 independent replay 精确执行 1/1/1/1，DQ 为 PASS 且独立重放差异为 0，所有外部或交易动作均为 0。该检验保持 385 个 LONG interval、41 个 episode、run/gap 长度多重集、边界、82 个交易事件与 5 bps 成本不变；真实 +13.745976956735628 个百分点 excess 位于 placebo 第 80.0 百分位，但 2,000 个 placebo 不低于真实值，单侧 p=0.20007999200079993，冻结 reducer 因此输出 TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO。真实最大回撤 9.602605144610187% 较好，但在合同中仅是描述性证据，不能覆盖主统计量。2557 继续维持 INSUFFICIENT/HOLD；不得重跑、事后改参数或提高本候选研究优先级，也不支持 QQQ Options Wave B/C、paper/live/production/broker 或任何交易动作。未来如继续，只能另行登记新的 prospective OOS。
-evidence_evaluated_at: '2026-09-03T08:03:07.6304015+00:00'
+classified_through_task_id: TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+current_mainline_task_id: TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+largest_blocker_task_id: TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+next_legal_action_task_id: TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+status_object_zh: 当前研究组合维持 evidence-first。TRADING-2559 在 Owner 精确预授权的 failure-fix 下完成时间位移与 leave-one-episode 证伪；修复只把上一轮 matched-placebo 最大回撤对账投影改为权威嵌套字段，窗口、信号、模型、阈值、成本、comparator、shift、episode 算法和 reducer 均未改变。新 manifest replay、canonical DQ、本地 temporal/influence run 与 independent replay 精确执行 1/1/1/1，DQ 为 PASS、独立重放最大差异 6.821210263296962e-13，所有外部或交易动作均为 0。完整窗口 excess 仍为 +13.745976956735628 个百分点，但删除 episode 12（2023-03-16..2023-08-10）后变为 -2.56913050870304 个百分点；统一时间窗口下 shift +2 也降至 -1.6675372437030163 个百分点，且不可执行的 anticipatory shift -2 占优。冻结 reducer 给出“单 episode 依赖”，并附加“非因果提前对齐占优”。该结果进一步削弱而非增强当前有效性证据；2557 继续证据不足并保持观察，2558 继续未能区分真实时点与同形态随机安排，不提高 prospective OOS、QQQ Options Wave B/C 或生产优先级。不得重跑或事后参数救援；paper/live/production/broker 和任何交易动作仍未授权。
+evidence_evaluated_at: '2026-09-03T14:08:20.4517918+00:00'
 task_status_mapping:
   DONE: PASS
   BASELINE_DONE: LIMITED

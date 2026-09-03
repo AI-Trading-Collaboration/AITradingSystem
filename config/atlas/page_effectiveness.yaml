@@ -1,7 +1,7 @@
 schema_version: atlas_page_effectiveness_policy.v1
 policy_id: atlas_strategy_research_page_effectiveness_v1
-policy_version: 3.14.0
-status: REVIEWED_LIVE_SNAPSHOT_IDENTITY_CONTRACT_V3_MATCHED_PLACEBO_NOT_DISTINGUISHED
+policy_version: 3.15.0
+status: REVIEWED_LIVE_SNAPSHOT_IDENTITY_CONTRACT_V3_TEMPORAL_SINGLE_EPISODE_DEPENDENT
 owner: Atlas page engineering owner
 primary_research_start: '2021-02-22'
 canonical_page_path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html
@@ -49,6 +49,12 @@ relevant_source_paths:
   - config/research/first_layer_composer_v2_matched_placebo_run_authorization_v1.yaml
   - inputs/research/first_layer_composer_v2_matched_placebo_v1/execution_manifest.json
   - config/research/first_layer_composer_v2_matched_placebo_result_admission_v1.yaml
+  - docs/requirements/TRADING-2559_First_Layer_Composer_V2_Temporal_Influence_Falsification_V1.md
+  - config/research/first_layer_composer_v2_temporal_influence_preregistration_v1.yaml
+  - config/research/first_layer_composer_v2_temporal_influence_failure_fix_run_authorization_v1.yaml
+  - inputs/research/first_layer_composer_v2_temporal_influence_failure_fix_v1/execution_manifest.json
+  - config/research/first_layer_composer_v2_temporal_influence_failure_fix_result_admission_v1.yaml
+  - src/ai_trading_system/first_layer_temporal_influence_falsification.py
   - inputs/architecture/arch_005_task_registry_index.yaml
   - inputs/research/qqq_options/trading_2533_session_finalization_dq_pit_evidence_admission_v1/dq_pit_evidence_admission.json
   - inputs/research/qqq_options/trading_2541_exact_date_subscription_recovery_execution_v3/export_safe_terminal_evidence.json
@@ -434,6 +440,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2558_First_Layer_Composer_V2_Matched_Placebo_Falsification_V1.md
     coverage: MATCHED_PLACEBO_TIMING_NOT_DISTINGUISHED_RESEARCH_PRIORITY_NOT_RAISED
     reader_summary_zh: 2558 已完成一次 write-once matched-placebo 时点证伪。10,000 draws 分别排列 41 个 LONG run 与 40 个内部 FLAT gap，同时固定 385 个 LONG interval、边界、82 个交易事件、5 bps 成本和 exposure-matched comparator；manifest replay、canonical DQ、本地 run、independent replay 为 1/1/1/1 且 PASS，其他动作均为 0。真实 +13.745976956735628 个百分点 excess 位于第 80.0 百分位，但 2,000 个 placebo 不低于真实值，单侧 p=0.20007999200079993，故未区分真实时点与同形态随机安排。最大回撤优势仅作描述性证据；2557 保持 INSUFFICIENT/HOLD，本候选不提高 prospective OOS、Options 或生产优先级，且不得重跑或事后参数救援。
+  - task_id: TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+    requirement_path: docs/requirements/TRADING-2559_First_Layer_Composer_V2_Temporal_Influence_Falsification_V1.md
+    coverage: TEMPORAL_INFLUENCE_SINGLE_EPISODE_DEPENDENT_RESEARCH_PRIORITY_NOT_RAISED
+    reader_summary_zh: 2559 已在 Owner 精确预授权的 schema-only failure-fix 下完成唯一时间位移与 episode 影响度验证；修复只读取上一轮 matched-placebo 的权威嵌套最大回撤字段，不改变窗口、信号、模型、阈值、成本、comparator、九个 shift、41-episode 算法或 reducer。Manifest replay、canonical DQ、本地 run、independent replay 为 1/1/1/1 且 PASS，其他动作均为 0。完整窗口 +13.745976956735628 个百分点 excess 在删除 episode 12（2023-03-16..2023-08-10）后降至 -2.56913050870304；shift +2 为 -1.6675372437030163，且非因果 shift -2 占优。冻结 reducer 为“单 episode 依赖”，并附加“非因果提前对齐占优”；这进一步削弱信号稳健性，不覆盖 2557 的证据不足/保持观察或 2558 的 matched-placebo p=0.20，不提高 prospective OOS、Options 或生产优先级，也不得重跑或参数救援。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW
