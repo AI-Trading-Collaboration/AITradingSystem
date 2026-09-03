@@ -886,6 +886,30 @@ def build_repository_authority(
                 ops_077_fragment_bytes,
             )
         )
+    ops_078_requirement_path = (
+        root / "docs/requirements/OPS-078_Daily_Automation_Isolation_and_Same_Day_Rescue.md"
+    )
+    if ops_078_requirement_path.exists():
+        ops_078_section_id, ops_078_section = _ops_078_section(
+            root,
+            policy=policy,
+        )
+        (
+            ops_078_relative,
+            ops_078_record,
+            ops_078_fragment_bytes,
+        ) = render_fragment(
+            section_id=ops_078_section_id,
+            section=ops_078_section,
+        )
+        rendered_fragments.append(
+            (
+                ops_078_section_id,
+                ops_078_relative,
+                ops_078_record,
+                ops_078_fragment_bytes,
+            )
+        )
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -2423,6 +2447,104 @@ def _ops_077_section(
             "production_weight_write": False,
             "active_shadow_weight_write": False,
             "provider_request_performed_by_canary": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _ops_078_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1"
+    source_paths = sorted(
+        [
+            "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+            "config/operations/aitradingsystem_pit_automation_prompt.md",
+            "config/operations/ops_release_promotion.yaml",
+            "config/operations/ops_scheduler_checkout.yaml",
+            "docs/operations/operations_runbook.md",
+            "docs/requirements/OPS-078_Daily_Automation_Isolation_and_Same_Day_Rescue.md",
+            "docs/system_flow.md",
+            "docs/task_register.md",
+            "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+            "inputs/architecture/arch_004e_architecture_fitness.yaml",
+            "inputs/architecture/arch_004e_module_manifest.yaml",
+            "inputs/architecture/arch_004e_test_manifest.yaml",
+            "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+            "inputs/architecture/arch_005_task_registry_index.yaml",
+            "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+            (
+                "registry/development_tasks/a0/"
+                "a015ae79125f8757c1fcee391d54c4d461a6c8276b47abedf3b84ccd4538d983.yaml"
+            ),
+            "src/ai_trading_system/ops_release_promotion.py",
+            "src/ai_trading_system/ops_scheduler_checkout.py",
+            "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+            "tests/test_arch_004_refactor_policy.py",
+            "tests/test_devx_006c_compatibility_authority.py",
+            "tests/test_devx_006d_report_catalog_flow_authority.py",
+            "tests/test_ops_release_promotion.py",
+            "tests/test_ops_scheduler_checkout.py",
+        ],
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "ops_078_daily_automation_isolation_and_same_day_rescue.v1",
+        "task_id": "OPS-078_DAILY_AUTOMATION_ISOLATION_AND_SAME_DAY_RESCUE",
+        "status": "VALIDATING",
+        "owner_decision": (
+            "owner_instruction:OPS-078:2026-09-03:add-dedicated-worktree-mechanism"
+        ),
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "carrier_contract": {
+            "mode": "PROJECTLESS_ISOLATED",
+            "development_project_target_allowed": False,
+            "development_checkout_cwd_allowed": False,
+            "business_runtime_kind": "INDEPENDENT_RECEIPT_GATED_CLONE",
+            "post_stage_blocker_must_not_block_daily_trigger": True,
+        },
+        "invocation_window_contract": {
+            "local_timezone": "Asia/Tokyo",
+            "windows": [
+                {"role": "PRIMARY", "hour": 9, "minute": 30},
+                {"role": "SAME_DAY_RESCUE", "hour": 17, "minute": 30},
+            ],
+            "scheduler_entry_count": 1,
+            "per_invocation_business_trigger_max": 1,
+            "same_scheduler_entry_for_all_windows": True,
+            "rescue_is_unconditional_retry": False,
+            "same_as_of_ordinary_allowed": False,
+        },
+        "gap_visibility_contract": {
+            "statuses": [
+                "NO_GAP_EVIDENCE",
+                "GAP_EXPOSURE_PRESENT",
+                "EXPECTED_AS_OF_NOT_RECORDED",
+                "INDETERMINATE",
+            ],
+            "missing_expected_as_of_evidence_means_no_gap": False,
+            "canonical_artifact_identity_required": True,
+        },
+        "safety": {
+            "second_scheduler_created": False,
+            "same_as_of_ordinary_allowed": False,
+            "provider_replay_gate_relaxed": False,
+            "production_weight_write": False,
+            "active_shadow_weight_write": False,
             "production_effect": "none",
             "broker_action": "none",
         },

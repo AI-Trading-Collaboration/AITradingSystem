@@ -28,6 +28,16 @@ DEFAULT_OPS_SCHEDULER_CHECKOUT_POLICY_PATH = (
     PROJECT_ROOT / "config" / "operations" / "ops_scheduler_checkout.yaml"
 )
 _COMMIT_PATTERN = re.compile(r"^[0-9a-f]{40}$")
+_EXPECTED_INVOCATION_WINDOWS = (
+    ("PRIMARY", 9, 30),
+    ("SAME_DAY_RESCUE", 17, 30),
+)
+_EXPECTED_GAP_VISIBILITY_STATUSES = (
+    "NO_GAP_EVIDENCE",
+    "GAP_EXPOSURE_PRESENT",
+    "EXPECTED_AS_OF_NOT_RECORDED",
+    "INDETERMINATE",
+)
 
 
 class OpsSchedulerTerminalDisposition(StrEnum):
@@ -61,6 +71,23 @@ class OpsSchedulerCheckoutPolicy:
     unified_external_trigger: tuple[str, ...]
     manual_execution_option: str
     separate_periodic_scheduler_entries_allowed: bool
+    carrier_mode: str
+    development_project_target_allowed: bool
+    development_checkout_cwd_allowed: bool
+    business_runtime_kind: str
+    post_stage_blocker_must_not_block_daily_trigger: bool
+    invocation_windows_schema: str
+    invocation_local_timezone: str
+    invocation_windows: tuple[tuple[str, int, int], ...]
+    invocation_scheduler_entry_count: int
+    per_invocation_business_trigger_max: int
+    same_scheduler_entry_for_all_windows: bool
+    rescue_is_unconditional_retry: bool
+    rescue_same_as_of_ordinary_allowed: bool
+    gap_visibility_schema: str
+    gap_visibility_statuses: tuple[str, ...]
+    missing_expected_as_of_evidence_means_no_gap: bool
+    canonical_artifact_identity_required: bool
     terminal_dispositions: tuple[str, ...]
     same_as_of_ordinary_allowed: bool
     ordinary_requires_as_of_strictly_after_parent: bool
@@ -97,6 +124,9 @@ def load_ops_scheduler_checkout_policy(
     environment = _mapping(payload.get("environment"), "environment")
     repository = _mapping(payload.get("repository"), "repository")
     trigger = _mapping(payload.get("trigger"), "trigger")
+    carrier = _mapping(payload.get("carrier"), "carrier")
+    invocation_windows = _mapping(payload.get("invocation_windows"), "invocation_windows")
+    gap_visibility = _mapping(payload.get("gap_visibility"), "gap_visibility")
     terminal_routing = _mapping(payload.get("terminal_parent_routing"), "terminal_parent_routing")
     deployment = _mapping(payload.get("deployment"), "deployment")
     safety = _mapping(payload.get("safety"), "safety")
@@ -200,6 +230,71 @@ def load_ops_scheduler_checkout_policy(
             trigger.get("separate_periodic_scheduler_entries_allowed"),
             "separate_periodic_scheduler_entries_allowed",
         ),
+        carrier_mode=_text(carrier.get("mode"), "carrier.mode"),
+        development_project_target_allowed=_bool(
+            carrier.get("development_project_target_allowed"),
+            "carrier.development_project_target_allowed",
+        ),
+        development_checkout_cwd_allowed=_bool(
+            carrier.get("development_checkout_cwd_allowed"),
+            "carrier.development_checkout_cwd_allowed",
+        ),
+        business_runtime_kind=_text(
+            carrier.get("business_runtime_kind"),
+            "carrier.business_runtime_kind",
+        ),
+        post_stage_blocker_must_not_block_daily_trigger=_bool(
+            carrier.get("post_stage_blocker_must_not_block_daily_trigger"),
+            "carrier.post_stage_blocker_must_not_block_daily_trigger",
+        ),
+        invocation_windows_schema=_text(
+            invocation_windows.get("schema_version"),
+            "invocation_windows.schema_version",
+        ),
+        invocation_local_timezone=_text(
+            invocation_windows.get("local_timezone"),
+            "invocation_windows.local_timezone",
+        ),
+        invocation_windows=_invocation_windows(
+            invocation_windows.get("windows"),
+            "invocation_windows.windows",
+        ),
+        invocation_scheduler_entry_count=_positive_int(
+            invocation_windows.get("scheduler_entry_count"),
+            "invocation_windows.scheduler_entry_count",
+        ),
+        per_invocation_business_trigger_max=_positive_int(
+            invocation_windows.get("per_invocation_business_trigger_max"),
+            "invocation_windows.per_invocation_business_trigger_max",
+        ),
+        same_scheduler_entry_for_all_windows=_bool(
+            invocation_windows.get("same_scheduler_entry_for_all_windows"),
+            "invocation_windows.same_scheduler_entry_for_all_windows",
+        ),
+        rescue_is_unconditional_retry=_bool(
+            invocation_windows.get("rescue_is_unconditional_retry"),
+            "invocation_windows.rescue_is_unconditional_retry",
+        ),
+        rescue_same_as_of_ordinary_allowed=_bool(
+            invocation_windows.get("same_as_of_ordinary_allowed"),
+            "invocation_windows.same_as_of_ordinary_allowed",
+        ),
+        gap_visibility_schema=_text(
+            gap_visibility.get("schema_version"),
+            "gap_visibility.schema_version",
+        ),
+        gap_visibility_statuses=_text_tuple(
+            gap_visibility.get("statuses"),
+            "gap_visibility.statuses",
+        ),
+        missing_expected_as_of_evidence_means_no_gap=_bool(
+            gap_visibility.get("missing_expected_as_of_evidence_means_no_gap"),
+            "gap_visibility.missing_expected_as_of_evidence_means_no_gap",
+        ),
+        canonical_artifact_identity_required=_bool(
+            gap_visibility.get("canonical_artifact_identity_required"),
+            "gap_visibility.canonical_artifact_identity_required",
+        ),
         terminal_dispositions=tuple(raw_dispositions),
         same_as_of_ordinary_allowed=_bool(
             terminal_routing.get("same_as_of_ordinary_allowed"),
@@ -275,6 +370,23 @@ def load_ops_scheduler_checkout_policy(
         or not policy.current_process_must_run_from_ops_checkout
         or policy.manual_execution_option != "--manual-execution"
         or policy.separate_periodic_scheduler_entries_allowed
+        or policy.carrier_mode != "PROJECTLESS_ISOLATED"
+        or policy.development_project_target_allowed
+        or policy.development_checkout_cwd_allowed
+        or policy.business_runtime_kind != "INDEPENDENT_RECEIPT_GATED_CLONE"
+        or not policy.post_stage_blocker_must_not_block_daily_trigger
+        or policy.invocation_windows_schema != "ops_scheduler_invocation_windows.v1"
+        or policy.invocation_local_timezone != "Asia/Tokyo"
+        or policy.invocation_windows != _EXPECTED_INVOCATION_WINDOWS
+        or policy.invocation_scheduler_entry_count != 1
+        or policy.per_invocation_business_trigger_max != 1
+        or not policy.same_scheduler_entry_for_all_windows
+        or policy.rescue_is_unconditional_retry
+        or policy.rescue_same_as_of_ordinary_allowed
+        or policy.gap_visibility_schema != "ops_scheduler_gap_visibility.v1"
+        or policy.gap_visibility_statuses != _EXPECTED_GAP_VISIBILITY_STATUSES
+        or policy.missing_expected_as_of_evidence_means_no_gap
+        or not policy.canonical_artifact_identity_required
         or policy.same_as_of_ordinary_allowed
         or not policy.ordinary_requires_as_of_strictly_after_parent
         or not policy.ordinary_requires_fresh_idempotency_key
@@ -368,12 +480,89 @@ def resolve_ops_scheduler_terminal_disposition(
         "same_as_of_ordinary_allowed": checked_policy.same_as_of_ordinary_allowed,
         "parent_bytes_must_remain_immutable": (checked_policy.parent_bytes_must_remain_immutable),
         "scheduler_entry_count": checked_policy.scheduler_entry_count,
+        "invocation_windows": [
+            {"role": role, "hour": hour, "minute": minute}
+            for role, hour, minute in checked_policy.invocation_windows
+        ],
+        "per_invocation_business_trigger_max": (checked_policy.per_invocation_business_trigger_max),
+        "same_scheduler_entry_for_all_windows": (
+            checked_policy.same_scheduler_entry_for_all_windows
+        ),
         "unified_external_trigger": list(checked_policy.unified_external_trigger),
         "production_effect": "none",
         "production_weight_write": False,
         "active_shadow_weight_write": False,
         "broker_action": False,
         "trading_action": False,
+    }
+
+
+def classify_ops_scheduler_gap_visibility(
+    *,
+    expected_as_of: date,
+    canonical_as_of: date | None,
+    state_present: bool,
+    ledger_present: bool,
+    manifest_present: bool,
+    artifact_identity_valid: bool,
+    terminal_status: str | None,
+    capture_status: str | None,
+    data_quality_status: str | None,
+    pit_status: str | None,
+    score_status: str | None,
+    policy: OpsSchedulerCheckoutPolicy | None = None,
+) -> dict[str, object]:
+    """Classify expected-session evidence without treating absent bytes as no gap."""
+
+    checked_policy = policy or load_ops_scheduler_checkout_policy()
+    required_artifacts = {
+        "state": state_present,
+        "ledger": ledger_present,
+        "manifest": manifest_present,
+    }
+    missing_artifacts = [name for name, present in required_artifacts.items() if not present]
+    if canonical_as_of != expected_as_of or missing_artifacts:
+        status = "EXPECTED_AS_OF_NOT_RECORDED"
+        reason_codes = ["EXPECTED_AS_OF_CANONICAL_EVIDENCE_MISSING"]
+        if canonical_as_of is not None and canonical_as_of != expected_as_of:
+            reason_codes.append("CANONICAL_AS_OF_MISMATCH")
+    elif not artifact_identity_valid:
+        status = "INDETERMINATE"
+        reason_codes = ["CANONICAL_ARTIFACT_IDENTITY_INVALID"]
+    elif (
+        terminal_status in {"FAILED", "BLOCKED"}
+        or capture_status in {"FAILED", "BLOCKED", "PARTIAL", "MISSED"}
+        or data_quality_status in {"FAIL", "FAILED", "BLOCKED"}
+        or pit_status in {"FAIL", "FAILED", "BLOCKED"}
+        or score_status in {"FAIL", "FAILED", "BLOCKED"}
+    ):
+        status = "GAP_EXPOSURE_PRESENT"
+        reason_codes = ["CANONICAL_EVIDENCE_REPORTS_GAP_OR_BLOCKER"]
+    elif (
+        terminal_status in {"PASS", "PASS_WITH_SKIPS"}
+        and capture_status in {"PASS", "PASS_WITH_WARNINGS"}
+        and data_quality_status == "PASS"
+        and pit_status == "PASS"
+        and score_status == "PASS"
+    ):
+        status = "NO_GAP_EVIDENCE"
+        reason_codes = ["EXPECTED_AS_OF_CANONICAL_CHAIN_REPLAYABLE"]
+    else:
+        status = "INDETERMINATE"
+        reason_codes = ["CANONICAL_EVIDENCE_INSUFFICIENT_FOR_GAP_CONCLUSION"]
+    if status not in checked_policy.gap_visibility_statuses:
+        raise ValueError("gap visibility status is outside reviewed policy")
+    return {
+        "schema_version": checked_policy.gap_visibility_schema,
+        "gap_visibility_status": status,
+        "expected_as_of": expected_as_of.isoformat(),
+        "canonical_as_of": canonical_as_of.isoformat() if canonical_as_of else None,
+        "missing_artifacts": missing_artifacts,
+        "reason_codes": reason_codes,
+        "missing_evidence_interpreted_as_no_gap": False,
+        "artifact_identity_valid": artifact_identity_valid,
+        "production_effect": "none",
+        "broker_action": "none",
     }
 
 
@@ -815,6 +1004,39 @@ def _positive_int(value: object, field: str) -> int:
     return value
 
 
+def _nonnegative_int(value: object, field: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError(f"ops scheduler checkout policy {field} must be nonnegative integer")
+    return value
+
+
+def _text_tuple(value: object, field: str) -> tuple[str, ...]:
+    if not isinstance(value, list) or not value:
+        raise ValueError(f"ops scheduler checkout policy {field} must be a text list")
+    if not all(isinstance(item, str) and item for item in value):
+        raise ValueError(f"ops scheduler checkout policy {field} must be a text list")
+    if len(set(value)) != len(value):
+        raise ValueError(f"ops scheduler checkout policy {field} contains duplicates")
+    return tuple(value)
+
+
+def _invocation_windows(value: object, field: str) -> tuple[tuple[str, int, int], ...]:
+    if not isinstance(value, list) or not value:
+        raise ValueError(f"ops scheduler checkout policy {field} must be a non-empty list")
+    windows: list[tuple[str, int, int]] = []
+    for index, raw in enumerate(value):
+        row = _mapping(raw, f"{field}[{index}]")
+        role = _text(row.get("role"), f"{field}[{index}].role")
+        hour = _nonnegative_int(row.get("hour"), f"{field}[{index}].hour")
+        minute = _nonnegative_int(row.get("minute"), f"{field}[{index}].minute")
+        if hour > 23 or minute > 59:
+            raise ValueError(f"ops scheduler checkout policy {field}[{index}] time is invalid")
+        windows.append((role, hour, minute))
+    if len(set(windows)) != len(windows):
+        raise ValueError(f"ops scheduler checkout policy {field} contains duplicates")
+    return tuple(windows)
+
+
 def _relative_text(value: object, field: str) -> str:
     text = _text(value, field)
     path = Path(text)
@@ -833,6 +1055,7 @@ def _relative_path(path: Path, project_root: Path) -> str:
 __all__ = [
     "DEFAULT_OPS_SCHEDULER_CHECKOUT_POLICY_PATH",
     "OpsSchedulerCheckoutPolicy",
+    "classify_ops_scheduler_gap_visibility",
     "inspect_ops_scheduler_checkout",
     "load_ops_scheduler_checkout_policy",
     "write_ops_scheduler_checkout_preflight",

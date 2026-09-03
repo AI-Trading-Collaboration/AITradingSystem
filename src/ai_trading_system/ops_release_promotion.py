@@ -69,6 +69,10 @@ _RUNTIME_GIT_EXCLUDE_PATTERNS = (
 _RUNTIME_GIT_EXCLUDE_HEADER = (
     "# AITradingSystem managed ops runtime exclusions: ops_release_promotion_v1"
 )
+_EXPECTED_SCHEDULER_INVOCATION_WINDOWS = (
+    ("PRIMARY", 9, 30),
+    ("SAME_DAY_RESCUE", 17, 30),
+)
 
 
 class OpsReleasePromotionError(RuntimeError):
@@ -126,6 +130,12 @@ class OpsReleasePromotionPolicy:
     expected_scheduler_reasoning_effort: str
     expected_scheduler_execution_environment: str
     expected_scheduler_target_type: str
+    expected_scheduler_cwds_empty: bool
+    scheduler_carrier_mode: str
+    scheduler_local_timezone: str
+    scheduler_invocation_windows: tuple[tuple[str, int, int], ...]
+    scheduler_per_invocation_business_trigger_max: int
+    scheduler_same_entry_for_all_windows: bool
     observation_must_not_predate_promotion: bool
     pre_release_canary_schema: str
     pre_release_canary_runner_schema: str
@@ -341,6 +351,30 @@ def load_ops_release_promotion_policy(
             scheduler.get("expected_target_type"),
             "expected_target_type",
         ),
+        expected_scheduler_cwds_empty=_bool(
+            scheduler.get("expected_cwds_empty"),
+            "expected_cwds_empty",
+        ),
+        scheduler_carrier_mode=_text(
+            scheduler.get("carrier_mode"),
+            "carrier_mode",
+        ),
+        scheduler_local_timezone=_text(
+            scheduler.get("local_timezone"),
+            "local_timezone",
+        ),
+        scheduler_invocation_windows=_scheduler_invocation_windows(
+            scheduler.get("invocation_windows"),
+            "invocation_windows",
+        ),
+        scheduler_per_invocation_business_trigger_max=_positive_int(
+            scheduler.get("per_invocation_business_trigger_max"),
+            "per_invocation_business_trigger_max",
+        ),
+        scheduler_same_entry_for_all_windows=_bool(
+            scheduler.get("same_scheduler_entry_for_all_windows"),
+            "same_scheduler_entry_for_all_windows",
+        ),
         observation_must_not_predate_promotion=_bool(
             scheduler.get("observation_must_not_predate_promotion"),
             "observation_must_not_predate_promotion",
@@ -403,7 +437,13 @@ def load_ops_release_promotion_policy(
         or policy.scheduler_observation_schema != _SCHEDULER_OBSERVATION_SCHEMA
         or policy.expected_scheduler_status != "ACTIVE"
         or policy.expected_scheduler_execution_environment != "local"
-        or policy.expected_scheduler_target_type != "project"
+        or policy.expected_scheduler_target_type != "projectless"
+        or not policy.expected_scheduler_cwds_empty
+        or policy.scheduler_carrier_mode != "PROJECTLESS_ISOLATED"
+        or policy.scheduler_local_timezone != "Asia/Tokyo"
+        or policy.scheduler_invocation_windows != _EXPECTED_SCHEDULER_INVOCATION_WINDOWS
+        or policy.scheduler_per_invocation_business_trigger_max != 1
+        or not policy.scheduler_same_entry_for_all_windows
         or not policy.observation_must_not_predate_promotion
         or policy.pre_release_canary_schema != _PRE_RELEASE_CANARY_SCHEMA
         or policy.pre_release_canary_runner_schema != _INCIDENT_REGRESSION_RUNNER_SCHEMA
@@ -1356,6 +1396,14 @@ def validate_scheduler_observation(
         "model": checked_policy.expected_scheduler_model,
         "reasoning_effort": checked_policy.expected_scheduler_reasoning_effort,
         "execution_environment": checked_policy.expected_scheduler_execution_environment,
+        "carrier_mode": checked_policy.scheduler_carrier_mode,
+        "local_timezone": checked_policy.scheduler_local_timezone,
+        "per_invocation_business_trigger_max": (
+            checked_policy.scheduler_per_invocation_business_trigger_max
+        ),
+        "same_scheduler_entry_for_all_windows": (
+            checked_policy.scheduler_same_entry_for_all_windows
+        ),
     }
     for field, value in expected.items():
         if payload.get(field) != value:
@@ -1401,6 +1449,26 @@ def validate_scheduler_observation(
             "SCHEDULER_TARGET_MISMATCH",
             str(target.get("type")),
         )
+    if target.get("project_id") is not None:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_PROJECT_TARGET_FORBIDDEN",
+            str(target.get("project_id")),
+        )
+    observed_cwds = payload.get("cwds")
+    if not isinstance(observed_cwds, list) or observed_cwds:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_DEVELOPMENT_CWD_FORBIDDEN",
+            repr(observed_cwds),
+        )
+    observed_windows = _scheduler_invocation_windows(
+        payload.get("invocation_windows"),
+        "invocation_windows",
+    )
+    if observed_windows != checked_policy.scheduler_invocation_windows:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_INVOCATION_WINDOWS_MISMATCH",
+            repr(observed_windows),
+        )
     config = _mapping(payload.get("config"), "config")
     config_path = Path(_text(config.get("absolute_path"), "config.absolute_path")).resolve()
     _validate_commitment_row(config, True)
@@ -1419,6 +1487,7 @@ def validate_scheduler_observation(
         "reasoning_effort": config_payload.get("reasoning_effort"),
         "execution_environment": config_payload.get("execution_environment"),
         "target": config_payload.get("target"),
+        "cwds": list(_automation_cwds(config_payload)),
     }
     drift = [field for field, value in live_fields.items() if payload.get(field) != value]
     if drift:
@@ -1479,7 +1548,20 @@ def validate_scheduler_observation(
         "model": checked_policy.expected_scheduler_model,
         "reasoning_effort": checked_policy.expected_scheduler_reasoning_effort,
         "execution_environment": checked_policy.expected_scheduler_execution_environment,
+        "carrier_mode": checked_policy.scheduler_carrier_mode,
+        "local_timezone": checked_policy.scheduler_local_timezone,
+        "invocation_windows": [
+            {"role": role, "hour": hour, "minute": minute}
+            for role, hour, minute in checked_policy.scheduler_invocation_windows
+        ],
+        "per_invocation_business_trigger_max": (
+            checked_policy.scheduler_per_invocation_business_trigger_max
+        ),
+        "same_scheduler_entry_for_all_windows": (
+            checked_policy.scheduler_same_entry_for_all_windows
+        ),
         "target": dict(target),
+        "cwds": [],
         "config": dict(config),
         "config_updated_at": config_updated_at.isoformat(),
         "prompt": dict(prompt),
@@ -1523,6 +1605,7 @@ def observe_codex_automation_config(
     if prompt_value != canonical_text:
         raise OpsReleasePromotionError("SCHEDULER_PROMPT_DRIFT", str(path))
     target = _mapping(config.get("target"), "config.target")
+    cwds = _automation_cwds(config)
     timestamp = _aware(observed_at)
     config_updated_at = _parse_automation_updated_at(config.get("updated_at"), "config.updated_at")
     if config_updated_at > timestamp:
@@ -1546,7 +1629,18 @@ def observe_codex_automation_config(
         "model": config.get("model"),
         "reasoning_effort": config.get("reasoning_effort"),
         "execution_environment": config.get("execution_environment"),
+        "carrier_mode": policy.scheduler_carrier_mode,
+        "local_timezone": policy.scheduler_local_timezone,
+        "invocation_windows": [
+            {"role": role, "hour": hour, "minute": minute}
+            for role, hour, minute in policy.scheduler_invocation_windows
+        ],
+        "per_invocation_business_trigger_max": (
+            policy.scheduler_per_invocation_business_trigger_max
+        ),
+        "same_scheduler_entry_for_all_windows": policy.scheduler_same_entry_for_all_windows,
         "target": dict(target),
+        "cwds": list(cwds),
         "config": {
             "path": str(path),
             "absolute_path": str(path),
@@ -1590,6 +1684,12 @@ def _validate_scheduler_binding_record(
         "model": policy.expected_scheduler_model,
         "reasoning_effort": policy.expected_scheduler_reasoning_effort,
         "execution_environment": policy.expected_scheduler_execution_environment,
+        "carrier_mode": policy.scheduler_carrier_mode,
+        "local_timezone": policy.scheduler_local_timezone,
+        "per_invocation_business_trigger_max": (
+            policy.scheduler_per_invocation_business_trigger_max
+        ),
+        "same_scheduler_entry_for_all_windows": (policy.scheduler_same_entry_for_all_windows),
         "release_identity_authority": policy.release_identity_authority,
         "mutable_release_environment_present": False,
     }
@@ -1615,6 +1715,28 @@ def _validate_scheduler_binding_record(
         raise OpsReleasePromotionError(
             "SCHEDULER_TARGET_MISMATCH",
             str(target.get("type")),
+        )
+    if target.get("project_id") is not None:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_PROJECT_TARGET_FORBIDDEN",
+            str(target.get("project_id")),
+        )
+    cwds = payload.get("cwds")
+    if not isinstance(cwds, list) or cwds:
+        raise OpsReleasePromotionError(
+            "SCHEDULER_DEVELOPMENT_CWD_FORBIDDEN",
+            repr(cwds),
+        )
+    if (
+        _scheduler_invocation_windows(
+            payload.get("invocation_windows"),
+            "scheduler.invocation_windows",
+        )
+        != policy.scheduler_invocation_windows
+    ):
+        raise OpsReleasePromotionError(
+            "SCHEDULER_INVOCATION_WINDOWS_MISMATCH",
+            repr(payload.get("invocation_windows")),
         )
     config = _mapping(payload.get("config"), "scheduler.config")
     _validate_commitment_row(config, verify_live)
@@ -2873,6 +2995,40 @@ def _text_tuple_groups(value: object, field: str) -> tuple[tuple[str, ...], ...]
     if len(set(groups)) != len(groups):
         raise OpsReleasePromotionError("RECEIPT_FIELD_DUPLICATE", field)
     return tuple(groups)
+
+
+def _scheduler_invocation_windows(
+    value: object,
+    field: str,
+) -> tuple[tuple[str, int, int], ...]:
+    if not isinstance(value, list) or not value:
+        raise OpsReleasePromotionError("SCHEDULER_INVOCATION_WINDOWS_INVALID", field)
+    windows: list[tuple[str, int, int]] = []
+    for index, raw in enumerate(value):
+        row = _mapping(raw, f"{field}[{index}]")
+        role = _text(row.get("role"), f"{field}[{index}].role")
+        hour = _nonnegative_int(row.get("hour"), f"{field}[{index}].hour")
+        minute = _nonnegative_int(row.get("minute"), f"{field}[{index}].minute")
+        if hour > 23 or minute > 59:
+            raise OpsReleasePromotionError(
+                "SCHEDULER_INVOCATION_WINDOWS_INVALID",
+                f"{field}[{index}]={hour:02d}:{minute:02d}",
+            )
+        windows.append((role, hour, minute))
+    if len(set(windows)) != len(windows):
+        raise OpsReleasePromotionError("SCHEDULER_INVOCATION_WINDOWS_INVALID", field)
+    return tuple(windows)
+
+
+def _automation_cwds(config: Mapping[str, object]) -> tuple[str, ...]:
+    value = config.get("cwds")
+    if value is None:
+        return ()
+    if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
+        raise OpsReleasePromotionError("SCHEDULER_CONFIG_CWDS_INVALID", "cwds")
+    if len(set(value)) != len(value):
+        raise OpsReleasePromotionError("SCHEDULER_CONFIG_CWDS_INVALID", "cwds")
+    return tuple(value)
 
 
 def _relative_policy_path(value: object, field: str) -> str:

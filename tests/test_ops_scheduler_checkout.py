@@ -16,6 +16,7 @@ import ai_trading_system.ops_scheduler_checkout as scheduler_checkout
 from ai_trading_system.ops_scheduler_checkout import (
     DEFAULT_OPS_SCHEDULER_CHECKOUT_POLICY_PATH,
     OpsSchedulerTerminalDisposition,
+    classify_ops_scheduler_gap_visibility,
     inspect_ops_scheduler_checkout,
     load_ops_scheduler_checkout_policy,
     resolve_ops_scheduler_terminal_disposition,
@@ -59,6 +60,19 @@ def test_policy_requires_receipt_gated_independent_clone() -> None:
     assert policy.nonrecoverable_parent_recovery_allowed is False
     assert policy.parent_bytes_must_remain_immutable is True
     assert policy.new_business_scheduler_entry_allowed is False
+    assert policy.carrier_mode == "PROJECTLESS_ISOLATED"
+    assert policy.development_project_target_allowed is False
+    assert policy.development_checkout_cwd_allowed is False
+    assert policy.business_runtime_kind == "INDEPENDENT_RECEIPT_GATED_CLONE"
+    assert policy.post_stage_blocker_must_not_block_daily_trigger is True
+    assert policy.invocation_local_timezone == "Asia/Tokyo"
+    assert policy.invocation_windows == (("PRIMARY", 9, 30), ("SAME_DAY_RESCUE", 17, 30))
+    assert policy.invocation_scheduler_entry_count == 1
+    assert policy.per_invocation_business_trigger_max == 1
+    assert policy.same_scheduler_entry_for_all_windows is True
+    assert policy.rescue_is_unconditional_retry is False
+    assert policy.rescue_same_as_of_ordinary_allowed is False
+    assert policy.missing_expected_as_of_evidence_means_no_gap is False
 
 
 def test_terminal_disposition_waits_when_same_as_of_is_not_recoverable() -> None:
@@ -112,7 +126,75 @@ def test_terminal_disposition_allows_new_as_of_ordinary_on_fresh_key() -> None:
     assert decision["trigger_mode"] == "ORDINARY"
     assert decision["recovery_arguments_required"] is False
     assert decision["scheduler_entry_count"] == 1
+    assert decision["invocation_windows"] == [
+        {"role": "PRIMARY", "hour": 9, "minute": 30},
+        {"role": "SAME_DAY_RESCUE", "hour": 17, "minute": 30},
+    ]
+    assert decision["per_invocation_business_trigger_max"] == 1
+    assert decision["same_scheduler_entry_for_all_windows"] is True
     assert decision["unified_external_trigger"] == ["aits", "ops", "daily-run"]
+
+
+def test_gap_visibility_does_not_treat_missing_expected_as_of_as_no_gap() -> None:
+    result = classify_ops_scheduler_gap_visibility(
+        expected_as_of=date(2026, 9, 2),
+        canonical_as_of=date(2026, 9, 1),
+        state_present=True,
+        ledger_present=True,
+        manifest_present=True,
+        artifact_identity_valid=True,
+        terminal_status="FAILED",
+        capture_status="PARTIAL",
+        data_quality_status="FAIL",
+        pit_status="PASS",
+        score_status="BLOCKED",
+    )
+
+    assert result["gap_visibility_status"] == "EXPECTED_AS_OF_NOT_RECORDED"
+    assert result["reason_codes"] == [
+        "EXPECTED_AS_OF_CANONICAL_EVIDENCE_MISSING",
+        "CANONICAL_AS_OF_MISMATCH",
+    ]
+    assert result["missing_evidence_interpreted_as_no_gap"] is False
+
+
+def test_gap_visibility_requires_complete_replayable_chain_for_no_gap() -> None:
+    result = classify_ops_scheduler_gap_visibility(
+        expected_as_of=date(2026, 9, 2),
+        canonical_as_of=date(2026, 9, 2),
+        state_present=True,
+        ledger_present=True,
+        manifest_present=True,
+        artifact_identity_valid=True,
+        terminal_status="PASS",
+        capture_status="PASS_WITH_WARNINGS",
+        data_quality_status="PASS",
+        pit_status="PASS",
+        score_status="PASS",
+    )
+
+    assert result["gap_visibility_status"] == "NO_GAP_EVIDENCE"
+    assert result["missing_artifacts"] == []
+    assert result["production_effect"] == "none"
+
+
+def test_gap_visibility_reports_partial_canonical_evidence() -> None:
+    result = classify_ops_scheduler_gap_visibility(
+        expected_as_of=date(2026, 9, 2),
+        canonical_as_of=date(2026, 9, 2),
+        state_present=True,
+        ledger_present=True,
+        manifest_present=True,
+        artifact_identity_valid=True,
+        terminal_status="FAILED",
+        capture_status="PARTIAL",
+        data_quality_status="FAIL",
+        pit_status="PASS",
+        score_status="BLOCKED",
+    )
+
+    assert result["gap_visibility_status"] == "GAP_EXPOSURE_PRESENT"
+    assert result["reason_codes"] == ["CANONICAL_EVIDENCE_REPORTS_GAP_OR_BLOCKER"]
 
 
 @pytest.mark.parametrize(

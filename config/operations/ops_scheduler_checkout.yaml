@@ -8,7 +8,9 @@ rationale: >
   Daily provider capture must run from an owner-accepted exact release in an
   independent Git clone with a runtime-local executable. Release identity comes
   only from the active deployment receipt; a legacy environment SHA is an
-  optional exact-match assertion and can never override the receipt.
+  optional exact-match assertion and can never override the receipt. The Codex
+  carrier is projectless so a user development checkout cannot block business
+  admission; one scheduler entry provides a primary and same-day rescue window.
 environment:
   scheduler_marker_name: AITS_EXTERNAL_SCHEDULER
   scheduler_marker_value: "1"
@@ -34,6 +36,36 @@ trigger:
     - daily-run
   manual_execution_option: --manual-execution
   separate_periodic_scheduler_entries_allowed: false
+carrier:
+  mode: PROJECTLESS_ISOLATED
+  development_project_target_allowed: false
+  development_checkout_cwd_allowed: false
+  business_runtime_kind: INDEPENDENT_RECEIPT_GATED_CLONE
+  post_stage_blocker_must_not_block_daily_trigger: true
+invocation_windows:
+  schema_version: ops_scheduler_invocation_windows.v1
+  local_timezone: Asia/Tokyo
+  windows:
+    - role: PRIMARY
+      hour: 9
+      minute: 30
+    - role: SAME_DAY_RESCUE
+      hour: 17
+      minute: 30
+  scheduler_entry_count: 1
+  per_invocation_business_trigger_max: 1
+  same_scheduler_entry_for_all_windows: true
+  rescue_is_unconditional_retry: false
+  same_as_of_ordinary_allowed: false
+gap_visibility:
+  schema_version: ops_scheduler_gap_visibility.v1
+  statuses:
+    - NO_GAP_EVIDENCE
+    - GAP_EXPOSURE_PRESENT
+    - EXPECTED_AS_OF_NOT_RECORDED
+    - INDETERMINATE
+  missing_expected_as_of_evidence_means_no_gap: false
+  canonical_artifact_identity_required: true
 terminal_parent_routing:
   schema_version: ops_scheduler_terminal_disposition_policy.v1
   dispositions:

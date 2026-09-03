@@ -10,6 +10,9 @@ rationale: >
   is the only mutable release authority; the external automation must not keep
   a second release SHA. Daily execution must never select latest main, mutate
   release state, or repair a failed promotion.
+  The automation carrier is projectless and isolated from the development
+  checkout; the same scheduler entry owns both the primary and same-day rescue
+  invocation windows.
   Permanent runtime-generated state uses an exact, receipt-bound local Git
   exclusion contract so development checkout dirty semantics remain strict.
 repository:
@@ -86,11 +89,23 @@ scheduler:
   observation_schema: ops_scheduler_observation.v2
   canonical_prompt_relative_path: config/operations/aitradingsystem_pit_automation_prompt.md
   expected_status: ACTIVE
-  expected_rrule: FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU;BYHOUR=9;BYMINUTE=30;BYSECOND=0
+  expected_rrule: FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU;BYHOUR=9,17;BYMINUTE=30;BYSECOND=0
   expected_model: gpt-5.6-sol
   expected_reasoning_effort: xhigh
   expected_execution_environment: local
-  expected_target_type: project
+  expected_target_type: projectless
+  expected_cwds_empty: true
+  carrier_mode: PROJECTLESS_ISOLATED
+  local_timezone: Asia/Tokyo
+  invocation_windows:
+    - role: PRIMARY
+      hour: 9
+      minute: 30
+    - role: SAME_DAY_RESCUE
+      hour: 17
+      minute: 30
+  per_invocation_business_trigger_max: 1
+  same_scheduler_entry_for_all_windows: true
   observation_must_not_predate_promotion: true
 pre_release_canary:
   schema_version: ops_release_preflight_canary.v1

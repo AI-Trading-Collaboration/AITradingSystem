@@ -1086,6 +1086,17 @@ executable/import 任一缺失或漂移均 fail closed。`daily-run` 先取得 c
 receipt 派生 exact commit 并执行/写 scheduler preflight；人工运行只有
 显式 `--manual-execution` 才可进入，active scheduler checkout 禁止混用 manual mode。
 
+OPS-078 将 scheduler carrier 从 development project 改为 projectless 隔离上下文，actual
+automation config 必须无 project id、无 development `cwds`。唯一 scheduler entry 的同一 RRULE
+提供 Asia/Tokyo 09:30 `PRIMARY` 与 17:30 `SAME_DAY_RESCUE` 两个 invocation window，但每个
+invocation 仍最多一次业务 trigger。第二窗口只补救“早间尚未产生业务 state/side effect”的
+control-plane 阻断；若已有 terminal parent，则继续按 OPS-071/073 的 recovery/disposition contract
+处理，禁止同 `as_of` ordinary 或重复 provider/capture/DQ/PIT/score。每轮还把 expected provider-ready
+`as_of` 与 canonical state/ledger/manifest/capture/gap evidence 对账；expected 日期没有 artifact 时
+输出 `EXPECTED_AS_OF_NOT_RECORDED`，不能因旧 gap ledger 的 `MISSED=0` 推断数据完整。Development
+checkout 的 Atlas/workflow-health post-stage blocker 与 daily business trigger 分离，避免用户 worktree
+lease 反向制造采集缺口；该隔离不放宽任何 DQ/PIT、release、production 或 broker gate。
+
 ```mermaid
 flowchart LR
     EXCLUDE["Reviewed runtime-only Git exclusions<br/>exact bytes + SHA + patterns"] --> CANARY["Pre-release incident canary<br/>exact candidate + parallel pytest<br/>zero provider request"]
@@ -1094,10 +1105,13 @@ flowchart LR
     AUDIT --> PROMOTE["Locked exact promotion<br/>portable evidence copy + revalidation + rollback"]
     PROMOTE --> SELF["Post-switch self-audit<br/>runtime policy + sanitized Python probe"]
     SELF --> DEPLOYED["DEPLOYED<br/>exact runtime switched"]
-    DEPLOYED --> API["Update the one Codex automation<br/>canonical stable prompt<br/>no mutable release SHA"]
-    API --> OBS["Fresh actual config observation<br/>prompt/config SHA + updated-at<br/>schedule/model/status/target"]
+    DEPLOYED --> API["Update the one Codex automation<br/>projectless isolated carrier<br/>09:30 primary + 17:30 rescue<br/>no mutable release SHA"]
+    API --> OBS["Fresh actual config observation<br/>prompt/config SHA + updated-at<br/>two windows + no project/cwd"]
     OBS --> ACCEPT["SCHEDULER_BOUND active receipt<br/>independent clone + runtime/environment fingerprint"]
-    ACCEPT --> TRIG["Only external trigger<br/>aits ops daily-run<br/>release from active receipt"]
+    ACCEPT --> WINDOW{"Invocation window<br/>PRIMARY or SAME_DAY_RESCUE"}
+    WINDOW -->|"terminal evidence current"| SKIP["RESCUE_NOT_NEEDED<br/>no business trigger"]
+    WINDOW -->|"fresh key + no lock + accepted release"| TRIG["Only external trigger<br/>max once per invocation<br/>aits ops daily-run"]
+    WINDOW -->|"terminal parent not recoverable"| WAIT["WAIT/BLOCKED<br/>no same-as-of ordinary"]
     TRIG --> WRITE["Checkout WRITE lease"]
     WRITE --> PREFLIGHT["Receipt-gated scheduler checkout preflight"]
     PREFLIGHT --> CAPTURE["capture_daily_inputs umbrella"]
@@ -1113,6 +1127,9 @@ flowchart LR
     OFF --> MAN
     MAN --> VCAP["Capture validation"]
     VCAP --> GAP["XNYS session gap ledger"]
+    FINALCAP --> GV["Expected-as-of gap visibility<br/>NO_GAP_EVIDENCE / GAP_EXPOSURE_PRESENT<br/>EXPECTED_AS_OF_NOT_RECORDED / INDETERMINATE"]
+    SKIP --> GV
+    WAIT --> GV
     GAP --> REC["Source/session recovery queue<br/>manual only / no strict PIT"]
     VCAP --> CDEP["Component dependency matrix"]
     CDEP -->|"market_macro PASS"| DQCAP["strict daily_default.v1 DQ"]

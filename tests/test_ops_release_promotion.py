@@ -110,6 +110,16 @@ def test_policy_fails_closed_on_latest_and_scheduler_duplication() -> None:
     assert policy.pre_switch_checkout_policy_source == "coordinator_candidate"
     assert policy.scheduler_entry_count == 1
     assert policy.windows_task_scheduler_entries_allowed is False
+    assert policy.expected_scheduler_target_type == "projectless"
+    assert policy.expected_scheduler_cwds_empty is True
+    assert policy.scheduler_carrier_mode == "PROJECTLESS_ISOLATED"
+    assert policy.scheduler_local_timezone == "Asia/Tokyo"
+    assert policy.scheduler_invocation_windows == (
+        ("PRIMARY", 9, 30),
+        ("SAME_DAY_RESCUE", 17, 30),
+    )
+    assert policy.scheduler_per_invocation_business_trigger_max == 1
+    assert policy.scheduler_same_entry_for_all_windows is True
     assert policy.pre_release_canary_runner_schema == "pytest_incident_regression.v1"
     assert set(policy.pre_release_canary_required_scenarios) == set(INCIDENT_TEST_NODES)
 
@@ -718,6 +728,57 @@ def test_scheduler_observation_rejects_prompt_drift(tmp_path: Path) -> None:
         )
 
 
+def test_scheduler_observation_rejects_project_target(tmp_path: Path) -> None:
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    runtime_python = runtime / ".venv" / "Scripts" / "python.exe"
+    payload = _scheduler_observation(runtime, runtime_python)
+    automation_path = Path(str(payload["config"]["absolute_path"]))
+    automation_path.write_text(
+        automation_path.read_text(encoding="utf-8").replace(
+            'type = "projectless"',
+            'type = "project"\nproject_id = "development-project"',
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(OpsReleasePromotionError, match="SCHEDULER_TARGET_MISMATCH"):
+        observe_codex_automation_config(
+            automation_path=automation_path,
+            runtime_root=runtime,
+            runtime_python=runtime_python,
+            policy_path=runtime / "config" / "operations" / "ops_release_promotion.yaml",
+            observed_at=OBSERVED_AT,
+        )
+
+
+def test_scheduler_observation_rejects_development_cwd(tmp_path: Path) -> None:
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    runtime_python = runtime / ".venv" / "Scripts" / "python.exe"
+    payload = _scheduler_observation(runtime, runtime_python)
+    automation_path = Path(str(payload["config"]["absolute_path"]))
+    automation_path.write_text(
+        automation_path.read_text(encoding="utf-8").replace(
+            "\n[target]\n",
+            '\ncwds = ["D:\\\\Work\\\\AITradingSystem"]\n\n[target]\n',
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        OpsReleasePromotionError,
+        match="SCHEDULER_DEVELOPMENT_CWD_FORBIDDEN",
+    ):
+        observe_codex_automation_config(
+            automation_path=automation_path,
+            runtime_root=runtime,
+            runtime_python=runtime_python,
+            policy_path=runtime / "config" / "operations" / "ops_release_promotion.yaml",
+            observed_at=OBSERVED_AT,
+        )
+
+
 def test_promotion_rejects_missing_runtime_without_creating_it(
     tmp_path: Path,
 ) -> None:
@@ -994,15 +1055,17 @@ def _scheduler_observation(runtime: Path, runtime_python: Path) -> dict[str, obj
                 'name = "AITradingSystem PIT Daily"',
                 f"prompt = {json.dumps(prompt, ensure_ascii=False)}",
                 'status = "ACTIVE"',
-                'rrule = "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU;BYHOUR=9;BYMINUTE=30;BYSECOND=0"',
+                (
+                    'rrule = "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU;'
+                    'BYHOUR=9,17;BYMINUTE=30;BYSECOND=0"'
+                ),
                 'model = "gpt-5.6-sol"',
                 'reasoning_effort = "xhigh"',
                 'execution_environment = "local"',
                 f"updated_at = {int((OBSERVED_AT - timedelta(minutes=1)).timestamp() * 1000)}",
                 "",
                 "[target]",
-                'type = "project"',
-                'project_id = "fixture-project"',
+                'type = "projectless"',
                 "",
             )
         ),

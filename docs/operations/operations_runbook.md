@@ -100,6 +100,22 @@
   closed。状态分别是 `CODE_FIXED`、`DEPLOYED`、`SCHEDULER_BOUND`；只有下一严格更新的
   provider-ready `as_of` ordinary daily 全链完成后才是 `OPERATIONALLY_ACCEPTED`。发布、观察和
   acceptance 本身不运行 daily，scheduler entry 仍只能有一个。
+- OPS-078 起，唯一 `aitradingsystem-pit` Codex automation 使用 `projectless` 隔离 carrier，actual
+  config 不得包含 development project id 或 `cwds`；启动后第一步进入 permanent independent
+  runtime clone。该 carrier 只隔离 Codex 控制面，业务 checkout、runtime Python、exact release、
+  active receipt 和 Git common-dir 证明仍全部绑定 `D:\Work\AITradingSystem_ops_runtime`，不得改回
+  linked worktree、共享 development checkout 或自动追随 mutable main。现有单一 scheduler entry
+  的 RRULE 在 `Asia/Tokyo` 每日包含 09:30 `PRIMARY` 与 17:30 `SAME_DAY_RESCUE` 两个 invocation
+  window；每个 invocation 最多一次 business trigger。Rescue 不是无条件 retry：primary 已有完整
+  terminal evidence 时只记录 `RESCUE_NOT_NEEDED`；primary 在 trigger 前因 control-plane drift
+  阻断时，只有 fresh key/no-lock/active receipt/exact release 全部满足才可执行一次 new-as-of
+  ordinary；已有 terminal parent 仍严格受 OPS-071/073 recovery/disposition 约束，不得同 `as_of`
+  ordinary 或重做 provider/capture/DQ/PIT/score。Daily 阶段后必须将 resolver expected `as_of`
+  与 canonical state/ledger/manifest/capture validation/gap ledger 对账，输出
+  `NO_GAP_EVIDENCE|GAP_EXPOSURE_PRESENT|EXPECTED_AS_OF_NOT_RECORDED|INDETERMINATE`；没有 expected
+  `as_of` artifact 时必须使用 `EXPECTED_AS_OF_NOT_RECORDED`，旧 ledger 的 `MISSED=0` 不能证明
+  无缺口。Atlas/workflow-health post-stage 仍显式读取 development checkout，但其 lease/drift blocker
+  只能阻断对应 post-stage，不得反向阻断已通过 runtime gate 的 daily trigger。
 - Wave14稳定commit/push后的运营修复验收仍只能以`aits ops daily-run`作为唯一外部scheduler trigger，并选择最近已完成且超过provider-ready buffer的U.S. equity trading day。不得删除或手改2026-07-22既有FAILED state/ledger；若新as-of可执行，则使用其正常run-control key验证download→strict DQ→PIT→score→dashboard/latest→Reader Brief全链，并按due条件记录其他cadence为EXECUTED/SKIPPED/LIMITED/INSUFFICIENT_DATA。该验收不写production或active shadow weights，不触发broker/order/trading。
 - 人工运行登记任务应使用`aits ops periodic-dispatch`并显式提供`--task-id`、daily/DQ canonical status、`--data-quality-evidence-id`、至少一个`--source-artifact-id`、`--owner-decision-id`和`--confirm-manual-dispatch`；ad-hoc另需`--explicit-trigger`。该入口复用workflow/date lock、idempotency、attempt和terminal RunLedger，未解析placeholder或非allowlist命令前缀会在runner前BLOCKED。`config/operations/periodic_control.yaml`仍固定`automatic_command_dispatch_enabled=false`，不得把人工入口登记为第二个外部scheduler。
 - `scheduled_tasks.yaml` 的 daily task可用 `activation_condition=always|trading_day_only|closed_market_only` 声明 market-session条件；未声明等同 `always`，未知值加载失败。每个 daily task 还必须显式声明 `dependencies`；未知、重复、自依赖、逆序依赖、未知 capture component 或带依赖的 `always_run` 在配置加载时 fail closed。Conditional alternative（例如 trading-day capture 与 closed-market live fetch）按实际 plan 过滤后进入同一 canonical WorkflowSpec。`ops_daily.py`与canonical shadow/runtime spec必须使用同一activation和DAG解析，不允许重新硬编码另一套条件。

@@ -15126,7 +15126,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.ops_release_promotion
   path: src/ai_trading_system/ops_release_promotion.py
-  sha256: 5560ffb518f5c692c894400cb17b367ea9e5ffcbb07014d431dc41164dd98dbc
+  sha256: 0f4dd1212baa9e29058018c3d4329f230f04f4510cfed5e452e23a967578523a
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -15146,7 +15146,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.ops_scheduler_checkout
   path: src/ai_trading_system/ops_scheduler_checkout.py
-  sha256: fa0f02d416f69027819c1dd03fe38bd2bee8229458d1a86b5cc5159c8b4698c7
+  sha256: 6e71d16c51debf51677bdcdf6e1d86cdedd78d4326aba995b35c869b95424280
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -15553,7 +15553,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.compatibility_authority
   path: src/ai_trading_system/platform/architecture/compatibility_authority.py
-  sha256: 2334f4850a19e05182f76ca5b0c736382ea43fe2486056ec55fdb1e08f36d919
+  sha256: 3aedcda4c494f53689586d60c270c03bad12edf6ddc81ca713fd4fae5071805c
   rule_id: platform_architecture
   owner_profile: platform
   owners:
