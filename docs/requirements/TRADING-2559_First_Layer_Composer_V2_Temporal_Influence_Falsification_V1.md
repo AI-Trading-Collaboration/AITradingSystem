@@ -226,3 +226,25 @@ LONG episode，因此本任务不重复年度归因或 matched-placebo，也不�
   518 active，541 completed）。由于 Atlas generator 必须绑定包含最新 task index/view 的已提交 exact
   source，v9 在 generator 前以 failed 关闭；先提交 task-source 生成视图，再由 v10 从该 clean source
   commit 完整运行五个 generator。未运行研究、DQ、provider 或任何交易动作。
+- 2026-09-04：v10 final candidate `68e7e86c3fc16934b86beef815abee226c77fcb4` 已通过
+  Architecture `885 passed`、Contract `278 passed`、Integration `995 passed` 和
+  Reproducibility `24 passed`，但首次 Full 在 `10194 passed / 5 skipped / 19 failed` 后 fail
+  closed。父级失败证据为
+  `outputs/validation_runtime/full_20260903T205706Z/test_runtime_summary.json`，SHA-256
+  `6608dbb37bf7250fb920905b0296857897e9c476c6a1f781bb5914c49297cafc`。其中 17 个失败源于
+  coordinator 隔离 worktree 未带入测试已由配置/hash 固定引用的本地 ignored retained evidence；另
+  1 个失败是 Atlas task coverage 随 TRADING-2559 从 88 增至 89 后静态断言未更新，1 个失败是
+  ignored Atlas manifest 仍绑定 generator source commit 而非生成权威提交后的 final HEAD。均不涉及
+  研究算法、数据内容或 TRADING-2559 的 `1/1/1/1` 运行结果。
+- 2026-09-04：受限 Full failure-fix 只允许：（1）从原 checkout 按既有 SHA 复制 Full 测试实际引用
+  的 1,215 个 retained evidence 文件到 coordinator worktree，不覆盖任何已有文件；（2）把 Atlas 静态
+  task coverage 断言机械更新为 89；（3）从新的 exact source commit 重建五个共享 authority，并在
+  final candidate commit 后重新渲染 ignored Atlas output 以绑定 exact HEAD；（4）以
+  `failure_fix_rerun` 和上述父级 Full artifact 执行一次正式重验。已复制文件包括 O1 DQ gate
+  `ca02b4310f99d664bb8d987debd4900f4367935b3938663c7a633400d988a1ca`、由 receipt
+  `7cb8807c5938be5453e49c392e3173aca38e10643c643c28b335914196eda494` 固定且逐文件复核无差异的
+  1,205-file QQQ options signal package，以及 foundational
+  与 matched-placebo admission 已冻结 evidence bindings；目标 bytes 均与原 checkout SHA-256
+  相同。该 hydration 不执行 O1/Options/研究、不下载数据、不改 cache；所有 provider、QuantConnect、
+  option backtest、order、fill、position 动作继续为 0，TRADING-2559 immutable research output 与
+  `1/1/1/1` counters 不变。
