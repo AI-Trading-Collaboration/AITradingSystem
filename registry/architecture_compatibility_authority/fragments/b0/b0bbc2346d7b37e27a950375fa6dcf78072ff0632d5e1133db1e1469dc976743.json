@@ -10,10 +10,10 @@
       "rollback_mode": "FROZEN_LEGACY_PREFIX_ONLY"
     },
     "broker_action": "none",
-    "owner_decision": "owner_decision:DEVX-011:2026-08-31:proceed-governed-workflow-health-v1",
+    "owner_decision": "owner_decision:DEVX-012:2026-08-31:auto-trigger-workflow-health-existing-daily-automation-v1",
     "production_effect": "none",
     "report_catalog_flow_successor": {
-      "current_hash_authority": "phase_devx_011_governed_workflow_health_control_loop_v1.sources",
+      "current_hash_authority": "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1.sources",
       "entry_count": 3147,
       "fragment_count": 192,
       "fragment_shadow_active": false,
@@ -31,7 +31,7 @@
       "strategy_or_weight_changed": false,
       "validation_gate_relaxed": false
     },
-    "schema_version": "devx_011_governed_workflow_health_control_loop.v1",
+    "schema_version": "devx_012_automatic_workflow_health_trigger.v1",
     "sources": [
       {
         "hash_normalization": "git_eol_lf",
@@ -65,8 +65,8 @@
       },
       {
         "hash_normalization": "git_eol_lf",
-        "path": "docs/requirements/DEVX-011_Governed_Workflow_Health_Control_Loop_V1.md",
-        "sha256": "75c53809c9122adae18d907ec89ac818402eb257e36ef54867dcfa9a90259a0e"
+        "path": "docs/requirements/DEVX-012_Automatic_Workflow_Health_Trigger_And_Outcome_Review_V1.md",
+        "sha256": "5aa1b8ea17225e5fc183801a0aad1963662bb5bb80fa804bb859796a101c8102"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -80,43 +80,18 @@
       },
       {
         "hash_normalization": "git_eol_lf",
-        "path": "docs/task_register_completed.md",
-        "sha256": "5e857de98a20aa361bb57125a95eec1797290d5607736d5e360641c19d91350b"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "c333ecf270545f5477bcdd84cc73ec9bb1453fe6bebd167b56baf7abf2feab25"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
-        "sha256": "057181e7c02ad773479dc555439e4cb7e370ddb7e27e7f47d6f31bb08854bb22"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "738b892e195f67bfb28cc09749a2dd28a87ba954b9dabfca427c0891fc38a5f6"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "8463885ae00d4daa2be0bd7612720d3ffaa67c22a725ee769b295018add7b668"
+        "path": "docs/task_register.md",
+        "sha256": "de71affb87bae1adfad18d715b266d897b1eabaa6ed98ba2d0dbd28deec51d42"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
-        "sha256": "82a2e380c2ac5973d26fef25ecbe169c435e001b6c75fa7ba80a968050627902"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "inputs/architecture/arch_005_s5_consumer_inventory.yaml",
-        "sha256": "247d44a02a96b3540e6a9ce30a837fbf8caa4c46d4022fddafc524e5ab57baa8"
+        "sha256": "0f1600b8f05733fdfee98e72d9c6957b5a59e2b294acc575207c74bf5e549d4b"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "ab3185da4988a7d709fe724d8488f322698f60cd37818ff92fd65a28f654b805"
+        "sha256": "db0e26773a1c80f4b57c6c3759d19bc5e7c951daacf4978f33930a6437ad9993"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -130,33 +105,13 @@
       },
       {
         "hash_normalization": "git_eol_lf",
-        "path": "registry/development_tasks/9a/9ad46a4d8119b53fb50453cbba1eb662766972e40253230d50ddd24b18824456.yaml",
-        "sha256": "2a903416c20707a24457e68e8097ca0b1056d4b8d73c0c2e5e8cee346d4e83ae"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "registry/development_tasks/9b/9b5b97b624376702351d03e57e6ec2a0003742fa336920c87ffe862ea8e2d051.yaml",
-        "sha256": "a98b7168edc98c9b6d04f557f68766bac9021b1d28ae9ae4d21ce5487ef7c422"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "registry/development_tasks/eb/eb173d62a0fb99025f71cfd1eb155b45b1d388accaf681c4afc1645c68de6a2c.yaml",
-        "sha256": "3807df91a6496ea3fc93ed604748dfa2035aeddaadbfaa605fbec0770632fa7b"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "src/ai_trading_system/cli_commands/reports.py",
-        "sha256": "f53e7a6f91af4c7de21a470d7dc0818efaa92b6d7d30f4db726e2d659faae43b"
+        "path": "registry/development_tasks/32/329b8ec19d9613571c38d8882c7221180604b9eccaf091b243ece160f6ce2e11.yaml",
+        "sha256": "530de163760fb9a045aa06c8b3d434af13b9a4f161f934f1a3e11c0e6faf8824"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "src/ai_trading_system/cli_commands/workflow_health_reports.py",
         "sha256": "b03f6d2bd02449c9d51b283e56f8d13db9eacb28bd630910f1c0972ed8b48963"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "src/ai_trading_system/platform/architecture/checkout_guard.py",
-        "sha256": "21dc83b213c2a7d50aa5cbc9393fec4c65ea9a40f018c8d9afd5e46afbd290a1"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -175,48 +130,13 @@
       },
       {
         "hash_normalization": "git_eol_lf",
-        "path": "tests/test_arch_004f1_operations_control_plane.py",
-        "sha256": "42c92b69e7825b5b30b087d57018f9ed8d392b85bdb9baa9c9ed7002f6d03be3"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "tests/test_arch_004f3_reporting_architecture.py",
-        "sha256": "86fb7cf2d2310bf86b890d2c5b43a7fed77681da1484c44ae78b6b70bc2cf206"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004g_deprecation.py",
         "sha256": "955a0226d7e7ebd4fc8866ddb1c6ee1036e0ddccc87686e313bcb6207c526878"
       },
       {
         "hash_normalization": "git_eol_lf",
-        "path": "tests/test_arch_005_s4d_checkout_guard.py",
-        "sha256": "42481b8f5b2002f7dae6384924024f76198de8450a22a8c16d2aaf453d234e40"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "tests/test_arch_005_s5_task_source_cutover.py",
-        "sha256": "c0d6032a40accb26057021e9ccfe840f0490081423304747e17c9be2f8439f74"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006c_compatibility_authority.py",
         "sha256": "fcd7c9e3af657a4f8c2f15b485b56a9b1b6893e1ac545d5fbaed0de69315f620"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "ae7beedb9d0f63725fbb48e50113c94a072a049d6790012586a80df92de9ec84"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "tests/test_ops_daily.py",
-        "sha256": "b857e93dae71db991aeee0d50f09d9737b131bcc5efbcf5bfec9d51cc0c6d4f7"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "tests/test_scheduled_tasks.py",
-        "sha256": "4c88fded6d157d72ac5df873c4c7c945bb9fbbdecb8bc3f2a0d1dfe93e018f6d"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -237,62 +157,44 @@
       "config/scheduled_tasks.yaml",
       "docs/artifact_catalog.md",
       "docs/operations/operations_runbook.md",
-      "docs/requirements/DEVX-011_Governed_Workflow_Health_Control_Loop_V1.md",
+      "docs/requirements/DEVX-012_Automatic_Workflow_Health_Trigger_And_Outcome_Review_V1.md",
       "docs/runbooks/scheduled_task_orchestration.md",
       "docs/system_flow.md",
-      "docs/task_register_completed.md",
-      "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-      "inputs/architecture/arch_004e_architecture_fitness.yaml",
-      "inputs/architecture/arch_004e_module_manifest.yaml",
-      "inputs/architecture/arch_004e_test_manifest.yaml",
+      "docs/task_register.md",
       "inputs/architecture/arch_004g_deprecation_inventory.yaml",
-      "inputs/architecture/arch_005_s5_consumer_inventory.yaml",
       "inputs/architecture/arch_005_task_registry_index.yaml",
       "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
       "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
-      "registry/development_tasks/9a/9ad46a4d8119b53fb50453cbba1eb662766972e40253230d50ddd24b18824456.yaml",
-      "registry/development_tasks/9b/9b5b97b624376702351d03e57e6ec2a0003742fa336920c87ffe862ea8e2d051.yaml",
-      "registry/development_tasks/eb/eb173d62a0fb99025f71cfd1eb155b45b1d388accaf681c4afc1645c68de6a2c.yaml",
-      "src/ai_trading_system/cli_commands/reports.py",
+      "registry/development_tasks/32/329b8ec19d9613571c38d8882c7221180604b9eccaf091b243ece160f6ce2e11.yaml",
       "src/ai_trading_system/cli_commands/workflow_health_reports.py",
-      "src/ai_trading_system/platform/architecture/checkout_guard.py",
       "src/ai_trading_system/platform/architecture/compatibility_authority.py",
       "src/ai_trading_system/reports/workflow_health.py",
       "tests/test_arch_004_refactor_policy.py",
-      "tests/test_arch_004f1_operations_control_plane.py",
-      "tests/test_arch_004f3_reporting_architecture.py",
       "tests/test_arch_004g_deprecation.py",
-      "tests/test_arch_005_s4d_checkout_guard.py",
-      "tests/test_arch_005_s5_task_source_cutover.py",
       "tests/test_devx_006c_compatibility_authority.py",
-      "tests/test_devx_006d_report_catalog_flow_authority.py",
-      "tests/test_ops_daily.py",
-      "tests/test_scheduled_tasks.py",
       "tests/test_trading2452_architecture_contract.py",
       "tests/test_workflow_health.py"
     ],
     "supersession": {
-      "current_hash_authority": "phase_devx_011_governed_workflow_health_control_loop_v1.sources",
+      "current_hash_authority": "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1.sources",
       "historical_hashes_rewritten": false,
-      "inherited_supersession_authority": "phase_prod_004_pit_cumulative_archive_consumption_v1"
+      "inherited_supersession_authority": "phase_devx_011_governed_workflow_health_control_loop_v1"
     },
-    "task_id": "DEVX-011_GOVERNED_WORKFLOW_HEALTH_CONTROL_LOOP_V1",
-    "workflow_health_contract": {
-      "automatic_dispatch_enabled": false,
-      "candidate_fingerprint_stable_across_dates": true,
-      "candidate_review_only": true,
-      "task_or_code_mutation_allowed": false,
-      "telemetry_sources": [
-        "validation_runtime",
-        "publication_transactions",
-        "git_main_history"
-      ],
-      "validation_gate_change_allowed": false,
-      "weekly_self_trigger_enabled": true,
-      "window_days": 7,
-      "window_timezone": "UTC"
+    "task_id": "DEVX-012_AUTOMATIC_WORKFLOW_HEALTH_TRIGGER_AND_OUTCOME_REVIEW_V1",
+    "workflow_health_automatic_cycle": {
+      "automatic_optimization_execution_enabled": false,
+      "automatic_report_generation_enabled": true,
+      "candidate_lifecycle_reported": true,
+      "candidate_task_or_code_mutation_allowed": false,
+      "existing_automation_id": "aitradingsystem-pit",
+      "failed_or_blocked_retry_on_next_existing_invocation": true,
+      "iso_week_validated_bundle_deduplication": true,
+      "main_origin_head_identity_required": true,
+      "prior_validated_week_metric_comparison": true,
+      "second_scheduler_created": false,
+      "validation_gate_change_allowed": false
     }
   },
-  "section_id": "phase_devx_011_governed_workflow_health_control_loop_v1",
-  "section_sha256": "99faa4787a0e213826908a8e7fa03fd31700774a9fcc662d5e9a4aad788fefc4"
+  "section_id": "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1",
+  "section_sha256": "b0bbc2346d7b37e27a950375fa6dcf78072ff0632d5e1133db1e1469dc976743"
 }

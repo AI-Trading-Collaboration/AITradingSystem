@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1354
-test_count: 1294
+test_file_count: 1355
+test_count: 1295
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -171,7 +171,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_historical_projection_review
   path: tests/atlas/test_historical_projection_review.py
-  sha256: fd9505bcff8fca9e1ea9ac2b32d6b5686ae5a394fa97c34167e8705ec13d1da9
+  sha256: 5c13c31249aef3d7573f63868a891dcd474144f7010728122c143e0b0f1d452c
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -219,7 +219,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_live_snapshot
   path: tests/atlas/test_live_snapshot.py
-  sha256: e44a3bb927d920f3bd62eb059c75944e67f271f64c38459a71d9c471e89d4af4
+  sha256: baf26f1971cbe7a8191e547738e10724ffde212980c78a074b2581eec0f1de3d
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -235,7 +235,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_page_effectiveness
   path: tests/atlas/test_page_effectiveness.py
-  sha256: 926c86c833d4972e27474ca6acd47cff41f8c1037368152f39efca30132bef08
+  sha256: 5dab77c27de0eec053fc4d91397e84d642d3cff8076527c0e906f09b7baf45ba
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10929,6 +10929,22 @@ tests:
 - test_id: tests.test_equal_risk_growth_tilt
   path: tests/test_equal_risk_growth_tilt.py
   sha256: cbf25c76850082d330bc29c7b74770a2e16990d6fabe32c2f341f825d6c7a56c
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_equal_risk_qqq_sgov_catchup_authorization
+  path: tests/test_equal_risk_qqq_sgov_catchup_authorization.py
+  sha256: acbec38f9726b815a69ae26ee4f335f5872754eb49747a2f904536bef19da550
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
