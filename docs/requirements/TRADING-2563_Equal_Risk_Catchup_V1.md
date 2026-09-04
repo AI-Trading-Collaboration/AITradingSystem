@@ -4,7 +4,7 @@
 
 稳定任务 ID：`TRADING-2563_EQUAL_RISK_CATCHUP_V1`
 
-状态：`IN_PROGRESS`
+状态：`BLOCKED_OWNER_INPUT`
 
 ## 1. Owner 精确授权
 

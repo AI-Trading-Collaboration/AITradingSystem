@@ -45,7 +45,7 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
     assert bundle.research_state_as_of.startswith("2026-09-04T")
-    assert bundle.evidence_evaluated_at == "2026-09-04T02:19:30+00:00"
+    assert bundle.evidence_evaluated_at == "2026-09-04T13:20:00+00:00"
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
     assert bundle.current_diff.after_snapshot_id == bundle.current_snapshot.snapshot_id
@@ -96,7 +96,7 @@ def test_unclassified_successor_is_detected_before_live_projection() -> None:
     without_latest = replace(policy, task_sources=policy.task_sources[:-1])
 
     assert unclassified_page_successors(registry, without_latest) == (
-        "TRADING-2562_DUAL_TRACK_STRATEGY_RESEARCH_CONTINUATION_V1",
+        "TRADING-2563_EQUAL_RISK_CATCHUP_V1",
     )
 
 
@@ -108,20 +108,20 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2562_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2563_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
-    assert bundle.evidence_evaluated_at == "2026-09-04T02:19:30+00:00"
+    assert bundle.evidence_evaluated_at == "2026-09-04T13:20:00+00:00"
     assert bundle.status_object_zh == (
-        "当前研究组合继续 evidence-first 双线推进。TRADING-2560 已完成 result-blind prospective OOS "
-        "合同，但既有 producer 固定在 2021-02-22..2025-12-02，不能合法生成冻结日后的当期 "
-        "session signal，prospective start 尚未冻结，因此生产器尚未就绪、真实 "
-        "observation=0；禁止复制历史 prediction 或临时改规则，下一步是新的 versioned single-session "
-        "mature-label producer，再在 exact manifest 与 canonical DQ 门禁后开始 capture。TRADING-2561 的 "
-        "retained-evidence screen 只选择继续 equal_risk_qqq_sgov 的既有 forward-aging，没有启动新 "
-        "empirical run；它与 composer 共享 QQQ input，结构正交性仅为 PARTIAL，经验独立性保持 "
-        "NOT_ESTABLISHED。TRADING-2557 的 INSUFFICIENT/HOLD、2558 的 matched-placebo 未区分和 "
-        "2559 的单 episode/非因果提前对齐诊断均未被改写。本轮市场数据、DQ、回测、下载、cache、"
-        "provider、QuantConnect、Options、paper/live、production、broker 和任何交易动作全部为 0。"
+        "当前研究组合继续 evidence-first 双线推进。TRADING-2563 已对 equal_risk_qqq_sgov catch-up "
+        "完成唯一一次 manifest replay 并 PASS；首次 canonical DQ 调度因隔离 worktree 不能引用原 "
+        "checkout cache path，在 validator 启动前被 path-containment 门禁拒绝，所以 completed DQ "
+        "execution、DQ receipt 与 DQ report 均为 0，不能形成 DQ PASS/FAIL 或任何信号有效性结论。"
+        "rehearsal、两份既有 observation maturity update、scoreboard 与 continuity audit 均未执行，"
+        "所有禁止动作保持 0。正确下一步只是在 cache 所属 checkout 内执行一次精确授权的 corrected "
+        "canonical DQ，且无论结果都先停止报告。TRADING-2560 的 prospective producer 仍未就绪、"
+        "真实 observation=0；TRADING-2557 的 INSUFFICIENT/HOLD、2558 的 matched-placebo 未区分和 "
+        "2559 的单 episode/非因果提前对齐诊断均未被改写，也不提高 Options、production "
+        "或交易优先级。"
     )
 
 
