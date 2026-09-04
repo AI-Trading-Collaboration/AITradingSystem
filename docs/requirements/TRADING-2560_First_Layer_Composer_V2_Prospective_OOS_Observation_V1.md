@@ -7,7 +7,7 @@
 Owner 指令：2026-09-04，在确认当前候选进入冻结观察、同时继续其他策略研究后要求
 “好的，那就这样继续推进两条线吧”。
 
-状态：`BASELINE_DONE`
+状态：`IN_PROGRESS`
 
 ## 1. 目标
 
@@ -83,6 +83,9 @@ feature/signal/definition identity 与 next-session decision；1/5/20-session ou
 - 不允许把旧 prediction 复制成新 observation，也不允许临时改变信号、窗口或标签规则；
 - durable next step 是新增 versioned、single-session、只使用 mature labels 的 prospective producer，
   并在首次 capture 前冻结 prospective start、运行 canonical DQ、重放 exact manifest；
+- 当前实现波次只把该 producer 推进到 result-blind `SAFE_PREVIEW_READY`：输入由调用方显式提供，
+  只允许使用目标 completed XNYS session 当日及之前的 feature 与已成熟 label；本波次不读取真实市场
+  cache、不运行 canonical DQ、不写 prospective observation；
 - 首次正式 scoreboard 前仍需 owner-reviewed sample/episode gate；
 - next owner：Codex 在新的受治理实现波次中完成上述 producer；Project Owner 只在新增阈值、真实
   capture 授权或扩大运行范围时复核。
@@ -97,6 +100,12 @@ feature/signal/definition identity 与 next-session decision；1/5/20-session ou
 - exit condition：lane commit 已进入经正式验证的 coordinator candidate，canonical evidence 完整，
   无进程依赖且 tracked/untracked/ignored audit 无唯一内容后清理；
 - 当前不创建 observation runtime、scheduler 或 automation。
+- 当前实现分支：`codex/trading-2560-current-session-producer-v1`；
+- 当前实现 worktree：`D:\Work\AITradingSystem_trading2560_current_session_producer`；
+- purpose：实现并验证 versioned single-session producer 与 result-blind preview receipt；
+- exit condition：实现进入正式验证并发布的 local/remote `main`，required evidence 已进入 canonical
+  位置，且 tracked/untracked/ignored audit 无唯一未保存内容后移除 worktree；失败或唯一 evidence 未
+  固化时保留并追加说明。
 
 ## 7. 进度记录
 
@@ -110,3 +119,6 @@ feature/signal/definition identity 与 next-session decision；1/5/20-session ou
 - 2026-09-04：readiness audit 在不读取市场数据、不运行 DQ、不写 observation 的条件下确认旧
   producer 无法合法产出当前 session signal，因此本任务以 `BASELINE_DONE` 保留 S1 阻塞；真实
   prospective observation count=`0`，所有禁止动作计数仍为 0。
+- 2026-09-04：Owner 要求继续推进。任务恢复为 `IN_PROGRESS`，本波次只实现 current-session
+  result-blind preview producer；不冻结真实 capture start、不运行 DQ/市场数据/回测、不写 observation。
+  同期 `equal_risk_qqq_sgov` 只继续既有 forward-aging 自然累计，不新增 empirical run。

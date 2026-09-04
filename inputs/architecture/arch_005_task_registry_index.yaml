@@ -14,7 +14,7 @@ fragment_count: 1062
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: cc7e005309caeda9863a9ca046f2fef4de8a2101413d4701c99fa36871cee59c
+final_chain_sha256: 602e0e0a19ef0c66541f002bf6531f7d6e4639b49fbc75c800d535215404dd45
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 247d44a02a96b3540e6a9ce30a837fbf8caa4c46d4022fddafc524e5ab57baa8
 templates:
@@ -8511,25 +8511,25 @@ fragments:
   entry_sha256: d8d28a81fda7a856e35ffcf0f5b5f1475b478a72f867ec911bc1ee917ee51841
 - task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
   path: registry/development_tasks/7a/7ad76bd97b8e054ed284029d0b4eca86af04f0d12a76c2d039cb6e3f0984b899.yaml
-  file_sha256: 2863903215d05f8f9209983471b5d95f226455e15f5de5bc92c6e05d32a1f4ec
-  fragment_checksum: c2427c415a1a64d4ac65f4a2812ce54014af5fd5ef80b2723d8a2c78c5e18768
+  file_sha256: 3963c1490a7c76a3b3b625bdb17bd8d08152613b742da85d047a63599d5199dc
+  fragment_checksum: 2dbf17d2880ce5938210a8135d3f56b26c2885bb93815f39c32db64631dc0230
   partition: active
   order: 1061
   previous_entry_sha256: d8d28a81fda7a856e35ffcf0f5b5f1475b478a72f867ec911bc1ee917ee51841
-  entry_sha256: ed205e0bbcfce2c7fca87891c6a1b1a0a1e202ccbd57a8e4385b6db1b0f793cc
+  entry_sha256: ec3d6ba9c2f4d12de619ed724b825760c8b86750912f3aea187e6ca493db03cc
 - task_id: TRADING-2561_ORTHOGONAL_STRATEGY_RETAINED_EVIDENCE_SCREEN_V1
   path: registry/development_tasks/ee/ee8b19acfba25be3ecf1ba261d4b7de24cb84ad3fa9540482c7423b9da46fa0d.yaml
   file_sha256: aeaa2117f2243a9342d85d467649ff7e06d2ee80886bc49868012cbab8ba356a
   fragment_checksum: 267f960655f045f34e7d10a44f1676a7ccf5e025ca60035cdb3fb356c3af8c5e
   partition: completed
   order: 1062
-  previous_entry_sha256: ed205e0bbcfce2c7fca87891c6a1b1a0a1e202ccbd57a8e4385b6db1b0f793cc
-  entry_sha256: cc7e005309caeda9863a9ca046f2fef4de8a2101413d4701c99fa36871cee59c
+  previous_entry_sha256: ec3d6ba9c2f4d12de619ed724b825760c8b86750912f3aea187e6ca493db03cc
+  entry_sha256: 602e0e0a19ef0c66541f002bf6531f7d6e4639b49fbc75c800d535215404dd45
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 527e5fc5780802d1d4dd9d783300b017b7e65dbc58b41eb5ef3f6b9a50e0802a
-  byte_count: 1775192
+  sha256: 2726c101af848b05563ed64628a80921ab5a304851a9d0391e6db85d5b8de663
+  byte_count: 1775214
   row_count: 520
   generated_do_not_edit: true
 - partition: completed
@@ -11619,7 +11619,21 @@ governance_cycles:
   change_id: trading-2562-baseline-done-20260904-v1
   event_count: 2
   production_effect: none
-governance_cycle_count: 440
+- cycle_id: arch-005-s5-cycle-441
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+  change_id: trading-2560-current-session-producer-start-20260904-v1
+  event_count: 3
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-442
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+  change_id: trading-2560-current-session-producer-start-20260904-v2
+  event_count: 4
+  production_effect: none
+governance_cycle_count: 442
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -11633,4 +11647,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: e5d6ae490dcc5b264eae9ae24691f0fb37f521c0d998a2d083f2175d49c9fd17
+index_checksum: 7a4e12c9561e872f9ae7838f356958c8f270523a20c550906ede9a910a9514f1

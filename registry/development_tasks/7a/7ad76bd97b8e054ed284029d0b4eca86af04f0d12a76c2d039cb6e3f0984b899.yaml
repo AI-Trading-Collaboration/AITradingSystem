@@ -13,20 +13,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex：在新受治理波次实现 versioned current-session producer；Project Owner 在新增阈值、真实
-    capture 或扩围前复核
+  next_owner: Codex：实现 versioned single-session mature-label producer；Project Owner
+    仅在真实 capture、新阈值或扩围前复核
   requirement_refs:
   - docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 旧 producer 固定在 2021-02-22..2025-12-02，不能合法生成冻结日后
-    signal；下一步新增 single-session mature-label producer，并在首次 capture 前冻结 start、运行 canonical
-    DQ 和 exact manifest replay
+  unstructured_legacy_blocker_or_next_step: 本波次只实现可安全生成 preview 的 current-session
+    producer，不写真实 observation；首次 capture 仍需冻结 start、canonical DQ、exact manifest replay
+    与精确授权
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: append-only/idempotency/maturity/identity-drift tests PASS；禁止 backfill；真实
-      observation 前 exact manifest/DQ/authorization；所有外部和交易动作 0
+    text: single-session/current-visible/mature-label/identity tests PASS；不写 observation；Track
+      B 不新增 empirical run；market/DQ/download/cache/provider/QuantConnect/options/orders/fills/positions
+      均为 0
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -88,24 +89,78 @@ events:
   - change:trading-2560-baseline-done-20260904-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-f9809cff17b7b24ce997b3793030f8e8
+- schema_version: task_event.v1
+  task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-04T14:53:19.9254584+09:00'
+  actor: integration-coordinator
+  change_id: trading-2560-current-session-producer-start-20260904-v1
+  lane_id: null
+  base_commit: db601bf3420f4f1dc4cd8e8aa8f9c6dc9d7ea100
+  previous_state_event_id: task-event-f9809cff17b7b24ce997b3793030f8e8
+  from_status: BASELINE_DONE
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：实现 versioned single-session mature-label producer；Project Owner
+      仅在真实 capture、新阈值或扩围前复核
+    blocker_or_next_step: 本波次只实现可安全生成 preview 的 current-session producer，不写真实 observation；首次
+      capture 仍需冻结 start、canonical DQ、exact manifest replay 与精确授权
+    acceptance_criteria: single-session/current-visible/mature-label/identity tests
+      PASS；不写 observation；Track B 不新增 empirical run；market/DQ/download/cache/provider/QuantConnect/options/orders/fills/positions
+      均为 0
+    notes: Owner 于 2026-09-04 要求继续推进两条线；Track A 恢复实现，Track B 保持 equal_risk_qqq_sgov
+      既有 forward-aging 自然累计且本轮不消费新 empirical run。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2560-current-session-producer-start-20260904-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ec4a03808178b07d0730725b29e572cd
+- schema_version: task_event.v1
+  task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-04T14:55:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2560-current-session-producer-start-20260904-v2
+  lane_id: null
+  base_commit: db601bf3420f4f1dc4cd8e8aa8f9c6dc9d7ea100
+  previous_state_event_id: task-event-ec4a03808178b07d0730725b29e572cd
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：实现 versioned single-session mature-label producer；Project Owner
+      仅在真实 capture、新阈值或扩围前复核
+    blocker_or_next_step: 本波次只实现可安全生成 preview 的 current-session producer，不写真实 observation；首次
+      capture 仍需冻结 start、canonical DQ、exact manifest replay 与精确授权
+    acceptance_criteria: single-session/current-visible/mature-label/identity tests
+      PASS；不写 observation；Track B 不新增 empirical run；market/DQ/download/cache/provider/QuantConnect/options/orders/fills/positions
+      均为 0
+    notes: 'Owner 于 2026-09-04 要求继续推进两条线；Track A 恢复实现，Track B 保持 equal_risk_qqq_sgov
+      既有 forward-aging 自然累计且本轮不消费新 empirical run。Supporting requirement: docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2560-current-session-producer-start-20260904-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8fc55c510c6d96812fa7d03651fc86c1
 projection:
   legacy_first_eight_cells:
   - TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
   - Strategy research / first-layer composer v2 prospective OOS observation
   - P0
-  - BASELINE_DONE
-  - Codex：在新受治理波次实现 versioned current-session producer；Project Owner 在新增阈值、真实 capture
-    或扩围前复核
-  - 旧 producer 固定在 2021-02-22..2025-12-02，不能合法生成冻结日后 signal；下一步新增 single-session mature-label
-    producer，并在首次 capture 前冻结 start、运行 canonical DQ 和 exact manifest replay
-  - append-only/idempotency/maturity/identity-drift tests PASS；禁止 backfill；真实 observation
-    前 exact manifest/DQ/authorization；所有外部和交易动作 0
-  - 'S0 contract、10 focused tests、Ruff/Black/strict mypy PASS；producer readiness=PRODUCER_NOT_READY；真实
-    observation=0，所有禁止动作=0。Supporting requirement: docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md'
+  - IN_PROGRESS
+  - Codex：实现 versioned single-session mature-label producer；Project Owner 仅在真实 capture、新阈值或扩围前复核
+  - 本波次只实现可安全生成 preview 的 current-session producer，不写真实 observation；首次 capture 仍需冻结
+    start、canonical DQ、exact manifest replay 与精确授权
+  - single-session/current-visible/mature-label/identity tests PASS；不写 observation；Track
+    B 不新增 empirical run；market/DQ/download/cache/provider/QuantConnect/options/orders/fills/positions
+    均为 0
+  - 'Owner 于 2026-09-04 要求继续推进两条线；Track A 恢复实现，Track B 保持 equal_risk_qqq_sgov 既有 forward-aging
+    自然累计且本轮不消费新 empirical run。Supporting requirement: docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md'
   docs_links:
   - docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md
   terminal: false
-  canonical_row_sha256: 14f78e3b55510ed848e22cdb0f6a45939020fde38e76fc8224577a834ce419f2
-last_event_id: task-event-f9809cff17b7b24ce997b3793030f8e8
+  canonical_row_sha256: e11c58e5b13d28b45cdf81dd4c79e53254b01d4c90174f4f1d4218f718842666
+last_event_id: task-event-8fc55c510c6d96812fa7d03651fc86c1
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: c2427c415a1a64d4ac65f4a2812ce54014af5fd5ef80b2723d8a2c78c5e18768
+fragment_checksum: 2dbf17d2880ce5938210a8135d3f56b26c2885bb93815f39c32db64631dc0230
