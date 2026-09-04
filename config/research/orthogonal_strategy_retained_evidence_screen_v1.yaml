@@ -1,0 +1,140 @@
+schema_version: orthogonal_strategy_retained_evidence_screen.v1
+policy_id: orthogonal_strategy_retained_evidence_screen_v1
+policy_version: 1.0.0
+policy_status: OWNER_DIRECTED_RESULT_BLIND_RETAINED_EVIDENCE_SCREEN
+task_id: TRADING-2561_ORTHOGONAL_STRATEGY_RETAINED_EVIDENCE_SCREEN_V1
+owner: project_owner
+approval_ref: owner_instruction:TRADING-2561:2026-09-04:continue_other_strategy_research_track
+known_result_boundary:
+  current_composer_terminal_verdict: INSUFFICIENT_HOLD
+  current_composer_temporal_status: SINGLE_EPISODE_DEPENDENT
+  prospective_outcome_access_allowed: false
+  new_backtest_allowed: false
+  retained_performance_reranking_allowed: false
+  empirical_independence_claim_allowed: false
+source_bindings:
+  - role: simple_baseline_registry
+    path: config/research/simple_baseline_strategy_registry.yaml
+    sha256: a4487d4477e7066943c3894e690d1dc9dbcb18bc28919eaa8cfb15371ef79843
+  - role: layer2_component_pool
+    path: config/research/layer2_strategy_component_pool_v1.yaml
+    sha256: c531dd99c7e345b0ab7d2571c6090b6ba149bd63c7367e099362c6a64451a773
+  - role: growth_candidate_registry
+    path: config/research/qqq_plus_growth_candidate_registry.yaml
+    sha256: ae70c21d894f8bee621fb34d0fbd96d23d39e5dc3c1287fe3a0a281bcba26c0f
+  - role: evidence_first_portfolio
+    path: config/research/evidence_first_research_portfolio_v1.yaml
+    sha256: 2df617dc247e509cb94799dda10e4c75ed1e8f1fc069a47466267125e39b8a05
+  - role: composer_terminal_admission
+    path: config/research/first_layer_composer_v2_temporal_influence_failure_fix_result_admission_v1.yaml
+    sha256: f8b3459cef438a6f41110226308792104353d1412a051c05209320df2bea34b3
+screen_contract:
+  mechanism_families:
+    - STATIC_ALLOCATION
+    - VOLATILITY_ALLOCATION
+    - TREND_TIMING
+    - LEVERAGED_GROWTH
+    - OPTIONS_IMPLEMENTATION
+  structural_orthogonality_values: [DISTINCT, PARTIAL, OVERLAPPING]
+  empirical_independence_value: NOT_ESTABLISHED
+  routes:
+    - CONTINUE_EXISTING_FORWARD_AGING
+    - PREREGISTER_NEW_EXPERIMENT
+    - HOLD_REFERENCE
+    - EXCLUDE
+  terminal_evidence_precedes_historical_portfolio_snapshot: true
+candidates:
+  - candidate_id: equal_risk_qqq_sgov
+    source_role: layer2_component_pool
+    source_section: selectable_components
+    lookup_field: strategy_id
+    lookup_value: equal_risk_qqq_sgov
+    mechanism_family: VOLATILITY_ALLOCATION
+    input_overlap: SHARED_QQQ_PRICE_PLUS_SGOV
+    action_overlap: CONTINUOUS_QQQ_SGOV_NOT_BINARY_TIMING
+    structural_orthogonality: PARTIAL
+    route: CONTINUE_EXISTING_FORWARD_AGING
+    reason_codes:
+      - OWNER_SELECTED_DEFENSIVE_PRIMARY
+      - EXISTING_FORWARD_AGING_CONTRACT
+      - ACTION_MECHANISM_DIFFERS_FROM_COMPOSER
+      - SHARED_QQQ_PRICE_INPUT_PREVENTS_INDEPENDENCE_CLAIM
+  - candidate_id: qqq_100_static
+    source_role: simple_baseline_registry
+    source_section: strategies
+    lookup_field: strategy_id
+    lookup_value: qqq_100_static
+    mechanism_family: STATIC_ALLOCATION
+    input_overlap: SHARED_QQQ_ASSET
+    action_overlap: FULL_QQQ_REFERENCE
+    structural_orthogonality: OVERLAPPING
+    route: HOLD_REFERENCE
+    reason_codes:
+      - HARD_BENCHMARK_NOT_NEW_ALPHA
+  - candidate_id: qqq_plus_growth_research_candidate
+    source_role: layer2_component_pool
+    source_section: inactive_research_reference_candidates
+    lookup_field: strategy_id
+    lookup_value: qqq_plus_growth_research_candidate
+    mechanism_family: LEVERAGED_GROWTH
+    input_overlap: SHARED_QQQ_TQQQ_SGOV_PRICE_INPUTS
+    action_overlap: GROWTH_OVERLAY
+    structural_orthogonality: PARTIAL
+    route: HOLD_REFERENCE
+    reason_codes:
+      - OWNER_DECISION_KEEP_GROWTH_RESEARCH_ONLY
+      - INACTIVE_REFERENCE_NOT_SELECTABLE
+  - candidate_id: dyn_tqqq_capped_trend
+    source_role: layer2_component_pool
+    source_section: excluded_components
+    lookup_field: strategy_id
+    lookup_value: dyn_tqqq_capped_trend
+    mechanism_family: TREND_TIMING
+    input_overlap: SHARED_QQQ_TREND_INPUT
+    action_overlap: TREND_GATED_LEVERAGED_EXPOSURE
+    structural_orthogonality: OVERLAPPING
+    route: HOLD_REFERENCE
+    reason_codes:
+      - COMPARISON_ONLY_NOT_FORMAL_POOL
+      - TREND_TIMING_OVERLAPS_COMPOSER
+      - LEVERAGE_PATH_DEPENDENCY
+  - candidate_id: LEAPS
+    source_role: layer2_component_pool
+    source_section: excluded_components
+    lookup_field: strategy_id
+    lookup_value: LEAPS
+    mechanism_family: OPTIONS_IMPLEMENTATION
+    input_overlap: DIRECTION_SOURCE_NOT_INDEPENDENT
+    action_overlap: OPTIONS_IMPLEMENTATION
+    structural_orthogonality: PARTIAL
+    route: EXCLUDE
+    reason_codes:
+      - OPTIONS_RESEARCH_BLOCKED
+      - IMPLEMENTATION_CANNOT_REPLACE_SIGNAL_VALUE
+result_contract:
+  selected_continuation_candidate: equal_risk_qqq_sgov
+  selected_new_experiment_candidate: null
+  status: CONTINUE_EXISTING_FORWARD_AGING_NO_NEW_EMPIRICAL_RUN
+  portfolio_snapshot_warning: PORTFOLIO_SNAPSHOT_PRECEDES_TERMINAL_EVIDENCE
+  automatic_promotion_allowed: false
+run_envelope:
+  tracked_config_reads: 5
+  market_data_reads: 0
+  prospective_outcome_reads: 0
+  canonical_dq_runs: 0
+  backtests: 0
+  data_downloads: 0
+  cache_mutations: 0
+  external_provider_actions: 0
+  quantconnect_actions: 0
+  option_backtests: 0
+  orders: 0
+  fills: 0
+  positions: 0
+safety:
+  research_only: true
+  observe_only: true
+  paper_shadow_allowed: false
+  production_allowed: false
+  production_effect: none
+  broker_action: none
