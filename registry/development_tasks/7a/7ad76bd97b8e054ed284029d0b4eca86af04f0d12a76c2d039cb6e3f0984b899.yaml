@@ -13,15 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex：完成 result-blind contract 与 frozen producer readiness audit；新增阈值或真实
-    capture 扩围前由 Project Owner 复核
+  next_owner: Codex：在新受治理波次实现 versioned current-session producer；Project Owner 在新增阈值、真实
+    capture 或扩围前复核
   requirement_refs:
   - docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 确认 frozen producer 能否用当时可见输入生成冻结日后 signal；首次正式
-    scoreboard 前冻结 sample/episode gate
+  unstructured_legacy_blocker_or_next_step: 旧 producer 固定在 2021-02-22..2025-12-02，不能合法生成冻结日后
+    signal；下一步新增 single-session mature-label producer，并在首次 capture 前冻结 start、运行 canonical
+    DQ 和 exact manifest replay
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: append-only/idempotency/maturity/identity-drift tests PASS；禁止 backfill；真实
@@ -60,23 +61,51 @@ events:
   - change:trading-2560-register-20260904-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-8875bd1142105ede50fe953352ed0ee7
+- schema_version: task_event.v1
+  task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-04T11:14:30+09:00'
+  actor: integration-coordinator
+  change_id: trading-2560-baseline-done-20260904-v1
+  lane_id: null
+  base_commit: eb90d7db77fbbe8fa713be4ecbd672990f1baf89
+  previous_state_event_id: task-event-8875bd1142105ede50fe953352ed0ee7
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Codex：在新受治理波次实现 versioned current-session producer；Project Owner 在新增阈值、真实
+      capture 或扩围前复核
+    blocker_or_next_step: 旧 producer 固定在 2021-02-22..2025-12-02，不能合法生成冻结日后 signal；下一步新增
+      single-session mature-label producer，并在首次 capture 前冻结 start、运行 canonical DQ
+      和 exact manifest replay
+    acceptance_criteria: append-only/idempotency/maturity/identity-drift tests PASS；禁止
+      backfill；真实 observation 前 exact manifest/DQ/authorization；所有外部和交易动作 0
+    notes: 'S0 contract、10 focused tests、Ruff/Black/strict mypy PASS；producer readiness=PRODUCER_NOT_READY；真实
+      observation=0，所有禁止动作=0。Supporting requirement: docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2560-baseline-done-20260904-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f9809cff17b7b24ce997b3793030f8e8
 projection:
   legacy_first_eight_cells:
   - TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
   - Strategy research / first-layer composer v2 prospective OOS observation
   - P0
-  - IN_PROGRESS
-  - Codex：完成 result-blind contract 与 frozen producer readiness audit；新增阈值或真实 capture
-    扩围前由 Project Owner 复核
-  - 确认 frozen producer 能否用当时可见输入生成冻结日后 signal；首次正式 scoreboard 前冻结 sample/episode gate
+  - BASELINE_DONE
+  - Codex：在新受治理波次实现 versioned current-session producer；Project Owner 在新增阈值、真实 capture
+    或扩围前复核
+  - 旧 producer 固定在 2021-02-22..2025-12-02，不能合法生成冻结日后 signal；下一步新增 single-session mature-label
+    producer，并在首次 capture 前冻结 start、运行 canonical DQ 和 exact manifest replay
   - append-only/idempotency/maturity/identity-drift tests PASS；禁止 backfill；真实 observation
     前 exact manifest/DQ/authorization；所有外部和交易动作 0
-  - 'Supporting requirement: docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md。当前只授权
-    tracked contract/implementation/tests/docs 与离线验证；production_effect=none；broker_action=none。'
+  - 'S0 contract、10 focused tests、Ruff/Black/strict mypy PASS；producer readiness=PRODUCER_NOT_READY；真实
+    observation=0，所有禁止动作=0。Supporting requirement: docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md'
   docs_links:
   - docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md
   terminal: false
-  canonical_row_sha256: ec0de262ea209cd688c381da43952b53a30d71a7909e25ae69c04552cb395adb
-last_event_id: task-event-8875bd1142105ede50fe953352ed0ee7
+  canonical_row_sha256: 14f78e3b55510ed848e22cdb0f6a45939020fde38e76fc8224577a834ce419f2
+last_event_id: task-event-f9809cff17b7b24ce997b3793030f8e8
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: fa454c94c07dd7081aaa5e21ef497b36bc5e8a2abbbf6a5eb77f23fffd65c3fe
+fragment_checksum: c2427c415a1a64d4ac65f4a2812ce54014af5fd5ef80b2723d8a2c78c5e18768
