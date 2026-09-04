@@ -252,7 +252,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/atlas/test_live_snapshot.py",
-        "sha256": "0a2dc62cf0f38fa7aa1da82e5af064ea271b6170557bbbd210c39b5878f8085b"
+        "sha256": "b68d1f4ddae3d6c23f1abc92a4a609fa4f0d9ea449fd293ccecb6131e8d10641"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -411,5 +411,5 @@
     "task_id": "TRADING-2542D_GROWTH_ACTION_VALUE_DQ_PIT_AND_SAMPLE_SEMANTICS_FREEZE_CORRECTION_V1"
   },
   "section_id": "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1",
-  "section_sha256": "677f3a09072b6cdde748242536ccf4be464681381ce7aff6b18e0b3150bbd8af"
+  "section_sha256": "47787bb314be694ad009f1445dcbd11c1d4987abd5018936df799b67b8a69d7a"
 }

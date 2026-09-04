@@ -132,7 +132,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/atlas/test_live_snapshot.py",
-        "sha256": "0a2dc62cf0f38fa7aa1da82e5af064ea271b6170557bbbd210c39b5878f8085b"
+        "sha256": "b68d1f4ddae3d6c23f1abc92a4a609fa4f0d9ea449fd293ccecb6131e8d10641"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -223,5 +223,5 @@
     "task_id": "TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1"
   },
   "section_id": "phase_trading_2542c_growth_action_value_independent_review_remediation_and_freeze_readiness_v1",
-  "section_sha256": "4afe039b356b2c602b1e11b69f10e0a09586c2675190cad44c3dc09d9c459f47"
+  "section_sha256": "dad53ff59bd2cf213243e34167f1e7ad40bc3f88d6d471f90202d43474b342df"
 }

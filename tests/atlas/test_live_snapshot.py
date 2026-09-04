@@ -4,7 +4,7 @@ import os
 import subprocess
 import sys
 from dataclasses import replace
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -44,7 +44,13 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
-    assert bundle.research_state_as_of.startswith("2026-09-04T")
+    # Bind the research clock to canonical events, not a date literal that
+    # expires on the next legitimate task update or a timezone boundary.
+    assert datetime.fromisoformat(bundle.research_state_as_of) == max(
+        datetime.fromisoformat(item.task_event_at)
+        for item in manifest.task_coverage
+        if item.task_event_time_basis == "EVENT_OCCURRED_AT"
+    )
     assert bundle.evidence_evaluated_at == "2026-09-04T21:59:02.723370+00:00"
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
