@@ -1,16 +1,16 @@
 schema_version: atlas_live_snapshot_policy.v1
 policy_id: atlas_live_canonical_snapshot_v1
-policy_version: 1.22.0
+policy_version: 1.23.0
 status: REVIEWED_FAIL_CLOSED_LIVE_PROJECTION
 owner: Atlas strategy research publishing coordinator
 historical_source_registry_path: config/atlas/source_registry.yaml
 page_effectiveness_policy_path: config/atlas/page_effectiveness.yaml
-classified_through_task_id: TRADING-2563_EQUAL_RISK_CATCHUP_V1
-current_mainline_task_id: TRADING-2563_EQUAL_RISK_CATCHUP_V1
-largest_blocker_task_id: TRADING-2563_EQUAL_RISK_CATCHUP_V1
-next_legal_action_task_id: TRADING-2563_EQUAL_RISK_CATCHUP_V1
-status_object_zh: 当前研究组合继续 evidence-first 双线推进。TRADING-2563 已对 equal_risk_qqq_sgov catch-up 完成唯一一次 manifest replay 并 PASS；首次 canonical DQ 调度因隔离 worktree 不能引用原 checkout cache path，在 validator 启动前被 path-containment 门禁拒绝，所以 completed DQ execution、DQ receipt 与 DQ report 均为 0，不能形成 DQ PASS/FAIL 或任何信号有效性结论。rehearsal、两份既有 observation maturity update、scoreboard 与 continuity audit 均未执行，所有禁止动作保持 0。正确下一步只是在 cache 所属 checkout 内执行一次精确授权的 corrected canonical DQ，且无论结果都先停止报告。TRADING-2560 的 prospective producer 仍未就绪、真实 observation=0；TRADING-2557 的 INSUFFICIENT/HOLD、2558 的 matched-placebo 未区分和 2559 的单 episode/非因果提前对齐诊断均未被改写，也不提高 Options、production 或交易优先级。
-evidence_evaluated_at: '2026-09-04T13:20:00+00:00'
+classified_through_task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+current_mainline_task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+largest_blocker_task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+next_legal_action_task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+status_object_zh: 当前继续 evidence-first 双线研究，并由 TRADING-2564 优先补齐研究输入与验证就绪能力。原目录 as-of=2026-09-03 的 corrected canonical DQ 已按独立精确授权完成一次且 FAIL，共同数据覆盖止于2026-07-23；该事实晚于2563已发布的路径失败记录，不能继续视为仅等待retry授权。独立运营环境已有同as-of的DQ与daily PASS，但不同root、输入、policy和code身份不能直接互换。当前先实现只读输入/证据检查，再受审连接快照与前瞻采集；本波不执行真实DQ、manifest replay、研究、观察更新或数据/交易动作。2560 single-session producer仅SAFE_PREVIEW_READY，真实prospective observation仍为0；2557的INSUFFICIENT/HOLD、2558的matched-placebo未区分及2559的单episode/时点敏感性结论均不升级。长期阶段仍未完成，不开放Options、production或任何交易权限。
+evidence_evaluated_at: '2026-09-04T21:59:02.723370+00:00'
 task_status_mapping:
   DONE: PASS
   BASELINE_DONE: LIMITED

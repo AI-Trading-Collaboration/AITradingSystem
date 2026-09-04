@@ -460,6 +460,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md
     coverage: EQUAL_RISK_CATCHUP_MANIFEST_REPLAY_PASS_DQ_PATH_CONTAINMENT_BLOCKED
     reader_summary_zh: 2563 已完成唯一一次 manifest replay 并 PASS；首次 canonical DQ 调度因原 cache path 不在隔离 worktree 的项目根目录内，在 validator 启动前被 containment gate 拒绝。completed DQ execution、receipt 与 report 均为 0，因此没有 DQ 或信号有效性结论；rehearsal、两份既有 observation 的 maturity update、scoreboard 与 continuity audit 均为 0，所有禁止动作也保持 0。正确修复需要 Owner 精确授权在 cache 所属 checkout 内执行一次 corrected canonical DQ，并在结果后停止。
+  - task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+    requirement_path: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
+    coverage: RESEARCH_CAPABILITY_READINESS_ENGINEERING_ONLY_NO_NEW_EVIDENCE
+    reader_summary_zh: 2564按Owner整体review启动长期研究能力建设。当前S1实现只读研究输入就绪核查和Full前证据完整性检查；后续阶段依次处理运营快照接入、真实前瞻连续采集、实验账本与机制归因、实测提效。原目录corrected DQ已完成且FAIL，而运营环境已有同as-of PASS，两者身份不能互换；当前缺口是研究消费连接，不是重复申请已完成的DQ retry。工程检查不运行真实DQ、manifest replay、研究、观察更新、下载、cache或provider，不升级2557的INSUFFICIENT/HOLD，也不开放Options、production或任何交易行为。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

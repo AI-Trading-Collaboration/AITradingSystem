@@ -21,12 +21,16 @@ from pathlib import Path
 # The runner must prefer this worktree's src package when executed as a script.
 REPO_ROOT_FOR_IMPORTS = Path(__file__).resolve().parents[1]
 SRC_ROOT_FOR_IMPORTS = REPO_ROOT_FOR_IMPORTS / "src"
-if str(SRC_ROOT_FOR_IMPORTS) not in sys.path:
-    sys.path.insert(0, str(SRC_ROOT_FOR_IMPORTS))
+if str(SRC_ROOT_FOR_IMPORTS) in sys.path:
+    sys.path.remove(str(SRC_ROOT_FOR_IMPORTS))
+sys.path.insert(0, str(SRC_ROOT_FOR_IMPORTS))
 
 from ai_trading_system.platform.architecture.integration_publication_fence import (  # noqa: E402
     IntegrationPublicationFence,
     PublicationFenceError,
+)
+from ai_trading_system.platform.architecture.validation_readiness import (
+    check_full_readiness,
 )
 from ai_trading_system.platform.validation_parent_run_import import (
     PARENT_RUN_IMPORT_ENV as VALIDATION_PARENT_RUN_IMPORT_ENV,
@@ -2725,16 +2729,14 @@ def _validate_publication_transaction_for_full(
     parent_value = validation_provenance.get("parent_run")
     if isinstance(parent_value, Mapping):
         parent_value = parent_value.get("summary_path")
-    if parent_value is not None and (
-        not isinstance(parent_value, str) or not parent_value.strip()
-    ):
+    if parent_value is not None and (not isinstance(parent_value, str) or not parent_value.strip()):
         raise PublicationFenceError(
             "PUBLICATION_FULL_PARENT_INVALID",
             "validated parent_run summary_path is missing",
         )
     parent_path = Path(parent_value) if parent_value is not None else None
     fence = IntegrationPublicationFence(project_root=repo_root)
-    fence.validate(
+    publication_binding = fence.validate(
         transaction_path,
         exact_phase="FORMAL_VALIDATION_PRE",
         task_id=task_id,
@@ -2742,12 +2744,34 @@ def _validate_publication_transaction_for_full(
         parent_path=parent_path,
         require_candidate=True,
     )
-    return fence.checkpoint(
+    candidate_sha = publication_binding.get("candidate_sha")
+    if not isinstance(candidate_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", candidate_sha):
+        raise PublicationFenceError("FULL_READINESS_CANDIDATE_MISSING", str(candidate_sha))
+    # TRADING-2564: inspect already-bound bytes before consuming the Full claim.
+    # This never renders, hydrates evidence, executes DQ, or repairs a transaction.
+    readiness = check_full_readiness(repo_root, candidate_sha)
+    if (
+        readiness.get("schema_version") != "full_validation_readiness.v1"
+        or readiness.get("status") != "PASS"
+        or readiness.get("candidate_sha") != candidate_sha
+        or readiness.get("full_dispatch_ready") is not True
+        or readiness.get("dispatch_performed") is not False
+        or readiness.get("research_dispatch_allowed") is not False
+        or readiness.get("dq_validation_executed") is not False
+        or readiness.get("artifacts_written") is not False
+    ):
+        raise PublicationFenceError(
+            "FULL_READINESS_BLOCKED",
+            json.dumps(readiness, ensure_ascii=False, sort_keys=True),
+        )
+    dispatched = fence.checkpoint(
         transaction_path,
         phase="FULL_DISPATCHED",
         actor="integration-coordinator",
         full_run_id=full_run_id,
     )
+    dispatched["pre_dispatch_readiness"] = readiness
+    return dispatched
 
 
 def _record_publication_full_result(

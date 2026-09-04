@@ -4,6 +4,16 @@
 
 如果需要理解输入数据如何计算成输出数据，先读 `docs/calculation_logic.md`；字段级含义见 `docs/schema/fields.yaml`，也可以用 `aits explain <field|gate|artifact>` 做只读反查。该 YAML 先覆盖 `scores_daily.csv`、decision snapshot、trace bundle、prediction ledger 和 shadow parameter search 的核心字段。
 
+## TRADING-2564 运行前只读就绪核查
+
+|输出|生成入口与输入|用途与边界|
+|---|---|---|
+|`research_input_readiness.v1` stdout JSON|`scripts/research_input_readiness.py`；显式请求、source/execution root、冻结依赖及既有canonical DQ receipt|核验输入身份、请求范围、必需字段与XNYS覆盖；不新运行DQ、不复制或修复数据、不创建持久报告、不签发consumer/capture授权。`READY_FOR_REVIEW`不等于可执行。|
+|`full_validation_readiness.v1` stdout / Full summary内嵌诊断|`scripts/validation_readiness.py`与Full runner的pre-dispatch调用；最终candidate、明确retained evidence及既有generated authority|在`FULL_DISPATCHED`前拦截缺失/漂移；检查器不运行pytest、不hydrate/render、不写artifact。PASS不替代正式Full、固定数量focused测试或研究有效性判断。|
+
+两个诊断不建立新的report-registry/discovery/latest authority，均为`production_effect=none`、
+`broker_action=none`。实际Full仍只由原runner与唯一publication transaction控制。
+
 ## DEVX-006D Report / Catalog / Flow Lossless Fragment Shadow
 
 |Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|

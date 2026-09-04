@@ -1,0 +1,97 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  task_id_sha256: c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  title: null
+  domain: 长期研究能力 / 输入就绪与验证前置
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: integration-coordinator：S1最终工程验收；随后S2只读快照接入设计
+  requirement_refs:
+  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: S1合成readiness/runner测试已通过，修正独立审查的导入身份风险后按source/final两阶段正式验证；S2-S5未完成
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: S1负例与零业务副作用测试、formal验证、普通main发布通过；S2-S5按依赖保留，工程PASS不升级研究结论
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-05T07:39:21.2247886+09:00'
+  actor: integration-coordinator
+  change_id: trading-2564-register-20260905-v1
+  lane_id: null
+  base_commit: 7ca36350e02cfa455bf16f33e34784697b4afb2a
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+    - 长期研究能力 / 输入就绪与验证前置
+    - P1
+    - IN_PROGRESS
+    - integration-coordinator：实现S1只读readiness并完成最终候选验证
+    - S1输入/证据预检；后续运营快照连接→真实前瞻连续采集→实验账本与机制归因→实测提效；不得复用2563已终止授权
+    - S1负例与零业务副作用测试、formal验证、普通main发布通过；S2-S5按依赖保留，工程PASS不升级研究结论
+    - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；Owner
+      2026-09-05授权长期建设；本波真实研究/DQ/下载/cache/provider/交易均0
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2564-register-20260905-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-393de3c4fad0540aebac318529a5e42d
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-05T08:09:15.8798004+09:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s1-focused-review-20260905
+  lane_id: null
+  base_commit: 7ca36350e02cfa455bf16f33e34784697b4afb2a
+  previous_state_event_id: task-event-393de3c4fad0540aebac318529a5e42d
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator：S1最终工程验收；随后S2只读快照接入设计
+    blocker_or_next_step: S1合成readiness/runner测试已通过，修正独立审查的导入身份风险后按source/final两阶段正式验证；S2-S5未完成
+    acceptance_criteria: S1负例与零业务副作用测试、formal验证、普通main发布通过；S2-S5按依赖保留，工程PASS不升级研究结论
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；历史证据仅missing-only复制且SHA一致；最终验收以publication
+      receipt为准；真实DQ/研究/下载/cache/provider/交易均0
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s1-focused-review-20260905
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-cb1763ce82027a19c3018b2aa4745021
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  - 长期研究能力 / 输入就绪与验证前置
+  - P1
+  - IN_PROGRESS
+  - integration-coordinator：S1最终工程验收；随后S2只读快照接入设计
+  - S1合成readiness/runner测试已通过，修正独立审查的导入身份风险后按source/final两阶段正式验证；S2-S5未完成
+  - S1负例与零业务副作用测试、formal验证、普通main发布通过；S2-S5按依赖保留，工程PASS不升级研究结论
+  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；历史证据仅missing-only复制且SHA一致；最终验收以publication
+    receipt为准；真实DQ/研究/下载/cache/provider/交易均0
+  docs_links:
+  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
+  terminal: false
+  canonical_row_sha256: b8eb31df39398a92d400f5f8d3839e9985a054849f544d182a8be7fabb68052e
+last_event_id: task-event-cb1763ce82027a19c3018b2aa4745021
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 473a44710a353202d61107561bd7577e8aec1ff3e64e28cc161701522f53c313

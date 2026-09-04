@@ -2,6 +2,24 @@
 
 本文档是系统从数据输入、中间评估到输出结论的流程图。它不是一次性说明文档，而是工程事实的一部分：后续新增命令、数据源、配置、评分模块、回测路径或报告输出时，必须同步维护本文件。
 
+TRADING-2564 S1增加两个只读运行前核查入口。`scripts/research_input_readiness.py`显式读取
+source/execution root、请求、既有canonical DQ receipt及输入承诺，核验字节、profile、window和
+必需ticker/field的XNYS覆盖；只输出诊断，不下载、不复制、不运行DQ、不签发consumer/capture授权。
+缺失或旧快照保持NOT_READY；运营PASS不能替换不同研究输入。后续真正capture仍须经过独立准入。
+`scripts/validation_readiness.py`复用既有task/Atlas/architecture/report-flow/compatibility只读校验，
+并检查明确retained evidence bindings。Full runner在fence.validate之后、`FULL_DISPATCHED`与pytest
+之前执行同一核查；BLOCKED不消费Full claim，不自动hydrate/render或修复。该检查不替代focused
+ratchet tests或正式Full，也不改变研究结论、发布phase/lock、生产或交易边界。
+
+```mermaid
+flowchart LR
+    INPUT["显式快照 + 请求 + 既有DQ receipt"] --> RI["研究输入只读就绪核查"]
+    RI --> REVIEW["诊断与缺口；dispatch_allowed=false"]
+    CAND["最终候选 + 已绑定证据/生成物"] --> VR["Full前只读完整性核查"]
+    VR -->|BLOCKED| STOP["停止；Full claim未消费"]
+    VR -->|PASS| CLAIM["现有FULL_DISPATCHED → pytest → 正式结果"]
+```
+
 DEVX-006D 为 `config/report_registry.yaml`、`docs/artifact_catalog.md` 与本文件建立
 full-entry v2 lossless fragment shadow。构建器从最终 monolith exact bytes 划分完整 YAML report
 entries 或 Markdown blank-line blocks；entry raw bytes 按稳定内容身份进入 content-addressed

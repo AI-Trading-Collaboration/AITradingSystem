@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from collections.abc import Callable
@@ -226,6 +227,46 @@ def test_validation_tier_print_only_writes_command_summary(tmp_path: Path) -> No
     assert "-n 16 --dist loadfile" in " ".join(payload["command"])
 
 
+def test_runner_prefers_its_own_source_when_already_after_foreign_pythonpath(
+    tmp_path: Path,
+) -> None:
+    repository = Path(validation_tier.__file__).resolve().parents[1]
+    foreign = tmp_path / "foreign" / "src"
+    package = foreign / "ai_trading_system"
+    package.mkdir(parents=True)
+    (package / "__init__.py").write_text(
+        'raise RuntimeError("FOREIGN_SOURCE_IMPORTED")\n', encoding="utf-8"
+    )
+    probe = (
+        "import inspect,json,runpy,sys; "
+        "namespace=runpy.run_path(sys.argv[1]); "
+        "print(json.dumps({"
+        "'source':sys.path[0],"
+        "'checker':inspect.getsourcefile(namespace['check_full_readiness']),"
+        "'fence':inspect.getsourcefile(namespace['IntegrationPublicationFence'])"
+        "}))"
+    )
+    completed = subprocess.run(
+        [sys.executable, "-c", probe, str(repository / "scripts/run_validation_tier.py")],
+        cwd=tmp_path,
+        env={
+            **os.environ,
+            "PYTHONPATH": os.pathsep.join((str(foreign), str(repository / "src"))),
+            "PYTHONDONTWRITEBYTECODE": "1",
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    identities = json.loads(completed.stdout)
+    assert Path(identities["source"]).resolve() == repository / "src"
+    source = repository / "src/ai_trading_system/platform/architecture"
+    assert Path(identities["checker"]).resolve() == source / "validation_readiness.py"
+    assert Path(identities["fence"]).resolve() == source / "integration_publication_fence.py"
+    assert not (tmp_path / "outputs").exists()
+
+
 def test_validation_tier_can_render_serial_command(tmp_path: Path) -> None:
     report_path = tmp_path / "validation_tier_serial.json"
 
@@ -368,7 +409,7 @@ def test_full_publication_uses_normalized_parent_summary_path(
         def validate(self, transaction: Path, **kwargs: object) -> dict[str, object]:
             observed["transaction"] = transaction
             observed.update(kwargs)
-            return {"status": "PASS"}
+            return {"status": "PASS", "candidate_sha": "a" * 40}
 
         def checkpoint(self, transaction: Path, **kwargs: object) -> dict[str, object]:
             observed["checkpoint_transaction"] = transaction
@@ -376,6 +417,20 @@ def test_full_publication_uses_normalized_parent_summary_path(
             return {"status": "PASS"}
 
     monkeypatch.setattr(validation_tier, "IntegrationPublicationFence", _Fence)
+    monkeypatch.setattr(
+        validation_tier,
+        "check_full_readiness",
+        lambda root, candidate: {
+            "schema_version": "full_validation_readiness.v1",
+            "status": "PASS",
+            "candidate_sha": candidate,
+            "full_dispatch_ready": True,
+            "dispatch_performed": False,
+            "research_dispatch_allowed": False,
+            "dq_validation_executed": False,
+            "artifacts_written": False,
+        },
+    )
     transaction = Path("outputs/architecture/publication/transaction.json")
     parent = "outputs/validation_runtime/full_parent/test_runtime_summary.json"
     args = validation_tier.parse_args(
@@ -396,6 +451,50 @@ def test_full_publication_uses_normalized_parent_summary_path(
     assert observed["parent_path"] == Path(parent)
     assert observed["validation_tier"] == "full"
     assert observed["checkpoint_full_run_id"] == "full-child"
+
+
+@pytest.mark.parametrize("malformed", [False, True])
+def test_full_readiness_blocks_before_claim(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    malformed: bool,
+) -> None:
+    class _Fence:
+        def __init__(self, *, project_root: Path) -> None:
+            assert project_root == tmp_path
+
+        def validate(self, transaction: Path, **kwargs: object) -> dict[str, object]:
+            return {"status": "PASS", "candidate_sha": "a" * 40}
+
+        def checkpoint(self, *args: object, **kwargs: object) -> dict[str, object]:
+            pytest.fail("readiness rejection must not consume FULL_DISPATCHED")
+
+    monkeypatch.setattr(validation_tier, "IntegrationPublicationFence", _Fence)
+    monkeypatch.setattr(
+        validation_tier,
+        "check_full_readiness",
+        lambda root, candidate: (
+            {"status": "PASS"}
+            if malformed
+            else {
+                "schema_version": "full_validation_readiness.v1",
+                "status": "BLOCKED",
+                "candidate_sha": candidate,
+                "full_dispatch_ready": False,
+                "blockers": [{"code": "READINESS_DEPENDENCY_MISSING"}],
+            }
+        ),
+    )
+    args = validation_tier.parse_args(
+        ["full", "--write-runtime-artifact", "--publication-transaction", "transaction.json"]
+    )
+    with pytest.raises(validation_tier.PublicationFenceError, match="FULL_READINESS_BLOCKED"):
+        _REAL_VALIDATE_PUBLICATION_TRANSACTION_FOR_FULL(
+            args,
+            repo_root=tmp_path,
+            validation_provenance={"task_id": "TRADING-2564"},
+            full_run_id="must-not-dispatch",
+        )
 
 
 def test_full_print_only_records_canonical_trigger_provenance(tmp_path: Path) -> None:
