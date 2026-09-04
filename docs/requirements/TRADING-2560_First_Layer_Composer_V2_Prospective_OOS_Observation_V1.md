@@ -136,3 +136,10 @@ feature/signal/definition identity 与 next-session decision；1/5/20-session ou
   data、canonical DQ、backtest、download、cache mutation、provider、QuantConnect、Options、paper/live、
   production、broker、orders、fills、positions 均为 0。Track B 继续既有 `equal_risk_qqq_sgov`
   forward-aging，本波次没有新增 empirical run。
+- 2026-09-04：final generator v1 在 report-flow build 前按 source seal fail closed；原因是本任务更新
+  `docs/system_flow.md` 后旧 seal 仍绑定此前 bytes。只机械更新 system-flow SHA/byte/blob/entry count，
+  从 clean source commit 重放。v2 五类 generator 全部 PASS；coordinator focused 为
+  `502 passed / 5 failed`，五处仅是新 module/test 与新增 system-flow block 导致的静态 ratchet：
+  report-flow entries `3146 -> 3147`、system-flow entries `1213 -> 1214`/新 SHA，以及 deprecation
+  inventory modules/tests `1195/1353 -> 1196/1354`。修正这些静态断言后从新 source commit 完整重建；
+  producer/strategy/window/model/feature/label/threshold/cost/action 与所有运行计数不变。

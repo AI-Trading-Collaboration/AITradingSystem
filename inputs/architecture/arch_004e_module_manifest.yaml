@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1195
+module_count: 1196
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -9992,6 +9992,26 @@ modules:
 - module_id: src.ai_trading_system.first_layer_channel_closeout
   path: src/ai_trading_system/first_layer_channel_closeout.py
   sha256: a425afdaf32d70719a4b17f4f0ba08919c7d6f930ac66c4b142c8e491460b0df
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.first_layer_composer_v2_current_session_producer
+  path: src/ai_trading_system/first_layer_composer_v2_current_session_producer.py
+  sha256: 356c962af592fb7dd6ccdd35e1122ac1009a8768380a26779f514ab0f31ad66d
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
