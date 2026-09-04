@@ -43,6 +43,12 @@ definition_bindings:
   - role: temporal_influence_result_admission
     path: config/research/first_layer_composer_v2_temporal_influence_failure_fix_result_admission_v1.yaml
     sha256: f8b3459cef438a6f41110226308792104353d1412a051c05209320df2bea34b3
+  - role: frozen_operational_forecast_policy
+    path: config/research/first_layer_operational_forecast_producer_v1.yaml
+    sha256: 938be28f5778b78f2a709abf3bf61cb3b748cf0cb1aa816fa911d670d053ed40
+  - role: frozen_operational_forecast_implementation
+    path: src/ai_trading_system/first_layer_operational_forecast.py
+    sha256: f2ce0c2d37ddd043cd27e169727c6312602096c1de59374d73b0b17755ec41e4
 observation_contract:
   schema_version: first_layer_composer_v2_prospective_observation.v1
   required_identity_fields:

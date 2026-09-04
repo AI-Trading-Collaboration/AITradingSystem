@@ -231,6 +231,8 @@ def load_preregistration(
         "foundational_result_admission",
         "matched_placebo_result_admission",
         "temporal_influence_result_admission",
+        "frozen_operational_forecast_policy",
+        "frozen_operational_forecast_implementation",
     }
     _expect(roles, expected_roles, "definition binding roles")
     return LoadedProspectivePolicy(
@@ -239,6 +241,58 @@ def load_preregistration(
         file_sha256=_sha256_bytes(raw),
         canonical_sha256=_sha256_bytes(_canonical_bytes(payload)),
     )
+
+
+def audit_frozen_producer_readiness(
+    policy: LoadedProspectivePolicy | None = None,
+    *,
+    project_root: Path = PROJECT_ROOT,
+) -> dict[str, Any]:
+    loaded = policy or load_preregistration(project_root=project_root)
+    bindings = {
+        str(item["role"]): Path(str(item["path"]))
+        for item in _sequence(loaded.payload["definition_bindings"], "definition_bindings")
+    }
+    producer_policy_path = bindings["frozen_operational_forecast_policy"]
+    producer_policy = _mapping(
+        load_strict_yaml_text(
+            _bound_path(
+                producer_policy_path,
+                project_root=project_root,
+                label="frozen operational forecast policy",
+            ).read_text(encoding="utf-8"),
+            label=producer_policy_path.as_posix(),
+        ),
+        "frozen operational forecast policy",
+    )
+    evaluation = _mapping(producer_policy.get("evaluation_window"), "producer.evaluation_window")
+    evaluation_end = date.fromisoformat(str(evaluation.get("end")))
+    freeze = _mapping(loaded.payload["freeze_contract"], "freeze_contract")
+    reasons: list[str] = []
+    if evaluation_end <= HISTORICAL_EVALUATED_END:
+        reasons.append("FROZEN_OPERATIONAL_PRODUCER_WINDOW_ENDS_AT_HISTORICAL_CUTOFF")
+    if freeze.get("prospective_start_date") is None:
+        reasons.append("PROSPECTIVE_START_NOT_FROZEN")
+    ready = not reasons
+    return {
+        "status": "OBSERVATION_READY" if ready else "PRODUCER_NOT_READY",
+        "reason_codes": reasons,
+        "producer_policy_path": producer_policy_path.as_posix(),
+        "producer_evaluation_start": str(evaluation.get("start")),
+        "producer_evaluation_end": evaluation_end.isoformat(),
+        "producer_expected_session_count": int(evaluation.get("expected_session_count", 0)),
+        "can_emit_post_historical_cutoff_session": evaluation_end > HISTORICAL_EVALUATED_END,
+        "recommended_solution": (
+            None
+            if ready
+            else "NEW_VERSIONED_PROSPECTIVE_SINGLE_SESSION_PRODUCER_USING_MATURE_LABELS_ONLY"
+        ),
+        "temporary_workaround_allowed": False,
+        "market_data_read": False,
+        "canonical_dq_run": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
 
 
 def activate_contract(

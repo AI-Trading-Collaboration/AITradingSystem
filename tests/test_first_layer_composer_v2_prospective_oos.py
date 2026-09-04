@@ -67,6 +67,8 @@ def test_loader_rejects_result_blind_boundary_tamper(tmp_path: Path) -> None:
             "config/research/first_layer_composer_v2_temporal_influence_"
             "failure_fix_result_admission_v1.yaml"
         ),
+        Path("config/research/first_layer_operational_forecast_producer_v1.yaml"),
+        Path("src/ai_trading_system/first_layer_operational_forecast.py"),
     ):
         destination = tmp_path / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -107,6 +109,23 @@ def test_activation_and_observation_forbid_backfill_and_non_pass_dq() -> None:
             identities=_identities(),
             dq_status="WARN",
         )
+
+
+def test_frozen_operational_producer_is_not_misrepresented_as_prospective_ready() -> None:
+    readiness = prospective.audit_frozen_producer_readiness()
+
+    assert readiness["status"] == "PRODUCER_NOT_READY"
+    assert readiness["reason_codes"] == [
+        "FROZEN_OPERATIONAL_PRODUCER_WINDOW_ENDS_AT_HISTORICAL_CUTOFF",
+        "PROSPECTIVE_START_NOT_FROZEN",
+    ]
+    assert readiness["producer_evaluation_end"] == "2025-12-02"
+    assert readiness["can_emit_post_historical_cutoff_session"] is False
+    assert readiness["recommended_solution"] == (
+        "NEW_VERSIONED_PROSPECTIVE_SINGLE_SESSION_PRODUCER_USING_MATURE_LABELS_ONLY"
+    )
+    assert readiness["temporary_workaround_allowed"] is False
+    assert readiness["market_data_read"] is False
 
 
 def test_state_mapping_and_identity_hashes_are_frozen() -> None:
