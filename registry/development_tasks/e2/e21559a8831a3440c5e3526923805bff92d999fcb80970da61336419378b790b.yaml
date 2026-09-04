@@ -1,0 +1,85 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2562_DUAL_TRACK_STRATEGY_RESEARCH_CONTINUATION_V1
+  task_id_sha256: e21559a8831a3440c5e3526923805bff92d999fcb80970da61336419378b790b
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2562_DUAL_TRACK_STRATEGY_RESEARCH_CONTINUATION_V1
+  title: null
+  domain: Strategy research / dual-track prospective observation and orthogonal screen
+    integration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Integration coordinator：从同一 exact main 协调 TRADING-2560/2561、一次 formal
+    validation 与一次 main publication
+  requirement_refs:
+  - docs/requirements/TRADING-2562_Dual_Track_Strategy_Research_Continuation_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 登记后运行 DUAL_LANE preflight；两条 lane claims
+    必须互斥；consumer-visible contract drift 必须先 serial contract wave
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 两 domain tasks 登记且 lane validation PASS；coordinator 更新 task/system flow/generated
+      authority；Full、local-main、origin/main 与 cleanup PASS
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2562_DUAL_TRACK_STRATEGY_RESEARCH_CONTINUATION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-04T10:42:25.1313679+09:00'
+  actor: integration-coordinator
+  change_id: trading-2562-register-20260904-v1
+  lane_id: null
+  base_commit: aa853b99bce3971679faa558a842b1194cd36350
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2562_DUAL_TRACK_STRATEGY_RESEARCH_CONTINUATION_V1
+    - Strategy research / dual-track prospective observation and orthogonal screen
+      integration
+    - P0
+    - IN_PROGRESS
+    - Integration coordinator：从同一 exact main 协调 TRADING-2560/2561、一次 formal validation
+      与一次 main publication
+    - 登记后运行 DUAL_LANE preflight；两条 lane claims 必须互斥；consumer-visible contract drift
+      必须先 serial contract wave
+    - 两 domain tasks 登记且 lane validation PASS；coordinator 更新 task/system flow/generated
+      authority；Full、local-main、origin/main 与 cleanup PASS
+    - 'Supporting requirement: docs/requirements/TRADING-2562_Dual_Track_Strategy_Research_Continuation_V1.md。当前波次不读市场数据、不运行
+      DQ/回测/捕获，不触发 provider、Options、production 或 broker。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2562-register-20260904-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3a6a17cefef7d2221b35b7b5870ba689
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2562_DUAL_TRACK_STRATEGY_RESEARCH_CONTINUATION_V1
+  - Strategy research / dual-track prospective observation and orthogonal screen integration
+  - P0
+  - IN_PROGRESS
+  - Integration coordinator：从同一 exact main 协调 TRADING-2560/2561、一次 formal validation
+    与一次 main publication
+  - 登记后运行 DUAL_LANE preflight；两条 lane claims 必须互斥；consumer-visible contract drift
+    必须先 serial contract wave
+  - 两 domain tasks 登记且 lane validation PASS；coordinator 更新 task/system flow/generated
+    authority；Full、local-main、origin/main 与 cleanup PASS
+  - 'Supporting requirement: docs/requirements/TRADING-2562_Dual_Track_Strategy_Research_Continuation_V1.md。当前波次不读市场数据、不运行
+    DQ/回测/捕获，不触发 provider、Options、production 或 broker。'
+  docs_links:
+  - docs/requirements/TRADING-2562_Dual_Track_Strategy_Research_Continuation_V1.md
+  terminal: false
+  canonical_row_sha256: db5d517097b6cbc601c6327f5fe8847a2aa1ff38ddb40bba130d9aed8ab44495
+last_event_id: task-event-3a6a17cefef7d2221b35b7b5870ba689
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: fd7e14e31d199562b4b4bbf1be29d10f4c7ecdb5a92d3af8837dae01a77c3017

@@ -7,14 +7,14 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 1059
-active_task_count: 518
+task_count: 1062
+active_task_count: 521
 completed_task_count: 541
-fragment_count: 1059
+fragment_count: 1062
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 7dd5068c91fad32116a5ccb3f1d7668be84fc31b7ed5e742a288641afb447757
+final_chain_sha256: a68ceb4745cfd109865de9fa8af9c6cedf0019e3bea2289d468140df48b49b6e
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 247d44a02a96b3540e6a9ce30a837fbf8caa4c46d4022fddafc524e5ab57baa8
 templates:
@@ -8501,12 +8501,36 @@ fragments:
   order: 1059
   previous_entry_sha256: f9eddd15c57277cdcb7f97c5b16ae2398285d3823b1bdf5f1e8ca2550f1e0ec5
   entry_sha256: 7dd5068c91fad32116a5ccb3f1d7668be84fc31b7ed5e742a288641afb447757
+- task_id: TRADING-2562_DUAL_TRACK_STRATEGY_RESEARCH_CONTINUATION_V1
+  path: registry/development_tasks/e2/e21559a8831a3440c5e3526923805bff92d999fcb80970da61336419378b790b.yaml
+  file_sha256: dac4f629756e2985641099030d1fb3db1eaa749f0ed88ba6e3ef79505fa1e603
+  fragment_checksum: fd7e14e31d199562b4b4bbf1be29d10f4c7ecdb5a92d3af8837dae01a77c3017
+  partition: active
+  order: 1060
+  previous_entry_sha256: 7dd5068c91fad32116a5ccb3f1d7668be84fc31b7ed5e742a288641afb447757
+  entry_sha256: bae585ddeba9985bf9d59f0a7c78ff9be4831dc7db08d4575eb0850c6a837f72
+- task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+  path: registry/development_tasks/7a/7ad76bd97b8e054ed284029d0b4eca86af04f0d12a76c2d039cb6e3f0984b899.yaml
+  file_sha256: 55f24f7b26b14968f519cd64b2fdaac7069aca50da7b65623b5e8d9b8ccbe842
+  fragment_checksum: fa454c94c07dd7081aaa5e21ef497b36bc5e8a2abbbf6a5eb77f23fffd65c3fe
+  partition: active
+  order: 1061
+  previous_entry_sha256: bae585ddeba9985bf9d59f0a7c78ff9be4831dc7db08d4575eb0850c6a837f72
+  entry_sha256: 4ff6ff9fce7194e1d13ef2b268d554ffbadb8aa7f3d052d9de22809f7de085b7
+- task_id: TRADING-2561_ORTHOGONAL_STRATEGY_RETAINED_EVIDENCE_SCREEN_V1
+  path: registry/development_tasks/ee/ee8b19acfba25be3ecf1ba261d4b7de24cb84ad3fa9540482c7423b9da46fa0d.yaml
+  file_sha256: 3774bd2780fcbea78a0aed90794cf0f6c911a347175f7eb6a399101b8a5a7f8d
+  fragment_checksum: e1db68d0b9bc69ca14779484bb8d621849f97b90d5d3e5689660229bb6446ff8
+  partition: active
+  order: 1062
+  previous_entry_sha256: 4ff6ff9fce7194e1d13ef2b268d554ffbadb8aa7f3d052d9de22809f7de085b7
+  entry_sha256: a68ceb4745cfd109865de9fa8af9c6cedf0019e3bea2289d468140df48b49b6e
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 2fbb6f8539f2ef30943bd1915d4dc58bac1aec6c7b6afe1232e37982add90565
-  byte_count: 1773367
-  row_count: 518
+  sha256: ff433f4c9d8cc0db3b6a24eb1be07cc2f5551ca6ca270edf632cf30715219196
+  byte_count: 1775837
+  row_count: 521
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
@@ -11553,7 +11577,28 @@ governance_cycles:
   change_id: trading-2559-temporal-influence-terminal-v1
   event_count: 4
   production_effect: none
-governance_cycle_count: 434
+- cycle_id: arch-005-s5-cycle-435
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: TRADING-2562_DUAL_TRACK_STRATEGY_RESEARCH_CONTINUATION_V1
+  change_id: trading-2562-register-20260904-v1
+  event_count: 1
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-436
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+  change_id: trading-2560-register-20260904-v1
+  event_count: 1
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-437
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: TRADING-2561_ORTHOGONAL_STRATEGY_RETAINED_EVIDENCE_SCREEN_V1
+  change_id: trading-2561-register-20260904-v1
+  event_count: 1
+  production_effect: none
+governance_cycle_count: 437
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -11567,4 +11612,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 7f3f436275e9ca59a1517c3816fa473a8c53f6a6b392a4c51d928ac2c29abb1a
+index_checksum: b6720527ca9deb8ec8c8140bbf6df6f14c47ba6cd2c07202f7c920f00a445884

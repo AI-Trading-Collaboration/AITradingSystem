@@ -1,0 +1,83 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2561_ORTHOGONAL_STRATEGY_RETAINED_EVIDENCE_SCREEN_V1
+  task_id_sha256: ee8b19acfba25be3ecf1ba261d4b7de24cb84ad3fa9540482c7423b9da46fa0d
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2561_ORTHOGONAL_STRATEGY_RETAINED_EVIDENCE_SCREEN_V1
+  title: null
+  domain: Strategy research / orthogonal retained-evidence strategy screen
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Codex：完成 tracked retained-evidence screen；如产生新 empirical experiment
+    候选则先交 Project Owner 复核预注册范围
+  requirement_refs:
+  - docs/requirements/TRADING-2561_Orthogonal_Strategy_Retained_Evidence_Screen_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 只读 tracked registries 与 terminal aggregate
+    evidence；不读 prospective outcome、不运行新回测；若无 DISTINCT/PIT-ready 候选则不得勉强晋级
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: strict loader/classifier/golden-negative tests PASS；structural orthogonality
+      与 empirical independence 分离；route 可审计；所有外部和交易动作 0
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2561_ORTHOGONAL_STRATEGY_RETAINED_EVIDENCE_SCREEN_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-04T10:44:26.8195545+09:00'
+  actor: integration-coordinator
+  change_id: trading-2561-register-20260904-v1
+  lane_id: null
+  base_commit: aa853b99bce3971679faa558a842b1194cd36350
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2561_ORTHOGONAL_STRATEGY_RETAINED_EVIDENCE_SCREEN_V1
+    - Strategy research / orthogonal retained-evidence strategy screen
+    - P1
+    - IN_PROGRESS
+    - Codex：完成 tracked retained-evidence screen；如产生新 empirical experiment 候选则先交 Project
+      Owner 复核预注册范围
+    - 只读 tracked registries 与 terminal aggregate evidence；不读 prospective outcome、不运行新回测；若无
+      DISTINCT/PIT-ready 候选则不得勉强晋级
+    - strict loader/classifier/golden-negative tests PASS；structural orthogonality
+      与 empirical independence 分离；route 可审计；所有外部和交易动作 0
+    - 'Supporting requirement: docs/requirements/TRADING-2561_Orthogonal_Strategy_Retained_Evidence_Screen_V1.md。authorization_state=STANDING_OWNER_SCOPE，仅本地
+      static evidence；production_effect=none；broker_action=none。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2561-register-20260904-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-6ebb7380d70d31df2903211bbd856d4e
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2561_ORTHOGONAL_STRATEGY_RETAINED_EVIDENCE_SCREEN_V1
+  - Strategy research / orthogonal retained-evidence strategy screen
+  - P1
+  - IN_PROGRESS
+  - Codex：完成 tracked retained-evidence screen；如产生新 empirical experiment 候选则先交 Project
+    Owner 复核预注册范围
+  - 只读 tracked registries 与 terminal aggregate evidence；不读 prospective outcome、不运行新回测；若无
+    DISTINCT/PIT-ready 候选则不得勉强晋级
+  - strict loader/classifier/golden-negative tests PASS；structural orthogonality 与
+    empirical independence 分离；route 可审计；所有外部和交易动作 0
+  - 'Supporting requirement: docs/requirements/TRADING-2561_Orthogonal_Strategy_Retained_Evidence_Screen_V1.md。authorization_state=STANDING_OWNER_SCOPE，仅本地
+    static evidence；production_effect=none；broker_action=none。'
+  docs_links:
+  - docs/requirements/TRADING-2561_Orthogonal_Strategy_Retained_Evidence_Screen_V1.md
+  terminal: false
+  canonical_row_sha256: bee73b51b7725441059a77583d2d25e65a8f5587cf82747b5d61f6844d5dfdfb
+last_event_id: task-event-6ebb7380d70d31df2903211bbd856d4e
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: e1db68d0b9bc69ca14779484bb8d621849f97b90d5d3e5689660229bb6446ff8
