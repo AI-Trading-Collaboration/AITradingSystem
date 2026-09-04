@@ -44,8 +44,8 @@ def test_live_snapshot_binds_all_page_tasks_events_requirements_and_commit() -> 
 
     assert bundle.comparison_snapshot.generated_at.isoformat() == "2026-08-02T00:00:00+09:00"
     assert bundle.current_snapshot.generated_at > bundle.comparison_snapshot.generated_at
-    assert bundle.research_state_as_of.startswith("2026-09-03T")
-    assert bundle.evidence_evaluated_at == "2026-09-03T14:08:20.4517918+00:00"
+    assert bundle.research_state_as_of.startswith("2026-09-04T")
+    assert bundle.evidence_evaluated_at == "2026-09-04T02:19:30+00:00"
     assert {item.exact_commit for item in bundle.current_snapshot.sources} == {head}
     assert bundle.current_diff.before_snapshot_id == bundle.comparison_snapshot.snapshot_id
     assert bundle.current_diff.after_snapshot_id == bundle.current_snapshot.snapshot_id
@@ -96,7 +96,7 @@ def test_unclassified_successor_is_detected_before_live_projection() -> None:
     without_latest = replace(policy, task_sources=policy.task_sources[:-1])
 
     assert unclassified_page_successors(registry, without_latest) == (
-        "TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1",
+        "TRADING-2562_DUAL_TRACK_STRATEGY_RESEARCH_CONTINUATION_V1",
     )
 
 
@@ -108,25 +108,20 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         exact_commit=repository_head(ROOT),
     )
 
-    assert policy.current_mainline_task_id.startswith("TRADING-2559_")
+    assert policy.current_mainline_task_id.startswith("TRADING-2562_")
     assert bundle.research_state_as_of != bundle.page_source_commit_at
-    assert bundle.evidence_evaluated_at == "2026-09-03T14:08:20.4517918+00:00"
+    assert bundle.evidence_evaluated_at == "2026-09-04T02:19:30+00:00"
     assert bundle.status_object_zh == (
-        "当前研究组合维持 evidence-first。TRADING-2559 在 Owner 精确预授权的 failure-fix "
-        "下完成时间位移与 leave-one-episode 证伪；修复只把上一轮 matched-placebo "
-        "最大回撤对账投影改为权威嵌套字段，"
-        "窗口、信号、模型、阈值、成本、comparator、shift、episode 算法和 reducer 均未改变。"
-        "新 manifest replay、canonical DQ、本地 temporal/influence "
-        "run 与 independent replay 精确执行 1/1/1/1，DQ 为 PASS、独立重放最大差异 "
-        "6.821210263296962e-13，所有外部或交易动作均为 0。完整窗口 excess 仍为 "
-        "+13.745976956735628 个百分点，但删除 episode 12（2023-03-16..2023-08-10）后"
-        "变为 -2.56913050870304 个百分点；统一时间窗口下 shift +2 也降至 "
-        "-1.6675372437030163 个百分点，且不可执行的 anticipatory shift -2 占优。"
-        "冻结 reducer 给出“单 episode 依赖”，并附加“非因果提前对齐占优”。"
-        "该结果进一步削弱而非增强当前有效性证据；2557 继续证据不足并保持观察，"
-        "2558 继续未能区分真实时点与同形态随机安排，不提高 prospective OOS、QQQ Options "
-        "Wave B/C 或生产优先级。不得重跑或事后参数救援；"
-        "paper/live/production/broker 和任何交易动作仍未授权。"
+        "当前研究组合继续 evidence-first 双线推进。TRADING-2560 已完成 result-blind prospective OOS "
+        "合同，但既有 producer 固定在 2021-02-22..2025-12-02，不能合法生成冻结日后的当期 "
+        "session signal，prospective start 尚未冻结，因此生产器尚未就绪、真实 "
+        "observation=0；禁止复制历史 prediction 或临时改规则，下一步是新的 versioned single-session "
+        "mature-label producer，再在 exact manifest 与 canonical DQ 门禁后开始 capture。TRADING-2561 的 "
+        "retained-evidence screen 只选择继续 equal_risk_qqq_sgov 的既有 forward-aging，没有启动新 "
+        "empirical run；它与 composer 共享 QQQ input，结构正交性仅为 PARTIAL，经验独立性保持 "
+        "NOT_ESTABLISHED。TRADING-2557 的 INSUFFICIENT/HOLD、2558 的 matched-placebo 未区分和 "
+        "2559 的单 episode/非因果提前对齐诊断均未被改写。本轮市场数据、DQ、回测、下载、cache、"
+        "provider、QuantConnect、Options、paper/live、production、broker 和任何交易动作全部为 0。"
     )
 
 

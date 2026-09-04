@@ -444,6 +444,18 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2559_First_Layer_Composer_V2_Temporal_Influence_Falsification_V1.md
     coverage: TEMPORAL_INFLUENCE_SINGLE_EPISODE_DEPENDENT_RESEARCH_PRIORITY_NOT_RAISED
     reader_summary_zh: 2559 已在 Owner 精确预授权的 schema-only failure-fix 下完成唯一时间位移与 episode 影响度验证；修复只读取上一轮 matched-placebo 的权威嵌套最大回撤字段，不改变窗口、信号、模型、阈值、成本、comparator、九个 shift、41-episode 算法或 reducer。Manifest replay、canonical DQ、本地 run、independent replay 为 1/1/1/1 且 PASS，其他动作均为 0。完整窗口 +13.745976956735628 个百分点 excess 在删除 episode 12（2023-03-16..2023-08-10）后降至 -2.56913050870304；shift +2 为 -1.6675372437030163，且非因果 shift -2 占优。冻结 reducer 为“单 episode 依赖”，并附加“非因果提前对齐占优”；这进一步削弱信号稳健性，不覆盖 2557 的证据不足/保持观察或 2558 的 matched-placebo p=0.20，不提高 prospective OOS、Options 或生产优先级，也不得重跑或参数救援。
+  - task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+    requirement_path: docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md
+    coverage: PROSPECTIVE_OOS_CONTRACT_BASELINE_DONE_PRODUCER_NOT_READY_OBSERVATION_ZERO
+    reader_summary_zh: 2560 已完成结果盲、append-only prospective OOS 合同与 producer readiness audit；10 个 focused tests、Ruff、Black、strict mypy PASS。既有 producer 固定在 2021-02-22..2025-12-02、1202 sessions，不能合法生成冻结日后当期 session signal，prospective start 也尚未冻结，因此生产器尚未就绪、真实 observation=0。禁止复制旧 prediction 或临时改规则；下一步必须另建 versioned single-session mature-label producer，并在首次 capture 前冻结 start、运行 canonical DQ 与 exact manifest replay。
+  - task_id: TRADING-2561_ORTHOGONAL_STRATEGY_RETAINED_EVIDENCE_SCREEN_V1
+    requirement_path: docs/requirements/TRADING-2561_Orthogonal_Strategy_Retained_Evidence_Screen_V1.md
+    coverage: ORTHOGONAL_SCREEN_DONE_EQUAL_RISK_FORWARD_AGING_NO_NEW_EMPIRICAL_RUN
+    reader_summary_zh: 2561 已完成 aggregate-only retained-evidence screen；7 个 focused tests、Ruff、Black、strict mypy PASS。结果只继续 equal_risk_qqq_sgov 的既有 forward-aging，没有选择新实验；该候选与 composer 在 mechanism/action 上不同但共享 QQQ input，只能标记 PARTIAL structural orthogonality，经验独立性仍为 NOT_ESTABLISHED。static QQQ、growth candidate 与 trend-gated TQQQ 保持 reference/hold，LEAPS/Options 保持 exclude，所有 empirical 或交易动作均为 0。
+  - task_id: TRADING-2562_DUAL_TRACK_STRATEGY_RESEARCH_CONTINUATION_V1
+    requirement_path: docs/requirements/TRADING-2562_Dual_Track_Strategy_Research_Continuation_V1.md
+    coverage: DUAL_TRACK_BASELINE_DONE_PRODUCER_BLOCKED_NO_NEW_EMPIRICAL_RUN
+    reader_summary_zh: 2562 已完成双线首轮协调：Track A 固化 prospective 合同但因历史截止 producer 保持 observation=0；Track B 只选择继续 equal_risk_qqq_sgov 的既有 forward-aging，不启动新 empirical run。两条 evidence lineage 分离，结构差异不被冒充为经验独立；本轮市场数据、DQ、回测、下载、cache、provider、QuantConnect、Options 及任何 production/broker/trading 动作全部为 0。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

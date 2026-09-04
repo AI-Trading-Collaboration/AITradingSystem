@@ -109,3 +109,8 @@ generated authority、formal validation 和最终 publication；两个 lane 不�
   `docs/system_flow.md` source bytes 后，在 generator 前按 failed 释放，以便先形成 Atlas 可绑定的 exact
   source commit；没有重跑研究或产生新 evidence counters。下一事务从该 clean source commit 完整执行五个
   official generators。
+- 2026-09-04：v3 official generator chain 在 task source 与 architecture manifests PASS 后 fail
+  closed：Atlas 发现三个新 task 尚未进入 successor classification；report-flow authority 发现新增 system
+  flow 段落使旧 source seal 失配。未绕过或删除检查；v3 以 failed 释放。最小修复只增加三条 Atlas
+  reader classification、更新 live snapshot 指针/说明、重绑 committed `docs/system_flow.md` source seal，
+  并机械刷新对应静态断言；不改变研究合同、结果或任何 evidence counter。
