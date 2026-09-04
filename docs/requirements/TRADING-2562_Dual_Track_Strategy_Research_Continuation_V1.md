@@ -114,3 +114,8 @@ generated authority、formal validation 和最终 publication；两个 lane 不�
   flow 段落使旧 source seal 失配。未绕过或删除检查；v3 以 failed 释放。最小修复只增加三条 Atlas
   reader classification、更新 live snapshot 指针/说明、重绑 committed `docs/system_flow.md` source seal，
   并机械刷新对应静态断言；不改变研究合同、结果或任何 evidence counter。
+- 2026-09-04：v4 五个 official generators、Ruff、Black、strict mypy 与 combined focused `85 passed`
+  后，Architecture 正式层级为 `884 passed / 1 failed`。唯一失败是 DEVX-011 历史兼容断言仍固定旧
+  report-flow entry count `3140`，而新增六个 system-flow blocks 后权威计数为 `3146`；不是研究逻辑
+  失败。v4 以 failed 释放并保存 runtime artifact；failure-fix 仅机械更新该静态计数，再从新 source
+  commit 重建 architecture/compatibility 与完整五类权威，不修改策略、数据或运行计数。
