@@ -119,3 +119,10 @@ generated authority、formal validation 和最终 publication；两个 lane 不�
   report-flow entry count `3140`，而新增六个 system-flow blocks 后权威计数为 `3146`；不是研究逻辑
   失败。v4 以 failed 释放并保存 runtime artifact；failure-fix 仅机械更新该静态计数，再从新 source
   commit 重建 architecture/compatibility 与完整五类权威，不修改策略、数据或运行计数。
+- 2026-09-04：v5 在 exact candidate `6d05c3c044defe5e0ee49a12225135b00e866452` 上完成
+  Architecture `885 passed`、Contract `278 passed`、Integration `995 passed` 与 Reproducibility
+  `24 passed`。唯一正式 Full 为 `10228 passed / 2 failed / 5 skipped`；两处失败都属于 Atlas 页面
+  coverage 静态 ratchet 仍期待 89 个 task 或截至 TRADING-2559 的清单，而 generated Atlas 已正确纳入
+  TRADING-2560/2561/2562 共 92 个 task。v5 已按 failed 释放，Full runtime artifact 保留；v6 通过
+  `full_parent` 绑定该失败 artifact，failure-fix 只机械更新上述两个静态断言，不改变 strategy、window、
+  signal、model、threshold、cost、data、evidence admission 或任何运行计数。
