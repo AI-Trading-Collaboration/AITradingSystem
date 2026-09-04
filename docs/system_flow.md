@@ -10336,11 +10336,16 @@ QQQ/cash action mapping、after-close decision、one-session lag、5 bps 单向�
 非回填、非覆盖与成熟日期 fail closed。scoreboard 在另行 owner-reviewed sample/episode gate 前只能是
 `EVIDENCE_INSUFFICIENT`。
 
-Producer readiness audit 当前为 `PRODUCER_NOT_READY`：既有 operational producer 固定在
+旧 producer readiness audit 仍为 `PRODUCER_NOT_READY`：既有 operational producer 固定在
 `2021-02-22..2025-12-02`、1202 sessions，不能以原合同生成冻结日后的 current-session signal，且
-prospective start 尚未冻结。因此当前真实 observation 为 0；禁止复制历史 prediction 或临时改规则。
-下一步必须先实现新的 versioned single-session producer，只使用当时已成熟 labels，再在独立授权下执行
-exact manifest replay 与 canonical DQ 后开始 capture。
+prospective start 尚未冻结；禁止复制历史 prediction 或临时改规则。新的
+`first_layer_composer_v2_current_session_producer_v1` 只接收 caller-supplied completed XNYS session
+及该日以前的 price/rate rows，继承 frozen producer 的 model/feature/threshold/504-session train
+window/20-session label horizon/cash proxy/composer 定义，并只使用
+`label_available_at <= feature_session` 的 mature labels 生成一行内存 preview。目标日后的任何输入行
+fail closed；旧 producer implementation 因 preregistration SHA 绑定而保持逐字未变。当前状态为
+`SAFE_PREVIEW_READY`，不等于 `OBSERVATION_READY`：真实 observation 仍为 0，首次 capture 仍须独立
+冻结 prospective start、canonical DQ、exact manifest replay 与精确授权。
 
 TRADING-2561 同时新增 aggregate-only retained-evidence screen。它只读取五个 hash-bound tracked
 configuration/terminal sources，并把 structural orthogonality 与 empirical independence 分开：当前结果为
@@ -10354,9 +10359,11 @@ exclude。旧 evidence-first portfolio snapshot 的 `UNRESOLVED` 早于 terminal
 ```mermaid
 flowchart LR
     T[TRADING-2557～2559 terminal evidence] --> A[Track A: prospective OOS contract]
-    A --> R{current-session producer ready?}
-    R -- no --> B[BASELINE_DONE / observation=0]
-    R -- future exact gate --> O[append-only 1/5/20-session observation]
+    A --> R[versioned current-session producer]
+    R --> P[SAFE_PREVIEW_READY / in-memory only]
+    P --> G{start + DQ + manifest + exact capture authorization}
+    G -- not complete --> B[BASELINE_DONE / observation=0]
+    G -- future exact gate --> O[append-only 1/5/20-session observation]
     T --> S[Track B: retained-evidence screen]
     C[tracked strategy registries] --> S
     S --> E[continue equal_risk_qqq_sgov forward-aging]
@@ -10368,6 +10375,11 @@ flowchart LR
 canonical DQ、backtest、download、cache mutation、provider、QuantConnect、Options、paper/live、
 production、broker、orders、fills、positions 全部为 0。TRADING-2562 仅协调两条独立 evidence lineage、
 共享权威重建与正式验证，不改变既有投资结论。
+
+后续 producer 波次新增 9 个 current-session tests，并与旧 producer/prospective contract 合计完成
+26 个并行 focused tests；新模块 Ruff、Black 与 strict mypy PASS。测试只使用 synthetic caller inputs，
+没有读取市场 cache、运行 canonical DQ 或写 observation。Track B 的
+`CONTINUE_EXISTING_FORWARD_AGING_NO_NEW_EMPIRICAL_RUN` 保持不变，没有新增策略 family 或经验运行。
 
 ## Coordinator integration publication fence（DEVX-009）
 

@@ -7,7 +7,7 @@
 Owner 指令：2026-09-04，在确认当前候选进入冻结观察、同时继续其他策略研究后要求
 “好的，那就这样继续推进两条线吧”。
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 ## 1. 目标
 
@@ -81,11 +81,12 @@ feature/signal/definition identity 与 next-session decision；1/5/20-session ou
   `FROZEN_OPERATIONAL_PRODUCER_WINDOW_ENDS_AT_HISTORICAL_CUTOFF` 与
   `PROSPECTIVE_START_NOT_FROZEN`；
 - 不允许把旧 prediction 复制成新 observation，也不允许临时改变信号、窗口或标签规则；
-- durable next step 是新增 versioned、single-session、只使用 mature labels 的 prospective producer，
-  并在首次 capture 前冻结 prospective start、运行 canonical DQ、重放 exact manifest；
-- 当前实现波次只把该 producer 推进到 result-blind `SAFE_PREVIEW_READY`：输入由调用方显式提供，
+- versioned、single-session、只使用 mature labels 的 prospective producer 已实现；
+- 当前实现波次把该 producer 推进到 result-blind `SAFE_PREVIEW_READY`：输入由调用方显式提供，
   只允许使用目标 completed XNYS session 当日及之前的 feature 与已成熟 label；本波次不读取真实市场
   cache、不运行 canonical DQ、不写 prospective observation；
+- 首次 capture 前仍须另行冻结 prospective start、运行 canonical DQ、重放 exact manifest，并取得
+  精确 capture 授权；`SAFE_PREVIEW_READY` 不等于 `OBSERVATION_READY`；
 - 首次正式 scoreboard 前仍需 owner-reviewed sample/episode gate；
 - next owner：Codex 在新的受治理实现波次中完成上述 producer；Project Owner 只在新增阈值、真实
   capture 授权或扩大运行范围时复核。
@@ -122,3 +123,16 @@ feature/signal/definition identity 与 next-session decision；1/5/20-session ou
 - 2026-09-04：Owner 要求继续推进。任务恢复为 `IN_PROGRESS`，本波次只实现 current-session
   result-blind preview producer；不冻结真实 capture start、不运行 DQ/市场数据/回测、不写 observation。
   同期 `equal_risk_qqq_sgov` 只继续既有 forward-aging 自然累计，不新增 empirical run。
+- 2026-09-04：新增
+  `config/research/first_layer_composer_v2_current_session_producer_v1.yaml` 与
+  `first_layer_composer_v2_current_session_producer.py`。新入口继承 frozen operational policy 的
+  model/feature/threshold/504-session train window/20-session label horizon/cash proxy/composer 定义，
+  每次只对 caller-supplied completed XNYS session refit 并生成一行内存 preview；目标 session 后的
+  price/rate row、非 XNYS 日、非 PASS DQ receipt、无效 identity 或历史截止日前 session 均 fail closed。
+  旧 `first_layer_operational_forecast.py` 因被 preregistration hash 冻结而保持逐字未变。
+- 2026-09-04：26 个并行 focused tests、Ruff、Black 与新模块 strict mypy PASS；synthetic preview
+  证明 4 个 model fit 均使用 504 个训练样本且 `latest_label_available_at <= feature_session`，并能生成与
+  append-only observation contract 兼容的六字段 identity。真实 prospective observation=`0`；market
+  data、canonical DQ、backtest、download、cache mutation、provider、QuantConnect、Options、paper/live、
+  production、broker、orders、fills、positions 均为 0。Track B 继续既有 `equal_risk_qqq_sgov`
+  forward-aging，本波次没有新增 empirical run。

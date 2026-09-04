@@ -13,21 +13,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex：实现 versioned single-session mature-label producer；Project Owner
-    仅在真实 capture、新阈值或扩围前复核
+  next_owner: Project Owner：真实 capture 前精确授权 start/DQ/manifest/一次 observation；Codex
+    继续保持 Track B 既有 forward-aging
   requirement_refs:
   - docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 本波次只实现可安全生成 preview 的 current-session
-    producer，不写真实 observation；首次 capture 仍需冻结 start、canonical DQ、exact manifest replay
-    与精确授权
+  unstructured_legacy_blocker_or_next_step: current-session producer 已达 SAFE_PREVIEW_READY；OBSERVATION_READY
+    仍受 prospective start、canonical DQ、exact manifest replay 与精确 capture 授权阻断
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: single-session/current-visible/mature-label/identity tests PASS；不写 observation；Track
-      B 不新增 empirical run；market/DQ/download/cache/provider/QuantConnect/options/orders/fills/positions
-      均为 0
+    text: producer policy/loader/single-session/current-visible/mature-label/identity
+      tests PASS；旧 frozen producer hash 不变；真实 observation=0；所有禁止动作=0
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -143,24 +141,52 @@ events:
   - change:trading-2560-current-session-producer-start-20260904-v2
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-8fc55c510c6d96812fa7d03651fc86c1
+- schema_version: task_event.v1
+  task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-04T15:11:49.9927578+09:00'
+  actor: integration-coordinator
+  change_id: trading-2560-current-session-producer-baseline-done-20260904-v1
+  lane_id: null
+  base_commit: 006976227b2d8c4d2b8175c1d9653afb7b23e35b
+  previous_state_event_id: task-event-8fc55c510c6d96812fa7d03651fc86c1
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：真实 capture 前精确授权 start/DQ/manifest/一次 observation；Codex
+      继续保持 Track B 既有 forward-aging
+    blocker_or_next_step: current-session producer 已达 SAFE_PREVIEW_READY；OBSERVATION_READY
+      仍受 prospective start、canonical DQ、exact manifest replay 与精确 capture 授权阻断
+    acceptance_criteria: producer policy/loader/single-session/current-visible/mature-label/identity
+      tests PASS；旧 frozen producer hash 不变；真实 observation=0；所有禁止动作=0
+    notes: '新增 versioned current-session producer；9 个新 tests，与旧 producer/prospective
+      contract 合计 26 passed；Ruff/Black/strict mypy PASS。Track B 没有新增 empirical run。Supporting
+      requirement: docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2560-current-session-producer-baseline-done-20260904-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-55c7de320a2a14fb108649b0a33cd9e5
 projection:
   legacy_first_eight_cells:
   - TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
   - Strategy research / first-layer composer v2 prospective OOS observation
   - P0
-  - IN_PROGRESS
-  - Codex：实现 versioned single-session mature-label producer；Project Owner 仅在真实 capture、新阈值或扩围前复核
-  - 本波次只实现可安全生成 preview 的 current-session producer，不写真实 observation；首次 capture 仍需冻结
-    start、canonical DQ、exact manifest replay 与精确授权
-  - single-session/current-visible/mature-label/identity tests PASS；不写 observation；Track
-    B 不新增 empirical run；market/DQ/download/cache/provider/QuantConnect/options/orders/fills/positions
-    均为 0
-  - 'Owner 于 2026-09-04 要求继续推进两条线；Track A 恢复实现，Track B 保持 equal_risk_qqq_sgov 既有 forward-aging
-    自然累计且本轮不消费新 empirical run。Supporting requirement: docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md'
+  - BASELINE_DONE
+  - Project Owner：真实 capture 前精确授权 start/DQ/manifest/一次 observation；Codex 继续保持 Track
+    B 既有 forward-aging
+  - current-session producer 已达 SAFE_PREVIEW_READY；OBSERVATION_READY 仍受 prospective
+    start、canonical DQ、exact manifest replay 与精确 capture 授权阻断
+  - producer policy/loader/single-session/current-visible/mature-label/identity tests
+    PASS；旧 frozen producer hash 不变；真实 observation=0；所有禁止动作=0
+  - '新增 versioned current-session producer；9 个新 tests，与旧 producer/prospective contract
+    合计 26 passed；Ruff/Black/strict mypy PASS。Track B 没有新增 empirical run。Supporting
+    requirement: docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md'
   docs_links:
   - docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md
   terminal: false
-  canonical_row_sha256: e11c58e5b13d28b45cdf81dd4c79e53254b01d4c90174f4f1d4218f718842666
-last_event_id: task-event-8fc55c510c6d96812fa7d03651fc86c1
+  canonical_row_sha256: bc2dc3f2104a8eb7637bdd180ff5f10ffd4876489b28d3905a0a93b65d632214
+last_event_id: task-event-55c7de320a2a14fb108649b0a33cd9e5
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 2dbf17d2880ce5938210a8135d3f56b26c2885bb93815f39c32db64631dc0230
+fragment_checksum: 7bbc30126b5f7bae6e266c7c6a6ce87f9dacc427aa00a8d7e8672c7ba3cfb8c9
