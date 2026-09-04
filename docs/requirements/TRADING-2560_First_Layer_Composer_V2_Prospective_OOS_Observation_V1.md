@@ -7,7 +7,7 @@
 Owner 指令：2026-09-04，在确认当前候选进入冻结观察、同时继续其他策略研究后要求
 “好的，那就这样继续推进两条线吧”。
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 ## 1. 目标
 
@@ -75,9 +75,17 @@ feature/signal/definition identity 与 next-session decision；1/5/20-session ou
 
 ## 5. 当前阻塞与下一责任人
 
-- 当前第一阻塞是确认 frozen producer 是否能以原定义生成冻结日后的当前 session signal；
-- 第二阻塞是首次正式 scoreboard 前需要 owner-reviewed sample/episode gate；
-- next owner：Codex 先完成 S0 与 producer readiness audit；Project Owner 仅在新增阈值或扩大运行范围时复核。
+- S0 已完成；producer readiness audit 明确输出 `PRODUCER_NOT_READY`。既有 frozen operational
+  producer 固定在 `2021-02-22..2025-12-02`、1202 sessions，不能以同一合同生成冻结日后的当前
+  session signal；reason codes 为
+  `FROZEN_OPERATIONAL_PRODUCER_WINDOW_ENDS_AT_HISTORICAL_CUTOFF` 与
+  `PROSPECTIVE_START_NOT_FROZEN`；
+- 不允许把旧 prediction 复制成新 observation，也不允许临时改变信号、窗口或标签规则；
+- durable next step 是新增 versioned、single-session、只使用 mature labels 的 prospective producer，
+  并在首次 capture 前冻结 prospective start、运行 canonical DQ、重放 exact manifest；
+- 首次正式 scoreboard 前仍需 owner-reviewed sample/episode gate；
+- next owner：Codex 在新的受治理实现波次中完成上述 producer；Project Owner 只在新增阈值、真实
+  capture 授权或扩大运行范围时复核。
 
 ## 6. 工作区生命周期
 
@@ -95,3 +103,10 @@ feature/signal/definition identity 与 next-session decision；1/5/20-session ou
 - 2026-09-04：Owner 批准双线继续。本任务先进入 result-blind S0；授权仅覆盖 tracked contract、
   implementation、tests、docs 与本地离线验证，不覆盖真实 prospective capture、数据下载、cache
   mutation、外部 provider 或任何交易行为。
+- 2026-09-04：完成 versioned preregistration、strict loader、append-only observation/maturity/
+  idempotency 合同及 10 个 focused tests；Ruff、Black 与 strict mypy 均 PASS。lane commits 为
+  `1983da6fd`（S0）与 `9c78e2512`（producer readiness audit），coordinator 对应 commits 为
+  `8029f9c77` 与 `984a046a1`。
+- 2026-09-04：readiness audit 在不读取市场数据、不运行 DQ、不写 observation 的条件下确认旧
+  producer 无法合法产出当前 session signal，因此本任务以 `BASELINE_DONE` 保留 S1 阻塞；真实
+  prospective observation count=`0`，所有禁止动作计数仍为 0。

@@ -6,7 +6,7 @@
 
 Owner 指令：2026-09-04，“好的，那就这样继续推进两条线吧”。
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 ## 1. 协调目标
 
@@ -74,6 +74,11 @@ generated authority、formal validation 和最终 publication；两个 lane 不�
 - 所有 lane worktree 的 exact path、purpose 与 exit condition 已分别记录在 TRADING-2560/2561；
 - 本协调 checkout 在 local/main/origin 一致、canonical evidence 完整、无进程依赖且 governed audit 无唯一
   内容后恢复或清理，不删除未审计内容。
+- 临时集成证据固定在
+  `D:\Work\AITradingSystem_trading2559_integration\outputs\architecture\trading_2562_dual_track_integration`；
+  owner=`TRADING-2562`，purpose=保存 exact change manifest、integration revalidation plan 与 closeout
+  receipt；在 final candidate 已进入 local/remote main、canonical evidence 完整且 cleanup receipt 固化后
+  删除，若 transaction 失败或仍是唯一失败证据则保留并在本记录继续说明。
 
 ## 6. 进度记录
 
@@ -87,3 +92,13 @@ generated authority、formal validation 和最终 publication；两个 lane 不�
   `DUAL_LANE` START preflight 在相同 base、互斥 claims 与 coordinator-only paths 下 PASS。
 - 2026-09-04：三个新 task 使 canonical task count 从 1059 增至 1062；registration focused test
   首次按预期暴露旧静态 ratchet，已只机械更新该 task-count 断言，不改变 registry 语义。
+- 2026-09-04：TRADING-2560 lane 完成 result-blind prospective contract 与 producer readiness audit；
+  10 个 focused tests、Ruff、Black、strict mypy PASS。audit 证明旧 producer 只能覆盖历史截止日，真实
+  capture 保持 0，下一步必须另建 versioned current-session producer。
+- 2026-09-04：TRADING-2561 lane 完成 retained-evidence screen；7 个 focused tests、Ruff、Black、
+  strict mypy PASS。结果只选择继续 `equal_risk_qqq_sgov` 的既有 forward-aging，没有启动新 empirical
+  run，也不声称经验独立性。
+- 2026-09-04：两条 lane 已按 contract/domain/tests 顺序进入 coordinator commits
+  `8029f9c77`、`edb2e6fcc`、`984a046a1`。本轮研究产物没有读取市场数据、运行 DQ/backtest、下载或
+  修改 cache，也没有 provider、QuantConnect、Options、paper/live、production、broker、order、fill、
+  position 动作；全部计数为 0。

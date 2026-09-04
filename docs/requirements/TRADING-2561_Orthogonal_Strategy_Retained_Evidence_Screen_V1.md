@@ -7,7 +7,7 @@
 Owner 指令：2026-09-04，在确认当前候选进入冻结观察、同时继续其他策略研究后要求
 “好的，那就这样继续推进两条线吧”。
 
-状态：`IN_PROGRESS`
+状态：`DONE`
 
 ## 1. 目标
 
@@ -97,3 +97,17 @@ leverage、Options 或生产边界继续关闭。
 
 - 2026-09-04：Owner 批准双线继续。本任务先执行不消费市场数据的 retained-evidence screen；
   authorization_state=`STANDING_OWNER_SCOPE` 仅用于本地 R0/static evidence work，不授权新的经验回测。
+- 2026-09-04：完成 versioned policy、strict loader、deterministic classifier 与 7 个 focused tests；
+  Ruff、Black 与 strict mypy 均 PASS。lane commit=`59cd95c44`，coordinator commit=`edb2e6fcc`。
+- 2026-09-04：确定性筛选输出
+  `CONTINUE_EXISTING_FORWARD_AGING_NO_NEW_EMPIRICAL_RUN`，继续候选为
+  `equal_risk_qqq_sgov`，新实验候选为空；result SHA-256=`08a982c9dab75b678529fce48f921449adaa98cca3dbcca14f364ee178ef8041`，
+  policy SHA-256=`a88eea5a4b3bf756f8e2a9f6147a90c26e5b9da414bc1174a92ddaa80e746db1`。
+  `equal_risk_qqq_sgov` 仅为 `PARTIAL` structural orthogonality；因共享 QQQ input，经验独立性保持
+  `NOT_ESTABLISHED`。static QQQ、growth research candidate 与 trend-gated TQQQ 保持 reference/hold，
+  LEAPS/Options 保持 exclude。
+- 2026-09-04：screen 检出旧 evidence-first portfolio snapshot 仍显示 `UNRESOLVED`，而较新的 terminal
+  composer evidence 为 `INSUFFICIENT_HOLD`，因此显式输出
+  `PORTFOLIO_SNAPSHOT_PRECEDES_TERMINAL_EVIDENCE` 并以 terminal evidence 为准，不静默改写历史
+  snapshot。tracked config reads=`5`；market/prospective/DQ/backtest/download/cache/provider/
+  QuantConnect/options/orders/fills/positions 均为 0，automatic promotion=false。
