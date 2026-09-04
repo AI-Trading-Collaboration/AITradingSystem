@@ -1,0 +1,79 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2563_EQUAL_RISK_CATCHUP_V1
+  task_id_sha256: 52e6bec432bc77496b038212e6412ff91348b5ce0714cb01e9f25454a18a0071
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2563_EQUAL_RISK_CATCHUP_V1
+  title: null
+  domain: Strategy research / equal-risk bounded maturity catch-up
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex：按精确授权完成 1/1/1/1/1/1 bounded catch-up；Project Owner 仅在扩大范围时复核
+  requirement_refs:
+  - docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md`；以
+    2026-09-03 为 as-of，先 replay/DQ/rehearsal，PASS 后仅更新两份既有 observation，禁止新增 observation
+    或外部/交易动作
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: manifest replay、canonical DQ、isolated rehearsal、maturity update、scoreboard、continuity
+      各恰好 1 次；immutable identity 不变；禁止项全部 0；正式验证、local-main、origin/main 与生命周期门禁通过
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2563_EQUAL_RISK_CATCHUP_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-04T22:02:21.7609355+09:00'
+  actor: integration-coordinator
+  change_id: trading-2563-register-20260904-v1
+  lane_id: null
+  base_commit: f2be2f0e734f5e1cab0c5b56fa1c69b9086e3097
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2563_EQUAL_RISK_CATCHUP_V1
+    - Strategy research / equal-risk bounded maturity catch-up
+    - P0
+    - IN_PROGRESS
+    - Codex：按精确授权完成 1/1/1/1/1/1 bounded catch-up；Project Owner 仅在扩大范围时复核
+    - 详见 `docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md`；以 2026-09-03 为
+      as-of，先 replay/DQ/rehearsal，PASS 后仅更新两份既有 observation，禁止新增 observation 或外部/交易动作
+    - manifest replay、canonical DQ、isolated rehearsal、maturity update、scoreboard、continuity
+      各恰好 1 次；immutable identity 不变；禁止项全部 0；正式验证、local-main、origin/main 与生命周期门禁通过
+    - authorization_state=`EXACT_PREAUTHORIZED`；production_effect=none；broker_action=none
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2563-register-20260904-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2a056409433f152cd429140c81188f0c
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2563_EQUAL_RISK_CATCHUP_V1
+  - Strategy research / equal-risk bounded maturity catch-up
+  - P0
+  - IN_PROGRESS
+  - Codex：按精确授权完成 1/1/1/1/1/1 bounded catch-up；Project Owner 仅在扩大范围时复核
+  - 详见 `docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md`；以 2026-09-03 为 as-of，先
+    replay/DQ/rehearsal，PASS 后仅更新两份既有 observation，禁止新增 observation 或外部/交易动作
+  - manifest replay、canonical DQ、isolated rehearsal、maturity update、scoreboard、continuity
+    各恰好 1 次；immutable identity 不变；禁止项全部 0；正式验证、local-main、origin/main 与生命周期门禁通过
+  - authorization_state=`EXACT_PREAUTHORIZED`；production_effect=none；broker_action=none
+  docs_links:
+  - docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md
+  terminal: false
+  canonical_row_sha256: 597a817662a1bdedcedce859d45901b520cfb2e1e4e05a2835f2d101e088107b
+last_event_id: task-event-2a056409433f152cd429140c81188f0c
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: f11fc307cb291570c042e2b250800ed3a44ed9ea6a589832a7fb623cd016d834

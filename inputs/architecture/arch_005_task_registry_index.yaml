@@ -7,14 +7,14 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 1062
-active_task_count: 520
+task_count: 1063
+active_task_count: 521
 completed_task_count: 542
-fragment_count: 1062
+fragment_count: 1063
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 12f8a19f30e4cab23a72d38e0be5350ebc5124afb53633e3d84e9e96f554a151
+final_chain_sha256: 5f28c9294698e1617013971ab20d8c93a8135fff98427b2eb8f6b53b3564a5f8
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 247d44a02a96b3540e6a9ce30a837fbf8caa4c46d4022fddafc524e5ab57baa8
 templates:
@@ -8525,12 +8525,20 @@ fragments:
   order: 1062
   previous_entry_sha256: 8837365bebcaf256b5ba921e53d4d3bb0d6cd86a874ddf1e6fbd485d3fa81ba8
   entry_sha256: 12f8a19f30e4cab23a72d38e0be5350ebc5124afb53633e3d84e9e96f554a151
+- task_id: TRADING-2563_EQUAL_RISK_CATCHUP_V1
+  path: registry/development_tasks/52/52e6bec432bc77496b038212e6412ff91348b5ce0714cb01e9f25454a18a0071.yaml
+  file_sha256: 2b4600f821b0df058527c028e5c46ffdd9b658b1d1d74e43d3c0a9bcc51b0408
+  fragment_checksum: f11fc307cb291570c042e2b250800ed3a44ed9ea6a589832a7fb623cd016d834
+  partition: active
+  order: 1063
+  previous_entry_sha256: 12f8a19f30e4cab23a72d38e0be5350ebc5124afb53633e3d84e9e96f554a151
+  entry_sha256: 5f28c9294698e1617013971ab20d8c93a8135fff98427b2eb8f6b53b3564a5f8
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: a5bfc174126bd2052d29f159d93fab71a1ed2548776c8aa891f6cfcedb1b342e
-  byte_count: 1775161
-  row_count: 520
+  sha256: b603706c936d1d046eb8e8beeaa7db046cee2b183687314f1fa2fb607f8e94c4
+  byte_count: 1775903
+  row_count: 521
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
@@ -11640,7 +11648,14 @@ governance_cycles:
   change_id: trading-2560-current-session-producer-baseline-done-20260904-v1
   event_count: 5
   production_effect: none
-governance_cycle_count: 443
+- cycle_id: arch-005-s5-cycle-444
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: TRADING-2563_EQUAL_RISK_CATCHUP_V1
+  change_id: trading-2563-register-20260904-v1
+  event_count: 1
+  production_effect: none
+governance_cycle_count: 444
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -11654,4 +11669,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 6877006829a31cd79c26513a34d4bcb92e4ae12ffbcffb6764910ad35cad2870
+index_checksum: 1d5b1776d55c55e9a1e01a60336b3b81f4e7044d6fa005e571aafc06ebd9bbc5
