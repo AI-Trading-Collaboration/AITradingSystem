@@ -1,0 +1,76 @@
+schema_version: equal_risk_qqq_sgov_catchup_dq_path_failure_fix_proposal.v1
+proposal_id: equal_risk_qqq_sgov_catchup_dq_path_failure_fix_proposal_v1
+proposal_version: 1.0.0
+status: OWNER_EXACT_RETRY_AUTHORIZATION_REQUIRED
+task_id: TRADING-2563_EQUAL_RISK_CATCHUP_V1
+failure_binding:
+  attempted_at: '2026-09-04T13:15:00Z'
+  attempted_execution_root: 'D:\Work\AITradingSystem_trading2563_equal_risk_catchup'
+  input_path: 'D:\Work\AITradingSystem\data\raw\prices_daily.csv'
+  exit_code: 1
+  reason_code: DQ_RECEIPT_FIELDS_INVALID
+  detail: 'path is outside project root'
+  rejected_before_validator_execution: true
+  canonical_dq_completed_execution_count: 0
+  canonical_dq_receipt_count: 0
+  canonical_dq_report_count: 0
+  terminal_receipt:
+    path: outputs/research_strategies/trading_2563_equal_risk_catchup_v1/terminal_receipt.json
+    sha256: ce25a8eadb8a7ee8f3c61742a5f8ddb917c7f6febb64f43c711538bccd627beb
+    size_bytes: 2984
+root_cause: >-
+  CanonicalDataQualityExecutionRequest 要求所有 input path 位于 PROJECT_ROOT 内。任务隔离
+  worktree 的代码尝试读取原 checkout 的 canonical cache，因而在 validator 和 receipt writer
+  启动前被 containment gate 拒绝。输入、cache 与 observation 均未修改。
+best_fix:
+  execution_root: 'D:\Work\AITradingSystem'
+  required_runtime_head: 0a0e6abef3eaebc760b200997160f5b64281a55f
+  required_code_bytes:
+    - path: src/ai_trading_system/cli_commands/data_cache.py
+      sha256: 07a562934ebf18fb7ae3a98e0f7458d2785ce57a928675fe977880dd7943f9d6
+      size_bytes: 23339
+    - path: config/data_quality.yaml
+      sha256: e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82
+      size_bytes: 9002
+    - path: config/data/us_equity_special_closure_registry.yaml
+      sha256: 375dd5e07b57208c5afb700d4fec96fdb3c95b29d562b553c3ecc5c4e6f97416
+      size_bytes: 1959
+    - path: config/universe.yaml
+      sha256: ce572af740e9b50c1ec97fd401ae5b16283709d6130c80d3253b5029989844ea
+      size_bytes: 917
+  as_of: '2026-09-03'
+  execution_profile: manual.v1
+  retry_scope:
+    corrected_canonical_dq_dispatches: 1
+    completed_canonical_dq_executions_max: 1
+    manifest_replays: 0
+    isolated_bounded_rehearsals: 0
+    canonical_maturity_updates: 0
+    scoreboard_generations: 0
+    continuity_audits: 0
+  stop_after_dq_result: true
+  rationale: >-
+    在 cache 所属 checkout 内运行可满足 containment，不复制或修改 cache；相关 DQ code/config
+    bytes 与已冻结 manifest 的绑定完全一致。即使 DQ PASS，本 retry 也只报告结果，不自动消费
+    后续 rehearsal/maturity/scoreboard/continuity 授权。
+forbidden_actions:
+  new_observations: 0
+  data_downloads: 0
+  cache_mutations: 0
+  provider_actions: 0
+  quantconnect_actions: 0
+  option_actions: 0
+  paper_actions: 0
+  live_actions: 0
+  broker_actions: 0
+  orders: 0
+  fills: 0
+  positions: 0
+  trading_actions: 0
+safety:
+  authorization_state: NOT_YET_AUTHORIZED
+  production_effect: none
+  broker_action: none
+  force_push_allowed: false
+  remote_history_repair_allowed: false
+terminal: OWNER_EXACT_RETRY_AUTHORIZATION_REQUIRED

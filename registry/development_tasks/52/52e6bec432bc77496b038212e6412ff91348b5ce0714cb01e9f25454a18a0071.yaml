@@ -13,15 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex：按精确授权完成 1/1/1/1/1/1 bounded catch-up；Project Owner 仅在扩大范围时复核
+  next_owner: Project Owner：决定是否精确授权 failure-fix proposal 中的一次 contained-root canonical
+    DQ retry
   requirement_refs:
   - docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md`；以
-    2026-09-03 为 as-of，先 replay/DQ/rehearsal，PASS 后仅更新两份既有 observation，禁止新增 observation
-    或外部/交易动作
+  unstructured_legacy_blocker_or_next_step: manifest replay=1 PASS；首个 DQ dispatch
+    在 validator 前因 path outside project root 被拒，completed DQ/receipt/report=0；需在 D:\Work\AITradingSystem
+    内 corrected DQ retry 1 次；其余动作与全部禁止项均为 0
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: manifest replay、canonical DQ、isolated rehearsal、maturity update、scoreboard、continuity
@@ -58,22 +59,52 @@ events:
   - change:trading-2563-register-20260904-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-2a056409433f152cd429140c81188f0c
+- schema_version: task_event.v1
+  task_id: TRADING-2563_EQUAL_RISK_CATCHUP_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-04T22:18:33.9751608+09:00'
+  actor: integration-coordinator
+  change_id: trading-2563-path-containment-block-20260904-v1
+  lane_id: null
+  base_commit: e93a48cab1be0be9507019c6fdac29ccfc29a945
+  previous_state_event_id: task-event-2a056409433f152cd429140c81188f0c
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner：决定是否精确授权 failure-fix proposal 中的一次 contained-root canonical
+      DQ retry
+    blocker_or_next_step: manifest replay=1 PASS；首个 DQ dispatch 在 validator 前因 path
+      outside project root 被拒，completed DQ/receipt/report=0；需在 D:\Work\AITradingSystem
+      内 corrected DQ retry 1 次；其余动作与全部禁止项均为 0
+    acceptance_criteria: manifest replay、canonical DQ、isolated rehearsal、maturity
+      update、scoreboard、continuity 各恰好 1 次；immutable identity 不变；禁止项全部 0；正式验证、local-main、origin/main
+      与生命周期门禁通过
+    notes: authorization_state=EXACT_PREAUTHORIZED；technical_validation_state=DQ_NOT_EXECUTED_PATH_CONTAINMENT_REJECTED；详见
+      docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md 与 failure-fix proposal
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2563-path-containment-block-20260904-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5b3ff03063dc6d7ea7e69b0911b768c9
 projection:
   legacy_first_eight_cells:
   - TRADING-2563_EQUAL_RISK_CATCHUP_V1
   - Strategy research / equal-risk bounded maturity catch-up
   - P0
-  - IN_PROGRESS
-  - Codex：按精确授权完成 1/1/1/1/1/1 bounded catch-up；Project Owner 仅在扩大范围时复核
-  - 详见 `docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md`；以 2026-09-03 为 as-of，先
-    replay/DQ/rehearsal，PASS 后仅更新两份既有 observation，禁止新增 observation 或外部/交易动作
+  - BLOCKED_OWNER_INPUT
+  - Project Owner：决定是否精确授权 failure-fix proposal 中的一次 contained-root canonical DQ retry
+  - manifest replay=1 PASS；首个 DQ dispatch 在 validator 前因 path outside project root
+    被拒，completed DQ/receipt/report=0；需在 D:\Work\AITradingSystem 内 corrected DQ retry
+    1 次；其余动作与全部禁止项均为 0
   - manifest replay、canonical DQ、isolated rehearsal、maturity update、scoreboard、continuity
     各恰好 1 次；immutable identity 不变；禁止项全部 0；正式验证、local-main、origin/main 与生命周期门禁通过
-  - authorization_state=`EXACT_PREAUTHORIZED`；production_effect=none；broker_action=none
+  - authorization_state=EXACT_PREAUTHORIZED；technical_validation_state=DQ_NOT_EXECUTED_PATH_CONTAINMENT_REJECTED；详见
+    docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md 与 failure-fix proposal
   docs_links:
   - docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md
   terminal: false
-  canonical_row_sha256: 597a817662a1bdedcedce859d45901b520cfb2e1e4e05a2835f2d101e088107b
-last_event_id: task-event-2a056409433f152cd429140c81188f0c
+  canonical_row_sha256: 8c1f3b449780875f1865070b9509076b3f4fa77e01f8603467290f0ca7efc522
+last_event_id: task-event-5b3ff03063dc6d7ea7e69b0911b768c9
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f11fc307cb291570c042e2b250800ed3a44ed9ea6a589832a7fb623cd016d834
+fragment_checksum: c80b1b4352b48001cae21309b1830da80b197fa549a29792f664af14e178df91

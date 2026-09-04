@@ -90,3 +90,21 @@ QuantConnect、Options、paper/live、broker、order、fill、position、product
 - 离线 XNYS 日历核对显示两份 observation 的 5d/10d/20d 已到期；60d 分别在
   2026-09-16/2026-09-18 到期，120d 分别在 2026-12-10/2026-12-14 到期。日历到期不替代
   canonical DQ 和真实可见价格证据。
+
+## 8. 执行进度与当前阻塞
+
+- 2026-09-04：versioned manifest 已绑定 source commit `8286392a5e5e5fa1ecd5aea6fb76fbd551854105`；
+  exact manifest commit 为 `e93a48cab1be0be9507019c6fdac29ccfc29a945`。
+- manifest replay 恰好执行 1 次并 PASS；receipt SHA-256 为
+  `8a79dfa44fbe613af95a3b5943f52d335ac7d017c51d45c1688e15be9409c822`。
+- 首次 canonical DQ 调用在 validator 启动前被 `DQ_RECEIPT_FIELDS_INVALID` 拒绝：隔离 worktree
+  的 `PROJECT_ROOT` 不允许包含原 checkout 的 cache path。该调用产生 1 次 dispatch attempt，
+  但 completed DQ execution、DQ receipt 与 DQ report 均为 0；因此没有数据质量结论。
+- 失败后复核确认 prices、rates、secondary prices 与两份 observation 的 SHA-256/size 全部未变；
+  rehearsal、maturity update、scoreboard、continuity 均为 0，所有禁止动作仍为 0。
+- 正确修复是在 cache 所属 checkout `D:\Work\AITradingSystem` 内运行一次 corrected DQ；该 checkout
+  的 DQ code/config bytes 与冻结 manifest 一致，但这将形成第二次 dispatch，因此不沿用原授权擅自
+  重试。精确 proposal 见
+  `config/research/equal_risk_qqq_sgov_catchup_dq_path_failure_fix_proposal_v1.yaml`。
+- 当前状态转为 `BLOCKED_OWNER_INPUT`；next owner 为 Project Owner，仅需决定是否授权 proposal
+  中的一次 corrected DQ retry。即使 retry PASS，也先停下报告，不自动执行后续四项动作。
