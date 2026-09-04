@@ -10327,6 +10327,48 @@ paired excess 分别为 `+10.410605362323075/+5.537673124193127/-1.6675372437030
 `INSUFFICIENT/HOLD` 与 `TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO` 保持不变。实际运行计数精确
 为 `1/1/1/1`，所有外部或交易动作均为 0/false/none。
 
+## TRADING-2560～2562 双线策略研究继续推进
+
+TRADING-2560 为 `first_layer_composer_v2` 新增结果盲、append-only 的 prospective OOS 观察合同。
+`config/research/first_layer_composer_v2_prospective_oos_preregistration_v1.yaml` 固定既有五态信号、
+QQQ/cash action mapping、after-close decision、one-session lag、5 bps 单向成本与 1/5/20-session
+成熟窗口；`first_layer_composer_v2_prospective_oos.py` 对 policy/source SHA、DQ PASS、同日幂等、
+非回填、非覆盖与成熟日期 fail closed。scoreboard 在另行 owner-reviewed sample/episode gate 前只能是
+`EVIDENCE_INSUFFICIENT`。
+
+Producer readiness audit 当前为 `PRODUCER_NOT_READY`：既有 operational producer 固定在
+`2021-02-22..2025-12-02`、1202 sessions，不能以原合同生成冻结日后的 current-session signal，且
+prospective start 尚未冻结。因此当前真实 observation 为 0；禁止复制历史 prediction 或临时改规则。
+下一步必须先实现新的 versioned single-session producer，只使用当时已成熟 labels，再在独立授权下执行
+exact manifest replay 与 canonical DQ 后开始 capture。
+
+TRADING-2561 同时新增 aggregate-only retained-evidence screen。它只读取五个 hash-bound tracked
+configuration/terminal sources，并把 structural orthogonality 与 empirical independence 分开：当前结果为
+`CONTINUE_EXISTING_FORWARD_AGING_NO_NEW_EMPIRICAL_RUN`，仅继续 `equal_risk_qqq_sgov` 的既有
+forward-aging；该候选因共享 QQQ input 只能标记 `PARTIAL`，经验独立性仍为 `NOT_ESTABLISHED`。
+static QQQ、growth research candidate、trend-gated TQQQ 保持 reference/hold，LEAPS/Options 保持
+exclude。旧 evidence-first portfolio snapshot 的 `UNRESOLVED` 早于 terminal
+`INSUFFICIENT_HOLD`，screen 显式发出 `PORTFOLIO_SNAPSHOT_PRECEDES_TERMINAL_EVIDENCE`，不静默
+改写历史 snapshot。
+
+```mermaid
+flowchart LR
+    T[TRADING-2557～2559 terminal evidence] --> A[Track A: prospective OOS contract]
+    A --> R{current-session producer ready?}
+    R -- no --> B[BASELINE_DONE / observation=0]
+    R -- future exact gate --> O[append-only 1/5/20-session observation]
+    T --> S[Track B: retained-evidence screen]
+    C[tracked strategy registries] --> S
+    S --> E[continue equal_risk_qqq_sgov forward-aging]
+    S --> H[hold/exclude other candidates]
+    E --> N[empirical independence NOT_ESTABLISHED]
+```
+
+本轮 17 个 focused tests、Ruff、Black 与 strict mypy 已通过；market/prospective outcome read、
+canonical DQ、backtest、download、cache mutation、provider、QuantConnect、Options、paper/live、
+production、broker、orders、fills、positions 全部为 0。TRADING-2562 仅协调两条独立 evidence lineage、
+共享权威重建与正式验证，不改变既有投资结论。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

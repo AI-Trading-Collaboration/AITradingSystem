@@ -14,7 +14,7 @@ fragment_count: 1062
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 10bff0911d518c4298eed49b416a98fda00676bf70b7f8524a0dc5d9166c7a2b
+final_chain_sha256: cc7e005309caeda9863a9ca046f2fef4de8a2101413d4701c99fa36871cee59c
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 247d44a02a96b3540e6a9ce30a837fbf8caa4c46d4022fddafc524e5ab57baa8
 templates:
@@ -8503,33 +8503,33 @@ fragments:
   entry_sha256: 7dd5068c91fad32116a5ccb3f1d7668be84fc31b7ed5e742a288641afb447757
 - task_id: TRADING-2562_DUAL_TRACK_STRATEGY_RESEARCH_CONTINUATION_V1
   path: registry/development_tasks/e2/e21559a8831a3440c5e3526923805bff92d999fcb80970da61336419378b790b.yaml
-  file_sha256: dac4f629756e2985641099030d1fb3db1eaa749f0ed88ba6e3ef79505fa1e603
-  fragment_checksum: fd7e14e31d199562b4b4bbf1be29d10f4c7ecdb5a92d3af8837dae01a77c3017
+  file_sha256: f94029ffb2565c92bd8f60e42ce9da633804ba9977af03c06359ec40760b50ad
+  fragment_checksum: b030a2b98bf29e22f7f9c10f5988f4f1496dfc97d62d9ade9ad75c9f986296f2
   partition: active
   order: 1060
   previous_entry_sha256: 7dd5068c91fad32116a5ccb3f1d7668be84fc31b7ed5e742a288641afb447757
-  entry_sha256: bae585ddeba9985bf9d59f0a7c78ff9be4831dc7db08d4575eb0850c6a837f72
+  entry_sha256: d8d28a81fda7a856e35ffcf0f5b5f1475b478a72f867ec911bc1ee917ee51841
 - task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
   path: registry/development_tasks/7a/7ad76bd97b8e054ed284029d0b4eca86af04f0d12a76c2d039cb6e3f0984b899.yaml
   file_sha256: 2863903215d05f8f9209983471b5d95f226455e15f5de5bc92c6e05d32a1f4ec
   fragment_checksum: c2427c415a1a64d4ac65f4a2812ce54014af5fd5ef80b2723d8a2c78c5e18768
   partition: active
   order: 1061
-  previous_entry_sha256: bae585ddeba9985bf9d59f0a7c78ff9be4831dc7db08d4575eb0850c6a837f72
-  entry_sha256: 531fb509312f8aad075f17dd079c992952f469dfd62e57a824b8cc643ccc1ec0
+  previous_entry_sha256: d8d28a81fda7a856e35ffcf0f5b5f1475b478a72f867ec911bc1ee917ee51841
+  entry_sha256: ed205e0bbcfce2c7fca87891c6a1b1a0a1e202ccbd57a8e4385b6db1b0f793cc
 - task_id: TRADING-2561_ORTHOGONAL_STRATEGY_RETAINED_EVIDENCE_SCREEN_V1
   path: registry/development_tasks/ee/ee8b19acfba25be3ecf1ba261d4b7de24cb84ad3fa9540482c7423b9da46fa0d.yaml
   file_sha256: aeaa2117f2243a9342d85d467649ff7e06d2ee80886bc49868012cbab8ba356a
   fragment_checksum: 267f960655f045f34e7d10a44f1676a7ccf5e025ca60035cdb3fb356c3af8c5e
   partition: completed
   order: 1062
-  previous_entry_sha256: 531fb509312f8aad075f17dd079c992952f469dfd62e57a824b8cc643ccc1ec0
-  entry_sha256: 10bff0911d518c4298eed49b416a98fda00676bf70b7f8524a0dc5d9166c7a2b
+  previous_entry_sha256: ed205e0bbcfce2c7fca87891c6a1b1a0a1e202ccbd57a8e4385b6db1b0f793cc
+  entry_sha256: cc7e005309caeda9863a9ca046f2fef4de8a2101413d4701c99fa36871cee59c
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 60a2aa73c296f12b3fc9f4fe31d9dc87584825390e82bd49404e02b39460e167
-  byte_count: 1775126
+  sha256: 527e5fc5780802d1d4dd9d783300b017b7e65dbc58b41eb5ef3f6b9a50e0802a
+  byte_count: 1775192
   row_count: 520
   generated_do_not_edit: true
 - partition: completed
@@ -11612,7 +11612,14 @@ governance_cycles:
   change_id: trading-2561-done-20260904-v1
   event_count: 2
   production_effect: none
-governance_cycle_count: 439
+- cycle_id: arch-005-s5-cycle-440
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2562_DUAL_TRACK_STRATEGY_RESEARCH_CONTINUATION_V1
+  change_id: trading-2562-baseline-done-20260904-v1
+  event_count: 2
+  production_effect: none
+governance_cycle_count: 440
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -11626,4 +11633,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 4b30933e998d68c6837101cf74f84a28563bf238f9faeec95d9b69631f2c212d
+index_checksum: e5d6ae490dcc5b264eae9ae24691f0fb37f521c0d998a2d083f2175d49c9fd17

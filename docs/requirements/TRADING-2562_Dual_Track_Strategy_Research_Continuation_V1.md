@@ -102,3 +102,10 @@ generated authority、formal validation 和最终 publication；两个 lane 不�
   `8029f9c77`、`edb2e6fcc`、`984a046a1`。本轮研究产物没有读取市场数据、运行 DQ/backtest、下载或
   修改 cache，也没有 provider、QuantConnect、Options、paper/live、production、broker、order、fill、
   position 动作；全部计数为 0。
+- 2026-09-04：final publication v1 在 acquisition 参数中重复声明 policy 自动加入的两个排他资源，
+  以 `PUBLICATION_PATH_DUPLICATE` 在 transaction 创建前停止；修正参数后取得的 v1 未做 canonical
+  mutation，并因需要分别更新三个 task identity 而以 failed 释放。TRADING-2560/2561 随后各用独立
+  task-scoped transaction 追加状态事件并形成 clean commits。协调 v2 完成 TRADING-2562 task event 与
+  `docs/system_flow.md` source bytes 后，在 generator 前按 failed 释放，以便先形成 Atlas 可绑定的 exact
+  source commit；没有重跑研究或产生新 evidence counters。下一事务从该 clean source commit 完整执行五个
+  official generators。
