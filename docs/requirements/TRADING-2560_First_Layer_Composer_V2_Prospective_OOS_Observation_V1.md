@@ -143,3 +143,19 @@ feature/signal/definition identity 与 next-session decision；1/5/20-session ou
   report-flow entries `3146 -> 3147`、system-flow entries `1213 -> 1214`/新 SHA，以及 deprecation
   inventory modules/tests `1195/1353 -> 1196/1354`。修正这些静态断言后从新 source commit 完整重建；
   producer/strategy/window/model/feature/label/threshold/cost/action 与所有运行计数不变。
+- 2026-09-04：候选 `cf4f368897b1405e36d4059f9f2346824a360d55` 的 Architecture、Contract、
+  Integration、Reproducibility 分别以 `885`、`278`、`995`、`24` 个测试 PASS；首次 Full 以
+  `10215 passed / 24 failed / 5 skipped` 终止，失败产物为
+  `outputs/validation_runtime/full_20260904T065451Z/test_runtime_summary.json`。24 个失败均不涉及新
+  producer 断言：23 个源于 Git worktree 未携带 `.gitignore` 下的历史权威 evidence，1 个源于 Atlas
+  ignored page sidecar 仍绑定生成前 commit。v3 publication transaction 已按 FAIL 释放，未发布。
+- 2026-09-04：failure-fix 仅允许从保留的
+  `D:\Work\AITradingSystem_trading2559_integration` 精确 hydration 下列五个历史 evidence 目录到当前
+  worktree，并逐文件核对 SHA-256；不重跑旧研究、不读取 market cache、不运行 canonical DQ、不下载
+  数据、不调用 provider。目录为 `trading_2464_o1_dq_20260729T183000Z`、
+  `trading_2542i_real_v3`、`first_layer_composer_v2_foundational_falsification_v1`、
+  `first_layer_composer_v2_foundational_falsification_failure_fix_v1` 与
+  `first_layer_composer_v2_matched_placebo_v1`，合计 16 个文件、约 789 KB、无 reparse point；随后仅从
+  最终候选 SHA 重新渲染 Atlas ignored 页面。exit condition：目标逐文件 SHA 与源完全相同、失败节点
+  focused PASS、failure-fix Full PASS，且这些只读副本随 task worktree cleanup 一并移除；若验证未通过，
+  保留本工作区和不可变失败证据继续审计。
