@@ -1,0 +1,74 @@
+schema_version: first_layer_composer_v2_current_session_producer_policy.v1
+policy_id: first_layer_composer_v2_current_session_producer_v1
+policy_version: 1.0.0
+status: OWNER_APPROVED_RESULT_BLIND_IMPLEMENTATION_ONLY
+owner: project_owner
+owner_decision_id: owner_instruction:TRADING-2560:2026-09-04:continue_current_session_producer_without_capture
+policy_metadata:
+  rationale: >-
+    既有 operational producer 固定在 2021-02-22..2025-12-02，不能生成冻结日后的
+    prospective signal。本合同继承其完整模型、阈值、504-session 训练窗、20-session
+    label horizon、cash proxy 和五态 composer，只新增一个 caller-supplied completed XNYS
+    session 的 result-blind preview 入口。
+  intended_effect: >-
+    使用目标 session 当日及之前的 feature 与目标 session 当日已经成熟的 labels，生成唯一一行
+    current-session signal preview，并为未来受授权 observation capture 提供可审计 identity；本波次
+    不写 observation。
+  validation_evidence: >-
+    Synthetic golden/negative tests must prove one-session emission, current-visible input cutoff,
+    mature-label-only fitting, deterministic identities, exact next-XNYS timing and zero capture.
+  review_condition: >-
+    Review before changing any inherited model, signal, feature, label, threshold, training window,
+    cost, action mapping or before enabling real market-data materialization or observation capture.
+authority_bindings:
+  frozen_operational_policy:
+    path: config/research/first_layer_operational_forecast_producer_v1.yaml
+    sha256: 938be28f5778b78f2a709abf3bf61cb3b748cf0cb1aa816fa911d670d053ed40
+  prospective_oos_preregistration:
+    path: config/research/first_layer_composer_v2_prospective_oos_preregistration_v1.yaml
+    sha256: 67fbaec38a78dc0e59fcc6b5ee256e1382ccfa740cdc14cb554e8751f046d26d
+session_contract:
+  calendar: XNYS
+  historical_cutoff: '2025-12-02'
+  feature_session_role: CALLER_SUPPLIED_COMPLETED_XNYS_SESSION
+  feature_session_must_follow_historical_cutoff: true
+  input_rows_after_feature_session_allowed: false
+  future_label_access_allowed: false
+  label_maturity_rule: LABEL_END_SESSION_ON_OR_BEFORE_FEATURE_SESSION
+  output_row_count: 1
+  decision_at_semantics: NEXT_VALID_XNYS_SESSION
+fit_contract:
+  source: INHERIT_FROZEN_OPERATIONAL_POLICY_EXACTLY
+  refit_rule: FIT_ON_EACH_REQUESTED_FEATURE_SESSION
+  cross_session_state_reuse_allowed: false
+output_contract:
+  schema_version: first_layer_composer_v2_current_session_preview.v1
+  readiness_status: SAFE_PREVIEW_READY
+  observation_identity_preview_required: true
+  observation_write_allowed: false
+  artifact_write_allowed: false
+  automatic_capture_allowed: false
+  forward_label_columns_allowed: false
+capture_boundary:
+  prospective_start_frozen: false
+  exact_manifest_replay_completed: false
+  canonical_dq_run_completed: false
+  exact_capture_authorization_present: false
+  first_real_observation_allowed: false
+safety:
+  scope: NON_EXECUTABLE_RESULT_BLIND_PREVIEW
+  market_data_read_by_producer: false
+  real_cache_materialization_allowed: false
+  data_download_allowed: false
+  cache_mutation_allowed: false
+  provider_query_allowed: false
+  quantconnect_allowed: false
+  option_backtest_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  orders: 0
+  fills: 0
+  positions: 0
+  production_effect: none
+  broker_action: none
