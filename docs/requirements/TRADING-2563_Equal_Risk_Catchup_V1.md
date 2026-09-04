@@ -1,6 +1,6 @@
 # TRADING-2563：Equal-Risk Catch-up V1
 
-最后更新：2026-09-04
+最后更新：2026-09-05
 
 稳定任务 ID：`TRADING-2563_EQUAL_RISK_CATCHUP_V1`
 
@@ -108,3 +108,21 @@ QuantConnect、Options、paper/live、broker、order、fill、position、product
   `config/research/equal_risk_qqq_sgov_catchup_dq_path_failure_fix_proposal_v1.yaml`。
 - 当前状态转为 `BLOCKED_OWNER_INPUT`；next owner 为 Project Owner，仅需决定是否授权 proposal
   中的一次 corrected DQ retry。即使 retry PASS，也先停下报告，不自动执行后续四项动作。
+
+## 9. 阻塞状态发布验证
+
+- focused/adjacent、architecture、contract、integration 与 reproducibility 分别通过
+  `249`、`885`、`278`、`995` 与 `24` 项测试；
+- 首次正式 Full 在候选 `5fd7c60a5f102a0032d8e390e2847f822a046299` 上完成，结果为
+  `10218 passed / 25 failed / 5 skipped`。父 Full artifact 为
+  `outputs/validation_runtime/full_20260904T144328Z/test_runtime_summary.json`，SHA-256 为
+  `a8de82d8e8595b00b1a1e6fcd0f60df7cc5f0b48d6d48a8990e6029b65b42e6d`；
+- 25 个失败中，23 个来自隔离 worktree 未携带历史任务的 ignored retained evidence，1 个为
+  Atlas task coverage 数量仍固定在 92，1 个为 Atlas runtime 页面在最终 generated commit 前生成而
+  绑定旧 SHA；没有失败来自 TRADING-2563 的策略、DQ 计算或 forbidden action；
+- failure-fix 仅允许从 `D:\Work\AITradingSystem` 复制经 SHA-256 核验的既有 immutable evidence
+  到本任务 worktree 的相同相对路径，形成 validation-only snapshot；不得复制 market cache、不得
+  修改 canonical evidence，也不得执行任何 research/provider/trading action；
+- 下一次 Full 必须使用 `failure_fix_rerun`，并同时绑定上述 parent Full artifact 与新的 publication
+  transaction。validation snapshot 在任务发布后仍保留到 DQ retry/任务 closeout，避免其作为未审计
+  临时依赖被提前删除。
