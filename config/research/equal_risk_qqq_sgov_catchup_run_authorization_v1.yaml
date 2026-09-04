@@ -1,7 +1,7 @@
 schema_version: equal_risk_qqq_sgov_catchup_run_authorization.v1
 authorization_id: equal_risk_qqq_sgov_catchup_run_authorization_v1
 authorization_version: 1.0.0
-status: DRAFT_SOURCE_IDENTITY_PENDING
+status: OWNER_EXACT_AUTHORIZED_NOT_YET_CONSUMED
 task_id: TRADING-2563_EQUAL_RISK_CATCHUP_V1
 scope: R1_BOUNDED_RESEARCH_SANDBOX
 owner_decision:
@@ -14,10 +14,22 @@ owner_decision:
     新 observation、数据下载、cache mutation、provider、QuantConnect、Options、
     paper/live、broker、order、fill、position 和任何交易行为均为 0。
 code_identity:
-  source_freeze_state: PENDING
-  exact_source_commit: SOURCE_COMMIT_TO_BE_FROZEN
+  source_freeze_state: FROZEN
+  exact_source_commit: 8286392a5e5e5fa1ecd5aea6fb76fbd551854105
   required_ancestor_of_execution_head: true
-  bound_paths: []
+  bound_paths:
+    - path: scripts/trading2563_equal_risk_catchup.py
+      size_bytes: 10632
+      sha256: d372a40d361ea2285a4acc7297db0bcf57915eaa4d99a324e2182f49f8fd5c7d
+    - path: src/ai_trading_system/simple_baseline_forward_aging.py
+      size_bytes: 108974
+      sha256: 8d489625e3b6270575f5a615171d52582a4b5a30899ad3db68f99ce6c4a9ddea
+    - path: src/ai_trading_system/research_roadmap_stabilization.py
+      size_bytes: 72314
+      sha256: b9bc489231f4be398f93af26c90bace872c8ab490a417bb74985787414675855
+    - path: src/ai_trading_system/cli_commands/data_cache.py
+      size_bytes: 23339
+      sha256: 07a562934ebf18fb7ae3a98e0f7458d2785ce57a928675fe977880dd7943f9d6
 execution_scope:
   as_of: '2026-09-03'
   strategy_id: equal_risk_qqq_sgov
@@ -153,4 +165,4 @@ safety:
   broker_allowed: false
   production_effect: none
   broker_action: none
-terminal: SOURCE_IDENTITY_NOT_YET_FROZEN
+terminal: OWNER_EXACT_AUTHORIZED_NOT_YET_CONSUMED

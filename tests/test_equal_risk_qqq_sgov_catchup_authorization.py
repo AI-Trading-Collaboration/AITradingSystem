@@ -20,11 +20,14 @@ def _module():
     return module
 
 
-def test_draft_manifest_freezes_exact_owner_envelope() -> None:
+def test_manifest_freezes_exact_owner_envelope_and_source_identity() -> None:
     module = _module()
     payload = module.load_manifest(MANIFEST_PATH)
-    module.validate_manifest_shape(payload, require_frozen=False)
-    assert payload["status"] == "DRAFT_SOURCE_IDENTITY_PENDING"
+    module.validate_manifest_shape(payload, require_frozen=True)
+    assert payload["status"] == "OWNER_EXACT_AUTHORIZED_NOT_YET_CONSUMED"
+    assert payload["code_identity"]["exact_source_commit"] == (
+        "8286392a5e5e5fa1ecd5aea6fb76fbd551854105"
+    )
     assert payload["execution_scope"]["as_of"] == "2026-09-03"
     assert payload["execution_scope"]["observation_decision_dates"] == [
         "2026-06-22",
