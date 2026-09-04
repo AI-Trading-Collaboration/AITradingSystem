@@ -150,12 +150,14 @@ feature/signal/definition identity 与 next-session decision；1/5/20-session ou
   producer 断言：23 个源于 Git worktree 未携带 `.gitignore` 下的历史权威 evidence，1 个源于 Atlas
   ignored page sidecar 仍绑定生成前 commit。v3 publication transaction 已按 FAIL 释放，未发布。
 - 2026-09-04：failure-fix 仅允许从保留的
-  `D:\Work\AITradingSystem_trading2559_integration` 精确 hydration 下列五个历史 evidence 目录到当前
+  `D:\Work\AITradingSystem_trading2559_integration` 精确 hydration 下列六个历史 evidence 目录到当前
   worktree，并逐文件核对 SHA-256；不重跑旧研究、不读取 market cache、不运行 canonical DQ、不下载
   数据、不调用 provider。目录为 `trading_2464_o1_dq_20260729T183000Z`、
   `trading_2542i_real_v3`、`first_layer_composer_v2_foundational_falsification_v1`、
   `first_layer_composer_v2_foundational_falsification_failure_fix_v1` 与
-  `first_layer_composer_v2_matched_placebo_v1`，合计 16 个文件、约 789 KB、无 reparse point；随后仅从
+  `first_layer_composer_v2_matched_placebo_v1`，以及 focused 重跑进一步确认缺失的
+  `outputs/qqq_options/signal_packages/trading_2542i_operational_forecast_real_v3`。合计 1221 个文件、
+  4267947 bytes、无 reparse point；随后仅从
   最终候选 SHA 重新渲染 Atlas ignored 页面。exit condition：目标逐文件 SHA 与源完全相同、失败节点
   focused PASS、failure-fix Full PASS，且这些只读副本随 task worktree cleanup 一并移除；若验证未通过，
   保留本工作区和不可变失败证据继续审计。
