@@ -118,7 +118,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "e0f3af004d3a2360748526a7233751cbd4ccd515960634354592cb40d236fafb"
+        "sha256": "a7adeb03ebcaecc12eec8b7e5508bed580e0bea64624325841e70dc70504e679"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -133,7 +133,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "5277311b982d4d4a2c9e10693388284ef81af41ed016b31e89a9430e7c33579b"
+        "sha256": "ae7beedb9d0f63725fbb48e50113c94a072a049d6790012586a80df92de9ec84"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -178,5 +178,5 @@
     "task_id": "RISK-012"
   },
   "section_id": "phase_risk_012_unknown_risk_event_id_fail_closed_v1",
-  "section_sha256": "95ed76c725f02e1ff87c50f9dd6801c263dc7283a623202b87089e988198176e"
+  "section_sha256": "e0dd31a1124b7ac51e5bb83d8ebd6fd54c632342166b33c2ce3e374cf9ed4ec2"
 }

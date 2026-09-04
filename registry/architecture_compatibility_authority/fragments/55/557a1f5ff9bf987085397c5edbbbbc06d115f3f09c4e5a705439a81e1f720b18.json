@@ -142,7 +142,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "40ce15428239569969066ab149397cb30c82e3c42943490d8e68d2138faecc5a"
+        "sha256": "8463885ae00d4daa2be0bd7612720d3ffaa67c22a725ee769b295018add7b668"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -222,12 +222,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "e0f3af004d3a2360748526a7233751cbd4ccd515960634354592cb40d236fafb"
+        "sha256": "a7adeb03ebcaecc12eec8b7e5508bed580e0bea64624325841e70dc70504e679"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004g_deprecation.py",
-        "sha256": "3bf9cd16391aa59300d89ccb26f33bb7fb236640e97f90acf0a93dc1d5ea723a"
+        "sha256": "955a0226d7e7ebd4fc8866ddb1c6ee1036e0ddccc87686e313bcb6207c526878"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -247,7 +247,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "5277311b982d4d4a2c9e10693388284ef81af41ed016b31e89a9430e7c33579b"
+        "sha256": "ae7beedb9d0f63725fbb48e50113c94a072a049d6790012586a80df92de9ec84"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -387,5 +387,5 @@
     "task_id": "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1"
   },
   "section_id": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1",
-  "section_sha256": "f3802ad291ce6aa62c768c8055d383ccd545e2a719fb75da5ae6602a1422f6af"
+  "section_sha256": "557a1f5ff9bf987085397c5edbbbbc06d115f3f09c4e5a705439a81e1f720b18"
 }
