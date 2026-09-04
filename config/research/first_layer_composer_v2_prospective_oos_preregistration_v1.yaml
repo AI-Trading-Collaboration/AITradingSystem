@@ -1,0 +1,92 @@
+schema_version: first_layer_composer_v2_prospective_oos_preregistration.v1
+policy_id: first_layer_composer_v2_prospective_oos_preregistration_v1
+policy_version: 1.0.0
+policy_status: RESULT_BLIND_CONTRACT_NOT_YET_CAPTURING
+task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+owner: project_owner
+approval_ref: owner_instruction:TRADING-2560:2026-09-04:continue_frozen_observation_track
+known_result_boundary:
+  historical_window_role: REUSED_DEVELOPMENT_CONFIRMATION
+  historical_evaluated_end: '2025-12-02'
+  current_verdict: INSUFFICIENT_HOLD
+  matched_placebo_status: TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO
+  temporal_influence_status: SINGLE_EPISODE_DEPENDENT
+  anticipatory_alignment_dominates: true
+  positive_historical_result_can_promote: false
+  prospective_outcome_accessed_by_this_contract: false
+freeze_contract:
+  producer_id: first_layer_composer_v2
+  calendar: XNYS
+  state_order: [risk_off, defensive, neutral, constructive, risk_on]
+  long_states: [constructive, risk_on]
+  flat_states: [risk_off, defensive, neutral]
+  decision_timestamp: after_close_t
+  execution_lag_sessions: 1
+  primary_one_way_cost_bps: 5.0
+  comparator_id: EXPOSURE_MATCHED_STATIC_QQQ_ZERO_RETURN_CASH
+  prospective_start_state: BLOCKED_UNTIL_EXACT_FREEZE_COMMIT_AND_FIRST_XNYS_SESSION
+  prospective_start_date: null
+  backfill_allowed: false
+definition_bindings:
+  - role: composer_policy
+    path: config/research/first_layer_composer_v2.yaml
+    sha256: 24ec583e1afbf01c3ddb16b43eaef6b2479ea67be6df87a1508e831b1585ffc3
+  - role: foundational_preregistration
+    path: config/research/first_layer_composer_v2_foundational_falsification_preregistration_v1.yaml
+    sha256: 54dc349be1ec5670f9e02fc74e9467b668b2311a7dadbdc22680c8c605a824ad
+  - role: foundational_result_admission
+    path: config/research/first_layer_composer_v2_foundational_falsification_failure_fix_result_admission_v1.yaml
+    sha256: e0d42e6a36f5bc65981d040c55684aa7b852c7d69c54f19f65a4461396f87c60
+  - role: matched_placebo_result_admission
+    path: config/research/first_layer_composer_v2_matched_placebo_result_admission_v1.yaml
+    sha256: c4a7ccc6dbc95211796d769cb5bfae453051104d312868237c1b965a3e3a23ba
+  - role: temporal_influence_result_admission
+    path: config/research/first_layer_composer_v2_temporal_influence_failure_fix_result_admission_v1.yaml
+    sha256: f8b3459cef438a6f41110226308792104353d1412a051c05209320df2bea34b3
+observation_contract:
+  schema_version: first_layer_composer_v2_prospective_observation.v1
+  required_identity_fields:
+    - feature_snapshot_sha256
+    - signal_sha256
+    - model_sha256
+    - policy_sha256
+    - dq_receipt_sha256
+    - source_sha256
+  dq_required_status: PASS
+  one_observation_per_decision_date: true
+  append_only: true
+  same_date_same_identity_status: OBSERVATION_ALREADY_EXISTS
+  same_date_different_identity_status: INVALID
+maturity_contract:
+  horizon_sessions: [1, 5, 20]
+  primary_horizon_sessions: 20
+  immature_status: MATURITY_PENDING
+  outcome_append_only: true
+  overwrite_matured_outcome_allowed: false
+  missing_session_fill_allowed: false
+scoreboard_contract:
+  status_before_reviewed_gate: EVIDENCE_INSUFFICIENT
+  sample_episode_gate_status: PENDING_OWNER_REVIEW_BEFORE_FIRST_FORMAL_SCOREBOARD
+  result_based_gate_selection_allowed: false
+  automatic_promotion_allowed: false
+  parameter_rescue_allowed: false
+run_envelope:
+  market_data_reads: 0
+  canonical_dq_runs: 0
+  prospective_captures: 0
+  maturity_updates: 0
+  data_downloads: 0
+  cache_mutations: 0
+  external_provider_actions: 0
+  quantconnect_actions: 0
+  option_backtests: 0
+  orders: 0
+  fills: 0
+  positions: 0
+safety:
+  research_only: true
+  observe_only: true
+  paper_shadow_allowed: false
+  production_allowed: false
+  production_effect: none
+  broker_action: none
