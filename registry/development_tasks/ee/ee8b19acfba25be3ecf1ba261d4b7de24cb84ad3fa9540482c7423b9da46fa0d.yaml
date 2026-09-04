@@ -13,15 +13,14 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Codex：完成 tracked retained-evidence screen；如产生新 empirical experiment
-    候选则先交 Project Owner 复核预注册范围
+  next_owner: 无；若启动新的 empirical experiment，必须另立预注册任务并取得相应授权
   requirement_refs:
   - docs/requirements/TRADING-2561_Orthogonal_Strategy_Retained_Evidence_Screen_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 只读 tracked registries 与 terminal aggregate
-    evidence；不读 prospective outcome、不运行新回测；若无 DISTINCT/PIT-ready 候选则不得勉强晋级
+  unstructured_legacy_blocker_or_next_step: retained-evidence screen 已完成；继续 equal_risk_qqq_sgov
+    既有 forward-aging，不启动新 empirical run，经验独立性保持 NOT_ESTABLISHED
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: strict loader/classifier/golden-negative tests PASS；structural orthogonality
@@ -60,24 +59,48 @@ events:
   - change:trading-2561-register-20260904-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-6ebb7380d70d31df2903211bbd856d4e
+- schema_version: task_event.v1
+  task_id: TRADING-2561_ORTHOGONAL_STRATEGY_RETAINED_EVIDENCE_SCREEN_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-04T11:16:30+09:00'
+  actor: integration-coordinator
+  change_id: trading-2561-done-20260904-v1
+  lane_id: null
+  base_commit: 29ab0b1631c2e9fa7b6287389b1e4769d3dcc3a7
+  previous_state_event_id: task-event-6ebb7380d70d31df2903211bbd856d4e
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 无；若启动新的 empirical experiment，必须另立预注册任务并取得相应授权
+    blocker_or_next_step: retained-evidence screen 已完成；继续 equal_risk_qqq_sgov 既有 forward-aging，不启动新
+      empirical run，经验独立性保持 NOT_ESTABLISHED
+    acceptance_criteria: strict loader/classifier/golden-negative tests PASS；structural
+      orthogonality 与 empirical independence 分离；route 可审计；所有外部和交易动作 0
+    notes: '7 focused tests、Ruff/Black/strict mypy PASS；result SHA-256=08a982c9dab75b678529fce48f921449adaa98cca3dbcca14f364ee178ef8041；所有经验运行和禁止动作=0。Supporting
+      requirement: docs/requirements/TRADING-2561_Orthogonal_Strategy_Retained_Evidence_Screen_V1.md'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2561-done-20260904-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-df0f6746244e50f16697502a272000e0
 projection:
   legacy_first_eight_cells:
   - TRADING-2561_ORTHOGONAL_STRATEGY_RETAINED_EVIDENCE_SCREEN_V1
   - Strategy research / orthogonal retained-evidence strategy screen
   - P1
-  - IN_PROGRESS
-  - Codex：完成 tracked retained-evidence screen；如产生新 empirical experiment 候选则先交 Project
-    Owner 复核预注册范围
-  - 只读 tracked registries 与 terminal aggregate evidence；不读 prospective outcome、不运行新回测；若无
-    DISTINCT/PIT-ready 候选则不得勉强晋级
+  - DONE
+  - 无；若启动新的 empirical experiment，必须另立预注册任务并取得相应授权
+  - retained-evidence screen 已完成；继续 equal_risk_qqq_sgov 既有 forward-aging，不启动新 empirical
+    run，经验独立性保持 NOT_ESTABLISHED
   - strict loader/classifier/golden-negative tests PASS；structural orthogonality 与
     empirical independence 分离；route 可审计；所有外部和交易动作 0
-  - 'Supporting requirement: docs/requirements/TRADING-2561_Orthogonal_Strategy_Retained_Evidence_Screen_V1.md。authorization_state=STANDING_OWNER_SCOPE，仅本地
-    static evidence；production_effect=none；broker_action=none。'
+  - '7 focused tests、Ruff/Black/strict mypy PASS；result SHA-256=08a982c9dab75b678529fce48f921449adaa98cca3dbcca14f364ee178ef8041；所有经验运行和禁止动作=0。Supporting
+    requirement: docs/requirements/TRADING-2561_Orthogonal_Strategy_Retained_Evidence_Screen_V1.md'
   docs_links:
   - docs/requirements/TRADING-2561_Orthogonal_Strategy_Retained_Evidence_Screen_V1.md
-  terminal: false
-  canonical_row_sha256: bee73b51b7725441059a77583d2d25e65a8f5587cf82747b5d61f6844d5dfdfb
-last_event_id: task-event-6ebb7380d70d31df2903211bbd856d4e
+  terminal: true
+  canonical_row_sha256: c2ce8939a968e12a6373ed2bc71246d2c8314f0b899ae974b008530c8c5a097b
+last_event_id: task-event-df0f6746244e50f16697502a272000e0
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: e1db68d0b9bc69ca14779484bb8d621849f97b90d5d3e5689660229bb6446ff8
+fragment_checksum: 267f960655f045f34e7d10a44f1676a7ccf5e025ca60035cdb3fb356c3af8c5e
