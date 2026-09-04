@@ -1,0 +1,156 @@
+schema_version: equal_risk_qqq_sgov_catchup_run_authorization.v1
+authorization_id: equal_risk_qqq_sgov_catchup_run_authorization_v1
+authorization_version: 1.0.0
+status: DRAFT_SOURCE_IDENTITY_PENDING
+task_id: TRADING-2563_EQUAL_RISK_CATCHUP_V1
+scope: R1_BOUNDED_RESEARCH_SANDBOX
+owner_decision:
+  decision_ref: owner_instruction:TRADING-2563:2026-09-04:exact_equal_risk_catchup
+  authorization_state: EXACT_PREAUTHORIZED
+  approved_instruction: >-
+    以 2026-09-03 为 as-of，授权 manifest replay 1 次、canonical DQ 1 次、
+    isolated bounded rehearsal 1 次；只更新 2026-06-22 和 2026-06-24 两个既有
+    observation 的 maturity 1 次，并生成 scoreboard 1 次、continuity audit 1 次。
+    新 observation、数据下载、cache mutation、provider、QuantConnect、Options、
+    paper/live、broker、order、fill、position 和任何交易行为均为 0。
+code_identity:
+  source_freeze_state: PENDING
+  exact_source_commit: SOURCE_COMMIT_TO_BE_FROZEN
+  required_ancestor_of_execution_head: true
+  bound_paths: []
+execution_scope:
+  as_of: '2026-09-03'
+  strategy_id: equal_risk_qqq_sgov
+  research_window_start: '2021-02-22'
+  canonical_source_root: 'D:\Work\AITradingSystem'
+  execution_worktree_root: 'D:\Work\AITradingSystem_trading2563_equal_risk_catchup'
+  observation_ids:
+    - simple_baseline_forward_aging_observation_2026-06-22
+    - simple_baseline_forward_aging_observation_2026-06-24
+  observation_decision_dates:
+    - '2026-06-22'
+    - '2026-06-24'
+  new_observation_allowed: false
+  historical_gap_backfill_allowed: false
+input_allowlist:
+  prices:
+    path: 'D:\Work\AITradingSystem\data\raw\prices_daily.csv'
+    size_bytes: 4775521
+    sha256: d50d57be04e655fe3be4efd5e831f86eb3afb7623dc34656de19cdb3c9b40df7
+    row_count: 54662
+    min_date: '2018-01-02'
+    max_date: '2026-07-24'
+  rates:
+    path: 'D:\Work\AITradingSystem\data\raw\rates_daily.csv'
+    size_bytes: 153160
+    sha256: a7a7f899c0448d712058dc74820f715a2f57c9bb339bd7477d697e055f2bfeed
+    row_count: 6409
+    min_date: '2018-01-02'
+    max_date: '2026-07-23'
+  secondary_prices:
+    path: 'D:\Work\AITradingSystem\data\raw\prices_marketstack_daily.csv'
+    size_bytes: 3186533
+    sha256: 5ccd15739929b26f139edb52c23bd83ab7f90697b1967d67f2ed2d7100d86b85
+    row_count: 52144
+    min_date: '2018-01-02'
+    max_date: '2026-07-24'
+  download_manifest:
+    path: 'D:\Work\AITradingSystem\data\raw\download_manifest.csv'
+    size_bytes: 757652
+    sha256: 1a78ebdc1b03fe957136586ac59f07048fb676b7bcfaaa908e3d1b4ffb9de98f
+  observation_2026_06_22:
+    path: 'D:\Work\AITradingSystem\outputs\research_strategies\simple_baselines\forward_aging_observations\simple_baseline_forward_aging_observation_2026-06-22.json'
+    size_bytes: 17440
+    sha256: 3042c5d3fdf8b3a596cd1b8ed5dea6358614ce48ec2d284b9a596b2181f7adc7
+    decision_date: '2026-06-22'
+  observation_2026_06_24:
+    path: 'D:\Work\AITradingSystem\outputs\research_strategies\simple_baselines\forward_aging_observations\simple_baseline_forward_aging_observation_2026-06-24.json'
+    size_bytes: 17010
+    sha256: 846ade0a5eb57478414d3609294ff7d8c42b2410aacf2827f10c601148baebe4
+    decision_date: '2026-06-24'
+  strategy_registry:
+    path: config/research/simple_baseline_strategy_registry.yaml
+    size_bytes: 12731
+    sha256: a4487d4477e7066943c3894e690d1dc9dbcb18bc28919eaa8cfb15371ef79843
+  data_quality_policy:
+    path: config/data_quality.yaml
+    size_bytes: 9002
+    sha256: e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82
+  calendar_policy:
+    path: config/data/us_equity_special_closure_registry.yaml
+    size_bytes: 1959
+    sha256: 375dd5e07b57208c5afb700d4fec96fdb3c95b29d562b553c3ecc5c4e6f97416
+  universe_policy:
+    path: config/universe.yaml
+    size_bytes: 917
+    sha256: ce572af740e9b50c1ec97fd401ae5b16283709d6130c80d3253b5029989844ea
+run_envelope:
+  manifest_replays: 1
+  canonical_dq_runs: 1
+  isolated_bounded_rehearsals: 1
+  canonical_maturity_updates: 1
+  scoreboard_generations: 1
+  continuity_audits: 1
+  new_observations: 0
+  data_downloads: 0
+  cache_mutations: 0
+  provider_actions: 0
+  quantconnect_actions: 0
+  option_actions: 0
+  paper_actions: 0
+  live_actions: 0
+  broker_actions: 0
+  orders: 0
+  fills: 0
+  positions: 0
+  trading_actions: 0
+execution_order:
+  - manifest_replay
+  - canonical_dq
+  - isolated_bounded_rehearsal
+  - canonical_maturity_update
+  - scoreboard_generation
+  - continuity_audit
+gates:
+  canonical_dq_required_status: PASS
+  stop_after_non_pass_dq: true
+  immutable_observation_fields:
+    - decision_date
+    - strategy_id
+    - registry_strategy_id
+    - candidate_role
+    - target_weight_qqq
+    - target_weight_tqqq
+    - target_weight_sgov
+    - target_weights
+    - signal_inputs_used
+    - execution_assumption
+    - policy_definition_hash
+    - research_only
+    - observe_only
+    - paper_shadow_allowed
+    - production_allowed
+    - production_effect
+    - promotion_allowed
+    - broker_action
+outputs:
+  execution_root: outputs/research_strategies/trading_2563_equal_risk_catchup_v1
+  manifest_replay_receipt: outputs/research_strategies/trading_2563_equal_risk_catchup_v1/manifest_replay_receipt.json
+  canonical_dq_console_log: outputs/research_strategies/trading_2563_equal_risk_catchup_v1/canonical_dq_console.txt
+  canonical_dq_report: outputs/research_strategies/trading_2563_equal_risk_catchup_v1/canonical_dq_report.md
+  terminal_receipt: outputs/research_strategies/trading_2563_equal_risk_catchup_v1/terminal_receipt.json
+safety:
+  market_data_read_authorized: true
+  cached_data_only: true
+  data_download_authorized: false
+  cache_mutation_authorized: false
+  provider_authorized: false
+  quantconnect_authorized: false
+  options_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none
+terminal: SOURCE_IDENTITY_NOT_YET_FROZEN
