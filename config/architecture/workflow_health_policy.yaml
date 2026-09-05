@@ -1,5 +1,5 @@
 schema_version: workflow_health_policy.v1
-policy_version: DEVX-012@1.1.0
+policy_version: DEVX-013@1.2.0
 policy_metadata:
   owner: Project Owner / Codex engineering coordinator
   status: controlled_automatic_report_generation
@@ -110,3 +110,35 @@ safety_boundary:
   automatic_execution_allowed: false
   task_register_mutation_allowed: false
   gate_relaxation_allowed: false
+continuous_improvement:
+  schema_version: workflow_improvement_policy.v1
+  enabled: true
+  owner_decision_ref: owner_instruction:DEVX-013:2026-09-06:continue-approved-long-term-improvement-plan
+  window_basis: PREVIOUS_COMPLETE_ISO_WEEK_UTC
+  plan_path: inputs/development/workflow_improvement_plan.yaml
+  maintenance_main_item_limit: 1
+  review_after_complete_weeks: 4
+  rationale: >
+    Complete non-overlapping weeks establish comparable observations. One active
+    maintenance item bounds coordination cost during the four-week pilot.
+    Canonical tasks remain the only execution-state authority; observations do
+    not grant code execution or change terminal task state.
+  token_usage:
+    source: CURRENT_USER_CODEX_SESSIONS
+    max_files: 2000
+    max_total_bytes: 268435456
+    max_line_bytes: 4194304
+    max_responses: 100000
+    rationale: >
+      Bounded read-only snapshots cap each weekly collection at 256 MiB and
+      2000 files; exhausted budgets disclose PARTIAL coverage. These are resource
+      ceilings, not estimated total usage or investment thresholds.
+  outcome_acceptance:
+    minimum_after_samples: 2
+    minimum_relative_reduction: 0.20
+    minimum_absolute_reduction_seconds: 30
+    rationale: >
+      Reuse the reviewed ARCH-004G2 validation-runtime experiment acceptance:
+      the slower of at least two comparable after samples must improve by both
+      20 percent and 30 seconds. Correctness validation must pass independently.
+      Weekly observational trends never establish causal savings.

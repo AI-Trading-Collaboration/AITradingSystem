@@ -481,10 +481,9 @@ def test_ensure_workflow_health_blocks_invalid_same_date_bundle_without_overwrit
         terminal_width=180,
     )
     retry_receipt = json.loads(
-        (
-            receipt_dir
-            / f"workflow_health_cycle_receipt_{retry_date.isoformat()}.json"
-        ).read_text(encoding="utf-8")
+        (receipt_dir / f"workflow_health_cycle_receipt_{retry_date.isoformat()}.json").read_text(
+            encoding="utf-8"
+        )
     )
 
     assert retry.exit_code == 0, retry.output
@@ -494,6 +493,9 @@ def test_ensure_workflow_health_blocks_invalid_same_date_bundle_without_overwrit
 
 def _write_policy(tmp_path: Path, *, permissive: bool) -> Path:
     payload = yaml.safe_load(DEFAULT_POLICY_PATH.read_text(encoding="utf-8"))
+    # Retained v1 coverage: DEVX-013 tests exercise the opt-in v2 policy separately.
+    payload.pop("continuous_improvement", None)
+    payload["policy_version"] = "DEVX-012@1.1.0"
     if permissive:
         rules = payload["candidate_rules"]
         rules["failed_full_runtime"]["minimum_failed_runs"] = 1
@@ -583,9 +585,7 @@ def _write_bundle(
     candidates: dict[str, object],
     validation: dict[str, object],
 ) -> None:
-    write_workflow_health_json(
-        report, default_workflow_health_json_path(reports_dir, report_date)
-    )
+    write_workflow_health_json(report, default_workflow_health_json_path(reports_dir, report_date))
     write_workflow_health_markdown(
         report, default_workflow_health_markdown_path(reports_dir, report_date)
     )

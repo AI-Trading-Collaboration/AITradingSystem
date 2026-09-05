@@ -1,0 +1,16 @@
+schema_version: workflow_improvement_plan.v1
+plan_version: DEVX-013@1.0.0
+owner: Project Owner / Codex engineering coordinator
+owner_decision_ref: owner_instruction:DEVX-013:2026-09-06:continue-approved-long-term-improvement-plan
+review_condition: Four complete weekly observations or a correctness regression.
+automatic_execution_allowed: false
+entries:
+  - candidate_id: workflow-opt-e9ff5d6b5ed565a901f4
+    rule_id: failed_full_runtime
+    scope: repository
+    root_cause_id: generated_authority_late_failure
+    task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+    owner_decision_ref: owner_instruction:DEVX-013:2026-09-06:continue-approved-long-term-improvement-plan
+    next_action: 前置验证常见生成权威失败；在确切最终候选保留 Full，并记录真实成本。
+    outcome_evidence: null
+    review_after: '2026-10-05'

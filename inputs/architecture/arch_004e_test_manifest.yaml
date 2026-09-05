@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1359
-test_count: 1299
+test_file_count: 1361
+test_count: 1301
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -8106,7 +8106,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 1fd173741fc007ff65af45b9c0057025b3b26662702a542fb5a81c7d8bf7743d
+  sha256: 11d6f09c106e3cb8eea2d698459149c9dca3958f27647694b7bee37553f9e0c9
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -8502,7 +8502,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: e1372e168bb9b244de50a3213f39d52150f84474fb866dac15a7c83af2eddc3a
+  sha256: 5b483400b653863d1b1fbbc8c6f61eb01a8f01f560d291aa60317dca96f5c70a
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -8714,7 +8714,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s5_task_source_cutover
   path: tests/test_arch_005_s5_task_source_cutover.py
-  sha256: c3218c15b1a8d9f0c8c64d03ab5ff4332c26f6c0c184973cc9ec42d519cb3b0e
+  sha256: 2815c3d789ace1bf9d940d8f4d2d13bcf65e68d6f44031af300d4054e92f26c5
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -10458,7 +10458,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: dcc8455806e585f65d3ebca0eeb53fb80499cc1a6eee15a3e7c3ab9d8c1e5352
+  sha256: 18665be2c6af493ad6692125c57af94668c0fc30a613c9b3b328b3bcd6da9a8d
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -19652,7 +19652,39 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_workflow_health
   path: tests/test_workflow_health.py
-  sha256: 760b60bbab2f8fca6305b7c67c2296533fec4cc4295692ab5b533f8c926bb0ca
+  sha256: 13afa260482cdf3d58d618fa8f6165776ccf25d563b4d67e194aacf5ec34cb5f
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_workflow_improvement
+  path: tests/test_workflow_improvement.py
+  sha256: a8a8c0c87aadbef6765a61311e98928e80a005970cca109795a76e9aba66d156
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_workflow_token_usage
+  path: tests/test_workflow_token_usage.py
+  sha256: 86d9cf4c0f42e4068ede52a9450b25aceb7b0199dc2874655a42d6ff132f70e1
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

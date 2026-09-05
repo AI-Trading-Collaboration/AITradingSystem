@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import date
 from pathlib import Path
@@ -25,6 +26,7 @@ from ai_trading_system.reports.workflow_health import (
     load_workflow_health_policy,
     resolve_workflow_health_checkout_identity,
     validate_workflow_health_payloads,
+    workflow_token_log_scope_sha256,
     write_workflow_candidates_json,
     write_workflow_health_cycle_receipt,
     write_workflow_health_json,
@@ -50,7 +52,9 @@ def workflow_health_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 输出目录。"),
-    ] = PROJECT_ROOT / "outputs" / "reports",
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
     project_root: Annotated[
         Path,
         typer.Option(help="读取 validation/publication/Git evidence 的项目根目录。"),
@@ -59,6 +63,10 @@ def workflow_health_command(
         Path,
         typer.Option(help="workflow health reviewed policy 路径。"),
     ] = DEFAULT_POLICY_PATH,
+    token_log_root: Annotated[
+        Path | None,
+        typer.Option(help="可选的本地 Codex sessions 根；仅统计明确归属于本项目的 usage records。"),
+    ] = None,
 ) -> None:
     """生成并校验只读研发流程健康周报与 review-only 优化候选。"""
     report_date = _parse_date(as_of) if as_of else date.today()
@@ -67,6 +75,7 @@ def workflow_health_command(
         project_root=project_root,
         policy_path=policy_path,
         history_dir=reports_dir,
+        token_log_roots=None if token_log_root is None else [token_log_root],
     )
     validation = validate_workflow_health_payloads(report, candidates)
     report_json = write_workflow_health_json(
@@ -111,11 +120,16 @@ def ensure_workflow_health_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="Workflow health artifact 输出目录。"),
-    ] = PROJECT_ROOT / "outputs" / "reports",
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
     receipt_dir: Annotated[
         Path,
         typer.Option(help="自动周期 receipt 输出目录。"),
-    ] = PROJECT_ROOT / "outputs" / "run_control" / "workflow_health",
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "run_control"
+    / "workflow_health",
     project_root: Annotated[
         Path,
         typer.Option(help="必须位于 exact main/origin identity 的 development checkout。"),
@@ -124,28 +138,32 @@ def ensure_workflow_health_command(
         Path,
         typer.Option(help="Workflow health reviewed policy。"),
     ] = DEFAULT_POLICY_PATH,
+    token_log_root: Annotated[
+        Path | None,
+        typer.Option(help="可选的本地 Codex sessions 根；不会采集对话正文。"),
+    ] = None,
 ) -> None:
     """在 existing daily automation 中按 ISO week 自动生成或复用流程健康报告。"""
     report_date = _parse_date(as_of) if as_of else date.today()
     receipt_path = default_workflow_health_cycle_receipt_path(receipt_dir, report_date)
-    governed_paths = (
+    governed_paths: tuple[Path, ...] = (
         policy_path,
         project_root / "src" / "ai_trading_system" / "reports" / "workflow_health.py",
-        project_root
-        / "src"
-        / "ai_trading_system"
-        / "cli_commands"
-        / "workflow_health_reports.py",
+        project_root / "src" / "ai_trading_system" / "cli_commands" / "workflow_health_reports.py",
         project_root / "config" / "scheduled_tasks.yaml",
     )
-    checkout_identity, checkout_blockers = resolve_workflow_health_checkout_identity(
-        project_root=project_root,
-        governed_paths=governed_paths,
-    )
+    checkout_identity: dict[str, Any] = {}
     try:
         policy = load_workflow_health_policy(policy_path)
         automatic_policy = dict(policy["cadence"]["automatic_report_generation"])
         owner_decision_id = str(automatic_policy["owner_decision_id"])
+        improvement_policy = policy.get("continuous_improvement")
+        if improvement_policy is not None:
+            governed_paths += (
+                project_root / "src/ai_trading_system/reports/workflow_improvement.py",
+                project_root / "src/ai_trading_system/reports/workflow_token_usage.py",
+                project_root / improvement_policy["plan_path"],
+            )
     except (OSError, ValueError, KeyError, TypeError) as exc:
         receipt = build_workflow_health_cycle_receipt(
             as_of=report_date,
@@ -160,6 +178,10 @@ def ensure_workflow_health_command(
         console.print(f"Receipt：{receipt_path}")
         raise typer.Exit(code=1) from exc
 
+    checkout_identity, checkout_blockers = resolve_workflow_health_checkout_identity(
+        project_root=project_root,
+        governed_paths=governed_paths,
+    )
     if checkout_blockers:
         receipt = build_workflow_health_cycle_receipt(
             as_of=report_date,
@@ -177,6 +199,21 @@ def ensure_workflow_health_command(
     current = latest_current_week_validated_bundle(
         reports_dir=reports_dir,
         as_of=report_date,
+        expected_policy_sha256=hashlib.sha256(policy_path.read_bytes()).hexdigest(),
+        expected_token_scope_sha256=(
+            None
+            if improvement_policy is None
+            else workflow_token_log_scope_sha256(
+                None if token_log_root is None else [token_log_root]
+            )
+        ),
+        expected_plan_sha256=(
+            None
+            if improvement_policy is None
+            else hashlib.sha256(
+                (project_root / improvement_policy["plan_path"]).read_bytes()
+            ).hexdigest()
+        ),
     )
     if current is not None:
         artifact_paths = tuple(
@@ -234,6 +271,7 @@ def ensure_workflow_health_command(
             project_root=project_root,
             policy_path=policy_path,
             history_dir=reports_dir,
+            token_log_roots=None if token_log_root is None else [token_log_root],
         )
         validation = validate_workflow_health_payloads(report, candidates)
         write_workflow_health_json(report, target_paths[0])
@@ -257,9 +295,7 @@ def ensure_workflow_health_command(
         raise typer.Exit(code=1) from exc
 
     cycle_status = (
-        "PASS"
-        if validation["validation_status"] in {"PASS", "PASS_WITH_WARNINGS"}
-        else "FAILED"
+        "PASS" if validation["validation_status"] in {"PASS", "PASS_WITH_WARNINGS"} else "FAILED"
     )
     receipt = build_workflow_health_cycle_receipt(
         as_of=report_date,
@@ -272,9 +308,7 @@ def ensure_workflow_health_command(
         validation=validation,
         artifact_paths=target_paths,
         blocker_codes=(
-            ()
-            if cycle_status == "PASS"
-            else ("WORKFLOW_HEALTH_INDEPENDENT_VALIDATION_FAILED",)
+            () if cycle_status == "PASS" else ("WORKFLOW_HEALTH_INDEPENDENT_VALIDATION_FAILED",)
         ),
     )
     write_workflow_health_cycle_receipt(receipt, receipt_path)
@@ -298,7 +332,9 @@ def validate_workflow_health_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT / "outputs" / "reports",
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
     source_json_path: Annotated[
         Path | None,
         typer.Option(help="Workflow health report JSON；优先于 --latest/--as-of。"),
@@ -311,6 +347,8 @@ def validate_workflow_health_command(
     """校验 workflow health report/candidate binding 与禁止自动执行边界。"""
     if latest and as_of:
         raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    report_path: Path | None
+    candidates_path: Path | None
     if source_json_path is not None:
         report_path = source_json_path
     elif latest:

@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1199
+module_count: 1201
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -2513,7 +2513,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.workflow_health_reports
   path: src/ai_trading_system/cli_commands/workflow_health_reports.py
-  sha256: b03f6d2bd02449c9d51b283e56f8d13db9eacb28bd630910f1c0972ed8b48963
+  sha256: 528beadeba43e6735a8b7bc7f7bd3a859dd546435a91186d9f83120a63531ef1
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -19533,7 +19533,51 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.reports.workflow_health
   path: src/ai_trading_system/reports/workflow_health.py
-  sha256: 2b62de43c032bce4bf7060fc86b09cef180cbf564d8af2de514f5298349d150f
+  sha256: 8be851c961a280a03577f0f195f5d16f31193703a089c66d15168130b2c3e248
+  rule_id: reports
+  owner_profile: reporting
+  owners:
+    code_owner: reporting_platform
+    policy_owner: reporting_governance
+    data_owner: data_governance
+    artifact_owner: reporting_governance
+    runtime_owner: reporting_operations
+  layer: interface
+  category: reporting
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_report*.py
+  - tests/test_reader_brief*.py
+  validation_tiers:
+  - report-validation
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.reports.workflow_improvement
+  path: src/ai_trading_system/reports/workflow_improvement.py
+  sha256: 5fd1e492a5ce2e87e775059649b5c102e45e5e0e937f5df89a3d9da25d83b3a1
+  rule_id: reports
+  owner_profile: reporting
+  owners:
+    code_owner: reporting_platform
+    policy_owner: reporting_governance
+    data_owner: data_governance
+    artifact_owner: reporting_governance
+    runtime_owner: reporting_operations
+  layer: interface
+  category: reporting
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_report*.py
+  - tests/test_reader_brief*.py
+  validation_tiers:
+  - report-validation
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.reports.workflow_token_usage
+  path: src/ai_trading_system/reports/workflow_token_usage.py
+  sha256: 7f28d461e209633b9b4baa7c02f5a353a3870dd88ac269674fa112b161a5fcfa
   rule_id: reports
   owner_profile: reporting
   owners:

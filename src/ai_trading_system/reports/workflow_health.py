@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import subprocess
 from collections import Counter, defaultdict
@@ -12,9 +13,19 @@ from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
+from ai_trading_system.reports.workflow_improvement import (
+    complete_week_window,
+    load_improvement_tracking,
+    validate_improvement_tracking,
+)
+from ai_trading_system.reports.workflow_token_usage import (
+    collect_workflow_token_usage,
+    validate_workflow_token_usage,
+)
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 REPORT_SCHEMA_VERSION = "workflow_health_report.v1"
+IMPROVEMENT_REPORT_SCHEMA_VERSION = "workflow_health_report.v2"
 CANDIDATE_SCHEMA_VERSION = "workflow_optimization_candidates.v1"
 VALIDATION_SCHEMA_VERSION = "workflow_health_validation.v1"
 CYCLE_RECEIPT_SCHEMA_VERSION = "workflow_health_cycle_receipt.v1"
@@ -117,6 +128,30 @@ def load_workflow_health_policy(path: Path = DEFAULT_POLICY_PATH) -> dict[str, A
         raise ValueError(f"workflow health policy safety boundary is unsafe: {path}")
     if not isinstance(policy.get("candidate_rules"), Mapping):
         raise ValueError(f"workflow health policy candidate_rules must be a mapping: {path}")
+    improvement = policy.get("continuous_improvement")
+    if improvement is not None:
+        if (
+            not isinstance(improvement, Mapping)
+            or improvement.get("schema_version") != "workflow_improvement_policy.v1"
+        ):
+            raise ValueError("continuous improvement policy schema is invalid")
+        if (
+            improvement.get("enabled") is not True
+            or improvement.get("window_basis") != "PREVIOUS_COMPLETE_ISO_WEEK_UTC"
+        ):
+            raise ValueError("continuous improvement requires the completed ISO-week contract")
+        for key in ("maintenance_main_item_limit", "review_after_complete_weeks"):
+            if type(improvement.get(key)) is not int or improvement[key] <= 0:
+                raise ValueError(f"continuous improvement {key} must be positive")
+        token_policy = improvement.get("token_usage", {})
+        if (
+            not isinstance(token_policy, Mapping)
+            or token_policy.get("source") != "CURRENT_USER_CODEX_SESSIONS"
+        ):
+            raise ValueError("unsupported token source policy")
+        for key in ("max_files", "max_total_bytes", "max_line_bytes", "max_responses"):
+            if type(token_policy.get(key)) is not int or token_policy[key] <= 0:
+                raise ValueError(f"token collection {key} must be positive")
     return policy
 
 
@@ -128,12 +163,18 @@ def build_workflow_health_payloads(
     generated_at: datetime | None = None,
     git_commit_records: Sequence[Mapping[str, Any]] | None = None,
     history_dir: Path | None = None,
+    token_log_roots: Sequence[Path] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     policy = load_workflow_health_policy(policy_path)
     lookback_days = int(policy["cadence"]["lookback_days"])
     window_start = datetime.combine(as_of - timedelta(days=lookback_days - 1), time.min, tzinfo=UTC)
     window_end = datetime.combine(as_of + timedelta(days=1), time.min, tzinfo=UTC)
     generated = (generated_at or datetime.now(tz=UTC)).astimezone(UTC)
+    improvement_policy = policy.get("continuous_improvement")
+    if improvement_policy is not None:
+        window_start, window_end = complete_week_window(as_of)
+        if window_end > generated:
+            raise ValueError("completed-week report cannot be generated before its window ends")
     telemetry_gaps: list[dict[str, str]] = []
 
     validation_root = project_root / "outputs" / "validation_runtime"
@@ -175,10 +216,54 @@ def build_workflow_health_payloads(
         "git": git_metrics,
     }
     candidates = _build_candidates(metrics=metrics, policy=policy)
+    tracking = None
+    if improvement_policy is not None:
+        token_policy = improvement_policy["token_usage"]
+        roots = token_log_roots
+        if roots is None:
+            codex_root = (
+                Path(os.environ["CODEX_HOME"])
+                if os.environ.get("CODEX_HOME")
+                else Path.home() / ".codex"
+            )
+            roots = [codex_root / "sessions"]
+        token_usage = collect_workflow_token_usage(
+            log_roots=roots,
+            project_roots=_token_project_roots(project_root),
+            window_start=window_start,
+            window_end=window_end,
+            limits={
+                key: token_policy[key]
+                for key in ("max_files", "max_total_bytes", "max_line_bytes", "max_responses")
+            },
+        )
+        metrics["token_usage"] = token_usage
+        if token_usage["status"] != "COMPLETE":
+            telemetry_gaps.append(
+                {
+                    "source": "token_usage",
+                    "path": "explicit_local_session_roots",
+                    "reason": (
+                        f"coverage={token_usage['status']}; "
+                        "see metrics.token_usage.telemetry_gaps"
+                    ),
+                }
+            )
+        tracking = load_improvement_tracking(
+            project_root=project_root, policy=improvement_policy, candidates=candidates
+        )
     previous_bundle = _latest_previous_validated_bundle(
         reports_dir=(history_dir or project_root / "outputs" / "reports"),
         as_of=as_of,
+        completed_before=window_start if improvement_policy is not None else None,
+        expected_policy_sha256=(
+            _sha256_path(policy_path) if improvement_policy is not None else None
+        ),
     )
+    if improvement_policy is not None and any(
+        gap.get("source") != "token_usage" for gap in telemetry_gaps
+    ):
+        previous_bundle = None
     optimization_progress = _build_optimization_progress(
         metrics=metrics,
         candidates=candidates,
@@ -196,6 +281,8 @@ def build_workflow_health_payloads(
         "metrics": metrics,
         "optimization_progress": optimization_progress,
     }
+    if tracking is not None:
+        report_identity["improvement_tracking"] = tracking
     report_id = f"workflow-health-{_stable_hash(report_identity)[:20]}"
     for candidate in candidates:
         candidate["source_report_id"] = report_id
@@ -226,7 +313,9 @@ def build_workflow_health_payloads(
     if telemetry_gaps:
         status = "WORKFLOW_HEALTH_LIMITED"
     report = {
-        "schema_version": REPORT_SCHEMA_VERSION,
+        "schema_version": (
+            IMPROVEMENT_REPORT_SCHEMA_VERSION if tracking is not None else REPORT_SCHEMA_VERSION
+        ),
         "report_type": REPORT_TYPE,
         "report_id": report_id,
         "as_of": as_of.isoformat(),
@@ -236,7 +325,11 @@ def build_workflow_health_payloads(
             "start_inclusive_utc": window_start.isoformat(),
             "end_exclusive_utc": window_end.isoformat(),
             "lookback_days": lookback_days,
-            "timestamp_basis": policy["cadence"]["timestamp_basis"],
+            "timestamp_basis": (
+                "PREVIOUS_COMPLETE_ISO_WEEK_UTC"
+                if tracking is not None
+                else policy["cadence"]["timestamp_basis"]
+            ),
         },
         "policy": {
             "path": _portable_path(policy_path, project_root),
@@ -284,16 +377,37 @@ def build_workflow_health_payloads(
             ),
         },
     }
+    if tracking is not None:
+        report["improvement_tracking"] = tracking
+        report["token_log_scope_sha256"] = workflow_token_log_scope_sha256(token_log_roots)
+        report["payload_sha256"] = _stable_hash(report)
     return report, candidate_bundle
 
 
 def latest_current_week_validated_bundle(
-    *, reports_dir: Path, as_of: date
+    *,
+    reports_dir: Path,
+    as_of: date,
+    expected_policy_sha256: str | None = None,
+    expected_token_scope_sha256: str | None = None,
+    expected_plan_sha256: str | None = None,
 ) -> dict[str, Any] | None:
     return _latest_validated_bundle(
         reports_dir=reports_dir,
         as_of=as_of,
         same_iso_week=True,
+        expected_policy_sha256=expected_policy_sha256,
+        expected_token_scope_sha256=expected_token_scope_sha256,
+        expected_plan_sha256=expected_plan_sha256,
+    )
+
+
+def workflow_token_log_scope_sha256(roots: Sequence[Path] | None) -> str:
+    if roots is None:
+        codex_root = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex")))
+        roots = [codex_root / "sessions"]
+    return _stable_hash(
+        {"log_roots": sorted({os.path.normcase(str(path.resolve())) for path in roots})}
     )
 
 
@@ -337,13 +451,9 @@ def build_workflow_health_cycle_receipt(
             0 if candidate_bundle is None else int(candidate_bundle.get("candidate_count", 0))
         ),
         "optimization_progress_status": (
-            None
-            if report is None
-            else dict(report.get("optimization_progress", {})).get("status")
+            None if report is None else dict(report.get("optimization_progress", {})).get("status")
         ),
-        "validation_status": (
-            None if validation is None else validation.get("validation_status")
-        ),
+        "validation_status": (None if validation is None else validation.get("validation_status")),
         "checkout_identity": dict(checkout_identity),
         "artifact_commitments": commitments,
         "blocker_codes": sorted(set(str(item) for item in blocker_codes if str(item))),
@@ -467,9 +577,7 @@ def _build_optimization_progress(
             ),
             _ratio(
                 float(
-                    dict(previous_metrics.get("validation", {})).get(
-                        "failed_elapsed_seconds", 0
-                    )
+                    dict(previous_metrics.get("validation", {})).get("failed_elapsed_seconds", 0)
                 ),
                 float(dict(previous_metrics.get("validation", {})).get("elapsed_seconds", 0)),
             ),
@@ -477,11 +585,7 @@ def _build_optimization_progress(
         (
             "failed_full_runtime_ratio",
             float(dict(metrics.get("validation", {})).get("failed_full_runtime_ratio", 0)),
-            float(
-                dict(previous_metrics.get("validation", {})).get(
-                    "failed_full_runtime_ratio", 0
-                )
-            ),
+            float(dict(previous_metrics.get("validation", {})).get("failed_full_runtime_ratio", 0)),
         ),
         (
             "failed_full_count",
@@ -490,11 +594,7 @@ def _build_optimization_progress(
         ),
         (
             "non_admin_failed_terminal_ratio",
-            float(
-                dict(metrics.get("publication", {})).get(
-                    "non_admin_failed_terminal_ratio", 0
-                )
-            ),
+            float(dict(metrics.get("publication", {})).get("non_admin_failed_terminal_ratio", 0)),
             float(
                 dict(previous_metrics.get("publication", {})).get(
                     "non_admin_failed_terminal_ratio", 0
@@ -504,17 +604,11 @@ def _build_optimization_progress(
         (
             "authority_only_commit_ratio",
             float(dict(metrics.get("git", {})).get("authority_only_commit_ratio", 0)),
-            float(
-                dict(previous_metrics.get("git", {})).get("authority_only_commit_ratio", 0)
-            ),
+            float(dict(previous_metrics.get("git", {})).get("authority_only_commit_ratio", 0)),
         ),
         (
             "duplicate_validation_group_count",
-            float(
-                dict(metrics.get("validation", {})).get(
-                    "duplicate_validation_group_count", 0
-                )
-            ),
+            float(dict(metrics.get("validation", {})).get("duplicate_validation_group_count", 0)),
             float(
                 dict(previous_metrics.get("validation", {})).get(
                     "duplicate_validation_group_count", 0
@@ -592,13 +686,30 @@ def _build_optimization_progress(
 
 
 def _latest_previous_validated_bundle(
-    *, reports_dir: Path, as_of: date
+    *,
+    reports_dir: Path,
+    as_of: date,
+    completed_before: datetime | None = None,
+    expected_policy_sha256: str | None = None,
 ) -> dict[str, Any] | None:
-    return _latest_validated_bundle(reports_dir=reports_dir, as_of=as_of, same_iso_week=False)
+    return _latest_validated_bundle(
+        reports_dir=reports_dir,
+        as_of=as_of,
+        same_iso_week=False,
+        completed_before=completed_before,
+        expected_policy_sha256=expected_policy_sha256,
+    )
 
 
 def _latest_validated_bundle(
-    *, reports_dir: Path, as_of: date, same_iso_week: bool
+    *,
+    reports_dir: Path,
+    as_of: date,
+    same_iso_week: bool,
+    completed_before: datetime | None = None,
+    expected_policy_sha256: str | None = None,
+    expected_token_scope_sha256: str | None = None,
+    expected_plan_sha256: str | None = None,
 ) -> dict[str, Any] | None:
     if not reports_dir.exists():
         return None
@@ -621,9 +732,7 @@ def _latest_validated_bundle(
     for report_date, report_path in sorted(candidates, reverse=True):
         candidate_path = default_workflow_candidates_json_path(reports_dir, report_date)
         report_markdown_path = default_workflow_health_markdown_path(reports_dir, report_date)
-        validation_path = default_workflow_health_validation_json_path(
-            reports_dir, report_date
-        )
+        validation_path = default_workflow_health_validation_json_path(reports_dir, report_date)
         validation_markdown_path = default_workflow_health_validation_markdown_path(
             reports_dir, report_date
         )
@@ -646,6 +755,44 @@ def _latest_validated_bundle(
             continue
         if validation["validation_status"] not in {"PASS", "PASS_WITH_WARNINGS"}:
             continue
+        expected_date = report_date.isoformat()
+        if (
+            report.get("as_of") != expected_date
+            or candidate_bundle.get("as_of") != expected_date
+            or stored_validation.get("as_of") != expected_date
+        ):
+            continue
+        if (
+            expected_policy_sha256 is not None
+            and report.get("policy", {}).get("sha256") != expected_policy_sha256
+        ):
+            continue
+        if (
+            expected_token_scope_sha256 is not None
+            and report.get("token_log_scope_sha256") != expected_token_scope_sha256
+        ):
+            continue
+        if (
+            expected_plan_sha256 is not None
+            and report.get("improvement_tracking", {}).get("source_bindings", {}).get("plan_sha256")
+            != expected_plan_sha256
+        ):
+            continue
+        if completed_before is not None:
+            prior_end = _parse_datetime(report.get("window", {}).get("end_exclusive_utc"))
+            prior_generated = _parse_datetime(report.get("generated_at"))
+            if (
+                report.get("schema_version") != IMPROVEMENT_REPORT_SCHEMA_VERSION
+                or prior_end is None
+                or prior_generated is None
+                or prior_end > completed_before
+                or prior_end > prior_generated
+            ):
+                continue
+            if any(
+                gap.get("source") != "token_usage" for gap in _records(report.get("telemetry_gaps"))
+            ):
+                continue
         if (
             stored_validation.get("source_report_id") != report.get("report_id")
             or stored_validation.get("validation_status") != validation["validation_status"]
@@ -678,9 +825,20 @@ def validate_workflow_health_payloads(
 
     check(
         "report_schema",
-        report.get("schema_version") == REPORT_SCHEMA_VERSION
+        report.get("schema_version") in {REPORT_SCHEMA_VERSION, IMPROVEMENT_REPORT_SCHEMA_VERSION}
         and report.get("report_type") == REPORT_TYPE,
         "workflow health report schema/type mismatch",
+    )
+    is_v2_content = (
+        "improvement_tracking" in report
+        or "payload_sha256" in report
+        or "token_usage" in report.get("metrics", {})
+        or str(report.get("policy", {}).get("version", "")).startswith("DEVX-013@")
+    )
+    check(
+        "report_schema_downgrade",
+        not is_v2_content or report.get("schema_version") == IMPROVEMENT_REPORT_SCHEMA_VERSION,
+        "v2 content or policy cannot be reinterpreted as a legacy report",
     )
     check(
         "candidate_schema",
@@ -692,6 +850,11 @@ def validate_workflow_health_payloads(
         "report_candidate_binding",
         candidate_bundle.get("source_report_id") == report.get("report_id"),
         "candidate bundle does not bind the source report id",
+    )
+    check(
+        "report_policy_binding",
+        candidate_bundle.get("policy_version") == report.get("policy", {}).get("version"),
+        "candidate policy differs from report policy",
     )
     report_candidates = report.get("optimization_candidates")
     candidates = _records(candidate_bundle.get("candidates"))
@@ -706,9 +869,11 @@ def validate_workflow_health_payloads(
     candidate_ids = [str(item.get("candidate_id", "")) for item in candidates]
     check(
         "candidate_ids_unique",
-        bool(all(candidate_ids)) and len(candidate_ids) == len(set(candidate_ids))
-        if candidates
-        else True,
+        (
+            bool(all(candidate_ids)) and len(candidate_ids) == len(set(candidate_ids))
+            if candidates
+            else True
+        ),
         "candidate ids must be non-empty and unique",
     )
     unsafe_candidates = [
@@ -758,8 +923,7 @@ def validate_workflow_health_payloads(
     check(
         "optimization_progress_contract",
         isinstance(progress, Mapping)
-        and progress.get("status")
-        in {"NO_BASELINE", "IMPROVED", "REGRESSED", "MIXED", "STABLE"}
+        and progress.get("status") in {"NO_BASELINE", "IMPROVED", "REGRESSED", "MIXED", "STABLE"}
         and isinstance(progress.get("metric_comparisons"), list)
         and isinstance(progress_candidate_lifecycle, Mapping)
         and lifecycle_current_ids == current_candidate_ids
@@ -785,6 +949,47 @@ def validate_workflow_health_payloads(
         "workflow health window is incomplete",
     )
     gaps = _records(report.get("telemetry_gaps"))
+    if report.get("schema_version") == IMPROVEMENT_REPORT_SCHEMA_VERSION:
+        try:
+            expected_window = complete_week_window(date.fromisoformat(str(report.get("as_of"))))
+        except ValueError:
+            expected_window = None
+        generated = _parse_datetime(report.get("generated_at"))
+        check(
+            "complete_week_window",
+            expected_window is not None
+            and isinstance(window, Mapping)
+            and window.get("start_inclusive_utc") == expected_window[0].isoformat()
+            and window.get("end_exclusive_utc") == expected_window[1].isoformat()
+            and generated is not None
+            and expected_window[1] <= generated,
+            "v2 requires a complete UTC ISO week before generation",
+        )
+        check(
+            "v2_payload_integrity",
+            report.get("payload_sha256")
+            == _stable_hash(
+                {key: value for key, value in report.items() if key != "payload_sha256"}
+            ),
+            "v2 report bytes differ from the committed payload",
+        )
+        tracking = report.get("improvement_tracking")
+        check(
+            "improvement_tracking",
+            isinstance(tracking, Mapping) and not validate_improvement_tracking(tracking),
+            "improvement task/outcome binding or safety is invalid",
+        )
+        tokens = report.get("metrics", {}).get("token_usage")
+        check(
+            "token_usage_contract",
+            expected_window is not None
+            and isinstance(tokens, Mapping)
+            and not validate_workflow_token_usage(tokens)
+            and tokens.get("window", {}).get("start_inclusive_utc")
+            == expected_window[0].isoformat()
+            and tokens.get("window", {}).get("end_exclusive_utc") == expected_window[1].isoformat(),
+            "token metrics are invalid or belong to another window",
+        )
     if gaps:
         warning_issues.append(
             {
@@ -900,6 +1105,50 @@ def render_workflow_health_markdown(report: Mapping[str, Any]) -> str:
         ]
     )
     candidate_ids = report.get("optimization_candidates", {}).get("candidate_ids", [])
+    tokens = report.get("metrics", {}).get("token_usage")
+    if isinstance(tokens, Mapping):
+        totals = tokens["totals"]
+        lines.extend(
+            [
+                "",
+                "## Token 观测",
+                "",
+                f"- 覆盖：`{tokens['status']}`；有效响应：{tokens['response_count']}。",
+                "- 下列数值是已读取且归属明确的观测；部分覆盖不能当作项目总量，"
+                "也不等于账单或额度。",
+                "",
+                "|指标|Token|",
+                "|---|---:|",
+            ]
+        )
+        for label, key in (
+            ("输入总计", "input_tokens"),
+            ("缓存输入", "cached_input_tokens"),
+            ("非缓存输入", "uncached_input_tokens"),
+            ("输出（包含推理）", "output_tokens"),
+        ):
+            lines.append(f"|{label}|{totals[key]}|")
+    tracking = report.get("improvement_tracking")
+    if isinstance(tracking, Mapping):
+        lines.extend(
+            [
+                "",
+                "## 改进执行与收益观察",
+                "",
+                f"- 维护容量：`{tracking['capacity_status']}`；候选报告不执行代码或修改任务。",
+                "",
+                "|Task|工程状态|收益状态|下一步|",
+                "|---|---|---|---|",
+            ]
+        )
+        for row in tracking["rows"]:
+            action = str(row["next_action"]).replace("|", "／").replace("\n", " ")
+            lines.append(
+                f"|`{row['task_id']}`|`{row['engineering']['status']}`|`{row['outcome']['status']}`|{action}|"
+            )
+        lines.append(
+            "\n工程状态来自 canonical registry；未触发候选不代表根因已修复，收益须独立验证。"
+        )
     lines.extend(["", "## 优化候选", ""])
     if candidate_ids:
         lines.extend(f"- `{candidate_id}`" for candidate_id in candidate_ids)
@@ -1598,6 +1847,23 @@ def _stable_hash(value: Any) -> str:
         "utf-8"
     )
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _token_project_roots(project_root: Path) -> list[Path]:
+    result = subprocess.run(
+        ["git", "-C", str(project_root), "worktree", "list", "--porcelain"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    if result.returncode != 0:
+        return [project_root.resolve()]
+    return [
+        Path(line.removeprefix("worktree "))
+        for line in result.stdout.splitlines()
+        if line.startswith("worktree ")
+    ]
 
 
 def _sha256_path(path: Path) -> str:

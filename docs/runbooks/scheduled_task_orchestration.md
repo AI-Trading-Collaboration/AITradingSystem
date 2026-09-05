@@ -122,6 +122,9 @@ independent validation 去重，写 `workflow_health_cycle_receipt.v1`；invalid
 periodic `automatic_command_dispatch_enabled=false` 保持不变；只有 workflow-health report generation
 policy 为 true，且不得扩大到其他 task id。
 
+
+DEVX-013 通过同一入口生成 `workflow_health_report.v2`：本地 Codex usage collector 只读精确 project/thread 元数据归属的 response usage，按 response id 去重，将 raw input、cached input、uncached input、output 和 reasoning 子集分别列出；达到文件/字节/响应预算明确 `PARTIAL`，不可用为 `UNAVAILABLE`，只提取用量字段，不将 prompt 正文纳入报告或模型上下文。来源覆盖不代表项目/账户全部消耗，也不推算账单。`inputs/development/workflow_improvement_plan.yaml` 将稳定候选关联到 canonical task，工程状态从有效 fragment/event/index 投影；收益使用独立 observation，绑定 reviewed implementation SHA、同任务 PASS validation provenance、实际 artifact bytes、相同工作负载与环境，并按政策重算。无 before/after 为 `OBSERVING`，task DONE 不代表收益。初始一周一个维护主项，四个真实完整周后复核；月度选择重复根因驱动的局部重构。现有 TRADING-2564 Full readiness 是首个复用试点，最终 Full 门禁保留。v2 baseline 只复用同 policy、已完成且不重叠的有效周；当周 bundle 的三处 as-of 必须与文件日期一致。policy/checkout 阻断写 receipt，不能当成健康 PASS。
+
 Weekly 输出必须声明实际 research window 与 requested/evaluated range；默认 primary conclusion window 从 `2021-02-22` 开始。若显式使用 `ai_after_chatgpt` / `2022-12-01`，必须标为 historical comparison、AI-cycle attribution 或 sensitivity/stress，而不是默认或更严格的 minimum bound。
 
 ## Biweekly Cadence

@@ -10480,6 +10480,21 @@ remote divergence 或 cleanup 不完整会在下一次写入前 fail closed。ca
 
 ## DEVX-011 Governed Developer Workflow Health
 
-DEVX-011/DEVX-012 后，developer workflow 形成受控自动生成、owner-gated 落地的周度只读健康闭环：`config/architecture/workflow_health_policy.yaml` 定义 7-day UTC half-open window、source scopes、administrative-stop 分类、候选阈值、existing automation binding 与 ISO-week dedup；existing `aitradingsystem-pit` automation 在同一 invocation 的唯一 runtime-local `daily-run` 之后调用 development checkout 的 `aits reports ensure-workflow-health --as-of YYYY-MM-DD`，且不得创建第二 scheduler。Gate 先要求 `HEAD = local main = origin/main` 和受治理实现/policy path 无 drift，再独立重验当周 report/candidate/validation bundle；有效则 `ALREADY_CURRENT` 且不改写，缺失时运行 `workflow-health` 读取 validation runtime summaries、ARCH-005 publication transactions 与 `git main` history，生成 `workflow_health_YYYY-MM-DD.json/md`、`workflow_optimization_candidates_YYYY-MM-DD.json` 和 `workflow_health_validation_YYYY-MM-DD.json/md`。报告还读取最近一个更早且 independently validated 的 weekly bundle，输出 metric deltas、`new|recurring|resolved` candidate lifecycle 与 `IMPROVED|REGRESSED|MIXED|STABLE|NO_BASELINE`，但不作因果声明。每次 post-stage 写 `workflow_health_cycle_receipt_YYYY-MM-DD.json`；invalid/blocked/failed 由下一次 existing invocation 重试。Generic periodic automatic dispatch 仍关闭，自动行为只允许 report/candidate/validation/receipt，不允许自动 task/code/gate/production/broker mutation。
+DEVX-011/DEVX-012 后，developer workflow 形成受控自动生成、owner-gated 落地的周度只读健康闭环：`config/architecture/workflow_health_policy.yaml` 定义 previous complete ISO week UTC half-open window（历史 v1 仍按原窗口重验）、source scopes、administrative-stop 分类、候选阈值、existing automation binding 与 ISO-week dedup；existing `aitradingsystem-pit` automation 在同一 invocation 的唯一 runtime-local `daily-run` 之后调用 development checkout 的 `aits reports ensure-workflow-health --as-of YYYY-MM-DD`，且不得创建第二 scheduler。Gate 先要求 `HEAD = local main = origin/main` 和受治理实现/policy path 无 drift，再独立重验当周 report/candidate/validation bundle；有效则 `ALREADY_CURRENT` 且不改写，缺失时运行 `workflow-health` 读取 validation runtime summaries、ARCH-005 publication transactions 与 `git main` history，生成 `workflow_health_YYYY-MM-DD.json/md`、`workflow_optimization_candidates_YYYY-MM-DD.json` 和 `workflow_health_validation_YYYY-MM-DD.json/md`。报告还读取最近一个更早且 independently validated 的 weekly bundle，输出 metric deltas、`new|recurring|resolved` candidate lifecycle 与 `IMPROVED|REGRESSED|MIXED|STABLE|NO_BASELINE`，但不作因果声明。每次 post-stage 写 `workflow_health_cycle_receipt_YYYY-MM-DD.json`；invalid/blocked/failed 由下一次 existing invocation 重试。Generic periodic automatic dispatch 仍关闭，自动行为只允许 report/candidate/validation/receipt，不允许自动 task/code/gate/production/broker mutation。
 
 该闭环只把 high Full failure runtime、early transaction churn、authority-only amplification、per-task retries、duplicate validation 和 recurring failure clusters 转成 fingerprint 稳定的 review-only candidate；它不会自动登记任务、修改代码/配置、放宽 validation gate、运行 market DQ、改变投资结论或触发 production/broker。任何后续优化仍需 owner 决策、canonical task registration 与独立 governed implementation。
+
+DEVX-013 通过同一入口生成 `workflow_health_report.v2`：本地 Codex usage collector 只读精确 project/thread 元数据归属的 response usage，按 response id 去重，将 raw input、cached input、uncached input、output 和 reasoning 子集分别列出；达到文件/字节/响应预算明确 `PARTIAL`，不可用为 `UNAVAILABLE`，只提取用量字段，不将 prompt 正文纳入报告或模型上下文。来源覆盖不代表项目/账户全部消耗，也不推算账单。`inputs/development/workflow_improvement_plan.yaml` 将稳定候选关联到 canonical task，工程状态从有效 fragment/event/index 投影；收益使用独立 observation，绑定 reviewed implementation SHA、同任务 PASS validation provenance、实际 artifact bytes、相同工作负载与环境，并按政策重算。无 before/after 为 `OBSERVING`，task DONE 不代表收益。初始一周一个维护主项，四个真实完整周后复核；月度选择重复根因驱动的局部重构。现有 TRADING-2564 Full readiness 是首个复用试点，最终 Full 门禁保留。v2 baseline 只复用同 policy、已完成且不重叠的有效周；当周 bundle 的三处 as-of 必须与文件日期一致。policy/checkout 阻断写 receipt，不能当成健康 PASS。
+
+```mermaid
+flowchart LR
+    Logs[本地响应用量与工程运行证据] --> Week[完整周统计与覆盖缺口]
+    Week --> Candidates[稳定候选与重复根因]
+    Candidates --> Plan[已准入改进计划]
+    Registry[Canonical task 与事件链] --> Plan
+    Plan --> Tracking[工程状态和下一责任人]
+    Artifacts[实际测量与 reviewed SHA] --> Outcome[独立收益复算]
+    Tracking --> Report[既有 weekly workflow health 报告]
+    Outcome --> Report
+    Report --> Review[四周复盘与局部重构决策]
+```

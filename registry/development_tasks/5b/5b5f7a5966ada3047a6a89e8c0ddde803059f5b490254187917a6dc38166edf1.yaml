@@ -1,0 +1,120 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-013_CONTINUOUS_IMPROVEMENT_EXECUTION_AND_OUTCOME_LOOP_V1
+  task_id_sha256: 5b5f7a5966ada3047a6a89e8c0ddde803059f5b490254187917a6dc38166edf1
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-013_CONTINUOUS_IMPROVEMENT_EXECUTION_AND_OUTCOME_LOOP_V1
+  title: null
+  domain: Developer experience / 持续改进执行、Token 测量与收益验收
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Codex engineering coordinator
+  requirement_refs:
+  - docs/requirements/DEVX-013_Continuous_Improvement_Execution_And_Outcome_Loop_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 首版完整周/Token/任务收益闭环88项聚焦与静态检查PASS；正式候选验收后发布。保留四个真实周、增量/跨id日志覆盖、checkout阻断解法与月度局部重构复核。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 正式验证后首版BASELINE_DONE；周报同policy/plan/Token源独立重验，真实FAIL为REGRESSION，独立execution去重；无可比实测不宣称收益；S5需四个完整周后复核。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-013_CONTINUOUS_IMPROVEMENT_EXECUTION_AND_OUTCOME_LOOP_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-05T17:49:54.078697+00:00'
+  actor: integration-coordinator
+  change_id: devx-013-register-20260906
+  lane_id: null
+  base_commit: 03f114b7edf73fbb15aad94dfff9515495940cc4
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-013_CONTINUOUS_IMPROVEMENT_EXECUTION_AND_OUTCOME_LOOP_V1
+    - Developer experience / 持续改进执行、Token 测量与收益验收
+    - P1
+    - IN_PROGRESS
+    - Codex engineering coordinator：S1/S2 首版实施与 final-tree 验证
+    - S0 登记；S5 等待四个完整观察周。详见 `docs/requirements/DEVX-013_Continuous_Improvement_Execution_And_Outcome_Loop_V1.md`。
+    - 复用现有健康报告与唯一触发；Token 去重/coverage；候选关联 canonical task；工程与收益分轴；重复失败最小试点；focused/formal/Full、主线普通推送及
+      cleanup；不改变 DQ/PIT、策略、production/broker。
+    - 2026-09-06 owner 要求推进长期方案；分阶段依赖、授权边界、指标、维护容量试行与临时 workspace 生命周期已冻结。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-013-register-20260906
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-47878ccca201749424720255b48d99b7
+- schema_version: task_event.v1
+  task_id: DEVX-013_CONTINUOUS_IMPROVEMENT_EXECUTION_AND_OUTCOME_LOOP_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-05T18:20:22.848178+00:00'
+  actor: integration-coordinator
+  change_id: devx-013-source-progress-20260906
+  lane_id: null
+  base_commit: 03f114b7edf73fbb15aad94dfff9515495940cc4
+  previous_state_event_id: task-event-47878ccca201749424720255b48d99b7
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: S1/S2/S4 已实现且78项并行聚焦通过；完成当前生成权威/正式候选验收；S3复用TRADING-2564
+      readiness；S5等待四个完整周。
+    acceptance_criteria: 完整周/Token分项与有界覆盖；canonical task与收益分轴；exact implementation/provenance/artifact与独立复算；现有周检幂等；正式验证发布后BASELINE_DONE，长期观察保留。
+    notes: '[长期方案与分阶段验收](docs/requirements/DEVX-013_Continuous_Improvement_Execution_And_Outcome_Loop_V1.md)；不创建新scheduler，收益暂无实测支持。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-013-source-progress-20260906
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-6ebcdfac5a94798f35e9672fff0cd7f6
+- schema_version: task_event.v1
+  task_id: DEVX-013_CONTINUOUS_IMPROVEMENT_EXECUTION_AND_OUTCOME_LOOP_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-05T18:32:39.307888+00:00'
+  actor: integration-coordinator
+  change_id: devx-013-baseline-20260906
+  lane_id: null
+  base_commit: 03f114b7edf73fbb15aad94dfff9515495940cc4
+  previous_state_event_id: task-event-6ebcdfac5a94798f35e9672fff0cd7f6
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: 首版完整周/Token/任务收益闭环88项聚焦与静态检查PASS；正式候选验收后发布。保留四个真实周、增量/跨id日志覆盖、checkout阻断解法与月度局部重构复核。
+    acceptance_criteria: 正式验证后首版BASELINE_DONE；周报同policy/plan/Token源独立重验，真实FAIL为REGRESSION，独立execution去重；无可比实测不宣称收益；S5需四个完整周后复核。
+    notes: '[DEVX-013分阶段方案与证据](docs/requirements/DEVX-013_Continuous_Improvement_Execution_And_Outcome_Loop_V1.md)；S3复用TRADING-2564
+      Full readiness，自动准入范围未扩大，production_effect=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-013-baseline-20260906
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-1afc3db2204fbcd47945affe3b41c472
+projection:
+  legacy_first_eight_cells:
+  - DEVX-013_CONTINUOUS_IMPROVEMENT_EXECUTION_AND_OUTCOME_LOOP_V1
+  - Developer experience / 持续改进执行、Token 测量与收益验收
+  - P1
+  - BASELINE_DONE
+  - Codex engineering coordinator
+  - 首版完整周/Token/任务收益闭环88项聚焦与静态检查PASS；正式候选验收后发布。保留四个真实周、增量/跨id日志覆盖、checkout阻断解法与月度局部重构复核。
+  - 正式验证后首版BASELINE_DONE；周报同policy/plan/Token源独立重验，真实FAIL为REGRESSION，独立execution去重；无可比实测不宣称收益；S5需四个完整周后复核。
+  - '[DEVX-013分阶段方案与证据](docs/requirements/DEVX-013_Continuous_Improvement_Execution_And_Outcome_Loop_V1.md)；S3复用TRADING-2564
+    Full readiness，自动准入范围未扩大，production_effect=none。'
+  docs_links:
+  - docs/requirements/DEVX-013_Continuous_Improvement_Execution_And_Outcome_Loop_V1.md
+  terminal: false
+  canonical_row_sha256: ff8a0a04cf0eec0857888fc3cba32582a40337e8d91cac2ac996289928876d16
+last_event_id: task-event-1afc3db2204fbcd47945affe3b41c472
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 9ed6c09dd6a464796fe37213a0db19304b72350da19a4ddaefff886f77047cf9
