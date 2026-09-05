@@ -68,12 +68,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "d76b8ce26a637e70ae4a5ef7d46fa3e8d6e681f4fdd317c31ac82d6ec3e11653"
+        "sha256": "3905c3a4ee749a7892708fc008b85ea657e9301ff4fe3c5c546edc009741165a"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "fb1d815532b85041a0f4bfb4cc9d408972d06f71c40a3659cc99af50398d36bf"
+        "sha256": "d0d9f3fe39a5446942bff6e209c6ab51be61843a648aa700c9e6cc09ff4954de"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -103,7 +103,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
-        "sha256": "3aedcda4c494f53689586d60c270c03bad12edf6ddc81ca713fd4fae5071805c"
+        "sha256": "17c6c3eee7a96bb47d38e932a9d3a256deb7148419ce994fec021bceadb87cfa"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -118,7 +118,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "ce6ce03a83fa8dc2fca13df792ab5066d318d3a3b7a67b1f41fd45d6c690d540"
+        "sha256": "2835dbac71fa123b9aaf1bc4add7c4608160ec81ded9c5d60f17c54d31f52caf"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -128,7 +128,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006c_compatibility_authority.py",
-        "sha256": "fcd7c9e3af657a4f8c2f15b485b56a9b1b6893e1ac545d5fbaed0de69315f620"
+        "sha256": "66bcb8f0e55ff80f2bbd3cce87b804f0d19341b878434e071494066b3a76f6cf"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -178,5 +178,5 @@
     "task_id": "RISK-012"
   },
   "section_id": "phase_risk_012_unknown_risk_event_id_fail_closed_v1",
-  "section_sha256": "0be22702c470b76eb7916bac02f4ed33064235fe2bb6d272056534bd26f87f67"
+  "section_sha256": "968e8628cb5c91aaf29b4327b70a6e08030a2e00dd266cc73bea973c5fa8f936"
 }

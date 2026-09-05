@@ -93,7 +93,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "d76b8ce26a637e70ae4a5ef7d46fa3e8d6e681f4fdd317c31ac82d6ec3e11653"
+        "sha256": "3905c3a4ee749a7892708fc008b85ea657e9301ff4fe3c5c546edc009741165a"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -108,12 +108,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "3fb1f76880e1c1b9ac58d0095f77300c112a041d530c1b7ee256b8bcfd6cc7d0"
+        "sha256": "20811d631e908fa64f32defcb1d5cb46673f9b569f5a66a5e22e61c6444a7718"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "4626c67edb9bf133f8094c2491b6847ed3f78e021184603f3855d3a50066c51e"
+        "sha256": "6beadb0fed5f90116845f8d382d503f1fd2a6215479c053132978e38b4e9d3c3"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -123,7 +123,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "fb1d815532b85041a0f4bfb4cc9d408972d06f71c40a3659cc99af50398d36bf"
+        "sha256": "d0d9f3fe39a5446942bff6e209c6ab51be61843a648aa700c9e6cc09ff4954de"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -153,17 +153,17 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
-        "sha256": "3aedcda4c494f53689586d60c270c03bad12edf6ddc81ca713fd4fae5071805c"
+        "sha256": "17c6c3eee7a96bb47d38e932a9d3a256deb7148419ce994fec021bceadb87cfa"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "ce6ce03a83fa8dc2fca13df792ab5066d318d3a3b7a67b1f41fd45d6c690d540"
+        "sha256": "2835dbac71fa123b9aaf1bc4add7c4608160ec81ded9c5d60f17c54d31f52caf"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006c_compatibility_authority.py",
-        "sha256": "fcd7c9e3af657a4f8c2f15b485b56a9b1b6893e1ac545d5fbaed0de69315f620"
+        "sha256": "66bcb8f0e55ff80f2bbd3cce87b804f0d19341b878434e071494066b3a76f6cf"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -223,5 +223,5 @@
     "task_id": "OPS-077_ATOMIC_RELEASE_SCHEDULER_BINDING_AND_CANARY"
   },
   "section_id": "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1",
-  "section_sha256": "3ddff069a45c30e1df5a5d638c7369b2257725e7c13f6a04aecf57e5c5752c78"
+  "section_sha256": "d210231c8f59617643cc545ea738da6d323c64533f76881d768f771338e0edab"
 }

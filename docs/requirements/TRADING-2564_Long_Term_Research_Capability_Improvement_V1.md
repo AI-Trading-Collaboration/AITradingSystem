@@ -291,3 +291,60 @@ verifier不重新运行DQ。所有fixture与真实市场cache隔离，不据此�
 既有`test_posix_in_root_symlink_alias_is_rejected`的POSIX语义用例，新增Windows reparse用例通过。
 新测试文件SHA-256为`7f8d5b3a565996119ae265cfe552d184e006c17d527df9e6d4795746a7f8f23b`，
 Ruff/Black PASS，source SHA与上述冻结一致。source/final正式验证继续执行；本任务和S2整体均未完成。
+
+### 9.6 S2a 首次正式失败与窄修复
+
+候选`d1d1b0e85bb7f0109c8311bce68d8dbb0bdc8040`的readiness为7 checks PASS、1242项依赖；
+随后architecture-fitness为776 passed / 112 failed（16 workers/loadfile，517.11秒）。流水线立即
+停止，contract/integration/reproducibility/Full均未启动。失败收据
+`outputs/validation_runtime/architecture-fitness_20260905T061221Z/test_runtime_summary.json`
+SHA-256为`636e444b77892fcb48709b234eeb7d32c3847dda56ea4ca9063058da737d3a73`。
+原final v1事务已通过publication命令终止为FAILED并释放lease，原始日志和收据原样保留。
+
+独立只读诊断确认112项均来自同一个缺口：两个publication模块已变更，但compatibility generator
+尚无TRADING-2564当前源码继任authority。修复新增本任务独立的S2a fragment、精确source集合和
+historical-test adapter接线，不将新路径塞入OPS-078历史职责，不改legacy prefix的306项与seal，
+不删除失败断言或改策略/DQ规则。现有官方builder继续负责当前fragment/index，新增负例证明任意
+未登记或被篡改的source仍被拒绝。业务flow与Named接口保持9.2定义。
+
+修复source v1事务沿用原范围，诊断发现还需声明compatibility generator路径，故在任何tracked写入前
+行政终止；v2显式加入`src/ai_trading_system/platform/architecture/compatibility_authority.py`后
+追加任务纠正事件并重做SINGLE_LANE预检。保持原branch、checkout及frozen main，不建替代worktree。
+架构失败不是failed Full，不伪造Full parent；修正后先做受影响聚焦回归，再冻结source/final候选，
+正式验证与普通发布收据才构成验收。全部真实研究、DQ、数据与交易动作仍为0。
+
+修复初次两文件focused为229 passed / 2 failed（16 workers/loadfile，532.36秒），原XML保留在
+`outputs/validation_runtime/trading-2564-s2a-authority-fix-focused.xml`。此前112项历史追溯失败均已
+消除；本次两项仅为新增篡改负例期望错误：source变更使content-addressed fragment路径变化，只读
+builder不创建新文件，现有validator先返回`AUTHORITY_FILE_MISSING`，尚未到hash比较的
+`AUTHORITY_GENERATED_STALE`。仅修正精确错误码断言，validator不改、不改为宽泛异常；随后仅重跑
+该受影响测试文件，最终formal仍覆盖完整候选。generator源码项目strict mypy及三文件Ruff/Black PASS。
+GEN_PRE首次漏显式generator顺序参数被阻断，补齐原声明后通过；重复refresh-consumers在GEN_PRE被
+阶段门禁拒绝。任务更新已在TASK_SOURCE_PRE_WRITE完成，其消费者库存随后只读validate PASS，故不
+绕过阶段、不重复任务写入，继续剩余官方generator。上述检查错误没有触发研究或Full。
+
+### 9.7 后续合同审查发现（设计待审，未实施）
+
+S2b最小方向是独立named-immutable DQ request/receipt/verifier分支，保留legacy v1原义，不全局
+重解释`project_root`。须分别绑定只读source root、显式publication目录、execution code/policy root、
+evidence output root；member只由已验证transaction导出。原manifest output_path与完整行hash、
+transaction role/member、实际捕获bytes必须三段一致，不重写原manifest、不读取legacy projection
+来冒充immutable输入。来源根不明确的relocation应阻断，支持范围需DATA-GOV-002合同owner审查。
+复用canonical DQ规则及同一`DataFileSnapshot.content`；新verifier不重跑DQ，返回已核验的只读bytes
+供后续adapter解析，避免PASS后再按路径读取换输入。新receipt不能改标签重用旧v1，不自动授予consumer。
+真实snapshot/root、as-of、consumer/profile及动作上限仍需明确准入，机器hash由coordinator提取。
+
+冻结producer的rates末日门禁是整个DataFrame index，并非每个必需series都有当日新值；已有内部
+`ffill`也不证明发布可得性。未来adapter须逐series披露最后有效观察日、carry来源和真实available-at，
+不得人为增加空末日行。S3还缺timezone-aware activation、输入cutoff、实际收盘、signal_recorded_at
+及decision deadline证据；现有日期/六hash不能证明PIT/OOS。默认保留producer阻断；若连续采集需要
+“决策截止已知rates”或更晚决策时点，先审查新信息集/时点合同，不能作为薄adapter暗改。S2b-S5继续
+保留在本任务；本节为只读设计发现，不证明真实输入ready，不启用任何新DQ或研究运行。
+
+S5新增实测候选：本波readiness自洽PASS仍漏掉新supersession覆盖，代价为112次重复失败、517.11秒、
+461616字节日志。拟在首个昂贵formal tier前增加只读live-source覆盖预检，绑定exact base/candidate和
+独立于generator的reviewed变更scope，复用canonical loader及LF hash规则；按路径归并missing/stale/
+wrong-lineage，不能自动生成或批准authority。须最小shared-contract审查，不复制巨型历史测试helper，
+不替代历史回归。负例须覆盖generator与生成物共同漏项、只覆盖一个source、旧SHA、缺supersession、
+错误继承/较早section、非法base/candidate、excluded/越界读取及零dispatch；未变源码与纯EOL差异
+不得误报。先测真实提前发现时间和日志量，不引入新性能阈值。此项仍为待审设计，当前波不实施。

@@ -910,6 +910,13 @@ def build_repository_authority(
                 ops_078_fragment_bytes,
             )
         )
+    trading_2564_requirement = (
+        root / "docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md"
+    )
+    if trading_2564_requirement.exists():
+        section_id, section = _trading_2564_s2a_section(root, policy=policy)
+        relative, record, content = render_fragment(section_id=section_id, section=section)
+        rendered_fragments.append((section_id, relative, record, content))
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -2497,9 +2504,7 @@ def _ops_078_section(
         "schema_version": "ops_078_daily_automation_isolation_and_same_day_rescue.v1",
         "task_id": "OPS-078_DAILY_AUTOMATION_ISOLATION_AND_SAME_DAY_RESCUE",
         "status": "VALIDATING",
-        "owner_decision": (
-            "owner_instruction:OPS-078:2026-09-03:add-dedicated-worktree-mechanism"
-        ),
+        "owner_decision": ("owner_instruction:OPS-078:2026-09-03:add-dedicated-worktree-mechanism"),
         "authority_contract": dict(_mapping(policy["contract"], "contract")),
         "superseded_live_source_paths": source_paths,
         "sources": [_source_record(root, path) for path in source_paths],
@@ -2608,6 +2613,66 @@ def _retired_task_shadow_authorities(root: Path) -> list[dict[str, Any]]:
             }
         )
     return authorities
+
+
+def _trading_2564_s2a_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    # TRADING-2564 §9.6 owns only this reviewed S2a source closure. Do not absorb
+    # unrelated drift or rewrite the frozen legacy prefix / OPS-078 policy.
+    section_id = "phase_trading_2564_s2a_named_immutable_snapshot_v1"
+    source_paths = sorted(
+        [
+            "src/ai_trading_system/data/immutable_publish.py",
+            "src/ai_trading_system/data/download_publication.py",
+            "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+            "tests/test_named_immutable_publication.py",
+            "tests/test_arch_004_refactor_policy.py",
+            "tests/test_devx_006c_compatibility_authority.py",
+            "docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md",
+            (
+                "registry/development_tasks/c8/"
+                "c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml"
+            ),
+            "inputs/architecture/arch_005_task_registry_index.yaml",
+        ],
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "trading_2564_s2a_named_immutable_snapshot.v1",
+        "task_id": "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1",
+        "status": "VALIDATING",
+        "owner_decision": "owner_instruction:TRADING-2564:2026-09-05:long-term-capability",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "named_snapshot_contract": {
+            "exact_pointer_and_transaction_identity_required": True,
+            "committed_chain_membership_required": True,
+            "current_selects_replacement_input": False,
+            "validation_scope": "STRUCTURAL_PUBLICATION_ONLY",
+            "legacy_projection_status": "NOT_EVALUATED",
+        },
+        "safety": {
+            "dq_validation_executed": False,
+            "consumer_cutover_allowed": False,
+            "dispatch_allowed": False,
+            "historical_receipt_rewritten": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
 
 
 def validate_repository_authority(repository_root: Path = Path(".")) -> dict[str, Any]:

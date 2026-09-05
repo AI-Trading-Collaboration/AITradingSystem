@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -40,6 +41,23 @@ DEVX_012_SECTION = "phase_devx_012_automatic_workflow_health_trigger_and_outcome
 RISK_012_SECTION = "phase_risk_012_unknown_risk_event_id_fail_closed_v1"
 OPS_077_SECTION = "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1"
 OPS_078_SECTION = "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1"
+TRADING_2564_S2A_SECTION = "phase_trading_2564_s2a_named_immutable_snapshot_v1"
+TRADING_2564_S2A_SOURCE_PATHS = frozenset(
+    {
+        "src/ai_trading_system/data/immutable_publish.py",
+        "src/ai_trading_system/data/download_publication.py",
+        "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "tests/test_named_immutable_publication.py",
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_devx_006c_compatibility_authority.py",
+        "docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md",
+        (
+            "registry/development_tasks/c8/"
+            "c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml"
+        ),
+        "inputs/architecture/arch_005_task_registry_index.yaml",
+    }
+)
 
 
 def _write_fixture_authority(
@@ -144,11 +162,12 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 319
+    assert len(merged) == 320
+    assert result["fragment_count"] == 14
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == OPS_078_SECTION
+    assert next(reversed(merged)) == TRADING_2564_S2A_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
@@ -241,6 +260,89 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
         "legacy_append_allowed": False,
         "rollback_mode": "FROZEN_LEGACY_PREFIX_ONLY",
     }
+
+
+def _assert_s2a_source_closure(phase: dict[str, Any]) -> None:
+    paths = [row["path"] for row in phase["sources"]]
+    assert paths == sorted(TRADING_2564_S2A_SOURCE_PATHS, key=str.casefold)
+    assert phase["superseded_live_source_paths"] == paths
+    for row in phase["sources"]:
+        assert row["hash_normalization"] == "git_eol_lf"
+        content = Path(row["path"]).read_bytes().replace(b"\r\n", b"\n")
+        assert hashlib.sha256(content).hexdigest() == row["sha256"], row["path"]
+
+
+def test_s2a_is_exact_named_snapshot_successor_authority() -> None:
+    merged = load_compatibility_authority()
+    assert next(reversed(merged)) == TRADING_2564_S2A_SECTION
+    assert list(merged).index(OPS_078_SECTION) < list(merged).index(TRADING_2564_S2A_SECTION)
+    phase = merged[TRADING_2564_S2A_SECTION]
+    assert phase["schema_version"] == "trading_2564_s2a_named_immutable_snapshot.v1"
+    assert phase["task_id"] == "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1"
+    assert phase["status"] == "VALIDATING"
+    assert phase["owner_decision"] == (
+        "owner_instruction:TRADING-2564:2026-09-05:long-term-capability"
+    )
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": OPS_078_SECTION,
+        "current_hash_authority": f"{TRADING_2564_S2A_SECTION}.sources",
+    }
+    _assert_s2a_source_closure(phase)
+    assert phase["named_snapshot_contract"] == {
+        "exact_pointer_and_transaction_identity_required": True,
+        "committed_chain_membership_required": True,
+        "current_selects_replacement_input": False,
+        "validation_scope": "STRUCTURAL_PUBLICATION_ONLY",
+        "legacy_projection_status": "NOT_EVALUATED",
+    }
+    assert phase["safety"] == {
+        "dq_validation_executed": False,
+        "consumer_cutover_allowed": False,
+        "dispatch_allowed": False,
+        "historical_receipt_rewritten": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+    assert phase["production_effect"] == phase["broker_action"] == "none"
+
+
+@pytest.mark.parametrize("mutation", ["extra_source", "missing_source", "wrong_hash"])
+def test_s2a_source_closure_rejects_unreviewed_changes(mutation: str) -> None:
+    phase = deepcopy(load_compatibility_authority()[TRADING_2564_S2A_SECTION])
+    if mutation == "extra_source":
+        phase["sources"].append({"path": "unreviewed.py", "sha256": "0" * 64})
+    elif mutation == "missing_source":
+        phase["sources"].pop()
+    else:
+        phase["sources"][0]["sha256"] = "0" * 64
+    with pytest.raises(AssertionError):
+        _assert_s2a_source_closure(phase)
+
+
+@pytest.mark.parametrize(
+    "portable",
+    [
+        "src/ai_trading_system/data/immutable_publish.py",
+        "src/ai_trading_system/data/download_publication.py",
+    ],
+)
+def test_s2a_validator_rejects_changed_source_without_rebuild(
+    monkeypatch: pytest.MonkeyPatch, portable: str
+) -> None:
+    original = Path.read_bytes
+    target = Path(portable).resolve()
+
+    def altered_read(path: Path) -> bytes:
+        content = original(path)
+        return content + b"\n# synthetic source drift\n" if path == target else content
+
+    monkeypatch.setattr(Path, "read_bytes", altered_read)
+    with pytest.raises(CompatibilityAuthorityError) as caught:
+        validate_repository_authority()
+    # Changed source bytes imply a new content-addressed fragment path. The
+    # read-only builder never installs it, so the contained reader fails first.
+    assert caught.value.code == "AUTHORITY_FILE_MISSING"
 
 
 def test_legacy_prefix_bytes_equal_exact_start_base() -> None:

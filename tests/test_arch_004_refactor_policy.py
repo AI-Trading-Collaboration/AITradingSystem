@@ -3903,7 +3903,8 @@ OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION = (
 OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION = (
     "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1"
 )
-LATEST_COMPATIBILITY_SECTION = OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION
+TRADING_2564_S2A_SECTION = "phase_trading_2564_s2a_named_immutable_snapshot_v1"
+LATEST_COMPATIBILITY_SECTION = TRADING_2564_S2A_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -13073,6 +13074,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION,
         OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION,
         OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION,
+        TRADING_2564_S2A_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13168,6 +13170,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION,
         OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION,
         OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION,
+        TRADING_2564_S2A_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -14108,7 +14111,36 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION in baseline:
+    if TRADING_2564_S2A_SECTION in baseline:
+        phase = baseline[TRADING_2564_S2A_SECTION]
+        current_superseded_paths = frozenset(
+            str(path) for path in phase["superseded_live_source_paths"]
+        )
+        assert (
+            _latest_active_source_mismatches(TRADING_2564_S2A_SECTION) <= current_superseded_paths
+        )
+        inherited_superseded_paths = frozenset(
+            str(path)
+            for section in (
+                DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION,
+                DEVX_009_PUBLICATION_FENCE_SECTION,
+                TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION,
+                PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION,
+                DEVX_011_WORKFLOW_HEALTH_SECTION,
+                DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION,
+                RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION,
+                OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION,
+                OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION,
+            )
+            for path in baseline[section]["superseded_live_source_paths"]
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2504_qqq_options_owner_decision_manifest_all_current_authority_paths()
+            | inherited_superseded_paths
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2564_S2A_SECTION
+    elif OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION in baseline:
         phase = baseline[OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION]
         current_superseded_paths = frozenset(
             str(path) for path in phase["superseded_live_source_paths"]
@@ -24820,9 +24852,11 @@ def test_ops_077_atomic_release_scheduler_binding_authority_is_retained() -> Non
     assert phase["broker_action"] == "none"
 
 
-def test_ops_078_is_latest_daily_automation_isolation_authority() -> None:
+def test_ops_078_is_retained_daily_automation_isolation_authority() -> None:
     baseline = _compatibility_baseline()
-    assert next(reversed(baseline)) == OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION
+    assert list(baseline).index(OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION) < list(baseline).index(
+        TRADING_2564_S2A_SECTION
+    )
     phase = baseline[OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION]
 
     assert phase["schema_version"] == ("ops_078_daily_automation_isolation_and_same_day_rescue.v1")
@@ -24882,6 +24916,27 @@ def test_ops_078_is_latest_daily_automation_isolation_authority() -> None:
     }
     assert phase["production_effect"] == "none"
     assert phase["broker_action"] == "none"
+
+
+def test_trading_2564_s2a_is_latest_named_snapshot_hash_authority() -> None:
+    baseline = _compatibility_baseline()
+    assert next(reversed(baseline)) == TRADING_2564_S2A_SECTION
+    phase = baseline[TRADING_2564_S2A_SECTION]
+    assert phase["schema_version"] == "trading_2564_s2a_named_immutable_snapshot.v1"
+    assert phase["supersession"]["historical_hashes_rewritten"] is False
+    paths = [str(source["path"]) for source in phase["sources"]]
+    assert paths == sorted(set(paths), key=str.casefold)
+    assert set(paths) == set(phase["superseded_live_source_paths"])
+    assert {
+        "src/ai_trading_system/data/immutable_publish.py",
+        "src/ai_trading_system/data/download_publication.py",
+    } <= set(paths)
+    for source in phase["sources"]:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["safety"]["dq_validation_executed"] is False
+    assert phase["safety"]["consumer_cutover_allowed"] is False
+    assert phase["safety"]["dispatch_allowed"] is False
 
 
 def test_trading_2464_decision_pack_is_append_only_current_hash_authority() -> None:

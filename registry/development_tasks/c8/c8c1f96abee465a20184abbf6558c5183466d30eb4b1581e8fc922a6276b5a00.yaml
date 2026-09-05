@@ -13,18 +13,17 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: integration-coordinator：S2a最终工程验证和普通main发布；随后受审DQ消费合同及adapter
+  next_owner: integration-coordinator：S2a独立版本追溯authority修复与正式验收；随后DATA-GOV-002消费合同review
   requirement_refs:
   - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S2a两个只读Named resolver和独立复核完成，最终focused179
-    passed/1平台skip；正式source/final验收待完成，S2消费接入及S3-S5保留
+  unstructured_legacy_blocker_or_next_step: S2a首次architecture为776 passed/112 failed，均缺两个publication模块的新supersession
+    authority；原事务终止，Full未启动；修复不改策略或历史seal；S2b-S5保留
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: S2a exact named identity/committed membership/零副作用与tamper负例通过；formal及ordinary
-      main发布receipt为最终验收；不升级DQ、consumer权限或研究结论
+    text: 新增S2a精确source authority并保持历史seal，负例与受影响架构回归通过；exact最终candidate formal/Full及普通main发布完成；真实研究数据交易动作全0
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -125,21 +124,46 @@ events:
   - change:trading-2564-s2a-focused-review-20260905
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-ec62dedeaed19c1bdb9b00939b1e9d1b
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-05T15:27:37.7104576+09:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2a-authority-failure-fix-20260905
+  lane_id: null
+  base_commit: 2124aff36802e0a85e0566c2306365659e8ee4d1
+  previous_state_event_id: task-event-ec62dedeaed19c1bdb9b00939b1e9d1b
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator：S2a独立版本追溯authority修复与正式验收；随后DATA-GOV-002消费合同review
+    blocker_or_next_step: S2a首次architecture为776 passed/112 failed，均缺两个publication模块的新supersession
+      authority；原事务终止，Full未启动；修复不改策略或历史seal；S2b-S5保留
+    acceptance_criteria: 新增S2a精确source authority并保持历史seal，负例与受影响架构回归通过；exact最终candidate
+      formal/Full及普通main发布完成；真实研究数据交易动作全0
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；失败architecture收据SHA256=636e444b77892fcb48709b234eeb7d32c3847dda56ea4ca9063058da737d3a73；不是failed
+      Full，不伪造parent；修复source v2声明generator路径
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2a-authority-failure-fix-20260905
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d2aeeeb5f7e19749b61554a5c6a8208a
 projection:
   legacy_first_eight_cells:
   - TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
   - 长期研究能力 / 输入就绪与验证前置
   - P1
   - IN_PROGRESS
-  - integration-coordinator：S2a最终工程验证和普通main发布；随后受审DQ消费合同及adapter
-  - S2a两个只读Named resolver和独立复核完成，最终focused179 passed/1平台skip；正式source/final验收待完成，S2消费接入及S3-S5保留
-  - S2a exact named identity/committed membership/零副作用与tamper负例通过；formal及ordinary
-    main发布receipt为最终验收；不升级DQ、consumer权限或研究结论
-  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；旧DQ和migration源码身份变化明确保留，历史receipt不改；本波全部真实研究/数据/交易动作0
+  - integration-coordinator：S2a独立版本追溯authority修复与正式验收；随后DATA-GOV-002消费合同review
+  - S2a首次architecture为776 passed/112 failed，均缺两个publication模块的新supersession authority；原事务终止，Full未启动；修复不改策略或历史seal；S2b-S5保留
+  - 新增S2a精确source authority并保持历史seal，负例与受影响架构回归通过；exact最终candidate formal/Full及普通main发布完成；真实研究数据交易动作全0
+  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；失败architecture收据SHA256=636e444b77892fcb48709b234eeb7d32c3847dda56ea4ca9063058da737d3a73；不是failed
+    Full，不伪造parent；修复source v2声明generator路径
   docs_links:
   - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
   terminal: false
-  canonical_row_sha256: be1d60ecb5859daffc4aeab22ec72358dc59a61bb13786239364a449eef0437e
-last_event_id: task-event-ec62dedeaed19c1bdb9b00939b1e9d1b
+  canonical_row_sha256: 30442d1d0e7d13fdfb2e2246812a017f4ac08780cdcf19dd69012318f4cde0bb
+last_event_id: task-event-d2aeeeb5f7e19749b61554a5c6a8208a
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 4821f52cf1b8ec4a4b5aff902aab39bf7f8d2b0c716881ebb5ced5bb15071852
+fragment_checksum: 371fb2b2104e22987c0d7e1baa8012038d817ac26a8d4ca5b128cb1c87a816d6

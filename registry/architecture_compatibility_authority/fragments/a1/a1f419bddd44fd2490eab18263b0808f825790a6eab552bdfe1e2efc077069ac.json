@@ -1,0 +1,99 @@
+{
+  "schema_version": "compatibility_authority_fragment.v1",
+  "section": {
+    "authority_contract": {
+      "dual_write": false,
+      "fragment_identity": "CANONICAL_SECTION_SHA256",
+      "fragment_source_active": true,
+      "index_chain": "SHA256",
+      "legacy_append_allowed": false,
+      "rollback_mode": "FROZEN_LEGACY_PREFIX_ONLY"
+    },
+    "broker_action": "none",
+    "named_snapshot_contract": {
+      "committed_chain_membership_required": true,
+      "current_selects_replacement_input": false,
+      "exact_pointer_and_transaction_identity_required": true,
+      "legacy_projection_status": "NOT_EVALUATED",
+      "validation_scope": "STRUCTURAL_PUBLICATION_ONLY"
+    },
+    "owner_decision": "owner_instruction:TRADING-2564:2026-09-05:long-term-capability",
+    "production_effect": "none",
+    "safety": {
+      "broker_action": "none",
+      "consumer_cutover_allowed": false,
+      "dispatch_allowed": false,
+      "dq_validation_executed": false,
+      "historical_receipt_rewritten": false,
+      "production_effect": "none"
+    },
+    "schema_version": "trading_2564_s2a_named_immutable_snapshot.v1",
+    "sources": [
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md",
+        "sha256": "3228fe9575a63c27a6886fb6f1797116059093ce25717d9a4ba2eb723043cfe8"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_005_task_registry_index.yaml",
+        "sha256": "d0d9f3fe39a5446942bff6e209c6ab51be61843a648aa700c9e6cc09ff4954de"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "registry/development_tasks/c8/c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml",
+        "sha256": "11836f62d72a8245adb4e3bc5c1bc766ad5e4627b9552c3cc9ebe93183aea860"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/data/download_publication.py",
+        "sha256": "d0044ec7aa59c6b75325ffc25808e9ec975b3ed5adfc97d5e0405d8ecc41fb64"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/data/immutable_publish.py",
+        "sha256": "e9c97a9863d6a74bee908d8ea56d930e86c9f25fe7e800b161b00e85e14d757f"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "sha256": "17c6c3eee7a96bb47d38e932a9d3a256deb7148419ce994fec021bceadb87cfa"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_004_refactor_policy.py",
+        "sha256": "2835dbac71fa123b9aaf1bc4add7c4608160ec81ded9c5d60f17c54d31f52caf"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006c_compatibility_authority.py",
+        "sha256": "66bcb8f0e55ff80f2bbd3cce87b804f0d19341b878434e071494066b3a76f6cf"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_named_immutable_publication.py",
+        "sha256": "7f8d5b3a565996119ae265cfe552d184e006c17d527df9e6d4795746a7f8f23b"
+      }
+    ],
+    "status": "VALIDATING",
+    "superseded_live_source_paths": [
+      "docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md",
+      "inputs/architecture/arch_005_task_registry_index.yaml",
+      "registry/development_tasks/c8/c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml",
+      "src/ai_trading_system/data/download_publication.py",
+      "src/ai_trading_system/data/immutable_publish.py",
+      "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+      "tests/test_arch_004_refactor_policy.py",
+      "tests/test_devx_006c_compatibility_authority.py",
+      "tests/test_named_immutable_publication.py"
+    ],
+    "supersession": {
+      "current_hash_authority": "phase_trading_2564_s2a_named_immutable_snapshot_v1.sources",
+      "historical_hashes_rewritten": false,
+      "inherited_supersession_authority": "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1"
+    },
+    "task_id": "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1"
+  },
+  "section_id": "phase_trading_2564_s2a_named_immutable_snapshot_v1",
+  "section_sha256": "a1f419bddd44fd2490eab18263b0808f825790a6eab552bdfe1e2efc077069ac"
+}

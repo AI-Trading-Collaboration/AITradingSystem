@@ -14,7 +14,7 @@ fragment_count: 1064
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: f176b93aa5dda66a9148b46ef7098eed366070b9aa123e16f94d83676de7e51b
+final_chain_sha256: 0a32ef35f72ac8d4929962a391f52f08fc290f89dc2e2af12b28bc57d4cb328a
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 247d44a02a96b3540e6a9ce30a837fbf8caa4c46d4022fddafc524e5ab57baa8
 templates:
@@ -8535,17 +8535,17 @@ fragments:
   entry_sha256: 2e8467c6e489b4dfb8bf5383bde0f2a809a921dd440bdf00e8866bbfa6562ce7
 - task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
   path: registry/development_tasks/c8/c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml
-  file_sha256: 655e108e85de6d16a22ec8cf4779bb7e16fa2f680297473fcfcf702653df1999
-  fragment_checksum: 4821f52cf1b8ec4a4b5aff902aab39bf7f8d2b0c716881ebb5ced5bb15071852
+  file_sha256: 11836f62d72a8245adb4e3bc5c1bc766ad5e4627b9552c3cc9ebe93183aea860
+  fragment_checksum: 371fb2b2104e22987c0d7e1baa8012038d817ac26a8d4ca5b128cb1c87a816d6
   partition: active
   order: 1064
   previous_entry_sha256: 2e8467c6e489b4dfb8bf5383bde0f2a809a921dd440bdf00e8866bbfa6562ce7
-  entry_sha256: f176b93aa5dda66a9148b46ef7098eed366070b9aa123e16f94d83676de7e51b
+  entry_sha256: 0a32ef35f72ac8d4929962a391f52f08fc290f89dc2e2af12b28bc57d4cb328a
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: d76b8ce26a637e70ae4a5ef7d46fa3e8d6e681f4fdd317c31ac82d6ec3e11653
-  byte_count: 1776815
+  sha256: 3905c3a4ee749a7892708fc008b85ea657e9301ff4fe3c5c546edc009741165a
+  byte_count: 1776922
   row_count: 522
   generated_do_not_edit: true
 - partition: completed
@@ -11698,7 +11698,14 @@ governance_cycles:
   change_id: trading-2564-s2a-focused-review-20260905
   event_count: 4
   production_effect: none
-governance_cycle_count: 449
+- cycle_id: arch-005-s5-cycle-450
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  change_id: trading-2564-s2a-authority-failure-fix-20260905
+  event_count: 5
+  production_effect: none
+governance_cycle_count: 450
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -11712,4 +11719,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 26b42129988d601e12ad9dfc07189bdcac3c1210b4296cbb07e61c514cdb629e
+index_checksum: a5d611815982ba48709915a5ffb38b071e55c77eab7ea2e9433f01c0b06635d1
