@@ -102,6 +102,9 @@ OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_PHASE_KEY = (
 OPS_078_DAILY_AUTOMATION_ISOLATION_PHASE_KEY = (
     "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1"
 )
+OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY = (
+    "phase_ops_079_historical_daily_gap_recovery_executor_v1"
+)
 TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
         ("docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md"),
@@ -216,6 +219,7 @@ def _assert_historical_source_is_current_or_superseded(
             RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_PHASE_KEY,
             OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_PHASE_KEY,
             OPS_078_DAILY_AUTOMATION_ISOLATION_PHASE_KEY,
+            OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY,
         }
     ):
         section_ids = list(baseline)

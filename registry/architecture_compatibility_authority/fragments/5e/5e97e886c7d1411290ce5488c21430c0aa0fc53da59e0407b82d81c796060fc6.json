@@ -143,7 +143,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_trading2452_architecture_contract.py",
-        "sha256": "3b3efb97ea1ba3f1580ec1f3ca6dcf917408cacee261df590e04dc17938fa045"
+        "sha256": "c205334d8117bf2100a5ab92cedae97a64598b28344e3440ada22591657b1544"
       }
     ],
     "status": "IN_PROGRESS",
@@ -178,5 +178,5 @@
     "task_id": "RISK-012"
   },
   "section_id": "phase_risk_012_unknown_risk_event_id_fail_closed_v1",
-  "section_sha256": "fd78138a885a20bc21ebb38604985d74a52e0f92e73adc5ca44d91588905bf66"
+  "section_sha256": "5e97e886c7d1411290ce5488c21430c0aa0fc53da59e0407b82d81c796060fc6"
 }

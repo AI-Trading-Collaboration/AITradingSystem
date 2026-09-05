@@ -10,32 +10,55 @@
       "rollback_mode": "FROZEN_LEGACY_PREFIX_ONLY"
     },
     "broker_action": "none",
-    "historical_gap_contract": {
-      "allowed_components": [
-        "market_macro",
-        "sec_companyfacts"
-      ],
-      "canonical_guard_identity_required": true,
-      "consumer_cutover_allowed": false,
-      "content_derived_validation_required": true,
-      "historical_strict_pit_backfill_allowed": false,
-      "market_source_mode": "EXPLICIT_CACHE_ONLY_INVENTORY",
-      "output_mode": "ISOLATED_SINGLE_CREATE",
-      "queue_execution_mode": "MANUAL_SINGLE_ITEM_ONLY",
-      "sec_source_mode": "EXPLICIT_BEFORE_AFTER_NON_PIT_REVIEW"
+    "carrier_contract": {
+      "business_runtime_kind": "INDEPENDENT_RECEIPT_GATED_CLONE",
+      "development_checkout_cwd_allowed": false,
+      "development_project_target_allowed": false,
+      "mode": "PROJECTLESS_ISOLATED",
+      "post_stage_blocker_must_not_block_daily_trigger": true
     },
-    "owner_decision": "owner_instruction:OPS-079:2026-09-05:continue-blocked-historical-gap-recovery",
+    "gap_visibility_contract": {
+      "canonical_artifact_identity_required": true,
+      "missing_expected_as_of_evidence_means_no_gap": false,
+      "statuses": [
+        "NO_GAP_EVIDENCE",
+        "GAP_EXPOSURE_PRESENT",
+        "EXPECTED_AS_OF_NOT_RECORDED",
+        "INDETERMINATE"
+      ]
+    },
+    "invocation_window_contract": {
+      "local_timezone": "Asia/Tokyo",
+      "per_invocation_business_trigger_max": 1,
+      "rescue_is_unconditional_retry": false,
+      "same_as_of_ordinary_allowed": false,
+      "same_scheduler_entry_for_all_windows": true,
+      "scheduler_entry_count": 1,
+      "windows": [
+        {
+          "hour": 9,
+          "minute": 30,
+          "role": "PRIMARY"
+        },
+        {
+          "hour": 17,
+          "minute": 30,
+          "role": "SAME_DAY_RESCUE"
+        }
+      ]
+    },
+    "owner_decision": "owner_instruction:OPS-078:2026-09-03:add-dedicated-worktree-mechanism",
     "production_effect": "none",
     "safety": {
+      "active_shadow_weight_write": false,
       "broker_action": "none",
-      "broker_or_trading_action": false,
-      "canonical_history_mutation_allowed": false,
-      "official_or_active_shadow_weight_write": false,
-      "openai_request_allowed": false,
       "production_effect": "none",
-      "provider_request_allowed": false
+      "production_weight_write": false,
+      "provider_replay_gate_relaxed": false,
+      "same_as_of_ordinary_allowed": false,
+      "second_scheduler_created": false
     },
-    "schema_version": "ops_079_historical_daily_gap_recovery_executor.v1",
+    "schema_version": "ops_078_daily_automation_isolation_and_same_day_rescue.v1",
     "sources": [
       {
         "hash_normalization": "git_eol_lf",
@@ -44,13 +67,18 @@
       },
       {
         "hash_normalization": "git_eol_lf",
-        "path": "config/operations/historical_gap_recovery.yaml",
-        "sha256": "1b4594b31cd4a2b7914305803c148c50a7636bf20afde39addb9e2ddc28484af"
+        "path": "config/operations/aitradingsystem_pit_automation_prompt.md",
+        "sha256": "b666581fae6359710902e40c14c68123083ab27315eb6f4fd8294a582da48b06"
       },
       {
         "hash_normalization": "git_eol_lf",
-        "path": "docs/artifact_catalog.md",
-        "sha256": "d6860152237e96b168b9e9974dc78d11735a3e766498f9697d4c36b91de4590a"
+        "path": "config/operations/ops_release_promotion.yaml",
+        "sha256": "497d9669a24fb0d58c2078544a1aaa0fb6d5ef7b835432aa4a0f6c660c100bcd"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/operations/ops_scheduler_checkout.yaml",
+        "sha256": "5ae66742c148e7074dc58dc3e21efb7537715b0ba482ab956a279633ff402854"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -59,18 +87,8 @@
       },
       {
         "hash_normalization": "git_eol_lf",
-        "path": "docs/requirements/OPS-079_Historical_Daily_Gap_Recovery_Executor.md",
-        "sha256": "b7926e5c93830353a493f2193a66440d3573b4c7251b4c755ccd525f09e523d2"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "docs/runbook_daily_ops.md",
-        "sha256": "033c1cd5822d78d2a17099c3372fb412c4f4658f3fc62796e0e3adb7f1f75727"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "docs/schema/historical_gap_recovery.v1.schema.json",
-        "sha256": "f6ebd15493bfba5cfb679f1a080b30c93bac1221e65af48ef1a09fbee093fa3a"
+        "path": "docs/requirements/OPS-078_Daily_Automation_Isolation_and_Same_Day_Rescue.md",
+        "sha256": "79268bf799ac534ada417675549600bae9d058ba683587d3e22a9b62d1f8b57b"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -100,7 +118,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "deafc656f6de86ec533a74009ac319ccd5c51fece8fbf604b5c0df10a531ef19"
+        "sha256": "3d5940a9683718713dfcf7a71607cc691baeac5db12ad31d0b1fc73e64eb865f"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -119,18 +137,18 @@
       },
       {
         "hash_normalization": "git_eol_lf",
-        "path": "registry/development_tasks/cd/cdcf4ff5d0c3c8c4b23fdfc72f44fd4c53c1fcf7449bafc0bda1fab81bbcb0df.yaml",
-        "sha256": "e1eeadc994187c561e720e44e4e5ff04131426a891a0b9f9f935bdea3738a6bb"
+        "path": "registry/development_tasks/a0/a015ae79125f8757c1fcee391d54c4d461a6c8276b47abedf3b84ccd4538d983.yaml",
+        "sha256": "5409ee3450896f09d3ce927e117777f692a5300b6bce8e448a2426af9fbda539"
       },
       {
         "hash_normalization": "git_eol_lf",
-        "path": "src/ai_trading_system/cli_commands/ops.py",
-        "sha256": "1198f67657ef789971a767675361ecc277134d8dcd2f430715b2f5e40aa32353"
+        "path": "src/ai_trading_system/ops_release_promotion.py",
+        "sha256": "1918b8c3d23170e6672915c7f76950a39bfeed8bcd8ff151b6e82c26d3b5df1d"
       },
       {
         "hash_normalization": "git_eol_lf",
-        "path": "src/ai_trading_system/historical_gap_recovery.py",
-        "sha256": "6cab3fc653aff9ff8585df1e0fa5e35bb509aa591867dbd1ecd82805ece5794c"
+        "path": "src/ai_trading_system/ops_scheduler_checkout.py",
+        "sha256": "6e71d16c51debf51677bdcdf6e1d86cdedd78d4326aba995b35c869b95424280"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -154,19 +172,23 @@
       },
       {
         "hash_normalization": "git_eol_lf",
-        "path": "tests/test_historical_gap_recovery.py",
-        "sha256": "0953d71f2365fe3212ad518164e229450e14d17b5e5e183ffe718cc57eb9dcc4"
+        "path": "tests/test_ops_release_promotion.py",
+        "sha256": "2f56339565edd91f9d6dbc421adb72fa5aae0be6b3cf4bde44a2823763447670"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_ops_scheduler_checkout.py",
+        "sha256": "55d1f2c0096eaca6db64be631e8f908db91eded94cbb809aa23718c8fb281acf"
       }
     ],
     "status": "VALIDATING",
     "superseded_live_source_paths": [
       "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
-      "config/operations/historical_gap_recovery.yaml",
-      "docs/artifact_catalog.md",
+      "config/operations/aitradingsystem_pit_automation_prompt.md",
+      "config/operations/ops_release_promotion.yaml",
+      "config/operations/ops_scheduler_checkout.yaml",
       "docs/operations/operations_runbook.md",
-      "docs/requirements/OPS-079_Historical_Daily_Gap_Recovery_Executor.md",
-      "docs/runbook_daily_ops.md",
-      "docs/schema/historical_gap_recovery.v1.schema.json",
+      "docs/requirements/OPS-078_Daily_Automation_Isolation_and_Same_Day_Rescue.md",
       "docs/system_flow.md",
       "docs/task_register.md",
       "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
@@ -176,22 +198,23 @@
       "inputs/architecture/arch_004g_deprecation_inventory.yaml",
       "inputs/architecture/arch_005_task_registry_index.yaml",
       "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-      "registry/development_tasks/cd/cdcf4ff5d0c3c8c4b23fdfc72f44fd4c53c1fcf7449bafc0bda1fab81bbcb0df.yaml",
-      "src/ai_trading_system/cli_commands/ops.py",
-      "src/ai_trading_system/historical_gap_recovery.py",
+      "registry/development_tasks/a0/a015ae79125f8757c1fcee391d54c4d461a6c8276b47abedf3b84ccd4538d983.yaml",
+      "src/ai_trading_system/ops_release_promotion.py",
+      "src/ai_trading_system/ops_scheduler_checkout.py",
       "src/ai_trading_system/platform/architecture/compatibility_authority.py",
       "tests/test_arch_004_refactor_policy.py",
       "tests/test_devx_006c_compatibility_authority.py",
       "tests/test_devx_006d_report_catalog_flow_authority.py",
-      "tests/test_historical_gap_recovery.py"
+      "tests/test_ops_release_promotion.py",
+      "tests/test_ops_scheduler_checkout.py"
     ],
     "supersession": {
-      "current_hash_authority": "phase_ops_079_historical_daily_gap_recovery_executor_v1.sources",
+      "current_hash_authority": "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1.sources",
       "historical_hashes_rewritten": false,
-      "inherited_supersession_authority": "phase_trading_2564_s2a_named_immutable_snapshot_v1"
+      "inherited_supersession_authority": "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1"
     },
-    "task_id": "OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR"
+    "task_id": "OPS-078_DAILY_AUTOMATION_ISOLATION_AND_SAME_DAY_RESCUE"
   },
-  "section_id": "phase_ops_079_historical_daily_gap_recovery_executor_v1",
-  "section_sha256": "61c208dbeacdf8a84a859970c217646be9b86dc38dab1fa6b9dae4c646266682"
+  "section_id": "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1",
+  "section_sha256": "9ad4939c38da168b587fde47d54bad3b46b484a05b09a50f329157c3b633160d"
 }
