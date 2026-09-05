@@ -82,6 +82,7 @@ DEFAULT_LOCK_TIMEOUT_SECONDS = 10.0
 DEFAULT_LOCK_POLL_SECONDS = 0.02
 
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+_POINTER_ID_RE = re.compile(r"^data_pointer_[0-9a-f]{32}$")
 _TYPE_RE = re.compile(r"^[a-z0-9][a-z0-9._+-]{0,31}$")
 _SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 _LOCK_ERRNOS = {
@@ -247,7 +248,7 @@ class CurrentPointerPrecondition:
 
 
 @dataclass(frozen=True)
-class ValidatedCurrentSnapshot:
+class ValidatedSnapshot:
     dataset_id: str
     snapshot_id: str
     manifest_id: str
@@ -261,6 +262,124 @@ class ValidatedCurrentSnapshot:
     source_event_path: Path
     manifest_path: Path
     envelope: ArtifactEnvelope
+
+
+@dataclass(frozen=True)
+class ValidatedCurrentSnapshot(ValidatedSnapshot):
+    """The publication selected by the validated mutable current pointer."""
+
+
+@dataclass(frozen=True)
+class SnapshotCommitAnchor:
+    dataset_id: str
+    pointer_id: str
+    pointer_sha256: str
+    pointer_path: Path
+    generation: int
+
+    def __post_init__(self) -> None:
+        if (
+            not isinstance(self.dataset_id, str)
+            or not _ID_RE.fullmatch(self.dataset_id)
+            or not isinstance(self.pointer_id, str)
+            or not _POINTER_ID_RE.fullmatch(self.pointer_id)
+            or not isinstance(self.pointer_sha256, str)
+            or not _SHA_RE.fullmatch(self.pointer_sha256)
+            or type(self.generation) is not int
+            or self.generation < 1
+            or not isinstance(self.pointer_path, Path)
+            or not self.pointer_path.is_absolute()
+            or ".." in self.pointer_path.parts
+            or self.pointer_path.parent.name != "current"
+            or self.pointer_path.name != f"{self.dataset_id}.json"
+        ):
+            _fail("NAMED_COMMIT_ANCHOR_INVALID", "invalid committed anchor identity or path")
+
+
+@dataclass(frozen=True)
+class ValidatedNamedSnapshot(ValidatedSnapshot):
+    """An explicitly pinned history member of an observed committed chain."""
+
+    commit_anchor: SnapshotCommitAnchor
+
+    def __post_init__(self) -> None:
+        # DTO consistency only: no filesystem access and no capability issuance.
+        # The resolver independently proves bytes and committed-chain membership.
+        identifiers = (
+            self.dataset_id,
+            self.snapshot_id,
+            self.manifest_id,
+            self.source_event_id,
+            self.run_id,
+        )
+        paths = (
+            self.pointer_path,
+            self.payload_path,
+            self.source_event_path,
+            self.manifest_path,
+        )
+        if (
+            not isinstance(self.commit_anchor, SnapshotCommitAnchor)
+            or not isinstance(self.envelope, ArtifactEnvelope)
+            or not isinstance(self.envelope.payload, ArtifactPointer)
+            or any(
+                not isinstance(value, str) or not _ID_RE.fullmatch(value) for value in identifiers
+            )
+            or not isinstance(self.pointer_id, str)
+            or not _POINTER_ID_RE.fullmatch(self.pointer_id)
+            or not isinstance(self.pointer_sha256, str)
+            or not _SHA_RE.fullmatch(self.pointer_sha256)
+            or type(self.generation) is not int
+            or self.generation < 1
+            or any(
+                not isinstance(path, Path) or not path.is_absolute() or ".." in path.parts
+                for path in paths
+            )
+            or len(self.pointer_path.parents) < 3
+        ):
+            _fail("NAMED_SNAPSHOT_INVALID", "invalid named snapshot identity, anchor or path")
+        anchor = self.commit_anchor
+        store_root = self.pointer_path.parents[2]
+        expected_history = (
+            store_root / "pointer_history" / self.dataset_id / f"{self.pointer_id}.json"
+        )
+        expected_current = store_root / "current" / f"{self.dataset_id}.json"
+        expected_payload = (
+            PurePosixPath("snapshots")
+            / self.dataset_id
+            / self.envelope.payload.sha256
+            / f"payload.{self.envelope.payload.artifact_type}"
+        ).as_posix()
+        expected_source = (
+            PurePosixPath("source_events") / self.dataset_id / f"{self.source_event_id}.json"
+        ).as_posix()
+        if (
+            self.pointer_path != expected_history
+            or anchor.pointer_path != expected_current
+            or anchor.dataset_id != self.dataset_id
+            or anchor.generation < self.generation
+            or (
+                anchor.generation == self.generation
+                and (anchor.pointer_id, anchor.pointer_sha256)
+                != (self.pointer_id, self.pointer_sha256)
+            )
+            or (
+                anchor.generation != self.generation
+                and (
+                    anchor.pointer_id == self.pointer_id
+                    or anchor.pointer_sha256 == self.pointer_sha256
+                )
+            )
+            or self.envelope.artifact_id != self.snapshot_id
+            or self.envelope.run_id != self.run_id
+            or self.envelope.payload.path != expected_payload
+            or self.payload_path != store_root / Path(expected_payload)
+            or self.source_event_path != store_root / Path(expected_source)
+            or self.manifest_path
+            != store_root / "manifests" / self.dataset_id / f"{self.manifest_id}.json"
+            or tuple(item.path for item in self.envelope.input_artifacts) != (expected_source,)
+        ):
+            _fail("NAMED_SNAPSHOT_BINDING_MISMATCH", "named snapshot, envelope and anchor differ")
 
 
 @dataclass(frozen=True)
@@ -912,6 +1031,84 @@ def validate_current_snapshot(
         )
 
 
+def validate_named_snapshot(
+    *,
+    store_root: Path,
+    dataset_id: str,
+    pointer_id: str,
+    expected_pointer_sha256: str,
+) -> ValidatedNamedSnapshot:
+    """Validate one named history member without selecting or changing current.
+
+    History is installed before the publisher commits current. A complete history
+    candidate therefore needs membership in an observed committed current chain;
+    its own hashes alone do not prove publication. This is not a rollback witness
+    against an adversarial trusted writer and does not authorize DQ or consumption.
+    """
+
+    _identifier(dataset_id, "dataset_id")
+    if not isinstance(pointer_id, str) or not _POINTER_ID_RE.fullmatch(pointer_id):
+        _fail("NAMED_POINTER_ID_INVALID", str(pointer_id))
+    expected_sha = _sha(expected_pointer_sha256, "expected_pointer_sha256")
+    root = _directory(store_root, create=False, code="STORE_ROOT_UNAVAILABLE")
+    with _root_authority(root):
+        current = validate_current_snapshot(
+            store_root=root,
+            evidence_root=root,
+            dataset_id=dataset_id,
+        )
+        anchor_raw, anchor_pointer = _read_json(
+            current.pointer_path, "NAMED_COMMIT_ANCHOR_INVALID", root
+        )
+        if sha256_bytes(anchor_raw) != current.pointer_sha256:
+            _fail("NAMED_COMMIT_ANCHOR_CHANGED", "current changed after anchor validation")
+
+        pointer_path = _history_path(root, dataset_id, pointer_id)
+        raw, pointer = _read_json(pointer_path, "NAMED_POINTER_INVALID", root)
+        if sha256_bytes(raw) != expected_sha:
+            _fail("NAMED_POINTER_SHA256_MISMATCH", pointer_id)
+        _validate_pointer(pointer, dataset_id)
+        if pointer.get("pointer_id") != pointer_id:
+            _fail("NAMED_POINTER_ID_MISMATCH", pointer_id)
+        _validate_history(
+            root,
+            anchor_pointer,
+            current_raw=anchor_raw,
+            required_member=(pointer_id, expected_sha),
+        )
+        envelope, paths = _validate_references(root, pointer)
+        # Rebind both independently read pointers after membership/reference
+        # validation. Concurrent advancement fails closed; it never selects the
+        # newly current generation in place of the caller's pinned identity.
+        if _read_checked_bytes(pointer_path, "named pointer recheck", root) != raw:
+            _fail("NAMED_POINTER_CHANGED", pointer_id)
+        if _read_checked_bytes(current.pointer_path, "commit anchor recheck", root) != anchor_raw:
+            _fail("NAMED_COMMIT_ANCHOR_CHANGED", "current changed during named validation")
+        _assert_snapshot_paths_contained(root, pointer_path, paths)
+        return ValidatedNamedSnapshot(
+            dataset_id=_text(pointer, "dataset_id"),
+            snapshot_id=_text(pointer, "snapshot_id"),
+            manifest_id=_text(pointer, "manifest_id"),
+            source_event_id=_text(pointer, "source_event_id"),
+            run_id=_text(pointer, "run_id"),
+            generation=_integer(pointer, "generation", 1),
+            pointer_id=_text(pointer, "pointer_id"),
+            pointer_sha256=expected_sha,
+            pointer_path=pointer_path,
+            payload_path=paths[0],
+            source_event_path=paths[1],
+            manifest_path=paths[2],
+            envelope=envelope,
+            commit_anchor=SnapshotCommitAnchor(
+                dataset_id=current.dataset_id,
+                pointer_id=current.pointer_id,
+                pointer_sha256=current.pointer_sha256,
+                pointer_path=current.pointer_path,
+                generation=current.generation,
+            ),
+        )
+
+
 def _validate_publish_order(
     request: SnapshotPublishRequest,
     previous: ValidatedCurrentSnapshot | None,
@@ -942,14 +1139,7 @@ def _validated_snapshot(
     envelope: ArtifactEnvelope,
     paths: tuple[Path, Path, Path],
 ) -> ValidatedCurrentSnapshot:
-    try:
-        for path in (pointer_path, *paths):
-            path.relative_to(root)
-    except ValueError as exc:
-        raise DataPublicationIntegrityError(
-            "ARTIFACT_PATH_ESCAPES_ROOT",
-            "validated publication path escapes store",
-        ) from exc
+    _assert_snapshot_paths_contained(root, pointer_path, paths)
     return ValidatedCurrentSnapshot(
         dataset_id=_text(pointer, "dataset_id"),
         snapshot_id=_text(pointer, "snapshot_id"),
@@ -965,6 +1155,21 @@ def _validated_snapshot(
         manifest_path=paths[2],
         envelope=envelope,
     )
+
+
+def _assert_snapshot_paths_contained(
+    root: Path,
+    pointer_path: Path,
+    paths: tuple[Path, Path, Path],
+) -> None:
+    try:
+        for path in (pointer_path, *paths):
+            path.relative_to(root)
+    except ValueError as exc:
+        raise DataPublicationIntegrityError(
+            "ARTIFACT_PATH_ESCAPES_ROOT",
+            "validated publication path escapes store",
+        ) from exc
 
 
 def _build(
@@ -1389,6 +1594,7 @@ def _validate_history(
     pointer: Mapping[str, object],
     *,
     current_raw: bytes | None = None,
+    required_member: tuple[str, str] | None = None,
 ) -> None:
     dataset = _text(pointer, "dataset_id")
     expected_id = _text(pointer, "pointer_id")
@@ -1396,6 +1602,7 @@ def _validate_history(
     expected_sha: str | None = None
     seen: set[str] = set()
     first = True
+    member_found = required_member is None
     while True:
         if expected_id in seen:
             _fail("POINTER_HISTORY_CYCLE", expected_id)
@@ -1410,11 +1617,17 @@ def _validate_history(
             _fail("PREVIOUS_POINTER_CHAIN_MISMATCH", "id/generation discontinuity")
         if expected_sha is not None and sha256_bytes(raw) != expected_sha:
             _fail("PREVIOUS_POINTER_CHECKSUM_MISMATCH", "predecessor changed")
+        if required_member is not None and expected_id == required_member[0]:
+            if sha256_bytes(raw) != required_member[1]:
+                _fail("NAMED_POINTER_SHA256_MISMATCH", expected_id)
+            member_found = True
         if first:
             if stored != dict(pointer) or (current_raw is not None and raw != current_raw):
                 _fail("POINTER_HISTORY_CURRENT_MISMATCH", "history/current bytes differ")
             first = False
         if expected_generation == 1:
+            if not member_found:
+                _fail("NAMED_POINTER_NOT_COMMITTED", str(required_member))
             return
         expected_id = _text(stored, "previous_pointer_id")
         expected_sha = _sha(stored.get("previous_pointer_sha256"), "previous_pointer_sha256")

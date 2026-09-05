@@ -3573,7 +3573,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.download_publication
   path: src/ai_trading_system/data/download_publication.py
-  sha256: e65201bf0ec99b960a3f922c65226f293cad3739fadda639b25ce016aa9dbaf5
+  sha256: d0044ec7aa59c6b75325ffc25808e9ec975b3ed5adfc97d5e0405d8ecc41fb64
   rule_id: data
   owner_profile: data
   owners:
@@ -3639,7 +3639,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.immutable_publish
   path: src/ai_trading_system/data/immutable_publish.py
-  sha256: 7ed5184e0b225ff5535d5c2debcea532c7d57533b87233f625a1ae2c629420da
+  sha256: e9c97a9863d6a74bee908d8ea56d930e86c9f25fe7e800b161b00e85e14d757f
   rule_id: data
   owner_profile: data
   owners:

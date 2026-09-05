@@ -22,9 +22,12 @@ from ai_trading_system.data.immutable_publish import (
     SnapshotPublishRequest,
     SourceEventProvenance,
     ValidatedCurrentSnapshot,
+    ValidatedNamedSnapshot,
+    ValidatedSnapshot,
     publish_immutable_snapshot,
     read_contained_artifact_bytes,
     validate_current_snapshot,
+    validate_named_snapshot,
     write_contained_artifact_bytes,
 )
 from ai_trading_system.platform.artifacts import canonical_json_bytes, sha256_bytes
@@ -242,6 +245,61 @@ class ValidatedDownloadPublication:
     production_effect: str = "none"
 
 
+@dataclass(frozen=True)
+class ValidatedNamedDownloadPublication:
+    """A pinned structural result, never a DQ or consumer authorization.
+
+    The inner publication's legacy_projection_verified=False is the structural
+    validator's unevaluated default, not a failed projection comparison. Named
+    consumers must expose the outer NOT_EVALUATED status; this resolver never
+    reads mutable compatibility projections.
+    """
+
+    publication: ValidatedDownloadPublication
+    snapshot: ValidatedNamedSnapshot
+    validation_scope: str = _VALIDATION_SCOPE
+    legacy_projection_status: str = "NOT_EVALUATED"
+    consumer_cutover_allowed: bool = False
+    dispatch_allowed: bool = False
+    production_effect: str = "none"
+
+    def __post_init__(self) -> None:
+        if (
+            not isinstance(self.publication, ValidatedDownloadPublication)
+            or not isinstance(self.snapshot, ValidatedNamedSnapshot)
+            or self.validation_scope != _VALIDATION_SCOPE
+            or self.legacy_projection_status != "NOT_EVALUATED"
+            or self.consumer_cutover_allowed is not False
+            or self.dispatch_allowed is not False
+            or self.production_effect != "none"
+        ):
+            _fail("DOWNLOAD_NAMED_RESULT_INVALID", "invalid named result type or safety boundary")
+        publication = self.publication
+        snapshot = self.snapshot
+        if (
+            publication.legacy_projection_verified is not False
+            or publication.consumer_cutover_allowed is not False
+            or publication.production_effect != "none"
+            or publication.atomicity_scope != _ATOMICITY_SCOPE
+            or publication.legacy_projection_role != _LEGACY_PROJECTION_ROLE
+            or publication.legacy_projection_atomicity != _LEGACY_PROJECTION_ATOMICITY
+        ):
+            _fail("DOWNLOAD_NAMED_RESULT_INVALID", "inner publication exceeds structural scope")
+        if (
+            publication.discovery_pointer_path != snapshot.pointer_path
+            or publication.discovery_pointer_sha256 != snapshot.pointer_sha256
+            or publication.transaction_manifest_path != snapshot.payload_path
+            or publication.transaction_manifest_sha256 != snapshot.envelope.payload.sha256
+            or publication.transaction_id != snapshot.run_id
+            or publication.transaction_id != snapshot.envelope.run_id
+            or publication.requested_end != snapshot.envelope.as_of
+            or snapshot.dataset_id != _DATASET_ID
+            or snapshot.commit_anchor.dataset_id != snapshot.dataset_id
+            or snapshot.commit_anchor.generation < snapshot.generation
+        ):
+            _fail("DOWNLOAD_NAMED_RESULT_BINDING_MISMATCH", "publication and named snapshot differ")
+
+
 def publish_download_transaction(
     *,
     output_dir: Path,
@@ -302,6 +360,81 @@ def resolve_download_publication(*, output_dir: Path) -> ValidatedDownloadPublic
     root = _prepare_root(output_dir, create=False)
     resolved, _, _ = _resolve_validated_generation(root)
     return resolved
+
+
+def resolve_named_download_publication(
+    *,
+    output_dir: Path,
+    pointer_id: str,
+    expected_pointer_sha256: str,
+    expected_transaction_id: str,
+    expected_transaction_sha256: str,
+) -> ValidatedNamedDownloadPublication:
+    """Resolve one explicitly pinned committed transaction, without legacy reads."""
+
+    transaction_id = _transaction_id(expected_transaction_id)
+    transaction_sha256 = _digest(expected_transaction_sha256, "expected_transaction_sha256")
+    root = _prepare_root(output_dir, create=False)
+    try:
+        snapshot = validate_named_snapshot(
+            store_root=root / _PUBLICATION_ROOT,
+            dataset_id=_DATASET_ID,
+            pointer_id=pointer_id,
+            expected_pointer_sha256=expected_pointer_sha256,
+        )
+    except DataPublicationError as exc:
+        raise DownloadPublicationIntegrityError(
+            "DOWNLOAD_NAMED_DISCOVERY_INVALID",
+            str(exc),
+            path=getattr(exc, "path", None),
+        ) from exc
+    if snapshot.run_id != transaction_id:
+        _fail("DOWNLOAD_NAMED_TRANSACTION_ID_MISMATCH", transaction_id)
+    if snapshot.envelope.payload.sha256 != transaction_sha256:
+        _fail("DOWNLOAD_NAMED_TRANSACTION_SHA256_MISMATCH", transaction_id)
+    outer_previous_pointer_sha256, outer_manifest_raw = _locked_outer_publication(root, snapshot)
+    transaction_raw = _read_required(
+        root,
+        snapshot.payload_path.relative_to(root).as_posix(),
+        "DOWNLOAD_TRANSACTION_MISSING",
+    )
+    _verify_bytes(
+        transaction_raw,
+        digest=transaction_sha256,
+        size=snapshot.envelope.payload.size_bytes,
+        code="DOWNLOAD_NAMED_TRANSACTION_SHA256_MISMATCH",
+    )
+    transaction = _strict_canonical_json(
+        transaction_raw,
+        schema=DOWNLOAD_PUBLICATION_SCHEMA_VERSION,
+        code="DOWNLOAD_TRANSACTION_INVALID",
+    )
+    publication, _ = _validate_transaction(
+        root=root,
+        transaction=transaction,
+        transaction_raw=transaction_raw,
+        pointer_path=snapshot.pointer_path,
+        transaction_path=snapshot.payload_path,
+        current=snapshot,
+        outer_previous_pointer_sha256=outer_previous_pointer_sha256,
+        outer_manifest_raw=outer_manifest_raw,
+    )
+    # Rebind selected history and its observed current anchor across the full
+    # transaction/member validation. A concurrently changed anchor is a retryable
+    # failure, never permission to choose another transaction.
+    if _locked_outer_publication(root, snapshot) != (
+        outer_previous_pointer_sha256,
+        outer_manifest_raw,
+    ):
+        _fail("DOWNLOAD_OUTER_PUBLICATION_BINDING_MISMATCH", "named outer publication changed")
+    anchor_raw = _read_required(
+        root,
+        snapshot.commit_anchor.pointer_path.relative_to(root).as_posix(),
+        "DOWNLOAD_NAMED_COMMIT_ANCHOR_CHANGED",
+    )
+    if _sha256(anchor_raw) != snapshot.commit_anchor.pointer_sha256:
+        _fail("DOWNLOAD_NAMED_COMMIT_ANCHOR_CHANGED", "current changed during named resolution")
+    return ValidatedNamedDownloadPublication(publication=publication, snapshot=snapshot)
 
 
 def resolve_download_publication_if_present(
@@ -381,7 +514,7 @@ def _validated_current_snapshot(root: Path) -> ValidatedCurrentSnapshot:
 
 def _locked_outer_publication(
     root: Path,
-    current: ValidatedCurrentSnapshot,
+    current: ValidatedSnapshot,
 ) -> tuple[str | None, bytes]:
     pointer_relative = current.pointer_path.relative_to(root).as_posix()
     pointer_raw = _read_required(
@@ -392,7 +525,7 @@ def _locked_outer_publication(
     if _sha256(pointer_raw) != current.pointer_sha256:
         _fail(
             "DOWNLOAD_OUTER_POINTER_CHANGED",
-            "current pointer changed after public validation",
+            "publication pointer changed after public validation",
         )
     pointer = _strict_canonical_json(
         pointer_raw,
@@ -416,7 +549,7 @@ def _locked_outer_publication(
     if any(pointer.get(field) != value for field, value in expected_identity.items()):
         _fail(
             "DOWNLOAD_OUTER_POINTER_INVALID",
-            "current pointer identity differs from public validation",
+            "publication pointer identity differs from public validation",
         )
 
     manifest_pointer = _mapping(pointer.get("manifest"), "outer.manifest")
@@ -2105,7 +2238,7 @@ def _validate_transaction(
     transaction_raw: bytes,
     pointer_path: Path,
     transaction_path: Path,
-    current: ValidatedCurrentSnapshot,
+    current: ValidatedSnapshot,
     outer_previous_pointer_sha256: str | None,
     outer_manifest_raw: bytes,
 ) -> tuple[ValidatedDownloadPublication, bytes]:

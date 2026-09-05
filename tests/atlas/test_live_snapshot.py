@@ -118,14 +118,18 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     assert bundle.research_state_as_of != bundle.page_source_commit_at
     assert bundle.evidence_evaluated_at == "2026-09-04T21:59:02.723370+00:00"
     assert bundle.status_object_zh == (
-        "当前继续 evidence-first 双线研究，并由 TRADING-2564 优先补齐研究输入与验证就绪能力。"
+        "当前继续 evidence-first 双线研究。TRADING-2564 S1只读输入/证据就绪核查"
+        "已通过Full及普通main发布；"
+        "S2a推进显式指定不可变快照的最小串行合同，current仅作已提交成员资格证明，不自动替换研究输入，"
+        "结构PASS不签发DQ或consumer权限。"
         "原目录 as-of=2026-09-03 的 corrected canonical DQ 已按独立精确授权完成一次且 FAIL，"
         "共同数据覆盖止于2026-07-23；该事实晚于2563已发布的路径失败记录，不能继续视为仅等待retry授权。"
         "独立运营环境已有同as-of的DQ与daily PASS，但不同root、输入、policy和code身份不能直接互换。"
-        "当前先实现只读输入/证据检查，再受审连接快照与前瞻采集；本波不执行真实DQ、manifest replay、"
+        "S2后续DQ消费合同、preview接入和只读equal-risk plan仍待完成；"
+        "本波不执行真实DQ、manifest replay、"
         "研究、观察更新或数据/交易动作。2560 single-session producer仅SAFE_PREVIEW_READY，"
         "真实prospective observation仍为0；2557的INSUFFICIENT/HOLD、2558的matched-placebo未区分"
-        "及2559的单episode/时点敏感性结论均不升级。长期阶段仍未完成，不开放Options、production或任何交易权限。"
+        "及2559的单episode/时点敏感性结论均不升级。S3-S5长期阶段仍未完成，不开放Options、production或任何交易权限。"
     )
 
 

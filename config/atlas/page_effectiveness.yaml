@@ -1,6 +1,6 @@
 schema_version: atlas_page_effectiveness_policy.v1
 policy_id: atlas_strategy_research_page_effectiveness_v1
-policy_version: 3.15.0
+policy_version: 3.15.1
 status: REVIEWED_LIVE_SNAPSHOT_IDENTITY_CONTRACT_V3_TEMPORAL_SINGLE_EPISODE_DEPENDENT
 owner: Atlas page engineering owner
 primary_research_start: '2021-02-22'
@@ -463,7 +463,7 @@ task_sources:
   - task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
     requirement_path: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
     coverage: RESEARCH_CAPABILITY_READINESS_ENGINEERING_ONLY_NO_NEW_EVIDENCE
-    reader_summary_zh: 2564按Owner整体review启动长期研究能力建设。当前S1实现只读研究输入就绪核查和Full前证据完整性检查；后续阶段依次处理运营快照接入、真实前瞻连续采集、实验账本与机制归因、实测提效。原目录corrected DQ已完成且FAIL，而运营环境已有同as-of PASS，两者身份不能互换；当前缺口是研究消费连接，不是重复申请已完成的DQ retry。工程检查不运行真实DQ、manifest replay、研究、观察更新、下载、cache或provider，不升级2557的INSUFFICIENT/HOLD，也不开放Options、production或任何交易行为。
+    reader_summary_zh: 2564按Owner整体review启动长期研究能力建设。S1只读研究输入就绪核查和Full前证据完整性检查已通过正式验证与普通main发布；S2a推进指定不可变快照的已提交成员资格与完整结构验证，不读取mutable legacy projection或签发DQ/consumer权限。S2后续消费合同与adapter、S3真实前瞻连续采集、S4实验账本与机制归因、S5实测提效仍待完成。原目录corrected DQ已完成且FAIL，而运营环境已有同as-of PASS，两者路径和源码身份不能互换；工程PASS不补成OOS、不重复申请已完成的DQ retry，不升级2557的INSUFFICIENT/HOLD。真实DQ、manifest replay、研究、观察更新、下载、cache、provider及任何交易动作均0，不开放Options或production。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

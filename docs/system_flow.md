@@ -10,10 +10,18 @@ source/execution root、请求、既有canonical DQ receipt及输入承诺，核
 并检查明确retained evidence bindings。Full runner在fence.validate之后、`FULL_DISPATCHED`与pytest
 之前执行同一核查；BLOCKED不消费Full claim，不自动hydrate/render或修复。该检查不替代focused
 ratchet tests或正式Full，也不改变研究结论、发布phase/lock、生产或交易边界。
+S2a新增`validate_named_snapshot`与`resolve_named_download_publication`只读API：显式pointer ID/SHA
+及transaction ID/SHA选择历史输入，current只证明其在已提交history链中，不作为输入fallback。
+完整但pre-commit失败留下的orphan不能准入；复用原pointer/history/manifest/source/member验证链，
+不读取mutable legacy projection。独立Named结果为`STRUCTURAL_PUBLICATION_ONLY`与
+`legacy_projection_status=NOT_EVALUATED`，不签发DQ或consumer权限；旧receipt的路径/源码身份不改写。
 
 ```mermaid
 flowchart LR
     INPUT["显式快照 + 请求 + 既有DQ receipt"] --> RI["研究输入只读就绪核查"]
+    NAMED["显式pointer/transaction ID + SHA"] --> PIN["Named解析：提交链成员资格 + 完整字节验证"]
+    ANCHOR["current仅作commit anchor；非输入选择"] --> PIN
+    PIN --> STRUCT["结构证明；DQ/consumer仍未准入"]
     RI --> REVIEW["诊断与缺口；dispatch_allowed=false"]
     CAND["最终候选 + 已绑定证据/生成物"] --> VR["Full前只读完整性核查"]
     VR -->|BLOCKED| STOP["停止；Full claim未消费"]

@@ -10,8 +10,9 @@
 |---|---|---|
 |`research_input_readiness.v1` stdout JSON|`scripts/research_input_readiness.py`；显式请求、source/execution root、冻结依赖及既有canonical DQ receipt|核验输入身份、请求范围、必需字段与XNYS覆盖；不新运行DQ、不复制或修复数据、不创建持久报告、不签发consumer/capture授权。`READY_FOR_REVIEW`不等于可执行。|
 |`full_validation_readiness.v1` stdout / Full summary内嵌诊断|`scripts/validation_readiness.py`与Full runner的pre-dispatch调用；最终candidate、明确retained evidence及既有generated authority|在`FULL_DISPATCHED`前拦截缺失/漂移；检查器不运行pytest、不hydrate/render、不写artifact。PASS不替代正式Full、固定数量focused测试或研究有效性判断。|
+|`ValidatedNamedSnapshot` / `ValidatedNamedDownloadPublication` 内存结果（无新持久artifact）|`data.immutable_publish.validate_named_snapshot` / `data.download_publication.resolve_named_download_publication`；显式pointer ID/SHA、transaction ID/SHA及只读source root|current仅为commit-membership anchor；history orphan、身份错绑或任一引用tamper阻断，无latest/glob/fallback。Named结构结果明确`STRUCTURAL_PUBLICATION_ONLY`、legacy `NOT_EVALUATED`、dispatch/cutover=false；内层legacy verified=false表示未核验，不是失败。旧DQ路径/源码身份和consumer准入保持独立，不修改或复制任何数据。|
 
-两个诊断不建立新的report-registry/discovery/latest authority，均为`production_effect=none`、
+两个诊断和Named只读解析不建立新的report-registry/discovery/latest authority，均为`production_effect=none`、
 `broker_action=none`。实际Full仍只由原runner与唯一publication transaction控制。
 
 ## DEVX-006D Report / Catalog / Flow Lossless Fragment Shadow

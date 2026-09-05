@@ -178,13 +178,13 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         (
             "artifact_catalog",
             "docs/artifact_catalog.md",
-            "7fadf882b0438e4315a6a07e3009a3f3d6f6dd0f49d4d71fa25a74c863605aa6",
+            "1a7b4c37847b294f9dd62e4a30e5e232ab91ce37d82529776925d7abc232e075",
             563,
         ),
         (
             "system_flow",
             "docs/system_flow.md",
-            "1f81a6dcb41dd28e8a5a133fc14469f0f5c5cbc65a2b4769942ab2765f0fc4e8",
+            "3daa0f94e597fbd2e519a011d6e79bcb01cf0809c91ba5b76f34b0e43bab2649",
             1216,
         ),
     ],

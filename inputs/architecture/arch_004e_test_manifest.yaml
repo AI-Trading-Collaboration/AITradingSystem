@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1357
-test_count: 1297
+test_file_count: 1358
+test_count: 1298
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -219,7 +219,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_live_snapshot
   path: tests/atlas/test_live_snapshot.py
-  sha256: b68d1f4ddae3d6c23f1abc92a4a609fa4f0d9ea449fd293ccecb6131e8d10641
+  sha256: 4363673e3a3542afb7bf8b0dc79c1335c628ec76aee90f8435ba4e9722d7a4ae
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8502,7 +8502,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 931e7e94b7a0fadd20aaad174d76c330e6dc2ba1e2491a3be842491ed50371e3
+  sha256: 005a2b22c14cc1261b2949aee372d5a81bbbe3c1859754972c015c99a94ed7f2
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -10458,7 +10458,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 797aa2d98b00c348b1fad25d16541ab41a76d60f62d99dbcb42a4cb2df6bdbce
+  sha256: 4b6f95f98f60f6356c8a599d273e9cd3c9a530da8d0e3b52ae9b6f31b091f3c3
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -13777,6 +13777,22 @@ tests:
 - test_id: tests.test_model_target_portfolio
   path: tests/test_model_target_portfolio.py
   sha256: 7fcd3c126f3fb64121c79b08761ee3371745c73e829c4de82a18e452d5f22535
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_named_immutable_publication
+  path: tests/test_named_immutable_publication.py
+  sha256: 7f8d5b3a565996119ae265cfe552d184e006c17d527df9e6d4795746a7f8f23b
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

@@ -8,7 +8,8 @@
 - mode：`SINGLE_LANE`
 - owner：Project Owner / integration-coordinator
 - owner instruction：2026-09-05「好的，你来推进下这几个方面的长期能力建设把」
-- frozen local-main：`7ca36350e02cfa455bf16f33e34784697b4afb2a`
+- S1 frozen local-main：`7ca36350e02cfa455bf16f33e34784697b4afb2a`
+- S2a frozen local-main：`2124aff36802e0a85e0566c2306365659e8ee4d1`
 - production effect：`none`；broker action：`none`
 
 ## 1. 目标与范围
@@ -188,3 +189,105 @@ Black check PASS。v4 LANE preflight PASS，HEAD/main/origin缓存ref仍为froze
 
 本定位仅阅读源码/政策，不证明现存runtime快照满足上述完整依赖；所有真实连接、DQ、capture、maturity、
 scoreboard、下载及交易计数继续为0。下一责任方为本任务coordinator与DATA-GOV-002合同owner。
+
+## 9. S1 正式交付与 S2a 最小串行合同波
+
+### 9.1 已完成的 S1 发布
+
+S1 final candidate `2124aff36802e0a85e0566c2306365659e8ee4d1` 已完成 architecture-fitness
+888 passed、contract-validation 281 passed、integration 995 passed、reproducibility 24 passed，
+Full 10324 passed / 5 skipped（16 workers/loadfile，2649.06秒）。Full仅实际dispatch一次，证据为
+`outputs/validation_runtime/full_20260905T003206Z/test_runtime_summary.json`，SHA-256
+`38d1690f1f9d54c97a3d8b8492857e877ea5378a228e2dbebc2cd6e452397e5b`。
+
+Owner随后明确批准普通push；local main与实际remote main均为上述candidate。v6事务已RELEASED，
+`outputs/architecture/arch_005_integration_publication_fence/transactions/trading-2564-research-capability-20260905-v6/closeout_receipt.json`
+SHA-256为`a43fa52223ddbdb55d20d9e65c03471d6d302455b5e4824aa7516f91e3187f49`。
+已合并S1本地分支删除，可由main恢复；集成checkout保留canonical evidence，无文件或工作区删除。
+此前记录为历史过程，以上receipt补充最终验收，不改写既有失败事务或研究结论。
+
+### 9.2 S2a 合同、职责与非目标
+
+Owner继续推进长期建设；本波选`SINGLE_LANE --contract-change`，从S1 exact main冻结，先完成共享
+输入解析合同，后续消费者不得从尚未完成的合同分支启动。两路独立静态审查与coordinator复核后，
+选择以下最小兼容设计；不新增发布格式、DQ例外、consumer权限或临时绕行路径。
+
+1. `ValidatedSnapshot`保存原有snapshot身份字段；`ValidatedCurrentSnapshot`与新增
+   `ValidatedNamedSnapshot`为同级类型，历史快照不得以Current类型冒充。Named新增
+   `SnapshotCommitAnchor`，记录dataset/pointer id、SHA、path及generation。
+2. `validate_named_snapshot(store_root, dataset_id, pointer_id, expected_pointer_sha256)`只接受
+   显式合法标识和精确SHA，按确定的history路径寻址，复用contained reader、pointer/history/reference
+   全链验证。必须证明所选pointer是已验证current commit anchor的自身或祖先；current仅作已提交
+   成员资格证明，绝不选择或替换输入。缺失current、目标不在链中、任一tamper均fail closed。
+   该边界不证明对同一可信writer的恶意回滚抵抗，也不新增独立外部commit witness。
+3. 新增`resolve_named_download_publication(output_dir, pointer_id, expected_pointer_sha256,
+   expected_transaction_id, expected_transaction_sha256)`；transaction只能从上述已验证snapshot
+   payload取得，继续复用outer pointer/manifest、transaction与全部member/source/window核验。
+   不从transaction id、glob、latest或任意JSON反向寻址。
+4. Download结果使用独立`ValidatedNamedDownloadPublication` wrapper，保留现有Current API与
+   `ValidatedDownloadPublication`构造兼容。wrapper包含`publication`与`snapshot`，显式
+   `validation_scope=STRUCTURAL_PUBLICATION_ONLY`、`legacy_projection_status=NOT_EVALUATED`、
+   `consumer_cutover_allowed=false`、`dispatch_allowed=false`、`production_effect=none`。
+   内层`legacy_projection_verified=false`仅是结构核验的未检查值，不表示legacy核验失败；新报告/
+   adapter只能按外层NOT_EVALUATED解释。wrapper拒绝身份不一致或权限升级值。Named路径不读取
+   mutable legacy projections；current前进、legacy变更或消失均不得换掉显式输入。
+5. 本波只改两个publication模块及合成测试；不实现真实preview、maturity、收益计算或等价授权。
+   Root拥有任务/文档/生成物/正式验证/发布；source与test worker仅在同一冻结base、已登记scope和
+   活动事务下独立实现。工程fixture发布不计为真实publication、DQ或研究执行。
+
+### 9.3 必须证明的边界与后续依赖
+
+- Publisher先安装history、后执行pre-commit validator、最后提交current。完整但未提交的orphan
+  也可能通过单独hash检查；必须用合成拒绝提交实例证明其不能被Named接纳。另覆盖当前/祖先正例、
+  缺失目标不fallback、hash/ID错绑、链断裂/跳号/前驱SHA/cycle、member/source/manifest改动、
+  traversal/reparse/hardlink与校验中替换等负例，复用现有文件系统安全测试而不降低门禁。
+- Canonical DQ receipt绑定实际input path和manifest output_path。同SHA immutable member不是原路径
+  的DQ receipt；跨root也不能借同root legacy consumer grant。`immutable_publish.py`本身在canonical
+  validator源码哈希闭包内，新增函数会改变validator identity，旧receipt在新代码上可能返回
+  `DQ_VALIDATOR_SHA_MISMATCH`。历史receipt与code原样保留，不改receipt、不豁免源码/路径身份。
+  独立审查另确认`foundation_consumer_migration.py`的migration validator源码闭包也包含该文件，
+  更新后的checkout重验旧migration capability会因`CONSUMER_MIGRATION_VALIDATOR_SOURCE_DRIFT`
+  正确阻断；本波不重新签发capability或把旧部署自动升级到新代码。
+  后续DQ消费合同迁移和真实DQ仍由DATA-GOV-002审查及单独范围准入。
+- 冻结2560 producer要求prices和rates各自max_date等于feature_session；运营rates落后一天虽可能
+  满足其DQ政策，仍不能直接满足producer。未来adapter必须阻断，不能补造rates或偷偷改producer。
+- Equal-risk只读plan必须限定exact observation file ID/path/SHA及逐策略row复合身份，并显式
+  as-of/input cutoff和canonical XNYS horizon。既有maturity入口会DQ、glob与写文件，且as-of未对
+  downstream prices裁切，不能当只读helper。不得复用2563已终止额度或把历史gap补成OOS。
+- S2后续adapter/合成等价/只读plan、真实snapshot/root/consumer选择及S3-S5仍未完成；S2a结构PASS
+  不提升SAFE_PREVIEW_READY、研究verdict或任何执行权限。
+
+### 9.4 验证与生命周期
+
+复用`D:\Work\AITradingSystem_trading2559_integration`，不建新worktree/cache；S2a任务分支为
+`codex/trading-2564-s2-named-snapshot-v1`，frozen base为上述2124aff。source/final事务分阶段遵守
+既有Atlas exact-commit与fence顺序，不在本波修改治理合同。source事务
+`trading-2564-s2a-source-20260905-v1`已获取唯一lease；首次acquire参数重复声明内建validation路径
+被校验拒绝，未获取lease/写事务；按内建路径去重后范围相同，未绕过scope。
+
+先运行16-worker focused tests与适用静态检查，最终单一candidate才执行formal tiers/Full与普通发布。
+保留真实readiness/evidence缺失的typed blocker；不为测试自动补市场数据。所有真实DQ、replay、研究、
+capture、maturity、scoreboard、下载、cache mutation、provider及交易动作均为0。
+任务分支仅在main集成/普通push/SHA一致及唯一内容审计后删除；集成checkout的历史证据继续按S1
+生命周期保留。未完成步骤保留在本umbrella；正式结果和清理以本波publication receipt为准。
+
+### 9.5 S2a 实现与独立复核记录
+
+两个只读resolver及独立Named类型已实现。初轮独立复核发现返回DTO可构造同代不一致anchor，
+以及测试尚未覆盖transaction验证完成后的末端替换；已补纯内存anchor/Named身份、同store确定路径、
+同代pointer ID/SHA与envelope一致性检查，并补8项DTO负例、4项末端竞态负例。DTO不是不可伪造
+capability，只有resolver证明其输入字节与已观察提交链一致；不增加外部commit witness或权限。
+
+第二次独立静态复核确认上述两项已解决，没有发现新的阻断问题。新增synthetic DQ用例只修改tmp
+fixture内immutable源码，验证旧receipt收到`DQ_VALIDATOR_SHA_MISMATCH`，receipt bytes不变，
+verifier不重新运行DQ。所有fixture与真实市场cache隔离，不据此声称旧migration capability已完成实测。
+
+初轮三文件聚焦回归166 passed / 1平台条件skip（63.96秒）；现有DQ/consumer/current/readiness等
+150项合成回归PASS（159.12秒）。这两批发生在最终DTO补强之前，保留为阶段证据，不冒称最终验收。
+补强后的两source Ruff、Black及strict mypy PASS；最终源码SHA-256分别为：
+`immutable_publish.py=e9c97a9863d6a74bee908d8ea56d930e86c9f25fe7e800b161b00e85e14d757f`、
+`download_publication.py=d0044ec7aa59c6b75325ffc25808e9ec975b3ed5adfc97d5e0405d8ecc41fb64`。
+最终三文件focused为179 passed / 1 skipped（16 workers/loadfile，42.67秒）；唯一skip是Windows上
+既有`test_posix_in_root_symlink_alias_is_rejected`的POSIX语义用例，新增Windows reparse用例通过。
+新测试文件SHA-256为`7f8d5b3a565996119ae265cfe552d184e006c17d527df9e6d4795746a7f8f23b`，
+Ruff/Black PASS，source SHA与上述冻结一致。source/final正式验证继续执行；本任务和S2整体均未完成。

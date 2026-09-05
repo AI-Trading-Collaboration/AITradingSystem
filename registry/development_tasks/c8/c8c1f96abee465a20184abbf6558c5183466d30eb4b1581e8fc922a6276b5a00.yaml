@@ -13,16 +13,18 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: integration-coordinator：S1最终工程验收；随后S2只读快照接入设计
+  next_owner: integration-coordinator：S2a最终工程验证和普通main发布；随后受审DQ消费合同及adapter
   requirement_refs:
   - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S1合成readiness/runner测试已通过，修正独立审查的导入身份风险后按source/final两阶段正式验证；S2-S5未完成
+  unstructured_legacy_blocker_or_next_step: S2a两个只读Named resolver和独立复核完成，最终focused179
+    passed/1平台skip；正式source/final验收待完成，S2消费接入及S3-S5保留
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: S1负例与零业务副作用测试、formal验证、普通main发布通过；S2-S5按依赖保留，工程PASS不升级研究结论
+    text: S2a exact named identity/committed membership/零副作用与tamper负例通过；formal及ordinary
+      main发布receipt为最终验收；不升级DQ、consumer权限或研究结论
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -77,21 +79,67 @@ events:
   - change:trading-2564-s1-focused-review-20260905
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-cb1763ce82027a19c3018b2aa4745021
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-05T14:39:15.6054350+09:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2a-contract-start-20260905
+  lane_id: null
+  base_commit: 2124aff36802e0a85e0566c2306365659e8ee4d1
+  previous_state_event_id: task-event-cb1763ce82027a19c3018b2aa4745021
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator：S2a指定不可变快照合同及合成验证；DATA-GOV-002 owner：后续DQ消费合同
+    blocker_or_next_step: S1已在2124aff完成Full及普通main发布；S2a先验证精确历史快照的已提交成员资格，不准入真实DQ或consumer迁移；S2后续及S3-S5保留
+    acceptance_criteria: S2a named pointer/transaction精确绑定、committed membership、零副作用、tamper负例与current兼容回归通过；结构验证不升级DQ或研究结论；正式发布后继续剩余阶段
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；S1
+      closeout receipt a43fa52223ddbdb55d20d9e65c03471d6d302455b5e4824aa7516f91e3187f49；本波真实DQ/replay/研究/capture/maturity/scoreboard/下载/cache/provider/交易均0
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2a-contract-start-20260905
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-14afcc622977a0cb86ad9f4316033524
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-05T14:58:42.0812545+09:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2a-focused-review-20260905
+  lane_id: null
+  base_commit: 2124aff36802e0a85e0566c2306365659e8ee4d1
+  previous_state_event_id: task-event-14afcc622977a0cb86ad9f4316033524
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator：S2a最终工程验证和普通main发布；随后受审DQ消费合同及adapter
+    blocker_or_next_step: S2a两个只读Named resolver和独立复核完成，最终focused179 passed/1平台skip；正式source/final验收待完成，S2消费接入及S3-S5保留
+    acceptance_criteria: S2a exact named identity/committed membership/零副作用与tamper负例通过；formal及ordinary
+      main发布receipt为最终验收；不升级DQ、consumer权限或研究结论
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；旧DQ和migration源码身份变化明确保留，历史receipt不改；本波全部真实研究/数据/交易动作0
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2a-focused-review-20260905
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ec62dedeaed19c1bdb9b00939b1e9d1b
 projection:
   legacy_first_eight_cells:
   - TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
   - 长期研究能力 / 输入就绪与验证前置
   - P1
   - IN_PROGRESS
-  - integration-coordinator：S1最终工程验收；随后S2只读快照接入设计
-  - S1合成readiness/runner测试已通过，修正独立审查的导入身份风险后按source/final两阶段正式验证；S2-S5未完成
-  - S1负例与零业务副作用测试、formal验证、普通main发布通过；S2-S5按依赖保留，工程PASS不升级研究结论
-  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；历史证据仅missing-only复制且SHA一致；最终验收以publication
-    receipt为准；真实DQ/研究/下载/cache/provider/交易均0
+  - integration-coordinator：S2a最终工程验证和普通main发布；随后受审DQ消费合同及adapter
+  - S2a两个只读Named resolver和独立复核完成，最终focused179 passed/1平台skip；正式source/final验收待完成，S2消费接入及S3-S5保留
+  - S2a exact named identity/committed membership/零副作用与tamper负例通过；formal及ordinary
+    main发布receipt为最终验收；不升级DQ、consumer权限或研究结论
+  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；旧DQ和migration源码身份变化明确保留，历史receipt不改；本波全部真实研究/数据/交易动作0
   docs_links:
   - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
   terminal: false
-  canonical_row_sha256: b8eb31df39398a92d400f5f8d3839e9985a054849f544d182a8be7fabb68052e
-last_event_id: task-event-cb1763ce82027a19c3018b2aa4745021
+  canonical_row_sha256: be1d60ecb5859daffc4aeab22ec72358dc59a61bb13786239364a449eef0437e
+last_event_id: task-event-ec62dedeaed19c1bdb9b00939b1e9d1b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 473a44710a353202d61107561bd7577e8aec1ff3e64e28cc161701522f53c313
+fragment_checksum: 4821f52cf1b8ec4a4b5aff902aab39bf7f8d2b0c716881ebb5ced5bb15071852
