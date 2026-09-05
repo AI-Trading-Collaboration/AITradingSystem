@@ -348,3 +348,72 @@ wrong-lineage，不能自动生成或批准authority。须最小shared-contract�
 不替代历史回归。负例须覆盖generator与生成物共同漏项、只覆盖一个source、旧SHA、缺supersession、
 错误继承/较早section、非法base/candidate、excluded/越界读取及零dispatch；未变源码与纯EOL差异
 不得误报。先测真实提前发现时间和日志量，不引入新性能阈值。此项仍为待审设计，当前波不实施。
+
+### 9.8 S2a 首次 Full 失败与末尾断言修复
+
+候选 `e1aa1c0cfc87d879257ff1ed5e0367e7587d4fc0` 的原 final v1 在 architecture 输出约80%后
+进程中断；核对 handle 不存在且实际验证进程已消失，未生成该轮正式结果，Full 未派发。中断原因
+未知，不把部分进度记为 PASS。旧事务和中断证据已封存；同候选 final v2 恢复后，readiness 7 checks /
+1242 dependencies PASS，architecture 889 passed、contract 281 passed、integration 995 passed /
+639 warnings、reproducibility 24 passed。没有改候选或创建新 worktree。
+
+随后首次实际 Full 为 `1 failed / 10397 passed / 5 skipped / 640 warnings`，pytest 2698.48秒，
+runner 2699.38秒；收据 `outputs/validation_runtime/full_20260905T075500Z/test_runtime_summary.json`
+SHA-256=`e6132fd0173b1a582812cfacf2017a94bd92fba6fa7bf46b89db5d52b63df0c5`，profile SHA-256=
+`4fc25fbb29613b00d79e8564d3e08d85a9a085264640908726ef9275a2f59edb`。唯一失败为
+`test_devx_006d_report_catalog_flow_authority.py::test_compatibility_authority_carries_the_inactive_shadow_contract`：
+第153行仍把 OPS-078 断言为最新末尾，实际已追加本任务 S2a。final v2 已以真实 Full FAIL 终止并释放
+lease，main/origin 未前移；失败与此前“未派发 Full”的行政中断分别保留，不相互冒充。
+
+本次窄修复按以下顺序执行：
+
+1. 沿原 branch/checkout 和 frozen main `2124aff`，获取
+   `trading-2564-s2a-tail-fix-source-20260905-v1`，绑定上述真实 failed Full，先追加 canonical 纠正事件。
+2. 独立只读检索 tests/src/scripts 的 OPS-078 literal/常量、next(reversed)、末项与 latest/order 组合；
+   未发现第二处同类过期末尾期望。修正唯一 exact-tail 为 S2a，并保留 OPS-078 前序关系及全部历史
+   3000、successor 3152、192、LEGACY_MONOLITH、inactive 和 cutover=false 断言，不删除门禁。
+3. 将本次修改的 DEVX-006D 测试显式纳入 S2a 精确 source/superseded scope，由9路径变10；对应独立
+   exact-source 集断言同步，官方 generator 刷新当前 fragment/index。历史 legacy seal 和保留链不改。
+4. focused 使用16 workers/loadfile，覆盖 DEVX-006D、DEVX-006C 全文件及 OPS-078/S2a 架构边界。
+   复核静态检查、归属与生成物后形成 source/final 候选；最终正式重跑使用 failure_fix_rerun 并绑定
+   上述 failed Full parent，不沿用旧候选的正式 PASS。全部通过后才普通 main 发布。
+
+本修复不改两个 publication resolver、DQ/策略/阈值、页面研究 verdict 或数据流，故 system_flow
+保持原样；真实 DQ/replay/研究/capture/maturity/scoreboard/下载/cache/provider/交易仍全部0。
+后续 S2b-S5 未完成，不因本次测试修复或 source commit 标记完成。
+
+### 9.9 等待正式验收期间的后续合同补充（待审、未实施）
+
+两路独立静态审查与 coordinator 复核保存在
+`outputs/validation_runtime/trading-2564-s2b-s4-design-review-20260905.md`，SHA-256=
+`d5d9b68889e31c34b7effa1150b0c56209d0c64829dcbc112c7e323a7b0f4995`。后续仍由本 umbrella 和
+DATA-GOV-002 / DEVX-009 等既有领域 owner 承接；这里登记具体依赖，不启动新执行授权：
+
+- S2b：canonical DQ 的数值规则可复用，但 quality.py 的 publication 路径校验，以及 runner/verifier
+  两处 manifest matcher 均仍按 legacy 物理路径绑定，必须新增同一套严格 named-row 身份分支。
+  不得伪写 snapshot.path 或退入 checksum-only legacy 分支。保持真实 member path，输出前逐项核对
+  summary/typed-attribution role/path/SHA；primary 与 rates 六个已批准 site 的 COMPLETE 不得退化为
+  UNKNOWN。独立 request/receipt/verified bytes 类型与纯 provenance helper 需避免 quality/execution
+  导入环，最小抽取范围另审；新增依赖必须进入真实 validator source closure，旧凭证正常 source drift。
+  execution root 必须匹配实际 loaded code/policy/calendar；旧 tmp-root fixture 和 fake report spy
+  不能证明这一点，须真实 canonical synthetic 正例。真实 source、consumer adoption 和动作上限另审。
+- S3：现有下载/manifest 日期及 hash 不证明 provider available_at；capture 声明时刻也不等于完成。
+  未来只能以真实事件绑定 freeze、输入已知时刻、signal持久化和 decision deadline；历史空白不补成
+  OOS。决策时点、rates信息集与合法顺序恢复由受审新合同定义，不改冻结producer来消除滞后阻断。
+- S4：ResearchPreregistration/SelectionDataBinding 可复用，indicator trial service 目前仅声明 payload、
+  trial_count=0，结果后 candidate ledger 也不能当首看前登记。需薄的 exact envelope、append-only
+  trial/attempt/访问事件及所有 outcome 释放前门禁；失败/部分暴露/未知历史不可通过改名清零。
+  崩溃后不能证明未释放时保留可能已暴露。2560旧“首次formal scoreboard前”措辞原样保留，新 envelope
+  落实本任务更严格的“首次查看 outcome 前”；sample/episode、停止条件与时间 witness 仍须审查。
+- Equal-risk归因：旧 `_attribution_row` 的 SGOV 项是平均权重乘策略年收益，并非现金真实贡献；另一
+  日度贡献接口用算术年化，不能直接与 CAGR 分量相加。未来先冻结可对账的逐日净差/成本及复利 linking。
+  全样本暴露匹配只可作为预声明事后 comparator；现有 QQQ/SGOV comparator 仍为 DRAFT_FOR_OWNER_REVIEW，
+  不自动借用其数字或替换 Composer benchmark。归因方法、sample/episode及真实访问仍由Owner审查。
+- S5：scope 的编辑权限不等于 supersession 审批；轻量覆盖预检需独立 reviewed source scope，不能
+  自举批准。tracked manifest 不嵌入包含自身的最终 commit SHA，应由现有 runtime transaction 绑定。
+  source/final 顺序冲突的长期候选是同一 fence/lease 下区分提交前 tracked generator 与提交后
+  exact-commit runtime generator，增加明确 candidate/tree seal 和版本化阶段，不放宽 HEAD 检查。
+  现行 transaction 无 policy path，Full前后/task-source/preflight默认构造 fence；新版本还必须统一
+  transaction→exact policy/handler 选路，历史 v1 按准确 version/SHA 与保留 bytes 重放，缺失时阻断，
+  不覆盖旧 policy、不用 latest/default。此 shared workflow 波只能在当前事务发布后另行登记实施，
+  同步 skill/preflight/runner/CLI/system flow 与历史兼容反例。

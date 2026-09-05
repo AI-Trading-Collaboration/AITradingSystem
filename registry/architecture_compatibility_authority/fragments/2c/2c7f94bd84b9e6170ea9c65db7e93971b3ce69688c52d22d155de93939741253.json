@@ -32,17 +32,17 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md",
-        "sha256": "3228fe9575a63c27a6886fb6f1797116059093ce25717d9a4ba2eb723043cfe8"
+        "sha256": "3abbc43f1cf0ac2800ece43f0a89cf7b2740a65aea790b40c65e0c9a5d6b3487"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "d0d9f3fe39a5446942bff6e209c6ab51be61843a648aa700c9e6cc09ff4954de"
+        "sha256": "e601db01ae1c1a2b1f413fa077ed4229229736dc38461d8c0578fac8dd3a15e8"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "registry/development_tasks/c8/c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml",
-        "sha256": "11836f62d72a8245adb4e3bc5c1bc766ad5e4627b9552c3cc9ebe93183aea860"
+        "sha256": "2412043a1ea116b1b568c4bfc3bcb4f557093edce860bd31f5ad2f29d49b9b8d"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -57,7 +57,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
-        "sha256": "17c6c3eee7a96bb47d38e932a9d3a256deb7148419ce994fec021bceadb87cfa"
+        "sha256": "a78b8a88f8f0fbf4cc83c5b185ed7cdbc8ec8d2ec08daa0d495dc50858fa7a0a"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -67,7 +67,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006c_compatibility_authority.py",
-        "sha256": "66bcb8f0e55ff80f2bbd3cce87b804f0d19341b878434e071494066b3a76f6cf"
+        "sha256": "835a0e276ff5e08ba511ea3ea9bf25fcc3db12442f9bf7e740008c5a0a10b83c"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "sha256": "6240bdce9058f077bfd7be024ec76335ec8ee9888978aa4666efca2da12c3670"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -85,6 +90,7 @@
       "src/ai_trading_system/platform/architecture/compatibility_authority.py",
       "tests/test_arch_004_refactor_policy.py",
       "tests/test_devx_006c_compatibility_authority.py",
+      "tests/test_devx_006d_report_catalog_flow_authority.py",
       "tests/test_named_immutable_publication.py"
     ],
     "supersession": {
@@ -95,5 +101,5 @@
     "task_id": "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1"
   },
   "section_id": "phase_trading_2564_s2a_named_immutable_snapshot_v1",
-  "section_sha256": "a1f419bddd44fd2490eab18263b0808f825790a6eab552bdfe1e2efc077069ac"
+  "section_sha256": "2c7f94bd84b9e6170ea9c65db7e93971b3ce69688c52d22d155de93939741253"
 }

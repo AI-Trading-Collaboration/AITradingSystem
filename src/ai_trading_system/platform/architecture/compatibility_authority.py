@@ -2620,7 +2620,7 @@ def _trading_2564_s2a_section(
     *,
     policy: Mapping[str, Any],
 ) -> tuple[str, dict[str, Any]]:
-    # TRADING-2564 §9.6 owns only this reviewed S2a source closure. Do not absorb
+    # TRADING-2564 §9.6/9.8 owns only this reviewed S2a source closure. Do not absorb
     # unrelated drift or rewrite the frozen legacy prefix / OPS-078 policy.
     section_id = "phase_trading_2564_s2a_named_immutable_snapshot_v1"
     source_paths = sorted(
@@ -2631,6 +2631,7 @@ def _trading_2564_s2a_section(
             "tests/test_named_immutable_publication.py",
             "tests/test_arch_004_refactor_policy.py",
             "tests/test_devx_006c_compatibility_authority.py",
+            "tests/test_devx_006d_report_catalog_flow_authority.py",
             "docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md",
             (
                 "registry/development_tasks/c8/"

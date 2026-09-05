@@ -150,9 +150,11 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         "report_catalog_flow_successor"
     ]
 
-    assert next(reversed(merged)) == (
+    latest_section = "phase_trading_2564_s2a_named_immutable_snapshot_v1"
+    assert next(reversed(merged)) == latest_section
+    assert list(merged).index(
         "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1"
-    )
+    ) < list(merged).index(latest_section)
     assert fragment_authority["source_of_truth"] == "LEGACY_MONOLITH"
     assert fragment_authority["fragment_shadow_active"] is False
     assert fragment_authority["target_count"] == 3

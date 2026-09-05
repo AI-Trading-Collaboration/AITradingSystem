@@ -50,6 +50,7 @@ TRADING_2564_S2A_SOURCE_PATHS = frozenset(
         "tests/test_named_immutable_publication.py",
         "tests/test_arch_004_refactor_policy.py",
         "tests/test_devx_006c_compatibility_authority.py",
+        "tests/test_devx_006d_report_catalog_flow_authority.py",
         "docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md",
         (
             "registry/development_tasks/c8/"
@@ -307,13 +308,22 @@ def test_s2a_is_exact_named_snapshot_successor_authority() -> None:
     assert phase["production_effect"] == phase["broker_action"] == "none"
 
 
-@pytest.mark.parametrize("mutation", ["extra_source", "missing_source", "wrong_hash"])
+@pytest.mark.parametrize(
+    "mutation",
+    ["extra_source", "missing_source", "tail_test_removed_from_both", "wrong_hash"],
+)
 def test_s2a_source_closure_rejects_unreviewed_changes(mutation: str) -> None:
     phase = deepcopy(load_compatibility_authority()[TRADING_2564_S2A_SECTION])
     if mutation == "extra_source":
         phase["sources"].append({"path": "unreviewed.py", "sha256": "0" * 64})
     elif mutation == "missing_source":
         phase["sources"].pop()
+    elif mutation == "tail_test_removed_from_both":
+        removed = "tests/test_devx_006d_report_catalog_flow_authority.py"
+        phase["sources"] = [row for row in phase["sources"] if row["path"] != removed]
+        phase["superseded_live_source_paths"] = [
+            path for path in phase["superseded_live_source_paths"] if path != removed
+        ]
     else:
         phase["sources"][0]["sha256"] = "0" * 64
     with pytest.raises(AssertionError):
@@ -325,6 +335,7 @@ def test_s2a_source_closure_rejects_unreviewed_changes(mutation: str) -> None:
     [
         "src/ai_trading_system/data/immutable_publish.py",
         "src/ai_trading_system/data/download_publication.py",
+        "tests/test_devx_006d_report_catalog_flow_authority.py",
     ],
 )
 def test_s2a_validator_rejects_changed_source_without_rebuild(
