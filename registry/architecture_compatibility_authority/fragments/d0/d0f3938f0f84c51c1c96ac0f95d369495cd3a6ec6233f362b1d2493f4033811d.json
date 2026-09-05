@@ -93,7 +93,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "8ccb3aa004fc8aa8525531339a555e5a2bb7bae55570c9e8fa5ca73ab0b40f4b"
+        "sha256": "bc5b4e17215972c2205576f353a1ae90ed03754a2996966588ccc5e91c598925"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -238,5 +238,5 @@
     "task_id": "PROD-004"
   },
   "section_id": "phase_prod_004_pit_cumulative_archive_consumption_v1",
-  "section_sha256": "54f3a8fb9685c300a28e9138b8eca8e5c527b6f424e4a7c7bce459267239cc8f"
+  "section_sha256": "d0f3938f0f84c51c1c96ac0f95d369495cd3a6ec6233f362b1d2493f4033811d"
 }
