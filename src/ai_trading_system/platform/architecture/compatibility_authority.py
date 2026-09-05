@@ -917,6 +917,13 @@ def build_repository_authority(
         section_id, section = _trading_2564_s2a_section(root, policy=policy)
         relative, record, content = render_fragment(section_id=section_id, section=section)
         rendered_fragments.append((section_id, relative, record, content))
+    ops_079_requirement = (
+        root / "docs/requirements/OPS-079_Historical_Daily_Gap_Recovery_Executor.md"
+    )
+    if ops_079_requirement.exists():
+        section_id, section = _ops_079_section(root, policy=policy)
+        relative, record, content = render_fragment(section_id=section_id, section=section)
+        rendered_fragments.append((section_id, relative, record, content))
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -2550,6 +2557,86 @@ def _ops_078_section(
             "provider_replay_gate_relaxed": False,
             "production_weight_write": False,
             "active_shadow_weight_write": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _ops_079_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_ops_079_historical_daily_gap_recovery_executor_v1"
+    source_paths = sorted(
+        [
+            "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+            "config/operations/historical_gap_recovery.yaml",
+            "docs/artifact_catalog.md",
+            "docs/operations/operations_runbook.md",
+            "docs/requirements/OPS-079_Historical_Daily_Gap_Recovery_Executor.md",
+            "docs/runbook_daily_ops.md",
+            "docs/schema/historical_gap_recovery.v1.schema.json",
+            "docs/system_flow.md",
+            "docs/task_register.md",
+            "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+            "inputs/architecture/arch_004e_architecture_fitness.yaml",
+            "inputs/architecture/arch_004e_module_manifest.yaml",
+            "inputs/architecture/arch_004e_test_manifest.yaml",
+            "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+            "inputs/architecture/arch_005_task_registry_index.yaml",
+            "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+            (
+                "registry/development_tasks/cd/"
+                "cdcf4ff5d0c3c8c4b23fdfc72f44fd4c53c1fcf7449bafc0bda1fab81bbcb0df.yaml"
+            ),
+            "src/ai_trading_system/cli_commands/ops.py",
+            "src/ai_trading_system/historical_gap_recovery.py",
+            "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+            "tests/test_arch_004_refactor_policy.py",
+            "tests/test_devx_006c_compatibility_authority.py",
+            "tests/test_devx_006d_report_catalog_flow_authority.py",
+            "tests/test_historical_gap_recovery.py",
+        ],
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "ops_079_historical_daily_gap_recovery_executor.v1",
+        "task_id": "OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR",
+        "status": "VALIDATING",
+        "owner_decision": (
+            "owner_instruction:OPS-079:2026-09-05:" "continue-blocked-historical-gap-recovery"
+        ),
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_trading_2564_s2a_named_immutable_snapshot_v1"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "historical_gap_contract": {
+            "queue_execution_mode": "MANUAL_SINGLE_ITEM_ONLY",
+            "allowed_components": ["market_macro", "sec_companyfacts"],
+            "market_source_mode": "EXPLICIT_CACHE_ONLY_INVENTORY",
+            "sec_source_mode": "EXPLICIT_BEFORE_AFTER_NON_PIT_REVIEW",
+            "output_mode": "ISOLATED_SINGLE_CREATE",
+            "content_derived_validation_required": True,
+            "canonical_guard_identity_required": True,
+            "historical_strict_pit_backfill_allowed": False,
+            "consumer_cutover_allowed": False,
+        },
+        "safety": {
+            "canonical_history_mutation_allowed": False,
+            "provider_request_allowed": False,
+            "openai_request_allowed": False,
+            "official_or_active_shadow_weight_write": False,
+            "broker_or_trading_action": False,
             "production_effect": "none",
             "broker_action": "none",
         },

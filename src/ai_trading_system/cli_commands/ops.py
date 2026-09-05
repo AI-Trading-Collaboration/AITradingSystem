@@ -67,6 +67,13 @@ from ai_trading_system.fmp_forward_pit import (
     default_fmp_forward_pit_fetch_report_path,
     default_fmp_forward_pit_normalized_path,
 )
+from ai_trading_system.historical_gap_recovery import (
+    HistoricalGapRecoveryError,
+    build_historical_gap_recovery,
+    default_historical_gap_recovery_output_root,
+    validate_historical_gap_recovery,
+    write_historical_gap_recovery_validation,
+)
 from ai_trading_system.historical_replay import (
     default_historical_replay_output_root,
     run_historical_day_replay,
@@ -304,19 +311,31 @@ def pipeline_health_command(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     features_path: Annotated[
         Path,
         typer.Option(help="每日特征 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "processed" / "features_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "features_daily.csv",
     scores_path: Annotated[
         Path,
         typer.Option(help="每日评分 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "processed" / "scores_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "scores_daily.csv",
     data_quality_report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 数据质量报告路径。"),
@@ -663,11 +682,17 @@ def scheduler_checkout_preflight_command(
     output_json: Annotated[
         Path,
         typer.Option(help="preflight JSON 输出路径。"),
-    ] = PROJECT_ROOT / "outputs" / "reports" / "ops_scheduler_checkout_preflight.json",
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports"
+    / "ops_scheduler_checkout_preflight.json",
     output_markdown: Annotated[
         Path,
         typer.Option(help="preflight Markdown 输出路径。"),
-    ] = PROJECT_ROOT / "outputs" / "reports" / "ops_scheduler_checkout_preflight.md",
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports"
+    / "ops_scheduler_checkout_preflight.md",
 ) -> None:
     """只读检查 pinned clean ops checkout；不安装或启用 scheduler。"""
     try:
@@ -1150,9 +1175,7 @@ def daily_ops_plan_command(
     style = (
         "green"
         if status == "READY"
-        else "yellow"
-        if status in {"READY_WITH_SKIPS", "READY_WITH_BLOCKED_BRANCHES"}
-        else "red"
+        else "yellow" if status in {"READY_WITH_SKIPS", "READY_WITH_BLOCKED_BRANCHES"} else "red"
     )
     missing_env = plan.missing_env_vars(os.environ)
     console.print(f"[{style}]每日运行计划：{status}[/{style}]")
@@ -2580,7 +2603,9 @@ def daily_ops_run_command(
     run_output_root: Annotated[
         Path,
         typer.Option(help="Canonical run bundle 根目录。"),
-    ] = PROJECT_ROOT / "outputs" / "runs",
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "runs",
     run_id: Annotated[
         str | None,
         typer.Option(help="可选固定 run id；默认由 as_of 和 UTC 时间生成。"),
@@ -3165,6 +3190,185 @@ def validate_limited_non_pit_command(
             console.print(f"Error：{error}")
         raise typer.Exit(code=1)
     json_path, markdown_path = write_limited_non_pit_validation(
+        validation,
+        bundle_path,
+    )
+    console.print(f"Validation JSON：{json_path}")
+    console.print(f"Validation report：{markdown_path}")
+    console.print("Production effect：none")
+
+
+@ops_app.command("recover-historical-gap")
+def recover_historical_gap_command(
+    queue_path: Annotated[
+        Path,
+        typer.Option("--queue-path", help="明确的 recovery queue JSON；禁止 latest/glob 发现。"),
+    ],
+    queue_validation_path: Annotated[
+        Path,
+        typer.Option(
+            "--queue-validation-path",
+            help="与 recovery queue 对应且必须 PASS 的 validation JSON。",
+        ),
+    ],
+    recovery_id: Annotated[
+        str,
+        typer.Option("--recovery-id", help="queue 中唯一的 daily-input-recovery id。"),
+    ],
+    owner_decision_id: Annotated[
+        str,
+        typer.Option("--owner-decision-id", help="批准本次单项恢复的 owner decision id。"),
+    ],
+    guard_path: Annotated[
+        list[Path] | None,
+        typer.Option(
+            "--guard-path",
+            help="生成前后必须 byte-identical 的 canonical 文件；至少一个，可重复。",
+        ),
+    ] = None,
+    inventory_bundle: Annotated[
+        Path | None,
+        typer.Option(
+            "--inventory-bundle",
+            help="market_macro 分支的明确 cache-only inventory bundle。",
+        ),
+    ] = None,
+    sec_before_manifest: Annotated[
+        Path | None,
+        typer.Option("--sec-before-manifest", help="SEC 分支的明确前置 capture manifest。"),
+    ] = None,
+    sec_after_manifest: Annotated[
+        Path | None,
+        typer.Option("--sec-after-manifest", help="SEC 分支的明确后置 capture manifest。"),
+    ] = None,
+    policy_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--policy-path",
+            help="reviewed OPS-079 policy；默认使用项目内 canonical 路径。",
+        ),
+    ] = None,
+    output_root: Annotated[
+        Path | None,
+        typer.Option(
+            "--output-root",
+            help="隔离输出根目录；默认 outputs/replays/historical_gap_recovery。",
+        ),
+    ] = None,
+    project_root: Annotated[
+        Path,
+        typer.Option(help="项目根目录；默认使用当前安装包配置的 PROJECT_ROOT。"),
+    ] = PROJECT_ROOT,
+) -> None:
+    """按 reviewed queue 单项生成不可变、无 consumer effect 的历史缺口证据。"""
+
+    try:
+        result = build_historical_gap_recovery(
+            queue_path=queue_path,
+            queue_validation_path=queue_validation_path,
+            recovery_id=recovery_id,
+            owner_decision_id=owner_decision_id,
+            project_root=project_root,
+            guard_paths=guard_path or (),
+            inventory_bundle=inventory_bundle,
+            sec_before_manifest=sec_before_manifest,
+            sec_after_manifest=sec_after_manifest,
+            policy_path=policy_path,
+            output_root=(output_root or default_historical_gap_recovery_output_root(project_root)),
+        )
+    except HistoricalGapRecoveryError as exc:
+        console.print(f"[red]历史缺口恢复失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]历史缺口恢复证据：PASS[/green]")
+    console.print(f"Bundle：{result.bundle_path}")
+    console.print(f"Report：{result.markdown_path}")
+    console.print(f"Validation：{result.validation_path}")
+    console.print("Canonical history：unchanged")
+    console.print("Strict PIT eligible：false")
+    console.print("Consumer cutover：false")
+    console.print("Production effect：none")
+
+
+@ops_app.command("validate-historical-gap")
+def validate_historical_gap_command(
+    bundle_path: Annotated[
+        Path,
+        typer.Option("--bundle-path", help="待校验的单项 historical gap recovery bundle。"),
+    ],
+    queue_path: Annotated[
+        Path,
+        typer.Option("--queue-path", help="生成时绑定的 recovery queue JSON。"),
+    ],
+    queue_validation_path: Annotated[
+        Path,
+        typer.Option(
+            "--queue-validation-path",
+            help="生成时绑定的 recovery queue validation JSON。",
+        ),
+    ],
+    recovery_id: Annotated[
+        str,
+        typer.Option("--recovery-id", help="预期 recovery id。"),
+    ],
+    owner_decision_id: Annotated[
+        str,
+        typer.Option("--owner-decision-id", help="预期 owner decision id。"),
+    ],
+    guard_path: Annotated[
+        list[Path] | None,
+        typer.Option(
+            "--guard-path",
+            help="当前必须与 before/after snapshot 一致的 canonical 文件；至少一个，可重复。",
+        ),
+    ] = None,
+    inventory_bundle: Annotated[
+        Path | None,
+        typer.Option("--inventory-bundle", help="market_macro 分支的原 inventory bundle。"),
+    ] = None,
+    sec_before_manifest: Annotated[
+        Path | None,
+        typer.Option("--sec-before-manifest", help="SEC 分支的原前置 capture manifest。"),
+    ] = None,
+    sec_after_manifest: Annotated[
+        Path | None,
+        typer.Option("--sec-after-manifest", help="SEC 分支的原后置 capture manifest。"),
+    ] = None,
+    policy_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--policy-path",
+            help="reviewed OPS-079 policy；默认使用项目内 canonical 路径。",
+        ),
+    ] = None,
+    project_root: Annotated[
+        Path,
+        typer.Option(help="项目根目录；默认使用当前安装包配置的 PROJECT_ROOT。"),
+    ] = PROJECT_ROOT,
+) -> None:
+    """从 frozen 与显式 live bytes 复算 recovery evidence 和安全边界。"""
+
+    validation = validate_historical_gap_recovery(
+        bundle_path,
+        project_root=project_root,
+        expected_queue_path=queue_path,
+        expected_queue_validation_path=queue_validation_path,
+        expected_recovery_id=recovery_id,
+        expected_owner_decision_id=owner_decision_id,
+        expected_guard_paths=guard_path or (),
+        expected_inventory_bundle=inventory_bundle,
+        expected_sec_before_manifest=sec_before_manifest,
+        expected_sec_after_manifest=sec_after_manifest,
+        policy_path=policy_path,
+    )
+    style = "green" if validation.passed else "red"
+    console.print(f"[{style}]历史缺口恢复校验：{validation.status}[/{style}]")
+    console.print(f"Checks：{len(validation.checks)}")
+    if validation.errors:
+        for error in validation.errors:
+            console.print(f"Error：{error}")
+        raise typer.Exit(code=1)
+    json_path, markdown_path = write_historical_gap_recovery_validation(
         validation,
         bundle_path,
     )
@@ -3977,9 +4181,7 @@ def historical_replay_day_command(
     style = (
         "green"
         if status in {"PASS", "PASS_INVENTORY"}
-        else "yellow"
-        if status == "INCOMPLETE_REPLAY"
-        else "red"
+        else "yellow" if status == "INCOMPLETE_REPLAY" else "red"
     )
     console.print(f"[{style}]历史交易日回放：{status}[/{style}]")
     console.print(f"Replay bundle：{replay_run.paths.root}")

@@ -1,0 +1,81 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR
+  task_id_sha256: cdcf4ff5d0c3c8c4b23fdfc72f44fd4c53c1fcf7449bafc0bda1fab81bbcb0df
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR
+  title: null
+  domain: Operations / historical daily gap recovery executor
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex：完成执行器、正式门禁、main 发布、release promotion 和四项 runtime 恢复；operations
+    owner：复核 non-PIT 结果并维持 strict 缺口。
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已解除 lease blocker；当前推进 reviewed contract、producer/validator、formal
+    validation 与 release。八项 strict 缺口仍不可恢复。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 隔离 bundle content-derived PASS；canonical gap/state/ledger/queue byte-identical；无
+      provider/OpenAI、strict PIT、consumer cutover、weights 或 broker/trading action。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-05T21:30:36.5327916+09:00'
+  actor: integration-coordinator
+  change_id: OPS-079-HISTORICAL-GAP-RECOVERY-REGISTER
+  lane_id: null
+  base_commit: 293813e5e2e7b88886b79fc22cf77e2d57f1f346
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR
+    - Operations / historical daily gap recovery executor
+    - P0
+    - IN_PROGRESS
+    - Codex：完成执行器、正式门禁、main 发布、release promotion 和四项 runtime 恢复；operations owner：复核
+      non-PIT 结果并维持 strict 缺口。
+    - 已解除 lease blocker；当前推进 reviewed contract、producer/validator、formal validation
+      与 release。八项 strict 缺口仍不可恢复。
+    - 隔离 bundle content-derived PASS；canonical gap/state/ledger/queue byte-identical；无
+      provider/OpenAI、strict PIT、consumer cutover、weights 或 broker/trading action。
+    - 2026-09-05：从 exact main 293813e5 建立独立 worktree；取得 publication transaction v1，开始最小
+      serial contract wave。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:OPS-079-HISTORICAL-GAP-RECOVERY-REGISTER
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-76d71ebcd078570a3afce4f8b5c32254
+projection:
+  legacy_first_eight_cells:
+  - OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR
+  - Operations / historical daily gap recovery executor
+  - P0
+  - IN_PROGRESS
+  - Codex：完成执行器、正式门禁、main 发布、release promotion 和四项 runtime 恢复；operations owner：复核
+    non-PIT 结果并维持 strict 缺口。
+  - 已解除 lease blocker；当前推进 reviewed contract、producer/validator、formal validation
+    与 release。八项 strict 缺口仍不可恢复。
+  - 隔离 bundle content-derived PASS；canonical gap/state/ledger/queue byte-identical；无
+    provider/OpenAI、strict PIT、consumer cutover、weights 或 broker/trading action。
+  - 2026-09-05：从 exact main 293813e5 建立独立 worktree；取得 publication transaction v1，开始最小
+    serial contract wave。
+  docs_links: []
+  terminal: false
+  canonical_row_sha256: 24bb18a434b23164118629423e926ae8f0ff431286ab84fcbfae72152ada9180
+last_event_id: task-event-76d71ebcd078570a3afce4f8b5c32254
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 6cd6147323aa9952056f25220312b92c712f0617345469f2254c03c11002dcbf

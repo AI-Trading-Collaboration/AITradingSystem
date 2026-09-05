@@ -42,6 +42,7 @@ RISK_012_SECTION = "phase_risk_012_unknown_risk_event_id_fail_closed_v1"
 OPS_077_SECTION = "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1"
 OPS_078_SECTION = "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1"
 TRADING_2564_S2A_SECTION = "phase_trading_2564_s2a_named_immutable_snapshot_v1"
+OPS_079_SECTION = "phase_ops_079_historical_daily_gap_recovery_executor_v1"
 TRADING_2564_S2A_SOURCE_PATHS = frozenset(
     {
         "src/ai_trading_system/data/immutable_publish.py",
@@ -163,12 +164,12 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 320
-    assert result["fragment_count"] == 14
+    assert len(merged) == 321
+    assert result["fragment_count"] == 15
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == TRADING_2564_S2A_SECTION
+    assert next(reversed(merged)) == OPS_079_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
@@ -275,7 +276,7 @@ def _assert_s2a_source_closure(phase: dict[str, Any]) -> None:
 
 def test_s2a_is_exact_named_snapshot_successor_authority() -> None:
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2564_S2A_SECTION
+    assert list(merged).index(TRADING_2564_S2A_SECTION) < list(merged).index(OPS_079_SECTION)
     assert list(merged).index(OPS_078_SECTION) < list(merged).index(TRADING_2564_S2A_SECTION)
     phase = merged[TRADING_2564_S2A_SECTION]
     assert phase["schema_version"] == "trading_2564_s2a_named_immutable_snapshot.v1"
@@ -331,15 +332,24 @@ def test_s2a_source_closure_rejects_unreviewed_changes(mutation: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "portable",
+    ("portable", "expected_code"),
     [
-        "src/ai_trading_system/data/immutable_publish.py",
-        "src/ai_trading_system/data/download_publication.py",
-        "tests/test_devx_006d_report_catalog_flow_authority.py",
+        (
+            "src/ai_trading_system/data/immutable_publish.py",
+            "AUTHORITY_GENERATED_STALE",
+        ),
+        (
+            "src/ai_trading_system/data/download_publication.py",
+            "AUTHORITY_GENERATED_STALE",
+        ),
+        (
+            "tests/test_devx_006d_report_catalog_flow_authority.py",
+            "AUTHORITY_FILE_MISSING",
+        ),
     ],
 )
 def test_s2a_validator_rejects_changed_source_without_rebuild(
-    monkeypatch: pytest.MonkeyPatch, portable: str
+    monkeypatch: pytest.MonkeyPatch, portable: str, expected_code: str
 ) -> None:
     original = Path.read_bytes
     target = Path(portable).resolve()
@@ -351,9 +361,7 @@ def test_s2a_validator_rejects_changed_source_without_rebuild(
     monkeypatch.setattr(Path, "read_bytes", altered_read)
     with pytest.raises(CompatibilityAuthorityError) as caught:
         validate_repository_authority()
-    # Changed source bytes imply a new content-addressed fragment path. The
-    # read-only builder never installs it, so the contained reader fails first.
-    assert caught.value.code == "AUTHORITY_FILE_MISSING"
+    assert caught.value.code == expected_code
 
 
 def test_legacy_prefix_bytes_equal_exact_start_base() -> None:

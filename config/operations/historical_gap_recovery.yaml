@@ -1,0 +1,61 @@
+schema_version: historical_gap_recovery_policy.v1
+policy_id: OPS-079-HISTORICAL-GAP-RECOVERY
+version: 1.0.0
+status: OWNER_APPROVED_ENFORCED
+owner: Project Owner / operations
+approval_ref: owner_instruction:OPS-079:2026-09-05:continue-blocked-historical-gap-recovery
+
+queue_contract:
+  schema_version: daily_input_capture_recovery_queue.v1
+  validation_schema_version: daily_input_capture_recovery_queue_validation.v1
+  required_validation_status: PASS
+  automatic_execution_allowed: false
+  historical_strict_pit_backfill_allowed: false
+  consumer_cutover_allowed: false
+  old_terminal_state_mutation_allowed: false
+
+output_contract:
+  root: outputs/replays/historical_gap_recovery
+  single_create: true
+  latest_pointer_allowed: false
+  report_registry_publication_allowed: false
+
+allowed_contracts:
+  market_macro:
+    action_status: READY_FOR_MANUAL_RECOVERY
+    recovery_mode: IMMUTABLE_RAW_BACKFILL
+    result_classification: IMMUTABLE_RAW_BACKFILL_EVIDENCE
+    inventory_required: true
+    sec_review_required: false
+  sec_companyfacts:
+    action_status: OWNER_REVIEW_REQUIRED
+    recovery_mode: MANUAL_NON_PIT_RAW_REVIEW
+    result_classification: MANUAL_NON_PIT_RAW_REVIEW
+    inventory_required: false
+    sec_review_required: true
+
+source_contract:
+  discovery_allowed: false
+  latest_allowed: false
+  glob_allowed: false
+  mtime_selection_allowed: false
+  provider_request_allowed: false
+  openai_request_allowed: false
+  market_inventory_status: INCOMPLETE_REPLAY
+  market_inventory_mode: cache-only
+  market_inventory_only: true
+  sec_decision_cutoff_policy: end_of_session_date_utc
+
+safety:
+  strict_pit_eligible: false
+  consumer_cutover_allowed: false
+  canonical_daily_mutation_allowed: false
+  production_effect: none
+  provider_request_performed: false
+  openai_request_performed: false
+  official_weight_write: false
+  active_shadow_weight_write: false
+  broker_action_allowed: false
+  broker_action_taken: false
+  trading_action_taken: false
+

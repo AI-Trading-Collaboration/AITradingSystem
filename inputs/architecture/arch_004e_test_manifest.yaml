@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1358
-test_count: 1298
+test_file_count: 1359
+test_count: 1299
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -8106,7 +8106,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 2835dbac71fa123b9aaf1bc4add7c4608160ec81ded9c5d60f17c54d31f52caf
+  sha256: 1fd173741fc007ff65af45b9c0057025b3b26662702a542fb5a81c7d8bf7743d
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -10442,7 +10442,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006c_compatibility_authority
   path: tests/test_devx_006c_compatibility_authority.py
-  sha256: 835a0e276ff5e08ba511ea3ea9bf25fcc3db12442f9bf7e740008c5a0a10b83c
+  sha256: e01cb98a147b93818490a7fbb526e7c6ce1a0dacb72280bdc2624f2329a448e2
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10458,7 +10458,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 6240bdce9058f077bfd7be024ec76335ec8ee9888978aa4666efca2da12c3670
+  sha256: dcc8455806e585f65d3ebca0eeb53fb80499cc1a6eee15a3e7c3ab9d8c1e5352
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -13073,6 +13073,22 @@ tests:
 - test_id: tests.test_heuristic_governance
   path: tests/test_heuristic_governance.py
   sha256: 5a17263310b6f90d0e62f302321fcb8a94bd3f94b6d1ef13ee9b18cd928b078f
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_historical_gap_recovery
+  path: tests/test_historical_gap_recovery.py
+  sha256: 0953d71f2365fe3212ad518164e229450e14d17b5e5e183ffe718cc57eb9dcc4
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

@@ -10407,6 +10407,39 @@ production、broker、orders、fills、positions 全部为 0。TRADING-2562 仅�
 没有读取市场 cache、运行 canonical DQ 或写 observation。Track B 的
 `CONTINUE_EXISTING_FORWARD_AGING_NO_NEW_EMPIRICAL_RUN` 保持不变，没有新增策略 family 或经验运行。
 
+## OPS-079 historical daily gap recovery executor
+
+OPS-079 把 OPS-070 的人工 recovery queue 接到一个窄化的、single-create 的 evidence executor，
+但没有把 queue 改成自动队列。每次运行必须显式选择一个 recovery id 并绑定 reviewed policy、
+queue PASS validation、owner decision、canonical guards 和分支 source。`market_macro` 只读取明确的
+cache-only `INCOMPLETE_REPLAY` inventory，冻结主/副行情、利率和 download manifest 后计算目标日
+coverage；`sec_companyfacts` 只读取明确的 before/after retained manifests 及 payload bytes，验证
+before capture 不晚于目标日 cutoff、after capture 晚于 cutoff，并形成逐 ticker hash comparison。
+
+```mermaid
+flowchart LR
+    Q["validated recovery queue<br/>manual item"] --> G["owner decision + canonical guards"]
+    I["explicit cache-only inventory"] --> M["market/macro immutable raw evidence"]
+    S["explicit SEC before/after manifests"] --> N["SEC non-PIT hash review"]
+    Q --> M
+    Q --> N
+    G --> M
+    G --> N
+    M --> V["content-derived validator<br/>source/hash/member/guard"]
+    N --> V
+    V --> E["isolated bundle<br/>production effect none"]
+    E -.- X["no canonical history / strict PIT / consumer cutover"]
+```
+
+Producer 与 validator 固定 `automatic_execution_allowed=false`、`strict_pit_eligible=false`、
+`consumer_cutover_allowed=false`；canonical gap ledger、queue、validation 和 latest daily state 在前后
+必须 byte-identical。market/macro PASS 只是 `IMMUTABLE_RAW_BACKFILL_EVIDENCE`，SEC PASS 只是
+`MANUAL_NON_PIT_RAW_REVIEW`；后一份 SEC capture 即使与前一份所有 payload 相同，因其在目标日
+decision cutoff 之后取得，`contemporaneous_evidence_status` 仍为 `MISSING`。FMP PIT、valuation 和
+official source 的 `HISTORICAL_RECAPTURE_FORBIDDEN` item 不能进入 executor，也不得从 isolated bundle
+生成 DQ、score、position、Decision Snapshot、Dashboard、Reader Brief、weekly、governance、
+promotion、backtest、weight 或 broker/trading 输出。
+
 ## Coordinator integration publication fence（DEVX-009）
 
 共享 task source、generated/current authority、formal Full 与 `main` 发布现在由一个

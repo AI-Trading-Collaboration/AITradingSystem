@@ -3904,7 +3904,8 @@ OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION = (
     "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1"
 )
 TRADING_2564_S2A_SECTION = "phase_trading_2564_s2a_named_immutable_snapshot_v1"
-LATEST_COMPATIBILITY_SECTION = TRADING_2564_S2A_SECTION
+OPS_079_HISTORICAL_GAP_RECOVERY_SECTION = "phase_ops_079_historical_daily_gap_recovery_executor_v1"
+LATEST_COMPATIBILITY_SECTION = OPS_079_HISTORICAL_GAP_RECOVERY_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -13075,6 +13076,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION,
         OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION,
         TRADING_2564_S2A_SECTION,
+        OPS_079_HISTORICAL_GAP_RECOVERY_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13171,6 +13173,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION,
         OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION,
         TRADING_2564_S2A_SECTION,
+        OPS_079_HISTORICAL_GAP_RECOVERY_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -14111,7 +14114,38 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2564_S2A_SECTION in baseline:
+    if OPS_079_HISTORICAL_GAP_RECOVERY_SECTION in baseline:
+        phase = baseline[OPS_079_HISTORICAL_GAP_RECOVERY_SECTION]
+        current_superseded_paths = frozenset(
+            str(path) for path in phase["superseded_live_source_paths"]
+        )
+        assert (
+            _latest_active_source_mismatches(OPS_079_HISTORICAL_GAP_RECOVERY_SECTION)
+            <= current_superseded_paths
+        )
+        inherited_superseded_paths = frozenset(
+            str(path)
+            for section in (
+                DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION,
+                DEVX_009_PUBLICATION_FENCE_SECTION,
+                TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION,
+                PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION,
+                DEVX_011_WORKFLOW_HEALTH_SECTION,
+                DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION,
+                RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION,
+                OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION,
+                OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION,
+                TRADING_2564_S2A_SECTION,
+            )
+            for path in baseline[section]["superseded_live_source_paths"]
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2504_qqq_options_owner_decision_manifest_all_current_authority_paths()
+            | inherited_superseded_paths
+            | current_superseded_paths
+        )
+        authority_section = OPS_079_HISTORICAL_GAP_RECOVERY_SECTION
+    elif TRADING_2564_S2A_SECTION in baseline:
         phase = baseline[TRADING_2564_S2A_SECTION]
         current_superseded_paths = frozenset(
             str(path) for path in phase["superseded_live_source_paths"]
@@ -24667,7 +24701,7 @@ def test_devx_011_governed_workflow_health_authority_remains_historical() -> Non
     for source in phase["sources"]:
         assert source["hash_normalization"] == "git_eol_lf"
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
-    assert phase["report_catalog_flow_successor"]["entry_count"] == 3152
+    assert phase["report_catalog_flow_successor"]["entry_count"] == 3156
     assert phase["report_catalog_flow_successor"]["fragment_count"] == 192
     assert phase["safety"] == {
         "market_cache_read": False,
@@ -24920,7 +24954,9 @@ def test_ops_078_is_retained_daily_automation_isolation_authority() -> None:
 
 def test_trading_2564_s2a_is_latest_named_snapshot_hash_authority() -> None:
     baseline = _compatibility_baseline()
-    assert next(reversed(baseline)) == TRADING_2564_S2A_SECTION
+    assert list(baseline).index(TRADING_2564_S2A_SECTION) < list(baseline).index(
+        OPS_079_HISTORICAL_GAP_RECOVERY_SECTION
+    )
     phase = baseline[TRADING_2564_S2A_SECTION]
     assert phase["schema_version"] == "trading_2564_s2a_named_immutable_snapshot.v1"
     assert phase["supersession"]["historical_hashes_rewritten"] is False
@@ -24937,6 +24973,58 @@ def test_trading_2564_s2a_is_latest_named_snapshot_hash_authority() -> None:
     assert phase["safety"]["dq_validation_executed"] is False
     assert phase["safety"]["consumer_cutover_allowed"] is False
     assert phase["safety"]["dispatch_allowed"] is False
+
+
+def test_ops_079_is_latest_historical_gap_recovery_hash_authority() -> None:
+    baseline = _compatibility_baseline()
+    assert next(reversed(baseline)) == OPS_079_HISTORICAL_GAP_RECOVERY_SECTION
+    phase = baseline[OPS_079_HISTORICAL_GAP_RECOVERY_SECTION]
+    assert phase["schema_version"] == ("ops_079_historical_daily_gap_recovery_executor.v1")
+    assert phase["task_id"] == "OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR"
+    assert phase["status"] == "VALIDATING"
+    assert phase["owner_decision"] == (
+        "owner_instruction:OPS-079:2026-09-05:" "continue-blocked-historical-gap-recovery"
+    )
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2564_S2A_SECTION,
+        "current_hash_authority": f"{OPS_079_HISTORICAL_GAP_RECOVERY_SECTION}.sources",
+    }
+    assert phase["historical_gap_contract"] == {
+        "queue_execution_mode": "MANUAL_SINGLE_ITEM_ONLY",
+        "allowed_components": ["market_macro", "sec_companyfacts"],
+        "market_source_mode": "EXPLICIT_CACHE_ONLY_INVENTORY",
+        "sec_source_mode": "EXPLICIT_BEFORE_AFTER_NON_PIT_REVIEW",
+        "output_mode": "ISOLATED_SINGLE_CREATE",
+        "content_derived_validation_required": True,
+        "canonical_guard_identity_required": True,
+        "historical_strict_pit_backfill_allowed": False,
+        "consumer_cutover_allowed": False,
+    }
+    paths = [str(source["path"]) for source in phase["sources"]]
+    assert paths == sorted(set(paths), key=str.casefold)
+    assert set(paths) == set(phase["superseded_live_source_paths"])
+    assert {
+        "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+        "config/operations/historical_gap_recovery.yaml",
+        "docs/schema/historical_gap_recovery.v1.schema.json",
+        "src/ai_trading_system/historical_gap_recovery.py",
+        "tests/test_historical_gap_recovery.py",
+    } <= set(paths)
+    for source in phase["sources"]:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["safety"] == {
+        "canonical_history_mutation_allowed": False,
+        "provider_request_allowed": False,
+        "openai_request_allowed": False,
+        "official_or_active_shadow_weight_write": False,
+        "broker_or_trading_action": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+    assert phase["production_effect"] == "none"
+    assert phase["broker_action"] == "none"
 
 
 def test_trading_2464_decision_pack_is_append_only_current_hash_authority() -> None:

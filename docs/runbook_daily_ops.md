@@ -83,6 +83,32 @@ SEC 需要 owner 复核，FMP PIT/valuation 与 official sources 保持
 `HISTORICAL_RECAPTURE_FORBIDDEN`。queue validator PASS 也不授权自动请求 provider、strict PIT、
 DQ、score 或 consumer cutover。
 
+OPS-079 为 queue 增加人工、单项、隔离的执行器。先固定 queue/validation、recovery id、owner
+decision 和 canonical guard，再按 component 选择且只选择一种 source contract：
+
+```text
+aits ops recover-historical-gap
+  --queue-path <exact-recovery-queue.json>
+  --queue-validation-path <exact-recovery-queue-validation.json>
+  --recovery-id <daily-input-recovery-id>
+  --owner-decision-id <owner-decision-id>
+  --guard-path <canonical-gap-ledger>
+  --guard-path <canonical-recovery-queue>
+  --guard-path <canonical-queue-validation>
+  --inventory-bundle <explicit-cache-only-inventory>             # market_macro only
+  --sec-before-manifest <explicit-before-capture-manifest>       # SEC only
+  --sec-after-manifest <explicit-after-capture-manifest>         # SEC only
+```
+
+生成后必须用 `aits ops validate-historical-gap` 传入同一 queue、validation、recovery id、owner
+decision、guards 和 branch source 复验。输出只在
+`outputs/replays/historical_gap_recovery/<session>/<recovery-id>/` single-create；既有目录不覆盖。
+market/macro PASS 只表示明确 inventory 中该日行情/利率 frozen facts 可复核；SEC PASS 只表示
+before/after payload matrix 可复核。两者均不是 strict PIT 或 canonical daily repair，不能进入 DQ、
+score、position、Decision Snapshot、Dashboard、Reader Brief、weekly、governance、promotion、
+backtest、weights 或 broker/trading。`INSUFFICIENT_DATA/HISTORICAL_RECAPTURE_FORBIDDEN` item 仍
+保持不可执行。
+
 Daily executor 按 `scheduled_tasks_v4` 的显式 dependency DAG 运行。`market_macro` 只控制
 `validate_data` branch，`fmp_forward_pit` 只控制 PIT branch，`sec_companyfacts` 只控制 SEC branch；
 `score_daily` 必须同时等到 strict DQ/PIT/SEC、`fmp_valuation` 和
