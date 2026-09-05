@@ -63,8 +63,8 @@ def test_repository_canonical_registry_is_active_and_self_hosted() -> None:
     assert registry.index["source_of_truth"] == CANONICAL_SOURCE
     assert registry.index["cutover_performed"] is True
     assert registry.index["legacy_markdown_writable"] is False
-    # TRADING-2564 adds one long-term capability umbrella, not empirical evidence.
-    assert registry.index["task_count"] == len(registry.fragments) == 1064
+    # OPS-079 adds one governed historical-gap recovery task, not empirical evidence.
+    assert registry.index["task_count"] == len(registry.fragments) == 1065
     assert registry.index["missing_task_count"] == 0
     assert registry.index["duplicate_task_count"] == 0
     assert registry.index["governance_cycle_count"] >= 2

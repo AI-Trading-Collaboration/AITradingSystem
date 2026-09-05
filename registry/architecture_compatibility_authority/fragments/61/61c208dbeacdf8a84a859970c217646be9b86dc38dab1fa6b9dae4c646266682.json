@@ -100,7 +100,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "b41f73b7f6d28441799da789b572110b37f0b99993374efd261421447dabdb60"
+        "sha256": "deafc656f6de86ec533a74009ac319ccd5c51fece8fbf604b5c0df10a531ef19"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -193,5 +193,5 @@
     "task_id": "OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR"
   },
   "section_id": "phase_ops_079_historical_daily_gap_recovery_executor_v1",
-  "section_sha256": "1fbb28e5a187a1e9972e526b5cc5ed5b9f5fd332985908f91c706cd826cc8956"
+  "section_sha256": "61c208dbeacdf8a84a859970c217646be9b86dc38dab1fa6b9dae4c646266682"
 }

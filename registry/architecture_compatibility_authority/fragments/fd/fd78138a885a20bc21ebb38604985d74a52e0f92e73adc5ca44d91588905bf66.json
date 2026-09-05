@@ -123,7 +123,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_005_s5_task_source_cutover.py",
-        "sha256": "826fee9f1a83333621c663944f73e1df66815d6aa966945279d8c092f8cb78d2"
+        "sha256": "c3218c15b1a8d9f0c8c64d03ab5ff4332c26f6c0c184973cc9ec42d519cb3b0e"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -178,5 +178,5 @@
     "task_id": "RISK-012"
   },
   "section_id": "phase_risk_012_unknown_risk_event_id_fail_closed_v1",
-  "section_sha256": "4968b6a8a5bd61a936da26c455e55fc7c6a008b7d4a77c8b5797abdbbccc1e6f"
+  "section_sha256": "fd78138a885a20bc21ebb38604985d74a52e0f92e73adc5ca44d91588905bf66"
 }
