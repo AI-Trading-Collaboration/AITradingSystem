@@ -37,12 +37,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "0364acdd0e740b65c36455b9932e58b374b76a0b957aa755704d12eb51b8e0e0"
+        "sha256": "ca8259cd500555b2f1452c51a93cd8f4319fcf6258e9c17e0be866242bee157e"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "registry/development_tasks/c8/c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml",
-        "sha256": "bd317a7297bef85ba90a60348581669a66c53798380fcd9313401a01d525e6d6"
+        "sha256": "aae23074515f8c1228a589dff28650cdd31a92ca7445171dfbed765dcc9b2ef0"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -62,7 +62,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "9dcdf4110d0744afaa6fbea1e2c784449f8118d45ee07c218c976745d21f18bc"
+        "sha256": "1a6bbb2a9a366e265daed295e7545d563dcee133f0ac631bd7c5647f0a9f41f8"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -101,5 +101,5 @@
     "task_id": "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1"
   },
   "section_id": "phase_trading_2564_s2a_named_immutable_snapshot_v1",
-  "section_sha256": "6fdfe26e24d06abeadf4df6fe2576d4b6106ef7a39301be3346dd083cbc6f390"
+  "section_sha256": "b339c164b33dc5061bbfa057aed10c602a9a92ba69dfd78f66d54016b083fd88"
 }

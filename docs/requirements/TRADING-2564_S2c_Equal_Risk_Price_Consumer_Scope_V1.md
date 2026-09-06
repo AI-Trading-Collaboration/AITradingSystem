@@ -169,3 +169,40 @@ source/final事务顺序绑定最终tree并运行actual E2E、正式tiers及Full
 S1/S2a/S2b已工程发布，S2c.1尚在验证，S2c.2/S3待完成。历史task行与研究证据评估时钟保留，
 不把当前工程检查时间当作新研究证据；不新增页面组件、schema或投资结论。源码提交后的实际
 Atlas生成仍绑定该精确提交，不以当前说明冒称S2c.1正式发布终态。
+
+## 8. 首次最终候选与单项架构断言修复
+
+源码提交d94dd79675d902d3630820f108b84a4a7f0766d3已保留，parent/main仍为本文件冻结的
+5c20c8fc3655e8a6e62a494122b785337a6c81de。提交前shared151 PASS、Atlas状态精确2 PASS、
+Black/Ruff及contract strict mypy PASS；63个no-renames归因路径、49个rename-aware文件。
+四生成与随后精确提交绑定的五生成通过；source事务按既有行政FAILED/RELEASED交接，Full=0。
+final v1首次创建前因未登记的atlas-live-page名称被拒绝且未创建事务/lease，核对既有policy后
+以正确atlas-authority创建，不改门禁。相关创建前拒绝已保留在final_admission_v1.json。
+
+最终候选实际26项E2E全部PASS（602.26秒，16/loadfile），parent receipts43份，run25/verify18；
+该批synthetic canonical DQ21，所有18次verify DQ0，真实市场DQ0。独立抽查T−1、T−2和缺TQQQ
+三条完整链无阻断，57/8身份、旧接口拒绝/新价格接口成功、原共同窗口、bytes、context与strict
+拒绝均保留。证据仅适用于该候选，不宣称五候选preview、feature readiness或OOS已实现。
+
+首轮architecture-fitness为1055 PASS/1 FAIL（runner1682.60秒，16/loadfile），失败唯一为
+test_devx_011_governed_workflow_health_authority_remains_historical：其live RCF successor
+仍断言3162，而当前官方1373+564+1227=3164；fragment_count仍192。builder明确从当前RCF
+index汇总该字段，非冻结历史合同。独立只读复核确认应只修正精确计数及对应两条新增entry注释，
+保留workflow_health_contract、safety、Owner/status、192与所有历史合同，不改builder/策略/DQ。
+
+失败summary、log与brief原样保留在outputs/validation_runtime/
+trading-2564-s2c-final-v1-architecture-20260907/；summary SHA为
+7ea9835b243df86e70cf07c90da0433793b1284b062a331203bd00013ad7b556。
+final v1已按失败终态释放，未运行后续三tiers或Full，未移动main或push。它不是failed Full parent；
+后续正式复验不能伪造Full parent或把本轮FAIL替换成PASS。
+
+当前继续同root/branch，从d94dd796进入source v2：
+trading-2564-s2c-price-scope-source-20260907-v2，lease-649ad271903cd7236086，LANE预检PASS。
+canonical追加第22事件/cycle487，原21事件不改写且三条完整需求引用保留。
+本次只修上述测试计数/注释与必要任务/需求及官方生成物。前置共享回归在原151项上明确加入
+DEVX011、DEVX012 workflow-health和PROD004 cumulative-PIT authority三个精确测试，共154项。
+这也作为既有S5实测提效的前置覆盖漏项记录，不改变tier组成、并行配置或Full门槛。
+
+通过前置复验后继续既有source/final顺序，绑定新候选、实际E2E和全部正式验证；旧d94dd796
+的actual PASS只作为保留证据。S2c.2接续只读笔记位于当前runtime root，尚未实施或授权真实采集。
+本修复及当前工程波的真实研究/DQ/观察/数据/交易动作仍全0，heartbeat PAUSED，旧一次授权不复用。

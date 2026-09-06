@@ -24763,9 +24763,9 @@ def test_devx_011_governed_workflow_health_authority_remains_historical() -> Non
     for source in phase["sources"]:
         assert source["hash_normalization"] == "git_eol_lf"
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
-    # DEVX-014 adds four system-flow blocks; the historical workflow contract
-    # remains unchanged while its generated RCF successor metadata advances.
-    assert phase["report_catalog_flow_successor"]["entry_count"] == 3162
+    # S2c adds one artifact-catalog and one system-flow entry. The historical
+    # workflow contract stays frozen; only the live successor count advances.
+    assert phase["report_catalog_flow_successor"]["entry_count"] == 3164
     assert phase["report_catalog_flow_successor"]["fragment_count"] == 192
     assert phase["safety"] == {
         "market_cache_read": False,
