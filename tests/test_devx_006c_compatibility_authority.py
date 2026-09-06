@@ -43,6 +43,43 @@ OPS_077_SECTION = "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1"
 OPS_078_SECTION = "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1"
 TRADING_2564_S2A_SECTION = "phase_trading_2564_s2a_named_immutable_snapshot_v1"
 OPS_079_SECTION = "phase_ops_079_historical_daily_gap_recovery_executor_v1"
+DEVX_014_SECTION = "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1"
+DEVX_014_SOURCE_PATHS = frozenset(
+    {
+        "config/architecture/arch_005_source_preservation.yaml",
+        "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+        "docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md",
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "docs/task_register_completed.md",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "inputs/architecture/arch_005_s5_consumer_inventory.yaml",
+        "inputs/architecture/arch_005_task_registry_index.yaml",
+        "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+        "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+        (
+            "registry/development_tasks/7a/"
+            "7aa82ac8ab6fa54a137b6972521b5ba8c7f1d0c4033f6fe84dac77fa2b5267e1.yaml"
+        ),
+        "scripts/architecture_arch005_lease_arbiter.py",
+        "scripts/architecture_arch005_source_preservation.py",
+        "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "src/ai_trading_system/platform/architecture/lease_arbiter.py",
+        "src/ai_trading_system/platform/architecture/parallel_control_kernel.py",
+        "src/ai_trading_system/platform/architecture/source_preservation.py",
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_arch_005_lease_arbiter.py",
+        "tests/test_arch_005_s2_kernel.py",
+        "tests/test_arch_005_s5_task_source_cutover.py",
+        "tests/test_arch_005_source_preservation.py",
+        "tests/test_devx_006c_compatibility_authority.py",
+        "tests/test_devx_006d_report_catalog_flow_authority.py",
+    }
+)
 TRADING_2564_S2A_SOURCE_PATHS = frozenset(
     {
         "src/ai_trading_system/data/immutable_publish.py",
@@ -164,12 +201,12 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 321
-    assert result["fragment_count"] == 15
+    assert len(merged) == 322
+    assert result["fragment_count"] == 16
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == OPS_079_SECTION
+    assert next(reversed(merged)) == DEVX_014_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
@@ -262,6 +299,144 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
         "legacy_append_allowed": False,
         "rollback_mode": "FROZEN_LEGACY_PREFIX_ONLY",
     }
+
+
+def _assert_devx_014_source_closure(phase: dict[str, Any]) -> None:
+    paths = [row["path"] for row in phase["sources"]]
+    assert len(DEVX_014_SOURCE_PATHS) == 29
+    assert paths == sorted(DEVX_014_SOURCE_PATHS, key=str.casefold)
+    assert phase["superseded_live_source_paths"] == paths
+    for row in phase["sources"]:
+        assert set(row) == {"path", "sha256", "hash_normalization"}
+        assert row["hash_normalization"] == "git_eol_lf"
+        content = Path(row["path"]).read_bytes().replace(b"\r\n", b"\n")
+        assert hashlib.sha256(content).hexdigest() == row["sha256"], row["path"]
+
+
+def test_devx_014_is_exact_source_preservation_and_os_arbiter_successor() -> None:
+    merged = load_compatibility_authority()
+    assert next(reversed(merged)) == DEVX_014_SECTION
+    assert list(merged).index(DEVX_014_SECTION) == list(merged).index(OPS_079_SECTION) + 1
+    phase = merged[DEVX_014_SECTION]
+    assert set(phase) == {
+        "schema_version",
+        "task_id",
+        "status",
+        "owner_decision",
+        "authority_contract",
+        "sources",
+        "superseded_live_source_paths",
+        "supersession",
+        "source_preservation_contract",
+        "os_arbiter_contract",
+        "migration_contract",
+        "safety",
+        "production_effect",
+        "broker_action",
+    }
+    assert phase["schema_version"] == "devx_014_dirty_source_preservation_and_os_lease_arbiter.v1"
+    assert phase["task_id"] == "DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1"
+    assert phase["status"] == "VALIDATING"
+    assert phase["owner_decision"] == "owner_instruction:DEVX-014:2026-09-06:arbiter-safety-fix"
+    assert phase["authority_contract"] == load_compatibility_policy()["contract"]
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": OPS_079_SECTION,
+        "current_hash_authority": f"{DEVX_014_SECTION}.sources",
+    }
+    _assert_devx_014_source_closure(phase)
+    assert phase["source_preservation_contract"] == {
+        "snapshot_profile": "RAW_BYTES_SOURCE_ONLY_UNVALIDATED",
+        "implementation_profile": "COMMITTED_SOURCE_GIT_EOL_LF",
+        "tracked_unstaged_regular_modified_only": True,
+        "raw_source_bytes_preserved": True,
+        "real_index_and_worktree_unchanged": True,
+        "canonical_history_append_only": True,
+        "create_only_snapshot_ref": True,
+        "ordinary_integration_required": True,
+        "git_configuration_profile": "source_preservation_git_configuration.v1",
+        "trusted_and_source_worktree_config_checked": True,
+        "configuration_drift_before_mutation_rejected": True,
+        "configuration_raw_values_retained": False,
+    }
+    assert phase["os_arbiter_contract"] == {
+        "protocol": "execution_lease_os_arbiter.v2",
+        "sole_existing_arbiter": True,
+        "stable_regular_file": True,
+        "normal_anchor_rename_or_unlink_allowed": False,
+        "live_owner_ttl_takeover_allowed": False,
+        "owner_safe_handle_release": True,
+        "logical_lease_contract_changed": False,
+    }
+    assert phase["migration_contract"] == {
+        "legacy_conversion_mode": "EXPLICIT_QUIESCENT_ONLY",
+        "create_only_anchor": True,
+        "partial_failure_blocks_replay": True,
+        "arbitrary_store_target_allowed": False,
+        "implementation_profiles": {
+            "current_root_bootstrap": "REVIEWED_WORKING_SOURCE_ENGINEERING_ONLY",
+            "published_source_migration": "COMMITTED_PUBLISHED_SOURCE_GIT_EOL_LF",
+        },
+    }
+    assert phase["safety"] == {
+        "snapshot_grants_task_source_write": False,
+        "snapshot_grants_generator": False,
+        "snapshot_grants_formal_validation": False,
+        "snapshot_grants_full": False,
+        "snapshot_grants_main_ff": False,
+        "snapshot_grants_push": False,
+        "snapshot_grants_research": False,
+        "snapshot_grants_data_action": False,
+        "snapshot_grants_trading": False,
+        "ordinary_publication_fence_changed": False,
+        "research_or_data_authorization_expanded": False,
+        "broker_or_trading_authorization_expanded": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+    assert phase["production_effect"] == phase["broker_action"] == "none"
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["extra_source", "extra_in_both", "missing_source", "missing_from_both", "wrong_hash"],
+)
+def test_devx_014_source_closure_rejects_unreviewed_changes(mutation: str) -> None:
+    phase = deepcopy(load_compatibility_authority()[DEVX_014_SECTION])
+    if mutation in {"extra_source", "extra_in_both"}:
+        phase["sources"].append(
+            {"path": "unreviewed.py", "sha256": "0" * 64, "hash_normalization": "git_eol_lf"}
+        )
+        if mutation == "extra_in_both":
+            phase["superseded_live_source_paths"].append("unreviewed.py")
+    elif mutation == "missing_source":
+        phase["sources"].pop()
+    elif mutation == "missing_from_both":
+        removed = "src/ai_trading_system/platform/architecture/parallel_control_kernel.py"
+        phase["sources"] = [row for row in phase["sources"] if row["path"] != removed]
+        phase["superseded_live_source_paths"] = [
+            path for path in phase["superseded_live_source_paths"] if path != removed
+        ]
+    else:
+        phase["sources"][0]["sha256"] = "0" * 64
+    with pytest.raises(AssertionError):
+        _assert_devx_014_source_closure(phase)
+
+
+def test_devx_014_validator_rejects_changed_source_without_rebuild(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target = Path("src/ai_trading_system/platform/architecture/source_preservation.py").resolve()
+    original = Path.read_bytes
+
+    def altered_read(path: Path) -> bytes:
+        content = original(path)
+        return content + b"\n# synthetic DEVX-014 source drift\n" if path == target else content
+
+    monkeypatch.setattr(Path, "read_bytes", altered_read)
+    with pytest.raises(CompatibilityAuthorityError) as caught:
+        validate_repository_authority()
+    assert caught.value.code == "AUTHORITY_FILE_MISSING"
 
 
 def _assert_s2a_source_closure(phase: dict[str, Any]) -> None:

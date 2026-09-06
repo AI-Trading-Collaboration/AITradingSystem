@@ -924,6 +924,13 @@ def build_repository_authority(
         section_id, section = _ops_079_section(root, policy=policy)
         relative, record, content = render_fragment(section_id=section_id, section=section)
         rendered_fragments.append((section_id, relative, record, content))
+    devx_014_requirement = (
+        root / "docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md"
+    )
+    if devx_014_requirement.exists():
+        section_id, section = _devx_014_section(root, policy=policy)
+        relative, record, content = render_fragment(section_id=section_id, section=section)
+        rendered_fragments.append((section_id, relative, record, content))
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -2637,6 +2644,121 @@ def _ops_079_section(
             "openai_request_allowed": False,
             "official_or_active_shadow_weight_write": False,
             "broker_or_trading_action": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _devx_014_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    # DEVX-014 owns this exact source closure in both source and final waves.
+    # Retain the C/D/S5 frozen prefix and OPS-079 contract unchanged; generated
+    # compatibility fragments/index never enter their own source dependency set.
+    section_id = "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1"
+    source_paths = sorted(
+        [
+            "config/architecture/arch_005_source_preservation.yaml",
+            "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+            "docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md",
+            "docs/system_flow.md",
+            "docs/task_register.md",
+            "docs/task_register_completed.md",
+            "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+            "inputs/architecture/arch_004e_architecture_fitness.yaml",
+            "inputs/architecture/arch_004e_module_manifest.yaml",
+            "inputs/architecture/arch_004e_test_manifest.yaml",
+            "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+            "inputs/architecture/arch_005_s5_consumer_inventory.yaml",
+            "inputs/architecture/arch_005_task_registry_index.yaml",
+            "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+            "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+            (
+                "registry/development_tasks/7a/"
+                "7aa82ac8ab6fa54a137b6972521b5ba8c7f1d0c4033f6fe84dac77fa2b5267e1.yaml"
+            ),
+            "scripts/architecture_arch005_lease_arbiter.py",
+            "scripts/architecture_arch005_source_preservation.py",
+            "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+            "src/ai_trading_system/platform/architecture/lease_arbiter.py",
+            "src/ai_trading_system/platform/architecture/parallel_control_kernel.py",
+            "src/ai_trading_system/platform/architecture/source_preservation.py",
+            "tests/test_arch_004_refactor_policy.py",
+            "tests/test_arch_005_lease_arbiter.py",
+            "tests/test_arch_005_s2_kernel.py",
+            "tests/test_arch_005_s5_task_source_cutover.py",
+            "tests/test_arch_005_source_preservation.py",
+            "tests/test_devx_006c_compatibility_authority.py",
+            "tests/test_devx_006d_report_catalog_flow_authority.py",
+        ],
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "devx_014_dirty_source_preservation_and_os_lease_arbiter.v1",
+        "task_id": "DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1",
+        "status": "VALIDATING",
+        "owner_decision": "owner_instruction:DEVX-014:2026-09-06:arbiter-safety-fix",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_ops_079_historical_daily_gap_recovery_executor_v1"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "source_preservation_contract": {
+            "snapshot_profile": "RAW_BYTES_SOURCE_ONLY_UNVALIDATED",
+            "implementation_profile": "COMMITTED_SOURCE_GIT_EOL_LF",
+            "tracked_unstaged_regular_modified_only": True,
+            "raw_source_bytes_preserved": True,
+            "real_index_and_worktree_unchanged": True,
+            "canonical_history_append_only": True,
+            "create_only_snapshot_ref": True,
+            "ordinary_integration_required": True,
+            "git_configuration_profile": "source_preservation_git_configuration.v1",
+            "trusted_and_source_worktree_config_checked": True,
+            "configuration_drift_before_mutation_rejected": True,
+            "configuration_raw_values_retained": False,
+        },
+        "os_arbiter_contract": {
+            "protocol": "execution_lease_os_arbiter.v2",
+            "sole_existing_arbiter": True,
+            "stable_regular_file": True,
+            "normal_anchor_rename_or_unlink_allowed": False,
+            "live_owner_ttl_takeover_allowed": False,
+            "owner_safe_handle_release": True,
+            "logical_lease_contract_changed": False,
+        },
+        "migration_contract": {
+            "legacy_conversion_mode": "EXPLICIT_QUIESCENT_ONLY",
+            "create_only_anchor": True,
+            "partial_failure_blocks_replay": True,
+            "arbitrary_store_target_allowed": False,
+            "implementation_profiles": {
+                "current_root_bootstrap": "REVIEWED_WORKING_SOURCE_ENGINEERING_ONLY",
+                "published_source_migration": "COMMITTED_PUBLISHED_SOURCE_GIT_EOL_LF",
+            },
+        },
+        "safety": {
+            "snapshot_grants_task_source_write": False,
+            "snapshot_grants_generator": False,
+            "snapshot_grants_formal_validation": False,
+            "snapshot_grants_full": False,
+            "snapshot_grants_main_ff": False,
+            "snapshot_grants_push": False,
+            "snapshot_grants_research": False,
+            "snapshot_grants_data_action": False,
+            "snapshot_grants_trading": False,
+            "ordinary_publication_fence_changed": False,
+            "research_or_data_authorization_expanded": False,
+            "broker_or_trading_authorization_expanded": False,
             "production_effect": "none",
             "broker_action": "none",
         },

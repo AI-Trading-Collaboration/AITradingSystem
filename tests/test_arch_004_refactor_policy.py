@@ -3905,7 +3905,10 @@ OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION = (
 )
 TRADING_2564_S2A_SECTION = "phase_trading_2564_s2a_named_immutable_snapshot_v1"
 OPS_079_HISTORICAL_GAP_RECOVERY_SECTION = "phase_ops_079_historical_daily_gap_recovery_executor_v1"
-LATEST_COMPATIBILITY_SECTION = OPS_079_HISTORICAL_GAP_RECOVERY_SECTION
+DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION = (
+    "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1"
+)
+LATEST_COMPATIBILITY_SECTION = DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -13077,6 +13080,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION,
         TRADING_2564_S2A_SECTION,
         OPS_079_HISTORICAL_GAP_RECOVERY_SECTION,
+        DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13174,6 +13178,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION,
         TRADING_2564_S2A_SECTION,
         OPS_079_HISTORICAL_GAP_RECOVERY_SECTION,
+        DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -14114,7 +14119,39 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if OPS_079_HISTORICAL_GAP_RECOVERY_SECTION in baseline:
+    if DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION in baseline:
+        phase = baseline[DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION]
+        current_superseded_paths = frozenset(
+            str(path) for path in phase["superseded_live_source_paths"]
+        )
+        assert (
+            _latest_active_source_mismatches(DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION)
+            <= current_superseded_paths
+        )
+        inherited_superseded_paths = frozenset(
+            str(path)
+            for section in (
+                DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION,
+                DEVX_009_PUBLICATION_FENCE_SECTION,
+                TRADING_2542D_DQ_PIT_SAMPLE_SEMANTICS_SECTION,
+                PROD_004_PIT_CUMULATIVE_CONSUMPTION_SECTION,
+                DEVX_011_WORKFLOW_HEALTH_SECTION,
+                DEVX_012_WORKFLOW_HEALTH_AUTOMATIC_CYCLE_SECTION,
+                RISK_012_UNKNOWN_RISK_EVENT_ID_FAIL_CLOSED_SECTION,
+                OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_SECTION,
+                OPS_078_DAILY_AUTOMATION_ISOLATION_SECTION,
+                TRADING_2564_S2A_SECTION,
+                OPS_079_HISTORICAL_GAP_RECOVERY_SECTION,
+            )
+            for path in baseline[section]["superseded_live_source_paths"]
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2504_qqq_options_owner_decision_manifest_all_current_authority_paths()
+            | inherited_superseded_paths
+            | current_superseded_paths
+        )
+        authority_section = DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION
+    elif OPS_079_HISTORICAL_GAP_RECOVERY_SECTION in baseline:
         phase = baseline[OPS_079_HISTORICAL_GAP_RECOVERY_SECTION]
         current_superseded_paths = frozenset(
             str(path) for path in phase["superseded_live_source_paths"]
@@ -24975,9 +25012,41 @@ def test_trading_2564_s2a_is_latest_named_snapshot_hash_authority() -> None:
     assert phase["safety"]["dispatch_allowed"] is False
 
 
-def test_ops_079_is_latest_historical_gap_recovery_hash_authority() -> None:
+def test_devx_014_is_latest_source_preservation_and_os_arbiter_hash_authority() -> None:
     baseline = _compatibility_baseline()
-    assert next(reversed(baseline)) == OPS_079_HISTORICAL_GAP_RECOVERY_SECTION
+    section_id = DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION
+    assert next(reversed(baseline)) == section_id
+    phase = baseline[section_id]
+    assert phase["schema_version"] == "devx_014_dirty_source_preservation_and_os_lease_arbiter.v1"
+    assert phase["task_id"] == "DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1"
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": OPS_079_HISTORICAL_GAP_RECOVERY_SECTION,
+        "current_hash_authority": f"{section_id}.sources",
+    }
+    paths = [str(source["path"]) for source in phase["sources"]]
+    assert len(paths) == 29
+    assert paths == sorted(set(paths), key=str.casefold)
+    assert phase["superseded_live_source_paths"] == paths
+    assert _latest_active_source_mismatches(section_id) <= frozenset(paths)
+    for source in phase["sources"]:
+        assert source["hash_normalization"] == "git_eol_lf"
+        # The latest phase must match physical source bytes, not be excused by
+        # the historical supersession path used for retained predecessor rows.
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["source_preservation_contract"]["ordinary_integration_required"] is True
+    assert phase["os_arbiter_contract"]["live_owner_ttl_takeover_allowed"] is False
+    assert phase["migration_contract"]["arbitrary_store_target_allowed"] is False
+    assert phase["safety"]["ordinary_publication_fence_changed"] is False
+    assert phase["safety"]["snapshot_grants_full"] is False
+    assert phase["production_effect"] == phase["broker_action"] == "none"
+
+
+def test_ops_079_retains_historical_gap_recovery_hash_authority() -> None:
+    baseline = _compatibility_baseline()
+    assert list(baseline).index(OPS_079_HISTORICAL_GAP_RECOVERY_SECTION) < list(baseline).index(
+        DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION
+    )
     phase = baseline[OPS_079_HISTORICAL_GAP_RECOVERY_SECTION]
     assert phase["schema_version"] == ("ops_079_historical_daily_gap_recovery_executor.v1")
     assert phase["task_id"] == "OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR"

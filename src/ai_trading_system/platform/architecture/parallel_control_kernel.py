@@ -2,17 +2,15 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
-import uuid
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from pathlib import Path
-from time import sleep
 from typing import Any, cast
 
+from ai_trading_system.platform.architecture.lease_arbiter import hold_lease_arbiter
 from ai_trading_system.platform.architecture.parallel_control import (
     ChangeManifest,
     ContractAccess,
@@ -31,10 +29,6 @@ LEASE_REPLAY_SCHEMA_VERSION = "execution_lease_replay.v1"
 
 _HARD_DEPENDENCY_TYPES = frozenset({"blocks_start", "blocks_completion"})
 _DEPENDENCY_TYPES = _HARD_DEPENDENCY_TYPES | frozenset({"parent_child", "informational"})
-# Windows can transiently deny readers while the atomic owner file is being
-# replaced. A short bounded stabilization window preserves fail-closed locking.
-_ARBITER_OWNER_READ_ATTEMPTS = 8
-_ARBITER_OWNER_READ_RETRY_SECONDS = 0.01
 _LEASE_TRANSITIONS: dict[str | None, frozenset[str]] = {
     None: frozenset({"REQUESTED"}),
     "REQUESTED": frozenset({"ACTIVE", "BLOCKED"}),
@@ -617,9 +611,7 @@ def replay_lease_events(
                 else None
             )
         if len(seen) != len(records):
-            issues.add(
-                _issue("LEASE_CAUSAL_DISCONNECTED", (), lease_id, "event chain incomplete")
-            )
+            issues.add(_issue("LEASE_CAUSAL_DISCONNECTED", (), lease_id, "event chain incomplete"))
             continue
         prior_state: str | None = None
         valid = True
@@ -639,9 +631,7 @@ def replay_lease_events(
                 valid = False
                 break
             if record.lease.state != record.to_state:
-                issues.add(
-                    _issue("LEASE_EVENT_STATE_MISMATCH", (), lease_id, record.event_id)
-                )
+                issues.add(_issue("LEASE_EVENT_STATE_MISMATCH", (), lease_id, record.event_id))
                 valid = False
                 break
             prior_state = record.to_state
@@ -994,90 +984,12 @@ class FileExecutionLeaseStore:
 
     @contextmanager
     def _arbiter(self, *, actor: str, now: datetime) -> Iterator[None]:
-        self.root.mkdir(parents=True, exist_ok=True)
-        owner_payload = {
-            "schema_version": "execution_lease_arbiter.v1",
-            "state": "ACTIVE",
-            "actor": actor,
-            "acquired_at": now.isoformat(),
-            "expires_at": (now + timedelta(seconds=self.policy.arbiter_ttl_seconds)).isoformat(),
-            "production_effect": "none",
-        }
-        acquired = self._publish_prepared_arbiter(owner_payload)
-        if not acquired:
-            owner_path = self.arbiter_root / "owner.json"
-            owner, expires = self._read_arbiter_owner(owner_path)
-            owner_state = owner.get("state")
-            if owner_state not in {None, "ACTIVE", "RELEASED"}:
-                raise ParallelControlError(
-                    "LEASE_ARBITER_STATE_INVALID",
-                    str(owner_state),
-                )
-            if owner_state != "RELEASED" and expires > now:
-                raise ParallelControlError("LEASE_ARBITER_BUSY", str(owner.get("actor"))) from None
-            stale = self.root / (
-                "arbiter.stale."
-                f"{hashlib.sha256(actor.encode()).hexdigest()[:12]}.{uuid.uuid4().hex}"
-            )
-            try:
-                os.replace(self.arbiter_root, stale)
-            except OSError as exc:
-                raise ParallelControlError("LEASE_ARBITER_CAS_FAILED", str(exc)) from exc
-            (stale / "owner.json").unlink(missing_ok=True)
-            stale.rmdir()
-            acquired = self._publish_prepared_arbiter(owner_payload)
-            if not acquired:
-                raise ParallelControlError("LEASE_ARBITER_CAS_FAILED", actor)
-        try:
+        # DEVX-014/S1a: the same unique arbiter uses a stable OS-owned handle.
+        # Policy TTL remains diagnostic; it never permits stealing a live lock.
+        with hold_lease_arbiter(
+            self.root, actor=actor, now=now, arbiter_ttl_seconds=self.policy.arbiter_ttl_seconds
+        ):
             yield
-        finally:
-            if acquired:
-                released_payload = {
-                    **owner_payload,
-                    "state": "RELEASED",
-                    "expires_at": now.isoformat(),
-                }
-                write_json_atomic(self.arbiter_root / "owner.json", released_payload)
-
-    def _publish_prepared_arbiter(self, owner_payload: Mapping[str, object]) -> bool:
-        pending = self.root / f"arbiter.pending.{uuid.uuid4().hex}"
-        pending.mkdir()
-        try:
-            write_json_atomic(pending / "owner.json", owner_payload)
-            try:
-                pending.rename(self.arbiter_root)
-            except OSError:
-                if not self.arbiter_root.exists():
-                    raise
-                return False
-            return True
-        finally:
-            if pending.exists():
-                (pending / "owner.json").unlink(missing_ok=True)
-                try:
-                    pending.rmdir()
-                except FileNotFoundError:
-                    pass
-
-    def _read_arbiter_owner(self, owner_path: Path) -> tuple[dict[str, object], datetime]:
-        for attempt in range(_ARBITER_OWNER_READ_ATTEMPTS):
-            try:
-                raw_owner = json.loads(owner_path.read_text(encoding="utf-8"))
-                if not isinstance(raw_owner, dict):
-                    raise TypeError("arbiter owner must be an object")
-                owner = {str(key): value for key, value in raw_owner.items()}
-                expires = datetime.fromisoformat(str(owner["expires_at"]))
-                return owner, expires
-            except PermissionError as exc:
-                if attempt + 1 == _ARBITER_OWNER_READ_ATTEMPTS:
-                    raise ParallelControlError(
-                        "LEASE_ARBITER_BUSY",
-                        "owner state remained temporarily unreadable",
-                    ) from exc
-                sleep(_ARBITER_OWNER_READ_RETRY_SECONDS)
-            except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
-                raise ParallelControlError("LEASE_ARBITER_STATE_INVALID", str(exc)) from exc
-        raise AssertionError("unreachable arbiter owner read state")
 
 
 def _lease_event(

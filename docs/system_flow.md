@@ -2,6 +2,49 @@
 
 本文档是系统从数据输入、中间评估到输出结论的流程图。它不是一次性说明文档，而是工程事实的一部分：后续新增命令、数据源、配置、评分模块、回测路径或报告输出时，必须同步维护本文件。
 
+DEVX-014 新增独立工程入口 `scripts/architecture_arch005_source_preservation.py preserve|validate`，
+由 `config/architecture/arch_005_source_preservation.yaml` 固定 source-only 合同。输入为明确的旧
+FAILED/RELEASED publication transaction、旧 source HEAD/frozen base、observed main 与逐文件承诺；
+复用原 S4D lease authority，只保全 tracked/unstaged/regular modified 文件的 raw bytes。
+私有 alternate index 从旧 tree 继承未改内容，不读取 excluded 文件；create-only snapshot ref
+指向以旧 HEAD 为唯一 parent 的新 Git identity。独立 receipt 为
+`RAW_BYTES_SOURCE_ONLY_UNVALIDATED`，源 branch/HEAD/real index/文件及 main/origin 保持不变。
+失败 partial evidence 原样保留。Snapshot 不是正式候选，不授予 task/generator/Full/main/push 或
+研究权限；后续只能经原 drift planner、唯一 latest-main coordinator 和 publication fence。
+
+DEVX-014 S1a 在同一 `FileExecutionLeaseStore` 中将 `arbiter.lock` 改为稳定普通文件，
+使用本机 OS-backed 非阻塞独占锁。OS handle 是唯一互斥权威，owner sidecar 与 arbiter TTL
+仅为诊断；正常执行不 rename/unlink 锁文件，不允许按过期时间抢走活体锁，业务 lease/event
+schema、资源冲突、actor/coordinator 权限和 execution lease TTL 保持原义。兼容性生成链追加
+`phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1`，以精确 29 项当前源码闭包
+继承 OPS-079，不改写 C/D/S5 冻结链或 OPS-079 的历史合同。
+
+显式工程迁移入口 `scripts/architecture_arch005_lease_arbiter.py` 在 active publication 的只读
+验证后，检查 exact working-code SHA、原 owner SHA 与人工协调排空 receipt，保留旧目录原
+bytes，create-only 初始化同一路径的新锁并输出 admission/migration receipt。普通 acquire
+遇 legacy directory 或 partial migration 必须拒绝，不能自动迁移或重试。其它旧 source
+checkout 必须等到 `CLEANUP_PRE`、current branch=main 且 candidate=HEAD=main=origin/main、
+实际代码已提交发布后，
+再复用 `inspect_migration_source` 的终止事务/身份/精确 dirty-set/无活动 lease 只读预检。
+迁移只改变明确 store 的 arbiter 运行时协议，不修改旧业务 lease 事件、source 文件、研究输入
+或交易状态；未验证的网络文件系统与新旧进程混用不属于支持合同。
+S1b 在 guard 与首次 mutation 前分别检查 trusted/source 的 common 与 worktree 全部配置条目，
+禁止 includes/执行性过滤器等危险设置；仅记录配置存在/缺失、路径与摘要并重验漂移，不复制
+配置原值、不关闭用户 worktreeConfig，也不把共同 Git 目录当作相同 worktree 配置的证明。
+Git 子进程固定 `--no-pager`，防止 pager 查询绕过 no-includes 的额外配置读取；配置条目
+保留值分隔符，拒绝无值执行性设置，不与显式空值混淆。
+
+```mermaid
+flowchart LR
+    SPREQ["旧终态事务 + exact source 承诺"] --> SPLEASE["原 S4D lease + 严格输入检查"]
+    SPLEGACY["旧目录协议：普通 acquire 拒绝"] --> SPQUIET["显式排空 + code/owner/fence 绑定"]
+    SPQUIET --> SPOS["同一路径 OS 锁 + 旧 bytes/迁移收据保留"]
+    SPOS --> SPLEASE
+    SPLEASE --> SPRAW["raw snapshot + 独立 source-only receipt"]
+    SPRAW --> SPPLAN["原 drift plan；显式 overlap 协调"]
+    SPPLAN --> SPVALID["独立正式候选；原验证与发布门禁"]
+```
+
 TRADING-2564 S1增加两个只读运行前核查入口。`scripts/research_input_readiness.py`显式读取
 source/execution root、请求、既有canonical DQ receipt及输入承诺，核验字节、profile、window和
 必需ticker/field的XNYS覆盖；只输出诊断，不下载、不复制、不运行DQ、不签发consumer/capture授权。

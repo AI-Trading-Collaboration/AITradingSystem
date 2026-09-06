@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from ai_trading_system.platform.architecture import lease_arbiter
 from ai_trading_system.platform.architecture.parallel_control import (
     ParallelControlError,
     parse_change_manifest,
@@ -347,59 +348,63 @@ def test_arbiter_rejects_unreviewed_actor(tmp_path: Path) -> None:
         )
 
 
-def test_arbiter_retries_transient_windows_owner_read_denial(
+def test_os_contention_is_rejected_before_owner_metadata_is_read(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     policy = load_parallel_control_policy(POLICY_PATH)
     store = FileExecutionLeaseStore(tmp_path / "leases", policy=policy)
-    owner_path = store.arbiter_root / "owner.json"
-    original_read_text = Path.read_text
     owner_read_attempts = 0
 
-    def transient_read_text(path: Path, *args: object, **kwargs: object) -> str:
+    def poisoned_owner_read(path: Path) -> dict[str, object]:
         nonlocal owner_read_attempts
-        if path == owner_path:
-            owner_read_attempts += 1
-            if owner_read_attempts == 1:
-                raise PermissionError("simulated Windows atomic replace visibility")
-        return original_read_text(path, *args, **kwargs)
+        owner_read_attempts += 1
+        raise AssertionError("a contending process must not consult owner JSON for authority")
 
     now = datetime(2026, 7, 20, tzinfo=UTC)
     with store._arbiter(actor="engineering-agent", now=now):
-        monkeypatch.setattr(Path, "read_text", transient_read_text)
-        with pytest.raises(ParallelControlError, match="LEASE_ARBITER_BUSY"):
-            with store._arbiter(actor="research-agent", now=now):
-                pytest.fail("overlapping arbiter must remain blocked")
+        with monkeypatch.context() as contention_patch:
+            contention_patch.setattr(lease_arbiter, "_read_owner", poisoned_owner_read)
+            with pytest.raises(ParallelControlError, match="LEASE_ARBITER_BUSY"):
+                with store._arbiter(actor="research-agent", now=now):
+                    pytest.fail("overlapping arbiter must remain blocked")
 
-    assert owner_read_attempts == 2
+    assert owner_read_attempts == 0
 
 
-def test_arbiter_persistent_owner_read_denial_remains_fail_closed(
+@pytest.mark.parametrize("cause", ["malformed", "read_denied"])
+def test_free_os_lock_with_invalid_metadata_fails_closed_and_releases_its_handle(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    cause: str,
 ) -> None:
     policy = load_parallel_control_policy(POLICY_PATH)
     store = FileExecutionLeaseStore(tmp_path / "leases", policy=policy)
-    owner_path = store.arbiter_root / "owner.json"
-    original_read_text = Path.read_text
-    owner_read_attempts = 0
-
-    def denied_read_text(path: Path, *args: object, **kwargs: object) -> str:
-        nonlocal owner_read_attempts
-        if path == owner_path:
-            owner_read_attempts += 1
-            raise PermissionError("simulated persistent owner denial")
-        return original_read_text(path, *args, **kwargs)
-
+    owner_path = store.root / "arbiter.owner.json"
     now = datetime(2026, 7, 20, tzinfo=UTC)
     with store._arbiter(actor="engineering-agent", now=now):
-        monkeypatch.setattr(Path, "read_text", denied_read_text)
-        with pytest.raises(ParallelControlError, match="LEASE_ARBITER_BUSY"):
-            with store._arbiter(actor="research-agent", now=now):
-                pytest.fail("unreadable arbiter owner must never grant a lease")
+        pass
+    original = owner_path.read_bytes()
+    original_open = Path.open
 
-    assert owner_read_attempts > 1
+    def denied_open(path: Path, *args: object, **kwargs: object) -> object:
+        if path == owner_path:
+            raise PermissionError("synthetic metadata read denied")
+        return original_open(path, *args, **kwargs)
+
+    try:
+        with monkeypatch.context() as metadata_patch:
+            if cause == "malformed":
+                owner_path.write_bytes(b"{ malformed synthetic metadata\n")
+            else:
+                metadata_patch.setattr(Path, "open", denied_open)
+            with pytest.raises(ParallelControlError, match="LEASE_ARBITER_STATE_INVALID"):
+                with store._arbiter(actor="research-agent", now=now):
+                    pytest.fail("invalid metadata must not produce successful entry")
+    finally:
+        owner_path.write_bytes(original)
+    with store._arbiter(actor="engineering-agent", now=now):
+        assert store.arbiter_root.is_file()
 
 
 def test_non_conflicting_lease_requests_can_both_become_active(tmp_path: Path) -> None:

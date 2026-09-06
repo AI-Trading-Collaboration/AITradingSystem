@@ -1,0 +1,372 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  task_id_sha256: 7aa82ac8ab6fa54a137b6972521b5ba8c7f1d0c4033f6fe84dac77fa2b5267e1
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  title: null
+  domain: Architecture / workflow governance
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex engineering coordinator
+  requirement_refs:
+  - docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 本root唯一arbiter迁移1/PASS，11事件及heads未变；进入source四生成/compat
+    focused/source commit/真实E2E，再final五生成与正式Full发布。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 修复ABA/活体TTL抢锁/错误owner释放；跨进程互斥、crash、legacy migration与原lease replay门禁；源码保全完整测试含committed
+      identity E2E及最终Full；main=origin=candidate；研究/DQ/数据/交易0。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-05T23:21:47.0172267Z'
+  actor: integration-coordinator
+  change_id: devx-014-register-source-preservation-20260906-v1
+  lane_id: null
+  base_commit: 4150a595ad2b9eb2df11ee552ead959c077aa417
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+    - Architecture / workflow governance
+    - P0
+    - IN_PROGRESS
+    - Codex engineering coordinator
+    - 先交付严格 source-only snapshot，再用已发布实现恢复 S2b；不放宽现有发布门禁。
+    - 原工作区/index/branch/main 不变；raw bytes 和 append-only 历史可重验；合成正负例及最终 Full；真实研究/数据/交易全部为
+      0。
+    - Owner 批准主线漂移后的受控恢复。SINGLE_LANE exact base 4150a595ad2b9eb2df11ee552ead959c077aa417；参见
+      [DEVX-014](docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md)，保留旧
+      S2b terminal 事务及 18 项 dirty。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-014-register-source-preservation-20260906-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fbd5cbffff71c948ab48f519fb918e7c
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-05T23:30:40.0943226Z'
+  actor: integration-coordinator
+  change_id: devx-014-source-generator-scope-correction-20260906-v2
+  lane_id: null
+  base_commit: 4150a595ad2b9eb2df11ee552ead959c077aa417
+  previous_state_event_id: task-event-fbd5cbffff71c948ab48f519fb918e7c
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: source v1在任何生成/Full前行政终止；v2按既有四生成器source链继续，final五项链不变。实现和合成负例并行，真实preserve须已发布exact代码。
+    acceptance_criteria: 原工作区/index/branch/main 不变；raw bytes 和 append-only 历史可重验；合成正负例及最终
+      Full；真实研究/数据/交易全部为 0。
+    notes: 参见 docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md；追加纠正，保留旧txn和ec7f3fea64f50ab928af12b39361cd4ea3fa4b981344623675b644b9b0890145证据；旧S2b18项修改保持。真实研究/DQ/数据/交易全部为0。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-014-source-generator-scope-correction-20260906-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2c595ca355f2d15f189f8b38c98abe5c
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T00:23:07.3425190Z'
+  actor: integration-coordinator
+  change_id: devx-014-arbiter-safety-dependency-20260906-v1
+  lane_id: null
+  base_commit: 4150a595ad2b9eb2df11ee552ead959c077aa417
+  previous_state_event_id: task-event-2c595ca355f2d15f189f8b38c98abe5c
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner / architecture-control-plane coordinator
+    blocker_or_next_step: 'DEVX-014/S1a P0: synthetic ABA已复现既有arbiter同时进入临界区；需Owner批准最小kernel互斥修正和新精确路径声明。source-only并发/发布/真实preserve保持阻塞。'
+    acceptance_criteria: 原source/index/branch/main不变；既有arbiter ABA/owner-safe release经单独受控修正和确定性验证；新增源码保全64项含真实身份E2E以及最终Full；真实研究/DQ/数据/交易全部0。
+    notes: 参见 docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md；追加事实不改写旧event。focused
+      v2=62PASS/1FAIL/1SKIP；唯一ABA诊断max_inside=2但实际execution lease记录0。保留DEVX014工作区与旧S2b18项；不改kernel、不放宽断言、不commit/Full/真实preserve。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-014-arbiter-safety-dependency-20260906-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e9cea2142542375c3be50fa633b49862
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T00:45:36.0594218Z'
+  actor: integration-coordinator
+  change_id: devx-014-arbiter-owner-approval-20260906-v1
+  lane_id: null
+  base_commit: 4150a595ad2b9eb2df11ee552ead959c077aa417
+  previous_state_event_id: task-event-e9cea2142542375c3be50fa633b49862
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: Owner已精确批准S1a现有lease内核互斥获取/释放；冻结同一arbiter.lock稳定文件OS锁、显式quiescent
+      legacy迁移及确定性回归。新source v3通过后执行，验证通过再继续S2b。
+    acceptance_criteria: 修复ABA/活体TTL抢锁/错误owner释放；跨进程互斥、crash、legacy migration与原lease
+      replay门禁；源码保全完整测试含committed identity E2E及最终Full；main=origin=candidate；研究/DQ/数据/交易0。
+    notes: 参见 docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md
+      的Owner批准S1a章节。authorization_state=EXACT_PREAUTHORIZED；追加事件不改历史。沿用4150 frozen
+      branch/worktree，新txn devx-014-source-preservation-arbiter-source-20260906-v3与精确新增kernel/helper/CLI/tests路径；旧18项和全部失败证据保持。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-014-arbiter-owner-approval-20260906-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f2a96dd45df07d7a1896c10b9e72ece2
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T01:30:00Z'
+  actor: integration-coordinator
+  change_id: devx-014-compatibility-topology-review-20260906-v1
+  lane_id: null
+  base_commit: 4150a595ad2b9eb2df11ee552ead959c077aa417
+  previous_state_event_id: task-event-f2a96dd45df07d7a1896c10b9e72ece2
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: S1a 合成回归执行中；追加 DEVX-014 唯一 compatibility successor 与 phase-aware
+      发布后 branch admission，经独立复核后才显式 bootstrap；不迁移其它 frozen checkout。
+    acceptance_criteria: 修复ABA/活体TTL抢锁/错误owner释放；跨进程互斥、crash、legacy migration与原lease
+      replay门禁；源码保全完整测试含committed identity E2E及最终Full；main=origin=candidate；研究/DQ/数据/交易0。
+    notes: EXACT_PREAUTHORIZED 工程范围保持；独立安全静态审查 PASS，不等于 focused/Full PASS。已登记 29 项
+      successor 精确闭包及真实 worktree 拓扑；C/D/S5/OPS079 历史不改，source-request 不扩大；真实研究、DQ、数据与交易均0。详见
+      docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-014-compatibility-topology-review-20260906-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a967691203e9bdba90cef609ae0a4c1c
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T01:44:20.0059951Z'
+  actor: integration-coordinator
+  change_id: devx-014-focused-and-event-clock-correction-20260906-v1
+  lane_id: null
+  base_commit: 4150a595ad2b9eb2df11ee552ead959c077aa417
+  previous_state_event_id: task-event-a967691203e9bdba90cef609ae0a4c1c
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: S1a回归157PASS/1precommitSKIP与阶段admission12PASS；真实预检因Git worktreeConfig=true被原环境合同拒绝，迁移/保全0；独立评估正确处理，禁止关用户配置或绕过。
+    acceptance_criteria: 修复ABA/活体TTL抢锁/错误owner释放；跨进程互斥、crash、legacy migration与原lease
+      replay门禁；源码保全完整测试含committed identity E2E及最终Full；main=origin=candidate；研究/DQ/数据/交易0。
+    notes: 追加纠正：compatibility-topology事件人工occurred_at=01:30Z，比随后实际01:27:31Z观测提前，属时间输入错误；原事件不改，本次实际UTC自动取值。首次本纠正writer因新consumer
+      inventory stale在写入前停止，经原refresh-consumers后再追加。EXACT_PREAUTHORIZED不变；研究/DQ/数据/交易0。详见DEVX014
+      requirement。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-014-focused-and-event-clock-correction-20260906-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e4c53e03170a36af537b14f7f3f3303d
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T01:49:42.1779201Z'
+  actor: integration-coordinator
+  change_id: devx-014-worktree-config-admission-contract-20260906-v1
+  lane_id: null
+  base_commit: 4150a595ad2b9eb2df11ee552ead959c077aa417
+  previous_state_event_id: task-event-e4c53e03170a36af537b14f7f3f3303d
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: S1b 显式验证 trusted/source common+worktree 安全配置与执行期快照，补真实linked-worktree及漂移负例，重新冻结4SHA/focused再迁移；不改用户Git配置。
+    acceptance_criteria: 修复ABA/活体TTL抢锁/错误owner释放；跨进程互斥、crash、legacy migration与原lease
+      replay门禁；源码保全完整测试含committed identity E2E及最终Full；main=origin=candidate；研究/DQ/数据/交易0。
+    notes: 独立审查确认该正式支持合同属于已有EXACT_PREAUTHORIZED工程范围；原worktreeConfig=true拒绝正确并留存预检证据。不只删条件，不关扩展，不新clone，不改变public
+      guard/fence；研究/DQ/数据/交易及真实迁移/保全均0。详见DEVX014 requirement S1b。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-014-worktree-config-admission-contract-20260906-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a2ea7a22561ac5afd16dd1dfd883b241
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T02:19:22.0891240Z'
+  actor: integration-coordinator
+  change_id: devx-014-valueless-configuration-review-20260906-v1
+  lane_id: null
+  base_commit: 4150a595ad2b9eb2df11ee552ead959c077aa417
+  previous_state_event_id: task-event-a2ea7a22561ac5afd16dd1dfd883b241
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: S1b独立审查发现无值fsmonitor被误当空值；等冻结110case回归终态后保留separator并补双root/双配置负例，通过再显式bootstrap。
+    acceptance_criteria: 修复ABA/活体TTL抢锁/错误owner释放；跨进程互斥、crash、legacy migration与原lease
+      replay门禁；源码保全完整测试含committed identity E2E及最终Full；main=origin=candidate；研究/DQ/数据/交易0。
+    notes: EXACT_PREAUTHORIZED工程范围不变；新静态检查PASS不代表安全验收。真实配置只读admission/recheck及v3validate
+      PASS；真实迁移/保全/研究/DQ/数据/交易均0。helper后BLOCKED不得冒称迁移0，详见DEVX014 requirement S1b。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-014-valueless-configuration-review-20260906-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-cd7b2044a9816a3d1a0088008b9d7e24
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T02:36:36.2511145Z'
+  actor: integration-coordinator
+  change_id: devx-014-include-pager-causal-fix-20260906-v1
+  lane_id: null
+  base_commit: 4150a595ad2b9eb2df11ee552ead959c077aa417
+  previous_state_event_id: task-event-cd7b2044a9816a3d1a0088008b9d7e24
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: S1b完整107PASS/2include-poisonFAIL/1precommitSKIP；六次合成只读对照与Git2.45.1源码定位pager旁路，实施最小global-no-pager+separator，再focused/独立复核和bootstrap。
+    acceptance_criteria: 修复ABA/活体TTL抢锁/错误owner释放；跨进程互斥、crash、legacy migration与原lease
+      replay门禁；源码保全完整测试含committed identity E2E及最终Full；main=origin=candidate；研究/DQ/数据/交易0。
+    notes: EXACT_PREAUTHORIZED不变；原失败XML SHA68cf9d4e804c59d7242b4a7950b4d239b422947b3fc674439e87c33b1b7ce462保留。独立审查确认无需额外file预扫描，不放宽FILTER，不改用户配置或public
+      guard。迁移/保全/研究/DQ/数据/交易0。详见DEVX014 requirement。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-014-include-pager-causal-fix-20260906-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ca254e5e532c2bf80fa17a69ef931e78
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T02:48:00.2593804Z'
+  actor: integration-coordinator
+  change_id: devx-014-s1b-focused-admission-ready-20260906-v1
+  lane_id: null
+  base_commit: 4150a595ad2b9eb2df11ee552ead959c077aa417
+  previous_state_event_id: task-event-ca254e5e532c2bf80fa17a69ef931e78
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: S1b最小修正独立static PASS、focused64PASS/298.94s；四源码v2冻结，排空旧调用后仅迁移本root，再原四生成/source
+      commit和final五生成/Full。
+    acceptance_criteria: 修复ABA/活体TTL抢锁/错误owner释放；跨进程互斥、crash、legacy migration与原lease
+      replay门禁；源码保全完整测试含committed identity E2E及最终Full；main=origin=candidate；研究/DQ/数据/交易0。
+    notes: EXACT_PREAUTHORIZED；旧107/2/1失败XML不改，新64PASS XML SHA143b325c89dd004b8b09de86d2261aade841e0f2e1d6aee67019589132134169。完整127case和committed
+      E2E仍须final Full；真实迁移尚未执行，保全/研究/DQ/数据/交易0，详见DEVX014 requirement。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-014-s1b-focused-admission-ready-20260906-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f5e405836b74e1f91e41b594c0571ef4
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T02:56:18.5874554Z'
+  actor: integration-coordinator
+  change_id: devx-014-migration-dispatch-permission-stop-20260906-v1
+  lane_id: null
+  base_commit: 4150a595ad2b9eb2df11ee552ead959c077aa417
+  previous_state_event_id: task-event-f5e405836b74e1f91e41b594c0571ef4
+  from_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: Project Owner
+    blocker_or_next_step: 工程fix与64-case focused通过；实际迁移在CreateProcess前被auto-review拒绝，等待Owner明确本root
+      arbiter迁移目标/效果授权；入口与迁移0，旧owner/11事件不变。
+    acceptance_criteria: 修复ABA/活体TTL抢锁/错误owner释放；跨进程互斥、crash、legacy migration与原lease
+      replay门禁；源码保全完整测试含committed identity E2E及最终Full；main=origin=candidate；研究/DQ/数据/交易0。
+    notes: 已批准工程EXACT_PREAUTHORIZED历史不改。未重试或间接绕过；v3仍TASK_SOURCE_PRE_WRITE，lease有效期至2026-09-06T06:44:10Z，续接须重验authority/新quiescence，过期failclosed。代码/旧S2b/证据保留；无generator/commit/Full/保全/研究/DQ/数据/交易，详见DEVX014
+      requirement及denial receipt。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-014-migration-dispatch-permission-stop-20260906-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2354be2c609624668870a81028a3b86d
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T03:54:54.6128460Z'
+  actor: integration-coordinator
+  change_id: devx-014-exact-task-root-migration-approved-resume-20260906-v1
+  lane_id: null
+  base_commit: 4150a595ad2b9eb2df11ee552ead959c077aa417
+  previous_state_event_id: task-event-2354be2c609624668870a81028a3b86d
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: Owner对精确本root单次arbiter迁移答复继续吧；v3/fence/LANE重验PASS，先新quiescence及11事件核对，再唯一迁移和原工程验证发布。
+    acceptance_criteria: 修复ABA/活体TTL抢锁/错误owner释放；跨进程互斥、crash、legacy migration与原lease
+      replay门禁；源码保全完整测试含committed identity E2E及最终Full；main=origin=candidate；研究/DQ/数据/交易0。
+    notes: EXACT_PREAUTHORIZED；旧CreateProcess拒绝与0执行历史保留。只迁移DEVX014本root，不改业务事件，不迁移其它store；research/DQ/data/trading0。详见docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-014-exact-task-root-migration-approved-resume-20260906-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d27c714fe7d25066a6f7e94154724b73
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T04:00:10.9330352Z'
+  actor: integration-coordinator
+  change_id: devx-014-task-root-migration-pass-source-boundary-20260906-v1
+  lane_id: null
+  base_commit: 4150a595ad2b9eb2df11ee552ead959c077aa417
+  previous_state_event_id: task-event-d27c714fe7d25066a6f7e94154724b73
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: 本root唯一arbiter迁移1/PASS，11事件及heads未变；进入source四生成/compat focused/source
+      commit/真实E2E，再final五生成与正式Full发布。
+    acceptance_criteria: 修复ABA/活体TTL抢锁/错误owner释放；跨进程互斥、crash、legacy migration与原lease
+      replay门禁；源码保全完整测试含committed identity E2E及最终Full；main=origin=candidate；研究/DQ/数据/交易0。
+    notes: EXACT_PREAUTHORIZED；03:57:43UTC migration receipt a6e5fa7cff71f07470ed2ad8069ac048b69a6fe3c4f45503f72e9b2006f70c48，postcheck
+      PASS。旧owner原样保留，working engineering profile，尚无source commit/Full/保全；research/DQ/data/trading0。详见docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-014-task-root-migration-pass-source-boundary-20260906-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5b610e3ec1cd2e07bc717be6a9d0b287
+projection:
+  legacy_first_eight_cells:
+  - DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  - Architecture / workflow governance
+  - P0
+  - IN_PROGRESS
+  - Codex engineering coordinator
+  - 本root唯一arbiter迁移1/PASS，11事件及heads未变；进入source四生成/compat focused/source commit/真实E2E，再final五生成与正式Full发布。
+  - 修复ABA/活体TTL抢锁/错误owner释放；跨进程互斥、crash、legacy migration与原lease replay门禁；源码保全完整测试含committed
+    identity E2E及最终Full；main=origin=candidate；研究/DQ/数据/交易0。
+  - EXACT_PREAUTHORIZED；03:57:43UTC migration receipt a6e5fa7cff71f07470ed2ad8069ac048b69a6fe3c4f45503f72e9b2006f70c48，postcheck
+    PASS。旧owner原样保留，working engineering profile，尚无source commit/Full/保全；research/DQ/data/trading0。详见docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md。
+  docs_links:
+  - docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md
+  terminal: false
+  canonical_row_sha256: e8f4d57170f031367713672753da8780ffb34695970f182aaca54010a999b082
+last_event_id: task-event-5b610e3ec1cd2e07bc717be6a9d0b287
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 63c20f5496ab7eedb6d8d09459e6dc736cd6a2f509a3bb586f6300dd147b2dec

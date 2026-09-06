@@ -1,0 +1,13 @@
+schema_version: source_preservation_policy.v1
+policy_id: ARCH-005-SOURCE-PRESERVATION
+version: 1.0.0
+status: OWNER_APPROVED_ENFORCED
+recovery_task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+owner_instruction_ref: owner_instruction:DEVX-014:2026-09-06:source-only-recovery
+runtime_root: outputs/architecture/arch_005_source_preservation
+ref_prefix: refs/aits/source-preservation/
+# DEVX-014 strict V1 resource bounds, not investment heuristics. Current retained
+# source has 18 modified files. Oversize requests fail closed, never auto-split.
+# Review these limits only for a separately reviewed wider preservation scope.
+max_files: 64
+max_total_bytes: 16777216

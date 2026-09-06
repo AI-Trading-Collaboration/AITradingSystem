@@ -1,10 +1,10 @@
 schema_version: arch_005_s5_consumer_inventory.v1
 status: PASS
 source_of_truth: ARCH_005_TASK_REGISTRY
-consumer_count: 136
+consumer_count: 137
 runtime_consumer_count: 8
 script_consumer_count: 3
-test_consumer_count: 125
+test_consumer_count: 126
 manual_semantic_runtime_consumer_count: 0
 manual_writer_count: 0
 consumers:
@@ -1045,6 +1045,15 @@ consumers:
   manual_semantic_runtime_consumer: false
   manual_writer: false
   rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_devx_006c_compatibility_authority.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
 - path: tests/test_engineering_closeout.py
   role: test
   targets:
@@ -1123,4 +1132,4 @@ consumers:
   rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
 production_effect: none
 broker_action: none
-inventory_checksum: fc2fb43f9bff4f938a2866e46866cc790253753e3fc8b8d7298bc4cf6c4a1671
+inventory_checksum: 320195f7e128524a1c1b8d78872d6d09c6b8c98b022575dc30cb3ab66b76b6c8

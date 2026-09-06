@@ -127,7 +127,7 @@ def test_repository_authority_is_fresh_lossless_and_inactive() -> None:
     assert result["source_of_truth"] == "LEGACY_MONOLITH"
     assert result["fragment_shadow_active"] is False
     assert result["target_count"] == 3
-    assert result["entry_count"] == 3158
+    assert result["entry_count"] == 3162
     assert 1 <= result["fragment_count"] <= 192
     assert policy["contract"] == {
         "source_of_truth": "LEGACY_MONOLITH",
@@ -150,11 +150,11 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         "report_catalog_flow_successor"
     ]
 
-    latest_section = "phase_ops_079_historical_daily_gap_recovery_executor_v1"
+    latest_section = "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1"
     assert next(reversed(merged)) == latest_section
-    assert list(merged).index(
-        "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1"
-    ) < list(merged).index(latest_section)
+    assert list(merged).index("phase_ops_079_historical_daily_gap_recovery_executor_v1") < list(
+        merged
+    ).index(latest_section)
     assert fragment_authority["source_of_truth"] == "LEGACY_MONOLITH"
     assert fragment_authority["fragment_shadow_active"] is False
     assert fragment_authority["target_count"] == 3
@@ -164,7 +164,7 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     assert successor["source_of_truth"] == "LEGACY_MONOLITH"
     assert successor["fragment_shadow_active"] is False
     assert successor["target_count"] == 3
-    assert successor["entry_count"] == 3158
+    assert successor["entry_count"] == 3162
     assert successor["fragment_count"] == 192
 
 
@@ -186,8 +186,8 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         (
             "system_flow",
             "docs/system_flow.md",
-            "1cba3ffad648466c4f09ddab6520e8386b1d0e95e98809afebe66682eb094d80",
-            1222,
+            "0d1e3cb2395abc90229aada7af2b64944ca771d1270eadaee102fb98da47463f",
+            1226,
         ),
     ],
 )
