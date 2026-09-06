@@ -16,7 +16,7 @@ DEVX-014 S1a 在同一 `FileExecutionLeaseStore` 中将 `arbiter.lock` 改为稳
 使用本机 OS-backed 非阻塞独占锁。OS handle 是唯一互斥权威，owner sidecar 与 arbiter TTL
 仅为诊断；正常执行不 rename/unlink 锁文件，不允许按过期时间抢走活体锁，业务 lease/event
 schema、资源冲突、actor/coordinator 权限和 execution lease TTL 保持原义。兼容性生成链追加
-`phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1`，以精确 29 项当前源码闭包
+`phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1`，以精确 32 项当前源码闭包
 继承 OPS-079，不改写 C/D/S5 冻结链或 OPS-079 的历史合同。
 
 显式工程迁移入口 `scripts/architecture_arch005_lease_arbiter.py` 在 active publication 的只读

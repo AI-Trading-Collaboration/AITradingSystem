@@ -35,6 +35,9 @@ def publication_checkout(tmp_path: Path) -> Path:
     _git(repository, "init", "-b", "main")
     _git(repository, "config", "user.email", "publication-fence@example.com")
     _git(repository, "config", "user.name", "Publication Fence Test")
+    # Synthetic text has a repository-local EOL contract even when the Git
+    # system/global configuration is isolated; do not inherit host defaults.
+    _git(repository, "config", "core.autocrlf", "true")
     _git(repository, "add", ".")
     _git(repository, "commit", "-m", "fixture")
     remote = tmp_path / "origin.git"
@@ -148,11 +151,14 @@ def test_bound_full_parent_is_optional_until_explicitly_consumed(
     transaction = Path(str(binding["transaction_path"]))
 
     assert fence.validate(transaction, exact_phase="ACQUIRED")["status"] == "PASS"
-    assert fence.validate(
-        transaction,
-        exact_phase="ACQUIRED",
-        parent_path=parent,
-    )["status"] == "PASS"
+    assert (
+        fence.validate(
+            transaction,
+            exact_phase="ACQUIRED",
+            parent_path=parent,
+        )["status"]
+        == "PASS"
+    )
 
     parent.write_text('{"status":"PASS"}\n', encoding="utf-8")
     with pytest.raises(PublicationFenceError) as error:

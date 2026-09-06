@@ -19,12 +19,13 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 本root唯一arbiter迁移1/PASS，11事件及heads未变；进入source四生成/compat
-    focused/source commit/真实E2E，再final五生成与正式Full发布。
+  unstructured_legacy_blocker_or_next_step: 正式 architecture 1045 PASS/4 FAIL 已保留并终止
+    final v1；同工作区修正精确 generated ratchets 和两个合成 Git EOL 夹具，通过正式验证并发布后再执行已明确批准的旧 S2b
+    单次迁移。详见 docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 修复ABA/活体TTL抢锁/错误owner释放；跨进程互斥、crash、legacy migration与原lease replay门禁；源码保全完整测试含committed
-      identity E2E及最终Full；main=origin=candidate；研究/DQ/数据/交易0。
+    text: 不放宽生产门禁或历史合同；current inventory/RCF 精确断言及32-source successor闭包通过；EOL正常修改PASS、真实空白FAIL；source
+      commit真实E2E和final五生成/正式tiers/Full通过，main=origin=candidate后才迁移旧S2b最多1次；研究/DQ/数据/交易全0。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -351,6 +352,32 @@ events:
   - change:devx-014-task-root-migration-pass-source-boundary-20260906-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-5b610e3ec1cd2e07bc717be6a9d0b287
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T04:54:26.0735759Z'
+  actor: integration-coordinator
+  change_id: devx-014-formal-architecture-failure-fix-and-s2b-exact-approval-20260906-v1
+  lane_id: null
+  base_commit: 550724649e79a22e118f7992461293d9305196b2
+  previous_state_event_id: task-event-5b610e3ec1cd2e07bc717be6a9d0b287
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: 正式 architecture 1045 PASS/4 FAIL 已保留并终止 final v1；同工作区修正精确
+      generated ratchets 和两个合成 Git EOL 夹具，通过正式验证并发布后再执行已明确批准的旧 S2b 单次迁移。详见 docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md。
+    acceptance_criteria: 不放宽生产门禁或历史合同；current inventory/RCF 精确断言及32-source successor闭包通过；EOL正常修改PASS、真实空白FAIL；source
+      commit真实E2E和final五生成/正式tiers/Full通过，main=origin=candidate后才迁移旧S2b最多1次；研究/DQ/数据/交易全0。
+    notes: EXACT_PREAUTHORIZED：Owner批准旧S2b工作区单次迁移，条件为本修复验证发布PASS；actual旧迁移0、本task迁移1。architecture-fitness_20260906T041925Z
+      FAIL保留，summary SHA229c00523e6bd9aaeb7bd49efc93de049838f13203cd1bdce66cdef2709e019b，Full0/parent
+      null。source-fix transaction devx-014-architecture-failure-fix-source-20260906-v1。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-014-formal-architecture-failure-fix-and-s2b-exact-approval-20260906-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5c1846420662465f3407ea4101cb679f
 projection:
   legacy_first_eight_cells:
   - DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
@@ -358,15 +385,17 @@ projection:
   - P0
   - IN_PROGRESS
   - Codex engineering coordinator
-  - 本root唯一arbiter迁移1/PASS，11事件及heads未变；进入source四生成/compat focused/source commit/真实E2E，再final五生成与正式Full发布。
-  - 修复ABA/活体TTL抢锁/错误owner释放；跨进程互斥、crash、legacy migration与原lease replay门禁；源码保全完整测试含committed
-    identity E2E及最终Full；main=origin=candidate；研究/DQ/数据/交易0。
-  - EXACT_PREAUTHORIZED；03:57:43UTC migration receipt a6e5fa7cff71f07470ed2ad8069ac048b69a6fe3c4f45503f72e9b2006f70c48，postcheck
-    PASS。旧owner原样保留，working engineering profile，尚无source commit/Full/保全；research/DQ/data/trading0。详见docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md。
+  - 正式 architecture 1045 PASS/4 FAIL 已保留并终止 final v1；同工作区修正精确 generated ratchets 和两个合成
+    Git EOL 夹具，通过正式验证并发布后再执行已明确批准的旧 S2b 单次迁移。详见 docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md。
+  - 不放宽生产门禁或历史合同；current inventory/RCF 精确断言及32-source successor闭包通过；EOL正常修改PASS、真实空白FAIL；source
+    commit真实E2E和final五生成/正式tiers/Full通过，main=origin=candidate后才迁移旧S2b最多1次；研究/DQ/数据/交易全0。
+  - EXACT_PREAUTHORIZED：Owner批准旧S2b工作区单次迁移，条件为本修复验证发布PASS；actual旧迁移0、本task迁移1。architecture-fitness_20260906T041925Z
+    FAIL保留，summary SHA229c00523e6bd9aaeb7bd49efc93de049838f13203cd1bdce66cdef2709e019b，Full0/parent
+    null。source-fix transaction devx-014-architecture-failure-fix-source-20260906-v1。
   docs_links:
   - docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md
   terminal: false
-  canonical_row_sha256: e8f4d57170f031367713672753da8780ffb34695970f182aaca54010a999b082
-last_event_id: task-event-5b610e3ec1cd2e07bc717be6a9d0b287
+  canonical_row_sha256: 7add480e882c57bf2a597805aaec9755c31162f0395844c48e7c02044d66f71b
+last_event_id: task-event-5c1846420662465f3407ea4101cb679f
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 63c20f5496ab7eedb6d8d09459e6dc736cd6a2f509a3bb586f6300dd147b2dec
+fragment_checksum: c5916bc742ec6e197476e38eab3cd2d629e88abdb125aa7c706d6a33730c1dbb

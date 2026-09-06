@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -41,6 +42,9 @@ def git_checkout(tmp_path: Path) -> Path:
     _git(tmp_path, "init", "-b", "fixture")
     _git(tmp_path, "config", "user.email", "checkout-guard@example.com")
     _git(tmp_path, "config", "user.name", "Checkout Guard Test")
+    # Synthetic text has a repository-local EOL contract even when the Git
+    # system/global configuration is isolated; do not inherit host defaults.
+    _git(tmp_path, "config", "core.autocrlf", "true")
     _git(tmp_path, "add", ".")
     _git(tmp_path, "commit", "-m", "fixture")
     return tmp_path
@@ -397,6 +401,37 @@ def test_worktree_audit_excludes_known_unrelated_from_all_git_checks(
         match="CHECKOUT_GIT_DIFF_CHECK_FAILED.*staged.*trailing whitespace",
     ):
         guard.audit_worktree()
+
+
+@pytest.mark.parametrize("staged", [False, True], ids=["unstaged", "staged"])
+@pytest.mark.parametrize("trailing", [b"", b" ", b"\t"], ids=["clean", "space", "tab"])
+def test_isolated_git_crlf_fixture_preserves_whitespace_gate(
+    request: pytest.FixtureRequest,
+    monkeypatch: pytest.MonkeyPatch,
+    staged: bool,
+    trailing: bytes,
+) -> None:
+    monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", os.devnull)
+    git_checkout: Path = request.getfixturevalue("git_checkout")
+    (git_checkout / "src/a.py").write_bytes(b"A = 2" + trailing + b"\r\n")
+    if staged:
+        _git(git_checkout, "add", "src/a.py")
+    guard = _guard(git_checkout)
+
+    if trailing:
+        diff_kind = "staged" if staged else "unstaged"
+        with pytest.raises(
+            CheckoutGuardError,
+            match=rf"CHECKOUT_GIT_DIFF_CHECK_FAILED.*\b{diff_kind}:.*trailing whitespace",
+        ):
+            guard.audit_worktree()
+    else:
+        audit = guard.audit_worktree().to_dict()
+        assert audit["status"] == "PASS"
+        assert audit["dirty_paths"] == ["src/a.py"]
+        assert audit["unstaged_diff_check"] == "PASS"
+        assert audit["staged_diff_check"] == "PASS"
 
 
 def test_worktree_audit_injects_exact_literal_exclusion_into_every_git_call(

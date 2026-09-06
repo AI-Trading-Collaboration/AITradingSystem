@@ -24738,7 +24738,9 @@ def test_devx_011_governed_workflow_health_authority_remains_historical() -> Non
     for source in phase["sources"]:
         assert source["hash_normalization"] == "git_eol_lf"
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
-    assert phase["report_catalog_flow_successor"]["entry_count"] == 3158
+    # DEVX-014 adds four system-flow blocks; the historical workflow contract
+    # remains unchanged while its generated RCF successor metadata advances.
+    assert phase["report_catalog_flow_successor"]["entry_count"] == 3162
     assert phase["report_catalog_flow_successor"]["fragment_count"] == 192
     assert phase["safety"] == {
         "market_cache_read": False,
@@ -25025,7 +25027,7 @@ def test_devx_014_is_latest_source_preservation_and_os_arbiter_hash_authority() 
         "current_hash_authority": f"{section_id}.sources",
     }
     paths = [str(source["path"]) for source in phase["sources"]]
-    assert len(paths) == 29
+    assert len(paths) == 32
     assert paths == sorted(set(paths), key=str.casefold)
     assert phase["superseded_live_source_paths"] == paths
     assert _latest_active_source_mismatches(section_id) <= frozenset(paths)

@@ -117,6 +117,28 @@ Request 通过显式 JSON 文件传入，绑定 schema、preservation id、recov
 
 ## 状态记录
 
+### 2026-09-06：正式 architecture 回归失败后的精确工程修正
+
+源码 commit `550724649e79a22e118f7992461293d9305196b2` 已完成四生成链、54-case authority focused 和真实 committed implementation E2E（1 PASS、无 SKIP）。final v1 五生成链在同一 commit 上保持 tracked 零差异，retained-input missing-only copy 为 1231 files / 3,810,350 bytes、overwrite 0，1242 项 bindings 复核及 readiness 全部 PASS；这些前置结果不等于最终验收通过。
+
+正式 `architecture-fitness_20260906T041925Z` 于 `2026-09-06T04:49:22.392587Z` 结束：16 workers/loadfile、1045 PASS / 4 FAIL / 0 SKIP，pytest 1793.58s。summary SHA `229c00523e6bd9aaeb7bd49efc93de049838f13203cd1bdce66cdef2709e019b`；完整 log、reader brief 和两项合成 Git 失败夹具的 12 个精确文件原始字节均保留，未读取 excluded 文档内容。新增锁协议与完整源码保全文件通过，但不以局部 PASS 覆盖整轮 FAIL。尚未 dispatch Full，Full parent 为 null。
+
+原 final v1 在保留失败和 Owner 新授权收据后，通过原 publication command 行政 FAILED/RELEASED，main/origin 保持 `4150a595ad2b9eb2df11ee552ead959c077aa417`。同一 branch/root 上的新 source-fix transaction 为 `devx-014-architecture-failure-fix-source-20260906-v1`，SHA `1e408817dc47b314f386921e676dcc3ffb6d5860ae9399038c88af8cc708c042`，lease `lease-8dab7da0b7fad39c4d0f`；不新建替代工作区，不重复任何实际迁移，不伪造 failed Full parent。
+
+已核对的最小修正与责任如下：
+
+- coordinator 精确更新 current deprecation ratchet：module 1201→1203、test file 1361→1363，由新增保全/arbiter 两模块及两测试导致；已生成 inventory 仅这两数改变，canonical ID 从 `188e7fa0187b6ad93dc7` 变为 `f14312a2d972f96dbcdb`。历史常量、surface/removal/writer 合同不变。
+- coordinator 修正 DEVX-011 的 RCF successor 元数据断言 3158→3162，原因是本任务 system_flow 四个新增分块；1373 report-registry + 563 artifact-catalog + 1226 flow = 3162，192 fragments 不变。原 workflow_health_contract/safety 不变，不用 live 值替代固定 expected，不重写历史 Git fragment。
+- 两项 synthetic Git 夹具默认 `write_text` 在 Windows 产生 CRLF，而未声明可移植 EOL 合同；formal fresh-child 禁止 system/global Git 配置时，真实 diff-check 因行尾 CR 拒绝。只在 `tests/test_arch_005_integration_publication_fence.py` 与 `tests/test_arch_005_s4d_checkout_guard.py` 明确测试夹具 EOL，验证正常修改 PASS、真实尾随空白仍 FAIL；生产 checkout/fence 门禁和用户 Git 配置不改。coordinator 负责登记与审查后才分派这两个 test 文件。
+
+上述三份本轮实际改动测试（另含 `tests/test_arch_004g_deprecation.py`）进入同一 DEVX-014 successor，精确源码闭包 29→32；builder、exact-set tests、说明和现有 flow 分块同步，不新增 phase 或 blank-line block。先 canonical 追加本事实及 preflight PASS，才实施；随后并行 focused、source 四生成链/commit/真实 E2E，再在同一新 commit 上 final 五生成链/正式适用 tiers/Full。若有新失败，保留并诊断，不缩小正式范围换取 PASS。
+
+### 2026-09-06：Owner 明确批准旧 S2b 单次协议迁移（待发布前提）
+
+Owner 对精确问题“当前修复验证并发布通过后，对 `D:\Work\AITradingSystem_trading2559_integration` 执行一次锁协议迁移，以继续原先批准的源码保全；旧锁记录和 18 项源码修改原样保留；研究、DQ、下载、缓存修改及交易动作全部为 0”答复“批准该工作区单次迁移”。`authorization_state=EXACT_PREAUTHORIZED`；receipt `outputs/validation_runtime/devx014-s2b-source-migration-owner-approval-20260906-v1.json` SHA `70018582aad1a1ef658d549838e11fc3db49cbe9323fa01d33742077ad294b10`。该批准不是技术 PASS。
+
+执行前提仍为本修复通过全部正式门禁并正常发布、CLEANUP_PRE、published exact code、旧 source request/terminal/18 项 bytes 的 fresh admission 及新的进程排空证据。旧 root migration 最大 1、实际 0；本 task-root 已迁移累计 1，不再 dispatch。所有真实研究、manifest replay、canonical DQ、下载、cache/provider/QuantConnect/Options 及交易动作仍为 0。旧 S2b 工作区及 18 项修改不清理、不覆盖。
+
 ### 2026-09-06：本工作区唯一 arbiter 迁移完成，进入工程生成与验证
 
 在新 preflight、四源码 SHA、配置、11 条原业务事件与进程排空复核后，唯一实际迁移于 `2026-09-06T03:57:43.182207+00:00` 完成，CLI exit 0 / PASS。migration id 为 `devx-014-task-root-os-arbiter-20260906-v1`，helper receipt SHA 为 `a6e5fa7cff71f07470ed2ad8069ac048b69a6fe3c4f45503f72e9b2006f70c48`；新 quiescence v2 原始 SHA `a0146d4671115f01a0e8c9a056e06f142e17692f57397f6dfcedda612dc602ed`。实际迁移累计 1，旧 auto-review 拒绝不计为实际执行。authorization 为 EXACT_PREAUTHORIZED，implementation profile 仍为 REVIEWED_WORKING_SOURCE_ENGINEERING_ONLY，不是已提交或已发布实现。
