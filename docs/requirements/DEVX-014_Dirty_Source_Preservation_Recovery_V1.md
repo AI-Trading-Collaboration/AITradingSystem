@@ -117,6 +117,18 @@ Request 通过显式 JSON 文件传入，绑定 schema、preservation id、recov
 
 ## 状态记录
 
+### 2026-09-06：正式 Full 三项失败后的最小合同测试修正
+
+候选 `1389319ddd67109f4defb11a60521a7bbde7b43e` 的四项前置正式验证均已通过：architecture 1055、contract 281、integration 995、reproducibility 24。唯一 Full `full_20260906T061949Z` 于 `2026-09-06T07:26:22.889471Z` 结束，实际 `10658 PASS / 3 FAIL / 5 SKIP / 640 warnings`、16 workers/loadfile、pytest 3926.23s；summary SHA `3e04952c55c9b062bd6379d9b2d8cfc8f7630bb478af4c1da3d01b1a5ccf8ac2`，runtime profile SHA `6d797e69fe958c788ecc08af2bf1272da6ca5d697ce822669820334720ceb8c0`。原 summary/log/profile/reader brief 及失败合成 Git 夹具的六个工作/元数据文件、八个精确 reachable loose objects 共1126 bytes已保留；未复制其它 fixture 或 excluded 文档内容。Full 不是 PASS，旧 S2b 迁移和保全仍为0。
+
+两项失败来自 `tests/test_trading2452_architecture_contract.py`：其特殊历史路径分支的显式后继集合遗漏本任务 DEVX-014，导致当前合法最新声明错误落入 `321 <= 302` 的旧阶段上界。仅补精确 phase 常量与既有集合，保留历史 hashes 不重写、supersession authority 和最新 live SHA 比较；不允许任意未来/近似名称阶段，不回退较早合法 SHA。新增真实命中特殊相对路径的正负例：合法 DEVX014、stale SHA、重写标记、错误 authority、缺失 superseded path、未知/近似后继与最新错误绑定。
+
+第三项来自 `tests/test_architecture_wave_readiness.py`：合成 `_init_repo` 未规定本地 EOL，Windows 默认 write_text 产生 CRLF，隔离 system/global 配置后 Git 正确保留 `B\r\n`，但测试固定要求 `B\n`。生产 binary Git helper 行为正确，不做 normalize 或放宽断言；只在 fixture 初次 add/commit 前明确 local `core.autocrlf=true`。保留 carrier 专用 false；补隔离环境下 LF 正例以及显式 false 的 raw CRLF/binary bytes/SHA 正例。
+
+这是原工程修复的最小测试/审计闭包修正，不改变锁实现、source-preservation 实现、生产 Git helper、运行窗口、DQ、研究或交易合同。同一 successor 的精确闭包从32增至34，仅新增上述两份实际修改测试；system_flow 只更新现有段落中的数量，不增新 flow block。预计 module1203/test-file1363、deprecation ID、flow1226、RCF3162/192、merged sections322不变，必须经真实生成核对，不能无依据调整 ratchet。新 source 事务 `devx-014-full-failure-fix-source-20260906-v1` 在相同 root/branch/base 下声明该范围；先 append-only canonical event 和 LANE preflight，再实施。依次完成 focused、source四生成/commit/真实E2E、final五生成/正式适用tiers；新 DEVX014 Full 使用 `failure_fix_rerun` 绑定上述真实失败 summary。S2b 后续 Full 仍绑定自己的旧失败 parent，不继承 DEVX014 结果。
+
+原 final v2 已通过 publication command 于 `2026-09-06T07:30:40.441554Z` FAILED/RELEASED，main/origin未前移。新 source事务 SHA `6f7c03278977e193d0c68ba1796a27cf98726e0fbc3e9898e7ecb9539a49c88e`、lease `lease-d0b9d7bc22c2c32e0620`；失败历史和现有 Owner 精确授权不改写。旧 root 单次迁移仍待全部正式验证及正常发布通过，实际0/1；本 task-root 已迁移1不重复。全部真实 manifest replay、canonical DQ、研究、下载、cache/provider/QuantConnect/Options、paper/live/broker/order/fill/position/交易动作仍为0。
+
 ### 2026-09-06：正式 architecture 回归失败后的精确工程修正
 
 源码 commit `550724649e79a22e118f7992461293d9305196b2` 已完成四生成链、54-case authority focused 和真实 committed implementation E2E（1 PASS、无 SKIP）。final v1 五生成链在同一 commit 上保持 tracked 零差异，retained-input missing-only copy 为 1231 files / 3,810,350 bytes、overwrite 0，1242 项 bindings 复核及 readiness 全部 PASS；这些前置结果不等于最终验收通过。

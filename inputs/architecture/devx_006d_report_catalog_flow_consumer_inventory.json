@@ -2484,7 +2484,7 @@
       "path": "tests/test_trading2452_architecture_contract.py",
       "references": [
         {
-          "literal_count": 1,
+          "literal_count": 2,
           "target_path": "docs/system_flow.md"
         }
       ],

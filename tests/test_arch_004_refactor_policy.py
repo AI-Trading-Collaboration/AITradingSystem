@@ -25027,7 +25027,7 @@ def test_devx_014_is_latest_source_preservation_and_os_arbiter_hash_authority() 
         "current_hash_authority": f"{section_id}.sources",
     }
     paths = [str(source["path"]) for source in phase["sources"]]
-    assert len(paths) == 32
+    assert len(paths) == 34
     assert paths == sorted(set(paths), key=str.casefold)
     assert phase["superseded_live_source_paths"] == paths
     assert _latest_active_source_mismatches(section_id) <= frozenset(paths)

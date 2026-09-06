@@ -19,13 +19,14 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 正式 architecture 1045 PASS/4 FAIL 已保留并终止
-    final v1；同工作区修正精确 generated ratchets 和两个合成 Git EOL 夹具，通过正式验证并发布后再执行已明确批准的旧 S2b
-    单次迁移。详见 docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md。
+  unstructured_legacy_blocker_or_next_step: Full 10658 PASS/3 FAIL/5 SKIP 已保留，final
+    v2 FAILED/RELEASED；只修旧 successor 测试对 DEVX014 的精确识别与 wave-readiness 合成 Git EOL，重建34-source闭包并绑定本次
+    failed Full 验证；发布前不迁移。详见 docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 不放宽生产门禁或历史合同；current inventory/RCF 精确断言及32-source successor闭包通过；EOL正常修改PASS、真实空白FAIL；source
-      commit真实E2E和final五生成/正式tiers/Full通过，main=origin=candidate后才迁移旧S2b最多1次；研究/DQ/数据/交易全0。
+    text: 保留历史 source hashes；DEVX014显式合法后继PASS、未知/近似后继与stale SHA等负例FAIL；isolated Git
+      fixture LF合同与raw CRLF/binary helper合同均验证；34-source/final五生成/正式tiers/parent-bound
+      Full通过，main=origin=candidate后才消费已批准旧S2b迁移最多1次；真实研究/DQ/数据/交易全0。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -378,6 +379,34 @@ events:
   - change:devx-014-formal-architecture-failure-fix-and-s2b-exact-approval-20260906-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-5c1846420662465f3407ea4101cb679f
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T07:32:14.0557247Z'
+  actor: integration-coordinator
+  change_id: devx-014-full-failure-causal-test-fix-20260906-v1
+  lane_id: null
+  base_commit: 1389319ddd67109f4defb11a60521a7bbde7b43e
+  previous_state_event_id: task-event-5c1846420662465f3407ea4101cb679f
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: Full 10658 PASS/3 FAIL/5 SKIP 已保留，final v2 FAILED/RELEASED；只修旧
+      successor 测试对 DEVX014 的精确识别与 wave-readiness 合成 Git EOL，重建34-source闭包并绑定本次 failed
+      Full 验证；发布前不迁移。详见 docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md。
+    acceptance_criteria: 保留历史 source hashes；DEVX014显式合法后继PASS、未知/近似后继与stale SHA等负例FAIL；isolated
+      Git fixture LF合同与raw CRLF/binary helper合同均验证；34-source/final五生成/正式tiers/parent-bound
+      Full通过，main=origin=candidate后才消费已批准旧S2b迁移最多1次；真实研究/DQ/数据/交易全0。
+    notes: 本次真实 Full full_20260906T061949Z 于2026-09-06T07:26:22.889471Z结束，summary
+      SHA3e04952c55c9b062bd6379d9b2d8cfc8f7630bb478af4c1da3d01b1a5ccf8ac2；保留log/profile/14精确合成夹具文件。最小修正限tests/test_trading2452_architecture_contract.py和tests/test_architecture_wave_readiness.py及同一DEVX014审计闭包，生产helper/锁/策略行为不改。旧迁移EXACT_PREAUTHORIZED仍有发布前提，实际0/1；本root已迁移1不重复；S2b原failed
+      Full parent不替换。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-014-full-failure-causal-test-fix-20260906-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-529dea43b0a45639330a23f2e411aa95
 projection:
   legacy_first_eight_cells:
   - DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
@@ -385,17 +414,16 @@ projection:
   - P0
   - IN_PROGRESS
   - Codex engineering coordinator
-  - 正式 architecture 1045 PASS/4 FAIL 已保留并终止 final v1；同工作区修正精确 generated ratchets 和两个合成
-    Git EOL 夹具，通过正式验证并发布后再执行已明确批准的旧 S2b 单次迁移。详见 docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md。
-  - 不放宽生产门禁或历史合同；current inventory/RCF 精确断言及32-source successor闭包通过；EOL正常修改PASS、真实空白FAIL；source
-    commit真实E2E和final五生成/正式tiers/Full通过，main=origin=candidate后才迁移旧S2b最多1次；研究/DQ/数据/交易全0。
-  - EXACT_PREAUTHORIZED：Owner批准旧S2b工作区单次迁移，条件为本修复验证发布PASS；actual旧迁移0、本task迁移1。architecture-fitness_20260906T041925Z
-    FAIL保留，summary SHA229c00523e6bd9aaeb7bd49efc93de049838f13203cd1bdce66cdef2709e019b，Full0/parent
-    null。source-fix transaction devx-014-architecture-failure-fix-source-20260906-v1。
+  - Full 10658 PASS/3 FAIL/5 SKIP 已保留，final v2 FAILED/RELEASED；只修旧 successor 测试对 DEVX014
+    的精确识别与 wave-readiness 合成 Git EOL，重建34-source闭包并绑定本次 failed Full 验证；发布前不迁移。详见 docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md。
+  - 保留历史 source hashes；DEVX014显式合法后继PASS、未知/近似后继与stale SHA等负例FAIL；isolated Git fixture
+    LF合同与raw CRLF/binary helper合同均验证；34-source/final五生成/正式tiers/parent-bound Full通过，main=origin=candidate后才消费已批准旧S2b迁移最多1次；真实研究/DQ/数据/交易全0。
+  - 本次真实 Full full_20260906T061949Z 于2026-09-06T07:26:22.889471Z结束，summary SHA3e04952c55c9b062bd6379d9b2d8cfc8f7630bb478af4c1da3d01b1a5ccf8ac2；保留log/profile/14精确合成夹具文件。最小修正限tests/test_trading2452_architecture_contract.py和tests/test_architecture_wave_readiness.py及同一DEVX014审计闭包，生产helper/锁/策略行为不改。旧迁移EXACT_PREAUTHORIZED仍有发布前提，实际0/1；本root已迁移1不重复；S2b原failed
+    Full parent不替换。
   docs_links:
   - docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md
   terminal: false
-  canonical_row_sha256: 7add480e882c57bf2a597805aaec9755c31162f0395844c48e7c02044d66f71b
-last_event_id: task-event-5c1846420662465f3407ea4101cb679f
+  canonical_row_sha256: 26b0754b75cec10468f0796864c4167afe8cb0243ef246d3b720b438bafb244d
+last_event_id: task-event-529dea43b0a45639330a23f2e411aa95
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: c5916bc742ec6e197476e38eab3cd2d629e88abdb125aa7c706d6a33730c1dbb
+fragment_checksum: 6d6667f6037dad7be5d47621147a09f9ec5551107244e1a76736c9a2d5bdf033

@@ -31,9 +31,9 @@ targets:
     format: MARKDOWN
     splitter: EXACT_BLANK_LINE_BLOCKS_V1
     byte_count: 2359829
-    file_sha256: 2da1533c3dffa012c5d7cc17d386837d7eafb466fbbd2a82222ba48adeebe9c1
-    lf_sha256: 2da1533c3dffa012c5d7cc17d386837d7eafb466fbbd2a82222ba48adeebe9c1
-    git_blob: 8f276f53f375ca801d11514eec490c28ee9ad2d7
+    file_sha256: 98e190f319e2c1fb7f5ca8d0d2e718691d6e1d2690e881d8d1f68ffde9dbbe78
+    lf_sha256: 98e190f319e2c1fb7f5ca8d0d2e718691d6e1d2690e881d8d1f68ffde9dbbe78
+    git_blob: a78c673452ae184790001cc5428c99be25aa1410
     entry_count: 1226
 contract:
   source_of_truth: LEGACY_MONOLITH

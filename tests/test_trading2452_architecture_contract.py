@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
@@ -104,6 +105,9 @@ OPS_078_DAILY_AUTOMATION_ISOLATION_PHASE_KEY = (
 )
 OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY = (
     "phase_ops_079_historical_daily_gap_recovery_executor_v1"
+)
+DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_PHASE_KEY = (
+    "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1"
 )
 TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
@@ -220,6 +224,7 @@ def _assert_historical_source_is_current_or_superseded(
             OPS_077_ATOMIC_RELEASE_SCHEDULER_BINDING_PHASE_KEY,
             OPS_078_DAILY_AUTOMATION_ISOLATION_PHASE_KEY,
             OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY,
+            DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_PHASE_KEY,
         }
     ):
         section_ids = list(baseline)
@@ -375,3 +380,169 @@ def test_historical_source_drift_rejects_stale_wave11_authority(tmp_path: Path) 
 
     with pytest.raises(AssertionError, match="authority hash does not match live bytes"):
         _assert_historical_source_is_current_or_superseded(baseline, historical_source)
+
+
+DEVX_014_SPECIAL_SOURCE_FIXTURE_PATHS = (
+    "docs/system_flow.md",
+    "tests/test_arch_004g_deprecation.py",
+)
+
+
+def _devx_014_special_source_fixture(
+    repository_root: Path,
+    source_path: str,
+    *,
+    current_bytes: bytes = b"current\n",
+) -> tuple[dict[str, Any], dict[str, str]]:
+    assert source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
+    live_path = repository_root / source_path
+    live_path.parent.mkdir(parents=True, exist_ok=True)
+    live_path.write_bytes(current_bytes)
+    # Include every historical presence guard so unknown successors are rejected
+    # by the reviewed phase boundary, not by an incomplete synthetic baseline.
+    baseline: dict[str, Any] = {
+        section_key: {}
+        for section_key in (
+            TRADING_2492_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_PHASE_KEY,
+            TRADING_2492_BOUNDED_PILOT_TERMINAL_NO_GO_PHASE_KEY,
+            TRADING_2493_OWNER_STAGE_GATE_SIGNOFF_PHASE_KEY,
+            TRADING_2497_LICENSE_EXPORT_DUE_DILIGENCE_PHASE_KEY,
+            TRADING_2497_LICENSE_EXPORT_OWNER_REVIEW_PHASE_KEY,
+            TRADING_2498_DAILY_CAPABILITY_GATE_PHASE_KEY,
+            TRADING_2496_OWNER_VISUAL_ACCEPTANCE_PHASE_KEY,
+            TRADING_2500_DAILY_CAPABILITY_GATE_RETRY_PHASE_KEY,
+            TRADING_2500_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_PHASE_KEY,
+            TRADING_2500_DAILY_CAPABILITY_GATE_RETRY_TERMINAL_REVIEW_PHASE_KEY,
+            TRADING_2499_DAILY_PRIMARY_BACKTEST_CONTRACT_PHASE_KEY,
+            TRADING_2501_ATLAS_OWNER_REVIEW_PACK_PHASE_KEY,
+            OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY,
+        )
+    }
+    section_key = DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_PHASE_KEY
+    baseline[section_key] = {
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "current_hash_authority": f"{section_key}.sources",
+        },
+        "superseded_live_source_paths": [source_path],
+        "sources": [
+            {
+                "path": source_path,
+                "sha256": sha256(current_bytes.replace(b"\r\n", b"\n")).hexdigest(),
+                "hash_normalization": "git_eol_lf",
+            }
+        ],
+    }
+    historical_source = {
+        "path": source_path,
+        "sha256": sha256(b"historical\n").hexdigest(),
+    }
+    return baseline, historical_source
+
+
+@pytest.mark.parametrize("source_path", DEVX_014_SPECIAL_SOURCE_FIXTURE_PATHS)
+@pytest.mark.parametrize("current_bytes", [b"current\n", b"current\r\n"], ids=["lf", "crlf"])
+def test_devx_014_special_source_accepts_exact_authority_without_rewriting_history(
+    tmp_path: Path, source_path: str, current_bytes: bytes
+) -> None:
+    baseline, historical_source = _devx_014_special_source_fixture(
+        tmp_path, source_path, current_bytes=current_bytes
+    )
+    before = deepcopy(baseline)
+    historical_before = dict(historical_source)
+
+    _assert_historical_source_is_current_or_superseded(
+        baseline, historical_source, repository_root=tmp_path
+    )
+
+    assert baseline == before
+    assert historical_source == historical_before
+    assert (tmp_path / source_path).read_bytes() == current_bytes
+
+
+@pytest.mark.parametrize("source_path", DEVX_014_SPECIAL_SOURCE_FIXTURE_PATHS)
+@pytest.mark.parametrize(
+    "malformation,expected_error",
+    [
+        ("stale_sha", "latest authority hash does not match live bytes"),
+        ("rewritten_history", "must preserve historical source hashes"),
+        ("wrong_authority", "current hash authority must be"),
+        ("missing_superseded_path", "drift is not declared"),
+        ("missing_current_source", "drift is not declared"),
+        ("unknown_normalization", "unsupported hash normalization"),
+    ],
+)
+def test_devx_014_special_source_rejects_invalid_current_binding(
+    tmp_path: Path, source_path: str, malformation: str, expected_error: str
+) -> None:
+    baseline, historical_source = _devx_014_special_source_fixture(tmp_path, source_path)
+    phase = baseline[DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_PHASE_KEY]
+    if malformation == "stale_sha":
+        phase["sources"][0]["sha256"] = sha256(b"stale\n").hexdigest()
+    elif malformation == "rewritten_history":
+        phase["supersession"]["historical_hashes_rewritten"] = True
+    elif malformation == "wrong_authority":
+        phase["supersession"][
+            "current_hash_authority"
+        ] = f"{OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY}.sources"
+    elif malformation == "missing_superseded_path":
+        phase["superseded_live_source_paths"] = []
+    elif malformation == "missing_current_source":
+        phase["sources"] = []
+    elif malformation == "unknown_normalization":
+        phase["sources"][0]["hash_normalization"] = "unreviewed_normalization"
+    else:
+        raise AssertionError(f"unsupported fixture malformation: {malformation}")
+
+    with pytest.raises(AssertionError, match=expected_error):
+        _assert_historical_source_is_current_or_superseded(
+            baseline, historical_source, repository_root=tmp_path
+        )
+
+
+@pytest.mark.parametrize("source_path", DEVX_014_SPECIAL_SOURCE_FIXTURE_PATHS)
+@pytest.mark.parametrize(
+    "unknown_section_key",
+    [
+        "phase_future_append_only",
+        f"{DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_PHASE_KEY}_unreviewed",
+    ],
+    ids=["unknown", "near_match"],
+)
+def test_devx_014_special_source_rejects_unreviewed_successor_with_current_sha(
+    tmp_path: Path, source_path: str, unknown_section_key: str
+) -> None:
+    baseline, historical_source = _devx_014_special_source_fixture(tmp_path, source_path)
+    _assert_historical_source_is_current_or_superseded(
+        baseline, historical_source, repository_root=tmp_path
+    )
+    unknown_phase = deepcopy(baseline[DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_PHASE_KEY])
+    unknown_phase["supersession"]["current_hash_authority"] = f"{unknown_section_key}.sources"
+    baseline[unknown_section_key] = unknown_phase
+    assert list(baseline).index(unknown_section_key) > list(baseline).index(
+        TRADING_2501_ATLAS_OWNER_REVIEW_PACK_PHASE_KEY
+    )
+
+    with pytest.raises(AssertionError):
+        _assert_historical_source_is_current_or_superseded(
+            baseline, historical_source, repository_root=tmp_path
+        )
+
+
+@pytest.mark.parametrize("source_path", DEVX_014_SPECIAL_SOURCE_FIXTURE_PATHS)
+def test_devx_014_special_source_does_not_fall_back_to_older_valid_authority(
+    tmp_path: Path, source_path: str
+) -> None:
+    baseline, historical_source = _devx_014_special_source_fixture(tmp_path, source_path)
+    current_phase = baseline[DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_PHASE_KEY]
+    older_phase = deepcopy(current_phase)
+    older_phase["supersession"][
+        "current_hash_authority"
+    ] = f"{OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY}.sources"
+    baseline[OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY] = older_phase
+    current_phase["sources"][0]["sha256"] = sha256(b"stale\n").hexdigest()
+
+    with pytest.raises(AssertionError, match="latest authority hash does not match live bytes"):
+        _assert_historical_source_is_current_or_superseded(
+            baseline, historical_source, repository_root=tmp_path
+        )

@@ -79,8 +79,10 @@ DEVX_014_SOURCE_PATHS = frozenset(
         "tests/test_arch_005_s4d_checkout_guard.py",
         "tests/test_arch_005_s5_task_source_cutover.py",
         "tests/test_arch_005_source_preservation.py",
+        "tests/test_architecture_wave_readiness.py",
         "tests/test_devx_006c_compatibility_authority.py",
         "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "tests/test_trading2452_architecture_contract.py",
     }
 )
 TRADING_2564_S2A_SOURCE_PATHS = frozenset(
@@ -306,7 +308,7 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
 def _assert_devx_014_source_closure(phase: dict[str, Any]) -> None:
     paths = [row["path"] for row in phase["sources"]]
-    assert len(DEVX_014_SOURCE_PATHS) == 32
+    assert len(DEVX_014_SOURCE_PATHS) == 34
     assert paths == sorted(DEVX_014_SOURCE_PATHS, key=str.casefold)
     assert phase["superseded_live_source_paths"] == paths
     for row in phase["sources"]:

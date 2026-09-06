@@ -2696,8 +2696,10 @@ def _devx_014_section(
             "tests/test_arch_005_s4d_checkout_guard.py",
             "tests/test_arch_005_s5_task_source_cutover.py",
             "tests/test_arch_005_source_preservation.py",
+            "tests/test_architecture_wave_readiness.py",
             "tests/test_devx_006c_compatibility_authority.py",
             "tests/test_devx_006d_report_catalog_flow_authority.py",
+            "tests/test_trading2452_architecture_contract.py",
         ],
         key=str.casefold,
     )

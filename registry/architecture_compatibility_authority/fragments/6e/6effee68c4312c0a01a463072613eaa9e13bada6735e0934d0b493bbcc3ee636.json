@@ -10,55 +10,60 @@
       "rollback_mode": "FROZEN_LEGACY_PREFIX_ONLY"
     },
     "broker_action": "none",
-    "owner_decision": "owner_instruction:OPS-077:2026-09-03:continue-root-prevention-fix",
-    "pre_release_canary_contract": {
-      "exact_candidate_required": true,
-      "parallel_pytest_required": true,
-      "provider_request_performed": false,
-      "required_scenarios": [
-        "risk_event_unknown_id_referential_integrity",
-        "signed_eps_revision_90d_pct"
-      ],
-      "runner_schema_version": "pytest_incident_regression.v1",
-      "schema_version": "ops_release_preflight_canary.v1"
+    "carrier_contract": {
+      "business_runtime_kind": "INDEPENDENT_RECEIPT_GATED_CLONE",
+      "development_checkout_cwd_allowed": false,
+      "development_project_target_allowed": false,
+      "mode": "PROJECTLESS_ISOLATED",
+      "post_stage_blocker_must_not_block_daily_trigger": true
     },
+    "gap_visibility_contract": {
+      "canonical_artifact_identity_required": true,
+      "missing_expected_as_of_evidence_means_no_gap": false,
+      "statuses": [
+        "NO_GAP_EVIDENCE",
+        "GAP_EXPOSURE_PRESENT",
+        "EXPECTED_AS_OF_NOT_RECORDED",
+        "INDETERMINATE"
+      ]
+    },
+    "invocation_window_contract": {
+      "local_timezone": "Asia/Tokyo",
+      "per_invocation_business_trigger_max": 1,
+      "rescue_is_unconditional_retry": false,
+      "same_as_of_ordinary_allowed": false,
+      "same_scheduler_entry_for_all_windows": true,
+      "scheduler_entry_count": 1,
+      "windows": [
+        {
+          "hour": 9,
+          "minute": 30,
+          "role": "PRIMARY"
+        },
+        {
+          "hour": 17,
+          "minute": 30,
+          "role": "SAME_DAY_RESCUE"
+        }
+      ]
+    },
+    "owner_decision": "owner_instruction:OPS-078:2026-09-03:add-dedicated-worktree-mechanism",
     "production_effect": "none",
-    "release_identity_contract": {
-      "automation_release_sha_allowed": false,
-      "daily_and_recovery_derive_release_from_receipt": true,
-      "legacy_release_assertion_mode": "exact_match_if_present",
-      "mutable_authority": "active_deployment_receipt"
-    },
-    "release_lifecycle": [
-      "CODE_FIXED",
-      "DEPLOYED",
-      "SCHEDULER_BOUND",
-      "OPERATIONALLY_ACCEPTED"
-    ],
     "safety": {
       "active_shadow_weight_write": false,
       "broker_action": "none",
       "production_effect": "none",
       "production_weight_write": false,
-      "provider_request_performed_by_canary": false,
+      "provider_replay_gate_relaxed": false,
       "same_as_of_ordinary_allowed": false,
-      "second_scheduler_created": false,
-      "validation_gate_relaxed": false
+      "second_scheduler_created": false
     },
-    "scheduler_binding_contract": {
-      "actual_config_hash_required": true,
-      "canonical_prompt_hash_required": true,
-      "config_updated_at_required": true,
-      "observation_must_not_predate_promotion": true,
-      "scheduler_entry_count": 1,
-      "schema_version": "ops_scheduler_observation.v2"
-    },
-    "schema_version": "ops_077_atomic_release_scheduler_binding_and_canary.v1",
+    "schema_version": "ops_078_daily_automation_isolation_and_same_day_rescue.v1",
     "sources": [
       {
         "hash_normalization": "git_eol_lf",
         "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
-        "sha256": "54c08f33f5199f72ff2a02380b4be72a76ca097357a9a778114a4d03a66fb7ac"
+        "sha256": "520e79bf9623f6aca5e81f41c19dfde17a6a259d2f000c677874b527b5dc8035"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -82,23 +87,23 @@
       },
       {
         "hash_normalization": "git_eol_lf",
-        "path": "docs/requirements/OPS-077_Atomic_Release_Scheduler_Binding_and_Canary.md",
-        "sha256": "5751f101c7a5ae0ff44e256d2b91bac5996bc16f1338736044504b574f7d9a77"
+        "path": "docs/requirements/OPS-078_Daily_Automation_Isolation_and_Same_Day_Rescue.md",
+        "sha256": "79268bf799ac534ada417675549600bae9d058ba683587d3e22a9b62d1f8b57b"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/system_flow.md",
-        "sha256": "2da1533c3dffa012c5d7cc17d386837d7eafb466fbbd2a82222ba48adeebe9c1"
+        "sha256": "98e190f319e2c1fb7f5ca8d0d2e718691d6e1d2690e881d8d1f68ffde9dbbe78"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "87a274a25b79758f0ccbb85d7a9aacb396be0e99f7faee85e8a8d66efb671b89"
+        "sha256": "a6fb441d61cdd357064f54fdf1c16634de0817b086e733b19c238684f650d215"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "7a4ce23475d4c2245828b2dfbc54d3f6e1e066fc7cb4c3100dda69e40d818e16"
+        "sha256": "ef5597d6c7660ccf6f6009f28fa6b99a2a8852921d8bd5fef220115aa7631a90"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -108,12 +113,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "99355952b1c27d56f7a461313b1b48cb4909b57b35f9ea2ae003d7b30110daec"
+        "sha256": "95674f0bd09d5031ef4178cb28d9d5084c6bbb95bdbbce1f0c839088e89ccce9"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "4eebb16508e2d4912e2f6cf7e981fd527ce2c0a9873080978a7e6e99b00ef81f"
+        "sha256": "78784a967520ef5dfdc0b4c91842a3f82511f16c77ff6fc01344be30e4bb180b"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -123,22 +128,17 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "4cd5205689ccc784da704e48415cd5dc4ca8b4d5246d4b0a6b32072b92155be9"
+        "sha256": "02cb5f6748daf4b62510d6fde188673aeccf5b5ec1ba3ea74fa6ef5daf1f48fd"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-        "sha256": "97570f6d7e79ac79fd68cf096ba8dac113336aea6ce7b647b396a2ca6194d119"
+        "sha256": "a78ea01d397d2ba46721c098e652e85d59479f5f091e2d279201223e82181deb"
       },
       {
         "hash_normalization": "git_eol_lf",
-        "path": "registry/development_tasks/64/64ace5865c3262fa0e9483b1eb6ebca98fde3a3ae2f959f8c84ffe6285bddbf9.yaml",
-        "sha256": "f701d45d5f651c34a39b689e3b00cb150e9fcbdf2cec56e1492254ef8a6112e8"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "src/ai_trading_system/cli_commands/ops.py",
-        "sha256": "1198f67657ef789971a767675361ecc277134d8dcd2f430715b2f5e40aa32353"
+        "path": "registry/development_tasks/a0/a015ae79125f8757c1fcee391d54c4d461a6c8276b47abedf3b84ccd4538d983.yaml",
+        "sha256": "5409ee3450896f09d3ce927e117777f692a5300b6bce8e448a2426af9fbda539"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -153,22 +153,22 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
-        "sha256": "10dbd81371a783ab265d141b1929da6d65ba35845ddd98f19b5a93e42071fae9"
+        "sha256": "53b8c066a81215fc1f4f36d8da2223584ba1684d03d374aba63e239ad7cea4be"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004_refactor_policy.py",
-        "sha256": "df5c57964ce92081a4b199c591c905afc561bb4bd6d54f79511039b1d6827cc9"
+        "sha256": "f6b5f214399c5791a249e76c353a899bd61800738d6b48dfa46b3aedf1854f76"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006c_compatibility_authority.py",
-        "sha256": "6b9cc20aaed2b1de36ead2e6bd6eaa77ea4ceab68976fd7928accd080aeed042"
+        "sha256": "56bceee8b54163f6ede37b5bcfeebb7bf242e96e37d83b994dcdfd3e352c5a44"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "a48f1ec933f4fca3a04280b8f26c432fad25b72ffd205156262cf95f86d28ed6"
+        "sha256": "52a050e35f4659da4f5dd9db32a2e4d2b65a4dc436f6f38112380864bc069e0c"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -179,11 +179,6 @@
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_ops_scheduler_checkout.py",
         "sha256": "55d1f2c0096eaca6db64be631e8f908db91eded94cbb809aa23718c8fb281acf"
-      },
-      {
-        "hash_normalization": "git_eol_lf",
-        "path": "tests/test_trading2452_architecture_contract.py",
-        "sha256": "c205334d8117bf2100a5ab92cedae97a64598b28344e3440ada22591657b1544"
       }
     ],
     "status": "VALIDATING",
@@ -193,7 +188,7 @@
       "config/operations/ops_release_promotion.yaml",
       "config/operations/ops_scheduler_checkout.yaml",
       "docs/operations/operations_runbook.md",
-      "docs/requirements/OPS-077_Atomic_Release_Scheduler_Binding_and_Canary.md",
+      "docs/requirements/OPS-078_Daily_Automation_Isolation_and_Same_Day_Rescue.md",
       "docs/system_flow.md",
       "docs/task_register.md",
       "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
@@ -203,8 +198,7 @@
       "inputs/architecture/arch_004g_deprecation_inventory.yaml",
       "inputs/architecture/arch_005_task_registry_index.yaml",
       "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-      "registry/development_tasks/64/64ace5865c3262fa0e9483b1eb6ebca98fde3a3ae2f959f8c84ffe6285bddbf9.yaml",
-      "src/ai_trading_system/cli_commands/ops.py",
+      "registry/development_tasks/a0/a015ae79125f8757c1fcee391d54c4d461a6c8276b47abedf3b84ccd4538d983.yaml",
       "src/ai_trading_system/ops_release_promotion.py",
       "src/ai_trading_system/ops_scheduler_checkout.py",
       "src/ai_trading_system/platform/architecture/compatibility_authority.py",
@@ -212,16 +206,15 @@
       "tests/test_devx_006c_compatibility_authority.py",
       "tests/test_devx_006d_report_catalog_flow_authority.py",
       "tests/test_ops_release_promotion.py",
-      "tests/test_ops_scheduler_checkout.py",
-      "tests/test_trading2452_architecture_contract.py"
+      "tests/test_ops_scheduler_checkout.py"
     ],
     "supersession": {
-      "current_hash_authority": "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1.sources",
+      "current_hash_authority": "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1.sources",
       "historical_hashes_rewritten": false,
-      "inherited_supersession_authority": "phase_risk_012_unknown_risk_event_id_fail_closed_v1"
+      "inherited_supersession_authority": "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1"
     },
-    "task_id": "OPS-077_ATOMIC_RELEASE_SCHEDULER_BINDING_AND_CANARY"
+    "task_id": "OPS-078_DAILY_AUTOMATION_ISOLATION_AND_SAME_DAY_RESCUE"
   },
-  "section_id": "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1",
-  "section_sha256": "21ee2afec6fdff198068cf3e141481068c511a2eefed9df7494e305cb5ad372d"
+  "section_id": "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1",
+  "section_sha256": "6effee68c4312c0a01a463072613eaa9e13bada6735e0934d0b493bbcc3ee636"
 }

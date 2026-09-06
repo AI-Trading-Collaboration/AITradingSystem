@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 import subprocess
 import tarfile
 from pathlib import Path
@@ -329,6 +330,9 @@ def _init_repo(root: Path) -> tuple[str, str]:
     _run_git(root, "init", "-b", "main")
     _run_git(root, "config", "user.email", "test@example.invalid")
     _run_git(root, "config", "user.name", "Wave Readiness Test")
+    # Synthetic text has a repository-local EOL contract even when the Git
+    # system/global configuration is isolated; do not inherit host defaults.
+    _run_git(root, "config", "core.autocrlf", "true")
     tracked = root / "tracked.txt"
     tracked.write_text("B\n", encoding="utf-8")
     replay_dependency = root / "src/replay_dependency.py"
@@ -540,7 +544,12 @@ def test_checksum_is_canonical_and_tamper_sensitive() -> None:
     assert len(checksum) == 64
 
 
-def test_git_helpers_bind_blob_tree_refs_and_ancestry(tmp_path: Path) -> None:
+def test_git_helpers_bind_blob_tree_refs_and_ancestry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", os.devnull)
     commit_b, commit_c = _init_repo(tmp_path)
     assert git_commit_exists(tmp_path, commit_b)
     assert not git_commit_exists(tmp_path, "f" * 40)
@@ -550,6 +559,30 @@ def test_git_helpers_bind_blob_tree_refs_and_ancestry(tmp_path: Path) -> None:
     assert not git_is_ancestor(tmp_path, commit_c, commit_b)
     assert git_blob_bytes(tmp_path, commit_b, "tracked.txt") == b"B\n"
     assert git_blob_sha256(tmp_path, commit_b, "tracked.txt") == hashlib.sha256(b"B\n").hexdigest()
+
+
+@pytest.mark.parametrize(
+    "content",
+    [b"RAW\r\n", b"\x00RAW\xff\r\n"],
+    ids=["crlf", "binary"],
+)
+def test_git_blob_helpers_preserve_raw_crlf_and_binary_bytes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    content: bytes,
+) -> None:
+    monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", os.devnull)
+    _init_repo(tmp_path)
+    # Disable only this synthetic repository's normalization to test raw blobs.
+    _run_git(tmp_path, "config", "core.autocrlf", "false")
+    (tmp_path / "raw.bin").write_bytes(content)
+    _run_git(tmp_path, "add", "raw.bin")
+    _run_git(tmp_path, "commit", "-m", "Raw blob")
+    commit = _run_git(tmp_path, "rev-parse", "HEAD")
+
+    assert git_blob_bytes(tmp_path, commit, "raw.bin") == content
+    assert git_blob_sha256(tmp_path, commit, "raw.bin") == hashlib.sha256(content).hexdigest()
 
 
 def test_carrier_requires_pushed_proper_descendant_and_tracked_bytes(
