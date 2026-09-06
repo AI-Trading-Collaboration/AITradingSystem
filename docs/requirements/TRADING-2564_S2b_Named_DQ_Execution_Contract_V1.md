@@ -437,3 +437,26 @@ tests/test_trading2452_architecture_contract.py。历史hash漂移且精确S2b p
 本轮Black --check另外指出2项共享测试需格式化；按项目Black规范统一，再按官方四项顺序重建并验收。
 官方首次生成已确认1207/1368/856/0 violations、RCF3162/192、compat17/323及预期deprecation ID；
 source transaction仍GENERATED_REBUILD_PRE，未作candidate commit或Full，也未改变任务IN_PROGRESS状态。
+
+### 14.4 首个恢复提交及需求引用纠正
+
+共享focused v2全部131 PASS/0 FAIL/0 SKIP，153.70秒、16 workers/loadfile；
+XML SHA256为9e4e0bf856b66e4b04066b373d15b7b38c243d42db8672427cf23b1729cec595。
+Black/Ruff及5个新增执行源strict mypy PASS。source提交
+a2f92209de2e7fb6c6610ae98d12d1ff1011ae9b，parent/main/origin缓存仍为
+64e1d3da3cd41ae842fd7cc3f14802c550ceb9ef；71个rename-aware文件，84个no-renames归因路径。
+原14-event前缀仍完全一致，当前18 events；原base/P/C plan原始SHA不变。
+
+source v2按既有协议行政释放后，final v1在canonical/architecture PASS之后的Atlas前置失败：
+PAGE_EFFECTIVENESS_TASK_REQUIREMENT_BINDING_INVALID:TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1。
+原因是coordinator后续update --notes替换了当前备注而未保留完整docs/requirements路径，
+使requirement_refs从cycle480的两项变为空；原事件与需求文件均在，不是来源文件丢失。
+Atlas尚未写新页面，后续RCF/compat generator未执行，candidate=null、actual E2E=0、Full=0，
+tracked clean；原source commit、失败收据及final v1行政FAILED/RELEASED全部保留。
+
+source v3只纠正上述元数据：官方追加事件恢复umbrella/S2b两条完整需求引用并保留全部18事件，
+同branch/root从a2f92209继续，expected main仍C。新增提交前只读build_page_task_coverage检查，
+先确认canonical需求绑定可解析；这不替代source commit后的Atlas exact-commit检查，
+也不改变任何validator、生产源或投资语义。current notes继续携带完整需求链接、研究方向和两root
+退出条件。本metadata failure-fix需要新的source commit及final事务，不覆盖首个提交或伪造其PASS。
+S5将使用这次真实失败记录评价提前检查的效率收益；本波不扩展任务writer或新增治理系统。

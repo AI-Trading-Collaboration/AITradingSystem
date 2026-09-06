@@ -86,7 +86,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "715799292f7c3dd22c4d103e77e86ae6e98401bbbec43ca9e742493d4b354e8f"
+        "sha256": "fe7c58db96465c5eb0c51309b006fd076e71fc3a089299e21d6d47cab6b82473"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -126,7 +126,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "9e8cb5bc889058a8a23f3fa8cd5bc1cd365fca076d4ccd08d222bcd68eea51fe"
+        "sha256": "692f08b2bacf0cb260377907108d8eb4fdcb047ac0c05d37baa9a6fed975d293"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -279,5 +279,5 @@
     "task_id": "DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1"
   },
   "section_id": "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1",
-  "section_sha256": "977f9b5ac02f28869851aff56e33c749ca8da29b17c47e0fefdeab5dd7c8fbd5"
+  "section_sha256": "9ef681c386faa14ad4d49f597c1ba852ab7958c38b97c369ea71ae28c7bfed98"
 }

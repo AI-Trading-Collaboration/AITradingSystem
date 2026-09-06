@@ -74,7 +74,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md",
-        "sha256": "231fa0ae226662a2e60abeb811c098e9e13e33625dfad01de929002e835c5e3a"
+        "sha256": "d96b9cc1a2368d4cd0a1c0ba7bb5fc04ea7210a73f275e97ccac9261745af37a"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -84,7 +84,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "9e8cb5bc889058a8a23f3fa8cd5bc1cd365fca076d4ccd08d222bcd68eea51fe"
+        "sha256": "692f08b2bacf0cb260377907108d8eb4fdcb047ac0c05d37baa9a6fed975d293"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -109,7 +109,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "registry/development_tasks/c8/c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml",
-        "sha256": "adfa3f291b5191f7264fc9d5157d493b7b996b1f1fae185dae49714286f1a61b"
+        "sha256": "d4934c0bff034704fc3aeafe870a35d29aa20a36abee9a60f438344e903bcf24"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -288,5 +288,5 @@
     "task_id": "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1"
   },
   "section_id": "phase_trading_2564_s2b_named_dq_execution_v1",
-  "section_sha256": "f983839b2f133b5499fff9473a762c07e92f930f57de7f68bd0fe8402083a4d3"
+  "section_sha256": "155e76e9d6b8af614bbe432fb98c0662a923a20866afcd429ea9e05dea5952f7"
 }

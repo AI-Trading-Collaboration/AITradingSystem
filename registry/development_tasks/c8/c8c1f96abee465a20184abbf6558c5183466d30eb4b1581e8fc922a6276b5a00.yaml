@@ -14,12 +14,15 @@ task_record:
   priority: P1
   accountable_owner: null
   next_owner: Codex integration coordinator
-  requirement_refs: []
+  requirement_refs:
+  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
+  - docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S2b恢复源码456项focused PASS、69-site/6-rate规则等价PASS；共享兼容性调和已实现，待source四生成及focused、真实committed
-    candidate验收、final正式tiers和Full；真实研究/数据/交易0。
+  unstructured_legacy_blocker_or_next_step: S2b恢复源码456 focused、50合成来源、131共享回归PASS，source
+    a2f92209已提交；final v1在Atlas前置因requirement_refs为空失败，candidate=null/Full=0。当前仅追加恢复需求引用并新增提交前只读coverage检查，再同branch
+    source/final完成12 actual E2E、正式tiers与Full；真实研究/数据/交易0。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 保留S2a→OPS079→DEVX014→S2b顺序与40-source/55-module/7-dependency；新清单实际核验1207/1368预期，C1/rate/decision语义等价及精确负例PASS；原12
@@ -483,6 +486,33 @@ events:
   - change:trading-2564-s2b-retained-authority-missing-binding-fix-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-fa11ad459679e04cf74ecdcee804a28e
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T12:28:40+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2b-restore-requirement-links-v3
+  lane_id: null
+  base_commit: a2f92209de2e7fb6c6610ae98d12d1ff1011ae9b
+  previous_state_event_id: task-event-fa11ad459679e04cf74ecdcee804a28e
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex integration coordinator
+    blocker_or_next_step: S2b恢复源码456 focused、50合成来源、131共享回归PASS，source a2f92209已提交；final
+      v1在Atlas前置因requirement_refs为空失败，candidate=null/Full=0。当前仅追加恢复需求引用并新增提交前只读coverage检查，再同branch
+      source/final完成12 actual E2E、正式tiers与Full；真实研究/数据/交易0。
+    acceptance_criteria: 保留S2a→OPS079→DEVX014→S2b顺序与40-source/55-module/7-dependency；新清单实际核验1207/1368预期，C1/rate/decision语义等价及精确负例PASS；原12
+      actual E2E和正式tiers/Full绑定full_20260905T155839Z，最终main/origin一致；全真实研究/DQ/数据/交易0。
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md。追加纠正cycles481-483的notes替换遗漏完整路径，保留全部18事件与a2f92209源码提交；不改Atlas/registry
+      validator或历史。见S2b第14.4节，source v3同root/branch/source head/expected main承接。复用D:/Work/AITradingSystem_devx014_source_preservation为唯一coordinator；D:/Work/AITradingSystem_trading2559_integration原18项及unique证据保留，待最终发布/证据保全/无依赖后审计清理。S2
+      consumer→S3真实前瞻→S4机制归因仍是研究主线；heartbeat PAUSED、原研究授权不可复用。S5记录提交前coverage检查以降低重复失败成本，不在本波改变任务writer或扩大权限。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2b-restore-requirement-links-v3
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5b5aaee398189b0e4c9b2bb4bc4ec3b3
 projection:
   legacy_first_eight_cells:
   - TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
@@ -490,14 +520,18 @@ projection:
   - P1
   - IN_PROGRESS
   - Codex integration coordinator
-  - S2b恢复源码456项focused PASS、69-site/6-rate规则等价PASS；共享兼容性调和已实现，待source四生成及focused、真实committed
-    candidate验收、final正式tiers和Full；真实研究/数据/交易0。
+  - S2b恢复源码456 focused、50合成来源、131共享回归PASS，source a2f92209已提交；final v1在Atlas前置因requirement_refs为空失败，candidate=null/Full=0。当前仅追加恢复需求引用并新增提交前只读coverage检查，再同branch
+    source/final完成12 actual E2E、正式tiers与Full；真实研究/数据/交易0。
   - 保留S2a→OPS079→DEVX014→S2b顺序与40-source/55-module/7-dependency；新清单实际核验1207/1368预期，C1/rate/decision语义等价及精确负例PASS；原12
     actual E2E和正式tiers/Full绑定full_20260905T155839Z，最终main/origin一致；全真实研究/DQ/数据/交易0。
-  - 独立只读review发现测试helper对S2b缺sources/superseded条目可能回退DEVX014；修正仅限S2b exact40与TRADING2480受限路径的4项交集，完整性预检+原两fixture四类缺失双phase负例；不改生产validator、不扩大来源、不改历史hash，实际并行验收待执行。
-  docs_links: []
+  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md。追加纠正cycles481-483的notes替换遗漏完整路径，保留全部18事件与a2f92209源码提交；不改Atlas/registry
+    validator或历史。见S2b第14.4节，source v3同root/branch/source head/expected main承接。复用D:/Work/AITradingSystem_devx014_source_preservation为唯一coordinator；D:/Work/AITradingSystem_trading2559_integration原18项及unique证据保留，待最终发布/证据保全/无依赖后审计清理。S2
+    consumer→S3真实前瞻→S4机制归因仍是研究主线；heartbeat PAUSED、原研究授权不可复用。S5记录提交前coverage检查以降低重复失败成本，不在本波改变任务writer或扩大权限。
+  docs_links:
+  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
+  - docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md
   terminal: false
-  canonical_row_sha256: ffb67948f1f47f983950b3df77abf5ae707b99ffae610dc69eca632df34394a7
-last_event_id: task-event-fa11ad459679e04cf74ecdcee804a28e
+  canonical_row_sha256: eb83707add3075c76b7fca072b7cbeca531f37e61a34fd24324d9af302c39941
+last_event_id: task-event-5b5aaee398189b0e4c9b2bb4bc4ec3b3
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: d769ee705c725d3fa40d49de983bc0170b82f21bddb3c3023214b21b8c5a145c
+fragment_checksum: d3ab4c4e1db4816aa284fec7727393286132d5ecd03d18fc8cc9fb30f53f1464
