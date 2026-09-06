@@ -109,6 +109,17 @@ OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY = (
 DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_PHASE_KEY = (
     "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1"
 )
+TRADING_2564_S2B_NAMED_DQ_EXECUTION_PHASE_KEY = "phase_trading_2564_s2b_named_dq_execution_v1"
+# Exact intersection of the reviewed S2b 40-source closure and the restricted
+# historical paths below; TRADING-2564 S2b requirement section 14.3.
+TRADING_2564_S2B_RESTRICTED_CURRENT_AUTHORITY_PATHS = frozenset(
+    {
+        "docs/system_flow.md",
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_trading2452_architecture_contract.py",
+    }
+)
 TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
         ("docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md"),
@@ -169,6 +180,25 @@ def _assert_historical_source_is_current_or_superseded(
     if source["sha256"] == live_hash:
         return
 
+    if (
+        source_path in TRADING_2564_S2B_RESTRICTED_CURRENT_AUTHORITY_PATHS
+        and TRADING_2564_S2B_NAMED_DQ_EXECUTION_PHASE_KEY in baseline
+    ):
+        required_phase = baseline[TRADING_2564_S2B_NAMED_DQ_EXECUTION_PHASE_KEY]
+        missing_binding = f"{source_path}: S2b historical hash drift is not declared completely"
+        assert isinstance(required_phase, dict), missing_binding
+        required_paths = required_phase.get("superseded_live_source_paths")
+        required_sources = required_phase.get("sources")
+        assert isinstance(required_paths, list) and source_path in required_paths, missing_binding
+        assert isinstance(required_sources, list), missing_binding
+        assert (
+            sum(
+                isinstance(item, dict) and item.get("path") == source_path
+                for item in required_sources
+            )
+            == 1
+        ), missing_binding
+
     latest_authority: tuple[str, dict[str, Any], dict[str, str]] | None = None
     for section_key, section in reversed(tuple(baseline.items())):
         if not isinstance(section, dict):
@@ -225,6 +255,7 @@ def _assert_historical_source_is_current_or_superseded(
             OPS_078_DAILY_AUTOMATION_ISOLATION_PHASE_KEY,
             OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY,
             DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_PHASE_KEY,
+            TRADING_2564_S2B_NAMED_DQ_EXECUTION_PHASE_KEY,
         }
     ):
         section_ids = list(baseline)
@@ -546,3 +577,191 @@ def test_devx_014_special_source_does_not_fall_back_to_older_valid_authority(
         _assert_historical_source_is_current_or_superseded(
             baseline, historical_source, repository_root=tmp_path
         )
+
+
+@pytest.fixture(params=["docs/system_flow.md", "tests/test_arch_004g_deprecation.py"])
+def restricted_s2b_source_case(
+    tmp_path: Path, request: pytest.FixtureRequest
+) -> tuple[dict[str, Any], dict[str, str]]:
+    source_path = str(request.param)
+    assert source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
+    live_path = tmp_path / source_path
+    live_path.parent.mkdir(parents=True)
+    live_path.write_bytes(b"current\r\n")
+    phase_key = TRADING_2564_S2B_NAMED_DQ_EXECUTION_PHASE_KEY
+    baseline = {
+        phase_key: {
+            "supersession": {
+                "historical_hashes_rewritten": False,
+                "current_hash_authority": f"{phase_key}.sources",
+            },
+            "superseded_live_source_paths": [source_path],
+            "sources": [
+                {
+                    "path": source_path,
+                    "sha256": sha256(b"current\n").hexdigest(),
+                    "hash_normalization": "git_eol_lf",
+                }
+            ],
+        }
+    }
+    historical_source = {
+        "path": source_path,
+        "sha256": sha256(b"historical\n").hexdigest(),
+        "hash_normalization": "git_eol_lf",
+    }
+    return baseline, historical_source
+
+
+def test_restricted_historical_source_accepts_exact_s2b_live_hash_authority(
+    tmp_path: Path,
+    restricted_s2b_source_case: tuple[dict[str, Any], dict[str, str]],
+) -> None:
+    baseline, historical_source = restricted_s2b_source_case
+    original_source = dict(historical_source)
+    original_baseline = deepcopy(baseline)
+
+    _assert_historical_source_is_current_or_superseded(
+        baseline, historical_source, repository_root=tmp_path
+    )
+
+    assert historical_source == original_source
+    assert baseline == original_baseline
+    assert (tmp_path / historical_source["path"]).read_bytes() == b"current\r\n"
+
+
+@pytest.mark.parametrize(
+    "mutation,expected_error,message",
+    [
+        ("wrong_sha", AssertionError, "authority hash does not match live bytes"),
+        ("missing_source", AssertionError, "drift is not declared"),
+        ("missing_superseded_path", AssertionError, "drift is not declared"),
+        ("missing_supersession", KeyError, "supersession"),
+        ("history_rewritten", AssertionError, "must preserve historical source hashes"),
+        ("wrong_locator", AssertionError, "current hash authority must be"),
+    ],
+)
+def test_restricted_s2b_authority_rejects_incomplete_or_changed_bindings(
+    tmp_path: Path,
+    restricted_s2b_source_case: tuple[dict[str, Any], dict[str, str]],
+    mutation: str,
+    expected_error: type[Exception],
+    message: str,
+) -> None:
+    baseline, historical_source = restricted_s2b_source_case
+    section = baseline[TRADING_2564_S2B_NAMED_DQ_EXECUTION_PHASE_KEY]
+    if mutation == "wrong_sha":
+        section["sources"][0]["sha256"] = sha256(b"stale\n").hexdigest()
+    elif mutation == "missing_source":
+        section.pop("sources")
+    elif mutation == "missing_superseded_path":
+        section.pop("superseded_live_source_paths")
+    elif mutation == "missing_supersession":
+        section.pop("supersession")
+    elif mutation == "history_rewritten":
+        section["supersession"]["historical_hashes_rewritten"] = True
+    else:
+        section["supersession"]["current_hash_authority"] = WAVE11_CURRENT_HASH_AUTHORITY
+
+    with pytest.raises(expected_error, match=message):
+        _assert_historical_source_is_current_or_superseded(
+            baseline, historical_source, repository_root=tmp_path
+        )
+
+
+@pytest.mark.parametrize(
+    "future_phase_key",
+    ["phase_future_append_only", "phase_trading_2564_s2b_named_dq_execution_v2"],
+)
+def test_restricted_historical_source_rejects_unreviewed_future_successor(
+    tmp_path: Path,
+    restricted_s2b_source_case: tuple[dict[str, Any], dict[str, str]],
+    future_phase_key: str,
+) -> None:
+    baseline, historical_source = restricted_s2b_source_case
+    # Include every required historical marker so rejection must reach the
+    # original chronology boundary, rather than fail on a missing fixture key.
+    historical_markers = (
+        TRADING_2492_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_PHASE_KEY,
+        TRADING_2492_BOUNDED_PILOT_TERMINAL_NO_GO_PHASE_KEY,
+        TRADING_2493_OWNER_STAGE_GATE_SIGNOFF_PHASE_KEY,
+        TRADING_2497_LICENSE_EXPORT_DUE_DILIGENCE_PHASE_KEY,
+        TRADING_2497_LICENSE_EXPORT_OWNER_REVIEW_PHASE_KEY,
+        TRADING_2498_DAILY_CAPABILITY_GATE_PHASE_KEY,
+        TRADING_2496_OWNER_VISUAL_ACCEPTANCE_PHASE_KEY,
+        TRADING_2500_DAILY_CAPABILITY_GATE_RETRY_PHASE_KEY,
+        TRADING_2500_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_PHASE_KEY,
+        TRADING_2500_DAILY_CAPABILITY_GATE_RETRY_TERMINAL_REVIEW_PHASE_KEY,
+        TRADING_2499_DAILY_PRIMARY_BACKTEST_CONTRACT_PHASE_KEY,
+        TRADING_2501_ATLAS_OWNER_REVIEW_PACK_PHASE_KEY,
+    )
+    section = baseline[TRADING_2564_S2B_NAMED_DQ_EXECUTION_PHASE_KEY]
+    future_baseline = {
+        **dict.fromkeys(historical_markers, {}),
+        **baseline,
+        future_phase_key: {
+            **section,
+            "supersession": {
+                "historical_hashes_rewritten": False,
+                "current_hash_authority": f"{future_phase_key}.sources",
+            },
+        },
+    }
+
+    with pytest.raises(AssertionError):
+        _assert_historical_source_is_current_or_superseded(
+            future_baseline, historical_source, repository_root=tmp_path
+        )
+
+
+@pytest.mark.parametrize("source_path", DEVX_014_SPECIAL_SOURCE_FIXTURE_PATHS)
+def test_s2b_special_source_does_not_fall_back_to_devx_014(
+    tmp_path: Path, source_path: str
+) -> None:
+    baseline, historical_source = _devx_014_special_source_fixture(tmp_path, source_path)
+    current_phase = deepcopy(baseline[DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_PHASE_KEY])
+    section_key = TRADING_2564_S2B_NAMED_DQ_EXECUTION_PHASE_KEY
+    current_phase["supersession"]["current_hash_authority"] = f"{section_key}.sources"
+    current_phase["sources"][0]["sha256"] = sha256(b"stale\n").hexdigest()
+    baseline[section_key] = current_phase
+
+    with pytest.raises(AssertionError, match="latest authority hash does not match live bytes"):
+        _assert_historical_source_is_current_or_superseded(
+            baseline, historical_source, repository_root=tmp_path
+        )
+
+
+@pytest.mark.parametrize("source_path", DEVX_014_SPECIAL_SOURCE_FIXTURE_PATHS)
+@pytest.mark.parametrize(
+    "malformation",
+    ["missing_sources", "missing_superseded", "matching_source_removed", "matching_path_removed"],
+)
+def test_s2b_missing_special_binding_does_not_fall_back_to_devx_014(
+    tmp_path: Path, source_path: str, malformation: str
+) -> None:
+    baseline, historical_source = _devx_014_special_source_fixture(tmp_path, source_path)
+    current_phase = deepcopy(baseline[DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_PHASE_KEY])
+    section_key = TRADING_2564_S2B_NAMED_DQ_EXECUTION_PHASE_KEY
+    current_phase["supersession"]["current_hash_authority"] = f"{section_key}.sources"
+    baseline[section_key] = current_phase
+    if malformation == "missing_sources":
+        current_phase.pop("sources")
+    elif malformation == "missing_superseded":
+        current_phase.pop("superseded_live_source_paths")
+    elif malformation == "matching_source_removed":
+        current_phase["sources"] = []
+    else:
+        current_phase["superseded_live_source_paths"] = []
+    original_baseline = deepcopy(baseline)
+    original_source = dict(historical_source)
+
+    with pytest.raises(
+        AssertionError, match="S2b historical hash drift is not declared completely"
+    ):
+        _assert_historical_source_is_current_or_superseded(
+            baseline, historical_source, repository_root=tmp_path
+        )
+
+    assert baseline == original_baseline
+    assert historical_source == original_source
+    assert (tmp_path / source_path).read_bytes() == b"current\n"

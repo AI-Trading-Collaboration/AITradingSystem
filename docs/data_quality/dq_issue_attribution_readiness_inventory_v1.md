@@ -1,6 +1,6 @@
 # DATA-GOV-002 Phase C：DQ Issue Attribution Readiness Inventory
 
-- inventory_id：`dq_issue_attribution_inventory_8e8b3981d478574ee87d989a`
+- inventory_id：`dq_issue_attribution_inventory_f266d9f47b5d85ddc2021670`
 - status：`SOURCE_OWNER_REVIEW_REQUIRED`
 - 当前结论：本 inventory 不是新 issue 隔离授权；未 review 项继续 `GLOBAL_OR_UNKNOWN_SCOPE`。
 - message/sample scope inference：`false`
@@ -11,17 +11,17 @@
 
 |指标|值|
 |---|---:|
-|`canonical_site_count`|69|
-|`direct_constructor_site_count`|63|
+|`canonical_site_count`|72|
+|`direct_constructor_site_count`|66|
 |`factory_call_site_count`|6|
-|`static_site_count`|56|
-|`template_site_count`|11|
-|`dynamic_site_count`|2|
-|`unique_static_code_count`|53|
+|`static_site_count`|57|
+|`template_site_count`|12|
+|`dynamic_site_count`|3|
+|`unique_static_code_count`|54|
 |`policy_authorized_code_count`|1|
 |`policy_authorized_site_count`|1|
 |`legacy_affected_instruments_site_count`|1|
-|`owner_review_required_site_count`|68|
+|`owner_review_required_site_count`|71|
 |`factory_implementation_constructor_count`|1|
 |`noncanonical_constructor_site_count`|2|
 
@@ -39,6 +39,9 @@
 |`dq_issue_site_440e2b840ebfcd10edca`|`DYNAMIC_EXPRESSION` / `code`|`src/ai_trading_system/data/quality.py::_check_expected_price_tickers`|`GLOBAL_OR_UNKNOWN_SCOPE`|`OWNER_REVIEW_REQUIRED`|`affected_instruments=false`|
 |`dq_issue_site_0e9673b916d7044dadc4`|`TEMPLATE_EXPRESSION` / `f'{label}_missing_expected_values'`|`src/ai_trading_system/data/quality.py::_check_expected_values`|`GLOBAL_OR_UNKNOWN_SCOPE`|`OWNER_REVIEW_REQUIRED`|`affected_instruments=false`|
 |`dq_issue_site_77c8b873a1d08b943704`|`TEMPLATE_EXPRESSION` / `f'{label}_download_manifest_checksum_missing'`|`src/ai_trading_system/data/quality.py::_check_manifest_covers_file`|`GLOBAL_OR_UNKNOWN_SCOPE`|`OWNER_REVIEW_REQUIRED`|`affected_instruments=false`|
+|`dq_issue_site_209756a138c3d5004b20`|`STATIC_LITERAL` / `download_manifest_named_binding_mismatch`|`src/ai_trading_system/data/quality.py::_check_named_download_binding`|`GLOBAL_OR_UNKNOWN_SCOPE`|`OWNER_REVIEW_REQUIRED`|`affected_instruments=false`|
+|`dq_issue_site_3194f2d7bb6556c564c2`|`TEMPLATE_EXPRESSION` / `f'{role}_named_download_publication_binding_mismatch'`|`src/ai_trading_system/data/quality.py::_check_named_download_binding`|`GLOBAL_OR_UNKNOWN_SCOPE`|`OWNER_REVIEW_REQUIRED`|`affected_instruments=false`|
+|`dq_issue_site_5b8c2dd5721991b230d2`|`DYNAMIC_EXPRESSION` / `exc.code.removeprefix('DQ_').lower()`|`src/ai_trading_system/data/quality.py::_check_named_download_binding`|`GLOBAL_OR_UNKNOWN_SCOPE`|`OWNER_REVIEW_REQUIRED`|`affected_instruments=false`|
 |`dq_issue_site_312625a26da21428b763`|`STATIC_LITERAL` / `prices_non_market_session_date`|`src/ai_trading_system/data/quality.py::_check_price_market_calendar_dates`|`EXISTING_POLICY_AUTHORIZED_INSTRUMENT_SCOPE`|`EXISTING_OWNER_REVIEWED_PILOT`|`affected_instruments=true`|
 |`dq_issue_site_6e2e6b8c204d145bb655`|`STATIC_LITERAL` / `prices_extreme_adj_close_move`|`src/ai_trading_system/data/quality.py::_check_price_moves`|`GLOBAL_OR_UNKNOWN_SCOPE`|`OWNER_REVIEW_REQUIRED`|`affected_instruments=false`|
 |`dq_issue_site_e35ba0673fdf3010f082`|`STATIC_LITERAL` / `prices_suspicious_adj_close_move`|`src/ai_trading_system/data/quality.py::_check_price_moves`|`GLOBAL_OR_UNKNOWN_SCOPE`|`OWNER_REVIEW_REQUIRED`|`affected_instruments=false`|

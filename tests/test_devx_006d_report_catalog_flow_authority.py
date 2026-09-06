@@ -150,8 +150,13 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         "report_catalog_flow_successor"
     ]
 
-    latest_section = "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1"
+    latest_section = "phase_trading_2564_s2b_named_dq_execution_v1"
     assert next(reversed(merged)) == latest_section
+    assert (
+        list(merged).index(latest_section)
+        == list(merged).index("phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1")
+        + 1
+    )
     assert list(merged).index("phase_ops_079_historical_daily_gap_recovery_executor_v1") < list(
         merged
     ).index(latest_section)
@@ -180,13 +185,13 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         (
             "artifact_catalog",
             "docs/artifact_catalog.md",
-            "d6860152237e96b168b9e9974dc78d11735a3e766498f9697d4c36b91de4590a",
+            "9b6467d6fb74fd6e83b0f54fd4e2e7a90c2b02ca273443e7a55d73b1aecf4680",
             563,
         ),
         (
             "system_flow",
             "docs/system_flow.md",
-            "98e190f319e2c1fb7f5ca8d0d2e718691d6e1d2690e881d8d1f68ffde9dbbe78",
+            "f66e81c310b569d6165f4dc9132fcb9562f708d319a6d5485794bfac8c02d134",
             1226,
         ),
     ],

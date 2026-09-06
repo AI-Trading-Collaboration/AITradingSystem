@@ -117,6 +117,43 @@ Request 通过显式 JSON 文件传入，绑定 schema、preservation id、recov
 
 ## 状态记录
 
+### 2026-09-06：发布与保全完成，S3 交接唯一 S2b coordinator
+
+DEVX014 candidate/main/origin `64e1d3da3cd41ae842fd7cc3f14802c550ceb9ef` 已正常发布；final v3
+`devx-014-source-preservation-final-20260906-v3` 已 COMPLETED/RELEASED。Full `full_20260906T084340Z`
+为 10685 PASS / 0 FAIL / 5 SKIP，summary SHA `48a79b45878aa6d19dc8aa1f9f34bd5a794e125cfdeb62bd7a5714a8ea0894e0`；
+四项正式 tier 分别 1055/281/995/24 PASS。旧 pending/失败记录保留，以上为追加终态事实。
+旧 S2b root 已批准 OS arbiter 迁移实际1/1、源码保全实际1、独立校验实际1，均 PASS，不得重复消费。
+保全 commit `d5e8b26f2a4ac3c66ccb941b77e6f7c983423786`、tree `f5890ff6bd6dd55d9490edef13521b209b165512`
+仅为 `RAW_BYTES_SOURCE_ONLY_UNVALIDATED`；原 HEAD `06140c52ca4e5be718075b7f436b820b927637c4`、18项 dirty
+原始 bytes/index、旧 terminal/业务事件保持原样。收据见 `outputs/validation_runtime/devx014-research-recovery-handoff-20260906-v1.json`
+及 final v3 closeout；handoff 中历史 release_pending 不覆盖其后实际 RELEASED 终态。
+
+以原 frozen base `293813e5e2e7b88886b79fc22cf77e2d57f1f346`、保全 snapshot 和当前 published C，
+正式核对全量66/86路径增量与30项 rename-aware overlap（9 coordinator refresh、21 domain）。
+plan=`integration-revalidation-f8a6fd3c9c5d05f5a27e`，内部 SHA
+`f8a6fd3c9c5d05f5a27ecbbce8561f83886bc82c192c52c7136ae2551a8f4b3c`，保留 RECONCILIATION_REQUIRED 分类。
+`outputs/architecture/trading_2564_s2b_preserved_recovery/clean_integration_admission_v2.json` 在任何 tracked
+写入前，对 clean exact C、真实 active fence 和 exact reviewed plan id 取得 INTEGRATION PASS。
+独立审查确认 execution_lease.v1 业务事件/TTL/replay 不变，新的 OS arbiter 协议单列 WRITE；mixed/legacy
+store 与迁移/path/state 错误仍阻断。S2b55模块 child 闭包不含 architecture/kernel/fence，主线未修改这些闭包路径。
+
+`D:/Work/AITradingSystem_devx014_source_preservation` 现接续为唯一 S2b coordinator，branch
+`codex/trading-2564-s2b-preserved-integration`，HEAD/main保持C；不新建工作区、不替换原 frozen lane。
+按精确 task-id gate 串行交接：DEVX014 source-only 事务追加本任务事实与文档后保留精确 dirty attribution，
+行政 FAILED/RELEASED（candidate=null、Full=0）；TRADING2564 source事务在同 root/branch/HEAD C 接管。
+后继 LANE 仅继续已准入的同一 candidate，不是重批 dirty plan；main/HEAD/branch/plan bytes/lease/归因
+任一漂移均停止。两个任务分别使用合法 canonical writer；先重放 TRADING2564 snapshot 的8条原追加事件、
+逐条核对完整 body/id，再追加新接续事件，不改旧 base commit 或时间。
+
+S3完成，S4与umbrella仍 IN_PROGRESS。S2b后续Full必须绑定它自己的 `full_20260905T155839Z` 失败原件，
+不能继承DEVX014 Full；只形成一个受审source/final候选，保留OPS079/DEVX014并追加S2b40-source。
+先验证C1→rate review→decision等价性和精确后继负例，再运行最终候选的实际E2E与正式tiers。
+本root保留独有验证/迁移/保全证据；旧 `D:/Work/AITradingSystem_trading2559_integration` 保留原18项源码及保全链。
+两root退出条件为S2b正式发布、unique证据规范保留并逐hash核对、无未审源码和运行依赖后审计清理；
+本次不删除目录/分支/缓存，不触碰excluded owner文档。真实研究、manifest replay、canonical DQ、observation、
+maturity、scoreboard、下载、cache/provider/QuantConnect/Options、paper/live/broker/order/fill/position/交易全部0。
+
 ### 2026-09-06：正式 Full 三项失败后的最小合同测试修正
 
 候选 `1389319ddd67109f4defb11a60521a7bbde7b43e` 的四项前置正式验证均已通过：architecture 1055、contract 281、integration 995、reproducibility 24。唯一 Full `full_20260906T061949Z` 于 `2026-09-06T07:26:22.889471Z` 结束，实际 `10658 PASS / 3 FAIL / 5 SKIP / 640 warnings`、16 workers/loadfile、pytest 3926.23s；summary SHA `3e04952c55c9b062bd6379d9b2d8cfc8f7630bb478af4c1da3d01b1a5ccf8ac2`，runtime profile SHA `6d797e69fe958c788ecc08af2bf1272da6ca5d697ce822669820334720ceb8c0`。原 summary/log/profile/reader brief 及失败合成 Git 夹具的六个工作/元数据文件、八个精确 reachable loose objects 共1126 bytes已保留；未复制其它 fixture 或 excluded 文档内容。Full 不是 PASS，旧 S2b 迁移和保全仍为0。

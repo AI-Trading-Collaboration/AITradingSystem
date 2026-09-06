@@ -44,6 +44,7 @@ OPS_078_SECTION = "phase_ops_078_daily_automation_isolation_and_same_day_rescue_
 TRADING_2564_S2A_SECTION = "phase_trading_2564_s2a_named_immutable_snapshot_v1"
 OPS_079_SECTION = "phase_ops_079_historical_daily_gap_recovery_executor_v1"
 DEVX_014_SECTION = "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1"
+TRADING_2564_S2B_SECTION = "phase_trading_2564_s2b_named_dq_execution_v1"
 DEVX_014_SOURCE_PATHS = frozenset(
     {
         "config/architecture/arch_005_source_preservation.yaml",
@@ -85,6 +86,51 @@ DEVX_014_SOURCE_PATHS = frozenset(
         "tests/test_trading2452_architecture_contract.py",
     }
 )
+TRADING_2564_S2B_SOURCE_PATHS = frozenset(
+    {
+        "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.json",
+        "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.validation.json",
+        "docs/data_quality/dq_issue_attribution_readiness_inventory_v1.md",
+        "inputs/data_quality/rate_issue_attribution_review_pack_v1.json",
+        "inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json",
+        "docs/data_quality/rate_issue_attribution_review_pack_v1.md",
+        "config/data_quality/rate_row_issue_attribution_decision_v1.yaml",
+        "src/ai_trading_system/contracts/rate_data_quality_attribution.py",
+        "tests/test_rate_issue_attribution_contract.py",
+        "tests/test_data_quality_issue_attribution_inventory.py",
+        "tests/test_trading2452_architecture_contract.py",
+        "src/ai_trading_system/contracts/named_data_quality_execution.py",
+        "src/ai_trading_system/contracts/named_execution_context.py",
+        "src/ai_trading_system/data/quality_provenance.py",
+        "src/ai_trading_system/data/named_quality_execution.py",
+        "src/ai_trading_system/data/quality.py",
+        "src/ai_trading_system/data/quality_execution.py",
+        "scripts/run_named_data_quality.py",
+        "config/data_governance/named_data_quality_execution_sources_v1.json",
+        "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+        "tests/test_named_data_quality_execution_contract.py",
+        "tests/test_named_data_quality_execution.py",
+        "tests/test_named_data_quality_bootstrap.py",
+        "tests/test_named_data_quality_candidate.py",
+        "tests/named_data_quality_support.py",
+        "tests/test_data_quality.py",
+        "tests/test_data_quality_execution.py",
+        "tests/test_qqq_options_signal_package.py",
+        "tests/test_research_input_readiness.py",
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_devx_006c_compatibility_authority.py",
+        "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md",
+        "docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md",
+        "docs/system_flow.md",
+        "docs/artifact_catalog.md",
+        "registry/development_tasks/c8/c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml",
+        "inputs/architecture/arch_005_task_registry_index.yaml",
+    }
+)
+
 TRADING_2564_S2A_SOURCE_PATHS = frozenset(
     {
         "src/ai_trading_system/data/immutable_publish.py",
@@ -206,12 +252,12 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 322
-    assert result["fragment_count"] == 16
+    assert len(merged) == 323
+    assert result["fragment_count"] == 17
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == DEVX_014_SECTION
+    assert next(reversed(merged)) == TRADING_2564_S2B_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
@@ -320,7 +366,7 @@ def _assert_devx_014_source_closure(phase: dict[str, Any]) -> None:
 
 def test_devx_014_is_exact_source_preservation_and_os_arbiter_successor() -> None:
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == DEVX_014_SECTION
+    assert list(merged).index(TRADING_2564_S2B_SECTION) == list(merged).index(DEVX_014_SECTION) + 1
     assert list(merged).index(DEVX_014_SECTION) == list(merged).index(OPS_079_SECTION) + 1
     phase = merged[DEVX_014_SECTION]
     assert set(phase) == {
@@ -441,7 +487,8 @@ def test_devx_014_validator_rejects_changed_source_without_rebuild(
     monkeypatch.setattr(Path, "read_bytes", altered_read)
     with pytest.raises(CompatibilityAuthorityError) as caught:
         validate_repository_authority()
-    assert caught.value.code == "AUTHORITY_FILE_MISSING"
+    assert caught.value.code == "AUTHORITY_GENERATED_STALE"
+    assert caught.value.detail == "inputs/architecture/devx_006c_compatibility_authority_index.json"
 
 
 def _assert_s2a_source_closure(phase: dict[str, Any]) -> None:
@@ -542,6 +589,133 @@ def test_s2a_validator_rejects_changed_source_without_rebuild(
     with pytest.raises(CompatibilityAuthorityError) as caught:
         validate_repository_authority()
     assert caught.value.code == expected_code
+    if expected_code == "AUTHORITY_GENERATED_STALE":
+        assert (
+            caught.value.detail
+            == "inputs/architecture/devx_006c_compatibility_authority_index.json"
+        )
+    else:
+        assert caught.value.detail.startswith(
+            "registry/architecture_compatibility_authority/fragments/"
+        )
+
+
+def _assert_s2b_source_closure(phase: dict[str, Any]) -> None:
+    paths = [row["path"] for row in phase["sources"]]
+    assert len(TRADING_2564_S2B_SOURCE_PATHS) == 40
+    assert paths == sorted(TRADING_2564_S2B_SOURCE_PATHS, key=str.casefold)
+    assert phase["superseded_live_source_paths"] == paths
+    for row in phase["sources"]:
+        assert set(row) == {"path", "sha256", "hash_normalization"}
+        assert row["hash_normalization"] == "git_eol_lf"
+        content = Path(row["path"]).read_bytes().replace(b"\r\n", b"\n")
+        assert hashlib.sha256(content).hexdigest() == row["sha256"], row["path"]
+
+
+def test_s2b_is_exact_named_execution_successor_authority() -> None:
+    from test_trading2452_architecture_contract import (
+        TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS,
+        TRADING_2564_S2B_RESTRICTED_CURRENT_AUTHORITY_PATHS,
+    )
+
+    assert TRADING_2564_S2B_RESTRICTED_CURRENT_AUTHORITY_PATHS == (
+        TRADING_2564_S2B_SOURCE_PATHS
+        & TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
+    )
+    merged = load_compatibility_authority()
+    assert next(reversed(merged)) == TRADING_2564_S2B_SECTION
+    assert list(merged).index(TRADING_2564_S2A_SECTION) < list(merged).index(
+        TRADING_2564_S2B_SECTION
+    )
+    assert list(merged).index(TRADING_2564_S2B_SECTION) == list(merged).index(DEVX_014_SECTION) + 1
+    phase = merged[TRADING_2564_S2B_SECTION]
+    assert phase["authority_contract"] == load_compatibility_policy()["contract"]
+    assert phase["schema_version"] == "trading_2564_s2b_named_dq_execution.v1"
+    assert phase["task_id"] == "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1"
+    assert phase["status"] == "VALIDATING"
+    assert (
+        phase["owner_decision"] == "owner_instruction:TRADING-2564:2026-09-05:long-term-capability"
+    )
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": DEVX_014_SECTION,
+        "current_hash_authority": f"{TRADING_2564_S2B_SECTION}.sources",
+    }
+    _assert_s2b_source_closure(phase)
+    assert phase["named_dq_contract"] == {
+        "source_kind": "GIT_COMMIT_BYTES_COMPILED",
+        "original_manifest_full_row_binding_required": True,
+        "separate_source_publication_execution_evidence_roots": True,
+        "canonical_dq_calls_per_runner": 1,
+        "canonical_dq_calls_per_verifier": 0,
+        "successful_terminal_dispatch_binding_required": True,
+        "complete_report_projection_exact_bytes_required": True,
+        "verified_bytes_bound_to_current_pid_and_context": True,
+        "verified_seal_export_allowed": False,
+        "coverage_semantics": "CANONICAL_DQ_RULES_ONLY",
+    }
+    assert phase["safety"] == {
+        "real_dq_or_research_executed": False,
+        "dq_numeric_rules_changed": False,
+        "consumer_cutover_allowed": False,
+        "dispatch_allowed": False,
+        "historical_receipt_rewritten": False,
+        "publication_fence_changed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+@pytest.mark.parametrize(
+    "mutation", ["extra", "extra_in_both", "missing", "both_missing_bootstrap", "wrong_hash"]
+)
+def test_s2b_source_closure_rejects_rebuilt_but_incomplete_authority(mutation: str) -> None:
+    phase = deepcopy(load_compatibility_authority()[TRADING_2564_S2B_SECTION])
+    if mutation in {"extra", "extra_in_both"}:
+        phase["sources"].append(
+            {"path": "unreviewed.py", "sha256": "0" * 64, "hash_normalization": "git_eol_lf"}
+        )
+        if mutation == "extra_in_both":
+            phase["superseded_live_source_paths"].append("unreviewed.py")
+    elif mutation == "missing":
+        phase["sources"].pop()
+    elif mutation == "both_missing_bootstrap":
+        removed = "scripts/run_named_data_quality.py"
+        phase["sources"] = [row for row in phase["sources"] if row["path"] != removed]
+        phase["superseded_live_source_paths"] = [
+            path for path in phase["superseded_live_source_paths"] if path != removed
+        ]
+    else:
+        phase["sources"][0]["sha256"] = "0" * 64
+    with pytest.raises(AssertionError):
+        _assert_s2b_source_closure(phase)
+
+
+@pytest.mark.parametrize(
+    "portable",
+    [
+        "scripts/run_named_data_quality.py",
+        "src/ai_trading_system/data/named_quality_execution.py",
+        "tests/test_named_data_quality_candidate.py",
+    ],
+)
+def test_s2b_validator_rejects_changed_source_without_rebuild(
+    monkeypatch: pytest.MonkeyPatch, portable: str
+) -> None:
+    original = Path.read_bytes
+    target = Path(portable).resolve()
+
+    def altered_read(path: Path) -> bytes:
+        content = original(path)
+        return content + b"\n# synthetic S2b drift\n" if path == target else content
+
+    monkeypatch.setattr(Path, "read_bytes", altered_read)
+    with pytest.raises(CompatibilityAuthorityError) as caught:
+        validate_repository_authority()
+    assert caught.value.code == "AUTHORITY_FILE_MISSING"
+    assert caught.value.detail.startswith(
+        "registry/architecture_compatibility_authority/fragments/"
+    )
 
 
 def test_legacy_prefix_bytes_equal_exact_start_base() -> None:

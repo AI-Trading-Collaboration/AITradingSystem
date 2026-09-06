@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import csv
 import hashlib
-import io
 import json
 from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass, replace
@@ -54,6 +53,11 @@ from ai_trading_system.data.quality import (
     resolve_download_publication_observation,
     validate_data_cache,
 )
+from ai_trading_system.data.quality_provenance import (
+    inspect_csv_content,
+    manifest_record_ref,
+    parse_manifest_content,
+)
 from ai_trading_system.us_equity_special_closure_policy import (
     CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH,
     UsEquitySpecialClosurePolicy,
@@ -70,6 +74,7 @@ DATA_QUALITY_CONTRACT_ID: Final = "cached_market_macro_validation"
 DEFAULT_POLICY_PATH: Final = Path("config/data_quality.yaml")
 _EXECUTION_SOURCE_PATH: Final = Path("src/ai_trading_system/data/quality_execution.py")
 _QUALITY_SOURCE_PATH: Final = Path("src/ai_trading_system/data/quality.py")
+_QUALITY_PROVENANCE_SOURCE_PATH: Final = Path("src/ai_trading_system/data/quality_provenance.py")
 _IMMUTABLE_PUBLISH_SOURCE_PATH: Final = Path("src/ai_trading_system/data/immutable_publish.py")
 _TRADING_CALENDAR_SOURCE_PATH: Final = Path("src/ai_trading_system/trading_calendar.py")
 _SPECIAL_CLOSURE_POLICY_SOURCE_PATH: Final = Path(
@@ -78,6 +83,7 @@ _SPECIAL_CLOSURE_POLICY_SOURCE_PATH: Final = Path(
 _VALIDATOR_SOURCE_PATHS: Final = (
     _EXECUTION_SOURCE_PATH,
     _QUALITY_SOURCE_PATH,
+    _QUALITY_PROVENANCE_SOURCE_PATH,
     _IMMUTABLE_PUBLISH_SOURCE_PATH,
     _TRADING_CALENDAR_SOURCE_PATH,
     _SPECIAL_CLOSURE_POLICY_SOURCE_PATH,
@@ -782,10 +788,7 @@ def _utc_now() -> datetime:
 
 
 def _capture_validator_sources(root: Path) -> dict[str, DataFileSnapshot]:
-    paths = {
-        source_path.as_posix(): root / source_path
-        for source_path in _VALIDATOR_SOURCE_PATHS
-    }
+    paths = {source_path.as_posix(): root / source_path for source_path in _VALIDATOR_SOURCE_PATHS}
     snapshots = capture_data_file_snapshots(paths)
     for source_path, snapshot in snapshots.items():
         if not snapshot.exists or snapshot.content is None:
@@ -1052,16 +1055,7 @@ def _derive_evaluated_window(
 
 
 def _inspect_csv_content(content: bytes) -> tuple[tuple[str, ...], int]:
-    try:
-        handle = io.StringIO(content.decode("utf-8-sig"), newline="")
-        reader = csv.reader(handle)
-        header = next(reader, [])
-        row_count = sum(1 for _ in reader)
-    except (UnicodeError, csv.Error):
-        return (), 0
-    if len(header) != len(set(header)):
-        return (), row_count
-    return tuple(header), row_count
+    return inspect_csv_content(content)
 
 
 def _read_manifest_rows(
@@ -1073,24 +1067,10 @@ def _read_manifest_rows(
     if not observed.exists or observed.content is None:
         return _ManifestRows(relative_path, absolute_path, False, None, (), ())
     raw_sha = observed.sha256
-    try:
-        handle = io.StringIO(observed.content.decode("utf-8-sig"), newline="")
-        reader = csv.DictReader(handle)
-        fieldnames = tuple(reader.fieldnames or ())
-        if (
-            not fieldnames
-            or len(fieldnames) != len(set(fieldnames))
-            or not set(MANIFEST_REQUIRED_COLUMNS).issubset(fieldnames)
-        ):
-            return _ManifestRows(relative_path, absolute_path, True, raw_sha, (), fieldnames)
-        rows: list[Mapping[str, str]] = []
-        for raw_row in reader:
-            if None in raw_row or any(value is None for value in raw_row.values()):
-                return _ManifestRows(relative_path, absolute_path, True, raw_sha, (), fieldnames)
-            rows.append({field: raw_row[field] for field in fieldnames})
-    except (UnicodeError, csv.Error):
-        return _ManifestRows(relative_path, absolute_path, True, raw_sha, (), ())
-    return _ManifestRows(relative_path, absolute_path, True, raw_sha, tuple(rows), fieldnames)
+    fieldnames, rows = parse_manifest_content(
+        observed.content, required_columns=MANIFEST_REQUIRED_COLUMNS
+    )
+    return _ManifestRows(relative_path, absolute_path, True, raw_sha, rows, fieldnames)
 
 
 def _match_manifest(item: _ObservedFile, manifest: _ManifestRows) -> _ManifestMatch:
@@ -1158,10 +1138,7 @@ def _manifest_output_matches(
 
 
 def _manifest_record_ref(row: Mapping[str, str]) -> str:
-    canonical = json.dumps(
-        dict(row), ensure_ascii=False, sort_keys=True, separators=(",", ":")
-    ).encode("utf-8")
-    return f"manifest_record_{hashlib.sha256(canonical).hexdigest()}"
+    return manifest_record_ref(row)
 
 
 def _invocation_bindings(

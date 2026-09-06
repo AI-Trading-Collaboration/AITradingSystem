@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from enum import StrEnum
 from hashlib import sha256
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, cast
 
 import pandas as pd
@@ -42,7 +42,15 @@ from ai_trading_system.contracts.rate_data_quality_attribution import (
 from ai_trading_system.data.download_publication import (
     DownloadPublicationError,
     ValidatedDownloadPublication,
+    ValidatedNamedDownloadPublication,
     resolve_download_publication_if_present,
+)
+from ai_trading_system.data.quality_provenance import (
+    MANIFEST_REQUIRED_COLUMNS as MANIFEST_REQUIRED_COLUMNS,
+)
+from ai_trading_system.data.quality_provenance import (
+    NamedManifestBindingError,
+    match_named_manifest_member,
 )
 from ai_trading_system.platform.artifacts import write_markdown_atomic
 from ai_trading_system.trading_calendar import (
@@ -52,16 +60,6 @@ from ai_trading_system.trading_calendar import (
 
 PRICE_REQUIRED_COLUMNS = ("date", "ticker", "open", "high", "low", "close", "adj_close", "volume")
 RATE_REQUIRED_COLUMNS = ("date", "series", "value")
-MANIFEST_REQUIRED_COLUMNS = (
-    "downloaded_at",
-    "source_id",
-    "provider",
-    "endpoint",
-    "request_parameters",
-    "output_path",
-    "row_count",
-    "checksum_sha256",
-)
 
 
 class Severity(StrEnum):
@@ -399,7 +397,20 @@ def validate_data_cache(
     download_publication_resolution: DownloadPublicationResolution | None = None,
     requested_window_authority: DataQualityRequestedWindowAuthority | None = None,
     checked_at: datetime | None = None,
+    named_download_publication: ValidatedNamedDownloadPublication | None = None,
+    named_source_root: Path | None = None,
+    named_source_output_relative_path: str | None = None,
 ) -> DataQualityReport:
+    named_original_output_root = _validate_named_publication_mode(
+        named_download_publication=named_download_publication,
+        named_source_root=named_source_root,
+        named_source_output_relative_path=named_source_output_relative_path,
+        download_publication_resolution=download_publication_resolution,
+        requested_window_authority=requested_window_authority,
+        requested_window=requested_window,
+        manifest_path=manifest_path,
+        backtest_manifest_path=backtest_manifest_path,
+    )
     issues: list[DataQualityIssue] = []
     observed_checked_at = checked_at or datetime.now(UTC)
     if observed_checked_at.tzinfo is None or observed_checked_at.utcoffset() is None:
@@ -474,7 +485,7 @@ def validate_data_cache(
         raise TypeError("download_publication_resolution must be DownloadPublicationResolution")
     canonical_publication: ValidatedDownloadPublication | None = None
     if manifest_path is not None:
-        if explicit_requested_window is not None:
+        if explicit_requested_window is not None and named_download_publication is None:
             resolution = download_publication_resolution
             if resolution is None:
                 resolution = resolve_download_publication_observation(
@@ -510,6 +521,8 @@ def validate_data_cache(
             secondary_price_summary=secondary_price_summary,
             issues=issues,
             canonical_publication=canonical_publication,
+            named_publication=named_download_publication,
+            named_original_output_root=named_original_output_root,
         )
     elif explicit_requested_window is not None and requested_window_authority is None:
         issues.append(
@@ -628,6 +641,56 @@ def validate_data_cache(
             else None
         ),
     )
+
+
+def _validate_named_publication_mode(
+    *,
+    named_download_publication: ValidatedNamedDownloadPublication | None,
+    named_source_root: Path | None,
+    named_source_output_relative_path: str | None,
+    download_publication_resolution: DownloadPublicationResolution | None,
+    requested_window_authority: DataQualityRequestedWindowAuthority | None,
+    requested_window: tuple[date, date] | None,
+    manifest_path: Path | None,
+    backtest_manifest_path: Path | None,
+) -> Path | None:
+    if named_download_publication is None:
+        if named_source_root is not None or named_source_output_relative_path is not None:
+            raise ValueError("named source relationship requires named_download_publication")
+        return None
+    if not isinstance(named_download_publication, ValidatedNamedDownloadPublication):
+        raise TypeError("named_download_publication must be ValidatedNamedDownloadPublication")
+    if (
+        download_publication_resolution is not None
+        or requested_window_authority is not None
+        or backtest_manifest_path is not None
+    ):
+        raise ValueError(
+            "named publication and legacy/derived-window authority are mutually exclusive"
+        )
+    if manifest_path is None or requested_window is None:
+        raise ValueError("named publication requires manifest_path and explicit requested_window")
+    if not isinstance(named_source_root, Path) or not named_source_root.is_absolute():
+        raise ValueError("named_source_root must be an explicit absolute source project root")
+    relative = named_source_output_relative_path
+    if (
+        not isinstance(relative, str)
+        or not relative
+        or "\\" in relative
+        or ":" in relative
+        or "\x00" in relative
+        or PurePosixPath(relative).is_absolute()
+        or ".." in PurePosixPath(relative).parts
+        or not PurePosixPath(relative).parts
+        or PurePosixPath(relative).as_posix() != relative
+        or ".." in named_source_root.parts
+    ):
+        raise ValueError(
+            "named_source_output_relative_path must be a normalized root-relative path"
+        )
+    # The original source root may be unavailable after relocation. Do not read
+    # legacy files or infer this relationship from the current publication root.
+    return named_source_root.joinpath(*PurePosixPath(relative).parts)
 
 
 def render_data_quality_report(report: DataQualityReport) -> str:
@@ -1095,9 +1158,15 @@ def _validate_download_manifest(
     issues: list[DataQualityIssue],
     *,
     canonical_publication: ValidatedDownloadPublication | None,
+    named_publication: ValidatedNamedDownloadPublication | None = None,
+    named_original_output_root: Path | None = None,
 ) -> tuple[DataFileSummary, tuple[date, date] | None]:
     path = snapshot.path
-    severity = Severity.ERROR if canonical_publication is not None else Severity.WARNING
+    severity = (
+        Severity.ERROR
+        if canonical_publication is not None or named_publication is not None
+        else Severity.WARNING
+    )
     if not snapshot.exists:
         issues.append(
             DataQualityIssue(
@@ -1151,6 +1220,22 @@ def _validate_download_manifest(
         )
         return summary, None
 
+    if named_publication is not None:
+        if canonical_publication is not None or named_original_output_root is None:
+            raise ValueError("named manifest binding requires one explicit source relationship")
+        _check_named_download_binding(
+            named=named_publication,
+            original_output_root=named_original_output_root,
+            manifest_snapshot=snapshot,
+            manifest_summary=summary,
+            price_summary=price_summary,
+            rate_summary=rate_summary,
+            secondary_price_summary=secondary_price_summary,
+            issues=issues,
+        )
+        publication = named_publication.publication
+        return summary, (publication.requested_start, publication.requested_end)
+
     if canonical_publication is not None:
         _check_canonical_download_binding(
             canonical=canonical_publication,
@@ -1191,6 +1276,97 @@ def _validate_download_manifest(
             issues,
         )
     return summary, None
+
+
+def _check_named_download_binding(
+    *,
+    named: ValidatedNamedDownloadPublication,
+    original_output_root: Path,
+    manifest_snapshot: DataFileSnapshot,
+    manifest_summary: DataFileSummary,
+    price_summary: DataFileSummary,
+    rate_summary: DataFileSummary,
+    secondary_price_summary: DataFileSummary | None,
+    issues: list[DataQualityIssue],
+) -> None:
+    publication = named.publication
+    if (
+        manifest_summary.path.resolve(strict=False)
+        != publication.manifest_path.resolve(strict=False)
+        or manifest_summary.sha256 != publication.manifest_sha256
+        or manifest_summary.rows != publication.manifest_row_count
+    ):
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR,
+                "download_manifest_named_binding_mismatch",
+                "原 manifest bytes/path/row_count 未精确绑定指定不可变 transaction。",
+                sample=str(manifest_summary.path),
+                source="下载审计清单",
+            )
+        )
+        return
+    # These filenames are D0A transaction schema invariants, not relocation
+    # guesses. The full original path is checked against the caller's explicit
+    # source project root plus source_output_relative_path (TRADING-2564 S2b §4).
+    bindings: tuple[tuple[str, DataFileSummary, Path | None, str], ...] = (
+        ("prices", price_summary, publication.prices_path, "prices_daily.csv"),
+        ("rates", rate_summary, publication.rates_path, "rates_daily.csv"),
+        *(
+            (
+                (
+                    "secondary_prices",
+                    secondary_price_summary,
+                    publication.secondary_prices_path,
+                    "prices_marketstack_daily.csv",
+                ),
+            )
+            if secondary_price_summary is not None
+            else ()
+        ),
+    )
+    for role, summary, member_path, filename in bindings:
+        member_sha = publication.artifact_sha256.get(role)
+        member_rows = publication.artifact_row_count.get(role)
+        if (
+            member_path is None
+            or member_sha is None
+            or member_rows is None
+            or not summary.exists
+            or summary.path.resolve(strict=False) != member_path.resolve(strict=False)
+            or summary.sha256 != member_sha
+            or summary.rows != member_rows
+        ):
+            issues.append(
+                DataQualityIssue(
+                    Severity.ERROR,
+                    f"{role}_named_download_publication_binding_mismatch",
+                    "当前输入未精确绑定指定 immutable member 的 role/path/sha256/row_count。",
+                    sample=str(summary.path),
+                    source="下载审计清单",
+                )
+            )
+            continue
+        assert manifest_snapshot.content is not None
+        try:
+            match_named_manifest_member(
+                manifest_snapshot.content,
+                transaction_id=publication.transaction_id,
+                role=role,
+                original_output_path=str(original_output_root / filename),
+                member_sha256=member_sha,
+                member_row_count=member_rows,
+            )
+        except NamedManifestBindingError as exc:
+            issues.append(
+                DataQualityIssue(
+                    Severity.ERROR,
+                    exc.code.removeprefix("DQ_").lower(),
+                    f"指定不可变输入的原 manifest 全行绑定失败：{exc.message}",
+                    sample=str(summary.path),
+                    source="下载审计清单",
+                )
+            )
 
 
 def _check_canonical_download_binding(

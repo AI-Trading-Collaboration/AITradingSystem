@@ -235,6 +235,7 @@ def _copy_authority_files(root: Path) -> None:
         Path("src/ai_trading_system/data/immutable_publish.py"),
         Path("src/ai_trading_system/data/quality_execution.py"),
         Path("src/ai_trading_system/data/quality.py"),
+        Path("src/ai_trading_system/data/quality_provenance.py"),
         Path("src/ai_trading_system/trading_calendar.py"),
         Path("src/ai_trading_system/us_equity_special_closure_policy.py"),
         Path("config/data/us_equity_special_closure_registry.yaml"),

@@ -68,6 +68,7 @@ def readiness_fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Readin
         "src/ai_trading_system/data/immutable_publish.py",
         "src/ai_trading_system/data/quality_execution.py",
         "src/ai_trading_system/data/quality.py",
+        "src/ai_trading_system/data/quality_provenance.py",
         "src/ai_trading_system/trading_calendar.py",
         "src/ai_trading_system/us_equity_special_closure_policy.py",
         "config/data/us_equity_special_closure_registry.yaml",

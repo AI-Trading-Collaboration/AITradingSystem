@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+import csv
+import io
 import json
+import shutil
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from hashlib import sha256
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
+import pytest
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
@@ -17,14 +23,26 @@ from ai_trading_system.data.download_publication import (
     DownloadArtifactCandidate,
     DownloadSourceBinding,
     ValidatedDownloadPublication,
+    ValidatedNamedDownloadPublication,
     publish_download_transaction,
+    resolve_named_download_publication,
 )
 from ai_trading_system.data.quality import (
     DataQualityReport,
+    DownloadPublicationResolution,
+    DownloadPublicationResolutionStatus,
     Severity,
+    capture_data_file_snapshots,
     render_data_quality_report,
     validate_data_cache,
     write_data_quality_report,
+)
+from ai_trading_system.data.quality_provenance import (
+    NamedManifestBindingError,
+    inspect_csv_content,
+    manifest_record_ref,
+    match_named_manifest_member,
+    parse_manifest_content,
 )
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
@@ -46,6 +64,398 @@ def test_validate_data_cache_passes_clean_data(tmp_path: Path) -> None:
     assert report.error_count == 0
     assert report.price_summary.rows == 4
     assert report.price_summary.sha256 is not None
+
+
+def _named_quality_case(tmp_path: Path) -> ValidatedNamedDownloadPublication:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    publication = _publish_quality_cache(
+        tmp_path / "source-output",
+        prices_path=prices_path,
+        rates_path=rates_path,
+    )
+    pointer = json.loads(publication.discovery_pointer_path.read_bytes())
+    return resolve_named_download_publication(
+        output_dir=tmp_path / "source-output",
+        pointer_id=pointer["pointer_id"],
+        expected_pointer_sha256=publication.discovery_pointer_sha256,
+        expected_transaction_id=publication.transaction_id,
+        expected_transaction_sha256=publication.transaction_manifest_sha256,
+    )
+
+
+def _named_quality_arguments(
+    named: ValidatedNamedDownloadPublication, source_root: Path
+) -> dict[str, Any]:
+    return {
+        "prices_path": named.publication.prices_path,
+        "rates_path": named.publication.rates_path,
+        "manifest_path": named.publication.manifest_path,
+        "expected_price_tickers": ["MSFT", "NVDA"],
+        "expected_rate_series": ["DGS2", "DGS10"],
+        "quality_config": load_data_quality(),
+        "as_of": date(2026, 4, 30),
+        "requested_window": (date(2026, 4, 29), date(2026, 4, 30)),
+        "checked_at": datetime(2026, 5, 1, tzinfo=UTC),
+        "named_download_publication": named,
+        "named_source_root": source_root,
+        "named_source_output_relative_path": "source-output",
+    }
+
+
+def test_named_canonical_dq_matches_legacy_without_current_discovery(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    named = _named_quality_case(tmp_path)
+    args = _named_quality_arguments(named, tmp_path)
+    legacy_args = {key: value for key, value in args.items() if not key.startswith("named_")}
+    legacy_args.update(
+        prices_path=named.publication.legacy_prices_path,
+        rates_path=named.publication.legacy_rates_path,
+        manifest_path=named.publication.legacy_manifest_path,
+    )
+    legacy = validate_data_cache(**legacy_args)
+
+    def forbidden_discovery(**kwargs: Any) -> None:
+        raise AssertionError("named DQ must never discover current or inspect legacy projections")
+
+    monkeypatch.setattr(
+        quality_module, "resolve_download_publication_observation", forbidden_discovery
+    )
+    report = validate_data_cache(**args)
+    assert report.status == legacy.status == "PASS"
+    assert report.price_summary.path == named.publication.prices_path
+    assert report.rate_summary.path == named.publication.rates_path
+    assert report.manifest_summary is not None
+    assert legacy.manifest_summary is not None
+    normalized = replace(
+        report,
+        price_summary=replace(report.price_summary, path=legacy.price_summary.path),
+        rate_summary=replace(report.rate_summary, path=legacy.rate_summary.path),
+        manifest_summary=replace(report.manifest_summary, path=legacy.manifest_summary.path),
+    )
+    assert normalized == legacy
+
+
+def test_named_canonical_dq_accepts_relocation_without_original_source_or_legacy_reads(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source_project = tmp_path / "original-project"
+    source_project.mkdir()
+    original = _named_quality_case(source_project)
+    pointer = json.loads(original.publication.discovery_pointer_path.read_bytes())
+    relocated_root = tmp_path / "relocated-publication"
+    shutil.copytree(
+        source_project / "source-output/.download_publications",
+        relocated_root / ".download_publications",
+    )
+    # Synthetic fixture only: keep the bytes recoverable at a different name,
+    # while the explicitly bound original root and legacy paths are unavailable.
+    source_project.rename(tmp_path / "retired-synthetic-source")
+    assert not source_project.exists()
+    named = resolve_named_download_publication(
+        output_dir=relocated_root,
+        pointer_id=pointer["pointer_id"],
+        expected_pointer_sha256=original.publication.discovery_pointer_sha256,
+        expected_transaction_id=original.publication.transaction_id,
+        expected_transaction_sha256=original.publication.transaction_manifest_sha256,
+    )
+    assert not named.publication.legacy_prices_path.exists()
+    args = _named_quality_arguments(named, source_project)
+    original_capture = quality_module.capture_data_file_snapshots
+    expected_paths = {
+        named.publication.prices_path,
+        named.publication.rates_path,
+        named.publication.manifest_path,
+    }
+    observed_paths: list[Path] = []
+
+    def capture_only_immutable(paths):
+        assert set(paths.values()) <= expected_paths
+        observed_paths.extend(paths.values())
+        return original_capture(paths)
+
+    def forbidden_discovery(**kwargs: Any) -> None:
+        raise AssertionError("relocated named DQ must not choose current")
+
+    monkeypatch.setattr(quality_module, "capture_data_file_snapshots", capture_only_immutable)
+    monkeypatch.setattr(
+        quality_module, "resolve_download_publication_observation", forbidden_discovery
+    )
+    report = validate_data_cache(**args)
+    assert report.status == "PASS"
+    assert set(observed_paths) == expected_paths
+    assert report.price_summary.path == named.publication.prices_path
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected"),
+    [
+        ("source_root", "named_manifest_source_path_mismatch"),
+        ("source_relative", "named_manifest_source_path_mismatch"),
+        ("prices_legacy", "prices_named_download_publication_binding_mismatch"),
+        ("rates_bytes", "rates_named_download_publication_binding_mismatch"),
+        ("manifest_legacy", "download_manifest_named_binding_mismatch"),
+        ("manifest_bytes", "download_manifest_named_binding_mismatch"),
+        ("member_rows", "prices_named_download_publication_binding_mismatch"),
+    ],
+)
+def test_named_canonical_dq_rejects_exact_input_or_source_relationship_drift(
+    tmp_path: Path, mutation: str, expected: str
+) -> None:
+    named = _named_quality_case(tmp_path)
+    args = _named_quality_arguments(named, tmp_path)
+    if mutation == "source_root":
+        args["named_source_root"] = tmp_path / "other-project"
+    elif mutation == "source_relative":
+        args["named_source_output_relative_path"] = "other-output"
+    elif mutation == "prices_legacy":
+        args["prices_path"] = named.publication.legacy_prices_path
+    elif mutation == "manifest_legacy":
+        args["manifest_path"] = named.publication.legacy_manifest_path
+    elif mutation == "member_rows":
+        args["named_download_publication"] = replace(
+            named,
+            publication=replace(
+                named.publication,
+                artifact_row_count={**named.publication.artifact_row_count, "prices": 99},
+            ),
+        )
+    else:
+        snapshots = capture_data_file_snapshots(
+            {role: args[f"{role}_path"] for role in ("prices", "rates", "manifest")}
+        )
+        role = "rates" if mutation == "rates_bytes" else "manifest"
+        snapshot = snapshots[role]
+        assert snapshot.content is not None
+        snapshots[role] = replace(snapshot, content=snapshot.content + b"\n")
+        args["file_snapshots"] = snapshots
+    report = validate_data_cache(**args)
+    assert report.status == "FAIL"
+    assert expected in _issue_codes(report)
+    assert not any("checksum_missing" in code for code in _issue_codes(report))
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["legacy", "derived", "backtest", "no_manifest", "no_window", "no_root", "traversal"],
+)
+def test_named_canonical_dq_rejects_ambiguous_mode_before_read_or_discovery(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mutation: str
+) -> None:
+    named = _named_quality_case(tmp_path)
+    args = _named_quality_arguments(named, tmp_path)
+    if mutation == "legacy":
+        args["download_publication_resolution"] = DownloadPublicationResolution(
+            DownloadPublicationResolutionStatus.ABSENT
+        )
+    elif mutation == "derived":
+        args["requested_window_authority"] = object()
+    elif mutation == "backtest":
+        args["backtest_manifest_path"] = tmp_path / "backtest.json"
+    elif mutation == "no_manifest":
+        args["manifest_path"] = None
+    elif mutation == "no_window":
+        args["requested_window"] = None
+    elif mutation == "no_root":
+        args["named_source_root"] = None
+    else:
+        args["named_source_output_relative_path"] = "../source-output"
+
+    def forbidden(*args: Any, **kwargs: Any) -> None:
+        raise AssertionError("invalid named mode must fail before capture/discovery")
+
+    monkeypatch.setattr(quality_module, "capture_data_file_snapshots", forbidden)
+    monkeypatch.setattr(quality_module, "resolve_download_publication_observation", forbidden)
+    with pytest.raises(ValueError):
+        validate_data_cache(**args)
+
+
+def test_named_manifest_match_retains_original_full_row_and_zero_based_ordinal(
+    tmp_path: Path,
+) -> None:
+    named = _named_quality_case(tmp_path)
+    publication = named.publication
+    raw = publication.manifest_path.read_bytes()
+    columns, rows = parse_manifest_content(raw)
+    match = match_named_manifest_member(
+        raw,
+        transaction_id=publication.transaction_id,
+        role="prices",
+        original_output_path=str(tmp_path / "source-output/prices_daily.csv"),
+        member_sha256=publication.artifact_sha256["prices"],
+        member_row_count=publication.artifact_row_count["prices"],
+    )
+    assert match.row == rows[match.ordinal]
+    assert tuple(match.row) == columns
+    assert match.record_ref == manifest_record_ref(rows[match.ordinal])
+    assert match.source_id == "quality_prices"
+    with pytest.raises(TypeError):
+        match.row["provider"] = "edited"  # type: ignore[index]
+    assert manifest_record_ref({**match.row, "provider": "edited"}) != match.record_ref
+    assert inspect_csv_content(raw) == (columns, len(rows))
+
+
+def test_manifest_full_row_hash_preserves_extension_and_raw_json_strings() -> None:
+    row = {
+        "z_extra": " keep ",
+        "source_id": "fixture",
+        "request_parameters": '{ "b": 2, "a": 1 }',
+    }
+    # Independent canonical bytes: do not derive the expected value by calling
+    # the production helper or normalizing the JSON inside a CSV string field.
+    expected = (
+        b'{"request_parameters":"{ \\"b\\": 2, \\"a\\": 1 }",'
+        b'"source_id":"fixture","z_extra":" keep "}'
+    )
+    assert manifest_record_ref(row) == f"manifest_record_{sha256(expected).hexdigest()}"
+
+
+def test_named_manifest_match_uses_transaction_not_identical_historical_checksum(
+    tmp_path: Path,
+) -> None:
+    first = _named_quality_case(tmp_path)
+    current = _publish_quality_cache(
+        tmp_path / "source-output",
+        prices_path=first.publication.legacy_prices_path,
+        rates_path=first.publication.legacy_rates_path,
+        published_at=datetime(2026, 5, 1, 0, 1, tzinfo=UTC),
+    )
+    raw = current.manifest_path.read_bytes()
+    _, rows = parse_manifest_content(raw)
+    assert sum(row["checksum_sha256"] == current.artifact_sha256["prices"] for row in rows) == 2
+    match = match_named_manifest_member(
+        raw,
+        transaction_id=current.transaction_id,
+        role="prices",
+        original_output_path=str(tmp_path / "source-output/prices_daily.csv"),
+        member_sha256=current.artifact_sha256["prices"],
+        member_row_count=current.artifact_row_count["prices"],
+    )
+    assert match.ordinal >= first.publication.manifest_row_count
+    assert json.loads(match.row["request_parameters"])["publication_transaction_id"] == (
+        current.transaction_id
+    )
+
+
+@pytest.mark.parametrize("mutation", ["duplicate", "wrong_role", "wrong_sha", "wrong_count"])
+def test_named_manifest_pure_match_rejects_duplicate_or_wrong_binding(
+    tmp_path: Path, mutation: str
+) -> None:
+    named = _named_quality_case(tmp_path)
+    publication = named.publication
+    columns, original_rows = parse_manifest_content(publication.manifest_path.read_bytes())
+    rows = [dict(row) for row in original_rows]
+    selected = next(
+        row for row in rows if json.loads(row["request_parameters"])["artifact_role"] == "prices"
+    )
+    if mutation == "duplicate":
+        rows.append(dict(selected))
+    elif mutation == "wrong_role":
+        params = json.loads(selected["request_parameters"])
+        params["artifact_role"] = "rates"
+        selected["request_parameters"] = json.dumps(params)
+    elif mutation == "wrong_sha":
+        selected["checksum_sha256"] = "0" * 64
+    else:
+        selected["row_count"] = "999"
+    handle = io.StringIO(newline="")
+    writer = csv.DictWriter(handle, fieldnames=columns)
+    writer.writeheader()
+    writer.writerows(rows)
+    with pytest.raises(NamedManifestBindingError):
+        match_named_manifest_member(
+            handle.getvalue().encode(),
+            transaction_id=publication.transaction_id,
+            role="prices",
+            original_output_path=str(tmp_path / "source-output/prices_daily.csv"),
+            member_sha256=publication.artifact_sha256["prices"],
+            member_row_count=publication.artifact_row_count["prices"],
+        )
+
+
+def test_named_canonical_preserves_primary_and_five_reachable_rate_attributions(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path, tickers=["MSFT"])
+    _write_price_dates(prices_path, ("2026-04-29", "2026-04-30", "2026-05-01", "2026-05-02"))
+    pd.DataFrame(
+        [
+            {"date": "2026-04-29", "series": "DGS2", "value": "bad"},
+            {"date": "2026-04-29", "series": "DGS3", "value": float("inf")},
+            {"date": "2026-04-29", "series": "DGS4", "value": 30.0},
+            {"date": "2026-04-29", "series": "DGS5", "value": 1.0},
+            {"date": "2026-04-30", "series": "DGS5", "value": 4.0},
+            {"date": "2026-04-29", "series": "DGS6", "value": 1.0},
+            {"date": "2026-04-30", "series": "DGS6", "value": 2.0},
+        ]
+    ).to_csv(rates_path, index=False)
+    publication = _publish_quality_cache(
+        tmp_path / "source-output",
+        prices_path=prices_path,
+        rates_path=rates_path,
+        requested_end=date(2026, 5, 2),
+        published_at=datetime(2026, 5, 2, 12, tzinfo=UTC),
+    )
+    pointer = json.loads(publication.discovery_pointer_path.read_bytes())
+    named = resolve_named_download_publication(
+        output_dir=tmp_path / "source-output",
+        pointer_id=pointer["pointer_id"],
+        expected_pointer_sha256=publication.discovery_pointer_sha256,
+        expected_transaction_id=publication.transaction_id,
+        expected_transaction_sha256=publication.transaction_manifest_sha256,
+    )
+    args = _named_quality_arguments(named, tmp_path)
+    args.update(
+        expected_price_tickers=["MSFT"],
+        expected_rate_series=["DGS2", "DGS3", "DGS4", "DGS5", "DGS6"],
+        as_of=date(2026, 5, 2),
+        requested_window=(date(2026, 4, 29), date(2026, 5, 2)),
+        checked_at=datetime(2026, 5, 2, 12, tzinfo=UTC),
+    )
+    report = validate_data_cache(**args)
+    assert report.status == "FAIL"
+    by_code = {issue.code: issue for issue in report.issues}
+    for code in (
+        "prices_non_market_session_date",
+        "rates_invalid_value",
+        "rates_non_finite_value",
+        "rates_out_of_range",
+        "rates_extreme_daily_change",
+        "rates_suspicious_daily_change",
+    ):
+        issue = by_code[code]
+        assert issue.attribution_scope_status == "COMPLETE"
+        assert issue.attribution_incomplete_reasons == ()
+        assert issue.typed_attribution is not None
+        summary = report.price_summary if code.startswith("prices_") else report.rate_summary
+        assert issue.typed_attribution.source.sha256 == summary.sha256
+        assert issue.typed_attribution.source.path == summary.path.resolve().as_posix()
+    assert not any("binding_mismatch" in code for code in by_code)
+
+
+def test_named_invalid_date_capture_keeps_binding_error_and_existing_complete_attribution(
+    tmp_path: Path,
+) -> None:
+    # D0A forbids invalid date row keys before named resolution. This injection
+    # is a binding-failure test, never a valid publication or runner E2E positive.
+    named = _named_quality_case(tmp_path)
+    args = _named_quality_arguments(named, tmp_path)
+    snapshots = capture_data_file_snapshots(
+        {role: args[f"{role}_path"] for role in ("prices", "rates", "manifest")}
+    )
+    rates_snapshot = snapshots["rates"]
+    assert rates_snapshot.content is not None
+    snapshots["rates"] = replace(
+        rates_snapshot,
+        content=rates_snapshot.content.replace(b"2026-04-29", b"not-a-date", 1),
+    )
+    report = validate_data_cache(**args, file_snapshots=snapshots)
+    assert report.status == "FAIL"
+    assert "rates_named_download_publication_binding_mismatch" in _issue_codes(report)
+    issue = next(issue for issue in report.issues if issue.code == "rates_invalid_date")
+    assert issue.attribution_scope_status == "COMPLETE"
+    assert issue.typed_attribution is not None
+    assert issue.typed_attribution.source.sha256 == snapshots["rates"].sha256
 
 
 def test_validate_data_cache_fails_duplicate_price_keys(tmp_path: Path) -> None:
@@ -167,9 +577,9 @@ def test_validate_data_cache_classifies_reviewed_split_ratio_jumps(tmp_path: Pat
         split_basis_row("2025-11-21", "MSFT", 1.0),
     ]
     pd.DataFrame(rows).to_csv(prices_path, index=False)
-    pd.DataFrame(
-        [{"date": "2025-11-21", "series": "DGS2", "value": 3.6}]
-    ).to_csv(rates_path, index=False)
+    pd.DataFrame([{"date": "2025-11-21", "series": "DGS2", "value": 3.6}]).to_csv(
+        rates_path, index=False
+    )
 
     report = validate_data_cache(
         prices_path=prices_path,
@@ -1745,9 +2155,7 @@ def _prepare_canonical_cli_project(
     special_closure_policy_path = root / "config/data/us_equity_special_closure_registry.yaml"
     special_closure_policy_path.parent.mkdir(parents=True, exist_ok=True)
     special_closure_policy_path.write_bytes(
-        (
-            REAL_PROJECT_ROOT / "config/data/us_equity_special_closure_registry.yaml"
-        ).read_bytes()
+        (REAL_PROJECT_ROOT / "config/data/us_equity_special_closure_registry.yaml").read_bytes()
     )
     for relative in (
         Path("src/ai_trading_system/trading_calendar.py"),
@@ -1755,6 +2163,7 @@ def _prepare_canonical_cli_project(
         Path("src/ai_trading_system/data/immutable_publish.py"),
         Path("src/ai_trading_system/data/quality_execution.py"),
         Path("src/ai_trading_system/data/quality.py"),
+        Path("src/ai_trading_system/data/quality_provenance.py"),
     ):
         target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)

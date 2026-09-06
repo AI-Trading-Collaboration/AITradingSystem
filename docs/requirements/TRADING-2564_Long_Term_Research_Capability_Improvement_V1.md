@@ -417,3 +417,98 @@ DATA-GOV-002 / DEVX-009 等既有领域 owner 承接；这里登记具体依赖�
   transaction→exact policy/handler 选路，历史 v1 按准确 version/SHA 与保留 bytes 重放，缺失时阻断，
   不覆盖旧 policy、不用 latest/default。此 shared workflow 波只能在当前事务发布后另行登记实施，
   同步 skill/preflight/runner/CLI/system flow 与历史兼容反例。
+
+## 10. S2a 正式发布与 S2b 接续
+
+S2a exact candidate `293813e5e2e7b88886b79fc22cf77e2d57f1f346` 已完成 readiness、architecture
+889 passed、contract 281 passed、integration 995 passed、reproducibility 24 passed，Full
+10400 passed / 5 skipped / 640 warnings（16 workers/loadfile，2576.43秒）。实际 Full 为
+`outputs/validation_runtime/full_20260905T092755Z/test_runtime_summary.json`，SHA256
+`1e56b63a250edb406b5edf5fc6284304a885583ea75d8105b54ecc2b238047f8`。不是重贴旧候选的 PASS。
+
+首次普通推送申请被自动权限检查拒绝，没有发生外发；Owner随后针对该 exact candidate、指定
+GitHub 仓库 `AI-Trading-Collaboration/AITradingSystem` 的 main 及代码/文档载荷明确回复「批准」。
+本次 publication authorization_state=`EXACT_PREAUTHORIZED`，technical_validation_state=`PASS`；
+不将该批准解释为真实研究或交易授权。普通 non-force push 已成功，实际 remote/main/local main
+与 candidate 相等。原 source/final失败、中断、待授权和验证历史记录均保留，不改写历史。
+
+最终收据为
+`outputs/architecture/arch_005_integration_publication_fence/transactions/trading-2564-s2a-tail-fix-final-20260905-v1/closeout_receipt.json`，
+SHA256=`888dbe53f9050d2a8c2486407f6262109761d496ccc01e830193e84e257483f5`，
+`PASS/COMPLETED/RELEASED`，原 lease 已释放。已合入 S2a branch 删除，全部提交保留在 main 可恢复；
+集成 checkout 和全部历史/合成验证证据继续按 §6/§9.4 保留，没有文件、目录或 cache 删除。
+
+S2b 从上述 exact main 开始，复用同一 checkout，任务分支
+`codex/trading-2564-s2b-named-dq-v1`。START 预检确认 clean、main/origin 一致、无活动旧 lease；
+新 source transaction `trading-2564-s2b-named-dq-source-20260905-v1` 采用既有 SINGLE_LANE
+串行合同波，scope 和正式验证仍由 coordinator 负责；不修改 publication fence 工作流。
+详细步骤、Git-bytes/进程内验证对象边界、测试分层和后续消费依赖见
+[S2b 指定快照 DQ 执行合同](TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md)。
+S2a 的结构验收不替代 S2b 的 DQ 身份验收，也不等于 S2、S3–S5 或总任务完成。
+
+### 10.1 S2b 源冻结前进度
+
+同日统一focused382 passed/1既有warning；核心源码static PASS，实际candidate E2E/Full尚待。
+父终态proof要求正常结束与postguard通过，failed/partial/unknown不能由残留PASS receipt解锁。
+actual-candidate测试固定要求真实正式事务，不提供dirty或仅提交源的降级路径；父控制流失败与reader
+补测92 passed，实际E2E尚未执行。LANE/静态检查通过，进入原定source/final工程验收顺序。
+本波仅更新当前system_flow/artifact_catalog内容及相应RCF live seal，最终29路径S2b source closure
+包含policy/catalog与当前deprecation计数测试；历史authority与研究receipt保留。详见S2b合同§11；
+S2后续adapter与S3-S5仍未完成，
+全部真实DQ/研究/下载/cache/provider/交易动作保持0，合成工程测试单列。
+
+### 10.2 S2b 首次实际候选的进程身份阻断
+
+源码与生成focused修正后80/80 PASS，形成source/candidate5615e27c454cbd872553b04a809b4f6edd676f6c；
+最终五项生成、clean audit和只读readiness七项/1242依赖PASS。首次真实candidate synthetic E2E
+8failed/4passed，原因是Windows venv启动器PID与执行解释器PID不同；严格父关联正确阻断，未放宽。
+实际11个child=8synthetic DQ+3pre-DQ阻断，verify0；未派发任何正式tier/Full，main/origin仍293813。
+
+旧final FAILED/RELEASED及原XML/11个父收据保持不可变，纯synthetic证据33根345文件909318字节已
+逐文件SHA相等归档。以同范围新source事务修正测试启动映射，采用CPython官方direct-venv方式，
+保持PID/lease/-I/-B与原venv依赖，不改生产DTO/55模块源身份/DQ/策略规则。详细根因、官方依据、
+失败SHA、归档生命周期及验收见S2b合同§12；canonical追加纠正事件cycle457，LANE PASS。
+后续仍需新精确candidate完整E2E和正式发布；没有failed Full parent，不将本轮失败冒充Full失败。
+S2b、S2后续及S3-S5继续未完成，所有真实数据/研究/外部/交易动作保持0。
+
+PID窄修复三文件Black/Ruff PASS；106项聚焦回归在保留100pass/6个fixture准备顺序失败后，
+修正同fixture期待值捕获时机并重跑为106/106 PASS（54.88秒）。标准库PID/venv/-I/-B已验证，
+生产路径字节未变；仍须修复后精确candidate的12项E2E及全部正式验收，不能借旧readiness提前发布。
+
+### 10.3 S2b 首次 Full：派生一致性失败与窄修复
+
+candidate06140c52ca4e5be718075b7f436b820b927637c4的12项actual E2E和四正式tiers全部通过，
+首次Full为10654 passed/11 failed/5 skipped/641 warnings，3893.89秒；summary SHA256
+ccef4a6bd377e560c62803db953f530bf45a148f6c30d255572d26d887454e04。Full内12项named E2E全部PASS，
+但不能覆盖兼容性helper2项、C1清单2项及其rate review pack级联7项失败。原final FAILED/RELEASED，
+main/origin仍293813，未发布。
+
+按既有DATA-GOV-002/TRADING2542I受审等价派生重绑定路径修复：原69site语义不变，新3项仍未批准；
+六rate候选、emitter AST、原Owner决定/条件、阈值与scope全部不变，官方重建C1→rate derived pack，
+只同步derived ID/SHA绑定，补精确successor与负例。新source事务trading-2564-s2b-derived-fix-source-20260906-v1
+绑定本失败Full，完整source closure29→40，先等价性和focused后新candidate验收。详情见S2b合同§13；
+任何语义差异需source-owner/serial contract review，不能自动重批或扩大隔离权限。
+
+S5明确增加两项未完成能力：关联验证必须覆盖C1→review pack→decision和独立successor测试；
+合成证据需区分临时测试与canonical replay并在运行期间保留必要bytes。本Full结束后pytest-18406目录已
+不存在，归档前检阻断且零复制/删除，不能重造原件；正式报告与16个父收据仍保留。对应next owner为
+integration-coordinator，退出条件是依赖漏检回归与证据保留策略验收通过，不在本窄修复修改Full runner。
+S2b、adapter及S3-S5均未完成，真实DQ/研究/下载/cache/provider/交易继续0。
+
+### 10.4 保全后的S2b恢复与研究主线接续（2026-09-06）
+
+DEVX014已正式发布`64e1d3da3cd41ae842fd7cc3f14802c550ceb9ef`；旧S2b工作区单次迁移1/1、原始源码保全1、
+独立校验1完成，snapshot=`d5e8b26f2a4ac3c66ccb941b77e6f7c983423786`。它不是S2b技术或消费PASS。
+完整66路径增量与main86路径经正式plan和独立review，在clean exact main上已取得一次真实INTEGRATION PASS。
+plan=`integration-revalidation-f8a6fd3c9c5d05f5a27e`；原8条追加task event经官方writer逐条保留body/id，
+原14-event fragment完全一致后才新增恢复事件。相关历史失败、已消费授权和原source18项dirty均不改写。
+
+复用`D:/Work/AITradingSystem_devx014_source_preservation`作为唯一coordinator，branch
+`codex/trading-2564-s2b-preserved-integration`；DEVX014与TRADING2564按各自精确task-id source事务串行交接，
+最终一个候选统一验收。后继LANE不冒充重新批准dirty plan。旧`D:/Work/AITradingSystem_trading2559_integration`
+继续保留原源码和独有保全链；两root退出条件为S2b发布、unique证据规范保留/hash核验及无未审源码/运行依赖后
+审计清理，当前不删除或另建替代工作区。详细合同、原failed Full parent与验证顺序见S2b合同§14。
+
+研究目标保持不变：先交付可信的指定输入DQ合同，再接实际consumer/PIT范围；其后推进S3合法前瞻记录与S4
+预注册/机制归因。工程工作只用于解除这些依赖，不把工程PASS当作信号有效性结论，不扩展到无关基础设施。
+真实DQ、研究、observation/maturity/scoreboard、下载/cache/provider与交易动作仍全0，heartbeat保持PAUSED。

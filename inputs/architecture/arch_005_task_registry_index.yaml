@@ -14,7 +14,7 @@ fragment_count: 1067
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 9fc36b87d5045660aef92d71784d6779e50dfa879a12d67e71700dc3e5f63e0a
+final_chain_sha256: 73d1f333e1a60d11696ef38f16dac917ce779f35aff8ee4b9bd9f5ad987d310b
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: ecee535fb08562da2c2fc6b054991cd569fdc7ca4c5b4109a8871fd7c16d5d1e
 templates:
@@ -8535,41 +8535,41 @@ fragments:
   entry_sha256: 2e8467c6e489b4dfb8bf5383bde0f2a809a921dd440bdf00e8866bbfa6562ce7
 - task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
   path: registry/development_tasks/c8/c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml
-  file_sha256: 2412043a1ea116b1b568c4bfc3bcb4f557093edce860bd31f5ad2f29d49b9b8d
-  fragment_checksum: 5ae3ee159fd46396df6e7f4c09c51beebd37ffe396134db60eef18f06b99971e
+  file_sha256: adfa3f291b5191f7264fc9d5157d493b7b996b1f1fae185dae49714286f1a61b
+  fragment_checksum: d769ee705c725d3fa40d49de983bc0170b82f21bddb3c3023214b21b8c5a145c
   partition: active
   order: 1064
   previous_entry_sha256: 2e8467c6e489b4dfb8bf5383bde0f2a809a921dd440bdf00e8866bbfa6562ce7
-  entry_sha256: f42ebcc19127eee5b153ae0c79650fffce875ee24221f75723a70d6a587232d7
+  entry_sha256: 9b82c5b1dbb5ab0acaa4361129db60f7c8c140df4f3cf6f2ef853fb8b25de1f7
 - task_id: OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR
   path: registry/development_tasks/cd/cdcf4ff5d0c3c8c4b23fdfc72f44fd4c53c1fcf7449bafc0bda1fab81bbcb0df.yaml
   file_sha256: e1eeadc994187c561e720e44e4e5ff04131426a891a0b9f9f935bdea3738a6bb
   fragment_checksum: 6cd6147323aa9952056f25220312b92c712f0617345469f2254c03c11002dcbf
   partition: active
   order: 1065
-  previous_entry_sha256: f42ebcc19127eee5b153ae0c79650fffce875ee24221f75723a70d6a587232d7
-  entry_sha256: 898f8ef37c2fbcab9c6d9c2a9510965ccf46869a22412c93ebb59b30caa1242f
+  previous_entry_sha256: 9b82c5b1dbb5ab0acaa4361129db60f7c8c140df4f3cf6f2ef853fb8b25de1f7
+  entry_sha256: 5a2e8b09466a633c5e0c57222c61ac620380956be5fa2fe64ee1a538b0602268
 - task_id: DEVX-013_CONTINUOUS_IMPROVEMENT_EXECUTION_AND_OUTCOME_LOOP_V1
   path: registry/development_tasks/5b/5b5f7a5966ada3047a6a89e8c0ddde803059f5b490254187917a6dc38166edf1.yaml
   file_sha256: 6222b1404ebbdaeaaf766fe0bd70d68fdd3e883b61d5744e28043dc707a7c955
   fragment_checksum: 9ed6c09dd6a464796fe37213a0db19304b72350da19a4ddaefff886f77047cf9
   partition: active
   order: 1066
-  previous_entry_sha256: 898f8ef37c2fbcab9c6d9c2a9510965ccf46869a22412c93ebb59b30caa1242f
-  entry_sha256: c983c94e87f39d24bef4fbb76e206a8208f813516b7d2998fa8980ea8a951499
+  previous_entry_sha256: 5a2e8b09466a633c5e0c57222c61ac620380956be5fa2fe64ee1a538b0602268
+  entry_sha256: d1c5919e678653107588920a586a784fc8fe99907aa2049d071a9a80ca086076
 - task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
   path: registry/development_tasks/7a/7aa82ac8ab6fa54a137b6972521b5ba8c7f1d0c4033f6fe84dac77fa2b5267e1.yaml
-  file_sha256: 29f42b7eaf241fa1e3fb79b205892a130e3f93e04ac0fd6835793a63cc09b52b
-  fragment_checksum: 6d6667f6037dad7be5d47621147a09f9ec5551107244e1a76736c9a2d5bdf033
+  file_sha256: ef2d0b48dba04dcd40f874cb73c973d223de4e7ad430259a8bbf9f51278da84e
+  fragment_checksum: 5851990c4d12da8052789a13c038dee2280af7b2e2b1b679aa3500be28aaefab
   partition: active
   order: 1067
-  previous_entry_sha256: c983c94e87f39d24bef4fbb76e206a8208f813516b7d2998fa8980ea8a951499
-  entry_sha256: 9fc36b87d5045660aef92d71784d6779e50dfa879a12d67e71700dc3e5f63e0a
+  previous_entry_sha256: d1c5919e678653107588920a586a784fc8fe99907aa2049d071a9a80ca086076
+  entry_sha256: 73d1f333e1a60d11696ef38f16dac917ce779f35aff8ee4b9bd9f5ad987d310b
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: a6fb441d61cdd357064f54fdf1c16634de0817b086e733b19c238684f650d215
-  byte_count: 1779783
+  sha256: 715799292f7c3dd22c4d103e77e86ae6e98401bbbec43ca9e742493d4b354e8f
+  byte_count: 1779901
   row_count: 525
   generated_do_not_edit: true
 - partition: completed
@@ -11869,7 +11869,98 @@ governance_cycles:
   change_id: devx-014-full-failure-causal-test-fix-20260906-v1
   event_count: 15
   production_effect: none
-governance_cycle_count: 470
+- cycle_id: arch-005-s5-cycle-471
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  change_id: devx-014-s2b-coordinator-handoff-20260906-v1
+  event_count: 16
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-472
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  change_id: trading-2564-s2b-named-dq-start-20260905
+  event_count: 7
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-473
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  change_id: trading-2564-s2b-source-scope-correction-20260905
+  event_count: 8
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-474
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  change_id: trading-2564-s2b-unified-focused-and-live-seal-20260905
+  event_count: 9
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-475
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  change_id: trading-2564-s2b-source-freeze-ready-20260905
+  event_count: 10
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-476
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  change_id: trading-2564-s2b-current-inventory-scope-20260905
+  event_count: 11
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-477
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  change_id: trading-2564-s2b-windows-venv-pid-fix-20260905
+  event_count: 12
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-478
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  change_id: trading-2564-s2b-pid-fix-focused-pass-20260905
+  event_count: 13
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-479
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  change_id: trading-2564-s2b-first-full-derived-failure-fix-20260906
+  event_count: 14
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-480
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  change_id: trading-2564-s2b-preserved-recovery-20260906-v1
+  event_count: 15
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-481
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  change_id: trading-2564-s2b-preserved-source-focused-v1
+  event_count: 16
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-482
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  change_id: trading-2564-s2b-source-phase-and-timestamp-correction-v2
+  event_count: 17
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-483
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  change_id: trading-2564-s2b-retained-authority-missing-binding-fix-v1
+  event_count: 18
+  production_effect: none
+governance_cycle_count: 483
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -11883,4 +11974,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 922c0e63d7f7140772eb2f01aa6427e04979c35cf57c4f0c00dd41781bb9d8f4
+index_checksum: 0428fdbf02115edc77fd340ae6617679f4479fb119a60c74deab472be28c5e6e

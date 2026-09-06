@@ -58,6 +58,21 @@ S2a新增`validate_named_snapshot`与`resolve_named_download_publication`只读A
 完整但pre-commit失败留下的orphan不能准入；复用原pointer/history/manifest/source/member验证链，
 不读取mutable legacy projection。独立Named结果为`STRUCTURAL_PUBLICATION_ONLY`与
 `legacy_projection_status=NOT_EVALUATED`，不签发DQ或consumer权限；旧receipt的路径/源码身份不改写。
+S2b增加独立`scripts/run_named_data_quality.py`入口（fresh `python -I -B`，实际Git checkout、
+显式request SHA/source-lease-id；不是既有aits或daily cutover）。源闭包manifest
+`config/data_governance/named_data_quality_execution_sources_v1.json`绑定55个原模块与7个政策/审查文件；
+bootstrap从同一candidate Git blobs编译执行原package初始化，拒绝项目pyc/未知import/源码漂移。
+request分别指定原source root+output相对路径、实际publication root、execution root和evidence root。
+`quality_provenance.py`保持原manifest全raw-string行/ordinal/hash；named DQ不读取legacy projection。
+runner只调用一次既有canonical数值与归因规则，生成独立`named_data_quality_report_bundle.v1`和
+`named_data_quality_execution_receipt.v1`。报告含完整canonical dataclass projection与Markdown，
+verifier严格重建并要求全部字节一致，逐项核对member/summary/COMPLETE attribution。
+当前运行calendar1.1.0与price历史归因calendar1.0.0分别绑定，不能相互替代。
+可信coordinator另将成功child终态及existing guard前后证明关联成successful-dispatch binding；
+只保留PASS receipt但终态失败不准入。verifier要求显式receipt与dispatch locator/SHA，在独立
+fresh child零DQ/零写核验，返回仅本PID/context可访问且不可序列化的captured bytes。
+CLI JSON、结构PASS、named DQ或本地seal均不授权adapter/capture/训练历史/研究/交易。
+原legacy runner只增加纯helper的源码依赖身份，旧receipt正常报source drift，不重签旧证据。
 
 ```mermaid
 flowchart LR
@@ -65,6 +80,14 @@ flowchart LR
     NAMED["显式pointer/transaction ID + SHA"] --> PIN["Named解析：提交链成员资格 + 完整字节验证"]
     ANCHOR["current仅作commit anchor；非输入选择"] --> PIN
     PIN --> STRUCT["结构证明；DQ/consumer仍未准入"]
+    GIT["Exact Git candidate + reviewed sources/policies"] --> BOOT["Fresh bootstrap：Git bytes编译；原package init"]
+    STRUCT --> NDQ["实际immutable members + 原manifest全行 → canonical DQ一次"]
+    BOOT --> NDQ
+    NDQ --> NREC["独立完整报告bundle + named receipt；无下游权限"]
+    NREC --> ENDPROOF["Coordinator成功终态 + 原guard关联证明"]
+    ENDPROOF --> NVERIFY["Fresh verifier：零DQ/零写；scope及完整bytes核验"]
+    BOOT --> NVERIFY
+    NVERIFY --> SEALED["同PID/context captured bytes；真实consumer仍待准入"]
     RI --> REVIEW["诊断与缺口；dispatch_allowed=false"]
     CAND["最终候选 + 已绑定证据/生成物"] --> VR["Full前只读完整性核查"]
     VR -->|BLOCKED| STOP["停止；Full claim未消费"]

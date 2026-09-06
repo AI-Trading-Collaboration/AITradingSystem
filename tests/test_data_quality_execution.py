@@ -482,6 +482,7 @@ def test_runner_materializes_non_pass_receipt_but_verifier_is_fail_closed(
         ("receipt", "DQ_RECEIPT_FIELDS_INVALID"),
         ("policy", "DQ_POLICY_SHA_MISMATCH"),
         ("validator", "DQ_VALIDATOR_SHA_MISMATCH"),
+        ("provenance_helper", "DQ_VALIDATOR_SHA_MISMATCH"),
         ("input", "DQ_INPUT_SHA_MISMATCH"),
         ("manifest", "DQ_MANIFEST_SHA_MISMATCH"),
         ("report", "DQ_REPORT_SHA_MISMATCH"),
@@ -501,6 +502,9 @@ def test_verifier_rejects_bound_byte_tamper(
         "receipt": result.receipt_path,
         "policy": execution_fixture.policy_path,
         "validator": execution_fixture.root / "src/ai_trading_system/data/quality.py",
+        "provenance_helper": (
+            execution_fixture.root / "src/ai_trading_system/data/quality_provenance.py"
+        ),
         "input": execution_fixture.prices_path,
         "manifest": execution_fixture.manifest_path,
         "report": result.report_path,
@@ -1084,6 +1088,7 @@ def _copy_validator_sources(root: Path) -> None:
         Path("src/ai_trading_system/data/immutable_publish.py"),
         Path("src/ai_trading_system/data/quality_execution.py"),
         Path("src/ai_trading_system/data/quality.py"),
+        Path("src/ai_trading_system/data/quality_provenance.py"),
         Path("src/ai_trading_system/trading_calendar.py"),
         Path("src/ai_trading_system/us_equity_special_closure_policy.py"),
         Path("config/data/us_equity_special_closure_registry.yaml"),

@@ -4,16 +4,20 @@
 
 如果需要理解输入数据如何计算成输出数据，先读 `docs/calculation_logic.md`；字段级含义见 `docs/schema/fields.yaml`，也可以用 `aits explain <field|gate|artifact>` 做只读反查。该 YAML 先覆盖 `scores_daily.csv`、decision snapshot、trace bundle、prediction ledger 和 shadow parameter search 的核心字段。
 
-## TRADING-2564 运行前只读就绪核查
+## TRADING-2564 输入就绪与指定快照 DQ 工程合同
 
 |输出|生成入口与输入|用途与边界|
 |---|---|---|
 |`research_input_readiness.v1` stdout JSON|`scripts/research_input_readiness.py`；显式请求、source/execution root、冻结依赖及既有canonical DQ receipt|核验输入身份、请求范围、必需字段与XNYS覆盖；不新运行DQ、不复制或修复数据、不创建持久报告、不签发consumer/capture授权。`READY_FOR_REVIEW`不等于可执行。|
 |`full_validation_readiness.v1` stdout / Full summary内嵌诊断|`scripts/validation_readiness.py`与Full runner的pre-dispatch调用；最终candidate、明确retained evidence及既有generated authority|在`FULL_DISPATCHED`前拦截缺失/漂移；检查器不运行pytest、不hydrate/render、不写artifact。PASS不替代正式Full、固定数量focused测试或研究有效性判断。|
 |`ValidatedNamedSnapshot` / `ValidatedNamedDownloadPublication` 内存结果（无新持久artifact）|`data.immutable_publish.validate_named_snapshot` / `data.download_publication.resolve_named_download_publication`；显式pointer ID/SHA、transaction ID/SHA及只读source root|current仅为commit-membership anchor；history orphan、身份错绑或任一引用tamper阻断，无latest/glob/fallback。Named结构结果明确`STRUCTURAL_PUBLICATION_ONLY`、legacy `NOT_EVALUATED`、dispatch/cutover=false；内层legacy verified=false表示未核验，不是失败。旧DQ路径/源码身份和consumer准入保持独立，不修改或复制任何数据。|
+|`named_data_quality_report_bundle.v1`：`<evidence_root>/named_data_quality/reports/<sha256>/report.json`；`named_data_quality_execution_receipt.v1`：`<evidence_root>/named_data_quality/executions/<receipt_id>/receipt.json`|`python -I -B scripts/run_named_data_quality.py --operation run`；显式request/请求SHA/source-lease-id，受审55模块Git源码及7项policy/calendar来源，指定不可变publication与原manifest完整行|runner一次canonical DQ；完整typed report与Markdown、原始CSV身份、requested/evaluated window和实际PID/时间/代码身份独立冻结。FAIL/WARN不是strict PASS；旧receipt不重新签发。source、publication、execution、evidence四根分别声明，无全局latest/default输入发现。|
+|`named_data_quality_parent_dispatch.v1`与`named_data_quality_successful_dispatch.v1`：`<execution_root>/outputs/validation_runtime/named_dq_parent_dispatch/<candidate>/<dispatch>/`|可信coordinator父进程绑定既有publication fence/lease及pre/post checkout guard，保存request、child stdout/stderr/PID/退出结果；先写parent再写successful proof|只有正常结束且postguard PASS才有successful proof；独立proof绑定原receipt但原receipt不反向包含proof hash，无循环。它是可信父进程关联而非签名或第二套租约；合成测试证据不是真实市场DQ，失败残留PASS文件不能自行准入。|
+|`VerifiedNamedInputs`内存对象及verify stdout摘要（无seal导出）|同一固定bootstrap `--operation verify`，显式receipt locator/SHA与successful-dispatch locator/SHA；零DQ重验代码/policy/calendar、selected publication、完整report及父成功终态|strict PASS后仅在当前PID/context内提供captured immutable bytes；consumer须解析这些bytes，不按原路径重读。scope超界、context关闭或序列化阻断，另一个child须重新verify；合同不签发研究、capture、production或broker权限。|
 
-两个诊断和Named只读解析不建立新的report-registry/discovery/latest authority，均为`production_effect=none`、
-`broker_action=none`。实际Full仍只由原runner与唯一publication transaction控制。
+两个诊断、Named只读解析和S2b显式locator工程凭证不建立新的report-registry/discovery/latest authority，
+不进入Reader Brief自动消费，均为`production_effect=none`、`broker_action=none`。实际Full仍只由原runner
+与唯一publication transaction控制；S2b仅manual工程合同，当前波全部真实DQ/研究/数据/交易动作0。
 
 ## DEVX-006D Report / Catalog / Flow Lossless Fragment Shadow
 

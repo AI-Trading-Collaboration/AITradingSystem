@@ -931,6 +931,13 @@ def build_repository_authority(
         section_id, section = _devx_014_section(root, policy=policy)
         relative, record, content = render_fragment(section_id=section_id, section=section)
         rendered_fragments.append((section_id, relative, record, content))
+    trading_2564_s2b_requirement = (
+        root / "docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md"
+    )
+    if trading_2564_s2b_requirement.exists():
+        section_id, section = _trading_2564_s2b_section(root, policy=policy)
+        relative, record, content = render_fragment(section_id=section_id, section=section)
+        rendered_fragments.append((section_id, relative, record, content))
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -2882,6 +2889,99 @@ def _trading_2564_s2a_section(
             "consumer_cutover_allowed": False,
             "dispatch_allowed": False,
             "historical_receipt_rewritten": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _trading_2564_s2b_section(
+    root: Path, *, policy: Mapping[str, Any]
+) -> tuple[str, dict[str, Any]]:
+    # Exact S2b engineering closure, not a migration of old receipt permissions,
+    # strategy rules or publication-fence semantics. Retained S2a stays distinct.
+    section_id = "phase_trading_2564_s2b_named_dq_execution_v1"
+    source_paths = sorted(
+        [
+            "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.json",
+            "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.validation.json",
+            "docs/data_quality/dq_issue_attribution_readiness_inventory_v1.md",
+            "inputs/data_quality/rate_issue_attribution_review_pack_v1.json",
+            "inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json",
+            "docs/data_quality/rate_issue_attribution_review_pack_v1.md",
+            "config/data_quality/rate_row_issue_attribution_decision_v1.yaml",
+            "src/ai_trading_system/contracts/rate_data_quality_attribution.py",
+            "tests/test_rate_issue_attribution_contract.py",
+            "tests/test_data_quality_issue_attribution_inventory.py",
+            "tests/test_trading2452_architecture_contract.py",
+            "src/ai_trading_system/contracts/named_data_quality_execution.py",
+            "src/ai_trading_system/contracts/named_execution_context.py",
+            "src/ai_trading_system/data/quality_provenance.py",
+            "src/ai_trading_system/data/named_quality_execution.py",
+            "src/ai_trading_system/data/quality.py",
+            "src/ai_trading_system/data/quality_execution.py",
+            "scripts/run_named_data_quality.py",
+            "config/data_governance/named_data_quality_execution_sources_v1.json",
+            "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+            "tests/test_named_data_quality_execution_contract.py",
+            "tests/test_named_data_quality_execution.py",
+            "tests/test_named_data_quality_bootstrap.py",
+            "tests/test_named_data_quality_candidate.py",
+            "tests/named_data_quality_support.py",
+            "tests/test_data_quality.py",
+            "tests/test_data_quality_execution.py",
+            "tests/test_qqq_options_signal_package.py",
+            "tests/test_research_input_readiness.py",
+            "tests/test_arch_004_refactor_policy.py",
+            "tests/test_arch_004g_deprecation.py",
+            "tests/test_devx_006c_compatibility_authority.py",
+            "tests/test_devx_006d_report_catalog_flow_authority.py",
+            "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+            "docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md",
+            "docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md",
+            "docs/system_flow.md",
+            "docs/artifact_catalog.md",
+            "registry/development_tasks/c8/c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml",
+            "inputs/architecture/arch_005_task_registry_index.yaml",
+        ],
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "trading_2564_s2b_named_dq_execution.v1",
+        "task_id": "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1",
+        "status": "VALIDATING",
+        "owner_decision": "owner_instruction:TRADING-2564:2026-09-05:long-term-capability",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "named_dq_contract": {
+            "source_kind": "GIT_COMMIT_BYTES_COMPILED",
+            "original_manifest_full_row_binding_required": True,
+            "separate_source_publication_execution_evidence_roots": True,
+            "canonical_dq_calls_per_runner": 1,
+            "canonical_dq_calls_per_verifier": 0,
+            "successful_terminal_dispatch_binding_required": True,
+            "complete_report_projection_exact_bytes_required": True,
+            "verified_bytes_bound_to_current_pid_and_context": True,
+            "verified_seal_export_allowed": False,
+            "coverage_semantics": "CANONICAL_DQ_RULES_ONLY",
+        },
+        "safety": {
+            "real_dq_or_research_executed": False,
+            "dq_numeric_rules_changed": False,
+            "consumer_cutover_allowed": False,
+            "dispatch_allowed": False,
+            "historical_receipt_rewritten": False,
+            "publication_fence_changed": False,
             "production_effect": "none",
             "broker_action": "none",
         },

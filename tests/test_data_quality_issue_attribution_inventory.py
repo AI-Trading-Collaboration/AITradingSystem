@@ -19,6 +19,26 @@ from ai_trading_system.platform.artifacts import load_strict_json_path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
+# Exact S2b emission identities, not issue-code patterns that grant isolation.
+# Stable IDs bind path/function/emitter/code expression/occurrence, never line numbers.
+NAMED_BINDING_SITES = {
+    "dq_issue_site_209756a138c3d5004b20": (
+        "STATIC_LITERAL",
+        "download_manifest_named_binding_mismatch",
+        "download_manifest_named_binding_mismatch",
+    ),
+    "dq_issue_site_3194f2d7bb6556c564c2": (
+        "TEMPLATE_EXPRESSION",
+        "f'{role}_named_download_publication_binding_mismatch'",
+        None,
+    ),
+    "dq_issue_site_5b8c2dd5721991b230d2": (
+        "DYNAMIC_EXPRESSION",
+        "exc.code.removeprefix('DQ_').lower()",
+        None,
+    ),
+}
+
 
 def test_real_inventory_is_complete_fail_closed_and_owner_review_ready() -> None:
     inventory = build_attribution_readiness_inventory(repo_root=REPO_ROOT)
@@ -33,22 +53,22 @@ def test_real_inventory_is_complete_fail_closed_and_owner_review_ready() -> None
     }
     assert inventory["policy_authorized_issue_codes"] == ["prices_non_market_session_date"]
     assert inventory["summary"] == {
-        "canonical_site_count": 69,
-        "direct_constructor_site_count": 63,
+        "canonical_site_count": 72,
+        "direct_constructor_site_count": 66,
         "factory_call_site_count": 6,
-        "static_site_count": 56,
-        "template_site_count": 11,
-        "dynamic_site_count": 2,
-        "unique_static_code_count": 53,
+        "static_site_count": 57,
+        "template_site_count": 12,
+        "dynamic_site_count": 3,
+        "unique_static_code_count": 54,
         "policy_authorized_code_count": 1,
         "policy_authorized_site_count": 1,
         "legacy_affected_instruments_site_count": 1,
-        "owner_review_required_site_count": 68,
+        "owner_review_required_site_count": 71,
         "factory_implementation_constructor_count": 1,
         "noncanonical_constructor_site_count": 2,
     }
     site_ids = [site["site_id"] for site in inventory["sites"]]
-    assert len(site_ids) == len(set(site_ids)) == 69
+    assert len(site_ids) == len(set(site_ids)) == 72
     authorized = [site for site in inventory["sites"] if site["existing_policy_authorized"]]
     assert len(authorized) == 1
     assert authorized[0]["static_code"] == "prices_non_market_session_date"
@@ -66,6 +86,63 @@ def test_real_inventory_is_complete_fail_closed_and_owner_review_ready() -> None
     assert inventory["safety"]["new_issue_isolation_authorized"] is False
     assert inventory["safety"]["production_effect"] == "none"
     assert inventory["safety"]["broker_action"] == "none"
+
+
+def test_named_binding_sites_have_exact_identity_without_scope_authority() -> None:
+    inventory = build_attribution_readiness_inventory(repo_root=REPO_ROOT)
+    sites = {
+        site["site_id"]: site
+        for site in inventory["sites"]
+        if site["source_path"] == "src/ai_trading_system/data/quality.py"
+        and site["enclosing_function"] == "_check_named_download_binding"
+    }
+
+    assert set(sites) == set(NAMED_BINDING_SITES)
+    for site_id, expected in NAMED_BINDING_SITES.items():
+        site = sites[site_id]
+        assert (site["code_kind"], site["code_expression"], site["static_code"]) == expected
+        assert site["emitter_kind"] == "DIRECT_CONSTRUCTOR"
+        assert site["emitter"] == "DataQualityIssue"
+        assert site["occurrence"] == 0
+        assert site["scope_status"] == "GLOBAL_OR_UNKNOWN_SCOPE"
+        assert site["owner_review_status"] == "OWNER_REVIEW_REQUIRED"
+        assert site["phase_c_migration_eligible"] is False
+        assert site["existing_policy_authorized"] is False
+        assert site["legacy_affected_instruments_present"] is False
+        assert site["message_or_sample_scope_inference_allowed"] is False
+    assert inventory["policy_authorized_issue_codes"] == ["prices_non_market_session_date"]
+    assert inventory["summary"]["policy_authorized_code_count"] == 1
+    assert inventory["summary"]["policy_authorized_site_count"] == 1
+
+
+@pytest.mark.parametrize("site_id", tuple(NAMED_BINDING_SITES))
+@pytest.mark.parametrize("tamper", ["identity", "expression", "scope_promotion"])
+def test_named_binding_site_tamper_cannot_create_attribution_authority(
+    site_id: str,
+    tamper: str,
+) -> None:
+    inventory = build_attribution_readiness_inventory(repo_root=REPO_ROOT)
+    changed = deepcopy(inventory)
+    site = next(item for item in changed["sites"] if item["site_id"] == site_id)
+    if tamper == "identity":
+        site["site_id"] = "dq_issue_site_unreviewed"
+    elif tamper == "expression":
+        site["code_expression"] = "rates_prices_named_binding_is_not_owner_review"
+    else:
+        assert tamper == "scope_promotion"
+        site["scope_status"] = "EXISTING_POLICY_AUTHORIZED_INSTRUMENT_SCOPE"
+        site["owner_review_status"] = "EXISTING_OWNER_REVIEWED_PILOT"
+        site["phase_c_migration_eligible"] = True
+        site["existing_policy_authorized"] = True
+
+    validation = validate_attribution_readiness_inventory(changed, repo_root=REPO_ROOT)
+
+    assert validation["status"] == "FAIL"
+    assert "content_derived_rebuild_mismatch" in validation["errors"]
+    if tamper == "scope_promotion":
+        assert "phase_c_migration_authority_illegal" in validation["errors"]
+    assert changed["policy_authorized_issue_codes"] == ["prices_non_market_session_date"]
+    assert changed["authority"]["new_issue_migration_authorized"] is False
 
 
 def test_tracked_inventory_markdown_and_validation_are_fresh() -> None:

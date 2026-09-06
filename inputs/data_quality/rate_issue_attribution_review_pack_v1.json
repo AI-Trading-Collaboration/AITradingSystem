@@ -8,7 +8,7 @@
     "runtime_contract_change_authorized": false,
     "source_owner_decision_recorded": false
   },
-  "c1_inventory_id": "dq_issue_attribution_inventory_8e8b3981d478574ee87d989a",
+  "c1_inventory_id": "dq_issue_attribution_inventory_f266d9f47b5d85ddc2021670",
   "candidates": [
     {
       "affected_price_tickers": [],
@@ -62,7 +62,7 @@
       "scope_taxonomy": "CURRENT_AND_PREVIOUS_VALID_OBSERVATION",
       "severity": "ERROR",
       "site_id": "dq_issue_site_85549de0f1e9ab739a74",
-      "source_line": 2998,
+      "source_line": 3174,
       "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
       "source_owner_questions": [
         "是否确认 move issue 的完整 row scope 必须同时包含当前行和前一有效观测？",
@@ -112,7 +112,7 @@
       "scope_taxonomy": "SINGLE_SOURCE_ROW",
       "severity": "ERROR",
       "site_id": "dq_issue_site_0e7f3d74bfa489801c83",
-      "source_line": 1456,
+      "source_line": 1632,
       "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
       "source_owner_questions": [
         "是否确认 invalid date 不阻止按 non-empty series 做保守 series-level attribution？",
@@ -163,7 +163,7 @@
       "scope_taxonomy": "SINGLE_SOURCE_ROW",
       "severity": "ERROR",
       "site_id": "dq_issue_site_f337897b3d0d0b8e2842",
-      "source_line": 1483,
+      "source_line": 1659,
       "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
       "source_owner_questions": [
         "是否确认 value 缺失或非数值只影响触发行及其 series？",
@@ -214,7 +214,7 @@
       "scope_taxonomy": "SINGLE_SOURCE_ROW",
       "severity": "ERROR",
       "site_id": "dq_issue_site_dcc6dcab7a17c225b404",
-      "source_line": 1510,
+      "source_line": 1686,
       "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
       "source_owner_questions": [
         "是否确认 Infinity/non-finite 只影响触发行及其 series？",
@@ -269,7 +269,7 @@
       "scope_taxonomy": "SINGLE_SOURCE_ROW",
       "severity": "ERROR",
       "site_id": "dq_issue_site_6421117ee905a6da1438",
-      "source_line": 2880,
+      "source_line": 3056,
       "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
       "source_owner_questions": [
         "是否确认 configured plausible range 的越界只影响触发行及其 series？",
@@ -330,7 +330,7 @@
       "scope_taxonomy": "CURRENT_AND_PREVIOUS_VALID_OBSERVATION",
       "severity": "WARNING",
       "site_id": "dq_issue_site_df1c184d09e3c55d3e71",
-      "source_line": 3057,
+      "source_line": 3233,
       "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
       "source_owner_questions": [
         "是否确认 warning 也使用与 extreme move 相同的完整 row-pair attribution？",
@@ -373,8 +373,8 @@
     {
       "path": "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.json",
       "role": "c1_readiness_inventory",
-      "sha256": "0bad8e6beab4e83d221b225c5b0c8d5a2eae2588be9d7ebc802039b0763c49ff",
-      "size_bytes": 85438
+      "sha256": "c9a637b198d2267d2938c0322e7a237c14d47111b4368e7afb020780c0714f63",
+      "size_bytes": 88931
     },
     {
       "path": "config/data_quality/rate_row_issue_attribution_review_v1.yaml",
@@ -385,8 +385,8 @@
     {
       "path": "src/ai_trading_system/data/quality.py",
       "role": "canonical_dq_source",
-      "sha256": "6c553f225441cd5b1caac11ba24cc3edfd84c3ca72ffb2e2cf8242f4944b780e",
-      "size_bytes": 122665
+      "sha256": "d8fe182e7c3abe8c93e3d4daf271a83d9440d1b446e3098051bde0a4455b3564",
+      "size_bytes": 130606
     },
     {
       "path": "config/data_quality.yaml",
@@ -433,7 +433,7 @@
     },
     "suspicious_daily_change_abs": 0.75
   },
-  "review_pack_id": "dq_rate_issue_attribution_review_34ea0d1bce5e7a0bc67d83b5",
+  "review_pack_id": "dq_rate_issue_attribution_review_d83d6fa823071cedf32ded22",
   "safety": {
     "broker_action": "none",
     "cached_data_mutated": false,

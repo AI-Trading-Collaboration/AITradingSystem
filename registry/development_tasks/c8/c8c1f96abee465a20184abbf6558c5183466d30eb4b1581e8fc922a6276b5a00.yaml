@@ -13,17 +13,17 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: integration-coordinator：S2a末尾断言窄修复与绑定failed Full的正式验收；随后S2b-S5受审合同
-  requirement_refs:
-  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
+  next_owner: Codex integration coordinator
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: e1aa四个正式tier PASS；首次Full为10397 passed/5
-    skipped/1 failed，仅DEVX-006D测试仍断言OPS078是末尾；修正exact-tail及S2a source追溯，不改策略/DQ/历史seal
+  unstructured_legacy_blocker_or_next_step: S2b恢复源码456项focused PASS、69-site/6-rate规则等价PASS；共享兼容性调和已实现，待source四生成及focused、真实committed
+    candidate验收、final正式tiers和Full；真实研究/数据/交易0。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 保留历史3000/3152/192与inactive门禁；同类末尾断言审查、focused与exact新candidate formal/Full通过，绑定真实失败parent，普通main发布；全部真实业务动作0
+    text: 保留S2a→OPS079→DEVX014→S2b顺序与40-source/55-module/7-dependency；新清单实际核验1207/1368预期，C1/rate/decision语义等价及精确负例PASS；原12
+      actual E2E和正式tiers/Full绑定full_20260905T155839Z，最终main/origin一致；全真实研究/DQ/数据/交易0。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -174,22 +174,330 @@ events:
   - change:trading-2564-s2a-full-tail-failure-fix-20260905
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-dfea6f261651c768b736912214a3e8de
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-05T11:41:22.1086786+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2b-named-dq-start-20260905
+  lane_id: null
+  base_commit: 293813e5e2e7b88886b79fc22cf77e2d57f1f346
+  previous_state_event_id: task-event-dfea6f261651c768b736912214a3e8de
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator：S2b指定快照canonical DQ与Git-bytes身份合同工程；DATA-GOV-002
+      owner：后续真实consumer准入
+    blocker_or_next_step: S2a已在293813e5e完成Full10400 passed/5 skipped及指定远端普通发布，原lease释放；S2b先独立DTO/bootstrap→纯provenance→runner/verifier→真实candidate
+      synthetic端到端，S3-S5保留
+    acceptance_criteria: 四根/exact snapshot/全manifest行/实际编译bytes/当前PID-context及scope绑定成立；canonical数值与归因不变；runner一次DQ/verifier零DQ；正式candidate及Full/普通发布通过；全部真实研究数据交易动作0
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；S2a
+      closeout SHA256=888dbe53f9050d2a8c2486407f6262109761d496ccc01e830193e84e257483f5；S2b不修改legacy权限/策略/默认窗口，不运行真实DQ，工程PASS不升级研究结论
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2b-named-dq-start-20260905
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b348e8ad7187f0fa5f1674b300db9e00
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-05T12:21:33.6727636+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2b-source-scope-correction-20260905
+  lane_id: null
+  base_commit: 293813e5e2e7b88886b79fc22cf77e2d57f1f346
+  previous_state_event_id: task-event-b348e8ad7187f0fa5f1674b300db9e00
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator：S2b指定快照canonical DQ与Git-bytes身份合同工程；DATA-GOV-002
+      owner：后续真实consumer准入
+    blocker_or_next_step: S2b provenance124/contract33/bootstrap toy58 PASS；runner与真实candidate
+      E2E待完成；source v1漏两项旧fixture声明已行政终止，v2同HEAD完整补声明后继续；无Full失败/真实动作
+    acceptance_criteria: 四根/exact snapshot/全manifest行/实际编译bytes/当前PID-context及scope绑定成立；canonical数值与归因不变；runner一次DQ/verifier零DQ；正式candidate及Full/普通发布通过；全部真实研究数据交易动作0
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；source
+      v2 SHA256=7bb4cba2dde758ffd9d4fb8d15ac560f4b01e1be6ab93f8108bd189e9adc41df；保留v1历史和已通过focused，不扩大策略/窗口/实际消费权限
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2b-source-scope-correction-20260905
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3cf700db27e8eae8ae6bb93acb093497
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-05T13:34:44.6839414+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2b-unified-focused-and-live-seal-20260905
+  lane_id: null
+  base_commit: 293813e5e2e7b88886b79fc22cf77e2d57f1f346
+  previous_state_event_id: task-event-3cf700db27e8eae8ae6bb93acb093497
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator：S2b源冻结/正式candidate工程验收；DATA-GOV-002 owner：后续真实consumer准入
+    blocker_or_next_step: S2b统一focused382 passed/1既有warning；父终态失败分支补测、当前catalog/system_flow的RCF
+      seal与28路径source closure待同步；真实candidate E2E/Full及S2后续/S3-S5未完成
+    acceptance_criteria: 四根/exact snapshot/全manifest行/55模块Git bytes/当前PID-context及scope绑定成立；runner一次DQ/verifier零DQ；成功父终态与postguard证明不可省略；最终candidate
+      formal/Full及普通发布通过；所有真实研究数据交易动作0
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；source
+      v2仍有效；RCF policy/catalog均已在shared_paths；只更新当前seal保留历史3000/3152/192及旧凭证；focused
+      XML SHA256=bb6f4e5c029805737947713cd972edac2803ee9489fc921d108d21116bd3b8c9
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2b-unified-focused-and-live-seal-20260905
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c57f3cfcc902e69db13be10e18149e3f
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-05T13:44:49.5265448+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2b-source-freeze-ready-20260905
+  lane_id: null
+  base_commit: 293813e5e2e7b88886b79fc22cf77e2d57f1f346
+  previous_state_event_id: task-event-c57f3cfcc902e69db13be10e18149e3f
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator：S2b源冻结/正式candidate工程验收；DATA-GOV-002 owner：后续真实consumer准入
+    blocker_or_next_step: S2b统一focused382 passed/1既有warning、父失败控制流与reader92 passed、LANE/静态PASS；当前RCF
+      seal与28路径closure已同步，进入官方generated/source/final；实际candidate E2E/Full及S2后续/S3-S5未完成
+    acceptance_criteria: 四根/exact snapshot/全manifest行/55模块Git bytes/当前PID-context及scope绑定成立；runner一次DQ/verifier零DQ；成功父终态与postguard证明不可省略；最终candidate
+      formal/Full及普通发布通过；所有真实研究数据交易动作0
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；父失败测试明确CONTROL_FLOW_STUB_ONLY/内存sink，不是实际guard或candidate
+      proof；保留历史seal、所有真实动作0
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2b-source-freeze-ready-20260905
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2d6b7a261064cae2eb520a7e23d499f2
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-05T13:52:08.6508340+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2b-current-inventory-scope-20260905
+  lane_id: null
+  base_commit: 293813e5e2e7b88886b79fc22cf77e2d57f1f346
+  previous_state_event_id: task-event-2d6b7a261064cae2eb520a7e23d499f2
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator：S2b源冻结/正式candidate工程验收；DATA-GOV-002 owner：后续真实consumer准入
+    blocker_or_next_step: S2b focused382及父/reader92 PASS；源码冻结须同步当前deprecation精确清单1202
+      modules/1363 tests与29项source closure；随后同一candidate实际E2E和formal/Full；S2后续/S3-S5未完成
+    acceptance_criteria: 四根/exact snapshot/全manifest行/55模块Git bytes/当前PID-context及scope绑定成立；runner一次DQ/verifier零DQ；成功父终态与postguard证明不可省略；最终candidate
+      formal/Full及普通发布通过；所有真实研究数据交易动作0
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；test_arch_004g_deprecation.py已在v2
+      shared scope，仅当前ID/数量更新，历史Wave11和writer856不变；静态预期ID需官方生成器独立确认；所有真实动作0
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2b-current-inventory-scope-20260905
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-bbcb11b9f3f9d1ef8b4364a5c4318044
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-05T14:37:20.9845966+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2b-windows-venv-pid-fix-20260905
+  lane_id: null
+  base_commit: 5615e27c454cbd872553b04a809b4f6edd676f6c
+  previous_state_event_id: task-event-bbcb11b9f3f9d1ef8b4364a5c4318044
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator
+    blocker_or_next_step: S2b候选5615e27c4实际synthetic E2E为8failed/4passed，Windows venv
+      redirector PID不等于解释器PID；父关联正确阻断。仅修正测试dispatch为CPython官方direct-venv启动并保留PID/lease/-I/-B校验；重做source/final验收。Full未派发，S2后续/S3-S5待办。
+    acceptance_criteria: 四根/exact snapshot/全manifest行/55模块Git bytes/当前PID-context及scope绑定成立；runner一次DQ/verifier零DQ；成功父终态与postguard证明不可省略；最终candidate
+      formal/Full及普通发布通过；所有真实研究数据交易动作0
+    notes: 详见 docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
+      和 docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md。原失败XML及11个父收据保留，33根345文件909318字节synthetic证据已逐文件SHA归档；旧final
+      FAILED/RELEASED，新pid-fix source同branch/checkout/claims、无Full parent。11个child=8synthetic
+      DQ+3pre-DQ阻断，verify0、真实数据/研究/外部/交易全部0；不是信号有效性结论。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2b-windows-venv-pid-fix-20260905
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-60c267a01ddb6e3834527df0c1af1109
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-05T15:02:08.6340923+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2b-pid-fix-focused-pass-20260905
+  lane_id: null
+  base_commit: 5615e27c454cbd872553b04a809b4f6edd676f6c
+  previous_state_event_id: task-event-60c267a01ddb6e3834527df0c1af1109
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator
+    blocker_or_next_step: S2b Windows PID修复106/106 focused PASS及Black/Ruff PASS；生产bootstrap/DTO/runner/validator/source
+      manifest不变，source closure29。原候选8failed/4passed保留；待新source/final、actual candidate12项及正式tiers/Full。S2后续/S3-S5未完成。
+    acceptance_criteria: 四根/exact snapshot/全manifest行/55模块Git bytes/当前PID-context及scope绑定成立；runner一次DQ/verifier零DQ；成功父终态与postguard证明不可省略；最终candidate
+      formal/Full及普通发布通过；所有真实研究数据交易动作0
+    notes: 详见 docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
+      §10.2 和 docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md
+      §12。新source事务trading-2564-s2b-pid-fix-source-20260905-v1；同branch/checkout/claims；100pass/6个fixture准备顺序失败及修正后106pass均留XML。标准库probe只证PID/venv/-I/-B，无DQ；原11个synthetic
+      child和归档不重签，Full未派发，无Full parent，真实数据/研究/外部/交易全部0。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2b-pid-fix-focused-pass-20260905
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8d705291063b34207b1ba4bcd13812cd
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-05T17:22:16.8543259Z'
+  actor: integration-coordinator
+  change_id: trading-2564-s2b-first-full-derived-failure-fix-20260906
+  lane_id: null
+  base_commit: 06140c52ca4e5be718075b7f436b820b927637c4
+  previous_state_event_id: task-event-8d705291063b34207b1ba4bcd13812cd
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator
+    blocker_or_next_step: S2b candidate06140 actual12与四tiers PASS；首次Full10654pass/11fail/5skip，精确successor漏项与C1→rate
+      derived pack stale。新事务先证明原69site/六rate候选/Owner条件语义等价，官方重建与derived绑定窄修复，再新candidate验收；S2后续/S3-S5未完成。
+    acceptance_criteria: 原Owner决定/六site/AST/阈值/scope/active policy不变；新增3named issue保持未批准/global；C1→rate
+      pack→decision绑定及exact successor负例通过；40path source闭包完整；新candidate E2E/formal及绑定本失败Full后普通发布；真实动作0。
+    notes: 详见 docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
+      §10.3 与 docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md
+      §13。failed Full=outputs/validation_runtime/full_20260905T155839Z/test_runtime_summary.json，SHA256=ccef4a6bd377e560c62803db953f530bf45a148f6c30d255572d26d887454e04。旧final已FAILED/RELEASED；新source同branch/checkout，5bff8113afb761b5287c5ba90b6a553dd5a8942e2e9fe9968d9c4ac0605f1b2e。Full临时pytest18406已失、归档前检零复制/删除，父收据/正式报告保留；S5登记运行期合成证据保留与关联focused闭包，禁止重造原件。真实数据研究交易均0。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2b-first-full-derived-failure-fix-20260906
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e81ae4befd16941bb9ea14d71603d055
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T11:32:19.7707798+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2b-preserved-recovery-20260906-v1
+  lane_id: null
+  base_commit: 64e1d3da3cd41ae842fd7cc3f14802c550ceb9ef
+  previous_state_event_id: task-event-e81ae4befd16941bb9ea14d71603d055
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator：在已准入唯一candidate恢复S2b完整源码，先等价/后继focused，再actual
+      candidate与parent-bound正式验证
+    blocker_or_next_step: 原snapshot d5e8b26全66路径及8条原追加event已审；历史经official update逐条原body/id重放，完整fragment一致。DEVX014已发布/保全完成，clean
+      C plan INTEGRATION PASS，当前同root/branch由TRADING2564精确事务承接；尚无S2b新candidate PASS。
+    acceptance_criteria: 保留S2a→OPS079→DEVX014→S2b顺序与40-source/55-module/7-dependency；新清单实际核验1207/1368预期，C1/rate/decision语义等价及精确负例PASS；原12
+      actual E2E和正式tiers/Full绑定full_20260905T155839Z，最终main/origin一致；全真实研究/DQ/数据/交易0。
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md。研究仍为最终目标，S2b后才接S2
+      consumer、S3前瞻、S4归因。复用D:/Work/AITradingSystem_devx014_source_preservation作为唯一coordinator，branch
+      codex/trading-2564-s2b-preserved-integration；原source18项保留。退出为S2b发布、unique证据规范保留/hash确认及无运行依赖后审计清理；heartbeat
+      PAUSED、已消费授权不可复用。plan integration-revalidation-f8a6fd3c9c5d05f5a27e；后继LANE为原clean
+      admission的继续，不重批dirty plan。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2b-preserved-recovery-20260906-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-de47a4f5673b3ad231a05a660a1fcc41
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T12:04:00+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2b-preserved-source-focused-v1
+  lane_id: null
+  base_commit: 64e1d3da3cd41ae842fd7cc3f14802c550ceb9ef
+  previous_state_event_id: task-event-de47a4f5673b3ad231a05a660a1fcc41
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex integration coordinator
+    blocker_or_next_step: S2b恢复源码456项focused PASS、69-site/6-rate规则等价PASS；共享兼容性调和已实现，待source四生成及focused、真实committed
+      candidate验收、final正式tiers和Full；真实研究/数据/交易0。
+    acceptance_criteria: 保留S2a→OPS079→DEVX014→S2b顺序与40-source/55-module/7-dependency；新清单实际核验1207/1368预期，C1/rate/decision语义等价及精确负例PASS；原12
+      actual E2E和正式tiers/Full绑定full_20260905T155839Z，最终main/origin一致；全真实研究/DQ/数据/交易0。
+    notes: 追加恢复进展；保留原14事件与cycle480，未改写历史。见TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md第14.1节；当前源码PASS不等于信号有效，S2
+      consumer及S3真实前瞻仍待后续阶段。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2b-preserved-source-focused-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a89fb9ab807251b48ec72ed7bd479b19
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T12:03:10.395968+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2b-source-phase-and-timestamp-correction-v2
+  lane_id: null
+  base_commit: 64e1d3da3cd41ae842fd7cc3f14802c550ceb9ef
+  previous_state_event_id: task-event-a89fb9ab807251b48ec72ed7bd479b19
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex integration coordinator
+    blocker_or_next_step: S2b恢复源码456项focused PASS、69-site/6-rate规则等价PASS；共享兼容性调和已实现，待source四生成及focused、真实committed
+      candidate验收、final正式tiers和Full；真实研究/数据/交易0。
+    acceptance_criteria: 保留S2a→OPS079→DEVX014→S2b顺序与40-source/55-module/7-dependency；新清单实际核验1207/1368预期，C1/rate/decision语义等价及精确负例PASS；原12
+      actual E2E和正式tiers/Full绑定full_20260905T155839Z，最终main/origin一致；全真实研究/DQ/数据/交易0。
+    notes: 追加纠正cycle481：occurred_at误填12:04:00Z，实际完成不晚于11:59:23Z；原事件保留，不用于研究时点。source
+      v1因阶段先行，refresh-consumers被PUBLICATION_PHASE_MISMATCH拒绝且未执行；已行政FAILED/RELEASED(candidate=null,Full=0)。v2同root/branch/HEAD/main/plan及43个脏路径逐hash等同后接管，先TASK_SOURCE_PRE_WRITE内完成canonical刷新，再进入生成阶段；不绕门禁、不扩大授权。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2b-source-phase-and-timestamp-correction-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-764a1201d00f2aa1e6c77dd941e91655
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-06T12:05:29+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2b-retained-authority-missing-binding-fix-v1
+  lane_id: null
+  base_commit: 64e1d3da3cd41ae842fd7cc3f14802c550ceb9ef
+  previous_state_event_id: task-event-764a1201d00f2aa1e6c77dd941e91655
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex integration coordinator
+    blocker_or_next_step: S2b恢复源码456项focused PASS、69-site/6-rate规则等价PASS；共享兼容性调和已实现，待source四生成及focused、真实committed
+      candidate验收、final正式tiers和Full；真实研究/数据/交易0。
+    acceptance_criteria: 保留S2a→OPS079→DEVX014→S2b顺序与40-source/55-module/7-dependency；新清单实际核验1207/1368预期，C1/rate/decision语义等价及精确负例PASS；原12
+      actual E2E和正式tiers/Full绑定full_20260905T155839Z，最终main/origin一致；全真实研究/DQ/数据/交易0。
+    notes: 独立只读review发现测试helper对S2b缺sources/superseded条目可能回退DEVX014；修正仅限S2b exact40与TRADING2480受限路径的4项交集，完整性预检+原两fixture四类缺失双phase负例；不改生产validator、不扩大来源、不改历史hash，实际并行验收待执行。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2b-retained-authority-missing-binding-fix-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fa11ad459679e04cf74ecdcee804a28e
 projection:
   legacy_first_eight_cells:
   - TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
   - 长期研究能力 / 输入就绪与验证前置
   - P1
   - IN_PROGRESS
-  - integration-coordinator：S2a末尾断言窄修复与绑定failed Full的正式验收；随后S2b-S5受审合同
-  - e1aa四个正式tier PASS；首次Full为10397 passed/5 skipped/1 failed，仅DEVX-006D测试仍断言OPS078是末尾；修正exact-tail及S2a
-    source追溯，不改策略/DQ/历史seal
-  - 保留历史3000/3152/192与inactive门禁；同类末尾断言审查、focused与exact新candidate formal/Full通过，绑定真实失败parent，普通main发布；全部真实业务动作0
-  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；failed
-    Full=outputs/validation_runtime/full_20260905T075500Z/test_runtime_summary.json；SHA256=e6132fd0173b1a582812cfacf2017a94bd92fba6fa7bf46b89db5d52b63df0c5；S2b-S5设计待审不算实施
-  docs_links:
-  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
+  - Codex integration coordinator
+  - S2b恢复源码456项focused PASS、69-site/6-rate规则等价PASS；共享兼容性调和已实现，待source四生成及focused、真实committed
+    candidate验收、final正式tiers和Full；真实研究/数据/交易0。
+  - 保留S2a→OPS079→DEVX014→S2b顺序与40-source/55-module/7-dependency；新清单实际核验1207/1368预期，C1/rate/decision语义等价及精确负例PASS；原12
+    actual E2E和正式tiers/Full绑定full_20260905T155839Z，最终main/origin一致；全真实研究/DQ/数据/交易0。
+  - 独立只读review发现测试helper对S2b缺sources/superseded条目可能回退DEVX014；修正仅限S2b exact40与TRADING2480受限路径的4项交集，完整性预检+原两fixture四类缺失双phase负例；不改生产validator、不扩大来源、不改历史hash，实际并行验收待执行。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 1b153bcc6c4f67b7c0dbdde9f3fcf9e377c6cd4ae73fca24c81301469a426e74
-last_event_id: task-event-dfea6f261651c768b736912214a3e8de
+  canonical_row_sha256: ffb67948f1f47f983950b3df77abf5ae707b99ffae610dc69eca632df34394a7
+last_event_id: task-event-fa11ad459679e04cf74ecdcee804a28e
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 5ae3ee159fd46396df6e7f4c09c51beebd37ffe396134db60eef18f06b99971e
+fragment_checksum: d769ee705c725d3fa40d49de983bc0170b82f21bddb3c3023214b21b8c5a145c
