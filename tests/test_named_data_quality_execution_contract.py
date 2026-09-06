@@ -31,6 +31,11 @@ from ai_trading_system.contracts.data_quality_execution import (
     canonical_json_value,
 )
 from ai_trading_system.contracts.named_data_quality_execution import (
+    EQUAL_RISK_GUARD_RATE_SERIES,
+    EQUAL_RISK_PRICE_REGISTRY_PATH,
+    EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH,
+    EQUAL_RISK_PRICE_SOURCE_MANIFEST_SHA256,
+    EQUAL_RISK_PRICE_TICKERS,
     NamedArtifactBinding,
     NamedDQExecutionReceipt,
     NamedDQExecutionRequest,
@@ -38,6 +43,7 @@ from ai_trading_system.contracts.named_data_quality_execution import (
     NamedDQRoots,
     NamedDQScope,
     NamedDQSuccessfulDispatchBinding,
+    NamedEqualRiskPriceScope,
     NamedExecutionObservation,
     NamedManifestBinding,
     NamedManifestRowBinding,
@@ -64,6 +70,111 @@ _COMMIT = "1" * 40
 _NOW = datetime(2026, 9, 5, 1, tzinfo=UTC)
 _WINDOW = DataQualityDateWindow(date(2021, 2, 22), date(2026, 9, 3))
 _TEST_FILE = "tests/test_named_data_quality_execution_contract.py"
+
+
+def _price_scope() -> NamedEqualRiskPriceScope:
+    return NamedEqualRiskPriceScope(
+        as_of=_WINDOW.end,
+        requested_window=_WINDOW,
+        registry_binding=NamedArtifactBinding("EXECUTION", EQUAL_RISK_PRICE_REGISTRY_PATH, _SHA, 1),
+    )
+
+
+def test_equal_risk_price_scope_is_strict_round_trip_request_not_authority() -> None:
+    scope = _price_scope()
+    assert NamedEqualRiskPriceScope.from_dict(scope.to_dict()) == scope
+    assert scope.schema_version == "named_equal_risk_price_scope.v1"
+    assert scope.expected_price_tickers == EQUAL_RISK_PRICE_TICKERS
+    assert scope.guard_rate_series == EQUAL_RISK_GUARD_RATE_SERIES
+    assert not isinstance(scope, VerifiedNamedInputs)
+    parameters = signature(VerifiedNamedInputs.prices_for_equal_risk_preview).parameters
+    assert set(parameters) == {"self", "required_scope"}
+    assert parameters["required_scope"].kind is Parameter.KEYWORD_ONLY
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("schema_version", "named_data_quality_execution_receipt.v1"),
+        ("consumer_id", "composer_preview@1.0.0"),
+        ("expected_price_tickers", ["QQQ", "SGOV"]),
+        ("expected_price_tickers", ["QQQ", "SGOV", "TQQQ", "SPY"]),
+        ("guard_rate_series", ["DGS10"]),
+        ("as_of", "2026-09-04"),
+        ("requested_window", {"start": "2021-02-23", "end": "2026-09-03"}),
+        ("requested_window", {"start": "2018-01-01", "end": "2026-09-03"}),
+        ("requested_window", {"start": "2021-02-22", "end": "2026-09-02"}),
+        ("dispatch_allowed", True),
+        ("ignore_evaluated_window", True),
+        ("input_roles", ["rates"]),
+    ],
+)
+def test_equal_risk_price_scope_rejects_scope_expansion_and_authority_fields(
+    field: str, value: object
+) -> None:
+    with pytest.raises(ValueError):
+        NamedEqualRiskPriceScope.from_dict({**_price_scope().to_dict(), field: value})
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("root_role", "PUBLICATION"),
+        ("relative_path", "other/simple_baseline_strategy_registry.yaml"),
+        ("sha256", "not-a-sha"),
+        ("size_bytes", 0),
+        ("size_bytes", True),
+    ],
+)
+def test_equal_risk_price_registry_binding_rejects_wrong_identity_shape(
+    field: str, value: object
+) -> None:
+    payload = _price_scope().to_dict()
+    payload["registry_binding"] = {**_price_scope().registry_binding.to_dict(), field: value}
+    with pytest.raises(ValueError):
+        NamedEqualRiskPriceScope.from_dict(payload)
+
+
+def test_equal_risk_manifest_is_pinned_exact_closure_extension_not_counts_only() -> None:
+    root = Path(__file__).resolve().parents[1]
+    original_bytes = (
+        root / "config/data_governance/named_data_quality_execution_sources_v1.json"
+    ).read_bytes()
+    content = (root / EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH).read_bytes()
+    original, actual = json.loads(original_bytes), json.loads(content)
+    assert hashlib.sha256(content).hexdigest() == EQUAL_RISK_PRICE_SOURCE_MANIFEST_SHA256
+    additions = [
+        {
+            "module_name": "ai_trading_system.data_foundation",
+            "source_path": "src/ai_trading_system/data_foundation.py",
+            "is_package": False,
+        },
+        {
+            "module_name": "ai_trading_system.simple_baseline_portfolio_control",
+            "source_path": "src/ai_trading_system/simple_baseline_portfolio_control.py",
+            "is_package": False,
+        },
+    ]
+    expected = {
+        **original,
+        "modules": sorted(original["modules"] + additions, key=lambda row: row["module_name"]),
+        "policy_dependencies": original["policy_dependencies"] + [EQUAL_RISK_PRICE_REGISTRY_PATH],
+    }
+    assert actual == expected
+    assert len(original["modules"]) == 55 and len(original["policy_dependencies"]) == 7
+    assert len(actual["modules"]) == 57 and len(actual["policy_dependencies"]) == 8
+    # Same cardinality is insufficient: changing any path changes the fixed pin.
+    substituted = {
+        **actual,
+        "policy_dependencies": actual["policy_dependencies"][:-1] + ["other/registry.yaml"],
+    }
+    encoded_original = (json.dumps(actual, indent=2) + "\n").encode()
+    encoded_substituted = (json.dumps(substituted, indent=2) + "\n").encode()
+    assert encoded_original == content
+    assert hashlib.sha256(encoded_original).hexdigest() == EQUAL_RISK_PRICE_SOURCE_MANIFEST_SHA256
+    assert (
+        hashlib.sha256(encoded_substituted).hexdigest() != EQUAL_RISK_PRICE_SOURCE_MANIFEST_SHA256
+    )
 
 
 def _identity() -> NamedExecutionIdentity:

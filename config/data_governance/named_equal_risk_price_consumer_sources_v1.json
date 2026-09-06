@@ -1,0 +1,303 @@
+{
+  "schema_version": "named_data_quality_execution_sources.v1",
+  "source_kind": "GIT_COMMIT_BYTES_COMPILED",
+  "bootstrap_path": "scripts/run_named_data_quality.py",
+  "worker_entrypoint": "ai_trading_system.data.named_quality_execution:bootstrap_worker",
+  "modules": [
+    {
+      "module_name": "ai_trading_system",
+      "source_path": "src/ai_trading_system/__init__.py",
+      "is_package": true
+    },
+    {
+      "module_name": "ai_trading_system.config",
+      "source_path": "src/ai_trading_system/config.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts",
+      "source_path": "src/ai_trading_system/contracts/__init__.py",
+      "is_package": true
+    },
+    {
+      "module_name": "ai_trading_system.contracts.artifact_envelope",
+      "source_path": "src/ai_trading_system/contracts/artifact_envelope.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.data_quality",
+      "source_path": "src/ai_trading_system/contracts/data_quality.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.data_quality_attribution",
+      "source_path": "src/ai_trading_system/contracts/data_quality_attribution.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.data_quality_capability",
+      "source_path": "src/ai_trading_system/contracts/data_quality_capability.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.data_quality_consumer_authorization",
+      "source_path": "src/ai_trading_system/contracts/data_quality_consumer_authorization.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.data_quality_execution",
+      "source_path": "src/ai_trading_system/contracts/data_quality_execution.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.deprecation",
+      "source_path": "src/ai_trading_system/contracts/deprecation.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.named_data_quality_execution",
+      "source_path": "src/ai_trading_system/contracts/named_data_quality_execution.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.named_execution_context",
+      "source_path": "src/ai_trading_system/contracts/named_execution_context.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.operations",
+      "source_path": "src/ai_trading_system/contracts/operations.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.rate_data_quality_attribution",
+      "source_path": "src/ai_trading_system/contracts/rate_data_quality_attribution.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.report_audit",
+      "source_path": "src/ai_trading_system/contracts/report_audit.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.report_spec",
+      "source_path": "src/ai_trading_system/contracts/report_spec.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.research_context",
+      "source_path": "src/ai_trading_system/contracts/research_context.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.research_lifecycle",
+      "source_path": "src/ai_trading_system/contracts/research_lifecycle.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.research_review",
+      "source_path": "src/ai_trading_system/contracts/research_review.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.status",
+      "source_path": "src/ai_trading_system/contracts/status.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.strategy_research_cited_query",
+      "source_path": "src/ai_trading_system/contracts/strategy_research_cited_query.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.strategy_research_explorer",
+      "source_path": "src/ai_trading_system/contracts/strategy_research_explorer.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.strategy_research_explorer_diff",
+      "source_path": "src/ai_trading_system/contracts/strategy_research_explorer_diff.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.strategy_research_page_effectiveness",
+      "source_path": "src/ai_trading_system/contracts/strategy_research_page_effectiveness.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.strategy_research_qqq_options_projection",
+      "source_path": "src/ai_trading_system/contracts/strategy_research_qqq_options_projection.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.strategy_research_reader_projection",
+      "source_path": "src/ai_trading_system/contracts/strategy_research_reader_projection.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.strategy_research_reader_state",
+      "source_path": "src/ai_trading_system/contracts/strategy_research_reader_state.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.strategy_research_reader_terminology",
+      "source_path": "src/ai_trading_system/contracts/strategy_research_reader_terminology.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.strategy_research_status_explanation",
+      "source_path": "src/ai_trading_system/contracts/strategy_research_status_explanation.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.strategy_research_work_progress",
+      "source_path": "src/ai_trading_system/contracts/strategy_research_work_progress.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.contracts.workflow",
+      "source_path": "src/ai_trading_system/contracts/workflow.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.core",
+      "source_path": "src/ai_trading_system/core/__init__.py",
+      "is_package": true
+    },
+    {
+      "module_name": "ai_trading_system.core.artifacts",
+      "source_path": "src/ai_trading_system/core/artifacts.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.core.production_effect",
+      "source_path": "src/ai_trading_system/core/production_effect.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.core.workflow",
+      "source_path": "src/ai_trading_system/core/workflow.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.data",
+      "source_path": "src/ai_trading_system/data/__init__.py",
+      "is_package": true
+    },
+    {
+      "module_name": "ai_trading_system.data.download_publication",
+      "source_path": "src/ai_trading_system/data/download_publication.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.data.immutable_publish",
+      "source_path": "src/ai_trading_system/data/immutable_publish.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.data.named_quality_execution",
+      "source_path": "src/ai_trading_system/data/named_quality_execution.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.data.quality",
+      "source_path": "src/ai_trading_system/data/quality.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.data.quality_capability",
+      "source_path": "src/ai_trading_system/data/quality_capability.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.data.quality_capability_discovery",
+      "source_path": "src/ai_trading_system/data/quality_capability_discovery.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.data.quality_consumer_authorization",
+      "source_path": "src/ai_trading_system/data/quality_consumer_authorization.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.data.quality_execution",
+      "source_path": "src/ai_trading_system/data/quality_execution.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.data.quality_provenance",
+      "source_path": "src/ai_trading_system/data/quality_provenance.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.data_foundation",
+      "source_path": "src/ai_trading_system/data_foundation.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.platform",
+      "source_path": "src/ai_trading_system/platform/__init__.py",
+      "is_package": true
+    },
+    {
+      "module_name": "ai_trading_system.platform.artifacts",
+      "source_path": "src/ai_trading_system/platform/artifacts/__init__.py",
+      "is_package": true
+    },
+    {
+      "module_name": "ai_trading_system.platform.artifacts.json_contract",
+      "source_path": "src/ai_trading_system/platform/artifacts/json_contract.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.platform.artifacts.writer",
+      "source_path": "src/ai_trading_system/platform/artifacts/writer.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.platform.config",
+      "source_path": "src/ai_trading_system/platform/config/__init__.py",
+      "is_package": true
+    },
+    {
+      "module_name": "ai_trading_system.platform.config.market_regimes",
+      "source_path": "src/ai_trading_system/platform/config/market_regimes.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.platform.config.resolver",
+      "source_path": "src/ai_trading_system/platform/config/resolver.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.simple_baseline_portfolio_control",
+      "source_path": "src/ai_trading_system/simple_baseline_portfolio_control.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.trading_calendar",
+      "source_path": "src/ai_trading_system/trading_calendar.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.us_equity_special_closure_policy",
+      "source_path": "src/ai_trading_system/us_equity_special_closure_policy.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.yaml_loader",
+      "source_path": "src/ai_trading_system/yaml_loader.py",
+      "is_package": false
+    }
+  ],
+  "policy_dependencies": [
+    "config/data_quality.yaml",
+    "config/data/us_equity_special_closure_registry.yaml",
+    "config/data/archive/us_equity_special_closure_registry_1_0_0.yaml",
+    "config/data_quality/price_non_market_session_attribution_decision_v1.yaml",
+    "inputs/data_quality/price_non_market_session_attribution_review_pack_v1.json",
+    "config/data_quality/rate_row_issue_attribution_decision_v1.yaml",
+    "inputs/data_quality/rate_issue_attribution_review_pack_v1.json",
+    "config/research/simple_baseline_strategy_registry.yaml"
+  ]
+}

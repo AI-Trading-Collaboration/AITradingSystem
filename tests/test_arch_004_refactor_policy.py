@@ -3909,7 +3909,8 @@ DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION = (
     "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1"
 )
 TRADING_2564_S2B_SECTION = "phase_trading_2564_s2b_named_dq_execution_v1"
-LATEST_COMPATIBILITY_SECTION = TRADING_2564_S2B_SECTION
+TRADING_2564_S2C_SECTION = "phase_trading_2564_s2c_equal_risk_price_consumer_scope_v1"
+LATEST_COMPATIBILITY_SECTION = TRADING_2564_S2C_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -13083,6 +13084,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         OPS_079_HISTORICAL_GAP_RECOVERY_SECTION,
         DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION,
         TRADING_2564_S2B_SECTION,
+        TRADING_2564_S2C_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13182,6 +13184,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         OPS_079_HISTORICAL_GAP_RECOVERY_SECTION,
         DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION,
         TRADING_2564_S2B_SECTION,
+        TRADING_2564_S2C_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -14123,13 +14126,18 @@ def _source_sha256(source: dict[str, object]) -> str:
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
     if (
-        TRADING_2564_S2B_SECTION in baseline
+        TRADING_2564_S2C_SECTION in baseline
+        or TRADING_2564_S2B_SECTION in baseline
         or DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION in baseline
     ):
         authority_section = (
-            TRADING_2564_S2B_SECTION
-            if TRADING_2564_S2B_SECTION in baseline
-            else DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION
+            TRADING_2564_S2C_SECTION
+            if TRADING_2564_S2C_SECTION in baseline
+            else (
+                TRADING_2564_S2B_SECTION
+                if TRADING_2564_S2B_SECTION in baseline
+                else DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION
+            )
         )
         phase = baseline[authority_section]
         current_superseded_paths = frozenset(
@@ -14152,7 +14160,12 @@ def _source_sha256(source: dict[str, object]) -> str:
                 OPS_079_HISTORICAL_GAP_RECOVERY_SECTION,
                 *(
                     (DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION,)
-                    if authority_section == TRADING_2564_S2B_SECTION
+                    if authority_section in {TRADING_2564_S2B_SECTION, TRADING_2564_S2C_SECTION}
+                    else ()
+                ),
+                *(
+                    (TRADING_2564_S2B_SECTION,)
+                    if authority_section == TRADING_2564_S2C_SECTION
                     else ()
                 ),
             )
@@ -25026,10 +25039,10 @@ def test_trading_2564_s2a_is_retained_named_snapshot_hash_authority() -> None:
     assert phase["safety"]["dispatch_allowed"] is False
 
 
-def test_trading_2564_s2b_is_latest_named_dq_execution_hash_authority() -> None:
+def test_trading_2564_s2b_is_retained_named_dq_execution_hash_authority() -> None:
     baseline = _compatibility_baseline()
     section_id = TRADING_2564_S2B_SECTION
-    assert next(reversed(baseline)) == section_id
+    assert list(baseline).index(TRADING_2564_S2C_SECTION) == list(baseline).index(section_id) + 1
     assert (
         list(baseline).index(section_id)
         == list(baseline).index(DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_SECTION) + 1

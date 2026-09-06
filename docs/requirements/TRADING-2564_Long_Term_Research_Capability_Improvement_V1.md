@@ -1,6 +1,6 @@
 # TRADING-2564：长期研究能力建设与运行前就绪核查
 
-最后更新：2026-09-05
+最后更新：2026-09-07
 
 - stable task id：`TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1`
 - priority：`P1`
@@ -512,3 +512,33 @@ plan=`integration-revalidation-f8a6fd3c9c5d05f5a27e`；原8条追加task event�
 研究目标保持不变：先交付可信的指定输入DQ合同，再接实际consumer/PIT范围；其后推进S3合法前瞻记录与S4
 预注册/机制归因。工程工作只用于解除这些依赖，不把工程PASS当作信号有效性结论，不扩展到无关基础设施。
 真实DQ、研究、observation/maturity/scoreboard、下载/cache/provider与交易动作仍全0，heartbeat保持PAUSED。
+
+## 11. S2b 已发布与 S2c 研究消费范围接续（2026-09-07）
+
+S2b恢复最终candidate为5c20c8fc3655e8a6e62a494122b785337a6c81de；首个源码提交为
+a2f92209de2e7fb6c6610ae98d12d1ff1011ae9b。实际Full full_20260906T133132Z为
+10990 passed/0 failed/5 skipped/641 warnings，16 workers/loadfile，runner4335.35秒；
+summary SHA256=6002b20611f23d1cc46d19db8bbb9a529032d1812f939ff0b9546911b0fba0cd，
+profile SHA256=ad45ad6fc2fdcc2144064b0002f2bd5451fd317815efa34b496d64256044ff34。
+architecture/contract/integration/reproducibility为1056/281/995/24 PASS，均绑定该candidate。
+原12项实际candidate合成E2E在focused和Full均PASS；Full新增16个parent经独立复核，无阻断项。
+parent PASS仅是关联/进程观察成功，内含预期BLOCKED/WARN/FAIL，不表示16次DQ都PASS。
+
+普通main push成功，local main、origin/main与live remote main已核对相等；事务
+trading-2564-s2b-preserved-recovery-final-20260906-v2于2026-09-06T14:55:57.522735Z
+COMPLETED/RELEASED，租约释放，replay12事件PASS。完整终态及清理证据在
+outputs/architecture/trading_2564_s2b_preserved_recovery/publication_reader_brief_v2.md，
+以及对应publication transaction的closeout_receipt.json。原失败Full parent、行政失败和第一次
+CLOSEOUT旧base参数拒绝都保留；参数修正不改冻结plan或Full。只删除已合并的临时branch引用，
+两root和旧18项dirty保留，退出条件继续按§10.4及workspace_retention_audit_v2.json执行。
+
+下一步仍优先解除真实研究输入阻塞。两路独立静态复核确认equal-risk及冻结5候选均prices-only，
+但旧S2b共同evaluated window仍会在prices=T/rates=T−1时阻断T日读取，不能用历史preview替代
+当前采样。先执行S2c.1固定价格消费范围串行合同，再接纯五候选preview/显式只读plan；不改变
+旧receipt/common-window API、DQ数值/时效规则、策略、成本、窗口或准入权限。详细步骤、角色
+语义、必要反例、来源闭包和生命周期见
+[S2c Equal-risk 价格消费范围](TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md)。
+Composer的2018分段训练、rates可知时点及S3/S4首看前规则另行受审；不借新价格范围移用权限。
+
+当前仅本地工程开发与合成验证，所有真实研究/DQ/采样/下载/cache/provider/交易动作0；umbrella
+保持IN_PROGRESS。S2b工程完成不等于S2c、S3–S5或信号有效性完成，不新增successor任务。

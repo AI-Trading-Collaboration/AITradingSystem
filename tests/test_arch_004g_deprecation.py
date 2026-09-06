@@ -57,7 +57,7 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-WAVE21_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_9f37718b96f3d47939c5"
+WAVE21_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_dd65c68b7aca4a543e45"
 WAVE21_CURRENT_REPOSITORY_COUNTS = {
     # TRADING-2526 adds the controlled HTTPS preview contract and its focused
     # test file; TRADING-2554 adds one DevEx active-worktree regression file.
@@ -82,7 +82,8 @@ WAVE21_CURRENT_REPOSITORY_COUNTS = {
 WAVE21_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(
     zip(
         WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS,
-        (105, 33, 31, 25),
+        # S2c adds a contract-document reference, not a legacy runtime caller.
+        (106, 33, 31, 25),
         strict=True,
     )
 )

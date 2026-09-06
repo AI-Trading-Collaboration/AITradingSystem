@@ -74,6 +74,16 @@ fresh child零DQ/零写核验，返回仅本PID/context可访问且不可序列�
 CLI JSON、结构PASS、named DQ或本地seal均不授权adapter/capture/训练历史/研究/交易。
 原legacy runner只增加纯helper的源码依赖身份，旧receipt正常报source drift，不重签旧证据。
 
+S2c.1新增固定`NamedEqualRiskPriceScope`与`VerifiedNamedInputs.prices_for_equal_risk_preview`。
+新`named_equal_risk_price_consumer_sources_v1.json`以精确路径/SHA固定57模块与8依赖，包含
+既有data_foundation、simple_baseline_portfolio_control两个模块和完整registry；旧55/7 manifest
+不变。价格为FEATURE_INPUT，三rates仍为
+DQ_GUARD_ONLY，原canonical对完整requested window逐ticker/session严格PASS后，新接口仅交付
+captured prices bytes。共同evaluated window仍诚实保留rates滞后，旧scope/accessor不改义；新
+范围必须从2021-02-22至相同as-of，原DQ请求不能被文件额外历史或caller DTO扩张。registry仅
+验证捕获身份，不宣称五候选语义、lookback、PIT或OOS成立。本波只有工程TEST_PROBE，无生产
+preview入口、新持久artifact、收益计算或research/capture准入；S2c.2纯预览仍待实现。
+
 ```mermaid
 flowchart LR
     INPUT["显式快照 + 请求 + 既有DQ receipt"] --> RI["研究输入只读就绪核查"]
@@ -88,6 +98,8 @@ flowchart LR
     ENDPROOF --> NVERIFY["Fresh verifier：零DQ/零写；scope及完整bytes核验"]
     BOOT --> NVERIFY
     NVERIFY --> SEALED["同PID/context captured bytes；真实consumer仍待准入"]
+    SEALED --> PSCOPE["固定price scope + exact57/8；原逐资产价格DQ完整覆盖"]
+    PSCOPE --> PBYTES["只交付prices bytes；五候选/PIT/前瞻仍待准入"]
     RI --> REVIEW["诊断与缺口；dispatch_allowed=false"]
     CAND["最终候选 + 已绑定证据/生成物"] --> VR["Full前只读完整性核查"]
     VR -->|BLOCKED| STOP["停止；Full claim未消费"]

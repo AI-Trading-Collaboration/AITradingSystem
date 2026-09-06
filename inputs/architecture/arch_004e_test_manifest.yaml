@@ -219,7 +219,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_live_snapshot
   path: tests/atlas/test_live_snapshot.py
-  sha256: 4363673e3a3542afb7bf8b0dc79c1335c628ec76aee90f8435ba4e9722d7a4ae
+  sha256: 29a501f5ca67e13d6f64bc1c508722f92a293884a3743f2a1ea74dc94cfb99ae
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -715,7 +715,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.named_data_quality_support
   path: tests/named_data_quality_support.py
-  sha256: 6b1d11b2b9dedee2ae3cab421160ec558af15cdcdc16a9131c28861b6c5ffc5c
+  sha256: bb9a937caa54253bb89281afc476ed52e04f2a67d1dd307aaa3ccf7fe85efc86
   file_role: test_support
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8122,7 +8122,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 7ca05f8a56dd1f46427bcc26d8ecf6246e6cee427e5b1c7593af218426a02feb
+  sha256: 9dcdf4110d0744afaa6fbea1e2c784449f8118d45ee07c218c976745d21f18bc
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -8518,7 +8518,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 272bd3005fed640032b9c9fe6154935cc1b245b5ceebf90ed6484fb8c24d5d85
+  sha256: 6a1784c879445f911f4b802bfddc5c2846153a8ada2842ae7b4ca331aaee99ee
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -10490,7 +10490,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006c_compatibility_authority
   path: tests/test_devx_006c_compatibility_authority.py
-  sha256: a41385101a97ce99c2dcf58856c41022ac61c62bb6f1b6d164bccc12ac56e374
+  sha256: 2a25498be79d96af8bd25a172c067193736140a6dc98ed950c94efec8dc8e5bc
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10506,7 +10506,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: c470959eea8bc4fa9acee380055f139a56f710b0d3882ebd8be2cae7ce279044
+  sha256: c04bffee15d94c1215591b785ba96db4ccbb80d6e6d28588ed2ce823cbecb2b5
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -13872,7 +13872,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_named_data_quality_candidate
   path: tests/test_named_data_quality_candidate.py
-  sha256: 32384a91a85a07dbaee762ed75cede2468ad38278f09d2d25f5492538a2f8eaa
+  sha256: 39a7231ec987652663a58c6e5abd91b5de26779d1e59680bbe6393641de4ec4a
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -13888,7 +13888,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_named_data_quality_execution
   path: tests/test_named_data_quality_execution.py
-  sha256: 1902c546020b88bbcc63d1e537ad1f8b4cd0c788cba89a47d6900c9f00c51b46
+  sha256: ec9f8f06991b77bc97c458ab2a1a510c19faa05803604ae4988416a458eae205
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -13904,7 +13904,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_named_data_quality_execution_contract
   path: tests/test_named_data_quality_execution_contract.py
-  sha256: 4639f3c91684967e03c33d35ce37fcf00995bcb27a462401c15689103d191a95
+  sha256: 18d0329e7169a9352247634366b2391d64da10e7fb5a6e99936531ced12f8cc9
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -18738,7 +18738,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_trading2452_architecture_contract
   path: tests/test_trading2452_architecture_contract.py
-  sha256: 458f38d82ba81b4136dc38a225e898dea200415a7b10418c8c0d9ce480fffdcd
+  sha256: 9b0a160c7c5f7f6bed853ecaefc5c461abeca178f1ad2443c33dfa0c7a066d33
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

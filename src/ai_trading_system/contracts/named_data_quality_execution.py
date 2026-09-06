@@ -192,6 +192,56 @@ class NamedArtifactBinding(_NamedDTO):
         _int_value(self.size_bytes, "artifact.size_bytes")
 
 
+# Fixed protocol/profile identities, not tunable investment thresholds. See
+# TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md §3. The manifest contains
+# paths, not source hashes: pinning its reviewed bytes introduces no hash cycle.
+EQUAL_RISK_PRICE_CONSUMER_ID = "simple_baseline_forward_aging_preview@1.0.0"
+EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH = (
+    "config/data_governance/named_equal_risk_price_consumer_sources_v1.json"
+)
+EQUAL_RISK_PRICE_SOURCE_MANIFEST_SHA256 = (
+    "b3dd9c781237fc71234f793832ff5d426d0244db792b177111569459f460e822"
+)
+EQUAL_RISK_PRICE_REGISTRY_PATH = "config/research/simple_baseline_strategy_registry.yaml"
+EQUAL_RISK_PRICE_TICKERS = ("QQQ", "SGOV", "TQQQ")
+EQUAL_RISK_GUARD_RATE_SERIES = ("DGS2", "DGS10", "DTWEXBGS")
+# Existing AGENTS.md primary-window policy; never inferred from retained runs.
+EQUAL_RISK_PRIMARY_START = date(2021, 2, 22)
+
+
+@dataclass(frozen=True)
+class NamedEqualRiskPriceScope(_NamedDTO):
+    """Fixed price-range request only; no strategy/PIT/readiness authorization."""
+
+    schema_version: ClassVar[str] = "named_equal_risk_price_scope.v1"
+    as_of: date
+    requested_window: DataQualityDateWindow
+    registry_binding: NamedArtifactBinding
+    consumer_id: str = EQUAL_RISK_PRICE_CONSUMER_ID
+    expected_price_tickers: tuple[str, ...] = EQUAL_RISK_PRICE_TICKERS
+    guard_rate_series: tuple[str, ...] = EQUAL_RISK_GUARD_RATE_SERIES
+
+    def __post_init__(self) -> None:
+        self._check_types()
+        if (
+            self.consumer_id != EQUAL_RISK_PRICE_CONSUMER_ID
+            or self.expected_price_tickers != EQUAL_RISK_PRICE_TICKERS
+            or self.guard_rate_series != EQUAL_RISK_GUARD_RATE_SERIES
+        ):
+            _invalid("equal-risk price consumer and member sets are fixed")
+        if (
+            self.requested_window.start != EQUAL_RISK_PRIMARY_START
+            or self.requested_window.end != self.as_of
+        ):
+            _invalid("equal-risk prices require the full primary window through the same as-of")
+        if (
+            self.registry_binding.root_role != "EXECUTION"
+            or self.registry_binding.relative_path != EQUAL_RISK_PRICE_REGISTRY_PATH
+            or self.registry_binding.size_bytes <= 0
+        ):
+            _invalid("equal-risk registry requires the fixed full EXECUTION binding")
+
+
 def _unique(values: tuple[str, ...], label: str, *, nonempty: bool = True) -> None:
     if (nonempty and not values) or len(values) != len(set(values)):
         _invalid(f"{label}: empty/duplicate values")
@@ -895,6 +945,42 @@ class VerifiedNamedInputs:
             if bound_role == role:
                 return content
         _invalid("requested role is not verified")
+        raise AssertionError("unreachable")
+
+    def prices_for_equal_risk_preview(self, *, required_scope: NamedEqualRiskPriceScope) -> bytes:
+        """Deliver captured prices under the separate reviewed price-range contract.
+
+        The original strict canonical call checks every expected ticker/session
+        over its full requested window. The legacy evaluated window is a common
+        prices/rates intersection and remains unchanged. This method neither
+        parses nor repairs prices, reruns DQ, verifies registry strategy semantics,
+        nor claims historical availability or sufficient calculation lookback.
+        """
+        self._assert_current()
+        if type(required_scope) is not NamedEqualRiskPriceScope:
+            _invalid("equal-risk prices require the fixed typed consumer scope")
+        execution = self._receipt.execution
+        if (
+            execution.source_manifest_path != EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH
+            or execution.source_manifest_sha256 != EQUAL_RISK_PRICE_SOURCE_MANIFEST_SHA256
+        ):
+            _invalid("equal-risk prices require the reviewed exact source manifest")
+        if required_scope.registry_binding not in self._receipt.execution_dependencies:
+            _invalid("equal-risk registry differs from the captured execution dependency")
+        required_dq = NamedDQScope(
+            as_of=required_scope.as_of,
+            requested_window=required_scope.requested_window,
+            expected_price_tickers=required_scope.expected_price_tickers,
+            expected_rate_series=required_scope.guard_rate_series,
+            input_roles=("prices", "rates"),
+            require_secondary_prices=False,
+        )
+        if not self._receipt.request.scope.covers(required_dq):
+            _invalid("equal-risk price range is not covered by the original canonical request")
+        for role, content in self._captured:
+            if role == "prices":
+                return content
+        _invalid("equal-risk prices are not verified")
         raise AssertionError("unreachable")
 
     def __reduce_ex__(self, protocol: SupportsIndex) -> Never:

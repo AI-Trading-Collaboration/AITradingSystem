@@ -111,11 +111,11 @@
           "target_path": "config/report_registry.yaml"
         },
         {
-          "literal_count": 9,
+          "literal_count": 10,
           "target_path": "docs/artifact_catalog.md"
         },
         {
-          "literal_count": 14,
+          "literal_count": 15,
           "target_path": "docs/system_flow.md"
         }
       ],
@@ -2410,11 +2410,11 @@
       "path": "tests/test_devx_006c_compatibility_authority.py",
       "references": [
         {
-          "literal_count": 1,
+          "literal_count": 2,
           "target_path": "docs/artifact_catalog.md"
         },
         {
-          "literal_count": 2,
+          "literal_count": 3,
           "target_path": "docs/system_flow.md"
         }
       ],
@@ -2488,7 +2488,7 @@
       "path": "tests/test_trading2452_architecture_contract.py",
       "references": [
         {
-          "literal_count": 4,
+          "literal_count": 5,
           "target_path": "docs/system_flow.md"
         }
       ],

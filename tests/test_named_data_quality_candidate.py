@@ -1,5 +1,4 @@
 """Committed actual-checkout E2E; every market-like byte is a synthetic fixture.
-
 This file deliberately fails without an explicitly associated live coordinator
 fence/lease. It does not create a copied source checkout, infer local task paths,
 skip dirty/uncommitted code, or acquire authority from environment variables.
@@ -36,7 +35,13 @@ from named_data_quality_support import (
     dispatch_actual_candidate_child,
 )
 
+from ai_trading_system.contracts.data_quality_execution import DataQualityDateWindow
 from ai_trading_system.contracts.named_data_quality_execution import (
+    EQUAL_RISK_GUARD_RATE_SERIES,
+    EQUAL_RISK_PRICE_REGISTRY_PATH,
+    EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH,
+    EQUAL_RISK_PRICE_SOURCE_MANIFEST_SHA256,
+    EQUAL_RISK_PRICE_TICKERS,
     NamedArtifactBinding,
     NamedDQExecutionReceipt,
     NamedDQSuccessfulDispatchBinding,
@@ -384,6 +389,196 @@ def test_missing_or_changed_immutable_member_blocks_before_dq(tmp_path: Path, da
     assert blocked.child_result["status"] == "BLOCKED"
     _assert_parent(blocked, calls=0)
     assert blocked.run_dispatch_path is blocked.run_dispatch_sha256 is None
+    assert not _fixture_tree(fixture.evidence_root)
+
+
+# S2c.1 synthetic contract coverage only. Three sessions deliberately do not
+# supply a calculation lookback or authorize a five-candidate research preview.
+_PRICE_SCOPE_START = date(2021, 2, 22)
+_PRICE_SCOPE_END = date(2021, 2, 24)
+_PRICE_SCOPE_RATE_END = date(2021, 2, 23)
+
+
+def _equal_risk_scope_fixture(tmp_path: Path, *, case: str = "lag_one") -> NamedExecutionFixture:
+    days = ["2021-02-22", "2021-02-23", "2021-02-24"]
+    rows = [
+        (day, ticker)
+        for day in days
+        for ticker in EQUAL_RISK_PRICE_TICKERS
+        if not (
+            (case == "sgov_missing_last" and (day, ticker) == (days[-1], "SGOV"))
+            or (case == "sgov_internal_gap" and (day, ticker) == (days[1], "SGOV"))
+            or (case == "tqqq_missing" and ticker == "TQQQ")
+        )
+    ]
+    prices = (
+        "date,ticker,open,high,low,close,adj_close,volume\n"
+        + "".join(f"{day},{ticker},100,102,99,100,100,1000\n" for day, ticker in rows)
+    ).encode()
+    rate_days = days[:2]
+    if case == "lag_two":
+        rate_days = days[:1]
+    elif case == "rates_future":
+        rate_days = [*days[:2], "2021-02-25"]
+    rate_rows = ["date,series,value\n"]
+    stale_dates = {"2021-02-22": "2021-01-04", "2021-02-23": "2021-01-05"}
+    for day in rate_days:
+        for series in EQUAL_RISK_GUARD_RATE_SERIES:
+            if case == "rates_missing" and series == "DGS2":
+                continue
+            observed = stale_dates[day] if case == "rates_stale" and series == "DGS2" else day
+            value = "110" if series == "DTWEXBGS" else "1.5"
+            rate_rows.append(f"{observed},{series},{value}\n")
+    rates = "".join(rate_rows).encode()
+    start = date(2021, 2, 23) if case == "request_tail_only" else _PRICE_SCOPE_START
+    end = _PRICE_SCOPE_RATE_END if case == "request_through_t_minus_one" else _PRICE_SCOPE_END
+    # A stale DGS2 is not hidden by other series reaching T-1. The existing
+    # common observation is still T-1, but per-series canonical DQ must fail.
+    evaluated_end = (
+        _PRICE_SCOPE_START
+        if case == "lag_two"
+        else _PRICE_SCOPE_END if case == "rates_future" else _PRICE_SCOPE_RATE_END
+    )
+    fixture = build_actual_candidate_fixture(
+        tmp_path,
+        prices_content=prices,
+        rates_content=rates,
+        requested_start=start,
+        requested_end=end,
+        as_of=_PRICE_SCOPE_END,
+        expected_price_tickers=(
+            ("QQQ", "SGOV") if case == "request_two_tickers" else EQUAL_RISK_PRICE_TICKERS
+        ),
+        expected_rate_series=(
+            ("DGS2", "DGS10") if case == "request_two_rates" else EQUAL_RISK_GUARD_RATE_SERIES
+        ),
+        equal_risk_price_profile=case != "old_manifest",
+        expected_evaluated_window=DataQualityDateWindow(start, evaluated_end),
+    )
+    return fixture
+
+
+@pytest.mark.parametrize("case", ["lag_one", "lag_two"])
+def test_equal_risk_actual_price_scope_keeps_guard_and_legacy_window(
+    tmp_path: Path, case: str
+) -> None:
+    fixture = _equal_risk_scope_fixture(tmp_path, case=case)
+    run = _pass_run(fixture)
+    receipt = _read_receipt(fixture, run)
+    before = receipt.canonical_bytes
+    publication_before = _fixture_tree(fixture.publication_root)
+    evidence_before = _fixture_tree(fixture.evidence_root)
+    probe = dispatch_actual_candidate_child(
+        fixture, operation="verify", successful_run=run, equal_risk_price_probe=True
+    )
+    assert probe.returncode == 0, probe.child_result
+    _assert_parent(probe, calls=0)
+    result = probe.child_result
+    assert result["status"] == "PASS" and all(result["probe_checks"].values())
+    assert result["actual_compiled_module_count"] == 57
+    assert result["input_sha256"] == {"prices": _sha(fixture.input_bytes["prices"])}
+    assert result["original_evaluated_window"] == receipt.evaluated_window.to_dict()
+    assert receipt.evaluated_window.end < fixture.request.scope.requested_window.end
+    assert result["strategy_semantics_validated"] is result["feature_readiness_claimed"] is False
+    assert result["original_dq_pid"] != result["verifier_pid"]
+    assert probe.parent_receipt["child_entrypoint_profile"] == "EQUAL_RISK_PRICE_TEST_PROBE"
+    assert len(probe.parent_receipt["fixed_test_probe_sha256"]) == 64
+    assert _read_receipt(fixture, run).canonical_bytes == before
+    assert _fixture_tree(fixture.publication_root) == publication_before
+    assert _fixture_tree(fixture.evidence_root) == evidence_before
+    assert receipt.execution.source_manifest_path == EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH
+    assert receipt.execution.source_manifest_sha256 == EQUAL_RISK_PRICE_SOURCE_MANIFEST_SHA256
+    manifest = json.loads((ROOT / EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH).read_bytes())
+    assert len(receipt.execution.modules) == len(manifest["modules"]) == 57
+    assert {
+        (item.module_name, item.source_path, item.is_package) for item in receipt.execution.modules
+    } == {
+        (item["module_name"], item["source_path"], item["is_package"])
+        for item in manifest["modules"]
+    }
+    dependencies = {item.relative_path: item for item in receipt.execution_dependencies}
+    assert set(dependencies) == EXPECTED_DEPENDENCIES | {EQUAL_RISK_PRICE_REGISTRY_PATH}
+    assert len(dependencies) == 8
+    for compiled in receipt.execution.modules:
+        content = (ROOT / compiled.source_path).read_bytes()
+        assert (compiled.sha256, compiled.size_bytes) == (_sha(content), len(content))
+        algorithm = "sha1" if len(compiled.git_blob_id) == 40 else "sha256"
+        blob = f"blob {len(content)}\0".encode("ascii") + content
+        assert hashlib.new(algorithm, blob).hexdigest() == compiled.git_blob_id
+    for relative_path, binding in dependencies.items():
+        content = (ROOT / relative_path).read_bytes()
+        assert binding.root_role == "EXECUTION"
+        assert (binding.sha256, binding.size_bytes) == (_sha(content), len(content))
+
+
+@pytest.mark.parametrize(
+    "case,detail",
+    [
+        ("old_manifest", "reviewed exact source manifest"),
+        ("request_tail_only", "not covered by the original canonical request"),
+        ("request_through_t_minus_one", "not covered by the original canonical request"),
+        ("request_two_tickers", "not covered by the original canonical request"),
+        ("request_two_rates", "not covered by the original canonical request"),
+    ],
+)
+def test_equal_risk_actual_scope_cannot_expand_original_dq_request(
+    tmp_path: Path, case: str, detail: str
+) -> None:
+    fixture = _equal_risk_scope_fixture(tmp_path, case=case)
+    run = _pass_run(fixture)
+    _read_receipt(fixture, run)
+    probe = dispatch_actual_candidate_child(
+        fixture, operation="verify", successful_run=run, equal_risk_price_probe=True
+    )
+    _assert_parent(probe, calls=0)
+    assert probe.returncode == 2
+    assert probe.child_result["status"] == "BLOCKED"
+    assert detail in probe.child_result["detail"]
+
+
+@pytest.mark.parametrize(
+    "case,issue",
+    [
+        ("sgov_missing_last", "prices_requested_window_coverage_missing"),
+        ("sgov_internal_gap", "prices_internal_trading_day_gap"),
+        ("tqqq_missing", "prices_missing_expected_values"),
+        ("rates_missing", "rates_missing_expected_values"),
+        ("rates_stale", "rates_stale"),
+        ("rates_future", "rates_future_dates"),
+    ],
+)
+def test_equal_risk_actual_profile_does_not_weaken_canonical_guard(
+    tmp_path: Path, case: str, issue: str
+) -> None:
+    fixture = _equal_risk_scope_fixture(tmp_path, case=case)
+    run = dispatch_actual_candidate_child(fixture)
+    _assert_parent(run, calls=1)
+    assert run.returncode == 0, run.child_result
+    receipt = _read_receipt(fixture, run)
+    assert receipt.report.status != "PASS"
+    assert any(issue in code for code in receipt.report.issue_codes), receipt.report.issue_codes
+    # Normal process completion still has a parent association; it is not DQ
+    # PASS. Only the independent strict verifier decides whether a seal exists.
+    assert run.run_dispatch_path is not None
+    probe = dispatch_actual_candidate_child(
+        fixture, operation="verify", successful_run=run, equal_risk_price_probe=True
+    )
+    _assert_parent(probe, calls=0)
+    assert probe.returncode == 2
+    assert probe.child_result["status"] == "BLOCKED"
+    assert probe.child_result["reason_code"] == "NAMED_DQ_STRICT_PASS_REQUIRED"
+
+
+def test_equal_risk_actual_same_manifest_path_wrong_request_hash_blocks_before_dq(
+    tmp_path: Path,
+) -> None:
+    fixture = _equal_risk_scope_fixture(tmp_path)
+    request = replace(fixture.request, source_manifest_sha256="0" * 64)
+    blocked = dispatch_actual_candidate_child(fixture, request=request)
+    _assert_parent(blocked, calls=0)
+    assert blocked.returncode == 2
+    assert blocked.child_result["reason_code"] == "NAMED_BOOTSTRAP_MANIFEST_SHA_MISMATCH"
+    assert blocked.run_dispatch_path is None
     assert not _fixture_tree(fixture.evidence_root)
 
 

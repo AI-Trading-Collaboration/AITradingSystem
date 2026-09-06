@@ -33,6 +33,7 @@ import pytest
 
 from ai_trading_system.contracts.data_quality_execution import DataQualityDateWindow
 from ai_trading_system.contracts.named_data_quality_execution import (
+    EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH,
     NamedArtifactBinding,
     NamedDQExecutionReceipt,
     NamedDQExecutionRequest,
@@ -203,6 +204,178 @@ except (ValueError, OSError, ImportError, RuntimeError, SyntaxError, TypeError) 
         "dispatch_allowed": False,
         "production_effect": "none",
         "broker_action": "none",
+    }, ensure_ascii=False, sort_keys=True))
+    raise SystemExit(2)
+finally:
+    if session is not None:
+        session.close()
+"""
+
+
+# Separate finite contract probe: no five-candidate calculation or production CLI.
+# Like the original probe, it uses only the actual Git bootstrap/verifier seal.
+_EQUAL_RISK_PRICE_TEST_PROBE = r"""
+import argparse
+import hashlib
+import importlib
+import json
+import os
+import pickle
+import runpy
+import sys
+from dataclasses import replace
+from datetime import timedelta
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("bootstrap", type=Path)
+parser.add_argument("--request", required=True, type=Path)
+parser.add_argument("--request-sha256", required=True)
+parser.add_argument("--source-lease-id", required=True)
+parser.add_argument("--operation", choices=("verify",), required=True)
+parser.add_argument("--receipt-path", required=True)
+parser.add_argument("--receipt-sha256", required=True)
+parser.add_argument("--run-dispatch-path", required=True)
+parser.add_argument("--run-dispatch-sha256", required=True)
+args = parser.parse_args()
+session = None
+try:
+    if not sys.flags.isolated:
+        raise ValueError("PRICE_PROBE_ISOLATED_CHILD_REQUIRED")
+    entry = runpy.run_path(str(args.bootstrap))
+    raw = entry["_initial_file_bytes"](args.request.parent, args.request.name)
+    if hashlib.sha256(raw).hexdigest() != args.request_sha256:
+        raise ValueError("PRICE_PROBE_REQUEST_SHA_MISMATCH")
+    request = entry["_json_object"](raw)
+    session = entry["NamedBootstrapSession"](
+        request, operation="verify", source_lease_id=args.source_lease_id
+    )
+    session.load()
+    contracts = importlib.import_module(
+        "ai_trading_system.contracts.named_data_quality_execution"
+    )
+    window_type = importlib.import_module(
+        "ai_trading_system.contracts.data_quality_execution"
+    ).DataQualityDateWindow
+    typed = contracts.NamedDQExecutionRequest.from_dict(request)
+    worker = importlib.import_module(entry["WORKER_MODULE"])
+    verified = worker.verify_named_data_quality_execution_receipt(
+        typed, receipt_path=args.receipt_path, receipt_sha256=args.receipt_sha256,
+        run_dispatch_path=args.run_dispatch_path,
+        run_dispatch_sha256=args.run_dispatch_sha256, bootstrap=session,
+    )
+    receipt_before = verified.receipt.canonical_bytes
+    # An absent registry remains an untrusted DTO, never a forged dependency.
+    registry = next(
+        (item for item in verified.receipt.execution_dependencies
+         if item.relative_path == contracts.EQUAL_RISK_PRICE_REGISTRY_PATH),
+        contracts.NamedArtifactBinding(
+            "EXECUTION", contracts.EQUAL_RISK_PRICE_REGISTRY_PATH, "0" * 64, 1
+        ),
+    )
+    scope = contracts.NamedEqualRiskPriceScope(
+        as_of=typed.scope.as_of,
+        requested_window=window_type(contracts.EQUAL_RISK_PRIMARY_START, typed.scope.as_of),
+        registry_binding=registry,
+    )
+    prices = verified.prices_for_equal_risk_preview(required_scope=scope)
+    checks = {
+        "prices_exact_member": hashlib.sha256(prices).hexdigest() == next(
+            item.member.sha256 for item in verified.receipt.inputs if item.role == "prices"
+        ),
+        "receipt_unchanged": verified.receipt.canonical_bytes == receipt_before,
+        "physical_module_origins": all(
+            Path(sys.modules[item.name].__file__) == session.root / item.artifact.relative_path
+            and sys.modules[item.name].__spec__.origin
+            == str(session.root / item.artifact.relative_path)
+            for item in session.modules.values()
+        ),
+    }
+    legacy_covered = verified.receipt.evaluated_window.contains(scope.requested_window)
+    try:
+        verified.bytes_for("prices", required_scope=typed.scope)
+    except contracts.NamedDataQualityExecutionContractError as exc:
+        checks["legacy_scope_unchanged"] = (
+            not legacy_covered
+            and "required consumption scope is not covered by canonical DQ" in str(exc)
+        )
+    else:
+        checks["legacy_scope_unchanged"] = legacy_covered
+    changed_registry = replace(
+        registry, sha256=("0" * 64 if registry.sha256 != "0" * 64 else "1" * 64)
+    )
+    later = scope.as_of + timedelta(days=1)
+    invalid_scopes = {
+        "registry_sha_mismatch": replace(scope, registry_binding=changed_registry),
+        "registry_size_mismatch": replace(
+            scope, registry_binding=replace(registry, size_bytes=registry.size_bytes + 1)
+        ),
+        "asof_mismatch": replace(
+            scope, as_of=later, requested_window=window_type(scope.requested_window.start, later)
+        ),
+    }
+    for label, invalid in invalid_scopes.items():
+        try:
+            verified.prices_for_equal_risk_preview(required_scope=invalid)
+        except contracts.NamedDataQualityExecutionContractError:
+            checks[label + "_rejected"] = True
+        else:
+            checks[label + "_rejected"] = False
+    try:
+        verified.prices_for_equal_risk_preview("rates", required_scope=scope)
+    except TypeError:
+        checks["rates_role_rejected"] = True
+    else:
+        checks["rates_role_rejected"] = False
+    try:
+        pickle.dumps(verified)
+    except TypeError:
+        checks["pickle_rejected"] = True
+    else:
+        checks["pickle_rejected"] = False
+    result = {
+        "schema_version": "named_data_quality_bootstrap_result.v1",
+        "profile": "EQUAL_RISK_PRICE_TEST_PROBE", "status": "PASS",
+        "request_id": typed.request_id, "process_id": os.getpid(),
+        "source_lease_id": session.source_lease_id,
+        "receipt_id": verified.receipt.receipt_id,
+        "original_dq_pid": verified.receipt.execution_observation.execution_pid,
+        "verifier_pid": verified.verifier_pid,
+        "input_sha256": {"prices": hashlib.sha256(prices).hexdigest()},
+        "price_scope": scope.to_dict(),
+        "original_evaluated_window": verified.receipt.evaluated_window.to_dict(),
+        "actual_compiled_module_count": len(session.loader.loaded),
+        "execution_identity_sha256": session.context.identity.stable_identity_sha256,
+        "context_provenance_kind": session.context.provenance_kind,
+        "canonical_dq_call_count": session.canonical_dq_call_count,
+        "verified_input_seal_exported": False, "dispatch_allowed": False,
+        "strategy_semantics_validated": False, "feature_readiness_claimed": False,
+        "production_effect": "none", "broker_action": "none",
+    }
+    if session.canonical_dq_call_count != 0:
+        raise ValueError("PRICE_PROBE_DQ_DISPATCH_FORBIDDEN")
+    session.assert_execution_unchanged(stage="TERMINAL")
+    result["child_started_at"] = session.started_at
+    result["child_terminal_checked_at"] = session.terminal_checked_at
+    session.close()
+    try:
+        verified.prices_for_equal_risk_preview(required_scope=scope)
+    except session.context_module.NamedExecutionContextError as exc:
+        checks["closed_context_accessor_rejected"] = exc.code == "NAMED_CONTEXT_REQUIRED"
+    else:
+        checks["closed_context_accessor_rejected"] = False
+    if not all(checks.values()):
+        raise ValueError("PRICE_PROBE_BOUNDARY_FAILED: " + repr(checks))
+    result["probe_checks"] = checks
+    print(json.dumps(result, ensure_ascii=False, sort_keys=True, allow_nan=False))
+except (ValueError, OSError, ImportError, RuntimeError, SyntaxError, TypeError) as exc:
+    print(json.dumps({
+        "schema_version": "named_data_quality_bootstrap_result.v1",
+        "profile": "EQUAL_RISK_PRICE_TEST_PROBE", "status": "BLOCKED",
+        "reason_code": getattr(exc, "code", "PRICE_PROBE_FAILED"), "detail": str(exc),
+        "canonical_dq_call_count": 0 if session is None else session.canonical_dq_call_count,
+        "verified_input_seal_exported": False, "dispatch_allowed": False,
+        "production_effect": "none", "broker_action": "none",
     }, ensure_ascii=False, sort_keys=True))
     raise SystemExit(2)
 finally:
@@ -415,6 +588,8 @@ def build_actual_candidate_fixture(
     as_of: date = AS_OF,
     expected_price_tickers: tuple[str, ...] = ("QQQ",),
     expected_rate_series: tuple[str, ...] = ("DGS10",),
+    equal_risk_price_profile: bool = False,
+    expected_evaluated_window: DataQualityDateWindow | None = None,
 ) -> NamedExecutionFixture:
     """Publish synthetic bytes, then relocate only that tmp-path publication.
 
@@ -424,6 +599,11 @@ def build_actual_candidate_fixture(
     Original manifest output paths are preserved when copying the synthetic
     publication. No source, policy, or real market cache is copied from ROOT.
     """
+    if type(equal_risk_price_profile) is not bool:
+        pytest.fail("NAMED_PARENT_PRICE_PROFILE_MUST_BE_BOOL")
+    source_manifest_path = (
+        EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH if equal_risk_price_profile else SOURCE_MANIFEST_PATH
+    )
     execution_root = execution_root.resolve()
     if execution_root != ROOT:
         pytest.fail("NAMED_PARENT_ACTUAL_CHECKOUT_REQUIRED: no copied execution checkout")
@@ -465,7 +645,9 @@ def build_actual_candidate_fixture(
                 request_parameters={"synthetic_only": True, "network_request_count": 0},
                 winning_row_count=len(records),
                 allocation_mode="REMAINDER",
-                winning_row_keys=tuple((row[dimension], row["date"]) for row in records),
+                # Binding order is canonical (dimension, date); CSV bytes and
+                # ordinals stay untouched. Do not deduplicate invalid fixtures.
+                winning_row_keys=tuple(sorted((row[dimension], row["date"]) for row in records)),
             )
         )
     publication = publish_download_transaction(
@@ -480,7 +662,7 @@ def build_actual_candidate_fixture(
     # Both ends are newly created fixture directories. This is not real cache
     # migration and does not write to, copy, or reinterpret the execution root.
     shutil.copytree(source_output, publication_root)
-    manifest = (execution_root / SOURCE_MANIFEST_PATH).read_bytes()
+    manifest = (execution_root / source_manifest_path).read_bytes()
     window = DataQualityDateWindow(requested_start, requested_end)
     request = NamedDQExecutionRequest(
         roots=NamedDQRoots(
@@ -507,9 +689,9 @@ def build_actual_candidate_fixture(
         policy_path="config/data_quality.yaml",
         execution_profile_id="manual.v1",
         candidate_commit=candidate,
-        source_manifest_path=SOURCE_MANIFEST_PATH,
+        source_manifest_path=source_manifest_path,
         source_manifest_sha256=_sha(manifest),
-        expected_evaluated_window=window,
+        expected_evaluated_window=expected_evaluated_window or window,
     )
     return NamedExecutionFixture(
         request, source_root, publication_root, evidence_root, publication, inputs
@@ -817,6 +999,7 @@ def dispatch_actual_candidate_child(
     request: NamedDQExecutionRequest | None = None,
     successful_run: ParentDispatchResult | None = None,
     test_probe: bool = False,
+    equal_risk_price_probe: bool = False,
     parent_evidence_root: Path | None = None,
 ) -> ParentDispatchResult:
     """Dispatch one actual child under an existing, live, explicitly named lease.
@@ -832,6 +1015,17 @@ def dispatch_actual_candidate_child(
         pytest.fail("NAMED_PARENT_OPERATION_INVALID")
     if type(test_probe) is not bool or (test_probe and operation != "verify"):
         pytest.fail("NAMED_PARENT_TEST_PROBE_VERIFY_ONLY")
+    if (
+        type(equal_risk_price_probe) is not bool
+        or (equal_risk_price_probe and operation != "verify")
+        or (equal_risk_price_probe and test_probe)
+    ):
+        pytest.fail("NAMED_PARENT_PRICE_PROBE_EXCLUSIVE_VERIFY_ONLY")
+    fixed_probe = (
+        _EQUAL_RISK_PRICE_TEST_PROBE
+        if equal_risk_price_probe
+        else _SEALED_INPUTS_TEST_PROBE if test_probe else None
+    )
     run_dispatch_path = run_dispatch_sha256 = None
     if operation == "verify":
         try:
@@ -870,8 +1064,8 @@ def dispatch_actual_candidate_child(
     pre_binding = _write_new(directory / "pre_dispatch_proof.json", _json_bytes(before))
     request_binding = _write_new(directory / "request.json", selected.canonical_bytes)
     command = [launch.executable, "-I", "-B", "-X", "utf8"]
-    if test_probe:
-        command.extend(["-c", _SEALED_INPUTS_TEST_PROBE])
+    if fixed_probe is not None:
+        command.extend(["-c", fixed_probe])
     command.extend(
         [
             str(ROOT / BOOTSTRAP_PATH),
@@ -969,9 +1163,13 @@ def dispatch_actual_candidate_child(
     parent_receipt: dict[str, Any] = {
         "schema_version": "named_data_quality_parent_dispatch.v1",
         "profile": "ACTUAL_CANDIDATE_SYNTHETIC_E2E",
-        "child_entrypoint_profile": "TEST_PROBE" if test_probe else "PRODUCTION_CLI",
+        "child_entrypoint_profile": (
+            "EQUAL_RISK_PRICE_TEST_PROBE"
+            if equal_risk_price_probe
+            else "TEST_PROBE" if test_probe else "PRODUCTION_CLI"
+        ),
         "fixed_test_probe_sha256": (
-            _sha(_SEALED_INPUTS_TEST_PROBE.encode("utf-8")) if test_probe else None
+            _sha(fixed_probe.encode("utf-8")) if fixed_probe is not None else None
         ),
         "status_semantics": "PARENT_ASSOCIATION_AND_PROCESS_OBSERVATION_ONLY",
         "status": "PASS" if failure is None and terminal_state == "EXITED" else "BLOCKED",

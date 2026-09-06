@@ -110,6 +110,16 @@ DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_PHASE_KEY = (
     "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1"
 )
 TRADING_2564_S2B_NAMED_DQ_EXECUTION_PHASE_KEY = "phase_trading_2564_s2b_named_dq_execution_v1"
+TRADING_2564_S2C_PRICE_SCOPE_PHASE_KEY = "phase_trading_2564_s2c_equal_risk_price_consumer_scope_v1"
+# Exact S2c 26-source closure intersection with the restricted historical set.
+TRADING_2564_S2C_RESTRICTED_CURRENT_AUTHORITY_PATHS = frozenset(
+    {
+        "docs/system_flow.md",
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_trading2452_architecture_contract.py",
+    }
+)
 # Exact intersection of the reviewed S2b 40-source closure and the restricted
 # historical paths below; TRADING-2564 S2b requirement section 14.3.
 TRADING_2564_S2B_RESTRICTED_CURRENT_AUTHORITY_PATHS = frozenset(
@@ -199,6 +209,25 @@ def _assert_historical_source_is_current_or_superseded(
             == 1
         ), missing_binding
 
+    if (
+        source_path in TRADING_2564_S2C_RESTRICTED_CURRENT_AUTHORITY_PATHS
+        and TRADING_2564_S2C_PRICE_SCOPE_PHASE_KEY in baseline
+    ):
+        required_phase = baseline[TRADING_2564_S2C_PRICE_SCOPE_PHASE_KEY]
+        missing_binding = f"{source_path}: S2c historical hash drift is not declared completely"
+        assert isinstance(required_phase, dict), missing_binding
+        required_paths = required_phase.get("superseded_live_source_paths")
+        required_sources = required_phase.get("sources")
+        assert isinstance(required_paths, list) and source_path in required_paths, missing_binding
+        assert isinstance(required_sources, list), missing_binding
+        assert (
+            sum(
+                isinstance(item, dict) and item.get("path") == source_path
+                for item in required_sources
+            )
+            == 1
+        ), missing_binding
+
     latest_authority: tuple[str, dict[str, Any], dict[str, str]] | None = None
     for section_key, section in reversed(tuple(baseline.items())):
         if not isinstance(section, dict):
@@ -207,22 +236,32 @@ def _assert_historical_source_is_current_or_superseded(
         section_sources = section.get("sources")
         if not isinstance(superseded_paths, list) or source_path not in superseded_paths:
             continue
-        if not isinstance(section_sources, list):
-            continue
+        declared_binding_error = (
+            f"{source_path}: historical hash drift is not declared completely; "
+            "declared successor lacks a unique current binding"
+        )
+        assert isinstance(section_sources, list), declared_binding_error
         matching_sources = [
             item
             for item in section_sources
             if isinstance(item, dict) and item.get("path") == source_path
         ]
-        if matching_sources:
-            latest_authority = (section_key, section, matching_sources[-1])
-            break
+        assert len(matching_sources) == 1, declared_binding_error
+        latest_authority = (section_key, section, matching_sources[0])
+        break
 
     assert latest_authority is not None, (
         f"{source_path}: historical hash drift is not declared in an append-only "
         "supersession section that also contains its current source hash"
     )
     section_key, section, current_source = latest_authority
+    if (
+        section_key == TRADING_2564_S2C_PRICE_SCOPE_PHASE_KEY
+        and source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
+    ):
+        assert (
+            source_path in TRADING_2564_S2C_RESTRICTED_CURRENT_AUTHORITY_PATHS
+        ), "S2c restricted source is outside the exact reviewed intersection"
     supersession = section["supersession"]
     assert (
         supersession["historical_hashes_rewritten"] is False
@@ -256,6 +295,7 @@ def _assert_historical_source_is_current_or_superseded(
             OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY,
             DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_PHASE_KEY,
             TRADING_2564_S2B_NAMED_DQ_EXECUTION_PHASE_KEY,
+            TRADING_2564_S2C_PRICE_SCOPE_PHASE_KEY,
         }
     ):
         section_ids = list(baseline)
@@ -273,7 +313,7 @@ def _assert_historical_source_is_current_or_superseded(
         assert TRADING_2501_ATLAS_OWNER_REVIEW_PACK_PHASE_KEY in section_ids
         assert section_ids.index(section_key) <= section_ids.index(
             TRADING_2501_ATLAS_OWNER_REVIEW_PACK_PHASE_KEY
-        )
+        ), "unreviewed future successor exceeds the historical chronology boundary"
         return
     assert (
         current_source.get("sha256") == current_live_hash
@@ -765,3 +805,100 @@ def test_s2b_missing_special_binding_does_not_fall_back_to_devx_014(
     assert baseline == original_baseline
     assert historical_source == original_source
     assert (tmp_path / source_path).read_bytes() == b"current\n"
+
+
+@pytest.mark.parametrize(
+    "malformation",
+    [
+        "valid",
+        "wrong_hash",
+        "missing_sources",
+        "missing_paths",
+        "duplicate_source",
+        "unknown_phase",
+    ],
+)
+def test_s2c_restricted_binding_never_falls_back_to_s2b(
+    tmp_path: Path,
+    restricted_s2b_source_case: tuple[dict[str, Any], dict[str, str]],
+    malformation: str,
+) -> None:
+    baseline, historical = restricted_s2b_source_case
+    phase = deepcopy(baseline[TRADING_2564_S2B_NAMED_DQ_EXECUTION_PHASE_KEY])
+    section = TRADING_2564_S2C_PRICE_SCOPE_PHASE_KEY
+    if malformation == "unknown_phase":
+        section = "phase_trading_2564_s2c_equal_risk_price_consumer_scope_v2"
+        historical_markers = (
+            TRADING_2492_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_PHASE_KEY,
+            TRADING_2492_BOUNDED_PILOT_TERMINAL_NO_GO_PHASE_KEY,
+            TRADING_2493_OWNER_STAGE_GATE_SIGNOFF_PHASE_KEY,
+            TRADING_2497_LICENSE_EXPORT_DUE_DILIGENCE_PHASE_KEY,
+            TRADING_2497_LICENSE_EXPORT_OWNER_REVIEW_PHASE_KEY,
+            TRADING_2498_DAILY_CAPABILITY_GATE_PHASE_KEY,
+            TRADING_2496_OWNER_VISUAL_ACCEPTANCE_PHASE_KEY,
+            TRADING_2500_DAILY_CAPABILITY_GATE_RETRY_PHASE_KEY,
+            TRADING_2500_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_PHASE_KEY,
+            TRADING_2500_DAILY_CAPABILITY_GATE_RETRY_TERMINAL_REVIEW_PHASE_KEY,
+            TRADING_2499_DAILY_PRIMARY_BACKTEST_CONTRACT_PHASE_KEY,
+            TRADING_2501_ATLAS_OWNER_REVIEW_PACK_PHASE_KEY,
+        )
+        baseline = {**dict.fromkeys(historical_markers, {}), **baseline}
+    phase["supersession"]["current_hash_authority"] = f"{section}.sources"
+    baseline[section] = phase
+    if malformation == "wrong_hash":
+        phase["sources"][0]["sha256"] = "0" * 64
+    elif malformation == "missing_sources":
+        phase.pop("sources")
+    elif malformation == "missing_paths":
+        phase.pop("superseded_live_source_paths")
+    elif malformation == "duplicate_source":
+        phase["sources"].append(deepcopy(phase["sources"][0]))
+    before = deepcopy(baseline)
+    original = dict(historical)
+    if malformation == "valid":
+        _assert_historical_source_is_current_or_superseded(
+            baseline, historical, repository_root=tmp_path
+        )
+    else:
+        expected = "unreviewed future successor" if malformation == "unknown_phase" else None
+        with pytest.raises(AssertionError, match=expected):
+            _assert_historical_source_is_current_or_superseded(
+                baseline, historical, repository_root=tmp_path
+            )
+    assert baseline == before and historical == original
+
+
+@pytest.mark.parametrize("malformation", ["missing_sources", "matching_source_removed"])
+def test_claimed_unknown_successor_missing_binding_cannot_fall_back_to_s2b(
+    tmp_path: Path,
+    restricted_s2b_source_case: tuple[dict[str, Any], dict[str, str]],
+    malformation: str,
+) -> None:
+    baseline, historical = restricted_s2b_source_case
+    phase = deepcopy(baseline[TRADING_2564_S2B_NAMED_DQ_EXECUTION_PHASE_KEY])
+    if malformation == "missing_sources":
+        phase.pop("sources")
+    else:
+        phase["sources"] = []
+    baseline["phase_trading_2564_s2c_equal_risk_price_consumer_scope_v2"] = phase
+    with pytest.raises(AssertionError, match="declared successor lacks a unique current binding"):
+        _assert_historical_source_is_current_or_superseded(
+            baseline, historical, repository_root=tmp_path
+        )
+
+
+def test_s2c_cannot_claim_an_extra_restricted_source(tmp_path: Path) -> None:
+    source_path = "docs/task_register.md"
+    assert source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
+    assert source_path not in TRADING_2564_S2C_RESTRICTED_CURRENT_AUTHORITY_PATHS
+    path = tmp_path / source_path
+    path.parent.mkdir(parents=True)
+    path.write_bytes(b"current\n")
+    phase_key = TRADING_2564_S2C_PRICE_SCOPE_PHASE_KEY
+    current = {"path": source_path, "sha256": sha256(b"current\n").hexdigest()}
+    baseline = {phase_key: {"sources": [current], "superseded_live_source_paths": [source_path]}}
+    historical = {"path": source_path, "sha256": sha256(b"historical\n").hexdigest()}
+    with pytest.raises(AssertionError, match="outside the exact reviewed intersection"):
+        _assert_historical_source_is_current_or_superseded(
+            baseline, historical, repository_root=tmp_path
+        )

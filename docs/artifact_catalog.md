@@ -15,7 +15,12 @@
 |`named_data_quality_parent_dispatch.v1`与`named_data_quality_successful_dispatch.v1`：`<execution_root>/outputs/validation_runtime/named_dq_parent_dispatch/<candidate>/<dispatch>/`|可信coordinator父进程绑定既有publication fence/lease及pre/post checkout guard，保存request、child stdout/stderr/PID/退出结果；先写parent再写successful proof|只有正常结束且postguard PASS才有successful proof；独立proof绑定原receipt但原receipt不反向包含proof hash，无循环。它是可信父进程关联而非签名或第二套租约；合成测试证据不是真实市场DQ，失败残留PASS文件不能自行准入。|
 |`VerifiedNamedInputs`内存对象及verify stdout摘要（无seal导出）|同一固定bootstrap `--operation verify`，显式receipt locator/SHA与successful-dispatch locator/SHA；零DQ重验代码/policy/calendar、selected publication、完整report及父成功终态|strict PASS后仅在当前PID/context内提供captured immutable bytes；consumer须解析这些bytes，不按原路径重读。scope超界、context关闭或序列化阻断，另一个child须重新verify；合同不签发研究、capture、production或broker权限。|
 
-两个诊断、Named只读解析和S2b显式locator工程凭证不建立新的report-registry/discovery/latest authority，
+S2c.1的`NamedEqualRiskPriceScope`是可序列化的固定价格范围请求，不是能力凭证。
+`VerifiedNamedInputs.prices_for_equal_risk_preview`仅返回同PID/context捕获的prices bytes；要求
+精确57/8 manifest和完整EXECUTION registry依赖。原三rates仍严格过DQ；旧共同窗口和旧accessor
+不变。没有新持久产物/生产preview入口；配置身份不等于策略语义、lookback、PIT或OOS有效性。
+
+两个诊断、Named只读解析和S2b/S2c显式locator工程凭证不建立新的report-registry/discovery/latest authority，
 不进入Reader Brief自动消费，均为`production_effect=none`、`broker_action=none`。实际Full仍只由原runner
 与唯一publication transaction控制；S2b仅manual工程合同，当前波全部真实DQ/研究/数据/交易动作0。
 

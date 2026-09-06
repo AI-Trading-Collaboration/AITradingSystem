@@ -1,6 +1,7 @@
 # TRADING-2564 S2b：指定不可变快照的 canonical DQ 执行合同
 
 日期：2026-09-05。状态：IN_PROGRESS / 工程合同实施中，未签发任何真实消费权限。
+2026-09-07终态补充：S2b工程已正式发布，详见§15；上行是历史起始状态，真实消费准入仍未签发。
 所属 canonical task：TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1，P1。
 Owner：Project Owner / integration-coordinator；DQ 领域和实际 consumer adoption 仍归 DATA-GOV-002。
 本文件是 umbrella 的步骤文档，不另建 successor/task，不改既有 DQ/研究窗口/策略 policy。
@@ -460,3 +461,22 @@ source v3只纠正上述元数据：官方追加事件恢复umbrella/S2b两条�
 也不改变任何validator、生产源或投资语义。current notes继续携带完整需求链接、研究方向和两root
 退出条件。本metadata failure-fix需要新的source commit及final事务，不覆盖首个提交或伪造其PASS。
 S5将使用这次真实失败记录评价提前检查的效率收益；本波不扩展任务writer或新增治理系统。
+
+## 15. 恢复验收与普通发布终态
+
+最终candidate 5c20c8fc3655e8a6e62a494122b785337a6c81de已完成四正式tiers及Full；
+full_20260906T133132Z：10990 PASS/0 FAIL/5 SKIP/641 warnings，16 workers/loadfile，
+runner4335.35秒。summary SHA256为6002b20611f23d1cc46d19db8bbb9a529032d1812f939ff0b9546911b0fba0cd，
+profile SHA256为ad45ad6fc2fdcc2144064b0002f2bd5451fd317815efa34b496d64256044ff34。
+原failed Full parent仍保持原件与精确绑定。12项actual candidate合成E2E全部通过；独立复核
+Full新增16份parent的关联/完整性通过，但其子结果含预期拒绝、WARN及FAIL，不等于全部strictDQ。
+
+local main=origin/main=live remote main=candidate，普通非强制push成功；final v2事务已
+COMPLETED/RELEASED，lease释放且12事件replayPASS。正式终态、四tier和独立审查、两次收尾预检、
+普通push与SHA证据集中于outputs/architecture/trading_2564_s2b_preserved_recovery/。
+已合并branch引用删除，代码可由main恢复；两root、旧18项源码和unique runtime证据继续保留。
+
+所有真实研究、manifest replay、canonical DQ、observation/maturity/scoreboard、下载、市场cache、
+provider与交易动作0；heartbeat仍PAUSED。S2b工程验收不签发真实consumer/研究权限。
+后继S2c先审查固定prices-only consumer scope，旧共同evaluated window/receipt/API保持原义；
+其后才接equal-risk纯预览，Composer分段训练和S3/S4仍未完成。参见umbrella§11与S2c步骤文档。

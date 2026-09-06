@@ -1247,3 +1247,42 @@ def test_parent_failure_control_flow_preserves_memory_only_diagnostics_without_a
             assert parent["failure"]
     assert "successful_run_dispatch.json" not in captured
     assert not any(path.is_file() for path in tmp_path.rglob("*"))
+
+
+@pytest.mark.parametrize(
+    "case,issue",
+    [
+        ("lag_one", None),
+        ("lag_two", None),
+        ("old_manifest", None),
+        ("request_tail_only", None),
+        ("request_through_t_minus_one", None),
+        ("request_two_tickers", None),
+        ("request_two_rates", None),
+        ("sgov_missing_last", "prices_requested_window_coverage_missing"),
+        ("sgov_internal_gap", "prices_internal_trading_day_gap"),
+        ("tqqq_missing", "prices_missing_expected_values"),
+        ("rates_missing", "rates_missing_expected_values"),
+        ("rates_stale", "rates_stale"),
+        ("rates_future", "rates_future_dates"),
+    ],
+)
+def test_equal_risk_synthetic_canonical_fixture_semantics_before_actual_dispatch(
+    tmp_path: Path, case: str, issue: str | None
+) -> None:
+    # Reuse only synthetic row/publication construction. No bootstrap child,
+    # actual execution identity, successful dispatch proof, or seal is claimed.
+    from test_named_data_quality_candidate import _equal_risk_scope_fixture
+
+    fixture = _equal_risk_scope_fixture(tmp_path, case=case)
+    capture = execution.capture_named_publication(fixture.request)
+    report = _canonical_report(fixture.request, capture)
+    if issue is None:
+        assert report.status == "PASS", [(item.code, item.message) for item in report.issues]
+    else:
+        assert report.status != "PASS"
+        assert issue in {item.code for item in report.issues}
+    assert execution._evaluated_window(fixture.request, capture.inputs) == (
+        fixture.request.expected_evaluated_window
+    )
+    assert not _tree_bytes(fixture.evidence_root)
