@@ -715,7 +715,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.named_data_quality_support
   path: tests/named_data_quality_support.py
-  sha256: 34203564a8876244ee7be72c003f5bf932030e90f6d419928d0be788d2693a9a
+  sha256: 650e5476642cc8519e1690825f27c9b5237659597beca5f1188e557df4a0806f
   file_role: test_support
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -13952,7 +13952,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_named_simple_baseline_preview_candidate
   path: tests/test_named_simple_baseline_preview_candidate.py
-  sha256: 6527f96cffb629ef33e4a1e36380a1ed7d2391a11fafdbe22c16d269cd7862f1
+  sha256: 4898db91c97c8900d1f3e6b5ac22bd148cce6a7b37a49f1c2be59bac9bfcfe8b
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

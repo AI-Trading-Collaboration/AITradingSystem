@@ -453,6 +453,7 @@ try:
         verified.inputs_for_five_candidate_preview(required_scope=scope)
     )
     consumer = importlib.import_module("ai_trading_system.simple_baseline_named_preview")
+    quality = importlib.import_module("ai_trading_system.data.quality")
     calendar = importlib.import_module("ai_trading_system.trading_calendar")
     calendar_policy = importlib.import_module("ai_trading_system.us_equity_special_closure_policy")
     checks = {}
@@ -460,7 +461,9 @@ try:
     calendar_policy.default_us_equity_special_closure_policy.cache_clear()
     with patch.object(builtins, "open", forbidden), patch.object(io, "open", forbidden), \
          patch.object(socket, "socket", forbidden), \
-         patch.object(calendar, "is_us_equity_trading_day", forbidden):
+         patch.object(calendar, "is_us_equity_trading_day", forbidden), \
+         patch.object(quality, "validate_data_cache", forbidden), \
+         patch.object(worker, "validate_data_cache", forbidden):
         preview = consumer.build_named_simple_baseline_preview(verified, required_scope=scope)
         payload = preview.to_dict()
         checks["repeat_is_identical_without_io"] = (

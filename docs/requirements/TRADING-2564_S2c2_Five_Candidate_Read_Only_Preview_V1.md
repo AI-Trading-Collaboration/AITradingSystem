@@ -147,3 +147,15 @@ source交集仍只有docs/system_flow.md与三个既有architecture tests，未�
 Python变更的Ruff/Black检查通过。最终E2E、formal tiers与普通发布仍须绑定精确提交，不以这些
 局部结果代替。官方source generator probe的模块/测试文件计数1209/1370，RCF为3167 entries，
 均只更新可复核当前inventory/pins，不改变历史验证门槛或runtime writer允许数。
+
+source 9f0fabb19bbb68e0ed0240931c3ddcad3387add0 的五项正式generator与36项actual candidate
+E2E全部PASS（727.37秒，16 workers/loadfile）。独立只读复核逐项确认59模块/8依赖的path、SHA、
+size、Git blob、bootstrap、request/receipt/dispatch/preview与calendar身份，run DQ1、verify DQ0。
+完整review证据保留在本波runtime root。审查要求将该身份复核固化为永久断言，精确区分五种负例
+拒绝码，并在consumer期间禁用canonical DQ函数及worker alias。生产计算不变。
+
+final v1在Full前以行政superseded终结，无Full失败或Full dispatch；source v3继续复用同一工作区，
+补强测试后重新冻结候选。LANE首条命令误用不存在的--expected-lease-id参数而在argparse退出，
+未执行preflight或源码修改；使用正式--allow-active-lease重跑PASS，保留原命令结果。
+S2c.2工程实现已完成，最终正式验证与发布结果由本波closeout收据承载；TRADING-2564仍为
+IN_PROGRESS，S3/S4/S5、真实前瞻、PIT/OOS准入不由本波完成。

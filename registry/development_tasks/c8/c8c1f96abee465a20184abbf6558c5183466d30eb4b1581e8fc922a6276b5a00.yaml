@@ -22,8 +22,7 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S2c.1已正式发布；S2c.2同seal完整registry/calendar与固定五候选纯预览已实现，独立审查修复完成，准备exact
-    candidate合成E2E、正式tiers/Full和普通main发布；S3-S5仍待完成。
+  unstructured_legacy_blocker_or_next_step: S2c.2工程及36项actual E2E通过，补强审查要求的永久断言后执行最终正式验证/普通main发布；S3-S5仍未完成。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 旧55/7与57/8合同/E2E保留；新闭包同进程严格价格/registry解析、五候选逐值/月初/lag/嵌套lookback等价与零副作用；实际candidate合成run1/verify0/preview、正式tiers/Full/main发布；真实研究与数据/交易动作0。
@@ -638,6 +637,31 @@ events:
   - change:trading-2564-s2c2-preview-implementation-20260907-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-9956ad5bf3b3475140208e3d48c37ca3
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-07T02:19:41.816017+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2c2-preview-pre-full-review-20260907-v3
+  lane_id: null
+  base_commit: 9f0fabb19bbb68e0ed0240931c3ddcad3387add0
+  previous_state_event_id: task-event-9956ad5bf3b3475140208e3d48c37ca3
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator
+    blocker_or_next_step: S2c.2工程及36项actual E2E通过，补强审查要求的永久断言后执行最终正式验证/普通main发布；S3-S5仍未完成。
+    acceptance_criteria: 旧55/7与57/8合同/E2E保留；新闭包同进程严格价格/registry解析、五候选逐值/月初/lag/嵌套lookback等价与零副作用；实际candidate合成run1/verify0/preview、正式tiers/Full/main发布；真实研究与数据/交易动作0。
+    notes: 需求：docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md；docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md。S2c.2工程实现完成：旧合同251、预览/合同144、共享架构183、exact
+      9f0fabb候选实际合成E2E36 PASS（用例重叠不相加）；独立59/8字节身份复核通过。发布前补强永久身份/精确拒绝码/直接DQ禁用断言，随后以最终提交执行formal
+      tiers/Full及普通main发布。S3真实前瞻/S4/S5继续IN_PROGRESS，PIT/OOS未准入；真实市场DQ/研究/provider/交易动作0。复用DEVX014
+      root，保留原因和退出条件见需求。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2c2-preview-pre-full-review-20260907-v3
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-49799d50ac464fd5cb3d1f2d06c9c30f
 projection:
   legacy_first_eight_cells:
   - TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
@@ -645,17 +669,19 @@ projection:
   - P1
   - IN_PROGRESS
   - integration-coordinator
-  - S2c.1已正式发布；S2c.2同seal完整registry/calendar与固定五候选纯预览已实现，独立审查修复完成，准备exact candidate合成E2E、正式tiers/Full和普通main发布；S3-S5仍待完成。
+  - S2c.2工程及36项actual E2E通过，补强审查要求的永久断言后执行最终正式验证/普通main发布；S3-S5仍未完成。
   - 旧55/7与57/8合同/E2E保留；新闭包同进程严格价格/registry解析、五候选逐值/月初/lag/嵌套lookback等价与零副作用；实际candidate合成run1/verify0/preview、正式tiers/Full/main发布；真实研究与数据/交易动作0。
-  - 需求：docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md；docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md。新闭包59/8，五候选复用原算法，主窗口2021-02-22不变；初始旧合同251
-    PASS，新增聚焦中发现的测试预期/regex问题已修正，原失败XML保留。复用DEVX014工作区，当前及旧root保留条件见需求；真实DQ/研究/数据/provider/交易动作0，S3及PIT/OOS未准入。
+  - 需求：docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md；docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md。S2c.2工程实现完成：旧合同251、预览/合同144、共享架构183、exact
+    9f0fabb候选实际合成E2E36 PASS（用例重叠不相加）；独立59/8字节身份复核通过。发布前补强永久身份/精确拒绝码/直接DQ禁用断言，随后以最终提交执行formal
+    tiers/Full及普通main发布。S3真实前瞻/S4/S5继续IN_PROGRESS，PIT/OOS未准入；真实市场DQ/研究/provider/交易动作0。复用DEVX014
+    root，保留原因和退出条件见需求。
   docs_links:
   - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
   - docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md
   - docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md
   - docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md
   terminal: false
-  canonical_row_sha256: 76a2fb06b62c0b51cc9fb1288c144327f1b4b3ae643f7ae74fa377480c5c49a1
-last_event_id: task-event-9956ad5bf3b3475140208e3d48c37ca3
+  canonical_row_sha256: 1e57ed43322f762b65e9a19b9c2b73355dfff214c178dc0aee176384529c120e
+last_event_id: task-event-49799d50ac464fd5cb3d1f2d06c9c30f
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 5953271f0f061a4198cb587bf3ffa2e58d27308b2e6dadb3420a69265ae8662e
+fragment_checksum: f15ae1995e1fe2958cd733313414f2fa0009921b43f38ae5f7c110b8b4c1ce94

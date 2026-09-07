@@ -2,16 +2,23 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
 from named_data_quality_support import (
+    BOOTSTRAP_PATH,
+    ROOT,
     build_actual_candidate_fixture,
     dispatch_actual_candidate_child,
 )
 from test_named_data_quality_candidate import (
+    CURRENT_CALENDAR_PATH,
+    EXPECTED_DEPENDENCIES,
+    HISTORICAL_CALENDAR_PATH,
     _assert_parent,
     _fixture_tree,
     _pass_run,
@@ -21,7 +28,10 @@ from test_named_data_quality_candidate import (
 from ai_trading_system.contracts.data_quality_execution import DataQualityDateWindow
 from ai_trading_system.contracts.named_data_quality_execution import (
     EQUAL_RISK_GUARD_RATE_SERIES,
+    EQUAL_RISK_PRICE_REGISTRY_PATH,
     EQUAL_RISK_PRICE_TICKERS,
+    FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH,
+    FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256,
 )
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
@@ -97,6 +107,62 @@ def test_actual_run_one_verify_zero_and_complete_read_only_preview(
     assert result.returncode == 0, result.child_result
     _assert_parent(result, calls=0)
     assert all(result.child_result["probe_checks"].values())
+    assert run.parent_receipt["child_pid"] != result.parent_receipt["child_pid"]
+    assert result.child_result["original_dq_pid"] == receipt.execution_observation.execution_pid
+    assert result.child_result["verifier_pid"] == result.parent_receipt["child_pid"]
+    execution = receipt.execution
+    assert execution.source_kind == "GIT_COMMIT_BYTES_COMPILED"
+    assert execution.execution_root == ROOT.as_posix()
+    assert execution.candidate_commit == fixture.request.candidate_commit
+    assert result.child_result["execution_identity_sha256"] == execution.stable_identity_sha256
+    manifest_bytes = (ROOT / FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH).read_bytes()
+    manifest = json.loads(manifest_bytes)
+    assert execution.source_manifest_path == FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH
+    assert execution.source_manifest_sha256 == FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256
+    assert execution.source_manifest_sha256 == hashlib.sha256(manifest_bytes).hexdigest()
+    assert (
+        execution.bootstrap_sha256
+        == hashlib.sha256((ROOT / BOOTSTRAP_PATH).read_bytes()).hexdigest()
+    )
+    assert len(execution.modules) == len(manifest["modules"]) == 59
+    expected_modules = {row["module_name"]: row for row in manifest["modules"]}
+    assert {item.module_name for item in execution.modules} == set(expected_modules)
+    for compiled in execution.modules:
+        assert expected_modules[compiled.module_name] == {
+            "module_name": compiled.module_name,
+            "source_path": compiled.source_path,
+            "is_package": compiled.is_package,
+        }
+        content = (ROOT / compiled.source_path).read_bytes()
+        assert (compiled.sha256, compiled.size_bytes) == (
+            hashlib.sha256(content).hexdigest(),
+            len(content),
+        )
+        blob_algorithm = "sha1" if len(compiled.git_blob_id) == 40 else "sha256"
+        blob = f"blob {len(content)}\0".encode("ascii") + content
+        assert hashlib.new(blob_algorithm, blob).hexdigest() == compiled.git_blob_id
+    assert sum(item.is_package for item in execution.modules) == 7
+    dependencies = {item.relative_path: item for item in receipt.execution_dependencies}
+    assert len(receipt.execution_dependencies) == 8
+    assert (
+        set(dependencies)
+        == set(manifest["policy_dependencies"])
+        == (EXPECTED_DEPENDENCIES | {EQUAL_RISK_PRICE_REGISTRY_PATH})
+    )
+    for path, binding in dependencies.items():
+        content = (ROOT / path).read_bytes()
+        assert binding.root_role == "EXECUTION"
+        assert (binding.sha256, binding.size_bytes) == (
+            hashlib.sha256(content).hexdigest(),
+            len(content),
+        )
+    assert receipt.calendar.special_closure_policy_version == "1.1.0"
+    assert receipt.calendar_policy == dependencies[CURRENT_CALENDAR_PATH]
+    assert receipt.calendar.special_closure_policy_sha256 == receipt.calendar_policy.sha256
+    assert dependencies[HISTORICAL_CALENDAR_PATH].sha256 == (
+        "c0469a17a775df2dcde503c254c22db0cc7d8ad6e3a5884f2ed43c88e4dfbda4"
+    )
+    assert receipt.calendar_policy.sha256 != dependencies[HISTORICAL_CALENDAR_PATH].sha256
     preview = result.child_result["preview"]
     assert len(preview["candidates"]) == 5
     assert preview["data_quality_status"] == "PASS"
@@ -145,7 +211,12 @@ def test_actual_preview_cannot_borrow_old_or_incomplete_authority(
     _assert_parent(result, calls=0)
     assert result.child_result["status"] == "BLOCKED"
     assert "preview" not in result.child_result
-    assert result.child_result["reason_code"] in {
-        "NAMED_DQ_FIELDS_INVALID",
-        "NAMED_PREVIEW_LOOKBACK_INCOMPLETE",
-    }
+    expected_code, expected_detail = {
+        "old55": ("NAMED_DQ_FIELDS_INVALID", "requires its reviewed exact source manifest"),
+        "old57": ("NAMED_DQ_FIELDS_INVALID", "requires its reviewed exact source manifest"),
+        "tail_scope": ("NAMED_DQ_FIELDS_INVALID", "not covered by the original canonical request"),
+        "two_assets": ("NAMED_DQ_FIELDS_INVALID", "not covered by the original canonical request"),
+        "short": ("NAMED_PREVIEW_LOOKBACK_INCOMPLETE", "available_prices=1, required_prices=62"),
+    }[case]
+    assert result.child_result["reason_code"] == expected_code
+    assert expected_detail in result.child_result["detail"]
