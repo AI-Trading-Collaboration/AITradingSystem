@@ -8,33 +8,33 @@ fragment_root: registry/report_catalog_flow_authority/fragments
 index_path: inputs/architecture/devx_006d_report_catalog_flow_authority_index.json
 consumer_inventory_path: inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json
 targets:
-  - target_id: report_registry
-    path: config/report_registry.yaml
-    format: YAML_REPORT_REGISTRY
-    splitter: YAML_REPORT_ITEMS_WITH_PREFIX_V1
-    byte_count: 1815783
-    file_sha256: 8544313ef42e43c2792dfb934bbd55030bb25f53b227593681c70e92b398920d
-    lf_sha256: 8544313ef42e43c2792dfb934bbd55030bb25f53b227593681c70e92b398920d
-    git_blob: 52a81cca53477ed7fdd2fbd325554427f12c3a7c
-    entry_count: 1373
-  - target_id: artifact_catalog
-    path: docs/artifact_catalog.md
-    format: MARKDOWN
-    splitter: EXACT_BLANK_LINE_BLOCKS_V1
-    byte_count: 2014679
-    file_sha256: 28e43426c5d56d18817446c90ea29bb91fa8b4f3cac8f50f1cd17eecb8f70206
-    lf_sha256: 28e43426c5d56d18817446c90ea29bb91fa8b4f3cac8f50f1cd17eecb8f70206
-    git_blob: 8cad5c62d7f7852f4919c3d1469d2848a2969eaf
-    entry_count: 567
-  - target_id: system_flow
-    path: docs/system_flow.md
-    format: MARKDOWN
-    splitter: EXACT_BLANK_LINE_BLOCKS_V1
-    byte_count: 2365956
-    file_sha256: 21d63aad2a52b809495cc61a5e200881a07c8de3de66f3a4187aed834fc20503
-    lf_sha256: 21d63aad2a52b809495cc61a5e200881a07c8de3de66f3a4187aed834fc20503
-    git_blob: 01f4951bcc4368903afb927d39dc6cdf5980b8a8
-    entry_count: 1231
+- target_id: report_registry
+  path: config/report_registry.yaml
+  format: YAML_REPORT_REGISTRY
+  splitter: YAML_REPORT_ITEMS_WITH_PREFIX_V1
+  byte_count: 1815783
+  file_sha256: 8544313ef42e43c2792dfb934bbd55030bb25f53b227593681c70e92b398920d
+  lf_sha256: 8544313ef42e43c2792dfb934bbd55030bb25f53b227593681c70e92b398920d
+  git_blob: 52a81cca53477ed7fdd2fbd325554427f12c3a7c
+  entry_count: 1373
+- target_id: artifact_catalog
+  path: docs/artifact_catalog.md
+  format: MARKDOWN
+  splitter: EXACT_BLANK_LINE_BLOCKS_V1
+  byte_count: 2016551
+  file_sha256: 4ddb8a02cb1ed8f77c685b92f36253a5d980fc737dffc8709574c523c3878016
+  lf_sha256: 4ddb8a02cb1ed8f77c685b92f36253a5d980fc737dffc8709574c523c3878016
+  git_blob: a9370aed7b58f38709e1f0bb1d5272b8e143a113
+  entry_count: 571
+- target_id: system_flow
+  path: docs/system_flow.md
+  format: MARKDOWN
+  splitter: EXACT_BLANK_LINE_BLOCKS_V1
+  byte_count: 2367875
+  file_sha256: dc7c10cc72bbe174454f441d0e310806f8cc4df218b2b4a61923a43864ccc8e8
+  lf_sha256: dc7c10cc72bbe174454f441d0e310806f8cc4df218b2b4a61923a43864ccc8e8
+  git_blob: 403bd0b3844145bfd95ea01f59b65822821eaf40
+  entry_count: 1233
 contract:
   source_of_truth: LEGACY_MONOLITH
   fragment_shadow_active: false

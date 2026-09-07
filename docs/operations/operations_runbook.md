@@ -13,6 +13,25 @@
 - `docs/artifact_catalog.md` 说明关键 artifact 的生成者、上游、下游、production effect 和常见误解。
 - `docs/system_flow.md` 仍是数据输入到结论输出路径的源-of-truth 图。
 
+## TRADING-2564 S3b 手工前瞻采集边界
+
+S3b `python -I -B scripts/run_named_data_quality.py --operation activate|capture` 为有限手工研究
+入口，固定新 85-module/12-dependency profile 与 `prospective_capture_execution_v1.yaml`，
+不登记第二个 scheduler。执行前显式 replay exact manifest/owner review、source commit、原
+S4D lease、根/输出归属、允许的 feature sessions 和 expiry。真实范围尚待独立 review；本工程波
+仅合成验证，真实 activation/capture/DQ/provider/order/fill 均为零，现有 heartbeat 状态不变。
+
+activation ACK 之后纽约日期的首 XNYS 为最早 F；capture 仅 F close 后、next_XNYS(F) close
+前执行。父固定零 DQ，child 最多一次 canonical DQ，严格 PASS + 原始成功终态/guards 后，同父
+context 零 DQ verify、原五候选 preview、完整闭包保全及 S3a signal witness 才能进入 ACK。
+完整 witness 被父观察完成必须严格早于 D close；第一段收益为 Close(D)→Close(next(D))。
+本入口不读取收益或运行 maturity/scoreboard。首次 outcome 访问须先冻结 S4 实验/会计合同。
+
+固定 key 原 attempt/部分证据必须保留；重复调用包括到期后的旧 key 只读复核完整 result 或返回
+INCOMPLETE，不能重试 DQ、补签时间或换 snapshot。输出路径和复核链见 artifact catalog 的
+S3b 条目。PASS admission 仅代表该范围本地源码/严格 DQ/信号/记录时间核验，不建立 provider
+available_at、PIT/OOS、调度启用、production 或 broker 权限。
+
 ## Operating Principles
 
 - 每日 scheduler trigger 是统一外部入口。Windows Task Scheduler、cron、GitHub Actions 或云调度器默认只应调用 `aits ops daily-run`，不要把 weekly / biweekly / monthly / governance 命令直接散落成多个未审计系统任务。

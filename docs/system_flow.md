@@ -122,6 +122,32 @@ flowchart LR
     TVERIFY --> TTEMPORAL["时间证据与永久gap；真实capture/OOS仍待独立准入"]
 ```
 
+S3b 新增固定 `named_prospective_five_candidate_sources_v1.json`（85 模块/12 依赖）与
+`prospective_capture_execution_v1.yaml`。同一 Git-byte bootstrap 只在该 profile 接受
+`--operation activate|capture`，逐次读取 exact manifest/owner review，重验原 S4D lease。
+capture 父固定零 DQ，隔离 child 最多一次 canonical DQ；同父 context 零 DQ verify 后，
+专属 seal 交付 captured prices/registry/calendar 和完整保全闭包（rates 仍只作 DQ guard）。
+原五候选算法生成独立 preview，经 S3a writer 保全 inputs/signal 后，父 UTC/monotonic 包络
+及前后 source/lease proof 形成 ACK。完整见证在 D close 前被观察完成才可生成新 observation
+投影；不修改旧 ledger。activation 首合法 F 取 ACK 纽约日期之后首 XNYS session。
+固定 manifest/operation/F key 只尝试一次；已完成或 INCOMPLETE key 在范围/lease 到期后仍可
+只读核验，不重新 dispatch 或补签。retained verifier 逐项复核原始父证据、所有 artifact 与
+时间关系，并从已保全价格/registry 完整重算信号。授权状态、技术状态和真实/合成计数分别记录。
+本波仅工程合同与合成验证；真实 manifest review、activation/capture、首看实验封套仍待后续。
+
+```mermaid
+flowchart LR
+    CM["固定新profile + exact manifest/owner review"] --> CP["原S4D lease + Git-byte父执行"]
+    CP --> CA["activation writer → 完整witness ACK → 首合法F"]
+    CP --> CD["一个隔离DQ child：strict PASS + 原始终态/guards"]
+    CD --> CS["同context零DQ verify + 完整captured闭包"]
+    CS --> CF["原五候选信号 + S3a inputs/signal writer"]
+    CA --> CF
+    CF --> CK["父UTC/monotonic包络 + source/lease前后证明 + ACK"]
+    CK --> CG["严格D-close准入；独立observation投影"]
+    CG --> CR["只读重验全部证据 + 从closed inputs完整重算"]
+```
+
 ```mermaid
 flowchart LR
     INPUT["显式快照 + 请求 + 既有DQ receipt"] --> RI["研究输入只读就绪核查"]

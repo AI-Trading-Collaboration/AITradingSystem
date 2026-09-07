@@ -35,6 +35,7 @@ from ai_trading_system.contracts.data_quality_execution import DataQualityDateWi
 from ai_trading_system.contracts.named_data_quality_execution import (
     EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH,
     FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH,
+    PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
     NamedArtifactBinding,
     NamedDQExecutionReceipt,
     NamedDQExecutionRequest,
@@ -43,6 +44,7 @@ from ai_trading_system.contracts.named_data_quality_execution import (
     NamedDQSuccessfulDispatchBinding,
     NamedSnapshotSelector,
 )
+from ai_trading_system.contracts.prospective_capture_execution import ProspectiveCaptureRequest
 from ai_trading_system.data.download_publication import (
     DownloadArtifactCandidate,
     DownloadSourceBinding,
@@ -750,6 +752,7 @@ def build_actual_candidate_fixture(
     expected_rate_series: tuple[str, ...] = ("DGS10",),
     equal_risk_price_profile: bool = False,
     five_candidate_preview_profile: bool = False,
+    prospective_capture_profile: bool = False,
     expected_evaluated_window: DataQualityDateWindow | None = None,
 ) -> NamedExecutionFixture:
     """Publish synthetic bytes, then relocate only that tmp-path publication.
@@ -763,16 +766,24 @@ def build_actual_candidate_fixture(
     if (
         type(equal_risk_price_profile) is not bool
         or type(five_candidate_preview_profile) is not bool
-        or (equal_risk_price_profile and five_candidate_preview_profile)
+        or type(prospective_capture_profile) is not bool
+        or sum(
+            (equal_risk_price_profile, five_candidate_preview_profile, prospective_capture_profile)
+        )
+        > 1
     ):
         pytest.fail("NAMED_PARENT_PRICE_PROFILE_MUST_BE_BOOL")
     source_manifest_path = (
-        FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH
-        if five_candidate_preview_profile
+        PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH
+        if prospective_capture_profile
         else (
-            EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH
-            if equal_risk_price_profile
-            else SOURCE_MANIFEST_PATH
+            FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH
+            if five_candidate_preview_profile
+            else (
+                EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH
+                if equal_risk_price_profile
+                else SOURCE_MANIFEST_PATH
+            )
         )
     )
     execution_root = execution_root.resolve()
@@ -881,7 +892,7 @@ def _parent_environment() -> tuple[str, str]:
 
 def _live_parent_proof(
     *,
-    request: NamedDQExecutionRequest,
+    request: NamedDQExecutionRequest | ProspectiveCaptureRequest,
     transaction_input: str,
     lease_id: str,
 ) -> dict[str, Any]:

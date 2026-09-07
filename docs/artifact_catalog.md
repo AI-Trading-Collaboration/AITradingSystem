@@ -44,6 +44,29 @@ API；不进入 report-registry/latest discovery、Reader Brief、旧 observatio
 固定 `temporal_evidence_only=true`、`observation_authorized=false`、provider/PIT/OOS 未建立、
 `production_effect=none`、`broker_action=none`；真实采集必须经过后续独立 adapter/manifest 门禁。
 
+## TRADING-2564 S3b 前瞻采集父执行证据
+
+固定 `python -I -B scripts/run_named_data_quality.py --operation activate|capture` 入口要求新
+85/12 profile、exact request SHA、reviewed bounded manifest 和原 S4D source lease；不是
+周期调度或 report discovery 入口。合成输出在
+`outputs/architecture/trading_2564_s3b_prospective_capture/synthetic/`
+下，真实输出在 `outputs/research/prospective_capture/` 下，二者均再按固定 manifest id 分隔。
+每个 manifest 的 `activation/` 或 `sessions/<F>/` 固定槽位保存 request、原 attempt、
+pre/post recording proof、`prospective_parent_completion_acknowledgement.v1`、result；capture 子目录
+`dq_dispatch/` 保存真实 child request/stdout/stderr/PID/退出/guard 和成功关联证据，DQ bytes
+位于 manifest 专属 `dq/`。确切 schema/路径以 capture DTO 和 manifest 为准。
+
+`timing/streams/<plan_sha>/` 保全全部 Named DQ 输入/来源/报告/依赖及五候选信号。只有原始
+完整 ACK 与严格 D-close 检查通过才写独立 `prospective_five_candidate_observation.v1`；它是
+已按时记录 signal 的投影，不宣称该 observation 或 ACK 自身提前 durable。留存复核不重新读取
+市场原路径、不运行 DQ，从 closed bytes 重算完整 preview 并比较所有字段。失败保留原 bytes，
+缺记录保持 INCOMPLETE，已用 key 到期后只读 replay，不重派 child、不补签。
+
+`authorization_state`、`technical_validation_state`、`evidence_purpose` 与 parent/child/real
+计数独立；已知超额计数原样保留，无法观察为 `UNKNOWN`。本波真实业务动作均为零，未确认
+provider available_at、PIT/OOS 或投资结论；不进入旧 observation ledger、Reader Brief、latest
+pointer 或 broker。首个真实范围与首次 outcome 访问仍需各自 reviewed manifest/policy。
+
 ## DEVX-006D Report / Catalog / Flow Lossless Fragment Shadow
 
 |Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|

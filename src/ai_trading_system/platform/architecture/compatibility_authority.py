@@ -956,6 +956,10 @@ def build_repository_authority(
         section_id, section = _trading_2564_s3a_section(root, policy=policy)
         relative, record, content = render_fragment(section_id=section_id, section=section)
         rendered_fragments.append((section_id, relative, record, content))
+    if (root / "docs/requirements/TRADING-2564_S3b_Prospective_Capture_Execution_V1.md").exists():
+        section_id, section = _trading_2564_s3b_section(root, policy=policy)
+        relative, record, content = render_fragment(section_id=section_id, section=section)
+        rendered_fragments.append((section_id, relative, record, content))
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -3204,6 +3208,73 @@ def _trading_2564_s3a_section(
             "observation_authorized": False,
             "returns_computed": False,
             "legacy_execution_profiles_changed": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _trading_2564_s3b_section(
+    root: Path, *, policy: Mapping[str, Any]
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_trading_2564_s3b_prospective_capture_execution_v1"
+    previous_id, previous = _trading_2564_s3a_section(root, policy=policy)
+    source_paths = sorted(
+        {
+            *previous["superseded_live_source_paths"],
+            "src/ai_trading_system/contracts/prospective_capture_execution.py",
+            "src/ai_trading_system/prospective_capture_execution.py",
+            "src/ai_trading_system/data/named_quality_dispatch.py",
+            "config/data_governance/named_prospective_five_candidate_sources_v1.json",
+            "config/research/prospective_capture_execution_v1.yaml",
+            "tests/test_named_quality_dispatch.py",
+            "tests/test_named_data_quality_actual_candidate.py",
+            "tests/test_prospective_capture_execution.py",
+            "tests/test_prospective_capture_execution_contract.py",
+            "tests/test_simple_baseline_named_preview.py",
+            "docs/requirements/TRADING-2564_S3b_Prospective_Capture_Execution_V1.md",
+        },
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "trading_2564_s3b_prospective_capture_execution.v1",
+        "task_id": "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1",
+        "status": "VALIDATING",
+        "owner_decision": "owner_instruction:TRADING-2564:2026-09-08:continue-s3b",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": previous_id,
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "capture_contract": {
+            "source_manifest_path": (
+                "config/data_governance/named_prospective_five_candidate_sources_v1.json"
+            ),
+            "module_count": 85,
+            "dependency_count": 12,
+            "parent_canonical_dq_calls": 0,
+            "child_canonical_dq_calls_per_capture": 1,
+            "input_closure": "ALL_DQ_MEMBERS_PROVENANCE_AND_EXECUTION_DEPENDENCIES",
+            "acknowledgement": "INTERNAL_AFTER_COMPLETE_WITNESS_RETURN_WITH_PARENT_PROOFS",
+            "retained_signal_verification": "COMPLETE_RECOMPUTATION_FROM_CLOSED_INPUTS",
+            "expired_existing_key": "READ_ONLY_ORIGINAL_RESULT_OR_INCOMPLETE",
+            "timing_version": "NEXT_XNYS_CLOSE_FORWARD_V1",
+        },
+        "safety": {
+            "real_activation_adopted": False,
+            "real_dq_or_research_executed": False,
+            "synthetic_evidence_admitted_to_research": False,
+            "provider_available_at_established": False,
+            "pit_or_oos_established": False,
+            "outcome_access_authorized": False,
+            "returns_computed": False,
+            "legacy_execution_profiles_changed": False,
+            "legacy_observation_ledger_mutated": False,
             "production_effect": "none",
             "broker_action": "none",
         },

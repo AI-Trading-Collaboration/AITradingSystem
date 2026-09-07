@@ -322,7 +322,7 @@ class NamedBootstrapSession:
         )
         if preloaded:
             _fail("NAMED_BOOTSTRAP_PROJECT_PREIMPORTED", preloaded[0])
-        if operation not in {"run", "verify"}:
+        if operation not in {"run", "verify", "activate", "capture"}:
             _fail("NAMED_BOOTSTRAP_OPERATION_INVALID", operation)
         # Correlation from the trusted coordinator, not an independent lease
         # proof. The parent binds a live guard/fence proof and this child's
@@ -349,6 +349,16 @@ class NamedBootstrapSession:
             request.get("source_manifest_sha256"), "source manifest"
         ):
             _fail("NAMED_BOOTSTRAP_MANIFEST_SHA_MISMATCH", self.manifest.relative_path)
+        # New parent operations require the exact reviewed S3b profile before
+        # any project module is compiled/imported. Legacy run/verify are not
+        # aliases for capture and keep their original worker behavior.
+        if operation in {"activate", "capture"} and (
+            self.manifest.relative_path
+            != "config/data_governance/named_prospective_five_candidate_sources_v1.json"
+            or self.manifest.sha256
+            != "1f7cb44e83f3e1d6840ae5a181c58972cb7ff31ff52e353c37bc8a3d9280a315"
+        ):
+            _fail("NAMED_BOOTSTRAP_PROSPECTIVE_PROFILE_REQUIRED", operation)
         self.bootstrap = self.git.artifact(BOOTSTRAP_PATH)
         if Path(__file__).absolute() != self.root / BOOTSTRAP_PATH:
             _fail("NAMED_BOOTSTRAP_ENTRY_ROOT_MISMATCH", str(Path(__file__).absolute()))
@@ -503,7 +513,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="指定不可变快照的受控 canonical DQ 子进程")
     parser.add_argument("--request", required=True, type=Path)
     parser.add_argument("--request-sha256", required=True)
-    parser.add_argument("--operation", choices=("run", "verify"), required=True)
+    parser.add_argument(
+        "--operation", choices=("run", "verify", "activate", "capture"), required=True
+    )
     parser.add_argument("--source-lease-id", required=True)
     parser.add_argument("--receipt-path")
     parser.add_argument("--receipt-sha256")
@@ -511,6 +523,7 @@ def main() -> int:
     parser.add_argument("--run-dispatch-sha256")
     args = parser.parse_args()
     session: NamedBootstrapSession | None = None
+    result: dict[str, object] | None = None
     try:
         if not sys.flags.isolated:
             _fail("NAMED_BOOTSTRAP_ISOLATED_CHILD_REQUIRED", "使用 python -I -B 启动此固定入口")
@@ -528,7 +541,8 @@ def main() -> int:
             args.run_dispatch_sha256,
         )
         if (
-            args.operation == "run" and any(value is not None for value in verification_arguments)
+            args.operation in {"run", "activate", "capture"}
+            and any(value is not None for value in verification_arguments)
         ) or (
             args.operation == "verify" and any(value is None for value in verification_arguments)
         ):
@@ -566,6 +580,35 @@ def main() -> int:
         print(json.dumps(result, ensure_ascii=False, sort_keys=True, allow_nan=False))
         return 0
     except (ValueError, OSError, ImportError, RuntimeError, SyntaxError, TypeError) as exc:
+        parent_calls = 0 if session is None else session.canonical_dq_call_count
+        capture_operation = args.operation in {"activate", "capture"}
+        observed_calls = (
+            (
+                result.get("canonical_dq_call_count")
+                if result is not None
+                else getattr(exc, "prospective_child_canonical_dq_call_count", None)
+            )
+            if capture_operation
+            else parent_calls
+        )
+        if observed_calls is not None and (type(observed_calls) is not int or observed_calls < 0):
+            observed_calls = None
+        capture_metadata = (
+            {
+                "parent_canonical_dq_call_count": parent_calls,
+                "counter_observation_state": "UNKNOWN" if observed_calls is None else "KNOWN",
+                "dq_parent_receipt": (
+                    result.get("dq_parent_receipt")
+                    if result is not None
+                    else getattr(exc, "prospective_dq_parent_receipt", None)
+                ),
+                "capture_admitted": False,
+                "activation_admitted": False,
+                "real_observation_admitted": False,
+            }
+            if capture_operation
+            else {}
+        )
         print(
             json.dumps(
                 {
@@ -573,9 +616,8 @@ def main() -> int:
                     "status": "BLOCKED",
                     "reason_code": getattr(exc, "code", "NAMED_BOOTSTRAP_FAILED"),
                     "detail": str(exc),
-                    "canonical_dq_call_count": (
-                        0 if session is None else session.canonical_dq_call_count
-                    ),
+                    "canonical_dq_call_count": observed_calls,
+                    **capture_metadata,
                     "dispatch_allowed": False,
                     "production_effect": "none",
                     "broker_action": "none",

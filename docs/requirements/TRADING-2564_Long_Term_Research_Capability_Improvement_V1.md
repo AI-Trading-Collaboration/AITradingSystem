@@ -574,3 +574,14 @@ S3a 不启动真实 activation/capture，不接旧 writer、不运行收益或�
 DQ/registry、scheduler 或策略结论；真实研究、数据、provider 与交易动作继续为 0。
 首次真实接入保留在 S3b，须复核新时间版本及 bounded manifest；S4 首次 outcome 访问前的实验
 规则和 S5 实测提效依赖仍未完成。Umbrella 继续 IN_PROGRESS，不自动登记 successor。
+
+## 14. S3a 发布与 S3b 生产采集能力接续（2026-09-08）
+
+S3a 已发布 9489d807f2fb6fd8795ccbadb62e7983b96a3709，Full 11385 passed / 5 skipped /
+641 warnings，四正式 tiers PASS；local/remote 相等、事务 COMPLETED/RELEASED、merged branch
+已清理。验收为 outputs/architecture/trading_2564_s3a_prospective_event_time/closeout_verified_v1.json。
+
+Owner 要求继续推进，现执行[S3b 五候选生产采集链](TRADING-2564_S3b_Prospective_Capture_Execution_V1.md)
+工程实现与合成验证。新 profile 连接可信 DQ 父/子执行、同 context preview、完整输入记录及父 ACK，
+旧 55/57/59 权限与时间层声明不扩权。真实 activation/capture/DQ/结果访问/数据/交易仍全 0。
+Composer 主线的分段训练/PIT、S4 首看前协议及净收益会计、S5 提效均保留未完成，详见新需求。

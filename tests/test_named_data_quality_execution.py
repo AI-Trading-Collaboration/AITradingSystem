@@ -33,6 +33,12 @@ from test_named_data_quality_execution_contract import (
 from ai_trading_system.config import PROJECT_ROOT, load_data_quality
 from ai_trading_system.contracts.data_quality_execution import DataQualityDateWindow
 from ai_trading_system.contracts.named_data_quality_execution import (
+    EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH,
+    EQUAL_RISK_PRICE_SOURCE_MANIFEST_SHA256,
+    FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH,
+    FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256,
+    PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
+    PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
     NamedArtifactBinding,
     NamedDQExecutionReceipt,
     NamedDQExecutionRequest,
@@ -40,6 +46,7 @@ from ai_trading_system.contracts.named_data_quality_execution import (
     NamedDQScope,
     NamedDQSuccessfulDispatchBinding,
     NamedSnapshotSelector,
+    VerifiedNamedInputs,
 )
 from ai_trading_system.contracts.named_execution_context import NamedExecutionContextError
 from ai_trading_system.data import named_quality_execution as execution
@@ -1022,6 +1029,553 @@ def test_parent_artifact_binding_requires_contained_path_and_strict_size_before_
             binding, root=Path(case.receipt.request.roots.execution_root)
         )
     assert reads == []
+
+
+_RECORDING_METADATA_ROLES = frozenset(
+    {
+        "publication_pointer",
+        "publication_transaction",
+        "snapshot_manifest",
+        "source_event",
+        "commit_anchor",
+        "source_manifest",
+        "dq_report",
+        "dq_receipt",
+        "dq_successful_dispatch",
+        "dq_parent",
+        "dq_parent_request",
+        "dq_child_stdout",
+        "dq_child_stderr",
+        "dq_pre_guard",
+        "dq_post_guard",
+    }
+)
+_LEGACY_PREVIEW_PROFILES = (
+    (EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH, EQUAL_RISK_PRICE_SOURCE_MANIFEST_SHA256),
+    (FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH, FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256),
+)
+
+
+@dataclass(frozen=True)
+class _RecordingCase:
+    """In-memory declarations only; no execution context, seal or real DQ evidence."""
+
+    receipt: NamedDQExecutionReceipt
+    proof: NamedDQSuccessfulDispatchBinding
+    dispatch_path: str
+    buffers: dict[tuple[str, str], bytes]
+
+
+def _recording_case() -> _RecordingCase:
+    original = _synthetic_receipt()
+    buffers: dict[tuple[str, str], bytes] = {}
+
+    def bind(root: str, path: str, content: bytes) -> NamedArtifactBinding:
+        buffers[(root, path)] = content
+        return NamedArtifactBinding(root, path, sha256(content).hexdigest(), len(content))
+
+    publication = original.publication
+    pointer_content = b'{"synthetic_only":"original pointer"}'
+    publication = replace(
+        publication,
+        **{
+            field: bind(
+                "PUBLICATION",
+                getattr(publication, field).relative_path,
+                pointer_content if field in {"pointer", "anchor_pointer"} else field.encode(),
+            )
+            for field in (
+                "pointer",
+                "transaction",
+                "snapshot_manifest",
+                "source_event",
+                "anchor_pointer",
+            )
+        },
+    )
+    identity = replace(
+        original.execution,
+        source_manifest_path=PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
+        source_manifest_sha256=PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
+    )
+    request = replace(
+        original.request,
+        source_manifest_path=identity.source_manifest_path,
+        source_manifest_sha256=identity.source_manifest_sha256,
+        selector=replace(
+            original.request.selector,
+            pointer_sha256=publication.pointer.sha256,
+            transaction_sha256=publication.transaction.sha256,
+        ),
+    )
+    report_content = b"synthetic report declaration only"
+    bind("EVIDENCE", original.report.path, report_content)
+    report = replace(
+        original.report, sha256=sha256(report_content).hexdigest(), size_bytes=len(report_content)
+    )
+    dependencies = tuple(
+        bind(
+            "EXECUTION",
+            item.relative_path,
+            ("synthetic dependency: " + item.relative_path).encode(),
+        )
+        for item in original.execution_dependencies
+    )
+    calendar_policy = next(
+        item
+        for item in dependencies
+        if item.relative_path == original.calendar_policy.relative_path
+    )
+    receipt = replace(
+        original,
+        request=request,
+        execution=identity,
+        publication=publication,
+        report=report,
+        manifest=replace(
+            original.manifest,
+            member=bind(
+                "PUBLICATION", original.manifest.member.relative_path, b"synthetic manifest"
+            ),
+        ),
+        data_quality_evidence=replace(original.data_quality_evidence, report_sha256=report.sha256),
+        execution_dependencies=dependencies,
+        policy=replace(original.policy, sha256=dependencies[0].sha256),
+        calendar_policy=calendar_policy,
+        calendar=replace(original.calendar, special_closure_policy_sha256=calendar_policy.sha256),
+    )
+    proof = _synthetic_dispatch(receipt)
+    parent: dict[str, Any] = {"synthetic_only": True}
+    for key, content in (
+        ("request", receipt.request.canonical_bytes),
+        ("child_stdout", b'{"synthetic_only":true,"canonical_dq_call_count":1}'),
+        ("child_stderr", b""),
+        ("pre_dispatch_proof", b'{"synthetic_only":"pre guard"}'),
+        ("post_dispatch_proof", b'{"synthetic_only":"post guard"}'),
+    ):
+        binding = bind("EXECUTION", "synthetic/" + key + ".json", content)
+        parent[key] = {
+            "path": (Path(receipt.request.roots.execution_root) / binding.relative_path).as_posix(),
+            "sha256": binding.sha256,
+            "size_bytes": binding.size_bytes,
+        }
+    # Compact JSON is the DTO's actual canonical representation. The parent is
+    # deliberately only a metadata fixture, never successful-dispatch evidence.
+    parent_bytes = json.dumps(parent, sort_keys=True, separators=(",", ":")).encode()
+    proof = replace(
+        proof, parent_receipt=bind("EXECUTION", proof.parent_receipt.relative_path, parent_bytes)
+    )
+    return _RecordingCase(receipt, proof, "synthetic/successful-dispatch.json", buffers)
+
+
+def _record_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+    case: _RecordingCase,
+    *,
+    advanced_anchor: bool = False,
+) -> tuple[tuple[tuple[str, NamedArtifactBinding, bytes], ...], list[tuple[str, str]]]:
+    roots = {
+        Path(case.receipt.request.roots.publication_root): "PUBLICATION",
+        Path(case.receipt.request.roots.evidence_root): "EVIDENCE",
+        Path(case.receipt.request.roots.execution_root): "EXECUTION",
+    }
+    reads: list[tuple[str, str]] = []
+
+    def read(*, root: Path, relative_path: str) -> bytes:
+        key = roots[root], relative_path
+        reads.append(key)
+        return case.buffers[key]
+
+    def forbidden(*args: Any, **kwargs: Any) -> None:
+        raise AssertionError("metadata preservation must not dispatch DQ, write or mint context")
+
+    monkeypatch.setattr(execution, "read_contained_artifact_bytes", read)
+    for name in (
+        "validate_data_cache",
+        "write_contained_artifact_bytes",
+        "require_named_execution_context",
+    ):
+        monkeypatch.setattr(execution, name, forbidden)
+    anchor_id = case.receipt.publication.anchor_pointer_id
+    if advanced_anchor:
+        original = case.receipt.publication.anchor_pointer
+        retained_path = "pointer_history/download_composite/retained-anchor.json"
+        case.buffers[("PUBLICATION", retained_path)] = case.buffers[
+            ("PUBLICATION", original.relative_path)
+        ]
+        case.buffers[("PUBLICATION", original.relative_path)] = b"later mutable current pointer"
+
+        def old_anchor(**kwargs: Any) -> SimpleNamespace:
+            assert kwargs["pointer_id"] == anchor_id
+            assert kwargs["expected_pointer_sha256"] == original.sha256
+            return SimpleNamespace(
+                pointer_path=Path(case.receipt.request.roots.publication_root) / retained_path
+            )
+
+        monkeypatch.setattr(execution, "validate_named_snapshot", old_anchor)
+    else:
+        monkeypatch.setattr(execution, "validate_named_snapshot", forbidden)
+    capture = SimpleNamespace(
+        publication=SimpleNamespace(
+            anchor_pointer_id="advanced_anchor" if advanced_anchor else anchor_id
+        )
+    )
+    rows = execution._prospective_recording_metadata(
+        case.receipt,
+        case.proof,
+        receipt_path=_synthetic_receipt_path(case.receipt),
+        dispatch_path=case.dispatch_path,
+        dispatch_sha256=case.proof.canonical_sha256,
+        capture=cast(execution.CapturedNamedPublication, capture),
+    )
+    return rows, reads
+
+
+@pytest.mark.parametrize("advanced_anchor", [False, True])
+def test_prospective_metadata_preserves_every_original_byte_without_reopening_current(
+    monkeypatch: pytest.MonkeyPatch,
+    advanced_anchor: bool,
+) -> None:
+    case = _recording_case()
+    rows, reads = _record_metadata(monkeypatch, case, advanced_anchor=advanced_anchor)
+    assert type(rows) is tuple and rows == tuple(sorted(rows))
+    assert {role for role, _, _ in rows} == _RECORDING_METADATA_ROLES
+    assert len(rows) == len(_RECORDING_METADATA_ROLES)
+    values = {role: content for role, _, content in rows}
+    for _, binding, content in rows:
+        assert type(content) is bytes
+        assert binding.sha256 == sha256(content).hexdigest()
+        assert binding.size_bytes == len(content)
+    assert values["dq_receipt"] == case.receipt.canonical_bytes
+    assert values["dq_successful_dispatch"] == case.proof.canonical_bytes
+    assert values["dq_parent_request"] == case.receipt.request.canonical_bytes
+    assert values["dq_child_stderr"] == b""
+    assert values["commit_anchor"] == values["publication_pointer"]
+    assert NamedDQExecutionReceipt.from_json_bytes(values["dq_receipt"]) == case.receipt
+    assert (
+        NamedDQSuccessfulDispatchBinding.from_json_bytes(values["dq_successful_dispatch"])
+        == case.proof
+    )
+    assert ("EVIDENCE", _synthetic_receipt_path(case.receipt)) not in reads
+    assert ("EXECUTION", case.dispatch_path) not in reads
+    if advanced_anchor:
+        assert ("PUBLICATION", case.receipt.publication.anchor_pointer.relative_path) not in reads
+
+
+@pytest.mark.parametrize(
+    "role",
+    [
+        "pointer",
+        "transaction",
+        "snapshot_manifest",
+        "source_event",
+        "anchor_pointer",
+        "source_manifest",
+        "report",
+        "parent",
+        "child_stdout",
+        "child_stderr",
+        "pre_dispatch_proof",
+        "post_dispatch_proof",
+        "request",
+    ],
+)
+def test_prospective_metadata_rejects_changed_bytes_in_every_persisted_chain_component(
+    monkeypatch: pytest.MonkeyPatch,
+    role: str,
+) -> None:
+    case = _recording_case()
+    if role in {"pointer", "transaction", "snapshot_manifest", "source_event", "anchor_pointer"}:
+        binding = getattr(case.receipt.publication, role)
+    elif role == "source_manifest":
+        binding = case.receipt.manifest.member
+    elif role == "report":
+        binding = NamedArtifactBinding(
+            "EVIDENCE",
+            case.receipt.report.path,
+            case.receipt.report.sha256,
+            case.receipt.report.size_bytes,
+        )
+    elif role == "parent":
+        binding = case.proof.parent_receipt
+    else:
+        content = case.buffers[("EXECUTION", "synthetic/" + role + ".json")]
+        binding = NamedArtifactBinding(
+            "EXECUTION", "synthetic/" + role + ".json", sha256(content).hexdigest(), len(content)
+        )
+    case.buffers[(binding.root_role, binding.relative_path)] += b"changed"
+    with pytest.raises(
+        execution.NamedDataQualityExecutionError,
+        match="NAMED_DQ_(RECORDING_METADATA_DRIFT|DISPATCH_PARENT_SHA_MISMATCH)",
+    ):
+        _record_metadata(monkeypatch, case)
+
+
+@pytest.mark.parametrize("profile", _LEGACY_PREVIEW_PROFILES)
+def test_legacy_profiles_never_capture_or_grant_prospective_recording_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+    profile: tuple[str, str],
+) -> None:
+    original = _synthetic_receipt()
+    receipt = replace(
+        original,
+        request=replace(
+            original.request, source_manifest_path=profile[0], source_manifest_sha256=profile[1]
+        ),
+        execution=replace(
+            original.execution, source_manifest_path=profile[0], source_manifest_sha256=profile[1]
+        ),
+    )
+
+    def forbidden(*args: Any, **kwargs: Any) -> None:
+        raise AssertionError("legacy profile must reject before reading metadata")
+
+    monkeypatch.setattr(execution, "read_contained_artifact_bytes", forbidden)
+    assert (
+        execution._prospective_recording_metadata(
+            receipt,
+            _synthetic_dispatch(receipt),
+            receipt_path=_synthetic_receipt_path(receipt),
+            dispatch_path=None,
+            dispatch_sha256=None,
+            capture=cast(execution.CapturedNamedPublication, object()),
+        )
+        == ()
+    )
+    # Unbound method harness only: this is neither a VerifiedNamedInputs instance
+    # nor a minted seal. Real capability issuance belongs to candidate E2E.
+    projection = SimpleNamespace(_receipt=receipt, _assert_current=lambda: None)
+    projection._assert_prospective_profile = lambda: (
+        VerifiedNamedInputs._assert_prospective_profile(projection)
+    )
+    with pytest.raises(
+        ValueError, match="prospective capture requires its reviewed exact source manifest"
+    ):
+        VerifiedNamedInputs.recording_closure_for_prospective(projection)
+
+
+def test_prospective_recording_projection_includes_guards_and_complete_bound_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case = _recording_case()
+    metadata, _ = _record_metadata(monkeypatch, case)
+    dependencies = tuple(
+        (binding.relative_path, case.buffers[("EXECUTION", binding.relative_path)])
+        for binding in case.receipt.execution_dependencies
+    )
+    projection = SimpleNamespace(
+        _receipt=case.receipt,
+        _captured=(("prices", b"prices"), ("rates", b"rates")),
+        _captured_dependencies=dependencies,
+        _captured_recording_artifacts=metadata,
+        _assert_current=lambda: None,
+    )
+    projection._assert_prospective_profile = lambda: (
+        VerifiedNamedInputs._assert_prospective_profile(projection)
+    )
+    assert not isinstance(projection, VerifiedNamedInputs)
+    # Test the byte-preservation projection, without mocking a positive seal or
+    # suggesting these synthetic declarations passed the original DQ verifier.
+    result = VerifiedNamedInputs.recording_closure_for_prospective(projection)
+    assert result == tuple(sorted(result))
+    values = dict(result)
+    manifest = json.loads(values.pop("closure_manifest"))
+    assert manifest["schema_version"] == "prospective_verified_input_closure.v1"
+    assert manifest["request_id"] == case.receipt.request.request_id
+    assert manifest["receipt_id"] == case.receipt.receipt_id
+    assert manifest["execution_identity_sha256"] == case.receipt.execution.stable_identity_sha256
+    assert manifest["all_dq_input_roles"] == ["prices", "rates"]
+    assert manifest["recording_only"] is True
+    assert manifest["rates_feature_access_granted"] is False
+    assert manifest["provider_available_at_status"] == "NOT_ESTABLISHED"
+    indexed = {row["role"]: row for row in manifest["members"]}
+    assert (
+        set(indexed)
+        == set(values)
+        == _RECORDING_METADATA_ROLES
+        | {"input_prices", "input_rates", "dependency_000", "dependency_001"}
+    )
+    for role, content in values.items():
+        assert indexed[role]["binding"]["sha256"] == sha256(content).hexdigest()
+        assert indexed[role]["binding"]["size_bytes"] == len(content)
+    assert indexed["input_prices"]["semantic_role"] == "PRICE_FEATURE"
+    assert indexed["input_rates"]["semantic_role"] == "DQ_GUARD_ONLY"
+    assert values["input_rates"] == b"rates"
+    for role, binding, content in metadata:
+        assert values[role] == content
+        assert indexed[role] == {
+            "role": role,
+            "binding": binding.to_dict(),
+            "semantic_role": "VERIFIED_PROVENANCE",
+        }
+    for ordinal, binding in enumerate(case.receipt.execution_dependencies):
+        role = f"dependency_{ordinal:03d}"
+        assert indexed[role]["binding"] == binding.to_dict()
+        assert indexed[role]["semantic_role"] == "EXECUTION_DEPENDENCY"
+
+
+@pytest.mark.parametrize(
+    "damage", [None, "unknown_report_field", "markdown", "noncanonical_outer_json"]
+)
+def test_compact_report_values_restore_strict_dates_and_full_projection_rejects_rehashed_changes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    damage: str | None,
+) -> None:
+    case = _case(tmp_path)
+    captured = execution.capture_named_publication(case.request)
+    report = _canonical_report(case.request, captured)
+    content = execution._report_bundle(
+        report, capture=captured, request=case.request, dependencies=()
+    )
+    payload = json.loads(content)
+    if damage == "unknown_report_field":
+        payload["canonical_report"]["unreviewed_scope_override"] = True
+    elif damage == "markdown":
+        payload["canonical_report_markdown"] += "\nUnbound projection.\n"
+    if damage is not None:
+        content = execution._json_bytes(payload)
+        if damage == "noncanonical_outer_json":
+            content = json.dumps(payload, separators=(",", ":")).encode()
+    binding = replace(
+        _synthetic_receipt().report,
+        sha256=sha256(content).hexdigest(),
+        size_bytes=len(content),
+        info_count=report.info_count,
+        issue_codes=tuple(sorted({issue.code for issue in report.issues})),
+    )
+    # Receipt shape is a projection fixture, never a successfully verified DTO.
+    projection = SimpleNamespace(
+        request=case.request,
+        report=binding,
+        checked_at=report.checked_at,
+        execution_dependencies=(),
+        price_consistency_start_date=report.price_consistency_start_date,
+        rate_consistency_start_date=report.rate_consistency_start_date,
+    )
+
+    def read(*, root: Path, relative_path: str) -> bytes:
+        assert root == Path(case.request.roots.evidence_root)
+        assert relative_path == binding.path
+        return content
+
+    monkeypatch.setattr(execution, "read_contained_artifact_bytes", read)
+    if damage is None:
+        execution._verify_report_bundle(projection, captured)
+    else:
+        with pytest.raises(
+            execution.NamedDataQualityExecutionError,
+            match="NAMED_DQ_REPORT_(FIELDS_INVALID|FULL_PROJECTION_MISMATCH)",
+        ):
+            execution._verify_report_bundle(projection, captured)
+
+
+@pytest.mark.parametrize("operation", ["activate", "capture"])
+@pytest.mark.parametrize(
+    "failure_stage,child_count,expected_count",
+    [
+        ("terminal", 1, 1),
+        ("terminal", None, None),
+        ("terminal", True, None),
+        ("terminal", -1, None),
+        ("terminal", "1", None),
+        ("worker", 1, 1),
+        ("worker", None, None),
+        ("load", None, None),
+    ],
+)
+def test_bootstrap_failure_keeps_child_counter_distinct_from_zero_parent_counter(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    operation: str,
+    failure_stage: str,
+    child_count: object,
+    expected_count: int | None,
+) -> None:
+    from scripts import run_named_data_quality as bootstrap_main
+
+    events: list[str] = []
+    content = b'{"synthetic_control_flow_only":true}'
+    error = RuntimeError("synthetic failure; no actual child or DQ")
+    parent_receipt = {"synthetic_only": True, "path": "no-file-created.json"}
+
+    class Session:
+        canonical_dq_call_count = 0
+
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            events.append("session")
+
+        def load(self) -> None:
+            events.append("load")
+            if failure_stage == "load":
+                raise error
+
+        def assert_execution_unchanged(self, *, stage: str) -> None:
+            assert stage == "TERMINAL"
+            events.append("terminal")
+            raise error
+
+        def close(self) -> None:
+            events.append("close")
+
+    def worker(*args: Any, **kwargs: Any) -> dict[str, object]:
+        events.append("worker")
+        if failure_stage == "worker":
+            error.prospective_child_canonical_dq_call_count = child_count  # type: ignore[attr-defined]
+            error.prospective_dq_parent_receipt = parent_receipt  # type: ignore[attr-defined]
+            raise error
+        return {"canonical_dq_call_count": child_count, "dq_parent_receipt": parent_receipt}
+
+    arguments = SimpleNamespace(
+        request=Path("D:/synthetic/request.json"),
+        request_sha256=sha256(content).hexdigest(),
+        operation=operation,
+        source_lease_id="CONTROL_FLOW_STUB_ONLY",
+        receipt_path=None,
+        receipt_sha256=None,
+        run_dispatch_path=None,
+        run_dispatch_sha256=None,
+    )
+    parser = SimpleNamespace(
+        add_argument=lambda *args, **kwargs: None, parse_args=lambda: arguments
+    )
+    monkeypatch.setattr(
+        bootstrap_main, "argparse", SimpleNamespace(ArgumentParser=lambda **kwargs: parser)
+    )
+    monkeypatch.setattr(
+        bootstrap_main, "sys", SimpleNamespace(flags=SimpleNamespace(isolated=True))
+    )
+    monkeypatch.setattr(bootstrap_main, "_absolute_directory", lambda value: Path(value))
+    monkeypatch.setattr(bootstrap_main, "_initial_file_bytes", lambda *args: content)
+    monkeypatch.setattr(bootstrap_main, "NamedBootstrapSession", Session)
+    monkeypatch.setattr(
+        bootstrap_main,
+        "importlib",
+        SimpleNamespace(import_module=lambda name: SimpleNamespace(bootstrap_worker=worker)),
+    )
+    assert bootstrap_main.main() == 2
+    observed = json.loads(capsys.readouterr().out)
+    assert observed["status"] == "BLOCKED"
+    assert observed["canonical_dq_call_count"] == expected_count
+    assert observed["parent_canonical_dq_call_count"] == 0
+    assert observed["counter_observation_state"] == (
+        "UNKNOWN" if expected_count is None else "KNOWN"
+    )
+    assert observed["dq_parent_receipt"] == (None if failure_stage == "load" else parent_receipt)
+    for key in (
+        "capture_admitted",
+        "activation_admitted",
+        "real_observation_admitted",
+        "dispatch_allowed",
+    ):
+        assert observed[key] is False
+    assert observed["production_effect"] == observed["broker_action"] == "none"
+    expected_events = ["session", "load"]
+    if failure_stage != "load":
+        expected_events.append("worker")
+    if failure_stage == "terminal":
+        expected_events.append("terminal")
+    assert events == [*expected_events, "close"]
 
 
 @pytest.mark.parametrize(

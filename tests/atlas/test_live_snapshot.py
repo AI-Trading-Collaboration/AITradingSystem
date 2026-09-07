@@ -128,7 +128,7 @@ def test_live_policy_separates_research_evidence_and_page_dates() -> None:
         "共同数据覆盖止于2026-07-23；该事实晚于2563已发布的路径失败记录，不能继续视为仅等待retry授权。"
         "独立运营环境已有同as-of的DQ与daily PASS，但不同root、输入、policy和code身份不能直接互换。"
         "S2c.2固定五候选纯preview与显式只读plan已完成工程验证及普通main发布；"
-        "完整registry与XNYS日期随同一seal封存。S3a前瞻事件时间sidecar已实现、正在验证，仅证明本地payload落盘时间；S3b真实activation与完整见证准入仍待完成；"
+        "完整registry与XNYS日期随同一seal封存。S3a前瞻事件时间sidecar已完成工程验证及普通main发布。S3b五候选采集父执行链已实现、正在验证，包含完整输入保全、父ACK与留存信号重算；真实范围review与activation/capture仍待完成；"
         "本波不执行真实DQ、manifest replay、"
         "研究、观察更新或数据/交易动作。2560 single-session producer仅SAFE_PREVIEW_READY，"
         "真实prospective observation仍为0；2557的INSUFFICIENT/HOLD、2558的matched-placebo未区分"

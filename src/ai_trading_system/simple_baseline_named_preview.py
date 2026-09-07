@@ -20,10 +20,16 @@ from typing import Any, NoReturn, cast
 import numpy as np
 import pandas as pd
 
+from ai_trading_system.contracts.data_quality_execution import canonical_json_value
 from ai_trading_system.contracts.named_data_quality_execution import (
     EQUAL_RISK_GUARD_RATE_SERIES,
     EQUAL_RISK_PRICE_TICKERS,
     EQUAL_RISK_PRIMARY_START,
+    PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
+    PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
+    NamedDQExecutionReceipt,
+    NamedDQScope,
+    NamedDQSuccessfulDispatchBinding,
     NamedEqualRiskPriceScope,
     VerifiedNamedInputs,
 )
@@ -382,3 +388,174 @@ def build_named_simple_baseline_preview(
             ("numpy_version", np.__version__),
         ),
     )
+
+
+def build_prospective_simple_baseline_preview(
+    verified: VerifiedNamedInputs, *, required_scope: NamedEqualRiskPriceScope
+) -> dict[str, object]:
+    """Describe frozen targets under the separate prospective source profile.
+
+    Only the new verifier accessor admits that profile. The legacy preview DTO
+    and accessor retain their original exact source identity. This pure result
+    supplies neither an activation nor evidence that a signal met its deadline.
+    See TRADING-2564_S3b_Prospective_Capture_Execution_V1.md §3.
+    """
+    if type(verified) is not VerifiedNamedInputs:
+        _fail("NAMED_PREVIEW_VERIFIED_INPUTS_REQUIRED", "same-process verifier seal required")
+    prices, registry, sessions, next_session = (
+        verified.inputs_for_prospective_five_candidate_preview(required_scope=required_scope)
+    )
+    return rebuild_prospective_simple_baseline_preview(
+        receipt=verified.receipt,
+        successful_dispatch=verified.successful_dispatch,
+        required_scope=required_scope,
+        prices=prices,
+        registry=registry,
+        sessions=sessions,
+        next_session=next_session,
+    )
+
+
+def rebuild_prospective_simple_baseline_preview(
+    *,
+    receipt: NamedDQExecutionReceipt,
+    successful_dispatch: NamedDQSuccessfulDispatchBinding,
+    required_scope: NamedEqualRiskPriceScope,
+    prices: bytes,
+    registry: bytes,
+    sessions: tuple[date, ...],
+    next_session: date,
+) -> dict[str, object]:
+    """Recompute retained result content; never mint a seal or live authority.
+
+    The retained verifier must independently validate the complete source/input
+    closure and canonical calendar before comparing this entire result with the
+    recorded signal. This helper checks pure binding consistency and arithmetic
+    only. Live callers must still enter through the verifier-sealed wrapper.
+    """
+    if (
+        type(receipt) is not NamedDQExecutionReceipt
+        or type(successful_dispatch) is not NamedDQSuccessfulDispatchBinding
+        or type(required_scope) is not NamedEqualRiskPriceScope
+    ):
+        _fail("NAMED_PREVIEW_EVIDENCE_TYPES_REQUIRED", "exact retained evidence DTO types required")
+    successful_dispatch.assert_matches_receipt(
+        receipt, receipt_path=successful_dispatch.receipt.relative_path
+    )
+    if (
+        receipt.execution.source_manifest_path != PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH
+        or receipt.execution.source_manifest_sha256
+        != PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256
+    ):
+        _fail("NAMED_PREVIEW_SOURCE_PROFILE_MISMATCH", "exact prospective source profile required")
+    required_dq = NamedDQScope(
+        as_of=required_scope.as_of,
+        requested_window=required_scope.requested_window,
+        expected_price_tickers=required_scope.expected_price_tickers,
+        expected_rate_series=required_scope.guard_rate_series,
+        input_roles=("prices", "rates"),
+        require_secondary_prices=False,
+    )
+    if not receipt.request.scope.covers(required_dq):
+        _fail(
+            "NAMED_PREVIEW_RECEIPT_SCOPE_MISMATCH",
+            "original full-window canonical request required",
+        )
+    if receipt.report.status != "PASS" or not receipt.data_quality_evidence.ready:
+        _fail("NAMED_PREVIEW_DQ_NOT_PASS", "retained preview requires strict data-quality PASS")
+    if (
+        type(registry) is not bytes
+        or required_scope.registry_binding not in receipt.execution_dependencies
+        or len(registry) != required_scope.registry_binding.size_bytes
+        or hashlib.sha256(registry).hexdigest() != required_scope.registry_binding.sha256
+    ):
+        _fail(
+            "NAMED_PREVIEW_REGISTRY_BINDING_MISMATCH", "retained registry differs from its binding"
+        )
+    price_input = next(item for item in receipt.inputs if item.role == "prices")
+    if (
+        type(prices) is not bytes
+        or len(prices) != price_input.member.size_bytes
+        or hashlib.sha256(prices).hexdigest() != price_input.member.sha256
+    ):
+        _fail("NAMED_PREVIEW_PRICE_BINDING_MISMATCH", "retained prices differ from their binding")
+    config = _parse_registry(registry)
+    matrix, counts = _price_matrix(prices, scope=required_scope, sessions=sessions)
+    if counts[0] != price_input.row_count:
+        _fail("NAMED_PREVIEW_PRICE_BINDING_MISMATCH", "original price row count differs from bytes")
+    candidates = _candidate_previews(matrix, config, next_session=next_session)
+    payload: dict[str, object] = {
+        "schema_version": "prospective_five_candidate_preview.v1",
+        "status": "FIVE_CANDIDATE_PREVIEW_READY",
+        "scope": required_scope.to_dict(),
+        "research_window": "unified_primary_2021",
+        "requested_window": required_scope.requested_window.to_dict(),
+        "original_dq_requested_window": receipt.request.scope.requested_window.to_dict(),
+        "original_dq_evaluated_window": receipt.evaluated_window.to_dict(),
+        "consumed_price_window": required_scope.requested_window.to_dict(),
+        "data_quality_status": receipt.report.status,
+        "data_quality_receipt": receipt.to_dict(),
+        "data_quality_receipt_id": receipt.receipt_id,
+        "data_quality_request_id": receipt.request.request_id,
+        "data_quality_report": receipt.report.to_dict(),
+        "data_quality_policy": receipt.policy.to_dict(),
+        "calendar": receipt.calendar.to_dict(),
+        "registry_binding": required_scope.registry_binding.to_dict(),
+        "price_binding": next(
+            item.member.to_dict() for item in receipt.inputs if item.role == "prices"
+        ),
+        "execution_identity": receipt.execution.to_dict(),
+        "successful_original_dispatch": successful_dispatch.to_dict(),
+        "calculation_environment": {
+            "python_implementation": platform.python_implementation(),
+            "python_version": platform.python_version(),
+            "pandas_version": pd.__version__,
+            "numpy_version": np.__version__,
+        },
+        "source_row_count": counts[0],
+        "consumed_row_count": counts[1],
+        "excluded_before_window_row_count": counts[2],
+        "excluded_other_ticker_row_count": counts[3],
+        "candidates": [item.to_dict() for item in candidates],
+        # Reviewed S3a protocol identifiers; no calendar I/O or new clock rule.
+        "timing_version": "NEXT_XNYS_CLOSE_FORWARD_V1",
+        "feature_session": required_scope.as_of.isoformat(),
+        "decision_effective_session": next_session.isoformat(),
+        "return_clock": "EFFECTIVE_SESSION_CLOSE_TO_NEXT_XNYS_SESSION_CLOSE",
+        "legacy_return_equivalent": False,
+        "legacy_applied_session_role": "ORIGINAL_TARGET_SHIFT_LABEL_ONLY",
+        "legacy_applied_session_is_execution_evidence": False,
+        "recompute_target_at_effective_session": False,
+        "carried_target_is_rebalance_evidence": False,
+        "read_only_plan": {
+            "status": "PREVIEW_ONLY",
+            "candidate_ids": [item.candidate_id for item in candidates],
+            "prices_role": "FEATURE_INPUT",
+            "rates_role": "DQ_GUARD_ONLY",
+            "calendar_role": "VERIFIER_SEALED_CANONICAL_SESSIONS",
+            "execution_allowed": False,
+            "next_gate": "S3B_ACTIVATION_INPUT_SIGNAL_AND_PARENT_ACK_ADMISSION",
+            "summary_zh": (
+                "保留五候选原权重及调仓日期；新前瞻收益从下一 XNYS session 收盘开始，"
+                "实际准入仍须核验激活、输入、信号完成与父执行确认。"
+            ),
+        },
+        "pit_status": "NOT_ESTABLISHED",
+        "oos_status": "NOT_ESTABLISHED",
+        "timing_evidence_established": False,
+        "verified_input_seal_exported": False,
+        "observation_authorized": False,
+        "consumer_cutover_allowed": False,
+        "dispatch_allowed": False,
+        "dq_validation_executed": False,
+        "observation_created": False,
+        "outcome_read": False,
+        "returns_computed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+    payload["preview_id"] = (
+        "prospective_five_candidate_preview_"
+        + hashlib.sha256(canonical_json_value(payload).encode("utf-8")).hexdigest()
+    )
+    return payload

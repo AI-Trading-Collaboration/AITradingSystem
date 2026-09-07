@@ -40,6 +40,8 @@ from ai_trading_system.contracts.data_quality_execution import (
 from ai_trading_system.contracts.named_data_quality_execution import (
     FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH,
     FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256,
+    PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
+    PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
     NamedArtifactBinding,
     NamedDQExecutionReceipt,
     NamedDQExecutionRequest,
@@ -130,6 +132,9 @@ class _CapturedDependency(Protocol):
 
 class NamedBootstrapAuthority(Protocol):
     """Narrow structural interface; the live context is independently required."""
+
+    @property
+    def operation(self) -> str: ...
 
     @property
     def context(self) -> NamedExecutionContext | None: ...
@@ -1071,6 +1076,14 @@ def verify_named_data_quality_execution_receipt(
     if receipt.report.status != "PASS" or not receipt.data_quality_evidence.ready:
         _fail("NAMED_DQ_STRICT_PASS_REQUIRED", receipt.report.status)
     preview_sessions, preview_next_session = _preview_calendar_witness(request)
+    recording_artifacts = _prospective_recording_metadata(
+        receipt,
+        successful_dispatch,
+        receipt_path=receipt_path,
+        dispatch_path=run_dispatch_path,
+        dispatch_sha256=run_dispatch_sha256,
+        capture=capture,
+    )
     bootstrap.assert_execution_unchanged(stage="TERMINAL")
     if bootstrap.canonical_dq_call_count != 0:
         _fail("NAMED_DQ_VERIFY_DISPATCH_COUNT", "verifier dispatched DQ")
@@ -1084,6 +1097,7 @@ def verify_named_data_quality_execution_receipt(
         ),
         preview_sessions=preview_sessions,
         preview_next_session=preview_next_session,
+        captured_recording_artifacts=recording_artifacts,
     )
 
 
@@ -1096,10 +1110,16 @@ def _preview_calendar_witness(
     Legacy profiles do not acquire the new consumer witness. All date decisions
     reuse the same canonical function already bound by _policy_and_calendar.
     """
-    if (
-        request.source_manifest_path != FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH
-        or request.source_manifest_sha256 != FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256
-    ):
+    if (request.source_manifest_path, request.source_manifest_sha256) not in {
+        (
+            FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH,
+            FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256,
+        ),
+        (
+            PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
+            PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
+        ),
+    }:
         return (), None
     day = request.scope.requested_window.start
     sessions = []
@@ -1112,6 +1132,110 @@ def _preview_calendar_witness(
     return tuple(sessions), day
 
 
+def _prospective_recording_metadata(
+    receipt: NamedDQExecutionReceipt,
+    successful: NamedDQSuccessfulDispatchBinding,
+    *,
+    receipt_path: str,
+    dispatch_path: str | None,
+    dispatch_sha256: str | None,
+    capture: CapturedNamedPublication,
+) -> tuple[tuple[str, NamedArtifactBinding, bytes], ...]:
+    """Finish S3b preservation capture during verification, before minting a seal.
+
+    Old profiles capture no new metadata and retain their old authority. This
+    records the original anchor bytes even when current has since advanced; the
+    ordinary named verifier already proved that anchor's committed membership.
+    """
+    request = receipt.request
+    if (request.source_manifest_path, request.source_manifest_sha256) != (
+        PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
+        PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
+    ):
+        return ()
+    roots = {
+        "EXECUTION": Path(request.roots.execution_root),
+        "PUBLICATION": Path(request.roots.publication_root),
+        "EVIDENCE": Path(request.roots.evidence_root),
+    }
+    rows: list[tuple[str, NamedArtifactBinding, bytes]] = []
+
+    def preserve(role: str, binding: NamedArtifactBinding, content: bytes | None = None) -> bytes:
+        if content is None:
+            content = read_contained_artifact_bytes(
+                root=roots[binding.root_role], relative_path=binding.relative_path
+            )
+        if len(content) != binding.size_bytes or sha256(content).hexdigest() != binding.sha256:
+            _fail("NAMED_DQ_RECORDING_METADATA_DRIFT", role)
+        rows.append((role, binding, content))
+        return content
+
+    publication = receipt.publication
+    for role, binding in (
+        ("publication_pointer", publication.pointer),
+        ("publication_transaction", publication.transaction),
+        ("snapshot_manifest", publication.snapshot_manifest),
+        ("source_event", publication.source_event),
+        ("source_manifest", receipt.manifest.member),
+    ):
+        preserve(role, binding)
+    if capture.publication.anchor_pointer_id == publication.anchor_pointer_id:
+        preserve("commit_anchor", publication.anchor_pointer)
+    else:
+        old_anchor = validate_named_snapshot(
+            store_root=roots["PUBLICATION"]
+            / Path(publication.anchor_pointer.relative_path).parent.parent,
+            dataset_id=publication.dataset_id,
+            pointer_id=publication.anchor_pointer_id,
+            expected_pointer_sha256=publication.anchor_pointer.sha256,
+        )
+        preserve(
+            "commit_anchor",
+            publication.anchor_pointer,
+            read_contained_artifact_bytes(
+                root=roots["PUBLICATION"],
+                relative_path=old_anchor.pointer_path.relative_to(roots["PUBLICATION"]).as_posix(),
+            ),
+        )
+    preserve(
+        "dq_report",
+        NamedArtifactBinding(
+            "EVIDENCE", receipt.report.path, receipt.report.sha256, receipt.report.size_bytes
+        ),
+    )
+    preserve("dq_receipt", successful.receipt, receipt.canonical_bytes)
+    if dispatch_path is None or dispatch_sha256 is None:
+        _fail("NAMED_DQ_SUCCESSFUL_DISPATCH_REQUIRED", receipt_path)
+    preserve(
+        "dq_successful_dispatch",
+        NamedArtifactBinding(
+            "EXECUTION", dispatch_path, dispatch_sha256, len(successful.canonical_bytes)
+        ),
+        successful.canonical_bytes,
+    )
+    parent_content = preserve("dq_parent", successful.parent_receipt)
+    parent = _object(_strict_json_loads(parent_content.decode("utf-8")), "DQ parent")
+    for role, key in (
+        ("dq_parent_request", "request"),
+        ("dq_child_stdout", "child_stdout"),
+        ("dq_child_stderr", "child_stderr"),
+        ("dq_pre_guard", "pre_dispatch_proof"),
+        ("dq_post_guard", "post_dispatch_proof"),
+    ):
+        value = _object(parent.get(key), "parent artifact")
+        content = _read_parent_artifact(value, root=roots["EXECUTION"])
+        preserve(
+            role,
+            _artifact(
+                "EXECUTION",
+                Path(cast(str, value["path"])).relative_to(roots["EXECUTION"]).as_posix(),
+                content,
+            ),
+            content,
+        )
+    return tuple(sorted(rows))
+
+
 def bootstrap_worker(
     request: Mapping[str, object],
     *,
@@ -1122,6 +1246,22 @@ def bootstrap_worker(
     run_dispatch_path: str | None = None,
     run_dispatch_sha256: str | None = None,
 ) -> dict[str, object]:
+    if operation in {"activate", "capture"}:
+        # Only the fixed new profile can dispatch this fixed production parent;
+        # old profiles never import its additional modules or acquire its scope.
+        if (request.get("source_manifest_path"), request.get("source_manifest_sha256")) != (
+            PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
+            PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
+        ) or any(
+            value is not None
+            for value in (receipt_path, receipt_sha256, run_dispatch_path, run_dispatch_sha256)
+        ):
+            _fail("NAMED_DQ_PROSPECTIVE_PROFILE_REQUIRED", operation)
+        from ai_trading_system.prospective_capture_execution import (
+            bootstrap_worker as capture_worker,
+        )
+
+        return capture_worker(request, operation=operation, bootstrap=bootstrap)
     typed = NamedDQExecutionRequest.from_dict(request)
     common: dict[str, object] = {
         "schema_version": "named_data_quality_bootstrap_result.v1",

@@ -218,6 +218,36 @@ FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256 = (
     "8d338125acfbecb4ad6c863c9d21e87a9e2c541c9eb200cef94b4b98d2dda45e"
 )
 
+# S3b is a distinct execution/recording scope, never another accepted pin of
+# the legacy 57/59 accessors or result DTO. The fixed manifest lists paths only.
+# See TRADING-2564_S3b_Prospective_Capture_Execution_V1.md §3.
+PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH = (
+    "config/data_governance/named_prospective_five_candidate_sources_v1.json"
+)
+PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256 = (
+    "1f7cb44e83f3e1d6840ae5a181c58972cb7ff31ff52e353c37bc8a3d9280a315"
+)
+
+_PROSPECTIVE_RECORDING_ROLES = frozenset(
+    {
+        "publication_pointer",
+        "publication_transaction",
+        "snapshot_manifest",
+        "source_event",
+        "commit_anchor",
+        "source_manifest",
+        "dq_report",
+        "dq_receipt",
+        "dq_successful_dispatch",
+        "dq_parent",
+        "dq_parent_request",
+        "dq_child_stdout",
+        "dq_child_stderr",
+        "dq_pre_guard",
+        "dq_post_guard",
+    }
+)
+
 
 @dataclass(frozen=True)
 class NamedEqualRiskPriceScope(_NamedDTO):
@@ -868,6 +898,7 @@ class VerifiedNamedInputs:
     _captured_dependencies: tuple[tuple[str, bytes], ...]
     _preview_sessions: tuple[date, ...]
     _preview_next_session: date | None
+    _captured_recording_artifacts: tuple[tuple[str, NamedArtifactBinding, bytes], ...]
 
     def __init__(
         self,
@@ -880,6 +911,7 @@ class VerifiedNamedInputs:
         captured_dependencies: tuple[tuple[str, bytes], ...] = (),
         preview_sessions: tuple[date, ...] = (),
         preview_next_session: date | None = None,
+        captured_recording_artifacts: tuple[tuple[str, NamedArtifactBinding, bytes], ...] = (),
     ) -> None:
         if _seal is not _VERIFIED_NAMED_SEAL:
             _invalid("verified named inputs require verifier seal")
@@ -925,12 +957,12 @@ class VerifiedNamedInputs:
                 item.relative_path for item in receipt.execution_dependencies
             }:
                 _invalid("captured execution dependency set mismatch")
-            for item in receipt.execution_dependencies:
-                content = dependencies[item.relative_path]
+            for dependency in receipt.execution_dependencies:
+                content = dependencies[dependency.relative_path]
                 if (
-                    item.root_role != "EXECUTION"
-                    or len(content) != item.size_bytes
-                    or hashlib.sha256(content).hexdigest() != item.sha256
+                    dependency.root_role != "EXECUTION"
+                    or len(content) != dependency.size_bytes
+                    or hashlib.sha256(content).hexdigest() != dependency.sha256
                 ):
                     _invalid("captured execution dependency bytes mismatch")
         if type(preview_sessions) is not tuple or any(
@@ -940,10 +972,20 @@ class VerifiedNamedInputs:
         if preview_sessions or preview_next_session is not None:
             if (
                 not captured_dependencies
-                or receipt.execution.source_manifest_path
-                != FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH
-                or receipt.execution.source_manifest_sha256
-                != FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256
+                or (
+                    receipt.execution.source_manifest_path,
+                    receipt.execution.source_manifest_sha256,
+                )
+                not in {
+                    (
+                        FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH,
+                        FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256,
+                    ),
+                    (
+                        PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
+                        PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
+                    ),
+                }
                 or not preview_sessions
                 or tuple(sorted(set(preview_sessions))) != preview_sessions
                 or preview_sessions[0] < receipt.request.scope.requested_window.start
@@ -952,6 +994,36 @@ class VerifiedNamedInputs:
                 or preview_next_session <= receipt.request.scope.as_of
             ):
                 _invalid("preview calendar witness does not bind the full verified request")
+        prospective = (
+            receipt.execution.source_manifest_path,
+            receipt.execution.source_manifest_sha256,
+        ) == (
+            PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
+            PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
+        )
+        if type(captured_recording_artifacts) is not tuple or any(
+            type(row) is not tuple
+            or len(row) != 3
+            or type(row[0]) is not str
+            or type(row[1]) is not NamedArtifactBinding
+            or type(row[2]) is not bytes
+            for row in captured_recording_artifacts
+        ):
+            _invalid("prospective recording closure requires immutable typed artifacts")
+        if prospective:
+            roles = [row[0] for row in captured_recording_artifacts]
+            if len(set(roles)) != len(roles) or set(roles) != _PROSPECTIVE_RECORDING_ROLES:
+                _invalid("prospective recording metadata closure must be complete")
+            if not captured_dependencies or not preview_sessions:
+                _invalid("prospective recording requires captured dependencies and calendar")
+            for role, binding, content in captured_recording_artifacts:
+                if (
+                    len(content) != binding.size_bytes
+                    or hashlib.sha256(content).hexdigest() != binding.sha256
+                ):
+                    _invalid("prospective recording artifact bytes mismatch: " + role)
+        elif captured_recording_artifacts:
+            _invalid("legacy profile cannot mint prospective recording metadata")
         object.__setattr__(self, "_receipt", receipt)
         object.__setattr__(self, "_successful_dispatch", successful_dispatch)
         object.__setattr__(self, "_context", context)
@@ -960,6 +1032,7 @@ class VerifiedNamedInputs:
         object.__setattr__(self, "_captured_dependencies", tuple(sorted(captured_dependencies)))
         object.__setattr__(self, "_preview_sessions", preview_sessions)
         object.__setattr__(self, "_preview_next_session", preview_next_session)
+        object.__setattr__(self, "_captured_recording_artifacts", captured_recording_artifacts)
 
     def _assert_current(self) -> None:
         if (
@@ -1061,6 +1134,32 @@ class VerifiedNamedInputs:
             or execution.source_manifest_sha256 != FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256
         ):
             _invalid("five-candidate preview requires its reviewed exact source manifest")
+        return self._captured_preview_inputs(required_scope=required_scope)
+
+    def inputs_for_prospective_five_candidate_preview(
+        self, *, required_scope: NamedEqualRiskPriceScope
+    ) -> tuple[bytes, bytes, tuple[date, ...], date]:
+        """S3b-only calculation access; the old 59-profile does not acquire it."""
+        self._assert_prospective_profile()
+        if type(required_scope) is not NamedEqualRiskPriceScope:
+            _invalid("prospective preview requires the fixed typed price scope")
+        return self._captured_preview_inputs(required_scope=required_scope)
+
+    def _assert_prospective_profile(self) -> None:
+        self._assert_current()
+        if (
+            self._receipt.execution.source_manifest_path,
+            self._receipt.execution.source_manifest_sha256,
+        ) != (
+            PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
+            PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
+        ):
+            _invalid("prospective capture requires its reviewed exact source manifest")
+
+    def _captured_preview_inputs(
+        self, *, required_scope: NamedEqualRiskPriceScope
+    ) -> tuple[bytes, bytes, tuple[date, ...], date]:
+        # Called only after the public accessor checks its distinct exact pin.
         if required_scope.registry_binding not in self._receipt.execution_dependencies:
             _invalid("preview registry differs from the captured execution dependency")
         required_dq = NamedDQScope(
@@ -1089,6 +1188,53 @@ class VerifiedNamedInputs:
                 return content, registry, sessions, self._preview_next_session
         _invalid("preview prices are not verified")
 
+    def recording_closure_for_prospective(self) -> tuple[tuple[str, bytes], ...]:
+        """Copy verified bytes for preservation, never grant feature/rates access.
+
+        Includes every DQ input, even guard-only roles, and the metadata captured
+        by the verifier before minting this seal. No source path is reopened.
+        """
+        self._assert_prospective_profile()
+        rows = [("input_" + role, content) for role, content in self._captured]
+        bindings = {item.role: item.member for item in self._receipt.inputs}
+        index = [
+            {
+                "role": "input_" + role,
+                "binding": bindings[role].to_dict(),
+                "semantic_role": "PRICE_FEATURE" if role == "prices" else "DQ_GUARD_ONLY",
+            }
+            for role, _ in self._captured
+        ]
+        for role, binding, content in self._captured_recording_artifacts:
+            rows.append((role, content))
+            index.append(
+                {"role": role, "binding": binding.to_dict(), "semantic_role": "VERIFIED_PROVENANCE"}
+            )
+        dependencies = {item.relative_path: item for item in self._receipt.execution_dependencies}
+        for ordinal, (path, content) in enumerate(self._captured_dependencies):
+            role = f"dependency_{ordinal:03d}"
+            rows.append((role, content))
+            index.append(
+                {
+                    "role": role,
+                    "binding": dependencies[path].to_dict(),
+                    "semantic_role": "EXECUTION_DEPENDENCY",
+                }
+            )
+        manifest = {
+            "schema_version": "prospective_verified_input_closure.v1",
+            "request_id": self._receipt.request.request_id,
+            "receipt_id": self._receipt.receipt_id,
+            "execution_identity_sha256": self._receipt.execution.stable_identity_sha256,
+            "members": sorted(index, key=lambda item: str(item["role"])),
+            "all_dq_input_roles": sorted(item.role for item in self._receipt.inputs),
+            "recording_only": True,
+            "rates_feature_access_granted": False,
+            "provider_available_at_status": "NOT_ESTABLISHED",
+        }
+        rows.append(("closure_manifest", canonical_json_value(manifest).encode("utf-8")))
+        return tuple(sorted(rows))
+
     def __reduce_ex__(self, protocol: SupportsIndex) -> Never:
         raise TypeError("verified named inputs cannot be serialized")
 
@@ -1105,6 +1251,7 @@ def _verified_named_inputs_from_receipt(
     captured_dependencies: tuple[tuple[str, bytes], ...] = (),
     preview_sessions: tuple[date, ...] = (),
     preview_next_session: date | None = None,
+    captured_recording_artifacts: tuple[tuple[str, NamedArtifactBinding, bytes], ...] = (),
 ) -> VerifiedNamedInputs:
     """Named verifier only, after full byte/provenance checks; not a verification API."""
     return VerifiedNamedInputs(
@@ -1115,5 +1262,6 @@ def _verified_named_inputs_from_receipt(
         captured_dependencies=captured_dependencies,
         preview_sessions=preview_sessions,
         preview_next_session=preview_next_session,
+        captured_recording_artifacts=captured_recording_artifacts,
         _seal=_VERIFIED_NAMED_SEAL,
     )

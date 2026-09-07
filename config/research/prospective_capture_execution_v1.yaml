@@ -1,0 +1,51 @@
+schema_version: prospective_capture_execution_policy.v1
+policy_id: prospective_capture_execution_v1
+policy_version: 1.0.0
+status: REVIEWED_ENGINEERING_CONTRACT_REAL_SCOPE_REVIEW_REQUIRED
+owner: Project Owner / integration-coordinator
+requirement_ref: docs/requirements/TRADING-2564_S3b_Prospective_Capture_Execution_V1.md
+rationale: >-
+  五候选的真实前瞻记录需要将完整源码身份、指定快照的严格 DQ、同进程预览、
+  完整输入保存及 witness 写后确认接为一条可重验的执行链。
+intended_effect: >-
+  单个 bounded manifest 只允许一个 activation 及每个显式 feature session 一次 attempt。
+  真实范围另由 owner review 精确绑定；工程验证不签发真实运行或结果访问权限。
+validation_plan: >-
+  actual fresh-bootstrap 合成链及 profile/lease/DQ/闭包/时钟/崩溃/幂等负例，
+  16-worker 聚焦验证、exact final candidate 正式验证和 Full。
+review_condition: >-
+  首次真实启用前复核 source roots、exact code、时间语义、host trust 与 bounded manifest；
+  改变消费者、收益时钟、执行次数、来源角色或结果访问需要新的受审合同。
+profile:
+  consumer_family: FIVE_CANDIDATE
+  source_manifest_path: config/data_governance/named_prospective_five_candidate_sources_v1.json
+  source_manifest_sha256: 1f7cb44e83f3e1d6840ae5a181c58972cb7ff31ff52e353c37bc8a3d9280a315
+  parent_operations: [activate, capture]
+  child_operation: run
+  parent_canonical_dq_calls: 0
+  canonical_dq_calls_per_capture: 1
+  original_profiles_extended: false
+recording:
+  timing_version: NEXT_XNYS_CLOSE_FORWARD_V1
+  first_feature_rule: FIRST_XNYS_SESSION_AFTER_COMPLETE_ACTIVATION_ACK_MARKET_DATE
+  deadline: STRICTLY_BEFORE_NEXT_XNYS_SCHEDULED_CLOSE
+  complete_witness_observation: AFTER_RECORDER_RETURNS
+  acknowledgement_own_durability_time_claimed: false
+  input_closure: ALL_DQ_MEMBERS_AND_VERIFIED_PROVENANCE_AND_EXECUTION_DEPENDENCIES
+  missing_ack_recovery: PRESERVE_INCOMPLETE_WITHOUT_REDISPATCH_OR_BACKDATE
+  same_key_retry: ORIGINAL_COMPLETE_RESULT_OR_INCOMPLETE
+authorization:
+  control_artifact: TRUSTED_OPERATOR_OWNER_REVIEW_BOUND_TO_EXACT_MANIFEST
+  cryptographic_owner_signature_claimed: false
+  risk_tier: R1_BOUNDED_RESEARCH_SANDBOX
+  historical_one_shot_authorization_reusable: false
+  synthetic_evidence_admitted_to_research: false
+safety:
+  outcome_access_allowed: false
+  legacy_observation_ledger_mutation_allowed: false
+  download_allowed: false
+  provider_allowed: false
+  orders_allowed: false
+  fills_allowed: false
+  production_effect: none
+  broker_action: none
