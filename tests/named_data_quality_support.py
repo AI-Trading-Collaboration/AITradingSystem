@@ -34,6 +34,7 @@ import pytest
 from ai_trading_system.contracts.data_quality_execution import DataQualityDateWindow
 from ai_trading_system.contracts.named_data_quality_execution import (
     EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH,
+    FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH,
     NamedArtifactBinding,
     NamedDQExecutionReceipt,
     NamedDQExecutionRequest,
@@ -384,6 +385,162 @@ finally:
 """
 
 
+_FIVE_CANDIDATE_PREVIEW_TEST_PROBE = r"""
+import argparse
+import builtins
+import hashlib
+import importlib
+import io
+import json
+import os
+import pickle
+import runpy
+import socket
+import sys
+from dataclasses import replace
+from pathlib import Path
+from unittest.mock import patch
+
+parser = argparse.ArgumentParser()
+parser.add_argument("bootstrap", type=Path)
+parser.add_argument("--request", required=True, type=Path)
+parser.add_argument("--request-sha256", required=True)
+parser.add_argument("--source-lease-id", required=True)
+parser.add_argument("--operation", choices=("verify",), required=True)
+parser.add_argument("--receipt-path", required=True)
+parser.add_argument("--receipt-sha256", required=True)
+parser.add_argument("--run-dispatch-path", required=True)
+parser.add_argument("--run-dispatch-sha256", required=True)
+args = parser.parse_args()
+session = None
+def forbidden(*args, **kwargs):
+    raise AssertionError("PREVIEW_PROBE_FORBIDDEN_IO")
+try:
+    if not sys.flags.isolated:
+        raise ValueError("PREVIEW_PROBE_ISOLATED_CHILD_REQUIRED")
+    entry = runpy.run_path(str(args.bootstrap))
+    raw = entry["_initial_file_bytes"](args.request.parent, args.request.name)
+    if hashlib.sha256(raw).hexdigest() != args.request_sha256:
+        raise ValueError("PREVIEW_PROBE_REQUEST_SHA_MISMATCH")
+    request = entry["_json_object"](raw)
+    session = entry["NamedBootstrapSession"](
+        request, operation="verify", source_lease_id=args.source_lease_id
+    )
+    session.load()
+    contracts = importlib.import_module("ai_trading_system.contracts.named_data_quality_execution")
+    window_type = importlib.import_module(
+        "ai_trading_system.contracts.data_quality_execution"
+    ).DataQualityDateWindow
+    typed = contracts.NamedDQExecutionRequest.from_dict(request)
+    worker = importlib.import_module(entry["WORKER_MODULE"])
+    verified = worker.verify_named_data_quality_execution_receipt(
+        typed, receipt_path=args.receipt_path, receipt_sha256=args.receipt_sha256,
+        run_dispatch_path=args.run_dispatch_path,
+        run_dispatch_sha256=args.run_dispatch_sha256, bootstrap=session,
+    )
+    receipt_before = verified.receipt.canonical_bytes
+    registry = next((item for item in verified.receipt.execution_dependencies
+                     if item.relative_path == contracts.EQUAL_RISK_PRICE_REGISTRY_PATH),
+                    contracts.NamedArtifactBinding(
+                        "EXECUTION", contracts.EQUAL_RISK_PRICE_REGISTRY_PATH, "0" * 64, 1))
+    scope = contracts.NamedEqualRiskPriceScope(
+        as_of=typed.scope.as_of,
+        requested_window=window_type(contracts.EQUAL_RISK_PRIMARY_START, typed.scope.as_of),
+        registry_binding=registry,
+    )
+    # Old closures must fail at the accessor before attempting to import the new consumer.
+    prices, registry_bytes, sessions, next_session = (
+        verified.inputs_for_five_candidate_preview(required_scope=scope)
+    )
+    consumer = importlib.import_module("ai_trading_system.simple_baseline_named_preview")
+    calendar = importlib.import_module("ai_trading_system.trading_calendar")
+    calendar_policy = importlib.import_module("ai_trading_system.us_equity_special_closure_policy")
+    checks = {}
+    # Clear the actual policy cache after verification; no future date getter may run.
+    calendar_policy.default_us_equity_special_closure_policy.cache_clear()
+    with patch.object(builtins, "open", forbidden), patch.object(io, "open", forbidden), \
+         patch.object(socket, "socket", forbidden), \
+         patch.object(calendar, "is_us_equity_trading_day", forbidden):
+        preview = consumer.build_named_simple_baseline_preview(verified, required_scope=scope)
+        payload = preview.to_dict()
+        checks["repeat_is_identical_without_io"] = (
+            consumer.build_named_simple_baseline_preview(verified, required_scope=scope)
+            .canonical_bytes == preview.canonical_bytes
+        )
+        for label, bad_scope in {
+            "registry_sha": replace(scope, registry_binding=replace(registry, sha256="0" * 64)),
+            "registry_size": replace(scope, registry_binding=replace(
+                registry, size_bytes=registry.size_bytes + 1)),
+        }.items():
+            try:
+                consumer.build_named_simple_baseline_preview(verified, required_scope=bad_scope)
+            except contracts.NamedDataQualityExecutionContractError:
+                checks[label + "_rejected"] = True
+            else:
+                checks[label + "_rejected"] = False
+        try:
+            verified.prices_for_equal_risk_preview(required_scope=scope)
+        except contracts.NamedDataQualityExecutionContractError:
+            checks["old_accessor_rejects_new_manifest"] = True
+        else:
+            checks["old_accessor_rejects_new_manifest"] = False
+        try:
+            pickle.dumps(verified)
+        except TypeError:
+            checks["pickle_rejected"] = True
+        else:
+            checks["pickle_rejected"] = False
+    checks["receipt_unchanged"] = verified.receipt.canonical_bytes == receipt_before
+    checks["captured_registry_exact"] = (
+        hashlib.sha256(registry_bytes).hexdigest() == registry.sha256
+    )
+    checks["compiled_complete_closure"] = len(session.loader.loaded) == 59
+    checks["consumer_dq_zero"] = session.canonical_dq_call_count == 0
+    result = {
+        "schema_version": "named_data_quality_bootstrap_result.v1",
+        "profile": "FIVE_CANDIDATE_PREVIEW_TEST_PROBE", "status": "PASS",
+        "request_id": typed.request_id, "process_id": os.getpid(),
+        "source_lease_id": session.source_lease_id,
+        "receipt_id": verified.receipt.receipt_id,
+        "original_dq_pid": verified.receipt.execution_observation.execution_pid,
+        "verifier_pid": verified.verifier_pid,
+        "actual_compiled_module_count": len(session.loader.loaded),
+        "execution_identity_sha256": session.context.identity.stable_identity_sha256,
+        "canonical_dq_call_count": session.canonical_dq_call_count,
+        "preview": payload,
+        "verified_input_seal_exported": False, "dispatch_allowed": False,
+        "production_effect": "none", "broker_action": "none",
+    }
+    session.assert_execution_unchanged(stage="TERMINAL")
+    result["child_started_at"] = session.started_at
+    result["child_terminal_checked_at"] = session.terminal_checked_at
+    session.close()
+    try:
+        consumer.build_named_simple_baseline_preview(verified, required_scope=scope)
+    except session.context_module.NamedExecutionContextError as exc:
+        checks["closed_context_rejected"] = exc.code == "NAMED_CONTEXT_REQUIRED"
+    else:
+        checks["closed_context_rejected"] = False
+    if not all(checks.values()):
+        raise ValueError("PREVIEW_PROBE_BOUNDARY_FAILED: " + repr(checks))
+    result["probe_checks"] = checks
+    print(json.dumps(result, ensure_ascii=False, sort_keys=True, allow_nan=False))
+except (ValueError, OSError, ImportError, RuntimeError, SyntaxError, TypeError) as exc:
+    print(json.dumps({
+        "schema_version": "named_data_quality_bootstrap_result.v1",
+        "profile": "FIVE_CANDIDATE_PREVIEW_TEST_PROBE", "status": "BLOCKED",
+        "reason_code": getattr(exc, "code", "PREVIEW_PROBE_FAILED"), "detail": str(exc),
+        "canonical_dq_call_count": 0 if session is None else session.canonical_dq_call_count,
+        "verified_input_seal_exported": False, "dispatch_allowed": False,
+        "production_effect": "none", "broker_action": "none",
+    }, ensure_ascii=False, sort_keys=True))
+    raise SystemExit(2)
+finally:
+    if session is not None:
+        session.close()
+"""
+
+
 def _sha(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
 
@@ -589,6 +746,7 @@ def build_actual_candidate_fixture(
     expected_price_tickers: tuple[str, ...] = ("QQQ",),
     expected_rate_series: tuple[str, ...] = ("DGS10",),
     equal_risk_price_profile: bool = False,
+    five_candidate_preview_profile: bool = False,
     expected_evaluated_window: DataQualityDateWindow | None = None,
 ) -> NamedExecutionFixture:
     """Publish synthetic bytes, then relocate only that tmp-path publication.
@@ -599,10 +757,20 @@ def build_actual_candidate_fixture(
     Original manifest output paths are preserved when copying the synthetic
     publication. No source, policy, or real market cache is copied from ROOT.
     """
-    if type(equal_risk_price_profile) is not bool:
+    if (
+        type(equal_risk_price_profile) is not bool
+        or type(five_candidate_preview_profile) is not bool
+        or (equal_risk_price_profile and five_candidate_preview_profile)
+    ):
         pytest.fail("NAMED_PARENT_PRICE_PROFILE_MUST_BE_BOOL")
     source_manifest_path = (
-        EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH if equal_risk_price_profile else SOURCE_MANIFEST_PATH
+        FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH
+        if five_candidate_preview_profile
+        else (
+            EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH
+            if equal_risk_price_profile
+            else SOURCE_MANIFEST_PATH
+        )
     )
     execution_root = execution_root.resolve()
     if execution_root != ROOT:
@@ -1000,6 +1168,7 @@ def dispatch_actual_candidate_child(
     successful_run: ParentDispatchResult | None = None,
     test_probe: bool = False,
     equal_risk_price_probe: bool = False,
+    five_candidate_preview_probe: bool = False,
     parent_evidence_root: Path | None = None,
 ) -> ParentDispatchResult:
     """Dispatch one actual child under an existing, live, explicitly named lease.
@@ -1021,10 +1190,19 @@ def dispatch_actual_candidate_child(
         or (equal_risk_price_probe and test_probe)
     ):
         pytest.fail("NAMED_PARENT_PRICE_PROBE_EXCLUSIVE_VERIFY_ONLY")
+    if type(five_candidate_preview_probe) is not bool or (
+        five_candidate_preview_probe
+        and (operation != "verify" or test_probe or equal_risk_price_probe)
+    ):
+        pytest.fail("NAMED_PARENT_PREVIEW_PROBE_EXCLUSIVE_VERIFY_ONLY")
     fixed_probe = (
-        _EQUAL_RISK_PRICE_TEST_PROBE
-        if equal_risk_price_probe
-        else _SEALED_INPUTS_TEST_PROBE if test_probe else None
+        _FIVE_CANDIDATE_PREVIEW_TEST_PROBE
+        if five_candidate_preview_probe
+        else (
+            _EQUAL_RISK_PRICE_TEST_PROBE
+            if equal_risk_price_probe
+            else _SEALED_INPUTS_TEST_PROBE if test_probe else None
+        )
     )
     run_dispatch_path = run_dispatch_sha256 = None
     if operation == "verify":
@@ -1164,9 +1342,13 @@ def dispatch_actual_candidate_child(
         "schema_version": "named_data_quality_parent_dispatch.v1",
         "profile": "ACTUAL_CANDIDATE_SYNTHETIC_E2E",
         "child_entrypoint_profile": (
-            "EQUAL_RISK_PRICE_TEST_PROBE"
-            if equal_risk_price_probe
-            else "TEST_PROBE" if test_probe else "PRODUCTION_CLI"
+            "FIVE_CANDIDATE_PREVIEW_TEST_PROBE"
+            if five_candidate_preview_probe
+            else (
+                "EQUAL_RISK_PRICE_TEST_PROBE"
+                if equal_risk_price_probe
+                else "TEST_PROBE" if test_probe else "PRODUCTION_CLI"
+            )
         ),
         "fixed_test_probe_sha256": (
             _sha(fixed_probe.encode("utf-8")) if fixed_probe is not None else None

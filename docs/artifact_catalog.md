@@ -24,6 +24,13 @@ S2c.1的`NamedEqualRiskPriceScope`是可序列化的固定价格范围请求，�
 不进入Reader Brief自动消费，均为`production_effect=none`、`broker_action=none`。实际Full仍只由原runner
 与唯一publication transaction控制；S2b仅manual工程合同，当前波全部真实DQ/研究/数据/交易动作0。
 
+S2c.2的`named_simple_baseline_preview.v1`由`build_named_simple_baseline_preview`在同一verifier
+context内生成，仅为可序列化的内存描述，无新持久路径或CLI writer。输入限定精确59/8源码闭包、
+captured prices、完整冻结registry与verifier封存XNYS日期。输出固定五候选target weights、实际
+rebalance/signal/理论applied日期、完整requested/evaluated/consumed窗口、receipt/dispatch/code/
+registry/environment身份及显式只读plan。任一候选历史不足或计算非有限时整批阻断；零波动保持原
+算法行为。结果不导出seal，不计算returns、创建observation或证明PIT/OOS；execution/cutover=false。
+
 ## DEVX-006D Report / Catalog / Flow Lossless Fragment Shadow
 
 |Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|

@@ -833,6 +833,39 @@ def test_new_private_factory_imports_and_calls_have_narrow_owner_allowlists() ->
                     assert relative in allowed[name], f"{relative}: unauthorized {name} reference"
 
 
+@pytest.mark.parametrize("damage", ["missing", "duplicate", "wrong_path", "wrong_bytes", "mutable"])
+def test_captured_dependency_negative_validation_cannot_issue_a_seal(
+    monkeypatch: pytest.MonkeyPatch, damage: str
+) -> None:
+    # Deliberately injected synthetic context solely to reach rejection branches.
+    # No case may construct a seal; real issuance remains actual-candidate E2E.
+    import ai_trading_system.contracts.named_data_quality_execution as contracts
+
+    receipt = _receipt()
+    context = _initialize_test_named_execution_context(receipt.execution)
+    monkeypatch.setattr(contracts, "require_named_execution_context", lambda: context)
+    captured = tuple((item.relative_path, b"bad") for item in receipt.execution_dependencies)
+    if damage == "missing":
+        captured = captured[:-1]
+    elif damage == "duplicate":
+        captured = (captured[0], captured[0])
+    elif damage == "wrong_path":
+        captured = (("config/unknown.yaml", b"bad"), *captured[1:])
+    elif damage == "mutable":
+        captured = tuple(list(pair) for pair in captured)
+    try:
+        with pytest.raises(ValueError, match="captured (execution )?dependenc"):
+            _verified_named_inputs_from_receipt(
+                receipt,
+                receipt_path=_receipt_path(receipt),
+                successful_dispatch=_dispatch(receipt),
+                captured_inputs=(("prices", b"prices"), ("rates", b"rates")),
+                captured_dependencies=captured,
+            )
+    finally:
+        close_named_execution_context(context)
+
+
 def test_nested_unknown_field_and_noncanonical_types_are_not_dropped() -> None:
     request = _request()
     payload = json.loads(request.canonical_bytes)

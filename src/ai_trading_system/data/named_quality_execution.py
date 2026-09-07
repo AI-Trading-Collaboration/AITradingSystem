@@ -12,7 +12,7 @@ import json
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
 from pathlib import Path
 from typing import NoReturn, Protocol, cast
@@ -38,6 +38,8 @@ from ai_trading_system.contracts.data_quality_execution import (
     canonical_json_value,
 )
 from ai_trading_system.contracts.named_data_quality_execution import (
+    FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH,
+    FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256,
     NamedArtifactBinding,
     NamedDQExecutionReceipt,
     NamedDQExecutionRequest,
@@ -87,7 +89,7 @@ from ai_trading_system.data.quality_provenance import (
     match_named_manifest_member,
     parse_manifest_content,
 )
-from ai_trading_system.trading_calendar import us_equity_calendar_source
+from ai_trading_system.trading_calendar import is_us_equity_trading_day, us_equity_calendar_source
 from ai_trading_system.us_equity_special_closure_policy import (
     CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH,
     default_us_equity_special_closure_policy,
@@ -1068,6 +1070,7 @@ def verify_named_data_quality_execution_receipt(
     _verify_report_bundle(receipt, capture)
     if receipt.report.status != "PASS" or not receipt.data_quality_evidence.ready:
         _fail("NAMED_DQ_STRICT_PASS_REQUIRED", receipt.report.status)
+    preview_sessions, preview_next_session = _preview_calendar_witness(request)
     bootstrap.assert_execution_unchanged(stage="TERMINAL")
     if bootstrap.canonical_dq_call_count != 0:
         _fail("NAMED_DQ_VERIFY_DISPATCH_COUNT", "verifier dispatched DQ")
@@ -1076,7 +1079,37 @@ def verify_named_data_quality_execution_receipt(
         captured_inputs=capture.captured,
         successful_dispatch=successful_dispatch,
         receipt_path=receipt_path,
+        captured_dependencies=tuple(
+            (path, item.content) for path, item in sorted(bootstrap.dependencies.items())
+        ),
+        preview_sessions=preview_sessions,
+        preview_next_session=preview_next_session,
     )
+
+
+def _preview_calendar_witness(
+    request: NamedDQExecutionRequest,
+) -> tuple[tuple[date, ...], date | None]:
+    """Seal canonical dates after calendar verification, never load them in a consumer.
+
+    This is calendar enumeration, not a data-quality/feature/outcome evaluation.
+    Legacy profiles do not acquire the new consumer witness. All date decisions
+    reuse the same canonical function already bound by _policy_and_calendar.
+    """
+    if (
+        request.source_manifest_path != FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH
+        or request.source_manifest_sha256 != FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256
+    ):
+        return (), None
+    day = request.scope.requested_window.start
+    sessions = []
+    while day <= request.scope.as_of:
+        if is_us_equity_trading_day(day):
+            sessions.append(day)
+        day += timedelta(days=1)
+    while not is_us_equity_trading_day(day):
+        day += timedelta(days=1)
+    return tuple(sessions), day
 
 
 def bootstrap_worker(

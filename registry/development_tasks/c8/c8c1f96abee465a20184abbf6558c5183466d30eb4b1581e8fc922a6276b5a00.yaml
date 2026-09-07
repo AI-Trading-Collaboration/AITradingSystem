@@ -17,14 +17,16 @@ task_record:
   requirement_refs:
   - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
   - docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md
+  - docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md
   - docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S2c.1首轮architecture因单一当前RCF计数断言失败；先最小修复与扩大前置回归，再新source/final验收，之后才进入S2c.2纯预览。
+  unstructured_legacy_blocker_or_next_step: S2c.1已正式发布；S2c.2同seal完整registry/calendar与固定五候选纯预览已实现，独立审查修复完成，准备exact
+    candidate合成E2E、正式tiers/Full和普通main发布；S3-S5仍待完成。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 固定57/8价格范围合同；旧API/共同window/DQ规则不变；原12 actual E2E与新增14场景通过，正式tiers/Full与main/origin精确一致；S2c.2/S3仍待完成，所有真实动作0。
+    text: 旧55/7与57/8合同/E2E保留；新闭包同进程严格价格/registry解析、五候选逐值/月初/lag/嵌套lookback等价与零副作用；实际candidate合成run1/verify0/preview、正式tiers/Full/main发布；真实研究与数据/交易动作0。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -589,6 +591,53 @@ events:
   - change:trading-2564-s2c-architecture-count-fix-20260907-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-ecff910f94a7af9435547d9b5bd8357b
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-07T01:14:25.216051+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2c2-preview-start-20260907-v2
+  lane_id: null
+  base_commit: b79974d6531c70deb18db153b3bd16c8f9e6e6ac
+  previous_state_event_id: task-event-ecff910f94a7af9435547d9b5bd8357b
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator
+    blocker_or_next_step: S2c.1已Full PASS并发布b79974d65；Owner要求继续S2c.2，先审同seal完整registry与新源码闭包，再实现固定五候选纯预览/只读plan；S3-S5仍待完成。
+    acceptance_criteria: 旧55/7与57/8合同/E2E保留；新闭包同进程严格价格/registry解析、五候选逐值/月初/lag/嵌套lookback等价与零副作用；实际candidate合成run1/verify0/preview、正式tiers/Full/main发布；真实研究与数据/交易动作0。
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md；docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md；2026-09-07
+      Owner继续推进；S2c.1终态PASS/COMPLETED/RELEASED，原始失败保留；复用DEVX014工作区。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2c2-preview-start-20260907-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ddf3a536ed5fdb00ea97d61328a4ba87
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-07T01:49:39.703175+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s2c2-preview-implementation-20260907-v1
+  lane_id: null
+  base_commit: b79974d6531c70deb18db153b3bd16c8f9e6e6ac
+  previous_state_event_id: task-event-ddf3a536ed5fdb00ea97d61328a4ba87
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator
+    blocker_or_next_step: S2c.1已正式发布；S2c.2同seal完整registry/calendar与固定五候选纯预览已实现，独立审查修复完成，准备exact
+      candidate合成E2E、正式tiers/Full和普通main发布；S3-S5仍待完成。
+    acceptance_criteria: 旧55/7与57/8合同/E2E保留；新闭包同进程严格价格/registry解析、五候选逐值/月初/lag/嵌套lookback等价与零副作用；实际candidate合成run1/verify0/preview、正式tiers/Full/main发布；真实研究与数据/交易动作0。
+    notes: 需求：docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md；docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md。新闭包59/8，五候选复用原算法，主窗口2021-02-22不变；初始旧合同251
+      PASS，新增聚焦中发现的测试预期/regex问题已修正，原失败XML保留。复用DEVX014工作区，当前及旧root保留条件见需求；真实DQ/研究/数据/provider/交易动作0，S3及PIT/OOS未准入。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s2c2-preview-implementation-20260907-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-9956ad5bf3b3475140208e3d48c37ca3
 projection:
   legacy_first_eight_cells:
   - TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
@@ -596,20 +645,17 @@ projection:
   - P1
   - IN_PROGRESS
   - integration-coordinator
-  - S2c.1首轮architecture因单一当前RCF计数断言失败；先最小修复与扩大前置回归，再新source/final验收，之后才进入S2c.2纯预览。
-  - 固定57/8价格范围合同；旧API/共同window/DQ规则不变；原12 actual E2E与新增14场景通过，正式tiers/Full与main/origin精确一致；S2c.2/S3仍待完成，所有真实动作0。
-  - S2c.1 source d94dd79675d902d3630820f108b84a4a7f0766d3保留；actual26 PASS/43 parent/21
-    synthetic DQ与独立抽查PASS。首轮architecture1055 PASS/1 FAIL，仅DEVX011 live RCF successor仍断言3162而当前3164，Full=0、未发布。当前最小metadata
-    failure-fix只更新精确计数/注释并补入前置共享回归，不改生产算法、DQ或政策；新candidate仍须实际E2E与正式tiers/Full。需求：docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md。S2c.2纯五候选预览与S3真实前瞻仍待完成，研究目标不变。当前root保留canonical
-    runtime；旧D:/Work/AITradingSystem_trading2559_integration保留18项源码及unique inputs/outputs，next
-    owner coordinator，退出条件为规范保留/hash/源码与进程依赖审清后精确allowlist清理。真实研究/DQ/下载/市场cache/provider和交易均0；旧一次授权不重复消费，heartbeat
-    PAUSED。
+  - S2c.1已正式发布；S2c.2同seal完整registry/calendar与固定五候选纯预览已实现，独立审查修复完成，准备exact candidate合成E2E、正式tiers/Full和普通main发布；S3-S5仍待完成。
+  - 旧55/7与57/8合同/E2E保留；新闭包同进程严格价格/registry解析、五候选逐值/月初/lag/嵌套lookback等价与零副作用；实际candidate合成run1/verify0/preview、正式tiers/Full/main发布；真实研究与数据/交易动作0。
+  - 需求：docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md；docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md。新闭包59/8，五候选复用原算法，主窗口2021-02-22不变；初始旧合同251
+    PASS，新增聚焦中发现的测试预期/regex问题已修正，原失败XML保留。复用DEVX014工作区，当前及旧root保留条件见需求；真实DQ/研究/数据/provider/交易动作0，S3及PIT/OOS未准入。
   docs_links:
   - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
   - docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md
+  - docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md
   - docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md
   terminal: false
-  canonical_row_sha256: bf37dbca0ba58804d762b348967d22df5e0e94b1f02fbc64698aa327f594b5c9
-last_event_id: task-event-ecff910f94a7af9435547d9b5bd8357b
+  canonical_row_sha256: 76a2fb06b62c0b51cc9fb1288c144327f1b4b3ae643f7ae74fa377480c5c49a1
+last_event_id: task-event-9956ad5bf3b3475140208e3d48c37ca3
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b8371e7627563657f09193498c420a34330e14f69cd04bf6cbdc3b05d7d78167
+fragment_checksum: 5953271f0f061a4198cb587bf3ffa2e58d27308b2e6dadb3420a69265ae8662e

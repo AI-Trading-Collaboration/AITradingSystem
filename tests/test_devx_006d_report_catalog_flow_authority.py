@@ -127,7 +127,7 @@ def test_repository_authority_is_fresh_lossless_and_inactive() -> None:
     assert result["source_of_truth"] == "LEGACY_MONOLITH"
     assert result["fragment_shadow_active"] is False
     assert result["target_count"] == 3
-    assert result["entry_count"] == 3164
+    assert result["entry_count"] == 3167
     assert 1 <= result["fragment_count"] <= 192
     assert policy["contract"] == {
         "source_of_truth": "LEGACY_MONOLITH",
@@ -150,11 +150,11 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         "report_catalog_flow_successor"
     ]
 
-    latest_section = "phase_trading_2564_s2c_equal_risk_price_consumer_scope_v1"
+    latest_section = "phase_trading_2564_s2c2_five_candidate_preview_v1"
     assert next(reversed(merged)) == latest_section
     assert (
         list(merged).index(latest_section)
-        == list(merged).index("phase_trading_2564_s2b_named_dq_execution_v1") + 1
+        == list(merged).index("phase_trading_2564_s2c_equal_risk_price_consumer_scope_v1") + 1
     )
     assert list(merged).index("phase_ops_079_historical_daily_gap_recovery_executor_v1") < list(
         merged
@@ -168,7 +168,7 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     assert successor["source_of_truth"] == "LEGACY_MONOLITH"
     assert successor["fragment_shadow_active"] is False
     assert successor["target_count"] == 3
-    assert successor["entry_count"] == 3164
+    assert successor["entry_count"] == 3167
     assert successor["fragment_count"] == 192
 
 
@@ -184,14 +184,14 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         (
             "artifact_catalog",
             "docs/artifact_catalog.md",
-            "f0dab19631aa1933010943bbcc8e158a0716e2196d19a06e446107a256abb725",
-            564,
+            "b49ce427176d2d45bc7c1805963ef29ce45fd3ac0d7e58c2a7e2fe61e9d02b7d",
+            565,
         ),
         (
             "system_flow",
             "docs/system_flow.md",
-            "796f92d3282b9efe03487727a18dcf87680d291b5eb3c733e9e90d4f741abfa4",
-            1227,
+            "3b087db6eabf4dce190225670563f4e70f9153bb1308c157bcccfa2306acfc4e",
+            1229,
         ),
     ],
 )

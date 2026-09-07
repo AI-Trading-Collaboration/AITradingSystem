@@ -1,0 +1,182 @@
+{
+  "schema_version": "compatibility_authority_fragment.v1",
+  "section": {
+    "authority_contract": {
+      "dual_write": false,
+      "fragment_identity": "CANONICAL_SECTION_SHA256",
+      "fragment_source_active": true,
+      "index_chain": "SHA256",
+      "legacy_append_allowed": false,
+      "rollback_mode": "FROZEN_LEGACY_PREFIX_ONLY"
+    },
+    "broker_action": "none",
+    "owner_decision": "owner_instruction:2026-09-01:fix_then_rerun",
+    "production_effect": "none",
+    "quarantine_contract": {
+      "active_store_post_validation_required": true,
+      "alpha_or_gate_usage_rejected": true,
+      "configured_event_rejected": true,
+      "direct_child_only": true,
+      "exact_source_bytes_preserved": true,
+      "idempotent_replay_validated": true,
+      "sha256_receipt_bound": true
+    },
+    "risk_event_admission_contract": {
+      "batch_error_writes_zero_attestations": true,
+      "batch_error_writes_zero_occurrences": true,
+      "known_match_preferred_from_mixed_list": true,
+      "reviewed_config_required": true,
+      "unknown_matched_id_is_error": true,
+      "validator_relaxed": false
+    },
+    "safety": {
+      "broker_action": "none",
+      "historical_evidence_rewritten": false,
+      "production_effect": "none",
+      "provider_request_performed": false,
+      "risk_rule_auto_created": false,
+      "same_as_of_recovery_allowed": false,
+      "strategy_or_weight_changed": false
+    },
+    "schema_version": "risk_012_unknown_risk_event_id_fail_closed.v1",
+    "sources": [
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+        "sha256": "2b5a9ad26a3a9f6acf4d0283a2e11fbee1f31a6600ffa76bc072ce97e2d19d9c"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/artifact_catalog.md",
+        "sha256": "b49ce427176d2d45bc7c1805963ef29ce45fd3ac0d7e58c2a7e2fe61e9d02b7d"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/operations/operations_runbook.md",
+        "sha256": "d322ca05fcb6ee27a76d239cebaaf9f2d4912c2bfd4340f61fe1f7e44913e2ff"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md",
+        "sha256": "a7b552dfb0bc6c0c21d52e556e64fe6bac04f124c17d06db03a604335d5de74f"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/system_flow.md",
+        "sha256": "3b087db6eabf4dce190225670563f4e70f9153bb1308c157bcccfa2306acfc4e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/task_register.md",
+        "sha256": "3d5fbefa4b051ad36ba3dc4181316de44eafca6c4c74b8b2684fa8879a768a95"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_005_task_registry_index.yaml",
+        "sha256": "d0b7da4be6febc5dc013d25d57d76af1a7e35ff1df5d0153f9cd567209f29246"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+        "sha256": "db028322ddc9b3310ef40455a11fb1a3ca2f47bae165233d7fa0b9b1380bf132"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+        "sha256": "bbe1a68ded9a87505b631ae8021ba5bc6e108b4365301acbb7291292801c9187"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "README.md",
+        "sha256": "cfae82f9daa840d42c62fca3917845367b4bced75d1a206fca21628359e0f35a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "registry/development_tasks/00/0077ffa71fac5e73308aa161a5cad7d17fea3acbff6dde2c92fc7d698b52b3fa.yaml",
+        "sha256": "72b770014cf933b54537db48b14a126c45ccfe1cc45962c8c88fea7ccab370dc"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/cli_commands/risk_events.py",
+        "sha256": "7b3f3903ddab6ed20fdcbe3152f2425877f139bac19902b53fe45cde3989c38d"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "sha256": "201e034d698c836db2cc9e4bfc9ffd4eb73292497fa6b2a4eed7df3fc701623a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/risk_event_llm_formal.py",
+        "sha256": "af70b5d1e6c72c7ca43ca18401c5fa9bd700d986ac850d6be35421aad26e6e29"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/risk_events.py",
+        "sha256": "00d138a02582406478b2d76688461ee3ecb1e70000791f2c676a09ff826a2a97"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_004_refactor_policy.py",
+        "sha256": "99a7795827fe56dcbe2d003c0c8d323202103a8bd7ab330f0341f921466fe28d"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_005_s5_task_source_cutover.py",
+        "sha256": "28b967b9299f3a619f7ab6d119522f580a8f83f2367ae98ee012193ccf5ec54e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006c_compatibility_authority.py",
+        "sha256": "bdb69879f57968bdb32e74a92d0f71ce7f668fb81ebd4d5d77a7158a93f37e9a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "sha256": "c303e9df50326d3b2df863bffd493e046f1b2e0d1a05b10743b60a60f6ee1885"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_risk_event_llm_formal.py",
+        "sha256": "ed1a47b6d15bb211ecfa2293d6e9bb976904d000c18f4b48c2a1f699d09ff75f"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_trading2452_architecture_contract.py",
+        "sha256": "74f06a168c4c758af66dddf32997af9b94694480db9f3cd063c5fe5c060c953e"
+      }
+    ],
+    "status": "IN_PROGRESS",
+    "superseded_live_source_paths": [
+      "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+      "docs/artifact_catalog.md",
+      "docs/operations/operations_runbook.md",
+      "docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md",
+      "docs/system_flow.md",
+      "docs/task_register.md",
+      "inputs/architecture/arch_005_task_registry_index.yaml",
+      "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+      "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+      "README.md",
+      "registry/development_tasks/00/0077ffa71fac5e73308aa161a5cad7d17fea3acbff6dde2c92fc7d698b52b3fa.yaml",
+      "src/ai_trading_system/cli_commands/risk_events.py",
+      "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+      "src/ai_trading_system/risk_event_llm_formal.py",
+      "src/ai_trading_system/risk_events.py",
+      "tests/test_arch_004_refactor_policy.py",
+      "tests/test_arch_005_s5_task_source_cutover.py",
+      "tests/test_devx_006c_compatibility_authority.py",
+      "tests/test_devx_006d_report_catalog_flow_authority.py",
+      "tests/test_risk_event_llm_formal.py",
+      "tests/test_trading2452_architecture_contract.py"
+    ],
+    "supersession": {
+      "current_hash_authority": "phase_risk_012_unknown_risk_event_id_fail_closed_v1.sources",
+      "historical_hashes_rewritten": false,
+      "inherited_supersession_authority": "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1"
+    },
+    "task_id": "RISK-012"
+  },
+  "section_id": "phase_risk_012_unknown_risk_event_id_fail_closed_v1",
+  "section_sha256": "b0915702c3bdbb5b27273c2c933ac8ca83105116c128c4a037bc6b4e90b0ff14"
+}

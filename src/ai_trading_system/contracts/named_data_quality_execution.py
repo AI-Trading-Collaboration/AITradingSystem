@@ -208,6 +208,16 @@ EQUAL_RISK_GUARD_RATE_SERIES = ("DGS2", "DGS10", "DTWEXBGS")
 # Existing AGENTS.md primary-window policy; never inferred from retained runs.
 EQUAL_RISK_PRIMARY_START = date(2021, 2, 22)
 
+# S2c.2 adds a distinct consumer closure. Never add this pin to the S2c.1
+# accessor: a captured-input request is not permission to import new consumers.
+# See TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md §3.
+FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH = (
+    "config/data_governance/named_simple_baseline_preview_sources_v1.json"
+)
+FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256 = (
+    "8d338125acfbecb4ad6c863c9d21e87a9e2c541c9eb200cef94b4b98d2dda45e"
+)
+
 
 @dataclass(frozen=True)
 class NamedEqualRiskPriceScope(_NamedDTO):
@@ -855,6 +865,9 @@ class VerifiedNamedInputs:
     _context: NamedExecutionContext
     _verifier_pid: int
     _captured: tuple[tuple[str, bytes], ...]
+    _captured_dependencies: tuple[tuple[str, bytes], ...]
+    _preview_sessions: tuple[date, ...]
+    _preview_next_session: date | None
 
     def __init__(
         self,
@@ -864,6 +877,9 @@ class VerifiedNamedInputs:
         receipt_path: str,
         successful_dispatch: NamedDQSuccessfulDispatchBinding,
         _seal: object,
+        captured_dependencies: tuple[tuple[str, bytes], ...] = (),
+        preview_sessions: tuple[date, ...] = (),
+        preview_next_session: date | None = None,
     ) -> None:
         if _seal is not _VERIFIED_NAMED_SEAL:
             _invalid("verified named inputs require verifier seal")
@@ -895,11 +911,55 @@ class VerifiedNamedInputs:
                 or hashlib.sha256(content).hexdigest() != item.member.sha256
             ):
                 _invalid("captured immutable member bytes mismatch")
+        if type(captured_dependencies) is not tuple or any(
+            type(pair) is not tuple
+            or len(pair) != 2
+            or type(pair[0]) is not str
+            or type(pair[1]) is not bytes
+            for pair in captured_dependencies
+        ):
+            _invalid("captured dependencies must be immutable path/bytes tuples")
+        if captured_dependencies:
+            dependencies = dict(captured_dependencies)
+            if len(dependencies) != len(captured_dependencies) or set(dependencies) != {
+                item.relative_path for item in receipt.execution_dependencies
+            }:
+                _invalid("captured execution dependency set mismatch")
+            for item in receipt.execution_dependencies:
+                content = dependencies[item.relative_path]
+                if (
+                    item.root_role != "EXECUTION"
+                    or len(content) != item.size_bytes
+                    or hashlib.sha256(content).hexdigest() != item.sha256
+                ):
+                    _invalid("captured execution dependency bytes mismatch")
+        if type(preview_sessions) is not tuple or any(
+            type(session) is not date for session in preview_sessions
+        ):
+            _invalid("preview calendar requires immutable date tuple")
+        if preview_sessions or preview_next_session is not None:
+            if (
+                not captured_dependencies
+                or receipt.execution.source_manifest_path
+                != FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH
+                or receipt.execution.source_manifest_sha256
+                != FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256
+                or not preview_sessions
+                or tuple(sorted(set(preview_sessions))) != preview_sessions
+                or preview_sessions[0] < receipt.request.scope.requested_window.start
+                or preview_sessions[-1] > receipt.request.scope.as_of
+                or type(preview_next_session) is not date
+                or preview_next_session <= receipt.request.scope.as_of
+            ):
+                _invalid("preview calendar witness does not bind the full verified request")
         object.__setattr__(self, "_receipt", receipt)
         object.__setattr__(self, "_successful_dispatch", successful_dispatch)
         object.__setattr__(self, "_context", context)
         object.__setattr__(self, "_verifier_pid", os.getpid())
         object.__setattr__(self, "_captured", tuple(sorted(captured)))
+        object.__setattr__(self, "_captured_dependencies", tuple(sorted(captured_dependencies)))
+        object.__setattr__(self, "_preview_sessions", preview_sessions)
+        object.__setattr__(self, "_preview_next_session", preview_next_session)
 
     def _assert_current(self) -> None:
         if (
@@ -983,6 +1043,52 @@ class VerifiedNamedInputs:
         _invalid("equal-risk prices are not verified")
         raise AssertionError("unreachable")
 
+    def inputs_for_five_candidate_preview(
+        self, *, required_scope: NamedEqualRiskPriceScope
+    ) -> tuple[bytes, bytes, tuple[date, ...], date]:
+        """Fixed captured inputs and calendar witness; no loader or DQ call.
+
+        The verifier minted the calendar tuple with the original bound XNYS
+        functions before sealing. A caller cannot supply a calendar or registry
+        mapping; clearing a global loader cache cannot introduce consumer I/O.
+        """
+        self._assert_current()
+        if type(required_scope) is not NamedEqualRiskPriceScope:
+            _invalid("five-candidate preview requires the fixed typed price scope")
+        execution = self._receipt.execution
+        if (
+            execution.source_manifest_path != FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH
+            or execution.source_manifest_sha256 != FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256
+        ):
+            _invalid("five-candidate preview requires its reviewed exact source manifest")
+        if required_scope.registry_binding not in self._receipt.execution_dependencies:
+            _invalid("preview registry differs from the captured execution dependency")
+        required_dq = NamedDQScope(
+            as_of=required_scope.as_of,
+            requested_window=required_scope.requested_window,
+            expected_price_tickers=required_scope.expected_price_tickers,
+            expected_rate_series=required_scope.guard_rate_series,
+            input_roles=("prices", "rates"),
+            require_secondary_prices=False,
+        )
+        if not self._receipt.request.scope.covers(required_dq):
+            _invalid("preview price range is not covered by the original canonical request")
+        dependencies = dict(self._captured_dependencies)
+        registry = dependencies.get(EQUAL_RISK_PRICE_REGISTRY_PATH)
+        sessions = tuple(
+            session
+            for session in self._preview_sessions
+            if required_scope.requested_window.start <= session <= required_scope.as_of
+        )
+        if registry is None or not sessions or self._preview_next_session is None:
+            _invalid("preview requires captured registry and verifier calendar witness")
+        if sessions[-1] != required_scope.as_of:
+            _invalid("preview as-of is not a canonical XNYS session")
+        for role, content in self._captured:
+            if role == "prices":
+                return content, registry, sessions, self._preview_next_session
+        _invalid("preview prices are not verified")
+
     def __reduce_ex__(self, protocol: SupportsIndex) -> Never:
         raise TypeError("verified named inputs cannot be serialized")
 
@@ -996,6 +1102,9 @@ def _verified_named_inputs_from_receipt(
     receipt_path: str,
     successful_dispatch: NamedDQSuccessfulDispatchBinding,
     captured_inputs: tuple[tuple[str, bytes], ...],
+    captured_dependencies: tuple[tuple[str, bytes], ...] = (),
+    preview_sessions: tuple[date, ...] = (),
+    preview_next_session: date | None = None,
 ) -> VerifiedNamedInputs:
     """Named verifier only, after full byte/provenance checks; not a verification API."""
     return VerifiedNamedInputs(
@@ -1003,5 +1112,8 @@ def _verified_named_inputs_from_receipt(
         captured_inputs,
         receipt_path=receipt_path,
         successful_dispatch=successful_dispatch,
+        captured_dependencies=captured_dependencies,
+        preview_sessions=preview_sessions,
+        preview_next_session=preview_next_session,
         _seal=_VERIFIED_NAMED_SEAL,
     )

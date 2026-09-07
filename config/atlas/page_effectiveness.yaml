@@ -463,7 +463,7 @@ task_sources:
   - task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
     requirement_path: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
     coverage: RESEARCH_CAPABILITY_READINESS_ENGINEERING_ONLY_NO_NEW_EVIDENCE
-    reader_summary_zh: 2564按Owner整体review推进长期研究能力建设。S1只读研究输入就绪核查、S2a指定不可变快照合同和S2b named DQ执行合同已通过工程验证与普通main发布；结构验证不读取mutable legacy projection或签发DQ/consumer权限。S2c.1固定equal-risk价格消费scope正在验证、尚未发布，区分prices特征输入与rates质量守卫而不改变原DQ或策略算法。S2c.2纯五候选preview与只读plan、S3真实前瞻连续采集、S4实验账本与机制归因、S5实测提效仍待完成。原目录corrected DQ已完成且FAIL，而运营环境已有同as-of PASS，两者路径和源码身份不能互换；工程PASS不补成OOS、不重复申请已完成的DQ retry，不升级2557的INSUFFICIENT/HOLD或2558/2559的证伪结论。真实DQ、manifest replay、研究、观察更新、下载、cache、provider及任何交易动作均0，不开放Options或production。
+    reader_summary_zh: 2564按Owner整体review推进长期研究能力建设。S1只读研究输入就绪核查、S2a指定不可变快照合同和S2b named DQ执行合同已通过工程验证与普通main发布；结构验证不读取mutable legacy projection或签发DQ/consumer权限。S2c.1固定equal-risk价格消费scope已完成工程验证与普通main发布，区分prices特征输入与rates质量守卫而不改变原DQ或策略算法。S2c.2固定五候选纯preview与只读plan已实现、正在验证，同seal封存完整registry和XNYS日期；S3真实前瞻连续采集、S4实验账本与机制归因、S5实测提效仍待完成。原目录corrected DQ已完成且FAIL，而运营环境已有同as-of PASS，两者路径和源码身份不能互换；工程PASS不补成OOS、不重复申请已完成的DQ retry，不升级2557的INSUFFICIENT/HOLD或2558/2559的证伪结论。真实DQ、manifest replay、研究、观察更新、下载、cache、provider及任何交易动作均0，不开放Options或production。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

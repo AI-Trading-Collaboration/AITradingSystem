@@ -945,6 +945,13 @@ def build_repository_authority(
         section_id, section = _trading_2564_s2c_section(root, policy=policy)
         relative, record, content = render_fragment(section_id=section_id, section=section)
         rendered_fragments.append((section_id, relative, record, content))
+    trading_2564_s2c2_requirement = (
+        root / "docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md"
+    )
+    if trading_2564_s2c2_requirement.exists():
+        section_id, section = _trading_2564_s2c2_section(root, policy=policy)
+        relative, record, content = render_fragment(section_id=section_id, section=section)
+        rendered_fragments.append((section_id, relative, record, content))
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -3065,6 +3072,72 @@ def _trading_2564_s2c_section(
             "real_dq_or_research_executed": False,
             "dq_numeric_rules_changed": False,
             "strategy_semantics_validated": False,
+            "consumer_cutover_allowed": False,
+            "dispatch_allowed": False,
+            "historical_receipt_rewritten": False,
+            "publication_fence_changed": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _trading_2564_s2c2_section(
+    root: Path, *, policy: Mapping[str, Any]
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_trading_2564_s2c2_five_candidate_preview_v1"
+    _, previous = _trading_2564_s2c_section(root, policy=policy)
+    source_paths = sorted(
+        [
+            *previous["superseded_live_source_paths"],
+            "src/ai_trading_system/data/named_quality_execution.py",
+            "src/ai_trading_system/contracts/named_simple_baseline_preview.py",
+            "src/ai_trading_system/simple_baseline_named_preview.py",
+            "config/data_governance/named_simple_baseline_preview_sources_v1.json",
+            "tests/test_named_simple_baseline_preview.py",
+            "tests/test_named_simple_baseline_preview_candidate.py",
+            "docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md",
+        ],
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "trading_2564_s2c2_five_candidate_preview.v1",
+        "task_id": "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1",
+        "status": "VALIDATING",
+        "owner_decision": "owner_instruction:TRADING-2564:2026-09-07:continue-s2c2",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": (
+                "phase_trading_2564_s2c_equal_risk_price_consumer_scope_v1"
+            ),
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "preview_contract": {
+            "source_manifest_path": (
+                "config/data_governance/named_simple_baseline_preview_sources_v1.json"
+            ),
+            "compiled_module_count": 59,
+            "execution_dependency_count": 8,
+            "candidate_count": 5,
+            "registry_semantics": "COMPLETE_CAPTURED_REVIEWED_BYTES",
+            "calendar_semantics": "VERIFIER_SEALED_CANONICAL_SESSIONS",
+            "consumer_io_allowed": False,
+            "original_algorithms_reused": True,
+            "original_common_evaluated_window_preserved": True,
+            "legacy_55_7_and_57_8_profiles_preserved": True,
+        },
+        "safety": {
+            "real_dq_or_research_executed": False,
+            "dq_numeric_rules_changed": False,
+            "strategy_policy_changed": False,
+            "pit_or_oos_established": False,
+            "observation_created": False,
+            "returns_computed": False,
             "consumer_cutover_allowed": False,
             "dispatch_allowed": False,
             "historical_receipt_rewritten": False,

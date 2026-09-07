@@ -82,7 +82,25 @@ DQ_GUARD_ONLY，原canonical对完整requested window逐ticker/session严格PASS
 captured prices bytes。共同evaluated window仍诚实保留rates滞后，旧scope/accessor不改义；新
 范围必须从2021-02-22至相同as-of，原DQ请求不能被文件额外历史或caller DTO扩张。registry仅
 验证捕获身份，不宣称五候选语义、lookback、PIT或OOS成立。本波只有工程TEST_PROBE，无生产
-preview入口、新持久artifact、收益计算或research/capture准入；S2c.2纯预览仍待实现。
+preview入口、新持久artifact、收益计算或research/capture准入。
+
+S2c.2增加`build_named_simple_baseline_preview`纯内存API。新精确59模块/8依赖manifest
+`config/data_governance/named_simple_baseline_preview_sources_v1.json`绑定完整registry bytes与
+两个preview模块。verifier在原calendar校验后将完整XNYS sessions与next-session随captured
+prices/registry封在同一`VerifiedNamedInputs`；consumer不重新读取文件或全局日历缓存。
+固定五候选必须全部通过完整2021-02-22..as-of三资产网格、冻结registry、月初/当日lookback与
+有限数值检查，才复用原portfolio-control算法输出`named_simple_baseline_preview.v1`。
+结果显式区分target/rebalance/signal/理论applied日期、原DQ共同窗口、实际消费窗口与输入身份。
+价格仅作feature input，rates仅作DQ guard；只读plan的execution=false，PIT/OOS仍未建立。
+旧55/7及57/8合同不变；没有新增CLI、持久writer、returns、capture或交易权限。
+
+```mermaid
+flowchart LR
+    PVER["Named独立verify：严格PASS + 成功dispatch"] --> PSEAL["同seal captured prices/完整registry/XNYS日期"]
+    PSEAL --> PGRID["主窗口完整网格 + 冻结策略 + 所有lookback/有限数值"]
+    PGRID --> PFIVE["原算法：固定五候选权重与日期语义"]
+    PFIVE --> PPLAN["只读plan：execution=false；PIT/OOS未建立"]
+```
 
 ```mermaid
 flowchart LR

@@ -540,5 +540,18 @@ CLOSEOUT旧base参数拒绝都保留；参数修正不改冻结plan或Full。只
 [S2c Equal-risk 价格消费范围](TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md)。
 Composer的2018分段训练、rates可知时点及S3/S4首看前规则另行受审；不借新价格范围移用权限。
 
+## 12. S2c.1发布与S2c.2五候选预览接续（2026-09-07）
+
+S2c.1最终candidate b79974d6531c70deb18db153b3bd16c8f9e6e6ac 已经actual E2E、全部formal tiers与
+Full PASS并普通推送；final v2 closeout为PASS/COMPLETED/RELEASED，main/origin/live remote SHA
+在发布收据中相等。登记中此前架构失败摘要由本次追加状态接续，不改写旧FAIL证据。
+
+Owner在下一步说明后要求「好的，继续推进吧」，本波从该exact main复用DEVX014工作区推进
+[S2c.2固定五候选只读预览](TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md)。先审查
+同seal captured registry与新consumer源码闭包合同，再严格解析完整主窗口并复用冻结算法，
+交付内存preview及显式只读plan；不新增scheduler/执行器或真实研究动作。真实DQ、manifest replay、
+capture、observation、maturity、scoreboard、下载/cache/provider和交易继续0；heartbeat仍PAUSED。
+S3前瞻/PIT时点、S4首看前实验规则与归因、S5实测提效仍按原顺序保留，不新建successor任务。
+
 当前仅本地工程开发与合成验证，所有真实研究/DQ/采样/下载/cache/provider/交易动作0；umbrella
 保持IN_PROGRESS。S2b工程完成不等于S2c、S3–S5或信号有效性完成，不新增successor任务。
