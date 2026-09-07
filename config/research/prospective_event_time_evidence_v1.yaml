@@ -1,0 +1,75 @@
+schema_version: prospective_event_time_evidence_policy.v1
+policy_id: prospective_event_time_evidence_v1
+policy_version: 1.0.0
+status: REVIEWED_ENGINEERING_CONTRACT_ADOPTION_BLOCKED
+owner: Project Owner / integration-coordinator
+scope_ref: owner_instruction:TRADING-2564:2026-09-07:continue_after_s2c2
+requirement_ref: docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md
+rationale: >-
+  收盘后生成的五候选 preview 不能证明旧 Close(F) 到 Close(next(F)) 收益起点前
+  信号已存在。独立记录本地 bytes 持久化完成的时间上界，并使用下一 XNYS 收盘
+  作为新前瞻生效点；不修改旧策略、收益或 ledger。
+intended_effect: >-
+  为未来受审采集提供可以复核的本地时间事实，区分实际保存、provider 发布时间、
+  DQ 与 OOS 准入；缺口及未完成事件永久保留，未来合法 session 可以恢复。
+validation_plan: >-
+  合成验证 writer 返回后采时、严格截止、immutable 冲突/幂等/崩溃、前驱与内容
+  错绑、S4D lease、canonical XNYS/DST/半日/特殊休市和缺口恢复；16-worker
+  focused tests、最终 candidate 正式验证与 Full。
+review_condition: >-
+  首次真实 activation/capture 前，Project Owner 复核新时间版本、完整后续 session
+  起点规则、本地主机时钟信任边界与 bounded manifest。改变收益、日历、首次
+  feature 规则、数据已知时间解释或 outcome admission 时需要新受审版本。
+timing:
+  timing_version: NEXT_XNYS_CLOSE_FORWARD_V1
+  calendar_id: XNYS
+  calendar_close_authority: REVIEWED_SCHEDULED_CLOSE
+  market_timezone: America/New_York
+  first_feature_rule: FIRST_XNYS_SESSION_AFTER_ACTIVATION_MARKET_DATE
+  feature_close_comparison: STRICTLY_AFTER
+  effective_session_rule: NEXT_XNYS_SESSION_AFTER_FEATURE
+  decision_deadline: EFFECTIVE_SESSION_SCHEDULED_CLOSE
+  deadline_comparison: STRICTLY_BEFORE
+  return_clock: EFFECTIVE_SESSION_CLOSE_TO_NEXT_XNYS_SESSION_CLOSE
+  five_candidate_legacy_return_equivalent: false
+  recompute_target_at_effective_session: false
+  carried_target_is_rebalance_evidence: false
+recording:
+  clock_authority: LOCAL_RECORDER_UTC_CLOCK
+  trust_scope: TRUSTED_RECORDER_AND_HOST_CLOCK_NOT_THIRD_PARTY_TIMESTAMP
+  completion_observation: AFTER_CONTAINED_PAYLOAD_WRITER_RETURNS
+  start_observation: INTERNAL_UTC_BEFORE_ANY_EVENT_PAYLOAD_WRITE
+  feature_lower_bound: RECORDING_START_STRICTLY_AFTER_FEATURE_CLOSE
+  completion_timestamp_role: PAYLOAD_DURABILITY_CONFIRMATION_UPPER_BOUND
+  witness_own_durability_time_claimed: false
+  caller_supplied_event_time_allowed: false
+  infer_time_from_mtime_or_hash_allowed: false
+  missing_witness_recovery: PRESERVE_INCOMPLETE_EVENT_WITHOUT_SUCCESS_BACKDATE
+  idempotent_replay: RETURN_ORIGINAL_COMPLETION_WITNESS
+  existing_different_bytes: REJECT
+  concurrency_authority: S4D_LEASE_AND_EXISTING_STORE_MAINTENANCE
+  late_event_admission_allowed: false
+  old_gap_backfill_allowed: false
+  future_session_recovery_allowed: true
+admission:
+  temporal_evidence_only: true
+  real_activation_adopted: false
+  observation_authorized: false
+  provider_available_at_status: NOT_ESTABLISHED
+  oos_admission_status: NOT_ESTABLISHED
+  historical_provider_pit_inferred: false
+  dq_status_from_caller_trusted: false
+  capture_manifest_required_by_future_adapter: true
+  outcome_access_allowed: false
+safety:
+  canonical_dq_run_allowed: false
+  producer_execution_allowed: false
+  observation_ledger_write_allowed: false
+  maturity_update_allowed: false
+  scoreboard_allowed: false
+  data_download_allowed: false
+  cache_mutation_allowed: false
+  external_provider_allowed: false
+  paper_live_allowed: false
+  broker_action: none
+  production_effect: none

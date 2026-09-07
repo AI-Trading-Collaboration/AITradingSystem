@@ -31,6 +31,19 @@ rebalance/signal/理论applied日期、完整requested/evaluated/consumed窗口�
 registry/environment身份及显式只读plan。任一候选历史不足或计算非有限时整批阻断；零波动保持原
 算法行为。结果不导出seal，不计算returns、创建observation或证明PIT/OOS；execution/cutover=false。
 
+## TRADING-2564 S3a 前瞻事件时间 sidecar
+
+`prospective_event_time_evidence.py` 提供显式 plan/输出根/事件 binding 的本地记录与只读核验
+API；不进入 report-registry/latest discovery、Reader Brief、旧 observation ledger 或 scheduler。
+`prospective_event_time_evidence_v1.yaml` 固定尚未真实 adopted 的新 next-XNYS-close 时间版本。
+输出根中的 `streams/<plan_sha>/activation/` 与 `streams/<plan_sha>/sessions/<F>/<stage>/`
+保存 immutable intent、payload、lease provenance 和 completion witness；前驱分别为 activation
+与本 session inputs。writer 返回后采样的时间只证明 payload 已保存，不证明 provider 首次发布时间
+或 completion witness 自身的完成时间。缺 witness/内容冲突/迟到保留并拒绝准入；同一完整事件
+重放保留原始时间。只读 coverage 从 canonical session grid 枚举永久 gaps，不填旧信号或收益。
+固定 `temporal_evidence_only=true`、`observation_authorized=false`、provider/PIT/OOS 未建立、
+`production_effect=none`、`broker_action=none`；真实采集必须经过后续独立 adapter/manifest 门禁。
+
 ## DEVX-006D Report / Catalog / Flow Lossless Fragment Shadow
 
 |Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|

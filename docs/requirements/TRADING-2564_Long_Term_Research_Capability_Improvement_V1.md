@@ -555,3 +555,22 @@ S3前瞻/PIT时点、S4首看前实验规则与归因、S5实测提效仍按原�
 
 当前仅本地工程开发与合成验证，所有真实研究/DQ/采样/下载/cache/provider/交易动作0；umbrella
 保持IN_PROGRESS。S2b工程完成不等于S2c、S3–S5或信号有效性完成，不新增successor任务。
+
+## 13. S2c.2 发布与 S3a 时间证据接续（2026-09-07）
+
+S2c.2 已以 f60153cb962d7b80013be258a4708af4012406fb 完成普通 main 发布：Full
+11159 passed / 5 skipped，四类正式验证及 36 项 actual candidate E2E PASS。
+local/remote SHA 相等、事务 COMPLETED/RELEASED、分支已清理，canonical root/evidence 保留；
+验收见 outputs/architecture/trading_2564_s2c2_five_candidate_preview/closeout_verified_v2.json。
+
+Owner 随后要求「继续吧」。当前从该 exact main 推进
+[S3a 前瞻事件时间证据](TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md)：
+只实现独立 recorder/verifier 与新 forward-only timing 工程合同，先审查时间与身份边界。
+五候选的旧收益首段是 Close(F)→Close(next(F))；收盘后生成的信号必须使用单独版本，在
+next(F) close 生效后才开始计收益，不能把旧终点标签当作执行证据。Composer 已有对应收益时钟。
+真实 durable completion、本地输入已知时间与 provider available_at 分别披露；旧缺口永久保留。
+
+S3a 不启动真实 activation/capture，不接旧 writer、不运行收益或成熟结果，不改变冻结 producer、
+DQ/registry、scheduler 或策略结论；真实研究、数据、provider 与交易动作继续为 0。
+首次真实接入保留在 S3b，须复核新时间版本及 bounded manifest；S4 首次 outcome 访问前的实验
+规则和 S5 实测提效依赖仍未完成。Umbrella 继续 IN_PROGRESS，不自动登记 successor。

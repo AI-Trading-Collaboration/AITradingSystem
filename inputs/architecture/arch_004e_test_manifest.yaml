@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1370
-test_count: 1309
+test_file_count: 1372
+test_count: 1311
 support_file_count: 61
 orphan_count: 0
 specific_overlap_count: 0
@@ -219,7 +219,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_live_snapshot
   path: tests/atlas/test_live_snapshot.py
-  sha256: 7735cc8cf9c247be423185282e6025d1614305b3a2d5ae7584a0373ac04fd4cd
+  sha256: 562ab9c0b8a91e64886ba0b3225ccc14b9f47f71e5e6b6c2b2bdc1846274b280
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8122,7 +8122,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 99a7795827fe56dcbe2d003c0c8d323202103a8bd7ab330f0341f921466fe28d
+  sha256: 8826351485cf0defd8af233dc1b94fafc448440168c1bd5ef64c0995f9d2e8f3
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -8518,7 +8518,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 829cb52fc96594e4631669b06394b7a4d3560db932bee7e29c64a1dd02783b69
+  sha256: 4ad587e842b2ae001091591d93411e75aa9f0062737552a439e9989834698e6e
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -10490,7 +10490,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006c_compatibility_authority
   path: tests/test_devx_006c_compatibility_authority.py
-  sha256: bdb69879f57968bdb32e74a92d0f71ce7f668fb81ebd4d5d77a7158a93f37e9a
+  sha256: 81feae39a9652754ea4392ead40db30681fe0a42d5bf48e8e03ec9b5a69a0ce6
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10506,7 +10506,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: c303e9df50326d3b2df863bffd493e046f1b2e0d1a05b10743b60a60f6ee1885
+  sha256: 573a4e304ff729dabde470a268f6bd80d25648de70a84352697f0359cc13feb2
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -15214,6 +15214,38 @@ tests:
   suite: full
   covered_module_prefixes:
   - src/ai_trading_system/
+- test_id: tests.test_prospective_event_time_evidence
+  path: tests/test_prospective_event_time_evidence.py
+  sha256: 5df5b1eab9200fcd414ef0d76528889f81ebea64b52e7e9ffec4afd411477bfb
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_prospective_event_time_evidence_contract
+  path: tests/test_prospective_event_time_evidence_contract.py
+  sha256: 2f3b478de25a8b13b5d763586a9e62e88f1ceb790ec9463380694c013a783c5e
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
 - test_id: tests.test_qc_qqq_options_bounded_cloud_pilot
   path: tests/test_qc_qqq_options_bounded_cloud_pilot.py
   sha256: 63a4af865fdbb1f64a7a1069833dc694320b7db7369e9853ee99171e3e24de63
@@ -18770,7 +18802,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_trading2452_architecture_contract
   path: tests/test_trading2452_architecture_contract.py
-  sha256: 74f06a168c4c758af66dddf32997af9b94694480db9f3cd063c5fe5c060c953e
+  sha256: 7fe487101cd24a365e74c24139dd49e62b94d2848b51d9da9364d548a7f71743
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

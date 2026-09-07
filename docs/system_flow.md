@@ -102,6 +102,26 @@ flowchart LR
     PFIVE --> PPLAN["只读plan：execution=false；PIT/OOS未建立"]
 ```
 
+S3a 的 `prospective_event_time_evidence.py` 在原 producer/Named DQ 之外增加独立时间 sidecar。
+固定 `prospective_event_time_evidence_v1.yaml` 采用 `NEXT_XNYS_CLOSE_FORWARD_V1`：feature F
+收盘后记录，D=next(F) 的计划收盘为截止/新收益起点；旧五候选 Close(F)→Close(D) 收益不移用。
+S4D write lease 与现有 contained immutable writer 保存 definition/input/signal 的确切 bytes，
+writer 成功返回后由内部 UTC clock 见证 payload 已完成，再写 completion witness。固定 plan/日期/
+stage 槽位与前驱绑定保证幂等保留原时间，缺 witness 保留 incomplete，迟到不准入；后续日期可恢复。
+只读 verifier 与 canonical XNYS gap 投影不读取市场 cache、不执行 DQ/producer 或旧 ledger。
+结果只证明本地保存时间关系，provider available_at、信号语义、实际执行与 OOS 准入仍独立；
+witness 自己的落盘完成仍需未来父执行器确认。当前仅工程 API，真实 activation/capture 未启用。
+
+```mermaid
+flowchart LR
+    TPLAN["版本化plan/定义 + S4D write lease"] --> TEVENT["固定不可变槽位：activation → inputs → signal"]
+    TEVENT --> TDURABLE["payload writer返回 → 内部UTC完成见证"]
+    TDURABLE --> TWITNESS["不可变completion witness；幂等/不补签"]
+    TWITNESS --> TVERIFY["只读内容/前驱/日历/时间核验"]
+    TCAL["canonical XNYS计划close + expected sessions"] --> TVERIFY
+    TVERIFY --> TTEMPORAL["时间证据与永久gap；真实capture/OOS仍待独立准入"]
+```
+
 ```mermaid
 flowchart LR
     INPUT["显式快照 + 请求 + 既有DQ receipt"] --> RI["研究输入只读就绪核查"]

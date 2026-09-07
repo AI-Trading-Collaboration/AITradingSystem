@@ -159,3 +159,18 @@ final v1在Full前以行政superseded终结，无Full失败或Full dispatch；so
 未执行preflight或源码修改；使用正式--allow-active-lease重跑PASS，保留原命令结果。
 S2c.2工程实现已完成，最终正式验证与发布结果由本波closeout收据承载；TRADING-2564仍为
 IN_PROGRESS，S3/S4/S5、真实前瞻、PIT/OOS准入不由本波完成。
+
+## 8. 正式发布与 S3 接续
+
+2026-09-07：最终 candidate f60153cb962d7b80013be258a4708af4012406fb 已完成
+11159 passed / 5 skipped / 641 warnings 的 Full；跳过节点和警告与基线一致。
+Architecture/Contract/Integration/Reproducibility 与 36 项 actual candidate E2E 均 PASS。
+local main、origin/main 与实际 remote main 相同，final v2 事务为 COMPLETED/RELEASED。
+本地任务分支已删除，canonical root 与 immutable 证据因 S3 依赖保留；验收见
+outputs/architecture/trading_2564_s2c2_five_candidate_preview/closeout_verified_v2.json。
+因此 S2c.2 工程状态为完成；本文此前 IN_PROGRESS 段落保留其当时记录。
+
+Owner 随后要求「继续吧」。下一最小串行工程波见
+docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md。
+独立审查已确认 legacy_applied_session 为旧收益终点标签，不能直接当新前瞻收益起点证据；
+新的 next-XNYS-close 版本单独实现，不修改本波冻结计算或冒称两种收益语义相同。

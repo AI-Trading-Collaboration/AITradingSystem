@@ -952,6 +952,10 @@ def build_repository_authority(
         section_id, section = _trading_2564_s2c2_section(root, policy=policy)
         relative, record, content = render_fragment(section_id=section_id, section=section)
         rendered_fragments.append((section_id, relative, record, content))
+    if (root / "docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md").exists():
+        section_id, section = _trading_2564_s3a_section(root, policy=policy)
+        relative, record, content = render_fragment(section_id=section_id, section=section)
+        rendered_fragments.append((section_id, relative, record, content))
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -3142,6 +3146,64 @@ def _trading_2564_s2c2_section(
             "dispatch_allowed": False,
             "historical_receipt_rewritten": False,
             "publication_fence_changed": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _trading_2564_s3a_section(
+    root: Path, *, policy: Mapping[str, Any]
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_trading_2564_s3a_prospective_event_time_v1"
+    previous_id, previous = _trading_2564_s2c2_section(root, policy=policy)
+    source_paths = sorted(
+        [
+            *previous["superseded_live_source_paths"],
+            "src/ai_trading_system/contracts/prospective_event_time_evidence.py",
+            "src/ai_trading_system/prospective_event_time_evidence.py",
+            "config/research/prospective_event_time_evidence_v1.yaml",
+            "tests/test_prospective_event_time_evidence.py",
+            "tests/test_prospective_event_time_evidence_contract.py",
+            "docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md",
+        ],
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "trading_2564_s3a_prospective_event_time.v1",
+        "task_id": "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1",
+        "status": "VALIDATING",
+        "owner_decision": "owner_instruction:TRADING-2564:2026-09-07:continue-s3",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": previous_id,
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "event_time_contract": {
+            "timing_version": "NEXT_XNYS_CLOSE_FORWARD_V1",
+            "event_kinds": ["ACTIVATION", "INPUTS_OBSERVED", "SIGNAL_RECORDED"],
+            "payload_completion_clock": "INTERNAL_UTC_AFTER_DURABLE_WRITER_RETURN",
+            "monotonic_interval": "INNER_UTC_INTERVAL_LOWER_BOUND",
+            "calendar_authority": "REVIEWED_SCHEDULED_CLOSE",
+            "legacy_five_candidate_return_equivalence": False,
+            "incomplete_event_resigning_allowed": False,
+            "future_session_recovery_allowed": True,
+        },
+        "safety": {
+            "real_activation_adopted": False,
+            "real_dq_or_research_executed": False,
+            "provider_available_at_established": False,
+            "pit_or_oos_established": False,
+            "witness_own_durability_time_established": False,
+            "parent_executor_acknowledgement": "NOT_PRESENT",
+            "observation_authorized": False,
+            "returns_computed": False,
+            "legacy_execution_profiles_changed": False,
             "production_effect": "none",
             "broker_action": "none",
         },

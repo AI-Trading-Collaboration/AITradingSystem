@@ -13,19 +13,20 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: integration-coordinator
+  next_owner: integration-coordinator：S3a正式验证/main发布；随后S3b接入复核
   requirement_refs:
   - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
   - docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md
   - docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md
   - docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md
+  - docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S2c.2工程及36项actual E2E通过，补强审查要求的永久断言后执行最终正式验证/普通main发布；S3-S5仍未完成。
+  unstructured_legacy_blocker_or_next_step: S3a完整事件时间sidecar、canonical XNYS与双阶段immutable提交已实现；204项最终合成测试及独立源审查PASS；已恢复完整需求引用，共享兼容性复验和正式Full待完成；S3b/S4/S5未完成。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 旧55/7与57/8合同/E2E保留；新闭包同进程严格价格/registry解析、五候选逐值/月初/lag/嵌套lookback等价与零副作用；实际candidate合成run1/verify0/preview、正式tiers/Full/main发布；真实研究与数据/交易动作0。
+    text: 精确payload/witness/前驱与UTC/monotonic绑定、读取范围/迟到/崩溃/并发/缺口恢复反例；16-worker共享及正式验证、Full和普通main发布；真实capture/DQ/provider/研究/交易0。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -662,26 +663,95 @@ events:
   - change:trading-2564-s2c2-preview-pre-full-review-20260907-v3
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-49799d50ac464fd5cb3d1f2d06c9c30f
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-07T13:42:16.6417485Z'
+  actor: integration-coordinator
+  change_id: trading-2564-s3a-time-evidence-start-20260907-v1
+  lane_id: null
+  base_commit: f60153cb962d7b80013be258a4708af4012406fb
+  previous_state_event_id: task-event-49799d50ac464fd5cb3d1f2d06c9c30f
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator：S3a事件时间合同与合成验证；S3b真实activation前复核
+    blocker_or_next_step: S2c.2已在f60153cb9完成Full/main发布；S3a先建立独立真实落盘时间、next-XNYS-close新前瞻版本与缺口合同；S3b/S4/S5未完成。
+    acceptance_criteria: 时钟/前驱/immutable payload/witness严格绑定，writer返回后采时、迟到与崩溃不补签、幂等保留原时间、canonical
+      XNYS及缺口恢复；16-worker负例与正式Full/main发布；真实研究/数据/capture/交易0。
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md；docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md；docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md；S3a仅时间工程，旧收益/producer/DQ
+      authority不变，真实activation与capture未启用。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s3a-time-evidence-start-20260907-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-cdf8f8b725495331cb146ad7e237733d
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-07T14:30:34.387835+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s3a-engineering-review-20260907-v1
+  lane_id: null
+  base_commit: f60153cb962d7b80013be258a4708af4012406fb
+  previous_state_event_id: task-event-cdf8f8b725495331cb146ad7e237733d
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator：S3a正式验证/main发布；随后S3b接入复核
+    blocker_or_next_step: S3a事件时间sidecar与双阶段immutable提交已实现；132合同/69真实writer合成测试PASS，独立源审查问题已关闭，最终新增反例与正式Full待验收；S3b/S4/S5仍未完成。
+    acceptance_criteria: 内部UTC与monotonic、payload/witness/前驱精确绑定；canonical XNYS时钟、迟到/崩溃/孤立残片/幂等/未来恢复与读取范围反例；16-worker正式验证、Full及普通main发布；真实capture/DQ/provider/研究/交易0。
+    notes: docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md；工程时间证据不建立provider
+      available_at或OOS；真实activation和父执行器完整witness确认留在S3b，旧55/57/59执行profile不变。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s3a-engineering-review-20260907-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b95239c87bb77e04ec2503311d8dd2fe
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-07T14:43:33.686102+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s3a-source-reference-closure-20260907-v2
+  lane_id: null
+  base_commit: f60153cb962d7b80013be258a4708af4012406fb
+  previous_state_event_id: task-event-b95239c87bb77e04ec2503311d8dd2fe
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: integration-coordinator：S3a正式验证/main发布；随后S3b接入复核
+    blocker_or_next_step: S3a完整事件时间sidecar、canonical XNYS与双阶段immutable提交已实现；204项最终合成测试及独立源审查PASS；已恢复完整需求引用，共享兼容性复验和正式Full待完成；S3b/S4/S5未完成。
+    acceptance_criteria: 精确payload/witness/前驱与UTC/monotonic绑定、读取范围/迟到/崩溃/并发/缺口恢复反例；16-worker共享及正式验证、Full和普通main发布；真实capture/DQ/provider/研究/交易0。
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md；docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md；docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md；五项Atlas失败源于上次更新省略总需求引用，现由canonical
+      writer恢复完整引用；不修改Atlas严格绑定检查。工程时间证据不建立provider available_at、完整witness自身完成时间或OOS。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s3a-source-reference-closure-20260907-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-71d2b3dabc2db82b59606e50406e6b5f
 projection:
   legacy_first_eight_cells:
   - TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
   - 长期研究能力 / 输入就绪与验证前置
   - P1
   - IN_PROGRESS
-  - integration-coordinator
-  - S2c.2工程及36项actual E2E通过，补强审查要求的永久断言后执行最终正式验证/普通main发布；S3-S5仍未完成。
-  - 旧55/7与57/8合同/E2E保留；新闭包同进程严格价格/registry解析、五候选逐值/月初/lag/嵌套lookback等价与零副作用；实际candidate合成run1/verify0/preview、正式tiers/Full/main发布；真实研究与数据/交易动作0。
-  - 需求：docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md；docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md。S2c.2工程实现完成：旧合同251、预览/合同144、共享架构183、exact
-    9f0fabb候选实际合成E2E36 PASS（用例重叠不相加）；独立59/8字节身份复核通过。发布前补强永久身份/精确拒绝码/直接DQ禁用断言，随后以最终提交执行formal
-    tiers/Full及普通main发布。S3真实前瞻/S4/S5继续IN_PROGRESS，PIT/OOS未准入；真实市场DQ/研究/provider/交易动作0。复用DEVX014
-    root，保留原因和退出条件见需求。
+  - integration-coordinator：S3a正式验证/main发布；随后S3b接入复核
+  - S3a完整事件时间sidecar、canonical XNYS与双阶段immutable提交已实现；204项最终合成测试及独立源审查PASS；已恢复完整需求引用，共享兼容性复验和正式Full待完成；S3b/S4/S5未完成。
+  - 精确payload/witness/前驱与UTC/monotonic绑定、读取范围/迟到/崩溃/并发/缺口恢复反例；16-worker共享及正式验证、Full和普通main发布；真实capture/DQ/provider/研究/交易0。
+  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md；docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md；docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md；五项Atlas失败源于上次更新省略总需求引用，现由canonical
+    writer恢复完整引用；不修改Atlas严格绑定检查。工程时间证据不建立provider available_at、完整witness自身完成时间或OOS。
   docs_links:
   - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
   - docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md
   - docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md
   - docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md
+  - docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md
   terminal: false
-  canonical_row_sha256: 1e57ed43322f762b65e9a19b9c2b73355dfff214c178dc0aee176384529c120e
-last_event_id: task-event-49799d50ac464fd5cb3d1f2d06c9c30f
+  canonical_row_sha256: ce23d7eef70125a52abff6e02175ace85f9c331e9e988084c6e7caa6990d0318
+last_event_id: task-event-71d2b3dabc2db82b59606e50406e6b5f
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f15ae1995e1fe2958cd733313414f2fa0009921b43f38ae5f7c110b8b4c1ce94
+fragment_checksum: 7c649a511fba72e8ad2b65552604d44ab7384da2bfa760765038cd5e1ef8cc1c
