@@ -49,6 +49,7 @@ TRADING_2564_S2C_SECTION = "phase_trading_2564_s2c_equal_risk_price_consumer_sco
 TRADING_2564_S2C2_SECTION = "phase_trading_2564_s2c2_five_candidate_preview_v1"
 TRADING_2564_S3A_SECTION = "phase_trading_2564_s3a_prospective_event_time_v1"
 TRADING_2564_S3B_SECTION = "phase_trading_2564_s3b_prospective_capture_execution_v1"
+TRADING_2564_S5_SECTION = "phase_trading_2564_s5_validated_duration_seed_v1"
 DEVX_014_SOURCE_PATHS = frozenset(
     {
         "config/architecture/arch_005_source_preservation.yaml",
@@ -213,6 +214,19 @@ TRADING_2564_S3B_SOURCE_PATHS = TRADING_2564_S3A_SOURCE_PATHS | frozenset(
     }
 )
 
+TRADING_2564_S5_SOURCE_PATHS = TRADING_2564_S3B_SOURCE_PATHS | frozenset(
+    {
+        "scripts/run_validation_tier.py",
+        "scripts/refresh_partial_duration_profile.py",
+        "inputs/architecture/arch_004g2_full_duration_profile.yaml",
+        "tests/test_validation_runtime_profile.py",
+        "tests/test_validation_tier_script.py",
+        "tests/test_partial_duration_refresh.py",
+        "docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md",
+        "docs/requirements/TRADING-2564_S5_Validated_Duration_Seed_Refresh_V1.md",
+    }
+)
+
 TRADING_2564_S2A_SOURCE_PATHS = frozenset(
     {
         "src/ai_trading_system/data/immutable_publish.py",
@@ -334,12 +348,12 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 327
-    assert result["fragment_count"] == 21
+    assert len(merged) == 328
+    assert result["fragment_count"] == 22
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == TRADING_2564_S3B_SECTION
+    assert next(reversed(merged)) == TRADING_2564_S5_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
@@ -835,7 +849,7 @@ def test_s2c2_exact_preview_successor_preserves_closed_execution_boundary() -> N
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2564_S3B_SECTION
+    assert next(reversed(merged)) == TRADING_2564_S5_SECTION
     assert (
         list(merged).index(TRADING_2564_S2C2_SECTION)
         == list(merged).index(TRADING_2564_S2C_SECTION) + 1
@@ -919,7 +933,7 @@ def test_s2c_is_exact_price_scope_successor_not_strategy_promotion() -> None:
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2564_S3B_SECTION
+    assert next(reversed(merged)) == TRADING_2564_S5_SECTION
     assert (
         list(merged).index(TRADING_2564_S2C_SECTION)
         == list(merged).index(TRADING_2564_S2B_SECTION) + 1
@@ -1208,7 +1222,7 @@ def test_s3a_exact_temporal_successor_preserves_admission_boundaries() -> None:
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2564_S3B_SECTION
+    assert next(reversed(merged)) == TRADING_2564_S5_SECTION
     assert (
         list(merged).index(TRADING_2564_S3A_SECTION)
         == list(merged).index(TRADING_2564_S2C2_SECTION) + 1
@@ -1281,7 +1295,7 @@ def test_s3b_exact_capture_successor_preserves_real_research_boundary() -> None:
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2564_S3B_SECTION
+    assert next(reversed(merged)) == TRADING_2564_S5_SECTION
     assert (
         list(merged).index(TRADING_2564_S3B_SECTION)
         == list(merged).index(TRADING_2564_S3A_SECTION) + 1
@@ -1343,3 +1357,79 @@ def test_s3b_source_identity_is_not_self_reported_lists(mutation: str) -> None:
         phase["sources"][0]["sha256"] = "0" * 64
     with pytest.raises(AssertionError):
         _assert_s3b_source_closure(phase)
+
+
+def test_s5_duration_successor_preserves_historical_and_advisory_boundaries() -> None:
+    from test_trading2452_architecture_contract import (
+        TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS,
+        TRADING_2564_S5_RESTRICTED_CURRENT_AUTHORITY_PATHS,
+    )
+
+    merged = load_compatibility_authority()
+    assert next(reversed(merged)) == TRADING_2564_S5_SECTION
+    assert (
+        list(merged).index(TRADING_2564_S5_SECTION)
+        == list(merged).index(TRADING_2564_S3B_SECTION) + 1
+    )
+    assert TRADING_2564_S5_RESTRICTED_CURRENT_AUTHORITY_PATHS == (
+        TRADING_2564_S5_SOURCE_PATHS
+        & TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
+    )
+    phase = merged[TRADING_2564_S5_SECTION]
+    _assert_s5_source_closure(phase)
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2564_S3B_SECTION,
+        "current_hash_authority": f"{TRADING_2564_S5_SECTION}.sources",
+    }
+    assert phase["duration_seed_contract"] == {
+        "source_admission": "STRICT_FORMAL_FULL_ORIGINAL_GIT_INPUTS_AND_RAW_PROFILE_REPLAY",
+        "shared_validator": "LIVE_AND_CAPTURED_BYTES_USE_ONE_CONTRACT_CORE",
+        "historical_manifest_identity": "EXACT_SOURCE_COMMIT_FIXED_GIT_BLOBS",
+        "summary_binding": "RAW_HASH_SIZE_AND_EXACT_DERIVED_PROJECTION",
+        "aggregation": "PHASES_TO_NODES_TO_FILES_COMPLETE_RECOMPUTATION",
+        "scheduler_mode": "PARTIAL_SEED",
+        "seeded_order": "DESCENDING_POSITIVE_DURATION_STABLE_SOURCE_ORDER_TIES",
+        "unseeded_order": "COLLECTION_FIRST_SEEN_AFTER_SEEDED_FILES",
+        "write_target": "CANONICAL_MANIFEST_ATOMIC_REPLACEMENT_AFTER_VALIDATION",
+        "formal_selection_eligible": False,
+    }
+    assert phase["safety"] == {
+        "historical_full_artifacts_mutated": False,
+        "investment_policy_changed": False,
+        "real_dq_or_research_executed": False,
+        "stable_speedup_established": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _assert_s5_source_closure(phase: dict[str, Any]) -> None:
+    paths = [row["path"] for row in phase["sources"]]
+    assert len(TRADING_2564_S5_SOURCE_PATHS) == 66
+    assert paths == sorted(TRADING_2564_S5_SOURCE_PATHS, key=str.casefold)
+    assert phase["superseded_live_source_paths"] == paths
+    for row in phase["sources"]:
+        assert set(row) == {"path", "sha256", "hash_normalization"}
+        assert row["hash_normalization"] == "git_eol_lf"
+        assert (
+            hashlib.sha256(Path(row["path"]).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+            == row["sha256"]
+        )
+
+
+@pytest.mark.parametrize("mutation", ["missing", "missing_both", "extra_both", "wrong_hash"])
+def test_s5_source_identity_is_not_self_reported_lists(mutation: str) -> None:
+    phase = deepcopy(load_compatibility_authority()[TRADING_2564_S5_SECTION])
+    if mutation in {"missing", "missing_both"}:
+        removed = "scripts/refresh_partial_duration_profile.py"
+        phase["sources"] = [row for row in phase["sources"] if row["path"] != removed]
+        if mutation == "missing_both":
+            phase["superseded_live_source_paths"].remove(removed)
+    elif mutation == "extra_both":
+        phase["sources"].append({"path": "unknown.py", "sha256": "0" * 64})
+        phase["superseded_live_source_paths"].append("unknown.py")
+    else:
+        phase["sources"][0]["sha256"] = "0" * 64
+    with pytest.raises(AssertionError):
+        _assert_s5_source_closure(phase)

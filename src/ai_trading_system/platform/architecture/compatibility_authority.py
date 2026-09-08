@@ -960,6 +960,10 @@ def build_repository_authority(
         section_id, section = _trading_2564_s3b_section(root, policy=policy)
         relative, record, content = render_fragment(section_id=section_id, section=section)
         rendered_fragments.append((section_id, relative, record, content))
+    if (root / "docs/requirements/TRADING-2564_S5_Validated_Duration_Seed_Refresh_V1.md").exists():
+        section_id, section = _trading_2564_s5_section(root, policy=policy)
+        relative, record, content = render_fragment(section_id=section_id, section=section)
+        rendered_fragments.append((section_id, relative, record, content))
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -3285,6 +3289,63 @@ def _trading_2564_s3b_section(
             "returns_computed": False,
             "legacy_execution_profiles_changed": False,
             "legacy_observation_ledger_mutated": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _trading_2564_s5_section(
+    root: Path, *, policy: Mapping[str, Any]
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_trading_2564_s5_validated_duration_seed_v1"
+    previous_id, previous = _trading_2564_s3b_section(root, policy=policy)
+    source_paths = sorted(
+        {
+            *previous["superseded_live_source_paths"],
+            "scripts/run_validation_tier.py",
+            "scripts/refresh_partial_duration_profile.py",
+            "inputs/architecture/arch_004g2_full_duration_profile.yaml",
+            "tests/test_validation_runtime_profile.py",
+            "tests/test_validation_tier_script.py",
+            "tests/test_partial_duration_refresh.py",
+            "docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md",
+            "docs/requirements/TRADING-2564_S5_Validated_Duration_Seed_Refresh_V1.md",
+        },
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "trading_2564_s5_validated_duration_seed.v1",
+        "task_id": "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1",
+        "status": "VALIDATING",
+        "owner_decision": "owner_instruction:TRADING-2564:2026-09-08:continue-s5",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": previous_id,
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "duration_seed_contract": {
+            "source_admission": "STRICT_FORMAL_FULL_ORIGINAL_GIT_INPUTS_AND_RAW_PROFILE_REPLAY",
+            "shared_validator": "LIVE_AND_CAPTURED_BYTES_USE_ONE_CONTRACT_CORE",
+            "historical_manifest_identity": "EXACT_SOURCE_COMMIT_FIXED_GIT_BLOBS",
+            "summary_binding": "RAW_HASH_SIZE_AND_EXACT_DERIVED_PROJECTION",
+            "aggregation": "PHASES_TO_NODES_TO_FILES_COMPLETE_RECOMPUTATION",
+            "scheduler_mode": "PARTIAL_SEED",
+            "seeded_order": "DESCENDING_POSITIVE_DURATION_STABLE_SOURCE_ORDER_TIES",
+            "unseeded_order": "COLLECTION_FIRST_SEEN_AFTER_SEEDED_FILES",
+            "write_target": "CANONICAL_MANIFEST_ATOMIC_REPLACEMENT_AFTER_VALIDATION",
+            "formal_selection_eligible": False,
+        },
+        "safety": {
+            "historical_full_artifacts_mutated": False,
+            "investment_policy_changed": False,
+            "real_dq_or_research_executed": False,
+            "stable_speedup_established": False,
             "production_effect": "none",
             "broker_action": "none",
         },

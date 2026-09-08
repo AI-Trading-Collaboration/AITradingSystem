@@ -601,3 +601,25 @@ S5 另外保留即时失败诊断输出和最新耗时 seed 的审查，当前�
 验收绑定在 `outputs/architecture/trading_2564_s3b_prospective_capture/clock_independent_review_v1.json`；
 C4 actual candidate、正式 tiers、失败 parent Full、main 普通发布仍待完成，S3真实采集/S4/S5
 不因本工程进展转为完成。
+
+## 16. S3b 正式发布与 S5 耗时来源准入（2026-09-08）
+
+S3b 已以 `38a0a689f8c4890760f40c1fedc4bd648a3bbb92` 完成 ordinary main 发布。source/shared
+focused 1,037 / 435 passed、actual candidate 2 passed、四正式 tiers PASS；Full 为
+11,986 passed / 5 skipped / 641 warnings，耗时 3,467.54 秒，profile/telemetry/provenance PASS。
+skip nodeids 和 normalized warnings 与基线一致；旧失败 Full 作为 failure_fix_rerun parent 保留。
+验收见 `outputs/architecture/trading_2564_s3b_prospective_capture/clock_closeout_verified_v1.json`：
+candidate/local main/remote main 相等、事务 COMPLETED/RELEASED、merged branch 已清理，canonical
+root/evidence 保留。真实 DQ/activation/capture/outcome/provider/order/fill 仍为零。
+
+下一最小 S5 波按[可信 Full 耗时来源与 seed 更新](TRADING-2564_S5_Validated_Duration_Seed_Refresh_V1.md)
+先修复 refresher 的历史证据校验和零耗时不一致，再复用本次 PASS Full 更新 advisory seed。
+继续遵循既有 ARCH-004G2 规则；保留全部测试、16/loadfile 和文件内部顺序，只在自然边界运行
+Full，不声明稳定提效。S3 真实范围、Composer、S4 实验/会计规则及 S5 其余长期事项仍未完成；
+本 umbrella 保持 IN_PROGRESS，不另建 successor。
+
+S5 E1–E3 接续：245 项 focused 和独立源码/测试/实际来源复核 PASS，已将 advisory seed 更新为
+v25（1,318 source files / 11,991 source nodes，SHA-256 `bd02d68f...d2d99`）。历史 reader 从
+source commit 原始 manifests 重算证据，当前 seed 替换后重验仍 PASS；source Full bytes 保持。
+下一步为 E4 生成一致性、正式验证和普通 main 发布；这只是工程调度改善，不形成稳定提效或研究
+结论，也不完成 S3 真实采集、Composer、S4 与 S5 其余长期事项。

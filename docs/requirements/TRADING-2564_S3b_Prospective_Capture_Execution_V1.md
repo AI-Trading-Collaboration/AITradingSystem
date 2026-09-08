@@ -170,3 +170,10 @@ Full 则为 1 failed / 11811 passed / 5 skipped / 641 warnings。失败 activati
 独立结论及 SHA 见 `clock_independent_review_v1.json`，修正前 608-pass 合并批次保留独立身份。
 source profile 为 87/14，旧 55/57/59 bytes 不变；当前 source/shared 全范围验证与 C4 尚未完成。
 不得沿用旧候选的 actual/Full 结果作为新候选通过证明，真实业务动作仍全零。
+
+2026-09-08 C4 正式验收：修正后的 `38a0a689` source/shared 为 1,037 / 435 passed，actual
+candidate 2 passed、四正式 tiers PASS；新 Full 11,986 passed / 5 skipped / 641 warnings，
+与旧失败 parent 绑定并保留原证据。`clock_final_validation_acceptance_v1.json` 核验 skip/warnings、
+exact source 与全部证据；`clock_main_publication_v1.json` 和 `clock_closeout_verified_v1.json`
+证明普通 push 后 candidate/local/remote 相等、事务 COMPLETED/RELEASED、merged branch 已清理。
+上述收据均位于本节同一 canonical runtime 根。本阶段工程完成；真实采集、S4 和 S5 未完成。

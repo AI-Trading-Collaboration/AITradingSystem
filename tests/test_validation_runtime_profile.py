@@ -263,16 +263,17 @@ def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> No
     assert profile.partial_seed is True
     assert profile.complete_profile is False
     assert profile.owner == "validation_operations"
-    assert profile.version == 24
+    assert profile.version == 25
     assert profile.source_workers == 16
     assert profile.source_dist == "loadfile"
     assert profile.source_artifact_path == (
-        "outputs/validation_runtime/full_20260723T052746Z/test_runtime_profile.json"
+        "outputs/validation_runtime/trading-2564-s3b-clock-final-v1-full-20260908/"
+        "test_runtime_profile.json"
     )
     assert profile.source_artifact_sha256 == (
-        "bd7b8d7271b580d5d06aa4b0a58c339d50303f75b02b41f63661def3e19b84e4"
+        "578586cb250697df54e16c684cf4d7986cb2c8355291f20329c66986b65ab619"
     )
-    assert len(profile.observed_seconds) == 1108
+    assert len(profile.observed_seconds) == 1318
     assert profile.source_node_count is None
     assert profile.source_file_count is None
     assert profile.source_collection_ordered_sha256 is None
@@ -282,11 +283,11 @@ def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> No
     assert profile.expected_scheduled_ordered_sha256 is None
     assert profile.source_file_duration_total_seconds is None
     assert profile.observed_seconds["tests/test_layer1_meta_policy_archive_stabilization.py"] == (
-        178.3878573
+        125.7827374
     )
     assert (
         profile.observed_seconds["tests/test_filtered_candidate_readiness_pipeline_foundation.py"]
-        == 126.7644014
+        == 272.4488793
     )
 
     legacy = load_duration_profile(_write_legacy_partial_profile(tmp_path / "legacy_partial.yaml"))
@@ -307,122 +308,33 @@ def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> No
 def test_partial_profile_refresh_uses_duration_rows_and_exact_summary_binding(
     tmp_path: Path,
 ) -> None:
-    source_profile_path = tmp_path / "outputs/full/test_runtime_profile.json"
-    source_summary_path = tmp_path / "outputs/full/test_runtime_summary.json"
-    source_profile_path.parent.mkdir(parents=True)
-    source_profile = {
-        "schema_version": "test_runtime_profile.v1",
-        "profile_status": "PASS",
-        "telemetry_status": "PASS",
-        "performance_evidence_status": "PASS",
-        "validation_provenance_binding_status": "PASS",
-        "pytest_exitstatus": 0,
-        "worker_count": 16,
-        "node_count": 3,
-        "file_count": 2,
-        "elapsed_seconds": 5.0,
-        "production_effect": "none",
-        "strategy_logic_changed": False,
-        "broker_action_taken": False,
-        "scheduler": {
-            "applied": True,
-            "fallback": False,
-            "expected_worker_count": 16,
-            "xdist_dist": "loadfile",
-            "formal_full_selection_eligible": True,
-        },
-        "collection": {
-            "complete": True,
-            "count": 3,
-            "observed_worker_count": 16,
-            "duplicate_nodeids": [],
-        },
-        "files": [
-            {
-                "path": "tests/test_fast.py",
-                "node_count": 1,
-                "duration_seconds": 1.0,
-                "elapsed_envelope_seconds": 99.0,
-            },
-            {
-                "path": "tests/test_slow.py",
-                "node_count": 2,
-                "duration_seconds": 3.0,
-                "elapsed_envelope_seconds": 0.1,
-            },
-        ],
-    }
-    source_profile_path.write_text(json.dumps(source_profile), encoding="utf-8")
-    profile_bytes = source_profile_path.read_bytes()
-    source_sha256 = hashlib.sha256(profile_bytes).hexdigest()
-    source_summary = {
-        "status": "PASS",
-        "exit_code": 0,
-        "runtime_profile_status": "PASS",
-        "validation_provenance_status": "PASS",
-        "dist": "loadfile",
-        "workers": "16",
-        "formal_full_selection_eligible": True,
-        "production_effect": "none",
-        "strategy_logic_changed": False,
-        "broker_action_taken": False,
-        "runtime_profile_path": str(source_profile_path.resolve()),
-        "git_commit": "1" * 40,
-        "runtime_profile_summary": {
-            "collection_count": 3,
-            "node_count": 3,
-            "file_count": 2,
-            "worker_count": 16,
-            "performance_evidence_status": "PASS",
-            "telemetry_status": "PASS",
-            "validation_provenance_binding_status": "PASS",
-            "scheduler_applied": True,
-            "scheduler_fallback": False,
-            "formal_full_selection_eligible": True,
-        },
-        "output_artifacts": [
-            {
-                "path": str(source_profile_path.resolve()),
-                "exists": True,
-                "sha256": source_sha256,
-                "size_bytes": len(profile_bytes),
-            }
-        ],
-    }
-    source_summary_path.write_text(json.dumps(source_summary), encoding="utf-8")
+    from test_partial_duration_refresh import build_source_fixture
 
+    source = build_source_fixture(tmp_path)
+    source_sha256 = hashlib.sha256(source.profile_path.read_bytes()).hexdigest()
     with patch("scripts.refresh_partial_duration_profile.PROJECT_ROOT", tmp_path):
-        manifest = build_partial_duration_manifest(
-            source_profile_path=source_profile_path,
-            source_summary_path=source_summary_path,
-            profile_id="eb4_test_seed",
-            version=10,
-            expected_nodes=3,
-            expected_files=2,
-        )
+        manifest = build_partial_duration_manifest(**source.expected_kwargs())
 
     assert manifest["status"] == "PARTIAL_SEED"
     assert "complete_profile" not in manifest
     assert manifest["source"]["artifact_sha256"] == source_sha256
-    assert manifest["source"]["artifact_path"] == ("outputs/full/test_runtime_profile.json")
-    assert [row["path"] for row in manifest["files"]] == [
-        "tests/test_slow.py",
-        "tests/test_fast.py",
-    ]
-    assert manifest["files"][0]["observed_seconds"] == 3.0
+    assert manifest["source"]["git_commit"] == source.source_commit
+    assert (
+        manifest["source"]["artifact_path"] == source.profile_path.relative_to(tmp_path).as_posix()
+    )
+    assert len(manifest["files"]) == 16
+    assert sum(row["node_count"] for row in manifest["files"]) == 32
+    assert manifest["files"][0]["path"] == "tests/test_15.py"
+    assert manifest["files"][0]["observed_seconds"] == 12.0
+    # Same measured duration retains source order, including the non-lexical pair.
+    ties = [row["path"] for row in manifest["files"] if row["observed_seconds"] == 6.0]
+    assert ties == ["tests/test_zeta.py", "tests/test_alpha.py", "tests/test_07.py"]
 
-    source_summary["output_artifacts"][0]["sha256"] = "0" * 64
-    source_summary_path.write_text(json.dumps(source_summary), encoding="utf-8")
+    source.summary["output_artifacts"][0]["sha256"] = "0" * 64
+    source.write_summary()
     try:
         with patch("scripts.refresh_partial_duration_profile.PROJECT_ROOT", tmp_path):
-            build_partial_duration_manifest(
-                source_profile_path=source_profile_path,
-                source_summary_path=source_summary_path,
-                profile_id="eb4_test_seed",
-                version=10,
-                expected_nodes=3,
-                expected_files=2,
-            )
+            build_partial_duration_manifest(**source.expected_kwargs())
     except ValueError as exc:
         assert "inventory sha256" in str(exc)
     else:

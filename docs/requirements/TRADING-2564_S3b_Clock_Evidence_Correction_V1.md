@@ -191,3 +191,8 @@ SHA-256 `769336c3f4ea9fdf47a1813656a33749c7c28e34d364b94bea577822b42a8654`。
 精确库存期望为 1216 模块、1379 测试文件，writer 数量 856 与 removal 门禁保持原合同。
 首轮 XML 保留，修正后重跑共享验证。C4 actual candidate、正式 tiers、失败 parent Full 与
 发布仍未完成。
+
+
+## C4 正式验收与发布（2026-09-08）
+
+修正候选 `38a0a689f8c4890760f40c1fedc4bd648a3bbb92` 已完成 source/shared 1,037 / 435 passed、actual candidate 2 passed 及四正式 tiers PASS。新 Full 为 11,986 passed / 5 skipped / 641 warnings，profile/provenance PASS，绑定并保留旧失败 parent；skip nodeids 与 normalized warnings 同基线。`outputs/architecture/trading_2564_s3b_prospective_capture/clock_closeout_verified_v1.json` 证明普通发布后 candidate/local main/remote main 相等、事务 COMPLETED/RELEASED、merged branch 已清理，canonical root/evidence 按依赖保留。本时钟工程修正完成，真实业务动作均零；umbrella 继续推进 S5 可信耗时来源，S3 真实采集及 S4/Composer 等依赖未提前关闭。

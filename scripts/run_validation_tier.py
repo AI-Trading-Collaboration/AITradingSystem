@@ -16,7 +16,7 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 # The runner must prefer this worktree's src package when executed as a script.
 REPO_ROOT_FOR_IMPORTS = Path(__file__).resolve().parents[1]
@@ -71,7 +71,7 @@ from ai_trading_system.platform.validation_trigger_provenance import (
 from ai_trading_system.platform.validation_trigger_provenance import (
     validate_full_provenance,
 )
-from ai_trading_system.yaml_loader import safe_load_yaml_path  # noqa: E402
+from ai_trading_system.yaml_loader import safe_load_yaml_path, safe_load_yaml_text  # noqa: E402
 
 DEFAULT_WORKERS = "16"
 DEFAULT_DIST = "loadfile"
@@ -1392,8 +1392,17 @@ def _duration_file_rows_sha256(
 
 def _load_expected_full_test_files(path: Path) -> tuple[set[str] | None, str | None]:
     try:
-        payload = safe_load_yaml_path(path)
-    except (OSError, ValueError, TypeError) as exc:
+        content = path.read_bytes()
+    except OSError as exc:
+        return None, f"full test manifest could not be read: {exc}"
+    return _parse_expected_full_test_files(content)
+
+
+def _parse_expected_full_test_files(content: bytes) -> tuple[set[str] | None, str | None]:
+    """Use the same full-file coverage contract for live and historical Git bytes."""
+    try:
+        payload = safe_load_yaml_text(content.decode("utf-8"))
+    except (UnicodeError, ValueError, TypeError) as exc:
         return None, f"full test manifest could not be read: {exc}"
     rows = payload.get("tests") if isinstance(payload, Mapping) else None
     if not isinstance(rows, list):
@@ -1429,6 +1438,43 @@ def _reject_non_finite_json_constant(value: str) -> object:
     raise ValueError(f"non-finite JSON constant: {value}")
 
 
+def normalize_absolute_runtime_locator(value: object) -> str:
+    """Compare a recorded absolute locator lexically, without reading its old host."""
+    if not isinstance(value, str) or not value or "\x00" in value:
+        raise ValueError("runtime locator must be a non-empty absolute path")
+    if value.startswith("\\") and not PureWindowsPath(value).drive:
+        raise ValueError("Windows rooted runtime locator requires a drive")
+    normalized = value.replace("\\", "/")
+    if any(part in {".", ".."} for part in normalized.split("/")):
+        raise ValueError("runtime locator must not contain dot segments")
+    windows = PureWindowsPath(normalized)
+    if windows.drive:
+        if not windows.is_absolute():
+            raise ValueError("drive-relative runtime locator is forbidden")
+        return windows.as_posix().casefold()
+    posix = PurePosixPath(normalized)
+    if not posix.is_absolute():
+        raise ValueError("runtime locator must be absolute")
+    return posix.as_posix()
+
+
+@dataclass(frozen=True)
+class CapturedDurationManifest:
+    """One immutable byte capture; the digest is never supplied by the caller."""
+
+    content: bytes
+    normalized_locator: str
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.content, bytes) or not self.content:
+            raise ValueError("captured duration manifest bytes are required")
+        object.__setattr__(
+            self,
+            "normalized_locator",
+            normalize_absolute_runtime_locator(self.normalized_locator),
+        )
+
+
 def _runtime_profile_contract_error(
     payload: Mapping[str, object],
     *,
@@ -1437,6 +1483,56 @@ def _runtime_profile_contract_error(
     expected_dist: str | None = None,
     formal_selection_eligible: bool | None = None,
     duration_profile_path: Path | None = None,
+    expected_test_files: set[str] | None = None,
+    expected_test_files_error: str | None = None,
+    expected_validation_provenance: Mapping[str, object] | None = None,
+) -> str | None:
+    """Preserve live path semantics, then validate one capture with the pure core."""
+    captured = None
+    validation_payload = payload
+    scheduler = payload.get("scheduler")
+    if duration_profile_path is not None and isinstance(scheduler, Mapping):
+        try:
+            resolved_profile_path = duration_profile_path.resolve()
+            configured_resolved = Path(str(scheduler.get("configured_manifest_path"))).resolve()
+        except (OSError, ValueError, TypeError) as exc:
+            return f"runtime profile configured manifest path is invalid: {exc}"
+        if configured_resolved != resolved_profile_path:
+            return "runtime profile configured manifest path differs from runner manifest"
+        try:
+            captured = CapturedDurationManifest(
+                content=resolved_profile_path.read_bytes(),
+                normalized_locator=str(resolved_profile_path),
+            )
+        except (OSError, ValueError, TypeError) as exc:
+            return f"runtime duration manifest could not be reloaded: {exc}"
+        # Normalize only the validation view, after checking the original live locator.
+        # The caller still returns and persists its original payload and bytes.
+        validation_payload = {
+            **payload,
+            "scheduler": {**scheduler, "configured_manifest_path": str(configured_resolved)},
+        }
+    return _runtime_profile_contract_error_from_inputs(
+        validation_payload,
+        pytest_exitstatus=pytest_exitstatus,
+        expected_worker_count=expected_worker_count,
+        expected_dist=expected_dist,
+        formal_selection_eligible=formal_selection_eligible,
+        captured_duration_manifest=captured,
+        expected_test_files=expected_test_files,
+        expected_test_files_error=expected_test_files_error,
+        expected_validation_provenance=expected_validation_provenance,
+    )
+
+
+def _runtime_profile_contract_error_from_inputs(
+    payload: Mapping[str, object],
+    *,
+    pytest_exitstatus: int,
+    expected_worker_count: int | None = None,
+    expected_dist: str | None = None,
+    formal_selection_eligible: bool | None = None,
+    captured_duration_manifest: CapturedDurationManifest | None = None,
     expected_test_files: set[str] | None = None,
     expected_test_files_error: str | None = None,
     expected_validation_provenance: Mapping[str, object] | None = None,
@@ -1807,19 +1903,21 @@ def _runtime_profile_contract_error(
         return "runtime profile collected file set does not match the full test manifest"
 
     recomputed_complete_collection_verified: bool | None = None
-    if duration_profile_path is not None:
-        resolved_profile_path = duration_profile_path.resolve()
-        configured_path = scheduler.get("configured_manifest_path")
+    if captured_duration_manifest is not None:
         try:
-            configured_resolved = Path(str(configured_path)).resolve()
-        except (OSError, ValueError, TypeError) as exc:
+            configured_locator = normalize_absolute_runtime_locator(
+                scheduler.get("configured_manifest_path")
+            )
+        except ValueError as exc:
             return f"runtime profile configured manifest path is invalid: {exc}"
-        if configured_resolved != resolved_profile_path:
+        if configured_locator != captured_duration_manifest.normalized_locator:
             return "runtime profile configured manifest path differs from runner manifest"
         try:
-            duration_manifest = safe_load_yaml_path(resolved_profile_path)
-            manifest_sha256 = _sha256_file(resolved_profile_path)
-        except (OSError, ValueError, TypeError) as exc:
+            duration_manifest = safe_load_yaml_text(
+                captured_duration_manifest.content.decode("utf-8")
+            )
+            manifest_sha256 = hashlib.sha256(captured_duration_manifest.content).hexdigest()
+        except (UnicodeError, ValueError, TypeError) as exc:
             return f"runtime duration manifest could not be reloaded: {exc}"
         if not isinstance(duration_manifest, Mapping):
             return "runtime duration manifest root must be a mapping"
@@ -2231,6 +2329,35 @@ def _runtime_profile_contract_error(
     return None
 
 
+def _parse_runtime_profile_bytes(raw_bytes: bytes, *, pytest_exitstatus: int) -> dict[str, object]:
+    try:
+        payload = json.loads(
+            raw_bytes.decode("utf-8"),
+            object_pairs_hook=_reject_duplicate_json_keys,
+            parse_constant=_reject_non_finite_json_constant,
+        )
+    except (UnicodeError, ValueError, TypeError) as exc:
+        raise ValueError(f"runtime profile artifact missing or invalid: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("runtime profile artifact root must be a mapping")
+    sidecar_exitstatus = payload.get("pytest_exitstatus")
+    if (
+        isinstance(sidecar_exitstatus, bool)
+        or not isinstance(sidecar_exitstatus, int)
+        or sidecar_exitstatus != pytest_exitstatus
+    ):
+        raise ValueError(
+            "runtime profile pytest_exitstatus is invalid or mismatched: "
+            f"sidecar={sidecar_exitstatus!r} subprocess={pytest_exitstatus!r}"
+        )
+    if (
+        payload.get("schema_version") != RUNTIME_PROFILE_SCHEMA_VERSION
+        or payload.get("report_type") != "test_runtime_profile"
+    ):
+        raise ValueError("runtime profile artifact schema/report_type is invalid")
+    return payload
+
+
 def _read_runtime_profile_payload(
     path: Path,
     *,
@@ -2245,44 +2372,17 @@ def _read_runtime_profile_payload(
     raw_bytes: bytes | None = None,
 ) -> dict[str, object]:
     try:
-        raw_text = (
-            path.read_text(encoding="utf-8") if raw_bytes is None else raw_bytes.decode("utf-8")
-        )
-        payload = json.loads(
-            raw_text,
-            object_pairs_hook=_reject_duplicate_json_keys,
-            parse_constant=_reject_non_finite_json_constant,
-        )
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        captured_bytes = path.read_bytes() if raw_bytes is None else raw_bytes
+    except OSError as exc:
         return _runtime_profile_failure_payload(
             reason=f"runtime profile artifact missing or invalid: {exc}",
             pytest_exitstatus=pytest_exitstatus,
         )
-    if not isinstance(payload, dict):
+    try:
+        payload = _parse_runtime_profile_bytes(captured_bytes, pytest_exitstatus=pytest_exitstatus)
+    except ValueError as exc:
         return _runtime_profile_failure_payload(
-            reason="runtime profile artifact root must be a mapping",
-            pytest_exitstatus=pytest_exitstatus,
-        )
-    sidecar_exitstatus = payload.get("pytest_exitstatus")
-    if (
-        isinstance(sidecar_exitstatus, bool)
-        or not isinstance(sidecar_exitstatus, int)
-        or sidecar_exitstatus != pytest_exitstatus
-    ):
-        return _runtime_profile_failure_payload(
-            reason=(
-                "runtime profile pytest_exitstatus is invalid or mismatched: "
-                f"sidecar={sidecar_exitstatus!r} subprocess={pytest_exitstatus!r}"
-            ),
-            pytest_exitstatus=pytest_exitstatus,
-        )
-    if (
-        payload.get("schema_version") != RUNTIME_PROFILE_SCHEMA_VERSION
-        or payload.get("report_type") != "test_runtime_profile"
-    ):
-        return _runtime_profile_failure_payload(
-            reason="runtime profile artifact schema/report_type is invalid",
-            pytest_exitstatus=pytest_exitstatus,
+            reason=str(exc), pytest_exitstatus=pytest_exitstatus
         )
     try:
         contract_error = _runtime_profile_contract_error(
@@ -2306,6 +2406,71 @@ def _read_runtime_profile_payload(
     if contract_error is not None:
         return _runtime_profile_failure_payload(
             reason=f"runtime profile contract is invalid: {contract_error}",
+            pytest_exitstatus=pytest_exitstatus,
+        )
+    return payload
+
+
+def validate_captured_runtime_profile(
+    profile_bytes: bytes,
+    *,
+    duration_manifest: CapturedDurationManifest,
+    full_test_manifest_bytes: bytes,
+    expected_validation_provenance: Mapping[str, object],
+    pytest_exitstatus: int,
+    expected_worker_count: int,
+    expected_dist: str,
+    formal_selection_eligible: bool,
+) -> dict[str, object]:
+    """Validate a historical profile using mandatory original manifest captures only."""
+    if not isinstance(profile_bytes, bytes) or not profile_bytes:
+        raise ValueError("historical runtime profile bytes are required")
+    if not isinstance(duration_manifest, CapturedDurationManifest):
+        raise ValueError("historical duration manifest capture is required")
+    if not isinstance(full_test_manifest_bytes, bytes) or not full_test_manifest_bytes:
+        raise ValueError("historical full test manifest bytes are required")
+    if (
+        not isinstance(expected_validation_provenance, Mapping)
+        or not expected_validation_provenance
+    ):
+        raise ValueError("historical validation provenance is required")
+    provenance_errors = validate_full_provenance(expected_validation_provenance)
+    if provenance_errors:
+        raise ValueError(
+            "historical expected provenance is invalid: " + "; ".join(provenance_errors)
+        )
+    if type(pytest_exitstatus) is not int or pytest_exitstatus < 0:
+        raise ValueError("historical pytest exit status must be a non-negative integer")
+    if type(expected_worker_count) is not int or expected_worker_count < 1:
+        raise ValueError("historical expected worker count must be a positive integer")
+    if not isinstance(expected_dist, str) or not expected_dist.strip():
+        raise ValueError("historical expected distribution is required")
+    if type(formal_selection_eligible) is not bool:
+        raise ValueError("historical formal selection eligibility must be boolean")
+    try:
+        payload = _parse_runtime_profile_bytes(profile_bytes, pytest_exitstatus=pytest_exitstatus)
+    except ValueError as exc:
+        return _runtime_profile_failure_payload(
+            reason=str(exc), pytest_exitstatus=pytest_exitstatus
+        )
+    try:
+        expected_files, file_error = _parse_expected_full_test_files(full_test_manifest_bytes)
+        error = _runtime_profile_contract_error_from_inputs(
+            payload,
+            pytest_exitstatus=pytest_exitstatus,
+            expected_worker_count=expected_worker_count,
+            expected_dist=expected_dist,
+            formal_selection_eligible=formal_selection_eligible,
+            captured_duration_manifest=duration_manifest,
+            expected_test_files=expected_files,
+            expected_test_files_error=file_error,
+            expected_validation_provenance=expected_validation_provenance,
+        )
+    except Exception as exc:  # noqa: BLE001 - malformed captured evidence fails closed
+        error = f"contract evaluation failed closed: {type(exc).__name__}: {exc}"
+    if error is not None:
+        return _runtime_profile_failure_payload(
+            reason=f"runtime profile contract is invalid: {error}",
             pytest_exitstatus=pytest_exitstatus,
         )
     return payload

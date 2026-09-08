@@ -2359,3 +2359,19 @@ contract=`203 passed / 36.45s`，artifact=
 跨worker immutable fixture与tamper copy-on-write、补足其余2次连续full及peak-memory/read-
 amplification telemetry，并完成S3 duration+peak-memory sharding，才可评估S2/S3比例验收。
 `strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
+
+2026-09-08 / TRADING-2564 S5 接续 EB4：按
+[可信 Full 耗时来源与 seed 更新](TRADING-2564_S5_Validated_Duration_Seed_Refresh_V1.md)
+先补强刷新器，再使用 S3b `38a0a689` 的唯一 PASS Full 作为待准入来源。
+该源为 11,991 nodes / 1,318 files；v24 只匹配 1,108 files / 7,379 nodes，遗漏 210 files /
+4,612 nodes。来源 total tail idle 9,645.72 worker-seconds 不是可直接折算的 wall-clock 收益。
+刷新器与 live runner 共用逐节点纯校验核心，历史 duration/full-test manifests 取自源 Git C，
+并交叉验证同 run summary/profile bytes、publication/readiness、provenance、命令及 UTC 窗口。
+显式拒绝没有治理绑定的旧源刷新、伪 PASS、bool/非有限值、重复 key/path、重签 aggregate 和
+零耗时。输出仍为 PARTIAL_SEED，保留所有实测文件、stable ties 和文件内节点顺序；原 legacy
+loader 行为保留，不能借种子更新声明 stable improvement 或完成本任务的 memory/I/O 等验收。
+E1–E3 已通过 245 项 focused 和独立源码、测试、实际来源复核，tracked PARTIAL_SEED v25
+已写入（SHA-256 `bd02d68f7b72771d1131816b8df4f5da3555bf218454eeebc3cac563068d2d99`）。
+替换后按源 Git C 原 v24 bytes 再验，结果与写入前一致；源 summary/profile bytes 不变。
+证据为 `outputs/architecture/trading_2564_s5_validation_efficiency/actual_seed_write_verified_v1.json`。
+E4 生成状态、source/shared、正式 tiers 和自然 Full 及普通发布尚未完成。

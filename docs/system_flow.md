@@ -2619,6 +2619,24 @@ profile/telemetry/performance/provenance均PASS；旧v23只匹配`1097/1108` fil
 `1108 files / 6847 nodes`。`stable_full_improvement_claimed=false`保持；下一次自然Full才验证v24
 applied/no-fallback与尾部效果，本closeout不额外运行第三次Full。
 
+TRADING-2564 S5 为后续 seed 刷新增加历史来源准入：同目录正式 Full summary/profile 的原始
+bytes、publication/readiness candidate、任务 provenance、原工作目录、UTC 窗口和命令先交叉
+绑定，再从 summary 的 exact Git commit 读取固定 duration/full-test manifest blobs。live
+reader 和 historical reader 共用纯校验核心，重算完整 collection、node phases、file/worker
+aggregates、调度顺序及 summary 投影；当前 seed 的变化不能影响历史复核。只有全部通过且
+每个文件的实测 duration 有限为正时，`scripts/refresh_partial_duration_profile.py` 才生成
+advisory PARTIAL_SEED；默认 dry-run，`--write` 只原子更新 canonical duration manifest。
+没有正式 publication/readiness 绑定的旧产物仍保留历史身份，不经新入口生成可信 seed。
+这条输入链只服务工程测试调度，完整测试集合、16/loadfile、文件内顺序和业务安全边界保持。
+`phase_trading_2564_s5_validated_duration_seed_v1` 绑定其命名来源后继和当前 hash，
+历史 phase 业务合同及旧证据身份保持；未知来源或未声明后继仍拒绝。
+
+当前 advisory manifest 为 `trading_2564_s5_full_duration_partial_seed` v25，绑定 S3b
+`38a0a689` PASS Full 的 1,318 files / 11,991 nodes；raw SHA-256 为
+`bd02d68f7b72771d1131816b8df4f5da3555bf218454eeebc3cac563068d2d99`。
+已收录路径的历史权重继续用于该路径后续节点集合，未收录路径稳定置后；实际替换后历史重验
+仍使用源 Git C 的 v24 bytes 并 PASS。v25 不声明稳定提效，效果由后续自然 Full 提供工程观测。
+
 S3H只改变四个既有pytest调用点：Search Coverage Gap、No Promotion Review、Near Miss Candidates与Cash Buffer Attribution显式使用已治理的52-variant test-only complete-family前缀；该前缀仍覆盖8个required families并执行原DQ/PIT、source-lineage、snapshot/view-hash、content rebuild和tamper validator，production配置的80-variant initial batch及所有threshold/conclusion不变。Resource-aware调度本批仅做离线模型，因runtime sidecar尚无peak RSS/I/O/read-amplification而不改变当前COMPLETE pilot policy；`production_effect=none`。
 
 S3I不改变Targeted Search v3业务数据流，只在同一active synchronous validation session内，将Coverage Gap、Near Miss、Weight Scorecard、Weight Batch Backfill与Paper Shadow Backfill五个固定上游validator接入hardened PASS-only content-fingerprint cache。Resolver仅按白名单snapshot schema与typed edge遍历已提交DAG，并显式绑定全部paper cache paths、Weight price-root的download manifest / Marketstack optional sibling，以及Model Target与Daily Advisory semantic-selection inventory；解析、schema、commitment、拓扑或预算任一异常均绕过cache并逐次执行真实validator。只有执行前后fingerprint一致的exact `PASS`可复用，`FAIL`、exception与tamper结果不缓存；Targeted 16 views、3 schema、3 cross-lineage、DQ/PIT/source/policy/price/rates/resume/chronology及byte-rebuild gate全部保留，session不跨test、worker或process，`production_effect=none`。
@@ -3172,6 +3190,9 @@ flowchart TD
     ETBT --> ETFRIDX
     PYTESTDURATION["inputs/architecture/arch_004g2_full_duration_profile.yaml<br/>full-only file duration order / PARTIAL_SEED bootstrap or source-bound COMPLETE<br/>collection change keeps historical rows partial; only current PASS sidecar may promote exact COMPLETE"] --> PYTESTTIER
     PYTESTPROVENANCE["validation_trigger_provenance.v1<br/>Full reviewed reason + task + boundary + optional failure parent<br/>CLI/env whole-envelope; formal parent fixed-sibling + same-bytes + summary/profile SHA-256 binding<br/>ordinary sidecar strict-read; canonical persisted failure exact-shape recovery<br/>missing/invalid/forged => pre-pytest usage error<br/>GitHub daily scheduled Full = engineering CI exception"] --> PYTESTTIER
+    DURATIONCAPTURE["Retained formal Full summary + profile raw bytes<br/>source commit + publication/readiness + provenance + UTC window"] --> DURATIONREPLAY["refresh_partial_duration_profile.py<br/>fixed Git-C duration/test manifests + shared pure reader<br/>recompute collection/phases/aggregates/order + summary binding"]
+    DURATIONREPLAY --> DURATIONSEED["finite positive observed file durations / advisory PARTIAL_SEED<br/>dry-run default / canonical manifest atomic write only"]
+    DURATIONSEED --> PYTESTTIER
     PYTESTTIER["python scripts/run_validation_tier.py fast-unit|contract-validation|report-validation|integration|reproducibility|slow-research-regression|full --write-runtime-artifact<br/>full keeps complete node set + -n 16 --dist loadfile + file-internal order<br/>PARTIAL_SEED stable duration order; COMPLETE requires exact coverage / --no-loadscope-reorder / invalid => explicit stock fallback<br/>summary + Reader Brief + formal Full profile share exact provenance / binding mismatch => performance FAIL<br/>benchmark clears inherited formal/profile/provenance env + keeps canonical summary/brief/log + comparison summary/variant logs / no formal profile / runtime_profile_status=NOT_APPLICABLE / not promotion evidence<br/>production_effect=none / engineering telemetry only / no research or promotion evidence / no broker action"] --> ETFRIDX
     DATAFALLBACK["aits data fallback-policy run/report/validate<br/>TRADING-368 explicit source fallback governance<br/>reports/data_governance/data_source_fallback_policy/...<br/>PRIMARY_OK|FALLBACK_USED|FALLBACK_UNAVAILABLE|BLOCKED_NO_VALID_SOURCE / explicit metadata / fail closed / production_effect=none"] --> ETFRIDX
     CACHECAT["aits data cache-catalog run/report/validate<br/>TRADING-369 checksum and cache catalog governance<br/>reports/data_governance/cache_catalog/...<br/>price / secondary price / macro / market panel cache path + checksum + dimensions + source lineage + validation/refresh audit links<br/>missing required or checksum mismatch fail closed / read-only / production_effect=none"] --> ETFRIDX

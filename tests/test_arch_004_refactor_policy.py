@@ -3913,7 +3913,8 @@ TRADING_2564_S2C_SECTION = "phase_trading_2564_s2c_equal_risk_price_consumer_sco
 TRADING_2564_S2C2_SECTION = "phase_trading_2564_s2c2_five_candidate_preview_v1"
 TRADING_2564_S3A_SECTION = "phase_trading_2564_s3a_prospective_event_time_v1"
 TRADING_2564_S3B_SECTION = "phase_trading_2564_s3b_prospective_capture_execution_v1"
-LATEST_COMPATIBILITY_SECTION = TRADING_2564_S3B_SECTION
+TRADING_2564_S5_SECTION = "phase_trading_2564_s5_validated_duration_seed_v1"
+LATEST_COMPATIBILITY_SECTION = TRADING_2564_S5_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -12623,6 +12624,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         )
     if DEVX_007_V2_SECTION in baseline:
         paths |= _devx_007_v2_all_current_authority_paths()
+    if TRADING_2564_S5_SECTION in baseline:
+        paths |= frozenset(baseline[TRADING_2564_S5_SECTION]["superseded_live_source_paths"])
     return paths
 
 
@@ -13091,6 +13094,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2564_S2C2_SECTION,
         TRADING_2564_S3A_SECTION,
         TRADING_2564_S3B_SECTION,
+        TRADING_2564_S5_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13194,6 +13198,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2564_S2C2_SECTION,
         TRADING_2564_S3A_SECTION,
         TRADING_2564_S3B_SECTION,
+        TRADING_2564_S5_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -14135,7 +14140,8 @@ def _source_sha256(source: dict[str, object]) -> str:
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
     if (
-        TRADING_2564_S3B_SECTION in baseline
+        TRADING_2564_S5_SECTION in baseline
+        or TRADING_2564_S3B_SECTION in baseline
         or TRADING_2564_S3A_SECTION in baseline
         or TRADING_2564_S2C2_SECTION in baseline
         or TRADING_2564_S2C_SECTION in baseline
@@ -14159,6 +14165,8 @@ def _source_sha256(source: dict[str, object]) -> str:
             authority_section = TRADING_2564_S3A_SECTION
         if TRADING_2564_S3B_SECTION in baseline:
             authority_section = TRADING_2564_S3B_SECTION
+        if TRADING_2564_S5_SECTION in baseline:
+            authority_section = TRADING_2564_S5_SECTION
         phase = baseline[authority_section]
         current_superseded_paths = frozenset(
             str(path) for path in phase["superseded_live_source_paths"]
@@ -14187,6 +14195,7 @@ def _source_sha256(source: dict[str, object]) -> str:
                         TRADING_2564_S2C2_SECTION,
                         TRADING_2564_S3A_SECTION,
                         TRADING_2564_S3B_SECTION,
+                        TRADING_2564_S5_SECTION,
                     }
                     else ()
                 ),
@@ -14198,6 +14207,7 @@ def _source_sha256(source: dict[str, object]) -> str:
                         TRADING_2564_S2C2_SECTION,
                         TRADING_2564_S3A_SECTION,
                         TRADING_2564_S3B_SECTION,
+                        TRADING_2564_S5_SECTION,
                     }
                     else ()
                 ),
@@ -14208,17 +14218,19 @@ def _source_sha256(source: dict[str, object]) -> str:
                         TRADING_2564_S2C2_SECTION,
                         TRADING_2564_S3A_SECTION,
                         TRADING_2564_S3B_SECTION,
+                        TRADING_2564_S5_SECTION,
                     }
                     else ()
                 ),
                 *(
                     (TRADING_2564_S2C2_SECTION,)
-                    if authority_section in {TRADING_2564_S3A_SECTION, TRADING_2564_S3B_SECTION}
+                    if authority_section
+                    in {TRADING_2564_S3A_SECTION, TRADING_2564_S3B_SECTION, TRADING_2564_S5_SECTION}
                     else ()
                 ),
                 *(
                     (TRADING_2564_S3A_SECTION,)
-                    if authority_section == TRADING_2564_S3B_SECTION
+                    if authority_section in {TRADING_2564_S3B_SECTION, TRADING_2564_S5_SECTION}
                     else ()
                 ),
             )
@@ -24818,7 +24830,7 @@ def test_devx_011_governed_workflow_health_authority_remains_historical() -> Non
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
     # S3b adds three artifact-catalog and three system-flow entries. The historical
     # workflow contract stays frozen; only the live successor count advances.
-    assert phase["report_catalog_flow_successor"]["entry_count"] == 3177
+    assert phase["report_catalog_flow_successor"]["entry_count"] == 3179
     assert phase["report_catalog_flow_successor"]["fragment_count"] == 192
     assert phase["safety"] == {
         "market_cache_read": False,
