@@ -623,3 +623,17 @@ v25（1,318 source files / 11,991 source nodes，SHA-256 `bd02d68f...d2d99`）�
 source commit 原始 manifests 重算证据，当前 seed 替换后重验仍 PASS；source Full bytes 保持。
 下一步为 E4 生成一致性、正式验证和普通 main 发布；这只是工程调度改善，不形成稳定提效或研究
 结论，也不完成 S3 真实采集、Composer、S4 与 S5 其余长期事项。
+
+
+## 2026-09-08 S5 duration seed 正式关闭与即时失败诊断后继
+
+S5 duration seed E4 已完成：最终 Full 12150 passed / 5 skipped，四类正式 tiers 与独立复核
+通过；main、origin/main 和发布候选均为 `8166843157fa9f0b619539ae7a20e00eea16ee0b`。
+正式事务已 RELEASED。关闭证据在
+`outputs/architecture/trading_2564_s5_validation_efficiency/closeout_verified_v2.json`；
+此前失败证据继续保留。任务临时 E1 文件和已合并分支已清理，canonical 证据保留。
+这关闭耗时来源修复片，不代表稳定提速或 umbrella 完成。
+
+下一片为 [S5 即时失败诊断](TRADING-2564_S5_Immediate_Failure_Diagnostics_V1.md)：
+Full 仍运行时显示失败阶段和根因，保留完整执行与最终证据。原 S3 真实前瞻研究、Composer、
+S4 与其他 S5 长期能力仍未关闭；真实业务调用计数继续为零。

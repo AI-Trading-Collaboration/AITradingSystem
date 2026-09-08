@@ -2375,3 +2375,15 @@ E1–E3 已通过 245 项 focused 和独立源码、测试、实际来源复核�
 替换后按源 Git C 原 v24 bytes 再验，结果与写入前一致；源 summary/profile bytes 不变。
 证据为 `outputs/architecture/trading_2564_s5_validation_efficiency/actual_seed_write_verified_v1.json`。
 E4 生成状态、source/shared、正式 tiers 和自然 Full 及普通发布尚未完成。
+
+
+## TRADING-2564 S5 即时失败诊断
+
+2026-09-08：新增 master failed-report observer；实施合同见
+`docs/requirements/TRADING-2564_S5_Immediate_Failure_Diagnostics_V1.md`。
+原 phase telemetry 完成后显示 IN_PROGRESS 根因和有界 traceback，每行带前缀并显式 flush。
+显示预算为 identity 1024、root cause 2048、traceback 8192 字符，每段最多80行；它们只限制
+即时输出大小，不是测试、研究或投资门槛。截断提示保留尾部并指向最终完整 pytest 报告。
+只隔离诊断格式化/输出异常，不改变原 report/outcome、collection、调度、退出码或终态 schema。
+真正16/loadfile子进程经原runner转发，并由外层收到失败详情后才释放末尾等待测试来验证及时性。
+尚待本波 focused/source/shared 和最终候选正式验证，不能预报 PASS 或稳定提速。

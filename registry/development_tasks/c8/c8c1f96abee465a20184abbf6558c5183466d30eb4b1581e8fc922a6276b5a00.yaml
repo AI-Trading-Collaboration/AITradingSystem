@@ -13,7 +13,7 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Codex：S5 E4 命名来源后继、shared 验证与正式候选
+  next_owner: Codex：S5 即时诊断自然集成与发布；后续S3真实研究/Composer/S4仍按独立合同推进
   requirement_refs:
   - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
   - docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md
@@ -22,16 +22,15 @@ task_record:
   - docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md
   - docs/requirements/TRADING-2564_S3b_Clock_Evidence_Correction_V1.md
   - docs/requirements/TRADING-2564_S3b_Prospective_Capture_Execution_V1.md
+  - docs/requirements/TRADING-2564_S5_Immediate_Failure_Diagnostics_V1.md
   - docs/requirements/TRADING-2564_S5_Validated_Duration_Seed_Refresh_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S5 E1–E3 已通过严格源重验并写入 advisory v25；E4 首轮
-    shared 459 PASS/127 FAIL，按 S5 需求新增命名来源后继并同步生成绑定后重验。原 source transaction FAILED
-    保留，新 v2 exact scope 重试；真实研究与生产边界不变。
+  unstructured_legacy_blocker_or_next_step: S5 duration seed 已发布816684；即时诊断和69来源后继已实现，修复后30项合成验证PASS；source/shared与正式发布结果绑定本片事务，不预报终态；真实业务仍0。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: v25仅advisory文件调度，完整node set和文件内顺序及16/loadfile不变；历史来源固定GitC与原始summary/profile，替换后重验PASS；正式候选验证和普通发布一致；S3真实业务/Composer/S4/S5长期能力不提前关闭
+    text: 失败根因在子进程终止前可见；setup/call/teardown与xfail/XPASS正确，worker不重复；有界带前缀输出不污染耗时解析；完整collection/phase/outcome/退出码与最终schema不变；来源闭包和正式验证发布通过。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -930,19 +929,61 @@ events:
   - change:trading-2564-s5-e4-named-authority-scope-20260908-v2
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-2afe69e8600587fdab962eab4582a637
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-08T09:16:12.821943+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s5-live-diagnostics-scope-20260908-v1
+  lane_id: null
+  base_commit: 8166843157fa9f0b619539ae7a20e00eea16ee0b
+  previous_state_event_id: task-event-2afe69e8600587fdab962eab4582a637
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex：S5 即时失败诊断 D2 实现与合成证明，D3 来源，D4 正式集成
+    blocker_or_next_step: S5 duration seed 已以816684正式验证发布；继续master失败诊断，保留全量执行和最终真值；S3真实前瞻/Composer/S4/其他S5依赖仍未解除。
+    acceptance_criteria: 失败根因在子进程终止前可见；setup/call/teardown与xfail/XPASS正确，worker不重复；有界带前缀输出不污染耗时解析；完整collection/phase/outcome/退出码与最终schema不变；来源闭包和正式验证发布通过。
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md；docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md；docs/requirements/TRADING-2564_S3b_Clock_Evidence_Correction_V1.md；docs/requirements/TRADING-2564_S3b_Prospective_Capture_Execution_V1.md；docs/requirements/TRADING-2564_S5_Validated_Duration_Seed_Refresh_V1.md；docs/requirements/TRADING-2564_S5_Immediate_Failure_Diagnostics_V1.md；2026-09-08
+      owner继续授权；本片仅本地工程与合成验证；真实业务/研究/provider/order/fill均0
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s5-live-diagnostics-scope-20260908-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-35e3309f7c27ccf295fa773a5573d1a7
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-08T09:34:17.002415+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s5-live-diagnostics-implementation-20260908-v1
+  lane_id: null
+  base_commit: 8166843157fa9f0b619539ae7a20e00eea16ee0b
+  previous_state_event_id: task-event-35e3309f7c27ccf295fa773a5573d1a7
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex：S5 即时诊断自然集成与发布；后续S3真实研究/Composer/S4仍按独立合同推进
+    blocker_or_next_step: S5 duration seed 已发布816684；即时诊断和69来源后继已实现，修复后30项合成验证PASS；source/shared与正式发布结果绑定本片事务，不预报终态；真实业务仍0。
+    acceptance_criteria: 失败根因在子进程终止前可见；setup/call/teardown与xfail/XPASS正确，worker不重复；有界带前缀输出不污染耗时解析；完整collection/phase/outcome/退出码与最终schema不变；来源闭包和正式验证发布通过。
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md；docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md；docs/requirements/TRADING-2564_S3b_Clock_Evidence_Correction_V1.md；docs/requirements/TRADING-2564_S3b_Prospective_Capture_Execution_V1.md；docs/requirements/TRADING-2564_S5_Immediate_Failure_Diagnostics_V1.md；docs/requirements/TRADING-2564_S5_Validated_Duration_Seed_Refresh_V1.md；S5诊断保留完整执行/原终态；独立复核两边界修复PASS；正式结果按精确候选事务归档，umbrella未完成
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s5-live-diagnostics-implementation-20260908-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-bf281a42c6345e24e0617c1dc0490e71
 projection:
   legacy_first_eight_cells:
   - TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
   - 长期研究能力 / 输入就绪与验证前置
   - P1
   - IN_PROGRESS
-  - Codex：S5 E4 命名来源后继、shared 验证与正式候选
-  - S5 E1–E3 已通过严格源重验并写入 advisory v25；E4 首轮 shared 459 PASS/127 FAIL，按 S5 需求新增命名来源后继并同步生成绑定后重验。原
-    source transaction FAILED 保留，新 v2 exact scope 重试；真实研究与生产边界不变。
-  - v25仅advisory文件调度，完整node set和文件内顺序及16/loadfile不变；历史来源固定GitC与原始summary/profile，替换后重验PASS；正式候选验证和普通发布一致；S3真实业务/Composer/S4/S5长期能力不提前关闭
-  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md；docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md；docs/requirements/TRADING-2564_S3b_Clock_Evidence_Correction_V1.md；docs/requirements/TRADING-2564_S3b_Prospective_Capture_Execution_V1.md；docs/requirements/TRADING-2564_S5_Validated_Duration_Seed_Refresh_V1.md；S3b38a0正式发布已闭合；S5
-    E1-E3共享历史reader/严格source准入与v25 seed完成，245项focused及独立源码/测试/实际逐phase-node-file复核PASS，1318
-    source files/11991 nodes；替换后原Git manifest历史重验PASS，原Full bytes未变；E4 source/shared与正式tiers/自然Full及普通发布待完成；S3真实范围/Composer/S4/S5其余未完成，业务动作0
+  - Codex：S5 即时诊断自然集成与发布；后续S3真实研究/Composer/S4仍按独立合同推进
+  - S5 duration seed 已发布816684；即时诊断和69来源后继已实现，修复后30项合成验证PASS；source/shared与正式发布结果绑定本片事务，不预报终态；真实业务仍0。
+  - 失败根因在子进程终止前可见；setup/call/teardown与xfail/XPASS正确，worker不重复；有界带前缀输出不污染耗时解析；完整collection/phase/outcome/退出码与最终schema不变；来源闭包和正式验证发布通过。
+  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md；docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md；docs/requirements/TRADING-2564_S3b_Clock_Evidence_Correction_V1.md；docs/requirements/TRADING-2564_S3b_Prospective_Capture_Execution_V1.md；docs/requirements/TRADING-2564_S5_Immediate_Failure_Diagnostics_V1.md；docs/requirements/TRADING-2564_S5_Validated_Duration_Seed_Refresh_V1.md；S5诊断保留完整执行/原终态；独立复核两边界修复PASS；正式结果按精确候选事务归档，umbrella未完成
   docs_links:
   - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
   - docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md
@@ -951,9 +992,10 @@ projection:
   - docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md
   - docs/requirements/TRADING-2564_S3b_Clock_Evidence_Correction_V1.md
   - docs/requirements/TRADING-2564_S3b_Prospective_Capture_Execution_V1.md
+  - docs/requirements/TRADING-2564_S5_Immediate_Failure_Diagnostics_V1.md
   - docs/requirements/TRADING-2564_S5_Validated_Duration_Seed_Refresh_V1.md
   terminal: false
-  canonical_row_sha256: 9f7a191166221f4a94a48fc5bc26eb141594347b0d41825087148ab82d86ab5c
-last_event_id: task-event-2afe69e8600587fdab962eab4582a637
+  canonical_row_sha256: 794561368ed170e3247ccb3ff3897be5e243097230e54511fc418be5f029f20d
+last_event_id: task-event-bf281a42c6345e24e0617c1dc0490e71
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 71331212c9865768e4ec8847643ffda93e015739fd8e639dc053544d00f81c7a
+fragment_checksum: d26a288b11566161d8d1f7cc5a783cc5a1a213b67dbc6b902c9c8072306fa982

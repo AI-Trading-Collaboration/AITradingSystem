@@ -964,6 +964,10 @@ def build_repository_authority(
         section_id, section = _trading_2564_s5_section(root, policy=policy)
         relative, record, content = render_fragment(section_id=section_id, section=section)
         rendered_fragments.append((section_id, relative, record, content))
+    if (root / "docs/requirements/TRADING-2564_S5_Immediate_Failure_Diagnostics_V1.md").exists():
+        section_id, section = _trading_2564_s5_diagnostics_section(root, policy=policy)
+        relative, record, content = render_fragment(section_id=section_id, section=section)
+        rendered_fragments.append((section_id, relative, record, content))
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -3342,6 +3346,57 @@ def _trading_2564_s5_section(
             "formal_selection_eligible": False,
         },
         "safety": {
+            "historical_full_artifacts_mutated": False,
+            "investment_policy_changed": False,
+            "real_dq_or_research_executed": False,
+            "stable_speedup_established": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _trading_2564_s5_diagnostics_section(
+    root: Path, *, policy: Mapping[str, Any]
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_trading_2564_s5_immediate_failure_diagnostics_v1"
+    previous_id, previous = _trading_2564_s5_section(root, policy=policy)
+    source_paths = sorted(
+        {
+            *previous["superseded_live_source_paths"],
+            "scripts/pytest_runtime_profile.py",
+            "tests/test_validation_failure_diagnostics.py",
+            "docs/requirements/TRADING-2564_S5_Immediate_Failure_Diagnostics_V1.md",
+        },
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "trading_2564_s5_immediate_failure_diagnostics.v1",
+        "task_id": "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1",
+        "status": "VALIDATING",
+        "owner_decision": "owner_instruction:TRADING-2564:2026-09-08:continue-s5",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": previous_id,
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "diagnostic_contract": {
+            "observer": "MASTER_FAILED_REPORT_AFTER_ORIGINAL_PHASE_RECORD",
+            "phases": ["setup", "call", "teardown"],
+            "state": "IN_PROGRESS_NONTERMINAL",
+            "output": "PREFIX_EVERY_LINE_BOUNDED_ROOT_CAUSE_AND_TRACEBACK_FLUSHED",
+            "diagnostic_errors": "ISOLATED_FROM_TEST_OUTCOME_WITH_BEST_EFFORT_NOTICE",
+            "terminal_truth": "ORIGINAL_PYTEST_EXIT_AND_COMPLETE_FINAL_ARTIFACTS",
+        },
+        "safety": {
+            "test_selection_changed": False,
+            "scheduler_or_retry_changed": False,
+            "final_evidence_schema_changed": False,
             "historical_full_artifacts_mutated": False,
             "investment_policy_changed": False,
             "real_dq_or_research_executed": False,

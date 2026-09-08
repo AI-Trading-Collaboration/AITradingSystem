@@ -448,6 +448,12 @@ HTTP 服务、投资建议或 strategy approval。
 
 ## ENG-VAL-001 Validation Runtime Profiling and Xdist Benchmark
 
+TRADING-2564 S5 即时诊断复用下面的 stdout/最终 `pytest_output.log`，不新增终态 artifact。
+Full plugin 的 master 在每个实际 failed setup/call/teardown 后输出带固定
+`[AITS FAILURE IN_PROGRESS]` 前缀的 nodeid/worker/phase、根因和有界 traceback；
+每行前缀及控制字符转义避免污染正式耗时解析，截断指向最终完整报告。
+该块仅为运行中观察；剩余测试继续，最终 exit/profile/summary/fence 的准入语义保持。
+
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
 |---|---|---|---|---|---|---|
 |`inputs/architecture/arch_004g2_full_duration_profile.yaml`|`python scripts/refresh_partial_duration_profile.py --source-profile <profile> --source-summary <summary> ... --write`；validation operations review；pytest运行不自动改写tracked profile|`outputs/validation_runtime/full_20260723T052746Z/test_runtime_profile.json`，SHA-256=`bd7b8d7271b580d5d06aa4b0a58c339d50303f75b02b41f63661def3e19b84e4`；full / 16 workers / loadfile PASS context|Schema contract：`schema_version=arch_004g2_full_duration_profile.v1`、`status=PARTIAL_SEED`、profile id=`arch_004g_wave13_full_duration_partial_seed`、version=24，精确保留`1108 files / 6847 nodes`的逐文件`observed_seconds`，raw SHA-256=`df1d10aeedcf8d572fa568e45a100d097aed2685a115c9ec8e1f7251517e2cfd`；review contract固定完整node set、文件内node顺序不变、缺失/无效profile显式stock fallback，fallback、顺序未验证或incomplete telemetry不得形成performance PASS；`stable_improvement_claimed=false`|仅为`full`的文件级历史耗时降序stable scheduling提供tracked、可审计输入；下一自然Full验证v24 applied/no-fallback与尾部效果|否，`production_effect=none`、不改变测试内容、策略逻辑、研究结论或broker状态|`PARTIAL_SEED`是advisory duration输入，不证明稳定提速；单次Full不能支持稳定性能结论，本closeout不为性能比较额外运行Full。|

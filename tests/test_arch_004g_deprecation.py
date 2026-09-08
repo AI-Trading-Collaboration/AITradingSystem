@@ -57,7 +57,7 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-WAVE21_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_79c1c5f6110a174ec868"
+WAVE21_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_9efb9bde56ecf4bda930"
 WAVE21_CURRENT_REPOSITORY_COUNTS = {
     # TRADING-2526 adds the controlled HTTPS preview contract and its focused
     # test file; TRADING-2554 adds one DevEx active-worktree regression file.
@@ -81,7 +81,8 @@ WAVE21_CURRENT_REPOSITORY_COUNTS = {
     # These change inventory identity/counts only; they do not change runtime
     # deprecation lifecycle or writer allowances.
     "python_module_count": 1216,
-    "python_test_file_count": 1380,
+    # S5 immediate failure diagnostics adds one synthetic test file.
+    "python_test_file_count": 1381,
     "direct_writer_current_count": 856,
 }
 WAVE21_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(

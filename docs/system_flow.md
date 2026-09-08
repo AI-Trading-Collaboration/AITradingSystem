@@ -2631,6 +2631,23 @@ advisory PARTIAL_SEED；默认 dry-run，`--write` 只原子更新 canonical dur
 `phase_trading_2564_s5_validated_duration_seed_v1` 绑定其命名来源后继和当前 hash，
 历史 phase 业务合同及旧证据身份保持；未知来源或未声明后继仍拒绝。
 
+S5 即时失败诊断在上述 Full plugin 的 master report hook 中，于原 phase 记录后观察 failed
+setup/call/teardown，逐条显示 nodeid、worker、phase、根因及有界 traceback 并 flush。
+每行带 `[AITS FAILURE IN_PROGRESS]` 前缀，控制字符转义、截断明示；runner 沿既有管道
+转发，诊断文本不进入正式耗时行解析。失败不会中断剩余测试，worker 不重复输出；
+最终 pytest exit、完整 profile/summary 与 publication result 仍为终态权威。
+`phase_trading_2564_s5_immediate_failure_diagnostics_v1` 精确继承 seed 来源并绑定 plugin、
+合成测试及诊断合同，不改变历史来源身份、实际研究或生产路径。
+
+```mermaid
+flowchart LR
+    FailedPhase["master failed setup/call/teardown report"] --> PhaseRecord["原 phase telemetry"]
+    PhaseRecord --> LiveDiagnostic["有界根因 / 每行 IN_PROGRESS / flush"]
+    LiveDiagnostic --> Pipe["既有 runner 合并输出管道"]
+    PhaseRecord --> Remaining["继续完整测试集合"]
+    Remaining --> FinalTruth["原 pytest exit + 最终 profile/summary + fence result"]
+```
+
 当前 advisory manifest 为 `trading_2564_s5_full_duration_partial_seed` v25，绑定 S3b
 `38a0a689` PASS Full 的 1,318 files / 11,991 nodes；raw SHA-256 为
 `bd02d68f7b72771d1131816b8df4f5da3555bf218454eeebc3cac563068d2d99`。

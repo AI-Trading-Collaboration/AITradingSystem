@@ -41,6 +41,64 @@ SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 GIT_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 PHASE_ORDER = {"setup": 0, "call": 1, "teardown": 2}
 
+# Operational display budgets, not test-selection or investment thresholds.
+# See TRADING-2564_S5_Immediate_Failure_Diagnostics_V1.md. The complete pytest
+# report remains authoritative; prefixes keep diagnostic text out of duration parsing.
+LIVE_FAILURE_PREFIX = "[AITS FAILURE IN_PROGRESS] "
+LIVE_FAILURE_IDENTITY_CHARS = 1024
+LIVE_FAILURE_ROOT_CAUSE_CHARS = 2048
+LIVE_FAILURE_TRACEBACK_CHARS = 8192
+LIVE_FAILURE_MAX_LINES = 80
+_LIVE_FAILURE_TRUNCATED = "... [TRUNCATED; see final complete pytest report] ..."
+
+
+def _failure_excerpt(value: object, limit: int) -> str:
+    def clip_characters(text: str) -> str:
+        if len(text) <= limit:
+            return text
+        available = limit - len(_LIVE_FAILURE_TRUNCATED)
+        head = available // 2
+        tail = available - head
+        # The marker introduces no newline, so a final character cut cannot
+        # invalidate the line budget established below.
+        return text[:head] + _LIVE_FAILURE_TRUNCATED + text[-tail:]
+
+    text = clip_characters(str(value))
+    # Escape terminal controls before writing so no raw carriage return or ANSI
+    # sequence can erase a prefix or imitate a standalone final-result line.
+    text = "".join(
+        character if character == "\n" or character.isprintable() else ascii(character)[1:-1]
+        for character in text
+    )
+    lines = text.splitlines()
+    if len(lines) > LIVE_FAILURE_MAX_LINES:
+        half = (LIVE_FAILURE_MAX_LINES - 1) // 2
+        lines = [*lines[:half], _LIVE_FAILURE_TRUNCATED, *lines[-half:]]
+    # Control escaping and the line-truncation marker can both grow the text.
+    return clip_characters("\n".join(lines))
+
+
+def format_failure_diagnostic(report: pytest.TestReport, worker_id: str) -> list[str]:
+    """Render an explicitly nonterminal observation without captured-output sections."""
+    identity = " ".join(
+        f"{name}="
+        + json.dumps(_failure_excerpt(value, LIVE_FAILURE_IDENTITY_CHARS), ensure_ascii=True)
+        for name, value in (
+            ("nodeid", report.nodeid),
+            ("worker", worker_id),
+            ("phase", report.when),
+        )
+    )
+    representation = report.longrepr
+    crash = getattr(representation, "reprcrash", None)
+    root_cause = crash if crash is not None else representation
+    lines = ["BEGIN " + identity, "ROOT_CAUSE"]
+    lines.extend(_failure_excerpt(root_cause, LIVE_FAILURE_ROOT_CAUSE_CHARS).splitlines())
+    lines.append("TRACEBACK")
+    lines.extend(_failure_excerpt(representation, LIVE_FAILURE_TRACEBACK_CHARS).splitlines())
+    lines.append("END")
+    return [LIVE_FAILURE_PREFIX + line for line in lines]
+
 
 @dataclass(frozen=True)
 class DurationProfile:
@@ -1323,6 +1381,41 @@ class RuntimeProfilePlugin:
                 "worker_id": worker_id,
             }
         )
+        if report.failed:
+            self._emit_failure_diagnostic(report, worker_id)
+
+    def _emit_failure_diagnostic(self, report: pytest.TestReport, worker_id: str) -> None:
+        # This observer cannot change test outcomes. Keep the exception boundary
+        # here, after original telemetry, and never catch process-control exceptions.
+        try:
+            lines = format_failure_diagnostic(report, worker_id)
+            reporter = self.config.pluginmanager.getplugin("terminalreporter")
+            if reporter is None:
+                print("\n" + "\n".join(lines), file=sys.stderr, flush=True)
+            else:
+                reporter.write_line("")  # xdist progress may have no trailing newline.
+                for line in lines:
+                    reporter.write_line(line)
+                reporter.flush()
+        except Exception as exc:
+            try:
+                error_type = json.dumps(
+                    _failure_excerpt(type(exc).__name__, LIVE_FAILURE_IDENTITY_CHARS),
+                    ensure_ascii=True,
+                )
+                print(
+                    "\n"
+                    + LIVE_FAILURE_PREFIX
+                    + "DIAGNOSTIC_UNAVAILABLE "
+                    + error_type
+                    + "; final pytest result remains authoritative",
+                    file=sys.stderr,
+                    flush=True,
+                )
+            except Exception:
+                # Both diagnostic sinks are unavailable; the pytest report is
+                # still retained by the existing pytest/session-finish path.
+                pass
 
     @pytest.hookimpl(trylast=True)
     def pytest_sessionfinish(self, session: pytest.Session, exitstatus: int) -> None:
