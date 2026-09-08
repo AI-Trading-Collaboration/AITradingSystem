@@ -13,24 +13,18 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Codex：S5 即时诊断自然集成与发布；后续S3真实研究/Composer/S4仍按独立合同推进
+  next_owner: Codex：S4来源生成、最终候选formal/Full验收、普通main发布与清理；随后真实接入及会计后继
   requirement_refs:
   - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
-  - docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md
-  - docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md
-  - docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md
-  - docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md
-  - docs/requirements/TRADING-2564_S3b_Clock_Evidence_Correction_V1.md
-  - docs/requirements/TRADING-2564_S3b_Prospective_Capture_Execution_V1.md
-  - docs/requirements/TRADING-2564_S5_Immediate_Failure_Diagnostics_V1.md
-  - docs/requirements/TRADING-2564_S5_Validated_Duration_Seed_Refresh_V1.md
+  - docs/requirements/TRADING-2564_S4_Experiment_Envelope_First_Access_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S5 duration seed 已发布816684；即时诊断和69来源后继已实现，修复后30项合成验证PASS；source/shared与正式发布结果绑定本片事务，不预报终态；真实业务仍0。
+  unstructured_legacy_blocker_or_next_step: S4严格封套与synthetic first-access联合验证/独立审查PASS；v1不完整证据保留。最终正式与发布以回执验收；真实协议、legacy首次读取入口、可靠外部时间witness、DQ/PIT
+    adapter及现金/复合归因待完成。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 失败根因在子进程终止前可见；setup/call/teardown与xfail/XPASS正确，worker不重复；有界带前缀输出不污染耗时解析；完整collection/phase/outcome/退出码与最终schema不变；来源闭包和正式验证发布通过。
+    text: exact封套/政策及身份连通历史绑定；pending-before-loader、终止/重复/篡改/并发负例PASS；来源闭包与final formal/Full、普通main发布和清理通过；不得宣称真实OOS或legacy全面门禁。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -974,28 +968,72 @@ events:
   - change:trading-2564-s5-live-diagnostics-implementation-20260908-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-bf281a42c6345e24e0617c1dc0490e71
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-08T11:57:39.352528+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s4-first-access-start-20260908-v1
+  lane_id: null
+  base_commit: e651a663f01a688f1e31ea76caa82cd3945b9228
+  previous_state_event_id: task-event-bf281a42c6345e24e0617c1dc0490e71
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex：S4最小串行封套合同→有界访问账本→合成及正式验证发布
+    blocker_or_next_step: S5即时诊断已在e651a663发布；S4开始实现exact封套、独立本地准入、稳定暴露域、append-only
+      attempt/access及pending-before-loader。真实协议、legacy入口迁移、可靠外部冻结见证和会计归因后继仍待完成；本波真实业务0。
+    acceptance_criteria: 严格封套与政策绑定；改名/参数/路径不重置暴露，unknown不升级untouched；pending先于loader且失败崩溃不回滚；同S4D锁并发/篡改/重复访问负例PASS；来源闭包、formal验证、普通main发布与清理通过；不宣称legacy已门禁。
+    notes: docs/requirements/TRADING-2564_S4_Experiment_Envelope_First_Access_V1.md；docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；仅本地工程和合成验证，S3b
+      outcome_access_authorized=False保持，production_effect=none/broker_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s4-first-access-start-20260908-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-425c89374b51939cd2ae89e0fa248cdf
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-08T13:09:55.512351+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s4-first-access-source-ready-20260908-v1
+  lane_id: null
+  base_commit: e651a663f01a688f1e31ea76caa82cd3945b9228
+  previous_state_event_id: task-event-425c89374b51939cd2ae89e0fa248cdf
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex：S4来源生成、最终候选formal/Full验收、普通main发布与清理；随后真实接入及会计后继
+    blocker_or_next_step: S4严格封套与synthetic first-access联合验证/独立审查PASS；v1不完整证据保留。最终正式与发布以回执验收；真实协议、legacy首次读取入口、可靠外部时间witness、DQ/PIT
+      adapter及现金/复合归因待完成。
+    acceptance_criteria: exact封套/政策及身份连通历史绑定；pending-before-loader、终止/重复/篡改/并发负例PASS；来源闭包与final
+      formal/Full、普通main发布和清理通过；不得宣称真实OOS或legacy全面门禁。
+    notes: docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S4_Experiment_Envelope_First_Access_V1.md；outputs/architecture/trading_2564_s4_experiment_first_access内implementation_validation_v1与independent
+      review为实际源证据；最终验收以candidate/Full/publication/closeout回执为准；真实DQ/研究/下载/cache/provider/交易均0。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s4-first-access-source-ready-20260908-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-699d6c24b52b6a589bb5e62b9f876778
 projection:
   legacy_first_eight_cells:
   - TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
   - 长期研究能力 / 输入就绪与验证前置
   - P1
   - IN_PROGRESS
-  - Codex：S5 即时诊断自然集成与发布；后续S3真实研究/Composer/S4仍按独立合同推进
-  - S5 duration seed 已发布816684；即时诊断和69来源后继已实现，修复后30项合成验证PASS；source/shared与正式发布结果绑定本片事务，不预报终态；真实业务仍0。
-  - 失败根因在子进程终止前可见；setup/call/teardown与xfail/XPASS正确，worker不重复；有界带前缀输出不污染耗时解析；完整collection/phase/outcome/退出码与最终schema不变；来源闭包和正式验证发布通过。
-  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md；docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md；docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md；docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md；docs/requirements/TRADING-2564_S3b_Clock_Evidence_Correction_V1.md；docs/requirements/TRADING-2564_S3b_Prospective_Capture_Execution_V1.md；docs/requirements/TRADING-2564_S5_Immediate_Failure_Diagnostics_V1.md；docs/requirements/TRADING-2564_S5_Validated_Duration_Seed_Refresh_V1.md；S5诊断保留完整执行/原终态；独立复核两边界修复PASS；正式结果按精确候选事务归档，umbrella未完成
+  - Codex：S4来源生成、最终候选formal/Full验收、普通main发布与清理；随后真实接入及会计后继
+  - S4严格封套与synthetic first-access联合验证/独立审查PASS；v1不完整证据保留。最终正式与发布以回执验收；真实协议、legacy首次读取入口、可靠外部时间witness、DQ/PIT
+    adapter及现金/复合归因待完成。
+  - exact封套/政策及身份连通历史绑定；pending-before-loader、终止/重复/篡改/并发负例PASS；来源闭包与final formal/Full、普通main发布和清理通过；不得宣称真实OOS或legacy全面门禁。
+  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S4_Experiment_Envelope_First_Access_V1.md；outputs/architecture/trading_2564_s4_experiment_first_access内implementation_validation_v1与independent
+    review为实际源证据；最终验收以candidate/Full/publication/closeout回执为准；真实DQ/研究/下载/cache/provider/交易均0。
   docs_links:
   - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
-  - docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md
-  - docs/requirements/TRADING-2564_S2c2_Five_Candidate_Read_Only_Preview_V1.md
-  - docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md
-  - docs/requirements/TRADING-2564_S3a_Prospective_Event_Time_Evidence_V1.md
-  - docs/requirements/TRADING-2564_S3b_Clock_Evidence_Correction_V1.md
-  - docs/requirements/TRADING-2564_S3b_Prospective_Capture_Execution_V1.md
-  - docs/requirements/TRADING-2564_S5_Immediate_Failure_Diagnostics_V1.md
-  - docs/requirements/TRADING-2564_S5_Validated_Duration_Seed_Refresh_V1.md
+  - docs/requirements/TRADING-2564_S4_Experiment_Envelope_First_Access_V1.md
   terminal: false
-  canonical_row_sha256: 794561368ed170e3247ccb3ff3897be5e243097230e54511fc418be5f029f20d
-last_event_id: task-event-bf281a42c6345e24e0617c1dc0490e71
+  canonical_row_sha256: e344147073821063251fe82b7b73031d9d24eab7a94f5d18fe0a17e6f40acc1b
+last_event_id: task-event-699d6c24b52b6a589bb5e62b9f876778
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: d26a288b11566161d8d1f7cc5a783cc5a1a213b67dbc6b902c9c8072306fa982
+fragment_checksum: 765e8259be55ec1d60c2f125eb9980a12c59845af010d2e787aa697a9cf68da1

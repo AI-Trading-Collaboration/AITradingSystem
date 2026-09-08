@@ -637,3 +637,23 @@ S5 duration seed E4 已完成：最终 Full 12150 passed / 5 skipped，四类正
 下一片为 [S5 即时失败诊断](TRADING-2564_S5_Immediate_Failure_Diagnostics_V1.md)：
 Full 仍运行时显示失败阶段和根因，保留完整执行与最终证据。原 S3 真实前瞻研究、Composer、
 S4 与其他 S5 长期能力仍未关闭；真实业务调用计数继续为零。
+
+
+### S4 最小实施波（2026-09-08）
+
+Owner 同意继续实现上一轮提出的 experiment envelope + first outcome access gate。
+分步需求、合同、信任边界、合成验收及生命周期见
+`docs/requirements/TRADING-2564_S4_Experiment_Envelope_First_Access_V1.md`。
+采用 SINGLE_LANE 最小串行合同波：strict envelope 与政策内容绑定→固定本地 authority/domain→
+append-only freeze/attempt/access→pending-before-loader→审查、正式验证和普通 main 发布。
+未知历史、失败、pending、改名/改参数及重叠 outcome 区间均不能恢复成 untouched。
+本波为 SYNTHETIC_ENGINEERING_ONLY 工程基础，未接 legacy maturity/scoreboard/indicator/Composer；
+真实协议/时间见证/DQ/PIT/历史盘点与会计归因后继仍未解除。S3b outcome_access_authorized=False 保持。
+S5 即时诊断已在 e651a663 发布，Full 12203 passed / 5 skipped，四个 formal tiers 和独立复验 PASS，
+事务 RELEASED；本 S4 不重复该波。真实业务动作仍为 0。
+
+- 2026-09-08 S4 最小波：严格 experiment envelope 与 synthetic first-access gateway 的联合合成验证、
+  独立实现审查已 PASS；来源生成与最终候选正式发布仍按 publication receipt 验收。
+  v1 进程清理阻塞保留为不完整验证，不能与修复后 PASS 合并。真实协议、外部时间 witness、
+  legacy 读取入口接入、实际 DQ/PIT adapter 及现金/复合收益归因仍未完成；详见
+  docs/requirements/TRADING-2564_S4_Experiment_Envelope_First_Access_V1.md。

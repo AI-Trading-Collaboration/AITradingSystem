@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1216
+module_count: 1218
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -3104,6 +3104,28 @@ modules:
 - module_id: src.ai_trading_system.contracts.research_context
   path: src/ai_trading_system/contracts/research_context.py
   sha256: 23bd2480505bad6b9e7098e1b8aac17b0233093d09dde4adb44df37446f1df8e
+  rule_id: contracts
+  owner_profile: architecture
+  owners:
+    code_owner: architecture_governance
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: architecture_governance
+    runtime_owner: architecture_governance
+  layer: contracts
+  category: semantic_and_platform_contracts
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004*.py
+  - tests/test_core_contracts.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.contracts.research_experiment_envelope
+  path: src/ai_trading_system/contracts/research_experiment_envelope.py
+  sha256: e159285cac534bc44d1a4ccc9eee75768c4c58372792207d31e17f4ab033b852
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -15893,7 +15915,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.compatibility_authority
   path: src/ai_trading_system/platform/architecture/compatibility_authority.py
-  sha256: f9acb58b2f7e10df640547d8d41283927e6c96c5cc42d10f1f4ca747067a7231
+  sha256: 34e92e70f6b2249890f97c529d8b225ded035928c90ee6f2e43cd3d49d509c33
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -20250,6 +20272,26 @@ modules:
 - module_id: src.ai_trading_system.research_governance
   path: src/ai_trading_system/research_governance.py
   sha256: dd133d86553890b205b311ccb3289dd503cc7ca34b8bdc447298588d0b4e2ad4
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.research_outcome_access
+  path: src/ai_trading_system/research_outcome_access.py
+  sha256: c777619bca9417d8039e228eea5a5c0406d1223e6b949ae8c64b64bbe8a4dbed
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

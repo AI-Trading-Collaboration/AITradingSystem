@@ -2689,3 +2689,15 @@ TRADING-348 Reader Brief update: 上述 Weight Optimization Batch Search excerpt
 |产物|生成命令|上游输入|Schema / 安全契约|用途|production 影响|常见误解|
 |---|---|---|---|---|---|---|
 |`config/architecture/arch_005_integration_publication_fence.yaml`<br/>`outputs/architecture/arch_005_integration_publication_fence/transactions/<transaction_id>/transaction.json`<br/>`events/*.json`<br/>`closeout_receipt.json`|`python scripts/architecture_arch005_publication_fence.py acquire|checkpoint|validate|replay|release`|exact Git/worktree identity、frozen base/lane head/expected main/candidate、可选 reviewed integration plan、declared paths/generators/tiers、S4D execution lease、formal summary/parent、remote refs与cleanup evidence|`arch_005_integration_publication_fence_policy.v1`、`integration_publication_fence.v1`、`integration_publication_fence_event.v1`、`integration_publication_closeout_receipt.v1`；immutable transaction、append-only hash chain、phase CAS、plan/evidence SHA、exclusive publication/validation resources、ordinary-push-only、terminal failure/no repair|把 canonical task source、generated-state rebuild、exact Full candidate、local-main ff、ordinary push、SHA equality、cleanup 和 lease release 串成可重放 coordinator publication transaction|否；`production_effect=none`、`broker_action=none`|它不是第二套 scheduler/lease/queue，不授权自动 merge/rebase/force-push，也不代表 strategy/DQ/model/backtest/production 已通过。|
+
+## TRADING-2564 S4：实验访问账本工程合同
+
+`research_outcome_access.py` 的受控 gateway 产生不可变 envelope/freeze、attempt 与 access 事件，
+上游为 exact envelope、具实质规则内容的政策绑定和固定本地 authority；下游仅 metadata replay、
+合成验证与人工审查。事件完整绑定前驱、服务时间、scope、attempt/access、结果 SHA/size；失败和
+未完成 pending 永久计入暴露历史。存储不保留结果 bytes，replay 不触发 loader 或返回历史结果。
+本波只允许 SYNTHETIC_ENGINEERING_ONLY，无真实市场/投资输出，不注册为 daily report 或 scheduler。
+输出并非 untouched holdout 或 Owner 投资准入证明；legacy 消费者尚未迁移，真实研究门禁依赖仍在
+`docs/requirements/TRADING-2564_S4_Experiment_Envelope_First_Access_V1.md`。
+工程治理证据保留在 `outputs/architecture/trading_2564_s4_experiment_first_access`，正式验证在
+`outputs/validation_runtime`；production_effect=none，broker_action=none。

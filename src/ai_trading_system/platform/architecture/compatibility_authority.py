@@ -968,6 +968,10 @@ def build_repository_authority(
         section_id, section = _trading_2564_s5_diagnostics_section(root, policy=policy)
         relative, record, content = render_fragment(section_id=section_id, section=section)
         rendered_fragments.append((section_id, relative, record, content))
+    if (root / "docs/requirements/TRADING-2564_S4_Experiment_Envelope_First_Access_V1.md").exists():
+        section_id, section = _trading_2564_s4_first_access_section(root, policy=policy)
+        relative, record, content = render_fragment(section_id=section_id, section=section)
+        rendered_fragments.append((section_id, relative, record, content))
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -2652,7 +2656,7 @@ def _ops_079_section(
         "task_id": "OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR",
         "status": "VALIDATING",
         "owner_decision": (
-            "owner_instruction:OPS-079:2026-09-05:" "continue-blocked-historical-gap-recovery"
+            "owner_instruction:OPS-079:2026-09-05:continue-blocked-historical-gap-recovery"
         ),
         "authority_contract": dict(_mapping(policy["contract"], "contract")),
         "superseded_live_source_paths": source_paths,
@@ -3401,6 +3405,60 @@ def _trading_2564_s5_diagnostics_section(
             "investment_policy_changed": False,
             "real_dq_or_research_executed": False,
             "stable_speedup_established": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _trading_2564_s4_first_access_section(
+    root: Path, *, policy: Mapping[str, Any]
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_trading_2564_s4_experiment_first_access_v1"
+    previous_id, previous = _trading_2564_s5_diagnostics_section(root, policy=policy)
+    source_paths = sorted(
+        {
+            *previous["superseded_live_source_paths"],
+            "src/ai_trading_system/contracts/research_experiment_envelope.py",
+            "src/ai_trading_system/research_outcome_access.py",
+            "tests/test_research_experiment_envelope.py",
+            "tests/test_research_outcome_access.py",
+            "docs/requirements/TRADING-2564_S4_Experiment_Envelope_First_Access_V1.md",
+        },
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "trading_2564_s4_experiment_first_access.v1",
+        "task_id": "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1",
+        "status": "BASELINE_DONE",
+        "owner_decision": "owner_instruction:TRADING-2564:2026-09-08:continue-s4-minimum",
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": previous_id,
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "access_contract": {
+            "scope": "SYNTHETIC_ENGINEERING_ONLY",
+            "entry": "BOUNDED_LOADER_GATEWAY",
+            "first_read": "DURABLE_PENDING_BEFORE_LOADER",
+            "failure_history": "APPEND_ONLY_POSSIBLY_EXPOSED",
+            "identity": "TYPED_DOMAIN_INPUT_COMPONENT_WITH_REQUESTED_INTERVAL_OVERLAP",
+            "history_anchor": "LOCAL_DUAL_CHAIN_NO_EXTERNAL_IMMUTABLE_ANCHOR",
+            "concurrency": "EXISTING_S4D_LEASE_STORE_ARBITER",
+            "review_trust": "LOCAL_REVIEW_INPUT_NOT_CRYPTOGRAPHIC_SIGNATURE",
+        },
+        "safety": {
+            "legacy_consumers_gated": False,
+            "real_outcome_access_authorized": False,
+            "untouched_holdout_established": False,
+            "historical_evidence_mutated": False,
+            "investment_thresholds_changed": False,
+            "real_dq_or_research_executed": False,
             "production_effect": "none",
             "broker_action": "none",
         },

@@ -10688,3 +10688,26 @@ flowchart LR
     Outcome --> Report
     Report --> Review[四周复盘与局部重构决策]
 ```
+
+## TRADING-2564 S4：实验封套到首次结果访问
+
+```mermaid
+flowchart LR
+  Review[本地受审 authority 与稳定 outcome domain] --> Envelope[Exact experiment envelope 与政策内容 SHA]
+  Envelope --> Freeze[冻结准入与不可变 FREEZE 事件]
+  Freeze --> Attempt[永久 ATTEMPT 记录]
+  Attempt --> Pending[同 S4D arbiter：重放并写入 VIEW_PENDING]
+  Pending --> Loader[锁外执行受控 synthetic loader]
+  Loader --> Terminal[成功 bytes SHA/size 或失败事件]
+  Terminal --> Replay[Metadata replay：次数与暴露状态]
+  Pending --> Possible[异常或崩溃：POSSIBLY_EXPOSED]
+```
+
+本波 Python 合同 `contracts/research_experiment_envelope.py` 与服务 `research_outcome_access.py`
+仅允许 SYNTHETIC_ENGINEERING_ONLY。本地 review 是受控信任输入，不是密码学签名；服务记账时间
+不是外部可靠冻结 witness。稳定 domain 与重叠 outcome 范围继承已知/可能暴露，改名、换参数、
+重试或换输出路径不能清零；未知历史不能由空账本变成 untouched。账本不保存可绕过门禁重读的结果 bytes。
+现有 S3b 的 outcome_access_authorized=False 保持；maturity、scoreboard、indicator casebook/ablation、
+report 直接读取与 Composer label 入口尚未接入。真正接入须在首次行情/结果读取之前，执行原有 DQ/PIT
+和受审研究协议。详见 `docs/requirements/TRADING-2564_S4_Experiment_Envelope_First_Access_V1.md`。
+真实研究、行情、DQ、采集、下载与 order/fill 均未执行；不新增 CLI、scheduler 或生产入口。
