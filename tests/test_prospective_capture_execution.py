@@ -7,8 +7,9 @@ execution, canonical DQ, market evidence, owner review or investment authority.
 
 from __future__ import annotations
 
+import copy
+import itertools
 import os
-import time
 from collections.abc import Iterator
 from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, timedelta
@@ -22,8 +23,17 @@ from test_named_quality_dispatch import _git
 from test_prospective_capture_execution_contract import _manifest, _request, _review
 
 import ai_trading_system.data.named_quality_dispatch as dispatch
+import ai_trading_system.host_clock_evidence as host_clock
 import ai_trading_system.prospective_capture_execution as capture
 import ai_trading_system.prospective_event_time_evidence as recorder
+from ai_trading_system.contracts.host_clock_evidence import (
+    POLICY_PATH as CLOCK_POLICY_PATH,
+)
+from ai_trading_system.contracts.host_clock_evidence import (
+    HostClockEvidence,
+    datetime_to_utc_ns,
+    require_clock_evidence_extension,
+)
 from ai_trading_system.contracts.named_data_quality_execution import (
     EQUAL_RISK_PRICE_REGISTRY_PATH,
     NamedArtifactBinding,
@@ -120,6 +130,7 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Harnes
     dependencies = (
         CAPTURE_POLICY_PATH,
         recorder.POLICY_PATH,
+        CLOCK_POLICY_PATH,
         EQUAL_RISK_PRICE_REGISTRY_PATH,
     )
     for relative in (
@@ -198,8 +209,8 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Harnes
     monkeypatch.setattr(capture, "_now", clock)
     monkeypatch.setattr(dispatch, "_now", clock)
     monkeypatch.setattr(recorder, "_utc_now", clock)
-    monkeypatch.setattr(capture, "_monotonic_ns", lambda: 0)
-    monkeypatch.setattr(time, "monotonic_ns", lambda: 0)
+    monkeypatch.setattr(host_clock, "_utc_ns", lambda: datetime_to_utc_ns(clock.value))
+    monkeypatch.setattr(host_clock, "_counter_ns", lambda: 0)
     value = _Harness(root, request, bootstrap, lease, clock)
     yield value
     if not value.lease.released:
@@ -562,11 +573,17 @@ def test_activation_real_s4d_recorder_and_parent_ack_replay_after_expiry(
     ack = ParentCompletionAcknowledgement.from_json_bytes(ack_bytes)
     assert ack.first_feature_session == date(2026, 11, 27)
     assert ack.source_lease_id == harness.lease.lease_id and ack.parent_pid == os.getpid()
+    terminal_clock = HostClockEvidence.from_dict(result["terminal_clock_evidence"])
+    require_clock_evidence_extension(ack.clock_evidence, terminal_clock)
+    assert terminal_clock.checkpoints[-1].label == "terminal_precommit"
+    assert result["result_own_durability_time_claimed"] is False
     harness.lease.release(outcome="synthetic_capture_complete", at=harness.clock.value)
     harness.clock.value = harness.request.manifest.expires_at + timedelta(days=1)
     monkeypatch.setattr(capture, "restore_named_capture_lease", _forbidden)
     monkeypatch.setattr(capture, "record_activation", _forbidden)
     monkeypatch.setattr(capture, "dispatch_named_quality_child", _forbidden)
+    monkeypatch.setattr(host_clock, "_utc_ns", _forbidden)
+    monkeypatch.setattr(host_clock, "_counter_ns", _forbidden)
     replay = harness.run()
     assert replay == {
         **result,
@@ -784,7 +801,7 @@ def test_partial_terminal_observation_retains_known_counter_without_fabricating_
 
 
 @pytest.mark.parametrize("during_publication", [False, True])
-def test_result_publication_clock_rollback_is_reported_after_ack(
+def test_single_commit_rejects_precommit_rollback_and_retains_postcommit_fact(
     harness: _Harness, monkeypatch: pytest.MonkeyPatch, during_publication: bool
 ) -> None:
     original_check = capture._check_live
@@ -797,7 +814,7 @@ def test_result_publication_clock_rollback_is_reported_after_ack(
         nonlocal checks_after_ack
         if ack_path.exists():
             checks_after_ack += 1
-            if not during_publication and checks_after_ack == 2:
+            if not during_publication and checks_after_ack == 1:
                 harness.clock.value -= timedelta(microseconds=1)
         return original_check(*args, **kwargs)
 
@@ -809,9 +826,22 @@ def test_result_publication_clock_rollback_is_reported_after_ack(
 
     monkeypatch.setattr(capture, "_check_live", check_live)
     monkeypatch.setattr(capture, "_write", write)
-    with pytest.raises(capture.ProspectiveCaptureExecutionError, match="CLOCK_ROLLBACK") as caught:
-        harness.run()
-    assert caught.value.prospective_child_canonical_dq_call_count == 0
+    if during_publication:
+        result = harness.run()
+        assert result["status"] == "ACTIVATED"
+        assert result["result_own_durability_time_claimed"] is False
+        assert checks_after_ack == 1  # No unbound fatal clock/lease guard after commit.
+        assert harness.run()["status"] == "ACTIVATED"
+    else:
+        with pytest.raises(
+            capture.ProspectiveCaptureExecutionError, match="HOST_CLOCK_UTC_BACKWARD"
+        ) as caught:
+            harness.run()
+        assert caught.value.prospective_child_canonical_dq_call_count == 0
+        diagnostic = caught.value.prospective_clock_failure_diagnostic
+        assert isinstance(diagnostic, dict) and diagnostic["admission_allowed"] is False
+        assert diagnostic["raw_readings"] and diagnostic["chain_resumable"] is False
+        assert harness.run()["status"] == "INCOMPLETE"
     assert (harness.root / result_relative).exists() is during_publication
 
 
@@ -848,7 +878,8 @@ def _rehash_signal_projection(
     content = canonical_json_bytes(completion)
     completion_path.write_bytes(content)
     event_binding = capture._binding(ack.recorder_event.relative_path, content)
-    rewritten_ack = replace(ack, recorder_event=event_binding)
+    returns = (*ack.recorder_returns[:-1], replace(ack.recorder_returns[-1], event=event_binding))
+    rewritten_ack = replace(ack, recorder_event=event_binding, recorder_returns=returns)
     ack_relative = result["acknowledgement"]["relative_path"]
     (root / ack_relative).write_bytes(rewritten_ack.canonical_bytes)
     ack_binding = capture._binding(ack_relative, rewritten_ack.canonical_bytes)
@@ -860,6 +891,7 @@ def _rehash_signal_projection(
         **result,
         "acknowledgement": ack_binding.to_dict(),
         "observation": capture._binding(observation_relative, content).to_dict(),
+        "recorder_returns": [row.to_dict() for row in returns],
     }
     (root / request.operation_relative_path / "result.json").write_bytes(
         canonical_json_bytes(rewritten_result)
@@ -931,7 +963,135 @@ def test_postguard_failure_preserves_incomplete_slot_without_creating_terminal_s
     with pytest.raises(capture.ProspectiveCaptureExecutionError) as caught:
         harness.run()
     assert caught.value.prospective_child_canonical_dq_call_count == 0
+    returns = caught.value.prospective_recorder_return_observations
+    assert isinstance(returns, list) and len(returns) == 1
+    assert returns[0]["clock_evidence"]["checkpoints"][-1]["label"] == "recorder_return"
     directory = harness.root / harness.request.operation_relative_path
     assert (directory / "attempt.json").exists() and not (directory / "result.json").exists()
     monkeypatch.setattr(capture, "record_activation", _forbidden)
     assert harness.run()["status"] == "INCOMPLETE"
+
+
+def test_coarse_raw_clock_accepts_positive_outer_interval_and_terminal_tamper_fails(
+    harness: _Harness, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    ticks = itertools.count(0, 1_000_000)
+    monkeypatch.setattr(host_clock, "_counter_ns", lambda: next(ticks))
+    result = harness.run()
+    assert result["status"] == "ACTIVATED"
+    clock = HostClockEvidence.from_dict(result["terminal_clock_evidence"])
+    assert clock.latest_sample.utc_ns == clock.anchor.utc_ns
+    assert clock.latest_sample.counter_after_ns > clock.anchor.counter_before_ns
+    assert clock.admission_bound_ns > clock.latest_sample.utc_ns
+    monkeypatch.setattr(host_clock, "_utc_ns", _forbidden)
+    monkeypatch.setattr(host_clock, "_counter_ns", _forbidden)
+    for mutation in (
+        "missing_clock",
+        "missing_proof",
+        "lease_identity",
+        "parent_identity",
+        "terminal_stage",
+        "reset_anchor",
+        "omit_child",
+        "child_bound",
+        "extra_stage",
+    ):
+        changed = copy.deepcopy(result)
+        if mutation == "missing_clock":
+            del changed["terminal_clock_evidence"]
+        elif mutation == "missing_proof":
+            del changed["terminal_precommit_proof"]
+        elif mutation == "lease_identity":
+            changed["terminal_precommit_proof"]["active_lease"]["lease_id"] = "lease-" + "a" * 20
+        elif mutation == "parent_identity":
+            changed["terminal_precommit_proof"]["parent_pid"] += 1
+        elif mutation == "terminal_stage":
+            changed["terminal_clock_evidence"]["checkpoints"][-1]["label"] = "replacement_terminal"
+        elif mutation == "reset_anchor":
+            changed["terminal_clock_evidence"]["anchor"]["utc_ns"] += 100
+        elif mutation == "omit_child":
+            changed["recorder_returns"] = []
+        elif mutation == "child_bound":
+            changed["recorder_returns"][0]["clock_evidence"]["checkpoints"][-1][
+                "admission_bound_ns"
+            ] += 1
+        else:
+            changed["terminal_clock_evidence"]["checkpoints"].append(
+                changed["terminal_clock_evidence"]["checkpoints"][-1]
+            )
+        harness.overwrite_result(changed)
+        with pytest.raises(ValueError):
+            harness.run()
+    harness.overwrite_result(result)
+    assert harness.run()["status"] == "ACTIVATED"
+
+
+def test_raw_before_deadline_with_long_counter_budget_cannot_admit_capture(
+    harness: _Harness, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert harness.run()["status"] == "ACTIVATED"
+    harness.renew(datetime(2026, 11, 30, 20, 59, 50, tzinfo=UTC))
+    request, calls = _synthetic_full_capture(harness, monkeypatch)
+    original = recorder.record_signal_completion
+    counter = 0
+    monkeypatch.setattr(host_clock, "_counter_ns", lambda: counter)
+
+    def late_budget(**kwargs: Any) -> recorder.RecordedTemporalEvidence:
+        nonlocal counter
+        event = original(**kwargs)
+        assert event.temporal_status == "TIMELY_PAYLOAD"
+        harness.clock.value += timedelta(seconds=5)
+        counter = 20_000_000_000
+        return event
+
+    monkeypatch.setattr(capture, "record_signal_completion", late_budget)
+    result = harness.run(request)
+    assert result["status"] == "LATE" and result["capture_admitted"] is False and calls == [1]
+    ack = ParentCompletionAcknowledgement.from_json_bytes(
+        (harness.root / result["acknowledgement"]["relative_path"]).read_bytes()
+    )
+    assert ack.decision_deadline is not None
+    assert ack.covered_through_at < ack.decision_deadline
+    assert ack.admission_bound_ns >= datetime_to_utc_ns(ack.decision_deadline)
+    assert harness.run(request)["status"] == "LATE" and calls == [1]
+
+
+@pytest.mark.parametrize("exhaust_lease", [False, True])
+def test_terminal_verification_latency_checks_expiry_without_reclassifying_frozen_ack(
+    harness: _Harness, monkeypatch: pytest.MonkeyPatch, exhaust_lease: bool
+) -> None:
+    assert harness.run()["status"] == "ACTIVATED"
+    harness.renew(datetime(2026, 11, 30, 20, 59, 58, tzinfo=UTC))
+    request, calls = _synthetic_full_capture(harness, monkeypatch)
+    verify = capture._verify_prospective_capture_projection
+    counter = 0
+    monkeypatch.setattr(host_clock, "_counter_ns", lambda: counter)
+
+    def slow_verify(*args: Any, **kwargs: Any) -> dict[str, object]:
+        nonlocal counter
+        result = verify(*args, **kwargs)
+        if kwargs.get("terminal_required") is False:
+            harness.clock.value += timedelta(seconds=10)
+            # Fixture budgets: finite replay latency or the six-hour lease.
+            counter = (6 * 60 * 60 if exhaust_lease else 20) * 1_000_000_000
+        return result
+
+    monkeypatch.setattr(capture, "_verify_prospective_capture_projection", slow_verify)
+    path = harness.root / request.operation_relative_path / "result.json"
+    if exhaust_lease:
+        with pytest.raises(capture.ProspectiveCaptureExecutionError, match="CLOCK_SCOPE_EXPIRED"):
+            harness.run(request)
+        assert not path.exists()
+        assert harness.run(request)["status"] == "INCOMPLETE"
+    else:
+        result = harness.run(request)
+        assert result["status"] == "CAPTURED" and result["capture_admitted"] is True
+        ack = ParentCompletionAcknowledgement.from_json_bytes(
+            (harness.root / result["acknowledgement"]["relative_path"]).read_bytes()
+        )
+        assert ack.decision_deadline is not None
+        assert ack.admission_bound_ns < datetime_to_utc_ns(ack.decision_deadline)
+        clock = HostClockEvidence.from_dict(result["terminal_clock_evidence"])
+        assert clock.admission_bound_ns >= datetime_to_utc_ns(ack.decision_deadline)
+        assert harness.run(request)["status"] == "CAPTURED"
+    assert calls == [1]

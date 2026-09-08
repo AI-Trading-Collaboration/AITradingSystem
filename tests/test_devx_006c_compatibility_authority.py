@@ -196,6 +196,14 @@ TRADING_2564_S3B_SOURCE_PATHS = TRADING_2564_S3A_SOURCE_PATHS | frozenset(
         "src/ai_trading_system/data/named_quality_dispatch.py",
         "config/data_governance/named_prospective_five_candidate_sources_v1.json",
         "config/research/prospective_capture_execution_v1.yaml",
+        "config/research/prospective_capture_execution_v2.yaml",
+        "config/research/prospective_event_time_evidence_v2.yaml",
+        "config/research/host_clock_evidence_v1.yaml",
+        "src/ai_trading_system/contracts/host_clock_evidence.py",
+        "src/ai_trading_system/host_clock_evidence.py",
+        "tests/test_host_clock_evidence_contract.py",
+        "tests/test_host_clock_evidence.py",
+        "docs/requirements/TRADING-2564_S3b_Clock_Evidence_Correction_V1.md",
         "tests/test_named_quality_dispatch.py",
         "tests/test_named_data_quality_actual_candidate.py",
         "tests/test_prospective_capture_execution.py",
@@ -1254,7 +1262,7 @@ def test_s3a_source_identity_is_not_self_reported_lists(mutation: str) -> None:
 
 def _assert_s3b_source_closure(phase: dict[str, Any]) -> None:
     paths = [row["path"] for row in phase["sources"]]
-    assert len(TRADING_2564_S3B_SOURCE_PATHS) == 50
+    assert len(TRADING_2564_S3B_SOURCE_PATHS) == 58
     assert paths == sorted(TRADING_2564_S3B_SOURCE_PATHS, key=str.casefold)
     assert phase["superseded_live_source_paths"] == paths
     for row in phase["sources"]:
@@ -1293,12 +1301,14 @@ def test_s3b_exact_capture_successor_preserves_real_research_boundary() -> None:
         "source_manifest_path": (
             "config/data_governance/named_prospective_five_candidate_sources_v1.json"
         ),
-        "module_count": 85,
-        "dependency_count": 12,
+        "module_count": 87,
+        "dependency_count": 14,
         "parent_canonical_dq_calls": 0,
         "child_canonical_dq_calls_per_capture": 1,
         "input_closure": "ALL_DQ_MEMBERS_PROVENANCE_AND_EXECUTION_DEPENDENCIES",
-        "acknowledgement": "INTERNAL_AFTER_COMPLETE_WITNESS_RETURN_WITH_PARENT_PROOFS",
+        "acknowledgement": "V2_ORIGINAL_ANCHOR_ALL_CHILD_RETURN_BOUNDS_AND_POSTGUARDS",
+        "terminal_commit": "V2_SINGLE_PRECHECKED_COMMIT_ORIGINAL_LEASE_AND_CLOCK_PREFIX",
+        "legacy_clock_evidence": "V1_RETAINED_ORIGINAL_INNER_SEMANTICS_NO_REINTERPRETATION",
         "retained_signal_verification": "COMPLETE_RECOMPUTATION_FROM_CLOSED_INPUTS",
         "expired_existing_key": "READ_ONLY_ORIGINAL_RESULT_OR_INCOMPLETE",
         "timing_version": "NEXT_XNYS_CLOSE_FORWARD_V1",

@@ -35,7 +35,9 @@ registry/environment身份及显式只读plan。任一候选历史不足或计�
 
 `prospective_event_time_evidence.py` 提供显式 plan/输出根/事件 binding 的本地记录与只读核验
 API；不进入 report-registry/latest discovery、Reader Brief、旧 observation ledger 或 scheduler。
-`prospective_event_time_evidence_v1.yaml` 固定尚未真实 adopted 的新 next-XNYS-close 时间版本。
+`prospective_event_time_evidence_v2.yaml` 固定尚未真实 adopted 的 next-XNYS-close 时间版本。
+旧 v1 policy/completion 保留原 inner verifier；新 completion v2 保存原 raw UTC ns/QPC
+anchor、payload/witness precommit checkpoints 和保守 bound，原成功返回另携完整 return prefix。
 输出根中的 `streams/<plan_sha>/activation/` 与 `streams/<plan_sha>/sessions/<F>/<stage>/`
 保存 immutable intent、payload、lease provenance 和 completion witness；前驱分别为 activation
 与本 session inputs。writer 返回后采样的时间只证明 payload 已保存，不证明 provider 首次发布时间
@@ -47,14 +49,18 @@ API；不进入 report-registry/latest discovery、Reader Brief、旧 observatio
 ## TRADING-2564 S3b 前瞻采集父执行证据
 
 固定 `python -I -B scripts/run_named_data_quality.py --operation activate|capture` 入口要求新
-85/12 profile、exact request SHA、reviewed bounded manifest 和原 S4D source lease；不是
+87/14 profile、exact request SHA、reviewed bounded manifest 和原 S4D source lease；不是
 周期调度或 report discovery 入口。合成输出在
 `outputs/architecture/trading_2564_s3b_prospective_capture/synthetic/`
 下，真实输出在 `outputs/research/prospective_capture/` 下，二者均再按固定 manifest id 分隔。
 每个 manifest 的 `activation/` 或 `sessions/<F>/` 固定槽位保存 request、原 attempt、
-pre/post recording proof、`prospective_parent_completion_acknowledgement.v1`、result；capture 子目录
+pre/post recording proof、`prospective_parent_completion_acknowledgement.v2`、result v2；capture 子目录
 `dq_dispatch/` 保存真实 child request/stdout/stderr/PID/退出/guard 和成功关联证据，DQ bytes
 位于 manifest 专属 `dq/`。确切 schema/路径以 capture DTO 和 manifest 为准。
+ACK 绑定每个原 recorder return、原 anchor 和 postguard；result v2 内嵌最终 source/lease proof
+及同 anchor terminal clock，在完整验证之后一次不可变提交。ACK bound 决定 D 与首次 F，
+terminal bound 仅约束 manifest/lease expiry。结果自身完成落盘时间不作承诺，失败原始
+clock diagnostic 与已观察 recorder returns 保留为不可准入诊断，不能重试或替换 anchor。
 
 `timing/streams/<plan_sha>/` 保全全部 Named DQ 输入/来源/报告/依赖及五候选信号。只有原始
 完整 ACK 与严格 D-close 检查通过才写独立 `prospective_five_candidate_observation.v1`；它是

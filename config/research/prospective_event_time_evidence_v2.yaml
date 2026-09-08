@@ -1,0 +1,86 @@
+schema_version: prospective_event_time_evidence_policy.v2
+policy_id: prospective_event_time_evidence_v2
+policy_version: 2.0.0
+status: REVIEWED_ENGINEERING_CONTRACT_ADOPTION_BLOCKED
+owner: Project Owner / integration-coordinator
+scope_ref: owner_instruction:TRADING-2564:2026-09-07:continue_after_s2c2
+requirement_ref: docs/requirements/TRADING-2564_S3b_Clock_Evidence_Correction_V1.md
+rationale: >-
+  独立 UTC 与 counter 的表示单位不证明二者精度或速率相同。保留原始 UTC 纳秒与完整
+  counter 外包络，以共享主机时钟合同计算保守截止准入值，不把正常粗时钟交错误报为回拨。
+intended_effect: >-
+  区分 payload 持久化观察、witness precommit、原 recorder 返回及完整父 ACK。
+  固定 anchor 覆盖锁等待和检查，严格保留下一 XNYS 收盘、lease 到期和原始顺序门禁。
+validation_plan: >-
+  共享时钟合同、粗时钟交错与真实回拨、严格截止/expiry、前驱 bound、immutable 崩溃
+  与只读幂等、v1 retained 兼容；16-worker focused、actual candidate 与绑定失败 parent 的 Full。
+review_condition: >-
+  首次真实启用、provider/时间合同/日历/首次 F 或 outcome admission 变化须重新审查。
+  本政策不授予真实业务、provider PIT、OOS、生产或交易权限。
+timing:
+  timing_version: NEXT_XNYS_CLOSE_FORWARD_V1
+  calendar_id: XNYS
+  calendar_close_authority: REVIEWED_SCHEDULED_CLOSE
+  market_timezone: America/New_York
+  first_feature_rule: FIRST_XNYS_SESSION_AFTER_PAYLOAD_ADMISSION_BOUND_MARKET_DATE
+  feature_close_comparison: RAW_RECORDING_START_STRICTLY_AFTER
+  effective_session_rule: NEXT_XNYS_SESSION_AFTER_FEATURE
+  decision_deadline: EFFECTIVE_SESSION_SCHEDULED_CLOSE
+  deadline_comparison: INTEGER_ADMISSION_BOUND_STRICTLY_BEFORE
+  return_clock: EFFECTIVE_SESSION_CLOSE_TO_NEXT_XNYS_SESSION_CLOSE
+  five_candidate_legacy_return_equivalent: false
+  recompute_target_at_effective_session: false
+  carried_target_is_rebalance_evidence: false
+recording:
+  clock_policy_path: config/research/host_clock_evidence_v1.yaml
+  clock_policy_sha256: 09d4b5bfa286650f4a6e1066c9a0a9fd93ede5007065ee547795d082be22557a
+  clock_authority: WINDOWS_CPYTHON_TIME_NS_QPC_V1
+  trust_scope: TRUSTED_RECORDER_AND_HOST_CLOCK_NOT_THIRD_PARTY_TIMESTAMP
+  hidden_host_adjustment_proof: NOT_ESTABLISHED
+  absolute_utc_accuracy_proof: NOT_ESTABLISHED
+  start_observation: FIXED_RAW_UTC_ANCHOR_BEFORE_STORE_WAIT_AND_PAYLOAD_WRITES
+  completion_observation: CHECKPOINT_AFTER_CONTAINED_PAYLOAD_WRITERS_RETURN
+  completion_timestamp_role: RAW_PAYLOAD_DURABILITY_OBSERVATION
+  admission_upper_bound: REPLAYED_FROZEN_ANCHOR_OUTER_MAX_V1
+  witness_covered_through: WITNESS_PRECOMMIT_CHECKPOINT
+  original_return_evidence: STRICT_EXTENSION_AFTER_WITNESS_AND_POSTGUARDS
+  original_return_evidence_recreated_by_replay: false
+  policy_recheck: OUTSIDE_EACH_STORE_TRANSACTION_BEFORE_AND_AFTER
+  sampler_checkpoint_filesystem_io: false
+  witness_own_durability_time_claimed: false
+  caller_supplied_event_time_allowed: false
+  infer_time_from_mtime_or_hash_allowed: false
+  missing_witness_recovery: PRESERVE_INCOMPLETE_EVENT_WITHOUT_SUCCESS_BACKDATE
+  idempotent_replay: RETURN_ORIGINAL_COMPLETION_WITHOUT_NEW_CLOCK_OR_LEASE
+  existing_different_bytes: REJECT
+  concurrency_authority: S4D_LEASE_AND_EXISTING_STORE_MAINTENANCE
+  late_event_admission_allowed: false
+  old_gap_backfill_allowed: false
+  future_session_recovery_allowed: true
+compatibility:
+  v1_policy: config/research/prospective_event_time_evidence_v1.yaml
+  v1_retained_verification: ORIGINAL_INNER_INTERVAL_SEMANTICS_UNCHANGED
+  v1_new_recording_allowed: false
+  mixed_version_chain_allowed: false
+admission:
+  temporal_evidence_only: true
+  real_activation_adopted: false
+  observation_authorized: false
+  provider_available_at_status: NOT_ESTABLISHED
+  oos_admission_status: NOT_ESTABLISHED
+  historical_provider_pit_inferred: false
+  dq_status_from_caller_trusted: false
+  capture_manifest_required_by_future_adapter: true
+  outcome_access_allowed: false
+safety:
+  canonical_dq_run_allowed: false
+  producer_execution_allowed: false
+  observation_ledger_write_allowed: false
+  maturity_update_allowed: false
+  scoreboard_allowed: false
+  data_download_allowed: false
+  cache_mutation_allowed: false
+  external_provider_allowed: false
+  paper_live_allowed: false
+  broker_action: none
+  production_effect: none

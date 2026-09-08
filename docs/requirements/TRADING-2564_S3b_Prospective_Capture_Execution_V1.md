@@ -151,3 +151,22 @@ actual_candidate_e2e_v1.xml、formal_tiers_v1.json、final_validation_acceptance
 main_publication_v1.json 和 closeout_verified_v1.json。这些文件须由实际通过的执行生成，本文
 列出路径不代表文件已存在或验证已通过。最终普通发布应验证 candidate=local main=remote main，
 仅删除已合并且无唯一实现的任务 branch；执行根及 canonical 合成/验证证据继续保留。
+
+## 8. 真实时钟 Full 失败与修正接续
+
+2026-09-08：上述候选 `12ec8c386` 的 actual-candidate v2 两项测试及四正式 tiers 通过，
+Full 则为 1 failed / 11811 passed / 5 skipped / 641 warnings。失败 activation 原 key 为
+`actual_source_activation_20bd65d147be43a5bcc937bb0e56766a_v1`，返回
+`BLOCKED / TEMPORAL_CLOCK_BACKWARD`；保留记录，不重试或补签，main 未发布。
+
+已登记[主机时钟证据修正](TRADING-2564_S3b_Clock_Evidence_Correction_V1.md)。共享时间
+合同先行，再同步 recorder、parent ACK、lease/manifest/deadline 和 source closure。
+旧 Full 以 FAILED 终态释放 lease，修复重验须明确绑定其 parent。前文列出的
+`final_validation_acceptance_v1.json`、publication/closeout 路径不代表已通过；后续版本
+收据必须清楚关联此次失败与修正后的 exact candidate。
+
+2026-09-08 修正进展：C1–C3 的固定 raw UTC/QPC 合同、recorder v2、ACK/result v2 单一提交
+已实现；三项独立终审发现修复后，116 项针对性测试与两名 reviewer 的精确源码复验通过。
+独立结论及 SHA 见 `clock_independent_review_v1.json`，修正前 608-pass 合并批次保留独立身份。
+source profile 为 87/14，旧 55/57/59 bytes 不变；当前 source/shared 全范围验证与 C4 尚未完成。
+不得沿用旧候选的 actual/Full 结果作为新候选通过证明，真实业务动作仍全零。

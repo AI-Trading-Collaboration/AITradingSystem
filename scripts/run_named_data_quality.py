@@ -356,7 +356,7 @@ class NamedBootstrapSession:
             self.manifest.relative_path
             != "config/data_governance/named_prospective_five_candidate_sources_v1.json"
             or self.manifest.sha256
-            != "1f7cb44e83f3e1d6840ae5a181c58972cb7ff31ff52e353c37bc8a3d9280a315"
+            != "9a11ed94e1c318aee3c44a7d01ba0f31556bd4de355eef1f75893245fe8bc1ce"
         ):
             _fail("NAMED_BOOTSTRAP_PROSPECTIVE_PROFILE_REQUIRED", operation)
         self.bootstrap = self.git.artifact(BOOTSTRAP_PATH)
@@ -605,6 +605,12 @@ def main() -> int:
                 "capture_admitted": False,
                 "activation_admitted": False,
                 "real_observation_admitted": False,
+                "clock_failure_diagnostic": getattr(
+                    exc, "prospective_clock_failure_diagnostic", None
+                ),
+                "recorder_return_observations": getattr(
+                    exc, "prospective_recorder_return_observations", None
+                ),
             }
             if capture_operation
             else {}

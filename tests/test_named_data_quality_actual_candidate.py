@@ -29,6 +29,11 @@ from named_data_quality_support import (
 )
 
 from ai_trading_system.contracts.data_quality_execution import DataQualityDateWindow
+from ai_trading_system.contracts.host_clock_evidence import (
+    HostClockEvidence,
+    require_clock_evidence_extension,
+    utc_ns_to_datetime_ceil,
+)
 from ai_trading_system.contracts.named_data_quality_execution import (
     EQUAL_RISK_GUARD_RATE_SERIES,
     EQUAL_RISK_PRICE_TICKERS,
@@ -295,17 +300,17 @@ def test_exact_candidate_production_parent_mints_new_profile_seal_and_complete_c
     assert result["candidate_commit"] == request.candidate_commit
     identity = result["execution_identity"]
     assert identity["source_manifest_path"] == PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH
-    assert len(identity["modules"]) == 85
+    assert len(identity["modules"]) == 87
     receipt_bytes = (evidence / result["receipt_path"]).read_bytes()
     assert hashlib.sha256(receipt_bytes).hexdigest() == result["receipt_sha256"]
     receipt = NamedDQExecutionReceipt.from_json_bytes(receipt_bytes)
-    assert len(receipt.execution_dependencies) == 12
+    assert len(receipt.execution_dependencies) == 14
     assert receipt.report.status == "PASS"
     assert receipt.evaluated_window == DataQualityDateWindow(start, days[-2])
     assert result["preview"]["feature_session"] == end.isoformat()
     assert result["preview"]["decision_effective_session"] == "2025-01-10"
     assert result["complete_recomputation_equal"] is True
-    assert len(result["closure_manifest"]["members"]) == 29
+    assert len(result["closure_manifest"]["members"]) == 31
     assert {
         row["role"]
         for row in result["closure_manifest"]["members"]
@@ -460,13 +465,20 @@ def test_exact_candidate_real_clock_synthetic_activation_and_read_only_duplicate
         assert hashlib.sha256(ack_bytes).hexdigest() == ack_binding.sha256
         ack = ParentCompletionAcknowledgement.from_json_bytes(ack_bytes)
         assert ack.first_feature_session == first_feature_session(
-            ack.witness_bundle_observed_at, policy=policy
+            utc_ns_to_datetime_ceil(ack.admission_bound_ns), policy=policy
         )
+        assert result["schema_version"] == "prospective_capture_execution_result.v2"
+        terminal_clock = HostClockEvidence.from_dict(result["terminal_clock_evidence"])
+        require_clock_evidence_extension(ack.clock_evidence, terminal_clock)
+        assert terminal_clock.checkpoints[-1].label == "terminal_precommit"
+        assert result["result_own_durability_time_claimed"] is False
+        assert len(ack.recorder_returns) == len(result["recorder_returns"]) == 1
         if invocation == 0:
             assert (
                 started
                 <= ack.recording_call_started_at
                 <= ack.witness_bundle_observed_at
+                <= ack.covered_through_at
                 <= terminal
             )
         results.append(result)

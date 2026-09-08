@@ -15,7 +15,7 @@ from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from inspect import Parameter, signature
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import pytest
 
@@ -844,7 +844,9 @@ def test_captured_dependency_negative_validation_cannot_issue_a_seal(
     receipt = _receipt()
     context = _initialize_test_named_execution_context(receipt.execution)
     monkeypatch.setattr(contracts, "require_named_execution_context", lambda: context)
-    captured = tuple((item.relative_path, b"bad") for item in receipt.execution_dependencies)
+    captured: tuple[Any, ...] = tuple(
+        (item.relative_path, b"bad") for item in receipt.execution_dependencies
+    )
     if damage == "missing":
         captured = captured[:-1]
     elif damage == "duplicate":

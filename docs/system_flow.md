@@ -103,14 +103,16 @@ flowchart LR
 ```
 
 S3a 的 `prospective_event_time_evidence.py` 在原 producer/Named DQ 之外增加独立时间 sidecar。
-固定 `prospective_event_time_evidence_v1.yaml` 采用 `NEXT_XNYS_CLOSE_FORWARD_V1`：feature F
+当前 `prospective_event_time_evidence_v2.yaml` 采用 `NEXT_XNYS_CLOSE_FORWARD_V1`：feature F
 收盘后记录，D=next(F) 的计划收盘为截止/新收益起点；旧五候选 Close(F)→Close(D) 收益不移用。
 S4D write lease 与现有 contained immutable writer 保存 definition/input/signal 的确切 bytes，
-writer 成功返回后由内部 UTC clock 见证 payload 已完成，再写 completion witness。固定 plan/日期/
+writer 成功返回后以 raw UTC ns/QPC 保守上界见证 payload 已完成，再写 completion v2 witness；
+原成功返回另外带有 witness 写后验证的严格 clock prefix 延伸，retained replay 不补造该观察。
+旧 v1 policy/bytes 与原 inner interval 数学仍显式保留，只供历史复验。固定 plan/日期/
 stage 槽位与前驱绑定保证幂等保留原时间，缺 witness 保留 incomplete，迟到不准入；后续日期可恢复。
 只读 verifier 与 canonical XNYS gap 投影不读取市场 cache、不执行 DQ/producer 或旧 ledger。
 结果只证明本地保存时间关系，provider available_at、信号语义、实际执行与 OOS 准入仍独立；
-witness 自己的落盘完成仍需未来父执行器确认。当前仅工程 API，真实 activation/capture 未启用。
+witness 完成由下述 S3b 父执行器绑定原返回确认。当前仅工程 API，真实 activation/capture 未启用。
 
 ```mermaid
 flowchart LR
@@ -122,14 +124,21 @@ flowchart LR
     TVERIFY --> TTEMPORAL["时间证据与永久gap；真实capture/OOS仍待独立准入"]
 ```
 
-S3b 新增固定 `named_prospective_five_candidate_sources_v1.json`（85 模块/12 依赖）与
-`prospective_capture_execution_v1.yaml`。同一 Git-byte bootstrap 只在该 profile 接受
+S3b 固定 `named_prospective_five_candidate_sources_v1.json`（87 模块/14 依赖）与
+`prospective_capture_execution_v2.yaml`。同一 Git-byte bootstrap 只在该 profile 接受
 `--operation activate|capture`，逐次读取 exact manifest/owner review，重验原 S4D lease。
 capture 父固定零 DQ，隔离 child 最多一次 canonical DQ；同父 context 零 DQ verify 后，
 专属 seal 交付 captured prices/registry/calendar 和完整保全闭包（rates 仍只作 DQ guard）。
-原五候选算法生成独立 preview，经 S3a writer 保全 inputs/signal 后，父 UTC/monotonic 包络
-及前后 source/lease proof 形成 ACK。完整见证在 D close 前被观察完成才可生成新 observation
-投影；不修改旧 ledger。activation 首合法 F 取 ACK 纽约日期之后首 XNYS session。
+原五候选算法生成独立 preview，经 S3a v2 writer 保全 inputs/signal 后，共享
+`host_clock_evidence_v1.yaml` 固定 Windows CPython raw UTC ns/QPC 外包络与原始 anchor。
+每个原 recorder return 的完整 clock prefix 先独立复验，子 bound 传播到父对应 checkpoint；
+父 ACK v2 覆盖 DQ、preview、witness 返回和 postguard，严格以保守 bound 小于 D close
+决定准入。activation 首合法 F 取该 bound 纽约日期之后首 XNYS session，且不早于 recorder。
+result v2 在完整闭包复验、原 active lease/source 检查及同 anchor terminal checkpoint 后
+单次不可变提交；terminal bound 只约束 manifest/lease expiry，不重判已冻结 ACK 的 D。
+result 内嵌最终 proof/clock，自己落盘完成时间不作承诺，外层 source terminal 保留为交付
+完整性门禁。失败原始时钟诊断不可准入或续跑；旧 v1 bytes/inner verifier 不重新解释。
+不修改旧 ledger；绝对 UTC 精度与隐藏主机调时证明仍为 NOT_ESTABLISHED。
 固定 manifest/operation/F key 只尝试一次；已完成或 INCOMPLETE key 在范围/lease 到期后仍可
 只读核验，不重新 dispatch 或补签。retained verifier 逐项复核原始父证据、所有 artifact 与
 时间关系，并从已保全价格/registry 完整重算信号。授权状态、技术状态和真实/合成计数分别记录。
@@ -143,9 +152,10 @@ flowchart LR
     CD --> CS["同context零DQ verify + 完整captured闭包"]
     CS --> CF["原五候选信号 + S3a inputs/signal writer"]
     CA --> CF
-    CF --> CK["父UTC/monotonic包络 + source/lease前后证明 + ACK"]
+    CF --> CK["固定raw UTC/QPC anchor + 全子return bound + postguard ACK v2"]
     CK --> CG["严格D-close准入；独立observation投影"]
-    CG --> CR["只读重验全部证据 + 从closed inputs完整重算"]
+    CG --> CT["完整复验 + 最终active lease/clock → 唯一result v2提交"]
+    CT --> CR["只读重验全部证据 + 从closed inputs完整重算"]
 ```
 
 ```mermaid

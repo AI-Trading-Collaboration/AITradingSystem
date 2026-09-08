@@ -1,0 +1,77 @@
+schema_version: prospective_capture_execution_policy.v2
+policy_id: prospective_capture_execution_v2
+policy_version: 2.0.0
+status: REVIEWED_ENGINEERING_CONTRACT_REAL_SCOPE_REVIEW_REQUIRED
+owner: Project Owner / integration-coordinator
+requirement_ref: docs/requirements/TRADING-2564_S3b_Clock_Evidence_Correction_V1.md
+rationale: >-
+  完整前瞻父确认须覆盖 DQ、预览、recorder 原调用返回及 postguard，并保留原始 UTC
+  与固定 QPC 外包络。旧微秒表示不证明独立时钟速率，不再用该推论识别 UTC 回拨。
+intended_effect: >-
+  子事件与父链的已验证 bound 单调传递，严格约束 D、首次 F、manifest 与 lease。
+  最终 result 只在全部决定准入的检查完成后一次提交，不保留未绑定的致命写后时钟门禁。
+validation_plan: >-
+  固定 provider/anchor/prefix、子 bound/完整源码/DQ/preview 闭包、粗时钟与回拨、
+  截止/expiry 相等、纽约午夜、崩溃/幂等及单一 commit；真实时钟 synthetic E2E、
+  16-worker focused、exact final candidate 正式验证及绑定失败 parent 的 Full。
+review_condition: >-
+  首次真实使用前复核 exact source roots、时间信任模型与 bounded manifest。
+  改变 consumer、收益时钟、执行次数、来源角色、提交语义或 outcome 访问须重新审查。
+profile:
+  consumer_family: FIVE_CANDIDATE
+  source_manifest_path: config/data_governance/named_prospective_five_candidate_sources_v1.json
+  source_manifest_sha256: 9a11ed94e1c318aee3c44a7d01ba0f31556bd4de355eef1f75893245fe8bc1ce
+  parent_operations: [activate, capture]
+  child_operation: run
+  parent_canonical_dq_calls: 0
+  canonical_dq_calls_per_capture: 1
+  original_profiles_extended: false
+recording:
+  timing_version: NEXT_XNYS_CLOSE_FORWARD_V1
+  time_policy_path: config/research/prospective_event_time_evidence_v2.yaml
+  clock_policy_path: config/research/host_clock_evidence_v1.yaml
+  clock_policy_sha256: 09d4b5bfa286650f4a6e1066c9a0a9fd93ede5007065ee547795d082be22557a
+  first_feature_rule: FIRST_XNYS_SESSION_AFTER_COMPLETE_ACK_ADMISSION_BOUND_MARKET_DATE
+  first_feature_not_before_recorder: true
+  deadline: INTEGER_ACK_ADMISSION_BOUND_STRICTLY_BEFORE_NEXT_XNYS_SCHEDULED_CLOSE
+  parent_anchor: ORIGINAL_ANCHOR_BEFORE_CANONICAL_DQ_AND_ALL_RECORDERS
+  complete_witness_observation: AFTER_ORIGINAL_RECORDER_RETURNS
+  child_return_evidence: EVERY_ORIGINAL_RECORDER_RETURN_AND_EXACT_COMPLETION_PREFIX
+  acknowledgement_covered_through: ORIGINAL_RECORDER_RETURNS_AND_PARENT_POSTGUARDS
+  acknowledgement_own_durability_time_claimed: false
+  input_closure: ALL_DQ_MEMBERS_AND_VERIFIED_PROVENANCE_AND_EXECUTION_DEPENDENCIES
+  missing_ack_recovery: PRESERVE_INCOMPLETE_WITHOUT_REDISPATCH_OR_BACKDATE
+  same_key_retry: ORIGINAL_COMPLETE_RESULT_OR_INCOMPLETE
+  hidden_host_adjustment_proof: NOT_ESTABLISHED
+  absolute_utc_accuracy_proof: NOT_ESTABLISHED
+commit:
+  protocol: SINGLE_IMMUTABLE_PRECHECKED_COMMIT_V2
+  terminal_clock: STRICT_EXTENSION_OF_ORIGINAL_PARENT_ANCHOR_AND_ACK_PREFIX
+  terminal_clock_upper_limits: MANIFEST_AND_ORIGINAL_LEASE_EXPIRY
+  deadline_scope: FROZEN_ACK_COVERED_THROUGH_BOUND
+  final_guard: ORIGINAL_ACTIVE_SCOPED_SOURCE_LEASE_IMMEDIATELY_BEFORE_COMMIT
+  projection_verification: COMPLETE_BEFORE_TERMINAL_PRECOMMIT_OBSERVATION
+  fatal_unbound_postcommit_clock_guard_allowed: false
+  result_own_predeadline_durability_claimed: false
+  result_write_completion_before_expiry_claimed: false
+  outer_bootstrap_source_terminal_guard: DELIVERY_INTEGRITY_REQUIRED
+  postcommit_transport_or_read_failure: ORIGINAL_CALL_DELIVERY_UNCONFIRMED
+authorization:
+  control_artifact: TRUSTED_OPERATOR_OWNER_REVIEW_BOUND_TO_EXACT_MANIFEST
+  cryptographic_owner_signature_claimed: false
+  risk_tier: R1_BOUNDED_RESEARCH_SANDBOX
+  historical_one_shot_authorization_reusable: false
+  synthetic_evidence_admitted_to_research: false
+compatibility:
+  v1_ack_parser: ORIGINAL_INNER_INTERVAL_SEMANTICS_UNCHANGED
+  old_attempt_or_incomplete_reexecution_allowed: false
+  mixed_timing_or_source_profile_admission_allowed: false
+safety:
+  outcome_access_allowed: false
+  legacy_observation_ledger_mutation_allowed: false
+  download_allowed: false
+  provider_allowed: false
+  orders_allowed: false
+  fills_allowed: false
+  production_effect: none
+  broker_action: none

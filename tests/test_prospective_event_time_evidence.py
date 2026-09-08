@@ -18,7 +18,15 @@ from typing import Any
 
 import pytest
 
+import ai_trading_system.host_clock_evidence as host_clock
 import ai_trading_system.prospective_event_time_evidence as recorder
+from ai_trading_system.contracts.host_clock_evidence import (
+    ClockSample,
+    HostClockEvidence,
+    HostClockEvidenceError,
+    append_clock_checkpoint,
+    datetime_to_utc_ns,
+)
 from ai_trading_system.contracts.prospective_event_time_evidence import (
     EventBinding,
     PayloadMember,
@@ -73,7 +81,9 @@ class _Clock:
 
     def event(self, started: datetime, completed: datetime | None = None) -> None:
         self.value = started
-        self.pending = deque((started, started, completed or started + timedelta(seconds=1)))
+        self.pending = deque(
+            (started, started, started, completed or started + timedelta(seconds=1))
+        )
 
 
 @dataclass
@@ -200,9 +210,10 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Harnes
     store.mkdir(parents=True)
     clock = _Clock()
     monkeypatch.setattr(recorder, "_utc_now", clock)
-    # Synthetic UTC advances independently of actual disk latency. Keep its
-    # paired inner monotonic interval explicit; rollback tests override this.
-    monkeypatch.setattr(recorder.time, "monotonic_ns", lambda: 0)
+    # These explicit synthetic primitives affect only this clock runtime;
+    # global stdlib time, leases and store-lock timing remain real.
+    monkeypatch.setattr(host_clock, "_utc_ns", lambda: datetime_to_utc_ns(recorder._utc_now()))
+    monkeypatch.setattr(host_clock, "_counter_ns", lambda: 0)
     instance = _Harness(
         root,
         store,
@@ -255,6 +266,51 @@ def _forbidden(*args: Any, **kwargs: Any) -> Any:
     raise AssertionError("unexpected writer, clock, external call or active-lease dependency")
 
 
+@pytest.mark.parametrize("mode", ["live", "retained"])
+def test_submicrosecond_predecessor_regression_is_rejected_without_v1_reinterpretation(
+    harness: _Harness, monkeypatch: pytest.MonkeyPatch, mode: str
+) -> None:
+    offset = 900
+    monkeypatch.setattr(
+        host_clock, "_utc_ns", lambda: datetime_to_utc_ns(recorder._utc_now()) + offset
+    )
+    activation = harness.activate()
+    inputs = harness.inputs(activation.binding)
+    assert inputs.clock_evidence is not None
+    at = recorder.utc_ns_to_datetime_floor(inputs.clock_evidence.latest_sample.utc_ns)
+    if mode == "live":
+        offset = 800
+        with pytest.raises(TemporalEvidenceError, match="raw ns event anchor precedes predecessor"):
+            harness.signal(inputs.binding, at=at)
+        slot = harness.store / f"streams/{harness.plan.stream_id}/sessions/{FEATURE}/signal"
+        assert not (slot / "intent.json").exists()
+        assert not (slot / "completion.json").exists()
+        return
+    signal = harness.signal(inputs.binding, at=at)
+    assert signal.clock_evidence is not None
+
+    def mutate(witness: dict[str, Any]) -> None:
+        original = HostClockEvidence.from_dict(witness["clock_evidence"])
+        rebuilt = HostClockEvidence(
+            original.provider, replace(original.anchor, utc_ns=original.anchor.utc_ns - 100)
+        )
+        for checkpoint in original.checkpoints:
+            rebuilt = append_clock_checkpoint(
+                rebuilt,
+                label=checkpoint.label,
+                sample=checkpoint.sample,
+                inherited_child_bound_ns=checkpoint.inherited_child_bound_ns,
+            )
+        # Both encoded datetimes stay identical, and all derived bounds rehash.
+        assert recorder.utc_ns_to_datetime_floor(rebuilt.anchor.utc_ns) == signal.started_at
+        witness["clock_evidence"] = rebuilt.to_dict()
+        witness["payload_admission_bound_ns"] = rebuilt.checkpoints[1].admission_bound_ns
+
+    damaged = _tamper(harness, signal.binding, mutate)
+    with pytest.raises(TemporalEvidenceError, match="raw ns event anchor precedes predecessor"):
+        harness.verify(damaged)
+
+
 def test_completion_clock_sample_follows_all_real_payload_writer_returns(
     harness: _Harness, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -291,7 +347,8 @@ def test_timely_signal_is_opaque_unadopted_temporal_evidence(harness: _Harness) 
     activation = harness.activate()
     inputs = harness.inputs(activation.binding)
     signal = harness.signal(inputs.binding)
-    assert signal == harness.verify(signal.binding)
+    assert replace(signal, return_clock_evidence=None) == harness.verify(signal.binding)
+    assert signal.return_clock_evidence is not None
     assert signal.first_feature_session == FEATURE
     assert signal.temporal_status == "TIMELY_PAYLOAD"
     assert signal.plan.primary_window_start == date(2021, 2, 22)
@@ -307,6 +364,220 @@ def test_timely_signal_is_opaque_unadopted_temporal_evidence(harness: _Harness) 
     assert report["production_effect"] == report["broker_action"] == "none"
     payload_path = Path(signal.binding.relative_path).parent / "payload_signal.bin"
     assert (harness.store / payload_path).read_bytes() == SIGNAL.content
+
+
+def test_stalled_raw_utc_with_positive_counter_elapsed_is_not_misreported_as_rollback(
+    harness: _Harness, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    activation = harness.activate()
+    inputs = harness.inputs(activation.binding)
+    ticks = iter(range(0, 60_000_000, 5_000_000))
+    monkeypatch.setattr(host_clock, "_counter_ns", lambda: next(ticks))
+    signal = harness.signal(inputs.binding, at=SIGNAL_TIME, completed=SIGNAL_TIME)
+    assert signal.started_at == signal.payload_durable_completed_at == SIGNAL_TIME
+    assert signal.temporal_status == "TIMELY_PAYLOAD"
+    assert signal.clock_evidence is not None and signal.return_clock_evidence is not None
+    assert signal.payload_admission_bound_ns > datetime_to_utc_ns(SIGNAL_TIME)
+    assert (
+        signal.return_clock_evidence.admission_bound_ns >= signal.clock_evidence.admission_bound_ns
+    )
+    assert harness.verify(signal.binding).temporal_status == "TIMELY_PAYLOAD"
+    coverage = harness.coverage(activation.binding, FEATURE, SIGNAL_TIME)
+    assert coverage["expected_sessions"][0]["status"] == "NOT_RECORDED_BY_REVIEW_TIME"
+
+
+def test_derived_bound_reaches_lease_expiry_before_payload_even_when_raw_is_live(
+    harness: _Harness, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    activation = harness.activate()
+    inputs = harness.inputs(activation.binding)
+    harness.renew(SIGNAL_TIME)
+    expiry = harness.acquired_at + timedelta(seconds=harness.guard.policy.lease_ttl_seconds)
+    remaining = datetime_to_utc_ns(expiry) - datetime_to_utc_ns(SIGNAL_TIME)
+    ticks = iter((0, 0, remaining, remaining))
+    monkeypatch.setattr(host_clock, "_counter_ns", lambda: next(ticks))
+    with pytest.raises(TemporalEvidenceError, match="TEMPORAL_LEASE_BOUND_EXPIRED"):
+        harness.signal(inputs.binding, at=SIGNAL_TIME, completed=SIGNAL_TIME)
+    assert not list(harness.store.glob("streams/*/sessions/*/signal/intent.json"))
+
+
+def test_original_return_observation_replays_after_expiry_without_clock_or_lease(
+    harness: _Harness, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    activation = harness.activate()
+    assert activation.return_clock_evidence is not None
+    harness.release()
+    with monkeypatch.context() as guard:
+        guard.setattr(recorder, "_live_lease", _forbidden)
+        guard.setattr(recorder, "_utc_now", _forbidden)
+        guard.setattr(host_clock, "_utc_ns", _forbidden)
+        guard.setattr(host_clock, "_counter_ns", _forbidden)
+        guard.setattr(host_clock, "_read_provider", _forbidden)
+        returned = recorder.verify_recorder_return_evidence(
+            store_root=harness.store,
+            event=activation.binding,
+            return_clock_evidence=activation.return_clock_evidence,
+            policy=harness.policy,
+        )
+        assert returned == activation
+        assert harness.verify(activation.binding).return_clock_evidence is None
+        replay = recorder.record_activation(
+            store_root=harness.store,
+            plan=harness.plan,
+            definitions=DEFINITIONS,
+            policy=harness.policy,
+            lease_handle=harness.handle,
+        )
+        assert replay.return_clock_evidence is None
+
+
+@pytest.mark.parametrize("damage", ["no_extension", "provider", "extra_stage", "expiry"])
+def test_return_observation_must_extend_exact_child_prefix_and_original_lease(
+    harness: _Harness, damage: str
+) -> None:
+    activation = harness.activate()
+    original = activation.return_clock_evidence
+    frozen = activation.clock_evidence
+    assert original is not None and frozen is not None
+    if damage == "no_extension":
+        changed = frozen
+    elif damage == "provider":
+        changed = replace(original, provider=replace(original.provider, python_version="3.11.10"))
+    elif damage == "extra_stage":
+        changed = append_clock_checkpoint(
+            original, label="unbound_later_stage", sample=original.latest_sample
+        )
+    else:
+        expiry = harness.acquired_at + timedelta(seconds=harness.guard.policy.lease_ttl_seconds)
+        duration = datetime_to_utc_ns(expiry) - frozen.anchor.utc_ns
+        changed = append_clock_checkpoint(
+            frozen,
+            label="recorder_return",
+            sample=ClockSample(frozen.latest_sample.utc_ns, duration, duration),
+        )
+    with pytest.raises(
+        ValueError,
+        match="HOST_CLOCK_EXTENSION_INVALID|TEMPORAL_RETURN_CLOCK_STAGE_INVALID|TEMPORAL_LEASE_BOUND_EXPIRED",
+    ):
+        recorder.verify_recorder_return_evidence(
+            store_root=harness.store,
+            event=activation.binding,
+            return_clock_evidence=changed,
+            policy=harness.policy,
+        )
+
+
+def test_clock_rejection_retains_original_backward_raw_tuple_and_partial_payload(
+    harness: _Harness,
+) -> None:
+    activation = harness.activate()
+    inputs = harness.inputs(activation.binding)
+    with pytest.raises(HostClockEvidenceError, match="HOST_CLOCK_UTC_BACKWARD") as caught:
+        harness.signal(
+            inputs.binding, at=SIGNAL_TIME, completed=SIGNAL_TIME - timedelta(microseconds=1)
+        )
+    diagnostic = caught.value.diagnostic
+    assert isinstance(diagnostic, host_clock.HostClockFailureDiagnostic)
+    assert diagnostic.attempted_label == "payload_complete"
+    assert diagnostic.raw_readings[1].integer_value == datetime_to_utc_ns(SIGNAL_TIME) - 1000
+    assert diagnostic.prior_evidence is not None
+    assert diagnostic.prior_evidence.latest_sample.utc_ns == datetime_to_utc_ns(SIGNAL_TIME)
+    slot = harness.store / f"streams/{harness.plan.stream_id}/sessions/{FEATURE}/signal"
+    assert (slot / "payload_signal.bin").read_bytes() == SIGNAL.content
+    assert not (slot / "completion.json").exists()
+
+
+def _legacy_activation_fixture(
+    harness: _Harness, *, elapsed_ns: int = 0
+) -> tuple[EventBinding, recorder.TimeEvidencePolicy]:
+    """Build explicitly synthetic original-v1 wire bytes; never enable a v1 writer."""
+    activation = harness.activate()
+    policy = recorder.load_time_evidence_policy(
+        source_root=recorder.SOURCE_ROOT, policy_path=recorder.LEGACY_POLICY_PATH
+    )
+    witness = _read_json(harness, activation.binding.relative_path)
+    assert HostClockEvidence.from_dict(witness["clock_evidence"]) == activation.clock_evidence
+    intent_relative = witness["intent"]["relative_path"]
+    intent = _read_json(harness, intent_relative)
+    semantic = intent["semantic"]
+    semantic["schema_version"] = "prospective_time_intent.v1"
+    semantic["policy_binding"] = policy.binding.to_dict()
+    del semantic["clock_policy_binding"]
+    intent_content = canonical_json_bytes(intent)
+    (harness.store / intent_relative).write_bytes(intent_content)
+    legacy = {
+        "schema_version": "prospective_time_completion.v1",
+        "intent": _binding(intent_relative, intent_content).to_dict(),
+        "started_at": witness["started_at"],
+        "payload_durable_completed_at": witness["payload_durable_completed_at"],
+        "monotonic_elapsed_ns": elapsed_ns,
+        "first_feature_session": witness["first_feature_session"],
+        "session_timing": None,
+        "temporal_status": "ACTIVATION_RECORDED",
+        "safety": dict(recorder._SAFETY_V1),
+    }
+    content = canonical_json_bytes(legacy)
+    (harness.store / activation.binding.relative_path).write_bytes(content)
+    return _binding(activation.binding.relative_path, content), policy
+
+
+@pytest.mark.parametrize("elapsed_ns,accepted", [(1_000_001_000, True), (1_000_001_001, False)])
+def test_v1_retained_inner_interval_math_is_not_reinterpreted_as_outer_envelope(
+    harness: _Harness, elapsed_ns: int, accepted: bool
+) -> None:
+    event, policy = _legacy_activation_fixture(harness, elapsed_ns=elapsed_ns)
+    if accepted:
+        original = recorder.verify_time_evidence(
+            store_root=harness.store, event=event, policy=policy
+        )
+        assert original.clock_evidence is None and original.return_clock_evidence is None
+        assert original.to_dict()["schema_version"] == "prospective_time_evidence.v1"
+        with pytest.raises(TemporalEvidenceError, match="TEMPORAL_LEGACY_CLOCK_BOUND_UNAVAILABLE"):
+            _ = original.admission_bound_ns
+    else:
+        with pytest.raises(TemporalEvidenceError, match="TEMPORAL_CLOCK_BACKWARD"):
+            recorder.verify_time_evidence(store_root=harness.store, event=event, policy=policy)
+
+
+def test_v1_is_readonly_and_cannot_be_mixed_into_new_v2_recording(
+    harness: _Harness, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    event, policy = _legacy_activation_fixture(harness)
+    retained_bytes = (harness.store / event.relative_path).read_bytes()
+    harness.release()
+    assert harness.handle is not None
+    with monkeypatch.context() as guard:
+        guard.setattr(recorder, "_utc_now", _forbidden)
+        guard.setattr(recorder, "_live_lease", _forbidden)
+        guard.setattr(host_clock, "_utc_ns", _forbidden)
+        replay = recorder.record_activation(
+            store_root=harness.store,
+            plan=harness.plan,
+            definitions=DEFINITIONS,
+            policy=policy,
+            lease_handle=harness.handle,
+        )
+        assert replay.binding == event and replay.return_clock_evidence is None
+        with pytest.raises(TemporalEvidenceError, match="TEMPORAL_LEGACY_RECORDING_DISABLED"):
+            recorder.record_activation(
+                store_root=harness.store,
+                plan=replace(harness.plan, plan_id="synthetic-legacy-new-v1"),
+                definitions=DEFINITIONS,
+                policy=policy,
+                lease_handle=harness.handle,
+            )
+        with pytest.raises(TemporalEvidenceError):
+            recorder.record_local_input_observation(
+                store_root=harness.store,
+                plan=harness.plan,
+                feature_session=FEATURE,
+                inputs=INPUTS,
+                activation=event,
+                policy=harness.policy,
+                lease_handle=harness.handle,
+            )
+    assert (harness.store / event.relative_path).read_bytes() == retained_bytes
+    assert not list(harness.store.glob("streams/*/sessions/*/inputs/intent.json"))
 
 
 @pytest.mark.parametrize("offset", [-1, 0])
@@ -402,7 +673,7 @@ def test_same_key_same_bytes_returns_original_witness_without_writer(
     original = (harness.store / signal.binding.relative_path).read_bytes()
     monkeypatch.setattr(recorder, "write_contained_artifact_bytes", _forbidden)
     replay = harness.signal(inputs.binding, at=SIGNAL_TIME + timedelta(minutes=15))
-    assert replay == signal
+    assert replay == replace(signal, return_clock_evidence=None)
     assert (harness.store / replay.binding.relative_path).read_bytes() == original
 
 
@@ -414,7 +685,7 @@ def test_same_key_different_bytes_is_conflict_and_keeps_original(harness: _Harne
     with pytest.raises(TemporalEvidenceError, match="TEMPORAL_EVENT_CONFLICT"):
         harness.signal(inputs.binding, content=PayloadMember("signal", b"changed"))
     assert (harness.store / signal.binding.relative_path).read_bytes() == original
-    assert harness.verify(signal.binding) == signal
+    assert harness.verify(signal.binding) == replace(signal, return_clock_evidence=None)
 
 
 def test_activation_is_singleton_and_definition_bytes_must_match_plan(
@@ -432,7 +703,8 @@ def test_activation_is_singleton_and_definition_bytes_must_match_plan(
             policy=harness.policy,
             lease_handle=harness.handle,
         )
-    assert replay == activation
+    assert replay == replace(activation, return_clock_evidence=None)
+    assert replay.return_clock_evidence is None
     with pytest.raises(TemporalEvidenceError, match="TEMPORAL_DEFINITION_MISMATCH"):
         recorder.record_activation(
             store_root=harness.store,
@@ -492,10 +764,14 @@ def test_crash_without_witness_is_never_recovered_as_success_and_next_feature_re
     [
         ("temporal_status", "TIMELY_PAYLOAD", "TEMPORAL_STATUS_INVALID"),
         ("started_at", "2025-03-05T22:00:00", "TEMPORAL_TIME_INVALID"),
-        ("payload_durable_completed_at", "2025-03-05T21:59:59+00:00", "TEMPORAL_CLOCK_BACKWARD"),
+        (
+            "payload_durable_completed_at",
+            "2025-03-05T21:59:59+00:00",
+            "TEMPORAL_CLOCK_BINDING_INVALID",
+        ),
         ("first_feature_session", "2025-03-05", "TEMPORAL_FIRST_SESSION_INVALID"),
-        ("monotonic_elapsed_ns", True, "TEMPORAL_MONOTONIC_CLOCK_INVALID"),
-        ("monotonic_elapsed_ns", -1, "TEMPORAL_MONOTONIC_CLOCK_INVALID"),
+        ("payload_outer_elapsed_ns", True, "TEMPORAL_MONOTONIC_CLOCK_INVALID"),
+        ("payload_outer_elapsed_ns", -1, "TEMPORAL_MONOTONIC_CLOCK_INVALID"),
         ("safety", {"observation_authorized": True}, "TEMPORAL_SAFETY_INVALID"),
     ],
 )
@@ -642,13 +918,17 @@ def test_untrusted_or_backward_recorder_clocks_fail_closed(harness: _Harness, mo
         complete = start - timedelta(microseconds=1)
     else:
         start = inputs.payload_durable_completed_at - timedelta(microseconds=1)
-    code = "TEMPORAL_TIME_INVALID" if mode == "naive" else "TEMPORAL_CLOCK_BACKWARD"
-    with pytest.raises(TemporalEvidenceError, match=code):
+    code = {
+        "naive": "TEMPORAL_TIME_INVALID",
+        "completion_backward": "HOST_CLOCK_UTC_BACKWARD",
+        "parent_backward": "TEMPORAL_CLOCK_BACKWARD",
+    }[mode]
+    with pytest.raises(ValueError, match=code):
         harness.signal(inputs.binding, at=start, completed=complete)
     assert not list(harness.store.glob("streams/*/sessions/*/signal/completion.json"))
 
 
-def test_partial_utc_rollback_cannot_hide_elapsed_time_across_deadline(
+def test_positive_raw_utc_cannot_hide_twenty_second_outer_interval_across_deadline(
     harness: _Harness, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     activation = harness.activate()
@@ -656,27 +936,28 @@ def test_partial_utc_rollback_cannot_hide_elapsed_time_across_deadline(
     deadline = datetime(2025, 3, 7, 21, tzinfo=UTC)
     start = deadline - timedelta(seconds=10)
     harness.renew(start)
-    samples = iter((0, 20_000_000_000))
-    monkeypatch.setattr(recorder.time, "monotonic_ns", lambda: next(samples))
-    # UTC still appears forward and before the deadline, but its five-second
-    # interval cannot contain the writer's twenty-second monotonic interval.
-    with pytest.raises(TemporalEvidenceError, match="TEMPORAL_CLOCK_BACKWARD"):
-        harness.signal(inputs.binding, at=start, completed=deadline - timedelta(seconds=5))
+    samples = iter((0, 0, 0, 0, *([20_000_000_000] * 8)))
+    monkeypatch.setattr(host_clock, "_counter_ns", lambda: next(samples))
+    # UTC remains forward and apparently timely; the full elapsed budget still
+    # crosses D. Preserve the genuine payload as LATE, never classify it timely.
+    result = harness.signal(inputs.binding, at=start, completed=deadline - timedelta(seconds=5))
+    assert result.temporal_status == "LATE_PAYLOAD"
+    assert harness.verify(result.binding).temporal_status == "LATE_PAYLOAD"
     slot = harness.store / f"streams/{harness.plan.stream_id}/sessions/{FEATURE}/signal"
     assert (slot / "payload_signal.bin").read_bytes() == SIGNAL.content
-    assert not (slot / "completion.json").exists()
+    assert (slot / "completion.json").exists()
 
 
-def test_retained_witness_rejects_elapsed_interval_longer_than_utc_interval(
+def test_retained_witness_rejects_outer_duration_different_from_raw_counter_evidence(
     harness: _Harness,
 ) -> None:
     activation = harness.activate()
     event = _tamper(
         harness,
         activation.binding,
-        lambda witness: witness.update(monotonic_elapsed_ns=2_000_000_000),
+        lambda witness: witness.update(payload_outer_elapsed_ns=2_000_000_000),
     )
-    with pytest.raises(TemporalEvidenceError, match="TEMPORAL_CLOCK_BACKWARD"):
+    with pytest.raises(TemporalEvidenceError, match="TEMPORAL_CLOCK_BINDING_INVALID"):
         harness.verify(event)
 
 
@@ -687,6 +968,7 @@ def test_post_payload_lease_check_cannot_hide_a_later_utc_rollback(
     inputs = harness.inputs(activation.binding)
     harness.clock.pending = deque(
         (
+            SIGNAL_TIME,
             SIGNAL_TIME,
             SIGNAL_TIME,
             SIGNAL_TIME + timedelta(seconds=2),
@@ -851,14 +1133,19 @@ def test_two_threads_same_key_keep_one_event_and_completed_replay_is_idempotent(
         result for result in results if isinstance(result, recorder.RecordedTemporalEvidence)
     ]
     assert successes
-    assert all(result == successes[0] for result in successes)
+    assert all(
+        replace(result, return_clock_evidence=None)
+        == replace(successes[0], return_clock_evidence=None)
+        for result in successes
+    )
+    assert sum(result.return_clock_evidence is not None for result in successes) == 1
     for result in results:
         if isinstance(result, TemporalEvidenceError):
             assert result.code in {"TEMPORAL_INCOMPLETE_EVENT", "TEMPORAL_EVENT_CONFLICT"}
     assert sum(path.endswith("/completion.json") for path in writes) == 1
     assert sum(path.endswith("/payload_signal.bin") for path in writes) == 1
     monkeypatch.setattr(recorder, "write_contained_artifact_bytes", _forbidden)
-    assert harness.signal(inputs.binding) == successes[0]
+    assert harness.signal(inputs.binding) == replace(successes[0], return_clock_evidence=None)
 
 
 def test_same_key_completed_while_waiting_for_store_lock_returns_original_timestamp(
@@ -912,7 +1199,8 @@ def test_same_key_completed_while_waiting_for_store_lock_returns_original_timest
         second = executor.submit(run, "second")
         original = first.result(timeout=30)
         replay = second.result(timeout=30)
-    assert replay == original
+    assert replay == replace(original, return_clock_evidence=None)
+    assert original.return_clock_evidence is not None and replay.return_clock_evidence is None
     assert replay.payload_durable_completed_at == SIGNAL_TIME
     assert completion_writes == [original.binding.relative_path]
 
@@ -986,7 +1274,10 @@ def test_readonly_verifier_and_coverage_need_no_live_lease_writer_clock_or_netwo
         patch.setattr(quality, "validate_data_cache", _forbidden)
         patch.setattr(named_quality, "capture_named_publication", _forbidden)
         patch.setattr(named_quality, "run_named_data_quality_execution", _forbidden)
-        assert harness.verify(signal.binding) == signal
+        patch.setattr(host_clock, "_utc_ns", _forbidden)
+        patch.setattr(host_clock, "_counter_ns", _forbidden)
+        patch.setattr(host_clock, "_read_provider", _forbidden)
+        assert harness.verify(signal.binding) == replace(signal, return_clock_evidence=None)
         coverage = harness.coverage(
             activation.binding, date(2025, 3, 11), datetime(2025, 3, 12, 21, tzinfo=UTC)
         )

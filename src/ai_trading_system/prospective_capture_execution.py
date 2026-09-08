@@ -10,12 +10,22 @@ from __future__ import annotations
 
 import hashlib
 import os
-import time
 from collections.abc import Mapping
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from pathlib import Path, PurePosixPath
 from typing import Any, NoReturn
 
+from ai_trading_system.contracts.host_clock_evidence import (
+    POLICY_PATH as CLOCK_POLICY_PATH,
+)
+from ai_trading_system.contracts.host_clock_evidence import (
+    HostClockEvidence,
+    deadline_allows,
+    require_clock_evidence_extension,
+    utc_ns_to_datetime_ceil,
+    utc_ns_to_datetime_floor,
+)
 from ai_trading_system.contracts.named_data_quality_execution import (
     EQUAL_RISK_PRICE_REGISTRY_PATH,
     NamedArtifactBinding,
@@ -30,6 +40,8 @@ from ai_trading_system.contracts.prospective_capture_execution import (
     ParentCompletionAcknowledgement,
     ProspectiveCaptureOwnerReview,
     ProspectiveCaptureRequest,
+    RecorderReturnObservation,
+    validate_parent_clock_prefix,
 )
 from ai_trading_system.contracts.prospective_event_time_evidence import (
     EventBinding,
@@ -61,6 +73,7 @@ from ai_trading_system.data.named_quality_execution import (
     _preview_calendar_witness,
     verify_named_data_quality_execution_receipt,
 )
+from ai_trading_system.host_clock_evidence import HostClockFailureDiagnostic, HostClockSampler
 from ai_trading_system.platform.architecture.checkout_guard import CheckoutLeaseHandle
 from ai_trading_system.prospective_event_time_evidence import (
     POLICY_PATH as TIME_POLICY_PATH,
@@ -74,6 +87,7 @@ from ai_trading_system.prospective_event_time_evidence import (
     record_local_input_observation,
     record_signal_completion,
     session_timing,
+    verify_recorder_return_evidence,
     verify_time_evidence,
 )
 from ai_trading_system.simple_baseline_named_preview import (
@@ -82,7 +96,7 @@ from ai_trading_system.simple_baseline_named_preview import (
 )
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
-_RESULT_SCHEMA = "prospective_capture_execution_result.v1"
+_RESULT_SCHEMA = "prospective_capture_execution_result.v2"
 _ATTEMPT_SCHEMA = "prospective_capture_attempt.v1"
 _SAFETY = {
     "outcome_access_authorized": False,
@@ -103,6 +117,8 @@ class ProspectiveCaptureExecutionError(ValueError):
         self.code = code
         self.prospective_child_canonical_dq_call_count: int | None = None
         self.prospective_dq_parent_receipt: object = None
+        self.prospective_clock_failure_diagnostic: object = None
+        self.prospective_recorder_return_observations: object = None
         super().__init__(f"{code}: {detail}")
 
 
@@ -112,10 +128,6 @@ def _fail(code: str, detail: str) -> NoReturn:
 
 def _now() -> datetime:
     return datetime.now(UTC)
-
-
-def _monotonic_ns() -> int:
-    return time.monotonic_ns()
 
 
 def _sha(content: bytes) -> str:
@@ -214,7 +226,7 @@ def _controls(
     policy = bootstrap.dependencies.get(CAPTURE_POLICY_PATH)
     if policy is None or _sha(policy.content) != CAPTURE_POLICY_SHA256:
         _fail("PROSPECTIVE_CAPTURE_POLICY_MISMATCH", CAPTURE_POLICY_PATH)
-    for path in (TIME_POLICY_PATH, EQUAL_RISK_PRICE_REGISTRY_PATH):
+    for path in (TIME_POLICY_PATH, CLOCK_POLICY_PATH, EQUAL_RISK_PRICE_REGISTRY_PATH):
         if path not in bootstrap.dependencies:
             _fail("PROSPECTIVE_CAPTURE_DEPENDENCY_MISSING", path)
     time_policy = load_time_evidence_policy(source_root=root)
@@ -227,6 +239,7 @@ def _controls(
                 PayloadMember("owner_review", review_bytes),
                 PayloadMember("capture_policy", policy.content),
                 PayloadMember("time_policy", bootstrap.dependencies[TIME_POLICY_PATH].content),
+                PayloadMember("clock_policy", bootstrap.dependencies[CLOCK_POLICY_PATH].content),
                 PayloadMember(
                     "strategy_registry",
                     bootstrap.dependencies[EQUAL_RISK_PRICE_REGISTRY_PATH].content,
@@ -479,15 +492,19 @@ def _acknowledge(
     review: ProspectiveCaptureOwnerReview,
     event: RecordedTemporalEvidence,
     *,
-    started_at: datetime,
-    completed_at: datetime,
-    elapsed_ns: int,
+    clock: HostClockEvidence,
+    recorder_returns: tuple[RecorderReturnObservation, ...],
     first_feature: date,
     policy: TimeEvidencePolicy,
 ) -> ParentCompletionAcknowledgement:
+    started_at = utc_ns_to_datetime_floor(clock.anchor.utc_ns)
+    completed_at = utc_ns_to_datetime_floor(clock.latest_sample.utc_ns)
+    observed_at = utc_ns_to_datetime_floor(clock.checkpoints[-2].sample.utc_ns)
     if not started_at <= event.started_at <= event.payload_durable_completed_at <= completed_at:
         _fail("PROSPECTIVE_CAPTURE_ACK_BEFORE_WRITER", "parent interval must enclose recorder")
-    if not review.reviewed_at <= started_at <= completed_at < request.manifest.expires_at:
+    if not review.reviewed_at <= started_at <= completed_at or not deadline_allows(
+        clock.admission_bound_ns, request.manifest.expires_at
+    ):
         _fail("PROSPECTIVE_CAPTURE_ACK_SCOPE_EXPIRED", request.request_id)
     timing = (
         session_timing(request.feature_session, policy=policy) if request.feature_session else None
@@ -495,7 +512,11 @@ def _acknowledge(
     state = (
         "ACTIVATION_ACKNOWLEDGED"
         if timing is None
-        else ("CAPTURE_ACKNOWLEDGED" if completed_at < timing.effective_close_at else "LATE")
+        else (
+            "CAPTURE_ACKNOWLEDGED"
+            if deadline_allows(clock.admission_bound_ns, timing.effective_close_at)
+            else "LATE"
+        )
     )
     return ParentCompletionAcknowledgement(
         request_id=request.request_id,
@@ -510,8 +531,12 @@ def _acknowledge(
         source_lease_id=bootstrap.source_lease_id,
         recorder_event=_event_binding(request, event.binding),
         recording_call_started_at=started_at,
-        witness_bundle_observed_at=completed_at,
-        monotonic_elapsed_ns=elapsed_ns,
+        witness_bundle_observed_at=observed_at,
+        covered_through_at=completed_at,
+        parent_outer_elapsed_ns=clock.latest_sample.counter_after_ns
+        - clock.anchor.counter_before_ns,
+        clock_evidence=clock,
+        recorder_returns=recorder_returns,
         first_feature_session=first_feature,
         decision_effective_session=timing.effective_session if timing else None,
         decision_deadline=timing.effective_close_at if timing else None,
@@ -543,6 +568,8 @@ def _base_result(
         "capture_admitted": False,
         "activation_admitted": False,
         "idempotent_replay": False,
+        "result_own_durability_time_claimed": False,
+        "completed_at_semantics": "RESULT_CONTENT_PREPARED",
         **_SAFETY,
     }
 
@@ -552,6 +579,8 @@ def _check_result_projection(
     request: ProspectiveCaptureRequest,
     review: ProspectiveCaptureOwnerReview,
     attempt: dict[str, Any],
+    *,
+    terminal_required: bool = True,
 ) -> None:
     expected = _base_result(request, review)
     expected["parent_pid"] = attempt["parent_pid"]
@@ -585,7 +614,10 @@ def _check_result_projection(
         "real_market_dq_call_count",
         "recorder_entered",
         "completed_at",
+        "recorder_returns",
     }
+    if terminal_required:
+        mandatory.update({"terminal_precommit_proof", "terminal_clock_evidence"})
     optional = {
         "acknowledgement",
         "observation",
@@ -948,11 +980,100 @@ def verify_prospective_capture_result(
     return _verify_prospective_capture_projection(request, bootstrap=bootstrap, result=result)
 
 
+def _clock_scope(
+    request: ProspectiveCaptureRequest, clock: HostClockEvidence, proof: dict[str, Any]
+) -> None:
+    """An upper bound is used for expiry only, never as live lease-check time."""
+    if not (
+        deadline_allows(clock.admission_bound_ns, request.manifest.expires_at)
+        and deadline_allows(
+            clock.admission_bound_ns, parse_utc_datetime(proof["active_lease"]["expires_at"])
+        )
+        and parse_utc_datetime(proof["checked_at"])
+        <= utc_ns_to_datetime_floor(clock.latest_sample.utc_ns)
+    ):
+        _fail("PROSPECTIVE_CAPTURE_CLOCK_SCOPE_EXPIRED", request.request_id)
+
+
+def _verify_terminal_clock(
+    request: ProspectiveCaptureRequest,
+    result: dict[str, Any],
+    attempt: dict[str, Any],
+    ack: ParentCompletionAcknowledgement | None,
+) -> None:
+    """Pure checks after all child and source/lease proof replay has completed."""
+    clock = HostClockEvidence.from_dict(result["terminal_clock_evidence"])
+    if not clock.checkpoints or clock.checkpoints[-1].label != "terminal_precommit":
+        _fail("PROSPECTIVE_CAPTURE_TERMINAL_CLOCK_INVALID", request.request_id)
+    if clock.checkpoints[-1].inherited_child_bound_ns is not None:
+        _fail("PROSPECTIVE_CAPTURE_TERMINAL_CLOCK_INVALID", "foreign terminal bound")
+    prefix = replace(clock, checkpoints=clock.checkpoints[:-1])
+    returns = tuple(RecorderReturnObservation.from_dict(row) for row in result["recorder_returns"])
+    validate_parent_clock_prefix(prefix, returns, request.operation)
+    if ack is not None:
+        require_clock_evidence_extension(ack.clock_evidence, clock)
+        if prefix != ack.clock_evidence or returns != ack.recorder_returns:
+            _fail("PROSPECTIVE_CAPTURE_TERMINAL_CLOCK_INVALID", "original ACK prefix differs")
+    proof = _object(result["terminal_precommit_proof"])
+    if not (
+        parse_utc_datetime(attempt["started_at"])
+        <= utc_ns_to_datetime_floor(clock.anchor.utc_ns)
+        <= utc_ns_to_datetime_floor(prefix.latest_sample.utc_ns)
+        <= parse_utc_datetime(result["completed_at"])
+        <= parse_utc_datetime(proof["source_checked_at"])
+    ):
+        _fail("PROSPECTIVE_CAPTURE_TERMINAL_CHRONOLOGY_INVALID", request.request_id)
+    _clock_scope(request, clock, proof)
+
+
+def _verify_return_observations(
+    request: ProspectiveCaptureRequest,
+    result: dict[str, Any],
+    *,
+    policy: TimeEvidencePolicy,
+    plan: RecordingPlan,
+    source_lease_id: str,
+) -> tuple[RecorderReturnObservation, ...]:
+    raw = result.get("recorder_returns")
+    if type(raw) is not list:
+        _fail("PROSPECTIVE_CAPTURE_RECORDER_RETURNS_INVALID", "ordered original returns required")
+    returns = tuple(RecorderReturnObservation.from_dict(row) for row in raw)
+    slots = (
+        ("activation",)
+        if request.operation == "activate"
+        else (
+            f"sessions/{request.feature_session}/inputs",
+            f"sessions/{request.feature_session}/signal",
+        )
+    )
+    if len(returns) > len(slots):
+        _fail("PROSPECTIVE_CAPTURE_RECORDER_RETURNS_INVALID", "extra child return")
+    for returned, slot in zip(returns, slots, strict=False):
+        expected_path = (
+            f"{request.timing_relative_path}/streams/{plan.stream_id}/{slot}/completion.json"
+        )
+        if returned.event.relative_path != expected_path:
+            _fail("PROSPECTIVE_CAPTURE_EVENT_LOCATOR_INVALID", "ordered original child slot")
+        event, _ = _event_members(
+            request, returned.event, policy=policy, source_lease_id=source_lease_id
+        )
+        verified = verify_recorder_return_evidence(
+            store_root=Path(request.roots.execution_root) / request.timing_relative_path,
+            event=_local_event(request, returned.event),
+            return_clock_evidence=returned.clock_evidence,
+            policy=policy,
+        )
+        if event.plan != plan or verified.binding != event.binding:
+            _fail("PROSPECTIVE_CAPTURE_RECORDER_RETURNS_INVALID", "child plan differs")
+    return returns
+
+
 def _verify_prospective_capture_projection(
     request: ProspectiveCaptureRequest,
     *,
     bootstrap: NamedBootstrapAuthority,
     result: dict[str, Any],
+    terminal_required: bool = True,
 ) -> dict[str, object]:
     """Same full proof path before publication and when reading retained bytes."""
     review, definitions, plan, policy = _controls(request, bootstrap)
@@ -966,7 +1087,29 @@ def _verify_prospective_capture_projection(
     attempt = _retained_attempt(request)
     if attempt is None:
         _fail("PROSPECTIVE_CAPTURE_RETAINED_ATTEMPT_CHANGED", relative)
-    _check_result_projection(result, request, review, attempt)
+    _check_result_projection(result, request, review, attempt, terminal_required=terminal_required)
+    returns = _verify_return_observations(
+        request, result, policy=policy, plan=plan, source_lease_id=attempt["source_lease_id"]
+    )
+    ack = None
+    if "acknowledgement" in result:
+        ack_binding = NamedArtifactBinding.from_dict(result["acknowledgement"])
+        if ack_binding.relative_path != relative + "/acknowledgement.json":
+            _fail("PROSPECTIVE_CAPTURE_ACK_LOCATOR_INVALID", relative)
+        ack = ParentCompletionAcknowledgement.from_json_bytes(_read(root, ack_binding))
+        if returns != ack.recorder_returns:
+            _fail("PROSPECTIVE_CAPTURE_RECORDER_RETURNS_INVALID", "original ACK returns differ")
+    if terminal_required:
+        _verify_source_parent_proof(
+            _object(result["terminal_precommit_proof"]),
+            request=request,
+            request_sha256=request.canonical_sha256,
+            parent_pid=attempt["parent_pid"],
+            source_lease_id=attempt["source_lease_id"],
+            required_paths=request.required_write_paths,
+            schema="prospective_capture_parent_proof.v1",
+        )
+        _verify_terminal_clock(request, result, attempt, ack)
     original_proofs: dict[str, dict[str, Any]] = {}
     for role in ("pre_recording_proof", "post_recording_proof"):
         if role not in result:
@@ -1004,6 +1147,7 @@ def _verify_prospective_capture_projection(
         <= ack.witness_bundle_observed_at
         <= parse_utc_datetime(post["source_checked_at"])
         <= parse_utc_datetime(post["checked_at"])
+        <= ack.covered_through_at
         <= parse_utc_datetime(result["completed_at"])
     ):
         _fail("PROSPECTIVE_CAPTURE_ACK_PARENT_CHRONOLOGY_INVALID", relative)
@@ -1024,12 +1168,10 @@ def _verify_prospective_capture_projection(
     }.items():
         if getattr(ack, key) != value:
             _fail("PROSPECTIVE_CAPTURE_ACK_BINDING_INVALID", key)
-    if (
-        not review.reviewed_at
-        <= parse_utc_datetime(attempt["started_at"])
-        <= ack.recording_call_started_at
-        <= ack.witness_bundle_observed_at
-        < request.manifest.expires_at
+    if not review.reviewed_at <= parse_utc_datetime(
+        attempt["started_at"]
+    ) <= ack.recording_call_started_at <= ack.covered_through_at and deadline_allows(
+        ack.admission_bound_ns, request.manifest.expires_at
     ):
         _fail("PROSPECTIVE_CAPTURE_ACK_CHRONOLOGY_INVALID", request.request_id)
     event_slot = (
@@ -1064,7 +1206,7 @@ def _verify_prospective_capture_projection(
         }:
             _fail("PROSPECTIVE_CAPTURE_ACTIVATION_DEFINITIONS_INVALID", relative)
         if ack.first_feature_session != first_feature_session(
-            ack.witness_bundle_observed_at, policy=policy
+            utc_ns_to_datetime_ceil(ack.admission_bound_ns), policy=policy
         ):
             _fail("PROSPECTIVE_CAPTURE_FIRST_FEATURE_INVALID", relative)
         if result.get("status") == "ACTIVATED":
@@ -1094,11 +1236,11 @@ def _verify_prospective_capture_projection(
             or ack.recording_call_started_at <= timing.feature_close_at
             or (
                 ack.technical_validation_state == "CAPTURE_ACKNOWLEDGED"
-                and ack.witness_bundle_observed_at >= timing.effective_close_at
+                and not deadline_allows(ack.admission_bound_ns, timing.effective_close_at)
             )
             or (
                 ack.technical_validation_state == "LATE"
-                and ack.witness_bundle_observed_at < timing.effective_close_at
+                and deadline_allows(ack.admission_bound_ns, timing.effective_close_at)
             )
             or event.event_kind != "SIGNAL_RECORDED"
             or event.feature_session != request.feature_session
@@ -1267,6 +1409,47 @@ def bootstrap_worker(
     terminal_observation: NamedQualityTerminalObservation | None = None
     dq_entered = False
     record_entered = False
+    sampler: HostClockSampler | None = None
+    recorder_returns: list[RecorderReturnObservation] = []
+    clock_failure: HostClockFailureDiagnostic | None = None
+    ack: ParentCompletionAcknowledgement | None = None
+
+    def observe_return(event: RecordedTemporalEvidence) -> None:
+        # Preserve an original return before any later source/lease check can
+        # fail. No retained witness is allowed to fabricate this observation.
+        if event.return_clock_evidence is None:
+            _fail("PROSPECTIVE_CAPTURE_ORIGINAL_RETURN_REQUIRED", event.binding.relative_path)
+        recorder_returns.append(
+            RecorderReturnObservation(
+                _event_binding(request, event.binding), event.return_clock_evidence
+            )
+        )
+
+    def checkpoint(
+        label: str, proof: dict[str, Any], event: RecordedTemporalEvidence | None = None
+    ) -> HostClockEvidence:
+        assert sampler is not None
+        sampler.recheck_policy()
+        child_bound = None
+        if event is not None:
+            if event.return_clock_evidence is None:
+                _fail("PROSPECTIVE_CAPTURE_ORIGINAL_RETURN_REQUIRED", label)
+            verified_return = verify_recorder_return_evidence(
+                store_root=root / request.timing_relative_path,
+                event=event.binding,
+                return_clock_evidence=event.return_clock_evidence,
+                policy=policy,
+            )
+            child_bound = verified_return.admission_bound_ns
+            if not recorder_returns or recorder_returns[-1] != RecorderReturnObservation(
+                _event_binding(request, event.binding), event.return_clock_evidence
+            ):
+                _fail("PROSPECTIVE_CAPTURE_ORIGINAL_RETURN_REQUIRED", label)
+        clock = sampler.checkpoint(label, inherited_child_bound_ns=child_bound)
+        validate_parent_clock_prefix(clock, tuple(recorder_returns), operation)
+        _clock_scope(request, clock, proof)
+        return clock
+
     try:
         # Freeze the original activation parent's identity into its definition
         # payload; later captures reuse those exact attempt bytes.
@@ -1296,8 +1479,8 @@ def bootstrap_worker(
             request.operation_relative_path + "/pre_recording_proof.json",
             canonical_json_bytes(pre),
         ).to_dict()
-        started = _now()
-        monotonic_started = _monotonic_ns()
+        sampler = HostClockSampler.start(source_root=root)
+        started = utc_ns_to_datetime_floor(sampler.evidence.anchor.utc_ns)
         if started < parse_utc_datetime(pre["checked_at"]):
             _fail("PROSPECTIVE_CAPTURE_CLOCK_ROLLBACK", "parent interval starts before preguard")
         if operation == "capture":
@@ -1324,7 +1507,12 @@ def bootstrap_worker(
                     "PROSPECTIVE_CAPTURE_OUTSIDE_FEATURE_WINDOW",
                     request.feature_session.isoformat(),
                 )
-            _check_live(request, bootstrap, lease, review)
+            live = _check_live(request, bootstrap, lease, review)
+            dispatch_clock = checkpoint("pre_dispatch", live)
+            if not deadline_allows(dispatch_clock.admission_bound_ns, timing.effective_close_at):
+                _fail(
+                    "PROSPECTIVE_CAPTURE_OUTSIDE_FEATURE_WINDOW", "dispatch bound reaches deadline"
+                )
             dq_entered = True
             dq = dispatch_named_quality_child(
                 request.named_dq_request,
@@ -1347,6 +1535,7 @@ def bootstrap_worker(
                 run_dispatch_sha256=dq.run_dispatch_sha256,
                 bootstrap=bootstrap,
             )
+            checkpoint("dq_verified", _check_live(request, bootstrap, lease, review))
             registry = next(
                 item
                 for item in verified.receipt.execution_dependencies
@@ -1367,7 +1556,9 @@ def bootstrap_worker(
                 PayloadMember("capture_request", request.canonical_bytes),
                 PayloadMember("activation_ack", activation_ack.canonical_bytes),
             )
-        _check_live(request, bootstrap, lease, review)
+            checkpoint("preview_complete", _check_live(request, bootstrap, lease, review))
+        live = _check_live(request, bootstrap, lease, review)
+        checkpoint("pre_recorder", live)
         record_entered = True
         if operation == "activate":
             event = record_activation(
@@ -1392,6 +1583,8 @@ def bootstrap_worker(
                 policy=policy,
                 lease_handle=lease,
             )
+            observe_return(input_event)
+            checkpoint("inputs_return", _check_live(request, bootstrap, lease, review), input_event)
             event = record_signal_completion(
                 store_root=root / request.timing_relative_path,
                 plan=plan,
@@ -1401,24 +1594,11 @@ def bootstrap_worker(
                 policy=policy,
                 lease_handle=lease,
             )
-        elapsed = _monotonic_ns() - monotonic_started
-        completed = _now()  # This is after the complete recorder/witness returns.
-        first = (
-            first_feature_session(completed, policy=policy)
-            if activation_ack is None
-            else activation_ack.first_feature_session
+        observe_return(event)
+        witnessed = checkpoint(
+            "witness_return", _check_live(request, bootstrap, lease, review), event
         )
-        ack = _acknowledge(
-            request,
-            bootstrap,
-            review,
-            event,
-            started_at=started,
-            completed_at=completed,
-            elapsed_ns=elapsed,
-            first_feature=first,
-            policy=policy,
-        )
+        completed = utc_ns_to_datetime_floor(witnessed.latest_sample.utc_ns)
         post = _check_live(request, bootstrap, lease, review)
         if completed > parse_utc_datetime(post["source_checked_at"]):
             _fail(
@@ -1430,6 +1610,26 @@ def bootstrap_worker(
             request.operation_relative_path + "/post_recording_proof.json",
             canonical_json_bytes(post),
         ).to_dict()
+        covered = checkpoint("ack_covered_through", post)
+        first = (
+            first_feature_session(
+                utc_ns_to_datetime_ceil(covered.admission_bound_ns), policy=policy
+            )
+            if activation_ack is None
+            else activation_ack.first_feature_session
+        )
+        if first < event.first_feature_session:
+            _fail("PROSPECTIVE_CAPTURE_FIRST_FEATURE_INVALID", "parent bound precedes recorder")
+        ack = _acknowledge(
+            request,
+            bootstrap,
+            review,
+            event,
+            clock=covered,
+            recorder_returns=tuple(recorder_returns),
+            first_feature=first,
+            policy=policy,
+        )
         ack_binding = _write(
             root, request.operation_relative_path + "/acknowledgement.json", ack.canonical_bytes
         )
@@ -1457,8 +1657,8 @@ def bootstrap_worker(
                 real_observation_admitted=review.evidence_purpose == "PROSPECTIVE_RESEARCH",
                 observation=observation_binding.to_dict(),
             )
-        _check_live(request, bootstrap, lease, review)
     except (ValueError, OSError, RuntimeError, KeyError, StopIteration, TypeError) as exc:
+        clock_failure = getattr(exc, "diagnostic", None)
         if isinstance(exc, NamedQualityDispatchError):
             terminal_observation = exc.terminal_observation
         result.update(
@@ -1484,6 +1684,7 @@ def bootstrap_worker(
         counter_observation_state="KNOWN" if count is not None else "UNKNOWN",
         recorder_entered=record_entered,
         retry_allowed=False,
+        recorder_returns=[row.to_dict() for row in recorder_returns],
     )
     if dq is not None:
         result["dq_parent_receipt"] = dq.parent_receipt.to_dict()
@@ -1496,18 +1697,35 @@ def bootstrap_worker(
     # If the postguard itself failed, do not bypass it to write a final status.
     # attempt/child/event bytes remain inspectable and the slot stays incomplete.
     try:
+        if sampler is None or clock_failure is not None or sampler.failure_diagnostic is not None:
+            _fail(
+                "PROSPECTIVE_CAPTURE_CLOCK_CHAIN_INCOMPLETE", "original clock chain cannot resume"
+            )
+        _verify_prospective_capture_projection(
+            request, bootstrap=bootstrap, result=result, terminal_required=False
+        )
+        # Source/lease replay and policy reads precede the final checkpoint.
+        # The result's own write/delivery time is deliberately not claimed.
         final_pre = _check_live(request, bootstrap, lease, review)
-        if parse_utc_datetime(final_pre["source_checked_at"]) < parse_utc_datetime(
-            result["completed_at"]
-        ):
-            _fail("PROSPECTIVE_CAPTURE_CLOCK_ROLLBACK", "terminal guard predates result completion")
-        _verify_prospective_capture_projection(request, bootstrap=bootstrap, result=result)
+        attempt = _retained_attempt(request)
+        assert attempt is not None
+        _verify_source_parent_proof(
+            final_pre,
+            request=request,
+            request_sha256=request.canonical_sha256,
+            parent_pid=attempt["parent_pid"],
+            source_lease_id=attempt["source_lease_id"],
+            required_paths=request.required_write_paths,
+            schema="prospective_capture_parent_proof.v1",
+        )
+        sampler.recheck_policy()
+        terminal_clock = sampler.checkpoint("terminal_precommit")
+        result["terminal_precommit_proof"] = final_pre
+        result["terminal_clock_evidence"] = terminal_clock.to_dict()
+        _verify_terminal_clock(
+            request, result, attempt, ack if "acknowledgement" in result else None
+        )
         _write(root, request.operation_relative_path + "/result.json", canonical_json_bytes(result))
-        final_post = _check_live(request, bootstrap, lease, review)
-        if parse_utc_datetime(final_post["source_checked_at"]) < parse_utc_datetime(
-            final_pre["checked_at"]
-        ):
-            _fail("PROSPECTIVE_CAPTURE_CLOCK_ROLLBACK", "terminal publication guard chronology")
     except (ValueError, OSError, RuntimeError, KeyError, TypeError) as exc:
         # The CLI may lose the return value if its terminal guard fails. These
         # observed child counters are separate from this parent's fixed zero.
@@ -1516,5 +1734,16 @@ def bootstrap_worker(
         )
         failure.prospective_child_canonical_dq_call_count = count
         failure.prospective_dq_parent_receipt = result.get("dq_parent_receipt")
+        diagnostic = (
+            clock_failure
+            or getattr(exc, "diagnostic", None)
+            or (sampler.failure_diagnostic if sampler is not None else None)
+        )
+        failure.prospective_clock_failure_diagnostic = (
+            diagnostic.to_dict() if diagnostic is not None else None
+        )
+        failure.prospective_recorder_return_observations = [
+            row.to_dict() for row in recorder_returns
+        ]
         raise failure from exc
     return result

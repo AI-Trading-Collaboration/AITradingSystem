@@ -225,7 +225,7 @@ PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH = (
     "config/data_governance/named_prospective_five_candidate_sources_v1.json"
 )
 PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256 = (
-    "1f7cb44e83f3e1d6840ae5a181c58972cb7ff31ff52e353c37bc8a3d9280a315"
+    "9a11ed94e1c318aee3c44a7d01ba0f31556bd4de355eef1f75893245fe8bc1ce"
 )
 
 _PROSPECTIVE_RECORDING_ROLES = frozenset(

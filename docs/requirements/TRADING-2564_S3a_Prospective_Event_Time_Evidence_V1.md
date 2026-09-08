@@ -61,6 +61,10 @@ Close(next(D))。S3a 采用单独命名的 NEXT_XNYS_CLOSE_FORWARD_V1 工程时�
 内部 UTC clock 采样 payload_durable_completed_at，再落不可变 completion witness。
 调用开始时刻、DTO generated_at、mtime 或写入前采样不得替代完成时刻。
 
+以下段落保留 S3a v1 历史合同；其中跨时钟下界推论已在 S3b Full 中发现不成立，新写入的
+修正方案见 [S3b 时钟证据修正](TRADING-2564_S3b_Clock_Evidence_Correction_V1.md)。旧 v1
+bytes 和 retained verifier 不以新语义重新判断；修正完成前不得宣称当前 S3b 已通过验收。
+
 UTC start 后紧邻 monotonic start；全部 payload writer 返回后先采 monotonic end，再采
 UTC completion。这个内侧 monotonic interval 是 UTC elapsed 的下界，runtime 和 retained
 verifier 均拒绝不一致；仅按 datetime 的 1µs 表示精度处理量化误差，不允许策略化 clock drift。

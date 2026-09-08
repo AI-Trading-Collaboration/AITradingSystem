@@ -585,3 +585,19 @@ Owner 要求继续推进，现执行[S3b 五候选生产采集链](TRADING-2564_
 工程实现与合成验证。新 profile 连接可信 DQ 父/子执行、同 context preview、完整输入记录及父 ACK，
 旧 55/57/59 权限与时间层声明不扩权。真实 activation/capture/DQ/结果访问/数据/交易仍全 0。
 Composer 主线的分段训练/PIT、S4 首看前协议及净收益会计、S5 提效均保留未完成，详见新需求。
+
+## 15. S3b Full 失败与时钟合同直接修正（2026-09-08）
+
+未发布候选 `12ec8c386` 的四类正式验证通过，但 Full 为 1 failed / 11811 passed / 5 skipped。
+真实时钟 synthetic activation 被 `TEMPORAL_CLOCK_BACKWARD` 阻断；原始失败与 INCOMPLETE
+字节已保全，main 仍为 `9489d807`。旧 UTC/monotonic 下界假设已由独立纯时钟采样证伪。
+按[S3b 主机时钟证据修正](TRADING-2564_S3b_Clock_Evidence_Correction_V1.md)执行 C1–C4：
+共享 outer clock envelope、raw/derived 分离、D/lease/manifest 双截止、版本兼容及正式重验。
+不增加主观时钟宽限、不替换真实时钟 E2E、不重试旧 activation key；真实业务动作仍为 0。
+S5 另外保留即时失败诊断输出和最新耗时 seed 的审查，当前不在冻结 Full 或本时间合同中修改。
+
+同日接续：C1–C3 已实现并修复独立终审的原始纳秒前驱/父子下界与失败诊断归属发现；
+116 项针对性验证及两名 reviewer 精确源码复验通过，扩大 source/shared 验证进行中。
+验收绑定在 `outputs/architecture/trading_2564_s3b_prospective_capture/clock_independent_review_v1.json`；
+C4 actual candidate、正式 tiers、失败 parent Full、main 普通发布仍待完成，S3真实采集/S4/S5
+不因本工程进展转为完成。

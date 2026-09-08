@@ -1,0 +1,64 @@
+schema_version: host_clock_evidence_policy.v1
+policy_id: host_clock_evidence_v1
+policy_version: 1.0.0
+status: REVIEWED_ENGINEERING_CONTRACT_REAL_SCOPE_REVIEW_REQUIRED
+owner: Project Owner / integration-coordinator
+requirement_ref: docs/requirements/TRADING-2564_S3b_Clock_Evidence_Correction_V1.md
+rationale: >-
+  datetime 的微秒表示和 monotonic_ns 的纳秒表示不证明底层时钟精度或跨时钟速率关系。
+  以原始 UTC 顺序和完整外包络的冻结倒计时分别约束截止准入，保留原始读数供复核。
+intended_effect: >-
+  消除把正常粗时钟交错误报为回拨的错误推论，同时保留交易日截止、manifest 和 lease
+  到期的保守限制。派生界限不覆盖原始 timestamp，不授予真实研究或交易权限。
+validation_plan: >-
+  严格 DTO/replay、outer bracket 边缘延迟、counter 量化、永久 anchor、raw UTC 倒退、
+  metadata tamper、未知 provider、子 bound 传播、截止恰好相等及真实源码/真实时钟合成 E2E；
+  16-worker focused tests 与绑定旧失败 Full 的正式重验。
+review_condition: >-
+  首次真实使用、provider/runtime 实现变化、时钟信任模型或截止算法变化须重新审查。
+  本 policy 不声明绝对 UTC 准确度；不使用经验容忍、运行中校准或自动 provider 替代。
+measurement:
+  profile_id: WINDOWS_CPYTHON_TIME_NS_QPC_V1
+  platform: win32
+  python_implementation: CPython
+  python_version_binding: RECORDED_EXACT_RUNTIME_IDENTITY
+  utc_clock:
+    clock_name: TIME_NS
+    implementation: GetSystemTimeAsFileTime()
+    monotonic: false
+    adjustable: true
+  counter_clock:
+    clock_name: PERF_COUNTER_NS
+    implementation: QueryPerformanceCounter()
+    monotonic: true
+    adjustable: false
+  sampling_order: COUNTER_BEFORE_UTC_COUNTER_AFTER
+  anchor_mode: FROZEN_INITIAL
+  utc_representation: ORIGINAL_INTEGER_NANOSECONDS
+  reported_resolution_representation: CANONICAL_DECIMAL_STRING_FROM_CLOCK_INFO
+  # Two endpoints, each rounded outward by one reported counter quantum.
+  quantization_endpoint_count: 2
+  # Exact integer unit conversion; admission datetimes always round upward.
+  ns_per_microsecond: 1000
+  bound_formula_version: FROZEN_ANCHOR_OUTER_MAX_V1
+  child_bound_authority: CONSUMER_MUST_INDEPENDENTLY_VERIFY
+  lower_bound_clock: RAW_UTC
+  upper_bound_admission: MAX_RAW_UTC_FROZEN_ANCHOR_OUTER_PRIOR_AND_CHILD
+  strict_upper_limit_comparison: LESS_THAN
+trust:
+  host_and_recorder: TRUSTED_LOCAL_HOST_MODEL
+  reported_resolution_is_absolute_utc_accuracy: false
+  hidden_host_adjustment_proof: NOT_ESTABLISHED
+  absolute_utc_accuracy_proof: NOT_ESTABLISHED
+  source_execution_authority: PROVIDED_BY_CALLING_CONSUMER
+  owner_authorization_authority: PROVIDED_BY_CALLING_CONSUMER
+safety:
+  real_scope_authorized: false
+  outcome_access_authorized: false
+  canonical_dq_run_allowed: false
+  provider_call_allowed: false
+  data_download_allowed: false
+  order_allowed: false
+  fill_allowed: false
+  production_effect: none
+  broker_action: none

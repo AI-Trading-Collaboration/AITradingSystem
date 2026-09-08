@@ -55,6 +55,11 @@
       "is_package": false
     },
     {
+      "module_name": "ai_trading_system.contracts.host_clock_evidence",
+      "source_path": "src/ai_trading_system/contracts/host_clock_evidence.py",
+      "is_package": false
+    },
+    {
       "module_name": "ai_trading_system.contracts.named_data_quality_execution",
       "source_path": "src/ai_trading_system/contracts/named_data_quality_execution.py",
       "is_package": false
@@ -255,6 +260,11 @@
       "is_package": false
     },
     {
+      "module_name": "ai_trading_system.host_clock_evidence",
+      "source_path": "src/ai_trading_system/host_clock_evidence.py",
+      "is_package": false
+    },
+    {
       "module_name": "ai_trading_system.platform",
       "source_path": "src/ai_trading_system/platform/__init__.py",
       "is_package": true
@@ -438,8 +448,10 @@
     "config/data_quality.yaml",
     "config/data_quality/price_non_market_session_attribution_decision_v1.yaml",
     "config/data_quality/rate_row_issue_attribution_decision_v1.yaml",
-    "config/research/prospective_capture_execution_v1.yaml",
+    "config/research/host_clock_evidence_v1.yaml",
+    "config/research/prospective_capture_execution_v2.yaml",
     "config/research/prospective_event_time_evidence_v1.yaml",
+    "config/research/prospective_event_time_evidence_v2.yaml",
     "config/research/simple_baseline_strategy_registry.yaml",
     "inputs/data_quality/price_non_market_session_attribution_review_pack_v1.json",
     "inputs/data_quality/rate_issue_attribution_review_pack_v1.json"

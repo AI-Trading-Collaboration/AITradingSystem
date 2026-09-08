@@ -8,15 +8,26 @@ import io
 import json
 import socket
 import subprocess
-from dataclasses import FrozenInstanceError, replace
+from collections.abc import Callable
+from dataclasses import FrozenInstanceError, fields, replace
 from datetime import UTC, date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
 from ai_trading_system import trading_calendar
 from ai_trading_system.contracts.data_quality_execution import DataQualityDateWindow
+from ai_trading_system.contracts.host_clock_evidence import (
+    ClockSample,
+    HostClockEvidence,
+    HostClockMetadata,
+    HostClockProvider,
+    append_clock_checkpoint,
+    datetime_to_utc_ns,
+    deadline_allows,
+    utc_ns_to_datetime_floor,
+)
 from ai_trading_system.contracts.named_data_quality_execution import (
     EQUAL_RISK_GUARD_RATE_SERIES,
     EQUAL_RISK_PRICE_SOURCE_MANIFEST_PATH,
@@ -33,14 +44,21 @@ from ai_trading_system.contracts.named_data_quality_execution import (
     NamedSnapshotSelector,
 )
 from ai_trading_system.contracts.prospective_capture_execution import (
+    ACK_CLOCK_STAGES,
     CAPTURE_POLICY_PATH,
     CAPTURE_RETURN_CLOCK,
     CAPTURE_TASK_ID,
     CAPTURE_TIMING_VERSION,
-    ParentCompletionAcknowledgement,
     ProspectiveCaptureManifest,
     ProspectiveCaptureOwnerReview,
     ProspectiveCaptureRequest,
+    RecorderReturnObservation,
+)
+from ai_trading_system.contracts.prospective_capture_execution import (
+    ParentCompletionAcknowledgement as ParentCompletionAcknowledgementV2,
+)
+from ai_trading_system.contracts.prospective_capture_execution import (
+    ParentCompletionAcknowledgementV1 as ParentCompletionAcknowledgement,
 )
 from ai_trading_system.contracts.prospective_event_time_evidence import canonical_json_bytes
 
@@ -193,18 +211,113 @@ def _ack(operation: str = "capture", **changes: Any) -> ParentCompletionAcknowle
     return ParentCompletionAcknowledgement(**values)
 
 
+def _ack_v2(
+    operation: str = "capture",
+    *,
+    start: datetime | None = None,
+    counter_step_ns: int = 1000,
+    raw_increment_ns: int = 1000,
+    resolution: str = "1e-07",
+    **changes: Any,
+) -> ParentCompletionAcknowledgementV2:
+    legacy = _ack(operation)
+    values = {
+        item.name: getattr(legacy, item.name)
+        for item in fields(legacy)
+        if item.name != "monotonic_elapsed_ns"
+    }
+    instant = datetime_to_utc_ns(start or legacy.recording_call_started_at)
+    provider = HostClockProvider(
+        "win32",
+        "CPython",
+        "3.11.9",
+        HostClockMetadata("TIME_NS", "GetSystemTimeAsFileTime()", "0.015625", False, True),
+        HostClockMetadata("PERF_COUNTER_NS", "QueryPerformanceCounter()", resolution, True, False),
+    )
+    cursor = 0
+    reads = 0
+
+    def sample() -> ClockSample:
+        nonlocal cursor, reads
+        before = cursor
+        cursor += counter_step_ns
+        observed = instant + reads * raw_increment_ns
+        reads += 1
+        result = ClockSample(observed, before, cursor)
+        cursor += counter_step_ns
+        return result
+
+    parent = HostClockEvidence(provider, sample())
+    returns = []
+    for label in ACK_CLOCK_STAGES[operation]:
+        child_bound = None
+        if label in {"inputs_return", "witness_return"}:
+            child = HostClockEvidence(provider, sample())
+            for stage in (
+                "pre_payload",
+                "payload_complete",
+                "post_payload_guards",
+                "witness_precommit",
+                "recorder_return",
+            ):
+                child = append_clock_checkpoint(child, label=stage, sample=sample())
+            event = replace(
+                legacy.recorder_event,
+                relative_path=legacy.recorder_event.relative_path + "/" + label,
+            )
+            returns.append(RecorderReturnObservation(event, child))
+            child_bound = child.admission_bound_ns
+        parent = append_clock_checkpoint(
+            parent, label=label, sample=sample(), inherited_child_bound_ns=child_bound
+        )
+    witness = next(row for row in parent.checkpoints if row.label == "witness_return")
+    values.update(
+        recorder_event=returns[-1].event,
+        recording_call_started_at=utc_ns_to_datetime_floor(parent.anchor.utc_ns),
+        witness_bundle_observed_at=utc_ns_to_datetime_floor(witness.sample.utc_ns),
+        covered_through_at=utc_ns_to_datetime_floor(parent.latest_sample.utc_ns),
+        parent_outer_elapsed_ns=parent.latest_sample.counter_after_ns
+        - parent.anchor.counter_before_ns,
+        clock_evidence=parent,
+        recorder_returns=tuple(returns),
+        technical_validation_state=(
+            "ACTIVATION_ACKNOWLEDGED"
+            if operation == "activate"
+            else (
+                "CAPTURE_ACKNOWLEDGED"
+                if deadline_allows(parent.admission_bound_ns, _DEADLINE)
+                else "LATE"
+            )
+        ),
+    )
+    values.update(changes)
+    return ParentCompletionAcknowledgementV2(**values)
+
+
 def _declaration(kind: str) -> Any:
-    return {
+    factories: dict[str, Callable[[], Any]] = {
         "manifest": _manifest,
         "review": _review,
         "activation": lambda: _request("activate"),
         "capture": _request,
         "activation_ack": lambda: _ack("activate"),
         "capture_ack": _ack,
-    }[kind]()
+        "activation_ack_v2": lambda: _ack_v2("activate"),
+        "capture_ack_v2": _ack_v2,
+    }
+    return factories[kind]()
 
 
-_KINDS = ("manifest", "review", "activation", "capture", "activation_ack", "capture_ack")
+_KINDS = (
+    "manifest",
+    "review",
+    "activation",
+    "capture",
+    "activation_ack",
+    "capture_ack",
+    "activation_ack_v2",
+    "capture_ack_v2",
+)
 
 
 @pytest.mark.parametrize("kind", _KINDS)
@@ -491,7 +604,7 @@ def test_review_must_precede_manifest_expiration(reviewed_at: datetime) -> None:
 
 def test_activation_has_no_dummy_dq_or_feature_and_control_path_is_external() -> None:
     activation = _request("activate")
-    assert activation.feature_session is activation.named_dq_request is None
+    assert activation.feature_session is None and activation.named_dq_request is None
     assert activation.owner_review.relative_path == (
         activation.manifest.output_relative_path + "/control/owner_review.json"
     )
@@ -541,6 +654,7 @@ def test_capture_request_cannot_drift_from_manifest_and_named_scope(field: str, 
 )
 def test_request_owner_control_is_bound_to_its_exact_run_root(damage: str) -> None:
     request = _request()
+    changes: dict[str, Any]
     if damage == "root_drift":
         changes = {"roots": replace(request.roots, source_root="/synthetic/other_source")}
     else:
@@ -598,7 +712,7 @@ def test_named_dq_child_request_cannot_borrow_old_or_partial_scope(damage: str) 
     elif damage == "dq_policy":
         changes = {"policy_path": "config/other_quality.yaml"}
     else:
-        scope_changes: dict[str, Any] = {
+        scope_table: dict[str, dict[str, Any]] = {
             "short_window": {
                 "requested_window": DataQualityDateWindow(date(2021, 2, 23), _FEATURE)
             },
@@ -608,7 +722,8 @@ def test_named_dq_child_request_cannot_borrow_old_or_partial_scope(damage: str) 
                 "input_roles": ("prices", "rates", "secondary_prices"),
                 "require_secondary_prices": True,
             },
-        }[damage]
+        }
+        scope_changes = scope_table[damage]
         changes = {"scope": replace(child.scope, **scope_changes)}
         if damage == "short_window":
             changes["expected_evaluated_window"] = None
@@ -761,6 +876,194 @@ def test_recorder_event_must_be_an_execution_root_binding() -> None:
     ack = _ack()
     with pytest.raises(ValueError):
         replace(ack, recorder_event=replace(ack.recorder_event, root_role="PUBLICATION"))
+
+
+def test_v2_coarse_raw_clock_is_valid_without_reinterpreting_v1_inner_math() -> None:
+    ack = _ack_v2(counter_step_ns=1_000_000, raw_increment_ns=0)
+    assert ack.recording_call_started_at == ack.witness_bundle_observed_at == ack.covered_through_at
+    assert ack.parent_outer_elapsed_ns > 0
+    assert ack.technical_validation_state == "CAPTURE_ACKNOWLEDGED"
+    with pytest.raises(ValueError, match="UTC must enclose"):
+        _ack(
+            recording_call_started_at=ack.recording_call_started_at,
+            witness_bundle_observed_at=ack.witness_bundle_observed_at,
+            monotonic_elapsed_ns=ack.parent_outer_elapsed_ns,
+        )
+
+
+@pytest.mark.parametrize(
+    "offset_us,status", [(-1, "CAPTURE_ACKNOWLEDGED"), (0, "LATE"), (1, "LATE")]
+)
+def test_v2_deadline_equality_uses_complete_bound_while_raw_utc_is_still_before_d(
+    offset_us: int,
+    status: str,
+) -> None:
+    # Two endpoint quanta of 1 us put B exactly on D at offset zero.
+    ack = _ack_v2(
+        start=_DEADLINE - timedelta(microseconds=2) + timedelta(microseconds=offset_us),
+        counter_step_ns=0,
+        raw_increment_ns=0,
+        resolution="1e-06",
+    )
+    assert ack.covered_through_at < _DEADLINE
+    assert ack.admission_bound_ns == datetime_to_utc_ns(_DEADLINE) + offset_us * 1000
+    assert ack.technical_validation_state == status
+    with pytest.raises(ValueError, match="strict bound-based deadline classification"):
+        replace(
+            ack, technical_validation_state="LATE" if status != "LATE" else "CAPTURE_ACKNOWLEDGED"
+        )
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("parent_outer_elapsed_ns", True),
+        ("parent_outer_elapsed_ns", -1),
+        ("parent_outer_elapsed_ns", 1.0),
+        ("parent_outer_elapsed_ns", 0),
+        ("parent_pid", 0),
+        ("source_lease_id", "lease-unknown"),
+        ("request_id", "prospective_capture_request_" + "b" * 64),
+        ("recorder_returns", ()),
+        ("hidden_host_adjustment_proof", "PASS"),
+        ("absolute_utc_accuracy_proof", "PASS"),
+        ("source_execution_attested", False),
+        ("outcome_access_authorized", True),
+        ("acknowledgement_own_durability_time_claimed", True),
+    ],
+)
+def test_v2_identity_types_and_non_authority_flags_remain_strict(field: str, value: Any) -> None:
+    with pytest.raises(ValueError):
+        replace(_ack_v2(), **{field: value})
+
+
+def test_v2_child_bounds_cannot_be_injected_even_after_recomputing_every_parent_bound() -> None:
+    ack = _ack_v2()
+    rebuilt = HostClockEvidence(ack.clock_evidence.provider, ack.clock_evidence.anchor)
+    for checkpoint in ack.clock_evidence.checkpoints:
+        inherited = checkpoint.inherited_child_bound_ns
+        if checkpoint.label == "inputs_return":
+            assert inherited is not None
+            inherited += 1000
+        rebuilt = append_clock_checkpoint(
+            rebuilt,
+            label=checkpoint.label,
+            sample=checkpoint.sample,
+            inherited_child_bound_ns=inherited,
+        )
+    with pytest.raises(
+        ValueError, match="original child provider, raw/counter enclosure and bound propagation"
+    ):
+        replace(ack, clock_evidence=rebuilt)
+
+
+@pytest.mark.parametrize(
+    "operation,label",
+    [
+        ("activate", "witness_return"),
+        ("capture", "inputs_return"),
+        ("capture", "witness_return"),
+    ],
+)
+@pytest.mark.parametrize("damage", ["utc_100ns_backward", "counter_overlap", "equal_boundary"])
+def test_v2_child_anchor_is_bound_to_immediately_preceding_parent_sample(
+    operation: str, label: str, damage: str
+) -> None:
+    ack = _ack_v2(operation, raw_increment_ns=100)
+    rows = ack.clock_evidence.checkpoints
+    index = next(index for index, row in enumerate(rows) if row.label == label)
+    prior = rows[index - 1].sample
+    child_labels = [row.label for row in rows if row.label in {"inputs_return", "witness_return"}]
+    child_index = child_labels.index(label)
+    original = ack.recorder_returns[child_index].clock_evidence
+    anchor = original.anchor
+    if damage == "utc_100ns_backward":
+        anchor = replace(anchor, utc_ns=prior.utc_ns - 100)
+        assert utc_ns_to_datetime_floor(anchor.utc_ns) == utc_ns_to_datetime_floor(prior.utc_ns)
+    elif damage == "counter_overlap":
+        anchor = replace(anchor, counter_before_ns=prior.counter_after_ns - 1)
+    else:
+        anchor = replace(anchor, utc_ns=prior.utc_ns, counter_before_ns=prior.counter_after_ns)
+    child = HostClockEvidence(original.provider, anchor)
+    for checkpoint in original.checkpoints:
+        child = append_clock_checkpoint(
+            child,
+            label=checkpoint.label,
+            sample=checkpoint.sample,
+            inherited_child_bound_ns=checkpoint.inherited_child_bound_ns,
+        )
+    returns = list(ack.recorder_returns)
+    returns[child_index] = replace(returns[child_index], clock_evidence=child)
+    rebuilt = HostClockEvidence(ack.clock_evidence.provider, ack.clock_evidence.anchor)
+    for checkpoint in rows:
+        rebuilt = append_clock_checkpoint(
+            rebuilt,
+            label=checkpoint.label,
+            sample=checkpoint.sample,
+            inherited_child_bound_ns=(
+                child.admission_bound_ns
+                if checkpoint.label == label
+                else checkpoint.inherited_child_bound_ns
+            ),
+        )
+    if damage == "equal_boundary":
+        assert (
+            replace(ack, clock_evidence=rebuilt, recorder_returns=tuple(returns)).clock_evidence
+            == rebuilt
+        )
+    else:
+        with pytest.raises(ValueError, match="original child provider, raw/counter enclosure"):
+            replace(ack, clock_evidence=rebuilt, recorder_returns=tuple(returns))
+
+
+@pytest.mark.parametrize("damage", ["missing", "reversed", "provider", "unbound_event"])
+def test_v2_requires_every_original_recorder_return_in_order(damage: str) -> None:
+    ack = _ack_v2()
+    returns = ack.recorder_returns
+    if damage == "missing":
+        changed = returns[1:]
+    elif damage == "reversed":
+        changed = tuple(reversed(returns))
+    elif damage == "provider":
+        first = returns[0]
+        clock = replace(
+            first.clock_evidence,
+            provider=replace(first.clock_evidence.provider, python_version="3.11.10"),
+        )
+        changed = (replace(first, clock_evidence=clock), returns[1])
+    else:
+        changed = (
+            returns[0],
+            replace(returns[1], event=replace(returns[1].event, sha256="b" * 64)),
+        )
+    with pytest.raises(ValueError):
+        replace(ack, recorder_returns=changed)
+
+
+def test_v2_terminal_precommit_cannot_be_added_to_already_frozen_ack_scope() -> None:
+    ack = _ack_v2()
+    latest = ack.clock_evidence.latest_sample
+    extended = append_clock_checkpoint(
+        ack.clock_evidence,
+        label="terminal_precommit",
+        sample=ClockSample(latest.utc_ns, latest.counter_after_ns, latest.counter_after_ns),
+    )
+    with pytest.raises(ValueError, match="complete original parent checkpoint sequence"):
+        replace(ack, clock_evidence=extended)
+    with pytest.raises(ValueError, match="raw observations and complete parent outer interval"):
+        replace(ack, covered_through_at=ack.covered_through_at + timedelta(microseconds=1))
+
+
+def test_v1_v2_ack_parsers_are_explicit_and_cannot_silently_upgrade_bytes() -> None:
+    old, new = _ack(), _ack_v2()
+    with pytest.raises(ValueError):
+        ParentCompletionAcknowledgement.from_json_bytes(new.canonical_bytes)
+    with pytest.raises(ValueError):
+        ParentCompletionAcknowledgementV2.from_json_bytes(old.canonical_bytes)
+    damaged = cast(dict[str, Any], new.to_dict())
+    damaged["recorder_returns"][0]["clock_evidence"]["fabricated_utc_authority"] = True
+    with pytest.raises(ValueError):
+        ParentCompletionAcknowledgementV2.from_dict(damaged)
 
 
 def _forbid(*args: object, **kwargs: object) -> Any:
