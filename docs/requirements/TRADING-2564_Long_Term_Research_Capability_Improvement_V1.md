@@ -12,6 +12,20 @@
 - S2a frozen local-main：`2124aff36802e0a85e0566c2306365659e8ee4d1`
 - production effect：`none`；broker action：`none`
 
+## 当前阶段选择入口（2026-09-09 试行）
+
+Owner 要求尝试无歧义的阶段任务选择机制。后续本 umbrella 的自主推进先执行
+[阶段任务唯一选择机制试行 V1](TRADING-2564_Stage_Decision_Pilot_V1.md) 的裁决和 decision record，
+再选择下一项工作；以下历史“下一波/下一片”和 S1–S5 长期清单不自动构成当前执行顺序。
+此规则覆盖所有优先级和 umbrella 内继续推进，补上原 TRADING-2549 只围绕新 P0 的范围缺口。
+
+当前 SDP-20260909-001：研究 primary 继续指向 Composer prospective evidence；具名输入连接已由
+TRADING-2560 在途负责，本执行者等待其受治理交付，不重复开发，不自动扩展 S5 或全部 legacy
+outcome readers。新交付/typed blocker 到达后重新裁决；真实授权和 DQ/PIT 等仍在执行前独立核验。
+本次机制采用有界书面试行，不开发新 scheduler/selector；回放一致性不等于真实防漂移效果。
+S4 真实协议、legacy 首读接入、可靠外部时间 witness、DQ/PIT adapter、现金/复合归因等仍保留，
+只在证明当前具名实验确实依赖它们后获得执行优先权。
+
 ## 1. 目标与范围
 
 在既有 evidence-first portfolio 下，提高获得可信新证据的连续性和单位研究结论效率。

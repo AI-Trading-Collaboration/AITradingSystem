@@ -1,0 +1,136 @@
+{
+  "schema_version": "compatibility_authority_fragment.v1",
+  "section": {
+    "authority_contract": {
+      "dual_write": false,
+      "fragment_identity": "CANONICAL_SECTION_SHA256",
+      "fragment_source_active": true,
+      "index_chain": "SHA256",
+      "legacy_append_allowed": false,
+      "rollback_mode": "FROZEN_LEGACY_PREFIX_ONLY"
+    },
+    "broker_action": "none",
+    "exact_start_base": "4eef79bd1614a7736a51cbf215cd69458041143c",
+    "legacy_prefix_sha256": "253b976b2740f0097e1d8949ec8eaf3846c82809f88fdf3a47fb76fae6023842",
+    "owner_decision": "owner_decision:DEVX-007:2026-08-23:explicit_web_pro_request_authorizes_non_sensitive_review_submission_without_repeat_confirmation_v2",
+    "production_effect": "none",
+    "schema_version": "devx_007_web_pro_git_review_skill_explicit_submission.v2",
+    "sources": [
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/architecture/devx_007_web_pro_git_review_skill_authority.yaml",
+        "sha256": "f37cbd84b5259be5785e64257ef49569116c6ada598e42f03d6dfa212694bc67"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/requirements/DEVX-007_Web_Pro_Git_Strategy_Planning_Skill.md",
+        "sha256": "b0d0cc7d422476b3acad8375e38d205b5962a2d673c4f852d57e88d7ac35a321"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/task_register.md",
+        "sha256": "f36c6213cf8150949dca9e57fb45dad7504fa1575e0eaf4e728570a86d902703"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "sha256": "b5ca47cd0db5c4c0817ddde24bcb4ff1162c2bc842e48f6748d5664f11c64db8"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "sha256": "d8d1deb31566d56a13e49935c36fcd7e8add0c8b493bc61d68f824e1df3ca425"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_module_manifest.yaml",
+        "sha256": "1df7b5c40d45f4b3ee908bcc5413d9f870afa25a32a3f652e47804d5766e918c"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_test_manifest.yaml",
+        "sha256": "994711726992e224d353ea1a61f1dac4b4964ccdb35515d7c53838dc7f81e9bb"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_005_task_registry_index.yaml",
+        "sha256": "e98663059b370fe79eb3c92b79930c175477d093e8aee86c9cf112b1be1ec18e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "registry/development_tasks/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml",
+        "sha256": "b6a223def6888030833c0e9957ea85aa6bf6af0ea43a02f06d541d6b600f61d5"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "sha256": "34e92e70f6b2249890f97c529d8b225ded035928c90ee6f2e43cd3d49d509c33"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_004_refactor_policy.py",
+        "sha256": "82ccb80a2fe8ace031d1f80a18c1e4f6f697c74e7a46d5fef9ea3efe68f5f29f"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006c_compatibility_authority.py",
+        "sha256": "1c8a57a3083393f4b54a417eeea9e1782011d9b08d2a290c0cee26bd0630678c"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "sha256": "14b3043d11bb4e3aa492ec0158bc2a1802d3106afd3cf850008fa4f46b172ab8"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_run_web_pro_git_review_skill.py",
+        "sha256": "cef3984f234fb0eb8329ed8a1c289baec9a8f82a75e30d24f1d825e8524e2da7"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_trading2452_architecture_contract.py",
+        "sha256": "518bd295263120ecc8b96ea1f22319d4cf5c52bef1a1fb32872a72c1bc4f0384"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tools/codex_skills/run-web-pro-git-review/SKILL.md",
+        "sha256": "b7acff3535223e43e223c50047edfafa76af753e616f5c27764809df7aec3871"
+      }
+    ],
+    "status": "ACTIVE",
+    "submission_authorization": {
+      "explicit_current_request_is_submission_authority": true,
+      "non_sensitive_public_or_authorized_exact_commit_only": true,
+      "repeat_send_confirmation_required": false,
+      "scope_expansion_is_new_authority_scope": true,
+      "second_submission_requires_separate_recovery_or_authorization": true,
+      "sensitive_private_unscoped_fail_closed": true
+    },
+    "superseded_live_source_paths": [
+      "config/architecture/devx_007_web_pro_git_review_skill_authority.yaml",
+      "docs/requirements/DEVX-007_Web_Pro_Git_Strategy_Planning_Skill.md",
+      "docs/task_register.md",
+      "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+      "inputs/architecture/arch_004e_architecture_fitness.yaml",
+      "inputs/architecture/arch_004e_module_manifest.yaml",
+      "inputs/architecture/arch_004e_test_manifest.yaml",
+      "inputs/architecture/arch_005_task_registry_index.yaml",
+      "registry/development_tasks/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml",
+      "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+      "tests/test_arch_004_refactor_policy.py",
+      "tests/test_devx_006c_compatibility_authority.py",
+      "tests/test_devx_006d_report_catalog_flow_authority.py",
+      "tests/test_run_web_pro_git_review_skill.py",
+      "tests/test_trading2452_architecture_contract.py",
+      "tools/codex_skills/run-web-pro-git-review/SKILL.md"
+    ],
+    "supersession": {
+      "current_hash_authority": "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2.sources",
+      "historical_hashes_rewritten": false,
+      "inherited_supersession_authority": "phase_arch_005_s5_canonical_task_source_cutover"
+    },
+    "task_id": "DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL"
+  },
+  "section_id": "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2",
+  "section_sha256": "2ce60b677d0c1b9b7145f27135ab8a467b8e5c7a4ea4f33ef1bbdde9cc0e54b1"
+}

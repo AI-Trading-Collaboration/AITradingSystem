@@ -13,18 +13,18 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Codex：S4来源生成、最终候选formal/Full验收、普通main发布与清理；随后真实接入及会计后继
+  next_owner: Codex coordinator：完成本pilot正式发布；随后按SDP-20260909-001等待TRADING-2560具名依赖交付并重判，观察防漂移效果
   requirement_refs:
-  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
-  - docs/requirements/TRADING-2564_S4_Experiment_Envelope_First_Access_V1.md
+  - docs/requirements/TRADING-2564_Stage_Decision_Pilot_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S4严格封套与synthetic first-access联合验证/独立审查PASS；v1不完整证据保留。最终正式与发布以回执验收；真实协议、legacy首次读取入口、可靠外部时间witness、DQ/PIT
-    adapter及现金/复合归因待完成。
+  unstructured_legacy_blocker_or_next_step: 阶段决策书面机制、六个来源回放和十个反例完成，14项并行聚焦验证PASS；等待本候选正式验收。发布后退出机制建设，等待在途Composer输入连接交付，不自动扩展S5或全部legacy
+    readers。S4真实协议/时间/DQ/PIT/会计缺口继续保留，真实防漂移效果NOT_OBSERVED。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: exact封套/政策及身份连通历史绑定；pending-before-loader、终止/重复/篡改/并发负例PASS；来源闭包与final formal/Full、普通main发布和清理通过；不得宣称真实OOS或legacy全面门禁。
+    text: exact封套/政策及身份连通历史绑定；pending-before-loader、终止/重复/篡改/并发负例PASS；来源闭包与final formal/Full、普通main发布和清理通过；不得宣称真实OOS或legacy全面门禁。；阶段决策pilot：见
+      docs/requirements/TRADING-2564_Stage_Decision_Pilot_V1.md，全优先级准入、来源绑定的六例回放和十个反例、唯一action/WAIT/owner裁决、无重复在途任务；建设与实际防漂移效果分轴验收，效果未观察前不得宣称已解决。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -1017,23 +1017,71 @@ events:
   - change:trading-2564-s4-first-access-source-ready-20260908-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-699d6c24b52b6a589bb5e62b9f876778
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-08T17:00:05.6097362Z'
+  actor: integration-coordinator
+  change_id: trading2564-stage-decision-reviewed-v1
+  lane_id: null
+  base_commit: a5b82f14f97a898d8c25951560f6e77d15aca295
+  previous_state_event_id: task-event-699d6c24b52b6a589bb5e62b9f876778
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex：完成有界阶段决策试行及来源回放；随后回到已选研究依赖，观察实际任务选择
+    blocker_or_next_step: Owner 2026-09-09要求尝试无歧义阶段任务决策；先按 docs/requirements/TRADING-2564_Stage_Decision_Pilot_V1.md
+      完成全优先级准入、必要依赖证明、唯一动作/等待/owner裁决与近期回放。长期S4真实接入及会计缺口继续保留，不能自动成为下一项工程。
+    acceptance_criteria: exact封套/政策及身份连通历史绑定；pending-before-loader、终止/重复/篡改/并发负例PASS；来源闭包与final
+      formal/Full、普通main发布和清理通过；不得宣称真实OOS或legacy全面门禁。
+    notes: 2026-09-09：阶段决策pilot进入IN_PROGRESS，复用现有umbrella；只做书面机制与回放，不新建selector/scheduler或真实研究运行。工程完成与实际防漂移效果分开验收。首次隔离环境错误导入旧checkout和误填UTC时间的记录已隔离、FAILED
+      release，不作为本事件来源；本事件绑定正确task源码和项目Python 3.11运行时。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading2564-stage-decision-reviewed-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-59bd02cfcbe18f1d554cb51f5a0e0bea
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-08T17:09:43.384782+00:00'
+  actor: integration-coordinator
+  change_id: trading2564-stage-decision-source-review-v2
+  lane_id: null
+  base_commit: a5b82f14f97a898d8c25951560f6e77d15aca295
+  previous_state_event_id: task-event-59bd02cfcbe18f1d554cb51f5a0e0bea
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex coordinator：完成本pilot正式发布；随后按SDP-20260909-001等待TRADING-2560具名依赖交付并重判，观察防漂移效果
+    blocker_or_next_step: 阶段决策书面机制、六个来源回放和十个反例完成，14项并行聚焦验证PASS；等待本候选正式验收。发布后退出机制建设，等待在途Composer输入连接交付，不自动扩展S5或全部legacy
+      readers。S4真实协议/时间/DQ/PIT/会计缺口继续保留，真实防漂移效果NOT_OBSERVED。
+    acceptance_criteria: exact封套/政策及身份连通历史绑定；pending-before-loader、终止/重复/篡改/并发负例PASS；来源闭包与final
+      formal/Full、普通main发布和清理通过；不得宣称真实OOS或legacy全面门禁。；阶段决策pilot：见 docs/requirements/TRADING-2564_Stage_Decision_Pilot_V1.md，全优先级准入、来源绑定的六例回放和十个反例、唯一action/WAIT/owner裁决、无重复在途任务；建设与实际防漂移效果分轴验收，效果未观察前不得宣称已解决。
+    notes: 2026-09-09：Owner授权有界试行；复用TRADING-2564，umbrella保持IN_PROGRESS。pilot不新增程序/锁/scheduler/交易规则，不修改历史冻结portfolio和AGENTS。文档入口及当前decision见支持需求；环境错误、错误时间事件和行政事务保留隔离证据，正确runtime及当前source单独绑定；正式发布以回执为准。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading2564-stage-decision-source-review-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-6a7d0ebc713110bdaf3479013904521d
 projection:
   legacy_first_eight_cells:
   - TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
   - 长期研究能力 / 输入就绪与验证前置
   - P1
   - IN_PROGRESS
-  - Codex：S4来源生成、最终候选formal/Full验收、普通main发布与清理；随后真实接入及会计后继
-  - S4严格封套与synthetic first-access联合验证/独立审查PASS；v1不完整证据保留。最终正式与发布以回执验收；真实协议、legacy首次读取入口、可靠外部时间witness、DQ/PIT
-    adapter及现金/复合归因待完成。
-  - exact封套/政策及身份连通历史绑定；pending-before-loader、终止/重复/篡改/并发负例PASS；来源闭包与final formal/Full、普通main发布和清理通过；不得宣称真实OOS或legacy全面门禁。
-  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；docs/requirements/TRADING-2564_S4_Experiment_Envelope_First_Access_V1.md；outputs/architecture/trading_2564_s4_experiment_first_access内implementation_validation_v1与independent
-    review为实际源证据；最终验收以candidate/Full/publication/closeout回执为准；真实DQ/研究/下载/cache/provider/交易均0。
+  - Codex coordinator：完成本pilot正式发布；随后按SDP-20260909-001等待TRADING-2560具名依赖交付并重判，观察防漂移效果
+  - 阶段决策书面机制、六个来源回放和十个反例完成，14项并行聚焦验证PASS；等待本候选正式验收。发布后退出机制建设，等待在途Composer输入连接交付，不自动扩展S5或全部legacy
+    readers。S4真实协议/时间/DQ/PIT/会计缺口继续保留，真实防漂移效果NOT_OBSERVED。
+  - exact封套/政策及身份连通历史绑定；pending-before-loader、终止/重复/篡改/并发负例PASS；来源闭包与final formal/Full、普通main发布和清理通过；不得宣称真实OOS或legacy全面门禁。；阶段决策pilot：见
+    docs/requirements/TRADING-2564_Stage_Decision_Pilot_V1.md，全优先级准入、来源绑定的六例回放和十个反例、唯一action/WAIT/owner裁决、无重复在途任务；建设与实际防漂移效果分轴验收，效果未观察前不得宣称已解决。
+  - 2026-09-09：Owner授权有界试行；复用TRADING-2564，umbrella保持IN_PROGRESS。pilot不新增程序/锁/scheduler/交易规则，不修改历史冻结portfolio和AGENTS。文档入口及当前decision见支持需求；环境错误、错误时间事件和行政事务保留隔离证据，正确runtime及当前source单独绑定；正式发布以回执为准。
   docs_links:
-  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
-  - docs/requirements/TRADING-2564_S4_Experiment_Envelope_First_Access_V1.md
+  - docs/requirements/TRADING-2564_Stage_Decision_Pilot_V1.md
   terminal: false
-  canonical_row_sha256: e344147073821063251fe82b7b73031d9d24eab7a94f5d18fe0a17e6f40acc1b
-last_event_id: task-event-699d6c24b52b6a589bb5e62b9f876778
+  canonical_row_sha256: aa6fc5bb7ea75c4cb0e485d470928e1ac2e131856025aa277a141be1f445c69e
+last_event_id: task-event-6a7d0ebc713110bdaf3479013904521d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 765e8259be55ec1d60c2f125eb9980a12c59845af010d2e787aa697a9cf68da1
+fragment_checksum: 29c402ae1e366c501a9f589f27fa5fc6c56bed24e19c04725f33ca9142116014
