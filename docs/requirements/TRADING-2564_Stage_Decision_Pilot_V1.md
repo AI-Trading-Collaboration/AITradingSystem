@@ -65,7 +65,7 @@ R0 是输入完整性检查，R1–R6 依次执行。这里的顺序是 develope
 
 |规则|条件|唯一下一步|
 |---|---|---|
-|R0|会改变选择的目标、事实、授权或证据身份为 UNKNOWN/冲突|如存在已授权且能直接消歧的只读核查，选该核查；否则 OWNER_DECISION_REQUIRED 或 WAIT_FOR_NAMED_EVIDENCE。未知不授权新工程。|
+|R0|会改变选择的目标、事实、授权或证据身份为 UNKNOWN/冲突|按下面 R0 分流表输出唯一动作。未知不授权新工程。|
 |R1|已确认当前运行安全受影响，或当前阶段必需证据被具体正确性错误污染|按已有事故规则控制影响，或修复该错误的最小完整范围。完成后返回原阶段，不自动扩成通用重构。|
 |R2|当前阶段的既有退出条件已经满足|作出继续/停止/转向决定并记录；负面结论也可完成阶段。不得继续补工程来延后裁决。|
 |R3|缺少决定性证据，且对应取证动作所有执行前提与授权已满足|选该取证动作；工程 PASS 不能替代实际证据，已读历史不能升级为 pristine OOS。|
@@ -78,6 +78,16 @@ R0 不阻止对一个独立且已确认安全事故做已授权的立即控制�
 未到实际回报读取时，不因为未来可能需要所有 outcome reader 便把它们都列为今天的 R4。
 相反，当前具名动作确实会首次读取 outcome，则其封套、历史暴露与相关 DQ/PIT 前提必须先满足。
 
+R0 的分流也按顺序命中即停：
+
+1. 阶段目标/退出规则缺失或 owner 指令冲突：`OWNER_DECISION_REQUIRED:STAGE_CONTRACT`。
+2. 缺口能用已授权的只读核查直接消歧：按 C 消歧后选唯一核查；C 无法消歧则 `OWNER_DECISION_REQUIRED:TIE`。
+3. 唯一剩余缺口来自已具名的交付/真实时间等待，并且已有责任方与恢复触发：`WAIT_FOR_NAMED_EVIDENCE`。
+4. 其它情况：`OWNER_DECISION_REQUIRED:UNRESOLVED_INPUT`，列出缺少的具体事实或授权，不自行推定。
+
+R1 中尚未控制的实际安全影响先按既有事故 authority 处置；影响已受控而证据错误仍在，才选择
+最小修复。若多个事故/错误之间无已有事故等级或阶段顺序可比较，同样使用 C，而不临时设风险分数。
+
 ### C. 必要依赖与同级消歧
 
 工程候选获得 R1/R4 资格必须同时列明：受影响的具名实验/动作、已观察失败或可检查的合同缺口、
@@ -89,7 +99,8 @@ R0 不阻止对一个独立且已确认安全事故做已授权的立即控制�
 
 1. 采用本阶段已预先指定的证据缺口/动作顺序；不能看完结果再改这个顺序。
 2. 同一证据缺口存在多个实现方式时，只有有效性和范围等价可证明，才允许成本支配比较：某方案
-   的必要依赖集合是另一方案的子集，且有证据证明其资源、用时均不更差，则优先该方案。
+   的必要依赖集合是另一方案的子集，且有证据证明其资源、用时均不更差，并至少一项严格改善，
+   才排除被支配方案；最后只剩一个方案时选择它。
    “大概更容易”不算证明；未知耗时不填零；成本/时间互有优劣属于不可比较。
 3. 若剩下多个不同动作，输出 `OWNER_DECISION_REQUIRED:TIE`，列候选及具体取舍。
    不按 task ID、创建时间、P0 标签、任意数字权重或实施方便程度伪造最优次序。
@@ -149,6 +160,10 @@ R0 不阻止对一个独立且已确认安全事故做已授权的立即控制�
 - 本轮建设目标：判断这个裁决协议是否能给近期偏移提供一致且有边界的选择；文档验收后退出建设。
 - 返回的研究阶段问题：冻结 Composer 在合法前瞻观察中能否取得可用的新证据，以继续评价其增量价值？
   历史 `INSUFFICIENT/HOLD` 及原有样本/停止条件保留；不新增投资阈值，不把一次 observation 当策略胜出。
+- 本次交接子阶段退出条件：具名输入连接交付被核验后即结束“建设输入连接”阶段，回到原
+  prospective preregistration 的下一合法动作；真实观察/成熟/研究 verdict 的验收仍由
+  `config/research/first_layer_composer_v2_prospective_oos_preregistration_v1.yaml` 及其已审执行合同决定。
+  本 pilot 既不为这些合同补造数值，也不把开发交付冒充已取得观察样本。
 - 当前缺口：E3/E4 证明真实前瞻输入/协议仍未全部接通；工程结果不能供应真实 observation。
 - 新鲜在途信息：2026-09-09 对 `D:/Work/AITradingSystem_devx014_source_preservation` 的只读审计看到
   branch=`codex/trading-2560-composer-known-snapshot-v1`、active lease=`lease-afbe2bfbc279cf44d588`，
@@ -214,7 +229,11 @@ runtime；发现后停止，v1 用原执行 authority 仅作 FAILED release，le
 唯一实际执行 worktree 改为 `D:/Work/AITradingSystem/run/ccra/trading2564-stage-decision-reviewed`，
 branch=`codex/trading-2564-stage-decision-reviewed`，仍从同一 frozen base 创建；每个 Python 命令显式
 绑定该 worktree 的 `src` 并核实 loaded origin。这是错误执行环境的替换，不是随 main 漂移重建。
-旧 pilot worktree 只保留待审字节及失败事件，最终按同样的证据校验与进程退出条件清理。
+旧 pilot worktree 的16项唯一字节及失败事件已归档并逐项校验，派生 pycache 已绑定未改的 Git 源码，
+无 Python 进程依赖后清理该精确 worktree 和未含独有 commit 的分支；约190,892,169 bytes
+（不含 excluded path）已释放。恢复包为 canonical `failed_environment_attempt_v1.zip`，
+审计为 `failed_environment_preservation_v1.json` / `failed_environment_cleanup_pre_v1.json`；
+primary 用户文件未读取、散列或修改。
 新工作区证据仍保留到上文唯一 canonical 目录；两个目录的清理 allowlist 均在此明确登记。
 
 新工作区首次显式源码调用使用 PATH 的 Python 3.14，现有文件身份 guard 因同一文件 path.stat 与
