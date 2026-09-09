@@ -10741,3 +10741,22 @@ flowchart LR
 report 直接读取与 Composer label 入口尚未接入。真正接入须在首次行情/结果读取之前，执行原有 DQ/PIT
 和受审研究协议。详见 `docs/requirements/TRADING-2564_S4_Experiment_Envelope_First_Access_V1.md`。
 真实研究、行情、DQ、采集、下载与 order/fill 均未执行；不新增 CLI、scheduler 或生产入口。
+
+## TRADING-2564 S4：前瞻会计算术核验
+
+```mermaid
+flowchart LR
+  Scope[显式期初日期 / 预期session / 资产全集] --> Ledger[逐期NAV / 资产货币PnL / 费用 / 零外部流]
+  Ledger --> Exact[research_forward_accounting：Fraction精确恒等式]
+  Exact --> Identity[逐期自融资与NAV连续 / 全期金额平衡]
+  Identity --> Attribution[初始资本归一化的资产贡献与费用贡献]
+  Identity --> Drawdown[包含期初NAV的非负最大回撤]
+  Attribution --> Summary[纯内存 ARITHMETIC_IDENTITY_ONLY summary]
+  Drawdown --> Summary
+```
+
+本模块仅用合成账本验收，无 CLI、文件读取或 writer。实际 SGOV PnL 贡献不等于仓位、机会成本
+或额外现金收益；贡献精确加总到净收益，展示舍入不得成为平衡判据。日期与资产全集必须精确匹配，
+不补行/填零。该算术摘要不验证真实 calendar、source、DQ/PIT 或 outcome 访问授权。
+旧 equal-risk maturity / scoreboard、冻结源和 observation 均未接线或改写；首次真实消费仍须先
+经受审 S4 adapter 和原 DQ/PIT 入口。详见 `docs/requirements/TRADING-2564_S4_Forward_Accounting_V1.md`。

@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1385
-test_count: 1324
+test_file_count: 1386
+test_count: 1325
 support_file_count: 61
 orphan_count: 0
 specific_overlap_count: 0
@@ -8122,7 +8122,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 22d4f9f641dfc65783b5f7c9a1ddd504a7e39d42b516f30bd4c98083e90aba2e
+  sha256: 6d21941acdf907d4ce4933c773265aa8b36dd33f3931f9682c9c4c884bb38dfd
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -8518,7 +8518,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: e0a4cfb618ef0590a520c74f35ae15220a542e2c9cb941ed0b4f590777839329
+  sha256: def2672e749c9f9a6786bdc405c2e0fb01582e9027cc35ad06f6a54c4366d1a4
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -10538,7 +10538,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: c6ee8af02e2594d522a8bbb5fa89aae9efeee6ca4afc8521bbe6056b0f9f9318
+  sha256: 33270313fe72cadcc9814320013e28518d9a262c7a27db767d1abc573bd665b7
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -16881,6 +16881,22 @@ tests:
 - test_id: tests.test_research_experiment_envelope
   path: tests/test_research_experiment_envelope.py
   sha256: d90e233abc55c5f9ab20faf2da796551959cbcc6d606ced0f87bf7fed6b9ed4a
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_research_forward_accounting
+  path: tests/test_research_forward_accounting.py
+  sha256: cc9501971d1e17034d583c5bccdc80f2a12671c7f8fe6a331e81cd59971ff213
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

@@ -2709,6 +2709,16 @@ TRADING-348 Reader Brief update: 上述 Weight Optimization Batch Search excerpt
 
 ## TRADING-2564 S4：实验访问账本工程合同
 
+### 前瞻会计算术摘要
+
+`research_forward_accounting.summarize_forward_ledger` 只返回纯内存
+`forward_accounting_summary.v1`，不创建文件或新 CLI。显式完整日期 / 资产集合、逐期 NAV、资产
+货币 PnL、费用及零 external flow 经 Fraction 精确平衡后，返回资产与费用贡献、净收益和包含
+期初 NAV 的最大回撤。scope 固定 `ARITHMETIC_IDENTITY_ONLY`，calendar / DQ verified 与真实
+outcome 访问授权均为 false。它不替代研究 gateway、真实数据质量或旧 maturity writer。
+本阶段合成验证与独立审查证据留在 `outputs/architecture/trading_2564_s4_forward_accounting/`；
+支持需求为 `docs/requirements/TRADING-2564_S4_Forward_Accounting_V1.md`，生产和 broker effect 均无。
+
 `research_outcome_access.py` 的受控 gateway 产生不可变 envelope/freeze、attempt 与 access 事件，
 上游为 exact envelope、具实质规则内容的政策绑定和固定本地 authority；下游仅 metadata replay、
 合成验证与人工审查。事件完整绑定前驱、服务时间、scope、attempt/access、结果 SHA/size；失败和

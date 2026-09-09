@@ -28,6 +28,12 @@ S4 真实协议、legacy 首读接入、可靠外部时间 witness、DQ/PIT adap
 
 ## 1. 目标与范围
 
+2026-09-09 Owner 补充「后续其他任务也要推进下」。SDP-20260909-002 选择已有 S4 的
+[前瞻收益会计算术核验 V1](TRADING-2564_S4_Forward_Accounting_V1.md)：在 Composer 等待合法
+F / 新快照期间，完成 equal-risk 后续首看所需的独立自融资、现金贡献和期初回撤合成核验。
+本波不消费真实 outcome、不接旧 writer、不修改冻结策略；完成即返回具名 first-access adapter
+及协议准入。原 2563 corrected DQ 后续 FAIL 已核对实际 receipt，不重复旧失败尝试。
+
 在既有 evidence-first portfolio 下，提高获得可信新证据的连续性和单位研究结论效率。
 投资认知质量与扣成本、控制市场暴露后的增量配置价值分别评估；工程 PASS 不提升策略 verdict。
 本任务为一个长期 umbrella，不因 contract、DQ、执行、展示或发布阶段自动生成 successor。
