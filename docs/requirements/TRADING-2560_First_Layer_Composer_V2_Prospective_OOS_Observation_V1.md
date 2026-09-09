@@ -9,6 +9,12 @@ Owner 指令：2026-09-04，在确认当前候选进入冻结观察、同时继�
 
 状态：`BASELINE_DONE`
 
+当前后继：2026-09-09 Owner 已选择 current-known snapshot 输入规则并要求恢复真实研究，
+本任务进入 `IN_PROGRESS`。下文保留既有 baseline 波次证据；新的信息集、有限真实 readiness/
+activation/capture、时点和工作区边界见
+[Composer 当前已知快照与首次真实前瞻记录](TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md)。
+旧 implementation-only policy 和一次性授权不变；真实阶段以新收据为准，不提前宣称 observation PASS。
+
 ## 1. 目标
 
 为 `first_layer_composer_v2` 建立与 TRADING-2555～2559 历史开发窗口严格分离的

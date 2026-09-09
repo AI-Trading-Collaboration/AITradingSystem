@@ -1376,6 +1376,9 @@ def test_prospective_recording_projection_includes_guards_and_complete_bound_met
     assert not isinstance(projection, VerifiedNamedInputs)
     # Test the byte-preservation projection, without mocking a positive seal or
     # suggesting these synthetic declarations passed the original DQ verifier.
+    projection._recording_closure = lambda *, composer: VerifiedNamedInputs._recording_closure(
+        projection, composer=composer
+    )
     result = VerifiedNamedInputs.recording_closure_for_prospective(projection)
     assert result == tuple(sorted(result))
     values = dict(result)

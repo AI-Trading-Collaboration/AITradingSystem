@@ -1,5 +1,35 @@
 # 系统数据流示意图
 
+## TRADING-2560：Composer 当前已知快照与真实前瞻记录
+
+新 `composer-activate|composer-readiness|composer-capture` 由
+`scripts/run_named_data_quality.py` 的独立 103-module/24-dependency Composer Git profile
+运行，政策为 `composer_prospective_capture_v1.yaml` 与
+`first_layer_composer_v2_known_snapshot_input_v1.yaml`。既有五候选与 price-only accessor
+保留各自权限。readiness 只检查显式历史快照；真实 capture 必须先有完整 activation ACK，
+并在 F close 之后、下一 XNYS D close 之前完成。项目主窗仍从 2021-02-22 开始。
+
+```mermaid
+flowchart LR
+    CM[exact manifest / owner review / S4D lease] --> CA[activation：真实时钟 ACK 冻结首 F]
+    CM --> CS[显式不可变 prices / rates / secondary 快照]
+    CS --> CDQ[三段 canonical DQ：2018训练 / 2020 SGOV / 2021主窗]
+    CDQ --> CV[原子身份重验：三段 strict PASS 与同一输入 bytes]
+    CV --> CR[readiness：零拟合 / 零观察]
+    CA --> CI[保存完整输入闭包，原始返回上界 R]
+    CV --> CI
+    CI --> CF[原504/20成熟历史训练 / 当前 revision / 五态 Composer]
+    CF --> CW[signal witness / 原始时钟 ACK 严格早于 D close]
+    CW --> CO[单条 observation：输入 / DQ / fit / R / policy / next-close]
+    CO --> CG[未来 outcome 未访问；首次评价另经 S4 实验与会计准入]
+```
+
+rates 可实际早于 F，沿用原 XNYS reindex/ffill，披露逐 series raw/effective source 日期；
+不补造 F 行、不改变 DQ freshness 或 consistency 起点、不声称历史 available_at/PIT。
+同 key 重放只读，部分失败不重试，已发生 DQ 次数与无法观察的 UNKNOWN 分开。
+源运营缓存只读，输出保留在 `outputs/research/composer_prospective`；无新 scheduler、
+provider、下载、缓存修改、maturity/scoreboard、production 或 broker 动作。
+
 本文档是系统从数据输入、中间评估到输出结论的流程图。它不是一次性说明文档，而是工程事实的一部分：后续新增命令、数据源、配置、评分模块、回测路径或报告输出时，必须同步维护本文件。
 
 DEVX-014 新增独立工程入口 `scripts/architecture_arch005_source_preservation.py preserve|validate`，

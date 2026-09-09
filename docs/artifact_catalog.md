@@ -6,6 +6,23 @@
 
 ## TRADING-2564 输入就绪与指定快照 DQ 工程合同
 
+### TRADING-2560 Composer 独立前瞻产物
+
+`scripts/run_named_data_quality.py --operation composer-activate|composer-readiness|composer-capture`
+使用独立 103/24 exact Git profile；输出根为 manifest 固定的
+`outputs/research/composer_prospective/<manifest-id>/`。不发布 latest pointer 或 Reader 自动报告。
+
+|产物|输入与用途|准入边界|
+|---|---|---|
+|`control/owner_review.json`、各阶段 `request.json` / `attempt.json`|精确有限 manifest、根、代码、政策及原 lease；派发前重放|声明与实际验证分开，同 key 不重试；不是市场证据。|
+|`readiness/`、`sessions/<F>/dq_dispatch/<segment>/` 与分段 Named DQ receipts|training/exact_cash/primary 各一次原 canonical DQ、实际子进程终态及 guards|全部 strict PASS 才可拟合；保留 requested/evaluated 与 consistency 起点，失败实际计数不擦除。|
+|`segmented_dq_identity.json`|三段同 prices/rates SHA、原 source snapshot、精确政策与窗口|readiness 零 fit/观察；旧历史快照不准入新 F。|
+|`timing/` 与 `acknowledgement.json`|原 activation/input/signal recorder 闭包、完整原始时钟与保守上界|R 证明当前本地 bytes 已知；完整 capture ACK 必须早于 D close，不建立历史 provider available_at/PIT。|
+|`sessions/<F>/observation.json`、各阶段 `result.json`|五态信号、原 504/20 fit audit、逐 rates raw/effective 日期、输入/DQ/policy/time identity|收益从 Close(D) 起；未来 outcome 未访问、maturity/scoreboard 关闭；工程 PASS 不代表真实观察或有效性结论。|
+
+细节见 `docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md`。
+所有输出保持 production_effect=none、broker_action=none，运营缓存和 scheduler 不变。
+
 |输出|生成入口与输入|用途与边界|
 |---|---|---|
 |`research_input_readiness.v1` stdout JSON|`scripts/research_input_readiness.py`；显式请求、source/execution root、冻结依赖及既有canonical DQ receipt|核验输入身份、请求范围、必需字段与XNYS覆盖；不新运行DQ、不复制或修复数据、不创建持久报告、不签发consumer/capture授权。`READY_FOR_REVIEW`不等于可执行。|

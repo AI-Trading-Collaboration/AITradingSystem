@@ -52,6 +52,7 @@ TRADING_2564_S3B_SECTION = "phase_trading_2564_s3b_prospective_capture_execution
 TRADING_2564_S5_SECTION = "phase_trading_2564_s5_validated_duration_seed_v1"
 TRADING_2564_S5_DIAGNOSTICS_SECTION = "phase_trading_2564_s5_immediate_failure_diagnostics_v1"
 TRADING_2564_S4_FIRST_ACCESS_SECTION = "phase_trading_2564_s4_experiment_first_access_v1"
+TRADING_2560_COMPOSER_CAPTURE_SECTION = "phase_trading_2560_composer_known_snapshot_capture_v1"
 DEVX_014_SOURCE_PATHS = frozenset(
     {
         "config/architecture/arch_005_source_preservation.yaml",
@@ -350,12 +351,12 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 330
-    assert result["fragment_count"] == 24
+    assert len(merged) == 331
+    assert result["fragment_count"] == 25
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == TRADING_2564_S4_FIRST_ACCESS_SECTION
+    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
@@ -851,7 +852,7 @@ def test_s2c2_exact_preview_successor_preserves_closed_execution_boundary() -> N
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2564_S4_FIRST_ACCESS_SECTION
+    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
     assert (
         list(merged).index(TRADING_2564_S2C2_SECTION)
         == list(merged).index(TRADING_2564_S2C_SECTION) + 1
@@ -935,7 +936,7 @@ def test_s2c_is_exact_price_scope_successor_not_strategy_promotion() -> None:
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2564_S4_FIRST_ACCESS_SECTION
+    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
     assert (
         list(merged).index(TRADING_2564_S2C_SECTION)
         == list(merged).index(TRADING_2564_S2B_SECTION) + 1
@@ -1224,7 +1225,7 @@ def test_s3a_exact_temporal_successor_preserves_admission_boundaries() -> None:
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2564_S4_FIRST_ACCESS_SECTION
+    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
     assert (
         list(merged).index(TRADING_2564_S3A_SECTION)
         == list(merged).index(TRADING_2564_S2C2_SECTION) + 1
@@ -1297,7 +1298,7 @@ def test_s3b_exact_capture_successor_preserves_real_research_boundary() -> None:
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2564_S4_FIRST_ACCESS_SECTION
+    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
     assert (
         list(merged).index(TRADING_2564_S3B_SECTION)
         == list(merged).index(TRADING_2564_S3A_SECTION) + 1
@@ -1368,7 +1369,7 @@ def test_s5_duration_successor_preserves_historical_and_advisory_boundaries() ->
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2564_S4_FIRST_ACCESS_SECTION
+    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
     assert (
         list(merged).index(TRADING_2564_S5_SECTION)
         == list(merged).index(TRADING_2564_S3B_SECTION) + 1
@@ -1467,7 +1468,7 @@ def test_s5_diagnostics_successor_preserves_terminal_truth_and_source_scope() ->
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2564_S4_FIRST_ACCESS_SECTION
+    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
     assert (
         list(merged).index(TRADING_2564_S5_DIAGNOSTICS_SECTION)
         == list(merged).index(TRADING_2564_S5_SECTION) + 1
@@ -1558,7 +1559,7 @@ def test_s4_first_access_successor_preserves_scope_and_unresolved_real_gate() ->
 
     merged = load_compatibility_authority()
     phase = merged[TRADING_2564_S4_FIRST_ACCESS_SECTION]
-    assert next(reversed(merged)) == TRADING_2564_S4_FIRST_ACCESS_SECTION
+    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
     assert (
         list(merged).index(TRADING_2564_S4_FIRST_ACCESS_SECTION)
         == list(merged).index(TRADING_2564_S5_DIAGNOSTICS_SECTION) + 1
@@ -1614,3 +1615,86 @@ def test_s4_first_access_sources_reject_false_or_incomplete_binding(mutation: st
         phase["sources"][0]["sha256"] = "0" * 64
     with pytest.raises(AssertionError):
         _assert_s4_first_access_source_closure(phase)
+
+
+COMPOSER_CAPTURE_ADDED_SOURCE_PATHS = frozenset(
+    {
+        "src/ai_trading_system/first_layer_composer_v2_current_session_producer.py",
+        "src/ai_trading_system/contracts/composer_prospective_capture.py",
+        "src/ai_trading_system/composer_prospective_capture.py",
+        "config/research/first_layer_composer_v2_known_snapshot_input_v1.yaml",
+        "config/research/composer_prospective_capture_v1.yaml",
+        "config/data_governance/named_composer_prospective_sources_v1.json",
+        "tests/test_first_layer_composer_v2_current_session_producer.py",
+        "tests/test_composer_prospective_capture_contract.py",
+        "tests/test_composer_prospective_capture.py",
+        "docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md",
+        "docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md",
+    }
+)
+
+
+def _assert_composer_source_closure(phase: dict[str, Any]) -> None:
+    expected = TRADING_2564_S4_FIRST_ACCESS_SOURCE_PATHS | COMPOSER_CAPTURE_ADDED_SOURCE_PATHS
+    paths = [row["path"] for row in phase["sources"]]
+    assert paths == sorted(expected, key=str.casefold)
+    assert phase["superseded_live_source_paths"] == paths
+    for row in phase["sources"]:
+        assert set(row) == {"path", "sha256", "hash_normalization"}
+        assert row["hash_normalization"] == "git_eol_lf"
+        content = Path(row["path"]).read_bytes().replace(b"\r\n", b"\n")
+        assert hashlib.sha256(content).hexdigest() == row["sha256"]
+
+
+def test_composer_successor_retains_separate_research_and_clock_boundaries() -> None:
+    from test_trading2452_architecture_contract import (
+        TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS,
+        TRADING_2560_COMPOSER_CAPTURE_RESTRICTED_CURRENT_AUTHORITY_PATHS,
+    )
+
+    merged = load_compatibility_authority()
+    phase = merged[TRADING_2560_COMPOSER_CAPTURE_SECTION]
+    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
+    assert list(merged).index(TRADING_2560_COMPOSER_CAPTURE_SECTION) == (
+        list(merged).index(TRADING_2564_S4_FIRST_ACCESS_SECTION) + 1
+    )
+    expected = TRADING_2564_S4_FIRST_ACCESS_SOURCE_PATHS | COMPOSER_CAPTURE_ADDED_SOURCE_PATHS
+    assert TRADING_2560_COMPOSER_CAPTURE_RESTRICTED_CURRENT_AUTHORITY_PATHS == (
+        expected & TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
+    )
+    _assert_composer_source_closure(phase)
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2564_S4_FIRST_ACCESS_SECTION,
+        "current_hash_authority": f"{TRADING_2560_COMPOSER_CAPTURE_SECTION}.sources",
+    }
+    assert phase["input_contract"]["dq"] == "THREE_SAME_SNAPSHOT_STRICT_PASS_SEGMENTS"
+    assert phase["input_contract"]["decision"] == "NEXT_XNYS_CLOSE_AFTER_FORWARD_ACTIVATION"
+    assert phase["safety"] == {
+        "historical_provider_available_at_established": False,
+        "historical_pit_claim_allowed": False,
+        "future_observation_outcome_access_allowed": False,
+        "scoreboard_or_maturity_allowed": False,
+        "historical_evidence_mutated": False,
+        "model_or_threshold_rules_changed": False,
+        "provider_or_cache_mutation_allowed": False,
+        "automatic_scheduler_enabled": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+@pytest.mark.parametrize("mutation", ["missing", "duplicate", "extra_both", "wrong_hash"])
+def test_composer_successor_rejects_incomplete_or_false_source_binding(mutation: str) -> None:
+    phase = deepcopy(load_compatibility_authority()[TRADING_2560_COMPOSER_CAPTURE_SECTION])
+    if mutation == "missing":
+        phase["sources"].pop()
+    elif mutation == "duplicate":
+        phase["sources"].append(deepcopy(phase["sources"][0]))
+    elif mutation == "extra_both":
+        phase["sources"].append({"path": "unknown.py", "sha256": "0" * 64})
+        phase["superseded_live_source_paths"].append("unknown.py")
+    else:
+        phase["sources"][0]["sha256"] = "0" * 64
+    with pytest.raises(AssertionError):
+        _assert_composer_source_closure(phase)

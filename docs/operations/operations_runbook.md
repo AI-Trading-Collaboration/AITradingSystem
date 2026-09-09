@@ -36,6 +36,29 @@ INCOMPLETE，不能重试 DQ、补签时间或换 snapshot。输出路径和复�
 S3b 条目。PASS admission 仅代表该范围本地源码/严格 DQ/信号/记录时间核验，不建立 provider
 available_at、PIT/OOS、调度启用、production 或 broker 权限。
 
+## TRADING-2560 Composer 手工前瞻研究入口
+
+`python -I -B scripts/run_named_data_quality.py --operation
+composer-activate|composer-readiness|composer-capture --request <request.json>
+--request-sha256 <sha256> --source-lease-id <lease-id>` 使用独立 103-module/24-dependency
+`named_composer_prospective_sources_v1.json` 与 `composer_prospective_capture_v1.yaml`。
+这是 Owner 已选择的有限手工研究，沿用当前已知 revision 输入规则；不新增 scheduler entry。
+详细边界见 `docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md`。
+
+每次派发前自动 replay exact manifest、owner review、代码/政策、原 S4D lease、根路径、唯一 F
+和 expiry。readiness 仅对显式现有快照运行 training/exact_cash/primary 三段 canonical DQ，
+完整保留 requested/evaluated 窗口与原 consistency 起点，零拟合、零观察；不能替代未来 F 的 DQ。
+activate 零 DQ/拟合，以实际完整 ACK 确定纽约日期之后首 XNYS F。
+capture 在 F close 后、D=next_XNYS(F) close 前完成三段同快照严格 PASS、完整输入封存、原
+504/20 Composer fit 与信号记录；价格完整至 F，rates 可早于 F，但原 DQ freshness 门禁不变。
+逐 rates series 披露 raw/effective 日期，R 来自原 input recorder 的保守返回上界。
+
+同 key 只读重放，部分尝试不得重试或补签；异常保留实际 DQ 计数，缺失计数保持 UNKNOWN。
+输出在 `outputs/research/composer_prospective/<manifest-id>/`，包括 control、attempt、分段
+DQ、segmented_dq_identity、timing、ACK 和 observation。记录 current revision 历史训练访问，
+不建立历史 provider available_at/PIT；未来 outcome、maturity、scoreboard、下载、缓存修改、
+production/broker/order/fill 均关闭。首次收益查看另须既有 S4 研究/会计合同。
+
 ## Operating Principles
 
 - 每日 scheduler trigger 是统一外部入口。Windows Task Scheduler、cron、GitHub Actions 或云调度器默认只应调用 `aits ops daily-run`，不要把 weekly / biweekly / monthly / governance 命令直接散落成多个未审计系统任务。

@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1218
+module_count: 1220
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -2555,6 +2555,26 @@ modules:
   - fast-unit
   - contract-validation
   shared_integration: false
+- module_id: src.ai_trading_system.composer_prospective_capture
+  path: src/ai_trading_system/composer_prospective_capture.py
+  sha256: 13f7c6a94520b58dc8db1ad2d966efdff21595080c4dcad948526a41047dd0a7
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
 - module_id: src.ai_trading_system.conclusion_boundary
   path: src/ai_trading_system/conclusion_boundary.py
   sha256: f30f97f8b73b8dc9fefc342e20cd9f2deb40b758901fff2a185b3eb429329120
@@ -2620,6 +2640,28 @@ modules:
 - module_id: src.ai_trading_system.contracts.artifact_envelope
   path: src/ai_trading_system/contracts/artifact_envelope.py
   sha256: 5dfb7b6ac051b63b4ea9f253aa2a7d64c8385d1e3f29530c11d47cf1c8116464
+  rule_id: contracts
+  owner_profile: architecture
+  owners:
+    code_owner: architecture_governance
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: architecture_governance
+    runtime_owner: architecture_governance
+  layer: contracts
+  category: semantic_and_platform_contracts
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004*.py
+  - tests/test_core_contracts.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.contracts.composer_prospective_capture
+  path: src/ai_trading_system/contracts/composer_prospective_capture.py
+  sha256: 8f8c9d9bf3c855401b3857d7393a635efe01cd5ab639d4195170ab26a5ec5cae
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -2817,7 +2859,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.named_data_quality_execution
   path: src/ai_trading_system/contracts/named_data_quality_execution.py
-  sha256: b74c2710214372fac2e1b3e5aee8481cf8b29b14b78dac52862574b45458c820
+  sha256: 41325f9687cdce000760fce49f913708c984bad0e48a3b1ac406b3c49f4c184a
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -3837,7 +3879,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.named_quality_dispatch
   path: src/ai_trading_system/data/named_quality_dispatch.py
-  sha256: c9661af8dafc1a4a7703330db8a57edce203da5149bf73fb6da9ed971bc039fa
+  sha256: d3803fba1339617eecf492778993a6049f732ee61023daf35b0cf3e007a9539e
   rule_id: data
   owner_profile: data
   owners:
@@ -3859,7 +3901,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.named_quality_execution
   path: src/ai_trading_system/data/named_quality_execution.py
-  sha256: 3b9b26f7c1cefea615229ca6f0406e0b07019dbe695d8045d97ec44d2a4275ff
+  sha256: 0711fcca803f980577d9cdb61a66a70815c266c7284a41677c779e509f9e98d2
   rule_id: data
   owner_profile: data
   owners:
@@ -10253,7 +10295,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.first_layer_composer_v2_current_session_producer
   path: src/ai_trading_system/first_layer_composer_v2_current_session_producer.py
-  sha256: 356c962af592fb7dd6ccdd35e1122ac1009a8768380a26779f514ab0f31ad66d
+  sha256: 5082a8366631a06abd1817a59b7210bcfb587b29f9ca0cf4b4d4847b39a5aabe
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -15915,7 +15957,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.compatibility_authority
   path: src/ai_trading_system/platform/architecture/compatibility_authority.py
-  sha256: 34e92e70f6b2249890f97c529d8b225ded035928c90ee6f2e43cd3d49d509c33
+  sha256: f6b7a51a3482f9c0b2ab871cbf6fecd4c104efbea2ec059b4f06cb26a625e3f9
   rule_id: platform_architecture
   owner_profile: platform
   owners:

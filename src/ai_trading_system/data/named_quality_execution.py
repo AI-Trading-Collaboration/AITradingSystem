@@ -38,6 +38,8 @@ from ai_trading_system.contracts.data_quality_execution import (
     canonical_json_value,
 )
 from ai_trading_system.contracts.named_data_quality_execution import (
+    COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_PATH,
+    COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_SHA256,
     FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_PATH,
     FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256,
     PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
@@ -1119,6 +1121,10 @@ def _preview_calendar_witness(
             PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
             PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
         ),
+        (
+            COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_PATH,
+            COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_SHA256,
+        ),
     }:
         return (), None
     day = request.scope.requested_window.start
@@ -1148,10 +1154,16 @@ def _prospective_recording_metadata(
     ordinary named verifier already proved that anchor's committed membership.
     """
     request = receipt.request
-    if (request.source_manifest_path, request.source_manifest_sha256) != (
-        PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
-        PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
-    ):
+    if (request.source_manifest_path, request.source_manifest_sha256) not in {
+        (
+            PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
+            PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
+        ),
+        (
+            COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_PATH,
+            COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_SHA256,
+        ),
+    }:
         return ()
     roots = {
         "EXECUTION": Path(request.roots.execution_root),
@@ -1246,6 +1258,20 @@ def bootstrap_worker(
     run_dispatch_path: str | None = None,
     run_dispatch_sha256: str | None = None,
 ) -> dict[str, object]:
+    if operation in {"composer-activate", "composer-readiness", "composer-capture"}:
+        if (request.get("source_manifest_path"), request.get("source_manifest_sha256")) != (
+            COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_PATH,
+            COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_SHA256,
+        ) or any(
+            value is not None
+            for value in (receipt_path, receipt_sha256, run_dispatch_path, run_dispatch_sha256)
+        ):
+            _fail("NAMED_DQ_COMPOSER_PROFILE_REQUIRED", operation)
+        from ai_trading_system.composer_prospective_capture import (
+            bootstrap_worker as composer_worker,
+        )
+
+        return composer_worker(request, operation=operation, bootstrap=bootstrap)
     if operation in {"activate", "capture"}:
         # Only the fixed new profile can dispatch this fixed production parent;
         # old profiles never import its additional modules or acquire its scope.

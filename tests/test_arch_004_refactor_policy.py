@@ -3916,7 +3916,8 @@ TRADING_2564_S3B_SECTION = "phase_trading_2564_s3b_prospective_capture_execution
 TRADING_2564_S5_SECTION = "phase_trading_2564_s5_validated_duration_seed_v1"
 TRADING_2564_S5_DIAGNOSTICS_SECTION = "phase_trading_2564_s5_immediate_failure_diagnostics_v1"
 TRADING_2564_S4_FIRST_ACCESS_SECTION = "phase_trading_2564_s4_experiment_first_access_v1"
-LATEST_COMPATIBILITY_SECTION = TRADING_2564_S4_FIRST_ACCESS_SECTION
+TRADING_2560_COMPOSER_CAPTURE_SECTION = "phase_trading_2560_composer_known_snapshot_capture_v1"
+LATEST_COMPATIBILITY_SECTION = TRADING_2560_COMPOSER_CAPTURE_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -12636,6 +12637,10 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= frozenset(
             baseline[TRADING_2564_S4_FIRST_ACCESS_SECTION]["superseded_live_source_paths"]
         )
+    if TRADING_2560_COMPOSER_CAPTURE_SECTION in baseline:
+        paths |= frozenset(
+            baseline[TRADING_2560_COMPOSER_CAPTURE_SECTION]["superseded_live_source_paths"]
+        )
     return paths
 
 
@@ -13107,6 +13112,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2564_S5_SECTION,
         TRADING_2564_S5_DIAGNOSTICS_SECTION,
         TRADING_2564_S4_FIRST_ACCESS_SECTION,
+        TRADING_2560_COMPOSER_CAPTURE_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13213,6 +13219,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2564_S5_SECTION,
         TRADING_2564_S5_DIAGNOSTICS_SECTION,
         TRADING_2564_S4_FIRST_ACCESS_SECTION,
+        TRADING_2560_COMPOSER_CAPTURE_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -14154,7 +14161,8 @@ def _source_sha256(source: dict[str, object]) -> str:
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
     if (
-        TRADING_2564_S4_FIRST_ACCESS_SECTION in baseline
+        TRADING_2560_COMPOSER_CAPTURE_SECTION in baseline
+        or TRADING_2564_S4_FIRST_ACCESS_SECTION in baseline
         or TRADING_2564_S5_DIAGNOSTICS_SECTION in baseline
         or TRADING_2564_S5_SECTION in baseline
         or TRADING_2564_S3B_SECTION in baseline
@@ -14187,6 +14195,8 @@ def _source_sha256(source: dict[str, object]) -> str:
             authority_section = TRADING_2564_S5_DIAGNOSTICS_SECTION
         if TRADING_2564_S4_FIRST_ACCESS_SECTION in baseline:
             authority_section = TRADING_2564_S4_FIRST_ACCESS_SECTION
+        if TRADING_2560_COMPOSER_CAPTURE_SECTION in baseline:
+            authority_section = TRADING_2560_COMPOSER_CAPTURE_SECTION
         phase = baseline[authority_section]
         current_superseded_paths = frozenset(
             str(path) for path in phase["superseded_live_source_paths"]
@@ -14218,6 +14228,7 @@ def _source_sha256(source: dict[str, object]) -> str:
                         TRADING_2564_S5_SECTION,
                         TRADING_2564_S5_DIAGNOSTICS_SECTION,
                         TRADING_2564_S4_FIRST_ACCESS_SECTION,
+                        TRADING_2560_COMPOSER_CAPTURE_SECTION,
                     }
                     else ()
                 ),
@@ -14232,6 +14243,7 @@ def _source_sha256(source: dict[str, object]) -> str:
                         TRADING_2564_S5_SECTION,
                         TRADING_2564_S5_DIAGNOSTICS_SECTION,
                         TRADING_2564_S4_FIRST_ACCESS_SECTION,
+                        TRADING_2560_COMPOSER_CAPTURE_SECTION,
                     }
                     else ()
                 ),
@@ -14245,6 +14257,7 @@ def _source_sha256(source: dict[str, object]) -> str:
                         TRADING_2564_S5_SECTION,
                         TRADING_2564_S5_DIAGNOSTICS_SECTION,
                         TRADING_2564_S4_FIRST_ACCESS_SECTION,
+                        TRADING_2560_COMPOSER_CAPTURE_SECTION,
                     }
                     else ()
                 ),
@@ -14257,6 +14270,7 @@ def _source_sha256(source: dict[str, object]) -> str:
                         TRADING_2564_S5_SECTION,
                         TRADING_2564_S5_DIAGNOSTICS_SECTION,
                         TRADING_2564_S4_FIRST_ACCESS_SECTION,
+                        TRADING_2560_COMPOSER_CAPTURE_SECTION,
                     }
                     else ()
                 ),
@@ -14268,6 +14282,7 @@ def _source_sha256(source: dict[str, object]) -> str:
                         TRADING_2564_S5_SECTION,
                         TRADING_2564_S5_DIAGNOSTICS_SECTION,
                         TRADING_2564_S4_FIRST_ACCESS_SECTION,
+                        TRADING_2560_COMPOSER_CAPTURE_SECTION,
                     }
                     else ()
                 ),
@@ -14277,12 +14292,19 @@ def _source_sha256(source: dict[str, object]) -> str:
                     in {
                         TRADING_2564_S5_DIAGNOSTICS_SECTION,
                         TRADING_2564_S4_FIRST_ACCESS_SECTION,
+                        TRADING_2560_COMPOSER_CAPTURE_SECTION,
                     }
                     else ()
                 ),
                 *(
                     (TRADING_2564_S5_DIAGNOSTICS_SECTION,)
-                    if authority_section == TRADING_2564_S4_FIRST_ACCESS_SECTION
+                    if authority_section
+                    in {TRADING_2564_S4_FIRST_ACCESS_SECTION, TRADING_2560_COMPOSER_CAPTURE_SECTION}
+                    else ()
+                ),
+                *(
+                    (TRADING_2564_S4_FIRST_ACCESS_SECTION,)
+                    if authority_section == TRADING_2560_COMPOSER_CAPTURE_SECTION
                     else ()
                 ),
             )
@@ -24880,9 +24902,9 @@ def test_devx_011_governed_workflow_health_authority_remains_historical() -> Non
     for source in phase["sources"]:
         assert source["hash_normalization"] == "git_eol_lf"
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
-    # S4 adds two catalog and three system-flow entries. The historical
+    # Composer adds eight catalog/system-flow entries. The historical
     # workflow contract stays frozen; only the live successor count advances.
-    assert phase["report_catalog_flow_successor"]["entry_count"] == 3187
+    assert phase["report_catalog_flow_successor"]["entry_count"] == 3195
     assert phase["report_catalog_flow_successor"]["fragment_count"] == 192
     assert phase["safety"] == {
         "market_cache_read": False,

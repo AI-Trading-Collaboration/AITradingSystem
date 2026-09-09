@@ -41,10 +41,14 @@ from ai_trading_system.upper_state_label_feature_reset import (
     build_upper_state_action_value_matrix_v2,
     build_upper_state_labels_v2,
 )
-from ai_trading_system.yaml_loader import safe_load_yaml_path
+from ai_trading_system.yaml_loader import load_strict_yaml_text, safe_load_yaml_path
 
 DEFAULT_CURRENT_SESSION_PRODUCER_POLICY_PATH = Path(
     "config/research/first_layer_composer_v2_current_session_producer_v1.yaml"
+)
+# Exact reviewed input contract; changing these bytes requires the linked requirement review.
+KNOWN_SNAPSHOT_INPUT_POLICY_SHA256 = (
+    "a882644608705b6b1fa2f9d907f780bf485762e3725a9c782f4a2859be7eeb09"
 )
 
 _SHA256_CHARS = frozenset("0123456789abcdef")
@@ -167,6 +171,54 @@ class CurrentSessionProducerPolicy(_StrictModel):
     safety: SafetyPolicy
 
 
+class _KnownSnapshotInputPolicy(PolicyMetadata):
+    schema_version: Literal["first_layer_composer_v2_known_snapshot_input_policy.v1"]
+    policy_id: Literal["first_layer_composer_v2_known_snapshot_input_v1"]
+    policy_version: Literal["1.0.0"]
+    status: Literal["OWNER_REVIEWED_PROSPECTIVE_INPUT_POLICY"]
+    owner: Literal["project_owner"]
+    owner_decision_id: str
+    requirement: str
+    frozen_current_session_policy: AuthorityBinding
+    information_set: Literal["LOCALLY_CAPTURED_CURRENT_REVISION_AT_R"]
+    prices_end_rule: Literal["COMPLETE_XNYS_PRICES_THROUGH_F"]
+    rates_end_rule: Literal["OBSERVATION_DATES_ON_OR_BEFORE_F"]
+    rate_feature_algorithm: Literal["ORIGINAL_XNYS_REINDEX_THEN_FFILL"]
+    synthetic_terminal_rate_row_allowed: Literal[False]
+    rate_series: list[str]
+    required_rate_disclosures: list[str]
+    historical_training_role: Literal["CURRENT_REVISION_PREQUENTIAL_TRAINING"]
+    historical_provider_available_at: Literal["NOT_ESTABLISHED"]
+    historical_pit_claim_allowed: Literal[False]
+    refit_rule: Literal["FIT_ON_EACH_REQUESTED_FEATURE_SESSION"]
+    model_feature_threshold_selection_rule: Literal["INHERIT_FROZEN_CURRENT_SESSION_POLICY"]
+    training_sample_count: Literal[504]
+    label_horizon_xnys_sessions: Literal[20]
+    decision_rule: Literal["NEXT_XNYS_CLOSE_FORWARD_V1"]
+    future_observation_outcome_access_allowed: Literal[False]
+    pure_preview_grants_capture_authority: Literal[False]
+    data_quality_rule: Literal["THREE_SCOPES_CANONICAL_STRICT_PASS_WITH_ORIGINAL_POLICY_BOUNDARIES"]
+    provider_calls_allowed: Literal[False]
+    cache_mutation_allowed: Literal[False]
+    production_effect: Literal["none"]
+    broker_action: Literal["none"]
+
+    @model_validator(mode="after")
+    def validate_series_and_disclosures(self) -> Self:
+        if self.rate_series != ["DGS10", "DGS2", "DTWEXBGS"]:
+            raise ValueError("known snapshot rate series drifted")
+        if self.required_rate_disclosures != [
+            "raw_last_valid_observation_date",
+            "effective_carry_source_date",
+            "raw_lag_calendar_days",
+            "effective_lag_calendar_days",
+            "carry_applied",
+            "input_content_sha256",
+        ]:
+            raise ValueError("known snapshot rate disclosures drifted")
+        return self
+
+
 @dataclass(frozen=True)
 class LoadedCurrentSessionProducerPolicy:
     policy: CurrentSessionProducerPolicy
@@ -236,6 +288,229 @@ def build_current_session_preview(
     dq_receipt_sha256: str,
     source_sha256: str,
 ) -> CurrentSessionPreviewResult:
+    dq_identity, source_identity = _validate_preview_request(
+        loaded_policy=loaded_policy,
+        feature_session=feature_session,
+        data_quality_status=data_quality_status,
+        dq_receipt_sha256=dq_receipt_sha256,
+        source_sha256=source_sha256,
+    )
+    price_frame = _normalize_current_visible_frame(prices, "prices", feature_session)
+    rate_frame = _normalize_current_visible_frame(rates, "rates", feature_session)
+    return _build_normalized_session_preview(
+        loaded_policy=loaded_policy,
+        feature_session=feature_session,
+        price_frame=price_frame,
+        rate_frame=rate_frame,
+        data_quality_status=data_quality_status,
+        dq_identity=dq_identity,
+        source_identity=source_identity,
+    )
+
+
+def build_known_snapshot_preview(
+    *,
+    loaded_policy: LoadedCurrentSessionProducerPolicy,
+    input_policy_content: bytes,
+    feature_session: date,
+    prices: pd.DataFrame,
+    rates: pd.DataFrame,
+    data_quality_status: str,
+    dq_receipt_sha256: str,
+    source_sha256: str,
+) -> CurrentSessionPreviewResult:
+    """Compute a pure preview; the runtime must prove DQ, raw bytes and actual R.
+
+    The reviewed information-set contract permits genuinely earlier macro rows.
+    It does not grant capture authority or establish historical provider availability.
+    """
+    input_policy = _validate_known_snapshot_policy(input_policy_content, loaded_policy)
+    dq_identity, source_identity = _validate_preview_request(
+        loaded_policy=loaded_policy,
+        feature_session=feature_session,
+        data_quality_status=data_quality_status,
+        dq_receipt_sha256=dq_receipt_sha256,
+        source_sha256=source_sha256,
+    )
+    try:
+        price_frame = _normalize_current_visible_frame(prices, "prices", feature_session)
+        rate_frame = _normalize_frame(rates, "rates")
+        future_rows = rate_frame.index > pd.Timestamp(feature_session)
+        if future_rows.any():
+            raise CurrentSessionProducerError(
+                "CURRENT_SESSION_PRODUCER_FUTURE_INPUT_PRESENT",
+                f"role=rates; rows={int(future_rows.sum())}",
+            )
+        if rate_frame.empty:
+            raise CurrentSessionProducerError(
+                "CURRENT_SESSION_PRODUCER_TARGET_INPUT_MISSING",
+                f"role=rates; feature_session={feature_session.isoformat()}",
+            )
+        _validate_known_snapshot_values(price_frame, "prices")
+        _validate_known_snapshot_values(rate_frame, "rates")
+        base_policy = loaded_policy.frozen_operational_policy.policy
+        history_index = pd.DatetimeIndex(
+            _xnys_sessions(base_policy.training_history.start, feature_session)
+        )
+        _require_rate_coverage(rate_frame, base_policy, history_index)
+        rate_identity, rate_disclosures = _known_snapshot_rate_disclosures(
+            rate_frame, history_index, input_policy, feature_session
+        )
+    except OperationalForecastError as exc:
+        raise CurrentSessionProducerError(exc.reason_code, exc.detail) from exc
+    result = _build_normalized_session_preview(
+        loaded_policy=loaded_policy,
+        feature_session=feature_session,
+        price_frame=price_frame,
+        rate_frame=rate_frame,
+        data_quality_status=data_quality_status,
+        dq_identity=dq_identity,
+        source_identity=source_identity,
+    )
+    identities = dict(result.preview["observation_identity_preview"])
+    identities["signal_sha256"] = _canonical_sha256(
+        {
+            "schema_version": "first_layer_composer_v2_known_snapshot_signal.v1",
+            "computed_signal_sha256": identities["signal_sha256"],
+            "input_policy_sha256": KNOWN_SNAPSHOT_INPUT_POLICY_SHA256,
+            "normalized_rates_sha256": rate_identity,
+        }
+    )
+    identities["policy_sha256"] = KNOWN_SNAPSHOT_INPUT_POLICY_SHA256
+    disclosures = {
+        "input_policy_sha256": KNOWN_SNAPSHOT_INPUT_POLICY_SHA256,
+        "frozen_current_session_policy_sha256": loaded_policy.file_sha256,
+        "information_set": input_policy.information_set,
+        "normalized_rates_sha256": rate_identity,
+        "normalized_rates_identity_schema": "composer_known_snapshot_normalized_rates.v1",
+        "rate_feature_algorithm": input_policy.rate_feature_algorithm,
+        "rate_disclosures": rate_disclosures,
+        "historical_training_access": {
+            "accessed": True,
+            "role": input_policy.historical_training_role,
+            "label_construction_input_start": base_policy.training_history.start.isoformat(),
+            "label_construction_input_end": feature_session.isoformat(),
+            "fit_sample_count": input_policy.training_sample_count,
+            "label_horizon_xnys_sessions": input_policy.label_horizon_xnys_sessions,
+            "historical_provider_available_at": input_policy.historical_provider_available_at,
+        },
+        "historical_pit_claim_allowed": False,
+        "future_observation_outcome_access": False,
+        "pure_preview_grants_capture_authority": False,
+        "actual_input_capture_time_established": False,
+    }
+    return CurrentSessionPreviewResult(
+        preview={
+            **result.preview,
+            "schema_version": "first_layer_composer_v2_known_snapshot_preview.v1",
+            "producer_id": input_policy.policy_id,
+            "producer_version": input_policy.policy_version,
+            "observation_identity_preview": identities,
+            **disclosures,
+        },
+        fit_audit=result.fit_audit,
+        receipt={
+            **result.receipt,
+            "schema_version": "first_layer_composer_v2_known_snapshot_preview_receipt.v1",
+            "policy_id": input_policy.policy_id,
+            "policy_file_sha256": KNOWN_SNAPSHOT_INPUT_POLICY_SHA256,
+            **disclosures,
+        },
+    )
+
+
+def _validate_known_snapshot_policy(
+    content: bytes, loaded_policy: LoadedCurrentSessionProducerPolicy
+) -> _KnownSnapshotInputPolicy:
+    try:
+        if not isinstance(content, bytes):
+            raise TypeError("input policy must be exact bytes")
+        if hashlib.sha256(content).hexdigest() != KNOWN_SNAPSHOT_INPUT_POLICY_SHA256:
+            raise ValueError("known snapshot input policy bytes drifted")
+        raw = load_strict_yaml_text(content.decode("utf-8"), label="known snapshot input policy")
+        policy = _KnownSnapshotInputPolicy.model_validate(raw, strict=True)
+        binding = policy.frozen_current_session_policy
+        if (
+            binding.path != DEFAULT_CURRENT_SESSION_PRODUCER_POLICY_PATH.as_posix()
+            or binding.sha256 != loaded_policy.file_sha256
+        ):
+            raise ValueError("frozen current-session policy binding drifted")
+        frozen = loaded_policy.frozen_operational_policy.policy
+        if (
+            frozen.walk_forward.train_window_sessions != policy.training_sample_count
+            or frozen.walk_forward.label_horizon_sessions != policy.label_horizon_xnys_sessions
+            or loaded_policy.policy.fit_contract.refit_rule != policy.refit_rule
+        ):
+            raise ValueError("inherited training rule drifted")
+    except (TypeError, ValueError) as exc:
+        raise CurrentSessionProducerError(
+            "KNOWN_SNAPSHOT_PRODUCER_INPUT_POLICY_INVALID", str(exc)
+        ) from exc
+    return policy
+
+
+def _validate_known_snapshot_values(frame: pd.DataFrame, role: str) -> None:
+    if frame.columns.has_duplicates or any(not isinstance(value, str) for value in frame.columns):
+        raise CurrentSessionProducerError("KNOWN_SNAPSHOT_PRODUCER_INPUT_SCHEMA_INVALID", role)
+    for column in frame.columns:
+        series = frame[column]
+        if not pd.api.types.is_numeric_dtype(series) or pd.api.types.is_bool_dtype(series):
+            raise CurrentSessionProducerError(
+                "KNOWN_SNAPSHOT_PRODUCER_INPUT_VALUES_INVALID", f"role={role}; column={column}"
+            )
+        # Missing observations retain the original coverage/ffill semantics; infinity
+        # is invalid input, not an additional investment-facing freshness threshold.
+        if np.isinf(series.to_numpy(dtype=float, na_value=np.nan)).any():
+            raise CurrentSessionProducerError(
+                "KNOWN_SNAPSHOT_PRODUCER_INPUT_VALUES_INVALID", f"role={role}; column={column}"
+            )
+
+
+def _known_snapshot_rate_disclosures(
+    rate_frame: pd.DataFrame,
+    history_index: pd.DatetimeIndex,
+    policy: _KnownSnapshotInputPolicy,
+    feature_session: date,
+) -> tuple[str, list[dict[str, Any]]]:
+    payload = {
+        "schema_version": "composer_known_snapshot_normalized_rates.v1",
+        "columns": list(rate_frame.columns),
+        "dates": [timestamp.date().isoformat() for timestamp in rate_frame.index],
+        "values": [
+            [None if pd.isna(value) else float(value) for value in row]
+            for row in rate_frame.itertuples(index=False, name=None)
+        ],
+    }
+    identity = _canonical_sha256(payload)
+    # Match the frozen algorithm's initial reindex exactly: off-calendar raw rows
+    # are excluded before forward-fill and cannot be reported as its carry source.
+    effective = rate_frame.reindex(history_index)
+    rows: list[dict[str, Any]] = []
+    for series in policy.rate_series:
+        raw_date = rate_frame[series].dropna().index[-1].date()
+        effective_date = effective[series].dropna().index[-1].date()
+        rows.append(
+            {
+                "series": series,
+                "raw_last_valid_observation_date": raw_date.isoformat(),
+                "effective_carry_source_date": effective_date.isoformat(),
+                "raw_lag_calendar_days": (feature_session - raw_date).days,
+                "effective_lag_calendar_days": (feature_session - effective_date).days,
+                "carry_applied": effective_date < feature_session,
+                "input_content_sha256": identity,
+            }
+        )
+    return identity, rows
+
+
+def _validate_preview_request(
+    *,
+    loaded_policy: LoadedCurrentSessionProducerPolicy,
+    feature_session: date,
+    data_quality_status: str,
+    dq_receipt_sha256: str,
+    source_sha256: str,
+) -> tuple[str, str]:
     if data_quality_status != "PASS":
         raise CurrentSessionProducerError(
             "CURRENT_SESSION_PRODUCER_DQ_NOT_PASS", f"observed={data_quality_status}"
@@ -260,8 +535,19 @@ def build_current_session_preview(
             feature_session.isoformat(),
         )
 
-    price_frame = _normalize_current_visible_frame(prices, "prices", feature_session)
-    rate_frame = _normalize_current_visible_frame(rates, "rates", feature_session)
+    return dq_identity, source_identity
+
+
+def _build_normalized_session_preview(
+    *,
+    loaded_policy: LoadedCurrentSessionProducerPolicy,
+    feature_session: date,
+    price_frame: pd.DataFrame,
+    rate_frame: pd.DataFrame,
+    data_quality_status: str,
+    dq_identity: str,
+    source_identity: str,
+) -> CurrentSessionPreviewResult:
     frozen = loaded_policy.frozen_operational_policy
     base_policy = frozen.policy
     try:

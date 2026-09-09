@@ -669,22 +669,38 @@ def _parent_proof(
     # Import at call time so the coordinator can freeze the new exact profile
     # without widening any previous consumer or bootstrap contract.
     from ai_trading_system.contracts.named_data_quality_execution import (
+        COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_PATH,
+        COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_SHA256,
         PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
         PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
     )
 
     context = require_named_execution_context()
+    profile = (request.source_manifest_path, request.source_manifest_sha256)
+    operation_profile_allowed = (
+        getattr(bootstrap, "operation", None) == "capture"
+        and profile
+        == (
+            PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
+            PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
+        )
+    ) or (
+        getattr(bootstrap, "operation", None) in {"composer-readiness", "composer-capture"}
+        and profile
+        == (
+            COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_PATH,
+            COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_SHA256,
+        )
+    )
     if (
         bootstrap.context is not context
         or context.process_id != os.getpid()
-        or getattr(bootstrap, "operation", None) != "capture"
+        or not operation_profile_allowed
         or type(bootstrap.canonical_dq_call_count) is not int
         or bootstrap.canonical_dq_call_count != 0
         or bootstrap.source_lease_id != lease.lease_id
         or context.identity.execution_root != request.roots.execution_root
         or context.identity.candidate_commit != request.candidate_commit
-        or request.source_manifest_path != PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH
-        or request.source_manifest_sha256 != PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256
         or context.identity.source_manifest_path != request.source_manifest_path
         or context.identity.source_manifest_sha256 != request.source_manifest_sha256
         or Path(request.roots.execution_root) != lease.guard.project_root
@@ -931,7 +947,11 @@ def dispatch_named_quality_child(
         stderr_binding = _write(store, publication_stage, stderr)
         parent: dict[str, Any] = {
             "schema_version": "named_data_quality_parent_dispatch.v1",
-            "profile": "PROSPECTIVE_FIVE_CANDIDATE_PRODUCTION_PARENT",
+            "profile": (
+                "COMPOSER_PROSPECTIVE_PRODUCTION_PARENT"
+                if bootstrap.operation.startswith("composer-")
+                else "PROSPECTIVE_FIVE_CANDIDATE_PRODUCTION_PARENT"
+            ),
             "status_semantics": "PARENT_ASSOCIATION_AND_PROCESS_OBSERVATION_ONLY",
             "status": "PASS" if receipt is not None and failure is None else "BLOCKED",
             "candidate_commit": request.candidate_commit,
@@ -940,7 +960,9 @@ def dispatch_named_quality_child(
             "request_id": request.request_id,
             "source_lease_id": lease.lease_id,
             "operation": "run",
-            "parent_operation": "capture",
+            "parent_operation": (
+                bootstrap.operation if bootstrap.operation.startswith("composer-") else "capture"
+            ),
             "command": command,
             "launch_audit": launch.audit,
             "parent_pid": os.getpid(),

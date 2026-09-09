@@ -1,0 +1,66 @@
+schema_version: composer_prospective_capture_policy.v1
+policy_id: composer_prospective_capture_v1
+policy_version: 1.0.0
+status: OWNER_REVIEWED_BOUNDED_RESEARCH
+owner: project_owner
+owner_decision_id: owner_instruction:TRADING-2560:2026-09-09:continue_known_snapshot_prospective_research
+requirement: docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md
+rationale: >-
+  将已受审 Composer current-known 规则接入同一不可变输入、三段 canonical DQ 和真实时点记录。
+  旧五候选、equal-risk 及 implementation-only preview 的授权范围保持原义。
+intended_effect: >-
+  先有限检查已有快照，再从实际冻结后的首个合法 F 建立一条前瞻观察；本波不访问未来 outcome。
+validation_evidence: >-
+  Strict DTO、same-snapshot 三段聚合、原始子进程终态、代码与输入漂移、迟到、崩溃、幂等及
+  真实 immutable writer/HostClockEvidence 的独立复核；实际运行结果另存，不预先宣称 PASS。
+review_condition: >-
+  增加 session/attempt、DQ 或模型次数、修改信息集/训练/DQ/时钟/输出访问和生产边界之前另审。
+input_policy_path: config/research/first_layer_composer_v2_known_snapshot_input_v1.yaml
+input_policy_sha256: a882644608705b6b1fa2f9d907f780bf485762e3725a9c782f4a2859be7eeb09
+data_quality_policy_path: config/data_quality.yaml
+data_quality_policy_boundary: ORIGINAL_REVIEWED_CONSISTENCY_START_DATES
+scope_order:
+  - training
+  - exact_cash
+  - primary
+scopes:
+  training:
+    requested_start: '2018-01-02'
+    price_tickers: [QQQ, TQQQ, SHY]
+    rate_series: [DGS2, DGS10, DTWEXBGS]
+    input_roles: [prices, rates, secondary_prices]
+    require_secondary_prices: true
+  exact_cash:
+    requested_start: '2020-05-28'
+    price_tickers: [SGOV]
+    rate_series: [DGS2, DGS10, DTWEXBGS]
+    input_roles: [prices, rates]
+    require_secondary_prices: false
+  primary:
+    requested_start: '2021-02-22'
+    price_tickers: [QQQ, SGOV, TQQQ]
+    rate_series: [DGS2, DGS10, DTWEXBGS]
+    input_roles: [prices, rates, secondary_prices]
+    require_secondary_prices: true
+activation_attempt_maximum: 1
+feature_session_maximum: 1
+attempts_per_feature_session: 1
+readiness_attempt_maximum: 1
+canonical_dq_calls_per_scope_maximum: 1
+canonical_dq_calls_per_readiness_maximum: 3
+canonical_dq_calls_per_capture_maximum: 3
+canonical_dq_calls_per_manifest_maximum: 6
+parent_canonical_dq_call_maximum: 0
+model_fit_calls_per_capture_maximum: 1
+model_fit_calls_per_readiness_maximum: 0
+activation_before_feature_date_required: true
+timing_version: NEXT_XNYS_CLOSE_FORWARD_V1
+historical_training_access: CURRENT_REVISION_PREQUENTIAL_TRAINING
+future_observation_outcome_access_allowed: false
+provider_calls_allowed: false
+cache_mutation_allowed: false
+orders: 0
+fills: 0
+positions: 0
+production_effect: none
+broker_action: none

@@ -322,7 +322,15 @@ class NamedBootstrapSession:
         )
         if preloaded:
             _fail("NAMED_BOOTSTRAP_PROJECT_PREIMPORTED", preloaded[0])
-        if operation not in {"run", "verify", "activate", "capture"}:
+        if operation not in {
+            "run",
+            "verify",
+            "activate",
+            "capture",
+            "composer-activate",
+            "composer-readiness",
+            "composer-capture",
+        }:
             _fail("NAMED_BOOTSTRAP_OPERATION_INVALID", operation)
         # Correlation from the trusted coordinator, not an independent lease
         # proof. The parent binds a live guard/fence proof and this child's
@@ -359,6 +367,13 @@ class NamedBootstrapSession:
             != "9a11ed94e1c318aee3c44a7d01ba0f31556bd4de355eef1f75893245fe8bc1ce"
         ):
             _fail("NAMED_BOOTSTRAP_PROSPECTIVE_PROFILE_REQUIRED", operation)
+        if operation in {"composer-activate", "composer-readiness", "composer-capture"} and (
+            self.manifest.relative_path
+            != "config/data_governance/named_composer_prospective_sources_v1.json"
+            or self.manifest.sha256
+            != "2613012b0774aaf78b448ccf63ee469099dd796cea28de8060b0ad9cd3bc3d2a"
+        ):
+            _fail("NAMED_BOOTSTRAP_COMPOSER_PROFILE_REQUIRED", operation)
         self.bootstrap = self.git.artifact(BOOTSTRAP_PATH)
         if Path(__file__).absolute() != self.root / BOOTSTRAP_PATH:
             _fail("NAMED_BOOTSTRAP_ENTRY_ROOT_MISMATCH", str(Path(__file__).absolute()))
@@ -514,7 +529,17 @@ def main() -> int:
     parser.add_argument("--request", required=True, type=Path)
     parser.add_argument("--request-sha256", required=True)
     parser.add_argument(
-        "--operation", choices=("run", "verify", "activate", "capture"), required=True
+        "--operation",
+        choices=(
+            "run",
+            "verify",
+            "activate",
+            "capture",
+            "composer-activate",
+            "composer-readiness",
+            "composer-capture",
+        ),
+        required=True,
     )
     parser.add_argument("--source-lease-id", required=True)
     parser.add_argument("--receipt-path")
@@ -541,7 +566,15 @@ def main() -> int:
             args.run_dispatch_sha256,
         )
         if (
-            args.operation in {"run", "activate", "capture"}
+            args.operation
+            in {
+                "run",
+                "activate",
+                "capture",
+                "composer-activate",
+                "composer-readiness",
+                "composer-capture",
+            }
             and any(value is not None for value in verification_arguments)
         ) or (
             args.operation == "verify" and any(value is None for value in verification_arguments)
@@ -581,7 +614,13 @@ def main() -> int:
         return 0
     except (ValueError, OSError, ImportError, RuntimeError, SyntaxError, TypeError) as exc:
         parent_calls = 0 if session is None else session.canonical_dq_call_count
-        capture_operation = args.operation in {"activate", "capture"}
+        capture_operation = args.operation in {
+            "activate",
+            "capture",
+            "composer-activate",
+            "composer-readiness",
+            "composer-capture",
+        }
         observed_calls = (
             (
                 result.get("canonical_dq_call_count")

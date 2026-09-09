@@ -228,6 +228,23 @@ PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256 = (
     "9a11ed94e1c318aee3c44a7d01ba0f31556bd4de355eef1f75893245fe8bc1ce"
 )
 
+# TRADING-2560 current-known Composer is a distinct, reviewed consumer. These
+# protocol identities never widen any old price-only or recording-only accessor.
+COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_PATH = (
+    "config/data_governance/named_composer_prospective_sources_v1.json"
+)
+COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_SHA256 = (
+    "2613012b0774aaf78b448ccf63ee469099dd796cea28de8060b0ad9cd3bc3d2a"
+)
+COMPOSER_INPUT_POLICY_PATH = "config/research/first_layer_composer_v2_known_snapshot_input_v1.yaml"
+COMPOSER_INPUT_POLICY_SHA256 = "a882644608705b6b1fa2f9d907f780bf485762e3725a9c782f4a2859be7eeb09"
+COMPOSER_SCOPE_ORDER = ("training", "exact_cash", "primary")
+COMPOSER_SCOPE_SPECS = {
+    "training": (date(2018, 1, 2), ("QQQ", "TQQQ", "SHY"), True),
+    "exact_cash": (date(2020, 5, 28), ("SGOV",), False),
+    "primary": (date(2021, 2, 22), ("QQQ", "SGOV", "TQQQ"), True),
+}
+
 _PROSPECTIVE_RECORDING_ROLES = frozenset(
     {
         "publication_pointer",
@@ -321,6 +338,49 @@ class NamedDQScope(_NamedDTO):
             and set(required.input_roles).issubset(self.input_roles)
             and (not required.require_secondary_prices or self.require_secondary_prices)
         )
+
+
+@dataclass(frozen=True)
+class NamedComposerInputScope(_NamedDTO):
+    """One of three fixed DQ roles; only a verified aggregate grants model input."""
+
+    schema_version: ClassVar[str] = "named_composer_input_scope.v1"
+    as_of: date
+    segment: str
+    input_policy_binding: NamedArtifactBinding
+
+    def __post_init__(self) -> None:
+        self._check_types()
+        if self.segment not in COMPOSER_SCOPE_SPECS:
+            _invalid("Composer requires an explicit fixed segment")
+        if self.as_of < date(2025, 12, 3):
+            _invalid("Composer current-session role must follow its historical cutoff")
+        if (
+            self.input_policy_binding.root_role != "EXECUTION"
+            or self.input_policy_binding.relative_path != COMPOSER_INPUT_POLICY_PATH
+            or self.input_policy_binding.sha256 != COMPOSER_INPUT_POLICY_SHA256
+            or self.input_policy_binding.size_bytes <= 0
+        ):
+            _invalid("Composer requires the reviewed complete input policy binding")
+
+    @property
+    def dq_scope(self) -> NamedDQScope:
+        return composer_dq_scope(as_of=self.as_of, segment=self.segment)
+
+
+def composer_dq_scope(*, as_of: date, segment: str) -> NamedDQScope:
+    """Pure fixed declaration, not a verified input or policy binding."""
+    if type(as_of) is not date or segment not in COMPOSER_SCOPE_SPECS:
+        _invalid("fixed Composer segment and exact date required")
+    start, tickers, secondary = COMPOSER_SCOPE_SPECS[segment]
+    return NamedDQScope(
+        as_of=as_of,
+        requested_window=DataQualityDateWindow(start, as_of),
+        expected_price_tickers=tickers,
+        expected_rate_series=EQUAL_RISK_GUARD_RATE_SERIES,
+        input_roles=("prices", "rates", "secondary_prices") if secondary else ("prices", "rates"),
+        require_secondary_prices=secondary,
+    )
 
 
 @dataclass(frozen=True)
@@ -985,6 +1045,10 @@ class VerifiedNamedInputs:
                         PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
                         PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
                     ),
+                    (
+                        COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_PATH,
+                        COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_SHA256,
+                    ),
                 }
                 or not preview_sessions
                 or tuple(sorted(set(preview_sessions))) != preview_sessions
@@ -997,10 +1061,16 @@ class VerifiedNamedInputs:
         prospective = (
             receipt.execution.source_manifest_path,
             receipt.execution.source_manifest_sha256,
-        ) == (
-            PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
-            PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
-        )
+        ) in {
+            (
+                PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
+                PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
+            ),
+            (
+                COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_PATH,
+                COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_SHA256,
+            ),
+        }
         if type(captured_recording_artifacts) is not tuple or any(
             type(row) is not tuple
             or len(row) != 3
@@ -1195,13 +1265,74 @@ class VerifiedNamedInputs:
         by the verifier before minting this seal. No source path is reopened.
         """
         self._assert_prospective_profile()
+        return self._recording_closure(composer=False)
+
+    def _assert_composer_profile(self) -> None:
+        self._assert_current()
+        if (
+            self._receipt.execution.source_manifest_path,
+            self._receipt.execution.source_manifest_sha256,
+        ) != (
+            COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_PATH,
+            COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_SHA256,
+        ):
+            _invalid("Composer requires its separate reviewed exact source manifest")
+
+    def inputs_for_composer_segment(
+        self, *, required_scope: NamedComposerInputScope
+    ) -> tuple[bytes, bytes, tuple[date, ...], date]:
+        """Current-known prices/rates bytes for exactly one reviewed DQ segment.
+
+        The full requested price coverage was checked by canonical DQ. Its
+        common evaluated window is retained unchanged. The new input policy
+        explicitly permits earlier rates under the original quality policy;
+        this is neither a historical available-at proof nor aggregate readiness.
+        The consumer must verify all three same-snapshot segments before fit.
+        """
+        self._assert_composer_profile()
+        if type(required_scope) is not NamedComposerInputScope:
+            _invalid("Composer requires its exact typed segment")
+        if (
+            self._receipt.request.scope != required_scope.dq_scope
+            or required_scope.input_policy_binding not in self._receipt.execution_dependencies
+            or self._receipt.publication.transaction_window.end != required_scope.as_of
+        ):
+            _invalid("Composer segment, policy or snapshot cutoff differs")
+        if (
+            not self._preview_sessions
+            or self._preview_sessions[-1] != required_scope.as_of
+            or self._preview_next_session is None
+        ):
+            _invalid("Composer requires the original verified XNYS calendar witness")
+        inputs = dict(self._captured)
+        return (
+            inputs["prices"],
+            inputs["rates"],
+            self._preview_sessions,
+            self._preview_next_session,
+        )
+
+    def recording_closure_for_composer(self) -> tuple[tuple[str, bytes], ...]:
+        """Preserve this Composer segment; aggregate/input policy checks remain required."""
+        self._assert_composer_profile()
+        return self._recording_closure(composer=True)
+
+    def _recording_closure(self, *, composer: bool) -> tuple[tuple[str, bytes], ...]:
         rows = [("input_" + role, content) for role, content in self._captured]
         bindings = {item.role: item.member for item in self._receipt.inputs}
         index = [
             {
                 "role": "input_" + role,
                 "binding": bindings[role].to_dict(),
-                "semantic_role": "PRICE_FEATURE" if role == "prices" else "DQ_GUARD_ONLY",
+                "semantic_role": (
+                    "PRICE_FEATURE"
+                    if role == "prices"
+                    else (
+                        "CURRENT_KNOWN_RATE_FEATURE"
+                        if composer and role == "rates"
+                        else "DQ_GUARD_ONLY"
+                    )
+                ),
             }
             for role, _ in self._captured
         ]
@@ -1222,14 +1353,18 @@ class VerifiedNamedInputs:
                 }
             )
         manifest = {
-            "schema_version": "prospective_verified_input_closure.v1",
+            "schema_version": (
+                "composer_verified_input_closure.v1"
+                if composer
+                else "prospective_verified_input_closure.v1"
+            ),
             "request_id": self._receipt.request.request_id,
             "receipt_id": self._receipt.receipt_id,
             "execution_identity_sha256": self._receipt.execution.stable_identity_sha256,
             "members": sorted(index, key=lambda item: str(item["role"])),
             "all_dq_input_roles": sorted(item.role for item in self._receipt.inputs),
             "recording_only": True,
-            "rates_feature_access_granted": False,
+            "rates_feature_access_granted": composer,
             "provider_available_at_status": "NOT_ESTABLISHED",
         }
         rows.append(("closure_manifest", canonical_json_value(manifest).encode("utf-8")))

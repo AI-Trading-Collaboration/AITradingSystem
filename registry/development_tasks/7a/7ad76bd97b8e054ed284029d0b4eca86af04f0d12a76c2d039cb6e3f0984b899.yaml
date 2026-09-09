@@ -13,19 +13,18 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner：真实 capture 前精确授权 start/DQ/manifest/一次 observation；Codex
-    继续保持 Track B 既有 forward-aging
+  next_owner: Codex：完成单一最终候选验证和ordinary push，执行真实readiness/activation
   requirement_refs:
-  - docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md
+  - docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: current-session producer 已达 SAFE_PREVIEW_READY；OBSERVATION_READY
-    仍受 prospective start、canonical DQ、exact manifest replay 与精确 capture 授权阻断
+  unstructured_legacy_blocker_or_next_step: 实际Composer route已通过；latest-main生成状态已按精确drift
+    plan协调，待新候选四tiers/Full全部6项actual测试及发布后研究运行
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: producer policy/loader/single-session/current-visible/mature-label/identity
-      tests PASS；旧 frozen producer hash 不变；真实 observation=0；所有禁止动作=0
+    text: 三段canonical DQ及same-bytes identity；原模型/阈值规则/504/20不变；宏观真实carry披露；严格事件时点/一次尝试；历史训练访问和未来outcome关闭分离；正式验证/ordinary
+      main push；实际readiness/activation结果及首条合法观察或精确时间/输入blocker留存
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -168,25 +167,164 @@ events:
   - change:trading-2560-current-session-producer-baseline-done-20260904-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-55c7de320a2a14fb108649b0a33cd9e5
+- schema_version: task_event.v1
+  task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-09T01:10:00+09:00'
+  actor: integration-coordinator
+  change_id: trading-2560-known-snapshot-start-20260909-v1
+  lane_id: null
+  base_commit: a5b82f14f97a898d8c25951560f6e77d15aca295
+  previous_state_event_id: task-event-55c7de320a2a14fb108649b0a33cd9e5
+  from_status: BASELINE_DONE
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：落实 Owner 已选择的 current-known snapshot 前瞻输入政策，接通完整训练 DQ 与首条真实观察
+    blocker_or_next_step: 完整2018训练分段DQ与Composer专属真实记录尚未接通；旧rates同日门禁由独立新信息集版本承接，原v1不变；未来F须在真实activation之后
+    acceptance_criteria: 三段canonical DQ及same-bytes identity；原模型/阈值规则/504/20不变；宏观真实carry披露；严格事件时点/一次尝试；历史训练访问和未来outcome关闭分离；正式验证/ordinary
+      main push；实际readiness/activation结果及首条合法观察或精确时间/输入blocker留存
+    notes: 'Owner 澄清继续此前建议的生成时已知输入快照规则；不再推进无关工程后继。Supporting requirement: docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md。保留旧一次性授权及历史结论；运行仅本地受限研究，provider/download/cache/交易0；首次outcome访问前仍执行S4。前置READ_SCOPE_EXCESS及工作区生命周期已记录。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2560-known-snapshot-start-20260909-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-221d4ab5f20b77fa539d0f76dc63aa00
+- schema_version: task_event.v1
+  task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-08T17:32:04.852291+00:00'
+  actor: integration-coordinator
+  change_id: trading-2560-known-snapshot-implementation-20260909-v1
+  lane_id: null
+  base_commit: a5b82f14f97a898d8c25951560f6e77d15aca295
+  previous_state_event_id: task-event-221d4ab5f20b77fa539d0f76dc63aa00
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：完成精确candidate验证及ordinary main push，然后执行受限真实readiness/activation
+    blocker_or_next_step: known-snapshot/DQ/recording实现已接通；actual seal和正式验证待执行；真实DQ/fit/observation仍0；首F由真实activation决定
+    acceptance_criteria: 三段canonical DQ及same-bytes identity；原模型/阈值规则/504/20不变；宏观真实carry披露；严格事件时点/一次尝试；历史训练访问和未来outcome关闭分离；正式验证/ordinary
+      main push；实际readiness/activation结果及首条合法观察或精确时间/输入blocker留存
+    notes: '独立runtime/shared审查PASS；producer39、DTO186、dispatch79及共享fixture修正证据留存；分轮runtime不冒充final
+      Full。Supporting requirement: docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2560-known-snapshot-implementation-20260909-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-eace02401c72e521d60010609aff3ca5
+- schema_version: task_event.v1
+  task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-08T18:07:53.234872+00:00'
+  actor: integration-coordinator
+  change_id: trading-2560-composer-atlas-source-20260909-v1
+  lane_id: null
+  base_commit: d34610c9b3d8d650b8d818e961008f1fbf40c5f6
+  previous_state_event_id: task-event-eace02401c72e521d60010609aff3ca5
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：完成精确candidate正式验证和ordinary push，执行固定真实readiness/activation；合法F再采集
+    blocker_or_next_step: known-snapshot/DQ/recording已接通；正式页面同步当前需求绑定。真实运行状态见固定composer_known_snapshot_first_real_v1原始结果；前瞻证据须等待合法时间和严格DQ
+    acceptance_criteria: 三段canonical DQ及same-bytes identity；原模型/阈值规则/504/20不变；宏观真实carry披露；严格事件时点/一次尝试；历史训练访问和未来outcome关闭分离；正式验证/ordinary
+      main push；实际readiness/activation结果及首条合法观察或精确时间/输入blocker留存
+    notes: '工程source d34610c9b及500 PASS/1旧目录计数FAIL、修正8 PASS和186 DTO PASS均留存；实际能力与前瞻研究结论分开。Supporting
+      requirement: docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2560-composer-atlas-source-20260909-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7c46ba755ad6f65875c8a413ab2104c1
+- schema_version: task_event.v1
+  task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-08T18:35:30.432346+00:00'
+  actor: integration-coordinator
+  change_id: trading-2560-composer-dq-assertion-source-20260909-v1
+  lane_id: null
+  base_commit: d2099dbe6424c879bf00973c63567351181ebe09
+  previous_state_event_id: task-event-7c46ba755ad6f65875c8a413ab2104c1
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：修复Composer父层分段evidence root初始化及DQ负例断言，最终候选验证推送后执行固定真实readiness/activation
+    blocker_or_next_step: 实际合成2 PASS/4 FAIL：三段seal及旧profile限制通过；三项负例DQ正确FAIL但误判exit，readiness缺少分段目录初始化。保持通用dispatcher与DQ政策，修复父层后复验
+    acceptance_criteria: 三段canonical DQ及same-bytes identity；原模型/阈值规则/504/20不变；宏观真实carry披露；严格事件时点/一次尝试；历史训练访问和未来outcome关闭分离；正式验证/ordinary
+      main push；实际readiness/activation结果及首条合法观察或精确时间/输入blocker留存
+    notes: 'd2099dbe原始2 PASS/4 FAIL与实际8次synthetic DQ保留，未派发Full；activation通过，真实DQ/fit/observation为0。Supporting
+      requirement: docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2560-composer-dq-assertion-source-20260909-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b61cb597e5e61fa245ba04a5d0da23ec
+- schema_version: task_event.v1
+  task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-09T01:17:34.934962+00:00'
+  actor: integration-coordinator
+  change_id: trading-2560-composer-route-budget-source-20260909-v1
+  lane_id: null
+  base_commit: c063d3474aff7f27db118fd18d30806923b0c2a7
+  previous_state_event_id: task-event-b61cb597e5e61fa245ba04a5d0da23ec
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：修正真实路由测试的嵌套子进程预算，完成最终验证发布后执行真实研究readiness/activation
+    blocker_or_next_step: 候选c063的5项seal检查通过；路由先被租约到期遮蔽，补验有效lease下3次DQ完成后外层300秒超时。仅修正测试外层预算，保留全部生产边界
+    acceptance_criteria: 三段canonical DQ及same-bytes identity；原模型/阈值规则/504/20不变；宏观真实carry披露；严格事件时点/一次尝试；历史训练访问和未来outcome关闭分离；正式验证/ordinary
+      main push；实际readiness/activation结果及首条合法观察或精确时间/输入blocker留存
+    notes: '采用300秒既有启动/审计开销预算+3*120秒生产子任务预算；不变更子任务超时、运行时代码、DQ或投资政策。原失败证据完整保留。Supporting
+      requirement: docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2560-composer-route-budget-source-20260909-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b24925ea86bef4ff9e4e5b77afdc7cec
+- schema_version: task_event.v1
+  task_id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-09T04:41:34.235243+00:00'
+  actor: integration-coordinator
+  change_id: trading-2560-composer-integration-source-20260909-v1
+  lane_id: null
+  base_commit: 7477d7b3f673ba328b538b8083de04e30a923cce
+  previous_state_event_id: task-event-b24925ea86bef4ff9e4e5b77afdc7cec
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：完成单一最终候选验证和ordinary push，执行真实readiness/activation
+    blocker_or_next_step: 实际Composer route已通过；latest-main生成状态已按精确drift plan协调，待新候选四tiers/Full全部6项actual测试及发布后研究运行
+    acceptance_criteria: 三段canonical DQ及same-bytes identity；原模型/阈值规则/504/20不变；宏观真实carry披露；严格事件时点/一次尝试；历史训练访问和未来outcome关闭分离；正式验证/ordinary
+      main push；实际readiness/activation结果及首条合法观察或精确时间/输入blocker留存
+    notes: '完整保留原事件及失败证据，main其他任务不变。真实DQ/fit/observation仍为0。Supporting requirement:
+      docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2560-composer-integration-source-20260909-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2c42f834db5daf72545e7af292a8d5b0
 projection:
   legacy_first_eight_cells:
   - TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
   - Strategy research / first-layer composer v2 prospective OOS observation
   - P0
-  - BASELINE_DONE
-  - Project Owner：真实 capture 前精确授权 start/DQ/manifest/一次 observation；Codex 继续保持 Track
-    B 既有 forward-aging
-  - current-session producer 已达 SAFE_PREVIEW_READY；OBSERVATION_READY 仍受 prospective
-    start、canonical DQ、exact manifest replay 与精确 capture 授权阻断
-  - producer policy/loader/single-session/current-visible/mature-label/identity tests
-    PASS；旧 frozen producer hash 不变；真实 observation=0；所有禁止动作=0
-  - '新增 versioned current-session producer；9 个新 tests，与旧 producer/prospective contract
-    合计 26 passed；Ruff/Black/strict mypy PASS。Track B 没有新增 empirical run。Supporting
-    requirement: docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md'
+  - IN_PROGRESS
+  - Codex：完成单一最终候选验证和ordinary push，执行真实readiness/activation
+  - 实际Composer route已通过；latest-main生成状态已按精确drift plan协调，待新候选四tiers/Full全部6项actual测试及发布后研究运行
+  - 三段canonical DQ及same-bytes identity；原模型/阈值规则/504/20不变；宏观真实carry披露；严格事件时点/一次尝试；历史训练访问和未来outcome关闭分离；正式验证/ordinary
+    main push；实际readiness/activation结果及首条合法观察或精确时间/输入blocker留存
+  - '完整保留原事件及失败证据，main其他任务不变。真实DQ/fit/observation仍为0。Supporting requirement: docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md'
   docs_links:
-  - docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md
+  - docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md
   terminal: false
-  canonical_row_sha256: bc2dc3f2104a8eb7637bdd180ff5f10ffd4876489b28d3905a0a93b65d632214
-last_event_id: task-event-55c7de320a2a14fb108649b0a33cd9e5
+  canonical_row_sha256: 1a351f58d87fa984a0fcd9546b988f9e607504c2b2e07606959d5c29eed55a3d
+last_event_id: task-event-2c42f834db5daf72545e7af292a8d5b0
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 7bbc30126b5f7bae6e266c7c6a6ce87f9dacc427aa00a8d7e8672c7ba3cfb8c9
+fragment_checksum: c54218945afed6d23a3540dc849a25823cbb2963b23f8d6d0f9a2ba07fd3da44

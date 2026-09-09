@@ -1,0 +1,52 @@
+schema_version: first_layer_composer_v2_known_snapshot_input_policy.v1
+policy_id: first_layer_composer_v2_known_snapshot_input_v1
+policy_version: 1.0.0
+status: OWNER_REVIEWED_PROSPECTIVE_INPUT_POLICY
+owner: project_owner
+owner_decision_id: owner_instruction:TRADING-2560:2026-09-09:continue_known_snapshot_prospective_research
+requirement: docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md
+rationale: >-
+  原 rates 整表末日等于 F 的门禁不能代表现实中生成信号时已知的信息集。Owner 选择使用
+  R 时实际取得的当前 revision 快照，保留原特征 carry 算法并披露滞后，以检验未来可执行信号。
+intended_effect: >-
+  价格完整到已收盘 F；宏观仅使用不晚于 F 且真实 R 时已保存的输入，允许较早末日，
+  不补造 F 行。未来结果从 next_XNYS(F) 的收盘开始；历史训练不宣称 historical PIT。
+validation_evidence: >-
+  同日 v1/v2 数值一致；v1 拒绝滞后、v2 仅受审输入允许；实际 carry/raw 日期区分；
+  未来行、缺输入、scope/DQ/identity/时点错误与同日不同记录 fail closed；完整真实闭包复核。
+review_condition: >-
+  信息集、模型、feature、carry 算法、训练/成熟规则、成本、action、时钟或输出访问变化前另审。
+frozen_current_session_policy:
+  path: config/research/first_layer_composer_v2_current_session_producer_v1.yaml
+  sha256: 20e5e362b1358e35da04de0847bb7ccc94f0d3c1a853336df4da1f13ed4b15b4
+information_set: LOCALLY_CAPTURED_CURRENT_REVISION_AT_R
+prices_end_rule: COMPLETE_XNYS_PRICES_THROUGH_F
+rates_end_rule: OBSERVATION_DATES_ON_OR_BEFORE_F
+rate_feature_algorithm: ORIGINAL_XNYS_REINDEX_THEN_FFILL
+synthetic_terminal_rate_row_allowed: false
+rate_series:
+  - DGS10
+  - DGS2
+  - DTWEXBGS
+required_rate_disclosures:
+  - raw_last_valid_observation_date
+  - effective_carry_source_date
+  - raw_lag_calendar_days
+  - effective_lag_calendar_days
+  - carry_applied
+  - input_content_sha256
+historical_training_role: CURRENT_REVISION_PREQUENTIAL_TRAINING
+historical_provider_available_at: NOT_ESTABLISHED
+historical_pit_claim_allowed: false
+refit_rule: FIT_ON_EACH_REQUESTED_FEATURE_SESSION
+model_feature_threshold_selection_rule: INHERIT_FROZEN_CURRENT_SESSION_POLICY
+training_sample_count: 504
+label_horizon_xnys_sessions: 20
+decision_rule: NEXT_XNYS_CLOSE_FORWARD_V1
+future_observation_outcome_access_allowed: false
+pure_preview_grants_capture_authority: false
+data_quality_rule: THREE_SCOPES_CANONICAL_STRICT_PASS_WITH_ORIGINAL_POLICY_BOUNDARIES
+provider_calls_allowed: false
+cache_mutation_allowed: false
+production_effect: none
+broker_action: none

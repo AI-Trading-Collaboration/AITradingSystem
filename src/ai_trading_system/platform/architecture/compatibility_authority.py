@@ -972,6 +972,12 @@ def build_repository_authority(
         section_id, section = _trading_2564_s4_first_access_section(root, policy=policy)
         relative, record, content = render_fragment(section_id=section_id, section=section)
         rendered_fragments.append((section_id, relative, record, content))
+    if (
+        root / "docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md"
+    ).exists():
+        section_id, section = _trading_2560_composer_known_snapshot_section(root, policy=policy)
+        relative, record, content = render_fragment(section_id=section_id, section=section)
+        rendered_fragments.append((section_id, relative, record, content))
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -3459,6 +3465,69 @@ def _trading_2564_s4_first_access_section(
             "historical_evidence_mutated": False,
             "investment_thresholds_changed": False,
             "real_dq_or_research_executed": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _trading_2560_composer_known_snapshot_section(
+    root: Path, *, policy: Mapping[str, Any]
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_trading_2560_composer_known_snapshot_capture_v1"
+    previous_id, previous = _trading_2564_s4_first_access_section(root, policy=policy)
+    source_paths = sorted(
+        {
+            *previous["superseded_live_source_paths"],
+            "src/ai_trading_system/first_layer_composer_v2_current_session_producer.py",
+            "src/ai_trading_system/contracts/composer_prospective_capture.py",
+            "src/ai_trading_system/composer_prospective_capture.py",
+            "config/research/first_layer_composer_v2_known_snapshot_input_v1.yaml",
+            "config/research/composer_prospective_capture_v1.yaml",
+            "config/data_governance/named_composer_prospective_sources_v1.json",
+            "tests/test_first_layer_composer_v2_current_session_producer.py",
+            "tests/test_composer_prospective_capture_contract.py",
+            "tests/test_composer_prospective_capture.py",
+            "docs/requirements/TRADING-2560_First_Layer_Composer_V2_Prospective_OOS_Observation_V1.md",
+            "docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md",
+        },
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "trading_2560_composer_known_snapshot_capture.v1",
+        "task_id": "TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1",
+        "status": "IN_PROGRESS",
+        "owner_decision": (
+            "owner_instruction:TRADING-2560:2026-09-09:"
+            "continue_known_snapshot_prospective_research"
+        ),
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": previous_id,
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "input_contract": {
+            "information_set": "LOCAL_CURRENT_REVISION_KNOWN_AT_ORIGINAL_INPUT_RETURN",
+            "rates": "ORIGINAL_XNYS_REINDEX_FFILL_WITH_PER_SERIES_SOURCE_DATES",
+            "dq": "THREE_SAME_SNAPSHOT_STRICT_PASS_SEGMENTS",
+            "training": "INHERITED_MATURE_504_SESSION_20_SESSION_LABEL",
+            "decision": "NEXT_XNYS_CLOSE_AFTER_FORWARD_ACTIVATION",
+            "manifest": "ONE_ACTIVATION_ONE_READINESS_ONE_FEATURE_SESSION_NO_RETRY",
+        },
+        "safety": {
+            "historical_provider_available_at_established": False,
+            "historical_pit_claim_allowed": False,
+            "future_observation_outcome_access_allowed": False,
+            "scoreboard_or_maturity_allowed": False,
+            "historical_evidence_mutated": False,
+            "model_or_threshold_rules_changed": False,
+            "provider_or_cache_mutation_allowed": False,
+            "automatic_scheduler_enabled": False,
             "production_effect": "none",
             "broker_action": "none",
         },
