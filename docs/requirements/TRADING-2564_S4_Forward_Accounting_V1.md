@@ -105,3 +105,5 @@ Composer 的原 activation / capture manifest 仍绑定原 candidate `4ac10a668`
   `final_validation_acceptance_v1.json`、`main_publication_v1.json` 和 cleanup / release receipt
   为准；未出现的回执不是 PASS。发布通过后下一动作是既有 equal-risk first-access adapter
   与结果盲协议的准入，不重复已完成会计基线或旧 DQ retry。
+
+- 最终 Atlas 生成发现 task notes 更新遗漏总需求引用；通过 canonical update 恢复三份需求链接。原 final-v1 未调度 Full 并终止保留；补充提交后新 final-v2 重新绑定全部正式验证。会计算法及投资规则不变。

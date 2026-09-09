@@ -15,6 +15,7 @@ task_record:
   accountable_owner: null
   next_owner: Codex coordinator：完成S4会计算术最终验证和普通main发布；随后返回equal-risk首看adapter及协议准入
   requirement_refs:
+  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
   - docs/requirements/TRADING-2564_S4_Forward_Accounting_V1.md
   - docs/requirements/TRADING-2564_Stage_Decision_Pilot_V1.md
   module_ids: []
@@ -1149,6 +1150,35 @@ events:
   - change:trading-2564-s4-forward-accounting-source-20260909-v2
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-c716927a50c2039a992625fc0fd40e0a
+- schema_version: task_event.v1
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-09T09:49:58.009403+00:00'
+  actor: integration-coordinator
+  change_id: trading-2564-s4-forward-accounting-binding-20260909-v1
+  lane_id: null
+  base_commit: 343f4c298a6a45e851834cf4c3372986088cf3c1
+  previous_state_event_id: task-event-c716927a50c2039a992625fc0fd40e0a
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex coordinator：完成S4会计算术最终验证和普通main发布；随后返回equal-risk首看adapter及协议准入
+    blocker_or_next_step: 56项合成会计与独立审查通过；待source/generated和最终formal/Full。真实equal-risk结果首读仍需具名adapter、输入DQ/PIT/历史暴露及研究协议。Composer等待既定未来F/新快照。
+    acceptance_criteria: exact封套/政策及身份连通历史绑定；pending-before-loader、终止/重复/篡改/并发负例PASS；来源闭包与final
+      formal/Full、普通main发布和清理通过；不得宣称真实OOS或legacy全面门禁。；阶段决策pilot：见 docs/requirements/TRADING-2564_Stage_Decision_Pilot_V1.md，全优先级准入、来源绑定的六例回放和十个反例、唯一action/WAIT/owner裁决、无重复在途任务；建设与实际防漂移效果分轴验收，效果未观察前不得宣称已解决。；S4会计：Fraction精确日/全期恒等式、贡献加总、期初回撤、显式日期/资产全集、全局Decimal
+      context不敏感及合成负例；独立review/focused/static/正式Full和ordinary main发布；旧源/策略/观察不变。
+    notes: 2026-09-09：Owner授权有界试行；复用TRADING-2564，umbrella保持IN_PROGRESS。pilot不新增程序/锁/scheduler/交易规则，不修改历史冻结portfolio和AGENTS。文档入口及当前decision见支持需求；环境错误、错误时间事件和行政事务保留隔离证据，正确runtime及当前source单独绑定；正式发布以回执为准。；Atlas生成前发现原umbrella
+      requirement引用在task update中被遗漏，按官方append-only事件恢复并保留pilot链接，validator未放宽，Full尚未dispatch。；2026-09-09
+      Owner要求其他任务继续推进，SDP-20260909-002选既有S4会计算术基线。新增支持需求 docs/requirements/TRADING-2564_S4_Forward_Accounting_V1.md；独立审查已接受Fraction精确归因/期初回撤/完整日期资产集合。原equal-risk
+      corrected DQ已FAIL，仅核查receipt，不重复旧attempt。纯合成工程，真实DQ/outcome/交易0。；S4会计算术实现已完成：56项纯合成并行测试、Black/Ruff/strict
+      mypy及独立review PASS。贡献为精确初始资本归一化货币PnL，费用单列、回撤含初值。待source/generated与最终formal/Full发布；真实first-access
+      adapter/协议仍未完成。；总需求 docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；恢复Atlas要求的总需求引用；最终生成未通过时未调度Full，原失败回执保留。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2564-s4-forward-accounting-binding-20260909-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8417133fbbed079fc50f9e2fd0ac0933
 projection:
   legacy_first_eight_cells:
   - TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
@@ -1165,12 +1195,13 @@ projection:
     Owner要求其他任务继续推进，SDP-20260909-002选既有S4会计算术基线。新增支持需求 docs/requirements/TRADING-2564_S4_Forward_Accounting_V1.md；独立审查已接受Fraction精确归因/期初回撤/完整日期资产集合。原equal-risk
     corrected DQ已FAIL，仅核查receipt，不重复旧attempt。纯合成工程，真实DQ/outcome/交易0。；S4会计算术实现已完成：56项纯合成并行测试、Black/Ruff/strict
     mypy及独立review PASS。贡献为精确初始资本归一化货币PnL，费用单列、回撤含初值。待source/generated与最终formal/Full发布；真实first-access
-    adapter/协议仍未完成。
+    adapter/协议仍未完成。；总需求 docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md；恢复Atlas要求的总需求引用；最终生成未通过时未调度Full，原失败回执保留。
   docs_links:
+  - docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md
   - docs/requirements/TRADING-2564_S4_Forward_Accounting_V1.md
   - docs/requirements/TRADING-2564_Stage_Decision_Pilot_V1.md
   terminal: false
-  canonical_row_sha256: cac65c0cdf6791a21981e0bc495bc6fbf874801434ebc862f8bcae75b6fb0775
-last_event_id: task-event-c716927a50c2039a992625fc0fd40e0a
+  canonical_row_sha256: 6b1e176f235b56b43fa07f2f6bf1f7a33e629e4a21177cdb2c23fad9b8d853b2
+last_event_id: task-event-8417133fbbed079fc50f9e2fd0ac0933
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 7382e1f37e0254f0929bf5fb210f6f4a2c139a6a0839e58366c45237bb847ab6
+fragment_checksum: c0925291b13b711b88b1cb3e417d6e636822c7ddd5a0902e04dbb6900f8ae21c

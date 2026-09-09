@@ -14,7 +14,7 @@ fragment_count: 1067
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 23f7ed7506c50d6061696671ded90194c7945dba0a6c7cd4ff0d0ea7b3701455
+final_chain_sha256: 7ca06f1a593c9aaa746695f55353cf00f1834680c35d34805b039fe0ce9464ab
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: ecee535fb08562da2c2fc6b054991cd569fdc7ca4c5b4109a8871fd7c16d5d1e
 templates:
@@ -8535,41 +8535,41 @@ fragments:
   entry_sha256: 13ed6ee767dd01708e20c3e173af9aa907ebc6561fc042457a4eff7b66100e14
 - task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
   path: registry/development_tasks/c8/c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml
-  file_sha256: 30ce3f64ad0616a55be5c5094ede4f7847e5bfbbef22f2e0ea76e6439300ec16
-  fragment_checksum: 7382e1f37e0254f0929bf5fb210f6f4a2c139a6a0839e58366c45237bb847ab6
+  file_sha256: 67055954e22fecd850c015a0622a2ae88a143b035f22b6618d8afc3ffeb7d097
+  fragment_checksum: c0925291b13b711b88b1cb3e417d6e636822c7ddd5a0902e04dbb6900f8ae21c
   partition: active
   order: 1064
   previous_entry_sha256: 13ed6ee767dd01708e20c3e173af9aa907ebc6561fc042457a4eff7b66100e14
-  entry_sha256: 62b0fffa71fe13cec59f40f3eb7386f7cc3d3014b060ad109a8ded494d4f38f1
+  entry_sha256: fe356fadbefb0d4e28994e455095d57d51e8624d30c25c5effd8e2dce59e3ad4
 - task_id: OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR
   path: registry/development_tasks/cd/cdcf4ff5d0c3c8c4b23fdfc72f44fd4c53c1fcf7449bafc0bda1fab81bbcb0df.yaml
   file_sha256: e1eeadc994187c561e720e44e4e5ff04131426a891a0b9f9f935bdea3738a6bb
   fragment_checksum: 6cd6147323aa9952056f25220312b92c712f0617345469f2254c03c11002dcbf
   partition: active
   order: 1065
-  previous_entry_sha256: 62b0fffa71fe13cec59f40f3eb7386f7cc3d3014b060ad109a8ded494d4f38f1
-  entry_sha256: 2c0c7c020954e8f8ea627826dc68cf0200dbcc5c241b40657b7acdd2431d7dc0
+  previous_entry_sha256: fe356fadbefb0d4e28994e455095d57d51e8624d30c25c5effd8e2dce59e3ad4
+  entry_sha256: ca377ede018823708a23a141ca3fe5c826672a8d3bb43de9af52d5dd89307d8a
 - task_id: DEVX-013_CONTINUOUS_IMPROVEMENT_EXECUTION_AND_OUTCOME_LOOP_V1
   path: registry/development_tasks/5b/5b5f7a5966ada3047a6a89e8c0ddde803059f5b490254187917a6dc38166edf1.yaml
   file_sha256: 6222b1404ebbdaeaaf766fe0bd70d68fdd3e883b61d5744e28043dc707a7c955
   fragment_checksum: 9ed6c09dd6a464796fe37213a0db19304b72350da19a4ddaefff886f77047cf9
   partition: active
   order: 1066
-  previous_entry_sha256: 2c0c7c020954e8f8ea627826dc68cf0200dbcc5c241b40657b7acdd2431d7dc0
-  entry_sha256: 92d466492b7ce349eece597807100f57225b8f58223cb23107fbda66a4bb3469
+  previous_entry_sha256: ca377ede018823708a23a141ca3fe5c826672a8d3bb43de9af52d5dd89307d8a
+  entry_sha256: 2b2dbeb40c958b61dbbbd4cdb90ed971d2dca673da95329d286518ebdf590035
 - task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
   path: registry/development_tasks/7a/7aa82ac8ab6fa54a137b6972521b5ba8c7f1d0c4033f6fe84dac77fa2b5267e1.yaml
   file_sha256: ef2d0b48dba04dcd40f874cb73c973d223de4e7ad430259a8bbf9f51278da84e
   fragment_checksum: 5851990c4d12da8052789a13c038dee2280af7b2e2b1b679aa3500be28aaefab
   partition: active
   order: 1067
-  previous_entry_sha256: 92d466492b7ce349eece597807100f57225b8f58223cb23107fbda66a4bb3469
-  entry_sha256: 23f7ed7506c50d6061696671ded90194c7945dba0a6c7cd4ff0d0ea7b3701455
+  previous_entry_sha256: 2b2dbeb40c958b61dbbbd4cdb90ed971d2dca673da95329d286518ebdf590035
+  entry_sha256: 7ca06f1a593c9aaa746695f55353cf00f1834680c35d34805b039fe0ce9464ab
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 1f0a9af33cfc9c3072286180839eb696d4aea2058ab3c30c4642449880fb710b
-  byte_count: 1781375
+  sha256: 39241e5472ec34688e48ca162814422819cfb189a02673fe2df9ae7e88c7af75
+  byte_count: 1781571
   row_count: 525
   generated_do_not_edit: true
 - partition: completed
@@ -12191,7 +12191,14 @@ governance_cycles:
   change_id: trading-2564-s4-forward-accounting-source-20260909-v2
   event_count: 45
   production_effect: none
-governance_cycle_count: 516
+- cycle_id: arch-005-s5-cycle-517
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1
+  change_id: trading-2564-s4-forward-accounting-binding-20260909-v1
+  event_count: 46
+  production_effect: none
+governance_cycle_count: 517
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -12205,4 +12212,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 4f72347de72e167e6a65802fd7da094b5110774c3d9c0e9ad2fbddae47390c72
+index_checksum: 248d4cce5ba5e0111d303db7ad72071876b3d195fbc892fbe4cd7f83f7129296
