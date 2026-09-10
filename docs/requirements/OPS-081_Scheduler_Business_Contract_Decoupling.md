@@ -37,3 +37,5 @@ S0/S1/S2 已实现：v3 observation/binding 保存业务投影，live validator 
 对 actual automation.toml 的候选只读观察已 PASS：Terra/medium 与 owner 效率说明无须回滚；business SHA 为 bff1fbb130e91c05158e1c7183dc9b4c567f191aca9ef46bae9d2bc6563b8739。此证据未修改 runtime 或 active receipt，不构成 OPERATIONALLY_ACCEPTED。
 
 初始 publication transaction 因 generator 声明不足，第二次因需显式声明兼容性源/测试，均以 FAILED 正常释放并保留（均未执行 Full）。最终 scope transaction 为 ops-081-scheduler-contract-final-scope-20260910；声明完整 task/architecture/report-flow/compatibility 范围后继续同一 worktree，未新建替代分支或改写旧事务。兼容性扩展诊断发现新增末节与目录条目数的旧断言需更新；未完成的诊断跑批不作为正式 PASS。
+
+首个已提交候选 384df80589f057e0c7cecf7636b3376a4b6764d2 的 fast-unit 为 353 PASS / 1 FAIL：新增模块/测试使 deprecation inventory identity 与 counts 改变，锁定断言未同步。该事务 FAILED/RELEASED，保留原失败摘要，不继续发布。重验事务为 ops-081-scheduler-contract-inventory-rerun-20260910；只修正经实际清单核验的 inventory 身份、1222/1387 计数及另一 live catalog successor 的 3204 计数，不修改废弃生命周期、writer 许可或其他安全门禁。未执行过 Full，无 failed-Full parent。
