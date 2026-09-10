@@ -65,13 +65,66 @@ def test_repository_canonical_registry_is_active_and_self_hosted() -> None:
     assert registry.index["source_of_truth"] == CANONICAL_SOURCE
     assert registry.index["cutover_performed"] is True
     assert registry.index["legacy_markdown_writable"] is False
-    # OPS-081 adds one scheduler-contract repair task, not empirical evidence.
-    assert registry.index["task_count"] == len(registry.fragments) == 1068
-    assert registry.fragment("OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING")
+    # Preserve the exact integration-base identities, not a total that rejects
+    # legitimate canonical registrations or hides an equal-count replacement.
+    baseline_commit = "6498d030079370f6fc6dd2edf3b71dd0505ed57e"
+    baseline_index = canonical._canonical_blob_mapping(
+        canonical._canonical_git_blob(
+            PROJECT_ROOT, baseline_commit, canonical.CANONICAL_INDEX_PATH
+        ),
+        canonical.CANONICAL_INDEX_PATH,
+        generated=True,
+    )
+    canonical._verify_checksum(baseline_index, "index_checksum", "INDEX_CHECKSUM")
+    baseline_ids = [record["task_id"] for record in baseline_index["fragments"]]
+    assert len(set(baseline_ids)) == len(baseline_ids) == baseline_index["task_count"]
+    _assert_preserved_task_identities(
+        baseline_ids=set(baseline_ids),
+        current_ids=[
+            fragment["stable_task_identity"]["task_id"] for fragment in registry.fragments
+        ],
+        declared_count=registry.index["task_count"],
+    )
     assert registry.index["missing_task_count"] == 0
     assert registry.index["duplicate_task_count"] == 0
     assert registry.index["governance_cycle_count"] >= 2
     assert registry.index["manual_row_move_workflow_enabled"] is False
+
+
+def _assert_preserved_task_identities(
+    *, baseline_ids: set[str], current_ids: list[str], declared_count: int
+) -> None:
+    identities = set(current_ids)
+    assert type(declared_count) is int
+    assert len(identities) == len(current_ids) == declared_count
+    assert baseline_ids <= identities
+    assert {
+        "OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING",
+        "DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2",
+    } <= identities
+
+
+@pytest.mark.parametrize("mutation", ["addition", "missing", "replacement", "duplicate", "count"])
+def test_preserved_task_identities_allow_additions_but_reject_loss(mutation: str) -> None:
+    baseline_ids = {"BASELINE-A", "OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING"}
+    current_ids = sorted(baseline_ids) + ["DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2"]
+    if mutation == "addition":
+        current_ids.append("LEGITIMATE-NEW-TASK")
+        _assert_preserved_task_identities(
+            baseline_ids=baseline_ids, current_ids=current_ids, declared_count=len(current_ids)
+        )
+        return
+    if mutation == "missing":
+        current_ids.remove("BASELINE-A")
+    elif mutation == "replacement":
+        current_ids[current_ids.index("BASELINE-A")] = "UNRELATED-REPLACEMENT"
+    elif mutation == "duplicate":
+        current_ids.append("BASELINE-A")
+    declared_count = len(current_ids) + (1 if mutation == "count" else 0)
+    with pytest.raises(AssertionError):
+        _assert_preserved_task_identities(
+            baseline_ids=baseline_ids, current_ids=current_ids, declared_count=declared_count
+        )
 
 
 def test_generated_views_are_validated_do_not_edit_projections() -> None:

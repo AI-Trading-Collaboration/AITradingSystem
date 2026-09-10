@@ -1,0 +1,292 @@
+{
+  "schema_version": "compatibility_authority_fragment.v1",
+  "section": {
+    "authority_contract": {
+      "dual_write": false,
+      "fragment_identity": "CANONICAL_SECTION_SHA256",
+      "fragment_source_active": true,
+      "index_chain": "SHA256",
+      "legacy_append_allowed": false,
+      "rollback_mode": "FROZEN_LEGACY_PREFIX_ONLY"
+    },
+    "broker_action": "none",
+    "named_dq_contract": {
+      "canonical_dq_calls_per_runner": 1,
+      "canonical_dq_calls_per_verifier": 0,
+      "complete_report_projection_exact_bytes_required": true,
+      "coverage_semantics": "CANONICAL_DQ_RULES_ONLY",
+      "original_manifest_full_row_binding_required": true,
+      "separate_source_publication_execution_evidence_roots": true,
+      "source_kind": "GIT_COMMIT_BYTES_COMPILED",
+      "successful_terminal_dispatch_binding_required": true,
+      "verified_bytes_bound_to_current_pid_and_context": true,
+      "verified_seal_export_allowed": false
+    },
+    "owner_decision": "owner_instruction:TRADING-2564:2026-09-05:long-term-capability",
+    "production_effect": "none",
+    "safety": {
+      "broker_action": "none",
+      "consumer_cutover_allowed": false,
+      "dispatch_allowed": false,
+      "dq_numeric_rules_changed": false,
+      "historical_receipt_rewritten": false,
+      "production_effect": "none",
+      "publication_fence_changed": false,
+      "real_dq_or_research_executed": false
+    },
+    "schema_version": "trading_2564_s2b_named_dq_execution.v1",
+    "sources": [
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+        "sha256": "a4d4889c39a5029b641b8099fa9d2b7dc25aac092b223970eb6e3c405a803887"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/data_governance/named_data_quality_execution_sources_v1.json",
+        "sha256": "fc52a2754d58cf57391995def63b9df27f4704c483d2746fe35b7d73a7ed0bc8"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/data_quality/rate_row_issue_attribution_decision_v1.yaml",
+        "sha256": "d47a81bb018f10568bc7f68e3b675a95be625955106d2d758976b7fd0c5e536b"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/artifact_catalog.md",
+        "sha256": "ab42e57d131cd27d22e91fa6bffc6024e7d98ae1e853180c7731399f91e890de"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/data_quality/dq_issue_attribution_readiness_inventory_v1.md",
+        "sha256": "2cfaa29ebcc45c02adfbcde7751cac8fab11f679007967ebf3e477a4f110e94d"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/data_quality/rate_issue_attribution_review_pack_v1.md",
+        "sha256": "ba4e9ced9c58ece648f60d490a3d2bf67f0e400e58fee7ada5462052a7a44cff"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md",
+        "sha256": "ce375b0978cae606d5d0c01f7ee9239f4598129fcf0d0cef7ef11f41a6b9497d"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md",
+        "sha256": "f65ac1c7265b387aa7b9510407bd128ed8b193fc39c596617d0ac0452871883c"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/system_flow.md",
+        "sha256": "3acbe1110b434fc40df9cffb38cd0f48086bd379479f8580fa8561140228fb77"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_005_task_registry_index.yaml",
+        "sha256": "872bec6b21c554381a8f93127d32546e13b27225767c9a9be4a97db7f19bbade"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.json",
+        "sha256": "c9a637b198d2267d2938c0322e7a237c14d47111b4368e7afb020780c0714f63"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.validation.json",
+        "sha256": "801e658f10f8d4e6e42e84d9d84338cfb1e19df29969743eeaf6cf1c73d8a0dc"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/data_quality/rate_issue_attribution_review_pack_v1.json",
+        "sha256": "357f78f8f07443669ef1d617af83f301da2f7b5961a0397084c1e29449865f72"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json",
+        "sha256": "55b6c8493342c4e74a0455e24acb2163aabf1aa285213b797dbdc1d029e86520"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "registry/development_tasks/c8/c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml",
+        "sha256": "67055954e22fecd850c015a0622a2ae88a143b035f22b6618d8afc3ffeb7d097"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "scripts/run_named_data_quality.py",
+        "sha256": "79ca7bef36eaa0357cc1c5484c2a706c56c657988eee8ef07c15fa97073309da"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/contracts/named_data_quality_execution.py",
+        "sha256": "41325f9687cdce000760fce49f913708c984bad0e48a3b1ac406b3c49f4c184a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/contracts/named_execution_context.py",
+        "sha256": "c53897b111b0312b60219fd589f6085382ac3fca01e394f2a028387b345898b1"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/contracts/rate_data_quality_attribution.py",
+        "sha256": "9fab5cd47b285dc60b7b6843a692b82a8cb578f5ee37854b3cfe918fe5b9343e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/data/named_quality_execution.py",
+        "sha256": "0711fcca803f980577d9cdb61a66a70815c266c7284a41677c779e509f9e98d2"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/data/quality.py",
+        "sha256": "d8fe182e7c3abe8c93e3d4daf271a83d9440d1b446e3098051bde0a4455b3564"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/data/quality_execution.py",
+        "sha256": "51a2054aba48d42df642e98d53ab8794c0943139ed41fe33e19b1b75b527d1dc"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/data/quality_provenance.py",
+        "sha256": "342fb58aeb62b0f203da4ee9f959bfb45952effc961ae3f003e4a4520c5c9172"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "sha256": "befba72858803bde8b4aac3ce33cef714ec1627e1c8822b232c98185a1ad90c1"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/named_data_quality_support.py",
+        "sha256": "32a3de10ee99675b4a25526f3029e1d69160535d80efef9641281dae17103216"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_004_refactor_policy.py",
+        "sha256": "e0b987d07f69f82bf9031c503b7e7932b5cdbd7ff0eaa32fd0c3cffc01fd337a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_004g_deprecation.py",
+        "sha256": "a70b8ea01dca2e518d63817e2654d5115efecf24ffb5dfe147fb2865ab4c0ad4"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_data_quality.py",
+        "sha256": "06428bc10ce3a25798512e38003c8e5b410cff73f7974ee6cc047b578d305641"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_data_quality_execution.py",
+        "sha256": "7edf842b3c298423de942771746e446f0cd73aa09d12dbf17203ac4eacfa7e18"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_data_quality_issue_attribution_inventory.py",
+        "sha256": "03d9d855b6b204394547527108256dc6a73a164d33152d5ea46fd08f078186cc"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006c_compatibility_authority.py",
+        "sha256": "65fa06ac9537e5fb58253cda9e16330ec518e07f42130c952d8306626ebbf639"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "sha256": "93619e8c7f59a23ab6e256b3068af3164b2b17d0c66342065c9686f600ad536e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_named_data_quality_bootstrap.py",
+        "sha256": "df8240a3e8f461b87b9e1353fce08ff2c78e9c2177050e112d722b49dd7a2550"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_named_data_quality_candidate.py",
+        "sha256": "39a7231ec987652663a58c6e5abd91b5de26779d1e59680bbe6393641de4ec4a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_named_data_quality_execution.py",
+        "sha256": "55005048cf8b330c4726d329a8f09ba629c850d8c8512d72e5b83f1d6d6609f0"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_named_data_quality_execution_contract.py",
+        "sha256": "0a2c828b6514e075b658b476fb6fd7e25e3b0847200bbb0e973f234bc22c5a1f"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_qqq_options_signal_package.py",
+        "sha256": "260c37bd65e0bfc0c1696f1138a990947461f1abf83c2a92f078990aeefb1bd3"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_rate_issue_attribution_contract.py",
+        "sha256": "1bcc7897fa58237d945bab2675c210f6f0aaaa4fcf1cf6b326aed9273ceba7f9"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_research_input_readiness.py",
+        "sha256": "97b3c5f92e0431cfc57662ac15a45759ecd36ee78fcd0afd57f8bfb2c81e5775"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_trading2452_architecture_contract.py",
+        "sha256": "8b8f8ddb049cdbc757c3152eb8a799c9e58b15d74e43e071971071536a8c05f3"
+      }
+    ],
+    "status": "VALIDATING",
+    "superseded_live_source_paths": [
+      "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+      "config/data_governance/named_data_quality_execution_sources_v1.json",
+      "config/data_quality/rate_row_issue_attribution_decision_v1.yaml",
+      "docs/artifact_catalog.md",
+      "docs/data_quality/dq_issue_attribution_readiness_inventory_v1.md",
+      "docs/data_quality/rate_issue_attribution_review_pack_v1.md",
+      "docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md",
+      "docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md",
+      "docs/system_flow.md",
+      "inputs/architecture/arch_005_task_registry_index.yaml",
+      "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.json",
+      "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.validation.json",
+      "inputs/data_quality/rate_issue_attribution_review_pack_v1.json",
+      "inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json",
+      "registry/development_tasks/c8/c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml",
+      "scripts/run_named_data_quality.py",
+      "src/ai_trading_system/contracts/named_data_quality_execution.py",
+      "src/ai_trading_system/contracts/named_execution_context.py",
+      "src/ai_trading_system/contracts/rate_data_quality_attribution.py",
+      "src/ai_trading_system/data/named_quality_execution.py",
+      "src/ai_trading_system/data/quality.py",
+      "src/ai_trading_system/data/quality_execution.py",
+      "src/ai_trading_system/data/quality_provenance.py",
+      "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+      "tests/named_data_quality_support.py",
+      "tests/test_arch_004_refactor_policy.py",
+      "tests/test_arch_004g_deprecation.py",
+      "tests/test_data_quality.py",
+      "tests/test_data_quality_execution.py",
+      "tests/test_data_quality_issue_attribution_inventory.py",
+      "tests/test_devx_006c_compatibility_authority.py",
+      "tests/test_devx_006d_report_catalog_flow_authority.py",
+      "tests/test_named_data_quality_bootstrap.py",
+      "tests/test_named_data_quality_candidate.py",
+      "tests/test_named_data_quality_execution.py",
+      "tests/test_named_data_quality_execution_contract.py",
+      "tests/test_qqq_options_signal_package.py",
+      "tests/test_rate_issue_attribution_contract.py",
+      "tests/test_research_input_readiness.py",
+      "tests/test_trading2452_architecture_contract.py"
+    ],
+    "supersession": {
+      "current_hash_authority": "phase_trading_2564_s2b_named_dq_execution_v1.sources",
+      "historical_hashes_rewritten": false,
+      "inherited_supersession_authority": "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1"
+    },
+    "task_id": "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1"
+  },
+  "section_id": "phase_trading_2564_s2b_named_dq_execution_v1",
+  "section_sha256": "13ab6c2c4956e5075a4a951fd3d872e13b4ce3c0547b7a2dc920c33c17f79438"
+}

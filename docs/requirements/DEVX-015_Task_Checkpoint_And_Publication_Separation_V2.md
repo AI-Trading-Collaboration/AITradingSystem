@@ -246,3 +246,11 @@ Owner 对登记顺序循环的明确建议回复“同意”，记录为
 - 最终代码另绑定 verified manifest task ID，且拒绝 plan/manifest 验证期间字节变化。保留此前已批准的 completed-task 受限 INTEGRATION 和 source-only allowed-lease 拒绝规则，避免 installed 更新回退行为；只迁入这些独立规则，不迁入旧lane checkpoint API。
 - 最终 skill 测试文件96项全部通过（同一源码的5项PASS＋91项补集PASS，44.96s/120.88s）；旧lane独有API的1项真实source-only capability测试未吸收、未skip、未计为PASS，仍须后续旧lane集成验收。格式化前后AST等价。额外 preflight mypy 的4项错误在 exact6498 原文件复现相同诊断，作为既有问题记录，不扩大本次修复；reader mypy PASS 不等于 preflight mypy PASS。
 - 安装包更新前五文件已独立复制并核对原始哈希，保留在 `outputs/validation_runtime/devx015-frozen-admission-installed-before-20260910/`。V5 的17份Atlas文件也已独立保存并逐项匹配旧生成seal，回执为 `outputs/validation_runtime/devx015-frozen-admission-v5-atlas-preservation-receipt-20260910.json`。
+
+### 44e 源候选的任务身份断言修正
+
+- `44e64f3acd2c9df6b6fe2adfad8667a74b0a3163` 源候选及其Atlas/七项readiness实际通过，但尚未派发正式tiers时，独立预审发现存量canonical测试固定1068任务；本轮合法登记后为1069。真实单node xdist复现1 failed/11.38s，保留XML与v1停止回执，不把该失败称为Full失败或修改旧PASS。
+- 修正的验收合同是保留精确6498基线的完整任务ID集合、明确存在OPS081与DEVX015，并核对唯一性与计数一致。合法新增不应要求再次改固定总数；删除、等数量替换、重复、计数不符必须失败。只修改相关测试，不改reader、writer或准入行为。
+- v1最终事务已官方FAILED/RELEASED；新source事务 `devx-015-frozen-task-admission-count-fix-source-20260910-v1` 继续当前工作区，完成该断言、必要生成及新候选验证。旧44e和V4/V5全部证据保持各自身份；S1-S5/consumer/OPS080并未完成。
+- 修正后完整canonical测试文件35 passed/64.38s，包含原21项reader测试及新增身份保留正反例，Ruff/定向diff-check PASS；XML为 `outputs/validation_runtime/devx015-frozen-admission-canonical-full-focused-20260910.xml`。生产reader和skill源码相对44e未变，保留此前96项skill行为结果；全部正式tiers仍须新候选执行。
+- 44e的17份Atlas字节已逐项核对其final seal并独立保留，回执为 `outputs/validation_runtime/devx015-frozen-admission-44e-atlas-preservation-receipt-20260910.json`；后续渲染不覆盖唯一旧证据。

@@ -1,0 +1,209 @@
+{
+  "schema_version": "compatibility_authority_fragment.v1",
+  "section": {
+    "authority_contract": {
+      "dual_write": false,
+      "fragment_identity": "CANONICAL_SECTION_SHA256",
+      "fragment_source_active": true,
+      "index_chain": "SHA256",
+      "legacy_append_allowed": false,
+      "rollback_mode": "FROZEN_LEGACY_PREFIX_ONLY"
+    },
+    "broker_action": "none",
+    "owner_decision": "owner_instruction:TRADING-2564:2026-09-05:long-term-capability",
+    "price_range_contract": {
+      "canonical_full_requested_price_coverage_required": true,
+      "compiled_module_count": 57,
+      "consumer_id": "simple_baseline_forward_aging_preview@1.0.0",
+      "execution_dependency_count": 8,
+      "original_common_evaluated_window_preserved": true,
+      "original_scope_and_accessor_semantics_preserved": true,
+      "prices_role": "FEATURE_INPUT",
+      "rates_role": "DQ_GUARD_ONLY",
+      "registry_binding_semantics": "CAPTURED_IDENTITY_ONLY",
+      "source_manifest_path": "config/data_governance/named_equal_risk_price_consumer_sources_v1.json"
+    },
+    "production_effect": "none",
+    "safety": {
+      "broker_action": "none",
+      "consumer_cutover_allowed": false,
+      "dispatch_allowed": false,
+      "dq_numeric_rules_changed": false,
+      "historical_receipt_rewritten": false,
+      "production_effect": "none",
+      "publication_fence_changed": false,
+      "real_dq_or_research_executed": false,
+      "strategy_semantics_validated": false
+    },
+    "schema_version": "trading_2564_s2c_equal_risk_price_consumer_scope.v1",
+    "sources": [
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+        "sha256": "a4d4889c39a5029b641b8099fa9d2b7dc25aac092b223970eb6e3c405a803887"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/data_governance/named_data_quality_execution_sources_v1.json",
+        "sha256": "fc52a2754d58cf57391995def63b9df27f4704c483d2746fe35b7d73a7ed0bc8"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/data_governance/named_equal_risk_price_consumer_sources_v1.json",
+        "sha256": "b3dd9c781237fc71234f793832ff5d426d0244db792b177111569459f460e822"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/research/simple_baseline_strategy_registry.yaml",
+        "sha256": "a4487d4477e7066943c3894e690d1dc9dbcb18bc28919eaa8cfb15371ef79843"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/artifact_catalog.md",
+        "sha256": "ab42e57d131cd27d22e91fa6bffc6024e7d98ae1e853180c7731399f91e890de"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md",
+        "sha256": "ce375b0978cae606d5d0c01f7ee9239f4598129fcf0d0cef7ef11f41a6b9497d"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md",
+        "sha256": "f65ac1c7265b387aa7b9510407bd128ed8b193fc39c596617d0ac0452871883c"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md",
+        "sha256": "771dae80d80b322eb0584293b0429259608d15eccc484520fcccddcfaeb82bda"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/system_flow.md",
+        "sha256": "3acbe1110b434fc40df9cffb38cd0f48086bd379479f8580fa8561140228fb77"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_005_task_registry_index.yaml",
+        "sha256": "872bec6b21c554381a8f93127d32546e13b27225767c9a9be4a97db7f19bbade"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "registry/development_tasks/c8/c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml",
+        "sha256": "67055954e22fecd850c015a0622a2ae88a143b035f22b6618d8afc3ffeb7d097"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/contracts/named_data_quality_execution.py",
+        "sha256": "41325f9687cdce000760fce49f913708c984bad0e48a3b1ac406b3c49f4c184a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/data_foundation.py",
+        "sha256": "9c14befd1864914fbea90864e9e2cdaa201edce1d83bd39b0359bf203f99737e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "sha256": "befba72858803bde8b4aac3ce33cef714ec1627e1c8822b232c98185a1ad90c1"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/simple_baseline_portfolio_control.py",
+        "sha256": "4fca5c7cd919ae36efd927d3318e4b8d76768faeef38fe1bc4778a7c105db54e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/named_data_quality_support.py",
+        "sha256": "32a3de10ee99675b4a25526f3029e1d69160535d80efef9641281dae17103216"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_004_refactor_policy.py",
+        "sha256": "e0b987d07f69f82bf9031c503b7e7932b5cdbd7ff0eaa32fd0c3cffc01fd337a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_004g_deprecation.py",
+        "sha256": "a70b8ea01dca2e518d63817e2654d5115efecf24ffb5dfe147fb2865ab4c0ad4"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_005_s5_task_source_cutover.py",
+        "sha256": "c0dbe3a1b3b07c3a5f08c0afc1a6ffd788554266a36eb44f570179874f79d847"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006c_compatibility_authority.py",
+        "sha256": "65fa06ac9537e5fb58253cda9e16330ec518e07f42130c952d8306626ebbf639"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "sha256": "93619e8c7f59a23ab6e256b3068af3164b2b17d0c66342065c9686f600ad536e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_named_data_quality_bootstrap.py",
+        "sha256": "df8240a3e8f461b87b9e1353fce08ff2c78e9c2177050e112d722b49dd7a2550"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_named_data_quality_candidate.py",
+        "sha256": "39a7231ec987652663a58c6e5abd91b5de26779d1e59680bbe6393641de4ec4a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_named_data_quality_execution.py",
+        "sha256": "55005048cf8b330c4726d329a8f09ba629c850d8c8512d72e5b83f1d6d6609f0"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_named_data_quality_execution_contract.py",
+        "sha256": "0a2c828b6514e075b658b476fb6fd7e25e3b0847200bbb0e973f234bc22c5a1f"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_trading2452_architecture_contract.py",
+        "sha256": "8b8f8ddb049cdbc757c3152eb8a799c9e58b15d74e43e071971071536a8c05f3"
+      }
+    ],
+    "status": "VALIDATING",
+    "superseded_live_source_paths": [
+      "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+      "config/data_governance/named_data_quality_execution_sources_v1.json",
+      "config/data_governance/named_equal_risk_price_consumer_sources_v1.json",
+      "config/research/simple_baseline_strategy_registry.yaml",
+      "docs/artifact_catalog.md",
+      "docs/requirements/TRADING-2564_Long_Term_Research_Capability_Improvement_V1.md",
+      "docs/requirements/TRADING-2564_S2b_Named_DQ_Execution_Contract_V1.md",
+      "docs/requirements/TRADING-2564_S2c_Equal_Risk_Price_Consumer_Scope_V1.md",
+      "docs/system_flow.md",
+      "inputs/architecture/arch_005_task_registry_index.yaml",
+      "registry/development_tasks/c8/c8c1f96abee465a20184abbf6558c5183466d30eb4b1581e8fc922a6276b5a00.yaml",
+      "src/ai_trading_system/contracts/named_data_quality_execution.py",
+      "src/ai_trading_system/data_foundation.py",
+      "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+      "src/ai_trading_system/simple_baseline_portfolio_control.py",
+      "tests/named_data_quality_support.py",
+      "tests/test_arch_004_refactor_policy.py",
+      "tests/test_arch_004g_deprecation.py",
+      "tests/test_arch_005_s5_task_source_cutover.py",
+      "tests/test_devx_006c_compatibility_authority.py",
+      "tests/test_devx_006d_report_catalog_flow_authority.py",
+      "tests/test_named_data_quality_bootstrap.py",
+      "tests/test_named_data_quality_candidate.py",
+      "tests/test_named_data_quality_execution.py",
+      "tests/test_named_data_quality_execution_contract.py",
+      "tests/test_trading2452_architecture_contract.py"
+    ],
+    "supersession": {
+      "current_hash_authority": "phase_trading_2564_s2c_equal_risk_price_consumer_scope_v1.sources",
+      "historical_hashes_rewritten": false,
+      "inherited_supersession_authority": "phase_trading_2564_s2b_named_dq_execution_v1"
+    },
+    "task_id": "TRADING-2564_LONG_TERM_RESEARCH_CAPABILITY_IMPROVEMENT_V1"
+  },
+  "section_id": "phase_trading_2564_s2c_equal_risk_price_consumer_scope_v1",
+  "section_sha256": "dbcd6f7d02f91883b9204d3f77e5807ae8eaa6670ed580d606cff26c4513f541"
+}

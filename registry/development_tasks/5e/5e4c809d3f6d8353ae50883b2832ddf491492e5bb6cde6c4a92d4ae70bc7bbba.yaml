@@ -18,8 +18,8 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 最小frozen canonical准入合同完成focused，待单独候选required
-    tiers；保留旧S1-S5/consumer/OPS080完整目标。
+  unstructured_legacy_blocker_or_next_step: 任务身份保留回归完整35项PASS；重封最小合同候选并运行全部required
+    tiers，生产reader/准入源码未变；S1-S5/consumer/OPS080仍待完成。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 仅clean coordinator INTEGRATION以有效plan精确lane_head的canonical index/fragment/event完整核验缺失任务；错身份、篡改、终态、source-only和脏状态拒绝；不放宽writer/Full/publication。真实CLI正反例及新候选全部required
@@ -104,6 +104,55 @@ events:
   - change:devx015-frozen-admission-focused-verified
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-500744a51849e84f20d8680a9e4882ec
+- schema_version: task_event.v1
+  task_id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-10T09:25:25.6187008+00:00'
+  actor: integration-coordinator
+  change_id: devx015-frozen-admission-preserve-baseline-task-identities
+  lane_id: null
+  base_commit: 44e64f3acd2c9df6b6fe2adfad8667a74b0a3163
+  previous_state_event_id: task-event-500744a51849e84f20d8680a9e4882ec
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: 修正存量固定任务总数断言为exact6498基线ID保留与唯一计数约束，验证完整canonical测试文件后重封最小合同候选；全部正式tiers未运行。
+    acceptance_criteria: 仅clean coordinator INTEGRATION以有效plan精确lane_head的canonical
+      index/fragment/event完整核验缺失任务；错身份、篡改、终态、source-only和脏状态拒绝；不放宽writer/Full/publication。真实CLI正反例及新候选全部required
+      tiers。
+    notes: 44e七项readiness PASS但固定1068断言对合法1069任务真实失败1项/11.38s，v1未Full派发即FAILED/RELEASED。新source仅修任务身份回归，不改准入/reader，不缩减S1-S5/consumer/OPS080。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx015-frozen-admission-preserve-baseline-task-identities
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-33ff3211d698db50b6bc270ac619ce3b
+- schema_version: task_event.v1
+  task_id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-10T09:29:53.6334740+00:00'
+  actor: integration-coordinator
+  change_id: devx015-frozen-admission-identity-preservation-verified
+  lane_id: null
+  base_commit: 44e64f3acd2c9df6b6fe2adfad8667a74b0a3163
+  previous_state_event_id: task-event-33ff3211d698db50b6bc270ac619ce3b
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: 任务身份保留回归完整35项PASS；重封最小合同候选并运行全部required tiers，生产reader/准入源码未变；S1-S5/consumer/OPS080仍待完成。
+    acceptance_criteria: 仅clean coordinator INTEGRATION以有效plan精确lane_head的canonical
+      index/fragment/event完整核验缺失任务；错身份、篡改、终态、source-only和脏状态拒绝；不放宽writer/Full/publication。真实CLI正反例及新候选全部required
+      tiers。
+    notes: 固定1068已替换为exact6498完整ID集合保留、OPS081/DEVX015存在及唯一/count一致，合法新增通过，缺失/等数量替换/重复/错count拒绝；35
+      passed/64.38s。44e Atlas17项独立保全，旧v1未Full派发即终结。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx015-frozen-admission-identity-preservation-verified
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8b13a19857609e7664d4223d2deb38da
 projection:
   legacy_first_eight_cells:
   - DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
@@ -111,14 +160,14 @@ projection:
   - P0
   - IN_PROGRESS
   - Codex engineering coordinator
-  - 最小frozen canonical准入合同完成focused，待单独候选required tiers；保留旧S1-S5/consumer/OPS080完整目标。
+  - 任务身份保留回归完整35项PASS；重封最小合同候选并运行全部required tiers，生产reader/准入源码未变；S1-S5/consumer/OPS080仍待完成。
   - 仅clean coordinator INTEGRATION以有效plan精确lane_head的canonical index/fragment/event完整核验缺失任务；错身份、篡改、终态、source-only和脏状态拒绝；不放宽writer/Full/publication。真实CLI正反例及新候选全部required
     tiers。
-  - reader21及skill最终96项PASS；plan/manifest字节与task绑定；保留已批准completed/source-only规则，bundle五文件一致。旧暂停四文件事后重建并匹配原hash，不冒充当时副本；V5
-    Atlas17文件保全。preflight额外mypy4项基线既有错误未扩修。
+  - 固定1068已替换为exact6498完整ID集合保留、OPS081/DEVX015存在及唯一/count一致，合法新增通过，缺失/等数量替换/重复/错count拒绝；35
+    passed/64.38s。44e Atlas17项独立保全，旧v1未Full派发即终结。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 62b22cd1ed00ec8e2db3495c4479a957f6f78d953a35abf378c8bff7e11bed0e
-last_event_id: task-event-500744a51849e84f20d8680a9e4882ec
+  canonical_row_sha256: 643d7dd5ed633f959a61628cc7b3b8757d692a85438672783319c235bb16b732
+last_event_id: task-event-8b13a19857609e7664d4223d2deb38da
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: ad0c4f972f5904466532206ebbe9d41d4a310ac5e726694377b4484bdd4e8c21
+fragment_checksum: 08e8e42f3a73a71d429d8668c3dbcde1105ea0b22c6958a0136a602e65147326
