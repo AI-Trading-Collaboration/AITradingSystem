@@ -2275,6 +2275,12 @@ flowchart LR
     REFRESH --> FINAL["Final-tree formal validation once"]
 ```
 
+DEVX-015 的 `frozen_lane_canonical_task_integration_admission_v1` 仅补充写入前的任务身份核验：
+clean exact latest-main coordinator → 已验证 plan/ACQUIRED 普通事务 → 当前 canonical 确认任务不存在
+→ 精确 frozen `lane_head` 的官方 index、唯一 fragment 与完整事件链 → 非终态身份准入。
+拒绝 source-only checkpoint、篡改及错身份；随后仍须官方 `TASK_SOURCE_PRE_WRITE` 才能登记，
+不改变 START/LANE/CLOSEOUT、Full、发布、DQ/PIT 或 production/broker 权限。
+
 ARCH-004F2 以 `docs/research/current_research_strategy_execution_chain.md` 建立研究执行链路的人读权威说明：owner question 先转为 hypothesis/preregistration，再解析 `ResearchEvaluationContext`，经过 source provenance、DQ/PIT gate、feature/label/signal、candidate/baseline、target/execution、backtest/cost/risk、robustness/holdout/falsification、evidence multi-axis state、ReviewDecision/OwnerDecision，最后由 canonical artifact/envelope/run ledger 进入分层报告。文档逐步链接真实配置、源码和 artifact，并把 `CANONICAL`、已验证 `REFERENCE`、待迁移 `LEGACY`、`BLOCKED` 与 `PLANNED` 分开；其中 2022-12-01 AI regime 与 2021-02-22 QQQ/SGOV/TQQQ primary window 明确不可互换。B0～B4 的 research-only公式和当前 evidence limitation 被记录，B5/B6、growth-tilt PIT replay/promotion仍保持 blocked；fixed cadence只产生 observation/review/proposal，不能自动调参、改权重或 promotion。该说明不运行上游、不改变计算或报告结论，F2 后续 runtime migration仍必须逐 slice parity。
 
 ARCH-004F2.5 将上述 lifecycle 落为 `contracts.research_lifecycle` pure state machine：`ResearchPreregistration` 强制 hypothesis/baseline/candidate/context、selection-rule SHA-256、metrics、policy refs、validation plan、timezone-aware freeze time、`result_visibility=NONE`、manual review和 no-production；`ResearchLifecycleRecord` 只允许 observation -> evidence -> `KEEP|INVESTIGATE|RETIRE|OPEN_RESEARCH`，OPEN_RESEARCH 后仍须单独 freeze proposal、记录 `PASS|FAILED|BLOCKED` validation，再由人工 owner决定 ADOPT/REJECT/CONTINUE。`apply_periodic_research_review` 只能停在 review outcome，不能创建 preregistration、validation、owner decision或 adoption。既有 `research_campaign.py` 保留为 campaign control plane，`legacy.research_campaign_adapter` 在缺 context/selection checksum/result visibility/policy refs 时显式 BLOCKED，不推断 READY。Generic Experiment runner 通过 optional lifecycle plugin capability写派生 `.lifecycle.json`；未注册 lifecycle plugin 的 spec完全不变。Growth-tilt closure reference 中 terminal negative evidence进入 `RETIRE -> RETIRED`，source-contract blocker进入 `INVESTIGATE -> INVESTIGATING`；旧 primary/section/Markdown/envelope/run-ledger path/schema/status/bytes保持，lifecycle只作 additive sidecar。该 runtime contract不改变研究结论、阈值、权重、DQ/PIT、promotion、paper-shadow、production或broker。

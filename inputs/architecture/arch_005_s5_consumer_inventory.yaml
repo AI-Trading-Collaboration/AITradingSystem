@@ -1083,6 +1083,7 @@ consumers:
   role: test
   targets:
   - task_register.md
+  - task_register_completed.md
   category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
   manual_semantic_runtime_consumer: false
   manual_writer: false
@@ -1132,4 +1133,4 @@ consumers:
   rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
 production_effect: none
 broker_action: none
-inventory_checksum: 320195f7e128524a1c1b8d78872d6d09c6b8c98b022575dc30cb3ab66b76b6c8
+inventory_checksum: 672183ef8ae740c789b557b6e4b447686942e46fd103cbca6828c38a65b4478c

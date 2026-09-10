@@ -384,6 +384,11 @@ def evaluate_task_registration(
     task_id: str | None,
     active_task_register: str,
     completed_task_register: str,
+    role: str | None = None,
+    publication_transaction: dict[str, Any] | None = None,
+    current_head: str | None = None,
+    audit_status: object = None,
+    dirty_paths: object = None,
 ) -> tuple[bool, str]:
     if mode == "READ_ONLY":
         return True, "READ_ONLY"
@@ -391,6 +396,19 @@ def evaluate_task_registration(
     completed_registered = bool(task_id and task_id in completed_task_register)
     if active_registered:
         return True, "ACTIVE"
+    if stage == "INTEGRATION" and completed_registered:
+        completed_candidate_is_publication_ready = (
+            role == "coordinator"
+            and isinstance(publication_transaction, dict)
+            and publication_transaction.get("phase") == "LOCAL_MAIN_FF_PRE"
+            and publication_transaction.get("task_id") == task_id
+            and isinstance(current_head, str)
+            and publication_transaction.get("candidate_sha") == current_head
+            and audit_status == "PASS"
+            and dirty_paths == []
+        )
+        if completed_candidate_is_publication_ready:
+            return True, "COMPLETED_VALIDATED_CANDIDATE_INTEGRATION"
     if stage == "CLOSEOUT" and completed_registered:
         return True, "COMPLETED_CLOSEOUT_ONLY"
     return False, "NONE"
@@ -553,6 +571,93 @@ def evaluate_base_drift(
     return blockers, serial, warnings
 
 
+def read_exact_canonical_task(repo: Path, commit: str, task_id: str) -> dict[str, Any]:
+    """Use the current repository's strict reader, never execute historical code."""
+    code = (
+        "import json,sys; from pathlib import Path; "
+        "sys.path.insert(0,str(Path(sys.argv[1])/'src')); "
+        "from ai_trading_system.platform.architecture.task_registry_canonical "
+        "import read_canonical_task_at_commit,CanonicalTaskRegistryError; "
+        "\ntry:\n result=read_canonical_task_at_commit(project_root=Path(sys.argv[1]),"
+        "commit=sys.argv[2],task_id=sys.argv[3])"
+        "\nexcept CanonicalTaskRegistryError as exc:\n "
+        "result={'reader_error':exc.code,'detail':exc.message}"
+        "\nprint(json.dumps(result,sort_keys=True))"
+    )
+    return _run_json([sys.executable, "-c", code, str(repo), commit, task_id], repo)
+
+
+def frozen_lane_task_registration(
+    *,
+    repo: Path,
+    args: argparse.Namespace,
+    state: dict[str, Any],
+    plan: dict[str, Any] | None,
+    transaction: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Narrow pre-write identity admission; all ordinary mutation gates still apply."""
+    if (
+        args.mode == "READ_ONLY"
+        or args.role != "coordinator"
+        or args.stage != "INTEGRATION"
+        or not args.task_id
+        or plan is None
+        or transaction is None
+        or transaction.get("phase") != "ACQUIRED"
+        or transaction.get("task_id") != args.task_id
+        or plan.get("_binding_manifest_task_id") != args.task_id
+        or state["head"] != state["local_main"]
+        or state["current_branch"] == "main"
+        or args.expected_base != plan.get("frozen_base")
+        or args.expected_base == state["local_main"]
+        or plan.get("latest_main") != state["local_main"]
+        or transaction.get("lane_head_sha") != state["head"]
+        or transaction.get("expected_main_sha") != state["local_main"]
+        or state["worktree_audit"].get("status") != "PASS"
+        or state["worktree_audit"].get("dirty_paths") != []
+    ):
+        return None
+    bound_plan = transaction.get("integration_revalidation_plan")
+    if (
+        not isinstance(bound_plan, dict)
+        or bound_plan.get("id") != plan.get("plan_id")
+        or bound_plan.get("sha256") != plan.get("_binding_file_sha256")
+        or not isinstance(plan.get("_binding_file_sha256"), str)
+    ):
+        raise PreflightError("FROZEN_TASK_PLAN_TRANSACTION_BINDING_INVALID")
+    # Current canonical state always wins, including terminal or damaged state.
+    current = read_exact_canonical_task(repo, state["head"], args.task_id)
+    if current.get("reader_error") != "CANONICAL_TASK_NOT_FOUND":
+        raise PreflightError("FROZEN_TASK_CURRENT_STATE_NOT_ABSENT")
+    lane_head = plan.get("lane_head")
+    if not isinstance(lane_head, str) or not re.fullmatch(r"[0-9a-f]{40}", lane_head):
+        raise PreflightError("FROZEN_TASK_LANE_IDENTITY_INVALID")
+    checkpoint_refs = _run(
+        [
+            "git",
+            "for-each-ref",
+            "--format=%(refname)",
+            "--points-at",
+            lane_head,
+            "refs/aits/task-checkpoints/",
+        ],
+        repo,
+    ).strip()
+    message = _run(["git", "show", "-s", "--format=%B", lane_head], repo)
+    if checkpoint_refs or "profile=RAW_BYTES_TASK_CHECKPOINT_UNVALIDATED" in message:
+        raise PreflightError("FROZEN_TASK_SOURCE_ONLY_CHECKPOINT_FORBIDDEN")
+    proof = read_exact_canonical_task(repo, lane_head, args.task_id)
+    if proof.get("reader_error"):
+        raise PreflightError(f"FROZEN_TASK_CANONICAL_INVALID:{proof['reader_error']}")
+    if proof.get("source_commit") != lane_head or proof.get("task_id") != args.task_id:
+        raise PreflightError("FROZEN_TASK_PROOF_IDENTITY_INVALID")
+    # The reader validates the status vocabulary; lifecycle eligibility remains
+    # the repository's canonical terminal-status policy, not a skill-local list.
+    if proof.get("is_terminal") is not False:
+        raise PreflightError("FROZEN_TASK_NOT_ACTIVE")
+    return proof
+
+
 def load_validated_integration_plan(
     *,
     repo: Path,
@@ -570,6 +675,8 @@ def load_validated_integration_plan(
     validator = repo / "scripts" / "architecture_arch005_integration_revalidation.py"
     if not validator.is_file():
         raise PreflightError(f"integration revalidation validator missing: {validator}")
+    plan_bytes = plan_path.read_bytes()
+    manifest_bytes = manifest_path.read_bytes()
     _run(
         [
             sys.executable,
@@ -585,13 +692,17 @@ def load_validated_integration_plan(
         repo,
     )
     try:
-        payload = json.loads(plan_path.read_text(encoding="utf-8"))
+        if plan_path.read_bytes() != plan_bytes or manifest_path.read_bytes() != manifest_bytes:
+            raise PreflightError("INTEGRATION_PLAN_INPUT_CHANGED_DURING_VALIDATION")
+        payload = json.loads(plan_bytes)
+        manifest_payload = json.loads(manifest_bytes)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise PreflightError(f"integration revalidation plan is unreadable: {exc}") from exc
-    if not isinstance(payload, dict):
-        raise PreflightError("integration revalidation plan must be a JSON object")
-    payload["_binding_file_sha256"] = hashlib.sha256(plan_path.read_bytes()).hexdigest()
+    if not isinstance(payload, dict) or not isinstance(manifest_payload, dict):
+        raise PreflightError("integration revalidation plan and manifest must be JSON objects")
+    payload["_binding_file_sha256"] = hashlib.sha256(plan_bytes).hexdigest()
     payload["_binding_path"] = plan_path.relative_to(repo).as_posix()
+    payload["_binding_manifest_task_id"] = manifest_payload.get("task_id")
     return payload
 
 
@@ -836,6 +947,28 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
     allowed_lease_ids = set(args.allow_active_lease)
     if publication_transaction is not None:
         allowed_lease_ids.add(str(publication_transaction["lease_id"]))
+    # The immutable lease replay binds this capability claim to its manifest.
+    # Allowing its ID suppresses a conflict only; it cannot turn a source-only
+    # snapshot capability into task mutation/publication authority (DEVX-015).
+    source_only_allowed = [
+        str(lease["lease_id"])
+        for lease in active_leases
+        if isinstance(lease, dict)
+        and str(lease.get("lease_id")) in allowed_lease_ids
+        and any(
+            isinstance(resource, dict)
+            and resource.get("kind") == "contract"
+            and str(resource.get("resource_id", "")).startswith("checkout-source-only-capability:")
+            for resource in lease.get("resources", [])
+        )
+    ]
+    if args.mode != "READ_ONLY" and source_only_allowed:
+        blockers.append(
+            {
+                "code": "SOURCE_ONLY_LEASE_NOT_MUTATION_AUTHORITY",
+                "detail": ",".join(sorted(source_only_allowed)),
+            }
+        )
     unexpected_active = [
         lease
         for lease in active_leases
@@ -872,14 +1005,12 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
             task_id=args.task_id,
             active_task_register=active_task_register,
             completed_task_register=completed_task_register,
+            role=args.role,
+            publication_transaction=publication_transaction,
+            current_head=state["head"],
+            audit_status=audit.get("status"),
+            dirty_paths=audit.get("dirty_paths"),
         )
-        if not task_registered:
-            blockers.append(
-                {
-                    "code": "TASK_NOT_REGISTERED",
-                    "detail": args.task_id or "<missing>",
-                }
-            )
 
     expected_base_is_head_ancestor = (
         _git_is_ancestor(repo, args.expected_base, state["head"]) if args.expected_base else None
@@ -912,6 +1043,24 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
     blockers.extend(checkout_blockers)
     warnings.extend(checkout_warnings)
 
+    frozen_task_proof: dict[str, Any] | None = None
+    if not task_registered and not blockers and not serial:
+        try:
+            frozen_task_proof = frozen_lane_task_registration(
+                repo=repo,
+                args=args,
+                state=state,
+                plan=integration_plan,
+                transaction=publication_transaction,
+            )
+        except PreflightError as exc:
+            blockers.append({"code": "FROZEN_TASK_ADMISSION_INVALID", "detail": str(exc)})
+        if frozen_task_proof is not None:
+            task_registered = True
+            task_registration_source = "FROZEN_LANE_CANONICAL_PRE_WRITE"
+    if not task_registered:
+        blockers.append({"code": "TASK_NOT_REGISTERED", "detail": args.task_id or "<missing>"})
+
     status = "BLOCKED" if blockers else "SERIAL_CONTRACT_WAVE_REQUIRED" if serial else "PASS"
     return {
         "schema_version": SCHEMA_VERSION,
@@ -922,6 +1071,7 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
         "task_id": args.task_id,
         "task_registered": task_registered,
         "task_registration_source": task_registration_source,
+        "frozen_task_registration_proof": frozen_task_proof,
         "repository": repo.as_posix(),
         "git": {
             "current_branch": state["current_branch"],

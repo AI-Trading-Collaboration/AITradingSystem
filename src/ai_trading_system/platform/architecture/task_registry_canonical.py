@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+import subprocess
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path, PurePosixPath
@@ -229,6 +231,184 @@ def validate_canonical_registry(
         _fail("INDEX_NONDETERMINISTIC", str(index_path))
     _validate_generated_views(root, policy, rebuilt, fragments)
     return CanonicalTaskRegistry(root, index, fragments)
+
+
+def read_canonical_task_at_commit(
+    *, project_root: Path, commit: str, task_id: str
+) -> dict[str, Any]:
+    """Read one sealed task, not an integration permission or registry freshness gate.
+
+    DEVX-015 frozen-lane admission: callers must independently validate the plan,
+    repository/lane/candidate identities, transaction, phase and nonterminal state.
+    Only a valid index lacking the requested identity yields TASK_NOT_FOUND.
+    Historical code, generated views and unrelated task blobs are never read.
+    """
+    if not isinstance(commit, str) or not _GIT_SHA_RE.fullmatch(commit):
+        _fail("SOURCE_COMMIT_INVALID", str(commit))
+    if _required_text(task_id, "task_id") != task_id:
+        _fail("TASK_ID_INVALID", task_id)
+    root = project_root.resolve()
+    if _canonical_git_read(root, "rev-parse", "--verify", f"{commit}^{{commit}}").strip() != (
+        commit.encode("ascii")
+    ):
+        _fail("SOURCE_COMMIT_INVALID", commit)
+    index_bytes = _canonical_git_blob(root, commit, CANONICAL_INDEX_PATH)
+    index = _canonical_blob_mapping(index_bytes, CANONICAL_INDEX_PATH, generated=True)
+    if index.get("schema_version") != CANONICAL_INDEX_SCHEMA:
+        _fail("INDEX_SCHEMA", str(index.get("schema_version")))
+    if index.get("status") != "PASS" or index.get("source_of_truth") != CANONICAL_SOURCE:
+        _fail("INDEX_AUTHORITY", str(index.get("source_of_truth")))
+    if index.get("cutover_performed") is not True:
+        _fail("INDEX_CUTOVER", "cutover_performed must be true")
+    _verify_checksum(index, "index_checksum", "INDEX_CHECKSUM")
+    policy_bytes = _canonical_git_blob(root, commit, POLICY_PATH)
+    policy = _canonical_blob_mapping(policy_bytes, POLICY_PATH, generated=False)
+    if (
+        policy.get("schema_version") != "arch_005_s5_task_source_cutover_policy.v1"
+        or policy.get("source_of_truth") != CANONICAL_SOURCE
+        or index.get("policy_sha256") != _sha256_bytes(policy_bytes)
+    ):
+        _fail("POLICY_DRIFT", POLICY_PATH)
+    canonical = _mapping(policy.get("canonical"), "policy.canonical")
+    if (
+        canonical.get("index_path") != CANONICAL_INDEX_PATH
+        or canonical.get("fragment_root") != CANONICAL_FRAGMENT_ROOT
+        or index.get("fragment_root") != CANONICAL_FRAGMENT_ROOT
+        or index.get("legacy_markdown_writable") is not False
+    ):
+        _fail("INDEX_PATH_BINDING", CANONICAL_INDEX_PATH)
+    records = _list(index.get("fragments"), "index.fragments")
+    seen: set[str] = set()
+    orders: set[int] = set()
+    counts = {"active": 0, "completed": 0}
+    previous = _chain_genesis()
+    selected: dict[str, Any] | None = None
+    for raw_record in records:
+        record = _mapping(raw_record, "record")
+        identity = _required_text(record.get("task_id"), "record.task_id")
+        if record.get("task_id") != identity:
+            _fail("TASK_ID_INVALID", identity)
+        if identity in seen:
+            _fail("INDEX_DUPLICATE_TASK", identity)
+        seen.add(identity)
+        order = _positive_int(record.get("order"), "record.order")
+        if order in orders or (orders and order <= max(orders)):
+            _fail("INDEX_DUPLICATE_ORDER", str(order))
+        orders.add(order)
+        if record.get("path") != _canonical_fragment_path(identity):
+            _fail("INDEX_PATH_BINDING", identity)
+        for field in ("file_sha256", "fragment_checksum"):
+            value = record.get(field)
+            if not isinstance(value, str) or not _SHA256_RE.fullmatch(value):
+                _fail("INDEX_FRAGMENT_BINDING", identity)
+        partition = record.get("partition")
+        if not isinstance(partition, str) or partition not in counts:
+            _fail("INDEX_PARTITION", identity)
+        counts[partition] += 1
+        expected = _entry_chain(previous, _record_core(record))
+        if (
+            record.get("previous_entry_sha256") != previous
+            or record.get("entry_sha256") != expected
+        ):
+            _fail("INDEX_CHAIN", identity)
+        previous = expected
+        if identity == task_id:
+            selected = record
+    for field, expected_count in {
+        "task_count": len(records),
+        "fragment_count": len(records),
+        "active_task_count": counts["active"],
+        "completed_task_count": counts["completed"],
+        "missing_task_count": 0,
+        "duplicate_task_count": 0,
+    }.items():
+        if type(index.get(field)) is not int or index.get(field) != expected_count:
+            _fail("INDEX_COUNT", field)
+    if (
+        index.get("chain_genesis_sha256") != _chain_genesis()
+        or index.get("final_chain_sha256") != previous
+    ):
+        _fail("INDEX_CHAIN", "index endpoints")
+    if selected is None:
+        _fail("CANONICAL_TASK_NOT_FOUND", task_id)
+    fragment_path = str(selected["path"])
+    fragment_bytes = _canonical_git_blob(root, commit, fragment_path)
+    if _sha256_bytes(fragment_bytes) != selected["file_sha256"]:
+        _fail("INDEX_FILE_HASH", task_id)
+    fragment = _canonical_blob_mapping(fragment_bytes, fragment_path, generated=True)
+    validate_canonical_fragment(fragment)
+    if (
+        _task_id(fragment) != task_id
+        or fragment["fragment_checksum"] != selected["fragment_checksum"]
+    ):
+        _fail("INDEX_FRAGMENT_BINDING", task_id)
+    cells = _projection_cells(fragment)
+    partition = "completed" if cells[3] in TERMINAL_STATUSES else "active"
+    if selected["partition"] != partition:
+        _fail("INDEX_PARTITION", task_id)
+    task = _mapping(fragment.get("task_record"), "task_record")
+    if task != _task_record_from_cells(cells, prior=task):
+        _fail("TASK_RECORD_PROJECTION", task_id)
+    return {
+        "task_id": task_id,
+        "source_commit": commit,
+        "status": cells[3],
+        "is_terminal": cells[3] in TERMINAL_STATUSES,
+        "fragment_path": fragment_path,
+        "index_sha256": _sha256_bytes(index_bytes),
+        "fragment_sha256": _sha256_bytes(fragment_bytes),
+        "index_checksum": index["index_checksum"],
+        "fragment_checksum": fragment["fragment_checksum"],
+        "last_event_id": fragment["last_event_id"],
+        "task_record": task,
+        "projection": fragment["projection"],
+    }
+
+
+def _canonical_git_read(root: Path, *args: str) -> bytes:
+    # Do not let inherited Git routing/object-store overrides replace the
+    # caller's explicitly selected repository or exact object bytes.
+    env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    env.update(GIT_NO_REPLACE_OBJECTS="1", GIT_OPTIONAL_LOCKS="0")
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), *args],
+            capture_output=True,
+            check=True,
+            env=env,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        _fail("CANONICAL_GIT_READ", str(exc))
+    return result.stdout
+
+
+def _canonical_git_blob(root: Path, commit: str, path: str) -> bytes:
+    entry = _canonical_git_read(root, "ls-tree", "-z", commit, "--", path)
+    rows = [row for row in entry.split(b"\0") if row]
+    if len(rows) != 1:
+        _fail("CANONICAL_GIT_BLOB_MISSING", path)
+    metadata, separator, name = rows[0].partition(b"\t")
+    fields = metadata.split()
+    if (
+        not separator
+        or name != path.encode("utf-8")
+        or len(fields) != 3
+        or fields[0] not in {b"100644", b"100755"}
+        or fields[1] != b"blob"
+    ):
+        _fail("CANONICAL_GIT_REGULAR_BLOB", path)
+    return _canonical_git_read(root, "cat-file", "blob", fields[2].decode("ascii"))
+
+
+def _canonical_blob_mapping(raw: bytes, path: str, *, generated: bool) -> dict[str, Any]:
+    try:
+        payload = _mapping(yaml.safe_load(raw.decode("utf-8")), path)
+    except (UnicodeError, yaml.YAMLError) as exc:
+        _fail("CANONICAL_GIT_YAML", f"{path}: {exc}")
+    if generated and raw != _yaml_bytes(payload):
+        _fail("NON_CANONICAL_GENERATED_YAML", path)
+    return payload
 
 
 def refresh_consumer_inventory(*, project_root: Path) -> dict[str, Any]:
@@ -1486,6 +1666,7 @@ __all__ = [
     "build_cutover_candidate",
     "canonical_task_register_view_path",
     "load_cutover_policy",
+    "read_canonical_task_at_commit",
     "refresh_consumer_inventory",
     "register_task",
     "run_rollback_rehearsal",

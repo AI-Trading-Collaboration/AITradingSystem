@@ -96,6 +96,12 @@ ownership rules, integration topology, validation, and cleanup.
 
 ## Integrate and Close
 
+- At clean latest-main `INTEGRATION`, a task absent from current canonical state
+  may be identified through the validated plan's exact frozen-lane canonical
+  index, unique fragment and event chain. This requires coordinator role and an
+  ordinary publication transaction at `ACQUIRED`; task registration follows the
+  successful gate. Current canonical state wins. Do not use historical Markdown,
+  checkpoint/source-only identities, dirty-plan exceptions or old test results.
 - Advance the publication transaction through the reviewed phase order. Recheck
   expected local main and any integration-plan hash before each shared mutation;
   rebuild generated authorities once, bind the clean committed candidate at
@@ -110,9 +116,13 @@ ownership rules, integration topology, validation, and cleanup.
   mode and claims as coordinator with `--stage CLOSEOUT --remote-action`.
   The active transaction must already be at `REMOTE_PUSH_PRE` and is supplied
   with `--publication-transaction`.
-  A task archived in `docs/task_register_completed.md` is eligible only at this
-  `CLOSEOUT` stage; `START`, `LANE`, and `INTEGRATION` still require the task in
-  the active register.
+  A task archived in `docs/task_register_completed.md` is normally eligible only
+  at this `CLOSEOUT` stage. `START` and `LANE` still require the active register.
+  `INTEGRATION` may recognize a completed task only when the validated
+  publication transaction is already at `LOCAL_MAIN_FF_PRE`, its task and
+  candidate exactly match the current clean checkout, and the caller is the
+  coordinator; this narrow case represents a terminal task event committed and
+  formally validated in the final candidate.
   Require a clean local `main` and `origin/main` to be the candidate's ancestor,
   perform the repository-default ordinary non-force push, and verify both SHAs.
   Skip only for an explicit no-push request or a governed no-push condition.

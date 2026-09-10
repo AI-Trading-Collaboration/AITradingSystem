@@ -95,6 +95,18 @@ validated plan and is recorded in the preflight result.
 `SERIAL_CONTRACT_WAVE_REQUIRED` requires the smallest reviewed contract wave;
 `BLOCKED` or any binding/tamper failure stops integration.
 
+When the task has not yet entered latest-main canonical state, keep the candidate
+clean for this gate. At `ACQUIRED`, coordinator `INTEGRATION` may independently
+read the exact plan `lane_head` canonical index and unique task fragment/event
+chain through the repository reader. The result is reported as
+`FROZEN_LANE_CANONICAL_PRE_WRITE` with commit and hash provenance. Current
+canonical state (including terminal state or damage) cannot be replaced by
+historical state. Wrong identity, incomplete/tampered records, terminal frozen
+tasks, source-only checkpoints and every ordinary plan/lease gate remain denied.
+Only after successful admission advance to `TASK_SOURCE_PRE_WRITE` and register
+the task through the canonical writer. This is not a dirty-check exception or
+validation/publication evidence reuse; `START`, `LANE` and `CLOSEOUT` are unchanged.
+
 Dual lane:
 
 ```powershell
@@ -155,8 +167,10 @@ rebases, rewrites history, or repairs divergence.
 12. Fetch remote main, record `REMOTE_PUSH_PRE`, rerun `SINGLE_LANE` coordinator preflight with the same
     claims plus `--stage CLOSEOUT --remote-action`, ordinary-push, and verify
     both SHAs. A task moved to `docs/task_register_completed.md` by the validated
-    final commit is recognized only at `CLOSEOUT`; earlier stages still require
-    the active register.
+    final commit may also be recognized at `INTEGRATION`, but only after the
+    exact transaction reaches `LOCAL_MAIN_FF_PRE` with a matching candidate,
+    task id, coordinator role, and clean worktree. `START` and `LANE` still
+    require the active register; ordinary completed tasks remain closeout-only.
 13. Ordinary-push, verify `local main = origin/main = candidate`, audit/clean,
    record `CLEANUP_PRE`, and release the lease through the transaction receipt.
 

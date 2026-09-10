@@ -16368,7 +16368,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.task_registry_canonical
   path: src/ai_trading_system/platform/architecture/task_registry_canonical.py
-  sha256: 3fe182127fb077ebb616bfad05d9b4b42e6f5572d13f448be3fae09d8806586b
+  sha256: 95290400bf4344b344008ac190cf01500353a79cf7a0f25097129767f2d18555
   rule_id: platform_architecture
   owner_profile: platform
   owners:

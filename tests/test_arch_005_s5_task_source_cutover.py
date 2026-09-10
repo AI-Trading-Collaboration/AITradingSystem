@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import subprocess
 from argparse import Namespace
 from pathlib import Path
 
@@ -10,6 +11,7 @@ import pytest
 
 import scripts.architecture_arch005_task_source as task_source_cli
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.platform.architecture import task_registry_canonical as canonical
 from ai_trading_system.platform.architecture.task_registry_canonical import (
     CANONICAL_SOURCE,
     GENERATED_BANNER,
@@ -167,3 +169,292 @@ def _event_id(event: dict[str, object]) -> str:
         sort_keys=True,
     ).encode("utf-8")
     return f"task-event-{hashlib.sha256(encoded).hexdigest()[:32]}"
+
+
+def _frozen_git(root: Path, *args: str) -> str:
+    return subprocess.run(
+        ["git", "-C", str(root), *args],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+def _frozen_fixture(root: Path, status: str = "IN_PROGRESS") -> tuple[dict, dict]:
+    """A real Git repository with two independently sealed canonical tasks."""
+    _frozen_git(root, "init")
+    _frozen_git(root, "config", "user.email", "fixture@example.invalid")
+    _frozen_git(root, "config", "user.name", "Canonical reader fixture")
+    policy_path = root / canonical.POLICY_PATH
+    policy_path.parent.mkdir(parents=True)
+    policy_path.write_bytes((PROJECT_ROOT / canonical.POLICY_PATH).read_bytes())
+    records = []
+    fragments = {}
+    previous = canonical._chain_genesis()
+    for order, task_id in enumerate(("TASK-A", "TASK-B"), start=1):
+        cells = [task_id, "fixture", "P1", status, "coordinator", "none", "checks", "note"]
+        event = {
+            "schema_version": "task_event.v1",
+            "task_id": task_id,
+            "event_type": "TASK_REGISTERED",
+            "occurred_at": "2026-09-10T01:00:00+00:00",
+            "actor": "fixture",
+            "change_id": "fixture-register",
+            "base_commit": "a" * 40,
+            "previous_state_event_id": None,
+            "from_status": None,
+            "to_status": status,
+            "payload": {"legacy_projection": cells},
+            "evidence_refs": ["fixture"],
+        }
+        event["event_id"] = canonical._canonical_event_id(event)
+        fragment = {
+            "schema_version": canonical.CANONICAL_FRAGMENT_SCHEMA,
+            "source_of_truth": CANONICAL_SOURCE,
+            "stable_task_identity": {
+                "task_id": task_id,
+                "task_id_sha256": hashlib.sha256(task_id.encode()).hexdigest(),
+            },
+            "task_record": canonical._task_record_from_cells(cells, prior={}),
+            "events": [event],
+            "projection": canonical._projection_from_cells(cells),
+            "last_event_id": event["event_id"],
+        }
+        fragment["fragment_checksum"] = canonical._payload_checksum(fragment, "fragment_checksum")
+        canonical.validate_canonical_fragment(fragment)
+        path = canonical._canonical_fragment_path(task_id)
+        target = root / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(canonical._yaml_bytes(fragment))
+        core = {
+            "task_id": task_id,
+            "path": path,
+            "file_sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
+            "fragment_checksum": fragment["fragment_checksum"],
+            "partition": "completed" if status == "DONE" else "active",
+            "order": order,
+        }
+        chain = canonical._entry_chain(previous, core)
+        records.append({**core, "previous_entry_sha256": previous, "entry_sha256": chain})
+        previous = chain
+        fragments[task_id] = fragment
+    index = {
+        "schema_version": canonical.CANONICAL_INDEX_SCHEMA,
+        "status": "PASS",
+        "source_of_truth": CANONICAL_SOURCE,
+        "cutover_performed": True,
+        "legacy_markdown_writable": False,
+        "fragment_root": canonical.CANONICAL_FRAGMENT_ROOT,
+        "policy_sha256": hashlib.sha256(policy_path.read_bytes()).hexdigest(),
+        "task_count": 2,
+        "fragment_count": 2,
+        "active_task_count": 0 if status == "DONE" else 2,
+        "completed_task_count": 2 if status == "DONE" else 0,
+        "missing_task_count": 0,
+        "duplicate_task_count": 0,
+        "chain_genesis_sha256": canonical._chain_genesis(),
+        "final_chain_sha256": previous,
+        "fragments": records,
+    }
+    _frozen_save_index(root, index)
+    return index, fragments
+
+
+def _frozen_save_index(root: Path, index: dict) -> None:
+    index["index_checksum"] = canonical._payload_checksum(index, "index_checksum")
+    path = root / canonical.CANONICAL_INDEX_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(canonical._yaml_bytes(index))
+
+
+def _frozen_commit(root: Path) -> str:
+    _frozen_git(root, "add", "--all")
+    _frozen_git(root, "commit", "-m", "synthetic canonical fixture")
+    return _frozen_git(root, "rev-parse", "HEAD")
+
+
+@pytest.mark.parametrize("status", ["IN_PROGRESS", "DONE"])
+def test_frozen_canonical_reader_exact_commit_and_task_isolation(
+    tmp_path: Path, status: str
+) -> None:
+    index, _ = _frozen_fixture(tmp_path, status)
+    commit = _frozen_commit(tmp_path)
+    # Neither working-copy corruption nor absent generated views/other blobs is
+    # authority for this historical, single-task query.
+    (tmp_path / canonical.CANONICAL_INDEX_PATH).write_text("corrupt working copy")
+    result = canonical.read_canonical_task_at_commit(
+        project_root=tmp_path,
+        commit=commit,
+        task_id="TASK-A",
+    )
+    assert result["source_commit"] == commit
+    assert result["task_id"] == "TASK-A"
+    assert result["status"] == status
+    assert result["is_terminal"] is (status == "DONE")
+    assert result["fragment_sha256"] == index["fragments"][0]["file_sha256"]
+    assert result["index_checksum"] == index["index_checksum"]
+    assert _frozen_git(tmp_path, "rev-parse", "HEAD") == commit
+
+
+def test_frozen_canonical_reader_missing_task_is_distinct_from_missing_blob(tmp_path: Path) -> None:
+    _frozen_fixture(tmp_path)
+    (tmp_path / canonical._canonical_fragment_path("TASK-B")).unlink()
+    commit = _frozen_commit(tmp_path)
+    assert (
+        canonical.read_canonical_task_at_commit(
+            project_root=tmp_path,
+            commit=commit,
+            task_id="TASK-A",
+        )["task_id"]
+        == "TASK-A"
+    )
+    for task_id, code in (
+        ("TASK-C", "CANONICAL_TASK_NOT_FOUND"),
+        ("TASK-B", "CANONICAL_GIT_BLOB_MISSING"),
+    ):
+        with pytest.raises(CanonicalTaskRegistryError) as error:
+            canonical.read_canonical_task_at_commit(
+                project_root=tmp_path, commit=commit, task_id=task_id
+            )
+        assert error.value.code == code
+
+
+@pytest.mark.parametrize("revision", ["HEAD", "a" * 7, "a" * 40, "A" * 40])
+def test_frozen_canonical_reader_rejects_nonexact_revision(tmp_path: Path, revision: str) -> None:
+    _frozen_fixture(tmp_path)
+    _frozen_commit(tmp_path)
+    with pytest.raises(CanonicalTaskRegistryError):
+        canonical.read_canonical_task_at_commit(
+            project_root=tmp_path, commit=revision, task_id="TASK-A"
+        )
+
+
+@pytest.mark.parametrize(
+    "mutation,code",
+    [
+        ("duplicate", "INDEX_DUPLICATE_TASK"),
+        ("count", "INDEX_COUNT"),
+        ("path", "INDEX_PATH_BINDING"),
+        ("chain", "INDEX_CHAIN"),
+        ("file_hash", "INDEX_FILE_HASH"),
+        ("checksum", "INDEX_CHECKSUM"),
+        ("authority", "INDEX_AUTHORITY"),
+        ("partition", "INDEX_PARTITION"),
+    ],
+)
+def test_frozen_canonical_reader_rejects_index_corruption(
+    tmp_path: Path, mutation: str, code: str
+) -> None:
+    index, _ = _frozen_fixture(tmp_path)
+    if mutation == "duplicate":
+        index["fragments"].append(copy.deepcopy(index["fragments"][0]))
+    elif mutation == "count":
+        index["task_count"] = True
+    elif mutation == "path":
+        index["fragments"][0]["path"] = "../outside.yaml"
+    elif mutation == "chain":
+        index["final_chain_sha256"] = "f" * 64
+    elif mutation == "authority":
+        index["source_of_truth"] = "LEGACY_MARKDOWN_ONLY"
+    elif mutation == "partition":
+        index["fragments"][0]["partition"] = "unknown"
+    elif mutation == "file_hash":
+        index["fragments"][0]["file_sha256"] = "f" * 64
+        previous = canonical._chain_genesis()
+        for record in index["fragments"]:
+            record["previous_entry_sha256"] = previous
+            record["entry_sha256"] = canonical._entry_chain(
+                previous, canonical._record_core(record)
+            )
+            previous = record["entry_sha256"]
+        index["final_chain_sha256"] = previous
+    _frozen_save_index(tmp_path, index)
+    if mutation == "checksum":
+        path = tmp_path / canonical.CANONICAL_INDEX_PATH
+        index["index_checksum"] = "f" * 64
+        path.write_bytes(canonical._yaml_bytes(index))
+    commit = _frozen_commit(tmp_path)
+    with pytest.raises(CanonicalTaskRegistryError) as error:
+        canonical.read_canonical_task_at_commit(
+            project_root=tmp_path, commit=commit, task_id="TASK-A"
+        )
+    assert error.value.code == code
+
+
+def test_frozen_canonical_reader_rejects_git_symlink_blob(tmp_path: Path) -> None:
+    _frozen_fixture(tmp_path)
+    _frozen_commit(tmp_path)
+    path = canonical._canonical_fragment_path("TASK-A")
+    blob = _frozen_git(tmp_path, "rev-parse", f"HEAD:{path}")
+    # Set a real Git symlink mode without needing Windows symlink privileges.
+    _frozen_git(tmp_path, "update-index", "--cacheinfo", f"120000,{blob},{path}")
+    _frozen_git(tmp_path, "commit", "-m", "nonregular canonical blob")
+    commit = _frozen_git(tmp_path, "rev-parse", "HEAD")
+    with pytest.raises(CanonicalTaskRegistryError, match="CANONICAL_GIT_REGULAR_BLOB"):
+        canonical.read_canonical_task_at_commit(
+            project_root=tmp_path, commit=commit, task_id="TASK-A"
+        )
+
+
+def test_frozen_canonical_reader_ignores_replacement_objects(tmp_path: Path) -> None:
+    index, _ = _frozen_fixture(tmp_path)
+    original = _frozen_commit(tmp_path)
+    original_blob = _frozen_git(tmp_path, "rev-parse", f"HEAD:{canonical.CANONICAL_INDEX_PATH}")
+    index["source_of_truth"] = "CORRUPT"
+    _frozen_save_index(tmp_path, index)
+    replacement = _frozen_commit(tmp_path)
+    replacement_blob = _frozen_git(tmp_path, "rev-parse", f"HEAD:{canonical.CANONICAL_INDEX_PATH}")
+    _frozen_git(tmp_path, "replace", original_blob, replacement_blob)
+    assert (
+        canonical.read_canonical_task_at_commit(
+            project_root=tmp_path, commit=original, task_id="TASK-A"
+        )["source_commit"]
+        == original
+    )
+    with pytest.raises(CanonicalTaskRegistryError, match="INDEX_AUTHORITY"):
+        canonical.read_canonical_task_at_commit(
+            project_root=tmp_path, commit=replacement, task_id="TASK-A"
+        )
+
+
+@pytest.mark.parametrize(
+    "mutation,code",
+    [
+        ("event", "EVENT_ID_HASH"),
+        ("projection", "TASK_RECORD_PROJECTION"),
+        ("fragment", "FRAGMENT_CHECKSUM"),
+        ("identity", "TASK_ID_HASH"),
+    ],
+)
+def test_frozen_canonical_reader_rejects_fragment_corruption(
+    tmp_path: Path, mutation: str, code: str
+) -> None:
+    index, fragments = _frozen_fixture(tmp_path)
+    fragment = fragments["TASK-A"]
+    if mutation == "event":
+        fragment["events"][0]["actor"] = "tampered"
+    elif mutation == "projection":
+        fragment["task_record"]["next_owner"] = "tampered"
+    elif mutation == "identity":
+        fragment["stable_task_identity"]["task_id_sha256"] = "f" * 64
+    fragment["fragment_checksum"] = canonical._payload_checksum(fragment, "fragment_checksum")
+    if mutation == "fragment":
+        fragment["fragment_checksum"] = "f" * 64
+    raw = canonical._yaml_bytes(fragment)
+    (tmp_path / canonical._canonical_fragment_path("TASK-A")).write_bytes(raw)
+    index["fragments"][0].update(
+        file_sha256=hashlib.sha256(raw).hexdigest(), fragment_checksum=fragment["fragment_checksum"]
+    )
+    previous = canonical._chain_genesis()
+    for record in index["fragments"]:
+        record["previous_entry_sha256"] = previous
+        record["entry_sha256"] = canonical._entry_chain(previous, canonical._record_core(record))
+        previous = record["entry_sha256"]
+    index["final_chain_sha256"] = previous
+    _frozen_save_index(tmp_path, index)
+    commit = _frozen_commit(tmp_path)
+    with pytest.raises(CanonicalTaskRegistryError) as error:
+        canonical.read_canonical_task_at_commit(
+            project_root=tmp_path, commit=commit, task_id="TASK-A"
+        )
+    assert error.value.code == code

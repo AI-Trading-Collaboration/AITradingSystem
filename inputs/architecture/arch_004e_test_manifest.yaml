@@ -8122,7 +8122,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: e78222fb38d1015b78feee45ec478852302cf4c2bb66ca1be78a231d12fc4b9e
+  sha256: e0b987d07f69f82bf9031c503b7e7932b5cdbd7ff0eaa32fd0c3cffc01fd337a
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -8746,7 +8746,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s5_task_source_cutover
   path: tests/test_arch_005_s5_task_source_cutover.py
-  sha256: b6e52da7f98086cb225297fecaae26db5b09b4d1c67530c0d3c4906e651030c9
+  sha256: 14ad03372efa41fa1ef5e2ddba17ff63d68bf9a8471ee41030e3db7c6d56619d
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -10538,7 +10538,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 7e5f254d5e069cee3761dde19aab1dd2128b447d8497d58394dd2c9a52ee67b3
+  sha256: 93619e8c7f59a23ab6e256b3068af3164b2b17d0c66342065c9686f600ad536e
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -12896,7 +12896,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_governed_development_skill
   path: tests/test_governed_development_skill.py
-  sha256: 5e46931d9577cd7597107991348fcfc9b36ea6d97f65a536857b9556b9803722
+  sha256: 58b1d29cb62ab8b15dc14e2630e3c06ab79b609e892e1627abc1520685f7f5c6
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

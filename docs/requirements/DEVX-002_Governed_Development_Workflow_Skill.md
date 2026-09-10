@@ -173,6 +173,24 @@ Preflight 至少输出：
 
 ## 7. 进度记录
 
+- 2026-09-10：Owner 在 DEVX-015 工程重构中批准
+  `owner_decision:DEVX-015:2026-09-10:completed_validated_candidate_integration_v1`。
+  终态任务已随最终候选提交、正式验证通过但尚未 fast-forward 时，允许 coordinator
+  在 `INTEGRATION` 识别该任务；必须由 repository publication fence 验证事务，精确阶段
+  `LOCAL_MAIN_FF_PRE`、task ID、candidate/current HEAD、clean audit 全部匹配。
+  `START`/`LANE` 仍要求活动任务，普通历史已完成任务仍仅可 CLOSEOUT；不扩大 source-only
+  能力、publication 或 Full 权限。此前 installed-only 例外纳入 canonical，必须补充真实
+  Git/租约/事务链完整预检与拒绝场景，并恢复 bundle byte parity。实现和验证进度见
+  `DEVX-015_Task_Checkpoint_And_Publication_Separation_V2.md`；本条不声明测试或发布已完成。
+
+- 2026-09-10：Owner 在 DEVX-015 批准
+  `owner_decision:DEVX-015:2026-09-10:frozen_lane_canonical_task_integration_admission_v1`。
+  latest-main尚未登记任务时，clean coordinator INTEGRATION可在真实普通事务ACQUIRED下，
+  从独立validated plan的exact lane_head canonical index/唯一fragment/完整event链核验任务，
+  通过后再canonical登记。当前canonical状态优先，拒绝损坏、终态、错身份和source-only，
+  不放宽dirty-plan或Full/publish。实现/真实行为验证及有效bundle同步由DEVX-015记录；
+  本记录不是验证或发布完成证据。
+
 - 2026-07-26：Owner确认项目内研发流程、local-main边界、parallel integration topology、
   workspace cleanup与skill强制入口均需明确推进；任务建立并进入`IN_PROGRESS`。
 - 2026-07-26：`AGENTS.md`、ARCH-005 requirement和dual-lane operating model已统一到

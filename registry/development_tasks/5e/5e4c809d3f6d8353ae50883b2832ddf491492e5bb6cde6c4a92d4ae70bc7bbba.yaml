@@ -1,0 +1,124 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+  task_id_sha256: 5e4c809d3f6d8353ae50883b2832ddf491492e5bb6cde6c4a92d4ae70bc7bbba
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+  title: null
+  domain: Architecture / task checkpoint and publication separation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex engineering coordinator
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 最小frozen canonical准入合同完成focused，待单独候选required
+    tiers；保留旧S1-S5/consumer/OPS080完整目标。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 仅clean coordinator INTEGRATION以有效plan精确lane_head的canonical index/fragment/event完整核验缺失任务；错身份、篡改、终态、source-only和脏状态拒绝；不放宽writer/Full/publication。真实CLI正反例及新候选全部required
+      tiers。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-10T07:59:55.7438160+00:00'
+  actor: integration-coordinator
+  change_id: devx015-main6498-task-registration
+  lane_id: null
+  base_commit: 6498d030079370f6fc6dd2edf3b71dd0505ed57e
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+    - Architecture / task checkpoint and publication separation
+    - P0
+    - IN_PROGRESS
+    - Codex engineering coordinator
+    - 按exact plan706b2f协调OPS081/DEVX015共享文件；任务登记后重新预检，S2-S5/consumer/OPS080范围不缩减。
+    - 保留双authority的严格当前绑定与历史完整性，官方生成后新候选全部required tiers及Full通过；完整需求见docs/requirements/DEVX-015_Task_Checkpoint_And_Publication_Separation_V2.md。
+    - 2026-09-10旧6638候选四tier PASS；V5 Full未启动因main6498前进而官方FAILED/RELEASED。复用原工作区，新候选branch保留原source和证据，不重标旧PASS。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx015-main6498-task-registration
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-50bfdff3c0e86eea594c179193cf247e
+- schema_version: task_event.v1
+  task_id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-10T08:38:20.7366277+00:00'
+  actor: integration-coordinator
+  change_id: devx015-frozen-task-admission-approved
+  lane_id: null
+  base_commit: 6498d030079370f6fc6dd2edf3b71dd0505ed57e
+  previous_state_event_id: task-event-50bfdff3c0e86eea594c179193cf247e
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: Owner已批准frozen-lane canonical任务准入；先在exact6498开发最小合同并验证，再继续共享差异协调及完整S2-S5/consumer/OPS080。
+    acceptance_criteria: 仅clean coordinator INTEGRATION以有效plan精确lane_head的canonical
+      index/fragment/event完整核验缺失任务；错身份、篡改、终态、source-only和脏状态拒绝；不放宽writer/Full/publication。真实CLI正反例及新候选全部required
+      tiers。
+    notes: 2026-09-10 Owner明确同意frozen_lane_canonical_task_integration_admission_v1；原暂停四文件证据已hash绑定保留，旧事务不修改。新source事务开发准入规则，不伪造旧plan
+      clean。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx015-frozen-task-admission-approved
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e0690554da642f0d861a9bcc671ae494
+- schema_version: task_event.v1
+  task_id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-10T09:04:22.3607871+00:00'
+  actor: integration-coordinator
+  change_id: devx015-frozen-admission-focused-verified
+  lane_id: null
+  base_commit: 6498d030079370f6fc6dd2edf3b71dd0505ed57e
+  previous_state_event_id: task-event-e0690554da642f0d861a9bcc671ae494
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: 最小frozen canonical准入合同完成focused，待单独候选required tiers；保留旧S1-S5/consumer/OPS080完整目标。
+    acceptance_criteria: 仅clean coordinator INTEGRATION以有效plan精确lane_head的canonical
+      index/fragment/event完整核验缺失任务；错身份、篡改、终态、source-only和脏状态拒绝；不放宽writer/Full/publication。真实CLI正反例及新候选全部required
+      tiers。
+    notes: reader21及skill最终96项PASS；plan/manifest字节与task绑定；保留已批准completed/source-only规则，bundle五文件一致。旧暂停四文件事后重建并匹配原hash，不冒充当时副本；V5
+      Atlas17文件保全。preflight额外mypy4项基线既有错误未扩修。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx015-frozen-admission-focused-verified
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-500744a51849e84f20d8680a9e4882ec
+projection:
+  legacy_first_eight_cells:
+  - DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+  - Architecture / task checkpoint and publication separation
+  - P0
+  - IN_PROGRESS
+  - Codex engineering coordinator
+  - 最小frozen canonical准入合同完成focused，待单独候选required tiers；保留旧S1-S5/consumer/OPS080完整目标。
+  - 仅clean coordinator INTEGRATION以有效plan精确lane_head的canonical index/fragment/event完整核验缺失任务；错身份、篡改、终态、source-only和脏状态拒绝；不放宽writer/Full/publication。真实CLI正反例及新候选全部required
+    tiers。
+  - reader21及skill最终96项PASS；plan/manifest字节与task绑定；保留已批准completed/source-only规则，bundle五文件一致。旧暂停四文件事后重建并匹配原hash，不冒充当时副本；V5
+    Atlas17文件保全。preflight额外mypy4项基线既有错误未扩修。
+  docs_links: []
+  terminal: false
+  canonical_row_sha256: 62b22cd1ed00ec8e2db3495c4479a957f6f78d953a35abf378c8bff7e11bed0e
+last_event_id: task-event-500744a51849e84f20d8680a9e4882ec
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: ad0c4f972f5904466532206ebbe9d41d4a310ac5e726694377b4484bdd4e8c21

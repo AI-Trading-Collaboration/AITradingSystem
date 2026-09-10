@@ -7,16 +7,16 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 1068
-active_task_count: 526
+task_count: 1069
+active_task_count: 527
 completed_task_count: 542
-fragment_count: 1068
+fragment_count: 1069
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 0148c67fa71e0ffcde5e01418a9246afb401ac1f28f67e32c0f6492156de3bbb
+final_chain_sha256: 83bd5a5301dd7463575c2cd26d8b9ab3e81c7e40f8952adf1f00dac0265ff358
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
-consumer_inventory_sha256: ecee535fb08562da2c2fc6b054991cd569fdc7ca4c5b4109a8871fd7c16d5d1e
+consumer_inventory_sha256: 53f22bb69c3865dd311d6c936964fdc67a75b94e84b174356bcd33e28a439a5e
 templates:
 - partition: active
   path: inputs/architecture/arch_005_s5_active_view_template.md
@@ -8573,12 +8573,20 @@ fragments:
   order: 1068
   previous_entry_sha256: 7ca06f1a593c9aaa746695f55353cf00f1834680c35d34805b039fe0ce9464ab
   entry_sha256: 0148c67fa71e0ffcde5e01418a9246afb401ac1f28f67e32c0f6492156de3bbb
+- task_id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+  path: registry/development_tasks/5e/5e4c809d3f6d8353ae50883b2832ddf491492e5bb6cde6c4a92d4ae70bc7bbba.yaml
+  file_sha256: 2e105c340f9d420757338ae33e3c0eac95f69ecef82bc91ee2e608407975293d
+  fragment_checksum: ad0c4f972f5904466532206ebbe9d41d4a310ac5e726694377b4484bdd4e8c21
+  partition: active
+  order: 1069
+  previous_entry_sha256: 0148c67fa71e0ffcde5e01418a9246afb401ac1f28f67e32c0f6492156de3bbb
+  entry_sha256: 83bd5a5301dd7463575c2cd26d8b9ab3e81c7e40f8952adf1f00dac0265ff358
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 0aede177b0f20ba26da4ec292caf2565423d6667f9ce33d1c78ad6b2abda8f98
-  byte_count: 1782236
-  row_count: 526
+  sha256: af82f41b0d35e6c26c6b3a8fbf687a74595b59deb3dd2dbf0d0fc4110b0f08f5
+  byte_count: 1783085
+  row_count: 527
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
@@ -12227,7 +12235,28 @@ governance_cycles:
   change_id: ops081-full-regression-fix
   event_count: 3
   production_effect: none
-governance_cycle_count: 520
+- cycle_id: arch-005-s5-cycle-521
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+  change_id: devx015-main6498-task-registration
+  event_count: 1
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-522
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+  change_id: devx015-frozen-task-admission-approved
+  event_count: 2
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-523
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+  change_id: devx015-frozen-admission-focused-verified
+  event_count: 3
+  production_effect: none
+governance_cycle_count: 523
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -12241,4 +12270,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: d090bff8ed7a61b6d881d5bc828e4dca7e679b902fc8a55931fa5b0c67c869d8
+index_checksum: a4c895ed1b02b72b4bccece0c0fc49d5a208e74105aabfc38163d735e77b2ab3
