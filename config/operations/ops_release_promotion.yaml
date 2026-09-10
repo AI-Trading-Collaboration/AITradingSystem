@@ -1,9 +1,9 @@
 schema_version: ops_release_promotion_policy.v2
 policy_id: ops_release_promotion_v2
-version: 2.1.0
+version: 2.2.0
 status: REVIEWED_OWNER_GATED
 owner: operations_owner_and_project_owner
-reviewed_at: 2026-09-04
+reviewed_at: 2026-09-10
 rationale: >
   Ops releases must be selected explicitly from validated, pushed remote main
   and promoted through a journaled transaction. The active deployment receipt
@@ -30,6 +30,11 @@ receipts:
   # Policy migrations may roll forward only from these exact immutable active
   # receipt bytes. This is not a schema or scheduler-field compatibility bypass.
   prior_active_acceptance_allowlist:
+    # OPS-081 owner-authorized migration; immutable prior receipt retained.
+    - deployment_id: ops_deployment_30c270b5e2719e7c5b8b600395775c3ce601747a
+      release_commit: 03f114b7edf73fbb15aad94dfff9515495940cc4
+      size_bytes: 11257
+      sha256: dffa7d724bb9e1aff7600eca624dc96cdc6e023619c3313922ec79f0f6fa540e
     - deployment_id: ops_deployment_13d42bc41d6fcb3228f8abf28d1717807544b66b
       release_commit: ea8937b2a07f5c4fc52ba1c437566017be137baa
       size_bytes: 10907
@@ -57,6 +62,7 @@ receipts:
     - src/ai_trading_system/cli_commands/ops.py
     - src/ai_trading_system/ops_release_promotion.py
     - src/ai_trading_system/ops_scheduler_checkout.py
+    - src/ai_trading_system/ops_scheduler_business_contract.py
 promotion:
   lock_relative_path: outputs/operations/deployment/promotion.lock
   active_daily_lease_required_count: 0
@@ -94,10 +100,16 @@ scheduler:
   release_identity_authority: active_deployment_receipt
   legacy_release_assertion_name: AITS_OPS_RELEASE_COMMIT
   legacy_release_assertion_mode: exact_match_if_present
-  observation_schema: ops_scheduler_observation.v2
+  identity_mode: business_contract.v1
+  observation_schema: ops_scheduler_observation.v3
+  # Explicit reviewed explanation, not arbitrary text after the business core.
+  reviewed_advisory_suffixes:
+    - >-
+      执行效率规则：在上述完整运营合同和 runbook 的约束下，优先调用既有确定性脚本完成检查与计算；按需读取相关日志片段和 canonical evidence，避免反复输出整份日志、全仓文件或历史。复用本 invocation 已验证且未变化的结果；涉及实时状态、release、锁、数据质量或执行许可时仍须重新验证。等待命令优先使用完成事件或有界等待，状态未变化时逐步延长轮询间隔。相同失败且没有新证据时不得重复尝试相同动作，应改用针对性的诊断；外部阻断只记录退出条件和 next owner。本规则不增加业务 trigger 次数、不创建新的 scheduler、不放宽任何 mandatory gate。完成规定的 daily、post-stage 和 gap 对账后结束本 invocation；无关重构和额外功能仅列入后续建议。
   canonical_prompt_relative_path: config/operations/aitradingsystem_pit_automation_prompt.md
   expected_status: ACTIVE
   expected_rrule: FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU;BYHOUR=9,17;BYMINUTE=30;BYSECOND=0
+  # Legacy-v2 replay defaults only; v3 observations record actual preferences.
   expected_model: gpt-5.6-sol
   expected_reasoning_effort: xhigh
   expected_execution_environment: local

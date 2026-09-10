@@ -351,12 +351,12 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 331
-    assert result["fragment_count"] == 25
+    assert len(merged) == 332
+    assert result["fragment_count"] == 26
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
+    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
@@ -852,7 +852,7 @@ def test_s2c2_exact_preview_successor_preserves_closed_execution_boundary() -> N
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
+    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
     assert (
         list(merged).index(TRADING_2564_S2C2_SECTION)
         == list(merged).index(TRADING_2564_S2C_SECTION) + 1
@@ -936,7 +936,7 @@ def test_s2c_is_exact_price_scope_successor_not_strategy_promotion() -> None:
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
+    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
     assert (
         list(merged).index(TRADING_2564_S2C_SECTION)
         == list(merged).index(TRADING_2564_S2B_SECTION) + 1
@@ -1225,7 +1225,7 @@ def test_s3a_exact_temporal_successor_preserves_admission_boundaries() -> None:
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
+    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
     assert (
         list(merged).index(TRADING_2564_S3A_SECTION)
         == list(merged).index(TRADING_2564_S2C2_SECTION) + 1
@@ -1298,7 +1298,7 @@ def test_s3b_exact_capture_successor_preserves_real_research_boundary() -> None:
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
+    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
     assert (
         list(merged).index(TRADING_2564_S3B_SECTION)
         == list(merged).index(TRADING_2564_S3A_SECTION) + 1
@@ -1369,7 +1369,7 @@ def test_s5_duration_successor_preserves_historical_and_advisory_boundaries() ->
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
+    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
     assert (
         list(merged).index(TRADING_2564_S5_SECTION)
         == list(merged).index(TRADING_2564_S3B_SECTION) + 1
@@ -1468,7 +1468,7 @@ def test_s5_diagnostics_successor_preserves_terminal_truth_and_source_scope() ->
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
+    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
     assert (
         list(merged).index(TRADING_2564_S5_DIAGNOSTICS_SECTION)
         == list(merged).index(TRADING_2564_S5_SECTION) + 1
@@ -1559,7 +1559,7 @@ def test_s4_first_access_successor_preserves_scope_and_unresolved_real_gate() ->
 
     merged = load_compatibility_authority()
     phase = merged[TRADING_2564_S4_FIRST_ACCESS_SECTION]
-    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
+    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
     assert (
         list(merged).index(TRADING_2564_S4_FIRST_ACCESS_SECTION)
         == list(merged).index(TRADING_2564_S5_DIAGNOSTICS_SECTION) + 1
@@ -1654,7 +1654,7 @@ def test_composer_successor_retains_separate_research_and_clock_boundaries() -> 
 
     merged = load_compatibility_authority()
     phase = merged[TRADING_2560_COMPOSER_CAPTURE_SECTION]
-    assert next(reversed(merged)) == TRADING_2560_COMPOSER_CAPTURE_SECTION
+    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
     assert list(merged).index(TRADING_2560_COMPOSER_CAPTURE_SECTION) == (
         list(merged).index(TRADING_2564_S4_FIRST_ACCESS_SECTION) + 1
     )
@@ -1698,3 +1698,30 @@ def test_composer_successor_rejects_incomplete_or_false_source_binding(mutation:
         phase["sources"][0]["sha256"] = "0" * 64
     with pytest.raises(AssertionError):
         _assert_composer_source_closure(phase)
+
+
+def test_ops_081_scheduler_successor_keeps_business_authority_fail_closed() -> None:
+    merged = load_compatibility_authority()
+    section_id = "phase_ops_081_scheduler_business_contract_decoupling_v1"
+    phase = merged[section_id]
+    assert next(reversed(merged)) == section_id
+    assert (
+        phase["supersession"]["inherited_supersession_authority"]
+        == TRADING_2560_COMPOSER_CAPTURE_SECTION
+    )
+    assert phase["scheduler_contract"] == {
+        "identity_mode": "business_contract.v1",
+        "preferences_revoke_business_authority": False,
+        "unknown_fields_fail_closed": True,
+        "business_drift_fail_closed": True,
+        "fresh_observation_required_for_activation": True,
+        "legacy_migration_requires_exact_receipt_allowlist": True,
+        "client_save_transaction_controlled_by_repository": False,
+    }
+    paths = [row["path"] for row in phase["sources"]]
+    assert paths == sorted(set(phase["superseded_live_source_paths"]), key=str.casefold)
+    assert "src/ai_trading_system/ops_scheduler_business_contract.py" in paths
+    for row in phase["sources"]:
+        content = Path(row["path"]).read_bytes().replace(b"\r\n", b"\n")
+        assert hashlib.sha256(content).hexdigest() == row["sha256"]
+    assert phase["production_effect"] == phase["broker_action"] == "none"

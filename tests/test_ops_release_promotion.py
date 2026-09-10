@@ -79,6 +79,7 @@ REQUIRED_CRITICAL_PATHS = (
     "src/ai_trading_system/cli_commands/ops.py",
     "src/ai_trading_system/ops_release_promotion.py",
     "src/ai_trading_system/ops_scheduler_checkout.py",
+    "src/ai_trading_system/ops_scheduler_business_contract.py",
 )
 ReleaseRepository = tuple[Path, str, tuple[Path, ...], tuple[Path, ...]]
 
@@ -121,9 +122,13 @@ def test_policy_fails_closed_on_latest_and_scheduler_duplication() -> None:
     )
     assert policy.scheduler_per_invocation_business_trigger_max == 1
     assert policy.scheduler_same_entry_for_all_windows is True
-    assert policy.version == "2.1.0"
-    assert len(policy.prior_active_acceptance_allowlist) == 1
-    prior = policy.prior_active_acceptance_allowlist[0]
+    assert policy.version == "2.2.0"
+    assert policy.scheduler_identity_mode == "business_contract.v1"
+    assert len(policy.prior_active_acceptance_allowlist) == 2
+    current = policy.prior_active_acceptance_allowlist[0]
+    assert current.deployment_id == "ops_deployment_30c270b5e2719e7c5b8b600395775c3ce601747a"
+    assert current.sha256 == "dffa7d724bb9e1aff7600eca624dc96cdc6e023619c3313922ec79f0f6fa540e"
+    prior = policy.prior_active_acceptance_allowlist[1]
     assert prior.deployment_id == "ops_deployment_13d42bc41d6fcb3228f8abf28d1717807544b66b"
     assert prior.release_commit == "ea8937b2a07f5c4fc52ba1c437566017be137baa"
     assert prior.size_bytes == 10907
@@ -594,6 +599,25 @@ def test_deployment_acceptance_binds_unique_scheduler_and_credentials(
     repeated_path = activate_ops_deployment(payload, runtime_root=runtime)
     assert active_path == repeated_path
     assert active_path.is_file()
+    retained_bytes = active_path.read_bytes()
+    config_path = runtime.parent / "automation.toml"
+    config_text = config_path.read_text(encoding="utf-8")
+    config_path.write_text(
+        config_text.replace('model = "gpt-5.6-sol"', 'model = "gpt-6-astra"'),
+        encoding="utf-8",
+    )
+    validate_ops_deployment_acceptance(
+        payload,
+        runtime_root=runtime,
+        development_root=development,
+        runtime_python=runtime_python,
+        verify_live_runtime=True,
+    )
+    assert active_path.read_bytes() == retained_bytes
+    config_path.write_text(config_text.replace("BYHOUR=9,17", "BYHOUR=10"), encoding="utf-8")
+    with pytest.raises(OpsReleasePromotionError, match="SCHEDULER_BUSINESS_CONTRACT_DRIFT"):
+        activate_ops_deployment(payload, runtime_root=runtime)
+    assert active_path.read_bytes() == retained_bytes
 
 
 def test_deployment_acceptance_rejects_forbidden_credential_name(
@@ -692,7 +716,7 @@ def test_activation_allows_only_exact_reviewed_prior_active_receipt(
     )
     prior = json.loads(json.dumps(current))
     prior["scheduler"]["rrule"] = (
-        "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU;" "BYHOUR=9;BYMINUTE=30;BYSECOND=0"
+        "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU;BYHOUR=9;BYMINUTE=30;BYSECOND=0"
     )
     prior["deployment_id"] = promotion._content_id("ops_deployment_", prior, "deployment_id")
     active_path = runtime / "outputs" / "operations" / "deployment" / "active.json"
@@ -1197,6 +1221,125 @@ def test_promotion_blocks_active_daily_lease_before_switch(
         )
 
     assert _git(runtime, "rev-parse", "HEAD") == commit
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    [
+        ('model = "gpt-5.6-sol"', 'model = "gpt-6-astra"'),
+        ('reasoning_effort = "xhigh"', 'reasoning_effort = "medium"'),
+        ('name = "AITradingSystem PIT Daily"', 'name = "Renamed daily"'),
+    ],
+)
+def test_deployed_business_binding_survives_preference_changes(
+    tmp_path: Path,
+    old: str,
+    new: str,
+) -> None:
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    executable = runtime / ".venv/Scripts/python.exe"
+    observation = _scheduler_observation(runtime, executable)
+    binding = validate_scheduler_observation(
+        observation,
+        runtime_root=runtime,
+        runtime_python=executable,
+    )
+    path = runtime.parent / "automation.toml"
+    original = path.read_text(encoding="utf-8")
+    path.write_text(original.replace(old, new), encoding="utf-8")
+    assert sha256_path(path) != binding["config"]["sha256"]
+    promotion._validate_scheduler_binding_record(
+        binding,
+        policy=load_ops_release_promotion_policy(),
+        runtime_root=runtime,
+        verify_live=True,
+    )
+    # A fresh observation is still required during release activation.
+    with pytest.raises(OpsReleasePromotionError, match="RECEIPT_COMMITMENT_DRIFT"):
+        validate_scheduler_observation(
+            observation,
+            runtime_root=runtime,
+            runtime_python=executable,
+        )
+
+
+def test_deployed_business_binding_rejects_semantic_change(tmp_path: Path) -> None:
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    executable = runtime / ".venv/Scripts/python.exe"
+    binding = validate_scheduler_observation(
+        _scheduler_observation(runtime, executable),
+        runtime_root=runtime,
+        runtime_python=executable,
+    )
+    path = runtime.parent / "automation.toml"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace("BYHOUR=9,17", "BYHOUR=10"), encoding="utf-8"
+    )
+    with pytest.raises(OpsReleasePromotionError, match="SCHEDULER_BUSINESS_CONTRACT_DRIFT"):
+        promotion._validate_scheduler_binding_record(
+            binding,
+            policy=load_ops_release_promotion_policy(),
+            runtime_root=runtime,
+            verify_live=True,
+        )
+
+
+def test_v2_binding_cannot_silently_acquire_v3_permissions(tmp_path: Path) -> None:
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    executable = runtime / ".venv/Scripts/python.exe"
+    binding = validate_scheduler_observation(
+        _scheduler_observation(runtime, executable),
+        runtime_root=runtime,
+        runtime_python=executable,
+    )
+    binding["schema_version"] = "ops_scheduler_binding.v2"
+    binding.pop("business_contract")
+    with pytest.raises(OpsReleasePromotionError, match="DEPLOYMENT_SCHEDULER_BINDING_MISMATCH"):
+        promotion._validate_scheduler_binding_record(
+            binding,
+            policy=load_ops_release_promotion_policy(),
+            runtime_root=runtime,
+            verify_live=True,
+        )
+
+
+def test_explicit_legacy_binding_keeps_exact_bytes_semantics(tmp_path: Path) -> None:
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    executable = runtime / ".venv/Scripts/python.exe"
+    observation = _scheduler_observation(runtime, executable)
+    legacy = replace(
+        load_ops_release_promotion_policy(),
+        scheduler_identity_mode="exact_config_bytes.v1",
+        scheduler_observation_schema="ops_scheduler_observation.v2",
+    )
+    observation["schema_version"] = legacy.scheduler_observation_schema
+    observation.pop("business_contract")
+    binding = validate_scheduler_observation(
+        observation,
+        runtime_root=runtime,
+        runtime_python=executable,
+        policy=legacy,
+    )
+    assert binding["schema_version"] == "ops_scheduler_binding.v2"
+    promotion._validate_scheduler_binding_record(
+        binding,
+        policy=legacy,
+        runtime_root=runtime,
+        verify_live=True,
+    )
+    path = runtime.parent / "automation.toml"
+    path.write_text(path.read_text(encoding="utf-8") + "\n# changed\n", encoding="utf-8")
+    with pytest.raises(OpsReleasePromotionError, match="RECEIPT_COMMITMENT_DRIFT"):
+        promotion._validate_scheduler_binding_record(
+            binding,
+            policy=legacy,
+            runtime_root=runtime,
+            verify_live=True,
+        )
 
 
 def _scheduler_observation(runtime: Path, runtime_python: Path) -> dict[str, object]:

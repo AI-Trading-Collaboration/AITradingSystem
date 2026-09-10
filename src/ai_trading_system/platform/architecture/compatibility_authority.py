@@ -978,6 +978,10 @@ def build_repository_authority(
         section_id, section = _trading_2560_composer_known_snapshot_section(root, policy=policy)
         relative, record, content = render_fragment(section_id=section_id, section=section)
         rendered_fragments.append((section_id, relative, record, content))
+    if (root / "docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md").exists():
+        section_id, section = _ops_081_section(root, policy=policy)
+        relative, record, content = render_fragment(section_id=section_id, section=section)
+        rendered_fragments.append((section_id, relative, record, content))
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -3473,6 +3477,54 @@ def _trading_2564_s4_first_access_section(
     }
 
 
+def _ops_081_section(root: Path, *, policy: Mapping[str, Any]) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_ops_081_scheduler_business_contract_decoupling_v1"
+    previous_id, previous = _trading_2560_composer_known_snapshot_section(root, policy=policy)
+    source_paths = sorted(
+        {
+            *previous["superseded_live_source_paths"],
+            "config/operations/ops_release_promotion.yaml",
+            "docs/operations/operations_runbook.md",
+            "docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md",
+            "registry/development_tasks/5d/5d5b532e96b0df2ece6a2cffad2d7ae7eed243dd9668c040a2d3c15b0f7beef8.yaml",
+            "src/ai_trading_system/ops_release_promotion.py",
+            "src/ai_trading_system/ops_scheduler_checkout.py",
+            "src/ai_trading_system/ops_scheduler_business_contract.py",
+            "tests/test_ops_release_promotion.py",
+            "tests/test_ops_scheduler_checkout.py",
+            "tests/test_ops_scheduler_business_contract.py",
+        },
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "ops_081_scheduler_business_contract_decoupling.v1",
+        "task_id": "OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING",
+        "status": "VALIDATING",
+        "owner_decision": (
+            "owner_instruction:OPS-081:2026-09-10:repair-scheduler-binding-root-cause"
+        ),
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": previous_id,
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "scheduler_contract": {
+            "identity_mode": "business_contract.v1",
+            "preferences_revoke_business_authority": False,
+            "unknown_fields_fail_closed": True,
+            "business_drift_fail_closed": True,
+            "fresh_observation_required_for_activation": True,
+            "legacy_migration_requires_exact_receipt_allowlist": True,
+            "client_save_transaction_controlled_by_repository": False,
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
 def _trading_2560_composer_known_snapshot_section(
     root: Path, *, policy: Mapping[str, Any]
 ) -> tuple[str, dict[str, Any]]:
@@ -3500,8 +3552,7 @@ def _trading_2560_composer_known_snapshot_section(
         "task_id": "TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1",
         "status": "IN_PROGRESS",
         "owner_decision": (
-            "owner_instruction:TRADING-2560:2026-09-09:"
-            "continue_known_snapshot_prospective_research"
+            "owner_instruction:TRADING-2560:2026-09-09:continue_known_snapshot_prospective_research"
         ),
         "authority_contract": dict(_mapping(policy["contract"], "contract")),
         "superseded_live_source_paths": source_paths,

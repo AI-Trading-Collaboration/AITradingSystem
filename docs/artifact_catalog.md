@@ -1,5 +1,16 @@
 # 产物目录
 
+## OPS-081 调度业务合同证据
+
+`ops_scheduler_observation.v3` 由既有 `observe_codex_automation_config` 读取 actual TOML
+生成；`ops_scheduler_binding.v3` 由 deployment acceptance 发布在 active receipt 的 scheduler
+字段。二者包含 `ops_scheduler_business_contract.v1`：strict business projection 与 SHA-256。
+完整 config SHA/size/model/effort/updated_at 保留为观察审计；未来偏好变化不要求重写旧 receipt。
+Live verifier 必须重算业务 projection，并继续校验 canonical prompt/source、release、runtime
+和所有既有安全约束。未知字段、未登记 prompt 指令、target/root/cadence 漂移均 BLOCKED。
+旧 v2 不自动升级；新观察不允许混合/过期快照。工程校验 PASS 不等于 daily operational PASS；
+全部固定 `production_effect=none`，不生成或修改投资权重、broker/order/trading action。
+
 本文从“看到一个文件后怎么理解它”的角度列出关键 artifact。`docs/system_flow.md` 仍是工程事实源；本文是阅读索引，帮助使用者判断 artifact 的生成者、上游输入、下游用途、production 影响和常见误解。
 
 如果需要理解输入数据如何计算成输出数据，先读 `docs/calculation_logic.md`；字段级含义见 `docs/schema/fields.yaml`，也可以用 `aits explain <field|gate|artifact>` 做只读反查。该 YAML 先覆盖 `scores_daily.csv`、decision snapshot、trace bundle、prediction ledger 和 shadow parameter search 的核心字段。

@@ -7,14 +7,14 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 1067
-active_task_count: 525
+task_count: 1068
+active_task_count: 526
 completed_task_count: 542
-fragment_count: 1067
+fragment_count: 1068
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 7ca06f1a593c9aaa746695f55353cf00f1834680c35d34805b039fe0ce9464ab
+final_chain_sha256: 170e63ea546028ceb97d19b5c1cc4f5b013a4477457e74ca843272b83242f1e1
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: ecee535fb08562da2c2fc6b054991cd569fdc7ca4c5b4109a8871fd7c16d5d1e
 templates:
@@ -8565,12 +8565,20 @@ fragments:
   order: 1067
   previous_entry_sha256: 2b2dbeb40c958b61dbbbd4cdb90ed971d2dca673da95329d286518ebdf590035
   entry_sha256: 7ca06f1a593c9aaa746695f55353cf00f1834680c35d34805b039fe0ce9464ab
+- task_id: OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING
+  path: registry/development_tasks/5d/5d5b532e96b0df2ece6a2cffad2d7ae7eed243dd9668c040a2d3c15b0f7beef8.yaml
+  file_sha256: ade20e027ded44fffd40f7bb2643c7d55dcc7ab7b82c93e9129e272c01367b53
+  fragment_checksum: 0492d917a04173350032f1834076b76d41877ea62ecfd027417130bcac4773a4
+  partition: active
+  order: 1068
+  previous_entry_sha256: 7ca06f1a593c9aaa746695f55353cf00f1834680c35d34805b039fe0ce9464ab
+  entry_sha256: 170e63ea546028ceb97d19b5c1cc4f5b013a4477457e74ca843272b83242f1e1
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 39241e5472ec34688e48ca162814422819cfb189a02673fe2df9ae7e88c7af75
-  byte_count: 1781571
-  row_count: 525
+  sha256: 0d5503497e1fd44009b49f816fd93ce32d18b2e287ec80f754981c2afd40d56a
+  byte_count: 1782114
+  row_count: 526
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
@@ -12198,7 +12206,21 @@ governance_cycles:
   change_id: trading-2564-s4-forward-accounting-binding-20260909-v1
   event_count: 46
   production_effect: none
-governance_cycle_count: 517
+- cycle_id: arch-005-s5-cycle-518
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING
+  change_id: ops081-register
+  event_count: 1
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-519
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING
+  change_id: ops081-validating
+  event_count: 2
+  production_effect: none
+governance_cycle_count: 519
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -12212,4 +12234,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 248d4cce5ba5e0111d303db7ad72071876b3d195fbc892fbe4cd7f83f7129296
+index_checksum: dbbb7978e7a6c3fc5c3fe9da3a7738f2460e34c4c450e079b8659d88012aa572

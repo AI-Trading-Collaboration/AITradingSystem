@@ -13,6 +13,19 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.ops_scheduler_business_contract import (
+    BINDING_SCHEMA as BUSINESS_BINDING_SCHEMA,
+)
+from ai_trading_system.ops_scheduler_business_contract import (
+    OBSERVATION_SCHEMA as BUSINESS_OBSERVATION_SCHEMA,
+)
+from ai_trading_system.ops_scheduler_business_contract import (
+    SchedulerBusinessContractError,
+    business_commitment,
+    stable_config_bytes,
+    validate_retained_business_commitment,
+    verify_business_commitment,
+)
 from ai_trading_system.platform.architecture.checkout_guard import CheckoutLeaseGuard
 from ai_trading_system.platform.artifacts import write_json_atomic
 from ai_trading_system.yaml_loader import safe_load_yaml_path
@@ -60,6 +73,7 @@ _REQUIRED_CRITICAL_PATHS = (
     "src/ai_trading_system/cli_commands/ops.py",
     "src/ai_trading_system/ops_release_promotion.py",
     "src/ai_trading_system/ops_scheduler_checkout.py",
+    "src/ai_trading_system/ops_scheduler_business_contract.py",
 )
 _RUNTIME_GIT_EXCLUDE_PATTERNS = (
     "/outputs/",
@@ -154,6 +168,8 @@ class OpsReleasePromotionPolicy:
     allowed_secret_names: tuple[str, ...]
     required_credential_groups: tuple[tuple[str, ...], ...]
     forbidden_name_patterns: tuple[str, ...]
+    scheduler_identity_mode: str = "exact_config_bytes.v1"
+    reviewed_advisory_suffixes: tuple[str, ...] = ()
 
 
 def load_ops_release_promotion_policy(
@@ -174,6 +190,9 @@ def load_ops_release_promotion_policy(
     promotion = _mapping(payload.get("promotion"), "promotion")
     runtime = _mapping(payload.get("runtime"), "runtime")
     scheduler = _mapping(payload.get("scheduler"), "scheduler")
+    identity_mode = _text(scheduler.get("identity_mode", "exact_config_bytes.v1"), "identity_mode")
+    if identity_mode not in {"exact_config_bytes.v1", "business_contract.v1"}:
+        raise OpsReleasePromotionError("PROMOTION_POLICY_SCHEDULER_IDENTITY_MODE", identity_mode)
     canary = _mapping(payload.get("pre_release_canary"), "pre_release_canary")
     credentials = _mapping(payload.get("credentials"), "credentials")
     safety = _mapping(payload.get("safety"), "safety")
@@ -335,6 +354,11 @@ def load_ops_release_promotion_policy(
             scheduler.get("observation_schema"),
             "observation_schema",
         ),
+        scheduler_identity_mode=identity_mode,
+        reviewed_advisory_suffixes=tuple(
+            _text(value, "reviewed_advisory_suffix")
+            for value in _advisory_suffix_list(scheduler.get("reviewed_advisory_suffixes", []))
+        ),
         canonical_prompt_relative_path=_relative_policy_path(
             scheduler.get("canonical_prompt_relative_path"),
             "canonical_prompt_relative_path",
@@ -432,7 +456,8 @@ def load_ops_release_promotion_policy(
         or not policy.previous_release_retained
         or policy.pre_switch_checkout_policy_source != "coordinator_candidate"
         or policy.required_validation_tiers != _REQUIRED_VALIDATION_TIERS
-        or policy.required_critical_paths != _REQUIRED_CRITICAL_PATHS
+        or policy.required_critical_paths
+        != (_REQUIRED_CRITICAL_PATHS if _business_mode(policy) else _REQUIRED_CRITICAL_PATHS[:-1])
         or policy.legacy_deployment_acceptance_schema != _LEGACY_DEPLOYMENT_ACCEPTANCE_SCHEMA
         or any(not _COMMIT_PATTERN.fullmatch(row) for row in policy.legacy_active_release_commits)
         or not policy.installed_distribution_inventory_required
@@ -446,7 +471,10 @@ def load_ops_release_promotion_policy(
         or policy.release_identity_authority != "active_deployment_receipt"
         or policy.legacy_release_assertion_name != "AITS_OPS_RELEASE_COMMIT"
         or policy.legacy_release_assertion_mode != "exact_match_if_present"
-        or policy.scheduler_observation_schema != _SCHEDULER_OBSERVATION_SCHEMA
+        or policy.scheduler_observation_schema
+        != (
+            BUSINESS_OBSERVATION_SCHEMA if _business_mode(policy) else _SCHEDULER_OBSERVATION_SCHEMA
+        )
         or policy.expected_scheduler_status != "ACTIVE"
         or policy.expected_scheduler_execution_environment != "local"
         or policy.expected_scheduler_target_type != "projectless"
@@ -1384,6 +1412,47 @@ def build_ops_deployment_acceptance(
     return payload
 
 
+def _business_mode(policy: OpsReleasePromotionPolicy) -> bool:
+    return policy.scheduler_identity_mode == "business_contract.v1"
+
+
+def _advisory_suffix_list(value: object) -> list[object]:
+    if not isinstance(value, list):
+        raise OpsReleasePromotionError("PROMOTION_POLICY_ADVISORY_SUFFIXES", "list required")
+    if len(value) != len(set(str(item) for item in value)):
+        raise OpsReleasePromotionError("PROMOTION_POLICY_ADVISORY_SUFFIXES", "duplicate suffix")
+    return value
+
+
+def _business_config(
+    path: Path,
+    canonical_text: str,
+    policy: OpsReleasePromotionPolicy,
+    *,
+    observed_at: datetime | None = None,
+) -> tuple[bytes, dict[str, object]]:
+    try:
+        raw = stable_config_bytes(path)
+        commitment = business_commitment(
+            raw,
+            canonical_prompt=canonical_text,
+            reviewed_advisory_suffixes=policy.reviewed_advisory_suffixes,
+            now=observed_at,
+        )
+        return raw, commitment
+    except (SchedulerBusinessContractError, OSError) as exc:
+        raise OpsReleasePromotionError(
+            getattr(exc, "code", "SCHEDULER_CONFIG_READ_FAILED"), str(exc)
+        ) from exc
+
+
+def _verify_business_config(retained: object, current: Mapping[str, object]) -> None:
+    try:
+        verify_business_commitment(_mapping(retained, "business_contract"), current)
+    except SchedulerBusinessContractError as exc:
+        raise OpsReleasePromotionError(exc.code, str(exc)) from exc
+
+
 def validate_scheduler_observation(
     payload: Mapping[str, object],
     *,
@@ -1417,6 +1486,9 @@ def validate_scheduler_observation(
             checked_policy.scheduler_same_entry_for_all_windows
         ),
     }
+    if _business_mode(checked_policy):
+        expected.pop("model")
+        expected.pop("reasoning_effort")
     for field, value in expected.items():
         if payload.get(field) != value:
             raise OpsReleasePromotionError(
@@ -1473,7 +1545,7 @@ def validate_scheduler_observation(
     ):
         raise OpsReleasePromotionError(
             "SCHEDULER_DEVELOPMENT_CWD_FORBIDDEN",
-            (f"expected={checked_policy.expected_scheduler_cwds!r};" f"observed={observed_cwds!r}"),
+            (f"expected={checked_policy.expected_scheduler_cwds!r};observed={observed_cwds!r}"),
         )
     observed_windows = _scheduler_invocation_windows(
         payload.get("invocation_windows"),
@@ -1522,8 +1594,20 @@ def validate_scheduler_observation(
     canonical_bytes = canonical_path.read_bytes()
     canonical_text = _canonical_prompt_text(canonical_bytes, canonical_path)
     actual_prompt = _text(config_payload.get("prompt"), "config.prompt")
-    if actual_prompt != canonical_text:
+    if actual_prompt != canonical_text and not _business_mode(checked_policy):
         raise OpsReleasePromotionError("SCHEDULER_PROMPT_DRIFT", str(config_path))
+    if _business_mode(checked_policy):
+        raw, current_business = _business_config(
+            config_path,
+            canonical_text,
+            checked_policy,
+            observed_at=_parse_aware_datetime(payload.get("observed_at"), "observed_at"),
+        )
+        # Observation is an exact point-in-time snapshot even for preference
+        # changes. Only a *retained deployed binding* tolerates future prefs.
+        if hashlib.sha256(raw).hexdigest() != config.get("sha256"):
+            raise OpsReleasePromotionError("SCHEDULER_CONFIG_CONCURRENT_CHANGE", str(config_path))
+        _verify_business_config(payload.get("business_contract"), current_business)
     expected_file_sha = hashlib.sha256(canonical_bytes).hexdigest()
     expected_semantic_sha = hashlib.sha256(canonical_text.encode("utf-8")).hexdigest()
     if (
@@ -1547,8 +1631,10 @@ def validate_scheduler_observation(
             "SCHEDULER_OBSERVATION_PREDATES_CONFIG",
             observed_at.isoformat(),
         )
-    return {
-        "schema_version": _SCHEDULER_BINDING_SCHEMA,
+    binding = {
+        "schema_version": BUSINESS_BINDING_SCHEMA
+        if _business_mode(checked_policy)
+        else _SCHEDULER_BINDING_SCHEMA,
         "provider": checked_policy.scheduler_provider,
         "scheduler_id": checked_policy.scheduler_id,
         "entry_count": checked_policy.scheduler_entry_count,
@@ -1560,8 +1646,8 @@ def validate_scheduler_observation(
         "environment_names": sorted(environment_names),
         "status": checked_policy.expected_scheduler_status,
         "rrule": checked_policy.expected_scheduler_rrule,
-        "model": checked_policy.expected_scheduler_model,
-        "reasoning_effort": checked_policy.expected_scheduler_reasoning_effort,
+        "model": payload.get("model"),
+        "reasoning_effort": payload.get("reasoning_effort"),
         "execution_environment": checked_policy.expected_scheduler_execution_environment,
         "carrier_mode": checked_policy.scheduler_carrier_mode,
         "local_timezone": checked_policy.scheduler_local_timezone,
@@ -1584,6 +1670,9 @@ def validate_scheduler_observation(
         "mutable_release_environment_present": False,
         "observed_at": observed_at.isoformat(),
     }
+    if _business_mode(checked_policy):
+        binding["business_contract"] = dict(current_business)
+    return binding
 
 
 def observe_codex_automation_config(
@@ -1597,6 +1686,8 @@ def observe_codex_automation_config(
     """Read the actual Codex automation config and bind it to the canonical prompt."""
 
     policy = load_ops_release_promotion_policy(policy_path)
+    if any(item.is_symlink() for item in (automation_path, *automation_path.parents)):
+        raise OpsReleasePromotionError("SCHEDULER_CONFIG_FILE_REQUIRED", str(automation_path))
     path = automation_path.resolve()
     if not path.is_file() or path.is_symlink():
         raise OpsReleasePromotionError("SCHEDULER_CONFIG_FILE_REQUIRED", str(path))
@@ -1617,7 +1708,7 @@ def observe_codex_automation_config(
         )
     canonical_bytes = canonical_path.read_bytes()
     canonical_text = _canonical_prompt_text(canonical_bytes, canonical_path)
-    if prompt_value != canonical_text:
+    if prompt_value != canonical_text and not _business_mode(policy):
         raise OpsReleasePromotionError("SCHEDULER_PROMPT_DRIFT", str(path))
     target = _mapping(config.get("target"), "config.target")
     cwds = _automation_cwds(config)
@@ -1671,6 +1762,16 @@ def observe_codex_automation_config(
         },
         "observed_at": timestamp.isoformat(),
     }
+    if _business_mode(policy):
+        stable_raw, current_business = _business_config(
+            path,
+            canonical_text,
+            policy,
+            observed_at=timestamp,
+        )
+        if stable_raw != raw:
+            raise OpsReleasePromotionError("SCHEDULER_CONFIG_CONCURRENT_CHANGE", str(path))
+        payload["business_contract"] = current_business
     validate_scheduler_observation(
         payload,
         runtime_root=runtime_root,
@@ -1688,7 +1789,9 @@ def _validate_scheduler_binding_record(
     verify_live: bool,
 ) -> None:
     expected = {
-        "schema_version": _SCHEDULER_BINDING_SCHEMA,
+        "schema_version": BUSINESS_BINDING_SCHEMA
+        if _business_mode(policy)
+        else _SCHEDULER_BINDING_SCHEMA,
         "provider": policy.scheduler_provider,
         "scheduler_id": policy.scheduler_id,
         "entry_count": policy.scheduler_entry_count,
@@ -1708,6 +1811,9 @@ def _validate_scheduler_binding_record(
         "release_identity_authority": policy.release_identity_authority,
         "mutable_release_environment_present": False,
     }
+    if _business_mode(policy):
+        expected.pop("model")
+        expected.pop("reasoning_effort")
     for field, expected_value in expected.items():
         if payload.get(field) != expected_value:
             raise OpsReleasePromotionError(
@@ -1754,8 +1860,25 @@ def _validate_scheduler_binding_record(
             repr(payload.get("invocation_windows")),
         )
     config = _mapping(payload.get("config"), "scheduler.config")
-    _validate_commitment_row(config, verify_live)
+    _validate_commitment_row(config, verify_live and not _business_mode(policy))
+    if _business_mode(policy):
+        # Always validate the retained contract itself, including offline
+        # receipt replay. Live prefs must not determine historical identity.
+        retained_business = _mapping(payload.get("business_contract"), "business_contract")
+        try:
+            projection = validate_retained_business_commitment(retained_business)
+        except SchedulerBusinessContractError as exc:
+            raise OpsReleasePromotionError(exc.code, str(exc)) from exc
+        for field in ("status", "rrule", "execution_environment", "target", "cwds"):
+            if projection.get(field) != payload.get(field):
+                raise OpsReleasePromotionError("SCHEDULER_BUSINESS_CONTRACT_INVALID", field)
+        if projection.get("id") != policy.scheduler_id:
+            raise OpsReleasePromotionError("SCHEDULER_BUSINESS_CONTRACT_INVALID", "id")
     prompt = _mapping(payload.get("prompt"), "scheduler.prompt")
+    if _business_mode(policy) and projection.get("prompt_core_sha256") != prompt.get(
+        "semantic_sha256"
+    ):
+        raise OpsReleasePromotionError("SCHEDULER_BUSINESS_CONTRACT_INVALID", "prompt core")
     canonical_path_text = _text(
         prompt.get("canonical_absolute_path"),
         "scheduler.prompt.canonical_absolute_path",
@@ -1803,6 +1926,10 @@ def _validate_scheduler_binding_record(
                 "SCHEDULER_PROMPT_COMMITMENT_MISMATCH",
                 str(canonical_path),
             )
+        if _business_mode(policy):
+            config_path = Path(_text(config.get("absolute_path"), "config.absolute_path"))
+            _, current_business = _business_config(config_path, canonical_text, policy)
+            _verify_business_config(payload.get("business_contract"), current_business)
 
 
 def validate_ops_deployment_acceptance(

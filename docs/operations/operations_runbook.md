@@ -61,6 +61,9 @@ production/broker/order/fill 均关闭。首次收益查看另须既有 S4 研�
 
 ## Operating Principles
 
+- OPS-081 起，新 scheduler observation/binding 使用 v3 与 `ops_scheduler_business_contract.v1`。模型、推理强度、展示名称、通知偏好和保存时间为审计信息，不参与已部署业务许可相等判断；完整 TOML SHA/size 仍保留为观察快照，不再被当作长期 live 授权。id、kind/version、status、rrule、execution environment、exact projectless target、neutral cwd 与业务 prompt 核心继续 strict 验证，未知字段和嵌套 target 扩展 fail closed。Prompt 仅允许 canonical 业务核心加 reviewed policy 逐字登记的效率说明附录，任意自由文本不得自动视作安全。此分类不改变 runtime release、Python/import、checkout lease、daily 去重、DQ/PIT 或 broker/weights 门禁。
+- 新部署仍要求 fresh、exact observation；观察过程中配置变化必须重新观察，不能发布混合快照。部署完成后的偏好变更只需 live business projection 与绑定相等，无需重新发布业务 release。业务合同变更必须先完成候选合同/代码/验证，再经过既有 promotion/acceptance 原子发布；旧 receipt 保留，失配时在业务 mutation 前阻断。旧 v2 receipt 不得通过删字段或手改 schema 升级；只能经 reviewed exact prior receipt migration 进入新的 v3 binding。客户端 UI 保存不受仓库事务控制，不能声称跨产品原子更新；runtime 严格阻断无效业务配置，避免假 PASS。
+
 - 每日 scheduler trigger 是统一外部入口。Windows Task Scheduler、cron、GitHub Actions 或云调度器默认只应调用 `aits ops daily-run`，不要把 weekly / biweekly / monthly / governance 命令直接散落成多个未审计系统任务。
 - 更长周期任务可以由同一个每日 scheduler 入口根据日期和条件触发，但必须通过受控编排实现：检查交易日、cadence due 状态、上游 daily artifacts、数据质量、production safety 和人工审批条件。
 - 当前 baseline 中，`aits ops daily-run` 只执行 `daily_trading_day` 链路；weekly / biweekly / monthly / ad hoc research 任务已在 `config/scheduled_tasks.yaml` 登记，但不会自动进入 daily-run。自动 due-cadence 执行实现前，非 daily 任务由 operator 按本文手动运行或由后续受控 scheduler 执行。

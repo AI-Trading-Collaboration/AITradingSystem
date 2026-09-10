@@ -1,5 +1,15 @@
 # 系统数据流示意图
 
+## OPS-081：业务合同与助手偏好
+
+Actual automation TOML → strict schema/稳定读取 → versioned business projection →
+v3 scheduler binding → active deployment live verifier → 既有 runtime checkout/Python/lease/daily 门禁。
+模型、推理强度、展示名称、通知偏好和保存时间仅进入审计快照；完整 TOML SHA 只证明观察时刻。
+业务 projection 绑定 id、kind/version、状态/窗口、local projectless target/cwd 和 canonical
+prompt 核心。只有逐字登记的 reviewed 说明附录可以变化；未知字段/业务变化/混合读取 fail closed。
+新 release 的 observation 仍需 fresh exact bytes，旧 receipt 只经正式 migration 进入新绑定。
+该变化不运行 provider、不改变 DQ/PIT/capture/score，不赋予 weights/broker/trading 权限。
+
 ## TRADING-2560：Composer 当前已知快照与真实前瞻记录
 
 新 `composer-activate|composer-readiness|composer-capture` 由

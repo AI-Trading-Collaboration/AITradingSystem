@@ -1,0 +1,97 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING
+  task_id_sha256: 5d5b532e96b0df2ece6a2cffad2d7ae7eed243dd9668c040a2d3c15b0f7beef8
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING
+  title: null
+  domain: Operations / scheduler business contract
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex operations coordinator
+  requirement_refs:
+  - docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 合同/代码/回归已实现；准备 formal tiers 与受治理发布。详见
+    docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 偏好变更保持许可；业务合同严格验证；未知字段/并发/中断 fail closed；回归验证与受治理发布
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-10T10:30:05.9478952+09:00'
+  actor: integration-coordinator
+  change_id: ops081-register
+  lane_id: null
+  base_commit: 0507e4dd129d2a33cd61479d9226dab7ea3dd5cd
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING
+    - Operations / scheduler business contract
+    - P0
+    - IN_PROGRESS
+    - Codex operations coordinator
+    - 修复全 TOML 哈希与模型偏好耦合；详见 docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md
+    - 偏好变更保持许可；业务合同严格验证；未知字段/并发/中断 fail closed；回归验证与受治理发布
+    - 2026-09-10 Owner 授权根因修复；SINGLE_LANE 串行合同。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:ops081-register
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2d8344716e74be16a6a6e309cbcfed64
+- schema_version: task_event.v1
+  task_id: OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-10T10:45:27.8092182+09:00'
+  actor: integration-coordinator
+  change_id: ops081-validating
+  lane_id: null
+  base_commit: 0507e4dd129d2a33cd61479d9226dab7ea3dd5cd
+  previous_state_event_id: task-event-2d8344716e74be16a6a6e309cbcfed64
+  from_status: IN_PROGRESS
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: Codex operations coordinator
+    blocker_or_next_step: 合同/代码/回归已实现；准备 formal tiers 与受治理发布。详见 docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md
+    acceptance_criteria: 偏好变更保持许可；业务合同严格验证；未知字段/并发/中断 fail closed；回归验证与受治理发布
+    notes: v3 业务投影解耦偏好；初步 88 tests PASS；actual Terra/medium + reviewed efficiency
+      只读观察 PASS；未发布 runtime。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:ops081-validating
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ddd775a8a3dfa7600d8add6c6c355f8b
+projection:
+  legacy_first_eight_cells:
+  - OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING
+  - Operations / scheduler business contract
+  - P0
+  - VALIDATING
+  - Codex operations coordinator
+  - 合同/代码/回归已实现；准备 formal tiers 与受治理发布。详见 docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md
+  - 偏好变更保持许可；业务合同严格验证；未知字段/并发/中断 fail closed；回归验证与受治理发布
+  - v3 业务投影解耦偏好；初步 88 tests PASS；actual Terra/medium + reviewed efficiency 只读观察 PASS；未发布
+    runtime。
+  docs_links:
+  - docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md
+  terminal: false
+  canonical_row_sha256: aa2d56f7a7a17f493b93ddfc7d6d0eda75e121f7ef0b84d49cb68fcaeee6f42b
+last_event_id: task-event-ddd775a8a3dfa7600d8add6c6c355f8b
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 0492d917a04173350032f1834076b76d41877ea62ecfd027417130bcac4773a4
