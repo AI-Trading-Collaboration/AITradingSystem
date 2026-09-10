@@ -14165,23 +14165,43 @@ def _trading_2470_prior_hash_authority_paths(
     )
 
 
+@cache
+def _ops_081_current_source_records() -> dict[str, dict[str, object]]:
+    # Like the cached baseline and prior authority-path helpers, this closure
+    # belongs to one frozen test checkout. Each queried source is still checked
+    # live below; do not rescan the entire historical ledger for every source.
+    baseline = _compatibility_baseline()
+    if OPS_081_SCHEDULER_BUSINESS_CONTRACT_SECTION not in baseline:
+        return {}
+    phase = baseline[OPS_081_SCHEDULER_BUSINESS_CONTRACT_SECTION]
+    paths = frozenset(phase["superseded_live_source_paths"])
+    assert _latest_active_source_mismatches(OPS_081_SCHEDULER_BUSINESS_CONTRACT_SECTION) <= paths
+    records = {row["path"]: row for row in phase["sources"]}
+    assert frozenset(records) == paths
+    return records
+
+
+def test_ops_081_cached_source_closure_still_rechecks_live_hash(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = _ops_081_current_source_records()[
+        "src/ai_trading_system/ops_scheduler_business_contract.py"
+    ]
+    assert _source_sha256(source) == source["sha256"]
+    monkeypatch.setitem(globals(), "_source_matches_checkout", lambda *_args: False)
+    with pytest.raises(AssertionError):
+        _source_sha256(source)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if OPS_081_SCHEDULER_BUSINESS_CONTRACT_SECTION in baseline:
-        phase = baseline[OPS_081_SCHEDULER_BUSINESS_CONTRACT_SECTION]
-        paths = frozenset(phase["superseded_live_source_paths"])
-        assert (
-            _latest_active_source_mismatches(OPS_081_SCHEDULER_BUSINESS_CONTRACT_SECTION) <= paths
-        )
-        records = {row["path"]: row for row in phase["sources"]}
-        assert frozenset(records) == paths
-        if str(source["path"]) in records:
-            current = records[str(source["path"])]
-            assert _source_matches_checkout(current, {})
-            return str(source["sha256"])
+    current = _ops_081_current_source_records().get(str(source["path"]))
+    if current is not None:
+        assert _source_matches_checkout(current, {})
+        return str(source["sha256"])
     if (
         TRADING_2560_COMPOSER_CAPTURE_SECTION in baseline
         or TRADING_2564_S4_FIRST_ACCESS_SECTION in baseline

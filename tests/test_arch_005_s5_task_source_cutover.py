@@ -63,8 +63,9 @@ def test_repository_canonical_registry_is_active_and_self_hosted() -> None:
     assert registry.index["source_of_truth"] == CANONICAL_SOURCE
     assert registry.index["cutover_performed"] is True
     assert registry.index["legacy_markdown_writable"] is False
-    # DEVX-014 adds one source-only engineering recovery task, not empirical evidence.
-    assert registry.index["task_count"] == len(registry.fragments) == 1067
+    # OPS-081 adds one scheduler-contract repair task, not empirical evidence.
+    assert registry.index["task_count"] == len(registry.fragments) == 1068
+    assert registry.fragment("OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING")
     assert registry.index["missing_task_count"] == 0
     assert registry.index["duplicate_task_count"] == 0
     assert registry.index["governance_cycle_count"] >= 2
