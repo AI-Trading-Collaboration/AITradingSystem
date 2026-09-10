@@ -211,6 +211,16 @@ TRADING_2564_S4_FIRST_ACCESS_RESTRICTED_CURRENT_AUTHORITY_PATHS = frozenset(
     }
 )
 TRADING_2560_COMPOSER_CAPTURE_PHASE_KEY = "phase_trading_2560_composer_known_snapshot_capture_v1"
+OPS_081_SCHEDULER_CONTRACT_PHASE_KEY = "phase_ops_081_scheduler_business_contract_decoupling_v1"
+# Exact OPS-081 source closure intersection; no other historical authority is admitted.
+OPS_081_RESTRICTED_CURRENT_AUTHORITY_PATHS = frozenset(
+    {
+        "docs/system_flow.md",
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_trading2452_architecture_contract.py",
+    }
+)
 # Exact Composer exact-source intersection with the restricted historical authority set.
 TRADING_2560_COMPOSER_CAPTURE_RESTRICTED_CURRENT_AUTHORITY_PATHS = frozenset(
     {
@@ -493,6 +503,25 @@ def _assert_historical_source_is_current_or_superseded(
             == 1
         ), missing_binding
 
+    if (
+        source_path in OPS_081_RESTRICTED_CURRENT_AUTHORITY_PATHS
+        and OPS_081_SCHEDULER_CONTRACT_PHASE_KEY in baseline
+    ):
+        required_phase = baseline[OPS_081_SCHEDULER_CONTRACT_PHASE_KEY]
+        missing_binding = f"{source_path}: OPS-081 historical hash drift is not declared completely"
+        assert isinstance(required_phase, dict), missing_binding
+        required_paths = required_phase.get("superseded_live_source_paths")
+        required_sources = required_phase.get("sources")
+        assert isinstance(required_paths, list) and source_path in required_paths, missing_binding
+        assert isinstance(required_sources, list), missing_binding
+        assert (
+            sum(
+                isinstance(item, dict) and item.get("path") == source_path
+                for item in required_sources
+            )
+            == 1
+        ), missing_binding
+
     latest_authority: tuple[str, dict[str, Any], dict[str, str]] | None = None
     for section_key, section in reversed(tuple(baseline.items())):
         if not isinstance(section, dict):
@@ -576,6 +605,13 @@ def _assert_historical_source_is_current_or_superseded(
         assert (
             source_path in TRADING_2560_COMPOSER_CAPTURE_RESTRICTED_CURRENT_AUTHORITY_PATHS
         ), "Composer restricted source is outside the exact reviewed intersection"
+    if (
+        section_key == OPS_081_SCHEDULER_CONTRACT_PHASE_KEY
+        and source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
+    ):
+        assert (
+            source_path in OPS_081_RESTRICTED_CURRENT_AUTHORITY_PATHS
+        ), "OPS-081 restricted source is outside the exact reviewed intersection"
     supersession = section["supersession"]
     assert (
         supersession["historical_hashes_rewritten"] is False
@@ -617,6 +653,7 @@ def _assert_historical_source_is_current_or_superseded(
             TRADING_2564_S5_DIAGNOSTICS_PHASE_KEY,
             TRADING_2564_S4_FIRST_ACCESS_PHASE_KEY,
             TRADING_2560_COMPOSER_CAPTURE_PHASE_KEY,
+            OPS_081_SCHEDULER_CONTRACT_PHASE_KEY,
         }
     ):
         section_ids = list(baseline)
@@ -1800,6 +1837,90 @@ def test_s4_first_access_cannot_claim_an_extra_restricted_source(tmp_path: Path)
     phase_key = TRADING_2564_S4_FIRST_ACCESS_PHASE_KEY
     current = {"path": source_path, "sha256": sha256(b"current\n").hexdigest()}
     baseline = {phase_key: {"sources": [current], "superseded_live_source_paths": [source_path]}}
+    historical = {"path": source_path, "sha256": sha256(b"historical\n").hexdigest()}
+    with pytest.raises(AssertionError, match="outside the exact reviewed intersection"):
+        _assert_historical_source_is_current_or_superseded(
+            baseline, historical, repository_root=tmp_path
+        )
+
+
+@pytest.mark.parametrize(
+    "malformation",
+    [
+        "valid",
+        "wrong_hash",
+        "missing_sources",
+        "missing_paths",
+        "duplicate_source",
+        "wrong_authority",
+        "unknown_phase",
+    ],
+)
+def test_ops_081_restricted_binding_does_not_fall_back_to_old_authority(
+    tmp_path: Path,
+    restricted_s2b_source_case: tuple[dict[str, Any], dict[str, str]],
+    malformation: str,
+) -> None:
+    baseline, historical = restricted_s2b_source_case
+    phase = deepcopy(baseline[TRADING_2564_S2B_NAMED_DQ_EXECUTION_PHASE_KEY])
+    section = OPS_081_SCHEDULER_CONTRACT_PHASE_KEY
+    if malformation == "unknown_phase":
+        section = "phase_ops_081_scheduler_business_contract_decoupling_unreviewed_v2"
+        markers = (
+            TRADING_2492_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_PHASE_KEY,
+            TRADING_2492_BOUNDED_PILOT_TERMINAL_NO_GO_PHASE_KEY,
+            TRADING_2493_OWNER_STAGE_GATE_SIGNOFF_PHASE_KEY,
+            TRADING_2497_LICENSE_EXPORT_DUE_DILIGENCE_PHASE_KEY,
+            TRADING_2497_LICENSE_EXPORT_OWNER_REVIEW_PHASE_KEY,
+            TRADING_2498_DAILY_CAPABILITY_GATE_PHASE_KEY,
+            TRADING_2496_OWNER_VISUAL_ACCEPTANCE_PHASE_KEY,
+            TRADING_2500_DAILY_CAPABILITY_GATE_RETRY_PHASE_KEY,
+            TRADING_2500_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_PHASE_KEY,
+            TRADING_2500_DAILY_CAPABILITY_GATE_RETRY_TERMINAL_REVIEW_PHASE_KEY,
+            TRADING_2499_DAILY_PRIMARY_BACKTEST_CONTRACT_PHASE_KEY,
+            TRADING_2501_ATLAS_OWNER_REVIEW_PACK_PHASE_KEY,
+        )
+        baseline = {**dict.fromkeys(markers, {}), **baseline}
+    phase["supersession"]["current_hash_authority"] = f"{section}.sources"
+    baseline[section] = phase
+    if malformation == "wrong_hash":
+        phase["sources"][0]["sha256"] = "0" * 64
+    elif malformation == "missing_sources":
+        phase.pop("sources")
+    elif malformation == "missing_paths":
+        phase.pop("superseded_live_source_paths")
+    elif malformation == "duplicate_source":
+        phase["sources"].append(deepcopy(phase["sources"][0]))
+    elif malformation == "wrong_authority":
+        phase["supersession"]["current_hash_authority"] = "unreviewed.sources"
+    before, original = deepcopy(baseline), dict(historical)
+    if malformation == "valid":
+        _assert_historical_source_is_current_or_superseded(
+            baseline, historical, repository_root=tmp_path
+        )
+    else:
+        expected = "unreviewed future successor" if malformation == "unknown_phase" else None
+        with pytest.raises(AssertionError, match=expected):
+            _assert_historical_source_is_current_or_superseded(
+                baseline, historical, repository_root=tmp_path
+            )
+    assert baseline == before and historical == original
+
+
+def test_ops_081_cannot_claim_an_extra_restricted_source(tmp_path: Path) -> None:
+    source_path = "docs/task_register.md"
+    assert source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
+    assert source_path not in OPS_081_RESTRICTED_CURRENT_AUTHORITY_PATHS
+    path = tmp_path / source_path
+    path.parent.mkdir(parents=True)
+    path.write_bytes(b"current\n")
+    current = {"path": source_path, "sha256": sha256(b"current\n").hexdigest()}
+    baseline = {
+        OPS_081_SCHEDULER_CONTRACT_PHASE_KEY: {
+            "sources": [current],
+            "superseded_live_source_paths": [source_path],
+        }
+    }
     historical = {"path": source_path, "sha256": sha256(b"historical\n").hexdigest()}
     with pytest.raises(AssertionError, match="outside the exact reviewed intersection"):
         _assert_historical_source_is_current_or_superseded(
