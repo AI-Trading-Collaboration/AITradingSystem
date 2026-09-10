@@ -38,6 +38,7 @@ TRADING_2542D_SECTION = (
 PROD_004_SECTION = "phase_prod_004_pit_cumulative_archive_consumption_v1"
 DEVX_011_SECTION = "phase_devx_011_governed_workflow_health_control_loop_v1"
 DEVX_012_SECTION = "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1"
+DEVX_015_ADMISSION_SECTION = "phase_devx_015_task_integration_admission_v1"
 RISK_012_SECTION = "phase_risk_012_unknown_risk_event_id_fail_closed_v1"
 OPS_077_SECTION = "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1"
 OPS_078_SECTION = "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1"
@@ -351,12 +352,12 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 332
-    assert result["fragment_count"] == 26
+    assert len(merged) == 333
+    assert result["fragment_count"] == 27
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
+    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
@@ -852,7 +853,7 @@ def test_s2c2_exact_preview_successor_preserves_closed_execution_boundary() -> N
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
+    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
     assert (
         list(merged).index(TRADING_2564_S2C2_SECTION)
         == list(merged).index(TRADING_2564_S2C_SECTION) + 1
@@ -936,7 +937,7 @@ def test_s2c_is_exact_price_scope_successor_not_strategy_promotion() -> None:
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
+    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
     assert (
         list(merged).index(TRADING_2564_S2C_SECTION)
         == list(merged).index(TRADING_2564_S2B_SECTION) + 1
@@ -1225,7 +1226,7 @@ def test_s3a_exact_temporal_successor_preserves_admission_boundaries() -> None:
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
+    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
     assert (
         list(merged).index(TRADING_2564_S3A_SECTION)
         == list(merged).index(TRADING_2564_S2C2_SECTION) + 1
@@ -1298,7 +1299,7 @@ def test_s3b_exact_capture_successor_preserves_real_research_boundary() -> None:
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
+    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
     assert (
         list(merged).index(TRADING_2564_S3B_SECTION)
         == list(merged).index(TRADING_2564_S3A_SECTION) + 1
@@ -1369,7 +1370,7 @@ def test_s5_duration_successor_preserves_historical_and_advisory_boundaries() ->
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
+    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
     assert (
         list(merged).index(TRADING_2564_S5_SECTION)
         == list(merged).index(TRADING_2564_S3B_SECTION) + 1
@@ -1468,7 +1469,7 @@ def test_s5_diagnostics_successor_preserves_terminal_truth_and_source_scope() ->
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
+    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
     assert (
         list(merged).index(TRADING_2564_S5_DIAGNOSTICS_SECTION)
         == list(merged).index(TRADING_2564_S5_SECTION) + 1
@@ -1559,7 +1560,7 @@ def test_s4_first_access_successor_preserves_scope_and_unresolved_real_gate() ->
 
     merged = load_compatibility_authority()
     phase = merged[TRADING_2564_S4_FIRST_ACCESS_SECTION]
-    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
+    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
     assert (
         list(merged).index(TRADING_2564_S4_FIRST_ACCESS_SECTION)
         == list(merged).index(TRADING_2564_S5_DIAGNOSTICS_SECTION) + 1
@@ -1654,7 +1655,7 @@ def test_composer_successor_retains_separate_research_and_clock_boundaries() -> 
 
     merged = load_compatibility_authority()
     phase = merged[TRADING_2560_COMPOSER_CAPTURE_SECTION]
-    assert next(reversed(merged)) == "phase_ops_081_scheduler_business_contract_decoupling_v1"
+    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
     assert list(merged).index(TRADING_2560_COMPOSER_CAPTURE_SECTION) == (
         list(merged).index(TRADING_2564_S4_FIRST_ACCESS_SECTION) + 1
     )
@@ -1704,7 +1705,7 @@ def test_ops_081_scheduler_successor_keeps_business_authority_fail_closed() -> N
     merged = load_compatibility_authority()
     section_id = "phase_ops_081_scheduler_business_contract_decoupling_v1"
     phase = merged[section_id]
-    assert next(reversed(merged)) == section_id
+    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
     assert (
         phase["supersession"]["inherited_supersession_authority"]
         == TRADING_2560_COMPOSER_CAPTURE_SECTION
@@ -1725,3 +1726,169 @@ def test_ops_081_scheduler_successor_keeps_business_authority_fail_closed() -> N
         content = Path(row["path"]).read_bytes().replace(b"\r\n", b"\n")
         assert hashlib.sha256(content).hexdigest() == row["sha256"]
     assert phase["production_effect"] == phase["broker_action"] == "none"
+
+
+OPS_081_ADDED_SOURCE_PATHS = frozenset(
+    {
+        "config/operations/ops_release_promotion.yaml",
+        "docs/operations/operations_runbook.md",
+        "docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md",
+        "registry/development_tasks/5d/5d5b532e96b0df2ece6a2cffad2d7ae7eed243dd9668c040a2d3c15b0f7beef8.yaml",
+        "src/ai_trading_system/ops_release_promotion.py",
+        "src/ai_trading_system/ops_scheduler_checkout.py",
+        "src/ai_trading_system/ops_scheduler_business_contract.py",
+        "tests/test_ops_release_promotion.py",
+        "tests/test_ops_scheduler_checkout.py",
+        "tests/test_ops_scheduler_business_contract.py",
+    }
+)
+DEVX_015_ADMISSION_ADDED_SOURCE_PATHS = frozenset(
+    {
+        "docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md",
+        "docs/requirements/DEVX-015_Task_Checkpoint_And_Publication_Separation_V2.md",
+        "registry/development_tasks/5e/5e4c809d3f6d8353ae50883b2832ddf491492e5bb6cde6c4a92d4ae70bc7bbba.yaml",
+        "src/ai_trading_system/platform/architecture/task_registry_canonical.py",
+        "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "tests/test_arch_005_s5_task_source_cutover.py",
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_devx_006c_compatibility_authority.py",
+        "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "tests/test_trading2452_architecture_contract.py",
+        "tests/test_governed_development_skill.py",
+        "tools/codex_skills/run-governed-development/SKILL.md",
+        "tools/codex_skills/run-governed-development/references/workflow-modes.md",
+        "tools/codex_skills/run-governed-development/scripts/preflight.py",
+    }
+)
+
+
+def _assert_devx_015_admission_source_closure(
+    phase: dict[str, Any], *, root: Path, inherited_paths: frozenset[str]
+) -> None:
+    expected = inherited_paths | DEVX_015_ADMISSION_ADDED_SOURCE_PATHS
+    paths = [row["path"] for row in phase["sources"]]
+    assert paths == sorted(expected, key=str.casefold)
+    assert phase["superseded_live_source_paths"] == paths
+    for row in phase["sources"]:
+        assert set(row) == {"path", "sha256", "hash_normalization"}
+        assert row["hash_normalization"] == "git_eol_lf"
+        content = (root / row["path"]).read_bytes().replace(b"\r\n", b"\n")
+        assert hashlib.sha256(content).hexdigest() == row["sha256"]
+
+
+def _assert_devx_015_admission_contract(phase: dict[str, Any]) -> None:
+    assert phase["schema_version"] == "devx_015_task_integration_admission.v1"
+    assert phase["task_id"] == "DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2"
+    assert phase["status"] == "VALIDATING"
+    assert phase["owner_decisions"] == [
+        "owner_decision:DEVX-015:2026-09-10:completed_validated_candidate_integration_v1",
+        "owner_decision:DEVX-015:2026-09-10:frozen_lane_canonical_task_integration_admission_v1",
+    ]
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (
+            "phase_ops_081_scheduler_business_contract_decoupling_v1"
+        ),
+        "current_hash_authority": f"{DEVX_015_ADMISSION_SECTION}.sources",
+    }
+    assert phase["admission_contract"] == {
+        "stage": "COORDINATOR_INTEGRATION_ONLY",
+        "completed_task": "VALIDATED_EXACT_CLEAN_CANDIDATE_AT_LOCAL_MAIN_FF_PRE",
+        "missing_current_task": "EXACT_PLAN_LANE_CANONICAL_CHAIN_AT_ACQUIRED",
+        "current_canonical_state_has_priority": True,
+        "plan_and_manifest_bytes_bound": True,
+        "source_only_authority_rejected": True,
+        "start_lane_closeout_rules_changed": False,
+    }
+    assert phase["safety"] == {
+        "historical_hashes_rewritten": False,
+        "old_s1_implementation_imported": False,
+        "task_writer_or_publication_authority_expanded": False,
+        "full_validation_reused": False,
+        "ops_080_recovery_completed": False,
+        "investment_policy_changed": False,
+        "dq_pit_or_research_window_changed": False,
+        "real_dq_or_research_executed": False,
+    }
+    assert phase["production_effect"] == phase["broker_action"] == "none"
+
+
+def test_devx_015_admission_successor_preserves_exact_approved_scope() -> None:
+    merged = load_compatibility_authority()
+    phase = merged[DEVX_015_ADMISSION_SECTION]
+    previous_id = "phase_ops_081_scheduler_business_contract_decoupling_v1"
+    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
+    assert list(merged).index(DEVX_015_ADMISSION_SECTION) == list(merged).index(previous_id) + 1
+    inherited = (
+        TRADING_2564_S4_FIRST_ACCESS_SOURCE_PATHS
+        | COMPOSER_CAPTURE_ADDED_SOURCE_PATHS
+        | OPS_081_ADDED_SOURCE_PATHS
+    )
+    _assert_devx_015_admission_source_closure(phase, root=Path("."), inherited_paths=inherited)
+    _assert_devx_015_admission_contract(phase)
+
+
+@pytest.fixture
+def admission_section_fixture(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[dict[str, Any], frozenset[str]]:
+    inherited = frozenset({"src/ai_trading_system/ops_scheduler_business_contract.py"})
+    for portable in inherited | DEVX_015_ADMISSION_ADDED_SOURCE_PATHS:
+        target = tmp_path / portable
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(f"fixture source: {portable}\r\n".encode())
+    previous = {
+        "superseded_live_source_paths": sorted(inherited),
+        "sources": [{"path": next(iter(inherited)), "sha256": "a" * 64}],
+        "scheduler_contract": {"business_drift_fail_closed": True},
+    }
+    retained_previous = deepcopy(previous)
+    monkeypatch.setattr(
+        authority,
+        "_ops_081_section",
+        lambda root, *, policy: (
+            "phase_ops_081_scheduler_business_contract_decoupling_v1",
+            previous,
+        ),
+    )
+    section_id, phase = authority._devx_015_task_admission_section(
+        tmp_path, policy={"contract": {"fixture": "immutable"}}
+    )
+    assert section_id == DEVX_015_ADMISSION_SECTION
+    assert previous == retained_previous
+    return phase, inherited
+
+
+def test_devx_015_admission_synthetic_builder_keeps_predecessor_unchanged(
+    tmp_path: Path, admission_section_fixture: tuple[dict[str, Any], frozenset[str]]
+) -> None:
+    phase, inherited = admission_section_fixture
+    _assert_devx_015_admission_source_closure(phase, root=tmp_path, inherited_paths=inherited)
+    _assert_devx_015_admission_contract(phase)
+
+
+@pytest.mark.parametrize(
+    "mutation", ["missing", "missing_both", "duplicate", "extra_both", "wrong_hash", "source_drift"]
+)
+def test_devx_015_admission_synthetic_sources_reject_false_binding(
+    tmp_path: Path,
+    admission_section_fixture: tuple[dict[str, Any], frozenset[str]],
+    mutation: str,
+) -> None:
+    phase, inherited = admission_section_fixture
+    removed = "src/ai_trading_system/platform/architecture/task_registry_canonical.py"
+    if mutation in {"missing", "missing_both"}:
+        phase["sources"] = [row for row in phase["sources"] if row["path"] != removed]
+        if mutation == "missing_both":
+            phase["superseded_live_source_paths"].remove(removed)
+    elif mutation == "duplicate":
+        phase["sources"].append(deepcopy(phase["sources"][0]))
+    elif mutation == "extra_both":
+        phase["sources"].append({"path": "unknown.py", "sha256": "0" * 64})
+        phase["superseded_live_source_paths"].append("unknown.py")
+    elif mutation == "source_drift":
+        (tmp_path / removed).write_bytes(b"changed after generation")
+    else:
+        phase["sources"][0]["sha256"] = "0" * 64
+    with pytest.raises(AssertionError):
+        _assert_devx_015_admission_source_closure(phase, root=tmp_path, inherited_paths=inherited)

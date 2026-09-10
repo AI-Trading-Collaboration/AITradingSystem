@@ -254,3 +254,14 @@ Owner 对登记顺序循环的明确建议回复“同意”，记录为
 - v1最终事务已官方FAILED/RELEASED；新source事务 `devx-015-frozen-task-admission-count-fix-source-20260910-v1` 继续当前工作区，完成该断言、必要生成及新候选验证。旧44e和V4/V5全部证据保持各自身份；S1-S5/consumer/OPS080并未完成。
 - 修正后完整canonical测试文件35 passed/64.38s，包含原21项reader测试及新增身份保留正反例，Ruff/定向diff-check PASS；XML为 `outputs/validation_runtime/devx015-frozen-admission-canonical-full-focused-20260910.xml`。生产reader和skill源码相对44e未变，保留此前96项skill行为结果；全部正式tiers仍须新候选执行。
 - 44e的17份Atlas字节已逐项核对其final seal并独立保留，回执为 `outputs/validation_runtime/devx015-frozen-admission-44e-atlas-preservation-receipt-20260910.json`；后续渲染不覆盖唯一旧证据。
+
+### 205e 最小准入合同的历史兼容性消费修复
+
+- exact205e439的正式Architecture为965 passed/118 failed，pytest779.47s、runner780.12s、退出码1。118项均来自refactor-policy历史断言，完整E行均指向DEVX002 requirement的未声明漂移；失败summary SHA256为182242f547a422f3d67db5d31012663ce6e91e14afd04e2100d9a8096bd73804，位于`outputs/validation_runtime/devx015-frozen-admission-final-v2-architecture-20260910/`。七项readiness实际PASS但没有覆盖这些历史断言，不替代正式验证。
+- v2 final事务已官方FAILED/RELEASED；未执行其它正式tiers或Full，不能将此失败伪作Full parent。新事务`devx-015-admission-compatibility-fix-source-20260910-v1`在原工作区修复。
+- 为本轮已批准的completed/frozen-canonical两项准入合同追加独立窄范围后继authority，继承OPS081，绑定本轮实际reader/skill/测试/文档来源。不得迁入旧6638的S1 phase、扩张准入或复用旧PASS；旧S1-S5/consumer/OPS080仍未完成。
+- 同步接入temporal mismatch与最新raw-hash消费者，检查sources与supersession集合一致；保持历史prefix、captured hash和已记录mismatch。不只扩大外层union，不重写旧hash。未声明漂移、边界owner、最新authority自身漂移、缺后继无豁免均须有拒绝测试。
+- 最小验收包括完整refactor-policy与compatibility文件、原118失败node逐项覆盖、新旧authority历史/当前绑定、官方生成和新候选全部required tiers。当前记录不预先声明修复或发布完成；Atlas旧17份必须在下次渲染前独立复制并匹配205e seal。
+- 源码实现完成后的合成验收：历史temporal/closure新增19 passed/10.80s；compatibility新增7 passed/5.69s；受限来源新旧联合34 passed/5.55s（其中新增19）。受限来源首轮extra-path用例因新增检查顺序抛KeyError，已前移正确检查并重验通过；不隐去首轮失败。三文件Ruff/定向diff-check通过，完整current文件与正式tiers仍待执行。
+- 205e Atlas17份已复制至`outputs/validation_runtime/devx015-frozen-admission-retained-205e-atlas-20260910/`并逐项匹配原final-v2 seal，独立回执为`devx015-frozen-admission-205e-atlas-preservation-receipt-20260910.json`。最小phase为`phase_devx_015_task_integration_admission_v1`；历史legacy prefix不改写，动态current source records仅由官方builder正常刷新。
+- 官方生成后的四个完整文件联合回归实际546 passed/631.65s，16 workers/loadfile，退出码0；原118个正式失败node逐项在新XML中PASS，遗漏0。XML为`outputs/validation_runtime/devx015-admission-compatibility-combined-20260910-v1.xml`，SHA256 `886a4901bdc96083cbfe021cdb86438f1a2829e41b64c44c4c5cc8b69a6f9757`。独立只读复审未发现阻断性问题。此为源码阶段证据，新最终候选全部正式tiers、Full、main/remote发布仍待执行；记录本结果后刷新受影响生成绑定，不把546项重标为正式验收。

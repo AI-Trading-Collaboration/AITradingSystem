@@ -3920,7 +3920,8 @@ TRADING_2560_COMPOSER_CAPTURE_SECTION = "phase_trading_2560_composer_known_snaps
 OPS_081_SCHEDULER_BUSINESS_CONTRACT_SECTION = (
     "phase_ops_081_scheduler_business_contract_decoupling_v1"
 )
-LATEST_COMPATIBILITY_SECTION = OPS_081_SCHEDULER_BUSINESS_CONTRACT_SECTION
+DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION = "phase_devx_015_task_integration_admission_v1"
+LATEST_COMPATIBILITY_SECTION = DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -13122,6 +13123,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2564_S4_FIRST_ACCESS_SECTION,
         TRADING_2560_COMPOSER_CAPTURE_SECTION,
         OPS_081_SCHEDULER_BUSINESS_CONTRACT_SECTION,
+        DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13149,9 +13151,11 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         recorded_superseded_paths = {
             str(path) for path in baseline[stop_section].get("superseded_live_source_paths", [])
         }
-        authority_superseded_paths = {
-            str(path) for path in baseline[authority_section]["superseded_live_source_paths"]
-        }
+        authority_superseded_paths = (
+            _devx_015_admission_superseded_live_source_paths()
+            if authority_section == DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION
+            else {str(path) for path in baseline[authority_section]["superseded_live_source_paths"]}
+        )
         retroactive_paths = {
             path
             for path in authority_superseded_paths
@@ -13230,6 +13234,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2564_S4_FIRST_ACCESS_SECTION,
         TRADING_2560_COMPOSER_CAPTURE_SECTION,
         OPS_081_SCHEDULER_BUSINESS_CONTRACT_SECTION,
+        DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -13257,9 +13262,11 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         recorded_superseded_paths = {
             str(path) for path in baseline[stop_section].get("superseded_live_source_paths", [])
         }
-        authority_superseded_paths = {
-            str(path) for path in baseline[authority_section]["superseded_live_source_paths"]
-        }
+        authority_superseded_paths = (
+            _devx_015_admission_superseded_live_source_paths()
+            if authority_section == DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION
+            else {str(path) for path in baseline[authority_section]["superseded_live_source_paths"]}
+        )
         retroactive_paths = {
             path
             for path in authority_superseded_paths
@@ -14165,6 +14172,134 @@ def _trading_2470_prior_hash_authority_paths(
     )
 
 
+def _devx_015_admission_superseded_live_source_paths() -> frozenset[str]:
+    phase = _compatibility_baseline()[DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION]
+    assert phase["schema_version"] == "devx_015_task_integration_admission.v1"
+    assert phase["supersession"]["historical_hashes_rewritten"] is False
+    paths = phase["superseded_live_source_paths"]
+    sources = phase["sources"]
+    assert isinstance(paths, list) and isinstance(sources, list)
+    declared = frozenset(str(path) for path in paths)
+    source_paths = frozenset(str(source["path"]) for source in sources)
+    assert len(declared) == len(paths)
+    assert len(source_paths) == len(sources)
+    assert declared == source_paths
+    return declared
+
+
+@cache
+def _devx_015_admission_current_source_records() -> dict[str, dict[str, object]]:
+    baseline = _compatibility_baseline()
+    if DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION not in baseline:
+        return {}
+    paths = _devx_015_admission_superseded_live_source_paths()
+    assert _latest_active_source_mismatches(DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION) <= paths
+    return {
+        row["path"]: row for row in baseline[DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION]["sources"]
+    }
+
+
+def _admission_supersession_fixture(paths: list[str]) -> dict[str, object]:
+    return {
+        "schema_version": "devx_015_task_integration_admission.v1",
+        "supersession": {"historical_hashes_rewritten": False},
+        "superseded_live_source_paths": paths,
+        "sources": [{"path": path, "sha256": "new"} for path in paths],
+    }
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "none",
+        "missing-source",
+        "undeclared-source",
+        "duplicate-source",
+        "duplicate-path",
+        "rewrite",
+    ],
+)
+def test_devx_015_admission_source_set_is_exact_and_unique(
+    monkeypatch: pytest.MonkeyPatch, mutation: str
+) -> None:
+    phase = _admission_supersession_fixture(["docs/declared.md"])
+    if mutation == "missing-source":
+        phase["sources"] = []
+    elif mutation == "undeclared-source":
+        phase["sources"] = [{"path": "docs/undeclared.md", "sha256": "new"}]
+    elif mutation == "duplicate-source":
+        phase["sources"] *= 2
+    elif mutation == "duplicate-path":
+        phase["superseded_live_source_paths"] *= 2
+    elif mutation == "rewrite":
+        phase["supersession"] = {"historical_hashes_rewritten": True}
+    monkeypatch.setitem(
+        globals(),
+        "_compatibility_baseline",
+        lambda: {DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION: phase},
+    )
+    if mutation == "none":
+        assert _devx_015_admission_superseded_live_source_paths() == frozenset({"docs/declared.md"})
+    else:
+        with pytest.raises(AssertionError):
+            _devx_015_admission_superseded_live_source_paths()
+
+
+@pytest.mark.parametrize(
+    "reader", [_prior_active_source_mismatches, _latest_active_source_mismatches]
+)
+@pytest.mark.parametrize(
+    "case", ["declared", "undeclared", "boundary-owner", "recorded", "current", "no-successor"]
+)
+def test_devx_015_admission_temporal_supersession_preserves_refusals(
+    monkeypatch: pytest.MonkeyPatch, reader: Any, case: str
+) -> None:
+    path = "docs/declared.md"
+    historical = {"path": path, "sha256": "old"}
+    baseline: dict[str, Any] = {
+        "prior": {"sources": [historical]},
+        "boundary": {},
+    }
+    if case == "boundary-owner":
+        baseline["boundary"]["sources"] = [historical]
+    elif case == "recorded":
+        baseline["boundary"]["superseded_live_source_paths"] = [path]
+    if case != "no-successor":
+        baseline[DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION] = _admission_supersession_fixture(
+            [] if case == "undeclared" else [path]
+        )
+    monkeypatch.setitem(globals(), "_compatibility_baseline", lambda: baseline)
+    monkeypatch.setitem(globals(), "_normalization_migrations_before", lambda _: {})
+    monkeypatch.setitem(globals(), "_source_matches_checkout", lambda *_: False)
+    stop = DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION if case == "current" else "boundary"
+    assert reader(stop) == (frozenset() if case == "declared" else frozenset({path}))
+
+
+def test_devx_015_admission_cached_closure_preserves_history_and_rechecks_current(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = "docs/declared.md"
+    historical = {"path": path, "sha256": "old"}
+    baseline = {
+        "prior": {"sources": [historical]},
+        DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION: _admission_supersession_fixture([path]),
+    }
+    monkeypatch.setitem(globals(), "_compatibility_baseline", lambda: baseline)
+    monkeypatch.setitem(globals(), "_normalization_migrations_before", lambda _: {})
+    monkeypatch.setitem(
+        globals(), "_source_matches_checkout", lambda source, _: source["sha256"] == "new"
+    )
+    _devx_015_admission_current_source_records.cache_clear()
+    try:
+        assert _source_sha256(historical) == "old"
+        assert historical == {"path": path, "sha256": "old"}
+        monkeypatch.setitem(globals(), "_source_matches_checkout", lambda *_: False)
+        with pytest.raises(AssertionError):
+            _source_sha256(historical)
+    finally:
+        _devx_015_admission_current_source_records.cache_clear()
+
+
 @cache
 def _ops_081_current_source_records() -> dict[str, dict[str, object]]:
     # Like the cached baseline and prior authority-path helpers, this closure
@@ -14198,6 +14333,10 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
+    current = _devx_015_admission_current_source_records().get(str(source["path"]))
+    if current is not None:
+        assert _source_matches_checkout(current, {})
+        return str(source["sha256"])
     current = _ops_081_current_source_records().get(str(source["path"]))
     if current is not None:
         assert _source_matches_checkout(current, {})

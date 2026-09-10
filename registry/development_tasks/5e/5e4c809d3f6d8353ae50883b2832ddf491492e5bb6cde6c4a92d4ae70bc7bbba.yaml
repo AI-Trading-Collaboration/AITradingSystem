@@ -18,12 +18,11 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 任务身份保留回归完整35项PASS；重封最小合同候选并运行全部required
-    tiers，生产reader/准入源码未变；S1-S5/consumer/OPS080仍待完成。
+  unstructured_legacy_blocker_or_next_step: 最小准入后继和三条历史消费已实现，合成19+7+34项通过；官方生成后完整current回归、新候选全部required
+    tiers及发布仍待执行。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 仅clean coordinator INTEGRATION以有效plan精确lane_head的canonical index/fragment/event完整核验缺失任务；错身份、篡改、终态、source-only和脏状态拒绝；不放宽writer/Full/publication。真实CLI正反例及新候选全部required
-      tiers。
+    text: 完整历史/当前兼容测试和原118失败node通过；未声明漂移、边界owner、最新authority及缺后继保持拒绝；不迁旧S1、不改准入权限；新候选正式验证与发布独立完成。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -153,6 +152,52 @@ events:
   - change:devx015-frozen-admission-identity-preservation-verified
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-8b13a19857609e7664d4223d2deb38da
+- schema_version: task_event.v1
+  task_id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-10T09:55:02.4658439+00:00'
+  actor: integration-coordinator
+  change_id: devx015-admission-compatibility-fix-start
+  lane_id: null
+  base_commit: 205e43904557d2a0af829dd86b8c6b8e71b342d5
+  previous_state_event_id: task-event-8b13a19857609e7664d4223d2deb38da
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: 205e正式Architecture 118项历史断言失败；追加仅准入合同的后继兼容声明与temporal消费，保留旧hash，完成新候选全部required
+      tiers。
+    acceptance_criteria: 完整历史/当前兼容测试和原118失败node通过；未声明漂移、边界owner、最新authority及缺后继保持拒绝；不迁旧S1、不改准入权限；新候选正式验证与发布独立完成。
+    notes: Architecture965PASS/118FAIL，summary182242f5保留，finalV2已FAILED/RELEASED且Full未执行；完整需求见docs/requirements/DEVX-015_Task_Checkpoint_And_Publication_Separation_V2.md。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx015-admission-compatibility-fix-start
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-38034565243b79a25b661d59e5d042b7
+- schema_version: task_event.v1
+  task_id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-10T10:02:00.0096201+00:00'
+  actor: integration-coordinator
+  change_id: devx015-admission-compatibility-source-ready
+  lane_id: null
+  base_commit: 205e43904557d2a0af829dd86b8c6b8e71b342d5
+  previous_state_event_id: task-event-38034565243b79a25b661d59e5d042b7
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex engineering coordinator
+    blocker_or_next_step: 最小准入后继和三条历史消费已实现，合成19+7+34项通过；官方生成后完整current回归、新候选全部required
+      tiers及发布仍待执行。
+    acceptance_criteria: 完整历史/当前兼容测试和原118失败node通过；未声明漂移、边界owner、最新authority及缺后继保持拒绝；不迁旧S1、不改准入权限；新候选正式验证与发布独立完成。
+    notes: 仅phase_devx_015_task_integration_admission_v1，未吸收旧S1；205e失败和Atlas17份原证据已独立保全。详见DEVX-015需求最新节。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx015-admission-compatibility-source-ready
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b661e75726f24b2ab196305cb65353f2
 projection:
   legacy_first_eight_cells:
   - DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
@@ -160,14 +205,12 @@ projection:
   - P0
   - IN_PROGRESS
   - Codex engineering coordinator
-  - 任务身份保留回归完整35项PASS；重封最小合同候选并运行全部required tiers，生产reader/准入源码未变；S1-S5/consumer/OPS080仍待完成。
-  - 仅clean coordinator INTEGRATION以有效plan精确lane_head的canonical index/fragment/event完整核验缺失任务；错身份、篡改、终态、source-only和脏状态拒绝；不放宽writer/Full/publication。真实CLI正反例及新候选全部required
-    tiers。
-  - 固定1068已替换为exact6498完整ID集合保留、OPS081/DEVX015存在及唯一/count一致，合法新增通过，缺失/等数量替换/重复/错count拒绝；35
-    passed/64.38s。44e Atlas17项独立保全，旧v1未Full派发即终结。
+  - 最小准入后继和三条历史消费已实现，合成19+7+34项通过；官方生成后完整current回归、新候选全部required tiers及发布仍待执行。
+  - 完整历史/当前兼容测试和原118失败node通过；未声明漂移、边界owner、最新authority及缺后继保持拒绝；不迁旧S1、不改准入权限；新候选正式验证与发布独立完成。
+  - 仅phase_devx_015_task_integration_admission_v1，未吸收旧S1；205e失败和Atlas17份原证据已独立保全。详见DEVX-015需求最新节。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 643d7dd5ed633f959a61628cc7b3b8757d692a85438672783319c235bb16b732
-last_event_id: task-event-8b13a19857609e7664d4223d2deb38da
+  canonical_row_sha256: 4c229c383a0b564dab25107b57f270e8523dd296f387a2d11cfd46ed53e70815
+last_event_id: task-event-b661e75726f24b2ab196305cb65353f2
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 08e8e42f3a73a71d429d8668c3dbcde1105ea0b22c6958a0136a602e65147326
+fragment_checksum: b30b71c6e4b38b7a78518333e8b508eebc2f37e510f803ca996d0428eb720836

@@ -982,6 +982,12 @@ def build_repository_authority(
         section_id, section = _ops_081_section(root, policy=policy)
         relative, record, content = render_fragment(section_id=section_id, section=section)
         rendered_fragments.append((section_id, relative, record, content))
+    if (
+        root / "docs/requirements/DEVX-015_Task_Checkpoint_And_Publication_Separation_V2.md"
+    ).exists():
+        section_id, section = _devx_015_task_admission_section(root, policy=policy)
+        relative, record, content = render_fragment(section_id=section_id, section=section)
+        rendered_fragments.append((section_id, relative, record, content))
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -3519,6 +3525,71 @@ def _ops_081_section(root: Path, *, policy: Mapping[str, Any]) -> tuple[str, dic
             "fresh_observation_required_for_activation": True,
             "legacy_migration_requires_exact_receipt_allowlist": True,
             "client_save_transaction_controlled_by_repository": False,
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _devx_015_task_admission_section(
+    root: Path, *, policy: Mapping[str, Any]
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_devx_015_task_integration_admission_v1"
+    previous_id, previous = _ops_081_section(root, policy=policy)
+    source_paths = sorted(
+        {
+            *previous["superseded_live_source_paths"],
+            "docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md",
+            "docs/requirements/DEVX-015_Task_Checkpoint_And_Publication_Separation_V2.md",
+            "registry/development_tasks/5e/5e4c809d3f6d8353ae50883b2832ddf491492e5bb6cde6c4a92d4ae70bc7bbba.yaml",
+            "src/ai_trading_system/platform/architecture/task_registry_canonical.py",
+            "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+            "tests/test_arch_005_s5_task_source_cutover.py",
+            "tests/test_arch_004_refactor_policy.py",
+            "tests/test_devx_006c_compatibility_authority.py",
+            "tests/test_devx_006d_report_catalog_flow_authority.py",
+            "tests/test_trading2452_architecture_contract.py",
+            "tests/test_governed_development_skill.py",
+            "tools/codex_skills/run-governed-development/SKILL.md",
+            "tools/codex_skills/run-governed-development/references/workflow-modes.md",
+            "tools/codex_skills/run-governed-development/scripts/preflight.py",
+        },
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "devx_015_task_integration_admission.v1",
+        "task_id": "DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2",
+        "status": "VALIDATING",
+        "owner_decisions": [
+            "owner_decision:DEVX-015:2026-09-10:completed_validated_candidate_integration_v1",
+            "owner_decision:DEVX-015:2026-09-10:frozen_lane_canonical_task_integration_admission_v1",
+        ],
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": previous_id,
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "admission_contract": {
+            "stage": "COORDINATOR_INTEGRATION_ONLY",
+            "completed_task": "VALIDATED_EXACT_CLEAN_CANDIDATE_AT_LOCAL_MAIN_FF_PRE",
+            "missing_current_task": "EXACT_PLAN_LANE_CANONICAL_CHAIN_AT_ACQUIRED",
+            "current_canonical_state_has_priority": True,
+            "plan_and_manifest_bytes_bound": True,
+            "source_only_authority_rejected": True,
+            "start_lane_closeout_rules_changed": False,
+        },
+        "safety": {
+            "historical_hashes_rewritten": False,
+            "old_s1_implementation_imported": False,
+            "task_writer_or_publication_authority_expanded": False,
+            "full_validation_reused": False,
+            "ops_080_recovery_completed": False,
+            "investment_policy_changed": False,
+            "dq_pit_or_research_window_changed": False,
+            "real_dq_or_research_executed": False,
         },
         "production_effect": "none",
         "broker_action": "none",
