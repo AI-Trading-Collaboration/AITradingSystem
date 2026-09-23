@@ -1,0 +1,81 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-017_AGENT_HARNESS_NEUTRALITY
+  task_id_sha256: d45572e4fde123e2f6cf43ddb40c504983372d58a3d605b209ca8ba1ff6025f5
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-017_AGENT_HARNESS_NEUTRALITY
+  title: null
+  domain: Architecture / agent harness neutrality before pi migration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Claude Code coordinator（DEVX-016 之后）
+  requirement_refs:
+  - docs/requirements/DEVX-017_Agent_Harness_Neutrality.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 依赖 DEVX-016。详见 `docs/requirements/DEVX-017_Agent_Harness_Neutrality.md`：AGENTS.md
+    中性化、skills 迁到 .agents/skills、新证据增加 agent_harness 字段、token 遥测接口化、Web Pro review
+    skill 标注或替换；保留 codex/ 前缀与旧 *_CODEX_* 枚举
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 旧证据仍全部通过校验；新证据可写 agent_harness 而不冒用 Codex 身份；skills 新位置可发现且 parity 通过；无
+      ~/.codex/sessions 时 workflow-health 降级为遥测不可用而非 BLOCKED
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-017_AGENT_HARNESS_NEUTRALITY
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-23T23:20:41+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-p0b-registration-20260923-v1
+  lane_id: null
+  base_commit: 217b345cd55bcce0d3e5c72f49b36c07ee7f8265
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    legacy_projection:
+    - DEVX-017_AGENT_HARNESS_NEUTRALITY
+    - Architecture / agent harness neutrality before pi migration
+    - P1
+    - PROPOSED
+    - Claude Code coordinator（DEVX-016 之后）
+    - 依赖 DEVX-016。详见 `docs/requirements/DEVX-017_Agent_Harness_Neutrality.md`：AGENTS.md
+      中性化、skills 迁到 .agents/skills、新证据增加 agent_harness 字段、token 遥测接口化、Web Pro review
+      skill 标注或替换；保留 codex/ 前缀与旧 *_CODEX_* 枚举
+    - 旧证据仍全部通过校验；新证据可写 agent_harness 而不冒用 Codex 身份；skills 新位置可发现且 parity 通过；无 ~/.codex/sessions
+      时 workflow-health 降级为遥测不可用而非 BLOCKED
+    - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision=`owner_decision:GOV-007:2026-09-23:pre_migration_convergence_v1`
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:gov-007-p0b-registration-20260923-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c1c933f7fd2a76376666bbfcd8b48c40
+projection:
+  legacy_first_eight_cells:
+  - DEVX-017_AGENT_HARNESS_NEUTRALITY
+  - Architecture / agent harness neutrality before pi migration
+  - P1
+  - PROPOSED
+  - Claude Code coordinator（DEVX-016 之后）
+  - 依赖 DEVX-016。详见 `docs/requirements/DEVX-017_Agent_Harness_Neutrality.md`：AGENTS.md
+    中性化、skills 迁到 .agents/skills、新证据增加 agent_harness 字段、token 遥测接口化、Web Pro review
+    skill 标注或替换；保留 codex/ 前缀与旧 *_CODEX_* 枚举
+  - 旧证据仍全部通过校验；新证据可写 agent_harness 而不冒用 Codex 身份；skills 新位置可发现且 parity 通过；无 ~/.codex/sessions
+    时 workflow-health 降级为遥测不可用而非 BLOCKED
+  - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision=`owner_decision:GOV-007:2026-09-23:pre_migration_convergence_v1`
+  docs_links:
+  - docs/requirements/DEVX-017_Agent_Harness_Neutrality.md
+  terminal: false
+  canonical_row_sha256: 2a15c6586c1de78d386d63c1c55aae2689d14a4ca2a77d38880a1bcd60840c86
+last_event_id: task-event-c1c933f7fd2a76376666bbfcd8b48c40
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: deb641d3197c59dbc0f02e612c44934a5dd8265ee419ad8097109f99a5ffc43f

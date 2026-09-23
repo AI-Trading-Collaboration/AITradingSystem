@@ -7,14 +7,14 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 1072
-active_task_count: 530
+task_count: 1073
+active_task_count: 531
 completed_task_count: 542
-fragment_count: 1072
+fragment_count: 1073
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: afb07cf266299112ddfd428d0209306ecca527f0b86c4e902ef2d39d1fc610f3
+final_chain_sha256: 6e4026f9180a7860202b1074bdafe74461ef490db5495d60c11b9418366f6070
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 53f22bb69c3865dd311d6c936964fdc67a75b94e84b174356bcd33e28a439a5e
 templates:
@@ -8605,12 +8605,20 @@ fragments:
   order: 1072
   previous_entry_sha256: 884c011702a52d93da72225c2ace3ec32d2da144aa96871dab8b3c9bf3c13319
   entry_sha256: afb07cf266299112ddfd428d0209306ecca527f0b86c4e902ef2d39d1fc610f3
+- task_id: DEVX-017_AGENT_HARNESS_NEUTRALITY
+  path: registry/development_tasks/d4/d45572e4fde123e2f6cf43ddb40c504983372d58a3d605b209ca8ba1ff6025f5.yaml
+  file_sha256: 9aa9c972ab81793a6d0d0754383beb12478cee389760c620f83a19b3f8ebb048
+  fragment_checksum: deb641d3197c59dbc0f02e612c44934a5dd8265ee419ad8097109f99a5ffc43f
+  partition: active
+  order: 1073
+  previous_entry_sha256: afb07cf266299112ddfd428d0209306ecca527f0b86c4e902ef2d39d1fc610f3
+  entry_sha256: 6e4026f9180a7860202b1074bdafe74461ef490db5495d60c11b9418366f6070
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: e3de835f5dfaca2c44a260652728abc3e4d51a49548b6ac71de43011050509f2
-  byte_count: 1785607
-  row_count: 530
+  sha256: 9d6cc69a470745b7931c2a711e4d7307ec384d04816dc92585ea334d2beaa57a
+  byte_count: 1786414
+  row_count: 531
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
@@ -12329,7 +12337,14 @@ governance_cycles:
   change_id: gov-007-p0b-registration-20260923-v1
   event_count: 1
   production_effect: none
-governance_cycle_count: 530
+- cycle_id: arch-005-s5-cycle-531
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: DEVX-017_AGENT_HARNESS_NEUTRALITY
+  change_id: gov-007-p0b-registration-20260923-v1
+  event_count: 1
+  production_effect: none
+governance_cycle_count: 531
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -12343,4 +12358,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: bb8b507580b6813ea4529a6abce2502b476c7262ccca40746ea95cb95d2f158a
+index_checksum: b9c01385f98d6c430725f8c491ada068139ee476c3f9425e9f9324461da3f340
