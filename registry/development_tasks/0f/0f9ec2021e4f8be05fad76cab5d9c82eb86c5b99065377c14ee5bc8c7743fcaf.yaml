@@ -1,0 +1,83 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  task_id_sha256: 0f9ec2021e4f8be05fad76cab5d9c82eb86c5b99065377c14ee5bc8c7743fcaf
+task_record:
+  schema_version: task_record.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  title: null
+  domain: Governance / pre-migration convergence program (Codex → pi)
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Claude Code coordinator：按阶段0→5 串行推进；Project Owner 处理决策包与 R2 动作确认
+  requirement_refs:
+  - docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md`。P0-A
+    盘点与仓库外备份已完成；P0-B 登记本任务与 DEVX-016/OPS-082/DEVX-017；下一步 P0-C 收口 3 个非终态 publication
+    事务，P1-A 主 checkout 回到 main
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-23T23:17:34+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-p0b-registration-20260923-v1
+  lane_id: null
+  base_commit: 4c73a371bc878b3ccf268d87452e654f3b498878
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+    - Governance / pre-migration convergence program (Codex → pi)
+    - P0
+    - IN_PROGRESS
+    - Claude Code coordinator：按阶段0→5 串行推进；Project Owner 处理决策包与 R2 动作确认
+    - 详见 `docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md`。P0-A 盘点与仓库外备份已完成；P0-B
+      登记本任务与 DEVX-016/OPS-082/DEVX-017；下一步 P0-C 收口 3 个非终态 publication 事务，P1-A 主 checkout
+      回到 main
+    - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision=`owner_decision:GOV-007:2026-09-23:pre_migration_convergence_v1`；吸收
+      GOV-006 N2/N3
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:gov-007-p0b-registration-20260923-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-421193622b9bfc992f585dfc3396bc24
+projection:
+  legacy_first_eight_cells:
+  - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  - Governance / pre-migration convergence program (Codex → pi)
+  - P0
+  - IN_PROGRESS
+  - Claude Code coordinator：按阶段0→5 串行推进；Project Owner 处理决策包与 R2 动作确认
+  - 详见 `docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md`。P0-A 盘点与仓库外备份已完成；P0-B
+    登记本任务与 DEVX-016/OPS-082/DEVX-017；下一步 P0-C 收口 3 个非终态 publication 事务，P1-A 主 checkout
+    回到 main
+  - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+    DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+  - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision=`owner_decision:GOV-007:2026-09-23:pre_migration_convergence_v1`；吸收
+    GOV-006 N2/N3
+  docs_links:
+  - docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md
+  terminal: false
+  canonical_row_sha256: 41451376af5f780a964e66854bb7c25b1a518a0eb3e6b26b6055941872b2ad32
+last_event_id: task-event-421193622b9bfc992f585dfc3396bc24
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 33cb241f9f149c8b5526ebef1413cbabc13a8d9b564d94e3a370e97d1b6f09f1
