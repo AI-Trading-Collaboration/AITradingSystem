@@ -48,3 +48,8 @@ DEVX-015 为 DONE（避免在 DEVX-015 最终候选阶段改动 ratchet 与 fenc
 
 - 2026-09-23：登记（GOV-007 P0-B）。DEVX-015 执行期间，每次 Full 失败若属于计数/SHA 类 ratchet 不同步，
   在本节追加一条样本，作为简化的证据。
+- 样本 1（2026-09-23，GOV-007 P0-B）：串行登记 4 个任务用了 5 个 fence 事务，其中 4 个只用于登记、
+  以 FAILED 终态收口，因为一个事务只允许修改自身 task_id。
+- 样本 2（2026-09-23，GOV-007 P0-B）：在 GOV-006 需求文档末尾追加一段进度说明，导致
+  `tests/test_arch_004_refactor_policy.py` 118 个 node 失败，因为该文档的 SHA-256 冻结在
+  `arch_004_compatibility_baseline.yaml` 中。处理方式是撤回该文档改动。

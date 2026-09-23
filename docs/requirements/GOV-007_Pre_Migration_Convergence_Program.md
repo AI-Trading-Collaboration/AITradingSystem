@@ -102,9 +102,21 @@ DEVX-015 的"做完全部 106 项"决定不在本变更里写入 DEVX-015 的任
 
 ### P0-B 任务登记（本变更）
 
-- 登记 DEVX-016、OPS-082、DEVX-017 和本任务；新增 4 份需求文档；GOV-006 记录 N2/N3 并入本任务。
+- 登记 DEVX-016、OPS-082、DEVX-017 和本任务；新增 4 份需求文档。
+- GOV-006 的需求文档没有改：它的 SHA-256 冻结在 `inputs/architecture/arch_004_compatibility_baseline.yaml`
+  中，改动它需要新增 baseline 段落。N2/N3 并入的记录只保存在本文档；阶段5 执行 N2/N3 时再同步
+  GOV-006 的任务行和文档。
 - 不改代码和行为；`docs/system_flow.md` 不需要更新。
 - 使用既有 coordinator worktree `D:\Work\AITradingSystem_devx014_source_preservation`，不新建临时工作区。
+- 执行环境：必须使用项目 venv（`D:\Work\AITradingSystem\.venv`，Python 3.11.9），并把 `PYTHONPATH` 指向
+  当前 worktree 的 `src`。系统 Python 3.14 会在 lease arbiter 的文件身份检查上失败
+  （`path.stat()` 与 `os.fstat()` 字段不一致）；venv 的 editable 安装指向主 checkout 的 `src`，
+  主 checkout 不在 main 时会加载过期代码。P0-A 的 READ_ONLY 预检和 lease 回放是在这种过期代码下运行的，
+  用正确代码重新回放的结果同样是 ACTIVE lease 0。
+- 登记方式：fence 事务一次只允许修改自身 task_id，所以按 TRADING-2561/2562 的既有做法，
+  为 GOV-007、DEVX-016、OPS-082、DEVX-017 各开一个只用于登记的事务，登记后以 failed 终态收口；
+  生成器重建、正式验证和发布在事务 `gov-007-p0b-publication-20260923-v1` 中完成。这 4 个 FAILED
+  不是验证失败，记为 DEVX-016 的简化样本。
 
 ## 7. 退出条件
 

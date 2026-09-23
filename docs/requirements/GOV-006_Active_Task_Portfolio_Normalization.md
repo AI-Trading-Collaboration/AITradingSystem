@@ -1,6 +1,6 @@
 # GOV-006 Active Task Portfolio Normalization
 
-最后更新：2026-09-23
+最后更新：2026-07-23
 
 ## 任务信息
 
@@ -147,5 +147,3 @@ N0 结果固定 `automatic_apply_allowed=false`。只有 coordinator 在共享�
   `e2da21894ea8e8921a86c6c1b48d7b191f0f142c`已普通推送并释放Wave14 S0关键路径。GOV-006整体仍
   `IN_PROGRESS`，但N2/N3只允许在后续clean coordinator boundary推进，不与当前S0/domain实现并发争用
   task registers、shadows或shared路线文档。
-
-- 2026-09-23：Owner 决定（`owner_decision:GOV-007:2026-09-23:pre_migration_convergence_v1`）把 N2（按等待条件/任务族收敛）和 N3（清理当前路线语义）并入 `GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM` 阶段5，统一在迁移 pi 前执行；详见 `docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md`。GOV-006 保持 IN_PROGRESS，直到 GOV-007 阶段5 完成 N2/N3。执行 harness：`claude_code`。
