@@ -1,0 +1,78 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
+  task_id_sha256: d243da1aac52dc8d69cc1e9db76ec1d7d7f6a2585d43e274a00317e15fb64965
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
+  title: null
+  domain: Architecture / single-agent default governance and monotonic ratchets
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Claude Code coordinator（DEVX-015 关闭后开始）
+  requirement_refs:
+  - docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 依赖 DEVX-015 DONE。详见 `docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md`：默认
+    SINGLE_LANE、精确计数/SHA ratchet 改单调检查、生成物只在最终候选重建一次、精简 fence 中间阶段、同一候选只跑一次 Full
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: DEVX-010、TRADING-2555、OPS-081 三个历史失败样本在新规则下不再误报；无关任务登记不引起测试失败；安全边界与 DQ/PIT
+      门禁覆盖不减少；AGENTS.md、skill、runbook 同步
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-23T23:20:02+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-p0b-registration-20260923-v1
+  lane_id: null
+  base_commit: 01979263e67090987c1334d8514a9fb2dd612099
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    legacy_projection:
+    - DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
+    - Architecture / single-agent default governance and monotonic ratchets
+    - P0
+    - PROPOSED
+    - Claude Code coordinator（DEVX-015 关闭后开始）
+    - 依赖 DEVX-015 DONE。详见 `docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md`：默认
+      SINGLE_LANE、精确计数/SHA ratchet 改单调检查、生成物只在最终候选重建一次、精简 fence 中间阶段、同一候选只跑一次 Full
+    - DEVX-010、TRADING-2555、OPS-081 三个历史失败样本在新规则下不再误报；无关任务登记不引起测试失败；安全边界与 DQ/PIT 门禁覆盖不减少；AGENTS.md、skill、runbook
+      同步
+    - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision=`owner_decision:GOV-007:2026-09-23:pre_migration_convergence_v1`；`owner_decision:DEVX-016:2026-09-23:single_agent_default_v1`
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:gov-007-p0b-registration-20260923-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8b5800110119742cd0bc9ef03e272c08
+projection:
+  legacy_first_eight_cells:
+  - DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
+  - Architecture / single-agent default governance and monotonic ratchets
+  - P0
+  - PROPOSED
+  - Claude Code coordinator（DEVX-015 关闭后开始）
+  - 依赖 DEVX-015 DONE。详见 `docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md`：默认
+    SINGLE_LANE、精确计数/SHA ratchet 改单调检查、生成物只在最终候选重建一次、精简 fence 中间阶段、同一候选只跑一次 Full
+  - DEVX-010、TRADING-2555、OPS-081 三个历史失败样本在新规则下不再误报；无关任务登记不引起测试失败；安全边界与 DQ/PIT 门禁覆盖不减少；AGENTS.md、skill、runbook
+    同步
+  - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision=`owner_decision:GOV-007:2026-09-23:pre_migration_convergence_v1`；`owner_decision:DEVX-016:2026-09-23:single_agent_default_v1`
+  docs_links:
+  - docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+  terminal: false
+  canonical_row_sha256: 77ab54dc1b237ea7ef5b27817266307c8c5e45a798d1469a1b43ab8af2656263
+last_event_id: task-event-8b5800110119742cd0bc9ef03e272c08
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: f4b97bf6e7e67930edf801ed29967dca6835be63cc87130bf4b260e31bf6f493
