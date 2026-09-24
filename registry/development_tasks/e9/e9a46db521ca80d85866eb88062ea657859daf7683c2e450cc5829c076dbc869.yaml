@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2293_SCOPE_NARROWED_FORWARD_OBSERVE_READINESS_REVIEW
   task_id_sha256: e9a46db521ca80d85866eb88062ea657859daf7683c2e450cc5829c076dbc869
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2293_SCOPE_NARROWED_FORWARD_OBSERVE_READINESS_REVIEW
   title: null
   domain: Research trends / scope-narrowed forward observe readiness review
@@ -12,19 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2293_Scope_Narrowed_Forward_Observe_Readiness_Review.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2293_Scope_Narrowed_Forward_Observe_Readiness_Review.md`；依赖
-    TRADING-2292 scope-narrowed actual-path validation outputs、TRADING-2291 risk-cap
-    scope-narrowed generator artifacts、TRADING-2290 scope review outputs 和 validated
-    carry-forward safety context。本批只做 readiness review 和 observe-only evidence collection
-    design，不启动 runtime、不接日报生产链路、不生成 owner review package、不做 paper-shadow/production/broker。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 `aits research trends scope-narrowed-forward-observe-readiness-review`；生成
       readiness summary、candidate readiness matrix、gate checklist、evidence collection
       spec、daily/weekly report contract、stop/continue rules、operational boundary、risk-cap
@@ -33,7 +31,6 @@ task_record:
       固定 promotion/paper-shadow/production/broker false/none、`forward_observe_started=false`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 2d55c3b91b2d9e213f7022844d69949f3c12ff5d02463389146eaf28acbebd7f
   cell_count: 8
@@ -110,35 +107,69 @@ events:
   evidence_refs:
   - sha256:2d55c3b91b2d9e213f7022844d69949f3c12ff5d02463389146eaf28acbebd7f
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2293_SCOPE_NARROWED_FORWARD_OBSERVE_READINESS_REVIEW
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:03:53+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: be928b7192c17fc26a3e7ff30df9e09d15560ec9
+  previous_state_event_id: legacy-import-2d55c3b91b2d9e213f702284
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 `aits research trends scope-narrowed-forward-observe-readiness-review`；生成
+      readiness summary、candidate readiness matrix、gate checklist、evidence collection
+      spec、daily/weekly report contract、stop/continue rules、operational boundary、risk-cap
+      metric spec、trigger interpretation spec、rejected/archived carry-forward matrix、next-task
+      recommendation 和 research docs；input/output safety gates fail closed；所有 outputs
+      固定 promotion/paper-shadow/production/broker false/none、`forward_observe_started=false`。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-30:
+      根据 owner 附件新增并进入 IN_PROGRESS；pre-flight 已确认 worktree 中存在 TRADING-1087 / ops
+      / docs 相关既有未提交改动，TRADING-2293 必须 selective staging 且最终 commit 不纳入这些无关改动。2026-06-30:
+      实现完成并转入 VALIDATING；真实 run readiness gate=`FORWARD_OBSERVE_READY_WITH_WARNINGS`，warnings=`DATA_QUALITY_PASS_WITH_WARNINGS`
+      / `TRIGGER_DIRECTION_SAMPLE_SPARSE`，next task=`TRADING-2294_Evidence_Accumulation_Extension_Plan`；验证通过
+      Ruff、compileall、focused parallel pytest 30 passed、full parallel pytest 3742
+      passed、docs freshness、report contract、contract-validation 193 passed、task-register
+      consistency run/validate 和 `git diff --check`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c96f185d29fba0a00693a1157570718c
 projection:
   legacy_first_eight_cells:
   - TRADING-2293_SCOPE_NARROWED_FORWARD_OBSERVE_READINESS_REVIEW
   - Research trends / scope-narrowed forward observe readiness review
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2293_Scope_Narrowed_Forward_Observe_Readiness_Review.md`；依赖
-    TRADING-2292 scope-narrowed actual-path validation outputs、TRADING-2291 risk-cap
-    scope-narrowed generator artifacts、TRADING-2290 scope review outputs 和 validated
-    carry-forward safety context。本批只做 readiness review 和 observe-only evidence collection
-    design，不启动 runtime、不接日报生产链路、不生成 owner review package、不做 paper-shadow/production/broker。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 `aits research trends scope-narrowed-forward-observe-readiness-review`；生成 readiness
     summary、candidate readiness matrix、gate checklist、evidence collection spec、daily/weekly
     report contract、stop/continue rules、operational boundary、risk-cap metric spec、trigger
     interpretation spec、rejected/archived carry-forward matrix、next-task recommendation
     和 research docs；input/output safety gates fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker
     false/none、`forward_observe_started=false`。
-  - '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；pre-flight 已确认 worktree 中存在 TRADING-1087
-    / ops / docs 相关既有未提交改动，TRADING-2293 必须 selective staging 且最终 commit 不纳入这些无关改动。2026-06-30:
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-30:
+    根据 owner 附件新增并进入 IN_PROGRESS；pre-flight 已确认 worktree 中存在 TRADING-1087 / ops /
+    docs 相关既有未提交改动，TRADING-2293 必须 selective staging 且最终 commit 不纳入这些无关改动。2026-06-30:
     实现完成并转入 VALIDATING；真实 run readiness gate=`FORWARD_OBSERVE_READY_WITH_WARNINGS`，warnings=`DATA_QUALITY_PASS_WITH_WARNINGS`
     / `TRIGGER_DIRECTION_SAMPLE_SPARSE`，next task=`TRADING-2294_Evidence_Accumulation_Extension_Plan`；验证通过
     Ruff、compileall、focused parallel pytest 30 passed、full parallel pytest 3742 passed、docs
     freshness、report contract、contract-validation 193 passed、task-register consistency
     run/validate 和 `git diff --check`。'
-  docs_links:
-  - docs/requirements/TRADING-2293_Scope_Narrowed_Forward_Observe_Readiness_Review.md
-  terminal: false
-  canonical_row_sha256: 2d55c3b91b2d9e213f7022844d69949f3c12ff5d02463389146eaf28acbebd7f
-last_event_id: legacy-import-2d55c3b91b2d9e213f702284
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 64d39cf43ba249c4a09305f026c6fd92bf29f621340f720d6c9c2711a5dc52f0
+last_event_id: task-event-c96f185d29fba0a00693a1157570718c
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 632a13613cf30bdd26bfabc54d4ea48c8da3c800db1fbd019c4a13e96314dcb0
+fragment_checksum: 81363c75eac546ffefb36914f70954ad9a237db7d1985a0ba3fa0655d2529056
