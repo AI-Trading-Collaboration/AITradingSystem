@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2268_NORGATE_2Y_PARTIAL_EVIDENCE_REVIEW_AND_PLATINUM_DECISION_MEMO
   task_id_sha256: 258ac2de53e8faaa641da1863f6a40cb48aa40998e93e5280cbdfe47f3fbabb1
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2268_NORGATE_2Y_PARTIAL_EVIDENCE_REVIEW_AND_PLATINUM_DECISION_MEMO
   title: null
   domain: Norgate trial / partial evidence review / Platinum owner decision memo
@@ -12,17 +13,16 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 项目 owner
-  requirement_refs:
-  - docs/requirements/TRADING-2268_Norgate_2Y_Partial_Evidence_Review_And_Platinum_Decision_Memo.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 见 `docs/requirements/TRADING-2268_Norgate_2Y_Partial_Evidence_Review_And_Platinum_Decision_Memo.md`；实现和验证已完成，TRADING-2269
-    已把 owner 复核语义改为 `trial_based_purchase_recommendation=no` / `stress_window_paid_experiment_recommendation=conditional_yes`；等待
-    owner 决定是否接受 paid stress-window experiment
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 输出 `norgate_2y_partial_evidence_review.md`、`norgate_platinum_decision_memo.md`、更新后的
       conclusion matrix 和 review inputs；检查 feature variation、bucket imbalance、outlier
       dominance、event count、baseline incremental value、QQQ/SPY/SMH consistency 和 2022
@@ -31,7 +31,6 @@ task_record:
       validation 完成
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 9d5f4fa0acc5bf6c23d5207b5e77b108f591c2df0a00509302a0b476afaf196b
   cell_count: 8
@@ -91,29 +90,61 @@ events:
   evidence_refs:
   - sha256:9d5f4fa0acc5bf6c23d5207b5e77b108f591c2df0a00509302a0b476afaf196b
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2268_NORGATE_2Y_PARTIAL_EVIDENCE_REVIEW_AND_PLATINUM_DECISION_MEMO
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:58:11+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: a10fb6f17724808945f832a3b967f99fce80669e
+  previous_state_event_id: legacy-import-9d5f4fa0acc5bf6c23d5207b
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 输出 `norgate_2y_partial_evidence_review.md`、`norgate_platinum_decision_memo.md`、更新后的
+      conclusion matrix 和 review inputs；检查 feature variation、bucket imbalance、outlier
+      dominance、event count、baseline incremental value、QQQ/SPY/SMH consistency 和 2022
+      stress absence；结论字段包含 `local_signal_evidence_reason`、`trial_2y_feature_value`、`full_history_needed_for_final_answer`、split
+      purchase fields、`purchase_allowed=false`；所有 gates 保持 false；focused/contract
+      validation 完成
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+      真实 run 归因为 `no_incremental_value`，2Y feature value=`weak`，full-history needed
+      for final answer=true；TRADING-2269 后 trial-based purchase recommendation=`no`，paid
+      stress-window experiment=`conditional_yes`，不是自动购买或策略验收。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-cc3698d545c9f650fe17388cf8dfebeb
 projection:
   legacy_first_eight_cells:
   - TRADING-2268_NORGATE_2Y_PARTIAL_EVIDENCE_REVIEW_AND_PLATINUM_DECISION_MEMO
   - Norgate trial / partial evidence review / Platinum owner decision memo
   - P1
-  - VALIDATING
-  - 项目 owner
-  - 见 `docs/requirements/TRADING-2268_Norgate_2Y_Partial_Evidence_Review_And_Platinum_Decision_Memo.md`；实现和验证已完成，TRADING-2269
-    已把 owner 复核语义改为 `trial_based_purchase_recommendation=no` / `stress_window_paid_experiment_recommendation=conditional_yes`；等待
-    owner 决定是否接受 paid stress-window experiment
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 输出 `norgate_2y_partial_evidence_review.md`、`norgate_platinum_decision_memo.md`、更新后的
     conclusion matrix 和 review inputs；检查 feature variation、bucket imbalance、outlier
     dominance、event count、baseline incremental value、QQQ/SPY/SMH consistency 和 2022
     stress absence；结论字段包含 `local_signal_evidence_reason`、`trial_2y_feature_value`、`full_history_needed_for_final_answer`、split
     purchase fields、`purchase_allowed=false`；所有 gates 保持 false；focused/contract validation
     完成
-  - '2026-06-28: 真实 run 归因为 `no_incremental_value`，2Y feature value=`weak`，full-history
-    needed for final answer=true；TRADING-2269 后 trial-based purchase recommendation=`no`，paid
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+    真实 run 归因为 `no_incremental_value`，2Y feature value=`weak`，full-history needed
+    for final answer=true；TRADING-2269 后 trial-based purchase recommendation=`no`，paid
     stress-window experiment=`conditional_yes`，不是自动购买或策略验收。'
-  docs_links:
-  - docs/requirements/TRADING-2268_Norgate_2Y_Partial_Evidence_Review_And_Platinum_Decision_Memo.md
-  terminal: false
-  canonical_row_sha256: 9d5f4fa0acc5bf6c23d5207b5e77b108f591c2df0a00509302a0b476afaf196b
-last_event_id: legacy-import-9d5f4fa0acc5bf6c23d5207b
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: d2822caa77a469a7a6e7baf9999d84a027f69b051421713ed7e3771075ddb260
+last_event_id: task-event-cc3698d545c9f650fe17388cf8dfebeb
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: ae2cf03ad15bfb781a966960bed6598d9883f426f479fe4163eee1fd1dd2cc7a
+fragment_checksum: 2f472150ac7c5b6bb65b73cb98b4c7794884a7b9ce5deccbd43be72fe969042c
