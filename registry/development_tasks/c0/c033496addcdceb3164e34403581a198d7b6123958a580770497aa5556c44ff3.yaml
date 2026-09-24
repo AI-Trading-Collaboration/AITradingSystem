@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2267_NORGATE_TRIAL_2Y_PARTIAL_EFFECTIVENESS_VALIDATION
   task_id_sha256: c033496addcdceb3164e34403581a198d7b6123958a580770497aa5556c44ff3
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2267_NORGATE_TRIAL_2Y_PARTIAL_EFFECTIVENESS_VALIDATION
   title: null
   domain: Norgate trial / 2Y partial effectiveness / purchase decision evidence
@@ -12,23 +13,21 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 项目 owner
-  requirement_refs:
-  - docs/requirements/TRADING-2267_Norgate_Trial_2Y_Partial_Effectiveness_Validation.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 见 `docs/requirements/TRADING-2267_Norgate_Trial_2Y_Partial_Effectiveness_Validation.md`；实现和验证已完成，等待
-    owner 复核 2Y local signal evidence 和 `purchase_platinum_evidence_strength=moderate`
-    是否足以批准正式 Platinum 历史订阅
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 2Y trial 能生成 coverage report、breadth feature report、local signal report
       和 conclusion matrix；输出只包含日期级/聚合 summary，不提交 raw vendor data 或 member list；`primary_window_validated=false`、`model_ready_for_2021_primary_window=false`、`reopen_gate_allowed=false`、promotion/paper-shadow/production/broker
       保持 false/false/false/none；focused/contract validation 完成
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 36dc857753dee334ff46e0a44920a4c509496b9061c05026b7eccadbac56d226
   cell_count: 8
@@ -81,25 +80,54 @@ events:
   evidence_refs:
   - sha256:36dc857753dee334ff46e0a44920a4c509496b9061c05026b7eccadbac56d226
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2267_NORGATE_TRIAL_2Y_PARTIAL_EFFECTIVENESS_VALIDATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:57:50+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: bc42d8f54f3155ec333772822c931ae634623c98
+  previous_state_event_id: legacy-import-36dc857753dee334ff46e0a4
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 2Y trial 能生成 coverage report、breadth feature report、local
+      signal report 和 conclusion matrix；输出只包含日期级/聚合 summary，不提交 raw vendor data 或
+      member list；`primary_window_validated=false`、`model_ready_for_2021_primary_window=false`、`reopen_gate_allowed=false`、promotion/paper-shadow/production/broker
+      保持 false/false/false/none；focused/contract validation 完成
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+      真实 run coverage/feature numeric validated，但 local_signal_evidence=`none`，source_feature_useful_2y=`weak`；可作为购买正式历史的
+      moderate evidence，不能替代 primary-window validation'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e113321643403f313872fabd1514b072
 projection:
   legacy_first_eight_cells:
   - TRADING-2267_NORGATE_TRIAL_2Y_PARTIAL_EFFECTIVENESS_VALIDATION
   - Norgate trial / 2Y partial effectiveness / purchase decision evidence
   - P1
-  - VALIDATING
-  - 项目 owner
-  - 见 `docs/requirements/TRADING-2267_Norgate_Trial_2Y_Partial_Effectiveness_Validation.md`；实现和验证已完成，等待
-    owner 复核 2Y local signal evidence 和 `purchase_platinum_evidence_strength=moderate`
-    是否足以批准正式 Platinum 历史订阅
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 2Y trial 能生成 coverage report、breadth feature report、local signal report 和 conclusion
     matrix；输出只包含日期级/聚合 summary，不提交 raw vendor data 或 member list；`primary_window_validated=false`、`model_ready_for_2021_primary_window=false`、`reopen_gate_allowed=false`、promotion/paper-shadow/production/broker
     保持 false/false/false/none；focused/contract validation 完成
-  - '2026-06-28: 真实 run coverage/feature numeric validated，但 local_signal_evidence=`none`，source_feature_useful_2y=`weak`；可作为购买正式历史的
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+    真实 run coverage/feature numeric validated，但 local_signal_evidence=`none`，source_feature_useful_2y=`weak`；可作为购买正式历史的
     moderate evidence，不能替代 primary-window validation'
-  docs_links:
-  - docs/requirements/TRADING-2267_Norgate_Trial_2Y_Partial_Effectiveness_Validation.md
-  terminal: false
-  canonical_row_sha256: 36dc857753dee334ff46e0a44920a4c509496b9061c05026b7eccadbac56d226
-last_event_id: legacy-import-36dc857753dee334ff46e0a4
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: f7c04d385d25c94f08f2e57fba75c2f56fd392f40aba5ac55fedcfa7da00322f
+last_event_id: task-event-e113321643403f313872fabd1514b072
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: bcbe0b1c93f3143a80a40793f8345b02c7cdeaf2e9832d7484134bc5e44b35c8
+fragment_checksum: a62bdade0d1d018d1e03b05133070ea3eb9970a550a908d207552bbe8cbb7e22
