@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2319_EVENT_CALENDAR_GATING_GENERATOR_POC
   task_id_sha256: f738bc0f88ddd750a793da0fa09e1a5cfe285680ecb4ef0b1b474a175f482393
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2319_EVENT_CALENDAR_GATING_GENERATOR_POC
   title: null
   domain: Research trends / event calendar gating generator
@@ -12,25 +13,22 @@ task_record:
   created_by: null
   priority: P2
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2319_Event_Calendar_Gating_Generator_POC.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2319_Event_Calendar_Gating_Generator_POC.md`；依赖
-    TRADING-2318 feasibility audit。当前 2318 真实 run 显示 `pit_ready_source_count=0`、`source_audit_required_count=8`，因此本批只能实现
-    source-blocked generator POC 包；不得绕过 source manifest / known-at blocker 生成 event
-    rows 或 gating signal。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 形成 event gating generator summary、inactive signal spec、use-case readiness
       matrix、source blocker report、manual review contract carry-forward、validation
       summary、safety boundary 和 research report；所有 outputs 固定 `source_blocked_no_generation=true`、`event_rows_consumed=false`、`gating_signal_generated=false`、`event_gating_signal_series_generated=false`、promotion/paper-shadow/production/broker
       false/none。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 0f1d1e66b79849e40e790c723161a21a396494f3561b551cb3405c58ccfdfcdc
   cell_count: 8
@@ -99,32 +97,65 @@ events:
   evidence_refs:
   - sha256:0f1d1e66b79849e40e790c723161a21a396494f3561b551cb3405c58ccfdfcdc
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2319_EVENT_CALENDAR_GATING_GENERATOR_POC
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:52:18+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: e50c987da6a924f381abc4bc9a31d1075b88e85f
+  previous_state_event_id: legacy-import-0f1d1e66b79849e40e790c72
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 形成 event gating generator summary、inactive signal spec、use-case
+      readiness matrix、source blocker report、manual review contract carry-forward、validation
+      summary、safety boundary 和 research report；所有 outputs 固定 `source_blocked_no_generation=true`、`event_rows_consumed=false`、`gating_signal_generated=false`、`event_gating_signal_series_generated=false`、promotion/paper-shadow/production/broker
+      false/none。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+      根据 owner roadmap 和 TRADING-2318 recommended next task 新增并进入 IN_PROGRESS；当前 worktree
+      有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入
+      VALIDATING；真实 run status=`EVENT_CALENDAR_GATING_GENERATOR_POC_SOURCE_BLOCKED_NO_SIGNAL`，data_quality_status=`NOT_APPLICABLE_SOURCE_BLOCKED_STATIC_GENERATOR`，source_pit_ready_source_count=0，source_blocker_count=8，use_case_readiness_count=4，blocked_use_case_count=4，validation_status=`PASS_SOURCE_BLOCKED_EXPECTED`；验证通过
+      Ruff、compileall、focused 2319 parallel pytest 8 passed、adjacent event/regime
+      focused parallel pytest 21 passed、docs/registry focused parallel pytest 27 passed、真实
+      CLI run、contract-validation 193 passed 和 `git diff --check`；`aits validate-data`
+      不适用，因为命令只读取 TRADING-2318 static artifacts、不读取 cached market data 或 event rows。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f8b0b500b51941018df7a9b92f6b1c07
 projection:
   legacy_first_eight_cells:
   - TRADING-2319_EVENT_CALENDAR_GATING_GENERATOR_POC
   - Research trends / event calendar gating generator
   - P2
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2319_Event_Calendar_Gating_Generator_POC.md`；依赖
-    TRADING-2318 feasibility audit。当前 2318 真实 run 显示 `pit_ready_source_count=0`、`source_audit_required_count=8`，因此本批只能实现
-    source-blocked generator POC 包；不得绕过 source manifest / known-at blocker 生成 event
-    rows 或 gating signal。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 形成 event gating generator summary、inactive signal spec、use-case readiness matrix、source
     blocker report、manual review contract carry-forward、validation summary、safety
     boundary 和 research report；所有 outputs 固定 `source_blocked_no_generation=true`、`event_rows_consumed=false`、`gating_signal_generated=false`、`event_gating_signal_series_generated=false`、promotion/paper-shadow/production/broker
     false/none。
-  - '2026-07-01: 根据 owner roadmap 和 TRADING-2318 recommended next task 新增并进入 IN_PROGRESS；当前
-    worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入
-    VALIDATING；真实 run status=`EVENT_CALENDAR_GATING_GENERATOR_POC_SOURCE_BLOCKED_NO_SIGNAL`，data_quality_status=`NOT_APPLICABLE_SOURCE_BLOCKED_STATIC_GENERATOR`，source_pit_ready_source_count=0，source_blocker_count=8，use_case_readiness_count=4，blocked_use_case_count=4，validation_status=`PASS_SOURCE_BLOCKED_EXPECTED`；验证通过
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+    根据 owner roadmap 和 TRADING-2318 recommended next task 新增并进入 IN_PROGRESS；当前 worktree
+    有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入 VALIDATING；真实
+    run status=`EVENT_CALENDAR_GATING_GENERATOR_POC_SOURCE_BLOCKED_NO_SIGNAL`，data_quality_status=`NOT_APPLICABLE_SOURCE_BLOCKED_STATIC_GENERATOR`，source_pit_ready_source_count=0，source_blocker_count=8，use_case_readiness_count=4，blocked_use_case_count=4，validation_status=`PASS_SOURCE_BLOCKED_EXPECTED`；验证通过
     Ruff、compileall、focused 2319 parallel pytest 8 passed、adjacent event/regime focused
     parallel pytest 21 passed、docs/registry focused parallel pytest 27 passed、真实 CLI
     run、contract-validation 193 passed 和 `git diff --check`；`aits validate-data` 不适用，因为命令只读取
     TRADING-2318 static artifacts、不读取 cached market data 或 event rows。'
-  docs_links:
-  - docs/requirements/TRADING-2319_Event_Calendar_Gating_Generator_POC.md
-  terminal: false
-  canonical_row_sha256: 0f1d1e66b79849e40e790c723161a21a396494f3561b551cb3405c58ccfdfcdc
-last_event_id: legacy-import-0f1d1e66b79849e40e790c72
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 5d113cd4381fc3e3f130e21175817044d07e97b6f1c17784521c38c08965e031
+last_event_id: task-event-f8b0b500b51941018df7a9b92f6b1c07
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 07348775d18448ce0bac7c77160bea7ba312224a8d6fb8e815d1a721bae23aca
+fragment_checksum: 61b7141d3cbffaaf321d333866f6e2b7cb965b82d5a961d5ba39bf0f89cf5b93
