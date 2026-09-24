@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-727_TRADABLE_UNIVERSE_ASSET_MASTER
   task_id_sha256: df26b82c38ce2318ed5b3d0119fa321033d17bbc8d1f869b3b0e3a81d1b87bc6
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-727_TRADABLE_UNIVERSE_ASSET_MASTER
   title: null
   domain: Data foundation / tradable universe and asset master
@@ -12,19 +13,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-726_to_733 总需求文档；建立 asset master、ticker
-    history、tradability calendar 和 universe as-of audit baseline
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`aits data asset-master validate'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 070066bcd704c452b9c3a231bfd0cd53963e00b807f2345eaf73fda364d73a0e
   cell_count: 10
@@ -74,20 +75,47 @@ events:
   evidence_refs:
   - sha256:070066bcd704c452b9c3a231bfd0cd53963e00b807f2345eaf73fda364d73a0e
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-727_TRADABLE_UNIVERSE_ASSET_MASTER
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:11:19+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 179aa5bfaf0b1aa9a2996e26653ae616bcb4b782
+  previous_state_event_id: legacy-import-070066bcd704c452b9c3a231
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`aits data asset-master validate'
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：build-tradability-calendar`
+      和 `aits data universe show
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7b13bbf64b36cd24f84396155d664f8f
 projection:
   legacy_first_eight_cells:
   - TRADING-727_TRADABLE_UNIVERSE_ASSET_MASTER
   - Data foundation / tradable universe and asset master
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-726_to_733 总需求文档；建立 asset master、ticker history、tradability calendar
-    和 universe as-of audit baseline
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`aits data asset-master validate'
-  - build-tradability-calendar` 和 `aits data universe show
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：build-tradability-calendar`
+    和 `aits data universe show
   docs_links: []
-  terminal: false
-  canonical_row_sha256: ea5e8fc1aef8fbfaab646a8f3c6dc7e03bf22aea46745df3cb68f73fcc7965ee
-last_event_id: legacy-import-070066bcd704c452b9c3a231
+  terminal: true
+  canonical_row_sha256: 3fe19d58df4cffb1ade1748345359e3649ba5eae63dc59d80971412eb36aebfe
+last_event_id: task-event-7b13bbf64b36cd24f84396155d664f8f
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 7469ac99d5ba449b87525c8bbe70adc914f2b5b499b51c61ad225b9b3bf66467
+fragment_checksum: 5796f66cba5b0b0b09e553fde16e5cdebfee2252d8c1901c88a48728eaaa28ca
