@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-725_MASTER_VALIDATION_MIGRATION_DOCUMENTATION_ROLLUP
   task_id_sha256: 93b15ab0e62c40e84d328f49e93fdfef79e8765173a14d87ca9bb9a4b9efc4f3
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-725_MASTER_VALIDATION_MIGRATION_DOCUMENTATION_ROLLUP
   title: null
   domain: Research ops / master validation, migration, documentation rollup
@@ -12,20 +13,20 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；整合 CLI、docs、registry、validation
-    和 legacy compatibility
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: CLI/docs/tests 更新；existing_production_outputs_unchanged=true；legacy_recommendation_semantic_drift_count=0；all_primary_artifacts_registered=true；validation_tier_pass=true
       或明确阻塞
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 668ccc816af416e2b096d7f0bc21e4099d202865d7591b130da22ea83ae95ffe
   cell_count: 8
@@ -92,19 +93,56 @@ events:
   evidence_refs:
   - sha256:668ccc816af416e2b096d7f0bc21e4099d202865d7591b130da22ea83ae95ffe
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-725_MASTER_VALIDATION_MIGRATION_DOCUMENTATION_ROLLUP
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:10:31+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: ce9da406629d2664644dee379bf6049282e72fc5
+  previous_state_event_id: legacy-import-668ccc816af416e2b096d7f0
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: CLI/docs/tests 更新；existing_production_outputs_unchanged=true；legacy_recommendation_semantic_drift_count=0；all_primary_artifacts_registered=true；validation_tier_pass=true
+      或明确阻塞
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+      按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增
+      schema/config/protocol、research governance / acceleration / portfolio decision
+      / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+      / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+      production_effect=none，不修改 production / paper-shadow / official weights，不触发
+      broker/order。2026-06-21: 继续 VALIDATING；`tests/test_research_master_roadmap.py`
+      已纳入 `fast-unit` 和 `contract-validation`，primary artifacts 已进入 report registry
+      与 artifact catalog，CLI smoke 增加 artifact existence checks；仍需真实 full-advisory
+      / forward paper-shadow evidence 和 owner review 才能进入 promotion review。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-025a14642c88ebe8049029dc1a101610
 projection:
   legacy_first_eight_cells:
   - TRADING-725_MASTER_VALIDATION_MIGRATION_DOCUMENTATION_ROLLUP
   - Research ops / master validation, migration, documentation rollup
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-703_to_725 总需求文档；整合 CLI、docs、registry、validation 和 legacy compatibility
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - CLI/docs/tests 更新；existing_production_outputs_unchanged=true；legacy_recommendation_semantic_drift_count=0；all_primary_artifacts_registered=true；validation_tier_pass=true
     或明确阻塞
-  - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入
-    VALIDATING；新增 schema/config/protocol、research governance / acceleration / portfolio
-    decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+    按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增
+    schema/config/protocol、research governance / acceleration / portfolio decision
+    / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
     / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
     production_effect=none，不修改 production / paper-shadow / official weights，不触发 broker/order。2026-06-21:
     继续 VALIDATING；`tests/test_research_master_roadmap.py` 已纳入 `fast-unit` 和 `contract-validation`，primary
@@ -112,8 +150,8 @@ projection:
     checks；仍需真实 full-advisory / forward paper-shadow evidence 和 owner review 才能进入
     promotion review。'
   docs_links: []
-  terminal: false
-  canonical_row_sha256: 668ccc816af416e2b096d7f0bc21e4099d202865d7591b130da22ea83ae95ffe
-last_event_id: legacy-import-668ccc816af416e2b096d7f0
+  terminal: true
+  canonical_row_sha256: 9f89c7591967e7abeffa559dde88c5c1fdd9ee92b852b0c3a33687cb043571d5
+last_event_id: task-event-025a14642c88ebe8049029dc1a101610
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 4261cacccad303ca81b67f7d5d2148b23b87442969cfc09aefbb3eb0b943aa40
+fragment_checksum: 1787bb496effbd738875544503b86592300397a368f395015c29b8ea25f7ad40
