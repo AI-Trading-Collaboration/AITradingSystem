@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-759_FIRST_CURRENT_SUBSCRIPTION_SOURCE_QUALIFICATION_BATCH
   task_id_sha256: 28356e278e32a05cc1f22669889baac4f395faeb8e95a8733ae9d69219c7997b
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-759_FIRST_CURRENT_SUBSCRIPTION_SOURCE_QUALIFICATION_BATCH
   title: null
   domain: Data foundation + controlled strategy research / first current-subscription
@@ -13,17 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-759_First_Current_Subscription_Source_Qualification_Batch.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-759_First_Current_Subscription_Source_Qualification_Batch.md`；基于已合入
-    TRADING-739～758 validation-only baseline，执行第一轮真实 current-subscription source qualification
-    batch，并输出 batch rollup
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 重跑 usage guardrails、FMP price/corporate-action qualification、Marketstack
       second-source reconciliation、forward evidence reclassification、data foundation
       acceptance v2；acceptance v2 至少 `DIAGNOSTIC_ONLY_READY` 时只运行小型 controlled strategy
@@ -32,7 +32,6 @@ task_record:
       API key 原文，不得放宽 PIT/data-quality/lineage gate
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 6f622579cab9bdb68c01591addaa8a4a3db39170246dcab9ea67a1cf22295132
   cell_count: 8
@@ -110,35 +109,72 @@ events:
   evidence_refs:
   - sha256:6f622579cab9bdb68c01591addaa8a4a3db39170246dcab9ea67a1cf22295132
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-759_FIRST_CURRENT_SUBSCRIPTION_SOURCE_QUALIFICATION_BATCH
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:16:47+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 6600c7d1811f9496bcff9e1a6444136c5b53b87e
+  previous_state_event_id: legacy-import-6f622579cab9bdb68c01591a
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 重跑 usage guardrails、FMP price/corporate-action qualification、Marketstack
+      second-source reconciliation、forward evidence reclassification、data foundation
+      acceptance v2；acceptance v2 至少 `DIAGNOSTIC_ONLY_READY` 时只运行小型 controlled strategy
+      pilot（benchmark/control、one reverse diagnostic、one regret casebook）；batch review
+      每个候选只能标记 `CONTINUE`、`PAUSE`、`WATCHLIST`、`KILL`、`DATA_REQUIRED`；所有输出固定 `production_effect=none`、`broker_action=none`、`promotion_gate_allowed=false`、`paper_shadow_change_allowed=false`、`production_weight_change_allowed=false`、`lookahead_violation_count=0`；不得记录
+      API key 原文，不得放宽 PIT/data-quality/lineage gate
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+      实现并执行 `aits data source-qualification first-batch`；batch review 输出 `PASS_WITH_DATA_REQUIRED`，usage
+      violation counts=0/0/0，FMP endpoints=6/6 manifest/policy contract，TRADING-737-P0-08=`internal_capture_requirement`，acceptance
+      v2=`CONTROLLED_RESEARCH_READY`，Marketstack row-snapshot coverage ratio=0.125
+      且 price/split/dividend discrepancy=`DATA_REQUIRED`；candidate decisions：FMP WATCHLIST、Marketstack
+      DATA_REQUIRED、forward CONTINUE、benchmark CONTINUE、reverse WATCHLIST、regret WATCHLIST；Ruff、scoped
+      Black、compileall、focused/docs pytest 33 passed、fast-unit 103 passed、contract-validation
+      102 passed、report-validation 55 passed；继续 VALIDATING，等待 owner 复核 DATA_REQUIRED
+      和 remaining PIT gaps。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-6c8ef02f55574f5ea958a5a167f0df8d
 projection:
   legacy_first_eight_cells:
   - TRADING-759_FIRST_CURRENT_SUBSCRIPTION_SOURCE_QUALIFICATION_BATCH
   - Data foundation + controlled strategy research / first current-subscription source
     qualification batch
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-759_First_Current_Subscription_Source_Qualification_Batch.md`；基于已合入
-    TRADING-739～758 validation-only baseline，执行第一轮真实 current-subscription source qualification
-    batch，并输出 batch rollup
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 重跑 usage guardrails、FMP price/corporate-action qualification、Marketstack second-source
     reconciliation、forward evidence reclassification、data foundation acceptance v2；acceptance
     v2 至少 `DIAGNOSTIC_ONLY_READY` 时只运行小型 controlled strategy pilot（benchmark/control、one
     reverse diagnostic、one regret casebook）；batch review 每个候选只能标记 `CONTINUE`、`PAUSE`、`WATCHLIST`、`KILL`、`DATA_REQUIRED`；所有输出固定
     `production_effect=none`、`broker_action=none`、`promotion_gate_allowed=false`、`paper_shadow_change_allowed=false`、`production_weight_change_allowed=false`、`lookahead_violation_count=0`；不得记录
     API key 原文，不得放宽 PIT/data-quality/lineage gate
-  - '2026-06-21: 实现并执行 `aits data source-qualification first-batch`；batch review 输出
-    `PASS_WITH_DATA_REQUIRED`，usage violation counts=0/0/0，FMP endpoints=6/6 manifest/policy
-    contract，TRADING-737-P0-08=`internal_capture_requirement`，acceptance v2=`CONTROLLED_RESEARCH_READY`，Marketstack
-    row-snapshot coverage ratio=0.125 且 price/split/dividend discrepancy=`DATA_REQUIRED`；candidate
-    decisions：FMP WATCHLIST、Marketstack DATA_REQUIRED、forward CONTINUE、benchmark CONTINUE、reverse
-    WATCHLIST、regret WATCHLIST；Ruff、scoped Black、compileall、focused/docs pytest 33
-    passed、fast-unit 103 passed、contract-validation 102 passed、report-validation 55
-    passed；继续 VALIDATING，等待 owner 复核 DATA_REQUIRED 和 remaining PIT gaps。'
-  docs_links:
-  - docs/requirements/TRADING-759_First_Current_Subscription_Source_Qualification_Batch.md
-  terminal: false
-  canonical_row_sha256: 6f622579cab9bdb68c01591addaa8a4a3db39170246dcab9ea67a1cf22295132
-last_event_id: legacy-import-6f622579cab9bdb68c01591a
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+    实现并执行 `aits data source-qualification first-batch`；batch review 输出 `PASS_WITH_DATA_REQUIRED`，usage
+    violation counts=0/0/0，FMP endpoints=6/6 manifest/policy contract，TRADING-737-P0-08=`internal_capture_requirement`，acceptance
+    v2=`CONTROLLED_RESEARCH_READY`，Marketstack row-snapshot coverage ratio=0.125 且
+    price/split/dividend discrepancy=`DATA_REQUIRED`；candidate decisions：FMP WATCHLIST、Marketstack
+    DATA_REQUIRED、forward CONTINUE、benchmark CONTINUE、reverse WATCHLIST、regret WATCHLIST；Ruff、scoped
+    Black、compileall、focused/docs pytest 33 passed、fast-unit 103 passed、contract-validation
+    102 passed、report-validation 55 passed；继续 VALIDATING，等待 owner 复核 DATA_REQUIRED
+    和 remaining PIT gaps。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: a699ff0412158251de43dec80ff6c771e0c662e81ed9200874d83eb7dcc4865a
+last_event_id: task-event-6c8ef02f55574f5ea958a5a167f0df8d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: dde3b7da62adee18ed900a2ffeb303b048ef4c57fda687cc21f61238fa0ec89d
+fragment_checksum: f6e1852d78fe8d664a39db810a3e73830f85436d083e8a38ab9d6a01ead6adce
