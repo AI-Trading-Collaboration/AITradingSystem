@@ -13,15 +13,14 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Project Owner：冻结 sample/threshold/critical-error/reviewer/signature
-    policy；2524 coordinator 仅在 2526-B exact HTML PASS 后组织 2527-B。
+  next_owner: Project Owner
   requirement_refs:
   - docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: protocol/schema/scenario/truth rubric
-    已准备；Owner policy 未批准，未招募或执行 pilot，不得自动签署 PASS。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第5条 DEFERRED；退出条件：owner
+    给出 human comprehension pilot policy（sample/threshold/critical 定义）
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 2527-A 保持 PENDING_OWNER_POLICY；2527-B 只对 frozen exact HTML 记录 verbatim、双
@@ -144,25 +143,52 @@ events:
   - change:trading-2527a-protocol-coordinator-integration-20260816-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-fe1f41a631fe227458a2007aa326aa3c
+- schema_version: task_event.v1
+  task_id: TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:32:58+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: 118a68f4a2b0137bdb1c08a6304d3e0909e7ef31
+  previous_state_event_id: task-event-fe1f41a631fe227458a2007aa326aa3c
+  from_status: IN_PROGRESS
+  to_status: DEFERRED
+  payload:
+    priority: P1
+    next_owner: Project Owner
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第5条 DEFERRED；退出条件：owner 给出 human comprehension
+      pilot policy（sample/threshold/critical 定义）
+    acceptance_criteria: 2527-A 保持 PENDING_OWNER_POLICY；2527-B 只对 frozen exact HTML
+      记录 verbatim、双 reviewer、disagreement 与 Owner attestation；HTML 变化必须重测。
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第5条：DEFERRED；agent_harness=claude_code；原备注：[supporting
+      requirement](docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md)；2527-A
+      protocol commit=2f8f24031 已吸收；participant/sample/threshold/reviewer/signature
+      仍 PENDING_OWNER_POLICY；未执行 pilot、未产生 comprehension PASS。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7a02b9bb7d9ac3ecd7171e0604c4949d
 projection:
   legacy_first_eight_cells:
   - TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
   - Atlas strategy research page / governed human comprehension acceptance pilot
   - P1
-  - IN_PROGRESS
-  - Project Owner：冻结 sample/threshold/critical-error/reviewer/signature policy；2524
-    coordinator 仅在 2526-B exact HTML PASS 后组织 2527-B。
-  - protocol/schema/scenario/truth rubric 已准备；Owner policy 未批准，未招募或执行 pilot，不得自动签署
-    PASS。
+  - DEFERRED
+  - Project Owner
+  - 2026-09-24 按 owner 决策包第5条 DEFERRED；退出条件：owner 给出 human comprehension pilot policy（sample/threshold/critical
+    定义）
   - 2527-A 保持 PENDING_OWNER_POLICY；2527-B 只对 frozen exact HTML 记录 verbatim、双 reviewer、disagreement
     与 Owner attestation；HTML 变化必须重测。
-  - '[supporting requirement](docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md)；2527-A
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第5条：DEFERRED；agent_harness=claude_code；原备注：[supporting
+    requirement](docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md)；2527-A
     protocol commit=2f8f24031 已吸收；participant/sample/threshold/reviewer/signature
-    仍 PENDING_OWNER_POLICY；未执行 pilot、未产生 comprehension PASS。'
+    仍 PENDING_OWNER_POLICY；未执行 pilot、未产生 comprehension PASS。
   docs_links:
   - docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md
   terminal: false
-  canonical_row_sha256: 590e20595fe8984ec121d66c1016fa76f9e6b67579f59ca03fc9a4755490a831
-last_event_id: task-event-fe1f41a631fe227458a2007aa326aa3c
+  canonical_row_sha256: 287a69c10fa3a3ee2d78729cde761bedc63b01a1a762216e485e092783b85cbb
+last_event_id: task-event-7a02b9bb7d9ac3ecd7171e0604c4949d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 7d8b5f2436c0a36648a0c0874826c3d78ec56d453c0c717f6af901d41b5414e2
+fragment_checksum: e2514a9bf988e17dc29b5877cc548aa671b3d9c1e939440d3d57c33c89717a22
