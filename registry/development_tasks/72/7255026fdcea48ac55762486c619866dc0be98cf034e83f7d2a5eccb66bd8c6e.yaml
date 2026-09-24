@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-785_to_789_VALUE_SURFACE_WALK_FORWARD_EXPANSION
   task_id_sha256: 7255026fdcea48ac55762486c619866dc0be98cf034e83f7d2a5eccb66bd8c6e
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-785_to_789_VALUE_SURFACE_WALK_FORWARD_EXPANSION
   title: null
   domain: Controlled strategy research / value surface walk-forward expansion, utility
@@ -14,24 +15,20 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-785_to_789_Value_Surface_Walk_Forward_Expansion.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-785_to_789_Value_Surface_Walk_Forward_Expansion.md`；owner
-    要求把 horizon-conditioned value surface 从 `CONTINUE` 推进到更严格 controlled walk-forward
-    review，并同步复核 utility/Pareto ranking、forward daily continuity、GBDT residual diagnostic
-    和 regret activation；不得 promotion、paper-shadow、production review、official weight
-    或 broker/order
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 CLI：`aits research strategies value-surface-controlled-walk-forward-expansion`、`value-surface-utility-pareto-ranking-review`、`gbdt-value-surface-residual-diagnostic-prototype`、`regret-casebook-activation-recheck`
       和 `aits forward-evidence daily-continuity-review`；TRADING-785 决策只能为 `CONTINUE
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 55ca61488e3228830760f981ebbe1aa1eefb139750a7ba54cf4f355a817a83c1
   cell_count: 12
@@ -116,26 +113,48 @@ events:
   evidence_refs:
   - sha256:55ca61488e3228830760f981ebbe1aa1eefb139750a7ba54cf4f355a817a83c1
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-785_to_789_VALUE_SURFACE_WALK_FORWARD_EXPANSION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:19:14+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: a1ffac4844c32820646ed149c091a059ff241b88
+  previous_state_event_id: legacy-import-55ca61488e3228830760f981
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 CLI：`aits research strategies value-surface-controlled-walk-forward-expansion`、`value-surface-utility-pareto-ranking-review`、`gbdt-value-surface-residual-diagnostic-prototype`、`regret-casebook-activation-recheck`
+      和 `aits forward-evidence daily-continuity-review`；TRADING-785 决策只能为 `CONTINUE
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ca79a90fce0b050aa9317988c8814e3b
 projection:
   legacy_first_eight_cells:
   - TRADING-785_to_789_VALUE_SURFACE_WALK_FORWARD_EXPANSION
   - Controlled strategy research / value surface walk-forward expansion, utility Pareto
     review, forward continuity, GBDT residual diagnostics, regret activation recheck
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-785_to_789_Value_Surface_Walk_Forward_Expansion.md`；owner
-    要求把 horizon-conditioned value surface 从 `CONTINUE` 推进到更严格 controlled walk-forward
-    review，并同步复核 utility/Pareto ranking、forward daily continuity、GBDT residual diagnostic
-    和 regret activation；不得 promotion、paper-shadow、production review、official weight
-    或 broker/order
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 CLI：`aits research strategies value-surface-controlled-walk-forward-expansion`、`value-surface-utility-pareto-ranking-review`、`gbdt-value-surface-residual-diagnostic-prototype`、`regret-casebook-activation-recheck`
     和 `aits forward-evidence daily-continuity-review`；TRADING-785 决策只能为 `CONTINUE
-  - WATCHLIST
-  docs_links:
-  - docs/requirements/TRADING-785_to_789_Value_Surface_Walk_Forward_Expansion.md
-  terminal: false
-  canonical_row_sha256: 293e1d2ae3f839e73c048f1ebfd0fce13a7ffe4e418b13e8d3b8735ce78a569d
-last_event_id: legacy-import-55ca61488e3228830760f981
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 1d9e19179273bb055246fbdfb79c4e0ed5ffaae87169da007e8121c061d7fa24
+last_event_id: task-event-ca79a90fce0b050aa9317988c8814e3b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 22a2eef6e3f06f253e4f825dfdbb49517f91f0a72e372ee813f5bde293d0cae9
+fragment_checksum: 61a4cc431fb5b9c250a5083813d75003a27ade5448ad32ce8326b6786f8eb9e4
