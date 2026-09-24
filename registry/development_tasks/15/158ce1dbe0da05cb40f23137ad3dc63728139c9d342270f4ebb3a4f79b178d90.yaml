@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-862_PROMOTION_HARD_BLOCK_END_TO_END_PROOF
   task_id_sha256: 158ce1dbe0da05cb40f23137ad3dc63728139c9d342270f4ebb3a4f79b178d90
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-862_PROMOTION_HARD_BLOCK_END_TO_END_PROOF
   title: null
   domain: Controlled strategy research / hard-block E2E proof
@@ -12,21 +13,20 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；hard
-    blocker 必须从底层传导到最终策略层
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 覆盖 TRADING-827/828/829/830、baseline dominated 和 insufficient sample 场景，最终必须
       promotion/paper-shadow/production false 且 broker_action=none
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 375b61d2bddfdf1731e5b56e8336f6d889334b69d98534359cab3c20560ac947
   cell_count: 8
@@ -73,23 +73,51 @@ events:
   evidence_refs:
   - sha256:375b61d2bddfdf1731e5b56e8336f6d889334b69d98534359cab3c20560ac947
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-862_PROMOTION_HARD_BLOCK_END_TO_END_PROOF
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:35:44+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: b55b854457d47cf87204862eba4a43e5326db37c
+  previous_state_event_id: legacy-import-375b61d2bddfdf1731e5b56e
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 覆盖 TRADING-827/828/829/830、baseline dominated 和 insufficient
+      sample 场景，最终必须 promotion/paper-shadow/production false 且 broker_action=none
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+      新增并进入 IN_PROGRESS。2026-06-22: E2E proof 完成并转入 VALIDATING；输出 `HARD_BLOCK_E2E_PASS`，6
+      个场景最终均保持 promotion/paper-shadow/production=false 且 broker_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ee51bed3acd46e36fe7fe71cb987bd42
 projection:
   legacy_first_eight_cells:
   - TRADING-862_PROMOTION_HARD_BLOCK_END_TO_END_PROOF
   - Controlled strategy research / hard-block E2E proof
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；hard
-    blocker 必须从底层传导到最终策略层
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 覆盖 TRADING-827/828/829/830、baseline dominated 和 insufficient sample 场景，最终必须 promotion/paper-shadow/production
     false 且 broker_action=none
-  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: E2E proof 完成并转入 VALIDATING；输出 `HARD_BLOCK_E2E_PASS`，6
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+    新增并进入 IN_PROGRESS。2026-06-22: E2E proof 完成并转入 VALIDATING；输出 `HARD_BLOCK_E2E_PASS`，6
     个场景最终均保持 promotion/paper-shadow/production=false 且 broker_action=none。'
-  docs_links:
-  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
-  terminal: false
-  canonical_row_sha256: 375b61d2bddfdf1731e5b56e8336f6d889334b69d98534359cab3c20560ac947
-last_event_id: legacy-import-375b61d2bddfdf1731e5b56e
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: c8af4447a70fca9277ea1007241117f0e0a9bca2abc9f4d065223f38ee29d1d1
+last_event_id: task-event-ee51bed3acd46e36fe7fe71cb987bd42
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 45a576554a35e1a85c18d688cc31a72669ad858e508c61114be3658e83e53dd9
+fragment_checksum: 7cc7a26cef77a8ab91db454e228ec267ce2540182470f4d47ae1c48f13188555
