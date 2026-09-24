@@ -238,6 +238,11 @@ Owner 在对话中确认分类并授权执行与推送（"确认，按这个分�
   TRADING-2304 及其后 135 条改用 `…-20260925-v1` 事务续跑，change id 不变。本批执行只调用 fence、任务源与 git，不涉及注册表重命名；两次蓝屏的调用栈均为
   `NtRenameKey → CmRenameKey → CmpKeySecurityIncrementReferenceCount`，触发候选是 DEVX-015 的原生 `RegRenameKey` 测试，
   已另立 `DEVX-015A_HOST_REGISTRY_SINGLE_VALUE_ANCHOR_V1`（P0，PROPOSED）处理，并与本批次一同发布。本机禁止再运行原生 `RegRenameKey`。
+- 发布验证中发现（2026-09-25）：architecture-fitness 中 `test_final_import_preserves_ambiguous_legacy_row_bytes_in_view`
+  失败。该测试只取第一个"历史导入单元格边界有歧义"的片段，断言原始导入行仍逐字节出现在视图中；本批把其中的 TRADING-816_to_820
+  合法更新为 DONE，行内容随之重渲染。实测规律：歧义片段中只有导入事件的（23 个）全部保留原始字节，已追加治理事件的全部重渲染。
+  修正为逐个检查全部从未更新过的歧义片段（比原先只查一个更严格），不放宽断言。首个发布事务
+  `gov-007-dp13-publication-20260925-v1` 以 failed 收口，修正后用新事务重跑全部分级与 Full。
 
 执行中发现：Atlas live snapshot 的任务状态映射（代码 `_STATUS_MAPPING` 与 `config/atlas/live_snapshot.yaml` 必须一致）
 没有 `DEFERRED`，Atlas 覆盖范围内的任务一旦转为 DEFERRED，Atlas 生成器即 fail closed。按 owner 已批准的处置补充

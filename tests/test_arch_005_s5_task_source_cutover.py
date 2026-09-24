@@ -142,17 +142,27 @@ def test_generated_views_are_validated_do_not_edit_projections() -> None:
 
 def test_final_import_preserves_ambiguous_legacy_row_bytes_in_view() -> None:
     registry = validate_canonical_registry(project_root=PROJECT_ROOT)
-    fragment = next(
+    # Raw legacy bytes are preserved only until a governed update appends a
+    # second event and re-renders the row, so check every never-updated one.
+    fragments = [
         item
         for item in registry.fragments
         if (item.get("legacy_import_evidence") or {}).get("ambiguous_unescaped_pipe_boundaries")
-    )
-    evidence = fragment["legacy_import_evidence"]
-    partition = "completed" if fragment["projection"]["terminal"] else "active"
-    view = canonical_task_register_view_path(PROJECT_ROOT, partition).read_text(encoding="utf-8")
+        and len(item["events"]) == 1
+    ]
+    views = {
+        partition: canonical_task_register_view_path(PROJECT_ROOT, partition).read_text(
+            encoding="utf-8"
+        )
+        for partition in ("active", "completed")
+    }
 
-    assert evidence["cell_count"] > 8
-    assert evidence["raw_line"] in view
+    assert fragments
+    for fragment in fragments:
+        evidence = fragment["legacy_import_evidence"]
+        partition = "completed" if fragment["projection"]["terminal"] else "active"
+        assert evidence["cell_count"] > 8
+        assert evidence["raw_line"] in views[partition]
 
 
 def test_fragment_validation_fails_closed_on_event_fork_and_reordering() -> None:
