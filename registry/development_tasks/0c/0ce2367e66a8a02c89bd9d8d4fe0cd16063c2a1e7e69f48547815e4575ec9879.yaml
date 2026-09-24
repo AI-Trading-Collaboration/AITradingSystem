@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1100_to_1109_EQUAL_RISK_GROWTH_TILT_REAL_RUN_RESULT_CONVERGENCE
   task_id_sha256: 0ce2367e66a8a02c89bd9d8d4fe0cd16063c2a1e7e69f48547815e4575ec9879
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1100_to_1109_EQUAL_RISK_GROWTH_TILT_REAL_RUN_RESULT_CONVERGENCE
   title: null
   domain: Research strategies / equal-risk growth tilt real-run result convergence
@@ -12,18 +13,16 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-1100_to_1109_Equal_Risk_Growth_Tilt_Real_Run_Result_Convergence.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1100_to_1109_Equal_Risk_Growth_Tilt_Real_Run_Result_Convergence.md`；owner
-    原始任务包标为 TRADING-1085～1094，但当前 repo 中 1085～1087 已被既有任务占用，本轮以无冲突编号 1100～1109 跟踪；实现已完成并真实运行
-    `growth-tilt-real-result-master-review --as-of 2026-06-25`，下一步为 owner 复核 real-run
-    docs 和是否继续 research-only growth tilt evidence review
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 10 个 `aits research strategies ...` CLI/artifacts：real CLI suite summary、candidate
       result summary、tier validation、beta-adjusted edge review、risk-return frontier
       review、period/drawdown/cost triage、final gate、forward-aging watchlist review、owner
@@ -34,7 +33,6 @@ task_record:
       diff --check` 通过
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 2ec2656bfc20a780bbc1dfcdd178d04168bedf839346cb48d75609073b446d77
   cell_count: 8
@@ -109,17 +107,53 @@ events:
   evidence_refs:
   - sha256:2ec2656bfc20a780bbc1dfcdd178d04168bedf839346cb48d75609073b446d77
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1100_to_1109_EQUAL_RISK_GROWTH_TILT_REAL_RUN_RESULT_CONVERGENCE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:49:08+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 648b2607bd14cba63f0bbbb835ebc2b5cadcd67d
+  previous_state_event_id: legacy-import-2ec2656bfc20a780bbc1dfcd
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 10 个 `aits research strategies ...` CLI/artifacts：real
+      CLI suite summary、candidate result summary、tier validation、beta-adjusted edge
+      review、risk-return frontier review、period/drawdown/cost triage、final gate、forward-aging
+      watchlist review、owner decision pack real-run、real-result master review；真实 master
+      status=`GROWTH_TILT_RESEARCH_ONLY`，best candidate=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，watchlist_allowed=false，owner
+      recommendation=`KEEP_GROWTH_TILT_RESEARCH_ONLY`；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+      registry、artifact catalog、system flow、focused pytest、Ruff、compileall 和 `git
+      diff --check` 通过
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-26:
+      新增并进入 IN_PROGRESS，原因：owner 要求在 1065～1084 growth tilt framework 已落地后真实运行并回答是否存在
+      Tier 1/2/3 候选、收益是否只是 beta、风险/turnover 是否可接受，以及是否只允许 research-only forward-aging
+      watchlist review。安全边界保持 no paper-shadow / no production / no broker。2026-06-26:
+      实现完成并转入 VALIDATING；真实运行使用本地 cache as-of 2026-06-25，data_quality=`PASS_WITH_WARNINGS`，candidate
+      summary 找到 31 个非 rejected 候选、207 个 rejected；final gate 未通过 watchlist review，原因是
+      beta-adjusted edge present 但未达到 material final gate，继续保持 research-only。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f5cb3b95649a821a22a8dfec59d86387
 projection:
   legacy_first_eight_cells:
   - TRADING-1100_to_1109_EQUAL_RISK_GROWTH_TILT_REAL_RUN_RESULT_CONVERGENCE
   - Research strategies / equal-risk growth tilt real-run result convergence
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1100_to_1109_Equal_Risk_Growth_Tilt_Real_Run_Result_Convergence.md`；owner
-    原始任务包标为 TRADING-1085～1094，但当前 repo 中 1085～1087 已被既有任务占用，本轮以无冲突编号 1100～1109 跟踪；实现已完成并真实运行
-    `growth-tilt-real-result-master-review --as-of 2026-06-25`，下一步为 owner 复核 real-run
-    docs 和是否继续 research-only growth tilt evidence review
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 10 个 `aits research strategies ...` CLI/artifacts：real CLI suite summary、candidate
     result summary、tier validation、beta-adjusted edge review、risk-return frontier
     review、period/drawdown/cost triage、final gate、forward-aging watchlist review、owner
@@ -128,16 +162,16 @@ projection:
     recommendation=`KEEP_GROWTH_TILT_RESEARCH_ONLY`；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
     registry、artifact catalog、system flow、focused pytest、Ruff、compileall 和 `git diff
     --check` 通过
-  - '2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求在 1065～1084 growth tilt framework 已落地后真实运行并回答是否存在
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-26:
+    新增并进入 IN_PROGRESS，原因：owner 要求在 1065～1084 growth tilt framework 已落地后真实运行并回答是否存在
     Tier 1/2/3 候选、收益是否只是 beta、风险/turnover 是否可接受，以及是否只允许 research-only forward-aging
     watchlist review。安全边界保持 no paper-shadow / no production / no broker。2026-06-26:
     实现完成并转入 VALIDATING；真实运行使用本地 cache as-of 2026-06-25，data_quality=`PASS_WITH_WARNINGS`，candidate
     summary 找到 31 个非 rejected 候选、207 个 rejected；final gate 未通过 watchlist review，原因是
     beta-adjusted edge present 但未达到 material final gate，继续保持 research-only。'
-  docs_links:
-  - docs/requirements/TRADING-1100_to_1109_Equal_Risk_Growth_Tilt_Real_Run_Result_Convergence.md
-  terminal: false
-  canonical_row_sha256: 2ec2656bfc20a780bbc1dfcdd178d04168bedf839346cb48d75609073b446d77
-last_event_id: legacy-import-2ec2656bfc20a780bbc1dfcd
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 328c02e5bf4a0e5481ae7edd4f8508948b40b1c46d792fd3c930663934139fbe
+last_event_id: task-event-f5cb3b95649a821a22a8dfec59d86387
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 5cbcc9176492c8b79cf98e52c581367e6a9409f37a02bbab91183f40cf67d0d3
+fragment_checksum: 83f9317d6a7028b1c3541274a2e8bef57a0be707c44d05afbb6f9fe177cbe169
