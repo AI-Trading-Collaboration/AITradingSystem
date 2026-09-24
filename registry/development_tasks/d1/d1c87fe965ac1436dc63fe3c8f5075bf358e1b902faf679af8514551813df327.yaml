@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1009_to_1014_LAYER1_LOW_TURNOVER_SELECTOR_REFINEMENT
   task_id_sha256: d1c87fe965ac1436dc63fe3c8f5075bf358e1b902faf679af8514551813df327
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1009_to_1014_LAYER1_LOW_TURNOVER_SELECTOR_REFINEMENT
   title: null
   domain: Research strategies / Layer-1 low-turnover selector refinement
@@ -12,17 +13,16 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-1009_to_1014_Layer1_Low_Turnover_Selector_Refinement.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1009_to_1014_Layer1_Low_Turnover_Selector_Refinement.md`；1009～1014
-    baseline 已实现并真实运行；当前结论是 turnover noise dominant，低换手候选仍未达到 forward-aging reviewability，下一步为
-    owner 复核是否接受继续 dry-run-only
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 6 个 `aits research strategies ...` CLI/artifacts；1009 输出 switch-level
       turnover source diagnosis，1010 比较 buffered / confirmed 200DMA variants，1011
       比较 minimum holding / cooldown / max switches，1012 比较 soft blend 替代 hard switch，1013
@@ -33,7 +33,6 @@ task_record:
       observation 或改变 production config
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 443253d6b472de78266753043c7934e6732a7c0a5c460ce69b5b8291999994c7
   cell_count: 8
@@ -104,16 +103,53 @@ events:
   evidence_refs:
   - sha256:443253d6b472de78266753043c7934e6732a7c0a5c460ce69b5b8291999994c7
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1009_to_1014_LAYER1_LOW_TURNOVER_SELECTOR_REFINEMENT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:45:49+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: f58fac3a97f39297a7bdb58b8cef10b4eba0aca2
+  previous_state_event_id: legacy-import-443253d6b472de7826675304
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 6 个 `aits research strategies ...` CLI/artifacts；1009
+      输出 switch-level turnover source diagnosis，1010 比较 buffered / confirmed 200DMA
+      variants，1011 比较 minimum holding / cooldown / max switches，1012 比较 soft blend
+      替代 hard switch，1013 统一 low-turnover ranking，1014 生成 owner decision pack；真实结果为
+      1009=`TURNOVER_NOISE_DOMINANT`、switch_count=6、noise_switch_count=4、near_200dma_switch_share=0.5、buffer/confirmation/minimum-holding
+      缺口 likely；1010 rows=8；1011 rows=27；1012 soft blend 输出 `blend_weight_path`；1013
+      recommended_low_turnover_candidate=`soft_blend_200dma_three_state`；1014=`KEEP_SELECTOR_DRY_RUN_ONLY`，原因是
+      candidate turnover 6.0→3.6 但 `switch_count_controlled` 未通过；所有 outputs 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，不得写正式
+      observation 或改变 production config
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-25:
+      新增并进入 IN_PROGRESS，原因：TRADING-1001～1008 owner pack 因 `TOO_MUCH_TURNOVER` 保持 dry-run-only；owner
+      要求围绕 `trend_200dma_selector` 做低换手改造，诊断 200DMA 附近横跳、buffer 缺失、holding/cooldown/confirmation
+      缺口，并判断是否有低换手版本可进入 research-only forward-aging review。2026-06-25: 实现完成并转入 VALIDATING；真实
+      CLI 全部生成，data_quality=`PASS_WITH_WARNINGS`，actual range=`2022-12-01`～`2026-06-23`，safety
+      fields 仍 false/none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-67802d8205c3c1d38783049880cb0f01
 projection:
   legacy_first_eight_cells:
   - TRADING-1009_to_1014_LAYER1_LOW_TURNOVER_SELECTOR_REFINEMENT
   - Research strategies / Layer-1 low-turnover selector refinement
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1009_to_1014_Layer1_Low_Turnover_Selector_Refinement.md`；1009～1014
-    baseline 已实现并真实运行；当前结论是 turnover noise dominant，低换手候选仍未达到 forward-aging reviewability，下一步为
-    owner 复核是否接受继续 dry-run-only
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 6 个 `aits research strategies ...` CLI/artifacts；1009 输出 switch-level turnover
     source diagnosis，1010 比较 buffered / confirmed 200DMA variants，1011 比较 minimum
     holding / cooldown / max switches，1012 比较 soft blend 替代 hard switch，1013 统一 low-turnover
@@ -122,15 +158,15 @@ projection:
     recommended_low_turnover_candidate=`soft_blend_200dma_three_state`；1014=`KEEP_SELECTOR_DRY_RUN_ONLY`，原因是
     candidate turnover 6.0→3.6 但 `switch_count_controlled` 未通过；所有 outputs 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，不得写正式
     observation 或改变 production config
-  - '2026-06-25: 新增并进入 IN_PROGRESS，原因：TRADING-1001～1008 owner pack 因 `TOO_MUCH_TURNOVER`
-    保持 dry-run-only；owner 要求围绕 `trend_200dma_selector` 做低换手改造，诊断 200DMA 附近横跳、buffer
-    缺失、holding/cooldown/confirmation 缺口，并判断是否有低换手版本可进入 research-only forward-aging
-    review。2026-06-25: 实现完成并转入 VALIDATING；真实 CLI 全部生成，data_quality=`PASS_WITH_WARNINGS`，actual
-    range=`2022-12-01`～`2026-06-23`，safety fields 仍 false/none。'
-  docs_links:
-  - docs/requirements/TRADING-1009_to_1014_Layer1_Low_Turnover_Selector_Refinement.md
-  terminal: false
-  canonical_row_sha256: 443253d6b472de78266753043c7934e6732a7c0a5c460ce69b5b8291999994c7
-last_event_id: legacy-import-443253d6b472de7826675304
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-25:
+    新增并进入 IN_PROGRESS，原因：TRADING-1001～1008 owner pack 因 `TOO_MUCH_TURNOVER` 保持 dry-run-only；owner
+    要求围绕 `trend_200dma_selector` 做低换手改造，诊断 200DMA 附近横跳、buffer 缺失、holding/cooldown/confirmation
+    缺口，并判断是否有低换手版本可进入 research-only forward-aging review。2026-06-25: 实现完成并转入 VALIDATING；真实
+    CLI 全部生成，data_quality=`PASS_WITH_WARNINGS`，actual range=`2022-12-01`～`2026-06-23`，safety
+    fields 仍 false/none。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 1c22c67e9e3747c5bccfff1c69b90974250477e97e0801c5a0d92492012939b4
+last_event_id: task-event-67802d8205c3c1d38783049880cb0f01
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: a16ae6e9eeee15bce3ae912ee253af5e0c7bc708629b1c5d85095e17024b3ce5
+fragment_checksum: d227d8c30e86a3ad1c92aafd4c993bdf3a67d9c3182dcc3a6c286d8e78a80d1f
