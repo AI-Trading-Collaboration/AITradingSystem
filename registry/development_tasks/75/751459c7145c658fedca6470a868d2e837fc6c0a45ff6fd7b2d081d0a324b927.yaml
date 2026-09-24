@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2006_to_2025_RISK_ON_VETO_OBSERVE_ONLY_DIAGNOSTIC
   task_id_sha256: 751459c7145c658fedca6470a868d2e837fc6c0a45ff6fd7b2d081d0a324b927
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2006_to_2025_RISK_ON_VETO_OBSERVE_ONLY_DIAGNOSTIC
   title: null
   domain: Research trends / risk-on veto observe-only diagnostic
@@ -12,19 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2006_to_2025_Risk_On_Veto_Observe_Only_Diagnostic.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2006_to_2025_Risk_On_Veto_Observe_Only_Diagnostic.md`；承接
-    TRADING-1976～2005 `CHANNEL_V3_RISK_ON_VETO_ONLY`，已正式归档 `do_not_de_risk v3` 为 no-material-improvement，并把
-    `risk_on_veto v3` 固化为 observe-only veto diagnostic。真实 tradeoff 显示 raw active/inactive
-    false-add-risk cost=`0.007518/0.006566`，但 blocked reference 下 net_veto_benefit_total=`-2.343111`，因此
-    return-seeking diagnostic compatibility=`VETO_TOO_STRICT_FOR_RETURN_SEEKING_DIAGNOSTIC`。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 已新增 closeout reclassification、do-not archive、diagnostic contract、metric
       policy、episode log、forward log spec、CLI `aits research trends risk-on-veto-diagnostic`、diagnostic
       summary、2022/2023+ behavior、tradeoff matrix、return-seeking diagnostic compatibility、owner
@@ -34,7 +32,6 @@ task_record:
       fields；验证已通过 focused parallel pytest、Ruff、compileall、治理文档检查和 diff check。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 45d5152dff4e3d99000077e2f9481b9e3aa8f3a44ebe236481234d3c3fdbd04f
   cell_count: 8
@@ -102,32 +99,64 @@ events:
   evidence_refs:
   - sha256:45d5152dff4e3d99000077e2f9481b9e3aa8f3a44ebe236481234d3c3fdbd04f
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2006_to_2025_RISK_ON_VETO_OBSERVE_ONLY_DIAGNOSTIC
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:09:53+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 63b88692998da63897e0624602e1e3eb352250df
+  previous_state_event_id: legacy-import-45d5152dff4e3d99000077e2
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 已新增 closeout reclassification、do-not archive、diagnostic contract、metric
+      policy、episode log、forward log spec、CLI `aits research trends risk-on-veto-diagnostic`、diagnostic
+      summary、2022/2023+ behavior、tradeoff matrix、return-seeking diagnostic compatibility、owner
+      brief、report registry、artifact catalog、system flow 和 guardrail tests；所有输出披露
+      data_quality_status=`PASS_WITH_WARNINGS`，candidate_count=0，owner_review/promotion/paper-shadow/production/broker
+      全部 disabled，CSV 不含 target_weights、trade_action、recommended_allocation 等 forbidden
+      fields；验证已通过 focused parallel pytest、Ruff、compileall、治理文档检查和 diff check。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+      新增并进入 IN_PROGRESS，原因：owner 附件要求把 risk-on veto 从 v3 selection pass 收口为 observe-only
+      diagnostic，并归档 do-not-de-risk v3；本批只做诊断与审计闭环，不启用任何 allocation 或生产路径。2026-06-28:
+      实现完成并转入 VALIDATING；真实 run episode_count=2771、veto_active_count=531、blocked_add_risk_count=347，compatibility=`VETO_TOO_STRICT_FOR_RETURN_SEEKING_DIAGNOSTIC`，`do_not_de_risk
+      v3` archive status=`DO_NOT_DERISK_V3_ARCHIVED_NO_MATERIAL_IMPROVEMENT`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f5f2f91242f0eeab881043b717182220
 projection:
   legacy_first_eight_cells:
   - TRADING-2006_to_2025_RISK_ON_VETO_OBSERVE_ONLY_DIAGNOSTIC
   - Research trends / risk-on veto observe-only diagnostic
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2006_to_2025_Risk_On_Veto_Observe_Only_Diagnostic.md`；承接
-    TRADING-1976～2005 `CHANNEL_V3_RISK_ON_VETO_ONLY`，已正式归档 `do_not_de_risk v3` 为 no-material-improvement，并把
-    `risk_on_veto v3` 固化为 observe-only veto diagnostic。真实 tradeoff 显示 raw active/inactive
-    false-add-risk cost=`0.007518/0.006566`，但 blocked reference 下 net_veto_benefit_total=`-2.343111`，因此
-    return-seeking diagnostic compatibility=`VETO_TOO_STRICT_FOR_RETURN_SEEKING_DIAGNOSTIC`。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 已新增 closeout reclassification、do-not archive、diagnostic contract、metric policy、episode
     log、forward log spec、CLI `aits research trends risk-on-veto-diagnostic`、diagnostic
     summary、2022/2023+ behavior、tradeoff matrix、return-seeking diagnostic compatibility、owner
     brief、report registry、artifact catalog、system flow 和 guardrail tests；所有输出披露 data_quality_status=`PASS_WITH_WARNINGS`，candidate_count=0，owner_review/promotion/paper-shadow/production/broker
     全部 disabled，CSV 不含 target_weights、trade_action、recommended_allocation 等 forbidden
     fields；验证已通过 focused parallel pytest、Ruff、compileall、治理文档检查和 diff check。
-  - '2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 附件要求把 risk-on veto 从 v3 selection pass
-    收口为 observe-only diagnostic，并归档 do-not-de-risk v3；本批只做诊断与审计闭环，不启用任何 allocation
-    或生产路径。2026-06-28: 实现完成并转入 VALIDATING；真实 run episode_count=2771、veto_active_count=531、blocked_add_risk_count=347，compatibility=`VETO_TOO_STRICT_FOR_RETURN_SEEKING_DIAGNOSTIC`，`do_not_de_risk
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+    新增并进入 IN_PROGRESS，原因：owner 附件要求把 risk-on veto 从 v3 selection pass 收口为 observe-only
+    diagnostic，并归档 do-not-de-risk v3；本批只做诊断与审计闭环，不启用任何 allocation 或生产路径。2026-06-28:
+    实现完成并转入 VALIDATING；真实 run episode_count=2771、veto_active_count=531、blocked_add_risk_count=347，compatibility=`VETO_TOO_STRICT_FOR_RETURN_SEEKING_DIAGNOSTIC`，`do_not_de_risk
     v3` archive status=`DO_NOT_DERISK_V3_ARCHIVED_NO_MATERIAL_IMPROVEMENT`。'
-  docs_links:
-  - docs/requirements/TRADING-2006_to_2025_Risk_On_Veto_Observe_Only_Diagnostic.md
-  terminal: false
-  canonical_row_sha256: 45d5152dff4e3d99000077e2f9481b9e3aa8f3a44ebe236481234d3c3fdbd04f
-last_event_id: legacy-import-45d5152dff4e3d99000077e2
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: dea8a8e6a4f5316cd3e52b3fbe42ccb033fbadd7dd138fe97add43b2e5ff79bc
+last_event_id: task-event-f5f2f91242f0eeab881043b717182220
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f78f29bc0c8bf560ba8042bda2724a9fdf271896af421adfe0a76c0d91893776
+fragment_checksum: 1057b97d201371cad712b7f6fecb40c8d0642d853567bd0bf7837005b7cdef55
