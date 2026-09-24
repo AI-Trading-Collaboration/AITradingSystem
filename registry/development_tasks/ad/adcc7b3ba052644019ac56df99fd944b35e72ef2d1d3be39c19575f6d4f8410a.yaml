@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-161_to_168
   task_id_sha256: adcc7b3ba052644019ac56df99fd944b35e72ef2d1d3be39c19575f6d4f8410a
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-161_to_168
   title: null
   domain: ETF portfolio research/Backtest Simulation Advisory Evaluation
@@ -12,19 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 项目 owner 人工复核
-  requirement_refs:
-  - docs/requirements/TRADING-161_to_168_Backtest_Simulation_Advisory_Evaluation.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-161_to_168_Backtest_Simulation_Advisory_Evaluation.md`；baseline
-    实现已完成；承接 TRADING-156_to_160 的 forward outcome evidence refresh，本阶段新增明确标记为 `BACKTEST_SIMULATION`
-    / `SIMULATION_NOT_PIT` 的 historical simulation advisory evaluation；该链路只评估当前 shadow
-    shortlist/manual advisory 规则，不声明 PIT-safe replay，不生成 production candidate，不允许
-    broker action、auto policy apply 或真实 portfolio mutation
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`backtest-sim config-validate`、`event-generate/report`、`variants-generate/report`、`outcome-run/report`、`paper-run/report`、`regime-review/report`、`sensitivity-run/report`、`calibration-pack/report`、`forward-bridge/report`
       及对应 `validate-backtest-sim-*` CLI 可运行；所有 artifacts 写入 `outcome_mode=BACKTEST_SIMULATION`、`pit_safety_status=SIMULATION_NOT_PIT`、`not_for_production=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`auto_policy_apply=false`、`production_effect=none`；cached
       data 输出前执行质量门禁；README、operations runbook、system flow、report registry、artifact
@@ -32,7 +30,6 @@ task_record:
       root validation 和 dynamic-v3 family artifact validation 完成'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 168975ad05321cebea00d9fbc0b78a9fee20788dc7804543d231a92df21639a1
   cell_count: 8
@@ -125,25 +122,65 @@ events:
   evidence_refs:
   - sha256:168975ad05321cebea00d9fbc0b78a9fee20788dc7804543d231a92df21639a1
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-161_to_168
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:00:32+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: c17fb9dcb711163acc947da372bd6d7044a63c52
+  previous_state_event_id: legacy-import-168975ad05321cebea00d9fb
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`backtest-sim config-validate`、`event-generate/report`、`variants-generate/report`、`outcome-run/report`、`paper-run/report`、`regime-review/report`、`sensitivity-run/report`、`calibration-pack/report`、`forward-bridge/report`
+      及对应 `validate-backtest-sim-*` CLI 可运行；所有 artifacts 写入 `outcome_mode=BACKTEST_SIMULATION`、`pit_safety_status=SIMULATION_NOT_PIT`、`not_for_production=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`auto_policy_apply=false`、`production_effect=none`；cached
+      data 输出前执行质量门禁；README、operations runbook、system flow、report registry、artifact
+      catalog、requirements、Reader Brief、focused tests、ruff、compileall、git diff check、dynamic-v3
+      root validation 和 dynamic-v3 family artifact validation 完成'
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-10:
+      新增并进入 IN_PROGRESS，原因：forward advisory outcome 仍受未来窗口限制，需要在 AI-after-ChatGPT
+      regime 内用非 PIT、非生产的历史模拟更快评估当前 shadow shortlist/advisory 规则；本阶段优先建立可审计 config、event、variant、outcome、paper、regime、sensitivity、calibration
+      和 forward bridge 闭环，同时保持 no broker / no production / no auto policy mutation。2026-06-10:
+      baseline 实现完成并转入 VALIDATING；真实链路在 `shadow_shortlist_id=4378b3ed3fc1be41` 上生成
+      events `9ef0fd84c5dd09b6`（185 events、184 READY、data_quality=`PASS_WITH_WARNINGS`）、variants
+      `b236c12cd59aa032`（925 rows、920 READY）、outcome `57c2eb4e71c3320d`（available=3650、pending=50、best_variant=`defensive_limited_adjustment`、data_quality=`PASS_WITH_WARNINGS`）、paper
+      `1c1381cb384fda0e`（variant=`limited_adjustment`、total_return=1.668184、max_drawdown=-0.206274）、regime
+      `67f693aabde09890`、sensitivity `203afb23ef0b387c`（LOW_RISK）、calibration `ad10060ace0a51b7`（REVIEW_ONLY、auto_apply=false）和
+      bridge `cd97afd8defa8d49`（continue_forward_tracking、target_count=2）；验证通过 focused
+      pytest 9 passed、`ruff check src tests`、`compileall src tests`、`git diff --check`、YAML
+      parse、dynamic-v3 root validation、dynamic-v3 family artifact validation、`backtest-sim
+      config-validate`、8 个 `validate-backtest-sim-*` 和全量 pytest 2306 passed；simulation
+      仍固定 no broker / no production / no auto policy apply。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-037c73c0ceb0d713a3c1526b373949d3
 projection:
   legacy_first_eight_cells:
   - TRADING-161_to_168
   - ETF portfolio research/Backtest Simulation Advisory Evaluation
   - P0
-  - VALIDATING
-  - 项目 owner 人工复核
-  - 详细拆解见 `docs/requirements/TRADING-161_to_168_Backtest_Simulation_Advisory_Evaluation.md`；baseline
-    实现已完成；承接 TRADING-156_to_160 的 forward outcome evidence refresh，本阶段新增明确标记为 `BACKTEST_SIMULATION`
-    / `SIMULATION_NOT_PIT` 的 historical simulation advisory evaluation；该链路只评估当前 shadow
-    shortlist/manual advisory 规则，不声明 PIT-safe replay，不生成 production candidate，不允许
-    broker action、auto policy apply 或真实 portfolio mutation
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`backtest-sim config-validate`、`event-generate/report`、`variants-generate/report`、`outcome-run/report`、`paper-run/report`、`regime-review/report`、`sensitivity-run/report`、`calibration-pack/report`、`forward-bridge/report`
     及对应 `validate-backtest-sim-*` CLI 可运行；所有 artifacts 写入 `outcome_mode=BACKTEST_SIMULATION`、`pit_safety_status=SIMULATION_NOT_PIT`、`not_for_production=true`、`broker_action_allowed=false`、`broker_action_taken=false`、`auto_policy_apply=false`、`production_effect=none`；cached
     data 输出前执行质量门禁；README、operations runbook、system flow、report registry、artifact
     catalog、requirements、Reader Brief、focused tests、ruff、compileall、git diff check、dynamic-v3
     root validation 和 dynamic-v3 family artifact validation 完成'
-  - '2026-06-10: 新增并进入 IN_PROGRESS，原因：forward advisory outcome 仍受未来窗口限制，需要在 AI-after-ChatGPT
-    regime 内用非 PIT、非生产的历史模拟更快评估当前 shadow shortlist/advisory 规则；本阶段优先建立可审计 config、event、variant、outcome、paper、regime、sensitivity、calibration
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-10:
+    新增并进入 IN_PROGRESS，原因：forward advisory outcome 仍受未来窗口限制，需要在 AI-after-ChatGPT regime
+    内用非 PIT、非生产的历史模拟更快评估当前 shadow shortlist/advisory 规则；本阶段优先建立可审计 config、event、variant、outcome、paper、regime、sensitivity、calibration
     和 forward bridge 闭环，同时保持 no broker / no production / no auto policy mutation。2026-06-10:
     baseline 实现完成并转入 VALIDATING；真实链路在 `shadow_shortlist_id=4378b3ed3fc1be41` 上生成 events
     `9ef0fd84c5dd09b6`（185 events、184 READY、data_quality=`PASS_WITH_WARNINGS`）、variants
@@ -155,10 +192,9 @@ projection:
     parse、dynamic-v3 root validation、dynamic-v3 family artifact validation、`backtest-sim
     config-validate`、8 个 `validate-backtest-sim-*` 和全量 pytest 2306 passed；simulation
     仍固定 no broker / no production / no auto policy apply。'
-  docs_links:
-  - docs/requirements/TRADING-161_to_168_Backtest_Simulation_Advisory_Evaluation.md
-  terminal: false
-  canonical_row_sha256: 168975ad05321cebea00d9fbc0b78a9fee20788dc7804543d231a92df21639a1
-last_event_id: legacy-import-168975ad05321cebea00d9fb
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: d4d074e96f66fbff1487134798edbb5f2842fd7556d02f59ca88f32adf59aff6
+last_event_id: task-event-037c73c0ceb0d713a3c1526b373949d3
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 1944513ea09d5bd25654f4dc08e056c838ee9ae1db0aeaf87ab335c06dd7348c
+fragment_checksum: c16937169a52f90e864b99d170baf5089577fdd2fecc0df13fc0ece7adffbdcd
