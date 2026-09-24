@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-865_to_878_SIMPLE_BASELINE_PORTFOLIO_CONTROL
   task_id_sha256: ee3b1f1fc0828de89c692674a5c6ce9e4e35d680611f1daf5f9646b9127b16f3
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-865_to_878_SIMPLE_BASELINE_PORTFOLIO_CONTROL
   title: null
   domain: Research strategies / QQQ-TQQQ-SGOV simple baselines and portfolio control
@@ -12,17 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-865_to_878_Simple_Baseline_Portfolio_Control.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-865_to_878_Simple_Baseline_Portfolio_Control.md`；tail-risk
-    fallback hard block 继续保留；本批只做 research-only / observe-only，不得 promotion、paper-shadow、production
-    weight、broker/order 或启动 LEAPS/Wheel 研究
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 simple baseline strategy registry、TRADING-865～878 CLI、JSON/Markdown artifacts、report
       registry、artifact catalog、system flow、Reader Brief safety summary、master review
       和 options next-stage gate；所有数据依赖命令必须先调用 `validate_data_cache` 并披露质量状态；PIT audit
@@ -31,7 +31,6 @@ task_record:
       validation、Ruff、compileall 和 `git diff --check` 通过或明确记录阻塞
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 0a01cde8ef02604514b6c92d3f793a7cda01f2bd9d04e73fa195ba8507fd56d2
   cell_count: 8
@@ -108,34 +107,71 @@ events:
   evidence_refs:
   - sha256:0a01cde8ef02604514b6c92d3f793a7cda01f2bd9d04e73fa195ba8507fd56d2
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-865_to_878_SIMPLE_BASELINE_PORTFOLIO_CONTROL
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:36:51+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: ffb0329ec6a00ccd9b47f18531bf0147064193be
+  previous_state_event_id: legacy-import-0a01cde8ef02604514b6c92d
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 simple baseline strategy registry、TRADING-865～878 CLI、JSON/Markdown
+      artifacts、report registry、artifact catalog、system flow、Reader Brief safety summary、master
+      review 和 options next-stage gate；所有数据依赖命令必须先调用 `validate_data_cache` 并披露质量状态；PIT
+      audit 必须确认 signal 使用 t-1 或更早可见字段；paper-shadow readiness 只能输出人工复核建议且 safety fields
+      false/none；focused pytest、CLI smoke、report registry validation、contract validation、report
+      validation、Ruff、compileall 和 `git diff --check` 通过或明确记录阻塞
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-23:
+      新增并进入 IN_PROGRESS，原因：TRADING-843～864 closeout 后 tail-risk fallback 继续 blocked，主线切换为
+      QQQ / TQQQ / SGOV 简单强基准和动态仓位控制研究；本批必须回答静态 baseline、TQQQ risk-controlled baseline、动态趋势/波动仓位、dominance、成本敏感性、regime
+      robustness、forward aging、paper-shadow reviewability、dry-run mapping、master review
+      和 LEAPS/Wheel gate，同时保持 production_effect=none、broker_action=none、promotion_allowed=false、paper_shadow_allowed=false、production_allowed=false。2026-06-23:
+      实现完成并转入 VALIDATING；验证通过：focused parallel pytest 4 passed（含 CLI smoke 与 report
+      registry loader）、`contract-validation` 193 passed、`report-validation` 55 passed、`ruff
+      check .`、`python -m compileall src tests scripts` 和 `git diff --check`；仍保留 VALIDATING，等待真实
+      QQQ/TQQQ/SGOV cache 覆盖与 owner 人工复核，不允许 promotion/paper-shadow/production/broker。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-20e57ce0af674a7d0dd6b09faa4dfc2c
 projection:
   legacy_first_eight_cells:
   - TRADING-865_to_878_SIMPLE_BASELINE_PORTFOLIO_CONTROL
   - Research strategies / QQQ-TQQQ-SGOV simple baselines and portfolio control
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-865_to_878_Simple_Baseline_Portfolio_Control.md`；tail-risk
-    fallback hard block 继续保留；本批只做 research-only / observe-only，不得 promotion、paper-shadow、production
-    weight、broker/order 或启动 LEAPS/Wheel 研究
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 simple baseline strategy registry、TRADING-865～878 CLI、JSON/Markdown artifacts、report
     registry、artifact catalog、system flow、Reader Brief safety summary、master review
     和 options next-stage gate；所有数据依赖命令必须先调用 `validate_data_cache` 并披露质量状态；PIT audit
     必须确认 signal 使用 t-1 或更早可见字段；paper-shadow readiness 只能输出人工复核建议且 safety fields false/none；focused
     pytest、CLI smoke、report registry validation、contract validation、report validation、Ruff、compileall
     和 `git diff --check` 通过或明确记录阻塞
-  - '2026-06-23: 新增并进入 IN_PROGRESS，原因：TRADING-843～864 closeout 后 tail-risk fallback
-    继续 blocked，主线切换为 QQQ / TQQQ / SGOV 简单强基准和动态仓位控制研究；本批必须回答静态 baseline、TQQQ risk-controlled
-    baseline、动态趋势/波动仓位、dominance、成本敏感性、regime robustness、forward aging、paper-shadow
-    reviewability、dry-run mapping、master review 和 LEAPS/Wheel gate，同时保持 production_effect=none、broker_action=none、promotion_allowed=false、paper_shadow_allowed=false、production_allowed=false。2026-06-23:
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-23:
+    新增并进入 IN_PROGRESS，原因：TRADING-843～864 closeout 后 tail-risk fallback 继续 blocked，主线切换为
+    QQQ / TQQQ / SGOV 简单强基准和动态仓位控制研究；本批必须回答静态 baseline、TQQQ risk-controlled baseline、动态趋势/波动仓位、dominance、成本敏感性、regime
+    robustness、forward aging、paper-shadow reviewability、dry-run mapping、master review
+    和 LEAPS/Wheel gate，同时保持 production_effect=none、broker_action=none、promotion_allowed=false、paper_shadow_allowed=false、production_allowed=false。2026-06-23:
     实现完成并转入 VALIDATING；验证通过：focused parallel pytest 4 passed（含 CLI smoke 与 report
     registry loader）、`contract-validation` 193 passed、`report-validation` 55 passed、`ruff
     check .`、`python -m compileall src tests scripts` 和 `git diff --check`；仍保留 VALIDATING，等待真实
     QQQ/TQQQ/SGOV cache 覆盖与 owner 人工复核，不允许 promotion/paper-shadow/production/broker。'
-  docs_links:
-  - docs/requirements/TRADING-865_to_878_Simple_Baseline_Portfolio_Control.md
-  terminal: false
-  canonical_row_sha256: 0a01cde8ef02604514b6c92d3f793a7cda01f2bd9d04e73fa195ba8507fd56d2
-last_event_id: legacy-import-0a01cde8ef02604514b6c92d
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 7ee17c65e1961a19fb5d614347dde22a6e0c064e8aeb59d1681ec654bd9125e0
+last_event_id: task-event-20e57ce0af674a7d0dd6b09faa4dfc2c
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 2ad260308cce6041ed8f48e819a161870f106fed3363ac4f876f9d4f1a058e0f
+fragment_checksum: 9b352aef3eff213d8684135461d3dbcd3b4bbe9211566d5b1099e5c40bf29e1c
