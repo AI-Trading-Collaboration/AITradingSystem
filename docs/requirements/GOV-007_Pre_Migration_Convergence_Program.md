@@ -171,6 +171,50 @@ DEVX-015 的"做完全部 106 项"决定不在本变更里写入 DEVX-015 的任
 - 迁移后：devx014 改为 detached，主 checkout 把 `Claude outputs/` 移入备份后切回 main，跑 workflow-health；
   devx014 的运行时证据保全后按清理流程移除。
 
+### P1-A 主 checkout 回到 main（2026-09-24，已完成，E1 满足）
+
+- 主 checkout lease store 迁移：migration id `gov-007-main-checkout-os-arbiter-20260924-v1`，PASS；迁移前后
+  453 个 lease head 不变、ACTIVE 0；旧目录保留在 `arbiter-migrations/<id>/legacy/`，迁移前整目录备份
+  `D:/Work/AITradingSystem_backups/2026-09-24/main_checkout_lease_store_pre_migration/leases.tar`
+  （SHA-256 `14618b60…d8f4c8`）。发布事务 `gov-007-sibling-migration-publication-20260924-v1` RELEASED，
+  main `d7a20519`。
+- devx014 worktree 改为 detached，主 checkout 切回 main（HEAD=main=origin/main）；`Claude outputs/`
+  已确认与备份一致后删除。
+- `aits reports ensure-workflow-health --as-of 2026-09-24`：回执 PASS / GENERATED，无 blocker；验证为
+  PASS_WITH_WARNINGS（1 处遥测缺口，属 DEVX-017 范围）。
+- devx014 worktree 不移除：DEVX-014 任务行登记其为 TRADING-2564 S2b 唯一 coordinator，退出条件是 S2b
+  发布并完成证据保全，当前未满足。此后主 checkout 为唯一 coordinator。
+
+### P1-B 分支与 worktree 清理第一批（2026-09-24）
+
+- 删除 50 个已是 main 祖先的分支、20 个已被替代且任务为 DONE 的分支（逐个核对 bundle SHA）；移除
+  worktree `AITradingSystem_trading2522_integration`（满足 TRADING-2522 登记的退出条件，忽略内容整体
+  归档，tar SHA-256 `de8a22af…6c19`）；删除两个 stash（已在 stash bundle）。
+- 保留：所有在途或未终态任务的 worktree；ops073/ops078/ops081 等待 OPS 运营验收；
+  ops_runtime_20260725 待单独证据审计；t2463 待 owner 另行授权释放排除项；`refs/codex/*` 待停用 Codex 后删除。
+- 记录：`D:/Work/AITradingSystem_backups/2026-09-24/P1-B_cleanup_record.md`。
+
+### Owner 决策包（2026-09-24）
+
+决策 id：`owner_decision:GOV-007:2026-09-24:decision_pack_v1`。Owner 选择"全部按建议默认值批准"。
+执行口径如下（第 13 条在第 1～12 条发布后单独执行）：
+
+| # | 任务 | 处置 |
+|---|---|---|
+| 1 | OPS-062 | 本机全盘未找到 2026-07-16 exact archive；按批准处置：canonical 2026-07-16 永久保持 FAILED 并标记为缺口，不做 canonical 恢复；受限重建已获批准但无下游用途，不执行 → DONE |
+| 2 | TRADING-2563 | 授权一次项目根内的 corrected DQ retry（R1，有界、零下单）→ IN_PROGRESS，待执行 |
+| 3 | TRADING-2542 / A / B / C | DEFERRED，退出条件：迁移 pi 后重启 growth action-value 研究线 |
+| 4 | TRADING-2542H、TRADING-2554 | DEFERRED，同上 |
+| 5 | TRADING-2527 | DEFERRED，退出条件：owner 给出 human comprehension pilot policy |
+| 6 | TRADING-1155～1164 | DEFERRED，退出条件：owner 提供外部平台导出 |
+| 7 | TRADING-505～520、511A～511D、511E～520 | 按 hard-stop checkpoint 收口为 DONE，结论为 inconclusive/blocked 也视为终态 |
+| 8 | TRADING-420～428 | DROPPED（dynamic v3 rescue 已不是主线） |
+| 9 | PROD-002 | 采用 RISK-008 的 backlog-only 边界 → DONE |
+| 10 | PROD-005 | 批准当前 production rule baseline → DONE；promotion/retirement 条件以后另议 |
+| 11 | THESIS-002 | DEFERRED |
+| 12 | 11 条 BLOCKED_EXTERNAL | DEFERRED，退出条件：外部条件出现时重开 |
+| 13 | VALIDATING 批量规则 | 实现完成、已有 formal PASS、只等 owner 复核且 30 天无新证据 → DONE（`closed_without_owner_review`）；等 forward/shadow 样本 → DEFERRED；涉及 production/broker/阈值的保留给 owner 逐条复核 |
+
 ## 7. 退出条件
 
 E1–E10 全部满足，迁移到 pi 的第一个低风险任务完成完整的"预检 → 提交 → 合入 main → 推送"。
