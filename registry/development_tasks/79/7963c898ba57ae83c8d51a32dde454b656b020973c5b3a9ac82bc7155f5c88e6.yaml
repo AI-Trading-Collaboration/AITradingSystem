@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1155_to_1164_MANUAL_EXTERNAL_PLATFORM_EVIDENCE_AND_SIGNOFF
   task_id_sha256: 7963c898ba57ae83c8d51a32dde454b656b020973c5b3a9ac82bc7155f5c88e6
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1155_to_1164_MANUAL_EXTERNAL_PLATFORM_EVIDENCE_AND_SIGNOFF
   title: null
   domain: Research strategies / manual external platform evidence and signoff
@@ -12,17 +13,15 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 项目 owner 提供真实外部平台记录 + 系统复核
-  requirement_refs:
-  - docs/requirements/TRADING-1155_to_1164_Manual_External_Platform_Evidence_and_Signoff.md
+  next_owner: Project Owner
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1155_to_1164_Manual_External_Platform_Evidence_and_Signoff.md`；实现已完成并通过指定验证，下一步需要
-    owner 填写真实外部平台导出/截图、metric convention signoff 和 SGOV convention signoff；缺失时必须保持
-    missing/unknown 状态，不得伪造外部记录
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第6条 DEFERRED；退出条件：owner
+    提供真实外部平台导出与 convention signoff
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 10 个 `aits research strategies ...` CLI/artifacts：manual-external-record-template、static-baseline-external-manual-runbook、static-baseline-external-manual-input-ingestion、external-platform-metric-convention-signoff、sgov-external-convention-signoff、static-baseline-final-reconciliation-after-manual-input、dynamic-weight-path-external-support-check、quantconnect-weight-path-replay-preflight、external-validation-manual-evidence-owner-signoff、external-validation-manual-evidence-master-review；新增
       YAML/CSV template 与 owner guide/runbook；report registry、artifact catalog、system
       flow 和 focused tests 同步更新；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；Ruff、compileall、focused
@@ -30,7 +29,6 @@ task_record:
       通过；实际 external validation manual evidence signoff 仍等待 owner 真实外部输入
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 0cdfa53bafefb6b45af86827f9045f792bd3d756921c208af1a386c61b359326
   cell_count: 8
@@ -94,30 +92,58 @@ events:
   evidence_refs:
   - sha256:0cdfa53bafefb6b45af86827f9045f792bd3d756921c208af1a386c61b359326
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1155_to_1164_MANUAL_EXTERNAL_PLATFORM_EVIDENCE_AND_SIGNOFF
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:33:19+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: 669566da8dae19545a474c16bbd3b81946eeb5ad
+  previous_state_event_id: legacy-import-0cdfa53bafefb6b45af86827
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: DEFERRED
+  payload:
+    priority: P1
+    next_owner: Project Owner
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第6条 DEFERRED；退出条件：owner 提供真实外部平台导出与
+      convention signoff
+    acceptance_criteria: 新增 10 个 `aits research strategies ...` CLI/artifacts：manual-external-record-template、static-baseline-external-manual-runbook、static-baseline-external-manual-input-ingestion、external-platform-metric-convention-signoff、sgov-external-convention-signoff、static-baseline-final-reconciliation-after-manual-input、dynamic-weight-path-external-support-check、quantconnect-weight-path-replay-preflight、external-validation-manual-evidence-owner-signoff、external-validation-manual-evidence-master-review；新增
+      YAML/CSV template 与 owner guide/runbook；report registry、artifact catalog、system
+      flow 和 focused tests 同步更新；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；Ruff、compileall、focused
+      parallel pytest、task/register/report/docs parallel pytest 和 `git diff --check`
+      通过；实际 external validation manual evidence signoff 仍等待 owner 真实外部输入
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第6条：DEFERRED；agent_harness=claude_code；原备注：2026-06-26:
+      新增并进入 IN_PROGRESS，原因：external validation hard blocker 已清空但 master 仍为 WARN，缺少真实外部平台记录、metric
+      convention 人工确认、SGOV convention 签核和动态 weight-path 外部平台支持判断；本批仅形成 manual evidence/signoff
+      层，不进入 paper-shadow、production 或 broker。2026-06-26: 实现完成并通过指定验证后转为 BLOCKED_OWNER_INPUT；阻塞项是
+      owner 尚未提供真实外部平台导出/截图、metric convention 签核和 SGOV convention 签核。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7363fa196871d4953ed55fe1a791b3d3
 projection:
   legacy_first_eight_cells:
   - TRADING-1155_to_1164_MANUAL_EXTERNAL_PLATFORM_EVIDENCE_AND_SIGNOFF
   - Research strategies / manual external platform evidence and signoff
   - P1
-  - BLOCKED_OWNER_INPUT
-  - 项目 owner 提供真实外部平台记录 + 系统复核
-  - 详见 `docs/requirements/TRADING-1155_to_1164_Manual_External_Platform_Evidence_and_Signoff.md`；实现已完成并通过指定验证，下一步需要
-    owner 填写真实外部平台导出/截图、metric convention signoff 和 SGOV convention signoff；缺失时必须保持
-    missing/unknown 状态，不得伪造外部记录
+  - DEFERRED
+  - Project Owner
+  - 2026-09-24 按 owner 决策包第6条 DEFERRED；退出条件：owner 提供真实外部平台导出与 convention signoff
   - 新增 10 个 `aits research strategies ...` CLI/artifacts：manual-external-record-template、static-baseline-external-manual-runbook、static-baseline-external-manual-input-ingestion、external-platform-metric-convention-signoff、sgov-external-convention-signoff、static-baseline-final-reconciliation-after-manual-input、dynamic-weight-path-external-support-check、quantconnect-weight-path-replay-preflight、external-validation-manual-evidence-owner-signoff、external-validation-manual-evidence-master-review；新增
     YAML/CSV template 与 owner guide/runbook；report registry、artifact catalog、system
     flow 和 focused tests 同步更新；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；Ruff、compileall、focused
     parallel pytest、task/register/report/docs parallel pytest 和 `git diff --check`
     通过；实际 external validation manual evidence signoff 仍等待 owner 真实外部输入
-  - '2026-06-26: 新增并进入 IN_PROGRESS，原因：external validation hard blocker 已清空但 master
-    仍为 WARN，缺少真实外部平台记录、metric convention 人工确认、SGOV convention 签核和动态 weight-path 外部平台支持判断；本批仅形成
-    manual evidence/signoff 层，不进入 paper-shadow、production 或 broker。2026-06-26: 实现完成并通过指定验证后转为
-    BLOCKED_OWNER_INPUT；阻塞项是 owner 尚未提供真实外部平台导出/截图、metric convention 签核和 SGOV convention
-    签核。'
-  docs_links:
-  - docs/requirements/TRADING-1155_to_1164_Manual_External_Platform_Evidence_and_Signoff.md
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第6条：DEFERRED；agent_harness=claude_code；原备注：2026-06-26:
+    新增并进入 IN_PROGRESS，原因：external validation hard blocker 已清空但 master 仍为 WARN，缺少真实外部平台记录、metric
+    convention 人工确认、SGOV convention 签核和动态 weight-path 外部平台支持判断；本批仅形成 manual evidence/signoff
+    层，不进入 paper-shadow、production 或 broker。2026-06-26: 实现完成并通过指定验证后转为 BLOCKED_OWNER_INPUT；阻塞项是
+    owner 尚未提供真实外部平台导出/截图、metric convention 签核和 SGOV convention 签核。'
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 0cdfa53bafefb6b45af86827f9045f792bd3d756921c208af1a386c61b359326
-last_event_id: legacy-import-0cdfa53bafefb6b45af86827
+  canonical_row_sha256: 0bed85afb624fbb8f7d1e2a76ba046e42e9b64cd8cebd3298990ab127ce42476
+last_event_id: task-event-7363fa196871d4953ed55fe1a791b3d3
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 6e3df4ab2b43d809ce54efd79a3c56decac22fde460b85e2b78751b39203dc81
+fragment_checksum: 52b2d8d2a09a9d7228c95d2d445ab6298d2bcfb218a59fff4412565199af2af6
