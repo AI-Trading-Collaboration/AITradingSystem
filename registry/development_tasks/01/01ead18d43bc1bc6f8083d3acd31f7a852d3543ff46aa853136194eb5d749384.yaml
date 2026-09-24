@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-174_to_178_FORWARD_CONFIRMATION_CYCLE
   task_id_sha256: 01ead18d43bc1bc6f8083d3acd31f7a852d3543ff46aa853136194eb5d749384
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-174_to_178_FORWARD_CONFIRMATION_CYCLE
   title: null
   domain: ETF portfolio research/Forward Confirmation Execution and Rule Review Cycle
@@ -12,20 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 项目 owner 人工复核
-  requirement_refs:
-  - docs/requirements/TRADING-174_to_178_Forward_Confirmation_Execution_and_Rule_Review_Cycle.md
+  next_owner: Project Owner（pi 迁移后重启对应研究线时）
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-174_to_178_Forward_Confirmation_Execution_and_Rule_Review_Cycle.md`；baseline
-    实现已完成并生成真实 artifacts：registry `ad9f5724b143a76d`、progress `8e5c03f0284aab0b`、evaluation
-    `bce0745ee33cea84`、rule review cycle `c80e7855c31eeee5`、owner decision `b4de77feff8cd189`；当前
-    recommendation=`continue_tracking`，下一步由 owner 复核是否继续观察或要求更多 data/source/policy
-    review；附件原始编号为 TRADING-174～178，但 `TRADING-174` 已被 full pytest runtime 任务使用，本行采用唯一汇总
-    ID 避免复用
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待
+    forward/shadow 样本自然成熟，30 天以上无新证据。退出条件：迁移 pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007
+    需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`confirmation-targets register/list/report`、`confirmation-progress update/report`、`confirmation-evaluate
       run/report`、`rule-review-cycle run/report`、`rule-owner-decision create/list/record/report`
       及对应 validate CLI 可运行；registry/progress/evaluation/cycle/owner decision artifacts
@@ -36,7 +33,6 @@ task_record:
       tests、ruff、compileall、git diff check 和 dynamic-v3 validation 完成'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: a8f5feed2d09705a2d36069955c67cf0ef6893d5f64064ac716af42782ba18c7
   cell_count: 8
@@ -119,19 +115,52 @@ events:
   evidence_refs:
   - sha256:a8f5feed2d09705a2d36069955c67cf0ef6893d5f64064ac716af42782ba18c7
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-174_to_178_FORWARD_CONFIRMATION_CYCLE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:03:51+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 78a8db4a584238fb97d3e89a6be3c0ad4b886aaa
+  previous_state_event_id: legacy-import-a8f5feed2d09705a2d360699
+  from_status: VALIDATING
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: Project Owner（pi 迁移后重启对应研究线时）
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待 forward/shadow
+      样本自然成熟，30 天以上无新证据。退出条件：迁移 pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007 需求文档
+    acceptance_criteria: '`confirmation-targets register/list/report`、`confirmation-progress
+      update/report`、`confirmation-evaluate run/report`、`rule-review-cycle run/report`、`rule-owner-decision
+      create/list/record/report` 及对应 validate CLI 可运行；registry/progress/evaluation/cycle/owner
+      decision artifacts 写入 dynamic_v3_rescue runtime roots；样本不足保持 NOT_READY/INSUFFICIENT_EVENTS；SUCCESS
+      只进入人工 rule review；`auto_apply=false`、`policy_change_allowed=false`、`broker_action_allowed=false`、`production_effect=none`；不修改
+      `position_advisory_v1.yaml`、policy、target weights、portfolio 或 broker；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check 和 dynamic-v3 validation 完成'
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：DEFERRED_AWAITING_FORWARD_SAMPLES；agent_harness=claude_code；原备注：2026-06-10:
+      新增并进入 IN_PROGRESS，原因：owner 要求推进附件中的 TRADING-174～178；当前 plan 已有 targets 但缺少持续执行层，本阶段优先建立可审计
+      follow-up loop，同时保持 no broker / no production / no auto policy mutation。2026-06-10:
+      baseline 实现完成并转入 VALIDATING；真实链路当前 ready_for_evaluation=0、insufficient_events=2、success=0、failure=0、not_ready=3，pressure-regime
+      tagged outcomes 仍是 blocker；五个新增 validate CLI、五个 report CLI、dynamic-v3 root validation、family
+      artifact validation、report index、documentation contract、Reader Brief latest/quality、focused
+      pytest、ruff、compileall、git diff check 和全量 pytest 2320 passed / 640 warnings
+      / 14:31 通过。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f30b4ba97bd237bf8f097079a869ba65
 projection:
   legacy_first_eight_cells:
   - TRADING-174_to_178_FORWARD_CONFIRMATION_CYCLE
   - ETF portfolio research/Forward Confirmation Execution and Rule Review Cycle
   - P0
-  - VALIDATING
-  - 项目 owner 人工复核
-  - 详细拆解见 `docs/requirements/TRADING-174_to_178_Forward_Confirmation_Execution_and_Rule_Review_Cycle.md`；baseline
-    实现已完成并生成真实 artifacts：registry `ad9f5724b143a76d`、progress `8e5c03f0284aab0b`、evaluation
-    `bce0745ee33cea84`、rule review cycle `c80e7855c31eeee5`、owner decision `b4de77feff8cd189`；当前
-    recommendation=`continue_tracking`，下一步由 owner 复核是否继续观察或要求更多 data/source/policy
-    review；附件原始编号为 TRADING-174～178，但 `TRADING-174` 已被 full pytest runtime 任务使用，本行采用唯一汇总
-    ID 避免复用
+  - DEFERRED
+  - Project Owner（pi 迁移后重启对应研究线时）
+  - 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待 forward/shadow 样本自然成熟，30 天以上无新证据。退出条件：迁移
+    pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007 需求文档
   - '`confirmation-targets register/list/report`、`confirmation-progress update/report`、`confirmation-evaluate
     run/report`、`rule-review-cycle run/report`、`rule-owner-decision create/list/record/report`
     及对应 validate CLI 可运行；registry/progress/evaluation/cycle/owner decision artifacts
@@ -140,17 +169,17 @@ projection:
     `position_advisory_v1.yaml`、policy、target weights、portfolio 或 broker；README、operations
     runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
     tests、ruff、compileall、git diff check 和 dynamic-v3 validation 完成'
-  - '2026-06-10: 新增并进入 IN_PROGRESS，原因：owner 要求推进附件中的 TRADING-174～178；当前 plan 已有 targets
-    但缺少持续执行层，本阶段优先建立可审计 follow-up loop，同时保持 no broker / no production / no auto policy
-    mutation。2026-06-10: baseline 实现完成并转入 VALIDATING；真实链路当前 ready_for_evaluation=0、insufficient_events=2、success=0、failure=0、not_ready=3，pressure-regime
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：DEFERRED_AWAITING_FORWARD_SAMPLES；agent_harness=claude_code；原备注：2026-06-10:
+    新增并进入 IN_PROGRESS，原因：owner 要求推进附件中的 TRADING-174～178；当前 plan 已有 targets 但缺少持续执行层，本阶段优先建立可审计
+    follow-up loop，同时保持 no broker / no production / no auto policy mutation。2026-06-10:
+    baseline 实现完成并转入 VALIDATING；真实链路当前 ready_for_evaluation=0、insufficient_events=2、success=0、failure=0、not_ready=3，pressure-regime
     tagged outcomes 仍是 blocker；五个新增 validate CLI、五个 report CLI、dynamic-v3 root validation、family
     artifact validation、report index、documentation contract、Reader Brief latest/quality、focused
     pytest、ruff、compileall、git diff check 和全量 pytest 2320 passed / 640 warnings /
     14:31 通过。'
-  docs_links:
-  - docs/requirements/TRADING-174_to_178_Forward_Confirmation_Execution_and_Rule_Review_Cycle.md
+  docs_links: []
   terminal: false
-  canonical_row_sha256: a8f5feed2d09705a2d36069955c67cf0ef6893d5f64064ac716af42782ba18c7
-last_event_id: legacy-import-a8f5feed2d09705a2d360699
+  canonical_row_sha256: c869bca1f6884360f80c09b2c9a1cc08eb4de5afa11bd5c7cca38f32ae580fee
+last_event_id: task-event-f30b4ba97bd237bf8f097079a869ba65
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 7ba6cd807507bfa3d7cff37930564ff1d736a63610046cdb2f2014c3479a1376
+fragment_checksum: 8d09c94148c48a90bd225ff87d7fe05448b6e85ace91d70f8bfdebdc2d88256a
