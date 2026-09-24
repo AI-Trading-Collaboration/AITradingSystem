@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-850_TASK_PROVENANCE_AND_COVERAGE_MAP
   task_id_sha256: 1f401ca1ed54e4eb8b9dc523b4862fa70c0d39eaf8eb1d408acaa8fe84a47fa3
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-850_TASK_PROVENANCE_AND_COVERAGE_MAP
   title: null
   domain: Controlled strategy research / task provenance coverage map
@@ -12,23 +13,22 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs:
-  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
   - docs/research/tail_risk_fallback_governance_task_coverage_map.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；弥补
-    828～842 打包实现的任务级 provenance gap
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 输出 `docs/research/tail_risk_fallback_governance_task_coverage_map.md` 和
       `tail_risk_task_coverage_map.json`，覆盖 task_id、implemented_files、CLI entrypoints、policy/registry/artifact/test/docs/shared
       components
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 57e0aecbde9c839235b03598d14351157313dba5f326e5074fe12e1a85bcea99
   cell_count: 8
@@ -81,26 +81,56 @@ events:
   evidence_refs:
   - sha256:57e0aecbde9c839235b03598d14351157313dba5f326e5074fe12e1a85bcea99
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-850_TASK_PROVENANCE_AND_COVERAGE_MAP
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:31:13+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 97f9929fce8f185f103284447e182bcc9d27f50c
+  previous_state_event_id: legacy-import-57e0aecbde9c839235b03598
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 输出 `docs/research/tail_risk_fallback_governance_task_coverage_map.md`
+      和 `tail_risk_task_coverage_map.json`，覆盖 task_id、implemented_files、CLI entrypoints、policy/registry/artifact/test/docs/shared
+      components
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+      新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+      Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+      tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-4a4bb470e9c14a0deefadabc105f9ea5
 projection:
   legacy_first_eight_cells:
   - TRADING-850_TASK_PROVENANCE_AND_COVERAGE_MAP
   - Controlled strategy research / task provenance coverage map
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；弥补
-    828～842 打包实现的任务级 provenance gap
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 输出 `docs/research/tail_risk_fallback_governance_task_coverage_map.md` 和 `tail_risk_task_coverage_map.json`，覆盖
     task_id、implemented_files、CLI entrypoints、policy/registry/artifact/test/docs/shared
     components
-  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+    新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
     Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
     tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
   docs_links:
-  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
   - docs/research/tail_risk_fallback_governance_task_coverage_map.md
-  terminal: false
-  canonical_row_sha256: 57e0aecbde9c839235b03598d14351157313dba5f326e5074fe12e1a85bcea99
-last_event_id: legacy-import-57e0aecbde9c839235b03598
+  terminal: true
+  canonical_row_sha256: 2623b510ed58f9513e882b73ecfaf3e85677a93f0e56b2c9eafb1ce37bc81f9c
+last_event_id: task-event-4a4bb470e9c14a0deefadabc105f9ea5
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 7e57b1d5312baa29af21fb58cdf5b885bfb0e8340c0174b7d89e1a1ca94b6f0d
+fragment_checksum: f0d378333c9852eebe625594b7ac16e3a1b71058c80d3f930dd50d5141dbac48
