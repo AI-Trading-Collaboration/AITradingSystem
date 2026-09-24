@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-844_TAIL_RISK_STATUS_MATRIX_AGGREGATOR
   task_id_sha256: 794f6c39e52a66fc1db75eac95b99d0b8aaf6ea9e342b1bf70525e77c3caac25
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-844_TAIL_RISK_STATUS_MATRIX_AGGREGATOR
   title: null
   domain: Controlled strategy research / tail-risk status matrix
@@ -12,22 +13,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；依赖
-    TRADING-843 或 827～842 artifacts
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 `aits research strategies tail-risk-status-matrix`，输出 task_id/report_id/command/artifact
       paths/status/warnings/blockers/promotion-paper-production usability/broker_action/owner_next_action；任一
       hard blocker 存在时 overall_status=`TAIL_RISK_RESEARCH_BLOCKED`
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: b38fbbdc5d59b9d8a56fcac9c64e6833e75fdbf02d73c2fe966996f47d1c10a9
   cell_count: 8
@@ -80,25 +80,55 @@ events:
   evidence_refs:
   - sha256:b38fbbdc5d59b9d8a56fcac9c64e6833e75fdbf02d73c2fe966996f47d1c10a9
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-844_TAIL_RISK_STATUS_MATRIX_AGGREGATOR
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:29:13+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 7fe296960d57d735fba72b86d1fa036fe6879f9b
+  previous_state_event_id: legacy-import-b38fbbdc5d59b9d8a56fcac9
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 `aits research strategies tail-risk-status-matrix`，输出
+      task_id/report_id/command/artifact paths/status/warnings/blockers/promotion-paper-production
+      usability/broker_action/owner_next_action；任一 hard blocker 存在时 overall_status=`TAIL_RISK_RESEARCH_BLOCKED`
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+      新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+      Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+      tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7928345e4262b995218ef89a6a621e9b
 projection:
   legacy_first_eight_cells:
   - TRADING-844_TAIL_RISK_STATUS_MATRIX_AGGREGATOR
   - Controlled strategy research / tail-risk status matrix
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；依赖
-    TRADING-843 或 827～842 artifacts
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 `aits research strategies tail-risk-status-matrix`，输出 task_id/report_id/command/artifact
     paths/status/warnings/blockers/promotion-paper-production usability/broker_action/owner_next_action；任一
     hard blocker 存在时 overall_status=`TAIL_RISK_RESEARCH_BLOCKED`
-  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+    新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
     Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
     tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
-  docs_links:
-  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
-  terminal: false
-  canonical_row_sha256: b38fbbdc5d59b9d8a56fcac9c64e6833e75fdbf02d73c2fe966996f47d1c10a9
-last_event_id: legacy-import-b38fbbdc5d59b9d8a56fcac9
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 6dce0fe0d121d85c269f3e1bad8caf962d434df744597521950f4311dc1acca3
+last_event_id: task-event-7928345e4262b995218ef89a6a621e9b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: fdf9f177db18ec8503c4b790d1a2007b66cdfcfb8df9e87e60a961a5f6e2ca36
+fragment_checksum: 37f829c9db5a704c3af99746c8c27a0854f980a210884eb57f649b1ba3b9387c
