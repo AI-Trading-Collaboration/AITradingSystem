@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1786_to_1805_FIRST_LAYER_V2_DEFENSIVE_PROBE_REGRESSION_DIAGNOSIS
   task_id_sha256: 3512df66b89735fd310e3d74f47e79bff0cadb7abe7fffaf763903a496d25b09
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1786_to_1805_FIRST_LAYER_V2_DEFENSIVE_PROBE_REGRESSION_DIAGNOSIS
   title: null
   domain: Research trends / first-layer v2 defensive probe regression diagnosis
@@ -12,17 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-1786_to_1805_First_Layer_V2_Defensive_Probe_Regression_Diagnosis.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1786_to_1805_First_Layer_V2_Defensive_Probe_Regression_Diagnosis.md`；承接
-    coverage rebuild 的 `DEFENSIVE_PROBE_REGRESSION` blocker，必须先定位回归来源和可降级边界，不能继续调第一层或第二层，也不能恢复
-    owner review / promotion / paper-shadow / production / broker
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 coverage rebuild reclassification、defensive regression inventory、probe-role
       group comparison、2022 defensive regression slice、signal error attribution、policy
       variant stability review、return-seeking diagnostic reclassification、risk-off-only
@@ -34,7 +34,6 @@ task_record:
       blocked/false/false/none
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: ca0eb4a82a0c5d56bc50144ac482f44e526e32143a88edaf304df50fd1c53a93
   cell_count: 8
@@ -107,16 +106,53 @@ events:
   evidence_refs:
   - sha256:ca0eb4a82a0c5d56bc50144ac482f44e526e32143a88edaf304df50fd1c53a93
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1786_to_1805_FIRST_LAYER_V2_DEFENSIVE_PROBE_REGRESSION_DIAGNOSIS
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:04:47+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: dc56e9411f8c7b253f5639ffb106c6ba9b1bb491
+  previous_state_event_id: legacy-import-ca0eb4a82a0c5d56bc50144a
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 coverage rebuild reclassification、defensive regression
+      inventory、probe-role group comparison、2022 defensive regression slice、signal
+      error attribution、policy variant stability review、return-seeking diagnostic
+      reclassification、risk-off-only fallback assessment、decision matrix、owner brief、closeout/final
+      matrix、report registry、artifact catalog、system flow 和 guardrail tests；真实 run
+      确认 coverage-pass variants 的回归集中在 `defensive_overlay_probe`、`drawdown_control_probe`，并在
+      252d 中连带 `balanced_dynamic_probe`；pure return-seeking 与 risk-on diagnostic 只支持
+      diagnostic-only；risk-off-only fallback 不支持；所有 artifacts 继续 research-only，owner
+      review=false，promotion/paper-shadow/production/broker blocked/false/false/none
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+      新增并进入 IN_PROGRESS，原因：TRADING-1766～1785 已修复 coverage 但 coverage-aware actual-path
+      selection 失败，primary failure=`DEFENSIVE_PROBE_REGRESSION`；本批先诊断来源并固定降级边界。2026-06-28:
+      实现完成并转入 VALIDATING；`aits research trends first-layer-defensive-regression-diagnosis`
+      真实生成 final_status=`FIRST_LAYER_V2_RETURN_SEEKING_DIAGNOSTIC_ONLY`，final_diagnosis=`RETURN_SEEKING_ONLY_DIAGNOSTIC`，signal
+      attribution primary=`DEFENSIVE_REGRESSION_DUE_TO_FALSE_ADD_RISK`，安全边界仍为 false/blocked/false/false/none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7c52c0b49f21e4c36de4e6540e468efb
 projection:
   legacy_first_eight_cells:
   - TRADING-1786_to_1805_FIRST_LAYER_V2_DEFENSIVE_PROBE_REGRESSION_DIAGNOSIS
   - Research trends / first-layer v2 defensive probe regression diagnosis
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1786_to_1805_First_Layer_V2_Defensive_Probe_Regression_Diagnosis.md`；承接
-    coverage rebuild 的 `DEFENSIVE_PROBE_REGRESSION` blocker，必须先定位回归来源和可降级边界，不能继续调第一层或第二层，也不能恢复
-    owner review / promotion / paper-shadow / production / broker
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 coverage rebuild reclassification、defensive regression inventory、probe-role
     group comparison、2022 defensive regression slice、signal error attribution、policy
     variant stability review、return-seeking diagnostic reclassification、risk-off-only
@@ -126,15 +162,15 @@ projection:
     return-seeking 与 risk-on diagnostic 只支持 diagnostic-only；risk-off-only fallback
     不支持；所有 artifacts 继续 research-only，owner review=false，promotion/paper-shadow/production/broker
     blocked/false/false/none
-  - '2026-06-28: 新增并进入 IN_PROGRESS，原因：TRADING-1766～1785 已修复 coverage 但 coverage-aware
-    actual-path selection 失败，primary failure=`DEFENSIVE_PROBE_REGRESSION`；本批先诊断来源并固定降级边界。2026-06-28:
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+    新增并进入 IN_PROGRESS，原因：TRADING-1766～1785 已修复 coverage 但 coverage-aware actual-path
+    selection 失败，primary failure=`DEFENSIVE_PROBE_REGRESSION`；本批先诊断来源并固定降级边界。2026-06-28:
     实现完成并转入 VALIDATING；`aits research trends first-layer-defensive-regression-diagnosis`
     真实生成 final_status=`FIRST_LAYER_V2_RETURN_SEEKING_DIAGNOSTIC_ONLY`，final_diagnosis=`RETURN_SEEKING_ONLY_DIAGNOSTIC`，signal
     attribution primary=`DEFENSIVE_REGRESSION_DUE_TO_FALSE_ADD_RISK`，安全边界仍为 false/blocked/false/false/none。'
-  docs_links:
-  - docs/requirements/TRADING-1786_to_1805_First_Layer_V2_Defensive_Probe_Regression_Diagnosis.md
-  terminal: false
-  canonical_row_sha256: ca0eb4a82a0c5d56bc50144ac482f44e526e32143a88edaf304df50fd1c53a93
-last_event_id: legacy-import-ca0eb4a82a0c5d56bc50144a
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: d153e8c55c4b3cc40d952551b34b4f70192fd471c091b9a8cf7d36ae638777bc
+last_event_id: task-event-7c52c0b49f21e4c36de4e6540e468efb
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: cc29176eb22a3a2c82e4bce017d651f98fdf540e946c6fcc7ec7526a5203a8df
+fragment_checksum: 0591167e4f028eae9e7ea2ec5b4cdb9f72c8521f9ccc7d2b91ccf1b9d245114e
