@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-888_to_893_SIMPLE_BASELINE_CANDIDATE_VALIDATION
   task_id_sha256: a1af41ac9172f6fb24e6883ca4fc3d4ba902385ce993e6612f2e84c330446e14
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-888_to_893_SIMPLE_BASELINE_CANDIDATE_VALIDATION
   title: null
   domain: Research strategies / QQQ-TQQQ-SGOV simple baseline candidate validation
@@ -13,19 +14,17 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 项目 owner 人工复核
+  next_owner: None / closed_without_owner_review
   requirement_refs:
-  - docs/requirements/TRADING-888_to_893_Simple_Baseline_Candidate_Validation.md
   - docs/research/simple_baseline_watchlist_owner_decision.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-888_to_893_Simple_Baseline_Candidate_Validation.md`；已完成
-    `equal_risk_qqq_sgov` deep dive、period split、drawdown episode、dynamic-vs-static
-    edge、TQQQ-heavy pause rationale 和 watchlist owner decision；不得进入 paper-shadow、production、broker、LEAPS/Wheel
-    或 tail-risk fallback 恢复
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 888～893 六个 `aits research strategies ...` CLI；输出指定 JSON/Markdown 与 `docs/research/simple_baseline_watchlist_owner_decision.md`；接入
       report registry、artifact catalog、system flow；所有数据依赖命令先运行同源 `validate_data_cache`
       并披露 data quality；period/episode 缺历史覆盖必须显式标记，不得 proxy；最终 safety fields 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；focused
@@ -33,7 +32,6 @@ task_record:
       --check` 通过或记录阻塞
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 91fa820252bc23fcbd7b4a6b4ad2861a7109a9d96c9db7370b62d0efd6609ae9
   cell_count: 8
@@ -107,35 +105,70 @@ events:
   evidence_refs:
   - sha256:91fa820252bc23fcbd7b4a6b4ad2861a7109a9d96c9db7370b62d0efd6609ae9
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-888_to_893_SIMPLE_BASELINE_CANDIDATE_VALIDATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:37:36+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: d22cd323d88a528c183d30f0165ee4ab65f36e5e
+  previous_state_event_id: legacy-import-91fa820252bc23fcbd7b4a6b
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 888～893 六个 `aits research strategies ...` CLI；输出指定 JSON/Markdown
+      与 `docs/research/simple_baseline_watchlist_owner_decision.md`；接入 report registry、artifact
+      catalog、system flow；所有数据依赖命令先运行同源 `validate_data_cache` 并披露 data quality；period/episode
+      缺历史覆盖必须显式标记，不得 proxy；最终 safety fields 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；focused
+      pytest、CLI smoke、contract/report/doc validation、Ruff、compileall 和 `git diff
+      --check` 通过或记录阻塞
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-23:
+      新增并进入 IN_PROGRESS，原因：owner 要求在 879～887 真实运行后继续围绕 top recommended `equal_risk_qqq_sgov`
+      做候选验证和 watchlist 收敛；当前已知 dynamic Calmar edge 约 0.084，不足以证明动态策略明显优于简单静态组合，TQQQ-heavy、LEAPS/Wheel、tail-risk
+      fallback 继续 blocked/no activation。2026-06-23: 实现完成并转入 VALIDATING；真实 CLI 输出 `EQUAL_RISK_DEEP_DIVE_READY`、`PERIOD_SPLIT_REGIME_DEPENDENT`、`DRAWDOWN_EPISODE_MIXED`、`DYNAMIC_EDGE_REGIME_CONCENTRATED`、`TQQQ_HEAVY_PAUSE_CONFIRMED`、`OWNER_DECISION_READY`；owner
+      decision 建议 equal-risk 为 primary、dyn_tqqq 为 challenger、TQQQ-heavy/LEAPS/Wheel/tail-risk
+      fallback 继续 blocked，最少 60 forward-aging days 后才允许 owner paper-shadow review；data
+      quality=`PASS_WITH_WARNINGS`/0 errors；验证通过真实 CLI smoke、focused parallel pytest、report/document/task-register
+      pytest、Ruff、compileall 和 git diff check。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7f1d6a448650c2d14b3a1ad4c9eac3ca
 projection:
   legacy_first_eight_cells:
   - TRADING-888_to_893_SIMPLE_BASELINE_CANDIDATE_VALIDATION
   - Research strategies / QQQ-TQQQ-SGOV simple baseline candidate validation and owner
     decision
   - P0
-  - VALIDATING
-  - 项目 owner 人工复核
-  - 详见 `docs/requirements/TRADING-888_to_893_Simple_Baseline_Candidate_Validation.md`；已完成
-    `equal_risk_qqq_sgov` deep dive、period split、drawdown episode、dynamic-vs-static
-    edge、TQQQ-heavy pause rationale 和 watchlist owner decision；不得进入 paper-shadow、production、broker、LEAPS/Wheel
-    或 tail-risk fallback 恢复
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 888～893 六个 `aits research strategies ...` CLI；输出指定 JSON/Markdown 与 `docs/research/simple_baseline_watchlist_owner_decision.md`；接入
     report registry、artifact catalog、system flow；所有数据依赖命令先运行同源 `validate_data_cache`
     并披露 data quality；period/episode 缺历史覆盖必须显式标记，不得 proxy；最终 safety fields 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；focused
     pytest、CLI smoke、contract/report/doc validation、Ruff、compileall 和 `git diff --check`
     通过或记录阻塞
-  - '2026-06-23: 新增并进入 IN_PROGRESS，原因：owner 要求在 879～887 真实运行后继续围绕 top recommended
-    `equal_risk_qqq_sgov` 做候选验证和 watchlist 收敛；当前已知 dynamic Calmar edge 约 0.084，不足以证明动态策略明显优于简单静态组合，TQQQ-heavy、LEAPS/Wheel、tail-risk
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-23:
+    新增并进入 IN_PROGRESS，原因：owner 要求在 879～887 真实运行后继续围绕 top recommended `equal_risk_qqq_sgov`
+    做候选验证和 watchlist 收敛；当前已知 dynamic Calmar edge 约 0.084，不足以证明动态策略明显优于简单静态组合，TQQQ-heavy、LEAPS/Wheel、tail-risk
     fallback 继续 blocked/no activation。2026-06-23: 实现完成并转入 VALIDATING；真实 CLI 输出 `EQUAL_RISK_DEEP_DIVE_READY`、`PERIOD_SPLIT_REGIME_DEPENDENT`、`DRAWDOWN_EPISODE_MIXED`、`DYNAMIC_EDGE_REGIME_CONCENTRATED`、`TQQQ_HEAVY_PAUSE_CONFIRMED`、`OWNER_DECISION_READY`；owner
     decision 建议 equal-risk 为 primary、dyn_tqqq 为 challenger、TQQQ-heavy/LEAPS/Wheel/tail-risk
     fallback 继续 blocked，最少 60 forward-aging days 后才允许 owner paper-shadow review；data
     quality=`PASS_WITH_WARNINGS`/0 errors；验证通过真实 CLI smoke、focused parallel pytest、report/document/task-register
     pytest、Ruff、compileall 和 git diff check。'
   docs_links:
-  - docs/requirements/TRADING-888_to_893_Simple_Baseline_Candidate_Validation.md
   - docs/research/simple_baseline_watchlist_owner_decision.md
-  terminal: false
-  canonical_row_sha256: 91fa820252bc23fcbd7b4a6b4ad2861a7109a9d96c9db7370b62d0efd6609ae9
-last_event_id: legacy-import-91fa820252bc23fcbd7b4a6b
+  terminal: true
+  canonical_row_sha256: 0b02ffc32ffd96e5e2eee698da85d0ba0f6299da5c2356fa45c6820db3e99b8b
+last_event_id: task-event-7f1d6a448650c2d14b3a1ad4c9eac3ca
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 3f2256e867df8d02536bc6e7f7bbd1197d65251d8e5677aef3a96d007dd7801c
+fragment_checksum: 67e7762fe04400b6b8301eb21c071388eb540c30c8c2a3a369df69e6983451cf
