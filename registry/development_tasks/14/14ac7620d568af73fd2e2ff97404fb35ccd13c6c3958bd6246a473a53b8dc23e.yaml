@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-861_RUN_REAL_TAIL_RISK_GOVERNANCE_CLI_SUITE
   task_id_sha256: 14ac7620d568af73fd2e2ff97404fb35ccd13c6c3958bd6246a473a53b8dc23e
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-861_RUN_REAL_TAIL_RISK_GOVERNANCE_CLI_SUITE
   title: null
   domain: Controlled strategy research / real CLI run summary
@@ -12,21 +13,20 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；必须真实运行
-    TRADING-843～858 follow-up CLI，不只依赖 pytest
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 生成 `tail_risk_followup_real_run_summary.json/md`，汇总真实 status、blockers、warnings、sample_count、baseline_dominance、readiness_score
       和 fixture/placeholder 检查
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: d6e38bc575fea38b7c5ca0dc0ce8abaed3e3585064d6933c4a81b7344ab5fd38
   cell_count: 8
@@ -76,24 +76,53 @@ events:
   evidence_refs:
   - sha256:d6e38bc575fea38b7c5ca0dc0ce8abaed3e3585064d6933c4a81b7344ab5fd38
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-861_RUN_REAL_TAIL_RISK_GOVERNANCE_CLI_SUITE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:35:21+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 7621a5bd8b72d60adff6dc4a8a9fc4bf67f53f82
+  previous_state_event_id: legacy-import-d6e38bc575fea38b7c5ca0dc
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 生成 `tail_risk_followup_real_run_summary.json/md`，汇总真实 status、blockers、warnings、sample_count、baseline_dominance、readiness_score
+      和 fixture/placeholder 检查
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+      新增并进入 IN_PROGRESS。2026-06-22: 真实 CLI suite 完成并转入 VALIDATING；逐条运行 TRADING-843～858
+      follow-up CLI，输出 `REAL_RUN_PASS`、readiness_score=58、baseline_dominance=`BASELINE_DOMINATED_BLOCKED`，确认
+      zero-sample 未被 VALIDATED、daily summary 不暗示策略可用。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f7c81d5185c5fa7770359b537d31ee5e
 projection:
   legacy_first_eight_cells:
   - TRADING-861_RUN_REAL_TAIL_RISK_GOVERNANCE_CLI_SUITE
   - Controlled strategy research / real CLI run summary
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；必须真实运行
-    TRADING-843～858 follow-up CLI，不只依赖 pytest
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 生成 `tail_risk_followup_real_run_summary.json/md`，汇总真实 status、blockers、warnings、sample_count、baseline_dominance、readiness_score
     和 fixture/placeholder 检查
-  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 真实 CLI suite 完成并转入 VALIDATING；逐条运行
-    TRADING-843～858 follow-up CLI，输出 `REAL_RUN_PASS`、readiness_score=58、baseline_dominance=`BASELINE_DOMINATED_BLOCKED`，确认
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+    新增并进入 IN_PROGRESS。2026-06-22: 真实 CLI suite 完成并转入 VALIDATING；逐条运行 TRADING-843～858
+    follow-up CLI，输出 `REAL_RUN_PASS`、readiness_score=58、baseline_dominance=`BASELINE_DOMINATED_BLOCKED`，确认
     zero-sample 未被 VALIDATED、daily summary 不暗示策略可用。'
-  docs_links:
-  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
-  terminal: false
-  canonical_row_sha256: d6e38bc575fea38b7c5ca0dc0ce8abaed3e3585064d6933c4a81b7344ab5fd38
-last_event_id: legacy-import-d6e38bc575fea38b7c5ca0dc
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: d7ad46c4d40cbf74a6f103ce1761040f32a93dc276737288bedbc0af951567aa
+last_event_id: task-event-f7c81d5185c5fa7770359b537d31ee5e
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: a2a48f501a7ae8b7f0b9bfe0ff0bea428f4cb18c34575c671eb3fcc794e58490
+fragment_checksum: a22aa5dcae05d9e6a0812407cb21c56c00299cb880da119f252fb971f7cb2cd5
