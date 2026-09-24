@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1201_to_1220_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_CLOSEOUT
   task_id_sha256: 0260e082356f1895e7b450e42d7bec0f9d388bb34c876ef0ba23db6e3f1e2d84
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1201_to_1220_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_CLOSEOUT
   title: null
   domain: Research strategies / execution semantics actual-path rebacktest closeout
@@ -12,17 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 项目 owner 后续复核 + 系统后续验证
-  requirement_refs:
-  - docs/requirements/TRADING-1201_to_1220_Execution_Semantics_Actual_Path_Rebacktest_Closeout.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1201_to_1220_Execution_Semantics_Actual_Path_Rebacktest_Closeout.md`；实现已完成，下一步为
-    owner review `owner_review_pack.md`、确认 lag/staleness materiality、决定哪些策略保留为 research
-    candidates；本批不得解除 dynamic promotion
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`promotion_readiness.json` 使用 `dynamic_promotion_readiness.v1` checklist
       且 `final_status` 派生；promotion/readiness 决策只读 actual-path metrics，target-path
       diagnostic-only；每策略 artifact 记录 policy hash；默认多策略 run 输出完整 per-strategy artifacts，以及
@@ -32,7 +32,6 @@ task_record:
       --check` 通过'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 4b60722de4716a339caeb007e567170f4037ab0a477b2fed0c7c8d51ae9fe0f8
   cell_count: 8
@@ -102,32 +101,66 @@ events:
   evidence_refs:
   - sha256:4b60722de4716a339caeb007e567170f4037ab0a477b2fed0c7c8d51ae9fe0f8
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1201_to_1220_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_CLOSEOUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:52:47+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 10374bb2bf563214f044b55a0d2286419d254740
+  previous_state_event_id: legacy-import-4b60722de4716a339caeb007
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`promotion_readiness.json` 使用 `dynamic_promotion_readiness.v1`
+      checklist 且 `final_status` 派生；promotion/readiness 决策只读 actual-path metrics，target-path
+      diagnostic-only；每策略 artifact 记录 policy hash；默认多策略 run 输出完整 per-strategy artifacts，以及
+      `index.json`、`leaderboard_actual_path.csv`、`target_vs_actual_gap_summary.csv`、`promotion_readiness_summary.json`、`owner_review_pack.md`；legacy
+      dynamic result 标记为 `PRE_EXECUTION_SEMANTICS_LEGACY_EVIDENCE`；report registry、artifact
+      catalog、system flow、focused tests、Ruff、compileall、parallel pytest 和 `git diff
+      --check` 通过'
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+      新增并进入 IN_PROGRESS，原因：owner 附件要求把 dynamic promotion block 从 warning 变成可解释、可测试、可逐项关闭的
+      readiness checklist，并完成多策略 actual-path rebacktest 聚合闭环；dynamic promotion 仍必须保持
+      blocked。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI dry-run 完成 8 个策略 actual-path rebacktest，`dynamic_promotion_blocked=true`，所有策略
+      final_status 仍 blocked，主要原因是 owner manual review pending，另有 defensive limited
+      staleness fail 和 v0.4 lower-turnover lag warn。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-17fdca3f5859069677702c58ac767b56
 projection:
   legacy_first_eight_cells:
   - TRADING-1201_to_1220_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_CLOSEOUT
   - Research strategies / execution semantics actual-path rebacktest closeout
   - P0
-  - VALIDATING
-  - 项目 owner 后续复核 + 系统后续验证
-  - 详见 `docs/requirements/TRADING-1201_to_1220_Execution_Semantics_Actual_Path_Rebacktest_Closeout.md`；实现已完成，下一步为
-    owner review `owner_review_pack.md`、确认 lag/staleness materiality、决定哪些策略保留为 research
-    candidates；本批不得解除 dynamic promotion
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`promotion_readiness.json` 使用 `dynamic_promotion_readiness.v1` checklist 且 `final_status`
     派生；promotion/readiness 决策只读 actual-path metrics，target-path diagnostic-only；每策略
     artifact 记录 policy hash；默认多策略 run 输出完整 per-strategy artifacts，以及 `index.json`、`leaderboard_actual_path.csv`、`target_vs_actual_gap_summary.csv`、`promotion_readiness_summary.json`、`owner_review_pack.md`；legacy
     dynamic result 标记为 `PRE_EXECUTION_SEMANTICS_LEGACY_EVIDENCE`；report registry、artifact
     catalog、system flow、focused tests、Ruff、compileall、parallel pytest 和 `git diff
     --check` 通过'
-  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求把 dynamic promotion block 从 warning
-    变成可解释、可测试、可逐项关闭的 readiness checklist，并完成多策略 actual-path rebacktest 聚合闭环；dynamic
-    promotion 仍必须保持 blocked。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI dry-run 完成 8 个策略
-    actual-path rebacktest，`dynamic_promotion_blocked=true`，所有策略 final_status 仍 blocked，主要原因是
-    owner manual review pending，另有 defensive limited staleness fail 和 v0.4 lower-turnover
-    lag warn。'
-  docs_links:
-  - docs/requirements/TRADING-1201_to_1220_Execution_Semantics_Actual_Path_Rebacktest_Closeout.md
-  terminal: false
-  canonical_row_sha256: 4b60722de4716a339caeb007e567170f4037ab0a477b2fed0c7c8d51ae9fe0f8
-last_event_id: legacy-import-4b60722de4716a339caeb007
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+    新增并进入 IN_PROGRESS，原因：owner 附件要求把 dynamic promotion block 从 warning 变成可解释、可测试、可逐项关闭的
+    readiness checklist，并完成多策略 actual-path rebacktest 聚合闭环；dynamic promotion 仍必须保持
+    blocked。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI dry-run 完成 8 个策略 actual-path rebacktest，`dynamic_promotion_blocked=true`，所有策略
+    final_status 仍 blocked，主要原因是 owner manual review pending，另有 defensive limited
+    staleness fail 和 v0.4 lower-turnover lag warn。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 9f459211eaf1e9d3f37f23c6ec8ee3c2ae76b6833ba04ab778c42e3e85f768a1
+last_event_id: task-event-17fdca3f5859069677702c58ac767b56
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 9ede5857d743055cc250e9e4ecd6b4745adb526840690c92175503aef6aab1d5
+fragment_checksum: b82304803b650163aabb543aa65dbd4e152a54b98ec317f54cad2bcb5d7cf871
