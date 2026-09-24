@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-986_to_1000_LAYER1_SIMPLE_RULE_METAPOLICY_RESEARCH
   task_id_sha256: a449fd2223053e63850acd97b0f9445ba983d62549bb7d45d988a9b92fbadc10
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-986_to_1000_LAYER1_SIMPLE_RULE_METAPOLICY_RESEARCH
   title: null
   domain: Research strategies / Layer-1 simple-rule selector historical research
@@ -12,17 +13,16 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-986_to_1000_Layer1_Simple_Rule_MetaPolicy_Research.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-986_to_1000_Layer1_Simple_Rule_MetaPolicy_Research.md`；986～1000
-    baseline 已实现并真实 smoke；下一步为 owner review 是否允许 research-only forward-aging watchlist
-    观察；本批不进入 Reader Brief、paper-shadow、production 或 broker
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 selector registry config、15 个 `aits research strategies ...` CLI/artifacts、report
       registry entries、artifact catalog/system flow 更新和 focused tests；覆盖 trend/vol/drawdown/combined
       selector metrics、cost/latency stress、period split、drawdown episode、regret attribution、selector-vs-component
@@ -33,7 +33,6 @@ task_record:
       ML selector、QQQ-plus growth selectable、tail-risk fallback/options selectable
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: db4708bfd1a7453a93598cccb6df3db1287681e58ed4369b4b1f6d08bdeb607d
   cell_count: 8
@@ -108,16 +107,54 @@ events:
   evidence_refs:
   - sha256:db4708bfd1a7453a93598cccb6df3db1287681e58ed4369b4b1f6d08bdeb607d
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-986_to_1000_LAYER1_SIMPLE_RULE_METAPOLICY_RESEARCH
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:40:37+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 28ad07b8cd544084eb51fa8ac99e67d875bb5c29
+  previous_state_event_id: legacy-import-db4708bfd1a7453a93598ccc
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 selector registry config、15 个 `aits research strategies
+      ...` CLI/artifacts、report registry entries、artifact catalog/system flow 更新和
+      focused tests；覆盖 trend/vol/drawdown/combined selector metrics、cost/latency stress、period
+      split、drawdown episode、regret attribution、selector-vs-component ranking、overfit
+      sensitivity、minimum holding period、watchlist gate、owner pack 和 master review；真实
+      master smoke 为 `LAYER1_SELECTOR_RESEARCH_ONLY`，registry=`SELECTOR_REGISTRY_READY`、ranking=`SELECTOR_RANKING_MIXED`、watchlist=`SELECTOR_WATCHLIST_NEEDS_OWNER_REVIEW`、data
+      quality=`PASS_WITH_WARNINGS`、actual range=`2022-12-01`～`2026-06-23`；所有 outputs
+      固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，禁止
+      ML selector、QQQ-plus growth selectable、tail-risk fallback/options selectable
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-24:
+      新增并进入 IN_PROGRESS，原因：976～985 master status=`LAYER1_SIMPLE_RULE_RESEARCH_READY`
+      且 owner recommendation=`START_LAYER1_SIMPLE_RULE_RESEARCH`，允许开始 research-only
+      historical study；当前 formal selectable 仅 `equal_risk_qqq_sgov` 与 `100_qqq`。2026-06-24:
+      实现完成并转入 VALIDATING；新增 Layer-1 simple-rule selector registry、15 个 CLI/artifacts、report
+      registry/artifact catalog/system flow 更新和 focused tests；真实 master smoke 输出 `LAYER1_SELECTOR_RESEARCH_ONLY`，watchlist
+      仍需 owner review，safety fields 仍 false/none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d8dee65b1ab327861c4ce4b5239ad1b2
 projection:
   legacy_first_eight_cells:
   - TRADING-986_to_1000_LAYER1_SIMPLE_RULE_METAPOLICY_RESEARCH
   - Research strategies / Layer-1 simple-rule selector historical research
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-986_to_1000_Layer1_Simple_Rule_MetaPolicy_Research.md`；986～1000
-    baseline 已实现并真实 smoke；下一步为 owner review 是否允许 research-only forward-aging watchlist
-    观察；本批不进入 Reader Brief、paper-shadow、production 或 broker
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 selector registry config、15 个 `aits research strategies ...` CLI/artifacts、report
     registry entries、artifact catalog/system flow 更新和 focused tests；覆盖 trend/vol/drawdown/combined
     selector metrics、cost/latency stress、period split、drawdown episode、regret attribution、selector-vs-component
@@ -126,16 +163,16 @@ projection:
     quality=`PASS_WITH_WARNINGS`、actual range=`2022-12-01`～`2026-06-23`；所有 outputs
     固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，禁止
     ML selector、QQQ-plus growth selectable、tail-risk fallback/options selectable
-  - '2026-06-24: 新增并进入 IN_PROGRESS，原因：976～985 master status=`LAYER1_SIMPLE_RULE_RESEARCH_READY`
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-24:
+    新增并进入 IN_PROGRESS，原因：976～985 master status=`LAYER1_SIMPLE_RULE_RESEARCH_READY`
     且 owner recommendation=`START_LAYER1_SIMPLE_RULE_RESEARCH`，允许开始 research-only
     historical study；当前 formal selectable 仅 `equal_risk_qqq_sgov` 与 `100_qqq`。2026-06-24:
     实现完成并转入 VALIDATING；新增 Layer-1 simple-rule selector registry、15 个 CLI/artifacts、report
     registry/artifact catalog/system flow 更新和 focused tests；真实 master smoke 输出 `LAYER1_SELECTOR_RESEARCH_ONLY`，watchlist
     仍需 owner review，safety fields 仍 false/none。'
-  docs_links:
-  - docs/requirements/TRADING-986_to_1000_Layer1_Simple_Rule_MetaPolicy_Research.md
-  terminal: false
-  canonical_row_sha256: db4708bfd1a7453a93598cccb6df3db1287681e58ed4369b4b1f6d08bdeb607d
-last_event_id: legacy-import-db4708bfd1a7453a93598ccc
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 64b9092e300f8a9d6af7dacdabd8d3bf1a0e838aa4e2955e8581d6c6528677c3
+last_event_id: task-event-d8dee65b1ab327861c4ce4b5239ad1b2
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: e4e06fffe82817bae99c8e021635d063b1816a9a1f877b8c9a61515685148103
+fragment_checksum: bfc29ad28f8d14e0ae74e26d2b9bea64a80c56ed86495c991aebacc6c1942b2c
