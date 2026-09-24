@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-826_TAIL_RISK_FALLBACK_BLOCKER_DIAGNOSTIC
   task_id_sha256: a8c34ef440e37d09aada4aba91976f99d7b4d01cf05b94a1374481fb60cf028a
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-826_TAIL_RISK_FALLBACK_BLOCKER_DIAGNOSTIC
   title: null
   domain: Controlled strategy research / read-only tail-risk fallback blocker diagnosis
@@ -12,17 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-826_Tail_Risk_Fallback_Blocker_Diagnostic.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-826_Tail_Risk_Fallback_Blocker_Diagnostic.md`；必须读取最新
-    `tail_risk_policy_controlled_review_board` artifact 及其 TRADING-821～825 输入报告；只输出诊断，不修改策略、promotion、paper-shadow、production
-    weight 或 broker/order
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增只读 CLI/artifact，展开五份输入报告 status、warnings、blockers、promotion_block_reason；按
       anti_leakage critical、universe reconciliation incomplete、forward degraded、sensitivity
       fragile、regime concentrated、forward insufficient/pending 排序 root cause；明确最终
@@ -30,7 +30,6 @@ task_record:
       report registry entry 并更新 artifact catalog/system flow
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: c8b5f4b8040a20b3d7a826fbac61d9e33a0bf2a26dcaa77dc1ea8096ef6b7565
   cell_count: 8
@@ -109,24 +108,63 @@ events:
   evidence_refs:
   - sha256:c8b5f4b8040a20b3d7a826fbac61d9e33a0bf2a26dcaa77dc1ea8096ef6b7565
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-826_TAIL_RISK_FALLBACK_BLOCKER_DIAGNOSTIC
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:22:46+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 617e86b4ed2b2148bf610c14458a0b5220b1752d
+  previous_state_event_id: legacy-import-c8b5f4b8040a20b3d7a826fb
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增只读 CLI/artifact，展开五份输入报告 status、warnings、blockers、promotion_block_reason；按
+      anti_leakage critical、universe reconciliation incomplete、forward degraded、sensitivity
+      fragile、regime concentrated、forward insufficient/pending 排序 root cause；明确最终
+      `CONTROLLED_RESEARCH_BLOCKED` 由哪个任务触发；输出 next recommended action 但不得建议 promotion；新增
+      report registry entry 并更新 artifact catalog/system flow
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+      新增并进入 IN_PROGRESS，原因：owner 要求对 TRADING-821～825 的 blocker/warning/root cause
+      做只读诊断汇总，便于复核 `CONTROLLED_RESEARCH_BLOCKED` 的触发源和下一步行动。2026-06-22: 实现完成并转入 VALIDATING；真实
+      CLI run 生成 `outputs/research_strategies/value_surface_review/tail_risk_fallback_blocker_diagnostic.json/md`，最终
+      `CONTROLLED_RESEARCH_BLOCKED` 由 TRADING-822 `anti_leakage_critical` 触发，severity
+      findings 依次为 TRADING-822 anti-leakage critical、TRADING-823 sensitivity fragile、TRADING-824
+      regime concentrated、TRADING-825 forward pending；next action=`decouple_trigger_and_label_or_add_independent_forward_outcome_validation`，不建议
+      promotion/paper-shadow/production/broker；验证通过：focused falsification pytest 8
+      passed、focused CLI/registry pytest 11 passed、`fast-unit` 186 passed、`contract-validation`
+      185 passed、`report-validation` 55 passed、Ruff、changed-file Black check、compileall
+      和 git diff check。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0f66f237480305b8303ea96b2cc58c90
 projection:
   legacy_first_eight_cells:
   - TRADING-826_TAIL_RISK_FALLBACK_BLOCKER_DIAGNOSTIC
   - Controlled strategy research / read-only tail-risk fallback blocker diagnosis
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-826_Tail_Risk_Fallback_Blocker_Diagnostic.md`；必须读取最新
-    `tail_risk_policy_controlled_review_board` artifact 及其 TRADING-821～825 输入报告；只输出诊断，不修改策略、promotion、paper-shadow、production
-    weight 或 broker/order
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增只读 CLI/artifact，展开五份输入报告 status、warnings、blockers、promotion_block_reason；按 anti_leakage
     critical、universe reconciliation incomplete、forward degraded、sensitivity fragile、regime
     concentrated、forward insufficient/pending 排序 root cause；明确最终 `CONTROLLED_RESEARCH_BLOCKED`
     由哪个任务触发；输出 next recommended action 但不得建议 promotion；新增 report registry entry 并更新
     artifact catalog/system flow
-  - '2026-06-22: 新增并进入 IN_PROGRESS，原因：owner 要求对 TRADING-821～825 的 blocker/warning/root
-    cause 做只读诊断汇总，便于复核 `CONTROLLED_RESEARCH_BLOCKED` 的触发源和下一步行动。2026-06-22: 实现完成并转入
-    VALIDATING；真实 CLI run 生成 `outputs/research_strategies/value_surface_review/tail_risk_fallback_blocker_diagnostic.json/md`，最终
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+    新增并进入 IN_PROGRESS，原因：owner 要求对 TRADING-821～825 的 blocker/warning/root cause 做只读诊断汇总，便于复核
+    `CONTROLLED_RESEARCH_BLOCKED` 的触发源和下一步行动。2026-06-22: 实现完成并转入 VALIDATING；真实 CLI
+    run 生成 `outputs/research_strategies/value_surface_review/tail_risk_fallback_blocker_diagnostic.json/md`，最终
     `CONTROLLED_RESEARCH_BLOCKED` 由 TRADING-822 `anti_leakage_critical` 触发，severity
     findings 依次为 TRADING-822 anti-leakage critical、TRADING-823 sensitivity fragile、TRADING-824
     regime concentrated、TRADING-825 forward pending；next action=`decouple_trigger_and_label_or_add_independent_forward_outcome_validation`，不建议
@@ -134,10 +172,9 @@ projection:
     CLI/registry pytest 11 passed、`fast-unit` 186 passed、`contract-validation` 185
     passed、`report-validation` 55 passed、Ruff、changed-file Black check、compileall
     和 git diff check。'
-  docs_links:
-  - docs/requirements/TRADING-826_Tail_Risk_Fallback_Blocker_Diagnostic.md
-  terminal: false
-  canonical_row_sha256: c8b5f4b8040a20b3d7a826fbac61d9e33a0bf2a26dcaa77dc1ea8096ef6b7565
-last_event_id: legacy-import-c8b5f4b8040a20b3d7a826fb
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 531be3c03148a91b87290e305e5daba5181a4a6169f73a726d8c525c8f087317
+last_event_id: task-event-0f66f237480305b8303ea96b2cc58c90
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 01685cda51e5d770522b1ec3d71207746449d7566c9bac5c715002731f54e59f
+fragment_checksum: 78f01186cdfabfcedf1d42fe04af860328aafb3d1505c8e3f05fa364ac4c58f3
