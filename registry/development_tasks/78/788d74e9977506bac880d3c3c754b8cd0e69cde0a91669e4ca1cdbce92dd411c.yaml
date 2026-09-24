@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1326_to_1485_DYNAMIC_STRATEGY_REMAINING_HIDDEN_LIMIT_AUDIT
   task_id_sha256: 788d74e9977506bac880d3c3c754b8cd0e69cde0a91669e4ca1cdbce92dd411c
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1326_to_1485_DYNAMIC_STRATEGY_REMAINING_HIDDEN_LIMIT_AUDIT
   title: null
   domain: Research strategies / actual-path edge attribution, objective redesign,
@@ -13,17 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 项目 owner 后续复核 + 系统后续验证
-  requirement_refs:
-  - docs/requirements/TRADING-1326_to_1485_Dynamic_Strategy_Remaining_Hidden_Limit_Audit.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1326_to_1485_Dynamic_Strategy_Remaining_Hidden_Limit_Audit.md`；TRADING-1326～1485
-    Batch 1/2/3/4 已实现并真实运行，下一步为 owner 复核 edge/objective、PIT/walk-forward、taxonomy/timing、cost/cash/stress/regime
-    和 artifact governance 结论；不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: Batch 1 新增 actual-path edge attribution 与 objective gate v2；Batch 2 新增 PIT
       data availability CLI/runtime/tracked inventory、walk-forward validation CLI/runtime/matrix；Batch
       3 新增 event taxonomy policy/snapshot、risk timing policy/runtime/matrix；Batch
@@ -33,7 +33,6 @@ task_record:
       和 dynamic promotion `BLOCKED`；artifact governance 真实 status=`RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY`
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: e2994624a79bebeab7c4aad6f404a76f6218b95bb15ff0ac47e2e5628a8fddea
   cell_count: 8
@@ -111,17 +110,55 @@ events:
   evidence_refs:
   - sha256:e2994624a79bebeab7c4aad6f404a76f6218b95bb15ff0ac47e2e5628a8fddea
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1326_to_1485_DYNAMIC_STRATEGY_REMAINING_HIDDEN_LIMIT_AUDIT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:55:23+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 32dc187e0268855acec17244a800892d60cb59a2
+  previous_state_event_id: legacy-import-e2994624a79bebeab7c4aad6
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: Batch 1 新增 actual-path edge attribution 与 objective gate
+      v2；Batch 2 新增 PIT data availability CLI/runtime/tracked inventory、walk-forward
+      validation CLI/runtime/matrix；Batch 3 新增 event taxonomy policy/snapshot、risk
+      timing policy/runtime/matrix；Batch 4 新增 cost/cash/stress/regime policy config、tracked
+      review matrix/snapshot、artifact governance inventory 和 `tests/test_research_artifact_governance.py`。全部报告声明
+      `ai_after_chatgpt` regime、actual requested date range、actual-path-only ranking、target-path
+      diagnostic-only 和 dynamic promotion `BLOCKED`；artifact governance 真实 status=`RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY`
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+      新增并进入 IN_PROGRESS；承接 TRADING-1306～1325 event override 结论。2026-06-27: Batch 1
+      转入 VALIDATING；真实 run edge attribution=`EDGE_ATTRIBUTION_REVIEW_READY`、objective
+      gate=`OBJECTIVE_GATE_REVIEW_READY`。2026-06-27: Batch 2 转入 VALIDATING；PIT=`PIT_DATA_AVAILABILITY_REVIEW_READY_WITH_CAVEATS`，walk-forward=`WALK_FORWARD_VALIDATION_READY_WITH_BLOCKERS`，`limited_adjustment`
+      verdict=`STABLE_ACROSS_WINDOWS`，其他 dynamic/event variants 为 `REGIME_OVERFITTED`
+      或 `PARAMETER_SENSITIVE`。2026-06-27: Batch 3 转入 VALIDATING；taxonomy=`EVENT_OVERRIDE_EX_ANTE_TAXONOMY_READY_WITH_RUNTIME_GAPS`，timing=`RISK_TIMING_QUALITY_REVIEW_READY_WITH_BLOCKERS`。2026-06-27:
+      Batch 4 转入 VALIDATING；cost/cash=`TRANSACTION_COST_CASH_YIELD_REVIEW_READY_WITH_BLOCKERS`，stress=`STRESS_RISK_METRICS_REVIEW_READY_WITH_BLOCKERS`，regime=`REGIME_BASELINE_EXPANSION_REVIEW_READY_WITH_BLOCKERS`，artifact
+      governance=`RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY`；dynamic promotion 继续
+      `BLOCKED`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-bed7dff334cca330204ff56ce3ebef96
 projection:
   legacy_first_eight_cells:
   - TRADING-1326_to_1485_DYNAMIC_STRATEGY_REMAINING_HIDDEN_LIMIT_AUDIT
   - Research strategies / actual-path edge attribution, objective redesign, hidden
     limit audit
   - P0
-  - VALIDATING
-  - 项目 owner 后续复核 + 系统后续验证
-  - 详见 `docs/requirements/TRADING-1326_to_1485_Dynamic_Strategy_Remaining_Hidden_Limit_Audit.md`；TRADING-1326～1485
-    Batch 1/2/3/4 已实现并真实运行，下一步为 owner 复核 edge/objective、PIT/walk-forward、taxonomy/timing、cost/cash/stress/regime
-    和 artifact governance 结论；不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - Batch 1 新增 actual-path edge attribution 与 objective gate v2；Batch 2 新增 PIT data
     availability CLI/runtime/tracked inventory、walk-forward validation CLI/runtime/matrix；Batch
     3 新增 event taxonomy policy/snapshot、risk timing policy/runtime/matrix；Batch 4
@@ -129,17 +166,17 @@ projection:
     governance inventory 和 `tests/test_research_artifact_governance.py`。全部报告声明 `ai_after_chatgpt`
     regime、actual requested date range、actual-path-only ranking、target-path diagnostic-only
     和 dynamic promotion `BLOCKED`；artifact governance 真实 status=`RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY`
-  - '2026-06-27: 新增并进入 IN_PROGRESS；承接 TRADING-1306～1325 event override 结论。2026-06-27:
-    Batch 1 转入 VALIDATING；真实 run edge attribution=`EDGE_ATTRIBUTION_REVIEW_READY`、objective
-    gate=`OBJECTIVE_GATE_REVIEW_READY`。2026-06-27: Batch 2 转入 VALIDATING；PIT=`PIT_DATA_AVAILABILITY_REVIEW_READY_WITH_CAVEATS`，walk-forward=`WALK_FORWARD_VALIDATION_READY_WITH_BLOCKERS`，`limited_adjustment`
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+    新增并进入 IN_PROGRESS；承接 TRADING-1306～1325 event override 结论。2026-06-27: Batch 1 转入
+    VALIDATING；真实 run edge attribution=`EDGE_ATTRIBUTION_REVIEW_READY`、objective gate=`OBJECTIVE_GATE_REVIEW_READY`。2026-06-27:
+    Batch 2 转入 VALIDATING；PIT=`PIT_DATA_AVAILABILITY_REVIEW_READY_WITH_CAVEATS`，walk-forward=`WALK_FORWARD_VALIDATION_READY_WITH_BLOCKERS`，`limited_adjustment`
     verdict=`STABLE_ACROSS_WINDOWS`，其他 dynamic/event variants 为 `REGIME_OVERFITTED`
     或 `PARAMETER_SENSITIVE`。2026-06-27: Batch 3 转入 VALIDATING；taxonomy=`EVENT_OVERRIDE_EX_ANTE_TAXONOMY_READY_WITH_RUNTIME_GAPS`，timing=`RISK_TIMING_QUALITY_REVIEW_READY_WITH_BLOCKERS`。2026-06-27:
     Batch 4 转入 VALIDATING；cost/cash=`TRANSACTION_COST_CASH_YIELD_REVIEW_READY_WITH_BLOCKERS`，stress=`STRESS_RISK_METRICS_REVIEW_READY_WITH_BLOCKERS`，regime=`REGIME_BASELINE_EXPANSION_REVIEW_READY_WITH_BLOCKERS`，artifact
     governance=`RESEARCH_ARTIFACT_GOVERNANCE_REVIEW_READY`；dynamic promotion 继续 `BLOCKED`。'
-  docs_links:
-  - docs/requirements/TRADING-1326_to_1485_Dynamic_Strategy_Remaining_Hidden_Limit_Audit.md
-  terminal: false
-  canonical_row_sha256: e2994624a79bebeab7c4aad6f404a76f6218b95bb15ff0ac47e2e5628a8fddea
-last_event_id: legacy-import-e2994624a79bebeab7c4aad6
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: ef6f56f9b0bfeafa621fb2bc391d058f3e94ab3fba2722ac5fe7f5f56c66c522
+last_event_id: task-event-bed7dff334cca330204ff56ce3ebef96
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 25211d5be2e6c67d0f21452e356efdd8a99d56c0c776c66b3f789cab30f68dfe
+fragment_checksum: 5aa78bef38706479deeae83d274746c0375e9b6a941bd901b019c8bbf04d7938
