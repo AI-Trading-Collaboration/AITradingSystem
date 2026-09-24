@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-032A
   task_id_sha256: a4770862b85423ba1c993403892d7b4bbd2ec477d1b275acc0862f11ce245002
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-032A
   title: null
   domain: 交易执行/Operator Brief Notification Dispatch Preview Real Artifact Observation
@@ -12,25 +13,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统验证 + 项目 owner
-  requirement_refs:
-  - docs/requirements/operator_brief_notification_dispatch_preview_real_artifact_observation_2026-06-09.md
+  next_owner: 外部条件 / Project Owner
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 承接 `TRADING-032` 的真实 `TRADING-031` artifact
-    观察；阻塞于本机或运行环境产生可审计 `operator_brief_notification_delivery_preflight_YYYY-MM-DD.json/md`，且能关联同日/匹配
-    `TRADING-022` operator brief 与 `TRADING-030` notification draft metadata/draft
-    files；详细拆解见 `docs/requirements/operator_brief_notification_dispatch_preview_real_artifact_observation_2026-06-09.md`
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL
+    转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider catalog）出现时重开
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 至少一个真实 `TRADING-031` artifact 日期完成 dry-run dispatch preview 观察，记录 `final_status`、`dispatch_status`、`preflight_summary`、channel
       plan、masked target、message excerpt、safety flags、dashboard 只读卡片结果；输出固定 `production_effect=none`、`manual_review_only=true`、`dispatch_preview_only=true`、`read_only=true`，所有
       sent/Gmail/webhook/broker/replay/trading/pipeline flags 为 false；缺失或不安全真实输入必须
       fail closed 为 `BLOCKED` 或 `SAFETY_BLOCKED`，不补造 upstream artifacts、不自动发送
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: ce6aefb871dfb93168128820b6788176e45dbbd11ce5ed617aebe2a4a1288db4
   cell_count: 8
@@ -88,27 +85,56 @@ events:
   evidence_refs:
   - sha256:ce6aefb871dfb93168128820b6788176e45dbbd11ce5ed617aebe2a4a1288db4
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-032A
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:36:26+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: 0c720b87990d4f57c6b402e7c59ca162b25d602b
+  previous_state_event_id: legacy-import-ce6aefb871dfb93168128820
+  from_status: BLOCKED_EXTERNAL
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: 外部条件 / Project Owner
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如
+      IBKR fill、通知链、多日观察、provider catalog）出现时重开
+    acceptance_criteria: 至少一个真实 `TRADING-031` artifact 日期完成 dry-run dispatch preview
+      观察，记录 `final_status`、`dispatch_status`、`preflight_summary`、channel plan、masked
+      target、message excerpt、safety flags、dashboard 只读卡片结果；输出固定 `production_effect=none`、`manual_review_only=true`、`dispatch_preview_only=true`、`read_only=true`，所有
+      sent/Gmail/webhook/broker/replay/trading/pipeline flags 为 false；缺失或不安全真实输入必须
+      fail closed 为 `BLOCKED` 或 `SAFETY_BLOCKED`，不补造 upstream artifacts、不自动发送
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-06-09:
+      新增并进入 BLOCKED_EXTERNAL，原因：TRADING-032 工程基线、临时 fixture WOULD_SEND smoke、缺输入 BLOCKED
+      smoke、目标测试和 scoped lint/format 均已通过，但当前缺真实 TRADING-031 delivery preflight artifacts，不能把真实
+      artifact dispatch preview 观察并入 baseline 完成。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f3b8a7d9bc5d191e338c09f37fe18873
 projection:
   legacy_first_eight_cells:
   - TRADING-032A
   - 交易执行/Operator Brief Notification Dispatch Preview Real Artifact Observation
   - P0
-  - BLOCKED_EXTERNAL
-  - 系统验证 + 项目 owner
-  - 承接 `TRADING-032` 的真实 `TRADING-031` artifact 观察；阻塞于本机或运行环境产生可审计 `operator_brief_notification_delivery_preflight_YYYY-MM-DD.json/md`，且能关联同日/匹配
-    `TRADING-022` operator brief 与 `TRADING-030` notification draft metadata/draft
-    files；详细拆解见 `docs/requirements/operator_brief_notification_dispatch_preview_real_artifact_observation_2026-06-09.md`
+  - DEFERRED
+  - 外部条件 / Project Owner
+  - 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider
+    catalog）出现时重开
   - 至少一个真实 `TRADING-031` artifact 日期完成 dry-run dispatch preview 观察，记录 `final_status`、`dispatch_status`、`preflight_summary`、channel
     plan、masked target、message excerpt、safety flags、dashboard 只读卡片结果；输出固定 `production_effect=none`、`manual_review_only=true`、`dispatch_preview_only=true`、`read_only=true`，所有
     sent/Gmail/webhook/broker/replay/trading/pipeline flags 为 false；缺失或不安全真实输入必须 fail
     closed 为 `BLOCKED` 或 `SAFETY_BLOCKED`，不补造 upstream artifacts、不自动发送
-  - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-032 工程基线、临时 fixture WOULD_SEND
-    smoke、缺输入 BLOCKED smoke、目标测试和 scoped lint/format 均已通过，但当前缺真实 TRADING-031 delivery
-    preflight artifacts，不能把真实 artifact dispatch preview 观察并入 baseline 完成。'
-  docs_links:
-  - docs/requirements/operator_brief_notification_dispatch_preview_real_artifact_observation_2026-06-09.md
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-06-09:
+    新增并进入 BLOCKED_EXTERNAL，原因：TRADING-032 工程基线、临时 fixture WOULD_SEND smoke、缺输入 BLOCKED
+    smoke、目标测试和 scoped lint/format 均已通过，但当前缺真实 TRADING-031 delivery preflight artifacts，不能把真实
+    artifact dispatch preview 观察并入 baseline 完成。'
+  docs_links: []
   terminal: false
-  canonical_row_sha256: ce6aefb871dfb93168128820b6788176e45dbbd11ce5ed617aebe2a4a1288db4
-last_event_id: legacy-import-ce6aefb871dfb93168128820
+  canonical_row_sha256: fb8cfef6b9589ebc5722d7690d8e0b50818dfec37b4174b87b642ecceec40097
+last_event_id: task-event-f3b8a7d9bc5d191e338c09f37fe18873
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 2b783f02246b19ed0eed0b61c97ded53782e7f1c67950ca7c06d6ad6df83aad5
+fragment_checksum: f799dd095a33815000a3823f77b500ff0b6f82a9be21441f618b786f3d203054
