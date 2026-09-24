@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-597_to_604_B2_FINAL_EVIDENCE_AND_ROLE_DECISION
   task_id_sha256: 95ea45e6091b679d63bdd7bc35bace9a27ab6f79aee571ae69ecf1873298065d
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-597_to_604_B2_FINAL_EVIDENCE_AND_ROLE_DECISION
   title: null
   domain: ETF portfolio/weight research B2 final evidence and role decision
@@ -12,22 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-597_to_604_B2_Final_Evidence_and_Role_Decision.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-597_to_604_B2_Final_Evidence_and_Role_Decision.md`；在
-    TRADING-588~596 后完成 B2 current-form final evidence 和 role decision，检查是否存在第二个独立非
-    holdout slow_drawdown diagnostic window，验证 slow_drawdown edge 是否 repeatable，正式审查
-    fast-risk role deprecation，判断 signal-driven re-entry lag 的设计含义，重新分类 B2 role，输出
-    final research gate、owner packet 和 final branch snapshot；不得补造 repeatability window，不得调
-    B2 threshold/参数，不得使用 B3 slow tilt，不得运行 B3/B4/B5/B6/v3，不得访问 untouched holdout，不得生成
-    official target weights、paper-shadow activation、extended shadow、broker/order/live/production
-    mutation，不得自动 append owner decision
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 输出 `b2_slow_drawdown_evidence_completion.json/md`、`b2_slow_drawdown_edge_validation.json/md`、`b2_fast_risk_role_deprecation_review.json/md`、`b2_reentry_lag_design_implication.json/md`、`b2_role_reclassification.json/md`、`b2_final_research_gate.json/md`、`b2_research_line_owner_packet.json/md`
       和 `b2_branch_snapshot_final.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
       date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；single-window
@@ -37,7 +32,6 @@ task_record:
       diff --check` 通过
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 74470f612c603a6a7bff4ac49d818d99a6f72d0f43a4301c8ce354c84c625c95
   cell_count: 8
@@ -122,21 +116,53 @@ events:
   evidence_refs:
   - sha256:74470f612c603a6a7bff4ac49d818d99a6f72d0f43a4301c8ce354c84c625c95
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-597_to_604_B2_FINAL_EVIDENCE_AND_ROLE_DECISION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:59:15+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: a82fc70d175752379f71a068ec584f2589bea934
+  previous_state_event_id: legacy-import-74470f612c603a6a7bff4ac4
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 输出 `b2_slow_drawdown_evidence_completion.json/md`、`b2_slow_drawdown_edge_validation.json/md`、`b2_fast_risk_role_deprecation_review.json/md`、`b2_reentry_lag_design_implication.json/md`、`b2_role_reclassification.json/md`、`b2_final_research_gate.json/md`、`b2_research_line_owner_packet.json/md`
+      和 `b2_branch_snapshot_final.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
+      date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；single-window
+      slow_drawdown evidence 必须阻断 promising / narrow slow-drawdown module classification；fast-risk
+      evidence unsupported 时不得继续声称 fast asymmetric role；B4 retest 必须依赖 valid B3，B5
+      必须依赖 valid non-redundant B4，B6 必须依赖 valid B5；focused tests、JSON parse、ruff、compileall、`git
+      diff --check` 通过
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-19:
+      新增并进入 IN_PROGRESS，原因：TRADING-588~596 已确认 current B2 fast-risk role unsupported、slow_drawdown
+      positive evidence single-window-only、re-entry lag signal-driven；本批次需要给出 current-form
+      final evidence 与 role decision，并继续保持 `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、`paper_shadow_allowed=false`。2026-06-19:
+      实现完成并转入 VALIDATING；`b2-final-decision-research` 输出 TRADING-597=`B2_SLOW_DRAWDOWN_NO_ADDITIONAL_WINDOW`、598=`B2_SLOW_DRAWDOWN_EDGE_SINGLE_WINDOW_ONLY`、599=`B2_FAST_RISK_ROLE_DEPRECATED`、600=`B2_REENTRY_LAG_REQUIRES_DESIGN_REWORK`、601=`B2_RISK_OVERLAY_NEEDS_REDESIGN`、602=`B2_CURRENT_FORM_RETURN_TO_DESIGN`、603=`B2_RESEARCH_LINE_OWNER_PACKET_READY`、604=`RETURN_B2_TO_DESIGN`；current
+      catalog 没有第二个独立非 holdout slow_drawdown diagnostic window，single-window edge
+      阻断 promising/narrow module，current B2 fast-risk role deprecated，re-entry lag
+      需设计复核，final branch 返回 B2 design；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、`paper_shadow_allowed=false`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e7be03b0d15943009d33051c4ad88f6f
 projection:
   legacy_first_eight_cells:
   - TRADING-597_to_604_B2_FINAL_EVIDENCE_AND_ROLE_DECISION
   - ETF portfolio/weight research B2 final evidence and role decision
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详细拆解见 `docs/requirements/TRADING-597_to_604_B2_Final_Evidence_and_Role_Decision.md`；在
-    TRADING-588~596 后完成 B2 current-form final evidence 和 role decision，检查是否存在第二个独立非
-    holdout slow_drawdown diagnostic window，验证 slow_drawdown edge 是否 repeatable，正式审查
-    fast-risk role deprecation，判断 signal-driven re-entry lag 的设计含义，重新分类 B2 role，输出
-    final research gate、owner packet 和 final branch snapshot；不得补造 repeatability window，不得调
-    B2 threshold/参数，不得使用 B3 slow tilt，不得运行 B3/B4/B5/B6/v3，不得访问 untouched holdout，不得生成
-    official target weights、paper-shadow activation、extended shadow、broker/order/live/production
-    mutation，不得自动 append owner decision
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 输出 `b2_slow_drawdown_evidence_completion.json/md`、`b2_slow_drawdown_edge_validation.json/md`、`b2_fast_risk_role_deprecation_review.json/md`、`b2_reentry_lag_design_implication.json/md`、`b2_role_reclassification.json/md`、`b2_final_research_gate.json/md`、`b2_research_line_owner_packet.json/md`
     和 `b2_branch_snapshot_final.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
     date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；single-window
@@ -144,17 +170,17 @@ projection:
     evidence unsupported 时不得继续声称 fast asymmetric role；B4 retest 必须依赖 valid B3，B5 必须依赖
     valid non-redundant B4，B6 必须依赖 valid B5；focused tests、JSON parse、ruff、compileall、`git
     diff --check` 通过
-  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：TRADING-588~596 已确认 current B2 fast-risk role
-    unsupported、slow_drawdown positive evidence single-window-only、re-entry lag signal-driven；本批次需要给出
-    current-form final evidence 与 role decision，并继续保持 `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、`paper_shadow_allowed=false`。2026-06-19:
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-19:
+    新增并进入 IN_PROGRESS，原因：TRADING-588~596 已确认 current B2 fast-risk role unsupported、slow_drawdown
+    positive evidence single-window-only、re-entry lag signal-driven；本批次需要给出 current-form
+    final evidence 与 role decision，并继续保持 `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、`paper_shadow_allowed=false`。2026-06-19:
     实现完成并转入 VALIDATING；`b2-final-decision-research` 输出 TRADING-597=`B2_SLOW_DRAWDOWN_NO_ADDITIONAL_WINDOW`、598=`B2_SLOW_DRAWDOWN_EDGE_SINGLE_WINDOW_ONLY`、599=`B2_FAST_RISK_ROLE_DEPRECATED`、600=`B2_REENTRY_LAG_REQUIRES_DESIGN_REWORK`、601=`B2_RISK_OVERLAY_NEEDS_REDESIGN`、602=`B2_CURRENT_FORM_RETURN_TO_DESIGN`、603=`B2_RESEARCH_LINE_OWNER_PACKET_READY`、604=`RETURN_B2_TO_DESIGN`；current
     catalog 没有第二个独立非 holdout slow_drawdown diagnostic window，single-window edge 阻断
     promising/narrow module，current B2 fast-risk role deprecated，re-entry lag 需设计复核，final
     branch 返回 B2 design；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、`paper_shadow_allowed=false`。'
-  docs_links:
-  - docs/requirements/TRADING-597_to_604_B2_Final_Evidence_and_Role_Decision.md
-  terminal: false
-  canonical_row_sha256: 74470f612c603a6a7bff4ac49d818d99a6f72d0f43a4301c8ce354c84c625c95
-last_event_id: legacy-import-74470f612c603a6a7bff4ac4
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 57bace96dac8e5f3e3e095a48aee3f95ce6dfa2fc59f194d2b4f286ec5186957
+last_event_id: task-event-e7be03b0d15943009d33051c4ad88f6f
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 941cda7016a64198cac950e76e3086bd5f06e99bfc5b04c3e58f03b9193b7778
+fragment_checksum: ef3395caa7d66b7b7ed85f331852a67bbac81e47a9a573c1dede5638db0ad688
