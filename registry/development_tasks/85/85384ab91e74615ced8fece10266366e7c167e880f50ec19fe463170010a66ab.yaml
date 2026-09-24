@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2272_FIRST_LAYER_OBJECTIVE_AND_VALIDATION_REDESIGN
   task_id_sha256: 85384ab91e74615ced8fece10266366e7c167e880f50ec19fe463170010a66ab
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2272_FIRST_LAYER_OBJECTIVE_AND_VALIDATION_REDESIGN
   title: null
   domain: Research trends / first-layer objective and validation redesign
@@ -12,18 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2272_First_Layer_Objective_And_Validation_Redesign.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2272_First_Layer_Objective_And_Validation_Redesign.md`；附件要求把
-    TRADING-2270 failure taxonomy 和 TRADING-2271 proxy blocker 转成 objective / validation
-    contract，并审计 current first-layer performance gates 的 actual-path marginal utility。本批已生成
-    objective artifacts 和 gate audit artifacts，下一步是 owner 复核 recommended gate policy。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 `aits research trends first-layer-objective-validation-redesign`、`aits
       research trends first-layer-performance-gate-audit`、objective validation policy、performance
       gate audit policy、JSON/YAML/Markdown artifacts、report registry、artifact catalog、system
@@ -33,7 +32,6 @@ task_record:
       false/none/BLOCKED。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 56a643f5dba5c576af0d476c51dced25a9a1e7af985b60067543016b6717a77d
   cell_count: 8
@@ -109,34 +107,70 @@ events:
   evidence_refs:
   - sha256:56a643f5dba5c576af0d476c51dced25a9a1e7af985b60067543016b6717a77d
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2272_FIRST_LAYER_OBJECTIVE_AND_VALIDATION_REDESIGN
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:59:36+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: a779233c12d71ed4586300a7252ca88ad59c681c
+  previous_state_event_id: legacy-import-56a643f5dba5c576af0d476c
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 `aits research trends first-layer-objective-validation-redesign`、`aits
+      research trends first-layer-performance-gate-audit`、objective validation policy、performance
+      gate audit policy、JSON/YAML/Markdown artifacts、report registry、artifact catalog、system
+      flow 和 focused tests；每个 objective term 定义 measurement source、direction、current
+      baseline、validation role 和 promotion interpretation；gate audit 每个 gate 披露 marginal
+      utility、failure mode、opportunity cost 和 recommended action；所有 gate fields 固定
+      false/none/BLOCKED。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+      调整并进入 IN_PROGRESS；本批只定义 objective / validation contract，不训练模型、不改变 active gates。2026-06-28:
+      实现完成并转入 VALIDATING；真实 run objective_term_count=7、stress slice coverage=`3/4
+      slices covered`、true_breadth_replaced=false。2026-06-28: 验证通过 focused / governance
+      / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T124530Z/test_runtime_summary.json`。2026-06-28:
+      追加 gate audit；current_gate_accept_count=0，coverage gate negative、defensive regression
+      gate positive，其余 gates neutral/audit-only；验证通过 focused parallel pytest（50 passed）、docs
+      freshness 和 diff checks。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5e72c3863ac158ee856329ec2b42221b
 projection:
   legacy_first_eight_cells:
   - TRADING-2272_FIRST_LAYER_OBJECTIVE_AND_VALIDATION_REDESIGN
   - Research trends / first-layer objective and validation redesign
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2272_First_Layer_Objective_And_Validation_Redesign.md`；附件要求把
-    TRADING-2270 failure taxonomy 和 TRADING-2271 proxy blocker 转成 objective / validation
-    contract，并审计 current first-layer performance gates 的 actual-path marginal utility。本批已生成
-    objective artifacts 和 gate audit artifacts，下一步是 owner 复核 recommended gate policy。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 `aits research trends first-layer-objective-validation-redesign`、`aits research
     trends first-layer-performance-gate-audit`、objective validation policy、performance
     gate audit policy、JSON/YAML/Markdown artifacts、report registry、artifact catalog、system
     flow 和 focused tests；每个 objective term 定义 measurement source、direction、current
     baseline、validation role 和 promotion interpretation；gate audit 每个 gate 披露 marginal
     utility、failure mode、opportunity cost 和 recommended action；所有 gate fields 固定 false/none/BLOCKED。
-  - '2026-06-28: 调整并进入 IN_PROGRESS；本批只定义 objective / validation contract，不训练模型、不改变
-    active gates。2026-06-28: 实现完成并转入 VALIDATING；真实 run objective_term_count=7、stress
-    slice coverage=`3/4 slices covered`、true_breadth_replaced=false。2026-06-28: 验证通过
-    focused / governance / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T124530Z/test_runtime_summary.json`。2026-06-28:
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+    调整并进入 IN_PROGRESS；本批只定义 objective / validation contract，不训练模型、不改变 active gates。2026-06-28:
+    实现完成并转入 VALIDATING；真实 run objective_term_count=7、stress slice coverage=`3/4 slices
+    covered`、true_breadth_replaced=false。2026-06-28: 验证通过 focused / governance / contract-validation，runtime
+    artifact=`outputs/validation_runtime/contract-validation_20260628T124530Z/test_runtime_summary.json`。2026-06-28:
     追加 gate audit；current_gate_accept_count=0，coverage gate negative、defensive regression
     gate positive，其余 gates neutral/audit-only；验证通过 focused parallel pytest（50 passed）、docs
     freshness 和 diff checks。'
-  docs_links:
-  - docs/requirements/TRADING-2272_First_Layer_Objective_And_Validation_Redesign.md
-  terminal: false
-  canonical_row_sha256: 56a643f5dba5c576af0d476c51dced25a9a1e7af985b60067543016b6717a77d
-last_event_id: legacy-import-56a643f5dba5c576af0d476c
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 956c11d8f83b40b1ae99c727770f2243f0be85e2ae70cc0f45f6a5caa0c12d44
+last_event_id: task-event-5e72c3863ac158ee856329ec2b42221b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: be4860c99eb3f6eb8417cdb7865ab2e03f85ba379ee38e6a0d7c38016173d586
+fragment_checksum: 6cafc46c613a3faab4c677a3e7c851296257d80642a8eb4a9dc429cf8882e195
