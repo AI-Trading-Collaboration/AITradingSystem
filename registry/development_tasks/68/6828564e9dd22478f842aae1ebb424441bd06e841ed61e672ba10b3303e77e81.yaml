@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-840_INDEPENDENT_TRIGGER_V2_CANDIDATE_BUILDER
   task_id_sha256: 6828564e9dd22478f842aae1ebb424441bd06e841ed61e672ba10b3303e77e81
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-840_INDEPENDENT_TRIGGER_V2_CANDIDATE_BUILDER
   title: null
   domain: Controlled strategy research / independent trigger v2 candidate builder
@@ -12,22 +13,21 @@ task_record:
   created_by: null
   priority: P2
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
-    TRADING-829、830、841；trigger v2 不得用旧 label/case 或 future outcome
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 CLI `aits research strategies tail-risk-independent-trigger-v2-builder`；只用
       decision_time 前可见 price trend/drawdown/realized vol/MA distance/proxy inputs，输出
       candidate list、dependencies、time-window contract 和 CANDIDATE_* 状态
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: b5a0cfb40c4c78c8f11f04c73f3f803cb7dbefe28060894f199a3f0a8ffc4564
   cell_count: 8
@@ -86,27 +86,59 @@ events:
   evidence_refs:
   - sha256:b5a0cfb40c4c78c8f11f04c73f3f803cb7dbefe28060894f199a3f0a8ffc4564
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-840_INDEPENDENT_TRIGGER_V2_CANDIDATE_BUILDER
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:27:36+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 92812dc3d65a5ac0e46ebd76e83d8869f1a02835
+  previous_state_event_id: legacy-import-b5a0cfb40c4c78c8f11f04c7
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 CLI `aits research strategies tail-risk-independent-trigger-v2-builder`；只用
+      decision_time 前可见 price trend/drawdown/realized vol/MA distance/proxy inputs，输出
+      candidate list、dependencies、time-window contract 和 CANDIDATE_* 状态
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+      按附件任务包登记为第三批 P2。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
+      registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused
+      pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation
+      190 passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
+      和 git diff --check。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-68de3e99f1406b2089807a8154ef5c13
 projection:
   legacy_first_eight_cells:
   - TRADING-840_INDEPENDENT_TRIGGER_V2_CANDIDATE_BUILDER
   - Controlled strategy research / independent trigger v2 candidate builder
   - P2
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
-    TRADING-829、830、841；trigger v2 不得用旧 label/case 或 future outcome
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 CLI `aits research strategies tail-risk-independent-trigger-v2-builder`；只用
     decision_time 前可见 price trend/drawdown/realized vol/MA distance/proxy inputs，输出
     candidate list、dependencies、time-window contract 和 CANDIDATE_* 状态
-  - '2026-06-22: 按附件任务包登记为第三批 P2。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+    按附件任务包登记为第三批 P2。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
     registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused
     pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation 190
     passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
     和 git diff --check。'
-  docs_links:
-  - docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md
-  terminal: false
-  canonical_row_sha256: b5a0cfb40c4c78c8f11f04c73f3f803cb7dbefe28060894f199a3f0a8ffc4564
-last_event_id: legacy-import-b5a0cfb40c4c78c8f11f04c7
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 8642cda7c71b0f2c6c039dfefbcac302caec0fc310b171fa2162456abb3ef54e
+last_event_id: task-event-68de3e99f1406b2089807a8154ef5c13
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 4dc922c684b0412a6b4f999b93eb878102cd27af256b84d91e8fd2688f3db1cd
+fragment_checksum: 2cc1f123202d2116903b12f6563ec889aa63203323f0a5eed03654f83ed99159
