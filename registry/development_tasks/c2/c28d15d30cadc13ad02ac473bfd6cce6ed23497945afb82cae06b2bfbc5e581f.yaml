@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2290_REFINED_CANDIDATE_LOCAL_EDGE_SCOPE_NARROWING_REVIEW
   task_id_sha256: c28d15d30cadc13ad02ac473bfd6cce6ed23497945afb82cae06b2bfbc5e581f
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2290_REFINED_CANDIDATE_LOCAL_EDGE_SCOPE_NARROWING_REVIEW
   title: null
   domain: Research trends / refined candidate local edge and scope narrowing review
@@ -12,19 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2290_Refined_Candidate_Local_Edge_and_Scope_Narrowing_Review.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2290_Refined_Candidate_Local_Edge_and_Scope_Narrowing_Review.md`；依赖
-    TRADING-2289 refined actual-path validation outputs、TRADING-2288 refined generation
-    artifacts 和 TRADING-2287 guardrails / refinement plan。本批只做 local edge / scope
-    narrowing review 和 risk_appetite current-form reject record，不生成 owner review package、不重跑
-    actual-path validation、不修改 generator。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 `aits research trends refined-candidate-local-edge-scope-review`；生成 candidate
       local edge、asset/horizon/direction/high-conviction/regime/false-cost scope matrices、scope
       narrowing recommendation、risk_appetite reject record、next-task recommendation、decision
@@ -32,7 +30,6 @@ task_record:
       promotion/paper-shadow/production/broker false/none。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 4c81093a867a06b4d25f9131d8fff29a096976f6932a15129ff2adaa2f490631
   cell_count: 8
@@ -107,34 +104,67 @@ events:
   evidence_refs:
   - sha256:4c81093a867a06b4d25f9131d8fff29a096976f6932a15129ff2adaa2f490631
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2290_REFINED_CANDIDATE_LOCAL_EDGE_SCOPE_NARROWING_REVIEW
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:02:49+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: baa9e6c719418dc9295d31f69abe72b5fb423e55
+  previous_state_event_id: legacy-import-4c81093a867a06b4d25f9131
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 `aits research trends refined-candidate-local-edge-scope-review`；生成
+      candidate local edge、asset/horizon/direction/high-conviction/regime/false-cost
+      scope matrices、scope narrowing recommendation、risk_appetite reject record、next-task
+      recommendation、decision summary 和 research docs；input/output safety gates fail
+      closed；所有 outputs 固定 promotion/paper-shadow/production/broker false/none。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-30:
+      根据 owner 附件新增并进入 IN_PROGRESS；2026-06-30: 实现完成并转入 VALIDATING，真实 run actual-path
+      records=95,220、validation eligible=73,188、data quality=`PASS_WITH_WARNINGS`；baseline_plus_trend_structure=`LOCAL_EDGE_PRESENT`
+      / `SCOPE_NARROW_AND_REGENERATE` / `confirmation_only`，volatility_regime=`LOCAL_EDGE_WEAK`
+      / `SCOPE_NARROW_AND_REGENERATE` / `risk_cap_only`，risk_appetite=`LOCAL_EDGE_NOT_FOUND`
+      / `REJECT_CURRENT_FORM` / archive current form；验证通过 Ruff、compileall、focused
+      parallel pytest 34 passed、full parallel pytest 3664 passed、docs freshness、documentation
+      contract、contract-validation 193 passed 和 `git diff --check`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f8b84444709c06a8a781869825b93d90
 projection:
   legacy_first_eight_cells:
   - TRADING-2290_REFINED_CANDIDATE_LOCAL_EDGE_SCOPE_NARROWING_REVIEW
   - Research trends / refined candidate local edge and scope narrowing review
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2290_Refined_Candidate_Local_Edge_and_Scope_Narrowing_Review.md`；依赖
-    TRADING-2289 refined actual-path validation outputs、TRADING-2288 refined generation
-    artifacts 和 TRADING-2287 guardrails / refinement plan。本批只做 local edge / scope
-    narrowing review 和 risk_appetite current-form reject record，不生成 owner review package、不重跑
-    actual-path validation、不修改 generator。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 `aits research trends refined-candidate-local-edge-scope-review`；生成 candidate
     local edge、asset/horizon/direction/high-conviction/regime/false-cost scope matrices、scope
     narrowing recommendation、risk_appetite reject record、next-task recommendation、decision
     summary 和 research docs；input/output safety gates fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker
     false/none。
-  - '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；2026-06-30: 实现完成并转入 VALIDATING，真实 run
-    actual-path records=95,220、validation eligible=73,188、data quality=`PASS_WITH_WARNINGS`；baseline_plus_trend_structure=`LOCAL_EDGE_PRESENT`
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-30:
+    根据 owner 附件新增并进入 IN_PROGRESS；2026-06-30: 实现完成并转入 VALIDATING，真实 run actual-path
+    records=95,220、validation eligible=73,188、data quality=`PASS_WITH_WARNINGS`；baseline_plus_trend_structure=`LOCAL_EDGE_PRESENT`
     / `SCOPE_NARROW_AND_REGENERATE` / `confirmation_only`，volatility_regime=`LOCAL_EDGE_WEAK`
     / `SCOPE_NARROW_AND_REGENERATE` / `risk_cap_only`，risk_appetite=`LOCAL_EDGE_NOT_FOUND`
     / `REJECT_CURRENT_FORM` / archive current form；验证通过 Ruff、compileall、focused parallel
     pytest 34 passed、full parallel pytest 3664 passed、docs freshness、documentation
     contract、contract-validation 193 passed 和 `git diff --check`。'
-  docs_links:
-  - docs/requirements/TRADING-2290_Refined_Candidate_Local_Edge_and_Scope_Narrowing_Review.md
-  terminal: false
-  canonical_row_sha256: 4c81093a867a06b4d25f9131d8fff29a096976f6932a15129ff2adaa2f490631
-last_event_id: legacy-import-4c81093a867a06b4d25f9131
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: df84e17fa82b7623fafe65819469d359fe4ead30ab209ed99c0c4444d3e8f77d
+last_event_id: task-event-f8b84444709c06a8a781869825b93d90
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 703729c8563c4e1a409458e23460ab360dc00fdf3ebb8614b45b51c2b010525a
+fragment_checksum: 2ae00092a73747bbd6dd66171768608d728716e3248e306324c8b371335b54f9
