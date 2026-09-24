@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1506_to_1525_EXPANDED_QQQ_SGOV_TQQQ_ALLOCATION_SEARCH
   task_id_sha256: a97a1f35a93bfbdbaf87974bcdc73265148d3f090472ca3f01f0a50951f603ca
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1506_to_1525_EXPANDED_QQQ_SGOV_TQQQ_ALLOCATION_SEARCH
   title: null
   domain: Research strategies / expanded allocation universe, static simplex frontier,
@@ -13,17 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-1506_to_1525_Expanded_QQQ_SGOV_TQQQ_Allocation_Search.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1506_to_1525_Expanded_QQQ_SGOV_TQQQ_Allocation_Search.md`；本批重新打开
-    QQQ / SGOV / TQQQ expanded universe research，但不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker；TQQQ
-    只能作为 research asset，promotion universe 保持 blocked
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 `config/research/expanded_allocation_universe.yaml`、scope/TQQQ review
       文档、static simplex grid index/metrics/frontier/risk-bucket summary、risk bucket
       representatives、state portfolio candidates、actual-path rebacktest leaderboard、target-path
@@ -36,7 +36,6 @@ task_record:
       tests 同步
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 07ff15418ef4167c72210980b7e58255c6dec95fd8e3b21c2b0222ebfb32f32c
   cell_count: 8
@@ -111,17 +110,55 @@ events:
   evidence_refs:
   - sha256:07ff15418ef4167c72210980b7e58255c6dec95fd8e3b21c2b0222ebfb32f32c
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1506_to_1525_EXPANDED_QQQ_SGOV_TQQQ_ALLOCATION_SEARCH
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:57:15+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 868daa827d28e38db147acce4fa9f0d75cc863e9
+  previous_state_event_id: legacy-import-07ff15418ef4167c72210980
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 `config/research/expanded_allocation_universe.yaml`、scope/TQQQ
+      review 文档、static simplex grid index/metrics/frontier/risk-bucket summary、risk
+      bucket representatives、state portfolio candidates、actual-path rebacktest leaderboard、target-path
+      diagnostic、TQQQ risk attribution、same-risk comparison、survival/walk-forward/net-cost/stress/owner
+      review artifacts；真实 run：static grid size=231、frontier rows=509、actual-path strategy
+      count=11、surviving candidate count=0、data_quality_status=`PASS_WITH_WARNINGS`；所有
+      outputs 声明 `ai_after_chatgpt`、actual requested date range、data quality status、actual-path-only
+      ranking、target-path diagnostic-only、promotion `BLOCKED`、paper-shadow/production/broker
+      disabled；report registry、artifact catalog、system flow、task register 和 focused
+      tests 同步
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+      新增并进入 IN_PROGRESS，原因：owner 附件要求从二档 `limited_adjustment` 扩展到 QQQ / SGOV / TQQQ
+      三资产 simplex 与 state-to-portfolio candidate research；本阶段只生成 research evidence，dynamic
+      promotion 继续 `BLOCKED`。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI 链路完成 scope/TQQQ
+      review、static grid/frontier、bucket/candidate、actual-path rebacktest 和 owner
+      pack，promotion 仍 `BLOCKED`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a85175b5bc38e4dc2f6f29e549a2ea33
 projection:
   legacy_first_eight_cells:
   - TRADING-1506_to_1525_EXPANDED_QQQ_SGOV_TQQQ_ALLOCATION_SEARCH
   - Research strategies / expanded allocation universe, static simplex frontier, actual-path
     dynamic candidate search
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1506_to_1525_Expanded_QQQ_SGOV_TQQQ_Allocation_Search.md`；本批重新打开
-    QQQ / SGOV / TQQQ expanded universe research，但不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker；TQQQ
-    只能作为 research asset，promotion universe 保持 blocked
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 `config/research/expanded_allocation_universe.yaml`、scope/TQQQ review 文档、static
     simplex grid index/metrics/frontier/risk-bucket summary、risk bucket representatives、state
     portfolio candidates、actual-path rebacktest leaderboard、target-path diagnostic、TQQQ
@@ -132,15 +169,15 @@ projection:
     ranking、target-path diagnostic-only、promotion `BLOCKED`、paper-shadow/production/broker
     disabled；report registry、artifact catalog、system flow、task register 和 focused
     tests 同步
-  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求从二档 `limited_adjustment` 扩展到 QQQ /
-    SGOV / TQQQ 三资产 simplex 与 state-to-portfolio candidate research；本阶段只生成 research
-    evidence，dynamic promotion 继续 `BLOCKED`。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI
-    链路完成 scope/TQQQ review、static grid/frontier、bucket/candidate、actual-path rebacktest
-    和 owner pack，promotion 仍 `BLOCKED`。'
-  docs_links:
-  - docs/requirements/TRADING-1506_to_1525_Expanded_QQQ_SGOV_TQQQ_Allocation_Search.md
-  terminal: false
-  canonical_row_sha256: 07ff15418ef4167c72210980b7e58255c6dec95fd8e3b21c2b0222ebfb32f32c
-last_event_id: legacy-import-07ff15418ef4167c72210980
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+    新增并进入 IN_PROGRESS，原因：owner 附件要求从二档 `limited_adjustment` 扩展到 QQQ / SGOV / TQQQ
+    三资产 simplex 与 state-to-portfolio candidate research；本阶段只生成 research evidence，dynamic
+    promotion 继续 `BLOCKED`。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI 链路完成 scope/TQQQ review、static
+    grid/frontier、bucket/candidate、actual-path rebacktest 和 owner pack，promotion 仍
+    `BLOCKED`。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: e511a718310ec660cf5f85efee425e6cb893115d2a3e464fa9bc4fb94af3b443
+last_event_id: task-event-a85175b5bc38e4dc2f6f29e549a2ea33
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 00c1d846a31d89ddb88b95938f0a88a4ee09b0f2f4db61e243767c434f565698
+fragment_checksum: 3a381236332f6ffcf3cea21a52321b20c9189e55d35c62d5a83d32321fee200d
