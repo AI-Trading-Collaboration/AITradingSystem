@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-102_to_110
   task_id_sha256: 234f0cd7c86d2fd1ac5892fc577c82687f82aafdd4e9458fec8a906b8d3ca047
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-102_to_110
   title: null
   domain: ETF portfolio research/Dynamic v3 Rescue Stable Real Parameter Iteration
@@ -13,25 +14,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统验证 + 项目 owner 人工复核
-  requirement_refs:
-  - docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md`；baseline
-    已完成 data audit、small_real profile、candidate attribution、true walk-forward selection、overfit
-    control、parameter governance、research index、shadow monitor和promotion pack；G2.4P已完成injection
-    audit OFAT matched-pair正确性修复，下一步需在当前真实cache上运行完整20-candidate audit重建逐参数证据，再由owner复核0.65
-    workflow-smoke gate、provenance warning与attribution/overfit限制
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 默认候选前8项必须为共同base+7个逐轴pair，effect只由其他required轴相同的pair计算，独立parameter effect
       artifact存在；无pair不得形成有效结论且validation FAIL；当前真实20-candidate重跑及对应validation PASS后，方可恢复逐参数效果结论；其余第13.2
       gates、文档、focused/architecture继续PASS
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: ad1454b18044cb6d2989d8e2b15288b07dbfe79910b62a774b115e379022697b
   cell_count: 8
@@ -89,28 +86,55 @@ events:
   evidence_refs:
   - sha256:ad1454b18044cb6d2989d8e2b15288b07dbfe79910b62a774b115e379022697b
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-102_to_110
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:47:02+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 6e9e0475e07f9244ddfd406fd0db457036625d6d
+  previous_state_event_id: legacy-import-ad1454b18044cb6d2989d8e2
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 默认候选前8项必须为共同base+7个逐轴pair，effect只由其他required轴相同的pair计算，独立parameter
+      effect artifact存在；无pair不得形成有效结论且validation FAIL；当前真实20-candidate重跑及对应validation
+      PASS后，方可恢复逐参数效果结论；其余第13.2 gates、文档、focused/architecture继续PASS
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-06:
+      实现完成并进入 VALIDATING，既有small_real artifacts生成且promotion保持incomplete。2026-07-11:
+      G2.4P发现旧effect summary跨参数混杂和grid轴覆盖风险，旧artifact降级为workflow-only证据。2026-07-11:
+      OFAT修复、CLI迁移、独立summary与fail-closed validation完成；保持VALIDATING，等待当前真实cache 20-candidate重跑。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a24bc3acbc76c9183dcf6791305e3d20
 projection:
   legacy_first_eight_cells:
   - TRADING-102_to_110
   - ETF portfolio research/Dynamic v3 Rescue Stable Real Parameter Iteration Backtest
     Loop
   - P0
-  - VALIDATING
-  - 系统验证 + 项目 owner 人工复核
-  - 详细拆解见 `docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md`；baseline
-    已完成 data audit、small_real profile、candidate attribution、true walk-forward selection、overfit
-    control、parameter governance、research index、shadow monitor和promotion pack；G2.4P已完成injection
-    audit OFAT matched-pair正确性修复，下一步需在当前真实cache上运行完整20-candidate audit重建逐参数证据，再由owner复核0.65
-    workflow-smoke gate、provenance warning与attribution/overfit限制
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 默认候选前8项必须为共同base+7个逐轴pair，effect只由其他required轴相同的pair计算，独立parameter effect artifact存在；无pair不得形成有效结论且validation
     FAIL；当前真实20-candidate重跑及对应validation PASS后，方可恢复逐参数效果结论；其余第13.2 gates、文档、focused/architecture继续PASS
-  - '2026-06-06: 实现完成并进入 VALIDATING，既有small_real artifacts生成且promotion保持incomplete。2026-07-11:
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-06:
+    实现完成并进入 VALIDATING，既有small_real artifacts生成且promotion保持incomplete。2026-07-11:
     G2.4P发现旧effect summary跨参数混杂和grid轴覆盖风险，旧artifact降级为workflow-only证据。2026-07-11:
     OFAT修复、CLI迁移、独立summary与fail-closed validation完成；保持VALIDATING，等待当前真实cache 20-candidate重跑。'
-  docs_links:
-  - docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
-  terminal: false
-  canonical_row_sha256: ad1454b18044cb6d2989d8e2b15288b07dbfe79910b62a774b115e379022697b
-last_event_id: legacy-import-ad1454b18044cb6d2989d8e2
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 658f3f1ff685d724a0d80ac8cc7219755909202f013a128f50076c484009dd3e
+last_event_id: task-event-a24bc3acbc76c9183dcf6791305e3d20
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 16cd30f7264f36576527b0f9c7a9ff67569ec95b82c85250352e582c20f56924
+fragment_checksum: 24c80958c983193a6efd3385f58f1807268bb32c401e956fb6a52a15d65c1180
