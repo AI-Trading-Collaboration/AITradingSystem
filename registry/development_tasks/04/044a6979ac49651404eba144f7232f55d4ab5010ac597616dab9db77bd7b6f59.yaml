@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-821_VALIDATION_RUNTIME_CONTROLLED_STRATEGY_SPLIT
   task_id_sha256: 044a6979ac49651404eba144f7232f55d4ab5010ac597616dab9db77bd7b6f59
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-821_VALIDATION_RUNTIME_CONTROLLED_STRATEGY_SPLIT
   title: null
   domain: Developer validation / controlled strategy pytest runtime optimization
@@ -12,19 +13,16 @@ task_record:
   created_by: null
   priority: P2
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-821_Validation_Runtime_Controlled_Strategy_Split.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-821_Validation_Runtime_Controlled_Strategy_Split.md`；当前
-    `tests/test_controlled_strategy_batch.py` 在 `pytest-xdist --dist loadfile` 下成为单文件瓶颈，导致
-    16 worker 无法有效分摊，且 `fast-unit` / `contract-validation` 均重复承担约 9 分钟 controlled
-    strategy suite；本任务只优化测试文件组织和 validation tier 路径，不改变策略逻辑、CLI 行为、report/artifact
-    schema、质量门或投资解释
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 将 controlled strategy batch 测试按主题拆成多个 `test_controlled_strategy_*.py` 文件，使现有
       `--dist loadfile` 能并行调度；公共 fixtures/helpers 必须抽到非 test helper 模块；`fast-unit`
       与 `contract-validation` 仍覆盖全部拆分后的 controlled strategy tests；验证需包含拆分后的 focused
@@ -32,7 +30,6 @@ task_record:
       artifacts 仍固定 `production_effect=none`，不得改变 validation tier safety boundary
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 6ff3b089003d1a2bb44c62018b2bc5ad89fd827be10ec2eb1e8e9f90ec1de82c
   cell_count: 8
@@ -110,24 +107,59 @@ events:
   evidence_refs:
   - sha256:6ff3b089003d1a2bb44c62018b2bc5ad89fd827be10ec2eb1e8e9f90ec1de82c
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-821_VALIDATION_RUNTIME_CONTROLLED_STRATEGY_SPLIT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:22:00+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 881653e1c67973cb0b14cac687969d0fa28bc527
+  previous_state_event_id: legacy-import-6ff3b089003d1a2bb44c6201
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 将 controlled strategy batch 测试按主题拆成多个 `test_controlled_strategy_*.py`
+      文件，使现有 `--dist loadfile` 能并行调度；公共 fixtures/helpers 必须抽到非 test helper 模块；`fast-unit`
+      与 `contract-validation` 仍覆盖全部拆分后的 controlled strategy tests；验证需包含拆分后的 focused
+      parallel pytest、`fast-unit`、`contract-validation`，并记录 runtime 对比；所有 runtime
+      artifacts 仍固定 `production_effect=none`，不得改变 validation tier safety boundary
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+      新增并进入 IN_PROGRESS；原因：TRADING-816～820 验证显示主要耗时来自 `tests/test_controlled_strategy_batch.py`
+      被完整 pytest、fast-unit、contract-validation 重复执行，且单文件在 `loadfile` 调度下无法充分并行。2026-06-22:
+      实现完成并转入 VALIDATING；将原 73 个 controlled strategy tests 拆为 `test_controlled_strategy_value_surface.py`、`test_controlled_strategy_regime_horizon.py`、`test_controlled_strategy_tail_risk_policy.py`、`test_controlled_strategy_candidate_batch.py`
+      和保留 CLI/registry 契约的 `test_controlled_strategy_batch.py`，公共 helper 抽到 `tests/controlled_strategy_batch_helpers.py`；`fast-unit`
+      和 `contract-validation` 均显式包含 5 个拆分文件，`--dist loadfile` 默认不变。拆分后 focused controlled
+      strategy pytest 73 passed，用时 132.52s，对比拆分前 552.17s，缩短约 76.0%；`fast-unit` 178
+      passed，用时 136.55s，对比 549.89s，缩短约 75.2%；`contract-validation` 177 passed，用时 138.91s，对比
+      559.78s，缩短约 75.2%。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T162455Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T162717Z/test_runtime_summary.json`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f63e2cc5a543369d2af5b1892845b0e1
 projection:
   legacy_first_eight_cells:
   - TRADING-821_VALIDATION_RUNTIME_CONTROLLED_STRATEGY_SPLIT
   - Developer validation / controlled strategy pytest runtime optimization
   - P2
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-821_Validation_Runtime_Controlled_Strategy_Split.md`；当前
-    `tests/test_controlled_strategy_batch.py` 在 `pytest-xdist --dist loadfile` 下成为单文件瓶颈，导致
-    16 worker 无法有效分摊，且 `fast-unit` / `contract-validation` 均重复承担约 9 分钟 controlled
-    strategy suite；本任务只优化测试文件组织和 validation tier 路径，不改变策略逻辑、CLI 行为、report/artifact
-    schema、质量门或投资解释
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 将 controlled strategy batch 测试按主题拆成多个 `test_controlled_strategy_*.py` 文件，使现有 `--dist
     loadfile` 能并行调度；公共 fixtures/helpers 必须抽到非 test helper 模块；`fast-unit` 与 `contract-validation`
     仍覆盖全部拆分后的 controlled strategy tests；验证需包含拆分后的 focused parallel pytest、`fast-unit`、`contract-validation`，并记录
     runtime 对比；所有 runtime artifacts 仍固定 `production_effect=none`，不得改变 validation tier
     safety boundary
-  - '2026-06-22: 新增并进入 IN_PROGRESS；原因：TRADING-816～820 验证显示主要耗时来自 `tests/test_controlled_strategy_batch.py`
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+    新增并进入 IN_PROGRESS；原因：TRADING-816～820 验证显示主要耗时来自 `tests/test_controlled_strategy_batch.py`
     被完整 pytest、fast-unit、contract-validation 重复执行，且单文件在 `loadfile` 调度下无法充分并行。2026-06-22:
     实现完成并转入 VALIDATING；将原 73 个 controlled strategy tests 拆为 `test_controlled_strategy_value_surface.py`、`test_controlled_strategy_regime_horizon.py`、`test_controlled_strategy_tail_risk_policy.py`、`test_controlled_strategy_candidate_batch.py`
     和保留 CLI/registry 契约的 `test_controlled_strategy_batch.py`，公共 helper 抽到 `tests/controlled_strategy_batch_helpers.py`；`fast-unit`
@@ -135,10 +167,9 @@ projection:
     strategy pytest 73 passed，用时 132.52s，对比拆分前 552.17s，缩短约 76.0%；`fast-unit` 178 passed，用时
     136.55s，对比 549.89s，缩短约 75.2%；`contract-validation` 177 passed，用时 138.91s，对比 559.78s，缩短约
     75.2%。Runtime artifacts：`outputs/validation_runtime/fast-unit_20260621T162455Z/test_runtime_summary.json`、`outputs/validation_runtime/contract-validation_20260621T162717Z/test_runtime_summary.json`。'
-  docs_links:
-  - docs/requirements/TRADING-821_Validation_Runtime_Controlled_Strategy_Split.md
-  terminal: false
-  canonical_row_sha256: 6ff3b089003d1a2bb44c62018b2bc5ad89fd827be10ec2eb1e8e9f90ec1de82c
-last_event_id: legacy-import-6ff3b089003d1a2bb44c6201
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: aceb532e354d6eef89ed35c1880d4c9d896d68d6c1d4cb1b46e28458884f0540
+last_event_id: task-event-f63e2cc5a543369d2af5b1892845b0e1
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 3671d478ee1ca176aa8772134f83d0ca5d16695042f1d67975583a1302fcb0ae
+fragment_checksum: 2355ded8c124795eae2d3dc76a07f9709dcea4a12cb8ef8e131e089e819fc17a
