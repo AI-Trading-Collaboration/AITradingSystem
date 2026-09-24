@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1706_to_1715_RESEARCH_WINDOW_ADOPTION_CLOSEOUT
   task_id_sha256: 57dcdfebc0736979024c9ef4dc0cce3e8df4ff44fe891a1294068105081ba4d1
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1706_to_1715_RESEARCH_WINDOW_ADOPTION_CLOSEOUT
   title: null
   domain: Research windows / primary window adoption and post-1665 audit discipline
@@ -12,18 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-1706_to_1715_Research_Window_Adoption_Closeout.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1706_to_1715_Research_Window_Adoption_Closeout.md`；owner
-    附件原编号 TRADING-1666～1675 与已完成 upper-state reset 冲突，本批重编号为 1706～1715；承接 `WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT_PROMOTION_BLOCKED`，已把
-    2021-02-22 primary window 正式设为后续 research default，并把 legacy / sensitivity / requested
-    inception 的用途边界写入 policy、artifact 和测试
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 research window adoption closeout、legacy evidence reclassification、primary
       research window policy、research audit metadata schema、window-aware selection
       rule templates、owner brief、post-window-extension closeout/final matrix、report
@@ -34,7 +33,6 @@ task_record:
       blocked/false/none
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: f5c5b940e102cee38be18d30a3f093d5aef093e2d05dc8635915e5d74c1a9928
   cell_count: 8
@@ -102,17 +100,51 @@ events:
   evidence_refs:
   - sha256:f5c5b940e102cee38be18d30a3f093d5aef093e2d05dc8635915e5d74c1a9928
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1706_to_1715_RESEARCH_WINDOW_ADOPTION_CLOSEOUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:02:26+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 1444c1d4870a82382767d0e6eeaacdbaa189f0fa
+  previous_state_event_id: legacy-import-f5c5b940e102cee38be18d30
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 research window adoption closeout、legacy evidence reclassification、primary
+      research window policy、research audit metadata schema、window-aware selection
+      rule templates、owner brief、post-window-extension closeout/final matrix、report
+      registry、artifact catalog、system flow、task register 和 guardrail tests；已证明 primary
+      leaderboard 必须用 primary window、legacy results comparison-only、sensitivity requires
+      caveat、requested 2020-05-26 metadata-only、post-1665 artifact requires research_audit_metadata、legacy
+      overfit blocks promotion；dynamic promotion、paper-shadow、production、broker 固定
+      blocked/false/none
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+      新增并进入 IN_PROGRESS，原因：owner 要求完成 research window adoption closeout；前置 TRADING-1646～1665
+      已完成且 final status=`WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT_PROMOTION_BLOCKED`。2026-06-28:
+      实现完成并转入 VALIDATING；验证通过 Ruff、compileall、focused parallel pytest、artifact governance
+      pytest、documentation contract pytest 和 `git diff --check`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8fdadeff25eb227edf5f28380f234101
 projection:
   legacy_first_eight_cells:
   - TRADING-1706_to_1715_RESEARCH_WINDOW_ADOPTION_CLOSEOUT
   - Research windows / primary window adoption and post-1665 audit discipline
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1706_to_1715_Research_Window_Adoption_Closeout.md`；owner
-    附件原编号 TRADING-1666～1675 与已完成 upper-state reset 冲突，本批重编号为 1706～1715；承接 `WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT_PROMOTION_BLOCKED`，已把
-    2021-02-22 primary window 正式设为后续 research default，并把 legacy / sensitivity / requested
-    inception 的用途边界写入 policy、artifact 和测试
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 research window adoption closeout、legacy evidence reclassification、primary
     research window policy、research audit metadata schema、window-aware selection rule
     templates、owner brief、post-window-extension closeout/final matrix、report registry、artifact
@@ -120,14 +152,14 @@ projection:
     primary window、legacy results comparison-only、sensitivity requires caveat、requested
     2020-05-26 metadata-only、post-1665 artifact requires research_audit_metadata、legacy
     overfit blocks promotion；dynamic promotion、paper-shadow、production、broker 固定 blocked/false/none
-  - '2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 要求完成 research window adoption closeout；前置
-    TRADING-1646～1665 已完成且 final status=`WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT_PROMOTION_BLOCKED`。2026-06-28:
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+    新增并进入 IN_PROGRESS，原因：owner 要求完成 research window adoption closeout；前置 TRADING-1646～1665
+    已完成且 final status=`WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT_PROMOTION_BLOCKED`。2026-06-28:
     实现完成并转入 VALIDATING；验证通过 Ruff、compileall、focused parallel pytest、artifact governance
     pytest、documentation contract pytest 和 `git diff --check`。'
-  docs_links:
-  - docs/requirements/TRADING-1706_to_1715_Research_Window_Adoption_Closeout.md
-  terminal: false
-  canonical_row_sha256: f5c5b940e102cee38be18d30a3f093d5aef093e2d05dc8635915e5d74c1a9928
-last_event_id: legacy-import-f5c5b940e102cee38be18d30
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: f393e185acfc438c9ba58595d54e466f04fd6efb49b91b07577ae44e4b489066
+last_event_id: task-event-8fdadeff25eb227edf5f28380f234101
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b16d06fc4cdd6193326ae284043a1efe9e80c09930e33bbf653d1740bb5105af
+fragment_checksum: f306c33bf5ddf4997a93afd8a5f3ded7c1d50fa9d55a866a5f0a1077f24a2ade
