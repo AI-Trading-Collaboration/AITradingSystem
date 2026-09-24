@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2309_AI_LEADERSHIP_ACTUAL_PATH_VALIDATION
   task_id_sha256: 7abf0ab41f1f87ecae6bb042146d62615683c7181a1406d6e09744474e6237e1
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2309_AI_LEADERSHIP_ACTUAL_PATH_VALIDATION
   title: null
   domain: Research trends / AI semiconductor leadership candidate family
@@ -12,18 +13,16 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2309_AI_Leadership_Actual_Path_Validation.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2309_AI_Leadership_Actual_Path_Validation.md`；依赖
-    TRADING-2308 generator POC artifacts、required-symbol cached price quality gate
-    和 validation policy manifest。Full-universe validation 当前因 `ASX` 缺失 fail-closed，本任务只能声明
-    TRADING-2309 required-symbol actual-path readiness，不能声明 full-universe data readiness。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 生成 AI leadership actual-path validation summary、actual-path matrix、prediction/outcome
       matrix、candidate scorecard、objective coverage matrix、state recommendation、safety
       boundary 和 research report；状态输出只能是 `AI_LEADERSHIP_VALIDATED_CONTINUE_RESEARCH`、`AI_LEADERSHIP_VALIDATED_INCONCLUSIVE`
@@ -31,7 +30,6 @@ task_record:
       / paper-shadow / production / broker false/none。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 997ed6dd067380185be0f2100e5601701e589f4c808e138cb93223fe66aad2a8
   cell_count: 8
@@ -96,30 +94,61 @@ events:
   evidence_refs:
   - sha256:997ed6dd067380185be0f2100e5601701e589f4c808e138cb93223fe66aad2a8
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2309_AI_LEADERSHIP_ACTUAL_PATH_VALIDATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:48:49+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: f9994fa0122c59d2190d5fad748f1f17f3c47522
+  previous_state_event_id: legacy-import-997ed6dd067380185be0f210
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 生成 AI leadership actual-path validation summary、actual-path
+      matrix、prediction/outcome matrix、candidate scorecard、objective coverage matrix、state
+      recommendation、safety boundary 和 research report；状态输出只能是 `AI_LEADERSHIP_VALIDATED_CONTINUE_RESEARCH`、`AI_LEADERSHIP_VALIDATED_INCONCLUSIVE`
+      或 `AI_LEADERSHIP_REJECT_RECOMMENDED`，所有 artifacts 固定 `actual_path_validation_executed=true`、`scope_review_ready=false`、`dynamic_promotion_status=BLOCKED`、promotion
+      / paper-shadow / production / broker false/none。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+      根据 owner post-2302 roadmap 和 TRADING-2308 recommended_next_task 新增并进入 IN_PROGRESS；当前
+      worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging。2026-07-01: 实现完成并转入
+      VALIDATING；真实 run status=`AI_LEADERSHIP_VALIDATED_CONTINUE_RESEARCH`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`，actual_path_record_count=48330，validation_eligible_record_count=47646，candidate_continue_count=3，objective
+      PASS=2 / INCONCLUSIVE_OR_WEAK=2；continue-research 不是 scope review ready。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2cfa75a17e5cd7c12e82d2156d532ebb
 projection:
   legacy_first_eight_cells:
   - TRADING-2309_AI_LEADERSHIP_ACTUAL_PATH_VALIDATION
   - Research trends / AI semiconductor leadership candidate family
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2309_AI_Leadership_Actual_Path_Validation.md`；依赖
-    TRADING-2308 generator POC artifacts、required-symbol cached price quality gate
-    和 validation policy manifest。Full-universe validation 当前因 `ASX` 缺失 fail-closed，本任务只能声明
-    TRADING-2309 required-symbol actual-path readiness，不能声明 full-universe data readiness。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 生成 AI leadership actual-path validation summary、actual-path matrix、prediction/outcome
     matrix、candidate scorecard、objective coverage matrix、state recommendation、safety
     boundary 和 research report；状态输出只能是 `AI_LEADERSHIP_VALIDATED_CONTINUE_RESEARCH`、`AI_LEADERSHIP_VALIDATED_INCONCLUSIVE`
     或 `AI_LEADERSHIP_REJECT_RECOMMENDED`，所有 artifacts 固定 `actual_path_validation_executed=true`、`scope_review_ready=false`、`dynamic_promotion_status=BLOCKED`、promotion
     / paper-shadow / production / broker false/none。
-  - '2026-07-01: 根据 owner post-2302 roadmap 和 TRADING-2308 recommended_next_task 新增并进入
-    IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging。2026-07-01:
-    实现完成并转入 VALIDATING；真实 run status=`AI_LEADERSHIP_VALIDATED_CONTINUE_RESEARCH`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`，actual_path_record_count=48330，validation_eligible_record_count=47646，candidate_continue_count=3，objective
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+    根据 owner post-2302 roadmap 和 TRADING-2308 recommended_next_task 新增并进入 IN_PROGRESS；当前
+    worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging。2026-07-01: 实现完成并转入 VALIDATING；真实
+    run status=`AI_LEADERSHIP_VALIDATED_CONTINUE_RESEARCH`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`，actual_path_record_count=48330，validation_eligible_record_count=47646，candidate_continue_count=3，objective
     PASS=2 / INCONCLUSIVE_OR_WEAK=2；continue-research 不是 scope review ready。'
-  docs_links:
-  - docs/requirements/TRADING-2309_AI_Leadership_Actual_Path_Validation.md
-  terminal: false
-  canonical_row_sha256: 997ed6dd067380185be0f2100e5601701e589f4c808e138cb93223fe66aad2a8
-last_event_id: legacy-import-997ed6dd067380185be0f210
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: a916604e3ad103a9a27daaedffac0dc5198bde71b996786cf94bcf8b0716a76e
+last_event_id: task-event-2cfa75a17e5cd7c12e82d2156d532ebb
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: e710be35c7fe42e6553a8542fb7578baef1757217c4373c7be3053521b038a7e
+fragment_checksum: 79874e4ecec6e390268ec999fb053231418015dabea3c0b39a6f697292a6aa88
