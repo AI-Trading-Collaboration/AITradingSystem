@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-704_EVIDENCE_LEDGER_SOURCE_POLICY
   task_id_sha256: 765169a9d9c41fb22c80c6ce92c12b5742dcdd0e33b690b8e5798ec71c6f0dd9
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-704_EVIDENCE_LEDGER_SOURCE_POLICY
   title: null
   domain: Research governance / evidence ledger and source policy
@@ -12,19 +13,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；建立 E0-E5 evidence
-    source class 和 allowed-use policy
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`evidence-ingest'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: f58f5d52728646f3aa4df3ea02fef11ec34aadef07611f99f31111f85a44e029
   cell_count: 9
@@ -75,19 +76,47 @@ events:
   evidence_refs:
   - sha256:f58f5d52728646f3aa4df3ea02fef11ec34aadef07611f99f31111f85a44e029
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-704_EVIDENCE_LEDGER_SOURCE_POLICY
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:03:19+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: e4e1b6aefb98ac62a5f2256388a7ea4ed5556df1
+  previous_state_event_id: legacy-import-f58f5d52728646f3aa4df3ea
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`evidence-ingest'
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：evidence-audit`
+      可运行；unclassified_evidence_count=0；promotion_ineligible_source_violation_count=0；missing_provenance_count=0；lookahead_violation_count=0
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d94a6afa237bed9eabd63c46c97c3c03
 projection:
   legacy_first_eight_cells:
   - TRADING-704_EVIDENCE_LEDGER_SOURCE_POLICY
   - Research governance / evidence ledger and source policy
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-703_to_725 总需求文档；建立 E0-E5 evidence source class 和 allowed-use policy
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`evidence-ingest'
-  - evidence-audit` 可运行；unclassified_evidence_count=0；promotion_ineligible_source_violation_count=0；missing_provenance_count=0；lookahead_violation_count=0
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：evidence-audit`
+    可运行；unclassified_evidence_count=0；promotion_ineligible_source_violation_count=0；missing_provenance_count=0；lookahead_violation_count=0
   docs_links: []
-  terminal: false
-  canonical_row_sha256: 9d86f2ab876e1bbffc631dd1fd902aaef191da3e1034bbb9b2d008dc13749dd7
-last_event_id: legacy-import-f58f5d52728646f3aa4df3ea
+  terminal: true
+  canonical_row_sha256: 080cd61e7aa0c62296fdd73b29aee23180c63047144346b891b83312ada185ef
+last_event_id: task-event-d94a6afa237bed9eabd63c46c97c3c03
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: aecde8b89a5df05152434872007d1d87e3adcb5e9f9fd55ba087e742d6870527
+fragment_checksum: 1198d670de1d059a0b080caa481bd2c33b284e23e50f0eb03b5c7798f85caa06
