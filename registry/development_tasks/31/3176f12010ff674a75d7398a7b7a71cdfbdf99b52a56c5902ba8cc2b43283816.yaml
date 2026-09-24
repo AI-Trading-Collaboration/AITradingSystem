@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-723_RESEARCH_OPS_DASHBOARD_WIP_GOVERNANCE
   task_id_sha256: 3176f12010ff674a75d7398a7b7a71cdfbdf99b52a56c5902ba8cc2b43283816
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-723_RESEARCH_OPS_DASHBOARD_WIP_GOVERNANCE
   title: null
   domain: Research ops / dashboard and WIP governance
@@ -12,19 +13,19 @@ task_record:
   created_by: null
   priority: P2
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；展示 WIP、blocked、stalled
-    和 next batch
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`dashboard` 可运行；wip_by_lane_visible=true；repeated_blocker_counts_visible=true；research_idle_or_stalled_items_visible=true'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: fe5035040d996f07ff76cb9b558fa24d91ea5023d42ad956577022f1b9a33663
   cell_count: 8
@@ -86,26 +87,61 @@ events:
   evidence_refs:
   - sha256:fe5035040d996f07ff76cb9b558fa24d91ea5023d42ad956577022f1b9a33663
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-723_RESEARCH_OPS_DASHBOARD_WIP_GOVERNANCE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:10:06+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 7f822af8ffbd17546960d4b0e7caadc4de731007
+  previous_state_event_id: legacy-import-fe5035040d996f07ff76cb9b
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`dashboard` 可运行；wip_by_lane_visible=true；repeated_blocker_counts_visible=true；research_idle_or_stalled_items_visible=true'
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+      按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增
+      schema/config/protocol、research governance / acceleration / portfolio decision
+      / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+      / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+      production_effect=none，不修改 production / paper-shadow / official weights，不触发
+      broker/order。2026-06-21: 继续 VALIDATING；`queue-status`、`batch-plan`、`batch-run`、`batch-rollup`、`review-board`
+      和 `dashboard` CLI 增加 artifact 写入，`research_ops_dashboard` 已进入 report registry
+      / artifact catalog。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b2cf2629c3996963dab3391844f37f90
 projection:
   legacy_first_eight_cells:
   - TRADING-723_RESEARCH_OPS_DASHBOARD_WIP_GOVERNANCE
   - Research ops / dashboard and WIP governance
   - P2
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-703_to_725 总需求文档；展示 WIP、blocked、stalled 和 next batch
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`dashboard` 可运行；wip_by_lane_visible=true；repeated_blocker_counts_visible=true；research_idle_or_stalled_items_visible=true'
-  - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入
-    VALIDATING；新增 schema/config/protocol、research governance / acceleration / portfolio
-    decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+    按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增
+    schema/config/protocol、research governance / acceleration / portfolio decision
+    / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
     / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
     production_effect=none，不修改 production / paper-shadow / official weights，不触发 broker/order。2026-06-21:
     继续 VALIDATING；`queue-status`、`batch-plan`、`batch-run`、`batch-rollup`、`review-board`
     和 `dashboard` CLI 增加 artifact 写入，`research_ops_dashboard` 已进入 report registry
     / artifact catalog。'
   docs_links: []
-  terminal: false
-  canonical_row_sha256: fe5035040d996f07ff76cb9b558fa24d91ea5023d42ad956577022f1b9a33663
-last_event_id: legacy-import-fe5035040d996f07ff76cb9b
+  terminal: true
+  canonical_row_sha256: 44706d9532bb292b4fc1ac0ce5d8f6f7621c04624b61c682346fd85aa0abf830
+last_event_id: task-event-b2cf2629c3996963dab3391844f37f90
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: fac6ce1fe20b72a5121cccc89566f566cc2aa8c4f715faaceb6bd757706feddd
+fragment_checksum: 4505fb98b9f35282bc284ab39b560af541b1ecbe8052a3739f1cf5cf7d3c205b
