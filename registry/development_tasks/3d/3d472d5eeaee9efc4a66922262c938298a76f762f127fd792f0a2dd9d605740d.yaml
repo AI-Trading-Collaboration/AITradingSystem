@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-800_to_804_VALUE_SURFACE_V2_COST_HORIZON_HOLDOUT
   task_id_sha256: 3d472d5eeaee9efc4a66922262c938298a76f762f127fd792f0a2dd9d605740d
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-800_to_804_VALUE_SURFACE_V2_COST_HORIZON_HOLDOUT
   title: null
   domain: Controlled strategy research / cost-turnover-aware regime-conditioned value
@@ -14,18 +15,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-800_to_804_Value_Surface_V2_Cost_Horizon_Holdout.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-800_to_804_Value_Surface_V2_Cost_Horizon_Holdout.md`；owner
-    要求基于 TRADING-799 `WATCHLIST` 与 `turnover_cost_not_worse=false`，把主线升级为 cost-aware
-    + horizon-restricted + fallback-controlled value surface v2；不得继续无条件扩大原始 value
-    surface、直接上 GBDT/NN/RL、进入 paper-shadow、只按 mean_delta 接近 0 继续或忽略成本换手恶化
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 CLI：`aits research strategies cost-turnover-aware-regime-conditioned-value-surface`、`long-horizon-quarantine-selection-review`、`ai-after-chatgpt-full-regime-attribution-review`、`regime-conditioned-walk-forward-holdout`
       和 `value-surface-v2-controlled-review`；TRADING-800 必须比较 turnover penalty/action
       hysteresis/no-trade band/benchmark fallback/max action-change cap 并输出收益、尾损、换手/成本、drawdown、flip/switch
@@ -35,7 +34,6 @@ task_record:
       `CONTINUE_TO_LARGER_CONTROLLED_RESEARCH
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: fbd7a0475d7e9886d804a7766619579958344d7368cc88afd1e6fd87c3b5e1aa
   cell_count: 13
@@ -128,29 +126,57 @@ events:
   evidence_refs:
   - sha256:fbd7a0475d7e9886d804a7766619579958344d7368cc88afd1e6fd87c3b5e1aa
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-800_to_804_VALUE_SURFACE_V2_COST_HORIZON_HOLDOUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:20:26+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 1aafb1e8eae55d28cd5b690c84e09b4eb234b202
+  previous_state_event_id: legacy-import-fbd7a0475d7e9886d804a776
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 CLI：`aits research strategies cost-turnover-aware-regime-conditioned-value-surface`、`long-horizon-quarantine-selection-review`、`ai-after-chatgpt-full-regime-attribution-review`、`regime-conditioned-walk-forward-holdout`
+      和 `value-surface-v2-controlled-review`；TRADING-800 必须比较 turnover penalty/action
+      hysteresis/no-trade band/benchmark fallback/max action-change cap 并输出收益、尾损、换手/成本、drawdown、flip/switch
+      指标；TRADING-801 必须输出 20d/60d disable-vs-downgrade comparison；TRADING-802 必须拆解
+      `ai_after_chatgpt_full` 的 asset/horizon/action/cluster 与 benchmark stability；TRADING-803
+      必须做 leave-one-regime/horizon/asset-cluster/date-window-out；TRADING-804 决策只能为
+      `CONTINUE_TO_LARGER_CONTROLLED_RESEARCH
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-723c03266eb421521ace5ccc556a49ea
 projection:
   legacy_first_eight_cells:
   - TRADING-800_to_804_VALUE_SURFACE_V2_COST_HORIZON_HOLDOUT
   - Controlled strategy research / cost-turnover-aware regime-conditioned value surface,
     long-horizon quarantine, regime attribution, walk-forward holdout, v2 review
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-800_to_804_Value_Surface_V2_Cost_Horizon_Holdout.md`；owner
-    要求基于 TRADING-799 `WATCHLIST` 与 `turnover_cost_not_worse=false`，把主线升级为 cost-aware
-    + horizon-restricted + fallback-controlled value surface v2；不得继续无条件扩大原始 value
-    surface、直接上 GBDT/NN/RL、进入 paper-shadow、只按 mean_delta 接近 0 继续或忽略成本换手恶化
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 CLI：`aits research strategies cost-turnover-aware-regime-conditioned-value-surface`、`long-horizon-quarantine-selection-review`、`ai-after-chatgpt-full-regime-attribution-review`、`regime-conditioned-walk-forward-holdout`
     和 `value-surface-v2-controlled-review`；TRADING-800 必须比较 turnover penalty/action
     hysteresis/no-trade band/benchmark fallback/max action-change cap 并输出收益、尾损、换手/成本、drawdown、flip/switch
     指标；TRADING-801 必须输出 20d/60d disable-vs-downgrade comparison；TRADING-802 必须拆解 `ai_after_chatgpt_full`
     的 asset/horizon/action/cluster 与 benchmark stability；TRADING-803 必须做 leave-one-regime/horizon/asset-cluster/date-window-out；TRADING-804
     决策只能为 `CONTINUE_TO_LARGER_CONTROLLED_RESEARCH
-  - WATCHLIST
-  docs_links:
-  - docs/requirements/TRADING-800_to_804_Value_Surface_V2_Cost_Horizon_Holdout.md
-  terminal: false
-  canonical_row_sha256: 365bd593a4f8c34332cb5a27ef0dddcbd6102f82d99619caca49ae5bd970e1f6
-last_event_id: legacy-import-fbd7a0475d7e9886d804a776
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: cf7703bd8d99d2b541752cfb0df5680a2829419096207f971b92e36fc1b47dca
+last_event_id: task-event-723c03266eb421521ace5ccc556a49ea
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: efc783bf5678d6bd3932d4e4e37d6861b5a1c70702b7620faf3d74afc335b3ed
+fragment_checksum: 1f191556726e7f572c1a8a16bd36208b269eba48f13748f1409d14489b346069
