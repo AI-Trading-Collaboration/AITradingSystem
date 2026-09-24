@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-860_SAFE_COMMIT_OR_PATCH_HANDOFF
   task_id_sha256: fee154615db079eb1ebb0a783624129db2e734c93862ae0e7e437adcad52a19f
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-860_SAFE_COMMIT_OR_PATCH_HANDOFF
   title: null
   domain: Engineering closeout / safe commit or patch handoff
@@ -12,21 +13,20 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；不得
-    `git add .`，不得提交不确定归因文件
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 基于 TRADING-859 状态执行 safe commit 或生成人工 review 清单和 patch handoff；mixed worktree
       时不得提交
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 569539455def8387f197a822ac339b94079cbf431d033bc731fa9dfd2a6918b2
   cell_count: 8
@@ -74,23 +74,52 @@ events:
   evidence_refs:
   - sha256:569539455def8387f197a822ac339b94079cbf431d033bc731fa9dfd2a6918b2
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-860_SAFE_COMMIT_OR_PATCH_HANDOFF
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:34:58+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 44c44dc9ed3156b5438a27515c111ef18cd4c1dd
+  previous_state_event_id: legacy-import-569539455def8387f197a822
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 基于 TRADING-859 状态执行 safe commit 或生成人工 review 清单和 patch handoff；mixed
+      worktree 时不得提交
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+      新增并进入 IN_PROGRESS。2026-06-22: 产物完成并转入 VALIDATING；TRADING-859 为 `BLOCKED_BY_MIXED_WORKTREE`，因此未创建
+      commit，未执行 `git add .`，输出 `tail_risk_followup_safe_commit_handoff.json/md` 和
+      `tail_risk_followup_mixed_worktree_handoff.patch`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5d3203dde9e8af3e5752f8e57f2143cc
 projection:
   legacy_first_eight_cells:
   - TRADING-860_SAFE_COMMIT_OR_PATCH_HANDOFF
   - Engineering closeout / safe commit or patch handoff
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；不得
-    `git add .`，不得提交不确定归因文件
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 基于 TRADING-859 状态执行 safe commit 或生成人工 review 清单和 patch handoff；mixed worktree
     时不得提交
-  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 产物完成并转入 VALIDATING；TRADING-859 为 `BLOCKED_BY_MIXED_WORKTREE`，因此未创建
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+    新增并进入 IN_PROGRESS。2026-06-22: 产物完成并转入 VALIDATING；TRADING-859 为 `BLOCKED_BY_MIXED_WORKTREE`，因此未创建
     commit，未执行 `git add .`，输出 `tail_risk_followup_safe_commit_handoff.json/md` 和 `tail_risk_followup_mixed_worktree_handoff.patch`。'
-  docs_links:
-  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
-  terminal: false
-  canonical_row_sha256: 569539455def8387f197a822ac339b94079cbf431d033bc731fa9dfd2a6918b2
-last_event_id: legacy-import-569539455def8387f197a822
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 8f4d014c4b27c7f78037fc71713f1656a38dbd7c73fb0d46084d18d23296877f
+last_event_id: task-event-5d3203dde9e8af3e5752f8e57f2143cc
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 6edffa34c408eabe6c06cd1bc5306b64002b3582ded1059f40e38e2f72e927b2
+fragment_checksum: 0b6d76be505f1cf1d7098ac8d18ad4c0941fa313c18d7cad4b8c963ace7224f3
