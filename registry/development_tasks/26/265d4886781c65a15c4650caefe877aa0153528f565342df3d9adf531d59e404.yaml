@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-737_SOURCE_LEVEL_QUALIFICATION_REQUIREMENTS
   task_id_sha256: 265d4886781c65a15c4650caefe877aa0153528f565342df3d9adf531d59e404
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-737_SOURCE_LEVEL_QUALIFICATION_REQUIREMENTS
   title: null
   domain: Data foundation / source-level qualification requirements
@@ -12,24 +13,22 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-737_Source_Level_Qualification_Requirements.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-737_Source_Level_Qualification_Requirements.md`；读取
-    TRADING-736 remediation execution report、item results 和 updated matrix，对 P0_remaining_count=9
-    的项目逐项生成 source-level requirement matrix
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`aits data source-qualification requirements` 可生成 `data_source_requirement_matrix.json/md`；每个
       P0 remaining item 输出 component、current_status、missing_proof、required_raw_source、required_timestamp_fields、required_source_manifest、required_as_of_snapshot、required_corporate_action_revision_policy、can_fix_with_existing_data、requires_new_data_source、can_remain_diagnostic_only、promotion_grade_blocker，并按
       SOURCE_MANIFEST_REQUIRED、AVAILABLE_TIME_REQUIRED、AS_OF_SNAPSHOT_REQUIRED、CORPORATE_ACTION_POLICY_REQUIRED、VENDOR_CURRENT_VIEW_ONLY、RESEARCH_LABEL_ONLY_BY_DESIGN、TRUE_PIT_LIMITATION、MANUAL_REVIEW_REQUIRED
       分类；所有输出固定 production_effect=none、promotion_gate_allowed=false，不尝试升级 source 状态'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 4440f420dd7da7abd648f95096d818297210219fc3b4ce69e93d0da047872a58
   cell_count: 8
@@ -88,28 +87,57 @@ events:
   evidence_refs:
   - sha256:4440f420dd7da7abd648f95096d818297210219fc3b4ce69e93d0da047872a58
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-737_SOURCE_LEVEL_QUALIFICATION_REQUIREMENTS
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:15:21+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: b1b31701a1ba912909958d3e19f960011c80fe3b
+  previous_state_event_id: legacy-import-4440f420dd7da7abd648f950
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`aits data source-qualification requirements` 可生成 `data_source_requirement_matrix.json/md`；每个
+      P0 remaining item 输出 component、current_status、missing_proof、required_raw_source、required_timestamp_fields、required_source_manifest、required_as_of_snapshot、required_corporate_action_revision_policy、can_fix_with_existing_data、requires_new_data_source、can_remain_diagnostic_only、promotion_grade_blocker，并按
+      SOURCE_MANIFEST_REQUIRED、AVAILABLE_TIME_REQUIRED、AS_OF_SNAPSHOT_REQUIRED、CORPORATE_ACTION_POLICY_REQUIRED、VENDOR_CURRENT_VIEW_ONLY、RESEARCH_LABEL_ONLY_BY_DESIGN、TRUE_PIT_LIMITATION、MANUAL_REVIEW_REQUIRED
+      分类；所有输出固定 production_effect=none、promotion_gate_allowed=false，不尝试升级 source 状态'
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+      validation-only source requirement runner 已实现并进入 VALIDATING；默认 run 输出 `REQUIREMENTS_READY_WITH_SOURCE_BLOCKERS`、P0_remaining_count=9、source_requirement_count=9、requires_new_data_source_count=8、can_fix_with_existing_data_count=0、promotion_grade_blocker_count=9、status_upgrade_attempted=false、lookahead_violation_count=0、production_effect=none、broker_action=none；focused
+      tests 40 passed，fast-unit 97 passed，contract-validation 96 passed，report-validation
+      55 passed。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-23e42bc22a0fa32a6e6a5dc12e0e7c73
 projection:
   legacy_first_eight_cells:
   - TRADING-737_SOURCE_LEVEL_QUALIFICATION_REQUIREMENTS
   - Data foundation / source-level qualification requirements
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-737_Source_Level_Qualification_Requirements.md`；读取
-    TRADING-736 remediation execution report、item results 和 updated matrix，对 P0_remaining_count=9
-    的项目逐项生成 source-level requirement matrix
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`aits data source-qualification requirements` 可生成 `data_source_requirement_matrix.json/md`；每个
     P0 remaining item 输出 component、current_status、missing_proof、required_raw_source、required_timestamp_fields、required_source_manifest、required_as_of_snapshot、required_corporate_action_revision_policy、can_fix_with_existing_data、requires_new_data_source、can_remain_diagnostic_only、promotion_grade_blocker，并按
     SOURCE_MANIFEST_REQUIRED、AVAILABLE_TIME_REQUIRED、AS_OF_SNAPSHOT_REQUIRED、CORPORATE_ACTION_POLICY_REQUIRED、VENDOR_CURRENT_VIEW_ONLY、RESEARCH_LABEL_ONLY_BY_DESIGN、TRUE_PIT_LIMITATION、MANUAL_REVIEW_REQUIRED
     分类；所有输出固定 production_effect=none、promotion_gate_allowed=false，不尝试升级 source 状态'
-  - '2026-06-21: validation-only source requirement runner 已实现并进入 VALIDATING；默认 run
-    输出 `REQUIREMENTS_READY_WITH_SOURCE_BLOCKERS`、P0_remaining_count=9、source_requirement_count=9、requires_new_data_source_count=8、can_fix_with_existing_data_count=0、promotion_grade_blocker_count=9、status_upgrade_attempted=false、lookahead_violation_count=0、production_effect=none、broker_action=none；focused
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+    validation-only source requirement runner 已实现并进入 VALIDATING；默认 run 输出 `REQUIREMENTS_READY_WITH_SOURCE_BLOCKERS`、P0_remaining_count=9、source_requirement_count=9、requires_new_data_source_count=8、can_fix_with_existing_data_count=0、promotion_grade_blocker_count=9、status_upgrade_attempted=false、lookahead_violation_count=0、production_effect=none、broker_action=none；focused
     tests 40 passed，fast-unit 97 passed，contract-validation 96 passed，report-validation
     55 passed。'
-  docs_links:
-  - docs/requirements/TRADING-737_Source_Level_Qualification_Requirements.md
-  terminal: false
-  canonical_row_sha256: 4440f420dd7da7abd648f95096d818297210219fc3b4ce69e93d0da047872a58
-last_event_id: legacy-import-4440f420dd7da7abd648f950
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: a97395f1101926a06ff1ef4a1804cae7e5a23caaf2485402aed606dc24ee9f2b
+last_event_id: task-event-23e42bc22a0fa32a6e6a5dc12e0e7c73
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 3f8295a9d0afa3a93ce812a1c35315438a0843ef0138ca7340af8c7d2e2d8873
+fragment_checksum: 67ae63df2c1a0dbbd05c869c0a7d2f9a389d0e6119f6967e6180780d6ef87e22
