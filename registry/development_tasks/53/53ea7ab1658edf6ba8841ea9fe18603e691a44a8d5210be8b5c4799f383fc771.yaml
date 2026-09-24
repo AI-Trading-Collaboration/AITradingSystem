@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2281_CANDIDATE_SIGNAL_PREDICTION_ARTIFACT_BACKFILL
   task_id_sha256: 53ea7ab1658edf6ba8841ea9fe18603e691a44a8d5210be8b5c4799f383fc771
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2281_CANDIDATE_SIGNAL_PREDICTION_ARTIFACT_BACKFILL
   title: null
   domain: Research trends / candidate signal prediction artifact backfill and provenance
@@ -13,17 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2281_Candidate_Signal_Prediction_Artifact_Backfill.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2281_Candidate_Signal_Prediction_Artifact_Backfill.md`；依赖
-    TRADING-2280 candidate-level validation。本批只审计缺失 artifact 类型、provenance 和 backfill
-    可行性，不训练模型、不修改 candidate scores、不打开 promotion/paper-shadow/production/broker。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 生成 candidate signal/prediction artifact gap report、candidate artifact provenance
       matrix、inconclusive candidate recovery plan 和对应 JSON artifacts；每个 INCONCLUSIVE
       candidate 必须有缺失原因、backfill_possible、recovery_action、permanently_inconclusive
@@ -31,7 +31,6 @@ task_record:
       false。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: a149dffd5b69828e3fec89a27ceef719ad67c6320c23a8afb273f4278529b662
   cell_count: 8
@@ -99,31 +98,65 @@ events:
   evidence_refs:
   - sha256:a149dffd5b69828e3fec89a27ceef719ad67c6320c23a8afb273f4278529b662
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2281_CANDIDATE_SIGNAL_PREDICTION_ARTIFACT_BACKFILL
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:01:44+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 1635e882f6c17ef395f37b0a5f8d9b6b4629bbbb
+  previous_state_event_id: legacy-import-a149dffd5b69828e3fec89a2
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 生成 candidate signal/prediction artifact gap report、candidate
+      artifact provenance matrix、inconclusive candidate recovery plan 和对应 JSON artifacts；每个
+      INCONCLUSIVE candidate 必须有缺失原因、backfill_possible、recovery_action、permanently_inconclusive
+      判断；可恢复 artifact 必须有可复现命令或 registry repair action，不可恢复候选固定 promotion/paper-shadow
+      false。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-29:
+      新增并进入 IN_PROGRESS；先审计 4 个 TRADING-2280 INCONCLUSIVE rows 的 signal / prediction
+      / actual-path / attribution / registry artifact evidence。2026-06-29: 实现完成并转入
+      VALIDATING；真实 run inconclusive=4、artifact_rows=28、complete_signal_prediction=0、backfill_possible=0、backfilled=0、permanently_inconclusive=4，`baseline`
+      frozen composer predictions 仅为 schema-incompatible source evidence。2026-06-29:
+      验证通过 Ruff、compileall、focused parallel pytest 48 passed、docs freshness、diff check
+      和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T161659Z/test_runtime_summary.json`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-149e743884806daa8105db6ecf02346f
 projection:
   legacy_first_eight_cells:
   - TRADING-2281_CANDIDATE_SIGNAL_PREDICTION_ARTIFACT_BACKFILL
   - Research trends / candidate signal prediction artifact backfill and provenance
     audit
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2281_Candidate_Signal_Prediction_Artifact_Backfill.md`；依赖
-    TRADING-2280 candidate-level validation。本批只审计缺失 artifact 类型、provenance 和 backfill
-    可行性，不训练模型、不修改 candidate scores、不打开 promotion/paper-shadow/production/broker。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 生成 candidate signal/prediction artifact gap report、candidate artifact provenance
     matrix、inconclusive candidate recovery plan 和对应 JSON artifacts；每个 INCONCLUSIVE
     candidate 必须有缺失原因、backfill_possible、recovery_action、permanently_inconclusive 判断；可恢复
     artifact 必须有可复现命令或 registry repair action，不可恢复候选固定 promotion/paper-shadow false。
-  - '2026-06-29: 新增并进入 IN_PROGRESS；先审计 4 个 TRADING-2280 INCONCLUSIVE rows 的 signal
-    / prediction / actual-path / attribution / registry artifact evidence。2026-06-29:
-    实现完成并转入 VALIDATING；真实 run inconclusive=4、artifact_rows=28、complete_signal_prediction=0、backfill_possible=0、backfilled=0、permanently_inconclusive=4，`baseline`
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-29:
+    新增并进入 IN_PROGRESS；先审计 4 个 TRADING-2280 INCONCLUSIVE rows 的 signal / prediction
+    / actual-path / attribution / registry artifact evidence。2026-06-29: 实现完成并转入 VALIDATING；真实
+    run inconclusive=4、artifact_rows=28、complete_signal_prediction=0、backfill_possible=0、backfilled=0、permanently_inconclusive=4，`baseline`
     frozen composer predictions 仅为 schema-incompatible source evidence。2026-06-29:
     验证通过 Ruff、compileall、focused parallel pytest 48 passed、docs freshness、diff check
     和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T161659Z/test_runtime_summary.json`。'
-  docs_links:
-  - docs/requirements/TRADING-2281_Candidate_Signal_Prediction_Artifact_Backfill.md
-  terminal: false
-  canonical_row_sha256: a149dffd5b69828e3fec89a27ceef719ad67c6320c23a8afb273f4278529b662
-last_event_id: legacy-import-a149dffd5b69828e3fec89a2
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 164ba431f0db53c09e22053dd1d6c6a5643acbdefbb29a9a49d387ee9cfaa318
+last_event_id: task-event-149e743884806daa8105db6ecf02346f
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: d7bce8b0a94f4fc9d35e43727cfc7130e91f6d63b57d2f695e93f86a260815b5
+fragment_checksum: b8f359d32b46fe134a5a466edde47e17b885e92f974be4dde184030d36d749be
