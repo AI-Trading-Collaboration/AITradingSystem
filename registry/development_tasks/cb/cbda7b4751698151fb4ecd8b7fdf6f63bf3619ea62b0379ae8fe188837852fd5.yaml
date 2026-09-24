@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2291_SCOPE_NARROWED_CANDIDATE_REGENERATION
   task_id_sha256: cbda7b4751698151fb4ecd8b7fdf6f63bf3619ea62b0379ae8fe188837852fd5
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2291_SCOPE_NARROWED_CANDIDATE_REGENERATION
   title: null
   domain: Research trends / scope-narrowed candidate regeneration
@@ -12,18 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2291_Scope_Narrowed_Candidate_Regeneration.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2291_Scope_Narrowed_Candidate_Regeneration.md`；依赖
-    TRADING-2290 scope review outputs、TRADING-2288 refined candidate artifacts 和 TRADING-2289
-    refined actual-path validation outputs。本批只生成 scope-narrowed candidate-bound artifacts
-    和 risk_appetite current-form archive，不执行 actual-path validation。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 `aits research trends scope-narrowed-candidate-generators-regenerate`；生成
       `baseline_plus_trend_structure_scope_narrowed_confirmation_v1`、`volatility_regime_scope_narrowed_risk_cap_v1`、scope
       filter reports、lineage reports、delta summaries、top-level registry/summary 和
@@ -31,7 +30,6 @@ task_record:
       fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker false/none，`actual_path_validation_ready=false`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: fe5503287d932541562fed2bd016f48fdea23071a6aba58057f3b8d2409a96e8
   cell_count: 8
@@ -104,33 +102,67 @@ events:
   evidence_refs:
   - sha256:fe5503287d932541562fed2bd016f48fdea23071a6aba58057f3b8d2409a96e8
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2291_SCOPE_NARROWED_CANDIDATE_REGENERATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:03:11+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 2e66046d86d1923a863feb8b88a5875a72de4f9a
+  previous_state_event_id: legacy-import-fe5503287d932541562fed2b
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 `aits research trends scope-narrowed-candidate-generators-regenerate`；生成
+      `baseline_plus_trend_structure_scope_narrowed_confirmation_v1`、`volatility_regime_scope_narrowed_risk_cap_v1`、scope
+      filter reports、lineage reports、delta summaries、top-level registry/summary 和
+      `risk_appetite_refined_confidence_v1` archive record；input/output safety gates
+      fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker false/none，`actual_path_validation_ready=false`。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-30:
+      根据 owner 附件新增并进入 IN_PROGRESS；2026-06-30: 实现完成并转入 VALIDATING，真实 run 生成 baseline_plus_trend_structure
+      scope-narrowed confirmation active=3,667 / inactive=27,761、volatility_regime
+      scope-narrowed risk cap active=373 / inactive=31,991，归档 risk_appetite current
+      form，top-level validation status=`PASS`；验证通过 Ruff、compileall、focused parallel
+      pytest 13 passed、full parallel pytest 3677 passed、docs freshness、documentation
+      contract、contract-validation 193 passed、task-register consistency run/validate
+      和 `git diff --check`；TRADING-2292 才允许验证 active scope actual-path evidence，2291
+      不声明 scope-narrowed candidate 有效。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-343b6ca50806df3147d0876e5fcaa730
 projection:
   legacy_first_eight_cells:
   - TRADING-2291_SCOPE_NARROWED_CANDIDATE_REGENERATION
   - Research trends / scope-narrowed candidate regeneration
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2291_Scope_Narrowed_Candidate_Regeneration.md`；依赖
-    TRADING-2290 scope review outputs、TRADING-2288 refined candidate artifacts 和 TRADING-2289
-    refined actual-path validation outputs。本批只生成 scope-narrowed candidate-bound artifacts
-    和 risk_appetite current-form archive，不执行 actual-path validation。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 `aits research trends scope-narrowed-candidate-generators-regenerate`；生成 `baseline_plus_trend_structure_scope_narrowed_confirmation_v1`、`volatility_regime_scope_narrowed_risk_cap_v1`、scope
     filter reports、lineage reports、delta summaries、top-level registry/summary 和 `risk_appetite_refined_confidence_v1`
     archive record；input/output safety gates fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker
     false/none，`actual_path_validation_ready=false`。
-  - '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；2026-06-30: 实现完成并转入 VALIDATING，真实 run
-    生成 baseline_plus_trend_structure scope-narrowed confirmation active=3,667 / inactive=27,761、volatility_regime
-    scope-narrowed risk cap active=373 / inactive=31,991，归档 risk_appetite current
-    form，top-level validation status=`PASS`；验证通过 Ruff、compileall、focused parallel
-    pytest 13 passed、full parallel pytest 3677 passed、docs freshness、documentation
-    contract、contract-validation 193 passed、task-register consistency run/validate
-    和 `git diff --check`；TRADING-2292 才允许验证 active scope actual-path evidence，2291
-    不声明 scope-narrowed candidate 有效。'
-  docs_links:
-  - docs/requirements/TRADING-2291_Scope_Narrowed_Candidate_Regeneration.md
-  terminal: false
-  canonical_row_sha256: fe5503287d932541562fed2bd016f48fdea23071a6aba58057f3b8d2409a96e8
-last_event_id: legacy-import-fe5503287d932541562fed2b
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-30:
+    根据 owner 附件新增并进入 IN_PROGRESS；2026-06-30: 实现完成并转入 VALIDATING，真实 run 生成 baseline_plus_trend_structure
+    scope-narrowed confirmation active=3,667 / inactive=27,761、volatility_regime scope-narrowed
+    risk cap active=373 / inactive=31,991，归档 risk_appetite current form，top-level
+    validation status=`PASS`；验证通过 Ruff、compileall、focused parallel pytest 13 passed、full
+    parallel pytest 3677 passed、docs freshness、documentation contract、contract-validation
+    193 passed、task-register consistency run/validate 和 `git diff --check`；TRADING-2292
+    才允许验证 active scope actual-path evidence，2291 不声明 scope-narrowed candidate 有效。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: b6b9cf469bd4b0897adef43c25ad574b4b61f8b28e3dacec17a63cb7c4d9535a
+last_event_id: task-event-343b6ca50806df3147d0876e5fcaa730
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 23ae6832b9da979ebf6c27353cb0a6ce02b7550a38875eeb932515b86be4d8c4
+fragment_checksum: 2a06fe447fc9a4f65e8f5d9ab9f07301cba4a7bea01bc8e93a60be42b068a745
