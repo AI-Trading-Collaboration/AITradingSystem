@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2279_FIRST_LAYER_BOUNDARY_CANDIDATE_OWNER_REVIEW_PACKAGE
   task_id_sha256: 8cd5d8352fbf6339536294945a05ce74dfd436a94c172e3c58c62149208ae6a1
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2279_FIRST_LAYER_BOUNDARY_CANDIDATE_OWNER_REVIEW_PACKAGE
   title: null
   domain: Research trends / boundary candidate owner review package
@@ -12,16 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2279_First_Layer_Boundary_Candidate_Owner_Review_Package.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2279_First_Layer_Boundary_Candidate_Owner_Review_Package.md`；依赖
-    TRADING-2278 challenger matrix v2。本批整理 owner-review evidence，不训练模型、不打开 promotion/paper-shadow/production/broker。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 生成 boundary candidate owner review、comparison matrix、tradeoff summary、offline
       validation ready summary、blocked failure reason summary 和 recommended next experiment
       plan；必须覆盖 actual-path utility、return/drawdown/Sharpe/Calmar/turnover/cost、false
@@ -31,7 +32,6 @@ task_record:
       和 promotion_ready=false。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 3651e0afa1aba5ac8b9f1f57d7626d9b08cc3bb901fdaddd087ce9c05870c21b
   cell_count: 8
@@ -95,15 +95,50 @@ events:
   evidence_refs:
   - sha256:3651e0afa1aba5ac8b9f1f57d7626d9b08cc3bb901fdaddd087ce9c05870c21b
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2279_FIRST_LAYER_BOUNDARY_CANDIDATE_OWNER_REVIEW_PACKAGE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:01:01+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 18d0ff7ac8442ad132ebc671b380c1eb6e04d94f
+  previous_state_event_id: legacy-import-3651e0afa1aba5ac8b9f1f57
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 生成 boundary candidate owner review、comparison matrix、tradeoff
+      summary、offline validation ready summary、blocked failure reason summary 和 recommended
+      next experiment plan；必须覆盖 actual-path utility、return/drawdown/Sharpe/Calmar/turnover/cost、false
+      risk、defensive probe、2022 stress、2023+ dependency、beta/TQQQ、benchmark consistency、recovery
+      delay、drawdown warning lead time；缺失 candidate-level 指标必须显式标明 unavailable；每个
+      boundary candidate 输出 owner_review_decision、primary_risk_flag、utility_tradeoff_acceptable
+      和 promotion_ready=false。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-29:
+      新增并进入 IN_PROGRESS。2026-06-29: 实现完成并转入 VALIDATING；真实 run boundary_candidate_count=2、offline_validation_ready=4、blocked=4、misclassification=`no_obvious_misclassification_detected`；`wf_504d_baseline`
+      结论为 expand_neighborhood，`wf_378d_initial` 结论为 continue_research。2026-06-29:
+      验证通过 Ruff、compileall、focused parallel pytest 51 passed、docs freshness、diff check
+      和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T153924Z/test_runtime_summary.json`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3d1eecdd04189bd0a9778e3b8aead4b3
 projection:
   legacy_first_eight_cells:
   - TRADING-2279_FIRST_LAYER_BOUNDARY_CANDIDATE_OWNER_REVIEW_PACKAGE
   - Research trends / boundary candidate owner review package
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2279_First_Layer_Boundary_Candidate_Owner_Review_Package.md`；依赖
-    TRADING-2278 challenger matrix v2。本批整理 owner-review evidence，不训练模型、不打开 promotion/paper-shadow/production/broker。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 生成 boundary candidate owner review、comparison matrix、tradeoff summary、offline
     validation ready summary、blocked failure reason summary 和 recommended next experiment
     plan；必须覆盖 actual-path utility、return/drawdown/Sharpe/Calmar/turnover/cost、false
@@ -111,14 +146,14 @@ projection:
     delay、drawdown warning lead time；缺失 candidate-level 指标必须显式标明 unavailable；每个 boundary
     candidate 输出 owner_review_decision、primary_risk_flag、utility_tradeoff_acceptable
     和 promotion_ready=false。
-  - '2026-06-29: 新增并进入 IN_PROGRESS。2026-06-29: 实现完成并转入 VALIDATING；真实 run boundary_candidate_count=2、offline_validation_ready=4、blocked=4、misclassification=`no_obvious_misclassification_detected`；`wf_504d_baseline`
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-29:
+    新增并进入 IN_PROGRESS。2026-06-29: 实现完成并转入 VALIDATING；真实 run boundary_candidate_count=2、offline_validation_ready=4、blocked=4、misclassification=`no_obvious_misclassification_detected`；`wf_504d_baseline`
     结论为 expand_neighborhood，`wf_378d_initial` 结论为 continue_research。2026-06-29: 验证通过
     Ruff、compileall、focused parallel pytest 51 passed、docs freshness、diff check 和
     contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T153924Z/test_runtime_summary.json`。'
-  docs_links:
-  - docs/requirements/TRADING-2279_First_Layer_Boundary_Candidate_Owner_Review_Package.md
-  terminal: false
-  canonical_row_sha256: 3651e0afa1aba5ac8b9f1f57d7626d9b08cc3bb901fdaddd087ce9c05870c21b
-last_event_id: legacy-import-3651e0afa1aba5ac8b9f1f57
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 18cf8644840455117d8dd99f9255e7fe610d9a38b1c0bfa806a228bd46455251
+last_event_id: task-event-3d1eecdd04189bd0a9778e3b8aead4b3
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 5f2d5ea71bdd5975ca50589ada03649367415cf04fa16b0ff73bd02ded95dcaa
+fragment_checksum: 6b4bbb15f2ffbeec0074dd4030745b54fcc156713c5cb60462b00951d6cd26cb
