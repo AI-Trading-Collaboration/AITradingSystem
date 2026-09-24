@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-184_to_188_PRESSURE_REGIME_DEFENSIVE_VALIDATION
   task_id_sha256: a09852a700eeae58556bbd0c29bf6039acc97101a301c1b8575017609296254a
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-184_to_188_PRESSURE_REGIME_DEFENSIVE_VALIDATION
   title: null
   domain: ETF portfolio research/Pressure Regime Sample Expansion and Defensive Rule
@@ -13,20 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 项目 owner 人工复核 + 系统运行观察
-  requirement_refs:
-  - docs/requirements/TRADING-184_to_188_Pressure_Regime_Sample_Expansion_and_Defensive_Rule_Validation.md
+  next_owner: Project Owner（pi 迁移后重启对应研究线时）
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-184_to_188_Pressure_Regime_Sample_Expansion_and_Defensive_Rule_Validation.md`；baseline
-    实现已完成并生成真实 artifacts：diagnosis `ca86a051c36a9e14`、pressure backfill `af2d09c3b5aabc6e`、defensive
-    comparison `6d3ea9b43618c7db`、rule review `1eee7bc87fd3acab`、weekly ops decision
-    update `5d43a54bbe2d8a5f`；当前 source mix 为 forward=0、historical replay=0、backtest
-    simulation=116，defensive validation relevant=87；继续固定 no broker / no production
-    / no auto policy apply
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待
+    forward/shadow 样本自然成熟，30 天以上无新证据。退出条件：迁移 pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007
+    需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`pressure-tag-diagnosis run/report`、`pressure-outcome-backfill run/report`、`defensive-pressure-compare
       run/report`、`defensive-rule-review run/report`、`weekly-ops-decision-update run/report`
       及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；source mode
@@ -37,7 +34,6 @@ task_record:
       diff check 和 dynamic-v3 validation 完成；保持 `broker_action_allowed=false`、`production_effect=none`、`policy_change_allowed=false`、`auto_apply=false`'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 3b775782422d42b9530dc0fcbab7a9fc4d525e4777311d50822c6e137fc10444
   cell_count: 8
@@ -116,19 +112,51 @@ events:
   evidence_refs:
   - sha256:3b775782422d42b9530dc0fcbab7a9fc4d525e4777311d50822c6e137fc10444
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-184_to_188_PRESSURE_REGIME_DEFENSIVE_VALIDATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:07:38+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 1a67ba3c84493196790a8793ca6518ad0bb51aa1
+  previous_state_event_id: legacy-import-3b775782422d42b9530dc0fc
+  from_status: VALIDATING
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: Project Owner（pi 迁移后重启对应研究线时）
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待 forward/shadow
+      样本自然成熟，30 天以上无新证据。退出条件：迁移 pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007 需求文档
+    acceptance_criteria: '`pressure-tag-diagnosis run/report`、`pressure-outcome-backfill
+      run/report`、`defensive-pressure-compare run/report`、`defensive-rule-review run/report`、`weekly-ops-decision-update
+      run/report` 及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；source
+      mode 明确标记 `FORWARD_OUTCOME` / `HISTORICAL_REPLAY` / `BACKTEST_SIMULATION`；simulation
+      evidence 标记 `SIMULATION_NOT_PIT` 且 `can_support_production=false`；`rule_approval_allowed=false`
+      unless forward/PIT evidence sufficient；Reader Brief、README、operations runbook、system
+      flow、report registry、artifact catalog、requirements、focused tests、ruff、compileall、git
+      diff check 和 dynamic-v3 validation 完成；保持 `broker_action_allowed=false`、`production_effect=none`、`policy_change_allowed=false`、`auto_apply=false`'
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：DEFERRED_AWAITING_FORWARD_SAMPLES；agent_harness=claude_code；原备注：2026-06-11:
+      新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-184～188；当前 pressure tag artifact
+      `1bc4775787a6606d` 已有 pressure windows 但 `defensive_validation_relevant_outcomes=0`，需要解释
+      forward outcome mapping 缺口并把 simulation/replay 样本作为 research-only pressure evidence
+      纳入防守规则验证。2026-06-11: baseline 实现完成并转入 VALIDATING；simulation-only evidence 不能支持
+      defensive label approval，下一步为 owner 复核 `RESEARCH_ONLY` / `continue_tracking`
+      结论并等待更多 forward pressure samples。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5678e30e32bfcd315f5a1232d98ba696
 projection:
   legacy_first_eight_cells:
   - TRADING-184_to_188_PRESSURE_REGIME_DEFENSIVE_VALIDATION
   - ETF portfolio research/Pressure Regime Sample Expansion and Defensive Rule Validation
   - P0
-  - VALIDATING
-  - 项目 owner 人工复核 + 系统运行观察
-  - 详细拆解见 `docs/requirements/TRADING-184_to_188_Pressure_Regime_Sample_Expansion_and_Defensive_Rule_Validation.md`；baseline
-    实现已完成并生成真实 artifacts：diagnosis `ca86a051c36a9e14`、pressure backfill `af2d09c3b5aabc6e`、defensive
-    comparison `6d3ea9b43618c7db`、rule review `1eee7bc87fd3acab`、weekly ops decision
-    update `5d43a54bbe2d8a5f`；当前 source mix 为 forward=0、historical replay=0、backtest
-    simulation=116，defensive validation relevant=87；继续固定 no broker / no production
-    / no auto policy apply
+  - DEFERRED
+  - Project Owner（pi 迁移后重启对应研究线时）
+  - 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待 forward/shadow 样本自然成熟，30 天以上无新证据。退出条件：迁移
+    pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007 需求文档
   - '`pressure-tag-diagnosis run/report`、`pressure-outcome-backfill run/report`、`defensive-pressure-compare
     run/report`、`defensive-rule-review run/report`、`weekly-ops-decision-update run/report`
     及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；source mode
@@ -137,16 +165,15 @@ projection:
     unless forward/PIT evidence sufficient；Reader Brief、README、operations runbook、system
     flow、report registry、artifact catalog、requirements、focused tests、ruff、compileall、git
     diff check 和 dynamic-v3 validation 完成；保持 `broker_action_allowed=false`、`production_effect=none`、`policy_change_allowed=false`、`auto_apply=false`'
-  - '2026-06-11: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-184～188；当前 pressure tag
-    artifact `1bc4775787a6606d` 已有 pressure windows 但 `defensive_validation_relevant_outcomes=0`，需要解释
-    forward outcome mapping 缺口并把 simulation/replay 样本作为 research-only pressure evidence
-    纳入防守规则验证。2026-06-11: baseline 实现完成并转入 VALIDATING；simulation-only evidence 不能支持
-    defensive label approval，下一步为 owner 复核 `RESEARCH_ONLY` / `continue_tracking` 结论并等待更多
-    forward pressure samples。'
-  docs_links:
-  - docs/requirements/TRADING-184_to_188_Pressure_Regime_Sample_Expansion_and_Defensive_Rule_Validation.md
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：DEFERRED_AWAITING_FORWARD_SAMPLES；agent_harness=claude_code；原备注：2026-06-11:
+    新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-184～188；当前 pressure tag artifact `1bc4775787a6606d`
+    已有 pressure windows 但 `defensive_validation_relevant_outcomes=0`，需要解释 forward
+    outcome mapping 缺口并把 simulation/replay 样本作为 research-only pressure evidence 纳入防守规则验证。2026-06-11:
+    baseline 实现完成并转入 VALIDATING；simulation-only evidence 不能支持 defensive label approval，下一步为
+    owner 复核 `RESEARCH_ONLY` / `continue_tracking` 结论并等待更多 forward pressure samples。'
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 3b775782422d42b9530dc0fcbab7a9fc4d525e4777311d50822c6e137fc10444
-last_event_id: legacy-import-3b775782422d42b9530dc0fc
+  canonical_row_sha256: 2e7a4487af3e2f1deeca6b893b3411976ce91aef96e67197fac9d03249fd7bc2
+last_event_id: task-event-5678e30e32bfcd315f5a1232d98ba696
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: a2b78e1c2f88f47c061b0dd7756482ee89c46ef3cb7a941b05bee04e963748f5
+fragment_checksum: af481dc7f11803a0832759c52d76d0c9c1f8aae45b3e5bded9907285c536cf03
