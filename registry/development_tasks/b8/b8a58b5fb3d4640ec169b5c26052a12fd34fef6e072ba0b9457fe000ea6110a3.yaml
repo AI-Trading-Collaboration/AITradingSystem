@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-729_REGIME_EVENT_CLUSTER_LABEL_STORE
   task_id_sha256: b8a58b5fb3d4640ec169b5c26052a12fd34fef6e072ba0b9457fe000ea6110a3
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-729_REGIME_EVENT_CLUSTER_LABEL_STORE
   title: null
   domain: Research data / regime, event, and cluster label store
@@ -12,19 +13,19 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-726_to_733 总需求文档；建立 regime/event/cluster
-    label definitions、label build 和 as-of audit baseline
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`aits research labels build-regime-labels'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 7ea682bbbea5c6564b84fdddc7f51b66af4c1309880297aef4401ce8b7d738f0
   cell_count: 11
@@ -74,20 +75,45 @@ events:
   evidence_refs:
   - sha256:7ea682bbbea5c6564b84fdddc7f51b66af4c1309880297aef4401ce8b7d738f0
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-729_REGIME_EVENT_CLUSTER_LABEL_STORE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:12:07+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 61325f5529b96ec65f5338b1f026e93cce074162
+  previous_state_event_id: legacy-import-7ea682bbbea5c6564b84fddd
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`aits research labels build-regime-labels'
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：build-event-labels
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-9a483443f2a3604e3d069924a11da3df
 projection:
   legacy_first_eight_cells:
   - TRADING-729_REGIME_EVENT_CLUSTER_LABEL_STORE
   - Research data / regime, event, and cluster label store
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-726_to_733 总需求文档；建立 regime/event/cluster label definitions、label build
-    和 as-of audit baseline
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`aits research labels build-regime-labels'
-  - build-event-labels
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：build-event-labels
   docs_links: []
-  terminal: false
-  canonical_row_sha256: 69bf455703e9efb28eb6f051a77b95d5d6a03411bf5fc53a9740ca35512f67e7
-last_event_id: legacy-import-7ea682bbbea5c6564b84fddd
+  terminal: true
+  canonical_row_sha256: afa3d2e97392c222c125ecea54a41ec8cc7f9d4e5daa78543a0a1acc82bb10d9
+last_event_id: task-event-9a483443f2a3604e3d069924a11da3df
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 590794f0da994ab6acdf2cb5bde7ca7ca1368488a2e3669ab9dfdce7476926a2
+fragment_checksum: ee0375cf0b757aaa9889be5a4588fb6ec4d5a3839018e86bbeb9d8b6c927b538
