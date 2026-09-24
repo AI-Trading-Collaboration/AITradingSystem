@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-179_to_183_CONFIRMATION_CYCLE_WEEKLY_OPS
   task_id_sha256: 30d775586f4c6dfb47e509223835e2cfa9cc86ec431203d3d4f56cfc042a9be7
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-179_to_183_CONFIRMATION_CYCLE_WEEKLY_OPS
   title: null
   domain: ETF portfolio research/Confirmation Cycle Scheduling and Weekly Evidence
@@ -13,21 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 项目 owner 人工复核 + 系统运行观察
-  requirement_refs:
-  - docs/requirements/TRADING-179_to_183_Confirmation_Cycle_Scheduling_and_Weekly_Evidence_Operations.md
+  next_owner: Project Owner（pi 迁移后重启对应研究线时）
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-179_to_183_Confirmation_Cycle_Scheduling_and_Weekly_Evidence_Operations.md`；baseline
-    实现已完成并生成真实 artifacts：plan `46dbf3d3f799b570`、weekly dry-run cycle `efc5b421b9fe3f32`、pressure
-    regime tag `1bc4775787a6606d`、confirmation dashboard `583f2901ecec9d0c`、rule review
-    queue `67ad255aeb9085b1`；weekly run 保持 dry-run，updated_windows=0，ready_for_evaluation=0，rule_review_recommendation=`continue_tracking`；pressure
-    tagging status=`PASS_WITH_WARNINGS` 且 defensive_validation_relevant_outcomes=0，因此
-    `defensive_limited_adjustment_drawdown` 仍是 evidence blocker；仍固定 no broker / no
-    production / no auto policy apply
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待
+    forward/shadow 样本自然成熟，30 天以上无新证据。退出条件：迁移 pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007
+    需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`confirmation-cycle plan/runbook/validate-config/weekly-run/weekly-report`、`pressure-regime-tag
       validate-config/run/report`、`confirmation-dashboard build/report`、`rule-review-queue
       build/report` 及对应 validate CLI 可运行；新增 schedule/tagging config；artifacts 写入 dynamic_v3_rescue
@@ -39,7 +35,6 @@ task_record:
       完成；保持 `broker_action_allowed=false`、`production_effect=none`、`policy_change_allowed=false`、`auto_apply=false`'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 77b6b7343515dceae6f9174466633b8316c73ce5f50e5cbd81cd1c0bf041a4b8
   cell_count: 8
@@ -125,20 +120,54 @@ events:
   evidence_refs:
   - sha256:77b6b7343515dceae6f9174466633b8316c73ce5f50e5cbd81cd1c0bf041a4b8
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-179_to_183_CONFIRMATION_CYCLE_WEEKLY_OPS
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:05:15+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: f43b3d49899147deb405774df8a2337fc9f56c56
+  previous_state_event_id: legacy-import-77b6b7343515dceae6f91744
+  from_status: VALIDATING
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: Project Owner（pi 迁移后重启对应研究线时）
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待 forward/shadow
+      样本自然成熟，30 天以上无新证据。退出条件：迁移 pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007 需求文档
+    acceptance_criteria: '`confirmation-cycle plan/runbook/validate-config/weekly-run/weekly-report`、`pressure-regime-tag
+      validate-config/run/report`、`confirmation-dashboard build/report`、`rule-review-queue
+      build/report` 及对应 validate CLI 可运行；新增 schedule/tagging config；artifacts 写入 dynamic_v3_rescue
+      runtime roots；weekly runner 默认 dry-run 且不修改 outcome；pressure thresholds 全部来自配置；dashboard
+      和 queue 清楚披露 target progress、pressure samples、ready/not_ready、owner action 和
+      safety；README、operations runbook、system flow、report registry、artifact catalog、requirements、Reader
+      Brief、focused tests、ruff、compileall、git diff check、dynamic-v3 validation、family
+      artifact validation、report index、Reader Brief quality 和 full validation tier
+      完成；保持 `broker_action_allowed=false`、`production_effect=none`、`policy_change_allowed=false`、`auto_apply=false`'
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：DEFERRED_AWAITING_FORWARD_SAMPLES；agent_harness=claude_code；原备注：2026-06-11:
+      新增并进入 IN_PROGRESS，原因：owner 要求推进附件中的 TRADING-179～183；本轮优先交付 P0 周度操作闭环和可审计 artifacts，P1/P2
+      的更精细标签、图表化 dashboard 和自动提醒后续再按样本和 owner 决策推进。2026-06-11: baseline 实现完成并转入 VALIDATING；验证通过
+      schedule config validate、pressure config validate、四个 artifact validators、dynamic-v3
+      root validation、dynamic-v3 family artifact validation、report index latest、Reader
+      Brief latest、Reader Brief quality、focused pytest 5 passed、ruff、compileall、git
+      diff check 和 full validation tier 2325 passed / 641 warnings / 124.72s；当前 owner
+      queue ready=0，下一步是 owner 复核 weekly dashboard/queue 并等待更多 defensive pressure
+      outcome。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-47381f91a7aa8bd2459005edd397eafc
 projection:
   legacy_first_eight_cells:
   - TRADING-179_to_183_CONFIRMATION_CYCLE_WEEKLY_OPS
   - ETF portfolio research/Confirmation Cycle Scheduling and Weekly Evidence Operations
   - P0
-  - VALIDATING
-  - 项目 owner 人工复核 + 系统运行观察
-  - 详细拆解见 `docs/requirements/TRADING-179_to_183_Confirmation_Cycle_Scheduling_and_Weekly_Evidence_Operations.md`；baseline
-    实现已完成并生成真实 artifacts：plan `46dbf3d3f799b570`、weekly dry-run cycle `efc5b421b9fe3f32`、pressure
-    regime tag `1bc4775787a6606d`、confirmation dashboard `583f2901ecec9d0c`、rule review
-    queue `67ad255aeb9085b1`；weekly run 保持 dry-run，updated_windows=0，ready_for_evaluation=0，rule_review_recommendation=`continue_tracking`；pressure
-    tagging status=`PASS_WITH_WARNINGS` 且 defensive_validation_relevant_outcomes=0，因此
-    `defensive_limited_adjustment_drawdown` 仍是 evidence blocker；仍固定 no broker / no
-    production / no auto policy apply
+  - DEFERRED
+  - Project Owner（pi 迁移后重启对应研究线时）
+  - 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待 forward/shadow 样本自然成熟，30 天以上无新证据。退出条件：迁移
+    pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007 需求文档
   - '`confirmation-cycle plan/runbook/validate-config/weekly-run/weekly-report`、`pressure-regime-tag
     validate-config/run/report`、`confirmation-dashboard build/report`、`rule-review-queue
     build/report` 及对应 validate CLI 可运行；新增 schedule/tagging config；artifacts 写入 dynamic_v3_rescue
@@ -147,17 +176,17 @@ projection:
     runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
     tests、ruff、compileall、git diff check、dynamic-v3 validation、family artifact validation、report
     index、Reader Brief quality 和 full validation tier 完成；保持 `broker_action_allowed=false`、`production_effect=none`、`policy_change_allowed=false`、`auto_apply=false`'
-  - '2026-06-11: 新增并进入 IN_PROGRESS，原因：owner 要求推进附件中的 TRADING-179～183；本轮优先交付 P0 周度操作闭环和可审计
-    artifacts，P1/P2 的更精细标签、图表化 dashboard 和自动提醒后续再按样本和 owner 决策推进。2026-06-11: baseline
-    实现完成并转入 VALIDATING；验证通过 schedule config validate、pressure config validate、四个 artifact
-    validators、dynamic-v3 root validation、dynamic-v3 family artifact validation、report
-    index latest、Reader Brief latest、Reader Brief quality、focused pytest 5 passed、ruff、compileall、git
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：DEFERRED_AWAITING_FORWARD_SAMPLES；agent_harness=claude_code；原备注：2026-06-11:
+    新增并进入 IN_PROGRESS，原因：owner 要求推进附件中的 TRADING-179～183；本轮优先交付 P0 周度操作闭环和可审计 artifacts，P1/P2
+    的更精细标签、图表化 dashboard 和自动提醒后续再按样本和 owner 决策推进。2026-06-11: baseline 实现完成并转入 VALIDATING；验证通过
+    schedule config validate、pressure config validate、四个 artifact validators、dynamic-v3
+    root validation、dynamic-v3 family artifact validation、report index latest、Reader
+    Brief latest、Reader Brief quality、focused pytest 5 passed、ruff、compileall、git
     diff check 和 full validation tier 2325 passed / 641 warnings / 124.72s；当前 owner
     queue ready=0，下一步是 owner 复核 weekly dashboard/queue 并等待更多 defensive pressure outcome。'
-  docs_links:
-  - docs/requirements/TRADING-179_to_183_Confirmation_Cycle_Scheduling_and_Weekly_Evidence_Operations.md
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 77b6b7343515dceae6f9174466633b8316c73ce5f50e5cbd81cd1c0bf041a4b8
-last_event_id: legacy-import-77b6b7343515dceae6f91744
+  canonical_row_sha256: 17b38d97b98fc1a617d9546e66bc2fd4543f9c6799c220e3f899f689cff6154b
+last_event_id: task-event-47381f91a7aa8bd2459005edd397eafc
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: e460d3484a30bdb2a23a16c2f18d9f6509e28e0685be3913ab768f5c821b1a11
+fragment_checksum: 34e541f75d8fa0e0bdd88374e1e2331958f3fb0c7ab275cac28dc00461fe2fab
