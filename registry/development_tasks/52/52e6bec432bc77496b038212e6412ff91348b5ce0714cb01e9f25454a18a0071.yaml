@@ -13,16 +13,14 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner：决定是否精确授权 failure-fix proposal 中的一次 contained-root canonical
-    DQ retry
+  next_owner: Claude Code coordinator：执行一次已授权的 corrected DQ retry
   requirement_refs:
   - docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: manifest replay=1 PASS；首个 DQ dispatch
-    在 validator 前因 path outside project root 被拒，completed DQ/receipt/report=0；需在 D:\Work\AITradingSystem
-    内 corrected DQ retry 1 次；其余动作与全部禁止项均为 0
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 owner 决策包第2条授权一次项目根内 corrected
+    DQ retry（R1，有界、零下单、不下载/不改 cache）；执行前复核 failure-fix proposal 与既有 1/1/1/1/1/1 上限，任何越界即停止
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: manifest replay、canonical DQ、isolated rehearsal、maturity update、scoreboard、continuity
@@ -87,24 +85,49 @@ events:
   - change:trading-2563-path-containment-block-20260904-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-5b3ff03063dc6d7ea7e69b0911b768c9
+- schema_version: task_event.v1
+  task_id: TRADING-2563_EQUAL_RISK_CATCHUP_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:30:34+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: 8dbe030de1e482bc96b7bde575e37350d2bcf6ed
+  previous_state_event_id: task-event-5b3ff03063dc6d7ea7e69b0911b768c9
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator：执行一次已授权的 corrected DQ retry
+    blocker_or_next_step: 2026-09-24 owner 决策包第2条授权一次项目根内 corrected DQ retry（R1，有界、零下单、不下载/不改
+      cache）；执行前复核 failure-fix proposal 与既有 1/1/1/1/1/1 上限，任何越界即停止
+    acceptance_criteria: manifest replay、canonical DQ、isolated rehearsal、maturity
+      update、scoreboard、continuity 各恰好 1 次；immutable identity 不变；禁止项全部 0；正式验证、local-main、origin/main
+      与生命周期门禁通过
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第2条：authorization_state=EXACT_PREAUTHORIZED；agent_harness=claude_code；原备注：authorization_state=EXACT_PREAUTHORIZED；technical_validation_state=DQ_NOT_EXECUTED_PATH_CONTAINMENT_REJECTED；详见
+      docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md 与 failure-fix proposal
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-1dd57b85ebd7ebafd6538a15c34faf6a
 projection:
   legacy_first_eight_cells:
   - TRADING-2563_EQUAL_RISK_CATCHUP_V1
   - Strategy research / equal-risk bounded maturity catch-up
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner：决定是否精确授权 failure-fix proposal 中的一次 contained-root canonical DQ retry
-  - manifest replay=1 PASS；首个 DQ dispatch 在 validator 前因 path outside project root
-    被拒，completed DQ/receipt/report=0；需在 D:\Work\AITradingSystem 内 corrected DQ retry
-    1 次；其余动作与全部禁止项均为 0
+  - IN_PROGRESS
+  - Claude Code coordinator：执行一次已授权的 corrected DQ retry
+  - 2026-09-24 owner 决策包第2条授权一次项目根内 corrected DQ retry（R1，有界、零下单、不下载/不改 cache）；执行前复核
+    failure-fix proposal 与既有 1/1/1/1/1/1 上限，任何越界即停止
   - manifest replay、canonical DQ、isolated rehearsal、maturity update、scoreboard、continuity
     各恰好 1 次；immutable identity 不变；禁止项全部 0；正式验证、local-main、origin/main 与生命周期门禁通过
-  - authorization_state=EXACT_PREAUTHORIZED；technical_validation_state=DQ_NOT_EXECUTED_PATH_CONTAINMENT_REJECTED；详见
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第2条：authorization_state=EXACT_PREAUTHORIZED；agent_harness=claude_code；原备注：authorization_state=EXACT_PREAUTHORIZED；technical_validation_state=DQ_NOT_EXECUTED_PATH_CONTAINMENT_REJECTED；详见
     docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md 与 failure-fix proposal
   docs_links:
   - docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md
   terminal: false
-  canonical_row_sha256: 8c1f3b449780875f1865070b9509076b3f4fa77e01f8603467290f0ca7efc522
-last_event_id: task-event-5b3ff03063dc6d7ea7e69b0911b768c9
+  canonical_row_sha256: da505a4546f473b13bbf4bd5722a4d05c307d684ad467351d8b1ad2681f3cf49
+last_event_id: task-event-1dd57b85ebd7ebafd6538a15c34faf6a
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: c80b1b4352b48001cae21309b1830da80b197fa549a29792f664af14e178df91
+fragment_checksum: f67eddf304c0747ca7e62d995187753ee1234330eb7c35d5a2723d5e6b7190d9
