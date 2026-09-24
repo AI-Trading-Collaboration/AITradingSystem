@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2310_AI_LEADERSHIP_SCOPE_REVIEW
   task_id_sha256: b96a81754b09d1fbeeb009de2a84118d6283b7c7ca93cc6e8a91b5e636f98927
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2310_AI_LEADERSHIP_SCOPE_REVIEW
   title: null
   domain: Research trends / AI semiconductor leadership candidate family
@@ -12,25 +13,22 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2310_AI_Leadership_Scope_Review.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2310_AI_Leadership_Scope_Review.md`；依赖
-    TRADING-2309 actual-path validation outputs、required-symbol cached price quality
-    gate 和 scope-review policy manifest。Full-universe validation 当前因 `ASX` 缺失 fail-closed，本任务只能声明
-    TRADING-2310 required-symbol scope review readiness，不能声明 full-universe data readiness。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 生成 AI leadership scope review summary、asset scope matrix、horizon scope matrix、use-case
       scope matrix、recommended scope、safety boundary 和 research report；必须明确 `SMH only`、`QQQ
       + SMH`、`10d` / `20d`、`confirmation_only` 和 `exposure_cap_modifier` 的 scope decision；所有
       artifacts 固定 promotion / paper-shadow / production / broker false/none、`dynamic_promotion_status=BLOCKED`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 7ac9c15b294342245931de975dd92de85d6e3c01886827d1a327c5f5d461392b
   cell_count: 8
@@ -95,30 +93,62 @@ events:
   evidence_refs:
   - sha256:7ac9c15b294342245931de975dd92de85d6e3c01886827d1a327c5f5d461392b
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2310_AI_LEADERSHIP_SCOPE_REVIEW
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:49:12+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: bbeddc6b6f385772e75c6f39136473a8761ed194
+  previous_state_event_id: legacy-import-7ac9c15b294342245931de97
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 生成 AI leadership scope review summary、asset scope matrix、horizon
+      scope matrix、use-case scope matrix、recommended scope、safety boundary 和 research
+      report；必须明确 `SMH only`、`QQQ + SMH`、`10d` / `20d`、`confirmation_only` 和 `exposure_cap_modifier`
+      的 scope decision；所有 artifacts 固定 promotion / paper-shadow / production / broker
+      false/none、`dynamic_promotion_status=BLOCKED`。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+      根据 owner post-2302 roadmap 和 TRADING-2309 next task 新增并进入 IN_PROGRESS；当前 worktree
+      有两个无关 research 文档未提交改动，本任务必须 selective staging。2026-07-01: 实现完成并转入 VALIDATING；真实
+      run status=`AI_LEADERSHIP_SCOPE_REVIEW_READY_RESEARCH_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`；`QQQ
+      + SMH` / `10d` / `confirmation_only` / `exposure_cap_modifier` keep，`SMH only`
+      / `20d` diagnostic，`standalone_alpha` reject。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-80b9042936234181a103b61df0cb58af
 projection:
   legacy_first_eight_cells:
   - TRADING-2310_AI_LEADERSHIP_SCOPE_REVIEW
   - Research trends / AI semiconductor leadership candidate family
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2310_AI_Leadership_Scope_Review.md`；依赖 TRADING-2309
-    actual-path validation outputs、required-symbol cached price quality gate 和 scope-review
-    policy manifest。Full-universe validation 当前因 `ASX` 缺失 fail-closed，本任务只能声明 TRADING-2310
-    required-symbol scope review readiness，不能声明 full-universe data readiness。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 生成 AI leadership scope review summary、asset scope matrix、horizon scope matrix、use-case
     scope matrix、recommended scope、safety boundary 和 research report；必须明确 `SMH only`、`QQQ
     + SMH`、`10d` / `20d`、`confirmation_only` 和 `exposure_cap_modifier` 的 scope decision；所有
     artifacts 固定 promotion / paper-shadow / production / broker false/none、`dynamic_promotion_status=BLOCKED`。
-  - '2026-07-01: 根据 owner post-2302 roadmap 和 TRADING-2309 next task 新增并进入 IN_PROGRESS；当前
-    worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging。2026-07-01: 实现完成并转入 VALIDATING；真实
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+    根据 owner post-2302 roadmap 和 TRADING-2309 next task 新增并进入 IN_PROGRESS；当前 worktree
+    有两个无关 research 文档未提交改动，本任务必须 selective staging。2026-07-01: 实现完成并转入 VALIDATING；真实
     run status=`AI_LEADERSHIP_SCOPE_REVIEW_READY_RESEARCH_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`；`QQQ
     + SMH` / `10d` / `confirmation_only` / `exposure_cap_modifier` keep，`SMH only`
     / `20d` diagnostic，`standalone_alpha` reject。'
-  docs_links:
-  - docs/requirements/TRADING-2310_AI_Leadership_Scope_Review.md
-  terminal: false
-  canonical_row_sha256: 7ac9c15b294342245931de975dd92de85d6e3c01886827d1a327c5f5d461392b
-last_event_id: legacy-import-7ac9c15b294342245931de97
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 07b7cd01860b4a89578e4aed8068e0dd0ea67634cf0f9c60b143d269e40e11d9
+last_event_id: task-event-80b9042936234181a103b61df0cb58af
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 99ad02c78799920ab7b4c5ed986881a884a9f8848cc2e7163560648a77389b5c
+fragment_checksum: 54a766ed4c9806a5a7f9ac22d46fd0fcfbe8cbc8885b7cc1327e637d03461cba
