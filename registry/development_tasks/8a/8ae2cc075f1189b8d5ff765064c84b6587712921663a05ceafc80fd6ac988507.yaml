@@ -14,18 +14,14 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / governed fresh-token admission after incident review
-    and reliable single-input Monaco mutation mechanism
+  next_owner: 外部条件 / Project Owner
   requirement_refs:
   - docs/requirements/TRADING-2538_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Admission_And_Execution_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: The first authorized browser mutation
-    attempt did not replace the prior Monaco content. Authorization is consumed and
-    retry is forbidden; Cloud run/provider query stayed 0. Review the sealed incident,
-    prove a reliable one-input mutation mechanism offline, then issue a fresh exact
-    single-use token if another attempt is desired.
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL
+    转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider catalog）出现时重开
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Preserve token/admission/incident/ledger/manifest seals; treat preliminary
@@ -104,30 +100,56 @@ events:
   - change:trading-2538-failed-mutation-attempt-blocked-20260820-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-08cbd0281f4afb2288d453ef1017f9e6
+- schema_version: task_event.v1
+  task_id: TRADING-2538_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_ADMISSION_AND_EXECUTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:39:32+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: 8dbaaf647a2d9d0fc0b06b7efc77dcebc3cbf686
+  previous_state_event_id: task-event-08cbd0281f4afb2288d453ef1017f9e6
+  from_status: BLOCKED_EXTERNAL
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: 外部条件 / Project Owner
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如
+      IBKR fill、通知链、多日观察、provider catalog）出现时重开
+    acceptance_criteria: Preserve token/admission/incident/ledger/manifest seals;
+      treat preliminary mutation receipt as superseded; terminal counters attempts/verified
+      mutations/runs/provider queries/orders/fills=1/0/0/0/0/0; no retry under current
+      token; focused/formal validation and governed publication of failure evidence;
+      any successor needs new Owner authorization.
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：详见
+      [TRADING-2538 exact-date provider catalog attribution admission and execution](docs/requirements/TRADING-2538_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Admission_And_Execution_V1.md)。production_effect=none、broker_action=none；authorization
+      consumed, no Cloud backtest submitted.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-126e2869c7f94d0588c93e68bd0bd7c8
 projection:
   legacy_first_eight_cells:
   - TRADING-2538_QC_QQQ_OPTIONS_EXACT_DATE_PROVIDER_CATALOG_ATTRIBUTION_ADMISSION_AND_EXECUTION_V1
   - QQQ Options exact-date provider catalog attribution admission and execution V1
   - P0
-  - BLOCKED_EXTERNAL
-  - Project Owner / governed fresh-token admission after incident review and reliable
-    single-input Monaco mutation mechanism
-  - The first authorized browser mutation attempt did not replace the prior Monaco
-    content. Authorization is consumed and retry is forbidden; Cloud run/provider
-    query stayed 0. Review the sealed incident, prove a reliable one-input mutation
-    mechanism offline, then issue a fresh exact single-use token if another attempt
-    is desired.
+  - DEFERRED
+  - 外部条件 / Project Owner
+  - 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider
+    catalog）出现时重开
   - Preserve token/admission/incident/ledger/manifest seals; treat preliminary mutation
     receipt as superseded; terminal counters attempts/verified mutations/runs/provider
     queries/orders/fills=1/0/0/0/0/0; no retry under current token; focused/formal
     validation and governed publication of failure evidence; any successor needs new
     Owner authorization.
-  - 详见 [TRADING-2538 exact-date provider catalog attribution admission and execution](docs/requirements/TRADING-2538_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Admission_And_Execution_V1.md)。production_effect=none、broker_action=none；authorization
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：详见
+    [TRADING-2538 exact-date provider catalog attribution admission and execution](docs/requirements/TRADING-2538_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Admission_And_Execution_V1.md)。production_effect=none、broker_action=none；authorization
     consumed, no Cloud backtest submitted.
   docs_links:
   - docs/requirements/TRADING-2538_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Admission_And_Execution_V1.md
   terminal: false
-  canonical_row_sha256: 9432511c7295d4fafaff4a0a0da9aea9d81fa1dffb55cfb1ad94a7b9da65e51c
-last_event_id: task-event-08cbd0281f4afb2288d453ef1017f9e6
+  canonical_row_sha256: 7a03d998ed57dd8fe2f7b0c7522cc746cc8a071563b7c2bc89ed055a622580b2
+last_event_id: task-event-126e2869c7f94d0588c93e68bd0bd7c8
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 086db0264da44dd7a9d60a0bc1bf65202349b33eb1863f78c0043754fb4265e6
+fragment_checksum: fc80bcfc0ce4c10603697691bba5ca803cc9f5769ec4d06b096b7620b0f49f26
