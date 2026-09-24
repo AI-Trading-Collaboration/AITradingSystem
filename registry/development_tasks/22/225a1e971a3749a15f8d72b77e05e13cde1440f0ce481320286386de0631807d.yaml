@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-827_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT
   task_id_sha256: 225a1e971a3749a15f8d72b77e05e13cde1440f0ce481320286386de0631807d
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-827_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT
   title: null
   domain: Controlled strategy research / read-only tail-risk trigger-label independence
@@ -13,17 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-827_Tail_Risk_Trigger_Label_Independence_Audit.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-827_Tail_Risk_Trigger_Label_Independence_Audit.md`；owner
-    原建议编号为 TRADING-826，但该编号已由 blocker diagnostic 占用，因此本实现使用新的唯一任务号 TRADING-827；只读取已有
-    tail-risk artifacts，不修改策略、promotion、paper-shadow、production weight 或 broker/order
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增只读 CLI/artifact，枚举 trigger、label/outcome 和 forward outcome 字段；检查 direct
       field overlap、derived overlap 和 decision/forward time-window overlap；输出 `overlap_matrix`、`time_window_matrix`、`derived_dependency_matrix`；如果
       trigger 与 label 共享核心字段或共享派生逻辑，必须输出 `BLOCKED`；回答当前策略是否用同一套风险定义同时触发和验证，并在 blocked
@@ -31,7 +31,6 @@ task_record:
       flow/tests
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: fa81893c1e774f2f5ab219ad929fa2b17264d5ce2520fa75e087e580f23cd2d3
   cell_count: 8
@@ -105,22 +104,59 @@ events:
   evidence_refs:
   - sha256:fa81893c1e774f2f5ab219ad929fa2b17264d5ce2520fa75e087e580f23cd2d3
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-827_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:23:08+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 6876af518683bc1685b7eec1292fbaefd6de605e
+  previous_state_event_id: legacy-import-fa81893c1e774f2f5ab219ad
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增只读 CLI/artifact，枚举 trigger、label/outcome 和 forward outcome
+      字段；检查 direct field overlap、derived overlap 和 decision/forward time-window overlap；输出
+      `overlap_matrix`、`time_window_matrix`、`derived_dependency_matrix`；如果 trigger
+      与 label 共享核心字段或共享派生逻辑，必须输出 `BLOCKED`；回答当前策略是否用同一套风险定义同时触发和验证，并在 blocked 时标记
+      return metrics 暂不可信；新增 report registry entry 并更新 artifact catalog/system flow/tests
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+      新增并进入 IN_PROGRESS，原因：TRADING-826 blocker diagnostic 指向 `decouple_trigger_and_label_or_add_independent_forward_outcome_validation`；owner
+      要求先做独立 trigger/label 审计，确认 fallback trigger 不参与 outcome label 定义、不与 label 有直接构造关系、且只使用
+      decision_time 当时可见信息。2026-06-22: 实现完成并转入 VALIDATING；真实 CLI run 生成 `outputs/research_strategies/value_surface_review/tail_risk_trigger_label_independence_audit.json/md`，status=`BLOCKED`，direct_overlap_count=3（`large_loss_case`、`tail_loss_case`、`long_horizon_failure_case`），derived_overlap_count=15，time_window_blocker_count=9，结论为当前
+      fallback 确实使用同一套风险定义做触发和验证，return metrics 暂不可信；next action=`define_independent_forward_outcome_validation_before_using_return_metrics`，不建议
+      promotion/paper-shadow/production/broker；验证通过：focused independence pytest 1
+      passed、focused falsification pytest 9 passed、focused CLI/registry pytest 3 passed、`fast-unit`
+      187 passed、`contract-validation` 186 passed、`report-validation` 55 passed、Ruff、changed-file
+      Black check、compileall 和 git diff check。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7b06cec9720b9d18b6af200824c30059
 projection:
   legacy_first_eight_cells:
   - TRADING-827_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT
   - Controlled strategy research / read-only tail-risk trigger-label independence
     audit
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-827_Tail_Risk_Trigger_Label_Independence_Audit.md`；owner
-    原建议编号为 TRADING-826，但该编号已由 blocker diagnostic 占用，因此本实现使用新的唯一任务号 TRADING-827；只读取已有
-    tail-risk artifacts，不修改策略、promotion、paper-shadow、production weight 或 broker/order
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增只读 CLI/artifact，枚举 trigger、label/outcome 和 forward outcome 字段；检查 direct field
     overlap、derived overlap 和 decision/forward time-window overlap；输出 `overlap_matrix`、`time_window_matrix`、`derived_dependency_matrix`；如果
     trigger 与 label 共享核心字段或共享派生逻辑，必须输出 `BLOCKED`；回答当前策略是否用同一套风险定义同时触发和验证，并在 blocked
     时标记 return metrics 暂不可信；新增 report registry entry 并更新 artifact catalog/system flow/tests
-  - '2026-06-22: 新增并进入 IN_PROGRESS，原因：TRADING-826 blocker diagnostic 指向 `decouple_trigger_and_label_or_add_independent_forward_outcome_validation`；owner
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+    新增并进入 IN_PROGRESS，原因：TRADING-826 blocker diagnostic 指向 `decouple_trigger_and_label_or_add_independent_forward_outcome_validation`；owner
     要求先做独立 trigger/label 审计，确认 fallback trigger 不参与 outcome label 定义、不与 label 有直接构造关系、且只使用
     decision_time 当时可见信息。2026-06-22: 实现完成并转入 VALIDATING；真实 CLI run 生成 `outputs/research_strategies/value_surface_review/tail_risk_trigger_label_independence_audit.json/md`，status=`BLOCKED`，direct_overlap_count=3（`large_loss_case`、`tail_loss_case`、`long_horizon_failure_case`），derived_overlap_count=15，time_window_blocker_count=9，结论为当前
     fallback 确实使用同一套风险定义做触发和验证，return metrics 暂不可信；next action=`define_independent_forward_outcome_validation_before_using_return_metrics`，不建议
@@ -128,10 +164,9 @@ projection:
     falsification pytest 9 passed、focused CLI/registry pytest 3 passed、`fast-unit`
     187 passed、`contract-validation` 186 passed、`report-validation` 55 passed、Ruff、changed-file
     Black check、compileall 和 git diff check。'
-  docs_links:
-  - docs/requirements/TRADING-827_Tail_Risk_Trigger_Label_Independence_Audit.md
-  terminal: false
-  canonical_row_sha256: fa81893c1e774f2f5ab219ad929fa2b17264d5ce2520fa75e087e580f23cd2d3
-last_event_id: legacy-import-fa81893c1e774f2f5ab219ad
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: bd1f1b4ddcd0a2dc31d48c072d0024b9d0e5cd3c3ae4987a52c1c71380d31663
+last_event_id: task-event-7b06cec9720b9d18b6af200824c30059
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: c88fe8c5c7ca74e27a4a273afe7c16099bb696ccde123370d3f9d1cca567fe94
+fragment_checksum: 67f35236bf5c4c6b979718be52b410ebccb6ea4a7669c233dbf2fdd9e1c97c8a
