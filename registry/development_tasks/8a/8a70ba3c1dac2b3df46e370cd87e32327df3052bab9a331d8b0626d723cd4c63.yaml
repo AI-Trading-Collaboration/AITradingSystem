@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2026_to_2045_FIRST_LAYER_CHANNEL_CLOSEOUT_REOPEN_CRITERIA
   task_id_sha256: 8a70ba3c1dac2b3df46e370cd87e32327df3052bab9a331d8b0626d723cd4c63
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2026_to_2045_FIRST_LAYER_CHANNEL_CLOSEOUT_REOPEN_CRITERIA
   title: null
   domain: Research trends / first-layer channel closeout and reopen criteria
@@ -12,20 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2026_to_2045_First_Layer_Channel_Closeout_Reopen_Criteria.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2026_to_2045_First_Layer_Channel_Closeout_Reopen_Criteria.md`；承接
-    TRADING-2006～2025，当前 first-layer channel 无策略候选：`do_not_de_risk v3` 无 material
-    improvement，`risk_on_veto v3` net benefit 为负，add-risk 没有 selected family，return-seeking
-    diagnostic 受 drawdown/beta/TQQQ/2023+ blocker 限制，breadth/event_risk family PIT
-    blocked。本批已收口为 `FIRST_LAYER_CHANNEL_RESEARCH_CLOSED_NO_CANDIDATE`，只允许历史诊断、PIT
-    data gap roadmap 和 owner-approved future reopen。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 `first_layer_channel_archive_policy`、master closeout、channel status matrix、diagnostic
       evidence labels、reopen criteria、PIT data gap roadmap、minimal forward diagnostic
       plan、owner closeout brief、report registry、artifact catalog、system flow 和 archive
@@ -36,7 +33,6 @@ task_record:
       blocked/false/false/none。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: e925261b362d089494f60c63ffab7b52385c8b8d001d8d7cea7b1360f069028c
   cell_count: 8
@@ -108,19 +104,50 @@ events:
   evidence_refs:
   - sha256:e925261b362d089494f60c63ffab7b52385c8b8d001d8d7cea7b1360f069028c
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2026_to_2045_FIRST_LAYER_CHANNEL_CLOSEOUT_REOPEN_CRITERIA
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:10:22+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: eee376acccc2bb4cfb74f0f0d72fe33b8f220fea
+  previous_state_event_id: legacy-import-e925261b362d089494f60c63
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 `first_layer_channel_archive_policy`、master closeout、channel
+      status matrix、diagnostic evidence labels、reopen criteria、PIT data gap roadmap、minimal
+      forward diagnostic plan、owner closeout brief、report registry、artifact catalog、system
+      flow 和 archive guardrail tests；必须证明 archived channels 不能作为 candidate，negative
+      net veto benefit blocks forward watch，add-risk selected family 为空，reopen requires
+      owner approval/new PIT feature or forward evidence，PIT-blocked family cannot
+      enter model，2023+ only result cannot reopen channel；promotion/paper-shadow/production/broker
+      固定 blocked/false/false/none。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+      实现完成并转入 VALIDATING；真实 run 生成 closeout pack，candidate_count=0，forward minimal
+      plan `enabled=false`；focused archive contract 10 tests pass，治理测试组 63 tests pass，全量
+      Ruff、compileall、diff check 通过；task-register DONE/BASELINE/DROPPED regex 无匹配。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-9ea64b9a204ad55e9dd9aab0e1786269
 projection:
   legacy_first_eight_cells:
   - TRADING-2026_to_2045_FIRST_LAYER_CHANNEL_CLOSEOUT_REOPEN_CRITERIA
   - Research trends / first-layer channel closeout and reopen criteria
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2026_to_2045_First_Layer_Channel_Closeout_Reopen_Criteria.md`；承接
-    TRADING-2006～2025，当前 first-layer channel 无策略候选：`do_not_de_risk v3` 无 material
-    improvement，`risk_on_veto v3` net benefit 为负，add-risk 没有 selected family，return-seeking
-    diagnostic 受 drawdown/beta/TQQQ/2023+ blocker 限制，breadth/event_risk family PIT
-    blocked。本批已收口为 `FIRST_LAYER_CHANNEL_RESEARCH_CLOSED_NO_CANDIDATE`，只允许历史诊断、PIT
-    data gap roadmap 和 owner-approved future reopen。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 `first_layer_channel_archive_policy`、master closeout、channel status matrix、diagnostic
     evidence labels、reopen criteria、PIT data gap roadmap、minimal forward diagnostic
     plan、owner closeout brief、report registry、artifact catalog、system flow 和 archive
@@ -128,14 +155,13 @@ projection:
     blocks forward watch，add-risk selected family 为空，reopen requires owner approval/new
     PIT feature or forward evidence，PIT-blocked family cannot enter model，2023+ only
     result cannot reopen channel；promotion/paper-shadow/production/broker 固定 blocked/false/false/none。
-  - '2026-06-28: 实现完成并转入 VALIDATING；真实 run 生成 closeout pack，candidate_count=0，forward
-    minimal plan `enabled=false`；focused archive contract 10 tests pass，治理测试组 63 tests
-    pass，全量 Ruff、compileall、diff check 通过；task-register DONE/BASELINE/DROPPED regex
-    无匹配。'
-  docs_links:
-  - docs/requirements/TRADING-2026_to_2045_First_Layer_Channel_Closeout_Reopen_Criteria.md
-  terminal: false
-  canonical_row_sha256: e925261b362d089494f60c63ffab7b52385c8b8d001d8d7cea7b1360f069028c
-last_event_id: legacy-import-e925261b362d089494f60c63
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+    实现完成并转入 VALIDATING；真实 run 生成 closeout pack，candidate_count=0，forward minimal plan
+    `enabled=false`；focused archive contract 10 tests pass，治理测试组 63 tests pass，全量
+    Ruff、compileall、diff check 通过；task-register DONE/BASELINE/DROPPED regex 无匹配。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 303fde8a24c73c0fa79e8b53e90b35927a0ee26d1cd04c87521c32adf5cbcc09
+last_event_id: task-event-9ea64b9a204ad55e9dd9aab0e1786269
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: ba5fe4a914e66e4258c69ebae2f51d128bf1e1be9e397cdaf9e342c079c50e1f
+fragment_checksum: 0a5e1ecbb3978750d93ac7fd9f1f10aeb0d35111f38f21fbeb3aa7e91f1e7738
