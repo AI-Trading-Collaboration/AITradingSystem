@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1306_to_1325_PENDING_PLAN_SUPERSEDE_EVENT_OVERRIDE
   task_id_sha256: aa2fc2d033d978e1c67eba38a6865c835901f8c2a37d0fac59bdaf9605779784
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1306_to_1325_PENDING_PLAN_SUPERSEDE_EVENT_OVERRIDE
   title: null
   domain: Research strategies / pending plan state machine, event override execution
@@ -13,18 +14,17 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 项目 owner 后续复核 + 系统后续验证
+  next_owner: None / closed_without_owner_review
   requirement_refs:
-  - docs/requirements/TRADING-1306_to_1325_Pending_Plan_Supersede_Event_Override.md
   - docs/research/event_override_execution_semantics_review.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1306_to_1325_Pending_Plan_Supersede_Event_Override.md`；实现已完成，下一步为
-    owner 复核 event override survival matrix、turnover impact、是否继续 watch event override
-    candidates；本批不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 `config/research/event_override_policy.yaml`；CLI 支持 `--enable-event-override`、`--event-override-policy`、`--event-override-mode
       event_override_t_plus_1` 和 trace/ledger flags；per-strategy 输出 `event_override_trace.json`、`pending_plan_ledger.csv`、`supersede_log.csv`、`event_override_summary.json`、`no_lookahead_evidence.json`；聚合输出
       leaderboard / vs-base / summary / gate 与 `inputs/research_reviews/event_override_survival_matrix.yaml`；新增
@@ -33,7 +33,6 @@ task_record:
       pytest、CLI dry-run 和 `git diff --check` 通过
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: e2142a7ca94972b0fd1f716383f5deab5549ed322597a2359b22487e213a3e77
   cell_count: 8
@@ -105,34 +104,69 @@ events:
   evidence_refs:
   - sha256:e2142a7ca94972b0fd1f716383f5deab5549ed322597a2359b22487e213a3e77
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1306_to_1325_PENDING_PLAN_SUPERSEDE_EVENT_OVERRIDE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:54:54+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 25db9b93179adb75b61cb6801ccb7ab9e5c67725
+  previous_state_event_id: legacy-import-e2142a7ca94972b0fd1f7163
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 `config/research/event_override_policy.yaml`；CLI 支持 `--enable-event-override`、`--event-override-policy`、`--event-override-mode
+      event_override_t_plus_1` 和 trace/ledger flags；per-strategy 输出 `event_override_trace.json`、`pending_plan_ledger.csv`、`supersede_log.csv`、`event_override_summary.json`、`no_lookahead_evidence.json`；聚合输出
+      leaderboard / vs-base / summary / gate 与 `inputs/research_reviews/event_override_survival_matrix.yaml`；新增
+      `docs/research/event_override_execution_semantics_review.md`；fast override 默认
+      risk-off only；dynamic promotion 继续 `BLOCKED`；focused tests、Ruff、compileall、parallel
+      pytest、CLI dry-run 和 `git diff --check` 通过
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+      新增并进入 IN_PROGRESS，原因：staleness-aware repair 结论为 `NO_MATERIAL_IMPROVEMENT`，剩余问题转向
+      actual-path edge insufficiency 与 event-response execution semantics。2026-06-27:
+      实现完成并转入 VALIDATING；真实 dry-run event reviews/triggers/supersedes/T+1 executions=`36/36/36/36`、blocked
+      overrides=`0`；`limited_adjustment_event_override_v1` verdict=`EVENT_OVERRIDE_INCREASES_TURNOVER_TOO_MUCH`，`dynamic_v0_5_ai_trend_confirmed_event_override_v1`
+      verdict=`EVENT_OVERRIDE_TOO_NOISY`，paper_shadow_preflight_candidate=`NOT_IDENTIFIED`，dynamic
+      promotion 继续 `BLOCKED`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-758ec656caa034d7a91aeae5028f665d
 projection:
   legacy_first_eight_cells:
   - TRADING-1306_to_1325_PENDING_PLAN_SUPERSEDE_EVENT_OVERRIDE
   - Research strategies / pending plan state machine, event override execution semantics,
     actual-path watch-only rebacktest
   - P0
-  - VALIDATING
-  - 项目 owner 后续复核 + 系统后续验证
-  - 详见 `docs/requirements/TRADING-1306_to_1325_Pending_Plan_Supersede_Event_Override.md`；实现已完成，下一步为
-    owner 复核 event override survival matrix、turnover impact、是否继续 watch event override
-    candidates；本批不得恢复 dynamic promotion，不得进入 paper-shadow/production/broker
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 `config/research/event_override_policy.yaml`；CLI 支持 `--enable-event-override`、`--event-override-policy`、`--event-override-mode
     event_override_t_plus_1` 和 trace/ledger flags；per-strategy 输出 `event_override_trace.json`、`pending_plan_ledger.csv`、`supersede_log.csv`、`event_override_summary.json`、`no_lookahead_evidence.json`；聚合输出
     leaderboard / vs-base / summary / gate 与 `inputs/research_reviews/event_override_survival_matrix.yaml`；新增
     `docs/research/event_override_execution_semantics_review.md`；fast override 默认
     risk-off only；dynamic promotion 继续 `BLOCKED`；focused tests、Ruff、compileall、parallel
     pytest、CLI dry-run 和 `git diff --check` 通过
-  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：staleness-aware repair 结论为 `NO_MATERIAL_IMPROVEMENT`，剩余问题转向
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+    新增并进入 IN_PROGRESS，原因：staleness-aware repair 结论为 `NO_MATERIAL_IMPROVEMENT`，剩余问题转向
     actual-path edge insufficiency 与 event-response execution semantics。2026-06-27:
     实现完成并转入 VALIDATING；真实 dry-run event reviews/triggers/supersedes/T+1 executions=`36/36/36/36`、blocked
     overrides=`0`；`limited_adjustment_event_override_v1` verdict=`EVENT_OVERRIDE_INCREASES_TURNOVER_TOO_MUCH`，`dynamic_v0_5_ai_trend_confirmed_event_override_v1`
     verdict=`EVENT_OVERRIDE_TOO_NOISY`，paper_shadow_preflight_candidate=`NOT_IDENTIFIED`，dynamic
     promotion 继续 `BLOCKED`。'
   docs_links:
-  - docs/requirements/TRADING-1306_to_1325_Pending_Plan_Supersede_Event_Override.md
   - docs/research/event_override_execution_semantics_review.md
-  terminal: false
-  canonical_row_sha256: e2142a7ca94972b0fd1f716383f5deab5549ed322597a2359b22487e213a3e77
-last_event_id: legacy-import-e2142a7ca94972b0fd1f7163
+  terminal: true
+  canonical_row_sha256: d83ccd7abaf226a1ff50b3bb06b4d78abfdfe711cd0125151d1e2c3ec229410a
+last_event_id: task-event-758ec656caa034d7a91aeae5028f665d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 802ae89db5c6a14d2d536aeeff42656cf06166c6624a918278a83d4893fb0039
+fragment_checksum: 77646fcec2944b0a84ca51dbc01601214e39b1e5afd8925f793f99e2ada57e4a
