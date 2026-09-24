@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-719_HORIZON_CONDITIONED_VALUE_SURFACE_BASELINE
   task_id_sha256: e0ec4d72f6de3bbad88d9f8401f6bea499da34578ee46541d63eb3b9c7770143
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-719_HORIZON_CONDITIONED_VALUE_SURFACE_BASELINE
   title: null
   domain: Portfolio decision research / horizon-conditioned value surface baseline
@@ -12,19 +13,19 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；建立 action/horizon
-    value surface baseline
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`value-surface-fit'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 467d3f18a5258f1e6641647f26b2b0e80b953f612f29d36b3a404ea2f1136b4f
   cell_count: 10
@@ -76,19 +77,45 @@ events:
   evidence_refs:
   - sha256:467d3f18a5258f1e6641647f26b2b0e80b953f612f29d36b3a404ea2f1136b4f
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-719_HORIZON_CONDITIONED_VALUE_SURFACE_BASELINE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:08:29+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 7e50d96ea7e43549ed6701960ce94b95863d0cd6
+  previous_state_event_id: legacy-import-467d3f18a5258f1e6641647f
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`value-surface-fit'
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：value-surface-evaluate
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-af7e80f439a83d79f8bb195d1276d619
 projection:
   legacy_first_eight_cells:
   - TRADING-719_HORIZON_CONDITIONED_VALUE_SURFACE_BASELINE
   - Portfolio decision research / horizon-conditioned value surface baseline
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-703_to_725 总需求文档；建立 action/horizon value surface baseline
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`value-surface-fit'
-  - value-surface-evaluate
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：value-surface-evaluate
   docs_links: []
-  terminal: false
-  canonical_row_sha256: db7cd7cb1ab101a05e216884ebf9b7ccc243e371310d98acf2d3792d583300ba
-last_event_id: legacy-import-467d3f18a5258f1e6641647f
+  terminal: true
+  canonical_row_sha256: e8c3b4d5023a0c865b645bd02ef89ece37f882fa8cea6c7f909173a6e26f0fe6
+last_event_id: task-event-af7e80f439a83d79f8bb195d1276d619
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f871eaf7fd5a08c97510630e87d075c2355e5630f0c18f82909bef87a36ecc68
+fragment_checksum: f846e36ac7a5cbc93d7b5ef7ba83896f6626a9d64c3e7ec8f957f57304d928cc
