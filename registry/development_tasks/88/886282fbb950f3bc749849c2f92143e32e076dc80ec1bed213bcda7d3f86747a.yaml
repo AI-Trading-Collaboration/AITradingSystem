@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-018B1
   task_id_sha256: 886282fbb950f3bc749849c2f92143e32e076dc80ec1bed213bcda7d3f86747a
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-018B1
   title: null
   domain: 交易执行/Daily Shadow Weight Iteration Multi-day Observation
@@ -12,19 +13,15 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统验证 + 项目 owner
-  requirement_refs:
-  - docs/requirements/daily_shadow_weight_iteration_2026-05-19.md
-  - docs/runbooks/daily_shadow_weight_iteration.md
+  next_owner: 外部条件 / Project Owner
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 承接 `TRADING-018B` 的真实 artifact 观察；阻塞于
-    `TRADING-018A1` 或 operator 连续生成可审计的 018A dry-run artifacts，并且同日 `TRADING-015/016/017/018`
-    上游 artifacts 可用；详细边界见 `docs/requirements/daily_shadow_weight_iteration_2026-05-19.md`
-    和 `docs/runbooks/daily_shadow_weight_iteration.md`
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL
+    转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider catalog）出现时重开
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 连续观察 3～7 个已完成美股交易日或等价手动样本，记录 `decision`、`decision_reason`、missing artifacts、scheduler
       safety status、confidence、delta、history/current 是否更新；缺输入必须保持 `INSUFFICIENT_DATA`
       且不更新 existing current，scheduler safety 非 PASS 必须 `SAFETY_BLOCKED`，信号不足必须 `NO_UPDATE`，只有真实输入完整且
@@ -33,7 +30,6 @@ task_record:
       证据并归档
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: fa70e5f5d41cba89b8d143c959980aab83db2a4b680107a5e9b8f5562ab9c63f
   cell_count: 8
@@ -92,30 +88,59 @@ events:
   evidence_refs:
   - sha256:fa70e5f5d41cba89b8d143c959980aab83db2a4b680107a5e9b8f5562ab9c63f
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-018B1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:38:09+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: 7fa8baafd470c943c1175915953a35f6ca132f47
+  previous_state_event_id: legacy-import-fa70e5f5d41cba89b8d143c9
+  from_status: BLOCKED_EXTERNAL
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: 外部条件 / Project Owner
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如
+      IBKR fill、通知链、多日观察、provider catalog）出现时重开
+    acceptance_criteria: 连续观察 3～7 个已完成美股交易日或等价手动样本，记录 `decision`、`decision_reason`、missing
+      artifacts、scheduler safety status、confidence、delta、history/current 是否更新；缺输入必须保持
+      `INSUFFICIENT_DATA` 且不更新 existing current，scheduler safety 非 PASS 必须 `SAFETY_BLOCKED`，信号不足必须
+      `NO_UPDATE`，只有真实输入完整且 gate 达标才允许 `UPDATE`；所有输出固定 `mode=shadow_only`、`production_effect=none`、`manual_review_only=true`，不得写
+      production/approved profile、不得调用 broker/replay/交易、不得改变 dashboard 主结论；完成后补充 requirement/review
+      证据并归档
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-06-09:
+      新增并进入 BLOCKED_EXTERNAL，原因：TRADING-018B builder/CLI/policy/dashboard/runbook
+      和测试已通过，本轮 isolated smoke 仅证明缺输入 fail-closed 和首次 shadow current 初始化；当前缺真实 015/016/017/018/018A
+      artifact 下的多日 UPDATE/NO_UPDATE/SAFETY_BLOCKED 样本，不应把运行期观察并入 baseline 完成。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a5e5381c227a88552d373036cd4d7985
 projection:
   legacy_first_eight_cells:
   - TRADING-018B1
   - 交易执行/Daily Shadow Weight Iteration Multi-day Observation
   - P0
-  - BLOCKED_EXTERNAL
-  - 系统验证 + 项目 owner
-  - 承接 `TRADING-018B` 的真实 artifact 观察；阻塞于 `TRADING-018A1` 或 operator 连续生成可审计的 018A
-    dry-run artifacts，并且同日 `TRADING-015/016/017/018` 上游 artifacts 可用；详细边界见 `docs/requirements/daily_shadow_weight_iteration_2026-05-19.md`
-    和 `docs/runbooks/daily_shadow_weight_iteration.md`
+  - DEFERRED
+  - 外部条件 / Project Owner
+  - 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider
+    catalog）出现时重开
   - 连续观察 3～7 个已完成美股交易日或等价手动样本，记录 `decision`、`decision_reason`、missing artifacts、scheduler
     safety status、confidence、delta、history/current 是否更新；缺输入必须保持 `INSUFFICIENT_DATA`
     且不更新 existing current，scheduler safety 非 PASS 必须 `SAFETY_BLOCKED`，信号不足必须 `NO_UPDATE`，只有真实输入完整且
     gate 达标才允许 `UPDATE`；所有输出固定 `mode=shadow_only`、`production_effect=none`、`manual_review_only=true`，不得写
     production/approved profile、不得调用 broker/replay/交易、不得改变 dashboard 主结论；完成后补充 requirement/review
     证据并归档
-  - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-018B builder/CLI/policy/dashboard/runbook
-    和测试已通过，本轮 isolated smoke 仅证明缺输入 fail-closed 和首次 shadow current 初始化；当前缺真实 015/016/017/018/018A
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-06-09:
+    新增并进入 BLOCKED_EXTERNAL，原因：TRADING-018B builder/CLI/policy/dashboard/runbook 和测试已通过，本轮
+    isolated smoke 仅证明缺输入 fail-closed 和首次 shadow current 初始化；当前缺真实 015/016/017/018/018A
     artifact 下的多日 UPDATE/NO_UPDATE/SAFETY_BLOCKED 样本，不应把运行期观察并入 baseline 完成。'
-  docs_links:
-  - docs/requirements/daily_shadow_weight_iteration_2026-05-19.md
-  - docs/runbooks/daily_shadow_weight_iteration.md
+  docs_links: []
   terminal: false
-  canonical_row_sha256: fa70e5f5d41cba89b8d143c959980aab83db2a4b680107a5e9b8f5562ab9c63f
-last_event_id: legacy-import-fa70e5f5d41cba89b8d143c9
+  canonical_row_sha256: 5d643f8e897c4bd5839073e14426f1f92f9e3c307dec1e7c80374fa17eb40268
+last_event_id: task-event-a5e5381c227a88552d373036cd4d7985
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 741750fface74ffa731b73fbe60ea4115df249ca9037210fd1acdf2d47affaca
+fragment_checksum: 5adaf4bfd189778915ba903825181536e690d97b2c41112af4ce407f7ba1510c
