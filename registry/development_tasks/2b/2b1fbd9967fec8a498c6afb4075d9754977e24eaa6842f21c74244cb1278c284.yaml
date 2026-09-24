@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1841_to_1860_RETURN_SEEKING_DIAGNOSTIC_LANE_RESEARCH
   task_id_sha256: 2b1fbd9967fec8a498c6afb4075d9754977e24eaa6842f21c74244cb1278c284
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1841_to_1860_RETURN_SEEKING_DIAGNOSTIC_LANE_RESEARCH
   title: null
   domain: Research trends / return-seeking diagnostic lane
@@ -12,25 +13,22 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md`；在
-    defensive lane 边界明确后，评估 first-layer v2 的 `stay_constructive`、`add_risk`、`high_confidence_risk_on`
-    是否只在 return-seeking probes 中有 diagnostic value；不得进入 defensive overlay 或 full allocation
-    主策略
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 return-seeking scope/policy、signal audit、return-seeking probe actual-path
       review、beta/TQQQ attribution、2022 vs 2023+ contrast 和 closeout；必须判断是否只是更高 QQQ-equivalent
       exposure 或 TQQQ beta；保留时也只能 forward diagnostic，不能接仓位、promotion、paper-shadow、production
       或 broker
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: ab12ce5e5e2b35141cc26d0d622a08a6670d255a4d343356b7cbaf7d7ab1f7d9
   cell_count: 8
@@ -97,31 +95,63 @@ events:
   evidence_refs:
   - sha256:ab12ce5e5e2b35141cc26d0d622a08a6670d255a4d343356b7cbaf7d7ab1f7d9
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1841_to_1860_RETURN_SEEKING_DIAGNOSTIC_LANE_RESEARCH
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:07:09+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: fcd39a30afa1a427029f19e90a4a8392f6a5aadf
+  previous_state_event_id: legacy-import-ab12ce5e5e2b35141cc26d0d
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 return-seeking scope/policy、signal audit、return-seeking
+      probe actual-path review、beta/TQQQ attribution、2022 vs 2023+ contrast 和 closeout；必须判断是否只是更高
+      QQQ-equivalent exposure 或 TQQQ beta；保留时也只能 forward diagnostic，不能接仓位、promotion、paper-shadow、production
+      或 broker
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+      从 owner 附件后续阶段登记为 READY；可与 Phase 2 结果并行研判，但 interpretation 必须服从 defensive lane
+      veto。2026-06-28: 进入 IN_PROGRESS；本批只允许 return-seeking diagnostic audit，不允许 defensive
+      overlay/full allocation/gated integration/promotion/paper-shadow/production/broker。2026-06-28:
+      实现完成并转入 VALIDATING；真实 final status=`RETURN_SEEKING_DIAGNOSTIC_UPSIDE_DEPENDENT_DRAWDOWN_REGRESSED_PROMOTION_BLOCKED`，7/7
+      probes return delta 为正但 7/7 drawdown regression，diagnostic value count=0，TQQQ
+      beta dependency 和 2023+ dependence 均为 true。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0683929985dd1dbf933219c85978b066
 projection:
   legacy_first_eight_cells:
   - TRADING-1841_to_1860_RETURN_SEEKING_DIAGNOSTIC_LANE_RESEARCH
   - Research trends / return-seeking diagnostic lane
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md`；在
-    defensive lane 边界明确后，评估 first-layer v2 的 `stay_constructive`、`add_risk`、`high_confidence_risk_on`
-    是否只在 return-seeking probes 中有 diagnostic value；不得进入 defensive overlay 或 full allocation
-    主策略
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 return-seeking scope/policy、signal audit、return-seeking probe actual-path review、beta/TQQQ
     attribution、2022 vs 2023+ contrast 和 closeout；必须判断是否只是更高 QQQ-equivalent exposure
     或 TQQQ beta；保留时也只能 forward diagnostic，不能接仓位、promotion、paper-shadow、production
     或 broker
-  - '2026-06-28: 从 owner 附件后续阶段登记为 READY；可与 Phase 2 结果并行研判，但 interpretation 必须服从 defensive
-    lane veto。2026-06-28: 进入 IN_PROGRESS；本批只允许 return-seeking diagnostic audit，不允许
-    defensive overlay/full allocation/gated integration/promotion/paper-shadow/production/broker。2026-06-28:
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+    从 owner 附件后续阶段登记为 READY；可与 Phase 2 结果并行研判，但 interpretation 必须服从 defensive lane
+    veto。2026-06-28: 进入 IN_PROGRESS；本批只允许 return-seeking diagnostic audit，不允许 defensive
+    overlay/full allocation/gated integration/promotion/paper-shadow/production/broker。2026-06-28:
     实现完成并转入 VALIDATING；真实 final status=`RETURN_SEEKING_DIAGNOSTIC_UPSIDE_DEPENDENT_DRAWDOWN_REGRESSED_PROMOTION_BLOCKED`，7/7
     probes return delta 为正但 7/7 drawdown regression，diagnostic value count=0，TQQQ
     beta dependency 和 2023+ dependence 均为 true。'
-  docs_links:
-  - docs/requirements/TRADING-1821_to_1885_Two_Lane_Optimization_Followup_Roadmap.md
-  terminal: false
-  canonical_row_sha256: ab12ce5e5e2b35141cc26d0d622a08a6670d255a4d343356b7cbaf7d7ab1f7d9
-last_event_id: legacy-import-ab12ce5e5e2b35141cc26d0d
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: d0b6f6864934b072aeaf5b8503c4ae8c2a9c367b44606dd9e26e3b6d8240fe1e
+last_event_id: task-event-0683929985dd1dbf933219c85978b066
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 6a98f3ca7194f0154ece3f6154105c7146003cdf238055997dc2948948a1ecde
+fragment_checksum: 339dac3e04442949f8f739c319f0f6a574159a2fd720d1a9f441308b77fe565f
