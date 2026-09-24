@@ -14,17 +14,15 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner reviews all eight V2 axes and TRADING-2542B numeric intent;
-    independent reviewer validates the DQ/PIT serial contract before freeze
+  next_owner: Project Owner（pi 迁移后）
   requirement_refs:
   - docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md
   - docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: V2 remains DRAFT_FOR_OWNER_REVIEW and
-    unfrozen. TRADING-2542B has supplied the independent serial contract semantics,
-    but Owner exact threshold approval and independent review remain pending.
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移
+    pi 后重启 growth action-value / QQQ options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Preserve V1/V2/comparator identities; require complete V2 owner review plus
@@ -229,22 +227,50 @@ events:
   - change:trading-2542a-record-2542b-independent-dq-contract-draft-20260823-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-7c0e4253c7beb0a3c3196de6be2c7617
+- schema_version: task_event.v1
+  task_id: TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:31:15+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: 114125b852a50c0a980c10da06c0bfb8a04617ab
+  previous_state_event_id: task-event-7c0e4253c7beb0a3c3196de6be2c7617
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: Project Owner（pi 迁移后）
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移 pi 后重启 growth
+      action-value / QQQ options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
+    acceptance_criteria: Preserve V1/V2/comparator identities; require complete V2
+      owner review plus reviewed TRADING-2542B DQ authority before freeze; keep all
+      DQ/provider/cache/backtest/empirical/external/trading action closed.
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第3/4条：DEFERRED；agent_harness=claude_code；原备注：Parent
+      requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.
+      DQ successor requirement: docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md.
+      2542B draft separates semantic validity from numeric authority; real evidence
+      cannot PASS before review.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-130198dc98204e2e8230f332784cab1d
 projection:
   legacy_first_eight_cells:
   - TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
   - Strategy governance / growth action-value exact measurement and joint decision
     contract V1
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner reviews all eight V2 axes and TRADING-2542B numeric intent; independent
-    reviewer validates the DQ/PIT serial contract before freeze
-  - V2 remains DRAFT_FOR_OWNER_REVIEW and unfrozen. TRADING-2542B has supplied the
-    independent serial contract semantics, but Owner exact threshold approval and
-    independent review remain pending.
+  - DEFERRED
+  - Project Owner（pi 迁移后）
+  - 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移 pi 后重启 growth action-value / QQQ
+    options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
   - Preserve V1/V2/comparator identities; require complete V2 owner review plus reviewed
     TRADING-2542B DQ authority before freeze; keep all DQ/provider/cache/backtest/empirical/external/trading
     action closed.
-  - 'Parent requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第3/4条：DEFERRED；agent_harness=claude_code；原备注：Parent
+    requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md.
     DQ successor requirement: docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md.
     2542B draft separates semantic validity from numeric authority; real evidence
     cannot PASS before review.'
@@ -252,7 +278,7 @@ projection:
   - docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md
   - docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md
   terminal: false
-  canonical_row_sha256: 5a5d78ed411e1d2c29f6386c92e922236222dd3016f1fba007d0a7b10a7329ec
-last_event_id: task-event-7c0e4253c7beb0a3c3196de6be2c7617
+  canonical_row_sha256: 761c9a0f55b490726b3d6e92b085b85abd9f1ab24e42e44909e33f63516ba904
+last_event_id: task-event-130198dc98204e2e8230f332784cab1d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b1b5417ecdefa5a85ad074ba9695f2caacc541b8e40e264dd6e2d84020262892
+fragment_checksum: 407c0cbf2f591fb297a4bbf333a0064962b8e78e7517ea379130b4546b6008f6
