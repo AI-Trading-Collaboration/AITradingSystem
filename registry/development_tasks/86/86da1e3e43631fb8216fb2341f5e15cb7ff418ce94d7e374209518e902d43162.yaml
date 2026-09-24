@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-114_to_120
   task_id_sha256: 86da1e3e43631fb8216fb2341f5e15cb7ff418ce94d7e374209518e902d43162
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-114_to_120
   title: null
   domain: ETF portfolio research/Dynamic v3 Rescue Medium Real Candidate Discovery
@@ -13,17 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统验证 + 项目 owner 人工复核
-  requirement_refs:
-  - docs/requirements/TRADING-114_to_120_Medium_Real_Candidate_Discovery_and_Regime_Coverage.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-114_to_120_Medium_Real_Candidate_Discovery_and_Regime_Coverage.md`；真实
-    medium_real workflow 已完成并建议 `fix_evidence_gaps`；下一步由 owner 复核是否先处理 data quality
-    warning、window incomplete 和 overfit review blockers，再决定是否手动启动 `overnight_real`
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`medium_real` profile 至少尝试 300 个 real candidates 或明确解释短缺原因；candidate evidence
       matrix 消费 data/window/weight/attribution/overfit/provenance 证据并 fail closed；regime
       coverage 披露 AI bull、drawdown、semiconductor stress、sideways/high-vol/recovery
@@ -33,7 +33,6 @@ task_record:
       check 和真实 workflow validate PASS'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: ec4e463c9721e65bb45ae035767b4fc667c3e2db7b52219e252715458b7c060f
   cell_count: 8
@@ -120,38 +119,79 @@ events:
   evidence_refs:
   - sha256:ec4e463c9721e65bb45ae035767b4fc667c3e2db7b52219e252715458b7c060f
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-114_to_120
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:51:37+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 2a7a4d8d0c152d40ff23b1836b302765dbb680c5
+  previous_state_event_id: legacy-import-ec4e463c9721e65bb45ae035
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`medium_real` profile 至少尝试 300 个 real candidates 或明确解释短缺原因；candidate
+      evidence matrix 消费 data/window/weight/attribution/overfit/provenance 证据并 fail
+      closed；regime coverage 披露 AI bull、drawdown、semiconductor stress、sideways/high-vol/recovery
+      覆盖缺口；interpretation pack、observe pool、overnight readiness 和 research decision
+      artifacts 固定 `production_effect=none`、`broker_action=none`、`manual_review_required=true`；Reader
+      Brief 只读 latest evidence/observe/decision，不运行上游；focused tests、ruff、compileall、diff
+      check 和真实 workflow validate PASS'
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-07:
+      新增并进入 IN_PROGRESS，原因：TRADING-111_to_113 已补齐真实研究证据 gate，但仍缺 medium_real 候选发现、regime
+      覆盖解释、观察池、overnight readiness 和统一 owner-readable research decision；本阶段所有新增阈值按
+      requirements 文档登记为 pilot baseline，完成至少一轮真实 medium_real/owner 复核后再迁移到 policy
+      manifest 或重新校准。2026-06-08: medium_real 真实 resume 显示单 candidate 存在小时级风险；本轮实现同等证据的
+      deterministic fixed robustness evidence cache，复用同一数据/date/policy hash 下的 baseline/v0.2/v0.4
+      robustness report，不降低 gate 或 sensitivity/overfit 证据。2026-06-08: 转入 VALIDATING，原因：sweep
+      `sweep_20260607T102300Z_ae5ae1d8` 完成 300/300、0 failures，medium report `89353fbd6d2e9e48`、evidence
+      summary `3d98dd79c7ab6b40`、regime coverage `65bc14b9e740798e`、interpretation
+      pack `291add5a0c664546`、observe pool `1201681d0e290627`、overnight readiness
+      `c0755e2c263b0854`、research decision `81ac692903a4c668` 和 dynamic-v3 artifact
+      validation 均跑通；业务结论为 0 个 observe candidate、research decision 建议 `fix_evidence_gaps`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-44b944348ecbbeada242fcbe0cd806a5
 projection:
   legacy_first_eight_cells:
   - TRADING-114_to_120
   - ETF portfolio research/Dynamic v3 Rescue Medium Real Candidate Discovery and Regime
     Coverage
   - P0
-  - VALIDATING
-  - 系统验证 + 项目 owner 人工复核
-  - 详细拆解见 `docs/requirements/TRADING-114_to_120_Medium_Real_Candidate_Discovery_and_Regime_Coverage.md`；真实
-    medium_real workflow 已完成并建议 `fix_evidence_gaps`；下一步由 owner 复核是否先处理 data quality
-    warning、window incomplete 和 overfit review blockers，再决定是否手动启动 `overnight_real`
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`medium_real` profile 至少尝试 300 个 real candidates 或明确解释短缺原因；candidate evidence
     matrix 消费 data/window/weight/attribution/overfit/provenance 证据并 fail closed；regime
     coverage 披露 AI bull、drawdown、semiconductor stress、sideways/high-vol/recovery 覆盖缺口；interpretation
     pack、observe pool、overnight readiness 和 research decision artifacts 固定 `production_effect=none`、`broker_action=none`、`manual_review_required=true`；Reader
     Brief 只读 latest evidence/observe/decision，不运行上游；focused tests、ruff、compileall、diff
     check 和真实 workflow validate PASS'
-  - '2026-06-07: 新增并进入 IN_PROGRESS，原因：TRADING-111_to_113 已补齐真实研究证据 gate，但仍缺 medium_real
-    候选发现、regime 覆盖解释、观察池、overnight readiness 和统一 owner-readable research decision；本阶段所有新增阈值按
-    requirements 文档登记为 pilot baseline，完成至少一轮真实 medium_real/owner 复核后再迁移到 policy manifest
-    或重新校准。2026-06-08: medium_real 真实 resume 显示单 candidate 存在小时级风险；本轮实现同等证据的 deterministic
-    fixed robustness evidence cache，复用同一数据/date/policy hash 下的 baseline/v0.2/v0.4
-    robustness report，不降低 gate 或 sensitivity/overfit 证据。2026-06-08: 转入 VALIDATING，原因：sweep
-    `sweep_20260607T102300Z_ae5ae1d8` 完成 300/300、0 failures，medium report `89353fbd6d2e9e48`、evidence
-    summary `3d98dd79c7ab6b40`、regime coverage `65bc14b9e740798e`、interpretation pack
-    `291add5a0c664546`、observe pool `1201681d0e290627`、overnight readiness `c0755e2c263b0854`、research
-    decision `81ac692903a4c668` 和 dynamic-v3 artifact validation 均跑通；业务结论为 0 个 observe
-    candidate、research decision 建议 `fix_evidence_gaps`。'
-  docs_links:
-  - docs/requirements/TRADING-114_to_120_Medium_Real_Candidate_Discovery_and_Regime_Coverage.md
-  terminal: false
-  canonical_row_sha256: ec4e463c9721e65bb45ae035767b4fc667c3e2db7b52219e252715458b7c060f
-last_event_id: legacy-import-ec4e463c9721e65bb45ae035
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-07:
+    新增并进入 IN_PROGRESS，原因：TRADING-111_to_113 已补齐真实研究证据 gate，但仍缺 medium_real 候选发现、regime
+    覆盖解释、观察池、overnight readiness 和统一 owner-readable research decision；本阶段所有新增阈值按 requirements
+    文档登记为 pilot baseline，完成至少一轮真实 medium_real/owner 复核后再迁移到 policy manifest 或重新校准。2026-06-08:
+    medium_real 真实 resume 显示单 candidate 存在小时级风险；本轮实现同等证据的 deterministic fixed robustness
+    evidence cache，复用同一数据/date/policy hash 下的 baseline/v0.2/v0.4 robustness report，不降低
+    gate 或 sensitivity/overfit 证据。2026-06-08: 转入 VALIDATING，原因：sweep `sweep_20260607T102300Z_ae5ae1d8`
+    完成 300/300、0 failures，medium report `89353fbd6d2e9e48`、evidence summary `3d98dd79c7ab6b40`、regime
+    coverage `65bc14b9e740798e`、interpretation pack `291add5a0c664546`、observe pool
+    `1201681d0e290627`、overnight readiness `c0755e2c263b0854`、research decision `81ac692903a4c668`
+    和 dynamic-v3 artifact validation 均跑通；业务结论为 0 个 observe candidate、research decision
+    建议 `fix_evidence_gaps`。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 73f5e9b48428a4c8ab35aecb0301b895e9658821490152aed5b8961b5df6d7e0
+last_event_id: task-event-44b944348ecbbeada242fcbe0cd806a5
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 47456a839e4f1fc66daa89b28632cc90a7791180093aad22ef87ca4cc4bda6ea
+fragment_checksum: 82e5d68d5f88e01dbe5de481ffc0b743e55289ac6075ce74d9a1694b1cdac995
