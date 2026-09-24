@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-851_HARD_BLOCK_MUTATION_TESTS
   task_id_sha256: 1d38ed15d6c52bdee43d71d0bc9955a2536a223766f2cb018eca389859a06a98
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-851_HARD_BLOCK_MUTATION_TESTS
   title: null
   domain: Controlled strategy research / hard-block mutation tests
@@ -12,22 +13,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；坏输入必须
-    BLOCKED，不得 WARN 后放行
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 mutation test artifact 和 focused pytest，覆盖 trigger/outcome overlap、fallback_triggered/large_loss
       outcome、future return trigger、feature latest_available_time > decision_time、sample_count=0
       VALIDATED、827 BLOCKED 但 promotion allowed 等 fail-closed 场景
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 3c6647c2845970b42e7b47fe6be98da8afb8217345618050740fb151eb3d4e1c
   cell_count: 8
@@ -80,25 +80,56 @@ events:
   evidence_refs:
   - sha256:3c6647c2845970b42e7b47fe6be98da8afb8217345618050740fb151eb3d4e1c
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-851_HARD_BLOCK_MUTATION_TESTS
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:31:36+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: cfcd1a1d147ab52da2d1d7aaa4414c09c9036381
+  previous_state_event_id: legacy-import-3c6647c2845970b42e7b47fe
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 mutation test artifact 和 focused pytest，覆盖 trigger/outcome
+      overlap、fallback_triggered/large_loss outcome、future return trigger、feature
+      latest_available_time > decision_time、sample_count=0 VALIDATED、827 BLOCKED 但
+      promotion allowed 等 fail-closed 场景
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+      新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+      Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+      tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-14eb96246b3b6f13690fcb0456937cc7
 projection:
   legacy_first_eight_cells:
   - TRADING-851_HARD_BLOCK_MUTATION_TESTS
   - Controlled strategy research / hard-block mutation tests
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；坏输入必须
-    BLOCKED，不得 WARN 后放行
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 mutation test artifact 和 focused pytest，覆盖 trigger/outcome overlap、fallback_triggered/large_loss
     outcome、future return trigger、feature latest_available_time > decision_time、sample_count=0
     VALIDATED、827 BLOCKED 但 promotion allowed 等 fail-closed 场景
-  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+    新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
     Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
     tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
-  docs_links:
-  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
-  terminal: false
-  canonical_row_sha256: 3c6647c2845970b42e7b47fe6be98da8afb8217345618050740fb151eb3d4e1c
-last_event_id: legacy-import-3c6647c2845970b42e7b47fe
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 06664a91ae98d5048495f1d5b89032f0d8711a4de3b25724f65f58c3888b2880
+last_event_id: task-event-14eb96246b3b6f13690fcb0456937cc7
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: c0e4aab56a1d9acb01263d773ef91f368d0ba9104917c2ab21d81500daea0ed9
+fragment_checksum: 9aa12a912f38d106c54b8522f65168e115131ffc18518e07e4be72651b522832
