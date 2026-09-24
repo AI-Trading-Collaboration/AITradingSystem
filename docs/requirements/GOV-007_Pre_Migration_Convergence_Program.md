@@ -215,6 +215,10 @@ DEVX-015 的"做完全部 106 项"决定不在本变更里写入 DEVX-015 的任
 | 12 | 11 条 BLOCKED_EXTERNAL | DEFERRED，退出条件：外部条件出现时重开 |
 | 13 | VALIDATING 批量规则 | 实现完成、已有 formal PASS、只等 owner 复核且 30 天无新证据 → DONE（`closed_without_owner_review`）；等 forward/shadow 样本 → DEFERRED；涉及 production/broker/阈值的保留给 owner 逐条复核 |
 
+执行中发现：Atlas live snapshot 的任务状态映射（代码 `_STATUS_MAPPING` 与 `config/atlas/live_snapshot.yaml` 必须一致）
+没有 `DEFERRED`，Atlas 覆盖范围内的任务一旦转为 DEFERRED，Atlas 生成器即 fail closed。按 owner 已批准的处置补充
+`DEFERRED → SKIPPED`（主动暂缓、不执行），只影响 Atlas 阅读页状态展示，不改变投资解读、研究窗口或 DQ/PIT。
+
 ## 7. 退出条件
 
 E1–E10 全部满足，迁移到 pi 的第一个低风险任务完成完整的"预检 → 提交 → 合入 main → 推送"。

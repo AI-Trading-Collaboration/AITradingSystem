@@ -19,6 +19,7 @@ task_status_mapping:
   VALIDATING: RUNNING
   BLOCKED_EXTERNAL: BLOCKED
   BLOCKED_OWNER_INPUT: BLOCKED
+  DEFERRED: SKIPPED
 safety:
   primary_research_start: '2021-02-22'
   historical_snapshot_role: LEGACY_COMPARISON_EVIDENCE

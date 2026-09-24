@@ -87,6 +87,8 @@ _STATUS_MAPPING = {
     "VALIDATING": "RUNNING",
     "BLOCKED_EXTERNAL": "BLOCKED",
     "BLOCKED_OWNER_INPUT": "BLOCKED",
+    # GOV-007 owner decision pack: deliberately paused tasks are shown as skipped.
+    "DEFERRED": "SKIPPED",
 }
 _SAFETY = {
     "primary_research_start": "2021-02-22",

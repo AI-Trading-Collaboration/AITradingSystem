@@ -109,6 +109,7 @@ def test_unclassified_successor_is_detected_before_live_projection() -> None:
 def test_live_policy_separates_research_evidence_and_page_dates() -> None:
     policy = load_live_snapshot_policy(repository_root=ROOT)
     assert policy.task_status_mapping["PROPOSED"] == "NOT_DUE"
+    assert policy.task_status_mapping["DEFERRED"] == "SKIPPED"
     bundle = build_live_snapshot_bundle(
         repository_root=ROOT,
         exact_commit=repository_head(ROOT),
