@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-080
   task_id_sha256: e3c17d1b9321ceebe67ced5f80993b497b77d4e5f438ddbd17733986395e28ca
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-080
   title: null
   domain: ETF portfolio research/Weight Calibration Cache and Parallel Diagnostics
@@ -13,20 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统验证 + 项目 owner
-  requirement_refs:
-  - docs/requirements/TRADING-080_Weight_Calibration_Cache_and_Parallel_Diagnostics_Runner.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-080_Weight_Calibration_Cache_and_Parallel_Diagnostics_Runner.md`；baseline
-    已实现 cache policy、cache key / manifest schema、price/returns matrix diagnostics
-    hot path、candidate backtest cache、regime robustness cache、diagnostics aggregation
-    cache、miss-path parallel runner、run manifest、performance report 和 validation gate；真实
-    production cold/warm/resume 已验证，下一步由 owner 判断 cold startup 是否需要进入 TRADING-081
-    profiling
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`config/etf_portfolio/cache_policy.yaml` 存在且 safety fields mandatory；cache
       key builder deterministic 且强制 `source_config_hash`、`data_hash`、`engine_version`
       和 layer-specific inputs；cache manifest 校验 schema/safety/config/data/engine；`aits
@@ -42,7 +39,6 @@ task_record:
       通过'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 3f78677f0bf0650ae9a7df85e4329c60ceadbf0afb6a63116f6d319bd3a7d2c0
   cell_count: 8
@@ -146,19 +142,63 @@ events:
   evidence_refs:
   - sha256:3f78677f0bf0650ae9a7df85e4329c60ceadbf0afb6a63116f6d319bd3a7d2c0
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-080
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:40:37+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 0cb2853f3675e814130d7cbdbc7a4f1fc1b5aa81
+  previous_state_event_id: legacy-import-3f78677f0bf0650ae9a7df85
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`config/etf_portfolio/cache_policy.yaml` 存在且 safety fields
+      mandatory；cache key builder deterministic 且强制 `source_config_hash`、`data_hash`、`engine_version`
+      和 layer-specific inputs；cache manifest 校验 schema/safety/config/data/engine；`aits
+      etf weight-calibration diagnostics` 支持 cache/workers/resume/performance flags
+      且 cache hit/miss/write 可见；price/returns matrix、candidate backtest、regime robustness、diagnostics
+      aggregation cache hit 不改变 ranking、metrics 或 robustness output；同一 production
+      raw price file 连续加载必须生成稳定 `data_hash`；`aits etf weight-calibration performance-validate`
+      fail closed 校验 cache policy、key/manifest、price/returns cache、candidate/regime/aggregation
+      cache behavior、parallel runner、resume manifest、performance report 和 safety boundary；runtime
+      cache artifacts 位于 ignored `data/cache/weight_calibration/` 或验证用 ignored `data/cache/trading080_validation/`；README、artifact
+      catalog、system flow、operations runbook、requirement docs 和 tests 同步；pytest、ruff、compileall、diff
+      check、默认 policy `performance-validate` 和 production cold/warm/resume evidence
+      通过'
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-04:
+      新增并实现 cache / parallel / resume / performance baseline，原因：TRADING-079 真实 multi-preset
+      diagnostics 在 24 个 preset/search 组合和 240 个 candidate observations 上外层 30 分钟超时，需要
+      cache-aware、parallel-capable、resumable、auditable research workflow；本阶段固定 observe_only/candidate_only/manual_review_required，不允许
+      broker action、production weight mutation 或 automatic promotion。2026-06-04: fixture
+      full cold/warm/resume/partial-config evidence 通过。2026-06-04: production route
+      A 首轮发现 raw price metadata `created_at` 使用当前时间导致 cache `data_hash` 漂移；已改为 deterministic
+      metadata placeholder 并补充 regression test。Post-fix production cold run wall runtime
+      1378.734s、performance runtime 1375.764s、`worker_count=8`、`shadow_ready_count=39`、`slowest_step=run_searches`；warm
+      run wall runtime 2.570s、performance runtime 0.382s、`cache_hit_rate=1.0`、`cache_hit_count=2`、`cache_miss_count=0`；resume
+      run wall runtime 2.610s、performance runtime 0.390s、`resume_status=resumed`、`cache_hit_rate=1.0`。TRADING-080
+      重复计算问题已解决；cold startup 超过 20 分钟，可作为是否启动 TRADING-081 profiling 的 owner 复核输入。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-472d91908f512ae8caf601ae0a81fa39
 projection:
   legacy_first_eight_cells:
   - TRADING-080
   - ETF portfolio research/Weight Calibration Cache and Parallel Diagnostics Runner
   - P0
-  - VALIDATING
-  - 系统验证 + 项目 owner
-  - 详细拆解见 `docs/requirements/TRADING-080_Weight_Calibration_Cache_and_Parallel_Diagnostics_Runner.md`；baseline
-    已实现 cache policy、cache key / manifest schema、price/returns matrix diagnostics
-    hot path、candidate backtest cache、regime robustness cache、diagnostics aggregation
-    cache、miss-path parallel runner、run manifest、performance report 和 validation gate；真实
-    production cold/warm/resume 已验证，下一步由 owner 判断 cold startup 是否需要进入 TRADING-081
-    profiling
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`config/etf_portfolio/cache_policy.yaml` 存在且 safety fields mandatory；cache key
     builder deterministic 且强制 `source_config_hash`、`data_hash`、`engine_version` 和
     layer-specific inputs；cache manifest 校验 schema/safety/config/data/engine；`aits
@@ -172,21 +212,21 @@ projection:
     catalog、system flow、operations runbook、requirement docs 和 tests 同步；pytest、ruff、compileall、diff
     check、默认 policy `performance-validate` 和 production cold/warm/resume evidence
     通过'
-  - '2026-06-04: 新增并实现 cache / parallel / resume / performance baseline，原因：TRADING-079
-    真实 multi-preset diagnostics 在 24 个 preset/search 组合和 240 个 candidate observations
-    上外层 30 分钟超时，需要 cache-aware、parallel-capable、resumable、auditable research workflow；本阶段固定
-    observe_only/candidate_only/manual_review_required，不允许 broker action、production
-    weight mutation 或 automatic promotion。2026-06-04: fixture full cold/warm/resume/partial-config
-    evidence 通过。2026-06-04: production route A 首轮发现 raw price metadata `created_at`
-    使用当前时间导致 cache `data_hash` 漂移；已改为 deterministic metadata placeholder 并补充 regression
-    test。Post-fix production cold run wall runtime 1378.734s、performance runtime 1375.764s、`worker_count=8`、`shadow_ready_count=39`、`slowest_step=run_searches`；warm
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-04:
+    新增并实现 cache / parallel / resume / performance baseline，原因：TRADING-079 真实 multi-preset
+    diagnostics 在 24 个 preset/search 组合和 240 个 candidate observations 上外层 30 分钟超时，需要
+    cache-aware、parallel-capable、resumable、auditable research workflow；本阶段固定 observe_only/candidate_only/manual_review_required，不允许
+    broker action、production weight mutation 或 automatic promotion。2026-06-04: fixture
+    full cold/warm/resume/partial-config evidence 通过。2026-06-04: production route
+    A 首轮发现 raw price metadata `created_at` 使用当前时间导致 cache `data_hash` 漂移；已改为 deterministic
+    metadata placeholder 并补充 regression test。Post-fix production cold run wall runtime
+    1378.734s、performance runtime 1375.764s、`worker_count=8`、`shadow_ready_count=39`、`slowest_step=run_searches`；warm
     run wall runtime 2.570s、performance runtime 0.382s、`cache_hit_rate=1.0`、`cache_hit_count=2`、`cache_miss_count=0`；resume
     run wall runtime 2.610s、performance runtime 0.390s、`resume_status=resumed`、`cache_hit_rate=1.0`。TRADING-080
     重复计算问题已解决；cold startup 超过 20 分钟，可作为是否启动 TRADING-081 profiling 的 owner 复核输入。'
-  docs_links:
-  - docs/requirements/TRADING-080_Weight_Calibration_Cache_and_Parallel_Diagnostics_Runner.md
-  terminal: false
-  canonical_row_sha256: 3f78677f0bf0650ae9a7df85e4329c60ceadbf0afb6a63116f6d319bd3a7d2c0
-last_event_id: legacy-import-3f78677f0bf0650ae9a7df85
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: c6700b12a398dcc3b01210e575fb1e226a47cec8a8050d89cc795b79a29f15e2
+last_event_id: task-event-472d91908f512ae8caf601ae0a81fa39
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 68e321ec81ffb07649bd100522196434abc48f1c5517bba36f07ff709d33d9c7
+fragment_checksum: 99f227852273ce1be084ef75b7d074577d758aff20fa346101e1930cbd829a2a
