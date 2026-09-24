@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1736_to_1765_FIRST_LAYER_V2_LABEL_FEATURE_MODEL_RESET
   task_id_sha256: cea5b6a2779fb0d6be117bbcb82f32b810c042b8f6558bf1d383ece8b676f8f0
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1736_to_1765_FIRST_LAYER_V2_LABEL_FEATURE_MODEL_RESET
   title: null
   domain: Research trends / first-layer label feature model reset under frozen second-layer
@@ -13,17 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-1736_to_1765_First_Layer_V2_Label_Feature_Model_Reset.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1736_to_1765_First_Layer_V2_Label_Feature_Model_Reset.md`；owner
-    附件原编号 TRADING-1696～1725 与 second-layer freeze 区间重叠，本批重编号为 1736～1765；必须冻结 `dynamic_second_layer_probe_registry_v2`，只调整
-    first-layer label / feature / model / threshold，并以 primary validated window 为主结论
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 first-layer v2 frozen probe contract、effective coverage audit、action-value
       matrix v2、label taxonomy v2 summary、PIT feature matrix v3、feature PIT audit、低复杂度
       submodel diagnostics、threshold/composer v2、walk-forward v3、frozen-probe actual-path
@@ -34,7 +34,6 @@ task_record:
       固定 blocked/false/none
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 0c062da5e24fbbfaffa2d21077cf77af0619f83d6f3570569e04be4849af60bb
   cell_count: 8
@@ -106,17 +105,53 @@ events:
   evidence_refs:
   - sha256:0c062da5e24fbbfaffa2d21077cf77af0619f83d6f3570569e04be4849af60bb
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1736_to_1765_FIRST_LAYER_V2_LABEL_FEATURE_MODEL_RESET
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:03:23+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 0faefe01666500a7542cd6f977c7a44b6cef38e8
+  previous_state_event_id: legacy-import-0c062da5e24fbbfaffa2d210
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 first-layer v2 frozen probe contract、effective coverage
+      audit、action-value matrix v2、label taxonomy v2 summary、PIT feature matrix v3、feature
+      PIT audit、低复杂度 submodel diagnostics、threshold/composer v2、walk-forward v3、frozen-probe
+      actual-path v3、failure attribution、owner pack、forward-watch plan、closeout/final
+      matrix、report registry、artifact catalog、system flow 和 guardrail tests；真实 run
+      标记 `PRIMARY_WINDOW_COVERAGE_INCOMPLETE`，label/feature start=`2021-02-22`，prediction/portfolio
+      effective start=`2023-02-22`，actual-path improved_vs_flat_reference_count=8/8
+      但不覆盖 coverage blocker；dynamic promotion、paper-shadow、production、broker 固定 blocked/false/none
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+      新增并进入 IN_PROGRESS，原因：owner 要求在已冻结 second-layer registry v2 后启动 first-layer v2
+      label/feature/model reset；本批不得修改 second-layer weights 或用 target-path metrics
+      晋级。2026-06-28: 实现完成并转入 VALIDATING；`aits research trends first-layer-v2-reset`
+      真实生成 final_status=`WINDOW_COVERAGE_INCOMPLETE`，primary_failure_reason=`WINDOW_COVERAGE_INCOMPLETE`，next_action=`REBUILD_WALK_FORWARD_COVERAGE_BEFORE_OWNER_ESCALATION`，安全边界仍为
+      blocked/false/false/none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3631d9033fd5d6a7cd313cbf50643515
 projection:
   legacy_first_eight_cells:
   - TRADING-1736_to_1765_FIRST_LAYER_V2_LABEL_FEATURE_MODEL_RESET
   - Research trends / first-layer label feature model reset under frozen second-layer
     v2
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1736_to_1765_First_Layer_V2_Label_Feature_Model_Reset.md`；owner
-    附件原编号 TRADING-1696～1725 与 second-layer freeze 区间重叠，本批重编号为 1736～1765；必须冻结 `dynamic_second_layer_probe_registry_v2`，只调整
-    first-layer label / feature / model / threshold，并以 primary validated window 为主结论
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 first-layer v2 frozen probe contract、effective coverage audit、action-value
     matrix v2、label taxonomy v2 summary、PIT feature matrix v3、feature PIT audit、低复杂度
     submodel diagnostics、threshold/composer v2、walk-forward v3、frozen-probe actual-path
@@ -125,15 +160,14 @@ projection:
     start=`2021-02-22`，prediction/portfolio effective start=`2023-02-22`，actual-path
     improved_vs_flat_reference_count=8/8 但不覆盖 coverage blocker；dynamic promotion、paper-shadow、production、broker
     固定 blocked/false/none
-  - '2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 要求在已冻结 second-layer registry v2 后启动 first-layer
-    v2 label/feature/model reset；本批不得修改 second-layer weights 或用 target-path metrics
-    晋级。2026-06-28: 实现完成并转入 VALIDATING；`aits research trends first-layer-v2-reset`
-    真实生成 final_status=`WINDOW_COVERAGE_INCOMPLETE`，primary_failure_reason=`WINDOW_COVERAGE_INCOMPLETE`，next_action=`REBUILD_WALK_FORWARD_COVERAGE_BEFORE_OWNER_ESCALATION`，安全边界仍为
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+    新增并进入 IN_PROGRESS，原因：owner 要求在已冻结 second-layer registry v2 后启动 first-layer v2
+    label/feature/model reset；本批不得修改 second-layer weights 或用 target-path metrics 晋级。2026-06-28:
+    实现完成并转入 VALIDATING；`aits research trends first-layer-v2-reset` 真实生成 final_status=`WINDOW_COVERAGE_INCOMPLETE`，primary_failure_reason=`WINDOW_COVERAGE_INCOMPLETE`，next_action=`REBUILD_WALK_FORWARD_COVERAGE_BEFORE_OWNER_ESCALATION`，安全边界仍为
     blocked/false/false/none。'
-  docs_links:
-  - docs/requirements/TRADING-1736_to_1765_First_Layer_V2_Label_Feature_Model_Reset.md
-  terminal: false
-  canonical_row_sha256: 0c062da5e24fbbfaffa2d21077cf77af0619f83d6f3570569e04be4849af60bb
-last_event_id: legacy-import-0c062da5e24fbbfaffa2d210
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: b1d3835a7a9bd5ef3ac83387c22e86b9c3098dd0afd2a749e03e6320a33584ac
+last_event_id: task-event-3631d9033fd5d6a7cd313cbf50643515
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 06b7f36575c17b1b8a79f55e1b82dbf105b3a703c69ad535842b8b90d2cf790a
+fragment_checksum: 9ef64f319baffd4822b9c89bcc2957d400e52cd9b9d4de76e92d27b0773df71f
