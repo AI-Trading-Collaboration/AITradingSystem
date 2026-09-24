@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1616_to_1645_FIRST_LAYER_UP_STATE_LEARNING_REPAIR
   task_id_sha256: f41539d35ff76c7825b79a16d958d3d2d530e5f0dc8ad96ca4147a086a3757b9
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1616_to_1645_FIRST_LAYER_UP_STATE_LEARNING_REPAIR
   title: null
   domain: Research trends / first-layer up-state learning repair
@@ -12,18 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-1616_to_1645_First_Layer_Up_State_Learning_Repair.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1616_to_1645_First_Layer_Up_State_Learning_Repair.md`；承接上一批
-    first-layer flat five-class walk-forward collapse，当前模型预测 constructive/risk_on
-    为 0，接回 frozen probes 后 actual-path 过度防守；本批只做 research-only repair，不恢复 promotion，不进入
-    paper-shadow/production/broker
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 `aits research trends up-state-repair`、failure diagnosis、probe return-seeking
       metadata、upper-state label audit、hierarchical labels、PIT feature matrix v2、feature
       PIT audit v2、risk-off detector v2、upper-state detector v1、risk-on severity scaler、threshold
@@ -35,7 +34,6 @@ task_record:
       `BLOCKED`、paper-shadow/production/broker false/none
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 0dac9b8a90f9044ba02d073fc05d8b80808b257faa2cdee1412e3dcd25f287d9
   cell_count: 8
@@ -106,17 +104,53 @@ events:
   evidence_refs:
   - sha256:0dac9b8a90f9044ba02d073fc05d8b80808b257faa2cdee1412e3dcd25f287d9
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1616_to_1645_FIRST_LAYER_UP_STATE_LEARNING_REPAIR
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:00:03+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: ba6a1f3d309a0e0614b4202b896f70d27301e5b1
+  previous_state_event_id: legacy-import-0dac9b8a90f9044ba02d073f
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 `aits research trends up-state-repair`、failure diagnosis、probe
+      return-seeking metadata、upper-state label audit、hierarchical labels、PIT feature
+      matrix v2、feature PIT audit v2、risk-off detector v2、upper-state detector v1、risk-on
+      severity scaler、threshold policy/review、hierarchical composer、walk-forward v2、frozen
+      probe actual-path v2、collapse guardrail tests、owner pack、forward watch plan/final
+      matrix/closeout、report registry、artifact catalog 和 system flow；真实结果：predicted
+      upper_state=185（constructive=159、risk_on=26），upper_state_precision=0.064865、upper_state_recall=0.105263，actual-path
+      improved_vs_flat_probe_count=0，final_status=`UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`；所有
+      outputs 固定 research-only、actual-path-required、target-path diagnostic-only、promotion
+      `BLOCKED`、paper-shadow/production/broker false/none
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+      新增并进入 IN_PROGRESS，原因：上一批确认 first-layer 失败核心是 up-state 学习塌缩，而非 frozen probe 链路缺失；本批将五分类拆成
+      risk-off detector、upper-state detector 和 severity scaler。2026-06-27: 实现完成并转入
+      VALIDATING；真实 CLI status=`FIRST_LAYER_UP_STATE_LEARNING_OWNER_REVIEW_READY_PROMOTION_BLOCKED`，final
+      status=`UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-db71d6de2708faa0c3b5ed28a261918a
 projection:
   legacy_first_eight_cells:
   - TRADING-1616_to_1645_FIRST_LAYER_UP_STATE_LEARNING_REPAIR
   - Research trends / first-layer up-state learning repair
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1616_to_1645_First_Layer_Up_State_Learning_Repair.md`；承接上一批
-    first-layer flat five-class walk-forward collapse，当前模型预测 constructive/risk_on
-    为 0，接回 frozen probes 后 actual-path 过度防守；本批只做 research-only repair，不恢复 promotion，不进入
-    paper-shadow/production/broker
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 `aits research trends up-state-repair`、failure diagnosis、probe return-seeking
     metadata、upper-state label audit、hierarchical labels、PIT feature matrix v2、feature
     PIT audit v2、risk-off detector v2、upper-state detector v1、risk-on severity scaler、threshold
@@ -126,14 +160,14 @@ projection:
     improved_vs_flat_probe_count=0，final_status=`UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`；所有
     outputs 固定 research-only、actual-path-required、target-path diagnostic-only、promotion
     `BLOCKED`、paper-shadow/production/broker false/none
-  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：上一批确认 first-layer 失败核心是 up-state 学习塌缩，而非 frozen
-    probe 链路缺失；本批将五分类拆成 risk-off detector、upper-state detector 和 severity scaler。2026-06-27:
-    实现完成并转入 VALIDATING；真实 CLI status=`FIRST_LAYER_UP_STATE_LEARNING_OWNER_REVIEW_READY_PROMOTION_BLOCKED`，final
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+    新增并进入 IN_PROGRESS，原因：上一批确认 first-layer 失败核心是 up-state 学习塌缩，而非 frozen probe 链路缺失；本批将五分类拆成
+    risk-off detector、upper-state detector 和 severity scaler。2026-06-27: 实现完成并转入 VALIDATING；真实
+    CLI status=`FIRST_LAYER_UP_STATE_LEARNING_OWNER_REVIEW_READY_PROMOTION_BLOCKED`，final
     status=`UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`。'
-  docs_links:
-  - docs/requirements/TRADING-1616_to_1645_First_Layer_Up_State_Learning_Repair.md
-  terminal: false
-  canonical_row_sha256: 0dac9b8a90f9044ba02d073fc05d8b80808b257faa2cdee1412e3dcd25f287d9
-last_event_id: legacy-import-0dac9b8a90f9044ba02d073f
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 2c1731a882f733f2dc09bb7a244cff71fcb03ad06868870fb85a9afc4ec2100b
+last_event_id: task-event-db71d6de2708faa0c3b5ed28a261918a
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 7f385dc29fabbdc00629b8ae4f1e7841f90b5b8eec3ff2e51dba09a18c34f735
+fragment_checksum: 5f8b3809be49e79ff52bb71c9ab69a4224491d3a884aab520fe2e3397bfa955e
