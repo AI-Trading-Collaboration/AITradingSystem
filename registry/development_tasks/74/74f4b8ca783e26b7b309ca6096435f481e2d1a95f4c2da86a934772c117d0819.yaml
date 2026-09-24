@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-790_to_794_VALUE_SURFACE_FAILURE_ATTRIBUTION
   task_id_sha256: 74f4b8ca783e26b7b309ca6096435f481e2d1a95f4c2da86a934772c117d0819
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-790_to_794_VALUE_SURFACE_FAILURE_ATTRIBUTION
   title: null
   domain: Controlled strategy research / value surface failure attribution, horizon
@@ -14,19 +15,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-790_to_794_Value_Surface_Failure_Attribution.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-790_to_794_Value_Surface_Failure_Attribution.md`；owner
-    要求解释 value surface `beat rate=0.742565` 但 overall `mean_delta_vs_benchmark=-0.02366`
-    的原因，并基于 failure attribution、horizon cliff、residual hypotheses 和 forward continuity
-    给出方向复核；不得继续扩大样本、直接训练 GBDT 策略、扩展 regret casebook、进入 paper-shadow 或把 high beat rate
-    当作有效策略证据
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 CLI：`aits research strategies value-surface-failure-attribution`、`horizon-cliff-utility-ranking-stabilization-review`、`gbdt-residual-hypothesis-triage`、`value-surface-direction-review`
       和 `aits forward-evidence continuity-extension`；TRADING-790 必须输出 winning/losing
       delta、top losing cases、loss concentration、tail/cost/drawdown/downside attribution；TRADING-791
@@ -34,7 +32,6 @@ task_record:
       只延续 forward evidence continuity；TRADING-794 决策只能为 `CONTINUE_LOCAL_FIX
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 079f08e07da25cb71951ee6e27285c810ee51d89478035302b5b94f11baf4c1e
   cell_count: 13
@@ -118,6 +115,34 @@ events:
   evidence_refs:
   - sha256:079f08e07da25cb71951ee6e27285c810ee51d89478035302b5b94f11baf4c1e
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-790_to_794_VALUE_SURFACE_FAILURE_ATTRIBUTION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:19:38+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 8e24bed300a537086df183327313df93a3814121
+  previous_state_event_id: legacy-import-079f08e07da25cb71951ee6e
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 CLI：`aits research strategies value-surface-failure-attribution`、`horizon-cliff-utility-ranking-stabilization-review`、`gbdt-residual-hypothesis-triage`、`value-surface-direction-review`
+      和 `aits forward-evidence continuity-extension`；TRADING-790 必须输出 winning/losing
+      delta、top losing cases、loss concentration、tail/cost/drawdown/downside attribution；TRADING-791
+      不能 validated utility boundary；TRADING-792 只能输出 diagnostic hypotheses；TRADING-793
+      只延续 forward evidence continuity；TRADING-794 决策只能为 `CONTINUE_LOCAL_FIX
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7802283e89e16f20ae072b5c18b85f49
 projection:
   legacy_first_eight_cells:
   - TRADING-790_to_794_VALUE_SURFACE_FAILURE_ATTRIBUTION
@@ -125,23 +150,20 @@ projection:
     stabilization, residual hypothesis triage, forward continuity extension, direction
     review
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-790_to_794_Value_Surface_Failure_Attribution.md`；owner
-    要求解释 value surface `beat rate=0.742565` 但 overall `mean_delta_vs_benchmark=-0.02366`
-    的原因，并基于 failure attribution、horizon cliff、residual hypotheses 和 forward continuity
-    给出方向复核；不得继续扩大样本、直接训练 GBDT 策略、扩展 regret casebook、进入 paper-shadow 或把 high beat rate
-    当作有效策略证据
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 CLI：`aits research strategies value-surface-failure-attribution`、`horizon-cliff-utility-ranking-stabilization-review`、`gbdt-residual-hypothesis-triage`、`value-surface-direction-review`
     和 `aits forward-evidence continuity-extension`；TRADING-790 必须输出 winning/losing
     delta、top losing cases、loss concentration、tail/cost/drawdown/downside attribution；TRADING-791
     不能 validated utility boundary；TRADING-792 只能输出 diagnostic hypotheses；TRADING-793
     只延续 forward evidence continuity；TRADING-794 决策只能为 `CONTINUE_LOCAL_FIX
-  - WATCHLIST
-  docs_links:
-  - docs/requirements/TRADING-790_to_794_Value_Surface_Failure_Attribution.md
-  terminal: false
-  canonical_row_sha256: 221239d1a3d39588d11e9685aea5237112efc77593c4c3337e3747208838a478
-last_event_id: legacy-import-079f08e07da25cb71951ee6e
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 42a5e2fc3dab2f48477cf1ded9130fcedd19f3ceced5735331090ce15afe3836
+last_event_id: task-event-7802283e89e16f20ae072b5c18b85f49
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 201a5b8675770c888f9a9ad97821b906755ed87c26847a57f3e710eb203d12fe
+fragment_checksum: d1fc3662a29e44d5f270849cbf6363489b7cfcd4f35e1677e330dc73ef084f0d
