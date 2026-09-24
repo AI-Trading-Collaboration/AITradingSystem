@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-810_to_815_TAIL_RISK_POLICY_FAMILY
   task_id_sha256: 566f56296a60406dd058e8b5fb6c772c7310f5d001e092db5e9cb9a36bffa9b1
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-810_to_815_TAIL_RISK_POLICY_FAMILY
   title: null
   domain: Controlled strategy research / value-surface policy kill, benchmark-first
@@ -14,20 +15,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-810_to_815_Tail_Risk_Policy_Family.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-810_to_815_Tail_Risk_Policy_Family.md`；owner
-    要求基于 TRADING-809 `KILL_VALUE_SURFACE_AS_ACTION_POLICY` 与 holdout_pass_rate=0，把
-    value surface 正式降级为 diagnostic/residual/tail-loss/horizon-risk/fallback-trigger
-    用途，并把主研究线转向 benchmark-first、tail-risk-aware、low-turnover、fallback-driven conservative
-    horizon filter；不得继续无条件扩大 value surface、微调 horizon selector 或 utility boundary、把
-    GBDT/NN/RL 直接策略化、扩展 regret casebook 或进入 paper-shadow
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 CLI：`aits research strategies value-surface-policy-kill-diagnostic-downgrade`、`benchmark-first-tail-risk-policy-contract`、`tail-loss-avoidance-classifier-prototype`、`conservative-horizon-risk-filter`、`benchmark-fallback-drawdown-guard-prototype`
       和 `tail-risk-policy-family-controlled-review`；TRADING-810 必须输出 action_policy_allowed=false、promotion_gate_allowed=false
       和 allowed_uses，只允许 diagnostic/residual_analysis/tail_loss_attribution/horizon_risk_signal/benchmark_fallback_trigger；TRADING-811
@@ -38,7 +35,6 @@ task_record:
       beat_rate_retention；TRADING-815 决策只能为 `CONTINUE
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: d6013591939934b81461dfa29fa72df74fa09ee6d52d1b33a9765b66a294844a
   cell_count: 12
@@ -135,6 +131,37 @@ events:
   evidence_refs:
   - sha256:d6013591939934b81461dfa29fa72df74fa09ee6d52d1b33a9765b66a294844a
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-810_to_815_TAIL_RISK_POLICY_FAMILY
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:21:14+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: d753d54c232889625efd7328d0060a8b9f44c0b9
+  previous_state_event_id: legacy-import-d6013591939934b81461dfa2
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 CLI：`aits research strategies value-surface-policy-kill-diagnostic-downgrade`、`benchmark-first-tail-risk-policy-contract`、`tail-loss-avoidance-classifier-prototype`、`conservative-horizon-risk-filter`、`benchmark-fallback-drawdown-guard-prototype`
+      和 `tail-risk-policy-family-controlled-review`；TRADING-810 必须输出 action_policy_allowed=false、promotion_gate_allowed=false
+      和 allowed_uses，只允许 diagnostic/residual_analysis/tail_loss_attribution/horizon_risk_signal/benchmark_fallback_trigger；TRADING-811
+      必须定义 base_policy、allowed_deviation、risk_downshift_condition、risk_recovery_condition、max_turnover_budget、fallback_policy、review_interval；TRADING-812
+      标签只能用于 gate value surface/aggressive action，不能直接决定仓位；TRADING-813 必须把 1d/5d/10d
+      设为默认可用、20d quarantine、60d fallback-only；TRADING-814 必须比较 fallback/drawdown guard
+      的 mean_delta、tail_loss_contribution、losing_avg、max_drawdown、turnover、cost 和
+      beat_rate_retention；TRADING-815 决策只能为 `CONTINUE
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-001b35d3087d406ae34d5af1451e9ab1
 projection:
   legacy_first_eight_cells:
   - TRADING-810_to_815_TAIL_RISK_POLICY_FAMILY
@@ -142,14 +169,11 @@ projection:
     policy contract, classifier prototype, conservative horizon risk filter, drawdown
     guard, controlled review
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-810_to_815_Tail_Risk_Policy_Family.md`；owner 要求基于
-    TRADING-809 `KILL_VALUE_SURFACE_AS_ACTION_POLICY` 与 holdout_pass_rate=0，把 value
-    surface 正式降级为 diagnostic/residual/tail-loss/horizon-risk/fallback-trigger 用途，并把主研究线转向
-    benchmark-first、tail-risk-aware、low-turnover、fallback-driven conservative horizon
-    filter；不得继续无条件扩大 value surface、微调 horizon selector 或 utility boundary、把 GBDT/NN/RL
-    直接策略化、扩展 regret casebook 或进入 paper-shadow
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 CLI：`aits research strategies value-surface-policy-kill-diagnostic-downgrade`、`benchmark-first-tail-risk-policy-contract`、`tail-loss-avoidance-classifier-prototype`、`conservative-horizon-risk-filter`、`benchmark-fallback-drawdown-guard-prototype`
     和 `tail-risk-policy-family-controlled-review`；TRADING-810 必须输出 action_policy_allowed=false、promotion_gate_allowed=false
     和 allowed_uses，只允许 diagnostic/residual_analysis/tail_loss_attribution/horizon_risk_signal/benchmark_fallback_trigger；TRADING-811
@@ -158,11 +182,10 @@ projection:
     设为默认可用、20d quarantine、60d fallback-only；TRADING-814 必须比较 fallback/drawdown guard
     的 mean_delta、tail_loss_contribution、losing_avg、max_drawdown、turnover、cost 和 beat_rate_retention；TRADING-815
     决策只能为 `CONTINUE
-  - WATCHLIST
-  docs_links:
-  - docs/requirements/TRADING-810_to_815_Tail_Risk_Policy_Family.md
-  terminal: false
-  canonical_row_sha256: b3dc9dcc425668b71b589b5b5be0a1eefe5bf12821be05a16584e0757afabda8
-last_event_id: legacy-import-d6013591939934b81461dfa2
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 0dab37fc9391df2282050a45ac70de61f8909f369b378e2c5e36295baaa34569
+last_event_id: task-event-001b35d3087d406ae34d5af1451e9ab1
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 75d3ffc9407502df2483b46c85ccc9f0f731d47833e59fa5e86dd5aa50ef2cb4
+fragment_checksum: 65d569990f8d6a4f03b01a03c84764be0922e316c6d4235f57d6ca1b29d0761e
