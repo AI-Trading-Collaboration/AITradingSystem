@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1221_to_1235_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_EVIDENCE_SNAPSHOT
   task_id_sha256: 7acdfc5c447a48b4bc6e61c1d4d5777ee5e81ea561afc493fcc432243d76b3d2
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1221_to_1235_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_EVIDENCE_SNAPSHOT
   title: null
   domain: Research strategies / execution semantics evidence snapshot and warning
@@ -13,19 +14,17 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs:
-  - docs/requirements/TRADING-1221_to_1235_Execution_Semantics_Actual_Path_Rebacktest_Evidence_Snapshot.md
   - docs/research/execution_semantics_actual_path_rebacktest_review.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1221_to_1235_Execution_Semantics_Actual_Path_Rebacktest_Evidence_Snapshot.md`；读取本地
-    `outputs/research_strategies/execution_semantics` actual-path rebacktest runtime
-    artifacts，固化 tracked review report 和 compact YAML snapshot，并判断 `PASS_WITH_WARNINGS`
-    是否影响 strategy ranking
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 `docs/research/execution_semantics_actual_path_rebacktest_review.md`
       和 `docs/research/artifact_snapshots/execution_semantics_actual_path_rebacktest_snapshot.yaml`；snapshot
       只记录 relative path、sha256、strategy id、actual/target metrics presence、promotion
@@ -36,7 +35,6 @@ task_record:
       通过
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 4474761dac7740b575be7948d717dd91fc9e3632acde420397691a08a3ba4291
   cell_count: 8
@@ -106,33 +104,68 @@ events:
   evidence_refs:
   - sha256:4474761dac7740b575be7948d717dd91fc9e3632acde420397691a08a3ba4291
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1221_to_1235_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_EVIDENCE_SNAPSHOT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:53:34+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: e74c37c4e667a42d17d8131cc839522b96153cee
+  previous_state_event_id: legacy-import-4474761dac7740b575be7948
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 `docs/research/execution_semantics_actual_path_rebacktest_review.md`
+      和 `docs/research/artifact_snapshots/execution_semantics_actual_path_rebacktest_snapshot.yaml`；snapshot
+      只记录 relative path、sha256、strategy id、actual/target metrics presence、promotion
+      readiness status、data quality status 和 blocked reasons；报告披露 run timestamp、commands、policy
+      registry、策略列表、artifact completeness、gate status、data-quality warning 明细、actual
+      vs target 差异、lag/staleness 和 promotion readiness；warning 诊断为 `NON_BLOCKING_WARNING`；dynamic
+      promotion 继续 blocked；Ruff、compileall、指定 parallel pytest 和 `git diff --check`
+      通过
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+      新增并进入 IN_PROGRESS，原因：owner 要求把 ignored runtime artifacts 转成可审计 tracked evidence
+      snapshot，并展开 `PASS_WITH_WARNINGS` 对排序可信度的影响。2026-06-27: 实现完成并转入 VALIDATING；当前唯一
+      WARNING 是主价格源 `prices_adjustment_ratio_jump` 1 行，data gate passed 且 5 个策略 artifacts
+      全部完整，未发现影响 actual-path ranking 的证据；dynamic promotion 仍由 staleness、lag 和 owner
+      review blocker 阻断。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-9e9ca152e4f6316de82ae8786c50dfad
 projection:
   legacy_first_eight_cells:
   - TRADING-1221_to_1235_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_EVIDENCE_SNAPSHOT
   - Research strategies / execution semantics evidence snapshot and warning diagnosis
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1221_to_1235_Execution_Semantics_Actual_Path_Rebacktest_Evidence_Snapshot.md`；读取本地
-    `outputs/research_strategies/execution_semantics` actual-path rebacktest runtime
-    artifacts，固化 tracked review report 和 compact YAML snapshot，并判断 `PASS_WITH_WARNINGS`
-    是否影响 strategy ranking
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 `docs/research/execution_semantics_actual_path_rebacktest_review.md` 和 `docs/research/artifact_snapshots/execution_semantics_actual_path_rebacktest_snapshot.yaml`；snapshot
     只记录 relative path、sha256、strategy id、actual/target metrics presence、promotion
     readiness status、data quality status 和 blocked reasons；报告披露 run timestamp、commands、policy
     registry、策略列表、artifact completeness、gate status、data-quality warning 明细、actual
     vs target 差异、lag/staleness 和 promotion readiness；warning 诊断为 `NON_BLOCKING_WARNING`；dynamic
     promotion 继续 blocked；Ruff、compileall、指定 parallel pytest 和 `git diff --check` 通过
-  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 要求把 ignored runtime artifacts 转成可审计 tracked
-    evidence snapshot，并展开 `PASS_WITH_WARNINGS` 对排序可信度的影响。2026-06-27: 实现完成并转入 VALIDATING；当前唯一
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+    新增并进入 IN_PROGRESS，原因：owner 要求把 ignored runtime artifacts 转成可审计 tracked evidence
+    snapshot，并展开 `PASS_WITH_WARNINGS` 对排序可信度的影响。2026-06-27: 实现完成并转入 VALIDATING；当前唯一
     WARNING 是主价格源 `prices_adjustment_ratio_jump` 1 行，data gate passed 且 5 个策略 artifacts
     全部完整，未发现影响 actual-path ranking 的证据；dynamic promotion 仍由 staleness、lag 和 owner
     review blocker 阻断。'
   docs_links:
-  - docs/requirements/TRADING-1221_to_1235_Execution_Semantics_Actual_Path_Rebacktest_Evidence_Snapshot.md
   - docs/research/execution_semantics_actual_path_rebacktest_review.md
-  terminal: false
-  canonical_row_sha256: 4474761dac7740b575be7948d717dd91fc9e3632acde420397691a08a3ba4291
-last_event_id: legacy-import-4474761dac7740b575be7948
+  terminal: true
+  canonical_row_sha256: ae948b1ce672192b70527722daf7b11093e55ed0a7d4ea754ce322bea8078b9b
+last_event_id: task-event-9e9ca152e4f6316de82ae8786c50dfad
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: e32d0a5c8a17ffc725e888562068697dfb854b07ecfb4ae776598fa3e177ae49
+fragment_checksum: 0ad5c1266d9994f9909106a9fe08ce801658abaf0223ed11398728bb62e44828
