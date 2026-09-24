@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-841_TRIGGER_FEATURE_AVAILABILITY_CATALOG
   task_id_sha256: 4572294105c47b9a518cd93d12350c7839a0531d7c8c3d0e068d82ffe1d23a26
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-841_TRIGGER_FEATURE_AVAILABILITY_CATALOG
   title: null
   domain: Controlled strategy research / trigger feature availability catalog
@@ -12,22 +13,21 @@ task_record:
   created_by: null
   priority: P2
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
-    TRADING-840 input contract；feature usage permissions 必须区分 trigger 与 outcome
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 CLI `aits research strategies tail-risk-trigger-feature-availability-catalog`；输出
       feature_name、source、earliest/latest、frequency、decision_time availability、missing
       periods、PIT quality、trigger/outcome permissions 和 FEATURE_CATALOG_* 状态
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: e13865c4b1272e582c6333071bf42f31c9a09990dee71f444866c25aa364e1c3
   cell_count: 8
@@ -87,27 +87,59 @@ events:
   evidence_refs:
   - sha256:e13865c4b1272e582c6333071bf42f31c9a09990dee71f444866c25aa364e1c3
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-841_TRIGGER_FEATURE_AVAILABILITY_CATALOG
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:27:59+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 1a8cef81a8055110391240d423d02d336a07832c
+  previous_state_event_id: legacy-import-e13865c4b1272e582c633307
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 CLI `aits research strategies tail-risk-trigger-feature-availability-catalog`；输出
+      feature_name、source、earliest/latest、frequency、decision_time availability、missing
+      periods、PIT quality、trigger/outcome permissions 和 FEATURE_CATALOG_* 状态
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+      按附件任务包登记为第三批 P2。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
+      registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused
+      pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation
+      190 passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
+      和 git diff --check。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3592ab82a5784d3ddce1ddb8eaeabcd8
 projection:
   legacy_first_eight_cells:
   - TRADING-841_TRIGGER_FEATURE_AVAILABILITY_CATALOG
   - Controlled strategy research / trigger feature availability catalog
   - P2
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
-    TRADING-840 input contract；feature usage permissions 必须区分 trigger 与 outcome
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 CLI `aits research strategies tail-risk-trigger-feature-availability-catalog`；输出
     feature_name、source、earliest/latest、frequency、decision_time availability、missing
     periods、PIT quality、trigger/outcome permissions 和 FEATURE_CATALOG_* 状态
-  - '2026-06-22: 按附件任务包登记为第三批 P2。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+    按附件任务包登记为第三批 P2。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
     registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused
     pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation 190
     passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
     和 git diff --check。'
-  docs_links:
-  - docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md
-  terminal: false
-  canonical_row_sha256: e13865c4b1272e582c6333071bf42f31c9a09990dee71f444866c25aa364e1c3
-last_event_id: legacy-import-e13865c4b1272e582c633307
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 397d1add4e37f863f6918b55f06cd3787d95764efb6aae7e73fb60c095c323dc
+last_event_id: task-event-3592ab82a5784d3ddce1ddb8eaeabcd8
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 535b849bb3f6a8282dd17044938d514cd7477967cafe522e1b6adece7fcbf3e2
+fragment_checksum: f91e62b5da45cc089a46c5284f04e368c7a5f32358a0b9620336a1ae61b88bb2
