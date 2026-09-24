@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-728_COST_LIQUIDITY_TRADABILITY_MODEL
   task_id_sha256: b1fa13577aae3c271f03493da82b04a09d8c59c81596ae7e992e1e9e6c6fdfe0
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-728_COST_LIQUIDITY_TRADABILITY_MODEL
   title: null
   domain: Data foundation / cost, liquidity, and tradability model
@@ -12,19 +13,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-726_to_733 总需求文档；建立版本化 cost/liquidity
-    model 和 net-return/cost fields baseline
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`aits trading-costs estimate'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: dcc1e7be856e68d799ea101d7f0e9fbbff2c76b0a36065ddc4e33d9cc31f8e4a
   cell_count: 9
@@ -70,20 +71,47 @@ events:
   evidence_refs:
   - sha256:dcc1e7be856e68d799ea101d7f0e9fbbff2c76b0a36065ddc4e33d9cc31f8e4a
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-728_COST_LIQUIDITY_TRADABILITY_MODEL
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:11:43+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: d7772ad8bf26c20377488646ab8dd4f18486ce99
+  previous_state_event_id: legacy-import-dcc1e7be856e68d799ea101d
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`aits trading-costs estimate'
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：audit`
+      可运行；net_return_available=true；cost_model_version_recorded=true；liquidity_violation_count_reported=true；strategy_evaluation_uses_cost_model=true
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-203d9f0c5e10da038d13aa3becd90d8b
 projection:
   legacy_first_eight_cells:
   - TRADING-728_COST_LIQUIDITY_TRADABILITY_MODEL
   - Data foundation / cost, liquidity, and tradability model
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-726_to_733 总需求文档；建立版本化 cost/liquidity model 和 net-return/cost fields
-    baseline
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`aits trading-costs estimate'
-  - audit` 可运行；net_return_available=true；cost_model_version_recorded=true；liquidity_violation_count_reported=true；strategy_evaluation_uses_cost_model=true
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：audit`
+    可运行；net_return_available=true；cost_model_version_recorded=true；liquidity_violation_count_reported=true；strategy_evaluation_uses_cost_model=true
   docs_links: []
-  terminal: false
-  canonical_row_sha256: acef8afe1b822c7927c5fa1f9473b3a1d299b8316c8108afc384720f5ffe8689
-last_event_id: legacy-import-dcc1e7be856e68d799ea101d
+  terminal: true
+  canonical_row_sha256: 85e2a88a62bc51f5f610c94ef7fcedb94f3c336bf4589943bed32ff859d1a862
+last_event_id: task-event-203d9f0c5e10da038d13aa3becd90d8b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 44562b0f34a8cf1bc5c5abfc29011136b3a4f6d579eaa3fa1cd1f543e3971a4b
+fragment_checksum: 6a8e2b02cffac6705876188095fa62713d08a3c09513bc1b96c73fe0e6bbd07b
