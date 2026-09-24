@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1129_to_1140_EXTERNAL_BACKTEST_VALIDATION_RECONCILIATION
   task_id_sha256: b6ccb46896def380ad4640c07fb2dbe5c335002d58fd9c6081f619a4956852aa
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1129_to_1140_EXTERNAL_BACKTEST_VALIDATION_RECONCILIATION
   title: null
   domain: Research strategies / external backtest validation and reconciliation
@@ -12,18 +13,16 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统验证 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-1129_to_1140_External_Backtest_Validation_Reconciliation.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1129_to_1140_External_Backtest_Validation_Reconciliation.md`；实现已完成：外部验证范围、静态
-    baseline 对账、动态 weight path 导出与独立 replay、指标定义对齐、SGOV total-return 专项检查、外部平台复现可行性、差异归因、owner/master
-    report 和 Reader Brief safe preview 均已接入；下一步完成 owner 指定 Ruff、compileall、parallel
-    pytest、report/task/documentation pytest 和 diff check；不得把外部平台结果作为唯一真相，不得进入 paper-shadow/production/broker
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 12 个 `aits research strategies ...` CLI/artifacts：external-validation-scope-contract、static-baseline-external-reconciliation、strategy-weight-path-export、external-independent-return-replay、metric-definition-reconciliation、sgov-total-return-external-check、external-platform-feasibility-review、quantconnect-replication-dry-run-plan、external-validation-difference-attribution、external-validation-owner-report、external-validation-master-review、external-validation-reader-brief-safe-preview；输出目录为
       `outputs/research_strategies/external_validation/` 和 `docs/research/`；weight
       path CSV 包含 date/strategy/definition hash/target weights/rebalance flag/signal
@@ -35,7 +34,6 @@ task_record:
       导致 replay 误读为零权重的问题
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: a96217e0d9798ca025614000e794d22fd9792a854a612236162732d37469ef0f
   cell_count: 8
@@ -110,17 +108,53 @@ events:
   evidence_refs:
   - sha256:a96217e0d9798ca025614000e794d22fd9792a854a612236162732d37469ef0f
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1129_to_1140_EXTERNAL_BACKTEST_VALIDATION_RECONCILIATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:50:50+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: dc6391232b71d29f6feb3d223b31b0cd125f4a02
+  previous_state_event_id: legacy-import-a96217e0d9798ca025614000
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 12 个 `aits research strategies ...` CLI/artifacts：external-validation-scope-contract、static-baseline-external-reconciliation、strategy-weight-path-export、external-independent-return-replay、metric-definition-reconciliation、sgov-total-return-external-check、external-platform-feasibility-review、quantconnect-replication-dry-run-plan、external-validation-difference-attribution、external-validation-owner-report、external-validation-master-review、external-validation-reader-brief-safe-preview；输出目录为
+      `outputs/research_strategies/external_validation/` 和 `docs/research/`；weight
+      path CSV 包含 date/strategy/definition hash/target weights/rebalance flag/signal
+      time/execution assumption/data quality；focused fixture 下 static baseline reconciled、dynamic
+      independent replay matched、SGOV total-return reconciled 或 warning-only、owner
+      recommendation accepted/accepted-with-warnings、master pass/pass-with-warnings、Reader
+      Brief preview safe；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；新增
+      `tests/test_external_validation.py`，并发现修复 weight path CSV reader index alignment
+      导致 replay 误读为零权重的问题
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-26:
+      新增并进入 IN_PROGRESS，原因：owner 要求在 defensive primary 与 balanced core forward-aging
+      已建立后，增加外部验证与对账流程，确认静态 baselines、动态 weight path replay、指标定义和 SGOV total-return
+      处理是否可审计一致。2026-06-26: 实现完成并转入 VALIDATING；新增 12 个 CLI/report registry entries、artifact
+      catalog/system flow 文档、external validation builders 和 focused tests；安全边界保持 no
+      paper-shadow / no production / no broker。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c70d8c2d8360e7135f1bae40fcec7091
 projection:
   legacy_first_eight_cells:
   - TRADING-1129_to_1140_EXTERNAL_BACKTEST_VALIDATION_RECONCILIATION
   - Research strategies / external backtest validation and reconciliation
   - P1
-  - VALIDATING
-  - 系统验证 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1129_to_1140_External_Backtest_Validation_Reconciliation.md`；实现已完成：外部验证范围、静态
-    baseline 对账、动态 weight path 导出与独立 replay、指标定义对齐、SGOV total-return 专项检查、外部平台复现可行性、差异归因、owner/master
-    report 和 Reader Brief safe preview 均已接入；下一步完成 owner 指定 Ruff、compileall、parallel
-    pytest、report/task/documentation pytest 和 diff check；不得把外部平台结果作为唯一真相，不得进入 paper-shadow/production/broker
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 12 个 `aits research strategies ...` CLI/artifacts：external-validation-scope-contract、static-baseline-external-reconciliation、strategy-weight-path-export、external-independent-return-replay、metric-definition-reconciliation、sgov-total-return-external-check、external-platform-feasibility-review、quantconnect-replication-dry-run-plan、external-validation-difference-attribution、external-validation-owner-report、external-validation-master-review、external-validation-reader-brief-safe-preview；输出目录为
     `outputs/research_strategies/external_validation/` 和 `docs/research/`；weight path
     CSV 包含 date/strategy/definition hash/target weights/rebalance flag/signal time/execution
@@ -130,15 +164,15 @@ projection:
     safe；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；新增
     `tests/test_external_validation.py`，并发现修复 weight path CSV reader index alignment
     导致 replay 误读为零权重的问题
-  - '2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求在 defensive primary 与 balanced core
-    forward-aging 已建立后，增加外部验证与对账流程，确认静态 baselines、动态 weight path replay、指标定义和 SGOV
-    total-return 处理是否可审计一致。2026-06-26: 实现完成并转入 VALIDATING；新增 12 个 CLI/report registry
-    entries、artifact catalog/system flow 文档、external validation builders 和 focused
-    tests；安全边界保持 no paper-shadow / no production / no broker。'
-  docs_links:
-  - docs/requirements/TRADING-1129_to_1140_External_Backtest_Validation_Reconciliation.md
-  terminal: false
-  canonical_row_sha256: a96217e0d9798ca025614000e794d22fd9792a854a612236162732d37469ef0f
-last_event_id: legacy-import-a96217e0d9798ca025614000
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-26:
+    新增并进入 IN_PROGRESS，原因：owner 要求在 defensive primary 与 balanced core forward-aging
+    已建立后，增加外部验证与对账流程，确认静态 baselines、动态 weight path replay、指标定义和 SGOV total-return
+    处理是否可审计一致。2026-06-26: 实现完成并转入 VALIDATING；新增 12 个 CLI/report registry entries、artifact
+    catalog/system flow 文档、external validation builders 和 focused tests；安全边界保持 no
+    paper-shadow / no production / no broker。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 04bcf934a9a2b2435acad531400b4756f8bf65a3756b46127f9701caf029e218
+last_event_id: task-event-c70d8c2d8360e7135f1bae40fcec7091
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 3904cd1d065a0c8889a647a17623ee0bcafd264defed9ce5e9e34674de307c2a
+fragment_checksum: 7339d2b996e36e2df70d73809f08f533fa0ff8dde6133ba17f24e088c9fafd46
