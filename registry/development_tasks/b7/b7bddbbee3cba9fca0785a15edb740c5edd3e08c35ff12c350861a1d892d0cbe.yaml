@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2046_to_2085_FREE_PIT_DATA_SOURCE_INGESTION
   task_id_sha256: b7bddbbee3cba9fca0785a15edb740c5edd3e08c35ff12c350861a1d892d0cbe
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2046_to_2085_FREE_PIT_DATA_SOURCE_INGESTION
   title: null
   domain: 数据源 / first-layer reopen readiness
@@ -12,22 +13,21 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现
-  requirement_refs:
-  - docs/requirements/TRADING-2046_to_2085_Free_PIT_Data_Source_Ingestion.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 见 `docs/requirements/TRADING-2046_to_2085_Free_PIT_Data_Source_Ingestion.md`；实现已完成，等待
-    owner 复核剩余免费源缺口和 macro calendar rows
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 免费 source registry、ingestion/validation CLI、free feature parquet/review、PIT
       audit、coverage/readiness/owner brief、report registry、artifact catalog、system
       flow 和 guardrail tests 完成并验证通过
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 3a549422f73f65375b8341c45cd9ade735e142eeb9d92c630d422a6b527fbc82
   cell_count: 8
@@ -77,24 +77,54 @@ events:
   evidence_refs:
   - sha256:3a549422f73f65375b8341c45cd9ade735e142eeb9d92c630d422a6b527fbc82
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2046_to_2085_FREE_PIT_DATA_SOURCE_INGESTION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:10:50+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 23f1066be4c688b196ae4925ad787c0192dd2e55
+  previous_state_event_id: legacy-import-3a549422f73f65375b8341c4
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 免费 source registry、ingestion/validation CLI、free feature
+      parquet/review、PIT audit、coverage/readiness/owner brief、report registry、artifact
+      catalog、system flow 和 guardrail tests 完成并验证通过
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+      真实 run data_quality_status=`PASS_WITH_WARNINGS`；rates/VIX ready，macro calendar
+      blocked，participation proxy diagnostic-only；promotion/paper-shadow/production/broker
+      继续 disabled'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-63f654f5266fd97d040779278cad2cd5
 projection:
   legacy_first_eight_cells:
   - TRADING-2046_to_2085_FREE_PIT_DATA_SOURCE_INGESTION
   - 数据源 / first-layer reopen readiness
   - P1
-  - VALIDATING
-  - 系统实现
-  - 见 `docs/requirements/TRADING-2046_to_2085_Free_PIT_Data_Source_Ingestion.md`；实现已完成，等待
-    owner 复核剩余免费源缺口和 macro calendar rows
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 免费 source registry、ingestion/validation CLI、free feature parquet/review、PIT audit、coverage/readiness/owner
     brief、report registry、artifact catalog、system flow 和 guardrail tests 完成并验证通过
-  - '2026-06-28: 真实 run data_quality_status=`PASS_WITH_WARNINGS`；rates/VIX ready，macro
-    calendar blocked，participation proxy diagnostic-only；promotion/paper-shadow/production/broker
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+    真实 run data_quality_status=`PASS_WITH_WARNINGS`；rates/VIX ready，macro calendar
+    blocked，participation proxy diagnostic-only；promotion/paper-shadow/production/broker
     继续 disabled'
-  docs_links:
-  - docs/requirements/TRADING-2046_to_2085_Free_PIT_Data_Source_Ingestion.md
-  terminal: false
-  canonical_row_sha256: 3a549422f73f65375b8341c45cd9ade735e142eeb9d92c630d422a6b527fbc82
-last_event_id: legacy-import-3a549422f73f65375b8341c4
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 115f10c4e7ffa395c510a3a8b12499f7f95e629b91bbb38af2d18f41f4f4506a
+last_event_id: task-event-63f654f5266fd97d040779278cad2cd5
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 2d9b0c1901eea2fa9be1aadcbe0207f4598eee13c567560acf8d28881fd02c45
+fragment_checksum: ab756eb99c18d02589b4219ca992fe864504933c4db97c53a4dc275e07881e32
