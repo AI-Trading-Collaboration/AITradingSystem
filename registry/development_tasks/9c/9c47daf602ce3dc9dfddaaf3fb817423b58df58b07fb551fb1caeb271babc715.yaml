@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-722_BATCH_EXPERIMENT_PACK_REVIEW_BOARD
   task_id_sha256: 9c47daf602ce3dc9dfddaaf3fb817423b58df58b07fb551fb1caeb271babc715
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-722_BATCH_EXPERIMENT_PACK_REVIEW_BOARD
   title: null
   domain: Research ops / batch experiment pack and review board
@@ -12,19 +13,19 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；生成批量实验包和 review
-    board
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`experiment-pack-build'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 74c926026bdfe5bbe9e0464b4d20cbd40f2e5ce1fccff85db341a86e0c0fb19b
   cell_count: 9
@@ -74,19 +75,47 @@ events:
   evidence_refs:
   - sha256:74c926026bdfe5bbe9e0464b4d20cbd40f2e5ce1fccff85db341a86e0c0fb19b
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-722_BATCH_EXPERIMENT_PACK_REVIEW_BOARD
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:09:42+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: fb8202684805f9d383f2a82b95c869ff960016ac
+  previous_state_event_id: legacy-import-74c926026bdfe5bbe9e0464b
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`experiment-pack-build'
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：review-board`
+      可运行；single_variant_manual_loop_reduced=true；batch_rollup_present=true；review_board_actions_present=true
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-4aa5548f62533174f4fff29f59145c0c
 projection:
   legacy_first_eight_cells:
   - TRADING-722_BATCH_EXPERIMENT_PACK_REVIEW_BOARD
   - Research ops / batch experiment pack and review board
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-703_to_725 总需求文档；生成批量实验包和 review board
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`experiment-pack-build'
-  - review-board` 可运行；single_variant_manual_loop_reduced=true；batch_rollup_present=true；review_board_actions_present=true
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：review-board`
+    可运行；single_variant_manual_loop_reduced=true；batch_rollup_present=true；review_board_actions_present=true
   docs_links: []
-  terminal: false
-  canonical_row_sha256: d34e6711a1d5a0267fdb2fb8069c6c83e935d7bfe35afbcb60f9924c98872540
-last_event_id: legacy-import-74c926026bdfe5bbe9e0464b
+  terminal: true
+  canonical_row_sha256: 0039569d48dca2c7d970df0a0fb67e9f4105fcd0d156b88a32e3c379048b9159
+last_event_id: task-event-4aa5548f62533174f4fff29f59145c0c
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 80abd662d071f8003165590de9dc4d8a6a4615046350fe39b62f1f3787938e72
+fragment_checksum: 19b413f19cc0f6abba7ed3a448fe982311110f581cfaa89842eff2a0793f48ff
