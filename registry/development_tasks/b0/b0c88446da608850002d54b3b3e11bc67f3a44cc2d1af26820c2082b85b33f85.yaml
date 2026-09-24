@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: PROD-005
   task_id_sha256: b0c88446da608850002d54b3b3e11bc67f3a44cc2d1af26820c2082b85b33f85
 task_record:
+  schema_version: task_record.v1
   task_id: PROD-005
   title: null
   domain: 趋势判断/规则治理 owner approval
@@ -12,22 +13,20 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 项目 owner + 系统验证
+  next_owner: None / closed by owner decision
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: '`GOV-001/GOV-002/GOV-003` 已有 rule card、rule
-    version 注入和受控 promotion/retirement 基础版；下一步需要 owner 对 production rule baseline、promotion
-    条件和 retirement 条件形成批准记录'
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第10条批准当前 production
+    rule baseline；promotion/retirement 条件以后另议，届时另开任务
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 核心 production rule card 具备 owner approval、适用范围、验证证据、已知失败模式、rollback condition
       和最后复核时间；未批准候选规则不得改变正式评分、仓位 gate、日报结论或回测 production 规则；日报、回测、decision snapshot
       和 trace 能追溯本次运行使用的规则版本
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: aff58c3cb0ff85bcd4d1e4aaffd5dde2781196f8bd62b48cf8b7ffd2b3fc4e49
   cell_count: 8
@@ -75,23 +74,48 @@ events:
   evidence_refs:
   - sha256:aff58c3cb0ff85bcd4d1e4aaffd5dde2781196f8bd62b48cf8b7ffd2b3fc4e49
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: PROD-005
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:35:24+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: 40b7bc4e7616cb0b5ea170ecf75eefd7dac9f44b
+  previous_state_event_id: legacy-import-aff58c3cb0ff85bcd4d1e4aa
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed by owner decision
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第10条批准当前 production rule baseline；promotion/retirement
+      条件以后另议，届时另开任务
+    acceptance_criteria: 核心 production rule card 具备 owner approval、适用范围、验证证据、已知失败模式、rollback
+      condition 和最后复核时间；未批准候选规则不得改变正式评分、仓位 gate、日报结论或回测 production 规则；日报、回测、decision
+      snapshot 和 trace 能追溯本次运行使用的规则版本
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第10条：BASELINE_APPROVED；agent_harness=claude_code；原备注：2026-05-06:
+      从 `PROD-001` 拆出，原因：规则治理工程底座已完成，但真实批准流属于 owner 决策和长期治理，不应让 `PROD-001` 继续保持进行中。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-4957173b962f738322d3ec9d3e24760e
 projection:
   legacy_first_eight_cells:
   - PROD-005
   - 趋势判断/规则治理 owner approval
   - P1
-  - BLOCKED_OWNER_INPUT
-  - 项目 owner + 系统验证
-  - '`GOV-001/GOV-002/GOV-003` 已有 rule card、rule version 注入和受控 promotion/retirement
-    基础版；下一步需要 owner 对 production rule baseline、promotion 条件和 retirement 条件形成批准记录'
+  - DONE
+  - None / closed by owner decision
+  - 2026-09-24 按 owner 决策包第10条批准当前 production rule baseline；promotion/retirement 条件以后另议，届时另开任务
   - 核心 production rule card 具备 owner approval、适用范围、验证证据、已知失败模式、rollback condition
     和最后复核时间；未批准候选规则不得改变正式评分、仓位 gate、日报结论或回测 production 规则；日报、回测、decision snapshot
     和 trace 能追溯本次运行使用的规则版本
-  - '2026-05-06: 从 `PROD-001` 拆出，原因：规则治理工程底座已完成，但真实批准流属于 owner 决策和长期治理，不应让 `PROD-001`
-    继续保持进行中。'
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第10条：BASELINE_APPROVED；agent_harness=claude_code；原备注：2026-05-06:
+    从 `PROD-001` 拆出，原因：规则治理工程底座已完成，但真实批准流属于 owner 决策和长期治理，不应让 `PROD-001` 继续保持进行中。'
   docs_links: []
-  terminal: false
-  canonical_row_sha256: aff58c3cb0ff85bcd4d1e4aaffd5dde2781196f8bd62b48cf8b7ffd2b3fc4e49
-last_event_id: legacy-import-aff58c3cb0ff85bcd4d1e4aa
+  terminal: true
+  canonical_row_sha256: 3e522f45e7f6354af425c16c331640f00321a0af104a3d6ee0a08f90dadbc6a2
+last_event_id: task-event-4957173b962f738322d3ec9d3e24760e
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: ebe3c2a4bc2a0ce99eb164753e17cd34c77098cf58ef4b582537207fd277c73e
+fragment_checksum: d1746f3fd045d8078d0223f5a085e3243c21636acebc6248728bd6842d4607b5
