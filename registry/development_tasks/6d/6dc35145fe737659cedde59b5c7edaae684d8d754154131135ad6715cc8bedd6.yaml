@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2303_CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_ONLY
   task_id_sha256: 6dc35145fe737659cedde59b5c7edaae684d8d754154131135ad6715cc8bedd6
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2303_CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_ONLY
   title: null
   domain: Research trends / breadth participation proxy diagnostics
@@ -12,25 +13,22 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2303_Current_Constituents_Proxy_Diagnostics_Only.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2303_Current_Constituents_Proxy_Diagnostics_Only.md`；依赖
-    TRADING-2302 feasibility audit。当前仓库缺少可审计 QQQ / SPY / SMH current constituents
-    snapshot 和 constituent price coverage audit；本批必须 fail closed，只生成 source-blocked
-    diagnostics package，不读取 market cache、不联网、不下载数据。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 生成 current constituents breadth proxy diagnostics report、signal distribution
       matrix、asset/horizon drilldown、bias warning report、next-step recommendation
       和 safety boundary；所有 outputs 固定 `pit_status=current_constituents_proxy_only`、`strict_pit_ready=false`、promotion/paper-shadow/production/broker
       false/none，且 `candidate_artifact_generated=false`、`candidate_signal_series_generated=false`、`actual_path_validation_executed=false`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 5783320a7bbe8d01a6ee805cab413233fdf4519beaadd1381d5629caa4af48a1
   cell_count: 8
@@ -99,31 +97,63 @@ events:
   evidence_refs:
   - sha256:5783320a7bbe8d01a6ee805cab413233fdf4519beaadd1381d5629caa4af48a1
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2303_CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_ONLY
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:05:28+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: d41f54ce93e62a029f03b0771a3a13dc134fdbc1
+  previous_state_event_id: legacy-import-5783320a7bbe8d01a6ee805c
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 生成 current constituents breadth proxy diagnostics report、signal
+      distribution matrix、asset/horizon drilldown、bias warning report、next-step recommendation
+      和 safety boundary；所有 outputs 固定 `pit_status=current_constituents_proxy_only`、`strict_pit_ready=false`、promotion/paper-shadow/production/broker
+      false/none，且 `candidate_artifact_generated=false`、`candidate_signal_series_generated=false`、`actual_path_validation_executed=false`。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+      根据 TRADING-2302 recommended_next_action 和 owner post-2302 roadmap 新增并转入 IN_PROGRESS；同时修正旧
+      backlog 编号冲突，TRADING-2303～2306 保留给 breadth proxy diagnostics / selection / POC
+      / validation。2026-07-01: 实现完成并转入 VALIDATING；真实 run status=`CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_SOURCE_BLOCKED`，source_snapshot_status=`ALL_TARGET_CURRENT_CONSTITUENTS_SNAPSHOTS_MISSING`，7
+      个 signal concepts 和 27 个 asset/horizon rows 均未计算；验证通过 focused parallel pytest
+      16 passed、docs/registry/task-register focused parallel pytest 54 passed、Ruff、compileall
+      和 contract-validation 193 passed。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-9740a8c0653fc0bfc9013eb514ea8bbd
 projection:
   legacy_first_eight_cells:
   - TRADING-2303_CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_ONLY
   - Research trends / breadth participation proxy diagnostics
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2303_Current_Constituents_Proxy_Diagnostics_Only.md`；依赖
-    TRADING-2302 feasibility audit。当前仓库缺少可审计 QQQ / SPY / SMH current constituents
-    snapshot 和 constituent price coverage audit；本批必须 fail closed，只生成 source-blocked
-    diagnostics package，不读取 market cache、不联网、不下载数据。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 生成 current constituents breadth proxy diagnostics report、signal distribution matrix、asset/horizon
     drilldown、bias warning report、next-step recommendation 和 safety boundary；所有 outputs
     固定 `pit_status=current_constituents_proxy_only`、`strict_pit_ready=false`、promotion/paper-shadow/production/broker
     false/none，且 `candidate_artifact_generated=false`、`candidate_signal_series_generated=false`、`actual_path_validation_executed=false`。
-  - '2026-07-01: 根据 TRADING-2302 recommended_next_action 和 owner post-2302 roadmap
-    新增并转入 IN_PROGRESS；同时修正旧 backlog 编号冲突，TRADING-2303～2306 保留给 breadth proxy diagnostics
-    / selection / POC / validation。2026-07-01: 实现完成并转入 VALIDATING；真实 run status=`CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_SOURCE_BLOCKED`，source_snapshot_status=`ALL_TARGET_CURRENT_CONSTITUENTS_SNAPSHOTS_MISSING`，7
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+    根据 TRADING-2302 recommended_next_action 和 owner post-2302 roadmap 新增并转入 IN_PROGRESS；同时修正旧
+    backlog 编号冲突，TRADING-2303～2306 保留给 breadth proxy diagnostics / selection / POC
+    / validation。2026-07-01: 实现完成并转入 VALIDATING；真实 run status=`CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_SOURCE_BLOCKED`，source_snapshot_status=`ALL_TARGET_CURRENT_CONSTITUENTS_SNAPSHOTS_MISSING`，7
     个 signal concepts 和 27 个 asset/horizon rows 均未计算；验证通过 focused parallel pytest
     16 passed、docs/registry/task-register focused parallel pytest 54 passed、Ruff、compileall
     和 contract-validation 193 passed。'
-  docs_links:
-  - docs/requirements/TRADING-2303_Current_Constituents_Proxy_Diagnostics_Only.md
-  terminal: false
-  canonical_row_sha256: 5783320a7bbe8d01a6ee805cab413233fdf4519beaadd1381d5629caa4af48a1
-last_event_id: legacy-import-5783320a7bbe8d01a6ee805c
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 11bafd450c734e7a3db9c6ecc19e676b93098d32bc558b222a5a74b241c40152
+last_event_id: task-event-9740a8c0653fc0bfc9013eb514ea8bbd
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 581b4fdfb0c1359377186ef58d358c4ba9034250a6a0b58bb1c85d773c031127
+fragment_checksum: 53e5160ea81a6aaabb79e39b70061066ba9ab9c4d473618371b883ee6493de88
