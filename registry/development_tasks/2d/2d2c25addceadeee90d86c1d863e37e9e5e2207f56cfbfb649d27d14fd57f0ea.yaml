@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-832_FALLBACK_COUNTERFACTUAL_BASELINE_VALIDATION
   task_id_sha256: 2d2c25addceadeee90d86c1d863e37e9e5e2207f56cfbfb649d27d14fd57f0ea
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-832_FALLBACK_COUNTERFACTUAL_BASELINE_VALIDATION
   title: null
   domain: Controlled strategy research / fallback counterfactual baseline validation
@@ -12,22 +13,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
-    TRADING-828 independent outcome；不得比较 label hit rate
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 CLI `aits research strategies tail-risk-fallback-counterfactual-validation`；比较
       fallback_policy、no_fallback_baseline、static_allocation_baseline、existing_best_baseline_if_available，并输出
       return/drawdown/cost/sample metrics 和 COUNTERFACTUAL_* 状态
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 6751d1b71a9870afc2e4da3a2f50fa2062853c42cd78ae7f969dc5758f4e2225
   cell_count: 8
@@ -85,27 +85,59 @@ events:
   evidence_refs:
   - sha256:6751d1b71a9870afc2e4da3a2f50fa2062853c42cd78ae7f969dc5758f4e2225
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-832_FALLBACK_COUNTERFACTUAL_BASELINE_VALIDATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:25:00+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: f5ee8502503e498bc831cedc6852397f5ac9a5d0
+  previous_state_event_id: legacy-import-6751d1b71a9870afc2e4da3a
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 CLI `aits research strategies tail-risk-fallback-counterfactual-validation`；比较
+      fallback_policy、no_fallback_baseline、static_allocation_baseline、existing_best_baseline_if_available，并输出
+      return/drawdown/cost/sample metrics 和 COUNTERFACTUAL_* 状态
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+      按附件任务包登记为第一批 P0。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
+      registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused
+      pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation
+      190 passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
+      和 git diff --check。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-1d13d43bd61ed56d6c1e339697a97da1
 projection:
   legacy_first_eight_cells:
   - TRADING-832_FALLBACK_COUNTERFACTUAL_BASELINE_VALIDATION
   - Controlled strategy research / fallback counterfactual baseline validation
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
-    TRADING-828 independent outcome；不得比较 label hit rate
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 CLI `aits research strategies tail-risk-fallback-counterfactual-validation`；比较
     fallback_policy、no_fallback_baseline、static_allocation_baseline、existing_best_baseline_if_available，并输出
     return/drawdown/cost/sample metrics 和 COUNTERFACTUAL_* 状态
-  - '2026-06-22: 按附件任务包登记为第一批 P0。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+    按附件任务包登记为第一批 P0。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
     registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused
     pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation 190
     passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
     和 git diff --check。'
-  docs_links:
-  - docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md
-  terminal: false
-  canonical_row_sha256: 6751d1b71a9870afc2e4da3a2f50fa2062853c42cd78ae7f969dc5758f4e2225
-last_event_id: legacy-import-6751d1b71a9870afc2e4da3a
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: da60bc6cfdcead13853beb0269767ffad92d538098985add498b46579fd3a644
+last_event_id: task-event-1d13d43bd61ed56d6c1e339697a97da1
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 96584d9d880e31c8f2fc0666dff012e2c1798c4ee3a2b534f3cb95a47e048262
+fragment_checksum: 9b26c0329939da642897b4b00659aca1a1287c3528915af3bbd707310e72deb2
