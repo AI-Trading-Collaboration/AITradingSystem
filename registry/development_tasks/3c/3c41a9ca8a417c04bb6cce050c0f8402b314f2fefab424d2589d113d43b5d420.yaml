@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-641_to_648_RESEARCH_CAMPAIGN_B2_FULL_COMPUTE_COVERAGE
   task_id_sha256: 3c41a9ca8a417c04bb6cce050c0f8402b314f2fefab424d2589d113d43b5d420
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-641_to_648_RESEARCH_CAMPAIGN_B2_FULL_COMPUTE_COVERAGE
   title: null
   domain: ETF portfolio/weight research campaign B2 full compute coverage and decision
@@ -13,20 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-641_to_648_Research_Campaign_B2_Full_Compute_Coverage.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-641_to_648_Research_Campaign_B2_Full_Compute_Coverage.md`；在
-    TRADING-631~640 rc2 基础上扩展 B2 Campaign compute adapter 覆盖 TARGETED_EVIDENCE、FULL_DIAGNOSTIC
-    和 GATE，新增 B2 end-to-end compute path、legacy full path parity、evidence budget final-decision
-    drill、legacy B2 runner deprecation readiness 和 Control Plane v1 rc3 validation
-    pack；不得启用 B3/B4/B5/B6/v3、paper-shadow/live/official weights/broker/order/production
-    mutation，不得访问 untouched holdout，不得调参或伪造 metrics
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: B2 targeted compute、full diagnostic compute 和 gate compute 均可生成 fresh Campaign
       run artifact/evidence；full diagnostic 只有 risk-heavy 与 control evidence 同时 validated
       才能 COMPLETE；gate 从 Campaign evidence store、budget 和 stop rules 生成 constrained
@@ -39,7 +36,6 @@ task_record:
       validate、validation-pack 和 `git diff --check` 通过
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: ac8c8c60acbde996518aedfdc3fab4606a87cd530ebd9c4096d8ddd3d5467637
   cell_count: 8
@@ -128,19 +124,56 @@ events:
   evidence_refs:
   - sha256:ac8c8c60acbde996518aedfdc3fab4606a87cd530ebd9c4096d8ddd3d5467637
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-641_to_648_RESEARCH_CAMPAIGN_B2_FULL_COMPUTE_COVERAGE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:00:52+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 7429b940f104d24e828208edd9bec32272f2b4a2
+  previous_state_event_id: legacy-import-ac8c8c60acbde996518aedfd
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: B2 targeted compute、full diagnostic compute 和 gate compute
+      均可生成 fresh Campaign run artifact/evidence；full diagnostic 只有 risk-heavy 与 control
+      evidence 同时 validated 才能 COMPLETE；gate 从 Campaign evidence store、budget 和 stop
+      rules 生成 constrained B2 decision；B2 E2E compute path 可运行或明确 PASS_WITH_LIMITATIONS/BLOCKED；legacy
+      full path parity PASS 或 explained；budget exhausted 禁止 generic `NEEDS_MORE_EVIDENCE`
+      并强制 final decision drill；legacy B2 runner deprecation readiness 输出 keep/deprecate/not-ready；rc3
+      validation pack 覆盖 adapter registry、B2 targeted/full/gate compute、E2E、parity、B3
+      signal-only smoke、budget final decision、holdout、next-action、no fabricated metrics
+      和 forbidden-effects；focused tests、Ruff、compileall、JSON parse、B2/B3 campaign
+      validate、validation-pack 和 `git diff --check` 通过
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-19:
+      新增并进入 IN_PROGRESS，原因：附件要求把 Campaign 从 B2 control-window smoke adapter 推进到 B2
+      targeted/full/gate compute coverage，并继续保持 B3 signal-only 与所有 production/promotion/broker/order
+      边界关闭。2026-06-19: 实现完成并转入 VALIDATING；新增 B2 targeted/full/gate compute adapter、B2
+      E2E compute、full-path parity、budget final-decision drill、legacy B2 runner readiness
+      和 rc3 validation pack；验证通过 focused pytest 18 passed、Ruff、compileall、adapter
+      validation、B2/B3 campaign validate、validation-pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`、JSON
+      parse 和 `git diff --check`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-50128dd2d2f037641c00de2986119bb7
 projection:
   legacy_first_eight_cells:
   - TRADING-641_to_648_RESEARCH_CAMPAIGN_B2_FULL_COMPUTE_COVERAGE
   - ETF portfolio/weight research campaign B2 full compute coverage and decision enforcement
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详细拆解见 `docs/requirements/TRADING-641_to_648_Research_Campaign_B2_Full_Compute_Coverage.md`；在
-    TRADING-631~640 rc2 基础上扩展 B2 Campaign compute adapter 覆盖 TARGETED_EVIDENCE、FULL_DIAGNOSTIC
-    和 GATE，新增 B2 end-to-end compute path、legacy full path parity、evidence budget final-decision
-    drill、legacy B2 runner deprecation readiness 和 Control Plane v1 rc3 validation
-    pack；不得启用 B3/B4/B5/B6/v3、paper-shadow/live/official weights/broker/order/production
-    mutation，不得访问 untouched holdout，不得调参或伪造 metrics
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - B2 targeted compute、full diagnostic compute 和 gate compute 均可生成 fresh Campaign
     run artifact/evidence；full diagnostic 只有 risk-heavy 与 control evidence 同时 validated
     才能 COMPLETE；gate 从 Campaign evidence store、budget 和 stop rules 生成 constrained
@@ -151,17 +184,17 @@ projection:
     signal-only smoke、budget final decision、holdout、next-action、no fabricated metrics
     和 forbidden-effects；focused tests、Ruff、compileall、JSON parse、B2/B3 campaign validate、validation-pack
     和 `git diff --check` 通过
-  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求把 Campaign 从 B2 control-window smoke adapter
-    推进到 B2 targeted/full/gate compute coverage，并继续保持 B3 signal-only 与所有 production/promotion/broker/order
-    边界关闭。2026-06-19: 实现完成并转入 VALIDATING；新增 B2 targeted/full/gate compute adapter、B2
-    E2E compute、full-path parity、budget final-decision drill、legacy B2 runner readiness
-    和 rc3 validation pack；验证通过 focused pytest 18 passed、Ruff、compileall、adapter validation、B2/B3
-    campaign validate、validation-pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`、JSON
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-19:
+    新增并进入 IN_PROGRESS，原因：附件要求把 Campaign 从 B2 control-window smoke adapter 推进到 B2 targeted/full/gate
+    compute coverage，并继续保持 B3 signal-only 与所有 production/promotion/broker/order 边界关闭。2026-06-19:
+    实现完成并转入 VALIDATING；新增 B2 targeted/full/gate compute adapter、B2 E2E compute、full-path
+    parity、budget final-decision drill、legacy B2 runner readiness 和 rc3 validation
+    pack；验证通过 focused pytest 18 passed、Ruff、compileall、adapter validation、B2/B3 campaign
+    validate、validation-pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`、JSON
     parse 和 `git diff --check`。'
-  docs_links:
-  - docs/requirements/TRADING-641_to_648_Research_Campaign_B2_Full_Compute_Coverage.md
-  terminal: false
-  canonical_row_sha256: ac8c8c60acbde996518aedfdc3fab4606a87cd530ebd9c4096d8ddd3d5467637
-last_event_id: legacy-import-ac8c8c60acbde996518aedfd
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 4f4be2b2fecda25ad21769cbf04c63d8caa22617f54586f8f6f7327699b84e54
+last_event_id: task-event-50128dd2d2f037641c00de2986119bb7
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 0b0b4679c9b3f6a694e688411f73ae7041e8a39ad52516e74c2e4118858f4778
+fragment_checksum: 22bc7a4cdbffca33bd9e4bfa06a7919158fbe33a9390cc1eb6a4bc0894ef04e6
