@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2317_REGIME_SEGMENTED_CANDIDATE_VALIDATION
   task_id_sha256: fb41fb898f794e8ee5be8951febaa4c8b0e83e8ea3e65fa471490da371c4388a
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2317_REGIME_SEGMENTED_CANDIDATE_VALIDATION
   title: null
   domain: Research trends / diagnostic regime segmentation validation
@@ -12,19 +13,16 @@ task_record:
   created_by: null
   priority: P2
   accountable_owner: null
-  next_owner: 系统验证 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2317_Regime_Segmented_Candidate_Validation.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2317_Regime_Segmented_Candidate_Validation.md`；依赖
-    TRADING-2316 regime labels、TRADING-2292 volatility risk-cap actual-path validation、TRADING-2304
-    breadth source-blocked selection、TRADING-2309 AI leadership actual-path validation
-    和 TRADING-2313 liquidity/rates actual-path validation。本批只做 diagnostic segmentation
-    reinterpretation，不生成新 candidate signal、不改写既有 validation verdict。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 生成 regime-segmented validation summary、candidate segment performance matrix、candidate
       segment coverage matrix、family blocker matrix、interpretation matrix、safety boundary
       和 research report；真实 run status=`REGIME_SEGMENTED_CANDIDATE_VALIDATION_READY_DIAGNOSTIC_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`，performance_row_count=294，coverage_row_count=31，family_blocker_row_count=4，interpretation_row_count=4；volatility
@@ -32,7 +30,6 @@ task_record:
       promotion/paper-shadow/production/broker false/none。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 30227a9efe670688bfa9e5628bfb90ad0e4159b56550245d2d1b4f14cb83dcb4
   cell_count: 8
@@ -101,32 +98,62 @@ events:
   evidence_refs:
   - sha256:30227a9efe670688bfa9e5628bfb90ad0e4159b56550245d2d1b4f14cb83dcb4
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2317_REGIME_SEGMENTED_CANDIDATE_VALIDATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:51:32+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: f1d7854e31506830b0a66bea5b4185651023ee62
+  previous_state_event_id: legacy-import-30227a9efe670688bfa9e562
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 生成 regime-segmented validation summary、candidate segment
+      performance matrix、candidate segment coverage matrix、family blocker matrix、interpretation
+      matrix、safety boundary 和 research report；真实 run status=`REGIME_SEGMENTED_CANDIDATE_VALIDATION_READY_DIAGNOSTIC_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`，performance_row_count=294，coverage_row_count=31，family_blocker_row_count=4，interpretation_row_count=4；volatility
+      risk-cap、AI leadership、liquidity pressure 可分段，breadth proxy source-blocked；所有
+      promotion/paper-shadow/production/broker false/none。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+      根据 owner post-2302 roadmap 和 TRADING-2316 next task 新增并进入 IN_PROGRESS；当前 worktree
+      有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入
+      VALIDATING；验证通过 Ruff、compileall、regime focused parallel pytest 19 passed、`aits
+      validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、真实 CLI run、`contract-validation`
+      193 passed。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-56a9cc26b5eebf170e22cd22d56af7e4
 projection:
   legacy_first_eight_cells:
   - TRADING-2317_REGIME_SEGMENTED_CANDIDATE_VALIDATION
   - Research trends / diagnostic regime segmentation validation
   - P2
-  - VALIDATING
-  - 系统验证 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2317_Regime_Segmented_Candidate_Validation.md`；依赖
-    TRADING-2316 regime labels、TRADING-2292 volatility risk-cap actual-path validation、TRADING-2304
-    breadth source-blocked selection、TRADING-2309 AI leadership actual-path validation
-    和 TRADING-2313 liquidity/rates actual-path validation。本批只做 diagnostic segmentation
-    reinterpretation，不生成新 candidate signal、不改写既有 validation verdict。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 生成 regime-segmented validation summary、candidate segment performance matrix、candidate
     segment coverage matrix、family blocker matrix、interpretation matrix、safety boundary
     和 research report；真实 run status=`REGIME_SEGMENTED_CANDIDATE_VALIDATION_READY_DIAGNOSTIC_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`，performance_row_count=294，coverage_row_count=31，family_blocker_row_count=4，interpretation_row_count=4；volatility
     risk-cap、AI leadership、liquidity pressure 可分段，breadth proxy source-blocked；所有
     promotion/paper-shadow/production/broker false/none。
-  - '2026-07-01: 根据 owner post-2302 roadmap 和 TRADING-2316 next task 新增并进入 IN_PROGRESS；当前
-    worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入
-    VALIDATING；验证通过 Ruff、compileall、regime focused parallel pytest 19 passed、`aits
-    validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、真实 CLI run、`contract-validation`
-    193 passed。'
-  docs_links:
-  - docs/requirements/TRADING-2317_Regime_Segmented_Candidate_Validation.md
-  terminal: false
-  canonical_row_sha256: 30227a9efe670688bfa9e5628bfb90ad0e4159b56550245d2d1b4f14cb83dcb4
-last_event_id: legacy-import-30227a9efe670688bfa9e562
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+    根据 owner post-2302 roadmap 和 TRADING-2316 next task 新增并进入 IN_PROGRESS；当前 worktree
+    有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入 VALIDATING；验证通过
+    Ruff、compileall、regime focused parallel pytest 19 passed、`aits validate-data --as-of
+    2026-06-29` PASS_WITH_WARNINGS、真实 CLI run、`contract-validation` 193 passed。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 5a48eab43b8e2f8947f578ffffbdaba2c7b219f959f77fa2c73c4f9a310a3493
+last_event_id: task-event-56a9cc26b5eebf170e22cd22d56af7e4
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 90a170c8ab13097031a9343cfd36de875924edf4c7affc359d8a2fdb348c7d15
+fragment_checksum: 617522583da9ed1fdcdb7c75c340a6f3a12e2026fa4e0dd54a9a09a089440369
