@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-795_to_799_REGIME_CONDITIONED_VALUE_SURFACE
   task_id_sha256: 5269f7e48cf4757064e7570c5f41aeccf764c6f54137ca075dcb4a11af48d246
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-795_to_799_REGIME_CONDITIONED_VALUE_SURFACE
   title: null
   domain: Controlled strategy research / regime-conditioned value surface design,
@@ -13,19 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-795_to_799_Regime_Conditioned_Value_Surface.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-795_to_799_Regime_Conditioned_Value_Surface.md`；owner
-    要求基于 TRADING-790 failure attribution、TRADING-791 horizon/utility cliff、TRADING-792
-    residual hypotheses 和 TRADING-794 `PIVOT_TO_REGIME_CONDITIONED_VALUE_SURFACE`
-    决策，定义条件化 value surface、尾部亏损保护和 benchmark fallback；不得继续无条件扩大 value surface、直接训练
-    GBDT 策略、扩展 regret casebook、进入 paper-shadow 或用 74% beat rate 做正面宣传
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 CLI：`aits research strategies regime-conditioned-value-surface-design`、`tail-loss-guardrail-fallback-policy`、`regime-horizon-loss-attribution-matrix`、`gbdt-residual-hypothesis-regime-conditioning`
       和 `regime-conditioned-value-surface-controlled-review`；TRADING-795 必须输出 protocol/regime
       variables/tail-loss definitions/action changes/fallback rules/validation plan；TRADING-796
@@ -34,7 +32,6 @@ task_record:
       只能输出 residual hypotheses；TRADING-799 决策只能为 `CONTINUE
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 77a419630406a885fdbf89725e21cb719df865211d20ff8ea46d451b6dc8b44f
   cell_count: 13
@@ -127,30 +124,56 @@ events:
   evidence_refs:
   - sha256:77a419630406a885fdbf89725e21cb719df865211d20ff8ea46d451b6dc8b44f
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-795_to_799_REGIME_CONDITIONED_VALUE_SURFACE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:20:02+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 3c39866ca5edd03d3c1c7591f2a169be58421e65
+  previous_state_event_id: legacy-import-77a419630406a885fdbf8972
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 CLI：`aits research strategies regime-conditioned-value-surface-design`、`tail-loss-guardrail-fallback-policy`、`regime-horizon-loss-attribution-matrix`、`gbdt-residual-hypothesis-regime-conditioning`
+      和 `regime-conditioned-value-surface-controlled-review`；TRADING-795 必须输出 protocol/regime
+      variables/tail-loss definitions/action changes/fallback rules/validation plan；TRADING-796
+      必须对比 original、regime-conditioned、tail-loss guarded、benchmark fallback；TRADING-797
+      必须拆解 loss_by_regime/asset/horizon/action/cluster/utility_profile/date_window；TRADING-798
+      只能输出 residual hypotheses；TRADING-799 决策只能为 `CONTINUE
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ef36b81bb0e8ee180389fc7517d6d24c
 projection:
   legacy_first_eight_cells:
   - TRADING-795_to_799_REGIME_CONDITIONED_VALUE_SURFACE
   - Controlled strategy research / regime-conditioned value surface design, tail-loss
     guardrail, loss matrix, residual regime hypotheses, controlled review
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-795_to_799_Regime_Conditioned_Value_Surface.md`；owner
-    要求基于 TRADING-790 failure attribution、TRADING-791 horizon/utility cliff、TRADING-792
-    residual hypotheses 和 TRADING-794 `PIVOT_TO_REGIME_CONDITIONED_VALUE_SURFACE`
-    决策，定义条件化 value surface、尾部亏损保护和 benchmark fallback；不得继续无条件扩大 value surface、直接训练
-    GBDT 策略、扩展 regret casebook、进入 paper-shadow 或用 74% beat rate 做正面宣传
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 CLI：`aits research strategies regime-conditioned-value-surface-design`、`tail-loss-guardrail-fallback-policy`、`regime-horizon-loss-attribution-matrix`、`gbdt-residual-hypothesis-regime-conditioning`
     和 `regime-conditioned-value-surface-controlled-review`；TRADING-795 必须输出 protocol/regime
     variables/tail-loss definitions/action changes/fallback rules/validation plan；TRADING-796
     必须对比 original、regime-conditioned、tail-loss guarded、benchmark fallback；TRADING-797
     必须拆解 loss_by_regime/asset/horizon/action/cluster/utility_profile/date_window；TRADING-798
     只能输出 residual hypotheses；TRADING-799 决策只能为 `CONTINUE
-  - WATCHLIST
-  docs_links:
-  - docs/requirements/TRADING-795_to_799_Regime_Conditioned_Value_Surface.md
-  terminal: false
-  canonical_row_sha256: 140980cdb964f0e3eff141c61906f81711b89606ee8ae84218b4b2a7b2e5ae40
-last_event_id: legacy-import-77a419630406a885fdbf8972
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: d67ce362912310ac9c823f4cf6ccf9037715a323d29035d117ceabbb9c5646d4
+last_event_id: task-event-ef36b81bb0e8ee180389fc7517d6d24c
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 5c176d37c3f862d0f87bdbd9f348391a1d69c96b058f209a39595b988077882f
+fragment_checksum: 62a01d3a8a5c24dfa2ad68e85eb37b6ea43909e017f2521974f5a8448e9d8dfb
