@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-713_BENCHMARK_CONTROLS_FALSIFICATION_HARNESS
   task_id_sha256: 4047e8086bf9c892b8c1530c3689a784929fdb5663cf8b2148435337b4b115b1
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-713_BENCHMARK_CONTROLS_FALSIFICATION_HARNESS
   title: null
   domain: Research acceleration / benchmark zoo, controls, falsification harness
@@ -12,19 +13,19 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；复杂策略必须过 benchmark、controls
-    和 leakage trap
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`benchmark-run'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 5a0a258822ae1033805a5b30f3136d7b96e1b1da569f25baef3332e45db08abc
   cell_count: 10
@@ -76,19 +77,45 @@ events:
   evidence_refs:
   - sha256:5a0a258822ae1033805a5b30f3136d7b96e1b1da569f25baef3332e45db08abc
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-713_BENCHMARK_CONTROLS_FALSIFICATION_HARNESS
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:06:00+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: c6efb9d16022c8ad9a808aff254d50ef4165fa22
+  previous_state_event_id: legacy-import-5a0a258822ae1033805a5b30
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`benchmark-run'
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：control-audit
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c631293a5519ae6d131183cfc34dd8c2
 projection:
   legacy_first_eight_cells:
   - TRADING-713_BENCHMARK_CONTROLS_FALSIFICATION_HARNESS
   - Research acceleration / benchmark zoo, controls, falsification harness
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-703_to_725 总需求文档；复杂策略必须过 benchmark、controls 和 leakage trap
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`benchmark-run'
-  - control-audit
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：control-audit
   docs_links: []
-  terminal: false
-  canonical_row_sha256: 61a6404bd220c06c79e82c166d4b37db8fd06fd40c915fa1dd2117216341c89d
-last_event_id: legacy-import-5a0a258822ae1033805a5b30
+  terminal: true
+  canonical_row_sha256: c9cea0210d7f2ca9a09f1c31b99c139bfcb28ef664f83f04fc84eac6f8894fbc
+last_event_id: task-event-c631293a5519ae6d131183cfc34dd8c2
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 2246a382858be889a3aac5300a035c4a1df4116f9460c69957947d271ad0dab5
+fragment_checksum: af2fdcd493ed168097fdfd8212560b1f5cc0606a332696d3cd7eabb4cf05916d
