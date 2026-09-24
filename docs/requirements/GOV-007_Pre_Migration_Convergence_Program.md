@@ -202,7 +202,7 @@ DEVX-015 的"做完全部 106 项"决定不在本变更里写入 DEVX-015 的任
 | # | 任务 | 处置 |
 |---|---|---|
 | 1 | OPS-062 | 本机全盘未找到 2026-07-16 exact archive；按批准处置：canonical 2026-07-16 永久保持 FAILED 并标记为缺口，不做 canonical 恢复；受限重建已获批准但无下游用途，不执行 → DONE |
-| 2 | TRADING-2563 | 授权一次项目根内的 corrected DQ retry（R1，有界、零下单）→ IN_PROGRESS，待执行 |
+| 2 | TRADING-2563 | 授权已记录但前提过时：该 corrected DQ retry 已按独立精确授权执行过一次且 FAIL（evaluated 至 2026-07-23，receipt `dq_execution_d4229d2a…`，见 TRADING-2564 需求 §2），不再执行；任务改为 DEFERRED，依赖 TRADING-2564 提供覆盖 as-of 的可接纳 DQ 输入 |
 | 3 | TRADING-2542 / A / B / C | DEFERRED，退出条件：迁移 pi 后重启 growth action-value 研究线 |
 | 4 | TRADING-2542H、TRADING-2554 | DEFERRED，同上 |
 | 5 | TRADING-2527 | DEFERRED，退出条件：owner 给出 human comprehension pilot policy |
