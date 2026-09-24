@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-879_to_887_SIMPLE_BASELINE_REAL_RUN_DECISION_PACK
   task_id_sha256: df35863e9a9cbc8f2c8f473a54f5fa0e086a23f73aa193cf159c923d5923edec
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-879_to_887_SIMPLE_BASELINE_REAL_RUN_DECISION_PACK
   title: null
   domain: Research strategies / QQQ-TQQQ-SGOV simple baseline real-run candidate decision
@@ -13,23 +14,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 项目 owner 人工复核
-  requirement_refs:
-  - docs/requirements/TRADING-879_to_887_Simple_Baseline_Real_Run_Decision_Pack.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-879_to_887_Simple_Baseline_Real_Run_Decision_Pack.md`；已完成
-    879 branch/commit/clean/push/PR readiness、880 真实 CLI suite、881～887 候选提取/解释/复盘/拆解/鲁棒性/owner
-    pack/watchlist；不得 merge main，不得修改 production config，不得 activation paper-shadow/production/broker
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 输出 `simple_baseline_pr_readiness_summary`、`simple_baseline_real_run_summary`、`simple_baseline_top_candidate_extraction_report`、`simple_baseline_dominance_explanation`、`simple_baseline_drawdown_episode_replay`、`simple_baseline_exposure_decomposition_report`、`simple_baseline_parameter_robustness_top_candidates`、`simple_baseline_owner_decision_pack`、`simple_baseline_paper_shadow_watchlist`
       JSON/Markdown；所有数据依赖结果必须通过 `validate_data_cache` 同源 gate 或显式 BLOCKED；候选字段、dominance
       原因、关键回撤段、收益来源、鲁棒性、owner 8 个问题和 watchlist safety fields 均可审计
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 5d358043ba1bc2054f1e29f56dd754aa81ecc3e4ff29cd3dfe93e66db627aea2
   cell_count: 8
@@ -101,21 +100,56 @@ events:
   evidence_refs:
   - sha256:5d358043ba1bc2054f1e29f56dd754aa81ecc3e4ff29cd3dfe93e66db627aea2
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-879_to_887_SIMPLE_BASELINE_REAL_RUN_DECISION_PACK
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:37:14+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: e28906e52cb4d799effa0f945a729e9e9af6151a
+  previous_state_event_id: legacy-import-5d358043ba1bc2054f1e29f5
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 输出 `simple_baseline_pr_readiness_summary`、`simple_baseline_real_run_summary`、`simple_baseline_top_candidate_extraction_report`、`simple_baseline_dominance_explanation`、`simple_baseline_drawdown_episode_replay`、`simple_baseline_exposure_decomposition_report`、`simple_baseline_parameter_robustness_top_candidates`、`simple_baseline_owner_decision_pack`、`simple_baseline_paper_shadow_watchlist`
+      JSON/Markdown；所有数据依赖结果必须通过 `validate_data_cache` 同源 gate 或显式 BLOCKED；候选字段、dominance
+      原因、关键回撤段、收益来源、鲁棒性、owner 8 个问题和 watchlist safety fields 均可审计
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-23:
+      新增并进入 IN_PROGRESS，原因：owner 要求从 c57cb082 的 14 个 CLI 实现转向真实运行、候选收敛和人工决策；TRADING-879
+      已确认当前分支为 `codex/simple-baseline-portfolio-control`、HEAD=`c57cb082`、本地 commit
+      存在、工作区 clean，并已 push 到 `origin/codex/simple-baseline-portfolio-control`。2026-06-23:
+      转入 VALIDATING；初次 simple-baseline gate 因主价格缓存缺 TQQQ fail-closed，随后通过既有 FMP price
+      repair/manifest 路径补入 TQQQ 1008 行并重跑 `validate-data`，状态 `PASS_WITH_WARNINGS`/0
+      errors；865～878 真实 CLI 全部执行，ranking=`BASELINE_RANKING_READY`，top recommended=`equal_risk_qqq_sgov`，readiness=`PAPER_SHADOW_REVIEWABLE_LATER`
+      但 safety fields 仍 false/none，master=`PAUSE_TQQQ_HEAVY`，options=`OPTIONS_RESEARCH_BLOCKED`；881～887
+      artifacts 已生成，watchlist 5 个候选且全部 no activation。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2a7ed4d8f6c5b3f4646941585f320fe0
 projection:
   legacy_first_eight_cells:
   - TRADING-879_to_887_SIMPLE_BASELINE_REAL_RUN_DECISION_PACK
   - Research strategies / QQQ-TQQQ-SGOV simple baseline real-run candidate decision
     pack
   - P0
-  - VALIDATING
-  - 项目 owner 人工复核
-  - 详见 `docs/requirements/TRADING-879_to_887_Simple_Baseline_Real_Run_Decision_Pack.md`；已完成
-    879 branch/commit/clean/push/PR readiness、880 真实 CLI suite、881～887 候选提取/解释/复盘/拆解/鲁棒性/owner
-    pack/watchlist；不得 merge main，不得修改 production config，不得 activation paper-shadow/production/broker
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 输出 `simple_baseline_pr_readiness_summary`、`simple_baseline_real_run_summary`、`simple_baseline_top_candidate_extraction_report`、`simple_baseline_dominance_explanation`、`simple_baseline_drawdown_episode_replay`、`simple_baseline_exposure_decomposition_report`、`simple_baseline_parameter_robustness_top_candidates`、`simple_baseline_owner_decision_pack`、`simple_baseline_paper_shadow_watchlist`
     JSON/Markdown；所有数据依赖结果必须通过 `validate_data_cache` 同源 gate 或显式 BLOCKED；候选字段、dominance
     原因、关键回撤段、收益来源、鲁棒性、owner 8 个问题和 watchlist safety fields 均可审计
-  - '2026-06-23: 新增并进入 IN_PROGRESS，原因：owner 要求从 c57cb082 的 14 个 CLI 实现转向真实运行、候选收敛和人工决策；TRADING-879
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-23:
+    新增并进入 IN_PROGRESS，原因：owner 要求从 c57cb082 的 14 个 CLI 实现转向真实运行、候选收敛和人工决策；TRADING-879
     已确认当前分支为 `codex/simple-baseline-portfolio-control`、HEAD=`c57cb082`、本地 commit 存在、工作区
     clean，并已 push 到 `origin/codex/simple-baseline-portfolio-control`。2026-06-23: 转入
     VALIDATING；初次 simple-baseline gate 因主价格缓存缺 TQQQ fail-closed，随后通过既有 FMP price repair/manifest
@@ -123,10 +157,9 @@ projection:
     CLI 全部执行，ranking=`BASELINE_RANKING_READY`，top recommended=`equal_risk_qqq_sgov`，readiness=`PAPER_SHADOW_REVIEWABLE_LATER`
     但 safety fields 仍 false/none，master=`PAUSE_TQQQ_HEAVY`，options=`OPTIONS_RESEARCH_BLOCKED`；881～887
     artifacts 已生成，watchlist 5 个候选且全部 no activation。'
-  docs_links:
-  - docs/requirements/TRADING-879_to_887_Simple_Baseline_Real_Run_Decision_Pack.md
-  terminal: false
-  canonical_row_sha256: 5d358043ba1bc2054f1e29f56dd754aa81ecc3e4ff29cd3dfe93e66db627aea2
-last_event_id: legacy-import-5d358043ba1bc2054f1e29f5
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 762bafb0d61b0fe68f430e71f7e1ecb68fd254040525e0c3a1de5a331d8c6476
+last_event_id: task-event-2a7ed4d8f6c5b3f4646941585f320fe0
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 52a5b1b7e77f0452eed5ee93b38a510b3f161893690ef5121dfb393ca2a34f39
+fragment_checksum: af194a00cfc41be90049e82c93a4c79c1d40a560ffd6bf627a38a3d9b92cfaa3
