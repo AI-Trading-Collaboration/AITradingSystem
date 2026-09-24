@@ -13,14 +13,17 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Claude Code coordinator：执行一次已授权的 corrected DQ retry
+  next_owner: TRADING-2564 coordinator（提供可接纳的 DQ 输入后重新评估）
   requirement_refs:
   - docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 2026-09-24 owner 决策包第2条授权一次项目根内 corrected
-    DQ retry（R1，有界、零下单、不下载/不改 cache）；执行前复核 failure-fix proposal 与既有 1/1/1/1/1/1 上限，任何越界即停止
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 更正：owner 决策包第2条授权的 contained-root
+    corrected DQ retry 已在 2026-09 以独立精确授权执行过一次且 FAIL（as_of=2026-09-03，requested 2021-02-22..2026-09-03，evaluated
+    至 2026-07-23，receipt dq_execution_d4229d2a50e008715a99b46e1f3d17077b1d6936e6bbb034130a0f43c48ffecb，见
+    TRADING-2564 需求 §2），再次执行只会得到同样结果，故不执行。真实阻塞是开发目录缓存覆盖止于 2026-07-23；本任务禁止下载或改 cache。退出条件：TRADING-2564
+    提供覆盖 as-of 的可接纳 named/consumer DQ 输入后，重新评估 maturity catch-up
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: manifest replay、canonical DQ、isolated rehearsal、maturity update、scoreboard、continuity
@@ -111,23 +114,58 @@ events:
   - change:gov-007-owner-decision-pack-20260924-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-1dd57b85ebd7ebafd6538a15c34faf6a
+- schema_version: task_event.v1
+  task_id: TRADING-2563_EQUAL_RISK_CATCHUP_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:59:49+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: 11277cdd8f791105728e8e16141bda1bc45f23f5
+  previous_state_event_id: task-event-1dd57b85ebd7ebafd6538a15c34faf6a
+  from_status: IN_PROGRESS
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: TRADING-2564 coordinator（提供可接纳的 DQ 输入后重新评估）
+    blocker_or_next_step: 2026-09-24 更正：owner 决策包第2条授权的 contained-root corrected DQ
+      retry 已在 2026-09 以独立精确授权执行过一次且 FAIL（as_of=2026-09-03，requested 2021-02-22..2026-09-03，evaluated
+      至 2026-07-23，receipt dq_execution_d4229d2a50e008715a99b46e1f3d17077b1d6936e6bbb034130a0f43c48ffecb，见
+      TRADING-2564 需求 §2），再次执行只会得到同样结果，故不执行。真实阻塞是开发目录缓存覆盖止于 2026-07-23；本任务禁止下载或改 cache。退出条件：TRADING-2564
+      提供覆盖 as-of 的可接纳 named/consumer DQ 输入后，重新评估 maturity catch-up
+    acceptance_criteria: manifest replay、canonical DQ、isolated rehearsal、maturity
+      update、scoreboard、continuity 各恰好 1 次；immutable identity 不变；禁止项全部 0；正式验证、local-main、origin/main
+      与生命周期门禁通过
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第2条（授权已记录但前提过时，未执行任何
+      DQ）；agent_harness=claude_code；owner_decision:GOV-007:2026-09-24:decision_pack_v1
+      第2条：authorization_state=EXACT_PREAUTHORIZED；agent_harness=claude_code；原备注：authorization_state=EXACT_PREAUTHORIZED；technical_validation_state=DQ_NOT_EXECUTED_PATH_CONTAINMENT_REJECTED；详见
+      docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md 与 failure-fix proposal
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8bfeb226dff718a51085483d7cb17d2a
 projection:
   legacy_first_eight_cells:
   - TRADING-2563_EQUAL_RISK_CATCHUP_V1
   - Strategy research / equal-risk bounded maturity catch-up
   - P0
-  - IN_PROGRESS
-  - Claude Code coordinator：执行一次已授权的 corrected DQ retry
-  - 2026-09-24 owner 决策包第2条授权一次项目根内 corrected DQ retry（R1，有界、零下单、不下载/不改 cache）；执行前复核
-    failure-fix proposal 与既有 1/1/1/1/1/1 上限，任何越界即停止
+  - DEFERRED
+  - TRADING-2564 coordinator（提供可接纳的 DQ 输入后重新评估）
+  - 2026-09-24 更正：owner 决策包第2条授权的 contained-root corrected DQ retry 已在 2026-09 以独立精确授权执行过一次且
+    FAIL（as_of=2026-09-03，requested 2021-02-22..2026-09-03，evaluated 至 2026-07-23，receipt
+    dq_execution_d4229d2a50e008715a99b46e1f3d17077b1d6936e6bbb034130a0f43c48ffecb，见
+    TRADING-2564 需求 §2），再次执行只会得到同样结果，故不执行。真实阻塞是开发目录缓存覆盖止于 2026-07-23；本任务禁止下载或改 cache。退出条件：TRADING-2564
+    提供覆盖 as-of 的可接纳 named/consumer DQ 输入后，重新评估 maturity catch-up
   - manifest replay、canonical DQ、isolated rehearsal、maturity update、scoreboard、continuity
     各恰好 1 次；immutable identity 不变；禁止项全部 0；正式验证、local-main、origin/main 与生命周期门禁通过
-  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第2条：authorization_state=EXACT_PREAUTHORIZED；agent_harness=claude_code；原备注：authorization_state=EXACT_PREAUTHORIZED；technical_validation_state=DQ_NOT_EXECUTED_PATH_CONTAINMENT_REJECTED；详见
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第2条（授权已记录但前提过时，未执行任何 DQ）；agent_harness=claude_code；owner_decision:GOV-007:2026-09-24:decision_pack_v1
+    第2条：authorization_state=EXACT_PREAUTHORIZED；agent_harness=claude_code；原备注：authorization_state=EXACT_PREAUTHORIZED；technical_validation_state=DQ_NOT_EXECUTED_PATH_CONTAINMENT_REJECTED；详见
     docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md 与 failure-fix proposal
   docs_links:
   - docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md
   terminal: false
-  canonical_row_sha256: da505a4546f473b13bbf4bd5722a4d05c307d684ad467351d8b1ad2681f3cf49
-last_event_id: task-event-1dd57b85ebd7ebafd6538a15c34faf6a
+  canonical_row_sha256: 9d93dfc18f0c3f5b90329d20e9fc0bf0d2147f96216eb4bd1e845cee906d4073
+last_event_id: task-event-8bfeb226dff718a51085483d7cb17d2a
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f67eddf304c0747ca7e62d995187753ee1234330eb7c35d5a2723d5e6b7190d9
+fragment_checksum: ae743c0c311ad252578448bb5916083191081c5ff138861e7d3fb44262d7694e
