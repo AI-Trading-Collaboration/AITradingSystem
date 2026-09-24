@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1716_to_1735_SECOND_LAYER_PROBE_LIBRARY_FREEZE
   task_id_sha256: 6577f807e864d5186184c68a84197895aa6b44b2aefc8c5b9c03ef34cc926701
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1716_to_1735_SECOND_LAYER_PROBE_LIBRARY_FREEZE
   title: null
   domain: Research windows / frozen second-layer probe library and return-seeking
@@ -13,18 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-1716_to_1735_Second_Layer_Probe_Library_Freeze.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1716_to_1735_Second_Layer_Probe_Library_Freeze.md`；owner
-    附件原编号 TRADING-1676～1695 与已完成 upper-state reset 区间冲突，本批重编号为 1716～1735；承接 primary-window
-    adoption closeout，后续 first-layer 重做前必须先冻结 second-layer probe registry v2，防止 action-value
-    labels 的目标函数漂移
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 dynamic second-layer probe registry v2、constraint tests、QQQ-equivalent
       exposure review、primary-window actual-path rebacktest、same-risk static frontier
       comparison、TQQQ contribution/stress review、action-value readiness matrix、first-layer
@@ -35,7 +34,6 @@ task_record:
       promotion、paper-shadow、production、broker 固定 blocked/false/none
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 65dd2d2e367b8d6db1300e63a191ed6db64d56c839f36b4c8b3b9edb6e1202d1
   cell_count: 8
@@ -110,18 +108,53 @@ events:
   evidence_refs:
   - sha256:65dd2d2e367b8d6db1300e63a191ed6db64d56c839f36b4c8b3b9edb6e1202d1
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1716_to_1735_SECOND_LAYER_PROBE_LIBRARY_FREEZE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:02:55+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: a35b4ea619bafacec3b47a05f7adb008ae02b362
+  previous_state_event_id: legacy-import-65dd2d2e367b8d6db1300e63
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 dynamic second-layer probe registry v2、constraint tests、QQQ-equivalent
+      exposure review、primary-window actual-path rebacktest、same-risk static frontier
+      comparison、TQQQ contribution/stress review、action-value readiness matrix、first-layer
+      dependency update、owner pack、closeout/final matrix、report registry、artifact
+      catalog、system flow、task register 和 guardrail tests；真实 run 生成 8 类 probes、7 个
+      action-value approved、1 个 diagnostic-only、0 个 rejected，same-risk 7 个优于同风险 static
+      frontier，TQQQ stress blocked=0；所有 outputs 带 primary window metadata 和 `research_audit_metadata`；dynamic
+      promotion、paper-shadow、production、broker 固定 blocked/false/none
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+      新增并进入 IN_PROGRESS，原因：owner 要求完成 second-layer dynamic probe library freeze；前置
+      primary-window adoption 已完成且后续 first-layer 校准必须冻结 second-layer v2。2026-06-28:
+      实现完成并转入 VALIDATING；`aits research trends second-layer-probe-freeze` 真实生成 exposure、actual-path、same-risk、TQQQ
+      stress、readiness、owner pack 和 final matrix，final_status=`SECOND_LAYER_RETURN_SEEKING_PROBES_DIAGNOSTIC_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，安全边界仍为
+      blocked/false/none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-289900163d80595bf51ae49174d544ef
 projection:
   legacy_first_eight_cells:
   - TRADING-1716_to_1735_SECOND_LAYER_PROBE_LIBRARY_FREEZE
   - Research windows / frozen second-layer probe library and return-seeking probe
     completion
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1716_to_1735_Second_Layer_Probe_Library_Freeze.md`；owner
-    附件原编号 TRADING-1676～1695 与已完成 upper-state reset 区间冲突，本批重编号为 1716～1735；承接 primary-window
-    adoption closeout，后续 first-layer 重做前必须先冻结 second-layer probe registry v2，防止 action-value
-    labels 的目标函数漂移
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 dynamic second-layer probe registry v2、constraint tests、QQQ-equivalent exposure
     review、primary-window actual-path rebacktest、same-risk static frontier comparison、TQQQ
     contribution/stress review、action-value readiness matrix、first-layer dependency
@@ -130,15 +163,15 @@ projection:
     个 diagnostic-only、0 个 rejected，same-risk 7 个优于同风险 static frontier，TQQQ stress
     blocked=0；所有 outputs 带 primary window metadata 和 `research_audit_metadata`；dynamic
     promotion、paper-shadow、production、broker 固定 blocked/false/none
-  - '2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 要求完成 second-layer dynamic probe library
-    freeze；前置 primary-window adoption 已完成且后续 first-layer 校准必须冻结 second-layer v2。2026-06-28:
-    实现完成并转入 VALIDATING；`aits research trends second-layer-probe-freeze` 真实生成 exposure、actual-path、same-risk、TQQQ
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+    新增并进入 IN_PROGRESS，原因：owner 要求完成 second-layer dynamic probe library freeze；前置 primary-window
+    adoption 已完成且后续 first-layer 校准必须冻结 second-layer v2。2026-06-28: 实现完成并转入 VALIDATING；`aits
+    research trends second-layer-probe-freeze` 真实生成 exposure、actual-path、same-risk、TQQQ
     stress、readiness、owner pack 和 final matrix，final_status=`SECOND_LAYER_RETURN_SEEKING_PROBES_DIAGNOSTIC_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，安全边界仍为
     blocked/false/none。'
-  docs_links:
-  - docs/requirements/TRADING-1716_to_1735_Second_Layer_Probe_Library_Freeze.md
-  terminal: false
-  canonical_row_sha256: 65dd2d2e367b8d6db1300e63a191ed6db64d56c839f36b4c8b3b9edb6e1202d1
-last_event_id: legacy-import-65dd2d2e367b8d6db1300e63
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 968847962039cfa2f2b1eeb88344bf129c459e095d10abcd3c9c59e54820540f
+last_event_id: task-event-289900163d80595bf51ae49174d544ef
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 8502d6eea98e090b6a3d5c92aab480c43cb7fe5b43739f3e50c6417513cedd93
+fragment_checksum: 23ee5654c333f658f338d77e26b91c2bc03e61ac5b7f5a0a94deb211f22513f6
