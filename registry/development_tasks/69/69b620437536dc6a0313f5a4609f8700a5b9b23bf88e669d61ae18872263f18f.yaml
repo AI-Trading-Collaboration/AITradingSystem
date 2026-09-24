@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
   task_id_sha256: 69b620437536dc6a0313f5a4609f8700a5b9b23bf88e669d61ae18872263f18f
 task_record:
+  schema_version: task_record.v1
   task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
   title: null
   domain: 运行架构/每日结果恢复
@@ -12,20 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: project owner：提供 exact archive 或批准受限处置
-  requirement_refs:
-  - docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md
+  next_owner: None / closed by owner disposition
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Owner 已于 2026-07-22 批准新的可审计 recovery workflow/spec（decision
-    id `owner_decision:OPS-062:2026-07-22:approve_auditable_recovery_v1`），但 cutoff-bound
-    preflight=`INCOMPLETE_REPLAY`：缺 `fmp_forward_pit_2026-07-16.csv`、同日 PIT validation/fetch
-    reports 与 `sec_fundamentals_2026-07-16.csv`。严格 canonical recovery 需 owner 提供/定位
-    exact cutoff archive；否则需另行批准 `LIMITED_PRIOR_SNAPSHOT_RECONSTRUCTION`，且 canonical
-    2026-07-16 继续保持 `FAILED`。详细拆解见 `docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md`
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第1条收口：本机全盘未找到 2026-07-16
+    exact archive；canonical 2026-07-16 永久保持 FAILED 并登记为缺口，不做 canonical 恢复；受限重建已获批准但无下游用途，不执行。详见
+    GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 保留旧 state/ledger，不删除状态、不直跑下游；禁止把 cutoff 后 live refetch 或 2026-07-15 prior-day
       snapshot 静默 retarget 为 exact 2026-07-16 input。只有 exact archive 完整后才可执行 owner-approved
       unified `daily-run` recovery spec 并要求 36/36、DQ、PIT、SEC、score、dashboard、Reader
@@ -33,7 +30,6 @@ task_record:
       使用，`production_effect=none`
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 1cdf2af6abec79ec607524a912bfad6da1e3d0506b65e36a5db23ccc08b49340
   cell_count: 8
@@ -99,31 +95,58 @@ events:
   evidence_refs:
   - sha256:1cdf2af6abec79ec607524a912bfad6da1e3d0506b65e36a5db23ccc08b49340
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:30:13+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: 8c62c46470829183c9f967b9a9d4de07cc924956
+  previous_state_event_id: legacy-import-1cdf2af6abec79ec607524a9
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed by owner disposition
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第1条收口：本机全盘未找到 2026-07-16 exact archive；canonical
+      2026-07-16 永久保持 FAILED 并登记为缺口，不做 canonical 恢复；受限重建已获批准但无下游用途，不执行。详见 GOV-007
+      需求文档
+    acceptance_criteria: 保留旧 state/ledger，不删除状态、不直跑下游；禁止把 cutoff 后 live refetch 或
+      2026-07-15 prior-day snapshot 静默 retarget 为 exact 2026-07-16 input。只有 exact
+      archive 完整后才可执行 owner-approved unified `daily-run` recovery spec 并要求 36/36、DQ、PIT、SEC、score、dashboard、Reader
+      Brief 同 run id PASS；受限重建只能隔离、无 canonical PASS、无 downstream/promotion/backtest/weight/production
+      使用，`production_effect=none`
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第1条：PERMANENT_GAP_OWNER_APPROVED；agent_harness=claude_code；原备注：2026-07-22：owner
+      approval 已登记；inventory-only/cache-only preflight 绑定原 attempt 1 cutoff，状态 `INCOMPLETE_REPLAY`，market/macro/PIT
+      manifest 等可冻结但 4 个 required exact-as-of artifacts 缺失。任务从 `IN_PROGRESS` 转 `BLOCKED_OWNER_INPUT`；未实现
+      historical visibility bypass，未运行 score/live recovery，等待 owner 输入。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3d5c140669a622e8e8dd07b930becf77
 projection:
   legacy_first_eight_cells:
   - OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
   - 运行架构/每日结果恢复
   - P0
-  - BLOCKED_OWNER_INPUT
-  - project owner：提供 exact archive 或批准受限处置
-  - Owner 已于 2026-07-22 批准新的可审计 recovery workflow/spec（decision id `owner_decision:OPS-062:2026-07-22:approve_auditable_recovery_v1`），但
-    cutoff-bound preflight=`INCOMPLETE_REPLAY`：缺 `fmp_forward_pit_2026-07-16.csv`、同日
-    PIT validation/fetch reports 与 `sec_fundamentals_2026-07-16.csv`。严格 canonical
-    recovery 需 owner 提供/定位 exact cutoff archive；否则需另行批准 `LIMITED_PRIOR_SNAPSHOT_RECONSTRUCTION`，且
-    canonical 2026-07-16 继续保持 `FAILED`。详细拆解见 `docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md`
+  - DONE
+  - None / closed by owner disposition
+  - 2026-09-24 按 owner 决策包第1条收口：本机全盘未找到 2026-07-16 exact archive；canonical 2026-07-16
+    永久保持 FAILED 并登记为缺口，不做 canonical 恢复；受限重建已获批准但无下游用途，不执行。详见 GOV-007 需求文档
   - 保留旧 state/ledger，不删除状态、不直跑下游；禁止把 cutoff 后 live refetch 或 2026-07-15 prior-day
     snapshot 静默 retarget 为 exact 2026-07-16 input。只有 exact archive 完整后才可执行 owner-approved
     unified `daily-run` recovery spec 并要求 36/36、DQ、PIT、SEC、score、dashboard、Reader
     Brief 同 run id PASS；受限重建只能隔离、无 canonical PASS、无 downstream/promotion/backtest/weight/production
     使用，`production_effect=none`
-  - 2026-07-22：owner approval 已登记；inventory-only/cache-only preflight 绑定原 attempt
-    1 cutoff，状态 `INCOMPLETE_REPLAY`，market/macro/PIT manifest 等可冻结但 4 个 required exact-as-of
-    artifacts 缺失。任务从 `IN_PROGRESS` 转 `BLOCKED_OWNER_INPUT`；未实现 historical visibility
-    bypass，未运行 score/live recovery，等待 owner 输入。
-  docs_links:
-  - docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md
-  terminal: false
-  canonical_row_sha256: 1cdf2af6abec79ec607524a912bfad6da1e3d0506b65e36a5db23ccc08b49340
-last_event_id: legacy-import-1cdf2af6abec79ec607524a9
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第1条：PERMANENT_GAP_OWNER_APPROVED；agent_harness=claude_code；原备注：2026-07-22：owner
+    approval 已登记；inventory-only/cache-only preflight 绑定原 attempt 1 cutoff，状态 `INCOMPLETE_REPLAY`，market/macro/PIT
+    manifest 等可冻结但 4 个 required exact-as-of artifacts 缺失。任务从 `IN_PROGRESS` 转 `BLOCKED_OWNER_INPUT`；未实现
+    historical visibility bypass，未运行 score/live recovery，等待 owner 输入。
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 6189e24c0b8d37d9b4434dd6f86f3a43b7e23b7ec38315aea72386906ee8e520
+last_event_id: task-event-3d5c140669a622e8e8dd07b930becf77
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 18c7eba7f0bdae35487e1e562f1d638a88990ce2e26567a068ec23f409bf5f31
+fragment_checksum: 3fb88cde054238f302c57072224ac2d3f740fab9514791cd64f32fdfdecb371f
