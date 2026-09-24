@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-151_to_155
   task_id_sha256: 0345e06e66c5ecddb597214e8cc0d8669b3e299391dd02414eddce1333555360
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-151_to_155
   title: null
   domain: ETF portfolio research/Forward Outcome Accumulation and Replay Sample Expansion
@@ -12,20 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 项目 owner 人工复核
-  requirement_refs:
-  - docs/requirements/TRADING-151_to_155_Forward_Outcome_Accumulation_and_Replay_Sample_Expansion.md
+  next_owner: Project Owner（pi 迁移后重启对应研究线时）
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-151_to_155_Forward_Outcome_Accumulation_and_Replay_Sample_Expansion.md`；承接
-    TRADING-146_to_150 的 replay diagnosis / repair / variant comparison / calibration
-    / forward bridge，新增 due window detector、replay sample expansion、outcome availability
-    dashboard、limited_adjustment vs no_trade focused evaluation 和 consensus_target
-    risk review；本阶段仍禁止 broker API、自动下单、automatic production candidate、owner auto approval、真实仓位自动修改、official
-    target weight mutation 和 `position_advisory_v1.yaml` 自动修改
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待
+    forward/shadow 样本自然成熟，30 天以上无新证据。退出条件：迁移 pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007
+    需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`outcome-due scan/report/update-ready` 和 `validate-outcome-due` 可运行，能识别
       DUE / NOT_DUE / PRICE_MISSING / ALREADY_AVAILABLE / INSUFFICIENT_DATA 并只更新 ready
       outcome；`replay-sample-expansion run/report` 和 `validate-replay-sample-expansion`
@@ -40,7 +37,6 @@ task_record:
       完成'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: a6f244825fe51f3d59315ad875aa5e7c26c9bba0efc15e3d86ddb56613986137
   cell_count: 8
@@ -143,19 +139,61 @@ events:
   evidence_refs:
   - sha256:a6f244825fe51f3d59315ad875aa5e7c26c9bba0efc15e3d86ddb56613986137
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-151_to_155
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:57:43+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 8bf900fa7f1001381c06502cc4b565e0d60d1314
+  previous_state_event_id: legacy-import-a6f244825fe51f3d59315ad8
+  from_status: VALIDATING
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: Project Owner（pi 迁移后重启对应研究线时）
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待 forward/shadow
+      样本自然成熟，30 天以上无新证据。退出条件：迁移 pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007 需求文档
+    acceptance_criteria: '`outcome-due scan/report/update-ready` 和 `validate-outcome-due`
+      可运行，能识别 DUE / NOT_DUE / PRICE_MISSING / ALREADY_AVAILABLE / INSUFFICIENT_DATA
+      并只更新 ready outcome；`replay-sample-expansion run/report` 和 `validate-replay-sample-expansion`
+      可运行，能扫描 existing artifacts、生成 expanded events 并默认排除 PIT_UNSAFE；`outcome-dashboard
+      build/report` 和 `validate-outcome-dashboard` 可运行，聚合 forward/replay/backtest
+      simulation outcome availability、pending reasons 和 Reader Brief section；`limited-vs-notrade
+      run/report` 和 `validate-limited-vs-notrade` 可运行，样本不足时明确 `INSUFFICIENT_DATA`
+      且不改 policy；`consensus-risk run/report` 和 `validate-consensus-risk` 可运行，样本不足时不能给
+      PASS，且不得推荐 consensus_target 为默认执行；README、operations runbook、system flow、report
+      registry、artifact catalog、requirements、Reader Brief、focused tests、ruff、compileall、git
+      diff check、dynamic-v3 root validation 和 dynamic-v3 family artifact validation
+      完成'
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：DEFERRED_AWAITING_FORWARD_SAMPLES；agent_harness=claude_code；原备注：2026-06-10:
+      新增并进入 IN_PROGRESS，原因：TRADING-146_to_150 已指出 current outcome 样本仍以 `PENDING` 为主、PIT_SAFE/PIT_WARNING
+      样本过少、limited_adjustment 和 consensus_target 证据置信度 LOW；本阶段优先积累到期 outcome、扩展可审计
+      replay 样本、汇总 availability，并对 limited_adjustment 与 consensus_target 风险做专项观察，继续保持
+      no broker / no production / no auto policy mutation。2026-06-10: 转入 VALIDATING；真实链路输出
+      outcome due `9d344a0a7c24b676`（total_pending=4、due=1、update_ready=1、price_missing=0）、replay
+      sample expansion `148142c0e60f0e07`（new events=4、PIT_SAFE/PIT_WARNING/PIT_UNSAFE=0/1/3）、outcome
+      dashboard `b8a1af7ac722bd69`（forward 0/4/0、historical 10/30/0、simulation 1/0/1，top
+      pending `future_window_not_reached`）、limited-vs-notrade `58b9235fedb7e197`（available=2、win_rate=1.0、avg_relative_return=0.00049、confidence=LOW、recommendation=`continue_tracking`）和
+      consensus risk `f081e53730e3b300`（consensus_target_risk=`INSUFFICIENT_DATA`、turnover=`PASS_WITH_WARNINGS`、default
+      execution=false）；验证通过五个新增 artifact validate、dynamic-v3 root validation、dynamic-v3
+      family artifact validation、focused pytest、Reader Brief fixture test、documentation
+      contract、ruff、compileall、git diff check 和全量 pytest 2291 passed。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-25abf311bc5ce4e1d6afab7a1a9bbf3e
 projection:
   legacy_first_eight_cells:
   - TRADING-151_to_155
   - ETF portfolio research/Forward Outcome Accumulation and Replay Sample Expansion
   - P0
-  - VALIDATING
-  - 项目 owner 人工复核
-  - 详细拆解见 `docs/requirements/TRADING-151_to_155_Forward_Outcome_Accumulation_and_Replay_Sample_Expansion.md`；承接
-    TRADING-146_to_150 的 replay diagnosis / repair / variant comparison / calibration
-    / forward bridge，新增 due window detector、replay sample expansion、outcome availability
-    dashboard、limited_adjustment vs no_trade focused evaluation 和 consensus_target
-    risk review；本阶段仍禁止 broker API、自动下单、automatic production candidate、owner auto approval、真实仓位自动修改、official
-    target weight mutation 和 `position_advisory_v1.yaml` 自动修改
+  - DEFERRED
+  - Project Owner（pi 迁移后重启对应研究线时）
+  - 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待 forward/shadow 样本自然成熟，30 天以上无新证据。退出条件：迁移
+    pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007 需求文档
   - '`outcome-due scan/report/update-ready` 和 `validate-outcome-due` 可运行，能识别 DUE /
     NOT_DUE / PRICE_MISSING / ALREADY_AVAILABLE / INSUFFICIENT_DATA 并只更新 ready outcome；`replay-sample-expansion
     run/report` 和 `validate-replay-sample-expansion` 可运行，能扫描 existing artifacts、生成
@@ -167,11 +205,12 @@ projection:
     flow、report registry、artifact catalog、requirements、Reader Brief、focused tests、ruff、compileall、git
     diff check、dynamic-v3 root validation 和 dynamic-v3 family artifact validation
     完成'
-  - '2026-06-10: 新增并进入 IN_PROGRESS，原因：TRADING-146_to_150 已指出 current outcome 样本仍以
-    `PENDING` 为主、PIT_SAFE/PIT_WARNING 样本过少、limited_adjustment 和 consensus_target 证据置信度
-    LOW；本阶段优先积累到期 outcome、扩展可审计 replay 样本、汇总 availability，并对 limited_adjustment 与
-    consensus_target 风险做专项观察，继续保持 no broker / no production / no auto policy mutation。2026-06-10:
-    转入 VALIDATING；真实链路输出 outcome due `9d344a0a7c24b676`（total_pending=4、due=1、update_ready=1、price_missing=0）、replay
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：DEFERRED_AWAITING_FORWARD_SAMPLES；agent_harness=claude_code；原备注：2026-06-10:
+    新增并进入 IN_PROGRESS，原因：TRADING-146_to_150 已指出 current outcome 样本仍以 `PENDING` 为主、PIT_SAFE/PIT_WARNING
+    样本过少、limited_adjustment 和 consensus_target 证据置信度 LOW；本阶段优先积累到期 outcome、扩展可审计 replay
+    样本、汇总 availability，并对 limited_adjustment 与 consensus_target 风险做专项观察，继续保持 no broker
+    / no production / no auto policy mutation。2026-06-10: 转入 VALIDATING；真实链路输出 outcome
+    due `9d344a0a7c24b676`（total_pending=4、due=1、update_ready=1、price_missing=0）、replay
     sample expansion `148142c0e60f0e07`（new events=4、PIT_SAFE/PIT_WARNING/PIT_UNSAFE=0/1/3）、outcome
     dashboard `b8a1af7ac722bd69`（forward 0/4/0、historical 10/30/0、simulation 1/0/1，top
     pending `future_window_not_reached`）、limited-vs-notrade `58b9235fedb7e197`（available=2、win_rate=1.0、avg_relative_return=0.00049、confidence=LOW、recommendation=`continue_tracking`）和
@@ -179,10 +218,9 @@ projection:
     execution=false）；验证通过五个新增 artifact validate、dynamic-v3 root validation、dynamic-v3
     family artifact validation、focused pytest、Reader Brief fixture test、documentation
     contract、ruff、compileall、git diff check 和全量 pytest 2291 passed。'
-  docs_links:
-  - docs/requirements/TRADING-151_to_155_Forward_Outcome_Accumulation_and_Replay_Sample_Expansion.md
+  docs_links: []
   terminal: false
-  canonical_row_sha256: a6f244825fe51f3d59315ad875aa5e7c26c9bba0efc15e3d86ddb56613986137
-last_event_id: legacy-import-a6f244825fe51f3d59315ad8
+  canonical_row_sha256: 4fbffe29500a714feec5f982a88899db09ca60f1114bd8526795bb3d8d3fb059
+last_event_id: task-event-25abf311bc5ce4e1d6afab7a1a9bbf3e
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 01869a7e1a15b97d0d13c93d926dd3f6d471b71d0e25323926cde0473b4f1a13
+fragment_checksum: 2cf0208ca1364b097699f17fa090dac6ee44addf0bca166a57eead28364d7759
