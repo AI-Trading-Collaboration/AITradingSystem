@@ -14,16 +14,14 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner and second independent reviewer
+  next_owner: Project Owner（pi 迁移后）
   requirement_refs:
   - docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Architecture formal gate exposed a stale
-    global latest-compatibility test constant; Codex repairs and reruns formal validation.
-    Freeze remains blocked on second independent review, four DQ numeric authority
-    dispositions, and Owner exact approval.
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移
+    pi 后重启 growth action-value / QQQ options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Exact latest-main candidate preserves TRADING-2544 as PROPOSED/NOT_DUE;
@@ -204,23 +202,55 @@ events:
   - change:trading-2542c-architecture-latest-authority-fix-20260824-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-eed937bb8970d4a747c4dc69e5e25576
+- schema_version: task_event.v1
+  task_id: TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:31:56+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: eb13b9e4a8ff59795125af66b26730d50be4297f
+  previous_state_event_id: task-event-eed937bb8970d4a747c4dc69e5e25576
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: Project Owner（pi 迁移后）
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移 pi 后重启 growth
+      action-value / QQQ options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
+    acceptance_criteria: Exact latest-main candidate preserves TRADING-2544 as PROPOSED/NOT_DUE;
+      V3 and DQ/PIT V2 replay; append-only compatibility successor and every architecture
+      latest-authority consumer agree; parent-bound Full plus Architecture/Contract/Integration/Reproducibility
+      pass; no real DQ or empirical run; second independent review and Owner exact
+      approval remain mandatory for freeze.
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第3/4条：DEFERRED；agent_harness=claude_code；原备注：Supporting
+      requirement: docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md.
+      Architecture artifact outputs/validation_runtime/architecture-fitness_20260823T153447Z/test_runtime_summary.json
+      retained 805 passed and 61 failed. All 61 failures share tests/test_arch_004_refactor_policy.py
+      LATEST_COMPATIBILITY_SECTION still pointing to DEVX-007 instead of the append-only
+      TRADING-2542C successor; no strategy mechanical assertion failed.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d345736721255949945075c0494d2b91
 projection:
   legacy_first_eight_cells:
   - TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1
   - Strategy governance / growth action-value independent review remediation and freeze
     readiness V1
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner and second independent reviewer
-  - Architecture formal gate exposed a stale global latest-compatibility test constant;
-    Codex repairs and reruns formal validation. Freeze remains blocked on second independent
-    review, four DQ numeric authority dispositions, and Owner exact approval.
+  - DEFERRED
+  - Project Owner（pi 迁移后）
+  - 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移 pi 后重启 growth action-value / QQQ
+    options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
   - Exact latest-main candidate preserves TRADING-2544 as PROPOSED/NOT_DUE; V3 and
     DQ/PIT V2 replay; append-only compatibility successor and every architecture latest-authority
     consumer agree; parent-bound Full plus Architecture/Contract/Integration/Reproducibility
     pass; no real DQ or empirical run; second independent review and Owner exact approval
     remain mandatory for freeze.
-  - 'Supporting requirement: docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md.
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第3/4条：DEFERRED；agent_harness=claude_code；原备注：Supporting
+    requirement: docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md.
     Architecture artifact outputs/validation_runtime/architecture-fitness_20260823T153447Z/test_runtime_summary.json
     retained 805 passed and 61 failed. All 61 failures share tests/test_arch_004_refactor_policy.py
     LATEST_COMPATIBILITY_SECTION still pointing to DEVX-007 instead of the append-only
@@ -228,7 +258,7 @@ projection:
   docs_links:
   - docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md
   terminal: false
-  canonical_row_sha256: ccdf29a04ec5adcddfe8709f5ba363c4844dc2ae471608af54b3762e442b3c98
-last_event_id: task-event-eed937bb8970d4a747c4dc69e5e25576
+  canonical_row_sha256: 39fa01b986f2973a4e2eb8b778a0dfc41c04cee17c6a618bbd945242259afde0
+last_event_id: task-event-d345736721255949945075c0494d2b91
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 7106ab3255dabec521345a7974c157295858c82946790808c9445ad62135cab8
+fragment_checksum: 303ebcf634ac323553d1886aa204d3a0699fe0ca5017f09d7d30ad2b804c6b09
