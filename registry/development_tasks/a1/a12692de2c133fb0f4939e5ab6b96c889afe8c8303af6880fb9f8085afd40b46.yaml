@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2315_REGIME_STATE_MACHINE_DESIGN_AUDIT
   task_id_sha256: a12692de2c133fb0f4939e5ab6b96c889afe8c8303af6880fb9f8085afd40b46
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2315_REGIME_STATE_MACHINE_DESIGN_AUDIT
   title: null
   domain: Research trends / diagnostic regime state machine
@@ -12,18 +13,16 @@ task_record:
   created_by: null
   priority: P2
   accountable_owner: null
-  next_owner: 系统验证 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2315_Regime_State_Machine_Design_Audit.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2315_Regime_State_Machine_Design_Audit.md`；依赖
-    TRADING-2301 backlog 输出；legacy alias=`TRADING-2297B`，原临时 ID=`TRADING-2305_REGIME_STATE_MACHINE_DIAGNOSTIC_LABEL_FRAMEWORK`
-    已因 post-2302 roadmap 冲突更正。当前只定义 diagnostic-only regime labels 和 transition rules，用于
-    validation stratification / interpretation；不读取 cached data、不生成 label series。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 生成 regime state machine design audit summary、label taxonomy、transition rule
       matrix、anti-lookahead guardrails、candidate segmentation use cases、TRADING-2316
       route 和 safety boundary；真实 run status=`REGIME_STATE_MACHINE_DESIGN_AUDIT_READY_DIAGNOSTIC_ONLY`，data_quality_status=`NOT_APPLICABLE_STATIC_DESIGN_AUDIT`；所有
@@ -31,7 +30,6 @@ task_record:
       / broker false/none。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 161857066c0da1a7e1c74c1cfc352f697ccbca1e73359ed0898284081228929a
   cell_count: 8
@@ -98,31 +96,64 @@ events:
   evidence_refs:
   - sha256:161857066c0da1a7e1c74c1cfc352f697ccbca1e73359ed0898284081228929a
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2315_REGIME_STATE_MACHINE_DESIGN_AUDIT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:51:09+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: e5d21063ffe4c4328047cc67f4db6a18f2146a9e
+  previous_state_event_id: legacy-import-161857066c0da1a7e1c74c1c
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 生成 regime state machine design audit summary、label taxonomy、transition
+      rule matrix、anti-lookahead guardrails、candidate segmentation use cases、TRADING-2316
+      route 和 safety boundary；真实 run status=`REGIME_STATE_MACHINE_DESIGN_AUDIT_READY_DIAGNOSTIC_ONLY`，data_quality_status=`NOT_APPLICABLE_STATIC_DESIGN_AUDIT`；所有
+      artifacts 固定 label series / candidate signal / promotion / paper-shadow / production
+      / broker false/none。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+      根据 owner 附件登记；2026-07-01: 迁移到 owner roadmap 的 TRADING-2315。2026-07-01: 新增需求文档并进入
+      IN_PROGRESS；本任务必须 selective staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入
+      VALIDATING；label_count=9、transition_rule_count=8、guardrail_count=6、candidate_segmentation_use_case_count=4；验证通过
+      Ruff、compileall、TRADING-2315 focused parallel pytest 7 passed、相邻 registry/docs
+      focused parallel pytest 43 passed、contract-validation 193 passed 和 `git diff
+      --check`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-cb2f1ded409faf4b71f319b890e87f14
 projection:
   legacy_first_eight_cells:
   - TRADING-2315_REGIME_STATE_MACHINE_DESIGN_AUDIT
   - Research trends / diagnostic regime state machine
   - P2
-  - VALIDATING
-  - 系统验证 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2315_Regime_State_Machine_Design_Audit.md`；依赖 TRADING-2301
-    backlog 输出；legacy alias=`TRADING-2297B`，原临时 ID=`TRADING-2305_REGIME_STATE_MACHINE_DIAGNOSTIC_LABEL_FRAMEWORK`
-    已因 post-2302 roadmap 冲突更正。当前只定义 diagnostic-only regime labels 和 transition rules，用于
-    validation stratification / interpretation；不读取 cached data、不生成 label series。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 生成 regime state machine design audit summary、label taxonomy、transition rule matrix、anti-lookahead
     guardrails、candidate segmentation use cases、TRADING-2316 route 和 safety boundary；真实
     run status=`REGIME_STATE_MACHINE_DESIGN_AUDIT_READY_DIAGNOSTIC_ONLY`，data_quality_status=`NOT_APPLICABLE_STATIC_DESIGN_AUDIT`；所有
     artifacts 固定 label series / candidate signal / promotion / paper-shadow / production
     / broker false/none。
-  - '2026-07-01: 根据 owner 附件登记；2026-07-01: 迁移到 owner roadmap 的 TRADING-2315。2026-07-01:
-    新增需求文档并进入 IN_PROGRESS；本任务必须 selective staging，不能混入两个既有无关 research 文档改动。2026-07-01:
-    实现完成并进入 VALIDATING；label_count=9、transition_rule_count=8、guardrail_count=6、candidate_segmentation_use_case_count=4；验证通过
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+    根据 owner 附件登记；2026-07-01: 迁移到 owner roadmap 的 TRADING-2315。2026-07-01: 新增需求文档并进入
+    IN_PROGRESS；本任务必须 selective staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入
+    VALIDATING；label_count=9、transition_rule_count=8、guardrail_count=6、candidate_segmentation_use_case_count=4；验证通过
     Ruff、compileall、TRADING-2315 focused parallel pytest 7 passed、相邻 registry/docs
     focused parallel pytest 43 passed、contract-validation 193 passed 和 `git diff --check`。'
-  docs_links:
-  - docs/requirements/TRADING-2315_Regime_State_Machine_Design_Audit.md
-  terminal: false
-  canonical_row_sha256: 161857066c0da1a7e1c74c1cfc352f697ccbca1e73359ed0898284081228929a
-last_event_id: legacy-import-161857066c0da1a7e1c74c1c
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: ab86ca7ba298512eb8eea12522076314fcb7323dcc1157b8f10f3bff30af9a7f
+last_event_id: task-event-cb2f1ded409faf4b71f319b890e87f14
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 93b0d3c0a2369d1ff6026c0bc5c313d1ba7026e7af98290e0446d097a68f5469
+fragment_checksum: 8a6868d92ffe6c5ae33d5f9aa19c76a7b850de048bd9d1be710a2083ae0bdb67
