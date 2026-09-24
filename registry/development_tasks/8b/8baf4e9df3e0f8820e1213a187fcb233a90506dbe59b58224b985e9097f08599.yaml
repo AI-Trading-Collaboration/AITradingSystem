@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2314_LIQUIDITY_RATES_SCOPE_REVIEW
   task_id_sha256: 8baf4e9df3e0f8820e1213a187fcb233a90506dbe59b58224b985e9097f08599
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2314_LIQUIDITY_RATES_SCOPE_REVIEW
   title: null
   domain: Research trends / liquidity rates pressure candidate family
@@ -12,18 +13,16 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统验证 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2314_Liquidity_Rates_Scope_Review.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2314_Liquidity_Rates_Scope_Review.md`；依赖
-    TRADING-2313 actual-path validation outputs、required-anchor cached data quality
-    gate 和 liquidity/rates scope-review policy。当前仅允许 partial rates-only scope review；`liquidity_headwind_proxy_v1`
-    因 `UUP` / `HYG` / `LQD` 缺失继续 blocked，不得生成 scope row。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 生成 liquidity/rates scope review summary、candidate scope matrix、horizon scope
       matrix、use-case scope matrix、recommended scope、safety boundary 和 research report；真实
       run status=`LIQUIDITY_RATES_SCOPE_REVIEW_DIAGNOSTIC_ONLY`，scope_review_result=`DIAGNOSTIC_ONLY_WITH_LIMITED_RISK_CAP_RESEARCH_CANDIDATE`；所有
@@ -31,7 +30,6 @@ task_record:
       false/none。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 9a4dfa8eeab9b1c7bada9c3bfeee925e2dc0de00179cc43fa823009047dfae9a
   cell_count: 8
@@ -107,34 +105,70 @@ events:
   evidence_refs:
   - sha256:9a4dfa8eeab9b1c7bada9c3bfeee925e2dc0de00179cc43fa823009047dfae9a
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2314_LIQUIDITY_RATES_SCOPE_REVIEW
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:50:46+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: d094238719633764bc6cd3189c45ddbba9c74932
+  previous_state_event_id: legacy-import-9a4dfa8eeab9b1c7bada9c3b
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 生成 liquidity/rates scope review summary、candidate scope matrix、horizon
+      scope matrix、use-case scope matrix、recommended scope、safety boundary 和 research
+      report；真实 run status=`LIQUIDITY_RATES_SCOPE_REVIEW_DIAGNOSTIC_ONLY`，scope_review_result=`DIAGNOSTIC_ONLY_WITH_LIMITED_RISK_CAP_RESEARCH_CANDIDATE`；所有
+      artifacts 固定 forward observe / promotion / paper-shadow / production / broker
+      false/none。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+      根据 owner 附件和 TRADING-2313 next task 新增并进入 IN_PROGRESS；本任务必须 selective staging，不能混入两个既有无关
+      research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；`duration_pressure_proxy_v1` 保留
+      limited research candidate，`rates_pressure_exposure_cap_modifier_v1` diagnostic，`10d`
+      keep、`20d` / `1m` diagnostic；`risk_cap_modifier`、`max_exposure_limiter` 和 `diagnostic_only`
+      keep，`no_add_gate` reject；验证通过 Ruff、compileall、TRADING-2314 focused parallel
+      pytest 9 passed、liquidity / AI focused parallel pytest 41 passed、registry/docs
+      focused parallel pytest 27 passed、task-register/docs focused parallel pytest
+      10 passed、`aits validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation
+      193 passed 和 `git diff --check`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-da13c43f21d263e7dc28551e55b3a6fd
 projection:
   legacy_first_eight_cells:
   - TRADING-2314_LIQUIDITY_RATES_SCOPE_REVIEW
   - Research trends / liquidity rates pressure candidate family
   - P1
-  - VALIDATING
-  - 系统验证 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2314_Liquidity_Rates_Scope_Review.md`；依赖 TRADING-2313
-    actual-path validation outputs、required-anchor cached data quality gate 和 liquidity/rates
-    scope-review policy。当前仅允许 partial rates-only scope review；`liquidity_headwind_proxy_v1`
-    因 `UUP` / `HYG` / `LQD` 缺失继续 blocked，不得生成 scope row。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 生成 liquidity/rates scope review summary、candidate scope matrix、horizon scope matrix、use-case
     scope matrix、recommended scope、safety boundary 和 research report；真实 run status=`LIQUIDITY_RATES_SCOPE_REVIEW_DIAGNOSTIC_ONLY`，scope_review_result=`DIAGNOSTIC_ONLY_WITH_LIMITED_RISK_CAP_RESEARCH_CANDIDATE`；所有
     artifacts 固定 forward observe / promotion / paper-shadow / production / broker
     false/none。
-  - '2026-07-01: 根据 owner 附件和 TRADING-2313 next task 新增并进入 IN_PROGRESS；本任务必须 selective
-    staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；`duration_pressure_proxy_v1`
-    保留 limited research candidate，`rates_pressure_exposure_cap_modifier_v1` diagnostic，`10d`
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+    根据 owner 附件和 TRADING-2313 next task 新增并进入 IN_PROGRESS；本任务必须 selective staging，不能混入两个既有无关
+    research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；`duration_pressure_proxy_v1` 保留 limited
+    research candidate，`rates_pressure_exposure_cap_modifier_v1` diagnostic，`10d`
     keep、`20d` / `1m` diagnostic；`risk_cap_modifier`、`max_exposure_limiter` 和 `diagnostic_only`
     keep，`no_add_gate` reject；验证通过 Ruff、compileall、TRADING-2314 focused parallel pytest
     9 passed、liquidity / AI focused parallel pytest 41 passed、registry/docs focused
     parallel pytest 27 passed、task-register/docs focused parallel pytest 10 passed、`aits
     validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation 193 passed
     和 `git diff --check`。'
-  docs_links:
-  - docs/requirements/TRADING-2314_Liquidity_Rates_Scope_Review.md
-  terminal: false
-  canonical_row_sha256: 9a4dfa8eeab9b1c7bada9c3bfeee925e2dc0de00179cc43fa823009047dfae9a
-last_event_id: legacy-import-9a4dfa8eeab9b1c7bada9c3b
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: a0540f970c6e72df999a709e868cc261cbafb3d5ced25bbee894652cf5cb7907
+last_event_id: task-event-da13c43f21d263e7dc28551e55b3a6fd
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 98b968bb3d26ed02119956636cedee2e9817c1d42a4f6147ef7098457ae9df5c
+fragment_checksum: 5fa0b21581aae90194edc786ff1af80c2fc0fc37a524227dc779ec7849aa8efb
