@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-408_to_419_RECOVERY_BLOCKER_RESOLUTION_BATCH
   task_id_sha256: 37ccc468bc81af67789a047df781ef813f44769c630d1d2fba4d4fda690a32ec
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-408_to_419_RECOVERY_BLOCKER_RESOLUTION_BATCH
   title: null
   domain: ETF portfolio/dynamic v3 rescue recovery blocker resolution batch
@@ -12,20 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-408_to_419_Blocker_Resolution_Batch.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-408_to_419_Blocker_Resolution_Batch.md`；按附件顺序处理
-    remaining blocker ledger、signal restore、readiness/health、cost/benchmark metrics、owner
-    hold log、report-index warning cleanup、requirements freshness、recovery pack rerun、normal
-    paper-shadow owner gate、normal observation clock 和 post-recovery governance pack；不得削弱
-    policy、silent waiver、伪造数据、创建 official target weights、broker/order、paper-shadow
-    state mutation、production mutation、extended shadow 或 live trading
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增或更新相关 CLI/report/validation artifact、Reader Brief section、report registry、artifact
       catalog、system flow、operations runbook、README、需求文档和 focused tests；真实链路输出每阶段
       status、remaining blockers/warnings、normal paper-shadow boundary、extended/live
@@ -33,7 +30,6 @@ task_record:
       consistency、docs freshness、data quality gate、report index/quality gates 或记录阻塞原因
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: ae1455a5c4a74b1de74b4553d7fce4ef326176aaf323229b8ced6cfa2845c5cb
   cell_count: 8
@@ -120,38 +116,73 @@ events:
   evidence_refs:
   - sha256:ae1455a5c4a74b1de74b4553d7fce4ef326176aaf323229b8ced6cfa2845c5cb
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-408_to_419_RECOVERY_BLOCKER_RESOLUTION_BATCH
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:54:42+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 03bbfb55755c69e8a85778a3964fd02be3c8a3a0
+  previous_state_event_id: legacy-import-ae1455a5c4a74b1de74b4553
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增或更新相关 CLI/report/validation artifact、Reader Brief section、report
+      registry、artifact catalog、system flow、operations runbook、README、需求文档和 focused
+      tests；真实链路输出每阶段 status、remaining blockers/warnings、normal paper-shadow boundary、extended/live
+      forbidden boundary；验证通过 focused pytest、ruff、compileall、documentation contract、task-register
+      consistency、docs freshness、data quality gate、report index/quality gates 或记录阻塞原因
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-17:
+      新增并进入 IN_PROGRESS，原因：owner 附件要求实现 TRADING-408～419 blocker resolution batch；本批次允许恢复
+      normal paper-shadow owner gate 的只读判断，但不得批准 extended shadow、live trading、official
+      targets、broker/order 或 production mutation。2026-06-17: 实现完成并转入 VALIDATING；真实链路输出
+      recovery pack `RECOVERY_GOVERNANCE_BLOCKED`、remaining blockers=9、remaining warnings=10、normal
+      paper-shadow may resume=false、extended/live forbidden=true；TRADING-408/414/418/419
+      新 report/validate CLI 已生成 artifacts，TRADING-413 追加 owner hold decision `TRADING-413_owner_hold_2026-06-17`，TRADING-415
+      docs freshness PASS；focused pytest 60 passed，ruff/compileall/documentation contract/task-register
+      consistency/data quality gate PASS，report index `PASS_WITH_WARNINGS` 且 unwaived=9、silent
+      waiver=0；2026-06-17 Reader Brief/report quality gate 因缺同日 decision snapshot
+      保持 fail-closed，latest Reader Brief quality 和 latest report quality gate 已通过。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2a652ef73dc4943991f3493e58e36045
 projection:
   legacy_first_eight_cells:
   - TRADING-408_to_419_RECOVERY_BLOCKER_RESOLUTION_BATCH
   - ETF portfolio/dynamic v3 rescue recovery blocker resolution batch
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详细拆解见 `docs/requirements/TRADING-408_to_419_Blocker_Resolution_Batch.md`；按附件顺序处理
-    remaining blocker ledger、signal restore、readiness/health、cost/benchmark metrics、owner
-    hold log、report-index warning cleanup、requirements freshness、recovery pack rerun、normal
-    paper-shadow owner gate、normal observation clock 和 post-recovery governance pack；不得削弱
-    policy、silent waiver、伪造数据、创建 official target weights、broker/order、paper-shadow
-    state mutation、production mutation、extended shadow 或 live trading
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增或更新相关 CLI/report/validation artifact、Reader Brief section、report registry、artifact
     catalog、system flow、operations runbook、README、需求文档和 focused tests；真实链路输出每阶段 status、remaining
     blockers/warnings、normal paper-shadow boundary、extended/live forbidden boundary；验证通过
     focused pytest、ruff、compileall、documentation contract、task-register consistency、docs
     freshness、data quality gate、report index/quality gates 或记录阻塞原因
-  - '2026-06-17: 新增并进入 IN_PROGRESS，原因：owner 附件要求实现 TRADING-408～419 blocker resolution
-    batch；本批次允许恢复 normal paper-shadow owner gate 的只读判断，但不得批准 extended shadow、live
-    trading、official targets、broker/order 或 production mutation。2026-06-17: 实现完成并转入
-    VALIDATING；真实链路输出 recovery pack `RECOVERY_GOVERNANCE_BLOCKED`、remaining blockers=9、remaining
-    warnings=10、normal paper-shadow may resume=false、extended/live forbidden=true；TRADING-408/414/418/419
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-17:
+    新增并进入 IN_PROGRESS，原因：owner 附件要求实现 TRADING-408～419 blocker resolution batch；本批次允许恢复
+    normal paper-shadow owner gate 的只读判断，但不得批准 extended shadow、live trading、official
+    targets、broker/order 或 production mutation。2026-06-17: 实现完成并转入 VALIDATING；真实链路输出
+    recovery pack `RECOVERY_GOVERNANCE_BLOCKED`、remaining blockers=9、remaining warnings=10、normal
+    paper-shadow may resume=false、extended/live forbidden=true；TRADING-408/414/418/419
     新 report/validate CLI 已生成 artifacts，TRADING-413 追加 owner hold decision `TRADING-413_owner_hold_2026-06-17`，TRADING-415
     docs freshness PASS；focused pytest 60 passed，ruff/compileall/documentation contract/task-register
     consistency/data quality gate PASS，report index `PASS_WITH_WARNINGS` 且 unwaived=9、silent
     waiver=0；2026-06-17 Reader Brief/report quality gate 因缺同日 decision snapshot 保持
     fail-closed，latest Reader Brief quality 和 latest report quality gate 已通过。'
-  docs_links:
-  - docs/requirements/TRADING-408_to_419_Blocker_Resolution_Batch.md
-  terminal: false
-  canonical_row_sha256: ae1455a5c4a74b1de74b4553d7fce4ef326176aaf323229b8ced6cfa2845c5cb
-last_event_id: legacy-import-ae1455a5c4a74b1de74b4553
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 9f4621a0436fbd4c26b31ed2170b873a4c08e7f0df20bfe78b6cffbd0c288f86
+last_event_id: task-event-2a652ef73dc4943991f3493e58e36045
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 918cc3a6e477e80a3b82d4aea4245e6b16d13fa0baee8accf91055e8de50cfa9
+fragment_checksum: f3fd011b88b37d42a8e08629f08ed3466f3d851f384b2e1658c997fb209e0426
