@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-717_PIT_ACTION_OUTCOME_DATASET
   task_id_sha256: dc59d8344c96b92b36af652bd813505439ca1bce356601e75ae3a56d718d496f
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-717_PIT_ACTION_OUTCOME_DATASET
   title: null
   domain: Portfolio decision research / PIT action-outcome dataset
@@ -12,19 +13,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；构造 state ×
-    action × horizon × outcome 研究数据集 contract
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`build-action-outcome-dataset` 可运行；pit_valid_rows_only=true；future_outcome_marked_evaluation_only=true；horizon_maturity_recorded=true；overlapping_horizon_warning_present=true'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 7155c81107f75cd6fafdea524a15b3706df7f240556cb2cf982972c23fa1d721
   cell_count: 8
@@ -79,23 +80,56 @@ events:
   evidence_refs:
   - sha256:7155c81107f75cd6fafdea524a15b3706df7f240556cb2cf982972c23fa1d721
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-717_PIT_ACTION_OUTCOME_DATASET
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:07:39+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: d05bd1c5c0026550b36f236811ef6fd4271cc9ae
+  previous_state_event_id: legacy-import-7155c81107f75cd6fafdea52
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`build-action-outcome-dataset` 可运行；pit_valid_rows_only=true；future_outcome_marked_evaluation_only=true；horizon_maturity_recorded=true；overlapping_horizon_warning_present=true'
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+      按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增
+      schema/config/protocol、research governance / acceleration / portfolio decision
+      / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+      / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+      production_effect=none，不修改 production / paper-shadow / official weights，不触发
+      broker/order。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-253cbbed0380152c92fc7361695952f2
 projection:
   legacy_first_eight_cells:
   - TRADING-717_PIT_ACTION_OUTCOME_DATASET
   - Portfolio decision research / PIT action-outcome dataset
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-703_to_725 总需求文档；构造 state × action × horizon × outcome 研究数据集 contract
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`build-action-outcome-dataset` 可运行；pit_valid_rows_only=true；future_outcome_marked_evaluation_only=true；horizon_maturity_recorded=true；overlapping_horizon_warning_present=true'
-  - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入
-    VALIDATING；新增 schema/config/protocol、research governance / acceleration / portfolio
-    decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+    按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增
+    schema/config/protocol、research governance / acceleration / portfolio decision
+    / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
     / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
     production_effect=none，不修改 production / paper-shadow / official weights，不触发 broker/order。'
   docs_links: []
-  terminal: false
-  canonical_row_sha256: 7155c81107f75cd6fafdea524a15b3706df7f240556cb2cf982972c23fa1d721
-last_event_id: legacy-import-7155c81107f75cd6fafdea52
+  terminal: true
+  canonical_row_sha256: 882e9fbd6797454692c7ce0ecf2dd4f0eacabfd23351b5dffb160e03bb024013
+last_event_id: task-event-253cbbed0380152c92fc7361695952f2
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: df5ef709c6d6f3d25cf641be510c48d8803a658e2c2871119b1ff8f54adf8cf7
+fragment_checksum: 0d235d6b0a1ef8b62ab0a94ffe4506bd31cecb3d21d3bc2d8e9b16c7707d467f
