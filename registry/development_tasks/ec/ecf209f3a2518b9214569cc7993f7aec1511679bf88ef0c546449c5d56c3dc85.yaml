@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-730_EXPERIMENT_RESULT_WAREHOUSE_RUN_REGISTRY
   task_id_sha256: ecf209f3a2518b9214569cc7993f7aec1511679bf88ef0c546449c5d56c3dc85
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-730_EXPERIMENT_RESULT_WAREHOUSE_RUN_REGISTRY
   title: null
   domain: Research runs / experiment result warehouse and run registry
@@ -12,19 +13,19 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-726_to_733 总需求文档；建立 run registry、query、compare
-    和 reproducibility audit baseline
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`aits research runs register'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: db41ca946f3d36c39883dae21f6dc0a0314812090f7e68e7b125616fefa9ea0b
   cell_count: 11
@@ -76,20 +77,45 @@ events:
   evidence_refs:
   - sha256:db41ca946f3d36c39883dae21f6dc0a0314812090f7e68e7b125616fefa9ea0b
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-730_EXPERIMENT_RESULT_WAREHOUSE_RUN_REGISTRY
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:12:32+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 2b98270fb2081a3f65c2dea002ba6848007201dc
+  previous_state_event_id: legacy-import-db41ca946f3d36c39883dae2
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`aits research runs register'
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：query
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-26254a3777018c7ba1c5fbac38f034aa
 projection:
   legacy_first_eight_cells:
   - TRADING-730_EXPERIMENT_RESULT_WAREHOUSE_RUN_REGISTRY
   - Research runs / experiment result warehouse and run registry
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-726_to_733 总需求文档；建立 run registry、query、compare 和 reproducibility audit
-    baseline
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`aits research runs register'
-  - query
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：query
   docs_links: []
-  terminal: false
-  canonical_row_sha256: 3ae2d9edfcffdd5b70640083fe6ddd813a319241e7f87e129444e1ad095f6d58
-last_event_id: legacy-import-db41ca946f3d36c39883dae2
+  terminal: true
+  canonical_row_sha256: c1686d3aff404b1f7ed4faa7c203f241380417255ffe5475643505447f2c0409
+last_event_id: task-event-26254a3777018c7ba1c5fbac38f034aa
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b96ec64e6a6e3fe72724b96abb8679041d119fef81d0b050f9b18e987c39f2f6
+fragment_checksum: f67b9ffa6c7d7c9ca0ec6829e5efb0efa75803b0f194c224b42fceb8504365bb
