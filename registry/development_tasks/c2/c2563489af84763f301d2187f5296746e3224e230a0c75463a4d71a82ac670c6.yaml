@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1526_EXPANDED_ACTUAL_PATH_CANDIDATE_FAILURE_MATRIX
   task_id_sha256: c2563489af84763f301d2187f5296746e3224e230a0c75463a4d71a82ac670c6
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1526_EXPANDED_ACTUAL_PATH_CANDIDATE_FAILURE_MATRIX
   title: null
   domain: Research strategies / expanded allocation failure diagnostics
@@ -12,17 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-1526_Expanded_Actual_Path_Candidate_Failure_Matrix.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1526_Expanded_Actual_Path_Candidate_Failure_Matrix.md`；owner
-    要求把 11 个 actual-path candidates 的失败原因拆到候选级别，不得只给 aggregate survival count；本任务只增强
-    research explanation，不改变 promotion state
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 `aits research strategies expanded-universe candidate-failure-matrix`
       和 `candidate_failure_matrix.csv` / `expanded_actual_path_candidate_failure_matrix.yaml`
       / `expanded_actual_path_candidate_failure_matrix.md`；真实输出 11 行，逐 candidate 输出
@@ -33,7 +33,6 @@ task_record:
       false/none
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 5cf0e05a054cb961b250bcc432f1f821d509869cc9fc90943acb156cca991338
   cell_count: 8
@@ -93,16 +92,49 @@ events:
   evidence_refs:
   - sha256:5cf0e05a054cb961b250bcc432f1f821d509869cc9fc90943acb156cca991338
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1526_EXPANDED_ACTUAL_PATH_CANDIDATE_FAILURE_MATRIX
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:58:11+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 24f9938f45e9f8e2187335768d81468875586ca6
+  previous_state_event_id: legacy-import-5cf0e05a054cb961b250bcc4
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 `aits research strategies expanded-universe candidate-failure-matrix`
+      和 `candidate_failure_matrix.csv` / `expanded_actual_path_candidate_failure_matrix.yaml`
+      / `expanded_actual_path_candidate_failure_matrix.md`；真实输出 11 行，逐 candidate 输出
+      requested fields：candidate_id、weights_by_state、tqqq_weight_profile、qqq_equivalent_exposure、actual_return、max_dd、sharpe、calmar、same_risk_baseline、delta_vs_same_risk_baseline、failure_reason、next_action，并显式列出
+      verdict、dominating static frontier baseline、TQQQ beta-only、same-risk underperformance、walk-forward
+      blocker、stress risk blocker、net-of-cost blocker；report registry、artifact catalog、system
+      flow 和 focused tests 同步；所有 outputs 保持 dynamic promotion `BLOCKED`、paper-shadow/production/broker
+      false/none
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+      新增并进入 IN_PROGRESS，原因：owner 要求对 11 个 actual-path candidates 的失败原因拆清楚并输出矩阵。2026-06-27:
+      实现完成并转入 VALIDATING；真实 CLI status=`CANDIDATE_FAILURE_MATRIX_READY_PROMOTION_BLOCKED`，candidate_count=11。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ae1b3d74e80a825c84362aa36154eefd
 projection:
   legacy_first_eight_cells:
   - TRADING-1526_EXPANDED_ACTUAL_PATH_CANDIDATE_FAILURE_MATRIX
   - Research strategies / expanded allocation failure diagnostics
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1526_Expanded_Actual_Path_Candidate_Failure_Matrix.md`；owner
-    要求把 11 个 actual-path candidates 的失败原因拆到候选级别，不得只给 aggregate survival count；本任务只增强
-    research explanation，不改变 promotion state
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 `aits research strategies expanded-universe candidate-failure-matrix` 和 `candidate_failure_matrix.csv`
     / `expanded_actual_path_candidate_failure_matrix.yaml` / `expanded_actual_path_candidate_failure_matrix.md`；真实输出
     11 行，逐 candidate 输出 requested fields：candidate_id、weights_by_state、tqqq_weight_profile、qqq_equivalent_exposure、actual_return、max_dd、sharpe、calmar、same_risk_baseline、delta_vs_same_risk_baseline、failure_reason、next_action，并显式列出
@@ -110,12 +142,12 @@ projection:
     blocker、stress risk blocker、net-of-cost blocker；report registry、artifact catalog、system
     flow 和 focused tests 同步；所有 outputs 保持 dynamic promotion `BLOCKED`、paper-shadow/production/broker
     false/none
-  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 要求对 11 个 actual-path candidates 的失败原因拆清楚并输出矩阵。2026-06-27:
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+    新增并进入 IN_PROGRESS，原因：owner 要求对 11 个 actual-path candidates 的失败原因拆清楚并输出矩阵。2026-06-27:
     实现完成并转入 VALIDATING；真实 CLI status=`CANDIDATE_FAILURE_MATRIX_READY_PROMOTION_BLOCKED`，candidate_count=11。'
-  docs_links:
-  - docs/requirements/TRADING-1526_Expanded_Actual_Path_Candidate_Failure_Matrix.md
-  terminal: false
-  canonical_row_sha256: 5cf0e05a054cb961b250bcc432f1f821d509869cc9fc90943acb156cca991338
-last_event_id: legacy-import-5cf0e05a054cb961b250bcc4
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: c302ec51443b4b622ff0ee15f5f9b523e0c04a4bd82cd0bbf148471301302b3e
+last_event_id: task-event-ae1b3d74e80a825c84362aa36154eefd
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 76355f865470a2c50179b8408a76f916ecb5c64b1ff99fce66849be225bb5d0c
+fragment_checksum: 56536f3d707bf6d128e13ebc97e3f657b11f1324ab15f4b60cbd927438cd9682
