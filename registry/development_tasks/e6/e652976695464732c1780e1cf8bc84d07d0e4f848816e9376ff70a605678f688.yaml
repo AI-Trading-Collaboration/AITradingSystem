@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-006B
   task_id_sha256: e652976695464732c1780e1cf8bc84d07d0e4f848816e9376ff70a605678f688
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-006B
   title: null
   domain: 交易执行/Paper Signal Quality Forward Observation
@@ -12,24 +13,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统验证 + 项目 owner
-  requirement_refs:
-  - docs/requirements/paper_signal_quality_forward_observation_2026-06-09.md
+  next_owner: 外部条件 / Project Owner
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 承接 `TRADING-006/006A` 的真实 daily flow 观察；阻塞于连续
-    3～7 个已完成美股交易日或等价人工 daily-run 样本产生 paper signal quality 与 dashboard artifacts；详细拆解见
-    `docs/requirements/paper_signal_quality_forward_observation_2026-06-09.md`
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL
+    转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider catalog）出现时重开
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 连续样本记录 `paper_signal_quality_YYYY-MM-DD.json/md` 生成情况、`evaluation_status`、主要
       `blocked_by`、sample/filled/candidate count、synthetic snapshot ratio、OHLC coverage、reconciliation
       ratio、dashboard 卡片一致性和 safety flags；缺输入或低质量输入必须保持 fail-closed，不补造样本、不触发 paper
       runner/replay/broker、不改变 production 仓位建议或参数晋级；完成后补充 requirement/任务登记/归档证据
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 55d67fad2da9a4df93c109fdd0e88b1020d78e20399667100607d44ed81ed85a
   cell_count: 8
@@ -83,26 +81,53 @@ events:
   evidence_refs:
   - sha256:55d67fad2da9a4df93c109fdd0e88b1020d78e20399667100607d44ed81ed85a
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-006B
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:38:50+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: 9344893436630db1c02cd23888b7b373cf25ab30
+  previous_state_event_id: legacy-import-55d67fad2da9a4df93c109fd
+  from_status: BLOCKED_EXTERNAL
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: 外部条件 / Project Owner
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如
+      IBKR fill、通知链、多日观察、provider catalog）出现时重开
+    acceptance_criteria: 连续样本记录 `paper_signal_quality_YYYY-MM-DD.json/md` 生成情况、`evaluation_status`、主要
+      `blocked_by`、sample/filled/candidate count、synthetic snapshot ratio、OHLC coverage、reconciliation
+      ratio、dashboard 卡片一致性和 safety flags；缺输入或低质量输入必须保持 fail-closed，不补造样本、不触发 paper
+      runner/replay/broker、不改变 production 仓位建议或参数晋级；完成后补充 requirement/任务登记/归档证据
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-06-09:
+      新增并进入 BLOCKED_EXTERNAL，原因：TRADING-006/006A 工程基线已通过数据质量门、isolated smoke、目标 pytest、Ruff
+      和 scoped Black，但当前没有连续真实 daily dashboard / paper signal quality forward 样本，不能把运行期稳定性并入基线完成。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-bda90ce80629fdf04604588f852e0290
 projection:
   legacy_first_eight_cells:
   - TRADING-006B
   - 交易执行/Paper Signal Quality Forward Observation
   - P0
-  - BLOCKED_EXTERNAL
-  - 系统验证 + 项目 owner
-  - 承接 `TRADING-006/006A` 的真实 daily flow 观察；阻塞于连续 3～7 个已完成美股交易日或等价人工 daily-run 样本产生
-    paper signal quality 与 dashboard artifacts；详细拆解见 `docs/requirements/paper_signal_quality_forward_observation_2026-06-09.md`
+  - DEFERRED
+  - 外部条件 / Project Owner
+  - 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider
+    catalog）出现时重开
   - 连续样本记录 `paper_signal_quality_YYYY-MM-DD.json/md` 生成情况、`evaluation_status`、主要 `blocked_by`、sample/filled/candidate
     count、synthetic snapshot ratio、OHLC coverage、reconciliation ratio、dashboard 卡片一致性和
     safety flags；缺输入或低质量输入必须保持 fail-closed，不补造样本、不触发 paper runner/replay/broker、不改变
     production 仓位建议或参数晋级；完成后补充 requirement/任务登记/归档证据
-  - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-006/006A 工程基线已通过数据质量门、isolated
-    smoke、目标 pytest、Ruff 和 scoped Black，但当前没有连续真实 daily dashboard / paper signal quality
-    forward 样本，不能把运行期稳定性并入基线完成。'
-  docs_links:
-  - docs/requirements/paper_signal_quality_forward_observation_2026-06-09.md
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-06-09:
+    新增并进入 BLOCKED_EXTERNAL，原因：TRADING-006/006A 工程基线已通过数据质量门、isolated smoke、目标 pytest、Ruff
+    和 scoped Black，但当前没有连续真实 daily dashboard / paper signal quality forward 样本，不能把运行期稳定性并入基线完成。'
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 55d67fad2da9a4df93c109fdd0e88b1020d78e20399667100607d44ed81ed85a
-last_event_id: legacy-import-55d67fad2da9a4df93c109fd
+  canonical_row_sha256: f928ef7e0b703adb4e8bb585b182b66b97e0488f8f2c2eb01385878e53d11d79
+last_event_id: task-event-bda90ce80629fdf04604588f852e0290
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 77f83270336331d0513e84ccd959c018137420e1007b7390ef54c51cbec2d0d9
+fragment_checksum: a63666e7b5e518a3b717e5a266900c44d307d7105a2a0441dafd8feb21988308
