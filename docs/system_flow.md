@@ -68,6 +68,13 @@ checkout 必须等到 `CLEANUP_PRE`、current branch=main 且 candidate=HEAD=mai
 再复用 `inspect_migration_source` 的终止事务/身份/精确 dirty-set/无活动 lease 只读预检。
 迁移只改变明确 store 的 arbiter 运行时协议，不修改旧业务 lease 事件、source 文件、研究输入
 或交易状态；未验证的网络文件系统与新旧进程混用不属于支持合同。
+GOV-007 另设 `scripts/architecture_arch005_sibling_lease_store_migration.py`，只迁移
+`config/architecture/lease_arbiter_sibling_migration_authorizations.yaml` 中逐条 owner 授权的
+同仓库 sibling checkout 精确 root（当前仅主 checkout），不扩大 DEVX-014 入口的单一范围。
+准入要求授权任务的 publication 事务处于 `CLEANUP_PRE` 且 candidate=HEAD=main=origin/main、
+入口与 helper 代码等于已发布候选、同一 Git common dir、目标 store 无 ACTIVE lease、旧 owner
+bytes 与授权 SHA 一致、quiescence receipt 绑定上述全部事实；随后复用未改动的
+`migrate_legacy_arbiter`，并回放确认目标 lease head 数不变。
 S1b 在 guard 与首次 mutation 前分别检查 trusted/source 的 common 与 worktree 全部配置条目，
 禁止 includes/执行性过滤器等危险设置；仅记录配置存在/缺失、路径与摘要并重验漂移，不复制
 配置原值、不关闭用户 worktreeConfig，也不把共同 Git 目录当作相同 worktree 配置的证明。

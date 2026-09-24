@@ -1,0 +1,21 @@
+schema_version: lease_arbiter_sibling_migration_authorizations.v1
+policy_id: ARCH-005-LEASE-ARBITER-SIBLING-MIGRATION
+version: 1.0.0
+status: OWNER_APPROVED_ENFORCED
+owner: Project Owner / architecture-control-plane
+rationale: >-
+  DEVX-014 的迁移入口只覆盖其自身任务 root，并明确不迁移物理主目录或其它 store。
+  本清单为同一仓库内其它 checkout 的旧 arbiter store 提供逐条、精确 root 的 owner 授权；
+  未登记的 root 一律拒绝。迁移本身复用未改动的 lease_arbiter.migrate_legacy_arbiter，
+  只改变 arbiter 运行时协议，不修改业务 lease 事件。
+authorizations:
+  - authorization_id: gov-007-main-checkout-root-v1
+    task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+    owner_instruction_ref: owner_decision:GOV-007:2026-09-24:main_checkout_lease_arbiter_migration_v1
+    target_checkout_root: D:/Work/AITradingSystem
+    expected_legacy_owner_sha256: 8a3a43de78e4f70fbefd857c4a74abdb9522b2eac05a3fc120328746c87bfe82
+    rationale: >-
+      workflow-health 固定检查主 checkout 位于 main，publication fence 的推送阶段也要求
+      coordinator checkout 位于 main；主 checkout 必须成为唯一 coordinator，因此其旧 arbiter
+      store 需要一次显式静默迁移。
+    review_or_expiry: 迁移成功后本条目自然失效（旧目录已归档，迁移函数拒绝再次执行）。
