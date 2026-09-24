@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2299_CI_DEFAULT_FAST_GATE_AND_FULL_NIGHTLY
   task_id_sha256: fe93433b0154b90f525fea2a86c9dd0091c396bfca25f66c6f67db31617b7a16
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2299_CI_DEFAULT_FAST_GATE_AND_FULL_NIGHTLY
   title: null
   domain: Engineering / CI validation feedback runtime
@@ -12,23 +13,22 @@ task_record:
   created_by: null
   priority: P2
   accountable_owner: null
-  next_owner: 系统实现 + GitHub Actions 观察
-  requirement_refs:
-  - docs/requirements/TRADING-2299_CI_Default_Fast_Gate_And_Full_Nightly.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2299_CI_Default_Fast_Gate_And_Full_Nightly.md`；当前
-    CI 每个 push/PR 跑 full tier 且不取消旧 run，导致 main 上连续小提交反馈超过 1 小时。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: push/pull_request 默认运行 `fast-unit`；manual workflow_dispatch 可选 `fast-unit`
       / `contract-validation` / `full`；nightly schedule 运行 `full`；同一 workflow/ref
       的 push/PR 新 run 自动取消旧 run；pytest failure annotations 保持；focused tests、Ruff、docs
       freshness、git diff check 通过。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 892a290df27ebb848360462d476dae45d737cb783bf44db9c2044666dd659ee4
   cell_count: 8
@@ -87,27 +87,60 @@ events:
   evidence_refs:
   - sha256:892a290df27ebb848360462d476dae45d737cb783bf44db9c2044666dd659ee4
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2299_CI_DEFAULT_FAST_GATE_AND_FULL_NIGHTLY
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:04:15+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: dafc38f4a67a8f6e464cf54f2b7e2c2c8fb49eec
+  previous_state_event_id: legacy-import-892a290df27ebb848360462d
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: push/pull_request 默认运行 `fast-unit`；manual workflow_dispatch
+      可选 `fast-unit` / `contract-validation` / `full`；nightly schedule 运行 `full`；同一
+      workflow/ref 的 push/PR 新 run 自动取消旧 run；pytest failure annotations 保持；focused
+      tests、Ruff、docs freshness、git diff check 通过。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-29:
+      新增并进入 IN_PROGRESS；owner 要求缩短 CI 默认反馈时间。2026-06-29: 实现完成并转入 VALIDATING；本地验证通过
+      focused parallel pytest 10 passed、Ruff、docs freshness、diff check 和 `fast-unit`
+      194 passed。GitHub Actions run #712 失败于 clean-cache 环境下的固定 source count 断言；已改为
+      acceptance summary 自洽断言并保持 fail-closed 覆盖。修复后验证通过 focused 11 passed、clean targeted
+      1 passed 和 `fast-unit` 194 passed，等待新 CI run。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-6e255ce634313843f526bcce4cd07084
 projection:
   legacy_first_eight_cells:
   - TRADING-2299_CI_DEFAULT_FAST_GATE_AND_FULL_NIGHTLY
   - Engineering / CI validation feedback runtime
   - P2
-  - VALIDATING
-  - 系统实现 + GitHub Actions 观察
-  - 详见 `docs/requirements/TRADING-2299_CI_Default_Fast_Gate_And_Full_Nightly.md`；当前
-    CI 每个 push/PR 跑 full tier 且不取消旧 run，导致 main 上连续小提交反馈超过 1 小时。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - push/pull_request 默认运行 `fast-unit`；manual workflow_dispatch 可选 `fast-unit` / `contract-validation`
     / `full`；nightly schedule 运行 `full`；同一 workflow/ref 的 push/PR 新 run 自动取消旧 run；pytest
     failure annotations 保持；focused tests、Ruff、docs freshness、git diff check 通过。
-  - '2026-06-29: 新增并进入 IN_PROGRESS；owner 要求缩短 CI 默认反馈时间。2026-06-29: 实现完成并转入 VALIDATING；本地验证通过
-    focused parallel pytest 10 passed、Ruff、docs freshness、diff check 和 `fast-unit`
-    194 passed。GitHub Actions run #712 失败于 clean-cache 环境下的固定 source count 断言；已改为
-    acceptance summary 自洽断言并保持 fail-closed 覆盖。修复后验证通过 focused 11 passed、clean targeted
-    1 passed 和 `fast-unit` 194 passed，等待新 CI run。'
-  docs_links:
-  - docs/requirements/TRADING-2299_CI_Default_Fast_Gate_And_Full_Nightly.md
-  terminal: false
-  canonical_row_sha256: 892a290df27ebb848360462d476dae45d737cb783bf44db9c2044666dd659ee4
-last_event_id: legacy-import-892a290df27ebb848360462d
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-29:
+    新增并进入 IN_PROGRESS；owner 要求缩短 CI 默认反馈时间。2026-06-29: 实现完成并转入 VALIDATING；本地验证通过 focused
+    parallel pytest 10 passed、Ruff、docs freshness、diff check 和 `fast-unit` 194 passed。GitHub
+    Actions run #712 失败于 clean-cache 环境下的固定 source count 断言；已改为 acceptance summary
+    自洽断言并保持 fail-closed 覆盖。修复后验证通过 focused 11 passed、clean targeted 1 passed 和 `fast-unit`
+    194 passed，等待新 CI run。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 27d0fae23f2f886971c4196755398a2f2adb55877b61cc222b842c0348513cb0
+last_event_id: task-event-6e255ce634313843f526bcce4cd07084
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: c9734038a625bc5c5d4a055fbef7eb8253aafa2553398da36c65edd49ba78b7c
+fragment_checksum: 2ed21de4c7d00c1302eb81a324b48d6ddfda4134ca645ed1c205b3a82f7ef31e
