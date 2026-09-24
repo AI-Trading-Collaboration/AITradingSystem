@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1946_to_1975_INDICATOR_FAMILY_ABLATION_CHANNEL_SIGNAL_EVIDENCE
   task_id_sha256: e83196e5ca1501240d0bc6868ed20af7e70700b3abd2bdae3567028b3d51e399
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1946_to_1975_INDICATOR_FAMILY_ABLATION_CHANNEL_SIGNAL_EVIDENCE
   title: null
   domain: Research trends / indicator family ablation evidence
@@ -12,19 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-1946_to_1975_Indicator_Family_Ablation_Channel_Signal_Evidence.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1946_to_1975_Indicator_Family_Ablation_Channel_Signal_Evidence.md`；承接
-    TRADING-1906～1945 的 `INDICATOR_FAMILY_ABLATION_READY` 但 registry-only diagnostic
-    结论，本批已对 seven indicator families 生成 PIT / coverage / action-value evidence，并判断
-    family 是否可进入下一轮 channel-specific first-layer model；不得恢复 dynamic promotion、paper-shadow、production、broker，不训练
-    universal first-layer，不改 second-layer weights
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 selection rule、scope、registry validation、PIT coverage audit、action-value
       by family dataset、family-only model review、do-not-de-risk/stay-constructive/add-risk/risk-on-veto
       reviews、2022 slice、2023+ dependence、beta/TQQQ dependence、interaction warning、selection
@@ -34,7 +32,6 @@ task_record:
       固定 blocked/false/false/none
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: b5db7130fed654baeb6c0f1d099d791ff5e14cb22cd5f217e634a6162f10151b
   cell_count: 8
@@ -106,18 +103,50 @@ events:
   evidence_refs:
   - sha256:b5db7130fed654baeb6c0f1d099d791ff5e14cb22cd5f217e634a6162f10151b
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1946_to_1975_INDICATOR_FAMILY_ABLATION_CHANNEL_SIGNAL_EVIDENCE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:09:02+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: b13deaf84126b19586eb6212ef757a4aff75c5c1
+  previous_state_event_id: legacy-import-b5db7130fed654baeb6c0f1d
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 selection rule、scope、registry validation、PIT coverage
+      audit、action-value by family dataset、family-only model review、do-not-de-risk/stay-constructive/add-risk/risk-on-veto
+      reviews、2022 slice、2023+ dependence、beta/TQQQ dependence、interaction warning、selection
+      matrix、channel-specific feature set、owner pack、closeout/final matrix、report
+      registry、artifact catalog、system flow 和 guardrail tests；已证明 PIT blocked、2023+
+      dependent、beta-only 或 target-path-only family 不能通过 add-risk/allocation selection；promotion/paper-shadow/production/broker
+      固定 blocked/false/false/none
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+      新增并进入 IN_PROGRESS，原因：owner 附件要求把 indicator-family ablation 从 registry-only diagnostic
+      推进到真实 family-level evidence；本批只做 evidence 和 channel selection/rejection，不创建策略候选或
+      allocation 输出。2026-06-28: 实现完成并转入 VALIDATING；真实 final status=`INDICATOR_FAMILY_ABLATION_EVIDENCE_READY`，PIT
+      pass=5、blocked=2，selected channel families 为 do_not_de_risk=`drawdown_recovery`、risk_on_veto=`volatility_compression`/`rates_liquidity`、return_seeking_diagnostic=`trend_persistence`/`relative_strength`，add_risk=[]。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-885342ba5121edc5d502edb6895b96dc
 projection:
   legacy_first_eight_cells:
   - TRADING-1946_to_1975_INDICATOR_FAMILY_ABLATION_CHANNEL_SIGNAL_EVIDENCE
   - Research trends / indicator family ablation evidence
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1946_to_1975_Indicator_Family_Ablation_Channel_Signal_Evidence.md`；承接
-    TRADING-1906～1945 的 `INDICATOR_FAMILY_ABLATION_READY` 但 registry-only diagnostic
-    结论，本批已对 seven indicator families 生成 PIT / coverage / action-value evidence，并判断
-    family 是否可进入下一轮 channel-specific first-layer model；不得恢复 dynamic promotion、paper-shadow、production、broker，不训练
-    universal first-layer，不改 second-layer weights
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 selection rule、scope、registry validation、PIT coverage audit、action-value by
     family dataset、family-only model review、do-not-de-risk/stay-constructive/add-risk/risk-on-veto
     reviews、2022 slice、2023+ dependence、beta/TQQQ dependence、interaction warning、selection
@@ -125,14 +154,14 @@ projection:
     catalog、system flow 和 guardrail tests；已证明 PIT blocked、2023+ dependent、beta-only
     或 target-path-only family 不能通过 add-risk/allocation selection；promotion/paper-shadow/production/broker
     固定 blocked/false/false/none
-  - '2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 附件要求把 indicator-family ablation 从 registry-only
-    diagnostic 推进到真实 family-level evidence；本批只做 evidence 和 channel selection/rejection，不创建策略候选或
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+    新增并进入 IN_PROGRESS，原因：owner 附件要求把 indicator-family ablation 从 registry-only diagnostic
+    推进到真实 family-level evidence；本批只做 evidence 和 channel selection/rejection，不创建策略候选或
     allocation 输出。2026-06-28: 实现完成并转入 VALIDATING；真实 final status=`INDICATOR_FAMILY_ABLATION_EVIDENCE_READY`，PIT
     pass=5、blocked=2，selected channel families 为 do_not_de_risk=`drawdown_recovery`、risk_on_veto=`volatility_compression`/`rates_liquidity`、return_seeking_diagnostic=`trend_persistence`/`relative_strength`，add_risk=[]。'
-  docs_links:
-  - docs/requirements/TRADING-1946_to_1975_Indicator_Family_Ablation_Channel_Signal_Evidence.md
-  terminal: false
-  canonical_row_sha256: b5db7130fed654baeb6c0f1d099d791ff5e14cb22cd5f217e634a6162f10151b
-last_event_id: legacy-import-b5db7130fed654baeb6c0f1d
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: d378cffb39e7e9330ef0d4bb30872f6187922c7c56e869b33f09c3eea3a2c0eb
+last_event_id: task-event-885342ba5121edc5d502edb6895b96dc
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 436812e2ca44b4a3cb9002307924b350384b011871533e6b494ac3a6958a3274
+fragment_checksum: fecbdb9d039bf394b97d56502de86bb2ccdfb8f8d33b5cf598feb976f1b1224e
