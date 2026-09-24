@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-525_to_529_B2_B3_B4_DIAGNOSTIC_EXPANSION
   task_id_sha256: 84af1ec50ea224d44e4ae822717da6a1bb5ae771f21f14ae73f2edf99673dc53
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-525_to_529_B2_B3_B4_DIAGNOSTIC_EXPANSION
   title: null
   domain: ETF portfolio/weight research B2/B3/B4 diagnostic expansion and B5 admission
@@ -13,19 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-525_to_529_B2_B3_B4_Diagnostic_Expansion.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-525_to_529_B2_B3_B4_Diagnostic_Expansion.md`；在
-    TRADING-521~524 之后只读诊断 B2 trigger coverage、B3 negative contribution、多窗口 B1/B2/B3/B4
-    diagnostic expansion、B4 interaction synthesis 和 B5 admission checkpoint；不得继续 B5/B6/v3，不得改
-    strategy logic，不得访问 untouched holdout，不得产生 official target weights、paper-shadow
-    activation、broker/order/live/production mutation
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 输出 `b2_risk_scaler_trigger_coverage_audit.json/md`、`b3_slow_tilt_negative_contribution_attribution.json/md`、`b1_b4_multi_window_diagnostic_expansion.json/md`、`b4_interaction_evidence_synthesis.json/md`
       和 `b5_admission_checkpoint.json/md`；必须覆盖 development/diagnostic windows，披露 B0/B1/B2/B3/B4
       metrics、B1/B2/B3/B4 vs B0、B4 vs B2/B3、return/drawdown/turnover/cost/benchmark-relative
@@ -35,7 +33,6 @@ task_record:
       visibility、JSON parse、ruff、compileall、`git diff --check` 通过
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 4ba74bb6550452f0df9d921c02e7c24cf8467a921b642dcaed956a9459040f3e
   cell_count: 8
@@ -105,18 +102,50 @@ events:
   evidence_refs:
   - sha256:4ba74bb6550452f0df9d921c02e7c24cf8467a921b642dcaed956a9459040f3e
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-525_to_529_B2_B3_B4_DIAGNOSTIC_EXPANSION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:55:57+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 8a0ae51614c35c7238454f519bd4f3441a908f74
+  previous_state_event_id: legacy-import-4ba74bb6550452f0df9d921c
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 输出 `b2_risk_scaler_trigger_coverage_audit.json/md`、`b3_slow_tilt_negative_contribution_attribution.json/md`、`b1_b4_multi_window_diagnostic_expansion.json/md`、`b4_interaction_evidence_synthesis.json/md`
+      和 `b5_admission_checkpoint.json/md`；必须覆盖 development/diagnostic windows，披露 B0/B1/B2/B3/B4
+      metrics、B1/B2/B3/B4 vs B0、B4 vs B2/B3、return/drawdown/turnover/cost/benchmark-relative
+      delta、risk trigger count、tilt contribution、constraint hits、window result、B2/B3
+      root-cause status、B4 interaction classification 和 b5/b6/v3 allowed flags；B4
+      未达到 positive/additive 时不得允许 B5，B5 blocked 时不得允许 B6/v3；focused tests、contract/data-quality
+      visibility、JSON parse、ruff、compileall、`git diff --check` 通过
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-19:
+      新增并进入 IN_PROGRESS，原因：owner 附件要求在 TRADING-521~524 后继续诊断 B2 为什么未触发、B3 为什么负贡献、B4
+      是否仅为单窗口现象，并基于多窗口证据生成 B5 准入 checkpoint；当前 B4 仍 inconclusive，B5/B6/v3 必须继续 blocked。2026-06-19:
+      实现完成并转入 VALIDATING；诊断输出 TRADING-525=`B2_REQUIRES_RISK_HEAVY_WINDOWS`，TRADING-526=`B3_NEGATIVE_DUE_TO_SIGNAL_DIRECTION`，TRADING-527=`MULTI_WINDOW_DIAGNOSTIC_COMPLETE`，TRADING-528=`B4_REDUNDANT`，TRADING-529=`B5_ADMISSION_BLOCKED_MORE_EVIDENCE`，且
+      `b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2dd62cc0399db7330874a93c30d9310a
 projection:
   legacy_first_eight_cells:
   - TRADING-525_to_529_B2_B3_B4_DIAGNOSTIC_EXPANSION
   - ETF portfolio/weight research B2/B3/B4 diagnostic expansion and B5 admission checkpoint
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详细拆解见 `docs/requirements/TRADING-525_to_529_B2_B3_B4_Diagnostic_Expansion.md`；在
-    TRADING-521~524 之后只读诊断 B2 trigger coverage、B3 negative contribution、多窗口 B1/B2/B3/B4
-    diagnostic expansion、B4 interaction synthesis 和 B5 admission checkpoint；不得继续 B5/B6/v3，不得改
-    strategy logic，不得访问 untouched holdout，不得产生 official target weights、paper-shadow
-    activation、broker/order/live/production mutation
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 输出 `b2_risk_scaler_trigger_coverage_audit.json/md`、`b3_slow_tilt_negative_contribution_attribution.json/md`、`b1_b4_multi_window_diagnostic_expansion.json/md`、`b4_interaction_evidence_synthesis.json/md`
     和 `b5_admission_checkpoint.json/md`；必须覆盖 development/diagnostic windows，披露 B0/B1/B2/B3/B4
     metrics、B1/B2/B3/B4 vs B0、B4 vs B2/B3、return/drawdown/turnover/cost/benchmark-relative
@@ -124,14 +153,14 @@ projection:
     root-cause status、B4 interaction classification 和 b5/b6/v3 allowed flags；B4 未达到
     positive/additive 时不得允许 B5，B5 blocked 时不得允许 B6/v3；focused tests、contract/data-quality
     visibility、JSON parse、ruff、compileall、`git diff --check` 通过
-  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 附件要求在 TRADING-521~524 后继续诊断 B2 为什么未触发、B3
-    为什么负贡献、B4 是否仅为单窗口现象，并基于多窗口证据生成 B5 准入 checkpoint；当前 B4 仍 inconclusive，B5/B6/v3
-    必须继续 blocked。2026-06-19: 实现完成并转入 VALIDATING；诊断输出 TRADING-525=`B2_REQUIRES_RISK_HEAVY_WINDOWS`，TRADING-526=`B3_NEGATIVE_DUE_TO_SIGNAL_DIRECTION`，TRADING-527=`MULTI_WINDOW_DIAGNOSTIC_COMPLETE`，TRADING-528=`B4_REDUNDANT`，TRADING-529=`B5_ADMISSION_BLOCKED_MORE_EVIDENCE`，且
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-19:
+    新增并进入 IN_PROGRESS，原因：owner 附件要求在 TRADING-521~524 后继续诊断 B2 为什么未触发、B3 为什么负贡献、B4
+    是否仅为单窗口现象，并基于多窗口证据生成 B5 准入 checkpoint；当前 B4 仍 inconclusive，B5/B6/v3 必须继续 blocked。2026-06-19:
+    实现完成并转入 VALIDATING；诊断输出 TRADING-525=`B2_REQUIRES_RISK_HEAVY_WINDOWS`，TRADING-526=`B3_NEGATIVE_DUE_TO_SIGNAL_DIRECTION`，TRADING-527=`MULTI_WINDOW_DIAGNOSTIC_COMPLETE`，TRADING-528=`B4_REDUNDANT`，TRADING-529=`B5_ADMISSION_BLOCKED_MORE_EVIDENCE`，且
     `b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
-  docs_links:
-  - docs/requirements/TRADING-525_to_529_B2_B3_B4_Diagnostic_Expansion.md
-  terminal: false
-  canonical_row_sha256: 4ba74bb6550452f0df9d921c02e7c24cf8467a921b642dcaed956a9459040f3e
-last_event_id: legacy-import-4ba74bb6550452f0df9d921c
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 985da96e7af3cdf80b415b3ac77e368ccd69dd0ce0c9d437f8ea11c7fd1df358
+last_event_id: task-event-2dd62cc0399db7330874a93c30d9310a
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 8621624995c81de42574172bc6e192252b856638cc6f72a84d8cfcad62c07576
+fragment_checksum: a83c60b41d7138d320f01682693e3948b77bdb74cae9b0b7f5c208cdbaffa80d
