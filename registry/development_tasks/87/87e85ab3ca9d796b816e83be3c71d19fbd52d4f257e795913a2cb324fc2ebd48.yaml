@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-703_RESEARCH_PROTOCOL_REGISTRY_CORE_SCHEMAS
   task_id_sha256: 87e85ab3ca9d796b816e83be3c71d19fbd52d4f257e795913a2cb324fc2ebd48
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-703_RESEARCH_PROTOCOL_REGISTRY_CORE_SCHEMAS
   title: null
   domain: Research governance / protocol registry and core schemas
@@ -12,20 +13,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-703_to_725_Research_Governance_Acceleration_Portfolio_Decision_Roadmap.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-703_to_725_Research_Governance_Acceleration_Portfolio_Decision_Roadmap.md`；建立
-    research protocol registry、core schemas 和 pilot protocols；validation-only
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: schema 文件和 `config/research/protocols/` 存在；`aits research governance protocol-validate
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: d0c10dcbecae9a02918cc86be56ee849e8e6e21385d389612b610eed939636fe
   cell_count: 9
@@ -78,21 +78,48 @@ events:
   evidence_refs:
   - sha256:d0c10dcbecae9a02918cc86be56ee849e8e6e21385d389612b610eed939636fe
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-703_RESEARCH_PROTOCOL_REGISTRY_CORE_SCHEMAS
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:02:54+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 199ee1ce3b44de960e379224a2caa2635bc0506d
+  previous_state_event_id: legacy-import-d0c10dcbecae9a02918cc86b
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: schema 文件和 `config/research/protocols/` 存在；`aits research
+      governance protocol-validate
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：protocol-show`
+      可运行；schema_validation_errors=0；production_effect=none
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-bdda73d6c4a2300b6550829483324596
 projection:
   legacy_first_eight_cells:
   - TRADING-703_RESEARCH_PROTOCOL_REGISTRY_CORE_SCHEMAS
   - Research governance / protocol registry and core schemas
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-703_to_725_Research_Governance_Acceleration_Portfolio_Decision_Roadmap.md`；建立
-    research protocol registry、core schemas 和 pilot protocols；validation-only
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - schema 文件和 `config/research/protocols/` 存在；`aits research governance protocol-validate
-  - protocol-show` 可运行；schema_validation_errors=0；production_effect=none
-  docs_links:
-  - docs/requirements/TRADING-703_to_725_Research_Governance_Acceleration_Portfolio_Decision_Roadmap.md
-  terminal: false
-  canonical_row_sha256: 73ec6b840cc6c885407915849434c9d8e8d3ac66ec789f2f444f6e3dd14bfc8b
-last_event_id: legacy-import-d0c10dcbecae9a02918cc86b
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：protocol-show`
+    可运行；schema_validation_errors=0；production_effect=none
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: c428d240dc74af7f968857019abc5a64407034bb25ff7732829c4b95a9b2717f
+last_event_id: task-event-bdda73d6c4a2300b6550829483324596
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: ff18a82cf5b9b0867daddf12baae693b2dc371d1421ba6187d857893dfa13a8f
+fragment_checksum: b26787aa9c52cf54d28b921c5743180038186e1e3a9d338c06aa5149115995d5
