@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-848_TAIL_RISK_ARTIFACT_DETERMINISM_CHECK
   task_id_sha256: 01c7fb38895a11bb8927c38cbacf42204c4c8e23627e3c87e181d62379d5bf1f
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-848_TAIL_RISK_ARTIFACT_DETERMINISM_CHECK
   title: null
   domain: Controlled strategy research / tail-risk artifact determinism
@@ -12,21 +13,20 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；忽略
-    generated_at/runtime/mtime 等 volatile 字段
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 `aits research strategies tail-risk-artifact-determinism-check`，重复生成核心汇总
       projection 并比较 JSON stable hash、排序、浮点稳定性和随机种子披露，输出 DETERMINISTIC_PASS/WARN/BLOCKED
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: c5faaf473f73f9a80f14bd2ac57e63e08e051fb3319afdfcadab684e5501527c
   cell_count: 8
@@ -78,24 +78,53 @@ events:
   evidence_refs:
   - sha256:c5faaf473f73f9a80f14bd2ac57e63e08e051fb3319afdfcadab684e5501527c
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-848_TAIL_RISK_ARTIFACT_DETERMINISM_CHECK
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:30:51+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 120a3435526a520228164e8a184d1cd53d524d84
+  previous_state_event_id: legacy-import-c5faaf473f73f9a80f14bd2a
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 `aits research strategies tail-risk-artifact-determinism-check`，重复生成核心汇总
+      projection 并比较 JSON stable hash、排序、浮点稳定性和随机种子披露，输出 DETERMINISTIC_PASS/WARN/BLOCKED
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+      新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+      Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+      tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-897441d010a36e24a996fa4e4cd731a4
 projection:
   legacy_first_eight_cells:
   - TRADING-848_TAIL_RISK_ARTIFACT_DETERMINISM_CHECK
   - Controlled strategy research / tail-risk artifact determinism
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；忽略
-    generated_at/runtime/mtime 等 volatile 字段
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 `aits research strategies tail-risk-artifact-determinism-check`，重复生成核心汇总 projection
     并比较 JSON stable hash、排序、浮点稳定性和随机种子披露，输出 DETERMINISTIC_PASS/WARN/BLOCKED
-  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+    新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
     Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
     tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
-  docs_links:
-  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
-  terminal: false
-  canonical_row_sha256: c5faaf473f73f9a80f14bd2ac57e63e08e051fb3319afdfcadab684e5501527c
-last_event_id: legacy-import-c5faaf473f73f9a80f14bd2a
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 192cb386a5d1357c17598fdeadfec4f4650918a153780ae130a404a4737ca296
+last_event_id: task-event-897441d010a36e24a996fa4e4cd731a4
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 2bc209d00aa273cc80ecbd57b37e484c0c0389d2321efb52765569f12a2d68e9
+fragment_checksum: fc72715747df73f99f4cffa56848287b4eac349de29e4df7391de6e8225de84c
