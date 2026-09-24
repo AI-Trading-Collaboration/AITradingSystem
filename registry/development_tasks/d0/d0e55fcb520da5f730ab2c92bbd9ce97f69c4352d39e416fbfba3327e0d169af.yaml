@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-805_to_809_HORIZON_SELECTOR_CONTROLLED_RESEARCH
   task_id_sha256: d0e55fcb520da5f730ab2c92bbd9ce97f69c4352d39e416fbfba3327e0d169af
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-805_to_809_HORIZON_SELECTOR_CONTROLLED_RESEARCH
   title: null
   domain: Controlled strategy research / horizon selector contract, long-horizon quarantine/fallback,
@@ -13,19 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-805_to_809_Horizon_Selector_Controlled_Research.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-805_to_809_Horizon_Selector_Controlled_Research.md`；owner
-    要求基于 TRADING-804 `PIVOT_TO_HORIZON_SELECTOR` 与 holdout_pass_rate=0，把 value surface
-    从直接主策略降级为 action scoring submodule，新增 horizon selector + long-horizon quarantine
-    + cost-aware fallback 主线；不得继续无条件扩大 value surface、把 regime-conditioned mean_delta≈0
-    当成功、直接上 GBDT/NN/RL、继续微调 utility boundary 或进入 paper-shadow
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 CLI：`aits research strategies horizon-selector-problem-contract`、`long-horizon-quarantine-fallback-review`、`horizon-selector-controlled-prototype`、`cost-aware-horizon-hysteresis`
       和 `horizon-selector-holdout-review`；TRADING-805 必须定义 candidate horizons、horizon
       status、selector output、review_interval 与 invalidation_condition，且说明 target_horizon
@@ -36,7 +34,6 @@ task_record:
       必须做 leave-one-regime/horizon/asset-cluster/date-window-out，决策只能为 `CONTINUE
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 163cfc34c9708e1d4907e5bf8e84dd566e990f8aac201d27f688c47fc4ca869a
   cell_count: 13
@@ -128,19 +125,48 @@ events:
   evidence_refs:
   - sha256:163cfc34c9708e1d4907e5bf8e84dd566e990f8aac201d27f688c47fc4ca869a
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-805_to_809_HORIZON_SELECTOR_CONTROLLED_RESEARCH
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:20:50+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 18c88b3fb12c95776c84cd0e58e6ed264a0026df
+  previous_state_event_id: legacy-import-163cfc34c9708e1d4907e5bf
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 CLI：`aits research strategies horizon-selector-problem-contract`、`long-horizon-quarantine-fallback-review`、`horizon-selector-controlled-prototype`、`cost-aware-horizon-hysteresis`
+      和 `horizon-selector-holdout-review`；TRADING-805 必须定义 candidate horizons、horizon
+      status、selector output、review_interval 与 invalidation_condition，且说明 target_horizon
+      不是持有期承诺；TRADING-806 必须对比 baseline/disable 60d/disable 20d60d/confirmation/fallback
+      5d10d/fallback benchmark 并输出收益、尾损、beat retention、turnover/cost/drawdown、holdout
+      pass rate；TRADING-807 必须输出 horizon_decision_by_date、horizon_confidence、quarantined_horizon_count、fallback_count、tail_loss_after_selector、cost_after_selector；TRADING-808
+      必须输出 horizon_switch_count、action_flip_count、turnover_delta、cost_delta、utility_lost_to_hysteresis、tail_loss_reduction；TRADING-809
+      必须做 leave-one-regime/horizon/asset-cluster/date-window-out，决策只能为 `CONTINUE
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-18c8fc7ca3a44935bd1a5b89c5d2978c
 projection:
   legacy_first_eight_cells:
   - TRADING-805_to_809_HORIZON_SELECTOR_CONTROLLED_RESEARCH
   - Controlled strategy research / horizon selector contract, long-horizon quarantine/fallback,
     controlled prototype, cost-aware hysteresis, holdout review
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-805_to_809_Horizon_Selector_Controlled_Research.md`；owner
-    要求基于 TRADING-804 `PIVOT_TO_HORIZON_SELECTOR` 与 holdout_pass_rate=0，把 value surface
-    从直接主策略降级为 action scoring submodule，新增 horizon selector + long-horizon quarantine
-    + cost-aware fallback 主线；不得继续无条件扩大 value surface、把 regime-conditioned mean_delta≈0
-    当成功、直接上 GBDT/NN/RL、继续微调 utility boundary 或进入 paper-shadow
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 CLI：`aits research strategies horizon-selector-problem-contract`、`long-horizon-quarantine-fallback-review`、`horizon-selector-controlled-prototype`、`cost-aware-horizon-hysteresis`
     和 `horizon-selector-holdout-review`；TRADING-805 必须定义 candidate horizons、horizon
     status、selector output、review_interval 与 invalidation_condition，且说明 target_horizon
@@ -149,11 +175,10 @@ projection:
     pass rate；TRADING-807 必须输出 horizon_decision_by_date、horizon_confidence、quarantined_horizon_count、fallback_count、tail_loss_after_selector、cost_after_selector；TRADING-808
     必须输出 horizon_switch_count、action_flip_count、turnover_delta、cost_delta、utility_lost_to_hysteresis、tail_loss_reduction；TRADING-809
     必须做 leave-one-regime/horizon/asset-cluster/date-window-out，决策只能为 `CONTINUE
-  - WATCHLIST
-  docs_links:
-  - docs/requirements/TRADING-805_to_809_Horizon_Selector_Controlled_Research.md
-  terminal: false
-  canonical_row_sha256: ebefabb22e01b1a0bddb231470d4c6444f7016be7204b36cdb45d601d06644c8
-last_event_id: legacy-import-163cfc34c9708e1d4907e5bf
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: bf53ffd17a5d46caa9ab3c84254e11a1b85e07150d93e2df6f1f05dd9d542da7
+last_event_id: task-event-18c8fc7ca3a44935bd1a5b89c5d2978c
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 69b1280f314134f69128ff353a10e5c80944b4031d048336568cde9e424f9a69
+fragment_checksum: e09ff491c3bb3155017b5a9898029254340e90faa2ad8f406cfd0758f5bc8285
