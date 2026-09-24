@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1031_to_1048_EQUAL_RISK_FORWARD_AGING_AND_LAYER2_GROWTH_RESTART
   task_id_sha256: d4f4008fb8f025d6818d12f16eb404321b3f867ca07d95ce668f7696fd76bb44
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1031_to_1048_EQUAL_RISK_FORWARD_AGING_AND_LAYER2_GROWTH_RESTART
   title: null
   domain: Research strategies / equal-risk forward-aging stabilization and Layer-2
@@ -13,17 +14,16 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-1031_to_1048_Equal_Risk_Forward_Aging_Stabilization_and_Layer2_Growth_Restart.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1031_to_1048_Equal_Risk_Forward_Aging_Stabilization_and_Layer2_Growth_Restart.md`；实现和验证已完成，下一步为
-    owner 复核 research-only artifacts、growth owner decision pack 和 roadmap v2；本批不得恢复
-    Layer-1 selector、不得直接恢复旧 QQQ-plus growth selectable、不得启动 paper-shadow/production/broker
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 18 个 `aits research strategies ...` CLI/artifacts；新增 controlled growth
       component registry v2 config；equal-risk scheduler/continuity/maturity/scoreboard/Reader
       Brief 摘要稳定；growth restart contract、beta-adjusted edge、低换手/vol-target/drawdown-guarded
@@ -33,7 +33,6 @@ task_record:
       和 `git diff --check` 通过或记录阻塞
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 4d598179101b02de49460d1b790a6af66d4ef9b945b0e7bf37fd56cd4fc14768
   cell_count: 8
@@ -104,17 +103,52 @@ events:
   evidence_refs:
   - sha256:4d598179101b02de49460d1b790a6af66d4ef9b945b0e7bf37fd56cd4fc14768
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1031_to_1048_EQUAL_RISK_FORWARD_AGING_AND_LAYER2_GROWTH_RESTART
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:47:27+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 61811ab64cce73aaabe192b6e5c4b502e621645e
+  previous_state_event_id: legacy-import-4d598179101b02de49460d1b
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 18 个 `aits research strategies ...` CLI/artifacts；新增 controlled
+      growth component registry v2 config；equal-risk scheduler/continuity/maturity/scoreboard/Reader
+      Brief 摘要稳定；growth restart contract、beta-adjusted edge、低换手/vol-target/drawdown-guarded
+      search、attribution、period/drawdown、cost/turnover、readiness gate、owner decision
+      pack、dual-track roadmap 和 roadmap v2 master review 输出完整；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
+      registry、artifact catalog、system flow、requirements 文档、focused pytest、Ruff、compileall
+      和 `git diff --check` 通过或记录阻塞
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-25:
+      新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1031～1048；当前基线为 `equal_risk_qqq_sgov`
+      defensive primary forward-aging active，Layer-1 selector dry-run only archived，growth
+      research 只能从更严格的 controlled Layer-2 component 标准重启。2026-06-25: 实现完成并转入 VALIDATING；验证通过
+      Ruff、compileall、focused equal-risk/growth pytest、report/task/documentation pytest、Layer-1/Layer-2
+      readiness regression pytest 和 `git diff --check`；所有 safety fields 保持 false/none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2bf16474dbbc27d316a1715f9fa3841d
 projection:
   legacy_first_eight_cells:
   - TRADING-1031_to_1048_EQUAL_RISK_FORWARD_AGING_AND_LAYER2_GROWTH_RESTART
   - Research strategies / equal-risk forward-aging stabilization and Layer-2 controlled
     growth restart
   - P1
-  - VALIDATING
-  - 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1031_to_1048_Equal_Risk_Forward_Aging_Stabilization_and_Layer2_Growth_Restart.md`；实现和验证已完成，下一步为
-    owner 复核 research-only artifacts、growth owner decision pack 和 roadmap v2；本批不得恢复
-    Layer-1 selector、不得直接恢复旧 QQQ-plus growth selectable、不得启动 paper-shadow/production/broker
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 18 个 `aits research strategies ...` CLI/artifacts；新增 controlled growth component
     registry v2 config；equal-risk scheduler/continuity/maturity/scoreboard/Reader
     Brief 摘要稳定；growth restart contract、beta-adjusted edge、低换手/vol-target/drawdown-guarded
@@ -122,15 +156,15 @@ projection:
     pack、dual-track roadmap 和 roadmap v2 master review 输出完整；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report
     registry、artifact catalog、system flow、requirements 文档、focused pytest、Ruff、compileall
     和 `git diff --check` 通过或记录阻塞
-  - '2026-06-25: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1031～1048；当前基线为 `equal_risk_qqq_sgov`
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-25:
+    新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1031～1048；当前基线为 `equal_risk_qqq_sgov`
     defensive primary forward-aging active，Layer-1 selector dry-run only archived，growth
     research 只能从更严格的 controlled Layer-2 component 标准重启。2026-06-25: 实现完成并转入 VALIDATING；验证通过
     Ruff、compileall、focused equal-risk/growth pytest、report/task/documentation pytest、Layer-1/Layer-2
     readiness regression pytest 和 `git diff --check`；所有 safety fields 保持 false/none。'
-  docs_links:
-  - docs/requirements/TRADING-1031_to_1048_Equal_Risk_Forward_Aging_Stabilization_and_Layer2_Growth_Restart.md
-  terminal: false
-  canonical_row_sha256: 4d598179101b02de49460d1b790a6af66d4ef9b945b0e7bf37fd56cd4fc14768
-last_event_id: legacy-import-4d598179101b02de49460d1b
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 4bcf9de26922e831d64c3085e294dfc9af75fbb81f82a7af9e21dacce9d8b7be
+last_event_id: task-event-2bf16474dbbc27d316a1715f9fa3841d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: a505565e95a6ff83de2c1287103d1ef82e8051f8db6c0822b824079d5f72254e
+fragment_checksum: f5e59e38de9de0cad46f2ef4c92bc4f1b0c7b5cc5d3b39fcef56daced8430a62
