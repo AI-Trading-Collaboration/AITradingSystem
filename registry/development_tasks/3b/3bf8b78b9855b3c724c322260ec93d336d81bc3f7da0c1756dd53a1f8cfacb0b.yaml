@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-736_DATA_SOURCE_REMEDIATION_EXECUTION
   task_id_sha256: 3bf8b78b9855b3c724c322260ec93d336d81bc3f7da0c1756dd53a1f8cfacb0b
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-736_DATA_SOURCE_REMEDIATION_EXECUTION
   title: null
   domain: Data foundation / source remediation execution and updated qualification
@@ -13,24 +14,22 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-736_Data_Source_Remediation_Execution.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-736_Data_Source_Remediation_Execution.md`；读取
-    TRADING-734 acceptance report 与 TRADING-735 qualification matrix/remediation plan/updated
-    summary，按 P0、blocked、current-view 风险排序并输出逐项 remediation execution result
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`aits data source-qualification execute-remediation` 可读取 TRADING-735 artifacts，重新运行
       `aits data foundation-acceptance run` 同一路径，输出每个 remediation item 的 before_status、after_status、blocked_reason、fix_applied、remaining_gap、repairable_without_relaxing_gate、promotion_grade_candidate_after_fix、allowed_uses，并生成
       updated qualification matrix；current-view 与 research-label-only 项必须显式隔离，所有输出固定
       production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: b2e6ee78f42991f84f324616be6c3c8407ab7c33d64673867197f43683dfd106
   cell_count: 8
@@ -94,29 +93,62 @@ events:
   evidence_refs:
   - sha256:b2e6ee78f42991f84f324616be6c3c8407ab7c33d64673867197f43683dfd106
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-736_DATA_SOURCE_REMEDIATION_EXECUTION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:14:57+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 08f98346facf41782e8e559794cb6ba001aa5c94
+  previous_state_event_id: legacy-import-b2e6ee78f42991f84f324616
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`aits data source-qualification execute-remediation` 可读取
+      TRADING-735 artifacts，重新运行 `aits data foundation-acceptance run` 同一路径，输出每个 remediation
+      item 的 before_status、after_status、blocked_reason、fix_applied、remaining_gap、repairable_without_relaxing_gate、promotion_grade_candidate_after_fix、allowed_uses，并生成
+      updated qualification matrix；current-view 与 research-label-only 项必须显式隔离，所有输出固定
+      production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false'
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+      validation-only remediation execution runner 已实现并进入 VALIDATING；默认 run 输出 `BLOCKED_UNTIL_QUALIFIED`
+      matrix、P0_remaining_count=9、P0_resolved_count=0、current_view_only_isolated_count=1、research_label_only_restricted_count=1、lookahead_violation_count=0、production_effect=none、broker_action=none，说明没有真实
+      as-of/source manifest proof 的 P0 source 仍不允许 promotion/strategy input；focused
+      tests 37 passed，fast-unit 94 passed，contract-validation 93 passed，report-validation
+      55 passed。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-79f10985a40041cdb5dcfad996f92151
 projection:
   legacy_first_eight_cells:
   - TRADING-736_DATA_SOURCE_REMEDIATION_EXECUTION
   - Data foundation / source remediation execution and updated qualification matrix
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-736_Data_Source_Remediation_Execution.md`；读取 TRADING-734
-    acceptance report 与 TRADING-735 qualification matrix/remediation plan/updated
-    summary，按 P0、blocked、current-view 风险排序并输出逐项 remediation execution result
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`aits data source-qualification execute-remediation` 可读取 TRADING-735 artifacts，重新运行
     `aits data foundation-acceptance run` 同一路径，输出每个 remediation item 的 before_status、after_status、blocked_reason、fix_applied、remaining_gap、repairable_without_relaxing_gate、promotion_grade_candidate_after_fix、allowed_uses，并生成
     updated qualification matrix；current-view 与 research-label-only 项必须显式隔离，所有输出固定
     production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false'
-  - '2026-06-21: validation-only remediation execution runner 已实现并进入 VALIDATING；默认
-    run 输出 `BLOCKED_UNTIL_QUALIFIED` matrix、P0_remaining_count=9、P0_resolved_count=0、current_view_only_isolated_count=1、research_label_only_restricted_count=1、lookahead_violation_count=0、production_effect=none、broker_action=none，说明没有真实
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+    validation-only remediation execution runner 已实现并进入 VALIDATING；默认 run 输出 `BLOCKED_UNTIL_QUALIFIED`
+    matrix、P0_remaining_count=9、P0_resolved_count=0、current_view_only_isolated_count=1、research_label_only_restricted_count=1、lookahead_violation_count=0、production_effect=none、broker_action=none，说明没有真实
     as-of/source manifest proof 的 P0 source 仍不允许 promotion/strategy input；focused
     tests 37 passed，fast-unit 94 passed，contract-validation 93 passed，report-validation
     55 passed。'
-  docs_links:
-  - docs/requirements/TRADING-736_Data_Source_Remediation_Execution.md
-  terminal: false
-  canonical_row_sha256: b2e6ee78f42991f84f324616be6c3c8407ab7c33d64673867197f43683dfd106
-last_event_id: legacy-import-b2e6ee78f42991f84f324616
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 9fec93e167fa55ff4277dc17dc479ba2bc25e7830c6213c340eb87ae9f2715df
+last_event_id: task-event-79f10985a40041cdb5dcfad996f92151
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 2ec1beb0ee0d74476c1ec5e77e1d361d5ccb58bc916ad250fff3ae7f86286f06
+fragment_checksum: 48b4876e55de76f3dc7452993e6d65e06dd747bdb2e6022f59a2f1b0497e220a
