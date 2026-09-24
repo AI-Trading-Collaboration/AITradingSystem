@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1165_to_1186_DYNAMIC_STRATEGY_EXECUTION_SEMANTICS
   task_id_sha256: ee9d85c1e0a6102bf4965e4436851429279cafb0165e9c41f8809931f74f948e
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1165_to_1186_DYNAMIC_STRATEGY_EXECUTION_SEMANTICS
   title: null
   domain: Research strategies / dynamic execution semantics and rebalance assumption
@@ -13,18 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-1165_to_1186_Dynamic_Strategy_Execution_Semantics.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1165_to_1186_Dynamic_Strategy_Execution_Semantics.md`；实现已完成并通过指定验证，下一步为
-    owner 复核 `REBALANCE_ASSUMPTION_NEEDS_OWNER_DECISION`、`EXECUTION_SEMANTICS_REQUIRES_REBACKTEST`
-    和 `ROADMAP_REBACKTEST_REQUIRED` 结论，并决定是否重跑 balanced-core / selected growth candidates
-    under hybrid execution；不得进入 paper-shadow、production 或 broker，不得输出真实交易建议
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 22 个 `aits research strategies ...` CLI/artifacts；新增 `config/research/strategy_execution_policy_registry.yaml`；report
       registry、artifact catalog、system flow、需求文档和 focused tests 同步更新；所有 artifacts
       固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；Ruff、compileall、parallel
@@ -32,7 +31,6 @@ task_record:
       review/rebacktest 状态而不是伪造完整结论
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: cc84c128b7cc8e2c42d5ec5d14be383d4e90462350f0dfea1c390f0b78370906
   cell_count: 8
@@ -101,31 +99,63 @@ events:
   evidence_refs:
   - sha256:cc84c128b7cc8e2c42d5ec5d14be383d4e90462350f0dfea1c390f0b78370906
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1165_to_1186_DYNAMIC_STRATEGY_EXECUTION_SEMANTICS
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:52:00+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: b9016c30fdce8d2a84a8e63973a9b41204e75acd
+  previous_state_event_id: legacy-import-cc84c128b7cc8e2c42d5ec5d
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 22 个 `aits research strategies ...` CLI/artifacts；新增 `config/research/strategy_execution_policy_registry.yaml`；report
+      registry、artifact catalog、system flow、需求文档和 focused tests 同步更新；所有 artifacts
+      固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；Ruff、compileall、parallel
+      pytest、task/register/report/docs pytest 和 `git diff --check` 通过；若发现此前结论需重跑，必须输出
+      review/rebacktest 状态而不是伪造完整结论
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+      新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1165～1186 dynamic strategy execution
+      semantics & rebalance assumption audit plan，核心风险是 dynamic signals 被隐含 monthly
+      execution 约束误读。2026-06-27: 实现完成并转入 VALIDATING；真实 artifacts 显示 monthly assumption
+      广泛存在、signal staleness/latency material、部分此前结论仅在 monthly constraint 下成立或需复核，默认策略选择需要
+      owner review，安全边界保持 no paper-shadow / no production / no broker。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-48fe75a2c79956ce49b6cddcb9844ccf
 projection:
   legacy_first_eight_cells:
   - TRADING-1165_to_1186_DYNAMIC_STRATEGY_EXECUTION_SEMANTICS
   - Research strategies / dynamic execution semantics and rebalance assumption audit
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1165_to_1186_Dynamic_Strategy_Execution_Semantics.md`；实现已完成并通过指定验证，下一步为
-    owner 复核 `REBALANCE_ASSUMPTION_NEEDS_OWNER_DECISION`、`EXECUTION_SEMANTICS_REQUIRES_REBACKTEST`
-    和 `ROADMAP_REBACKTEST_REQUIRED` 结论，并决定是否重跑 balanced-core / selected growth candidates
-    under hybrid execution；不得进入 paper-shadow、production 或 broker，不得输出真实交易建议
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 22 个 `aits research strategies ...` CLI/artifacts；新增 `config/research/strategy_execution_policy_registry.yaml`；report
     registry、artifact catalog、system flow、需求文档和 focused tests 同步更新；所有 artifacts 固定
     `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；Ruff、compileall、parallel
     pytest、task/register/report/docs pytest 和 `git diff --check` 通过；若发现此前结论需重跑，必须输出
     review/rebacktest 状态而不是伪造完整结论
-  - '2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1165～1186 dynamic strategy
-    execution semantics & rebalance assumption audit plan，核心风险是 dynamic signals 被隐含
-    monthly execution 约束误读。2026-06-27: 实现完成并转入 VALIDATING；真实 artifacts 显示 monthly
-    assumption 广泛存在、signal staleness/latency material、部分此前结论仅在 monthly constraint
-    下成立或需复核，默认策略选择需要 owner review，安全边界保持 no paper-shadow / no production / no broker。'
-  docs_links:
-  - docs/requirements/TRADING-1165_to_1186_Dynamic_Strategy_Execution_Semantics.md
-  terminal: false
-  canonical_row_sha256: cc84c128b7cc8e2c42d5ec5d14be383d4e90462350f0dfea1c390f0b78370906
-last_event_id: legacy-import-cc84c128b7cc8e2c42d5ec5d
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27:
+    新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1165～1186 dynamic strategy execution semantics
+    & rebalance assumption audit plan，核心风险是 dynamic signals 被隐含 monthly execution
+    约束误读。2026-06-27: 实现完成并转入 VALIDATING；真实 artifacts 显示 monthly assumption 广泛存在、signal
+    staleness/latency material、部分此前结论仅在 monthly constraint 下成立或需复核，默认策略选择需要 owner
+    review，安全边界保持 no paper-shadow / no production / no broker。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: faa269116867a4cd9fe6f9d6f68f70febc517ec5e9346c06351b5e6ca536bb58
+last_event_id: task-event-48fe75a2c79956ce49b6cddcb9844ccf
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 9ba70062a045e5c35e853cbd9bec34f8b27aab80630c12ae861c0cb0ceb957a9
+fragment_checksum: b14a6eb8c9f9b7a0bd83740fd3cf5306f7d87179ef841478f495502e330b2030
