@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-716_PORTFOLIO_DECISION_PROBLEM_CONTRACT
   task_id_sha256: e07826b0978885696511d1749ed456c5e6789646fe519405675d03d8f7b1c2ad
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-716_PORTFOLIO_DECISION_PROBLEM_CONTRACT
   title: null
   domain: Portfolio decision research / portfolio decision problem contract
@@ -12,18 +13,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；建立动态投资决策 contract
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: portfolio decision config/schema/package 存在；`validate-contract
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 17cc85f4b629c5f426946422df9ef17587e06ae56f1170e106ccc10f17138018
   cell_count: 9
@@ -80,19 +82,47 @@ events:
   evidence_refs:
   - sha256:17cc85f4b629c5f426946422df9ef17587e06ae56f1170e106ccc10f17138018
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-716_PORTFOLIO_DECISION_PROBLEM_CONTRACT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:07:14+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 160eefcd817127943184dcbb940ae712c99629a2
+  previous_state_event_id: legacy-import-17cc85f4b629c5f426946422
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: portfolio decision config/schema/package 存在；`validate-contract
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：show-contract`
+      可运行；portfolio_decision_contract_valid=true；production_effect=none
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2ad8e100b941b8a9e43d87fb9eff87fe
 projection:
   legacy_first_eight_cells:
   - TRADING-716_PORTFOLIO_DECISION_PROBLEM_CONTRACT
   - Portfolio decision research / portfolio decision problem contract
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-703_to_725 总需求文档；建立动态投资决策 contract
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - portfolio decision config/schema/package 存在；`validate-contract
-  - show-contract` 可运行；portfolio_decision_contract_valid=true；production_effect=none
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：show-contract`
+    可运行；portfolio_decision_contract_valid=true；production_effect=none
   docs_links: []
-  terminal: false
-  canonical_row_sha256: d22235be681aceb525016974da24ec4a557bfcc2cf7ae97a94990da64c35b894
-last_event_id: legacy-import-17cc85f4b629c5f426946422
+  terminal: true
+  canonical_row_sha256: 63b37065c51c6b11ee9a81b8c405428e2fced68e3ef95b9dc4e5c81ada1bf17c
+last_event_id: task-event-2ad8e100b941b8a9e43d87fb9eff87fe
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b70d989b166f587b77aed064f3e061918247be822778da12540586754079749e
+fragment_checksum: e8cd3a6657b4049b3246d774c93c1c3c277cf1a58f724baf6e39d311dfeb59c8
