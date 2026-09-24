@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1088_MARKETSTACK_MISSED_DAY_TAIL_CATCH_UP
   task_id_sha256: 4244b1c224a7a1640833ef7c0126f5becc62fbdfdad1c81d455a37b701b1c08d
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1088_MARKETSTACK_MISSED_DAY_TAIL_CATCH_UP
   title: null
   domain: Data pipeline / Marketstack quota and catch-up governance
@@ -12,18 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-1088_Marketstack_Missed_Day_Tail_Catch_Up.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-1088_Marketstack_Missed_Day_Tail_Catch_Up.md`；承接
-    TRADING-1087 owner-approved small daily overage。当前实现新增受控 catch-up profile，把 eligible
-    tail gap 拆成 one-U.S.-trading-day windows，并保留 full-history / new ticker / large
-    quota shortfall fail-closed；后续需要真实 daily-run 观察确认。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 Marketstack missed-day tail catch-up budget profile、one-day split window
       执行路径、manifest/failure diagnostics 中的 profile/original windows/split windows/quota
       shortfall/ratio/violation reasons；`aits download-data` / daily-run 默认路径可在小额
@@ -32,7 +31,6 @@ task_record:
       action；focused tests 覆盖允许 catch-up、full-history block、ratio block 和诊断输出。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 15c21994dc3bf43989461de8c13d2854c6241be33db54a2e79239b278b725c01
   cell_count: 8
@@ -97,31 +95,63 @@ events:
   evidence_refs:
   - sha256:15c21994dc3bf43989461de8c13d2854c6241be33db54a2e79239b278b725c01
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1088_MARKETSTACK_MISSED_DAY_TAIL_CATCH_UP
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:48:44+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 5297eb6ac8763ee1bfa74c6677610f488a607d4f
+  previous_state_event_id: legacy-import-15c21994dc3bf43989461de8
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 Marketstack missed-day tail catch-up budget profile、one-day
+      split window 执行路径、manifest/failure diagnostics 中的 profile/original windows/split
+      windows/quota shortfall/ratio/violation reasons；`aits download-data` / daily-run
+      默认路径可在小额 missed-day gap 下继续进入 `aits validate-data`，但不得使用 `--without-marketstack`、不得绕过
+      data quality gate、不得写 production weights / active shadow weights 或触发 broker
+      action；focused tests 覆盖允许 catch-up、full-history block、ratio block 和诊断输出。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-03:
+      根据 daily PIT 自动化 ProviderQuotaBudgetError 复盘新增并进入 IN_PROGRESS；另一个 full validation
+      已 PASS 后开始实现。2026-07-03: 实现完成并进入 VALIDATING；验证通过 data download focused tests
+      16 passed、config+data focused tests 33 passed、Ruff、compileall、docs freshness、task-register
+      consistency run/validate 和 contract-validation 193 passed。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ff1063b202fb654e77a88c7f2dd417bb
 projection:
   legacy_first_eight_cells:
   - TRADING-1088_MARKETSTACK_MISSED_DAY_TAIL_CATCH_UP
   - Data pipeline / Marketstack quota and catch-up governance
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-1088_Marketstack_Missed_Day_Tail_Catch_Up.md`；承接
-    TRADING-1087 owner-approved small daily overage。当前实现新增受控 catch-up profile，把 eligible
-    tail gap 拆成 one-U.S.-trading-day windows，并保留 full-history / new ticker / large
-    quota shortfall fail-closed；后续需要真实 daily-run 观察确认。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 Marketstack missed-day tail catch-up budget profile、one-day split window 执行路径、manifest/failure
     diagnostics 中的 profile/original windows/split windows/quota shortfall/ratio/violation
     reasons；`aits download-data` / daily-run 默认路径可在小额 missed-day gap 下继续进入 `aits validate-data`，但不得使用
     `--without-marketstack`、不得绕过 data quality gate、不得写 production weights / active
     shadow weights 或触发 broker action；focused tests 覆盖允许 catch-up、full-history block、ratio
     block 和诊断输出。
-  - '2026-07-03: 根据 daily PIT 自动化 ProviderQuotaBudgetError 复盘新增并进入 IN_PROGRESS；另一个
-    full validation 已 PASS 后开始实现。2026-07-03: 实现完成并进入 VALIDATING；验证通过 data download
-    focused tests 16 passed、config+data focused tests 33 passed、Ruff、compileall、docs
-    freshness、task-register consistency run/validate 和 contract-validation 193 passed。'
-  docs_links:
-  - docs/requirements/TRADING-1088_Marketstack_Missed_Day_Tail_Catch_Up.md
-  terminal: false
-  canonical_row_sha256: 15c21994dc3bf43989461de8c13d2854c6241be33db54a2e79239b278b725c01
-last_event_id: legacy-import-15c21994dc3bf43989461de8
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-03:
+    根据 daily PIT 自动化 ProviderQuotaBudgetError 复盘新增并进入 IN_PROGRESS；另一个 full validation
+    已 PASS 后开始实现。2026-07-03: 实现完成并进入 VALIDATING；验证通过 data download focused tests 16
+    passed、config+data focused tests 33 passed、Ruff、compileall、docs freshness、task-register
+    consistency run/validate 和 contract-validation 193 passed。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: fc7a517dd44548345265aa3b1842e030558e4f331f4e63b4da8be38c57742104
+last_event_id: task-event-ff1063b202fb654e77a88c7f2dd417bb
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 0f1184eb5ab08dd812afb393f672a2c04033a197f4011bc1e66a025bcd4e99bc
+fragment_checksum: 7dea3d39a588b70ab6e1e6274f64abe94f6752f8804a3aac00094e78b69f2d32
