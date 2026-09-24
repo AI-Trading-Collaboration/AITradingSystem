@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-665_to_685_INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1
   task_id_sha256: e0798270ebf75b071edfa516057a3822db10671b83356811c69fdfb32b18345b
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-665_to_685_INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1
   title: null
   domain: Indicator to signal research framework / daily indicator coverage, dependency,
@@ -13,24 +14,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-665_to_685_Indicator_To_Signal_Research_Framework_V1.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-665_to_685_Indicator_To_Signal_Research_Framework_V1.md`；实现指标/约束
-    ontology、日报指标 inventory、依赖图、multi-stage weight trace contract、role/mapping registry、diagnostics/calibration
-    baseline、conditional/masking/factorial/trial/holdout/gate artifacts、Research Campaign
-    adapter contract、CLI、coverage gap report、validation pack、rerun stability、casebook
-    和 ablation validation；不得修改日报实际权重逻辑、估值拥挤参数、paper-shadow/live/broker/order/official
-    weights 或 production state
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`aits research indicators inventory'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 3daadf08e7ba1faf7ae723bfd0d66bf1a8c0e58dbcf17dc4aab6eecd1342cadf
   cell_count: 23
@@ -211,26 +207,46 @@ events:
   evidence_refs:
   - sha256:3daadf08e7ba1faf7ae723bfd0d66bf1a8c0e58dbcf17dc4aab6eecd1342cadf
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-665_to_685_INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:02:05+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 47b29320bb29d44fc172e2a2927f7c0a410aa154
+  previous_state_event_id: legacy-import-3daadf08e7ba1faf7ae723bf
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`aits research indicators inventory'
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：coverage
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3f8c57c327b5292b27ed1106b37a8f79
 projection:
   legacy_first_eight_cells:
   - TRADING-665_to_685_INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1
   - Indicator to signal research framework / daily indicator coverage, dependency,
     masking, and campaign adapter governance
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详细拆解见 `docs/requirements/TRADING-665_to_685_Indicator_To_Signal_Research_Framework_V1.md`；实现指标/约束
-    ontology、日报指标 inventory、依赖图、multi-stage weight trace contract、role/mapping registry、diagnostics/calibration
-    baseline、conditional/masking/factorial/trial/holdout/gate artifacts、Research Campaign
-    adapter contract、CLI、coverage gap report、validation pack、rerun stability、casebook
-    和 ablation validation；不得修改日报实际权重逻辑、估值拥挤参数、paper-shadow/live/broker/order/official
-    weights 或 production state
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`aits research indicators inventory'
-  - coverage
-  docs_links:
-  - docs/requirements/TRADING-665_to_685_Indicator_To_Signal_Research_Framework_V1.md
-  terminal: false
-  canonical_row_sha256: abd67cd08ee9ef2515f334b175917f32e49193a63a1ee991cb2c7b0a97f9c0a0
-last_event_id: legacy-import-3daadf08e7ba1faf7ae723bf
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：coverage
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: bc4970af3128ed97b3e8ad55b4aa7494d673ba65dfc2b6ae20f232ff7415ef80
+last_event_id: task-event-3f8c57c327b5292b27ed1106b37a8f79
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: db8ecec14aed5eff51220131c6bb2af318a0dde6bec3fd05ed88d3a5eb645067
+fragment_checksum: 0fc2ebd1103194e4c9690c5b88f087dbb1f7b2953710ba28c2fefdff0eaffa4c
