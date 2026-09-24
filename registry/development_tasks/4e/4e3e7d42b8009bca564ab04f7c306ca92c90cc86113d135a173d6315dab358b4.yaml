@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-715_HYPOTHESIS_COMPILER_MUTATION_DIRECTION_GENERATOR
   task_id_sha256: 4e3e7d42b8009bca564ab04f7c306ca92c90cc86113d135a173d6315dab358b4
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-715_HYPOTHESIS_COMPILER_MUTATION_DIRECTION_GENERATOR
   title: null
   domain: Research acceleration / hypothesis compiler, mutation, orthogonal direction
@@ -13,18 +14,19 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；低信息量时生成不同方向，不只微调阈值
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`hypothesis-compile'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 1e44aa4c7c49c37fb0b100ee0cce0076bc8d85bfd39679d505fd3798d8941d5e
   cell_count: 10
@@ -76,19 +78,45 @@ events:
   evidence_refs:
   - sha256:1e44aa4c7c49c37fb0b100ee0cce0076bc8d85bfd39679d505fd3798d8941d5e
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-715_HYPOTHESIS_COMPILER_MUTATION_DIRECTION_GENERATOR
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:06:49+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 04f04186e26c23b63737b38c5b37ac6d71108e04
+  previous_state_event_id: legacy-import-1e44aa4c7c49c37fb0b100ee
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`hypothesis-compile'
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：mutation-generate
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-dfec314495abaa953e21136794beec9e
 projection:
   legacy_first_eight_cells:
   - TRADING-715_HYPOTHESIS_COMPILER_MUTATION_DIRECTION_GENERATOR
   - Research acceleration / hypothesis compiler, mutation, orthogonal direction generator
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-703_to_725 总需求文档；低信息量时生成不同方向，不只微调阈值
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`hypothesis-compile'
-  - mutation-generate
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：mutation-generate
   docs_links: []
-  terminal: false
-  canonical_row_sha256: ec22a190db2197dac63f636dacc70a702bda541e6dbdca0d7255603ad4cb8ea5
-last_event_id: legacy-import-1e44aa4c7c49c37fb0b100ee
+  terminal: true
+  canonical_row_sha256: 7325603ba9d07319b5c949e8338d5f00e7d0a935fe5d8ad7dfee306c8635b34c
+last_event_id: task-event-dfec314495abaa953e21136794beec9e
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 401ccfcee56978af30dfcb1601aee34ad2ee2d0819040c875073f131a2065d1a
+fragment_checksum: f8ff2a5c222396a6e94b4eb7e09d46b7802e448efe0d50b6160a29f035787986
