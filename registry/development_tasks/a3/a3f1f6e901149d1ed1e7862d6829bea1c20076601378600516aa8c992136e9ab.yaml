@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-702_PIT_DATA_SOURCE_READINESS_AUDIT
   task_id_sha256: a3f1f6e901149d1ed1e7862d6829bea1c20076601378600516aa8c992136e9ab
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-702_PIT_DATA_SOURCE_READINESS_AUDIT
   title: null
   domain: Data governance / PIT data source readiness audit for full-advisory replay
@@ -12,20 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-702_PIT_Data_Source_Readiness_Audit.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-702_PIT_Data_Source_Readiness_Audit.md`；单独推进
-    PIT data source readiness audit，梳理会阻断 full-advisory replay 的 PIT-sensitive features，基于
-    historical gate audit / feature availability / lineage inputs 将 TRADING-701 的粗粒度
-    `expected_pit_limitation` 细分为 `true_not_available_before_decision_time`、`available_time_missing`、`timestamp_model_too_conservative`、`source_snapshot_missing`、`feature_reconstruction_gap`、`lineage_manifest_missing`、`replay_config_issue`、`calendar_mapping_issue`、`asset_mapping_issue`、`price_window_not_mature`、`vendor_current_view_only`
-    和 `unknown_requires_manual_review`；继续保持 validation-only，不修改 production / paper-shadow
-    / official weights，不放宽任何 data quality gate
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 输出 `pit_source_readiness_audit.json/md`，包含 PIT availability contracts、blocked-date
       reclassification、blocked_by_feature、blocked_by_reason_class、repairable_without_relaxing_gate_count、not_repairable_true_pit_limitation_count、candidate_data_source_needed、expected_full_advisory_case_gain_if_repaired
       和下一步建议；所有修复建议必须满足 available_time <= decision_time、as-of snapshot 可复现、trace manifest
@@ -33,7 +30,6 @@ task_record:
       通过或明确记录阻塞
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 3c048e2c1250abd5be77e901ae73cadb85fe1f66387f8d22084c4d5e3fa1b31a
   cell_count: 8
@@ -122,27 +118,65 @@ events:
   evidence_refs:
   - sha256:3c048e2c1250abd5be77e901ae73cadb85fe1f66387f8d22084c4d5e3fa1b31a
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-702_PIT_DATA_SOURCE_READINESS_AUDIT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:02:29+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 10c2c6e797929b98ec1a521fabec6563343983d8
+  previous_state_event_id: legacy-import-3c048e2c1250abd5be77e901
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 输出 `pit_source_readiness_audit.json/md`，包含 PIT availability
+      contracts、blocked-date reclassification、blocked_by_feature、blocked_by_reason_class、repairable_without_relaxing_gate_count、not_repairable_true_pit_limitation_count、candidate_data_source_needed、expected_full_advisory_case_gain_if_repaired
+      和下一步建议；所有修复建议必须满足 available_time <= decision_time、as-of snapshot 可复现、trace manifest
+      可证明、production gate 不放宽；focused tests、CLI、Ruff、py_compile、`git diff --check`
+      通过或明确记录阻塞
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+      按 owner 指令新增并进入 IN_PROGRESS；范围限定为 PIT data source readiness audit，不能批准 promotion、paper-shadow、production
+      或 official weight changes，不能修改 threshold current_value，不能用未来数据补 signal，不能放宽
+      data quality / PIT feature / lineage gates。2026-06-21: 实现完成并进入 VALIDATING；真实
+      CLI 输出 `pit_source_readiness_audit.json/md`，summary 为 pit_contract_count=26、missing_availability_contract_count=0、total_blocked_dates=18、blocked_by_feature={sec_fundamentals_filing:18}、blocked_by_reason_class={true_not_available_before_decision_time:18}、repairable_without_relaxing_gate_count=0、not_repairable_true_pit_limitation_count=18、candidate_data_source_needed=[]、expected_full_advisory_case_gain_if_repaired=0、next_recommendation_counts={maintain_fail_closed:18}、production_effect=none；validation
+      pack 已同步 `pit_source_readiness_summary`，仍不放宽 data quality / PIT feature / lineage
+      gates。2026-06-21: 最终 taxonomy / CLI option surface 复核通过 focused PIT pytest 5
+      passed、focused CLI/docs/config xdist 30 passed、Black check、Ruff、py_compile、PIT
+      CLI smoke、validation-pack smoke、stale taxonomy sweep 和 `git diff --check`；较早的
+      full parallel tier `--workers 8` 通过 2990 passed / 642 warnings / 265.1s，runtime
+      artifact `outputs/validation_runtime/full_20260620T160055Z/test_runtime_summary.json`；最终
+      CLI option 增量后的 full-tier rerun 受 xdist worker termination / workspace taxonomy
+      reversion instability 阻塞，未静默改用 serial PASS。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2adb883605c7faf5802e997733e63468
 projection:
   legacy_first_eight_cells:
   - TRADING-702_PIT_DATA_SOURCE_READINESS_AUDIT
   - Data governance / PIT data source readiness audit for full-advisory replay
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详细拆解见 `docs/requirements/TRADING-702_PIT_Data_Source_Readiness_Audit.md`；单独推进
-    PIT data source readiness audit，梳理会阻断 full-advisory replay 的 PIT-sensitive features，基于
-    historical gate audit / feature availability / lineage inputs 将 TRADING-701 的粗粒度
-    `expected_pit_limitation` 细分为 `true_not_available_before_decision_time`、`available_time_missing`、`timestamp_model_too_conservative`、`source_snapshot_missing`、`feature_reconstruction_gap`、`lineage_manifest_missing`、`replay_config_issue`、`calendar_mapping_issue`、`asset_mapping_issue`、`price_window_not_mature`、`vendor_current_view_only`
-    和 `unknown_requires_manual_review`；继续保持 validation-only，不修改 production / paper-shadow
-    / official weights，不放宽任何 data quality gate
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 输出 `pit_source_readiness_audit.json/md`，包含 PIT availability contracts、blocked-date
     reclassification、blocked_by_feature、blocked_by_reason_class、repairable_without_relaxing_gate_count、not_repairable_true_pit_limitation_count、candidate_data_source_needed、expected_full_advisory_case_gain_if_repaired
     和下一步建议；所有修复建议必须满足 available_time <= decision_time、as-of snapshot 可复现、trace manifest
     可证明、production gate 不放宽；focused tests、CLI、Ruff、py_compile、`git diff --check` 通过或明确记录阻塞
-  - '2026-06-21: 按 owner 指令新增并进入 IN_PROGRESS；范围限定为 PIT data source readiness audit，不能批准
-    promotion、paper-shadow、production 或 official weight changes，不能修改 threshold current_value，不能用未来数据补
-    signal，不能放宽 data quality / PIT feature / lineage gates。2026-06-21: 实现完成并进入 VALIDATING；真实
-    CLI 输出 `pit_source_readiness_audit.json/md`，summary 为 pit_contract_count=26、missing_availability_contract_count=0、total_blocked_dates=18、blocked_by_feature={sec_fundamentals_filing:18}、blocked_by_reason_class={true_not_available_before_decision_time:18}、repairable_without_relaxing_gate_count=0、not_repairable_true_pit_limitation_count=18、candidate_data_source_needed=[]、expected_full_advisory_case_gain_if_repaired=0、next_recommendation_counts={maintain_fail_closed:18}、production_effect=none；validation
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+    按 owner 指令新增并进入 IN_PROGRESS；范围限定为 PIT data source readiness audit，不能批准 promotion、paper-shadow、production
+    或 official weight changes，不能修改 threshold current_value，不能用未来数据补 signal，不能放宽 data
+    quality / PIT feature / lineage gates。2026-06-21: 实现完成并进入 VALIDATING；真实 CLI 输出
+    `pit_source_readiness_audit.json/md`，summary 为 pit_contract_count=26、missing_availability_contract_count=0、total_blocked_dates=18、blocked_by_feature={sec_fundamentals_filing:18}、blocked_by_reason_class={true_not_available_before_decision_time:18}、repairable_without_relaxing_gate_count=0、not_repairable_true_pit_limitation_count=18、candidate_data_source_needed=[]、expected_full_advisory_case_gain_if_repaired=0、next_recommendation_counts={maintain_fail_closed:18}、production_effect=none；validation
     pack 已同步 `pit_source_readiness_summary`，仍不放宽 data quality / PIT feature / lineage
     gates。2026-06-21: 最终 taxonomy / CLI option surface 复核通过 focused PIT pytest 5 passed、focused
     CLI/docs/config xdist 30 passed、Black check、Ruff、py_compile、PIT CLI smoke、validation-pack
@@ -150,10 +184,9 @@ projection:
     8` 通过 2990 passed / 642 warnings / 265.1s，runtime artifact `outputs/validation_runtime/full_20260620T160055Z/test_runtime_summary.json`；最终
     CLI option 增量后的 full-tier rerun 受 xdist worker termination / workspace taxonomy
     reversion instability 阻塞，未静默改用 serial PASS。'
-  docs_links:
-  - docs/requirements/TRADING-702_PIT_Data_Source_Readiness_Audit.md
-  terminal: false
-  canonical_row_sha256: 3c048e2c1250abd5be77e901ae73cadb85fe1f66387f8d22084c4d5e3fa1b31a
-last_event_id: legacy-import-3c048e2c1250abd5be77e901
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 3950235ec3e272833415f3fbaaacb440463310af025d730245b9b878b677222c
+last_event_id: task-event-2adb883605c7faf5802e997733e63468
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b9e24133a60310af7dc86d7042a56c6e72dcb527ab5ad0170fa40578e3a0166b
+fragment_checksum: bae98c2e606c8b6b978ac007defde5ca5a485380912fe13283ac7f6933b34d36
