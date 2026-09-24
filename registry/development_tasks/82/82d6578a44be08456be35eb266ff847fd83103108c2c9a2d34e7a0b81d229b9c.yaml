@@ -1,0 +1,89 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-015A_HOST_REGISTRY_SINGLE_VALUE_ANCHOR_V1
+  task_id_sha256: 82d6578a44be08456be35eb266ff847fd83103108c2c9a2d34e7a0b81d229b9c
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-015A_HOST_REGISTRY_SINGLE_VALUE_ANCHOR_V1
+  title: null
+  domain: Architecture / host enrollment registry anchor without RegRenameKey
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Claude Code coordinator（需先确认 DEVX-015 integration worktree 未提交改动归属）
+  requirement_refs:
+  - docs/requirements/DEVX-015A_Host_Registry_Single_Value_Anchor.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 2026-09-25 本机两次蓝屏（0xBE/0x3B），调用栈均为 NtRenameKey→CmRenameKey→CmpKeySecurityIncrementReferenceCount+0x1c，触发候选为
+    DEVX-015 的 publish_registry_key/RegRenameKey 原生测试。改为在 HKLM\SOFTWARE\AITradingSystem
+    父键下写单个 REG_SZ 值作为登记锚点，移除 RegRenameKey。本机禁止再运行原生 RegRenameKey。阻塞：实现代码只在未合入的 DEVX-015
+    lane（AITradingSystem_devx015_integration 有未提交改动）。详见 `docs/requirements/DEVX-015A_Host_Registry_Single_Value_Anchor.md`
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 生产代码与测试中不再调用 RegRenameKey/NtRenameKey，并有守护检查；父键值缺失=未登记、存在即严格校验、遗留 WorkflowControl
+      子键 fail closed；登记幂等、拒绝不同内容覆盖、写后读回；管理员令牌/ACL 门禁不变；内存模型测试覆盖五种情形且本机无新注册表残留；DEVX-015
+      V3 文档同步；不改真实 HKLM/ACL
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-015A_HOST_REGISTRY_SINGLE_VALUE_ANCHOR_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-25T01:44:09+09:00'
+  actor: integration-coordinator
+  change_id: devx-015a-registration-20260925-v1
+  lane_id: null
+  base_commit: 68083893523d0fa5b834fd17930f7551ea1b9382
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    legacy_projection:
+    - DEVX-015A_HOST_REGISTRY_SINGLE_VALUE_ANCHOR_V1
+    - Architecture / host enrollment registry anchor without RegRenameKey
+    - P0
+    - PROPOSED
+    - Claude Code coordinator（需先确认 DEVX-015 integration worktree 未提交改动归属）
+    - 2026-09-25 本机两次蓝屏（0xBE/0x3B），调用栈均为 NtRenameKey→CmRenameKey→CmpKeySecurityIncrementReferenceCount+0x1c，触发候选为
+      DEVX-015 的 publish_registry_key/RegRenameKey 原生测试。改为在 HKLM\SOFTWARE\AITradingSystem
+      父键下写单个 REG_SZ 值作为登记锚点，移除 RegRenameKey。本机禁止再运行原生 RegRenameKey。阻塞：实现代码只在未合入的 DEVX-015
+      lane（AITradingSystem_devx015_integration 有未提交改动）。详见 `docs/requirements/DEVX-015A_Host_Registry_Single_Value_Anchor.md`
+    - 生产代码与测试中不再调用 RegRenameKey/NtRenameKey，并有守护检查；父键值缺失=未登记、存在即严格校验、遗留 WorkflowControl
+      子键 fail closed；登记幂等、拒绝不同内容覆盖、写后读回；管理员令牌/ACL 门禁不变；内存模型测试覆盖五种情形且本机无新注册表残留；DEVX-015
+      V3 文档同步；不改真实 HKLM/ACL
+    - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision=`owner_decision:DEVX-015A:2026-09-25:single_value_anchor_v1`；父任务
+      DEVX-015（GOV-007 P1-C）；蓝屏证据与清理记录 D:/Work/AITradingSystem_backups/2026-09-25/
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-015a-registration-20260925-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c534e6a9eb4b3bdc02ddf466f6bf13c4
+projection:
+  legacy_first_eight_cells:
+  - DEVX-015A_HOST_REGISTRY_SINGLE_VALUE_ANCHOR_V1
+  - Architecture / host enrollment registry anchor without RegRenameKey
+  - P0
+  - PROPOSED
+  - Claude Code coordinator（需先确认 DEVX-015 integration worktree 未提交改动归属）
+  - 2026-09-25 本机两次蓝屏（0xBE/0x3B），调用栈均为 NtRenameKey→CmRenameKey→CmpKeySecurityIncrementReferenceCount+0x1c，触发候选为
+    DEVX-015 的 publish_registry_key/RegRenameKey 原生测试。改为在 HKLM\SOFTWARE\AITradingSystem
+    父键下写单个 REG_SZ 值作为登记锚点，移除 RegRenameKey。本机禁止再运行原生 RegRenameKey。阻塞：实现代码只在未合入的 DEVX-015
+    lane（AITradingSystem_devx015_integration 有未提交改动）。详见 `docs/requirements/DEVX-015A_Host_Registry_Single_Value_Anchor.md`
+  - 生产代码与测试中不再调用 RegRenameKey/NtRenameKey，并有守护检查；父键值缺失=未登记、存在即严格校验、遗留 WorkflowControl
+    子键 fail closed；登记幂等、拒绝不同内容覆盖、写后读回；管理员令牌/ACL 门禁不变；内存模型测试覆盖五种情形且本机无新注册表残留；DEVX-015
+    V3 文档同步；不改真实 HKLM/ACL
+  - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision=`owner_decision:DEVX-015A:2026-09-25:single_value_anchor_v1`；父任务
+    DEVX-015（GOV-007 P1-C）；蓝屏证据与清理记录 D:/Work/AITradingSystem_backups/2026-09-25/
+  docs_links:
+  - docs/requirements/DEVX-015A_Host_Registry_Single_Value_Anchor.md
+  terminal: false
+  canonical_row_sha256: 87f094b00b8ab01c3904fe2584f03df8b3d919db02c2b801cb5e9813f280b2a8
+last_event_id: task-event-c534e6a9eb4b3bdc02ddf466f6bf13c4
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: e2ec402ce6e9d6306446530ed9fdfd9a8ac2ef741a85a6d7af76a1c97608c4cd
