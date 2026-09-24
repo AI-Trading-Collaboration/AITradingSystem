@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-146_to_150
   task_id_sha256: 5b590cd43f74dae5de010cb1686e7fc8dcfc79eda80e35bf855c8a39afd4ed6f
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-146_to_150
   title: null
   domain: ETF portfolio research/Historical Replay Result Diagnosis and Advisory Rule
@@ -13,21 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 项目 owner 人工复核
-  requirement_refs:
-  - docs/requirements/TRADING-146_to_150_Historical_Replay_Result_Diagnosis_and_Advisory_Rule_Calibration.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-146_to_150_Historical_Replay_Result_Diagnosis_and_Advisory_Rule_Calibration.md`；承接
-    TRADING-141_to_145 已生成但仍 `PARTIAL` / `PENDING` / `INSUFFICIENT_DATA` 的 historical
-    replay 链路，新增 replay diagnosis、backfill repair、variant comparison、rule calibration
-    proposal 和 replay-to-forward bridge；本任务 ID 为聚合阶段编号，已知 `TRADING-146` 单项 PIT hardening
-    已在 completed register 中归档，本文使用 `TRADING-146_to_150` 避免 ID 复用；真实链路输出 diagnosis
-    `29bbc2d31984cd07`、repair `3b75fb568c6c1f9b`、comparison `5f9206ca138fe754`、calibration
-    `61055d6b9750da78`、bridge `2a8da46099be3c69`
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`replay-diagnosis run/report` 能读取 existing inventory/replay/backfill/sim/review
       artifacts 并输出 coverage、pending reason 和 artifact health，`validate-replay-diagnosis`
       PASS；`backfill-repair run/report` 能在不伪造未来数据、不覆盖原 backfill 的前提下输出 availability
@@ -42,7 +38,6 @@ task_record:
       family artifact validation 完成'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 707ce0bca40ad930b10f6c9c2f4c9143c9724da17e77fe3cc08d2d6d5c4a3a17
   cell_count: 8
@@ -145,20 +140,62 @@ events:
   evidence_refs:
   - sha256:707ce0bca40ad930b10f6c9c2f4c9143c9724da17e77fe3cc08d2d6d5c4a3a17
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-146_to_150
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:56:19+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 8298faa095febb017f7ace4b5d0d7666dd6a17ab
+  previous_state_event_id: legacy-import-707ce0bca40ad930b10f6c9c
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`replay-diagnosis run/report` 能读取 existing inventory/replay/backfill/sim/review
+      artifacts 并输出 coverage、pending reason 和 artifact health，`validate-replay-diagnosis`
+      PASS；`backfill-repair run/report` 能在不伪造未来数据、不覆盖原 backfill 的前提下输出 availability
+      delta 和 repair actions，`validate-backfill-repair` PASS；`variant-comparison run/report`
+      能比较 no_trade、consensus_target、limited_adjustment、owner_decision、paper_action
+      并在样本不足时 fail closed，`validate-variant-comparison` PASS；`rule-calibration run/report`
+      只输出 owner-approved proposals，`auto_apply=false`、`production_effect=none`、`broker_action_allowed=false`，`validate-rule-calibration`
+      PASS；`replay-forward-bridge run/report` 生成 forward tracking focus、weekly review
+      updates 和 Reader Brief section，`validate-replay-forward-bridge` PASS；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 root validation 和 dynamic-v3
+      family artifact validation 完成'
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-09:
+      新增并进入 IN_PROGRESS，原因：TRADING-141_to_145 已完成 historical replay workflow，但 current
+      artifacts 仍不足以形成可解释 performance conclusion；本阶段先诊断 PENDING/INSUFFICIENT_DATA
+      原因，再只在可审计 price/cache/calendar 条件下尝试 repair，随后比较 variants、输出 advisory calibration
+      proposals，并把结论接回 forward tracking；保持 no broker / no production / no auto policy
+      mutation。2026-06-09: 转入 VALIDATING；真实 diagnosis 显示 PIT_SAFE/PIT_WARNING/PIT_UNSAFE
+      = 0/2/0，backfill windows AVAILABLE/PENDING/INSUFFICIENT_DATA = 0/40/0，top pending
+      reason `future_window_not_reached`；repair 将 10 个 windows 修复为 AVAILABLE，仍有 30
+      个 PENDING、0 个 INSUFFICIENT_DATA；variant comparison best_variant=`consensus_target`、confidence=`LOW`，limited_adjustment
+      vs no_trade 仅 1d 有样本且 limited_adjustment better，5/10/20d 仍 `INSUFFICIENT_DATA`；rule
+      calibration proposal 为 `continue_forward_tracking` / `require_more_forward_data`，`auto_apply=false`、`owner_approval_required=true`；bridge
+      status=`INCREASE_FOCUS`，next_action=`require_more_forward_data`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d931711b5f0f5c3dbcf1322a5d5e39ae
 projection:
   legacy_first_eight_cells:
   - TRADING-146_to_150
   - ETF portfolio research/Historical Replay Result Diagnosis and Advisory Rule Calibration
   - P0
-  - VALIDATING
-  - 项目 owner 人工复核
-  - 详细拆解见 `docs/requirements/TRADING-146_to_150_Historical_Replay_Result_Diagnosis_and_Advisory_Rule_Calibration.md`；承接
-    TRADING-141_to_145 已生成但仍 `PARTIAL` / `PENDING` / `INSUFFICIENT_DATA` 的 historical
-    replay 链路，新增 replay diagnosis、backfill repair、variant comparison、rule calibration
-    proposal 和 replay-to-forward bridge；本任务 ID 为聚合阶段编号，已知 `TRADING-146` 单项 PIT hardening
-    已在 completed register 中归档，本文使用 `TRADING-146_to_150` 避免 ID 复用；真实链路输出 diagnosis
-    `29bbc2d31984cd07`、repair `3b75fb568c6c1f9b`、comparison `5f9206ca138fe754`、calibration
-    `61055d6b9750da78`、bridge `2a8da46099be3c69`
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`replay-diagnosis run/report` 能读取 existing inventory/replay/backfill/sim/review
     artifacts 并输出 coverage、pending reason 和 artifact health，`validate-replay-diagnosis`
     PASS；`backfill-repair run/report` 能在不伪造未来数据、不覆盖原 backfill 的前提下输出 availability
@@ -171,21 +208,21 @@ projection:
     runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
     tests、ruff、compileall、git diff check、dynamic-v3 root validation 和 dynamic-v3 family
     artifact validation 完成'
-  - '2026-06-09: 新增并进入 IN_PROGRESS，原因：TRADING-141_to_145 已完成 historical replay workflow，但
-    current artifacts 仍不足以形成可解释 performance conclusion；本阶段先诊断 PENDING/INSUFFICIENT_DATA
-    原因，再只在可审计 price/cache/calendar 条件下尝试 repair，随后比较 variants、输出 advisory calibration
-    proposals，并把结论接回 forward tracking；保持 no broker / no production / no auto policy
-    mutation。2026-06-09: 转入 VALIDATING；真实 diagnosis 显示 PIT_SAFE/PIT_WARNING/PIT_UNSAFE
-    = 0/2/0，backfill windows AVAILABLE/PENDING/INSUFFICIENT_DATA = 0/40/0，top pending
-    reason `future_window_not_reached`；repair 将 10 个 windows 修复为 AVAILABLE，仍有 30 个
-    PENDING、0 个 INSUFFICIENT_DATA；variant comparison best_variant=`consensus_target`、confidence=`LOW`，limited_adjustment
-    vs no_trade 仅 1d 有样本且 limited_adjustment better，5/10/20d 仍 `INSUFFICIENT_DATA`；rule
-    calibration proposal 为 `continue_forward_tracking` / `require_more_forward_data`，`auto_apply=false`、`owner_approval_required=true`；bridge
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-09:
+    新增并进入 IN_PROGRESS，原因：TRADING-141_to_145 已完成 historical replay workflow，但 current
+    artifacts 仍不足以形成可解释 performance conclusion；本阶段先诊断 PENDING/INSUFFICIENT_DATA 原因，再只在可审计
+    price/cache/calendar 条件下尝试 repair，随后比较 variants、输出 advisory calibration proposals，并把结论接回
+    forward tracking；保持 no broker / no production / no auto policy mutation。2026-06-09:
+    转入 VALIDATING；真实 diagnosis 显示 PIT_SAFE/PIT_WARNING/PIT_UNSAFE = 0/2/0，backfill
+    windows AVAILABLE/PENDING/INSUFFICIENT_DATA = 0/40/0，top pending reason `future_window_not_reached`；repair
+    将 10 个 windows 修复为 AVAILABLE，仍有 30 个 PENDING、0 个 INSUFFICIENT_DATA；variant comparison
+    best_variant=`consensus_target`、confidence=`LOW`，limited_adjustment vs no_trade
+    仅 1d 有样本且 limited_adjustment better，5/10/20d 仍 `INSUFFICIENT_DATA`；rule calibration
+    proposal 为 `continue_forward_tracking` / `require_more_forward_data`，`auto_apply=false`、`owner_approval_required=true`；bridge
     status=`INCREASE_FOCUS`，next_action=`require_more_forward_data`。'
-  docs_links:
-  - docs/requirements/TRADING-146_to_150_Historical_Replay_Result_Diagnosis_and_Advisory_Rule_Calibration.md
-  terminal: false
-  canonical_row_sha256: 707ce0bca40ad930b10f6c9c2f4c9143c9724da17e77fe3cc08d2d6d5c4a3a17
-last_event_id: legacy-import-707ce0bca40ad930b10f6c9c
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: f56b2ead13dbdf3baf6840e21a6f966199360a9f37292267548fbfb196819e82
+last_event_id: task-event-d931711b5f0f5c3dbcf1322a5d5e39ae
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 26f352a74835890325ea7b76f871c41682776703ddcd284159637c162d390ef8
+fragment_checksum: 8962800d26af35ce1741a40dbccbda40c6d48bf8cf70fdce974bc9e844f8fbc8
