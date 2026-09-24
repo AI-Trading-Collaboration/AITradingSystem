@@ -14,16 +14,14 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner gives exact numeric review and appoints or confirms an
-    independent reviewer; any semantic or value change requires a new version
+  next_owner: Project Owner（pi 迁移后）
   requirement_refs:
   - docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: V1 serial semantics are DRAFT_COMPLETE_PENDING_OWNER_AND_INDEPENDENT_REVIEW.
-    Real evidence remains AUTHORITY_UNAVAILABLE; no executable DQ authority or freeze
-    exists.
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移
+    pi 后重启 growth action-value / QQQ options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Preserve contract file/canonical SHA-256 a60b6c71e492aacac31d8fc9a4f4d406659679c6a1f88ac9e53664d49134d138/d7c6bfe8fcb8123be6b8d6f87c5ba72a90db3c5ac50af041d1b3f5eefcc32f68
@@ -158,28 +156,58 @@ events:
   - change:trading-2542b-contract-draft-owner-independent-review-blocked-20260823-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-dd62290c11f3d0a93dc5062695373612
+- schema_version: task_event.v1
+  task_id: TRADING-2542B_GROWTH_ACTION_VALUE_CANONICAL_DQ_PIT_SERIAL_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:31:35+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: e27eb98667e98b5b7f64dc51028a0f2c59f5e592
+  previous_state_event_id: task-event-dd62290c11f3d0a93dc5062695373612
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: Project Owner（pi 迁移后）
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移 pi 后重启 growth
+      action-value / QQQ options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
+    acceptance_criteria: Preserve contract file/canonical SHA-256 a60b6c71e492aacac31d8fc9a4f4d406659679c6a1f88ac9e53664d49134d138/d7c6bfe8fcb8123be6b8d6f87c5ba72a90db3c5ac50af041d1b3f5eefcc32f68
+      and unchanged V2 identity; require Owner exact approval plus independent review
+      in a new version; keep every DQ, empirical, external, and trading authorization
+      false.
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第3/4条：DEFERRED；agent_harness=claude_code；原备注：Requirement:
+      docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md.
+      Implementation and four formal tiers pass; Full final-tree closeout remains
+      an engineering publication gate and does not provide numeric approval. Current
+      terminal is owner/reviewer blocked, not strategy or DQ PASS.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-08e32973bb666ed6577216752058fe8b
 projection:
   legacy_first_eight_cells:
   - TRADING-2542B_GROWTH_ACTION_VALUE_CANONICAL_DQ_PIT_SERIAL_CONTRACT_V1
   - Strategy governance / growth action-value canonical DQ/PIT serial contract V1
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner gives exact numeric review and appoints or confirms an independent
-    reviewer; any semantic or value change requires a new version
-  - V1 serial semantics are DRAFT_COMPLETE_PENDING_OWNER_AND_INDEPENDENT_REVIEW. Real
-    evidence remains AUTHORITY_UNAVAILABLE; no executable DQ authority or freeze exists.
+  - DEFERRED
+  - Project Owner（pi 迁移后）
+  - 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移 pi 后重启 growth action-value / QQQ
+    options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
   - Preserve contract file/canonical SHA-256 a60b6c71e492aacac31d8fc9a4f4d406659679c6a1f88ac9e53664d49134d138/d7c6bfe8fcb8123be6b8d6f87c5ba72a90db3c5ac50af041d1b3f5eefcc32f68
     and unchanged V2 identity; require Owner exact approval plus independent review
     in a new version; keep every DQ, empirical, external, and trading authorization
     false.
-  - 'Requirement: docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md.
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第3/4条：DEFERRED；agent_harness=claude_code；原备注：Requirement:
+    docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md.
     Implementation and four formal tiers pass; Full final-tree closeout remains an
     engineering publication gate and does not provide numeric approval. Current terminal
     is owner/reviewer blocked, not strategy or DQ PASS.'
   docs_links:
   - docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md
   terminal: false
-  canonical_row_sha256: 0d0b13f2873e43f7298f786021b9e208a8714dde1d0e5abf365f507c6bcb97f6
-last_event_id: task-event-dd62290c11f3d0a93dc5062695373612
+  canonical_row_sha256: e607028c0b8210377c6a519ee6ce97a44d6a39a1b31dfd3f60c7698cff851c18
+last_event_id: task-event-08e32973bb666ed6577216752058fe8b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 938a5c59e402f92e0116b3f3ab0b253f786474506bd6fb12d3899526c468bdb2
+fragment_checksum: 962e907536253154b06bb163af18f247c558dd417e3c1e2c43da1908c27d9fed
