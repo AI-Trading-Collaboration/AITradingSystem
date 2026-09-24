@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-530_to_536_B2_RISK_OVERLAY_AND_B3_BRANCHING
   task_id_sha256: 38b5b8447fdcd223f429701093d8bc132ff6e9cd54c63e625086b346c90d5d6a
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-530_to_536_B2_RISK_OVERLAY_AND_B3_BRANCHING
   title: null
   domain: ETF portfolio/weight research B2 risk-overlay path and B3 redesign branching
@@ -13,20 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-530_to_536_B2_Risk_Overlay_and_B3_Branching.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-530_to_536_B2_Risk_Overlay_and_B3_Branching.md`；在
-    TRADING-525~529 后只读评估 B2 risk-heavy windows、B3 signal direction、B1 execution wrapper
-    adoption、ablation path branching、B2-only checkpoint、B3 redesign hypotheses 和 post-branching
-    program checkpoint；不得继续 B5/B6/v3，不得调 B2/B3 参数，不得改 strategy logic，不得访问 untouched
-    holdout，不得产生 official target weights、paper-shadow activation、broker/order/live/production
-    mutation
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 输出 `b2_risk_heavy_window_evaluation.json/md`、`b3_slow_tilt_signal_direction_audit.json/md`、`b1_execution_control_adoption_review.json/md`、`ablation_path_branching_decision.json/md`、`b2_only_research_candidate_checkpoint.json/md`、`b3_redesign_hypothesis_pack.json/md`
       和 `research_program_checkpoint_after_branching.json/md`；必须包含 B2 trigger/return/drawdown/turnover/cost/false-risk-off/re-entry/V-shaped
       opportunity-cost、B3 asset-level wrong-tilt/contribution/lag/noise diagnosis、B1
@@ -35,7 +32,6 @@ task_record:
       visibility、JSON parse、ruff、compileall、`git diff --check` 通过
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: ed6aa16d88bebeec7747a7eb727febe70ca8bd1fdcaa3c55af79ac0a6dc68153
   cell_count: 8
@@ -105,33 +101,63 @@ events:
   evidence_refs:
   - sha256:ed6aa16d88bebeec7747a7eb727febe70ca8bd1fdcaa3c55af79ac0a6dc68153
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-530_to_536_B2_RISK_OVERLAY_AND_B3_BRANCHING
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:56:22+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: ecc5b4524c82ef11c54029f294749bc0836ea5da
+  previous_state_event_id: legacy-import-ed6aa16d88bebeec7747a7eb
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 输出 `b2_risk_heavy_window_evaluation.json/md`、`b3_slow_tilt_signal_direction_audit.json/md`、`b1_execution_control_adoption_review.json/md`、`ablation_path_branching_decision.json/md`、`b2_only_research_candidate_checkpoint.json/md`、`b3_redesign_hypothesis_pack.json/md`
+      和 `research_program_checkpoint_after_branching.json/md`；必须包含 B2 trigger/return/drawdown/turnover/cost/false-risk-off/re-entry/V-shaped
+      opportunity-cost、B3 asset-level wrong-tilt/contribution/lag/noise diagnosis、B1
+      wrapper decision、selected branch/rejected branches/blocked modules、B2-only checkpoint、B3
+      redesign hypotheses、B5/B6/v3 allowed flags 和 safety boundary；focused tests、contract/data-quality
+      visibility、JSON parse、ruff、compileall、`git diff --check` 通过
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-19:
+      新增并进入 IN_PROGRESS，原因：owner 附件要求在 TRADING-525~529 后停止 B4->B5 路径，转向 B2 risk-overlay
+      path 和 B3 redesign decision plan；当前 `b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。2026-06-19:
+      实现完成并转入 VALIDATING；`branch-b2-b3` 输出 TRADING-530=`B2_RISK_OVERLAY_MIXED`、TRADING-531=`B3_REDESIGN_REQUIRED`、TRADING-532=`B1_OPTIONAL_WRAPPER`、TRADING-533=`CONTINUE_B2_ONLY_PATH`、TRADING-534=`B2_ONLY_NEEDS_MORE_EVIDENCE`、TRADING-535=`B3_REDESIGN_HYPOTHESES_READY`、TRADING-536=`CONTINUE_B2_ONLY_RESEARCH`，且
+      `b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-712c9272240403ee60d494e1b9d8cd23
 projection:
   legacy_first_eight_cells:
   - TRADING-530_to_536_B2_RISK_OVERLAY_AND_B3_BRANCHING
   - ETF portfolio/weight research B2 risk-overlay path and B3 redesign branching checkpoint
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详细拆解见 `docs/requirements/TRADING-530_to_536_B2_Risk_Overlay_and_B3_Branching.md`；在
-    TRADING-525~529 后只读评估 B2 risk-heavy windows、B3 signal direction、B1 execution wrapper
-    adoption、ablation path branching、B2-only checkpoint、B3 redesign hypotheses 和 post-branching
-    program checkpoint；不得继续 B5/B6/v3，不得调 B2/B3 参数，不得改 strategy logic，不得访问 untouched
-    holdout，不得产生 official target weights、paper-shadow activation、broker/order/live/production
-    mutation
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 输出 `b2_risk_heavy_window_evaluation.json/md`、`b3_slow_tilt_signal_direction_audit.json/md`、`b1_execution_control_adoption_review.json/md`、`ablation_path_branching_decision.json/md`、`b2_only_research_candidate_checkpoint.json/md`、`b3_redesign_hypothesis_pack.json/md`
     和 `research_program_checkpoint_after_branching.json/md`；必须包含 B2 trigger/return/drawdown/turnover/cost/false-risk-off/re-entry/V-shaped
     opportunity-cost、B3 asset-level wrong-tilt/contribution/lag/noise diagnosis、B1
     wrapper decision、selected branch/rejected branches/blocked modules、B2-only checkpoint、B3
     redesign hypotheses、B5/B6/v3 allowed flags 和 safety boundary；focused tests、contract/data-quality
     visibility、JSON parse、ruff、compileall、`git diff --check` 通过
-  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 附件要求在 TRADING-525~529 后停止 B4->B5 路径，转向
-    B2 risk-overlay path 和 B3 redesign decision plan；当前 `b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。2026-06-19:
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-19:
+    新增并进入 IN_PROGRESS，原因：owner 附件要求在 TRADING-525~529 后停止 B4->B5 路径，转向 B2 risk-overlay
+    path 和 B3 redesign decision plan；当前 `b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。2026-06-19:
     实现完成并转入 VALIDATING；`branch-b2-b3` 输出 TRADING-530=`B2_RISK_OVERLAY_MIXED`、TRADING-531=`B3_REDESIGN_REQUIRED`、TRADING-532=`B1_OPTIONAL_WRAPPER`、TRADING-533=`CONTINUE_B2_ONLY_PATH`、TRADING-534=`B2_ONLY_NEEDS_MORE_EVIDENCE`、TRADING-535=`B3_REDESIGN_HYPOTHESES_READY`、TRADING-536=`CONTINUE_B2_ONLY_RESEARCH`，且
     `b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`。'
-  docs_links:
-  - docs/requirements/TRADING-530_to_536_B2_Risk_Overlay_and_B3_Branching.md
-  terminal: false
-  canonical_row_sha256: ed6aa16d88bebeec7747a7eb727febe70ca8bd1fdcaa3c55af79ac0a6dc68153
-last_event_id: legacy-import-ed6aa16d88bebeec7747a7eb
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: facefb4ad5e0b31fa6d27b65cfbc569862059c33d511afbe829c3abff0858760
+last_event_id: task-event-712c9272240403ee60d494e1b9d8cd23
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 83c0b8b4cc03d4551386bf1393c6696b218da221570f1563e2794309b21d56a2
+fragment_checksum: bb265d203bc1acf5f599200791e1df90a46804f4eec1526c66d7d075fcf97bb0
