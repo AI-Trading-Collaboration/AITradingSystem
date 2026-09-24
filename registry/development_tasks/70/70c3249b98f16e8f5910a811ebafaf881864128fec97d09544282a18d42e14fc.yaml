@@ -14,19 +14,14 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner / exact-freeze the retained signal identity, source-enum
-    mapping and reviewed selection/execution/accounting/lifecycle policy values before
-    any QC research run
+  next_owner: Project Owner（pi 迁移后）
   requirement_refs:
   - docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 'Static scope-correction contract is implemented:
-    existing strategy signal is sole direction authority, QC owns option implementation/P&L,
-    and FMP/Cboe/Fed/BLS/BEA are optional overlays. No retained exact signal package
-    or reviewed mapping exists, and all executable option policy axes remain OWNER_REVIEW_REQUIRED_BASELINE;
-    therefore no legal manifest or backtest can be dispatched.'
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移
+    pi 后重启 growth action-value / QQQ options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Owner exact-freezes the signal artifact and source-enum to LONG_CALL/LONG_PUT/FLAT
@@ -108,33 +103,60 @@ events:
   - change:trading-2542h-static-contract-ready-owner-policy-block-20260828-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-da091d0f1360058f09714f99e996e3b5
+- schema_version: task_event.v1
+  task_id: TRADING-2542H_QQQ_OPTIONS_FROZEN_SIGNAL_IMPLEMENTATION_RETEST_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:32:17+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: 2dca8cc68842c587f41aa8bcb85ea4aca010dcc7
+  previous_state_event_id: task-event-da091d0f1360058f09714f99e996e3b5
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: Project Owner（pi 迁移后）
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移 pi 后重启 growth
+      action-value / QQQ options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
+    acceptance_criteria: Owner exact-freezes the signal artifact and source-enum to
+      LONG_CALL/LONG_PUT/FLAT mapping, including defensive/SGOV handling, plus all
+      relevant TRADING-2509 selection/execution/accounting/lifecycle slots. A separate
+      bounded QC authorization then requires exact manifest replay PASS; local repricing/raw
+      option export remain prohibited and paper/live/broker/production remain zero.
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第3/4条：DEFERRED；agent_harness=claude_code；原备注：Supporting
+      requirement: docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md.
+      contract file/canonical SHA=d86e294f2be3ad8b8f601953ecd5e2b90d71317bca6dd197096de0db196dc80a/133eb368414d9f93429818a8a098df4d9bd0eed994ef58ca3b7615f31363d496;
+      terminal=OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST; focused/adjacent=91
+      passed plus Atlas targeted PASS; QC/provider/real DQ/backtest not run; orders/fills/positions/production/broker=0.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-4aded46127b637ec670ab17cf2cac75e
 projection:
   legacy_first_eight_cells:
   - TRADING-2542H_QQQ_OPTIONS_FROZEN_SIGNAL_IMPLEMENTATION_RETEST_CONTRACT_V1
   - QQQ options frozen-signal implementation retest scope-correction contract V1
   - P0
-  - BLOCKED_OWNER_INPUT
-  - Project Owner / exact-freeze the retained signal identity, source-enum mapping
-    and reviewed selection/execution/accounting/lifecycle policy values before any
-    QC research run
-  - 'Static scope-correction contract is implemented: existing strategy signal is
-    sole direction authority, QC owns option implementation/P&L, and FMP/Cboe/Fed/BLS/BEA
-    are optional overlays. No retained exact signal package or reviewed mapping exists,
-    and all executable option policy axes remain OWNER_REVIEW_REQUIRED_BASELINE; therefore
-    no legal manifest or backtest can be dispatched.'
+  - DEFERRED
+  - Project Owner（pi 迁移后）
+  - 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移 pi 后重启 growth action-value / QQQ
+    options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
   - Owner exact-freezes the signal artifact and source-enum to LONG_CALL/LONG_PUT/FLAT
     mapping, including defensive/SGOV handling, plus all relevant TRADING-2509 selection/execution/accounting/lifecycle
     slots. A separate bounded QC authorization then requires exact manifest replay
     PASS; local repricing/raw option export remain prohibited and paper/live/broker/production
     remain zero.
-  - 'Supporting requirement: docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md.
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第3/4条：DEFERRED；agent_harness=claude_code；原备注：Supporting
+    requirement: docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md.
     contract file/canonical SHA=d86e294f2be3ad8b8f601953ecd5e2b90d71317bca6dd197096de0db196dc80a/133eb368414d9f93429818a8a098df4d9bd0eed994ef58ca3b7615f31363d496;
     terminal=OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST; focused/adjacent=91 passed
     plus Atlas targeted PASS; QC/provider/real DQ/backtest not run; orders/fills/positions/production/broker=0.'
   docs_links:
   - docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md
   terminal: false
-  canonical_row_sha256: 32666e8ab3a18088c465279b7b6c0de14a2b70bb7b6be28cc8b0b6589a7ddc95
-last_event_id: task-event-da091d0f1360058f09714f99e996e3b5
+  canonical_row_sha256: 9eced5d6e440e2628c27a26a91541837e5bfdbb4185c76b1f29bb5b23084ffb7
+last_event_id: task-event-4aded46127b637ec670ab17cf2cac75e
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f3bc4b4aaf02d7a8faa9b1dea1986555303660ea6db43b4d5b03f9d8b3f83c2b
+fragment_checksum: d2226addb67f7b17a016834c96a567bd45d7a3109c01d06455a4725526b92b95
