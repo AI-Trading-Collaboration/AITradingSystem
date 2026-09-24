@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-326_to_335_SIGNAL_FEATURE_DIAGNOSIS_AND_CANDIDATE_QUALITY_FILTER_PIPELINE
   task_id_sha256: 00f45471bb02c2bbc3b7da3c6f07715f7757e3a985608e3460bd2eb6d7f19798
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-326_to_335_SIGNAL_FEATURE_DIAGNOSIS_AND_CANDIDATE_QUALITY_FILTER_PIPELINE
   title: null
   domain: ETF portfolio/dynamic v3 rescue signal feature diagnosis and candidate quality
@@ -13,21 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 项目 owner 后续复核 + signal filter 后续策略决策
-  requirement_refs:
-  - docs/requirements/TRADING-326_to_335_Signal_Feature_Diagnosis_and_Candidate_Quality_Filter_Pipeline.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-326_to_335_Signal_Feature_Diagnosis_and_Candidate_Quality_Filter_Pipeline.md`；承接
-    TRADING-316～325 的 `SIGNAL_QUALITY` / `signal_churn` 结论，新增 signal failure taxonomy、candidate
-    signal ledger、signal churn root cause、regime mismatch attribution、candidate quality
-    filter design、filtered candidate backfill、filtered vs original comparison、signal
-    persistence / disagreement gate experiment、filtered candidate promotion review
-    和 owner signal roadmap；不得 broker、order、official target weights、production mutation、auto
-    owner approval、auto paper shadow primary switch 或修改 `position_advisory_v1.yaml`
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 10 组 CLI 和对应 validators 可运行；taxonomy config 可验证；candidate signal ledger
       / root cause / regime mismatch / filter design / filtered backfill / comparison
       / signal gate experiment / promotion review / owner roadmap artifacts 可读；filtered
@@ -40,7 +36,6 @@ task_record:
       Brief/quality 和 full pytest 完成
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 839b07d13dc5e95d89ec17694ece9ddd1f0c6a4c7c85cfa8ff0be0042539224e
   cell_count: 8
@@ -163,21 +158,68 @@ events:
   evidence_refs:
   - sha256:839b07d13dc5e95d89ec17694ece9ddd1f0c6a4c7c85cfa8ff0be0042539224e
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-326_to_335_SIGNAL_FEATURE_DIAGNOSIS_AND_CANDIDATE_QUALITY_FILTER_PIPELINE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:53:54+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: dd503d68442e1c2c0b49daeaa1e10959022d8b31
+  previous_state_event_id: legacy-import-839b07d13dc5e95d89ec1769
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 10 组 CLI 和对应 validators 可运行；taxonomy config 可验证；candidate
+      signal ledger / root cause / regime mismatch / filter design / filtered backfill
+      / comparison / signal gate experiment / promotion review / owner roadmap artifacts
+      可读；filtered backfill 通过 cached data quality gate 或明确复用已验证 source artifact 并披露
+      data quality status；报告回答 signal_churn 根因、candidate/regime 不稳来源、是否使用 quality
+      filter / persistence / high disagreement hold、filtered candidate 是否优于原始 candidate、是否有
+      formalize 候选以及 no official target / no broker / no production；README、operations
+      runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused
+      tests、ruff、compileall、git diff check、dynamic-v3 validation、artifact family validation、documentation
+      contract、Reader Brief/quality 和 full pytest 完成
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-14:
+      新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-326～335；P0 聚焦 signal-level root
+      cause、candidate quality filters、filtered-vs-original evidence、promotion review
+      fail-close 和 owner-readable signal roadmap。2026-06-14: 实现完成并转入 VALIDATING；真实链路输出
+      taxonomy `signal-failure-taxonomy_4dd4a4a1a340799b`=16 failure modes，ledger
+      `candidate-signal-ledger_0ba7661d9a7dba34` dominant failure=`direction_flip_high`
+      / `data_quality_status=PASS_WITH_WARNINGS`，churn root cause `signal-churn-root-cause_79bdbb1a94fe7547`
+      dominant=`top_candidate_rotation`，regime mismatch `regime-mismatch-attribution_e0cf4b6989b248b4`
+      dominant=`risk_increase_during_drawdown`，filter design `candidate-quality-filter-design_edafde5d99e021fe`=5
+      filters，filtered backfill `filtered-candidate-backfill_e0b3be39c9a9a33f`=5 variants
+      / `data_quality_status=PASS_WITH_WARNINGS`，comparison `filtered-vs-original-comparison_e77634a8cf5851b3`
+      best=`median_plus_regime_mismatch_filter` / recommendation=`PROMOTE_FOR_REVIEW`，gate
+      experiment `signal-gate-experiment_cda00c7a3e8dc1ee` next=`continue_forward_confirmation`
+      / formalization_ready=false，promotion review `filtered-candidate-promotion-review_ffdb14e1b2782e02`
+      decision=`CONTINUE_TESTING`，owner roadmap `owner-signal-roadmap_64c7d31037ee42a4`
+      action=`continue_forward_confirmation_and_signal_gate_evidence`；10 个新增 validators、dynamic-v3
+      validation、artifact family validation、documentation contract、Reader Brief/quality、report
+      index、ruff、compileall、git diff check、focused pytest 和 full pytest `2478 passed,
+      640 warnings` 已通过；保持 no official target / no broker / no production。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0f8a1caa8051f79bda8bf5cb01df0325
 projection:
   legacy_first_eight_cells:
   - TRADING-326_to_335_SIGNAL_FEATURE_DIAGNOSIS_AND_CANDIDATE_QUALITY_FILTER_PIPELINE
   - ETF portfolio/dynamic v3 rescue signal feature diagnosis and candidate quality
     filter pipeline
   - P0
-  - VALIDATING
-  - 项目 owner 后续复核 + signal filter 后续策略决策
-  - 详细拆解见 `docs/requirements/TRADING-326_to_335_Signal_Feature_Diagnosis_and_Candidate_Quality_Filter_Pipeline.md`；承接
-    TRADING-316～325 的 `SIGNAL_QUALITY` / `signal_churn` 结论，新增 signal failure taxonomy、candidate
-    signal ledger、signal churn root cause、regime mismatch attribution、candidate quality
-    filter design、filtered candidate backfill、filtered vs original comparison、signal
-    persistence / disagreement gate experiment、filtered candidate promotion review
-    和 owner signal roadmap；不得 broker、order、official target weights、production mutation、auto
-    owner approval、auto paper shadow primary switch 或修改 `position_advisory_v1.yaml`
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 10 组 CLI 和对应 validators 可运行；taxonomy config 可验证；candidate signal ledger / root
     cause / regime mismatch / filter design / filtered backfill / comparison / signal
     gate experiment / promotion review / owner roadmap artifacts 可读；filtered backfill
@@ -188,28 +230,27 @@ projection:
     registry、artifact catalog、requirements、Reader Brief、focused tests、ruff、compileall、git
     diff check、dynamic-v3 validation、artifact family validation、documentation contract、Reader
     Brief/quality 和 full pytest 完成
-  - '2026-06-14: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-326～335；P0 聚焦 signal-level
-    root cause、candidate quality filters、filtered-vs-original evidence、promotion review
-    fail-close 和 owner-readable signal roadmap。2026-06-14: 实现完成并转入 VALIDATING；真实链路输出
-    taxonomy `signal-failure-taxonomy_4dd4a4a1a340799b`=16 failure modes，ledger `candidate-signal-ledger_0ba7661d9a7dba34`
-    dominant failure=`direction_flip_high` / `data_quality_status=PASS_WITH_WARNINGS`，churn
-    root cause `signal-churn-root-cause_79bdbb1a94fe7547` dominant=`top_candidate_rotation`，regime
-    mismatch `regime-mismatch-attribution_e0cf4b6989b248b4` dominant=`risk_increase_during_drawdown`，filter
-    design `candidate-quality-filter-design_edafde5d99e021fe`=5 filters，filtered backfill
-    `filtered-candidate-backfill_e0b3be39c9a9a33f`=5 variants / `data_quality_status=PASS_WITH_WARNINGS`，comparison
-    `filtered-vs-original-comparison_e77634a8cf5851b3` best=`median_plus_regime_mismatch_filter`
-    / recommendation=`PROMOTE_FOR_REVIEW`，gate experiment `signal-gate-experiment_cda00c7a3e8dc1ee`
-    next=`continue_forward_confirmation` / formalization_ready=false，promotion review
-    `filtered-candidate-promotion-review_ffdb14e1b2782e02` decision=`CONTINUE_TESTING`，owner
-    roadmap `owner-signal-roadmap_64c7d31037ee42a4` action=`continue_forward_confirmation_and_signal_gate_evidence`；10
-    个新增 validators、dynamic-v3 validation、artifact family validation、documentation
-    contract、Reader Brief/quality、report index、ruff、compileall、git diff check、focused
-    pytest 和 full pytest `2478 passed, 640 warnings` 已通过；保持 no official target / no
-    broker / no production。'
-  docs_links:
-  - docs/requirements/TRADING-326_to_335_Signal_Feature_Diagnosis_and_Candidate_Quality_Filter_Pipeline.md
-  terminal: false
-  canonical_row_sha256: 839b07d13dc5e95d89ec17694ece9ddd1f0c6a4c7c85cfa8ff0be0042539224e
-last_event_id: legacy-import-839b07d13dc5e95d89ec1769
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-14:
+    新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-326～335；P0 聚焦 signal-level root cause、candidate
+    quality filters、filtered-vs-original evidence、promotion review fail-close 和 owner-readable
+    signal roadmap。2026-06-14: 实现完成并转入 VALIDATING；真实链路输出 taxonomy `signal-failure-taxonomy_4dd4a4a1a340799b`=16
+    failure modes，ledger `candidate-signal-ledger_0ba7661d9a7dba34` dominant failure=`direction_flip_high`
+    / `data_quality_status=PASS_WITH_WARNINGS`，churn root cause `signal-churn-root-cause_79bdbb1a94fe7547`
+    dominant=`top_candidate_rotation`，regime mismatch `regime-mismatch-attribution_e0cf4b6989b248b4`
+    dominant=`risk_increase_during_drawdown`，filter design `candidate-quality-filter-design_edafde5d99e021fe`=5
+    filters，filtered backfill `filtered-candidate-backfill_e0b3be39c9a9a33f`=5 variants
+    / `data_quality_status=PASS_WITH_WARNINGS`，comparison `filtered-vs-original-comparison_e77634a8cf5851b3`
+    best=`median_plus_regime_mismatch_filter` / recommendation=`PROMOTE_FOR_REVIEW`，gate
+    experiment `signal-gate-experiment_cda00c7a3e8dc1ee` next=`continue_forward_confirmation`
+    / formalization_ready=false，promotion review `filtered-candidate-promotion-review_ffdb14e1b2782e02`
+    decision=`CONTINUE_TESTING`，owner roadmap `owner-signal-roadmap_64c7d31037ee42a4`
+    action=`continue_forward_confirmation_and_signal_gate_evidence`；10 个新增 validators、dynamic-v3
+    validation、artifact family validation、documentation contract、Reader Brief/quality、report
+    index、ruff、compileall、git diff check、focused pytest 和 full pytest `2478 passed,
+    640 warnings` 已通过；保持 no official target / no broker / no production。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: b27e2cf91cf9f49fb76d8828b933723dd697aef6eb91fd3acc5c95893d3a31a0
+last_event_id: task-event-0f8a1caa8051f79bda8bf5cb01df0325
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f1d38ccd73272396fce05b6a12490b8f031aee2e9cddde4a62ce5d2aa5df4cb4
+fragment_checksum: 3ab2106ba32dd8047a819b7e235bc3cedc125ee06e2a6cd642d21037d80a3c84
