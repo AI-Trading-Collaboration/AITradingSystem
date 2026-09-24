@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-770_to_774_CONTROLLED_STRATEGY_CANDIDATE_RESEARCH
   task_id_sha256: 94e3b2ec49830a912e5fab06751cbaed18877eeb20cb9d2e7958fa0e8dffdc41
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-770_to_774_CONTROLLED_STRATEGY_CANDIDATE_RESEARCH
   title: null
   domain: Controlled strategy research / value surface, regret state machine, simple
@@ -13,18 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-770_to_774_Controlled_Strategy_Candidate_Research.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-770_to_774_Controlled_Strategy_Candidate_Research.md`；在
-    TRADING-765～769 controlled research expansion 后启动第一批受控策略候选研究；所有候选只能 validation-only
-    / observe-only，不得进入 promotion、paper-shadow、production review、official weight 或
-    broker/order 路径
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 CLI：`aits research strategies value-surface-controlled-prototype`、`regret-state-machine-controlled-prototype`、`simple-strategy-selector-pilot`、`gbdt-action-utility-baseline`
       和 `aits research ops controlled-strategy-batch-review`；输出附件要求的 JSON/Markdown
       artifacts；每个候选必须包含 data_foundation_status、evidence_source_mix、control_results、benchmark_comparison、remaining_blockers
@@ -35,7 +34,6 @@ task_record:
       必须为所有候选给出 `CONTINUE
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 9ed6ef3549112b7924291062fe5d7cb5a48fad493e339dc0fa2b4fb7af5a1102
   cell_count: 14
@@ -122,18 +120,48 @@ events:
   evidence_refs:
   - sha256:9ed6ef3549112b7924291062fe5d7cb5a48fad493e339dc0fa2b4fb7af5a1102
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-770_to_774_CONTROLLED_STRATEGY_CANDIDATE_RESEARCH
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:18:01+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 86e36db6079bcd34aadfe5d6e832235742247bb7
+  previous_state_event_id: legacy-import-9ed6ef3549112b7924291062
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 CLI：`aits research strategies value-surface-controlled-prototype`、`regret-state-machine-controlled-prototype`、`simple-strategy-selector-pilot`、`gbdt-action-utility-baseline`
+      和 `aits research ops controlled-strategy-batch-review`；输出附件要求的 JSON/Markdown
+      artifacts；每个候选必须包含 data_foundation_status、evidence_source_mix、control_results、benchmark_comparison、remaining_blockers
+      和 safety flags；value surface 必须有 horizon leakage audit、sample quality 和 benchmark
+      comparison；state machine 必须有可解释 transition、regret mapping、turnover/whipsaw guardrail；selector
+      必须比较 best simple benchmark 并披露 overfit warning；GBDT diagnostic 必须输出 split、negative
+      control、random label、feature importance 和 no future feature audit；review board
+      必须为所有候选给出 `CONTINUE
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a043cf2af1ad5c23ff5235d6f2d2491b
 projection:
   legacy_first_eight_cells:
   - TRADING-770_to_774_CONTROLLED_STRATEGY_CANDIDATE_RESEARCH
   - Controlled strategy research / value surface, regret state machine, simple ensemble,
     GBDT utility, and batch review
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-770_to_774_Controlled_Strategy_Candidate_Research.md`；在
-    TRADING-765～769 controlled research expansion 后启动第一批受控策略候选研究；所有候选只能 validation-only
-    / observe-only，不得进入 promotion、paper-shadow、production review、official weight 或
-    broker/order 路径
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 CLI：`aits research strategies value-surface-controlled-prototype`、`regret-state-machine-controlled-prototype`、`simple-strategy-selector-pilot`、`gbdt-action-utility-baseline`
     和 `aits research ops controlled-strategy-batch-review`；输出附件要求的 JSON/Markdown artifacts；每个候选必须包含
     data_foundation_status、evidence_source_mix、control_results、benchmark_comparison、remaining_blockers
@@ -142,11 +170,10 @@ projection:
     必须比较 best simple benchmark 并披露 overfit warning；GBDT diagnostic 必须输出 split、negative
     control、random label、feature importance 和 no future feature audit；review board
     必须为所有候选给出 `CONTINUE
-  - WATCHLIST
-  docs_links:
-  - docs/requirements/TRADING-770_to_774_Controlled_Strategy_Candidate_Research.md
-  terminal: false
-  canonical_row_sha256: fe35f404f89fda0d988617079f92a6055fc6e7d40a567f2c23a7550e4a9b960f
-last_event_id: legacy-import-9ed6ef3549112b7924291062
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 71cf481f21fb2bd42217a4719a0901875b2c9610241f532c2cf8d4c2a423fba3
+last_event_id: task-event-a043cf2af1ad5c23ff5235d6f2d2491b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: a7cd1e719328c30f18402dc7237b15e1c40df8d8e633592aaf5901936b320328
+fragment_checksum: 5fc89de96c9641228ff2a49e3a6955b04745c238a5bdc1cd4a8f7bfa33aba253
