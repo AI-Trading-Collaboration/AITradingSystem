@@ -215,6 +215,30 @@ DEVX-015 的"做完全部 106 项"决定不在本变更里写入 DEVX-015 的任
 | 12 | 11 条 BLOCKED_EXTERNAL | DEFERRED，退出条件：外部条件出现时重开 |
 | 13 | VALIDATING 批量规则 | 实现完成、已有 formal PASS、只等 owner 复核且 30 天无新证据 → DONE（`closed_without_owner_review`）；等 forward/shadow 样本 → DEFERRED；涉及 production/broker/阈值的保留给 owner 逐条复核 |
 
+### 决策包第13条执行（2026-09-24）
+
+Owner 在对话中确认分类并授权执行与推送（"确认，按这个分类执行并推送"）。执行前 VALIDATING 共 273 条：
+
+| 处置 | 数量 | 说明 |
+|---|---|---|
+| DONE（`closed_without_owner_review`） | 216 | 实现已在 main、相关测试包含在最近一次 Full PASS 中、仅剩 owner 复核且 30 天以上无新证据；不代表批准任何 promotion、paper、production 或 broker 动作 |
+| DEFERRED | 15 | 等待 forward/shadow 样本成熟；退出条件：迁移 pi 后重启对应研究线或样本成熟到可评估时重新打开 |
+| 保留 VALIDATING（owner 逐条复核） | 33 | 涉及 production 配置/权重、paper/shadow/仓位、阈值/gate/promotion 策略 |
+| 保留 VALIDATING（不在本规则范围） | 9 | 在途运营验收与 release，由 P1-E 处理 |
+
+- "已有 formal PASS" 的口径：这些旧任务早于正式验证分级，约 50 条的任务行未记录验证结果；判定依据为实现在 main 且测试包含于最近一次 Full PASS。
+- "30 天无新证据" 的判定：任务文本中出现的最大日期与需求文档最后提交日期均早于 2026-08-25。
+- DEFERRED：TRADING-1119_to_1128, TRADING-1141_to_1154, TRADING-151_to_155, TRADING-156_to_160, TRADING-174_to_178, TRADING-179_to_183, TRADING-184_to_188, TRADING-189_to_198, TRADING-760_to_764, TRADING-765_to_769, TRADING-775_to_779, TRADING-837, TRADING-894_to_910, TRADING-911_to_922, TRADING-923_to_932。
+- 保留给 owner：CALIBRATION-003, CALIBRATION-004, CALIBRATION-005, LLM-005, TRADING-078, TRADING-082, TRADING-087, TRADING-126_to_130, TRADING-131_to_135, TRADING-136_to_140, TRADING-199_to_203, TRADING-204_to_208, TRADING-209_to_213, TRADING-214_to_218, TRADING-219_to_223, TRADING-2274, TRADING-2275, TRADING-2276, TRADING-2277, TRADING-229_to_233, TRADING-350, TRADING-693, TRADING-695, TRADING-696, TRADING-697, TRADING-698, TRADING-699, TRADING-700, TRADING-701, TRADING-707, TRADING-708, TRADING-724, TRADING-834。
+- 运营范围外：DATA-001, OPS-070, OPS-072, OPS-073, OPS-074, OPS-077, OPS-078, OPS-081, PROD-004。
+- 执行方式：每个任务一个只用于登记的 fence 事务（登记后以 failed 终态收口），change id `gov-007-owner-decision-pack-item13-20260924-v1`；分类清单与逐任务事务/提交记录在主 checkout
+  `outputs/architecture/gov_007_pre_migration/decision_pack_item13_*`；完整的任务→提交索引见 `decision_pack_item13_commit_index_v1.json`（231 条：216 DONE / 15 DEFERRED，与分类计划逐条一致）。
+- 执行中断（2026-09-25）：本机两次蓝屏打断批量执行（00:10 0xBE、01:06 0x3B）。第一次中断发生在两条任务之间，没有半写状态；
+  第二次中断时 TRADING-2304 的 permit 事务刚到 `TASK_SOURCE_PRE_WRITE`，任务源尚未写入。该事务按原模式以 `failed` 终态收口，
+  TRADING-2304 及其后 135 条改用 `…-20260925-v1` 事务续跑，change id 不变。本批执行只调用 fence、任务源与 git，不涉及注册表重命名；两次蓝屏的调用栈均为
+  `NtRenameKey → CmRenameKey → CmpKeySecurityIncrementReferenceCount`，触发候选是 DEVX-015 的原生 `RegRenameKey` 测试，
+  已另立 `DEVX-015A_HOST_REGISTRY_SINGLE_VALUE_ANCHOR_V1`（P0，PROPOSED）处理，并与本批次一同发布。本机禁止再运行原生 `RegRenameKey`。
+
 执行中发现：Atlas live snapshot 的任务状态映射（代码 `_STATUS_MAPPING` 与 `config/atlas/live_snapshot.yaml` 必须一致）
 没有 `DEFERRED`，Atlas 覆盖范围内的任务一旦转为 DEFERRED，Atlas 生成器即 fail closed。按 owner 已批准的处置补充
 `DEFERRED → SKIPPED`（主动暂缓、不执行），只影响 Atlas 阅读页状态展示，不改变投资解读、研究窗口或 DQ/PIT。
