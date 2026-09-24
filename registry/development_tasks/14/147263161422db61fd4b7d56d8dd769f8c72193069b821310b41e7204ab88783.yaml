@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-710_WATCHLIST_STOP_RERUN_PIVOT_TRIGGER
   task_id_sha256: 147263161422db61fd4b7d56d8dd769f8c72193069b821310b41e7204ab88783
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-710_WATCHLIST_STOP_RERUN_PIVOT_TRIGGER
   title: null
   domain: Research governance / watchlist, stop, rerun, pivot trigger and pilot migration
@@ -12,19 +13,19 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；blocker 进入
-    stop/rerun/watchlist/pivot
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`watchlist'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 6a9e06424e20426640e1b28823d652ab42be6c00bfbaa8a53fee5b3f8af097de
   cell_count: 9
@@ -75,19 +76,47 @@ events:
   evidence_refs:
   - sha256:6a9e06424e20426640e1b28823d652ab42be6c00bfbaa8a53fee5b3f8af097de
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-710_WATCHLIST_STOP_RERUN_PIVOT_TRIGGER
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:04:50+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 512f6f1989139fae68cee061b22a5471852ac1e2
+  previous_state_event_id: legacy-import-6a9e06424e20426640e1b288
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`watchlist'
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：direction-review-status`
+      可运行；rerun_trigger_evaluable=true；direction_review_trigger_evaluable=true
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-1ae2768ccfda1608bd164d0bf29d6b43
 projection:
   legacy_first_eight_cells:
   - TRADING-710_WATCHLIST_STOP_RERUN_PIVOT_TRIGGER
   - Research governance / watchlist, stop, rerun, pivot trigger and pilot migration
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-703_to_725 总需求文档；blocker 进入 stop/rerun/watchlist/pivot
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`watchlist'
-  - direction-review-status` 可运行；rerun_trigger_evaluable=true；direction_review_trigger_evaluable=true
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：direction-review-status`
+    可运行；rerun_trigger_evaluable=true；direction_review_trigger_evaluable=true
   docs_links: []
-  terminal: false
-  canonical_row_sha256: 4b7de4196276fa45096cb77f2102411dec6f1d2eb65e1fab903ca273ce30e650
-last_event_id: legacy-import-6a9e06424e20426640e1b288
+  terminal: true
+  canonical_row_sha256: d0617da02c0b92b7e66ea5265049d172f7ff7d964452959ffbe731fb9dd97626
+last_event_id: task-event-1ae2768ccfda1608bd164d0bf29d6b43
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 1f084636cd508433ea866f7caed06c070d09b8585368d50ff1e001061859bbaf
+fragment_checksum: 9e193a89618b2d8128def9bb9912ea2f2683c2491202b642571ef600230d8b01
