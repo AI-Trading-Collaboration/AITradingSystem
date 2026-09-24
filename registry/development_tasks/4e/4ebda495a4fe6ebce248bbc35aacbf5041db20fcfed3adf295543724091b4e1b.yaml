@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-085
   task_id_sha256: 4ebda495a4fe6ebce248bbc35aacbf5041db20fcfed3adf295543724091b4e1b
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-085
   title: null
   domain: ETF portfolio research/Two-Layer Dynamic Candidate Batch Runner and Cache
@@ -12,20 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统验证 + 项目 owner 人工复核
-  requirement_refs:
-  - docs/requirements/TRADING-085_Two_Layer_Dynamic_Candidate_Batch_Runner_and_Cache.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-085_Two_Layer_Dynamic_Candidate_Batch_Runner_and_Cache.md`；baseline
-    已实现 two-layer dynamic candidate batch/cache/ranking workflow；下一步 owner 复核真实 dynamic
-    calibration batch report，并在 TRADING-086 前确认哪些 candidate packs 进入完整 robustness
-    review；本阶段可输出 candidate packs / allocation path / dynamic calibration proxy /
-    ranking report，但不得写 official ETF target weights artifact、production baseline 或
-    broker state
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`aits etf dynamic-calibration run/report/validate` 可运行；candidate pack schema、two-stage
       search protocol、coarse-to-fine iteration、trend score cache、allocation path cache、dynamic
       backtest cache、parallel runner visibility、candidate ranking、batch report 和 validation
@@ -38,7 +35,6 @@ task_record:
       validate` 通过'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 16367103f2642326859fc36ed2fa58fbf656a4f41f2ba8e62b006d00da77da88
   cell_count: 8
@@ -145,19 +141,63 @@ events:
   evidence_refs:
   - sha256:16367103f2642326859fc36ed2fa58fbf656a4f41f2ba8e62b006d00da77da88
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-085
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T23:42:28+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 7f930a441ecdc6431ae82e4ce5a893f517974676
+  previous_state_event_id: legacy-import-16367103f2642326859fc36e
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`aits etf dynamic-calibration run/report/validate` 可运行；candidate
+      pack schema、two-stage search protocol、coarse-to-fine iteration、trend score cache、allocation
+      path cache、dynamic backtest cache、parallel runner visibility、candidate ranking、batch
+      report 和 validation gate 可用；cache keys 包含 data/config/model/engine/policy hashes；ranking
+      不只按 return，需披露 drawdown、turnover、regime robustness、false signal penalty、data
+      quality 和 overfit risk components；`dynamic_backtest` cache 当前为 calibration proxy，完整
+      robustness/false-signal diagnostics 属于 TRADING-086；所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`production_state_mutated=false`、`baseline_config_mutated=false`、`official_target_weights_mutated=false`、`automatic_candidate_promotion=false`、`auto_enrollment_without_owner_approval=false`；system
+      flow、artifact catalog、operations runbook、README、task register、requirement docs
+      和 tests 同步；focused pytest、ruff、compileall、diff check 和 `aits etf dynamic-calibration
+      validate` 通过'
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-05:
+      新增并进入 IN_PROGRESS，原因：TRADING-083 Layer 1 和 TRADING-084 Layer 2 baseline 已验证并推送，下一优先级是把二者组合成可批量测试、缓存和排名的
+      candidate pack 工作流，为 TRADING-086 robustness/attribution review 和 TRADING-087
+      dynamic shadow review 提供审计输入。2026-06-05: TRADING-085A-J baseline 实现完成并转入 VALIDATING，原因：新增
+      dynamic calibration policy、`aits etf dynamic-calibration run/report/validate`、candidate
+      pack schema、two-stage search metadata、coarse/local refinement candidate generation、trend
+      score cache、allocation path cache、dynamic calibration proxy cache、cache manifest
+      wrapper、worker/cache visibility、evidence-based ranking、JSON/Markdown report、Reader
+      Brief `Dynamic Calibration Batch` section、report registry/artifact catalog/system
+      flow/runbook/README integration 和 focused tests；验证为 19 个相关测试 passed，`aits etf
+      dynamic-calibration validate` PASS，ruff、compileall 初步通过；真实 latest-trend-report
+      smoke 生成 24 个 candidate packs，`status=PASS`、`data_quality_status=PASS_WITH_WARNINGS`、`top_ranking_score=51.071078`、`calibration_proxy=true`、`full_robustness_backtest_required=true`、warm
+      rerun `cache_hit_rate=1.0`。2026-06-05: 全量 `python -m pytest tests -q` 长跑复核通过，结果为
+      2149 passed、330 warnings、耗时 620.63s；剩余条件是真实 batch report 的 owner 复核和 TRADING-086
+      前的 candidate pack input 审查。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2e4e74f2adbe8e08ce9ba68153ab4a5c
 projection:
   legacy_first_eight_cells:
   - TRADING-085
   - ETF portfolio research/Two-Layer Dynamic Candidate Batch Runner and Cache
   - P0
-  - VALIDATING
-  - 系统验证 + 项目 owner 人工复核
-  - 详细拆解见 `docs/requirements/TRADING-085_Two_Layer_Dynamic_Candidate_Batch_Runner_and_Cache.md`；baseline
-    已实现 two-layer dynamic candidate batch/cache/ranking workflow；下一步 owner 复核真实 dynamic
-    calibration batch report，并在 TRADING-086 前确认哪些 candidate packs 进入完整 robustness
-    review；本阶段可输出 candidate packs / allocation path / dynamic calibration proxy /
-    ranking report，但不得写 official ETF target weights artifact、production baseline 或
-    broker state
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`aits etf dynamic-calibration run/report/validate` 可运行；candidate pack schema、two-stage
     search protocol、coarse-to-fine iteration、trend score cache、allocation path cache、dynamic
     backtest cache、parallel runner visibility、candidate ranking、batch report 和 validation
@@ -168,24 +208,24 @@ projection:
     flow、artifact catalog、operations runbook、README、task register、requirement docs
     和 tests 同步；focused pytest、ruff、compileall、diff check 和 `aits etf dynamic-calibration
     validate` 通过'
-  - '2026-06-05: 新增并进入 IN_PROGRESS，原因：TRADING-083 Layer 1 和 TRADING-084 Layer 2 baseline
-    已验证并推送，下一优先级是把二者组合成可批量测试、缓存和排名的 candidate pack 工作流，为 TRADING-086 robustness/attribution
-    review 和 TRADING-087 dynamic shadow review 提供审计输入。2026-06-05: TRADING-085A-J baseline
-    实现完成并转入 VALIDATING，原因：新增 dynamic calibration policy、`aits etf dynamic-calibration
-    run/report/validate`、candidate pack schema、two-stage search metadata、coarse/local
-    refinement candidate generation、trend score cache、allocation path cache、dynamic
-    calibration proxy cache、cache manifest wrapper、worker/cache visibility、evidence-based
-    ranking、JSON/Markdown report、Reader Brief `Dynamic Calibration Batch` section、report
-    registry/artifact catalog/system flow/runbook/README integration 和 focused tests；验证为
-    19 个相关测试 passed，`aits etf dynamic-calibration validate` PASS，ruff、compileall 初步通过；真实
-    latest-trend-report smoke 生成 24 个 candidate packs，`status=PASS`、`data_quality_status=PASS_WITH_WARNINGS`、`top_ranking_score=51.071078`、`calibration_proxy=true`、`full_robustness_backtest_required=true`、warm
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-05:
+    新增并进入 IN_PROGRESS，原因：TRADING-083 Layer 1 和 TRADING-084 Layer 2 baseline 已验证并推送，下一优先级是把二者组合成可批量测试、缓存和排名的
+    candidate pack 工作流，为 TRADING-086 robustness/attribution review 和 TRADING-087 dynamic
+    shadow review 提供审计输入。2026-06-05: TRADING-085A-J baseline 实现完成并转入 VALIDATING，原因：新增
+    dynamic calibration policy、`aits etf dynamic-calibration run/report/validate`、candidate
+    pack schema、two-stage search metadata、coarse/local refinement candidate generation、trend
+    score cache、allocation path cache、dynamic calibration proxy cache、cache manifest
+    wrapper、worker/cache visibility、evidence-based ranking、JSON/Markdown report、Reader
+    Brief `Dynamic Calibration Batch` section、report registry/artifact catalog/system
+    flow/runbook/README integration 和 focused tests；验证为 19 个相关测试 passed，`aits etf
+    dynamic-calibration validate` PASS，ruff、compileall 初步通过；真实 latest-trend-report
+    smoke 生成 24 个 candidate packs，`status=PASS`、`data_quality_status=PASS_WITH_WARNINGS`、`top_ranking_score=51.071078`、`calibration_proxy=true`、`full_robustness_backtest_required=true`、warm
     rerun `cache_hit_rate=1.0`。2026-06-05: 全量 `python -m pytest tests -q` 长跑复核通过，结果为
     2149 passed、330 warnings、耗时 620.63s；剩余条件是真实 batch report 的 owner 复核和 TRADING-086
     前的 candidate pack input 审查。'
-  docs_links:
-  - docs/requirements/TRADING-085_Two_Layer_Dynamic_Candidate_Batch_Runner_and_Cache.md
-  terminal: false
-  canonical_row_sha256: 16367103f2642326859fc36ed2fa58fbf656a4f41f2ba8e62b006d00da77da88
-last_event_id: legacy-import-16367103f2642326859fc36e
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 5c9264f197026e73616e2a13b22f786e180d183ba037395bfb460361abf39016
+last_event_id: task-event-2e4e74f2adbe8e08ce9ba68153ab4a5c
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 3a7c3480543b422b38a4e599ef5726ac26d62a0fb88ad61dc10c1eca6d2b1aaf
+fragment_checksum: f252748c2148ac5235c127b65e7d032ed81528018bead2267bcd9819db0d1961
