@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-014B
   task_id_sha256: bc8afd878492a5f9cbbb41d1e835728fd0b0fcab40ef854e8d2a237a588267a5
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-014B
   title: null
   domain: 交易执行/Fill Failure Diagnostics
@@ -12,24 +13,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统验证 + 项目 owner
-  requirement_refs:
-  - docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md
+  next_owner: 外部条件 / Project Owner
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；仅当美股
-    `REGULAR` session controlled fill 仍输出 `fill_seen=false` 时启动；当前等待下一次真实 regular
-    session 样本
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL
+    转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider catalog）出现时重开
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 诊断 regular session no-fill 的 broker rejection、market data / quote stale、limit
       price 不可成交、order status path 异常、TWS / IB Gateway 连接事件、contract details / liquid
       hours 解析问题；输出 issue classification、下一步检查建议和脱敏 review；不得把 no-fill 直接归因于 `PaperBroker`
       fill model；不修改 `PaperBroker` fill 行为
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: fc7248594223ee9e1f9f01c3eed59573c571b85f7b9d6d7945fc38a8e80bb1dc
   cell_count: 8
@@ -81,26 +79,53 @@ events:
   evidence_refs:
   - sha256:fc7248594223ee9e1f9f01c3eed59573c571b85f7b9d6d7945fc38a8e80bb1dc
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-014B
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:37:28+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: a0bc976daf01d59d6e94ca4659aa89f81f0f0d90
+  previous_state_event_id: legacy-import-fc7248594223ee9e1f9f01c3
+  from_status: BLOCKED_EXTERNAL
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: 外部条件 / Project Owner
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如
+      IBKR fill、通知链、多日观察、provider catalog）出现时重开
+    acceptance_criteria: 诊断 regular session no-fill 的 broker rejection、market data
+      / quote stale、limit price 不可成交、order status path 异常、TWS / IB Gateway 连接事件、contract
+      details / liquid hours 解析问题；输出 issue classification、下一步检查建议和脱敏 review；不得把 no-fill
+      直接归因于 `PaperBroker` fill model；不修改 `PaperBroker` fill 行为
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-05-18:
+      新增并进入 BLOCKED_EXTERNAL，原因：如果 regular session 仍 no-fill，需要先做 failure diagnostics，而不是用失败样本改造
+      `PaperBroker`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-81c8e2bf60e11f2ceae0b959730e3b9f
 projection:
   legacy_first_eight_cells:
   - TRADING-014B
   - 交易执行/Fill Failure Diagnostics
   - P0
-  - BLOCKED_EXTERNAL
-  - 系统验证 + 项目 owner
-  - 详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；仅当美股
-    `REGULAR` session controlled fill 仍输出 `fill_seen=false` 时启动；当前等待下一次真实 regular
-    session 样本
+  - DEFERRED
+  - 外部条件 / Project Owner
+  - 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider
+    catalog）出现时重开
   - 诊断 regular session no-fill 的 broker rejection、market data / quote stale、limit
     price 不可成交、order status path 异常、TWS / IB Gateway 连接事件、contract details / liquid
     hours 解析问题；输出 issue classification、下一步检查建议和脱敏 review；不得把 no-fill 直接归因于 `PaperBroker`
     fill model；不修改 `PaperBroker` fill 行为
-  - '2026-05-18: 新增并进入 BLOCKED_EXTERNAL，原因：如果 regular session 仍 no-fill，需要先做 failure
-    diagnostics，而不是用失败样本改造 `PaperBroker`。'
-  docs_links:
-  - docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-05-18:
+    新增并进入 BLOCKED_EXTERNAL，原因：如果 regular session 仍 no-fill，需要先做 failure diagnostics，而不是用失败样本改造
+    `PaperBroker`。'
+  docs_links: []
   terminal: false
-  canonical_row_sha256: fc7248594223ee9e1f9f01c3eed59573c571b85f7b9d6d7945fc38a8e80bb1dc
-last_event_id: legacy-import-fc7248594223ee9e1f9f01c3
+  canonical_row_sha256: 29041c805f7872665025820c005144ef3a9507198a29cf81850089cf51d840ae
+last_event_id: task-event-81c8e2bf60e11f2ceae0b959730e3b9f
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: ef93cae184b881fb931c5715df0efb755111a93690bd4a5c25ceb763e2ebef70
+fragment_checksum: 09f8b75c295dfe8ef00e0c28453a42cec53a2cd425a835c148c0134dcdb05458
