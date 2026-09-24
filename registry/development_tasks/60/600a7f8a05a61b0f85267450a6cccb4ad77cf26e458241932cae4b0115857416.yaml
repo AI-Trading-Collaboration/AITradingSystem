@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-014C
   task_id_sha256: 600a7f8a05a61b0f85267450a6cccb4ad77cf26e458241932cae4b0115857416
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-014C
   title: null
   domain: 交易执行/Fill Model Calibration Proposal
@@ -12,22 +13,20 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统设计 + 项目 owner
-  requirement_refs:
-  - docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md
+  next_owner: 外部条件 / Project Owner
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；阻塞于
-    `TRADING-014A` 真实 `fill_seen=true` 样本和本地验证完成；本任务只做 proposal，不直接实现 fill 行为改造
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL
+    转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider catalog）出现时重开
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 基于真实 regular session fill evidence 提出可审计 calibration 方案，说明 `PaperBroker`
       与 IBKR Paper 行为差异、数据需求、候选调整项、预期影响、风险、回归测试范围、报告语义变化和退出条件；任何阈值或启发式必须进入 reviewed
       policy / manifest 或有注释的不可调常量；实际修改 `PaperBroker` fill 行为前需要单独任务和 owner 决策
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 29a112373dde20c47b62b228846c1866589a51647766f74bca19686b3118d61a
   cell_count: 8
@@ -79,25 +78,54 @@ events:
   evidence_refs:
   - sha256:29a112373dde20c47b62b228846c1866589a51647766f74bca19686b3118d61a
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-014C
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:38:30+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: 9a0d332e84e5772bd23c90f6c1f33bb8b465f70e
+  previous_state_event_id: legacy-import-29a112373dde20c47b62b228
+  from_status: BLOCKED_EXTERNAL
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: 外部条件 / Project Owner
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如
+      IBKR fill、通知链、多日观察、provider catalog）出现时重开
+    acceptance_criteria: 基于真实 regular session fill evidence 提出可审计 calibration 方案，说明
+      `PaperBroker` 与 IBKR Paper 行为差异、数据需求、候选调整项、预期影响、风险、回归测试范围、报告语义变化和退出条件；任何阈值或启发式必须进入
+      reviewed policy / manifest 或有注释的不可调常量；实际修改 `PaperBroker` fill 行为前需要单独任务和 owner
+      决策
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-05-18:
+      从原未提交 `TRADING-016` 改为 `TRADING-014C`，原因：owner 本轮明确 `TRADING-016` 用于 Weight
+      Candidate Evaluation；fill model proposal 仍保持 BLOCKED_EXTERNAL，当前缺真实 fill 样本，不应提前进入
+      fill model 改造。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-25413d59cf819fefdc7fff990854666e
 projection:
   legacy_first_eight_cells:
   - TRADING-014C
   - 交易执行/Fill Model Calibration Proposal
   - P0
-  - BLOCKED_EXTERNAL
-  - 系统设计 + 项目 owner
-  - 详细拆解见 `docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md`；阻塞于
-    `TRADING-014A` 真实 `fill_seen=true` 样本和本地验证完成；本任务只做 proposal，不直接实现 fill 行为改造
+  - DEFERRED
+  - 外部条件 / Project Owner
+  - 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider
+    catalog）出现时重开
   - 基于真实 regular session fill evidence 提出可审计 calibration 方案，说明 `PaperBroker` 与 IBKR
     Paper 行为差异、数据需求、候选调整项、预期影响、风险、回归测试范围、报告语义变化和退出条件；任何阈值或启发式必须进入 reviewed policy
     / manifest 或有注释的不可调常量；实际修改 `PaperBroker` fill 行为前需要单独任务和 owner 决策
-  - '2026-05-18: 从原未提交 `TRADING-016` 改为 `TRADING-014C`，原因：owner 本轮明确 `TRADING-016`
-    用于 Weight Candidate Evaluation；fill model proposal 仍保持 BLOCKED_EXTERNAL，当前缺真实
-    fill 样本，不应提前进入 fill model 改造。'
-  docs_links:
-  - docs/requirements/ibkr_paper_regular_session_fill_followup_2026-05-18.md
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-05-18:
+    从原未提交 `TRADING-016` 改为 `TRADING-014C`，原因：owner 本轮明确 `TRADING-016` 用于 Weight Candidate
+    Evaluation；fill model proposal 仍保持 BLOCKED_EXTERNAL，当前缺真实 fill 样本，不应提前进入 fill
+    model 改造。'
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 29a112373dde20c47b62b228846c1866589a51647766f74bca19686b3118d61a
-last_event_id: legacy-import-29a112373dde20c47b62b228
+  canonical_row_sha256: 0478e42fe87d9ea3c390894fc88f2933c3ac5ef7d8c3dad7fd56bf314b3109a6
+last_event_id: task-event-25413d59cf819fefdc7fff990854666e
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 8c23b153d21202f61a22ec5cf28705ca7ecc68984abc6e2919fda9b316693323
+fragment_checksum: f1ffc05e550f5c3d4daef2f94349e74863c0b41b02f2664d254f14bc15e25fb3
