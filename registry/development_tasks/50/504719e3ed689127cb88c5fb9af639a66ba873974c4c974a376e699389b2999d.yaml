@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-733_RESEARCH_CASE_LIBRARY_FORWARD_REVERSE_DIAGNOSTICS
   task_id_sha256: 504719e3ed689127cb88c5fb9af639a66ba873974c4c974a376e699389b2999d
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-733_RESEARCH_CASE_LIBRARY_FORWARD_REVERSE_DIAGNOSTICS
   title: null
   domain: Research case library / forward and reverse diagnostics
@@ -12,19 +13,19 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-726_to_733 总需求文档；建立正向/逆向 case
-    library、oracle diagnostic set 和 regret case conversion baseline
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`aits research cases register'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: b9a0927c2e01de538accc3a564d2e08595a204d04280b82fda88b2bc368e3cd5
   cell_count: 12
@@ -76,20 +77,45 @@ events:
   evidence_refs:
   - sha256:b9a0927c2e01de538accc3a564d2e08595a204d04280b82fda88b2bc368e3cd5
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-733_RESEARCH_CASE_LIBRARY_FORWARD_REVERSE_DIAGNOSTICS
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:13:44+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: f9e56c55682857f5641310af89afe7619f4f1da9
+  previous_state_event_id: legacy-import-b9a0927c2e01de538accc3a5
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`aits research cases register'
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：query
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-bba3b92c60c02bd070f1f2956c4fc27b
 projection:
   legacy_first_eight_cells:
   - TRADING-733_RESEARCH_CASE_LIBRARY_FORWARD_REVERSE_DIAGNOSTICS
   - Research case library / forward and reverse diagnostics
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-726_to_733 总需求文档；建立正向/逆向 case library、oracle diagnostic set 和 regret
-    case conversion baseline
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`aits research cases register'
-  - query
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：query
   docs_links: []
-  terminal: false
-  canonical_row_sha256: 817c1be07177fd685676aeafbb98deb2ede896a29d0197063cffc9cee7b07dc6
-last_event_id: legacy-import-b9a0927c2e01de538accc3a5
+  terminal: true
+  canonical_row_sha256: 4c787023b0582388f4ae8e8b9a384a3f092269212f7dba910c9247042df1a306
+last_event_id: task-event-bba3b92c60c02bd070f1f2956c4fc27b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 13eab1d10c100d914e04a684f5b0f9dfc4a0ac10b2d03a1c8d615bfaf6dc13dd
+fragment_checksum: 4ce9861980656bb742f9ed72b4e89bba7314c2ae1cf7a228be13499b60303e37
