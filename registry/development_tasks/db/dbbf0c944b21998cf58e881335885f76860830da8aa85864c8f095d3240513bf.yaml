@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-588_to_596_B2_TARGETED_EVIDENCE_AND_ROLE_SCOPE
   task_id_sha256: dbbf0c944b21998cf58e881335885f76860830da8aa85864c8f095d3240513bf
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-588_to_596_B2_TARGETED_EVIDENCE_AND_ROLE_SCOPE
   title: null
   domain: ETF portfolio/weight research B2 targeted evidence and risk-overlay role
@@ -13,22 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-588_to_596_B2_Targeted_Evidence_and_Role_Scope.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-588_to_596_B2_Targeted_Evidence_and_Role_Scope.md`；在
-    TRADING-587 之后冻结 B2 targeted evidence windows，审计 rapid_drawdown / volatility_spike
-    no-trigger，检查 slow_drawdown repeatability，归因 re-entry lag，澄清 B2 是否仍可作为 general
-    fast asymmetric risk overlay 或应 narrow/return-to-design，并输出 targeted evidence
-    backfill v2、scorecard、gate v5 和 branch snapshot v2；不得调 B2 threshold/参数，不得使用 B3
-    slow tilt，不得运行 B3/B4/B5/B6/v3，不得访问 untouched holdout，不得生成 official target weights、paper-shadow
-    activation、extended shadow、broker/order/live/production mutation，不得自动 append owner
-    decision
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 输出 `b2_targeted_evidence_window_lock.json/md`、`b2_fast_risk_no_trigger_audit.json/md`、`b2_slow_drawdown_repeatability_study.json/md`、`b2_reentry_lag_root_cause_review.json/md`、`b2_role_narrowing_assessment.json/md`、`b2_targeted_evidence_backfill_v2.json/md`、`b2_targeted_evidence_scorecard.json/md`、`b2_gate_v5.json/md`
       和 `b2_research_branch_snapshot_v2.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
       date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；如果只有一个
@@ -38,7 +33,6 @@ task_record:
       parse、ruff、compileall、`git diff --check` 通过
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 2d601c5ae1cf86adea3a98e54f0735c192b1fdddeb5773b82aa80f1c4617face
   cell_count: 8
@@ -120,21 +114,52 @@ events:
   evidence_refs:
   - sha256:2d601c5ae1cf86adea3a98e54f0735c192b1fdddeb5773b82aa80f1c4617face
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-588_to_596_B2_TARGETED_EVIDENCE_AND_ROLE_SCOPE
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:58:53+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 3cf745bdbd996d32507cfcfd694a9fe193074c6d
+  previous_state_event_id: legacy-import-2d601c5ae1cf86adea3a98e5
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 输出 `b2_targeted_evidence_window_lock.json/md`、`b2_fast_risk_no_trigger_audit.json/md`、`b2_slow_drawdown_repeatability_study.json/md`、`b2_reentry_lag_root_cause_review.json/md`、`b2_role_narrowing_assessment.json/md`、`b2_targeted_evidence_backfill_v2.json/md`、`b2_targeted_evidence_scorecard.json/md`、`b2_gate_v5.json/md`
+      和 `b2_research_branch_snapshot_v2.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
+      date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；如果只有一个
+      slow_drawdown positive window，不得 classified as promising；如果 fast-risk no-trigger
+      指向 current design unsupported，必须 narrow role 或继续 targeted evidence；B4 retest
+      必须依赖 valid B3，B5 必须依赖 valid non-redundant B4，B6 必须依赖 valid B5；focused tests、JSON
+      parse、ruff、compileall、`git diff --check` 通过
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-19:
+      新增并进入 IN_PROGRESS，原因：B2 full diagnostic complete 且 control behavior clean，但
+      positive evidence 集中在 slow_drawdown，rapid_drawdown / volatility_spike 未触发，re-entry
+      lag 高且 utility mixed；本批次需要澄清 B2 role scope，并继续保持 `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、`paper_shadow_allowed=false`。2026-06-19:
+      实现完成并转入 VALIDATING；`b2-targeted-evidence-research` 输出 TRADING-588=`B2_TARGETED_EVIDENCE_WINDOWS_INCOMPLETE`、589=`B2_FAST_RISK_NOT_SUPPORTED_BY_CURRENT_DESIGN`、590=`B2_SLOW_DRAWDOWN_EDGE_SINGLE_WINDOW_ONLY`、591=`B2_REENTRY_LAG_SIGNAL_DRIVEN`、592=`B2_FAST_RISK_OVERLAY_NOT_SUPPORTED`、593=`B2_TARGETED_EVIDENCE_BACKFILL_PARTIAL`、594=`B2_TARGETED_EVIDENCE_MIXED`、595=`B2_ONLY_CONTINUE_WITH_MORE_TARGETED_EVIDENCE`、596=`CONTINUE_B2_ONLY_RESEARCH`；current
+      targeted set 缺独立第二个 slow_drawdown repeatability window，fast-risk protection
+      unsupported，slow_drawdown 仍 single-window-only，re-entry lag 为 signal-driven；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、`paper_shadow_allowed=false`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a25ca04daf52c03f614aa06a8e2cc3e9
 projection:
   legacy_first_eight_cells:
   - TRADING-588_to_596_B2_TARGETED_EVIDENCE_AND_ROLE_SCOPE
   - ETF portfolio/weight research B2 targeted evidence and risk-overlay role clarification
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详细拆解见 `docs/requirements/TRADING-588_to_596_B2_Targeted_Evidence_and_Role_Scope.md`；在
-    TRADING-587 之后冻结 B2 targeted evidence windows，审计 rapid_drawdown / volatility_spike
-    no-trigger，检查 slow_drawdown repeatability，归因 re-entry lag，澄清 B2 是否仍可作为 general
-    fast asymmetric risk overlay 或应 narrow/return-to-design，并输出 targeted evidence
-    backfill v2、scorecard、gate v5 和 branch snapshot v2；不得调 B2 threshold/参数，不得使用 B3
-    slow tilt，不得运行 B3/B4/B5/B6/v3，不得访问 untouched holdout，不得生成 official target weights、paper-shadow
-    activation、extended shadow、broker/order/live/production mutation，不得自动 append owner
-    decision
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 输出 `b2_targeted_evidence_window_lock.json/md`、`b2_fast_risk_no_trigger_audit.json/md`、`b2_slow_drawdown_repeatability_study.json/md`、`b2_reentry_lag_root_cause_review.json/md`、`b2_role_narrowing_assessment.json/md`、`b2_targeted_evidence_backfill_v2.json/md`、`b2_targeted_evidence_scorecard.json/md`、`b2_gate_v5.json/md`
     和 `b2_research_branch_snapshot_v2.json/md`；所有输出必须披露 ai_after_chatgpt regime、requested
     date range、data quality gate、source artifacts、Reader Brief 和 safety boundary；如果只有一个
@@ -142,16 +167,16 @@ projection:
     指向 current design unsupported，必须 narrow role 或继续 targeted evidence；B4 retest 必须依赖
     valid B3，B5 必须依赖 valid non-redundant B4，B6 必须依赖 valid B5；focused tests、JSON parse、ruff、compileall、`git
     diff --check` 通过
-  - '2026-06-19: 新增并进入 IN_PROGRESS，原因：B2 full diagnostic complete 且 control behavior
-    clean，但 positive evidence 集中在 slow_drawdown，rapid_drawdown / volatility_spike
-    未触发，re-entry lag 高且 utility mixed；本批次需要澄清 B2 role scope，并继续保持 `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、`paper_shadow_allowed=false`。2026-06-19:
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-19:
+    新增并进入 IN_PROGRESS，原因：B2 full diagnostic complete 且 control behavior clean，但 positive
+    evidence 集中在 slow_drawdown，rapid_drawdown / volatility_spike 未触发，re-entry lag
+    高且 utility mixed；本批次需要澄清 B2 role scope，并继续保持 `B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、`paper_shadow_allowed=false`。2026-06-19:
     实现完成并转入 VALIDATING；`b2-targeted-evidence-research` 输出 TRADING-588=`B2_TARGETED_EVIDENCE_WINDOWS_INCOMPLETE`、589=`B2_FAST_RISK_NOT_SUPPORTED_BY_CURRENT_DESIGN`、590=`B2_SLOW_DRAWDOWN_EDGE_SINGLE_WINDOW_ONLY`、591=`B2_REENTRY_LAG_SIGNAL_DRIVEN`、592=`B2_FAST_RISK_OVERLAY_NOT_SUPPORTED`、593=`B2_TARGETED_EVIDENCE_BACKFILL_PARTIAL`、594=`B2_TARGETED_EVIDENCE_MIXED`、595=`B2_ONLY_CONTINUE_WITH_MORE_TARGETED_EVIDENCE`、596=`CONTINUE_B2_ONLY_RESEARCH`；current
     targeted set 缺独立第二个 slow_drawdown repeatability window，fast-risk protection unsupported，slow_drawdown
     仍 single-window-only，re-entry lag 为 signal-driven；`B4_retest_allowed=false`、`b5_allowed=false`、`b6_allowed=false`、`v3_allowed=false`、`paper_shadow_allowed=false`。'
-  docs_links:
-  - docs/requirements/TRADING-588_to_596_B2_Targeted_Evidence_and_Role_Scope.md
-  terminal: false
-  canonical_row_sha256: 2d601c5ae1cf86adea3a98e54f0735c192b1fdddeb5773b82aa80f1c4617face
-last_event_id: legacy-import-2d601c5ae1cf86adea3a98e5
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 8da8b0a404f1cfae95caa279d48d8799a2b4489ea8ebc430a109be81a76f231f
+last_event_id: task-event-a25ca04daf52c03f614aa06a8e2cc3e9
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 2556ab9f677bf7275e0e76fa044290dc2daef7bb7944fd1a6f6522b170c1c5cd
+fragment_checksum: f597c77a3283ead06ab72339b87b344d66d8fa62d550eec6488307174a5d7a58
