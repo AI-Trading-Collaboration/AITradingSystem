@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-018A1
   task_id_sha256: ff96ab11faace74ba46e71de75290b186ce7a5b09cd2cd782591aa1d4b6fca13
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-018A1
   title: null
   domain: 交易执行/Daily Weight Adjustment Scheduler Multi-day Observation
@@ -12,18 +13,15 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统验证 + 项目 owner
-  requirement_refs:
-  - docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md
-  - docs/runbooks/daily_weight_adjustment_scheduler_dry_run.md
+  next_owner: 外部条件 / Project Owner
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 承接 `TRADING-018A` runbook 的 3～7 个美股交易日稳定性观察；阻塞于本地
-    Windows Task Scheduler 已安装或 operator 按同一命令连续手动运行，并且对应日期的 015/016/017/018 上游 artifacts
-    可审计；详细边界见 `docs/runbooks/daily_weight_adjustment_scheduler_dry_run.md` 和 `docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md`
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL
+    转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider catalog）出现时重开
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 连续 3～7 个已完成美股交易日记录 scheduler/manual-run exit code、`dry_run_status`、`pipeline_status`、`missing_artifacts`、warnings
       和 safety checks；每次输出必须保持 `mode=dry_run`、`production_effect=none`、`manual_review_only=true`，且不写
       production profile、不写 approved profile、不调用 IBKR/PaperBroker/replay/controlled
@@ -31,7 +29,6 @@ task_record:
       层绕过；完成后补充 review/requirement 证据并归档
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 665808cad259145e1666b5cc597f1196f8ab5ab25878af4821d10ed3740ef45d
   cell_count: 8
@@ -89,29 +86,57 @@ events:
   evidence_refs:
   - sha256:665808cad259145e1666b5cc597f1196f8ab5ab25878af4821d10ed3740ef45d
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-018A1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:37:48+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: e1eec102a70997be6479b7f48ef14ebe984240a2
+  previous_state_event_id: legacy-import-665808cad259145e1666b5cc
+  from_status: BLOCKED_EXTERNAL
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: 外部条件 / Project Owner
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如
+      IBKR fill、通知链、多日观察、provider catalog）出现时重开
+    acceptance_criteria: 连续 3～7 个已完成美股交易日记录 scheduler/manual-run exit code、`dry_run_status`、`pipeline_status`、`missing_artifacts`、warnings
+      和 safety checks；每次输出必须保持 `mode=dry_run`、`production_effect=none`、`manual_review_only=true`，且不写
+      production profile、不写 approved profile、不调用 IBKR/PaperBroker/replay/controlled
+      fill/lifecycle/comparison、不自动 git commit/push；若连续 `LIMITED`，按真实上游缺口拆分任务，不在 scheduler
+      层绕过；完成后补充 review/requirement 证据并归档
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-06-09:
+      新增并进入 BLOCKED_EXTERNAL，原因：TRADING-018A wrapper、安全边界、本地 smoke、目标测试、`tests/trading_engine`
+      和当前 CI 已通过，但当前仓库只有本轮单日 isolated smoke，没有真实 3～7 天 scheduler/manual-run 样本；为避免误报运行期稳定性，本
+      follow-up 专门承接多日观察。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f0b1085247fabadd634360586978fcdb
 projection:
   legacy_first_eight_cells:
   - TRADING-018A1
   - 交易执行/Daily Weight Adjustment Scheduler Multi-day Observation
   - P0
-  - BLOCKED_EXTERNAL
-  - 系统验证 + 项目 owner
-  - 承接 `TRADING-018A` runbook 的 3～7 个美股交易日稳定性观察；阻塞于本地 Windows Task Scheduler 已安装或
-    operator 按同一命令连续手动运行，并且对应日期的 015/016/017/018 上游 artifacts 可审计；详细边界见 `docs/runbooks/daily_weight_adjustment_scheduler_dry_run.md`
-    和 `docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md`
+  - DEFERRED
+  - 外部条件 / Project Owner
+  - 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider
+    catalog）出现时重开
   - 连续 3～7 个已完成美股交易日记录 scheduler/manual-run exit code、`dry_run_status`、`pipeline_status`、`missing_artifacts`、warnings
     和 safety checks；每次输出必须保持 `mode=dry_run`、`production_effect=none`、`manual_review_only=true`，且不写
     production profile、不写 approved profile、不调用 IBKR/PaperBroker/replay/controlled
     fill/lifecycle/comparison、不自动 git commit/push；若连续 `LIMITED`，按真实上游缺口拆分任务，不在 scheduler
     层绕过；完成后补充 review/requirement 证据并归档
-  - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-018A wrapper、安全边界、本地 smoke、目标测试、`tests/trading_engine`
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-06-09:
+    新增并进入 BLOCKED_EXTERNAL，原因：TRADING-018A wrapper、安全边界、本地 smoke、目标测试、`tests/trading_engine`
     和当前 CI 已通过，但当前仓库只有本轮单日 isolated smoke，没有真实 3～7 天 scheduler/manual-run 样本；为避免误报运行期稳定性，本
     follow-up 专门承接多日观察。'
-  docs_links:
-  - docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md
-  - docs/runbooks/daily_weight_adjustment_scheduler_dry_run.md
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 665808cad259145e1666b5cc597f1196f8ab5ab25878af4821d10ed3740ef45d
-last_event_id: legacy-import-665808cad259145e1666b5cc
+  canonical_row_sha256: 2219a5c60c206896238fd8975066cc943be52708bd41b6609f2ec9ddbd9e0bc0
+last_event_id: task-event-f0b1085247fabadd634360586978fcdb
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 64e62124fcfc9fba5e2cb04f6117a64ab01d3813602fd893910a9677c39fa4a8
+fragment_checksum: 4d6e5eb81a2cb5c52ec3d975acb38f60cf1913c5746a817ed072740f4aad503c
