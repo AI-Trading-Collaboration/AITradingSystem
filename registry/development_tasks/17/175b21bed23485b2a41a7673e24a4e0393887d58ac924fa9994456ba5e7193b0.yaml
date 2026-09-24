@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-706_SAMPLE_QUALITY_EFFECTIVE_EVIDENCE_AUDIT
   task_id_sha256: 175b21bed23485b2a41a7673e24a4e0393887d58ac924fa9994456ba5e7193b0
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-706_SAMPLE_QUALITY_EFFECTIVE_EVIDENCE_AUDIT
   title: null
   domain: Research governance / sample quality and effective evidence audit
@@ -12,19 +13,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；输出有效样本质量，不允许
-    row_count-only 决策
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`sample-quality-audit` 输出 required sample breakdown；row_count_only_decision_count=0；sample_source_breakdown_complete=true；horizon_maturity_breakdown_complete=true'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: e92d91e25e91fb7b9c653095834dbbb70061a16c3ac70d8ebde03cbf747ddcd9
   cell_count: 8
@@ -79,23 +80,56 @@ events:
   evidence_refs:
   - sha256:e92d91e25e91fb7b9c653095834dbbb70061a16c3ac70d8ebde03cbf747ddcd9
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-706_SAMPLE_QUALITY_EFFECTIVE_EVIDENCE_AUDIT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:04:06+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 22abaafdeb9ab52ffb5d04a7bddce1aa4d1a3a90
+  previous_state_event_id: legacy-import-e92d91e25e91fb7b9c653095
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`sample-quality-audit` 输出 required sample breakdown；row_count_only_decision_count=0；sample_source_breakdown_complete=true；horizon_maturity_breakdown_complete=true'
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+      按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增
+      schema/config/protocol、research governance / acceleration / portfolio decision
+      / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+      / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+      production_effect=none，不修改 production / paper-shadow / official weights，不触发
+      broker/order。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5f0d80569d689b2ffb519ce21de4941c
 projection:
   legacy_first_eight_cells:
   - TRADING-706_SAMPLE_QUALITY_EFFECTIVE_EVIDENCE_AUDIT
   - Research governance / sample quality and effective evidence audit
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-703_to_725 总需求文档；输出有效样本质量，不允许 row_count-only 决策
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`sample-quality-audit` 输出 required sample breakdown；row_count_only_decision_count=0；sample_source_breakdown_complete=true；horizon_maturity_breakdown_complete=true'
-  - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入
-    VALIDATING；新增 schema/config/protocol、research governance / acceleration / portfolio
-    decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21:
+    按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增
+    schema/config/protocol、research governance / acceleration / portfolio decision
+    / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
     / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
     production_effect=none，不修改 production / paper-shadow / official weights，不触发 broker/order。'
   docs_links: []
-  terminal: false
-  canonical_row_sha256: e92d91e25e91fb7b9c653095834dbbb70061a16c3ac70d8ebde03cbf747ddcd9
-last_event_id: legacy-import-e92d91e25e91fb7b9c653095
+  terminal: true
+  canonical_row_sha256: e2856fdc68cd3275b6f1a12d9e721ea2dd68696aef5fbb544a6cd0bc9f0636d1
+last_event_id: task-event-5f0d80569d689b2ffb519ce21de4941c
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 9d342288a37e0268b72f76e3e61a78f9b37cb901857401423c0228a61e0e17c9
+fragment_checksum: 610485cd8e61dacecd16013d043e1eceb458990b690ce9d27cf99792f289d66e
