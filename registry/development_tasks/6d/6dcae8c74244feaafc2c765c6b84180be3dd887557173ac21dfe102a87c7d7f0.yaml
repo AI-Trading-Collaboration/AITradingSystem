@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2271_FREE_LOW_COST_FIRST_LAYER_PROXY_COVERAGE_AUDIT
   task_id_sha256: 6dcae8c74244feaafc2c765c6b84180be3dd887557173ac21dfe102a87c7d7f0
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2271_FREE_LOW_COST_FIRST_LAYER_PROXY_COVERAGE_AUDIT
   title: null
   domain: Research trends / free and low-cost first-layer proxy coverage audit
@@ -12,18 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2271_Free_Low_Cost_First_Layer_Proxy_Coverage_Audit.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2271_Free_Low_Cost_First_Layer_Proxy_Coverage_Audit.md`；附件要求逐
-    proxy 审计 data availability、history start、primary window coverage、PIT safety、survivorship
-    risk、expected signal role 和 replacement for true breadth。本批已生成 audit artifacts，下一步进入
-    TRADING-2272 objective redesign。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 `aits research trends first-layer-proxy-coverage-audit`、proxy coverage
       policy、JSON/YAML/Markdown audit artifacts、report registry、artifact catalog、system
       flow 和 focused tests；所有 proxy rows 显式披露 `replacement_for_true_breadth=false`
@@ -31,7 +30,6 @@ task_record:
       fields 固定 false/none/BLOCKED。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: fc353f669140b066b6a2a6e68b7c9b707461241e3fce94ec88388228dc5d8a07
   cell_count: 8
@@ -93,29 +91,58 @@ events:
   evidence_refs:
   - sha256:fc353f669140b066b6a2a6e68b7c9b707461241e3fce94ec88388228dc5d8a07
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2271_FREE_LOW_COST_FIRST_LAYER_PROXY_COVERAGE_AUDIT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:59:15+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 85d0e78466d565ff2cd4218c00d977bd9060bfff
+  previous_state_event_id: legacy-import-fc353f669140b066b6a2a6e6
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 `aits research trends first-layer-proxy-coverage-audit`、proxy
+      coverage policy、JSON/YAML/Markdown audit artifacts、report registry、artifact
+      catalog、system flow 和 focused tests；所有 proxy rows 显式披露 `replacement_for_true_breadth=false`
+      或阻塞原因；可用 ETF price proxies 只能 price-proxy diagnostic，不得升级成 true breadth；所有 gate
+      fields 固定 false/none/BLOCKED。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+      新增并进入 IN_PROGRESS；本批只做 coverage audit，不下载网络数据、不升级 paid source、不训练模型、不恢复 reopen/promotion/paper-shadow/production/broker。2026-06-28:
+      实现完成并转入 VALIDATING；真实 run proxy_count=12、data_available_count=6、replacement_for_true_breadth_count=0。2026-06-28:
+      验证通过 focused / governance / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T122456Z/test_runtime_summary.json`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ec98b294b095a94f7297613948699267
 projection:
   legacy_first_eight_cells:
   - TRADING-2271_FREE_LOW_COST_FIRST_LAYER_PROXY_COVERAGE_AUDIT
   - Research trends / free and low-cost first-layer proxy coverage audit
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2271_Free_Low_Cost_First_Layer_Proxy_Coverage_Audit.md`；附件要求逐
-    proxy 审计 data availability、history start、primary window coverage、PIT safety、survivorship
-    risk、expected signal role 和 replacement for true breadth。本批已生成 audit artifacts，下一步进入
-    TRADING-2272 objective redesign。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 `aits research trends first-layer-proxy-coverage-audit`、proxy coverage policy、JSON/YAML/Markdown
     audit artifacts、report registry、artifact catalog、system flow 和 focused tests；所有
     proxy rows 显式披露 `replacement_for_true_breadth=false` 或阻塞原因；可用 ETF price proxies
     只能 price-proxy diagnostic，不得升级成 true breadth；所有 gate fields 固定 false/none/BLOCKED。
-  - '2026-06-28: 新增并进入 IN_PROGRESS；本批只做 coverage audit，不下载网络数据、不升级 paid source、不训练模型、不恢复
-    reopen/promotion/paper-shadow/production/broker。2026-06-28: 实现完成并转入 VALIDATING；真实
-    run proxy_count=12、data_available_count=6、replacement_for_true_breadth_count=0。2026-06-28:
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+    新增并进入 IN_PROGRESS；本批只做 coverage audit，不下载网络数据、不升级 paid source、不训练模型、不恢复 reopen/promotion/paper-shadow/production/broker。2026-06-28:
+    实现完成并转入 VALIDATING；真实 run proxy_count=12、data_available_count=6、replacement_for_true_breadth_count=0。2026-06-28:
     验证通过 focused / governance / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T122456Z/test_runtime_summary.json`。'
-  docs_links:
-  - docs/requirements/TRADING-2271_Free_Low_Cost_First_Layer_Proxy_Coverage_Audit.md
-  terminal: false
-  canonical_row_sha256: fc353f669140b066b6a2a6e68b7c9b707461241e3fce94ec88388228dc5d8a07
-last_event_id: legacy-import-fc353f669140b066b6a2a6e6
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: bf9cce4815cf4eae82871489a517843dc9505f41a560a6e412e74ae63a70ce14
+last_event_id: task-event-ec98b294b095a94f7297613948699267
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b1b9017ef30885656dd2341dca2f286219c24b1f5a1bc1ce5a4233be3c14e7ee
+fragment_checksum: 5c98f434338f5728e152fa77c4650109606ba68212bc73fa5b6ae022f55d3a75
