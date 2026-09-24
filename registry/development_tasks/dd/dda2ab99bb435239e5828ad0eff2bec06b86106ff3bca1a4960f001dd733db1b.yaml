@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: PROD-002
   task_id_sha256: dda2ab99bb435239e5828ad0eff2bec06b86106ff3bca1a4960f001dd733db1b
 task_record:
+  schema_version: task_record.v1
   task_id: PROD-002
   title: null
   domain: 趋势判断/风险复核运行纪律
@@ -12,24 +13,20 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 项目 owner + 系统验证
-  requirement_refs:
-  - docs/requirements/production_readiness_gaps_2026-05-04.md
-  - docs/requirements/risk_event_review_workflow_2026-05-04.md
+  next_owner: None / closed by owner decision
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: '`RISK-005/RISK-006/RISK-007/RISK-008`
-    已有工程底座；下一步需要 owner 明确每日风险复核责任人、合格来源清单、跳过规则和复核声明运行纪律；详细索引见 `docs/requirements/production_readiness_gaps_2026-05-04.md`
-    与 `docs/requirements/risk_event_review_workflow_2026-05-04.md`'
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 owner 决策包第9条采用 RISK-008 的
+    backlog-only 边界作为每日风险复核责任与纪律，关闭本任务
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 连续运行样本中，日报能区分“已复核且未发现未记录重大事件”“有待复核 backlog”“复核缺失导致 policy/geopolitics 降级”；有效复核声明必须包含
       reviewer、source scope、reviewed_at、coverage window 和结论；缺失或过期声明时不得把空 occurrence
       目录解释为无风险
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 159b914b1aa1b4519a81a77dd676e33bf77683dd49ff74f91b07bcf71014903c
   cell_count: 8
@@ -75,24 +72,47 @@ events:
   evidence_refs:
   - sha256:159b914b1aa1b4519a81a77dd676e33bf77683dd49ff74f91b07bcf71014903c
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: PROD-002
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-24T20:35:03+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-20260924-v1
+  lane_id: null
+  base_commit: 86b0a49c2285eea887ffe4f4786d34620c27384f
+  previous_state_event_id: legacy-import-159b914b1aa1b4519a81a77d
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed by owner decision
+    blocker_or_next_step: 2026-09-24 按 owner 决策包第9条采用 RISK-008 的 backlog-only 边界作为每日风险复核责任与纪律，关闭本任务
+    acceptance_criteria: 连续运行样本中，日报能区分“已复核且未发现未记录重大事件”“有待复核 backlog”“复核缺失导致 policy/geopolitics
+      降级”；有效复核声明必须包含 reviewer、source scope、reviewed_at、coverage window 和结论；缺失或过期声明时不得把空
+      occurrence 目录解释为无风险
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第9条：ADOPT_RISK_008_BACKLOG_ONLY；agent_harness=claude_code；原备注：2026-05-06:
+      从 `PROD-001` 拆出，原因：总控任务已完成缺口登记和边界收口，但风险事件真实复核是 owner 运营纪律，不应继续压在总任务里。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-6874deb8a92dfc679f403f8ba8643bf2
 projection:
   legacy_first_eight_cells:
   - PROD-002
   - 趋势判断/风险复核运行纪律
   - P1
-  - BLOCKED_OWNER_INPUT
-  - 项目 owner + 系统验证
-  - '`RISK-005/RISK-006/RISK-007/RISK-008` 已有工程底座；下一步需要 owner 明确每日风险复核责任人、合格来源清单、跳过规则和复核声明运行纪律；详细索引见
-    `docs/requirements/production_readiness_gaps_2026-05-04.md` 与 `docs/requirements/risk_event_review_workflow_2026-05-04.md`'
+  - DONE
+  - None / closed by owner decision
+  - 2026-09-24 按 owner 决策包第9条采用 RISK-008 的 backlog-only 边界作为每日风险复核责任与纪律，关闭本任务
   - 连续运行样本中，日报能区分“已复核且未发现未记录重大事件”“有待复核 backlog”“复核缺失导致 policy/geopolitics 降级”；有效复核声明必须包含
     reviewer、source scope、reviewed_at、coverage window 和结论；缺失或过期声明时不得把空 occurrence
     目录解释为无风险
-  - '2026-05-06: 从 `PROD-001` 拆出，原因：总控任务已完成缺口登记和边界收口，但风险事件真实复核是 owner 运营纪律，不应继续压在总任务里。'
-  docs_links:
-  - docs/requirements/production_readiness_gaps_2026-05-04.md
-  - docs/requirements/risk_event_review_workflow_2026-05-04.md
-  terminal: false
-  canonical_row_sha256: 159b914b1aa1b4519a81a77dd676e33bf77683dd49ff74f91b07bcf71014903c
-last_event_id: legacy-import-159b914b1aa1b4519a81a77d
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第9条：ADOPT_RISK_008_BACKLOG_ONLY；agent_harness=claude_code；原备注：2026-05-06:
+    从 `PROD-001` 拆出，原因：总控任务已完成缺口登记和边界收口，但风险事件真实复核是 owner 运营纪律，不应继续压在总任务里。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: da625b2a1d1d14ad25f621d17327b965bafd4b02a81f78507c10dc3f8713c6ac
+last_event_id: task-event-6874deb8a92dfc679f403f8ba8643bf2
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 955e2ae3477e7fa1b2d9badc5cef4ce59e54f6bb86ea8e21f82e67a3b0f8dfdd
+fragment_checksum: 59e90597eec8dc5565128865d273d4b300399f0b732194ad84a4e9b521887398
