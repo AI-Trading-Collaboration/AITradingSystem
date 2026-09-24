@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-718_STRATEGY_ADAPTER_MULTI_FIDELITY_EVALUATION
   task_id_sha256: 4c7dc45837690600cc88d7858c64a10b23ce99174f683b7aee454caa07932d75
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-718_STRATEGY_ADAPTER_MULTI_FIDELITY_EVALUATION
   title: null
   domain: Portfolio decision research / strategy adapter and multi-fidelity evaluation
@@ -13,18 +14,19 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；统一策略接口和分阶段验证
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: '`aits research strategy evaluate'
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: be015cbd7cdbd4b2cb818673d402885f1dc0e2c97d8319a6357b99ab3beb8e1a
   cell_count: 9
@@ -75,19 +77,47 @@ events:
   evidence_refs:
   - sha256:be015cbd7cdbd4b2cb818673d402885f1dc0e2c97d8319a6357b99ab3beb8e1a
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-718_STRATEGY_ADAPTER_MULTI_FIDELITY_EVALUATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:08:04+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 12e3f2e62a413740dc288102919a9108d2bc4847
+  previous_state_event_id: legacy-import-be015cbd7cdbd4b2cb818673
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: '`aits research strategy evaluate'
+    notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：compare`
+      可运行；all_strategies_use_same_interface=true；complex_strategy_cannot_skip_stage=true；stage_outputs_registered=true
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f2a58fdeb1687ac025455f3c74f6a5f4
 projection:
   legacy_first_eight_cells:
   - TRADING-718_STRATEGY_ADAPTER_MULTI_FIDELITY_EVALUATION
   - Portfolio decision research / strategy adapter and multi-fidelity evaluation harness
   - P1
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 详见 TRADING-703_to_725 总需求文档；统一策略接口和分阶段验证
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - '`aits research strategy evaluate'
-  - compare` 可运行；all_strategies_use_same_interface=true；complex_strategy_cannot_skip_stage=true；stage_outputs_registered=true
+  - owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：compare`
+    可运行；all_strategies_use_same_interface=true；complex_strategy_cannot_skip_stage=true；stage_outputs_registered=true
   docs_links: []
-  terminal: false
-  canonical_row_sha256: 69bd6163f7ef604b4a8a080c1d94eee3647274edd78fb4902e6133d712b97b78
-last_event_id: legacy-import-be015cbd7cdbd4b2cb818673
+  terminal: true
+  canonical_row_sha256: 93ab95ca94f5aca010065a6f6eeb16cff39598ee729b55871844feb41a0d0e9f
+last_event_id: task-event-f2a58fdeb1687ac025455f3c74f6a5f4
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 4199d938e30cd3e0a990183de3a63c39c5bc979a8ea94ac69bb9e2ce788746d7
+fragment_checksum: 902420bcaa009b20e40795f43b460f1c274a7dfb531ae1e0c9ba9b5783dabeeb
