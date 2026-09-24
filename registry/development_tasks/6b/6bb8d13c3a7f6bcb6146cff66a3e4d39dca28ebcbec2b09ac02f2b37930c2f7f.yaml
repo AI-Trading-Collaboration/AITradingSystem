@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-864_TAIL_RISK_OWNER_REVIEW_PACK
   task_id_sha256: 6bb8d13c3a7f6bcb6146cff66a3e4d39dca28ebcbec2b09ac02f2b37930c2f7f
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-864_TAIL_RISK_OWNER_REVIEW_PACK
   title: null
   domain: Controlled strategy research / owner review pack
@@ -12,23 +13,22 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 项目 owner + 系统实现
+  next_owner: None / closed_without_owner_review
   requirement_refs:
-  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
   - docs/research/tail_risk_followup_owner_review_pack.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；用于
-    owner 决定接受、提交、继续或暂停
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 生成 `docs/research/tail_risk_followup_owner_review_pack.md` 和 `tail_risk_owner_review_pack.json`，回答实现完整性、未提交文件、mixed
       risk、真实 CLI、blocked/readiness/baseline dominance/trigger v2 和 owner approval
       项
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 3a28519031e5e8753a24a4ad92148eaf40879a19a4b657b8e8ca2f02777a458d
   cell_count: 8
@@ -80,25 +80,55 @@ events:
   evidence_refs:
   - sha256:3a28519031e5e8753a24a4ad92148eaf40879a19a4b657b8e8ca2f02777a458d
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-864_TAIL_RISK_OWNER_REVIEW_PACK
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:36:29+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 40a95a9c1d0966d6d4b87fe77adc0b9edbd3da94
+  previous_state_event_id: legacy-import-3a28519031e5e8753a24a4ad
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 生成 `docs/research/tail_risk_followup_owner_review_pack.md`
+      和 `tail_risk_owner_review_pack.json`，回答实现完整性、未提交文件、mixed risk、真实 CLI、blocked/readiness/baseline
+      dominance/trigger v2 和 owner approval 项
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+      新增并进入 IN_PROGRESS。2026-06-22: owner review pack 完成并转入 VALIDATING；输出 `OWNER_REVIEW_PACK_READY`，明确当前
+      fallback 仍 blocked、readiness_score=58、baseline dominated=true、trigger v2 不建议自动继续，owner
+      需批准 mixed worktree/hunk-level commit 边界。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-6badd0879d88fb79c5347a2129663a9d
 projection:
   legacy_first_eight_cells:
   - TRADING-864_TAIL_RISK_OWNER_REVIEW_PACK
   - Controlled strategy research / owner review pack
   - P1
-  - VALIDATING
-  - 项目 owner + 系统实现
-  - 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；用于
-    owner 决定接受、提交、继续或暂停
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 生成 `docs/research/tail_risk_followup_owner_review_pack.md` 和 `tail_risk_owner_review_pack.json`，回答实现完整性、未提交文件、mixed
     risk、真实 CLI、blocked/readiness/baseline dominance/trigger v2 和 owner approval 项
-  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: owner review pack 完成并转入 VALIDATING；输出
-    `OWNER_REVIEW_PACK_READY`，明确当前 fallback 仍 blocked、readiness_score=58、baseline
-    dominated=true、trigger v2 不建议自动继续，owner 需批准 mixed worktree/hunk-level commit 边界。'
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22:
+    新增并进入 IN_PROGRESS。2026-06-22: owner review pack 完成并转入 VALIDATING；输出 `OWNER_REVIEW_PACK_READY`，明确当前
+    fallback 仍 blocked、readiness_score=58、baseline dominated=true、trigger v2 不建议自动继续，owner
+    需批准 mixed worktree/hunk-level commit 边界。'
   docs_links:
-  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
   - docs/research/tail_risk_followup_owner_review_pack.md
-  terminal: false
-  canonical_row_sha256: 3a28519031e5e8753a24a4ad92148eaf40879a19a4b657b8e8ca2f02777a458d
-last_event_id: legacy-import-3a28519031e5e8753a24a4ad
+  terminal: true
+  canonical_row_sha256: c68849b88c576481f23f9c68bc8b14031f1cd9c19c9b0dc6485971636f8c93f3
+last_event_id: task-event-6badd0879d88fb79c5347a2129663a9d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 1f4d1577295368b9fef03102e66910988eca743ffaccaaa614f8048358ddddf8
+fragment_checksum: bbe85f251c13d8b37402d0496a0bc721faf7b8a2ed9dd29443b5557f422c8c0d
