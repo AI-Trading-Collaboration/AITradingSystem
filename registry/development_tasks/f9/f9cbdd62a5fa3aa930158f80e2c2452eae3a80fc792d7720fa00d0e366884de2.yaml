@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-760_to_764_CONTROLLED_RESEARCH_BATCH
   task_id_sha256: f9cbdd62a5fa3aa930158f80e2c2452eae3a80fc792d7720fa00d0e366884de2
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-760_to_764_CONTROLLED_RESEARCH_BATCH
   title: null
   domain: Data foundation + controlled strategy research / controlled benchmark, source
@@ -13,18 +14,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 项目 owner 后续复核 + 系统运行观察
-  requirement_refs:
-  - docs/requirements/TRADING-760_to_764_Controlled_Research_Batch.md
+  next_owner: Project Owner（pi 迁移后重启对应研究线时）
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-760_to_764_Controlled_Research_Batch.md`；baseline
-    实现已完成并生成真实 artifacts；TRADING-760 benchmark/forward evidence、TRADING-763 diagnostics/casebook
-    和 TRADING-764 review board 进入 `VALIDATING`；TRADING-761 Marketstack 仍为 `DATA_REQUIRED`，TRADING-762
-    FMP PIT / delisted review 仍为 `WATCHLIST`
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待
+    forward/shadow 样本自然成熟，30 天以上无新证据。退出条件：迁移 pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007
+    需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 CLI：`aits research controlled-pilot benchmark-batch`、`aits forward-evidence
       capture-dry-run`、`aits data source-qualification marketstack-coverage-expansion`、`aits
       data source-qualification fmp-pit-owner-review`、`aits research acceleration
@@ -37,7 +36,6 @@ task_record:
       check 和 git diff check
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 2f699eca7bff370d75e023b81a0b7905530f57904bc17e63a66e782516df3511
   cell_count: 8
@@ -110,18 +108,52 @@ events:
   evidence_refs:
   - sha256:2f699eca7bff370d75e023b81a0b7905530f57904bc17e63a66e782516df3511
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-760_to_764_CONTROLLED_RESEARCH_BATCH
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T02:17:12+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 89cf302852162ac79fbf3a354822095f3ab51f00
+  previous_state_event_id: legacy-import-2f699eca7bff370d75e023b8
+  from_status: VALIDATING
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: Project Owner（pi 迁移后重启对应研究线时）
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待 forward/shadow
+      样本自然成熟，30 天以上无新证据。退出条件：迁移 pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 CLI：`aits research controlled-pilot benchmark-batch`、`aits
+      forward-evidence capture-dry-run`、`aits data source-qualification marketstack-coverage-expansion`、`aits
+      data source-qualification fmp-pit-owner-review`、`aits research acceleration
+      reverse-diagnostics-controlled-pilot`、`aits research acceleration regret-casebook-controlled-pilot`、`aits
+      research ops controlled-batch-review`；输出 TRADING-760～764 指定 JSON/Markdown artifacts；negative
+      controls 和 leakage trap fail-closed；Marketstack 仍不得作为 primary source；FMP provider
+      timestamp / delisted gap 不得静默升级；review board 对所有模块给出 continue/watchlist/data-required/pause
+      等决策；全部输出固定 production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0；验证通过
+      compileall、focused parallel pytest、fast-unit、contract-validation、report-validation、Ruff、Black
+      check 和 git diff check
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：DEFERRED_AWAITING_FORWARD_SAMPLES；agent_harness=claude_code；原备注：2026-06-21:
+      新增并进入 IN_PROGRESS，原因：owner 要求推进 TRADING-760～764 下一步任务；本批目标是进入 `CONTROLLED_RESEARCH_RUNNING`，不是
+      `PROMOTION_READY`。2026-06-21: baseline 实现完成并转入 VALIDATING；真实缓存运行生成 760～764 artifacts，review
+      board 保持 no production/no broker/no promotion 边界，下一步为 owner 复核 Marketstack/FMP
+      数据源决策和下一批研究优先级。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5b49d279b29c49555fe2dbfb357febfe
 projection:
   legacy_first_eight_cells:
   - TRADING-760_to_764_CONTROLLED_RESEARCH_BATCH
   - Data foundation + controlled strategy research / controlled benchmark, source
     gap review, diagnostics, and batch review
   - P0
-  - VALIDATING
-  - 项目 owner 后续复核 + 系统运行观察
-  - 详见 `docs/requirements/TRADING-760_to_764_Controlled_Research_Batch.md`；baseline
-    实现已完成并生成真实 artifacts；TRADING-760 benchmark/forward evidence、TRADING-763 diagnostics/casebook
-    和 TRADING-764 review board 进入 `VALIDATING`；TRADING-761 Marketstack 仍为 `DATA_REQUIRED`，TRADING-762
-    FMP PIT / delisted review 仍为 `WATCHLIST`
+  - DEFERRED
+  - Project Owner（pi 迁移后重启对应研究线时）
+  - 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待 forward/shadow 样本自然成熟，30 天以上无新证据。退出条件：迁移
+    pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007 需求文档
   - 新增 CLI：`aits research controlled-pilot benchmark-batch`、`aits forward-evidence
     capture-dry-run`、`aits data source-qualification marketstack-coverage-expansion`、`aits
     data source-qualification fmp-pit-owner-review`、`aits research acceleration reverse-diagnostics-controlled-pilot`、`aits
@@ -131,14 +163,14 @@ projection:
     对所有模块给出 continue/watchlist/data-required/pause 等决策；全部输出固定 production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false、lookahead_violation_count=0；验证通过
     compileall、focused parallel pytest、fast-unit、contract-validation、report-validation、Ruff、Black
     check 和 git diff check
-  - '2026-06-21: 新增并进入 IN_PROGRESS，原因：owner 要求推进 TRADING-760～764 下一步任务；本批目标是进入 `CONTROLLED_RESEARCH_RUNNING`，不是
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：DEFERRED_AWAITING_FORWARD_SAMPLES；agent_harness=claude_code；原备注：2026-06-21:
+    新增并进入 IN_PROGRESS，原因：owner 要求推进 TRADING-760～764 下一步任务；本批目标是进入 `CONTROLLED_RESEARCH_RUNNING`，不是
     `PROMOTION_READY`。2026-06-21: baseline 实现完成并转入 VALIDATING；真实缓存运行生成 760～764 artifacts，review
     board 保持 no production/no broker/no promotion 边界，下一步为 owner 复核 Marketstack/FMP
     数据源决策和下一批研究优先级。'
-  docs_links:
-  - docs/requirements/TRADING-760_to_764_Controlled_Research_Batch.md
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 2f699eca7bff370d75e023b81a0b7905530f57904bc17e63a66e782516df3511
-last_event_id: legacy-import-2f699eca7bff370d75e023b8
+  canonical_row_sha256: 159f06a506fb474846bdac2f4e59c18c2a3380ac7c2c2f71f86d466c8bace39b
+last_event_id: task-event-5b49d279b29c49555fe2dbfb357febfe
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 0837f9a31e2e04ec8dc240fdf6b2ac43d423b03399b682517ca5347ac4ad9c3c
+fragment_checksum: defa3679cdfd453047a9d97ea39be3762e5601c4eb480df1b2fedd857b144698
