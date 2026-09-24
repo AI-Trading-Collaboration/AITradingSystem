@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-1806_to_1885_TWO_LANE_OPTIMIZATION_MASTER_CLOSEOUT
   task_id_sha256: 1717ccab9ef576b36246e080a3cbffb262b327ac7ac7469ab5b6ee1519d9550c
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-1806_to_1885_TWO_LANE_OPTIMIZATION_MASTER_CLOSEOUT
   title: null
   domain: Research trends / two-lane optimization master closeout
@@ -12,18 +13,17 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现 + 项目 owner 后续复核
+  next_owner: None / closed_without_owner_review
   requirement_refs:
   - docs/research/two_lane_optimization_master_closeout.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 基于 owner 附件完整范围、TRADING-1806～1820 lane
-    separation、TRADING-1821～1840 defensive lane、TRADING-1841～1860 return-seeking lane
-    和 Phase 4/5 blocked state，新增总收口 artifact；不得把 Phase 4/5 的 blocked 状态改写成候选验证或 gated
-    overlay 实现
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 新增 `docs/research/two_lane_optimization_master_closeout.md` 和 `inputs/research_reviews/two_lane_optimization_master_final_matrix.yaml`，并同步
       report registry、artifact catalog、system flow、task register 和 guardrail tests；必须逐
       phase 记录 evidence path、status、gate result、blocked/allowed next action；最终结论应证明不继续
@@ -31,7 +31,6 @@ task_record:
       全部 disabled
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 2a900809f35732b82939eddd46ff55ea4d24e9c2c83cc7a7dbb5e86206dfd9bf
   cell_count: 8
@@ -96,30 +95,65 @@ events:
   evidence_refs:
   - sha256:2a900809f35732b82939eddd46ff55ea4d24e9c2c83cc7a7dbb5e86206dfd9bf
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-1806_to_1885_TWO_LANE_OPTIMIZATION_MASTER_CLOSEOUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T00:06:12+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: d75f24a0f25039563ba0d612cdad907edb424f1f
+  previous_state_event_id: legacy-import-2a900809f35732b82939eddd
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 新增 `docs/research/two_lane_optimization_master_closeout.md`
+      和 `inputs/research_reviews/two_lane_optimization_master_final_matrix.yaml`，并同步
+      report registry、artifact catalog、system flow、task register 和 guardrail tests；必须逐
+      phase 记录 evidence path、status、gate result、blocked/allowed next action；最终结论应证明不继续
+      gated integration、不进入 candidate validation、dynamic promotion/paper-shadow/production/broker
+      全部 disabled
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+      新增并进入 IN_PROGRESS；本批只做 master closeout，不实现 Phase 4 gated overlay actual-path
+      或 Phase 5 validation，因为 Phase 2/3 evidence gates 未满足。2026-06-28: 实现完成并转入 VALIDATING；final
+      status=`TWO_LANE_OPTIMIZATION_DIAGNOSTIC_ONLY_INSUFFICIENT_EVIDENCE_PROMOTION_BLOCKED`，最终建议暂停
+      automatic first-layer trend strategy，只保留 diagnostic-only / owner-reviewed future
+      evidence。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c0c3a21751dc4505e088edb85d937022
 projection:
   legacy_first_eight_cells:
   - TRADING-1806_to_1885_TWO_LANE_OPTIMIZATION_MASTER_CLOSEOUT
   - Research trends / two-lane optimization master closeout
   - P0
-  - VALIDATING
-  - 系统实现 + 项目 owner 后续复核
-  - 基于 owner 附件完整范围、TRADING-1806～1820 lane separation、TRADING-1821～1840 defensive
-    lane、TRADING-1841～1860 return-seeking lane 和 Phase 4/5 blocked state，新增总收口 artifact；不得把
-    Phase 4/5 的 blocked 状态改写成候选验证或 gated overlay 实现
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 新增 `docs/research/two_lane_optimization_master_closeout.md` 和 `inputs/research_reviews/two_lane_optimization_master_final_matrix.yaml`，并同步
     report registry、artifact catalog、system flow、task register 和 guardrail tests；必须逐
     phase 记录 evidence path、status、gate result、blocked/allowed next action；最终结论应证明不继续
     gated integration、不进入 candidate validation、dynamic promotion/paper-shadow/production/broker
     全部 disabled
-  - '2026-06-28: 新增并进入 IN_PROGRESS；本批只做 master closeout，不实现 Phase 4 gated overlay
-    actual-path 或 Phase 5 validation，因为 Phase 2/3 evidence gates 未满足。2026-06-28: 实现完成并转入
-    VALIDATING；final status=`TWO_LANE_OPTIMIZATION_DIAGNOSTIC_ONLY_INSUFFICIENT_EVIDENCE_PROMOTION_BLOCKED`，最终建议暂停
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28:
+    新增并进入 IN_PROGRESS；本批只做 master closeout，不实现 Phase 4 gated overlay actual-path 或
+    Phase 5 validation，因为 Phase 2/3 evidence gates 未满足。2026-06-28: 实现完成并转入 VALIDATING；final
+    status=`TWO_LANE_OPTIMIZATION_DIAGNOSTIC_ONLY_INSUFFICIENT_EVIDENCE_PROMOTION_BLOCKED`，最终建议暂停
     automatic first-layer trend strategy，只保留 diagnostic-only / owner-reviewed future
     evidence。'
   docs_links:
   - docs/research/two_lane_optimization_master_closeout.md
-  terminal: false
-  canonical_row_sha256: 2a900809f35732b82939eddd46ff55ea4d24e9c2c83cc7a7dbb5e86206dfd9bf
-last_event_id: legacy-import-2a900809f35732b82939eddd
+  terminal: true
+  canonical_row_sha256: f7675427ab8412fd5b965aa038bdfb2f9259eabf3835e3d7ccb42c213b34d0a3
+last_event_id: task-event-c0c3a21751dc4505e088edb85d937022
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 06e607f0bbe8aa71c25611685e51c16cb755bf2e2376d308059d65bddffcfe9b
+fragment_checksum: 0be5ed32fc980dfce77ffe204d355502ea7f6e30e624182c2e35fb4aa2bc8bf3
