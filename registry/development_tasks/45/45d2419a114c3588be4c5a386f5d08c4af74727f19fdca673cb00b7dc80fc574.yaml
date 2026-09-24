@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2312_LIQUIDITY_RATES_PRESSURE_GENERATOR_POC
   task_id_sha256: 45d2419a114c3588be4c5a386f5d08c4af74727f19fdca673cb00b7dc80fc574
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2312_LIQUIDITY_RATES_PRESSURE_GENERATOR_POC
   title: null
   domain: Research trends / liquidity rates pressure candidate family
@@ -12,18 +13,16 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 系统验证 + 项目 owner 后续复核
-  requirement_refs:
-  - docs/requirements/TRADING-2312_Liquidity_Rates_Pressure_Generator_POC.md
+  next_owner: None / closed_without_owner_review
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2312_Liquidity_Rates_Pressure_Generator_POC.md`；依赖
-    TRADING-2311 feasibility audit、required-anchor cached data quality gate 和 liquidity/rates
-    generator pilot policy。当前仅允许 partial rates-only route；`liquidity_headwind_proxy_v1`
-    因 `UUP` / `HYG` / `LQD` 缺失继续 blocked。
+  unstructured_legacy_blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次
+    Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何
+    promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 生成 `duration_pressure_proxy_v1` 和 `rates_pressure_exposure_cap_modifier_v1`
       的 candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary、policy
       summary、blocked candidate report 和 safety boundary；真实 run status=`LIQUIDITY_RATES_PRESSURE_GENERATOR_POC_READY_VALIDATION_BLOCKED`，data_quality_status=`PASS_WITH_WARNINGS`，top-level
@@ -32,7 +31,6 @@ task_record:
       POC ready。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 5b07d7901e3488b5360b1bb9e69cbe9c65106d8d55f4106835201c0076472c3a
   cell_count: 8
@@ -106,34 +104,68 @@ events:
   evidence_refs:
   - sha256:5b07d7901e3488b5360b1bb9e69cbe9c65106d8d55f4106835201c0076472c3a
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2312_LIQUIDITY_RATES_PRESSURE_GENERATOR_POC
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T01:49:59+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-owner-decision-pack-item13-20260924-v1
+  lane_id: null
+  base_commit: 94fbc415ebc77dceef744cfe1ba72288eafa2a95
+  previous_state_event_id: legacy-import-5b07d7901e3488b5360b1bb9
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: None / closed_without_owner_review
+    blocker_or_next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full
+      PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+      或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+    acceptance_criteria: 生成 `duration_pressure_proxy_v1` 和 `rates_pressure_exposure_cap_modifier_v1`
+      的 candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary、policy
+      summary、blocked candidate report 和 safety boundary；真实 run status=`LIQUIDITY_RATES_PRESSURE_GENERATOR_POC_READY_VALIDATION_BLOCKED`，data_quality_status=`PASS_WITH_WARNINGS`，top-level
+      validation status=`PASS`；所有 artifacts 固定 actual-path validation / promotion
+      / paper-shadow / production / broker false/none，不得声称 full liquidity pressure
+      POC ready。
+    notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+      根据 owner 附件和 TRADING-2311 recommended_next_task 新增并进入 IN_PROGRESS；本任务必须 selective
+      staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；真实 run 生成两个
+      partial rates-only candidate-bound bundles，`liquidity_headwind_proxy_v1` 只进入
+      blocked report，所有 promotion/paper-shadow/production/broker gates 仍为 false/none；验证通过
+      Ruff、compileall、TRADING-2312 CLI smoke、focused parallel pytest 76 passed、`aits
+      validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation 193
+      passed 和 `git diff --check`。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-owner-decision-pack-item13-20260924-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-aeb1b2b7218339b5d1255ffe0fb07847
 projection:
   legacy_first_eight_cells:
   - TRADING-2312_LIQUIDITY_RATES_PRESSURE_GENERATOR_POC
   - Research trends / liquidity rates pressure candidate family
   - P1
-  - VALIDATING
-  - 系统验证 + 项目 owner 后续复核
-  - 详见 `docs/requirements/TRADING-2312_Liquidity_Rates_Pressure_Generator_POC.md`；依赖
-    TRADING-2311 feasibility audit、required-anchor cached data quality gate 和 liquidity/rates
-    generator pilot policy。当前仅允许 partial rates-only route；`liquidity_headwind_proxy_v1`
-    因 `UUP` / `HYG` / `LQD` 缺失继续 blocked。
+  - DONE
+  - None / closed_without_owner_review
+  - 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且
+    30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production
+    或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
   - 生成 `duration_pressure_proxy_v1` 和 `rates_pressure_exposure_cap_modifier_v1` 的
     candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary、policy
     summary、blocked candidate report 和 safety boundary；真实 run status=`LIQUIDITY_RATES_PRESSURE_GENERATOR_POC_READY_VALIDATION_BLOCKED`，data_quality_status=`PASS_WITH_WARNINGS`，top-level
     validation status=`PASS`；所有 artifacts 固定 actual-path validation / promotion /
     paper-shadow / production / broker false/none，不得声称 full liquidity pressure POC
     ready。
-  - '2026-07-01: 根据 owner 附件和 TRADING-2311 recommended_next_task 新增并进入 IN_PROGRESS；本任务必须
-    selective staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；真实 run
-    生成两个 partial rates-only candidate-bound bundles，`liquidity_headwind_proxy_v1`
-    只进入 blocked report，所有 promotion/paper-shadow/production/broker gates 仍为 false/none；验证通过
-    Ruff、compileall、TRADING-2312 CLI smoke、focused parallel pytest 76 passed、`aits
-    validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、contract-validation 193 passed
-    和 `git diff --check`。'
-  docs_links:
-  - docs/requirements/TRADING-2312_Liquidity_Rates_Pressure_Generator_POC.md
-  terminal: false
-  canonical_row_sha256: 5b07d7901e3488b5360b1bb9e69cbe9c65106d8d55f4106835201c0076472c3a
-last_event_id: legacy-import-5b07d7901e3488b5360b1bb9
+  - 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01:
+    根据 owner 附件和 TRADING-2311 recommended_next_task 新增并进入 IN_PROGRESS；本任务必须 selective
+    staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；真实 run 生成两个 partial
+    rates-only candidate-bound bundles，`liquidity_headwind_proxy_v1` 只进入 blocked report，所有
+    promotion/paper-shadow/production/broker gates 仍为 false/none；验证通过 Ruff、compileall、TRADING-2312
+    CLI smoke、focused parallel pytest 76 passed、`aits validate-data --as-of 2026-06-29`
+    PASS_WITH_WARNINGS、contract-validation 193 passed 和 `git diff --check`。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 2aed7d21e6e94a135c976914dcb21bc13d63e8db9b5e177a3584fff0c4e26b62
+last_event_id: task-event-aeb1b2b7218339b5d1255ffe0fb07847
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: a5fa8cb778650ecee5cbe4087067b8fef64b3e0fbd3290eecf72a6e25fbccd4f
+fragment_checksum: f2c547f0f64e3cab9cd6a234672f4ad7402b42a68e219526b40808d5aea4e418
