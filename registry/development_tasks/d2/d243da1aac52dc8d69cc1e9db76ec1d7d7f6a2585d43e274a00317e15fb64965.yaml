@@ -13,18 +13,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Claude Code coordinator（DEVX-015 关闭后开始）
+  next_owner: Claude Code coordinator（S1 主体/S2/S3 待 DEVX-015 合入 main）
   requirement_refs:
   - docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 依赖 DEVX-015 DONE。详见 `docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md`：默认
-    SINGLE_LANE、精确计数/SHA ratchet 改单调检查、生成物只在最终候选重建一次、精简 fence 中间阶段、同一候选只跑一次 Full
+  unstructured_legacy_blocker_or_next_step: v2 分阶段计划见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md：S0（只读盘点）DONE；S1-early（3
+    个 Atlas 覆盖计数/任务列表改单调或生成式检查）随本次发布；S1 主体、S2 多任务事务、S3 单一发布命令、S4 文档同步依赖 DEVX-015 合入
+    main（S0 发现 18 个目标文件中 14 个与 DEVX-015 lane 重叠）；开放问题 2–4 在 S1 开始前由 owner 决定
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: DEVX-010、TRADING-2555、OPS-081 三个历史失败样本在新规则下不再误报；无关任务登记不引起测试失败；安全边界与 DQ/PIT
-      门禁覆盖不减少；AGENTS.md、skill、runbook 同步
+    text: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移
+      N 个任务 = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选 Full 1 次；A6
+      安全边界与 DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow
+      同步
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -57,22 +60,53 @@ events:
   - change:gov-007-p0b-registration-20260923-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-8b5800110119742cd0bc9ef03e272c08
+- schema_version: task_event.v1
+  task_id: DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T23:13:31+09:00'
+  actor: integration-coordinator
+  change_id: devx-016-s0-s1-early-20260925-v1
+  lane_id: null
+  base_commit: c56439fa28faa30635a823db1cb5272feaa18702
+  previous_state_event_id: task-event-8b5800110119742cd0bc9ef03e272c08
+  from_status: PROPOSED
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator（S1 主体/S2/S3 待 DEVX-015 合入 main）
+    blocker_or_next_step: v2 分阶段计划见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md：S0（只读盘点）DONE；S1-early（3
+      个 Atlas 覆盖计数/任务列表改单调或生成式检查）随本次发布；S1 主体、S2 多任务事务、S3 单一发布命令、S4 文档同步依赖 DEVX-015
+      合入 main（S0 发现 18 个目标文件中 14 个与 DEVX-015 lane 重叠）；开放问题 2–4 在 S1 开始前由 owner 决定
+    acceptance_criteria: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为
+      0；A3 登记或转移 N 个任务 = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选
+      Full 1 次；A6 安全边界与 DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow
+      同步
+    notes: agent_harness=claude_code；owner_decision=owner_decision:DEVX-016:2026-09-25:s0_early_start_v1、owner_decision:DEVX-016:2026-09-25:s1_early_publication_v1；S0
+      产物 outputs/architecture/devx_016/s0_inventory_v1.json；production_effect=none；broker_action=none
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-016-s0-s1-early-20260925-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-bc902720f5adf84950ecfb433dee7564
 projection:
   legacy_first_eight_cells:
   - DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
   - Architecture / single-agent default governance and monotonic ratchets
   - P0
-  - PROPOSED
-  - Claude Code coordinator（DEVX-015 关闭后开始）
-  - 依赖 DEVX-015 DONE。详见 `docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md`：默认
-    SINGLE_LANE、精确计数/SHA ratchet 改单调检查、生成物只在最终候选重建一次、精简 fence 中间阶段、同一候选只跑一次 Full
-  - DEVX-010、TRADING-2555、OPS-081 三个历史失败样本在新规则下不再误报；无关任务登记不引起测试失败；安全边界与 DQ/PIT 门禁覆盖不减少；AGENTS.md、skill、runbook
-    同步
-  - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision=`owner_decision:GOV-007:2026-09-23:pre_migration_convergence_v1`；`owner_decision:DEVX-016:2026-09-23:single_agent_default_v1`
+  - IN_PROGRESS
+  - Claude Code coordinator（S1 主体/S2/S3 待 DEVX-015 合入 main）
+  - v2 分阶段计划见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md：S0（只读盘点）DONE；S1-early（3
+    个 Atlas 覆盖计数/任务列表改单调或生成式检查）随本次发布；S1 主体、S2 多任务事务、S3 单一发布命令、S4 文档同步依赖 DEVX-015 合入
+    main（S0 发现 18 个目标文件中 14 个与 DEVX-015 lane 重叠）；开放问题 2–4 在 S1 开始前由 owner 决定
+  - A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移 N 个任务
+    = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选 Full 1 次；A6 安全边界与
+    DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow 同步
+  - agent_harness=claude_code；owner_decision=owner_decision:DEVX-016:2026-09-25:s0_early_start_v1、owner_decision:DEVX-016:2026-09-25:s1_early_publication_v1；S0
+    产物 outputs/architecture/devx_016/s0_inventory_v1.json；production_effect=none；broker_action=none
   docs_links:
   - docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
   terminal: false
-  canonical_row_sha256: 77ab54dc1b237ea7ef5b27817266307c8c5e45a798d1469a1b43ab8af2656263
-last_event_id: task-event-8b5800110119742cd0bc9ef03e272c08
+  canonical_row_sha256: 37106a8cb855dbc3821853cd5793e4a54c8eacaae9b3284b41701c0ff62ad2f4
+last_event_id: task-event-bc902720f5adf84950ecfb433dee7564
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f4b97bf6e7e67930edf801ed29967dca6835be63cc87130bf4b260e31bf6f493
+fragment_checksum: e94a21e0f7b217c41e3ecd6779b9b9ade34e83d357cd4a8982ea5a4911e100fa
