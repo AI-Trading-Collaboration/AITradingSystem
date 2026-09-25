@@ -181,7 +181,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/requirements/DEVX-015_Workflow_Contract_And_Acceptance_V3.md",
-        "sha256": "6b32f905964a0ef44283e4b5898f23536e02c011f37e1f166f5c0f97adc8e13f"
+        "sha256": "8a44342b425b270d38e6307ce19b086b564b2ec5d38d5795bf84612764ffb116"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -406,7 +406,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "src/ai_trading_system/platform/architecture/checkout_guard.py",
-        "sha256": "28187b1187da805894eea3d48e8d00b1fe89f2c1f699292c4202d275bca7921f"
+        "sha256": "94b23512b1ea8d725d8c4ee4b6546ecac0a1603597b988913f7e0ea176c54b21"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -531,7 +531,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_005_integration_publication_fence.py",
-        "sha256": "e97ea94091eecc1a11cd9837d32324a5371a18d726b6e53ead35cee26bbe7f09"
+        "sha256": "8a89508c58a409ab64b3e6c1799e9216ad0ebc5a03b9db459038bc2718b00b3d"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -591,7 +591,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx015_workflow_integration.py",
-        "sha256": "7855a8cf3c376c4340004fd54c0afb77d395e9967a394cb8a167c04320a0b1ae"
+        "sha256": "6855454ffedd42522d2980ca92b0f8f41ecc6f7d27e6bc2414b9d6fdbaa0e0af"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -918,5 +918,5 @@
     }
   },
   "section_id": "phase_devx_015_workflow_contract_v3",
-  "section_sha256": "9df118fac30620b1e1e927a134e2180ff2390dafa492772cf93c8bc0f2b6c687"
+  "section_sha256": "77eb06c6233bf4fab37ee0a6e6ed8fbc2728b49cf586617acc7b1899b2027cf4"
 }

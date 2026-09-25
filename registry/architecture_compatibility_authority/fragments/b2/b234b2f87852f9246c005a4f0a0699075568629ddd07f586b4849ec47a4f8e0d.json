@@ -113,12 +113,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "5acb3a6fca965f9a183cbb2589bb4762bb3f134da6d1e9c93585d1a8c68d80db"
+        "sha256": "155a42389f1a191e50dff8d8372d3c630508024459d6ba15a3be29ed3510e5bb"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "604bd4572af2f191c087fcc3858ee8cec885e750f055d9f1528ee5e6e3dafdba"
+        "sha256": "e426be3f83d8b9c9afbf7e2c45b7aeca68c0c00e2f8b971e8ce00caf7cd6b8b9"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -216,5 +216,5 @@
     "task_id": "OPS-078_DAILY_AUTOMATION_ISOLATION_AND_SAME_DAY_RESCUE"
   },
   "section_id": "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1",
-  "section_sha256": "d99f366e44658357f5d0ae5044a809291962d9f3dfa55c449f38220df3b66320"
+  "section_sha256": "b234b2f87852f9246c005a4f0a0699075568629ddd07f586b4849ec47a4f8e0d"
 }

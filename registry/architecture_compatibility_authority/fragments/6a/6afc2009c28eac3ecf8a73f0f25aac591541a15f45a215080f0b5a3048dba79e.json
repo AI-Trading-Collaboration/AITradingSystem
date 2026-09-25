@@ -95,12 +95,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "5acb3a6fca965f9a183cbb2589bb4762bb3f134da6d1e9c93585d1a8c68d80db"
+        "sha256": "155a42389f1a191e50dff8d8372d3c630508024459d6ba15a3be29ed3510e5bb"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "604bd4572af2f191c087fcc3858ee8cec885e750f055d9f1528ee5e6e3dafdba"
+        "sha256": "e426be3f83d8b9c9afbf7e2c45b7aeca68c0c00e2f8b971e8ce00caf7cd6b8b9"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -193,5 +193,5 @@
     "task_id": "OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR"
   },
   "section_id": "phase_ops_079_historical_daily_gap_recovery_executor_v1",
-  "section_sha256": "d0c45c7e85d393af97cba78c85ad3db98fce5b0664bd52cd21dfb0c3ddf2f46c"
+  "section_sha256": "6afc2009c28eac3ecf8a73f0f25aac591541a15f45a215080f0b5a3048dba79e"
 }

@@ -96,12 +96,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "5acb3a6fca965f9a183cbb2589bb4762bb3f134da6d1e9c93585d1a8c68d80db"
+        "sha256": "155a42389f1a191e50dff8d8372d3c630508024459d6ba15a3be29ed3510e5bb"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "604bd4572af2f191c087fcc3858ee8cec885e750f055d9f1528ee5e6e3dafdba"
+        "sha256": "e426be3f83d8b9c9afbf7e2c45b7aeca68c0c00e2f8b971e8ce00caf7cd6b8b9"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -156,7 +156,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "src/ai_trading_system/platform/architecture/checkout_guard.py",
-        "sha256": "28187b1187da805894eea3d48e8d00b1fe89f2c1f699292c4202d275bca7921f"
+        "sha256": "94b23512b1ea8d725d8c4ee4b6546ecac0a1603597b988913f7e0ea176c54b21"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -294,5 +294,5 @@
     }
   },
   "section_id": "phase_devx_011_governed_workflow_health_control_loop_v1",
-  "section_sha256": "0bcfeee3188a81aec6c8f218803bcf5e2fe8fa3e0ab720fe382f217665f1f03b"
+  "section_sha256": "f34b6d1f13911be1ade54f592441f8685457321d0b7088c08de5661c9ea0cd0a"
 }

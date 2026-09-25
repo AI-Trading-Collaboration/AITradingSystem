@@ -15885,7 +15885,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.checkout_guard
   path: src/ai_trading_system/platform/architecture/checkout_guard.py
-  sha256: 28187b1187da805894eea3d48e8d00b1fe89f2c1f699292c4202d275bca7921f
+  sha256: 94b23512b1ea8d725d8c4ee4b6546ecac0a1603597b988913f7e0ea176c54b21
   rule_id: platform_architecture
   owner_profile: platform
   owners:
