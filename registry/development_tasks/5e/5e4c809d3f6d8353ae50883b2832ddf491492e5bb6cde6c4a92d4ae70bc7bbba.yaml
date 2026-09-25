@@ -24,13 +24,18 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: integration-coordinator
-  requirement_refs: []
+  next_owner: Claude Code coordinator（agent_harness=claude_code）；Project Owner 执行管理员主机/账户/HKLM/ACL
+    执行包
+  requirement_refs:
+  - docs/requirements/DEVX-015_Workflow_Contract_And_Acceptance_V3.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 将v371-v384实现与记录经原四generator及scope审核保存到task
-    branch源码提交；该提交非最终C，不改变main，不推进Full/发布。后续真实fence/旧锁迁移/公开恢复及OPS080验收继续。
+  unstructured_legacy_blocker_or_next_step: v386–v389 已随集成候选合入 main（lane 69729e6ff，计划
+    integration-revalidation-d1b239e06f110ea1409c）：受保护 Full 门禁、DEVX-015A 单值锚点、活体执行仲裁重试窗口、调用方已加载源码自检及陈旧夹具修复；首次回归
+    54 个失败节点全部通过。剩余：I05×2、L03×7、X05×4 共 13 项验收，管理员执行包，最终同一候选全部 required tiers/Full/迁移发布及
+    OPS-080 W3/W4。详见 docs/requirements/DEVX-015_Workflow_Contract_And_Acceptance_V3.md
+    v386–v389。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 受审受控merge保留归属历史及当前canonical权威；I01-I06/S01-S02/L01-L03/V01-V03/P01-P02/R01-R02及X01-X05有效实证、独立oracle、反证与终态可达；最终同一C全部required
@@ -13743,21 +13748,54 @@ events:
   - change:devx015-v385-source-save-preregister
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-7ef36f47807e3aec43722516baedf5e8
+- schema_version: task_event.v1
+  task_id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-25T17:27:37+00:00'
+  actor: integration-coordinator
+  change_id: devx015-v389-integration-20260926-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-7ef36f47807e3aec43722516baedf5e8
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator（agent_harness=claude_code）；Project Owner 执行管理员主机/账户/HKLM/ACL
+      执行包
+    blocker_or_next_step: v386–v389 已随集成候选合入 main（lane 69729e6ff，计划 integration-revalidation-d1b239e06f110ea1409c）：受保护
+      Full 门禁、DEVX-015A 单值锚点、活体执行仲裁重试窗口、调用方已加载源码自检及陈旧夹具修复；首次回归 54 个失败节点全部通过。剩余：I05×2、L03×7、X05×4
+      共 13 项验收，管理员执行包，最终同一候选全部 required tiers/Full/迁移发布及 OPS-080 W3/W4。详见 docs/requirements/DEVX-015_Workflow_Contract_And_Acceptance_V3.md
+      v386–v389。
+    acceptance_criteria: 受审受控merge保留归属历史及当前canonical权威；I01-I06/S01-S02/L01-L03/V01-V03/P01-P02/R01-R02及X01-X05有效实证、独立oracle、反证与终态可达；最终同一C全部required
+      tiers和实际Full、迁移发布及OPS080独立工程/运营验收。
+    notes: Owner 决定（2026-09-24）：做完全部 106 项验收；worker 账户范围 A 只用于测试和 Full（owner_decision:DEVX-015:2026-09-24:worker_account_scope_full_only_v1）。主机级步骤由
+      owner 按执行包运行，agent 不改系统/安全设置。重型整链节点并行度不超过 2。本机禁止原生 RegRenameKey。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx015-v389-integration-20260926-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7f6cb9716e28ad88cc287444d7e43067
 projection:
   legacy_first_eight_cells:
   - DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
   - Architecture / task checkpoint and publication separation
   - P0
   - IN_PROGRESS
-  - integration-coordinator
-  - 将v371-v384实现与记录经原四generator及scope审核保存到task branch源码提交；该提交非最终C，不改变main，不推进Full/发布。后续真实fence/旧锁迁移/公开恢复及OPS080验收继续。
+  - Claude Code coordinator（agent_harness=claude_code）；Project Owner 执行管理员主机/账户/HKLM/ACL
+    执行包
+  - v386–v389 已随集成候选合入 main（lane 69729e6ff，计划 integration-revalidation-d1b239e06f110ea1409c）：受保护
+    Full 门禁、DEVX-015A 单值锚点、活体执行仲裁重试窗口、调用方已加载源码自检及陈旧夹具修复；首次回归 54 个失败节点全部通过。剩余：I05×2、L03×7、X05×4
+    共 13 项验收，管理员执行包，最终同一候选全部 required tiers/Full/迁移发布及 OPS-080 W3/W4。详见 docs/requirements/DEVX-015_Workflow_Contract_And_Acceptance_V3.md
+    v386–v389。
   - 受审受控merge保留归属历史及当前canonical权威；I01-I06/S01-S02/L01-L03/V01-V03/P01-P02/R01-R02及X01-X05有效实证、独立oracle、反证与终态可达；最终同一C全部required
     tiers和实际Full、迁移发布及OPS080独立工程/运营验收。
-  - 最新串联10PASS17.40秒、原生目录屏障4PASS8.82秒，相关parser及publisher focused均通过。源码冻结后重建原generated
-    authority并复用已审计source-save入口，保留v9所有证据；不以commit宣布验收完成。
-  docs_links: []
+  - Owner 决定（2026-09-24）：做完全部 106 项验收；worker 账户范围 A 只用于测试和 Full（owner_decision:DEVX-015:2026-09-24:worker_account_scope_full_only_v1）。主机级步骤由
+    owner 按执行包运行，agent 不改系统/安全设置。重型整链节点并行度不超过 2。本机禁止原生 RegRenameKey。
+  docs_links:
+  - docs/requirements/DEVX-015_Workflow_Contract_And_Acceptance_V3.md
   terminal: false
-  canonical_row_sha256: 03872826b82361fbb29b864c103d9ff581655f7cad3f5118ac66a7de93e5365b
-last_event_id: task-event-7ef36f47807e3aec43722516baedf5e8
+  canonical_row_sha256: 8be44610cd1f94665c19d01016f52fc0bbb9c5639ae2cc68e9705fbb6a34f93e
+last_event_id: task-event-7f6cb9716e28ad88cc287444d7e43067
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 231a0ae0365285c8b681c1d0d7fd63567503b939752325a7efcb6699c3ccfcf7
+fragment_checksum: fbe8b85d55fb0e2a92b197125e78cca80e9296c2ada57da51fd6654c2eebf92d
