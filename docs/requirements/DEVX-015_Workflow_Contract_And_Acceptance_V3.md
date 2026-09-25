@@ -1,3 +1,12 @@
+### v390 集成候选预检发现的问题与修复（2026-09-26）
+
+- 集成候选（最新 main `cbc31cdff` + lane v386–v389，计划 `integration-revalidation-d1b239e06f110ea1409c`）预跑 architecture-fitness：4 FAIL / 19 ERROR；contract-validation 317 PASS。
+- 19 ERROR：`canonical_merge_repository` 复制仓库后夹具 Git 报 `Filename too long`。真实仓库在仓库级 `.git/config` 设 `core.longpaths=true`，夹具 Git 刻意忽略全局/系统配置；夹具仓库同样设置该项，正式分级不再依赖短 basetemp。
+- 真实缺陷（lane 代码）：`CheckoutLeaseGuard.acquire` 新增的活体脏路径归属 `_live_attributed_paths` 在仲裁器 BUSY 时抛出未包装的 `ParallelControlError`，而同函数的意图持久化与租约调用都把 BUSY 转为 BLOCKED 决定。并发 source preservation 因此把"租约不可用"误报为 `SOURCE_PRESERVATION_PARTIAL`。修复为与另两处一致：先构造 intent，再在同样的 BUSY→BLOCKED、其它→`CheckoutGuardError` 包装内计算未归属路径。
+- 陈旧测试：`test_local_recovery_dispatch_selects_actual_index_state[advanced]` 仍期待 main 前进时直接 `PUBLICATION_RECOVERY_MAIN_ADVANCED`，现行设计为恢复保留候选后交给 `adopt_main_advanced_failed_attempt`（`CANDIDATE_RETAINED_MAIN_ADVANCED`），测试按现行设计更新。
+- v389 调用方自检的测试隔离：`test_profile_child_timeout_refuses_publication_with_bounded_mode_budget` 在同一 worker 中受其它用例遗留的已加载代码影响而被自检提前拒绝；该单元只测检查器时限，隔离自检；另新增 `test_profile_caller_loaded_source_custody_refuses_before_inspector` 直接覆盖"自检失败必须在检查子进程启动前拒绝"。
+- 集成对齐（非代码修复）：canonical 任务索引按 main 前缀 + lane DEVX-015 cycle 追加重建（cycle 序号顺延，脚本 `outputs/architecture/integration_revalidation/devx015-v389/reconcile_canonical_index.py`）；system_flow 与 artifact_catalog 重新封印；清单 id/模块数 1227/测试文件数 1395、report-flow 条目 3449、compatibility 段 334/fragment 28 与链尾顺序按合并后事实更新；DEVX-014 漂移测试接受两种 fail-closed 位置并逐一核对所指产物。
+
 ### v389 隔离 profile 检查器与 V02 加载实现语义的修复（2026-09-25）
 
 - 根因：`3c28347e3` 将开发模式 profile 检查子进程改为 `-I` 并运行调用方自身实现（非候选脚本）。后果一：`_full_readiness_semantics`/`check_full_readiness` 要求检查代码根等于候选根，测试中 pytest/CLI 以 lane 代码检查夹具仓库，恒判 inadmissible。后果二：检查子进程不再继承调用方启动代码，原生夹具的测试注册表映射与 V02 注入故障均无法到达。后果三：实际 Full 启动器冻结环境写入候选 src 的 `.pyc`，夹具 `.gitignore` 仅忽略 `outputs/`，readiness 报 `READINESS_INSPECTION_CODE_UNTRACKED`、release 报未归属脏文件。

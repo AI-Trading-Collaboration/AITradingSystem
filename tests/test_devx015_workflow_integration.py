@@ -438,6 +438,9 @@ def small_repository(tmp_path: Path) -> Path:
     _git(root, "config", "user.name", "Merge fixture")
     _git(root, "config", "user.email", "fixture@example.invalid")
     _git(root, "config", "core.autocrlf", "false")
+    # Mirror the real repository-level setting: fixture Git ignores global config,
+    # and copied long requirement paths under default pytest tmp exceed MAX_PATH.
+    _git(root, "config", "core.longpaths", "true")
     _git(
         root,
         "remote",

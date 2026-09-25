@@ -792,14 +792,6 @@ class CheckoutLeaseGuard:
                 self.project_root,
                 exclusions=status_exclusions,
             )
-        unattributed = _unattributed_dirty_paths(
-            dirty_paths,
-            operation_class=operation_class,
-            declared_paths=self._live_attributed_paths(
-                dirty_paths, operation_class=operation_class,
-                declared_paths=(*checked_owned, *checked_shared), actor=actor, now=instant,
-            ),
-        )
         intent = CheckoutOperationIntent(
             intent_id=_identifier(intent_id, "intent_id"),
             task_id=_required_text(task_id, "task_id"),
@@ -816,6 +808,31 @@ class CheckoutLeaseGuard:
             inspection_profile=inspection_profile,
         )
         intent_path = self.runtime_root / "intents" / f"{intent.intent_id}.json"
+        # Live attribution snapshots the store under its arbiter too; a busy
+        # arbiter is the same BLOCKED decision as the persistence/lease calls below.
+        try:
+            unattributed = _unattributed_dirty_paths(
+                dirty_paths,
+                operation_class=operation_class,
+                declared_paths=self._live_attributed_paths(
+                    dirty_paths, operation_class=operation_class,
+                    declared_paths=(*checked_owned, *checked_shared), actor=actor, now=instant,
+                ),
+            )
+        except ParallelControlError as exc:
+            if exc.code == "LEASE_ARBITER_BUSY":
+                return (
+                    CheckoutGuardDecision(
+                        status="BLOCKED",
+                        reason_codes=(f"CHECKOUT_LEASE_ARBITER_BUSY:{exc.message}",),
+                        intent=intent,
+                        intent_path=intent_path,
+                        lease_id=None,
+                        lease_state=None,
+                    ),
+                    None,
+                )
+            raise CheckoutGuardError(exc.code, exc.message) from exc
         # Intent persistence is a writer side effect too. Migration phase/epoch
         # checks must precede it under the same short store arbiter as leases.
         try:

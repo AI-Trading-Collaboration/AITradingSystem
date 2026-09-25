@@ -284,6 +284,11 @@ def test_profile_child_timeout_refuses_publication_with_bounded_mode_budget(
     if installed:
         command.append("--protected-inspector")
     monkeypatch.setattr(module, "_full_profile_inspector_command", lambda *args: command)
+    # Caller loaded-source custody is covered separately; this unit checks only the
+    # inspector budget, independent of code other tests left loaded in this worker.
+    from ai_trading_system.platform.architecture import workflow_execution
+
+    monkeypatch.setattr(workflow_execution, "acceptance_runtime_identity", lambda: {})
     calls = []
 
     def timeout_run(argv, **kwargs):
@@ -300,6 +305,41 @@ def test_profile_child_timeout_refuses_publication_with_bounded_mode_budget(
     assert calls == [command]
     assert events == [{"phase": "FORMAL_VALIDATION_RESULT",
                        "payload": {"validation_status": "PASS"}}]
+
+
+def test_profile_caller_loaded_source_custody_refuses_before_inspector(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The isolated (-I) inspector cannot see caller startup code; the caller must."""
+    from types import SimpleNamespace
+
+    from ai_trading_system.platform.architecture import integration_publication_fence as module
+    from ai_trading_system.platform.architecture import workflow_execution
+
+    events = [{"phase": "FORMAL_VALIDATION_RESULT", "payload": {"validation_status": "PASS"}}]
+    replay = SimpleNamespace(
+        transaction={"actor": "unit", "task_id": "unit"},
+        phase="FORMAL_VALIDATION_RESULT", events=events,
+    )
+    witness = SimpleNamespace(
+        project_root=tmp_path, replay=lambda *args: replay,
+        _active_lease=lambda *args, **kwargs: None, validate=lambda *args, **kwargs: None,
+        _require_clean_candidate=lambda: None, _transaction_path=lambda path: path,
+    )
+
+    def changed_origin():
+        raise workflow_execution.ExecutionContainmentError(
+            "ACCEPTANCE_LOADED_CODE_ORIGIN", "synthetic caller drift",
+        )
+
+    monkeypatch.setattr(workflow_execution, "acceptance_runtime_identity", changed_origin)
+    calls = []
+    monkeypatch.setattr(module.subprocess, "run", lambda argv, **kwargs: calls.append(argv))
+    with pytest.raises(PublicationFenceError, match="ACCEPTANCE_LOADED_CODE_ORIGIN"):
+        IntegrationPublicationFence._prepare_current_full_profile(
+            witness, tmp_path / "unit.json", actor="unit",
+        )
+    assert calls == []
 
 
 def _v03_cli(
@@ -528,7 +568,6 @@ def test_local_recovery_dispatch_selects_actual_index_state(monkeypatch, tmp_pat
     from types import SimpleNamespace
 
     from ai_trading_system.platform.architecture import workflow_integration as integration
-    from ai_trading_system.platform.architecture.parallel_control import ParallelControlError
     from ai_trading_system.platform.architecture.workflow_coordination import PublicationLifecycle
 
     lifecycle = PublicationLifecycle.__new__(PublicationLifecycle)
@@ -553,6 +592,7 @@ def test_local_recovery_dispatch_selects_actual_index_state(monkeypatch, tmp_pat
     })
     for name, label in (("adopt_unchanged_failed_attempt", "unchanged"),
                         ("adopt_index_replaced_failed_attempt", "replaced"),
+                        ("adopt_main_advanced_failed_attempt", "advanced"),
                         ("adopt_published_attempt", "published")):
         monkeypatch.setattr(
             lifecycle, name, lambda lease, label=label, **kwargs: {"selected": label},
@@ -562,15 +602,12 @@ def test_local_recovery_dispatch_selects_actual_index_state(monkeypatch, tmp_pat
     monkeypatch.setattr(integration, "inspect_local_publication_topology", lambda *args, **kwargs: {
         "candidate_checkout": {"index": current_index},
     })
-    if scene == "advanced":
-        with pytest.raises(ParallelControlError, match="PUBLICATION_RECOVERY_MAIN_ADVANCED"):
-            lifecycle.recover_local_publication(tmp_path / "shape-only.json", actor="owner")
-        assert calls == []
-    else:
-        assert lifecycle.recover_local_publication(tmp_path / "shape-only.json", actor="owner") == {
-            "selected": scene,
-        }
-        assert calls == ([] if scene == "published" else ["restore"])
+    # An advanced main restores the retained candidate first, then routes to the
+    # independent CANDIDATE_RETAINED_MAIN_ADVANCED adopter (never a new dispatch).
+    assert lifecycle.recover_local_publication(tmp_path / "shape-only.json", actor="owner") == {
+        "selected": scene,
+    }
+    assert calls == ([] if scene == "published" else ["restore"])
 
 
 @pytest.mark.parametrize("target_name", ["common", "refs", "heads"])
