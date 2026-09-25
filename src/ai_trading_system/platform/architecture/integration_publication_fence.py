@@ -889,19 +889,8 @@ class IntegrationPublicationFence:
         ):
             raise PublicationFenceError("PUBLICATION_FORMAL_VALIDATION_NOT_PASS", "Full result")
         self._require_clean_candidate()
-        # The isolated (-I) inspector never loads this caller's startup or
-        # PYTHONPATH code, so it cannot observe a changed implementation here.
-        # The publishing process must itself pass the same loaded-source custody
-        # check the original Full worker passed before trusting that observation.
-        from ai_trading_system.platform.architecture.workflow_execution import (
-            ExecutionContainmentError,
-            acceptance_runtime_identity,
-        )
-
-        try:
-            acceptance_runtime_identity()
-        except ExecutionContainmentError as exc:
-            raise PublicationFenceError("PUBLICATION_FULL_CLOSURE_INVALID", str(exc)) from exc
+        # The isolated (-I) inspector never loads caller startup code; the
+        # profile-consuming CLI entrypoints attest their own loaded code first.
         # Reuse the runner's strict validator through its read-only public entry
         # point, outside the shared arbiter. No src -> scripts import or second
         # validator, proof store, execution queue, or lease is introduced.

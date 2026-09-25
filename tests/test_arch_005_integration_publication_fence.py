@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import hashlib
 import inspect
 import json
@@ -284,11 +285,6 @@ def test_profile_child_timeout_refuses_publication_with_bounded_mode_budget(
     if installed:
         command.append("--protected-inspector")
     monkeypatch.setattr(module, "_full_profile_inspector_command", lambda *args: command)
-    # Caller loaded-source custody is covered separately; this unit checks only the
-    # inspector budget, independent of code other tests left loaded in this worker.
-    from ai_trading_system.platform.architecture import workflow_execution
-
-    monkeypatch.setattr(workflow_execution, "acceptance_runtime_identity", lambda: {})
     calls = []
 
     def timeout_run(argv, **kwargs):
@@ -307,39 +303,43 @@ def test_profile_child_timeout_refuses_publication_with_bounded_mode_budget(
                        "payload": {"validation_status": "PASS"}}]
 
 
-def test_profile_caller_loaded_source_custody_refuses_before_inspector(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.parametrize(
+    "command,phase,checked",
+    [
+        ("checkpoint", "LOCAL_MAIN_FF_PRE", True),
+        ("checkpoint", "REMOTE_PUSH_PRE", True),
+        ("local-publish", None, True),
+        ("local-publication-worker", None, True),
+        ("checkpoint", "TASK_SOURCE_PRE_WRITE", False),
+        ("replay", None, False),
+    ],
+)
+def test_profile_entry_attests_loaded_source_custody_before_dispatch(
+    monkeypatch: pytest.MonkeyPatch, command: str, phase: str | None, checked: bool,
 ) -> None:
-    """The isolated (-I) inspector cannot see caller startup code; the caller must."""
-    from types import SimpleNamespace
-
-    from ai_trading_system.platform.architecture import integration_publication_fence as module
-    from ai_trading_system.platform.architecture import workflow_execution
-
-    events = [{"phase": "FORMAL_VALIDATION_RESULT", "payload": {"validation_status": "PASS"}}]
-    replay = SimpleNamespace(
-        transaction={"actor": "unit", "task_id": "unit"},
-        phase="FORMAL_VALIDATION_RESULT", events=events,
+    """The isolated (-I) inspector cannot see caller startup code; the CLI entry must."""
+    from ai_trading_system.platform.architecture.workflow_execution import (
+        ExecutionContainmentError,
     )
-    witness = SimpleNamespace(
-        project_root=tmp_path, replay=lambda *args: replay,
-        _active_lease=lambda *args, **kwargs: None, validate=lambda *args, **kwargs: None,
-        _require_clean_candidate=lambda: None, _transaction_path=lambda path: path,
-    )
+    from scripts import architecture_arch005_publication_fence as cli
+
+    calls = []
 
     def changed_origin():
-        raise workflow_execution.ExecutionContainmentError(
-            "ACCEPTANCE_LOADED_CODE_ORIGIN", "synthetic caller drift",
-        )
+        calls.append("custody")
+        raise ExecutionContainmentError("ACCEPTANCE_LOADED_CODE_ORIGIN", "synthetic caller drift")
 
-    monkeypatch.setattr(workflow_execution, "acceptance_runtime_identity", changed_origin)
-    calls = []
-    monkeypatch.setattr(module.subprocess, "run", lambda argv, **kwargs: calls.append(argv))
-    with pytest.raises(PublicationFenceError, match="ACCEPTANCE_LOADED_CODE_ORIGIN"):
-        IntegrationPublicationFence._prepare_current_full_profile(
-            witness, tmp_path / "unit.json", actor="unit",
-        )
-    assert calls == []
+    monkeypatch.setattr(cli, "acceptance_runtime_identity", changed_origin)
+    args = argparse.Namespace(command=command, phase=phase)
+    if checked:
+        with pytest.raises(PublicationFenceError, match="ACCEPTANCE_LOADED_CODE_ORIGIN") as caught:
+            cli.require_entry_loaded_source_custody(args)
+        assert caught.value.code == "PUBLICATION_FULL_CLOSURE_INVALID"
+    else:
+        cli.require_entry_loaded_source_custody(args)
+    assert calls == (["custody"] if checked else [])
+    monkeypatch.setattr(cli, "acceptance_runtime_identity", lambda: {})
+    cli.require_entry_loaded_source_custody(args)
 
 
 def _v03_cli(

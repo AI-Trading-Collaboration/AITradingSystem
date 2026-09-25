@@ -14,9 +14,37 @@ from ai_trading_system.platform.architecture.integration_publication_fence impor
 )
 from ai_trading_system.platform.architecture.parallel_control import ParallelControlError
 from ai_trading_system.platform.architecture.workflow_contract import WorkflowContractError
-from ai_trading_system.platform.architecture.workflow_execution import ExecutionContainmentError
+from ai_trading_system.platform.architecture.workflow_execution import (
+    ExecutionContainmentError,
+    acceptance_runtime_identity,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROFILE_CHECKPOINT_PHASES = frozenset({"LOCAL_MAIN_FF_PRE", "REMOTE_PUSH_PRE"})
+LOCAL_PUBLICATION_COMMANDS = frozenset({
+    "local-publication-inspect", "local-publication-recover-index", "local-publication-hook",
+    "local-publish", "local-publication-worker", "local-publication-adopt-published",
+    "local-publication-recover",
+})
+
+
+def require_entry_loaded_source_custody(args: argparse.Namespace) -> None:
+    """Profile-consuming entrypoints must prove their own loaded code first.
+
+    The isolated (-I) Full profile inspector never loads this process's startup
+    or PYTHONPATH code, so it cannot observe a changed caller implementation.
+    The check is scoped to this process entry; library callers inside other
+    processes (for example a test worker) are not attested by it.
+    """
+    if not (
+        args.command in LOCAL_PUBLICATION_COMMANDS
+        or (args.command == "checkpoint" and args.phase in PROFILE_CHECKPOINT_PHASES)
+    ):
+        return
+    try:
+        acceptance_runtime_identity()
+    except ExecutionContainmentError as exc:
+        raise PublicationFenceError("PUBLICATION_FULL_CLOSURE_INVALID", str(exc)) from exc
 
 
 def parse_args() -> argparse.Namespace:
@@ -117,6 +145,7 @@ def main() -> int:
         policy_path=policy,
     )
     try:
+        require_entry_loaded_source_custody(args)
         payload = _dispatch(fence, args)
     except (PublicationFenceError, ParallelControlError, WorkflowContractError,
             ExecutionContainmentError, OSError, ValueError) as exc:
