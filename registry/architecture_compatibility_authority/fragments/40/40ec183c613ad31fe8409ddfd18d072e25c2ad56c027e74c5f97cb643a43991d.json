@@ -137,12 +137,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "155a42389f1a191e50dff8d8372d3c630508024459d6ba15a3be29ed3510e5bb"
+        "sha256": "93b8642d1247dbe1b9c179d9be56c239ee147228c3bbd14b475fd20421a4fec0"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "e426be3f83d8b9c9afbf7e2c45b7aeca68c0c00e2f8b971e8ce00caf7cd6b8b9"
+        "sha256": "994dc4e6824c9093b79e52da23357cce7e1e15a8e56cbeda77d302383fe0807c"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -177,7 +177,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "scripts/architecture_arch005_publication_fence.py",
-        "sha256": "e7b7296850e05fda939ccd3f3d6d650265f49b82fc0466d83c9e8c2e038fedf5"
+        "sha256": "5daa6367d2873db7fc3a0edee8d8cc71da865685999108601bf5430961ef54f4"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -202,7 +202,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "src/ai_trading_system/platform/architecture/integration_publication_fence.py",
-        "sha256": "bdd9d715ca46bc5f7d974d10e8226e8a073760acc37a541fdfee3d794ce69dde"
+        "sha256": "76897bde9b1a08a335ecf458af7716f44c144f81222dab52d605506ceb7a9da9"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -232,7 +232,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_005_integration_publication_fence.py",
-        "sha256": "8a89508c58a409ab64b3e6c1799e9216ad0ebc5a03b9db459038bc2718b00b3d"
+        "sha256": "675d7117bf378e61907d39e5288b7ac923fa4649d8736b14cae177668969345b"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -387,5 +387,5 @@
     "task_id": "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1"
   },
   "section_id": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1",
-  "section_sha256": "3a8bd7ee28724cb01079c875cea2f70498f894c134ce16c9dd88c45c3595abfb"
+  "section_sha256": "40ec183c613ad31fe8409ddfd18d072e25c2ad56c027e74c5f97cb643a43991d"
 }
