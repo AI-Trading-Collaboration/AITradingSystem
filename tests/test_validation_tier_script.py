@@ -9,6 +9,7 @@ from collections.abc import Callable
 from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -49,9 +50,166 @@ _REAL_VALIDATE_PUBLICATION_TRANSACTION_FOR_FULL = (
 )
 
 
+@pytest.mark.parametrize("extra", [
+    [], ["--print-only"], ["--recover-full"], ["--benchmark-dist", "loadfile"],
+])
+def test_protected_full_rejects_serialized_capabilities_before_dispatch(
+    tmp_path: Path, extra: list[str], monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from ai_trading_system.platform.architecture.workflow_execution import ExecutionContainmentError
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("invalid protected request reached Full dispatch")
+
+    monkeypatch.setattr(validation_tier, "_main", forbidden)
+    with pytest.raises(ExecutionContainmentError, match="PROTECTED_FULL_"):
+        validation_tier.run_protected_full(
+            ["full", "--write-runtime-artifact", "--task-id", "unit",
+             "--publication-transaction", "unit.json", *extra],
+            candidate_root=tmp_path, git_context={}, worker_token={},
+            worker_environment={"UNIT": "1"}, worker_exchange={},
+        )
+
+
+def test_main_forwards_admitted_worker_capabilities_to_original_runner(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # This only checks downstream wiring after admission; objects are explicit
+    # test witnesses and cannot satisfy run_protected_full's capability checks.
+    token, exchange = object(), object()
+    environment = {"UNIT_ONLY": "1"}
+    admitted = validation_tier._ProtectedFullLaunch(tmp_path, token, environment, exchange)
+
+    class CaptureRunner:
+        def __init__(self, **kwargs):
+            assert kwargs["root"] == tmp_path
+            assert kwargs["worker_token"] is token
+            assert kwargs["worker_environment"] is environment
+            assert kwargs["worker_exchange"] is exchange
+            raise RuntimeError("unit runner reached")
+
+    monkeypatch.setattr(validation_tier, "_FullCommandRunner", CaptureRunner)
+    monkeypatch.setattr(validation_tier, "_artifact_dir", lambda *args: tmp_path / "artifacts")
+    args = validation_tier.parse_args([
+        "full", "--write-runtime-artifact", *FULL_PROVENANCE_ARGS,
+    ])
+    with pytest.raises(RuntimeError, match="unit runner reached"):
+        validation_tier._main(args, protected=admitted)
+
+
+@pytest.mark.parametrize("mutation", [None, "inspector", "target", "candidate", "checks"])
+def test_profile_readiness_binds_both_candidate_and_admitted_inspector(
+    tmp_path: Path, mutation: str | None,
+) -> None:
+    root, inspector = tmp_path / "candidate", tmp_path / "installed"
+    candidate = "a" * 40
+    record = {
+        "schema_version": "full_validation_readiness.v1", "status": "PASS",
+        "candidate_sha": candidate, "full_dispatch_ready": True, "blockers": [],
+        "inspection_code_root": inspector.as_posix(), "target_root": root.as_posix(),
+        "dispatch_performed": False, "research_dispatch_allowed": False,
+        "dq_validation_executed": False, "artifacts_written": False,
+        "checks": [{"checker_id": name, "status": "PASS"}
+                   for name in validation_tier.CHECKER_IDS],
+    }
+    if mutation == "inspector":
+        record["inspection_code_root"] = root.as_posix()
+    elif mutation == "target":
+        record["target_root"] = inspector.as_posix()
+    elif mutation == "candidate":
+        record["candidate_sha"] = "b" * 40
+    elif mutation == "checks":
+        record["checks"] = []
+    if mutation is not None:
+        with pytest.raises(ValueError, match="incomplete or inadmissible"):
+            validation_tier._full_readiness_semantics(
+                record, root=root, candidate=candidate, inspector_root=inspector,
+            )
+    else:
+        assert validation_tier._full_readiness_semantics(
+            record, root=root, candidate=candidate, inspector_root=inspector,
+        )["inspection_code_root"] == inspector.as_posix()
+        with pytest.raises(ValueError, match="incomplete or inadmissible"):
+            validation_tier._full_readiness_semantics(record, root=root, candidate=candidate)
+
+
+def test_protected_profile_rejects_serialized_context_before_probe(tmp_path: Path) -> None:
+    from ai_trading_system.platform.architecture.workflow_execution import ExecutionContainmentError
+
+    with pytest.raises(ExecutionContainmentError, match="PROTECTED_PROFILE_CAPABILITY"):
+        validation_tier.inspect_protected_full_publication_profile(
+            repo_root=tmp_path, transaction=tmp_path / "absent.json", task_id="unit",
+            git_context={},
+        )
+
+
+def test_protected_profile_real_development_process_refuses_before_transaction(tmp_path: Path):
+    result = subprocess.run([
+        sys.executable, "-I", str(Path(validation_tier.__file__).resolve()), "full",
+        "--inspect-full-publication-profile", "--protected-inspector",
+        "--inspection-candidate-root", str(tmp_path),
+        "--publication-transaction", str(tmp_path / "absent.json"), "--task-id", "unit",
+    ], cwd=tmp_path, capture_output=True, text=True, timeout=30)
+    assert result.returncode == 2
+    assert "INSTALLED_INSPECTOR_STARTUP" in result.stderr
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_protected_inspector_flag_cannot_request_execution(capsys):
+    assert validation_tier.main(["full", "--protected-inspector", "--print-only"]) == 2
+    assert "restricted to read-only" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("value", [True, False, None, "0", 0.0, [], {}])
+def test_command_exit_code_rejects_non_integer_runtime_values(value: object) -> None:
+    with pytest.raises(TypeError, match="command exit_code must be an integer"):
+        validation_tier._command_exit_code({"exit_code": value})
+
+
+def test_full_recovery_action_requires_explicit_recovery_mode(
+    capsys: pytest.CaptureFixture,
+) -> None:
+    assert validation_tier.main([
+        "full", "--recover-full-action", "terminate_frozen_job", "--print-only",
+    ]) == 2
+    assert "--recover-full-action requires --recover-full" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("value", [0, 1, 7, -1])
+def test_command_exit_code_preserves_actual_integer_result(value: int) -> None:
+    assert validation_tier._command_exit_code({"exit_code": value}) == value
+
+
+@pytest.mark.parametrize("value", [True, False, None, "1", float("nan"), float("inf"), -1])
+def test_runtime_numeric_type_guards_keep_invalid_evidence_rejected(value: object) -> None:
+    assert not validation_tier._is_non_bool_int(value)
+    assert not validation_tier._is_nonnegative_finite_number(value)
+
+
 @pytest.fixture(autouse=True)
 def _unit_full_publication_transaction(monkeypatch: pytest.MonkeyPatch) -> None:
     """Keep unit-level Full runner tests focused on their existing boundary."""
+    class UnitFullCommandRunner:
+        def __init__(self, **kwargs):
+            self.worker_token = None
+            self.worker_exchange = None
+
+        def effective_environment(self):
+            return dict(os.environ)
+
+        def __call__(self, command, **kwargs):
+            return validation_tier._run_command(command, **kwargs)
+
+        def record_summary(self, *args, **kwargs):
+            pass
+
+    # This fixture already replaces admission/result authority. Real Job and
+    # canonical/fence integration are tested independently without these doubles.
+    monkeypatch.setattr(validation_tier, "_FullCommandRunner", UnitFullCommandRunner)
+    monkeypatch.setattr(
+        validation_tier, "_full_task_commitment",
+        lambda *args: {"unit_fixture": "task-commitment"},
+    )
     monkeypatch.setattr(
         validation_tier,
         "_validate_publication_transaction_for_full",
@@ -403,6 +561,9 @@ def test_full_publication_uses_normalized_parent_summary_path(
     observed: dict[str, object] = {}
 
     class _Fence:
+        # Unregistered host: the DEVX-015 protected-launcher gate does not apply.
+        guard = SimpleNamespace(store=SimpleNamespace(coordination_binding=None))
+
         def __init__(self, *, project_root: Path) -> None:
             assert project_root == tmp_path
 
@@ -460,6 +621,9 @@ def test_full_readiness_blocks_before_claim(
     malformed: bool,
 ) -> None:
     class _Fence:
+        # Unregistered host: the DEVX-015 protected-launcher gate does not apply.
+        guard = SimpleNamespace(store=SimpleNamespace(coordination_binding=None))
+
         def __init__(self, *, project_root: Path) -> None:
             assert project_root == tmp_path
 
@@ -2386,20 +2550,30 @@ def test_runtime_artifacts_are_written_for_print_only(tmp_path: Path) -> None:
     assert "Production effect: `none`" in reader_brief
 
 
-def test_json_output_cannot_overwrite_managed_runtime_artifact(tmp_path: Path) -> None:
+@pytest.mark.parametrize("tier,artifact_name", [
+    ("contract-validation", "pytest_output.log"),
+    ("full", "execution_request.json"),
+    ("full", "execution_validation_identity.json"),
+    ("full", "execution.stdout.log"),
+    ("full", "execution_result.json"),
+])
+def test_json_output_cannot_overwrite_managed_runtime_artifact(
+    tmp_path: Path, tier: str, artifact_name: str,
+) -> None:
     artifact_dir = tmp_path / "runtime_artifact"
 
     completed = subprocess.run(
         [
             sys.executable,
             "scripts/run_validation_tier.py",
-            "contract-validation",
+            tier,
+            *(FULL_PROVENANCE_ARGS if tier == "full" else []),
             "--print-only",
             "--write-runtime-artifact",
             "--artifact-dir",
             str(artifact_dir),
             "--json-output",
-            str(artifact_dir / "pytest_output.log"),
+            str(artifact_dir / artifact_name),
         ],
         check=False,
         capture_output=True,

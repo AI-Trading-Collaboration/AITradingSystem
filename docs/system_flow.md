@@ -1,5 +1,257 @@
 # 系统数据流示意图
 
+DEVX-015 显式worker启动前置：WindowsWorkerToken只复制真实primary token，绑定SID/非elevated/会话及持有线程，拒绝字典、关闭能力和同principal；原WindowsJobProcess.create_as_worker使用CreateProcessAsUserW并保留创建时JOB_LIST、标准句柄白名单、挂起核对和原清理。API权限不足不回退继承调用者身份。当前未接入受保护账户配置/可信入口，worker直接访问命名Job和控制记录的路径仍需迁移；不能据此启用ACTIVE。
+
+DEVX-015 身份隔离前置：原 WindowsJobProcess 在创建 Job/stdout/候选进程之前读取调用进程的 primary token，拒绝 elevated 或 SYSTEM/LocalService/NetworkService 身份通过继承启动候选。CreateProcessW 返回后，在原挂起状态核对实际子进程 token；不一致走原 Job 清理，不执行候选代码。线程 impersonation 不替代进程身份。此检查不赋予独立账户启动能力、不完成可信验证者接线或主机 ACTIVE，正式隔离与最终验收仍待完成。
+
+DEVX-015进程身份：v219独立原生观测到同PID、不同FILETIME的真实复用；旧身份无权终止新Job，新身份解释器正常运行并完整收尾。X02.pid_reuse/X03.process_identity_reuse已映射，当前90/106；最终项目Full/发布、原生host迁移和OPS-080验收仍未完成。
+
+DEVX-015 P01：v217真实Git ref-only中间态（main/peer HEAD=C，peer index=M）被原inspect/publish/recover/adopt拒绝；无原publication attempt便不能消费C为已发布。原Full与不一致scene保留，FAILED释放不等于checkout修复。当前88/106映射，项目最终Full/发布和OPS-080验收仍未完成。
+
+DEVX-015 X01：旧canonical历史即使全部重算内部hash仍被原source入口拒绝；自包含结果PASS/hash不能替代原lease绑定。v213/v214原入口及恢复原件后的正常安装/交接通过；当前87/106为V3映射，最终Full/发布及OPS-080验收仍未完成。
+
+DEVX-015 X01：v212原source Job生成一次，公开安装入口分别拒绝旧canonical输出capture及被替换manifest，恢复私有测试输入后同一候选正常安装/交接通过。85/106仅为V3映射，最终Full及OPS-080验收仍待完成。
+
+DEVX-015 ref ABA：原LOCAL_MAIN_FF_PRE记录的拓扑身份不能由同SHA的新对象代替。v211实际
+Full候选经公开inspection正例后，独立Git M→N→M被原inspection/local-publish拒绝为
+PUBLICATION_LOCAL_INTENT_CHANGED；零新增publication attempt，Full、源码/index及两条
+reflog保留，原失败发布收尾释放租约。83/106仅为V3映射，项目最终候选验收仍未完成。
+
+DEVX-015 checkpoint main观测：在原arbiter/transaction持有期间以既有Windows原生句柄
+持有main引用及已有日志；packed fallback同时持有ref目录与packed-refs，symbolic main跟随
+目标。heartbeat/event前复核HEAD/main与本次准入观测一致；退出后释放句柄，独立Git可继续。
+v209/v210覆盖五种布局正负例及同argv/environment后置前进校准，X02.main_toctou已映射；
+当前82/106为映射进展，ref ABA历史和最终正式验收仍待完成。
+
+DEVX-015 publication transaction：checkpoint/release在原store arbiter内取得Windows原
+transaction只读句柄及祖先目录持有，完成转换后才释放；父目录可更新兄弟receipt，原叶仍禁止
+写入/删除，祖先仍禁止rename。副作用前再次核对完整replay，最终无效replay不得返回PASS。
+POSIX保持原协作式arbiter和写前复核，不声称mandatory文件持有。v205原公开CLI竞态与恢复/
+并发及native custody回归25 PASS；V3当前81/106仅为映射，最终候选正式验收仍未完成。
+
+DEVX-015 等待请求取消：原 checkout guard 的 `cancel-request --repository ... --lease-id ...
+--actor ...` 在原 lease store/OS arbiter 内核对绑定 intent，只将尚未执行且没有后继 generation
+的 BLOCKED 请求追加为 RELEASED/REQUEST_CANCELLED；重复取消不追加事件，同一请求不能重新
+派发，活动执行仍须原恢复/释放。取消不创建 publication transaction，不改变源码、index 或 refs；
+原 holder 释放后后续合格等待者经原 acquire 前进，不新增队列或 scheduler。v200公开CLI取消/
+重试竞争/后来者与原活性回归6 PASS；最终候选正式验收仍未完成。
+
+DEVX-015最新：原事务N恢复入口、生产ref/日志持有器、独立失败stable.v4已接通，v184 37PASS。
+v185预注册新实际Full/原public publisher在HEAD交接后遭一次独立M→N CAS，再由新进程恢复/
+重放/原失败lease释放。预期候选C、peer detached M及私有文件、N和原Full不变；尚待实跑，
+不能计作整体P01/V3/发布/OPS080验收，不启动Pi。
+
+DEVX-015 N恢复记录v2保持candidate C/peer detached M且绑定首次N ref与日志。v182 45PASS/
+1原生反例证明只持有ref会留下失败竞争的reflog追加；v183 3PASS证明同时持有ref及两份reflog
+可阻止peer/root竞争并完成candidate-only恢复，原反例保留拒绝。下一步真实原fence恢复临界区/
+独立稳定adopter/public publisher竞争；未接通的入口不冒充验收，不启动Pi。
+
+DEVX-015 v181较新main只读观察器及旧M恢复回归25PASS157.08s；捕获实际单次M→N的ref/日志/
+索引/HEAD身份，candidate可恢复C、peer必须detached M，旧公开恢复入口不放宽。下一步原事务
+持久恢复记录/稳定adopter/真实publisher竞争，不以只读观察代替恢复授权。66/106仍仅映射，
+全部V3/最终C正式Full/发布/OPS080整体验收仍须继续完成，不启动Pi。
+
+DEVX-015 v180原提交后中断/独立恢复/重放1PASS2057.26s；实际Full74PASS，原FAST提交后
+原Job核验身份中断EMPTY，publisher RECOVERY_REQUIRED，fresh recovery LOCAL_PUBLISHED/recoveredtrue，
+fresh replay REPLAY_ONLY。独立原租约RELEASED；原Full不变，唯一attempt仍保留INSUFFICIENT和缺失Git
+退出回执，恢复前不可terminal消费。下一步main竞争及剩余P01，必须保留较新main；仍不是全部V3/
+最终C正式Full/发布/OPS080整体验收，不重复已通过路径，不启动Pi。
+
+DEVX-015 v178终态失败：测试误读外层Full的git_merge，实际未中断；原正常发布LOCAL_PUBLISHED，
+原Full74PASS，独立确认原租约已释放，不计中断验收。仅修正测试读取唯一publication_attempt，
+并在注入检查报错后仍捕获公开恢复结果；v179轻量投影回归10PASS6.69s，v180待运行真实新Full/
+原Job提交后中断/独立恢复重放。生产逻辑不变，最终C/整体验收/发布/OPS080仍未完成。
+
+DEVX-015 v178预登记：原公开发布在原持久FAST committed后，以原PID/creation/Job身份中断
+测试发布进程组，原公开publisher记录缺失结果；独立新进程恢复一致C并再次重放。新增测试、
+生产逻辑未改；尚未运行，不能计作P01或整体验收。正常v177不重复，真实发布与OPS080仍待完成。
+
+DEVX-015 最新确认：v177原完整正常发布测试1PASS2939.93s，C4d73ae2303c710954cd114eb14e6d316a29e74f3，
+实际Full74PASS、原Git退出0、public LOCAL_PUBLISHED/recoveredfalse、fresh recovery REPLAY_ONLY；
+单一原attempt、稳定依据ORIGINAL_GIT_EXIT_ZERO，原fixture租约正常释放且Full不变。空清理锁原身份
+已跨aborted/prepared绑定，committed消失。此成功路径已通过，不再无变化重跑；下一步确定性
+中断与竞争场景，仍不等于全部P01/最终C/DEVX015或OPS080验收，生产/peer/admin授权边界不变。
+
+DEVX-015 当前：v172实际Full74PASS，但正常发布在AUTO_MERGE清理阶段因packed-refs.lock被拒绝，
+Git128；原公开独立恢复确认LOCAL_PUBLISHED/RECOVERED_STABLE_C，原租约FAILED/RELEASED，
+失败与Full不改，外测试1FAIL。v173最小原生Git两例确认清理时空锁的aborted/prepared同身份、
+committed消失；拒绝锁会导致main已到C而Git失败。修正仅原native-origin AUTO_MERGE hook、
+原已提交FAST/postmerge和mainC窗口，原fence再次核验Job/Git祖先及活worker，空锁身份记录到
+原hook cleanup_lock并复查；普通/恢复/终态残留锁拒绝不变。v174原生observer及边界13PASS，
+v175原生来源5PASS/fixture构造13FAIL，修正fixture后的v176记录契约13PASS，失败原件均保留。
+新v177待执行新C/原Full/public入口/Job-Git/hooks/ff-only/独立恢复，不复用v172 Full给新代码授权。
+同范围source v5 TASK_SOURCE_PRE_WRITE/LANE PASS；不是TTL扩展或替代store，canonical同步进行中。
+全41未映射变体/14counters/10mutants/最终C全门禁/迁移发布closeout、OPS080工程部署新daily仍未完成。
+
+DEVX-015 当前纵向路径已接入原 local-publish → 原 worker/Job → 固定 native-origin hook →
+Git ff-only → 独立 LOCAL_PUBLISHED 观察；尚未以新原 Full 运行验收。原事务内的
+local-publication-recover 在 Job/Git 死亡后区分 main=C 的独立采纳与 main=M 的逆向恢复。
+后者先追加 head_recovery INTENT，仅恢复原 HEAD/native identity 和原 prepared ORIG_HEAD/锁，
+再追加 RESTORED 并通过原 Full profile 采纳失败终态。未知或已前进的状态不覆盖，peer 私有文件不动。
+v168 先跑真实 Git 恢复场景/receipt 合同和原 switched-window 回归；v169 才执行新原 Full 的
+真实公开发布/恢复入口，失败不得冒充成功。v168原77787终态27PASS/183.56s，XML
+d025cd3b7ab263bdf2b52fb98f998c1153ba196f7738a6b0254f50061a669911，六份源/测试保留v168。
+v169仍待运行；前置通过不增加65/106映射或整体验收完成数。
+DEVX-015 全部门禁/迁移/发布/closeout 后仍须 OPS080 工程、部署及新 lawful daily；不启动 Pi/SoL-Pi。
+
+DEVX-015原git_launch记录将原ready输入与三份安装Git只读custody、实际悬停child身份及固定
+ff-only命令绑定在同一原事务；摘要重建原pre-resume记录，不复制整个readset，不授予resume权。
+prepare_git_launch复用原ready活文件与原Job，冻结实际cmd Git、mingw64 Git、sh物理身份/链接数，
+创建原CREATE_SUSPENDED ff-only子进程并记录launch。switch_publication_heads保持原行政目录
+custody，原store先持久化HEAD_HANDOFF_INTENT，再以原HEAD身份/before bytes条件写入，记录
+HEADS_SWITCHED；目录持有延续至调用体退出，显式peer选项不扩大至peer index或私有文件。
+该链尚未接通resume effect-window/公开hook/成功publisher；不因HEADS_SWITCHED授予resume或PASS。
+原fence的validate_publication_head_handoff从本active lease历史取原HEADS_SWITCHED记录，
+重验LOCAL/plan/原intent/request与执行合同，再对实际现场只规范化两份原HEAD变化；两份index、
+main/候选ref、所有其他worktree、配置、locator、reflog/ORIG_HEAD和锁仍必须保持原状态。
+原Full custody和实际worker复验接在这一窄门禁后；普通validate的HEAD=C门禁保持不变。
+该门禁只用于resume之前，不能用于merge已改变index/ORIG_HEAD/ref之后或充当稳定发布凭证。
+失败稳定采用另须独立证明原Git已退出，
+原ORIG_HEAD与两份reflog身份/内容及所有预登记不存在路径不变；原checkout/Full/Job门禁保留，
+同一atomic内再次核对。未知锁、merge残留或已发生效果均拒绝只读释放，不删除其他owner对象。
+
+DEVX-015只读文件custody的默认v1仍拒绝多hardlink；原安装Git文件可显式冻结完整物理身份及
+精确link_count，形成v2绑定。原NtCreateFile句柄核验链接数与原bytes后才持有，binding从同一
+活leaf句柄查询FILE_STANDARD_INFO再次核对数量、大小和非删除状态，不以路径重开代替原对象。
+多链接参数只允许只读保留路径，普通写入/创建/删除仍仅单链接；关闭后绑定不可使用。
+v2可沿原InheritedJobChild活句柄继承，ready原v1合同不自动接受v2或扩大执行权限。
+DEVX-015原生hold_contained_ancestor只核验当前hook到原绑定Git进程的实际父链；Toolhelp快照
+仅提供候选parent PID，每一层必须由原生process句柄、创建时间顺序、活状态与原Job成员证明，
+原Git PID/创建时间须精确匹配；上下文前后再次核验，深度有限，错误来源与身份复用拒绝。
+process句柄保留到调用体退出，query Job与snapshot句柄立即关闭，不阻碍原launcher的
+kill-on-last-handle；异常也释放全部观察句柄。该原语不授予lease/发布权，实际事务hook仍须接入。
+DEVX-015 PublicationLifecycle复用原fence.guard.store，将发布attempt的reserve/Job身份/退出/失败custody
+追加在原Full事件投影之外；原LOCAL事件、intent、Full custody及当前checkout须重验。未ready拒绝，
+worker须原Job成员及活launcher；自报PASS不获稳定采用。失败attempt仅在独立重验原checkout未改变、
+Job无活动进程后记录不可改写的UNCHANGED观察并允许failed release。当前尚无公开publisher，
+成功发布采用/CAS/部分写入与TTL后恢复仍需完成；execution的租约管理任务不等同用户开发任务。
+准备组件由原Job worker派生固定Git子进程，原生句柄核验继承Job后发送精确LF协议；实际prepare
+ACK/进程身份/准备锁对象及原拓扑记入同attempt不可改写的main_preparation。当前组件退出即abort，
+尚不开放commit/公开publisher；准备记录不授予PASS，不把未知锁或替换对象当作恢复权威。
+安装Git exe只读捕获须显式冻结物理身份及精确hardlink数，普通source仍默认拒绝多链接；
+Git子环境去除重定向变量并记录派生环境hash，不允许环境把准备写入移到其他仓库。
+存在准备记录时，UNCHANGED采用还须实际核验原Git进程终止、main.lock路径不存在，原子写入前
+再次核验并保存绑定原准备记录的resolution；任何残留/替换锁均拒绝释放，不按路径删除。
+发布准备复用原runner的当前Full profile只读检查；原事务锁内重验原execution和捕获bytes，
+Git效果前与准备记录追加前均检查clean candidate，不以旧LOCAL/PASS代替当前准入。
+原Job worker可在同attempt一次追加checkout_plan，绑定原request/LOCAL拓扑、HEAD预期转换、
+ORIG_HEAD与reflog指纹及必须不存在的锁/合并状态；原store内重捕获后写入，不可改写或删除，
+不得在main_preparation之后补写。计划和重放不授予dispatch/publication/resume权限。
+prepared引用解析器仅准许原M→C的HEAD/main配对、ORIG_HEAD旧0写M及AUTO_MERGE旧0→0；
+未知/重复/错旧值/畸形集合拒绝。解析器不是Full/Job授权，实际hook身份与执行绑定仍需接入。
+hook capsule的固定定义从原request和checkout plan重建：仅reference-transaction/post-merge，
+目录由原stdout父目录及完整request SHA导出；脚本bytes、Python/CLI/actor/policy与逐文件hash
+均固定。仅转发Git单个stage参数及原stdin，错参数数目拒绝；重新计算hash不能授权替换内容。
+原Full/LOCAL/Job worker可在同store一次记录该定义；原clean candidate和checkout plan须在
+同atomic再次核验，绑定原worker和时间，objects初始为空且ready=None，重放不创建文件。
+定义不得删除/改写，也不得在main_preparation后追加或同时修改其他状态。materialize仅按
+原目录→reference-transaction→post-merge顺序创建，原recoverable create回调从实际fd核验
+完整目标路径、类型、空普通文件/single-link与物理身份，原root和父链也必须匹配；同store
+atomic重核原worker/clean状态后逐个追加身份，才清除delete-on-close并写入固定bytes。
+对象列表只允许一次追加一个，旧前缀、定义、worker和原时间不变；后续文件父链须包含
+首目录的原生身份，未知同名对象不能覆盖，部分或完整已创建记录不能重复materialize。
+返回CREATED_NOT_READY只是创建证据，不等于完整读取窗口证明；materialize本身不写ready，原失败
+终态保留全部对象记录，不授予Git resume或发布成功。
+readiness原Git入口固定diff.autoRefreshIndex=false；quiet差异使用numstat内容比较映射0/1，
+避免将失效stat缓存误判脏源码，既拒绝实际源码漂移，也禁止只读diff刷新index。
+原common/refs/heads目录身份纳入拓扑，复用RootDirectory相对打开并复制原生目录句柄；
+仅固定Git通过显式handle_list继承保护，父句柄关闭不提前解除仍运行Git持有的目录保护。
+`InheritedJobChild`复用原Windows创建路径，先核验当前worker属于原Job，再以suspended方式
+创建自动继承同Job的child，核验原生身份后才交出一次resume能力；不是通用Full owner handle。
+仅显式stdio与已校验目录/只读文件custody可继承，child close只终止自身进程，不终止父worker或原Job；
+wait_exit只证明直接child退出，原Job整树退出仍由原launcher独立核验，不授予发布成功。
+原Job查询句柄在暂停child创建验证后立即关闭，不随child holder留存，保持原launcher死亡时
+kill-on-last-handle行为；child close仅依赖原process/thread句柄，不需保留原Job句柄。
+原close同时丢弃已成功关闭的stdio缓冲流对象，避免对象仍持有原生锁句柄直至holder析构；
+未关闭流仍留在原owner中供失败重试，原进程树终止与清理失败报告不变，不依赖调用者GC。
+child的pre_resume_binding从原活句柄重验PID/创建时间及实际Job成员，绑定原worker与启动参数；
+仅原owner尚未resume时可读，已resume/退出/关闭/跨thread均拒绝，查询Job句柄立即关闭。
+快照不授予Full/发布权，也不声称查询外部线程暂停计数；原attempt追加和hook执行绑定仍须完成。
+原RootDirectory文件路径可在精确root/parents/leaf身份与原bytes匹配后持有只读句柄，拒绝
+reparse/multilink/内容漂移，不创建、写入或删除；实际叶文件与父链句柄可由原child显式继承，
+父custody关闭后保护延续到原child/Job退出。pre_resume v2绑定来自实际活custody的文件证明，
+不接受序列化证明冒充句柄；原v1历史保留，不自动获得文件保护语义。Full-profile证据captures
+不等于全部执行代码已持有；后续仍须复用原候选Python源清单与独立runtime绑定补齐读取窗口。
+原acceptance_runtime_identity可用observe_dependency在原调用线程观察每次已核验的实际bytes，
+覆盖exe/engine及原distribution清单全部代码、二进制、.pth与元数据；原identity/hash/顺序与
+.py/.pyc缓存语义不变，原读线程池在回调异常时也须退出。观察不是持有证明，ready仍须核验
+实际活custody并与原Full绑定。只读hold默认16MiB不变，可显式使用原runtime既有64MiB单文件
+资源上限，拒绝非法预算/超限，原single-link/身份/父链与只读约束不变；无新增执行权限。
+hold_acceptance_runtime_identity通过原observer逐项持有全部exe/engine与distribution实际输入；
+root只取当前解释器prefix/base_prefix及安装distribution origins，每次原生打开重核父链身份。
+原ExitStack在捕获或调用体异常时释放全部句柄，返回原identity及实际custody tuple；不接受
+外部root或序列化记录替代活句柄，也不替代原Full比对、Job成员和发布attempt的准入检查。
+PublicationLifecycle.hold_hook_capsule_inputs仅在原RUNNING/完整3对象/未ready未prepare下组合
+全部runtime、原Full inspector已捕获的候选源码/checkout/retained evidence、固定hook、事务与
+选定policy的活句柄。固定hook原created物理身份和父链不能换，captures精确hash/size/bytes；
+同原store atomic重核原worker/attempt、clean candidate和精确outer/profile后返回观察快照及
+实际custody tuple。上下文退出释放，不写事件、不授予resume；后续ready追加仍需同原绑定复核。
+prepare_hook_capsule_ready只由原worker内部取得上述活对象，同原store重核每项实际binding、
+原Full/profile与clean candidate后一次追加ready。首次追加在outer execution转换处直接比对
+真实prior的完整hash，且新outer仅将该ready还原None后须完全等于prior；不从后续退出/结果状态
+倒造旧Full证明。ready保存原输入清单但所有执行许可仍False，后续不可改写、删除或重复创建。
+清单验证逐项原生root/parent/leaf、跨项同路径namespace一致、固定hook创建身份、Full captures、
+事务/policy路径、hook Python与受保护入口，并从原路径/size/SHA顺序重算runtime分发承诺。
+原runtime还须匹配已持有且hash绑定原Full的execution_validation_identity.json，仅排除环境差异；
+原Full profile校验复用同一结构谓词。context退出释放句柄，持久化ready不是可重建的执行能力，
+实际Git仍须独立受控创建、继承活句柄并通过原效果窗口检查。
+ready校验仅在单次调用内复用词法Path对象，避免重复解析相同root/parent；每项物理身份、
+内容承诺及namespace冲突仍逐项复核，不缓存文件观察、验证结论或跨调用授权。
+Full投影先剔除仅属发布的两字段再深复制原Full，返回对象仍不共享可变字段。公开执行转换
+入口完整递归校验current树一次，再由内部函数逐层验证所有转换边；不在同一次递归边检查中
+重复校验已完整验证的子树。每个历史事件、外部调用及现场门禁仍独立执行，不跨事件复用结论。
+`publication_fence local-publication-recover-index`仅在原LOCAL_MAIN_FF_PRE失败attempt下，
+独立重验当前Full/profile captures、原Job/Git终止、无遗留锁及其余原拓扑完全一致；当前index
+须由Git实际对照原C且无hidden flags。原store锁内重验后追加v2稳定观察
+`CANDIDATE_STABLE_INDEX_REPLACED`，保留原拓扑/新index身份及原Full，不写index/refs/源码，
+不记ORIGINAL_UNCHANGED、不将失败升级为PASS，不授予重派发或实际发布权限。
+
+DEVX-015 原租约acquire在等待请求仍冲突时重放原BLOCKED；释放后复核完整身份/readiness，
+readiness须精确绑定task/change/manifest/policy；acquire及reassign均在事件写入前拒绝错配，
+在同store建立previous_lease_id关联的新尝试，保留历史BLOCKED不改写。未执行的阻塞尝试不消耗
+执行reassign配额；取消/失效/完整有限公平序列仍须另验，不新增scheduler或第二队列。
+
+DEVX-015 `publication_fence local-publication-inspect` 只在原LOCAL_MAIN_FF_PRE与exact C下
+读取真实linked-worktree/Git管理拓扑、HEAD/index身份及index与C树的对应；复核捕获未漂移。
+原LOCAL_MAIN_FF_PRE在同一租约arbiter下将local_publication_intent绑定到既有事件；公开检查
+须与原拓扑一致，不能以新捕获替换原身份。事件记录自身不授予执行权，实际执行租约绑定仍必需。
+内部lease_execution.v5保留原Full全部字段并追加publication_attempts；原Full投影不可重封替换，
+发布记录尚无独立稳定采用能力，故不可release，通用reserve也不可派发发布request.v5。
+main旧checkout不遍历工作文件。输出仅OBSERVED、dispatch/publication=false；不是实际main更新、
+checkout接管或恢复能力，P01后续持久意图与受控更新/恢复仍须完成，不以诊断代替发布验收。
+
+DEVX-015 mandatory controller对xdist异常退出、缺失或非字典workeroutput保留无效身份，
+由原sessionfinish拒绝不完整执行；不再因读取缺失属性掩盖最早worker故障，不新增PASS路径。
+Full发布前的runtime/code/custody/七readiness组合inspection使用独立180s工程上限；
+超时仍拒绝，锁外检查不授予发布权，原锁内candidate/main/event/input复核保持。
+
+## DEVX-015：受控源码扫描的排除边界
+
+`source-candidate` 在 Job 启动前按当前 checkout policy 排除已登记的私人路径及其子树；
+名称枚举在 stat/open/目录下降之前应用排除，不把私人文件纳入审阅或生成输入。
+其余未知源码仍返回 `CANDIDATE_DELTA_UNCOVERED`，生成输出的严格 inventory 不放宽。
+真实 W1 首次请求在此门禁拒绝，未 reserve/启动 worker；原审阅和失败事实保留。
+修复后8项回归通过，仍须新冻结审阅、真实源码候选及最终整体验收；不启动 Pi/SoL-Pi。
+报告 fragments 历史集合取 exact main 的完整 Git tree，而非仅当前 index 引用；对历史
+type/mode/raw bytes 逐项核验，未知或修改的旧文件仍拒绝，不删除 main 保留的历史。
+worker 在已绑定 stdout 中记录阶段起止/时间的 observation-only JSONL，定位实际生成耗时；
+该日志不含源码 bytes、不进入候选/验证权威，父进程公开结果仍独立返回。真实完整链实测后，
+source worker 工程防挂起预算为1200秒；不是租约TTL或验收期限，超时仍托管终止并有限恢复。
+四生成器聚合 `generation.json` 使用独立64 MiB预算，编码后在写入及私有对象构造前检查；worker、独立收养与安装/恢复均保持原生文件身份和精确SHA校验，普通文件16 MiB上限不变。
+DEVX-015 mandatory execution guard 已接入正式runner的实际pytest子进程，对xdist收集与setup/call/teardown报告检查必需node；父进程独立检查报告与绑定，missing/deselect/skip/xfail/XPASS/禁用插件/缺失结果/重复或不完整报告均禁止PASS。发布前的真实readiness重验先捕获有限retained policy/绑定文件/receipt链和Atlas manifest/outputs原bytes，原inspection结束及原atomic内分别重核，拒绝忽略文件在检查后被替换；REMOTE_PUSH_PRE锁内同时重核clean C，不依赖锁外检查。该有限输入闭合复用原adapter/captures/store，不新增证明库。普通checkout guard的acquire前后及release从原arbiter下的lease replay识别同checkout未过期且intent/resource绑定有效的ordinary活owner，以认领其他合法dirty路径；不扩张调用者自身claims，原资源冲突仍拒绝，source-only或终态历史不授予归属。完整mutation preflight对自身声明之外的dirty调用当前guard核验活owner，允许lease ID不等于允许无归属文件；无活owner直接拒绝且不创建store，READ_ONLY边界保持。完整106变体映射和loaded SUT/environment身份仍待闭环，不能单独授予验收或发布。
+正式Full在占用执行名额前，从候选C的Git blob绑定验收manifest及精确test blobs；独立V3变体承诺拒绝替换原106变体，缺项/重复/非法路径/非普通blob或未完成审阅映射均拒绝。此预检不证明断言充分性或真实执行，运行环境与执行结果闭环仍须完成。
+实际runner另用既有原生bounded_regular_bytes绑定manifest/test工作区raw SHA和文件身份；精确CRLF提交或既有Git LF文本基准均可核对，raw身份不归一化。每个worker核对必测模块来源并回传结束时身份，controller与父进程复核；执行前漂移禁止启动，执行中改写/同字节替换拒绝PASS，串行与xdist均要求有效身份报告。
+解释器identity绑定实际python.exe与GetModuleFileNameW(sys.dllhandle)返回的已加载Python DLL精确SHA、版本/prefix、安装distribution名称/版本/location清单及实际代码字节摘要和有效环境摘要；原始环境值不写回执。RECORD只提供名称，Python/原生代码、已登记pyc、导入路径配置及安装元数据经原native custody读取实际bytes，路径/数量/大小均有界。每进程将已捕获source/cache交给共同authored-code校验器；不exec源文件/缓存，不信任缓存mtime。经源码完整指令/常量/flags/名字/异常表核对后，仅接受实际代码完整匹配源码或已承诺缓存的line-table表示；typing-only声明、生效条件分支、descriptor/fixture及元类producer按真实构造验证，不用模块跳过名单。仅排除六个固定pytest/xdist观察变量，controller/workers/父进程前后复核；未绑定解释器或运行时漂移拒绝。安装代码字节和authored声明承诺不是全部package data/stdlib、动态生成赋值及native内存证明，后者仍须独立闭环。
+依赖捕获使用最多四个在途原native读取任务，仍逐文件验证祖先/reparse/metadata-before-content与held-handle身份；不缓存stat或源码字节。按原排序消费结果并计算共同摘要，保留64MiB单文件及512MiB累计接受上限；预读最多四个单文件预算，异常退出也等待全部自有读取关闭，不添加执行权威。
+验证门禁以候选src/scripts普通Python blobs完整清单作为共同源码承诺，各进程独立核验实际加载模块的来源及authored函数、类、descriptor和wrapper的结构化code identity（含常量、嵌套代码、字节码与位置元数据）；只compile不exec源文件。父worker导入集合可不同，仍绑定同一候选清单；内存替换即使磁盘不变也拒绝。正常wrapper还核验其代码与wrapped闭包绑定；此处不替代第三方依赖bytes及最终完整验收。
+pytest早期兼容扩展只按已验证hook源码的精确MonkeyPatch.setattr绑定识别原始实现，不放行任意替换。AssertionRewritingHook模块由已验证的原rewrite_asserts和真实loader配置重建AST，精确比较重写代码，不禁用断言重写或改用普通cache。parent/controller/worker及publication inspector的项目源码binder复用同次runtime捕获的依赖字节上下文，候选重叠路径字节冲突拒绝；不另外读取未经捕获的producer。外部co_filename先受解释器Lib普通.py边界限制，避免代码对象指向任意仓库文件；完整动态运行身份与最终接受仍独立验证。
+WindowsJobProcess工厂成员在类级声明明确类型，launch_binding仍返回JSON深拷贝；调用方修改导出argv不影响活跃执行绑定。类型修正不改变Job句柄、owner、resume/close或子树终止规则，原生生命周期回归单独验证。
+mandatory结果由父进程原生预留空文件，在持有原句柄时将其identity写入durable request；子进程只对该空文件执行bound写入，父进程按原identity执行bounded读取。请求descriptor同时绑定SHA/identity，同字节替换请求或有效PASS结果均拒绝；正式summary保存请求/结果/root身份与原始结果SHA/size，临时传输文件不冒充永久发布回执。
+checkpoint._bytes改接既有bounded_regular_bytes：先以零数据访问句柄核对路径、属性及调用方冻结身份，再以ReOpenFile取得同一对象的deny-write/delete读句柄，重验身份/size/mtime/single-link后才读内容。实际worker检查后替换曾在旧读取器返回保护canary内容；修复要求原生零内容访问和typed DRIFT，原件保留，不以最终拒绝掩盖先读后验。此处不替代最终C的完整验收。
+固定候选的验证与发布资格分开：fence在已绑定C的正式验证阶段按显式validation_tier检查C/lease/plan/parent/resource，main前进不抹去技术PASS/FAIL；FULL_DISPATCHED及FORMAL_VALIDATION_RESULT保留原C和实际main观察。验证响应明确validation_only且publication_allowed=false，结果仍要求publication preflight；普通validate和LOCAL_MAIN_FF_PRE继续要求原main条件。当前fence转移回归不替代实际runner三时序或最终C验收。
+远端确认改读origin的实际单一push endpoint：REMOTE_PUSH_PRE以git ls-remote核对实际refs/heads/main并绑定endpoint摘要，CLEANUP_PRE要求同一endpoint的实际tip等于C，不再用本地origin/main缓存证明远端。公开publication-fence remote-observe只读返回实际tip或REMOTE_UNKNOWN，均不授予push；不可达可在远端恢复后重新探测，endpoint更换则拒绝。探测在短时store arbiter之外，锁内重验transaction/head-event/phase、actor/lease、endpoint和候选；外部调用方不能提供内部观察参数，探测期间事务变化拒绝旧结果。真实ACK丢失且tracking cache陈旧的fixture只探测便完成收尾，不重推；该增量仍不替代全部P02和最终C验收。
+新COMPLETED终态事件保存remote_confirmation：候选、原CLEANUP_PRE事件ID、实际观察与point_in_time语义。回执仅投影终态已保存事实，缺失或错配观察拒绝；旧终态不补写确认，不把release时的本地cache或时钟当作远端现状。正式Full在claim前绑定当前canonical任务与C中原bytes，拒绝DROPPED/REVOKED和scope漂移；合法DONE仍可绑定，实际启动前重核task commitment。v2 Full claim将原launcher PID/创建时间及完整请求先写fence事件，再写claim投影；实际启动只能来自原进程。最终guarded argv/env经同一执行租约托管到Job，前台循环续租，确认整棵进程树退出后，待mandatory/profile检查结束，由原launcher将候选绑定的结果与summary原SHA承诺追加到同一租约事件链，再写结果文件并收存；request、含mandatory绑定的validation identity和原始stdout保留，禁止json-output覆盖。runner拒绝非整型exit_code，profile保留原非布尔/有限数值及完整集合门禁，类型声明不代替运行时检查。full --recover-full核验原租约已收存结果，或在原launcher实际退出后从lease_execution.v4冻结承诺补齐结果文件/收存，再补记fence；原dispatcher已退出且无execution时，仅从事件恢复claim投影并以NOT_EXECUTED关闭失败尝试，活原进程只可观察。旧无launcher claim不自动获得恢复权。已reserve但无最终承诺时，核对原claim/request/launcher及原租约，经实际进程与Job证明后以INSUFFICIENT关闭失败尝试；保留原stdout/summary/松散结果和已知退出码，不把未知退出码推为0。即使低层已收存PASS/FAIL文件，也只保留该原始custody事实，不能缺少最终承诺而获得正式采用资格。原launcher已死但冻结Job仍活时，默认仅观察；显式--recover-full-action terminate_frozen_job只允许核对原PID/创建时间/Job成员后的有限终止，同一租约释放与失败fence可幂等恢复。恢复不重跑、不发布；通用恢复缺少已承诺文件时保留承诺并指向Full恢复。fence新增结果入口强制实际execution和最终承诺，核对原v2 claim的C/request/Job/launcher、冻结结果和summary实际hash；拒绝后不续租、不写结果事件。旧不可变历史仍可读取，不新增legacy绕过。当前实证覆盖reserve/create/resume/exit/summary/custody未承诺恢复窗口，以及实际canonical/mandatory/Full Job下的main前进；不替代claim事件前、完整身份/106变体及最终C实际Full验收。pytest技术PASS与正式采用资格分开：LOCAL_MAIN_FF_PRE与REMOTE_PUSH_PRE分别在原arbiter外调用只读--inspect-full-publication-profile，复用严格profile/mandatory验证，从原租约承诺定位summary/sidecar并重核C输入、实际argv和canonical任务；实际local ff之后的只读重验仍绑定原FORMAL_VALIDATION_RESULT与V(C)，不提供新Full派发或旧main豁免发布权；远端阶段仍要求实际main=HEAD=C、clean和真实remote ancestry。回到原atomic核对事件、execution及捕获原bytes后才续租和准入。独立检查失败不改写原技术结果、不派发、不发布；发布检查现核对原readiness完整七项/候选/路径/安全标志，并与同C当前真实检查语义逐项一致（仅耗时不属身份）；原runtime须与mandatory worker证据相同，当前interpreter/distribution身份另行重验，不用发布进程环境替换原执行环境。完整loaded-dependency bytes、readiness输入在观察至atomic重验间的完整捕获及最终验收仍须闭合。
+
 ## OPS-081：业务合同与助手偏好
 
 Actual automation TOML → strict schema/稳定读取 → versioned business projection →
@@ -51,6 +303,16 @@ FAILED/RELEASED publication transaction、旧 source HEAD/frozen base、observed
 `RAW_BYTES_SOURCE_ONLY_UNVALIDATED`，源 branch/HEAD/real index/文件及 main/origin 保持不变。
 失败 partial evidence 原样保留。Snapshot 不是正式候选，不授予 task/generator/Full/main/push 或
 研究权限；后续只能经原 drift planner、唯一 latest-main coordinator 和 publication fence。
+
+DEVX-015 扩展同一保全入口的 opt-in V2：通过原 `--policy` 显式选择固定路径
+`config/architecture/arch_005_source_preservation_v2.yaml`，加载的 policy 与 request schema 必须同为 V2，
+逐项明确 ADD/MODIFY/DELETE、基线 mode/object 与保全后 raw bytes 或不存在承诺。
+新增限普通非 executable 文件，删除必须绑定既有 blob，canonical task history 保持追加约束。
+原 lease、私有 index、create-only ref 和 source-only 权限边界不变；独立验证重新读取基线与
+snapshot，核对精确变更集和完整 tree。原默认路径仍严格绑定 V1，新增路径严格绑定 V2；
+拒绝任意路径或版本错配，原 implementation binding 包含选定策略的实际已提交字节。
+V2 上限92路径/16MiB、不自动拆分。合成协议测试通过不表示已执行实际 OPS-080 保全、
+已提交实现身份或正式候选验收；真实 V2 CLI 跨进程92路径用例须在 source commit 后及最终 Full 执行。
 
 DEVX-014 S1a 在同一 `FileExecutionLeaseStore` 中将 `arbiter.lock` 改为稳定普通文件，
 使用本机 OS-backed 非阻塞独占锁。OS handle 是唯一互斥权威，owner sidecar 与 arbiter TTL
@@ -2287,6 +2549,238 @@ clean exact latest-main coordinator → 已验证 plan/ACQUIRED 普通事务 →
 → 精确 frozen `lane_head` 的官方 index、唯一 fragment 与完整事件链 → 非终态身份准入。
 拒绝 source-only checkpoint、篡改及错身份；随后仍须官方 `TASK_SOURCE_PRE_WRITE` 才能登记，
 不改变 START/LANE/CLOSEOUT、Full、发布、DQ/PIT 或 production/broker 权限。
+
+DEVX-015 V3 的当前实现增量：`scripts/architecture_arch005_workflow.py control-inspect`
+只读检查主机注册；`NOT_ENROLLED` 和 `REGISTERED` 都不表示迁移接受，不创建 root 或注册表项。
+`merge-validate` 从当前canonical重建计划、读取绑定review后，再核对每项非生成resolution和
+额外candidate source的当前raw对象/mode；审阅后改字节、删除或mode漂移拒绝READY，不改写review。
+冻结和重验共用源码路径筛选规则并比较完整集合；审阅后新增未审源码也拒绝READY。
+generated ALREADY_ABSORBED只表示B/L/M历史已吸收；review的result仍为null，必须由独立
+官方生成闭包决定新输出，不把旧M blob锁定为当前结果。source worker使用独立v3执行请求与
+结果，绑定source head/request、transaction、canonical authority、review和同一普通lease；
+真实Job后代准入不替代publication fence，source-only capability不能升级为候选构造权限。
+`canonical-input-inspect --task-id ...` 用严格canonical validator核验当前registry，并对照M的
+任务路径、无关fragment身份、旧事件和governance周期前缀及sealed依赖；仅列精确输出路径，
+manifest/templates作为依赖而非可重写输出。未知fragment文件只按元数据识别并拒绝，不读取内容。
+结果`VALIDATED_CANONICAL_INPUTS`不代表生成已执行、对象已经冻结或允许materialization。
+`architecture-input-inspect --task-id ...` 复用官方fitness重算module/test/aggregate及dependency门禁，
+并逐值比较保存的fitness与重算deprecation输出；复核期间五项输出和policy依赖字节不变。
+陈旧或无效输出拒绝，不生成文件、不修改阈值、不授予构造权限。
+`report-input-inspect --task-id ...` 只读重算官方report-flow index/inventory/fragments并验证
+render parity；未知fragment仅按元数据拒绝，当前输出与M已登记旧文件分列。保留旧文件须逐字
+匹配M的真实Git blob；前后重查输入、输出、保留文件与名称集合，不执行生成或删除。
+report policy同时属于输入与精确输出，除官方target来源seal字段外的合同必须与M一致。
+`compatibility-input-inspect --task-id ...` 对官方builder的全部index entries逐项验fragment hash，
+保留M的section顺序前缀与immutable legacy/policy；当前输出和待替换M旧路径分列。未知文件仅
+按元数据拒绝，未删旧文件须仍匹配M；通过官方完整链validator后复查文件集合和已捕获字节。
+该结果不提供删除权限，也不替代生成器输入源码的冻结审阅或自动证明所有合同语义等价。
+该观察不替代完整generated closure，也不构成后续构造过程的原子授权；尚不执行候选commit或发布。
+`candidate-input-inspect --task-id ... --publication-transaction ... --actor ...`在同一source
+事务和immutable review下组合官方输出集合，dirty路径必须精确归属源码/输出/已验证obsolete
+删除；报告retained对象保持M，生成文件mode不可私自改变。捕获M→当前的增改删与raw bytes后
+重算输出并复核对象、完整集合、authority和HEAD/main，仍返回materialization_allowed=false。
+为避免freshness先读未知源码，先用canonical结构/事件/索引/视图核验引导读取权限，校验已审
+source集合及scan名称后才执行完整inventory freshness；结构结果显式consumer_inventory_checked=false，
+不能被当作执行许可。实际生成输入和执行托管仍须另行接线，不能仅信生成器ID或输出freshness。
+`GeneratedArtifactStage`为固定官方生成器提供内存产物步骤：已声明输入只消费同句柄验证的
+raw对象，writer写入精确内存输出集，已授权删除只记录None；后继读取及glob/rglob投影消费
+该产物版本，复核实际扫描集合和输入/index mode。直接OS写入拒绝；这不是任意代码沙箱，
+不能单独授予生成执行、候选安装或发布权限。metadata还须与外部对象存在性相符，读取versions
+保留旧输入和新输出；两个官方regular reader可读取未落盘fragment及父目录，未全局放宽resolve。
+`render_source_generators`已串联四个固定官方生成器，包含各阶段真实读取versions、精确输出及
+M历史输入对象，结束后重验物理输入与HEAD/index/main；report只刷新既定seal字段，compatibility
+只允许M核准的obsolete集合。历史Git读取绑定exact commit/object并应用排除集合。
+生成器与输入保护专项单次29项通过；source worker全量authority/HEAD/index闭包、实际Job执行、
+私有S构造及独立安装仍须完成，内存生成结果不授予提交或发布权限。
+其上层`prepare_source_generation`以当前review/transaction/canonical核验冻结完整M namespace，
+叠加受审源码与合法canonical输出，分别保存M对象和Windows raw对象；未知dirty不得先读后准入。
+此输入观察尚不授予Job或Git写权限，必须由实际执行接线消费并再次核验。
+`render_source_candidate_delta`已将四生成器真实内存bytes与完整输入快照闭合为A/M/D操作，
+受审source mode不被M mode覆盖，物理生成物不预先安装。新增`source-candidate`→现有Windows
+Job/lifecycle v3→`source-worker`→无私有index的精确tree/S[M,L]路径正在端到端复验；worker按正常
+GENERATED_PRE/POST→CANDIDATE_COMMIT_PRE推进，完整tree metadata须保留M未变项（含排除项，
+不读取排除blob）。真实HEAD/index安装仍独立，未验证的CLI不等于可发布或整体机制接受。
+父侧独立重算delta并校验完整Git commit bytes及实际Job成员身份，结果托管须绑定同次读回SHA；
+v3未独立采用即崩溃时，即使已有exit0/PASS文件也恢复为SOURCE_ADOPTION_INCOMPLETE，保留
+私有证据且不重派发；已托管终态仅重放，不能把托管等同于最终安装或publication接受。
+`source-recover`沿完整lease execution/launcher身份复核真实退出，再经原fence失败释放；
+source请求首个文件前先持久reservation，防止文件半写丢失执行归属。活体/未知不释放，
+原私有对象不删除；早期恢复原版本2项真实崩溃测试已通过，新输出接线正在复验，不代表已完成工作区安装。
+request/execution-request/capture/generation/object-intent/result的一次写入现通过Windows
+`write_bound_once`：逐级RootDirectory相对打开且保留不共享写入/删除的目录句柄，拒绝reparse，
+leaf仅FILE_CREATE并flush；不以字符串检查后的普通open代替实际对象绑定。
+tree只由实际M metadata与已核验delta构造，要求单一SHA-1格式，按Git目录排序及原始OID编码，
+内部严格校验后literal写tree、独立算SHA并保留父侧完整Git tree/commit比对；不创建candidate.index，
+不让mktree/default tree fsck读取保留blob。此接线不证明Git object-store或真实安装的路径保护已完成。
+Git 2.45.1的input-format输出不能单独证明无compat；现另从受控no-includes配置明确拒绝
+compatobjectformat键，真实format-v1 compat与SHA-256反例已通过。无index/新输出接线组合
+回归27项通过；随后格式门禁与tree专项6项通过，各自绑定对应版本，不代替最终候选Full。
+现有文件的`apply_bound_file`沿相同目录句柄链独占打开已知file identity，核对before bytes后
+同句柄写入/truncate/fsync/readback或handle disposition删除；拒绝reparse、hardlink和对象漂移。
+安装执行复用原source lease：`lease_execution.v2`保留已采用source结果，追加v4安装/恢复attempt；
+失败或未完成attempt不能因TTL过期而release/expire，也不允许竞争者接管。RECOVER绑定前次
+终态失败与原plan/candidate/environment。通用result入口拒绝v4自报PASS，不以stable_state
+字符串开放释放；新`adopt_stable_result`独立核验原plan对应实际HEAD/index/raw文件后采用，
+不是worker自报。公开`source-install`与`source-install-recover`接通原租约和实际Job，
+后者仅新请求恢复原plan，不重派发旧source请求；真实fixture端到端安装单项已通过，
+但完整恢复与实际源仓库发布接受仍未完成。
+安装前计划现从同租约已采信source-v3与其原request/result/generation/capture绑定S，复核当前
+source输入/index后记录原始bytes及root/gitdir/common/file身份；index目标bytes由精确S元数据
+编码标准SHA-1 index-v2。该只读准备不增加安装权：需先将原计划绑定到安装reservation，
+再持久化、派发与逐项原生写入。安装中保留Git既有HEAD/index/ref/main/packed-refs锁，
+父侧独立稳定检查后移除并复查，不新增workflow协调权威；main不移动，失败原租约继续保护。
+原生I/O现可要求计划中的`expected_root_identity`，在新建文件前拒绝计划后被替换的root；
+index编码12项和原生整文件36项已单次通过，完整source Job后的计划不变性v2单项亦已通过。
+恢复不能仅以原bytes/目标bytes或torn混合证明对象归属，原文件identity不符则保留并拒绝覆盖；
+首plan中断现可在原执行者实际死亡且从未绑定Job的受保护原租约下重建同一外部SHA计划，
+保留原partial并通过恢复副本消费，不能用TTL或新before绕过；该真实故障与namespace七项已通过。
+恢复副本自身及保全副本截断的续写仅接受原内容prefix和实际identity，原完整partial保持在场；
+扩展连续三次中断的新进程实证已单次1PASS/690.83s，原计划及partial保全；这不代表全部恢复接受。
+main按Windows大小写等价规则拒绝，全部管理目标/锁在首次创建前去重。
+新建对象身份持久化、目录转换与source-final交接仍未完成。公开source-final-handoff已实现并启动
+完整链验证，正常路径1PASS/703.14s；新版精确lease/publication事件CAS与历史release补齐正在
+两个真实source实例验证，handoff证据自身截断及heartbeat后marker重试仍待闭合，未计入整体验收。
+上述两实例暴露readonly diff审计刷新index的真实副作用，2FAIL留证；审计已命令级关闭
+diff.autoRefreshIndex，marker改按原ACTIVE事件保存并接入固定两层截断恢复。77项native/guard
+回归通过，三个新版完整source实例验证中；旧正常PASS不能证明交接后index未被刷新。
+该组合终态2PASS/1ERROR：交错恢复与后续正式阶段拒绝通过；新marker用例为fixture依赖缺失，
+已补齐后单独重跑。另有12个实际子进程机制探针证明本机相对NtCreateFile的delete-on-close
+可用EX21/Flags8清除，普通FALSE不能；目录保护未降级。尚未接入原lease creation identity，
+不是安装恢复完成或跨平台保证，生产/OPS入口未改变。
+marker修正fixture后的完整中断恢复已1PASS/755.76s，精确index/证据/重放不变。
+新增可恢复创建原语：已有父目录保护→原生create+delete-on-close→真实fd记录回调→identity/empty
+复核与指针归零→EX清除→payload/fsync/readback；原lease recorder尚未接线。54项native回归通过，
+不替代原installation/full/迁移验收，也不增加OPS或研究权限。
+原installation inner v3现保存只追加created_objects，旧v1可读、source外层v2不变。
+安装新文件回调接原Job/fd/plan验证及原lease追加，恢复查询原attempt创建身份；48项协调回归通过，
+新版完整安装链1FAIL1ERROR/675.23s，缺失父目录FILE_OPEN失败，fixture释放因非终态拒绝。
+恢复和stable adoption现先解析原attempt custody，再在实际读取句柄核验identity；同bytes替换
+不可作为no-op或接纳依据，相关58项回归通过。目录原语现支持held-fd记录后清除delete-on-close、
+精确空目录删除和每层已打开父句柄identity校验；native61项回归通过，不代表原plan/lease目录接线。
+下一步由版本化原plan冻结获准父目录的existing/absent与identity，原attempt记录真实目录创建，
+文件恢复后仅深到浅删除本链原absent空目录；未知子项/替换身份保持拒绝，不递归清除。
+source-v5到期后的文档追加已登记门禁事件；官方失败释放后同scope v6继续，不是任务验收/发布。
+目录现接入plan.v2完整原态清单→原Job held-fd kind=directory记录→逐层实际父句柄核验→文件安装。
+恢复的adoption先验证文件，解除Git锁后仅删除原absent且原链记录的空目录，再严格验证原态。
+原v1保持旧bytes且锁创建明确existing-parent-only。113项目录/协调/native回归和独立1项旧锁拒绝
+均通过；新版完整安装链运行中，尚不宣称整体验收或OPS080就绪。
+目录完整source→install→handoff链现1PASS/712.83s，原缺失目录/file集合与实际租约记录、
+raw/index/refs/重放一致。随后RECOVER改为本次真实环境绑定，保留原source/runtime/plan；
+worker写入前重验environment+runtime。新版协调48PASS，随后不同环境公开恢复三次中断链
+1PASS/690.08s（证据SHA见V3）；不等于created-file/directory故障恢复或整体验收。
+此后增加严格JSON对象形状与缺失execution拒绝，显式parent identity map及None-return
+创建记录回调；三workflow模块strict mypy与Ruff通过。协调/集成回归134PASS1FAIL，
+单用例分段证实CLI保留index而测试dirty audit改变index；已给测试diff禁用autoRefreshIndex，
+保留全部不变断言。六变体现全部通过；两条真实file/directory创建后原Job中断→public RECOVER
+两轮未到目标断言即因测试hook启动问题失败；已改为self-contained hook与真实CLI启动检查，
+六项新版smoke通过后重跑长链v3，现实际file/directory after-create恢复2PASS/821.01s。
+剩余before/after-record及同字节替换/未知子文件拒绝→恢复六场景现6PASS/1766.75s；
+未知对象必须保留，worker退出0不能代替独立稳定态adoption。
+完整证据及剩余验收边界见V3，不将helper支持或focused结果替代整体验收。
+W1补回真实source-only lease→canonical completed task→公开preflight拒绝，13项回归通过，
+实际preflight现通过共享严格canonical reader读取精确当前task，不再从Markdown子串推断ACTIVE；
+clean audited checkout读取exact当前Git candidate；dirty lane的当前index/policy/目标fragment
+使用Windows native原bytes前后复核，复用完整index链/计数/唯一task/fragment事件校验；
+不把未提交合法任务更新替换为旧HEAD状态，也不把合法Git checkout换行转换误判为新authority。
+canonical损坏禁止历史回退；completed仍受candidate/phase/coordinator/clean门禁约束，验收待验证。
+拒绝后原HEAD/refs/index/source/canonical与lease history不变。compatibility builder新增
+`phase_devx_015_workflow_contract_v3`，继承OPS081→DEVX015 admission，绑定当前checkpoint/
+workflow精确source集合，不改写历史、不授予source-only生成/Full/publication、不预填验收。
+真实源码检查剔除不存在的预留coordination配置，保留失败证据；实际继承与closure负例15项通过。
+该段尚未生成/安装，相关consumer successor与精确review仍待完成；不是W1/Full/发布完成。
+消费侧已接入V3的前驱/唯一source集合、历史时序归属、current文件重验与受限四路径，
+旧admission反例保留；79节点回归通过。devx006c/RCF末段次序及已安装closure断言已补，
+须待实际生成验证。只读架构重算当前1227模块/1393测试文件/856writers，三份manifest stale，
+无新增dependency违规；deprecation ID为待实际生成复核的投影。RCF无损拆分3213条，
+历史3000合同不变；最终raw SHA与生成结果尚未验收，禁止把计数投影视作正式PASS。
+下一步在原M/L/B与source-v6中冻结逐条review和当前raw sources，使用公开source-candidate
+构造私有S[M,L]；运行期间冻结输入，原始执行事实在任务checkpoint/immutable artifacts留存。
+该source步骤不提供Full/发布/运营完成证明，全部后续验收边界不变。
+source-only产物与手工恢复入口已补入artifact_catalog/runbook，不进入daily scheduler；
+最终C/Full、实际迁移/发布和OPS080新合法daily验收仍须完成。
+`control-drain-inspect --lease-policy <path>` 只读登记的旧root和租约事件，过期ACTIVE也保持
+`DRAIN_REQUIRED`；账本为空只给 `CLEAR_SNAPSHOT_ONLY`，不提供切换权限，不回收或复制租约。
+首次登记前，`control-enrollment-plan --lease-policy <path> --control-root <path>
+--legacy-root <path> [--additional-repository <path>]` 通过原 Git origin/sentinel 身份门禁，
+只读记录明确声明的仓库、旧 store、目标目录/父目录物理身份、原账本及 OS 执行者。
+该清单不保证穷尽主机、不持有切换锁、不创建目标目录，输出摘要不是安装或激活授权；
+ACTIVE/未终态/存活执行者给 DRAIN_REQUIRED，空快照仍要求管理员保护、旧入口 OS fence
+及持久切换恢复。真正安装必须重新完成全部检查，不消费过期计划作为权限。
+`control-enroll --plan <path> --lease-policy <path> --actor <actor>` 与
+`control-enroll-recover --control-root <path> --lease-policy <path> --actor <actor>`
+已接入管理员 DRAINING 登记/恢复代码。入口核验实际 elevated token，不自行提权；新控制根、
+不可变 host-enrollment.v1.json 日志和管理文件在创建时赋予管理员/SYSTEM 写权限与受保护 DACL。
+原旧/新 store arbiters 串行化登记，保护的目录句柄固定实际 file identity；原 ACTIVE 不复制或回收。
+持久顺序为受保护准备目录内的完整日志、无覆盖发布正式 root、DRAINING state、各 common-Git
+locator/旧根 retirement、最后在受保护父键 SOFTWARE\\AITradingSystem 写入单个 REG_SZ 值
+WorkflowControl.RegistrationV1 并 flush、读回逐字节核对（DEVX-015A；单值写入原子，值缺失即未登记）。
+正式 root 不暴露缺少日志的半初始化对象；不再使用 WorkflowControl 子键或 RegRenameKey（本机两次内核蓝屏）。
+准备目录为同一 parent 下、由目标路径摘要命名的 .aits-enrollment-*，只保存安装准备内容，
+不初始化 arbiter 或复制业务事件。日志已落盘时 recover 可定位原准备目录并继续发布；日志前
+中断仅允许通过原始、仍匹配当前现场的 plan 重新进入准备，不从空目录自行推导意图。
+登记值已存在且内容相同时幂等返回，内容不同则 HOST_REGISTRATION_CHANGED 拒绝、不覆盖；父键下出现
+其它值或任何子键（含遗留 WorkflowControl 子键）一律 fail closed，不自动删除或转换。准备容器不构成
+第二 store/queue/authority，正式根仍复用原 arbiter。父项 SOFTWARE\\AITradingSystem 不存在时由管理员创建保护项。
+没有原计划的日志前中断、历史遗留来源不明的空正式注册键、身份/内容/ACL 漂移均保留原件并拒绝接管；
+不能把临时 staging 文件或新计划当旧迁移的授权。此入口没有 ACTIVE 分支，也不安装旧 binary
+OS fence；真实管理员正向安装和完整跨进程崩溃验收、旧 writer OS fence 和最终激活仍待完成。
+本轮仅执行真实普通令牌拒绝、原生只读 ACL/目录句柄和隔离管理员 transport 的协议测试，
+没有对实际主机执行登记或 ACL 修改。
+host切换临界区按物理root顺序持有全部旧/新store的原arbiter，在锁内重验注册、身份、
+policy、lease replay和冻结executor的实际Job/进程状态；ACTIVE或活子进程不能通过排空。
+临界区异常释放原锁、不修改业务事件；它本身不写HKLM/ACL/phase，也不提供激活或恢复收据。
+切换后的publication终态重放可只读追溯当前checkout已登记原runtime/leases，核验retirement、
+物理身份、policy、原事件链及lease-intent后重建同一收据；不扫描其它root或复制历史lease，
+未终态事务不能借此恢复旧store写权限。管理员切换/恢复入口仍须完成独立验证。
+Full准入按同一可信host绑定重算必需资源，受管模式必须包含host Full槽且全部为已持有的
+path/WRITE声明；只持有普通checkout路径或错误marker不能获得Full权限。未登记legacy保留原路径检查。
+共享 writer 链为可信 HKLM 注册 → exact checkout/common directory identity 与 Git locator
+→ 注册绑定的 control-state bytes → 现有 `FileExecutionLeaseStore` 短 arbiter 下的 epoch/policy/phase
+复核 → checkout 路径、repository publication 与 host Full 资源约束。路径大小写及覆盖 marker 的
+父/子声明保留相同资源约束；裸替代 store、丢失定位/retirement、重封未授权状态不能创建有效租约。
+管理员安装、ACL/旧二进制封锁、实际排空与 dispatch/supervised 切线尚未完成；当前真实主机未启用，
+不能把该工程增量解释为 daily、Full 或生产执行已接受。完整要求见
+`docs/requirements/DEVX-015_Workflow_Contract_And_Acceptance_V3.md`。
+
+同任务的 `architecture_arch005_task_checkpoint.py recover-terminal --request ... --actor ...`
+仅接收原六阶段事件、持久raw bundle/object intent及实际成功释放lease完整的请求，经同一历史
+快照校验器核对后，在既有store arbiter下create-only写`terminal_recovery.json`。
+重复请求重放该独立回执；原receipt/failure/events、源码、HEAD/index/ref均不替换，不重新采集、
+释放、过期或派发。`validate`可独立验证此恢复记录，但不授予Full/生成/发布或业务权限。
+实际OS arbiter忙时返回`WAITING_FOR_ARBITER`和同请求再探测出口，不推断本请求有另一个生产者。
+Windows安装以同目录staging完整fsync/读回后rename到不存在的最终名；中断staging保留为
+非权威诊断，不覆盖最终文件或原证据。新安装仅在已验证Windows语义下开放。
+该成功回执入口仍拒绝早期中断；完整R02接受和共享迁移尚未完成。
+
+checkpoint执行接线新增 `workflow_execution_request.v2/TASK_SOURCE_CAPTURE`，把checkpoint
+请求、source HEAD、intent及scope摘要绑定到同一source-only路径lease；旧validation v1不变。
+`require_checkpoint_worker` 只读复验实际lease执行状态、完整请求、launcher存活及当前进程的
+Windows Job成员关系；返回witness不是可传递执行许可。其结果使用独立
+`task_checkpoint_worker_result.v1`，不接受candidate/validation字段。
+`capture`现由父进程持有原source-only路径lease，reserve后创建受控Job并派发固定
+`capture-worker --execution-request ...`。worker在真实Job/同lease及当前source/实现准入后
+执行raw bundle、Git对象和create-only ref；父进程等待整个Job实际退出，复验结果与五阶段
+证据后记录result、释放并封存RELEASED。缺失/无效结果只能在已证实退出后记录INSUFFICIENT，
+不重派发、不伪造PASS；清理未证实不解锁。新receipt v2独立核验归档执行链和请求/结果bytes，
+有执行链的回执不能降级为历史v1。此接线仍不授予早期重试、集成、Full或发布权限。
+Windows执行层的wait/terminate超时携带主进程退出码、Job活跃数及保留进程身份/等待状态；
+该顺序观察明确为diagnostic-only，不替代整体退出确认，不改变租约释放或恢复准入条件。
+新checkpoint计划的implementation v2还精确绑定coordination/execution/contract三项执行依赖
+的历史Git blob、实时文件及loaded origin；历史implementation v1仅可验证，不可用于当前执行。
+执行失败的primary error与terminate/confirm/result/close错误分别保留，诊断落盘失败不覆盖原错。
+
+新capture先将完整`task_checkpoint_attempt.v2`与request在同目录staging写入/fsync/读回，
+再由Windows create-only rename安装run后才获取租约。producer实际PID/FILETIME与request等
+完整attempt字段通过intent SHA绑定真实lease的immutable change_id；acquire/reserve在同一
+store arbiter内复核当前producer与请求，不能借重封磁盘身份认领原lease。旧attempt v1只保留
+历史验证，不能补造早期producer证明。中断staging不参与执行权威，也不自动采用/删除。
+`recover-interrupted --request ... --actor ... [--action observe|terminate_frozen_job]`提供有限
+失败终态出口：活producer只观察；真实producer已亡后，复验原intent/lease与已绑定execution，
+通过已有lifecycle确认真实Job/执行终态，才正式failed release。原已释放状态保持，不伪称新释放。
+独立`interrupted_recovery.json`记录`INSUFFICIENT/FAILED_ATTEMPT_TERMINAL_ONLY`，
+execution结果托管与checkpoint完整性分列；不重派发、不修改原events/failure/raw bytes/ref，
+不追加虚构成功阶段。完整成功走原validate/recover-terminal，不降格。此实现仍需对应实证，
+不是partial续作、完整R02、迁移、Full或发布接受。
 
 ARCH-004F2 以 `docs/research/current_research_strategy_execution_chain.md` 建立研究执行链路的人读权威说明：owner question 先转为 hypothesis/preregistration，再解析 `ResearchEvaluationContext`，经过 source provenance、DQ/PIT gate、feature/label/signal、candidate/baseline、target/execution、backtest/cost/risk、robustness/holdout/falsification、evidence multi-axis state、ReviewDecision/OwnerDecision，最后由 canonical artifact/envelope/run ledger 进入分层报告。文档逐步链接真实配置、源码和 artifact，并把 `CANONICAL`、已验证 `REFERENCE`、待迁移 `LEGACY`、`BLOCKED` 与 `PLANNED` 分开；其中 2022-12-01 AI regime 与 2021-02-22 QQQ/SGOV/TQQQ primary window 明确不可互换。B0～B4 的 research-only公式和当前 evidence limitation 被记录，B5/B6、growth-tilt PIT replay/promotion仍保持 blocked；fixed cadence只产生 observation/review/proposal，不能自动调参、改权重或 promotion。该说明不运行上游、不改变计算或报告结论，F2 后续 runtime migration仍必须逐 slice parity。
 
@@ -10783,3 +11277,421 @@ flowchart LR
 不补行/填零。该算术摘要不验证真实 calendar、source、DQ/PIT 或 outcome 访问授权。
 旧 equal-risk maturity / scoreboard、冻结源和 observation 均未接线或改写；首次真实消费仍须先
 经受审 S4 adapter 和原 DQ/PIT 入口。详见 `docs/requirements/TRADING-2564_S4_Forward_Accounting_V1.md`。
+
+DEVX-015 Full explicit-worker path: trusted launcher validates live token SID/session and explicit environment -> hashes worker metadata into existing validation identity -> original execution lease reserve -> suspended create_as_worker -> original bind/resume/exit/result. Serialized identity cannot authorize launch. Protected installed entrypoint and real distinct-account acceptance remain pending (v299 prerequisite evidence only).
+
+DEVX-015 publication profile inspection selects implementation-owned script with Python -I and readonly candidate-root argument. Candidate-source identity and trusted-inspector loaded-code identity must be separated before deployment; v314 positive regression currently rejects the independent inspector origin. No acceptance or privileged deployment is claimed. v389: because the -I inspector never loads caller startup/PYTHONPATH code, the publishing caller first passes the existing acceptance_runtime_identity loaded-source custody check itself (PUBLICATION_FULL_CLOSURE_INVALID on failure) before trusting the inspection.
+
+DEVX-015 independent profile inspector now checks committed candidate bytes against original mandatory source identity separately from loaded trusted src/scripts code and dependency identity. Both capture sets are rechecked; trusted capture scope is derived from the implementation itself. Candidate execution still uses original strict candidate-origin verification. v315/v316 are diagnostic/component proofs, not new publication admission.
+
+2026-09-22 DEVX-015 v317：Full runner 上下文先于性能记录目录分配；受限 worker 的 runtime profile 指向已校验的 WindowsWorkerExchange/profile，缺少真实交换能力立即拒绝，保留证据。formal selection 使用 runner 有效环境。正式账号入口和最终验收仍待完成。
+
+2026-09-22 DEVX-015 v317 来源分离：固定启动实现 loaded-code 校验 → 候选源码 data-only capture → 受限子进程原候选来源校验 → 父进程复核双方来源 → 原结果承诺携带 launcher_identity → 固定发布 inspector 复核并纳入 capture。普通同根启动保持 include_runner=True 强校验。
+
+2026-09-22 DEVX-015 v318：checkout只读status与diff审计显式禁用core.fsmonitor，避免审计执行仓库配置回调；保留脏文件归属、精确排除和索引不变约束。提权入口完整Git执行边界仍待验证。
+
+2026-09-22 DEVX-015 v319：原source-preservation Git配置准入提取为同模块GitConfigurationAdmission.capture/recheck；原SourcePreservation继承复用，schema与拒绝规则不变。该共享检查尚不是OS保护执行能力；可信Full入口接入仍待完成。
+
+2026-09-22 DEVX-015 v320：独立GitConfigurationAdmission必须指定现存绝对Git程序路径，禁止PATH替换该主程序；原SourcePreservation保留原命令选择。配置准入、程序选择与OS对象保护仍是不同检查，正式Full接入尚未完成。
+
+2026-09-22 DEVX-015 v321：新增原管理员只读文件持有组件，权限/摘要/身份验证后复用原文件句柄拒绝写删，祖先目录持续pin至使用结束。上层仍须证明程序依赖清单完整及实际保护，未接入正式Full入口。
+
+2026-09-22 DEVX-015 v322：安装运行时的多硬链接文件只有绑定精确device/file-id/link-count后才能进入原只读持有；未声明文件保留单链接默认，别名不能绕过实际inode的deny-write句柄。
+
+2026-09-22 DEVX-015 v323：真实管理员准入 → 不调用Git的配置定位/物理捕获 → 运行时+配置叶文件持有及缺失配置父目录保护 → 捕获一致性复核 → 原Git配置准入 → 句柄内终态重检 → 释放。该链路尚需接入正式Full及完整运行时清单。
+
+2026-09-22 DEVX-015 v324：独立Git配置准入复制显式环境，同源供配置检查和实际Git子进程；父进程或调用方后续变动不能替换。原SourcePreservation继续使用既有ambient环境拒绝规则。
+
+2026-09-22 DEVX-015 v325：受保护文件持有成功后生成活体上下文，按当前进程/线程、仓库、已持有输入摘要核对使用，退出失效；普通readiness同根门禁未放开。上层仍需检查器/运行时输入完整性与原执行权限。
+
+2026-09-22 DEVX-015 v326：data-only candidate source capture可显式使用活体Git上下文，由规范批准根、固定Git和显式环境执行固定ls-tree；失败不回退旧调用。文件blob/摘要/原生读取校验保持。
+
+2026-09-22 DEVX-015 v327：固定检查器Python副本逐文件比对candidate Git blob，并要求副本摘要属于活体held集合；纯数据校验，不执行候选，不代表额外文件及运行时依赖闭包，异根readiness尚未启用。
+
+2026-09-22 DEVX-015 v328：readiness可选择活体Git通道，有限只读命令经固定exe/env贯穿兼容性历史读取及Atlas时间读取；受保护Atlas查询绕开普通缓存，区间退出恢复。原同根/源码版本/7 checker门禁不变，正式main和部署尚未接通。
+
+2026-09-22 DEVX-015 v329：固定项目检查器src/scripts先核对精确源码集合并拒绝缓存/native/额外源码及reparse，再比较candidate blob和held摘要；这不替代外部运行时完整性或正式部署。
+
+2026-09-22 DEVX-015 v331：mandatory验收绑定和默认candidate源码捕获使用已选择的受保护Git通道，精确SHA读取语法及原映射/blob门禁保留；无上下文普通路径兼容。正式worker入口尚未接完。
+
+2026-09-22 DEVX-015 v332：受保护运行时文件读取/持有显式使用原64MiB硬上限，支持真实大于16MiB的工具与DLL；逐文件身份/哈希/原生句柄门禁不变。
+
+2026-09-22 DEVX-015 v333：文件持有仅在目录原生pin的当前区间复用父目录expected identity，逐叶实际身份/内容/ACL验证不变，区间结束丢弃。
+
+2026-09-22 DEVX-015 v334：原held准入可声明完整runtime根，将全部文件与空目录纳入原保护链并做namespace前后复核；活体assert_runtime_root只证明当前完整保护，不授予执行权。
+
+### v335 独立检查器 readiness 接入验证（2026-09-22）
+
+已接入受保护运行时检查，包括隔离启动、完整目录持有、Python 和原生模块来源、运行时文件及候选源码一致性。新增真实持有上下文下拒绝普通开发解释器的回归，发现并修复 ExecutionContainmentError 未转换为 readiness BLOCKED 的异常传递问题。Ruff 通过，两项源模块 mypy 通过，readiness 与持有上下文聚焦测试 49 passed in 19.92s。测试使用原有管理员及 ACL 接缝，不构成管理员部署或独立运行时正向验收。独立运行时正向测试、实际 runner 注入、正式 Full、publication 与 OPS-080 仍未完成。当前无需用户 PowerShell 操作。
+
+### v336 Full 前受保护 Git 传输（2026-09-22）
+
+publication fence 的本地 _git 及祖先查询、runner 的 task commitment 对象大小与字节读取已接 inspection 上下文。仅允许明确列出的 ref、common-dir、当前分支、origin URL 读取及两个精确 SHA 的祖先判断；对象内容限精确 SHA 或 SHA:规范相对路径。未选择上下文保留普通调用，已选择但失效的上下文不回退。原候选大小、字节一致性及 canonical 语义校验保留。
+
+真实 Git 与 native custody 聚焦测试 3 passed in 15.11s，普通 publication 并发身份重查及 writer gate 测试 3 passed in 13.98s；Ruff 及三个改动源模块 mypy 通过。测试管理员 ACL 部分仍使用原有显式接缝，不证明正式部署。main 的 token/environment/exchange 注入、其他直接 Git 调用及上下文全生命周期尚未收口，不启动 Full，不改变验收映射计数。当前无需用户 PowerShell 操作。
+
+### v337 runner Git 闭合与回归修复（2026-09-22）
+
+runner HEAD 探测和 profile 两份候选 manifest 原始字节读取接入现有 inspection Git。已选上下文失效时在普通错误兜底之前拒绝；未选上下文仍普通读取，profile no-optional-locks 语义保留。真实持有测试增加 HEAD、show 传输与退出后失效上下文拒绝。
+
+105项组合回归首次102通过3失败，41.79秒；失败均为历史 UnitFullCommandRunner 替身缺 worker_token 导致原 sidecar 断言未执行。经任务登记和preflight后补齐替身的空 worker token/exchange 与 effective_environment，三个失败原用例重跑全部通过12.04秒。未通过修改生产检查或断言消除失败。Ruff、runner mypy通过。证据为首次102通过加修复后3通过，不冒充同一整套重跑。
+
+后续仍需 checkout guard Git传输、main实际worker注入及完整上下文生命周期，再完成正式独立运行时和同一候选验收；Full/publication/OPS080未完成。
+
+### v338 checkout guard 受保护 Git（2026-09-22）
+
+身份、worktree列表、status脏路径及diff check统一经 _checkout_git_result 接现有inspection上下文。普通调用保留原配置参数，受保护调用经有限只读文法验证，失效上下文不回退。原始排除路径序列保留，未读取被排除内容。
+
+新增真实持有上下文的checkout身份/列表/status/diff与索引字节不变测试。首次新测试属性名拼写错误已纠正。组合回归7通过1旧参数下标断言失败30.36秒；断言更新为同时要求core.fsmonitor=false、diff.autoRefreshIndex=false及原精确排除路径后，该用例通过12.10秒。Ruff与两个源模块mypy通过。证据不冒充一次完整重跑。测试ACL/elevation仍用原显式接缝，非管理员部署验收。
+
+后续重点为main实际worker token/environment/exchange及上下文生命周期注入、剩余跨模块Git调用审计。Full、publication与OPS080未完成，无需用户PowerShell操作。
+
+### v339 受信 Full 启动入口（2026-09-22）
+
+新增 run_protected_full，仅接受实时 HeldGitConfiguration、WindowsWorkerToken、WindowsWorkerExchange 及独立环境快照。拒绝只读/恢复/benchmark等不兼容参数，在原Full claim前核验worker、交换目录和固定运行时。候选目录传入原_main，身份与环境注入原_FullCommandRunner，不引入替代执行器。整个调用选择同一inspection上下文，正常或异常退出均复位；readiness仅复用同一有效已选上下文，仍禁止另建嵌套选择。
+
+Ruff及三个源模块mypy通过。source custody、runner、readiness组合155 passed in47.11s；追加原_main向原runner转交能力的单项测试通过6.54s。能力正向组合采用显式token/exchange/运行时准入测试接缝，不能作为管理员部署或双账户原生执行证明。普通CLI原行为经回归覆盖。
+
+待完成：canonical历史Git读取等剩余依赖审计，受信安装/启动脚本和预审材料，真实运行时及worker验收，最终同一候选required tiers/Full/publication，OPS080工程与运营验收。未启用账户，未安装运行时，未运行正式Full，无需用户PowerShell操作。
+
+### v340 canonical 历史 Git 读取（2026-09-22）
+
+_canonical_git_read在已选inspection上下文下使用受保护Git；未选择时保留原始普通行为。有限文法新增精确40位SHA的commit解引用和固定ls-tree-z对象读取，不允许HEAD解引用、tree解引用或路径逃逸。普通blob类型和路径校验不变，失败保持CANONICAL_GIT_READ/缺失对象错误，不回退。
+
+真实持有上下文3项通过16.60秒；普通历史读取精确版本与任务隔离、符号链接拒绝、替换对象隔离4项通过14.72秒。Ruff和两个源模块mypy通过。仍未部署受信运行时、未执行真实双账户Full，最终候选和OPS080验收未完成。
+
+下一步：完成受信启动器部署前材料，并检查发布profile子进程的独立运行时与上下文传递；已接入口不等于正式操作授权或安装完成。无需用户PowerShell操作。
+
+### v341 profile 独立检查器目录绑定（2026-09-22）
+
+发现原_full_readiness_semantics固定要求inspection_code_root等于candidate，导致合法独立检查器记录在最终profile拒绝。现仅在当前held上下文及bind_protected_inspector_runtime再次准入通过后，使用实际固定inspector目录绑定原记录与当前readiness重验；candidate目录与SHA仍分别精确核对。普通无上下文入口保持原同根要求。
+
+新增inspect_protected_full_publication_profile供受信launcher在整个只读probe期间选择实时上下文，不接受序列化替代。8项聚焦测试通过18.09秒，覆盖目录/版本/检查器清单反证、伪上下文和原publication阶段限制；Ruff与runner mypy通过。没有真实管理员部署正例，子进程重新创建held上下文尚待bootstrap接通；未改变180秒原超时预算，未运行Full。
+
+下一步受信bootstrap与子进程启动绑定，随后才具备可复核的一次管理员操作材料。DEVX015与OPS080尚未完成，用户当前无需PowerShell操作。
+
+### v342 子进程安装目录原生准入（2026-09-22）
+
+新增hold_installed_inspector：从自身解释器确定固定runtime，要求隔离无site无字节码及固定cwd/prefix；真实管理员检查在盘点前执行。盘点复用原50000项界限，逐目录/文件ACL检查、有界原生读取和SHA，拒绝reparse及多硬链接，再通过原GitConfigurationAdmission.held建立完整根证明。Git固定为runtime/git/cmd/git.exe，PATH仅安装内cmd/mingw64/bin/usr/bin，清除继承GIT覆盖。只读构建能力，不修ACL或安装账户。
+
+工程I/O上限2GiB，保留单文件64MiB原限制；真实包含Git的完整安装准入耗时仍待测，不能把旧Python原型测量当作新路径结果。原180秒profile超时未改。
+
+5项启动/真实非管理员拒绝与原native custody测试通过21.82秒；补充完整文件集和固定Git环境组合测试通过6.75秒（管理员及Git准入为显式接缝）。Ruff与模块mypy通过。真实管理员正向安装、子进程启动调用接入、Full/publication/OPS080均未完成。当前无需用户PowerShell操作。
+
+### v343 profile 实际子进程入口（2026-09-22）
+
+固定安装中的profile命令使用-I -S -B与protected-inspector开关，cwd固定为解释器runtime目录；子进程通过hold_installed_inspector重新取得真实保护，再调用受保护只读profile入口。开关仅限只读profile，不能要求执行Full；普通开发入口保持原命令。
+
+4项测试通过12.08秒：固定实现路径/隔离开关、普通命令保持、实际开发子进程在事务读取前拒绝且无文件写入、开关不得请求执行。Ruff及两个模块mypy通过。实际安装管理员正例仍未验证。
+
+Git安装只读metadata盘点0.955秒：6356文件、731目录、419124878字节、无reparse，最大文件19553512字节。与既有Python原型654769010字节相加约1.074GB、29326文件，落在2GiB与50000项工程边界内，Git最大文件低于64MiB。仅容量估计，不是新完整安装的哈希/原生持有耗时；180秒profile超时尚未据此放宽。证据位于任务outputs/DEVX015-bundled-git-footprint-20260922.json。
+
+下一步完整原型运行时测量与部署材料，真实双账户及最终Full/publication/OPS080验收仍待完成。目前无需用户PowerShell操作。
+
+### v344 完整Python加Git原型测量（2026-09-22）
+
+保留v330与旧证据，新增任务work/devx015-runtime-probe-v344。四线程复制逐文件源/目标SHA一致，29326文件1073918618字节53.13秒；源码为当前未提交工程快照，不是候选发布。补充原型内测量脚本后的prepared manifest为29327文件1073921588字节。92份RECORD无缺失/越界。隔离启动在故意无效PYTHONHOME及开发PYTHONPATH下通过2.505秒，无外部Python/native，site未加载；bundled Git2.45.1正常启动。
+
+真实原生文件持有与真实Git配置读取、仅管理员/ACL为明确替身：hold_installed_inspector进入191.202秒，总计201.757秒，写入拒绝errno13，峰值65656句柄，184到187。独立复核首次Git capture即184到187，二次capture加GC仍187，增长并非随调用累积；该观察不是所有真实部署资源审计。
+
+已证实仅安装准入超过profile180秒预算，且尚未计真实ACL与完整readiness；不能启动正式验收后才发现超时。下一步通过受保护部署清单提供预先审定哈希，保留完整namespace和原native持有重验，消除启动时重复全量读取；再测量，不直接放宽超时。此轮未改repo实现、未安装、未改ACL或账户，DEVX015/OPS080未完成。证据为任务outputs内runtime-v344系列及installed-custody-v344-20260922.json。无需用户PowerShell操作。
+
+### v345 受保护安装清单消除重复读取（2026-09-22）
+
+启动读取固定runtime-manifest.json，先检查ACL、有界读取并通过原native持有锁定清单，然后严格解析devx015_installed_runtime.v1。文件列表必须完整等于目录盘点加清单自身，唯一规范路径、字节数、链接数、64MiB单文件和2GiB总量边界不变。各文件仍在原GitConfigurationAdmission.held/hold_protected_files中校验ACL、实际哈希和原生身份并保持持有。缺失/坏清单拒绝，不回退实时自生成哈希。
+
+12项测试通过24.37秒，覆盖错误hash、大小、额外文件、重复、自引用、越界、普通启动及真实非管理员拒绝。Ruff及模块mypy通过。正向组合保留明确ACL/elevation和Git准入接缝，真实文件读和持有验证写拒绝。
+
+保留v344新建v345原型，复制逐文件SHA校验51.38秒，恢复3个空目录；加入4737896字节安装清单后29328文件1078660624字节。相同测量脚本和同一合成candidate，真实native/真实Git而ACL为替身：进入持有121.464秒（v344为191.202秒，减少36.5%），总132.216秒（原201.757秒），峰值62268句柄（原65656），写拒绝errno13保留，进程184到187与既有首次Git开销一致。完整真实ACL与profile/readiness尚未测量，不宣称180秒整体预算足够，也未放宽预算。
+
+下一步完整profile剩余时延与部署前材料。运行时仍为普通工程原型，未安装ProgramData、未改账户/ACL、未运行正式Full，DEVX015/OPS080仍未完成。证据为任务outputs内runtime-v345系列及installed-custody-v345-20260922.json。当前无需用户PowerShell操作。
+
+### v346 完整profile时延边界（2026-09-22）
+
+v345隔离运行时独立测量：runtime identity 15.698秒，loaded inspector code1.303秒，72个检查器文件，含导入总17.841秒PASS；无管理员保护准入声明。profile另有多次身份核对，故不能以132秒安装准入低于180秒推断全链足够。
+
+受保护安装子进程采用360秒硬上限，分配为安装准入180秒加原profile180秒；普通入口保持180秒。超时仍PUBLICATION_FULL_CLOSURE_INVALID，不自动重试、不跳过校验。4项命令/超时拒绝测试通过8.23秒，Ruff和模块mypy通过。360秒是明确工程预算，真实管理员ACL与完整成功profile仍待测，非验收PASS。
+
+只读刷新主机状态：AITSWorker仍Enabled=false，SID尾号1010；C:/ProgramData/AITradingSystem.TrustedRuntime不存在，旧DEVX015Canary存在。旧失败canary不可当作干净新安装根，历史reconciled记录仅解释HRESULT，不宣称原FAILED通过。
+
+下一步集中准备可审阅部署包与真实权限验证材料：剔除工程probe/测试替身、冻结文件哈希清单、只在新受保护目标原子创建且拒绝覆盖、不自动修旧ACL/删除旧证据；账户与正式仓库迁移需各自明确范围。此轮未部署、未启用账户，Full/publication及OPS080未完成。当前无需用户PowerShell操作。
+
+### v347 安装传输组件（2026-09-22）
+
+任务outputs/DEVX015-install-transport.cs作为待组合安装器的传输组件：原生源句柄不共享写/删除，校验实际final path、单硬链接、非reparse/目录、精确size和SHA，64MiB上限，确认后返回内存字节。目标写入要求真实64位管理员，使用Windows PowerShell5.1/.NET Framework FileStream CreateNew及创建时安全描述符；不提供修ACL/覆盖路径。
+
+Windows PowerShell5.1编译成功，9项实际源读取/错误hash/size/预算/非规范路径/ADS/占用/硬链接/真实非管理员拒绝通过。PowerShell7不支持该FileStream构造，最终驱动必须在编译前固定版本。未验证管理员正向创建及其ACL，不宣称安装器完成。
+
+父目录保护验证与持续pin、精确目标allowlist、完整manifest驱动和最终候选绑定仍须在驱动实现，禁止单独以该组件部署。工程输入29325文件约1.074GB，哈希核对9.78秒，无需另复制一份运行时。测试夹具保留于任务work/devx015-install-transport-test-146139d7894543dd8a6f090bbde08750，下一轮安装器验证完成并审计证据后可清理。无ProgramData、账户、注册表、调度变更。Full/publication/OPS080仍未完成。
+
+### v348 安装驱动及真实目录保护检查（2026-09-22）
+
+任务outputs/DEVX015-install-runtime.ps1默认Plan，固定Windows PowerShell5.1/64位，组件从已验证hash的内存字节编译。固定目标C:/ProgramData/AITradingSystem.TrustedRuntime/v348-engineering，根已存在拒绝。安装分支创建时设置受保护SDDL，不覆盖、不修ACL、不启用账户、不执行runtime。CreateDirectoryW拒绝已存在目录，CreateNew拒绝文件覆盖；连续pin系统盘根、ProgramData及新目录，源与目标字节通过原生读取重验。该分支未执行，无真实管理员正例声明。
+
+Plan完整读取29325文件1073917523字节，3389目录，33.0126秒PASS，目标仍不存在。固定工程输入SHA 16bb5d711962a4fe55eff99bc6e8e87229e2bf06806ff8fc68cbabb6d9ef2702，安装manifest预期SHA 36879e544619c86838f63dea3063a6a45e98de35b542e6b91e4a1767e6279817。candidate_sha为空，不作最终发布证明。证据DEVX015-install-plan-20260922.json。
+
+目录组件7项真实检查PASS：ProgramData父ACL及祖先pin、持有期间rename拒绝、Dispose后rename成功、junction拒绝、非管理员创建拒绝、普通用户目录拒绝、已释放对象拒绝。测试夹具保留work/devx015-directory-pin-test-5723ab7428114675ab9fa2ced9262b5a，后续证据审计后清理。旧9项传输证据不变。
+
+仍需管理员安全创建及最终文件ACL复核、在执行前校验入口字节的bootstrap、实际双账号启动、最终候选Full/publication和OPS080。本轮未安装或修改账户/注册表/调度，当前无需用户PowerShell操作。
+
+### v348 安装入口v2审阅就绪（2026-09-22）
+
+保留旧组件及Plan证据，新建DEVX015-install-transport-v2.cs和DEVX015-install-runtime-v2.ps1。每个目标文件（含manifest）写入后读回hash并逐一比较owner/group/DACL与创建时预期SDDL。普通用户源码文件被实际拒绝。入口固定artifact目录，已通过SHA校验内存字节再ScriptBlock执行的完整Plan，11.8619秒PASS。前次33.01秒，未控制缓存，不能宣称代码优化。
+
+任务outputs/DEVX015-install-review-20260922.md列明精确ProgramData新目标、约1.08GB、拒绝覆盖/失败保留、零账户/项目ACL/注册表/调度/runtime执行变更及代码hash。已请求本次安装授权，尚未收到回复或执行。当前进程未提升，可能需用户UAC确认。此新增安装不在原第一阶段合成权限授权内。candidate_sha仍空，双账号、Full/publication/OPS080继续未完成。
+
+### v349 治理接续及已安装状态（2026-09-23）
+
+用户已授权原安装与保留现场续装。工程runtime固定位置C:/ProgramData/AITradingSystem.TrustedRuntime/v348-engineering，续装206.249秒成功，独立全部字节/文件集/ACL复核18.621秒成功：29326文件、3389目录；AITSWorker仍禁用，未执行已安装runtime。原首文件ACL generic mask表示差异失败证据保留，v3规范预期mask后不放宽实际权限。
+
+新代码登记时旧v7租约过期，原入口拒绝PUBLICATION_LEASE_EXPIRED，未修改实现。经正式release保留FAILED/RELEASED。首次v8 acquire错误重复传入两个自动声明的排他资源，得到PUBLICATION_PATH_DUPLICATE，尚未取得lease；移除重复CLI声明后按相同范围成功，不改变资源排他范围。
+
+新事务devx-015-execution-identity-20260923-v8，SHA 5c400368f9d91480fb40f805ae6485f411abc7c0fc01007a778e3de833745270，lease-d364ae1b72dbcf21ade7，阶段TASK_SOURCE_PRE_WRITE。原HEAD10ac47c及main03d10b4未变。原canonical writer登记成功，新SINGLE_LANE preflight PASS。
+
+下一实现：受信任调用方本地worker令牌取得上下文，内存凭据清零，复用原primary工厂的SID/elevation/session校验与句柄释放；先显式API替身测试，禁止实际登录/启用账户。已安装快照不随开发源码变化而改写。实际跨账号启动与权限条件、最终candidate/Full/publication及OPS080 S4/S5仍未完成。
+
+### v349 本地worker令牌获取与生命周期（2026-09-23）
+
+新增WindowsWorkerToken.logon_local受信任调用上下文：仅本地账户domain点、LogonUserW interactive/default，无重试或API回退。凭据必须为调用方独占的NUL终止ctypes wchar数组，不接受不可清零字符串/请求JSON；所有拒绝路径清零，并在yield之前清零。不启用账户、不授予权限、不加载profile、不授予启动权。调用方仍须从受保护配置提供account/expected SID及获得授权。
+
+复用原from_primary_handle校验primary/SID/非提升及复制能力，再validate_launcher验证身份分离和session，上下文结束或异常时释放副本与原登录句柄。显式拒绝API声称成功但缺失句柄。
+
+首轮10项新API替身及2项既有真实token回归共12PASS/14.52秒；mypy发现可空handle后增加显式空句柄拒绝，相关6项生命周期回归PASS/7.28秒。最终Ruff和该源模块mypy通过。新登录路径使用明确API替身，没有真实账户登录/启动证据，不汇总两轮为18个独立验收场景。参考微软LogonUserW：https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-logonuserw。
+
+已安装v348工程快照保持原字节，未自动更新。新增源实现仍需最终候选绑定后按审阅部署流程安装。尚缺受保护身份配置/凭据供应、实际启动权限及环境策略、真实双账号正例、最终Full/publication/OPS080。v8事务继续TASK_SOURCE_PRE_WRITE，无真实账户/主机权限修改。
+
+### v350 受保护身份与登录组合结果（2026-09-23）
+
+新增WindowsWorkerToken.logon_registered。先实际管理员构造与原bind_protected_inspector_runtime准入，再从固定runtime父目录/worker-identity.json读取身份；不接收可变配置路径。检查父目录/文件ACL，16KiB有界单链接读取，经原hold_protected_files持续native持有后严格解析四字段与当前host_id；在持有期间调用logon_local并保持到token退出。密码在包括准入/解析失败的所有路径清零。无创建配置、账户、密码持久化或真实登录动作。
+
+18项组合与既有登录生命周期测试PASS/11.60秒；runtime/admin/token为明确接缝，实际bounded file读取保留。覆盖wrong host、extra password field、重复key、runtime/custody拒绝、调用方异常及清理顺序。Ruff和源模块mypy通过，格式修正后Ruff再次通过。不是管理员/真实跨账号验收。
+
+仍需可信凭据供应和真实身份部署的具体方案、实际启动权限/环境验证、最终候选与安装源码同步、Full/publication及OPS080。已安装v348快照仍不修改。v8继续TASK_SOURCE_PRE_WRITE。
+
+### v351/v352 凭据读取与原生解密检查（2026-09-23）
+
+v351 canonical结果已通过原writer登记（governance cycle 943），状态IN_PROGRESS。4项confidential ACL/custody测试12.31秒通过，Ruff通过；未限定导入的mypy报告8文件44错误，包括coordination的9项，未宣称类型通过。
+
+v352新增decrypted_worker_password：仅接收有界密文与32字节binding，原生CryptUnprotectData以UI_FORBIDDEN解密，不产生明文Python字符串；返回原生分配上的可写wchar数组视图。所有退出路径先memset清零再LocalFree。调用者必须在上下文内消费，不能保留视图。5项真实DPAPI合成测试6.85秒通过，覆盖正常、调用方异常、wrong binding、未终止和内部NUL；LocalFree观察接缝检查释放前字节清零，解密与释放仍使用真实API。Ruff通过；mypy --follow-imports=silent单源模块通过，不代表全仓类型检查。
+
+尚需把该原语与hold_confidential_file及logon_registered组合。没有写入真实凭据、启用账户、改写已安装v348快照或运行Full。测试未见慢阶段，本轮不重复昂贵安装/全清单校验。最终candidate/Full/publication及OPS080 S4/S5继续未完成。
+
+### v353 固定密文读取接入登录入口（2026-09-23）
+
+logon_registered保留显式可清零缓冲区模式；不提供缓冲区时，在原身份文件持续持有、严格字段/current host检查之后，读取固定runtime父目录/worker-credential.dpapi。通过hold_confidential_file检查SY/BA精确ACL并保持原生文件持有，以原始identity文件SHA256的32字节摘要绑定DPAPI。释放顺序为token退出、明文清零并LocalFree、秘密文件释放、identity释放。失败不回退到其他凭据源。无新增账户/权限/主机写入。
+
+首轮19项含真实DPAPI5项通过8.11秒；增加秘密ACL与decrypt拒绝后最终16项组合测试通过6.76秒。组合测试明确使用runtime/admin/decrypt/token接缝，不等同真实管理员登录；原生DPAPI由独立测试覆盖。每次组合runtime准入次数固定为1，避免包装旧入口带来重复全清单校验。Ruff及mypy --follow-imports=silent源模块通过。
+
+下一步准备身份与密文配置部署、账户重置/启用与失败禁用的具体可审阅入口，再取得对应操作授权；现安装授权不覆盖这些账户变更。已安装v348工程快照仍未同步新增代码。真实双账号启动、最终candidate/Full/publication及OPS080 S4/S5未完成。
+
+### v354 主机正例后的正式闭合审计（2026-09-23）
+
+原canonical writer登记主机v2登录和挂起Job创建PASS，cycle948，仍IN_PROGRESS。用户授权的worker配置、JACK单项赋权、新token和单次v2主机探测均有独立输出receipt；worker最终禁用、child已终止，未执行Full/PIT。
+
+当前manifest仍PARTIAL_NOT_ACCEPTANCE_READY/NOT_EXECUTED，缺13映射：I05 prerequisite_then_old_source/real_frozen_lane_replay；L03 old_new_writer/ttl_while_executor_alive/parent_dead_child_alive/lock_file_replaced/store_alias/migration_crash/old_entry_restart；X05 real_cli_repository_identity/baseline_defect_reached/required_platform_available/mandatory_collection_complete。不得用主机探测填充这些正式映射。
+
+对三个具体文件比较开发与v348安装字节：workflow_execution.py、workflow_coordination.py不同；run_validation_tier.py相同。没有全清单重扫，不外推其他文件一致。定向搜索确认登录、安装持有与run_protected_full入口尚无正式组合调用者。下一实现应连接原入口、受保护身份/密文、exchange与明确worker环境及异常释放；完成后再冻结最终候选和部署，避免重复安装。相关审计位于chat outputs/DEVX015-post-host-closure-audit-20260923.json。OPS080 S4/S5仍待DEVX正式闭合。
+
+### v355 安装运行时到Full的组合调用（2026-09-23）
+
+新增run_installed_protected_full：先复用统一参数拒绝条件，再持有hold_installed_inspector，在Git inspection内读取候选commit，通过logon_registered消费固定身份/密文，创建一次性full-exchange UUID目录并持续持有，调用原run_protected_full。保留原Full gate及再次绑定检查，不启用账户、不自动安装或删除证据。
+
+worker环境由OS GetSystemDirectoryW、已准入runtime路径和exchange profile构造；不继承launcher os.environ，固定PATH/Git配置、禁止usersite/bytecode，TEMP/HOME/profile位置明确。该目录是工作文件profile，不代表已LoadUserProfile或HKCU加载。真实完整环境合同与候选测试兼容性仍需后续验证。
+
+5项接缝测试PASS/7.88秒，覆盖成功返回值及admission/logon/exchange/Full异常，确认exchange→token→runtime释放顺序、污染PATH和额外env不继承。只是真实OS系统目录读取，其余能力明确接缝，不宣称真实Full。Ruff修正一个导入排序后通过；初次mypy未绑定MYPYPATH读到已安装包而失败，绑定当前src后--follow-imports=silent单模块PASS。
+
+本轮未运行账户、主机exchange、Full或更新v348快照。新组合仍须受保护可信入口实际调用、完整环境/profile验证与最终候选绑定；13项映射及DEVX015/OPS080正式验收仍未完成。
+
+### v356 原CLI接入受保护Full组合（2026-09-23）
+
+原runner新增--protected-full-candidate-root显式入口，main分派到run_installed_protected_full；普通_main若收到该参数却没有活体protected能力则拒绝，不能走普通子进程路径。组合入口要求参数candidate与显式root一致，绝对路径及Full/transaction/write-runtime参数先验证，之后才运行安装准入。未开启任何自动安装、账户启用或授予权限。
+
+4项CLI测试及5项既有组合测试共9PASS/8.64秒，覆盖正确路由、print-only拒绝、相对路径拒绝、缺事务拒绝、绕过组合拒绝与异常释放。Ruff和绑定当前MYPYPATH的mypy --follow-imports=silent单模块PASS。测试使用明确能力替身，未运行真实Full或创建主机exchange。尚待实际worker环境/profile合同验证、安装候选同步及13项映射/最终Full/publication/OPS080。
+
+### v357 修正一次性exchange重复消费（2026-09-23）
+
+发现v355外层exchange.directory与原_run_mandatory_acceptance_command中的exchange.directory重复；真实WindowsWorkerExchange._used会拒绝第二次进入。前一组合替身没有调用原mandatory消费者，因此漏检。新回归实际调用原mandatory入口到checkout准入拒绝边界，确认目录仅由该消费者持有，禁止派发pytest。
+
+先红2FAIL/3PASS复现外层提前消费（v357-red.xml），移除组合外层directory后9PASS/8.63秒（v357-green.xml，包含CLI回归）。现在运行时/token外层持有不变，由原mandatory流程唯一消费exchange。Ruff、正确MYPYPATH单模块mypy通过。目录保护和内部生命周期未放宽，未真实执行Full或主机变更。
+
+后续继续环境/profile与精确候选部署、缺失13项正式映射、Full/publication及OPS080 S4/S5；不能以本轮回归替代最终验收。
+
+### v358 实际pytest/xdist环境烟测（2026-09-23）
+
+读取当前pytest实现确认配置pythonpath在显式-p插件加载前处理；项目pyproject配置src和点。对现有未保护诊断runtime v345实测：设置PYTHONDONTWRITEBYTECODE后dont_write_bytecode=True，未证实“_pth忽略变量导致写缓存”的猜测，因此不修改命令语法。
+
+在chat work/devx015-environment-smoke-v358独立合成项目，调用当前_installed_worker_environment构造环境，运行诊断python -m pytest -p合成本地插件 -n2 --dist loadfile；4PASS，进程总4.125秒、pytest报1.14秒。实际验证插件来自candidate-local src、子进程isolated/no_site/禁止bytecode、TEMP/USERPROFILE与固定profile一致、GIT_CONFIG_NOSYSTEM和秘密变量不继承。证据outputs/DEVX015-environment-smoke-v358.json。
+
+这是普通JACK进程和未保护诊断runtime，不是AITSWorker或已安装runtime，也不证明HKCU/profile加载、真实ACL、正式Full。未登录或启用账户，未更新安装。合成夹具保留用于证据，实际Full/13映射/候选publication和OPS080仍未完成。没有因猜测增加新的启动协议。
+
+### v359 source-job 终态与耗时证据（2026-09-23）
+
+原session63002退出0，1PASS/625.05秒；JUnit1测试无失败、错误或跳过，testcase618.332秒。原canonical writer结果PASS/cycle957，SINGLE_LANE preflight PASS，无新测试派发。worker日志分段：PREPARE16.551秒，GENERATORS180.816秒（内含architecture-manifests88.897秒），FINAL_INPUT_RECHECK17.347秒。worker_result写入到installation_plan写入约261秒是观察区间，包含原测试重放、纯plan准备、后续安装入口再验证等，不能直接归因为安装或锁等待。绝大部分总耗时在测试体，外围约6.7秒，减少xdist数量不足以解决主要成本。
+
+I05闭合审查：原source-job在source-final-handoff后释放失败publication事务，formal NOT_EXECUTED；现有_run_actual_profile_full另写duration/profile并提交fixture candidate，不能直接拼接当作原始source已经完成正式终态。下一步必须让同一原始source身份贯穿批准的最终候选与原Full/publication门禁，保留旧source handoff和失败receipt，不能用新替代source工作区或synthetic Full结果填映射。13项映射、最终Full/publication及OPS080 S4/S5仍未完成。
+
+### v360 同源final准入前置缺口（2026-09-23）
+
+原合同V3已明确source交接后使用普通final事务lane_head=S/expected_main=M，经Atlas形成C[S]并取得自己的验证；不要求S字节永远不变，也不需要新增handoff协议。此前关于Full helper的结论应限定为不能直接拼接既有helper作为I05完成证明，不能误解为禁止合法C[S]生成。
+
+对保留的v359 S=50030fbd4c24a11dfcbae5d83b1f7a9111ef260f只读检查：最初开发checkout脚本检查fixture因READINESS_INSPECTION_ROOT_MISMATCH拒绝；随后在原fixture cwd加载其自身src中的检查模块，0.119922秒以READINESS_INSPECTION_CODE_NOT_COMMITTED scripts/validation_readiness.py拒绝。checks为空，后续依赖未评估；无Full、PIT、账户或fixture写入。两份结果保存在chat outputs/DEVX015-v360-source-readiness.json及DEVX015-v360-source-local-readiness.json。
+
+根因是source-job fixture未像full-readiness/profile分支那样在source冻结前纳入readiness入口。既有whole_profile又会把测试替换为Job机制探针，不能作为原I05验收。下一步在原fixture构造流程补齐冻结前的真实readiness/runner及必要输入，保留原测试与源码身份，再接既有普通final事务；不把旧S重写为新S、不建立替代source目录、不通过删检查或伪造Full关闭I05。先做便宜的提交对象/input检查，再运行昂贵链路。
+
+### v361 冻结前真实readiness入口修复（2026-09-23）
+
+原_install_source_job_runtime增加真实scripts/run_validation_tier.py与scripts/validation_readiness.py，均在M/source冻结前复制，未改变产品门禁或旧v359候选。新增test_source_job_freezes_real_readiness_entrypoints[source-job]使用实际canonical source-job fixture，验证HEAD=M、原_inspection_code_identity通过、两个入口的Git blob/工作文件/真实项目字节一致；随后改动readiness文件确认原DIRTY拒绝，finally恢复并重新通过。
+
+原session40582退出0，1PASS/55.56秒，XML outputs/validation_runtime/devx015-v361.xml；Ruff与限定diff检查PASS。canonical prereg/result和SINGLE_LANE preflight均PASS。独占fixture D:/Work/devx015-v361保留至证据归档且无依赖后清理。该回归只覆盖冻结输入身份，未派发source生成、安装、Full或PIT，不增加I05映射。下一步对新fixture原committed模块执行只读readiness，定位剩余真实输入，不能把identity PASS当完整readiness或终态接受。
+
+### v362 真实source优先，停止扩充合成夹具（2026-09-23）
+
+v361保留fixture原已提交入口readiness实际运行23.95秒，identity PASS；retained_evidence缺六政策、Atlas缺policy mapping、compatibility缺fragment，共8 blocker。architecture_generated PASS耗时22.65秒，canonical/report PASS。输出chat outputs/DEVX015-v362-readiness.json，无Full/DQ/PIT或账户动作。
+
+重要方向修正：既有_seed_readiness_retained_evidence明确生成synthetic research payload，只能检验工程哈希准入；不能靠继续补此类fixture证据完成真实I05。v361入口修复保留作为廉价防回归，但不再把完善source-job夹具当真实项目验收的前置无限扩张。回到真实开发source：显式事务src/scripts/tests allowlist当前18文件4528新增213删除；原committed V1/V2 preservation验收要求真实source commit后才可执行。下一步检查当前v8原source候选准备/生成/保存流程及所需完整输入，保存现有实现身份，再跑真实committed验收与C[S]最终门禁，不直接跳过事务提交、不以synthetic PASS填映射。OPS080 S4/S5仍保留。
+
+### v363 实际candidate旧review不适用（2026-09-23）
+
+实际checkout原CLI candidate-input-inspect失败WORKFLOW_MERGE_CANDIDATE_DELTA_UNCOVERED，尚未生成或安装候选。用原collect_checkout_dirty_paths及_exclusions、_candidate_source_paths定位：冻结review 37路径，当前20路径，新增6、缺席23。新增为runner、page_effectiveness、source_preservation、validation_readiness及两对应测试；详情chat outputs/DEVX015-v363-review-delta.json。缺席是当前dirty集合不含，不代表文件丢失。
+
+旧review路径outputs/architecture/workflow_integration/reviews/7e8ece48df29c6c522809f6352312a914a3f4efceb34480082ad5aedd38d0b29.json，scope latest_main03d10b4a2071ce6b9bbc87e982714471052b1db1；真实HEAD10ac47c94b6958147498656041c31c43ac8fe181。原capture进一步要求HEAD=scope latest_main，因此只改review路径集合也不足。下一按当前任务分支source checkpoint保存边界检查请求/现有租约兼容性，再进行真实原集成审阅；不直接覆盖旧review或把HEAD伪称main，不重复派发已知不满足门禁的candidate。canonical v363 result PASS，全部最终验收仍待完成。
+
+### v364 source自身提交准备（2026-09-23）
+
+TaskCheckpoint只读_implementation_binding明确拒绝SOURCE_PRESERVATION_IDENTITY: trusted implementation is not exact committed source，未capture。不能用未提交的自身implementation绕过这个守卫保存自身。证据chat outputs/DEVX015-v364-checkpoint-binding.json。
+
+找回实际既有工程source保存前例：v285在原事务GENERATED_REBUILD_PRE/POST和CANDIDATE_COMMIT_PRE之后，按scope精确路径源码提交产生当前10ac47c；v286真实committed E2E已通过。复用同一工程流程而不是再造checkpoint机制。下一执行当前v8生成器顺序canonical/architecture/report seal-build/compatibility及bundle校验，准备新精确pathspec提交脚本（不运行旧v285脚本，换新事务和证据路径，所有Git检查带范围或完整排除集）。main不动，source commit保持IN_PROGRESS而非final C。原旧OPS080 receipt仍绑定10ac，不能重解释。
+
+v364 canonical已预登记，尚未推进GENERATED_PRE，未生成或提交；写完本节后再冻结文档，避免生成后反复追加造成seal漂移。下轮直接继续当前v8生成器准入和保存流程，不再重审fixture/readiness或重试checkpoint绑定。
+
+### v369 剩余L03实现边界与新事务
+
+当前93/106未改变。代码审查确认公开control-enroll/control-enroll-recover仅到DRAINING，返回activation_allowed=false/old_binary_os_fence_installed=false；host_cutover_custody真实持旧新arbiter并校验排空，但明确不改phase、不授权ACTIVE。已有registered_control/monkeypatch/helper测试不能直接映射全部L03。下一关键实现必须把旧binary OS fence、LEGACY_WRITERS_DISABLED到ACTIVE及失败恢复连成原公开入口，不新增第二store/scheduler；实际主机变更仍需要具体审阅授权，现未操作。
+
+新事务devx-015-final-closure-20260923-v9，lane_head3c28347e，原v8完整scope/generator/required tiers复用。首次acquire因为传入了API自动添加的两个resource而PUBLICATION_PATH_DUPLICATE，在路径检查阶段拒绝；去除参数中自动项后acquire PASS（并未缩减结果scope）。已TASK_SOURCE_PRE_WRITE，canonical devx015-v369-remaining-closure登记源码提交/2PASS/Atlas结果及后续缺口。源码HEAD不变；本轮canonical写入后最终生成和Atlas新候选绑定仍须在下一自然提交边界统一更新，不能无条件延用v368 CURRENT结论。
+
+### v370 L03状态切换恢复的具体实现约束（2026-09-23）
+
+实查HostControlBinding.assert_current以HKLM registration.state_sha256读取固定CONTROL_STATE_NAME；_WindowsEnrollmentAdministrator.write_admin_json对已有不同bytes报ENROLLMENT_ARTIFACT_CHANGED，仅支持首次写入/相同重放。现有register为首次登记，不可直接当phase切换恢复。不能把state.phase直接改ACTIVE再补registry来宣称完成。
+
+实施顺序：1. 从原trusted registration、物理根、原policy和完整旧新root inventory构造精确前后状态及只读计划，禁止任意caller自报fence已完成；2. 在原host_cutover_custody的全部arbiter内重新验证完整lease/execution/真实进程和Job排空，未知即拒绝；3. 管理员持久化受保护精确前后bytes/身份的切换日志，证明旧binary OS写入被封锁及祖先不可替换，不能仅用ACL文本或phase标志；4. 使用同一精确日志按顺序发布状态文件和HKLM注册哈希，每个断点允许fail-closed，公开恢复只接受已记录的有限前/后组合，未知bytes/epoch/SID/root不覆盖；5. 独立读回后才可ACTIVE，恢复不能通过重新启用旧writer退出。
+
+测试必须覆盖日志前后、状态发布前后、注册发布前后与完成回执窗口，并保留旧新同时写、live TTL、父死子活、锁替换、root alias、旧入口重启的真实oracle。合成transport可做协议单元回归但不填完整L03；真实主机动作需具体范围授权。旧写句柄不会被DACL更改撤销，无法证明排空/封锁时不得继续激活。本轮仅边界审查及canonical预登记，未新增状态切换API、未改ACL/HKLM/服务/账户。
+
+### v371 cutover恢复现场纯判定实现
+
+新增workflow_coordination._cutover_publication_position：bounded strict JSON验证，前后状态只允许DRAINING到LEGACY_WRITERS_DISABLED或后者到ACTIVE，其他字段完全相等；注册只能改变state_sha256并绑定原始状态bytes。只返回BEFORE_PUBLICATION、STATE_PUBLISHED、REGISTRATION_PUBLISHED。注册先写、未知bytes、epoch漂移拒绝。纯函数不提供完整schema/来源认证、custody或activation资格，必须由后续受保护日志与原临界区调用；当前尚未接公开入口，不计L03映射。
+
+10项focused PASS/7.76秒，XML repo outputs/validation_runtime/devx015-v371.xml，Ruff与精确scope diff PASS。测试为合成协议输入，无主机ACL/HKLM/账户动作。v371 prereg、preflight、results均通过。下一接受保护journal与原生有条件发布/恢复，不能把这个helper当迁移完成。v9 lease-50253ba863ba783f813f仍TASK_SOURCE_PRE_WRITE，HEAD3c28347e不变，当前无运行session。
+
+### v372 受保护cutover journal读取接线
+
+管理员新增hold_cutover_journal(root,digest)只读上下文：固定cutover-<digest>.json，复用原hold_protected_files的ACL/目录/文件持续持有；有界9MiB日志、四个各1MiB以内小写hex文档，strict JSON及精确schema键，完整原state/registration校验、物理root关联，再用v371单步phase/注册哈希判定。_control_state校验拆出_validate_control_state复用，原现场读取不变。yield期间持续持有，异常出口释放。不提供完整操作授权/custody/旧writer封锁，不写ACL/HKLM或state。
+
+新日志transport seam五项、v371十项、原state严格类型五项，共20PASS10.84秒，XML outputs/validation_runtime/devx015-v372.xml。测试真实解析/物理identity/恢复判定，权限transport显式替身，因此非真实管理员日志接受或L03完成。Ruff首次两格式问题修正后PASS，限定diff PASS。canonical pre/results及preflight PASS，session均terminal。下一原生有条件发布/注册读回与公开恢复仍待实现，不能把只读journal当激活资格。v9仍TASK_SOURCE_PRE_WRITE，HEAD3c28347e不变。
+
+### v373 状态先写窗口的恢复准入阻塞已定位
+
+在实现native writer前审查确认：resolve_host_control_binding末尾binding.assert_current，后者按当前HKLM registration.state_sha256验证固定state；host_cutover_custody在拿任何arbiter前调用此链。因此合法STATE_PUBLISHED窗口也无法经普通custody取得恢复锁。不能先接writer而把无法进入的恢复留空，更不能放宽普通写入入口的哈希校验。
+
+下一实现应是管理员日志绑定的恢复准入：读取真实注册原始bytes（现_trusted_host_registration返回parsed dict，须保留原byte身份而不自行规范化替换证据），持续持有v372 journal，验证当前state/registry精确位于v371有限组合，从完整已验证journal的旧state取物理root清单，确认全部原root仍存在、无别名重叠，再按原顺序持同一hold_lease_arbiter并重放全部租约/观察OS执行树；无复制ACTIVE、TTL释放或新store。特别原hold_lease_arbiter内部会mkdir/初始化，所以缺失root必须在此前明确拒绝，不得恢复为新authority。普通binding保持不一致即拒绝。只有取得这项原生恢复custody后再接条件写入和公开恢复CLI。
+
+本轮canonical已预登记devx015-v373-recovery-admission-boundary，无新增代码或主机操作；前轮v37220PASS证据不扩展为恢复准入已通过。v9保持TASK_SOURCE_PRE_WRITE，HEAD3c28347e，所有会话terminal。下轮直接实现该恢复准入，不再重复审查同一调用链。
+
+### v373 原始注册文本读取已实现
+
+_trusted_host_registration_bytes从原固定HKLM64入口读取REG_SZ，保留严格完整schema与实际物理identity校验，再返回原文本的UTF8（不是底层UTF16数据，也不重序列化）。普通_trusted_host_registration复用该读取并保持dict返回/严格校验。六新场景验证空白格式原样保留、仅缺key可None、缺value/denied/错误kind/未知schema拒绝；加原journal/state回归16PASS11.35秒，XMLdevx015-v373.xml。Ruff修正单个行宽后PASS，限定diff PASS。Winreg读取明确替身，无真实注册写入。
+
+本轮只完成恢复读取先决条件，尚未实现journal绑定恢复custody、native写入或公开CLI。下一直接组合原raw registration与已持journal，在原物理根完整存在且已排空条件下取得原arbiter；普通binding不放宽。canonical result PASS，HEAD3c28347e/v9不变，无活动会话。
+
+### v374 日志绑定的中断恢复锁已实现
+
+host_cutover_recovery_custody 在受保护日志持续持有期间，仅锁定原新旧物理根；保留完整状态及注册 schema、策略摘要、退休标记、租约重放和执行终止检查。允许精确 before/before、after/before、after/after 字节组合；倒序或未知状态拒绝，缺失旧根不重建。退出后 custody 失效，异常路径释放锁。无状态、注册或 ACL 发布，也不授予激活权限。
+
+六项测试 PASS（16.22 秒，outputs/validation_runtime/devx015-v374.xml）；独立子进程验证双根锁竞争与退出释放。管理员文件传输和目录 pin 为明确测试替身，不视为真实管理员 ACL 或主机迁移验收。Ruff 和限定路径 diff 检查 PASS。后续仍需条件状态发布、原生注册更新、旧二进制 OS 隔离证明及真实验收。v9 保持 TASK_SOURCE_PRE_WRITE，HEAD 3c28347e，未执行 Full/PIT。
+
+### v375 条件状态发布原语与差异收敛
+
+新增内部 _WindowsEnrollmentAdministrator._publish_cutover_state，绑定持续有效的 recovery custody 和日志中的精确 after_state。仅 BEFORE_PUBLICATION 创建受保护唯一暂存文件，原生 WriteFile + FlushFileBuffers，重验现场后 MoveFileExW(REPLACE_EXISTING | WRITE_THROUGH)，再独立读回有限状态。STATE_PUBLISHED / REGISTRATION_PUBLISHED 重放不重写。未知现场拒绝；失败保留暂存文件，不自动重试。此原语依赖原 arbiter 串行化及管理员保护，不声称对其他管理员提供 OS compare-and-swap；调用方仍必须先建立旧 writer OS fence，目前没有公开激活接线。
+
+测试 devx015-v375.xml：9 PASS / 22.34 秒；真实 Windows 文件创建、写入、刷盘、替换，真实独立进程锁竞争。ACL、目录 pin、注册读取为明确替身，发布失败为故障注入；不能计作真实主机迁移或 Full。Ruff/限定 diff PASS。未见异常慢阶段。测试目录 D:/Work/devx015-v375 由本任务持有，正式验收后确认无依赖且证据归档再清理。
+
+另修正 v374 整文件格式化引入的无关差异：按 AST 与注释一致性恢复原有未改函数/方法排版，恢复前后完整 AST 等价；仅保留实际功能变化，不重跑无关昂贵测试。后续仍为精确注册更新、OS fence、公开有限恢复及完整 L03/I05/X05 验收。HEAD 3c28347e，v9 TASK_SOURCE_PRE_WRITE，未执行 Full/PIT/主机变更。
+
+### v376 精确注册发布与刷盘失败恢复
+
+新增内部 _publish_cutover_registration，仅使用固定 HKLM64 已有注册键的 OpenKey，不创建缺失 key。仅 STATE_PUBLISHED 可以写日志中的精确 UTF8/REG_SZ 文本；核对原值、持续 custody、SetValueEx、FlushKey，再检查句柄值和独立路径读回。错误顺序、未知现场、缺 key 均拒绝。REGISTRATION_PUBLISHED 重放不重复写值，但必须 FlushKey，以覆盖此前 SetValue 成功而 Flush 失败的有限恢复位置；单次失败不自动重跑。
+
+v376 13 PASS / 31.04 秒（outputs/validation_runtime/devx015-v376.xml），Ruff 与限定 diff PASS。新增正常注册、刷盘中断、未知值、缺失键及写入前顺序拒绝；原状态/双根锁回归保留。Winreg 传输和 ACL 为明确替身，真实临时文件与双根竞争沿用原生；没有真实 HKLM、账户、Full 或 PIT 操作，不补记最终 L03 验收。用时与增加四个双根竞争场景一致，无异常慢阶段。
+
+剩余关键实现是旧 writer OS fence 的实际证明、日志生成及公开有限恢复入口；两个内部 transport 均不自行提供旧句柄排空证明或激活授权。v9 仍 TASK_SOURCE_PRE_WRITE，HEAD 3c28347e。D:/Work/devx015-v376 保留至正式验收与证据审计后清理。
+
+### v377 目录写共享屏障的真实能力边界
+
+pin_directories 新增 deny_target_writers，默认保持原行为；显式目标使用 READ-only sharing，祖先继续 READ|WRITE sharing。真实 Win32 验证现存/新开 FILE_ADD_FILE 与 FILE_ADD_SUBDIRECTORY 写句柄均拒绝，DELETE 仍拒绝，失败和成功退出均无句柄泄漏。它不是完整 OS fence：不能单靠目录分享规则禁止按路径新增子文件，仍需递归 protected ACL、全部文件持有及原 custody；属性/DAC/owner 等既有权限不能由该测试推定已排除。
+
+v377-verified.xml 四项 PASS / 8.82 秒；Ruff/限定 diff PASS。首次 v377.xml 的 FILE_DELETE_CHILD 在打开测试句柄时被现有 Modify ACL 拒绝（WinError5）；只读复核确认后改测 DELETE。v377-fixed.xml 又发现默认 pin 本就拒 DELETE，修正该测试前提；两失败 XML 和现场均保留，不视作真实 fence 通过。无 ACL、账户、HKLM 或 Full/PIT 变更，未见异常慢阶段。
+
+D:/Work/devx015-v377、D:/Work/devx015-v377-fixed、D:/Work/devx015-v377-verified 由本任务保留至正式验收/证据审计后清理。下一继续组合完整旧根 inventory 和原文件 custody，再接日志/公开有限恢复。HEAD3c28347e、v9 TASK_SOURCE_PRE_WRITE，整体未验收。
+
+### v378 原生反例：分享屏障不能清空既有安全权限句柄
+
+只读实测原保留测试目录，打开各权限句柄后进入 deny_target_writers 屏障：FILE_ADD_FILE / FILE_ADD_SUBDIRECTORY / DELETE 均拒绝（32）；FILE_WRITE_ATTRIBUTES / WRITE_DAC 可同时持有；WRITE_OWNER 在打开时被原 ACL 拒绝（5）。探针 0.0195 秒，未写 ACL/内容，句柄全部关闭。证据 outputs/validation_runtime/devx015-v378-existing-handle-audit.json。v377 的四项 PASS 仍仅证明其具体权限集合，不可推广为完整旧 writer OS fence。
+
+因此不能直接把递归 ACL 检查和文件/目录分享持有拼成完整隔离证明。下一评估维护边界：先冻结完整旧根及祖先、保存可信原字节/身份清单、保护新可信日志和旧根；在单独授权维护窗口清空全部旧进程句柄；随后按实际 boot identity、完整 ACL/父路径/物理身份/字节清单重新验收，才允许状态与注册发布。重启方案尚未最终审阅，不能使用壁钟或普通注销代替可证明的边界；不新增启动任务/服务，不自动重启或注销。
+
+待明确完整主机 root/entrypoint inventory 和现有活动租约排空后，才能生成可批准的精确动作方案；此记录不授权任何主机变更。内部状态/注册 transport 保留，公开激活关闭，L03/I05/X05、Full/发布和 OPS080 验收未完成。v9 TASK_SOURCE_PRE_WRITE，HEAD3c28347e不变。
+
+### v379 已知旧根盘点与维护范围前置
+
+D:/Work/AITradingSystem* 一级真实 Git checkout 共20个，16个存在旧 lease root、4个缺失；当前 decoder 对15个旧根重放 PASS，历史 AITradingSystem_ops_runtime_20260725 因 checkout policy.v1 被当前入口拒绝，读取其原构造/只读 replay 后使用该 checkout 自有代码验证 PASS（87事件），不改旧策略或伪装兼容。主盘点3.628秒，历史补验0.049秒，无异常慢。
+
+现存16根中两处仍有ACTIVE：本任务v9 lease-50253ba863ba783f813f；OPS077-v2 lease-877daeaa98540dfe8e17。后者最后可见原事件0006 phase=FORMAL_VALIDATION_PRE，candidate edd372797b1c270da0125453218931e9c400cec3，terminal=false。不按expires_at释放，不以租约表代替OS进程存活调查。本任务v9需源码保全并按原事务终结后才可切换；OPS077需原事务具证收尾。HKLM host注册当前仍缺失。
+
+盘点仅覆盖明确D:/Work命名范围，不声称全主机入口穷举；两个worktrees容器无一级目录。观察非原子，未改业务root/ACL/HKLM，不创建缺失root。证据 outputs/validation_runtime/devx015-v379-legacy-root-inventory.json 及 devx015-v379-historical-root-replay.json。进一步维护方案须绑定完整entrypoint、root及祖先owner/DACL范围，处理原事务排空和旧安全句柄，重启本身不构成激活接受。OPS080旧根重放PASS且无ACTIVE，不等同S4/S5验收。
+
+### v380 旧根祖先权限边界调查
+
+对已知16旧根及祖先去重只读 Get-Acl，共82目录（补齐历史runtime祖先）：81目录由JACK所有且DACL继承，D盘根由SYSTEM所有。原SDDL完整保留 devx015-v380-root-ancestor-acl.json。未改任何ACL。逐路径审阅草案见任务输出 DEVX015-v380-cutover-scope-review.md，明确不可执行、无新授权。
+
+原方案若只收紧leases叶目录，不能证明祖先路径不可替换；不能把静态ACL加目录分享持有误作永久旧binary封锁。具体实施前须限定祖先owner/删除/改权限边界，保留普通开发需求及可审计回滚；4个缺失旧根还需旧入口重启的拒绝策略，不能把ABSENT当fence或擅自创建authority。维护重启也必须结合可信日志/boot身份和字节/ACL重验，不能单凭重启激活。
+
+这不授权对D:/Work或整个D盘递归修改权限。v9及OPS077-v2原租约具证收尾、完整entrypoint清单、公开恢复和L03/Full/发布及OPS080 S4/S5仍未完成。HEAD3c28347e、v9 TASK_SOURCE_PRE_WRITE。快照检查低于1秒，无异常慢阶段。
+
+### v381 离线最小权限方案与内存权限判定
+
+基于v380快照生成81项before/proposed SDDL：65祖先目录为对象级限制，16旧根拟冻结只读；不改D盘根。祖先owner拟BA，移除普通principal对目录自身DELETE/DELETE_CHILD/WRITE_DAC/WRITE_OWNER，原对子项的继承ACE分离保留；旧根拟SY/BA full、AU read/execute。无任何Set-Acl调用，execute_allowed=false。
+
+当前真实非提升进程令牌（不是AITSWorker）DuplicateToken后，仅在内存中对拟议描述符执行原生AccessCheck，81项PASS：祖先read/add-file/add-directory允许，自身删除/子项删除/改DACL/改owner拒绝；旧根只读。65祖先的inheritable ACE顺序、SID、qualifier、mask、OI/CI/NP对比PASS（IO规范化），不是实际子目录继承实测。所有token/descriptor释放；没有登录/模拟身份执行/主机ACL变化。两校验均小于1秒。
+
+任务outputs保留DEVX015-v381-offline-acl-plan.json、DEVX015-v381-accesscheck.json、DEVX015-v381-child-inheritance-check.json；work保留纯生成脚本。仍需完整叶对象清单及回滚、缺失旧根拒绝契约、旧安全句柄维护边界、原v9/OPS077收尾、具体动作授权和真实验收，不能据此直接激活或请求未准备完整的批量ACL执行。
+
+### v382 完整已知旧根对象清单与旧锁迁移前置
+
+16个已知旧根递归只读枚举6113对象：833目录、5280文件，共30200748字节。保存逐对象原SDDL、owner、protected、设备/文件ID、链接数、mtime/size；未读取业务内容用于此清单。枚举5.77秒，独立lstat身份检查0.387秒；无重解析点、硬链接、物理alias或size漂移，但明确非原子快照，执行前仍需锁内重验。3个对象owner为历史CodexSandboxOffline（主checkout目录式arbiter及owner文件、一个事件文件），不能忽略其回滚owner。
+
+新发现16根仅6个文件式arbiter，10个仍目录式arbiter。10份owner.json为execution_lease_arbiter.v1/RELEASED，原bytes SHA已保留于DEVX015-v382-legacy-arbiter-admission.json；这是互斥诊断状态，不证明业务租约释放或旧进程/句柄quiescence。host_cutover_custody要求原文件式arbiter，因此受控legacy迁移是额外前置，不得通过直接删除/替换目录锁绕过。没有修改旧锁、ACL、租约、账户、HKLM或触发Full/PIT。
+
+任务outputs保留v382-legacy-object-acl、lock-shape-summary、legacy-arbiter-admission三份JSON，代码与主机执行不变。下一统一维护依赖：源码保全/原事务收尾、完整入口冻结、精确权限及恢复、旧句柄维护边界、原legacy迁移、host DRAINING/切换/有限恢复、正式L03和全部后续验收。目标保持IN_PROGRESS，v9 TASK_SOURCE_PRE_WRITE。
+
+### v383 原临界区内的持久精确日志生成
+
+新增内部 _prepare_cutover_journal(HostCutoverCustody)：原锁与binding持续校验，从现场获取原state和注册REG_SZ精确UTF8 bytes，完整schema/identity校验，仅派生下一phase及注册state_sha256；原始before bytes不规范化。用与原admin writer一致的编码计算cutover-<sha>.json，原保护写入后通过hold_cutover_journal重新解析核验，返回activation_allowed=false。沿用管理写入1MiB envelope上限，超限在发布前拒绝，不扩张原界限。
+
+v383 9 PASS / 9.59秒，包含两个phase、真实原生文件写入、重复准备保留同一文件ID/bytes、已有相同语义但不同bytes日志拒绝且不覆盖、原state/registry不变、custody关闭后拒绝，以及前journal parser回归。ACL、日志保护持有和注册读取为明确transport替身，不视作管理员安装/完整fence/最终L03。Ruff仅行宽修正后PASS，限定diff PASS，无异常慢阶段。
+
+未写实际HKLM、ACL或运行账户，无重启/Full/PIT。D:/Work/devx015-v383由本任务保留至证据审计后清理。真实旧writer隔离、10旧目录锁受控迁移、受控切换/公开恢复及最终候选required tiers/Full/发布和OPS080 S4/S5仍未完成。HEAD3c28347e，v9 TASK_SOURCE_PRE_WRITE。
+
+### v384 日志到状态/注册的双根中断恢复串联
+
+扩展原journal preparation测试：真实旧/新根及退休marker，原host_cutover_custody准备日志，退出后原host_cutover_recovery_custody读取同一日志并重新锁定双根，再串联内部state/registration发布。两个phase覆盖日志后、state后、registration后三处RuntimeError中断；不一致state/registry时原普通binding以HOST_REGISTRATION_CHANGED拒绝。异常退出后custody失效，独立子进程可取得两锁；新恢复读取准确有限位置，注册仅SetValue一次，journal bytes及文件ID不变，最终原binding读回目标phase。
+
+v384.xml 十项PASS17.40秒（原none/corrupt四项加六断点），Ruff及限定diff PASS，无异常慢。原生文件/目录pin/arbiter真实，ACL保护和winreg为明确替身；是同进程异常注入，不是强杀进程、真实HKLM或完整L03 migration_crash，不增加93/106映射。无主机ACL/账户/重启/Full/PIT操作。
+
+D:/Work/devx015-v384保留至证据审计后清理。真实旧writer隔离、10旧目录锁受控迁移、公开切换/恢复入口、真实崩溃和最终候选全部验证/发布及OPS080 S4/S5仍待完成。HEAD3c28347e、v9 TASK_SOURCE_PRE_WRITE不变。
+
+### v385 本轮源码保存边界
+
+v371-v384已完成有限位置判定、原始注册文本读取、受保护journal解析/生成、原双根恢复custody、原生条件状态文件发布、精确注册更新及内部串联异常恢复；实际验收边界以各原XML和明确transport seam为准。现按既有source-save流程，在v9原事务内重建四类generated authority并保存task branch源码，未授权/未声明最终C、main推进、Full、发布或主机权限变更。
+
+v378-v382调查仍约束后续真实主机阶段：旧WRITE_DAC句柄、祖先路径保护、10目录式旧锁和两ACTIVE业务租约均不能被局部PASS忽略。81项离线ACL AccessCheck、65继承对比和6113对象权限清单只是准备证据。公开激活/恢复、真实隔离/崩溃、I05/L03/X05及DEVX015最终验收和OPS080 S4/S5保持未完成。提交结果与耗时写入task outputs/DEVX015-v385-source-commit.json（如完成），不为记录提交SHA再制造已提交候选外的跟随改动。

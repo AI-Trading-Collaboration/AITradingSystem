@@ -1,0 +1,12 @@
+schema_version: source_preservation_policy.v2
+policy_id: ARCH-005-SOURCE-PRESERVATION
+version: 2.0.0
+status: OWNER_APPROVED_ENFORCED
+recovery_task_id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
+owner_instruction_ref: owner_decision:DEVX-015:2026-09-11:complete_workflow_contract_revision_v3
+runtime_root: outputs/architecture/arch_005_source_preservation
+ref_prefix: refs/aits/source-preservation/
+# Explicit mixed-source scope reviewed in devx015_mixed_source_preservation_v2_review.md.
+# No automatic splitting. This is source-only preservation, not acceptance.
+max_files: 92
+max_total_bytes: 16777216

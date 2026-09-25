@@ -382,8 +382,7 @@ def evaluate_task_registration(
     mode: str,
     stage: str,
     task_id: str | None,
-    active_task_register: str,
-    completed_task_register: str,
+    task_proof: dict[str, Any] | None,
     role: str | None = None,
     publication_transaction: dict[str, Any] | None = None,
     current_head: str | None = None,
@@ -392,8 +391,14 @@ def evaluate_task_registration(
 ) -> tuple[bool, str]:
     if mode == "READ_ONLY":
         return True, "READ_ONLY"
-    active_registered = bool(task_id and task_id in active_task_register)
-    completed_registered = bool(task_id and task_id in completed_task_register)
+    if (
+        not task_id or not isinstance(task_proof, dict)
+        or task_proof.get("reader_error") or task_proof.get("task_id") != task_id
+        or type(task_proof.get("is_terminal")) is not bool
+    ):
+        return False, "NONE"
+    active_registered = task_proof["is_terminal"] is False
+    completed_registered = task_proof["is_terminal"] is True
     if active_registered:
         return True, "ACTIVE"
     if stage == "INTEGRATION" and completed_registered:
@@ -454,12 +459,11 @@ def evaluate_base_drift(
             }
         )
         return blockers, serial, warnings
-    coordinator_candidate_binding = stage == "INTEGRATION" and publication_transaction is not None
     expected_bindings = {
         "frozen_base": expected_base,
         "latest_main": local_main,
     }
-    if coordinator_candidate_binding:
+    if stage == "INTEGRATION" and publication_transaction is not None:
         transaction_bindings = {
             "expected_main_sha": local_main,
             "lane_head_sha": head,
@@ -490,15 +494,17 @@ def evaluate_base_drift(
                 }
             )
         else:
-            for field, expected in {
+            for field, expected_plan_value in {
                 "id": plan_id,
                 "sha256": plan_file_sha,
             }.items():
-                if transaction_plan.get(field) != expected:
+                if transaction_plan.get(field) != expected_plan_value:
                     blockers.append(
                         {
                             "code": "PUBLICATION_INTEGRATION_PLAN_BINDING_MISMATCH",
-                            "detail": (f"{field}:{transaction_plan.get(field)!r}!={expected!r}"),
+                            "detail": (
+                                f"{field}:{transaction_plan.get(field)!r}!={expected_plan_value!r}"
+                            ),
                         }
                     )
     else:
@@ -571,6 +577,41 @@ def evaluate_base_drift(
     return blockers, serial, warnings
 
 
+def read_live_dirty_attribution(
+    repo: Path, declared_paths: list[str], allowed_lease_ids: set[str],
+) -> dict[str, Any]:
+    """Ask the current guard, not raw resource strings, to bind live owners."""
+    code = (
+        "import json,sys; from pathlib import Path; from datetime import UTC,datetime; "
+        "sys.path.insert(0,str(Path(sys.argv[1])/'src')); "
+        "from ai_trading_system.platform.architecture.checkout_guard import "
+        "CheckoutLeaseGuard,CheckoutOperationClass,_unattributed_dirty_paths; "
+        "g=CheckoutLeaseGuard(project_root=Path(sys.argv[1])); "
+        "declared=json.loads(sys.argv[2]); allowed=set(json.loads(sys.argv[3])); "
+        "now=datetime.now(UTC); "
+        "\nwith g.store.atomic(actor='integration-coordinator',now=now):\n"
+        " replay=g.replay()\n"
+        " if replay.status!='PASS': raise ValueError('invalid lease replay')\n"
+        " if {r.lease_id for r in replay.active_leases}-allowed: "
+        "raise ValueError('active lease set changed')\n"
+        " dirty=g.audit_worktree().dirty_paths\n"
+        " attributed=g._live_attributed_paths(dirty,"
+        "operation_class=CheckoutOperationClass.DOMAIN_MUTATION,declared_paths=declared,"
+        "actor='integration-coordinator',now=now)\n"
+        " unknown=_unattributed_dirty_paths(dirty,"
+        "operation_class=CheckoutOperationClass.DOMAIN_MUTATION,declared_paths=attributed)\n"
+        " print(json.dumps({'unattributed_dirty_paths':list(unknown)}))"
+    )
+    result = _run_json([
+        sys.executable, "-c", code, str(repo), json.dumps(declared_paths),
+        json.dumps(sorted(allowed_lease_ids)),
+    ], repo)
+    unknown = result.get("unattributed_dirty_paths")
+    if not isinstance(unknown, list) or any(not isinstance(path, str) for path in unknown):
+        raise PreflightError("Invalid current dirty attribution result")
+    return result
+
+
 def read_exact_canonical_task(repo: Path, commit: str, task_id: str) -> dict[str, Any]:
     """Use the current repository's strict reader, never execute historical code."""
     code = (
@@ -585,6 +626,22 @@ def read_exact_canonical_task(repo: Path, commit: str, task_id: str) -> dict[str
         "\nprint(json.dumps(result,sort_keys=True))"
     )
     return _run_json([sys.executable, "-c", code, str(repo), commit, task_id], repo)
+
+
+def read_current_task_proof(repo: Path, task_id: str) -> dict[str, Any]:
+    """Use repository authority for uncommitted task-writer progress as well."""
+    code = (
+        "import json,sys; from pathlib import Path; "
+        "sys.path.insert(0,str(Path(sys.argv[1])/'src')); "
+        "from ai_trading_system.platform.architecture.task_registry_canonical "
+        "import read_current_canonical_task,CanonicalTaskRegistryError; "
+        "\ntry:\n result=read_current_canonical_task(project_root=Path(sys.argv[1]),"
+        "task_id=sys.argv[2])"
+        "\nexcept CanonicalTaskRegistryError as exc:\n "
+        "result={'reader_error':exc.code,'detail':exc.message}"
+        "\nprint(json.dumps(result,sort_keys=True))"
+    )
+    return _run_json([sys.executable, "-c", code, str(repo), task_id], repo)
 
 
 def frozen_lane_task_registration(
@@ -989,22 +1046,50 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
             }
         )
 
+    # Allowed IDs suppress only the presence conflict. They are not permission
+    # for arbitrary dirty files, and source-only/released claims cannot backfill
+    # ordinary mutation authority. Avoid a probe/store access when own declared
+    # paths already cover the snapshot or no active owner can supply attribution.
+    declared_paths = sorted({
+        *coordinator_paths, *(path for rows in claims.values() for path in rows),
+    })
+    dirty_paths = audit.get("dirty_paths")
+    if args.mode != "READ_ONLY" and not blockers and isinstance(dirty_paths, list):
+        unknown = [path for path in dirty_paths
+                   if not any(paths_overlap(path, own) for own in declared_paths)]
+        if unknown and active_leases:
+            try:
+                unknown = read_live_dirty_attribution(
+                    repo, declared_paths, allowed_lease_ids,
+                )["unattributed_dirty_paths"]
+            except PreflightError as exc:
+                blockers.append({"code": "CHECKOUT_DIRTY_ATTRIBUTION_INVALID", "detail": str(exc)})
+        if unknown:
+            blockers.append({"code": "CHECKOUT_DIRTY_UNATTRIBUTED", "detail": ",".join(unknown)})
+
     task_registered = args.mode == "READ_ONLY"
     task_registration_source = "READ_ONLY" if task_registered else "NONE"
+    current_task_proof = None
     if args.mode != "READ_ONLY":
-        active_task_register = (repo / "docs" / "task_register.md").read_text(encoding="utf-8")
-        completed_task_register_path = repo / "docs" / "task_register_completed.md"
-        completed_task_register = (
-            completed_task_register_path.read_text(encoding="utf-8")
-            if completed_task_register_path.is_file()
-            else ""
-        )
+        if args.task_id:
+            # A clean audited checkout denotes the exact current Git candidate;
+            # legitimate Git checkout EOL conversion is not a new authority.
+            # Dirty lanes instead need the current writer's uncommitted bytes.
+            current_task_proof = (
+                read_exact_canonical_task(repo, state["head"], args.task_id)
+                if audit.get("status") == "PASS" and audit.get("dirty_paths") == []
+                else read_current_task_proof(repo, args.task_id)
+            )
+            if current_task_proof.get("reader_error") not in {None, "CANONICAL_TASK_NOT_FOUND"}:
+                blockers.append({
+                    "code": "CANONICAL_TASK_AUTHORITY_INVALID",
+                    "detail": json.dumps(current_task_proof, sort_keys=True),
+                })
         task_registered, task_registration_source = evaluate_task_registration(
             mode=args.mode,
             stage=args.stage,
             task_id=args.task_id,
-            active_task_register=active_task_register,
-            completed_task_register=completed_task_register,
+            task_proof=current_task_proof,
             role=args.role,
             publication_transaction=publication_transaction,
             current_head=state["head"],
@@ -1071,6 +1156,7 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
         "task_id": args.task_id,
         "task_registered": task_registered,
         "task_registration_source": task_registration_source,
+        "current_task_registration_proof": current_task_proof,
         "frozen_task_registration_proof": frozen_task_proof,
         "repository": repo.as_posix(),
         "git": {

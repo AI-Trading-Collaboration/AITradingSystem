@@ -39,6 +39,7 @@ PROD_004_SECTION = "phase_prod_004_pit_cumulative_archive_consumption_v1"
 DEVX_011_SECTION = "phase_devx_011_governed_workflow_health_control_loop_v1"
 DEVX_012_SECTION = "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1"
 DEVX_015_ADMISSION_SECTION = "phase_devx_015_task_integration_admission_v1"
+DEVX_015_WORKFLOW_SECTION = "phase_devx_015_workflow_contract_v3"
 RISK_012_SECTION = "phase_risk_012_unknown_risk_event_id_fail_closed_v1"
 OPS_077_SECTION = "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1"
 OPS_078_SECTION = "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1"
@@ -357,7 +358,7 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
+    assert next(reversed(merged)) == DEVX_015_WORKFLOW_SECTION
     assert DEVX_006C_SECTION in merged
     assert DEVX_006D_SECTION in merged
     assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
@@ -853,7 +854,7 @@ def test_s2c2_exact_preview_successor_preserves_closed_execution_boundary() -> N
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
+    assert next(reversed(merged)) == DEVX_015_WORKFLOW_SECTION
     assert (
         list(merged).index(TRADING_2564_S2C2_SECTION)
         == list(merged).index(TRADING_2564_S2C_SECTION) + 1
@@ -937,7 +938,7 @@ def test_s2c_is_exact_price_scope_successor_not_strategy_promotion() -> None:
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
+    assert next(reversed(merged)) == DEVX_015_WORKFLOW_SECTION
     assert (
         list(merged).index(TRADING_2564_S2C_SECTION)
         == list(merged).index(TRADING_2564_S2B_SECTION) + 1
@@ -1226,7 +1227,7 @@ def test_s3a_exact_temporal_successor_preserves_admission_boundaries() -> None:
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
+    assert next(reversed(merged)) == DEVX_015_WORKFLOW_SECTION
     assert (
         list(merged).index(TRADING_2564_S3A_SECTION)
         == list(merged).index(TRADING_2564_S2C2_SECTION) + 1
@@ -1299,7 +1300,7 @@ def test_s3b_exact_capture_successor_preserves_real_research_boundary() -> None:
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
+    assert next(reversed(merged)) == DEVX_015_WORKFLOW_SECTION
     assert (
         list(merged).index(TRADING_2564_S3B_SECTION)
         == list(merged).index(TRADING_2564_S3A_SECTION) + 1
@@ -1370,7 +1371,7 @@ def test_s5_duration_successor_preserves_historical_and_advisory_boundaries() ->
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
+    assert next(reversed(merged)) == DEVX_015_WORKFLOW_SECTION
     assert (
         list(merged).index(TRADING_2564_S5_SECTION)
         == list(merged).index(TRADING_2564_S3B_SECTION) + 1
@@ -1469,7 +1470,7 @@ def test_s5_diagnostics_successor_preserves_terminal_truth_and_source_scope() ->
     )
 
     merged = load_compatibility_authority()
-    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
+    assert next(reversed(merged)) == DEVX_015_WORKFLOW_SECTION
     assert (
         list(merged).index(TRADING_2564_S5_DIAGNOSTICS_SECTION)
         == list(merged).index(TRADING_2564_S5_SECTION) + 1
@@ -1560,7 +1561,7 @@ def test_s4_first_access_successor_preserves_scope_and_unresolved_real_gate() ->
 
     merged = load_compatibility_authority()
     phase = merged[TRADING_2564_S4_FIRST_ACCESS_SECTION]
-    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
+    assert next(reversed(merged)) == DEVX_015_WORKFLOW_SECTION
     assert (
         list(merged).index(TRADING_2564_S4_FIRST_ACCESS_SECTION)
         == list(merged).index(TRADING_2564_S5_DIAGNOSTICS_SECTION) + 1
@@ -1655,7 +1656,7 @@ def test_composer_successor_retains_separate_research_and_clock_boundaries() -> 
 
     merged = load_compatibility_authority()
     phase = merged[TRADING_2560_COMPOSER_CAPTURE_SECTION]
-    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
+    assert next(reversed(merged)) == DEVX_015_WORKFLOW_SECTION
     assert list(merged).index(TRADING_2560_COMPOSER_CAPTURE_SECTION) == (
         list(merged).index(TRADING_2564_S4_FIRST_ACCESS_SECTION) + 1
     )
@@ -1705,7 +1706,7 @@ def test_ops_081_scheduler_successor_keeps_business_authority_fail_closed() -> N
     merged = load_compatibility_authority()
     section_id = "phase_ops_081_scheduler_business_contract_decoupling_v1"
     phase = merged[section_id]
-    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
+    assert next(reversed(merged)) == DEVX_015_WORKFLOW_SECTION
     assert (
         phase["supersession"]["inherited_supersession_authority"]
         == TRADING_2560_COMPOSER_CAPTURE_SECTION
@@ -1817,7 +1818,7 @@ def test_devx_015_admission_successor_preserves_exact_approved_scope() -> None:
     merged = load_compatibility_authority()
     phase = merged[DEVX_015_ADMISSION_SECTION]
     previous_id = "phase_ops_081_scheduler_business_contract_decoupling_v1"
-    assert next(reversed(merged)) == DEVX_015_ADMISSION_SECTION
+    assert next(reversed(merged)) == DEVX_015_WORKFLOW_SECTION
     assert list(merged).index(DEVX_015_ADMISSION_SECTION) == list(merged).index(previous_id) + 1
     inherited = (
         TRADING_2564_S4_FIRST_ACCESS_SOURCE_PATHS
@@ -1892,3 +1893,207 @@ def test_devx_015_admission_synthetic_sources_reject_false_binding(
         phase["sources"][0]["sha256"] = "0" * 64
     with pytest.raises(AssertionError):
         _assert_devx_015_admission_source_closure(phase, root=tmp_path, inherited_paths=inherited)
+
+
+# Independent reviewed V3 additions, not derived from the builder under test.
+DEVX_015_WORKFLOW_ADDED_SOURCE_PATHS = frozenset(
+    """
+AGENTS.md
+config/architecture/arch_005_integration_publication_fence.yaml
+config/architecture/arch_005_integration_revalidation.yaml
+config/architecture/arch_005_parallel_control_policy.yaml
+config/architecture/arch_005_s4d_checkout_guard.yaml
+config/architecture/arch_005_task_checkpoint.yaml
+config/architecture/devx_006d_report_catalog_flow_authority.yaml
+config/architecture/arch_005_source_preservation_v2.yaml
+config/architecture/devx_015_merge_scope.v1.json
+config/architecture/devx_015_workflow_acceptance.v1.json
+docs/artifact_catalog.md
+docs/operations/operations_runbook.md
+docs/requirements/DEVX-015_Workflow_Contract_And_Acceptance_V3.md
+docs/system_flow.md
+scripts/architecture_arch005_checkout_guard.py
+scripts/architecture_arch005_integration_revalidation.py
+scripts/architecture_arch005_publication_fence.py
+scripts/architecture_arch005_task_checkpoint.py
+scripts/architecture_arch005_task_source.py
+scripts/architecture_arch005_workflow.py
+scripts/run_validation_tier.py
+src/ai_trading_system/platform/architecture/checkout_guard.py
+src/ai_trading_system/platform/architecture/integration_publication_fence.py
+src/ai_trading_system/platform/architecture/integration_revalidation.py
+src/ai_trading_system/platform/architecture/lease_arbiter.py
+src/ai_trading_system/platform/architecture/parallel_control_dispatch.py
+src/ai_trading_system/platform/architecture/parallel_control_kernel.py
+src/ai_trading_system/platform/architecture/parallel_control.py
+src/ai_trading_system/platform/architecture/source_preservation.py
+src/ai_trading_system/platform/architecture/supervised_automation.py
+src/ai_trading_system/platform/architecture/task_checkpoint.py
+src/ai_trading_system/platform/architecture/workflow_contract.py
+src/ai_trading_system/platform/architecture/workflow_coordination.py
+src/ai_trading_system/platform/architecture/workflow_execution.py
+src/ai_trading_system/platform/architecture/workflow_integration.py
+tests/test_arch_004g_deprecation.py
+tests/test_arch_005_checkpoint_capability.py
+tests/test_arch_005_integration_publication_fence.py
+tests/test_arch_005_integration_revalidation.py
+tests/test_arch_005_s4d_checkout_guard.py
+tests/test_arch_005_source_preservation.py
+tests/test_arch_005_task_checkpoint.py
+tests/test_architecture_wave_readiness.py
+tests/test_devx015_workflow_acceptance.py
+tests/test_devx015_workflow_coordination.py
+tests/test_devx015_workflow_execution.py
+tests/test_devx015_workflow_integration.py
+tests/test_named_quality_dispatch.py
+""".split()
+)
+
+
+def _assert_devx_015_workflow_source_closure(phase, root, inherited):
+    expected = inherited | DEVX_015_WORKFLOW_ADDED_SOURCE_PATHS
+    paths = [row["path"] for row in phase["sources"]]
+    assert paths == sorted(expected, key=str.casefold)
+    assert phase["superseded_live_source_paths"] == paths
+    for row in phase["sources"]:
+        assert set(row) == {"path", "sha256", "hash_normalization"}
+        assert row["hash_normalization"] == "git_eol_lf"
+        assert (
+            row["sha256"]
+            == hashlib.sha256((root / row["path"]).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+        )
+
+
+@pytest.fixture
+def workflow_section_fixture(tmp_path, monkeypatch):
+    inherited = frozenset({"src/ai_trading_system/ops_scheduler_business_contract.py"})
+    previous = {
+        "superseded_live_source_paths": sorted(inherited),
+        "sources": [{"path": next(iter(inherited)), "sha256": "a" * 64}],
+        "admission_contract": {"source_only_authority_rejected": True},
+    }
+    retained = deepcopy(previous)
+    for portable in inherited | DEVX_015_WORKFLOW_ADDED_SOURCE_PATHS:
+        target = tmp_path / portable
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(f"synthetic source {portable}\r\n".encode())
+    monkeypatch.setattr(
+        authority,
+        "_devx_015_task_admission_section",
+        lambda root, *, policy: (DEVX_015_ADMISSION_SECTION, previous),
+    )
+    section_id, phase = authority._devx_015_workflow_contract_section(
+        tmp_path, policy={"contract": {"fixture": "immutable"}}
+    )
+    assert section_id == DEVX_015_WORKFLOW_SECTION
+    assert previous == retained
+    return phase, inherited
+
+
+def test_devx_015_workflow_successor_exact_sources_and_no_acceptance_claim(
+    tmp_path, workflow_section_fixture
+):
+    phase, inherited = workflow_section_fixture
+    _assert_devx_015_workflow_source_closure(phase, tmp_path, inherited)
+    assert phase["schema_version"] == "devx_015_workflow_contract.v3"
+    assert phase["task_id"] == "DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2"
+    assert phase["status"] == "IN_PROGRESS"
+    assert phase["owner_decision"] == (
+        "owner_decision:DEVX-015:2026-09-11:complete_workflow_contract_revision_v3"
+    )
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": DEVX_015_ADMISSION_SECTION,
+        "current_hash_authority": f"{DEVX_015_WORKFLOW_SECTION}.sources",
+    }
+    assert phase["checkpoint_contract"] == {
+        "inspection_profile": "SOURCE_ONLY_EXPLICIT_PATHS",
+        "snapshot_profile": "RAW_BYTES_TASK_CHECKPOINT_UNVALIDATED",
+        "staged_bytes_are_selection_authority": False,
+        "raw_bytes_and_operations_preserved": True,
+        "source_only_grants_generation_full_or_publication": False,
+        "recovery_authority": "ORIGINAL_IMMUTABLE_REQUEST_AND_ACTUAL_JOB_STATE",
+        "same_request_replay_grants_redispatch": False,
+    }
+    assert phase["workflow_contract"] == {
+        "source_lineage": "REVIEWED_M_L_PARENTS_WITH_CURRENT_CANONICAL_AUTHORITY",
+        "coordination_authority": "FileExecutionLeaseStore",
+        "validation_identity": "EXACT_CANDIDATE_SUT_RUNNER_INPUTS_AND_ENVIRONMENT",
+        "validation_and_current_publication_eligibility_separate": True,
+        "recovery_requires_independent_stable_state": True,
+        "unresolved_contract_semantics_block_publication": True,
+        "required_acceptance": "config/architecture/devx_015_workflow_acceptance.v1.json",
+    }
+    assert phase["safety"] == dict.fromkeys(
+        (
+            "historical_hashes_rewritten",
+            "unrequested_source_content_read_allowed",
+            "checkpoint_mutates_source_branch_or_index",
+            "prior_full_validation_reused",
+            "new_scheduler_or_lease_kernel_added",
+            "mechanism_acceptance_claimed",
+            "deployment_or_operational_acceptance_claimed",
+            "investment_policy_or_dq_pit_changed",
+        ),
+        False,
+    )
+    assert phase["production_effect"] == phase["broker_action"] == "none"
+
+
+@pytest.mark.parametrize(
+    "mutation", ["missing", "missing_both", "duplicate", "extra_both", "wrong_hash", "source_drift"]
+)
+def test_devx_015_workflow_source_closure_rejects_false_binding(
+    tmp_path, workflow_section_fixture, mutation
+):
+    phase, inherited = workflow_section_fixture
+    removed = "src/ai_trading_system/platform/architecture/workflow_integration.py"
+    if mutation in {"missing", "missing_both"}:
+        phase["sources"] = [row for row in phase["sources"] if row["path"] != removed]
+        if mutation == "missing_both":
+            phase["superseded_live_source_paths"].remove(removed)
+    elif mutation == "duplicate":
+        phase["sources"].append(deepcopy(phase["sources"][0]))
+    elif mutation == "extra_both":
+        phase["sources"].append({"path": "unknown.py", "sha256": "0" * 64})
+        phase["superseded_live_source_paths"].append("unknown.py")
+    elif mutation == "source_drift":
+        (tmp_path / removed).write_bytes(b"changed after generation")
+    else:
+        phase["sources"][0]["sha256"] = "0" * 64
+    with pytest.raises(AssertionError):
+        _assert_devx_015_workflow_source_closure(phase, tmp_path, inherited)
+
+
+def test_devx_015_workflow_published_successor_preserves_exact_current_closure() -> None:
+    root = Path(__file__).resolve().parents[1]
+    published = load_compatibility_authority(root)
+    assert next(reversed(published)) == DEVX_015_WORKFLOW_SECTION
+    assert list(published).index(DEVX_015_WORKFLOW_SECTION) == (
+        list(published).index(DEVX_015_ADMISSION_SECTION) + 1
+    )
+    _assert_devx_015_workflow_source_closure(
+        published[DEVX_015_WORKFLOW_SECTION],
+        root,
+        frozenset(published[DEVX_015_ADMISSION_SECTION]["superseded_live_source_paths"]),
+    )
+
+
+def test_devx_015_workflow_current_builder_inherits_published_admission() -> None:
+    root = Path(__file__).resolve().parents[1]
+    published = load_compatibility_authority(root)
+    previous = published[DEVX_015_ADMISSION_SECTION]
+    previous_bytes = json.dumps(previous, sort_keys=True)
+    section_id, phase = authority._devx_015_workflow_contract_section(
+        root, policy=load_compatibility_policy(root)
+    )
+    assert section_id == DEVX_015_WORKFLOW_SECTION
+    assert phase["supersession"]["inherited_supersession_authority"] == DEVX_015_ADMISSION_SECTION
+    _assert_devx_015_workflow_source_closure(
+        phase, root, frozenset(previous["superseded_live_source_paths"])
+    )
+    assert json.dumps(previous, sort_keys=True) == previous_bytes
+    assert (
+        list(published).index(DEVX_015_ADMISSION_SECTION)
+        == list(published).index("phase_ops_081_scheduler_business_contract_decoupling_v1") + 1
+    )

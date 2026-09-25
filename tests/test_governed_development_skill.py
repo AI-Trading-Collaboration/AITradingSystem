@@ -8,12 +8,19 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from collections.abc import Iterator
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType
 
 import pytest
+from test_devx015_workflow_integration import (
+    canonical_merge_repository as canonical_merge_repository,
+)
+from test_devx015_workflow_integration import (
+    small_repository as small_repository,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 PREFLIGHT_PATH = (
@@ -548,6 +555,98 @@ def admission_checkout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Itera
     assert fence.guard.replay().active_leases == ()
 
 
+def test_l02_full_preflight_attributes_live_writers_but_rejects_unowned_dirty(
+    admission_checkout: Path,
+) -> None:
+    from ai_trading_system.platform.architecture.checkout_guard import (
+        CheckoutLeaseGuard,
+        CheckoutOperationClass,
+    )
+
+    root = admission_checkout
+    policy = "config/architecture/arch_005_s5_task_source_cutover.yaml"
+    shutil.copyfile(ROOT / policy, root / policy)
+    (root / "src/b.py").write_text("B = 1\n", encoding="utf-8")
+    _admission_registry(root, {"L02-A": "IN_PROGRESS", "L02-B": "IN_PROGRESS"},
+                        _admission_git(root, "rev-parse", "HEAD"))
+    _admission_git(root, "add", ".")
+    _admission_git(root, "commit", "-m", "freeze L02 canonical preflight inputs")
+    guard = CheckoutLeaseGuard(project_root=root)
+    observations = []
+    owners = []
+    rogue = root / "src/unowned.py"
+    shutil.copyfile(PREFLIGHT_PATH, root.parent / "l02-preflight-original-sut.py")
+
+    def inspect(task: str, path: str, *, allow_owners: bool = True) -> dict:
+        command = [
+            sys.executable, str(PREFLIGHT_PATH), "--repo", str(root), "--mode", "SINGLE_LANE",
+            "--role", "worker", "--stage", "LANE", "--task-id", task, "--claim", "task=" + path,
+        ]
+        if allow_owners:
+            for owner in owners:
+                command.extend(("--allow-active-lease", owner.lease_id))
+        before = guard.replay()
+        index = (root / ".git/index").read_bytes()
+        refs = _admission_git(root, "show-ref")
+        result = subprocess.run(command, cwd=root, capture_output=True, text=True, timeout=60)
+        assert result.returncode in {0, 2}, result.stdout + result.stderr
+        value = json.loads(result.stdout)
+        observations.append({"argv": command, "exit_code": result.returncode, "result": value})
+        assert guard.replay() == before
+        assert (root / ".git/index").read_bytes() == index
+        assert _admission_git(root, "show-ref") == refs
+        return value
+
+    try:
+        baseline = inspect("L02-A", "src/a.py")
+        assert baseline["status"] == "PASS", baseline
+        anchor_existed = guard.store.arbiter_root.exists()
+        rogue.write_text("UNOWNED = True\n", encoding="utf-8")
+        without_owner = inspect("L02-A", "src/a.py")
+        assert without_owner["status"] == "BLOCKED"
+        assert "CHECKOUT_DIRTY_UNATTRIBUTED" in {
+            row["code"] for row in without_owner["blockers"]
+        }
+        assert guard.store.arbiter_root.exists() == anchor_existed
+        rogue.unlink()
+        for name in ("a", "b"):
+            decision, owner = guard.acquire(
+                intent_id="l02-preflight-" + name, task_id="L02-" + name.upper(), thread_id=name,
+                actor="architecture-control-plane",
+                operation_class=CheckoutOperationClass.DOMAIN_MUTATION,
+                owned_paths=(f"src/{name}.py",), now=datetime.now(UTC),
+            )
+            assert decision.status == "PASS" and owner is not None, decision
+            owners.append(owner)
+            (root / f"src/{name}.py").write_text(f"{name.upper()} = 2\n", encoding="utf-8")
+        for name in ("a", "b"):
+            admitted = inspect("L02-" + name.upper(), f"src/{name}.py")
+            assert admitted["status"] == "PASS", admitted
+            assert admitted["task_registered"] is True
+            assert set(admitted["leases"]["active_lease_ids"]) == {
+                owner.lease_id for owner in owners
+            }
+        omitted = inspect("L02-B", "src/b.py", allow_owners=False)
+        assert omitted["status"] == "BLOCKED"
+        assert "UNEXPECTED_ACTIVE_LEASE" in {row["code"] for row in omitted["blockers"]}
+        rogue.write_text("UNOWNED = True\n", encoding="utf-8")
+        rejected = inspect("L02-B", "src/b.py")
+        assert rejected["status"] == "BLOCKED", rejected
+        assert "CHECKOUT_DIRTY_UNATTRIBUTED" in {row["code"] for row in rejected["blockers"]}
+    finally:
+        if rogue.exists():
+            rogue.unlink()  # Only this test's explicitly created fault path.
+        for name, owner in zip(("a", "b"), owners, strict=False):
+            with guard.store.atomic(actor="architecture-control-plane", now=datetime.now(UTC)):
+                _admission_git(root, "add", "--", f"src/{name}.py")
+                _admission_git(root, "commit", "-m", "finish L02 " + name, "--", f"src/{name}.py")
+            owner.release(outcome="completed", at=datetime.now(UTC))
+        (root.parent / "l02-full-preflight-observations.json").write_text(
+            json.dumps(observations), encoding="utf-8",
+        )
+    assert not guard.replay().active_leases
+
+
 def _admission_complete_projection(repository: Path) -> None:
     # Synthetic compatibility projections: canonical task-writer validation is
     # covered separately; here the consumer must read the final committed view.
@@ -560,75 +659,33 @@ def _admission_complete_projection(repository: Path) -> None:
 
 
 def _admission_transaction(
-    repository: Path, *, phase: str = "LOCAL_MAIN_FF_PRE", expired: bool = False
+    repository: Path, *, phase: str = "LOCAL_MAIN_FF_PRE"
 ) -> tuple[object, Path]:
+    from test_devx015_workflow_coordination import _run_actual_profile_full
+    from test_devx015_workflow_integration import TASK
+
     from ai_trading_system.platform.architecture.integration_publication_fence import (
         IntegrationPublicationFence,
     )
 
-    fence = IntegrationPublicationFence(
-        project_root=repository,
-        policy_path=repository / "config/architecture/arch_005_integration_publication_fence.yaml",
+    assert phase in {"FORMAL_VALIDATION_RESULT", "LOCAL_MAIN_FF_PRE"}
+    fence = IntegrationPublicationFence(project_root=repository)
+    transaction = fence.runtime_root / "transactions/merge-authority/transaction.json"
+    completed = subprocess.run(
+        [sys.executable, "scripts/architecture_arch005_task_source.py", "update",
+         "--task-id", TASK, "--status", "DONE", "--actor", "integration-coordinator",
+         "--change-id", "completed-admission-candidate", "--occurred-at",
+         datetime.now(UTC).isoformat(), "--base-commit",
+         _admission_git(repository, "rev-parse", "HEAD"),
+         "--publication-transaction", str(transaction)],
+        cwd=repository, capture_output=True, text=True, timeout=30,
     )
-    instant = datetime.now(UTC) - timedelta(days=2) if expired else datetime.now(UTC)
-    base = _admission_git(repository, "rev-parse", "HEAD")
-    binding = fence.acquire(
-        transaction_id="synthetic-admission",
-        task_id=ADMISSION_TASK,
-        change_id="synthetic-admission-change",
-        thread_id="synthetic-admission-thread",
-        actor="integration-coordinator",
-        frozen_base_sha=base,
-        lane_head_sha=base,
-        expected_main_sha=base,
-        owned_paths=("src/a.py",),
-        shared_paths=("docs/task_register.md", "docs/task_register_completed.md"),
-        generator_ids=("canonical-task-source",),
-        now=instant,
-    )
-    transaction = repository / str(binding["transaction_path"])
-    for next_phase in (
-        "TASK_SOURCE_PRE_WRITE",
-        "GENERATED_REBUILD_PRE",
-        "GENERATED_REBUILD_POST",
-        "CANDIDATE_COMMIT_PRE",
-        "FORMAL_VALIDATION_PRE",
-        "FULL_DISPATCHED",
-        "FORMAL_VALIDATION_RESULT",
-        "LOCAL_MAIN_FF_PRE",
-    ):
-        if fence.replay(transaction).phase == phase:
-            break
-        options = {}
-        if next_phase in {"GENERATED_REBUILD_PRE", "GENERATED_REBUILD_POST"}:
-            options = {
-                "generator_ids": ("canonical-task-source",),
-                "evidence_paths": (repository / "docs/task_register_completed.md",),
-            }
-        elif next_phase == "FORMAL_VALIDATION_PRE":
-            (repository / "src/a.py").write_text("VALUE = 2\n", encoding="utf-8")
-            _admission_git(
-                repository,
-                "add",
-                "src/a.py",
-                "docs/task_register.md",
-                "docs/task_register_completed.md",
-            )
-            _admission_git(repository, "commit", "-m", "synthetic final candidate")
-        elif next_phase == "FULL_DISPATCHED":
-            options = {"full_run_id": "synthetic-full-admission"}
-        elif next_phase == "FORMAL_VALIDATION_RESULT":
-            # A synthetic runner receipt tests the real fence consumer chain;
-            # this is not evidence that project Full executed in this fixture.
-            summary = repository / "outputs/validation_runtime/full/test_runtime_summary.json"
-            summary.parent.mkdir(parents=True)
-            summary.write_text('{"status":"PASS"}\n', encoding="utf-8")
-            options = {"evidence_paths": (summary,), "validation_status": "PASS"}
-        fence.checkpoint(
-            transaction, phase=next_phase, actor="integration-coordinator", now=instant, **options
-        )
-        if next_phase == "TASK_SOURCE_PRE_WRITE":
-            _admission_complete_projection(repository)
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    binding, _directory, _driver, _environment = _run_actual_profile_full(repository)
+    assert binding["task_commitment"]["status"] == "DONE"
+    if phase == "LOCAL_MAIN_FF_PRE":
+        fence.checkpoint(transaction, phase=phase, actor="integration-coordinator")
+    assert fence.replay(transaction).phase == phase
     return fence, transaction
 
 
@@ -666,15 +723,25 @@ def _admission_result(
     return PREFLIGHT.build_result(PREFLIGHT.parse_args())
 
 
+@pytest.mark.parametrize("canonical_merge_repository", ["full-profile-publish"], indirect=True)
 def test_completed_admission_full_entry_real_publication_pass(
-    admission_checkout: Path,
+    canonical_merge_repository,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    from test_devx015_workflow_integration import TASK
+
+    from ai_trading_system.platform.architecture import task_registry_canonical as canonical
+
+    admission_checkout, _scope = canonical_merge_repository
+    started = time.monotonic()
     fence, transaction = _admission_transaction(admission_checkout)
-    validated = fence.validate(
-        transaction, exact_phase="LOCAL_MAIN_FF_PRE", task_id=ADMISSION_TASK, require_candidate=True
+    (admission_checkout.parent / "completed-admission-full-timing.json").write_text(
+        json.dumps({"full_preparation_seconds": time.monotonic() - started}), encoding="utf-8",
     )
-    result = _admission_result(admission_checkout, transaction, monkeypatch)
+    validated = fence.validate(
+        transaction, exact_phase="LOCAL_MAIN_FF_PRE", task_id=TASK, require_candidate=True
+    )
+    result = _admission_result(admission_checkout, transaction, monkeypatch, task_id=TASK)
     assert result["status"] == "PASS", result["blockers"]
     assert result["task_registration_source"] == "COMPLETED_VALIDATED_CANDIDATE_INTEGRATION"
     assert result["publication_transaction"]["candidate_sha"] == result["git"]["head"]
@@ -682,7 +749,197 @@ def test_completed_admission_full_entry_real_publication_pass(
     assert result["worktree_audit"]["dirty_paths"] == []
     assert _admission_git(admission_checkout, "rev-parse", "main") != result["git"]["head"]
 
+    def original_cli(label: str, expected_exit: int) -> dict:
+        retained = [
+            admission_checkout / ".git/index", transaction,
+            admission_checkout / canonical.CANONICAL_INDEX_PATH,
+            admission_checkout / canonical._canonical_fragment_path(TASK),
+            admission_checkout / "docs/task_register.md",
+            admission_checkout / "docs/task_register_completed.md",
+            admission_checkout / "src/a.py",
+        ]
+        raw = {path: path.read_bytes() for path in retained}
+        refs = _admission_git(
+            admission_checkout, "for-each-ref", "--format=%(refname) %(objectname)",
+        )
+        before = fence.replay(transaction)
+        leases = fence.guard.replay()
+        completed = subprocess.run(
+            [sys.executable, str(PREFLIGHT_PATH), *sys.argv[1:]],
+            cwd=admission_checkout, env=os.environ, capture_output=True,
+            text=True, encoding="utf-8", timeout=60,
+        )
+        (admission_checkout.parent / (label + "-preflight.json")).write_text(json.dumps({
+            "command": completed.args, "returncode": completed.returncode,
+            "stdout": completed.stdout, "stderr": completed.stderr,
+            "refs_before": refs,
+            "input_sha256": {str(path.relative_to(admission_checkout)):
+                             hashlib.sha256(content).hexdigest() for path, content in raw.items()},
+        }), encoding="utf-8")
+        assert completed.returncode == expected_exit, completed.stdout + completed.stderr
+        assert {path: path.read_bytes() for path in retained} == raw
+        assert _admission_git(
+            admission_checkout, "for-each-ref", "--format=%(refname) %(objectname)",
+        ) == refs
+        assert fence.replay(transaction) == before and fence.guard.replay() == leases
+        return json.loads(completed.stdout)
 
+    observed = original_cli("completed-exact-candidate", 0)
+    assert observed["status"] == "PASS"
+    assert observed["task_registration_source"] == "COMPLETED_VALIDATED_CANDIDATE_INTEGRATION"
+    candidate = validated["candidate_sha"]
+    assert observed["publication_transaction"]["candidate_sha"] == candidate
+    assert observed["git"]["head"] == candidate
+    # Reuse this actual Full for its paired negative: Git commits a new HEAD
+    # with the same tree; canonical DONE and old Full PASS cannot admit it.
+    full_execution = fence.guard.replay().active_leases[0].execution
+    _admission_git(admission_checkout, "commit", "--allow-empty", "-m", "I06 candidate drift")
+    assert _admission_git(admission_checkout, "rev-parse", "HEAD") != candidate
+    assert _admission_git(admission_checkout, "rev-parse", "HEAD^{tree}") == _admission_git(
+        admission_checkout, "rev-parse", str(candidate) + "^{tree}",
+    )
+    rejected = _admission_result(admission_checkout, transaction, monkeypatch, task_id=TASK)
+    assert rejected["status"] == "BLOCKED" and not rejected["task_registered"]
+    observed = original_cli("completed-wrong-candidate", 2)
+    assert observed["status"] == "BLOCKED" and not observed["task_registered"]
+    assert "TASK_NOT_REGISTERED" in {row["code"] for row in observed["blockers"]}
+    assert fence.guard.replay().active_leases[0].execution == full_execution
+
+
+@pytest.mark.parametrize("canonical_merge_repository", ["full-profile-publish"], indirect=True)
+@pytest.mark.parametrize("case", [
+    "active-uncommitted", "completed-uncommitted", "prefix", "markdown-only",
+    "corrupt-index", "corrupt-fragment",
+])
+def test_current_canonical_preflight_identity_and_uncommitted_state(
+    canonical_merge_repository, monkeypatch: pytest.MonkeyPatch, case: str,
+) -> None:
+    from test_devx015_workflow_integration import TASK
+
+    from ai_trading_system.platform.architecture import task_registry_canonical as canonical
+
+    root, _scope = canonical_merge_repository
+    transaction = root / (
+        "outputs/architecture/arch_005_integration_publication_fence/"
+        "transactions/merge-authority/transaction.json"
+    )
+    head = _admission_git(root, "rev-parse", "HEAD")
+    requested_task = TASK
+    if case == "completed-uncommitted":
+        completed = subprocess.run(
+            [sys.executable, "scripts/architecture_arch005_task_source.py", "update",
+             "--task-id", TASK, "--status", "DONE", "--actor", "integration-coordinator",
+             "--change-id", "uncommitted-completed-admission", "--occurred-at",
+             datetime.now(UTC).isoformat(), "--base-commit", head,
+             "--publication-transaction", str(transaction)],
+            cwd=root, capture_output=True, text=True, timeout=30,
+        )
+        assert completed.returncode == 0, completed.stdout + completed.stderr
+        assert PREFLIGHT.read_exact_canonical_task(root, head, TASK)["is_terminal"] is False
+    elif case == "prefix":
+        requested_task = TASK[:-1]
+    elif case == "markdown-only":
+        requested_task = TASK + "-LEGACY"
+        view = root / "docs/task_register.md"
+        view.write_bytes(view.read_bytes() + f"\n|{requested_task}|fixture|IN_PROGRESS|\n".encode())
+    elif case in {"corrupt-index", "corrupt-fragment"}:
+        target = root / (
+            canonical.CANONICAL_INDEX_PATH if case == "corrupt-index"
+            else canonical._canonical_fragment_path(TASK)
+        )
+        target.write_bytes(target.read_bytes() + b"# deliberately noncanonical transport\n")
+    retained_paths = (
+        root / ".git/index", root / "src/a.py", transaction,
+        root / canonical.CANONICAL_INDEX_PATH,
+        root / canonical._canonical_fragment_path(TASK),
+        root / "docs/task_register.md", root / "docs/task_register_completed.md",
+    )
+    before_bytes = {path: path.read_bytes() for path in retained_paths}
+    before_refs = _admission_git(root, "for-each-ref", "--format=%(refname) %(objectname)")
+    from ai_trading_system.platform.architecture.checkout_guard import CheckoutLeaseGuard
+
+    guard = CheckoutLeaseGuard(project_root=root)
+    before_leases = guard.replay()
+    result = _admission_result(
+        root, transaction, monkeypatch, task_id=requested_task, stage="LANE",
+    )
+    completed = subprocess.run(
+        [sys.executable, str(PREFLIGHT_PATH), *sys.argv[1:]],
+        cwd=root, capture_output=True, text=True, encoding="utf-8", timeout=60,
+        env=os.environ,
+    )
+    evidence = root.parent / (root.name + "-canonical-admission.json")
+    evidence.write_text(json.dumps({
+        "case": case, "command": completed.args, "returncode": completed.returncode,
+        "stdout": completed.stdout, "stderr": completed.stderr,
+        "head_before": head, "refs_before": before_refs,
+        "input_sha256": {str(path.relative_to(root)): hashlib.sha256(raw).hexdigest()
+                         for path, raw in before_bytes.items()},
+    }), encoding="utf-8")
+    observed = json.loads(completed.stdout)
+    assert completed.returncode == (0 if case == "active-uncommitted" else 2), observed
+    for key in (
+        "status", "task_registered", "task_registration_source", "current_task_registration_proof",
+    ):
+        assert observed[key] == result[key], (key, observed, result)
+    assert _admission_git(root, "for-each-ref", "--format=%(refname) %(objectname)") == before_refs
+    assert {path: path.read_bytes() for path in retained_paths} == before_bytes
+    assert guard.replay() == before_leases
+    proof = result["current_task_registration_proof"]
+    assert _admission_git(root, "rev-parse", "HEAD") == head
+    if case == "active-uncommitted":
+        assert result["status"] == "PASS", result
+        assert result["task_registration_source"] == "ACTIVE"
+        assert proof["task_id"] == TASK and proof["source_view"] == "CURRENT_WORKTREE"
+    elif case == "completed-uncommitted":
+        assert result["status"] == "BLOCKED"
+        assert not result["task_registered"]
+        assert proof["is_terminal"] is True and proof["source_view"] == "CURRENT_WORKTREE"
+    elif case in {"prefix", "markdown-only"}:
+        assert not result["task_registered"]
+        assert proof["reader_error"] == "CANONICAL_TASK_NOT_FOUND"
+    else:
+        assert result["status"] == "BLOCKED"
+        assert "CANONICAL_TASK_AUTHORITY_INVALID" in {row["code"] for row in result["blockers"]}
+        assert proof["reader_error"] in {"NON_CANONICAL_GENERATED_YAML", "INDEX_FILE_HASH"}
+
+
+def test_current_canonical_task_rejects_actual_input_change_during_read(
+    canonical_merge_repository, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from test_devx015_workflow_integration import TASK
+
+    from ai_trading_system.platform.architecture import task_registry_canonical as canonical
+    from ai_trading_system.platform.architecture import workflow_contract
+
+    root, _scope = canonical_merge_repository
+    index = root / canonical.CANONICAL_INDEX_PATH
+    fragment = root / canonical._canonical_fragment_path(TASK)
+    original_index = index.read_bytes()
+    original_reader = workflow_contract.bounded_regular_bytes
+    mutated = False
+
+    def read_then_change(path, **kwargs):
+        nonlocal mutated
+        raw = original_reader(path, **kwargs)
+        if path == fragment and not mutated:
+            index.write_bytes(original_index + b"# actual after-read change\n")
+            mutated = True
+        return raw
+
+    # Wrap the real native reader only to place an actual byte-write barrier;
+    # do not fabricate a reader result, canonical proof, or admission decision.
+    monkeypatch.setattr(workflow_contract, "bounded_regular_bytes", read_then_change)
+    try:
+        with pytest.raises(canonical.CanonicalTaskRegistryError) as error:
+            canonical.read_current_canonical_task(project_root=root, task_id=TASK)
+        assert mutated and error.value.code == "CANONICAL_CURRENT_INPUT_DRIFT"
+    finally:
+        index.write_bytes(original_index)
+    assert canonical.read_current_canonical_task(project_root=root, task_id=TASK)["task_id"] == TASK
+
+
+@pytest.mark.parametrize("canonical_merge_repository", ["full-profile-publish"], indirect=True)
 @pytest.mark.parametrize(
     "case",
     [
@@ -700,20 +957,27 @@ def test_completed_admission_full_entry_real_publication_pass(
     ],
 )
 def test_completed_admission_full_entry_rejects_real_invalid_context(
-    admission_checkout: Path,
+    canonical_merge_repository,
     monkeypatch: pytest.MonkeyPatch,
     case: str,
 ) -> None:
+    from test_devx015_workflow_integration import TASK
+
+    admission_checkout, _scope = canonical_merge_repository
     fence, transaction = _admission_transaction(
         admission_checkout,
         phase="FORMAL_VALIDATION_RESULT" if case == "phase" else "LOCAL_MAIN_FF_PRE",
-        expired=case == "expired",
     )
+    if case != "phase":
+        baseline = _admission_result(admission_checkout, transaction, monkeypatch, task_id=TASK)
+        assert baseline["status"] == "PASS", baseline
+        assert baseline["task_registration_source"] == "COMPLETED_VALIDATED_CANDIDATE_INTEGRATION"
     if case == "candidate":
         _admission_git(admission_checkout, "commit", "--allow-empty", "-m", "candidate drift")
     elif case in {"dirty", "audit"}:
         (admission_checkout / "src/a.py").write_text(
-            "VALUE = 3  \n" if case == "audit" else "VALUE = 3\n", encoding="utf-8"
+            "VALUE = 3  \n" if case == "audit" else "VALUE = 3\n",
+            encoding="utf-8", newline="\n",
         )
     elif case == "tampered":
         payload = json.loads(transaction.read_text(encoding="utf-8"))
@@ -721,11 +985,21 @@ def test_completed_admission_full_entry_rejects_real_invalid_context(
         transaction.write_text(json.dumps(payload), encoding="utf-8")
     elif case == "terminal":
         fence.release(transaction, actor="integration-coordinator", outcome="failed")
+    elif case == "expired":
+        # Actual elapsed expiry after a proven live PASS, not a backdated lease
+        # or a patched production clock. Fixture policy was frozen before C.
+        assert fence.guard.policy.lease_ttl_seconds == 180
+        lease = fence.guard.replay().active_leases[0]
+        expires_at = datetime.fromisoformat(lease.expires_at)
+        remaining = (expires_at - datetime.now(UTC)).total_seconds()
+        assert 0 < remaining <= 180
+        time.sleep(remaining + 0.05)
+        assert datetime.now(UTC) >= expires_at
     if case == "audit":
         # A real failed audit CLI exits nonzero; the result builder must abort
         # before considering completed-task admission, rather than consume PASS.
         with pytest.raises(PREFLIGHT.PreflightError, match="worktree-audit.*failed"):
-            _admission_result(admission_checkout, transaction, monkeypatch)
+            _admission_result(admission_checkout, transaction, monkeypatch, task_id=TASK)
         return
     result = _admission_result(
         admission_checkout,
@@ -733,7 +1007,7 @@ def test_completed_admission_full_entry_rejects_real_invalid_context(
         monkeypatch,
         stage=case if case in {"START", "LANE"} else "INTEGRATION",
         role="worker" if case == "role" else "coordinator",
-        task_id="Other-task" if case == "task" else ADMISSION_TASK,
+        task_id=TASK + "-OTHER" if case == "task" else TASK,
     )
     assert result["status"] == "BLOCKED", result
     codes = {row["code"] for row in result["blockers"]}
@@ -752,6 +1026,97 @@ def test_completed_admission_full_entry_rejects_real_invalid_context(
         assert "TASK_NOT_REGISTERED" in codes
 
 
+def test_completed_admission_full_entry_rejects_real_source_only_lease(
+    admission_checkout: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from ai_trading_system.platform.architecture import task_registry_canonical as canonical
+    from ai_trading_system.platform.architecture.checkout_guard import (
+        CHECKOUT_SOURCE_ONLY_PROFILE,
+        CHECKOUT_SOURCE_ONLY_RUNTIME,
+        CheckoutLeaseGuard,
+        CheckoutOperationClass,
+    )
+
+    root = admission_checkout
+    policy = root / canonical.POLICY_PATH
+    shutil.copyfile(ROOT / canonical.POLICY_PATH, policy)
+    _admission_registry(root, {ADMISSION_TASK: "DONE"}, _admission_git(root, "rev-parse", "HEAD"))
+    _admission_complete_projection(root)
+    _admission_git(root, "add", "config", "registry", "inputs", "docs")
+    _admission_git(root, "commit", "-m", "synthetic canonical completed task")
+    before_head = _admission_git(root, "rev-parse", "HEAD")
+    proof = PREFLIGHT.read_exact_canonical_task(root, before_head, ADMISSION_TASK)
+    assert proof["task_id"] == ADMISSION_TASK and proof["is_terminal"] is True
+
+    guard = CheckoutLeaseGuard(project_root=root)
+    decision, handle = guard.acquire(
+        intent_id="synthetic-admission-source-only",
+        task_id=ADMISSION_TASK,
+        thread_id="synthetic-admission-source-only",
+        actor="integration-coordinator",
+        operation_class=CheckoutOperationClass.SHARED_MUTATION,
+        shared_paths=("src/a.py", CHECKOUT_SOURCE_ONLY_RUNTIME),
+        inspection_profile=CHECKOUT_SOURCE_ONLY_PROFILE,
+    )
+    assert decision.status == "PASS" and handle is not None
+    before_replay = guard.replay()
+    assert len(before_replay.active_leases) == 1
+    lease = before_replay.active_leases[0]
+    assert decision.intent_path is not None
+    forged = root / "outputs/forged-publication.json"
+    forged.parent.mkdir(exist_ok=True)
+    forged.write_text(
+        json.dumps(
+            {
+                "status": "PASS",
+                "phase": "LOCAL_MAIN_FF_PRE",
+                "task_id": ADMISSION_TASK,
+                "candidate_sha": before_head,
+                "lease_id": lease.lease_id,
+                "checkout_intent_path": decision.intent_path.as_posix(),
+            }
+        ),
+        encoding="utf-8",
+    )
+    retained = {
+        relative: (root / relative).read_bytes()
+        for relative in (
+            ".git/index",
+            "src/a.py",
+            canonical.CANONICAL_INDEX_PATH,
+            canonical._canonical_fragment_path(ADMISSION_TASK),
+            "outputs/forged-publication.json",
+        )
+    }
+    before_refs = _admission_git(root, "for-each-ref", "--format=%(refname) %(objectname)")
+    result = _admission_result(root, forged, monkeypatch, allowed_lease=lease.lease_id)
+    # Also run the public entry in a new process. No scope, canonical reader,
+    # replay, validator, or Git helper is replaced by a test double.
+    completed = subprocess.run(
+        [sys.executable, str(PREFLIGHT_PATH), *sys.argv[1:]],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=os.environ,
+    )
+    assert completed.returncode != 0, completed.stdout + completed.stderr
+    for observed in (result, json.loads(completed.stdout)):
+        assert observed["status"] == "BLOCKED", observed
+        assert not observed["task_registered"]
+        assert observed["publication_transaction"] is None
+        assert {
+            "SOURCE_ONLY_LEASE_NOT_MUTATION_AUTHORITY",
+            "PUBLICATION_TRANSACTION_INVALID",
+            "TASK_NOT_REGISTERED",
+        } <= {row["code"] for row in observed["blockers"]}
+    assert _admission_git(root, "rev-parse", "HEAD") == before_head
+    assert _admission_git(root, "for-each-ref", "--format=%(refname) %(objectname)") == before_refs
+    assert {relative: (root / relative).read_bytes() for relative in retained} == retained
+    assert guard.replay() == before_replay
+
+
 @pytest.mark.parametrize(
     ("mode", "source_only", "expected"),
     [
@@ -762,14 +1127,21 @@ def test_completed_admission_full_entry_rejects_real_invalid_context(
     ],
 )
 def test_allowed_snapshot_lease_never_becomes_workflow_mutation_permission(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: str, source_only: bool, expected: str
+    admission_checkout: Path, monkeypatch: pytest.MonkeyPatch,
+    mode: str, source_only: bool, expected: str,
 ) -> None:
     # Exercise the real result builder, not a source-text assertion. The replay
     # here is a deterministic input; real immutable lease binding is separately
     # covered by test_arch_005_checkpoint_capability.
-    (tmp_path / "docs").mkdir()
-    (tmp_path / "AGENTS.md").write_text("Synthetic governance fixture\n")
-    (tmp_path / "docs/task_register.md").write_text("|DEVX-015|fixture|P0|IN_PROGRESS|\n")
+    from ai_trading_system.platform.architecture import task_registry_canonical as canonical
+
+    tmp_path = admission_checkout
+    shutil.copyfile(ROOT / canonical.POLICY_PATH, tmp_path / canonical.POLICY_PATH)
+    _admission_registry(
+        tmp_path, {"DEVX-015": "IN_PROGRESS"}, _admission_git(tmp_path, "rev-parse", "HEAD"),
+    )
+    _admission_git(tmp_path, "add", "config", "registry", "inputs")
+    _admission_git(tmp_path, "commit", "-m", "actual canonical identity for resource policy unit")
     resources = (
         [
             {
@@ -781,20 +1153,14 @@ def test_allowed_snapshot_lease_never_becomes_workflow_mutation_permission(
         if source_only
         else []
     )
-    state = {
-        "current_branch": "codex/fixture",
-        "head": "a" * 40,
-        "local_main": "a" * 40,
-        "origin_main": "a" * 40,
-        "origin_main_vs_local_main": {"local_only": 0, "origin_only": 0},
-        "worktrees": [str(tmp_path)],
-        "worktree_audit": {"status": "PASS", "dirty_paths": [], "known_unrelated_exclusions": []},
-        "lease_replay": {
-            "status": "PASS",
-            "active_leases": [{"lease_id": "lease-fixture", "resources": resources}],
-        },
+    state = PREFLIGHT.collect_repo_state(tmp_path)
+    assert state["worktree_audit"]["dirty_paths"] == []
+    state["lease_replay"] = {
+        "status": "PASS",
+        "active_leases": [{"lease_id": "lease-fixture", "resources": resources}],
     }
-    monkeypatch.setattr(PREFLIGHT, "validate_repository_scope", lambda _root: tmp_path)
+    # Only lease resources remain a deterministic unit-test input. Repository
+    # identity, Git candidate, audit and canonical task reads now run for real.
     monkeypatch.setattr(PREFLIGHT, "collect_repo_state", lambda _root: state)
     monkeypatch.setattr(
         sys,
@@ -1064,8 +1430,7 @@ def test_completed_task_registration_is_closeout_only(
         mode="SINGLE_LANE",
         stage=stage,
         task_id="DEVX-ARCHIVED",
-        active_task_register="|DEVX-ACTIVE|IN_PROGRESS|",
-        completed_task_register="|DEVX-ARCHIVED|DONE|",
+        task_proof={"task_id": "DEVX-ARCHIVED", "is_terminal": True},
     )
     assert registered is expected_registered
     assert source == expected_source
@@ -1076,18 +1441,27 @@ def test_active_and_read_only_task_registration_behavior_is_preserved() -> None:
         mode="SINGLE_LANE",
         stage="LANE",
         task_id="DEVX-ACTIVE",
-        active_task_register="|DEVX-ACTIVE|IN_PROGRESS|",
-        completed_task_register="",
+        task_proof={"task_id": "DEVX-ACTIVE", "is_terminal": False},
     )
     read_only = PREFLIGHT.evaluate_task_registration(
         mode="READ_ONLY",
         stage="START",
         task_id=None,
-        active_task_register="",
-        completed_task_register="",
+        task_proof=None,
     )
     assert active == (True, "ACTIVE")
     assert read_only == (True, "READ_ONLY")
+
+
+@pytest.mark.parametrize("proof", [
+    None, {}, {"task_id": "TASK-OTHER", "is_terminal": False},
+    {"task_id": "TASK", "is_terminal": 0},
+    {"task_id": "TASK", "is_terminal": False, "reader_error": "INDEX_CHAIN"},
+])
+def test_task_registration_rejects_missing_wrong_or_invalid_canonical_proof(proof) -> None:
+    assert PREFLIGHT.evaluate_task_registration(
+        mode="SINGLE_LANE", stage="LANE", task_id="TASK", task_proof=proof,
+    ) == (False, "NONE")
 
 
 def test_integration_and_closeout_require_publication_transaction() -> None:

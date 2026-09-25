@@ -14,7 +14,10 @@ import re
 import stat
 import subprocess
 import sys
-from collections.abc import Mapping
+import threading
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 from typing import Any, NoReturn
@@ -40,6 +43,7 @@ from ai_trading_system.yaml_loader import safe_load_yaml_text
 MODULE_PATH = "src/ai_trading_system/platform/architecture/source_preservation.py"
 CLI_PATH = "scripts/architecture_arch005_source_preservation.py"
 POLICY_PATH = "config/architecture/arch_005_source_preservation.yaml"
+V2_POLICY_PATH = "config/architecture/arch_005_source_preservation_v2.yaml"
 DEFAULT_POLICY_PATH = Path(__file__).resolve().parents[4] / POLICY_PATH
 FENCE_POLICY_PATH = "config/architecture/arch_005_integration_publication_fence.yaml"
 _OLD_POLICIES = {
@@ -400,38 +404,418 @@ def _configuration_evidence(
                 _fail("RECEIPT", "absent configuration cannot claim content")
 
 
-class SourcePreservation:
-    def __init__(self, project_root: Path, policy_path: Path = DEFAULT_POLICY_PATH) -> None:
-        self.project_root = project_root.resolve(strict=True)
-        self.policy_path = (
-            policy_path if policy_path.is_absolute() else self.project_root / policy_path
-        ).resolve(strict=True)
-        if self.policy_path != self.project_root / POLICY_PATH:
-            _fail("POLICY", "V1 requires the exact reviewed policy locator")
+_RuntimeNamespace = tuple[
+    dict[Path, tuple[int, int]], dict[Path, tuple[int, int, int, int]],
+]
+
+
+def _runtime_namespace(root: Path, declared: Mapping[Path, str] | None) -> _RuntimeNamespace:
+    """Bounded metadata inventory, never imports or reads undeclared file content."""
+    if not root.is_absolute() or ".." in root.parts or _configuration_path(root) != root:
+        _fail("RUNTIME_ROOT", "exact absolute runtime root required")
+    directories: dict[Path, tuple[int, int]] = {}
+    files: dict[Path, tuple[int, int, int, int]] = {}
+    pending = [root]
+    while pending:
+        path = pending.pop()
+        info = path.lstat()
+        if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & 0x400:
+            _fail("RUNTIME_REPARSE", "runtime namespace contains a reparse object")
+        if len(directories) + len(files) >= 50000:
+            _fail("RUNTIME_BUDGET", "runtime namespace exceeds 50000 entries")
+        if stat.S_ISDIR(info.st_mode):
+            directories[path] = (info.st_dev, info.st_ino)
+            with os.scandir(path) as entries:
+                for entry in entries:
+                    if len(directories) + len(files) + len(pending) >= 50000:
+                        _fail("RUNTIME_BUDGET", "runtime namespace exceeds 50000 entries")
+                    pending.append(Path(entry.path))
+        elif stat.S_ISREG(info.st_mode):
+            if declared is not None and path not in declared:
+                _fail("RUNTIME_UNDECLARED_FILE", "runtime file absent from held declaration")
+            files[path] = (info.st_dev, info.st_ino, info.st_nlink, info.st_size)
+        else:
+            _fail("RUNTIME_FILE_TYPE", "runtime object is not a directory or regular file")
+    if root not in directories or (declared is not None and set(files) != {
+        path for path in declared if path.is_relative_to(root)
+    }):
+        _fail("RUNTIME_INVENTORY", "runtime root or declared file inventory differs")
+    return directories, files
+
+
+class HeldGitConfiguration:
+    """Live proof of held declared files, not general execution authority."""
+
+    _admission: GitConfigurationAdmission
+    _owner: tuple[int, int]
+    _roots: frozenset[Path]
+    _files: dict[Path, str]
+    _runtime_namespaces: dict[Path, _RuntimeNamespace]
+    _active: bool
+
+    def __init__(self) -> None:
+        _fail("HELD_CONTEXT_FACTORY_REQUIRED", "use successful protected admission")
+
+    def assert_current(self, repository: Path, required_files: Mapping[Path, str]) -> Path:
+        if (not self._active or self._admission._held_context is not self
+                or self._owner != (os.getpid(), threading.get_ident())):
+            _fail("HELD_CONTEXT_INACTIVE", "held context is expired or belongs to another owner")
+        canonical_root = repository.resolve(strict=True)
+        if canonical_root not in self._roots:
+            _fail("HELD_CONTEXT_SCOPE", "repository is outside protected admission")
+        if any(not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None
+               or self._files.get(path) != digest for path, digest in required_files.items()):
+            _fail("HELD_CONTEXT_FILES", "required input is not held with the declared bytes")
+        return canonical_root
+
+    def candidate_source_tree(self, repository: Path, candidate_sha: str) -> bytes:
+        """Only the fixed source inventory command, never arbitrary Git argv."""
+        repository = self.assert_current(repository, {})
+        if (not isinstance(candidate_sha, str)
+                or re.fullmatch(r"[0-9a-f]{40}", candidate_sha) is None):
+            _fail("HELD_CONTEXT_CANDIDATE", "an exact candidate commit is required")
+        return self._admission._git(
+            repository, "ls-tree", "-r", "-z", candidate_sha, "--", "src", "scripts",
+        )
+
+    def assert_runtime_root(self, root: Path) -> Path:
+        """Prove a complete namespace in this live hold, not permission to execute it."""
+        self.assert_current(self._admission.project_root, {})
+        expected = self._runtime_namespaces.get(root)
+        if expected is None:
+            _fail("RUNTIME_ROOT_NOT_HELD", "runtime root was not admitted as a complete tree")
+        if _runtime_namespace(root, self._files) != expected:
+            _fail("RUNTIME_DRIFT", "runtime namespace identity changed while held")
+        return root
+
+
+    @contextmanager
+    def inspection(self, repository: Path) -> Iterator[None]:
+        """Route synchronous inspector reads; this does not authorize code execution."""
+        self.assert_current(repository, {})
+        if _INSPECTION_GIT.get() is not None:
+            _fail("HELD_CONTEXT_NESTED", "an inspection transport is already selected")
+        token = _INSPECTION_GIT.set(self)
         try:
-            policy = _object(
-                safe_load_yaml_text(_regular(self.policy_path).decode("utf-8")), _POLICY_KEYS
+            yield
+            self.assert_current(repository, {})
+        finally:
+            _INSPECTION_GIT.reset(token)
+
+
+_INSPECTION_GIT: ContextVar[HeldGitConfiguration | None] = ContextVar(
+    "devx015_inspection_git", default=None,
+)
+
+
+def current_inspection_context(repository: Path) -> HeldGitConfiguration | None:
+    """Observe the selected live scope without creating or nesting authority."""
+    context = _INSPECTION_GIT.get()
+    if context is not None:
+        context.assert_current(repository, {})
+    return context
+
+
+def inspection_git_result(
+    repository: Path, *arguments: str,
+) -> subprocess.CompletedProcess[bytes] | None:
+    """Return None only for ordinary callers; selected invalid contexts never fall back."""
+    context = _INSPECTION_GIT.get()
+    if context is None:
+        return None
+    root = context.assert_current(repository, {})
+    _validate_inspection_git_arguments(arguments)
+    return context._admission._git_result(root, *arguments, allowed=(0, 1, 128))
+
+
+def _validate_inspection_git_arguments(arguments: tuple[str, ...]) -> None:
+    """Finite read-only command grammar used by readiness and its dependency adapters."""
+    def commit(value: str) -> bool:
+        return re.fullmatch(r"[0-9a-f]{40}", value) is not None
+
+    def path(value: str) -> bool:
+        value = value.removeprefix(":(literal)")
+        try:
+            return _relative(value) == value and not value.startswith("-")
+        except SourcePreservationError:
+            return False
+
+    def object_name(value: str) -> bool:
+        sha, sep, relative = value.partition(":")
+        return bool(sep) and commit(sha) and path(relative)
+
+    valid = arguments in {
+        ("rev-parse", "HEAD"), ("rev-parse", "main"),
+        ("rev-parse", "refs/heads/main"), ("rev-parse", "refs/remotes/origin/main"),
+        ("rev-parse", "--path-format=absolute", "--git-common-dir"),
+        ("branch", "--show-current"),
+        ("remote", "get-url", "--push", "--all", "origin"),
+        ("rev-parse", "--show-toplevel"),
+        ("symbolic-ref", "--quiet", "--short", "HEAD"),
+        ("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"),
+        ("worktree", "list", "--porcelain", "-z"),
+    }
+    if arguments[:2] == ("rev-parse", "--verify"):
+        valid = len(arguments) == 3 and (
+            (arguments[2].endswith("^{commit}") and commit(arguments[2][:-9]))
+            or (path(arguments[2])
+                 and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]*", arguments[2]) is not None
+                 and ".." not in arguments[2])
+        )
+    elif arguments[:2] == ("merge-base", "--is-ancestor"):
+        valid = len(arguments) == 4 and all(map(commit, arguments[2:]))
+    elif arguments[:2] in {("cat-file", "-e"), ("cat-file", "-s")}:
+        valid = len(arguments) == 3 and object_name(arguments[2])
+    elif arguments[:2] == ("cat-file", "blob"):
+        valid = len(arguments) == 3 and (commit(arguments[2]) or object_name(arguments[2]))
+    elif arguments[:1] == ("ls-tree",):
+        valid = ((len(arguments) == 4 and commit(arguments[1]) and arguments[2] == "--"
+                  and path(arguments[3]))
+                 or (len(arguments) == 5 and arguments[1] == "-z" and commit(arguments[2])
+                     and arguments[3] == "--" and path(arguments[4]))
+                 or (len(arguments) == 7 and arguments[1:3] == ("-r", "-z")
+                     and commit(arguments[3]) and arguments[4:] == ("--", "src", "scripts")))
+    elif arguments[:1] == ("show",):
+        valid = ((len(arguments) == 2 and object_name(arguments[1]))
+                 or (len(arguments) == 4 and arguments[1:3] == ("-s", "--format=%cI")
+                     and commit(arguments[3])))
+    elif arguments[:4] == ("ls-files", "--others", "--exclude-standard", "-z"):
+        valid = len(arguments) > 5 and arguments[4] == "--" and all(map(path, arguments[5:]))
+    elif arguments[:3] == ("grep", "-l", "-F"):
+        valid = (len(arguments) == 9 and "\0" not in arguments[3] and commit(arguments[4])
+                 and arguments[5:] == ("--", "src", "scripts", "tests"))
+    elif arguments[:3] == ("diff", "--numstat", "-z"):
+        rest = arguments[3:]
+        if rest[:1] == ("--cached",):
+            rest = rest[1:]
+        valid = (len(rest) >= 5 and rest[:2] == ("--no-ext-diff", "--no-textconv")
+                 and commit(rest[2]) and rest[3] == "--" and all(map(path, rest[4:])))
+    elif arguments[:1] in {("status",), ("diff",)}:
+        prefix: tuple[str, ...] = ("status", "--porcelain=v1", "-z", "--untracked-files=all",
+                  "--ignore-submodules=none", "--", ".")
+        if arguments[:1] == ("diff",):
+            prefix = (("diff", "--cached", "--check", "--", ".")
+                      if arguments[1:2] == ("--cached",)
+                      else ("diff", "--check", "--", "."))
+        valid = arguments[:len(prefix)] == prefix and all(
+            value.startswith(":(exclude,literal)") and path(value[len(":(exclude,literal)"):])
+            for value in arguments[len(prefix):]
+        )
+    if not valid:
+        _fail("HELD_CONTEXT_GIT_COMMAND", "unsupported inspector Git operation")
+
+
+def _installed_runtime_manifest(
+    runtime: Path, raw: bytes,
+) -> tuple[dict[Path, str], dict[Path, int]]:
+    from ai_trading_system.platform.artifacts.json_contract import load_strict_json_text
+
+    payload = _object(load_strict_json_text(raw.decode("utf-8")), {"schema_version", "files"})
+    rows = payload["files"]
+    if (payload["schema_version"] != "devx015_installed_runtime.v1"
+            or not isinstance(rows, list) or not 0 < len(rows) < 50000):
+        _fail("RUNTIME_MANIFEST", "invalid installed runtime manifest")
+    files: dict[Path, str] = {}
+    sizes: dict[Path, int] = {}
+    names: set[str] = {"runtime-manifest.json"}
+    for row in rows:
+        record = _object(row, {"path", "sha256", "size_bytes"})
+        relative = _relative(record["path"])
+        if relative.casefold() in names:
+            _fail("RUNTIME_MANIFEST", "duplicate or self-referential runtime path")
+        names.add(relative.casefold())
+        size = record["size_bytes"]
+        if type(size) is not int or not 0 <= size <= 64 * 1024 * 1024:
+            _fail("RUNTIME_BUDGET", "invalid installed file size")
+        files[runtime / relative] = _digest(record["sha256"])
+        sizes[runtime / relative] = size
+    manifest = runtime / "runtime-manifest.json"
+    files[manifest], sizes[manifest] = _sha(raw), len(raw)
+    return files, sizes
+
+
+@contextmanager
+def hold_installed_inspector(candidate_root: Path) -> Iterator[HeldGitConfiguration]:
+    """Reconstruct read-only native custody in an already protected installation.
+
+    No installation, ACL repair, account change or execution permission is granted.
+    Git ships inside the fixed runtime so its dependencies share the held namespace.
+    """
+    from ai_trading_system.platform.architecture.workflow_contract import bounded_regular_bytes
+    from ai_trading_system.platform.architecture.workflow_coordination import (
+        _WindowsEnrollmentAdministrator,
+    )
+
+    runtime = Path(sys.executable).absolute().parent
+    if (not sys.flags.isolated or not sys.flags.no_site or not sys.dont_write_bytecode
+            or "site" in sys.modules or Path.cwd() != runtime
+            or Path(sys.prefix) != runtime or Path(sys.base_prefix) != runtime
+            or not Path(__file__).resolve().is_relative_to(runtime)):
+        _fail("INSTALLED_INSPECTOR_STARTUP", "fixed isolated installation required")
+    administrator = _WindowsEnrollmentAdministrator()
+    administrator.assert_protected(runtime)
+    with administrator.pin_directories((runtime,)):
+        manifest = runtime / "runtime-manifest.json"
+        administrator.assert_protected(manifest)
+        raw = bounded_regular_bytes(manifest, expected_link_count=1)
+        # Parse only while the protected manifest itself stays natively held.
+        with administrator.hold_protected_files({manifest: _sha(raw)}):
+            files, sizes = _installed_runtime_manifest(runtime, raw)
+            namespace = _runtime_namespace(runtime, files)
+            _, inventory = namespace
+            # Engineering I/O envelope includes Python, bundled Git and manifest.
+            if sum(sizes.values()) > 2 * 1024**3:
+                _fail("RUNTIME_BUDGET", "installed runtime exceeds 2 GiB")
+            git = runtime / "git" / "cmd" / "git.exe"
+            if git not in inventory:
+                _fail("INSTALLED_INSPECTOR_GIT", "bundled Git executable missing")
+            identities: dict[Path, tuple[int, int, int]] = {}
+            for path, (device, file_id, links, size) in inventory.items():
+                if links != 1:
+                    _fail("RUNTIME_LINKS", "installed runtime must have single-link files")
+                if size != sizes[path]:
+                    _fail("RUNTIME_MANIFEST", "installed file size differs from manifest")
+                identities[path] = (device, file_id, links)
+            environment = {key: value for key, value in os.environ.items()
+                           if not key.upper().startswith("GIT_") and key.upper() != "PATH"}
+            environment.update(GIT_OPTIONAL_LOCKS="0", GIT_CONFIG_NOSYSTEM="1",
+                               GIT_CONFIG_GLOBAL=os.devnull, PATH=os.pathsep.join(
+                                   str(runtime / "git" / part)
+                                   for part in ("cmd", "mingw64/bin", "usr/bin")
+                               ))
+            admission = GitConfigurationAdmission(
+                candidate_root, git_executable=git, git_environment=environment,
             )
-        except (ValueError, UnicodeError) as exc:
-            _fail("POLICY", type(exc).__name__)
-        if (
-            policy["schema_version"] != "source_preservation_policy.v1"
-            or policy["status"] != "OWNER_APPROVED_ENFORCED"
-            or policy["runtime_root"] != _RUNTIME
-            or policy["ref_prefix"] != _REF_PREFIX
+            with admission.held(candidate_root, runtime_files=files,
+                                runtime_identities=identities, runtime_roots=(runtime,)):
+                yield admission.active_context()
+
+
+class GitConfigurationAdmission:
+    """Shared configuration checks, not an OS-protected execution capability.
+
+    Preserve the original source-preservation evidence and error contracts.
+    Callers must separately establish executable and filesystem protection.
+    """
+
+    def __init__(
+        self, project_root: Path, *, git_executable: Path, git_environment: Mapping[str, str],
+    ) -> None:
+        self.project_root = project_root.resolve(strict=True)
+        if not git_executable.is_absolute() or not git_executable.is_file():
+            _fail("ENVIRONMENT", "explicit existing absolute Git executable required")
+        self._git_executable = str(_configuration_path(git_executable))
+        environment = dict(git_environment)
+        if any(not isinstance(key, str) or not key or "=" in key or "\0" in key
+               or not isinstance(value, str) or "\0" in value
+               for key, value in environment.items()):
+            _fail("ENVIRONMENT", "invalid explicit Git environment")
+        if len({key.casefold() for key in environment}) != len(environment):
+            _fail("ENVIRONMENT", "duplicate case-insensitive Git environment key")
+        self._git_environment: dict[str, str] | None = environment
+        self._held_context: HeldGitConfiguration | None = None
+
+    def _environment_source(self) -> dict[str, str]:
+        return dict(os.environ if self._git_environment is None else self._git_environment)
+
+    def capture(self, source_root: Path) -> dict[str, Any]:
+        return self._environment(source_root)
+
+    def recheck(self, source_root: Path, expected: Mapping[str, Any]) -> None:
+        self._recheck_environment(source_root, expected)
+
+    def active_context(self) -> HeldGitConfiguration:
+        context = self._held_context
+        if context is None:
+            _fail("HELD_CONTEXT_INACTIVE", "no protected admission is active")
+        context.assert_current(self.project_root, {})
+        return context
+
+    @contextmanager
+    def held(
+        self, source_root: Path, *, runtime_files: Mapping[Path, str],
+        runtime_identities: Mapping[Path, tuple[int, int, int]],
+        runtime_roots: Sequence[Path] = (),
+    ) -> Iterator[dict[str, Any]]:
+        """Check configuration while declared runtime and metadata stay pinned.
+
+        Explicit runtime_roots require complete file and directory coverage.
+        This does not establish dependencies outside those roots or replace
+        the caller's execution, repository, or publication authority.
+        """
+        from ai_trading_system.platform.architecture.workflow_coordination import (
+            _WindowsEnrollmentAdministrator,
+        )
+
+        if self._held_context is not None:
+            _fail("HELD_CONTEXT_NESTED", "protected admission cannot be nested")
+        administrator = _WindowsEnrollmentAdministrator()
+        executable = Path(self._git_executable)
+        if not executable.is_absolute() or executable not in runtime_files:
+            _fail("ENVIRONMENT", "fixed Git executable must be declared in runtime files")
+        roots = {self.project_root, source_root.resolve(strict=True)}
+        if len(set(runtime_roots)) != len(runtime_roots) or any(
+            runtime.is_relative_to(repository) or repository.is_relative_to(runtime)
+            for runtime in runtime_roots for repository in roots
         ):
-            _fail("POLICY", "unsupported policy contract")
-        for field in ("policy_id", "version", "recovery_task_id", "owner_instruction_ref"):
-            _text(policy[field])
-        for field in ("max_files", "max_total_bytes"):
-            if type(policy[field]) is not int or policy[field] <= 0:
-                _fail("POLICY", "positive integer resource limit required")
-        self.policy = policy
-        # The fresh trusted coordinator process and installed interpreter/packages
-        # are assumptions, not an in-memory attestation mechanism. Bind all project
-        # modules used through the normal package initializers, not just this
-        # facade: foreign-root or dirty helper implementations must fail closed.
-        self._loaded_modules = _IMPLEMENTATION_MODULES
+            _fail("RUNTIME_ROOT", "runtime roots must be distinct from candidate repositories")
+        namespaces = {root: _runtime_namespace(root, runtime_files) for root in runtime_roots}
+        runtime_directories = {path for namespace in namespaces.values() for path in namespace[0]}
+
+        def recheck_runtime() -> None:
+            if any(_runtime_namespace(root, runtime_files) != expected
+                   for root, expected in namespaces.items()):
+                _fail("RUNTIME_DRIFT", "runtime namespace changed during admission")
+
+        def physical() -> tuple[set[Path], dict[Path, dict[str, Any]]]:
+            directories: set[Path] = set()
+            records: dict[Path, dict[str, Any]] = {}
+            for root in roots:
+                git_dir, common = _git_configuration_layout(root)
+                directories.update((root, git_dir, common))
+                entries = [(git_dir / "commondir", "COMMON_DIR_POINTER"),
+                           (common / "config", "COMMON_CONFIG"),
+                           (git_dir / "config.worktree", "WORKTREE_CONFIG")]
+                if not (root / ".git").is_dir():
+                    entries.append((root / ".git", "GIT_DIR_POINTER"))
+                for path, role in entries:
+                    records[path] = _configuration_file(path, role)
+            return directories, records
+
+        directories, records = physical()
+        files = dict(runtime_files)
+        for path, record in records.items():
+            if record["present"]:
+                digest = record["sha256"]
+                if path in files and files[path] != digest:
+                    _fail("DRIFT", "configuration and runtime declarations conflict")
+                files[path] = digest
+        with administrator.hold_protected_files(
+            files, protected_directories=tuple(directories | runtime_directories),
+            expected_file_identities=runtime_identities,
+        ):
+            # No Git parser/process runs before all physical inputs are held.
+            recheck_runtime()
+            if physical() != (directories, records):
+                _fail("DRIFT", "Git configuration changed before protected admission")
+            snapshot = self.capture(source_root)
+            context = object.__new__(HeldGitConfiguration)
+            context._admission = self
+            context._owner = (os.getpid(), threading.get_ident())
+            context._roots = frozenset(roots)
+            context._files = dict(files)
+            context._runtime_namespaces = namespaces
+            context._active = True
+            self._held_context = context
+            try:
+                yield json.loads(json.dumps(snapshot))
+            finally:
+                context._active = False
+                self._held_context = None
+                recheck_runtime()
+                self.recheck(source_root, snapshot)
+                if physical() != (directories, records):
+                    _fail("DRIFT", "Git configuration changed during protected admission")
 
     def _environment(self, root: Path) -> dict[str, Any]:
         """Legacy guard inherits these values; never mutate process-global env.
@@ -445,10 +829,11 @@ class SourcePreservation:
             "GIT_CONFIG_NOSYSTEM": "1",
             "GIT_CONFIG_GLOBAL": os.devnull,
         }
-        if any(os.environ.get(key) != value for key, value in required.items()):
+        environment = self._environment_source()
+        if any(environment.get(key) != value for key, value in required.items()):
             _fail("ENVIRONMENT", "fresh child requires fixed read-only Git environment")
         allowed = set(required)
-        count = os.environ.get("GIT_CONFIG_COUNT")
+        count = environment.get("GIT_CONFIG_COUNT")
         if count is not None:
             if re.fullmatch(r"[0-9]+", count) is None or int(count) > 2:
                 _fail("ENVIRONMENT", "only exact safe.directory entries are allowed")
@@ -458,13 +843,13 @@ class SourcePreservation:
                 key = f"GIT_CONFIG_KEY_{number}"
                 value = f"GIT_CONFIG_VALUE_{number}"
                 if (
-                    os.environ.get(key) != "safe.directory"
-                    or not os.environ.get(value)
-                    or Path(os.environ[value]).resolve() not in roots
+                    environment.get(key) != "safe.directory"
+                    or not environment.get(value)
+                    or Path(environment[value]).resolve() not in roots
                 ):
                     _fail("ENVIRONMENT", "foreign Git configuration entry")
                 allowed.update((key, value))
-        if any(key.upper().startswith("GIT_") and key not in allowed for key in os.environ):
+        if any(key.upper().startswith("GIT_") and key not in allowed for key in environment):
             _fail("ENVIRONMENT", "ambient Git override is unsupported")
         # Same common Git directory does not imply the same worktree config.
         # Capture each actual checkout independently; no secret values survive.
@@ -614,8 +999,22 @@ class SourcePreservation:
         allowed: tuple[int, ...] = (0,),
         timestamp: str | None = None,
     ) -> bytes:
+        return self._git_result(
+            root, *args, content=content, index=index, allowed=allowed, timestamp=timestamp,
+        ).stdout
+
+    def _git_result(
+        self,
+        root: Path,
+        *args: str,
+        content: bytes | None = None,
+        index: Path | None = None,
+        allowed: tuple[int, ...] = (0,),
+        timestamp: str | None = None,
+    ) -> subprocess.CompletedProcess[bytes]:
         environment = {
-            key: value for key, value in os.environ.items() if not key.upper().startswith("GIT_")
+            key: value for key, value in self._environment_source().items()
+            if not key.upper().startswith("GIT_")
         }
         environment.update(
             {
@@ -635,7 +1034,7 @@ class SourcePreservation:
                 environment[f"GIT_{role}_EMAIL"] = "source-preservation@localhost"
                 environment[f"GIT_{role}_DATE"] = timestamp
         command = [
-            "git",
+            self._git_executable,
             # Git config's automatic pager lookup can read includes separately
             # from --no-includes. Fix this before any repository config command.
             "--no-pager",
@@ -646,6 +1045,8 @@ class SourcePreservation:
             f"safe.directory={root.as_posix()}",
             "-c",
             "core.fsmonitor=false",
+            "-c",
+            "diff.autoRefreshIndex=false",
             "-c",
             f"core.hooksPath={os.devnull}",
             "-c",
@@ -673,14 +1074,59 @@ class SourcePreservation:
         if result.returncode not in allowed:
             # Do not print arbitrary repository config, hook output, or input bytes.
             _fail("GIT", f"{args[0]} returned {result.returncode}")
-        return result.stdout
+        return result
+
+
+class SourcePreservation(GitConfigurationAdmission):
+    def __init__(self, project_root: Path, policy_path: Path = DEFAULT_POLICY_PATH) -> None:
+        # Preserve the original source-preservation command contract. Standalone
+        # trusted-launcher admission instead requires explicit executable input.
+        self._git_executable = "git"
+        self._git_environment = None
+        self._held_context = None
+        self.project_root = project_root.resolve(strict=True)
+        self.policy_path = (
+            policy_path if policy_path.is_absolute() else self.project_root / policy_path
+        ).resolve(strict=True)
+        policy_versions = {POLICY_PATH: "v1", V2_POLICY_PATH: "v2"}
+        selected = next(
+            (path for path in policy_versions if self.policy_path == self.project_root / path),
+            None,
+        )
+        if selected is None:
+            _fail("POLICY", "the exact reviewed policy locator is required")
+        try:
+            policy = _object(
+                safe_load_yaml_text(_regular(self.policy_path).decode("utf-8")), _POLICY_KEYS
+            )
+        except (ValueError, UnicodeError) as exc:
+            _fail("POLICY", type(exc).__name__)
+        if (
+            policy["schema_version"] != f"source_preservation_policy.{policy_versions[selected]}"
+            or policy["status"] != "OWNER_APPROVED_ENFORCED"
+            or policy["runtime_root"] != _RUNTIME
+            or policy["ref_prefix"] != _REF_PREFIX
+        ):
+            _fail("POLICY", "unsupported policy contract")
+        for field in ("policy_id", "version", "recovery_task_id", "owner_instruction_ref"):
+            _text(policy[field])
+        for field in ("max_files", "max_total_bytes"):
+            if type(policy[field]) is not int or policy[field] <= 0:
+                _fail("POLICY", "positive integer resource limit required")
+        self.policy = policy
+        self.protocol_version = policy["schema_version"].rsplit(".", 1)[1]
+        # The fresh trusted coordinator process and installed interpreter/packages
+        # are assumptions, not an in-memory attestation mechanism. Bind all project
+        # modules used through the normal package initializers, not just this
+        # facade: foreign-root or dirty helper implementations must fail closed.
+        self._loaded_modules = _IMPLEMENTATION_MODULES
 
     def _implementation_binding(self) -> dict[str, Any]:
         if Path(__file__).resolve() != self.project_root / MODULE_PATH:
             _fail("IDENTITY", "loaded implementation root mismatch")
         head = self._git(self.project_root, "rev-parse", "--verify", "HEAD").decode().strip()
         records = []
-        paths = {MODULE_PATH, CLI_PATH, POLICY_PATH}
+        paths = {MODULE_PATH, CLI_PATH, self.policy_path.relative_to(self.project_root).as_posix()}
         for name in self._loaded_modules:
             module = sys.modules.get(name)
             origin = getattr(module, "__file__", None)
@@ -712,7 +1158,7 @@ class SourcePreservation:
 
     def _request(self, request: Mapping[str, Any]) -> dict[str, Any]:
         result = _object(request, _REQUEST_KEYS)
-        if result["schema_version"] != "source_preservation_request.v1":
+        if result["schema_version"] != f"source_preservation_request.{self.protocol_version}":
             _fail("REQUEST", "unsupported request schema")
         identifier = _text(result["preservation_id"])
         if re.fullmatch(r"[a-z0-9][a-z0-9-]{0,95}", identifier) is None:
@@ -740,19 +1186,56 @@ class SourcePreservation:
             _fail("REQUEST", "invalid file count")
         paths = []
         total = 0
+        mixed = self.protocol_version == "v2"
         for raw in files:
-            row = _object(raw, {"path", "sha256", "size_bytes", "git_mode"})
+            keys = {"path", "sha256", "size_bytes", "git_mode"}
+            if mixed:
+                keys |= {"change", "base_git_mode", "base_git_oid"}
+            row = _object(raw, keys)
             paths.append(_relative(row["path"]))
-            _digest(row["sha256"])
+            change = row.get("change", "MODIFY")
+            if mixed:
+                if not isinstance(change, str) or change not in {"ADD", "MODIFY", "DELETE"}:
+                    _fail("REQUEST", "unsupported source change")
+                if change == "ADD":
+                    if (row["base_git_mode"], row["base_git_oid"]) != ("000000", "0" * 40):
+                        _fail("REQUEST", "addition must bind an absent baseline")
+                    if row["git_mode"] != "100644":
+                        _fail("REQUEST", "new source must use the regular non-executable mode")
+                else:
+                    if row["base_git_mode"] not in ("100644", "100755"):
+                        _fail("REQUEST", "existing source requires a regular baseline")
+                    if _digest(row["base_git_oid"], 40) == "0" * 40:
+                        _fail("REQUEST", "existing source requires a nonzero baseline")
+                if change == "MODIFY" and row["base_git_mode"] != row["git_mode"]:
+                    _fail("REQUEST", "source mode changes are outside this contract")
+                if change == "DELETE" and row["path"].casefold().startswith(
+                    "registry/development_tasks/",
+                ):
+                    _fail("HISTORY", "canonical task history cannot be deleted")
+            if change == "DELETE":
+                if (
+                    row["sha256"] is not None
+                    or row["size_bytes"] != 0
+                    or row["git_mode"] != "000000"
+                ):
+                    _fail("REQUEST", "deletion cannot claim after content")
+            else:
+                _digest(row["sha256"])
             if type(row["size_bytes"]) is not int or row["size_bytes"] < 0:
                 _fail("REQUEST", "invalid byte size")
             total += row["size_bytes"]
-            if row["git_mode"] not in {"100644", "100755"}:
+            if change != "DELETE" and row["git_mode"] not in ("100644", "100755"):
                 _fail("UNSUPPORTED_CHANGE", "unsupported Git mode")
         if paths != sorted(paths, key=str.casefold) or len(
             {path.casefold() for path in paths}
         ) != len(paths):
             _fail("REQUEST", "file paths must be unique and sorted")
+        if mixed and any(
+            path.casefold().startswith(other.casefold() + "/")
+            for path in paths for other in paths if path != other
+        ):
+            _fail("REQUEST", "source paths cannot overlap a descendant")
         if total > self.policy["max_total_bytes"]:
             _fail("REQUEST", "aggregate capture budget exceeded; splitting is not automatic")
         return result
@@ -1072,24 +1555,43 @@ class SourcePreservation:
             *pathspec,
         )
         dirty = []
+        observed_status = {}
+        mixed = self.protocol_version == "v2"
         for token in status.split(b"\0"):
             if not token:
                 continue
-            if token[:3] != b" M ":
+            allowed_status = {b" M ", b" D ", b"?? "} if mixed else {b" M "}
+            if token[:3] not in allowed_status:
                 _fail(
                     "UNSUPPORTED_CHANGE",
-                    "only tracked unstaged regular modifications are supported",
+                    "only unstaged regular modification/addition/deletion is supported"
+                    if mixed else "only tracked unstaged regular modifications are supported",
                 )
             dirty.append(token[3:].decode("utf-8"))
+            observed_status[dirty[-1]] = token[:2].decode("ascii")
         expected_paths = [row["path"] for row in request["files"]]
         if sorted(dirty, key=str.casefold) != expected_paths:
             _fail("DIRTY_SCOPE", "exact non-excluded dirty set mismatch")
         captures = {}
+        source_entries = self._tree_entries(root, head, expected_paths, allow_absent=mixed)
         for row in request["files"]:
             path = row["path"]
-            mode, _ = self._tree_entry(root, head, path)
-            if mode != row["git_mode"]:
+            mode, oid = source_entries[path]
+            change = row.get("change", "MODIFY")
+            if mixed and (
+                (mode, oid) != (row["base_git_mode"], row["base_git_oid"])
+                or observed_status[path] != {"ADD": "??", "MODIFY": " M", "DELETE": " D"}[change]
+            ):
+                _fail("DRIFT", "source baseline or change kind differs")
+            if change == "MODIFY" and mode != row["git_mode"]:
                 _fail("UNSUPPORTED_CHANGE", "Git file mode differs")
+            if change == "DELETE":
+                target = _member(root, path)
+                try:
+                    target.lstat()
+                except FileNotFoundError:
+                    continue
+                _fail("DRIFT", "deleted source exists during capture")
             attributes = self._git(
                 root, "check-attr", "-z", "filter", "working-tree-encoding", "--", path
             ).split(b"\0")
@@ -1099,7 +1601,7 @@ class SourcePreservation:
             if len(raw) != row["size_bytes"] or _sha(raw) != row["sha256"]:
                 _fail("DRIFT", "source bytes differ from request")
             captures[path] = raw
-            self._history(root, head, path, raw)
+            self._history(root, head, path, raw, new_file=change == "ADD")
         index_path = Path(
             self._git(root, "rev-parse", "--path-format=absolute", "--git-path", "index")
             .decode()
@@ -1127,18 +1629,30 @@ class SourcePreservation:
             "git_configuration": configuration,
         }, captures
 
-    def _history(self, root: Path, head: str, path: str, content: bytes) -> None:
-        if not path.startswith("registry/development_tasks/"):
+    def _history(
+        self, root: Path, head: str, path: str, content: bytes, *, new_file: bool = False,
+    ) -> None:
+        if not path.casefold().startswith("registry/development_tasks/"):
             return
         try:
+            after = _object(safe_load_yaml_text(content.decode("utf-8")))
+            validate_canonical_fragment(after)
+            if new_file:
+                identity = after["stable_task_identity"]
+                digest = _sha(identity["task_id"].encode("utf-8"))
+                if (
+                    self.protocol_version != "v2"
+                    or path != f"registry/development_tasks/{digest[:2]}/{digest}.yaml"
+                    or after["events"][0]["event_type"] != "TASK_REGISTERED"
+                ):
+                    _fail("HISTORY", "new task history identity or initial event differs")
+                return
             before = _object(
                 safe_load_yaml_text(
                     self._git(root, "cat-file", "blob", f"{head}:{path}").decode("utf-8")
                 )
             )
-            after = _object(safe_load_yaml_text(content.decode("utf-8")))
             validate_canonical_fragment(before)
-            validate_canonical_fragment(after)
             if (
                 after["events"][: len(before["events"])] != before["events"]
                 or before["stable_task_identity"] != after["stable_task_identity"]
@@ -1147,16 +1661,38 @@ class SourcePreservation:
         except (ValueError, UnicodeError, KeyError) as exc:
             _fail("HISTORY", type(exc).__name__)
 
-    def _tree_entry(self, root: Path, commit: str, path: str) -> tuple[str, str]:
-        raw = self._git(root, "ls-tree", "-z", commit, "--", path)
-        entries = [entry for entry in raw.split(b"\0") if entry]
-        if len(entries) != 1:
-            _fail("UNSUPPORTED_CHANGE", "existing unique tracked file required")
-        metadata, found = entries[0].split(b"\t", 1)
-        mode, kind, oid = metadata.decode().split()
-        if found.decode("utf-8") != path or kind != "blob" or mode not in {"100644", "100755"}:
-            _fail("UNSUPPORTED_CHANGE", "regular Git blob required")
-        return mode, _digest(oid, 40)
+    def _tree_entry(
+        self, root: Path, commit: str, path: str, *, allow_absent: bool = False,
+    ) -> tuple[str, str]:
+        return self._tree_entries(root, commit, [path], allow_absent=allow_absent)[path]
+
+    def _tree_entries(
+        self, root: Path, commit: str, paths: list[str], *, allow_absent: bool = False,
+    ) -> dict[str, tuple[str, str]]:
+        """Read declared metadata in bounded batches, without cross-check caching."""
+        result: dict[str, tuple[str, str]] = {}
+        for start in range(0, len(paths), 16):
+            batch = paths[start:start + 16]
+            expected = set(batch)
+            raw = self._git(root, "ls-tree", "-z", commit, "--", *batch)
+            for entry in raw.split(b"\0"):
+                if not entry:
+                    continue
+                metadata, found = entry.split(b"\t", 1)
+                path = found.decode("utf-8")
+                mode, kind, oid = metadata.decode().split()
+                if (
+                    path not in expected or path in result
+                    or kind != "blob" or mode not in {"100644", "100755"}
+                ):
+                    _fail("UNSUPPORTED_CHANGE", "unique declared regular Git blob required")
+                result[path] = mode, _digest(oid, 40)
+            for path in batch:
+                if path not in result:
+                    if not allow_absent:
+                        _fail("UNSUPPORTED_CHANGE", "existing unique tracked file required")
+                    result[path] = "000000", "0" * 40
+        return result
 
     def inspect_migration_source(self, request: Mapping[str, Any]) -> dict[str, Any]:
         """Read-only admission for an explicitly approved legacy arbiter migration.
@@ -1269,6 +1805,12 @@ class SourcePreservation:
             self._git(root, "read-tree", checked["source_head_sha"], index=index)
             blobs = []
             for row in checked["files"]:
+                if row.get("change") == "DELETE":
+                    self._git(
+                        root, "update-index", "--force-remove", "--", row["path"], index=index,
+                    )
+                    blobs.append({**row, "blob_oid": "0" * 40, "blob_content_sha256": None})
+                    continue
                 content = captures[row["path"]]
                 oid = (
                     self._git(root, "hash-object", "-w", "--stdin", "--no-filters", content=content)
@@ -1279,6 +1821,7 @@ class SourcePreservation:
                 self._git(
                     root,
                     "update-index",
+                    *(["--add"] if row.get("change") == "ADD" else []),
                     "--cacheinfo",
                     row["git_mode"],
                     oid,
@@ -1331,7 +1874,7 @@ class SourcePreservation:
             self._unchanged(checked, fence, before, implementation)
             self._event(run, events, "RELEASED", {"lease_id": lease_id, "lease_state": "RELEASED"})
             body = {
-                "schema_version": "source_preservation_receipt.v1",
+                "schema_version": f"source_preservation_receipt.{self.protocol_version}",
                 "status": "PASS",
                 "preservation_id": checked["preservation_id"],
                 "request_sha256": _sha(_json_bytes(checked)),
@@ -1382,7 +1925,7 @@ class SourcePreservation:
                         disposition = "RELEASED"
             if owned_run and not (run / "failure.json").exists():
                 failure = {
-                    "schema_version": "source_preservation_failure.v1",
+                    "schema_version": f"source_preservation_failure.{self.protocol_version}",
                     "status": "FAIL",
                     "request_sha256": _sha(_json_bytes(checked)),
                     "completed_phases": [event["phase"] for event in events],
@@ -1438,7 +1981,7 @@ class SourcePreservation:
         if len(events) >= len(_PHASES) or phase != _PHASES[len(events)]:
             _fail("RECEIPT", "invalid preservation phase")
         body = {
-            "schema_version": "source_preservation_event.v1",
+            "schema_version": f"source_preservation_event.{self.protocol_version}",
             "sequence": len(events) + 1,
             "phase": phase,
             "previous_event_id": events[-1]["event_id"] if events else None,
@@ -1493,14 +2036,33 @@ class SourcePreservation:
             _fail("RECEIPT", "snapshot delta is not exact source scope")
         if len(snapshot["files"]) != len(request["files"]):
             _fail("RECEIPT", "snapshot member count mismatch")
+        mixed = self.protocol_version == "v2"
+        declared_paths = [row["path"] for row in request["files"]]
+        baseline_entries = self._tree_entries(
+            root, request["source_head_sha"], declared_paths, allow_absent=True,
+        ) if mixed else {}
+        snapshot_entries = self._tree_entries(root, commit, declared_paths, allow_absent=mixed)
         for expected, actual in zip(request["files"], snapshot["files"], strict=True):
             row = _object(
                 actual,
-                {"path", "sha256", "size_bytes", "git_mode", "blob_oid", "blob_content_sha256"},
+                set(expected) | {"blob_oid", "blob_content_sha256"},
             )
             if any(row[key] != value for key, value in expected.items()):
                 _fail("RECEIPT", "snapshot file binding mismatch")
-            mode, oid = self._tree_entry(root, commit, row["path"])
+            change = row.get("change", "MODIFY")
+            if mixed and baseline_entries[row["path"]] != (
+                row["base_git_mode"], row["base_git_oid"],
+            ):
+                _fail("RECEIPT", "snapshot baseline binding differs")
+            mode, oid = snapshot_entries[row["path"]]
+            if change == "DELETE":
+                if (
+                    (mode, oid) != ("000000", "0" * 40)
+                    or row["blob_oid"] != "0" * 40
+                    or row["blob_content_sha256"] is not None
+                ):
+                    _fail("RECEIPT", "deleted snapshot member is present or claims content")
+                continue
             size = int(self._git(root, "cat-file", "-s", oid).decode().strip())
             if size != row["size_bytes"]:
                 _fail("RECEIPT", "snapshot blob size differs before capture")
@@ -1513,14 +2075,18 @@ class SourcePreservation:
                 or row["blob_content_sha256"] != row["sha256"]
             ):
                 _fail("RECEIPT", "raw snapshot bytes mismatch")
-            self._history(root, request["source_head_sha"], row["path"], content)
+            self._history(
+                root, request["source_head_sha"], row["path"], content, new_file=change == "ADD",
+            )
         replacements = {
             row["path"]: (row["git_mode"], row["blob_oid"]) for row in snapshot["files"]
         }
         parent_tree = (
             self._git(root, "rev-parse", f"{request['source_head_sha']}^{{tree}}").decode().strip()
         )
-        if self._expected_tree(root, parent_tree, replacements) != tree:
+        if self._expected_tree(
+            root, parent_tree, replacements, allow_path_changes=self.protocol_version == "v2",
+        ) != tree:
             _fail("RECEIPT", "snapshot includes an undeclared tree change")
         if (
             require_ref
@@ -1529,16 +2095,20 @@ class SourcePreservation:
             _fail("RECEIPT", "preservation ref drift")
 
     def _expected_tree(
-        self, root: Path, tree: str, replacements: dict[str, tuple[str, str]]
+        self, root: Path, tree: str | None, replacements: dict[str, tuple[str, str]],
+        *, allow_path_changes: bool = False,
     ) -> str:
         """Recompute only changed tree nodes, never read/hash undeclared blobs.
 
         Git V1 is SHA-1; object headers and untouched entry OIDs are metadata.
-        Validation does not write Git objects or a temporary index.
+        Validation does not write Git objects or a temporary index. V1 callers
+        retain replacement-only semantics. Explicit path-change verification is
+        a tree oracle, not permission to capture a wider source request.
         """
-        raw = self._git(root, "cat-file", "tree", tree)
-        result = bytearray()
-        seen: set[str] = set()
+        if tree is None and not allow_path_changes:
+            _fail("RECEIPT", "replacement path absent in original parent tree")
+        raw = b"" if tree is None else self._git(root, "cat-file", "tree", tree)
+        entries: dict[str, tuple[bytes, bytes]] = {}
         cursor = 0
         while cursor < len(raw):
             nul = raw.index(b"\0", cursor)
@@ -1547,26 +2117,59 @@ class SourcePreservation:
             if len(oid_bytes) != 20:
                 _fail("RECEIPT", "unsupported Git tree object format")
             name = name_bytes.decode("utf-8")
-            nested = {
-                path[len(name) + 1 :]: row
-                for path, row in replacements.items()
-                if path.startswith(name + "/")
-            }
-            if name in replacements:
-                expected_mode, replacement_oid = replacements[name]
-                if mode.decode() != expected_mode:
-                    _fail("RECEIPT", "snapshot changes an existing file mode")
-                oid_bytes = bytes.fromhex(_digest(replacement_oid, 40))
-                seen.add(name)
-            elif nested:
-                if mode != b"40000":
-                    _fail("RECEIPT", "replacement ancestor is not a tree")
-                oid_bytes = bytes.fromhex(self._expected_tree(root, oid_bytes.hex(), nested))
-                seen.update(name + "/" + path for path in nested)
-            result.extend(mode + b" " + name_bytes + b"\0" + oid_bytes)
+            if name in entries:
+                _fail("RECEIPT", "duplicate original tree entry")
+            entries[name] = mode, oid_bytes
             cursor = nul + 21
-        if seen != set(replacements):
-            _fail("RECEIPT", "replacement path absent in original parent tree")
+        groups: dict[str, dict[str, tuple[str, str]]] = {}
+        for path, row in replacements.items():
+            _relative(path)
+            name, separator, tail = path.partition("/")
+            groups.setdefault(name, {})[tail if separator else ""] = row
+        empty_tree = hashlib.sha1(b"tree 0\0").hexdigest()
+        for name, changes in groups.items():
+            original = entries.get(name)
+            if original is None and not allow_path_changes:
+                _fail("RECEIPT", "replacement path absent in original parent tree")
+            if name in replacements:
+                if len(changes) != 1:
+                    _fail("RECEIPT", "replacement path overlaps a descendant")
+                expected_mode, replacement_oid = replacements[name]
+                if expected_mode == "000000" and allow_path_changes:
+                    if original is None or original[0] not in {b"100644", b"100755"}:
+                        _fail("RECEIPT", "deletion requires an existing regular blob")
+                    if replacement_oid != "0" * 40:
+                        _fail("RECEIPT", "deletion cannot claim a blob")
+                    del entries[name]
+                    continue
+                if expected_mode not in {"100644", "100755"}:
+                    _fail("RECEIPT", "replacement requires a regular blob")
+                if original is not None and original[0].decode() != expected_mode:
+                    _fail("RECEIPT", "snapshot changes an existing file mode")
+                oid = bytes.fromhex(_digest(replacement_oid, 40))
+                if oid == b"\0" * 20:
+                    _fail("RECEIPT", "regular blob cannot have a zero identity")
+                entries[name] = expected_mode.encode("ascii"), oid
+            else:
+                if original is not None and original[0] != b"40000":
+                    _fail("RECEIPT", "replacement ancestor is not a tree")
+                nested_tree = self._expected_tree(
+                    root, None if original is None else original[1].hex(), changes,
+                    allow_path_changes=allow_path_changes,
+                )
+                if allow_path_changes and nested_tree == empty_tree:
+                    entries.pop(name, None)
+                else:
+                    entries[name] = b"40000", bytes.fromhex(nested_tree)
+        result = bytearray()
+        # Git sorts directories as name + slash, regular entries as name + NUL.
+        # Ordinary string sorting gets adjacent names such as a.c and a/x wrong.
+        for name, (mode, oid) in sorted(
+            entries.items(),
+            key=lambda item: item[0].encode("utf-8")
+            + (b"/" if item[1][0] == b"40000" else b"\0"),
+        ):
+            result.extend(mode + b" " + name.encode("utf-8") + b"\0" + oid)
         return hashlib.sha1(b"tree " + str(len(result)).encode() + b"\0" + result).hexdigest()
 
     def validate(self, receipt_path: Path) -> dict[str, Any]:
@@ -1615,7 +2218,8 @@ class SourcePreservation:
         checksum = body.pop("receipt_sha256", None)
         if (
             checksum != _sha(_json_bytes(body))
-            or receipt.get("schema_version") != "source_preservation_receipt.v1"
+            or receipt.get("schema_version")
+            != f"source_preservation_receipt.{self.protocol_version}"
         ):
             _fail("RECEIPT", "receipt checksum/schema mismatch")
         if receipt.get("status") != "PASS" or receipt.get("safety") != _SAFETY:
@@ -1666,7 +2270,8 @@ class SourcePreservation:
                     "payload",
                     "event_id",
                 }
-                or event["schema_version"] != "source_preservation_event.v1"
+                or event["schema_version"]
+                != f"source_preservation_event.{self.protocol_version}"
                 or path.name != f"{sequence:04d}_{phase}.json"
             ):
                 _fail("RECEIPT", "invalid exact event schema/locator")
@@ -1775,7 +2380,7 @@ class SourcePreservation:
         self._verify_snapshot(root, request, receipt["snapshot"], fence, require_ref=True)
         self._recheck_environment(root, configuration)
         return {
-            "schema_version": "source_preservation_validation.v1",
+            "schema_version": f"source_preservation_validation.{self.protocol_version}",
             "status": "PASS",
             "receipt_path": expected_path.as_posix(),
             "snapshot_commit": receipt["snapshot"]["commit"],

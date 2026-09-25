@@ -1,6 +1,6 @@
 {
   "broker_action": "none",
-  "consumer_count": 162,
+  "consumer_count": 164,
   "consumers": [
     {
       "migration_status": "PENDING_OWNER_CUTOVER",
@@ -111,11 +111,11 @@
           "target_path": "config/report_registry.yaml"
         },
         {
-          "literal_count": 10,
+          "literal_count": 11,
           "target_path": "docs/artifact_catalog.md"
         },
         {
-          "literal_count": 15,
+          "literal_count": 16,
           "target_path": "docs/system_flow.md"
         }
       ],
@@ -2407,14 +2407,44 @@
     },
     {
       "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
-      "path": "tests/test_devx_006c_compatibility_authority.py",
+      "path": "tests/test_devx015_workflow_execution.py",
       "references": [
+        {
+          "literal_count": 4,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_devx015_workflow_integration.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
         {
           "literal_count": 2,
           "target_path": "docs/artifact_catalog.md"
         },
         {
           "literal_count": 3,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_devx_006c_compatibility_authority.py",
+      "references": [
+        {
+          "literal_count": 3,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 4,
           "target_path": "docs/system_flow.md"
         }
       ],
@@ -2488,7 +2518,7 @@
       "path": "tests/test_trading2452_architecture_contract.py",
       "references": [
         {
-          "literal_count": 18,
+          "literal_count": 19,
           "target_path": "docs/system_flow.md"
         }
       ],

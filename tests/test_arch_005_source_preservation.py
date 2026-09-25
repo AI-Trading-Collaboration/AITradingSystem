@@ -13,6 +13,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import shutil
 import subprocess
 import sys
 import traceback
@@ -234,7 +235,10 @@ def _files(repo: Path) -> list[dict[str, Any]]:
     ]
 
 
-def _source_case(tmp_path: Path, *, linked_worktree: bool = False) -> SourceCase:
+def _source_case(
+    tmp_path: Path, *, linked_worktree: bool = False, mixed_scope: bool = False,
+    extra_source_files: dict[str, bytes] | None = None,
+) -> SourceCase:
     repo = tmp_path / "synthetic-source"
     repo.mkdir()
     _git(repo, "init", "-b", "main")
@@ -245,7 +249,12 @@ def _source_case(tmp_path: Path, *, linked_worktree: bool = False) -> SourceCase
     _write(repo, ".gitignore", b"outputs/\n")
     _write(repo, "src/a.py", b"VALUE = 1\n")
     _write(repo, "src/raw.bin", b"base\x00binary\n")
-    seed = _commit(repo, (*POLICIES, ".gitignore", "src/a.py", "src/raw.bin"), "synthetic seed")
+    for name, content in (extra_source_files or {}).items():
+        _write(repo, name, content)
+    seed = _commit(
+        repo, (*POLICIES, ".gitignore", "src/a.py", "src/raw.bin", *(extra_source_files or {})),
+        "synthetic seed",
+    )
     original_fragment = _fragment(seed)
     _write(repo, TASK_PATH, _json(original_fragment) + b"\n")
     frozen = _commit(repo, (TASK_PATH,), "synthetic canonical task")
@@ -268,8 +277,8 @@ def _source_case(tmp_path: Path, *, linked_worktree: bool = False) -> SourceCase
         frozen_base_sha=frozen,
         lane_head_sha=head,
         expected_main_sha=frozen,
-        owned_paths=("src/a.py", "src/raw.bin"),
-        shared_paths=(TASK_PATH,),
+        owned_paths=("src",) if mixed_scope else ("src/a.py", "src/raw.bin"),
+        shared_paths=("registry/development_tasks",) if mixed_scope else (TASK_PATH,),
         generator_ids=("canonical-task-source",),
     )
     transaction = Path(str(binding["transaction_path"]))
@@ -378,9 +387,402 @@ def unit_engine(monkeypatch: pytest.MonkeyPatch) -> SourcePreservation:
     return engine
 
 
+@pytest.fixture
+def mixed_engine(tmp_path, monkeypatch):
+    # A real on-disk V2 policy in a disposable trusted-root model. The default
+    # policy stays V1. As in unit_engine, only implementation identity is
+    # modeled; Git, source authority, leases, raw capture and replay remain real.
+    trusted = tmp_path / "mixed-trusted"
+    policy_path = trusted / preservation.V2_POLICY_PATH
+    policy_path.parent.mkdir(parents=True)
+    policy = preservation.safe_load_yaml_text(
+        (ROOT / preservation.V2_POLICY_PATH).read_text(encoding="utf-8"),
+    )
+    policy_path.write_bytes(_json(policy))
+    _git(trusted, "init", "-b", "main")
+    _git(trusted, "config", "user.email", "mixed-source@example.invalid")
+    _git(trusted, "config", "user.name", "Mixed Source Fixture")
+    _commit(trusted, (preservation.V2_POLICY_PATH,), "synthetic mixed policy")
+    engine = SourcePreservation(project_root=trusted, policy_path=policy_path)
+    monkeypatch.setattr(engine, "_implementation_binding", lambda: {
+        "profile": "SYNTHETIC_IMPLEMENTATION_BINDING_NOT_PRODUCTION",
+        "project_root": trusted.as_posix(), "head_sha": "1" * 40, "files": [],
+    })
+    return engine
+
+
+def _mixed_source_case(tmp_path, engine, *, new_task_history=False, large=False):
+    modified = [f"src/existing/modify-{index:02}.bin" for index in range(42)] if large else []
+    deleted = [f"src/existing/delete-{index:02}.bin" for index in range(16)] if large else []
+    case = _source_case(
+        tmp_path, mixed_scope=True,
+        extra_source_files={name: b"old\x00" + name.encode() for name in (*modified, *deleted)},
+    )
+    (case.root / "src/raw.bin").unlink()
+    for name in modified:
+        _write(case.root, name, b"modified\x00\r\n" + name.encode())
+    for name in deleted:
+        (case.root / name).unlink()
+    added = ({f"src/new/add-{index:02}.bin": b"new\x00\r\n" + str(index).encode()
+              for index in range(31)} if large else
+             {"src/new/nested.bin": b"new\x00raw\r\n", "src/new/empty.bin": b""})
+    for name, content in added.items():
+        _write(case.root, name, content)
+    request = copy.deepcopy(case.request)
+    request["schema_version"] = "source_preservation_request.v2"
+    request["recovery_task_id"] = engine.policy["recovery_task_id"]
+    request["owner_instruction_ref"] = engine.policy["owner_instruction_ref"]
+    request["files"] = []
+    paths = [*SOURCE_PATHS, *modified, *deleted, *added]
+    if new_task_history:
+        new_task = "SYNTHETIC_NEW_MIXED_SOURCE_TASK"
+        digest = _sha(new_task.encode())
+        relative = f"registry/development_tasks/{digest[:2]}/{digest}.yaml"
+        with pytest.MonkeyPatch.context() as temporary:
+            temporary.setattr(sys.modules[__name__], "SOURCE_TASK", new_task)
+            temporary.setattr(sys.modules[__name__], "TASK_DIGEST", digest)
+            fragment = _fragment(case.head)
+        _write(case.root, relative, _json(fragment) + b"\n")
+        paths.append(relative)
+    for name in sorted(paths, key=str.casefold):
+        mode, oid = engine._tree_entry(case.root, case.head, name, allow_absent=True)
+        exists = (case.root / name).exists()
+        content = (case.root / name).read_bytes() if exists else None
+        request["files"].append({
+            "path": name, "base_git_mode": mode, "base_git_oid": oid,
+            "change": "DELETE" if not exists else ("ADD" if mode == "000000" else "MODIFY"),
+            "git_mode": ("100644" if mode == "000000" else mode) if exists else "000000",
+            "sha256": _sha(content) if content is not None else None,
+            "size_bytes": len(content) if content is not None else 0,
+        })
+    return case, request
+
+
+def test_mixed_preservation_real_92_path_shape_keeps_original_source_and_exact_delta(
+    tmp_path, controlled_git_environment, mixed_engine, monkeypatch,
+):
+    import time
+
+    case, request = _mixed_source_case(tmp_path, mixed_engine, large=True)
+    assert len(request["files"]) == 92
+    assert {kind: sum(row["change"] == kind for row in request["files"])
+            for kind in ("MODIFY", "ADD", "DELETE")} == {"MODIFY": 44, "ADD": 31, "DELETE": 17}
+    before = _mixed_working_state(case, request)
+    started = time.monotonic()
+    actual_git = mixed_engine._git
+    timings = {}
+    observed = 0
+    timing_path = tmp_path / "mixed-source-92-timing.json"
+
+    def timing(status):
+        timing_path.write_text(json.dumps({
+            "status": status, "path_count": 92, "git_call_count": observed,
+            "elapsed_seconds": round(time.monotonic() - started, 3), "git_commands": timings,
+        }, indent=2), encoding="utf-8")
+
+    def measured_git(root, *args, **kwargs):
+        nonlocal observed
+        called = time.monotonic()
+        try:
+            return actual_git(root, *args, **kwargs)
+        finally:
+            row = timings.setdefault(args[0], {"count": 0, "seconds": 0.0})
+            row["count"] += 1
+            row["seconds"] += time.monotonic() - called
+            observed += 1
+            if observed % 100 == 0:
+                timing("RUNNING")
+
+    monkeypatch.setattr(mixed_engine, "_git", measured_git)
+    try:
+        result = mixed_engine.preserve(request)
+        validation = mixed_engine.validate(Path(result["receipt_path"]))
+    finally:
+        timing("FINISHED_ATTEMPT")
+    assert validation["status"] == "PASS" and len(result["snapshot"]["files"]) == 92
+    assert _mixed_working_state(case, request) == before
+    changed = _git(
+        case.root, "diff-tree", "--no-commit-id", "--no-renames", "--name-only", "-r", "-z",
+        case.head, result["snapshot"]["commit"], "--", "src", "registry/development_tasks",
+    )
+    assert {name.decode() for name in changed.split(b"\0") if name} == {
+        row["path"] for row in request["files"]
+    }
+    assert _fence(case.root).guard.replay().active_leases == ()
+
+
+def test_batched_tree_metadata_matches_git_and_rechecks_each_commit(
+    tmp_path, controlled_git_environment, unit_engine,
+):
+    root = tmp_path / "metadata"
+    root.mkdir()
+    _git(root, "init", "-q")
+    _git(root, "config", "user.name", "Synthetic")
+    _git(root, "config", "user.email", "synthetic@example.invalid")
+    paths = [f"src/member {index:02}.bin" for index in range(33)]
+    (root / "src").mkdir()
+    for index, path in enumerate(paths):
+        (root / path).write_bytes(bytes([index]))
+    _git(root, "add", "--", *paths)
+    _git(root, "commit", "-qm", "baseline")
+    baseline = _ref(root, "HEAD")
+    before = unit_engine._tree_entries(root, baseline, paths)
+    for path, (mode, oid) in before.items():
+        assert mode == "100644"
+        assert _git(root, "cat-file", "blob", oid) == (root / path).read_bytes()
+    missing = "src/absent.bin"
+    assert unit_engine._tree_entries(root, baseline, [missing], allow_absent=True) == {
+        missing: ("000000", "0" * 40),
+    }
+    for invalid in (missing, "src"):
+        with pytest.raises(SourcePreservationError, match="SOURCE_PRESERVATION_UNSUPPORTED_CHANGE"):
+            unit_engine._tree_entries(root, baseline, [invalid])
+    (root / paths[0]).write_bytes(b"changed")
+    _git(root, "add", "--", paths[0])
+    _git(root, "commit", "-qm", "next")
+    after = unit_engine._tree_entries(root, _ref(root, "HEAD"), paths)
+    assert after[paths[0]] != before[paths[0]]
+    assert unit_engine._tree_entries(root, baseline, paths) == before
+
+
+def _mixed_working_state(case, request):
+    return {
+        "head": _ref(case.root, "HEAD"),
+        "refs": _git(case.root, "for-each-ref", "refs/heads", "refs/remotes"),
+        "index": (case.root / ".git/index").read_bytes(),
+        "files": {row["path"]: ((case.root / row["path"]).read_bytes()
+                                 if (case.root / row["path"]).exists() else None)
+                  for row in request["files"]},
+    }
+
+
+def test_mixed_preservation_captures_raw_add_modify_delete_and_independently_replays(
+    tmp_path, controlled_git_environment, mixed_engine,
+):
+    case, request = _mixed_source_case(tmp_path, mixed_engine, new_task_history=True)
+    before = _mixed_working_state(case, request)
+    v1 = SourcePreservation(project_root=ROOT)
+    with pytest.raises(SourcePreservationError, match="SOURCE_PRESERVATION_REQUEST"):
+        v1.preserve(request)
+    result = mixed_engine.preserve(request)
+    assert result["schema_version"] == "source_preservation_receipt.v2"
+    validation = mixed_engine.validate(Path(result["receipt_path"]))
+    assert validation["status"] == "PASS"
+    assert validation["schema_version"] == "source_preservation_validation.v2"
+    assert _mixed_working_state(case, request) == before
+    snapshot = result["snapshot"]["commit"]
+    assert not _git(case.root, "ls-tree", snapshot, "--", "src/raw.bin")
+    for name in ("src/new/nested.bin", "src/new/empty.bin", "src/a.py"):
+        assert _git(case.root, "cat-file", "blob", f"{snapshot}:{name}") == before["files"][name]
+    assert result["safety"] == preservation._SAFETY
+    assert _fence(case.root).guard.replay().active_leases == ()
+    # The retained v2 receipt is not silently interpreted using the v1 policy.
+    with pytest.raises(SourcePreservationError, match="SOURCE_PRESERVATION_RECEIPT"):
+        v1.validate(Path(result["receipt_path"]))
+    run = Path(result["receipt_path"]).parent
+    paths = [run / "request.json", run / "receipt.json", *sorted((run / "events").glob("*.json"))]
+    original = {path: path.read_bytes() for path in paths}
+    for fault in ("deleted-content", "baseline-object"):
+        receipt = json.loads(original[run / "receipt.json"])
+        requested = json.loads(original[run / "request.json"])
+        events = [json.loads(original[path]) for path in paths[2:]]
+        assert all(event["schema_version"] == "source_preservation_event.v2" for event in events)
+        if fault == "deleted-content":
+            row = next(row for row in receipt["snapshot"]["files"] if row["change"] == "DELETE")
+            row["blob_content_sha256"] = _sha(b"")
+        else:
+            for rows in (requested["files"], receipt["source_state_before"]["files"],
+                         receipt["source_state_after"]["files"], receipt["snapshot"]["files"]):
+                next(row for row in rows if row["path"] == "src/a.py")["base_git_oid"] = "f" * 40
+            encoded = preservation._json_bytes(requested)
+            (run / "request.json").write_bytes(encoded)
+            receipt["request_sha256"] = _sha(encoded)
+        events[1]["payload"]["source_state"] = receipt["source_state_before"]
+        events[2]["payload"]["snapshot"] = receipt["snapshot"]
+        events[4]["payload"]["source_state"] = receipt["source_state_after"]
+        previous = None
+        for path, event in zip(paths[2:], events, strict=True):
+            event["previous_event_id"] = previous
+            body = {key: value for key, value in event.items() if key != "event_id"}
+            event["event_id"] = _sha(preservation._json_bytes(body))
+            previous = event["event_id"]
+            path.write_bytes(preservation._json_bytes(event))
+        receipt["head_event_id"] = previous
+        body = {key: value for key, value in receipt.items() if key != "receipt_sha256"}
+        receipt["receipt_sha256"] = _sha(preservation._json_bytes(body))
+        (run / "receipt.json").write_bytes(preservation._json_bytes(receipt))
+        try:
+            with pytest.raises(SourcePreservationError) as error:
+                mixed_engine.validate(run / "receipt.json")
+            assert error.value.code == "SOURCE_PRESERVATION_RECEIPT", fault
+        finally:
+            for path, content in original.items():
+                path.write_bytes(content)
+    assert _mixed_working_state(case, request) == before
+
+
+@pytest.mark.parametrize("fault", ["baseline", "deleted-returned", "added-disappeared"])
+def test_mixed_source_state_drift_is_rejected_before_snapshot(
+    tmp_path, controlled_git_environment, mixed_engine, fault,
+):
+    case, request = _mixed_source_case(tmp_path, mixed_engine)
+    if fault == "baseline":
+        row = next(row for row in request["files"] if row["path"] == "src/a.py")
+        row["base_git_oid"] = "f" * 40
+    elif fault == "deleted-returned":
+        _write(case.root, "src/raw.bin", b"unexpected return")
+    else:
+        (case.root / "src/new/nested.bin").unlink()
+    with pytest.raises(SourcePreservationError) as error:
+        mixed_engine.inspect_migration_source(request)
+    assert error.value.code in {"SOURCE_PRESERVATION_DRIFT", "SOURCE_PRESERVATION_DIRTY_SCOPE"}
+    assert not case.destination.exists()
+    assert not _git(case.root, "for-each-ref", "refs/aits/source-preservation/")
+
+
+@pytest.mark.parametrize(
+    "fault", ["schema", "deletion-bytes", "added-baseline", "canonical-delete",
+              "canonical-case", "added-executable", "unknown-change", "file-budget"],
+)
+def test_mixed_request_requires_version_and_explicit_change_semantics(
+    tmp_path, controlled_git_environment, mixed_engine, fault,
+):
+    case, request = _mixed_source_case(tmp_path, mixed_engine)
+    deleted = next(row for row in request["files"] if row["change"] == "DELETE")
+    if fault == "schema":
+        request["schema_version"] = "source_preservation_request.v1"
+    elif fault == "deletion-bytes":
+        deleted["sha256"] = _sha(b"")
+    elif fault == "added-baseline":
+        next(row for row in request["files"] if row["change"] == "ADD")["base_git_oid"] = "f" * 40
+    elif fault == "added-executable":
+        next(row for row in request["files"] if row["change"] == "ADD")["git_mode"] = "100755"
+    elif fault == "unknown-change":
+        deleted["change"] = []
+    elif fault == "file-budget":
+        request["files"] = [copy.deepcopy(deleted) for _ in range(93)]
+    else:
+        task = next(row for row in request["files"] if row["path"] == TASK_PATH)
+        task.update(change="DELETE", sha256=None, size_bytes=0, git_mode="000000")
+        if fault == "canonical-case":
+            task["path"] = task["path"].upper()
+    with pytest.raises(SourcePreservationError) as error:
+        mixed_engine.preserve(request)
+    assert error.value.code in {"SOURCE_PRESERVATION_REQUEST", "SOURCE_PRESERVATION_HISTORY"}
+    assert not case.destination.exists()
+
+
+@pytest.mark.parametrize("fault", ["v1-at-v2", "v2-at-v1", "arbitrary-path"])
+def test_policy_version_requires_its_exact_reviewed_locator(tmp_path, fault):
+    v1 = SourcePreservation(ROOT)
+    v2 = SourcePreservation(ROOT, Path(preservation.V2_POLICY_PATH))
+    assert (v1.protocol_version, v1.policy["max_files"]) == ("v1", 64)
+    assert (v2.protocol_version, v2.policy["max_files"]) == ("v2", 92)
+    source = preservation.V2_POLICY_PATH if fault == "v2-at-v1" else preservation.POLICY_PATH
+    target = {
+        "v1-at-v2": preservation.V2_POLICY_PATH,
+        "v2-at-v1": preservation.POLICY_PATH,
+        "arbitrary-path": "config/architecture/arbitrary.yaml",
+    }[fault]
+    path = tmp_path / target
+    path.parent.mkdir(parents=True)
+    path.write_bytes((ROOT / source).read_bytes())
+    with pytest.raises(SourcePreservationError, match="SOURCE_PRESERVATION_POLICY"):
+        SourcePreservation(tmp_path, path)
+
+
+def test_preservation_policy_invalid_schema_is_typed_before_execution(tmp_path):
+    path = tmp_path / preservation.POLICY_PATH
+    path.parent.mkdir(parents=True)
+    policy = preservation.safe_load_yaml_text(DEFAULT_POLICY_PATH.read_text(encoding="utf-8"))
+    policy["schema_version"] = []
+    path.write_bytes(_json(policy))
+    with pytest.raises(SourcePreservationError, match="SOURCE_PRESERVATION_POLICY"):
+        SourcePreservation(project_root=tmp_path, policy_path=path)
+
+
 def _receipt_path(case: SourceCase, result: dict[str, Any]) -> Path:
     path = Path(result["receipt_path"])
     return path if path.is_absolute() else case.root / path
+
+
+def _tree_oracle_repository(tmp_path: Path) -> tuple[Path, str, SourcePreservation]:
+    root = tmp_path / "tree-oracle"
+    root.mkdir()
+    _git(root, "init", "-b", "main")
+    _git(root, "config", "user.email", "tree-oracle@example.invalid")
+    _git(root, "config", "user.name", "Tree Oracle")
+    for name in ("src/a.py", "src/raw.bin", "untouched.bin"):
+        _write(root, name, (name + "\r\n").encode() + b"\x00")
+    head = _commit(root, ("src/a.py", "src/raw.bin", "untouched.bin"), "tree baseline")
+    return root, head, SourcePreservation(project_root=ROOT)
+
+
+@pytest.mark.parametrize("variant", ["mixed", "remove-directory", "remove-all", "empty-add"])
+def test_mixed_tree_oracle_matches_real_git_without_object_or_index_writes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, variant: str,
+) -> None:
+    root, head, engine = _tree_oracle_repository(tmp_path)
+    tree = _git(root, "rev-parse", head + "^{tree}").decode().strip()
+    # Git's private index is only the independent expected-result producer.
+    # The implementation under test must not invoke it or create any objects.
+    index = tmp_path / "oracle.index"
+    engine._git(root, "read-tree", head, index=index)
+    deleted = ["src/raw.bin"]
+    additions = {"src/a.py": b"changed\r\n\x00", "a.c": b"file", "a/x.bin": b"nested"}
+    if variant in {"remove-directory", "remove-all"}:
+        deleted = ["src/a.py", "src/raw.bin"]
+        if variant == "remove-all":
+            deleted.append("untouched.bin")
+        additions = {}
+    elif variant == "empty-add":
+        deleted, additions = [], {"new/empty.bin": b""}
+    changes = {name: ("000000", "0" * 40) for name in deleted}
+    for name in deleted:
+        engine._git(root, "update-index", "--force-remove", "--", name, index=index)
+    for name, content in additions.items():
+        oid = engine._git(
+            root, "hash-object", "-w", "--stdin", "--no-filters", content=content,
+        ).decode().strip()
+        engine._git(root, "update-index", "--add", "--cacheinfo", "100644", oid, name, index=index)
+        changes[name] = ("100644", oid)
+    expected = engine._git(root, "write-tree", index=index).decode().strip()
+    before = (_git(root, "count-objects", "-v"), (root / ".git/index").read_bytes(),
+              _git(root, "show-ref"), index.read_bytes())
+    actual_git = engine._git
+    reads = []
+
+    def metadata_only(repo, *args, **kwargs):
+        assert args[:2] == ("cat-file", "tree") and not kwargs
+        reads.append(args[2])
+        return actual_git(repo, *args)
+
+    monkeypatch.setattr(engine, "_git", metadata_only)
+    assert engine._expected_tree(root, tree, changes, allow_path_changes=True) == expected
+    assert reads and len(reads) == len(set(reads))
+    assert before == (_git(root, "count-objects", "-v"), (root / ".git/index").read_bytes(),
+                      _git(root, "show-ref"), index.read_bytes())
+
+
+@pytest.mark.parametrize(
+    "fault", ["v1-add", "v1-delete", "absent-delete", "delete-blob", "mode", "ancestor", "overlap"],
+)
+def test_mixed_tree_oracle_rejects_unsupported_changes_and_keeps_v1_closed(tmp_path, fault):
+    root, head, engine = _tree_oracle_repository(tmp_path)
+    tree = _git(root, "rev-parse", head + "^{tree}").decode().strip()
+    oid = _git(root, "rev-parse", head + ":src/a.py").decode().strip()
+    changes = {
+        "v1-add": {"new.bin": ("100644", oid)},
+        "v1-delete": {"src/a.py": ("000000", "0" * 40)},
+        "absent-delete": {"absent.bin": ("000000", "0" * 40)},
+        "delete-blob": {"src/a.py": ("000000", oid)},
+        "mode": {"src/a.py": ("100755", oid)},
+        "ancestor": {"untouched.bin/child": ("100644", oid)},
+        "overlap": {"new.bin": ("100644", oid), "new.bin/child": ("100644", oid)},
+    }[fault]
+    with pytest.raises(SourcePreservationError) as error:
+        engine._expected_tree(root, tree, changes, allow_path_changes=not fault.startswith("v1-"))
+    assert error.value.code == "SOURCE_PRESERVATION_RECEIPT"
 
 
 def _assert_snapshot(case: SourceCase, engine: SourcePreservation) -> tuple[Path, dict[str, Any]]:
@@ -1083,13 +1485,13 @@ def test_pre_ref_capture_drift_is_not_rolled_back_or_silently_rebound(
     assert _ref(source_case.root, "HEAD") == source_case.head
 
 
-def _implementation_fixture(tmp_path: Path) -> Path:
+def _implementation_fixture(tmp_path: Path, policy_path: str = preservation.POLICY_PATH) -> Path:
     trusted = tmp_path / "synthetic-trusted-implementation"
     trusted.mkdir()
     _git(trusted, "init", "-b", "main")
     _git(trusted, "config", "user.name", "Synthetic Identity Checker")
     _git(trusted, "config", "user.email", "identity@example.invalid")
-    paths = _implementation_paths()
+    paths = _implementation_paths(policy_path)
     for relative in paths:
         _write(trusted, relative, (ROOT / relative).read_bytes().replace(b"\r\n", b"\n"))
     _commit(
@@ -1100,8 +1502,8 @@ def _implementation_fixture(tmp_path: Path) -> Path:
     return trusted
 
 
-def _implementation_paths() -> tuple[str, ...]:
-    paths = {preservation.CLI_PATH, preservation.POLICY_PATH}
+def _implementation_paths(policy_path: str = preservation.POLICY_PATH) -> tuple[str, ...]:
+    paths = {preservation.CLI_PATH, policy_path}
     # Only the explicit finite reviewed list, not runtime or filesystem discovery.
     for name in preservation._IMPLEMENTATION_MODULES:
         stem = ROOT / "src" / Path(*name.split("."))
@@ -1114,13 +1516,15 @@ def _implementation_paths() -> tuple[str, ...]:
 
 
 @pytest.mark.parametrize("tamper", [None, "module", "cli", "policy", "loaded_root", "helper_root"])
+@pytest.mark.parametrize("policy_path", [preservation.POLICY_PATH, preservation.V2_POLICY_PATH])
 def test_implementation_identity_checker_requires_exact_head_and_loaded_root(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     tamper: str | None,
+    policy_path: str,
 ) -> None:
-    trusted = _implementation_fixture(tmp_path)
-    engine = SourcePreservation(trusted, Path(preservation.POLICY_PATH))
+    trusted = _implementation_fixture(tmp_path, policy_path)
+    engine = SourcePreservation(trusted, Path(policy_path))
     # This tests the checker with a synthetic __file__ locator. It is not evidence
     # of actual loaded-code identity; the no-mock E2E below provides that proof.
     for name in preservation._IMPLEMENTATION_MODULES:
@@ -1130,7 +1534,7 @@ def test_implementation_identity_checker_requires_exact_head_and_loaded_root(
     paths = {
         "module": preservation.MODULE_PATH,
         "cli": preservation.CLI_PATH,
-        "policy": preservation.POLICY_PATH,
+        "policy": policy_path,
     }
     if tamper in paths:
         target = trusted / paths[tamper]
@@ -1150,18 +1554,20 @@ def test_implementation_identity_checker_requires_exact_head_and_loaded_root(
         binding = engine._implementation_binding()
         assert binding["commit"] == _ref(trusted, "HEAD")
         assert binding["basis"] == "COMMITTED_SOURCE_GIT_EOL_LF"
-        assert {row["path"] for row in binding["files"]} == set(_implementation_paths())
+        assert {row["path"] for row in binding["files"]} == set(_implementation_paths(policy_path))
         for row in binding["files"]:
             assert row["sha256"] == row["git_blob_content_sha256"]
 
 
-def test_committed_implementation_identity_e2e(source_case: SourceCase) -> None:
+def _require_committed_preservation_implementation(engine: SourcePreservation) -> None:
     # Source-stage only prerequisite: this precise test MUST execute PASS after
     # source commit and in final Full. No env option, copied execution root, dirty
     # implementation fallback or mocked identity is accepted in this case.
-    engine = SourcePreservation(ROOT, DEFAULT_POLICY_PATH)
     head = engine._git(ROOT, "rev-parse", "--verify", "HEAD").decode().strip()
-    for relative in (preservation.MODULE_PATH, preservation.CLI_PATH, preservation.POLICY_PATH):
+    for relative in (
+        preservation.MODULE_PATH, preservation.CLI_PATH,
+        engine.policy_path.relative_to(ROOT).as_posix(),
+    ):
         entry = engine._git(ROOT, "ls-tree", "-z", head, "--", f":(literal){relative}")
         if not entry:
             pytest.skip(
@@ -1177,7 +1583,51 @@ def test_committed_implementation_identity_e2e(source_case: SourceCase) -> None:
     binding = engine._implementation_binding()
     assert binding["project_root"] == ROOT.as_posix()
     assert binding["commit"] == head
+
+
+def test_committed_implementation_identity_e2e(source_case: SourceCase) -> None:
+    engine = SourcePreservation(ROOT, DEFAULT_POLICY_PATH)
+    _require_committed_preservation_implementation(engine)
     _assert_snapshot(source_case, engine)
+
+
+def test_committed_v2_cli_preserves_92_paths_and_independent_process_validates(
+    tmp_path, controlled_git_environment,
+) -> None:
+    # Mandatory after the actual source commit and in final Full. No copied
+    # implementation, patched identity or substituted policy is used here.
+    engine = SourcePreservation(ROOT, Path(preservation.V2_POLICY_PATH))
+    _require_committed_preservation_implementation(engine)
+    case, request = _mixed_source_case(tmp_path, engine, large=True)
+    before = _mixed_working_state(case, request)
+    request_path = ROOT / "outputs/validation_runtime" / (
+        f"source-preservation-v2-e2e-{_sha(str(tmp_path).encode())[:16]}.json"
+    )
+    request_path.parent.mkdir(parents=True, exist_ok=True)
+    with request_path.open("xb") as stream:
+        stream.write(_json(request))
+    command = [sys.executable, str(ROOT / preservation.CLI_PATH)]
+    selected = ["--policy", str(ROOT / preservation.V2_POLICY_PATH)]
+    captured = subprocess.run(
+        [*command, *selected, "preserve", "--request", str(request_path)],
+        cwd=ROOT, capture_output=True, text=True, encoding="utf-8", timeout=600, check=False,
+    )
+    assert captured.returncode == 0, captured.stdout + captured.stderr
+    receipt = json.loads(captured.stdout)
+    assert receipt["schema_version"] == "source_preservation_receipt.v2"
+    assert receipt["status"] == "PASS" and len(receipt["snapshot"]["files"]) == 92
+    checked = subprocess.run(
+        [*command, *selected, "validate", "--receipt", receipt["receipt_path"]],
+        cwd=ROOT, capture_output=True, text=True, encoding="utf-8", timeout=600, check=False,
+    )
+    assert checked.returncode == 0, checked.stdout + checked.stderr
+    assert json.loads(checked.stdout)["status"] == "PASS"
+    assert receipt["implementation"]["commit"] == _ref(ROOT, "HEAD")
+    assert preservation.V2_POLICY_PATH in {
+        row["path"] for row in receipt["implementation"]["files"]
+    }
+    assert _mixed_working_state(case, request) == before
+    assert _fence(case.root).guard.replay().active_leases == ()
 
 
 def test_migration_source_inspection_is_read_only_and_preserves_exact_evidence(
@@ -1373,6 +1823,725 @@ def configuration_case(
         source,
         {"trusted": _configuration_files(trusted), "source": _configuration_files(source)},
     )
+
+
+def test_shared_git_admission_preserves_original_snapshot_and_drift_rejection(
+    configuration_case: tuple[SourcePreservation, Path, dict[str, tuple[Path, Path]]],
+) -> None:
+    engine, source, _paths = configuration_case
+    executable = shutil.which("git")
+    assert executable is not None
+    shared = preservation.GitConfigurationAdmission(
+        engine.project_root, git_executable=Path(executable), git_environment=dict(os.environ),
+    )
+    original = engine._environment(source)
+    assert shared.capture(source) == original
+    shared.recheck(source, original)
+    _git(source, "config", "filter.synthetic.clean", "SYNTHETIC_NEVER_EXECUTE")
+    with pytest.raises(SourcePreservationError) as drift:
+        shared.recheck(source, original)
+    assert drift.value.code == "SOURCE_PRESERVATION_DRIFT"
+    with pytest.raises(SourcePreservationError) as denied:
+        shared.capture(source)
+    assert denied.value.code == "SOURCE_PRESERVATION_FILTER"
+
+
+def test_shared_git_admission_ignores_hostile_path(
+    configuration_case: tuple[SourcePreservation, Path, dict[str, tuple[Path, Path]]],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine, source, _paths = configuration_case
+    executable = shutil.which("git")
+    assert executable is not None
+    shared = preservation.GitConfigurationAdmission(
+        engine.project_root, git_executable=Path(executable), git_environment=dict(os.environ),
+    )
+    expected = shared.capture(source)
+    hostile = tmp_path / "hostile-path"
+    hostile.mkdir()
+    (hostile / "git.exe").write_bytes(b"must never execute")
+    (hostile / "git").write_bytes(b"must never execute")
+    monkeypatch.setenv("PATH", str(hostile))
+    assert shared.capture(source) == expected
+    shared.recheck(source, expected)
+
+
+@pytest.mark.parametrize("program", ["git", "missing-git.exe"])
+def test_shared_git_admission_rejects_unbound_program_before_spawn(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, program: str,
+) -> None:
+    def forbidden(*args: Any, **kwargs: Any) -> None:
+        pytest.fail("invalid executable must fail before subprocess creation")
+
+    monkeypatch.setattr(subprocess, "run", forbidden)
+    candidate = Path(program) if program == "git" else tmp_path / program
+    with pytest.raises(SourcePreservationError) as error:
+        preservation.GitConfigurationAdmission(
+            tmp_path, git_executable=candidate, git_environment=dict(os.environ),
+        )
+    assert error.value.code == "SOURCE_PRESERVATION_ENVIRONMENT"
+
+
+def test_shared_git_environment_is_copied_and_matches_actual_dispatch(
+    configuration_case: tuple[SourcePreservation, Path, dict[str, tuple[Path, Path]]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine, source, _paths = configuration_case
+    executable = shutil.which("git")
+    assert executable is not None
+    explicit = {**os.environ, "DEVX015_ENV_WITNESS": "bound"}
+    shared = preservation.GitConfigurationAdmission(
+        engine.project_root, git_executable=Path(executable), git_environment=explicit,
+    )
+    expected = shared.capture(source)
+    explicit["DEVX015_ENV_WITNESS"] = "caller-mutated"
+    explicit["GIT_DIR"] = str(source / "caller-routing")
+    monkeypatch.setenv("DEVX015_ENV_WITNESS", "parent-mutated")
+    monkeypatch.setenv("GIT_DIR", str(source / "parent-routing"))
+    original = subprocess.run
+    observations = []
+
+    def observed_run(*args, **kwargs):
+        environment = kwargs["env"]
+        assert environment["DEVX015_ENV_WITNESS"] == "bound"
+        assert "GIT_DIR" not in environment
+        observations.append(environment)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", observed_run)
+    assert shared.capture(source) == expected
+    shared.recheck(source, expected)
+    assert observations
+    count = len(observations)
+    with pytest.raises(SourcePreservationError) as rejected:
+        engine._environment(source)
+    assert rejected.value.code == "SOURCE_PRESERVATION_ENVIRONMENT"
+    assert len(observations) == count
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows native file custody proof")
+@pytest.mark.parametrize("insert_configuration", [False, True, "runtime"])
+def test_held_git_admission_parses_only_after_native_custody(
+    configuration_case: tuple[SourcePreservation, Path, dict[str, tuple[Path, Path]]],
+    monkeypatch: pytest.MonkeyPatch, insert_configuration: bool | str,
+) -> None:
+    import ctypes as c
+    from contextlib import contextmanager
+    from ctypes import wintypes as w
+
+    from ai_trading_system.platform.architecture import workflow_coordination as coordination
+    from ai_trading_system.platform.architecture.workflow_execution import (
+        ExecutionContainmentError,
+        capture_acceptance_implementation,
+        capture_matching_inspector_sources,
+    )
+
+    engine, source, paths = configuration_case
+    source_file = source / "src" / "probe.py"
+    source_file.parent.mkdir()
+    source_file.write_text("raise RuntimeError('CANDIDATE_MUST_NOT_EXECUTE')\n", encoding="utf-8")
+    _git(source, "add", "--", "src/probe.py")
+    _git(source, "-c", "user.name=Synthetic", "-c", "user.email=synthetic@localhost",
+         "commit", "-qm", "synthetic source")
+    candidate = _ref(source, "HEAD")
+    copies = {}
+    extra_files = {
+        "extra_source": "shadow.py", "cache": "__pycache__/probe.cpython-313.pyc",
+        "native": "probe.pyd", "path_config": "import.pth", "archive": "import.zip",
+    }
+    for variant in ("matching", "stale", "unheld", "junction", *extra_files):
+        copy_root = source.parent / ("inspector-" + variant)
+        copy_file = copy_root / "src" / "probe.py"
+        copy_file.parent.mkdir(parents=True)
+        copy_file.write_bytes(source_file.read_bytes() if variant != "stale" else b"# stale\n")
+        if variant in extra_files:
+            extra = copy_file.parent / extra_files[variant]
+            extra.parent.mkdir(exist_ok=True)
+            extra.write_bytes(b"unapproved code carrier")
+        copies[variant] = (copy_root, copy_file)
+    outside_inspector = source.parent / "outside-inspector"
+    outside_inspector.mkdir()
+    (outside_inspector / "witness.py").write_text("raise RuntimeError('MUST_NOT_EXECUTE')\n")
+    subprocess.run(
+        ["cmd.exe", "/d", "/c", "mklink", "/J",
+         str(copies["junction"][0] / "src" / "redirect"), str(outside_inspector)],
+        check=True, capture_output=True,
+    )
+    missing_copy = source.parent / "inspector-missing"
+    missing_copy.mkdir()
+    empty_runtime_directory = copies["matching"][0] / "empty"
+    empty_runtime_directory.mkdir()
+    executable = shutil.which("git")
+    assert executable is not None
+    program = Path(executable)
+    shared = preservation.GitConfigurationAdmission(
+        engine.project_root, git_executable=program, git_environment=dict(os.environ),
+    )
+    expected = shared.capture(source)
+    active = False
+    calls = []
+
+    class ReadOnlyProbe(coordination._WindowsEnrollmentAdministrator):
+        # Only elevation/ACL admission is modeled; file/ancestor handles and
+        # Git parsing are real. This is not administrative deployment evidence.
+        def __init__(self):
+            self.c, self.w = c, w
+            self.kernel = c.WinDLL("kernel32", use_last_error=True)
+            self._bind(self.kernel, "CloseHandle", [w.HANDLE], w.BOOL)
+
+        def assert_protected(self, path, **kwargs):
+            pass
+
+        @contextmanager
+        def hold_protected_files(self, *args, **kwargs):
+            nonlocal active
+            with super().hold_protected_files(*args, **kwargs):
+                active = True
+                try:
+                    if insert_configuration is True:
+                        paths["source"][1].write_text("[test]\nvalue = inserted\n")
+                    elif insert_configuration == "runtime":
+                        (copies["matching"][0] / "injected.py").write_bytes(b"# unreported input")
+                    yield
+                finally:
+                    active = False
+
+    original = shared._git
+
+    def checked_git(*args, **kwargs):
+        assert active, "Git must not parse configuration outside the protected lifetime"
+        calls.append(args)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(coordination, "_WindowsEnrollmentAdministrator", ReadOnlyProbe)
+    monkeypatch.setattr(shared, "_git", checked_git)
+    info = program.stat()
+    runtime_files = {program: _sha(program.read_bytes())}
+    runtime_files.update({file: _sha(file.read_bytes()) for variant, (_root, file) in copies.items()
+                          if variant != "unheld"})
+    context = shared.held(
+        source, runtime_files=runtime_files,
+        runtime_identities={program: (info.st_dev, info.st_ino, info.st_nlink)},
+        runtime_roots=(copies["matching"][0],),
+    )
+    with pytest.raises(SourcePreservationError, match="HELD_CONTEXT_INACTIVE"):
+        shared.active_context()
+    with pytest.raises(SourcePreservationError, match="HELD_CONTEXT_FACTORY_REQUIRED"):
+        preservation.HeldGitConfiguration()
+    if insert_configuration:
+        with pytest.raises(SourcePreservationError) as error:
+            with context:
+                pytest.fail("new configuration must be rejected before caller entry")
+        assert error.value.code == (
+            "SOURCE_PRESERVATION_DRIFT" if insert_configuration is True
+            else "SOURCE_PRESERVATION_RUNTIME_UNDECLARED_FILE"
+        )
+        assert calls == []
+    else:
+        with context as observed:
+            assert observed == expected
+            live = shared.active_context()
+            live.assert_current(source, {program: _sha(program.read_bytes())})
+            assert live.assert_runtime_root(copies["matching"][0]) == copies["matching"][0]
+            with pytest.raises(SourcePreservationError, match="RUNTIME_ROOT_NOT_HELD"):
+                live.assert_runtime_root(copies["stale"][0])
+            with pytest.raises(OSError):
+                empty_runtime_directory.rename(empty_runtime_directory.with_name("renamed"))
+            from ai_trading_system.atlas import page_effectiveness as page
+            from ai_trading_system.platform.architecture import (
+                compatibility_authority as compatibility,
+            )
+            from ai_trading_system.platform.architecture import (
+                validation_readiness as readiness,
+            )
+
+            transported = []
+            original_result = shared._git_result
+
+            def checked_result(root, *arguments, **kwargs):
+                assert active
+                transported.append((root, arguments))
+                return original_result(root, *arguments, **kwargs)
+
+            monkeypatch.setattr(shared, "_git_result", checked_result)
+            with monkeypatch.context() as scoped:
+                scoped.setattr(page, "_ordinary_commit_time", lambda *args: "OLD_CACHE")
+                with live.inspection(source):
+                    from ai_trading_system.platform.architecture import (
+                        workflow_execution as execution,
+                    )
+
+                    auto_capture = capture_acceptance_implementation(source, candidate)
+                    assert [row["path"] for row in auto_capture] == ["src/probe.py"]
+                    # Bind the synthetic authority path to invalid JSON so the
+                    # original mapping gate rejects after all real object reads.
+                    scoped.setattr(execution, "_ACCEPTANCE_MANIFEST", "src/probe.py")
+                    before_binding = len(transported)
+                    with pytest.raises(
+                        ExecutionContainmentError, match="ACCEPTANCE_MAPPING_INVALID",
+                    ):
+                        execution.bind_mandatory_acceptance(source, candidate)
+                    assert [args[0] for _root, args in transported[before_binding:]] == [
+                        "rev-parse", "ls-tree", "cat-file",
+                    ]
+                    assert page.repository_head(source) == candidate
+                    from ai_trading_system.platform.architecture import (
+                        integration_publication_fence as fence,
+                    )
+                    from scripts import run_validation_tier as runner
+
+                    before_full_git = len(transported)
+                    assert fence._git(source, "rev-parse", "HEAD") == candidate
+                    fence._require_ancestor(source, candidate, candidate)
+                    assert int(runner._inspection_git_bytes(
+                        source, "cat-file", "-s", f"{candidate}:src/probe.py",
+                    ).stdout) == len(source_file.read_bytes())
+                    assert runner._inspection_git_bytes(
+                        source, "cat-file", "blob", f"{candidate}:src/probe.py",
+                    ).stdout == source_file.read_bytes()
+                    assert len(transported) == before_full_git + 4
+                    assert runner._git_commit(source) == candidate
+                    assert runner._inspection_git_bytes(
+                        source, "show", f"{candidate}:src/probe.py",
+                    ).stdout == source_file.read_bytes()
+                    assert len(transported) == before_full_git + 6
+                    from ai_trading_system.platform.architecture import task_registry_canonical
+
+                    before_canonical = len(transported)
+                    assert task_registry_canonical._canonical_git_read(
+                        source, "rev-parse", "--verify", candidate + "^{commit}",
+                    ).strip() == candidate.encode("ascii")
+                    assert task_registry_canonical._canonical_git_blob(
+                        source, candidate, "src/probe.py",
+                    ) == source_file.read_bytes()
+                    assert len(transported) == before_canonical + 3
+                    with pytest.raises(ValueError, match="CANONICAL_GIT_BLOB_MISSING"):
+                        task_registry_canonical._canonical_git_blob(
+                            source, candidate, "src/missing.py",
+                        )
+                    from ai_trading_system.platform.architecture import checkout_guard as checkout
+
+                    before_checkout = len(transported)
+                    identity = checkout.resolve_checkout_identity(source)
+                    assert identity.head_commit == candidate
+                    assert checkout._registered_worktrees(source)
+                    audit_index = (source / ".git" / "index").read_bytes()
+                    assert isinstance(checkout.collect_checkout_dirty_paths(
+                        source, exclusions=("unrelated.txt",),
+                    ), tuple)
+                    checkout._run_git_diff_check(
+                        source, exclusions=("unrelated.txt",), cached=False,
+                    )
+                    checkout._run_git_diff_check(
+                        source, exclusions=("unrelated.txt",), cached=True,
+                    )
+                    assert (source / ".git" / "index").read_bytes() == audit_index
+                    assert len(transported) > before_checkout
+                    with pytest.raises(fence.PublicationFenceError, match="ANCESTRY_INVALID"):
+                        fence._require_ancestor(source, "0" * 40, candidate)
+                    assert page._commit_time(str(source), candidate) != "OLD_CACHE"
+                    assert compatibility._git_bytes(source, candidate, "src/probe.py") == (
+                        source_file.read_bytes()
+                    )
+                    assert compatibility._git_text(source, candidate, "src/missing.py") == ""
+                    assert compatibility._git_lines(
+                        source, ["grep", "-l", "-F", "CANDIDATE_MUST_NOT_EXECUTE", candidate,
+                                 "--", "src", "scripts", "tests"], allow_no_match=True,
+                    ) == [f"{candidate}:src/probe.py"]
+                    assert readiness._git(source, "cat-file", "-e",
+                                          f"{candidate}:src/probe.py").returncode == 0
+                    assert readiness._git(
+                        source, "diff", "--quiet", "--no-ext-diff", "--no-textconv",
+                        candidate, "--", ":(literal)src",
+                    ).returncode == 0
+                    index_path = source / ".git" / "index"
+                    index_before = index_path.read_bytes()
+                    source_before = source_file.read_bytes()
+                    source_file.write_bytes(source_before + b"# changed\n")
+                    try:
+                        assert readiness._git(
+                            source, "diff", "--quiet", "--no-ext-diff", "--no-textconv",
+                            candidate, "--", ":(literal)src",
+                        ).returncode == 1
+                        assert index_path.read_bytes() == index_before
+                    finally:
+                        source_file.write_bytes(source_before)
+                    assert readiness._git(
+                        source, "ls-files", "--others", "--exclude-standard", "-z",
+                        "--", ":(literal)src",
+                    ).stdout == ""
+                    before_rejected = len(transported)
+                    for rejected_args in (
+                        ("reset", "--hard"), ("-c", "core.fsmonitor=evil", "status"),
+                        ("show", "HEAD:src/probe.py"),
+                        ("show", candidate + ":../outside"),
+                        ("diff", "--numstat", "-z", "--ext-diff", candidate, "--", "src"),
+                        ("show", "-s", "--format=%cI", "--output=outside"),
+                        ("ls-tree", "HEAD", "--", "src/probe.py"),
+                        ("cat-file", "blob", "HEAD:src/probe.py"),
+                        ("cat-file", "-s", candidate + ":../outside"),
+                        ("merge-base", "--is-ancestor", "HEAD", candidate),
+                        ("remote", "set-url", "origin", "outside"),
+                        ("rev-parse", "--git-path", "outside"),
+                        ("rev-parse", "--verify", "--output=outside"),
+                        ("worktree", "add", "outside"),
+                        ("rev-parse", "--verify", "HEAD^{commit}"),
+                        ("rev-parse", "--verify", candidate + "^{tree}"),
+                        ("ls-tree", "-z", candidate, "--", "../outside"),
+                        ("diff", "--check", "--", ".", ":(exclude)unrelated.txt"),
+                    ):
+                        with pytest.raises(
+                            SourcePreservationError, match="HELD_CONTEXT_GIT_COMMAND",
+                        ):
+                            preservation.inspection_git_result(source, *rejected_args)
+                    assert len(transported) == before_rejected
+                    with pytest.raises(SourcePreservationError, match="HELD_CONTEXT_NESTED"):
+                        with live.inspection(source):
+                            pytest.fail("nested transport accepted")
+                assert page._commit_time(str(source), candidate) == "OLD_CACHE"
+                assert preservation.inspection_git_result(source, "rev-parse", "HEAD") is None
+                # Synthetic checker bodies isolate transport propagation, not
+                # actual Full dependency acceptance. Code-root/version gates
+                # retain their independent original regression coverage.
+                scoped.setattr(readiness, "_inspection_code_root", lambda: source)
+                scoped.setattr(
+                    readiness, "_inspection_code_identity", readiness._candidate_identity,
+                )
+                visited = []
+
+                def checker(root, sha):
+                    visited.append(sha)
+                    assert page._commit_time(str(root), sha) != "OLD_CACHE"
+                    return readiness._candidate_identity(root, sha)
+
+                scoped.setattr(readiness, "_checkers", lambda: {
+                    name: checker for name in readiness.CHECKER_IDS
+                })
+                inspected = readiness.check_full_readiness(source, candidate, git_context=live)
+                assert inspected["status"] == "PASS"
+                assert len(visited) == len(readiness.CHECKER_IDS)
+                assert all(root == source for root, _args in transported)
+                before = len(transported)
+                refused = readiness.check_full_readiness(source, candidate, git_context={})
+                assert refused["status"] == "BLOCKED"
+                assert len(transported) == before
+                # A real live custody context does not admit this ordinary
+                # development interpreter as an installed isolated inspector.
+                scoped.setattr(readiness, "_inspection_code_root", lambda: copies["matching"][0])
+                before_visits = len(visited)
+                refused_runtime = readiness.check_full_readiness(
+                    source, candidate, git_context=live,
+                )
+                assert refused_runtime["status"] == "BLOCKED"
+                assert "ACCEPTANCE_INSPECTOR_STARTUP" in str(refused_runtime)
+                assert len(visited) == before_visits
+                # Only test readiness composition here; this seam is not proof
+                # of a deployed protected runtime or administrator admission.
+                from ai_trading_system.platform.architecture import workflow_execution as execution
+
+                def admitted_runtime(root, sha, *, git_context):
+                    assert root == source and sha == candidate and git_context is live
+                    return {"inspector_root": copies["matching"][0].as_posix()}
+
+                scoped.setattr(execution, "bind_protected_inspector_runtime", admitted_runtime)
+                composed = readiness.check_full_readiness(source, candidate, git_context=live)
+                assert composed["status"] == "PASS"
+                assert len(visited) == before_visits + len(readiness.CHECKER_IDS)
+                with live.inspection(source):
+                    nested_readiness = readiness.check_full_readiness(
+                        source, candidate, git_context=live,
+                    )
+                    assert nested_readiness["status"] == "PASS"
+                before_visits = len(visited) - len(readiness.CHECKER_IDS)
+                # Explicit launcher composition seams: no real worker token,
+                # administrator enrollment or Full execution is represented.
+                class UnitToken:
+                    def validate_launcher(self):
+                        return {"unit": True}
+
+                token = UnitToken()
+
+                class UnitExchange:
+                    def validate_worker(self, worker):
+                        assert worker is token
+
+                    @property
+                    def profile_directory(self):
+                        return source
+
+                exchange = UnitExchange()
+                scoped.setattr(execution, "WindowsWorkerToken", UnitToken)
+                scoped.setattr(coordination, "WindowsWorkerExchange", UnitExchange)
+                launch_environment = {"UNIT_ONLY": "1"}
+
+                def receive_main(args, *, protected):
+                    assert preservation.current_inspection_context(source) is live
+                    assert protected.root == source
+                    assert protected.worker_token is token
+                    assert protected.worker_exchange is exchange
+                    assert protected.worker_environment == launch_environment
+                    assert protected.worker_environment is not launch_environment
+                    return 27
+
+                scoped.setattr(runner, "_main", receive_main)
+                launch_arguments = ["full", "--write-runtime-artifact", "--task-id", "unit",
+                                    "--publication-transaction", "unit.json"]
+                assert runner.run_protected_full(
+                    launch_arguments, candidate_root=source, git_context=live,
+                    worker_token=token, worker_environment=launch_environment,
+                    worker_exchange=exchange,
+                ) == 27
+                assert preservation.current_inspection_context(source) is None
+
+                def failed_main(*args, **kwargs):
+                    raise RuntimeError("unit dispatch failure")
+
+                scoped.setattr(runner, "_main", failed_main)
+                with pytest.raises(RuntimeError, match="unit dispatch failure"):
+                    runner.run_protected_full(
+                        launch_arguments, candidate_root=source, git_context=live,
+                        worker_token=token, worker_environment=launch_environment,
+                        worker_exchange=exchange,
+                    )
+                assert preservation.current_inspection_context(source) is None
+                scoped.setattr(readiness, "_inspection_code_root", lambda: copies["stale"][0])
+                wrong_origin = readiness.check_full_readiness(source, candidate, git_context=live)
+                assert wrong_origin["status"] == "BLOCKED"
+                assert "READINESS_INSPECTOR_ORIGIN" in str(wrong_origin)
+                assert len(visited) == before_visits + len(readiness.CHECKER_IDS)
+            captured = capture_acceptance_implementation(source, candidate, git_context=live)
+            assert [row["path"] for row in captured] == ["src/probe.py"]
+            assert captured[0]["sha256"] == _sha(source_file.read_bytes())
+            matched = capture_matching_inspector_sources(
+                copies["matching"][0], source, candidate, git_context=live,
+            )
+            assert matched == [{"path": copies["matching"][1].as_posix(),
+                                "sha256": _sha(source_file.read_bytes()),
+                                "size_bytes": source_file.stat().st_size}]
+            for variant, reason in (("stale", "ACCEPTANCE_INSPECTOR_NOT_CANDIDATE"),
+                                    ("unheld", "ACCEPTANCE_INSPECTOR_NOT_HELD"),
+                                    ("junction", "ACCEPTANCE_INSPECTOR_REPARSE"),
+                                    ("extra_source", "ACCEPTANCE_INSPECTOR_SOURCE_EXTRA"),
+                                    *((name, "ACCEPTANCE_INSPECTOR_EXECUTABLE_EXTRA")
+                                      for name in extra_files if name != "extra_source")):
+                with pytest.raises(ExecutionContainmentError, match=reason):
+                    capture_matching_inspector_sources(
+                        copies[variant][0], source, candidate, git_context=live,
+                    )
+            with pytest.raises(
+                ExecutionContainmentError, match="ACCEPTANCE_INSPECTOR_SOURCE_MISSING",
+            ):
+                capture_matching_inspector_sources(
+                    missing_copy, source, candidate, git_context=live,
+                )
+            assert live.candidate_source_tree(source / ".." / source.name, candidate)
+            assert calls[-1][0] == source
+            before_calls = len(calls)
+            with pytest.raises(ExecutionContainmentError, match="HELD_CONTEXT_CANDIDATE"):
+                capture_acceptance_implementation(source, "HEAD", git_context=live)
+            with pytest.raises(ExecutionContainmentError, match="ACCEPTANCE_GIT_CONTEXT_REQUIRED"):
+                capture_acceptance_implementation(source, candidate, git_context={})
+            assert len(calls) == before_calls
+            with pytest.raises(SourcePreservationError, match="HELD_CONTEXT_FILES"):
+                live.assert_current(source, {program: "0" * 64})
+            with pytest.raises(SourcePreservationError, match="HELD_CONTEXT_SCOPE"):
+                live.assert_current(source.parent, {})
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                foreign = executor.submit(live.assert_current, source, {})
+                with pytest.raises(SourcePreservationError, match="HELD_CONTEXT_INACTIVE"):
+                    foreign.result(timeout=10)
+            with pytest.raises(SourcePreservationError, match="HELD_CONTEXT_NESTED"):
+                with shared.held(source, runtime_files={}, runtime_identities={}):
+                    pytest.fail("nested context must not replace the active custody")
+            with pytest.raises(OSError):
+                paths["source"][0].write_bytes(b"must not replace config")
+            observed.clear()  # Caller changes cannot weaken the internal exit recheck.
+        assert calls and not active
+        before_transport = len(transported)
+        expired = readiness.check_full_readiness(source, candidate, git_context=live)
+        assert expired["status"] == "BLOCKED"
+        assert len(transported) == before_transport
+        # A stale context selected by an inherited caller must not silently
+        # become an ordinary HEAD/profile lookup after custody has ended.
+        selected = preservation._INSPECTION_GIT.set(live)
+        try:
+            with pytest.raises(SourcePreservationError, match="HELD_CONTEXT_INACTIVE"):
+                runner._git_commit(source)
+            with pytest.raises(SourcePreservationError, match="HELD_CONTEXT_INACTIVE"):
+                runner._inspection_git_bytes(source, "show", f"{candidate}:src/probe.py")
+        finally:
+            preservation._INSPECTION_GIT.reset(selected)
+        assert len(transported) == before_transport
+        with pytest.raises(SourcePreservationError, match="HELD_CONTEXT_INACTIVE"):
+            live.assert_current(source, {})
+        with pytest.raises(SourcePreservationError, match="HELD_CONTEXT_INACTIVE"):
+            live.assert_runtime_root(copies["matching"][0])
+        before_calls = len(calls)
+        with pytest.raises(ExecutionContainmentError, match="HELD_CONTEXT_INACTIVE"):
+            capture_acceptance_implementation(source, candidate, git_context=live)
+        assert len(calls) == before_calls
+        with pytest.raises(SourcePreservationError, match="HELD_CONTEXT_INACTIVE"):
+            shared.active_context()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows administrator admission proof")
+def test_held_git_admission_requires_real_administrator_before_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import ctypes
+
+    from ai_trading_system.platform.architecture import workflow_coordination as coordination
+
+    if ctypes.windll.shell32.IsUserAnAdmin():
+        pytest.skip("this negative case requires an ordinary unelevated process")
+    executable = shutil.which("git")
+    assert executable is not None
+    shared = preservation.GitConfigurationAdmission(
+        tmp_path, git_executable=Path(executable), git_environment=dict(os.environ),
+    )
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("administrator rejection must precede Git metadata access")
+
+    monkeypatch.setattr(preservation, "_git_configuration_layout", forbidden)
+    with pytest.raises(coordination.ParallelControlError, match="ADMINISTRATOR_REQUIRED"):
+        with shared.held(tmp_path, runtime_files={}, runtime_identities={}):
+            pytest.fail("ordinary process cannot acquire protected admission")
+
+
+def test_installed_inspector_rejects_development_startup_before_inventory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def forbidden(*args, **kwargs):
+        pytest.fail("ordinary startup reached installation inventory")
+
+    monkeypatch.setattr(preservation, "_runtime_namespace", forbidden)
+    with pytest.raises(SourcePreservationError, match="INSTALLED_INSPECTOR_STARTUP"):
+        with preservation.hold_installed_inspector(tmp_path):
+            pytest.fail("development interpreter admitted")
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows administrator admission proof")
+def test_installed_inspector_requires_real_admin_before_inventory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import ctypes
+    from types import SimpleNamespace
+
+    from ai_trading_system.platform.architecture import workflow_coordination as coordination
+
+    if ctypes.windll.shell32.IsUserAnAdmin():
+        pytest.skip("negative case requires an ordinary unelevated process")
+    # Only startup locations are modeled; the OS administrator check is real.
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(preservation, "__file__", str(tmp_path / "installed.py"))
+    monkeypatch.setattr(preservation, "sys", SimpleNamespace(
+        executable=str(tmp_path / "python.exe"), flags=SimpleNamespace(isolated=1, no_site=1),
+        dont_write_bytecode=True, modules={}, prefix=str(tmp_path), base_prefix=str(tmp_path),
+    ))
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("non-administrator reached installation inventory")
+
+    monkeypatch.setattr(preservation, "_runtime_namespace", forbidden)
+    with pytest.raises(coordination.ParallelControlError, match="ADMINISTRATOR_REQUIRED"):
+        with preservation.hold_installed_inspector(tmp_path / "candidate"):
+            pytest.fail("ordinary process admitted")
+
+
+@pytest.mark.skipif(os.name != "nt", reason="native bounded file reads")
+@pytest.mark.parametrize("fault", [None, "hash", "size", "extra", "duplicate", "self", "escape"])
+def test_installed_inspector_composes_complete_inventory_and_fixed_git_environment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fault: str | None,
+) -> None:
+    import ctypes as c
+    from contextlib import contextmanager
+    from ctypes import wintypes as w
+    from types import SimpleNamespace
+
+    from ai_trading_system.platform.architecture import workflow_coordination as coordination
+
+    runtime = tmp_path / "installed"
+    git = runtime / "git" / "cmd" / "git.exe"
+    git.parent.mkdir(parents=True)
+    git.write_bytes(b"unit git witness - never executed")
+    (runtime / "python.exe").write_bytes(b"unit interpreter witness - never executed")
+    rows = [{"path": path.relative_to(runtime).as_posix(), "sha256": _sha(path.read_bytes()),
+             "size_bytes": path.stat().st_size} for path in (git, runtime / "python.exe")]
+    if fault == "hash":
+        rows[0]["sha256"] = "0" * 64
+    elif fault == "size":
+        rows[0]["size_bytes"] += 1
+    elif fault == "extra":
+        (runtime / "undeclared.py").write_text("# must refuse", encoding="utf-8")
+    elif fault == "duplicate":
+        rows.append(dict(rows[0]))
+    elif fault == "self":
+        rows[0]["path"] = "runtime-manifest.json"
+    elif fault == "escape":
+        rows[0]["path"] = "../outside"
+    manifest = runtime / "runtime-manifest.json"
+    manifest.write_text(json.dumps({"schema_version": "devx015_installed_runtime.v1",
+                                    "files": rows}), encoding="utf-8")
+    monkeypatch.chdir(runtime)
+    monkeypatch.setattr(preservation, "__file__", str(runtime / "source_preservation.py"))
+    monkeypatch.setattr(preservation, "sys", SimpleNamespace(
+        executable=str(runtime / "python.exe"), flags=SimpleNamespace(isolated=1, no_site=1),
+        dont_write_bytecode=True, modules={}, prefix=str(runtime), base_prefix=str(runtime),
+    ))
+    monkeypatch.setenv("GIT_EXEC_PATH", "untrusted-helper-path")
+    monkeypatch.setenv("PATH", "untrusted-search-path")
+    protected = set()
+
+    class UnitAdministrator(coordination._WindowsEnrollmentAdministrator):
+        def __init__(self):
+            self.c, self.w = c, w
+            self.kernel = c.WinDLL("kernel32", use_last_error=True)
+            self._bind(self.kernel, "CloseHandle", [w.HANDLE], w.BOOL)
+
+        def assert_protected(self, path):
+            protected.add(path)
+
+    marker = object()
+
+    class UnitAdmission:
+        def __init__(self, root, *, git_executable, git_environment):
+            assert git_executable == git
+            assert "GIT_EXEC_PATH" not in git_environment
+            assert git_environment["PATH"].split(os.pathsep) == [
+                str(runtime / "git" / part) for part in ("cmd", "mingw64/bin", "usr/bin")
+            ]
+
+        @contextmanager
+        def held(self, root, *, runtime_files, runtime_identities, runtime_roots):
+            assert set(runtime_files) == {git, runtime / "python.exe", manifest}
+            assert manifest in protected
+            assert runtime_roots == (runtime,)
+            assert all(row[2] == 1 for row in runtime_identities.values())
+            with UnitAdministrator().hold_protected_files(
+                runtime_files, protected_directories=runtime_roots,
+                expected_file_identities=runtime_identities,
+            ):
+                assert set(runtime_files) <= protected
+                yield
+
+        def active_context(self):
+            return marker
+
+    # Explicit composition seams, not native administrator admission evidence.
+    monkeypatch.setattr(coordination, "_WindowsEnrollmentAdministrator", UnitAdministrator)
+    monkeypatch.setattr(preservation, "GitConfigurationAdmission", UnitAdmission)
+    if fault is None:
+        with preservation.hold_installed_inspector(tmp_path / "candidate") as context:
+            assert context is marker
+            with pytest.raises(OSError):
+                with git.open("ab"):
+                    pass
+    else:
+        with pytest.raises((ValueError, coordination.ParallelControlError)):
+            with preservation.hold_installed_inspector(tmp_path / "candidate"):
+                pytest.fail("invalid installation admitted")
 
 
 def _assert_configuration_capture(

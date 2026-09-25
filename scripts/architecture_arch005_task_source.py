@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +47,11 @@ def main() -> int:
     update.add_argument("--blocker-or-next-step")
     update.add_argument("--acceptance-criteria")
     update.add_argument("--notes")
+    update.add_argument(
+        "--workflow-authority",
+        type=Path,
+        help="Freeze a structured workflow_task_authority.v1 reference in the current event.",
+    )
     _add_publication_argument(update)
 
     register = subparsers.add_parser("register", help="register one new canonical task")
@@ -64,8 +70,22 @@ def main() -> int:
     rollback.add_argument("--output-root", required=True, type=Path)
 
     args = parser.parse_args()
+    if args.command in {"build", "refresh-consumers", "update", "register"}:
+        fence = IntegrationPublicationFence(project_root=PROJECT_ROOT)
+        actor = str(getattr(args, "actor", "integration-coordinator"))
+        with fence.guard.store.atomic(actor=actor, now=datetime.now(UTC)):
+            _require_publication_transaction(args)
+            if fence.replay(args.publication_transaction).transaction["actor"] != actor:
+                raise SystemExit("publication actor does not own task-source mutation")
+            payload = _execute_command(args)
+    else:
+        payload = _execute_command(args)
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
+
+
+def _execute_command(args: argparse.Namespace) -> dict[str, Any]:
     command = str(args.command)
-    _require_publication_transaction(args)
     if command == "build":
         payload = build_cutover_candidate(
             project_root=PROJECT_ROOT,
@@ -99,6 +119,7 @@ def main() -> int:
             blocker_or_next_step=args.blocker_or_next_step,
             acceptance_criteria=args.acceptance_criteria,
             notes=args.notes,
+            workflow_authority=_workflow_authority(args.workflow_authority),
         )
     elif command == "register":
         payload = register_task(
@@ -114,8 +135,7 @@ def main() -> int:
             project_root=PROJECT_ROOT,
             output_root=args.output_root,
         )
-    print(json.dumps(payload, ensure_ascii=False, indent=2))
-    return 0
+    return payload
 
 
 def _add_event_arguments(parser: argparse.ArgumentParser) -> None:
@@ -163,6 +183,18 @@ def _cells(raw: str) -> list[str]:
         raise SystemExit(f"--cells-json is not valid JSON: {exc}") from exc
     if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
         raise SystemExit("--cells-json must be a JSON array of strings")
+    return value
+
+
+def _workflow_authority(path: Path | None) -> dict[str, Any] | None:
+    if path is None:
+        return None
+    from ai_trading_system.platform.architecture.workflow_contract import bounded_regular_bytes
+    from ai_trading_system.platform.artifacts.json_contract import load_strict_json_text
+
+    value = load_strict_json_text(bounded_regular_bytes(path, budget=65536).decode("utf-8"))
+    if not isinstance(value, dict):
+        raise SystemExit("workflow authority must be a JSON object")
     return value
 
 

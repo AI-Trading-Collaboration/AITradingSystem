@@ -25,18 +25,30 @@ from ai_trading_system.platform.architecture.parallel_control import (
 )
 from ai_trading_system.platform.architecture.parallel_control_kernel import (
     ExecutionLease,
-    FileExecutionLeaseStore,
     LeaseReplay,
     ParallelControlPolicy,
     ReadinessDecision,
     TaskControlRecord,
     load_parallel_control_policy,
+    manifest_resource_claims,
 )
 from ai_trading_system.platform.artifacts import write_json_atomic
+from ai_trading_system.platform.artifacts.json_contract import load_strict_json_text
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 CHECKOUT_GUARD_POLICY_SCHEMA_VERSION = "arch_005_s4d_checkout_guard_policy.v2"
 CHECKOUT_INTENT_SCHEMA_VERSION = "checkout_operation_intent.v1"
+CHECKOUT_SOURCE_ONLY_INTENT_SCHEMA_VERSION = "checkout_operation_intent.v2"
+CHECKOUT_FULL_WORKTREE_PROFILE = "FULL_WORKTREE"
+CHECKOUT_SOURCE_ONLY_PROFILE = "SOURCE_ONLY_EXPLICIT_PATHS"
+CHECKOUT_SOURCE_ONLY_CAPABILITY_PREFIX = "checkout-source-only-capability:"
+CHECKOUT_SOURCE_ONLY_CAPABILITY_VERSION = "SOURCE_ONLY_EXPLICIT_PATHS@2"
+CHECKOUT_SOURCE_ONLY_RUNTIME = "outputs/architecture/arch_005_task_checkpoints"
+# DEVX-015 reviewed engineering ceilings. A checkpoint policy may be stricter;
+# these hard ceilings never authorize publication or a source-file mutation.
+_CHECKPOINT_MAX_FILES = 2048
+_CHECKPOINT_MAX_TOTAL_BYTES = 64 * 1024 * 1024
+_INTENT_MAX_BYTES = 16 * 1024 * 1024
 CHECKOUT_DECISION_SCHEMA_VERSION = "checkout_guard_decision.v1"
 CHECKOUT_WORKTREE_AUDIT_SCHEMA_VERSION = "checkout_worktree_audit.v2"
 DEFAULT_CHECKOUT_GUARD_POLICY_PATH = (
@@ -170,9 +182,15 @@ class CheckoutOperationIntent:
     observed_dirty_paths: tuple[str, ...]
     known_unrelated_exclusions: tuple[KnownUnrelatedExclusion, ...]
     created_at: datetime
+    inspection_profile: str = CHECKOUT_FULL_WORKTREE_PROFILE
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        if self.inspection_profile not in {
+            CHECKOUT_FULL_WORKTREE_PROFILE,
+            CHECKOUT_SOURCE_ONLY_PROFILE,
+        }:
+            raise CheckoutGuardError("CHECKOUT_INSPECTION_PROFILE_INVALID", self.inspection_profile)
+        result: dict[str, object] = {
             "schema_version": CHECKOUT_INTENT_SCHEMA_VERSION,
             "intent_id": self.intent_id,
             "task_id": self.task_id,
@@ -192,6 +210,83 @@ class CheckoutOperationIntent:
             "broker_action": "none",
             "created_at": self.created_at.isoformat(),
         }
+        if self.inspection_profile == CHECKOUT_SOURCE_ONLY_PROFILE:
+            result.update(
+                schema_version=CHECKOUT_SOURCE_ONLY_INTENT_SCHEMA_VERSION,
+                inspection_profile=CHECKOUT_SOURCE_ONLY_PROFILE,
+                source_mutation_allowed=False,
+                unscoped_worktree_status="NOT_INSPECTED",
+                clean_integration_status="NOT_EVALUATED",
+            )
+        return result
+
+
+def parse_checkout_operation_intent(payload: Mapping[str, object]) -> CheckoutOperationIntent:
+    """Parse exact v1/v2 authority without upgrading a historical capability."""
+    try:
+        schema = payload.get("schema_version")
+        if schema == CHECKOUT_INTENT_SCHEMA_VERSION:
+            profile = CHECKOUT_FULL_WORKTREE_PROFILE
+        elif schema == CHECKOUT_SOURCE_ONLY_INTENT_SCHEMA_VERSION:
+            profile = CHECKOUT_SOURCE_ONLY_PROFILE
+        else:
+            raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", "unsupported intent schema")
+        raw_identity = _mapping(payload.get("workspace_identity"), "workspace_identity")
+        identity = CheckoutIdentity(**raw_identity)
+        for name in ("workspace_id", "checkout_root", "git_common_dir", "head_commit"):
+            _required_text(getattr(identity, name), name)
+        for name in ("branch_name", "upstream_ref", "upstream_commit"):
+            if getattr(identity, name) is not None:
+                _required_text(getattr(identity, name), name)
+        raw_exclusions = payload.get("known_unrelated_exclusions")
+        if not isinstance(raw_exclusions, list):
+            raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", "known_unrelated_exclusions")
+        exclusions = []
+        for raw in raw_exclusions:
+            item = _mapping(raw, "known_unrelated_exclusion")
+            exclusions.append(
+                KnownUnrelatedExclusion(
+                    path=_portable_path(item.get("path"), "excluded path"),
+                    rationale=_required_text(item.get("rationale"), "rationale"),
+                    owner_ref=_required_text(item.get("owner_ref"), "owner_ref"),
+                )
+            )
+        intent = CheckoutOperationIntent(
+            intent_id=_identifier(payload.get("intent_id"), "intent_id"),
+            task_id=_required_text(payload.get("task_id"), "task_id"),
+            thread_id=_required_text(payload.get("thread_id"), "thread_id"),
+            actor=_required_text(payload.get("actor"), "actor"),
+            operation_class=CheckoutOperationClass(
+                _required_text(payload.get("operation_class"), "operation_class")
+            ),
+            base_commit=_required_text(payload.get("base_commit"), "base_commit"),
+            owned_paths=_release_paths(payload.get("owned_paths"), "owned_paths"),
+            shared_paths=_release_paths(payload.get("shared_paths"), "shared_paths"),
+            workspace_identity=identity,
+            observed_dirty_paths=_release_paths(
+                payload.get("observed_dirty_paths"), "observed_dirty_paths"
+            ),
+            known_unrelated_exclusions=tuple(exclusions),
+            created_at=datetime.fromisoformat(
+                _required_text(payload.get("created_at"), "created_at")
+            ),
+            inspection_profile=profile,
+        )
+        _aware_utc(intent.created_at)
+        if (
+            intent.to_dict() != dict(payload)
+            or type(payload.get("task_source_cutover")) is not bool
+            or profile == CHECKOUT_SOURCE_ONLY_PROFILE
+            and type(payload.get("source_mutation_allowed")) is not bool
+        ):
+            raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", "exact intent schema required")
+        if profile == CHECKOUT_SOURCE_ONLY_PROFILE:
+            _source_only_scope(intent.operation_class, intent.owned_paths, intent.shared_paths)
+            if intent.observed_dirty_paths:
+                raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", "unscoped status not inspected")
+        return intent
+    except (TypeError, ValueError, KeyError, AttributeError) as exc:
+        raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", type(exc).__name__) from exc
 
 
 @dataclass(frozen=True)
@@ -337,9 +432,15 @@ class CheckoutLeaseGuard:
         )
         if not self.runtime_root.is_relative_to(self.project_root):
             raise CheckoutGuardError("CHECKOUT_RUNTIME_ROOT_OUTSIDE", str(self.runtime_root))
-        self.store = FileExecutionLeaseStore(
+        from ai_trading_system.platform.architecture.workflow_coordination import (
+            coordinated_lease_store,
+        )
+
+        self.store = coordinated_lease_store(
+            self.project_root,
             self.runtime_root / "leases",
             policy=self.lease_policy,
+            entrypoint="checkout-guard",
         )
 
     def replay(self) -> LeaseReplay:
@@ -392,6 +493,23 @@ class CheckoutLeaseGuard:
             known_unrelated_exclusions=exclusions,
         )
 
+    def cancel_request(
+        self, lease_id: str, *, actor: str, now: datetime | None = None,
+    ) -> ExecutionLease:
+        """Cancel only the exact bound, never-executed checkout request."""
+        instant = _aware_utc(now or datetime.now(tz=UTC))
+        with self.store.atomic(actor=actor, now=instant, operation="terminal"):
+            replay = self.store.replay()
+            if replay.status != "PASS":
+                raise CheckoutGuardError("CHECKOUT_LEASE_REPLAY_INVALID", lease_id)
+            head = next((row for row in replay.lease_heads if row.lease_id == lease_id), None)
+            if head is None:
+                raise CheckoutGuardError("CHECKOUT_LEASE_UNKNOWN", lease_id)
+            _intent, intent_path = self._bound_lease_intent(head)
+            return self.store.cancel_request(
+                lease_id, actor=actor, now=instant, evidence_refs=(intent_path.as_posix(),),
+            )
+
     def release(
         self,
         lease_id: str,
@@ -406,29 +524,28 @@ class CheckoutLeaseGuard:
         head = {lease.lease_id: lease for lease in replay.lease_heads}.get(lease_id)
         if head is None:
             raise CheckoutGuardError("CHECKOUT_LEASE_UNKNOWN", lease_id)
-        intent_id = head.change_id.removeprefix("checkout:")
-        if f"checkout:{intent_id}" != head.change_id:
-            raise CheckoutGuardError(
-                "CHECKOUT_RELEASE_CHANGE_ID",
-                head.change_id,
-            )
-        intent_path = self.runtime_root / "intents" / f"{intent_id}.json"
-        declared_paths, operation_class = _load_release_scope(
-            intent_path,
-            expected_intent_id=intent_id,
-        )
+        intent, intent_path = self._bound_lease_intent(head)
+        declared_paths = (*intent.owned_paths, *intent.shared_paths)
+        operation_class = intent.operation_class
         status_exclusions = (
             *(row.path for row in self.policy.known_unrelated_exclusions),
             self.runtime_root.relative_to(self.project_root).as_posix(),
         )
-        dirty_paths = collect_checkout_dirty_paths(
-            self.project_root,
-            exclusions=status_exclusions,
-        )
+        if intent.inspection_profile == CHECKOUT_SOURCE_ONLY_PROFILE:
+            self._inspect_source_only(operation_class, intent.owned_paths, intent.shared_paths)
+            dirty_paths: tuple[str, ...] = ()
+        else:
+            dirty_paths = collect_checkout_dirty_paths(
+                self.project_root,
+                exclusions=status_exclusions,
+            )
         unattributed = _unattributed_dirty_paths(
             dirty_paths,
             operation_class=operation_class,
-            declared_paths=declared_paths,
+            declared_paths=self._live_attributed_paths(
+                dirty_paths, operation_class=operation_class, declared_paths=declared_paths,
+                actor=actor, now=instant,
+            ),
         )
         reason = _identifier(outcome, "outcome").upper()
         reason_codes = (
@@ -449,6 +566,159 @@ class CheckoutLeaseGuard:
             )
         return released
 
+    def _live_attributed_paths(
+        self, dirty_paths: Sequence[str], *, operation_class: CheckoutOperationClass,
+        declared_paths: Sequence[str], actor: str, now: datetime,
+    ) -> tuple[str, ...]:
+        """Recognize current ordinary owners; never turn their claims into ours.
+
+        Resource-conflict admission still uses only the caller's declared paths.
+        Snapshot the existing authority under its arbiter, and independently bind
+        each same-checkout intent before accepting its dirty-path attribution.
+        """
+        paths = set(declared_paths)
+        if not dirty_paths or operation_class not in {
+            CheckoutOperationClass.DOMAIN_MUTATION, CheckoutOperationClass.SHARED_MUTATION,
+        }:
+            return tuple(sorted(paths))
+        with self.store.atomic(actor=actor, now=now):
+            replay = self.store.replay()
+            if replay.status != "PASS":
+                raise CheckoutGuardError("CHECKOUT_ATTRIBUTION_REPLAY_INVALID", str(replay.issues))
+            identity = resolve_checkout_identity(self.project_root)
+            gate = "checkout-gate:" + identity.workspace_id
+            for lease in replay.active_leases:
+                if (
+                    lease.task_id != self.policy.authority_task_id
+                    or lease.actor not in self.policy.allowlisted_actors
+                    or lease.expires_at is None
+                    or _aware_utc(datetime.fromisoformat(lease.expires_at)) <= now
+                    or not any(row.kind == "contract" and row.resource_id == gate
+                               for row in lease.resources)
+                ):
+                    continue
+                intent, _ = self._bound_lease_intent(lease)
+                if intent.inspection_profile == CHECKOUT_FULL_WORKTREE_PROFILE and (
+                    intent.operation_class in {
+                        CheckoutOperationClass.DOMAIN_MUTATION,
+                        CheckoutOperationClass.SHARED_MUTATION,
+                    }
+                ):
+                    paths.update((*intent.owned_paths, *intent.shared_paths))
+        return tuple(sorted(paths))
+
+    def _bound_lease_intent(self, lease: ExecutionLease) -> tuple[CheckoutOperationIntent, Path]:
+        intent_id = lease.change_id.removeprefix("checkout:")
+        if f"checkout:{intent_id}" != lease.change_id:
+            raise CheckoutGuardError("CHECKOUT_RELEASE_CHANGE_ID", lease.change_id)
+        _identifier(intent_id, "intent_id")
+        path = self.runtime_root / "intents" / f"{intent_id}.json"
+        intent = _read_checkout_intent(self.project_root, path)
+        task, _ = self._lease_task(intent)
+        if (
+            lease.state == "RELEASED"
+            and self.store.coordination_binding is not None
+            and lease.change_manifest_sha256 != task.manifest.sha256
+        ):
+            # A retired lease keeps its original unscoped path namespace. Prove
+            # the exact immutable terminal origin; never infer it from a caller
+            # flag or use this branch for an ACTIVE lease/new writer admission.
+            from ai_trading_system.platform.architecture.workflow_coordination import (
+                registered_legacy_terminal_lease,
+            )
+
+            try:
+                origin = registered_legacy_terminal_lease(
+                    self.project_root, self.runtime_root / "leases",
+                    policy=self.lease_policy, lease_id=lease.lease_id,
+                )
+            except (ParallelControlError, OSError, ValueError) as exc:
+                raise CheckoutGuardError("CHECKOUT_TERMINAL_ORIGIN_INVALID", str(exc)) from exc
+            if origin == lease:
+                task = replace(task, manifest=replace(
+                    task.manifest, owned_paths=intent.owned_paths, shared_paths=intent.shared_paths,
+                ))
+        current = resolve_checkout_identity(self.project_root)
+        if (
+            intent.intent_id != intent_id
+            or lease.task_id != self.policy.authority_task_id
+            or lease.change_id != task.manifest.change_id
+            or lease.actor != intent.actor
+            or lease.base_commit != intent.base_commit
+            or lease.change_manifest_sha256 != task.manifest.sha256
+            or lease.lane_id != _lane_id(intent.operation_class)
+            or lease.resources != manifest_resource_claims(task.manifest)
+            or Path(intent.workspace_identity.checkout_root).resolve() != self.project_root
+            or intent.workspace_identity.workspace_id != current.workspace_id
+            or Path(intent.workspace_identity.git_common_dir).resolve()
+            != Path(current.git_common_dir).resolve()
+            or intent.workspace_identity.head_commit != intent.base_commit
+            or intent.known_unrelated_exclusions != self.policy.known_unrelated_exclusions
+        ):
+            raise CheckoutGuardError("CHECKOUT_LEASE_INTENT_BINDING", lease.lease_id)
+        return intent, path
+
+    def require_mutation_lease(
+        self,
+        lease: ExecutionLease,
+        *,
+        expected_intent_path: Path | None = None,
+        task_id: str | None = None,
+        actor: str | None = None,
+    ) -> CheckoutOperationIntent:
+        """Require ordinary mutation capability, including historical release proof.
+
+        State/expiry and a publication transaction's remaining identity are the
+        consumer's responsibility; a source-only lease is never a mutation grant.
+        """
+        intent, path = self._bound_lease_intent(lease)
+        if (
+            intent.inspection_profile != CHECKOUT_FULL_WORKTREE_PROFILE
+            or intent.operation_class
+            not in {
+                CheckoutOperationClass.DOMAIN_MUTATION,
+                CheckoutOperationClass.SHARED_MUTATION,
+            }
+        ):
+            raise CheckoutGuardError("CHECKOUT_MUTATION_CAPABILITY_REQUIRED", lease.lease_id)
+        if (
+            expected_intent_path is not None
+            and expected_intent_path.absolute() != path.absolute()
+            or task_id is not None
+            and intent.task_id != task_id
+            or actor is not None
+            and intent.actor != actor
+        ):
+            raise CheckoutGuardError("CHECKOUT_LEASE_INTENT_BINDING", lease.lease_id)
+        return intent
+
+    def _inspect_source_only(
+        self,
+        operation_class: CheckoutOperationClass,
+        owned_paths: Sequence[str],
+        shared_paths: Sequence[str],
+    ) -> None:
+        paths = _source_only_scope(operation_class, owned_paths, shared_paths)
+        # No Git status, attributes, ignore-file or source-content read here.
+        # These are conservative metadata gates, not a clean-worktree claim.
+        for path in paths:
+            if any(
+                _paths_overlap(path, row.path) for row in self.policy.known_unrelated_exclusions
+            ):
+                raise CheckoutGuardError("CHECKOUT_SOURCE_ONLY_SCOPE", "known unrelated path")
+        total = 0
+        for path in paths:
+            _assert_no_reparse_components(self.project_root, path)
+            try:
+                metadata = os.lstat(self.project_root / path)
+            except FileNotFoundError:
+                continue  # The checkpoint layer proves DELETE against source HEAD.
+            if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
+                raise CheckoutGuardError("CHECKOUT_SOURCE_ONLY_PATH", "regular single-link source")
+            total += metadata.st_size
+        if total > _CHECKPOINT_MAX_TOTAL_BYTES:
+            raise CheckoutGuardError("CHECKOUT_SOURCE_ONLY_BUDGET", "aggregate source size")
+
     def acquire(
         self,
         *,
@@ -461,8 +731,11 @@ class CheckoutLeaseGuard:
         shared_paths: Sequence[str] = (),
         base_commit: str | None = None,
         now: datetime | None = None,
+        inspection_profile: str = CHECKOUT_FULL_WORKTREE_PROFILE,
     ) -> tuple[CheckoutGuardDecision, CheckoutLeaseHandle | None]:
         instant = _aware_utc(now or datetime.now(tz=UTC))
+        if inspection_profile not in {CHECKOUT_FULL_WORKTREE_PROFILE, CHECKOUT_SOURCE_ONLY_PROFILE}:
+            raise CheckoutGuardError("CHECKOUT_INSPECTION_PROFILE_INVALID", inspection_profile)
         if actor not in self.policy.allowlisted_actors:
             raise CheckoutGuardError("CHECKOUT_ACTOR_NOT_ALLOWLISTED", actor)
         identity = resolve_checkout_identity(self.project_root)
@@ -511,14 +784,21 @@ class CheckoutLeaseGuard:
             *(row.path for row in self.policy.known_unrelated_exclusions),
             self.runtime_root.relative_to(self.project_root).as_posix(),
         )
-        dirty_paths = collect_checkout_dirty_paths(
-            self.project_root,
-            exclusions=status_exclusions,
-        )
+        if inspection_profile == CHECKOUT_SOURCE_ONLY_PROFILE:
+            self._inspect_source_only(operation_class, checked_owned, checked_shared)
+            dirty_paths: tuple[str, ...] = ()
+        else:
+            dirty_paths = collect_checkout_dirty_paths(
+                self.project_root,
+                exclusions=status_exclusions,
+            )
         unattributed = _unattributed_dirty_paths(
             dirty_paths,
             operation_class=operation_class,
-            declared_paths=(*checked_owned, *checked_shared),
+            declared_paths=self._live_attributed_paths(
+                dirty_paths, operation_class=operation_class,
+                declared_paths=(*checked_owned, *checked_shared), actor=actor, now=instant,
+            ),
         )
         intent = CheckoutOperationIntent(
             intent_id=_identifier(intent_id, "intent_id"),
@@ -533,9 +813,28 @@ class CheckoutLeaseGuard:
             observed_dirty_paths=dirty_paths,
             known_unrelated_exclusions=self.policy.known_unrelated_exclusions,
             created_at=instant,
+            inspection_profile=inspection_profile,
         )
         intent_path = self.runtime_root / "intents" / f"{intent.intent_id}.json"
-        intent = _persist_or_replay_intent(intent_path, intent)
+        # Intent persistence is a writer side effect too. Migration phase/epoch
+        # checks must precede it under the same short store arbiter as leases.
+        try:
+            with self.store.atomic(actor=actor, now=instant, operation="acquire"):
+                intent = _persist_or_replay_intent(intent_path, intent)
+        except ParallelControlError as exc:
+            if exc.code == "LEASE_ARBITER_BUSY":
+                return (
+                    CheckoutGuardDecision(
+                        status="BLOCKED",
+                        reason_codes=(f"CHECKOUT_LEASE_ARBITER_BUSY:{exc.message}",),
+                        intent=intent,
+                        intent_path=intent_path,
+                        lease_id=None,
+                        lease_state=None,
+                    ),
+                    None,
+                )
+            raise CheckoutGuardError(exc.code, exc.message) from exc
         if unattributed:
             return (
                 CheckoutGuardDecision(
@@ -596,14 +895,31 @@ class CheckoutLeaseGuard:
         )
         if decision.status != "PASS":
             return decision, None
-        after_acquire_dirty = collect_checkout_dirty_paths(
-            self.project_root,
-            exclusions=status_exclusions,
-        )
+        if inspection_profile == CHECKOUT_SOURCE_ONLY_PROFILE:
+            try:
+                self._inspect_source_only(operation_class, checked_owned, checked_shared)
+            except (CheckoutGuardError, OSError):
+                self.store.release(
+                    acquisition.lease.lease_id,
+                    actor=actor,
+                    now=instant,
+                    evidence_refs=(intent_path.as_posix(),),
+                    reason_codes=("CHECKOUT_POST_ACQUIRE_SOURCE_ONLY_BLOCKED",),
+                )
+                raise
+            after_acquire_dirty: tuple[str, ...] = ()
+        else:
+            after_acquire_dirty = collect_checkout_dirty_paths(
+                self.project_root,
+                exclusions=status_exclusions,
+            )
         after_unattributed = _unattributed_dirty_paths(
             after_acquire_dirty,
             operation_class=operation_class,
-            declared_paths=(*checked_owned, *checked_shared),
+            declared_paths=self._live_attributed_paths(
+                after_acquire_dirty, operation_class=operation_class,
+                declared_paths=(*checked_owned, *checked_shared), actor=actor, now=instant,
+            ),
         )
         if after_unattributed:
             self.store.release(
@@ -635,11 +951,34 @@ class CheckoutLeaseGuard:
             version=self.policy.version,
             access=self.policy.gate_access(intent.operation_class),
         )
+        contracts: tuple[ContractClaim, ...] = (gate_contract,)
+        if intent.inspection_profile == CHECKOUT_SOURCE_ONLY_PROFILE:
+            _source_only_scope(intent.operation_class, intent.owned_paths, intent.shared_paths)
+            contracts += (
+                ContractClaim(
+                    contract_id=CHECKOUT_SOURCE_ONLY_CAPABILITY_PREFIX
+                    + intent.workspace_identity.workspace_id,
+                    version=CHECKOUT_SOURCE_ONLY_CAPABILITY_VERSION,
+                    access=ContractAccess.READ,
+                ),
+            )
+        elif intent.inspection_profile != CHECKOUT_FULL_WORKTREE_PROFILE:
+            raise CheckoutGuardError(
+                "CHECKOUT_INSPECTION_PROFILE_INVALID", intent.inspection_profile
+            )
         lane_role = (
             LaneRole.COORDINATOR
             if intent.operation_class is CheckoutOperationClass.SHARED_MUTATION
             else LaneRole.DOMAIN
         )
+        binding = self.store.coordination_binding
+        owned_paths = intent.owned_paths
+        shared_paths = intent.shared_paths
+        if binding is not None:
+            shared_scopes = {scope for path in shared_paths for scope in binding.scoped_paths(path)}
+            owned_scopes = {scope for path in owned_paths for scope in binding.scoped_paths(path)}
+            shared_paths = tuple(sorted(shared_scopes))
+            owned_paths = tuple(sorted(owned_scopes - shared_scopes))
         manifest = ChangeManifest(
             change_id=f"checkout:{intent.intent_id}",
             task_id=self.policy.authority_task_id,
@@ -647,10 +986,10 @@ class CheckoutLeaseGuard:
             base_commit=intent.base_commit,
             owner=f"{intent.task_id}:{intent.thread_id}",
             production_effect="none",
-            owned_paths=intent.owned_paths,
-            shared_paths=intent.shared_paths,
+            owned_paths=owned_paths,
+            shared_paths=shared_paths,
             module_ids=(),
-            contract_claims=(gate_contract,),
+            contract_claims=contracts,
             required_validation_tiers=("focused",),
         )
         task = TaskControlRecord(
@@ -991,10 +1330,7 @@ def resolve_worktree_audit_binding(
     ):
         raise CheckoutGuardError(
             "CHECKOUT_AUDIT_GIT_COMMON_DIR_MISMATCH",
-            (
-                f"policy={policy_identity.git_common_dir};"
-                f"target={audited_identity.git_common_dir}"
-            ),
+            (f"policy={policy_identity.git_common_dir};target={audited_identity.git_common_dir}"),
         )
     registrations = _registered_worktrees(policy_root)
     if (
@@ -1049,19 +1385,9 @@ def _checked_audit_root(path: Path, *, role: str) -> Path:
 
 def _registered_worktrees(policy_root: Path) -> tuple[RegisteredWorktree, ...]:
     try:
-        result = subprocess.run(
-            [
-                "git",
-                "-c",
-                "core.quotepath=false",
-                "worktree",
-                "list",
-                "--porcelain",
-                "-z",
-            ],
-            cwd=policy_root,
-            check=False,
-            capture_output=True,
+        result = _checkout_git_result(
+            policy_root, ("worktree", "list", "--porcelain", "-z"),
+            configuration=("-c", "core.quotepath=false"),
         )
     except OSError as exc:
         raise CheckoutGuardError(
@@ -1213,12 +1539,12 @@ def collect_checkout_dirty_paths(
     ]
     args.extend(f":(exclude,literal){path}" for path in exclusions)
     try:
-        result = subprocess.run(
-            ["git", "-c", "core.quotepath=false", *args],
-            cwd=root,
-            check=False,
-            capture_output=True,
-            env=git_environment,
+        result = _checkout_git_result(
+            # A repository-configured fsmonitor hook executes code even for
+            # status. Read-only audit must not invoke that callback.
+            root, args,
+            configuration=("-c", "core.quotepath=false", "-c", "core.fsmonitor=false"),
+            environment=git_environment,
         )
     except OSError as exc:
         raise CheckoutGuardError("CHECKOUT_GIT_STATUS_EXECUTION", str(exc)) from exc
@@ -1264,11 +1590,13 @@ def _run_git_diff_check(
     args.extend(("--check", "--", "."))
     args.extend(f":(exclude,literal){path}" for path in exclusions)
     try:
-        result = subprocess.run(
-            ["git", "-c", "core.quotepath=false", *args],
-            cwd=root,
-            check=False,
-            capture_output=True,
+        result = _checkout_git_result(
+            # Porcelain diff otherwise refreshes stat-only index entries even
+            # with GIT_OPTIONAL_LOCKS=0. An audit must preserve exact bytes and
+            # file identity, including an installed zero-stat index.
+            root, args,
+            configuration=("-c", "core.quotepath=false", "-c", "core.fsmonitor=false",
+                           "-c", "diff.autoRefreshIndex=false"),
         )
     except OSError as exc:
         raise CheckoutGuardError(
@@ -1404,34 +1732,100 @@ def _persist_or_replay_intent(
     return intent
 
 
-def _load_release_scope(
-    path: Path,
-    *,
-    expected_intent_id: str,
-) -> tuple[tuple[str, ...], CheckoutOperationClass]:
+def _source_only_scope(
+    operation_class: CheckoutOperationClass,
+    owned_paths: Sequence[str],
+    shared_paths: Sequence[str],
+) -> tuple[str, ...]:
+    if (
+        operation_class is not CheckoutOperationClass.SHARED_MUTATION
+        or owned_paths
+        or list(shared_paths) != sorted(set(shared_paths))
+        or CHECKOUT_SOURCE_ONLY_RUNTIME not in shared_paths
+    ):
+        raise CheckoutGuardError(
+            "CHECKOUT_SOURCE_ONLY_SCOPE", "exact shared checkpoint scope required"
+        )
+    paths = tuple(path for path in shared_paths if path != CHECKOUT_SOURCE_ONLY_RUNTIME)
+    if not paths or len(paths) > _CHECKPOINT_MAX_FILES:
+        raise CheckoutGuardError("CHECKOUT_SOURCE_ONLY_BUDGET", "source path count")
+    if len({path.casefold() for path in paths}) != len(paths):
+        raise CheckoutGuardError("CHECKOUT_SOURCE_ONLY_SCOPE", "casefold duplicate paths")
+    for path in paths:
+        _portable_path(path, "source path")
+        parts = PurePosixPath(path).parts
+        name = parts[-1].casefold()
+        if (
+            ":" in path
+            or any(
+                part.casefold() in {".git", ".ssh", ".aws", ".azure", ".gnupg"} for part in parts
+            )
+            or name in {".env", "credentials", "credentials.json", "secrets.yaml", "secrets.yml"}
+            or name.startswith((".env.", "id_rsa", "id_ed25519"))
+            or name.endswith((".pem", ".key", ".p12", ".pfx"))
+            or _paths_overlap(path, CHECKOUT_SOURCE_ONLY_RUNTIME)
+        ):
+            raise CheckoutGuardError("CHECKOUT_SOURCE_ONLY_SCOPE", "private or runtime source path")
+    return paths
+
+
+def _read_checkout_intent(project_root: Path, path: Path) -> CheckoutOperationIntent:
+    """Bounded authority read; reject links before opening or reading their bytes."""
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", str(path)) from exc
-    if not isinstance(payload, Mapping):
-        raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", str(path))
-    if payload.get("schema_version") != CHECKOUT_INTENT_SCHEMA_VERSION:
-        raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", str(path))
-    if payload.get("intent_id") != expected_intent_id:
-        raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", str(path))
-    try:
-        operation_class = CheckoutOperationClass(str(payload.get("operation_class")))
-    except ValueError as exc:
-        raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", str(path)) from exc
-    owned_paths = _release_paths(payload.get("owned_paths"), "owned_paths")
-    shared_paths = _release_paths(payload.get("shared_paths"), "shared_paths")
-    return (*owned_paths, *shared_paths), operation_class
+        relative = path.absolute().relative_to(project_root).as_posix()
+        _assert_no_reparse_components(project_root, relative)
+        before = path.lstat()
+        if (
+            not stat.S_ISREG(before.st_mode)
+            or before.st_nlink != 1
+            or before.st_size > _INTENT_MAX_BYTES
+        ):
+            raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", "regular bounded intent required")
+
+        def identity(value: os.stat_result) -> tuple[int, ...]:
+            return (
+                value.st_dev,
+                value.st_ino,
+                value.st_size,
+                value.st_mtime_ns,
+                value.st_ctime_ns,
+                value.st_mode,
+                value.st_nlink,
+            )
+
+        with path.open("rb") as stream:
+            if identity(os.fstat(stream.fileno())) != identity(before):
+                raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", "intent changed before read")
+            content = stream.read(_INTENT_MAX_BYTES + 1)
+            if identity(os.fstat(stream.fileno())) != identity(before):
+                raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", "intent changed during read")
+        if len(content) != before.st_size or identity(path.lstat()) != identity(before):
+            raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", "intent changed after read")
+        payload = load_strict_json_text(content.decode("utf-8"))
+        return parse_checkout_operation_intent(_mapping(payload, "intent"))
+    except (OSError, ValueError) as exc:
+        raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", type(exc).__name__) from exc
 
 
 def _release_paths(value: object, field: str) -> tuple[str, ...]:
     if not isinstance(value, list):
         raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", field)
     return tuple(_portable_path(item, field) for item in value)
+
+
+def _checkout_git_result(
+    root: Path, arguments: Sequence[str], *, configuration: Sequence[str] = (),
+    environment: Mapping[str, str] | None = None,
+) -> subprocess.CompletedProcess[bytes]:
+    from ai_trading_system.platform.architecture.source_preservation import inspection_git_result
+
+    protected = inspection_git_result(root, *arguments)
+    if protected is not None:
+        return protected
+    return subprocess.run(
+        ["git", *configuration, *arguments], cwd=root, check=False,
+        capture_output=True, env=environment,
+    )
 
 
 def _git_output(
@@ -1441,14 +1835,7 @@ def _git_output(
     required: bool,
 ) -> str | None:
     try:
-        result = subprocess.run(
-            ["git", *args],
-            cwd=root,
-            check=False,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-        )
+        result = _checkout_git_result(root, args)
     except OSError as exc:
         raise CheckoutGuardError("CHECKOUT_GIT_EXECUTION", str(exc)) from exc
     if result.returncode != 0:
@@ -1456,9 +1843,9 @@ def _git_output(
             return None
         raise CheckoutGuardError(
             "CHECKOUT_GIT_FAILED",
-            result.stderr.strip() or " ".join(args),
+            result.stderr.decode("utf-8").strip() or " ".join(args),
         )
-    value = result.stdout.strip()
+    value = result.stdout.decode("utf-8").strip()
     if not value and required:
         raise CheckoutGuardError("CHECKOUT_GIT_EMPTY", " ".join(args))
     return value or None

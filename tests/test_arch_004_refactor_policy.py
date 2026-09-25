@@ -3921,7 +3921,8 @@ OPS_081_SCHEDULER_BUSINESS_CONTRACT_SECTION = (
     "phase_ops_081_scheduler_business_contract_decoupling_v1"
 )
 DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION = "phase_devx_015_task_integration_admission_v1"
-LATEST_COMPATIBILITY_SECTION = DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION
+DEVX_015_WORKFLOW_CONTRACT_SECTION = "phase_devx_015_workflow_contract_v3"
+LATEST_COMPATIBILITY_SECTION = DEVX_015_WORKFLOW_CONTRACT_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -13124,6 +13125,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2560_COMPOSER_CAPTURE_SECTION,
         OPS_081_SCHEDULER_BUSINESS_CONTRACT_SECTION,
         DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION,
+        DEVX_015_WORKFLOW_CONTRACT_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13152,7 +13154,9 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
             str(path) for path in baseline[stop_section].get("superseded_live_source_paths", [])
         }
         authority_superseded_paths = (
-            _devx_015_admission_superseded_live_source_paths()
+            _devx_015_workflow_superseded_live_source_paths()
+            if authority_section == DEVX_015_WORKFLOW_CONTRACT_SECTION
+            else _devx_015_admission_superseded_live_source_paths()
             if authority_section == DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION
             else {str(path) for path in baseline[authority_section]["superseded_live_source_paths"]}
         )
@@ -13235,6 +13239,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2560_COMPOSER_CAPTURE_SECTION,
         OPS_081_SCHEDULER_BUSINESS_CONTRACT_SECTION,
         DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION,
+        DEVX_015_WORKFLOW_CONTRACT_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -13263,7 +13268,9 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
             str(path) for path in baseline[stop_section].get("superseded_live_source_paths", [])
         }
         authority_superseded_paths = (
-            _devx_015_admission_superseded_live_source_paths()
+            _devx_015_workflow_superseded_live_source_paths()
+            if authority_section == DEVX_015_WORKFLOW_CONTRACT_SECTION
+            else _devx_015_admission_superseded_live_source_paths()
             if authority_section == DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION
             else {str(path) for path in baseline[authority_section]["superseded_live_source_paths"]}
         )
@@ -14172,6 +14179,39 @@ def _trading_2470_prior_hash_authority_paths(
     )
 
 
+def _devx_015_workflow_superseded_live_source_paths() -> frozenset[str]:
+    phase = _compatibility_baseline()[DEVX_015_WORKFLOW_CONTRACT_SECTION]
+    assert phase["schema_version"] == "devx_015_workflow_contract.v3"
+    assert phase["supersession"] == {
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION,
+        "current_hash_authority": f"{DEVX_015_WORKFLOW_CONTRACT_SECTION}.sources",
+    }
+    paths = phase["superseded_live_source_paths"]
+    sources = phase["sources"]
+    assert isinstance(paths, list) and isinstance(sources, list)
+    assert all(isinstance(path, str) for path in paths)
+    assert all(
+        isinstance(source, dict) and isinstance(source.get("path"), str) for source in sources
+    )
+    declared = frozenset(paths)
+    source_paths = frozenset(source["path"] for source in sources)
+    assert len(declared) == len(paths)
+    assert len(source_paths) == len(sources)
+    assert declared == source_paths
+    return declared
+
+
+@cache
+def _devx_015_workflow_current_source_records() -> dict[str, dict[str, object]]:
+    baseline = _compatibility_baseline()
+    if DEVX_015_WORKFLOW_CONTRACT_SECTION not in baseline:
+        return {}
+    paths = _devx_015_workflow_superseded_live_source_paths()
+    assert _latest_active_source_mismatches(DEVX_015_WORKFLOW_CONTRACT_SECTION) <= paths
+    return {row["path"]: row for row in baseline[DEVX_015_WORKFLOW_CONTRACT_SECTION]["sources"]}
+
+
 def _devx_015_admission_superseded_live_source_paths() -> frozenset[str]:
     phase = _compatibility_baseline()[DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION]
     assert phase["schema_version"] == "devx_015_task_integration_admission.v1"
@@ -14197,6 +14237,114 @@ def _devx_015_admission_current_source_records() -> dict[str, dict[str, object]]
     return {
         row["path"]: row for row in baseline[DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION]["sources"]
     }
+
+
+def _workflow_supersession_fixture(paths: list[str]) -> dict[str, object]:
+    return {
+        "schema_version": "devx_015_workflow_contract.v3",
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION,
+            "current_hash_authority": f"{DEVX_015_WORKFLOW_CONTRACT_SECTION}.sources",
+        },
+        "superseded_live_source_paths": paths,
+        "sources": [{"path": path, "sha256": "new"} for path in paths],
+    }
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "none",
+        "missing-source",
+        "undeclared-source",
+        "duplicate-source",
+        "duplicate-path",
+        "rewrite",
+        "predecessor",
+        "authority",
+        "schema",
+    ],
+)
+def test_devx_015_workflow_source_set_is_exact_and_unique(monkeypatch, mutation):
+    phase = _workflow_supersession_fixture(["docs/declared.md"])
+    if mutation == "missing-source":
+        phase["sources"] = []
+    elif mutation == "undeclared-source":
+        phase["sources"] = [{"path": "docs/undeclared.md", "sha256": "new"}]
+    elif mutation == "duplicate-source":
+        phase["sources"] *= 2
+    elif mutation == "duplicate-path":
+        phase["superseded_live_source_paths"] *= 2
+    elif mutation == "rewrite":
+        phase["supersession"]["historical_hashes_rewritten"] = True
+    elif mutation == "predecessor":
+        phase["supersession"]["inherited_supersession_authority"] = "old-checkpoint-only"
+    elif mutation == "authority":
+        phase["supersession"]["current_hash_authority"] = "unreviewed.sources"
+    elif mutation == "schema":
+        phase["schema_version"] = "devx_015_workflow_contract.v4"
+    monkeypatch.setitem(
+        globals(), "_compatibility_baseline", lambda: {DEVX_015_WORKFLOW_CONTRACT_SECTION: phase}
+    )
+    if mutation == "none":
+        assert _devx_015_workflow_superseded_live_source_paths() == frozenset({"docs/declared.md"})
+    else:
+        with pytest.raises(AssertionError):
+            _devx_015_workflow_superseded_live_source_paths()
+
+
+@pytest.mark.parametrize(
+    "reader", [_prior_active_source_mismatches, _latest_active_source_mismatches]
+)
+@pytest.mark.parametrize(
+    "case", ["declared", "undeclared", "boundary-owner", "recorded", "current", "no-successor"]
+)
+def test_devx_015_workflow_temporal_supersession_preserves_refusals(monkeypatch, reader, case):
+    path = "docs/declared.md"
+    historical = {"path": path, "sha256": "old"}
+    baseline = {"prior": {"sources": [historical]}, "boundary": {}}
+    if case == "boundary-owner":
+        baseline["boundary"]["sources"] = [historical]
+    elif case == "recorded":
+        baseline["boundary"]["superseded_live_source_paths"] = [path]
+    if case != "no-successor":
+        baseline[DEVX_015_WORKFLOW_CONTRACT_SECTION] = _workflow_supersession_fixture(
+            [] if case == "undeclared" else [path]
+        )
+    monkeypatch.setitem(globals(), "_compatibility_baseline", lambda: baseline)
+    monkeypatch.setitem(globals(), "_normalization_migrations_before", lambda _: {})
+    monkeypatch.setitem(globals(), "_source_matches_checkout", lambda *_: False)
+    stop = DEVX_015_WORKFLOW_CONTRACT_SECTION if case == "current" else "boundary"
+    assert reader(stop) == (frozenset() if case == "declared" else frozenset({path}))
+
+
+def test_devx_015_workflow_cached_closure_preserves_history_and_rechecks_current(monkeypatch):
+    path = "docs/declared.md"
+    historical = {"path": path, "sha256": "old"}
+    baseline = {
+        "prior": {"sources": [historical]},
+        DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION: _admission_supersession_fixture([path]),
+        DEVX_015_WORKFLOW_CONTRACT_SECTION: _workflow_supersession_fixture([path]),
+    }
+    baseline[DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION]["sources"][0]["sha256"] = "admission-old"
+    monkeypatch.setitem(globals(), "_compatibility_baseline", lambda: baseline)
+    monkeypatch.setitem(globals(), "_normalization_migrations_before", lambda _: {})
+    monkeypatch.setitem(
+        globals(), "_source_matches_checkout", lambda source, _: source["sha256"] == "new"
+    )
+    _devx_015_workflow_current_source_records.cache_clear()
+    try:
+        assert _source_sha256(historical) == "old"
+        assert historical == {"path": path, "sha256": "old"}
+        assert baseline[DEVX_015_TASK_INTEGRATION_ADMISSION_SECTION]["sources"][0]["sha256"] == (
+            "admission-old"
+        )
+        monkeypatch.setitem(globals(), "_source_matches_checkout", lambda *_: False)
+        with pytest.raises(AssertionError):
+            _source_sha256(historical)
+    finally:
+        _devx_015_workflow_current_source_records.cache_clear()
 
 
 def _admission_supersession_fixture(paths: list[str]) -> dict[str, object]:
@@ -14333,6 +14481,10 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
+    current = _devx_015_workflow_current_source_records().get(str(source["path"]))
+    if current is not None:
+        assert _source_matches_checkout(current, {})
+        return str(source["sha256"])
     current = _devx_015_admission_current_source_records().get(str(source["path"]))
     if current is not None:
         assert _source_matches_checkout(current, {})

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,9 @@ from ai_trading_system.platform.architecture.integration_publication_fence impor
     IntegrationPublicationFence,
     PublicationFenceError,
 )
+from ai_trading_system.platform.architecture.parallel_control import ParallelControlError
+from ai_trading_system.platform.architecture.workflow_contract import WorkflowContractError
+from ai_trading_system.platform.architecture.workflow_execution import ExecutionContainmentError
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,6 +45,42 @@ def parse_args() -> argparse.Namespace:
 
     replay = subparsers.add_parser("replay")
     replay.add_argument("--transaction", required=True, type=Path)
+
+    remote = subparsers.add_parser("remote-observe")
+    remote.add_argument("--transaction", required=True, type=Path)
+
+    local = subparsers.add_parser("local-publication-inspect")
+    local.add_argument("--transaction", required=True, type=Path)
+
+    recover_index = subparsers.add_parser("local-publication-recover-index")
+    recover_index.add_argument("--transaction", required=True, type=Path)
+    recover_index.add_argument("--actor", default="integration-coordinator")
+
+    hook = subparsers.add_parser("local-publication-hook")
+    hook.add_argument("--transaction", required=True, type=Path)
+    hook.add_argument("--actor", required=True)
+    hook.add_argument("--request-sha", required=True)
+    hook.add_argument("--kind", required=True, choices=("reference-transaction", "post-merge"))
+    hook.add_argument("--stage", required=True)
+
+    publish = subparsers.add_parser("local-publish")
+    publish.add_argument("--transaction", required=True, type=Path)
+    publish.add_argument("--actor", default="integration-coordinator")
+    publish.add_argument("--authorize-peer-head-handoff", action="store_true")
+
+    worker = subparsers.add_parser("local-publication-worker")
+    worker.add_argument("--transaction", required=True, type=Path)
+    worker.add_argument("--actor", required=True)
+    worker.add_argument("--request-id", required=True)
+    worker.add_argument("--authorize-peer-head-handoff", action="store_true")
+
+    recover_published = subparsers.add_parser("local-publication-adopt-published")
+    recover_published.add_argument("--transaction", required=True, type=Path)
+    recover_published.add_argument("--actor", default="integration-coordinator")
+
+    recover_local = subparsers.add_parser("local-publication-recover")
+    recover_local.add_argument("--transaction", required=True, type=Path)
+    recover_local.add_argument("--actor", default="integration-coordinator")
 
     validate = subparsers.add_parser("validate")
     validate.add_argument("--transaction", required=True, type=Path)
@@ -78,8 +118,12 @@ def main() -> int:
     )
     try:
         payload = _dispatch(fence, args)
-    except (PublicationFenceError, OSError, ValueError, json.JSONDecodeError) as exc:
-        code = exc.code if isinstance(exc, PublicationFenceError) else "PUBLICATION_COMMAND_FAILED"
+    except (PublicationFenceError, ParallelControlError, WorkflowContractError,
+            ExecutionContainmentError, OSError, ValueError) as exc:
+        code = (exc.code if isinstance(
+            exc, (PublicationFenceError, ParallelControlError, WorkflowContractError,
+                  ExecutionContainmentError),
+        ) else "PUBLICATION_COMMAND_FAILED")
         payload = {
             "schema_version": "integration_publication_fence_command_result.v1",
             "status": "BLOCKED",
@@ -91,7 +135,10 @@ def main() -> int:
         print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
         return 2
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
-    return 0
+    incomplete_publication = args.command in {
+        "local-publish", "local-publication-adopt-published", "local-publication-recover",
+    } and payload.get("status") in {"RECOVERY_REQUIRED", "OBSERVE_ONLY"}
+    return 2 if payload.get("status") == "REMOTE_UNKNOWN" or incomplete_publication else 0
 
 
 def _dispatch(
@@ -118,6 +165,60 @@ def _dispatch(
         )
     if args.command == "replay":
         return fence.replay(args.transaction).to_dict()
+    if args.command == "remote-observe":
+        return fence.observe_remote(args.transaction)
+    if args.command == "local-publication-inspect":
+        return fence.inspect_local_publication(args.transaction)
+    if args.command == "local-publication-hook":
+        from ai_trading_system.platform.architecture.workflow_coordination import (
+            PublicationLifecycle,
+        )
+
+        return PublicationLifecycle(fence).record_publication_hook(
+            args.transaction, actor=args.actor, request_sha=args.request_sha,
+            kind=args.kind, stage=args.stage, updates=sys.stdin.buffer.read(257),
+        )
+    if args.command in {
+        "local-publish", "local-publication-worker", "local-publication-adopt-published",
+        "local-publication-recover",
+    }:
+        from ai_trading_system.platform.architecture.workflow_coordination import (
+            PublicationLifecycle,
+        )
+
+        lifecycle = PublicationLifecycle(fence)
+        if args.command == "local-publication-recover":
+            return lifecycle.recover_local_publication(args.transaction, actor=args.actor)
+        if args.command == "local-publish":
+            return lifecycle.publish_local(
+                args.transaction, actor=args.actor,
+                authorize_peer_head_handoff=args.authorize_peer_head_handoff,
+            )
+        if args.command == "local-publication-worker":
+            return lifecycle.run_publication_worker(
+                args.transaction, actor=args.actor, request_id=args.request_id,
+                authorize_peer_head_handoff=args.authorize_peer_head_handoff,
+            )
+        replay = fence.replay(args.transaction)
+        if replay.status != "PASS" or replay.transaction["actor"] != args.actor:
+            raise PublicationFenceError("PUBLICATION_ACTOR_MISMATCH", args.actor)
+        lease = str(replay.transaction["lease_id"])
+        observed = lifecycle.recover(lease, actor=args.actor)
+        if observed["status"] not in {"RECOVERED_TERMINAL", "REPLAY_ONLY"}:
+            return {key: item for key, item in observed.items() if key != "execution"}
+        return lifecycle.adopt_published_attempt(lease, actor=args.actor, recovery=True)
+    if args.command == "local-publication-recover-index":
+        from ai_trading_system.platform.architecture.workflow_coordination import (
+            PublicationLifecycle,
+        )
+
+        fence.validate(args.transaction, exact_phase="LOCAL_MAIN_FF_PRE", require_candidate=True)
+        replay = fence.replay(args.transaction)
+        if replay.transaction.get("actor") != args.actor:
+            raise PublicationFenceError("PUBLICATION_ACTOR_MISMATCH", args.actor)
+        return PublicationLifecycle(fence).adopt_index_replaced_failed_attempt(
+            str(replay.transaction["lease_id"]), actor=args.actor,
+        )
     if args.command == "validate":
         return fence.validate(
             args.transaction,

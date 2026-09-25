@@ -16,7 +16,10 @@ import subprocess
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path, PurePosixPath
 from time import perf_counter
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from ai_trading_system.platform.architecture.source_preservation import HeldGitConfiguration
 
 from ai_trading_system.yaml_loader import load_strict_yaml_text
 
@@ -113,8 +116,37 @@ def _regular_file(root: Path, portable: object) -> Path:
 
 
 def _git(root: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
+    from ai_trading_system.platform.architecture.source_preservation import inspection_git_result
+
+    quiet_diff = arguments[:1] == ("diff",) and "--quiet" in arguments
+    if quiet_diff:
+        # With refresh disabled, --quiet treats stat-only cache misses as dirty.
+        # Numstat performs the content comparison without refreshing the index;
+        # translate its nonempty change inventory to the same quiet exit contract.
+        arguments = ("diff", "--numstat", "-z",
+                     *(value for value in arguments[1:] if value != "--quiet"))
+    protected = inspection_git_result(root, *arguments)
+    if protected is not None:
+        result = subprocess.CompletedProcess(
+            protected.args, protected.returncode,
+            stdout=protected.stdout.decode("utf-8"), stderr=protected.stderr.decode("utf-8"),
+        )
+    else:
+        result = _ordinary_git(root, *arguments)
+    if quiet_diff and result.returncode == 0:
+        return subprocess.CompletedProcess(
+            result.args, int(bool(result.stdout)), stdout="", stderr=result.stderr,
+        )
+    return result
+
+
+def _ordinary_git(root: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        ["git", "-c", f"safe.directory={root.as_posix()}", *arguments],
+        # Porcelain diff refreshes stat-only index entries even when optional
+        # locks are disabled. Readiness must preserve the original index object
+        # and bytes; otherwise a successful inspection invalidates publication.
+        ["git", "-c", f"safe.directory={root.as_posix()}",
+         "-c", "diff.autoRefreshIndex=false", *arguments],
         cwd=root,
         env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"},
         capture_output=True,
@@ -413,7 +445,38 @@ def _inspection_code_root() -> Path:
     return Path(__file__).resolve().parents[4]
 
 
-def check_full_readiness(project_root: Path, candidate_sha: str) -> dict[str, Any]:
+def check_full_readiness(
+    project_root: Path, candidate_sha: str, *, git_context: HeldGitConfiguration | None = None,
+) -> dict[str, Any]:
+    """Select a held transport without weakening source identity or granting execution."""
+    if git_context is None:
+        return _check_full_readiness(project_root, candidate_sha)
+    from ai_trading_system.platform.architecture.source_preservation import (
+        HeldGitConfiguration,
+        current_inspection_context,
+    )
+
+    started = perf_counter()
+    try:
+        if type(git_context) is not HeldGitConfiguration:
+            raise ValidationReadinessError(
+                "READINESS_GIT_CONTEXT_REQUIRED", "live context required",
+            )
+        if current_inspection_context(project_root) is git_context:
+            return _check_full_readiness(project_root, candidate_sha, git_context=git_context)
+        with git_context.inspection(project_root):
+            return _check_full_readiness(project_root, candidate_sha, git_context=git_context)
+    except (ValueError, OSError, subprocess.SubprocessError) as exc:
+        return _result(
+            candidate_sha, [], [_blocker("candidate_identity", exc)],
+            elapsed_seconds=perf_counter() - started,
+            inspection_code_root=_inspection_code_root(), target_root=project_root.absolute(),
+        )
+
+
+def _check_full_readiness(
+    project_root: Path, candidate_sha: str, *, git_context: HeldGitConfiguration | None = None,
+) -> dict[str, Any]:
     """Aggregate read-only checks without consuming a publication or run claim."""
     started = perf_counter()
     inspection_code_root = _inspection_code_root()
@@ -433,10 +496,24 @@ def check_full_readiness(project_root: Path, candidate_sha: str) -> dict[str, An
             raise ValidationReadinessError("READINESS_ROOT_NOT_DIRECTORY", str(root))
         root = root.resolve()
         if root != inspection_code_root:
-            raise ValidationReadinessError(
-                "READINESS_INSPECTION_ROOT_MISMATCH",
-                f"inspection={inspection_code_root};target={root}",
+            if git_context is None:
+                raise ValidationReadinessError(
+                    "READINESS_INSPECTION_ROOT_MISMATCH",
+                    f"inspection={inspection_code_root};target={root}",
+                )
+            from ai_trading_system.platform.architecture.workflow_execution import (
+                ExecutionContainmentError,
+                bind_protected_inspector_runtime,
             )
+
+            try:
+                admission = bind_protected_inspector_runtime(
+                    root, candidate_sha, git_context=git_context,
+                )
+            except ExecutionContainmentError as exc:
+                raise ValidationReadinessError("READINESS_INSPECTOR_RUNTIME", str(exc)) from exc
+            if admission["inspector_root"] != inspection_code_root.as_posix():
+                raise ValidationReadinessError("READINESS_INSPECTOR_ORIGIN", "inspector mismatch")
         # Not a registry adapter: missing/replaced checker inventory must never
         # bypass the live-source/candidate boundary in this standalone entry.
         _inspection_code_identity(root, candidate_sha)

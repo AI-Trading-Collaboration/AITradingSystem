@@ -106,3 +106,15 @@ nt!NtRenameKey → nt!CmRenameKey → nt!CmpReferenceSecurityNode
   其中记录了一次审计失误：`D:/Work/devx015-*` 共 264 个目录曾被整体移动到暂存目录，
   复核发现其中 260 个是 DEVX-015 文档登记的证据根，已全部原样移回，没有删除任何内容。
   这些目录随 DEVX-015 的证据归档一起处理。
+- 2026-09-25/26：S1–S3 完成（DEVX-015 V3 文档 v387–v389）。S1：未提交改动归属 DEVX-015 lane
+  `codex/devx-015-main6498-reconciliation`，在该 lane 上实施。S2：值名定为 `WorkflowControl.RegistrationV1`
+  （父键 `HKLM\SOFTWARE\AITradingSystem`）；读取端缺键/缺值即未登记，遗留子键只读探测后
+  `HOST_REGISTRATION_LEGACY_KEY` fail closed；`register()` 单值幂等写入、不同内容 `HOST_REGISTRATION_CHANGED`、
+  写后读回；`publish_registry_key` 与 prepared 逻辑已删除。S3：内存注册表协议测试覆盖 5 个边界，
+  原生测试只在 HKCU 下做单值写入/读回/删除，另有静态守护测试确认任何代码都不绑定注册表键重命名 API。
+  全程未在本机执行原生 `RegRenameKey`。lane 提交 `69729e6ff`，随 DEVX-015 集成候选发布（S4）。
+- 验收第 4 条尚未满足：v387 回归中一次被中止的原生 linked-contender 测试留下 HKCU 测试键
+  `AITS-DEVX015-Test-b12411aa44934338848e4aba697d0755`（内容为测试登记值与 MachineGuid 副本，不含重命名残留）。
+  与两个蓝屏遗留键一起交 owner 清理；清理确认前本任务保持 `BASELINE_DONE`。
+- 待决问题"是否在 policy/contract 登记值名"：值名是代码常量 `HOST_REGISTRY_VALUE`，读写两端共用，
+  主机从未登记过，暂不单列 contract；如 DEVX-016 保留 HKLM 登记，再随其评估。

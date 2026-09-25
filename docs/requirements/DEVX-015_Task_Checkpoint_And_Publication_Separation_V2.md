@@ -2,6 +2,10 @@
 
 ## 身份、授权与当前状态
 
+- 2026-09-11：Owner 明确批准本任务内的完整工程合同修订。当前执行合同与冻结验收见
+  [DEVX-015 Workflow Contract V3](DEVX-015_Workflow_Contract_And_Acceptance_V3.md)。
+  本文保留既有阶段和历史证据；V3 不把最小准入发布等同于 S1-S5 或 OPS-080 完成。
+
 - task：`DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2`；P0；`IN_PROGRESS`。
 - next owner：Codex engineering coordinator；Owner：Project Owner。
 - Owner 于 2026-09-09 在完整机制设计草案后要求“你推进下这个流程？”，授权推进工程治理分阶段实现；不扩大研究、业务数据、production 或 broker 权限。

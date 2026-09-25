@@ -222,6 +222,15 @@ OPS_081_RESTRICTED_CURRENT_AUTHORITY_PATHS = frozenset(
     }
 )
 DEVX_015_TASK_ADMISSION_PHASE_KEY = "phase_devx_015_task_integration_admission_v1"
+DEVX_015_WORKFLOW_PHASE_KEY = "phase_devx_015_workflow_contract_v3"
+DEVX_015_WORKFLOW_RESTRICTED_CURRENT_AUTHORITY_PATHS = frozenset(
+    {
+        "docs/system_flow.md",
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_trading2452_architecture_contract.py",
+    }
+)
 # Exact DEVX-015 admission intersection; no other historical authority is admitted.
 DEVX_015_TASK_ADMISSION_RESTRICTED_CURRENT_AUTHORITY_PATHS = frozenset(
     {
@@ -534,14 +543,18 @@ def _assert_historical_source_is_current_or_superseded(
         ), missing_binding
 
     latest_authority: tuple[str, dict[str, Any], dict[str, str]] | None = None
-    if (
-        source_path in DEVX_015_TASK_ADMISSION_RESTRICTED_CURRENT_AUTHORITY_PATHS
-        and DEVX_015_TASK_ADMISSION_PHASE_KEY in baseline
+    for required_section, restricted_paths in (
+        (
+            DEVX_015_TASK_ADMISSION_PHASE_KEY,
+            DEVX_015_TASK_ADMISSION_RESTRICTED_CURRENT_AUTHORITY_PATHS,
+        ),
+        (DEVX_015_WORKFLOW_PHASE_KEY, DEVX_015_WORKFLOW_RESTRICTED_CURRENT_AUTHORITY_PATHS),
     ):
-        required_phase = baseline[DEVX_015_TASK_ADMISSION_PHASE_KEY]
+        if source_path not in restricted_paths or required_section not in baseline:
+            continue
+        required_phase = baseline[required_section]
         missing_binding = (
-            f"{source_path}: DEVX-015 task admission historical hash drift "
-            "is not declared completely"
+            f"{source_path}: {required_section} historical hash drift is not declared completely"
         )
         assert isinstance(required_phase, dict), missing_binding
         required_paths = required_phase.get("superseded_live_source_paths")
@@ -586,65 +599,65 @@ def _assert_historical_source_is_current_or_superseded(
         section_key == TRADING_2564_S2C_PRICE_SCOPE_PHASE_KEY
         and source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
     ):
-        assert (
-            source_path in TRADING_2564_S2C_RESTRICTED_CURRENT_AUTHORITY_PATHS
-        ), "S2c restricted source is outside the exact reviewed intersection"
+        assert source_path in TRADING_2564_S2C_RESTRICTED_CURRENT_AUTHORITY_PATHS, (
+            "S2c restricted source is outside the exact reviewed intersection"
+        )
     if (
         section_key == TRADING_2564_S2C2_PREVIEW_PHASE_KEY
         and source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
     ):
-        assert (
-            source_path in TRADING_2564_S2C2_RESTRICTED_CURRENT_AUTHORITY_PATHS
-        ), "S2c2 restricted source is outside the exact reviewed intersection"
+        assert source_path in TRADING_2564_S2C2_RESTRICTED_CURRENT_AUTHORITY_PATHS, (
+            "S2c2 restricted source is outside the exact reviewed intersection"
+        )
     if (
         section_key == TRADING_2564_S3A_TIME_PHASE_KEY
         and source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
     ):
-        assert (
-            source_path in TRADING_2564_S3A_RESTRICTED_CURRENT_AUTHORITY_PATHS
-        ), "S3a restricted source is outside the exact reviewed intersection"
+        assert source_path in TRADING_2564_S3A_RESTRICTED_CURRENT_AUTHORITY_PATHS, (
+            "S3a restricted source is outside the exact reviewed intersection"
+        )
     if (
         section_key == TRADING_2564_S3B_CAPTURE_PHASE_KEY
         and source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
     ):
-        assert (
-            source_path in TRADING_2564_S3B_RESTRICTED_CURRENT_AUTHORITY_PATHS
-        ), "S3b restricted source is outside the exact reviewed intersection"
+        assert source_path in TRADING_2564_S3B_RESTRICTED_CURRENT_AUTHORITY_PATHS, (
+            "S3b restricted source is outside the exact reviewed intersection"
+        )
     if (
         section_key == TRADING_2564_S5_CAPTURE_PHASE_KEY
         and source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
     ):
-        assert (
-            source_path in TRADING_2564_S5_RESTRICTED_CURRENT_AUTHORITY_PATHS
-        ), "S5 restricted source is outside the exact reviewed intersection"
+        assert source_path in TRADING_2564_S5_RESTRICTED_CURRENT_AUTHORITY_PATHS, (
+            "S5 restricted source is outside the exact reviewed intersection"
+        )
     if (
         section_key == TRADING_2564_S5_DIAGNOSTICS_PHASE_KEY
         and source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
     ):
-        assert (
-            source_path in TRADING_2564_S5_DIAGNOSTICS_RESTRICTED_CURRENT_AUTHORITY_PATHS
-        ), "S5 diagnostics restricted source is outside the exact reviewed intersection"
+        assert source_path in TRADING_2564_S5_DIAGNOSTICS_RESTRICTED_CURRENT_AUTHORITY_PATHS, (
+            "S5 diagnostics restricted source is outside the exact reviewed intersection"
+        )
     if (
         section_key == TRADING_2564_S4_FIRST_ACCESS_PHASE_KEY
         and source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
     ):
-        assert (
-            source_path in TRADING_2564_S4_FIRST_ACCESS_RESTRICTED_CURRENT_AUTHORITY_PATHS
-        ), "S4 first-access restricted source is outside the exact reviewed intersection"
+        assert source_path in TRADING_2564_S4_FIRST_ACCESS_RESTRICTED_CURRENT_AUTHORITY_PATHS, (
+            "S4 first-access restricted source is outside the exact reviewed intersection"
+        )
     if (
         section_key == TRADING_2560_COMPOSER_CAPTURE_PHASE_KEY
         and source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
     ):
-        assert (
-            source_path in TRADING_2560_COMPOSER_CAPTURE_RESTRICTED_CURRENT_AUTHORITY_PATHS
-        ), "Composer restricted source is outside the exact reviewed intersection"
+        assert source_path in TRADING_2560_COMPOSER_CAPTURE_RESTRICTED_CURRENT_AUTHORITY_PATHS, (
+            "Composer restricted source is outside the exact reviewed intersection"
+        )
     if (
         section_key == OPS_081_SCHEDULER_CONTRACT_PHASE_KEY
         and source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
     ):
-        assert (
-            source_path in OPS_081_RESTRICTED_CURRENT_AUTHORITY_PATHS
-        ), "OPS-081 restricted source is outside the exact reviewed intersection"
+        assert source_path in OPS_081_RESTRICTED_CURRENT_AUTHORITY_PATHS, (
+            "OPS-081 restricted source is outside the exact reviewed intersection"
+        )
     if (
         section_key == DEVX_015_TASK_ADMISSION_PHASE_KEY
         and source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
@@ -652,15 +665,22 @@ def _assert_historical_source_is_current_or_superseded(
         assert source_path in DEVX_015_TASK_ADMISSION_RESTRICTED_CURRENT_AUTHORITY_PATHS, (
             "DEVX-015 task admission restricted source is outside the exact reviewed intersection"
         )
+    if (
+        section_key == DEVX_015_WORKFLOW_PHASE_KEY
+        and source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
+    ):
+        assert source_path in DEVX_015_WORKFLOW_RESTRICTED_CURRENT_AUTHORITY_PATHS, (
+            "DEVX-015 workflow restricted source is outside the exact reviewed intersection"
+        )
 
     supersession = section["supersession"]
-    assert (
-        supersession["historical_hashes_rewritten"] is False
-    ), f"{section_key} must preserve historical source hashes"
+    assert supersession["historical_hashes_rewritten"] is False, (
+        f"{section_key} must preserve historical source hashes"
+    )
     expected_authority = f"{section_key}.sources"
-    assert (
-        supersession["current_hash_authority"] == expected_authority
-    ), f"{section_key} current hash authority must be {expected_authority}"
+    assert supersession["current_hash_authority"] == expected_authority, (
+        f"{section_key} current hash authority must be {expected_authority}"
+    )
     current_live_hash = _source_sha256_path(live_path, current_source)
     if (
         source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
@@ -696,6 +716,7 @@ def _assert_historical_source_is_current_or_superseded(
             TRADING_2560_COMPOSER_CAPTURE_PHASE_KEY,
             OPS_081_SCHEDULER_CONTRACT_PHASE_KEY,
             DEVX_015_TASK_ADMISSION_PHASE_KEY,
+            DEVX_015_WORKFLOW_PHASE_KEY,
         }
     ):
         section_ids = list(baseline)
@@ -715,9 +736,9 @@ def _assert_historical_source_is_current_or_superseded(
             TRADING_2501_ATLAS_OWNER_REVIEW_PACK_PHASE_KEY
         ), "unreviewed future successor exceeds the historical chronology boundary"
         return
-    assert (
-        current_source.get("sha256") == current_live_hash
-    ), f"{source_path}: latest authority hash does not match live bytes"
+    assert current_source.get("sha256") == current_live_hash, (
+        f"{source_path}: latest authority hash does not match live bytes"
+    )
 
 
 def test_trading2452_active_glossary_supersedes_frozen_v1_without_rewriting_it() -> None:
@@ -953,9 +974,9 @@ def test_devx_014_special_source_rejects_invalid_current_binding(
     elif malformation == "rewritten_history":
         phase["supersession"]["historical_hashes_rewritten"] = True
     elif malformation == "wrong_authority":
-        phase["supersession"][
-            "current_hash_authority"
-        ] = f"{OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY}.sources"
+        phase["supersession"]["current_hash_authority"] = (
+            f"{OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY}.sources"
+        )
     elif malformation == "missing_superseded_path":
         phase["superseded_live_source_paths"] = []
     elif malformation == "missing_current_source":
@@ -1007,9 +1028,9 @@ def test_devx_014_special_source_does_not_fall_back_to_older_valid_authority(
     baseline, historical_source = _devx_014_special_source_fixture(tmp_path, source_path)
     current_phase = baseline[DEVX_014_SOURCE_PRESERVATION_AND_OS_ARBITER_PHASE_KEY]
     older_phase = deepcopy(current_phase)
-    older_phase["supersession"][
-        "current_hash_authority"
-    ] = f"{OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY}.sources"
+    older_phase["supersession"]["current_hash_authority"] = (
+        f"{OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY}.sources"
+    )
     baseline[OPS_079_HISTORICAL_GAP_RECOVERY_PHASE_KEY] = older_phase
     current_phase["sources"][0]["sha256"] = sha256(b"stale\n").hexdigest()
 
@@ -1961,16 +1982,20 @@ def test_ops_081_restricted_binding_does_not_fall_back_to_old_authority(
         "unknown_phase",
     ],
 )
+@pytest.mark.parametrize(
+    "successor_key", [DEVX_015_TASK_ADMISSION_PHASE_KEY, DEVX_015_WORKFLOW_PHASE_KEY]
+)
 def test_devx_015_admission_restricted_binding_does_not_fall_back_to_old_authority(
     tmp_path: Path,
     restricted_s2b_source_case: tuple[dict[str, Any], dict[str, str]],
     malformation: str,
+    successor_key: str,
 ) -> None:
     baseline, historical = restricted_s2b_source_case
     phase = deepcopy(baseline[TRADING_2564_S2B_NAMED_DQ_EXECUTION_PHASE_KEY])
-    section = DEVX_015_TASK_ADMISSION_PHASE_KEY
+    section = successor_key
     if malformation == "unknown_phase":
-        section = "phase_devx_015_task_integration_admission_unreviewed_v2"
+        section = successor_key + "_unreviewed"
         markers = (
             TRADING_2492_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_PHASE_KEY,
             TRADING_2492_BOUNDED_PILOT_TERMINAL_NO_GO_PHASE_KEY,
@@ -2015,14 +2040,23 @@ def test_devx_015_admission_restricted_binding_does_not_fall_back_to_old_authori
 @pytest.mark.parametrize(
     "source_path", sorted(DEVX_015_TASK_ADMISSION_RESTRICTED_CURRENT_AUTHORITY_PATHS)
 )
-def test_devx_015_admission_exact_four_path_successor(tmp_path: Path, source_path: str) -> None:
+@pytest.mark.parametrize(
+    "successor_key", [DEVX_015_TASK_ADMISSION_PHASE_KEY, DEVX_015_WORKFLOW_PHASE_KEY]
+)
+def test_devx_015_admission_exact_four_path_successor(
+    tmp_path: Path, source_path: str, successor_key: str
+) -> None:
     path = tmp_path / source_path
     path.parent.mkdir(parents=True)
     path.write_bytes(b"current\n")
     current = {"path": source_path, "sha256": sha256(b"current\n").hexdigest()}
     historical = {"path": source_path, "sha256": sha256(b"historical\n").hexdigest()}
     baseline = {}
-    for section_key in (OPS_081_SCHEDULER_CONTRACT_PHASE_KEY, DEVX_015_TASK_ADMISSION_PHASE_KEY):
+    for section_key in (
+        OPS_081_SCHEDULER_CONTRACT_PHASE_KEY,
+        DEVX_015_TASK_ADMISSION_PHASE_KEY,
+        successor_key,
+    ):
         baseline[section_key] = {
             "sources": [dict(current)],
             "superseded_live_source_paths": [source_path],
@@ -2036,7 +2070,12 @@ def test_devx_015_admission_exact_four_path_successor(tmp_path: Path, source_pat
     )
 
 
-def test_devx_015_admission_cannot_claim_an_extra_restricted_source(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "successor_key", [DEVX_015_TASK_ADMISSION_PHASE_KEY, DEVX_015_WORKFLOW_PHASE_KEY]
+)
+def test_devx_015_admission_cannot_claim_an_extra_restricted_source(
+    tmp_path: Path, successor_key: str
+) -> None:
     source_path = "docs/task_register.md"
     assert source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
     assert source_path not in DEVX_015_TASK_ADMISSION_RESTRICTED_CURRENT_AUTHORITY_PATHS
@@ -2045,7 +2084,7 @@ def test_devx_015_admission_cannot_claim_an_extra_restricted_source(tmp_path: Pa
     path.write_bytes(b"current\n")
     current = {"path": source_path, "sha256": sha256(b"current\n").hexdigest()}
     baseline = {
-        DEVX_015_TASK_ADMISSION_PHASE_KEY: {
+        successor_key: {
             "sources": [current],
             "superseded_live_source_paths": [source_path],
         }

@@ -60,6 +60,12 @@ def main() -> int:
     release.add_argument("--evidence-ref", action="append", default=[])
     release.add_argument("--at")
 
+    cancel = subparsers.add_parser("cancel-request")
+    cancel.add_argument("--repository", type=Path, default=PROJECT_ROOT)
+    cancel.add_argument("--lease-id", required=True)
+    cancel.add_argument("--actor", required=True)
+    cancel.add_argument("--at")
+
     subparsers.add_parser("replay")
 
     daily = subparsers.add_parser("daily-preflight")
@@ -171,7 +177,7 @@ def main() -> int:
                 "production_effect": "none",
             }
         else:
-            guard = CheckoutLeaseGuard(project_root=PROJECT_ROOT)
+            guard = CheckoutLeaseGuard(project_root=getattr(args, "repository", PROJECT_ROOT))
             if args.command == "acquire":
                 decision, _ = guard.acquire(
                     intent_id=args.intent_id,
@@ -196,6 +202,14 @@ def main() -> int:
                     "action": "heartbeat",
                     "lease": lease.to_dict(),
                     "production_effect": "none",
+                }
+            elif args.command == "cancel-request":
+                lease = guard.cancel_request(
+                    args.lease_id, actor=args.actor, now=_parse_datetime(args.at),
+                )
+                payload = {
+                    "status": "PASS", "action": "cancel-request", "lease": lease.to_dict(),
+                    "dispatch_allowed": False, "production_effect": "none", "broker_action": "none",
                 }
             elif args.command == "release":
                 lease = guard.release(

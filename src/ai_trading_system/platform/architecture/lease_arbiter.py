@@ -501,7 +501,7 @@ def _completed_migrations(root: Path) -> None:
 @contextmanager
 def hold_lease_arbiter(
     store_root: Path, *, actor: str, now: datetime, arbiter_ttl_seconds: int
-) -> Iterator[None]:
+) -> Iterator[_HeldLock]:
     root = _root(store_root)
     instant = _aware(now)
     _text(actor)
@@ -522,7 +522,7 @@ def hold_lease_arbiter(
         active = _owner(held, actor, instant, arbiter_ttl_seconds, "ACTIVE")
         write_json_atomic(owner_path, active)
         owner_written = True
-        yield
+        yield held
     finally:
         try:
             if owner_written:

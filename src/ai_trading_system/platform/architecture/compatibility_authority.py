@@ -988,6 +988,10 @@ def build_repository_authority(
         section_id, section = _devx_015_task_admission_section(root, policy=policy)
         relative, record, content = render_fragment(section_id=section_id, section=section)
         rendered_fragments.append((section_id, relative, record, content))
+    if (root / "docs/requirements/DEVX-015_Workflow_Contract_And_Acceptance_V3.md").exists():
+        section_id, section = _devx_015_workflow_contract_section(root, policy=policy)
+        relative, record, content = render_fragment(section_id=section_id, section=section)
+        rendered_fragments.append((section_id, relative, record, content))
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
@@ -1030,6 +1034,13 @@ def build_repository_authority(
 
 
 def _git_bytes(root: Path, commit: str, portable: str) -> bytes:
+    from ai_trading_system.platform.architecture.source_preservation import inspection_git_result
+
+    protected = inspection_git_result(root, "show", f"{commit}:{portable}")
+    if protected is not None:
+        if protected.returncode != 0:
+            _fail("AUTHORITY_GIT_BLOB_UNAVAILABLE", f"{commit}:{portable}")
+        return protected.stdout
     result = subprocess.run(
         ["git", "show", f"{commit}:{portable}"],
         cwd=root,
@@ -3596,6 +3607,114 @@ def _devx_015_task_admission_section(
     }
 
 
+def _devx_015_workflow_contract_section(
+    root: Path, *, policy: Mapping[str, Any]
+) -> tuple[str, dict[str, Any]]:
+    """Append V3 source authority without rewriting the published admission chain."""
+    section_id = "phase_devx_015_workflow_contract_v3"
+    previous_id, previous = _devx_015_task_admission_section(root, policy=policy)
+    source_paths = sorted(
+        {
+            *previous["superseded_live_source_paths"],
+            "AGENTS.md",
+            "config/architecture/arch_005_integration_publication_fence.yaml",
+            "config/architecture/arch_005_integration_revalidation.yaml",
+            "config/architecture/arch_005_parallel_control_policy.yaml",
+            "config/architecture/arch_005_s4d_checkout_guard.yaml",
+            "config/architecture/arch_005_task_checkpoint.yaml",
+            "config/architecture/arch_005_source_preservation_v2.yaml",
+            "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+            "config/architecture/devx_015_merge_scope.v1.json",
+            "config/architecture/devx_015_workflow_acceptance.v1.json",
+            "docs/artifact_catalog.md",
+            "docs/operations/operations_runbook.md",
+            "docs/requirements/DEVX-015_Workflow_Contract_And_Acceptance_V3.md",
+            "docs/system_flow.md",
+            "scripts/architecture_arch005_checkout_guard.py",
+            "scripts/architecture_arch005_integration_revalidation.py",
+            "scripts/architecture_arch005_publication_fence.py",
+            "scripts/architecture_arch005_task_checkpoint.py",
+            "scripts/architecture_arch005_task_source.py",
+            "scripts/architecture_arch005_workflow.py",
+            "scripts/run_validation_tier.py",
+            "src/ai_trading_system/platform/architecture/checkout_guard.py",
+            "src/ai_trading_system/platform/architecture/integration_publication_fence.py",
+            "src/ai_trading_system/platform/architecture/integration_revalidation.py",
+            "src/ai_trading_system/platform/architecture/lease_arbiter.py",
+            "src/ai_trading_system/platform/architecture/parallel_control_dispatch.py",
+            "src/ai_trading_system/platform/architecture/parallel_control_kernel.py",
+            "src/ai_trading_system/platform/architecture/parallel_control.py",
+            "src/ai_trading_system/platform/architecture/source_preservation.py",
+            "src/ai_trading_system/platform/architecture/supervised_automation.py",
+            "src/ai_trading_system/platform/architecture/task_checkpoint.py",
+            "src/ai_trading_system/platform/architecture/workflow_contract.py",
+            "src/ai_trading_system/platform/architecture/workflow_coordination.py",
+            "src/ai_trading_system/platform/architecture/workflow_execution.py",
+            "src/ai_trading_system/platform/architecture/workflow_integration.py",
+            "tests/test_arch_004g_deprecation.py",
+            "tests/test_arch_005_checkpoint_capability.py",
+            "tests/test_arch_005_integration_publication_fence.py",
+            "tests/test_arch_005_integration_revalidation.py",
+            "tests/test_arch_005_s4d_checkout_guard.py",
+            "tests/test_arch_005_source_preservation.py",
+            "tests/test_arch_005_task_checkpoint.py",
+            "tests/test_architecture_wave_readiness.py",
+            "tests/test_devx015_workflow_acceptance.py",
+            "tests/test_devx015_workflow_coordination.py",
+            "tests/test_devx015_workflow_execution.py",
+            "tests/test_devx015_workflow_integration.py",
+            "tests/test_named_quality_dispatch.py",
+        },
+        key=str.casefold,
+    )
+    return section_id, {
+        "schema_version": "devx_015_workflow_contract.v3",
+        "task_id": "DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2",
+        "status": "IN_PROGRESS",
+        "owner_decision": (
+            "owner_decision:DEVX-015:2026-09-11:complete_workflow_contract_revision_v3"
+        ),
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "inherited_supersession_authority": previous_id,
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "checkpoint_contract": {
+            "inspection_profile": "SOURCE_ONLY_EXPLICIT_PATHS",
+            "snapshot_profile": "RAW_BYTES_TASK_CHECKPOINT_UNVALIDATED",
+            "staged_bytes_are_selection_authority": False,
+            "raw_bytes_and_operations_preserved": True,
+            "source_only_grants_generation_full_or_publication": False,
+            "recovery_authority": "ORIGINAL_IMMUTABLE_REQUEST_AND_ACTUAL_JOB_STATE",
+            "same_request_replay_grants_redispatch": False,
+        },
+        "workflow_contract": {
+            "source_lineage": "REVIEWED_M_L_PARENTS_WITH_CURRENT_CANONICAL_AUTHORITY",
+            "coordination_authority": "FileExecutionLeaseStore",
+            "validation_identity": "EXACT_CANDIDATE_SUT_RUNNER_INPUTS_AND_ENVIRONMENT",
+            "validation_and_current_publication_eligibility_separate": True,
+            "recovery_requires_independent_stable_state": True,
+            "unresolved_contract_semantics_block_publication": True,
+            "required_acceptance": "config/architecture/devx_015_workflow_acceptance.v1.json",
+        },
+        "safety": {
+            "historical_hashes_rewritten": False,
+            "unrequested_source_content_read_allowed": False,
+            "checkpoint_mutates_source_branch_or_index": False,
+            "prior_full_validation_reused": False,
+            "new_scheduler_or_lease_kernel_added": False,
+            "mechanism_acceptance_claimed": False,
+            "deployment_or_operational_acceptance_claimed": False,
+            "investment_policy_or_dq_pit_changed": False,
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
 def _trading_2560_composer_known_snapshot_section(
     root: Path, *, policy: Mapping[str, Any]
 ) -> tuple[str, dict[str, Any]]:
@@ -3837,6 +3956,16 @@ def _git_lines(
     *,
     allow_no_match: bool,
 ) -> list[str]:
+    from ai_trading_system.platform.architecture.source_preservation import inspection_git_result
+
+    protected = inspection_git_result(root, *arguments)
+    if protected is not None:
+        if protected.returncode == 1 and allow_no_match:
+            return []
+        if protected.returncode != 0:
+            _fail("AUTHORITY_GIT_COMMAND_FAILED", f"exit={protected.returncode}")
+        return [line.strip() for line in protected.stdout.decode("utf-8").splitlines()
+                if line.strip()]
     result = subprocess.run(
         ["git", *arguments],
         cwd=root,
@@ -3853,6 +3982,11 @@ def _git_lines(
 
 
 def _git_text(root: Path, base: str, portable: str) -> str:
+    from ai_trading_system.platform.architecture.source_preservation import inspection_git_result
+
+    protected = inspection_git_result(root, "show", f"{base}:{portable}")
+    if protected is not None:
+        return "" if protected.returncode != 0 else protected.stdout.decode("utf-8")
     result = subprocess.run(
         ["git", "show", f"{base}:{portable}"],
         cwd=root,

@@ -248,6 +248,19 @@ Owner 在对话中确认分类并授权执行与推送（"确认，按这个分�
 没有 `DEFERRED`，Atlas 覆盖范围内的任务一旦转为 DEFERRED，Atlas 生成器即 fail closed。按 owner 已批准的处置补充
 `DEFERRED → SKIPPED`（主动暂缓、不执行），只影响 Atlas 阅读页状态展示，不改变投资解读、研究窗口或 DQ/PIT。
 
+### P1-C DEVX-015 lane 修复与首次集成（2026-09-25/26）
+
+- Owner 决定写入 DEVX-015 任务行（本次发布）：做完全部 106 项验收；worker 账户范围 A（只用于测试和 Full，
+  `owner_decision:DEVX-015:2026-09-24:worker_account_scope_full_only_v1`）。主机/账户/HKLM/ACL 步骤以管理员执行包交 owner 运行。
+- lane `codex/devx-015-main6498-reconciliation` 上完成 v386–v389（详见 DEVX-015 V3 文档）：受保护 Full 门禁、
+  DEVX-015A 父键单值锚点、活体执行仲裁重试窗口、隔离 profile 检查器下的调用方已加载源码自检（恢复 V02 语义）
+  及一批陈旧测试夹具修复。首次回归的 54 个失败节点全部串行或 `-n 2` 通过；重型整链节点并行度不超过 2。
+- 集成：冻结基线 `03d10b4a2`，lane head `69729e6ff`，最新 main `cbc31cdff`（DEVX-016 S1-early 发布后）。
+  revalidation 计划 `integration-revalidation-d1b239e06f110ea1409c` 为 `RECONCILIATION_REQUIRED`（无阻塞、无契约冲突）；
+  重叠仅限生成物、system_flow 及其封印、两份固定常量测试，在单一最新 main 候选上对齐后重新生成。
+- 本机 HKCU 遗留测试键 3 个交 owner 清理（两个蓝屏遗留、一个 v387 回归中止遗留），见 DEVX-015A 进展。
+- 本次 P1-C 不代表 DEVX-015 完成：剩余 13 项验收（I05×2、L03×7、X05×4）、管理员执行包、最终候选 Full/发布及 OPS-080 W3/W4。
+
 ## 7. 退出条件
 
 E1–E10 全部满足，迁移到 pi 的第一个低风险任务完成完整的"预检 → 提交 → 合入 main → 推送"。

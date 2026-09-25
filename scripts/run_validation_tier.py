@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import codecs
 import hashlib
 import json
 import math
@@ -13,10 +14,19 @@ import sys
 import tempfile
 import time
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath, PureWindowsPath
+from typing import TYPE_CHECKING, Any, TypedDict, TypeGuard
+
+if TYPE_CHECKING:
+    from ai_trading_system.platform.architecture.source_preservation import HeldGitConfiguration
+    from ai_trading_system.platform.architecture.workflow_coordination import (
+        ExecutionLifecycle,
+        WindowsWorkerExchange,
+    )
+    from ai_trading_system.platform.architecture.workflow_execution import WindowsWorkerToken
 
 # The runner must prefer this worktree's src package when executed as a script.
 REPO_ROOT_FOR_IMPORTS = Path(__file__).resolve().parents[1]
@@ -30,7 +40,20 @@ from ai_trading_system.platform.architecture.integration_publication_fence impor
     PublicationFenceError,
 )
 from ai_trading_system.platform.architecture.validation_readiness import (
+    CHECKER_IDS,
     check_full_readiness,
+)
+from ai_trading_system.platform.architecture.workflow_execution import (
+    DEVX015_ACCEPTANCE_TASK,
+    MANDATORY_ACCEPTANCE_REQUEST_ENV,
+    ExecutionContainmentError,
+    acceptance_runtime_identity,
+    bind_acceptance_checkout,
+    bind_acceptance_implementation,
+    bind_inspector_implementation,
+    bind_mandatory_acceptance,
+    capture_acceptance_implementation,
+    validate_mandatory_acceptance_result,
 )
 from ai_trading_system.platform.validation_parent_run_import import (
     PARENT_RUN_IMPORT_ENV as VALIDATION_PARENT_RUN_IMPORT_ENV,
@@ -418,6 +441,317 @@ def _format_command(command: Sequence[str]) -> str:
     return " ".join(command)
 
 
+def _command_exit_code(result: Mapping[str, object]) -> int:
+    value = result["exit_code"]
+    if type(value) is not int:
+        raise TypeError("command exit_code must be an integer")
+    return value
+
+
+def _runtime_float(value: object) -> float:
+    if not isinstance(value, (str, int, float)):
+        raise TypeError("runtime numeric value must be a number or numeric string")
+    return float(value)
+
+
+def _run_leased_command(
+    *,
+    request: Mapping[str, Any],
+    lifecycle: ExecutionLifecycle,
+    actor: str,
+    environment: Mapping[str, str],
+    request_path: Path | None = None,
+    validation_identity: Mapping[str, object] | None = None,
+    worker_token: WindowsWorkerToken | None = None,
+) -> dict[str, object]:
+    """Run one reserved process tree; result adoption remains with the Full caller."""
+    from ai_trading_system.platform.architecture.workflow_execution import (
+        WindowsJobProcess,
+        WindowsWorkerToken,
+        execution_environment_sha256,
+    )
+    from ai_trading_system.platform.artifacts import canonical_json_bytes
+
+    started = time.perf_counter()
+    if worker_token is not None:
+        if type(worker_token) is not WindowsWorkerToken:
+            raise ExecutionContainmentError("WORKER_TOKEN_CAPABILITY_REQUIRED")
+        worker_binding = worker_token.validate_launcher()
+        if (request_path is None or validation_identity is None
+                or validation_identity.get("worker_identity") != worker_binding):
+            raise ExecutionContainmentError("FULL_WORKER_IDENTITY_UNBOUND")
+    elif validation_identity is not None and "worker_identity" in validation_identity:
+        raise ExecutionContainmentError("WORKER_TOKEN_CAPABILITY_REQUIRED")
+    # Reject changed inputs before reserving execution or writing evidence.
+    if execution_environment_sha256(environment) != request["environment_sha256"]:
+        raise ExecutionContainmentError("FULL_EXECUTION_ENVIRONMENT_CHANGED")
+    if validation_identity is not None:
+        identity_raw = canonical_json_bytes(dict(validation_identity))
+        if hashlib.sha256(identity_raw).hexdigest() != request["validation_identity_sha256"]:
+            raise ExecutionContainmentError("FULL_VALIDATION_IDENTITY_CHANGED")
+    reserved = lifecycle.reserve(request, actor=actor)
+    if reserved["dispatch_allowed"] is not True:
+        raise ExecutionContainmentError("FULL_EXECUTION_REPLAY_ONLY")
+    parts: list[str] = []
+    decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
+    process = None
+    try:
+        # Renew the existing execution lease; this foreground loop owns no scheduler.
+        lifecycle.store.heartbeat(request["lease_id"], actor=actor, now=datetime.now(UTC))
+        heartbeat_interval = lifecycle.store.policy.lease_ttl_seconds / 3
+        heartbeat_due = time.monotonic() + heartbeat_interval
+        if request_path is not None:
+            from ai_trading_system.platform.architecture.workflow_contract import write_bound_once
+
+            write_bound_once(
+                request_path.parent, request_path.name, canonical_json_bytes(dict(request)),
+            )
+            if validation_identity is not None:
+                write_bound_once(
+                    request_path.parent, "execution_validation_identity.json", identity_raw,
+                )
+        launch = dict(
+            argv=request["argv"],
+            cwd=Path(request["cwd"]),
+            environment=environment,
+            stdout_path=Path(request["stdout_path"]),
+            job_name=request["job_name"],
+        )
+        process = (
+            WindowsJobProcess.create(**launch) if worker_token is None
+            else WindowsJobProcess.create_as_worker(worker_token=worker_token, **launch)
+        )
+        lifecycle.bind(request["lease_id"], process, actor=actor)
+        lifecycle.resume(request["lease_id"], process, actor=actor)
+        with Path(request["stdout_path"]).open("rb") as stream:
+            while True:
+                # A polling interval is not a run timeout or permission to relaunch.
+                try:
+                    code = process.wait(timeout=0.25)
+                except TimeoutError:
+                    code = None
+                if time.monotonic() >= heartbeat_due:
+                    lifecycle.store.heartbeat(
+                        request["lease_id"], actor=actor, now=datetime.now(UTC),
+                    )
+                    heartbeat_due = time.monotonic() + heartbeat_interval
+                chunk = decoder.decode(stream.read(), final=code is not None)
+                if chunk:
+                    print(chunk, end="", flush=True)
+                    parts.append(chunk)
+                if code is not None:
+                    break
+        lifecycle.confirm_exit(request["lease_id"], process, actor=actor)
+        identity = process.identity()
+    except BaseException as exc:
+        if process is not None:
+            # Keep the live handle until both termination and custody are proved.
+            try:
+                process.terminate()
+                lifecycle.confirm_exit(request["lease_id"], process, actor=actor)
+                lifecycle.record_incomplete_result(request["lease_id"], actor=actor)
+            except BaseException as cleanup_error:
+                exc.add_note("execution custody incomplete: " + str(cleanup_error))
+        raise
+    finally:
+        if process is not None:
+            process.close()
+    return {
+        "command": list(request["argv"]),
+        "exit_code": code,
+        "elapsed_seconds": round(time.perf_counter() - started, 2),
+        "pytest_output": "".join(parts),
+        "execution_request_id": request["request_id"],
+        "execution_process": identity,
+        "execution_exit_confirmed": True,
+    }
+
+
+class _FullCommandRunner:
+    """Bind the final argv/environment to the already-admitted ordinary Full claim."""
+
+    def __init__(
+        self, *, args: argparse.Namespace, root: Path, artifact_dir: Path,
+        publication_binding: Mapping[str, object], provenance: Mapping[str, object],
+        worker_token: WindowsWorkerToken | None = None,
+        worker_environment: Mapping[str, str] | None = None,
+        worker_exchange: WindowsWorkerExchange | None = None,
+    ) -> None:
+        from ai_trading_system.platform.architecture.workflow_coordination import (
+            WindowsWorkerExchange,
+        )
+        from ai_trading_system.platform.architecture.workflow_execution import WindowsWorkerToken
+
+        if (worker_token is None) != (worker_environment is None):
+            raise ExecutionContainmentError("FULL_WORKER_ENVIRONMENT_REQUIRED")
+        if worker_token is not None and type(worker_token) is not WindowsWorkerToken:
+            raise ExecutionContainmentError("WORKER_TOKEN_CAPABILITY_REQUIRED")
+        self.worker_token = worker_token
+        if worker_exchange is not None:
+            if type(worker_exchange) is not WindowsWorkerExchange or worker_token is None:
+                raise ExecutionContainmentError("FULL_WORKER_EXCHANGE_REQUIRED")
+            worker_exchange.validate_worker(worker_token)
+        self.worker_exchange = worker_exchange
+        self.worker_environment = (
+            dict(worker_environment) if worker_environment is not None else None
+        )
+        self.args = args
+        self.root = root.resolve()
+        self.artifact_dir = artifact_dir.resolve()
+        self.binding = dict(publication_binding)
+        self.provenance = dict(provenance)
+        self.request: dict[str, Any] | None = None
+        self.fence = IntegrationPublicationFence(project_root=self.root)
+        if not self.artifact_dir.is_relative_to(self.root / DEFAULT_ARTIFACT_ROOT):
+            raise ExecutionContainmentError("FULL_EXECUTION_ARTIFACT_SCOPE")
+
+    def effective_environment(
+        self, overrides: Mapping[str, str] | None = None,
+    ) -> dict[str, str]:
+        """One environment source for mandatory identity and actual dispatch."""
+        return {
+            **(os.environ if self.worker_environment is None else self.worker_environment),
+            **(overrides or {}),
+        }
+
+    def __call__(
+        self, command: Sequence[str], *, cwd: Path,
+        env_overrides: Mapping[str, str] | None = None,
+    ) -> dict[str, object]:
+        from ai_trading_system.platform.architecture.workflow_contract import canonical_digest
+        from ai_trading_system.platform.architecture.workflow_coordination import machine_host_id
+        from ai_trading_system.platform.architecture.workflow_execution import (
+            execution_environment_sha256,
+        )
+        from ai_trading_system.platform.artifacts import canonical_json_bytes
+
+        if cwd.resolve() != self.root or self.request is not None:
+            raise ExecutionContainmentError("FULL_EXECUTION_CONTEXT_REUSE")
+        if not command or Path(command[0]).absolute() != Path(sys.executable).absolute():
+            raise ExecutionContainmentError("FULL_EXECUTION_INTERPRETER_UNBOUND")
+        parent = self.provenance.get("parent_run")
+        if isinstance(parent, Mapping):
+            parent = parent.get("summary_path")
+        current = self.fence.validate(
+            self.args.publication_transaction, exact_phase="FULL_DISPATCHED",
+            task_id=str(self.provenance["task_id"]), validation_tier="full",
+            parent_path=Path(str(parent)) if parent is not None else None,
+            require_candidate=True,
+        )
+        for key in ("transaction_sha256", "lease_id", "candidate_sha"):
+            if current[key] != self.binding[key]:
+                raise ExecutionContainmentError("FULL_EXECUTION_BINDING_CHANGED")
+        self.fence.require_full_launcher(self.args.publication_transaction)
+        # Final committed DONE tasks are allowed only by the existing fence.
+        # Bind their real canonical fragment, never revive an old task authority.
+        task_commitment = _full_task_commitment(
+            self.root, str(self.provenance["task_id"]), str(current["candidate_sha"]),
+        )
+        if task_commitment != self.binding.get("task_commitment"):
+            raise ExecutionContainmentError("FULL_EXECUTION_TASK_CHANGED")
+        replay = self.fence.replay(self.args.publication_transaction)
+        event = next(row for row in replay.events if row["phase"] == "FULL_DISPATCHED")
+        lease = next(
+            row for row in self.fence.guard.store.replay().active_leases
+            if row.lease_id == current["lease_id"]
+        )
+        coordination = self.fence.guard.store.coordination_binding
+        if coordination is not None:
+            coordination.assert_current(operation="observe")
+        worker_binding = (
+            self.worker_token.validate_launcher() if self.worker_token is not None else None
+        )
+        self.artifact_dir.mkdir(parents=True, exist_ok=True)
+        environment = self.effective_environment(env_overrides)
+        request_id = canonical_digest({
+            "transaction": current["transaction_sha256"],
+            "full_run_id": event["payload"]["full_run_id"],
+        })
+        validation_identity = {
+            "candidate_sha": current["candidate_sha"],
+            "argv": list(command), "cwd": self.root.as_posix(),
+            "environment_sha256": execution_environment_sha256(environment),
+            "runtime": acceptance_runtime_identity(environment),
+            "publication_policy_sha256": self.fence.policy_sha256,
+            "pre_dispatch_readiness": self.binding["pre_dispatch_readiness"],
+            "mandatory_acceptance_binding": self.binding.get("mandatory_acceptance_binding"),
+            "task_authority_sha256": task_commitment["fragment_sha256"],
+        }
+        if worker_binding is not None:
+            validation_identity["worker_identity"] = worker_binding
+        self.request = {
+            "schema_version": "workflow_execution_request.v1",
+            "request_id": request_id, "lease_id": lease.lease_id,
+            "manifest_sha256": lease.change_manifest_sha256,
+            "subject_task_id": lease.task_id,
+            "candidate_sha": current["candidate_sha"],
+            "validation_identity_sha256": hashlib.sha256(
+                canonical_json_bytes(validation_identity)
+            ).hexdigest(),
+            "task_authority_sha256": task_commitment["fragment_sha256"],
+            "argv": list(command), "cwd": self.root.as_posix(),
+            "environment_sha256": validation_identity["environment_sha256"],
+            "stdout_path": (self.artifact_dir / "execution.stdout.log").as_posix(),
+            "result_path": (self.artifact_dir / "execution_result.json").as_posix(),
+            "job_name": "Local\\AITS-DEVX015-full-" + request_id,
+            "host_id": coordination.host_id if coordination else machine_host_id(),
+            "writer_epoch": coordination.epoch if coordination else "UNENROLLED_LEGACY",
+        }
+        result = _run_leased_command(
+            request=self.request, lifecycle=self.fence.guard.store.execution_lifecycle(),
+            actor="integration-coordinator", environment=environment,
+            request_path=self.artifact_dir / "execution_request.json",
+            validation_identity=validation_identity,
+            worker_token=self.worker_token,
+        )
+        result["validation_identity_sha256"] = self.request["validation_identity_sha256"]
+        return result
+
+    def record_summary(self, summary_path: Path, *, status: str) -> None:
+        from ai_trading_system.platform.architecture.workflow_contract import (
+            bounded_regular_bytes,
+            write_bound_once,
+        )
+        from ai_trading_system.platform.artifacts import canonical_json_bytes
+        from ai_trading_system.platform.artifacts.json_contract import load_strict_json_text
+
+        if self.request is None:
+            if status == "PASS":
+                raise ExecutionContainmentError("FULL_RESULT_WITHOUT_EXECUTION")
+            return  # A pre-execution mandatory check may fail without a process.
+        raw = bounded_regular_bytes(summary_path)
+        summary = load_strict_json_text(raw.decode("utf-8"))
+        expected = {
+            "git_commit": self.request["candidate_sha"], "status": status,
+            "execution_request_id": self.request["request_id"],
+            "validation_identity_sha256": self.request["validation_identity_sha256"],
+        }
+        if not isinstance(summary, dict) or any(summary.get(k) != v for k, v in expected.items()):
+            raise ExecutionContainmentError("FULL_RESULT_SUMMARY_BINDING")
+        result = {
+            "schema_version": "full_execution_result.v1",
+            "candidate_sha": self.request["candidate_sha"],
+            "validation_identity_sha256": self.request["validation_identity_sha256"],
+            "request_id": self.request["request_id"], "status": status,
+            "summary": {"path": summary_path.absolute().as_posix(),
+                        "sha256": hashlib.sha256(raw).hexdigest()},
+        }
+        result_path = Path(self.request["result_path"])
+        result_raw = canonical_json_bytes(result)
+        if result_path.exists():
+            if bounded_regular_bytes(result_path) != result_raw:
+                raise ExecutionContainmentError("FULL_RESULT_REPLAY_CHANGED")
+        self.fence.guard.store.execution_lifecycle().commit_full_result(
+            self.request["lease_id"], actor="integration-coordinator", record=result,
+        )
+        if not result_path.exists():
+            write_bound_once(result_path.parent, result_path.name, result_raw)
+        self.fence.guard.store.execution_lifecycle().record_result(
+            self.request["lease_id"], actor="integration-coordinator", result_path=result_path,
+            expected_sha256=hashlib.sha256(result_raw).hexdigest(),
+        )
+
+
 def _run_command(
     command: Sequence[str],
     *,
@@ -460,8 +794,282 @@ def _run_command(
     }
 
 
-def _parse_pytest_slow_durations(pytest_output: str) -> list[dict[str, object]]:
-    durations: list[dict[str, object]] = []
+def _recheck_launcher_identity(value: object) -> list[dict[str, object]]:
+    """Read committed launcher evidence only beneath this inspector's fixed root."""
+    from ai_trading_system.platform.architecture.workflow_contract import bounded_regular_bytes
+
+    fixed_root = _repo_root().resolve()
+    if not isinstance(value, list) or not value or len(value) > 10000:
+        raise ValueError("Full launcher source inventory is invalid")
+    verified: dict[str, dict[str, object]] = {}
+    for row in value:
+        if not isinstance(row, dict) or set(row) != {"path", "sha256", "size_bytes"}:
+            raise ValueError("Full launcher source record is invalid")
+        path = Path(str(row["path"]))
+        if (not path.is_absolute() or ".." in path.parts or path.suffix != ".py"
+                or not any(path.is_relative_to(fixed_root / directory)
+                           for directory in ("src", "scripts"))
+                or path.as_posix() in verified):
+            raise ValueError("Full launcher source is outside the fixed implementation")
+        raw = bounded_regular_bytes(path)
+        if (type(row["size_bytes"]) is not int or len(raw) != row["size_bytes"]
+                or hashlib.sha256(raw).hexdigest() != row["sha256"]):
+            raise ValueError("Full launcher source changed")
+        verified[path.as_posix()] = dict(row)
+    if (fixed_root / "scripts" / "run_validation_tier.py").as_posix() not in verified:
+        raise ValueError("Full launcher runner source is missing")
+    return list(verified.values())
+
+
+def _allocate_runtime_profile(
+    runner: _FullCommandRunner | None,
+) -> tuple[tempfile.TemporaryDirectory[str] | None, Path]:
+    if runner is not None and runner.worker_token is not None:
+        from ai_trading_system.platform.architecture.workflow_coordination import (
+            WindowsWorkerExchange,
+        )
+
+        exchange = runner.worker_exchange
+        if type(exchange) is not WindowsWorkerExchange:
+            raise ExecutionContainmentError("FULL_WORKER_EXCHANGE_REQUIRED")
+        exchange.validate_worker(runner.worker_token)
+        return None, exchange.profile_directory / RUNTIME_PROFILE_OUTPUT_NAME
+    directory = tempfile.TemporaryDirectory(prefix="aits_pytest_runtime_profile_")
+    return directory, Path(directory.name) / RUNTIME_PROFILE_OUTPUT_NAME
+
+
+def _run_mandatory_acceptance_command(
+    command: Sequence[str],
+    *,
+    cwd: Path,
+    binding: dict[str, object],
+    expected_collections: int,
+    env_overrides: Mapping[str, str] | None = None,
+    command_runner: Callable[..., dict[str, object]] | None = None,
+) -> dict[str, object]:
+    """Use the ordinary subprocess runner, with mandatory evidence checked before PASS."""
+    from ai_trading_system.platform.architecture.workflow_contract import (
+        WorkflowContractError,
+        bounded_regular_bytes,
+        create_bound_recoverable_file,
+        hold_bound_read_file,
+        write_bound_once,
+    )
+    from ai_trading_system.platform.architecture.workflow_coordination import WindowsWorkerExchange
+
+    exchange = (
+        command_runner.worker_exchange if isinstance(command_runner, _FullCommandRunner) else None
+    )
+    if exchange is not None and type(exchange) is not WindowsWorkerExchange:
+        raise ExecutionContainmentError("FULL_WORKER_EXCHANGE_REQUIRED")
+    if (isinstance(command_runner, _FullCommandRunner)
+            and command_runner.worker_token is not None and exchange is None):
+        raise ExecutionContainmentError("FULL_WORKER_EXCHANGE_REQUIRED")
+    directory_context = (
+        exchange.directory() if exchange is not None
+        else tempfile.TemporaryDirectory(prefix="aits_mandatory_acceptance_")
+    )
+    with directory_context as directory:
+        request, output = Path(directory) / "request.json", Path(directory) / "result.json"
+        try:
+            checkout_identity = bind_acceptance_checkout(cwd, binding)
+            if Path(command[0]).absolute() != Path(sys.executable).absolute():
+                raise ExecutionContainmentError("ACCEPTANCE_INTERPRETER_UNBOUND")
+            effective_environment = (
+                command_runner.effective_environment(env_overrides)
+                if isinstance(command_runner, _FullCommandRunner)
+                else {**os.environ, **(env_overrides or {})}
+            )
+            dependency_inputs: dict[Path, bytes] = {}
+            runtime_identity = acceptance_runtime_identity(
+                effective_environment, captured_dependencies=dependency_inputs
+            )
+            launcher_identity = None
+            if exchange is not None:
+                launcher_identity = bind_inspector_implementation(
+                    _repo_root(), runtime_inputs=dependency_inputs,
+                )
+                runner_identity = capture_acceptance_implementation(
+                    cwd, str(binding["candidate_sha"]),
+                )
+            else:
+                runner_identity = bind_acceptance_implementation(
+                    cwd, str(binding["candidate_sha"]), include_runner=True,
+                    runtime_inputs=dependency_inputs,
+                )
+            implementation_identity = runner_identity
+        except ExecutionContainmentError as exc:
+            return {
+                "command": list(command),
+                "exit_code": 1,
+                "elapsed_seconds": 0.0,
+                "pytest_output": "",
+                "mandatory_acceptance": {"status": "FAIL", "reason": str(exc)},
+            }
+        root_info = Path(directory).stat()
+        root_identity = (root_info.st_dev, root_info.st_ino)
+        result_identity: tuple[int, int] | None = None
+        request_raw = b""
+
+        def record_result_identity(identity: tuple[int, int]) -> None:
+            nonlocal result_identity, request_raw
+            result_identity = identity
+            request_raw = json.dumps(
+                {
+                    "repo_root": str(cwd.resolve()),
+                    "binding": binding,
+                    "output": str(output),
+                    "checkout_identity": checkout_identity,
+                    "runtime_identity": runtime_identity,
+                    "implementation_identity": implementation_identity,
+                    "result_identity": result_identity,
+                    "result_root_identity": root_identity,
+                },
+                sort_keys=True,
+            ).encode()
+            # Durable creation authority is written while the original result
+            # descriptor is held, before delete-on-close reservation is committed.
+            write_bound_once(
+                Path(directory), request.name, request_raw, expected_root_identity=root_identity
+            )
+
+        def record_result(descriptor: int) -> None:
+            info = os.fstat(descriptor)
+            record_result_identity((info.st_dev, info.st_ino))
+
+        if exchange is None:
+            create_bound_recoverable_file(
+                Path(directory), output.name, b"", record_created=record_result,
+                expected_root_identity=root_identity,
+            )
+        else:
+            with hold_bound_read_file(
+                Path(directory), output.name, expected=b"",
+                expected_identity=exchange.result_identity,
+                expected_root_identity=root_identity, expected_parent_identities={},
+                allow_parent_updates=True,
+            ):
+                record_result_identity(exchange.result_identity)
+        assert result_identity is not None
+        request_info = request.stat()
+        request_descriptor = json.dumps(
+            {
+                "path": str(request),
+                "identity": [request_info.st_dev, request_info.st_ino],
+                "sha256": hashlib.sha256(request_raw).hexdigest(),
+            }
+        )
+        guarded_command = [
+            *command[:3],
+            "-p",
+            "ai_trading_system.platform.architecture.workflow_execution",
+            *command[3:],
+        ]
+        result = (command_runner or _run_command)(
+            guarded_command,
+            cwd=cwd,
+            env_overrides={
+                **(env_overrides or {}),
+                MANDATORY_ACCEPTANCE_REQUEST_ENV: request_descriptor,
+            },
+        )
+        try:
+            if bind_mandatory_acceptance(cwd, str(binding["candidate_sha"])) != binding:
+                raise ExecutionContainmentError("ACCEPTANCE_BINDING_CHANGED")
+            if bind_acceptance_checkout(cwd, binding) != checkout_identity:
+                raise ExecutionContainmentError("ACCEPTANCE_CHECKOUT_CHANGED")
+            terminal_dependencies: dict[Path, bytes] = {}
+            terminal_environment = (
+                command_runner.effective_environment(env_overrides)
+                if isinstance(command_runner, _FullCommandRunner)
+                else {**os.environ, **(env_overrides or {})}
+            )
+            if (
+                acceptance_runtime_identity(
+                    terminal_environment,
+                    captured_dependencies=terminal_dependencies,
+                )
+                != runtime_identity
+            ):
+                raise ExecutionContainmentError("ACCEPTANCE_RUNTIME_CHANGED")
+            if exchange is not None:
+                terminal_launcher = bind_inspector_implementation(
+                    _repo_root(), runtime_inputs=terminal_dependencies,
+                )
+                terminal_launcher_map = {row["path"]: row for row in terminal_launcher}
+                if launcher_identity is None or any(
+                    terminal_launcher_map.get(row["path"]) != row for row in launcher_identity
+                ):
+                    raise ExecutionContainmentError("ACCEPTANCE_LAUNCHER_CHANGED")
+                terminal_implementation = capture_acceptance_implementation(
+                    cwd, str(binding["candidate_sha"]),
+                )
+            else:
+                terminal_implementation = bind_acceptance_implementation(
+                    cwd, str(binding["candidate_sha"]), include_runner=True,
+                    runtime_inputs=terminal_dependencies,
+                )
+            if terminal_implementation != runner_identity:
+                raise ExecutionContainmentError("ACCEPTANCE_IMPLEMENTATION_CHANGED")
+            result_raw = bounded_regular_bytes(output, expected_identity=result_identity)
+            evidence = validate_mandatory_acceptance_result(
+                result_raw,
+                binding,
+                exit_code=_command_exit_code(result),
+                expected_collections=expected_collections,
+            )
+            if (
+                evidence["checkout_identity"] != checkout_identity
+                or evidence["runtime_identity"] != runtime_identity
+                or evidence["implementation_identity"] != implementation_identity
+                or len(evidence["worker_inputs"]) != expected_collections
+                or any(
+                    row
+                    != {
+                        "checkout_identity": checkout_identity,
+                        "origin_valid": True,
+                        "runtime_identity": runtime_identity,
+                        "implementation_identity": implementation_identity,
+                    }
+                    for row in evidence["worker_inputs"]
+                )
+            ):
+                raise ExecutionContainmentError("ACCEPTANCE_WORKER_INPUT_CHANGED")
+            result["mandatory_acceptance"] = {
+                "status": "PASS",
+                "evidence": evidence,
+                "runner_identity": runner_identity,
+                "launcher_identity": launcher_identity,
+                "result_custody": {
+                    "request_sha256": hashlib.sha256(request_raw).hexdigest(),
+                    "request_identity": [request_info.st_dev, request_info.st_ino],
+                    "result_identity": list(result_identity),
+                    "root_identity": list(root_identity),
+                    "result_sha256": hashlib.sha256(result_raw).hexdigest(),
+                    "result_size_bytes": len(result_raw),
+                },
+            }
+        except (
+            OSError,
+            KeyError,
+            TypeError,
+            ExecutionContainmentError,
+            WorkflowContractError,
+        ) as exc:
+            result["mandatory_acceptance"] = {"status": "FAIL", "reason": str(exc)}
+            if result["exit_code"] == 0:
+                result["exit_code"] = 1
+        return result
+
+
+class _SlowDuration(TypedDict):
+    seconds: float
+    phase: str
+    nodeid: str
+
+
+def _parse_pytest_slow_durations(pytest_output: str) -> list[_SlowDuration]:
+    durations: list[_SlowDuration] = []
     for line in pytest_output.splitlines():
         match = PYTEST_SLOW_DURATION_RE.match(line)
         if match is None:
@@ -530,6 +1138,13 @@ def _safe_variant_id(*parts: str) -> str:
     return "_".join(safe_parts)
 
 
+class _BenchmarkVariant(TypedDict):
+    workers: str
+    dist: str
+    command: list[str]
+    variant_id: str
+
+
 def _benchmark_variants(
     *,
     tier: str,
@@ -540,10 +1155,10 @@ def _benchmark_variants(
     dist: str,
     benchmark_workers: Sequence[str],
     benchmark_dists: Sequence[str],
-) -> list[dict[str, object]]:
+) -> list[_BenchmarkVariant]:
     worker_values = _split_cli_values(benchmark_workers) or [workers]
     dist_values = _split_cli_values(benchmark_dists) or [dist]
-    variants: list[dict[str, object]] = []
+    variants: list[_BenchmarkVariant] = []
     for worker_value in worker_values:
         for dist_value in dist_values:
             command = build_command(
@@ -570,12 +1185,12 @@ def _summarize_benchmark_runs(runs: Sequence[dict[str, object]]) -> dict[str, ob
     successful_runs = [run for run in completed_runs if run.get("status") == "PASS"]
     best_run = min(
         successful_runs,
-        key=lambda run: float(run.get("elapsed_seconds") or float("inf")),
+        key=lambda run: _runtime_float(run.get("elapsed_seconds") or float("inf")),
         default=None,
     )
     slowest_run = max(
         completed_runs,
-        key=lambda run: float(run.get("elapsed_seconds") or 0),
+        key=lambda run: _runtime_float(run.get("elapsed_seconds") or 0),
         default=None,
     )
     return {
@@ -761,6 +1376,7 @@ def _validated_parent_run_binding(
 
     validated_profile: dict[str, object] | None = None
     if valid_exit_code and resolved_profile_path is not None and runtime_profile_bytes is not None:
+        assert isinstance(exit_code, int)  # Established by valid_exit_code above.
         canonical_persisted_failure = bool(
             isinstance(parent_provenance, Mapping)
             and _is_canonical_persisted_runtime_profile_failure(
@@ -770,7 +1386,8 @@ def _validated_parent_run_binding(
             )
         )
         if canonical_persisted_failure:
-            validated_profile = dict(captured_profile_payload)  # type: ignore[arg-type]
+            assert isinstance(captured_profile_payload, Mapping)
+            validated_profile = dict(captured_profile_payload)
         else:
             validated_profile = _read_runtime_profile_payload(
                 resolved_profile_path,
@@ -1027,7 +1644,7 @@ def _artifact_dir(repo_root: Path, args: argparse.Namespace, run_id: str) -> Pat
     if not args.write_runtime_artifact:
         return None
     if args.artifact_dir:
-        return args.artifact_dir
+        return Path(args.artifact_dir)
     return repo_root / DEFAULT_ARTIFACT_ROOT / run_id
 
 
@@ -1044,6 +1661,10 @@ def _reserved_runtime_artifact_paths(
     }
     if resolved_tier == "full":
         reserved.add(artifact_dir / RUNTIME_PROFILE_OUTPUT_NAME)
+        reserved.update(artifact_dir / name for name in (
+            "execution_request.json", "execution_validation_identity.json",
+            "execution.stdout.log", "execution_result.json",
+        ))
     if benchmark_variants:
         reserved.add(artifact_dir / BENCHMARK_SUMMARY_NAME)
         reserved.update(
@@ -1131,13 +1752,17 @@ def _runtime_payload(
             )
         )
     if validation_provenance.get("status") == "FAIL":
-        payload["warnings"].append("validation_trigger_provenance=FAIL")
+        warnings = payload["warnings"]
+        assert isinstance(warnings, list)
+        warnings.append("validation_trigger_provenance=FAIL")
     runtime_profile_summary = payload.get("runtime_profile_summary")
     if (
         isinstance(runtime_profile_summary, dict)
         and runtime_profile_summary.get("performance_evidence_status") != "PASS"
     ):
-        payload["warnings"].append(
+        warnings = payload["warnings"]
+        assert isinstance(warnings, list)
+        warnings.append(
             "runtime_profile_performance_evidence="
             f"{runtime_profile_summary.get('performance_evidence_status', 'FAIL')}"
         )
@@ -1315,11 +1940,11 @@ def _is_canonical_persisted_runtime_profile_failure(
     return dict(payload) == expected
 
 
-def _is_non_bool_int(value: object, *, minimum: int = 0) -> bool:
+def _is_non_bool_int(value: object, *, minimum: int = 0) -> TypeGuard[int]:
     return not isinstance(value, bool) and isinstance(value, int) and value >= minimum
 
 
-def _is_nonnegative_finite_number(value: object) -> bool:
+def _is_nonnegative_finite_number(value: object) -> TypeGuard[int | float]:
     return (
         not isinstance(value, bool)
         and isinstance(value, (int, float))
@@ -1346,7 +1971,8 @@ def _parse_utc_iso_epoch(value: object) -> float | None:
         return None
     try:
         parsed = datetime.fromisoformat(value[:-1] + "+00:00")
-        if parsed.utcoffset() is None or parsed.utcoffset().total_seconds() != 0.0:
+        offset = parsed.utcoffset()
+        if offset is None or offset.total_seconds() != 0.0:
             return None
         epoch_seconds = parsed.timestamp()
     except (OSError, OverflowError, ValueError):
@@ -1654,13 +2280,15 @@ def _runtime_profile_contract_error_from_inputs(
         "scheduler.matched_tracked_file_count": scheduler.get("matched_tracked_file_count"),
         "scheduler.matched_tracked_node_count": scheduler.get("matched_tracked_node_count"),
     }
+    checked_counts: dict[str, int] = {}
     for key, value in count_fields.items():
         if not _is_non_bool_int(value):
             return f"runtime profile {key} must be a non-negative integer"
+        checked_counts[key] = value
 
-    node_count = int(payload["node_count"])
-    file_count = int(payload["file_count"])
-    worker_count = int(payload["worker_count"])
+    node_count = checked_counts["node_count"]
+    file_count = checked_counts["file_count"]
+    worker_count = checked_counts["worker_count"]
     if node_count != len(nodeids):
         return "runtime profile node_count does not match collection"
 
@@ -1874,20 +2502,21 @@ def _runtime_profile_contract_error_from_inputs(
             return "runtime profile worker row has invalid worker_id/node_count"
         worker_row_counts[worker_id] += int(row_count)
         if telemetry_complete:
-            expected_rows = node_runtime_by_worker.get(worker_id, [])
-            if not expected_rows:
+            expected_worker_rows = node_runtime_by_worker.get(worker_id, [])
+            if not expected_worker_rows:
                 return f"runtime profile worker aggregate is not node-derived for {worker_id}"
-            expected_start = min(runtime_row[0] for runtime_row in expected_rows)
-            expected_stop = max(runtime_row[1] for runtime_row in expected_rows)
-            expected_busy = round(sum(runtime_row[2] for runtime_row in expected_rows), 9)
+            expected_start = min(runtime_row[0] for runtime_row in expected_worker_rows)
+            expected_stop = max(runtime_row[1] for runtime_row in expected_worker_rows)
+            expected_busy = round(sum(runtime_row[2] for runtime_row in expected_worker_rows), 9)
             expected_span = round(expected_stop - expected_start, 9)
             expected_internal_idle = round(max(0.0, expected_span - expected_busy), 9)
+            assert global_last_stop is not None  # Nonempty worker rows contribute to this maximum.
             expected_tail_idle = round(
                 max(0.0, float(global_last_stop) - expected_stop),
                 9,
             )
             if (
-                int(row_count) != len(expected_rows)
+                int(row_count) != len(expected_worker_rows)
                 or row.get("first_start_utc") != _epoch_utc_iso(expected_start)
                 or row.get("last_stop_utc") != _epoch_utc_iso(expected_stop)
                 or not _numbers_close(row.get("busy_seconds"), expected_busy)
@@ -2047,6 +2676,7 @@ def _runtime_profile_contract_error_from_inputs(
             return "runtime profile duration-order evidence is not reproducible"
 
         if duration_is_complete:
+            assert isinstance(complete_profile, Mapping)  # Checked against manifest status above.
             if (
                 source.get("profile_status") != "PASS"
                 or source.get("telemetry_status") != "PASS"
@@ -2086,11 +2716,11 @@ def _runtime_profile_contract_error_from_inputs(
                     "expected_scheduled_ordered_sha256"
                 ),
             }
-            for key, expected in complete_manifest_hashes.items():
+            for key, expected_hash in complete_manifest_hashes.items():
                 if (
-                    not isinstance(expected, str)
-                    or re.fullmatch(r"[0-9a-f]{64}", expected) is None
-                    or scheduler.get(key) != expected
+                    not isinstance(expected_hash, str)
+                    or re.fullmatch(r"[0-9a-f]{64}", expected_hash) is None
+                    or scheduler.get(key) != expected_hash
                 ):
                     return f"runtime complete duration hash evidence mismatch for {key}"
             if scheduler.get("tracked_node_count") != expected_source_node_count:
@@ -2237,7 +2867,8 @@ def _runtime_profile_contract_error_from_inputs(
         if (
             global_first_start < session_start - 1e-6
             or global_last_stop > session_end + 1e-6
-            or float(payload["elapsed_seconds"]) < float(payload["observed_test_window_seconds"])
+            or _runtime_float(payload["elapsed_seconds"])
+            < _runtime_float(payload["observed_test_window_seconds"])
         ):
             return "runtime profile node window is outside the session window"
         expected_tail_values = [
@@ -2647,6 +3278,13 @@ def _environment_summary() -> dict[str, str]:
 
 
 def _git_commit(repo_root: Path) -> str | None:
+    from ai_trading_system.platform.architecture.source_preservation import inspection_git_result
+
+    protected = inspection_git_result(repo_root, "rev-parse", "HEAD")
+    if protected is not None:
+        if protected.returncode != 0:
+            return None
+        return protected.stdout.decode("utf-8").strip() or None
     try:
         completed = subprocess.run(
             ("git", "rev-parse", "HEAD"),
@@ -2672,6 +3310,9 @@ def _is_relative_to(path: Path, parent: Path) -> bool:
 
 
 def _render_runtime_reader_brief(payload: dict[str, object]) -> str:
+    command = payload["command"]
+    if not isinstance(command, (list, tuple)) or any(not isinstance(arg, str) for arg in command):
+        raise TypeError("runtime command must be a sequence of strings")
     status = payload["status"]
     can_support = payload["can_support_promotion_evidence"]
     limitation = payload.get("promotion_evidence_limitation", "None")
@@ -2709,7 +3350,7 @@ def _render_runtime_reader_brief(payload: dict[str, object]) -> str:
         "## Command",
         "",
         "```powershell",
-        _format_command(payload["command"]),  # type: ignore[arg-type]
+        _format_command(command),
         "```",
         "",
     ]
@@ -2727,7 +3368,10 @@ def _render_runtime_reader_brief(payload: dict[str, object]) -> str:
                 "|---|---|---|---|---|",
             ]
         )
-        for run in payload.get("benchmark_runs", []):
+        benchmark_runs = payload.get("benchmark_runs", [])
+        if not isinstance(benchmark_runs, list):
+            raise TypeError("benchmark_runs must be a list")
+        for run in benchmark_runs:
             if not isinstance(run, dict):
                 continue
             lines.append(
@@ -2867,12 +3511,71 @@ def _list_tiers() -> str:
     return "\n".join(lines)
 
 
+def _inspection_git_bytes(root: Path, *arguments: str) -> subprocess.CompletedProcess[bytes]:
+    from ai_trading_system.platform.architecture.source_preservation import inspection_git_result
+
+    protected = inspection_git_result(root, *arguments)
+    if protected is not None:
+        return protected
+    return subprocess.run(
+        ["git", "--no-optional-locks", *arguments], cwd=root, capture_output=True, timeout=30,
+    )
+
+
+def _full_task_commitment(root: Path, task_id: str, candidate: str) -> dict[str, object]:
+    from ai_trading_system.platform.architecture.task_registry_canonical import (
+        _canonical_fragment_path,
+        validate_canonical_registry,
+    )
+    from ai_trading_system.platform.architecture.workflow_contract import (
+        WorkflowContractError,
+        bounded_regular_bytes,
+        canonical_digest,
+        read_bound_json,
+    )
+    from ai_trading_system.yaml_loader import safe_load_yaml_text
+
+    registry = validate_canonical_registry(project_root=root)
+    fragment = registry.fragment(task_id)
+    status = fragment["projection"]["legacy_first_eight_cells"][3]
+    if status == "DROPPED":
+        raise PublicationFenceError("PUBLICATION_FULL_TASK_DROPPED", task_id)
+    authority = fragment["task_record"].get("workflow_authority")
+    if authority is not None and authority["status"] != "ACTIVE":
+        raise PublicationFenceError("PUBLICATION_FULL_TASK_AUTHORITY_REVOKED", task_id)
+    if authority is not None:
+        try:
+            scope = read_bound_json(root, authority["scope_ref"])
+        except (WorkflowContractError, OSError, ValueError) as exc:
+            raise PublicationFenceError("PUBLICATION_FULL_TASK_SCOPE_INVALID", str(exc)) from exc
+        if scope.get("task_id") != task_id or scope.get("decision_id") != authority["decision_id"]:
+            raise PublicationFenceError("PUBLICATION_FULL_TASK_SCOPE_INVALID", task_id)
+    relative = _canonical_fragment_path(task_id)
+    raw = bounded_regular_bytes(root / relative)
+    object_name = candidate + ":" + relative
+    size = _inspection_git_bytes(root, "cat-file", "-s", object_name)
+    if size.returncode or not size.stdout.strip().isdigit() or int(size.stdout) > 16 * 1024 * 1024:
+        raise PublicationFenceError("PUBLICATION_FULL_TASK_NOT_CANDIDATE", task_id)
+    committed = _inspection_git_bytes(root, "cat-file", "blob", object_name)
+    if (
+        committed.returncode
+        or raw not in {committed.stdout, committed.stdout.replace(b"\n", b"\r\n")}
+        or safe_load_yaml_text(committed.stdout.decode("utf-8")) != fragment
+    ):
+        raise PublicationFenceError("PUBLICATION_FULL_TASK_NOT_CANDIDATE", task_id)
+    return {
+        "task_id": task_id, "status": status, "event_id": fragment["last_event_id"],
+        "fragment_sha256": canonical_digest(fragment),
+    }
+
+
 def _validate_publication_transaction_for_full(
     args: argparse.Namespace,
     *,
     repo_root: Path,
     validation_provenance: Mapping[str, object],
     full_run_id: str,
+    protected_launcher: bool = False,
 ) -> dict[str, object]:
     transaction_path = args.publication_transaction
     if transaction_path is None:
@@ -2912,9 +3615,40 @@ def _validate_publication_transaction_for_full(
     candidate_sha = publication_binding.get("candidate_sha")
     if not isinstance(candidate_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", candidate_sha):
         raise PublicationFenceError("FULL_READINESS_CANDIDATE_MISSING", str(candidate_sha))
+    task_commitment = _full_task_commitment(repo_root, task_id, candidate_sha)
+    acceptance_binding = None
+    if task_id == DEVX015_ACCEPTANCE_TASK:
+        try:
+            acceptance_binding = bind_mandatory_acceptance(repo_root, candidate_sha)
+        except ExecutionContainmentError as exc:
+            raise PublicationFenceError("FULL_ACCEPTANCE_BINDING_INVALID", str(exc)) from exc
+    # DEVX-015 owner decision 2026-09-24 (worker account scope = tests and Full):
+    # when the registered host control declares PROTECTED_WORKER_REQUIRED, formal
+    # Full runs only as the restricted worker through the installed protected
+    # launcher. The ordinary entry must not bypass it; reject before the claim.
+    coordination = fence.guard.store.coordination_binding
+    if coordination is not None and not protected_launcher:
+        from ai_trading_system.platform.architecture.workflow_coordination import (
+            full_execution_policy,
+        )
+
+        state = coordination.assert_current(operation="observe")
+        if full_execution_policy(state) == "PROTECTED_WORKER_REQUIRED":
+            raise PublicationFenceError(
+                "FULL_PROTECTED_LAUNCHER_REQUIRED",
+                "registered host control requires the installed protected Full launcher",
+            )
     # TRADING-2564: inspect already-bound bytes before consuming the Full claim.
     # This never renders, hydrates evidence, executes DQ, or repairs a transaction.
-    readiness = check_full_readiness(repo_root, candidate_sha)
+    from ai_trading_system.platform.architecture.source_preservation import (
+        current_inspection_context,
+    )
+
+    selected_git = current_inspection_context(repo_root)
+    readiness = (
+        check_full_readiness(repo_root, candidate_sha) if selected_git is None
+        else check_full_readiness(repo_root, candidate_sha, git_context=selected_git)
+    )
     if (
         readiness.get("schema_version") != "full_validation_readiness.v1"
         or readiness.get("status") != "PASS"
@@ -2936,6 +3670,9 @@ def _validate_publication_transaction_for_full(
         full_run_id=full_run_id,
     )
     dispatched["pre_dispatch_readiness"] = readiness
+    dispatched["task_commitment"] = task_commitment
+    if acceptance_binding is not None:
+        dispatched["mandatory_acceptance_binding"] = acceptance_binding
     return dispatched
 
 
@@ -2960,6 +3697,589 @@ def _record_publication_full_result(
     )
 
 
+def _recover_recorded_full_result(
+    *, repo_root: Path, transaction: Path, task_id: str, action: str = "observe",
+) -> dict[str, object]:
+    """Finish a durable Full result, without executing or re-adopting loose artifacts."""
+    from ai_trading_system.platform.architecture.workflow_contract import bounded_regular_bytes
+    from ai_trading_system.platform.artifacts.json_contract import load_strict_json_text
+
+    fence = IntegrationPublicationFence(project_root=repo_root)
+    if action not in {"observe", "terminate_frozen_job"}:
+        raise ExecutionContainmentError("FULL_RECOVERY_ACTION")
+    replay = fence.replay(transaction)
+    if replay.status != "PASS" or replay.transaction["task_id"] != task_id:
+        raise ExecutionContainmentError("FULL_RECOVERY_TRANSACTION_BINDING")
+    if replay.phase not in {"FULL_DISPATCHED", "FORMAL_VALIDATION_RESULT", "FAILED"}:
+        raise ExecutionContainmentError("FULL_RECOVERY_PHASE")
+    leases = fence.guard.store.replay()
+    if leases.status != "PASS":
+        raise ExecutionContainmentError("FULL_RECOVERY_LEASE_REPLAY")
+    lease = next(
+        (row for row in leases.lease_heads if row.lease_id == replay.transaction["lease_id"]), None,
+    )
+    if lease is None or lease.actor != "integration-coordinator" or lease.state not in {
+        "ACTIVE", "RELEASED",
+    }:
+        raise ExecutionContainmentError("FULL_RECOVERY_OWNER")
+    execution = lease.execution
+    if execution is None:
+        return fence.recover_unstarted_full(transaction, actor="integration-coordinator")
+    if execution.get("full_result_commitment") is None:
+        from ai_trading_system.platform.architecture.workflow_contract import (
+            canonical_digest,
+            write_bound_once,
+        )
+        from ai_trading_system.platform.architecture.workflow_execution import observe_process
+        from ai_trading_system.platform.artifacts import canonical_json_bytes
+
+        if replay.phase not in {"FULL_DISPATCHED", "FAILED"}:
+            raise ExecutionContainmentError("FULL_INCOMPLETE_RECOVERY_PHASE")
+        claim = fence._full_claim(replay)
+        request = execution["request"]
+        expected_id = canonical_digest({
+            "transaction": replay.transaction["transaction_sha256"],
+            "full_run_id": claim["full_run_id"],
+        })
+        if (
+            request["schema_version"] != "workflow_execution_request.v1"
+            or request["candidate_sha"] != replay.candidate_sha
+            or request["request_id"] != expected_id
+            or request["job_name"] != "Local\\AITS-DEVX015-full-" + expected_id
+            or execution["launcher"] != claim["launcher"]
+        ):
+            raise ExecutionContainmentError("FULL_INCOMPLETE_RECOVERY_BINDING")
+        fence._require_publication_lease_intent(replay, lease)
+        launcher = observe_process(**execution["launcher"])
+        if launcher["state"] not in {"EXITED", "REUSED"}:
+            return {
+                "status": "OBSERVE_ONLY", "launcher": launcher,
+                "dispatch_performed": False, "publication_allowed": False,
+                "allowed_actions": ["observe", "launcher_owned_complete"],
+            }
+        recovered = fence.guard.store.execution_lifecycle().recover(
+            lease.lease_id, actor="integration-coordinator", action=action,
+        )
+        if recovered["status"] not in {"RECOVERED_TERMINAL", "REPLAY_ONLY"}:
+            return {**recovered, "dispatch_performed": False, "publication_allowed": False}
+        terminal = recovered["execution"]
+        if (
+            terminal["state"] != "RESULT_RECORDED"
+            or terminal.get("full_result_commitment") is not None
+        ):
+            raise ExecutionContainmentError("FULL_INCOMPLETE_RECOVERY_RESULT")
+        # Generic custody may already preserve a self-reported PASS/FAIL file.
+        # Keep that immutable fact; without the original validation commitment
+        # this attempt is still INSUFFICIENT and cannot enter formal adoption.
+        # Preserve original logs/summary/loose result bytes. This independent
+        # closeout describes missing validation, never a fabricated pytest FAIL.
+        report = {
+            "schema_version": "full_incomplete_recovery.v1",
+            "transaction_sha256": replay.transaction["transaction_sha256"],
+            "candidate_sha": replay.candidate_sha,
+            "execution_request_id": request["request_id"],
+            "execution_sha256": canonical_digest(terminal),
+            "technical_status": "INSUFFICIENT", "original_exit": terminal["exit"],
+            "reason": "FULL_VALIDATION_COMMITMENT_MISSING",
+            "dispatch_performed": False, "publication_allowed": False,
+        }
+        proof = fence._transaction_path(transaction).parent / "full_incomplete_recovery.json"
+        raw = canonical_json_bytes(report)
+        if proof.exists():
+            if bounded_regular_bytes(proof) != raw:
+                raise ExecutionContainmentError("FULL_INCOMPLETE_RECOVERY_CHANGED")
+        else:
+            write_bound_once(proof.parent, proof.name, raw)
+        receipt = fence.release(
+            transaction, actor="integration-coordinator", outcome="FAILED", evidence_paths=(proof,),
+        )
+        return {**report, "status": "RECOVERED_FAILED_ATTEMPT", "receipt": receipt}
+    if lease.state != "ACTIVE" or replay.phase == "FAILED":
+        raise ExecutionContainmentError("FULL_RECOVERY_OWNER")
+    if execution is not None and execution["state"] == "EXIT_CONFIRMED" and (
+        execution.get("full_result_commitment") is not None
+    ):
+        from ai_trading_system.platform.architecture.workflow_contract import write_bound_once
+        from ai_trading_system.platform.architecture.workflow_execution import observe_process
+        from ai_trading_system.platform.artifacts import canonical_json_bytes
+
+        # Only the original launcher's immutable validation commitment may fill
+        # this crash window. A loose file or a new caller's status is not proof.
+        launcher = observe_process(**execution["launcher"])
+        if launcher["state"] not in {"EXITED", "REUSED"}:
+            return {
+                "status": "OBSERVE_ONLY", "dispatch_performed": False,
+                "publication_allowed": False, "launcher": launcher,
+                "allowed_actions": ["observe", "launcher_owned_complete"],
+            }
+        frozen = execution["full_result_commitment"]["record"]
+        result_path = Path(execution["request"]["result_path"])
+        if (
+            execution["request"].get("candidate_sha") != replay.candidate_sha
+            or not result_path.is_absolute()
+            or not result_path.is_relative_to(repo_root.resolve() / DEFAULT_ARTIFACT_ROOT)
+        ):
+            raise ExecutionContainmentError("FULL_RECOVERY_ARTIFACT_SCOPE")
+        summary_path = result_path.parent / "test_runtime_summary.json"
+        summary_ref = frozen.get("summary")
+        if not isinstance(summary_ref, dict) or summary_ref.get("path") != summary_path.as_posix():
+            raise ExecutionContainmentError("FULL_RECOVERY_SUMMARY_PATH")
+        if (
+            hashlib.sha256(bounded_regular_bytes(summary_path)).hexdigest()
+            != summary_ref.get("sha256")
+        ):
+            raise ExecutionContainmentError("FULL_RECOVERY_SUMMARY_CHANGED")
+        frozen_raw = canonical_json_bytes(frozen)
+        if result_path.exists():
+            if bounded_regular_bytes(result_path) != frozen_raw:
+                raise ExecutionContainmentError("FULL_RECOVERY_RESULT_CHANGED")
+        else:
+            write_bound_once(result_path.parent, result_path.name, frozen_raw)
+        recovered = fence.guard.store.execution_lifecycle().recover(
+            lease.lease_id, actor="integration-coordinator",
+        )
+        if recovered["status"] not in {"RECOVERED_TERMINAL", "REPLAY_ONLY"}:
+            return {**recovered, "dispatch_performed": False, "publication_allowed": False}
+        execution = recovered["execution"]
+    if execution is None or execution["state"] != "RESULT_RECORDED":
+        return {
+            "status": "RECOVERY_REQUIRED", "dispatch_performed": False,
+            "publication_allowed": False, "reason": "FULL_RESULT_CUSTODY_NOT_RECORDED",
+            "allowed_actions": ["observe", "launcher_owned_complete"],
+        }
+    request, custody = execution["request"], execution["result"]
+    if request.get("candidate_sha") != replay.candidate_sha or custody["artifact"] is None:
+        raise ExecutionContainmentError("FULL_RECOVERY_RESULT_UNPROVEN")
+    result_path = Path(request["result_path"])
+    expected_root = repo_root.resolve() / DEFAULT_ARTIFACT_ROOT
+    if not result_path.is_absolute() or not result_path.is_relative_to(expected_root):
+        raise ExecutionContainmentError("FULL_RECOVERY_ARTIFACT_SCOPE")
+    result_raw = bounded_regular_bytes(result_path)
+    if hashlib.sha256(result_raw).hexdigest() != custody["artifact"]["sha256"]:
+        raise ExecutionContainmentError("FULL_RECOVERY_RESULT_CHANGED")
+    result = load_strict_json_text(result_raw.decode("utf-8"))
+    expected = {
+        "schema_version": "full_execution_result.v1",
+        "candidate_sha": replay.candidate_sha,
+        "validation_identity_sha256": request["validation_identity_sha256"],
+        "request_id": request["request_id"], "status": custody["status"],
+    }
+    if not isinstance(result, dict) or any(
+        result.get(key) != value for key, value in expected.items()
+    ):
+        raise ExecutionContainmentError("FULL_RECOVERY_RESULT_BINDING")
+    summary_path = result_path.parent / "test_runtime_summary.json"
+    summary_ref = result.get("summary")
+    if not isinstance(summary_ref, dict) or summary_ref.get("path") != summary_path.as_posix():
+        raise ExecutionContainmentError("FULL_RECOVERY_SUMMARY_PATH")
+    summary_raw = bounded_regular_bytes(summary_path)
+    if hashlib.sha256(summary_raw).hexdigest() != summary_ref.get("sha256"):
+        raise ExecutionContainmentError("FULL_RECOVERY_SUMMARY_CHANGED")
+    summary = load_strict_json_text(summary_raw.decode("utf-8"))
+    expected_summary = {
+        "git_commit": replay.candidate_sha, "status": custody["status"],
+        "execution_request_id": request["request_id"],
+        "validation_identity_sha256": request["validation_identity_sha256"],
+    }
+    if not isinstance(summary, dict) or any(
+        summary.get(key) != value for key, value in expected_summary.items()
+    ):
+        raise ExecutionContainmentError("FULL_RECOVERY_SUMMARY_BINDING")
+    if replay.phase == "FULL_DISPATCHED":
+        # Only this still-ACTIVE, independently verified recorded execution may
+        # renew its own existing lease. An expired/reassigned lease was rejected above.
+        fence.guard.store.heartbeat(
+            lease.lease_id, actor="integration-coordinator", now=datetime.now(UTC),
+        )
+        fence.checkpoint(
+            transaction, phase="FORMAL_VALIDATION_RESULT", actor="integration-coordinator",
+            evidence_paths=(summary_path,), validation_status=str(custody["status"]),
+        )
+    else:
+        event = replay.events[-1]
+        evidence = event["payload"]["evidence"]
+        if (
+            event["payload"]["validation_status"] != custody["status"]
+            or event["payload"].get("execution_result") != custody["artifact"]
+            or not any(
+                row["path"] == summary_path.relative_to(repo_root).as_posix()
+                and row["sha256"] == summary_ref["sha256"] for row in evidence
+            )
+        ):
+            raise ExecutionContainmentError("FULL_RECOVERY_FENCE_RESULT_CHANGED")
+    return {
+        "status": "RECOVERED_RESULT", "technical_status": custody["status"],
+        "candidate_sha": replay.candidate_sha, "execution_request_id": request["request_id"],
+        "dispatch_performed": False, "publication_allowed": False,
+    }
+
+
+def _full_readiness_semantics(
+    value: object, *, root: Path, candidate: str, inspector_root: Path | None = None,
+) -> dict[str, object]:
+    """Require the original complete record; timings alone are observational."""
+    if not isinstance(value, dict):
+        raise ValueError("Full original readiness record is missing")
+    checks = value.get("checks")
+    if (
+        value.get("schema_version") != "full_validation_readiness.v1"
+        or value.get("status") != "PASS" or value.get("candidate_sha") != candidate
+        or value.get("full_dispatch_ready") is not True or value.get("blockers") != []
+        or value.get("inspection_code_root") != (inspector_root or root).as_posix()
+        or value.get("target_root") != root.as_posix()
+        or any(value.get(key) is not False for key in (
+            "dispatch_performed", "research_dispatch_allowed", "dq_validation_executed",
+            "artifacts_written",
+        ))
+        or not isinstance(checks, list)
+        or any(not isinstance(row, dict) or row.get("status") != "PASS" for row in checks)
+        or tuple(row.get("checker_id") for row in checks) != CHECKER_IDS
+    ):
+        raise ValueError("Full original readiness record is incomplete or inadmissible")
+    return {
+        **{key: item for key, item in value.items() if key not in {"elapsed_seconds", "checks"}},
+        "checks": [{key: item for key, item in row.items() if key != "elapsed_seconds"}
+                   for row in checks],
+    }
+
+
+def inspect_protected_full_publication_profile(
+    *, repo_root: Path, transaction: Path, task_id: str, git_context: HeldGitConfiguration,
+) -> dict[str, object]:
+    """Read-only launcher entry using caller-held native custody for the whole probe."""
+    from ai_trading_system.platform.architecture.source_preservation import HeldGitConfiguration
+
+    if type(git_context) is not HeldGitConfiguration:
+        raise ExecutionContainmentError("PROTECTED_PROFILE_CAPABILITY")
+    with git_context.inspection(repo_root):
+        return inspect_full_publication_profile(
+            repo_root=repo_root, transaction=transaction, task_id=task_id,
+        )
+
+
+def inspect_full_publication_profile(
+    *, repo_root: Path, transaction: Path, task_id: str,
+) -> dict[str, object]:
+    """Read-only profile, original readiness and execution-identity admission.
+
+    The publication fence consumes this probe outside its short arbiter and
+    rechecks the captured files and execution under that same original arbiter.
+    Reuse the existing profile validator; never trust a summary's PASS booleans.
+    """
+    from ai_trading_system.platform.architecture.source_preservation import (
+        current_inspection_context,
+    )
+    from ai_trading_system.platform.architecture.workflow_contract import (
+        bounded_regular_bytes,
+        canonical_digest,
+    )
+    from ai_trading_system.platform.architecture.workflow_execution import (
+        bind_protected_inspector_runtime,
+    )
+    from ai_trading_system.platform.artifacts.json_contract import load_strict_json_text
+
+    root = repo_root.resolve()
+    fence = IntegrationPublicationFence(project_root=root)
+    replay = fence.replay(transaction)
+    if replay.phase not in {"FORMAL_VALIDATION_RESULT", "LOCAL_MAIN_FF_PRE"}:
+        raise ValueError("Full profile inspection is outside publication admission phases")
+    binding = fence.validate(
+        transaction, exact_phase=replay.phase, task_id=task_id,
+        validation_tier=fence.policy.heavyweight_tier, require_candidate=True,
+    )
+    selected_git = current_inspection_context(root)
+    inspector_root = root
+    if selected_git is not None:
+        admission = bind_protected_inspector_runtime(
+            root, str(binding["candidate_sha"]), git_context=selected_git,
+        )
+        inspector_root = Path(admission["inspector_root"])
+        if inspector_root != _repo_root():
+            raise ValueError("Full profile inspector origin differs from admitted runtime")
+    lease = next(row for row in fence.guard.store.replay().active_leases
+                 if row.lease_id == binding["lease_id"])
+    execution = lease.execution
+    if not isinstance(execution, Mapping):
+        raise ValueError("Full execution is missing")
+    result_events = [row for row in replay.events if row["phase"] == "FORMAL_VALIDATION_RESULT"]
+    if len(result_events) != 1:
+        raise ValueError("Full requires one original formal result event")
+    event_payload = result_events[0]["payload"]
+    if event_payload.get("validation_status") != "PASS":
+        raise ValueError("Full technical result is not PASS")
+    custody = fence._full_result_custody(replay, execution, "PASS", event_payload["evidence"])
+    captures: dict[str, dict[str, object]] = {}
+
+    def capture(path: Path, *, expected_sha: object = None) -> bytes:
+        path = path.absolute()
+        if not path.is_relative_to(root) or ".." in path.parts:
+            raise ValueError("Full profile evidence is outside the candidate")
+        raw = bounded_regular_bytes(path)
+        digest = hashlib.sha256(raw).hexdigest()
+        if expected_sha is not None and digest != expected_sha:
+            raise ValueError("Full profile evidence changed: " + str(path))
+        previous = captures.get(path.as_posix())
+        if previous is not None and previous["sha256"] != digest:
+            raise ValueError("Full profile evidence changed during inspection: " + str(path))
+        captures[path.as_posix()] = {"path": path.as_posix(), "sha256": digest,
+                                    "size_bytes": len(raw)}
+        return raw
+
+    record = load_strict_json_text(capture(
+        Path(str(custody["path"])), expected_sha=custody["sha256"],
+    ).decode("utf-8"))
+    if not isinstance(record, dict) or not isinstance(record.get("summary"), dict):
+        raise ValueError("Full result record is invalid")
+    summary_path = Path(record["summary"]["path"])
+    summary = load_strict_json_text(capture(
+        summary_path, expected_sha=record["summary"]["sha256"],
+    ).decode("utf-8"))
+    request = execution["request"]
+    identity = load_strict_json_text(capture(
+        summary_path.parent / "execution_validation_identity.json",
+        expected_sha=request["validation_identity_sha256"],
+    ).decode("utf-8"))
+    if not isinstance(summary, dict) or not isinstance(identity, dict):
+        raise ValueError("Full summary or execution identity is invalid")
+    candidate = str(binding["candidate_sha"])
+    if (
+        summary.get("git_commit") != candidate or summary.get("resolved_tier") != "full"
+        or type(summary.get("exit_code")) is not int or summary["exit_code"] != 0
+        or summary.get("status") != "PASS" or summary.get("print_only") is not False
+        or summary.get("benchmark_mode") is not False
+        or summary.get("command") != request["argv"]
+        or identity.get("argv") != request["argv"]
+        or identity.get("candidate_sha") != candidate
+        or identity.get("environment_sha256") != request["environment_sha256"]
+        or identity.get("publication_policy_sha256") != fence.policy_sha256
+        or identity.get("task_authority_sha256") != _full_task_commitment(
+            root, task_id, candidate,
+        )["fragment_sha256"]
+    ):
+        raise ValueError("Full profile identity differs from the original execution")
+    original_readiness = _full_readiness_semantics(
+        identity.get("pre_dispatch_readiness"), root=root, candidate=candidate,
+        inspector_root=inspector_root,
+    )
+    mandatory = bind_mandatory_acceptance(root, candidate)
+    if identity.get("mandatory_acceptance_binding") != mandatory:
+        raise ValueError("Full mandatory binding changed")
+    mandatory_summary = summary.get("mandatory_acceptance")
+    if not isinstance(mandatory_summary, dict) or mandatory_summary.get("status") != "PASS":
+        raise ValueError("Full mandatory result is missing")
+    mandatory_evidence = validate_mandatory_acceptance_result(
+        json.dumps(mandatory_summary.get("evidence"), allow_nan=False).encode(),
+        mandatory, exit_code=0, expected_collections=16,
+    )
+    original_runtime = identity.get("runtime")
+    if (
+        not isinstance(original_runtime, dict)
+        or mandatory_evidence.get("runtime_identity") != original_runtime
+    ):
+        raise ValueError("Full execution runtime differs from original mandatory worker evidence")
+    # Publication's own environment is not the old execution environment. The
+    # original effective env remains bound by the request and worker evidence.
+    current_dependencies: dict[Path, bytes] = {}
+    current_runtime = acceptance_runtime_identity(captured_dependencies=current_dependencies)
+    inspector_inputs = bind_inspector_implementation(
+        _repo_root(), runtime_inputs=current_dependencies,
+    )
+    launcher_inputs = mandatory_summary.get("launcher_identity")
+    if "worker_identity" in identity or launcher_inputs is not None:
+        for launcher_row in _recheck_launcher_identity(launcher_inputs):
+            captures[str(launcher_row["path"])] = launcher_row
+    if {key: value for key, value in original_runtime.items() if key != "environment_sha256"} != {
+        key: value for key, value in current_runtime.items() if key != "environment_sha256"
+    }:
+        raise ValueError("Full interpreter or distribution identity changed")
+    if (
+        mandatory_evidence.get("checkout_identity") != bind_acceptance_checkout(root, mandatory)
+        or mandatory_summary.get("runner_identity") != capture_acceptance_implementation(
+            root, candidate,
+        )
+    ):
+        raise ValueError("Full mandatory source identity changed")
+    profile_path = summary_path.parent / RUNTIME_PROFILE_OUTPUT_NAME
+    records = summary.get("output_artifacts")
+    matching = [
+        row for row in records
+        if isinstance(row, dict) and isinstance(row.get("path"), str)
+        and (root / row["path"]).absolute() == profile_path
+    ] if isinstance(records, list) else []
+    if (
+        len(matching) != 1 or matching[0].get("exists") is not True
+        or re.fullmatch(r"[0-9a-f]{64}", str(matching[0].get("sha256"))) is None
+    ):
+        raise ValueError("Full must inventory one original runtime profile")
+    raw_profile = capture(profile_path, expected_sha=matching[0].get("sha256"))
+    if len(raw_profile) != matching[0].get("size_bytes"):
+        raise ValueError("Full profile inventory size changed")
+    provenance = summary.get("validation_provenance")
+    if not isinstance(provenance, Mapping) or provenance.get("task_id") != task_id:
+        raise ValueError("Full profile provenance task differs")
+    duration_path = root / FULL_DURATION_PROFILE_MANIFEST
+    duration_raw = capture(duration_path)
+    test_manifest_raw = capture(root / FULL_TEST_MANIFEST)
+    expected_files, manifest_error = _parse_expected_full_test_files(test_manifest_raw)
+    if manifest_error or not expected_files:
+        raise ValueError("Full file manifest is invalid")
+    argv = request["argv"]
+    if argv[:3] != [str(sys.executable), "-m", "pytest"]:
+        raise ValueError("Full command is not the bound pytest interpreter")
+    options: dict[str, object] = {}
+    plugins: list[str] = []
+    selected_files: set[str] = set()
+    index = 3
+    while index < len(argv):
+        argument = argv[index]
+        if argument in {"-p", "-n", "--dist", "--aits-duration-profile"}:
+            if index + 1 >= len(argv):
+                raise ValueError("Full command option value is missing")
+            value = argv[index + 1]
+            if argument == "-p":
+                plugins.append(value)
+            elif argument == "-n":
+                if value != "16" or "-n16" in options:
+                    raise ValueError("Full command worker contract differs")
+                options["-n16"] = True
+            elif argument in options:
+                raise ValueError("Full command repeats a required option")
+            else:
+                options[argument] = value
+            index += 2
+        elif argument in {"-n16", "--no-loadscope-reorder", *TIER_SPECS["full"].pytest_args}:
+            if argument in options:
+                raise ValueError("Full command repeats a fixed option")
+            options[argument] = True
+            index += 1
+        elif argument == "tests":
+            selected_files.update(expected_files)
+            index += 1
+        elif argument in expected_files:
+            selected_files.add(argument)
+            index += 1
+        elif _formal_full_selection_eligible(argv[index:index + 1], pytest_addopts=""):
+            index += 1
+        elif _formal_full_selection_eligible(argv[index:index + 2], pytest_addopts=""):
+            index += 2
+        else:
+            raise ValueError("Full command contains unaudited selection: " + str(argument))
+    if (
+        selected_files != expected_files or options.get("-n16") is not True
+        or options.get("--dist") != "loadfile"
+        or options.get("--no-loadscope-reorder") is not True
+        or sorted(plugins) != sorted([
+            "ai_trading_system.platform.architecture.workflow_execution",
+            FULL_RUNTIME_PROFILE_PLUGIN,
+        ])
+        or (root / str(options.get("--aits-duration-profile"))).absolute() != duration_path
+    ):
+        raise ValueError("Full command does not cover the fixed formal profile contract")
+    # These inputs are independently read from C, not accepted from profile hashes.
+    for relative, raw in ((FULL_DURATION_PROFILE_MANIFEST, duration_raw),
+                          (FULL_TEST_MANIFEST, test_manifest_raw)):
+        committed = _inspection_git_bytes(root, "show", f"{candidate}:{relative}")
+        if committed.returncode or committed.stdout != raw:
+            raise ValueError("Full profile input differs from candidate: " + relative)
+    profile = validate_captured_runtime_profile(
+        raw_profile, duration_manifest=CapturedDurationManifest(duration_raw, str(duration_path)),
+        full_test_manifest_bytes=test_manifest_raw, expected_validation_provenance=provenance,
+        pytest_exitstatus=0, expected_worker_count=16, expected_dist="loadfile",
+        formal_selection_eligible=True,
+    )
+    if any(profile.get(key) != "PASS" for key in (
+        "profile_status", "telemetry_status", "performance_evidence_status",
+        "validation_provenance_binding_status",
+    )):
+        raise ValueError("Full formal profile rejected: " + str(profile.get("warnings", [])))
+    # Reject cheap structural/raw/profile failures before the actual seven-checker
+    # replay. This changes no acceptance condition and consumes no new Full claim.
+    # Capture explicit runtime dependencies BEFORE replay, then use the existing
+    # end-of-probe and locked fence rechecks. Git cleanliness alone cannot bind
+    # ignored retained evidence or rendered Atlas outputs.
+    from ai_trading_system.atlas.page_effectiveness import load_page_effectiveness_policy
+    from ai_trading_system.contracts.strategy_research_page_effectiveness import (
+        StrategyResearchPageEffectivenessManifest,
+    )
+    from ai_trading_system.platform.architecture import validation_readiness as readiness
+
+    class CapturedEvidence(readiness._EvidenceCheck):
+        def bindings(
+            self, rows: Sequence[Mapping[str, Any]], *, sha_key: str = "sha256",
+        ) -> None:
+            super().bindings(rows, sha_key=sha_key)
+            if self.blockers:
+                raise ValueError("Full retained input binding rejected: " + str(self.blockers))
+            for row in rows:
+                capture(readiness._regular_file(root, row.get("path")), expected_sha=row[sha_key])
+
+    retained = CapturedEvidence(root)
+    for relative in (*readiness.RESULT_ADMISSIONS, readiness.O1_POLICY, readiness.SIGNAL_POLICY):
+        capture(readiness._regular_file(root, relative))
+    for relative in readiness.RESULT_ADMISSIONS:
+        payload = readiness._committed_yaml(root, candidate, relative)
+        retained.bindings(
+            readiness._rows(payload.get("evidence_bindings"), relative), sha_key="file_sha256",
+        )
+    o1 = readiness._committed_yaml(root, candidate, readiness.O1_POLICY)
+    isolated = readiness._mapping(o1.get("isolated_dq_evidence"), "isolated_dq_evidence")
+    retained.bindings([readiness._mapping(isolated.get("gate"), "isolated_dq_evidence.gate")])
+    readiness._signal_dependencies(retained, root, candidate)
+    capture(readiness._regular_file(root, "config/atlas/page_effectiveness.yaml"))
+    atlas_policy = load_page_effectiveness_policy(repository_root=root)
+    atlas_manifest = StrategyResearchPageEffectivenessManifest.from_json_bytes(
+        capture(readiness._regular_file(root, atlas_policy.manifest_path)),
+    )
+    for artifact in (*atlas_manifest.source_artifacts, *atlas_manifest.rendered_artifacts):
+        if artifact.locator.startswith("outputs/"):
+            raw = capture(
+                readiness._regular_file(root, artifact.locator), expected_sha=artifact.sha256,
+            )
+            if len(raw) != artifact.byte_count:
+                raise ValueError("Full Atlas input size changed: " + artifact.locator)
+    current_readiness = _full_readiness_semantics(
+        (check_full_readiness(root, candidate) if selected_git is None
+         else check_full_readiness(root, candidate, git_context=selected_git)),
+        root=root, candidate=candidate, inspector_root=inspector_root,
+    )
+    if original_readiness != current_readiness:
+        raise ValueError("Full original readiness identity differs from current checked inputs")
+    for relative in (
+        "scripts/run_validation_tier.py",
+        "src/ai_trading_system/platform/architecture/validation_readiness.py",
+        "src/ai_trading_system/platform/architecture/integration_publication_fence.py",
+        *[str(row["path"]) for row in mandatory_summary["runner_identity"]],
+        *[str(row["path"]) for row in mandatory_evidence["checkout_identity"]],
+    ):
+        capture(root / relative)
+    # Catch changes during this read-only inspection as well as the fence's
+    # later locked recheck. No proof file, lease renewal, or second store exists.
+    for row in tuple(captures.values()):
+        capture(Path(str(row["path"])), expected_sha=row["sha256"])
+    final_inspector_inputs = bind_inspector_implementation(
+        _repo_root(), runtime_inputs=current_dependencies,
+    )
+    final_inspector_map = {row["path"]: row for row in final_inspector_inputs}
+    if any(final_inspector_map.get(row["path"]) != row for row in inspector_inputs):
+        raise ValueError("Trusted inspector changed during inspection")
+    for inspector_row in final_inspector_inputs:
+        inspector_path = str(inspector_row["path"])
+        previous = captures.get(inspector_path)
+        if previous is not None and previous != inspector_row:
+            raise ValueError("Candidate and inspector capture changed during inspection")
+        captures[inspector_path] = inspector_row
+    if fence.replay(transaction).events[-1]["event_id"] != replay.events[-1]["event_id"]:
+        raise ValueError("Full publication state changed during profile inspection")
+    return {
+        "schema_version": "full_publication_profile_inspection.v1", "status": "PASS",
+        "scope": "PROFILE_MANDATORY_AND_READINESS_IDENTITY",
+        "transaction_sha256": binding["transaction_sha256"],
+        "head_event_id": replay.events[-1]["event_id"], "candidate_sha": candidate,
+        "execution_sha256": canonical_digest(execution), "captures": list(captures.values()),
+        "dispatch_performed": False, "publication_performed": False,
+    }
+
+
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run auditable pytest validation tiers for local development."
@@ -2967,6 +4287,30 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     tier_choices = sorted({*TIER_SPECS, *TIER_ALIASES})
     parser.add_argument("tier", nargs="?", choices=tier_choices)
     parser.add_argument("--list", action="store_true", help="List available validation tiers.")
+    parser.add_argument(
+        "--inspect-full-publication-profile", action="store_true",
+        help="只读重验原Full profile/mandatory及候选绑定；不派发、续租或发布。",
+    )
+    parser.add_argument(
+        "--protected-full-candidate-root", type=Path,
+        help="Execute governed Full through the isolated installed launcher for this candidate.",
+    )
+    parser.add_argument(
+        "--protected-inspector", action="store_true",
+        help="仅供固定安装的只读profile入口重新校验管理员文件保护；不授予权限。",
+    )
+    parser.add_argument(
+        "--inspection-candidate-root", type=Path,
+        help="只读复核的候选数据目录；仅限 --inspect-full-publication-profile。",
+    )
+    parser.add_argument(
+        "--recover-full-action", choices=("observe", "terminate_frozen_job"), default="observe",
+        help="Recovery only: observe, or terminate the independently verified original frozen Job.",
+    )
+    parser.add_argument(
+        "--recover-full", action="store_true",
+        help="仅核验已在租约收存的Full结果并补记fence；不重新执行测试或发布。",
+    )
     parser.add_argument(
         "--print-only",
         action="store_true",
@@ -3076,8 +4420,159 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+@dataclass(frozen=True)
+class _ProtectedFullLaunch:
+    root: Path
+    worker_token: WindowsWorkerToken
+    worker_environment: Mapping[str, str]
+    worker_exchange: WindowsWorkerExchange
+
+
+def _installed_worker_environment(profile: Path) -> dict[str, str]:
+    """Build from held paths and the OS API, never the launcher's environment."""
+    import ctypes
+    from ctypes import wintypes
+
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.GetSystemDirectoryW.argtypes = [wintypes.LPWSTR, wintypes.UINT]
+    kernel.GetSystemDirectoryW.restype = wintypes.UINT
+    buffer = ctypes.create_unicode_buffer(32768)
+    length = kernel.GetSystemDirectoryW(buffer, len(buffer))
+    if not 0 < length < len(buffer):
+        raise ExecutionContainmentError("WORKER_SYSTEM_DIRECTORY")
+    system = Path(buffer.value)
+    runtime = Path(sys.executable).absolute().parent
+    return {
+        "SystemRoot": str(system.parent), "WINDIR": str(system.parent),
+        "COMSPEC": str(system / "cmd.exe"),
+        "PATH": os.pathsep.join(str(path) for path in (
+            runtime, runtime / "git/cmd", runtime / "git/mingw64/bin",
+            runtime / "git/usr/bin", system,
+        )),
+        "TEMP": str(profile), "TMP": str(profile), "USERPROFILE": str(profile),
+        "HOME": str(profile), "APPDATA": str(profile), "LOCALAPPDATA": str(profile),
+        "PYTHONNOUSERSITE": "1", "PYTHONDONTWRITEBYTECODE": "1",
+        "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull,
+    }
+
+
+def run_installed_protected_full(argv: Sequence[str], *, candidate_root: Path) -> int:
+    """Compose existing admission and execution; account must already be authorized.
+
+    Does not enable accounts, repair ACLs, install software or clean retained evidence.
+    Call only from the isolated protected installation. No caller-provided environment.
+    """
+    import uuid
+
+    from ai_trading_system.platform.architecture.source_preservation import hold_installed_inspector
+    from ai_trading_system.platform.architecture.workflow_coordination import WindowsWorkerExchange
+    from ai_trading_system.platform.architecture.workflow_execution import WindowsWorkerToken
+
+    args = _protected_full_arguments(argv)
+    if (args.protected_full_candidate_root is not None
+            and args.protected_full_candidate_root != candidate_root):
+        raise ExecutionContainmentError("PROTECTED_FULL_ROOT")
+    if not candidate_root.is_absolute():
+        raise ExecutionContainmentError("PROTECTED_FULL_ROOT")
+    with hold_installed_inspector(candidate_root) as context:
+        with context.inspection(candidate_root):
+            candidate = _git_commit(candidate_root)
+        if candidate is None:
+            raise ExecutionContainmentError("PROTECTED_FULL_CANDIDATE")
+        with WindowsWorkerToken.logon_registered(
+            candidate_root=candidate_root, candidate_sha=candidate, git_context=context,
+        ) as token:
+            root = (Path(sys.executable).absolute().parent.parent
+                    / ("full-exchange-" + uuid.uuid4().hex))
+            exchange = WindowsWorkerExchange.create(root, token)
+            # The mandatory runner owns the single-use directory custody. Opening
+            # it here would consume the capability before its actual consumer.
+            environment = _installed_worker_environment(exchange.profile_directory)
+            return run_protected_full(
+                argv, candidate_root=candidate_root, git_context=context,
+                worker_token=token, worker_environment=environment, worker_exchange=exchange,
+            )
+
+
+def _protected_full_arguments(argv: Sequence[str]) -> argparse.Namespace:
     args = parse_args(argv)
+    if (args.tier != "full" or not args.write_runtime_artifact
+            or args.publication_transaction is None or not args.task_id
+            or args.list or args.print_only or args.recover_full
+            or args.recover_full_action != "observe" or args.inspect_full_publication_profile
+            or args.protected_inspector
+            or args.inspection_candidate_root is not None
+            or args.benchmark_dist or args.benchmark_worker):
+        raise ExecutionContainmentError("PROTECTED_FULL_ARGUMENTS")
+    return args
+
+
+def run_protected_full(
+    argv: Sequence[str], *, candidate_root: Path, git_context: HeldGitConfiguration,
+    worker_token: WindowsWorkerToken, worker_environment: Mapping[str, str],
+    worker_exchange: WindowsWorkerExchange,
+) -> int:
+    """Trusted launcher entry; live capabilities cannot be supplied through CLI JSON.
+
+    The caller owns native custody and token lifetime through this entire call.
+    This entry neither installs a runtime nor enrolls or enables an account.
+    """
+    from ai_trading_system.platform.architecture.source_preservation import HeldGitConfiguration
+    from ai_trading_system.platform.architecture.workflow_coordination import WindowsWorkerExchange
+    from ai_trading_system.platform.architecture.workflow_execution import (
+        WindowsWorkerToken,
+        bind_protected_inspector_runtime,
+    )
+
+    args = _protected_full_arguments(argv)
+    if (type(git_context) is not HeldGitConfiguration
+            or type(worker_token) is not WindowsWorkerToken
+            or type(worker_exchange) is not WindowsWorkerExchange):
+        raise ExecutionContainmentError("PROTECTED_FULL_CAPABILITIES")
+    if not candidate_root.is_absolute():
+        raise ExecutionContainmentError("PROTECTED_FULL_ROOT")
+    environment = dict(worker_environment)
+    if (not environment or any(
+        not isinstance(key, str) or not key or "=" in key or "\0" in key
+        or not isinstance(value, str) or "\0" in value for key, value in environment.items()
+    ) or len({key.casefold() for key in environment}) != len(environment)):
+        raise ExecutionContainmentError("PROTECTED_FULL_ENVIRONMENT")
+    root = git_context.assert_current(candidate_root, {})
+    worker_token.validate_launcher()
+    worker_exchange.validate_worker(worker_token)
+    # Verify current exchange custody before consuming the Full claim.
+    _ = worker_exchange.profile_directory
+    with git_context.inspection(root):
+        candidate = _git_commit(root)
+        if candidate is None:
+            raise ExecutionContainmentError("PROTECTED_FULL_CANDIDATE")
+        bind_protected_inspector_runtime(root, candidate, git_context=git_context)
+        return _main(args, protected=_ProtectedFullLaunch(
+            root, worker_token, environment, worker_exchange,
+        ))
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    args = parse_args(arguments)
+    if args.protected_full_candidate_root is not None:
+        return run_installed_protected_full(
+            arguments, candidate_root=args.protected_full_candidate_root,
+        )
+    return _main(args)
+
+
+def _main(args: argparse.Namespace, *, protected: _ProtectedFullLaunch | None = None) -> int:
+    if getattr(args, "protected_full_candidate_root", None) is not None and protected is None:
+        raise ExecutionContainmentError("PROTECTED_FULL_CAPABILITIES")
+    if args.protected_inspector and not args.inspect_full_publication_profile:
+        print("error: protected inspector is restricted to read-only profile inspection",
+              file=sys.stderr)
+        return 2
+    if args.inspection_candidate_root is not None and not args.inspect_full_publication_profile:
+        print("error: candidate root is restricted to read-only profile inspection",
+              file=sys.stderr)
+        return 2
     if args.list:
         print(_list_tiers())
         return 0
@@ -3085,7 +4580,62 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("error: choose a tier or pass --list", file=sys.stderr)
         return 2
 
-    repo_root = _repo_root()
+    repo_root = _repo_root() if protected is None else protected.root
+    if args.inspect_full_publication_profile:
+        if (
+            args.tier != "full" or args.publication_transaction is None or not args.task_id
+            or args.recover_full or args.print_only or args.benchmark_dist or args.benchmark_worker
+            or args.write_runtime_artifact or args.json_output
+        ):
+            print("error: profile inspection requires only full, transaction and task-id",
+                  file=sys.stderr)
+            return 2
+        try:
+            if args.inspection_candidate_root is not None:
+                if not args.inspection_candidate_root.is_absolute():
+                    raise ValueError("inspection candidate root must be absolute")
+                repo_root = args.inspection_candidate_root.resolve(strict=True)
+            if args.protected_inspector:
+                from ai_trading_system.platform.architecture.source_preservation import (
+                    hold_installed_inspector,
+                )
+
+                with hold_installed_inspector(repo_root) as git_context:
+                    inspection = inspect_protected_full_publication_profile(
+                        repo_root=repo_root, transaction=args.publication_transaction,
+                        task_id=args.task_id, git_context=git_context,
+                    )
+            else:
+                inspection = inspect_full_publication_profile(
+                    repo_root=repo_root, transaction=args.publication_transaction,
+                    task_id=args.task_id,
+                )
+        except (ExecutionContainmentError, PublicationFenceError, OSError, ValueError,
+                KeyError, TypeError, StopIteration) as exc:
+            print(f"error: Full publication profile rejected: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps(inspection, ensure_ascii=False, sort_keys=True))
+        return 0
+    if args.recover_full_action != "observe" and not args.recover_full:
+        print("error: --recover-full-action requires --recover-full", file=sys.stderr)
+        return 2
+    if args.recover_full:
+        if (
+            args.tier != "full" or args.publication_transaction is None or not args.task_id
+            or args.print_only or args.benchmark_dist or args.benchmark_worker
+        ):
+            print("error: --recover-full requires full, transaction and task-id", file=sys.stderr)
+            return 2
+        try:
+            recovered = _recover_recorded_full_result(
+                repo_root=repo_root, transaction=args.publication_transaction, task_id=args.task_id,
+                action=args.recover_full_action,
+            )
+        except (ExecutionContainmentError, PublicationFenceError, OSError, ValueError) as exc:
+            print(f"error: Full recovery rejected: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps(recovered, ensure_ascii=False, sort_keys=True))
+        return 0 if recovered["status"] in {"RECOVERED_RESULT", "RECOVERED_FAILED_ATTEMPT"} else 2
     resolved_tier = resolve_tier(args.tier)
     spec = TIER_SPECS[resolved_tier]
     validation_provenance = _validation_trigger_provenance(
@@ -3094,9 +4644,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         repo_root=repo_root,
     )
     if validation_provenance["status"] == "FAIL":
+        validation_errors = validation_provenance["validation_errors"]
+        if not isinstance(validation_errors, list) or any(
+            not isinstance(error, str) for error in validation_errors
+        ):
+            raise TypeError("validation_errors must be a list of strings")
         print(
             "error: Validation trigger provenance failed: "
-            + "; ".join(validation_provenance["validation_errors"]),
+            + "; ".join(validation_errors),
             file=sys.stderr,
         )
         return 2
@@ -3117,6 +4672,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 repo_root=repo_root,
                 validation_provenance=validation_provenance,
                 full_run_id=run_id,
+                protected_launcher=protected is not None,
             )
         except PublicationFenceError as exc:
             print(
@@ -3263,7 +4819,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 flush=True,
             )
             result = _run_command(
-                variant["command"],  # type: ignore[arg-type]
+                variant["command"],
                 cwd=repo_root,
                 env_removals=BENCHMARK_REMOVED_VALIDATION_ENV_VARS,
             )
@@ -3372,22 +4928,29 @@ def main(argv: Sequence[str] | None = None) -> int:
             _write_report(args.json_output, payload)
         return overall_exit_code
 
+    full_runner = None
+    if publication_binding is not None:
+        assert artifact_dir is not None
+        full_runner = _FullCommandRunner(
+            args=args, root=repo_root, artifact_dir=artifact_dir,
+            publication_binding=publication_binding, provenance=validation_provenance,
+            worker_token=None if protected is None else protected.worker_token,
+            worker_environment=None if protected is None else protected.worker_environment,
+            worker_exchange=None if protected is None else protected.worker_exchange,
+        )
     runtime_profile_temp_dir: tempfile.TemporaryDirectory[str] | None = None
     runtime_profile_temp_path: Path | None = None
     runtime_profile_payload: dict[str, object] | None = None
     formal_selection_eligible: bool | None = None
     env_overrides: dict[str, str] = {}
     if resolved_tier == "full" and artifact_dir is not None:
-        runtime_profile_temp_dir = tempfile.TemporaryDirectory(
-            prefix="aits_pytest_runtime_profile_"
-        )
-        runtime_profile_temp_path = (
-            Path(runtime_profile_temp_dir.name) / RUNTIME_PROFILE_OUTPUT_NAME
-        )
+        runtime_profile_temp_dir, runtime_profile_temp_path = _allocate_runtime_profile(full_runner)
         env_overrides[RUNTIME_PROFILE_OUTPUT_ENV] = str(runtime_profile_temp_path)
         formal_selection_eligible = _formal_full_selection_eligible(
             args.pytest_arg,
-            pytest_addopts=os.environ.get("PYTEST_ADDOPTS", ""),
+            pytest_addopts=(
+                full_runner.effective_environment() if full_runner is not None else os.environ
+            ).get("PYTEST_ADDOPTS", ""),
         )
         env_overrides[RUNTIME_PROFILE_FORMAL_SELECTION_ENV] = (
             "1" if formal_selection_eligible else "0"
@@ -3398,13 +4961,22 @@ def main(argv: Sequence[str] | None = None) -> int:
             sort_keys=True,
         )
 
-    result = _run_command(
-        command,
-        cwd=repo_root,
-        env_overrides=env_overrides,
-    )
+    acceptance_binding = (publication_binding or {}).get("mandatory_acceptance_binding")
+    if isinstance(acceptance_binding, dict):
+        result = _run_mandatory_acceptance_command(
+            command,
+            cwd=repo_root,
+            binding=acceptance_binding,
+            expected_collections=_runtime_worker_contract(args.workers, args.dist)[0] or 1,
+            env_overrides=env_overrides,
+            command_runner=full_runner,
+        )
+    else:
+        result = (full_runner or _run_command)(
+            command, cwd=repo_root, env_overrides=env_overrides,
+        )
     if runtime_profile_temp_path is not None and artifact_dir is not None:
-        subprocess_exitstatus = int(result["exit_code"])
+        subprocess_exitstatus = _command_exit_code(result)
         expected_full_test_files, expected_full_test_files_error = _load_expected_full_test_files(
             repo_root / FULL_TEST_MANIFEST
         )
@@ -3458,6 +5030,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     if publication_binding is not None:
         payload["publication_transaction"] = publication_binding
+    if "mandatory_acceptance" in result:
+        payload["mandatory_acceptance"] = result["mandatory_acceptance"]
+    for execution_key in ("execution_request_id", "validation_identity_sha256"):
+        if execution_key in result:
+            payload[execution_key] = result[execution_key]
     print(f"Status: {status}")
     print(f"Elapsed seconds: {result['elapsed_seconds']}")
     if artifact_dir is not None:
@@ -3476,6 +5053,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         if publication_binding is not None:
             try:
+                assert full_runner is not None
+                full_runner.record_summary(
+                    artifact_dir / "test_runtime_summary.json", status=status,
+                )
                 _record_publication_full_result(
                     args,
                     repo_root=repo_root,
@@ -3492,7 +5073,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         _write_report(args.json_output, payload)
     if runtime_profile_temp_dir is not None:
         runtime_profile_temp_dir.cleanup()
-    return int(result["exit_code"])
+    return _command_exit_code(result)
 
 
 if __name__ == "__main__":

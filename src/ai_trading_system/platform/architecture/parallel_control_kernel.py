@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Iterator, Mapping, Sequence
+import threading
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
@@ -36,7 +37,7 @@ _LEASE_TRANSITIONS: dict[str | None, frozenset[str]] = {
     "EXPIRED": frozenset({"REASSIGNED"}),
     "RELEASED": frozenset(),
     "REASSIGNED": frozenset(),
-    "BLOCKED": frozenset(),
+    "BLOCKED": frozenset({"RELEASED"}),
 }
 
 
@@ -198,10 +199,13 @@ class ExecutionLease:
     expires_at: str | None
     resources: tuple[ResourceClaim, ...]
     evidence_refs: tuple[str, ...] = ()
+    execution: Mapping[str, Any] | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "schema_version": LEASE_SCHEMA_VERSION,
+            "schema_version": LEASE_SCHEMA_VERSION
+            if self.execution is None
+            else "execution_lease.v2",
             "lease_id": self.lease_id,
             "task_id": self.task_id,
             "change_id": self.change_id,
@@ -220,6 +224,7 @@ class ExecutionLease:
             "evidence_refs": list(self.evidence_refs),
             "production_effect": "none",
             "broker_action": "none",
+            **({"execution": dict(self.execution)} if self.execution is not None else {}),
         }
 
 
@@ -236,7 +241,11 @@ class LeaseEvent:
 
     def _body(self) -> dict[str, object]:
         return {
-            "schema_version": LEASE_EVENT_SCHEMA_VERSION,
+            "schema_version": (
+                LEASE_EVENT_SCHEMA_VERSION
+                if self.lease.execution is None
+                else "execution_lease_event.v2"
+            ),
             "lease": self.lease.to_dict(),
             "previous_event_id": self.previous_event_id,
             "from_state": self.from_state,
@@ -579,6 +588,24 @@ def replay_lease_events(
     *,
     initial_issues: Sequence[ControlIssue] = (),
 ) -> LeaseReplay:
+    from ai_trading_system.platform.architecture.workflow_coordination import (
+        validate_execution_transition,
+    )
+
+    # Public callers may construct LeaseEvent objects without parsing them.
+    # Preserve the complete execution validation at this public boundary.
+    return _replay_lease_events(
+        events, initial_issues=initial_issues,
+        execution_transition=validate_execution_transition,
+    )
+
+
+def _replay_lease_events(
+    events: Sequence[LeaseEvent],
+    *,
+    initial_issues: Sequence[ControlIssue],
+    execution_transition: Callable[[ExecutionLease | None, ExecutionLease], None],
+) -> LeaseReplay:
     issues = set(initial_issues)
     by_lease: dict[str, list[LeaseEvent]] = {}
     for event in events:
@@ -614,6 +641,7 @@ def replay_lease_events(
             issues.add(_issue("LEASE_CAUSAL_DISCONNECTED", (), lease_id, "event chain incomplete"))
             continue
         prior_state: str | None = None
+        prior_lease: ExecutionLease | None = None
         valid = True
         for record in reversed(chain):
             if (
@@ -634,7 +662,39 @@ def replay_lease_events(
                 issues.add(_issue("LEASE_EVENT_STATE_MISMATCH", (), lease_id, record.event_id))
                 valid = False
                 break
+            if prior_state == "BLOCKED" and record.to_state == "RELEASED":
+                if (
+                    prior_lease is None or prior_lease.execution is not None
+                    or prior_lease.acquired_at is not None
+                    or record.actor not in {prior_lease.actor, "integration-coordinator"}
+                    or record.reason_codes != ("REQUEST_CANCELLED",)
+                    or record.lease != replace(
+                        prior_lease, state="RELEASED", evidence_refs=record.lease.evidence_refs,
+                    )
+                ):
+                    issues.add(_issue("LEASE_CANCEL_INVALID", (), lease_id, record.event_id))
+                    valid = False
+                    break
+            if record.lease.execution is not None or (
+                prior_lease is not None and prior_lease.execution is not None
+            ):
+                from ai_trading_system.platform.architecture.workflow_coordination import (
+                    validate_execution_transition,
+                )
+
+                try:
+                    # An absent execution was not checked by the file parser;
+                    # removing a previous execution still takes the full gate.
+                    if record.lease.execution is None:
+                        validate_execution_transition(prior_lease, record.lease)
+                    else:
+                        execution_transition(prior_lease, record.lease)
+                except ParallelControlError as exc:
+                    issues.add(_issue(exc.code, (), lease_id, str(exc)))
+                    valid = False
+                    break
             prior_state = record.to_state
+            prior_lease = record.lease
         if valid:
             heads.append(head.lease)
             head_ids.append((lease_id, head.event_id))
@@ -666,12 +726,19 @@ def replay_lease_events(
 
 class FileExecutionLeaseStore:
     def __init__(self, root: Path, *, policy: ParallelControlPolicy) -> None:
+        self.requested_root = root.absolute()
         self.root = root.resolve()
         self.policy = policy
         self.events_root = self.root / "events"
         self.arbiter_root = self.root / "arbiter.lock"
+        self._atomic_context = threading.local()
+        self.coordination_binding: Any = None
 
     def replay(self) -> LeaseReplay:
+        from ai_trading_system.platform.architecture.workflow_coordination import (
+            _validate_checked_execution_transition,
+        )
+
         events: list[LeaseEvent] = []
         issues: set[ControlIssue] = set()
         if self.events_root.exists():
@@ -680,7 +747,34 @@ class FileExecutionLeaseStore:
                     events.append(parse_lease_event(json.loads(path.read_text(encoding="utf-8"))))
                 except (OSError, json.JSONDecodeError, ParallelControlError) as exc:
                     issues.add(_issue("LEASE_EVENT_INVALID", (), path.as_posix(), str(exc)))
-        return replay_lease_events(events, initial_issues=tuple(issues))
+        # Each local event was fully validated by parse_lease_event above in
+        # this call. Check every causal/transition rule without validating the
+        # same current tree twice. No validation survives this invocation and
+        # no caller-owned event or on-disk "already checked" flag is admitted.
+        return _replay_lease_events(
+            events, initial_issues=tuple(issues),
+            execution_transition=_validate_checked_execution_transition,
+        )
+
+    def _require_ready_request(
+        self, task: TaskControlRecord, readiness: ReadinessDecision, *,
+        actor: str, current_base_commit: str,
+    ) -> None:
+        # A READY decision belongs to one exact request and policy. Validate
+        # before either admission or consuming an expired lease's recovery slot.
+        if (
+            readiness.status != "READY" or readiness.task_id != task.task_id
+            or readiness.change_id != task.manifest.change_id
+            or readiness.manifest_sha256 != task.manifest.sha256
+            or readiness.policy_version != self.policy.policy_version
+        ):
+            raise ParallelControlError("LEASE_READINESS_REQUIRED", task.task_id)
+        if task.task_id not in self.policy.allowlisted_task_ids:
+            raise ParallelControlError("LEASE_TASK_NOT_ALLOWLISTED", task.task_id)
+        if actor not in self.policy.allowlisted_actors:
+            raise ParallelControlError("LEASE_ACTOR_NOT_ALLOWLISTED", actor)
+        if task.manifest.base_commit != current_base_commit:
+            raise ParallelControlError("LEASE_BASE_DRIFT", task.manifest.base_commit)
 
     def acquire(
         self,
@@ -695,16 +789,10 @@ class FileExecutionLeaseStore:
         previous_lease_id: str | None = None,
     ) -> LeaseAcquisition:
         instant = _utc(now)
-        if readiness.status != "READY" or readiness.task_id != task.task_id:
-            raise ParallelControlError("LEASE_READINESS_REQUIRED", task.task_id)
-        if task.task_id not in self.policy.allowlisted_task_ids:
-            raise ParallelControlError("LEASE_TASK_NOT_ALLOWLISTED", task.task_id)
-        if actor not in self.policy.allowlisted_actors:
-            raise ParallelControlError("LEASE_ACTOR_NOT_ALLOWLISTED", actor)
-        if task.manifest.base_commit != current_base_commit:
-            raise ParallelControlError("LEASE_BASE_DRIFT", task.manifest.base_commit)
+        self._require_ready_request(task, readiness, actor=actor,
+                                    current_base_commit=current_base_commit)
         lease_id = _lease_id(task.manifest, lane_id=lane_id, generation=generation)
-        with self._arbiter(actor=actor, now=instant):
+        with self._arbiter(actor=actor, now=instant, operation="acquire"):
             replay = self.replay()
             if replay.status != "PASS":
                 raise ParallelControlError("LEASE_REPLAY_INVALID", replay.issues[0].code)
@@ -712,7 +800,40 @@ class FileExecutionLeaseStore:
                 replay = self.replay()
                 if replay.status != "PASS":
                     raise ParallelControlError("LEASE_REPLAY_INVALID", replay.issues[0].code)
-            existing = {lease.lease_id: lease for lease in replay.lease_heads}.get(lease_id)
+            heads = {lease.lease_id: lease for lease in replay.lease_heads}
+            existing = heads.get(lease_id)
+            # A resource refusal is immutable evidence, not a permanently lost
+            # request. Recheck the SAME complete identity and current readiness;
+            # only after contention clears create a linked fresh attempt. Never
+            # rewrite BLOCKED to ACTIVE or consume an execution-recovery slot.
+            while existing is not None and existing.state == "BLOCKED":
+                if (
+                    existing.actor != actor or existing.task_id != task.task_id
+                    or existing.change_id != task.manifest.change_id
+                    or existing.change_manifest_sha256 != task.manifest.sha256
+                    or existing.base_commit != current_base_commit
+                    or existing.policy_version != self.policy.policy_version
+                    or existing.lane_id != lane_id
+                    or existing.resources != manifest_resource_claims(task.manifest)
+                    or existing.execution is not None
+                ):
+                    raise ParallelControlError("LEASE_IDENTITY_CONFLICT", existing.lease_id)
+                next_id = _lease_id(task.manifest, lane_id=lane_id, generation=generation + 1)
+                if next_id not in heads:
+                    retry_blockers = []
+                    if len(replay.active_leases) >= self.policy.max_total_active_leases:
+                        retry_blockers.append("LEASE_CAPACITY_EXHAUSTED")
+                    for active in replay.active_leases:
+                        if leases_conflict(replace(existing, state="ACTIVE"), active):
+                            retry_blockers.append(f"LEASE_RESOURCE_CONFLICT:{active.lease_id}")
+                    if retry_blockers:
+                        return LeaseAcquisition(
+                            "BLOCKED", existing, tuple(sorted(retry_blockers)), True,
+                        )
+                previous_lease_id = existing.lease_id
+                generation += 1
+                lease_id = next_id
+                existing = heads.get(lease_id)
             head_event_id = dict(replay.head_event_ids).get(lease_id)
             if existing is not None and existing.state == "ACTIVE":
                 if (
@@ -801,7 +922,7 @@ class FileExecutionLeaseStore:
         now: datetime,
     ) -> ExecutionLease:
         instant = _utc(now)
-        with self._arbiter(actor=actor, now=instant):
+        with self._arbiter(actor=actor, now=instant, operation="heartbeat"):
             replay = self.replay()
             if replay.status != "PASS":
                 raise ParallelControlError("LEASE_REPLAY_INVALID", replay.issues[0].code)
@@ -812,7 +933,7 @@ class FileExecutionLeaseStore:
             if actor != head.actor:
                 raise ParallelControlError("LEASE_ACTOR_MISMATCH", lease_id)
             expiry = _lease_expiry(head)
-            if expiry <= instant:
+            if expiry <= instant and head.execution is None:
                 raise ParallelControlError("LEASE_HEARTBEAT_EXPIRED", lease_id)
             refreshed = replace(
                 head,
@@ -830,6 +951,45 @@ class FileExecutionLeaseStore:
                 )
             )
             return refreshed
+
+    def cancel_request(
+        self, lease_id: str, *, actor: str, now: datetime,
+        evidence_refs: Sequence[str] = (),
+    ) -> ExecutionLease:
+        """Retire a nonexecuting refusal under the original arbiter, without granting work."""
+        instant = _utc(now)
+        with self._arbiter(actor=actor, now=instant, operation="terminal"):
+            replay = self.replay()
+            if replay.status != "PASS":
+                raise ParallelControlError("LEASE_REPLAY_INVALID", lease_id)
+            head = next((row for row in replay.lease_heads if row.lease_id == lease_id), None)
+            if head is None:
+                raise ParallelControlError("LEASE_CANCEL_UNKNOWN", lease_id)
+            if actor not in {head.actor, "integration-coordinator"}:
+                raise ParallelControlError("LEASE_ACTOR_MISMATCH", lease_id)
+            if any(row.previous_lease_id == lease_id for row in replay.lease_heads):
+                raise ParallelControlError("LEASE_CANCEL_SUPERSEDED", lease_id)
+            previous_event = dict(replay.head_event_ids)[lease_id]
+            if head.state == "RELEASED":
+                event = parse_lease_event(json.loads(
+                    (self.events_root / lease_id / f"{previous_event}.json").read_text(
+                        encoding="utf-8",
+                    )
+                ))
+                if event.from_state == "BLOCKED" and event.reason_codes == ("REQUEST_CANCELLED",):
+                    return head
+            if (
+                head.state != "BLOCKED" or head.execution is not None
+                or head.acquired_at is not None
+            ):
+                raise ParallelControlError("LEASE_CANCEL_REQUIRES_BLOCKED", lease_id)
+            terminal = replace(head, state="RELEASED", evidence_refs=tuple(sorted(evidence_refs)))
+            self._append_event(_lease_event(
+                lease=terminal, previous_event_id=previous_event, from_state="BLOCKED",
+                to_state="RELEASED", occurred_at=instant, actor=actor,
+                reason_codes=("REQUEST_CANCELLED",),
+            ))
+            return terminal
 
     def release(
         self,
@@ -878,13 +1038,35 @@ class FileExecutionLeaseStore:
         now: datetime,
     ) -> LeaseAcquisition:
         instant = _utc(now)
-        with self._arbiter(actor=actor, now=instant):
+        self._require_ready_request(task, readiness, actor=actor,
+                                    current_base_commit=current_base_commit)
+        with self._arbiter(actor=actor, now=instant, operation="reassign"):
             replay = self.replay()
             head = {lease.lease_id: lease for lease in replay.lease_heads}.get(lease_id)
             previous_event = dict(replay.head_event_ids).get(lease_id)
             if head is None or head.state != "EXPIRED":
                 raise ParallelControlError("LEASE_REASSIGN_REQUIRES_EXPIRED", lease_id)
-            if head.generation > self.policy.max_reassignments:
+            self._require_execution_terminal(head)
+            # Admission-only BLOCKED attempts never ran an executor. Count
+            # actual prior reassignments, not their generation numbers.
+            ancestors = {lease.lease_id: lease for lease in replay.lease_heads}
+            cursor = head
+            reassignments = 0
+            seen = {head.lease_id}
+            while cursor.previous_lease_id is not None:
+                prior = ancestors.get(cursor.previous_lease_id)
+                if (
+                    prior is None or prior.lease_id in seen
+                    or prior.generation + 1 != cursor.generation
+                    or prior.state not in {"BLOCKED", "REASSIGNED"}
+                ):
+                    raise ParallelControlError("LEASE_REASSIGNMENT_HISTORY", lease_id)
+                reassignments += int(prior.state == "REASSIGNED")
+                seen.add(prior.lease_id)
+                cursor = prior
+            if cursor.generation != 1:
+                raise ParallelControlError("LEASE_REASSIGNMENT_HISTORY", lease_id)
+            if reassignments >= self.policy.max_reassignments:
                 raise ParallelControlError("LEASE_REASSIGNMENT_LIMIT", lease_id)
             reassigned = replace(head, state="REASSIGNED")
             self._append_event(
@@ -920,7 +1102,7 @@ class FileExecutionLeaseStore:
         evidence_refs: tuple[str, ...],
     ) -> ExecutionLease:
         instant = _utc(now)
-        with self._arbiter(actor=actor, now=instant):
+        with self._arbiter(actor=actor, now=instant, operation="terminal"):
             replay = self.replay()
             head = {lease.lease_id: lease for lease in replay.lease_heads}.get(lease_id)
             previous_event = dict(replay.head_event_ids).get(lease_id)
@@ -928,6 +1110,7 @@ class FileExecutionLeaseStore:
                 raise ParallelControlError("LEASE_ACTIVE_REQUIRED", lease_id)
             if actor != head.actor and actor != "integration-coordinator":
                 raise ParallelControlError("LEASE_ACTOR_MISMATCH", lease_id)
+            self._require_execution_terminal(head)
             terminal = replace(
                 head,
                 state=to_state,
@@ -953,9 +1136,15 @@ class FileExecutionLeaseStore:
         actor: str,
         now: datetime,
     ) -> bool:
+        from ai_trading_system.platform.architecture.workflow_coordination import (
+            execution_is_terminal,
+        )
+
         expired_any = False
         head_event_ids = dict(replay.head_event_ids)
         for head in replay.active_leases:
+            if not execution_is_terminal(head.execution):
+                continue  # Diagnostic TTL never steals live or uncertain execution.
             if _lease_expiry(head) > now:
                 continue
             expired = replace(head, state="EXPIRED")
@@ -973,6 +1162,20 @@ class FileExecutionLeaseStore:
             expired_any = True
         return expired_any
 
+    @staticmethod
+    def _require_execution_terminal(head: ExecutionLease) -> None:
+        from ai_trading_system.platform.architecture.workflow_coordination import (
+            execution_is_terminal,
+        )
+
+        if not execution_is_terminal(head.execution):
+            raise ParallelControlError("LEASE_EXECUTION_NOT_TERMINAL", head.lease_id)
+
+    def execution_lifecycle(self) -> Any:
+        from ai_trading_system.platform.architecture.workflow_coordination import ExecutionLifecycle
+
+        return ExecutionLifecycle(self)
+
     def _append_event(self, event: LeaseEvent) -> None:
         path = self.events_root / event.lease.lease_id / f"{event.event_id}.json"
         if path.exists():
@@ -983,12 +1186,62 @@ class FileExecutionLeaseStore:
         write_json_atomic(path, event.to_dict())
 
     @contextmanager
-    def _arbiter(self, *, actor: str, now: datetime) -> Iterator[None]:
+    def atomic(self, *, actor: str, now: datetime, operation: str = "compound") -> Iterator[None]:
+        """One short compound operation under this store's existing OS arbiter.
+
+        The capability is a live process/thread-bound handle, never an input
+        boolean or on-disk receipt. Nested store methods reuse it only on the
+        same store instance and for the same actor. It is not an execution-
+        lifetime lease and must not enclose a test run or a child-process wait.
+        """
+        if getattr(self._atomic_context, "binding", None) is not None:
+            with self._arbiter(actor=actor, now=now, operation=operation):
+                yield
+            return
+        # Reject an unregistered root before even creating the arbiter anchor.
+        # This is admission only; the same checks repeat after lock acquisition
+        # to fence a concurrent registration/phase change.
+        self._assert_writer(operation)
+        with hold_lease_arbiter(
+            self.root, actor=actor, now=now, arbiter_ttl_seconds=self.policy.arbiter_ttl_seconds
+        ) as held:
+            self._assert_writer(operation)
+            self._atomic_context.binding = (actor, held)
+            try:
+                yield
+            finally:
+                del self._atomic_context.binding
+
+    def _assert_writer(self, operation: str) -> None:
+        from ai_trading_system.platform.architecture.workflow_coordination import (
+            assert_store_writer,
+        )
+
+        assert_store_writer(self, operation=operation)
+
+    @contextmanager
+    def _arbiter(self, *, actor: str, now: datetime, operation: str = "compound") -> Iterator[None]:
+        binding = getattr(self._atomic_context, "binding", None)
+        if binding is not None:
+            owner, held = binding
+            if actor != owner or held.path.parent != self.root:
+                raise ParallelControlError("LEASE_ATOMIC_OWNER_MISMATCH", actor)
+            held.assert_owner(owner_token=held.token)
+            held.assert_anchor()
+            self._assert_writer(operation)
+            try:
+                yield
+            finally:
+                held.assert_owner(owner_token=held.token)
+                held.assert_anchor()
+            return
         # DEVX-014/S1a: the same unique arbiter uses a stable OS-owned handle.
         # Policy TTL remains diagnostic; it never permits stealing a live lock.
+        self._assert_writer(operation)
         with hold_lease_arbiter(
             self.root, actor=actor, now=now, arbiter_ttl_seconds=self.policy.arbiter_ttl_seconds
         ):
+            self._assert_writer(operation)
             yield
 
 
@@ -1062,7 +1315,18 @@ def parse_lease_event(payload: Mapping[str, Any]) -> LeaseEvent:
         ),
         resources=resources,
         evidence_refs=_strings(lease_payload.get("evidence_refs"), "evidence_refs"),
+        execution=lease_payload.get("execution"),
     )
+    if lease.execution is not None:
+        from ai_trading_system.platform.architecture.workflow_coordination import validate_execution
+
+        validate_execution(lease)
+    if payload.get("schema_version") != (
+        LEASE_EVENT_SCHEMA_VERSION if lease.execution is None else "execution_lease_event.v2"
+    ) or lease_payload.get("schema_version") != (
+        LEASE_SCHEMA_VERSION if lease.execution is None else "execution_lease.v2"
+    ):
+        raise ParallelControlError("LEASE_EVENT_SCHEMA", event_id)
     prototype = LeaseEvent(
         event_id=event_id,
         lease=lease,

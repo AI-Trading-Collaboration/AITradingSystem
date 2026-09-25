@@ -417,6 +417,36 @@ budget 或任意改 version 绕过。
 
 Daily chain 还包括 `download-data`、`validate-data`、SEC companyfacts / metrics、valuation fetch、SEC PIT shadow observe / monitor、score change attribution、market panel、forward evidence dry-run daily archive、Dynamic v3 rescue `schedule observe` gate、`ops health` 和 secret scan。`aits ops daily-run` 在 finalization 写出 current-run `daily_decision_summary` 和 `daily_task_dashboard` 后，会用同一 run 的 summary 只读刷新最终 Reader Brief / report quality gate / Reader Brief quality mirror；该刷新不得重跑 scoring、PIT、SEC、valuation、backtest、shadow、weight 或 docs 上游。休市日模式下，系统不得生成新的 score、decision snapshot、Reader Brief scoring artifacts、tracking review artifacts、forward evidence dry-run archive、prediction ledger 行或执行动作；Dynamic v3 rescue gate 只写 closed-market / not-due / due 审计。
 
+## DEVX-015 手工源码保全与中断恢复
+
+这是显式开发工作流，不接入 daily trigger，不新增 scheduler，也不改变 OPS-081
+launcher / lease-arbiter 或任何 DQ/PIT、production、broker 门禁。
+仅在任务已授权的显式源码 scope 内执行；先核对当前可信 checkout 与原请求身份。
+完整合同见 `docs/requirements/DEVX-015_Workflow_Contract_And_Acceptance_V3.md`。
+
+1. 在可信工作区 `outputs/validation_runtime/` 下准备 scope JSON，再运行
+   `python scripts/architecture_arch005_task_checkpoint.py plan --scope <scope.json> --output <request.json>`。
+   输出请求不可覆盖；策略上限为 2048 文件 / 64 MiB，超限须重新审议范围，不能自动拆分。
+2. 运行 `python scripts/architecture_arch005_task_checkpoint.py capture --request <request.json>`。
+   普通 staged 内容不是拒绝理由，但也不是 scope 授权；捕获保全原 index，并使用 private index。
+   unmerged / sparse-directory index 与未知身份、路径或内容漂移仍 fail closed。
+   `capture-worker` 是受控 Job 内部入口，不能手动调用来绕过原租约。
+3. 对返回的 receipt 运行
+   `python scripts/architecture_arch005_task_checkpoint.py validate --receipt <receipt.json>`。
+   PASS 仅代表 source-only 保全证据有效，不代表 clean integration、Full、发布或 OPS 验收。
+4. 若原执行已经完整终止但缺回执，使用
+   `python scripts/architecture_arch005_task_checkpoint.py recover-terminal --request <request.json> --actor <actor>`；
+   它只从完整终态证据重建独立回执，不重采或重派发。
+   对中断执行先使用 `recover-interrupted --request <request.json> --actor <actor> --action observe`。
+   只有确认要终止该原执行且在已授权范围内，才选择 `--action terminate_frozen_job`；
+   该路径只针对冻结身份的原 Job，确认终态后保全失败证据并处理原租约，不启动新任务。
+
+命令返回 `BLOCKED` 时保留原 request、attempt、failure 与 recovery evidence，并按 typed
+reason 处理；不得修改回执、手工伪造 lease 终态、复用历史 PASS 或自动修复运行环境。
+运行产物位于 `outputs/architecture/arch_005_task_checkpoints/`，源码引用位于
+`refs/aits/task-checkpoints/`；后续集成必须另经 exact candidate、正式验证和 publication fence。
+本段不声明迁移、正式发布或 DEVX-015 整体验收完成。
+
 ## Periodic Task Register
 
 DEVX-011/DEVX-012 governed workflow health control loop 是 developer workflow telemetry，不是数据质量、策略、报告结论、生产审批或 broker workflow。现有 Codex automation `aitradingsystem-pit` 在完成或依规跳过每次唯一 runtime-local `aits ops daily-run` 后，进入同一 invocation 的 R0 post-stage，切换到 development checkout 并执行 `aits reports ensure-workflow-health --as-of {as_of}`；不得新增第二个 automation/scheduler。该 gate 要求 `HEAD = local main = origin/main`、受治理实现/policy path 无 staged/unstaged drift，并按 ISO week 对 report/candidate/validation bundle 做 independent validation；当周有效 bundle 返回 `ALREADY_CURRENT` 且不重写，缺失时生成一次，invalid/blocked/failed receipt 由下一次 existing daily invocation 重试。命令只读 `outputs/validation_runtime/**/test_runtime_summary.json`、`outputs/architecture/arch_005_integration_publication_fence/transactions/**` 与 `git main` 历史，DEVX-013 v2 以 `as_of` 所在 UTC ISO 周之前的完整周 `[Monday 00:00Z, next Monday 00:00Z)` 统计（历史 v1 保持原始窗口重验） validation runtime / failure、Full failure、publication transaction early failure / administrative stop、authority-only commits、per-task retries 与 failure clusters；还与最近一个更早且 independently validated 的 weekly bundle 比较 failed runtime、Full failure、non-admin publication failure、authority-only ratio、duplicate dispatch 与 candidate lifecycle，输出 `IMPROVED|REGRESSED|MIXED|STABLE|NO_BASELINE`，但不得声称因果。输出包括 `workflow_health_*.json/md`、`workflow_optimization_candidates_*.json`、`workflow_health_validation_*.json/md` 与 `workflow_health_cycle_receipt_*.json`。候选 fingerprint 只绑定 rule 与 scope，供人工去重和复核；所有候选固定 `review_only=true`、`auto_apply=false`、`task_mutation_allowed=false`、`code_mutation_allowed=false`、`validation_gate_change_allowed=false`、`production_effect=none`。自动行为只允许生成/复用报告和 receipt，不读取 market cache，固定 `data_quality_status=NOT_APPLICABLE_DEVELOPER_TELEMETRY`；缺失或 malformed telemetry 必须进入 coverage gap / warning，不能用 mtime 猜测事件时间、补造 PASS、自动创建任务或执行优化。

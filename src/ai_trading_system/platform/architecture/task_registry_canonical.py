@@ -5,6 +5,7 @@ import json
 import os
 import re
 import subprocess
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path, PurePosixPath
@@ -196,8 +197,7 @@ def validate_canonical_registry(
 
     inventory_path = _policy_path(root, policy, "canonical", "consumer_inventory_path")
     inventory = _load_generated_mapping(inventory_path)
-    expected_inventory = build_consumer_inventory(root)
-    if require_inventory_freshness and inventory != expected_inventory:
+    if require_inventory_freshness and inventory != build_consumer_inventory(root):
         _fail("CONSUMER_INVENTORY_STALE", str(inventory_path))
     if _sha256_file(inventory_path) != index.get("consumer_inventory_sha256"):
         _fail("CONSUMER_INVENTORY_HASH", str(inventory_path))
@@ -252,7 +252,58 @@ def read_canonical_task_at_commit(
         commit.encode("ascii")
     ):
         _fail("SOURCE_COMMIT_INVALID", commit)
-    index_bytes = _canonical_git_blob(root, commit, CANONICAL_INDEX_PATH)
+    return _read_sealed_canonical_task(
+        task_id=task_id, source_commit=commit,
+        read_blob=lambda path: _canonical_git_blob(root, commit, path),
+    )
+
+
+def read_current_canonical_task(*, project_root: Path, task_id: str) -> dict[str, Any]:
+    """Read current task authority without demanding unrelated generated freshness.
+
+    Uses the same index/policy/fragment validator as the exact-commit reader.
+    Windows native regular-file reads and a second byte comparison reject aliases
+    and a mixed publication snapshot. Missing or damaged authority never falls
+    back to a compatibility Markdown view or an older commit.
+    """
+    from ai_trading_system.platform.architecture.workflow_contract import (
+        WorkflowContractError,
+        bounded_regular_bytes,
+    )
+
+    root = project_root.resolve()
+    captured: dict[str, bytes] = {}
+
+    def read_blob(relative: str) -> bytes:
+        raw = bounded_regular_bytes(root / _portable_path(relative, "canonical task input"))
+        captured[relative] = raw
+        return raw
+
+    try:
+        try:
+            result = _read_sealed_canonical_task(
+                task_id=task_id, source_commit=None, read_blob=read_blob,
+            )
+        finally:
+            for relative, raw in captured.items():
+                if bounded_regular_bytes(root / relative) != raw:
+                    _fail("CANONICAL_CURRENT_INPUT_DRIFT", relative)
+    except (OSError, WorkflowContractError) as exc:
+        _fail("CANONICAL_CURRENT_INPUT_UNAVAILABLE", str(exc))
+    result["source_view"] = "CURRENT_WORKTREE"
+    result["captured_inputs"] = [
+        {"path": relative, "sha256": _sha256_bytes(raw), "size_bytes": len(raw)}
+        for relative, raw in sorted(captured.items())
+    ]
+    return result
+
+
+def _read_sealed_canonical_task(
+    *, task_id: str, source_commit: str | None, read_blob: Callable[[str], bytes],
+) -> dict[str, Any]:
+    if _required_text(task_id, "task_id") != task_id:
+        _fail("TASK_ID_INVALID", task_id)
+    index_bytes = read_blob(CANONICAL_INDEX_PATH)
     index = _canonical_blob_mapping(index_bytes, CANONICAL_INDEX_PATH, generated=True)
     if index.get("schema_version") != CANONICAL_INDEX_SCHEMA:
         _fail("INDEX_SCHEMA", str(index.get("schema_version")))
@@ -261,7 +312,7 @@ def read_canonical_task_at_commit(
     if index.get("cutover_performed") is not True:
         _fail("INDEX_CUTOVER", "cutover_performed must be true")
     _verify_checksum(index, "index_checksum", "INDEX_CHECKSUM")
-    policy_bytes = _canonical_git_blob(root, commit, POLICY_PATH)
+    policy_bytes = read_blob(POLICY_PATH)
     policy = _canonical_blob_mapping(policy_bytes, POLICY_PATH, generated=False)
     if (
         policy.get("schema_version") != "arch_005_s5_task_source_cutover_policy.v1"
@@ -332,7 +383,7 @@ def read_canonical_task_at_commit(
     if selected is None:
         _fail("CANONICAL_TASK_NOT_FOUND", task_id)
     fragment_path = str(selected["path"])
-    fragment_bytes = _canonical_git_blob(root, commit, fragment_path)
+    fragment_bytes = read_blob(fragment_path)
     if _sha256_bytes(fragment_bytes) != selected["file_sha256"]:
         _fail("INDEX_FILE_HASH", task_id)
     fragment = _canonical_blob_mapping(fragment_bytes, fragment_path, generated=True)
@@ -351,7 +402,7 @@ def read_canonical_task_at_commit(
         _fail("TASK_RECORD_PROJECTION", task_id)
     return {
         "task_id": task_id,
-        "source_commit": commit,
+        "source_commit": source_commit,
         "status": cells[3],
         "is_terminal": cells[3] in TERMINAL_STATUSES,
         "fragment_path": fragment_path,
@@ -366,6 +417,13 @@ def read_canonical_task_at_commit(
 
 
 def _canonical_git_read(root: Path, *args: str) -> bytes:
+    from ai_trading_system.platform.architecture.source_preservation import inspection_git_result
+
+    protected = inspection_git_result(root, *args)
+    if protected is not None:
+        if protected.returncode:
+            _fail("CANONICAL_GIT_READ", protected.stderr.decode("utf-8", errors="replace"))
+        return protected.stdout
     # Do not let inherited Git routing/object-store overrides replace the
     # caller's explicitly selected repository or exact object bytes.
     env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
@@ -460,6 +518,7 @@ def update_task(
     blocker_or_next_step: str | None = None,
     acceptance_criteria: str | None = None,
     notes: str | None = None,
+    workflow_authority: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     registry = validate_canonical_registry(
         project_root=project_root,
@@ -484,7 +543,7 @@ def update_task(
         _fail("BASE_COMMIT_INVALID", base_commit)
     events = _list(fragment.get("events"), "fragment.events")
     previous_event_id = str(_mapping(events[-1], "last_event")["event_id"])
-    event_payload = {
+    event_payload: dict[str, Any] = {
         "schema_version": "task_event.v1",
         "task_id": task_id,
         "event_type": "TASK_UPDATED",
@@ -507,6 +566,22 @@ def update_task(
         "evidence_refs": [f"change:{change_id}"],
         "history_completeness": "CANONICAL_EVENT_COMPLETE",
     }
+    if workflow_authority is not None:
+        from ai_trading_system.platform.architecture.workflow_contract import (
+            read_bound_json,
+            validate_task_authority,
+        )
+
+        checked_authority = validate_task_authority(workflow_authority, task_id=task_id)
+        scope = read_bound_json(project_root, checked_authority["scope_ref"])
+        if (
+            scope.get("task_id") != task_id
+            or scope.get("decision_id") != checked_authority["decision_id"]
+        ):
+            _fail("WORKFLOW_SCOPE_IDENTITY", task_id)
+        if cells[3] in TERMINAL_STATUSES and checked_authority["status"] == "ACTIVE":
+            _fail("WORKFLOW_TERMINAL_AUTHORITY", task_id)
+        event_payload["payload"]["workflow_authority"] = checked_authority
     event_payload["event_id"] = _canonical_event_id(event_payload)
     events.append(event_payload)
     fragment["events"] = events
@@ -514,6 +589,8 @@ def update_task(
         cells,
         prior=_mapping(fragment.get("task_record"), "task_record"),
     )
+    if workflow_authority is not None:
+        fragment["task_record"]["workflow_authority"] = checked_authority
     fragment["projection"] = _projection_from_cells(cells)
     fragment["last_event_id"] = event_payload["event_id"]
     fragment["fragment_checksum"] = _payload_checksum(fragment, "fragment_checksum")
@@ -705,6 +782,7 @@ def validate_canonical_fragment(payload: dict[str, Any]) -> None:
         _fail("EVENTS_EMPTY", task_id)
     previous: str | None = None
     projected_status: str | None = None
+    projected_workflow_authority: dict[str, Any] | None = None
     for position, raw_event in enumerate(events):
         event = _mapping(raw_event, f"events[{position}]")
         event_id = _required_text(event.get("event_id"), "event_id")
@@ -730,6 +808,14 @@ def validate_canonical_fragment(payload: dict[str, Any]) -> None:
         if not _GIT_SHA_RE.fullmatch(base_commit):
             _fail("EVENT_BASE_COMMIT", event_id)
         _mapping(event.get("payload"), "event.payload")
+        if "workflow_authority" in event["payload"]:
+            from ai_trading_system.platform.architecture.workflow_contract import (
+                validate_task_authority,
+            )
+
+            projected_workflow_authority = validate_task_authority(
+                event["payload"]["workflow_authority"], task_id=task_id
+            )
         _list(event.get("evidence_refs"), "event.evidence_refs")
         if event_type == "LEGACY_IMPORT":
             if position != 0 or event.get("occurred_at") is not None:
@@ -754,6 +840,8 @@ def validate_canonical_fragment(payload: dict[str, Any]) -> None:
         _fail("LAST_EVENT_ID", task_id)
     if projected_status != cells[3]:
         _fail("EVENT_PROJECTION_STATUS", task_id)
+    if task.get("workflow_authority") != projected_workflow_authority:
+        _fail("WORKFLOW_AUTHORITY_PROJECTION", task_id)
     _verify_checksum(payload, "fragment_checksum", "FRAGMENT_CHECKSUM")
 
 
@@ -887,6 +975,11 @@ def _task_record_from_cells(
     previous = dict(prior) if isinstance(prior, dict) else dict(prior)
     return {
         "schema_version": "task_record.v1",
+        **(
+            {"workflow_authority": previous["workflow_authority"]}
+            if "workflow_authority" in previous
+            else {}
+        ),
         "task_id": cells[0],
         "title": previous.get("title"),
         "domain": cells[1],
@@ -1667,6 +1760,7 @@ __all__ = [
     "canonical_task_register_view_path",
     "load_cutover_policy",
     "read_canonical_task_at_commit",
+    "read_current_canonical_task",
     "refresh_consumer_inventory",
     "register_task",
     "run_rollback_rehearsal",

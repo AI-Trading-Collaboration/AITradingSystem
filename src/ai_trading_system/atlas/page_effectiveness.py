@@ -335,6 +335,15 @@ def load_page_effectiveness_policy(
 
 
 def repository_head(repository_root: Path) -> str:
+    from ai_trading_system.platform.architecture.source_preservation import inspection_git_result
+
+    protected = inspection_git_result(repository_root, "rev-parse", "HEAD")
+    if protected is not None:
+        protected.check_returncode()
+        value = protected.stdout.decode("ascii").strip()
+        if not re.fullmatch(r"[0-9a-f]{40}", value):
+            raise PageEffectivenessError("PAGE_EFFECTIVENESS_REPOSITORY_HEAD_INVALID")
+        return value
     result = subprocess.run(
         ["git", "rev-parse", "HEAD"],
         cwd=repository_root,
@@ -412,8 +421,23 @@ def _task_event_time(
     return value, "EVENT_BASE_COMMIT_AT"
 
 
-@lru_cache(maxsize=512)
 def _commit_time(root: str, commit: str) -> str:
+    from ai_trading_system.platform.architecture.source_preservation import inspection_git_result
+
+    # A protected inspection must neither consume nor populate the ordinary
+    # process cache: its evidence belongs to the currently held Git context.
+    protected = inspection_git_result(Path(root), "show", "-s", "--format=%cI", commit)
+    if protected is not None:
+        if protected.returncode != 0:
+            raise PageEffectivenessError(
+                f"PAGE_EFFECTIVENESS_TASK_EVENT_BASE_COMMIT_UNAVAILABLE:{commit}"
+            )
+        return protected.stdout.decode("utf-8").strip()
+    return _ordinary_commit_time(root, commit)
+
+
+@lru_cache(maxsize=512)
+def _ordinary_commit_time(root: str, commit: str) -> str:
     try:
         result = subprocess.run(
             ["git", "show", "-s", "--format=%cI", commit],

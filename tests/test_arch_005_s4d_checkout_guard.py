@@ -80,6 +80,45 @@ def test_workspace_identity_is_checkout_scoped_and_records_lineage(
     assert identity.upstream_commit is None
 
 
+def test_migration_blocks_intent_persistence_before_lease_acquire(
+    git_checkout: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from test_devx015_workflow_coordination import _anchor_control, _registered_control
+
+    from ai_trading_system.platform.architecture.workflow_coordination import (
+        CONTROL_STATE_NAME,
+        RETIREMENT_NAME,
+        directory_identity,
+    )
+
+    guard = _guard(git_checkout)
+    guard.store.root.mkdir(parents=True)
+    fixture = guard.runtime_root / "control-fixture"
+    fixture.mkdir()
+    _repo, control, _policy, state = _registered_control(fixture, monkeypatch)
+    state["phase"] = "DRAINING"
+    retired = {"root_identity": directory_identity(guard.store.root), "epoch": state["epoch"]}
+    state["legacy_roots"] = [retired]
+    (control / CONTROL_STATE_NAME).write_text(json.dumps(state), encoding="utf-8")
+    _anchor_control(_repo, control, monkeypatch)
+    (guard.store.root / RETIREMENT_NAME).write_text(
+        json.dumps(
+            {
+                "schema_version": "workflow_legacy_retirement.v1",
+                "control_root": control.as_posix(),
+                **retired,
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(CheckoutGuardError, match="LEGACY_WRITER_RETIRED"):
+        _acquire_mutation(
+            guard, intent_id="blocked-before-intent", task_id="TASK-A", owned_paths=("src/a.py",)
+        )
+    assert not (guard.runtime_root / "intents" / "blocked-before-intent.json").exists()
+    assert not guard.store.replay().active_leases
+
+
 def test_main_branch_requires_integration_coordinator_for_mutation(
     git_checkout: Path,
 ) -> None:
@@ -319,6 +358,35 @@ def test_declared_dirty_mutation_is_attributed_and_unrelated_exact_path_is_exclu
     handle.release(outcome="completed", at=NOW + timedelta(seconds=1))
 
 
+def test_git_audits_do_not_execute_repository_fsmonitor(tmp_path: Path) -> None:
+    def git(*args: str) -> None:
+        subprocess.run(["git", *args], cwd=tmp_path, check=True, capture_output=True)
+
+    git("init", "-q")
+    source = tmp_path / "source.txt"
+    source.write_text("initial\n", encoding="utf-8")
+    git("add", "--", "source.txt")
+    source.write_text("changed\n", encoding="utf-8")
+    hook = tmp_path / ".git" / "fsmonitor-probe.sh"
+    hook.write_text(
+        "#!/bin/sh\nprintf 'invoked\\n' >> .git/fsmonitor-witness\nprintf 'probe\\000'\n",
+        encoding="utf-8", newline="\n",
+    )
+    git("config", "core.fsmonitor", hook.as_posix())
+    index = tmp_path / ".git" / "index"
+    before = index.read_bytes()
+    identity = (index.stat().st_dev, index.stat().st_ino)
+    assert collect_checkout_dirty_paths(tmp_path, exclusions=()) == ("source.txt",)
+    for cached in (False, True):
+        checkout_guard_module._run_git_diff_check(tmp_path, exclusions=(), cached=cached)
+    assert not (tmp_path / ".git" / "fsmonitor-witness").exists()
+    assert index.read_bytes() == before
+    assert (index.stat().st_dev, index.stat().st_ino) == identity
+    # Positive control: prove this fixture's hook really executes under Git.
+    git("status", "--porcelain=v1")
+    assert (tmp_path / ".git" / "fsmonitor-witness").exists()
+
+
 def test_dirty_path_audit_disables_git_optional_locks(
     git_checkout: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -452,18 +520,22 @@ def test_worktree_audit_injects_exact_literal_exclusion_into_every_git_call(
 
     guard.audit_worktree()
 
-    exclusion = ":(exclude,literal)" "docs/research/growth_tilt_owner_diagnosis_pack.md"
+    exclusion = ":(exclude,literal)docs/research/growth_tilt_owner_diagnosis_pack.md"
     assert len(calls) == 3
     assert all(call[-1] == exclusion for call in calls)
-    assert calls[0][3:8] == [
+    assert all(call[:5] == [
+        "git", "-c", "core.quotepath=false", "-c", "core.fsmonitor=false",
+    ] for call in calls)
+    assert calls[0][5:10] == [
         "status",
         "--porcelain=v1",
         "-z",
         "--untracked-files=all",
         "--ignore-submodules=none",
     ]
-    assert calls[1][3:6] == ["diff", "--check", "--"]
-    assert calls[2][3:7] == ["diff", "--cached", "--check", "--"]
+    assert all(call[5:7] == ["-c", "diff.autoRefreshIndex=false"] for call in calls[1:])
+    assert calls[1][7:10] == ["diff", "--check", "--"]
+    assert calls[2][7:11] == ["diff", "--cached", "--check", "--"]
 
 
 def test_target_bound_worktree_audit_isolates_target_state(
@@ -721,6 +793,264 @@ def test_daily_cli_guard_blocks_before_run_bundle_creation(
     assert "Checkout guard：BLOCKED" in result.output
     assert "provider_request=false" in result.output
     assert not run_root.exists()
+
+
+def test_disjoint_live_writers_acquire_after_dirty_and_release_interleaved(
+    git_checkout: Path,
+) -> None:
+    """L02: two real writers retain both edits through the original guard/store."""
+    driver = r'''
+import json, os, subprocess, sys
+from datetime import UTC, datetime
+from pathlib import Path
+from ai_trading_system.platform.architecture.checkout_guard import (
+    CheckoutLeaseGuard, CheckoutOperationClass,
+)
+root = Path.cwd()
+name = sys.argv[1]
+relative = 'src/' + name + '.py'
+guard = CheckoutLeaseGuard(
+    project_root=root, runtime_root=root/'outputs/architecture/checkout-guard-test',
+)
+decision, handle = guard.acquire(
+    intent_id='l02-'+name, task_id='L02-'+name.upper(), thread_id='writer-'+name,
+    actor='architecture-control-plane', operation_class=CheckoutOperationClass.DOMAIN_MUTATION,
+    owned_paths=(relative,), now=datetime.now(UTC),
+)
+if handle is not None:
+    (root/relative).write_text(name.upper()+' = 2\n', encoding='utf-8')
+print(json.dumps({'status':decision.status, 'reasons':decision.reason_codes,
+                  'lease_id':decision.lease_id, 'pid':os.getpid()}), flush=True)
+if handle is None:
+    raise SystemExit(0)
+assert sys.stdin.readline().strip() == 'commit-release'
+with guard.store.atomic(actor='architecture-control-plane', now=datetime.now(UTC)):
+    subprocess.run(['git','add','--',relative], check=True, capture_output=True)
+    subprocess.run(['git','commit','-m','L02 writer '+name,'--',relative],
+                   check=True, capture_output=True)
+handle.release(outcome='completed', at=datetime.now(UTC))
+released = next(row for row in guard.replay().lease_heads if row.lease_id == handle.lease_id)
+print(json.dumps({'released':released.state, 'pid':os.getpid()}), flush=True)
+'''
+    # Genuine child imports, API, Git and store; no admission/identity patch.
+    environment = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1] / "src"),
+                       PYTHONDONTWRITEBYTECODE="1")
+    children: list[subprocess.Popen[str]] = []
+    observations = []
+    try:
+        for name in ("a", "b"):
+            child = subprocess.Popen(
+                [sys.executable, "-c", driver, name], cwd=git_checkout, env=environment,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+            )
+            children.append(child)
+            assert child.stdout is not None
+            row = json.loads(child.stdout.readline())
+            observations.append(row)
+            assert row["status"] == "PASS", row
+            assert child.poll() is None
+            assert (git_checkout / f"src/{name}.py").read_text() == f"{name.upper()} = 2\n"
+        assert observations[0]["pid"] != observations[1]["pid"]
+        assert len(_guard(git_checkout).replay().active_leases) == 2
+        for child in children:
+            output, error = child.communicate("commit-release\n", timeout=60)
+            assert child.returncode == 0, output + error
+            assert json.loads(output)["released"] == "RELEASED"
+        assert not _guard(git_checkout).replay().active_leases
+        for name in ("a", "b"):
+            committed = subprocess.check_output(
+                ["git", "show", f"HEAD:src/{name}.py"], cwd=git_checkout,
+            )
+            assert committed == f"{name.upper()} = 2\n".encode()
+    finally:
+        for child in children:
+            if child.poll() is None:
+                child.communicate("commit-release\n", timeout=60)
+        (git_checkout.parent / "l02-writer-observations.json").write_text(
+            json.dumps(observations), encoding="utf-8",
+        )
+        (git_checkout.parent / "l02-original-driver.py").write_text(driver, encoding="utf-8")
+
+
+def test_l02_two_process_index_operations_serialize(git_checkout: Path) -> None:
+    """Actual competing arbiter entrants, Git trace and committed bytes are the oracle."""
+    driver = r'''
+import json, os, subprocess, sys
+from datetime import UTC, datetime
+from pathlib import Path
+from ai_trading_system.platform.architecture.checkout_guard import (
+    CheckoutLeaseGuard, CheckoutOperationClass,
+)
+from ai_trading_system.platform.architecture.parallel_control import ParallelControlError
+root = Path.cwd()
+name = sys.argv[1]
+relative = 'src/' + name + '.py'
+guard = CheckoutLeaseGuard(
+    project_root=root, runtime_root=root/'outputs/architecture/checkout-guard-test',
+)
+def report(state, **fields):
+    print(json.dumps({'state': state, 'pid': os.getpid(), **fields}), flush=True)
+def commit():
+    subprocess.run(['git', 'add', '--', relative], check=True, capture_output=True)
+    subprocess.run(['git', 'commit', '-m', 'index writer '+name, '--', relative],
+                   check=True, capture_output=True)
+decision, handle = guard.acquire(
+    intent_id='index-'+name, task_id='L02-'+name.upper(), thread_id='index-'+name,
+    actor='architecture-control-plane', operation_class=CheckoutOperationClass.DOMAIN_MUTATION,
+    owned_paths=(relative,), now=datetime.now(UTC),
+)
+assert decision.status == 'PASS' and handle is not None, decision
+(root/relative).write_text(name.upper()+' = 3\n', encoding='utf-8')
+report('READY')
+assert sys.stdin.readline().strip() == 'ATTEMPT'
+if name == 'a':
+    with guard.store.atomic(actor='architecture-control-plane', now=datetime.now(UTC)):
+        report('HELD')
+        assert sys.stdin.readline().strip() == 'COMMIT'
+        commit()
+else:
+    try:
+        with guard.store.atomic(actor='architecture-control-plane', now=datetime.now(UTC)):
+            commit()
+    except ParallelControlError as error:
+        report('DENIED', reason=str(error))
+    else:
+        report('WRONGLY_ENTERED')
+    assert sys.stdin.readline().strip() == 'RETRY'
+    with guard.store.atomic(actor='architecture-control-plane', now=datetime.now(UTC)):
+        commit()
+handle.release(outcome='completed', at=datetime.now(UTC))
+report('DONE')
+'''
+    children: list[subprocess.Popen[str]] = []
+    observations: list[dict[str, object]] = []
+    traces = [git_checkout.parent / f"index-{name}-trace.jsonl" for name in ("a", "b")]
+    reader = ThreadPoolExecutor(max_workers=2)
+
+    def receive(child: subprocess.Popen[str]) -> dict[str, object]:
+        assert child.stdout is not None
+        row = json.loads(reader.submit(child.stdout.readline).result(timeout=30))
+        observations.append(row)
+        return row
+
+    def send(child: subprocess.Popen[str], command: str) -> None:
+        assert child.stdin is not None
+        child.stdin.write(command + "\n")
+        child.stdin.flush()
+
+    def git_writes(trace: Path) -> list[str]:
+        return [row["name"] for line in trace.read_text(encoding="utf-8").splitlines()
+                if (row := json.loads(line)).get("event") == "cmd_name"
+                and row.get("name") in {"add", "commit"}]
+
+    try:
+        for name, trace in zip(("a", "b"), traces, strict=True):
+            environment = dict(
+                os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1] / "src"),
+                PYTHONDONTWRITEBYTECODE="1", GIT_TRACE2_EVENT=str(trace),
+            )
+            child = subprocess.Popen(
+                [sys.executable, "-c", driver, name], cwd=git_checkout, env=environment,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+            )
+            children.append(child)
+            assert receive(child)["state"] == "READY"
+        assert observations[0]["pid"] != observations[1]["pid"]
+        index = (git_checkout / ".git/index").read_bytes()
+        head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=git_checkout)
+        send(children[0], "ATTEMPT")
+        assert receive(children[0])["state"] == "HELD"
+        send(children[1], "ATTEMPT")
+        denied = receive(children[1])
+        assert denied["state"] == "DENIED", denied
+        assert "LEASE_ARBITER_BUSY" in str(denied["reason"])
+        assert (git_checkout / ".git/index").read_bytes() == index
+        assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=git_checkout) == head
+        assert all(git_writes(trace) == [] for trace in traces)
+        send(children[0], "COMMIT")
+        assert receive(children[0])["state"] == "DONE"
+        send(children[1], "RETRY")
+        assert receive(children[1])["state"] == "DONE"
+        for child in children:
+            output, error = child.communicate(timeout=30)
+            assert child.returncode == 0, output + error
+        assert [git_writes(trace) for trace in traces] == [["add", "commit"], ["add", "commit"]]
+        for name in ("a", "b"):
+            assert subprocess.check_output(
+                ["git", "show", f"HEAD:src/{name}.py"], cwd=git_checkout,
+            ) == f"{name.upper()} = 3\n".encode()
+        assert not _guard(git_checkout).replay().active_leases
+        assert not (git_checkout / ".git/index.lock").exists()
+    finally:
+        for child in children:
+            if child.poll() is None:
+                child.kill()
+                child.communicate(timeout=30)
+        reader.shutdown(wait=True)
+        (git_checkout.parent / "index-driver.py").write_text(driver, encoding="utf-8")
+        (git_checkout.parent / "index-observations.json").write_text(
+            json.dumps(observations), encoding="utf-8",
+        )
+
+
+@pytest.mark.parametrize(
+    "case", ["released", "expired", "source-only", "corrupt-intent", "overlap"],
+)
+def test_live_dirty_attribution_does_not_grant_invalid_or_overlapping_claims(
+    git_checkout: Path, case: str,
+) -> None:
+    guard = _guard(git_checkout)
+    instant = datetime.now(UTC)
+    first, owner = guard.acquire(
+        intent_id="l02-owner", task_id="L02-OWNER", thread_id="owner",
+        actor="architecture-control-plane",
+        operation_class=(CheckoutOperationClass.SHARED_MUTATION if case == "source-only"
+                         else CheckoutOperationClass.DOMAIN_MUTATION),
+        owned_paths=() if case == "source-only" else ("src/a.py",), now=instant,
+        shared_paths=(
+            tuple(sorted((checkout_guard_module.CHECKOUT_SOURCE_ONLY_RUNTIME, "src/a.py")))
+            if case == "source-only" else ()
+        ),
+        inspection_profile=(checkout_guard_module.CHECKOUT_SOURCE_ONLY_PROFILE
+                            if case == "source-only" else "FULL_WORKTREE"),
+    )
+    assert first.status == "PASS" and owner is not None
+    original_intent = first.intent_path.read_bytes()
+    (git_checkout / "src/a.py").write_text("A = 2\n", encoding="utf-8")
+    attempt_time = instant + timedelta(seconds=1)
+    if case == "released":
+        owner.release(outcome="completed", at=attempt_time)
+    elif case == "expired":
+        attempt_time = instant + timedelta(seconds=guard.lease_policy.lease_ttl_seconds + 1)
+    elif case == "corrupt-intent":
+        payload = json.loads(original_intent)
+        payload["actor"] = "operations-automation"
+        first.intent_path.write_text(json.dumps(payload), encoding="utf-8")
+    second_owner = None
+    try:
+        kwargs = dict(
+            intent_id="l02-second", task_id="L02-SECOND", thread_id="second",
+            actor="architecture-control-plane",
+            operation_class=CheckoutOperationClass.DOMAIN_MUTATION,
+            owned_paths=("src/a.py" if case == "overlap" else "src/b.py",), now=attempt_time,
+        )
+        if case == "corrupt-intent":
+            with pytest.raises(CheckoutGuardError, match="CHECKOUT_LEASE_INTENT_BINDING"):
+                guard.acquire(**kwargs)
+        else:
+            second, second_owner = guard.acquire(**kwargs)
+            assert second.status == "BLOCKED" and second_owner is None
+            expected = "LEASE_RESOURCE_CONFLICT:" if case == "overlap" else (
+                "CHECKOUT_DIRTY_UNATTRIBUTED:src/a.py"
+            )
+            assert any(reason.startswith(expected) for reason in second.reason_codes)
+        assert (git_checkout / "src/b.py").read_text() == "B = 1\n"
+    finally:
+        first.intent_path.write_bytes(original_intent)
+        if second_owner is not None:
+            second_owner.release(outcome="failed", at=attempt_time + timedelta(seconds=1))
+        if not owner.released:
+            owner.release(outcome="completed", at=attempt_time + timedelta(seconds=2))
 
 
 def _guard(project_root: Path) -> CheckoutLeaseGuard:

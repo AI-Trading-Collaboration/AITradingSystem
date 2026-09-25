@@ -43,6 +43,7 @@ from ai_trading_system.data.named_quality_execution import (
     _verify_successful_run_dispatch,
 )
 from ai_trading_system.platform.architecture.checkout_guard import (
+    CheckoutGuardError,
     CheckoutLeaseGuard,
     CheckoutLeaseHandle,
     CheckoutOperationClass,
@@ -280,6 +281,8 @@ def test_recheck_rejects_forged_stale_or_tampered_handle(
     mutation: str,
 ) -> None:
     handle = leased.handle
+    intent_path = handle.decision.intent_path
+    original_intent_bytes: bytes | None = None
     if mutation == "actor":
         monkeypatch.setattr(handle, "actor", "unreviewed-actor")
     elif mutation == "scope":
@@ -295,13 +298,25 @@ def test_recheck_rejects_forged_stale_or_tampered_handle(
     elif mutation == "expired":
         monkeypatch.setattr(dispatch, "_now", lambda: datetime.now(UTC) + timedelta(days=1))
     elif mutation == "extra_intent":
-        path = handle.decision.intent_path
-        raw = json.loads(path.read_bytes())
-        path.write_bytes(canonical_json_bytes({**raw, "caller_permission": True}))
-    with pytest.raises((ValueError, RuntimeError)):
-        dispatch.recheck_named_capture_lease(
-            handle, candidate_commit=leased.commit, required_paths=(OUTPUT,)
-        )
+        original_intent_bytes = intent_path.read_bytes()
+        raw = json.loads(original_intent_bytes)
+        intent_path.write_bytes(canonical_json_bytes({**raw, "caller_permission": True}))
+    try:
+        with pytest.raises((ValueError, RuntimeError)):
+            dispatch.recheck_named_capture_lease(
+                handle, candidate_commit=leased.commit, required_paths=(OUTPUT,)
+            )
+        if mutation == "extra_intent":
+            before_release = handle.guard.replay().to_dict()
+            with pytest.raises(CheckoutGuardError) as rejected_release:
+                handle.release(outcome="synthetic_tampered_intent")
+            assert rejected_release.value.code == "CHECKOUT_INTENT_INVALID"
+            assert not handle.released
+            assert handle.guard.replay().to_dict() == before_release
+    finally:
+        if original_intent_bytes is not None:
+            # Restore only this fresh synthetic fixture after proving release fails closed.
+            intent_path.write_bytes(original_intent_bytes)
 
 
 @pytest.mark.parametrize(

@@ -2718,6 +2718,23 @@ TRADING-348 Reader Brief update: 上述 Weight Optimization Batch Search excerpt
 |---|---|---|---|---|---|---|
 |`config/architecture/arch_005_integration_publication_fence.yaml`<br/>`outputs/architecture/arch_005_integration_publication_fence/transactions/<transaction_id>/transaction.json`<br/>`events/*.json`<br/>`closeout_receipt.json`|`python scripts/architecture_arch005_publication_fence.py acquire|checkpoint|validate|replay|release`|exact Git/worktree identity、frozen base/lane head/expected main/candidate、可选 reviewed integration plan、declared paths/generators/tiers、S4D execution lease、formal summary/parent、remote refs与cleanup evidence|`arch_005_integration_publication_fence_policy.v1`、`integration_publication_fence.v1`、`integration_publication_fence_event.v1`、`integration_publication_closeout_receipt.v1`；immutable transaction、append-only hash chain、phase CAS、plan/evidence SHA、exclusive publication/validation resources、ordinary-push-only、terminal failure/no repair|把 canonical task source、generated-state rebuild、exact Full candidate、local-main ff、ordinary push、SHA equality、cleanup 和 lease release 串成可重放 coordinator publication transaction|否；`production_effect=none`、`broker_action=none`|它不是第二套 scheduler/lease/queue，不授权自动 merge/rebase/force-push，也不代表 strategy/DQ/model/backtest/production 已通过。|
 
+## DEVX-015 Task-Source Checkpoint
+
+这是源码保全产物，不是 integration candidate 或发布回执。入口为
+`scripts/architecture_arch005_task_checkpoint.py`；精确 scope/request JSON 必须位于
+当前可信工作区的 `outputs/validation_runtime/`，`plan` 不覆盖已有请求。
+
+|产物|生成或验证入口|合同与用途|权限边界|
+|---|---|---|---|
+|`config/architecture/arch_005_task_checkpoint.yaml`|checkpoint `plan` / `capture` 读取|`task_checkpoint_policy.v1`；最多 2048 文件、64 MiB 原始字节，超限拒绝，不自动拆分或提高上限|限定显式任务源码；staged entries 不构成选择权限|
+|`outputs/architecture/arch_005_task_checkpoints/` 下的 capture bundle、`source.index`、`private.index` 与 attempt evidence|checkpoint `capture --request <request.json>`|`task_checkpoint_capture_bundle.v1`、当前 `task_checkpoint_attempt.v2`；保全原始内容和原 index，以 private index 构造源码快照；普通 staged 状态可接受，unmerged / sparse-directory index 拒绝|不修改原 index，不运行 task writer / generators / Full，不授予 publication 权限|
+|上述运行目录的 `receipt.json` 与 `refs/aits/task-checkpoints/` 下的源码引用|checkpoint `validate --receipt <receipt.json>`|当前 `task_checkpoint_receipt.v2`；独立检查请求、快照与执行证据；兼容读取历史 v1 不会扩大其权限|source-only；不是 clean integration、DQ/PIT、OPS 或策略验收|
+|原运行保留的 failure / terminal recovery evidence|checkpoint `recover-terminal` 或 `recover-interrupted`|核对原请求与原执行身份；终态回执重建不重采、不重新派发；中断恢复保全原失败证据|不得通过手改 lease / receipt 或替换原证据解除门禁|
+
+操作步骤及恢复边界见 `docs/operations/operations_runbook.md` 的 DEVX-015 手工源码保全段；
+整体验收仍以 `docs/requirements/DEVX-015_Workflow_Contract_And_Acceptance_V3.md`
+为准。以上是实现合同，不声明 DEVX-015 已完成正式验证、迁移或发布。
+
 ## TRADING-2564 S4：实验访问账本工程合同
 
 ### 前瞻会计算术摘要
