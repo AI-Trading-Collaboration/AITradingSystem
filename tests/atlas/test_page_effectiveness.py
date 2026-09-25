@@ -36,6 +36,56 @@ PAGE_LOCATOR = "outputs/atlas/strategy_research_cited_query/trading_2470_v1/inde
 PAGE_PREFIX = "outputs/atlas/strategy_research_cited_query/trading_2470_v1"
 
 
+# DEVX-016 S1-early: Atlas task coverage is a monotonic ratchet. Registering a new
+# Atlas-covered task must not require editing these tests; removing a covered task
+# or breaking the governed identity order still fails. Extend this floor only when a
+# task's coverage classification is asserted below.
+ATLAS_TASK_SOURCE_FLOOR = (
+    *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
+    "TRADING-2523A",
+    "TRADING-2523B",
+    *[f"TRADING-{number}" for number in range(2524, 2543)],
+    "TRADING-2542A",
+    "TRADING-2542B",
+    "TRADING-2542C",
+    "TRADING-2542D",
+    "TRADING-2542E",
+    "TRADING-2542F",
+    "TRADING-2542G",
+    "TRADING-2542H",
+    "TRADING-2542I",
+    "TRADING-2543",
+    "TRADING-2544",
+    "TRADING-2545",
+    "TRADING-2546",
+    "TRADING-2547",
+    "TRADING-2548",
+    "TRADING-2549",
+    "TRADING-2550",
+    "TRADING-2551",
+    "TRADING-2552",
+    "TRADING-2553",
+    "TRADING-2554",
+    "TRADING-2555",
+    "TRADING-2556",
+    "TRADING-2557",
+    "TRADING-2558",
+    "TRADING-2559",
+    "TRADING-2560",
+    "TRADING-2561",
+    "TRADING-2562",
+    "TRADING-2563",
+    "TRADING-2564",
+)
+
+
+def _assert_monotonic_task_sequence(task_ids: list[str]) -> None:
+    short_ids = [task_id.split("_", 1)[0] for task_id in task_ids]
+    assert len(short_ids) == len(set(short_ids))
+    assert task_ids == sorted(task_ids, key=page_task_identity_sort_key)
+    assert set(ATLAS_TASK_SOURCE_FLOOR) <= set(short_ids)
+
+
 @lru_cache(maxsize=1)
 def _live_sidecar_payloads() -> dict[str, bytes]:
     head = repository_head(ROOT)
@@ -80,44 +130,7 @@ def _rendered(
 def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 94
-    assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
-        *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
-        "TRADING-2523A",
-        "TRADING-2523B",
-        *[f"TRADING-{number}" for number in range(2524, 2543)],
-        "TRADING-2542A",
-        "TRADING-2542B",
-        "TRADING-2542C",
-        "TRADING-2542D",
-        "TRADING-2542E",
-        "TRADING-2542F",
-        "TRADING-2542G",
-        "TRADING-2542H",
-        "TRADING-2542I",
-        "TRADING-2543",
-        "TRADING-2544",
-        "TRADING-2545",
-        "TRADING-2546",
-        "TRADING-2547",
-        "TRADING-2548",
-        "TRADING-2549",
-        "TRADING-2550",
-        "TRADING-2551",
-        "TRADING-2552",
-        "TRADING-2553",
-        "TRADING-2554",
-        "TRADING-2555",
-        "TRADING-2556",
-        "TRADING-2557",
-        "TRADING-2558",
-        "TRADING-2559",
-        "TRADING-2560",
-        "TRADING-2561",
-        "TRADING-2562",
-        "TRADING-2563",
-        "TRADING-2564",
-    ]
+    _assert_monotonic_task_sequence([item.task_id for item in policy.task_sources])
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
         "LARGEST_CURRENT_BLOCKER",
@@ -142,44 +155,11 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
     assert manifest.schema_version == "strategy_research_page_effectiveness.v3"
-    assert len(manifest.task_coverage) == 94
-    assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
-        *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
-        "TRADING-2523A",
-        "TRADING-2523B",
-        *[f"TRADING-{number}" for number in range(2524, 2543)],
-        "TRADING-2542A",
-        "TRADING-2542B",
-        "TRADING-2542C",
-        "TRADING-2542D",
-        "TRADING-2542E",
-        "TRADING-2542F",
-        "TRADING-2542G",
-        "TRADING-2542H",
-        "TRADING-2542I",
-        "TRADING-2543",
-        "TRADING-2544",
-        "TRADING-2545",
-        "TRADING-2546",
-        "TRADING-2547",
-        "TRADING-2548",
-        "TRADING-2549",
-        "TRADING-2550",
-        "TRADING-2551",
-        "TRADING-2552",
-        "TRADING-2553",
-        "TRADING-2554",
-        "TRADING-2555",
-        "TRADING-2556",
-        "TRADING-2557",
-        "TRADING-2558",
-        "TRADING-2559",
-        "TRADING-2560",
-        "TRADING-2561",
-        "TRADING-2562",
-        "TRADING-2563",
-        "TRADING-2564",
+    policy = load_page_effectiveness_policy(repository_root=ROOT)
+    assert [item.task_id for item in manifest.task_coverage] == [
+        item.task_id for item in policy.task_sources
     ]
+    _assert_monotonic_task_sequence([item.task_id for item in manifest.task_coverage])
     coverage_by_task = {
         item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
     }

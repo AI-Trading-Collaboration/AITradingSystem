@@ -20,6 +20,7 @@ from ai_trading_system.atlas.historical_projection_review_renderer import (
     render_historical_projection_review_html,
 )
 from ai_trading_system.atlas.page_effectiveness import (
+    load_page_effectiveness_policy,
     validate_page_effectiveness_manifest,
 )
 from ai_trading_system.contracts.strategy_research_page_effectiveness import (
@@ -319,78 +320,11 @@ def test_local_canonical_page_uses_current_successor_identity_when_available() -
         assert manifest.repository_commit == _exact_commit()
         assert len(payload) == page_identity.byte_count
         assert sha256(payload).hexdigest() == page_identity.sha256
-        assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
-            *[f"TRADING-{task_id}" for task_id in range(2481, 2505)],
-            "TRADING-2506",
-            "TRADING-2507",
-            "TRADING-2508",
-            "TRADING-2509",
-            "TRADING-2510",
-            "TRADING-2511",
-            "TRADING-2512",
-            "TRADING-2513",
-            "TRADING-2514",
-            "TRADING-2515",
-            "TRADING-2516",
-            "TRADING-2517",
-            "TRADING-2518",
-            "TRADING-2519",
-            "TRADING-2520",
-            "TRADING-2521",
-            "TRADING-2522",
-            "TRADING-2523",
-            "TRADING-2523A",
-            "TRADING-2523B",
-            "TRADING-2524",
-            "TRADING-2525",
-            "TRADING-2526",
-            "TRADING-2527",
-            "TRADING-2528",
-            "TRADING-2529",
-            "TRADING-2530",
-            "TRADING-2531",
-            "TRADING-2532",
-            "TRADING-2533",
-            "TRADING-2534",
-            "TRADING-2535",
-            "TRADING-2536",
-            "TRADING-2537",
-            "TRADING-2538",
-            "TRADING-2539",
-            "TRADING-2540",
-            "TRADING-2541",
-            "TRADING-2542",
-            "TRADING-2542A",
-            "TRADING-2542B",
-            "TRADING-2542C",
-            "TRADING-2542D",
-            "TRADING-2542E",
-            "TRADING-2542F",
-            "TRADING-2542G",
-            "TRADING-2542H",
-            "TRADING-2542I",
-            "TRADING-2543",
-            "TRADING-2544",
-            "TRADING-2545",
-            "TRADING-2546",
-            "TRADING-2547",
-            "TRADING-2548",
-            "TRADING-2549",
-            "TRADING-2550",
-            "TRADING-2551",
-            "TRADING-2552",
-            "TRADING-2553",
-            "TRADING-2554",
-            "TRADING-2555",
-            "TRADING-2556",
-            "TRADING-2557",
-            "TRADING-2558",
-            "TRADING-2559",
-            "TRADING-2560",
-            "TRADING-2561",
-            "TRADING-2562",
-            "TRADING-2563",
-            "TRADING-2564",
+        # DEVX-016 S1-early: the canonical page must cover exactly the governed policy
+        # task sources; the monotonic floor lives in test_page_effectiveness.py.
+        assert [item.task_id for item in manifest.task_coverage] == [
+            item.task_id
+            for item in load_page_effectiveness_policy(repository_root=ROOT).task_sources
         ]
         assert validation_sidecar["status"] == "PASS"
         assert validation_sidecar["manifest_sha256"] == manifest.content_sha256

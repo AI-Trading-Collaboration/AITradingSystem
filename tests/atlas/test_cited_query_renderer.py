@@ -18,7 +18,10 @@ from ai_trading_system.atlas.cited_query_renderer import (
     write_cited_query_artifacts,
 )
 from ai_trading_system.atlas.live_snapshot import build_live_snapshot_bundle
-from ai_trading_system.atlas.page_effectiveness import repository_head
+from ai_trading_system.atlas.page_effectiveness import (
+    load_page_effectiveness_policy,
+    repository_head,
+)
 from ai_trading_system.atlas.reader_accessibility_validation import (
     validate_reader_accessibility,
 )
@@ -299,7 +302,12 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="94"' in html
+    # DEVX-016 S1-early: bind the rendered count to the governed policy instead of a
+    # literal, so registering an Atlas-covered task does not require a test edit.
+    expected_task_coverage = len(
+        load_page_effectiveness_policy(repository_root=PROJECT_ROOT).task_sources
+    )
+    assert f'data-task-coverage-count="{expected_task_coverage}"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html
