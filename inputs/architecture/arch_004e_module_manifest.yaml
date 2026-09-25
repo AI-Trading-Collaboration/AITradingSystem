@@ -16069,7 +16069,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.integration_publication_fence
   path: src/ai_trading_system/platform/architecture/integration_publication_fence.py
-  sha256: bd32105eca879b6a490244f126727cd867f38f808804972506be3983c67885c3
+  sha256: bdd9d715ca46bc5f7d974d10e8226e8a073760acc37a541fdfee3d794ce69dde
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -16506,7 +16506,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.workflow_coordination
   path: src/ai_trading_system/platform/architecture/workflow_coordination.py
-  sha256: f2f02806a19715dc65bab2c723a1a25a0f024da549840170bb8c2edacef576f3
+  sha256: 5282e10ec0f940e7af07e43e4634c613f2d07cbce2b82cc0181bd35ab3825b58
   rule_id: platform_architecture
   owner_profile: platform
   owners:
