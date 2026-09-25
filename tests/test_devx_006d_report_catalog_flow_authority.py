@@ -127,7 +127,7 @@ def test_repository_authority_is_fresh_lossless_and_inactive() -> None:
     assert result["source_of_truth"] == "LEGACY_MONOLITH"
     assert result["fragment_shadow_active"] is False
     assert result["target_count"] == 3
-    assert result["entry_count"] == 3205
+    assert result["entry_count"] == 3449
     assert 1 <= result["fragment_count"] <= 192
     assert policy["contract"] == {
         "source_of_truth": "LEGACY_MONOLITH",
@@ -150,10 +150,14 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         "report_catalog_flow_successor"
     ]
 
-    latest_section = "phase_devx_015_task_integration_admission_v1"
+    latest_section = "phase_devx_015_workflow_contract_v3"
     assert next(reversed(merged)) == latest_section
     assert (
         list(merged).index(latest_section)
+        == list(merged).index("phase_devx_015_task_integration_admission_v1") + 1
+    )
+    assert (
+        list(merged).index("phase_devx_015_task_integration_admission_v1")
         == list(merged).index("phase_ops_081_scheduler_business_contract_decoupling_v1") + 1
     )
     assert (
@@ -172,7 +176,7 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     assert successor["source_of_truth"] == "LEGACY_MONOLITH"
     assert successor["fragment_shadow_active"] is False
     assert successor["target_count"] == 3
-    assert successor["entry_count"] == 3205
+    assert successor["entry_count"] == 3449
     assert successor["fragment_count"] == 192
 
 

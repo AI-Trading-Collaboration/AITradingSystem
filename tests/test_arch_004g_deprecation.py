@@ -59,7 +59,7 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
 }
 # OPS-081 adds one scheduler contract module and one test file; counts only.
 # GOV-007 adds one sibling lease-store migration admission test file; counts only.
-WAVE21_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_33947daf2d566ae3ce3c"
+WAVE21_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_eea0870faddeafbcbed7"
 WAVE21_CURRENT_REPOSITORY_COUNTS = {
     # TRADING-2526 adds the controlled HTTPS preview contract and its focused
     # test file; TRADING-2554 adds one DevEx active-worktree regression file.
@@ -83,11 +83,13 @@ WAVE21_CURRENT_REPOSITORY_COUNTS = {
     # These change inventory identity/counts only; they do not change runtime
     # deprecation lifecycle or writer allowances.
     # S4 adds the strict experiment envelope and bounded result-access service.
-    "python_module_count": 1222,
+    # DEVX-015 v386-v389 integration adds five workflow-control modules.
+    "python_module_count": 1227,
     # S5 immediate failure diagnostics adds one synthetic test file.
     # S4 adds two corresponding synthetic contract/runtime test files.
     # GOV-007 adds one sibling lease-store migration admission test file.
-    "python_test_file_count": 1388,
+    # DEVX-015 v386-v389 integration adds seven workflow/protected-Full test files.
+    "python_test_file_count": 1395,
     "direct_writer_current_count": 856,
 }
 WAVE21_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(

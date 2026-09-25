@@ -353,7 +353,7 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 333
+    assert len(merged) == 334
     assert result["fragment_count"] == 27
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
@@ -588,8 +588,13 @@ def test_devx_014_validator_rejects_changed_source_without_rebuild(
     monkeypatch.setattr(Path, "read_bytes", altered_read)
     with pytest.raises(CompatibilityAuthorityError) as caught:
         validate_repository_authority()
-    assert caught.value.code == "AUTHORITY_GENERATED_STALE"
-    assert caught.value.detail == "inputs/architecture/devx_006c_compatibility_authority_index.json"
+    # DEVX-015 workflow contract v3 hashes this source into its own fragment, so the
+    # drift can surface as that fragment's missing rebuild before the index check.
+    if caught.value.code == "AUTHORITY_FILE_MISSING":
+        assert caught.value.detail.startswith("registry/architecture_compatibility_authority/fragments/")
+    else:
+        assert caught.value.code == "AUTHORITY_GENERATED_STALE"
+        assert caught.value.detail == "inputs/architecture/devx_006c_compatibility_authority_index.json"
 
 
 def _assert_s2a_source_closure(phase: dict[str, Any]) -> None:
