@@ -354,7 +354,7 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
     assert len(merged) == 334
-    assert result["fragment_count"] == 27
+    assert result["fragment_count"] == 28
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
