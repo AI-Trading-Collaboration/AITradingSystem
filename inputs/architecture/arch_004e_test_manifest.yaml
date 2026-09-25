@@ -10650,7 +10650,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006c_compatibility_authority
   path: tests/test_devx_006c_compatibility_authority.py
-  sha256: c8b2b0ff27ed20fc5b0bb2d1df7b5d0c5ca0651cffdff077a319a743ca761cc1
+  sha256: 87d5e327012a15f44ee4e9e98beffa9c14e803c3069e4a9f8ba85cdaf1d27c3d
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
