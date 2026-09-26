@@ -10618,7 +10618,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx015_workflow_execution
   path: tests/test_devx015_workflow_execution.py
-  sha256: 1cc5cc0fa27d9c2a53684f3f23cc0ede923894202b6bba55a70aaba77c17d9ff
+  sha256: 241c2b39c9f52dcf4bdfe43617d748996e98c194111c20b60b732dfdbf206d63
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
