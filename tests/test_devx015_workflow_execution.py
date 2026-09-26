@@ -39,7 +39,8 @@ from test_devx015_workflow_integration import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-DEADLINE = 30.0  # Test hang bound, not a production lease or scheduling policy.
+# Test hang bound (Full runs 16 loaded workers), not a production lease or scheduling policy.
+DEADLINE = 120.0
 CRASH_EXIT = 23
 
 
@@ -597,19 +598,30 @@ def test_dependency_observer_covers_original_inventory_and_releases_custody(tmp_
 
 
 def test_runtime_dependency_observer_preserves_original_identity(tmp_path):
-    from ai_trading_system.platform.architecture.workflow_execution import (
-        acceptance_runtime_identity,
+    # Loaded-source custody is scoped to a clean process (acceptance workers and CLI
+    # entries). A shared pytest worker may already hold unrelated compiled wrappers
+    # (e.g. numpy dispatchers), so measure in a fresh interpreter.
+    probe = (
+        "import hashlib, json, sys, threading\n"
+        "from ai_trading_system.platform.architecture.workflow_execution import (\n"
+        "    acceptance_runtime_identity)\n"
+        "owner = threading.get_ident(); rows = []\n"
+        "def observe(path, raw):\n"
+        "    assert threading.get_ident() == owner\n"
+        "    rows.append((str(path), len(raw), hashlib.sha256(raw).hexdigest()))\n"
+        "original = acceptance_runtime_identity()\n"
+        "observed = acceptance_runtime_identity(observe_dependency=observe)\n"
+        "sys.stdout.write(json.dumps({'original': original, 'observed': observed,"
+        " 'rows': rows}))\n"
     )
-
-    owner = threading.get_ident()
-    rows = []
-
-    def observe(path, raw):
-        assert threading.get_ident() == owner
-        rows.append((str(path), len(raw), hashlib.sha256(raw).hexdigest()))
-
-    original = acceptance_runtime_identity()
-    observed = acceptance_runtime_identity(observe_dependency=observe)
+    completed = subprocess.run(
+        [sys.executable, "-c", probe], cwd=ROOT, env=_environment(), capture_output=True,
+        text=True, timeout=300,
+    )
+    assert completed.returncode == 0, completed.stderr
+    measured = json.loads(completed.stdout)
+    original, observed = measured["original"], measured["observed"]
+    rows = [tuple(row) for row in measured["rows"]]
     assert observed == original
     assert rows[0][0] == original["executable"]
     assert rows[0][2] == original["executable_sha256"]
