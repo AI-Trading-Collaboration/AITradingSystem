@@ -4057,7 +4057,9 @@ def canonical_merge_repository(small_repository: Path, monkeypatch: pytest.Monke
         fixture_fence = root / "src/ai_trading_system/platform/architecture/" / Path(
             fence_module.__file__
         ).name
-        assert fixture_fence.read_bytes() == Path(fence_module.__file__).read_bytes()
+        # Not byte-compared with the loaded module: probe variants deliberately
+        # instrument the candidate's copy, which is the implementation under test.
+        assert fixture_fence.is_file()
         monkeypatch.setattr(fence_module, "__file__", str(fixture_fence))
         monkeypatch.setenv(
             "PYTHONPATH", str(root / "src") + os.pathsep + os.environ.get("PYTHONPATH", "")

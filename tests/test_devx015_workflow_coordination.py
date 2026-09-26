@@ -5077,7 +5077,9 @@ def _run_actual_profile_full(
     filtered: bool = False,
     whole_readiness: bool = True,
     readiness_fault: str = "none",
-    driver_timeout: int = 600,
+    # Hang guard only: the inner mandatory Full takes 170-520s serially and more
+    # under formal-tier load (16 workers); it is not a semantic threshold.
+    driver_timeout: int = 1200,
     live_observer=None,
 ) -> tuple[dict[str, object], Path, str, dict[str, str]]:
     """Real canonical/Job/profile chain; isolated probes, not original V3 oracles."""
@@ -5318,7 +5320,7 @@ def test_original_full_cannot_authorize_changed_candidate(canonical_merge_reposi
     )
 
     root, _scope = canonical_merge_repository
-    binding, directory, script, environment = _run_actual_profile_full(root, driver_timeout=600)
+    binding, directory, script, environment = _run_actual_profile_full(root)
     (root.parent / "full-driver.py").write_text(script, encoding="utf-8")
     fence = IntegrationPublicationFence(project_root=root)
     transaction = fence.runtime_root / "transactions/merge-authority/transaction.json"
@@ -5386,7 +5388,7 @@ def test_original_full_rejects_changed_publication_identities(canonical_merge_re
     from ai_trading_system.yaml_loader import safe_load_yaml_path
 
     root, _scope = canonical_merge_repository
-    binding, directory, script, environment = _run_actual_profile_full(root, driver_timeout=600)
+    binding, directory, script, environment = _run_actual_profile_full(root)
     (root.parent / "full-driver.py").write_text(script, encoding="utf-8")
     fence = IntegrationPublicationFence(project_root=root)
     transaction = fence.runtime_root / "transactions/merge-authority/transaction.json"
