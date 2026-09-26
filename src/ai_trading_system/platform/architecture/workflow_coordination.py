@@ -916,7 +916,7 @@ def _validate_publication_git_launch(execution: Mapping[str, Any]) -> None:
                 / ("publication-merge-" + execution["request_sha256"] + ".stdout")
             ).as_posix()):
         _fail("PUBLICATION_GIT_LAUNCH_COMMAND")
-    root = Path(argv[0]).parent.parent
+    root = _git_installation_root(Path(argv[0]))
     wanted = [Path(argv[0]), root / "mingw64/bin/git.exe", root / "usr/bin/sh.exe"]
     files = record["git_file_custodies"]
     if not isinstance(files, list) or len(files) != len(wanted):
@@ -2155,6 +2155,18 @@ def _validate_checked_execution_transition(
         _fail("PREMATURE_RELEASE")
 
 
+def _git_installation_root(launcher: Path) -> Path:
+    """Git for Windows root for a cmd/, bin/, mingw64/bin/ or usr/bin/ git.exe launcher.
+
+    PATH order decides which launcher shutil.which returns; mingw64/bin/git.exe is two
+    levels below the root, not one, so a fixed parent.parent would double mingw64.
+    """
+    parent = launcher.parent
+    if parent.name.casefold() == "bin" and parent.parent.name.casefold() in {"mingw64", "usr"}:
+        return parent.parent.parent
+    return parent.parent
+
+
 # Engineering bound for reads that overlap a live execution, not a model rule:
 # the store arbiter guards only short critical sections (never a test run or a
 # child wait), so a few seconds covers transient overlap; beyond it BUSY fails
@@ -3288,7 +3300,7 @@ class PublicationLifecycle(ExecutionLifecycle):
             "cmd", "bin",
         }:
             _fail("PUBLICATION_GIT_LAUNCH_COMMAND")
-        root = launcher.parent.parent
+        root = _git_installation_root(launcher)
         root_info = root.lstat()
         root_identity = (root_info.st_dev, root_info.st_ino)
         environment = {key: item for key, item in os.environ.items()

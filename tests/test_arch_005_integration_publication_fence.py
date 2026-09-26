@@ -2733,7 +2733,8 @@ def _assert_full_transaction_replays_candidate_publish_and_closeout_receipt(
         remote = Path(_git(publication_checkout, "remote", "get-url", "--push", "origin"))
         cached = _git(publication_checkout, "rev-parse", "origin/main")
         peer = publication_checkout.parent / "divergent-writer"
-        _git(publication_checkout, "clone", "--branch", "main", str(remote), str(peer))
+        _git(publication_checkout, "clone", "--config", "core.longpaths=true",
+             "--branch", "main", str(remote), str(peer))
         _git(peer, "config", "user.name", "Divergent Writer Fixture")
         _git(peer, "config", "user.email", "divergence@example.invalid")
         (peer / "src/a.py").write_text("VALUE = 'independent remote'\n", encoding="utf-8")
@@ -2828,7 +2829,8 @@ def _assert_full_transaction_replays_candidate_publish_and_closeout_receipt(
     assert observation["push_allowed"] is False and observation["mutation_performed"] is False
     if remote_state == "advanced":
         peer = publication_checkout.parent / "remote-writer"
-        _git(publication_checkout, "clone", "--branch", "main", str(remote), str(peer))
+        _git(publication_checkout, "clone", "--config", "core.longpaths=true",
+             "--branch", "main", str(remote), str(peer))
         _git(peer, "config", "user.name", "Remote Writer Fixture")
         _git(peer, "config", "user.email", "remote-writer@example.invalid")
         _git(peer, "commit", "--allow-empty", "-m", "remote advances after candidate push")

@@ -5,6 +5,12 @@
 - 真实缺陷（lane 代码）：`CheckoutLeaseGuard.acquire` 新增的活体脏路径归属 `_live_attributed_paths` 在仲裁器 BUSY 时抛出未包装的 `ParallelControlError`，而同函数的意图持久化与租约调用都把 BUSY 转为 BLOCKED 决定。并发 source preservation 因此把"租约不可用"误报为 `SOURCE_PRESERVATION_PARTIAL`。修复为与另两处一致：先构造 intent，再在同样的 BUSY→BLOCKED、其它→`CheckoutGuardError` 包装内计算未归属路径。
 - 陈旧测试：`test_local_recovery_dispatch_selects_actual_index_state[advanced]` 仍期待 main 前进时直接 `PUBLICATION_RECOVERY_MAIN_ADVANCED`，现行设计为恢复保留候选后交给 `adopt_main_advanced_failed_attempt`（`CANDIDATE_RETAINED_MAIN_ADVANCED`），测试按现行设计更新。
 - v389 调用方自检的边界修正：预检中 fence 整链用例在同一 pytest worker 内进程内调用 fence，该 worker 已加载 numpy，`acceptance_runtime_identity` 对 numpy C 扩展调度包装 `empty_like` 恒报 `ACCEPTANCE_LOADED_WRAPPER_CLASS`，17 个用例被误拒。该校验器为只加载少量代码的验收 worker 设计，对任意库调用方进程过强。自检要防的是启动代码/PYTHONPATH 注入，只在进程入口有意义：改为由 fence CLI 在会消费 profile 的命令（`checkpoint` 进入 `LOCAL_MAIN_FF_PRE`/`REMOTE_PUSH_PRE`、全部 `local-publication-*` 与 `local-publish`，含发布 worker）分派前执行 `require_entry_loaded_source_custody`，失败仍为 `PUBLICATION_FULL_CLOSURE_INVALID`；库函数不再自检。已确认生产 fence CLI 与分级 runner 启动时均不加载 numpy。新增 `test_profile_entry_attests_loaded_source_custody_before_dispatch` 覆盖受检/不受检命令与放行。
+- 正式事务 `devx015-v390-publication-20260926-v1` 的 architecture-fitness（4:06:12）暴露第二批：8 FAIL / 2 ERROR，全在 fence 整链文件。
+  真实缺陷（lane 代码）：发布 Git 启动器按 `git.exe` 的上两级推算 Git 安装根，并接受 `cmd`/`bin` 父目录；当 PATH 先命中
+  `Git\\mingw64\\bin\\git.exe` 时根被推成 `Git\\mingw64`，再拼 `mingw64/bin/git.exe` 得到不存在的双层路径，4 个原发布 CLI 用例的
+  worker 以 `PUBLICATION_COMMAND_FAILED` 退出。新增 `_git_installation_root` 正确识别 `cmd`/`bin`/`mingw64\\bin`/`usr\\bin` 四种布局，
+  两处调用改用它，并有参数化单元测试。测试夹具：peer `git clone` 带 `--config core.longpaths=true`，与夹具仓库一致。
+  该事务以 failed 收口，修复后在新候选上获取新事务。
 - 集成对齐（非代码修复）：canonical 任务索引按 main 前缀 + lane DEVX-015 cycle 追加重建（cycle 序号顺延，脚本 `outputs/architecture/integration_revalidation/devx015-v389/reconcile_canonical_index.py`）；system_flow 与 artifact_catalog 重新封印；清单 id/模块数 1227/测试文件数 1395、report-flow 条目 3449、compatibility 段 334/fragment 28 与链尾顺序按合并后事实更新；DEVX-014 漂移测试接受两种 fail-closed 位置并逐一核对所指产物。
 
 ### v389 隔离 profile 检查器与 V02 加载实现语义的修复（2026-09-25）

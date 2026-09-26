@@ -8518,3 +8518,16 @@ def test_reservation_rejects_wrong_subject_and_actor_without_consuming_request(
     assert store.replay().active_leases[0].execution is None
     assert lifecycle.reserve(request, actor=ACTOR)["dispatch_allowed"] is True
     assert store.replay().active_leases[0].lease_id == lease.lease_id
+
+
+@pytest.mark.parametrize(
+    "launcher",
+    ["cmd/git.exe", "bin/git.exe", "mingw64/bin/git.exe", "usr/bin/git.exe"],
+)
+def test_git_installation_root_accepts_every_git_for_windows_launcher(launcher) -> None:
+    from ai_trading_system.platform.architecture.workflow_coordination import (
+        _git_installation_root,
+    )
+
+    root = Path("C:/Program Files/Git")
+    assert _git_installation_root(root / launcher) == root
