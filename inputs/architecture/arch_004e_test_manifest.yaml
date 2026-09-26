@@ -14048,7 +14048,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_named_data_quality_actual_candidate
   path: tests/test_named_data_quality_actual_candidate.py
-  sha256: fec8485b217b8cb1fe3116426a3cfcd3861a12f2f0b99ea1128ddc8edadcc648
+  sha256: 574122ecadf07afad0c5b920a9a1c7f02c0a208c0b4d40f7b0cf7fa247172198
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
