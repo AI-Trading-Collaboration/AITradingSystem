@@ -27,6 +27,10 @@
     `config/research/prospective_capture_execution_v2.yaml` 的 `source_manifest_sha256`，以及 `contracts/prospective_capture_execution.py`
     固定的该配置哈希（`edcc5d90…→2a4857d4c111…`）。TRADING-2564 历史文档中的旧值保持原样（记录当时状态）。
     GOV-007 事务 v3 的 Full 因此在命名 DQ 用例失败，且我在其运行中改动了主 checkout 被跟踪文件，结果不可再用，已终止并记为失败终态。
+  - v4 Full 暴露 `checkout_guard` 执行 git 时函数内导入 `source_preservation` 仍未审阅。改为按静态导入闭包补齐架构子系统：两份含内核的清单
+    再纳入 `integration_publication_fence`、`report_catalog_flow_authority`、`source_preservation`、`workflow_execution`、`workflow_integration`，
+    其架构部分闭包完整（composer 110/110；five-candidate 余下 16 个非架构模块为 main 既有未纳入且运行不可达的项，不变）；信任锚再次同步。
+    fence 测试中包含 profile 检查的 CLI/worker 防挂死上限随 360s 上调（180/240→720、420→840、600→1200、300→600）。v4 在已知问题明确后于 94% 主动终止，记为失败终态。
   - 进程内已加载源码自检：observer 与 full-command adapter 测试改为在全新解释器中测量运行时身份（共享 worker 可能已加载 numpy）。
   - 高负载时限：DEVX-015 测试中子进程防挂死时限翻倍（900→1800、600→1200、`_until` 30→120s），开发模式 profile 检查上限
     180→360s（与受保护模式一致；无负载实测 59–75s）；native-independent peer clone 带 `core.longpaths`。

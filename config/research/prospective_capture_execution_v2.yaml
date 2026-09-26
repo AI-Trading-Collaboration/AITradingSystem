@@ -20,7 +20,7 @@ review_condition: >-
 profile:
   consumer_family: FIVE_CANDIDATE
   source_manifest_path: config/data_governance/named_prospective_five_candidate_sources_v1.json
-  source_manifest_sha256: 667065828870a68c5f2325e16c63e121a9cb3e75090e08f4fa6fff08a3433e0b
+  source_manifest_sha256: f165e6ec29b197bac6f6a37f2109acbd63761de919c618e9e68f6937c1694320
   parent_operations: [activate, capture]
   child_operation: run
   parent_canonical_dq_calls: 0

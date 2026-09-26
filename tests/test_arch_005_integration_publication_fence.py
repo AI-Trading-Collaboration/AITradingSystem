@@ -13,6 +13,9 @@ from threading import Barrier
 from typing import Any
 
 import pytest
+
+# CLI/worker hang guards below include the 360s profile inspection bound and run under
+# formal Full load (16 workers plus nested Full); they bound hangs only.
 from test_devx015_workflow_integration import (
     canonical_merge_repository as canonical_merge_repository,
 )
@@ -1474,10 +1477,10 @@ def _exercise_failed_publication_job(
         _until(lambda: witness_path.exists() or process.poll() is not None
                or _publication_main_prepare_started(Path(request["stdout_path"])),
                description="actual publication worker input custody and negative checks",
-               timeout=420)
+               timeout=840)
         _until(lambda: witness_path.exists() or process.poll() is not None,
                description="actual publication worker original Git preparation witness",
-               timeout=420)
+               timeout=840)
         assert witness_path.exists(), Path(request["stdout_path"]).read_text()
         witness = json.loads(witness_path.read_text())
         inputs = witness["input_custody"]
@@ -1612,7 +1615,7 @@ def _exercise_failed_publication_job(
             result = _v03_fence_cli(root, "index-recovery-" + label, [
                 "local-publication-recover-index", "--transaction", str(transaction),
                 "--actor", actor,
-            ], timeout=240)
+            ], timeout=720)
             assert result["exit_code"] == 0, result
             payload = json.loads(result["stdout"])
             assert payload["status"] == expected
@@ -1689,7 +1692,7 @@ def test_original_publication_cli_ff_only_and_independent_recovery(canonical_mer
     # it never turns the failed success-path assertion into a PASS.
     recovered = _v03_fence_cli(root, "original-publication-recovery-cli", [
         "local-publication-recover", "--transaction", str(transaction),
-    ], timeout=600)
+    ], timeout=1200)
     value = physical().execution
     assert full_execution_projection(value) == original_full
     try:
@@ -1910,7 +1913,7 @@ def test_original_publication_cli_interrupted_after_main_commit(canonical_merge_
     before_recovery = physical().execution
     recovered = _v03_fence_cli(root, "interrupted-publication-recovery-cli", [
         "local-publication-recover", "--transaction", str(transaction),
-    ], timeout=600)
+    ], timeout=1200)
     value = physical().execution
     try:
         assert injection_error is None, injection_error
@@ -1936,7 +1939,7 @@ def test_original_publication_cli_interrupted_after_main_commit(canonical_merge_
         assert _git(root, "branch", "--show-current") == "main"
         repeated = _v03_fence_cli(root, "interrupted-publication-replay-cli", [
             "local-publication-recover", "--transaction", str(transaction),
-        ], timeout=600)
+        ], timeout=1200)
         assert repeated["exit_code"] == 0, repeated
         assert json.loads(repeated["stdout"])["status"] == "REPLAY_ONLY", repeated
         assert physical().execution == value
@@ -2041,7 +2044,7 @@ def test_original_publication_cli_recovers_independent_main_advance(canonical_me
     before = physical().execution
     recovered = _v03_fence_cli(root, "main-race-recovery-cli", [
         "local-publication-recover", "--transaction", str(transaction),
-    ], timeout=600)
+    ], timeout=1200)
     value = physical().execution
     try:
         assert injection_error is None, injection_error
@@ -2076,7 +2079,7 @@ def test_original_publication_cli_recovers_independent_main_advance(canonical_me
                 for path in retained_paths} == retained
         repeated = _v03_fence_cli(root, "main-race-replay-cli", [
             "local-publication-recover", "--transaction", str(transaction),
-        ], timeout=600)
+        ], timeout=1200)
         assert repeated["exit_code"] == 0, repeated
         assert json.loads(repeated["stdout"])["status"] == "REPLAY_ONLY", repeated
         assert physical().execution == value
@@ -2245,7 +2248,7 @@ def test_p01_public_entries_reject_ref_only_update_before_checkout(canonical_mer
     assert not original_execution.get("publication_attempts")
     positive = _v03_fence_cli(root, "ref-only-original-inspection", [
         "local-publication-inspect", "--transaction", str(transaction),
-    ], timeout=180)
+    ], timeout=720)
     assert positive["exit_code"] == 0, positive
     assert json.loads(positive["stdout"])["status"] == "OBSERVED"
     _git(root, "update-ref", "-m", "external ref-only fault before checkout",
@@ -2272,7 +2275,7 @@ def test_p01_public_entries_reject_ref_only_update_before_checkout(canonical_mer
         args = [command, "--transaction", str(transaction)]
         if command == "local-publish":
             args.append("--authorize-peer-head-handoff")
-        refused = _v03_fence_cli(root, "ref-only-refused-" + command, args, timeout=180)
+        refused = _v03_fence_cli(root, "ref-only-refused-" + command, args, timeout=720)
         assert refused["exit_code"] == 2, refused
         assert reason in refused["stdout"], refused
         assert _publication_business_snapshot(fence, transaction) == damaged
@@ -2315,7 +2318,7 @@ def test_x02_original_publication_rejects_ref_aba_after_actual_full(canonical_me
     original_full = full_execution_projection(original_execution)
     positive = _v03_fence_cli(root, "aba-original-inspection", [
         "local-publication-inspect", "--transaction", str(transaction),
-    ], timeout=180)
+    ], timeout=720)
     assert positive["exit_code"] == 0, positive
     assert json.loads(positive["stdout"])["status"] == "OBSERVED"
     assert _v03_unchanged_state(fence, transaction) == original_state
@@ -2343,7 +2346,7 @@ def test_x02_original_publication_rejects_ref_aba_after_actual_full(canonical_me
     for command in ("local-publication-inspect", "local-publish"):
         refused = _v03_fence_cli(root, "aba-refused-" + command, [
             command, "--transaction", str(transaction),
-        ], timeout=180)
+        ], timeout=720)
         assert refused["exit_code"] == 2, refused
         assert "PUBLICATION_LOCAL_INTENT_CHANGED" in refused["stdout"], refused
         assert not refused["stderr"]
@@ -2922,7 +2925,7 @@ def _assert_full_transaction_replays_candidate_publish_and_closeout_receipt(
                    "--repository", str(publication_checkout), *arguments]
         completed = subprocess.run(
             command, cwd=publication_checkout, env=environment, capture_output=True,
-            text=True, encoding="utf-8", timeout=300,
+            text=True, encoding="utf-8", timeout=600,
         )
         (publication_checkout.parent / (label + ".json")).write_text(json.dumps({
             "argv": command, "returncode": completed.returncode,

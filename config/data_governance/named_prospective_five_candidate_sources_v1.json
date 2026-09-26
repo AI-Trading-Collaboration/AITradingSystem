@@ -325,6 +325,11 @@
       "is_package": false
     },
     {
+      "module_name": "ai_trading_system.platform.architecture.integration_publication_fence",
+      "source_path": "src/ai_trading_system/platform/architecture/integration_publication_fence.py",
+      "is_package": false
+    },
+    {
       "module_name": "ai_trading_system.platform.architecture.integration_revalidation",
       "source_path": "src/ai_trading_system/platform/architecture/integration_revalidation.py",
       "is_package": false
@@ -355,8 +360,18 @@
       "is_package": false
     },
     {
+      "module_name": "ai_trading_system.platform.architecture.report_catalog_flow_authority",
+      "source_path": "src/ai_trading_system/platform/architecture/report_catalog_flow_authority.py",
+      "is_package": false
+    },
+    {
       "module_name": "ai_trading_system.platform.architecture.scaffold",
       "source_path": "src/ai_trading_system/platform/architecture/scaffold.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.platform.architecture.source_preservation",
+      "source_path": "src/ai_trading_system/platform/architecture/source_preservation.py",
       "is_package": false
     },
     {
@@ -382,6 +397,16 @@
     {
       "module_name": "ai_trading_system.platform.architecture.workflow_coordination",
       "source_path": "src/ai_trading_system/platform/architecture/workflow_coordination.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.platform.architecture.workflow_execution",
+      "source_path": "src/ai_trading_system/platform/architecture/workflow_execution.py",
+      "is_package": false
+    },
+    {
+      "module_name": "ai_trading_system.platform.architecture.workflow_integration",
+      "source_path": "src/ai_trading_system/platform/architecture/workflow_integration.py",
       "is_package": false
     },
     {

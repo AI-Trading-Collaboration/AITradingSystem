@@ -225,7 +225,7 @@ PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH = (
     "config/data_governance/named_prospective_five_candidate_sources_v1.json"
 )
 PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256 = (
-    "667065828870a68c5f2325e16c63e121a9cb3e75090e08f4fa6fff08a3433e0b"
+    "f165e6ec29b197bac6f6a37f2109acbd63761de919c618e9e68f6937c1694320"
 )
 
 # TRADING-2560 current-known Composer is a distinct, reviewed consumer. These
@@ -234,7 +234,7 @@ COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_PATH = (
     "config/data_governance/named_composer_prospective_sources_v1.json"
 )
 COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_SHA256 = (
-    "06f566ff1855b1344f7cccb7800c7c8d97d8ee52d037b96583fc8128ec4300a2"
+    "d69dc73cf496afa7a839f495ccbd9bad4f796dce8ad5f2a79c03133b61eece4b"
 )
 COMPOSER_INPUT_POLICY_PATH = "config/research/first_layer_composer_v2_known_snapshot_input_v1.yaml"
 COMPOSER_INPUT_POLICY_SHA256 = "a882644608705b6b1fa2f9d907f780bf485762e3725a9c782f4a2859be7eeb09"
