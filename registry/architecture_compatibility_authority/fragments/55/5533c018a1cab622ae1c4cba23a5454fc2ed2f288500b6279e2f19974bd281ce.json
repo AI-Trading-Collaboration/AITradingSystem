@@ -181,7 +181,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/requirements/DEVX-015_Workflow_Contract_And_Acceptance_V3.md",
-        "sha256": "1b9be4a67ebff8979b0124b869671747bc814460b265c4a7742d1deff1eed2b8"
+        "sha256": "42573a0fe8e9c4b0032412637ed9b4ccd8179377f211eab4d725ddfcc7aeeed0"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -471,7 +471,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "src/ai_trading_system/platform/architecture/workflow_coordination.py",
-        "sha256": "5282e10ec0f940e7af07e43e4634c613f2d07cbce2b82cc0181bd35ab3825b58"
+        "sha256": "43b0f0ad6e79aa45936294b1e4baefa66d74488587d6912d60509131afa3c150"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -531,7 +531,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_005_integration_publication_fence.py",
-        "sha256": "675d7117bf378e61907d39e5288b7ac923fa4649d8736b14cae177668969345b"
+        "sha256": "2be4ca897ac468edb25a8fe2fea9b2a51c8e1b7f21f2894ac93df13bbf456eff"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -581,7 +581,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx015_workflow_coordination.py",
-        "sha256": "fb0dd13d8ba14f0d75c7c268790e67baf6543195b8575baa8ca6766a7db6029f"
+        "sha256": "88d15474e891b8021eddba99c903c0e03930dd3c13dabb355a8c07c1108ed06b"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -591,7 +591,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx015_workflow_integration.py",
-        "sha256": "6855454ffedd42522d2980ca92b0f8f41ecc6f7d27e6bc2414b9d6fdbaa0e0af"
+        "sha256": "dbe57f717985b6edd36c2cdbb7aab73e11fe8139df7ea54da90635dc77b15272"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -918,5 +918,5 @@
     }
   },
   "section_id": "phase_devx_015_workflow_contract_v3",
-  "section_sha256": "4ecf4fc79cc1e059b25fa1ba868547cc507370aeba2174ff4c274f2d3314d1a2"
+  "section_sha256": "5533c018a1cab622ae1c4cba23a5454fc2ed2f288500b6279e2f19974bd281ce"
 }
