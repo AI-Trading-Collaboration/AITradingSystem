@@ -2909,7 +2909,9 @@ def _assert_full_transaction_replays_candidate_publish_and_closeout_receipt(
                 fence.checkpoint(transaction, phase="CLEANUP_PRE", actor="integration-coordinator")
             assert _git(remote, "rev-parse", "main") == candidate
         finally:
-            _git(publication_checkout, "config", "--unset-all", "remote.origin.pushurl")
+            # Restore the exact original push transport (the fixture isolates only
+            # the push URL); unsetting it would fall back to the real fetch URL.
+            _git(publication_checkout, "remote", "set-url", "--push", "origin", str(remote))
     def ack_recovery_cli(label: str, arguments: list[str]) -> dict[str, Any]:
         # Fresh original candidate CLI, with the candidate's own imported code.
         # This is recovery after a real successful push whose launcher died.
