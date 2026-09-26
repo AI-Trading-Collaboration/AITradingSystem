@@ -364,14 +364,14 @@ class NamedBootstrapSession:
             self.manifest.relative_path
             != "config/data_governance/named_prospective_five_candidate_sources_v1.json"
             or self.manifest.sha256
-            != "9a11ed94e1c318aee3c44a7d01ba0f31556bd4de355eef1f75893245fe8bc1ce"
+            != "667065828870a68c5f2325e16c63e121a9cb3e75090e08f4fa6fff08a3433e0b"
         ):
             _fail("NAMED_BOOTSTRAP_PROSPECTIVE_PROFILE_REQUIRED", operation)
         if operation in {"composer-activate", "composer-readiness", "composer-capture"} and (
             self.manifest.relative_path
             != "config/data_governance/named_composer_prospective_sources_v1.json"
             or self.manifest.sha256
-            != "2613012b0774aaf78b448ccf63ee469099dd796cea28de8060b0ad9cd3bc3d2a"
+            != "06f566ff1855b1344f7cccb7800c7c8d97d8ee52d037b96583fc8128ec4300a2"
         ):
             _fail("NAMED_BOOTSTRAP_COMPOSER_PROFILE_REQUIRED", operation)
         self.bootstrap = self.git.artifact(BOOTSTRAP_PATH)

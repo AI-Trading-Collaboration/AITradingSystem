@@ -22,6 +22,11 @@
   - 命名 DQ：lane 的租约存储重放经 `workflow_coordination` 校验执行记录，含 `parallel_control_kernel` 的两份命名清单
     （composer prospective、prospective five-candidate）被 `NAMED_BOOTSTRAP_UNREVIEWED_IMPORT` 拒绝；两份清单纳入
     `workflow_contract` 与 `workflow_coordination`（其余三份不含内核，不变）。这扩大了这两个命名运行的受信代码范围，理由即上述依赖。
+    两份清单的 SHA256 是信任锚，同步更新：`scripts/run_named_data_quality.py` 与 `contracts/named_data_quality_execution.py`
+    的 profile 固定值（five-candidate `9a11ed94…→667065828870…`，composer `2613012b…→06f566ff1855…`）、
+    `config/research/prospective_capture_execution_v2.yaml` 的 `source_manifest_sha256`，以及 `contracts/prospective_capture_execution.py`
+    固定的该配置哈希（`edcc5d90…→2a4857d4c111…`）。TRADING-2564 历史文档中的旧值保持原样（记录当时状态）。
+    GOV-007 事务 v3 的 Full 因此在命名 DQ 用例失败，且我在其运行中改动了主 checkout 被跟踪文件，结果不可再用，已终止并记为失败终态。
   - 进程内已加载源码自检：observer 与 full-command adapter 测试改为在全新解释器中测量运行时身份（共享 worker 可能已加载 numpy）。
   - 高负载时限：DEVX-015 测试中子进程防挂死时限翻倍（900→1800、600→1200、`_until` 30→120s），开发模式 profile 检查上限
     180→360s（与受保护模式一致；无负载实测 59–75s）；native-independent peer clone 带 `core.longpaths`。
