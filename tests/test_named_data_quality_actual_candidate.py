@@ -300,7 +300,7 @@ def test_exact_candidate_production_parent_mints_new_profile_seal_and_complete_c
     assert result["candidate_commit"] == request.candidate_commit
     identity = result["execution_identity"]
     assert identity["source_manifest_path"] == PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH
-    assert len(identity["modules"]) == 87
+    assert len(identity["modules"]) == 94  # + workflow-control architecture closure (DEVX-015 v390)
     receipt_bytes = (evidence / result["receipt_path"]).read_bytes()
     assert hashlib.sha256(receipt_bytes).hexdigest() == result["receipt_sha256"]
     receipt = NamedDQExecutionReceipt.from_json_bytes(receipt_bytes)
