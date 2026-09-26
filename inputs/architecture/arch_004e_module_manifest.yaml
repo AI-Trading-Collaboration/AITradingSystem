@@ -2859,7 +2859,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.named_data_quality_execution
   path: src/ai_trading_system/contracts/named_data_quality_execution.py
-  sha256: 4de4bc32401ac313021490291964f81f20706db59f3b96637e27b318a5a5080d
+  sha256: 3b36840d23752cf89416f0f71119e33a49750eae6e3b4be7cd7801cd7a82e06f
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -2947,7 +2947,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.prospective_capture_execution
   path: src/ai_trading_system/contracts/prospective_capture_execution.py
-  sha256: 035e9b77131cbe62de1764c798d6d2634329d5d6fbbe7b60e70c76e0425928b7
+  sha256: e3e427f8cd432ab26b19ea0275db6b1a2e0a6e8257b05a5ad7c6eb6c6d8ecdaa
   rule_id: contracts
   owner_profile: architecture
   owners:
