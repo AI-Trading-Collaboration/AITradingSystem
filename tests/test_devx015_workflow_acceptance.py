@@ -10,6 +10,9 @@ import sys
 from pathlib import Path
 
 import pytest
+
+# Subprocess hang guards below are sized for formal Full load (16 xdist workers plus
+# nested actual Full/pytest children); they bound hangs only, never pass/fail meaning.
 from test_devx015_workflow_integration import (
     canonical_merge_repository as canonical_merge_repository,
 )
@@ -174,7 +177,7 @@ def observe_creation_crash(root, command, environment, fence, lease_id, boundary
                     or ({"launcher_exited": True} if launcher.poll() is not None else None)
                 ),
                 description="real installation creation boundary or original launcher exit",
-                timeout=600,
+                timeout=1200,
             )
             assert "launcher_exited" not in witness, log_path.read_text(errors="replace")
             assert (witness["kind"], witness["phase"]) == (kind, phase)
@@ -267,7 +270,7 @@ def reject_creation_recovery_adversary(
     refs = _git(root, "for-each-ref", "--format=%(refname) %(objectname)")
     index_path = Path(_git(root, "rev-parse", "--path-format=absolute", "--git-path", "index"))
     index_bytes = index_path.read_bytes()
-    rejected = subprocess.run(command, cwd=root, env=environment, capture_output=True, timeout=900)
+    rejected = subprocess.run(command, cwd=root, env=environment, capture_output=True, timeout=1800)
     log_path = (
         Path(original_attempt["request"]["result_path"]).parent.parent
         / command[-1]
@@ -366,7 +369,7 @@ def recover_creation_crash(
         cwd=root,
         env=recovery_environment,
         capture_output=True,
-        timeout=900,
+        timeout=1800,
     )
     recovery_log = (
         Path(attempt["request"]["result_path"]).parent.parent

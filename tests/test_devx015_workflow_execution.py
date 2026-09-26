@@ -28,6 +28,9 @@ from typing import Any
 from xml.etree import ElementTree
 
 import pytest
+
+# Subprocess hang guards below are sized for formal Full load (16 xdist workers plus
+# nested actual Full/pytest children); they bound hangs only, never pass/fail meaning.
 from test_devx015_workflow_integration import (
     _git,
 )
@@ -1154,7 +1157,7 @@ def test_fixed_candidate_actual_runner_result_survives_main_advance(
     # identity hashing alone measured ~170s on the 2026-09-25 host, above 120s.
     completed = subprocess.run(
         [sys.executable, "-c", script], cwd=tmp_path, env=environment,
-        capture_output=True, text=True, timeout=600,
+        capture_output=True, text=True, timeout=1200,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
     lines = [
@@ -1505,7 +1508,7 @@ def pytest_unconfigure(config):
         # the sixteen-worker loaded-code controls; on the 2026-09-25 host the
         # two-worker cases measured ~120-126s once the fixture carried the
         # runner's lazily imported modules, so both groups share one bound.
-        timeout=600,
+        timeout=1200,
     )
     (tmp_path / "original-runner-command.py").write_text(script, encoding="utf-8")
     (tmp_path / "original-runner-output.json").write_text(json.dumps({
@@ -2306,7 +2309,7 @@ def test_source_candidate_cli_uses_real_job_and_private_two_parent_commit(
                     or ({"launcher_exited": True} if launcher.poll() is not None else None)
                 ),
                 description="real source CLI request or actual failure",
-                timeout=900,
+                timeout=1800,
             )
             assert "launcher_exited" not in request, diagnostics()
             assert request["cwd"] == root.as_posix()
@@ -2326,7 +2329,7 @@ def test_source_candidate_cli_uses_real_job_and_private_two_parent_commit(
             execution = _until(
                 contained_execution,
                 description="actual contained source process",
-                timeout=900,
+                timeout=1800,
             )
             assert "launcher_exited" not in execution, diagnostics()
             oracle = NativeOracle()
@@ -2350,7 +2353,7 @@ def test_source_candidate_cli_uses_real_job_and_private_two_parent_commit(
                                 if item.lease_id == lease_id)
                     assert live.execution["process"] == execution["process"]
                     assert live.execution["request"] == request
-                assert launcher.wait(timeout=900) == 0, diagnostics()
+                assert launcher.wait(timeout=1800) == 0, diagnostics()
                 assert oracle.exited(process)
             oracle.assert_job_absent(request["job_name"])
         finally:
@@ -2427,7 +2430,7 @@ def test_source_candidate_cli_uses_real_job_and_private_two_parent_commit(
         if path.is_file()
     }
     heads_before_replay = tuple(fence.guard.store.replay().head_event_ids)
-    repeated = subprocess.run(command, cwd=root, env=environment, capture_output=True, timeout=900)
+    repeated = subprocess.run(command, cwd=root, env=environment, capture_output=True, timeout=1800)
     assert repeated.returncode == 0, repeated.stdout.decode(
         errors="replace"
     ) + repeated.stderr.decode(errors="replace")
@@ -2759,7 +2762,7 @@ integration.start_source_installation(root, sys.argv[3], transaction_path=transa
             cwd=root,
             env=environment,
             capture_output=True,
-            timeout=900,
+            timeout=1800,
         )
         recovery_log = run / "installations" / install_command[-1] / "worker.stdout.log"
         assert recovered.returncode == 0, recovered.stderr.decode(errors="replace") + (
@@ -2819,7 +2822,7 @@ integration.start_source_installation(root, sys.argv[3], transaction_path=transa
         cwd=root,
         env=environment,
         capture_output=True,
-        timeout=900,
+        timeout=1800,
     )
     worker_log = install_run / "worker.stdout.log"
     assert installed.returncode == 0, (
@@ -3289,7 +3292,7 @@ def test_source_generation_and_commit_crash_recovers_without_installation(
             stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW,
         )
         try:
-            observed = _until(witness, description="original source worker boundary", timeout=900)
+            observed = _until(witness, description="original source worker boundary", timeout=1800)
             assert "launcher_exited" not in observed, log_path.read_text(errors="replace")
             head = next(row for row in fence.guard.store.replay().lease_heads
                         if row.lease_id == lease_id)
@@ -3333,7 +3336,7 @@ def test_source_generation_and_commit_crash_recovers_without_installation(
     recovery = list(command)
     recovery[2] = "source-recover"
     completed = subprocess.run(
-        recovery, cwd=root, env=environment, capture_output=True, timeout=900,
+        recovery, cwd=root, env=environment, capture_output=True, timeout=1800,
     )
     (root.parent / "generation-crash-recovery.stdout").write_bytes(completed.stdout)
     (root.parent / "generation-crash-recovery.stderr").write_bytes(completed.stderr)
@@ -3346,7 +3349,9 @@ def test_source_generation_and_commit_crash_recovers_without_installation(
     head = next(row for row in fence.guard.store.replay().lease_heads if row.lease_id == lease_id)
     assert head.state == "RELEASED" and head.execution["result"]["status"] == "INSUFFICIENT"
     terminal = tuple(fence.guard.store.replay().head_event_ids)
-    repeated = subprocess.run(recovery, cwd=root, env=environment, capture_output=True, timeout=900)
+    repeated = subprocess.run(
+        recovery, cwd=root, env=environment, capture_output=True, timeout=1800,
+    )
     assert repeated.returncode == 0, repeated.stdout + repeated.stderr
     assert json.loads(repeated.stdout)["dispatch_allowed"] is False
     assert tuple(fence.guard.store.replay().head_event_ids) == terminal
@@ -3448,7 +3453,7 @@ start_source_candidate(root, sys.argv[7], transaction_path=transaction,
             _until(
                 lambda: ready.exists() or launcher.poll() is not None,
                 description="source reservation before request write crash",
-                timeout=900,
+                timeout=1800,
             )
             assert ready.exists(), log_path.read_text(encoding="utf-8", errors="replace")
             execution = lease_head().execution
@@ -3501,12 +3506,14 @@ start_source_candidate(root, sys.argv[7], transaction_path=transaction,
             cwd=root,
             env=environment,
             capture_output=True,
-            timeout=900,
+            timeout=1800,
         )
         assert rejected.returncode != 0
         assert code in (rejected.stdout + rejected.stderr).decode(errors="replace")
         assert tuple(fence.guard.store.replay().head_event_ids) == original_heads
-    recovered = subprocess.run(command, cwd=root, env=environment, capture_output=True, timeout=900)
+    recovered = subprocess.run(
+        command, cwd=root, env=environment, capture_output=True, timeout=1800,
+    )
     assert recovered.returncode == 0, (recovered.stdout + recovered.stderr).decode(errors="replace")
     result = json.loads(recovered.stdout)
     assert result["status"] == "RECOVERED_FAILED" and result["dispatch_allowed"] is False
@@ -3526,7 +3533,7 @@ start_source_candidate(root, sys.argv[7], transaction_path=transaction,
             cwd=root,
             env=environment,
             capture_output=True,
-            timeout=900,
+            timeout=1800,
         )
         assert repeated.returncode == 0, (repeated.stdout + repeated.stderr).decode(
             errors="replace"

@@ -33,7 +33,9 @@ RECEIPT_SCHEMA_VERSION = "integration_publication_closeout_receipt.v1"
 # execution or lease timeout. DEVX-015 V3 v83 measured 50.773s before custody and
 # startup: allow the existing 120s readiness envelope plus 60s identity/custody.
 # Timeout still refuses publication; the later locked identity rechecks remain.
-FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS = 180
+# 2026-09-26: raised to the protected envelope (360s) after formal Full load (16
+# workers plus nested Full children) exceeded 180s; unloaded runs take 59-75s.
+FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS = 360
 # Installed child additionally reconstructs complete native runtime custody.
 # V345 measured 132.216s with ACL/elevation seams; reserve a separate bounded
 # 180s admission envelope, preserving the original 180s profile envelope.

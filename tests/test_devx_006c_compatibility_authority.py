@@ -591,10 +591,14 @@ def test_devx_014_validator_rejects_changed_source_without_rebuild(
     # DEVX-015 workflow contract v3 hashes this source into its own fragment, so the
     # drift can surface as that fragment's missing rebuild before the index check.
     if caught.value.code == "AUTHORITY_FILE_MISSING":
-        assert caught.value.detail.startswith("registry/architecture_compatibility_authority/fragments/")
+        assert caught.value.detail.startswith(
+            "registry/architecture_compatibility_authority/fragments/"
+        )
     else:
         assert caught.value.code == "AUTHORITY_GENERATED_STALE"
-        assert caught.value.detail == "inputs/architecture/devx_006c_compatibility_authority_index.json"
+        assert caught.value.detail == (
+            "inputs/architecture/devx_006c_compatibility_authority_index.json"
+        )
 
 
 def _assert_s2a_source_closure(phase: dict[str, Any]) -> None:

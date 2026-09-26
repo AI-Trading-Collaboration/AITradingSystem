@@ -289,7 +289,7 @@ def test_profile_child_timeout_refuses_publication_with_bounded_mode_budget(
 
     def timeout_run(argv, **kwargs):
         calls.append(argv)
-        assert kwargs["timeout"] == (360 if installed else 180)
+        assert kwargs["timeout"] == 360
         assert kwargs["cwd"] == (Path(sys.executable).absolute().parent if installed else tmp_path)
         raise subprocess.TimeoutExpired(argv, kwargs["timeout"])
 

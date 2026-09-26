@@ -15,6 +15,19 @@
   endpoint-changed 收尾由 `--unset-all remote.origin.pushurl`（会连同夹具原推送地址一起删除、回落到真实 fetch 地址）改为精确恢复原推送地址；
   `_run_actual_profile_full` 防挂死时限 600s→1200s（内层 Full 串行 170–520s，正式分级 16 worker 负载下更长，非语义门槛）。
   10 个失败节点修复后均单独或 `-n 2` 复验通过（日志 `outputs/architecture/integration_revalidation/devx015-v389/af_failed_rerun_v1..v3.log`）。
+- 发布方式（owner 2026-09-26）：DEVX-015 自身正式 Full 要求验收映射 `COMPLETE_REVIEWED`（当前 93/106），本次以
+  GOV-007 P1-C 基线集成发布，不代表 DEVX-015 验收完成（`owner_decision:GOV-007:2026-09-26:devx015_baseline_integration_via_gov007_v1`）。
+- GOV-007 事务 v1 因 `--python`/`--artifact-dir` 为相对路径在预留阶段被 `LEASE_EXECUTION_PATH` 拒绝（未执行任何测试）；v2 Full 在
+  16 worker 下暴露第三批问题（停在 98% 时主动终止并经 `--recover-full` 记为失败终态）：
+  - 命名 DQ：lane 的租约存储重放经 `workflow_coordination` 校验执行记录，含 `parallel_control_kernel` 的两份命名清单
+    （composer prospective、prospective five-candidate）被 `NAMED_BOOTSTRAP_UNREVIEWED_IMPORT` 拒绝；两份清单纳入
+    `workflow_contract` 与 `workflow_coordination`（其余三份不含内核，不变）。这扩大了这两个命名运行的受信代码范围，理由即上述依赖。
+  - 进程内已加载源码自检：observer 与 full-command adapter 测试改为在全新解释器中测量运行时身份（共享 worker 可能已加载 numpy）。
+  - 高负载时限：DEVX-015 测试中子进程防挂死时限翻倍（900→1800、600→1200、`_until` 30→120s），开发模式 profile 检查上限
+    180→360s（与受保护模式一致；无负载实测 59–75s）；native-independent peer clone 带 `core.longpaths`。
+  - 事件：主 checkout 中不可变证据 `outputs/research_ops/strategy_restart/strategy_research_restart_preflight.json` 于 2026-09-26 09:33
+    被一次使用默认输出目录的 preflight 运行覆盖（测试中未找到写入者，疑为外部运行）；已从 `AITradingSystem_ops_runtime` 恢复原字节
+    （`b7272a44…`），被覆盖版本保存在 `D:/Work/AITradingSystem_backups/2026-09-27/incident_preflight_overwrite/`。
 - 集成对齐（非代码修复）：canonical 任务索引按 main 前缀 + lane DEVX-015 cycle 追加重建（cycle 序号顺延，脚本 `outputs/architecture/integration_revalidation/devx015-v389/reconcile_canonical_index.py`）；system_flow 与 artifact_catalog 重新封印；清单 id/模块数 1227/测试文件数 1395、report-flow 条目 3449、compatibility 段 334/fragment 28 与链尾顺序按合并后事实更新；DEVX-014 漂移测试接受两种 fail-closed 位置并逐一核对所指产物。
 
 ### v389 隔离 profile 检查器与 V02 加载实现语义的修复（2026-09-25）

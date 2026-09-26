@@ -17,6 +17,9 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
+
+# Subprocess hang guards below are sized for formal Full load (16 xdist workers plus
+# nested actual Full/pytest children); they bound hangs only, never pass/fail meaning.
 from test_arch_005_integration_publication_fence import publication_checkout as publication_checkout
 from test_arch_005_s2_kernel import BASE_COMMIT, POLICY_PATH, _task
 from test_devx015_workflow_execution import NativeOracle, _read_json, _until
@@ -969,7 +972,8 @@ def native_full_host_registration(
         assert not linked_contender
         peer = root.parent / "native-full-contender"
         subprocess.run(
-            ["git", "clone", "--no-hardlinks", str(root), str(peer)],
+            ["git", "clone", "--no-hardlinks", "--config", "core.longpaths=true",
+             str(root), str(peer)],
             check=True, capture_output=True,
         )
         original_main = subprocess.check_output(
@@ -6241,7 +6245,7 @@ def test_actual_mandatory_xdist_runs_inside_full_job_and_records_custody(
         env=environment,
         capture_output=True,
         text=True,
-        timeout=600,
+        timeout=1200,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
     summary = json.loads((directory / "test_runtime_summary.json").read_bytes())
@@ -6404,6 +6408,12 @@ def test_full_command_adapter_binds_real_fence_canonical_lease_and_summary(
         **(os.environ if worker_environment is None else worker_environment), **environment,
     }
     assert captured_environments == ([] if adapter_worker else [expected_environment])
+    # The production runner is its own clean process. This in-process adapter test
+    # may share a worker that already loaded unrelated compiled wrappers (numpy),
+    # so measure runtime identity in a fresh interpreter with the same environment.
+    monkeypatch.setattr(
+        validation_runner, "acceptance_runtime_identity", _clean_process_runtime_identity,
+    )
     changed = _FullCommandRunner(
         args=argparse.Namespace(publication_transaction=transaction),
         root=root,
@@ -8533,3 +8543,23 @@ def test_git_installation_root_accepts_every_git_for_windows_launcher(launcher) 
 
     root = Path("C:/Program Files/Git")
     assert _git_installation_root(root / launcher) == root
+
+def _clean_process_runtime_identity(environment=None, **kwargs):
+    """Loaded-source custody measured in a fresh interpreter (tests only)."""
+    if kwargs:
+        raise AssertionError("clean-process identity supports the environment argument only")
+    probe = (
+        "import json, sys\n"
+        "from ai_trading_system.platform.architecture.workflow_execution import (\n"
+        "    acceptance_runtime_identity)\n"
+        "environment = json.loads(sys.stdin.read())\n"
+        "sys.stdout.write(json.dumps(acceptance_runtime_identity(environment)))\n"
+    )
+    selected = dict(os.environ if environment is None else environment)
+    completed = subprocess.run(
+        [sys.executable, "-c", probe], input=json.dumps(selected), capture_output=True,
+        text=True, timeout=300,
+        env={**os.environ, "PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
+    )
+    assert completed.returncode == 0, completed.stderr
+    return json.loads(completed.stdout)
