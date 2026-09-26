@@ -11,6 +11,10 @@
   worker 以 `PUBLICATION_COMMAND_FAILED` 退出。新增 `_git_installation_root` 正确识别 `cmd`/`bin`/`mingw64\\bin`/`usr\\bin` 四种布局，
   两处调用改用它，并有参数化单元测试。测试夹具：peer `git clone` 带 `--config core.longpaths=true`，与夹具仓库一致。
   该事务以 failed 收口，修复后在新候选上获取新事务。
+  其余三项陈旧测试：probe 变体有意在候选 fence 副本中插入观察屏障，夹具不再要求该副本与已加载模块逐字节相同（仍绑定候选自身实现）；
+  endpoint-changed 收尾由 `--unset-all remote.origin.pushurl`（会连同夹具原推送地址一起删除、回落到真实 fetch 地址）改为精确恢复原推送地址；
+  `_run_actual_profile_full` 防挂死时限 600s→1200s（内层 Full 串行 170–520s，正式分级 16 worker 负载下更长，非语义门槛）。
+  10 个失败节点修复后均单独或 `-n 2` 复验通过（日志 `outputs/architecture/integration_revalidation/devx015-v389/af_failed_rerun_v1..v3.log`）。
 - 集成对齐（非代码修复）：canonical 任务索引按 main 前缀 + lane DEVX-015 cycle 追加重建（cycle 序号顺延，脚本 `outputs/architecture/integration_revalidation/devx015-v389/reconcile_canonical_index.py`）；system_flow 与 artifact_catalog 重新封印；清单 id/模块数 1227/测试文件数 1395、report-flow 条目 3449、compatibility 段 334/fragment 28 与链尾顺序按合并后事实更新；DEVX-014 漂移测试接受两种 fail-closed 位置并逐一核对所指产物。
 
 ### v389 隔离 profile 检查器与 V02 加载实现语义的修复（2026-09-25）
