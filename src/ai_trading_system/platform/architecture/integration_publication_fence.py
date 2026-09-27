@@ -41,6 +41,10 @@ FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS = 360
 # 180s admission envelope, preserving the original 180s profile envelope.
 # This is a subprocess limit, not permission to skip any check or retry Full.
 FULL_PROFILE_PROTECTED_INSPECTION_TIMEOUT_SECONDS = 360
+# Bounded read for captured Full profile evidence. A real Full runtime profile is
+# 22-27 MB (14.5k nodes, 2026-09-27) and grows with the suite; the generic 16 MiB
+# artifact budget rejected every real publication. Hash/size checks are unchanged.
+FULL_PROFILE_EVIDENCE_BUDGET_BYTES = 256 * 1024 * 1024
 
 
 def _full_profile_inspector_command(
@@ -959,7 +963,7 @@ class IntegrationPublicationFence:
                     or ".." in path.parts):
                 raise PublicationFenceError("PUBLICATION_FULL_CLOSURE_INVALID", "capture scope")
             try:
-                raw = bounded_regular_bytes(path)
+                raw = bounded_regular_bytes(path, budget=FULL_PROFILE_EVIDENCE_BUDGET_BYTES)
             except (OSError, WorkflowContractError) as exc:
                 raise PublicationFenceError(
                     "PUBLICATION_FULL_CLOSURE_INVALID", "capture unavailable",

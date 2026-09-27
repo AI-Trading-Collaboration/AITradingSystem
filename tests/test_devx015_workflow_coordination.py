@@ -5085,8 +5085,13 @@ def _run_actual_profile_full(
     # under formal-tier load (16 workers); it is not a semantic threshold.
     driver_timeout: int = 1200,
     live_observer=None,
+    mandatory: bool = True,
 ) -> tuple[dict[str, object], Path, str, dict[str, str]]:
-    """Real canonical/Job/profile chain; isolated probes, not original V3 oracles."""
+    """Real canonical/Job/profile chain; isolated probes, not original V3 oracles.
+
+    ``mandatory=False`` runs the Full exactly as every non-DEVX-015 task does: no
+    mandatory-acceptance binding or wrapper, the plain leased Full command runner.
+    """
     from test_devx015_workflow_integration import TASK, _git
     from test_validation_runtime_profile import (
         _full_validation_provenance,
@@ -5243,18 +5248,27 @@ def _run_actual_profile_full(
         "fence=IntegrationPublicationFence(project_root=Path.cwd())\n"
         "fence.checkpoint(transaction,phase='FULL_DISPATCHED',actor='integration-coordinator',"
         f"full_run_id={run_id!r})\n"
-        "mandatory=bind_mandatory_acceptance(Path.cwd(),binding['candidate_sha'])\n"
-        "binding['mandatory_acceptance_binding']=mandatory\n"
-        "runner=_FullCommandRunner(args=argparse.Namespace(publication_transaction=transaction),"
+        + (
+            "mandatory=bind_mandatory_acceptance(Path.cwd(),binding['candidate_sha'])\n"
+            "binding['mandatory_acceptance_binding']=mandatory\n"
+            if mandatory else ""
+        )
+        + "runner=_FullCommandRunner(args=argparse.Namespace(publication_transaction=transaction),"
         "root=Path.cwd(),artifact_dir=directory,publication_binding=binding,provenance=provenance)\n"
         "started=datetime.now(UTC)\n"
-        f"result=_run_mandatory_acceptance_command({command!r},cwd=Path.cwd(),binding=mandatory,"
-        f"expected_collections=16,env_overrides={{'DEVX015_EXPECTED_JOB':{job_name!r},"
+        f"environment_overrides={{'DEVX015_EXPECTED_JOB':{job_name!r},"
         "'DEVX015_FAIL':'0','AITS_PYTEST_RUNTIME_PROFILE_OUTPUT':"
         "str(directory/'test_runtime_profile.json'),"
         f"'AITS_PYTEST_RUNTIME_PROFILE_FORMAL_SELECTION':{str(int(not filtered))!r},"
-        "'AITS_VALIDATION_PROVENANCE_JSON':json.dumps(provenance)},command_runner=runner)\n"
-        "assert result['exit_code']==0,result\n"
+        "'AITS_VALIDATION_PROVENANCE_JSON':json.dumps(provenance)}\n"
+        + (
+            f"result=_run_mandatory_acceptance_command({command!r},cwd=Path.cwd(),"
+            "binding=mandatory,expected_collections=16,env_overrides=environment_overrides,"
+            "command_runner=runner)\n"
+            if mandatory else
+            f"result=runner({command!r},cwd=Path.cwd(),env_overrides=environment_overrides)\n"
+        )
+        + "assert result['exit_code']==0,result\n"
         "profile=directory/'test_runtime_profile.json'\n"
         "checked=_read_runtime_profile_payload(profile,pytest_exitstatus=0,expected_worker_count=16,"
         f"expected_dist='loadfile',formal_selection_eligible={not filtered!r},"
@@ -5312,6 +5326,50 @@ def _run_actual_profile_full(
                 raise observation_error
     assert completed.returncode == 0, completed.stdout + completed.stderr
     return binding, directory, script, environment
+
+
+@pytest.mark.parametrize("canonical_merge_repository", ["full-readiness-profile"], indirect=True)
+def test_unbound_full_profile_admits_non_devx015_publication(canonical_merge_repository) -> None:
+    """Every non-DEVX-015 task runs Full without mandatory acceptance; it must still publish.
+
+    Regression for the 2026-09-27 GOV-007 baseline integration: the profile inspection
+    required mandatory-acceptance evidence, its plugin and a 16 MiB evidence budget,
+    so no non-DEVX-015 Full could reach LOCAL_MAIN_FF_PRE.
+    """
+    from test_devx015_workflow_integration import TASK
+
+    from ai_trading_system.platform.architecture.integration_publication_fence import (
+        FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS,
+        IntegrationPublicationFence,
+    )
+
+    root, _scope = canonical_merge_repository
+    binding, directory, _driver, environment = _run_actual_profile_full(root, mandatory=False)
+    assert "mandatory_acceptance_binding" not in binding
+    identity = json.loads((directory / "execution_validation_identity.json").read_text())
+    summary = json.loads((directory / "test_runtime_summary.json").read_text())
+    assert identity["mandatory_acceptance_binding"] is None
+    assert summary.get("mandatory_acceptance") is None
+    fence = IntegrationPublicationFence(project_root=root)
+    transaction = fence.runtime_root / "transactions/merge-authority/transaction.json"
+    inspected = subprocess.run(
+        [sys.executable, "scripts/run_validation_tier.py", "full",
+         "--inspect-full-publication-profile", "--publication-transaction", str(transaction),
+         "--task-id", TASK],
+        cwd=root, env=environment, capture_output=True, text=True,
+        timeout=FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS * 2,
+    )
+    assert inspected.returncode == 0, inspected.stdout + inspected.stderr
+    assert json.loads(inspected.stdout)["status"] == "PASS"
+    admission = subprocess.run(
+        [sys.executable, "scripts/architecture_arch005_publication_fence.py", "checkpoint",
+         "--transaction", str(transaction), "--phase", "LOCAL_MAIN_FF_PRE",
+         "--actor", "integration-coordinator"],
+        cwd=root, env=environment, capture_output=True, text=True,
+        timeout=FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS * 2,
+    )
+    assert admission.returncode == 0, admission.stdout + admission.stderr
+    assert fence.replay(transaction).phase == "LOCAL_MAIN_FF_PRE"
 
 
 @pytest.mark.parametrize("canonical_merge_repository", ["full-readiness-profile"], indirect=True)

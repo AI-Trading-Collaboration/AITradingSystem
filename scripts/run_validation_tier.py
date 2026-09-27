@@ -36,6 +36,7 @@ if str(SRC_ROOT_FOR_IMPORTS) in sys.path:
 sys.path.insert(0, str(SRC_ROOT_FOR_IMPORTS))
 
 from ai_trading_system.platform.architecture.integration_publication_fence import (  # noqa: E402
+    FULL_PROFILE_EVIDENCE_BUDGET_BYTES,
     IntegrationPublicationFence,
     PublicationFenceError,
 )
@@ -4014,7 +4015,7 @@ def inspect_full_publication_profile(
         path = path.absolute()
         if not path.is_relative_to(root) or ".." in path.parts:
             raise ValueError("Full profile evidence is outside the candidate")
-        raw = bounded_regular_bytes(path)
+        raw = bounded_regular_bytes(path, budget=FULL_PROFILE_EVIDENCE_BUDGET_BYTES)
         digest = hashlib.sha256(raw).hexdigest()
         if expected_sha is not None and digest != expected_sha:
             raise ValueError("Full profile evidence changed: " + str(path))
@@ -4061,22 +4062,40 @@ def inspect_full_publication_profile(
         identity.get("pre_dispatch_readiness"), root=root, candidate=candidate,
         inspector_root=inspector_root,
     )
-    mandatory = bind_mandatory_acceptance(root, candidate)
-    if identity.get("mandatory_acceptance_binding") != mandatory:
-        raise ValueError("Full mandatory binding changed")
-    mandatory_summary = summary.get("mandatory_acceptance")
-    if not isinstance(mandatory_summary, dict) or mandatory_summary.get("status") != "PASS":
-        raise ValueError("Full mandatory result is missing")
-    mandatory_evidence = validate_mandatory_acceptance_result(
-        json.dumps(mandatory_summary.get("evidence"), allow_nan=False).encode(),
-        mandatory, exit_code=0, expected_collections=16,
+    # Full dispatch binds and runs mandatory acceptance for the DEVX-015 task
+    # (_validate_publication_transaction_for_full); other callers may bind it
+    # explicitly. Any recorded binding is fully validated; the DEVX-015 task must
+    # carry one; an unbound Full must carry no mandatory result at all.
+    mandatory_task = (
+        task_id == DEVX015_ACCEPTANCE_TASK
+        or identity.get("mandatory_acceptance_binding") is not None
     )
+    mandatory: dict[str, Any] | None = None
+    mandatory_summary: dict[str, Any] | None = None
+    mandatory_evidence: Mapping[str, Any] | None = None
     original_runtime = identity.get("runtime")
-    if (
-        not isinstance(original_runtime, dict)
-        or mandatory_evidence.get("runtime_identity") != original_runtime
+    if not isinstance(original_runtime, dict):
+        raise ValueError("Full execution runtime is missing")
+    if mandatory_task:
+        mandatory = bind_mandatory_acceptance(root, candidate)
+        if identity.get("mandatory_acceptance_binding") != mandatory:
+            raise ValueError("Full mandatory binding changed")
+        mandatory_summary = summary.get("mandatory_acceptance")
+        if not isinstance(mandatory_summary, dict) or mandatory_summary.get("status") != "PASS":
+            raise ValueError("Full mandatory result is missing")
+        mandatory_evidence = validate_mandatory_acceptance_result(
+            json.dumps(mandatory_summary.get("evidence"), allow_nan=False).encode(),
+            mandatory, exit_code=0, expected_collections=16,
+        )
+        if mandatory_evidence.get("runtime_identity") != original_runtime:
+            raise ValueError(
+                "Full execution runtime differs from original mandatory worker evidence"
+            )
+    elif (
+        identity.get("mandatory_acceptance_binding") is not None
+        or summary.get("mandatory_acceptance") is not None
     ):
-        raise ValueError("Full execution runtime differs from original mandatory worker evidence")
+        raise ValueError("Full mandatory evidence present outside the DEVX-015 task")
     # Publication's own environment is not the old execution environment. The
     # original effective env remains bound by the request and worker evidence.
     current_dependencies: dict[Path, bytes] = {}
@@ -4084,7 +4103,9 @@ def inspect_full_publication_profile(
     inspector_inputs = bind_inspector_implementation(
         _repo_root(), runtime_inputs=current_dependencies,
     )
-    launcher_inputs = mandatory_summary.get("launcher_identity")
+    launcher_inputs = (
+        mandatory_summary.get("launcher_identity") if mandatory_summary is not None else None
+    )
     if "worker_identity" in identity or launcher_inputs is not None:
         for launcher_row in _recheck_launcher_identity(launcher_inputs):
             captures[str(launcher_row["path"])] = launcher_row
@@ -4092,8 +4113,9 @@ def inspect_full_publication_profile(
         key: value for key, value in current_runtime.items() if key != "environment_sha256"
     }:
         raise ValueError("Full interpreter or distribution identity changed")
-    if (
-        mandatory_evidence.get("checkout_identity") != bind_acceptance_checkout(root, mandatory)
+    if mandatory_task and (
+        mandatory_evidence is None or mandatory_summary is None or mandatory is None
+        or mandatory_evidence.get("checkout_identity") != bind_acceptance_checkout(root, mandatory)
         or mandatory_summary.get("runner_identity") != capture_acceptance_implementation(
             root, candidate,
         )
@@ -4168,8 +4190,11 @@ def inspect_full_publication_profile(
         selected_files != expected_files or options.get("-n16") is not True
         or options.get("--dist") != "loadfile"
         or options.get("--no-loadscope-reorder") is not True
+        # The mandatory-acceptance plugin is added only by the mandatory runner
+        # wrapper (_run_mandatory_acceptance_command), i.e. when a binding exists.
         or sorted(plugins) != sorted([
-            "ai_trading_system.platform.architecture.workflow_execution",
+            *(["ai_trading_system.platform.architecture.workflow_execution"]
+              if mandatory_task else []),
             FULL_RUNTIME_PROFILE_PLUGIN,
         ])
         or (root / str(options.get("--aits-duration-profile"))).absolute() != duration_path
@@ -4248,8 +4273,10 @@ def inspect_full_publication_profile(
         "scripts/run_validation_tier.py",
         "src/ai_trading_system/platform/architecture/validation_readiness.py",
         "src/ai_trading_system/platform/architecture/integration_publication_fence.py",
-        *[str(row["path"]) for row in mandatory_summary["runner_identity"]],
-        *[str(row["path"]) for row in mandatory_evidence["checkout_identity"]],
+        *([str(row["path"]) for row in mandatory_summary["runner_identity"]]
+          if mandatory_summary is not None else []),
+        *([str(row["path"]) for row in mandatory_evidence["checkout_identity"]]
+          if mandatory_evidence is not None else []),
     ):
         capture(root / relative)
     # Catch changes during this read-only inspection as well as the fence's
