@@ -31,6 +31,7 @@
     再纳入 `integration_publication_fence`、`report_catalog_flow_authority`、`source_preservation`、`workflow_execution`、`workflow_integration`，
     其架构部分闭包完整（composer 110/110；five-candidate 余下 16 个非架构模块为 main 既有未纳入且运行不可达的项，不变）；信任锚再次同步。
     fence 测试中包含 profile 检查的 CLI/worker 防挂死上限随 360s 上调（180/240→720、420→840、600→1200、300→600）。v4 在已知问题明确后于 94% 主动终止，记为失败终态。
+    v5 于 93% 仅余已编译模块数固定值（87→94）；v6 于 97% 暴露 coordination 中包含 profile 检查的 CLI 探针上限 210s/180s（6 处）未随 360s 同步，统一为 720s。v5、v6 均在问题明确后主动终止并记为失败终态。
   - 进程内已加载源码自检：observer 与 full-command adapter 测试改为在全新解释器中测量运行时身份（共享 worker 可能已加载 numpy）。
   - 高负载时限：DEVX-015 测试中子进程防挂死时限翻倍（900→1800、600→1200、`_until` 30→120s），开发模式 profile 检查上限
     180→360s（与受保护模式一致；无负载实测 59–75s）；native-independent peer clone 带 `core.longpaths`。

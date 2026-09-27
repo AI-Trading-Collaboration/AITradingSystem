@@ -5332,7 +5332,7 @@ def test_original_full_cannot_authorize_changed_candidate(canonical_merge_reposi
         [sys.executable, "scripts/run_validation_tier.py", "full",
          "--inspect-full-publication-profile", "--publication-transaction", str(transaction),
          "--task-id", TASK],
-        cwd=root, env=environment, capture_output=True, text=True, timeout=180,
+        cwd=root, env=environment, capture_output=True, text=True, timeout=720,
     )
     (root.parent / "original-full-inspection.stdout.log").write_text(
         inspected.stdout, encoding="utf-8"
@@ -5361,7 +5361,7 @@ def test_original_full_cannot_authorize_changed_candidate(canonical_merge_reposi
         [sys.executable, "scripts/architecture_arch005_publication_fence.py", "checkpoint",
          "--transaction", str(transaction), "--phase", "LOCAL_MAIN_FF_PRE",
          "--actor", "integration-coordinator"],
-        cwd=root, env=environment, capture_output=True, text=True, timeout=180,
+        cwd=root, env=environment, capture_output=True, text=True, timeout=720,
     )
     (root.parent / "changed-candidate-admission.json").write_text(
         json.dumps({"original_candidate": binding["candidate_sha"],
@@ -5413,7 +5413,7 @@ def test_original_full_rejects_changed_publication_identities(canonical_merge_re
     def run_probe(name: str, argv: list[str], env: dict[str, str]) -> subprocess.CompletedProcess:
         started = time.perf_counter()
         result = subprocess.run(
-            argv, cwd=root, env=env, capture_output=True, text=True, timeout=210,
+            argv, cwd=root, env=env, capture_output=True, text=True, timeout=720,
         )
         (root.parent / (name + ".json")).write_text(
             json.dumps({"argv": argv, "exit_code": result.returncode,
@@ -5585,7 +5585,7 @@ def test_actual_full_profile_preserves_real_whole_readiness(
         env=environment,
         capture_output=True,
         text=True,
-        timeout=210,
+        timeout=720,
     )
     (root.parent / "full-inspection.stdout.log").write_text(inspected.stdout, encoding="utf-8")
     (root.parent / "full-inspection.stderr.log").write_text(inspected.stderr, encoding="utf-8")
@@ -5610,7 +5610,7 @@ def test_actual_full_profile_preserves_real_whole_readiness(
             env=environment,
             capture_output=True,
             text=True,
-            timeout=210,
+            timeout=720,
         )
         (root.parent / "full-admission.stdout.log").write_text(admission.stdout, encoding="utf-8")
         (root.parent / "full-admission.stderr.log").write_text(admission.stderr, encoding="utf-8")
@@ -5932,9 +5932,9 @@ def test_remote_admission_rechecks_original_full_profile(
         env={**environment, "GIT_TRACE2_EVENT": trace.as_posix()},
         capture_output=True,
         text=True,
-        # Public CLI observation budget: 180s profile probe plus process overhead,
-        # as for the other original-publication CLI probes in this module.
-        timeout=210,
+        # Public CLI observation budget: 360s profile probe plus entry custody and
+        # process overhead under Full load, as for the other CLI probes in this module.
+        timeout=720,
     )
     (evidence / "remote-admission.stdout.log").write_text(result.stdout, encoding="utf-8")
     (evidence / "remote-admission.stderr.log").write_text(result.stderr, encoding="utf-8")
