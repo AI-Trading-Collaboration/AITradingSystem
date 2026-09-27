@@ -111,7 +111,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "0bc86858610066f2833f72f99611053a73ac068630377cabb43b42f2c1584f6c"
+        "sha256": "803ec84112049439e3f58728c6ac06084199c00c7d59ece6e8739a77e3cfdd9b"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -279,5 +279,5 @@
     "task_id": "DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1"
   },
   "section_id": "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1",
-  "section_sha256": "a003e677c0408986af7c37e01e529b4839619a02f58c99c9734ab9e3773836ae"
+  "section_sha256": "dd1d8c5e812dd40a220913f9b941663908ddddd0f1adcb3a65f699f1df4b2bec"
 }

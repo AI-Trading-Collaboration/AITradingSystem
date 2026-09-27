@@ -113,7 +113,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "0bc86858610066f2833f72f99611053a73ac068630377cabb43b42f2c1584f6c"
+        "sha256": "803ec84112049439e3f58728c6ac06084199c00c7d59ece6e8739a77e3cfdd9b"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -223,5 +223,5 @@
     "task_id": "OPS-077_ATOMIC_RELEASE_SCHEDULER_BINDING_AND_CANARY"
   },
   "section_id": "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1",
-  "section_sha256": "eae393e38b9c3b5deda167acdc7d8ff2a0aa568135f52b9f402ecf654424549d"
+  "section_sha256": "6529c8b26866e61cb558b48288beb70d9149b08059fddfd2a833ce5c0af3c14d"
 }
