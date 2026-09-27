@@ -13,15 +13,17 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Claude Code coordinator：按阶段0→5 串行推进；Project Owner 处理决策包与 R2 动作确认
+  next_owner: Codex coordinator：完成 P1-C 当前基线验证/发布及后续性能优化；Project Owner 处理管理员执行包与 R2
+    决策
   requirement_refs:
   - docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md`。P0-A/P0-B
-    已完成并发布；P0-C 已收口 trading-2557 v6，devx-009 v1 与 ops-077 v2 按 owner 决定归档登记；P1-A 前置：经授权的
-    sibling 入口迁移主 checkout lease store，随后主 checkout 回到 main、workflow-health 恢复 PASS
+  unstructured_legacy_blocker_or_next_step: P0 与 P1 既有进展见 docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md。2026-09-28
+    Codex 接手 P1-C；v7 Full 在 b8e6eb013 为 PASS（14503/4），970d028fd 为其后发布检查修复，旧发布事务已按候选替代释放。先补齐当前候选生成物、required
+    tiers 与 v8 Full，再完成普通发布；之后推进 S1、P1、P4、重测与有限 T1。DEVX-015 仍为 93/106，管理员步骤与 OPS-080
+    独立验收待完成。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -87,24 +89,55 @@ events:
   - change:gov-007-sibling-lease-migration-20260924-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-7174bd483b752417f40d94d02d00f15e
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-28T00:49:23.4834256+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-p1c-codex-handoff-20260928-v1
+  lane_id: null
+  base_commit: 970d028fd446b198459552978baf9fd8ede28dcb
+  previous_state_event_id: task-event-7174bd483b752417f40d94d02d00f15e
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex coordinator：完成 P1-C 当前基线验证/发布及后续性能优化；Project Owner 处理管理员执行包与
+      R2 决策
+    blocker_or_next_step: P0 与 P1 既有进展见 docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md。2026-09-28
+      Codex 接手 P1-C；v7 Full 在 b8e6eb013 为 PASS（14503/4），970d028fd 为其后发布检查修复，旧发布事务已按候选替代释放。先补齐当前候选生成物、required
+      tiers 与 v8 Full，再完成普通发布；之后推进 S1、P1、P4、重测与有限 T1。DEVX-015 仍为 93/106，管理员步骤与 OPS-080
+      独立验收待完成。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: production_effect=none；broker_action=none；Owner 2026-09-28 授权 Codex 接手
+      Claude 未完成工作；仅当前基线发布与性能优化，不扩大管理员/运营/交易权限。v7 发布 FAILED 不改变其测试 PASS；性能优化不削弱完整性、DQ/PIT、lease
+      或发布门禁。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-p1c-codex-handoff-20260928-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-736292c501eb350067fd57205cf9505f
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
   - Governance / pre-migration convergence program (Codex → pi)
   - P0
   - IN_PROGRESS
-  - Claude Code coordinator：按阶段0→5 串行推进；Project Owner 处理决策包与 R2 动作确认
-  - 详见 `docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md`。P0-A/P0-B
-    已完成并发布；P0-C 已收口 trading-2557 v6，devx-009 v1 与 ops-077 v2 按 owner 决定归档登记；P1-A 前置：经授权的
-    sibling 入口迁移主 checkout lease store，随后主 checkout 回到 main、workflow-health 恢复 PASS
+  - Codex coordinator：完成 P1-C 当前基线验证/发布及后续性能优化；Project Owner 处理管理员执行包与 R2 决策
+  - P0 与 P1 既有进展见 docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md。2026-09-28
+    Codex 接手 P1-C；v7 Full 在 b8e6eb013 为 PASS（14503/4），970d028fd 为其后发布检查修复，旧发布事务已按候选替代释放。先补齐当前候选生成物、required
+    tiers 与 v8 Full，再完成普通发布；之后推进 S1、P1、P4、重测与有限 T1。DEVX-015 仍为 93/106，管理员步骤与 OPS-080
+    独立验收待完成。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision=`owner_decision:GOV-007:2026-09-23:pre_migration_convergence_v1`；吸收
-    GOV-006 N2/N3
+  - production_effect=none；broker_action=none；Owner 2026-09-28 授权 Codex 接手 Claude
+    未完成工作；仅当前基线发布与性能优化，不扩大管理员/运营/交易权限。v7 发布 FAILED 不改变其测试 PASS；性能优化不削弱完整性、DQ/PIT、lease
+    或发布门禁。
   docs_links:
   - docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md
   terminal: false
-  canonical_row_sha256: d78faf125e0d03185424c802e52424b4097c2850de9f6f5173e2b943055c684e
-last_event_id: task-event-7174bd483b752417f40d94d02d00f15e
+  canonical_row_sha256: 00b91ac28e1c54c7a64575182a13ed96ff5983bb3adca95e9edf52190fa06021
+last_event_id: task-event-736292c501eb350067fd57205cf9505f
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: aff7a794179e8cb7aab0e8317c2cdcf5fb19b7d4b30ca3a8502e90669f6c9a77
+fragment_checksum: bbc0996dda9c4f87360c3408209883c00d02333dfe21e6e11ed2f205ea08cb31

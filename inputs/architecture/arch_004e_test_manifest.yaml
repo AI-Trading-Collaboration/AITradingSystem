@@ -10602,7 +10602,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx015_workflow_coordination
   path: tests/test_devx015_workflow_coordination.py
-  sha256: b5715e17118389bf030bc9fd0cbf73cb19b50b34d0007e84acfcb34d24a2adfe
+  sha256: 0fc336af590374d32dbe7c8a961f42e6a1e60b811a66866bb801a4447d66e63e
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

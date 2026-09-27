@@ -1,3 +1,13 @@
+### v390 基线候选接手检查点（2026-09-28）
+
+- GOV-007 P1-C 的 v7 Full 为 14503 passed / 4 skipped，绑定 `b8e6eb01347a13f089ac09dd73024f367f43ae11`。
+  随后的 `970d028fd446b198459552978baf9fd8ede28dcb` 修复非 DEVX-015 unbound profile 的发布检查，
+  并扩大完整 runtime profile 的证据预算；新增回归已保留并行 PASS 日志。
+- Owner 授权 Codex 接手当前基线发布和后续性能优化。v7 测试 PASS 原样保留，旧发布事务按候选已被
+  替代收为 FAILED 并释放租约；接手记录与 required tiers/v8 验证准备见 GOV-007 需求文档 P1-C 检查点。
+- DEVX-015 仍为 PARTIAL_NOT_ACCEPTANCE_READY（93/106），本次基线发布不关闭剩余 13 项验收，
+  不执行管理员主机/账户/HKLM/ACL 步骤，不替代 OPS-080 独立验收。
+
 ### v390 集成候选预检发现的问题与修复（2026-09-26）
 
 - 集成候选（最新 main `cbc31cdff` + lane v386–v389，计划 `integration-revalidation-d1b239e06f110ea1409c`）预跑 architecture-fitness：4 FAIL / 19 ERROR；contract-validation 317 PASS。

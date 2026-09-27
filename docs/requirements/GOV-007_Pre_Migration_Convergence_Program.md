@@ -261,6 +261,34 @@ Owner 在对话中确认分类并授权执行与推送（"确认，按这个分�
 - 本机 HKCU 遗留测试键 3 个交 owner 清理（两个蓝屏遗留、一个 v387 回归中止遗留），见 DEVX-015A 进展。
 - 本次 P1-C 不代表 DEVX-015 完成：剩余 13 项验收（I05×2、L03×7、X05×4）、管理员执行包、最终候选 Full/发布及 OPS-080 W3/W4。
 
+### P1-C Codex 接手与 v8 验证准备（2026-09-28）
+
+- Owner 在原性能优化讨论中授权 Codex 接手：先完成当前 GOV-007 P1-C 基线候选，再按
+  S1 → P1 → P4 → 重测瓶颈 → 有限 T1 推进。接手仅覆盖本次基线发布和性能优化，不代表
+  GOV-007 全部阶段或 DEVX-015 剩余验收完成；管理员执行包、OPS-080 运营验收边界不变。
+- 接手时 HEAD 为 `970d028fd446b198459552978baf9fd8ede28dcb`，local main 与 origin/main
+  均为 `cbc31cdffcfb8cda1cf106f6da2a302f87183255`。当前候选由 `fe6e27d7c` 从该 main
+  建立，历史 lane 的 reconciliation 计划 `integration-revalidation-b47776469f7c72fd5d7d`
+  已重新验证。继续复用当前候选和工作区，不重建 lane 或改变历史计划的 lane head。
+- v7 Full 在 `b8e6eb01347a13f089ac09dd73024f367f43ae11` 上为 PASS：14503 passed、
+  4 skipped、29625.67 秒。其后 `970d028fd` 修复非 DEVX-015 的 unbound Full profile
+  发布检查，并将完整 runtime profile 的证据预算设为 256 MiB。原新增回归有并行 PASS
+  日志，v7 的证据保持原样；旧发布事务因候选已被替代，以 FAILED 发布终态释放，不能将
+  该终态描述为 v7 测试失败，也不能把 v7 当成当前候选的 Full。
+- 本次先更新接手记录、重建生成物、完成便宜的 readiness/归属检查，然后在冻结候选上运行
+  required tiers 与 v8 Full。正式运行期间不修改候选 tracked 文件、Python 环境或依赖。
+  同一候选通过正式验证后才推进 local-main fast-forward、普通推送和 SHA 相等核验。
+- 性能优化在基线发布后分别纳入 ARCH-004G2（S1）与拟登记的 DEVX-018（P1/P4）：S1 使用
+  实际完整 runtime profile 更新文件耗时权重；P1 只在一次 replay 内复用纯结构校验，仍逐条
+  校验事件哈希、链关系、actor、时间与状态转移；P4 保持审计能力，将重复清单移为持久化且
+  不可变的引用证据，保留 v1 replay、原生文件句柄、进程与 Job 校验。各阶段单独验收，
+  代表性重型用例的前后实测决定收益，不将单次 replay 的降幅外推为整个 Full 的降幅。
+- A1/A2 的完整运行时托管单独设计，不与 P4 合并；代码摘要去重仅考虑单次源码验证调用内
+  的 immutable code object/catalogue 重复工作，不缓存跨调用的运行时身份或校验 PASS。
+- 连续性证据位于 `outputs/architecture/integration_revalidation/devx015-v389/` 的
+  `codex_takeover_20260928.json`、`codex_handoff_preflight.json` 与后续 v8 运行证据。
+  该目录继续保留到发布、证据归档及依赖审计完成，不新建临时 checkout。
+
 ## 7. 退出条件
 
 E1–E10 全部满足，迁移到 pi 的第一个低风险任务完成完整的"预检 → 提交 → 合入 main → 推送"。
