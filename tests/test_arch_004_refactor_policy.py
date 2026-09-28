@@ -12650,6 +12650,10 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= frozenset(
             baseline[OPS_081_SCHEDULER_BUSINESS_CONTRACT_SECTION]["superseded_live_source_paths"]
         )
+    if DEVX_015_WORKFLOW_CONTRACT_SECTION in baseline:
+        # The current reviewed successor owns its declared live-source changes;
+        # historical source records and hashes remain unchanged.
+        paths |= _devx_015_workflow_superseded_live_source_paths()
     return paths
 
 

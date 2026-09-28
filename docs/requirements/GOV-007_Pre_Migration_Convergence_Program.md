@@ -412,6 +412,34 @@ purpose 原失败发布回归/中断parent契约验证），避免向上发现�
 严格扩充parent union。诊断envelope的可选字段与父链消费路径已同步写入
 `docs/system_flow.md`，不改变业务数据流或提升原失败证据的资格。
 
+### 2026-09-28 v9 中断后的来源闭包修复
+
+v9 在 architecture-fitness 阶段已观察到失败，随后验证进程消失；系统没有再次重启。
+Owner 确认重启过 Codex，但尚不能确定进程退出的因果。原日志/进度保持不变，事务已沿
+原 fence 收口 FAILED/RELEASED，v9 正式 Full 未派发，main 未发布。
+
+聚焦验证入口 127 项和源码保全/checkpoint/集成计划/架构生成物 357 项通过；剩余架构
+首错诊断得到 681 passed、1 failed（363.85 秒）。具体失败为
+`test_ops_081_cached_source_closure_still_rechecks_live_hash`：新增严格中断 parent 所修改的
+`src/ai_trading_system/platform/validation_trigger_provenance.py` 和
+`tests/test_validation_trigger_provenance.py` 未登记到当前 DEVX-015 来源闭包。
+
+修复步骤与验收：先将两个确切路径纳入现有当前来源生成器及精确集合回归，重建生成物；
+历史来源哈希保持不变，当前来源仍逐次验证，未知路径、漏项和哈希篡改仍拒绝。随后运行
+完整 refactor-policy 回归，确认这一原因解释的失败范围；剩余失败单独定位，不能以此
+断言原 v9 所有失败已解决。新候选需新事务及全部正式验证，不复用聚焦 PASS 或旧 Full。
+本修复仅补齐已实现契约的审计来源清单，不改变数据流，故无需再次修改 system_flow。
+
+诊断日志保存在原 devx015-v389 证据目录；仓库外 `D:/Work/aits_gov007_v8fix/` 下
+v9diagnosis1/2/3 保留至证据归档校验、无进程依赖及发布后的生命周期审计完成。
+补齐两路径后的完整 refactor-policy/compatibility-authority 回归为 352 passed、1 failed
+（846.32 秒）；剩余 OPS-068 断言的差集仅为 `tests/test_validation_trigger_provenance.py`。
+原因是旧全体后继来源范围止于 OPS-081；将其接到现有 DEVX-015 结构验证后的明确来源
+集合，继续保留旧历史集合及哈希，不加入任意路径豁免。随后验证原失败断言及当前来源
+hash 复核，并在正式候选上完成全套门禁。
+
+S1/P1/P4 尚未实现，DEVX-015 仍为 93/106，不将本修复登记为运营或正式验收完成。
+
 ## 7. 退出条件
 
 E1–E10 全部满足，迁移到 pi 的第一个低风险任务完成完整的"预检 → 提交 → 合入 main → 推送"。

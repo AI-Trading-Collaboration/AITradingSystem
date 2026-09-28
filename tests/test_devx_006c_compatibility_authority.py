@@ -1942,6 +1942,7 @@ src/ai_trading_system/platform/architecture/workflow_contract.py
 src/ai_trading_system/platform/architecture/workflow_coordination.py
 src/ai_trading_system/platform/architecture/workflow_execution.py
 src/ai_trading_system/platform/architecture/workflow_integration.py
+src/ai_trading_system/platform/validation_trigger_provenance.py
 tests/test_arch_004g_deprecation.py
 tests/test_arch_005_checkpoint_capability.py
 tests/test_arch_005_integration_publication_fence.py
@@ -1955,6 +1956,7 @@ tests/test_devx015_workflow_coordination.py
 tests/test_devx015_workflow_execution.py
 tests/test_devx015_workflow_integration.py
 tests/test_named_quality_dispatch.py
+tests/test_validation_trigger_provenance.py
 """.split()
 )
 

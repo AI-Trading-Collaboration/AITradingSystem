@@ -3651,6 +3651,7 @@ def _devx_015_workflow_contract_section(
             "src/ai_trading_system/platform/architecture/workflow_coordination.py",
             "src/ai_trading_system/platform/architecture/workflow_execution.py",
             "src/ai_trading_system/platform/architecture/workflow_integration.py",
+            "src/ai_trading_system/platform/validation_trigger_provenance.py",
             "tests/test_arch_004g_deprecation.py",
             "tests/test_arch_005_checkpoint_capability.py",
             "tests/test_arch_005_integration_publication_fence.py",
@@ -3664,6 +3665,7 @@ def _devx_015_workflow_contract_section(
             "tests/test_devx015_workflow_execution.py",
             "tests/test_devx015_workflow_integration.py",
             "tests/test_named_quality_dispatch.py",
+            "tests/test_validation_trigger_provenance.py",
         },
         key=str.casefold,
     )
