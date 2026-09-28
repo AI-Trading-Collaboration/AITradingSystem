@@ -630,14 +630,16 @@ class _FullCommandRunner:
             raise ExecutionContainmentError("FULL_EXECUTION_CONTEXT_REUSE")
         if not command or Path(command[0]).absolute() != Path(sys.executable).absolute():
             raise ExecutionContainmentError("FULL_EXECUTION_INTERPRETER_UNBOUND")
-        parent = self.provenance.get("parent_run")
-        if isinstance(parent, Mapping):
-            parent = parent.get("summary_path")
+        parent_path = _publication_parent_path(self.provenance, repo_root=self.root)
         current = self.fence.validate(
             self.args.publication_transaction, exact_phase="FULL_DISPATCHED",
             task_id=str(self.provenance["task_id"]), validation_tier="full",
-            parent_path=Path(str(parent)) if parent is not None else None,
+            parent_path=parent_path,
             require_candidate=True,
+        )
+        _require_new_incomplete_parent_candidate(
+            self.provenance, current, fence=self.fence,
+            transaction=self.args.publication_transaction,
         )
         for key in ("transaction_sha256", "lease_id", "candidate_sha"):
             if current[key] != self.binding[key]:
@@ -1217,14 +1219,174 @@ def _runtime_run_id(resolved_tier: str, started_at: datetime) -> str:
     return f"{resolved_tier}_{timestamp}"
 
 
+def _incomplete_recovery_report(
+    replay: Any, execution: Mapping[str, Any],
+) -> dict[str, object]:
+    from ai_trading_system.platform.architecture.workflow_contract import canonical_digest
+
+    return {
+        "schema_version": "full_incomplete_recovery.v1",
+        "transaction_sha256": replay.transaction["transaction_sha256"],
+        "candidate_sha": replay.candidate_sha,
+        "execution_request_id": execution["request"]["request_id"],
+        "execution_sha256": canonical_digest(execution),
+        "technical_status": "INSUFFICIENT", "original_exit": execution["exit"],
+        "reason": "FULL_VALIDATION_COMMITMENT_MISSING",
+        "dispatch_performed": False, "publication_allowed": False,
+    }
+
+
+def _validated_incomplete_parent_binding(
+    parent_path: Path, *, repo_root: Path, task_id: str | None,
+) -> tuple[dict[str, object] | None, list[str]]:
+    """Read original terminal authority; never recover, dispatch or repair it."""
+    from ai_trading_system.platform.architecture.workflow_contract import (
+        bounded_regular_bytes,
+        canonical_digest,
+    )
+    from ai_trading_system.platform.architecture.workflow_coordination import validate_execution
+    from ai_trading_system.platform.artifacts import canonical_json_bytes
+
+    try:
+        fence = IntegrationPublicationFence(project_root=repo_root)
+        path = parent_path.absolute()
+        if (".." in parent_path.parts or path.name != "full_incomplete_recovery.json"
+                or path.parent.parent != fence.runtime_root / "transactions"):
+            raise ValueError("proof must be the original transaction's canonical sibling")
+        transaction_path = path.parent / "transaction.json"
+        receipt_path = path.parent / "closeout_receipt.json"
+        claim_path = path.parent / "full_dispatch_claim.json"
+        captures = {
+            item: bounded_regular_bytes(item)
+            for item in (path, transaction_path, receipt_path, claim_path)
+        }
+        proof = load_provenance_json(captures[path].decode("utf-8"))
+        transaction = load_provenance_json(captures[transaction_path].decode("utf-8"))
+        receipt = load_provenance_json(captures[receipt_path].decode("utf-8"))
+        replay = fence.replay(transaction_path)
+        if (replay.status != "PASS" or replay.phase != "FAILED" or not task_id
+                or replay.transaction["task_id"] != task_id
+                or replay.transaction["transaction_id"] != path.parent.name
+                or canonical_digest(transaction) != canonical_digest(replay.transaction)
+                or any(event["phase"] == "FORMAL_VALIDATION_RESULT" for event in replay.events)):
+            raise ValueError("original transaction/task/terminal phase differs")
+        claim = fence._full_claim(replay)
+        if captures[claim_path] != canonical_json_bytes(claim):
+            raise ValueError("original dispatch claim differs")
+        lease = fence._terminal_replay_lease(replay)
+        if (lease is None or lease.state != "RELEASED"
+                or lease.actor != "integration-coordinator"
+                or lease.actor != replay.transaction["actor"] or lease.execution is None):
+            raise ValueError("original released execution is missing")
+        lease_snapshot = canonical_digest(lease.to_dict())
+        fence._require_publication_lease_intent(replay, lease)
+        validate_execution(lease)
+        execution = lease.execution
+        if (execution["state"] != "RESULT_RECORDED"
+                or execution.get("full_result_commitment") is not None):
+            raise ValueError("parent must be an uncommitted terminal Full execution")
+        request = execution["request"]
+        expected_id = canonical_digest({
+            "transaction": replay.transaction["transaction_sha256"],
+            "full_run_id": claim["full_run_id"],
+        })
+        if (request["schema_version"] != "workflow_execution_request.v1"
+                or request["candidate_sha"] != replay.candidate_sha
+                or request["request_id"] != expected_id
+                or request["job_name"] != "Local\\AITS-DEVX015-full-" + expected_id
+                or execution["launcher"] != claim["launcher"]):
+            raise ValueError("original request/candidate/Job/launcher binding differs")
+        expected_proof = _incomplete_recovery_report(replay, execution)
+        if canonical_digest(proof) != canonical_digest(expected_proof):
+            raise ValueError("proof differs from the original terminal execution")
+        proof_ref = {
+            "path": path.relative_to(repo_root).as_posix(),
+            "sha256": hashlib.sha256(captures[path]).hexdigest(),
+            "size_bytes": len(captures[path]),
+        }
+        if (canonical_digest(receipt) != canonical_digest(fence._terminal_receipt(replay))
+                or receipt["evidence"] != [proof_ref]
+                or replay.events[-1]["payload"]["evidence"] != [proof_ref]):
+            raise ValueError("proof/terminal event/receipt binding differs")
+        final_lease = fence._terminal_replay_lease(replay)
+        if (final_lease is None or canonical_digest(final_lease.to_dict()) != lease_snapshot
+                or fence.replay(transaction_path) != replay
+                or any(bounded_regular_bytes(item) != raw for item, raw in captures.items())):
+            raise ValueError("parent authority changed during inspection")
+        return {
+            "run_id": claim["full_run_id"],
+            "recovery_path": proof_ref["path"], "recovery_sha256": proof_ref["sha256"],
+            "recovery_size_bytes": len(captures[path]),
+            "receipt_sha256": hashlib.sha256(captures[receipt_path]).hexdigest(),
+            "transaction_id": replay.transaction["transaction_id"],
+            "transaction_sha256": replay.transaction["transaction_sha256"],
+            "terminal_event_id": replay.events[-1]["event_id"], "lease_id": lease.lease_id,
+            "execution_request_id": request["request_id"],
+            "execution_sha256": canonical_digest(execution), "candidate_sha": replay.candidate_sha,
+            "report_type": "full_incomplete_recovery", "resolved_tier": "full",
+            "status": "INSUFFICIENT", "failure_basis": "FULL_VALIDATION_COMMITMENT_MISSING",
+            "production_effect": "none",
+        }, []
+    except (OSError, ValueError, KeyError, TypeError, RuntimeError) as exc:
+        return None, [f"parent_run incomplete recovery is invalid: {exc}"]
+
+
+def _publication_parent_path(
+    provenance: Mapping[str, object], *, repo_root: Path,
+) -> Path | None:
+    parent = provenance.get("parent_run")
+    if isinstance(parent, Mapping):
+        if parent.get("report_type") == "full_incomplete_recovery":
+            value = parent.get("recovery_path")
+            if not isinstance(value, str) or not value:
+                raise PublicationFenceError("PUBLICATION_FULL_PARENT_INVALID", "recovery_path")
+            checked, errors = _validated_incomplete_parent_binding(
+                repo_root / value, repo_root=repo_root, task_id=str(provenance.get("task_id", "")),
+            )
+            if errors or checked != parent:
+                raise PublicationFenceError("PUBLICATION_FULL_PARENT_CHANGED", "; ".join(errors))
+            return Path(value)
+        parent = parent.get("summary_path")
+    if parent is not None and (not isinstance(parent, str) or not parent.strip()):
+        raise PublicationFenceError("PUBLICATION_FULL_PARENT_INVALID", "summary_path")
+    return Path(parent) if isinstance(parent, str) else None
+
+
+def _require_new_incomplete_parent_candidate(
+    provenance: Mapping[str, object], binding: Mapping[str, object],
+    *, fence: IntegrationPublicationFence, transaction: Path,
+) -> None:
+    parent = provenance.get("parent_run")
+    if isinstance(parent, Mapping) and parent.get("report_type") == "full_incomplete_recovery":
+        replay = fence.replay(transaction)
+        expected_parent = {
+            "path": parent["recovery_path"], "sha256": parent["recovery_sha256"],
+            "size_bytes": parent["recovery_size_bytes"],
+        }
+        if (replay.status != "PASS" or replay.phase != binding["phase"]
+                or replay.transaction["transaction_sha256"] != binding["transaction_sha256"]
+                or replay.transaction.get("full_parent") != expected_parent):
+            raise PublicationFenceError("PUBLICATION_FULL_PARENT_CHANGED", "frozen parent differs")
+        if any(parent.get(key) == binding.get(key)
+               for key in ("transaction_sha256", "candidate_sha", "lease_id")):
+            raise PublicationFenceError("PUBLICATION_FULL_PARENT_REUSED", "new candidate required")
+
+
 def _validated_parent_run_binding(
     raw_parent_run: str,
     *,
     raw_parent_run_import: str | None = None,
     repo_root: Path,
+    task_id: str | None = None,
 ) -> tuple[dict[str, object] | None, list[str]]:
     candidate = Path(raw_parent_run)
     parent_path = candidate if candidate.is_absolute() else repo_root / candidate
+    if candidate.name == "full_incomplete_recovery.json":
+        if raw_parent_run_import is not None:
+            return None, ["parent_run incomplete recovery cannot use portable import"]
+        return _validated_incomplete_parent_binding(
+            parent_path, repo_root=repo_root, task_id=task_id,
+        )
     try:
         resolved_path = parent_path.resolve(strict=True)
     except (OSError, RuntimeError, ValueError) as exc:
@@ -1562,6 +1724,7 @@ def _validation_trigger_provenance(
                 raw_parent_run,
                 raw_parent_run_import=parent_run_import,
                 repo_root=repo_root,
+                task_id=str(values["task_id"]) if values["task_id"] is not None else None,
             )
             errors.extend(parent_errors)
             values["parent_run"] = parent_binding
@@ -3595,15 +3758,7 @@ def _validate_publication_transaction_for_full(
             "PUBLICATION_VALIDATION_TASK_MISSING",
             str(task_id),
         )
-    parent_value = validation_provenance.get("parent_run")
-    if isinstance(parent_value, Mapping):
-        parent_value = parent_value.get("summary_path")
-    if parent_value is not None and (not isinstance(parent_value, str) or not parent_value.strip()):
-        raise PublicationFenceError(
-            "PUBLICATION_FULL_PARENT_INVALID",
-            "validated parent_run summary_path is missing",
-        )
-    parent_path = Path(parent_value) if parent_value is not None else None
+    parent_path = _publication_parent_path(validation_provenance, repo_root=repo_root)
     fence = IntegrationPublicationFence(project_root=repo_root)
     publication_binding = fence.validate(
         transaction_path,
@@ -3612,6 +3767,9 @@ def _validate_publication_transaction_for_full(
         validation_tier="full",
         parent_path=parent_path,
         require_candidate=True,
+    )
+    _require_new_incomplete_parent_candidate(
+        validation_provenance, publication_binding, fence=fence, transaction=transaction_path,
     )
     candidate_sha = publication_binding.get("candidate_sha")
     if not isinstance(candidate_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", candidate_sha):
@@ -3774,16 +3932,7 @@ def _recover_recorded_full_result(
         # this attempt is still INSUFFICIENT and cannot enter formal adoption.
         # Preserve original logs/summary/loose result bytes. This independent
         # closeout describes missing validation, never a fabricated pytest FAIL.
-        report = {
-            "schema_version": "full_incomplete_recovery.v1",
-            "transaction_sha256": replay.transaction["transaction_sha256"],
-            "candidate_sha": replay.candidate_sha,
-            "execution_request_id": request["request_id"],
-            "execution_sha256": canonical_digest(terminal),
-            "technical_status": "INSUFFICIENT", "original_exit": terminal["exit"],
-            "reason": "FULL_VALIDATION_COMMITMENT_MISSING",
-            "dispatch_performed": False, "publication_allowed": False,
-        }
+        report = _incomplete_recovery_report(replay, terminal)
         proof = fence._transaction_path(transaction).parent / "full_incomplete_recovery.json"
         raw = canonical_json_bytes(report)
         if proof.exists():
@@ -4380,7 +4529,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--parent-run",
         help=(
-            "Path to a prior failed Full test_runtime_summary.json for failure_fix_rerun; "
+            "Path to a prior failed Full test_runtime_summary.json or the original "
+            "full_incomplete_recovery.json for failure_fix_rerun; "
             "CLI overrides "
             "AITS_VALIDATION_PARENT_RUN."
         ),

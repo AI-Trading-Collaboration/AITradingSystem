@@ -108,7 +108,45 @@ def decrypted_worker_password(encrypted: bytes, binding: bytes) -> Iterator[Any]
 class ExecutionContainmentError(RuntimeError):
     def __init__(self, code: str, detail: str = "") -> None:
         self.code = "WORKFLOW_EXECUTION_" + code
+        self._job_process_list_diagnostics: dict[str, Any] | None = None
         super().__init__(f"{self.code}: {detail}")
+
+
+def _job_process_list_diagnostics(error: BaseException) -> dict[str, Any] | None:
+    """Return only bounded native counters, never arbitrary exception text."""
+    if (type(error) is not ExecutionContainmentError
+            or error.code != "WORKFLOW_EXECUTION_JOB_PROCESS_LIST_BUDGET"):
+        return None
+    value = getattr(error, "_job_process_list_diagnostics", None)
+    base_fields = {"queries", "retained_process_count"}
+    if type(value) is not dict or set(value) not in (
+        base_fields | {"active_process_count"}, base_fields | {"accounting_error_code"},
+    ):
+        return None
+
+    def native_count(item: object) -> bool:
+        return type(item) is int and 0 <= item <= 0xFFFFFFFF
+
+    # Capacity doubles from 16 through 65536: at most 13 observations.
+    queries = value["queries"]
+    if (type(queries) is not list or not 1 <= len(queries) <= 13
+            or not native_count(value["retained_process_count"])):
+        return None
+    for row in queries:
+        if (type(row) is not dict
+                or set(row) != {"capacity", "ok", "winerror", "assigned", "count"}
+                or type(row["ok"]) is not bool
+                or any(not native_count(row[key])
+                       for key in ("capacity", "winerror", "assigned", "count"))
+                or not 16 <= row["capacity"] <= 65536):
+            return None
+    if "active_process_count" in value:
+        if not native_count(value["active_process_count"]):
+            return None
+    elif (type(value["accounting_error_code"]) is not str
+          or value["accounting_error_code"] != "WORKFLOW_EXECUTION_JOB_QUERY"):
+        return None
+    return {**value, "queries": [dict(row) for row in queries], "observation_only": True}
 
 
 DEVX015_ACCEPTANCE_TASK = "DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2"
@@ -2161,6 +2199,7 @@ class _JobProcesses:
 
     def collect(self) -> None:
         capacity = 16
+        queries: list[dict[str, int | bool]] = []
         # Bounded allocation/retry guard, not a concurrency scheduling policy.
         while capacity <= 65536:
 
@@ -2175,9 +2214,12 @@ class _JobProcesses:
             ok = self.api.QueryInformationJobObject(
                 self.job, 3, ctypes.byref(listing), ctypes.sizeof(listing), None
             )
-            if not ok and ctypes.get_last_error() != 234:
+            error = ctypes.get_last_error() if not ok else 0
+            if not ok and error != 234:
                 _checked(ok, "JOB_PROCESS_LIST")
             if not ok or listing.count < listing.assigned:
+                queries.append({"capacity": capacity, "ok": bool(ok), "winerror": error,
+                                "assigned": int(listing.assigned), "count": int(listing.count)})
                 capacity = max(capacity * 2, int(listing.assigned))
                 continue
             if listing.count > capacity:
@@ -2203,7 +2245,19 @@ class _JobProcesses:
                     if not retained:
                         _checked(self.api.CloseHandle(process), "CLOSE_PROCESS")
             return
-        raise ExecutionContainmentError("JOB_PROCESS_LIST_BUDGET")
+        # Keep the same bounded, fail-closed decision. v8 lacked the native
+        # counters needed to distinguish buffer exhaustion from a short list
+        # during process exit; diagnostics are observations, never exit proof.
+        detail: dict[str, Any] = {"queries": queries, "retained_process_count": len(self.handles)}
+        try:
+            detail["active_process_count"] = _active(self.api, self.job)
+        except ExecutionContainmentError as exc:
+            detail["accounting_error_code"] = exc.code
+        failure = ExecutionContainmentError(
+            "JOB_PROCESS_LIST_BUDGET", json.dumps(detail, sort_keys=True),
+        )
+        failure._job_process_list_diagnostics = detail
+        raise failure
 
     def exited(self) -> bool:
         complete = True

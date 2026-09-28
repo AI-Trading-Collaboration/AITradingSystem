@@ -8810,7 +8810,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_task_checkpoint
   path: tests/test_arch_005_task_checkpoint.py
-  sha256: b07b48d1fd8388818b7aad19ded264371f61fdec146d2b56e83f56d7655713ea
+  sha256: 37296eb964cb4f8a73b861fbac365601bf5b06f61adb85abc25227f10bb2e80b
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -10602,7 +10602,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx015_workflow_coordination
   path: tests/test_devx015_workflow_coordination.py
-  sha256: 0fc336af590374d32dbe7c8a961f42e6a1e60b811a66866bb801a4447d66e63e
+  sha256: 27b1b7d47473772b8a50287bc2e1d5499dc6519612b6177d84335b3010ab10e8
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10618,7 +10618,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx015_workflow_execution
   path: tests/test_devx015_workflow_execution.py
-  sha256: 525c52b905a893f0ce3a13070389b2df53ca96d0d2b61dbc3d39a2138bf9735c
+  sha256: b6c3ceeaa9c8d5b2daff7e741c837928618bde181940ddc848cc8b68383c85b1
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10666,7 +10666,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 3f13065fc1162b3c0915efb807f926672e477afa2b5d84bb3d6f720c306fa855
+  sha256: 082fc58e8836c60fa76f67efb02e6945ea204db5cb2efe62a94e7d5cbd335a1d
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -19442,7 +19442,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_validation_runtime_profile
   path: tests/test_validation_runtime_profile.py
-  sha256: 703a992dd0636428eecfda294af85ec036c39ccd1fcbfd7c68d3cae1b4d2eed1
+  sha256: cc9a42a4dc5a56ef65bff33b6952e1bc2c73a780a51c24a97f1604cc74da5d11
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -19458,7 +19458,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_validation_tier_script
   path: tests/test_validation_tier_script.py
-  sha256: e7546c824009660dc0e02b80292fdae467a4ca566e6a4622d2a97b356b282796
+  sha256: eedfe10d6c9e35c6ddf361882eab3a6e9eecba2146f0eb42dea0a8d7f0183189
   file_role: test
   rule_id: architecture_control_tests
   owner_profile: quality
@@ -19476,7 +19476,7 @@ tests:
   - scripts/
 - test_id: tests.test_validation_trigger_provenance
   path: tests/test_validation_trigger_provenance.py
-  sha256: dfa13d3e6dd5c5a4e8a68789143684b0f798bef6c687e01c708967efaa6ffc5e
+  sha256: 431e55620ff128cd9492ba57793b9f7002eacdcb07114f053ec97d59955ec8b1
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

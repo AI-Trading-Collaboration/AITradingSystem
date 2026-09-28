@@ -774,6 +774,26 @@ def _observe_unchanged_preparation(attempt: Mapping[str, Any]) -> dict[str, Any]
             "git_process": process, "lock_state": "ABSENT"}
 
 
+def _same_terminal_process_resolution(
+    before: Mapping[str, Any] | None, after: Mapping[str, Any] | None,
+) -> bool:
+    """Compare stable evidence after independently observing the original process.
+
+    EXITED (with/without ERROR_INVALID_PARAMETER) and REUSED all prove that the
+    recorded PID + creation time is no longer live. Windows may change between
+    these representations while the coordinator inspects the checkout. Keep
+    the latest raw observation; do not treat PID recycling as authority drift.
+    """
+    if before is None or after is None:
+        return before is after
+    return (
+        before.keys() == after.keys()
+        and before["git_process"]["state"] in {"EXITED", "REUSED"}
+        and after["git_process"]["state"] in {"EXITED", "REUSED"}
+        and all(value == after[key] for key, value in before.items() if key != "git_process")
+    )
+
+
 def _validate_publication_head_recovery(execution: Mapping[str, Any]) -> None:
     from ai_trading_system.platform.architecture.workflow_contract import canonical_digest
     from ai_trading_system.platform.architecture.workflow_integration import (
@@ -4311,10 +4331,14 @@ class PublicationLifecycle(ExecutionLifecycle):
                 _fail("PUBLICATION_STABLE_CHANGED")
             if observe_job(checked["job_name"])["state"] not in {"EMPTY", "ABSENT"}:
                 _fail("PUBLICATION_JOB_STILL_RUNNING")
-            if _observe_unchanged_preparation(attempt) != preparation_resolution:
+            current_preparation = _observe_unchanged_preparation(attempt)
+            if not _same_terminal_process_resolution(preparation_resolution, current_preparation):
                 _fail("PUBLICATION_PREPARATION_RESOLUTION_CHANGED")
-            if _observe_unchanged_git_launch(attempt) != git_launch_resolution:
+            current_launch = _observe_unchanged_git_launch(attempt)
+            if not _same_terminal_process_resolution(git_launch_resolution, current_launch):
                 _fail("PUBLICATION_GIT_LAUNCH_RESOLUTION_CHANGED")
+            preparation_resolution = current_preparation
+            git_launch_resolution = current_launch
             if "publication_stable_observation" in value:
                 _validate_unchanged_publication_observation(value)
                 stable = value["publication_stable_observation"]

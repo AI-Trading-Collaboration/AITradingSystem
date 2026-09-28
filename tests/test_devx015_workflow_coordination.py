@@ -621,6 +621,127 @@ def test_failed_git_launch_requires_native_exit_and_unchanged_auxiliary_files(tm
     assert coordination._observe_unchanged_git_launch({}) is None
 
 
+def _failed_publication_observation_case(tmp_path, monkeypatch, kind, first, second, fault=None):
+    """Isolate recovery's observation boundary; this does not attest a Full or lease."""
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+
+    from ai_trading_system.platform.architecture import workflow_coordination as coordination
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+    from ai_trading_system.platform.architecture import workflow_integration as integration
+
+    process = {"pid": 123, "creation_time": 456}
+    lock = tmp_path / "main.lock"
+    auxiliary = tmp_path / "ORIG_HEAD"
+    auxiliary.write_bytes(b"original auxiliary bytes\n")
+    attempt = {
+        "state": "RESULT_RECORDED", "result": {"status": "FAIL"},
+        "request": {"publication_transaction_path": str(tmp_path / "transaction.json"),
+                    "job_name": "Local\\AITS-DEVX015-observation-boundary"},
+        "request_sha256": "a" * 64,
+    }
+    if kind == "preparation":
+        attempt["main_preparation"] = {
+            "git_process": process, "prepared_ref": {"path": str(lock)},
+        }
+    else:
+        attempt["git_launch"] = {"process": process}
+        attempt["checkout_plan"] = {"plan": {
+            "orig_head": integration._local_publication_metadata(auxiliary, contents=True),
+            "reflogs": {}, "absent_paths": [str(lock)],
+        }}
+    physical = SimpleNamespace(execution={"publication_attempts": [attempt]})
+    appended, observations = [], []
+    samples = iter((first, second))
+
+    def observe(**identity):
+        assert identity == process  # Both observations address the same original identity.
+        observed = dict(next(samples))
+        observations.append(observed)
+        return observed
+
+    inspected = 0
+
+    def inspect(transaction):
+        nonlocal inspected
+        inspected += 1
+        if inspected == 1:
+            if fault == "lock":
+                lock.write_bytes(b"unrelated lock - preserve")
+            elif fault == "auxiliary":
+                auxiliary.write_bytes(b"changed auxiliary bytes")
+            elif fault == "authority":
+                physical.execution["changed"] = True
+        return {"topology": {"fixture": "unchanged"}}
+
+    lifecycle = object.__new__(coordination.PublicationLifecycle)
+    lifecycle.store = SimpleNamespace(atomic=lambda **kwargs: nullcontext())
+    lifecycle.fence = SimpleNamespace(inspect_local_publication=inspect)
+    monkeypatch.setattr(
+        lifecycle, "_require_original_publication", lambda *args: {"original": True},
+    )
+    monkeypatch.setattr(coordination.ExecutionLifecycle, "_head", lambda *args: physical)
+    monkeypatch.setattr(coordination.ExecutionLifecycle, "_append",
+                        lambda self, head, value, instant: appended.append(value))
+    monkeypatch.setattr(execution, "observe_process", observe)
+    monkeypatch.setattr(execution, "observe_job", lambda name: {"state": "ABSENT"})
+    monkeypatch.setattr(
+        execution, "current_process_identity", lambda: {"pid": 789, "creation_time": 1011},
+    )
+    return lifecycle, appended, observations, lock
+
+
+@pytest.mark.parametrize("kind", ["preparation", "git-launch"])
+@pytest.mark.parametrize("first", [{"state": "EXITED"}, {"state": "EXITED", "winerror": 87},
+                                   {"state": "REUSED"}])
+@pytest.mark.parametrize("second", [{"state": "EXITED"}, {"state": "EXITED", "winerror": 87},
+                                    {"state": "REUSED"}])
+def test_failed_publication_recovery_accepts_same_dead_identity_observation_changes(
+    tmp_path, monkeypatch, kind, first, second,
+):
+    lifecycle, appended, observations, _lock = _failed_publication_observation_case(
+        tmp_path, monkeypatch, kind, first, second,
+    )
+    result = lifecycle.adopt_unchanged_failed_attempt("original-lease", actor="coordinator")
+    assert result["status"] == "STABLE_FAILED_ATTEMPT"
+    assert result["dispatch_allowed"] is False and result["publication_allowed"] is False
+    assert observations == [first, second]
+    assert len(appended) == 1
+    field = "preparation_resolution" if kind == "preparation" else "git_launch_resolution"
+    assert appended[0]["publication_stable_observation"][field]["git_process"] == second
+
+
+@pytest.mark.parametrize("kind", ["preparation", "git-launch"])
+@pytest.mark.parametrize("fault", ["running", "unknown", "lock", "authority"])
+def test_failed_publication_recovery_still_rejects_nonterminal_or_changed_scene(
+    tmp_path, monkeypatch, kind, fault,
+):
+    from ai_trading_system.platform.architecture.workflow_contract import WorkflowContractError
+
+    second = {"state": "RUNNING" if fault == "running" else "UNKNOWN", "winerror": 5}
+    if fault not in {"running", "unknown"}:
+        second = {"state": "REUSED"}
+    lifecycle, appended, _observations, lock = _failed_publication_observation_case(
+        tmp_path, monkeypatch, kind, {"state": "EXITED"}, second, fault,
+    )
+    expected = ("NOT_TERMINAL" if fault in {"running", "unknown"}
+                else "STABLE_CHANGED" if fault == "authority" else "LOCK_REMAINS|STATE_EXISTS")
+    with pytest.raises((ParallelControlError, WorkflowContractError), match=expected):
+        lifecycle.adopt_unchanged_failed_attempt("original-lease", actor="coordinator")
+    assert not appended
+    if fault == "lock":
+        assert lock.read_bytes() == b"unrelated lock - preserve"
+
+
+def test_failed_publication_recovery_still_rejects_changed_auxiliary_files(tmp_path, monkeypatch):
+    lifecycle, appended, _observations, _lock = _failed_publication_observation_case(
+        tmp_path, monkeypatch, "git-launch", {"state": "EXITED"}, {"state": "REUSED"}, "auxiliary",
+    )
+    with pytest.raises(ParallelControlError, match="EFFECTS_REMAIN"):
+        lifecycle.adopt_unchanged_failed_attempt("original-lease", actor="coordinator")
+    assert not appended
+
+
 @pytest.mark.parametrize("schema", [
     "lease_execution.v1", "lease_execution.v4", "lease_execution.v5",
 ])
@@ -4433,6 +4554,7 @@ def test_public_full_claim_recovery_after_actual_dispatcher_dies_before_reservat
 def test_public_full_uncommitted_crash_recovery_closes_without_adopting_loose_pass(
     canonical_merge_repository,
     boundary: str,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from test_devx015_workflow_integration import TASK, _git
 
@@ -4683,6 +4805,126 @@ def test_public_full_uncommitted_crash_recovery_closes_without_adopting_loose_pa
         path.name: path.read_bytes() for path in directory.iterdir() if path.is_file()
     } == retained
     assert _git(root, "show-ref") == refs and index.read_bytes() == original_index
+
+    # The same actual interrupted launcher supplies retry lineage, never a
+    # synthetic failed pytest summary or permission to adopt its loose result.
+    from scripts import run_validation_tier as runner
+
+    proof_path = transaction.parent / "full_incomplete_recovery.json"
+    proof_before = proof_path.read_bytes()
+    parent, errors = runner._validated_parent_run_binding(
+        str(proof_path), repo_root=root, task_id=TASK,
+    )
+    assert not errors and parent is not None
+    assert parent["report_type"] == "full_incomplete_recovery"
+    assert parent["status"] == "INSUFFICIENT"
+    assert parent["candidate_sha"] == binding["candidate_sha"]
+    assert parent["run_id"] == fence._full_claim(after)["full_run_id"]
+    assert parent["execution_sha256"] == runner._incomplete_recovery_report(
+        after, execution,
+    )["execution_sha256"]
+
+    if boundary == "summary-0":
+        _assert_incomplete_parent_rejects_changed_authority(root, TASK, proof_path, monkeypatch)
+    assert proof_path.read_bytes() == proof_before
+    assert fence.replay(transaction) == after and fence.guard.store.replay() == terminal
+    assert {
+        path.name: path.read_bytes() for path in directory.iterdir() if path.is_file()
+    } == retained
+
+
+def _assert_incomplete_parent_rejects_changed_authority(root, task, proof_path, monkeypatch):
+    """Fault seams over an actual recovered chain; never rewrite its evidence."""
+    from copy import deepcopy
+    from dataclasses import replace
+
+    from ai_trading_system.platform.architecture import workflow_contract as contract
+    from ai_trading_system.platform.architecture.integration_publication_fence import (
+        IntegrationPublicationFence,
+    )
+    from scripts import run_validation_tier as runner
+
+    original_read = contract.bounded_regular_bytes
+    original_lease = IntegrationPublicationFence._terminal_replay_lease
+    transaction_path = proof_path.parent / "transaction.json"
+    targets = {
+        "proof-exit": proof_path, "proof-extra": proof_path, "proof-flags": proof_path,
+        "proof-replaced": proof_path, "receipt": proof_path.parent / "closeout_receipt.json",
+        "claim-bytes": proof_path.parent / "full_dispatch_claim.json",
+        "missing": proof_path, "transaction-task": transaction_path,
+    }
+    for fault, target in targets.items():
+        reads = 0
+
+        def changed_read(path, *, fault=fault, target=target, **kwargs):
+            nonlocal reads
+            raw = original_read(path, **kwargs)
+            if path != target:
+                return raw
+            reads += 1
+            if fault == "missing":
+                raise FileNotFoundError("controlled missing proof")
+            if fault == "claim-bytes" or fault == "proof-replaced" and reads > 1:
+                return raw + b"\n"
+            payload = json.loads(raw)
+            if fault == "proof-exit":
+                payload["original_exit"]["returncode"] = 7
+            elif fault == "proof-extra":
+                payload["unreviewed"] = True
+            elif fault == "proof-flags":
+                payload["publication_allowed"] = 0  # Must reject bool/int equality.
+            elif fault == "receipt":
+                payload["status"] = "PASS"
+            elif fault == "transaction-task":
+                payload["task_id"] = "other-task"
+            else:
+                return raw
+            return json.dumps(payload).encode()
+
+        with monkeypatch.context() as patch:
+            patch.setattr(contract, "bounded_regular_bytes", changed_read)
+            parent, errors = runner._validated_parent_run_binding(
+                str(proof_path), repo_root=root, task_id=task,
+            )
+            assert parent is None and errors, fault
+
+    for fault in ("active", "empty", "running", "committed", "actor", "request", "lease-replaced"):
+        reads = 0
+
+        def changed_lease(self, replay, *, fault=fault):
+            nonlocal reads
+            lease = original_lease(self, replay)
+            reads += 1
+            if fault == "active":
+                return replace(lease, state="ACTIVE")
+            if fault == "empty":
+                return replace(lease, execution=None)
+            if fault == "actor":
+                return replace(lease, actor="unreviewed-coordinator")
+            if fault == "lease-replaced" and reads == 1:
+                return lease
+            value = deepcopy(lease.execution)
+            if fault == "running":
+                value["state"] = "RUNNING"
+            elif fault == "committed":
+                value["full_result_commitment"] = {"unreviewed": True}
+            elif fault == "request":
+                value["request"]["candidate_sha"] = "0" * 40
+            else:
+                value["original_observation_changed"] = True
+            return replace(lease, execution=value)
+
+        with monkeypatch.context() as patch:
+            patch.setattr(IntegrationPublicationFence, "_terminal_replay_lease", changed_lease)
+            parent, errors = runner._validated_parent_run_binding(
+                str(proof_path), repo_root=root, task_id=task,
+            )
+            assert parent is None and errors, fault
+    for kwargs in ({"task_id": "other-task"}, {"task_id": task, "raw_parent_run_import": "x"}):
+        parent, errors = runner._validated_parent_run_binding(
+            str(proof_path), repo_root=root, **kwargs,
+        )
+        assert parent is None and errors
 
 
 def _seed_readiness_atlas_inputs(root: Path) -> list[dict[str, object]]:

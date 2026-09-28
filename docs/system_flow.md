@@ -2768,6 +2768,15 @@ Windows执行层的wait/terminate超时携带主进程退出码、Job活跃数�
 新checkpoint计划的implementation v2还精确绑定coordination/execution/contract三项执行依赖
 的历史Git blob、实时文件及loaded origin；历史implementation v1仅可验证，不可用于当前执行。
 执行失败的primary error与terminate/confirm/result/close错误分别保留，诊断落盘失败不覆盖原错。
+Job进程列表达到原有扩容预算时，`execution_failure.json`可附加受限的
+`job_process_list_diagnostics`：最多13条原生查询计数、持有句柄数量与原生accounting观测。
+仅接收指定错误类型和固定字段/数值范围，不保存任意异常文本；上层错误码保持不变。
+该对象为observation-only，随原失败证据按bytes/SHA归档，不授予退出、释放、重试或发布权限。
+Full因主机中断而缺失最终承诺时，`failure_fix_rerun`可绑定原事务的
+`full_incomplete_recovery.json`。runner只读重放原FAILED事务、RELEASED租约、原Job执行与
+原终态证据；summary/profile的原失败分支仍保持。新parent union经同一provenance校验进入
+runtime profile，两个派发消费点重验原链及新事务的proof path/SHA/size，并要求新候选、
+新事务和新租约。原证据始终为INSUFFICIENT；松散PASS不被采纳，也不由此触发恢复或发布。
 
 新capture先将完整`task_checkpoint_attempt.v2`与request在同目录staging写入/fsync/读回，
 再由Windows create-only rename安装run后才获取租约。producer实际PID/FILETIME与request等

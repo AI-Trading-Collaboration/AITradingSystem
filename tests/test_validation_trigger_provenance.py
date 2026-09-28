@@ -6,6 +6,7 @@ import pytest
 
 from ai_trading_system.platform.validation_trigger_provenance import (
     PARENT_RUN_IMPORT_KEYS,
+    PARENT_RUN_INCOMPLETE_KEYS,
     PARENT_RUN_KEYS,
     PROVENANCE_KEYS,
     validate_full_provenance,
@@ -39,6 +40,23 @@ def _portable_import_parent_run() -> dict[str, object]:
     }
 
 
+def _incomplete_parent_run() -> dict[str, object]:
+    return {
+        "run_id": "full_interrupted", "transaction_id": "interrupted-transaction",
+        "recovery_path": (
+            "outputs/architecture/arch_005_integration_publication_fence/transactions/"
+            "interrupted-transaction/full_incomplete_recovery.json"
+        ),
+        "recovery_sha256": "1" * 64, "recovery_size_bytes": 715, "receipt_sha256": "2" * 64,
+        "transaction_sha256": "3" * 64, "terminal_event_id": "4" * 64,
+        "lease_id": "lease-original", "execution_request_id": "5" * 64,
+        "execution_sha256": "6" * 64, "candidate_sha": "7" * 40,
+        "report_type": "full_incomplete_recovery", "resolved_tier": "full",
+        "status": "INSUFFICIENT", "failure_basis": "FULL_VALIDATION_COMMITMENT_MISSING",
+        "production_effect": "none",
+    }
+
+
 def _failure_fix_provenance(parent_run: object) -> dict[str, object]:
     return {
         "schema_version": "validation_trigger_provenance.v1",
@@ -67,6 +85,40 @@ def test_legacy_direct_parent_run_exact_shape_remains_valid() -> None:
     assert set(parent_run) == PARENT_RUN_KEYS
     assert set(payload) == PROVENANCE_KEYS
     assert validate_full_provenance(payload) == []
+
+
+def test_incomplete_parent_has_a_distinct_exact_binding_without_summary() -> None:
+    parent = _incomplete_parent_run()
+    assert set(parent) == PARENT_RUN_INCOMPLETE_KEYS
+    assert validate_full_provenance(_failure_fix_provenance(parent)) == []
+
+
+@pytest.mark.parametrize("field,value", [
+    ("status", "PASS"), ("status", "FAIL"), ("failure_basis", "PYTEST_FAIL"),
+    ("candidate_sha", "A" * 40), ("recovery_sha256", "0" * 63),
+    ("execution_sha256", None), ("execution_request_id", 123),
+    ("transaction_sha256", []), ("receipt_sha256", True), ("terminal_event_id", "unknown"),
+    ("recovery_size_bytes", True), ("recovery_size_bytes", 0),
+    ("transaction_id", "other"), ("lease_id", ""), ("run_id", None),
+    ("production_effect", "production"), ("resolved_tier", "focused"),
+    ("summary_sha256", "1" * 64), ("runtime_profile_sha256", "2" * 64),
+    ("locator_mode", "portable_import_v1"),
+    ("recovery_path", "../full_incomplete_recovery.json"),
+    ("recovery_path", "outputs\\full_incomplete_recovery.json"),
+    ("recovery_path", "outputs/architecture/arch_005_integration_publication_fence/"
+                      "transactions/interrupted-transaction/../full_incomplete_recovery.json"),
+])
+def test_incomplete_parent_rejects_mixed_or_invalid_binding(field: str, value: object) -> None:
+    parent = _incomplete_parent_run()
+    parent[field] = value
+    assert validate_full_provenance(_failure_fix_provenance(parent))
+
+
+@pytest.mark.parametrize("field", sorted(PARENT_RUN_INCOMPLETE_KEYS))
+def test_incomplete_parent_rejects_every_missing_commitment(field: str) -> None:
+    parent = _incomplete_parent_run()
+    parent.pop(field)
+    assert validate_full_provenance(_failure_fix_provenance(parent))
 
 
 def test_portable_import_parent_run_exact_shape_is_valid() -> None:

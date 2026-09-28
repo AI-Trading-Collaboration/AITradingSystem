@@ -598,6 +598,30 @@ def test_runtime_profile_aggregates_nodes_files_workers_and_tail_idle() -> None:
     assert payload["validation_provenance"] == provenance
 
 
+def test_runtime_profile_preserves_strict_incomplete_parent_lineage() -> None:
+    from test_validation_trigger_provenance import _failure_fix_provenance, _incomplete_parent_run
+
+    for malformed in (False, True):
+        parent = _incomplete_parent_run()
+        if malformed:
+            parent["summary_sha256"] = "1" * 64
+        provenance = _failure_fix_provenance(parent)
+        with patch.dict(os.environ, {
+            RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV: json.dumps(provenance),
+        }):
+            parsed, errors = _validation_provenance_from_environment()
+        payload = _build_comparable_runtime_payload(
+            validation_provenance=parsed, validation_provenance_errors=tuple(errors),
+        )
+        expected = "FAIL" if malformed else "PASS"
+        assert payload["validation_provenance_binding_status"] == expected
+        assert payload["performance_evidence_status"] == expected
+        assert payload["pytest_exitstatus"] == 0
+        assert payload["pytest_outcome_overridden"] is False
+        if not malformed:
+            assert payload["validation_provenance"] == provenance
+
+
 def test_missing_validation_provenance_fails_only_performance_binding() -> None:
     payload = _build_comparable_runtime_payload(validation_provenance=None)
 

@@ -289,6 +289,129 @@ Owner 在对话中确认分类并授权执行与推送（"确认，按这个分�
   `codex_takeover_20260928.json`、`codex_handoff_preflight.json` 与后续 v8 运行证据。
   该目录继续保留到发布、证据归档及依赖审计完成，不新建临时 checkout。
 
+### P1-C v8 中断后的最小修复（2026-09-28）
+
+状态：`IN_PROGRESS`。Owner 已授权继续原接手工作；本节只修复基线验证发现的两个执行边界，
+不提前实施 S1/P1/P4，不代表 DEVX-015 的 93/106 已完成，也不授权管理员、运营或交易动作。
+
+- v8 候选 `e05581b7a0b12f620082039f3803edf2249b0bd4` 的 required tiers 通过，
+  architecture-fitness 为 1525 passed / 25325.51 秒；Full 未完成，不能用于发布。
+  Windows System 记录约 10:11 异常关机、11:01 重启及 bugcheck `0x0000000A`；
+  本次内核原因未确定，不能把蓝屏归因于某个测试或驱动。本机原生 `RegRenameKey` 禁令保持。
+- 中断前记录两项失败：发布 unchanged 恢复的
+  `PUBLICATION_PREPARATION_RESOLUTION_CHANGED`（以及后续 fixture 清理的非终态拒绝）；
+  task checkpoint RELEASED 变体的 `WORKFLOW_EXECUTION_JOB_PROCESS_LIST_BUDGET`。
+  前者定位到两次原进程终态观测字典的全等比较；两次具体原始返回值没有留存。
+  后者尚缺 API 的原始计数，须先做诊断，不能仅扩大预算或把不完整列表视为退出证明。
+- 官方 `run_validation_tier.py full --recover-full --recover-full-action observe` 已确认原
+  launcher 死亡、原 Job 为 ABSENT，原事务收口 FAILED、租约 RELEASED；技术状态保持
+  `INSUFFICIENT`，returncode 保持 null。原进度、日志和 request/identity 保持原样；
+  未伪造缺失的 Full summary。正式证明为原 v8 事务的 `full_incomplete_recovery.json`。
+
+阶段与验收：
+
+1. 先登记本节和 canonical 任务事件，通过新事务 preflight 后实施。
+   新事务 `gov-007-p1c-v8-recovery-fix-20260928-v1` 沿原 task、coordinator 和路径声明，
+   在 `TASK_SOURCE_PRE_WRITE` 绑定 v8 中断证明及原恢复证明。
+2. 发布恢复只比较原请求/准备/launch 的稳定身份及仍然成立的终态事实。
+   两次均须独立观察原 PID + creation time，拒绝 RUNNING、UNKNOWN、未知 lock、
+   拓扑或证据变化；允许同一已死亡原进程的 EXITED/REUSED/原生错误表示合法变化。
+   保留原始观测用于审计，不缓存 PASS、不共享其他候选的 Full。
+   确定性回归须覆盖终态表示切换、非终态/未知结果、准备证据和锁变化。
+3. Job 列表先以受控小进程诊断 `ok/error/assigned/count/capacity/active` 和被持有句柄的
+   signaled 状态。仅使用任务自有 Job，不做注册表、账户或主机修改。
+   修复须区分真正缓冲区不足、并发退出及无法确认的观测；保留进程身份、Job membership、
+   ActiveProcesses 和全部 retained handles signaled 的退出门禁。负例覆盖权限错误、
+   活跃 Job、未 signaled 句柄、越界及真正预算耗尽，不能无限重试。
+   2026-09-28 原生探针的单进程、父先退出和17个子进程场景均未复现预算错误；
+   原 checkpoint 的 CAPTURED/RELEASED 两个节点在短路径下通过（2 passed / 53.45秒）。
+   当前不改变列表完整性判定或65536上限，只增加受限诊断，不能宣称预算错误已修复。
+   `execution_failure.json` 可选新增 `job_process_list_diagnostics`，仅保存指定异常携带的
+   最多13条有限查询计数、retained/active数量或固定accounting失败码。未知字段、字符串
+   和不合法类型一律不输出；不保存任意异常文本。现有消费者只按完整bytes/SHA清点，
+   不解析此诊断字段；原schema标识、错误码、异常优先级与release条件保持。真实worker
+   退出后的确定性API seam回归验证该诊断能穿过原包装落盘，不能把它当作原生故障复现。
+4. 先跑最小确定性回归和原失败节点，再按最终候选重建生成物、执行所有 required tiers
+   与 Full，最后沿原 local-publish 路径普通发布并核验 SHA。新候选及新 Full 有独立身份；
+   原 v8 缺失合格 parent summary，不得伪造 `failure_fix_rerun` parent。
+   静态复核确认现有入口仅允许完整summary/profile，没有中断父运行入口。须先完成下述
+   最小串行契约修复，不能将失败修复重跑改称第二次自然Full。
+
+中断父运行契约修复（归属本次GOV-007基线恢复；实施前更换事务补齐声明路径）：
+
+- 保留 `failure_fix_rerun`、whole-envelope CLI/env和原direct/portable summary验收。
+  `parent_run`新增互斥的 `full_incomplete_recovery` 绑定，只接收原事务固定同目录下的
+  `full_incomplete_recovery.json`；不支持portable incomplete import，不生成summary/profile
+  摘要或虚构pytest退出码。状态固定INSUFFICIENT，失败依据为缺少原Full结果承诺。
+- 只读重放原事务、原任务/仓库/intent、v2 FULL_DISPATCHED claim、已RELEASED租约和非空
+  RESULT_RECORDED execution；后者必须没有full_result_commitment。request/candidate/Job名、
+  launcher PID+creation、execution摘要及原exit须与原claim、证明严格一致。run_id来自原claim，
+  不能使用事务目录名。只复用已有的受登记终态租约来源，不新建锁或选取任意旧lease根。
+- 捕获证明bytes的SHA/size须同时命中原FAILED事件evidence与closeout receipt；持久receipt
+  必须等于原事务和RELEASED租约推导出的receipt。绑定原proof、transaction、lease、terminal
+  event、execution/request、candidate和run-id；路径逃逸、reparse/别名、替换、未知字段拒绝。
+- 新事务及新候选独立冻结，并以原 `full_parent` 字节绑定消费该proof。FORMAL_VALIDATION_PRE
+  和FULL_DISPATCHED最终启动前都重新验证整个父链，与已冻结parent对象exact compare。
+  profile plugin共用严格union validator；不以单份JSON自述或本次通过结果代替原链。
+- 不要求磁盘没有松散summary/profile：这些原字节继续保留，始终不可采纳。父运行验证不得
+  调用恢复、派发、终止Job、租约写入或发布；它只提供重跑来源，不提升原v8证据资格。
+- 验收覆盖原summary/import兼容、新完整原链正例，错task/candidate/request/claim/哈希/receipt、
+  ACTIVE或空execution、有commitment、unstarted proof、未知/混合字段、路径逃逸及首次读取后
+  证据替换的拒绝；两个派发消费点与runtime profile均须消费同一确切对象。
+
+当前聚焦结果：发布恢复确定性red为12 failed/15 passed，修复后的首批44 passed；包括原
+checkpoint两个边界与诊断持久化的54项通过（100.99秒），最后类型边界13项通过（6.44秒）。
+Ruff通过。三个生产模块strict mypy仍报21项，使用HEAD影子源比对确认全部已存在；无新增，
+本次不扩大到这些无关类型修复，保留 `v8_fix_typecheck_01.log` 和 `v8_fix_mypy_base/` 供后续
+DEVX类型清理评估。原发布两节点的第一次聚焦运行在进入恢复步骤前被实现来源门禁拒绝，
+不代表修复验收通过；根因是临时Git夹具在主仓库内向上发现主pyproject的pythonpath。
+
+后续验证（2026-09-28）：外部短路径下原发布两个参数全部通过，2 passed / 3172.06秒；
+正常终态恢复通过，index被替换的分支只登记稳定失败并允许只读重放，始终禁止继续发布。
+日志为 `v8_fix_original_publication_02.log`。中断parent的协议/旧summary/import/profile组合
+首次93项通过、6项因单元文件autouse替身未进入真实runner而失败；修正测试接线后，两处
+真实派发消费点的12个拒绝场景全部通过（5.93秒）。原生summary-0、exit-unrecorded、
+custody-0三节点通过（101.07秒），包括基于真实终态链的缺失、篡改及二次读取替换拒绝。
+对应日志为 `v8_fix_parent_unit_01.log`、`v8_fix_parent_consumer_02.log`、
+`v8_fix_parent_native_01.log`。新增provenance/runner严格类型检查和Ruff通过；独立静态复核
+未发现新增阻塞。F2预算错误仍未复现，以上不能作为其根因已修复的声明。
+
+下一步沿既有准备/正式事务边界提交新候选：准备事务只记录生成物和source commit；Atlas
+要求已提交的exact source，因此准备记录不得标成正式生成/验证PASS。提交后结束准备事务，
+新正式事务按同一顺序重建全部五个生成器并要求PASS、clean candidate和readiness通过；
+再串行执行named-parent positive、contract、integration、reproducibility、architecture和Full。
+新Full使用 `failure_fix_rerun` 并重新核验原v8固定proof，不能复用v8已通过的tiers代替新候选
+验证。`run_codex_gov007_v9.py`仅为本次串行派发driver，不增加调度器或租约；独立复核覆盖
+候选/事务/父证据、逐stage派发前检查、失败停止、已有artifact拒绝和原driver的进度归属。
+当前仅完成聚焦验证，基线未发布，DEVX-015仍为93/106，S1/P1/P4仍在基线发布之后。
+准备重建首次因本次system-flow说明增加9行、source seal仍为旧值而被
+`RCF_SOURCE_SEAL_DRIFT`拒绝，原日志完整保留。按既有monolith source-of-truth规则只更新
+system_flow的byte_count、SHA-256、Git blob与对应固定测试摘要，1490个entry边界保持不变；
+inactive shadow、100% coverage、禁止silent drop与精确字节重建门禁保持。元数据变化记录
+于 `v8_fix_system_flow_reseal.json`，随后从第一项重新执行声明的生成器顺序。
+
+证据与生命周期：继续使用
+`D:/Work/AITradingSystem/outputs/architecture/integration_revalidation/devx015-v389/`；
+中断证据为 `codex_v8_interruption_20260928T1419.json`，恢复日志为
+`codex_v8_recovery_20260928T1423.log`。诊断输出和隔离 pytest 临时目录仅建在该目录下，
+使用 `v8_fix_*` / `pytest-v8-fix-*` 名称并记录命令、结果及退出条件。Git 夹具使用较短的
+`D:/Work/AITradingSystem/outputs/validation_runtime/v8fix/` 作为本任务专用 basetemp 父目录；
+首次长路径尝试在 Git add 阶段报 `Filename too long`，尚未进入 SUT，原日志和目录保留。
+该目录不改变主机 longpaths 配置，每次命令使用独立子目录，生命周期同本节其余诊断目录。
+涉及嵌套pytest的发布/Full夹具改用 `D:/Work/aits_gov007_v8fix/` 的独立短子目录（owner GOV-007，
+purpose 原失败发布回归/中断parent契约验证），避免向上发现主仓库pytest配置。已有f1目录
+及 `v8_fix_original_publication_01.log`（2 failed/2 teardown errors，481.54秒）保留；只纠正
+临时工作区位置，不删除或覆盖证据、不改Python依赖或身份校验。仓库外目录同样须在修复
+发布且证据归档核验、无进程依赖后清理，不能因位于仓库外跳过生命周期审计。
+两个原失败 fixture
+位于 `C:/Users/32739/AppData/Local/Temp/pytest-of-JACK/pytest-20416/`，在所需证据归档
+并核对摘要前不得清理；聚焦验证使用显式的新 basetemp，避免自动保留策略删除原 fixture。
+临时诊断目录在修复发布且证据完成归档、无进程依赖后按原治理规则清理。
+
+本次修复涉及现有执行观察、恢复及上述中断父运行契约；保留现有CLI参数和schema标识，
+严格扩充parent union。诊断envelope的可选字段与父链消费路径已同步写入
+`docs/system_flow.md`，不改变业务数据流或提升原失败证据的资格。
+
 ## 7. 退出条件
 
 E1–E10 全部满足，迁移到 pi 的第一个低风险任务完成完整的"预检 → 提交 → 合入 main → 推送"。

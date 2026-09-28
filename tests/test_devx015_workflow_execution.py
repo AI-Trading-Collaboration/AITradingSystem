@@ -5805,6 +5805,88 @@ while not Path('canary.release').exists() and time.monotonic() < end:
         handle.close()
 
 
+@pytest.mark.parametrize("active", [0, 1])
+@pytest.mark.parametrize("query_fault", ["short-success", "more-data", "accounting-denied"])
+def test_job_process_list_budget_retains_bounded_native_query_diagnostics(active, query_fault):
+    from types import SimpleNamespace
+
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+
+    capacities = []
+
+    def query(job, kind, buffer, size, returned):
+        assert job == 123
+        if kind == 1:
+            if query_fault == "accounting-denied":
+                ctypes.set_last_error(5)
+                return False
+            buffer._obj.ActiveProcesses = active
+            return True
+        assert kind == 3
+        listing = buffer._obj
+        capacity = len(listing.pids)
+        capacities.append(capacity)
+        listing.assigned, listing.count = 2, 1
+        ctypes.set_last_error(234 if query_fault == "more-data" else 0)
+        return query_fault != "more-data"
+
+    api = SimpleNamespace(QueryInformationJobObject=query)
+    processes = execution._JobProcesses(api, 123)
+    with pytest.raises(
+        execution.ExecutionContainmentError, match="JOB_PROCESS_LIST_BUDGET",
+    ) as error:
+        processes.collect()
+    detail = json.loads(str(error.value).split(": ", 1)[1])
+    assert capacities == [2 ** power for power in range(4, 17)]
+    assert detail["retained_process_count"] == 0
+    assert len(detail["queries"]) == len(capacities)
+    assert detail["queries"][-1] == {
+        "capacity": 65536, "ok": query_fault != "more-data",
+        "winerror": 234 if query_fault == "more-data" else 0, "assigned": 2, "count": 1,
+    }
+    if query_fault == "accounting-denied":
+        assert detail["accounting_error_code"] == "WORKFLOW_EXECUTION_JOB_QUERY"
+        assert "active_process_count" not in detail
+    else:
+        assert detail["active_process_count"] == active
+    assert not processes.handles
+    assert execution._job_process_list_diagnostics(error.value) == {
+        **detail, "observation_only": True,
+    }
+
+
+@pytest.mark.parametrize("fault", [
+    "wrong-error", "too-many", "extra", "secret", "bool-count", "capacity", "accounting-type",
+])
+def test_job_process_list_diagnostics_excludes_unbounded_or_untyped_data(fault):
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+
+    row = {"capacity": 16, "ok": True, "winerror": 0, "assigned": 2, "count": 1}
+    value = {"queries": [row], "retained_process_count": 0, "active_process_count": 0}
+    error = execution.ExecutionContainmentError(
+        "JOB_QUERY" if fault == "wrong-error" else "JOB_PROCESS_LIST_BUDGET",
+        "secret text must never be serialized",
+    )
+    if fault == "too-many":
+        value["queries"] = [dict(row) for _ in range(14)]
+    elif fault == "extra":
+        value["secret"] = "secret text"
+    elif fault == "secret":
+        row["assigned"] = "secret text"
+    elif fault == "bool-count":
+        value["active_process_count"] = False
+    elif fault == "capacity":
+        row["capacity"] = 65537
+    elif fault == "accounting-type":
+        class ErrorCode(str):
+            pass
+
+        value.pop("active_process_count")
+        value["accounting_error_code"] = ErrorCode("WORKFLOW_EXECUTION_JOB_QUERY")
+    error._job_process_list_diagnostics = value
+    assert execution._job_process_list_diagnostics(error) is None
+
+
 @pytest.mark.parametrize("completion", ["wait", "close"])
 def test_wait_does_not_release_when_direct_parent_exits_before_child(
     tmp_path: Path, execution_api: Any, native: NativeOracle, completion: str

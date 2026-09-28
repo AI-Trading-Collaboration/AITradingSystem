@@ -13,17 +13,15 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex coordinator：完成 P1-C 当前基线验证/发布及后续性能优化；Project Owner 处理管理员执行包与 R2
-    决策
+  next_owner: Codex：冻结新候选、全部正式验证与原fence基线发布；Owner：原管理员/主机边界
   requirement_refs:
   - docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: P0 与 P1 既有进展见 docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md。2026-09-28
-    Codex 接手 P1-C；v7 Full 在 b8e6eb013 为 PASS（14503/4），970d028fd 为其后发布检查修复，旧发布事务已按候选替代释放。先补齐当前候选生成物、required
-    tiers 与 v8 Full，再完成普通发布；之后推进 S1、P1、P4、重测与有限 T1。DEVX-015 仍为 93/106，管理员步骤与 OPS-080
-    独立验收待完成。
+  unstructured_legacy_blocker_or_next_step: v8已按INSUFFICIENT收口FAILED/RELEASED；F1原发布两节点2
+    PASS/3172.06秒，严格incomplete-parent协议/旧格式兼容、12个派发拒绝场景及3个原生恢复节点通过。F2未复现，仅补有界诊断。下一步准备source
+    commit，新正式事务重建全部生成器并以failure_fix_rerun绑定原v8 proof，串行重跑全部required tiers与Full；S1/P1/P4仍在基线发布之后。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -118,26 +116,99 @@ events:
   - change:gov-007-p1c-codex-handoff-20260928-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-736292c501eb350067fd57205cf9505f
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-28T05:51:47.6718121Z'
+  actor: integration-coordinator
+  change_id: gov-007-p1c-v8-recovery-fix-20260928-v1
+  lane_id: null
+  base_commit: e05581b7a0b12f620082039f3803edf2249b0bd4
+  previous_state_event_id: task-event-736292c501eb350067fd57205cf9505f
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex coordinator：完成 v8 中断后的最小修复、新候选验证和 P1-C 基线发布；Project Owner 处理管理员执行包与主机层处置
+    blocker_or_next_step: 2026-09-28 v8 在 e05581b7a 上 required tiers 通过，Full 出现发布恢复终态观测误拒绝与
+      Job 进程列表预算错误后被本机蓝屏中断；官方 recover-full 已收口 FAILED/INSUFFICIENT、原租约 RELEASED，原日志不变。当前按需求文档
+      P1-C v8 中断修复阶段先做确定性诊断、修复及负例回归，再形成新候选验证和普通发布；之后才 S1/P1/P4。DEVX-015 仍 93/106，未扩大管理员或运营授权。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: v8 中断证明、修复验收及证据保留见 docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md；新验证不得冒充原
+      v8 或伪造缺失的 parent Full summary。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-p1c-v8-recovery-fix-20260928-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b8ed9326f2c48735a809c909ccc16698
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-28T06:31:05.6202831Z'
+  actor: integration-coordinator
+  change_id: gov-007-p1c-v8-incomplete-parent-contract-20260928
+  lane_id: null
+  base_commit: e05581b7a0b12f620082039f3803edf2249b0bd4
+  previous_state_event_id: task-event-b8ed9326f2c48735a809c909ccc16698
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：原基线恢复、严格中断parent契约和新候选验证；Owner：原管理员/主机边界
+    blocker_or_next_step: v8中断已FAILED/RELEASED，F1确定性修复及54项聚焦通过；F2未复现，仅补有限诊断。原重型回归先因仓库内夹具继承主pytest配置而被来源门禁拒绝，改已登记仓库外短路径。现有failure_fix_rerun不支持incomplete
+      proof，须先做最小严格契约扩展、新事务及新候选，不能冒称自然Full。S1/P1/P4仍在基线发布之后。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: 详见docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md中P1-C v8中断修复段；保留原失败/中断证据、54项与13项PASS、来源失败f1夹具。strict
+      mypy的21项均由HEAD影子源证实已存在，无新增，登记为原DEVX类型清理后续评估，不混入本次最小恢复。DEVX-015仍93/106。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-p1c-v8-incomplete-parent-contract-20260928
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a4b24644b5161a24b8155a01d70cb27f
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-28T07:54:52.5067810+00:00'
+  actor: integration-coordinator
+  change_id: gov-007-v8-fix-focused-validation-20260928-v1
+  lane_id: null
+  base_commit: e05581b7a0b12f620082039f3803edf2249b0bd4
+  previous_state_event_id: task-event-a4b24644b5161a24b8155a01d70cb27f
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：冻结新候选、全部正式验证与原fence基线发布；Owner：原管理员/主机边界
+    blocker_or_next_step: v8已按INSUFFICIENT收口FAILED/RELEASED；F1原发布两节点2 PASS/3172.06秒，严格incomplete-parent协议/旧格式兼容、12个派发拒绝场景及3个原生恢复节点通过。F2未复现，仅补有界诊断。下一步准备source
+      commit，新正式事务重建全部生成器并以failure_fix_rerun绑定原v8 proof，串行重跑全部required tiers与Full；S1/P1/P4仍在基线发布之后。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: production_effect=none；broker_action=none；agent_harness=codex；Owner于2026-09-28授权接手原GOV-007
+      P1-C基线发布及后续fence性能优化。DEVX-015仍93/106，非DONE；不扩展管理员、OPS触发或交易。需求及原始/聚焦证据见docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md与outputs/architecture/integration_revalidation/devx015-v389/；保留v8原证据和失败夹具，未伪造summary或PASS。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-v8-fix-focused-validation-20260928-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-da3386d9896e54985698ab73edebdbf2
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
   - Governance / pre-migration convergence program (Codex → pi)
   - P0
   - IN_PROGRESS
-  - Codex coordinator：完成 P1-C 当前基线验证/发布及后续性能优化；Project Owner 处理管理员执行包与 R2 决策
-  - P0 与 P1 既有进展见 docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md。2026-09-28
-    Codex 接手 P1-C；v7 Full 在 b8e6eb013 为 PASS（14503/4），970d028fd 为其后发布检查修复，旧发布事务已按候选替代释放。先补齐当前候选生成物、required
-    tiers 与 v8 Full，再完成普通发布；之后推进 S1、P1、P4、重测与有限 T1。DEVX-015 仍为 93/106，管理员步骤与 OPS-080
-    独立验收待完成。
+  - Codex：冻结新候选、全部正式验证与原fence基线发布；Owner：原管理员/主机边界
+  - v8已按INSUFFICIENT收口FAILED/RELEASED；F1原发布两节点2 PASS/3172.06秒，严格incomplete-parent协议/旧格式兼容、12个派发拒绝场景及3个原生恢复节点通过。F2未复现，仅补有界诊断。下一步准备source
+    commit，新正式事务重建全部生成器并以failure_fix_rerun绑定原v8 proof，串行重跑全部required tiers与Full；S1/P1/P4仍在基线发布之后。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - production_effect=none；broker_action=none；Owner 2026-09-28 授权 Codex 接手 Claude
-    未完成工作；仅当前基线发布与性能优化，不扩大管理员/运营/交易权限。v7 发布 FAILED 不改变其测试 PASS；性能优化不削弱完整性、DQ/PIT、lease
-    或发布门禁。
+  - production_effect=none；broker_action=none；agent_harness=codex；Owner于2026-09-28授权接手原GOV-007
+    P1-C基线发布及后续fence性能优化。DEVX-015仍93/106，非DONE；不扩展管理员、OPS触发或交易。需求及原始/聚焦证据见docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md与outputs/architecture/integration_revalidation/devx015-v389/；保留v8原证据和失败夹具，未伪造summary或PASS。
   docs_links:
   - docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md
   terminal: false
-  canonical_row_sha256: 00b91ac28e1c54c7a64575182a13ed96ff5983bb3adca95e9edf52190fa06021
-last_event_id: task-event-736292c501eb350067fd57205cf9505f
+  canonical_row_sha256: 05a1bbab4d8f5676ee502487dc405d3cb89f99eb32c62673cd5487115d05c70d
+last_event_id: task-event-da3386d9896e54985698ab73edebdbf2
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: bbc0996dda9c4f87360c3408209883c00d02333dfe21e6e11ed2f205ea08cb31
+fragment_checksum: dca4028eb9491d7de4e331d34a57edee0b9aaa030ac573f8bea3ce24b801b1c4

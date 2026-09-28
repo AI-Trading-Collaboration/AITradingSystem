@@ -2121,6 +2121,50 @@ def test_capture_retains_primary_failure_when_real_exit_cleanup_reports_error(
                 probe.guard.release(lease.lease_id, actor=ACTOR, outcome="failed")
 
 
+def test_capture_retains_bounded_job_query_diagnostics_before_public_error_wrap(
+    case: CheckpointCase, engine: TaskCheckpoint, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Real worker exit plus deterministic query seam; not a native budget reproduction."""
+    from types import SimpleNamespace
+
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+
+    planned = engine.plan(case.scope)
+    actual_wait = execution.WindowsJobProcess.wait
+    main_before = _git(case.main_root, "rev-parse", "HEAD")
+
+    def query(job, kind, buffer, size, returned):
+        if kind == 1:
+            buffer._obj.ActiveProcesses = 0
+        else:
+            assert kind == 3
+            buffer._obj.assigned, buffer._obj.count = 2, 1
+        return True
+
+    def fail_after_real_exit(process: Any, *, timeout: float) -> int:
+        code = actual_wait(process, timeout=timeout)
+        assert code == 0 and process.active_process_count() == 0
+        execution._JobProcesses(SimpleNamespace(QueryInformationJobObject=query), 123).collect()
+        pytest.fail("short query must exhaust the existing bounded guard")
+
+    monkeypatch.setattr(execution.WindowsJobProcess, "wait", fail_after_real_exit)
+    with pytest.raises(TaskCheckpointError, match="WORKFLOW_EXECUTION_JOB_PROCESS_LIST_BUDGET"):
+        engine.capture(planned)
+    failure = json.loads((case.destination / "execution_failure.json").read_bytes())
+    assert failure["primary_error_code"] == "WORKFLOW_EXECUTION_JOB_PROCESS_LIST_BUDGET"
+    assert failure["cleanup_errors"] == []
+    diagnostic = failure["job_process_list_diagnostics"]
+    assert diagnostic["observation_only"] is True
+    assert diagnostic["active_process_count"] == 0
+    assert diagnostic["retained_process_count"] == 0
+    assert diagnostic["queries"] == [
+        {"capacity": 2 ** power, "ok": True, "winerror": 0, "assigned": 2, "count": 1}
+        for power in range(4, 17)
+    ]
+    assert not (case.destination / "receipt.json").exists()
+    assert _git(case.main_root, "rev-parse", "HEAD") == main_before
+
+
 def _interrupted_cli_setup(case: CheckpointCase) -> tuple[str, dict[str, str], Path]:
     environment = {
         **os.environ,

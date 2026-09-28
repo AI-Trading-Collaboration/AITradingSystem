@@ -1439,13 +1439,24 @@ G2.4 主线。S4 的目的不是增加新的 Full，而是让每一次 Full 都�
   环境变量拼接缺失字段；完全没有CLI provenance参数时才读取完整environment envelope；
 - Full 的 reviewed trigger enum 固定为 `natural_integration_boundary`、`phase_exit_or_handoff`、
   `broad_shared_contract_change`、`formal_performance_profile`、`failure_fix_rerun`、`scheduled_ci`。
-  所有 Full 都要求 non-empty task/boundary；`failure_fix_rerun` 额外要求指向仓库内既有失败formal Full
+  所有 Full 都要求 non-empty task/boundary；`failure_fix_rerun` 额外要求已验证的父运行，
+  已完成失败分支要求指向仓库内既有失败formal Full
   `test_runtime_summary.json`。runner必须重验schema v1、非benchmark/print-only、exit/status一致、PASS
   provenance、profile resolved fixed-sibling containment，并以同一份captured profile bytes完成formal语义、
   summary/profile派生字段及output inventory SHA/size验证，再冻结run id、相对路径、
   summary/profile SHA-256、失败依据与安全边界；opaque id、缺文件、非Full、benchmark/print-only、最小伪造
   summary、无有效失败依据、任一SHA不可验证或filesystem resolution异常都在pytest启动前以canonical
   `validation_errors`拒绝，不允许Python traceback替代结构化exit 2；
+- 2026-09-28 GOV-007 P1-C原v8因主机重启缺失最终承诺，补充互斥的中断父运行分支：仅可使用
+  原事务固定路径的 `full_incomplete_recovery.v1`，状态保持INSUFFICIENT；完整重放原FAILED事务、
+  v2 dispatch claim、RELEASED租约、非空RESULT_RECORDED execution及原intent，逐项绑定原
+  task/candidate/request/launcher/Job/exit。proof的捕获bytes须同时命中终态事件和receipt，
+  receipt须与原链推导值一致；dispatch claim精确bytes也必须保持原事件绑定。两次Full消费
+  均须重验父链，将proof的path/SHA/size与新事务冻结的full_parent直接比较，新candidate/
+  transaction/lease不得复用原身份。末次复核原lease快照和所读文件，拒绝途中替换。
+  新union不含虚构summary/profile/pytest退出码，不接受portable incomplete import，不采纳
+  原松散PASS，不执行恢复或改变原终态。原direct/portable summary规则保持。实现与验收归属
+  [GOV-007基线恢复](GOV-007_Pre_Migration_Convergence_Program.md)，先完成串行契约修复再跑新候选；
 - 非 Full tier 未声明 provenance 时保持现有调用兼容并记录 `status=NOT_REQUIRED`；若显式声明，则同样
   使用 canonical object，但不把 S4 扩张为日常 focused/architecture/contract 的新阻断门；
 - `.github/workflows/ci.yml` 保留既有 daily scheduled Full，但必须映射为 `scheduled_ci`、

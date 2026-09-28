@@ -59,6 +59,55 @@ PARENT_RUN_IMPORT_KEYS = PARENT_RUN_KEYS | {
     "import_manifest_path",
     "import_manifest_sha256",
 }
+PARENT_RUN_INCOMPLETE_KEYS = {
+    "run_id", "recovery_path", "recovery_sha256", "recovery_size_bytes", "receipt_sha256",
+    "transaction_id", "transaction_sha256", "terminal_event_id", "lease_id",
+    "execution_request_id", "execution_sha256", "candidate_sha",
+    "report_type", "resolved_tier", "status", "failure_basis", "production_effect",
+}
+
+
+def _validate_incomplete_parent(parent: Mapping[str, object]) -> list[str]:
+    """Structural contract only; the runner must replay the original authority."""
+    errors: list[str] = []
+    if set(parent) != PARENT_RUN_INCOMPLETE_KEYS:
+        errors.append("parent_run incomplete keys mismatch")
+    for name in ("run_id", "transaction_id", "lease_id"):
+        value = parent.get(name)
+        if not isinstance(value, str) or IDENTIFIER_RE.fullmatch(value) is None:
+            errors.append(f"parent_run incomplete {name} is invalid")
+    for name in (
+        "recovery_sha256", "receipt_sha256", "transaction_sha256", "terminal_event_id",
+        "execution_request_id", "execution_sha256",
+    ):
+        value = parent.get(name)
+        if not isinstance(value, str) or SHA256_RE.fullmatch(value) is None:
+            errors.append(f"parent_run incomplete {name} is invalid")
+    size = parent.get("recovery_size_bytes")
+    if type(size) is not int or not 0 < size <= 16 * 1024 * 1024:
+        errors.append("parent_run incomplete recovery_size_bytes is invalid")
+    candidate = parent.get("candidate_sha")
+    if not isinstance(candidate, str) or re.fullmatch(r"[0-9a-f]{40}", candidate) is None:
+        errors.append("parent_run incomplete candidate_sha is invalid")
+    transaction_id = parent.get("transaction_id")
+    path = parent.get("recovery_path")
+    expected_parts = (
+        "outputs", "architecture", "arch_005_integration_publication_fence",
+        "transactions", transaction_id, "full_incomplete_recovery.json",
+    )
+    if (not isinstance(path, str) or "\\" in path
+            or PurePosixPath(path).is_absolute()
+            or PurePosixPath(path).parts != expected_parts
+            or any(part in {"", ".", ".."} for part in path.split("/"))):
+        errors.append("parent_run incomplete recovery_path is invalid")
+    for name, expected in (
+        ("report_type", "full_incomplete_recovery"), ("resolved_tier", "full"),
+        ("status", "INSUFFICIENT"), ("failure_basis", "FULL_VALIDATION_COMMITMENT_MISSING"),
+        ("production_effect", "none"),
+    ):
+        if parent.get(name) != expected:
+            errors.append(f"parent_run incomplete {name} is invalid")
+    return errors
 
 
 def _reject_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -140,6 +189,8 @@ def validate_full_provenance(payload: object) -> list[str]:
     if trigger_reason == "failure_fix_rerun":
         if not isinstance(parent_run, Mapping):
             errors.append("failure_fix_rerun parent_run must be a validated summary binding")
+        elif parent_run.get("report_type") == "full_incomplete_recovery":
+            errors.extend(_validate_incomplete_parent(parent_run))
         else:
             parent_keys = set(parent_run)
             is_direct_binding = parent_keys == PARENT_RUN_KEYS

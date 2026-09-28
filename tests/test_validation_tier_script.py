@@ -48,6 +48,69 @@ FULL_PROVENANCE_ARGS = [
 _REAL_VALIDATE_PUBLICATION_TRANSACTION_FOR_FULL = (
     validation_tier._validate_publication_transaction_for_full
 )
+_REAL_FULL_COMMAND_RUNNER = validation_tier._FullCommandRunner
+
+
+@pytest.mark.parametrize("stage", ["FORMAL_VALIDATION_PRE", "FULL_DISPATCHED"])
+@pytest.mark.parametrize("fault", ["hash", "size", "path", "transaction", "candidate", "lease"])
+def test_incomplete_parent_consumers_reject_changed_frozen_binding_before_dispatch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, stage: str, fault: str,
+) -> None:
+    from test_validation_trigger_provenance import _failure_fix_provenance, _incomplete_parent_run
+
+    from ai_trading_system.platform.architecture.integration_publication_fence import (
+        PublicationFenceError,
+    )
+
+    parent = _incomplete_parent_run()
+    provenance = _failure_fix_provenance(parent)
+    binding = {
+        "phase": stage, "transaction_sha256": "a" * 64,
+        "candidate_sha": "b" * 40, "lease_id": "lease-new",
+    }
+    frozen = {
+        "path": parent["recovery_path"], "sha256": parent["recovery_sha256"],
+        "size_bytes": parent["recovery_size_bytes"],
+    }
+    if fault == "hash":
+        frozen["sha256"] = "c" * 64
+    elif fault == "size":
+        frozen["size_bytes"] = 1
+    elif fault == "path":
+        frozen["path"] = "outputs/other/full_incomplete_recovery.json"
+    else:
+        key = {"transaction": "transaction_sha256", "candidate": "candidate_sha",
+               "lease": "lease_id"}[fault]
+        binding[key] = parent[key]
+    replay = SimpleNamespace(
+        status="PASS", phase=stage,
+        transaction={"transaction_sha256": binding["transaction_sha256"], "full_parent": frozen},
+    )
+    validated_paths = []
+
+    def validate(*args, **kwargs):
+        validated_paths.append(kwargs["parent_path"])
+        return binding
+
+    fence = SimpleNamespace(validate=validate, replay=lambda path: replay)
+    monkeypatch.setattr(validation_tier, "IntegrationPublicationFence", lambda **kwargs: fence)
+    # Parent qualification is the upstream boundary under test elsewhere. This
+    # seam models A validating successfully while the new fence has frozen B.
+    monkeypatch.setattr(validation_tier, "_validated_incomplete_parent_binding",
+                        lambda *args, **kwargs: (dict(parent), []))
+    args = SimpleNamespace(publication_transaction=tmp_path / "new.json",
+                           benchmark_dist=[], benchmark_worker=[])
+    with pytest.raises(PublicationFenceError, match="PUBLICATION_FULL_PARENT_(CHANGED|REUSED)"):
+        if stage == "FORMAL_VALIDATION_PRE":
+            _REAL_VALIDATE_PUBLICATION_TRANSACTION_FOR_FULL(
+                args, repo_root=tmp_path, validation_provenance=provenance, full_run_id="new-full",
+            )
+        else:
+            runner = object.__new__(_REAL_FULL_COMMAND_RUNNER)
+            runner.root, runner.request = tmp_path.resolve(), None
+            runner.args, runner.fence, runner.provenance = args, fence, provenance
+            runner([sys.executable, "-m", "pytest"], cwd=tmp_path)
+    assert validated_paths == [Path(str(parent["recovery_path"]))]
 
 
 @pytest.mark.parametrize("extra", [

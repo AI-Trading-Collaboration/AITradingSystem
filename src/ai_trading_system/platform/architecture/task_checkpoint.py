@@ -1630,6 +1630,7 @@ class TaskCheckpoint:
                     if primary_error is None:
                         primary_error = cleanup
         if primary_error is not None:
+            job_diagnostics = workflow_execution._job_process_list_diagnostics(primary_error)
             try:
                 safe._write_once(
                     run / "execution_failure.json",
@@ -1642,6 +1643,8 @@ class TaskCheckpoint:
                                 getattr(primary_error, "code", type(primary_error).__name__)
                             ),
                             "cleanup_errors": cleanup_errors,
+                            **({"job_process_list_diagnostics": job_diagnostics}
+                               if job_diagnostics is not None else {}),
                         }
                     ),
                 )
