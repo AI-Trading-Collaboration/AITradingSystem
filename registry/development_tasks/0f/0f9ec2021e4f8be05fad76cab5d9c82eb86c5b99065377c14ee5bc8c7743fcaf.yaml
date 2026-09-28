@@ -13,15 +13,14 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex：修复兼容性来源闭包、聚焦回归后新候选正式验证及原fence发布；Owner：原管理员/主机边界
-  requirement_refs:
-  - docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md
+  next_owner: Codex：修复witness原子发布、确定性回归及新候选正式验证；Owner：原管理员/主机边界
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: v9中断已FAILED/RELEASED，正式Full未派发。聚焦127+357通过；剩余架构首错诊断681
-    passed/1 failed，定位新增incomplete-parent provenance模块及测试缺失于DEVX-015当前兼容性来源闭包。先登记两路径、维持历史哈希不变并验证live-hash篡改拒绝，再检查整组架构失败；新候选重跑required
-    tiers和Full，基线发布后才S1/P1/P4。
+  unstructured_legacy_blocker_or_next_step: v10 architecture 1466 passed/1 failed/1
+    teardown error，Full未派发，原事务FAILED/RELEASED。隔离publication worker先创建后写入witness，parent仅等exists即读到0字节。先原子发布完整witness并确定性验证发布前不可见、发布后完整及写入失败不发布，保留真实Full/进程/Job门禁；新候选新事务重验全部required
+    tiers及Full，再原fence发布。证据见需求文档与devx015-v389/v10_witness_failure_20260929。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -218,24 +217,47 @@ events:
   - change:gov-007-v9-source-closure-fix-20260928-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-c20a20c5571a09cdb1817072ce398f3f
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-29T01:19:24.7410471+09:00'
+  actor: integration-coordinator
+  change_id: gov-007-v10-witness-fix-20260929-v1
+  lane_id: null
+  base_commit: af68a7c9c7633054e13560a574354aa4cfb38b02
+  previous_state_event_id: task-event-c20a20c5571a09cdb1817072ce398f3f
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：修复witness原子发布、确定性回归及新候选正式验证；Owner：原管理员/主机边界
+    blocker_or_next_step: v10 architecture 1466 passed/1 failed/1 teardown error，Full未派发，原事务FAILED/RELEASED。隔离publication
+      worker先创建后写入witness，parent仅等exists即读到0字节。先原子发布完整witness并确定性验证发布前不可见、发布后完整及写入失败不发布，保留真实Full/进程/Job门禁；新候选新事务重验全部required
+      tiers及Full，再原fence发布。证据见需求文档与devx015-v389/v10_witness_failure_20260929。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: production_effect=none；broker_action=none；原E1–E10验收不变；本次仅修复测试同步竞态，不豁免JSON错误、不延长sleep或削弱发布门禁。基线发布后继续S1/P1/P4及重测。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-v10-witness-fix-20260929-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-58daa59d49124d414c4eb9f834a9e249
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
   - Governance / pre-migration convergence program (Codex → pi)
   - P0
   - IN_PROGRESS
-  - Codex：修复兼容性来源闭包、聚焦回归后新候选正式验证及原fence发布；Owner：原管理员/主机边界
-  - v9中断已FAILED/RELEASED，正式Full未派发。聚焦127+357通过；剩余架构首错诊断681 passed/1 failed，定位新增incomplete-parent
-    provenance模块及测试缺失于DEVX-015当前兼容性来源闭包。先登记两路径、维持历史哈希不变并验证live-hash篡改拒绝，再检查整组架构失败；新候选重跑required
-    tiers和Full，基线发布后才S1/P1/P4。
+  - Codex：修复witness原子发布、确定性回归及新候选正式验证；Owner：原管理员/主机边界
+  - v10 architecture 1466 passed/1 failed/1 teardown error，Full未派发，原事务FAILED/RELEASED。隔离publication
+    worker先创建后写入witness，parent仅等exists即读到0字节。先原子发布完整witness并确定性验证发布前不可见、发布后完整及写入失败不发布，保留真实Full/进程/Job门禁；新候选新事务重验全部required
+    tiers及Full，再原fence发布。证据见需求文档与devx015-v389/v10_witness_failure_20260929。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - production_effect=none；broker_action=none；agent_harness=codex；Owner于2026-09-28授权接手原GOV-007
-    P1-C基线发布及后续fence性能优化。DEVX-015仍93/106，非DONE；不扩展管理员、OPS触发或交易。需求及原始/聚焦证据见docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md与outputs/architecture/integration_revalidation/devx015-v389/；保留v8原证据和失败夹具，未伪造summary或PASS。
-  docs_links:
-  - docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md
+  - production_effect=none；broker_action=none；原E1–E10验收不变；本次仅修复测试同步竞态，不豁免JSON错误、不延长sleep或削弱发布门禁。基线发布后继续S1/P1/P4及重测。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: d7ad9837c592dc93a53808dd2f288f365b1c65f9884f8a6598797cbd24df3dee
-last_event_id: task-event-c20a20c5571a09cdb1817072ce398f3f
+  canonical_row_sha256: 22456af6f71d2ae6c7098d509644641132a5eb1068270812519ec9cac195aa71
+last_event_id: task-event-58daa59d49124d414c4eb9f834a9e249
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 4b4d472e07f467164c1e2ddc7a1c2d4b3a66727ed660aff71dfffa178e9a27a1
+fragment_checksum: 27ceef3d46ad7511d1e7c8ae6e37c8399b7d07472421281cacff9b12973e673a

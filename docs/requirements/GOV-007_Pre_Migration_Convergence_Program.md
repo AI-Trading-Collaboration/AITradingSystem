@@ -440,6 +440,31 @@ hash 复核，并在正式候选上完成全套门禁。
 
 S1/P1/P4 尚未实现，DEVX-015 仍为 93/106，不将本修复登记为运营或正式验收完成。
 
+### 2026-09-29 v10 witness 发布竞态修复
+
+v10 architecture-fitness 得到 1466 passed、1 failed、1 teardown error（4165.48 秒）。
+`index-replaced-full-profile-publish` 的 worker 直接写入 witness，父进程仅等待文件存在，
+因而在文件创建后、写完前读取到空 JSON；失败文件实测为 0 字节。随后 Job 清理导致
+`LEASE_EXECUTION_NOT_TERMINAL`，保留原拒绝，不放宽终态门禁。v10 已 FAILED/RELEASED，
+正式 Full 未派发；证据在 devx015-v389/v10_witness_failure_20260929，原夹具保留。
+
+按原 GOV 任务的新准备事务先登记，再实施测试同步修复：worker 将完整 JSON 写到同目录
+临时文件，关闭后原子发布 witness，父进程仍严格解析与核验内容。确定性回归须证明写入
+暂停时目标不可见、发布后内容完整、写入失败不会暴露目标；不能吞 JSON 错误、增加 sleep、
+跳过原 Full 或削弱进程/Job/lease 校验。之后复验原真实发布用例，新候选新事务执行全部
+required tiers 与 Full，父证据仍为原 v8 incomplete Full。源码测试同步不改变系统数据流。
+
+本阶段临时测试目录使用已登记 D:/Work/aits_gov007_v8fix/ 下 v10witness-* 子目录；
+owner 为 GOV-007，退出条件为发布后证据归档校验、无进程依赖及生命周期审计完成。
+S1/P1/P4 尚未实施，本修复不代表基线发布或目标完成。
+
+实现复用现有 `write_json_atomic`，测试 worker 与确定性回归执行同一 writer source。
+回归在原子替换前阻塞，验证目标不可见，再释放并检查完整 JSON；另注入 fsync 失败，
+确认目标及临时文件均不残留。4 项聚焦检查通过（7.29 秒），Ruff 通过；日志为
+`v10_witness_fix_unit_01.log`。真实发布用例两个参数均通过（2 passed /3742.62 秒），
+日志 `v10_witness_fix_native_01.log`，使用 -n16/loadfile；原进程正常结束。
+新候选全部 required tiers 和正式 Full 仍待完成，聚焦结果不替代正式验收。
+
 ## 7. 退出条件
 
 E1–E10 全部满足，迁移到 pi 的第一个低风险任务完成完整的"预检 → 提交 → 合入 main → 推送"。

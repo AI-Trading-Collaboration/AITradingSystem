@@ -36,232 +36,232 @@
       "section_sha256": "4e9e977f6701dec9b64455af4235bf532ec53729b36a51090769209a58e28252"
     },
     {
-      "entry_sha256": "288d517ab1381a4cd33d6125d8d0e53c2557b13a7726facbf67e02b0bba1d55f",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/5b/5bb6ba2fed3a96976fbfef68fa0e102867595ce1a42e783fc37e2affdd9ac68d.json",
-      "fragment_sha256": "5ca0054830a00ce792ae845380d40387d03c514c3a0aebd57abc4aa41fb5d268",
+      "entry_sha256": "d7e347615e5a998d7706a2dd83436cb5aa8bdcb5da8dbbdc1296f68359001a9b",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/a4/a4038290f2ac3edbf91305055811755dd8c0d6675c2938175339efc850fc4e07.json",
+      "fragment_sha256": "60385789273206589d7292a9c38b7ba1e00a8f39348821a6a05831d9791cff33",
       "order": 3,
       "previous_entry_sha256": "afebdf822635c51a58cf2e71622a3b3f871b44b2c38dad3036f532e640ca5e39",
       "section_id": "phase_devx_007_web_pro_git_review_skill_explicit_submission_v2",
-      "section_sha256": "5bb6ba2fed3a96976fbfef68fa0e102867595ce1a42e783fc37e2affdd9ac68d"
+      "section_sha256": "a4038290f2ac3edbf91305055811755dd8c0d6675c2938175339efc850fc4e07"
     },
     {
-      "entry_sha256": "ed3402e59ee2bc20b6b4fb3e9a82f33f314e447ac6d9a64f09aee5cf087d58a2",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/4f/4ffa6267006478ff1f8ef810462c1717ed9486c828fd83c50a70cf70237c4738.json",
-      "fragment_sha256": "497cab489271af5d61615c21b20472f92c421aad98233db954e43e8eb66464e1",
+      "entry_sha256": "3cf98fd6655210e3d4fb77ce06ab6e6518d9431de73aa37768f21518ba7634c3",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/16/16785a94c317fbafb73f31dca4c1381dc20fa1541bd6d59757cae7c2232e212c.json",
+      "fragment_sha256": "020e4c74600861559bcf24749852039da76fe084334fcf5b23c1ac0a49d2536d",
       "order": 4,
-      "previous_entry_sha256": "288d517ab1381a4cd33d6125d8d0e53c2557b13a7726facbf67e02b0bba1d55f",
+      "previous_entry_sha256": "d7e347615e5a998d7706a2dd83436cb5aa8bdcb5da8dbbdc1296f68359001a9b",
       "section_id": "phase_trading_2542c_growth_action_value_independent_review_remediation_and_freeze_readiness_v1",
-      "section_sha256": "4ffa6267006478ff1f8ef810462c1717ed9486c828fd83c50a70cf70237c4738"
+      "section_sha256": "16785a94c317fbafb73f31dca4c1381dc20fa1541bd6d59757cae7c2232e212c"
     },
     {
-      "entry_sha256": "d0958e11b187a4dffe89bbbef52e94a2aaf26bbb3236139b081f7cad829592cd",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/8f/8fe28ab8537e1567e27b3d3c4bee7043dce130db5cb0cb39aae20356eb758619.json",
-      "fragment_sha256": "9684029efe5cbe59110e902788c3f3a4a8622099b4dc89c279c16636f4a2e95b",
+      "entry_sha256": "63490969effb44a92ec53013e39b1c0ad02a62d85b54e4fbb901f5c0b88d4a03",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/aa/aa1dc3137b6b0914852993fd28c47470c56bea2d0f31dab213d2cc2c2c1cf11e.json",
+      "fragment_sha256": "dd2daa7f1a6771e0f65789fcec8f9bf1bb87e4bf48bfd9524888a0dd6e88cc7f",
       "order": 5,
-      "previous_entry_sha256": "ed3402e59ee2bc20b6b4fb3e9a82f33f314e447ac6d9a64f09aee5cf087d58a2",
+      "previous_entry_sha256": "3cf98fd6655210e3d4fb77ce06ab6e6518d9431de73aa37768f21518ba7634c3",
       "section_id": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1",
-      "section_sha256": "8fe28ab8537e1567e27b3d3c4bee7043dce130db5cb0cb39aae20356eb758619"
+      "section_sha256": "aa1dc3137b6b0914852993fd28c47470c56bea2d0f31dab213d2cc2c2c1cf11e"
     },
     {
-      "entry_sha256": "35375cad67c86b69779d003912311501c646d0d1ad9c7ddf7f0e1e31d340a226",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/26/266754e032bc056c2ae4cba23da4fc2ec338c1a6e4c92b9e0df32d52ee927be1.json",
-      "fragment_sha256": "0848256738189a3fa2adaec54c311c51487146e104398a822ebbd473343c46ed",
+      "entry_sha256": "15e90ecc47197d524008da1a250c3325b246023fb64f7d5321e74ce3a382bb9c",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/38/38603e5c8cb31dfb21a84fea6f5889c5b76723f7c99dcd1c7d4d57f22f164f18.json",
+      "fragment_sha256": "226b39dacc113515c8cc1ad9d9a6a05be290e59e47b09c2a03fa17721300ce59",
       "order": 6,
-      "previous_entry_sha256": "d0958e11b187a4dffe89bbbef52e94a2aaf26bbb3236139b081f7cad829592cd",
+      "previous_entry_sha256": "63490969effb44a92ec53013e39b1c0ad02a62d85b54e4fbb901f5c0b88d4a03",
       "section_id": "phase_trading_2542d_growth_action_value_dq_pit_and_sample_semantics_freeze_correction_v1",
-      "section_sha256": "266754e032bc056c2ae4cba23da4fc2ec338c1a6e4c92b9e0df32d52ee927be1"
+      "section_sha256": "38603e5c8cb31dfb21a84fea6f5889c5b76723f7c99dcd1c7d4d57f22f164f18"
     },
     {
-      "entry_sha256": "21fd9a28f1013b2209900b3157aff5fb6a8ba9a346426aaf7c8e5f9958714f99",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/f5/f5b5995c179178a15cc99def889d4308e33409638229c476d88f8557ef64f148.json",
-      "fragment_sha256": "a81fd1463e99262c50a1632b855594fb18c04f21a094fda8cf2448e97f87847d",
+      "entry_sha256": "24ad250f7f980f05d46c866036ec93a36dc15d8a7878ff5aea36ed85a5d3e949",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/60/6040a31a413f8605ea3c4c01db0f8958a7d7f22dcbc238233528769dd80f5508.json",
+      "fragment_sha256": "6749646306a2775321581a767d114eab07faca29929acb4ff1e2f9cbd9e81755",
       "order": 7,
-      "previous_entry_sha256": "35375cad67c86b69779d003912311501c646d0d1ad9c7ddf7f0e1e31d340a226",
+      "previous_entry_sha256": "15e90ecc47197d524008da1a250c3325b246023fb64f7d5321e74ce3a382bb9c",
       "section_id": "phase_prod_004_pit_cumulative_archive_consumption_v1",
-      "section_sha256": "f5b5995c179178a15cc99def889d4308e33409638229c476d88f8557ef64f148"
+      "section_sha256": "6040a31a413f8605ea3c4c01db0f8958a7d7f22dcbc238233528769dd80f5508"
     },
     {
-      "entry_sha256": "0c8b0a617682b5992568fe2c3279fa7bc09af2d8eb5f698a03f3880eeceaad18",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/b0/b0b44de6b6e56e839d1698f3803bcbc8a9f8c2f3e12c544b400d441948b9d61e.json",
-      "fragment_sha256": "d632644a44861f66054ff94a01e055399b665764a77ed76051903a32b6a395cb",
+      "entry_sha256": "7e7d3a41c3a869992d046ce0dc6ce8b35cac9dc887f1d900daea00d69fd3ffb5",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/05/0557870448390c26febbd78ea6d6fd29d27024a08f0d3b01786a998cb2eb0885.json",
+      "fragment_sha256": "1e8cc1f09ba318f0ff54bc1483099b6611446d1df92793a3f739206b349a0efe",
       "order": 8,
-      "previous_entry_sha256": "21fd9a28f1013b2209900b3157aff5fb6a8ba9a346426aaf7c8e5f9958714f99",
+      "previous_entry_sha256": "24ad250f7f980f05d46c866036ec93a36dc15d8a7878ff5aea36ed85a5d3e949",
       "section_id": "phase_devx_011_governed_workflow_health_control_loop_v1",
-      "section_sha256": "b0b44de6b6e56e839d1698f3803bcbc8a9f8c2f3e12c544b400d441948b9d61e"
+      "section_sha256": "0557870448390c26febbd78ea6d6fd29d27024a08f0d3b01786a998cb2eb0885"
     },
     {
-      "entry_sha256": "9adee393e4643c6bf237743fa6c55192486da4f3972cfb72446b94a7ed2d7045",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/82/82ae483399db89234e36fb32bb5f5b55562d20e261fe8d821c0e5ba36cc84137.json",
-      "fragment_sha256": "16827e0ea6f2d532c342bfcd1dfc72f50b2ff506a3b8d68fd742db6f4fa7d559",
+      "entry_sha256": "9ac54735530f5690cf3cf8260947bb4c3466f98e469c3f195687c71279ced267",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/ce/ceeece62fbe8e65ddf605a31a03beebc58d0bf2e69f5982f8a15ee175e46ba5f.json",
+      "fragment_sha256": "c4bc780526c3ecb7c7e53d8672a262e64a0e0bb88bd0df3b73df903c0109426c",
       "order": 9,
-      "previous_entry_sha256": "0c8b0a617682b5992568fe2c3279fa7bc09af2d8eb5f698a03f3880eeceaad18",
+      "previous_entry_sha256": "7e7d3a41c3a869992d046ce0dc6ce8b35cac9dc887f1d900daea00d69fd3ffb5",
       "section_id": "phase_devx_012_automatic_workflow_health_trigger_and_outcome_review_v1",
-      "section_sha256": "82ae483399db89234e36fb32bb5f5b55562d20e261fe8d821c0e5ba36cc84137"
+      "section_sha256": "ceeece62fbe8e65ddf605a31a03beebc58d0bf2e69f5982f8a15ee175e46ba5f"
     },
     {
-      "entry_sha256": "6a8be5ff1802fefa50c7a8d62555973d9622230d45487066fafc35dec13da684",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/45/45929a7a4700f54ce39ff2eba1d29d1fdafdde13c23fd6df5debe5ad2450aa18.json",
-      "fragment_sha256": "312b7111385248c91e2d989e27885809030beff41b19c07b6abe9354d8f80a36",
+      "entry_sha256": "fbb34e886037fca47a02c0db6ec2dd58d78437c8cf72f9b81841e1f49b819036",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/79/790f7f508490a7153611f34cc693a711e4072822cf3961bf8ee61f5ca220212c.json",
+      "fragment_sha256": "42e0f24892d3354f7dce6976835c4fb22e1ef519ffdbc98a6c81d3e7c7e50f59",
       "order": 10,
-      "previous_entry_sha256": "9adee393e4643c6bf237743fa6c55192486da4f3972cfb72446b94a7ed2d7045",
+      "previous_entry_sha256": "9ac54735530f5690cf3cf8260947bb4c3466f98e469c3f195687c71279ced267",
       "section_id": "phase_risk_012_unknown_risk_event_id_fail_closed_v1",
-      "section_sha256": "45929a7a4700f54ce39ff2eba1d29d1fdafdde13c23fd6df5debe5ad2450aa18"
+      "section_sha256": "790f7f508490a7153611f34cc693a711e4072822cf3961bf8ee61f5ca220212c"
     },
     {
-      "entry_sha256": "25cd2fc6bc5756afa6cf752cb2bf777e4fb1c484d74ef55de9339b609e5c5644",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/6f/6ffccb321fbfd9a7a1ae18f8be0be07931091537ceb8548ea9198526a15a1a98.json",
-      "fragment_sha256": "71d9ff1f12767fa0027b00320de3be74882e918dae6ca936875d9b9d8b476d56",
+      "entry_sha256": "ab90794eaf7e269b7a9e00a5f46efb48427ac2864ce18d45a82925fc8749e41c",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/fc/fccbd9a4482d1e4b3ccff8026c3080ee5c010134d9a66262dc0ef8ef627fd088.json",
+      "fragment_sha256": "b41da1c31653e0b1f8c7e2e516b0780ae5056f7e8d9be4e46d95784b6883c6f5",
       "order": 11,
-      "previous_entry_sha256": "6a8be5ff1802fefa50c7a8d62555973d9622230d45487066fafc35dec13da684",
+      "previous_entry_sha256": "fbb34e886037fca47a02c0db6ec2dd58d78437c8cf72f9b81841e1f49b819036",
       "section_id": "phase_ops_077_atomic_release_scheduler_binding_and_canary_v1",
-      "section_sha256": "6ffccb321fbfd9a7a1ae18f8be0be07931091537ceb8548ea9198526a15a1a98"
+      "section_sha256": "fccbd9a4482d1e4b3ccff8026c3080ee5c010134d9a66262dc0ef8ef627fd088"
     },
     {
-      "entry_sha256": "e54314c64593e44938baaf25c8bcfecabf5d6429f493296b55b2d9c88b69d415",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/0e/0ea78049ca987c30a7c71b63e2f78e81a92f1b59edd28dc1bf45cc3a895ce352.json",
-      "fragment_sha256": "88417e5f58ee7418027721200a37c5d03366ca758d9771d5d474aa674276cd35",
+      "entry_sha256": "c663e012d79e962981e92121ef666c4725765d531f6499c63bcbc54d736dc5d1",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/46/464a4cdc2a04a894261db3b41693ad70dc399cfc3dd9ca3d9af7f00bd751c471.json",
+      "fragment_sha256": "21cd29e96a623b602c7c18778834140e3432a81c25681d644e1d707cd83e86ee",
       "order": 12,
-      "previous_entry_sha256": "25cd2fc6bc5756afa6cf752cb2bf777e4fb1c484d74ef55de9339b609e5c5644",
+      "previous_entry_sha256": "ab90794eaf7e269b7a9e00a5f46efb48427ac2864ce18d45a82925fc8749e41c",
       "section_id": "phase_ops_078_daily_automation_isolation_and_same_day_rescue_v1",
-      "section_sha256": "0ea78049ca987c30a7c71b63e2f78e81a92f1b59edd28dc1bf45cc3a895ce352"
+      "section_sha256": "464a4cdc2a04a894261db3b41693ad70dc399cfc3dd9ca3d9af7f00bd751c471"
     },
     {
-      "entry_sha256": "065af1a8deaf4cba02ec6e104d7ccffb7916e30c2470514efc38cbd486d3a7fc",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/69/69d7dba6ae015a4dc5d56348e40e3b0fe7b647de7d3f77699cb2de5dbc770433.json",
-      "fragment_sha256": "6849a807d0a4fcd2208196d05022a5fe9d3783e30f4ae094716fb5e93ebeee3b",
+      "entry_sha256": "61c0b88c34c39f251a4e2464d99d194906dd76d5d2395915fd9f5877668f7866",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/de/de9a27bf53998ab29ab850fd7049b724d8f5faac04587ea28771c8d658e585b6.json",
+      "fragment_sha256": "353f17c2ba46ebf8aa155db97ab82037627b623008c9ae701100cf5dd8ec9cc1",
       "order": 13,
-      "previous_entry_sha256": "e54314c64593e44938baaf25c8bcfecabf5d6429f493296b55b2d9c88b69d415",
+      "previous_entry_sha256": "c663e012d79e962981e92121ef666c4725765d531f6499c63bcbc54d736dc5d1",
       "section_id": "phase_trading_2564_s2a_named_immutable_snapshot_v1",
-      "section_sha256": "69d7dba6ae015a4dc5d56348e40e3b0fe7b647de7d3f77699cb2de5dbc770433"
+      "section_sha256": "de9a27bf53998ab29ab850fd7049b724d8f5faac04587ea28771c8d658e585b6"
     },
     {
-      "entry_sha256": "ccbd3a476cdadecaec0deb3eb3acd7a5fff95c616697ea13cc88c4ac9f57e646",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/2c/2c8e74cd9c6a1aea282e8fce850c593a611b96f87db318a957e6e0b060a8fa35.json",
-      "fragment_sha256": "5efc256bb1d28dc49aeb7cfd58af3d49d2a4c4ba4d927b1244994d5ad16ef2fc",
+      "entry_sha256": "173697c4bcf4ae89e932f569200c5bdc906fc6bbc740a3f4833c2640cb3fea3f",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/34/340f8fedd585f5093552d61d69b57340de56bd4fe3e167673099143d0a8b3ef7.json",
+      "fragment_sha256": "e4f1eaad8bcd64a0493d56781bb212bcf600f0b12840fca266d6d5ba78555d50",
       "order": 14,
-      "previous_entry_sha256": "065af1a8deaf4cba02ec6e104d7ccffb7916e30c2470514efc38cbd486d3a7fc",
+      "previous_entry_sha256": "61c0b88c34c39f251a4e2464d99d194906dd76d5d2395915fd9f5877668f7866",
       "section_id": "phase_ops_079_historical_daily_gap_recovery_executor_v1",
-      "section_sha256": "2c8e74cd9c6a1aea282e8fce850c593a611b96f87db318a957e6e0b060a8fa35"
+      "section_sha256": "340f8fedd585f5093552d61d69b57340de56bd4fe3e167673099143d0a8b3ef7"
     },
     {
-      "entry_sha256": "adc674d33b0436848f08a9dd511cbe713adbe576ecead26934f31f84788c6814",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/61/614599f877d0d89892e0978e6b9a828f54b3c15789227a9c4d7d03168c3017a9.json",
-      "fragment_sha256": "0520d094010c543d35dac9c47923264b0de036e63e57247fb59d887885299b1a",
+      "entry_sha256": "3b0410c19db1d9352f86c21261f3eda4fed4c908d93775c30a8548cfa97a1cc1",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/92/927f4164b5bbc2618be9eadd99670541e682a016ba11ecd3b4bcd6281c1e0555.json",
+      "fragment_sha256": "d3c1e0e33822444d8b5518c26498634448933f850b1bfadde19ff706b1415a16",
       "order": 15,
-      "previous_entry_sha256": "ccbd3a476cdadecaec0deb3eb3acd7a5fff95c616697ea13cc88c4ac9f57e646",
+      "previous_entry_sha256": "173697c4bcf4ae89e932f569200c5bdc906fc6bbc740a3f4833c2640cb3fea3f",
       "section_id": "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1",
-      "section_sha256": "614599f877d0d89892e0978e6b9a828f54b3c15789227a9c4d7d03168c3017a9"
+      "section_sha256": "927f4164b5bbc2618be9eadd99670541e682a016ba11ecd3b4bcd6281c1e0555"
     },
     {
-      "entry_sha256": "4cb40596261945fec2c6c6abc2938fee91490de543e31d0c0c66f803c32fe6fc",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/21/211f60484ff0565f957cfeb246b01a217fc6a5363c18acd4cc9ee754ce8da11a.json",
-      "fragment_sha256": "fdb0b1b0a6988e46619dd08c5a1a61b57ce1222c93fc109495afac344869ee86",
+      "entry_sha256": "ab60161a8710a55dc8e01683a8372a76a5bdb4f9f93fa86bf60431e0f59976df",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/83/83ecd835e37c1baa100ab49575714fd1feb2637c1a7748e6a762b00db3a1826b.json",
+      "fragment_sha256": "1c792150fcc3c17e87cb083187d3b941b421a6239b15f8232594c447cd141fca",
       "order": 16,
-      "previous_entry_sha256": "adc674d33b0436848f08a9dd511cbe713adbe576ecead26934f31f84788c6814",
+      "previous_entry_sha256": "3b0410c19db1d9352f86c21261f3eda4fed4c908d93775c30a8548cfa97a1cc1",
       "section_id": "phase_trading_2564_s2b_named_dq_execution_v1",
-      "section_sha256": "211f60484ff0565f957cfeb246b01a217fc6a5363c18acd4cc9ee754ce8da11a"
+      "section_sha256": "83ecd835e37c1baa100ab49575714fd1feb2637c1a7748e6a762b00db3a1826b"
     },
     {
-      "entry_sha256": "27eb848518a09c61932f3d9ff7eab45dceb5f886f42e7f0662d425403261b522",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/86/8643428a6a34f03e17266c674c4140ad95955a80118041833fbb2e6a75c2f6e1.json",
-      "fragment_sha256": "44fd8f5e061752aeb35e7351a81c7209b76737d9a3f170133d904eb630ce8868",
+      "entry_sha256": "79e19795744f7f6fb8418e24dabc75dcafce0ebe96afe70789d98014c5a19cae",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/ae/ae0187bd868b250c4a8a7316a8abf415b20a39add08f23d16843f384520fd283.json",
+      "fragment_sha256": "c18826cdff3f5ae3501708d28129748a20c86ba7bce8432c4e4ad5a12660cd5c",
       "order": 17,
-      "previous_entry_sha256": "4cb40596261945fec2c6c6abc2938fee91490de543e31d0c0c66f803c32fe6fc",
+      "previous_entry_sha256": "ab60161a8710a55dc8e01683a8372a76a5bdb4f9f93fa86bf60431e0f59976df",
       "section_id": "phase_trading_2564_s2c_equal_risk_price_consumer_scope_v1",
-      "section_sha256": "8643428a6a34f03e17266c674c4140ad95955a80118041833fbb2e6a75c2f6e1"
+      "section_sha256": "ae0187bd868b250c4a8a7316a8abf415b20a39add08f23d16843f384520fd283"
     },
     {
-      "entry_sha256": "640baf7d1606319d6c6a289b80e44fad6fa8e7c4e9ff4c2dc61a6567df67cf5d",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/2c/2c0583a3ca1246b2387934887e663126beae5f8d0812b6987fc9158af6f58cc1.json",
-      "fragment_sha256": "04780a9e5b91616d1f86ebe6dc17a3c2d52ae8a82a20b5d2dd125711d5d729b6",
+      "entry_sha256": "4f29cf34057af15eb343a4ce83973511160bab326690f764cd777d364998f472",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/0a/0a6347e223a83f6fefd344183b8298efb87031c594b5bbf2344dbaab77ba2237.json",
+      "fragment_sha256": "9f69f7fc4141a8658c9733c4411a42a298dc8d0b71d0eca713f318c0048d496c",
       "order": 18,
-      "previous_entry_sha256": "27eb848518a09c61932f3d9ff7eab45dceb5f886f42e7f0662d425403261b522",
+      "previous_entry_sha256": "79e19795744f7f6fb8418e24dabc75dcafce0ebe96afe70789d98014c5a19cae",
       "section_id": "phase_trading_2564_s2c2_five_candidate_preview_v1",
-      "section_sha256": "2c0583a3ca1246b2387934887e663126beae5f8d0812b6987fc9158af6f58cc1"
+      "section_sha256": "0a6347e223a83f6fefd344183b8298efb87031c594b5bbf2344dbaab77ba2237"
     },
     {
-      "entry_sha256": "b470b7210aee01e7d47901b955678c02b99dc40168ededde7b949dd8a37ca683",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/2e/2e142b2d0456a944657fcd3ee4f34b27356cccfb5ced2ce37d7546a9a61aa602.json",
-      "fragment_sha256": "e163d17b77d2d30976525efde9ebfa59cc141a8914c8ed9debc73e3e302d8873",
+      "entry_sha256": "77d7daffd931cbcacd3ce3ae37d1d757e537701721cd93f7ce8f744bd49d7522",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/11/11d7080c13dfe5f2b8737ebdaaccf1a37896583b0fd47d3e48bf82be2f824e4e.json",
+      "fragment_sha256": "9da8bec923573de18ef5abc61b2d8fad7017f44f34fbddeb16e5f4bad77047e2",
       "order": 19,
-      "previous_entry_sha256": "640baf7d1606319d6c6a289b80e44fad6fa8e7c4e9ff4c2dc61a6567df67cf5d",
+      "previous_entry_sha256": "4f29cf34057af15eb343a4ce83973511160bab326690f764cd777d364998f472",
       "section_id": "phase_trading_2564_s3a_prospective_event_time_v1",
-      "section_sha256": "2e142b2d0456a944657fcd3ee4f34b27356cccfb5ced2ce37d7546a9a61aa602"
+      "section_sha256": "11d7080c13dfe5f2b8737ebdaaccf1a37896583b0fd47d3e48bf82be2f824e4e"
     },
     {
-      "entry_sha256": "6541bf68ab4408ad95ca29dd8e4b5c39b86cbb55928c3fd0afed382d309992a8",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/20/20650120a461cc11c284d3c5401ef6bc40f3ef55a6327a5910439b6d25226ee1.json",
-      "fragment_sha256": "e6c4817f01676c39905b1a19b4bd7b68351d5168af0026513727ff778e0fc466",
+      "entry_sha256": "f9ff2ffcd7221d6bbef9f633ee2ac5a75a04bef44cbfe8f0eb529d11b7597ad2",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/62/626f8cd4d15fef9ee3dee72b555de1b247090ac7943401aa547922092959f52f.json",
+      "fragment_sha256": "8c46bb46c08bcb679fa5de736747d254da247e564f02fc3100f79a570f109131",
       "order": 20,
-      "previous_entry_sha256": "b470b7210aee01e7d47901b955678c02b99dc40168ededde7b949dd8a37ca683",
+      "previous_entry_sha256": "77d7daffd931cbcacd3ce3ae37d1d757e537701721cd93f7ce8f744bd49d7522",
       "section_id": "phase_trading_2564_s3b_prospective_capture_execution_v1",
-      "section_sha256": "20650120a461cc11c284d3c5401ef6bc40f3ef55a6327a5910439b6d25226ee1"
+      "section_sha256": "626f8cd4d15fef9ee3dee72b555de1b247090ac7943401aa547922092959f52f"
     },
     {
-      "entry_sha256": "a343fc007cfe20c57ee90fd47ee8ff2bd32deb9ee511c3a9251f704473a7898f",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/0f/0fe260b41942b69636598fbab5b95a9e40bd18bba18c3c5adec3baf225d0ec46.json",
-      "fragment_sha256": "61ef28069f1f927fd1d6a20b567c67010c39411e5f927b71c2997383d3309262",
+      "entry_sha256": "ef490c6b9130fe32edc5b05b40e4896a3f7665e62e8069d94ac97efe328a9f07",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/0c/0c46459232fcf13020c93fc319346bfe233a9f200d82edec7983b8de61b7595c.json",
+      "fragment_sha256": "b2e72430532932d680ad021aa974fbdd3b77efd11c444e92d213e9577e122be6",
       "order": 21,
-      "previous_entry_sha256": "6541bf68ab4408ad95ca29dd8e4b5c39b86cbb55928c3fd0afed382d309992a8",
+      "previous_entry_sha256": "f9ff2ffcd7221d6bbef9f633ee2ac5a75a04bef44cbfe8f0eb529d11b7597ad2",
       "section_id": "phase_trading_2564_s5_validated_duration_seed_v1",
-      "section_sha256": "0fe260b41942b69636598fbab5b95a9e40bd18bba18c3c5adec3baf225d0ec46"
+      "section_sha256": "0c46459232fcf13020c93fc319346bfe233a9f200d82edec7983b8de61b7595c"
     },
     {
-      "entry_sha256": "ec3d0358dea660f6a11148e5985f6015f32efcbd854a9951c29ccec29a6ebb61",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/25/25526d6e59331c75e90cdd4c566b182e312e532e6b27bd9b28f9e0c395a647ff.json",
-      "fragment_sha256": "4fa919cef97d5a0e49d30034691f201596a89bcf519a5f1bcb5702fba6a3b5c9",
+      "entry_sha256": "b6cc302165071e64309734bce77e4b37a57a5c141c8d9eaa917b04702ea9d182",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/2a/2a989c7540a18d972baf0cedfd9587e414c6a1b897b9e861a82721b52e5f5a2e.json",
+      "fragment_sha256": "406461a4f5334c92828546275011264d2e32a2d6e91edcd59c12204dd167320a",
       "order": 22,
-      "previous_entry_sha256": "a343fc007cfe20c57ee90fd47ee8ff2bd32deb9ee511c3a9251f704473a7898f",
+      "previous_entry_sha256": "ef490c6b9130fe32edc5b05b40e4896a3f7665e62e8069d94ac97efe328a9f07",
       "section_id": "phase_trading_2564_s5_immediate_failure_diagnostics_v1",
-      "section_sha256": "25526d6e59331c75e90cdd4c566b182e312e532e6b27bd9b28f9e0c395a647ff"
+      "section_sha256": "2a989c7540a18d972baf0cedfd9587e414c6a1b897b9e861a82721b52e5f5a2e"
     },
     {
-      "entry_sha256": "31cdfdcc7e0576220a8682c64d06434ae9b8681604ad49794255d6e8f3a4fded",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/40/40be48879aa998e1f249b4dbd75c75de89f40d14e11f6dc80bbc7b95d7e6ff04.json",
-      "fragment_sha256": "c57c6de512f2413b2da301683c60a388ffeea3b71c785d5c7fe29cdce27c5b12",
+      "entry_sha256": "295fff898da067e5240a57b54c5be49ec940b91730e4d728b281898980ee9ae6",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/b8/b80c2d09561a99a031fd2be3fa1f07e021f25c9dfd53ac93af0dd4234a473fcb.json",
+      "fragment_sha256": "e3121341ea27b7d1d033837706e9871267a6c09aa4bf57f2bd0faf541bbe6396",
       "order": 23,
-      "previous_entry_sha256": "ec3d0358dea660f6a11148e5985f6015f32efcbd854a9951c29ccec29a6ebb61",
+      "previous_entry_sha256": "b6cc302165071e64309734bce77e4b37a57a5c141c8d9eaa917b04702ea9d182",
       "section_id": "phase_trading_2564_s4_experiment_first_access_v1",
-      "section_sha256": "40be48879aa998e1f249b4dbd75c75de89f40d14e11f6dc80bbc7b95d7e6ff04"
+      "section_sha256": "b80c2d09561a99a031fd2be3fa1f07e021f25c9dfd53ac93af0dd4234a473fcb"
     },
     {
-      "entry_sha256": "d288fc359fbf9b0ab2ed26170aa4eb64a8774392a0c43386fae109c2864dda45",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/b5/b5163c47ba7366b2ed7ef6afdb5633a2e80ac958b3731c2b46d1b138e2972c3d.json",
-      "fragment_sha256": "e6bc3100fe4876bf29f723b38f2507af0796ba1861caddd7279a7c2faefc9688",
+      "entry_sha256": "33bd11eca16f35e041eb77e1b35308466dd460a917dcf1633b172b8c2784ab48",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/ed/ed8309e66e3acd151b9a2a179f1a3abab7526f8a53ceb864d206a6af2b3bb9a1.json",
+      "fragment_sha256": "4a9f200b39e5715d994a391751728113f65afd91d28ff2db4765db466c0153e5",
       "order": 24,
-      "previous_entry_sha256": "31cdfdcc7e0576220a8682c64d06434ae9b8681604ad49794255d6e8f3a4fded",
+      "previous_entry_sha256": "295fff898da067e5240a57b54c5be49ec940b91730e4d728b281898980ee9ae6",
       "section_id": "phase_trading_2560_composer_known_snapshot_capture_v1",
-      "section_sha256": "b5163c47ba7366b2ed7ef6afdb5633a2e80ac958b3731c2b46d1b138e2972c3d"
+      "section_sha256": "ed8309e66e3acd151b9a2a179f1a3abab7526f8a53ceb864d206a6af2b3bb9a1"
     },
     {
-      "entry_sha256": "84f3b2785ec2e6f163627b711be3f50fac145acfafef97400bdb9ce3362f03c5",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/fe/fe0e495ddd5ca4d7415af2a586dc231e1889170429f0f20781cb733171c5ee03.json",
-      "fragment_sha256": "c703bb84f3801ec38cffce0b834981227a046dbb836edf4100f4ba4d9edebe9d",
+      "entry_sha256": "d5c004473cef02d8a8a6eaf529e38fe0d37fd88404242d0bc4133185e571ffe9",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/88/8828764eb140dc3cb2d5393b93f6820fae3c788c56a7bdeec9b4d43ed5400e22.json",
+      "fragment_sha256": "ec8ff40bf067056c940fe41223a1c8462a9e5c55a79eb59514a6e6f7eda24236",
       "order": 25,
-      "previous_entry_sha256": "d288fc359fbf9b0ab2ed26170aa4eb64a8774392a0c43386fae109c2864dda45",
+      "previous_entry_sha256": "33bd11eca16f35e041eb77e1b35308466dd460a917dcf1633b172b8c2784ab48",
       "section_id": "phase_ops_081_scheduler_business_contract_decoupling_v1",
-      "section_sha256": "fe0e495ddd5ca4d7415af2a586dc231e1889170429f0f20781cb733171c5ee03"
+      "section_sha256": "8828764eb140dc3cb2d5393b93f6820fae3c788c56a7bdeec9b4d43ed5400e22"
     },
     {
-      "entry_sha256": "2388e2a01e5d723310cd2654b8bf27f847bb25ceb3e539640bb6a12b36f741e3",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/9e/9e4bcf4993cc8f15e341222fc5dcc2db9ad5da775fa37729496b18e6162f83bc.json",
-      "fragment_sha256": "5232c7fcbe7f1ce58a0c23b6b70803f6afcbb89a6d1a40c74b82f551b6ff536c",
+      "entry_sha256": "38a30844dd418c1821a084b2e2c890049693b9180839b9b2063f9b73cd3af4ca",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/48/48f20ee759f4b8d43693990ea98d3fff7ad3d85505d791132324e3ee50d95b7f.json",
+      "fragment_sha256": "373fd44e47c7fbb70b4fc270cfc03396dcd4012261fda022d326197927c319f2",
       "order": 26,
-      "previous_entry_sha256": "84f3b2785ec2e6f163627b711be3f50fac145acfafef97400bdb9ce3362f03c5",
+      "previous_entry_sha256": "d5c004473cef02d8a8a6eaf529e38fe0d37fd88404242d0bc4133185e571ffe9",
       "section_id": "phase_devx_015_task_integration_admission_v1",
-      "section_sha256": "9e4bcf4993cc8f15e341222fc5dcc2db9ad5da775fa37729496b18e6162f83bc"
+      "section_sha256": "48f20ee759f4b8d43693990ea98d3fff7ad3d85505d791132324e3ee50d95b7f"
     },
     {
-      "entry_sha256": "c0943ab051c42cf79d1c02e6e25d191439ca572ad8c9ce57dd92351840f6ec30",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/19/198a21fff0b10218750fd7269e5f894e35861a003fe8431055a4c934eab33496.json",
-      "fragment_sha256": "ae8ae046361e20466c81d13415019098dcf935aae8e8452030604bf44a8157a2",
+      "entry_sha256": "73e6b38704cedffa4bd80115e6bbbfc89b4e9805f50236db4c7d0258a2f63dbd",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/6f/6f4896f5e10d1b9cdb46e47eecc5671c934ee26409887ca97da126710af42219.json",
+      "fragment_sha256": "b943116e3c5688375c683d18acad2258ff3b09242c068d48131084805f8f86a2",
       "order": 27,
-      "previous_entry_sha256": "2388e2a01e5d723310cd2654b8bf27f847bb25ceb3e539640bb6a12b36f741e3",
+      "previous_entry_sha256": "38a30844dd418c1821a084b2e2c890049693b9180839b9b2063f9b73cd3af4ca",
       "section_id": "phase_devx_015_workflow_contract_v3",
-      "section_sha256": "198a21fff0b10218750fd7269e5f894e35861a003fe8431055a4c934eab33496"
+      "section_sha256": "6f4896f5e10d1b9cdb46e47eecc5671c934ee26409887ca97da126710af42219"
     }
   ],
-  "final_chain_sha256": "c0943ab051c42cf79d1c02e6e25d191439ca572ad8c9ce57dd92351840f6ec30",
+  "final_chain_sha256": "73e6b38704cedffa4bd80115e6bbbfc89b4e9805f50236db4c7d0258a2f63dbd",
   "genesis_chain_sha256": "9be38b19ac0ccccd821200bc38b1fb86ce86e1052e7f4496595da5b40d475bcd",
   "legacy_prefix": {
     "byte_count": 3151107,

@@ -8586,7 +8586,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_integration_publication_fence
   path: tests/test_arch_005_integration_publication_fence.py
-  sha256: e565def72b5a281fc8e1329baf389f7c9489dc8cfcd20993dd32b74b53ce03c3
+  sha256: a9785dd91a33697a360c28f893221a95c8784513d734e0a44d73668bf411c798
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality

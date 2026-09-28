@@ -1218,6 +1218,62 @@ def _publication_stage_trace_source() -> str:
     )
 
 
+def _publication_witness_writer_source() -> str:
+    # Existence is the parent/worker rendezvous: publish only a complete document.
+    return (
+        "from ai_trading_system.platform.artifacts import write_json_atomic\n"
+        "def publish_witness(path, witness):\n"
+        " write_json_atomic(path, witness)\n"
+    )
+
+
+def test_publication_witness_is_invisible_until_complete(tmp_path, monkeypatch) -> None:
+    from threading import Event
+
+    from ai_trading_system.platform.artifacts import writer
+
+    target = tmp_path / "witness.json"
+    payload = {"worker_process": {"pid": 123}, "evidence": "完整证据" * 10000}
+    before_publish, allow_publish = Event(), Event()
+    original_replace = writer._replace_with_bounded_windows_contention_retry
+
+    def paused_replace(source, destination):
+        assert destination == target
+        assert json.loads(source.read_text(encoding="utf-8")) == payload
+        before_publish.set()
+        assert allow_publish.wait(10), "test did not release the publication boundary"
+        original_replace(source, destination)
+
+    monkeypatch.setattr(writer, "_replace_with_bounded_windows_contention_retry", paused_replace)
+    scope = {}
+    exec(_publication_witness_writer_source(), scope)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        pending = pool.submit(scope["publish_witness"], target, payload)
+        try:
+            assert before_publish.wait(10), "worker did not reach atomic publication"
+            assert not target.exists()
+        finally:
+            allow_publish.set()
+        pending.result(timeout=10)
+    assert json.loads(target.read_text(encoding="utf-8")) == payload
+
+
+def test_publication_witness_write_failure_does_not_publish(tmp_path, monkeypatch) -> None:
+    from ai_trading_system.platform.artifacts import writer
+
+    def failed_flush(_descriptor):
+        raise OSError("injected witness flush failure")
+
+    monkeypatch.setattr(writer.os, "fsync", failed_flush)
+    scope = {}
+    exec(_publication_witness_writer_source(), scope)
+    target = tmp_path / "witness.json"
+    with pytest.raises(OSError, match="injected witness flush failure"):
+        scope["publish_witness"](target, {"evidence": "must not publish"})
+    assert not target.exists()
+    assert list(tmp_path.iterdir()) == []
+
+
 def test_publication_stage_trace_is_synchronous(capsys) -> None:
     scope = {}
     exec(_publication_stage_trace_source(), scope)
@@ -1335,6 +1391,7 @@ def _exercise_failed_publication_job(
     program = (
         "import json,sys,time\nfrom pathlib import Path\n"
         + _publication_stage_trace_source()
+        + _publication_witness_writer_source()
         + "publication_stage('worker_started')\n"
         "from ai_trading_system.platform.architecture.integration_publication_fence "
         "import IntegrationPublicationFence,PublicationFenceError\n"
@@ -1446,7 +1503,7 @@ def _exercise_failed_publication_job(
         f"with lifecycle.prepare_main_reference(request,actor={actor!r}) as preparation:\n"
         " publication_stage('main_prepared')\n"
         " witness['main_preparation']=preparation\n"
-        f" Path({str(witness_path)!r}).write_text(json.dumps(witness))\n"
+        f" publish_witness(Path({str(witness_path)!r}),witness)\n"
         f" while not Path({str(release_path)!r}).exists(): time.sleep(.02)\n"
         "publication_stage('main_prepare_aborted')\n"
         "result={**_result_binding(request),'status':'FAIL','reason':'AFTER_PREPARE_ABORT'}\n"
