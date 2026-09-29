@@ -10,8 +10,10 @@ import subprocess
 import sys
 import time
 from collections.abc import Iterator
+from contextlib import contextmanager, nullcontext
 from datetime import UTC, datetime
 from pathlib import Path
+from threading import Event, Thread
 from types import ModuleType
 
 import pytest
@@ -658,8 +660,46 @@ def _admission_complete_projection(repository: Path) -> None:
     )
 
 
+@contextmanager
+def _admission_live_lease(repository: Path) -> Iterator[None]:
+    """Maintain the fixture lease through preparation, then allow real expiry."""
+    from ai_trading_system.platform.architecture.integration_publication_fence import (
+        IntegrationPublicationFence,
+    )
+
+    fence = IntegrationPublicationFence(project_root=repository)
+    transaction = fence.runtime_root / "transactions/merge-authority/transaction.json"
+    lease_id = str(fence.replay(transaction).transaction["lease_id"])
+    stopped = Event()
+    failures: list[Exception] = []
+
+    def heartbeat() -> None:
+        fence.guard.store.heartbeat(
+            lease_id, actor="integration-coordinator", now=datetime.now(UTC),
+        )
+
+    def maintain() -> None:
+        while not stopped.wait(fence.guard.policy.heartbeat_interval_seconds):
+            try:
+                heartbeat()
+            except Exception as error:
+                failures.append(error)
+                stopped.set()
+
+    heartbeat()
+    worker = Thread(target=maintain, name="admission-fixture-lease")
+    worker.start()
+    try:
+        yield
+    finally:
+        stopped.set()
+        worker.join()
+        if failures:
+            raise AssertionError("fixture preparation heartbeat failed") from failures[0]
+
+
 def _admission_transaction(
-    repository: Path, *, phase: str = "LOCAL_MAIN_FF_PRE"
+    repository: Path, *, phase: str = "LOCAL_MAIN_FF_PRE", keep_preparation_live: bool = False,
 ) -> tuple[object, Path]:
     from test_devx015_workflow_coordination import _run_actual_profile_full
     from test_devx015_workflow_integration import TASK
@@ -669,7 +709,16 @@ def _admission_transaction(
     )
 
     assert phase in {"FORMAL_VALIDATION_RESULT", "LOCAL_MAIN_FF_PRE"}
-    fence = IntegrationPublicationFence(project_root=repository)
+    class PreparationFence(IntegrationPublicationFence):
+        def _prepare_profile_checkpoint(self, *args, **kwargs):
+            # The real inspector runs outside the arbiter. Join the heartbeat
+            # before checkpoint enters its atomic transition; never compete
+            # with the Full runner's own lease lifecycle.
+            with _admission_live_lease(repository):
+                return super()._prepare_profile_checkpoint(*args, **kwargs)
+
+    fence_type = PreparationFence if keep_preparation_live else IntegrationPublicationFence
+    fence = fence_type(project_root=repository)
     transaction = fence.runtime_root / "transactions/merge-authority/transaction.json"
     completed = subprocess.run(
         [sys.executable, "scripts/architecture_arch005_task_source.py", "update",
@@ -967,11 +1016,17 @@ def test_completed_admission_full_entry_rejects_real_invalid_context(
     fence, transaction = _admission_transaction(
         admission_checkout,
         phase="FORMAL_VALIDATION_RESULT" if case == "phase" else "LOCAL_MAIN_FF_PRE",
+        keep_preparation_live=case == "expired",
     )
-    if case != "phase":
-        baseline = _admission_result(admission_checkout, transaction, monkeypatch, task_id=TASK)
-        assert baseline["status"] == "PASS", baseline
-        assert baseline["task_registration_source"] == "COMPLETED_VALIDATED_CANDIDATE_INTEGRATION"
+    # Preflight is read-only. Stop and join its heartbeat before observing
+    # the unmodified wall-clock expiry; Full and transitions own their writes.
+    with _admission_live_lease(admission_checkout) if case == "expired" else nullcontext():
+        if case != "phase":
+            baseline = _admission_result(admission_checkout, transaction, monkeypatch, task_id=TASK)
+            assert baseline["status"] == "PASS", baseline
+            assert baseline["task_registration_source"] == (
+                "COMPLETED_VALIDATED_CANDIDATE_INTEGRATION"
+            )
     if case == "candidate":
         _admission_git(admission_checkout, "commit", "--allow-empty", "-m", "candidate drift")
     elif case in {"dirty", "audit"}:

@@ -13,14 +13,15 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex：修复witness原子发布、确定性回归及新候选正式验证；Owner：原管理员/主机边界
-  requirement_refs: []
+  next_owner: Codex：修复聚焦回归已通过，生成/提交新候选并正式重验；Owner：原管理员/主机边界
+  requirement_refs:
+  - docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: v10 architecture 1466 passed/1 failed/1
-    teardown error，Full未派发，原事务FAILED/RELEASED。隔离publication worker先创建后写入witness，parent仅等exists即读到0字节。先原子发布完整witness并确定性验证发布前不可见、发布后完整及写入失败不发布，保留真实Full/进程/Job门禁；新候选新事务重验全部required
-    tiers及Full，再原fence发布。证据见需求文档与devx015-v389/v10_witness_failure_20260929。
+  unstructured_legacy_blocker_or_next_step: v11正式失败已FAILED/RELEASED；原3个checkpoint
+    node及6项清理分支PASS，expired经限定只读准备续租后1 passed/1657.22s。首轮仲裁失败证据保留；下一步新候选新事务全部required
+    tiers及Full，绑定v11失败Full，发布后S1/P1/P4。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -242,22 +243,71 @@ events:
   - change:gov-007-v10-witness-fix-20260929-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-58daa59d49124d414c4eb9f834a9e249
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-29T11:45:39.557623+00:00'
+  actor: integration-coordinator
+  change_id: gov-007-v11-fixture-lifecycle-fix-20260929-v1
+  lane_id: null
+  base_commit: 935ad29c3d84cdaddb911c9637302ca71dbd9142
+  previous_state_event_id: task-event-58daa59d49124d414c4eb9f834a9e249
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：修复测试producer清理与真实过期准备生命周期，聚焦回归后新候选正式验证；Owner：原管理员/主机边界
+    blocker_or_next_step: v11正式Full为4 failed/14597 passed/4 skipped，36553.55s；原事务FAILED/RELEASED。三项checkpoint清理重复打开已复用PID，一项expired
+      admission在准备阶段lease提前过期。先修复测试生命周期并证明不会误终止复用PID、未知状态仍拒绝、live基线到真实过期负例完整；新候选新事务全部required
+      tiers及Full，严格绑定失败父证据，再基线发布及S1/P1/P4。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: production_effect=none；broker_action=none；原P0及E1–E10验收不变。保留原v8/v11及pytest-20495失败证据；不放宽生产身份/lease门禁，不改变候选Full资格。需求docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md；证据outputs/architecture/integration_revalidation/devx015-v389。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-v11-fixture-lifecycle-fix-20260929-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c4b2081044df01443f6f28bd4abd10cd
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-29T12:30:47.615199+00:00'
+  actor: integration-coordinator
+  change_id: gov-007-v11-fixture-regression-passed-20260929
+  lane_id: null
+  base_commit: 935ad29c3d84cdaddb911c9637302ca71dbd9142
+  previous_state_event_id: task-event-c4b2081044df01443f6f28bd4abd10cd
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：修复聚焦回归已通过，生成/提交新候选并正式重验；Owner：原管理员/主机边界
+    blocker_or_next_step: v11正式失败已FAILED/RELEASED；原3个checkpoint node及6项清理分支PASS，expired经限定只读准备续租后1
+      passed/1657.22s。首轮仲裁失败证据保留；下一步新候选新事务全部required tiers及Full，绑定v11失败Full，发布后S1/P1/P4。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: production_effect=none；broker_action=none；详见 docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md；聚焦PASS不等于正式验收，原E1–E10边界不变。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-v11-fixture-regression-passed-20260929
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-40e8a4eb8388c41f2c8af1856dfb302b
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
   - Governance / pre-migration convergence program (Codex → pi)
   - P0
   - IN_PROGRESS
-  - Codex：修复witness原子发布、确定性回归及新候选正式验证；Owner：原管理员/主机边界
-  - v10 architecture 1466 passed/1 failed/1 teardown error，Full未派发，原事务FAILED/RELEASED。隔离publication
-    worker先创建后写入witness，parent仅等exists即读到0字节。先原子发布完整witness并确定性验证发布前不可见、发布后完整及写入失败不发布，保留真实Full/进程/Job门禁；新候选新事务重验全部required
-    tiers及Full，再原fence发布。证据见需求文档与devx015-v389/v10_witness_failure_20260929。
+  - Codex：修复聚焦回归已通过，生成/提交新候选并正式重验；Owner：原管理员/主机边界
+  - v11正式失败已FAILED/RELEASED；原3个checkpoint node及6项清理分支PASS，expired经限定只读准备续租后1 passed/1657.22s。首轮仲裁失败证据保留；下一步新候选新事务全部required
+    tiers及Full，绑定v11失败Full，发布后S1/P1/P4。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - production_effect=none；broker_action=none；原E1–E10验收不变；本次仅修复测试同步竞态，不豁免JSON错误、不延长sleep或削弱发布门禁。基线发布后继续S1/P1/P4及重测。
-  docs_links: []
+  - production_effect=none；broker_action=none；详见 docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md；聚焦PASS不等于正式验收，原E1–E10边界不变。
+  docs_links:
+  - docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md
   terminal: false
-  canonical_row_sha256: 22456af6f71d2ae6c7098d509644641132a5eb1068270812519ec9cac195aa71
-last_event_id: task-event-58daa59d49124d414c4eb9f834a9e249
+  canonical_row_sha256: c853898dcd612ded9f92b67559fbdb109ea44e77cab873838ce8f472dc64a74a
+last_event_id: task-event-40e8a4eb8388c41f2c8af1856dfb302b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 27ceef3d46ad7511d1e7c8ae6e37c8399b7d07472421281cacff9b12973e673a
+fragment_checksum: 1d9520a27ce428794fe093060fd5ddd17bf63b6c5063166231d1419d65655f64

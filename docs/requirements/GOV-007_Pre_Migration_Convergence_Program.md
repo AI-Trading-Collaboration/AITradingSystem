@@ -465,6 +465,46 @@ S1/P1/P4 尚未实施，本修复不代表基线发布或目标完成。
 日志 `v10_witness_fix_native_01.log`，使用 -n16/loadfile；原进程正常结束。
 新候选全部 required tiers 和正式 Full 仍待完成，聚焦结果不替代正式验收。
 
+### 2026-09-29 v11 Full 测试生命周期修复
+
+候选 `935ad29c3d84cdaddb911c9637302ca71dbd9142` 的四项 required tiers 通过，
+正式 Full 得到 4 failed、14597 passed、4 skipped（36553.55 秒）。原 v11 事务已
+FAILED/RELEASED；正式 summary 的 provenance 为 PASS，但测试 FAIL，不能发布。
+完整日志、summary/profile、原 v8 incomplete parent 及 `pytest-20495` 失败夹具均保留。
+
+本轮按原 GOV 任务和新准备事务分两步修复，再形成新候选：
+
+1. checkpoint 的三个失败都发生在清理函数重新打开旧 PID 后，创建时间已经不同。
+   清理必须区分原实例存活、已退出、PID 复用以及无法确认；绝不能终止复用后的进程。
+   以确定性回归覆盖身份分支、句柄释放和拒绝未知状态，再验证原真实中断恢复用例；
+   保留真实 launcher/worker/Job、恢复结果和事件链断言，不放宽生产身份校验。
+2. `expired-full-profile-publish` 在 `_admission_transaction` 的 LOCAL_MAIN_FF_PRE
+   准备阶段触发 PUBLICATION_LEASE_EXPIRED，未进入预期的 live PASS → 真实过期负例。
+   先核对保留事件链的续租及耗时，修复测试准备阶段的 lease 生命周期；必须先得到同一
+   候选的完整 live 基线，再停止续租并等待真实墙钟过期，验证原 typed rejection。
+   不修改生产时钟、不事后更改冻结策略、不缩减真实 Full 或共享不同候选的通过结果。
+
+两步聚焦验证通过后更新记录、生成物并提交新候选；新正式事务绑定合法失败 Full 父证据，
+执行全部 required tiers 与 Full。旧 v11 不重启、不覆盖；聚焦 PASS 不替代正式结果。
+本次测试生命周期修复不改变业务数据流，故无需修改 system_flow。
+
+首轮聚焦回归为 9 passed、1 failed（241.79 秒）：三个原 PID 用例及六项清理分支
+通过，expired 用例暴露测试续租线程与内层 Full 的 LEASE_ARBITER_BUSY。
+续租作用域因此限定到真实 profile 只读准备和只读 preflight；准备返回前停止并 join，
+再由原 checkpoint 进入 atomic transition，Full 期间仅由原 runner 管理租约。
+不重试仲裁失败、不放宽原生锁，原失败日志保留，新一轮单独验证 expired 用例。
+
+第二轮 expired 聚焦回归通过（1 passed /1657.22 秒）；其内部真实 Full 为
+PASS/exit0/provenance PASS（1029.9 秒），正向 admission、停止续租后的真实过期及
+PUBLICATION_LEASE_EXPIRED 拒绝均通过。结合首轮 9 项 PASS，四个原失败 node 和
+六项清理分支已覆盖；Ruff 通过。证据位于 devx015-v389 的
+v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
+下一步为新候选全部正式验证，尚未发布，不能复用旧候选的 required tiers PASS。
+
+临时聚焦目录归 GOV-007，位于既有 `D:/Work/aits_gov007_v8fix/` 下 `v11fixture-*`；
+退出条件为发布后证据归档与摘要核对完成、无进程依赖并通过生命周期审计。原失败夹具
+在保留证据完成前不清理。基线发布后的 S1、P1、P4 及重测目标仍未完成。
+
 ## 7. 退出条件
 
 E1–E10 全部满足，迁移到 pi 的第一个低风险任务完成完整的"预检 → 提交 → 合入 main → 推送"。

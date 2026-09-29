@@ -8810,7 +8810,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_task_checkpoint
   path: tests/test_arch_005_task_checkpoint.py
-  sha256: 37296eb964cb4f8a73b861fbac365601bf5b06f61adb85abc25227f10bb2e80b
+  sha256: d839dab030a355df1c62ea01849a48ec3f9df2034eff6a7b090dd153ce495824
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -13024,7 +13024,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_governed_development_skill
   path: tests/test_governed_development_skill.py
-  sha256: ae35a0805578694a685447dee0f9c622d6ad40ad654092d17fe99c810060f5a4
+  sha256: 7648ac15ac0e3d071ccaf0fb293d1cde82163422511b7a559c08b108bfd293e0
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

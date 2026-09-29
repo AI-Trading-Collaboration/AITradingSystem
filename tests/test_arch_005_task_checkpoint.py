@@ -2283,7 +2283,10 @@ def _terminate_fixture_producer(identity: dict[str, int]) -> None:
         assert ctypes.get_last_error() == 87, "fixture producer absence is unproven"
         return
     try:
-        assert oracle.creation_time(native) == identity["creation_time"], "fixture PID was reused"
+        if oracle.creation_time(native) != identity["creation_time"]:
+            # This handle belongs to a replacement process. The original instance
+            # is gone; never terminate the new owner of the recycled PID.
+            return
         if not oracle.exited(native):
             oracle.api.TerminateProcess.argtypes = [wintypes.HANDLE, wintypes.UINT]
             oracle.api.TerminateProcess.restype = wintypes.BOOL
@@ -2291,6 +2294,66 @@ def _terminate_fixture_producer(identity: dict[str, int]) -> None:
             assert oracle.exited(native, timeout=30)
     finally:
         assert oracle.api.CloseHandle(native)
+
+
+@pytest.mark.parametrize("state", ["live", "exited", "reused", "absent", "denied", "unknown"])
+def test_fixture_producer_cleanup_respects_native_instance_identity(
+    monkeypatch: pytest.MonkeyPatch, state: str,
+) -> None:
+    import ctypes
+    from types import SimpleNamespace
+
+    import test_devx015_workflow_execution as native_tests
+
+    calls: list[str] = []
+
+    def open_process(*_args):
+        calls.append("open")
+        return 0 if state in {"absent", "denied"} else 42
+
+    def creation_time(_handle):
+        calls.append("identity")
+        if state == "unknown":
+            raise OSError("identity unavailable")
+        return 101 if state == "reused" else 100
+
+    def exited(_handle, *, timeout=None):
+        calls.append("wait" if timeout is not None else "exited")
+        return state == "exited" or timeout is not None
+
+    def terminate(_handle, _code):
+        calls.append("terminate")
+        return True
+
+    def close(_handle):
+        calls.append("close")
+        return True
+
+    oracle = SimpleNamespace(
+        api=SimpleNamespace(
+            OpenProcess=open_process, TerminateProcess=terminate, CloseHandle=close,
+        ),
+        creation_time=creation_time, exited=exited,
+    )
+    monkeypatch.setattr(native_tests, "NativeOracle", lambda: oracle)
+    monkeypatch.setattr(ctypes, "get_last_error", lambda: 87 if state == "absent" else 5)
+    identity = {"pid": 123, "creation_time": 100}
+    if state == "denied":
+        with pytest.raises(AssertionError, match="absence is unproven"):
+            _terminate_fixture_producer(identity)
+    elif state == "unknown":
+        with pytest.raises(OSError, match="identity unavailable"):
+            _terminate_fixture_producer(identity)
+    else:
+        _terminate_fixture_producer(identity)
+    assert calls == {
+        "live": ["open", "identity", "exited", "terminate", "wait", "close"],
+        "exited": ["open", "identity", "exited", "close"],
+        "reused": ["open", "identity", "close"],
+        "absent": ["open"],
+        "denied": ["open"],
+        "unknown": ["open", "identity", "close"],
+    }[state]
 
 
 def _interrupt_recovery_install(
