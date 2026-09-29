@@ -1,0 +1,91 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  task_id_sha256: 925a49077b490f7bfbf905ce1550d06916e77d406f48c9f02f4fcab5d181e367
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  title: null
+  domain: Architecture / validation runtime throughput (scheduling, tier dedup, heavy-node
+    cost)
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Claude Code coordinator
+  requirement_refs:
+  - docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md`。v11
+    Full 10.15h 墙钟 vs 43.2 worker-h（理想 2.7h）：loadfile 把 publication_fence 文件（568 分钟）固定在单
+    worker。下一步 O1+S1（受审清单内文件按节点拆分、重型并发上限 K=6、耗时权重刷新，runtime profile 契约新增 policy）→
+    O2（pre-Full tier 排除 `real_full_chain` 节点）→ O5 → 与 GOV-007 基线同一候选正式验收 → P1/P4/O3
+    → O4 按需
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile
+      仍按原契约通过；pre-Full tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-09-29T17:41:23Z'
+  actor: integration-coordinator
+  change_id: devx-018-registration-permit-20260930-v1
+  lane_id: null
+  base_commit: 01d2d14f8fb9b1f31a714e3c48f9f7f4b58cd689
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+    - Architecture / validation runtime throughput (scheduling, tier dedup, heavy-node
+      cost)
+    - P0
+    - IN_PROGRESS
+    - Claude Code coordinator
+    - 详见 `docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md`。v11 Full
+      10.15h 墙钟 vs 43.2 worker-h（理想 2.7h）：loadfile 把 publication_fence 文件（568 分钟）固定在单
+      worker。下一步 O1+S1（受审清单内文件按节点拆分、重型并发上限 K=6、耗时权重刷新，runtime profile 契约新增 policy）→
+      O2（pre-Full tier 排除 `real_full_chain` 节点）→ O5 → 与 GOV-007 基线同一候选正式验收 → P1/P4/O3
+      → O4 按需
+    - Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full
+      tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
+    - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision
+      2026-09-30（优化顺序、O2、S1 并入、K=6、v12 中断后先落地 O1+O2 再跑正式验证）
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:devx-018-registration-permit-20260930-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8654b7a1aaccb1d98361dc4134a9d75d
+projection:
+  legacy_first_eight_cells:
+  - DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  - Architecture / validation runtime throughput (scheduling, tier dedup, heavy-node
+    cost)
+  - P0
+  - IN_PROGRESS
+  - Claude Code coordinator
+  - 详见 `docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md`。v11 Full 10.15h
+    墙钟 vs 43.2 worker-h（理想 2.7h）：loadfile 把 publication_fence 文件（568 分钟）固定在单 worker。下一步
+    O1+S1（受审清单内文件按节点拆分、重型并发上限 K=6、耗时权重刷新，runtime profile 契约新增 policy）→ O2（pre-Full
+    tier 排除 `real_full_chain` 节点）→ O5 → 与 GOV-007 基线同一候选正式验收 → P1/P4/O3 → O4 按需
+  - Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full
+    tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
+  - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision
+    2026-09-30（优化顺序、O2、S1 并入、K=6、v12 中断后先落地 O1+O2 再跑正式验证）
+  docs_links:
+  - docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
+  terminal: false
+  canonical_row_sha256: 06655f1985c90c8a3862c1fabd16fe7dc1ac55d3ae4cb7b1b5e2e49cf9aad34c
+last_event_id: task-event-8654b7a1aaccb1d98361dc4134a9d75d
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 38c86a46dd7d4da38d112f2283278b41db3484011e28a6045c8266371bed59df

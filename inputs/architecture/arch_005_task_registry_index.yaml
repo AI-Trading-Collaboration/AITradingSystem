@@ -7,14 +7,14 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 1074
-active_task_count: 309
+task_count: 1075
+active_task_count: 310
 completed_task_count: 765
-fragment_count: 1074
+fragment_count: 1075
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: ebd03da5d0823d037df40fd16d6dcf2876545eda7b90d6f86719a8c6f55f4ac5
+final_chain_sha256: 4925df0d52cc3849c597c2208dcf905183918d78d66312d168b7320ead9a101f
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 2fab76611d56d6278a102740c94bb5da2236a35467c6debc98b34ad1c9f32129
 templates:
@@ -8621,12 +8621,20 @@ fragments:
   order: 1074
   previous_entry_sha256: c54a9a35e6b17ce1ec7be5784e274d1eccb3d46cf0f7b54c5d56e2d56ff51c50
   entry_sha256: ebd03da5d0823d037df40fd16d6dcf2876545eda7b90d6f86719a8c6f55f4ac5
+- task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  path: registry/development_tasks/92/925a49077b490f7bfbf905ce1550d06916e77d406f48c9f02f4fcab5d181e367.yaml
+  file_sha256: f527bba32059a49805b49f7a76b258e74c029545f7dc3a9bca6c315fc7d77f28
+  fragment_checksum: 38c86a46dd7d4da38d112f2283278b41db3484011e28a6045c8266371bed59df
+  partition: active
+  order: 1075
+  previous_entry_sha256: ebd03da5d0823d037df40fd16d6dcf2876545eda7b90d6f86719a8c6f55f4ac5
+  entry_sha256: 4925df0d52cc3849c597c2208dcf905183918d78d66312d168b7320ead9a101f
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 2ae2d42dd89a35210563576414ed81a9b3bf2b8bb0f33c3705e261d367af49cb
-  byte_count: 1358322
-  row_count: 309
+  sha256: f85e48c0fb483ffb6627c2a5408a857560c62e41d70a4c8f3a754cd172522bc0
+  byte_count: 1359446
+  row_count: 310
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
@@ -17497,7 +17505,14 @@ governance_cycles:
   change_id: gov-007-v11-fixture-regression-passed-20260929
   event_count: 10
   production_effect: none
-governance_cycle_count: 1266
+- cycle_id: arch-005-s5-cycle-1267
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  change_id: devx-018-registration-permit-20260930-v1
+  event_count: 1
+  production_effect: none
+governance_cycle_count: 1267
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -17511,4 +17526,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: da612c1ec30f0a6ad7f2b311ec08c63f9dc9a65fe161ec13d6e960774fcc4137
+index_checksum: bd9903702aea96ad75e045009336c111a7b4610c5328f70ea38e6c6e9c7259ba
