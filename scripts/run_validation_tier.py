@@ -62,6 +62,16 @@ from ai_trading_system.platform.validation_parent_run_import import (
 from ai_trading_system.platform.validation_parent_run_import import (
     validate_parent_run_import,
 )
+from ai_trading_system.platform.validation_scheduling import (  # noqa: E402
+    REAL_FULL_CHAIN_MARKER,
+    SCHEDULING_MANIFEST_RELATIVE_PATH,
+    SPLIT_SCOPE_EVIDENCE_SCHEMA_VERSION,
+    SchedulingManifest,
+    SchedulingManifestError,
+    load_scheduling_manifest,
+    parse_scheduling_manifest,
+    split_scope_evidence_error,
+)
 from ai_trading_system.platform.validation_trigger_provenance import (  # noqa: E402
     BOUNDARY_ID_ENV as VALIDATION_BOUNDARY_ID_ENV,
 )
@@ -150,6 +160,9 @@ class TierSpec:
     match_terms: tuple[str, ...] = ()
     manifest_categories: tuple[str, ...] = ()
     pytest_args: tuple[str, ...] = ("-q", "--durations=20", "--durations-min=1")
+    # DEVX-018 O2: markers deselected in this pre-Full tier. The marks come from the
+    # reviewed scheduling manifest via the runtime profile plugin; Full never excludes.
+    excluded_markers: tuple[str, ...] = ()
 
 
 TIER_SPECS: dict[str, TierSpec] = {
@@ -298,6 +311,7 @@ TIER_SPECS: dict[str, TierSpec] = {
         promotion_blocking=True,
         slow_suite_allowed=False,
         manifest_categories=("architecture",),
+        excluded_markers=(REAL_FULL_CHAIN_MARKER,),
     ),
     "slow-research-regression": TierSpec(
         description="ETF dynamic-v3 rescue, historical replay, simulation, and advisory tests.",
@@ -425,17 +439,56 @@ def build_command(
         else []
     )
     runtime_profile_suffix = ["--no-loadscope-reorder"] if resolved_tier == "full" else []
+    if spec.excluded_markers and resolved_tier == "full":
+        raise ValueError("Full must not exclude any marker")
+    marker_exclusion = (
+        [
+            "-p",
+            FULL_RUNTIME_PROFILE_PLUGIN,
+            "-m",
+            " and ".join(f"not {marker}" for marker in spec.excluded_markers),
+        ]
+        if spec.excluded_markers
+        else []
+    )
     return [
         python_executable,
         "-m",
         "pytest",
         *_pytest_parallel_args(workers, dist),
         *runtime_profile_prefix,
+        *marker_exclusion,
         *paths,
         *spec.pytest_args,
         *extra_pytest_args,
         *runtime_profile_suffix,
     ]
+
+
+def _test_selection_policy(spec: TierSpec, repo_root: Path) -> dict[str, object] | None:
+    """Audit record for DEVX-018 marker exclusion; the manifest identity is re-read."""
+    if not spec.excluded_markers:
+        return None
+    try:
+        manifest = load_scheduling_manifest(repo_root)
+    except SchedulingManifestError as exc:
+        manifest_record: dict[str, object] | None = {"error": str(exc)}
+    else:
+        manifest_record = (
+            None
+            if manifest is None
+            else {
+                "path": manifest.relative_path,
+                "sha256": manifest.sha256,
+                "version": manifest.version,
+                "real_full_chain_function_count": len(manifest.real_full_chain_functions),
+            }
+        )
+    return {
+        "excluded_markers": list(spec.excluded_markers),
+        "formal_authority_for_excluded_nodes": "full",
+        "scheduling_manifest": manifest_record,
+    }
 
 
 def _format_command(command: Sequence[str]) -> str:
@@ -1877,6 +1930,7 @@ def _runtime_payload(
         "dist": dist,
         "extra_pytest_args": list(extra_pytest_args),
         "command": list(command),
+        "test_selection_policy": _test_selection_policy(spec, repo_root),
         "resolved_config": {"validation_tier": resolved_tier},
         "input_artifacts": input_artifacts,
         "input_checksums": _artifact_checksums(input_artifacts),
@@ -2265,6 +2319,47 @@ class CapturedDurationManifest:
         )
 
 
+_SCHEDULING_MANIFEST_UNCHECKED = object()
+_SPLIT_SCOPE_EVIDENCE_FIELDS = frozenset(
+    {
+        "schema_version",
+        "manifest_path",
+        "manifest_sha256",
+        "policy_id",
+        "version",
+        "status",
+        "heavy_concurrency_cap",
+        "split_scope_files",
+        "real_full_chain_marker",
+        "real_full_chain_function_count",
+    }
+)
+
+
+def _split_scope_structure_error(split_scope: object) -> str | None:
+    """DEVX-018 evidence shape; exact manifest binding happens where bytes are trusted."""
+    if split_scope is None:
+        return None
+    if not isinstance(split_scope, Mapping) or set(split_scope) != _SPLIT_SCOPE_EVIDENCE_FIELDS:
+        return "runtime profile scheduler.split_scope fields are invalid"
+    files = split_scope.get("split_scope_files")
+    if (
+        split_scope.get("schema_version") != SPLIT_SCOPE_EVIDENCE_SCHEMA_VERSION
+        or split_scope.get("manifest_path") != SCHEDULING_MANIFEST_RELATIVE_PATH
+        or not isinstance(split_scope.get("manifest_sha256"), str)
+        or re.fullmatch(r"[0-9a-f]{64}", str(split_scope.get("manifest_sha256"))) is None
+        or not _is_non_bool_int(split_scope.get("version"), minimum=1)
+        or not _is_non_bool_int(split_scope.get("heavy_concurrency_cap"), minimum=1)
+        or not _is_non_bool_int(split_scope.get("real_full_chain_function_count"), minimum=1)
+        or not isinstance(files, list)
+        or not files
+        or any(not isinstance(path, str) or not path for path in files)
+        or files != sorted(set(files))
+    ):
+        return "runtime profile scheduler.split_scope evidence is invalid"
+    return None
+
+
 def _runtime_profile_contract_error(
     payload: Mapping[str, object],
     *,
@@ -2276,8 +2371,15 @@ def _runtime_profile_contract_error(
     expected_test_files: set[str] | None = None,
     expected_test_files_error: str | None = None,
     expected_validation_provenance: Mapping[str, object] | None = None,
+    scheduling_manifest_root: Path | None = None,
 ) -> str | None:
     """Preserve live path semantics, then validate one capture with the pure core."""
+    scheduling_manifest: object = _SCHEDULING_MANIFEST_UNCHECKED
+    if scheduling_manifest_root is not None:
+        try:
+            scheduling_manifest = load_scheduling_manifest(scheduling_manifest_root)
+        except SchedulingManifestError as exc:
+            return f"runtime scheduling manifest could not be reloaded: {exc}"
     captured = None
     validation_payload = payload
     scheduler = payload.get("scheduler")
@@ -2312,6 +2414,7 @@ def _runtime_profile_contract_error(
         expected_test_files=expected_test_files,
         expected_test_files_error=expected_test_files_error,
         expected_validation_provenance=expected_validation_provenance,
+        scheduling_manifest=scheduling_manifest,
     )
 
 
@@ -2326,6 +2429,7 @@ def _runtime_profile_contract_error_from_inputs(
     expected_test_files: set[str] | None = None,
     expected_test_files_error: str | None = None,
     expected_validation_provenance: Mapping[str, object] | None = None,
+    scheduling_manifest: object = _SCHEDULING_MANIFEST_UNCHECKED,
 ) -> str | None:
     statuses = {
         key: payload.get(key)
@@ -2372,6 +2476,22 @@ def _runtime_profile_contract_error_from_inputs(
         return "runtime profile scheduler must be a mapping"
     if not isinstance(telemetry, Mapping):
         return "runtime profile telemetry must be a mapping"
+    split_scope = scheduler.get("split_scope")
+    split_scope_error = _split_scope_structure_error(split_scope)
+    if split_scope_error is not None:
+        return split_scope_error
+    if scheduling_manifest is not _SCHEDULING_MANIFEST_UNCHECKED:
+        assert scheduling_manifest is None or isinstance(scheduling_manifest, SchedulingManifest)
+        binding_error = split_scope_evidence_error(split_scope, scheduling_manifest)
+        # The split scheduler exists only for parallel loadfile runs.
+        split_scope_inapplicable = scheduler.get("xdist_dist") != "loadfile" or not (
+            _is_non_bool_int(scheduler.get("expected_worker_count"), minimum=2)
+        )
+        if binding_error is not None and not (split_scope is None and split_scope_inapplicable):
+            return "runtime profile " + binding_error
+    split_scope_files = (
+        set(split_scope["split_scope_files"]) if isinstance(split_scope, Mapping) else set()
+    )
 
     manifest_status = scheduler.get("manifest_status")
     if manifest_status not in {"PARTIAL_SEED", "COMPLETE"}:
@@ -2649,7 +2769,11 @@ def _runtime_profile_contract_error_from_inputs(
                 )
             ):
                 return f"runtime profile file aggregate is not node-derived for {path}"
-            if scheduler.get("xdist_dist") == "loadfile" and len(expected_workers) != 1:
+            if (
+                scheduler.get("xdist_dist") == "loadfile"
+                and len(expected_workers) != 1
+                and path not in split_scope_files
+            ):
                 return f"runtime profile loadfile assignment spans workers for {path}"
 
     worker_row_counts: Counter[str] = Counter()
@@ -3165,6 +3289,7 @@ def _read_runtime_profile_payload(
     expected_test_files_error: str | None = None,
     expected_validation_provenance: Mapping[str, object] | None = None,
     raw_bytes: bytes | None = None,
+    scheduling_manifest_root: Path | None = None,
 ) -> dict[str, object]:
     try:
         captured_bytes = path.read_bytes() if raw_bytes is None else raw_bytes
@@ -3190,6 +3315,7 @@ def _read_runtime_profile_payload(
             expected_test_files=expected_test_files,
             expected_test_files_error=expected_test_files_error,
             expected_validation_provenance=expected_validation_provenance,
+            scheduling_manifest_root=scheduling_manifest_root,
         )
     except Exception as exc:  # noqa: BLE001 - malformed evidence must not override pytest
         return _runtime_profile_failure_payload(
@@ -3491,6 +3617,7 @@ def _render_runtime_reader_brief(payload: dict[str, object]) -> str:
         f"- Promotion blocking: `{payload['promotion_blocking']}`",
         f"- Can support promotion evidence: `{can_support}`",
         f"- Slow suite allowed: `{payload['slow_suite_allowed']}`",
+        f"- Test selection policy: `{json.dumps(payload.get('test_selection_policy'))}`",
         f"- Workers: `{payload['workers']}`",
         f"- Distribution: `{payload['dist']}`",
         f"- Elapsed seconds: `{payload['elapsed_seconds']}`",
@@ -4361,6 +4488,31 @@ def inspect_full_publication_profile(
         pytest_exitstatus=0, expected_worker_count=16, expected_dist="loadfile",
         formal_selection_eligible=True,
     )
+    # DEVX-018: the split-scope policy is one more candidate-bound input.
+    # Only the finite read-only grammar of the protected inspector is allowed here.
+    listed = _inspection_git_bytes(
+        root, "ls-tree", candidate, "--", SCHEDULING_MANIFEST_RELATIVE_PATH
+    )
+    if listed.returncode:
+        raise ValueError("Full scheduling manifest presence could not be inspected")
+    committed_scheduling: SchedulingManifest | None = None
+    if listed.stdout.strip():
+        scheduling_raw = _inspection_git_bytes(
+            root, "show", f"{candidate}:{SCHEDULING_MANIFEST_RELATIVE_PATH}"
+        )
+        if scheduling_raw.returncode:
+            raise ValueError("Full scheduling manifest could not be read from candidate")
+        try:
+            committed_scheduling = parse_scheduling_manifest(scheduling_raw.stdout)
+        except SchedulingManifestError as exc:
+            raise ValueError(f"Full scheduling manifest is invalid: {exc}") from exc
+    profile_scheduler = profile.get("scheduler")
+    scheduling_error = split_scope_evidence_error(
+        profile_scheduler.get("split_scope") if isinstance(profile_scheduler, Mapping) else None,
+        committed_scheduling,
+    )
+    if scheduling_error is not None:
+        raise ValueError("Full profile " + scheduling_error)
     if any(profile.get(key) != "PASS" for key in (
         "profile_status", "telemetry_status", "performance_evidence_status",
         "validation_provenance_binding_status",
@@ -4899,6 +5051,13 @@ def _main(args: argparse.Namespace, *, protected: _ProtectedFullLaunch | None = 
     print(f"Suite family: {spec.suite_family}", flush=True)
     print(f"Promotion blocking: {spec.promotion_blocking}", flush=True)
     print(f"Slow suite allowed: {spec.slow_suite_allowed}", flush=True)
+    if spec.excluded_markers:
+        print(
+            "Excluded markers: "
+            + ", ".join(spec.excluded_markers)
+            + " (DEVX-018; Full remains the formal authority for these nodes)",
+            flush=True,
+        )
     print(f"Workers: {args.workers}", flush=True)
     print(f"Distribution: {args.dist}", flush=True)
     print(
@@ -5170,6 +5329,7 @@ def _main(args: argparse.Namespace, *, protected: _ProtectedFullLaunch | None = 
             expected_test_files=expected_full_test_files,
             expected_test_files_error=expected_full_test_files_error,
             expected_validation_provenance=validation_provenance,
+            scheduling_manifest_root=repo_root,
         )
         runtime_profile_payload = _attach_validation_provenance(
             runtime_profile_payload,

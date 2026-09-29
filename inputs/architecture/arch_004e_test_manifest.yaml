@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1395
-test_count: 1334
+test_file_count: 1396
+test_count: 1335
 support_file_count: 61
 orphan_count: 0
 specific_overlap_count: 0
@@ -8518,7 +8518,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 583ab36fa4cda052da4fa1c4c48b2b5d121a7ce6c27f18d34abba0882fe99156
+  sha256: 5634997209cef20a40389046232c525cbc0570a6341f090d3aa909b8e38f5672
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -10648,6 +10648,22 @@ tests:
   suite: full
   covered_module_prefixes:
   - src/ai_trading_system/
+- test_id: tests.test_devx018_validation_scheduling
+  path: tests/test_devx018_validation_scheduling.py
+  sha256: 4c05d3a17450e33f49ca207310e132a84f9bcb3c02ccdaec5cb4e77cf570d943
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
 - test_id: tests.test_devx_006c_compatibility_authority
   path: tests/test_devx_006c_compatibility_authority.py
   sha256: 5c0a1d899693a57c83fd11a86f212c8e94ad9c48fac8f42a2346f04c5e52aa20
@@ -10666,7 +10682,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 082fc58e8836c60fa76f67efb02e6945ea204db5cb2efe62a94e7d5cbd335a1d
+  sha256: d6d64846e9e70da73097c3b47ba5d60e7f9df824986c145279570281819e29db
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -19442,7 +19458,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_validation_runtime_profile
   path: tests/test_validation_runtime_profile.py
-  sha256: cc9a42a4dc5a56ef65bff33b6952e1bc2c73a780a51c24a97f1604cc74da5d11
+  sha256: 34f26be3d95dd7422ec42973c8b5444c16de97ede647276b235b1764fff8a37f
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

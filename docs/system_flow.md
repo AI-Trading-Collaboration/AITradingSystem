@@ -3186,6 +3186,21 @@ advisory PARTIAL_SEED；默认 dry-run，`--write` 只原子更新 canonical dur
 这条输入链只服务工程测试调度，完整测试集合、16/loadfile、文件内顺序和业务安全边界保持。
 `phase_trading_2564_s5_validated_duration_seed_v1` 绑定其命名来源后继和当前 hash，
 历史 phase 业务合同及旧证据身份保持；未知来源或未声明后继仍拒绝。
+DEVX-018 在同一 Full plugin 内增加受审调度清单
+`config/architecture/devx_018_validation_scheduling.yaml`（纯解析器
+`ai_trading_system.platform.validation_scheduling`，严格 YAML、未知字段拒绝）。collection 顺序
+与上述文件级耗时降序、文件内 node 顺序完全不变；只有清单列出的文件在 xdist controller 中以单个
+node 为派发单元，其余文件保持 loadfile。清单列出的 `real_full_chain` 函数（内含真实 Full、source
+job 或 actual runner 链）由 plugin 在 pytest `-m` 取消选择之前打标；同时持有此类单元的 worker 数
+不超过 `heavy_concurrency_cap`，持有者只再接收一个后继单元以保证 xdist 执行最后一项。runtime
+profile 的 `scheduler.split_scope` 记录清单路径、SHA-256、版本、上限与拆分文件；为 `null` 时沿用
+原"loadfile 文件只能在单 worker"校验，否则只豁免清单内文件。runner live reader 从 repo 重读清单、
+Full 正式检查从 candidate Git blob 重读清单，二者必须与 profile 证据逐字段一致，缺失、篡改或未声明
+均拒绝。`architecture-fitness` 等 pre-Full tier 以 `-p scripts.pytest_runtime_profile -m "not
+real_full_chain"` 排除这些节点并在 summary `test_selection_policy` 与 Reader Brief 中披露；Full
+不排除任何 marker，仍是这些节点唯一的正式权威。S1 以 PASS 的 v7 Full profile 经上述 S5 入口刷新
+advisory seed 为 `devx_018_s1_full_duration_partial_seed` v26（`1334 files / 14507 nodes`）。
+该链只优化工程验证调度与层级选择，`production_effect=none`，不改变数据、DQ/PIT、评分或投资结论。
 
 S5 即时失败诊断在上述 Full plugin 的 master report hook 中，于原 phase 记录后观察 failed
 setup/call/teardown，逐条显示 nodeid、worker、phase、根因及有界 traceback 并 flush。

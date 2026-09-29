@@ -1,0 +1,85 @@
+schema_version: devx_018_validation_scheduling.v1
+policy_id: devx_018_governed_split_scope_scheduling
+owner: validation_operations
+version: 1
+status: ACTIVE_PILOT
+requirement: docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
+rationale: >-
+  pytest-xdist loadfile pins every test file to one worker, so the largest file
+  (tests/test_arch_005_integration_publication_fence.py, 568 minutes in the v11
+  Full) bounds Full wall time at about 10 hours although all nodes need only
+  2.7 hours on 16 workers. Files listed below are distributed per node while
+  every other file keeps loadfile semantics. Nodes that execute a real inner
+  Full, source job or actual runner chain are marked real_full_chain; they are
+  capped in concurrency and excluded from pre-Full tiers, where Full remains
+  their only formal authority.
+intended_effect: >-
+  Full wall time about 5 hours (simulated from v11 node durations with cap 6);
+  architecture-fitness without real_full_chain nodes and with split files in
+  well under one hour. Estimates are not commitments; acceptance uses measured
+  runtime profiles.
+validation_evidence: >-
+  outputs/validation_runtime/gov-007-p1c-devx015-full-20260929-v11/test_runtime_profile.json
+  (heavy concurrency mostly 3-4, peak 14, tail 3.69 hours at 1); static review of
+  the split files found no module/class/session/package fixtures or autouse
+  fixtures.
+review_condition: >-
+  Recalibrate heavy_concurrency_cap and the lists after the first Full measured
+  with this policy, and whenever a real_full_chain function is added, renamed
+  or removed (a listed function that is missing from a collected split file
+  fails the run closed).
+# Pilot baseline: the first cap from the owner decision of 2026-09-30. Each
+# real_full_chain node runs an inner -n16 Full; DEVX-015 heavy nodes previously
+# tripped their 600 second hang guards when run at -n 4 in isolation, while the
+# v11 Full ran 3-4 of them concurrently. Replace with measured calibration.
+heavy_concurrency_cap: 6
+split_scope_files:
+  - tests/test_arch_005_integration_publication_fence.py
+  - tests/test_arch_005_source_preservation.py
+  - tests/test_arch_005_task_checkpoint.py
+  - tests/test_devx015_workflow_acceptance.py
+  - tests/test_devx015_workflow_coordination.py
+  - tests/test_devx015_workflow_execution.py
+  - tests/test_devx015_workflow_integration.py
+  - tests/test_governed_development_skill.py
+real_full_chain:
+  marker: real_full_chain
+  functions:
+    - tests/test_arch_005_integration_publication_fence.py::test_full_transaction_replays_candidate_publish_and_closeout_receipt
+    - tests/test_arch_005_integration_publication_fence.py::test_local_publication_inspection_cli_after_actual_full
+    - tests/test_arch_005_integration_publication_fence.py::test_original_publication_cli_ff_only_and_independent_recovery
+    - tests/test_arch_005_integration_publication_fence.py::test_original_publication_cli_interrupted_after_main_commit
+    - tests/test_arch_005_integration_publication_fence.py::test_original_publication_cli_recovers_independent_main_advance
+    - tests/test_arch_005_integration_publication_fence.py::test_p01_public_entries_reject_ref_only_update_before_checkout
+    - tests/test_arch_005_integration_publication_fence.py::test_publication_lifecycle_binds_original_actual_full
+    - tests/test_arch_005_integration_publication_fence.py::test_terminal_confirmation_cannot_be_fabricated_from_missing_observation
+    - tests/test_arch_005_integration_publication_fence.py::test_x02_original_publication_rejects_ref_aba_after_actual_full
+    - tests/test_devx015_workflow_acceptance.py::test_public_installation_recovers_created_directory_from_original_job
+    - tests/test_devx015_workflow_acceptance.py::test_public_recovery_preserves_unknown_child_before_empty_directory_restore
+    - tests/test_devx015_workflow_acceptance.py::test_source_final_handoff_recovers_real_marker_and_retention_crashes_after_heartbeat
+    - tests/test_devx015_workflow_coordination.py::test_actual_full_profile_preserves_real_whole_readiness
+    - tests/test_devx015_workflow_coordination.py::test_actual_pytest_pass_with_invalid_formal_profile_cannot_publish
+    - tests/test_devx015_workflow_coordination.py::test_native_host_actual_full_and_publication
+    - tests/test_devx015_workflow_coordination.py::test_native_linked_contender_refused_during_actual_full
+    - tests/test_devx015_workflow_coordination.py::test_original_full_cannot_authorize_changed_candidate
+    - tests/test_devx015_workflow_coordination.py::test_original_full_rejects_changed_publication_identities
+    - tests/test_devx015_workflow_coordination.py::test_public_recovery_restores_directory_creation_record_crashes
+    - tests/test_devx015_workflow_coordination.py::test_readiness_input_replaced_after_real_inspection_cannot_publish
+    - tests/test_devx015_workflow_coordination.py::test_remote_admission_rechecks_original_full_profile
+    - tests/test_devx015_workflow_coordination.py::test_unbound_full_profile_admits_non_devx015_publication
+    - tests/test_devx015_workflow_execution.py::test_fixed_candidate_actual_runner_result_survives_main_advance
+    - tests/test_devx015_workflow_execution.py::test_mandatory_acceptance_actual_runner_chain
+    - tests/test_devx015_workflow_execution.py::test_public_installation_recovers_actual_partial_plan_before_job
+    - tests/test_devx015_workflow_execution.py::test_public_installation_recovers_created_file_from_original_job
+    - tests/test_devx015_workflow_execution.py::test_public_recovery_preserves_same_bytes_replacement_before_original_restore
+    - tests/test_devx015_workflow_execution.py::test_r01_original_source_job_replays_and_rejects_changed_payload
+    - tests/test_devx015_workflow_execution.py::test_source_candidate_cli_uses_real_job_and_private_two_parent_commit
+    - tests/test_devx015_workflow_execution.py::test_source_final_handoff_rejects_actual_release_race_and_recovers_history
+    - tests/test_devx015_workflow_execution.py::test_source_generation_and_commit_crash_recovers_without_installation
+    - tests/test_devx015_workflow_execution.py::test_x01_original_source_installation_rejects_self_attested_result
+    - tests/test_devx015_workflow_execution.py::test_x01_original_source_installation_rejects_stale_output_and_manifest
+    - tests/test_devx015_workflow_integration.py::test_public_recovery_restores_file_creation_record_crashes
+    - tests/test_devx015_workflow_integration.py::test_source_final_handoff_rejects_actual_later_phase_failure
+    - tests/test_governed_development_skill.py::test_completed_admission_full_entry_real_publication_pass
+    - tests/test_governed_development_skill.py::test_completed_admission_full_entry_rejects_real_invalid_context
+production_effect: none

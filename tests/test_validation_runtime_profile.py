@@ -263,17 +263,18 @@ def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> No
     assert profile.partial_seed is True
     assert profile.complete_profile is False
     assert profile.owner == "validation_operations"
-    assert profile.version == 25
+    # DEVX-018 S1: refreshed from the validated v7 Full profile.
+    assert profile.version == 26
     assert profile.source_workers == 16
     assert profile.source_dist == "loadfile"
     assert profile.source_artifact_path == (
-        "outputs/validation_runtime/trading-2564-s3b-clock-final-v1-full-20260908/"
+        "outputs/validation_runtime/gov-007-p1c-devx015-full-20260926-v7/"
         "test_runtime_profile.json"
     )
     assert profile.source_artifact_sha256 == (
-        "578586cb250697df54e16c684cf4d7986cb2c8355291f20329c66986b65ab619"
+        "8443b17b028f42136d0bac769cd02e640ad92028956d66c3c182cc535a3fdb62"
     )
-    assert len(profile.observed_seconds) == 1318
+    assert len(profile.observed_seconds) == 1334
     assert profile.source_node_count is None
     assert profile.source_file_count is None
     assert profile.source_collection_ordered_sha256 is None
@@ -283,11 +284,11 @@ def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> No
     assert profile.expected_scheduled_ordered_sha256 is None
     assert profile.source_file_duration_total_seconds is None
     assert profile.observed_seconds["tests/test_layer1_meta_policy_archive_stabilization.py"] == (
-        125.7827374
+        137.978968
     )
     assert (
         profile.observed_seconds["tests/test_filtered_candidate_readiness_pipeline_foundation.py"]
-        == 272.4488793
+        == 276.5576559
     )
 
     legacy = load_duration_profile(_write_legacy_partial_profile(tmp_path / "legacy_partial.yaml"))

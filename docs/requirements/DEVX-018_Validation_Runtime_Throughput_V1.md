@@ -144,3 +144,26 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
 2. 初始 K = 6（v11 已稳定承受 3–4，短时 14），以 O1 实测结果调整并记入配置清单。
 3. `real_full_chain` 初始清单：以 v11 的 108 个 >300 秒节点为候选，逐个确认它确实内含真实 Full 或整链后再标注；
    不用耗时阈值自动判定。
+
+## 7. 进展记录
+
+### 2026-09-30 O1 + S1 + O2 实施（待正式验证）
+
+- 纯解析器 `src/ai_trading_system/platform/validation_scheduling.py`：严格 YAML、未知字段/重复键拒绝、
+  列表须排序去重、每个 `real_full_chain` 函数必须位于拆分文件内；清单缺失（最小夹具仓库）时策略
+  不启用，存在但非法时 pytest `UsageError` 失败关闭；正式 Full 选择下，已收集文件中缺少清单函数也失败关闭。
+- Full plugin（`scripts/pytest_runtime_profile.py`）：在 `-m` 取消选择前按清单打 `real_full_chain`；
+  `pytest_xdist_make_scheduler` 仅在 controller、loadfile 下返回拆分调度器。collection 顺序不变。
+- 调度器首版"持有重型单元的 worker 不再补派"在真实 xdist 集成测试中死锁：xdist worker 须知道下一项
+  或收到 shutdown 才执行末项。修正后上限按"持有重型单元的 worker 数"计，持有者只再接受一个后继单元
+  （最短的轻量单元，没有则下一个重型单元，同 worker 串行不增加并发）；重型完成后唤醒全部 worker。
+- 契约：profile `scheduler.split_scope`（null 或 10 字段证据）；null 保持原单 worker 校验，否则只豁免
+  清单文件；runner live reader 重读 repo 清单，Full 正式检查以受保护 git 语法读取 candidate blob，
+  二者与证据逐字段比较。
+- O2：`architecture-fitness` 以 `-p scripts.pytest_runtime_profile -m "not real_full_chain"` 运行；
+  summary 新增 `test_selection_policy`（排除 marker、清单路径/SHA/版本、正式权威=full），控制台与 Reader
+  Brief 同步披露。Full 禁止排除 marker。
+- S1：`refresh_partial_duration_profile.py` 以 v7 PASS Full（`b8e6eb013`，14507 nodes / 1334 files）
+  写入 `devx_018_s1_full_duration_partial_seed` v26。
+- 聚焦验证：新测试文件含真实 xdist（-n3、cap=1）集成与 marker 排除用例；runtime profile / tier script /
+  duration refresh / devex 共 330 项中仅 architecture fitness 因生成物待重建失败，待 generator 后复验。

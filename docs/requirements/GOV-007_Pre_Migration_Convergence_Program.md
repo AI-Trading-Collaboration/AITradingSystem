@@ -505,6 +505,28 @@ v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
 退出条件为发布后证据归档与摘要核对完成、无进程依赖并通过生命周期审计。原失败夹具
 在保留证据完成前不清理。基线发布后的 S1、P1、P4 及重测目标仍未完成。
 
+### 2026-09-30 v12 中断与 DEVX-018 O1/O2 并入基线候选
+
+- 执行方改为 Claude Code（`agent_harness=claude_code`，actor `integration-coordinator`）。
+  v12 候选 `01d2d14f8` 的 named-parent、contract、integration、reproducibility 通过；
+  architecture-fitness 在 93%（gw4 单 worker 串行执行 publication_fence 重型尾部）时于
+  2026-09-30 02:33 整树终止，无终态记录、无 artifact，Full 未派发。系统日志同一时刻显示
+  Microsoft Store 更新 OpenAI.Codex 应用（02:21 因包占用 0x80073D02 失败，02:33 成功），
+  driver 由 Codex 启动；因果相关但未证实，与 v9 的 Codex 重启中断同类。v12 已沿原 fence
+  收口 FAILED/RELEASED：`codex_v12_interruption_20260930.json`、`codex_v12_failed_release.json`。
+- Owner 决定不原样重跑，先落地 DEVX-018 的 O1+S1+O2，再以一个 GOV-007 候选完成全部 required
+  tiers 与 Full；基线与 O1/O2 同次验收，替代原"基线后分阶段"安排。依据 v11 profile：墙钟
+  10.15 小时对 43.2 worker 小时，loadfile 把 568 分钟的 publication_fence 文件固定在单 worker。
+  DEVX-018 经独立许可事务登记（`6c121cfae`），详见
+  `docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md`。
+- 实施：受审清单 `config/architecture/devx_018_validation_scheduling.yaml`（8 个拆分文件、
+  37 个 `real_full_chain` 函数、重型持有者上限 6）；Full plugin 的拆分调度器与标注；runtime
+  profile `scheduler.split_scope` 契约及 live/candidate 字节绑定；architecture-fitness 排除
+  `real_full_chain`；S1 以 v7 PASS Full 刷新 seed v26。首轮真实 xdist 集成测试暴露"持有重型
+  单元的 worker 不补派"导致 xdist 末项永不执行的死锁，已改为持有者只接受一个后继单元，且上限
+  按持有 worker 计；原失败保留在聚焦日志。
+- 下一轮正式运行的 driver 与桌面 agent 应用脱钩启动。P1/P4/O3 与重测仍在本次发布之后。
+
 ## 7. 退出条件
 
 E1–E10 全部满足，迁移到 pi 的第一个低风险任务完成完整的"预检 → 提交 → 合入 main → 推送"。

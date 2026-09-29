@@ -21,6 +21,14 @@ SRC_ROOT = REPO_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
+from ai_trading_system.platform.validation_scheduling import (  # noqa: E402
+    REAL_FULL_CHAIN_MARKER,
+    SchedulingManifest,
+    SchedulingManifestError,
+    load_scheduling_manifest,
+    missing_real_full_chain_functions,
+    nodeid_file,
+)
 from ai_trading_system.platform.validation_trigger_provenance import (  # noqa: E402
     PROFILE_JSON_ENV as RUNTIME_PROFILE_VALIDATION_PROVENANCE_ENV,
 )
@@ -878,6 +886,7 @@ def build_runtime_profile(
     ended_at: float,
     validation_provenance: Mapping[str, object] | None = None,
     validation_provenance_errors: Sequence[str] = (),
+    split_scope: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     warnings: list[str] = []
     provenance_errors = [
@@ -1209,6 +1218,9 @@ def build_runtime_profile(
             "xdist_dist": xdist_dist,
             "loadscope_reorder_disabled": not loadscope_reorder,
             "formal_full_selection_eligible": formal_full_selection_eligible,
+            # DEVX-018: None keeps pure loadfile semantics; otherwise the listed
+            # files ran per node and the manifest bytes are bound by SHA-256.
+            "split_scope": dict(split_scope) if split_scope is not None else None,
         },
         "collection": {
             **canonical_identity,
@@ -1267,6 +1279,94 @@ def build_runtime_profile(
     return payload
 
 
+def make_governed_split_scheduler(
+    config: pytest.Config, log: object, manifest: SchedulingManifest
+) -> object:
+    """Loadfile scheduling except for DEVX-018 split files, with a heavy-worker cap.
+
+    Collection order (the audited duration order) is unchanged; only the work
+    unit of a listed file becomes its single node. At most
+    ``heavy_concurrency_cap`` workers hold real_full_chain units at once. An
+    xdist worker runs its last queued item only after it learns the next item
+    (or shutdown), so a worker holding a heavy unit still receives exactly one
+    successor: the shortest remaining light unit, or another heavy unit, which
+    runs sequentially on the same worker and adds no concurrency.
+    """
+    from xdist.scheduler import LoadFileScheduling
+
+    class GovernedSplitScopeScheduling(LoadFileScheduling):  # type: ignore[misc]
+        def _split_scope(self, nodeid: str) -> str:
+            file_path = nodeid_file(nodeid)
+            return nodeid if manifest.is_split_file(file_path) else file_path
+
+        @staticmethod
+        def _is_heavy(scope: str) -> bool:
+            return "::" in scope and manifest.is_real_full_chain(scope)
+
+        def _holds_heavy(self, node: object) -> bool:
+            return any(
+                self._is_heavy(scope) and not all(unit.values())
+                for scope, unit in self.assigned_work.get(node, {}).items()
+            )
+
+        def _heavy_holders(self) -> int:
+            return sum(1 for node in self.assigned_work if self._holds_heavy(node))
+
+        def _choose(self, node: object) -> str | None:
+            holds = self._holds_heavy(node)
+            heavy = [scope for scope in self.workqueue if self._is_heavy(scope)]
+            light = [scope for scope in self.workqueue if not self._is_heavy(scope)]
+            if not holds and heavy and self._heavy_holders() < manifest.heavy_concurrency_cap:
+                return heavy[0]
+            if light:
+                # Behind a heavy unit, queue the shortest (last in duration order) light unit.
+                return light[-1] if holds else light[0]
+            if holds and heavy:
+                return heavy[0]
+            return None  # Only capped heavy units remain; a heavy completion wakes all workers.
+
+        def _assign_work_unit(self, node: object) -> None:
+            chosen = self._choose(node)
+            if chosen is None:
+                return
+            work_unit = self.workqueue.pop(chosen)
+            self.assigned_work.setdefault(node, {})[chosen] = work_unit
+            worker_collection = self.registered_collections[node]
+            node.send_runtest_some(  # type: ignore[attr-defined]
+                [
+                    worker_collection.index(nodeid)
+                    for nodeid, completed in work_unit.items()
+                    if not completed
+                ]
+            )
+
+        def _reschedule(self, node: object) -> None:
+            if node.shutting_down:  # type: ignore[attr-defined]
+                return
+            if not self.workqueue:
+                node.shutdown()  # type: ignore[attr-defined]
+                return
+            pending = self._pending_of(self.assigned_work[node])
+            # One successor behind a heavy unit is enough to let it run.
+            if pending > 2 or (pending >= 2 and self._holds_heavy(node)):
+                return
+            self._assign_work_unit(node)
+
+        def mark_test_complete(
+            self, node: object, item_index: int, duration: float = 0
+        ) -> None:
+            nodeid = self.registered_collections[node][item_index]
+            scope = self._split_scope(nodeid)
+            self.assigned_work[node][scope][nodeid] = True
+            if self._is_heavy(scope):
+                for other in self.nodes:  # A freed heavy slot may admit another worker.
+                    self._reschedule(other)
+            else:
+                self._reschedule(node)
+
+    return GovernedSplitScopeScheduling(config, log)
+
+
 class RuntimeProfilePlugin:
     def __init__(self, config: pytest.Config, duration_profile: DurationProfile) -> None:
         self.config = config
@@ -1313,9 +1413,21 @@ class RuntimeProfilePlugin:
             xdist_dist=self.xdist_dist,
             loadscope_reorder=self.loadscope_reorder,
         )
+        try:
+            self.scheduling_manifest = load_scheduling_manifest(Path(config.rootpath))
+        except SchedulingManifestError as exc:
+            raise pytest.UsageError(f"DEVX-018 scheduling manifest is invalid: {exc}") from exc
+        self.split_scope_applied = False
         self.started_at = time.time()
         self.collections: dict[str, list[str]] = {}
         self.phase_reports: list[dict[str, object]] = []
+
+    @pytest.hookimpl(optionalhook=True)
+    def pytest_xdist_make_scheduler(self, config: pytest.Config, log: object) -> object | None:
+        if self.is_worker or self.scheduling_manifest is None or self.xdist_dist != "loadfile":
+            return None
+        self.split_scope_applied = True
+        return make_governed_split_scheduler(config, log, self.scheduling_manifest)
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_collection_modifyitems(
@@ -1326,6 +1438,19 @@ class RuntimeProfilePlugin:
     ) -> None:
         del session, config
         nodeids = [item.nodeid for item in items]
+        manifest = self.scheduling_manifest
+        if manifest is not None:
+            # Runs before pytest's own -m deselection, so pre-Full tiers can exclude
+            # these nodes; Full never deselects them.
+            for item in items:
+                if manifest.is_real_full_chain(item.nodeid):
+                    item.add_marker(REAL_FULL_CHAIN_MARKER)
+            missing = missing_real_full_chain_functions(manifest, nodeids)
+            if missing and self.formal_full_selection_eligible:
+                raise pytest.UsageError(
+                    "DEVX-018 real_full_chain functions are missing from collected files: "
+                    + ", ".join(missing)
+                )
         scheduler_decision = resolve_scheduler_decision(
             self.duration_profile,
             expected_worker_count=self.expected_worker_count,
@@ -1438,6 +1563,11 @@ class RuntimeProfilePlugin:
             ended_at=time.time(),
             validation_provenance=self.validation_provenance,
             validation_provenance_errors=self.validation_provenance_errors,
+            split_scope=(
+                self.scheduling_manifest.split_scope_evidence()
+                if self.split_scope_applied and self.scheduling_manifest is not None
+                else None
+            ),
         )
         output_path = Path(output_value)
         try:
@@ -1469,6 +1599,11 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 
 def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line(
+        "markers",
+        f"{REAL_FULL_CHAIN_MARKER}: DEVX-018 node runs a real inner Full, source job or "
+        "actual runner chain; applied from the reviewed scheduling manifest",
+    )
     configured = str(config.getoption("aits_duration_profile") or "").strip()
     if configured:
         candidate = Path(configured)
