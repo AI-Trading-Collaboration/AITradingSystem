@@ -527,6 +527,28 @@ v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
   按持有 worker 计；原失败保留在聚焦日志。
 - 下一轮正式运行的 driver 与桌面 agent 应用脱钩启动。P1/P4/O3 与重测仍在本次发布之后。
 
+### 2026-09-30 v13 Full 结果与 v14 修复范围
+
+- Claude Code 执行 v13（候选 `90b1b3293`，DEVX-018 O1+O2+S1 与基线同候选）：contract-validation、
+  integration、reproducibility 通过；architecture-fitness 20.5 分钟（v11 超过 4 小时）；Full 4.95
+  小时（v11 10.15 小时）但 31 failed + 3 errors，按失败回路 FAILED 收口（`claude_v13_failed_release.json`，
+  artifact 位于 `outputs/validation_runtime/gov-007-p1c-devx015-full-20260930-v13/`）。
+- 根因（逐条取自 `[AITS FAILURE IN_PROGRESS]` 块）：(1) Full plugin 的 `config.rootpath` 在诊断测试的
+  合成 config 下缺失，18 个诊断测试失败；(2) 拆分调度使原先文件内串行的宿主全局资源单元并发：固定
+  `Local\AITS-DEVX015-actual-full-publication-binding` Job 名、HKCU `Software\AITS-DEVX015-Test-*`
+  根视图；(3) 重型并发上限 6 时过载触发固定超时（360 秒 inspector 在空载 59–75 秒）；(4) 真实
+  Job 对象进程列表在保留句柄的已退出进程仍计入 `assigned` 时短于 `ActiveProcesses`，`_JobProcesses.collect`
+  误判失败关闭（F2）。
+- v14 范围（owner 选择"一起修 F2"）：plugin rootpath 修复；清单 v2：`heavy_concurrency_cap` 6→4，
+  新增 `exclusive_groups`（固定 Job 名 1 项、HKCU 视图 15 项），调度器保证同组单元不同时运行；F2 仅接受
+  重复成功列表、等于 `ActiveProcesses` 且缺口不超过已发信号的保留句柄数，账目错误仍失败关闭。
+  聚焦验证 368 项中 1 项（16 worker 真实诊断、60 秒收尾看门狗）在聚焦批次高负载下超时，空载单跑
+  15.7 秒通过，v13 Full 亦通过，记为负载敏感风险，不改测试。
+- 审计事件（无内容暴露）：v14 候选暂存后误用了一次裸 `git status --short`，遗漏了 `known_unrelated_exclusions` 的精确排除集；
+  只将状态码计数（awk/uniq）输出，未打开、哈希、复制、暂存或修改被排除文件，其后已改用 `worktree-audit`。按纪律记为审计事件。
+- 下一步：v14 候选经新的许可事务（`failure_fix_rerun` 绑定 v13 失败 Full）完成全部 tiers 与 Full；
+  发布后 P1/P4/O3 与重测。
+
 ## 7. 退出条件
 
 E1–E10 全部满足，迁移到 pi 的第一个低风险任务完成完整的"预检 → 提交 → 合入 main → 推送"。

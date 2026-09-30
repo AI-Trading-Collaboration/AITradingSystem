@@ -19,11 +19,11 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: v12 于 2026-09-30 02:33 architecture-fitness
-    93% 时整树终止（与 Codex 应用 Store 更新同时，相关未证实），已 FAILED/RELEASED，Full 未派发。Owner 决定先落地
-    DEVX-018 O1+S1+O2（拆分调度、real_full_chain 上限与 pre-Full 排除、seed v26），再以一个 GOV-007
-    候选跑全部 required tiers 与 Full 并发布基线；driver 与桌面 agent 应用脱钩启动。详见 GOV-007 文档 2026-09-30
-    节与 DEVX-018 需求。
+  unstructured_legacy_blocker_or_next_step: v13（候选 90b1b3293，DEVX-018 O1+O2+S1）Full
+    4.95 小时（v11 10.15）、architecture-fitness 20.5 分钟，但 31 failed + 3 errors，已按失败回路
+    FAILED/RELEASED。四类根因：plugin rootpath 缺失、拆分调度使宿主全局资源单元并发（固定 Job 名、HKCU 测试根视图）、K=6
+    过载触发固定超时、Job 进程列表 F2。v14 修复：rootpath、清单 v2（K=4、exclusive_groups）、F2；以新候选经 failure_fix_rerun
+    绑定 v13 失败 Full 完成全部 tiers 与 Full 并发布基线。详见 GOV-007 文档 v13/v14 节与 DEVX-018 需求。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -320,6 +320,33 @@ events:
   - change:gov-007-devx018-o1o2-preparation-20260930-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-88b345bc9d6c075c808bad00201ba5b5
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-30T01:32:32Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx018-v14-preparation-20260930-v1
+  lane_id: null
+  base_commit: 90b1b32936bfd958793cc6f992bffe2ff5edebad
+  previous_state_event_id: task-event-88b345bc9d6c075c808bad00201ba5b5
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Codex：修复聚焦回归已通过，生成/提交新候选并正式重验；Owner：原管理员/主机边界
+    blocker_or_next_step: v13（候选 90b1b3293，DEVX-018 O1+O2+S1）Full 4.95 小时（v11 10.15）、architecture-fitness
+      20.5 分钟，但 31 failed + 3 errors，已按失败回路 FAILED/RELEASED。四类根因：plugin rootpath 缺失、拆分调度使宿主全局资源单元并发（固定
+      Job 名、HKCU 测试根视图）、K=6 过载触发固定超时、Job 进程列表 F2。v14 修复：rootpath、清单 v2（K=4、exclusive_groups）、F2；以新候选经
+      failure_fix_rerun 绑定 v13 失败 Full 完成全部 tiers 与 Full 并发布基线。详见 GOV-007 文档 v13/v14
+      节与 DEVX-018 需求。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: production_effect=none；broker_action=none；详见 docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md；聚焦PASS不等于正式验收，原E1–E10边界不变。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx018-v14-preparation-20260930-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f16493f5ad86b6b8c0b5ee213faecb03
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
@@ -327,17 +354,18 @@ projection:
   - P0
   - IN_PROGRESS
   - Codex：修复聚焦回归已通过，生成/提交新候选并正式重验；Owner：原管理员/主机边界
-  - v12 于 2026-09-30 02:33 architecture-fitness 93% 时整树终止（与 Codex 应用 Store 更新同时，相关未证实），已
-    FAILED/RELEASED，Full 未派发。Owner 决定先落地 DEVX-018 O1+S1+O2（拆分调度、real_full_chain 上限与
-    pre-Full 排除、seed v26），再以一个 GOV-007 候选跑全部 required tiers 与 Full 并发布基线；driver 与桌面
-    agent 应用脱钩启动。详见 GOV-007 文档 2026-09-30 节与 DEVX-018 需求。
+  - v13（候选 90b1b3293，DEVX-018 O1+O2+S1）Full 4.95 小时（v11 10.15）、architecture-fitness
+    20.5 分钟，但 31 failed + 3 errors，已按失败回路 FAILED/RELEASED。四类根因：plugin rootpath 缺失、拆分调度使宿主全局资源单元并发（固定
+    Job 名、HKCU 测试根视图）、K=6 过载触发固定超时、Job 进程列表 F2。v14 修复：rootpath、清单 v2（K=4、exclusive_groups）、F2；以新候选经
+    failure_fix_rerun 绑定 v13 失败 Full 完成全部 tiers 与 Full 并发布基线。详见 GOV-007 文档 v13/v14
+    节与 DEVX-018 需求。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
   - production_effect=none；broker_action=none；详见 docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md；聚焦PASS不等于正式验收，原E1–E10边界不变。
   docs_links:
   - docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md
   terminal: false
-  canonical_row_sha256: 327c3ce8eac88d5cae5fa57eb5d2382630f7ece880270e16b6ef3f43e0b207ea
-last_event_id: task-event-88b345bc9d6c075c808bad00201ba5b5
+  canonical_row_sha256: d4506be4f0e1fe5358ad935367f8b45fb7de7ac3b9de37d5734af962b71e73a9
+last_event_id: task-event-f16493f5ad86b6b8c0b5ee213faecb03
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f4dfd453185ea25130be80f5198cf4c7ad566a1560127ab197d794268452352d
+fragment_checksum: 8622b28abf744bf7c59a0a4f9ff95c949b6f0f72002ba91bf0b1705c6005426a

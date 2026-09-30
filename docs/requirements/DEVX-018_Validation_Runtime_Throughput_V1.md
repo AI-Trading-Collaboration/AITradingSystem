@@ -167,3 +167,18 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
   写入 `devx_018_s1_full_duration_partial_seed` v26。
 - 聚焦验证：新测试文件含真实 xdist（-n3、cap=1）集成与 marker 排除用例；runtime profile / tier script /
   duration refresh / devex 共 330 项中仅 architecture fitness 因生成物待重建失败，待 generator 后复验。
+
+### 2026-09-30 v13 Full 实测与 v14 修正
+
+- v13（K=6）Full 4.95 小时（v11 10.15 小时），architecture-fitness 20.5 分钟（v11 >4 小时）：拆分调度
+  达到目标量级；31 failed + 3 errors 均定位到四类根因，无一是测试语义错误：plugin `rootpath` 缺失（18）、
+  宿主全局资源并发（固定 Job 名、HKCU 测试根视图）、K=6 过载触发固定超时、Job 进程列表 F2。
+- 清单 v2：`heavy_concurrency_cap` 6→4（v11 稳态水平，owner 批准的"以实测调整"）；新增
+  `exclusive_groups`（`fixed_publication_binding_job` 1 项、`host_registry_view` 15 项），组内单元
+  由调度器保证不并发，用以复现 loadfile 下文件内串行的隐含互斥；清单成员须位于拆分文件内、排序去重，
+  清单函数在已收集文件中缺失时同样失败关闭。
+- F2：`_JobProcesses.collect` 仅在重复成功列表、等于 `ActiveProcesses`、缺口不超过已发信号的保留句柄
+  数时接受 `assigned > listed`；回归测试位于 `tests/test_devx015_workflow_execution.py`。
+- 已知风险：`test_real_16_worker_diagnostics_cross_runner_pipe_before_release_and_session_exit` 的 60 秒
+  收尾看门狗在 16 worker 满载时可能超时（聚焦批次一次，空载 15.7 秒）；如 v14 Full 复现再评估。
+- 重测时以实测 profile 重新校准 K 与分组；O3/P1/P4 仍待基线发布后。

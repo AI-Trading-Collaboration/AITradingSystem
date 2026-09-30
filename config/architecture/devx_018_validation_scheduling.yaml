@@ -1,7 +1,7 @@
 schema_version: devx_018_validation_scheduling.v1
 policy_id: devx_018_governed_split_scope_scheduling
 owner: validation_operations
-version: 1
+version: 2
 status: ACTIVE_PILOT
 requirement: docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
 rationale: >-
@@ -28,11 +28,13 @@ review_condition: >-
   with this policy, and whenever a real_full_chain function is added, renamed
   or removed (a listed function that is missing from a collected split file
   fails the run closed).
-# Pilot baseline: the first cap from the owner decision of 2026-09-30. Each
-# real_full_chain node runs an inner -n16 Full; DEVX-015 heavy nodes previously
-# tripped their 600 second hang guards when run at -n 4 in isolation, while the
-# v11 Full ran 3-4 of them concurrently. Replace with measured calibration.
-heavy_concurrency_cap: 6
+# Pilot baseline. v1 used 6 (owner decision of 2026-09-30). The v13 Full at 6
+# finished in 4.95 hours instead of 10.15, but overload tripped fixed
+# subprocess/inspector timeouts (360 second profile inspection that takes 59-75
+# seconds unloaded, cleanup waits, readiness child). v2 calibrates to 4, the
+# steady level the v11 Full ran without such timeouts. Recalibrate with the next
+# measured profile.
+heavy_concurrency_cap: 4
 split_scope_files:
   - tests/test_arch_005_integration_publication_fence.py
   - tests/test_arch_005_source_preservation.py
@@ -82,4 +84,28 @@ real_full_chain:
     - tests/test_devx015_workflow_integration.py::test_source_final_handoff_rejects_actual_later_phase_failure
     - tests/test_governed_development_skill.py::test_completed_admission_full_entry_real_publication_pass
     - tests/test_governed_development_skill.py::test_completed_admission_full_entry_rejects_real_invalid_context
+# Units sharing a host-global resource. Under loadfile these ran serially inside
+# their file; v13 split scheduling ran them concurrently and they failed.
+exclusive_groups:
+  # Fixed Local\AITS-DEVX015-actual-full-publication-binding Job name in both params.
+  fixed_publication_binding_job:
+    - tests/test_arch_005_integration_publication_fence.py::test_publication_lifecycle_binds_original_actual_full
+  # Tests that create HKCU Software\AITS-DEVX015-Test-* roots or open winreg, plus
+  # the test that asserts the whole root view is unchanged before/after itself.
+  host_registry_view:
+    - tests/test_arch_005_integration_publication_fence.py::test_original_publication_cli_ff_only_and_independent_recovery
+    - tests/test_devx015_workflow_coordination.py::test_cutover_journal_preparation_binds_live_bytes
+    - tests/test_devx015_workflow_coordination.py::test_enrollment_journal_resumes_same_draining_intent_with_isolated_admin_transport
+    - tests/test_devx015_workflow_coordination.py::test_enrollment_native_single_value_anchor_write_readback_and_delete
+    - tests/test_devx015_workflow_coordination.py::test_m04_native_per_checkout_store_hits_original_shared_store_assertion
+    - tests/test_devx015_workflow_coordination.py::test_native_host_actual_full_and_publication
+    - tests/test_devx015_workflow_coordination.py::test_native_linked_contender_refused_during_actual_full
+    - tests/test_devx015_workflow_coordination.py::test_native_linked_publication_cli_competition
+    - tests/test_devx015_workflow_coordination.py::test_native_registered_guard_competition
+    - tests/test_devx015_workflow_coordination.py::test_native_registry_fixture_cleanup_inventory_contract
+    - tests/test_devx015_workflow_coordination.py::test_native_registry_fixture_preserves_existing_view_and_leaves_no_new_root
+    - tests/test_devx015_workflow_coordination.py::test_real_registry_host_rejects_unregistered_checkout
+    - tests/test_devx015_workflow_coordination.py::test_recovery_custody_locks_original_roots_across_split_publication
+    - tests/test_devx015_workflow_coordination.py::test_registration_bytes_preserve_text_and_fail_closed
+    - tests/test_devx015_workflow_coordination.py::test_untrusted_locator_cannot_enrol_host
 production_effect: none

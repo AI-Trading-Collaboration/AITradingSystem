@@ -2197,9 +2197,40 @@ class _JobProcesses:
         self.api, self.job = api, job
         self.handles: dict[tuple[int, int], Any] = {}
 
+    def _signaled_retained_count(self) -> int:
+        signaled = 0
+        for handle in self.handles.values():
+            state = self.api.WaitForSingleObject(handle, 0)
+            if state not in {0, _WAIT_TIMEOUT}:
+                raise ExecutionContainmentError("WAIT_PROCESS", str(state))
+            signaled += state == 0
+        return signaled
+
+    def _short_list_explained(
+        self, assigned: int, count: int, previous: tuple[int, int] | None,
+    ) -> bool:
+        """GOV-007 F2: a short list is complete only when our own handles explain it.
+
+        A retained handle keeps an exited process object alive, so the job still
+        counts it as assigned while the PID list names only active members (v13
+        native evidence: assigned=65, listed=64=ActiveProcesses, retained=65).
+        Accept only a successful list that repeats the previous successful query
+        exactly, equals ActiveProcesses, and whose gap is at most our retained
+        signaled identities. Anything else keeps the bounded fail-closed path.
+        """
+        if previous != (assigned, count):
+            return False
+        if assigned - count > self._signaled_retained_count():
+            return False
+        try:
+            return _active(self.api, self.job) == count
+        except ExecutionContainmentError:
+            return False  # Unobservable accounting keeps the original bounded failure.
+
     def collect(self) -> None:
         capacity = 16
         queries: list[dict[str, int | bool]] = []
+        previous_short: tuple[int, int] | None = None
         # Bounded allocation/retry guard, not a concurrency scheduling policy.
         while capacity <= 65536:
 
@@ -2217,7 +2248,16 @@ class _JobProcesses:
             error = ctypes.get_last_error() if not ok else 0
             if not ok and error != 234:
                 _checked(ok, "JOB_PROCESS_LIST")
-            if not ok or listing.count < listing.assigned:
+            short = ok and listing.count < listing.assigned
+            if short and self._short_list_explained(
+                int(listing.assigned), int(listing.count), previous_short,
+            ):
+                short = False
+            elif short:
+                previous_short = (int(listing.assigned), int(listing.count))
+            else:
+                previous_short = None
+            if not ok or short:
                 queries.append({"capacity": capacity, "ok": bool(ok), "winerror": error,
                                 "assigned": int(listing.assigned), "count": int(listing.count)})
                 capacity = max(capacity * 2, int(listing.assigned))

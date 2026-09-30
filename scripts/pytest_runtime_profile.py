@@ -1290,7 +1290,9 @@ def make_governed_split_scheduler(
     xdist worker runs its last queued item only after it learns the next item
     (or shutdown), so a worker holding a heavy unit still receives exactly one
     successor: the shortest remaining light unit, or another heavy unit, which
-    runs sequentially on the same worker and adds no concurrency.
+    runs sequentially on the same worker and adds no concurrency. A unit of an
+    ``exclusive_groups`` entry is assigned only while no other worker holds an
+    unfinished unit of the same group (loadfile used to serialize them implicitly).
     """
     from xdist.scheduler import LoadFileScheduling
 
@@ -1312,10 +1314,26 @@ def make_governed_split_scheduler(
         def _heavy_holders(self) -> int:
             return sum(1 for node in self.assigned_work if self._holds_heavy(node))
 
+        @staticmethod
+        def _groups(scope: str) -> frozenset[str]:
+            return manifest.exclusive_groups_of(scope) if "::" in scope else frozenset()
+
+        def _groups_held_elsewhere(self, node: object) -> set[str]:
+            return {
+                group
+                for other, units in self.assigned_work.items()
+                if other is not node
+                for scope, unit in units.items()
+                if not all(unit.values())
+                for group in self._groups(scope)
+            }
+
         def _choose(self, node: object) -> str | None:
             holds = self._holds_heavy(node)
-            heavy = [scope for scope in self.workqueue if self._is_heavy(scope)]
-            light = [scope for scope in self.workqueue if not self._is_heavy(scope)]
+            blocked = self._groups_held_elsewhere(node)
+            allowed = [scope for scope in self.workqueue if not (self._groups(scope) & blocked)]
+            heavy = [scope for scope in allowed if self._is_heavy(scope)]
+            light = [scope for scope in allowed if not self._is_heavy(scope)]
             if not holds and heavy and self._heavy_holders() < manifest.heavy_concurrency_cap:
                 return heavy[0]
             if light:
@@ -1358,8 +1376,8 @@ def make_governed_split_scheduler(
             nodeid = self.registered_collections[node][item_index]
             scope = self._split_scope(nodeid)
             self.assigned_work[node][scope][nodeid] = True
-            if self._is_heavy(scope):
-                for other in self.nodes:  # A freed heavy slot may admit another worker.
+            if self._is_heavy(scope) or self._groups(scope):
+                for other in self.nodes:  # A freed heavy slot or group may admit a worker.
                     self._reschedule(other)
             else:
                 self._reschedule(node)
@@ -1413,8 +1431,12 @@ class RuntimeProfilePlugin:
             xdist_dist=self.xdist_dist,
             loadscope_reorder=self.loadscope_reorder,
         )
+        # Unit tests drive the plugin with a minimal config; no rootpath means no policy.
+        rootpath = getattr(config, "rootpath", None)
         try:
-            self.scheduling_manifest = load_scheduling_manifest(Path(config.rootpath))
+            self.scheduling_manifest = (
+                load_scheduling_manifest(Path(rootpath)) if rootpath is not None else None
+            )
         except SchedulingManifestError as exc:
             raise pytest.UsageError(f"DEVX-018 scheduling manifest is invalid: {exc}") from exc
         self.split_scope_applied = False

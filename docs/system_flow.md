@@ -3192,7 +3192,9 @@ DEVX-018 在同一 Full plugin 内增加受审调度清单
 与上述文件级耗时降序、文件内 node 顺序完全不变；只有清单列出的文件在 xdist controller 中以单个
 node 为派发单元，其余文件保持 loadfile。清单列出的 `real_full_chain` 函数（内含真实 Full、source
 job 或 actual runner 链）由 plugin 在 pytest `-m` 取消选择之前打标；同时持有此类单元的 worker 数
-不超过 `heavy_concurrency_cap`，持有者只再接收一个后继单元以保证 xdist 执行最后一项。runtime
+不超过 `heavy_concurrency_cap`（试点值 4），持有者只再接收一个后继单元以保证 xdist 执行最后一项。
+清单 `exclusive_groups` 声明共享宿主全局资源（固定 Job 名、HKCU 测试根视图）的单元组，调度器保证同组
+单元不在两个 worker 上同时运行，以保留 loadfile 下文件内串行的隐含互斥。runtime
 profile 的 `scheduler.split_scope` 记录清单路径、SHA-256、版本、上限与拆分文件；为 `null` 时沿用
 原"loadfile 文件只能在单 worker"校验，否则只豁免清单内文件。runner live reader 从 repo 重读清单、
 Full 正式检查从 candidate Git blob 重读清单，二者必须与 profile 证据逐字段一致，缺失、篡改或未声明

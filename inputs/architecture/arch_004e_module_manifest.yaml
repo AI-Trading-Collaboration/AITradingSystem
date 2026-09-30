@@ -16529,7 +16529,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.workflow_execution
   path: src/ai_trading_system/platform/architecture/workflow_execution.py
-  sha256: 2bf0b4113c168beb844948d9a46abb3b293c5a27c4bdabbef8cfaa55e43e6074
+  sha256: 074b1c86b82e9f2f472dd970fac2e70c057e8f5e437ef3161c350ae869d88375
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -17023,7 +17023,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.validation_scheduling
   path: src/ai_trading_system/platform/validation_scheduling.py
-  sha256: 4cc4878be4dcbb780c1bc114ec37d75431dab7b6200897aab06276ba7a83d2fa
+  sha256: 34ae584235d64261a892917de01a6ace41a0b357cb70315ecbf9e0e46b141622
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

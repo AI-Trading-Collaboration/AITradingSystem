@@ -40,12 +40,14 @@ _ALLOWED_TOP_LEVEL_FIELDS = frozenset(
         "heavy_concurrency_cap",
         "split_scope_files",
         "real_full_chain",
+        "exclusive_groups",
         "production_effect",
         *_REQUIRED_TEXT_FIELDS,
     }
 )
 _TEST_FILE_RE = re.compile(r"^tests/(?:[A-Za-z0-9_]+/)*test_[A-Za-z0-9_]+\.py$")
 _FUNCTION_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_GROUP_RE = re.compile(r"^[a-z][a-z0-9_]{2,63}$")
 
 
 class SchedulingManifestError(ValueError):
@@ -62,6 +64,13 @@ class SchedulingManifest:
     heavy_concurrency_cap: int
     split_scope_files: tuple[str, ...]
     real_full_chain_functions: tuple[str, ...]
+    # Units sharing one host-global resource (a fixed Job name, the whole HKCU
+    # test-root view) must never run on two workers at once.
+    exclusive_groups: tuple[tuple[str, tuple[str, ...]], ...] = ()
+
+    def exclusive_groups_of(self, nodeid: str) -> frozenset[str]:
+        key = nodeid_function_key(nodeid)
+        return frozenset(name for name, functions in self.exclusive_groups if key in functions)
 
     def is_split_file(self, file_path: str) -> bool:
         return file_path in self.split_scope_files
@@ -147,15 +156,30 @@ def parse_scheduling_manifest(
     if chain.get("marker") != REAL_FULL_CHAIN_MARKER:
         raise SchedulingManifestError("real_full_chain marker is unsupported")
     functions = _string_list(chain.get("functions"), "real_full_chain.functions")
-    for key in functions:
+
+    def require_split_function(key: str, field: str) -> None:
         file_path, separator, function = key.partition("::")
         if (
             not separator
             or file_path not in split_files
             or any(_FUNCTION_RE.fullmatch(part) is None for part in function.split("::"))
         ):
-            # Heavy accounting is per node, so every real chain must live in a split file.
-            raise SchedulingManifestError(f"real_full_chain entry is invalid: {key}")
+            # Heavy and exclusive accounting is per node, so entries must live in split files.
+            raise SchedulingManifestError(f"{field} entry is invalid: {key}")
+
+    for key in functions:
+        require_split_function(key, "real_full_chain")
+    raw_groups = payload.get("exclusive_groups", {})
+    if not isinstance(raw_groups, Mapping):
+        raise SchedulingManifestError("exclusive_groups must be a mapping")
+    groups: list[tuple[str, tuple[str, ...]]] = []
+    for name in sorted(raw_groups):
+        if not isinstance(name, str) or _GROUP_RE.fullmatch(name) is None:
+            raise SchedulingManifestError(f"exclusive group name is invalid: {name!r}")
+        members = _string_list(raw_groups[name], f"exclusive_groups.{name}")
+        for key in members:
+            require_split_function(key, f"exclusive_groups.{name}")
+        groups.append((name, tuple(members)))
     return SchedulingManifest(
         relative_path=relative_path,
         sha256=hashlib.sha256(raw).hexdigest(),
@@ -165,6 +189,7 @@ def parse_scheduling_manifest(
         heavy_concurrency_cap=cap,
         split_scope_files=tuple(split_files),
         real_full_chain_functions=tuple(functions),
+        exclusive_groups=tuple(groups),
     )
 
 
@@ -186,9 +211,13 @@ def missing_real_full_chain_functions(
     """Listed functions absent from a collection that did collect their file."""
     collected_files = {nodeid_file(nodeid) for nodeid in nodeids}
     collected_functions = {nodeid_function_key(nodeid) for nodeid in nodeids}
+    listed = sorted(
+        {*manifest.real_full_chain_functions,
+         *(key for _, members in manifest.exclusive_groups for key in members)}
+    )
     return [
         key
-        for key in manifest.real_full_chain_functions
+        for key in listed
         if key.split("::", 1)[0] in collected_files and key not in collected_functions
     ]
 

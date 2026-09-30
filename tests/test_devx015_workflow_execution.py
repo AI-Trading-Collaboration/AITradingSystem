@@ -5855,6 +5855,56 @@ def test_job_process_list_budget_retains_bounded_native_query_diagnostics(active
     }
 
 
+@pytest.mark.parametrize("case", [
+    "explained", "not-repeated", "active-mismatch", "unsignaled-retained", "accounting-denied",
+])
+def test_job_process_list_short_list_accepted_only_when_retained_exits_explain_it(case):
+    """GOV-007 F2 (v13 native counters: assigned=65, listed=64=active, retained=65).
+
+    A retained handle keeps one exited process object assigned to the job. Only a
+    repeated successful list equal to ActiveProcesses whose gap is covered by our
+    own signaled identities is complete; every other short list stays fail-closed.
+    """
+    from types import SimpleNamespace
+
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+
+    listings = []
+
+    def query(job, kind, buffer, size, returned):
+        assert job == 123
+        if kind == 1:
+            if case == "accounting-denied":
+                ctypes.set_last_error(5)
+                return False
+            buffer._obj.ActiveProcesses = 1 if case == "active-mismatch" else 0
+            return True
+        assert kind == 3
+        listing = buffer._obj
+        listings.append(len(listing.pids))
+        assigned = 1 + (len(listings) % 2 if case == "not-repeated" else 0)
+        listing.assigned, listing.count = assigned, 0
+        return True
+
+    retained = object()
+    api = SimpleNamespace(
+        QueryInformationJobObject=query,
+        WaitForSingleObject=lambda handle, timeout: (
+            execution._WAIT_TIMEOUT if case == "unsignaled-retained" else 0
+        ),
+    )
+    processes = execution._JobProcesses(api, 123)
+    processes.handles[(4242, 1)] = retained
+    if case == "explained":
+        processes.collect()
+        assert listings == [16, 32]  # The second identical successful list is accepted.
+        assert processes.handles == {(4242, 1): retained}
+        return
+    with pytest.raises(execution.ExecutionContainmentError, match="JOB_PROCESS_LIST_BUDGET"):
+        processes.collect()
+    assert listings == [2 ** power for power in range(4, 17)]
+
+
 @pytest.mark.parametrize("fault", [
     "wrong-error", "too-many", "extra", "secret", "bool-count", "capacity", "accounting-type",
 ])

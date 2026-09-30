@@ -60,7 +60,13 @@ def test_tracked_manifest_is_valid_and_every_chain_lives_in_a_split_file() -> No
     manifest = load_scheduling_manifest(ROOT)
 
     assert manifest is not None
-    assert manifest.heavy_concurrency_cap == 6
+    assert manifest.heavy_concurrency_cap == 4
+    groups = dict(manifest.exclusive_groups)
+    assert set(groups) == {"fixed_publication_binding_job", "host_registry_view"}
+    assert manifest.exclusive_groups_of(
+        "tests/test_devx015_workflow_coordination.py::"
+        "test_native_registry_fixture_preserves_existing_view_and_leaves_no_new_root"
+    ) == frozenset({"host_registry_view"})
     assert manifest.real_full_chain_functions
     for key in manifest.real_full_chain_functions:
         assert manifest.is_split_file(key.split("::", 1)[0])
@@ -91,6 +97,11 @@ def test_tracked_manifest_is_valid_and_every_chain_lives_in_a_split_file() -> No
                              "functions": ["tests/test_other.py::test_chain"]}},
         {"real_full_chain": {"marker": REAL_FULL_CHAIN_MARKER,
                              "functions": ["tests/test_split.py::test_chain[param]"]}},
+        {"exclusive_groups": []},
+        {"exclusive_groups": {"Bad-Name": ["tests/test_split.py::test_chain"]}},
+        {"exclusive_groups": {"group_a": ["tests/test_other.py::test_x"]}},
+        {"exclusive_groups": {"group_a": ["tests/test_split.py::test_b",
+                                          "tests/test_split.py::test_a"]}},
     ],
 )
 def test_manifest_rejects_unreviewed_shapes(overrides: dict[str, object]) -> None:
@@ -207,7 +218,7 @@ def _record(name, seconds):
 """
 
 
-def _write_fixture_project(root: Path, *, cap: int) -> None:
+def _write_fixture_project(root: Path, *, cap: int, grouped: bool = False) -> None:
     (root / "pytest.ini").write_text("[pytest]\n", encoding="utf-8")
     manifest = _manifest_payload(
         heavy_concurrency_cap=cap,
@@ -215,6 +226,10 @@ def _write_fixture_project(root: Path, *, cap: int) -> None:
         real_full_chain={"marker": REAL_FULL_CHAIN_MARKER,
                          "functions": ["tests/test_split.py::test_chain"]},
     )
+    if grouped:
+        manifest["exclusive_groups"] = {"shared_host_resource": [
+            "tests/test_split.py::test_light", "tests/test_split.py::test_other_light",
+        ]}
     path = root / SCHEDULING_MANIFEST_RELATIVE_PATH
     path.parent.mkdir(parents=True)
     path.write_bytes(_raw(manifest))
@@ -226,7 +241,8 @@ def _write_fixture_project(root: Path, *, cap: int) -> None:
         + "@pytest.mark.parametrize('index', range(3))\n"
         + "def test_chain(index):\n    _record(f'chain{index}', 1.5)\n"
         + "@pytest.mark.parametrize('index', range(6))\n"
-        + "def test_light(index):\n    _record(f'light{index}', 0.3)\n",
+        + "def test_light(index):\n    _record(f'light{index}', 0.3)\n"
+        + "def test_other_light():\n    _record('otherlight', 0.3)\n",
         encoding="utf-8",
     )
     (tests / "test_whole.py").write_text(
@@ -262,7 +278,7 @@ def test_real_xdist_split_scope_caps_heavy_nodes_and_keeps_loadfile_elsewhere(
     _write_fixture_project(tmp_path, cap=1)
     completed, rows = _run_fixture(tmp_path, "-n", "3", "--dist", "loadfile")
     assert completed.returncode == 0, completed.stdout + completed.stderr
-    assert len(rows) == 12
+    assert len(rows) == 13
 
     whole_workers = {row["worker"] for row in rows if row["test"].startswith("whole")}
     assert len(whole_workers) == 1  # non-listed file keeps loadfile semantics
@@ -286,4 +302,18 @@ def test_real_marker_exclusion_deselects_exactly_listed_chain_nodes(tmp_path: Pa
     assert "3 deselected" in completed.stdout
     assert sorted(row["test"] for row in rows) == sorted(
         [f"light{index}" for index in range(6)] + [f"whole{index}" for index in range(3)]
+        + ["otherlight"]
     )
+
+
+def test_real_xdist_exclusive_group_units_never_overlap(tmp_path: Path) -> None:
+    _write_fixture_project(tmp_path, cap=3, grouped=True)
+    completed, rows = _run_fixture(tmp_path, "-n", "4", "--dist", "loadfile")
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    grouped = sorted(
+        (row["start"], row["stop"], row["worker"])
+        for row in rows if row["test"].startswith(("light", "otherlight"))
+    )
+    assert len(grouped) == 7
+    for (_, previous_stop, _), (next_start, _, _) in zip(grouped, grouped[1:], strict=False):
+        assert next_start >= previous_stop  # one shared host resource, never two holders
