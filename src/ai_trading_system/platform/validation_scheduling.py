@@ -22,6 +22,8 @@ SCHEDULING_MANIFEST_SCHEMA_VERSION = "devx_018_validation_scheduling.v1"
 SCHEDULING_MANIFEST_RELATIVE_PATH = "config/architecture/devx_018_validation_scheduling.yaml"
 SPLIT_SCOPE_EVIDENCE_SCHEMA_VERSION = "devx_018_split_scope_evidence.v1"
 REAL_FULL_CHAIN_MARKER = "real_full_chain"
+# An exclusive group runs as one sequential work unit under this scope prefix.
+EXCLUSIVE_GROUP_SCOPE_PREFIX = "exclusive-group::"
 ALLOWED_MANIFEST_STATUSES = frozenset({"ACTIVE_PILOT", "ACTIVE"})
 _REQUIRED_TEXT_FIELDS = (
     "policy_id",
@@ -38,6 +40,7 @@ _ALLOWED_TOP_LEVEL_FIELDS = frozenset(
         "version",
         "status",
         "heavy_concurrency_cap",
+        "heavy_start_interval_seconds",
         "split_scope_files",
         "real_full_chain",
         "exclusive_groups",
@@ -65,12 +68,27 @@ class SchedulingManifest:
     split_scope_files: tuple[str, ...]
     real_full_chain_functions: tuple[str, ...]
     # Units sharing one host-global resource (a fixed Job name, the whole HKCU
-    # test-root view) must never run on two workers at once.
+    # test-root view) run as one sequential unit; a function is in at most one group.
     exclusive_groups: tuple[tuple[str, tuple[str, ...]], ...] = ()
+    # Minimum spacing between two workers starting a heavy unit; 0 disables the ramp.
+    # The manifest SHA-256 already binds this value in runtime profile evidence.
+    heavy_start_interval_seconds: int = 0
 
-    def exclusive_groups_of(self, nodeid: str) -> frozenset[str]:
+    def exclusive_group_of(self, nodeid: str) -> str | None:
         key = nodeid_function_key(nodeid)
-        return frozenset(name for name, functions in self.exclusive_groups if key in functions)
+        for name, functions in self.exclusive_groups:
+            if key in functions:
+                return name
+        return None
+
+    def is_heavy_scope(self, scope: str) -> bool:
+        """A group unit is heavy when any member is; a node unit when it is real_full_chain."""
+        if scope.startswith(EXCLUSIVE_GROUP_SCOPE_PREFIX):
+            members = dict(self.exclusive_groups).get(
+                scope[len(EXCLUSIVE_GROUP_SCOPE_PREFIX) :], ()
+            )
+            return any(key in self.real_full_chain_functions for key in members)
+        return "::" in scope and self.is_real_full_chain(scope)
 
     def is_split_file(self, file_path: str) -> bool:
         return file_path in self.split_scope_files
@@ -146,6 +164,9 @@ def parse_scheduling_manifest(
     cap = payload.get("heavy_concurrency_cap")
     if type(cap) is not int or cap < 1:
         raise SchedulingManifestError("heavy_concurrency_cap must be a positive integer")
+    interval = payload.get("heavy_start_interval_seconds", 0)
+    if type(interval) is not int or interval < 0:
+        raise SchedulingManifestError("heavy_start_interval_seconds must be a non-negative integer")
     split_files = _string_list(payload.get("split_scope_files"), "split_scope_files")
     for path in split_files:
         if _TEST_FILE_RE.fullmatch(path) is None or PurePosixPath(path).as_posix() != path:
@@ -173,12 +194,19 @@ def parse_scheduling_manifest(
     if not isinstance(raw_groups, Mapping):
         raise SchedulingManifestError("exclusive_groups must be a mapping")
     groups: list[tuple[str, tuple[str, ...]]] = []
+    group_of: dict[str, str] = {}
     for name in sorted(raw_groups):
         if not isinstance(name, str) or _GROUP_RE.fullmatch(name) is None:
             raise SchedulingManifestError(f"exclusive group name is invalid: {name!r}")
         members = _string_list(raw_groups[name], f"exclusive_groups.{name}")
         for key in members:
             require_split_function(key, f"exclusive_groups.{name}")
+            if key in group_of:
+                # A group is one sequential unit, so a function cannot join two of them.
+                raise SchedulingManifestError(
+                    f"exclusive group member is in two groups: {key} ({group_of[key]}, {name})"
+                )
+            group_of[key] = name
         groups.append((name, tuple(members)))
     return SchedulingManifest(
         relative_path=relative_path,
@@ -190,6 +218,7 @@ def parse_scheduling_manifest(
         split_scope_files=tuple(split_files),
         real_full_chain_functions=tuple(functions),
         exclusive_groups=tuple(groups),
+        heavy_start_interval_seconds=interval,
     )
 
 
@@ -212,8 +241,10 @@ def missing_real_full_chain_functions(
     collected_files = {nodeid_file(nodeid) for nodeid in nodeids}
     collected_functions = {nodeid_function_key(nodeid) for nodeid in nodeids}
     listed = sorted(
-        {*manifest.real_full_chain_functions,
-         *(key for _, members in manifest.exclusive_groups for key in members)}
+        {
+            *manifest.real_full_chain_functions,
+            *(key for _, members in manifest.exclusive_groups for key in members),
+        }
     )
     return [
         key
@@ -222,9 +253,7 @@ def missing_real_full_chain_functions(
     ]
 
 
-def split_scope_evidence_error(
-    evidence: object, manifest: SchedulingManifest | None
-) -> str | None:
+def split_scope_evidence_error(evidence: object, manifest: SchedulingManifest | None) -> str | None:
     """Compare profile evidence with the manifest parsed from trusted bytes."""
     if manifest is None:
         return None if evidence is None else "split scope evidence without a manifest"
@@ -236,6 +265,7 @@ def split_scope_evidence_error(
 
 
 __all__ = [
+    "EXCLUSIVE_GROUP_SCOPE_PREFIX",
     "REAL_FULL_CHAIN_MARKER",
     "SCHEDULING_MANIFEST_RELATIVE_PATH",
     "SCHEDULING_MANIFEST_SCHEMA_VERSION",

@@ -15,16 +15,15 @@ task_record:
   priority: P0
   accountable_owner: null
   next_owner: Claude Code coordinator
-  requirement_refs:
-  - docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md`。v11
-    Full 10.15h 墙钟 vs 43.2 worker-h（理想 2.7h）：loadfile 把 publication_fence 文件（568 分钟）固定在单
-    worker。下一步 O1+S1（受审清单内文件按节点拆分、重型并发上限 K=6、耗时权重刷新，runtime profile 契约新增 policy）→
-    O2（pre-Full tier 排除 `real_full_chain` 节点）→ O5 → 与 GOV-007 基线同一候选正式验收 → P1/P4/O3
-    → O4 按需
+  unstructured_legacy_blocker_or_next_step: v14 Full 死锁（非慢）：exclusive_groups 的跨 worker
+    占用与 heavy 上限 K=4、xdist 队尾项语义构成循环等待，已离线模拟复现。v15（清单 v3）：每个 exclusive group 固定为一个串行复合工作单元（重型判定=任一成员为
+    real_full_chain）、新增 heavy_start_interval_seconds 软启动（活性保证：无轻量工作时不等待）、解析器拒绝一个函数属于两个
+    group；并附 fake-node 模拟属性测试与真实 xdist 测试。验收：限时 pilot 无失败簇复现后进入 v15 正式 Full；通过后 P1/P4/O3
+    与重测（重新校准 K 与启动间隔），O4 按需。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile
@@ -66,6 +65,35 @@ events:
   - change:devx-018-registration-permit-20260930-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-8654b7a1aaccb1d98361dc4134a9d75d
+- schema_version: task_event.v1
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-30T10:54:40Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx018-v15-task-20260930-v2
+  lane_id: null
+  base_commit: e71db2646b2e0a5fdec1369962952e261c5fcf16
+  previous_state_event_id: task-event-8654b7a1aaccb1d98361dc4134a9d75d
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: v14 Full 死锁（非慢）：exclusive_groups 的跨 worker 占用与 heavy 上限
+      K=4、xdist 队尾项语义构成循环等待，已离线模拟复现。v15（清单 v3）：每个 exclusive group 固定为一个串行复合工作单元（重型判定=任一成员为
+      real_full_chain）、新增 heavy_start_interval_seconds 软启动（活性保证：无轻量工作时不等待）、解析器拒绝一个函数属于两个
+      group；并附 fake-node 模拟属性测试与真实 xdist 测试。验收：限时 pilot 无失败簇复现后进入 v15 正式 Full；通过后
+      P1/P4/O3 与重测（重新校准 K 与启动间隔），O4 按需。
+    acceptance_criteria: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧
+      loadfile profile 仍按原契约通过；pre-Full tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3
+      不跨调用缓存身份或 PASS
+    notes: production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision
+      2026-09-30（优化顺序、O2、S1 并入、K=6、v12 中断后先落地 O1+O2 再跑正式验证）
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx018-v15-task-20260930-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0a31ce2fb925ac0b0435cce118ae4ad1
 projection:
   legacy_first_eight_cells:
   - DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
@@ -74,18 +102,17 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - 详见 `docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md`。v11 Full 10.15h
-    墙钟 vs 43.2 worker-h（理想 2.7h）：loadfile 把 publication_fence 文件（568 分钟）固定在单 worker。下一步
-    O1+S1（受审清单内文件按节点拆分、重型并发上限 K=6、耗时权重刷新，runtime profile 契约新增 policy）→ O2（pre-Full
-    tier 排除 `real_full_chain` 节点）→ O5 → 与 GOV-007 基线同一候选正式验收 → P1/P4/O3 → O4 按需
+  - v14 Full 死锁（非慢）：exclusive_groups 的跨 worker 占用与 heavy 上限 K=4、xdist 队尾项语义构成循环等待，已离线模拟复现。v15（清单
+    v3）：每个 exclusive group 固定为一个串行复合工作单元（重型判定=任一成员为 real_full_chain）、新增 heavy_start_interval_seconds
+    软启动（活性保证：无轻量工作时不等待）、解析器拒绝一个函数属于两个 group；并附 fake-node 模拟属性测试与真实 xdist 测试。验收：限时
+    pilot 无失败簇复现后进入 v15 正式 Full；通过后 P1/P4/O3 与重测（重新校准 K 与启动间隔），O4 按需。
   - Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full
     tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
   - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision
     2026-09-30（优化顺序、O2、S1 并入、K=6、v12 中断后先落地 O1+O2 再跑正式验证）
-  docs_links:
-  - docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 06655f1985c90c8a3862c1fabd16fe7dc1ac55d3ae4cb7b1b5e2e49cf9aad34c
-last_event_id: task-event-8654b7a1aaccb1d98361dc4134a9d75d
+  canonical_row_sha256: 97dfa29067001a69be88c49f9ad6f1c225bfebdb8218315f80c2b494c65ae039
+last_event_id: task-event-0a31ce2fb925ac0b0435cce118ae4ad1
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 38c86a46dd7d4da38d112f2283278b41db3484011e28a6045c8266371bed59df
+fragment_checksum: 9dbdedbb18e69fd96e540b3a2adce0092497bd91c64e134acdd57b9ad7325eb9

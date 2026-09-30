@@ -8,6 +8,7 @@ All launchers, jobs, files and cleanup targets belong to the current tmp_path.
 from __future__ import annotations
 
 import ctypes
+import gc
 import hashlib
 import importlib
 import inspect
@@ -5523,6 +5524,7 @@ def test_worker_token_rejects_wrong_sid_impersonation_and_does_not_leak(executio
     with _own_primary_token(execution_api) as (api, security, token, sid):
         api.GetProcessHandleCount.argtypes = [w.HANDLE, ctypes.POINTER(w.DWORD)]
         api.GetProcessHandleCount.restype = w.BOOL
+        gc.collect()  # Unreferenced handles from earlier tests must not be freed mid-check.
         before, after = w.DWORD(), w.DWORD()
         assert api.GetProcessHandleCount(api.GetCurrentProcess(), ctypes.byref(before))
         for _ in range(16):
@@ -5670,6 +5672,8 @@ def test_primary_token_observation_matches_independent_dotnet_and_closes_handles
         "|ConvertTo-Json -Compress",
     ], text=True, timeout=DEADLINE))
     execution_api._process_primary_token(api, process)  # Warm library loading before leak check.
+    # Other tests on this worker may leave unreferenced handles that a collection frees mid-check.
+    gc.collect()
     before, after = w.DWORD(), w.DWORD()
     assert api.GetProcessHandleCount(process, ctypes.byref(before))
     for _ in range(32):

@@ -1,7 +1,7 @@
 schema_version: devx_018_validation_scheduling.v1
 policy_id: devx_018_governed_split_scope_scheduling
 owner: validation_operations
-version: 2
+version: 3
 status: ACTIVE_PILOT
 requirement: docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
 rationale: >-
@@ -12,17 +12,23 @@ rationale: >-
   every other file keeps loadfile semantics. Nodes that execute a real inner
   Full, source job or actual runner chain are marked real_full_chain; they are
   capped in concurrency and excluded from pre-Full tiers, where Full remains
-  their only formal authority.
+  their only formal authority. Each exclusive group runs as one composite
+  sequential unit, the v14 Full showed that cross-worker group blocking can
+  deadlock the xdist last-item quirk (19 nodes never ran). Heavy units start at
+  a spaced interval so host load ramps up instead of stepping.
 intended_effect: >-
   Full wall time about 5 hours (simulated from v11 node durations with cap 6);
   architecture-fitness without real_full_chain nodes and with split files in
   well under one hour. Estimates are not commitments; acceptance uses measured
-  runtime profiles.
+  runtime profiles. With cap 4 the 99 real_full_chain nodes (25.75 hours in v11,
+  29.11 hours in v13) bound the wall time at about 6.5-7.5 hours.
 validation_evidence: >-
   outputs/validation_runtime/gov-007-p1c-devx015-full-20260929-v11/test_runtime_profile.json
   (heavy concurrency mostly 3-4, peak 14, tail 3.69 hours at 1); static review of
   the split files found no module/class/session/package fixtures or autouse
-  fixtures.
+  fixtures. v14 stall: outputs/validation_runtime/gov-007-p1c-devx015-full-20260930-v14
+  (deadlock reproduced offline with a discrete-event simulator; v3 scheduling is
+  covered by fake-node property tests in tests/test_devx018_validation_scheduling.py).
 review_condition: >-
   Recalibrate heavy_concurrency_cap and the lists after the first Full measured
   with this policy, and whenever a real_full_chain function is added, renamed
@@ -35,6 +41,13 @@ review_condition: >-
 # steady level the v11 Full ran without such timeouts. Recalibrate with the next
 # measured profile.
 heavy_concurrency_cap: 4
+# Pilot baseline, new in v3. v11 ramped heavy units 0 to 5 over about 60 minutes
+# and produced few timeouts; v13 and v14 started 4-6 heavy units at t=0 and the
+# first-hour inspector, readiness and fence CLI timeouts fired under that step
+# load. 600 seconds spaces heavy starts so the cap of 4 is reached after about
+# 30 minutes (about 0.25 hours of extra wall time). 0 disables the ramp.
+# Recalibrate with the first measured profile after P1/P4/O3.
+heavy_start_interval_seconds: 600
 split_scope_files:
   - tests/test_arch_005_integration_publication_fence.py
   - tests/test_arch_005_source_preservation.py
@@ -85,7 +98,8 @@ real_full_chain:
     - tests/test_governed_development_skill.py::test_completed_admission_full_entry_real_publication_pass
     - tests/test_governed_development_skill.py::test_completed_admission_full_entry_rejects_real_invalid_context
 # Units sharing a host-global resource. Under loadfile these ran serially inside
-# their file; v13 split scheduling ran them concurrently and they failed.
+# their file; v13 split scheduling ran them concurrently and they failed. A group
+# is one sequential composite unit (v3), so a function belongs to at most one.
 exclusive_groups:
   # Fixed Local\AITS-DEVX015-actual-full-publication-binding Job name in both params.
   fixed_publication_binding_job:

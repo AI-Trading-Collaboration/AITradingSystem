@@ -549,6 +549,27 @@ v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
 - 下一步：v14 候选经新的许可事务（`failure_fix_rerun` 绑定 v13 失败 Full）完成全部 tiers 与 Full；
   发布后 P1/P4/O3 与重测。
 
+### 2026-09-30 v14 Full 结果与 v15 修复范围
+
+- Claude Code 执行 v14（候选 `e71db2646`，清单 v2）：contract-validation、integration、reproducibility、
+  architecture-fitness 通过；Full 在约 18:26 JST 后无完成事件——控制器在等 19 个永不运行的节点，并非
+  运行缓慢（此前"还需 1 到 2 小时"的判断有误，已更正）。已以 `--recover-full-action terminate_frozen_job`
+  收口（`full_incomplete_recovery.json`，事务 FAILED/RELEASED），v14 证据全部保留。
+- 根因：v2 跨 worker exclusive group 占用与重型上限、xdist 末项机制形成循环等待（细节与离线复现见
+  DEVX-018 需求文档 v14 章节）。另有 13 个负载相关失败（identity 哈希在 4–6 重型并发下 116–194 秒，
+  触发固定的 child-ready/readiness/fence CLI/inspector/terminate 超时）与一个句柄计数用例的 GC 抖动
+  （381≠383，非泄漏），无一是逻辑错误。
+- v15 范围（DEVX-018 v3）：每个 exclusive group 为一个串行复合工作单元（不再跨 worker 互斥），复合单元
+  优先启动；`heavy_start_interval_seconds=600` 软启动；句柄计数用例取基线前 `gc.collect()`。
+  模拟（v11/v13 实测 profile、K=4、16 worker）均无死锁，makespan 约 6.8/7.6 小时，`max_heavy=4`，组无重叠。
+- 任务源两条记录（GOV-007、DEVX-018）经 `gov-007-devx018-v15-task-20260930-v1/v2` 许可事务更新（事务按
+  任务 id 绑定，故各需一个；均按失败回路 released）。
+- 审计事件（无内容暴露）：v15 文档整理时误执行一次裸 `git status --short`（输出被 `head -0` 丢弃，未显示任何路径或
+  内容），遗漏 `known_unrelated_exclusions` 的精确排除集；未打开、复制、暂存或修改被排除文件。此后仅用
+  `worktree-audit`。按纪律记为第二次审计事件。
+- 下一步：v15 候选经限时 pilot、`failure_fix_rerun`（父为 v14 `full_incomplete_recovery.json`）事务、
+  generators 与全部 tiers、Full；发布后 P1/P4/O3 与重测。
+
 ## 7. 退出条件
 
 E1–E10 全部满足，迁移到 pi 的第一个低风险任务完成完整的"预检 → 提交 → 合入 main → 推送"。

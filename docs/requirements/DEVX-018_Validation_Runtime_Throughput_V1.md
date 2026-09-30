@@ -182,3 +182,50 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
 - 已知风险：`test_real_16_worker_diagnostics_cross_runner_pipe_before_release_and_session_exit` 的 60 秒
   收尾看门狗在 16 worker 满载时可能超时（聚焦批次一次，空载 15.7 秒）；如 v14 Full 复现再评估。
 - 重测时以实测 profile 重新校准 K 与分组；O3/P1/P4 仍待基线发布后。
+
+### 2026-09-30 v14 Full 死锁与 v15 设计（Design F）
+
+- 现象：v14（候选 `e71db2646`，清单 v2）Full 在约 18:26 JST 后无任何完成事件；此前"还需 1 到 2 小时"的判断
+  错误——该次运行不是慢，而是控制器等待 19 个永不运行的节点。已以 `--recover-full-action
+  terminate_frozen_job` 收尾（`full_incomplete_recovery.json`，事务 FAILED/RELEASED），全部证据保留。
+- 根因（已用离线离散事件模拟复现）：v2 的跨 worker exclusive group 占用与 heavy 上限、xdist"worker 只在收到
+  后继或 shutdown 后才运行队尾项"叠加成循环等待。`host_registry_view` 被 gw4 一个未开始的轻量队首占用；
+  四个重型持有者 gw0–gw3 各持一个未开始的队首，其唯一可分配的后继都是被组阻塞的重型单元；其余 11 个
+  worker 各持一个未开始的末位轻量项。没有任何 worker 能开始，因而没有完成事件去唤醒调度。
+- Design F：每个 exclusive group 固定为**一个串行复合工作单元**（scope `exclusive-group::<name>`，成员按
+  collection 顺序在同一 worker 上顺序运行，天然互斥）；复合单元为重型当且仅当任一成员为 `real_full_chain`；
+  调度器删除跨 worker 组占用计数。持有重型单元的 worker 总能得到后继（轻量或重型），因此活性成立；
+  非持有者在只剩重型单元且已达上限时只是等待某个重型完成，推迟的是轻量结果而不是 makespan。解析器
+  拒绝一个函数同时属于两个 group（否则无法固定到单个复合单元）。
+- 软启动（清单 v3 `heavy_start_interval_seconds`，pilot 基线）：v13/v14 在 t=0 同时启动 4–6 个重型链，
+  重型内部 -n16 与每次 `acceptance_runtime_identity()`（约 16,554 文件 / 442 MB；空载约 11 秒，中载
+  19–22 秒，重载 116–194 秒）叠加，触发固定的 180 秒 child-ready、120 秒 readiness 子进程、60 秒 fence CLI、
+  360 秒 inspector 与 10 秒 `terminate` 超时；v11 重型并发在约 60 分钟内自然爬升 0→5，同类失败很少。
+  规则：非持有 worker 仅当距上一次"非持有者取得重型单元"已过该间隔，或已无轻量工作时才取得重型单元
+  （后者保证活性）。代价估算约 +0.25 小时。这是有评估证据但主观的启动策略，值 600 秒；重新校准条件：
+  P1/P4/O3 之后的首个实测 profile。
+- 预计墙钟：99 个链节点合计约 25.75（v11）/ 29.11（v13）小时，K=4 下界约 6.4–7.3 小时；K=3/2 分别约 9.7 /
+  14.5 小时，不可行。因此 v15 正式 Full 预计 5–7 小时，之后仍需 P1/P4/O3 才能进一步降低。
+- 测试：新增 fake-node 事件模拟属性测试（随机耗时与种子：无死锁、`max_heavy ≤ cap`、每个 group 全程串行、
+  启动间隔生效）与真实 xdist 组互斥用例；`test_devx015_workflow_execution.py` 句柄计数用例在取基线前后
+  `gc.collect()`（v14 出现 381≠383 抖动，非泄漏）。
+- 限时 pilot（非正式验证，不产生发布证据）：在候选提交上，于独立 detached worktree
+  `D:/Work/devx018-pilot-v15`（任务 DEVX-018；目的：在不占用主 checkout 的前提下观察新调度器首 75 分钟
+  是否复现 v14 首小时失败簇；退出条件：分析后 `git worktree remove` 并 `git worktree prune`，
+  证据摘要写回本节）运行 `pytest -n 16 --dist loadfile -p scripts.pytest_runtime_profile ... --no-loadscope-reorder
+  --basetemp D:/Work/devx018-pilot-<n>`，约 75 分钟后终止。该运行为验证笔记中的显式例外，不替代 Full。
+- 已接受的变通：暂无。固定超时与每调用 identity 哈希未改动；如 pilot 仍复现负载相关失败，再与 owner 讨论
+  测试侧超时按负载校准（须记录原因、影响、风险、验证、退出条件，退出条件绑定 P1/P4/O3）或提前 O3
+  （触及"不做跨调用 identity 缓存"的设计，须 owner 决定）。
+
+### 2026-09-30 v15 实现进展
+
+- 已实现：解析器 `exclusive_group_of` / `is_heavy_scope` / `heavy_start_interval_seconds`（默认 0，
+  非负整数，布尔与字符串拒绝）、一个函数至多属于一个 group；调度器复合单元 scope
+  `exclusive-group::<name>`、复合优先的重单元启动次序、软启动（注入式 clock，测试中用模拟时钟）；
+  清单 v3（`heavy_start_interval_seconds: 600`）。split_scope 证据字段保持 10 个不变，间隔由清单 SHA-256 绑定。
+- 验证：`tests/test_devx018_validation_scheduling.py` 57 项 parallel pytest 通过，含 fake-node 事件模拟属性
+  测试（12 种子 x 间隔 0/600：无死锁、`max_heavy <= cap`、每 group 单 worker 串行、间隔生效）、v14 死锁形状回归、
+  真实 xdist 组/重型组用例；对调度器做两次变异（去掉间隔、去掉上限）后测试均失败，说明测试有效。
+  以 v11/v13 实测 profile 做离散事件模拟（K=4、16 worker）：6.8 / 7.63 小时，`max_heavy=4`，组无重叠。
+- 待办：限时 pilot、正式 v15 Full；P1/P4/O3 与重测后再校准 K 与启动间隔。

@@ -8,7 +8,7 @@ import re
 import sys
 import time
 from collections import OrderedDict, defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
@@ -22,6 +22,7 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 from ai_trading_system.platform.validation_scheduling import (  # noqa: E402
+    EXCLUSIVE_GROUP_SCOPE_PREFIX,
     REAL_FULL_CHAIN_MARKER,
     SchedulingManifest,
     SchedulingManifestError,
@@ -1280,30 +1281,49 @@ def build_runtime_profile(
 
 
 def make_governed_split_scheduler(
-    config: pytest.Config, log: object, manifest: SchedulingManifest
+    config: pytest.Config,
+    log: object,
+    manifest: SchedulingManifest,
+    *,
+    clock: Callable[[], float] = time.monotonic,
 ) -> object:
     """Loadfile scheduling except for DEVX-018 split files, with a heavy-worker cap.
 
     Collection order (the audited duration order) is unchanged; only the work
-    unit of a listed file becomes its single node. At most
-    ``heavy_concurrency_cap`` workers hold real_full_chain units at once. An
-    xdist worker runs its last queued item only after it learns the next item
-    (or shutdown), so a worker holding a heavy unit still receives exactly one
+    unit of a listed file becomes its single node. Every ``exclusive_groups``
+    entry is one composite sequential unit (loadfile used to serialize them
+    implicitly), so two workers can never overlap on the same host-global
+    resource and no cross-worker blocking exists. A composite unit is heavy when
+    any member is real_full_chain and is started before other heavy units, since
+    it is the longest sequential chain.
+
+    At most ``heavy_concurrency_cap`` workers hold heavy units at once. An xdist
+    worker runs its last queued item only after it learns the next item (or
+    shutdown), so a worker holding a heavy unit still receives exactly one
     successor: the shortest remaining light unit, or another heavy unit, which
-    runs sequentially on the same worker and adds no concurrency. A unit of an
-    ``exclusive_groups`` entry is assigned only while no other worker holds an
-    unfinished unit of the same group (loadfile used to serialize them implicitly).
+    runs sequentially on the same worker and adds no concurrency. A worker that
+    holds nothing and finds only capped heavy units waits for a heavy completion,
+    which reschedules every worker. When ``heavy_start_interval_seconds`` is set,
+    a worker starts a heavy unit only that long after the previous start while
+    light units remain, so load ramps up instead of stepping.
     """
     from xdist.scheduler import LoadFileScheduling
 
     class GovernedSplitScopeScheduling(LoadFileScheduling):  # type: ignore[misc]
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            super().__init__(*args, **kwargs)
+            self._next_heavy_at: float | None = None
+
         def _split_scope(self, nodeid: str) -> str:
             file_path = nodeid_file(nodeid)
-            return nodeid if manifest.is_split_file(file_path) else file_path
+            if not manifest.is_split_file(file_path):
+                return file_path
+            group = manifest.exclusive_group_of(nodeid)
+            return nodeid if group is None else EXCLUSIVE_GROUP_SCOPE_PREFIX + group
 
         @staticmethod
         def _is_heavy(scope: str) -> bool:
-            return "::" in scope and manifest.is_real_full_chain(scope)
+            return manifest.is_heavy_scope(scope)
 
         def _holds_heavy(self, node: object) -> bool:
             return any(
@@ -1314,27 +1334,28 @@ def make_governed_split_scheduler(
         def _heavy_holders(self) -> int:
             return sum(1 for node in self.assigned_work if self._holds_heavy(node))
 
-        @staticmethod
-        def _groups(scope: str) -> frozenset[str]:
-            return manifest.exclusive_groups_of(scope) if "::" in scope else frozenset()
+        def _heavy_in_start_order(self, scopes: list[str]) -> list[str]:
+            # Stable: composites first (longest member list first), the rest in collection order.
+            def key(scope: str) -> tuple[int, int]:
+                if not scope.startswith(EXCLUSIVE_GROUP_SCOPE_PREFIX):
+                    return (1, 0)
+                return (0, -len(self.workqueue[scope]))
 
-        def _groups_held_elsewhere(self, node: object) -> set[str]:
-            return {
-                group
-                for other, units in self.assigned_work.items()
-                if other is not node
-                for scope, unit in units.items()
-                if not all(unit.values())
-                for group in self._groups(scope)
-            }
+            return sorted(scopes, key=key)
 
         def _choose(self, node: object) -> str | None:
             holds = self._holds_heavy(node)
-            blocked = self._groups_held_elsewhere(node)
-            allowed = [scope for scope in self.workqueue if not (self._groups(scope) & blocked)]
-            heavy = [scope for scope in allowed if self._is_heavy(scope)]
-            light = [scope for scope in allowed if not self._is_heavy(scope)]
-            if not holds and heavy and self._heavy_holders() < manifest.heavy_concurrency_cap:
+            heavy = self._heavy_in_start_order(
+                [scope for scope in self.workqueue if self._is_heavy(scope)]
+            )
+            light = [scope for scope in self.workqueue if not self._is_heavy(scope)]
+            ramp_open = not light or self._next_heavy_at is None or clock() >= self._next_heavy_at
+            if (
+                not holds
+                and heavy
+                and ramp_open
+                and self._heavy_holders() < manifest.heavy_concurrency_cap
+            ):
                 return heavy[0]
             if light:
                 # Behind a heavy unit, queue the shortest (last in duration order) light unit.
@@ -1344,9 +1365,12 @@ def make_governed_split_scheduler(
             return None  # Only capped heavy units remain; a heavy completion wakes all workers.
 
         def _assign_work_unit(self, node: object) -> None:
+            was_holder = self._holds_heavy(node)
             chosen = self._choose(node)
             if chosen is None:
                 return
+            if self._is_heavy(chosen) and not was_holder:
+                self._next_heavy_at = clock() + manifest.heavy_start_interval_seconds
             work_unit = self.workqueue.pop(chosen)
             self.assigned_work.setdefault(node, {})[chosen] = work_unit
             worker_collection = self.registered_collections[node]
@@ -1370,14 +1394,12 @@ def make_governed_split_scheduler(
                 return
             self._assign_work_unit(node)
 
-        def mark_test_complete(
-            self, node: object, item_index: int, duration: float = 0
-        ) -> None:
+        def mark_test_complete(self, node: object, item_index: int, duration: float = 0) -> None:
             nodeid = self.registered_collections[node][item_index]
             scope = self._split_scope(nodeid)
             self.assigned_work[node][scope][nodeid] = True
-            if self._is_heavy(scope) or self._groups(scope):
-                for other in self.nodes:  # A freed heavy slot or group may admit a worker.
+            if self._is_heavy(scope):
+                for other in self.nodes:  # A freed heavy slot may admit a worker.
                     self._reschedule(other)
             else:
                 self._reschedule(node)
