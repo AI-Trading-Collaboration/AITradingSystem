@@ -1604,7 +1604,7 @@ class TaskCheckpoint:
                 # Failure cannot release the source lease while any child remains.
                 operation = "terminate"
                 try:
-                    process.terminate(timeout=10)
+                    process.terminate()
                     operation = "confirm_exit"
                     lifecycle.confirm_exit(lease.lease_id, process, actor=checked["actor"])
                     operation = "record_incomplete_result"

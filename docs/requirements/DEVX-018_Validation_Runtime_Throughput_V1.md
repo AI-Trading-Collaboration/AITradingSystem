@@ -265,3 +265,37 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
     退出条件：P1（identity/hook 重放去重）、P4（大 manifest 外置）与 O3（identity 缓存，需 owner 决定，
     触及"不做跨调用 identity 缓存"的设计）落地并重测后，用首个实测 profile 决定是否把常量降回；
     在此之前不得再放大任何期限而不回写本节。
+
+### 2026-10-01 v15 pilot 结论与已知簇校准验证
+
+- pilot 收尾（非正式验证，候选 `3d9379a56`、未含校准代码）：02:02 JST 停止，历时 5 小时 28 分，
+  已完成 14,635/14,673（99.74%），PASSED 14,577 / FAILED 53 / ERROR 2，4 个在飞、34 个未启动。停止原因：剩余为
+  串行尾部，且后续结果因未含校准而无信息量。失败归类：43 项为 pilot 环境因素（无 git 忽略的 retained evidence，
+  named-DQ / composer / named_simple_baseline 缺 `AITS_NAMED_DQ_PUBLICATION_TRANSACTION` /
+  `AITS_NAMED_DQ_SOURCE_LEASE_ID`，正式 worktree 不受影响）；1 项为 Atlas canonical 页面相对任务登记索引过期
+  （`SEMANTIC_SOURCE_DRIFT`，正式 Full 的 `atlas-authority` 生成器会在最终 head 重建）；9 项为负载类
+  （即上节 A/B/C 三类期限），由本次校准处理。
+- 尾部观察（供重测/O4 使用，不在本次范围内处理）：新调度器约 1.5 小时到达 98%，其后约 4 小时为串行尾部，
+  主机 CPU 仅 19–26%：关键路径是串行链长度而不是 CPU，主要是 `host_registry_view` 复合单元（15 个函数串行）与若干
+  链节点。可行方向：读者/写者式锁使只有"断言整个 HKCU 视图"的测试独占，或为各测试提供隔离的 HKCU 根。
+  据此把正式 Full 预期修订为约 6.5–8 小时（pilot 5.5 小时 + 约 38 个未完成尾部测试）。
+- 已知簇校准验证：第一次簇运行（stock `--dist loadfile`、与 pilot 并发）无效——未启用治理调度器、与 pilot 争用
+  主机全局资源（固定 Job 名、HKCU 测试根视图），吞吐 2.5 小时仅 10 项并出现一次无法归因的 `F`，已终止进程树并作废。
+  干净重跑在 pilot 停止后执行：`-p scripts.pytest_runtime_profile -n 12 --dist loadfile`，对象为 v13/v14/pilot
+  失败/抖动的 16 个负载类测试，结果 16/16 PASSED，用时 2:11:01。
+- 证据边界（诚实披露）：该重跑只有 12 个 worker、16 个测试、主机相对安静，证明校准后的代码在已知失败形状下
+  正确，但不是重负载通过证明；负载通过证明只能由正式 v15 Full 给出。pilot 未含校准代码，其后续结果不作为
+  校准证据。另新增不变量测试
+  `test_loaded_host_hang_guards_stay_above_the_production_inspection_bound`：测试侧 CLI 超时必须严格大于生产内层
+  inspector 上限，防止测试侧超时先于生产超时触发而掩盖 fail-closed 诊断。
+- 临时工作区生命周期（owner：Claude Code coordinator；退出条件：v15 正式 Full 结果落定并把所需证据归入规范位置后，
+  逐一审计再清理）：
+  - `D:/Work/devx018-pilot-v15`（detached `3d9379a56`，约 15 GB，pilot worktree；清理前先 `git -C` 审计状态，
+    再 `git worktree remove`）与其 basetemp `D:/Work/devx018-pilot-v15-tmp`；pilot 日志
+    `D:/Work/devx018-pilot-v15-out*.log` 与 `-err.log` 保留为证据；
+  - `D:/Work/devx018-custody-repro`、`D:/Work/devx018-lifecycle-repro`（及其 `.log`）、
+    `D:/Work/devx018-cluster-tmp`、`D:/Work/devx018-cluster-tmp2`、`D:/Work/devx018-atlas-tmp`：均为单次复现/簇验证
+    的 basetemp，可再生；
+  - 不删除 `D:/Work/devx015-*` 证据目录与 5 个遗留 HKCU `AITS-DEVX015-Test-*` 根（owner 清理事项）。
+- 下一步：提交本校准与文档，做一轮 reseal，然后以 `failure_fix_rerun` 事务在最终 head 上启动正式 v15 Full；
+  P1/P4/O3 与重测（重新校准 K、启动间隔、上述超时常量与串行尾部的锁粒度）在基线发布之后进行。

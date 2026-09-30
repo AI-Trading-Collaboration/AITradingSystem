@@ -2654,7 +2654,6 @@ class ExecutionLifecycle:
                 value["request"]["job_name"],
                 terminate=True,
                 expected_process=value["process"],
-                timeout=10,
             )
         if job["state"] not in {"EMPTY", "ABSENT"}:
             return {
@@ -3892,7 +3891,7 @@ class PublicationLifecycle(ExecutionLifecycle):
             try:
                 code = handle.wait(timeout=3600)
             except TimeoutError:
-                code = handle.terminate(timeout=20)
+                code = handle.terminate()
             self.confirm_exit(physical.lease_id, handle, actor=actor)
             result = Path(request["result_path"])
             if result.exists():

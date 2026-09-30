@@ -4828,7 +4828,7 @@ def start_source_installation(
     except BaseException as primary:
         if process is not None:
             try:
-                process.terminate(timeout=10)
+                process.terminate()
                 lifecycle.confirm_exit(lease_id, process, actor=actor)
                 lifecycle.record_incomplete_result(lease_id, actor=actor)
             except BaseException as cleanup:
@@ -5597,7 +5597,7 @@ def start_source_candidate(
         return result
     except BaseException:
         if process is not None:
-            process.terminate(timeout=10)
+            process.terminate()
             lifecycle.confirm_exit(lease.lease_id, process, actor=actor)
             lifecycle.record_incomplete_result(lease.lease_id, actor=actor)
         raise

@@ -54,6 +54,15 @@ _INFINITE = 0xFFFFFFFF
 _STILL_ACTIVE = 259
 _ABORTED = 1067
 
+# Bounded wait for the OS to confirm that a terminated Job/process tree is gone. This is
+# a hang detector, not a permission to skip termination: on expiry the caller still fails
+# closed with CLEANUP_UNCONFIRMED. DEVX-018: after TerminateJobObject the active-process
+# count reached 0 while retained process handles stayed unsignaled for more than the
+# former 10s under formal-Full load (16 outer workers plus nested Fulls, Defender I/O).
+# Provisional load calibration pending owner review; exit condition and rationale are in
+# docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md (v15 pilot section).
+CONTAINED_TERMINATION_CONFIRMATION_SECONDS = 180.0
+
 
 class _CredentialBlob(ctypes.Structure):
     _fields_ = [("length", w.DWORD), ("data", ctypes.c_void_p)]
@@ -2369,7 +2378,7 @@ def observe_job(
     job_name: str,
     *,
     terminate: bool = False,
-    timeout: float = 10,
+    timeout: float = CONTAINED_TERMINATION_CONFIRMATION_SECONDS,
     expected_process: Mapping[str, int] | None = None,
 ) -> dict[str, object]:
     api = _api()
@@ -3059,7 +3068,7 @@ class WindowsJobProcess:
                     )
                 time.sleep(0.02)
 
-    def terminate(self, *, timeout: float = 10) -> int:
+    def terminate(self, *, timeout: float = CONTAINED_TERMINATION_CONFIRMATION_SECONDS) -> int:
         self._require_owner()
         timeout = _timeout(timeout)
         if not self._owns_job:
@@ -3247,7 +3256,9 @@ class InheritedJobChild:
     def wait_exit(self, *, timeout: float) -> int:
         return self._holder.wait(timeout=timeout)
 
-    def terminate_process(self, *, timeout: float = 10) -> int:
+    def terminate_process(
+        self, *, timeout: float = CONTAINED_TERMINATION_CONFIRMATION_SECONDS
+    ) -> int:
         return self._holder.terminate(timeout=timeout)
 
     def close(self) -> None:

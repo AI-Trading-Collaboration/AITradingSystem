@@ -43,8 +43,14 @@ from test_devx015_workflow_integration import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-# Test hang bound (Full runs 16 loaded workers), not a production lease or scheduling policy.
-DEADLINE = 120.0
+# Test hang bounds (Full runs 16 loaded workers plus nested Full), not production lease or
+# scheduling policy. DEVX-018 load calibration (provisional, owner review pending; exit
+# condition in docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md): the former
+# 120s/60s/180s values were unloaded-host values; a loaded Windows host needs ~194s for one
+# runtime-identity hash and Job termination confirmation. CLI bounds stay above the 900s
+# production profile inspector bound.
+DEADLINE = 600.0
+LOADED_HOST_CLI_TIMEOUT_SECONDS = 1800
 CRASH_EXIT = 23
 
 
@@ -335,11 +341,11 @@ try:
         (root/'git-binding.json').write_text(json.dumps({{
             'original':original,'expected':expected,
             'job':name+'-missing' if {mode!r}=='wrong-job' else name}}))
-        child.resume(); code=child.wait_exit(timeout=30)
+        child.resume(); code=child.wait_exit(timeout=180)
         (root/'git-result.json').write_text(json.dumps({{'returncode':code}}))
 finally:
     if sibling is not None:
-        sibling.terminate();sibling.wait(timeout=10)
+        sibling.terminate();sibling.wait(timeout=180)
 """
     with _create(execution_api, root, source, name=name) as process:
         process.resume()
@@ -2209,7 +2215,7 @@ def test_x01_public_source_rejects_rehashed_canonical_history(canonical_merge_re
         sys.executable, str(root / "scripts/architecture_arch005_workflow.py"),
         "source-candidate", "--task-id", TASK, "--publication-transaction", str(transaction),
         "--actor", "integration-coordinator", "--request-id", request_id,
-    ], cwd=root, env=environment, capture_output=True, timeout=180)
+    ], cwd=root, env=environment, capture_output=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
     (evidence / "cli.stdout").write_bytes(result.stdout)
     (evidence / "cli.stderr").write_bytes(result.stderr)
     (evidence / "observation.json").write_text(json.dumps({
@@ -2340,7 +2346,8 @@ def test_source_candidate_cli_uses_real_job_and_private_two_parent_commit(
                 if request_replays:
                     assert not oracle.exited(process), "R01 needs actual live contention"
                     duplicate = subprocess.run(
-                        command, cwd=root, env=environment, capture_output=True, timeout=60,
+                        command, cwd=root, env=environment, capture_output=True,
+                        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
                     )
                     (root.parent / "r01-live-replay.stdout").write_bytes(duplicate.stdout)
                     (root.parent / "r01-live-replay.stderr").write_bytes(duplicate.stderr)
@@ -2360,7 +2367,7 @@ def test_source_candidate_cli_uses_real_job_and_private_two_parent_commit(
         finally:
             if launcher.poll() is None:
                 launcher.kill()
-                launcher.wait(timeout=20)
+                launcher.wait(timeout=DEADLINE)
     result = json.loads(cli_log.read_text(encoding="utf-8"))
     assert result["status"] == "PASS"
     assert result["schema_version"] == "controlled_source_candidate_worker_result.v1"
@@ -2461,7 +2468,8 @@ def test_source_candidate_cli_uses_real_job_and_private_two_parent_commit(
             try:
                 execution_path.write_text(json.dumps(changed), encoding="utf-8")
                 refused = subprocess.run(
-                    command, cwd=root, env=environment, capture_output=True, timeout=60,
+                    command, cwd=root, env=environment, capture_output=True,
+                    timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
                 )
                 (root.parent / ("r01-payload-" + field + ".json")).write_text(
                     json.dumps({"request": changed, "exit_code": refused.returncode,
@@ -2619,7 +2627,8 @@ def test_source_candidate_cli_uses_real_job_and_private_two_parent_commit(
             damaged = _stage_snapshot(root)
             try:
                 refused = subprocess.run(
-                    install_command, cwd=root, env=environment, capture_output=True, timeout=180,
+                    install_command, cwd=root, env=environment, capture_output=True,
+                    timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
                 )
                 (evidence / "cli.stdout").write_bytes(refused.stdout)
                 (evidence / "cli.stderr").write_bytes(refused.stderr)
@@ -2694,7 +2703,7 @@ integration.start_source_installation(root, sys.argv[3], transaction_path=transa
             cwd=root,
             env=environment,
             capture_output=True,
-            timeout=180,
+            timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
         )
         assert crashed.returncode == 29, crashed.stderr.decode(errors="replace")
         partial = (run / "installation_plan.json").read_bytes()
@@ -2742,7 +2751,7 @@ integration.start_source_installation(root, sys.argv[3], transaction_path=transa
                 cwd=root,
                 env=environment,
                 capture_output=True,
-                timeout=180,
+                timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
             )
             assert interrupted_recovery.returncode == 31, interrupted_recovery.stderr.decode(
                 errors="replace"
@@ -2812,7 +2821,7 @@ integration.start_source_installation(root, sys.argv[3], transaction_path=transa
             cwd=root,
             env=environment,
             capture_output=True,
-            timeout=60,
+            timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
         )
         assert repeated.returncode == 0, repeated.stderr.decode(errors="replace")
         assert json.loads(repeated.stdout)["dispatch_allowed"] is False
@@ -2905,7 +2914,7 @@ integration.start_source_installation(root, sys.argv[3], transaction_path=transa
         cwd=root,
         env=environment,
         capture_output=True,
-        timeout=60,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     assert repeated_install.returncode == 0, repeated_install.stderr.decode(errors="replace")
     assert json.loads(repeated_install.stdout)["dispatch_allowed"] is False
@@ -2918,7 +2927,7 @@ integration.start_source_installation(root, sys.argv[3], transaction_path=transa
         cwd=root,
         env=environment,
         capture_output=True,
-        timeout=60,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     assert wrong_handoff.returncode != 0
     assert b"SOURCE_HANDOFF_INDEPENDENT_INSTALL_REQUIRED" in wrong_handoff.stderr
@@ -2993,7 +3002,7 @@ integration.start_source_installation(root, sys.argv[3], transaction_path=transa
                 cwd=root,
                 env=environment,
                 capture_output=True,
-                timeout=60,
+                timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
             )
             assert denied.returncode != 0
             assert b"SOURCE_HANDOFF_TERMINAL_PREDECESSOR" in denied.stderr
@@ -3076,7 +3085,7 @@ integration.finish_source_installation(root, 'DEVX-015-MERGE-FIXTURE',
                 cwd=root,
                 env=environment,
                 capture_output=True,
-                timeout=180,
+                timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
             )
             assert crashed.returncode == exit_code, crashed.stderr.decode(errors="replace")
             assert tuple(fence.guard.store.replay().head_event_ids) == before_events
@@ -3107,7 +3116,7 @@ integration.finish_source_installation(root, 'DEVX-015-MERGE-FIXTURE',
         cwd=root,
         env=environment,
         capture_output=True,
-        timeout=180,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     assert handoff.returncode == 0, handoff.stderr.decode(errors="replace")
     handed = json.loads(handoff.stdout)
@@ -3125,7 +3134,7 @@ integration.finish_source_installation(root, 'DEVX-015-MERGE-FIXTURE',
         cwd=root,
         env=environment,
         capture_output=True,
-        timeout=60,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     assert replay_handoff.returncode == 0, replay_handoff.stderr.decode(errors="replace")
     assert json.loads(replay_handoff.stdout) == handed
@@ -3312,7 +3321,7 @@ def test_source_generation_and_commit_crash_recovers_without_installation(
                 oracle.assert_in_job(worker, request["job_name"])
                 assert not oracle.exited(producer) and not oracle.exited(worker)
                 _terminate_fixture_producer(producer_identity)
-                launcher.wait(timeout=30)
+                launcher.wait(timeout=DEADLINE)
                 assert launcher.returncode != 0
                 assert oracle.exited(producer, 10)
                 assert oracle.exited(bound, 10) and oracle.exited(worker, 10)
@@ -3322,7 +3331,7 @@ def test_source_generation_and_commit_crash_recovers_without_installation(
                 _terminate_fixture_producer(producer_identity)
             if launcher.poll() is None:
                 launcher.kill()
-                launcher.wait(timeout=30)
+                launcher.wait(timeout=DEADLINE)
     preserved = {p.relative_to(run).as_posix(): p.read_bytes()
                  for p in run.rglob("*") if p.is_file()}
     assert ("generation.json" in preserved) == (source_boundary != "generation-before")
@@ -3472,12 +3481,12 @@ start_source_candidate(root, sys.argv[7], transaction_path=transaction,
                 assert not oracle.exited(process)
                 oracle.assert_job_absent(request["job_name"])
                 release.write_text("exit", encoding="utf-8")
-                assert launcher.wait(timeout=30) == 17
+                assert launcher.wait(timeout=DEADLINE) == 17
                 assert oracle.exited(process, 10)
         finally:
             if launcher.poll() is None:
                 launcher.kill()
-                launcher.wait(timeout=20)
+                launcher.wait(timeout=DEADLINE)
     preserved = {path.name: path.read_bytes() for path in run.glob("*") if path.is_file()}
     assert set(preserved) == ({"request.json"} if write_boundary == "after" else set())
     if write_boundary == "after":
@@ -4668,7 +4677,7 @@ until(lambda: Path('controller.release').exists())
 if child is not None:
     if mode=='close-suspended': child.close()
     elif mode=='exit-before-resume':
-        assert child.terminate_process(timeout=10)==1067
+        assert child.terminate_process()==1067
         try: child.pre_resume_binding()
         except ExecutionContainmentError as exc:
             assert exc.code=='WORKFLOW_EXECUTION_PRE_RESUME_NOT_LIVE'
@@ -4685,10 +4694,10 @@ if child is not None:
             assert exc.code=='WORKFLOW_EXECUTION_ALREADY_RESUMED'
         else: raise AssertionError('second resume admitted')
         until(lambda: Path('child.json').exists())
-        if mode=='terminate': assert child.terminate_process(timeout=10)==1067
+        if mode=='terminate': assert child.terminate_process()==1067
         else:
             Path('child.release').write_text('release')
-            assert child.wait_exit(timeout=10)==0
+            assert child.wait_exit(timeout=180)==0
         child.close()
     try: child.pre_resume_binding()
     except ExecutionContainmentError as exc:
@@ -4699,7 +4708,7 @@ Path('inherited-completed.json').write_text(json.dumps({{'worker_pid':os.getpid(
     'sibling_pid':sibling.pid,'original_job_not_terminated':True}}))
 until(lambda: Path('final.release').exists())
 Path('sibling.release').write_text('release')
-assert sibling.wait(timeout=10)==0
+assert sibling.wait(timeout=180)==0
 """
     handle = _create(execution_api, tmp_path, source, name=name)
     try:
@@ -5056,7 +5065,7 @@ assert after==baseline,(baseline,after)
         ready_path = tmp_path / "runtime-ready.json"
         _until(lambda: ready_path.exists() or handle.poll() is not None,
                description="complete original runtime native retention and child inheritance",
-               timeout=180)
+               timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
         assert ready_path.exists(), (tmp_path / "stdout.log").read_text()
         ready = _read_json(ready_path)
         controls = ready["native_child_controls"]
@@ -6053,14 +6062,14 @@ os._exit({CRASH_EXIT})
             observation = execution_api.observe_job(name)
             if identity is not None and observation["state"] == "ACTIVE":
                 execution_api.observe_job(
-                    name, terminate=True, timeout=10, expected_process=identity
+                    name, terminate=True, expected_process=identity
                 )
             elif identity is None:
                 # A Job name alone never authorizes adopting or terminating it.
                 _until(
                     lambda: execution_api.observe_job(name)["state"] == "ABSENT",
                     description="failed launcher closed its unnamed process binding",
-                    timeout=10,
+                    timeout=DEADLINE,
                 )
 
 
@@ -6129,20 +6138,19 @@ def test_observer_requires_exact_process_identity_before_terminating_live_job(
             )
             with native.process(child["pid"]) as grandchild:
                 with pytest.raises(execution_api.ExecutionContainmentError) as missing:
-                    execution_api.observe_job(identity["job_name"], terminate=True, timeout=10)
+                    execution_api.observe_job(identity["job_name"], terminate=True)
                 assert missing.value.code == "WORKFLOW_EXECUTION_JOB_IDENTITY_REQUIRED"
                 assert not native.exited(parent) and not native.exited(grandchild)
                 wrong = {"pid": identity["pid"], "creation_time": identity["creation_time"] + 1}
                 with pytest.raises(execution_api.ExecutionContainmentError) as mismatch:
                     execution_api.observe_job(
-                        identity["job_name"], terminate=True, timeout=10, expected_process=wrong
+                        identity["job_name"], terminate=True, expected_process=wrong
                     )
                 assert mismatch.value.code == "WORKFLOW_EXECUTION_JOB_IDENTITY_MISMATCH"
                 assert not native.exited(parent) and not native.exited(grandchild)
                 result = execution_api.observe_job(
                     identity["job_name"],
                     terminate=True,
-                    timeout=10,
                     expected_process={
                         "pid": identity["pid"],
                         "creation_time": identity["creation_time"],
@@ -6199,7 +6207,7 @@ def test_explicit_cleanup_waits_for_synthetic_descendants(
             child = _until(lambda: _read_json(tmp_path / "child.json"), description="cleanup child")
             with native.process(child["pid"]) as grandchild:
                 if action == "terminate":
-                    assert isinstance(handle.terminate(timeout=10), int)
+                    assert isinstance(handle.terminate(), int)
                     assert handle.active_process_count() == 0
                 elif action == "context":
                     with handle:
@@ -6262,7 +6270,7 @@ def test_actual_pid_reuse_rejects_old_identity_and_preserves_current_job(
                             record["stale_observation"] = stale
                             with pytest.raises(execution_api.ExecutionContainmentError) as error:
                                 execution_api.observe_job(
-                                    name, terminate=True, timeout=10, expected_process=previous
+                                    name, terminate=True, expected_process=previous
                                 )
                             assert error.value.code == "WORKFLOW_EXECUTION_JOB_IDENTITY_MISMATCH"
                             record["stale_refusal"] = error.value.code
@@ -6281,7 +6289,7 @@ def test_actual_pid_reuse_rejects_old_identity_and_preserves_current_job(
                                     "creation_time": native.creation_time(child),
                                 }
                                 result = execution_api.observe_job(
-                                    name, terminate=True, timeout=10, expected_process=current
+                                    name, terminate=True, expected_process=current
                                 )
                                 assert result["state"] == "EMPTY"
                                 assert result["active_process_count"] == 0
@@ -6291,7 +6299,7 @@ def test_actual_pid_reuse_rejects_old_identity_and_preserves_current_job(
                                 status="ACTUAL_REUSE_VERIFIED", old=previous, current=current
                             )
                         else:
-                            handle.terminate(timeout=10)
+                            handle.terminate()
                             assert native.exited(process)
                         record["exit_code"] = handle.poll()
                         assert record["exit_code"] is not None

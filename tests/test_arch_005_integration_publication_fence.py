@@ -13,9 +13,6 @@ from threading import Barrier
 from typing import Any
 
 import pytest
-
-# CLI/worker hang guards below include the 360s profile inspection bound and run under
-# formal Full load (16 workers plus nested Full); they bound hangs only.
 from test_devx015_workflow_integration import (
     canonical_merge_repository as canonical_merge_repository,
 )
@@ -25,12 +22,23 @@ from test_devx015_workflow_integration import (
 
 from ai_trading_system.platform.architecture.integration_publication_fence import (
     DEFAULT_POLICY_PATH,
+    FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS,
+    FULL_PROFILE_PROTECTED_INSPECTION_TIMEOUT_SECONDS,
     IntegrationPublicationFence,
     PublicationFenceError,
     load_publication_fence_policy,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+# CLI/worker hang guards below include the 900s profile inspection bound and run under
+# formal Full load (16 workers plus nested Full); they bound hangs only. DEVX-018 load
+# calibration (provisional, owner review pending; exit condition in
+# docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md): every publication
+# CLI entry re-hashes the runtime (~11s idle, 116-194s loaded), so the former 60s
+# defaults were unloaded-host values. CLI guards stay strictly above the inner
+# inspector bound.
+LOADED_HOST_PROBE_TIMEOUT_SECONDS = 600
+LOADED_HOST_CLI_TIMEOUT_SECONDS = 1800
 CHECKOUT_POLICY = ROOT / "config/architecture/arch_005_s4d_checkout_guard.yaml"
 PARALLEL_POLICY = ROOT / "config/architecture/arch_005_parallel_control_policy.yaml"
 TASK_ID = "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1"
@@ -70,6 +78,14 @@ def publication_checkout(tmp_path: Path) -> Path:
     _git(repository, "push", "-u", "origin", "main")
     _git(repository, "switch", "-c", "codex/publication-test")
     return repository
+
+
+def test_loaded_host_hang_guards_stay_above_the_production_inspection_bound() -> None:
+    # A test CLI guard at or below the inner inspector bound would fire before the
+    # production timeout, masking the fail-closed diagnosis behind a test-side timeout.
+    assert LOADED_HOST_CLI_TIMEOUT_SECONDS > FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS
+    assert LOADED_HOST_CLI_TIMEOUT_SECONDS > FULL_PROFILE_PROTECTED_INSPECTION_TIMEOUT_SECONDS
+    assert LOADED_HOST_PROBE_TIMEOUT_SECONDS < LOADED_HOST_CLI_TIMEOUT_SECONDS
 
 
 def test_policy_reuses_s4d_lease_authority_and_freezes_no_unsafe_actions() -> None:
@@ -292,7 +308,7 @@ def test_profile_child_timeout_refuses_publication_with_bounded_mode_budget(
 
     def timeout_run(argv, **kwargs):
         calls.append(argv)
-        assert kwargs["timeout"] == 360
+        assert kwargs["timeout"] == 900  # DEVX-018 load calibration of the reviewed bound
         assert kwargs["cwd"] == (Path(sys.executable).absolute().parent if installed else tmp_path)
         raise subprocess.TimeoutExpired(argv, kwargs["timeout"])
 
@@ -346,7 +362,8 @@ def test_profile_entry_attests_loaded_source_custody_before_dispatch(
 
 
 def _v03_cli(
-    repository: Path, label: str, script: str, args: list[str], *, timeout: float = 60,
+    repository: Path, label: str, script: str, args: list[str], *,
+    timeout: float = LOADED_HOST_PROBE_TIMEOUT_SECONDS,
 ) -> dict[str, Any]:
     environment = dict(os.environ)
     code_root = ROOT
@@ -374,7 +391,8 @@ def _v03_cli(
 
 
 def _v03_fence_cli(
-    repository: Path, label: str, args: list[str], *, timeout: float = 60,
+    repository: Path, label: str, args: list[str], *,
+    timeout: float = LOADED_HOST_PROBE_TIMEOUT_SECONDS,
 ) -> dict[str, Any]:
     return _v03_cli(repository, label, "architecture_arch005_publication_fence.py", [
         "--repository", str(repository), "--policy", str(DEFAULT_POLICY_PATH), *args,
@@ -1022,7 +1040,8 @@ def test_x04_public_cancel_preserves_later_waiter_and_serializes_retry(
             with ThreadPoolExecutor(max_workers=2) as pool:
                 c = pool.submit(competing_cancel)
                 r = pool.submit(competing_retry)
-                cancelled, retried = c.result(timeout=60), r.result(timeout=60)
+                cancelled = c.result(timeout=LOADED_HOST_PROBE_TIMEOUT_SECONDS)
+                retried = r.result(timeout=LOADED_HOST_PROBE_TIMEOUT_SECONDS)
             # The original arbiter rejects contention rather than queueing.
             # Resolve only an observed BUSY after both original processes exit,
             # using the same complete request; never infer a terminal decision.
@@ -1534,10 +1553,10 @@ def _exercise_failed_publication_job(
         _until(lambda: witness_path.exists() or process.poll() is not None
                or _publication_main_prepare_started(Path(request["stdout_path"])),
                description="actual publication worker input custody and negative checks",
-               timeout=840)
+               timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
         _until(lambda: witness_path.exists() or process.poll() is not None,
                description="actual publication worker original Git preparation witness",
-               timeout=840)
+               timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
         assert witness_path.exists(), Path(request["stdout_path"]).read_text()
         witness = json.loads(witness_path.read_text())
         inputs = witness["input_custody"]
@@ -1668,11 +1687,11 @@ def _exercise_failed_publication_job(
         replacement.replace(index)
         installed_identity = (index.stat().st_dev, index.stat().st_ino)
         for label, expected in (("adopt", "STABLE_FAILED_ATTEMPT"), ("replay", "REPLAY_ONLY")):
-            # The original read-only profile has its own 180s bound; allow command overhead.
+            # The original read-only profile has its own inspector bound; allow command overhead.
             result = _v03_fence_cli(root, "index-recovery-" + label, [
                 "local-publication-recover-index", "--transaction", str(transaction),
                 "--actor", actor,
-            ], timeout=720)
+            ], timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
             assert result["exit_code"] == 0, result
             payload = json.loads(result["stdout"])
             assert payload["status"] == expected
@@ -1749,7 +1768,7 @@ def test_original_publication_cli_ff_only_and_independent_recovery(canonical_mer
     # it never turns the failed success-path assertion into a PASS.
     recovered = _v03_fence_cli(root, "original-publication-recovery-cli", [
         "local-publication-recover", "--transaction", str(transaction),
-    ], timeout=1200)
+    ], timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
     value = physical().execution
     assert full_execution_projection(value) == original_full
     try:
@@ -1909,7 +1928,7 @@ def _interrupt_original_publication_job(pending, physical, root, directory, bind
                 "git_process": before["git_launch"]["process"],
                 "hooks": before["git_merge"]["hooks"],
                 "observation": observe_job(
-                    before["request"]["job_name"], terminate=True, timeout=10,
+                    before["request"]["job_name"], terminate=True,
                     expected_process=before["process"],
                 ),
             }
@@ -1970,7 +1989,7 @@ def test_original_publication_cli_interrupted_after_main_commit(canonical_merge_
     before_recovery = physical().execution
     recovered = _v03_fence_cli(root, "interrupted-publication-recovery-cli", [
         "local-publication-recover", "--transaction", str(transaction),
-    ], timeout=1200)
+    ], timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
     value = physical().execution
     try:
         assert injection_error is None, injection_error
@@ -1996,7 +2015,7 @@ def test_original_publication_cli_interrupted_after_main_commit(canonical_merge_
         assert _git(root, "branch", "--show-current") == "main"
         repeated = _v03_fence_cli(root, "interrupted-publication-replay-cli", [
             "local-publication-recover", "--transaction", str(transaction),
-        ], timeout=1200)
+        ], timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
         assert repeated["exit_code"] == 0, repeated
         assert json.loads(repeated["stdout"])["status"] == "REPLAY_ONLY", repeated
         assert physical().execution == value
@@ -2101,7 +2120,7 @@ def test_original_publication_cli_recovers_independent_main_advance(canonical_me
     before = physical().execution
     recovered = _v03_fence_cli(root, "main-race-recovery-cli", [
         "local-publication-recover", "--transaction", str(transaction),
-    ], timeout=1200)
+    ], timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
     value = physical().execution
     try:
         assert injection_error is None, injection_error
@@ -2136,7 +2155,7 @@ def test_original_publication_cli_recovers_independent_main_advance(canonical_me
                 for path in retained_paths} == retained
         repeated = _v03_fence_cli(root, "main-race-replay-cli", [
             "local-publication-recover", "--transaction", str(transaction),
-        ], timeout=1200)
+        ], timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
         assert repeated["exit_code"] == 0, repeated
         assert json.loads(repeated["stdout"])["status"] == "REPLAY_ONLY", repeated
         assert physical().execution == value
@@ -2305,7 +2324,7 @@ def test_p01_public_entries_reject_ref_only_update_before_checkout(canonical_mer
     assert not original_execution.get("publication_attempts")
     positive = _v03_fence_cli(root, "ref-only-original-inspection", [
         "local-publication-inspect", "--transaction", str(transaction),
-    ], timeout=720)
+    ], timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
     assert positive["exit_code"] == 0, positive
     assert json.loads(positive["stdout"])["status"] == "OBSERVED"
     _git(root, "update-ref", "-m", "external ref-only fault before checkout",
@@ -2332,7 +2351,9 @@ def test_p01_public_entries_reject_ref_only_update_before_checkout(canonical_mer
         args = [command, "--transaction", str(transaction)]
         if command == "local-publish":
             args.append("--authorize-peer-head-handoff")
-        refused = _v03_fence_cli(root, "ref-only-refused-" + command, args, timeout=720)
+        refused = _v03_fence_cli(
+            root, "ref-only-refused-" + command, args, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+        )
         assert refused["exit_code"] == 2, refused
         assert reason in refused["stdout"], refused
         assert _publication_business_snapshot(fence, transaction) == damaged
@@ -2375,7 +2396,7 @@ def test_x02_original_publication_rejects_ref_aba_after_actual_full(canonical_me
     original_full = full_execution_projection(original_execution)
     positive = _v03_fence_cli(root, "aba-original-inspection", [
         "local-publication-inspect", "--transaction", str(transaction),
-    ], timeout=720)
+    ], timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
     assert positive["exit_code"] == 0, positive
     assert json.loads(positive["stdout"])["status"] == "OBSERVED"
     assert _v03_unchanged_state(fence, transaction) == original_state
@@ -2403,7 +2424,7 @@ def test_x02_original_publication_rejects_ref_aba_after_actual_full(canonical_me
     for command in ("local-publication-inspect", "local-publish"):
         refused = _v03_fence_cli(root, "aba-refused-" + command, [
             command, "--transaction", str(transaction),
-        ], timeout=720)
+        ], timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
         assert refused["exit_code"] == 2, refused
         assert "PUBLICATION_LOCAL_INTENT_CHANGED" in refused["stdout"], refused
         assert not refused["stderr"]
@@ -2868,7 +2889,8 @@ def _assert_full_transaction_replays_candidate_publish_and_closeout_receipt(
         if bootstrap is not None:
             command = [sys.executable, "-c", bootstrap, *command[1:]]
         result = subprocess.run(
-            command, cwd=ROOT, capture_output=True, text=True, timeout=60,
+            command, cwd=ROOT, capture_output=True, text=True,
+            timeout=LOADED_HOST_PROBE_TIMEOUT_SECONDS,
         )
         if m10_bootstrap is not None:
             (publication_checkout.parent / f"m10-observation-{probe_count}.json").write_text(
@@ -3033,7 +3055,7 @@ def _assert_full_transaction_replays_candidate_publish_and_closeout_receipt(
                     fence.release(transaction, actor="integration-coordinator", outcome="failed")
                 process.stdin.write("continue\n")
                 process.stdin.flush()
-                output, error = process.communicate(timeout=60)
+                output, error = process.communicate(timeout=LOADED_HOST_PROBE_TIMEOUT_SECONDS)
                 assert native.exited(handle, timeout=5)
             result = json.loads(output)
             assert not error, error
@@ -3587,7 +3609,7 @@ print(json.dumps(result, sort_keys=True), flush=True)
         assert _v03_unchanged_state(fence, transaction) == before
         producer.stdin.write("continue\n")
         producer.stdin.flush()
-        output, error = producer.communicate(timeout=60)
+        output, error = producer.communicate(timeout=LOADED_HOST_PROBE_TIMEOUT_SECONDS)
         assert producer.returncode == 0, error
         produced = json.loads(output)
         # A busy observer is not an execution grant. Retry only after A actually exits.

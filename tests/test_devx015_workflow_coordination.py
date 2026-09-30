@@ -44,6 +44,13 @@ from ai_trading_system.platform.architecture.workflow_execution import (
 )
 
 ACTOR = "engineering-agent"
+# Test hang bounds, not production policy. DEVX-018 load calibration (provisional, owner review
+# pending; exit condition in docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md):
+# the former 20s-180s values were unloaded-host values; under formal Full load every workflow or
+# publication CLI entry hashes the runtime (~11s idle, 116-194s loaded). CLI bounds stay above
+# the 900s production profile inspector bound.
+LOADED_HOST_CLI_TIMEOUT_SECONDS = 1800
+LOADED_HOST_WAIT_TIMEOUT_SECONDS = 600
 
 
 @pytest.mark.parametrize(
@@ -2099,7 +2106,7 @@ def test_cutover_os_observation_rejects_dead_parent_with_live_job_child(
             with pytest.raises(ParallelControlError, match="CUTOVER_EXECUTOR_NOT_DRAINED"):
                 _cutover_execution_observations(execution)
             (tmp_path / "child.release").write_bytes(b"release")
-            assert handle.wait(timeout=20) == 0
+            assert handle.wait(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS) == 0
             assert oracle.exited(child_native)
             observed = _cutover_execution_observations(execution)
             assert observed[-1]["job"]["state"] == "EMPTY"
@@ -3306,7 +3313,7 @@ def test_public_enrollment_plan_preserves_original_stores_and_repository(
             env={**os.environ, "PYTHONPATH": str(source / "src"), "PYTHONDONTWRITEBYTECODE": "1"},
             capture_output=True,
             text=True,
-            timeout=45,
+            timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
         )
         assert snapshot() == before
         if case == "live-job":
@@ -3912,7 +3919,7 @@ with winreg.OpenKey(winreg.HKEY_CURRENT_USER, sys.argv[1], 0,
                 job_name='Local\\AITS-DEVX015-native-proof-'+str(os.getpid()))
             try:
                 job.resume()
-                assert job.wait(timeout=30) == 0
+                assert job.wait(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS) == 0
             finally:
                 job.close()
             handle.release(outcome='completed', at=datetime.now(UTC))
@@ -4113,7 +4120,7 @@ Path(sys.argv[2]).parent.joinpath('m04-method.json').write_text(json.dumps({
                     "active": 0,
                 }
                 for child in children:
-                    stdout, stderr = child.communicate(timeout=30)
+                    stdout, stderr = child.communicate(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS)
                     assert child.returncode == 0, stdout + stderr
                 for checkout in enrolled:
                     if competition != "linked-fence":
@@ -4155,7 +4162,7 @@ Path(sys.argv[2]).parent.joinpath('m04-method.json').write_text(json.dumps({
                     if child.poll() is None:
                         child.kill()
                     if child.stdout is not None and not child.stdout.closed:
-                        stdout, stderr = child.communicate(timeout=30)
+                        stdout, stderr = child.communicate(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS)
                         outputs.append(
                             {
                                 "phase": "terminal",
@@ -4255,7 +4262,7 @@ def test_full_task_admission_uses_current_committed_canonical_state(
             cwd=root,
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
         )
         assert changed.returncode == 0, changed.stdout + changed.stderr
     if case in {"dropped", "revoked"}:
@@ -4493,11 +4500,16 @@ def test_public_full_claim_recovery_after_actual_dispatcher_dies_before_reservat
                 )
             assert not unauthorized_directory.exists()
             assert fence.guard.store.replay().active_leases[0].execution is None
-            observed = subprocess.run(cli, cwd=root, capture_output=True, text=True, timeout=60)
+            observed = subprocess.run(
+                cli, cwd=root, capture_output=True, text=True,
+                timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+            )
             assert observed.returncode == 2, observed.stdout + observed.stderr
             assert json.loads(observed.stdout)["status"] == "OBSERVE_ONLY"
             assert fence.replay(transaction) == before
-            stdout, stderr = launcher.communicate(input="exit\n", timeout=60)
+            stdout, stderr = launcher.communicate(
+                input="exit\n", timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+            )
             assert launcher.returncode == 47, stdout + stderr
             assert oracle.exited(handle)
     head = fence.guard.store.replay().active_leases[0]
@@ -4506,14 +4518,18 @@ def test_public_full_claim_recovery_after_actual_dispatcher_dies_before_reservat
     assert projection.exists() is projection_written
     frozen_raw = canonical_json_bytes(claim)
     projection.write_bytes(frozen_raw + b" ")
-    rejected = subprocess.run(cli, cwd=root, capture_output=True, text=True, timeout=60)
+    rejected = subprocess.run(
+        cli, cwd=root, capture_output=True, text=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+    )
     assert rejected.returncode == 2 and "PUBLICATION_FULL_CLAIM_CHANGED" in rejected.stderr
     assert fence.replay(transaction) == before
     if projection_written:
         projection.write_bytes(frozen_raw)
     else:
         projection.unlink()  # Only the newly injected synthetic projection.
-    recovered = subprocess.run(cli, cwd=root, capture_output=True, text=True, timeout=60)
+    recovered = subprocess.run(
+        cli, cwd=root, capture_output=True, text=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+    )
     assert recovered.returncode == 0, recovered.stdout + recovered.stderr
     result = json.loads(recovered.stdout)
     assert result["status"] == "RECOVERED_FAILED_ATTEMPT"
@@ -4525,7 +4541,9 @@ def test_public_full_claim_recovery_after_actual_dispatcher_dies_before_reservat
     assert not leases.active_leases
     assert leases.lease_heads[0].execution is None and leases.lease_heads[0].state == "RELEASED"
     assert projection.read_bytes() == frozen_raw
-    again = subprocess.run(cli, cwd=root, capture_output=True, text=True, timeout=60)
+    again = subprocess.run(
+        cli, cwd=root, capture_output=True, text=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+    )
     assert again.returncode == 0, again.stdout + again.stderr
     assert fence.replay(transaction) == after and fence.guard.store.replay() == leases
     assert _git(root, "show-ref") == refs and index.read_bytes() == index_raw
@@ -4716,11 +4734,16 @@ def test_public_full_uncommitted_crash_recovery_closes_without_adopting_loose_pa
                     )
                     assert not oracle.exited(process)
                     oracle.assert_in_job(process, original_head.execution["request"]["job_name"])
-                observed = subprocess.run(cli, cwd=root, capture_output=True, text=True, timeout=60)
+                observed = subprocess.run(
+                    cli, cwd=root, capture_output=True, text=True,
+                    timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+                )
                 assert observed.returncode == 2, observed.stdout + observed.stderr
                 assert json.loads(observed.stdout)["status"] == "OBSERVE_ONLY"
                 assert fence.guard.store.replay().active_leases[0] == original_head
-                stdout, stderr = launcher.communicate(input="exit\n", timeout=60)
+                stdout, stderr = launcher.communicate(
+                    input="exit\n", timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+                )
                 assert launcher.returncode == 47, stdout + stderr
                 assert oracle.exited(handle)
                 if boundary == "running-held-job":
@@ -4735,7 +4758,7 @@ def test_public_full_uncommitted_crash_recovery_closes_without_adopting_loose_pa
                         cwd=root,
                         capture_output=True,
                         text=True,
-                        timeout=60,
+                        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
                     )
                     assert waiting.returncode == 2, waiting.stdout + waiting.stderr
                     assert json.loads(waiting.stdout)["status"] == "RECOVERY_REQUIRED"
@@ -4746,7 +4769,7 @@ def test_public_full_uncommitted_crash_recovery_closes_without_adopting_loose_pa
                         cwd=root,
                         capture_output=True,
                         text=True,
-                        timeout=60,
+                        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
                     )
                     assert terminated.returncode == 0, terminated.stdout + terminated.stderr
                     assert json.loads(terminated.stdout)["technical_status"] == "INSUFFICIENT"
@@ -4764,7 +4787,9 @@ def test_public_full_uncommitted_crash_recovery_closes_without_adopting_loose_pa
     refs = _git(root, "show-ref")
     index = root / _git(root, "rev-parse", "--git-path", "index")
     original_index = index.read_bytes()
-    recovered = subprocess.run(cli, cwd=root, capture_output=True, text=True, timeout=60)
+    recovered = subprocess.run(
+        cli, cwd=root, capture_output=True, text=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+    )
     assert recovered.returncode == 0, recovered.stdout + recovered.stderr
     report = json.loads(recovered.stdout)
     assert report["status"] == "RECOVERED_FAILED_ATTEMPT"
@@ -4798,7 +4823,9 @@ def test_public_full_uncommitted_crash_recovery_closes_without_adopting_loose_pa
     after = fence.replay(transaction)
     assert after.phase == "FAILED"
     assert not any(row["phase"] == "FORMAL_VALIDATION_RESULT" for row in after.events)
-    repeated = subprocess.run(cli, cwd=root, capture_output=True, text=True, timeout=60)
+    repeated = subprocess.run(
+        cli, cwd=root, capture_output=True, text=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+    )
     assert repeated.returncode == 0, repeated.stdout + repeated.stderr
     assert fence.replay(transaction) == after and fence.guard.store.replay() == terminal
     assert {
@@ -5255,7 +5282,7 @@ def test_whole_readiness_fixture_uses_actual_seven_checkers(canonical_merge_repo
         cwd=root,
         capture_output=True,
         text=True,
-        timeout=60,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     assert generated.returncode == 0, generated.stdout + generated.stderr
     _git(root, "add", ".")
@@ -5275,7 +5302,7 @@ def test_whole_readiness_fixture_uses_actual_seven_checkers(canonical_merge_repo
         cwd=root,
         capture_output=True,
         text=True,
-        timeout=180,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     (root.parent / "atlas-render.stdout.log").write_text(rendered.stdout, encoding="utf-8")
     (root.parent / "atlas-render.stderr.log").write_text(rendered.stderr, encoding="utf-8")
@@ -5294,7 +5321,7 @@ def test_whole_readiness_fixture_uses_actual_seven_checkers(canonical_merge_repo
         cwd=root,
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     (root.parent / "actual-readiness.json").write_text(checked.stdout, encoding="utf-8")
     (root.parent / "actual-readiness.stderr.log").write_text(checked.stderr, encoding="utf-8")
@@ -5389,7 +5416,7 @@ def _run_actual_profile_full(
                 cwd=root,
                 capture_output=True,
                 text=True,
-                timeout=60,
+                timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
             )
             assert generated.returncode == 0, generated.stdout + generated.stderr
         fence.checkpoint(
@@ -5417,7 +5444,7 @@ def _run_actual_profile_full(
             cwd=root,
             capture_output=True,
             text=True,
-            timeout=180,
+            timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
         )
         (root.parent / "full-atlas-render.stdout.log").write_text(rendered.stdout, encoding="utf-8")
         (root.parent / "full-atlas-render.stderr.log").write_text(rendered.stderr, encoding="utf-8")
@@ -5434,7 +5461,7 @@ def _run_actual_profile_full(
             cwd=root,
             capture_output=True,
             text=True,
-            timeout=120,
+            timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
         )
         (root.parent / "full-readiness.json").write_text(checked.stdout, encoding="utf-8")
         assert checked.returncode == 0, checked.stdout + checked.stderr
@@ -5558,7 +5585,7 @@ def _run_actual_profile_full(
             finally:
                 if process.poll() is None:
                     process.kill()
-                    process.communicate(timeout=30)
+                    process.communicate(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS)
             completed = subprocess.CompletedProcess(
                 process.args, process.returncode, stdout, stderr,
             )
@@ -6358,11 +6385,16 @@ def test_public_full_recovery_after_real_launcher_dies_with_recorded_result(
             assert launcher_identity == announced and not oracle.exited(handle)
             if crash_boundary != "recorded":
                 live_before = fence.guard.store.replay()
-                observed = subprocess.run(cli, cwd=root, capture_output=True, text=True, timeout=60)
+                observed = subprocess.run(
+                    cli, cwd=root, capture_output=True, text=True,
+                    timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+                )
                 assert observed.returncode == 2, observed.stdout + observed.stderr
                 assert json.loads(observed.stdout)["status"] == "OBSERVE_ONLY"
                 assert fence.guard.store.replay() == live_before
-            stdout, stderr = crashed.communicate(input="exit\n", timeout=60)
+            stdout, stderr = crashed.communicate(
+                input="exit\n", timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+            )
             assert crashed.returncode == 47, stdout + stderr
             assert oracle.exited(handle)
     assert fence.replay(transaction).phase == "FULL_DISPATCHED"
@@ -6388,7 +6420,9 @@ def test_public_full_recovery_after_real_launcher_dies_with_recorded_result(
         assert fence.guard.store.replay().active_leases[0].execution == head.execution
         assert not result_path.exists()
     result_path.write_bytes(original_result + b" ")
-    rejected_result = subprocess.run(cli, cwd=root, capture_output=True, text=True, timeout=60)
+    rejected_result = subprocess.run(
+        cli, cwd=root, capture_output=True, text=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+    )
     assert rejected_result.returncode == 2
     assert "FULL_RECOVERY_RESULT_CHANGED" in rejected_result.stderr
     assert fence.replay(transaction) == before
@@ -6400,7 +6434,7 @@ def test_public_full_recovery_after_real_launcher_dies_with_recorded_result(
         cwd=root,
         capture_output=True,
         text=True,
-        timeout=60,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     assert wrong_task.returncode == 2 and "FULL_RECOVERY_TRANSACTION_BINDING" in wrong_task.stderr
     assert fence.replay(transaction) == before
@@ -6408,7 +6442,9 @@ def test_public_full_recovery_after_real_launcher_dies_with_recorded_result(
     assert print_only.returncode == 2
     assert fence.replay(transaction) == before
     summary.write_bytes(original + b" ")
-    rejected = subprocess.run(cli, cwd=root, capture_output=True, text=True, timeout=60)
+    rejected = subprocess.run(
+        cli, cwd=root, capture_output=True, text=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+    )
     assert rejected.returncode == 2 and "FULL_RECOVERY_SUMMARY_CHANGED" in rejected.stderr
     assert fence.replay(transaction) == before
     from ai_trading_system.platform.architecture.integration_publication_fence import (
@@ -6432,7 +6468,9 @@ def test_public_full_recovery_after_real_launcher_dies_with_recorded_result(
         )
     assert fence.replay(transaction) == before
     summary.write_bytes(original)
-    recovered = subprocess.run(cli, cwd=root, capture_output=True, text=True, timeout=60)
+    recovered = subprocess.run(
+        cli, cwd=root, capture_output=True, text=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+    )
     assert recovered.returncode == 0, recovered.stdout + recovered.stderr
     report = json.loads(recovered.stdout)
     assert report["technical_status"] == status and report["status"] == "RECOVERED_RESULT"
@@ -6445,7 +6483,9 @@ def test_public_full_recovery_after_real_launcher_dies_with_recorded_result(
     assert terminal["full_result_commitment"] == head.execution["full_result_commitment"]
     assert result_path.read_bytes() == original_result
     assert after.events[-1]["payload"]["execution_result"] == terminal["result"]["artifact"]
-    again = subprocess.run(cli, cwd=root, capture_output=True, text=True, timeout=60)
+    again = subprocess.run(
+        cli, cwd=root, capture_output=True, text=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS
+    )
     assert again.returncode == 0, again.stdout + again.stderr
     assert fence.replay(transaction) == after
     assert fence.guard.store.replay().active_leases[0].execution == terminal
@@ -7610,7 +7650,7 @@ def _finish_installation_test_job(lifecycle, request, environment):
                 with pytest.raises(ExecutionContainmentError, match="JOB_MEMBERSHIP_MISMATCH"):
                     lifecycle.record_created_object(request, -1, actor=ACTOR)
             Path(str(request_path) + ".release").write_text("release")
-            assert process.wait(timeout=20) == 0
+            assert process.wait(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS) == 0
             assert oracle.exited(native, 10)
         lifecycle.confirm_exit(request["lease_id"], process, actor=ACTOR)
         if (
@@ -8032,7 +8072,7 @@ Path(request['result_path']).write_text(json.dumps(result))
         with pytest.raises(ExecutionContainmentError, match="JOB_MEMBERSHIP_MISMATCH"):
             lifecycle.require_checkpoint_worker(request, actor=actor)
         release.write_text("release", encoding="utf-8")
-        assert process.wait(timeout=20) == 0
+        assert process.wait(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS) == 0
         lifecycle.confirm_exit(lease.lease_id, process, actor=actor)
         result_path = Path(request["result_path"])
         original_result = result_path.read_bytes()
@@ -8184,7 +8224,7 @@ Path(request['result_path']).write_text(json.dumps(result))
         with pytest.raises(ParallelControlError, match="ACTIVE_OWNER"):
             lifecycle.require_source_candidate_worker(request, actor="other-actor")
         release.write_text("release", encoding="utf-8")
-        assert process.wait(timeout=20) == 0
+        assert process.wait(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS) == 0
         lifecycle.confirm_exit(lease.lease_id, process, actor=ACTOR)
         with pytest.raises(ParallelControlError, match="SOURCE_CANDIDATE_WORKER_STATE"):
             lifecycle.require_source_candidate_worker(request, actor=ACTOR)
@@ -8339,7 +8379,7 @@ def test_real_contained_exit_and_result_precede_lease_release(tmp_path: Path) ->
             lifecycle.confirm_exit(lease.lease_id, handle, actor=ACTOR)
         lifecycle.resume(lease.lease_id, handle, actor=ACTOR)
         assert lifecycle.resume(lease.lease_id, handle, actor=ACTOR)["status"] == "REPLAY_ONLY"
-        assert handle.wait(timeout=20) == 0
+        assert handle.wait(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS) == 0
         lifecycle.confirm_exit(lease.lease_id, handle, actor=ACTOR)
         with pytest.raises(ParallelControlError, match="LEASE_EXECUTION_NOT_TERMINAL"):
             store.release(lease.lease_id, actor=ACTOR, now=datetime.now(UTC), evidence_refs=())
@@ -8406,7 +8446,7 @@ def test_incomplete_result_requires_real_exit_and_preserves_original_artifact(
                 lifecycle.record_incomplete_result(lease.lease_id, actor=ACTOR)
             assert store.replay().lease_heads[0].execution["state"] == "RUNNING"
             (tmp_path / "worker.release").write_bytes(b"release")
-            assert handle.wait(timeout=20) == 0
+            assert handle.wait(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS) == 0
             assert oracle.exited(native)
             # Physical exit alone is insufficient until the lifecycle records it.
             with pytest.raises(ParallelControlError):
@@ -8546,7 +8586,7 @@ Path(request['result_path']).write_text(json.dumps(result), encoding='utf-8')
     if phase in {"RUNNING", "RUNNING_RESULT_FILE"}:
         crash_barrier()
     (root / "worker.release").write_text("release", encoding="utf-8")
-    assert handle.wait(timeout=20) == 0
+    assert handle.wait(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS) == 0
     lifecycle.confirm_exit(lease.lease_id, handle, actor=ACTOR)
     if source_candidate:
         assert phase in {"RESULT_FILE_WRITTEN", "RESULT_RECORDED"}
@@ -8668,7 +8708,7 @@ def test_real_launcher_crash_recovery_replays_without_second_dispatch(
                     assert not native.exited(worker_handle)
                     native.assert_in_job(worker_handle, request["job_name"])
                 (tmp_path / "crash.release").write_text("crash", encoding="utf-8")
-                assert launcher.wait(timeout=20) == CRASH_EXIT
+                assert launcher.wait(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS) == CRASH_EXIT
                 assert native.exited(launcher_handle, 10)
                 for process in process_handles:
                     assert native.exited(process, 10), "launcher crash left a live executor"
@@ -8734,7 +8774,7 @@ def test_real_launcher_crash_recovery_replays_without_second_dispatch(
             if launcher.poll() is None:
                 # Kill only this test's launcher. Its owned Job closes in the OS.
                 launcher.kill()
-                launcher.wait(timeout=20)
+                launcher.wait(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS)
 
 
 @pytest.mark.parametrize("mutation", [False, True], ids=["original", "M06"])
@@ -8762,7 +8802,7 @@ def test_m06_actual_redispatch_hits_original_recovery_assertion(
         try:
             duplicate_identity = duplicate.identity()
             duplicate.resume()
-            duplicate_exit = duplicate.wait(timeout=20)
+            duplicate_exit = duplicate.wait(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS)
             assert duplicate_exit == 0
             assert duplicate.active_process_count() == 0
             Path(frozen["cwd"], "m06-duplicate.json").write_text(

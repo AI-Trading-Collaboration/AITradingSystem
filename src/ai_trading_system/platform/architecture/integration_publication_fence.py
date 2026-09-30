@@ -35,12 +35,20 @@ RECEIPT_SCHEMA_VERSION = "integration_publication_closeout_receipt.v1"
 # Timeout still refuses publication; the later locked identity rechecks remain.
 # 2026-09-26: raised to the protected envelope (360s) after formal Full load (16
 # workers plus nested Full children) exceeded 180s; unloaded runs take 59-75s.
-FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS = 360
+# 2026-09-30 (DEVX-018): the 360s envelope was again exceeded under the same load
+# (acceptance_runtime_identity hashes 16,554 files: ~11s idle, 116-194s loaded, and
+# every publication CLI entry repeats it), failing PUBLICATION_FULL_CLOSURE_INVALID for
+# heavy publication tests. Raised to 900s as a provisional load calibration pending
+# owner review; exit condition (P1/P4/O3 remove the load source) is recorded in
+# docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md. A timeout still
+# refuses publication.
+FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS = 900
 # Installed child additionally reconstructs complete native runtime custody.
 # V345 measured 132.216s with ACL/elevation seams; reserve a separate bounded
 # 180s admission envelope, preserving the original 180s profile envelope.
 # This is a subprocess limit, not permission to skip any check or retry Full.
-FULL_PROFILE_PROTECTED_INSPECTION_TIMEOUT_SECONDS = 360
+# Kept equal to the profile envelope (DEVX-018 load calibration above).
+FULL_PROFILE_PROTECTED_INSPECTION_TIMEOUT_SECONDS = 900
 # Bounded read for captured Full profile evidence. A real Full runtime profile is
 # 22-27 MB (14.5k nodes, 2026-09-27) and grows with the suite; the generic 16 MiB
 # artifact budget rejected every real publication. Hash/size checks are unchanged.
