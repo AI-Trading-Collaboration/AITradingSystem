@@ -229,3 +229,39 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
   真实 xdist 组/重型组用例；对调度器做两次变异（去掉间隔、去掉上限）后测试均失败，说明测试有效。
   以 v11/v13 实测 profile 做离散事件模拟（K=4、16 worker）：6.8 / 7.63 小时，`max_heavy=4`，组无重叠。
 - 待办：限时 pilot、正式 v15 Full；P1/P4/O3 与重测后再校准 K 与启动间隔。
+
+### 2026-09-30 v15 pilot 证据与负载校准（超时校准，待 owner 复核）
+
+- pilot 证据（非正式验证，`D:/Work/devx018-pilot-v15`，启动 20:33 JST，候选 `3d9379a56`；原型为
+  `pytest -n 16 --dist loadfile` 全量，不含 git 忽略的 retained evidence，named-DQ/composer/simple_baseline
+  三类测试因缺 `AITS_NAMED_DQ_*` 而失败，按 env 因素剔除）：新调度器在 16 worker 下未出现死锁形态，
+  进度越过 v14 前 20%；但 v14 的负载失败簇复现：custody ×2（3%）、`test_publication_lifecycle_binds_original_actual_full`
+  FAILED+ERROR（16%）、`test_original_publication_cli_recovers_independent_main_advance` FAILED+ERROR（20%）、
+  `test_original_publication_cli_interrupted_after_main_commit` FAILED（23%）。原始 gc 句柄计数抖动未再出现。
+  串行 lifecycle 复现曾于 21:24 启动、约 21:35 因 pilot 证据已足够而终止（日志为空），属被放弃的串行例外，
+  不作为验证结论。
+- 根因（v13 完整 traceback、v14 日志与 pilot 交叉确认）：三类固定期限均按空载主机校准，而每个重型链节点内部再跑
+  嵌套 Full，约 16 个外层 worker + 4 个重型 × 内部 `-n16` 约 80 个进程争用 32 核，Defender 拖慢逐文件 I/O，
+  `acceptance_runtime_identity()`（16,554 文件）空载约 11 秒、负载下 116–194 秒：
+  (A) 生产侧 `FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS` / `..._PROTECTED_...` 为 360 秒（空载 59–75 秒）→
+  `PUBLICATION_FULL_CLOSURE_INVALID`（ff_only）、publisher 到不了 `heads_switched`（race-window）；
+  (B) 终止确认期限 10 秒：`TerminateJobObject` 之后 `_JobProcesses.exited()` 需要所有保留句柄变信号，
+  观察到 `job_active_process_count: 0` 而句柄 wait_status 仍为 258 超过 10 秒 → custody、lifecycle
+  （CLEANUP_UNCONFIRMED 与 `LEASE_EXECUTION_NOT_TERMINAL` teardown ERROR）、interrupted（`'ACTIVE' == 'EMPTY'`）；
+  (C) 测试侧挂起探测器：`DEADLINE = 120`、custody readiness 180 秒、`_v03_fence_cli` 默认 60 秒、
+  compat/authority/readiness 子进程 60/120 秒、显式 10 秒终止。
+- 决定（记录为暂行变通，`PROVISIONAL_PENDING_OWNER_REVIEW`，owner 需在 v15 结果报告中复核）：
+  把上述期限改为按负载校准的命名常量，成功路径行为不变，只延后"确认失败"的判定。
+  - 生产：`CONTAINED_TERMINATION_CONFIRMATION_SECONDS = 180`（`workflow_execution.py`，`terminate` /
+    `terminate_process` / `observe_job(terminate=True)` 默认值及 `task_checkpoint`、`workflow_coordination`、
+    `workflow_integration` 中显式的 10/20 秒调用）；`FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS` 与受保护 inspector
+    上限 360 → 900 秒。
+  - 测试：各测试文件的 hang-detector 上限同步放大并保持测试侧 CLI 上限严格大于生产内层 inspector 上限（嵌套约束）。
+  - 原因：v13/v14/pilot 三次独立复现同一失败簇，且都有"期限到达时目标状态实际在推进"的证据；
+    行为影响：仅在负载下延长失败判定时间，超期仍 fail closed（`CLEANUP_UNCONFIRMED`、
+    `PUBLICATION_FULL_CLOSURE_INVALID`）；
+    风险：真实挂起最多晚 180/540 秒被发现；仍有"新增固定期限被更大负载击穿"的边际风险；
+    验证覆盖：受影响单测、`test_arch_005` / `test_devx015_*` 已知簇在并行负载下重跑、正式 v15 Full；
+    退出条件：P1（identity/hook 重放去重）、P4（大 manifest 外置）与 O3（identity 缓存，需 owner 决定，
+    触及"不做跨调用 identity 缓存"的设计）落地并重测后，用首个实测 profile 决定是否把常量降回；
+    在此之前不得再放大任何期限而不回写本节。

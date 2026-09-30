@@ -15,15 +15,14 @@ task_record:
   priority: P0
   accountable_owner: null
   next_owner: Claude Code coordinator
-  requirement_refs: []
+  requirement_refs:
+  - docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: v14 Full 死锁（非慢）：exclusive_groups 的跨 worker
-    占用与 heavy 上限 K=4、xdist 队尾项语义构成循环等待，已离线模拟复现。v15（清单 v3）：每个 exclusive group 固定为一个串行复合工作单元（重型判定=任一成员为
-    real_full_chain）、新增 heavy_start_interval_seconds 软启动（活性保证：无轻量工作时不等待）、解析器拒绝一个函数属于两个
-    group；并附 fake-node 模拟属性测试与真实 xdist 测试。验收：限时 pilot 无失败簇复现后进入 v15 正式 Full；通过后 P1/P4/O3
-    与重测（重新校准 K 与启动间隔），O4 按需。
+  unstructured_legacy_blocker_or_next_step: v15 pilot 复现负载失败簇（inspector 360s/终止确认
+    10s/测试 hang-detector 按空载校准）；实施负载校准超时（命名常量，暂行变通，待 owner 复核）后重跑已知簇并进入 v15 正式 Full；P1/P4/O3
+    落地后按实测 profile 决定是否降回常量，并重新校准 K 与启动间隔。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile
@@ -94,6 +93,36 @@ events:
   - change:gov-007-devx018-v15-task-20260930-v2
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-0a31ce2fb925ac0b0435cce118ae4ad1
+- schema_version: task_event.v1
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-09-30T12:41:08Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx018-v15-task-20260930-v3
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-0a31ce2fb925ac0b0435cce118ae4ad1
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: v15 pilot 复现负载失败簇（inspector 360s/终止确认 10s/测试 hang-detector
+      按空载校准）；实施负载校准超时（命名常量，暂行变通，待 owner 复核）后重跑已知簇并进入 v15 正式 Full；P1/P4/O3 落地后按实测 profile
+      决定是否降回常量，并重新校准 K 与启动间隔。
+    acceptance_criteria: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧
+      loadfile profile 仍按原契约通过；pre-Full tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3
+      不跨调用缓存身份或 PASS
+    notes: v15 pilot：新调度器无死锁，但 v14 负载失败簇复现（custody x2、lifecycle、race-window、interrupted）；根因=生产
+      inspector 360s、终止确认 10s、测试 hang-detector 60/120/180s 均按空载校准。决定（暂行变通，待 owner
+      复核）：改为命名常量 CONTAINED_TERMINATION_CONFIRMATION_SECONDS=180、inspector 上限 900s，测试期限同步放大并保持嵌套约束；退出条件=P1/P4/O3
+      落地并重测后用实测 profile 决定是否降回。详见 docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
+      的「v15 pilot 证据与负载校准」。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx018-v15-task-20260930-v3
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-45f547cd5c63063d928d2a894fa0f550
 projection:
   legacy_first_eight_cells:
   - DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
@@ -102,17 +131,19 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - v14 Full 死锁（非慢）：exclusive_groups 的跨 worker 占用与 heavy 上限 K=4、xdist 队尾项语义构成循环等待，已离线模拟复现。v15（清单
-    v3）：每个 exclusive group 固定为一个串行复合工作单元（重型判定=任一成员为 real_full_chain）、新增 heavy_start_interval_seconds
-    软启动（活性保证：无轻量工作时不等待）、解析器拒绝一个函数属于两个 group；并附 fake-node 模拟属性测试与真实 xdist 测试。验收：限时
-    pilot 无失败簇复现后进入 v15 正式 Full；通过后 P1/P4/O3 与重测（重新校准 K 与启动间隔），O4 按需。
+  - v15 pilot 复现负载失败簇（inspector 360s/终止确认 10s/测试 hang-detector 按空载校准）；实施负载校准超时（命名常量，暂行变通，待
+    owner 复核）后重跑已知簇并进入 v15 正式 Full；P1/P4/O3 落地后按实测 profile 决定是否降回常量，并重新校准 K 与启动间隔。
   - Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full
     tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
-  - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision
-    2026-09-30（优化顺序、O2、S1 并入、K=6、v12 中断后先落地 O1+O2 再跑正式验证）
-  docs_links: []
+  - v15 pilot：新调度器无死锁，但 v14 负载失败簇复现（custody x2、lifecycle、race-window、interrupted）；根因=生产
+    inspector 360s、终止确认 10s、测试 hang-detector 60/120/180s 均按空载校准。决定（暂行变通，待 owner 复核）：改为命名常量
+    CONTAINED_TERMINATION_CONFIRMATION_SECONDS=180、inspector 上限 900s，测试期限同步放大并保持嵌套约束；退出条件=P1/P4/O3
+    落地并重测后用实测 profile 决定是否降回。详见 docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
+    的「v15 pilot 证据与负载校准」。
+  docs_links:
+  - docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
   terminal: false
-  canonical_row_sha256: 97dfa29067001a69be88c49f9ad6f1c225bfebdb8218315f80c2b494c65ae039
-last_event_id: task-event-0a31ce2fb925ac0b0435cce118ae4ad1
+  canonical_row_sha256: cf160fd0ee4f7d1d32a6b6aef6378854828efd6807d28a2d9afef7b7c667a825
+last_event_id: task-event-45f547cd5c63063d928d2a894fa0f550
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 9dbdedbb18e69fd96e540b3a2adce0092497bd91c64e134acdd57b9ad7325eb9
+fragment_checksum: a7aed792b5485d31d56e074ca0f61654cfae4fc085b620eeaebc588792dbf909

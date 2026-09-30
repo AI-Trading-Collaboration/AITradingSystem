@@ -14,7 +14,7 @@ fragment_count: 1075
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: bd9d57f98d86d31d31febdea30ed0e5b4c5e2c8a4e36dac9995d44a410704277
+final_chain_sha256: 9180222ad14147d362ed538aa478e5fe3894804abae0c99988569cb5f58196b9
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 2fab76611d56d6278a102740c94bb5da2236a35467c6debc98b34ad1c9f32129
 templates:
@@ -8623,17 +8623,17 @@ fragments:
   entry_sha256: 45535229b8a77316a70f1fceb3081425c7f9c936d07b6b7cd15d04bb0c502609
 - task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
   path: registry/development_tasks/92/925a49077b490f7bfbf905ce1550d06916e77d406f48c9f02f4fcab5d181e367.yaml
-  file_sha256: ced3c71ce78e2c472d2e1b2a9af24bfd5492fcc7547bcfd46de28a9e37a5b2ea
-  fragment_checksum: 9dbdedbb18e69fd96e540b3a2adce0092497bd91c64e134acdd57b9ad7325eb9
+  file_sha256: 19dc54565132da2a144ec326d4603e3a6755af6dca1397cb064066ccb2f9d009
+  fragment_checksum: a7aed792b5485d31d56e074ca0f61654cfae4fc085b620eeaebc588792dbf909
   partition: active
   order: 1075
   previous_entry_sha256: 45535229b8a77316a70f1fceb3081425c7f9c936d07b6b7cd15d04bb0c502609
-  entry_sha256: bd9d57f98d86d31d31febdea30ed0e5b4c5e2c8a4e36dac9995d44a410704277
+  entry_sha256: 9180222ad14147d362ed538aa478e5fe3894804abae0c99988569cb5f58196b9
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: ad4c70d4692a83409352876741794a128b0ac9996f14180d35ed2980eb85ebbd
-  byte_count: 1360431
+  sha256: 04d8303975dfaa7110e53c9ba8184c38621a76402b0c35fbe1e7e54e7a0fa4ca
+  byte_count: 1360533
   row_count: 310
   generated_do_not_edit: true
 - partition: completed
@@ -17540,7 +17540,14 @@ governance_cycles:
   change_id: gov-007-devx018-v15-task-20260930-v2
   event_count: 2
   production_effect: none
-governance_cycle_count: 1271
+- cycle_id: arch-005-s5-cycle-1272
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  change_id: gov-007-devx018-v15-task-20260930-v3
+  event_count: 3
+  production_effect: none
+governance_cycle_count: 1272
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -17554,4 +17561,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: e6ec8d8b348b4636339032ff94f678ccd451c02697faeb90132eb2eb20c2b41e
+index_checksum: 9b84dfd2429488a63432ca8142c4ff98926e6ae4220e31af89f6c8b50c001a90
