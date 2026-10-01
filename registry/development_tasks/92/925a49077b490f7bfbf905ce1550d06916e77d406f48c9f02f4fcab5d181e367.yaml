@@ -15,15 +15,19 @@ task_record:
   priority: P0
   accountable_owner: null
   next_owner: Claude Code coordinator
-  requirement_refs:
-  - docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 修复 v15 Full 的 6 个校准覆盖缺口（内嵌源常量代入、m05 嵌套
-    pytest 超时命名常量、不变量测试扩展），对失败节点与相关重型节点做定向 smoke，随后以 failure_fix_rerun 事务（绑定 v15 失败
-    Full）启动正式 v16 Full；通过后走本地 main 快进与普通 push。P1/P4/O3 与重测（K、启动间隔、超时常量、串行尾部锁粒度）在基线发布之后；超时校准待
-    owner 复核，O3 identity 缓存待 owner 决定。
+  unstructured_legacy_blocker_or_next_step: v16 正式 Full 技术上 PASS（14671 passed/0 failed，7:15:10），但发布被
+    LOCAL_MAIN_FF_PRE 阻断：PUBLICATION_FULL_PARENT_MISMATCH missing-side。根因：带 full_parent
+    的 failure_fix_rerun 事务在发布阶段（inspect_full_publication_profile 起始 validate 与 fence
+    _prepare_current_full_profile 在 LOCAL_MAIN_FF_PRE 的探测）未传入/校验记录的 parent，与 DEVX-010
+    同类、只修了派发侧。v17 修复（设计见 DEVX-018 需求 v16 结果与 v17 修复节）：validate 新增 verify_recorded_parent，inspector
+    增加原 Full provenance parent 与事务 full_parent 逐字节交叉校验，新增 fence 单测与真实链路演练（带 parent
+    的 failure_fix_rerun 发布）；随后 reseal、前置 tiers、新 failure_fix_rerun 事务绑定 v16 Full summary
+    并重跑正式 Full（约 7-8 小时），通过后本地 main 快进与普通 push。P1/P4/O3 与重测仍在基线发布之后；超时校准待 owner 复核，O3
+    identity 缓存待 owner 决定。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile
@@ -186,6 +190,40 @@ events:
   - change:gov-007-devx018-v16-task-20261001-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-b84a7794605fb7e486bc2d63358dd511
+- schema_version: task_event.v1
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-01T13:22:16Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx018-v17-task-20261001-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-b84a7794605fb7e486bc2d63358dd511
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: v16 正式 Full 技术上 PASS（14671 passed/0 failed，7:15:10），但发布被
+      LOCAL_MAIN_FF_PRE 阻断：PUBLICATION_FULL_PARENT_MISMATCH missing-side。根因：带 full_parent
+      的 failure_fix_rerun 事务在发布阶段（inspect_full_publication_profile 起始 validate 与 fence
+      _prepare_current_full_profile 在 LOCAL_MAIN_FF_PRE 的探测）未传入/校验记录的 parent，与 DEVX-010
+      同类、只修了派发侧。v17 修复（设计见 DEVX-018 需求 v16 结果与 v17 修复节）：validate 新增 verify_recorded_parent，inspector
+      增加原 Full provenance parent 与事务 full_parent 逐字节交叉校验，新增 fence 单测与真实链路演练（带 parent
+      的 failure_fix_rerun 发布）；随后 reseal、前置 tiers、新 failure_fix_rerun 事务绑定 v16 Full
+      summary 并重跑正式 Full（约 7-8 小时），通过后本地 main 快进与普通 push。P1/P4/O3 与重测仍在基线发布之后；超时校准待
+      owner 复核，O3 identity 缓存待 owner 决定。
+    acceptance_criteria: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧
+      loadfile profile 仍按原契约通过；pre-Full tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3
+      不跨调用缓存身份或 PASS
+    notes: production_effect=none；broker_action=none；agent_harness=claude_code；v16
+      Full 结果因候选绑定不可复用，属 fail-closed 设计，不绕过；owner_decision 2026-09-30（优化顺序、O2、S1 并入、K=4、v12
+      中断后先落地 O1+O2 再跑正式验证）
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx018-v17-task-20261001-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2bdbeb7677f44948d4a1e823673109b6
 projection:
   legacy_first_eight_cells:
   - DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
@@ -194,22 +232,22 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - 修复 v15 Full 的 6 个校准覆盖缺口（内嵌源常量代入、m05 嵌套 pytest 超时命名常量、不变量测试扩展），对失败节点与相关重型节点做定向
-    smoke，随后以 failure_fix_rerun 事务（绑定 v15 失败 Full）启动正式 v16 Full；通过后走本地 main 快进与普通
-    push。P1/P4/O3 与重测（K、启动间隔、超时常量、串行尾部锁粒度）在基线发布之后；超时校准待 owner 复核，O3 identity 缓存待 owner
-    决定。
+  - v16 正式 Full 技术上 PASS（14671 passed/0 failed，7:15:10），但发布被 LOCAL_MAIN_FF_PRE 阻断：PUBLICATION_FULL_PARENT_MISMATCH
+    missing-side。根因：带 full_parent 的 failure_fix_rerun 事务在发布阶段（inspect_full_publication_profile
+    起始 validate 与 fence _prepare_current_full_profile 在 LOCAL_MAIN_FF_PRE 的探测）未传入/校验记录的
+    parent，与 DEVX-010 同类、只修了派发侧。v17 修复（设计见 DEVX-018 需求 v16 结果与 v17 修复节）：validate 新增
+    verify_recorded_parent，inspector 增加原 Full provenance parent 与事务 full_parent 逐字节交叉校验，新增
+    fence 单测与真实链路演练（带 parent 的 failure_fix_rerun 发布）；随后 reseal、前置 tiers、新 failure_fix_rerun
+    事务绑定 v16 Full summary 并重跑正式 Full（约 7-8 小时），通过后本地 main 快进与普通 push。P1/P4/O3 与重测仍在基线发布之后；超时校准待
+    owner 复核，O3 identity 缓存待 owner 决定。
   - Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full
     tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
-  - 2026-10-01 v15 Full 结束：7 小时 23 分，14,664 passed / 6 failed / 4 skipped；校准后的期限在重负载下全部成立（无
-    PUBLICATION_FULL_CLOSURE_INVALID、无 CLEANUP_UNCONFIRMED、无 hang-detector 触发）。6 个失败均为本次校准提交的覆盖缺口：5
-    项为字符串内嵌源码（native registry 子进程 driver、M06 注入方法）中被整体替换的 LOADED_HOST_WAIT_TIMEOUT_SECONDS
-    在子进程/注入作用域内 NameError，1 项为 test_m05 的嵌套 pytest 90 秒测试侧超时未校准。v16 修复：常量值代入内嵌源码（不重复字面量）、m05
-    超时改为命名常量并纳入不变量测试、扩展内嵌源审计；正式 Full 前对失败节点及相关重型节点做定向 smoke（O5）。校准仍为 PROVISIONAL_PENDING_OWNER_REVIEW；O3
-    待 owner 决定。详见 docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md。
-  docs_links:
-  - docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
+  - production_effect=none；broker_action=none；agent_harness=claude_code；v16 Full 结果因候选绑定不可复用，属
+    fail-closed 设计，不绕过；owner_decision 2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2
+    再跑正式验证）
+  docs_links: []
   terminal: false
-  canonical_row_sha256: a3572882d541cf9c83b69f2a56739572b60c1b54f89301e1cfded41d9d65bf35
-last_event_id: task-event-b84a7794605fb7e486bc2d63358dd511
+  canonical_row_sha256: b4fae634a34d4a8cc5afaf40ef2537255c3c7ee0a4475431f697fa90b86ca1f5
+last_event_id: task-event-2bdbeb7677f44948d4a1e823673109b6
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 5739af3aee740c7679fb9371f0191381d63a6441205a943e3d70d67178c69493
+fragment_checksum: 7b3d1024875f596988ec9171f812f475fcbee9088c1c7fb979a8971719889079

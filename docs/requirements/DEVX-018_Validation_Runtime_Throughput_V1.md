@@ -350,3 +350,50 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
   - 一次聚焦运行因误含该文件全量而被终止（我方进程树，运行约 30 分钟、无失败），HKCU 测试根仍为既有 5 个，无新增泄漏。
   - 本次 smoke 的临时目录 `D:/Work/devx018-smoke-v16`、`D:/Work/devx018-focused-v16`（basetemp，可再生，owner：
     Claude Code coordinator，退出条件同上）加入清理清单。
+
+### 2026-10-01 v16 Full 结果与 v17 修复（发布阶段 parent 绑定缺陷）
+
+- v16 正式 Full（候选 `8cf97a9d7eef`，事务 `gov-007-p1c-devx015-baseline-publication-20261001-v16`，
+  `failure_fix_rerun`，绑定 v15 失败 Full 的 `test_runtime_summary.json` 为 `full_parent`）：
+  `14671 passed, 4 skipped, 0 failed`，历时 7 小时 15 分 10 秒，退出码 0；v15 的 6 个失败全部消除，校准后的期限在
+  重负载下成立。Full 产物保留在 `outputs/validation_runtime/gov-007-p1c-devx015-full-20261001-v16/`。
+- 但发布被阻断：`checkpoint --phase LOCAL_MAIN_FF_PRE` 以
+  `PUBLICATION_FULL_CLOSURE_INVALID: Full publication profile rejected: PUBLICATION_FULL_PARENT_MISMATCH: missing-side`
+  拒绝，事务状态保持在 `FORMAL_VALIDATION_RESULT`（PASS），没有任何 local-main / remote 变更。
+- 根因（设计缺陷，非环境问题；与 DEVX-010 同类，该任务只修复了派发侧）：
+  - `IntegrationPublicationFence.validate(validation_tier=<heavyweight>)` 在 `parent_path is None` 且事务记录了
+    `full_parent` 时按 `missing-side` 拒绝。派发侧（`run_validation_tier.py` 两处 `_FullCommandRunner` /
+    dispatch）会用 `_publication_parent_path(provenance)` 显式传入 parent，因此 v16 的 `FULL_DISPATCHED` 通过；
+  - 发布侧有两处没有传入 parent：① `inspect_full_publication_profile` 起始处的 `fence.validate(...)`；
+    ② fence 自身 `_prepare_current_full_profile` 在 `LOCAL_MAIN_FF_PRE` 阶段的探测（`validation_tier=heavy`）。
+    任何带 `full_parent` 的 `failure_fix_rerun` 事务因此都无法通过 `FORMAL_VALIDATION_RESULT → LOCAL_MAIN_FF_PRE`
+    及其后的 profile 校验；
+  - 既有测试只覆盖「无 parent 的 Full 发布」（`test_unbound_full_profile_admits_non_devx015_publication`）与
+    「parent 仅被显式消费」（`test_bound_full_parent_is_optional_until_explicitly_consumed`），从未让带 parent 的事务
+    走完发布阶段，所以 v13–v16 都没能提前发现。
+- 为什么 v16 的 PASS 不能直接复用：修复必然改变候选提交，Full 结果绑定 `candidate_sha`、事务 sha 与租约，旧结果不能
+  迁移到新候选；这是 fail-closed 设计，不绕过。代价是再跑一次正式 Full（约 7–8 小时）。
+- v17 修复设计（先记录、后实施；生产行为只收紧检查，不放宽）：
+  1. `IntegrationPublicationFence.validate` 新增显式参数 `verify_recorded_parent`（默认 `False`，现有调用方行为
+     不变）：为真且调用方未传 `parent_path` 时，用事务已记录的 `full_parent.path` 做同一套 exact-byte
+     （path/sha256/size）比对，因此文件被篡改、删除或替换仍然 fail closed；传了 `parent_path` 时仍以调用方为准
+     （`missing-side` 对「调用方传了 parent 而事务没有」继续成立）。
+  2. `_prepare_current_full_profile` 在 `LOCAL_MAIN_FF_PRE` 的探测传入 `verify_recorded_parent=True`；
+     `inspect_full_publication_profile` 起始 validate 同样传入。
+  3. `inspect_full_publication_profile` 读取原 PASS Full summary 的 `validation_provenance` 后，新增交叉校验：
+     用与派发侧相同的 `_publication_parent_path(provenance)` 得到 parent，再用同一 fence validate（显式 `parent_path`）
+     与 `_require_new_incomplete_parent_candidate` 复核；即「原 Full 声明的 parent」必须与「事务冻结的 parent」逐字节一致，
+     不一致（含 Full 声明了 parent 而事务没有、或反之）一律拒绝。
+  4. 测试：fence 层单测（带记录 parent 的事务：不带标志仍 `missing-side`、带标志通过、parent 被篡改后拒绝、事务无
+     parent 时标志无影响）；inspector 交叉校验的单元测试；以及真实链路演练
+     `test_full_profile_with_bound_parent_admits_failure_fix_rerun_publication`（复用
+     `_run_actual_profile_full` 的真实 canonical/Job/profile 链，事务带 `full_parent`、provenance 为 `failure_fix_rerun`，
+     跑到 `LOCAL_MAIN_FF_PRE` 之前的 inspector 与 checkpoint 探测）——目的就是避免第三次 7–8 小时才暴露同类缺陷。
+- 验收：上述测试通过；预 Full 的四个前置 tier 与重型演练节点 smoke 通过；新事务（`failure_fix_rerun`，绑定 v16 Full
+  summary 为 `full_parent`）的正式 Full 通过并成功走完 `LOCAL_MAIN_FF_PRE → local-publish → REMOTE_PUSH_PRE →
+  普通 push → CLEANUP_PRE → RELEASED`；`local main = remote main = candidate`。
+- 状态/风险：校准仍为 `PROVISIONAL_PENDING_OWNER_REVIEW`；O3 identity 缓存待 owner 决定；本修复不改变任何投资
+  解释、评分、回测或数据路径，`production_effect=none`。
+- 临时工作区：本段无新增；v15/v16 的清单沿用上节（发布完成后统一审计清理）。v16 事务已作为 FAILED 终态证据释放
+  （证据文件 `outputs/architecture/integration_revalidation/devx015-v389/claude_v16_local_main_ff_pre.json`，
+  sha256 `67be89a4a6cc29422c2817ccaa88298e1763acbb081be758903ed71f1bcb4174`）。

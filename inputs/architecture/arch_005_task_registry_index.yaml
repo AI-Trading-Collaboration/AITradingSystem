@@ -14,7 +14,7 @@ fragment_count: 1075
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 52c645961a17b964c18d35feff1d04d0262f71eb7ae3733a69fe8a8469e2d633
+final_chain_sha256: 1c4a940e9b11ab939afaf2841fc2729b7ff140ef03c701251907e79c3e03dcda
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 2fab76611d56d6278a102740c94bb5da2236a35467c6debc98b34ad1c9f32129
 templates:
@@ -8583,57 +8583,57 @@ fragments:
   entry_sha256: 1de62330a489b2811647061ade2701b62f199926fdcb54a046d3d9274abda960
 - task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
   path: registry/development_tasks/0f/0f9ec2021e4f8be05fad76cab5d9c82eb86c5b99065377c14ee5bc8c7743fcaf.yaml
-  file_sha256: fbba26b6e61f1431aea5fe5b97d0b52aa8a44e5d5a030c4fbe73fe62be8ba680
-  fragment_checksum: c28c0a43eb8448bb9001cd16fcef44c5b8c983f5f3838958143b638943fea9c9
+  file_sha256: c7fb0abbd21afbc6216a50e73a1343011669ba5b3e42adf4b527665d1de55499
+  fragment_checksum: c22dfa217c1d1bb8fcf315c0f0d76f2b61bb4a28b339e27385b8fc2755c6cccd
   partition: active
   order: 1070
   previous_entry_sha256: 1de62330a489b2811647061ade2701b62f199926fdcb54a046d3d9274abda960
-  entry_sha256: 9308c1e8262bcbb5b0f688866e3e9d9ba6701b8ec0d50f64bbe3837b5c7542f5
+  entry_sha256: 3a708125632b03018cff1698287dd3898629381c17df9a26d6cc02abdfc96984
 - task_id: DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
   path: registry/development_tasks/d2/d243da1aac52dc8d69cc1e9db76ec1d7d7f6a2585d43e274a00317e15fb64965.yaml
   file_sha256: fcd6cbe15718166634abd51e9b9e8db7856fd506b91635b68c56b2510ffcd59e
   fragment_checksum: e94a21e0f7b217c41e3ecd6779b9b9ade34e83d357cd4a8982ea5a4911e100fa
   partition: active
   order: 1071
-  previous_entry_sha256: 9308c1e8262bcbb5b0f688866e3e9d9ba6701b8ec0d50f64bbe3837b5c7542f5
-  entry_sha256: a98b6ca82b2b4b19f222dd6b982c8009281cf08cdaad6f83e1f5337b2be8a41f
+  previous_entry_sha256: 3a708125632b03018cff1698287dd3898629381c17df9a26d6cc02abdfc96984
+  entry_sha256: 00a6d3f99d5ed973ca1a63144017faba83711920ffbf33e46c8dfc56af517f0c
 - task_id: OPS-082_DETERMINISTIC_WINDOWS_SCHEDULER
   path: registry/development_tasks/55/556a533087a8bc22fdb85251276257ed0cf671197492067f67dbc0ba5ace30cb.yaml
   file_sha256: cd282c78ee3610caccd177a4fe57ba0cd239fca0c27c707238434b472964ad09
   fragment_checksum: c16475c400a251b76a98e9b2d415ed9cad9b3832a5de409cd04b463bb03af890
   partition: active
   order: 1072
-  previous_entry_sha256: a98b6ca82b2b4b19f222dd6b982c8009281cf08cdaad6f83e1f5337b2be8a41f
-  entry_sha256: ebe08359c63eb2549826c2844a705526c9004b3568b07fc5c5eb98efe05b2e1e
+  previous_entry_sha256: 00a6d3f99d5ed973ca1a63144017faba83711920ffbf33e46c8dfc56af517f0c
+  entry_sha256: ff89ba23bff87f189da60f22d869bb8e5fea2d3ec295001c5b2b468a125b8694
 - task_id: DEVX-017_AGENT_HARNESS_NEUTRALITY
   path: registry/development_tasks/d4/d45572e4fde123e2f6cf43ddb40c504983372d58a3d605b209ca8ba1ff6025f5.yaml
   file_sha256: 9aa9c972ab81793a6d0d0754383beb12478cee389760c620f83a19b3f8ebb048
   fragment_checksum: deb641d3197c59dbc0f02e612c44934a5dd8265ee419ad8097109f99a5ffc43f
   partition: active
   order: 1073
-  previous_entry_sha256: ebe08359c63eb2549826c2844a705526c9004b3568b07fc5c5eb98efe05b2e1e
-  entry_sha256: a21661e097f8dbd32d33c43a6c3648030857b1471db2213fa7fe32569bd9536e
+  previous_entry_sha256: ff89ba23bff87f189da60f22d869bb8e5fea2d3ec295001c5b2b468a125b8694
+  entry_sha256: 8e0cc718729f37e41b625913f0e700286b02140a0fea1bee71249590d54c64a5
 - task_id: DEVX-015A_HOST_REGISTRY_SINGLE_VALUE_ANCHOR_V1
   path: registry/development_tasks/82/82d6578a44be08456be35eb266ff847fd83103108c2c9a2d34e7a0b81d229b9c.yaml
   file_sha256: 12ff9db33919bdc67dc615a276d3ff0aa843427ae7b5ec4823331d78b16589e8
   fragment_checksum: b1ce0b0cac8c0591ed81ca39e9dbc14383104736d58164a2facc01a13d272344
   partition: active
   order: 1074
-  previous_entry_sha256: a21661e097f8dbd32d33c43a6c3648030857b1471db2213fa7fe32569bd9536e
-  entry_sha256: 45535229b8a77316a70f1fceb3081425c7f9c936d07b6b7cd15d04bb0c502609
+  previous_entry_sha256: 8e0cc718729f37e41b625913f0e700286b02140a0fea1bee71249590d54c64a5
+  entry_sha256: f10ab34b4d097691e5a440acfd981e8e3e843a431972a44dea3c33852164162d
 - task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
   path: registry/development_tasks/92/925a49077b490f7bfbf905ce1550d06916e77d406f48c9f02f4fcab5d181e367.yaml
-  file_sha256: 814cb568f8bbbd39851932d0e260c1067e7686ffa43c49be61dcff0920211ed9
-  fragment_checksum: 5739af3aee740c7679fb9371f0191381d63a6441205a943e3d70d67178c69493
+  file_sha256: de305256c20d1336b3e6c084cf2860cb17ac081fa3e973bcc2cc89dd4b71773f
+  fragment_checksum: 7b3d1024875f596988ec9171f812f475fcbee9088c1c7fb979a8971719889079
   partition: active
   order: 1075
-  previous_entry_sha256: 45535229b8a77316a70f1fceb3081425c7f9c936d07b6b7cd15d04bb0c502609
-  entry_sha256: 52c645961a17b964c18d35feff1d04d0262f71eb7ae3733a69fe8a8469e2d633
+  previous_entry_sha256: f10ab34b4d097691e5a440acfd981e8e3e843a431972a44dea3c33852164162d
+  entry_sha256: 1c4a940e9b11ab939afaf2841fc2729b7ff140ef03c701251907e79c3e03dcda
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 6bfe52be4e59a6cff05c84f04411dbb2a1b0c5174575d9af85403362254aea4e
-  byte_count: 1360992
+  sha256: 84b9b520e082a881cfff8598feb8dd19c11c1c70b69afd4dd8e3da698b3accbe
+  byte_count: 1360667
   row_count: 310
   generated_do_not_edit: true
 - partition: completed
@@ -17561,7 +17561,21 @@ governance_cycles:
   change_id: gov-007-devx018-v16-task-20261001-v1
   event_count: 5
   production_effect: none
-governance_cycle_count: 1274
+- cycle_id: arch-005-s5-cycle-1275
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  change_id: gov-007-devx018-v17-task-20261001-v1
+  event_count: 6
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-1276
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  change_id: gov-007-gov007-v17-task-20261001-v1
+  event_count: 14
+  production_effect: none
+governance_cycle_count: 1276
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -17575,4 +17589,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: ddb5d7fc99352412f01cbaabe7ad074b0e2260c034c9e6d3cb5a30b9a8d9a20a
+index_checksum: 53d1424b20e1cae2749a058018832b2718cad36c0d2254f9fc2d6e0341adaea3
