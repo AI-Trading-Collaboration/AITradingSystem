@@ -42,6 +42,9 @@ ROOT = Path(__file__).resolve().parents[1]
 # inspector bound.
 LOADED_HOST_PROBE_TIMEOUT_SECONDS = 600
 LOADED_HOST_CLI_TIMEOUT_SECONDS = 1800
+# In-child hang guards (child exit waits and release-file waits) also scale with load: a child
+# inheriting ~85k file-custody handles needed >30s just to tear down under Full load (DEVX-018 v17).
+LOADED_HOST_WAIT_TIMEOUT_SECONDS = 600
 CHECKOUT_POLICY = ROOT / "config/architecture/arch_005_s4d_checkout_guard.yaml"
 PARALLEL_POLICY = ROOT / "config/architecture/arch_005_parallel_control_policy.yaml"
 TASK_ID = "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1"
@@ -126,6 +129,43 @@ def test_loaded_host_guard_names_are_not_referenced_inside_embedded_sources() ->
                 for offset, line in enumerate(node.value.splitlines()):
                     if guard_names.search(line):
                         offenders.append(f"{name}:{node.lineno}+{offset}: {line.strip()[:100]}")
+    assert offenders == [], offenders
+
+
+def test_embedded_source_deadlines_are_loaded_host_calibrated() -> None:
+    # Child drivers embedded as strings run outside this module's globals, so their hang
+    # guards are literals. v15 skipped them (NameError risk) and v17's Full then failed on a
+    # 30s wait_exit literal. Pin every such literal to the calibrated loaded-host value so the
+    # heavy nodes, which pre-Full tiers exclude, cannot silently regress.
+    pattern = re.compile(
+        r"wait_exit\(timeout=(\d+(?:\.\d+)?)\)|monotonic\(\)\s*\+\s*(\d+(?:\.\d+)?)"
+    )
+    detector = "test_embedded_source_deadlines_are_loaded_host_calibrated"
+    offenders: list[str] = []
+    for name in (
+        "test_devx015_workflow_coordination.py",
+        "test_devx015_workflow_execution.py",
+        "test_arch_005_integration_publication_fence.py",
+        "test_devx015_workflow_integration.py",
+    ):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", SyntaxWarning)
+            warnings.simplefilter("ignore", DeprecationWarning)
+            tree = ast.parse((ROOT / "tests" / name).read_text(encoding="utf-8"))
+        own = {
+            id(inner)
+            for outer in ast.walk(tree)
+            if isinstance(outer, ast.FunctionDef) and outer.name == detector
+            for inner in ast.walk(outer)
+        }
+        for node in ast.walk(tree):
+            if id(node) in own or not (isinstance(node, ast.Constant) and isinstance(node.value, str)):
+                continue
+            for match in pattern.finditer(node.value):
+                seconds = float(match.group(1) or match.group(2))
+                # Sub-5s values are poll/sleep windows, not hang guards.
+                if 5 <= seconds < LOADED_HOST_WAIT_TIMEOUT_SECONDS:
+                    offenders.append(f"{name}:{node.lineno}: {match.group(0)}")
     assert offenders == [], offenders
 
 
@@ -1527,7 +1567,7 @@ def _exercise_failed_publication_job(
         "  Path('outputs/publication-live-inputs.json').write_text(json.dumps(inputs))\n"
         "  child_binding_path=Path('outputs/publication-input-child-binding.json')\n"
         "  child_binding_path.write_text(json.dumps(child_binding))\n"
-        "  child.resume(); assert child.wait_exit(timeout=30)==0\n"
+        "  child.resume(); assert child.wait_exit(timeout=600)==0\n"
         "  publication_stage('input_child_exited')\n"
         " finally: child.close()\n"
         "witness['input_custody']={'file_count':len(files),'runtime_count':inputs['runtime_file_count'],\n"
@@ -3304,7 +3344,7 @@ original=IntegrationPublicationFence._checkpoint_payload
 def observe(self,*args,**kwargs):
     payload=original(self,*args,**kwargs)
     ready.write_text(json.dumps(current_process_identity()),encoding='utf-8')
-    end=time.monotonic()+30
+    end=time.monotonic()+600
     while not release.exists():
         if time.monotonic()>end:raise RuntimeError('fixture observation deadline')
         time.sleep(.01)

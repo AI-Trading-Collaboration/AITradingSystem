@@ -4661,7 +4661,7 @@ def test_public_full_uncommitted_crash_recovery_closes_without_adopting_loose_pa
         " original=ExecutionLifecycle.resume\n"
         " def fault(self,*args,**kwargs):\n"
         "  original(self,*args,**kwargs)\n"
-        "  deadline=time.monotonic()+30\n"
+        "  deadline=time.monotonic()+600\n"
         "  while not (directory/'child-started').exists():\n"
         "   assert time.monotonic()<deadline\n"
         "   time.sleep(0.02)\n"
@@ -7678,7 +7678,7 @@ admit=(lifecycle.require_installation_worker if installation
        else lifecycle.require_source_candidate_worker)
 witness=admit(request, actor=sys.argv[3])
 Path(sys.argv[1]+'.witness').write_text(json.dumps(witness))
-deadline=time.monotonic()+40
+deadline=time.monotonic()+600
 while not Path(sys.argv[1]+'.release').exists():
     if time.monotonic()>deadline: raise RuntimeError('worker release timeout')
     time.sleep(.02)
@@ -8077,7 +8077,7 @@ else:
     raise AssertionError('contained worker accepted changed checkpoint payload')
 witness=guard.store.execution_lifecycle().require_checkpoint_worker(request, actor=sys.argv[6])
 Path(sys.argv[2]).write_text(json.dumps(witness))
-deadline=time.monotonic()+30
+deadline=time.monotonic()+600
 while not Path(sys.argv[3]).exists():
     if time.monotonic()>deadline: raise RuntimeError('synthetic release deadline')
     time.sleep(0.01)
@@ -8222,7 +8222,7 @@ else:
     raise AssertionError('v3 admitted as checkpoint')
 witness=lifecycle.require_source_candidate_worker(request, actor=sys.argv[5])
 Path(sys.argv[2]).write_text(json.dumps(witness))
-deadline=time.monotonic()+30
+deadline=time.monotonic()+600
 while not Path(sys.argv[3]).exists():
     if time.monotonic()>deadline: raise RuntimeError('synthetic release deadline')
     time.sleep(.01)
@@ -8589,7 +8589,7 @@ CRASH_PHASES = (
 def _crash_launcher(root: Path, phase: str, source_candidate: bool = False) -> None:
     """Subprocess-only fault injection; never called in the pytest controller."""
     # Bound even a stuck launcher independently of parent-side test cleanup.
-    watchdog = threading.Timer(90, lambda: os._exit(98))
+    watchdog = threading.Timer(LOADED_HOST_WAIT_TIMEOUT_SECONDS, lambda: os._exit(98))
     watchdog.daemon = True
     watchdog.start()
     store, lease, request, env, _ = _case(root)
@@ -8603,7 +8603,7 @@ from pathlib import Path
 with Path('dispatches.txt').open('a', encoding='utf-8') as stream:
     stream.write('executed\\n')
 Path('worker.json').write_text(json.dumps({'pid': os.getpid()}), encoding='utf-8')
-end = time.monotonic() + 60
+end = time.monotonic() + 600
 while not Path('worker.release').exists() and time.monotonic() < end:
     time.sleep(.02)
 """,

@@ -2927,3 +2927,58 @@ def test_publication_stage_parent_cross_check_follows_full_provenance(tmp_path: 
         validation_tier._require_publication_parent_matches_transaction(
             unbound, fence=fence, transaction=transaction, task_id="TASK", root=tmp_path,
         )
+
+
+def test_publication_stage_parent_cross_check_accepts_incomplete_recovery_parent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    recovery = (
+        "outputs/architecture/arch_005_integration_publication_fence/transactions/old/"
+        "full_incomplete_recovery.json"
+    )
+    parent = {
+        "report_type": "full_incomplete_recovery", "recovery_path": recovery,
+        "recovery_sha256": "a" * 64, "recovery_size_bytes": 715,
+        "transaction_sha256": "b" * 64, "candidate_sha": "c" * 40, "lease_id": "lease-old",
+    }
+    monkeypatch.setattr(
+        validation_tier, "_validated_incomplete_parent_binding",
+        lambda path, *, repo_root, task_id: (dict(parent), []),
+    )
+    frozen = {"path": recovery, "sha256": "a" * 64, "size_bytes": 715}
+    calls: list[dict[str, object]] = []
+
+    def build(frozen_parent: dict[str, object], *, transaction_sha256: str = "d" * 64):
+        def validate(transaction: Path, **kwargs: object) -> dict[str, object]:
+            calls.append(kwargs)
+            return {
+                "phase": "LOCAL_MAIN_FF_PRE", "transaction_sha256": transaction_sha256,
+                "candidate_sha": "e" * 40, "lease_id": "lease-new",
+            }
+
+        replay = SimpleNamespace(
+            status="PASS", phase="LOCAL_MAIN_FF_PRE",
+            transaction={"transaction_sha256": transaction_sha256, "full_parent": frozen_parent},
+        )
+        return SimpleNamespace(
+            policy=SimpleNamespace(heavyweight_tier="full"), replay=lambda t: replay,
+            validate=validate,
+        )
+
+    transaction = tmp_path / "transaction.json"
+    provenance = {"task_id": "TASK", "parent_run": parent}
+    validation_tier._require_publication_parent_matches_transaction(
+        provenance, fence=build(frozen), transaction=transaction, task_id="TASK", root=tmp_path,
+    )
+    assert calls[-1]["parent_path"] == Path(recovery)
+
+    with pytest.raises(validation_tier.PublicationFenceError, match="PUBLICATION_FULL_PARENT_CHANGED"):
+        validation_tier._require_publication_parent_matches_transaction(
+            provenance, fence=build({**frozen, "sha256": "f" * 64}), transaction=transaction,
+            task_id="TASK", root=tmp_path,
+        )
+    with pytest.raises(validation_tier.PublicationFenceError, match="PUBLICATION_FULL_PARENT_REUSED"):
+        validation_tier._require_publication_parent_matches_transaction(
+            provenance, fence=build(frozen, transaction_sha256="b" * 64), transaction=transaction,
+            task_id="TASK", root=tmp_path,
+        )

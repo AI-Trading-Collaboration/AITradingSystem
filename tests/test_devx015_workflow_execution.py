@@ -51,6 +51,10 @@ ROOT = Path(__file__).resolve().parents[1]
 # production profile inspector bound.
 DEADLINE = 600.0
 LOADED_HOST_CLI_TIMEOUT_SECONDS = 1800
+# String-embedded child sources cannot see module globals, so their hang guards spell the
+# loaded-host wait as the literal 600; test_embedded_source_deadlines_are_loaded_host_calibrated
+# (tests/test_arch_005_integration_publication_fence.py) pins every such literal to >= 600.
+# The outer waits for those children use the CLI bound so they stay above the inner ones.
 CRASH_EXIT = 23
 
 
@@ -304,7 +308,7 @@ try:
         assert result['held']==before+len(chain)  # No retained query Job/snapshot handle.
         (root/'hook-live.json').write_text(json.dumps(result))
         if {mode!r}=='exception': raise RuntimeError('owned body failure')
-        end=time.monotonic()+20
+        end=time.monotonic()+600
         while not (root/'hook.release').exists() and time.monotonic()<end:time.sleep(.02)
         assert (root/'hook.release').exists()
     result['status']='ACCEPTED'
@@ -341,7 +345,7 @@ try:
         (root/'git-binding.json').write_text(json.dumps({{
             'original':original,'expected':expected,
             'job':name+'-missing' if {mode!r}=='wrong-job' else name}}))
-        child.resume(); code=child.wait_exit(timeout=180)
+        child.resume(); code=child.wait_exit(timeout=600)
         (root/'git-result.json').write_text(json.dumps({{'returncode':code}}))
 finally:
     if sibling is not None:
@@ -3416,7 +3420,7 @@ def fault(bound_root, relative, content):
         if sys.argv[6] == 'after':
             original(bound_root, relative, content)
         ready.write_text(str(os.getpid()))
-        deadline = time.monotonic()+60
+        deadline = time.monotonic()+600
         while not release.exists():
             if time.monotonic()>deadline: os._exit(98)
             time.sleep(.02)
@@ -4595,7 +4599,7 @@ CHILD = """
 import json, os, time
 from pathlib import Path
 Path('child.json').write_text(json.dumps({'pid': os.getpid()}), encoding='utf-8')
-end = time.monotonic() + 60
+end = time.monotonic() + 600
 while not Path('child.release').exists() and time.monotonic() < end:
     time.sleep(.02)
 Path('child.done').write_text('exited', encoding='utf-8')
@@ -4609,7 +4613,7 @@ from pathlib import Path
 child = subprocess.Popen([sys.executable, '-u', '-c', {CHILD!r}])
 Path('parent.json').write_text(
     json.dumps({{'pid': os.getpid(), 'child': child.pid}}), encoding='utf-8')
-end = time.monotonic() + 60
+end = time.monotonic() + 600
 while not Path('child.json').exists() and time.monotonic() < end:
     time.sleep(.02)
 print('PARENT_READY', flush=True)
@@ -4637,7 +4641,7 @@ from ai_trading_system.platform.architecture.workflow_execution import (
 from ai_trading_system.platform.architecture.workflow_contract import hold_bound_directory
 root=Path.cwd(); mode={mode!r}; job={name!r}
 def until(predicate):
-    end=time.monotonic()+60
+    end=time.monotonic()+600
     while not predicate():
         if time.monotonic()>end: raise RuntimeError('owned worker deadline')
         time.sleep(.02)
@@ -4697,7 +4701,7 @@ if child is not None:
         if mode=='terminate': assert child.terminate_process()==1067
         else:
             Path('child.release').write_text('release')
-            assert child.wait_exit(timeout=180)==0
+            assert child.wait_exit(timeout=600)==0
         child.close()
     try: child.pre_resume_binding()
     except ExecutionContainmentError as exc:
@@ -4943,7 +4947,7 @@ try:
         row['after_create']=count()
         child.pre_resume_binding(); row['after_binding']=count()
         child.resume(); row['after_resume']=count()
-        assert child.wait_exit(timeout=30)==0
+        assert child.wait_exit(timeout=600)==0
         row['after_wait']=count()
         child.close(); row['after_close']=count()
         gc.collect(); time.sleep(.05); row['after_gc']=count()
@@ -4960,7 +4964,7 @@ Path('native-handle-control.json').write_text(json.dumps({'rows':rows,'events':e
     handle = _create(execution_api, tmp_path, source, name=name)
     try:
         handle.resume()
-        assert handle.wait(timeout=DEADLINE) == 0, (tmp_path / "stdout.log").read_text()
+        assert handle.wait(timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS) == 0, (tmp_path / "stdout.log").read_text()
         result = _read_json(tmp_path / "native-handle-control.json")
         assert len(result["rows"]) == 3 and result["events"]
         # Measure first-use initialization separately; subsequent complete
@@ -5013,7 +5017,7 @@ for cycle in range(3):
     try:
         control.pre_resume_binding()
         control.resume()
-        assert control.wait_exit(timeout=30)==0
+        assert control.wait_exit(timeout=600)==0
     finally:
         control.close()
     controls.append({'before':before,'after':handle_count()})
@@ -5047,13 +5051,13 @@ ready={'file_count':len(files),'runtime':original,'parent_baseline_handles':base
     'body_exception':raised,'process':binding['process'] if binding else None,
     'binding_sha256':canonical_digest(binding) if binding else None}
 Path('runtime-ready.json').write_text(json.dumps(ready))
-end=time.monotonic()+60
+end=time.monotonic()+600
 while not Path('runtime.release').exists():
     if time.monotonic()>end: raise RuntimeError('test release deadline')
     time.sleep(.02)
 if child:
     child.resume()
-    assert child.wait_exit(timeout=30)==0
+    assert child.wait_exit(timeout=600)==0
     child.close()
 after=handle_count()
 Path('runtime-complete.json').write_text(json.dumps({'baseline':baseline,'after':after}))
@@ -5087,7 +5091,7 @@ assert after==baseline,(baseline,after)
             assert ready["process"] is None and ready["body_exception"] is True
             assert ready["parent_after_context_handles"] == ready["parent_baseline_handles"]
         (tmp_path / "runtime.release").write_text("release original native child")
-        assert handle.wait(timeout=DEADLINE) == 0, (tmp_path / "stdout.log").read_text()
+        assert handle.wait(timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS) == 0, (tmp_path / "stdout.log").read_text()
         completed = _read_json(tmp_path / "runtime-complete.json")
         assert completed["after"] == completed["baseline"]
         if mode == "success":
@@ -5148,13 +5152,13 @@ with ExitStack() as stack:
     binding=child.pre_resume_binding() if child else None
 Path('file-child-ready.json').write_text(json.dumps({{'binding':binding,'files':records,
     'rejected':rejected,'worker_pid':os.getpid()}}))
-end=time.monotonic()+60
+end=time.monotonic()+600
 while not Path('file-child.release').exists():
     if time.monotonic()>end: raise RuntimeError('file child release deadline')
     time.sleep(.02)
 if child:
     child.resume()
-    assert child.wait_exit(timeout=30)==0
+    assert child.wait_exit(timeout=600)==0
     child.close()
 """
     handle = _create(execution_api, tmp_path, source, name=name)
@@ -5188,7 +5192,7 @@ if child:
             assert ready["binding"] is None and ready["rejected"]
             assert not (tmp_path / "child.stdout").exists()
         (tmp_path / "file-child.release").write_text("resume original child")
-        assert handle.wait(timeout=DEADLINE) == 0, (tmp_path / "stdout.log").read_text()
+        assert handle.wait(timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS) == 0, (tmp_path / "stdout.log").read_text()
         if mode in {"success", "hardlink-success"}:
             assert (tmp_path / "read-inputs.hex").read_text() == (
                 first.read_bytes() + second.read_bytes()
@@ -5763,7 +5767,7 @@ import json, os, time
 from pathlib import Path
 Path('canary.json').write_text(json.dumps({'cwd':os.getcwd(), 'pid':os.getpid()}), encoding='utf-8')
 print('STDOUT_CANARY', flush=True)
-end = time.monotonic() + 60
+end = time.monotonic() + 600
 while not Path('canary.release').exists() and time.monotonic() < end:
     time.sleep(.02)
 """
@@ -6005,7 +6009,7 @@ child=InheritedJobChild.create(argv=[sys.executable,'-u','-c',{CHILD!r}],
     job_name={name!r})
 assert child.pre_resume_binding()['owner_resume_state']=='NOT_RESUMED'
 child.resume()
-end=time.monotonic()+60
+end=time.monotonic()+600
 while not Path('parent.release').exists() and time.monotonic()<end: time.sleep(.02)
 child.close()
 """
@@ -6019,7 +6023,7 @@ handle = WindowsJobProcess.create(argv=[sys.executable, '-u', '-c', child_source
     cwd=root, environment=dict(os.environ), stdout_path=root/'job.stdout.log', job_name={name!r})
 (root/'launcher.identity.json').write_text(json.dumps(handle.identity()), encoding='utf-8')
 handle.resume()
-end = time.monotonic() + 60
+end = time.monotonic() + 600
 while not (root/'launcher.crash').exists() and time.monotonic() < end:
     time.sleep(.02)
 os._exit({CRASH_EXIT})
@@ -6353,7 +6357,7 @@ from pathlib import Path
 def test_worker(worker_id):
     root = Path(__file__).resolve().parent
     (root/(worker_id+'.json')).write_text(json.dumps({'pid':os.getpid(), 'worker':worker_id}))
-    end = time.monotonic()+60
+    end = time.monotonic()+600
     while not (root/'workers.release').exists() and time.monotonic()<end:
         time.sleep(.02)
     assert (root/'workers.release').exists(), 'test controller did not release worker'
