@@ -19,15 +19,16 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: v16 正式 Full 技术上 PASS（14671 passed/0 failed，7:15:10），但发布被
-    LOCAL_MAIN_FF_PRE 阻断：PUBLICATION_FULL_PARENT_MISMATCH missing-side。根因：带 full_parent
-    的 failure_fix_rerun 事务在发布阶段（inspect_full_publication_profile 起始 validate 与 fence
-    _prepare_current_full_profile 在 LOCAL_MAIN_FF_PRE 的探测）未传入/校验记录的 parent，与 DEVX-010
-    同类、只修了派发侧。v17 修复（设计见 DEVX-018 需求 v16 结果与 v17 修复节）：validate 新增 verify_recorded_parent，inspector
-    增加原 Full provenance parent 与事务 full_parent 逐字节交叉校验，新增 fence 单测与真实链路演练（带 parent
-    的 failure_fix_rerun 发布）；随后 reseal、前置 tiers、新 failure_fix_rerun 事务绑定 v16 Full summary
-    并重跑正式 Full（约 7-8 小时），通过后本地 main 快进与普通 push。P1/P4/O3 与重测仍在基线发布之后；超时校准待 owner 复核，O3
-    identity 缓存待 owner 决定。
+  unstructured_legacy_blocker_or_next_step: v17 正式 Full（候选 597fe2bdb，failure_fix_rerun，绑定
+    v15 失败 summary 为 full_parent）派发 7 分钟后出现负载相关失败 test_complete_runtime_native_custody_inherited_and_released[success]：测试内嵌子进程脚本的
+    wait_exit(timeout=30) 在子进程继承约 8.5 万句柄、Full 负载下销毁耗时超过 30 秒时超时（v15 批量替换按设计跳过内嵌源码字面量而漏校准；v16
+    同节点通过属时序幸运）。一个失败节点已令该 Full 必然 FAIL，已停止驱动并用 --recover-full terminate_frozen_job
+    以 FAILED/INSUFFICIENT 终态收尾（full_incomplete_recovery.json sha256 020957685c93…335d41），不伪造
+    pytest FAIL。此前 v17 的发布阶段 parent 绑定修复（verify_recorded_parent）已提交，仍待正式 Full 通过后的真实发布验证。v18
+    修复（见 DEVX-018 需求 v17/v18 节）：测试内嵌源码中的固定亚分钟期限统一改为已校准 600 秒占位符替换；新增不变量测试禁止再出现；补 recovery
+    型 parent 的发布阶段交叉校验单测；先做重节点 smoke，再以新候选 failure_fix_rerun 绑定 v17 incomplete-recovery
+    重跑正式 Full（约 7-8 小时）并发布。P1/P4/O3 与重测仍在基线发布之后；超时校准待 owner 复核，O3 identity 缓存待 owner
+    决定。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile
@@ -224,6 +225,42 @@ events:
   - change:gov-007-devx018-v17-task-20261001-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-2bdbeb7677f44948d4a1e823673109b6
+- schema_version: task_event.v1
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-01T17:29:08Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx018-v18-task-20261002-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-2bdbeb7677f44948d4a1e823673109b6
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: v17 正式 Full（候选 597fe2bdb，failure_fix_rerun，绑定 v15 失败 summary
+      为 full_parent）派发 7 分钟后出现负载相关失败 test_complete_runtime_native_custody_inherited_and_released[success]：测试内嵌子进程脚本的
+      wait_exit(timeout=30) 在子进程继承约 8.5 万句柄、Full 负载下销毁耗时超过 30 秒时超时（v15 批量替换按设计跳过内嵌源码字面量而漏校准；v16
+      同节点通过属时序幸运）。一个失败节点已令该 Full 必然 FAIL，已停止驱动并用 --recover-full terminate_frozen_job
+      以 FAILED/INSUFFICIENT 终态收尾（full_incomplete_recovery.json sha256 020957685c93…335d41），不伪造
+      pytest FAIL。此前 v17 的发布阶段 parent 绑定修复（verify_recorded_parent）已提交，仍待正式 Full 通过后的真实发布验证。v18
+      修复（见 DEVX-018 需求 v17/v18 节）：测试内嵌源码中的固定亚分钟期限统一改为已校准 600 秒占位符替换；新增不变量测试禁止再出现；补
+      recovery 型 parent 的发布阶段交叉校验单测；先做重节点 smoke，再以新候选 failure_fix_rerun 绑定 v17 incomplete-recovery
+      重跑正式 Full（约 7-8 小时）并发布。P1/P4/O3 与重测仍在基线发布之后；超时校准待 owner 复核，O3 identity 缓存待 owner
+      决定。
+    acceptance_criteria: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧
+      loadfile profile 仍按原契约通过；pre-Full tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3
+      不跨调用缓存身份或 PASS
+    notes: production_effect=none；broker_action=none；agent_harness=claude_code；v17
+      期间宿主死机重启：前置 tier 已通过，architecture-fitness 被中断后在同一事务（Full 未派发）下恢复重跑并通过；v17 Full
+      因必然失败而提前终止，属已记录的恢复路径，非绕过；owner_decision 2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地
+      O1+O2 再跑正式验证）
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx018-v18-task-20261002-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ae5678c953a9383511ea7e2aa5edebbd
 projection:
   legacy_first_eight_cells:
   - DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
@@ -232,22 +269,24 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - v16 正式 Full 技术上 PASS（14671 passed/0 failed，7:15:10），但发布被 LOCAL_MAIN_FF_PRE 阻断：PUBLICATION_FULL_PARENT_MISMATCH
-    missing-side。根因：带 full_parent 的 failure_fix_rerun 事务在发布阶段（inspect_full_publication_profile
-    起始 validate 与 fence _prepare_current_full_profile 在 LOCAL_MAIN_FF_PRE 的探测）未传入/校验记录的
-    parent，与 DEVX-010 同类、只修了派发侧。v17 修复（设计见 DEVX-018 需求 v16 结果与 v17 修复节）：validate 新增
-    verify_recorded_parent，inspector 增加原 Full provenance parent 与事务 full_parent 逐字节交叉校验，新增
-    fence 单测与真实链路演练（带 parent 的 failure_fix_rerun 发布）；随后 reseal、前置 tiers、新 failure_fix_rerun
-    事务绑定 v16 Full summary 并重跑正式 Full（约 7-8 小时），通过后本地 main 快进与普通 push。P1/P4/O3 与重测仍在基线发布之后；超时校准待
-    owner 复核，O3 identity 缓存待 owner 决定。
+  - v17 正式 Full（候选 597fe2bdb，failure_fix_rerun，绑定 v15 失败 summary 为 full_parent）派发
+    7 分钟后出现负载相关失败 test_complete_runtime_native_custody_inherited_and_released[success]：测试内嵌子进程脚本的
+    wait_exit(timeout=30) 在子进程继承约 8.5 万句柄、Full 负载下销毁耗时超过 30 秒时超时（v15 批量替换按设计跳过内嵌源码字面量而漏校准；v16
+    同节点通过属时序幸运）。一个失败节点已令该 Full 必然 FAIL，已停止驱动并用 --recover-full terminate_frozen_job
+    以 FAILED/INSUFFICIENT 终态收尾（full_incomplete_recovery.json sha256 020957685c93…335d41），不伪造
+    pytest FAIL。此前 v17 的发布阶段 parent 绑定修复（verify_recorded_parent）已提交，仍待正式 Full 通过后的真实发布验证。v18
+    修复（见 DEVX-018 需求 v17/v18 节）：测试内嵌源码中的固定亚分钟期限统一改为已校准 600 秒占位符替换；新增不变量测试禁止再出现；补 recovery
+    型 parent 的发布阶段交叉校验单测；先做重节点 smoke，再以新候选 failure_fix_rerun 绑定 v17 incomplete-recovery
+    重跑正式 Full（约 7-8 小时）并发布。P1/P4/O3 与重测仍在基线发布之后；超时校准待 owner 复核，O3 identity 缓存待 owner
+    决定。
   - Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full
     tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
-  - production_effect=none；broker_action=none；agent_harness=claude_code；v16 Full 结果因候选绑定不可复用，属
-    fail-closed 设计，不绕过；owner_decision 2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2
-    再跑正式验证）
+  - production_effect=none；broker_action=none；agent_harness=claude_code；v17 期间宿主死机重启：前置
+    tier 已通过，architecture-fitness 被中断后在同一事务（Full 未派发）下恢复重跑并通过；v17 Full 因必然失败而提前终止，属已记录的恢复路径，非绕过；owner_decision
+    2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）
   docs_links: []
   terminal: false
-  canonical_row_sha256: b4fae634a34d4a8cc5afaf40ef2537255c3c7ee0a4475431f697fa90b86ca1f5
-last_event_id: task-event-2bdbeb7677f44948d4a1e823673109b6
+  canonical_row_sha256: 0dedb62ca5706152e8cf91c0209a460a5bd6d9b5879f3b2005240b6a92d3e176
+last_event_id: task-event-ae5678c953a9383511ea7e2aa5edebbd
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 7b3d1024875f596988ec9171f812f475fcbee9088c1c7fb979a8971719889079
+fragment_checksum: 24c3e765c49929f992e51e98250af574b921b2c775bec1f66d325c9bcd43234f

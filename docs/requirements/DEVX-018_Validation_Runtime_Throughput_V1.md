@@ -397,3 +397,43 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
 - 临时工作区：本段无新增；v15/v16 的清单沿用上节（发布完成后统一审计清理）。v16 事务已作为 FAILED 终态证据释放
   （证据文件 `outputs/architecture/integration_revalidation/devx015-v389/claude_v16_local_main_ff_pre.json`，
   sha256 `67be89a4a6cc29422c2817ccaa88298e1763acbb081be758903ed71f1bcb4174`）。
+
+### 2026-10-02 v17 Full 提前终止与 v18 修复（内嵌固定期限）
+
+- v17（候选 `597fe2bdb`，事务 `gov-007-p1c-devx015-baseline-publication-20261002-v17`，`failure_fix_rerun`，
+  绑定 v15 失败 Full summary 为 `full_parent`）：四个前置 tier 与 architecture-fitness 均通过（architecture-fitness 在
+  01:26 因宿主死机重启被中断，未派发 Full，事务仍在 `FORMAL_VALIDATION_PRE`、租约 ACTIVE、HEAD 未变，审计干净；
+  随后用同一事务的恢复驱动重跑 architecture-fitness 并通过，再派发 Full。中断日志保留为
+  `claude_v17_validation_architecture-fitness.interrupted-reboot.log`，说明见 `claude_v17_reboot_interruption.md`）。
+- Full 于 02:17 TST 派发，02:24 TST 出现第一个失败节点
+  `tests/test_devx015_workflow_execution.py::test_complete_runtime_native_custody_inherited_and_released[success]`
+  （worker gw1）：`TimeoutError: inherited direct child has not exited`（测试内嵌子进程脚本的
+  `child.wait_exit(timeout=30)`）。保留目录 `pytest-21247/popen-gw1/test_complete_runtime_native_c0` 显示子进程在释放后
+  约 80 ms 就写出 `runtime-child.json`（说明子进程正常运行），但它继承了 84,927 个句柄（16,554 个运行时文件托管句柄的继承），
+  进程销毁（关闭这些句柄）在 Full 负载下超过 30 秒。这与 v15/v16 已校准的「负载下的固定期限」同类，只是该处是写在
+  内嵌 Python 源码字符串里的字面量，v15 的批量替换按设计跳过了内嵌源码（避免 NameError），因此漏校准；v16 同一节点通过只是
+  时序幸运。
+- 一个失败节点即令本次 Full 必然 FAIL（pytest 非零退出），继续跑完约 7 小时不会改变结论，且主工作树在 Full 期间不得修改，
+  无法并行开发。处置：停止我自己启动的驱动进程树，再用既有恢复路径
+  `run_validation_tier.py full --recover-full --recover-full-action terminate_frozen_job` 收尾；事务以 `FAILED`、
+  `full_incomplete_recovery.json`（`FULL_VALIDATION_COMMITMENT_MISSING`、技术状态 INSUFFICIENT）终态释放，租约
+  `RELEASED`，不伪造 pytest FAIL。该文件将作为 v18 `failure_fix_rerun` 的 `full_parent`（新候选，非复用）。
+  终止说明见 `claude_v17_full_abort_note.md`。
+- v18 修复范围（类修复，不逐点打补丁；不改生产代码）：
+  1. 测试内嵌子进程源码中的固定亚分钟期限统一改为已校准的 `LOADED_HOST_WAIT_TIMEOUT_SECONDS`（600 秒，沿用
+     coordination 测试的同名常量与占位符 `__LOADED_HOST_WAIT_TIMEOUT_SECONDS__` 替换机制，避免内嵌源码的 NameError）：
+     `wait_exit(timeout=30)`、等待释放文件的 `time.monotonic()+60/+20` 循环，涉及
+     `tests/test_devx015_workflow_execution.py` 与 `tests/test_arch_005_integration_publication_fence.py` 的内嵌源码；
+  2. 新增不变量测试：上述测试文件的内嵌源码字符串中不得再出现小于 600 的 `wait_exit(timeout=<n>)`
+     与 `monotonic()+<n>` 字面量（避免同类漏校准再次只在 7–8 小时的正式 Full 才暴露）；
+  3. 预 Full 的 O2 排除不覆盖这些重节点，所以实施后先做重节点 smoke
+     （`-p scripts.pytest_runtime_profile -n 2 --dist loadfile`，不与其他 pytest 并发），并补一个 recovery 型 parent 的
+     发布阶段交叉校验单测（v18 的 `full_parent` 是 `full_incomplete_recovery.json`，此前真实发布阶段只走过 summary 型）。
+- 验收：不变量测试与 smoke 通过；reseal 后新候选的前置 tiers 与正式 Full 通过，并成功走完
+  `LOCAL_MAIN_FF_PRE → local-publish → REMOTE_PUSH_PRE → 普通 push → CLEANUP_PRE → RELEASED`，`local main = remote main = candidate`。
+- 状态/风险：超时校准仍为 `PROVISIONAL_PENDING_OWNER_REVIEW`（本次新增的内嵌期限同属该临时校准，退出条件不变）；O3 identity
+  缓存待 owner 决定；继承 8.5 万句柄导致子进程销毁耗时随负载放大，属 DEVX-015 v3 文件托管设计的已知代价，本次不改生产行为，
+  留待 O3/后续重测评估。本修复不改变任何投资解释、评分、回测或数据路径，`production_effect=none`。
+- 临时工作区：本段无新增（`D:/Work/devx018-focus17*`、`-smoke17`、`-rehearsal17`、`-fence17*` 等沿用上节清单，发布完成后统一
+  审计清理）。v17 事务已作为 FAILED 终态证据释放（`full_incomplete_recovery.json` sha256
+  `020957685c938ae7f2bdb56fa504c3b891b25b737619a9115acae33e44335d41`）。

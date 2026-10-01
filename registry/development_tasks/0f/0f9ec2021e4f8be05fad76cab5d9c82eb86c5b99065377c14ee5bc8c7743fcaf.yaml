@@ -13,21 +13,18 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Claude Code coordinator；Owner：原管理员/主机边界
-  requirement_refs:
-  - docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md
+  next_owner: Claude Code coordinator
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: v15 Full（候选 97e73769c）7h23m：14664 passed/6
-    failed，6 项均为校准提交的覆盖缺口，已于 v16 修复；v16 Full（候选 8cf97a9d7）7h15m：14671 passed/0 failed
-    技术 PASS，但 LOCAL_MAIN_FF_PRE 被 PUBLICATION_FULL_PARENT_MISMATCH(missing-side) 阻断：带
-    full_parent 的 failure_fix_rerun 事务在发布阶段（Full profile inspector 与 fence LOCAL_MAIN_FF_PRE
-    探测）未校验记录的 parent，与 DEVX-010 同类、只修了派发侧；v16 事务已 FAILED/RELEASED 保留证据，无任何 main/remote
-    变更。v17：修复发布阶段 parent 绑定（validate 新增 verify_recorded_parent、inspector 交叉校验原 Full
-    provenance parent 与事务 full_parent）并增加带 parent 的真实链路演练测试，reseal 后以新 failure_fix_rerun
-    事务绑定 v16 Full summary 重跑正式 Full（候选必变，旧结果不可复用，fail-closed）。详见 DEVX-018 需求 v16 结果与
-    v17 修复节。
+  unstructured_legacy_blocker_or_next_step: P1-C 基线发布仍未完成：v16 Full 技术 PASS 但发布阶段 parent
+    绑定缺陷（已于 v17 修复提交）阻断了发布；v17 正式 Full 在派发 7 分钟后因测试内嵌子进程脚本的 wait_exit(timeout=30)（继承约
+    8.5 万句柄、负载下销毁超时）出现必然失败，已用 --recover-full terminate_frozen_job 以 FAILED/INSUFFICIENT
+    终态收尾。v18 修复统一校准内嵌固定亚分钟期限并新增不变量测试、补 recovery 型 parent 单测、先做重节点 smoke，再以新候选 failure_fix_rerun（绑定
+    v17 incomplete-recovery）重跑正式 Full（约 7-8 小时）并发布；顺序不变：基线发布 → P1/P4/O3 → 重测 → O4
+    → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时校准待 owner 复核，O3 identity 缓存待
+    owner 决定。详见 DEVX-018 需求 v17/v18 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -412,28 +409,60 @@ events:
   - change:gov-007-gov007-v17-task-20261001-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-d25e17f397b87d2a05664a1d3cbf0003
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-01T17:29:56Z'
+  actor: integration-coordinator
+  change_id: gov-007-gov007-v18-task-20261002-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-d25e17f397b87d2a05664a1d3cbf0003
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: P1-C 基线发布仍未完成：v16 Full 技术 PASS 但发布阶段 parent 绑定缺陷（已于 v17
+      修复提交）阻断了发布；v17 正式 Full 在派发 7 分钟后因测试内嵌子进程脚本的 wait_exit(timeout=30)（继承约 8.5 万句柄、负载下销毁超时）出现必然失败，已用
+      --recover-full terminate_frozen_job 以 FAILED/INSUFFICIENT 终态收尾。v18 修复统一校准内嵌固定亚分钟期限并新增不变量测试、补
+      recovery 型 parent 单测、先做重节点 smoke，再以新候选 failure_fix_rerun（绑定 v17 incomplete-recovery）重跑正式
+      Full（约 7-8 小时）并发布；顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017
+      → GOV-007 阶段 5。超时校准待 owner 复核，O3 identity 缓存待 owner 决定。详见 DEVX-018 需求 v17/v18
+      节。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: production_effect=none；broker_action=none；agent_harness=claude_code；v17
+      期间宿主死机重启：前置 tier 已通过，architecture-fitness 被中断后在同一事务（Full 未派发）下恢复重跑并通过；v17 Full
+      因必然失败而提前终止，属已记录的恢复路径，非绕过；owner_decision 2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地
+      O1+O2 再跑正式验证）
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-gov007-v18-task-20261002-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c3b18cd58aa7beacbb66d0b164d47da4
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
   - Governance / pre-migration convergence program (Codex → pi)
   - P0
   - IN_PROGRESS
-  - Claude Code coordinator；Owner：原管理员/主机边界
-  - v15 Full（候选 97e73769c）7h23m：14664 passed/6 failed，6 项均为校准提交的覆盖缺口，已于 v16 修复；v16
-    Full（候选 8cf97a9d7）7h15m：14671 passed/0 failed 技术 PASS，但 LOCAL_MAIN_FF_PRE 被 PUBLICATION_FULL_PARENT_MISMATCH(missing-side)
-    阻断：带 full_parent 的 failure_fix_rerun 事务在发布阶段（Full profile inspector 与 fence LOCAL_MAIN_FF_PRE
-    探测）未校验记录的 parent，与 DEVX-010 同类、只修了派发侧；v16 事务已 FAILED/RELEASED 保留证据，无任何 main/remote
-    变更。v17：修复发布阶段 parent 绑定（validate 新增 verify_recorded_parent、inspector 交叉校验原 Full
-    provenance parent 与事务 full_parent）并增加带 parent 的真实链路演练测试，reseal 后以新 failure_fix_rerun
-    事务绑定 v16 Full summary 重跑正式 Full（候选必变，旧结果不可复用，fail-closed）。详见 DEVX-018 需求 v16 结果与
-    v17 修复节。
+  - Claude Code coordinator
+  - P1-C 基线发布仍未完成：v16 Full 技术 PASS 但发布阶段 parent 绑定缺陷（已于 v17 修复提交）阻断了发布；v17 正式 Full
+    在派发 7 分钟后因测试内嵌子进程脚本的 wait_exit(timeout=30)（继承约 8.5 万句柄、负载下销毁超时）出现必然失败，已用 --recover-full
+    terminate_frozen_job 以 FAILED/INSUFFICIENT 终态收尾。v18 修复统一校准内嵌固定亚分钟期限并新增不变量测试、补
+    recovery 型 parent 单测、先做重节点 smoke，再以新候选 failure_fix_rerun（绑定 v17 incomplete-recovery）重跑正式
+    Full（约 7-8 小时）并发布；顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017
+    → GOV-007 阶段 5。超时校准待 owner 复核，O3 identity 缓存待 owner 决定。详见 DEVX-018 需求 v17/v18
+    节。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - production_effect=none；broker_action=none；详见 docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md；聚焦PASS不等于正式验收，原E1–E10边界不变。
-  docs_links:
-  - docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md
+  - production_effect=none；broker_action=none；agent_harness=claude_code；v17 期间宿主死机重启：前置
+    tier 已通过，architecture-fitness 被中断后在同一事务（Full 未派发）下恢复重跑并通过；v17 Full 因必然失败而提前终止，属已记录的恢复路径，非绕过；owner_decision
+    2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）
+  docs_links: []
   terminal: false
-  canonical_row_sha256: f7d976dbe753fc3a7be16b7db7b77ff2fadb1b8a63a2cbfe60de6a08b83a006b
-last_event_id: task-event-d25e17f397b87d2a05664a1d3cbf0003
+  canonical_row_sha256: f65da1f19f2a3ac93010144ab339af85d677df674017a3c9b1b4a48ad51d5299
+last_event_id: task-event-c3b18cd58aa7beacbb66d0b164d47da4
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: c22dfa217c1d1bb8fcf315c0f0d76f2b61bb4a28b339e27385b8fc2755c6cccd
+fragment_checksum: 52f6a650ba339054552755feb731c437f63c3ec39ed5f468e04a594057311131
