@@ -20,8 +20,9 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 提交校准并 reseal 后，以 failure_fix_rerun 事务在最终
-    head 启动正式 v15 Full；通过后走本地 main 快进与普通 push；P1/P4/O3 与重测（K、启动间隔、超时常量、串行尾部锁粒度）在基线发布之后；超时校准待
+  unstructured_legacy_blocker_or_next_step: 修复 v15 Full 的 6 个校准覆盖缺口（内嵌源常量代入、m05 嵌套
+    pytest 超时命名常量、不变量测试扩展），对失败节点与相关重型节点做定向 smoke，随后以 failure_fix_rerun 事务（绑定 v15 失败
+    Full）启动正式 v16 Full；通过后走本地 main 快进与普通 push。P1/P4/O3 与重测（K、启动间隔、超时常量、串行尾部锁粒度）在基线发布之后；超时校准待
     owner 复核，O3 identity 缓存待 owner 决定。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
@@ -153,6 +154,38 @@ events:
   - change:gov-007-devx018-v15-task-20261001-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-bd4f11fe47a3de9fdebdc09107fad2ad
+- schema_version: task_event.v1
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-01T04:11:26Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx018-v16-task-20261001-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-bd4f11fe47a3de9fdebdc09107fad2ad
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 修复 v15 Full 的 6 个校准覆盖缺口（内嵌源常量代入、m05 嵌套 pytest 超时命名常量、不变量测试扩展），对失败节点与相关重型节点做定向
+      smoke，随后以 failure_fix_rerun 事务（绑定 v15 失败 Full）启动正式 v16 Full；通过后走本地 main 快进与普通
+      push。P1/P4/O3 与重测（K、启动间隔、超时常量、串行尾部锁粒度）在基线发布之后；超时校准待 owner 复核，O3 identity 缓存待
+      owner 决定。
+    acceptance_criteria: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧
+      loadfile profile 仍按原契约通过；pre-Full tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3
+      不跨调用缓存身份或 PASS
+    notes: 2026-10-01 v15 Full 结束：7 小时 23 分，14,664 passed / 6 failed / 4 skipped；校准后的期限在重负载下全部成立（无
+      PUBLICATION_FULL_CLOSURE_INVALID、无 CLEANUP_UNCONFIRMED、无 hang-detector 触发）。6
+      个失败均为本次校准提交的覆盖缺口：5 项为字符串内嵌源码（native registry 子进程 driver、M06 注入方法）中被整体替换的 LOADED_HOST_WAIT_TIMEOUT_SECONDS
+      在子进程/注入作用域内 NameError，1 项为 test_m05 的嵌套 pytest 90 秒测试侧超时未校准。v16 修复：常量值代入内嵌源码（不重复字面量）、m05
+      超时改为命名常量并纳入不变量测试、扩展内嵌源审计；正式 Full 前对失败节点及相关重型节点做定向 smoke（O5）。校准仍为 PROVISIONAL_PENDING_OWNER_REVIEW；O3
+      待 owner 决定。详见 docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx018-v16-task-20261001-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b84a7794605fb7e486bc2d63358dd511
 projection:
   legacy_first_eight_cells:
   - DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
@@ -161,19 +194,22 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - 提交校准并 reseal 后，以 failure_fix_rerun 事务在最终 head 启动正式 v15 Full；通过后走本地 main 快进与普通
-    push；P1/P4/O3 与重测（K、启动间隔、超时常量、串行尾部锁粒度）在基线发布之后；超时校准待 owner 复核，O3 identity 缓存待 owner
+  - 修复 v15 Full 的 6 个校准覆盖缺口（内嵌源常量代入、m05 嵌套 pytest 超时命名常量、不变量测试扩展），对失败节点与相关重型节点做定向
+    smoke，随后以 failure_fix_rerun 事务（绑定 v15 失败 Full）启动正式 v16 Full；通过后走本地 main 快进与普通
+    push。P1/P4/O3 与重测（K、启动间隔、超时常量、串行尾部锁粒度）在基线发布之后；超时校准待 owner 复核，O3 identity 缓存待 owner
     决定。
   - Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full
     tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
-  - 2026-10-01 v15 pilot 收尾并完成负载校准验证：pilot 14,635/14,673 已完成（PASSED 14,577 / FAILED
-    53 / ERROR 2），失败归类 43 项 env、1 项 Atlas 页面过期、9 项负载类；已知 16 项负载簇在治理调度器下重跑 16/16 PASSED（2:11:01，12
-    worker，非重负载通过证明）。校准（终止确认 180 秒、inspector 900 秒、测试侧守卫上调）标记为 PROVISIONAL_PENDING_OWNER_REVIEW，已新增嵌套不变量测试；串行尾部（host_registry_view
-    复合单元）记为重测/O4 输入。详见 docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md。
+  - 2026-10-01 v15 Full 结束：7 小时 23 分，14,664 passed / 6 failed / 4 skipped；校准后的期限在重负载下全部成立（无
+    PUBLICATION_FULL_CLOSURE_INVALID、无 CLEANUP_UNCONFIRMED、无 hang-detector 触发）。6 个失败均为本次校准提交的覆盖缺口：5
+    项为字符串内嵌源码（native registry 子进程 driver、M06 注入方法）中被整体替换的 LOADED_HOST_WAIT_TIMEOUT_SECONDS
+    在子进程/注入作用域内 NameError，1 项为 test_m05 的嵌套 pytest 90 秒测试侧超时未校准。v16 修复：常量值代入内嵌源码（不重复字面量）、m05
+    超时改为命名常量并纳入不变量测试、扩展内嵌源审计；正式 Full 前对失败节点及相关重型节点做定向 smoke（O5）。校准仍为 PROVISIONAL_PENDING_OWNER_REVIEW；O3
+    待 owner 决定。详见 docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md。
   docs_links:
   - docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
   terminal: false
-  canonical_row_sha256: 343364385e9ded2ec8ca3550ec9fe7199abaa577b5082ef72c0bf582dadaca6a
-last_event_id: task-event-bd4f11fe47a3de9fdebdc09107fad2ad
+  canonical_row_sha256: a3572882d541cf9c83b69f2a56739572b60c1b54f89301e1cfded41d9d65bf35
+last_event_id: task-event-b84a7794605fb7e486bc2d63358dd511
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 2da3c78003af17205d5330cd655b7635cec7f9f625508cf0f8b8f5a3bd83b3f9
+fragment_checksum: 5739af3aee740c7679fb9371f0191381d63a6441205a943e3d70d67178c69493
