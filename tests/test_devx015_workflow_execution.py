@@ -450,7 +450,7 @@ def test_exact_hardlink_read_custody_preserves_source_default(tmp_path: Path, ca
                 checked = subprocess.run(
                     [sys.executable, "-c", _publication_input_write_probe_source(), "denied",
                      str(tmp_path / "write-probes.json"), str(original), str(alias)],
-                    capture_output=True, text=True, timeout=15,
+                    capture_output=True, text=True, timeout=DEADLINE,
                 )
                 assert checked.returncode == 0, (checked.stdout, checked.stderr)
                 probes = _read_json(tmp_path / "write-probes.json")
@@ -1710,7 +1710,7 @@ def test_mandatory_acceptance_real_xdist_result_guard(
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
-        timeout=90,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     (tmp_path / "driver.py").write_text(script, encoding="utf-8")
     (tmp_path / "driver-output.txt").write_text(completed.stdout, encoding="utf-8")
@@ -4791,7 +4791,7 @@ def _independent_file_custody_probe(action, target, other):
     )
     result = subprocess.run(
         [sys.executable, "-B", "-c", source, action, str(target), str(other)],
-        cwd=target.anchor, capture_output=True, text=True, timeout=20,
+        cwd=target.anchor, capture_output=True, text=True, timeout=DEADLINE,
         creationflags=subprocess.CREATE_NO_WINDOW,
     )
     assert result.returncode == 0, result.stderr

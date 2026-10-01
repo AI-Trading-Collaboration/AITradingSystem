@@ -299,3 +299,54 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
   - 不删除 `D:/Work/devx015-*` 证据目录与 5 个遗留 HKCU `AITS-DEVX015-Test-*` 根（owner 清理事项）。
 - 下一步：提交本校准与文档，做一轮 reseal，然后以 `failure_fix_rerun` 事务在最终 head 上启动正式 v15 Full；
   P1/P4/O3 与重测（重新校准 K、启动间隔、上述超时常量与串行尾部的锁粒度）在基线发布之后进行。
+
+### 2026-10-01 v15 Full 结果与 v16 修复
+
+- v15 正式 Full（候选 `97e73769cc83`，事务 `gov-007-p1c-devx015-baseline-publication-20260930-v15`，
+  `failure_fix_rerun`，Design F 调度 + 负载校准）：20:35 JST 启动，历时 7 小时 23 分（26,601 秒），
+  `14664 passed, 6 failed, 4 skipped`，对比 v11 的 10.15 小时；校准后的三类期限在重负载下全部成立
+  （无 `PUBLICATION_FULL_CLOSURE_INVALID`、无 `CLEANUP_UNCONFIRMED`、无终止确认超时、无生产侧 hang-detector
+  触发）。v15 事务已作为 FAILED 终态证据释放（证据：事务目录与 `outputs/validation_runtime/gov-007-p1c-devx015-full-20260930-v15/`）。
+- 6 个失败全部是校准提交（`3195f99b8`）自身的覆盖缺口，不是生产行为回归：
+  - 5 项 `NameError`：`tests/test_devx015_workflow_coordination.py` 里有两处**字符串内嵌源码**——native
+    registry 子进程 driver（`r"""..."""`）与 M06 注入的 `ExecutionLifecycle.recover` 方法源码——校准时被整体替换成了
+    模块常量 `LOADED_HOST_WAIT_TIMEOUT_SECONDS`，而子进程/注入作用域看不到该模块全局名。影响节点：
+    `test_native_registered_guard_competition[linked-publication|linked-full|repositories-full]`、
+    `test_m04_native_per_checkout_store_hits_original_shared_store_assertion[original]`、
+    `test_m06_actual_redispatch_hits_original_recovery_assertion[M06]`。
+  - 1 项 `subprocess.TimeoutExpired`：`test_m05_actual_pytest_failure_mutant_hits_original_exit_assertion[failure-mutant]`
+    启动嵌套 `pytest -n 2 --dist loadfile`，测试侧 90 秒期限是校准遗漏。
+- 为什么 pilot 与已知簇验证没有发现：这些全是 `real_full_chain` 重型节点，O2 把它们排除在 pre-Full tier 之外
+  （Full 为唯一权威），pilot 因缺 `AITS_NAMED_DQ_*` 环境而剔除了同类节点，已知簇重跑只覆盖了 16 个负载类失败节点。
+  结论：**改动重型测试后，pre-Full tier 不会执行被改动的节点**，必须在正式 Full 前对受影响重型节点做定向 smoke
+  （即 O5 的前移：失败节点 + 受影响重型节点，`-n 2`，不与其他 pytest 会话并发）。
+- v16 修复（测试侧，生产代码与清单不变）：
+  - 内嵌源码的常量以占位符 `__LOADED_HOST_WAIT_TIMEOUT_SECONDS__` 写入，由
+    `_embed_loaded_host_wait()` 在使用前把值代入文本（单一常量，不复制字面量；占位符缺失时断言失败）；
+  - `test_m05` 嵌套 pytest 的 `timeout=90` → `LOADED_HOST_CLI_TIMEOUT_SECONDS`（1800 秒）；同文件另两处启动
+    Python 子进程的短期限 15 / 20 秒 → `DEADLINE`（600 秒），均只放宽"确认失败"的判定，成功路径不变；
+  - 新增不变量测试 `test_loaded_host_guard_names_are_not_referenced_inside_embedded_sources`：对三个测试文件的
+    所有字符串常量做 AST 扫描，裸 `LOADED_HOST_*_TIMEOUT_SECONDS` / `DEADLINE` 引用即失败（对 v15 候选的文件会报
+    2 处，修复后为 0，已验证检测器有效）。新增函数在既有文件内，不触发 WAVE21 清单变更。
+- 已知残余（诚实披露，不在本次修复内）：`test_devx015_workflow_execution.py` 中仍有若干 10–60 秒测试侧短期限
+  （git `cat-file` 的 30 秒、`-c pass` 子进程的 `wait_exit(timeout=30)`、60 秒 release 等待等），它们在 v15 的
+  重负载下通过，因此保持原值；若 v16 再有同类超时，它们是首批候选。校准整体仍为
+  `PROVISIONAL_PENDING_OWNER_REVIEW`，O3 identity 缓存仍待 owner 决定。
+- v16 验证计划：先重跑 6 个失败节点与其余本文件内嵌源码节点（`-p scripts.pytest_runtime_profile -n 2`，
+  串行化由调度清单保证，不与其它 pytest 会话并发）、新增不变量测试与 `test_arch_005` 相关单测；
+  再按既定序走 reseal（test manifest、compat authority）→ `failure_fix_rerun` 事务绑定 v15 失败 Full
+  → 正式 v16 Full（预期 7–8 小时）。
+- 临时工作区生命周期补充：`D:/Work/devx018-focus-tmp`（v15 前聚焦重跑的 basetemp，可再生，owner：Claude Code
+  coordinator，退出条件同上）加入清理清单；v15 Full 保留的失败测试 tmp 目录
+  `C:/Users/32739/AppData/Local/Temp/pytest-of-JACK/pytest-21009/` 仅作诊断，已用完则随 pytest 自身轮转清理。
+- v16 修复后验证（2026-10-01，空闲主机，`-n 2 --dist loadfile`，`--basetemp D:/Work/devx018-smoke-v16`）：
+  - 定向重型节点 smoke 58 通过 / 0 失败（501.99 秒）：覆盖 6 个 v15 失败节点（含 `native_registered_guard_competition`
+    三个参数、M04/M06 原始断言、`m05` 的 4 个参数）、15/20 秒探针的调用者（hardlink 只读保管、独立文件保管探针系列）以及两个
+    不变量测试；`m05[pass-original]` 在空闲主机上单节点即 480.70 秒（嵌套完整 pytest），记入后续剩余时间预算。
+  - 影响面单测 68 通过 / 0 失败（55.35 秒，`-n 16 --dist loadfile`）：`test_devx018_validation_scheduling.py`、
+    `test_arch_004g_deprecation.py`、`test_arch_005_integration_publication_fence.py` 中两个 loaded-host 不变量测试。
+    `test_arch_005_integration_publication_fence.py` 全文件未在此处重跑：本次改动只新增一个测试与导入，生产代码未变，
+    且该文件在 Full 中累计约 43,192 秒（`--dist loadfile` 下单 worker 串行，不适合作为聚焦验证）。
+  - 一次聚焦运行因误含该文件全量而被终止（我方进程树，运行约 30 分钟、无失败），HKCU 测试根仍为既有 5 个，无新增泄漏。
+  - 本次 smoke 的临时目录 `D:/Work/devx018-smoke-v16`、`D:/Work/devx018-focused-v16`（basetemp，可再生，owner：
+    Claude Code coordinator，退出条件同上）加入清理清单。

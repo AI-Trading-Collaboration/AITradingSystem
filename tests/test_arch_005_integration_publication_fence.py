@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import inspect
 import json
 import os
+import re
 import subprocess
 import sys
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from threading import Barrier
@@ -86,6 +89,44 @@ def test_loaded_host_hang_guards_stay_above_the_production_inspection_bound() ->
     assert LOADED_HOST_CLI_TIMEOUT_SECONDS > FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS
     assert LOADED_HOST_CLI_TIMEOUT_SECONDS > FULL_PROFILE_PROTECTED_INSPECTION_TIMEOUT_SECONDS
     assert LOADED_HOST_PROBE_TIMEOUT_SECONDS < LOADED_HOST_CLI_TIMEOUT_SECONDS
+
+
+def test_loaded_host_guard_names_are_not_referenced_inside_embedded_sources() -> None:
+    # String-embedded child drivers and injected method sources run outside the test
+    # module's globals, so a bare reference to a calibrated guard constant there is a
+    # NameError. The heavy nodes that execute those sources are excluded from pre-Full
+    # tiers, so only the formal Full would otherwise discover it. Substitute the value
+    # into the text (placeholder) or interpolate it with an f-string instead.
+    guard_names = re.compile(
+        r"(?<![A-Za-z0-9_])(?:LOADED_HOST_[A-Z_]+_TIMEOUT_SECONDS|DEADLINE)(?![A-Za-z0-9_])"
+    )
+    detector = "test_loaded_host_guard_names_are_not_referenced_inside_embedded_sources"
+    offenders: list[str] = []
+    for name in (
+        "test_devx015_workflow_coordination.py",
+        "test_devx015_workflow_execution.py",
+        "test_arch_005_integration_publication_fence.py",
+    ):
+        path = ROOT / "tests" / name
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", SyntaxWarning)
+            warnings.simplefilter("ignore", DeprecationWarning)
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        # This detector's own pattern text necessarily spells the guard names.
+        own = {
+            id(inner)
+            for outer in ast.walk(tree)
+            if isinstance(outer, ast.FunctionDef) and outer.name == detector
+            for inner in ast.walk(outer)
+        }
+        for node in ast.walk(tree):
+            if id(node) in own:
+                continue
+            if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                for offset, line in enumerate(node.value.splitlines()):
+                    if guard_names.search(line):
+                        offenders.append(f"{name}:{node.lineno}+{offset}: {line.strip()[:100]}")
+    assert offenders == [], offenders
 
 
 def test_policy_reuses_s4d_lease_authority_and_freezes_no_unsafe_actions() -> None:

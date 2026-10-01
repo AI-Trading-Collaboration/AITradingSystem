@@ -51,6 +51,14 @@ ACTOR = "engineering-agent"
 # the 900s production profile inspector bound.
 LOADED_HOST_CLI_TIMEOUT_SECONDS = 1800
 LOADED_HOST_WAIT_TIMEOUT_SECONDS = 600
+_EMBEDDED_WAIT_PLACEHOLDER = "__LOADED_HOST_WAIT_TIMEOUT_SECONDS__"
+
+
+def _embed_loaded_host_wait(source: str) -> str:
+    # Child drivers and injected method sources run outside this module's globals,
+    # so the calibrated value is substituted into the text instead of referenced.
+    assert _EMBEDDED_WAIT_PLACEHOLDER in source, "EMBEDDED_WAIT_PLACEHOLDER_MISSING"
+    return source.replace(_EMBEDDED_WAIT_PLACEHOLDER, str(LOADED_HOST_WAIT_TIMEOUT_SECONDS))
 
 
 @pytest.mark.parametrize(
@@ -3919,7 +3927,7 @@ with winreg.OpenKey(winreg.HKEY_CURRENT_USER, sys.argv[1], 0,
                 job_name='Local\\AITS-DEVX015-native-proof-'+str(os.getpid()))
             try:
                 job.resume()
-                assert job.wait(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS) == 0
+                assert job.wait(timeout=__LOADED_HOST_WAIT_TIMEOUT_SECONDS__) == 0
             finally:
                 job.close()
             handle.release(outcome='completed', at=datetime.now(UTC))
@@ -3927,6 +3935,7 @@ with winreg.OpenKey(winreg.HKEY_CURRENT_USER, sys.argv[1], 0,
     finally:
         assert override(hklm, None) == 0
 """
+    driver = _embed_loaded_host_wait(driver)
     if per_checkout_mutant:
         # Execute the changed real method only inside the isolated child. Keep
         # registry resolution, binding, and the original parent oracle intact.
@@ -8802,7 +8811,7 @@ def test_m06_actual_redispatch_hits_original_recovery_assertion(
         try:
             duplicate_identity = duplicate.identity()
             duplicate.resume()
-            duplicate_exit = duplicate.wait(timeout=LOADED_HOST_WAIT_TIMEOUT_SECONDS)
+            duplicate_exit = duplicate.wait(timeout=__LOADED_HOST_WAIT_TIMEOUT_SECONDS__)
             assert duplicate_exit == 0
             assert duplicate.active_process_count() == 0
             Path(frozen["cwd"], "m06-duplicate.json").write_text(
@@ -8813,6 +8822,7 @@ def test_m06_actual_redispatch_hits_original_recovery_assertion(
         finally:
             duplicate.close()
 '''
+    injection = _embed_loaded_host_wait(injection)
     after = before.replace(target, injection + target)
     code = compile(after, "<M06-blind-recovery-dispatch>", "exec")
     (tmp_path / "m06-method-before.py").write_text(before, encoding="utf-8")
