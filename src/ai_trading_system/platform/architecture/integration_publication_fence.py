@@ -733,6 +733,7 @@ class IntegrationPublicationFence:
         task_id: str | None = None,
         validation_tier: str | None = None,
         parent_path: Path | None = None,
+        verify_recorded_parent: bool = False,
         require_candidate: bool = False,
         now: datetime | None = None,
     ) -> dict[str, object]:
@@ -812,6 +813,17 @@ class IntegrationPublicationFence:
                         "PUBLICATION_FULL_RESOURCE_MISSING",
                         self.policy.exclusive_validation_resource,
                     )
+        if verify_recorded_parent and parent_path is None:
+            # Publication-stage callers (profile inspector, LOCAL_MAIN_FF_PRE
+            # probe) hold no run provenance, so they re-verify the exact bytes of
+            # the parent recorded at acquire instead of passing a caller-side
+            # parent. A transaction with no recorded parent still compares as
+            # unbound; a missing or changed recorded file still fails closed.
+            recorded_parent = replay.transaction.get("full_parent")
+            if isinstance(recorded_parent, Mapping) and isinstance(
+                recorded_parent.get("path"), str
+            ):
+                parent_path = self.project_root / str(recorded_parent["path"])
         if validation_tier == self.policy.heavyweight_tier or parent_path is not None:
             self._validate_parent_binding(replay.transaction, parent_path)
         binding = self._binding(replay)
@@ -893,6 +905,7 @@ class IntegrationPublicationFence:
             validation_tier=(self.policy.heavyweight_tier
                              if replay.phase == "LOCAL_MAIN_FF_PRE" else None),
             task_id=str(replay.transaction["task_id"]),
+            verify_recorded_parent=True,
             require_candidate=True,
             now=now,
         )

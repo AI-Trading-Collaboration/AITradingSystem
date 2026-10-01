@@ -5484,6 +5484,24 @@ def _run_actual_profile_full(
         else:
             assert readiness_fault == "none"
     provenance = {**_full_validation_provenance(), "task_id": TASK}
+    recorded_parent = fence.replay(transaction).transaction.get("full_parent")
+    if recorded_parent is not None:
+        # failure_fix_rerun: the Full declares exactly the parent frozen at acquire.
+        provenance.update(
+            trigger_reason="failure_fix_rerun",
+            parent_run={
+                "run_id": Path(recorded_parent["path"]).parent.name,
+                "summary_path": recorded_parent["path"],
+                "summary_sha256": recorded_parent["sha256"],
+                "runtime_profile_sha256": "0" * 64,
+                "report_type": "test_runtime_summary",
+                "resolved_tier": "full",
+                "status": "FAIL",
+                "failure_basis": "PYTEST_FAIL",
+                "production_effect": "none",
+            },
+            field_sources={**provenance["field_sources"], "parent_run": "environment"},
+        )
     run_id = "formal-profile"
     job_name = "Local\\AITS-DEVX015-full-" + canonical_digest(
         {
@@ -5644,6 +5662,72 @@ def test_unbound_full_profile_admits_non_devx015_publication(canonical_merge_rep
          "--transaction", str(transaction), "--phase", "LOCAL_MAIN_FF_PRE",
          "--actor", "integration-coordinator"],
         cwd=root, env=environment, capture_output=True, text=True,
+        timeout=FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS * 2,
+    )
+    assert admission.returncode == 0, admission.stdout + admission.stderr
+    assert fence.replay(transaction).phase == "LOCAL_MAIN_FF_PRE"
+
+
+@pytest.mark.parametrize(
+    "canonical_merge_repository", ["full-readiness-profile-parent"], indirect=True,
+)
+def test_full_profile_with_bound_parent_admits_failure_fix_rerun_publication(
+    canonical_merge_repository,
+) -> None:
+    """A failure_fix_rerun transaction freezes a parent; publication must re-verify it.
+
+    Regression for the 2026-10-01 GOV-007 v16 Full: the Full dispatched and passed
+    with its recorded parent, but the publication-stage inspector and the
+    LOCAL_MAIN_FF_PRE probe never supplied that parent, so the PASS was rejected as
+    PUBLICATION_FULL_PARENT_MISMATCH (missing-side). The parent here is a stand-in
+    file; qualifying a real parent summary is covered at the provenance CLI.
+    """
+    from test_devx015_workflow_integration import TASK
+
+    from ai_trading_system.platform.architecture.integration_publication_fence import (
+        FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS,
+        IntegrationPublicationFence,
+    )
+
+    root, _scope = canonical_merge_repository
+    _binding, directory, _driver, environment = _run_actual_profile_full(root, mandatory=False)
+    fence = IntegrationPublicationFence(project_root=root)
+    transaction = fence.runtime_root / "transactions/merge-authority/transaction.json"
+    recorded = fence.replay(transaction).transaction["full_parent"]
+    assert recorded is not None
+    summary = json.loads((directory / "test_runtime_summary.json").read_text())
+    provenance = summary["validation_provenance"]
+    assert provenance["trigger_reason"] == "failure_fix_rerun"
+    assert provenance["parent_run"]["summary_path"] == recorded["path"]
+    parent_file = root / recorded["path"]
+    original_parent = parent_file.read_bytes()
+    checkpoint = [
+        sys.executable, "scripts/architecture_arch005_publication_fence.py", "checkpoint",
+        "--transaction", str(transaction), "--phase", "LOCAL_MAIN_FF_PRE",
+        "--actor", "integration-coordinator",
+    ]
+    parent_file.write_bytes(original_parent + b" ")
+    try:
+        tampered = subprocess.run(
+            checkpoint, cwd=root, env=environment, capture_output=True, text=True,
+            timeout=FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS * 2,
+        )
+    finally:
+        parent_file.write_bytes(original_parent)
+    assert tampered.returncode != 0, tampered.stdout + tampered.stderr
+    assert "PUBLICATION_FULL_PARENT_MISMATCH" in tampered.stdout + tampered.stderr
+    assert fence.replay(transaction).phase == "FORMAL_VALIDATION_RESULT"
+    inspected = subprocess.run(
+        [sys.executable, "scripts/run_validation_tier.py", "full",
+         "--inspect-full-publication-profile", "--publication-transaction", str(transaction),
+         "--task-id", TASK],
+        cwd=root, env=environment, capture_output=True, text=True,
+        timeout=FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS * 2,
+    )
+    assert inspected.returncode == 0, inspected.stdout + inspected.stderr
+    assert json.loads(inspected.stdout)["status"] == "PASS"
+    admission = subprocess.run(
+        checkpoint, cwd=root, env=environment, capture_output=True, text=True,
         timeout=FULL_PROFILE_INSPECTION_TIMEOUT_SECONDS * 2,
     )
     assert admission.returncode == 0, admission.stdout + admission.stderr

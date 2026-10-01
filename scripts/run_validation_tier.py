@@ -1425,6 +1425,27 @@ def _require_new_incomplete_parent_candidate(
             raise PublicationFenceError("PUBLICATION_FULL_PARENT_REUSED", "new candidate required")
 
 
+def _require_publication_parent_matches_transaction(
+    provenance: Mapping[str, object], *, fence: IntegrationPublicationFence,
+    transaction: Path, task_id: str, root: Path,
+) -> None:
+    """Publication-stage twin of the dispatch-side parent check.
+
+    The Full that produced the PASS summary declared its own parent in
+    provenance; the transaction freezes the parent at acquire. Both must name
+    the same exact bytes (or both be absent) before the PASS is admitted.
+    """
+    parent_path = _publication_parent_path(provenance, repo_root=root)
+    binding = fence.validate(
+        transaction, exact_phase=fence.replay(transaction).phase, task_id=task_id,
+        validation_tier=fence.policy.heavyweight_tier, parent_path=parent_path,
+        require_candidate=True,
+    )
+    _require_new_incomplete_parent_candidate(
+        provenance, binding, fence=fence, transaction=transaction,
+    )
+
+
 def _validated_parent_run_binding(
     raw_parent_run: str,
     *,
@@ -4262,7 +4283,8 @@ def inspect_full_publication_profile(
         raise ValueError("Full profile inspection is outside publication admission phases")
     binding = fence.validate(
         transaction, exact_phase=replay.phase, task_id=task_id,
-        validation_tier=fence.policy.heavyweight_tier, require_candidate=True,
+        validation_tier=fence.policy.heavyweight_tier, verify_recorded_parent=True,
+        require_candidate=True,
     )
     selected_git = current_inspection_context(root)
     inspector_root = root
@@ -4415,6 +4437,9 @@ def inspect_full_publication_profile(
     provenance = summary.get("validation_provenance")
     if not isinstance(provenance, Mapping) or provenance.get("task_id") != task_id:
         raise ValueError("Full profile provenance task differs")
+    _require_publication_parent_matches_transaction(
+        provenance, fence=fence, transaction=transaction, task_id=task_id, root=root,
+    )
     duration_path = root / FULL_DURATION_PROFILE_MANIFEST
     duration_raw = capture(duration_path)
     test_manifest_raw = capture(root / FULL_TEST_MANIFEST)

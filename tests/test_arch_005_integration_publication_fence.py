@@ -2705,6 +2705,79 @@ def test_bound_full_parent_is_optional_until_explicitly_consumed(
     fence.release(transaction, actor="integration-coordinator", outcome="failed")
 
 
+def _advance_to_formal_validation_pre(
+    fence: IntegrationPublicationFence, transaction: Path
+) -> None:
+    for phase in (
+        "TASK_SOURCE_PRE_WRITE", "GENERATED_REBUILD_PRE", "GENERATED_REBUILD_POST",
+        "CANDIDATE_COMMIT_PRE", "FORMAL_VALIDATION_PRE",
+    ):
+        fence.checkpoint(
+            transaction, phase=phase, actor="integration-coordinator",
+            generator_ids=("canonical-task-source",) if phase.startswith("GENERATED_") else (),
+        )
+
+
+def test_publication_stage_reverifies_recorded_full_parent_without_caller_provenance(
+    publication_checkout: Path,
+) -> None:
+    root = publication_checkout
+    parent = root / "outputs/validation_runtime/parent/test_runtime_summary.json"
+    parent.parent.mkdir(parents=True)
+    parent.write_text('{"status":"FAIL"}\n', encoding="utf-8")
+    fence = _fence(root)
+    binding = _acquire(fence, root, transaction_id="recorded-parent", full_parent=parent)
+    transaction = Path(str(binding["transaction_path"]))
+    _advance_to_formal_validation_pre(fence, transaction)
+    heavy = {"exact_phase": "FORMAL_VALIDATION_PRE", "task_id": TASK_ID,
+             "validation_tier": "full", "require_candidate": True}
+
+    with pytest.raises(PublicationFenceError) as missing:
+        fence.validate(transaction, **heavy)
+    assert (missing.value.code, missing.value.message) == (
+        "PUBLICATION_FULL_PARENT_MISMATCH", "missing-side",
+    )
+    assert fence.validate(transaction, verify_recorded_parent=True, **heavy)["status"] == "PASS"
+    assert fence.validate(
+        transaction, parent_path=parent.relative_to(root), **heavy,
+    )["status"] == "PASS"
+
+    parent.write_text('{"status":"PASS"}\n', encoding="utf-8")
+    with pytest.raises(PublicationFenceError) as changed:
+        fence.validate(transaction, verify_recorded_parent=True, **heavy)
+    assert changed.value.code == "PUBLICATION_FULL_PARENT_MISMATCH"
+    parent.unlink()
+    with pytest.raises(PublicationFenceError) as gone:
+        fence.validate(transaction, verify_recorded_parent=True, **heavy)
+    assert gone.value.code == "PUBLICATION_EVIDENCE_FILE_MISSING"
+    fence.release(transaction, actor="integration-coordinator", outcome="failed")
+
+
+def test_publication_stage_recorded_parent_check_keeps_unbound_transactions_unbound(
+    publication_checkout: Path,
+) -> None:
+    root = publication_checkout
+    fence = _fence(root)
+    binding = _acquire(fence, root, transaction_id="unbound-parent")
+    transaction = Path(str(binding["transaction_path"]))
+    _advance_to_formal_validation_pre(fence, transaction)
+    heavy = {"exact_phase": "FORMAL_VALIDATION_PRE", "task_id": TASK_ID,
+             "validation_tier": "full", "require_candidate": True}
+    assert fence.validate(transaction, verify_recorded_parent=True, **heavy)["status"] == "PASS"
+    stray = root / "outputs/validation_runtime/stray/test_runtime_summary.json"
+    stray.parent.mkdir(parents=True)
+    stray.write_text('{"status":"FAIL"}\n', encoding="utf-8")
+    with pytest.raises(PublicationFenceError) as error:
+        fence.validate(
+            transaction, verify_recorded_parent=True,
+            parent_path=stray.relative_to(root), **heavy,
+        )
+    assert (error.value.code, error.value.message) == (
+        "PUBLICATION_FULL_PARENT_MISMATCH", "missing-side",
+    )
+    fence.release(transaction, actor="integration-coordinator", outcome="failed")
+
+
 @pytest.mark.parametrize("canonical_merge_repository", ["full-profile-publish"], indirect=True)
 @pytest.mark.parametrize(
     "remote_state",

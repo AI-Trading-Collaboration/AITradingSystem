@@ -3647,6 +3647,9 @@ def canonical_merge_repository(small_repository: Path, monkeypatch: pytest.Monke
     )
     if native_host:
         fixture_mode = "full-profile-publish"
+    bound_parent = fixture_mode == "full-readiness-profile-parent"
+    if bound_parent:
+        fixture_mode = "full-readiness-profile"
     whole_profile = fixture_mode in {
         "full-profile", "full-profile-publish", "full-readiness-profile",
     }
@@ -4073,6 +4076,17 @@ def canonical_merge_repository(small_repository: Path, monkeypatch: pytest.Monke
         with exclude.open("a", encoding="utf-8") as handle:
             handle.write("__pycache__/\n")
     fence = IntegrationPublicationFence(project_root=root)
+    parent_summary = None
+    if bound_parent:
+        # Stand-in for the failed Full this transaction re-runs. Qualifying a real
+        # parent summary is the upstream CLI boundary; this fixture only freezes
+        # its exact bytes so publication-stage consumption can be rehearsed.
+        parent_summary = root / "outputs/validation_runtime/parent-run/test_runtime_summary.json"
+        parent_summary.parent.mkdir(parents=True)
+        parent_summary.write_text(
+            '{"status":"FAIL","fixture":"publication-stage parent binding"}\n',
+            encoding="utf-8",
+        )
     binding = fence.acquire(
         transaction_id="merge-authority",
         task_id=TASK,
@@ -4124,6 +4138,7 @@ def canonical_merge_repository(small_repository: Path, monkeypatch: pytest.Monke
         generator_ids=(
             tuple(scope["generator_order"]) if source_candidate else ("canonical-task-source",)
         ),
+        full_parent_path=parent_summary,
     )
     transaction = root / binding["transaction_path"]
     try:

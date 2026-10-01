@@ -2891,3 +2891,39 @@ def test_reproducibility_tier_covers_lineage_and_manifest_contracts() -> None:
     assert "tests/test_engineering_stage_b_readiness.py" in normalized
     assert "tests/test_pit_source_manifest.py" in normalized
     assert "tests/trading_engine/test_backtest_snapshot_manifest.py" in normalized
+
+
+def test_publication_stage_parent_cross_check_follows_full_provenance(tmp_path: Path) -> None:
+    calls: list[dict[str, object]] = []
+
+    def validate(transaction: Path, **kwargs: object) -> dict[str, object]:
+        calls.append(kwargs)
+        return {"phase": "LOCAL_MAIN_FF_PRE"}
+
+    fence = SimpleNamespace(
+        policy=SimpleNamespace(heavyweight_tier="full"),
+        replay=lambda transaction: SimpleNamespace(phase="LOCAL_MAIN_FF_PRE"),
+        validate=validate,
+    )
+    transaction = tmp_path / "transaction.json"
+    parent_summary = "outputs/validation_runtime/parent/test_runtime_summary.json"
+    bound = {"task_id": "TASK", "parent_run": {"summary_path": parent_summary}}
+    unbound = {"task_id": "TASK"}
+
+    for provenance, expected in ((bound, Path(parent_summary)), (unbound, None)):
+        validation_tier._require_publication_parent_matches_transaction(
+            provenance, fence=fence, transaction=transaction, task_id="TASK", root=tmp_path,
+        )
+        assert calls[-1] == {
+            "exact_phase": "LOCAL_MAIN_FF_PRE", "task_id": "TASK",
+            "validation_tier": "full", "parent_path": expected, "require_candidate": True,
+        }
+
+    def reject(transaction: Path, **kwargs: object) -> dict[str, object]:
+        raise validation_tier.PublicationFenceError("PUBLICATION_FULL_PARENT_MISMATCH", "missing-side")
+
+    fence.validate = reject
+    with pytest.raises(validation_tier.PublicationFenceError, match="PUBLICATION_FULL_PARENT_MISMATCH"):
+        validation_tier._require_publication_parent_matches_transaction(
+            unbound, fence=fence, transaction=transaction, task_id="TASK", root=tmp_path,
+        )
