@@ -520,3 +520,43 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
   失败的 Full）的前置 tiers 与正式 Full 通过，并走完 `LOCAL_MAIN_FF_PRE → local-publish → REMOTE_PUSH_PRE → 普通 push →
   CLEANUP_PRE → RELEASED`，`local main = remote main = candidate`。
 - 状态/风险：超时校准仍为 `PROVISIONAL_PENDING_OWNER_REVIEW`；O3 identity 缓存待 owner 决定；`production_effect=none`。
+
+### 2026-10-02 v20 Full 结果与 v21 修复（作业进程列表收集器没有稳定窗口）
+
+- v20（候选 `eb17c78d5`，事务 `gov-007-p1c-devx015-baseline-publication-20261002-v20`，`failure_fix_rerun`，绑定 v19 的
+  `full_incomplete_recovery.json`）：五个前置 tier 通过；正式 Full 跑完 `14679 passed, 1 failed, 4 skipped`，pytest 7:24:38
+  （驱动 26838 秒，退出码 1）。v20 的 test-only 修复在重负载下成立；前 5.7 小时无失败，唯一失败出现在重型尾部：
+  `tests/test_devx015_workflow_coordination.py::test_readiness_input_replaced_after_real_inspection_cannot_publish[full-profile-retained]`（gw0）。
+  事务按 `FORMAL_VALIDATION_RESULT(FAIL)` → `release --outcome failed` 释放（证据 `test_runtime_summary.json`，sha256
+  `dddf472b3016cf98df69972a87df01def1b9788568b2d2c57f29188fe8b45ad7`），main/origin/main 未变。该摘要（status FAIL、
+  exit_code 1）是 v21 `failure_fix_rerun` 的合法 `full_parent`。
+- 直接原因（来自保留现场与最终 pytest 报告）：夹具内的内层 Full 启动 3 分 10 秒后被 `terminate()`（退出码 1067）强制终止，
+  因为外层运行器的 `_run_leased_command → WindowsJobProcess.wait → _JobProcesses.collect()` 抛出
+  `WORKFLOW_EXECUTION_JOB_PROCESS_LIST_BUDGET`：`active_process_count=36`，查询序列
+  `assigned=37, count=36, ok=true` 反复出现，`retained_process_count=0`，容量从 16 翻倍到 37888 的全部重试在不到 1 毫秒内用完。
+- 根因（既存设计缺口，非环境问题；与 GOV-007 F2 同一函数）：`collect()` 把「已分配 > 已列出」视为短列表，只有当差值被**本实例保留的
+  已退出句柄**解释时才接受（F2）。`wait(timeout=0.25)` 每次调用新建实例，起始没有任何保留句柄；一旦出现瞬时差值
+  （例如某个成员正处于退出过程中、活动计数已减一而分配计数未减，重负载下该窗口可被拉长），收集器**不等待**就连续重查并在
+  1 毫秒内放弃，进而杀掉整个 Job。同一收集器还以 0.25 秒间隔轮询正式 Full 自己的 Job 达 7 小时，因此同一缺陷也可能直接杀掉正式 Full；
+  v16、v18 只是没有撞上。估计每次 Full 约三分之一的失败概率（3 次 Full 中 1 次），不能靠重跑碰运气。
+- 复现尝试（空闲主机，原生 Job）：不断创建并退出子进程并以每次新实例紧密轮询 253,511 次、叠加 56 个 CPU 烧机进程 82,211 次、
+  并发长寿收集器 51,518 次、外部观察者对每个成员保留句柄后观察 assigned/listed/active，均**未**出现持续的 assigned>listed
+  （本机上退出成员即使被句柄持有也很快从列表消失）。因此差值是极少见的瞬时状态，无法在本机确定性复现；v13 的差值由保留句柄解释，
+  v20 的差值来源未能确证。这一点如实记录，不把推测当作结论。
+- v21 修复设计（最小政策变更；不放宽任何判定）：
+  1. 在 `_JobProcesses.collect()` 里，对「`ok` 但未被解释的短列表」的连续重查之间加有界退避等待（1、2、4……1024 毫秒，总窗口约 2 秒），
+     容量增长（`ok=false/234`）路径不加等待，所以普通轮询无额外延迟；
+  2. 保持 13 次查询结构、容量序列、F2 接受规则（重复且等于 ActiveProcesses 且差值被保留句柄解释）、诊断载荷字段不变，
+     窗口耗尽后仍以同一错误 fail closed；
+  3. 等待用可注入的 sleep，避免测试变慢；新增确定性假 API 测试：瞬时差值在若干次查询后消失则成功并记录退避序列、持续差值在窗口耗尽后仍失败、
+     容量增长路径不睡眠；原有 `short-success`/F2 用例改为注入 sleep。
+  4. 不做的事（需 owner 决策，记为选项）：把接受条件放宽为「已列出 == ActiveProcesses 且稳定」。该规则被现有测试刻意钉为 fail-closed
+     （`active=1` 且无保留句柄仍失败），放宽等于改变既定的容器安全判定，未经 owner 评审不实施。
+  5. 风险：若真实差值持续超过 2 秒，该失败仍会复发；因此 v21 通过不构成该缺陷已消除的证明，复发时会再拿到同样的诊断载荷，
+     再升级为上面的选项。
+- 验收：新单测通过且原钉住的 fail-closed 语义仍成立；对受影响重型节点做 smoke；reseal 后新候选（parent 为 v20 的失败摘要）
+  的前置 tiers 与正式 Full 通过，并走完 `LOCAL_MAIN_FF_PRE → local-publish → REMOTE_PUSH_PRE → 普通 push → CLEANUP_PRE → RELEASED`，
+  `local main = remote main = candidate`。
+- 状态/风险：超时与等待校准仍为 `PROVISIONAL_PENDING_OWNER_REVIEW`；本修复新增的退避窗口属同一类工程边界（非投资启发式），
+  同样待 owner 复核；O3 identity 缓存仍待 owner 决定；`production_effect=none`。
+- 关联：DEVX-020 已于 2026-10-02 登记（c23fef466），排查在基线发布后的安静主机上进行。

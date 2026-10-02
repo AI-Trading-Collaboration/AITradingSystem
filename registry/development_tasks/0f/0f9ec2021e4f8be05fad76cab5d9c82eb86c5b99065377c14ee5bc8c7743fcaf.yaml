@@ -18,12 +18,14 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: P1-C 基线发布仍未完成：v19 正式 Full 派发约 4 分钟后因测试对句柄数值的巧合依赖（test_nonallowlisted_inheritable_event_handle_does_not_reach_child，非泄漏）出现必然失败，已用
-    --recover-full terminate_frozen_job 以 FAILED/INSUFFICIENT 收尾，main/origin/main
-    未变。v20 仅修该测试（具名 Event + CompareObjectHandles，并做继承对照实验）并审计同类写法，再以新候选 failure_fix_rerun（parent
-    为 v19 recovery）重跑正式 Full（约 7-8 小时）并发布；v19 的发布 worker 预算修复已有大 profile 端到端演练，待真实
-    Full 后验证。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007
-    阶段 5。超时校准待 owner 复核，O3 identity 缓存待 owner 决定。详见 DEVX-018 需求 v19/v20 节。
+  unstructured_legacy_blocker_or_next_step: P1-C 基线发布仍未完成：v20 正式 Full 14679 passed/1
+    failed（pytest 7:24:38），唯一失败是 _JobProcesses.collect() 对「已分配>已列出」的瞬时状态不等待就放弃并杀掉
+    Job（既存缺陷，同一收集器也在轮询正式 Full，约 1/3 概率），v20 事务已 FAILED 释放，main/origin/main 未变。v21
+    在连续重查之间加有界退避（总窗口约 2 s，其余判定不变，窗口耗尽仍 fail closed）并补确定性单测，放宽接受条件需 owner 评审；随后受影响重型节点
+    smoke、reseal，以新候选 failure_fix_rerun（parent 为 v20 失败摘要）重跑正式 Full（约 7-8 小时）并发布。v19
+    发布 worker 预算修复待真实 Full 后验证。DEVX-020（Full 成本拆解）已登记，排查在基线发布后。顺序不变：基线发布 → P1/P4/O3
+    → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时与等待校准待 owner 复核，O3
+    identity 缓存待 owner 决定。详见 DEVX-018 需求 v20/v21 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -501,6 +503,39 @@ events:
   - change:gov-007-gov007-v20-task-20261002-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-6d0b0c60ba892550bdd7e97181a4c545
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-02T13:13:46Z'
+  actor: integration-coordinator
+  change_id: gov-007-gov007-v21-task-20261002-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-6d0b0c60ba892550bdd7e97181a4c545
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: P1-C 基线发布仍未完成：v20 正式 Full 14679 passed/1 failed（pytest 7:24:38），唯一失败是
+      _JobProcesses.collect() 对「已分配>已列出」的瞬时状态不等待就放弃并杀掉 Job（既存缺陷，同一收集器也在轮询正式 Full，约
+      1/3 概率），v20 事务已 FAILED 释放，main/origin/main 未变。v21 在连续重查之间加有界退避（总窗口约 2 s，其余判定不变，窗口耗尽仍
+      fail closed）并补确定性单测，放宽接受条件需 owner 评审；随后受影响重型节点 smoke、reseal，以新候选 failure_fix_rerun（parent
+      为 v20 失败摘要）重跑正式 Full（约 7-8 小时）并发布。v19 发布 worker 预算修复待真实 Full 后验证。DEVX-020（Full
+      成本拆解）已登记，排查在基线发布后。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017
+      → GOV-007 阶段 5。超时与等待校准待 owner 复核，O3 identity 缓存待 owner 决定。详见 DEVX-018 需求 v20/v21
+      节。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: production_effect=none；broker_action=none；agent_harness=claude_code；v20
+      Full 技术 FAIL（1 个节点），已按既有路径以 FAILED 释放，本地/远端 main 均未变；失败的 Job 进程列表缺陷无法在本机确定性复现，已如实记录；owner_decision
+      2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）；owner 2026-10-02 要求登记
+      DEVX-020
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-gov007-v21-task-20261002-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2b53c04b72e269b25a192907bb0f5231
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
@@ -508,19 +543,21 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - P1-C 基线发布仍未完成：v19 正式 Full 派发约 4 分钟后因测试对句柄数值的巧合依赖（test_nonallowlisted_inheritable_event_handle_does_not_reach_child，非泄漏）出现必然失败，已用
-    --recover-full terminate_frozen_job 以 FAILED/INSUFFICIENT 收尾，main/origin/main
-    未变。v20 仅修该测试（具名 Event + CompareObjectHandles，并做继承对照实验）并审计同类写法，再以新候选 failure_fix_rerun（parent
-    为 v19 recovery）重跑正式 Full（约 7-8 小时）并发布；v19 的发布 worker 预算修复已有大 profile 端到端演练，待真实
-    Full 后验证。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007
-    阶段 5。超时校准待 owner 复核，O3 identity 缓存待 owner 决定。详见 DEVX-018 需求 v19/v20 节。
+  - P1-C 基线发布仍未完成：v20 正式 Full 14679 passed/1 failed（pytest 7:24:38），唯一失败是 _JobProcesses.collect()
+    对「已分配>已列出」的瞬时状态不等待就放弃并杀掉 Job（既存缺陷，同一收集器也在轮询正式 Full，约 1/3 概率），v20 事务已 FAILED 释放，main/origin/main
+    未变。v21 在连续重查之间加有界退避（总窗口约 2 s，其余判定不变，窗口耗尽仍 fail closed）并补确定性单测，放宽接受条件需 owner 评审；随后受影响重型节点
+    smoke、reseal，以新候选 failure_fix_rerun（parent 为 v20 失败摘要）重跑正式 Full（约 7-8 小时）并发布。v19
+    发布 worker 预算修复待真实 Full 后验证。DEVX-020（Full 成本拆解）已登记，排查在基线发布后。顺序不变：基线发布 → P1/P4/O3
+    → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时与等待校准待 owner 复核，O3
+    identity 缓存待 owner 决定。详见 DEVX-018 需求 v20/v21 节。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - production_effect=none；broker_action=none；agent_harness=claude_code；v19 Full 因测试巧合依赖句柄数值而必然失败，已按既有恢复路径提前收尾，main/origin/main
-    未变；owner_decision 2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）
+  - production_effect=none；broker_action=none；agent_harness=claude_code；v20 Full 技术
+    FAIL（1 个节点），已按既有路径以 FAILED 释放，本地/远端 main 均未变；失败的 Job 进程列表缺陷无法在本机确定性复现，已如实记录；owner_decision
+    2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）；owner 2026-10-02 要求登记 DEVX-020
   docs_links: []
   terminal: false
-  canonical_row_sha256: b2e7d3a39009562e24a69c6f093a1d1cd0979aa7bc1be96a4403407b8ea5bd78
-last_event_id: task-event-6d0b0c60ba892550bdd7e97181a4c545
+  canonical_row_sha256: 2ba9667623e26f6c9737901480cfa50aae5137d190432ea11dcc3d21c7a15488
+last_event_id: task-event-2b53c04b72e269b25a192907bb0f5231
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f3bfeca98c1e06de30d88a096e882d517d99661e41cd69bd31d6979a71c2257f
+fragment_checksum: 745bbaa8bcffd8613c71578a1a3447726d6670fb73d5e34fd87860eceec22ce6

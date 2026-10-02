@@ -19,17 +19,18 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: v19 正式 Full（候选 d2d7fb67a，绑定 v17 recovery
-    为 parent）派发约 4 分钟后出现失败节点 test_nonallowlisted_inheritable_event_handle_does_not_reach_child：测试让子进程对父进程
-    Event 句柄的数值调用 SetEvent 并要求失败，但子进程恰好在同数值上持有自己的 Event 时会成功（句柄编号巧合，非泄漏：同用例的 WaitForSingleObject==258
-    已通过；v16/v18 通过属编号运气）。一个失败节点已令该 Full 必然 FAIL，已停止驱动并用 --recover-full terminate_frozen_job
-    以 FAILED/INSUFFICIENT 收尾（full_incomplete_recovery.json sha256 279fdf3f3eda…35af6dd），main/origin/main
-    未变。v20 修复（见 DEVX-018 需求 v19/v20 节）：仅改该测试，改用具名 Event + 子进程 OpenEventW + CompareObjectHandles
-    判断是否同一内核对象，并用 close_fds=False 对照实验证明能检出真实继承；审计其余同类写法；随后 reseal、前置 tiers，新 failure_fix_rerun
-    事务（parent 为 v19 recovery）重跑正式 Full（约 7-8 小时）并发布。v18 发现的发布 worker 16 MiB 预算缺陷已由
-    v19 修复并有大 profile 端到端演练，仍待真实 Full 通过后的真实发布验证。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 →
-    DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时校准待 owner 复核，O3 identity 缓存待 owner
-    决定。
+  unstructured_legacy_blocker_or_next_step: v20 正式 Full（候选 eb17c78d5，绑定 v19 recovery
+    为 parent）跑完 14679 passed/1 failed/4 skipped（pytest 7:24:38）；v20 的测试修复在重负载下成立，唯一失败是重型尾部的夹具内层
+    Full：外层运行器的 WindowsJobProcess.wait 调用的 _JobProcesses.collect() 在「已分配 37 > 已列出
+    36 = ActiveProcesses 36、保留句柄 0」的瞬时状态下不等待就连续重查（<1 ms 内用尽 13 次）并抛 JOB_PROCESS_LIST_BUDGET，Job
+    被 terminate（退出码 1067）。同一收集器也以 0.25 秒间隔轮询正式 Full 自己的 Job，估计每次 Full 约 1/3 概率被它杀掉。本机多种压力下无法确定性复现（瞬时状态极少见），已如实记录。v20
+    事务 FAILED 释放，摘要（FAIL，exit 1）作为 v21 的 full_parent。v21 修复（见 DEVX-018 需求 v20/v21
+    节）：只在「ok 但未被解释的短列表」的连续重查之间加有界退避（1 ms 起翻倍，总窗口约 2 s），保持 13 次查询结构、F2 接受规则与诊断载荷不变，窗口耗尽仍
+    fail closed；可注入 sleep 的确定性单测；放宽为「已列出==ActiveProcesses」是被现有测试刻意钉住的 fail-closed
+    规则，需 owner 评审，不实施。随后受影响重型节点 smoke，reseal，新 failure_fix_rerun 事务（parent 为 v20 失败摘要）重跑正式
+    Full（约 7-8 小时）并发布。v19 的发布 worker 预算修复已有大 profile 端到端演练，待真实 Full 通过后验证。DEVX-020
+    已登记，排查待基线发布后。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 →
+    GOV-007 阶段 5。超时与等待校准待 owner 复核，O3 identity 缓存待 owner 决定。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile
@@ -335,6 +336,44 @@ events:
   - change:gov-007-devx018-v20-task-20261002-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-fbbdcaa1accd49c0a5fc2564871b120f
+- schema_version: task_event.v1
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-02T13:13:03Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx018-v21-task-20261002-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-fbbdcaa1accd49c0a5fc2564871b120f
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: v20 正式 Full（候选 eb17c78d5，绑定 v19 recovery 为 parent）跑完 14679
+      passed/1 failed/4 skipped（pytest 7:24:38）；v20 的测试修复在重负载下成立，唯一失败是重型尾部的夹具内层 Full：外层运行器的
+      WindowsJobProcess.wait 调用的 _JobProcesses.collect() 在「已分配 37 > 已列出 36 = ActiveProcesses
+      36、保留句柄 0」的瞬时状态下不等待就连续重查（<1 ms 内用尽 13 次）并抛 JOB_PROCESS_LIST_BUDGET，Job 被 terminate（退出码
+      1067）。同一收集器也以 0.25 秒间隔轮询正式 Full 自己的 Job，估计每次 Full 约 1/3 概率被它杀掉。本机多种压力下无法确定性复现（瞬时状态极少见），已如实记录。v20
+      事务 FAILED 释放，摘要（FAIL，exit 1）作为 v21 的 full_parent。v21 修复（见 DEVX-018 需求 v20/v21
+      节）：只在「ok 但未被解释的短列表」的连续重查之间加有界退避（1 ms 起翻倍，总窗口约 2 s），保持 13 次查询结构、F2 接受规则与诊断载荷不变，窗口耗尽仍
+      fail closed；可注入 sleep 的确定性单测；放宽为「已列出==ActiveProcesses」是被现有测试刻意钉住的 fail-closed
+      规则，需 owner 评审，不实施。随后受影响重型节点 smoke，reseal，新 failure_fix_rerun 事务（parent 为 v20
+      失败摘要）重跑正式 Full（约 7-8 小时）并发布。v19 的发布 worker 预算修复已有大 profile 端到端演练，待真实 Full 通过后验证。DEVX-020
+      已登记，排查待基线发布后。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017
+      → GOV-007 阶段 5。超时与等待校准待 owner 复核，O3 identity 缓存待 owner 决定。
+    acceptance_criteria: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧
+      loadfile profile 仍按原契约通过；pre-Full tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3
+      不跨调用缓存身份或 PASS
+    notes: production_effect=none；broker_action=none；agent_harness=claude_code；v20
+      Full 技术 FAIL（1 个节点），已按既有路径以 FAILED 释放，本地/远端 main 均未变；失败的 Job 进程列表缺陷无法在本机确定性复现，已如实记录；owner_decision
+      2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）；owner 2026-10-02 要求登记
+      DEVX-020
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx018-v21-task-20261002-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b2f46caa17e59f3d3d90e484251e5299
 projection:
   legacy_first_eight_cells:
   - DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
@@ -343,23 +382,26 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - v19 正式 Full（候选 d2d7fb67a，绑定 v17 recovery 为 parent）派发约 4 分钟后出现失败节点 test_nonallowlisted_inheritable_event_handle_does_not_reach_child：测试让子进程对父进程
-    Event 句柄的数值调用 SetEvent 并要求失败，但子进程恰好在同数值上持有自己的 Event 时会成功（句柄编号巧合，非泄漏：同用例的 WaitForSingleObject==258
-    已通过；v16/v18 通过属编号运气）。一个失败节点已令该 Full 必然 FAIL，已停止驱动并用 --recover-full terminate_frozen_job
-    以 FAILED/INSUFFICIENT 收尾（full_incomplete_recovery.json sha256 279fdf3f3eda…35af6dd），main/origin/main
-    未变。v20 修复（见 DEVX-018 需求 v19/v20 节）：仅改该测试，改用具名 Event + 子进程 OpenEventW + CompareObjectHandles
-    判断是否同一内核对象，并用 close_fds=False 对照实验证明能检出真实继承；审计其余同类写法；随后 reseal、前置 tiers，新 failure_fix_rerun
-    事务（parent 为 v19 recovery）重跑正式 Full（约 7-8 小时）并发布。v18 发现的发布 worker 16 MiB 预算缺陷已由
-    v19 修复并有大 profile 端到端演练，仍待真实 Full 通过后的真实发布验证。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 →
-    DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时校准待 owner 复核，O3 identity 缓存待 owner
-    决定。
+  - v20 正式 Full（候选 eb17c78d5，绑定 v19 recovery 为 parent）跑完 14679 passed/1 failed/4 skipped（pytest
+    7:24:38）；v20 的测试修复在重负载下成立，唯一失败是重型尾部的夹具内层 Full：外层运行器的 WindowsJobProcess.wait 调用的
+    _JobProcesses.collect() 在「已分配 37 > 已列出 36 = ActiveProcesses 36、保留句柄 0」的瞬时状态下不等待就连续重查（<1
+    ms 内用尽 13 次）并抛 JOB_PROCESS_LIST_BUDGET，Job 被 terminate（退出码 1067）。同一收集器也以 0.25
+    秒间隔轮询正式 Full 自己的 Job，估计每次 Full 约 1/3 概率被它杀掉。本机多种压力下无法确定性复现（瞬时状态极少见），已如实记录。v20
+    事务 FAILED 释放，摘要（FAIL，exit 1）作为 v21 的 full_parent。v21 修复（见 DEVX-018 需求 v20/v21
+    节）：只在「ok 但未被解释的短列表」的连续重查之间加有界退避（1 ms 起翻倍，总窗口约 2 s），保持 13 次查询结构、F2 接受规则与诊断载荷不变，窗口耗尽仍
+    fail closed；可注入 sleep 的确定性单测；放宽为「已列出==ActiveProcesses」是被现有测试刻意钉住的 fail-closed
+    规则，需 owner 评审，不实施。随后受影响重型节点 smoke，reseal，新 failure_fix_rerun 事务（parent 为 v20 失败摘要）重跑正式
+    Full（约 7-8 小时）并发布。v19 的发布 worker 预算修复已有大 profile 端到端演练，待真实 Full 通过后验证。DEVX-020
+    已登记，排查待基线发布后。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 →
+    GOV-007 阶段 5。超时与等待校准待 owner 复核，O3 identity 缓存待 owner 决定。
   - Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full
     tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
-  - production_effect=none；broker_action=none；agent_harness=claude_code；v19 Full 因测试巧合依赖句柄数值而必然失败，已按既有恢复路径提前收尾，main/origin/main
-    未变；owner_decision 2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）
+  - production_effect=none；broker_action=none；agent_harness=claude_code；v20 Full 技术
+    FAIL（1 个节点），已按既有路径以 FAILED 释放，本地/远端 main 均未变；失败的 Job 进程列表缺陷无法在本机确定性复现，已如实记录；owner_decision
+    2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）；owner 2026-10-02 要求登记 DEVX-020
   docs_links: []
   terminal: false
-  canonical_row_sha256: d3b647d855899b889b4e6bad907cd141ec6e20c3733c92343009977713ef4b07
-last_event_id: task-event-fbbdcaa1accd49c0a5fc2564871b120f
+  canonical_row_sha256: a1d55803e3d18b8865a3128d27dff9139ef5d83348968f4a527a97f89584ee6a
+last_event_id: task-event-b2f46caa17e59f3d3d90e484251e5299
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 4c9218d0dd5bf2a57e9c9206ad5b29fc057b398911e19ea6385e50f094dfaa82
+fragment_checksum: 74b51a08767c13788d2fd49da836a8a0f04fd8b79e39c4d6de0e9a916c164ee6
