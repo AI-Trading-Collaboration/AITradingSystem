@@ -6077,30 +6077,65 @@ os._exit({CRASH_EXIT})
                 )
 
 
-def test_nonallowlisted_inheritable_event_handle_does_not_reach_child(
-    tmp_path: Path, execution_api: Any, native: NativeOracle
-) -> None:
-    event = native.api.CreateEventW(None, True, False, None)
-    assert event and native.api.SetHandleInformation(event, 1, 1)
-    source = f"""
+def _event_object_probe_source(name: str, handle_value: int) -> str:
+    """Child code: is the parent's handle number the same kernel object as a named event?"""
+    return f"""
 import ctypes, json
 from pathlib import Path
 api = ctypes.WinDLL('kernel32', use_last_error=True)
-api.SetEvent.argtypes = [ctypes.c_void_p]
-api.SetEvent.restype = ctypes.c_int
-result = api.SetEvent({int(event)})
-Path('handle_probe.json').write_text(
-    json.dumps({{'result':result, 'error':ctypes.get_last_error()}}))
+api.OpenEventW.argtypes = [ctypes.c_uint32, ctypes.c_int, ctypes.c_wchar_p]
+api.OpenEventW.restype = ctypes.c_void_p
+base = ctypes.WinDLL('kernelbase', use_last_error=True)
+base.CompareObjectHandles.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+base.CompareObjectHandles.restype = ctypes.c_int
+own = api.OpenEventW(0x100000 | 0x2, False, {name!r})  # SYNCHRONIZE | EVENT_MODIFY_STATE
+same = base.CompareObjectHandles({handle_value}, own) if own else -1
+"""
+
+
+def test_nonallowlisted_inheritable_event_handle_does_not_reach_child(
+    tmp_path: Path, execution_api: Any, native: NativeOracle
+) -> None:
+    # A handle value only means something inside its own process, so probing the child with the
+    # parent's number is not evidence: a child that owns an unrelated event at that number
+    # succeeds without any leak (DEVX-018 v19 Full failure). Name the event instead; the child
+    # opens its own handle to the same object and asks the kernel whether the parent's number
+    # refers to that same object, which is true only for a real inherited handle.
+    name = "Local\\AITS-DEVX015-handle-probe-" + uuid.uuid4().hex
+    event = native.api.CreateEventW(None, True, False, name)
+    assert event and native.api.SetHandleInformation(event, 1, 1)
+    source = _event_object_probe_source(name, int(event)) + """
+Path('handle_probe.json').write_text(json.dumps({'opened': bool(own), 'same_object': same}))
 print('EXPLICIT_STDOUT_STILL_WORKS', flush=True)
 """
     try:
         with _create(execution_api, tmp_path, source) as handle:
             handle.resume()
             assert handle.wait(timeout=DEADLINE) == 0
-        assert native.api.WaitForSingleObject(event, 0) == 258, "nonallowlist event handle leaked"
         probe = _read_json(tmp_path / "handle_probe.json")
-        assert probe == {"result": 0, "error": 6}  # ERROR_INVALID_HANDLE, not an inherited event.
+        assert probe == {"opened": True, "same_object": 0}, "nonallowlist event handle leaked"
         assert "EXPLICIT_STDOUT_STILL_WORKS" in (tmp_path / "stdout.log").read_text()
+    finally:
+        assert native.api.CloseHandle(event)
+
+
+def test_event_object_probe_detects_real_inheritance(native: NativeOracle) -> None:
+    # Control for the probe above: with close_fds=False the child really inherits the handle,
+    # so the same kernel object must be reported; with close_fds=True it must not.
+    name = "Local\\AITS-DEVX015-handle-control-" + uuid.uuid4().hex
+    event = native.api.CreateEventW(None, True, False, name)
+    assert event and native.api.SetHandleInformation(event, 1, 1)
+    source = _event_object_probe_source(name, int(event)) + """
+print(json.dumps({'opened': bool(own), 'same_object': same}))
+"""
+    try:
+        for inherited, expected in ((False, 0), (True, 1)):
+            result = subprocess.run(
+                [sys.executable, "-c", source], capture_output=True, text=True,
+                close_fds=not inherited, timeout=DEADLINE, check=True,
+            )
+            observed = json.loads(result.stdout.strip().splitlines()[-1])
+            assert observed == {"opened": True, "same_object": expected}, (inherited, observed)
     finally:
         assert native.api.CloseHandle(event)
 
