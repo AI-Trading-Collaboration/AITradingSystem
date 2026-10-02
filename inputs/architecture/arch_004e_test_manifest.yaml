@@ -8586,7 +8586,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_integration_publication_fence
   path: tests/test_arch_005_integration_publication_fence.py
-  sha256: 69f106a4dcc4489eabf907ec542dd45932bc82c7af584a3463da088890f54ef6
+  sha256: 34c4e8e87588c6c6b439f8924b398cc586887c6216651133333df8fb6ae4095f
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -10602,7 +10602,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx015_workflow_coordination
   path: tests/test_devx015_workflow_coordination.py
-  sha256: a0cbb7dc58defc559ab95dd0c9fc4d87b133eae33a827f2b6f7259d5d109c81a
+  sha256: 14e22a9528ba11e7cdd2f91b31f2534996394086d3ed5aa3588d584a990d7c28
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10634,7 +10634,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx015_workflow_integration
   path: tests/test_devx015_workflow_integration.py
-  sha256: 8f0e81606524021941f03584ace7aa9b02e19aa68e2973466a6dd7dbd294c3b6
+  sha256: 4aca2bcb1eec84a9d55f3caefb18f98dc252574a6a6ac6b7e71395b16f7ebe9a
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

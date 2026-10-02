@@ -16506,7 +16506,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.workflow_coordination
   path: src/ai_trading_system/platform/architecture/workflow_coordination.py
-  sha256: b90c9cfa40ddaf39366a97df96c75dbbdbb7afbe5a62f41410e3f1713989038e
+  sha256: 24bf1be36d2f4ac6a97f28bf2c74ba5c6c6121e79608da8ce1169a9b53d2bdb8
   rule_id: platform_architecture
   owner_profile: platform
   owners:
