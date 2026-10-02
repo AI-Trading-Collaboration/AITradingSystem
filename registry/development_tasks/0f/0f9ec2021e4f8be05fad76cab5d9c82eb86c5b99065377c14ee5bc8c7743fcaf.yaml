@@ -18,13 +18,13 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: P1-C 基线发布仍未完成：v16 Full 技术 PASS 但发布阶段 parent
-    绑定缺陷（已于 v17 修复提交）阻断了发布；v17 正式 Full 在派发 7 分钟后因测试内嵌子进程脚本的 wait_exit(timeout=30)（继承约
-    8.5 万句柄、负载下销毁超时）出现必然失败，已用 --recover-full terminate_frozen_job 以 FAILED/INSUFFICIENT
-    终态收尾。v18 修复统一校准内嵌固定亚分钟期限并新增不变量测试、补 recovery 型 parent 单测、先做重节点 smoke，再以新候选 failure_fix_rerun（绑定
-    v17 incomplete-recovery）重跑正式 Full（约 7-8 小时）并发布；顺序不变：基线发布 → P1/P4/O3 → 重测 → O4
-    → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时校准待 owner 复核，O3 identity 缓存待
-    owner 决定。详见 DEVX-018 需求 v17/v18 节。
+  unstructured_legacy_blocker_or_next_step: P1-C 基线发布仍未完成：v18 正式 Full 技术 PASS（候选 a77a96e0a，14677
+    passed/0 failed），LOCAL_MAIN_FF_PRE 通过，但 local-publish 发布 worker 因 hook 输入托管使用默认
+    16 MiB 预算而无法托管 27.4 MB 的 test_runtime_profile.json（WORKFLOW_ARTIFACT_BUDGET），本地
+    main 未变，事务已按恢复路径 FAILED 收尾。v19 先为捕获文件设置显式命名预算，并新增 profile>16 MiB 的真实 local-publish
+    端到端演练（先复现再修复、一并修掉下游缺陷），再以新候选 failure_fix_rerun 重跑正式 Full（约 7-8 小时）并发布；顺序不变：基线发布
+    → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时校准待 owner
+    复核，O3 identity 缓存待 owner 决定。详见 DEVX-018 需求 v18/v19 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -441,6 +441,37 @@ events:
   - change:gov-007-gov007-v18-task-20261002-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-c3b18cd58aa7beacbb66d0b164d47da4
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-02T01:49:31Z'
+  actor: integration-coordinator
+  change_id: gov-007-gov007-v19-task-20261002-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-c3b18cd58aa7beacbb66d0b164d47da4
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: P1-C 基线发布仍未完成：v18 正式 Full 技术 PASS（候选 a77a96e0a，14677 passed/0
+      failed），LOCAL_MAIN_FF_PRE 通过，但 local-publish 发布 worker 因 hook 输入托管使用默认 16 MiB
+      预算而无法托管 27.4 MB 的 test_runtime_profile.json（WORKFLOW_ARTIFACT_BUDGET），本地 main
+      未变，事务已按恢复路径 FAILED 收尾。v19 先为捕获文件设置显式命名预算，并新增 profile>16 MiB 的真实 local-publish
+      端到端演练（先复现再修复、一并修掉下游缺陷），再以新候选 failure_fix_rerun 重跑正式 Full（约 7-8 小时）并发布；顺序不变：基线发布
+      → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时校准待 owner
+      复核，O3 identity 缓存待 owner 决定。详见 DEVX-018 需求 v18/v19 节。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: production_effect=none；broker_action=none；agent_harness=claude_code；v18
+      Full 技术 PASS 但发布阶段因 16 MiB 读取预算失败，已按既有恢复路径收尾，本地/远端 main 均未变；Full 结果绑定候选，修复后须重跑，不绕过；owner_decision
+      2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-gov007-v19-task-20261002-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d454b4bf1ea66fe19f2344c324aef21e
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
@@ -448,21 +479,20 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - P1-C 基线发布仍未完成：v16 Full 技术 PASS 但发布阶段 parent 绑定缺陷（已于 v17 修复提交）阻断了发布；v17 正式 Full
-    在派发 7 分钟后因测试内嵌子进程脚本的 wait_exit(timeout=30)（继承约 8.5 万句柄、负载下销毁超时）出现必然失败，已用 --recover-full
-    terminate_frozen_job 以 FAILED/INSUFFICIENT 终态收尾。v18 修复统一校准内嵌固定亚分钟期限并新增不变量测试、补
-    recovery 型 parent 单测、先做重节点 smoke，再以新候选 failure_fix_rerun（绑定 v17 incomplete-recovery）重跑正式
-    Full（约 7-8 小时）并发布；顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017
-    → GOV-007 阶段 5。超时校准待 owner 复核，O3 identity 缓存待 owner 决定。详见 DEVX-018 需求 v17/v18
-    节。
+  - P1-C 基线发布仍未完成：v18 正式 Full 技术 PASS（候选 a77a96e0a，14677 passed/0 failed），LOCAL_MAIN_FF_PRE
+    通过，但 local-publish 发布 worker 因 hook 输入托管使用默认 16 MiB 预算而无法托管 27.4 MB 的 test_runtime_profile.json（WORKFLOW_ARTIFACT_BUDGET），本地
+    main 未变，事务已按恢复路径 FAILED 收尾。v19 先为捕获文件设置显式命名预算，并新增 profile>16 MiB 的真实 local-publish
+    端到端演练（先复现再修复、一并修掉下游缺陷），再以新候选 failure_fix_rerun 重跑正式 Full（约 7-8 小时）并发布；顺序不变：基线发布
+    → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时校准待 owner
+    复核，O3 identity 缓存待 owner 决定。详见 DEVX-018 需求 v18/v19 节。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - production_effect=none；broker_action=none；agent_harness=claude_code；v17 期间宿主死机重启：前置
-    tier 已通过，architecture-fitness 被中断后在同一事务（Full 未派发）下恢复重跑并通过；v17 Full 因必然失败而提前终止，属已记录的恢复路径，非绕过；owner_decision
+  - production_effect=none；broker_action=none；agent_harness=claude_code；v18 Full 技术
+    PASS 但发布阶段因 16 MiB 读取预算失败，已按既有恢复路径收尾，本地/远端 main 均未变；Full 结果绑定候选，修复后须重跑，不绕过；owner_decision
     2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）
   docs_links: []
   terminal: false
-  canonical_row_sha256: f65da1f19f2a3ac93010144ab339af85d677df674017a3c9b1b4a48ad51d5299
-last_event_id: task-event-c3b18cd58aa7beacbb66d0b164d47da4
+  canonical_row_sha256: f27382ad35d002f0e67cceca5ed01eee97a9e4115c09c9485159b7a04e1324de
+last_event_id: task-event-d454b4bf1ea66fe19f2344c324aef21e
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 52f6a650ba339054552755feb731c437f63c3ec39ed5f468e04a594057311131
+fragment_checksum: 6597d9c6030b01bf03e4d342ad67914b8a91c660b4b929c71a2fd7f0a4ec2ac6

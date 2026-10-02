@@ -19,16 +19,19 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: v17 正式 Full（候选 597fe2bdb，failure_fix_rerun，绑定
-    v15 失败 summary 为 full_parent）派发 7 分钟后出现负载相关失败 test_complete_runtime_native_custody_inherited_and_released[success]：测试内嵌子进程脚本的
-    wait_exit(timeout=30) 在子进程继承约 8.5 万句柄、Full 负载下销毁耗时超过 30 秒时超时（v15 批量替换按设计跳过内嵌源码字面量而漏校准；v16
-    同节点通过属时序幸运）。一个失败节点已令该 Full 必然 FAIL，已停止驱动并用 --recover-full terminate_frozen_job
-    以 FAILED/INSUFFICIENT 终态收尾（full_incomplete_recovery.json sha256 020957685c93…335d41），不伪造
-    pytest FAIL。此前 v17 的发布阶段 parent 绑定修复（verify_recorded_parent）已提交，仍待正式 Full 通过后的真实发布验证。v18
-    修复（见 DEVX-018 需求 v17/v18 节）：测试内嵌源码中的固定亚分钟期限统一改为已校准 600 秒占位符替换；新增不变量测试禁止再出现；补 recovery
-    型 parent 的发布阶段交叉校验单测；先做重节点 smoke，再以新候选 failure_fix_rerun 绑定 v17 incomplete-recovery
-    重跑正式 Full（约 7-8 小时）并发布。P1/P4/O3 与重测仍在基线发布之后；超时校准待 owner 复核，O3 identity 缓存待 owner
-    决定。
+  unstructured_legacy_blocker_or_next_step: v18 正式 Full 技术 PASS（候选 a77a96e0a，14677
+    passed/4 skipped/0 failed，pytest 7:04:00），LOCAL_MAIN_FF_PRE 通过（v17 记录 parent 修复在真实事务上验证），但
+    local-publish 的原始发布 worker 在 hooks_created 之后以 WORKFLOW_ARTIFACT_BUDGET 被阻断（CLI
+    退出码 2，本地 main/索引未变，已用 local-publication-recover 收尾为 STABLE_FAILED_ATTEMPT/ORIGINAL_UNCHANGED，事务
+    FAILED 释放，租约 RELEASED）。根因：hold_hook_capsule_inputs 对 profile 检查捕获文件用默认 16 MiB
+    读取/托管预算，而真实 test_runtime_profile.json 为 27,370,306 字节（自 v15 起约 27 MB，此前无真实 Full
+    走到 local-publish，夹具 profile 仅几十 KB 故潜伏）。修复要改 src，候选必变，Full 须重跑。v19 方案（见 DEVX-018
+    需求 v18/v19 节）：为捕获文件使用显式命名预算（上限 64 MiB，超限 fail closed 且错误可读）；新增 large-full-profile-publish
+    夹具与端到端演练（真实 local-publish→hooks→ff-only→adoption→recover，profile>16 MiB），先复现再修复并一并修掉演练暴露的下游缺陷；profile
+    增长余量（27.4MB 对 64MiB）登记为后续任务；随后 reseal、前置 tiers，新 failure_fix_rerun 事务（parent 仍为
+    v17 incomplete-recovery，v18 为 PASS 不能作 parent）重跑正式 Full（约 7-8 小时）并发布。顺序不变：基线发布
+    → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时校准待 owner
+    复核，O3 identity 缓存待 owner 决定。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile
@@ -261,6 +264,43 @@ events:
   - change:gov-007-devx018-v18-task-20261002-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-ae5678c953a9383511ea7e2aa5edebbd
+- schema_version: task_event.v1
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-02T01:48:59Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx018-v19-task-20261002-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-ae5678c953a9383511ea7e2aa5edebbd
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: v18 正式 Full 技术 PASS（候选 a77a96e0a，14677 passed/4 skipped/0
+      failed，pytest 7:04:00），LOCAL_MAIN_FF_PRE 通过（v17 记录 parent 修复在真实事务上验证），但 local-publish
+      的原始发布 worker 在 hooks_created 之后以 WORKFLOW_ARTIFACT_BUDGET 被阻断（CLI 退出码 2，本地 main/索引未变，已用
+      local-publication-recover 收尾为 STABLE_FAILED_ATTEMPT/ORIGINAL_UNCHANGED，事务 FAILED
+      释放，租约 RELEASED）。根因：hold_hook_capsule_inputs 对 profile 检查捕获文件用默认 16 MiB 读取/托管预算，而真实
+      test_runtime_profile.json 为 27,370,306 字节（自 v15 起约 27 MB，此前无真实 Full 走到 local-publish，夹具
+      profile 仅几十 KB 故潜伏）。修复要改 src，候选必变，Full 须重跑。v19 方案（见 DEVX-018 需求 v18/v19 节）：为捕获文件使用显式命名预算（上限
+      64 MiB，超限 fail closed 且错误可读）；新增 large-full-profile-publish 夹具与端到端演练（真实 local-publish→hooks→ff-only→adoption→recover，profile>16
+      MiB），先复现再修复并一并修掉演练暴露的下游缺陷；profile 增长余量（27.4MB 对 64MiB）登记为后续任务；随后 reseal、前置 tiers，新
+      failure_fix_rerun 事务（parent 仍为 v17 incomplete-recovery，v18 为 PASS 不能作 parent）重跑正式
+      Full（约 7-8 小时）并发布。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017
+      → GOV-007 阶段 5。超时校准待 owner 复核，O3 identity 缓存待 owner 决定。
+    acceptance_criteria: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧
+      loadfile profile 仍按原契约通过；pre-Full tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3
+      不跨调用缓存身份或 PASS
+    notes: production_effect=none；broker_action=none；agent_harness=claude_code；v18
+      Full 技术 PASS 但发布阶段因 16 MiB 读取预算失败，已按既有恢复路径收尾，本地/远端 main 均未变；Full 结果绑定候选，修复后须重跑，不绕过；owner_decision
+      2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx018-v19-task-20261002-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-592869a6555e080a744e5758e9a2e8c2
 projection:
   legacy_first_eight_cells:
   - DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
@@ -269,24 +309,26 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - v17 正式 Full（候选 597fe2bdb，failure_fix_rerun，绑定 v15 失败 summary 为 full_parent）派发
-    7 分钟后出现负载相关失败 test_complete_runtime_native_custody_inherited_and_released[success]：测试内嵌子进程脚本的
-    wait_exit(timeout=30) 在子进程继承约 8.5 万句柄、Full 负载下销毁耗时超过 30 秒时超时（v15 批量替换按设计跳过内嵌源码字面量而漏校准；v16
-    同节点通过属时序幸运）。一个失败节点已令该 Full 必然 FAIL，已停止驱动并用 --recover-full terminate_frozen_job
-    以 FAILED/INSUFFICIENT 终态收尾（full_incomplete_recovery.json sha256 020957685c93…335d41），不伪造
-    pytest FAIL。此前 v17 的发布阶段 parent 绑定修复（verify_recorded_parent）已提交，仍待正式 Full 通过后的真实发布验证。v18
-    修复（见 DEVX-018 需求 v17/v18 节）：测试内嵌源码中的固定亚分钟期限统一改为已校准 600 秒占位符替换；新增不变量测试禁止再出现；补 recovery
-    型 parent 的发布阶段交叉校验单测；先做重节点 smoke，再以新候选 failure_fix_rerun 绑定 v17 incomplete-recovery
-    重跑正式 Full（约 7-8 小时）并发布。P1/P4/O3 与重测仍在基线发布之后；超时校准待 owner 复核，O3 identity 缓存待 owner
-    决定。
+  - v18 正式 Full 技术 PASS（候选 a77a96e0a，14677 passed/4 skipped/0 failed，pytest 7:04:00），LOCAL_MAIN_FF_PRE
+    通过（v17 记录 parent 修复在真实事务上验证），但 local-publish 的原始发布 worker 在 hooks_created 之后以
+    WORKFLOW_ARTIFACT_BUDGET 被阻断（CLI 退出码 2，本地 main/索引未变，已用 local-publication-recover
+    收尾为 STABLE_FAILED_ATTEMPT/ORIGINAL_UNCHANGED，事务 FAILED 释放，租约 RELEASED）。根因：hold_hook_capsule_inputs
+    对 profile 检查捕获文件用默认 16 MiB 读取/托管预算，而真实 test_runtime_profile.json 为 27,370,306
+    字节（自 v15 起约 27 MB，此前无真实 Full 走到 local-publish，夹具 profile 仅几十 KB 故潜伏）。修复要改 src，候选必变，Full
+    须重跑。v19 方案（见 DEVX-018 需求 v18/v19 节）：为捕获文件使用显式命名预算（上限 64 MiB，超限 fail closed 且错误可读）；新增
+    large-full-profile-publish 夹具与端到端演练（真实 local-publish→hooks→ff-only→adoption→recover，profile>16
+    MiB），先复现再修复并一并修掉演练暴露的下游缺陷；profile 增长余量（27.4MB 对 64MiB）登记为后续任务；随后 reseal、前置 tiers，新
+    failure_fix_rerun 事务（parent 仍为 v17 incomplete-recovery，v18 为 PASS 不能作 parent）重跑正式
+    Full（约 7-8 小时）并发布。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017
+    → GOV-007 阶段 5。超时校准待 owner 复核，O3 identity 缓存待 owner 决定。
   - Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full
     tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
-  - production_effect=none；broker_action=none；agent_harness=claude_code；v17 期间宿主死机重启：前置
-    tier 已通过，architecture-fitness 被中断后在同一事务（Full 未派发）下恢复重跑并通过；v17 Full 因必然失败而提前终止，属已记录的恢复路径，非绕过；owner_decision
+  - production_effect=none；broker_action=none；agent_harness=claude_code；v18 Full 技术
+    PASS 但发布阶段因 16 MiB 读取预算失败，已按既有恢复路径收尾，本地/远端 main 均未变；Full 结果绑定候选，修复后须重跑，不绕过；owner_decision
     2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）
   docs_links: []
   terminal: false
-  canonical_row_sha256: 0dedb62ca5706152e8cf91c0209a460a5bd6d9b5879f3b2005240b6a92d3e176
-last_event_id: task-event-ae5678c953a9383511ea7e2aa5edebbd
+  canonical_row_sha256: 1337142abfb060e0e768d8c9cb1999a8b88dff0518987bb99500ff4e49a10ae5
+last_event_id: task-event-592869a6555e080a744e5758e9a2e8c2
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 24c3e765c49929f992e51e98250af574b921b2c775bec1f66d325c9bcd43234f
+fragment_checksum: 9a49f821d4591df202f7f5edd9a7c3761da64fc41f67172e9c1ed638bdb1d330

@@ -437,3 +437,44 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
 - 临时工作区：本段无新增（`D:/Work/devx018-focus17*`、`-smoke17`、`-rehearsal17`、`-fence17*` 等沿用上节清单，发布完成后统一
   审计清理）。v17 事务已作为 FAILED 终态证据释放（`full_incomplete_recovery.json` sha256
   `020957685c938ae7f2bdb56fa504c3b891b25b737619a9115acae33e44335d41`）。
+
+### 2026-10-02 v18 Full 通过与 v19 修复（发布 worker 的 16 MiB 读取预算）
+
+- v18（候选 `a77a96e0a`，事务 `gov-007-p1c-devx015-baseline-publication-20261002-v18`，`failure_fix_rerun`，绑定 v17 的
+  `full_incomplete_recovery.json` 为 `full_parent`）：五个前置 tier 全部通过；正式 Full 技术上 PASS，
+  `14677 passed, 4 skipped, 0 failed`，pytest 历时 7:04:00（驱动 25590 秒，退出码 0），v17 的内嵌固定期限修复在重负载下成立。
+  `LOCAL_MAIN_FF_PRE` checkpoint 通过，即 v17 的「记录 parent」修复在真实带 parent 的事务上得到验证。
+- 但 `local-publish`（原始发布 worker Job）在 `PUBLICATION_STAGE hooks_created` 之后、`ready_held` 之前以
+  `WORKFLOW_ARTIFACT_BUDGET` 被阻断（worker 结果 `FAIL`，CLI 退出码 2，`RECOVERY_REQUIRED`），本地 main/索引**未变**
+  （`main = origin/main = cbc31cdf`）。已用既有恢复路径 `local-publication-recover` 收尾
+  （`STABLE_FAILED_ATTEMPT`、`ORIGINAL_UNCHANGED`），事务以 FAILED 终态释放，租约 RELEASED；证据
+  `claude_v18_local_publish.json`、`claude_v18_local_publication_recover.json`，worker stdout/result 保留在
+  `outputs/validation_runtime/gov-007-p1c-devx015-full-20261002-v18/publication-*.{stdout,result.json}`。
+- 根因（既存缺陷，非环境问题）：`PublicationLifecycle.hold_hook_capsule_inputs`
+  （`workflow_coordination.py`）对 profile 检查所捕获的每个证据文件用默认预算读取并托管
+  （`bounded_regular_bytes(path)`、`hold_bound_read_file(...)` 默认 16 MiB），而真实 Full 的
+  `test_runtime_profile.json` 为 27,370,306 字节（v15 27,363,065、v16 27,360,659；O1 逐节点 profile 含约 1.47 万节点
+  及各 phase 记录）。profile 检查器本身已使用 `FULL_PROFILE_EVIDENCE_BUDGET_BYTES`（256 MiB），托管上限为 64 MiB，只有
+  hook 输入托管这一处仍是默认 16 MiB。此前没有任何一次真实 Full 走到 `local-publish`（v13–v15 Full 失败，v16 死于
+  `LOCAL_MAIN_FF_PRE` 的 parent 缺陷），而发布测试夹具的 profile 只有几十 KB，所以该缺陷一直潜伏。
+- 为什么必须再跑 Full：修复要改 `src/` 代码，候选必变，Full 结果绑定候选 sha、事务与租约，旧 PASS 不可复用（fail-closed）。
+  代价约 7–8 小时。为避免「每修一个潜伏缺陷就再等一轮 7 小时」，本轮把真实规模的发布阶段先在夹具里完整演练。
+- v19 修复设计（先记录、后实施；只放宽到既有的托管上限，不改变任何校验语义）：
+  1. 在 hook 输入托管路径为捕获文件使用显式、命名的预算：读取用 `FULL_PROFILE_EVIDENCE_BUDGET_BYTES` 的同源语义，
+     托管用 `hold_bound_read_file` 的 64 MiB 上限；超过上限时 fail closed 并给出明确错误码，而不是笼统的
+     `ARTIFACT_BUDGET`。同类位置（`prepare_git_launch` 等）逐一核对，只改确实可能触及 profile 的读取。
+  2. 新增大 profile 发布演练：夹具模式 `large-full-profile-publish`（与 `full-profile-publish` 相同，内层 Full 的测试文件
+     额外参数化大量节点，使 `test_runtime_profile.json` 超过 16 MiB），端到端测试走真实
+     `local-publish → hooks → ff-only → adoption → recover`，先在未修复代码上复现 `WORKFLOW_ARTIFACT_BUDGET`，
+     修复后通过；演练暴露的下游缺陷（hooks、git launch、adoption）在启动 Full 之前一并修复。
+  3. profile 增长余量：27.4 MB 对 64 MiB 托管上限约 2.4 倍余量，节点数增至约 3.4 万会再次触顶；本次不改 profile 结构，
+     登记为后续任务（评估精简逐节点 phase 记录或分层存储），并让超限错误可读。
+  4. v19 的 `full_parent` 仍用 v17 `full_incomplete_recovery.json`：v18 的 Full 是 PASS，不满足 parent 必须是失败结果的
+     约束；该 parent 对新候选并非复用（候选、事务、租约均不同）。
+- 验收：大 profile 演练在修复前红、修复后绿；既有发布夹具与 smoke 通过；reseal 后新候选的前置 tiers 与正式 Full 通过，
+  并走完 `LOCAL_MAIN_FF_PRE → local-publish → REMOTE_PUSH_PRE → 普通 push → CLEANUP_PRE → RELEASED`，
+  `local main = remote main = candidate`。
+- 状态/风险：超时校准仍为 `PROVISIONAL_PENDING_OWNER_REVIEW`；O3 identity 缓存待 owner 决定；本修复不改变任何投资解释、
+  评分、回测或数据路径，`production_effect=none`。
+- 临时工作区：沿用上节清单；本节新增 `D:/Work/devx018-smoke18`、`-unit18*`（发布完成后统一审计清理）。
+  v18 事务已作为 FAILED 终态证据释放。
