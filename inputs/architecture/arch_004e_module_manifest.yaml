@@ -16529,7 +16529,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.workflow_execution
   path: src/ai_trading_system/platform/architecture/workflow_execution.py
-  sha256: 97fa7a314b0657a2103468e35b3bed8f8cab9be73dd7cb687d766a9ef78881e7
+  sha256: dd0d4e3b35f581e7037bf2712ef933aad260b33d1b045a5e7e131448033a0354
   rule_id: platform_architecture
   owner_profile: platform
   owners:
