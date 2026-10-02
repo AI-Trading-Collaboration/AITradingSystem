@@ -1,0 +1,93 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
+  task_id_sha256: a0786c5e70a0321afc0b1726a945c287c7f9ec4058a666ababd203331103724c
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
+  title: null
+  domain: Validation runtime / Full heavy-node cost profiling, host telemetry and
+    variant redundancy audit
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Claude Code coordinator
+  requirement_refs:
+  - docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 依赖 DEVX-018 基线发布完成（v20 正式 Full 与发布）且需要安静主机后才能开始。基于
+    v18 Full profile 的逐节点拆解：墙钟只由 99 个重型节点（26.8 worker 小时，占 59% 的 7 个测试族 15.9 小时）除以并发数
+    K=4 决定，约 1.5 小时后轻量节点跑完，其后 5.5 小时只有 4 个重型节点在跑、12 个 worker 空闲；调度模拟 6.96 小时对实测 7.05
+    小时。待做三步：(1) 对 4 个代表重型节点做函数级计时（身份哈希、回放、git、进程启动占比，空闲对比高负载）；(2) 在 Full/重负载 pilot
+    期间采样主机 CPU、磁盘队列、句柄数，由数据决定 K 与启动间隔；(3) 审计 28/11/9/14 个变体测试族的变体维度是否真的改变昂贵的前置步骤，并给出不降低覆盖的共享夹具方案。任何测试结构调整须先经
+    owner 评审，另立任务实施；P1/P4/O3 仍属 DEVX-018，O3 身份缓存仍待 owner 决定。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变
+      Full 验收语义、不放宽任何校验；任何调度或测试改动必须另有任务、评审与重测；明确列出覆盖等价性论证和风险。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-10-02T13:04:38Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx020-v1-task-20261002-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    legacy_projection:
+    - DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
+    - Validation runtime / Full heavy-node cost profiling, host telemetry and variant
+      redundancy audit
+    - P1
+    - PROPOSED
+    - Claude Code coordinator
+    - 依赖 DEVX-018 基线发布完成（v20 正式 Full 与发布）且需要安静主机后才能开始。基于 v18 Full profile 的逐节点拆解：墙钟只由
+      99 个重型节点（26.8 worker 小时，占 59% 的 7 个测试族 15.9 小时）除以并发数 K=4 决定，约 1.5 小时后轻量节点跑完，其后
+      5.5 小时只有 4 个重型节点在跑、12 个 worker 空闲；调度模拟 6.96 小时对实测 7.05 小时。待做三步：(1) 对 4 个代表重型节点做函数级计时（身份哈希、回放、git、进程启动占比，空闲对比高负载）；(2)
+      在 Full/重负载 pilot 期间采样主机 CPU、磁盘队列、句柄数，由数据决定 K 与启动间隔；(3) 审计 28/11/9/14 个变体测试族的变体维度是否真的改变昂贵的前置步骤，并给出不降低覆盖的共享夹具方案。任何测试结构调整须先经
+      owner 评审，另立任务实施；P1/P4/O3 仍属 DEVX-018，O3 身份缓存仍待 owner 决定。
+    - 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变
+      Full 验收语义、不放宽任何校验；任何调度或测试改动必须另有任务、评审与重测；明确列出覆盖等价性论证和风险。
+    - production_effect=none；broker_action=none；agent_harness=claude_code；owner 2026-10-02
+      决定登记并在 v20 跑完后开始排查；排查只读 profile 与安静主机上的计时，不改生产行为。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:gov-007-devx020-v1-task-20261002-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-36562e113327b7a3a581645b14b79fab
+projection:
+  legacy_first_eight_cells:
+  - DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
+  - Validation runtime / Full heavy-node cost profiling, host telemetry and variant
+    redundancy audit
+  - P1
+  - PROPOSED
+  - Claude Code coordinator
+  - 依赖 DEVX-018 基线发布完成（v20 正式 Full 与发布）且需要安静主机后才能开始。基于 v18 Full profile 的逐节点拆解：墙钟只由
+    99 个重型节点（26.8 worker 小时，占 59% 的 7 个测试族 15.9 小时）除以并发数 K=4 决定，约 1.5 小时后轻量节点跑完，其后
+    5.5 小时只有 4 个重型节点在跑、12 个 worker 空闲；调度模拟 6.96 小时对实测 7.05 小时。待做三步：(1) 对 4 个代表重型节点做函数级计时（身份哈希、回放、git、进程启动占比，空闲对比高负载）；(2)
+    在 Full/重负载 pilot 期间采样主机 CPU、磁盘队列、句柄数，由数据决定 K 与启动间隔；(3) 审计 28/11/9/14 个变体测试族的变体维度是否真的改变昂贵的前置步骤，并给出不降低覆盖的共享夹具方案。任何测试结构调整须先经
+    owner 评审，另立任务实施；P1/P4/O3 仍属 DEVX-018，O3 身份缓存仍待 owner 决定。
+  - 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变
+    Full 验收语义、不放宽任何校验；任何调度或测试改动必须另有任务、评审与重测；明确列出覆盖等价性论证和风险。
+  - production_effect=none；broker_action=none；agent_harness=claude_code；owner 2026-10-02
+    决定登记并在 v20 跑完后开始排查；排查只读 profile 与安静主机上的计时，不改生产行为。
+  docs_links:
+  - docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md
+  terminal: false
+  canonical_row_sha256: dc85fbe80823509eff2dd0cbbb760d48517026cbf7f594998a2d772e47446f54
+last_event_id: task-event-36562e113327b7a3a581645b14b79fab
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 798a33f1b2138cacb5c7a9b9c09abf34ecc17f875b5ede3911929571168b8a08
