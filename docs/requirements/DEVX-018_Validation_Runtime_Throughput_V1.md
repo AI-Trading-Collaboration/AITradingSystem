@@ -560,3 +560,37 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
 - 状态/风险：超时与等待校准仍为 `PROVISIONAL_PENDING_OWNER_REVIEW`；本修复新增的退避窗口属同一类工程边界（非投资启发式），
   同样待 owner 复核；O3 identity 缓存仍待 owner 决定；`production_effect=none`。
 - 关联：DEVX-020 已于 2026-10-02 登记（c23fef466），排查在基线发布后的安静主机上进行。
+
+### 2026-10-03 v21 Full 通过与 v22 修复（hook ready 入口脚本未进入非 DEVX-015 任务的捕获清单）
+
+- v21（候选 `ee20d0647`，事务 `gov-007-p1c-devx015-baseline-publication-20261003-v21`，`failure_fix_rerun`，绑定 v20 的失败摘要为
+  `full_parent`）：五个前置 tier 通过；正式 Full 技术上 PASS：`14683 passed, 4 skipped, 0 failed`，pytest 7:21:37（驱动 26647 秒，
+  退出码 0）；v21 的 Job 进程列表退避修复期间无复发。`LOCAL_MAIN_FF_PRE` 通过。v19 的 16 MiB 预算修复在真实 27.4 MB profile 上得到验证：
+  发布 worker 越过了此前被拦住的 hook 输入读取/托管阶段。
+- 发布仍被拦住：`local-publish`（原始发布 worker Job）在 `PUBLICATION_STAGE hooks_created` 之后以
+  `LEASE_EXECUTION_PUBLICATION_HOOK_READY_ENTRYPOINT: execution lifecycle rejected` 失败（CLI 退出码 2，`RECOVERY_REQUIRED`），
+  本地 main/索引**未变**（`main = origin/main = cbc31cdf`）。已用 `local-publication-recover` 收尾（`STABLE_FAILED_ATTEMPT`、
+  `ORIGINAL_UNCHANGED`），事务 FAILED 释放，租约 RELEASED；v21 Full 摘要 sha256
+  `a67b6559952c05d6baf09b532593958e5f25fc89c6c31c3900700f7e5df5dd8a`（PASS，不能作 parent）。
+- 根因（既存设计缺口；与 v18 的预算缺陷同类：真实非 DEVX-015 任务第一次走到发布 worker 的下一阶段）：
+  `_validate_hook_capsule` 要求 hook 定义的 `entrypoint_path`（`scripts/architecture_arch005_publication_fence.py`）必须出现在 profile 检查的
+  捕获清单（`profile_inspection.captures`）中，使入口脚本的字节被哈希绑定。现场核对：该入口路径不在 v21 的 1,375 个捕获项里（精确与
+  忽略大小写/分隔符均不在）。检查器 `inspect_full_publication_profile` 的固定清单只含 `run_validation_tier.py`、
+  `validation_readiness.py`、`integration_publication_fence.py`，入口脚本只会随 DEVX-015 任务的 mandatory 验收行（`runner_identity`）被带入；
+  GOV-007 等非 DEVX-015 任务没有这些行，所以永远缺这一项。
+- 为什么此前没发现（含我自己的疏漏，如实记录）：①现有非 DEVX-015 回归测试 `test_unbound_full_profile_admits_non_devx015_publication`
+  只做到 `LOCAL_MAIN_FF_PRE` 就停止，从未执行 `local-publish` 的 worker 阶段；②所有走 worker 的测试都用 DEVX-015 的 mandatory 夹具，
+  入口脚本恰好被带进清单；③v19 我先写过一个真实走 `local-publish` 的大 profile 演练（修复前红、修复后绿），随后为了「一并覆盖远端与 closeout」
+  换成 `test_full_transaction_closeout_admits_full_profile_above_default_read_budget`，而它复用的 closeout 辅助函数用**普通 `git merge`**
+  快进，并不执行发布 worker；因此 v19 文档里「全链路通过」对 worker 路径的表述是夸大的，此处更正。
+- v22 修复设计（只增加绑定证据，不放宽任何校验）：
+  1. 在 `inspect_full_publication_profile` 的固定捕获清单加入 `scripts/architecture_arch005_publication_fence.py`（hook/worker 实际执行的入口），
+     与现有校验保持一致：被捕获即被哈希绑定，并在检查期间复核未变；
+  2. 恢复并加强演练：closeout 辅助函数新增 `publish_via_worker`（用真实 `local-publish` 替代普通 `git merge`）与 `mandatory`
+     参数；大 profile 重型测试改为「非 DEVX-015（`mandatory=False`）+ 大 profile + 真实 worker + 远端 push + closeout」，并保留
+     DEVX-015 的既有变体；先在未修复代码上复现 `HOOK_READY_ENTRYPOINT` 红，再修复转绿；
+  3. 演练若暴露 worker 后续阶段（git launch、hooks、adoption）的其他缺口，在启动 Full 之前一并修复，避免再付 7 小时。
+- parent：仍用 v20 的失败摘要（v21 是 PASS，不满足「parent 必须是失败结果」）。
+- 验收：演练在修复前红、修复后绿；既有发布夹具与 smoke 通过；reseal 后新候选的前置 tiers 与正式 Full 通过并走完
+  `LOCAL_MAIN_FF_PRE → local-publish → REMOTE_PUSH_PRE → 普通 push → CLEANUP_PRE → RELEASED`，`local main = remote main = candidate`。
+- 状态/风险：校准仍为 `PROVISIONAL_PENDING_OWNER_REVIEW`；O3 identity 缓存待 owner 决定；`production_effect=none`。
