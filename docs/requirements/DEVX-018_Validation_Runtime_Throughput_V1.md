@@ -496,3 +496,27 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
   `test_devx015_workflow_integration.py`、`test_devx018_validation_scheduling.py`、
   `test_arch_005_s5_task_source_cutover.py`（排除 real_full_chain）813 passed。
 - 仍待验证：新候选的前置 tiers 与正式 Full（含新增重节点），以及真实 27.4 MB profile 的发布（夹具为 20.3 MB）。
+
+### 2026-10-02 v19 Full 提前终止与 v20 修复（句柄编号巧合的测试）
+
+- v19（候选 `d2d7fb67a`，事务 `gov-007-p1c-devx015-baseline-publication-20261002-v19`，`failure_fix_rerun`，绑定 v17
+  `full_incomplete_recovery.json`）：五个前置 tier 全部通过；正式 Full 于 13:33 TST 派发，约 4 分钟后出现第一个失败节点
+  `tests/test_devx015_workflow_execution.py::test_nonallowlisted_inheritable_event_handle_does_not_reach_child`（gw9）：
+  `assert {'result': 1, 'error': 0} == {'result': 0, 'error': 6}`。
+- 根因（测试设计缺陷，非产品缺陷）：用例在父进程创建可继承 Event，让子进程对「该 Event 在父进程中的句柄数值」调用 `SetEvent`
+  并要求失败（ERROR_INVALID_HANDLE）。句柄数值只在进程内有意义；子进程恰好在同一数值上持有自己的某个 Event 时，调用会成功。
+  同一用例里真正的泄漏检查 `WaitForSingleObject(event, 0) == 258`（父进程 Event 未被置位）已通过，说明没有句柄泄漏。
+  它之前在 v16/v18 通过只是句柄编号运气，worker 的句柄编号随调度顺序而变。
+- 一个失败节点即令本次 Full 必然 FAIL；与 v17 相同处置：停止驱动树，用既有恢复路径
+  `run_validation_tier.py full --recover-full --recover-full-action terminate_frozen_job` 以 `FAILED` /
+  `full_incomplete_recovery.json`（sha256 `279fdf3f3edaa2fe0c76e31d41b7d8c413a2caea27e7a3b33edf835fe35af6dd`，INSUFFICIENT）
+  终态收尾，租约 RELEASED，main/origin/main 未变；说明见 `claude_v19_full_abort_note.md`。
+- v20 修复（只改该测试，不改生产代码）：事件改为具名 Event；子进程用 `OpenEventW` 按名字打开自己的句柄，再用
+  `CompareObjectHandles(父进程句柄数值, 自己的句柄)` 判断是否同一内核对象：被继承则为真，无效句柄或碰巧同数值的其他对象为假，
+  与句柄编号无关。保留父进程侧的 `stdout` 显式重定向断言。并用对照实验（`subprocess.Popen(close_fds=False)` 让子进程真实继承）
+  证明新探针能发现真正的泄漏，避免测试变成永远通过。同时全量审计其余用例是否有同类「按数值探测句柄」的写法。
+- v19 同候选还验证了前置 tier 的稳定性；v19 的 Full 因被提前终止，发布路径（含 27.4 MB profile 的真实发布）仍待下一次 Full 通过后验证。
+- 验收：新探针对照实验能检出继承泄漏、在 gw 重负载与空闲下都稳定；reseal 后新候选（parent 为 v19 recovery，因为 v19 是最近一次
+  失败的 Full）的前置 tiers 与正式 Full 通过，并走完 `LOCAL_MAIN_FF_PRE → local-publish → REMOTE_PUSH_PRE → 普通 push →
+  CLEANUP_PRE → RELEASED`，`local main = remote main = candidate`。
+- 状态/风险：超时校准仍为 `PROVISIONAL_PENDING_OWNER_REVIEW`；O3 identity 缓存待 owner 决定；`production_effect=none`。

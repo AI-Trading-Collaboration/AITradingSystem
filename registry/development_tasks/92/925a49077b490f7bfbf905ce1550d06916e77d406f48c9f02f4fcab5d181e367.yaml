@@ -19,19 +19,17 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: v18 正式 Full 技术 PASS（候选 a77a96e0a，14677
-    passed/4 skipped/0 failed，pytest 7:04:00），LOCAL_MAIN_FF_PRE 通过（v17 记录 parent 修复在真实事务上验证），但
-    local-publish 的原始发布 worker 在 hooks_created 之后以 WORKFLOW_ARTIFACT_BUDGET 被阻断（CLI
-    退出码 2，本地 main/索引未变，已用 local-publication-recover 收尾为 STABLE_FAILED_ATTEMPT/ORIGINAL_UNCHANGED，事务
-    FAILED 释放，租约 RELEASED）。根因：hold_hook_capsule_inputs 对 profile 检查捕获文件用默认 16 MiB
-    读取/托管预算，而真实 test_runtime_profile.json 为 27,370,306 字节（自 v15 起约 27 MB，此前无真实 Full
-    走到 local-publish，夹具 profile 仅几十 KB 故潜伏）。修复要改 src，候选必变，Full 须重跑。v19 方案（见 DEVX-018
-    需求 v18/v19 节）：为捕获文件使用显式命名预算（上限 64 MiB，超限 fail closed 且错误可读）；新增 large-full-profile-publish
-    夹具与端到端演练（真实 local-publish→hooks→ff-only→adoption→recover，profile>16 MiB），先复现再修复并一并修掉演练暴露的下游缺陷；profile
-    增长余量（27.4MB 对 64MiB）登记为后续任务；随后 reseal、前置 tiers，新 failure_fix_rerun 事务（parent 仍为
-    v17 incomplete-recovery，v18 为 PASS 不能作 parent）重跑正式 Full（约 7-8 小时）并发布。顺序不变：基线发布
-    → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时校准待 owner
-    复核，O3 identity 缓存待 owner 决定。
+  unstructured_legacy_blocker_or_next_step: v19 正式 Full（候选 d2d7fb67a，绑定 v17 recovery
+    为 parent）派发约 4 分钟后出现失败节点 test_nonallowlisted_inheritable_event_handle_does_not_reach_child：测试让子进程对父进程
+    Event 句柄的数值调用 SetEvent 并要求失败，但子进程恰好在同数值上持有自己的 Event 时会成功（句柄编号巧合，非泄漏：同用例的 WaitForSingleObject==258
+    已通过；v16/v18 通过属编号运气）。一个失败节点已令该 Full 必然 FAIL，已停止驱动并用 --recover-full terminate_frozen_job
+    以 FAILED/INSUFFICIENT 收尾（full_incomplete_recovery.json sha256 279fdf3f3eda…35af6dd），main/origin/main
+    未变。v20 修复（见 DEVX-018 需求 v19/v20 节）：仅改该测试，改用具名 Event + 子进程 OpenEventW + CompareObjectHandles
+    判断是否同一内核对象，并用 close_fds=False 对照实验证明能检出真实继承；审计其余同类写法；随后 reseal、前置 tiers，新 failure_fix_rerun
+    事务（parent 为 v19 recovery）重跑正式 Full（约 7-8 小时）并发布。v18 发现的发布 worker 16 MiB 预算缺陷已由
+    v19 修复并有大 profile 端到端演练，仍待真实 Full 通过后的真实发布验证。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 →
+    DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时校准待 owner 复核，O3 identity 缓存待 owner
+    决定。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile
@@ -301,6 +299,42 @@ events:
   - change:gov-007-devx018-v19-task-20261002-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-592869a6555e080a744e5758e9a2e8c2
+- schema_version: task_event.v1
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-02T04:39:46Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx018-v20-task-20261002-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-592869a6555e080a744e5758e9a2e8c2
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: v19 正式 Full（候选 d2d7fb67a，绑定 v17 recovery 为 parent）派发约 4
+      分钟后出现失败节点 test_nonallowlisted_inheritable_event_handle_does_not_reach_child：测试让子进程对父进程
+      Event 句柄的数值调用 SetEvent 并要求失败，但子进程恰好在同数值上持有自己的 Event 时会成功（句柄编号巧合，非泄漏：同用例的 WaitForSingleObject==258
+      已通过；v16/v18 通过属编号运气）。一个失败节点已令该 Full 必然 FAIL，已停止驱动并用 --recover-full terminate_frozen_job
+      以 FAILED/INSUFFICIENT 收尾（full_incomplete_recovery.json sha256 279fdf3f3eda…35af6dd），main/origin/main
+      未变。v20 修复（见 DEVX-018 需求 v19/v20 节）：仅改该测试，改用具名 Event + 子进程 OpenEventW + CompareObjectHandles
+      判断是否同一内核对象，并用 close_fds=False 对照实验证明能检出真实继承；审计其余同类写法；随后 reseal、前置 tiers，新 failure_fix_rerun
+      事务（parent 为 v19 recovery）重跑正式 Full（约 7-8 小时）并发布。v18 发现的发布 worker 16 MiB 预算缺陷已由
+      v19 修复并有大 profile 端到端演练，仍待真实 Full 通过后的真实发布验证。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4
+      → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时校准待 owner 复核，O3 identity 缓存待
+      owner 决定。
+    acceptance_criteria: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧
+      loadfile profile 仍按原契约通过；pre-Full tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3
+      不跨调用缓存身份或 PASS
+    notes: production_effect=none；broker_action=none；agent_harness=claude_code；v19
+      Full 因测试巧合依赖句柄数值而必然失败，已按既有恢复路径提前收尾，main/origin/main 未变；owner_decision 2026-09-30（优化顺序、O2、S1
+      并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx018-v20-task-20261002-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fbbdcaa1accd49c0a5fc2564871b120f
 projection:
   legacy_first_eight_cells:
   - DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
@@ -309,26 +343,23 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - v18 正式 Full 技术 PASS（候选 a77a96e0a，14677 passed/4 skipped/0 failed，pytest 7:04:00），LOCAL_MAIN_FF_PRE
-    通过（v17 记录 parent 修复在真实事务上验证），但 local-publish 的原始发布 worker 在 hooks_created 之后以
-    WORKFLOW_ARTIFACT_BUDGET 被阻断（CLI 退出码 2，本地 main/索引未变，已用 local-publication-recover
-    收尾为 STABLE_FAILED_ATTEMPT/ORIGINAL_UNCHANGED，事务 FAILED 释放，租约 RELEASED）。根因：hold_hook_capsule_inputs
-    对 profile 检查捕获文件用默认 16 MiB 读取/托管预算，而真实 test_runtime_profile.json 为 27,370,306
-    字节（自 v15 起约 27 MB，此前无真实 Full 走到 local-publish，夹具 profile 仅几十 KB 故潜伏）。修复要改 src，候选必变，Full
-    须重跑。v19 方案（见 DEVX-018 需求 v18/v19 节）：为捕获文件使用显式命名预算（上限 64 MiB，超限 fail closed 且错误可读）；新增
-    large-full-profile-publish 夹具与端到端演练（真实 local-publish→hooks→ff-only→adoption→recover，profile>16
-    MiB），先复现再修复并一并修掉演练暴露的下游缺陷；profile 增长余量（27.4MB 对 64MiB）登记为后续任务；随后 reseal、前置 tiers，新
-    failure_fix_rerun 事务（parent 仍为 v17 incomplete-recovery，v18 为 PASS 不能作 parent）重跑正式
-    Full（约 7-8 小时）并发布。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017
-    → GOV-007 阶段 5。超时校准待 owner 复核，O3 identity 缓存待 owner 决定。
+  - v19 正式 Full（候选 d2d7fb67a，绑定 v17 recovery 为 parent）派发约 4 分钟后出现失败节点 test_nonallowlisted_inheritable_event_handle_does_not_reach_child：测试让子进程对父进程
+    Event 句柄的数值调用 SetEvent 并要求失败，但子进程恰好在同数值上持有自己的 Event 时会成功（句柄编号巧合，非泄漏：同用例的 WaitForSingleObject==258
+    已通过；v16/v18 通过属编号运气）。一个失败节点已令该 Full 必然 FAIL，已停止驱动并用 --recover-full terminate_frozen_job
+    以 FAILED/INSUFFICIENT 收尾（full_incomplete_recovery.json sha256 279fdf3f3eda…35af6dd），main/origin/main
+    未变。v20 修复（见 DEVX-018 需求 v19/v20 节）：仅改该测试，改用具名 Event + 子进程 OpenEventW + CompareObjectHandles
+    判断是否同一内核对象，并用 close_fds=False 对照实验证明能检出真实继承；审计其余同类写法；随后 reseal、前置 tiers，新 failure_fix_rerun
+    事务（parent 为 v19 recovery）重跑正式 Full（约 7-8 小时）并发布。v18 发现的发布 worker 16 MiB 预算缺陷已由
+    v19 修复并有大 profile 端到端演练，仍待真实 Full 通过后的真实发布验证。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 →
+    DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时校准待 owner 复核，O3 identity 缓存待 owner
+    决定。
   - Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full
     tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
-  - production_effect=none；broker_action=none；agent_harness=claude_code；v18 Full 技术
-    PASS 但发布阶段因 16 MiB 读取预算失败，已按既有恢复路径收尾，本地/远端 main 均未变；Full 结果绑定候选，修复后须重跑，不绕过；owner_decision
-    2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）
+  - production_effect=none；broker_action=none；agent_harness=claude_code；v19 Full 因测试巧合依赖句柄数值而必然失败，已按既有恢复路径提前收尾，main/origin/main
+    未变；owner_decision 2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）
   docs_links: []
   terminal: false
-  canonical_row_sha256: 1337142abfb060e0e768d8c9cb1999a8b88dff0518987bb99500ff4e49a10ae5
-last_event_id: task-event-592869a6555e080a744e5758e9a2e8c2
+  canonical_row_sha256: d3b647d855899b889b4e6bad907cd141ec6e20c3733c92343009977713ef4b07
+last_event_id: task-event-fbbdcaa1accd49c0a5fc2564871b120f
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 9a49f821d4591df202f7f5edd9a7c3761da64fc41f67172e9c1ed638bdb1d330
+fragment_checksum: 4c9218d0dd5bf2a57e9c9206ad5b29fc057b398911e19ea6385e50f094dfaa82
