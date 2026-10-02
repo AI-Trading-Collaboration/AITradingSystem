@@ -2199,6 +2199,20 @@ def _active(api: Any, job: Any) -> int:
     return int(accounting.ActiveProcesses)
 
 
+# DEVX-018 v21: bounded settle time for an unexplained short Job process list. A member that is
+# exiting can be assigned to the Job without being listed for a moment, and under formal Full load
+# that window outlasts the former back-to-back retries (v20 gave up within a millisecond and the
+# contained Job was terminated). Engineering bound, not a model rule: provisional, owner review
+# pending (docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md); a gap that persists
+# through the whole window still fails closed exactly as before.
+JOB_LIST_SETTLE_FIRST_SECONDS = 0.001
+JOB_LIST_SETTLE_MAX_SECONDS = 0.512
+
+
+def _job_list_settle(seconds: float) -> None:
+    time.sleep(seconds)
+
+
 class _JobProcesses:
     """Keep observed kernel identities until their process objects are signaled."""
 
@@ -2240,6 +2254,7 @@ class _JobProcesses:
         capacity = 16
         queries: list[dict[str, int | bool]] = []
         previous_short: tuple[int, int] | None = None
+        settles = 0
         # Bounded allocation/retry guard, not a concurrency scheduling policy.
         while capacity <= 65536:
 
@@ -2270,6 +2285,12 @@ class _JobProcesses:
                 queries.append({"capacity": capacity, "ok": bool(ok), "winerror": error,
                                 "assigned": int(listing.assigned), "count": int(listing.count)})
                 capacity = max(capacity * 2, int(listing.assigned))
+                if ok and capacity <= 65536:
+                    # The buffer was large enough, so this is an unexplained short list, not
+                    # a growth step: give a transient state time to resolve before re-querying.
+                    _job_list_settle(min(JOB_LIST_SETTLE_FIRST_SECONDS * 2 ** settles,
+                                         JOB_LIST_SETTLE_MAX_SECONDS))
+                    settles += 1
                 continue
             if listing.count > capacity:
                 raise ExecutionContainmentError("JOB_PROCESS_LIST_BOUNDS")

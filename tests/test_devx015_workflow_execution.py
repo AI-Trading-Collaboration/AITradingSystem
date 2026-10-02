@@ -5824,12 +5824,16 @@ while not Path('canary.release').exists() and time.monotonic() < end:
 
 @pytest.mark.parametrize("active", [0, 1])
 @pytest.mark.parametrize("query_fault", ["short-success", "more-data", "accounting-denied"])
-def test_job_process_list_budget_retains_bounded_native_query_diagnostics(active, query_fault):
+def test_job_process_list_budget_retains_bounded_native_query_diagnostics(
+    active, query_fault, monkeypatch,
+):
     from types import SimpleNamespace
 
     from ai_trading_system.platform.architecture import workflow_execution as execution
 
     capacities = []
+    delays: list[float] = []
+    monkeypatch.setattr(execution, "_job_list_settle", delays.append)
 
     def query(job, kind, buffer, size, returned):
         assert job == 123
@@ -5870,12 +5874,23 @@ def test_job_process_list_budget_retains_bounded_native_query_diagnostics(active
     assert execution._job_process_list_diagnostics(error.value) == {
         **detail, "observation_only": True,
     }
+    # DEVX-018 v21: an unexplained short list on a sufficient buffer settles with a bounded
+    # backoff before each re-query; capacity growth (ERROR_MORE_DATA) never sleeps.
+    expected_delays = [] if query_fault == "more-data" else [
+        min(execution.JOB_LIST_SETTLE_FIRST_SECONDS * 2 ** index,
+            execution.JOB_LIST_SETTLE_MAX_SECONDS)
+        for index in range(len(capacities) - 1)
+    ]
+    assert delays == expected_delays
+    assert sum(delays) < 2.1
 
 
 @pytest.mark.parametrize("case", [
     "explained", "not-repeated", "active-mismatch", "unsignaled-retained", "accounting-denied",
 ])
-def test_job_process_list_short_list_accepted_only_when_retained_exits_explain_it(case):
+def test_job_process_list_short_list_accepted_only_when_retained_exits_explain_it(
+    case, monkeypatch,
+):
     """GOV-007 F2 (v13 native counters: assigned=65, listed=64=active, retained=65).
 
     A retained handle keeps one exited process object assigned to the job. Only a
@@ -5886,6 +5901,7 @@ def test_job_process_list_short_list_accepted_only_when_retained_exits_explain_i
 
     from ai_trading_system.platform.architecture import workflow_execution as execution
 
+    monkeypatch.setattr(execution, "_job_list_settle", lambda seconds: None)
     listings = []
 
     def query(job, kind, buffer, size, returned):
@@ -5920,6 +5936,46 @@ def test_job_process_list_short_list_accepted_only_when_retained_exits_explain_i
     with pytest.raises(execution.ExecutionContainmentError, match="JOB_PROCESS_LIST_BUDGET"):
         processes.collect()
     assert listings == [2 ** power for power in range(4, 17)]
+
+
+@pytest.mark.parametrize("transient_queries", [1, 3, 11])
+def test_job_process_list_transient_short_list_settles_instead_of_failing(
+    transient_queries, monkeypatch,
+):
+    """DEVX-018 v21: v20 gave up within a millisecond on a transient assigned>listed state.
+
+    The state resolves after a few queries (a member finishing its exit). With a bounded
+    backoff between queries the collector returns instead of terminating the Job; the
+    persistent case keeps failing closed (see the budget diagnostics test above).
+    """
+    from types import SimpleNamespace
+
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+
+    delays: list[float] = []
+    monkeypatch.setattr(execution, "_job_list_settle", delays.append)
+    listings: list[int] = []
+
+    def query(job, kind, buffer, size, returned):
+        assert job == 123
+        if kind == 1:
+            buffer._obj.ActiveProcesses = 0
+            return True
+        assert kind == 3
+        listing = buffer._obj
+        listings.append(len(listing.pids))
+        listing.assigned, listing.count = (1 if len(listings) <= transient_queries else 0), 0
+        return True
+
+    processes = execution._JobProcesses(SimpleNamespace(QueryInformationJobObject=query), 123)
+    processes.collect()
+    assert len(listings) == transient_queries + 1
+    assert delays == [
+        min(execution.JOB_LIST_SETTLE_FIRST_SECONDS * 2 ** index,
+            execution.JOB_LIST_SETTLE_MAX_SECONDS)
+        for index in range(transient_queries)
+    ]
+    assert not processes.handles
 
 
 @pytest.mark.parametrize("fault", [

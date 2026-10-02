@@ -2132,6 +2132,8 @@ def test_capture_retains_bounded_job_query_diagnostics_before_public_error_wrap(
     planned = engine.plan(case.scope)
     actual_wait = execution.WindowsJobProcess.wait
     main_before = _git(case.main_root, "rev-parse", "HEAD")
+    # DEVX-018 v21: the collector now settles between unexplained short lists; skip the real sleeps.
+    monkeypatch.setattr(execution, "_job_list_settle", lambda seconds: None)
 
     def query(job, kind, buffer, size, returned):
         if kind == 1:
