@@ -45,6 +45,8 @@ LOADED_HOST_CLI_TIMEOUT_SECONDS = 1800
 # In-child hang guards (child exit waits and release-file waits) also scale with load: a child
 # inheriting ~85k file-custody handles needed >30s just to tear down under Full load (DEVX-018 v17).
 LOADED_HOST_WAIT_TIMEOUT_SECONDS = 600
+# Default byte budget of bounded_regular_bytes/hold_bound_read_file (workflow_contract.py).
+DEFAULT_READ_FILE_BUDGET_BYTES = 16 * 1024 * 1024
 CHECKOUT_POLICY = ROOT / "config/architecture/arch_005_s4d_checkout_guard.yaml"
 PARALLEL_POLICY = ROOT / "config/architecture/arch_005_parallel_control_policy.yaml"
 TASK_ID = "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1"
@@ -1325,6 +1327,23 @@ def _publication_witness_writer_source() -> str:
         "def publish_witness(path, witness):\n"
         " write_json_atomic(path, witness)\n"
     )
+
+
+@pytest.mark.parametrize("canonical_merge_repository", ["large-full-profile-publish"], indirect=True)
+def test_full_transaction_closeout_admits_full_profile_above_default_read_budget(
+    canonical_merge_repository,
+) -> None:
+    """DEVX-018 v19: a real Full profile can exceed the 16 MiB default read budget.
+
+    The v18 Full wrote a 27 MB test_runtime_profile.json; the original publication worker then
+    stopped with WORKFLOW_ARTIFACT_BUDGET while holding hook inputs. Fixtures used to write a
+    few KB, so no publication test ever saw a realistic profile. This runs the whole chain
+    (local publication, remote push, closeout receipt) over a profile above the default budget.
+    """
+    publication_checkout, _scope = canonical_merge_repository
+    _run_actual_publication_fixture(publication_checkout, "normal")
+    profile = publication_checkout / "outputs/validation_runtime/mandatory/test_runtime_profile.json"
+    assert profile.stat().st_size > DEFAULT_READ_FILE_BUDGET_BYTES, profile.stat().st_size
 
 
 def test_publication_witness_is_invisible_until_complete(tmp_path, monkeypatch) -> None:

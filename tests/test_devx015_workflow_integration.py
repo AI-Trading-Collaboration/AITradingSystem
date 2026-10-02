@@ -2669,7 +2669,7 @@ def _synthetic_publication_ready(root):
     "incomplete-objects", "grant-resume", "false-as-zero", "profile-event", "profile-dispatch-zero",
     "profile-duplicate", "runtime-count", "runtime-size", "runtime-hash", "runtime-executable",
     "runtime-file-sha", "file-identity", "file-parent", "file-root", "file-budget",
-    "hook-leaf", "capture-sha", "control-path", "extra-file", "namespace", "missing-entrypoint",
+    "capture-budget", "hook-leaf", "capture-sha", "control-path", "extra-file", "namespace", "missing-entrypoint",
     "runtime-root-relative", "runtime-root-traversal",
 ])
 def test_publication_ready_binding_shape(tmp_path, fault):
@@ -2726,7 +2726,11 @@ def test_publication_ready_binding_shape(tmp_path, fault):
     elif fault == "runtime-root-traversal":
         files[2]["root"] += "/.."
     elif fault == "file-budget":
-        files[5]["size_bytes"] = 16 * 1024**2 + 1
+        # Non-capture rows (created hook files, control inputs) keep the generic 16 MiB default.
+        files[3]["size_bytes"] = 16 * 1024**2 + 1
+    elif fault == "capture-budget":
+        # Captured Full evidence may exceed 16 MiB (DEVX-018 v19) but never the 64 MiB hard cap.
+        files[5]["size_bytes"] = 64 * 1024**2 + 1
     elif fault == "hook-leaf":
         files[3]["identity"] = [1, 99]
     elif fault == "capture-sha":
@@ -2743,8 +2747,10 @@ def test_publication_ready_binding_shape(tmp_path, fault):
     if fault == "none":
         _validate_hook_capsule(execution, actor="integration-coordinator")
     else:
-        with pytest.raises((ParallelControlError, contract.WorkflowContractError)):
+        with pytest.raises((ParallelControlError, contract.WorkflowContractError)) as rejected:
             _validate_hook_capsule(execution, actor="integration-coordinator")
+        if fault in {"file-budget", "capture-budget"}:
+            assert "PUBLICATION_HOOK_READY_FILE" in str(rejected.value)
     assert list(tmp_path.iterdir()) == []
 
 
@@ -3633,6 +3639,18 @@ tests/test_arch_005_task_registry_shadow.py
             target.write_bytes(b"# Synthetic compatibility source; no runtime behavior.\n")
 
 
+# DEVX-018 v19: the real Full profile (~27 MB for ~14.7k nodes) exceeds the 16 MiB default
+# read budget that earlier fixtures never approached. The large mode pads every fixture test
+# file with trivially parametrized nodes so the inner Full writes a profile above that budget.
+LARGE_PROFILE_PADDING_NODES_PER_FILE = 160
+LARGE_PROFILE_PADDING_SOURCE = (
+    "\nimport pytest\n\n\n"
+    "@pytest.mark.parametrize('padding', range(" + str(LARGE_PROFILE_PADDING_NODES_PER_FILE) + "))\n"
+    "def test_padding(padding):\n"
+    "    assert padding >= 0\n"
+)
+
+
 @pytest.fixture
 def canonical_merge_repository(small_repository: Path, monkeypatch: pytest.MonkeyPatch, request):
     """Build source objects first, then real canonical registry/CLI publication authority."""
@@ -3646,6 +3664,9 @@ def canonical_merge_repository(small_repository: Path, monkeypatch: pytest.Monke
         fixture_mode == "native-full-profile-publish" or linked_native or independent_native
     )
     if native_host:
+        fixture_mode = "full-profile-publish"
+    large_profile = fixture_mode == "large-full-profile-publish"
+    if large_profile:
         fixture_mode = "full-profile-publish"
     bound_parent = fixture_mode == "full-readiness-profile-parent"
     if bound_parent:
@@ -3799,6 +3820,8 @@ def canonical_merge_repository(small_repository: Path, monkeypatch: pytest.Monke
                 template = test_path.read_text(encoding="utf-8").replace(
                     "{'gw0','gw1'}", "{f'gw{index}' for index in range(16)}",
                 )
+                if large_profile:
+                    template += LARGE_PROFILE_PADDING_SOURCE
                 test_path.write_text(template, encoding="utf-8", newline="\n")
                 extra_nodes = []
                 for index in range(1, 16):

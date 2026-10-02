@@ -478,3 +478,21 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
   评分、回测或数据路径，`production_effect=none`。
 - 临时工作区：沿用上节清单；本节新增 `D:/Work/devx018-smoke18`、`-unit18*`（发布完成后统一审计清理）。
   v18 事务已作为 FAILED 终态证据释放。
+
+#### v19 实现与演练结果（2026-10-02）
+
+- 实现（只放宽到既有托管上限，校验语义不变）：`workflow_coordination.py` 新增命名常量
+  `PUBLICATION_CAPTURE_BUDGET_BYTES`（64 MiB，读取器硬上限），`hold_hook_capsule_inputs` 对 profile 检查捕获文件使用该预算读取并托管；
+  hook ready 记录校验对「捕获文件行」的大小上限由 16 MiB 同步为该常量，其余非捕获行（创建的 hook 文件、事务与策略）仍为 16 MiB。
+  超过 64 MiB 的捕获文件仍 fail closed（`PUBLICATION_HOOK_READY_FILE`）。运行时代码文件原本就是 64 MiB，未改。
+- 大 profile 发布演练：夹具模式 `large-full-profile-publish`（内层 Full 测试模板追加 160 个参数化节点，复杂度可忽略），
+  `_run_actual_profile_full` 按模板自动列出 padding 节点以满足完整耗时 profile 的集合/顺序校验；新增重节点
+  `test_full_transaction_closeout_admits_full_profile_above_default_read_budget`（真实 local-publish → hooks → ff-only →
+  adoption → 远端 push → closeout receipt，并断言 profile 大于 16 MiB），已登记到调度清单（版本 4，重节点）。
+  修复前：同一夹具（20,304,612 字节 profile）复现与生产完全一致的 `PUBLICATION_STAGE hooks_created` 后
+  `WORKFLOW_ARTIFACT_BUDGET`；修复后全链路通过（15 分 49 秒，空闲主机）。`test_publication_ready_binding_shape` 的
+  `file-budget` 改为钉住非捕获行的 16 MiB 上限，并新增 `capture-budget` 钉住捕获行 64 MiB 上限。
+- 聚焦回归：`tests/test_validation_tier_script.py`、`test_arch_005_integration_publication_fence.py`、
+  `test_devx015_workflow_integration.py`、`test_devx018_validation_scheduling.py`、
+  `test_arch_005_s5_task_source_cutover.py`（排除 real_full_chain）813 passed。
+- 仍待验证：新候选的前置 tiers 与正式 Full（含新增重节点），以及真实 27.4 MB profile 的发布（夹具为 20.3 MB）。

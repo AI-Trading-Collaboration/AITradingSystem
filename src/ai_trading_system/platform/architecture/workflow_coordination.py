@@ -42,6 +42,12 @@ if TYPE_CHECKING:
         WindowsJobProcess,
     )
 
+# Hook-input custody of the Full profile inspection captures. The captured runtime profile grows with the
+# node count (about 1.9 KB per node, 27.4 MB for the v18 Full), so it exceeds the generic 16 MiB artifact
+# default; DEVX-018 v19. This is an engineering ceiling, not a model rule: the reader's 64 MiB hard cap
+# applies and larger evidence fails closed instead of being truncated or skipped.
+PUBLICATION_CAPTURE_BUDGET_BYTES = 64 * 1024 * 1024
+
 _REQUEST_KEYS = {
     "schema_version",
     "request_id",
@@ -1459,7 +1465,11 @@ def _validate_hook_ready(execution: Mapping[str, Any]) -> None:
                 or not isinstance(row["relative"], str)
                 or portable_path(row["relative"]) != row["relative"]
                 or type(row["size_bytes"]) is not int
-                or not 0 <= row["size_bytes"] <= (64 if index < count else 16) * 1024**2):
+                or not 0 <= row["size_bytes"] <= (
+                    PUBLICATION_CAPTURE_BUDGET_BYTES
+                    if index < count or count + 2 <= index < len(files) - 2
+                    else 16 * 1024**2
+                )):
             _fail("PUBLICATION_HOOK_READY_FILE")
         root_name = row["root"]
         if root_name not in roots:
@@ -3162,6 +3172,7 @@ class PublicationLifecycle(ExecutionLifecycle):
 
             def retain(
                 path: Path, raw: bytes, *, creation: Mapping[str, Any] | None = None,
+                budget: int = 16 * 1024 * 1024,
             ) -> None:
                 target_root = root if path.is_relative_to(root) else policy.parent
                 if (target_root not in roots or (target_root != root and path != policy)
@@ -3184,6 +3195,7 @@ class PublicationLifecycle(ExecutionLifecycle):
                 files.append(stack.enter_context(hold_bound_read_file(
                     target_root, relative.as_posix(), expected=raw, expected_identity=pair,
                     expected_root_identity=roots[target_root], expected_parent_identities=parents,
+                    budget=budget,
                 )))
 
             for row, creation in zip(capsule["definition"]["files"], capsule["objects"][1:],
@@ -3193,11 +3205,11 @@ class PublicationLifecycle(ExecutionLifecycle):
                 path = Path(row["path"])
                 if not path.is_relative_to(root) or ".." in path.parts:
                     _fail("PUBLICATION_HOOK_INPUT_PATH")
-                raw = bounded_regular_bytes(path)
+                raw = bounded_regular_bytes(path, budget=PUBLICATION_CAPTURE_BUDGET_BYTES)
                 if (len(raw) != row["size_bytes"]
                         or hashlib.sha256(raw).hexdigest() != row["sha256"]):
                     _fail("PUBLICATION_HOOK_INPUT_CHANGED")
-                retain(path, raw)
+                retain(path, raw, budget=PUBLICATION_CAPTURE_BUDGET_BYTES)
                 if (path.name == "execution_validation_identity.json"
                         and row["sha256"] == identity_sha):
                     original_identities.append(json.loads(raw))

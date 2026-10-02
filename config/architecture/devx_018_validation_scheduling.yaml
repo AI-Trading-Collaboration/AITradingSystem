@@ -1,7 +1,7 @@
 schema_version: devx_018_validation_scheduling.v1
 policy_id: devx_018_governed_split_scope_scheduling
 owner: validation_operations
-version: 3
+version: 4
 status: ACTIVE_PILOT
 requirement: docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
 rationale: >-
@@ -57,9 +57,12 @@ split_scope_files:
   - tests/test_devx015_workflow_execution.py
   - tests/test_devx015_workflow_integration.py
   - tests/test_governed_development_skill.py
+# v4 (DEVX-018 v19): adds the large-profile closeout node, a real publication chain over a
+# Full profile above the 16 MiB default read budget; it is heavy like its siblings.
 real_full_chain:
   marker: real_full_chain
   functions:
+    - tests/test_arch_005_integration_publication_fence.py::test_full_transaction_closeout_admits_full_profile_above_default_read_budget
     - tests/test_arch_005_integration_publication_fence.py::test_full_transaction_replays_candidate_publish_and_closeout_receipt
     - tests/test_arch_005_integration_publication_fence.py::test_local_publication_inspection_cli_after_actual_full
     - tests/test_arch_005_integration_publication_fence.py::test_original_publication_cli_ff_only_and_independent_recovery

@@ -5364,6 +5364,7 @@ def _run_actual_profile_full(
     driver_timeout: int = 1200,
     live_observer=None,
     mandatory: bool = True,
+    padding_nodes_per_file: int | None = None,
 ) -> tuple[dict[str, object], Path, str, dict[str, str]]:
     """Real canonical/Job/profile chain; isolated probes, not original V3 oracles.
 
@@ -5395,9 +5396,28 @@ def _run_actual_profile_full(
         manifest = safe_load_yaml_path(root / "inputs/architecture/arch_004e_test_manifest.yaml")
         test_files = [row["path"] for row in manifest["tests"] if row["file_role"] == "test"]
         assert len(test_files) >= 16
+    # DEVX-018 v19: padded fixtures collect extra parametrized nodes after test_required, and
+    # the complete duration profile must list the exact collection in order. The large-profile
+    # fixture mode marks itself by padding its test template, so detect that here.
+    if padding_nodes_per_file is None:
+        from test_devx015_workflow_integration import LARGE_PROFILE_PADDING_NODES_PER_FILE
+
+        padding_nodes_per_file = (
+            LARGE_PROFILE_PADDING_NODES_PER_FILE
+            if "def test_padding(" in (root / "tests/test_full_job.py").read_text(encoding="utf-8")
+            else 0
+        )
+    nodeids = [
+        nodeid
+        for path in test_files
+        for nodeid in (
+            path + "::test_required",
+            *(f"{path}::test_padding[{index}]" for index in range(padding_nodes_per_file)),
+        )
+    ]
     _write_complete_profile(
         duration,
-        nodeids=[path + "::test_required" for path in test_files],
+        nodeids=nodeids,
         observed_seconds=dict.fromkeys(test_files, 1.0),
     )
     if not whole_readiness:
