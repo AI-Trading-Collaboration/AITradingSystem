@@ -7269,7 +7269,8 @@ def test_mandatory_exchange_separates_launcher_and_candidate(tmp_path, monkeypat
         pytest.fail("trusted parent must not bind its loaded modules to candidate source")
 
     worker_input = {"checkout_identity": {}, "origin_valid": True,
-                    "runtime_identity": {"runtime": "bound"}, "implementation_identity": sources}
+                    "runtime_identity": {"runtime": "bound"}, "implementation_identity": sources,
+                    "runtime_verification": "INVENTORY_METADATA_V1"}
     monkeypatch.setattr(coordination, "WindowsWorkerExchange", ExchangeProbe)
     monkeypatch.setattr(runner, "bind_acceptance_checkout", lambda *args: {})
     monkeypatch.setattr(runner, "bind_mandatory_acceptance", lambda *args: binding)

@@ -13,6 +13,7 @@ import os
 import re
 import stat
 import subprocess
+import threading
 from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
@@ -49,12 +50,57 @@ def portable_path(value: Any) -> str:
     return value
 
 
+_CUSTODY_KERNEL_LOCK = threading.Lock()
+_CUSTODY_KERNEL: Any = None
+
+
+def _custody_kernel() -> Any:
+    """Bind kernel32 for the custody reader once per process (DEVX-018 O3-a).
+
+    The reader used to build a new ctypes library object and re-declare every prototype on each
+    file. The prototypes never change, and a bound function pointer is safe to call from several
+    threads, so the declaration is done once under a lock and then only read.
+    """
+    global _CUSTODY_KERNEL
+    api = _CUSTODY_KERNEL
+    if api is None:
+        with _CUSTODY_KERNEL_LOCK:
+            api = _CUSTODY_KERNEL
+            if api is None:
+                from ctypes import wintypes as w
+
+                api = ctypes.WinDLL("kernel32", use_last_error=True)
+                api.CreateFileW.argtypes = [
+                    w.LPCWSTR,
+                    w.DWORD,
+                    w.DWORD,
+                    ctypes.c_void_p,
+                    w.DWORD,
+                    w.DWORD,
+                    w.HANDLE,
+                ]
+                api.CreateFileW.restype = w.HANDLE
+                api.ReOpenFile.argtypes = [w.HANDLE, w.DWORD, w.DWORD, w.DWORD]
+                api.ReOpenFile.restype = w.HANDLE
+                api.GetFinalPathNameByHandleW.argtypes = [w.HANDLE, w.LPWSTR, w.DWORD, w.DWORD]
+                api.GetFinalPathNameByHandleW.restype = w.DWORD
+                api.CloseHandle.argtypes = [w.HANDLE]
+                api.CloseHandle.restype = w.BOOL
+                api.GetFileInformationByHandleEx.argtypes = [
+                    w.HANDLE, ctypes.c_int, ctypes.c_void_p, w.DWORD,
+                ]
+                api.GetFileInformationByHandleEx.restype = w.BOOL
+                _CUSTODY_KERNEL = api
+    return api
+
+
 def bounded_regular_bytes(
     path: Path,
     *,
     budget: int = 16 * 1024 * 1024,
     expected_identity: tuple[int, int] | None = None,
     expected_link_count: int = 1,
+    verified_ancestors: set[Path] | None = None,
 ) -> bytes:
     """Read a frozen, caller-authorized name, rejecting reparse/replace aliases.
 
@@ -79,34 +125,25 @@ def bounded_regular_bytes(
         or any(type(value) is not int or value < 0 for value in expected_identity)
     ):
         raise WorkflowContractError("ARTIFACT_IDENTITY")
-    for entry in (*reversed(path.parents), path):
+    chain = (*reversed(path.parents), path)
+    for position, entry in enumerate(chain):
+        is_ancestor = position < len(chain) - 1
+        # DEVX-018 O3-b: one caller-owned set shares ancestor checks inside a single identity
+        # computation only. The leaf is always checked, and the final-path comparison after the
+        # handle opens still rejects an ancestor that was redirected after its check.
+        if is_ancestor and verified_ancestors is not None and entry in verified_ancestors:
+            continue
         info = entry.lstat()
         if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & 0x400:
             raise WorkflowContractError("REPARSE_PATH", str(path))
+        if is_ancestor and verified_ancestors is not None:
+            verified_ancestors.add(entry)
     if os.name != "nt":
         raise WorkflowContractError("PLATFORM_UNSUPPORTED", "Windows file identity required")
     import msvcrt
     from ctypes import wintypes as w
 
-    api = ctypes.WinDLL("kernel32", use_last_error=True)
-    api.CreateFileW.argtypes = [
-        w.LPCWSTR,
-        w.DWORD,
-        w.DWORD,
-        ctypes.c_void_p,
-        w.DWORD,
-        w.DWORD,
-        w.HANDLE,
-    ]
-    api.CreateFileW.restype = w.HANDLE
-    api.ReOpenFile.argtypes = [w.HANDLE, w.DWORD, w.DWORD, w.DWORD]
-    api.ReOpenFile.restype = w.HANDLE
-    api.GetFinalPathNameByHandleW.argtypes = [w.HANDLE, w.LPWSTR, w.DWORD, w.DWORD]
-    api.GetFinalPathNameByHandleW.restype = w.DWORD
-    api.CloseHandle.argtypes = [w.HANDLE]
-    api.CloseHandle.restype = w.BOOL
-    api.GetFileInformationByHandleEx.argtypes = [w.HANDLE, ctypes.c_int, ctypes.c_void_p, w.DWORD]
-    api.GetFileInformationByHandleEx.restype = w.BOOL
+    api = _custody_kernel()
     # No data access: a replaced protected file must not be opened for reading
     # merely to discover its identity. Metadata observation shares existing
     # readers/writers; the later read handle establishes deny-write/delete custody.

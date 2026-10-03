@@ -710,6 +710,318 @@ def test_bound_read_file_explicit_runtime_budget_preserves_default(tmp_path, cas
     }
 
 
+def _count_lstat_calls(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    calls: list[str] = []
+    original = Path.lstat
+
+    def counting(self: Path, *args: Any, **kwargs: Any) -> Any:
+        calls.append(str(self))
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "lstat", counting)
+    return calls
+
+
+def test_bounded_read_shares_ancestor_checks_only_through_the_callers_set(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """DEVX-018 O3-b: one set shares ancestor reparse checks inside a single computation."""
+    from ai_trading_system.platform.architecture.workflow_contract import bounded_regular_bytes
+
+    directory = tmp_path / "a" / "b"
+    directory.mkdir(parents=True)
+    first, second = directory / "one.bin", directory / "two.bin"
+    first.write_bytes(b"1")
+    second.write_bytes(b"2")
+    calls = _count_lstat_calls(monkeypatch)
+    # Without a set every ancestor is checked on every read (the original behavior).
+    bounded_regular_bytes(first)
+    unshared = len(calls)
+    calls.clear()
+    bounded_regular_bytes(second)
+    assert len(calls) == unshared > 3
+    # With a shared set the second read only checks its leaf.
+    shared: set[Path] = set()
+    calls.clear()
+    assert bounded_regular_bytes(first, verified_ancestors=shared) == b"1"
+    assert len(calls) == unshared
+    calls.clear()
+    assert bounded_regular_bytes(second, verified_ancestors=shared) == b"2"
+    assert calls == [str(second)]
+    # The set never leaks into a call that does not pass it.
+    calls.clear()
+    bounded_regular_bytes(first)
+    assert len(calls) == unshared
+
+
+def _make_junction(link: Path, target: Path) -> None:
+    result = subprocess.run(
+        ["cmd.exe", "/d", "/c", "mklink", "/J", str(link), str(target)],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_bounded_read_still_rejects_reparse_ancestors_with_a_shared_set(tmp_path: Path) -> None:
+    from ai_trading_system.platform.architecture.workflow_contract import (
+        WorkflowContractError,
+        bounded_regular_bytes,
+    )
+
+    real = tmp_path / "real"
+    real.mkdir()
+    (real / "file.bin").write_bytes(b"x")
+    link = tmp_path / "link"
+    _make_junction(link, real)
+    with pytest.raises(WorkflowContractError, match="REPARSE_PATH"):
+        bounded_regular_bytes(link / "file.bin", verified_ancestors=set())
+
+
+def test_bounded_read_with_shared_set_catches_an_ancestor_redirected_after_its_check(
+    tmp_path: Path,
+) -> None:
+    """The skipped lstat is backed by the post-open final-path comparison."""
+    from ai_trading_system.platform.architecture.workflow_contract import (
+        WorkflowContractError,
+        bounded_regular_bytes,
+    )
+
+    ancestor = tmp_path / "ancestor"
+    ancestor.mkdir()
+    (ancestor / "file.bin").write_bytes(b"x")
+    shared: set[Path] = set()
+    assert bounded_regular_bytes(ancestor / "file.bin", verified_ancestors=shared) == b"x"
+    assert ancestor in shared
+    moved = tmp_path / "moved"
+    ancestor.rename(moved)
+    _make_junction(ancestor, moved)  # The checked name now redirects to another directory.
+    with pytest.raises(WorkflowContractError, match="HANDLE_PATH_CHANGED"):
+        bounded_regular_bytes(ancestor / "file.bin", verified_ancestors=shared)
+
+
+def test_custody_kernel_binding_is_created_once_and_shared_by_threads() -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    from ai_trading_system.platform.architecture import workflow_contract as contract
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        bindings = list(pool.map(lambda _: contract._custody_kernel(), range(64)))
+    assert all(binding is bindings[0] for binding in bindings)
+    assert bindings[0] is contract._custody_kernel()
+
+
+def _small_runtime_files(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> dict[Path, bytes]:
+    """A few real files standing in for the distribution inventory (RECORD enumeration is fixed)."""
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+
+    site = tmp_path / "site"
+    site.mkdir()
+    files = {
+        site / "alpha.py": b"VALUE = 1\n",
+        site / "beta.py": b"VALUE = 2\n",
+        site / "native.dll": b"\x00binary",
+        site / "empty.py": b"",
+    }
+    for path, raw in files.items():
+        path.write_bytes(raw)
+    monkeypatch.setattr(
+        execution, "_acceptance_distribution_paths",
+        lambda distributions, module_origins=None: set(files),
+    )
+    return files
+
+
+def _small_inventory(files: dict[Path, bytes]) -> list[list[Any]]:
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+
+    inventory: list[list[Any]] = []
+    code = execution._acceptance_distribution_code([], module_origins={}, inventory=inventory)
+    assert code["file_count"] == len(files) == len(inventory)
+    return inventory
+
+
+def test_runtime_inventory_export_describes_exactly_the_bytes_the_digest_commits(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    """DEVX-018 O3-c: the exported rows are the very rows the controller's digest covers."""
+    import json as jsonlib
+
+    files = _small_runtime_files(monkeypatch, tmp_path)
+    inventory = _small_inventory(files)
+    assert [row[0] for row in inventory] == sorted((str(path) for path in files), key=str)
+    digest = hashlib.sha256()
+    for path_text, size, sha256, mtime_ns, file_id in inventory:
+        path = Path(path_text)
+        info = path.lstat()
+        assert (size, sha256) == (len(files[path]), hashlib.sha256(files[path]).hexdigest())
+        assert (mtime_ns, file_id) == (info.st_mtime_ns, info.st_ino)
+        digest.update(jsonlib.dumps([path_text, size, sha256], separators=(",", ":")).encode())
+        digest.update(b"\n")
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+
+    assert execution._acceptance_distribution_code([], module_origins={})["sha256"] == (
+        digest.hexdigest()
+    )
+
+
+def test_inventory_verification_reproduces_the_identity_and_serves_checked_bytes(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    from ai_trading_system.platform.architecture import workflow_contract as contract
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+
+    files = _small_runtime_files(monkeypatch, tmp_path)
+    inventory = _small_inventory(files)
+    full = execution.acceptance_runtime_identity()
+    identity, inputs = execution.acceptance_runtime_identity_from_inventory(inventory)
+    assert identity == full
+    # Only code files are served; membership and iteration never read file bytes.
+    reads: list[Path] = []
+    original = contract.bounded_regular_bytes
+
+    def counting(path: Path, **kwargs: Any) -> bytes:
+        reads.append(path)
+        return original(path, **kwargs)
+
+    monkeypatch.setattr(contract, "bounded_regular_bytes", counting)
+    py_view, pyc_view = inputs.view(".py"), inputs.view(".pyc")
+    alpha = tmp_path / "site" / "alpha.py"
+    assert alpha in py_view and alpha not in pyc_view
+    assert (tmp_path / "site" / "native.dll") not in py_view
+    assert sorted(path.name for path in py_view) == ["alpha.py", "beta.py", "empty.py"]
+    assert len(py_view) == 3 and not pyc_view and reads == []
+    assert py_view[alpha] == b"VALUE = 1\n" and py_view.get(alpha) == b"VALUE = 1\n"
+    assert py_view[tmp_path / "site" / "empty.py"] == b""
+    assert reads == [alpha, tmp_path / "site" / "empty.py"]
+    reads.clear()
+    assert py_view[alpha] == b"VALUE = 1\n" and reads == []  # one verified read per path
+    with pytest.raises(KeyError):
+        py_view[tmp_path / "site" / "native.dll"]
+
+
+@pytest.mark.parametrize("change", ["size", "mtime", "file-id", "missing-row", "extra-row", "gone"])
+def test_inventory_verification_fails_closed_on_metadata_or_path_set_drift(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, change: str,
+) -> None:
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+
+    files = _small_runtime_files(monkeypatch, tmp_path)
+    inventory = _small_inventory(files)
+    victim = next(row for row in inventory if row[0].endswith("beta.py"))
+    if change == "size":
+        Path(victim[0]).write_bytes(b"VALUE = 22\n")
+    elif change == "mtime":
+        os.utime(victim[0], ns=(victim[3] + 5_000_000_000, victim[3] + 5_000_000_000))
+    elif change == "file-id":
+        victim[4] += 1
+    elif change == "missing-row":
+        inventory.remove(victim)
+    elif change == "extra-row":
+        inventory.append([str(tmp_path / "site" / "zzz.py"), 0, "0" * 64, 1, 1])
+    else:
+        Path(victim[0]).unlink()
+    with pytest.raises(execution.ExecutionContainmentError, match="RUNTIME_CHANGED|CUSTODY"):
+        execution.acceptance_runtime_identity_from_inventory(inventory)
+
+
+def test_inventory_metadata_check_is_not_a_byte_check_but_served_code_is(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    """Same size and mtime pass the fingerprint; the code actually served is hash-checked."""
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+
+    files = _small_runtime_files(monkeypatch, tmp_path)
+    inventory = _small_inventory(files)
+    victim = tmp_path / "site" / "alpha.py"
+    stamp = victim.stat().st_mtime_ns
+    victim.write_bytes(b"VALUE = 9\n")  # Same length as the original.
+    os.utime(victim, ns=(stamp, stamp))
+    row = next(item for item in inventory if item[0] == str(victim))
+    # The replaced file keeps its file ID on rewrite; the fingerprint is blind to this edit.
+    _, inputs = execution.acceptance_runtime_identity_from_inventory(inventory)
+    with pytest.raises(execution.ExecutionContainmentError, match="RUNTIME_CHANGED"):
+        inputs.view(".py")[victim]
+    assert row[2] != hashlib.sha256(b"VALUE = 9\n").hexdigest()
+
+
+def test_inventory_verification_rejects_reparse_ancestors_and_malformed_rows(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+
+    files = _small_runtime_files(monkeypatch, tmp_path)
+    inventory = _small_inventory(files)
+    for bad in (
+        [],
+        [["only-one-field"]],
+        [[str(tmp_path / "x"), -1, "0" * 64, 1, 1]],
+        [[str(tmp_path / "x"), 1, "not-hex", 1, 1]],
+        [[str(tmp_path / "x"), True, "0" * 64, 1, 1]],
+    ):
+        with pytest.raises(execution.ExecutionContainmentError, match="RUNTIME_INVENTORY"):
+            execution.acceptance_runtime_identity_from_inventory(bad)
+    link = tmp_path / "link"
+    _make_junction(link, tmp_path / "site")
+    redirected = [[str(link / Path(row[0]).name), *row[1:]] for row in inventory]
+    monkeypatch.setattr(
+        execution, "_acceptance_distribution_paths",
+        lambda distributions, module_origins=None: {Path(row[0]) for row in redirected},
+    )
+    with pytest.raises(execution.ExecutionContainmentError, match="reparse"):
+        execution.acceptance_runtime_identity_from_inventory(redirected)
+
+
+def test_real_runtime_inventory_verification_matches_the_full_identity() -> None:
+    """The real 16.5k-file runtime: the verified identity is byte-for-byte the full identity."""
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+
+    inventory: list[list[Any]] = []
+    full = execution.acceptance_runtime_identity(inventory=inventory)
+    assert len(inventory) == full["distribution_code"]["file_count"] > 1000
+    identity, inputs = execution.acceptance_runtime_identity_from_inventory(inventory)
+    assert identity == full
+    assert all(path.suffix in {".py", ".pyc"} for path in inputs)
+
+
+def test_overlay_sources_prefer_candidate_bytes_without_materializing_runtime() -> None:
+    from ai_trading_system.platform.architecture.workflow_execution import _OverlaySources
+
+    first, second, third = Path("first.py"), Path("second.py"), Path("third.py")
+
+    class Lazy(dict):
+        def items(self) -> Any:  # Materializing the runtime view would be a regression.
+            raise AssertionError("runtime sources must not be iterated")
+
+    candidate = {first: b"candidate", second: b"candidate-only"}
+    runtime = Lazy({first: b"runtime", third: b"runtime-only"})
+    overlay = _OverlaySources(candidate, runtime)
+    assert overlay[first] == b"candidate" and overlay[third] == b"runtime-only"
+    assert first in overlay and third in overlay and Path("none.py") not in overlay
+    assert overlay.get(Path("none.py")) is None
+    assert sorted(overlay) == sorted({first, second, third}) and len(overlay) == 3
+
+
+@pytest.mark.parametrize("verification", ["FULL_BYTES_V1", "INVENTORY_METADATA_V1"])
+def test_worker_row_comparator_requires_identical_inputs_and_a_known_verification(
+    verification: str,
+) -> None:
+    from ai_trading_system.platform.architecture.workflow_execution import worker_input_matches
+
+    expected = {
+        "checkout_identity": [{"path": "a"}], "runtime_identity": {"r": 1},
+        "implementation_identity": [{"path": "b"}],
+    }
+    row = {**expected, "origin_valid": True, "runtime_verification": verification}
+    assert worker_input_matches(row, **expected)
+    assert not worker_input_matches({**row, "origin_valid": False}, **expected)
+    assert not worker_input_matches({**row, "runtime_identity": {"r": 2}}, **expected)
+    assert not worker_input_matches({**row, "runtime_verification": "TRUSTED"}, **expected)
+    assert not worker_input_matches({**row, "extra": 1}, **expected)
+    without = {key: value for key, value in row.items() if key != "runtime_verification"}
+    assert not worker_input_matches(without, **expected)
+    assert not worker_input_matches(None, **expected)
+
+
 @pytest.mark.parametrize("fault", ["none", "missing", "oversize"])
 def test_dependency_capture_bounds_readers_and_drains_before_return(
     tmp_path: Path, fault: str,
@@ -4964,7 +5276,9 @@ Path('native-handle-control.json').write_text(json.dumps({'rows':rows,'events':e
     handle = _create(execution_api, tmp_path, source, name=name)
     try:
         handle.resume()
-        assert handle.wait(timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS) == 0, (tmp_path / "stdout.log").read_text()
+        assert handle.wait(timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS) == 0, (
+            tmp_path / "stdout.log"
+        ).read_text()
         result = _read_json(tmp_path / "native-handle-control.json")
         assert len(result["rows"]) == 3 and result["events"]
         # Measure first-use initialization separately; subsequent complete
@@ -5091,7 +5405,9 @@ assert after==baseline,(baseline,after)
             assert ready["process"] is None and ready["body_exception"] is True
             assert ready["parent_after_context_handles"] == ready["parent_baseline_handles"]
         (tmp_path / "runtime.release").write_text("release original native child")
-        assert handle.wait(timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS) == 0, (tmp_path / "stdout.log").read_text()
+        assert handle.wait(timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS) == 0, (
+            tmp_path / "stdout.log"
+        ).read_text()
         completed = _read_json(tmp_path / "runtime-complete.json")
         assert completed["after"] == completed["baseline"]
         if mode == "success":
@@ -5192,7 +5508,9 @@ if child:
             assert ready["binding"] is None and ready["rejected"]
             assert not (tmp_path / "child.stdout").exists()
         (tmp_path / "file-child.release").write_text("resume original child")
-        assert handle.wait(timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS) == 0, (tmp_path / "stdout.log").read_text()
+        assert handle.wait(timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS) == 0, (
+            tmp_path / "stdout.log"
+        ).read_text()
         if mode in {"success", "hardlink-success"}:
             assert (tmp_path / "read-inputs.hex").read_text() == (
                 first.read_bytes() + second.read_bytes()

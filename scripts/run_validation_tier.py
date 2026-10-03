@@ -47,6 +47,7 @@ from ai_trading_system.platform.architecture.validation_readiness import (
 from ai_trading_system.platform.architecture.workflow_execution import (
     DEVX015_ACCEPTANCE_TASK,
     MANDATORY_ACCEPTANCE_REQUEST_ENV,
+    RUNTIME_INVENTORY_SCHEMA,
     ExecutionContainmentError,
     acceptance_runtime_identity,
     bind_acceptance_checkout,
@@ -55,6 +56,7 @@ from ai_trading_system.platform.architecture.workflow_execution import (
     bind_mandatory_acceptance,
     capture_acceptance_implementation,
     validate_mandatory_acceptance_result,
+    worker_input_matches,
 )
 from ai_trading_system.platform.validation_parent_run_import import (
     PARENT_RUN_IMPORT_ENV as VALIDATION_PARENT_RUN_IMPORT_ENV,
@@ -937,8 +939,10 @@ def _run_mandatory_acceptance_command(
                 else {**os.environ, **(env_overrides or {})}
             )
             dependency_inputs: dict[Path, bytes] = {}
+            runtime_inventory: list[list[object]] = []
             runtime_identity = acceptance_runtime_identity(
-                effective_environment, captured_dependencies=dependency_inputs
+                effective_environment, captured_dependencies=dependency_inputs,
+                inventory=runtime_inventory,
             )
             launcher_identity = None
             if exchange is not None:
@@ -977,6 +981,9 @@ def _run_mandatory_acceptance_command(
                     "output": str(output),
                     "checkout_identity": checkout_identity,
                     "runtime_identity": runtime_identity,
+                    "runtime_inventory": {
+                        "schema_version": RUNTIME_INVENTORY_SCHEMA, "files": runtime_inventory,
+                    },
                     "implementation_identity": implementation_identity,
                     "result_identity": result_identity,
                     "result_root_identity": root_identity,
@@ -1079,14 +1086,13 @@ def _run_mandatory_acceptance_command(
                 or evidence["runtime_identity"] != runtime_identity
                 or evidence["implementation_identity"] != implementation_identity
                 or len(evidence["worker_inputs"]) != expected_collections
-                or any(
-                    row
-                    != {
-                        "checkout_identity": checkout_identity,
-                        "origin_valid": True,
-                        "runtime_identity": runtime_identity,
-                        "implementation_identity": implementation_identity,
-                    }
+                or not all(
+                    worker_input_matches(
+                        row,
+                        checkout_identity=checkout_identity,
+                        runtime_identity=runtime_identity,
+                        implementation_identity=implementation_identity,
+                    )
                     for row in evidence["worker_inputs"]
                 )
             ):

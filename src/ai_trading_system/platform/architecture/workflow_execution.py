@@ -176,11 +176,41 @@ _ACCEPTANCE_OBSERVATION_ENV = frozenset(
 )
 
 
+RUNTIME_INVENTORY_SCHEMA = "acceptance_runtime_inventory.v1"
+RUNTIME_VERIFICATION_FULL = "FULL_BYTES_V1"
+RUNTIME_VERIFICATION_INVENTORY = "INVENTORY_METADATA_V1"
+_RUNTIME_VERIFICATION_VALUES = frozenset(
+    {RUNTIME_VERIFICATION_FULL, RUNTIME_VERIFICATION_INVENTORY}
+)
+
+
+def worker_input_matches(
+    row: Any,
+    *,
+    checkout_identity: Any,
+    runtime_identity: Any,
+    implementation_identity: Any,
+) -> bool:
+    """A process's reported inputs equal the controller's, and say how runtime was verified."""
+    return (
+        isinstance(row, dict)
+        and row.get("runtime_verification") in _RUNTIME_VERIFICATION_VALUES
+        and row == {
+            "checkout_identity": checkout_identity,
+            "origin_valid": True,
+            "runtime_identity": runtime_identity,
+            "implementation_identity": implementation_identity,
+            "runtime_verification": row["runtime_verification"],
+        }
+    )
+
+
 def acceptance_runtime_identity(
     environment: Mapping[str, str] | None = None,
     *,
     captured_dependencies: dict[Path, bytes] | None = None,
     observe_dependency: Callable[[Path, bytes], None] | None = None,
+    inventory: list[list[Any]] | None = None,
 ) -> dict[str, Any]:
     """Bind interpreter, installed code bytes, authored loaded code and effective env.
 
@@ -189,13 +219,40 @@ def acceptance_runtime_identity(
     observer receives every actually read interpreter/distribution input on this
     calling thread. It does not itself attest retention, Full, or execution rights.
     """
+    if observe_dependency is not None and not callable(observe_dependency):
+        raise ExecutionContainmentError("ACCEPTANCE_DEPENDENCY_OBSERVER")
+    executable, content, engine, engine_content = _acceptance_interpreter_custody(
+        observe_dependency
+    )
+    distributions = list(importlib.metadata.distributions())
+    source_inputs: dict[Path, bytes] = (
+        {} if captured_dependencies is None else captured_dependencies
+    )
+    source_inputs.clear()
+    module_origins: dict[str, set[Path]] = {}
+    dependency_code = _acceptance_distribution_code(
+        distributions, source_inputs=source_inputs, module_origins=module_origins,
+        observe_dependency=observe_dependency, inventory=inventory,
+    )
+    _verify_loaded_python_sources(
+        {path: raw for path, raw in source_inputs.items() if path.suffix == ".py"},
+        module_origins=module_origins,
+        cache_inputs={path: raw for path, raw in source_inputs.items() if path.suffix == ".pyc"},
+    )
+    return _acceptance_runtime_document(
+        executable, content, engine, engine_content, distributions, dependency_code, environment
+    )
+
+
+def _acceptance_interpreter_custody(
+    observe_dependency: Callable[[Path, bytes], None] | None,
+) -> tuple[Path, bytes, Path, bytes]:
+    """Read the interpreter executable and engine DLL through the native custody gate."""
     from ai_trading_system.platform.architecture.workflow_contract import (
         WorkflowContractError,
         bounded_regular_bytes,
     )
 
-    if observe_dependency is not None and not callable(observe_dependency):
-        raise ExecutionContainmentError("ACCEPTANCE_DEPENDENCY_OBSERVER")
     executable = Path(sys.executable).absolute()
     try:
         content = bounded_regular_bytes(executable)
@@ -215,24 +272,21 @@ def acceptance_runtime_identity(
     if observe_dependency is not None:
         observe_dependency(executable, content)
         observe_dependency(engine, engine_content)
-    distributions = list(importlib.metadata.distributions())
+    return executable, content, engine, engine_content
+
+
+def _acceptance_runtime_document(
+    executable: Path,
+    content: bytes,
+    engine: Path,
+    engine_content: bytes,
+    distributions: list[importlib.metadata.Distribution],
+    dependency_code: dict[str, Any],
+    environment: Mapping[str, str] | None,
+) -> dict[str, Any]:
     packages = sorted(
         (str(item.metadata["Name"]), item.version, str(Path(str(item.locate_file(""))).absolute()))
         for item in distributions
-    )
-    source_inputs: dict[Path, bytes] = (
-        {} if captured_dependencies is None else captured_dependencies
-    )
-    source_inputs.clear()
-    module_origins: dict[str, set[Path]] = {}
-    dependency_code = _acceptance_distribution_code(
-        distributions, source_inputs=source_inputs, module_origins=module_origins,
-        observe_dependency=observe_dependency,
-    )
-    _verify_loaded_python_sources(
-        {path: raw for path, raw in source_inputs.items() if path.suffix == ".py"},
-        module_origins=module_origins,
-        cache_inputs={path: raw for path, raw in source_inputs.items() if path.suffix == ".pyc"},
     )
     selected = os.environ if environment is None else environment
     return {
@@ -257,6 +311,200 @@ def acceptance_runtime_identity(
             }
         ),
     }
+
+
+def acceptance_runtime_identity_from_inventory(
+    rows: Sequence[Sequence[Any]],
+    environment: Mapping[str, str] | None = None,
+) -> tuple[dict[str, Any], _InventoryBackedInputs]:
+    """Verify this process's runtime against the controller's frozen file inventory.
+
+    DEVX-018 O3-c (owner decision 2026-10-03): a worker does not re-hash every distribution
+    file. It recomputes everything that is not file content, requires the RECORD-derived path
+    set to equal the controller's, and requires every file's lstat metadata (size, mtime_ns,
+    file ID, regular non-reparse, reparse-free ancestors) to match what the controller read
+    and hashed. The returned lazy inputs hash-check each code file a verifier actually asks
+    for. The controller still performs the complete byte hash at run start and run end. Any
+    mismatch fails closed; this is not a cross-call cache and never serves unchecked bytes.
+    """
+    from ai_trading_system.platform.architecture.workflow_contract import WorkflowContractError
+
+    executable, content, engine, engine_content = _acceptance_interpreter_custody(None)
+    distributions = list(importlib.metadata.distributions())
+    module_origins: dict[str, set[Path]] = {}
+    paths = _acceptance_distribution_paths(distributions, module_origins)
+    checked = _checked_runtime_inventory(rows)
+    if [row[0] for row in checked] != [str(path) for path in sorted(paths, key=str)]:
+        raise ExecutionContainmentError("ACCEPTANCE_RUNTIME_CHANGED", "distribution_code:paths")
+    verified_ancestors: set[Path] = set()
+    digest = hashlib.sha256()
+    total = 0
+    try:
+        for path_text, size, sha256, mtime_ns, file_id in checked:
+            path = Path(path_text)
+            _verify_runtime_ancestors(path, verified_ancestors)
+            info = path.lstat()
+            if (
+                stat.S_ISLNK(info.st_mode)
+                or getattr(info, "st_file_attributes", 0) & 0x400
+                or not stat.S_ISREG(info.st_mode)
+                or info.st_size != size
+                or info.st_mtime_ns != mtime_ns
+                or info.st_ino != file_id
+            ):
+                raise ExecutionContainmentError(
+                    "ACCEPTANCE_RUNTIME_CHANGED", "distribution_code:" + path_text
+                )
+            total += size
+            if total > 512 * 1024 * 1024:
+                raise ExecutionContainmentError("ACCEPTANCE_DEPENDENCY_BUDGET")
+            digest.update(json.dumps([path_text, size, sha256], separators=(",", ":")).encode())
+            digest.update(b"\n")
+    except (OSError, WorkflowContractError) as exc:
+        raise ExecutionContainmentError("ACCEPTANCE_DEPENDENCY_CUSTODY", str(exc)) from exc
+    inputs = _InventoryBackedInputs(checked, verified_ancestors)
+    _verify_loaded_python_sources(
+        inputs.view(".py"), module_origins=module_origins, cache_inputs=inputs.view(".pyc"),
+    )
+    dependency_code = {"sha256": digest.hexdigest(), "file_count": len(paths), "size_bytes": total}
+    return _acceptance_runtime_document(
+        executable, content, engine, engine_content, distributions, dependency_code, environment
+    ), inputs
+
+
+def _checked_runtime_inventory(
+    rows: Sequence[Sequence[Any]],
+) -> list[tuple[str, int, str, int, int]]:
+    checked: list[tuple[str, int, str, int, int]] = []
+    try:
+        for row in rows:
+            path_text, size, sha256, mtime_ns, file_id = row
+            if (
+                type(path_text) is not str or type(size) is not int or size < 0
+                or type(sha256) is not str or not re.fullmatch(r"[0-9a-f]{64}", sha256)
+                or type(mtime_ns) is not int or type(file_id) is not int
+            ):
+                raise ValueError("inventory row shape")
+            checked.append((path_text, size, sha256, mtime_ns, file_id))
+    except (TypeError, ValueError) as exc:
+        raise ExecutionContainmentError("ACCEPTANCE_RUNTIME_INVENTORY", str(exc)) from exc
+    if not checked or len(checked) > 20000:
+        raise ExecutionContainmentError("ACCEPTANCE_RUNTIME_INVENTORY", "count")
+    return checked
+
+
+def _verify_runtime_ancestors(path: Path, verified_ancestors: set[Path]) -> None:
+    """Reject links/junctions above a file; each directory is checked once per computation."""
+    parent = path.parent
+    if parent in verified_ancestors:
+        return
+    for entry in (*reversed(parent.parents), parent):
+        if entry in verified_ancestors:
+            continue
+        info = entry.lstat()
+        if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & 0x400:
+            raise ExecutionContainmentError("ACCEPTANCE_RUNTIME_CHANGED", "reparse:" + str(entry))
+        verified_ancestors.add(entry)
+
+
+class _InventoryBackedInputs(Mapping[Path, bytes]):
+    """Runtime code bytes served lazily, each checked against the controller's inventory."""
+
+    def __init__(
+        self, rows: Sequence[tuple[str, int, str, int, int]], verified_ancestors: set[Path]
+    ) -> None:
+        self._rows = {
+            Path(path_text): (size, sha256)
+            for path_text, size, sha256, _mtime, _file_id in rows
+            if Path(path_text).suffix in {".py", ".pyc"}
+        }
+        self._loaded: dict[Path, bytes] = {}
+        self._verified_ancestors = verified_ancestors
+
+    def __contains__(self, path: object) -> bool:
+        return path in self._rows
+
+    def __iter__(self) -> Iterator[Path]:
+        return iter(self._rows)
+
+    def __len__(self) -> int:
+        return len(self._rows)
+
+    def __getitem__(self, path: Path) -> bytes:
+        loaded = self._loaded.get(path)
+        if loaded is not None:
+            return loaded
+        from ai_trading_system.platform.architecture.workflow_contract import (
+            WorkflowContractError,
+            bounded_regular_bytes,
+        )
+
+        size, sha256 = self._rows[path]
+        try:
+            raw = bounded_regular_bytes(
+                path, budget=min(size, 64 * 1024 * 1024),
+                verified_ancestors=self._verified_ancestors,
+            )
+        except (OSError, WorkflowContractError) as exc:
+            raise ExecutionContainmentError("ACCEPTANCE_DEPENDENCY_CUSTODY", str(path)) from exc
+        if len(raw) != size or hashlib.sha256(raw).hexdigest() != sha256:
+            raise ExecutionContainmentError("ACCEPTANCE_RUNTIME_CHANGED", "bytes:" + str(path))
+        self._loaded[path] = raw
+        return raw
+
+    def view(self, suffix: str) -> Mapping[Path, bytes]:
+        return _InventorySuffixView(self, suffix)
+
+
+class _InventorySuffixView(Mapping[Path, bytes]):
+    def __init__(self, inputs: _InventoryBackedInputs, suffix: str) -> None:
+        self._inputs, self._suffix = inputs, suffix
+        self._paths = tuple(path for path in inputs if path.suffix == suffix)
+
+    def __contains__(self, path: object) -> bool:
+        return isinstance(path, Path) and path.suffix == self._suffix and path in self._inputs
+
+    def __iter__(self) -> Iterator[Path]:
+        return iter(self._paths)
+
+    def __len__(self) -> int:
+        return len(self._paths)
+
+    def __getitem__(self, path: Path) -> bytes:
+        if path.suffix != self._suffix:
+            raise KeyError(path)
+        return self._inputs[path]
+
+
+class _OverlaySources(Mapping[Path, bytes]):
+    """Candidate sources take precedence over runtime sources, without materializing either."""
+
+    def __init__(self, primary: Mapping[Path, bytes], secondary: Mapping[Path, bytes]) -> None:
+        self._primary, self._secondary = primary, secondary
+
+    def __contains__(self, path: object) -> bool:
+        return path in self._primary or path in self._secondary
+
+    def __iter__(self) -> Iterator[Path]:
+        yield from self._primary
+        yield from (path for path in self._secondary if path not in self._primary)
+
+    def __len__(self) -> int:
+        return sum(1 for _ in self)
+
+    def __getitem__(self, path: Path) -> bytes:
+        if path in self._primary:
+            return self._primary[path]
+        return self._secondary[path]
+
+
+def _runtime_inputs_with_suffix(
+    inputs: Mapping[Path, bytes] | None, suffix: str
+) -> Mapping[Path, bytes]:
+    """Runtime code of one kind without forcing lazy, inventory-backed inputs to read."""
+    if isinstance(inputs, _InventoryBackedInputs):
+        return inputs.view(suffix)
+    return {path: raw for path, raw in (inputs or {}).items() if path.suffix == suffix}
 
 
 @contextmanager
@@ -317,27 +565,11 @@ def hold_acceptance_runtime_identity(
         yield identity, tuple(custodies)
 
 
-def _acceptance_distribution_code(
+def _acceptance_distribution_paths(
     distributions: list[importlib.metadata.Distribution],
-    *,
-    source_inputs: dict[Path, bytes] | None = None,
     module_origins: dict[str, set[Path]] | None = None,
-    observe_dependency: Callable[[Path, bytes], None] | None = None,
-) -> dict[str, Any]:
-    """Commit installed executable sources/binaries and installation metadata bytes.
-
-    RECORD supplies names, never trusted content hashes. Recorded bytecode caches,
-    authored Python, native binaries, import path configuration and distribution
-    metadata are read through the existing native custody gate. This is not a
-    claim about all package data or native in-memory implementations.
-    """
-    from ai_trading_system.platform.architecture.workflow_contract import (
-        WorkflowContractError,
-        bounded_regular_bytes,
-    )
-
-    if observe_dependency is not None and not callable(observe_dependency):
-        raise ExecutionContainmentError("ACCEPTANCE_DEPENDENCY_OBSERVER")
+) -> set[Path]:
+    """Enumerate the installed files the runtime identity commits (RECORD names, never hashes)."""
     paths: set[Path] = set()
     interpreter_root = Path(sys.prefix).absolute()
     for distribution in distributions:
@@ -372,14 +604,43 @@ def _acceptance_distribution_code(
     # Engineering resource bounds, not configurable evidence-admission shortcuts.
     if len(paths) > 20000:
         raise ExecutionContainmentError("ACCEPTANCE_DEPENDENCY_BUDGET")
+    return paths
+
+
+def _acceptance_distribution_code(
+    distributions: list[importlib.metadata.Distribution],
+    *,
+    source_inputs: dict[Path, bytes] | None = None,
+    module_origins: dict[str, set[Path]] | None = None,
+    observe_dependency: Callable[[Path, bytes], None] | None = None,
+    inventory: list[list[Any]] | None = None,
+) -> dict[str, Any]:
+    """Commit installed executable sources/binaries and installation metadata bytes.
+
+    RECORD supplies names, never trusted content hashes. Recorded bytecode caches,
+    authored Python, native binaries, import path configuration and distribution
+    metadata are read through the existing native custody gate. This is not a
+    claim about all package data or native in-memory implementations.
+    """
+    from ai_trading_system.platform.architecture.workflow_contract import (
+        WorkflowContractError,
+        bounded_regular_bytes,
+    )
+
+    if observe_dependency is not None and not callable(observe_dependency):
+        raise ExecutionContainmentError("ACCEPTANCE_DEPENDENCY_OBSERVER")
+    paths = _acceptance_distribution_paths(distributions, module_origins)
     digest = hashlib.sha256()
     total = 0
 
+    # DEVX-018 O3-b: ancestor reparse checks are shared only inside this one computation.
+    verified_ancestors: set[Path] = set()
+
     def read(path: Path) -> bytes:
-        # Every task uses the original metadata-before-content custody reader.
-        # No ancestor/stat or byte cache is shared between files or observations.
+        # Every task uses the original metadata-before-content custody reader. Only the ancestor
+        # checks are shared, and only within this call; no byte cache, nothing across calls.
         budget = min(path.lstat().st_size, 64 * 1024 * 1024)
-        return bounded_regular_bytes(path, budget=budget)
+        return bounded_regular_bytes(path, budget=budget, verified_ancestors=verified_ancestors)
 
     remaining = iter(sorted(paths, key=str))
     pending: deque[tuple[Path, Future[bytes]]] = deque()
@@ -404,8 +665,17 @@ def _acceptance_distribution_code(
                 observe_dependency(path, raw)
             if source_inputs is not None and path.suffix in {".py", ".pyc"}:
                 source_inputs[path] = raw
+            raw_sha256 = hashlib.sha256(raw).hexdigest()
+            if inventory is not None:
+                # DEVX-018 O3-c: metadata for the per-worker verification. The custody read just
+                # proved these bytes; a size that differs from the metadata means the file moved
+                # under the capture and the inventory would describe two different files.
+                info = path.lstat()
+                if info.st_size != len(raw):
+                    raise ExecutionContainmentError("ACCEPTANCE_DEPENDENCY_CUSTODY", str(path))
+                inventory.append([str(path), len(raw), raw_sha256, info.st_mtime_ns, info.st_ino])
             digest.update(json.dumps(
-                [str(path), len(raw), hashlib.sha256(raw).hexdigest()], separators=(",", ":")
+                [str(path), len(raw), raw_sha256], separators=(",", ":")
             ).encode())
             digest.update(b"\n")
             next_path = next(remaining, None)
@@ -736,18 +1006,16 @@ def bind_acceptance_implementation(
     root = root.absolute()
     sources, rows = _capture_acceptance_sources(root, candidate_sha)
 
-    verification_sources = {
-        path: raw for path, raw in (runtime_inputs or {}).items() if path.suffix == ".py"
-    }
-    if any(path in verification_sources and verification_sources[path] != raw
+    runtime_sources = _runtime_inputs_with_suffix(runtime_inputs, ".py")
+    if any(path in runtime_sources and runtime_sources[path] != raw
            for path, raw in sources.items()):
         raise ExecutionContainmentError("ACCEPTANCE_RUNTIME_CANDIDATE_OVERLAP")
-    verification_sources.update(sources)
+    # Candidate sources take precedence, exactly as the earlier dict update did.
+    verification_sources = _OverlaySources(sources, runtime_sources)
     _verify_loaded_python_sources(
         verification_sources, root=root, required_prefix="ai_trading_system",
         require_runner=include_runner,
-        cache_inputs={path: raw for path, raw in (runtime_inputs or {}).items()
-                      if path.suffix == ".pyc"},
+        cache_inputs=_runtime_inputs_with_suffix(runtime_inputs, ".pyc"),
     )
     return sorted(rows, key=lambda row: row["path"])
 
@@ -1613,14 +1881,13 @@ class _BoundAcceptancePlugin(MandatoryAcceptancePlugin):
                 identity_error = "ACCEPTANCE_IMPLEMENTATION_CHANGED"
             if session.config.getoption("numprocesses", default=0) and (
                 len(self.worker_inputs) != len(self.collections)
-                or any(
-                    row
-                    != {
-                        "checkout_identity": self.checkout_identity,
-                        "origin_valid": True,
-                        "runtime_identity": self.runtime_identity,
-                        "implementation_identity": self.implementation_identity,
-                    }
+                or not all(
+                    worker_input_matches(
+                        row,
+                        checkout_identity=self.checkout_identity,
+                        runtime_identity=self.runtime_identity,
+                        implementation_identity=self.implementation_identity,
+                    )
                     for row in self.worker_inputs
                 )
             ):
@@ -1634,6 +1901,7 @@ class _BoundAcceptancePlugin(MandatoryAcceptancePlugin):
                     "origin_valid": identity_error is None,
                     "runtime_identity": self.runtime_identity,
                     "implementation_identity": self.implementation_identity,
+                    "runtime_verification": RUNTIME_VERIFICATION_FULL,
                 }
             ]
         if identity_error:
@@ -1672,11 +1940,14 @@ class _AcceptanceInputObserver:
         expected: list[dict[str, Any]],
         runtime_identity: dict[str, Any],
         implementation_identity: list[dict[str, str]],
+        runtime_inventory: Sequence[Sequence[Any]] | None = None,
     ) -> None:
         self.root, self.binding, self.expected = root, binding, expected
         self.origin_valid = True
         self.runtime_identity = runtime_identity
         self.implementation_identity = implementation_identity
+        # Workers verify against the controller inventory; the controller hashes everything.
+        self.runtime_inventory = runtime_inventory
 
     def pytest_collection_modifyitems(self, items: list[Any]) -> None:
         for item in items:
@@ -1690,8 +1961,17 @@ class _AcceptanceInputObserver:
     def pytest_sessionfinish(self, session: Any, exitstatus: int) -> None:
         try:
             identity = bind_acceptance_checkout(self.root, self.binding)
-            dependency_inputs: dict[Path, bytes] = {}
-            runtime = acceptance_runtime_identity(captured_dependencies=dependency_inputs)
+            dependency_inputs: Mapping[Path, bytes]
+            if self.runtime_inventory is None:
+                captured: dict[Path, bytes] = {}
+                runtime = acceptance_runtime_identity(captured_dependencies=captured)
+                dependency_inputs = captured
+                verification = RUNTIME_VERIFICATION_FULL
+            else:
+                runtime, dependency_inputs = acceptance_runtime_identity_from_inventory(
+                    self.runtime_inventory
+                )
+                verification = RUNTIME_VERIFICATION_INVENTORY
             implementation = bind_acceptance_implementation(
                 self.root, self.binding["candidate_sha"], runtime_inputs=dependency_inputs
             )
@@ -1703,6 +1983,10 @@ class _AcceptanceInputObserver:
             )
         except ExecutionContainmentError:
             identity, valid, runtime, implementation = [], False, {}, []
+            verification = (
+                RUNTIME_VERIFICATION_FULL if self.runtime_inventory is None
+                else RUNTIME_VERIFICATION_INVENTORY
+            )
         if not valid:
             session.exitstatus = 1
         if hasattr(session.config, "workeroutput"):
@@ -1711,6 +1995,7 @@ class _AcceptanceInputObserver:
                 "origin_valid": valid,
                 "runtime_identity": runtime,
                 "implementation_identity": implementation,
+                "runtime_verification": verification,
             }
 
 
@@ -1736,8 +2021,19 @@ def pytest_configure(config: Any) -> None:
         checkout_identity = bind_acceptance_checkout(root, binding)
         if checkout_identity != request["checkout_identity"]:
             raise ExecutionContainmentError("ACCEPTANCE_CHECKOUT_CHANGED")
-        dependency_inputs: dict[Path, bytes] = {}
-        runtime_identity = acceptance_runtime_identity(captured_dependencies=dependency_inputs)
+        dependency_inputs: Mapping[Path, bytes]
+        runtime_inventory: Sequence[Sequence[Any]] | None = None
+        if hasattr(config, "workerinput") and "runtime_inventory" in request:
+            if request["runtime_inventory"]["schema_version"] != RUNTIME_INVENTORY_SCHEMA:
+                raise ExecutionContainmentError("ACCEPTANCE_RUNTIME_INVENTORY", "schema")
+            runtime_inventory = request["runtime_inventory"]["files"]
+            runtime_identity, dependency_inputs = acceptance_runtime_identity_from_inventory(
+                runtime_inventory
+            )
+        else:
+            captured: dict[Path, bytes] = {}
+            runtime_identity = acceptance_runtime_identity(captured_dependencies=captured)
+            dependency_inputs = captured
         if runtime_identity != request["runtime_identity"]:
             changed = sorted(
                 key
@@ -1752,7 +2048,8 @@ def pytest_configure(config: Any) -> None:
             raise ExecutionContainmentError("ACCEPTANCE_IMPLEMENTATION_CHANGED")
         config.pluginmanager.register(
             _AcceptanceInputObserver(
-                root, binding, checkout_identity, runtime_identity, implementation_identity
+                root, binding, checkout_identity, runtime_identity, implementation_identity,
+                runtime_inventory,
             ),
             "aits-acceptance-inputs",
         )
