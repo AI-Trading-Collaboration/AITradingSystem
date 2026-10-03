@@ -1,7 +1,7 @@
 schema_version: devx_018_validation_scheduling.v1
 policy_id: devx_018_governed_split_scope_scheduling
 owner: validation_operations
-version: 4
+version: 5
 status: ACTIVE_PILOT
 requirement: docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
 rationale: >-
@@ -17,11 +17,13 @@ rationale: >-
   deadlock the xdist last-item quirk (19 nodes never ran). Heavy units start at
   a spaced interval so host load ramps up instead of stepping.
 intended_effect: >-
-  Full wall time about 5 hours (simulated from v11 node durations with cap 6);
-  architecture-fitness without real_full_chain nodes and with split files in
-  well under one hour. Estimates are not commitments; acceptance uses measured
-  runtime profiles. With cap 4 the 99 real_full_chain nodes (25.75 hours in v11,
-  29.11 hours in v13) bound the wall time at about 6.5-7.5 hours.
+  Full wall time about 2.4-3 hours (v5, cap 8: node-level model from the
+  v21 profile and the DEVX-020 K experiment; the v21 Full at cap 4 took 7.36
+  hours); architecture-fitness without real_full_chain nodes and with split
+  files in well under one hour. Estimates are not commitments; acceptance uses
+  measured runtime profiles. With cap 4 the heavy nodes after the DEVX-018 O3
+  runtime-identity reduction (about 14 node-hours) still bound the wall time at
+  about 3.6 hours.
 validation_evidence: >-
   outputs/validation_runtime/gov-007-p1c-devx015-full-20260929-v11/test_runtime_profile.json
   (heavy concurrency mostly 3-4, peak 14, tail 3.69 hours at 1); static review of
@@ -29,6 +31,12 @@ validation_evidence: >-
   fixtures. v14 stall: outputs/validation_runtime/gov-007-p1c-devx015-full-20260930-v14
   (deadlock reproduced offline with a discrete-event simulator; v3 scheduling is
   covered by fake-node property tests in tests/test_devx018_validation_scheduling.py).
+  v5: DEVX-020 section 7 (K experiment, 21 representative heavy nodes at
+  concurrency 4/6/8/12, all 21/21 passed; per-node inflation 1.00/1.13/1.23/1.43
+  relative to cap 4; memory and disk were not limiting, CPU p95 saturates from 8)
+  and the whole-Full wall-clock model: cap 4 about 3.6 hours, cap 6 2.8, cap 8
+  2.4, cap 10 2.4, cap 12 2.5. Raw data: D:/Work/devx020-k (retained until DEVX-020
+  closes).
 review_condition: >-
   Recalibrate heavy_concurrency_cap and the lists after the first Full measured
   with this policy, and whenever a real_full_chain function is added, renamed
@@ -37,17 +45,24 @@ review_condition: >-
 # Pilot baseline. v1 used 6 (owner decision of 2026-09-30). The v13 Full at 6
 # finished in 4.95 hours instead of 10.15, but overload tripped fixed
 # subprocess/inspector timeouts (360 second profile inspection that takes 59-75
-# seconds unloaded, cleanup waits, readiness child). v2 calibrates to 4, the
-# steady level the v11 Full ran without such timeouts. Recalibrate with the next
-# measured profile.
-heavy_concurrency_cap: 4
+# seconds unloaded, cleanup waits, readiness child). v2 calibrated to 4, the
+# steady level the v11 Full ran without such timeouts. v5 (owner decision of
+# 2026-10-03: choose K by experiment) uses 8: the host-side timeouts are now
+# calibrated for a loaded host (1800 second waits) and DEVX-018 O3 removed the
+# runtime-identity storm; the DEVX-020 K experiment found the efficiency sweet
+# spot at 8 (node inflation x1.23 relative to 4, no failures; beyond 10 the
+# work-conservation bound and inflation make the Full slower again). Recalibrate
+# with the first measured Full under this policy.
+heavy_concurrency_cap: 8
 # Pilot baseline, new in v3. v11 ramped heavy units 0 to 5 over about 60 minutes
 # and produced few timeouts; v13 and v14 started 4-6 heavy units at t=0 and the
 # first-hour inspector, readiness and fence CLI timeouts fired under that step
-# load. 600 seconds spaces heavy starts so the cap of 4 is reached after about
-# 30 minutes (about 0.25 hours of extra wall time). 0 disables the ramp.
-# Recalibrate with the first measured profile after P1/P4/O3.
-heavy_start_interval_seconds: 600
+# load. The spacing only applies while light units remain. v5 uses 120 seconds so
+# the cap of 8 is reached after about 16 minutes (600 seconds would take 80
+# minutes, about 0.7 hours of extra modelled wall time); the K experiment ran
+# starts 60 seconds apart up to 12 concurrent nodes without a failure. 0 disables
+# the ramp. Recalibrate with the first measured Full under this policy.
+heavy_start_interval_seconds: 120
 split_scope_files:
   - tests/test_arch_005_integration_publication_fence.py
   - tests/test_arch_005_source_preservation.py

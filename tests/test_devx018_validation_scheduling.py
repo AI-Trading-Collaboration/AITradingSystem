@@ -69,10 +69,10 @@ def test_tracked_manifest_is_valid_and_every_chain_lives_in_a_split_file() -> No
     manifest = load_scheduling_manifest(ROOT)
 
     assert manifest is not None
-    assert manifest.heavy_concurrency_cap == 4
+    assert manifest.heavy_concurrency_cap == 8
     groups = dict(manifest.exclusive_groups)
     assert set(groups) == {"fixed_publication_binding_job", "host_registry_view"}
-    assert manifest.heavy_start_interval_seconds == 600
+    assert manifest.heavy_start_interval_seconds == 120
     assert (
         manifest.exclusive_group_of(
             "tests/test_devx015_workflow_coordination.py::"
