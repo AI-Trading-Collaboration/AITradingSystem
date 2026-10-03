@@ -19,12 +19,12 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: O3-a/b/c 已实施并实测（commits 53258e9b5、2069a84a3）：运行器完整字节哈希只在运行开始与结束各一次，运行内全部进程（控制器与
-    xdist worker）按逐文件清单做元数据指纹比对并对被取用代码做惰性 sha256 核对，任何不一致 fail closed；mandatory 链节点
-    94.8 s → 55.7 s，16 worker 发布回放节点 951 s → 735 s，16 并发下单次身份 73 s → 约 7 s。受影响真实链路回归（actual_runner_chain/survives_main_advance/m03/xdist-in-Job）在清单变更后通过，控制器改动后的同一回归正在复跑。下一步：K
-    实验（并发 2/4/6/8，同一批代表性重型节点，记录墙钟/膨胀/主机遥测）→ devx_018_validation_scheduling.yaml v5
-    → 新候选准备链 → 正式 Full（parent 为 v20 失败摘要）→ 发布。须披露给 owner：设计偏离（控制器进程也用清单，完整哈希仅在运行首尾）与残余风险见
-    DEVX-018 需求「O3-a/b/c 实施结果与实测」；超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW；O3 跨调用缓存仍未获批。
+  unstructured_legacy_blocker_or_next_step: K 实验完成（4/6/8/12 各 21/21 通过；相对 K=4 单节点膨胀
+    1.13/1.23/1.43，内存/磁盘非瓶颈，CPU p95 在 K>=8 触顶）；节点级模型得 K=8、间隔 120 秒的估计 Full 墙钟约 2.4-3
+    小时（v21 同口径 7.36 小时）。已决定把 devx_018_validation_scheduling.yaml 升到 version 5（cap
+    8、interval 120）并同步测试，随后：回归（调度与受影响链路）→ 新候选准备链（parent 为 v20 失败摘要）→ 正式 Full → 发布。须披露给
+    owner：K/间隔依据与未建模风险（DEVX-020 第 7.4 节）、O3 的设计偏离与残余风险（DEVX-018「O3-a/b/c 实施结果」）、超时与等待校准仍
+    PROVISIONAL_PENDING_OWNER_REVIEW、O3 跨调用缓存仍未获批。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile
@@ -505,6 +505,35 @@ events:
   - change:gov-007-devx018-o3c-task-20261003-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-b7bb9db1770c172351a30e8c93c3d14d
+- schema_version: task_event.v1
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-03T10:55:46Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx018-k-task-20261003-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-b7bb9db1770c172351a30e8c93c3d14d
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: K 实验完成（4/6/8/12 各 21/21 通过；相对 K=4 单节点膨胀 1.13/1.23/1.43，内存/磁盘非瓶颈，CPU
+      p95 在 K>=8 触顶）；节点级模型得 K=8、间隔 120 秒的估计 Full 墙钟约 2.4-3 小时（v21 同口径 7.36 小时）。已决定把
+      devx_018_validation_scheduling.yaml 升到 version 5（cap 8、interval 120）并同步测试，随后：回归（调度与受影响链路）→
+      新候选准备链（parent 为 v20 失败摘要）→ 正式 Full → 发布。须披露给 owner：K/间隔依据与未建模风险（DEVX-020 第 7.4
+      节）、O3 的设计偏离与残余风险（DEVX-018「O3-a/b/c 实施结果」）、超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW、O3
+      跨调用缓存仍未获批。
+    acceptance_criteria: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧
+      loadfile profile 仍按原契约通过；pre-Full tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3
+      不跨调用缓存身份或 PASS
+    notes: 2026-10-03：K 实验结论与调度清单 v5 决定写入 DEVX-018 需求；数据与模型见 DEVX-020 第 7 节。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx018-k-task-20261003-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-adadf06c304522ae2ef6dc48bf29dbb7
 projection:
   legacy_first_eight_cells:
   - DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
@@ -513,19 +542,17 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - O3-a/b/c 已实施并实测（commits 53258e9b5、2069a84a3）：运行器完整字节哈希只在运行开始与结束各一次，运行内全部进程（控制器与
-    xdist worker）按逐文件清单做元数据指纹比对并对被取用代码做惰性 sha256 核对，任何不一致 fail closed；mandatory 链节点
-    94.8 s → 55.7 s，16 worker 发布回放节点 951 s → 735 s，16 并发下单次身份 73 s → 约 7 s。受影响真实链路回归（actual_runner_chain/survives_main_advance/m03/xdist-in-Job）在清单变更后通过，控制器改动后的同一回归正在复跑。下一步：K
-    实验（并发 2/4/6/8，同一批代表性重型节点，记录墙钟/膨胀/主机遥测）→ devx_018_validation_scheduling.yaml v5
-    → 新候选准备链 → 正式 Full（parent 为 v20 失败摘要）→ 发布。须披露给 owner：设计偏离（控制器进程也用清单，完整哈希仅在运行首尾）与残余风险见
-    DEVX-018 需求「O3-a/b/c 实施结果与实测」；超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW；O3 跨调用缓存仍未获批。
+  - K 实验完成（4/6/8/12 各 21/21 通过；相对 K=4 单节点膨胀 1.13/1.23/1.43，内存/磁盘非瓶颈，CPU p95 在 K>=8
+    触顶）；节点级模型得 K=8、间隔 120 秒的估计 Full 墙钟约 2.4-3 小时（v21 同口径 7.36 小时）。已决定把 devx_018_validation_scheduling.yaml
+    升到 version 5（cap 8、interval 120）并同步测试，随后：回归（调度与受影响链路）→ 新候选准备链（parent 为 v20 失败摘要）→
+    正式 Full → 发布。须披露给 owner：K/间隔依据与未建模风险（DEVX-020 第 7.4 节）、O3 的设计偏离与残余风险（DEVX-018「O3-a/b/c
+    实施结果」）、超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW、O3 跨调用缓存仍未获批。
   - Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full
     tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
-  - 2026-10-03：O3-a/b/c 落地并复测；文档 DEVX-018 需求新增「O3-a/b/c 实施结果与实测」，DEVX-020 进展记录同步。K
-    实验为下一步。
+  - 2026-10-03：K 实验结论与调度清单 v5 决定写入 DEVX-018 需求；数据与模型见 DEVX-020 第 7 节。
   docs_links: []
   terminal: false
-  canonical_row_sha256: e2b75334557fb6a05a590f09e959add77632132f22e2ac19de6a62c4a035721f
-last_event_id: task-event-b7bb9db1770c172351a30e8c93c3d14d
+  canonical_row_sha256: f608176d589bbf5c9ea438ec5b7c162dcde748a6661e37805b9b681507124d7d
+last_event_id: task-event-adadf06c304522ae2ef6dc48bf29dbb7
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 0892b24dc664730caa8c35050026ea1b5c6bec2840c10383169d681bd394b543
+fragment_checksum: 2573318690d5045456a4149e47e2d8d3efb226a69d85611d71573ee563b0794c
