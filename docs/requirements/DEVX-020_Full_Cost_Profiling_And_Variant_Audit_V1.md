@@ -169,3 +169,38 @@ v18 Full 的并发时间线：约 1.5 小时后只剩 4 个重型节点（K=4）
 - 采用 `heavy_concurrency_cap: 8`、`heavy_start_interval_seconds: 120`，调度清单升到 version 5（`config/architecture/devx_018_validation_scheduling.yaml`），
   同步 `tests/test_devx018_validation_scheduling.py` 的固定值与清单的 rationale/intended_effect/validation_evidence。review_condition 不变：第一次用该策略测得的 Full
   之后复核，并在 `real_full_chain` 函数增删改时复核。
+
+
+## 8. v24 真实 Full 回看（2026-10-04）
+
+数据：`outputs/validation_runtime/gov-007-p1c-devx015-full-20261003-v24/test_runtime_profile.json`（14,709 个节点，16 个 worker，墙钟 3.76 小时；v21 为 7.36 小时）。
+
+### 8.1 墙钟由什么决定
+- 重型并发在 8 的时间为 146 分钟（共 225 分钟）；轻量节点 99% 在 113 分钟完成；之后唯一还在跑的「轻量」节点是 `host_registry_view` 复合组里的 59 个协调测试。
+- **gw0 忙了 225 分钟 = 整个墙钟**：它串行执行 `host_registry_view` 复合组——`test_original_publication_cli_ff_only_and_independent_recovery`
+  两个变体（4,449 s + 4,141 s）加原生注册表测试。其余重型 worker 在 205–220 分钟结束，仅轻量 worker 在 189 分钟结束（尾部空闲 36 分钟 × 8）。
+- 工作量守恒下界（轻量 17.75 h + 重型 25.96 h）/ 16 = 2.73 小时；实测 3.76 小时，差额主要是这条复合组关键路径。
+
+### 8.2 模型与实测的差异（须诚实记录）
+| 项目 | K 实验模型 | 真实 Full |
+|---|---|---|
+| 墙钟 | 2.4–3 小时（K=8、间隔 120 s） | **3.76 小时** |
+| 重型节点总耗时 | 约 14 小时（样本族比例外推，样本外族取 0.50） | 26.0 小时（v21 27.6 小时，−6%） |
+| 发布回放族 / v21 | 0.80（K=8 实验） | 0.99 |
+| `completed_admission_full_entry` 族 | 0.68 | 0.91 |
+| mandatory 链族 | 0.20 | 0.29 |
+| 最大节点（`ff_only` 等 7 个 3,000–4,500 s） | 未在样本中，按 0.50 外推 | 0.89–1.01（几乎没变） |
+- 原因：(1) 样本外的最大节点（发布 CLI 的 `ff_only`/`interrupted_after_main_commit`/`recovers_independent_main_advance`、`publication_lifecycle`、`closeout…above_default_read_budget`）
+  不是身份成本主导，O3 对它们几乎无效（closeout 大 profile 甚至 1.82×，被 K=8 争用放大）；(2) K 实验是「只有重型」的负载，真实 Full 前 ~2 小时轻量测试同时占用 CPU；
+  (3) 模型假设复合组按族比例缩小。结论：K=8 带来的是容量翻倍；单节点收益只在 mandatory 链族兑现。
+
+### 8.3 下一步杠杆（按预期收益）
+1. 拆分 `host_registry_view` 复合组（须 owner 复核互斥语义：该组的存在理由是「有 HKCU 测试根的测试」与「断言整个根视图在自身前后不变」的测试互斥）：
+   把 `ff_only`（两个变体，约 2.4 小时的串行链）等重型成员移出组，估计墙钟降到约 3.0 小时。
+2. P4：发布类大节点的生命周期重放（`ExecutionLifecycle._head()` 每次重放整个 store，~10 MB `read_file_custodies` 复制进后续每个租约事件）去重或外置；
+   目标是上述 7 个 3,000–4,500 s 节点（合计 7.4 节点小时）。
+3. 变体冗余审计：同一测试族每个变体重复约 420 s 的 Atlas+readiness+生成器+内层 Full。
+4. 评估 K=10 与轻量/重型 worker 分区（轻量阶段 8 个 worker 要做 17.75 节点小时）。
+
+### 8.4 进展记录
+- 2026-10-04：本节写入；v25 以 v24 候选 + 两处修复（`c61ba02a3`）重跑。临时工作区新增 `D:/Work/devx020-prof2`（已用于开发修复，仍保留）、`D:/Work/devx018-v25-light*`（轻量回归基目录）；回归与发布完成后审计并清理。
