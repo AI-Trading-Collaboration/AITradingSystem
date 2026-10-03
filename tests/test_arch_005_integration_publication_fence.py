@@ -171,6 +171,43 @@ def test_embedded_source_deadlines_are_loaded_host_calibrated() -> None:
     assert offenders == [], offenders
 
 
+def test_host_side_loaded_timeouts_use_calibrated_constants() -> None:
+    # Steps that hash the runtime identity, run an inner Full or call a publication CLI scale with
+    # formal-Full load, so a literal timeout between 300s and the calibrated 1800s is an unloaded-host
+    # value. v22's Full lost a node to a hard-coded 1200s fixture-driver guard that the inner Full had
+    # outgrown. Sub-300s literals guard git/small processes and stay as they are.
+    offenders: list[str] = []
+    for path in sorted((ROOT / "tests").glob("*.py")):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", SyntaxWarning)
+            warnings.simplefilter("ignore", DeprecationWarning)
+            try:
+                tree = ast.parse(path.read_text(encoding="utf-8"))
+            except SyntaxError:
+                continue
+
+        def numeric(node: ast.AST | None) -> float | None:
+            if (isinstance(node, ast.Constant) and isinstance(node.value, (int, float))
+                    and not isinstance(node.value, bool)):
+                return float(node.value)
+            return None
+
+        for node in ast.walk(tree):
+            found: list[tuple[int, str, float | None]] = []
+            if isinstance(node, ast.keyword) and node.arg and "timeout" in node.arg:
+                found.append((node.value.lineno, node.arg, numeric(node.value)))
+            elif isinstance(node, ast.FunctionDef):
+                positional = [arg.arg for arg in node.args.args][-len(node.args.defaults):]
+                pairs = [*zip(positional, node.args.defaults),
+                         *zip([arg.arg for arg in node.args.kwonlyargs], node.args.kw_defaults)]
+                found.extend((value.lineno, name, numeric(value))
+                             for name, value in pairs if value is not None and "timeout" in name)
+            for lineno, name, value in found:
+                if value is not None and 300 <= value < LOADED_HOST_CLI_TIMEOUT_SECONDS:
+                    offenders.append(f"{path.name}:{lineno}: {name}={value:g}")
+    assert offenders == [], offenders
+
+
 def test_policy_reuses_s4d_lease_authority_and_freezes_no_unsafe_actions() -> None:
     policy = load_publication_fence_policy(DEFAULT_POLICY_PATH)
 
@@ -3200,7 +3237,7 @@ def _assert_full_transaction_replays_candidate_publish_and_closeout_receipt(
                    "--repository", str(publication_checkout), *arguments]
         completed = subprocess.run(
             command, cwd=publication_checkout, env=environment, capture_output=True,
-            text=True, encoding="utf-8", timeout=600,
+            text=True, encoding="utf-8", timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
         )
         (publication_checkout.parent / (label + ".json")).write_text(json.dumps({
             "argv": command, "returncode": completed.returncode,

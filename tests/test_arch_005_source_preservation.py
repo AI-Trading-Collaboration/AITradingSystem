@@ -48,6 +48,12 @@ from ai_trading_system.platform.architecture.task_registry_canonical import (
     validate_canonical_fragment,
 )
 
+# Test hang bounds, not production policy. DEVX-018 load calibration (provisional, owner review
+# pending; exit condition in docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md): steps that
+# hash the runtime identity (~11s idle, 116-194s loaded), run an inner Full or call a publication CLI
+# scale with formal-Full load, so their guards sit above the 900s production profile inspector bound.
+LOADED_HOST_CLI_TIMEOUT_SECONDS = 1800
+
 ROOT = Path(__file__).resolve().parents[1]
 EXCLUDED = "docs/research/growth_tilt_owner_diagnosis_pack.md"
 EXCLUSION = f":(exclude,literal){EXCLUDED}"
@@ -1610,7 +1616,7 @@ def test_committed_v2_cli_preserves_92_paths_and_independent_process_validates(
     selected = ["--policy", str(ROOT / preservation.V2_POLICY_PATH)]
     captured = subprocess.run(
         [*command, *selected, "preserve", "--request", str(request_path)],
-        cwd=ROOT, capture_output=True, text=True, encoding="utf-8", timeout=600, check=False,
+        cwd=ROOT, capture_output=True, text=True, encoding="utf-8", timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS, check=False,
     )
     assert captured.returncode == 0, captured.stdout + captured.stderr
     receipt = json.loads(captured.stdout)
@@ -1618,7 +1624,7 @@ def test_committed_v2_cli_preserves_92_paths_and_independent_process_validates(
     assert receipt["status"] == "PASS" and len(receipt["snapshot"]["files"]) == 92
     checked = subprocess.run(
         [*command, *selected, "validate", "--receipt", receipt["receipt_path"]],
-        cwd=ROOT, capture_output=True, text=True, encoding="utf-8", timeout=600, check=False,
+        cwd=ROOT, capture_output=True, text=True, encoding="utf-8", timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS, check=False,
     )
     assert checked.returncode == 0, checked.stdout + checked.stderr
     assert json.loads(checked.stdout)["status"] == "PASS"

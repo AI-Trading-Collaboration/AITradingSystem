@@ -61,6 +61,12 @@ from ai_trading_system.platform.architecture.task_checkpoint import (
     TaskCheckpointError,
 )
 
+# Test hang bounds, not production policy. DEVX-018 load calibration (provisional, owner review
+# pending; exit condition in docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md): steps that
+# hash the runtime identity (~11s idle, 116-194s loaded), run an inner Full or call a publication CLI
+# scale with formal-Full load, so their guards sit above the 900s production profile inspector bound.
+LOADED_HOST_CLI_TIMEOUT_SECONDS = 1800
+
 RUNTIME = "outputs/architecture/arch_005_task_checkpoints"
 UNREQUESTED_TRACKED_PATH = "src/unrequested-tracked.py"
 UNREQUESTED_BASE_BYTES = b"unrequested committed base\n"
@@ -1123,7 +1129,7 @@ def test_source_drift_during_capture_keeps_actual_source_and_cannot_issue_receip
             capture_output=True,
             text=True,
             encoding="utf-8",
-            timeout=300,
+            timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
             check=False,
         )
 
@@ -1470,7 +1476,7 @@ def test_s02_actual_cli_protected_canaries_have_zero_native_access(
             capture_output=True,
             text=True,
             encoding="utf-8",
-            timeout=300,
+            timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
             check=False,
         )
 
@@ -1537,7 +1543,7 @@ def test_s02_actual_cli_reparse_rejected_before_native_canary_access(
         return subprocess.run(
             [sys.executable, str(case.main_root / checkpoint.CLI_PATH), *arguments],
             cwd=case.main_root, env=environment, capture_output=True, text=True,
-            encoding="utf-8", timeout=300, check=False,
+            encoding="utf-8", timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS, check=False,
         )
 
     if stage == "capture":
@@ -1652,7 +1658,7 @@ def test_s02_actual_worker_check_open_swap_never_reads_replacement(
         return subprocess.run(
             [sys.executable, str(case.main_root / checkpoint.CLI_PATH), *arguments],
             cwd=case.main_root, env=environment, capture_output=True, text=True,
-            encoding="utf-8", timeout=300, check=False,
+            encoding="utf-8", timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS, check=False,
         )
 
     planned = cli("plan", "--scope", str(scope_path), "--output", str(request_path))
@@ -1865,7 +1871,7 @@ def test_s01_actual_cli_aggregate_budget_boundary(
             capture_output=True,
             text=True,
             encoding="utf-8",
-            timeout=300,
+            timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
         )
 
     planned = cli("plan", "--scope", str(scope_path), "--output", str(request_path))
@@ -1955,7 +1961,7 @@ def test_committed_implementation_cli_subprocess_e2e_survives_main_advance(
             capture_output=True,
             text=True,
             encoding="utf-8",
-            timeout=300,
+            timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
             check=False,
         )
         assert completed.returncode == 0, (completed.stdout, completed.stderr)
@@ -3007,7 +3013,7 @@ def test_terminal_recovery_public_cli_after_real_producer_exit(
             capture_output=True,
             text=True,
             encoding="utf-8",
-            timeout=300,
+            timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
             check=False,
         )
         assert completed.returncode == expected, (completed.stdout, completed.stderr)
@@ -3039,7 +3045,7 @@ runpy.run_path(sys.argv[0], run_name='__main__')
         cwd=case.main_root,
         env=environment,
         capture_output=True,
-        timeout=300,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
         check=False,
     )
     assert child.returncode == 17, (child.stdout, child.stderr)
@@ -3086,7 +3092,7 @@ runpy.run_path(sys.argv[0], run_name='__main__')
     outcomes = []
     try:
         for contender in contenders:
-            stdout, stderr = contender.communicate(timeout=300)
+            stdout, stderr = contender.communicate(timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
             assert contender.returncode == 0, (stdout, stderr)
             outcomes.append(json.loads(stdout))
     finally:
@@ -3289,7 +3295,7 @@ runpy.run_path(sys.argv[0], run_name='__main__')
         cwd=case.main_root,
         env=environment,
         capture_output=True,
-        timeout=300,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
         check=False,
     )
     assert crashed.returncode == 23, (crashed.stdout, crashed.stderr)
@@ -3314,7 +3320,7 @@ runpy.run_path(sys.argv[0], run_name='__main__')
         capture_output=True,
         text=True,
         encoding="utf-8",
-        timeout=300,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
         check=False,
     )
     assert resumed.returncode == 0, (resumed.stdout, resumed.stderr)

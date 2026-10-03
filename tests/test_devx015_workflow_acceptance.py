@@ -27,6 +27,12 @@ from ai_trading_system.platform.architecture.integration_publication_fence impor
     IntegrationPublicationFence,
 )
 
+# Test hang bounds, not production policy. DEVX-018 load calibration (provisional, owner review
+# pending; exit condition in docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md): steps that
+# hash the runtime identity (~11s idle, 116-194s loaded), run an inner Full or call a publication CLI
+# scale with formal-Full load, so their guards sit above the 900s production profile inspector bound.
+LOADED_HOST_CLI_TIMEOUT_SECONDS = 1800
+
 ROOT = Path(__file__).resolve().parents[1]
 TASK = "DEVX-015-WORKFLOW-FIXTURE"
 
@@ -177,7 +183,7 @@ def observe_creation_crash(root, command, environment, fence, lease_id, boundary
                     or ({"launcher_exited": True} if launcher.poll() is not None else None)
                 ),
                 description="real installation creation boundary or original launcher exit",
-                timeout=1200,
+                timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
             )
             assert "launcher_exited" not in witness, log_path.read_text(errors="replace")
             assert (witness["kind"], witness["phase"]) == (kind, phase)

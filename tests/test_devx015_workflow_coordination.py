@@ -42,6 +42,9 @@ from ai_trading_system.platform.architecture.workflow_execution import (
     WindowsJobProcess,
     execution_environment_sha256,
 )
+# The fixture driver runs an inner Full, its profile read/artifact write and the formal-result inspection;
+# under the outer Full's heaviest load its 16 workers alone took ~6.5 min to start (DEVX-018 v22).
+LOADED_HOST_DRIVER_TIMEOUT_SECONDS = 3600
 
 ACTOR = "engineering-agent"
 # Test hang bounds, not production policy. DEVX-018 load calibration (provisional, owner review
@@ -5361,7 +5364,7 @@ def _run_actual_profile_full(
     readiness_fault: str = "none",
     # Hang guard only: the inner mandatory Full takes 170-520s serially and more
     # under formal-tier load (16 workers); it is not a semantic threshold.
-    driver_timeout: int = 1200,
+    driver_timeout: int = LOADED_HOST_DRIVER_TIMEOUT_SECONDS,
     live_observer=None,
     mandatory: bool = True,
     padding_nodes_per_file: int | None = None,
@@ -5772,7 +5775,7 @@ def test_original_full_cannot_authorize_changed_candidate(canonical_merge_reposi
         [sys.executable, "scripts/run_validation_tier.py", "full",
          "--inspect-full-publication-profile", "--publication-transaction", str(transaction),
          "--task-id", TASK],
-        cwd=root, env=environment, capture_output=True, text=True, timeout=720,
+        cwd=root, env=environment, capture_output=True, text=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     (root.parent / "original-full-inspection.stdout.log").write_text(
         inspected.stdout, encoding="utf-8"
@@ -5801,7 +5804,7 @@ def test_original_full_cannot_authorize_changed_candidate(canonical_merge_reposi
         [sys.executable, "scripts/architecture_arch005_publication_fence.py", "checkpoint",
          "--transaction", str(transaction), "--phase", "LOCAL_MAIN_FF_PRE",
          "--actor", "integration-coordinator"],
-        cwd=root, env=environment, capture_output=True, text=True, timeout=720,
+        cwd=root, env=environment, capture_output=True, text=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     (root.parent / "changed-candidate-admission.json").write_text(
         json.dumps({"original_candidate": binding["candidate_sha"],
@@ -5853,7 +5856,7 @@ def test_original_full_rejects_changed_publication_identities(canonical_merge_re
     def run_probe(name: str, argv: list[str], env: dict[str, str]) -> subprocess.CompletedProcess:
         started = time.perf_counter()
         result = subprocess.run(
-            argv, cwd=root, env=env, capture_output=True, text=True, timeout=720,
+            argv, cwd=root, env=env, capture_output=True, text=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
         )
         (root.parent / (name + ".json")).write_text(
             json.dumps({"argv": argv, "exit_code": result.returncode,
@@ -6025,7 +6028,7 @@ def test_actual_full_profile_preserves_real_whole_readiness(
         env=environment,
         capture_output=True,
         text=True,
-        timeout=720,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     (root.parent / "full-inspection.stdout.log").write_text(inspected.stdout, encoding="utf-8")
     (root.parent / "full-inspection.stderr.log").write_text(inspected.stderr, encoding="utf-8")
@@ -6050,7 +6053,7 @@ def test_actual_full_profile_preserves_real_whole_readiness(
             env=environment,
             capture_output=True,
             text=True,
-            timeout=720,
+            timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
         )
         (root.parent / "full-admission.stdout.log").write_text(admission.stdout, encoding="utf-8")
         (root.parent / "full-admission.stderr.log").write_text(admission.stderr, encoding="utf-8")
@@ -6374,7 +6377,7 @@ def test_remote_admission_rechecks_original_full_profile(
         text=True,
         # Public CLI observation budget: 360s profile probe plus entry custody and
         # process overhead under Full load, as for the other CLI probes in this module.
-        timeout=720,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     (evidence / "remote-admission.stdout.log").write_text(result.stdout, encoding="utf-8")
     (evidence / "remote-admission.stderr.log").write_text(result.stderr, encoding="utf-8")
@@ -6698,7 +6701,7 @@ def test_actual_mandatory_xdist_runs_inside_full_job_and_records_custody(
         env=environment,
         capture_output=True,
         text=True,
-        timeout=1200,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
     summary = json.loads((directory / "test_runtime_summary.json").read_bytes())
@@ -9012,7 +9015,7 @@ def _clean_process_runtime_identity(environment=None, **kwargs):
     selected = dict(os.environ if environment is None else environment)
     completed = subprocess.run(
         [sys.executable, "-c", probe], input=json.dumps(selected), capture_output=True,
-        text=True, timeout=300,
+        text=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
         env={**os.environ, "PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")},
     )
     assert completed.returncode == 0, completed.stderr

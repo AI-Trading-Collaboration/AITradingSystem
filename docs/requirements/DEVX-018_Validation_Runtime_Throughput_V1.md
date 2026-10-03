@@ -645,3 +645,20 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
   `LOCAL_MAIN_FF_PRE → local-publish → REMOTE_PUSH_PRE → 普通 push → CLEANUP_PRE → RELEASED`，`local main = remote main = candidate`。
 - 状态/风险：新增/调整的超时仍属 `PROVISIONAL_PENDING_OWNER_REVIEW`（测试挂起保护，非投资启发式）；O3 identity 缓存待 owner 决定；
   `production_effect=none`。v22 已在约 1 小时处提前终止（单个失败节点必然使该 Full FAIL），故无整轮 pytest 汇总。
+
+#### v23 实现与验证结果（2026-10-03）
+
+- 实现（只改测试的挂起保护，不改任何断言与生产代码）：新增 `LOADED_HOST_DRIVER_TIMEOUT_SECONDS = 3600`，
+  `_run_actual_profile_full` 的 `driver_timeout` 默认使用它；其余宿主侧写死的 300–1799 秒数值超时共 28 处改用校准常量
+  `LOADED_HOST_CLI_TIMEOUT_SECONDS`（1800，高于 900 秒的生产检查器保护），缺该常量的文件
+  （`test_arch_005_source_preservation`、`test_arch_005_task_checkpoint`、`test_devx015_workflow_acceptance`、
+  `test_named_data_quality_actual_candidate`）各自补定义。扫描范围是全部 `tests/*.py`，实际共 29 处（比上节估计的 18 处多：
+  `test_arch_005_task_checkpoint` 的 11 处 300 秒与 `test_named_data_quality_actual_candidate` 的 2 处 300 秒此前未列入）。
+- 不变量测试：`test_host_side_loaded_timeouts_use_calibrated_constants` 扫描全部 `tests/*.py` 的宿主侧代码，300 ≤ 数值 `timeout`/`*_timeout`
+  < 1800 一律视为违规；变异检查（临时写回 `timeout=1200`）能使其失败，恢复后通过。30/60 秒等 git/小进程的保护不受影响。
+- 回归：相关测试文件（排除 real_full_chain）`816 passed, 2 failed`，2 个失败为 `test_named_data_quality_actual_candidate` 中必须由协调者显式提供
+  `AITS_NAMED_DQ_PUBLICATION_TRANSACTION`/`AITS_NAMED_DQ_SOURCE_LEASE_ID` 的用例（正式验证链里由驱动设置，裸 pytest 没有），与本改动无关；
+  相关重型节点 smoke（v22 失败的 `test_original_publication_cli_interrupted_after_main_commit` 两个变体、
+  `test_actual_mandatory_xdist_runs_inside_full_job_and_records_custody`、`test_remote_admission_rechecks_original_full_profile`、
+  `test_mandatory_acceptance_actual_runner_chain[pass]`、`test_fixed_candidate_actual_runner_result_survives_main_advance`）12 passed。
+- 仍待验证：新候选的前置 tiers 与正式 Full；真实仓库与真实远端上的 `local-publish`、CLOSEOUT 治理预检、普通 push 与收尾。

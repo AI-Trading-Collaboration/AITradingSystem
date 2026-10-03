@@ -54,6 +54,12 @@ from ai_trading_system.prospective_event_time_evidence import (
 )
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
+# Test hang bounds, not production policy. DEVX-018 load calibration (provisional, owner review
+# pending; exit condition in docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md): steps that
+# hash the runtime identity (~11s idle, 116-194s loaded), run an inner Full or call a publication CLI
+# scale with formal-Full load, so their guards sit above the 900s production profile inspector bound.
+LOADED_HOST_CLI_TIMEOUT_SECONDS = 1800
+
 # Finite test-owned code. Production has no arbitrary probe or seal-import API.
 _PROSPECTIVE_PARENT_SEAL_PROBE = r"""
 import hashlib
@@ -241,7 +247,7 @@ def test_exact_candidate_production_parent_mints_new_profile_seal_and_complete_c
         command, cwd=ROOT, env=launch.environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     ) as process:
         try:
-            stdout, stderr = process.communicate(timeout=300)
+            stdout, stderr = process.communicate(timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
         except subprocess.TimeoutExpired:
             process.kill()
             stdout, stderr = process.communicate()
@@ -409,7 +415,7 @@ def test_exact_candidate_real_clock_synthetic_activation_and_read_only_duplicate
             stderr=subprocess.PIPE,
         ) as process:
             try:
-                stdout, stderr = process.communicate(timeout=300)
+                stdout, stderr = process.communicate(timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS)
             except subprocess.TimeoutExpired:
                 process.kill()
                 stdout, stderr = process.communicate()

@@ -630,7 +630,7 @@ def test_runtime_dependency_observer_preserves_original_identity(tmp_path):
     )
     completed = subprocess.run(
         [sys.executable, "-c", probe], cwd=ROOT, env=_environment(), capture_output=True,
-        text=True, timeout=300,
+        text=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     assert completed.returncode == 0, completed.stderr
     measured = json.loads(completed.stdout)
@@ -1168,7 +1168,7 @@ def test_fixed_candidate_actual_runner_result_survives_main_advance(
     # identity hashing alone measured ~170s on the 2026-09-25 host, above 120s.
     completed = subprocess.run(
         [sys.executable, "-c", script], cwd=tmp_path, env=environment,
-        capture_output=True, text=True, timeout=1200,
+        capture_output=True, text=True, timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
     lines = [
@@ -1519,7 +1519,7 @@ def pytest_unconfigure(config):
         # the sixteen-worker loaded-code controls; on the 2026-09-25 host the
         # two-worker cases measured ~120-126s once the fixture carried the
         # runner's lazily imported modules, so both groups share one bound.
-        timeout=1200,
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
     )
     (tmp_path / "original-runner-command.py").write_text(script, encoding="utf-8")
     (tmp_path / "original-runner-output.json").write_text(json.dumps({
