@@ -52,6 +52,36 @@ def portable_path(value: Any) -> str:
 
 _CUSTODY_KERNEL_LOCK = threading.Lock()
 _CUSTODY_KERNEL: Any = None
+# The genuine library factory. Tests inject race/observation wrappers by replacing ctypes.WinDLL;
+# such a substitution must stay observable on every read, so the shared binding is only used
+# while ctypes.WinDLL is this original object.
+_GENUINE_WINDLL = getattr(ctypes, "WinDLL", None)
+
+
+def _declare_custody_prototypes(api: Any) -> Any:
+    from ctypes import wintypes as w
+
+    api.CreateFileW.argtypes = [
+        w.LPCWSTR,
+        w.DWORD,
+        w.DWORD,
+        ctypes.c_void_p,
+        w.DWORD,
+        w.DWORD,
+        w.HANDLE,
+    ]
+    api.CreateFileW.restype = w.HANDLE
+    api.ReOpenFile.argtypes = [w.HANDLE, w.DWORD, w.DWORD, w.DWORD]
+    api.ReOpenFile.restype = w.HANDLE
+    api.GetFinalPathNameByHandleW.argtypes = [w.HANDLE, w.LPWSTR, w.DWORD, w.DWORD]
+    api.GetFinalPathNameByHandleW.restype = w.DWORD
+    api.CloseHandle.argtypes = [w.HANDLE]
+    api.CloseHandle.restype = w.BOOL
+    api.GetFileInformationByHandleEx.argtypes = [
+        w.HANDLE, ctypes.c_int, ctypes.c_void_p, w.DWORD,
+    ]
+    api.GetFileInformationByHandleEx.restype = w.BOOL
+    return api
 
 
 def _custody_kernel() -> Any:
@@ -59,37 +89,20 @@ def _custody_kernel() -> Any:
 
     The reader used to build a new ctypes library object and re-declare every prototype on each
     file. The prototypes never change, and a bound function pointer is safe to call from several
-    threads, so the declaration is done once under a lock and then only read.
+    threads, so the declaration is done once under a lock and then only read. If ctypes.WinDLL has
+    been replaced (race-injection tests), the original per-read binding is kept instead.
     """
     global _CUSTODY_KERNEL
+    if ctypes.WinDLL is not _GENUINE_WINDLL:
+        return _declare_custody_prototypes(ctypes.WinDLL("kernel32", use_last_error=True))
     api = _CUSTODY_KERNEL
     if api is None:
         with _CUSTODY_KERNEL_LOCK:
             api = _CUSTODY_KERNEL
             if api is None:
-                from ctypes import wintypes as w
-
-                api = ctypes.WinDLL("kernel32", use_last_error=True)
-                api.CreateFileW.argtypes = [
-                    w.LPCWSTR,
-                    w.DWORD,
-                    w.DWORD,
-                    ctypes.c_void_p,
-                    w.DWORD,
-                    w.DWORD,
-                    w.HANDLE,
-                ]
-                api.CreateFileW.restype = w.HANDLE
-                api.ReOpenFile.argtypes = [w.HANDLE, w.DWORD, w.DWORD, w.DWORD]
-                api.ReOpenFile.restype = w.HANDLE
-                api.GetFinalPathNameByHandleW.argtypes = [w.HANDLE, w.LPWSTR, w.DWORD, w.DWORD]
-                api.GetFinalPathNameByHandleW.restype = w.DWORD
-                api.CloseHandle.argtypes = [w.HANDLE]
-                api.CloseHandle.restype = w.BOOL
-                api.GetFileInformationByHandleEx.argtypes = [
-                    w.HANDLE, ctypes.c_int, ctypes.c_void_p, w.DWORD,
-                ]
-                api.GetFileInformationByHandleEx.restype = w.BOOL
+                api = _declare_custody_prototypes(
+                    ctypes.WinDLL("kernel32", use_last_error=True)
+                )
                 _CUSTODY_KERNEL = api
     return api
 

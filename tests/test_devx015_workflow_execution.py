@@ -810,6 +810,40 @@ def test_custody_kernel_binding_is_created_once_and_shared_by_threads() -> None:
     assert bindings[0] is contract._custody_kernel()
 
 
+def test_custody_kernel_is_rebound_per_read_while_the_library_factory_is_substituted(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    """Race-injection tests replace ctypes.WinDLL; the shared binding must not mask that.
+
+    The v24 Full failed `test_generated_stage_junction_swap_rejected_before_handle_read` because
+    the one-time binding (O3-a) made its injected library wrapper unreachable after the first
+    read in the worker. A substituted factory is bound per read, as before; the genuine one is
+    bound once.
+    """
+    from ai_trading_system.platform.architecture import workflow_contract as contract
+
+    target = tmp_path / "data.bin"
+    target.write_bytes(b"payload")
+    genuine = ctypes.WinDLL
+    calls: list[str] = []
+
+    def watched(name: str, *args: Any, **kwargs: Any) -> Any:
+        calls.append(name)
+        return genuine(name, *args, **kwargs)
+
+    contract.bounded_regular_bytes(target)
+    shared = contract._custody_kernel()
+    with monkeypatch.context() as hooks:
+        hooks.setattr(ctypes, "WinDLL", watched)
+        assert contract.bounded_regular_bytes(target) == b"payload"
+        assert contract.bounded_regular_bytes(target) == b"payload"
+        assert calls == ["kernel32", "kernel32"]
+        assert contract._custody_kernel() is not shared
+    calls.clear()
+    assert contract.bounded_regular_bytes(target) == b"payload"
+    assert calls == [] and contract._custody_kernel() is shared
+
+
 def _small_runtime_files(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> dict[Path, bytes]:
     """A few real files standing in for the distribution inventory (RECORD enumeration is fixed)."""
     from ai_trading_system.platform.architecture import workflow_execution as execution
@@ -972,15 +1006,31 @@ def test_inventory_verification_rejects_reparse_ancestors_and_malformed_rows(
 
 
 def test_real_runtime_inventory_verification_matches_the_full_identity() -> None:
-    """The real 16.5k-file runtime: the verified identity is byte-for-byte the full identity."""
-    from ai_trading_system.platform.architecture import workflow_execution as execution
+    """The real 16.5k-file runtime: the verified identity is byte-for-byte the full identity.
 
-    inventory: list[list[Any]] = []
-    full = execution.acceptance_runtime_identity(inventory=inventory)
-    assert len(inventory) == full["distribution_code"]["file_count"] > 1000
-    identity, inputs = execution.acceptance_runtime_identity_from_inventory(inventory)
-    assert identity == full
-    assert all(path.suffix in {".py", ".pyc"} for path in inputs)
+    Runs in a fresh interpreter. The loaded-code verifier judges every module its process has
+    imported, and a shared xdist worker that already imported numpy carries array-function
+    wrappers the verifier deliberately does not model (the v24 Full failed on `empty_like`).
+    """
+    code = (
+        "import json\n"
+        "from ai_trading_system.platform.architecture import workflow_execution as execution\n"
+        "inventory = []\n"
+        "full = execution.acceptance_runtime_identity(inventory=inventory)\n"
+        "assert len(inventory) == full['distribution_code']['file_count'] > 1000\n"
+        "identity, inputs = execution.acceptance_runtime_identity_from_inventory(inventory)\n"
+        "assert identity == full\n"
+        "assert all(path.suffix in {'.py', '.pyc'} for path in inputs)\n"
+        "print('INVENTORY_IDENTITY_OK')\n"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code], cwd=ROOT, capture_output=True, text=True,
+        env={**os.environ, "PYTHONPATH": str(ROOT / "src"), "PYTHONDONTWRITEBYTECODE": "1"},
+        timeout=LOADED_HOST_CLI_TIMEOUT_SECONDS,
+    )
+    assert result.returncode == 0 and "INVENTORY_IDENTITY_OK" in result.stdout, (
+        result.stdout + result.stderr
+    )
 
 
 def test_overlay_sources_prefer_candidate_bytes_without_materializing_runtime() -> None:
