@@ -1,0 +1,99 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-021_PUBLICATION_ORIG_HEAD_UNCHANGED_ROBUSTNESS
+  task_id_sha256: b84106ab1cacc70514293aed696f0e6dc0ab1fb38bd961b60dc04f3420d5fd20
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-021_PUBLICATION_ORIG_HEAD_UNCHANGED_ROBUSTNESS
+  title: null
+  domain: Publication fence / local ff-merge hook validation robustness when ORIG_HEAD
+    already equals the old HEAD
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Claude Code coordinator
+  requirement_refs:
+  - docs/requirements/DEVX-021_Publication_ORIG_HEAD_Unchanged_Robustness_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: v25 正式 Full 通过（14,706 通过/0 失败，3 小时 28
+    分）后，local-publish 在真实主检出被钩子校验以 PUBLICATION_GIT_MERGE_LOCK 拒绝：真实仓库的 .git/ORIG_HEAD
+    已等于旧 main，git 因此只创建空的 ORIG_HEAD.lock，而 _validate_publication_git_merge 要求其内容为
+    expected_main_sha+换行。已在真实 .git 副本上复现（有 ORIG_HEAD：锁 size 0；无 ORIG_HEAD：锁 size 41），其余钩子序列一致。v26
+    不改发布代码，只在 local-publish 前一次性删除 .git/ORIG_HEAD（临时前置条件，已在需求文档登记，待 owner 确认）。实施排在基线发布之后：以
+    plan.orig_head 基线推导合法锁内容与最终 ORIG_HEAD，联动合并窗口/效果分类（workflow_integration 约 2964/3058/4154）并补三种基线的测试与真实布局演练。详见
+    docs/requirements/DEVX-021_Publication_ORIG_HEAD_Unchanged_Robustness_V1.md。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 校验器与效果分类对 ORIG_HEAD 三种基线（不存在、等于旧 main、不同于旧 main）语义正确放行/拒绝并有负向测试（锁内容被篡改、基线与锁不一致必须拒绝）；fixture
+      演练覆盖「预先存在且等于旧 main」且真实布局副本演练通过；不放宽任何既有检查，恢复/adopt 路径对新情形可重放；更新任务登记与需求文档；退出条件：不再需要删除
+      ORIG_HEAD 的临时前置条件。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-021_PUBLICATION_ORIG_HEAD_UNCHANGED_ROBUSTNESS
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-10-03T20:42:59Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx021-register-20261004-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    legacy_projection:
+    - DEVX-021_PUBLICATION_ORIG_HEAD_UNCHANGED_ROBUSTNESS
+    - Publication fence / local ff-merge hook validation robustness when ORIG_HEAD
+      already equals the old HEAD
+    - P1
+    - PROPOSED
+    - Claude Code coordinator
+    - v25 正式 Full 通过（14,706 通过/0 失败，3 小时 28 分）后，local-publish 在真实主检出被钩子校验以 PUBLICATION_GIT_MERGE_LOCK
+      拒绝：真实仓库的 .git/ORIG_HEAD 已等于旧 main，git 因此只创建空的 ORIG_HEAD.lock，而 _validate_publication_git_merge
+      要求其内容为 expected_main_sha+换行。已在真实 .git 副本上复现（有 ORIG_HEAD：锁 size 0；无 ORIG_HEAD：锁
+      size 41），其余钩子序列一致。v26 不改发布代码，只在 local-publish 前一次性删除 .git/ORIG_HEAD（临时前置条件，已在需求文档登记，待
+      owner 确认）。实施排在基线发布之后：以 plan.orig_head 基线推导合法锁内容与最终 ORIG_HEAD，联动合并窗口/效果分类（workflow_integration
+      约 2964/3058/4154）并补三种基线的测试与真实布局演练。详见 docs/requirements/DEVX-021_Publication_ORIG_HEAD_Unchanged_Robustness_V1.md。
+    - 校验器与效果分类对 ORIG_HEAD 三种基线（不存在、等于旧 main、不同于旧 main）语义正确放行/拒绝并有负向测试（锁内容被篡改、基线与锁不一致必须拒绝）；fixture
+      演练覆盖「预先存在且等于旧 main」且真实布局副本演练通过；不放宽任何既有检查，恢复/adopt 路径对新情形可重放；更新任务登记与需求文档；退出条件：不再需要删除
+      ORIG_HEAD 的临时前置条件。
+    - production_effect=none；broker_action=none；agent_harness=claude_code；根因证据与复现见需求文档第
+      1、2 节；临时前置条件（删除 ORIG_HEAD）为已记录的变通，待 owner 复核。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:gov-007-devx021-register-20261004-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-16f6dd9662d3a74d0acb7b2b8001a685
+projection:
+  legacy_first_eight_cells:
+  - DEVX-021_PUBLICATION_ORIG_HEAD_UNCHANGED_ROBUSTNESS
+  - Publication fence / local ff-merge hook validation robustness when ORIG_HEAD already
+    equals the old HEAD
+  - P1
+  - PROPOSED
+  - Claude Code coordinator
+  - v25 正式 Full 通过（14,706 通过/0 失败，3 小时 28 分）后，local-publish 在真实主检出被钩子校验以 PUBLICATION_GIT_MERGE_LOCK
+    拒绝：真实仓库的 .git/ORIG_HEAD 已等于旧 main，git 因此只创建空的 ORIG_HEAD.lock，而 _validate_publication_git_merge
+    要求其内容为 expected_main_sha+换行。已在真实 .git 副本上复现（有 ORIG_HEAD：锁 size 0；无 ORIG_HEAD：锁
+    size 41），其余钩子序列一致。v26 不改发布代码，只在 local-publish 前一次性删除 .git/ORIG_HEAD（临时前置条件，已在需求文档登记，待
+    owner 确认）。实施排在基线发布之后：以 plan.orig_head 基线推导合法锁内容与最终 ORIG_HEAD，联动合并窗口/效果分类（workflow_integration
+    约 2964/3058/4154）并补三种基线的测试与真实布局演练。详见 docs/requirements/DEVX-021_Publication_ORIG_HEAD_Unchanged_Robustness_V1.md。
+  - 校验器与效果分类对 ORIG_HEAD 三种基线（不存在、等于旧 main、不同于旧 main）语义正确放行/拒绝并有负向测试（锁内容被篡改、基线与锁不一致必须拒绝）；fixture
+    演练覆盖「预先存在且等于旧 main」且真实布局副本演练通过；不放宽任何既有检查，恢复/adopt 路径对新情形可重放；更新任务登记与需求文档；退出条件：不再需要删除
+    ORIG_HEAD 的临时前置条件。
+  - production_effect=none；broker_action=none；agent_harness=claude_code；根因证据与复现见需求文档第
+    1、2 节；临时前置条件（删除 ORIG_HEAD）为已记录的变通，待 owner 复核。
+  docs_links:
+  - docs/requirements/DEVX-021_Publication_ORIG_HEAD_Unchanged_Robustness_V1.md
+  terminal: false
+  canonical_row_sha256: 691d2ee1317e6de5964b6052042cf3338f4a24acde92d584d15ee4ba3f36c8bc
+last_event_id: task-event-16f6dd9662d3a74d0acb7b2b8001a685
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: ad795281f117691012ddc23a5756615e9c1c9ba9609ec4b21f964ce8b7b6b557
