@@ -111,3 +111,9 @@ v18 Full 的并发时间线：约 1.5 小时后只剩 4 个重型节点（K=4）
   `D:/Work/devx020-prof`（git worktree，含不提交的计时钩子与从主检出复制的 `outputs/research`、`outputs/atlas`、
   `outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z`）、`D:/Work/devx020-bt1`、`D:/Work/devx020-bt2`、
   `D:/Work/devx020-trace-*.jsonl`：排查结束后审计并清理（`git worktree remove`），不得提交计时钩子。
+
+- 2026-10-03（O3 实施后复测）：在 `D:/Work/devx020-prof2`（git worktree，HEAD `53258e9b5`/`2069a84a3` + 不提交的计时钩子，钩子只能写成与源文件同名的模块级重定义，
+  闭包包装会被已加载代码校验器正确拒绝）复测同两个代表性节点：mandatory 链路节点 94.8 s → 55.7 s；16 worker 的发布回放节点 951 s → 735 s，
+  单次身份计算（16 并发）中位 73 s → 约 7 s。详细对照与实现说明见 `DEVX-018` 文档「O3-a/b/c 实施结果与实测」。该工作区回归后改为干净的
+  `2069a84a3`（无钩子），仍在用于跑回归；退出条件：回归与 K 实验结束后 `git worktree remove`，并保留 `D:/Work/devx020-trace2-*.jsonl` 作为实测证据直至 DEVX-020 关闭。
+- 仍未做：K 实验、变体冗余审计（发布节点每个变体重复约 420 s 的 Atlas/readiness/生成器/内层 Full）、遥测。
