@@ -18,17 +18,15 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: P1-C 基线发布仍未完成（main/origin/main 未变）。owner
-    2026-10-03 要求最高优先级优化 Full 耗时（7 小时太低效），已落地：DEVX-018 O3-a/b/c（运行时身份：运行器首尾各一次完整字节哈希，运行内全部进程按逐文件清单做元数据指纹比对并对被取用代码做惰性
-    sha256 核对；mandatory 链节点 94.8→55.7 s，16 worker 发布回放节点 951→735 s，16 并发单次身份 73→约
-    7 s）与 K 实验（调度清单 v5：heavy_concurrency_cap 8、interval 120 s，节点级模型估计 Full 约 2.4-3
-    小时，v21 同口径 7.36 小时）。v24 候选已在准备：同一批代码（commits 53258e9b5、2069a84a3、094b3857e）加生成物
-    reseal，failure_fix_rerun 的 parent 沿用 v20 失败摘要；受影响真实链路回归 92 项通过，K 实验 4 轮 84 个节点运行全部通过。下一步：准备链（生成器零
-    diff）→ 正式 Full → 发布（LOCAL_MAIN_FF_PRE → local-publish → 取远端 → REMOTE_PUSH_PRE
-    → CLOSEOUT 预检 → 普通推送 → 核对 SHA → CLEANUP_PRE → release completed）。须披露给 owner：超时与等待校准仍
-    PROVISIONAL_PENDING_OWNER_REVIEW；O3 跨调用缓存仍未获批，O3 的设计偏离与残余风险见 DEVX-018 需求；K=8/间隔
-    120 的依据与未建模风险见 DEVX-020 第 7 节。顺序不变：基线发布 → P1/P4 → 重测 → O4 → DEVX-016 → OPS-082
-    → DEVX-017 → GOV-007 阶段 5。
+  unstructured_legacy_blocker_or_next_step: P1-C 基线发布仍未完成（main/origin/main 未变）。v24
+    正式 Full（O3-a/b/c + 调度清单 v5）14,703 通过 / 2 失败 / 4 跳过，墙钟 3 小时 46 分（v21 7 小时 22 分，-49%），无超时；2
+    个失败为 O3 改动引起并已修复（commit c61ba02a3），被改动模块非重型测试 1,205 项通过。v25 = v24 候选 + 两处修复，failure_fix_rerun
+    的 parent 沿用 v20 失败摘要，正在走准备链（生成器零 diff）→ 正式 Full（预期约 3.8 小时）→ 发布（LOCAL_MAIN_FF_PRE
+    → local-publish → 取远端 → REMOTE_PUSH_PRE → CLOSEOUT 预检 → 普通推送 → 核对 SHA → CLEANUP_PRE
+    → release completed）。须披露给 owner：超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW；O3 设计偏离与残余风险（DEVX-018
+    需求）；K=8/间隔 120 的依据与模型偏差（DEVX-020 第 7、8 节）；O3 跨调用缓存仍未获批。之后杠杆（需 owner 复核）：拆分 host_registry_view
+    复合组、P4 重放去重。顺序不变：基线发布 → P1/P4 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007
+    阶段 5。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -637,6 +635,37 @@ events:
   - change:gov-007-gov007-v24-task-20261003-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-366458283da549cee2fe0377039a03f5
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-03T15:57:16Z'
+  actor: integration-coordinator
+  change_id: gov-007-gov007-v25-task-20261004-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-366458283da549cee2fe0377039a03f5
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: P1-C 基线发布仍未完成（main/origin/main 未变）。v24 正式 Full（O3-a/b/c
+      + 调度清单 v5）14,703 通过 / 2 失败 / 4 跳过，墙钟 3 小时 46 分（v21 7 小时 22 分，-49%），无超时；2 个失败为
+      O3 改动引起并已修复（commit c61ba02a3），被改动模块非重型测试 1,205 项通过。v25 = v24 候选 + 两处修复，failure_fix_rerun
+      的 parent 沿用 v20 失败摘要，正在走准备链（生成器零 diff）→ 正式 Full（预期约 3.8 小时）→ 发布（LOCAL_MAIN_FF_PRE
+      → local-publish → 取远端 → REMOTE_PUSH_PRE → CLOSEOUT 预检 → 普通推送 → 核对 SHA → CLEANUP_PRE
+      → release completed）。须披露给 owner：超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW；O3
+      设计偏离与残余风险（DEVX-018 需求）；K=8/间隔 120 的依据与模型偏差（DEVX-020 第 7、8 节）；O3 跨调用缓存仍未获批。之后杠杆（需
+      owner 复核）：拆分 host_registry_view 复合组、P4 重放去重。顺序不变：基线发布 → P1/P4 → 重测 → O4 → DEVX-016
+      → OPS-082 → DEVX-017 → GOV-007 阶段 5。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: 2026-10-04：v24 Full 结果与 v25 计划；详见 DEVX-018 需求「v24 正式 Full 结果与 v25 计划」。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-gov007-v25-task-20261004-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a2e9cc7b988ba9fa3112455ad5952ed9
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
@@ -644,22 +673,20 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - P1-C 基线发布仍未完成（main/origin/main 未变）。owner 2026-10-03 要求最高优先级优化 Full 耗时（7 小时太低效），已落地：DEVX-018
-    O3-a/b/c（运行时身份：运行器首尾各一次完整字节哈希，运行内全部进程按逐文件清单做元数据指纹比对并对被取用代码做惰性 sha256 核对；mandatory
-    链节点 94.8→55.7 s，16 worker 发布回放节点 951→735 s，16 并发单次身份 73→约 7 s）与 K 实验（调度清单 v5：heavy_concurrency_cap
-    8、interval 120 s，节点级模型估计 Full 约 2.4-3 小时，v21 同口径 7.36 小时）。v24 候选已在准备：同一批代码（commits
-    53258e9b5、2069a84a3、094b3857e）加生成物 reseal，failure_fix_rerun 的 parent 沿用 v20 失败摘要；受影响真实链路回归
-    92 项通过，K 实验 4 轮 84 个节点运行全部通过。下一步：准备链（生成器零 diff）→ 正式 Full → 发布（LOCAL_MAIN_FF_PRE
-    → local-publish → 取远端 → REMOTE_PUSH_PRE → CLOSEOUT 预检 → 普通推送 → 核对 SHA → CLEANUP_PRE
-    → release completed）。须披露给 owner：超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW；O3 跨调用缓存仍未获批，O3
-    的设计偏离与残余风险见 DEVX-018 需求；K=8/间隔 120 的依据与未建模风险见 DEVX-020 第 7 节。顺序不变：基线发布 → P1/P4
-    → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。
+  - P1-C 基线发布仍未完成（main/origin/main 未变）。v24 正式 Full（O3-a/b/c + 调度清单 v5）14,703 通过 /
+    2 失败 / 4 跳过，墙钟 3 小时 46 分（v21 7 小时 22 分，-49%），无超时；2 个失败为 O3 改动引起并已修复（commit c61ba02a3），被改动模块非重型测试
+    1,205 项通过。v25 = v24 候选 + 两处修复，failure_fix_rerun 的 parent 沿用 v20 失败摘要，正在走准备链（生成器零
+    diff）→ 正式 Full（预期约 3.8 小时）→ 发布（LOCAL_MAIN_FF_PRE → local-publish → 取远端 → REMOTE_PUSH_PRE
+    → CLOSEOUT 预检 → 普通推送 → 核对 SHA → CLEANUP_PRE → release completed）。须披露给 owner：超时与等待校准仍
+    PROVISIONAL_PENDING_OWNER_REVIEW；O3 设计偏离与残余风险（DEVX-018 需求）；K=8/间隔 120 的依据与模型偏差（DEVX-020
+    第 7、8 节）；O3 跨调用缓存仍未获批。之后杠杆（需 owner 复核）：拆分 host_registry_view 复合组、P4 重放去重。顺序不变：基线发布
+    → P1/P4 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - 2026-10-03：转入 v24（优化落地后的新候选）；详见 DEVX-018 需求「O3-a/b/c 实施结果与实测」「K 实验结论与调度清单 v5」。
+  - 2026-10-04：v24 Full 结果与 v25 计划；详见 DEVX-018 需求「v24 正式 Full 结果与 v25 计划」。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 350cc47fb9018f634774bcebb6e5a0a4b2428135f9fb4583b0cdeaef1b39292b
-last_event_id: task-event-366458283da549cee2fe0377039a03f5
+  canonical_row_sha256: a5ff0c32f7a3f260e8b17e2e275b833c405d45ede602d8a8e70276bd6d389195
+last_event_id: task-event-a2e9cc7b988ba9fa3112455ad5952ed9
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 926f39257de9e0ddd82df93d477f34dae53a101a7976d2d9d29a9bbe7f36984b
+fragment_checksum: b96c637f37513ca209c01107e543b512de3310c853b7cf39d53d61095cc23727
