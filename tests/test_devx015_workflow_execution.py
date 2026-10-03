@@ -1001,6 +1001,53 @@ def test_overlay_sources_prefer_candidate_bytes_without_materializing_runtime() 
     assert sorted(overlay) == sorted({first, second, third}) and len(overlay) == 3
 
 
+@pytest.mark.parametrize("origin_valid", [True, False])
+def test_controller_observer_leaves_identity_recheck_to_the_bound_plugin(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, origin_valid: bool,
+) -> None:
+    """DEVX-018: the controller's BoundAcceptancePlugin already repeats every identity check."""
+    from types import SimpleNamespace
+
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+
+    def recomputed(*args: Any, **kwargs: Any) -> Any:
+        raise AssertionError("the controller observer must not recompute identities")
+
+    for name in (
+        "acceptance_runtime_identity", "acceptance_runtime_identity_from_inventory",
+        "bind_acceptance_checkout", "bind_acceptance_implementation",
+    ):
+        monkeypatch.setattr(execution, name, recomputed)
+    observer = execution._AcceptanceInputObserver(tmp_path, {}, [], {}, [], [])
+    observer.origin_valid = origin_valid
+    session = SimpleNamespace(config=SimpleNamespace(), exitstatus=0)
+    observer.pytest_sessionfinish(session, 0)
+    assert session.exitstatus == (0 if origin_valid else 1)
+
+
+def test_worker_observer_still_reports_its_own_failed_identity(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    from types import SimpleNamespace
+
+    from ai_trading_system.platform.architecture import workflow_execution as execution
+
+    def failing(*args: Any, **kwargs: Any) -> Any:
+        raise execution.ExecutionContainmentError("ACCEPTANCE_RUNTIME_CHANGED", "probe")
+
+    monkeypatch.setattr(execution, "bind_acceptance_checkout", lambda *args: [])
+    monkeypatch.setattr(execution, "acceptance_runtime_identity_from_inventory", failing)
+    observer = execution._AcceptanceInputObserver(
+        tmp_path, {"candidate_sha": "a" * 40}, [], {}, [], [],
+    )
+    config = SimpleNamespace(workerinput={}, workeroutput={})
+    session = SimpleNamespace(config=config, exitstatus=0)
+    observer.pytest_sessionfinish(session, 0)
+    assert session.exitstatus == 1
+    row = config.workeroutput["mandatory_input_identity"]
+    assert row["origin_valid"] is False and row["runtime_verification"] == "INVENTORY_METADATA_V1"
+
+
 @pytest.mark.parametrize("verification", ["FULL_BYTES_V1", "INVENTORY_METADATA_V1"])
 def test_worker_row_comparator_requires_identical_inputs_and_a_known_verification(
     verification: str,

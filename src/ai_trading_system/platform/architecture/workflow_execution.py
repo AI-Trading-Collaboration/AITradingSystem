@@ -1839,6 +1839,7 @@ class _BoundAcceptancePlugin(MandatoryAcceptancePlugin):
         implementation_identity: list[dict[str, str]],
         result_identity: tuple[int, int],
         result_root_identity: tuple[int, int],
+        runtime_inventory: Sequence[Sequence[Any]] | None = None,
     ) -> None:
         super().__init__(binding["required_nodes"])
         self.root, self.binding, self.output = root, binding, output
@@ -1846,6 +1847,7 @@ class _BoundAcceptancePlugin(MandatoryAcceptancePlugin):
         self.runtime_identity = runtime_identity
         self.implementation_identity = implementation_identity
         self.result_identity, self.result_root_identity = result_identity, result_root_identity
+        self.runtime_inventory = runtime_inventory
         self.worker_inputs: list[Any] = []
 
     def pytest_testnodedown(self, node: Any, error: Any) -> None:
@@ -1866,11 +1868,16 @@ class _BoundAcceptancePlugin(MandatoryAcceptancePlugin):
                 identity_error = "ACCEPTANCE_BINDING_CHANGED"
             if bind_acceptance_checkout(self.root, self.binding) != self.checkout_identity:
                 identity_error = "ACCEPTANCE_CHECKOUT_CHANGED"
-            dependency_inputs: dict[Path, bytes] = {}
-            if (
-                acceptance_runtime_identity(captured_dependencies=dependency_inputs)
-                != self.runtime_identity
-            ):
+            dependency_inputs: Mapping[Path, bytes]
+            if self.runtime_inventory is None:
+                captured: dict[Path, bytes] = {}
+                current_runtime = acceptance_runtime_identity(captured_dependencies=captured)
+                dependency_inputs = captured
+            else:
+                current_runtime, dependency_inputs = acceptance_runtime_identity_from_inventory(
+                    self.runtime_inventory
+                )
+            if current_runtime != self.runtime_identity:
                 identity_error = "ACCEPTANCE_RUNTIME_CHANGED"
             if (
                 bind_acceptance_implementation(
@@ -1901,7 +1908,10 @@ class _BoundAcceptancePlugin(MandatoryAcceptancePlugin):
                     "origin_valid": identity_error is None,
                     "runtime_identity": self.runtime_identity,
                     "implementation_identity": self.implementation_identity,
-                    "runtime_verification": RUNTIME_VERIFICATION_FULL,
+                    "runtime_verification": (
+                        RUNTIME_VERIFICATION_FULL if self.runtime_inventory is None
+                        else RUNTIME_VERIFICATION_INVENTORY
+                    ),
                 }
             ]
         if identity_error:
@@ -1959,6 +1969,15 @@ class _AcceptanceInputObserver:
                     raise ExecutionContainmentError("ACCEPTANCE_TEST_ORIGIN")
 
     def pytest_sessionfinish(self, session: Any, exitstatus: int) -> None:
+        if not hasattr(session.config, "workeroutput") and not hasattr(
+            session.config, "workerinput"
+        ):
+            # The controller/single process registers _BoundAcceptancePlugin, whose
+            # sessionfinish repeats every identity check below on this same process. Only the
+            # origin result is unique to this observer; do not compute the identities twice.
+            if not self.origin_valid:
+                session.exitstatus = 1
+            return
         try:
             identity = bind_acceptance_checkout(self.root, self.binding)
             dependency_inputs: Mapping[Path, bytes]
@@ -2023,7 +2042,7 @@ def pytest_configure(config: Any) -> None:
             raise ExecutionContainmentError("ACCEPTANCE_CHECKOUT_CHANGED")
         dependency_inputs: Mapping[Path, bytes]
         runtime_inventory: Sequence[Sequence[Any]] | None = None
-        if hasattr(config, "workerinput") and "runtime_inventory" in request:
+        if "runtime_inventory" in request:
             if request["runtime_inventory"]["schema_version"] != RUNTIME_INVENTORY_SCHEMA:
                 raise ExecutionContainmentError("ACCEPTANCE_RUNTIME_INVENTORY", "schema")
             runtime_inventory = request["runtime_inventory"]["files"]
@@ -2065,6 +2084,7 @@ def pytest_configure(config: Any) -> None:
                     implementation_identity,
                     tuple(request["result_identity"]),
                     tuple(request["result_root_identity"]),
+                    runtime_inventory,
                 ),
                 "aits-mandatory-acceptance",
             )
