@@ -18,13 +18,13 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: P1-C 基线发布仍未完成：v21 正式 Full 完整通过（14683 passed/0
-    failed）且 LOCAL_MAIN_FF_PRE 通过，但 local-publish worker 因 hook 入口脚本不在非 DEVX-015 任务的
-    profile 捕获清单而以 HOOK_READY_ENTRYPOINT 失败，本地/远端 main 未变，事务已按恢复路径 FAILED 收尾。v22 把入口脚本加入检查器固定捕获清单（只增加绑定证据），并把发布演练恢复为非
-    DEVX-015 + 大 profile + 真实 worker + 远端 push + closeout（先红后绿，一并修掉演练暴露的其他缺口），再以新候选
-    failure_fix_rerun（parent=v20 失败摘要）重跑正式 Full（约 7-8 小时）并发布。DEVX-020 已登记，排查在基线发布后。顺序不变：基线发布
-    → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时与等待校准待 owner
-    复核，O3 identity 缓存待 owner 决定。详见 DEVX-018 需求 v21/v22 节。
+  unstructured_legacy_blocker_or_next_step: P1-C 基线发布仍未完成：v22 正式 Full 派发约 57 分钟后因夹具驱动的写死
+    1200 秒挂起保护被越过（夹具内层 Full 实际已跑完，负载下变慢，非卡死）出现必然失败，已提前终止并以 FAILED/INSUFFICIENT 收尾，main/origin/main
+    未变。v23 按类修复宿主侧写死的真实链路超时（共 18 处：driver_timeout 改 3600，其余统一 1800）并新增不变量测试，先受影响重型节点
+    smoke，再 reseal，新候选 failure_fix_rerun（parent 沿用 v20 失败摘要）重跑正式 Full（约 7-8 小时）并发布。v22
+    的入口捕获修复与大 profile+真实 worker 演练待真实 Full 通过后验证。DEVX-020 已登记，排查在基线发布后。顺序不变：基线发布 →
+    P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时与等待校准待 owner
+    复核，O3 identity 缓存待 owner 决定。详见 DEVX-018 需求 v22/v23 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -567,6 +567,38 @@ events:
   - change:gov-007-gov007-v22-task-20261003-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-b500c43bd71879c81d2c3d400d46510e
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-03T03:52:02Z'
+  actor: integration-coordinator
+  change_id: gov-007-gov007-v23-task-20261003-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-b500c43bd71879c81d2c3d400d46510e
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: P1-C 基线发布仍未完成：v22 正式 Full 派发约 57 分钟后因夹具驱动的写死 1200 秒挂起保护被越过（夹具内层
+      Full 实际已跑完，负载下变慢，非卡死）出现必然失败，已提前终止并以 FAILED/INSUFFICIENT 收尾，main/origin/main
+      未变。v23 按类修复宿主侧写死的真实链路超时（共 18 处：driver_timeout 改 3600，其余统一 1800）并新增不变量测试，先受影响重型节点
+      smoke，再 reseal，新候选 failure_fix_rerun（parent 沿用 v20 失败摘要）重跑正式 Full（约 7-8 小时）并发布。v22
+      的入口捕获修复与大 profile+真实 worker 演练待真实 Full 通过后验证。DEVX-020 已登记，排查在基线发布后。顺序不变：基线发布
+      → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时与等待校准待
+      owner 复核，O3 identity 缓存待 owner 决定。详见 DEVX-018 需求 v22/v23 节。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: production_effect=none；broker_action=none；agent_harness=claude_code；v22
+      Full 因测试夹具的写死 1200 秒挂起保护被越过而必然失败，已按既有恢复路径提前收尾，本地/远端 main 均未变；owner_decision
+      2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）；owner 2026-10-02 要求登记
+      DEVX-020
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-gov007-v23-task-20261003-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-786ccbe942cd7470e2c5f60570e3f3c0
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
@@ -574,21 +606,21 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - P1-C 基线发布仍未完成：v21 正式 Full 完整通过（14683 passed/0 failed）且 LOCAL_MAIN_FF_PRE 通过，但
-    local-publish worker 因 hook 入口脚本不在非 DEVX-015 任务的 profile 捕获清单而以 HOOK_READY_ENTRYPOINT
-    失败，本地/远端 main 未变，事务已按恢复路径 FAILED 收尾。v22 把入口脚本加入检查器固定捕获清单（只增加绑定证据），并把发布演练恢复为非 DEVX-015
-    + 大 profile + 真实 worker + 远端 push + closeout（先红后绿，一并修掉演练暴露的其他缺口），再以新候选 failure_fix_rerun（parent=v20
-    失败摘要）重跑正式 Full（约 7-8 小时）并发布。DEVX-020 已登记，排查在基线发布后。顺序不变：基线发布 → P1/P4/O3 → 重测 →
-    O4 → DEVX-016 → OPS-082 → DEVX-017 → GOV-007 阶段 5。超时与等待校准待 owner 复核，O3 identity
-    缓存待 owner 决定。详见 DEVX-018 需求 v21/v22 节。
+  - P1-C 基线发布仍未完成：v22 正式 Full 派发约 57 分钟后因夹具驱动的写死 1200 秒挂起保护被越过（夹具内层 Full 实际已跑完，负载下变慢，非卡死）出现必然失败，已提前终止并以
+    FAILED/INSUFFICIENT 收尾，main/origin/main 未变。v23 按类修复宿主侧写死的真实链路超时（共 18 处：driver_timeout
+    改 3600，其余统一 1800）并新增不变量测试，先受影响重型节点 smoke，再 reseal，新候选 failure_fix_rerun（parent
+    沿用 v20 失败摘要）重跑正式 Full（约 7-8 小时）并发布。v22 的入口捕获修复与大 profile+真实 worker 演练待真实 Full
+    通过后验证。DEVX-020 已登记，排查在基线发布后。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082
+    → DEVX-017 → GOV-007 阶段 5。超时与等待校准待 owner 复核，O3 identity 缓存待 owner 决定。详见 DEVX-018
+    需求 v22/v23 节。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - production_effect=none；broker_action=none；agent_harness=claude_code；v21 Full 技术
-    PASS 但发布 worker 因 hook 入口脚本未被捕获而失败，已按既有恢复路径收尾，本地/远端 main 均未变；演练覆盖不足（含我 v19 的疏漏）已如实记录；owner_decision
-    2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）；owner 2026-10-02 要求登记 DEVX-020
+  - production_effect=none；broker_action=none；agent_harness=claude_code；v22 Full 因测试夹具的写死
+    1200 秒挂起保护被越过而必然失败，已按既有恢复路径提前收尾，本地/远端 main 均未变；owner_decision 2026-09-30（优化顺序、O2、S1
+    并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）；owner 2026-10-02 要求登记 DEVX-020
   docs_links: []
   terminal: false
-  canonical_row_sha256: edf8f203178395aae058390c746370b6baf1e2f31f12d7700f6621aa7d245e93
-last_event_id: task-event-b500c43bd71879c81d2c3d400d46510e
+  canonical_row_sha256: 57e8cfb6287bddb793953813bc9b9180bcf41a16bce6e6b520ba149075210e85
+last_event_id: task-event-786ccbe942cd7470e2c5f60570e3f3c0
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 5be4e45a52d2d08a767190a46458c9f06446700bb5b35b2b93144f705696a13a
+fragment_checksum: b579ba88691f37743dcb7edfd28fcd912b4a86bb1c83835887957ea73ab0d528

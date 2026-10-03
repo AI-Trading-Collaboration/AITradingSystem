@@ -613,3 +613,35 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
   `test_actual_full_profile_preserves_real_whole_readiness`、`test_original_publication_cli_ff_only_and_independent_recovery` 两个变体）6 passed。
 - 仍待验证：新候选的前置 tiers 与正式 Full；真实仓库与真实远端上的 `local-publish`、CLOSEOUT 治理预检（夹具使用本地裸远端且不含该预检）、
   普通 push 与收尾。
+
+### 2026-10-03 v22 Full 提前终止与 v23 修复（宿主侧写死的真实链路超时）
+
+- v22（候选 `827f0ee7e`，事务 `gov-007-p1c-devx015-baseline-publication-20261003-v22`，`failure_fix_rerun`，绑定 v20 失败摘要为
+  `full_parent`）：五个前置 tier 通过；正式 Full 于 11:51 TST 派发，约 57 分钟后出现失败节点
+  `tests/test_arch_005_integration_publication_fence.py::test_original_publication_cli_interrupted_after_main_commit[full-profile-publish]`
+  （gw4）：`subprocess.TimeoutExpired`，发生在 `_run_actual_profile_full` 的驱动 `subprocess.run(..., timeout=driver_timeout)`，
+  默认 `driver_timeout=1200` 秒；拆台再报 `LEASE_EXECUTION_NOT_TERMINAL` 只是驱动被中止的后果。
+- 根因（宿主侧写死的挂起保护，同一类「空闲主机值」；非产品缺陷）：保留的夹具现场显示夹具内层 Full 实际已**跑完**
+  （`74 passed in 675.76s`，profile 于 12:46:58 写出），但 16 个 worker 的启动就用了约 6.5 分钟（Full 前期 4 个重型节点加 14 个轻量节点的最重负载段），
+  驱动后续还要读 profile、写产物并执行 `FORMAL_VALIDATION_RESULT` 检查点（含 profile 检查），整体在 12:48:30 越过 1200 秒保护。
+  是变慢，不是卡死。v16/v18/v20/v21 的同一节点在该窗口内恰好没越线。
+- 因为每轮 Full 都以「一个又一个写死的期限」暴露，这次按类盘点而不是只修一处：对 `test_devx015_workflow_coordination/execution/
+  acceptance`、`test_arch_005_integration_publication_fence/source_preservation/task_checkpoint`、`test_governed_development_skill`、
+  `test_devx015_workflow_integration` 做 AST 盘点，宿主侧写死的数值 `timeout` 共 128 处（30–3599 秒）；其中包着
+  「内层 Full、运行时身份哈希（空闲约 11 秒、重负载 116–194 秒）、profile 检查或发布 CLI」且小于已校准的 1800 秒的共 18 处：
+  `driver_timeout` 默认 1200（1 处）、`timeout=1200`（4 处：`test_actual_mandatory_xdist…`、
+  `test_mandatory_acceptance_actual_runner_chain`、`test_fixed_candidate_actual_runner_result_survives_main_advance`、
+  `observe_creation_crash`）、`timeout=720`（6 处，coordination 的 profile/发布 CLI 子进程）、`timeout=600`（3 处）、
+  `timeout=300`（3 处，运行时身份子进程）。其余 30/60 秒等为 git/小进程，不随负载放大，不动。
+- v23 修复（只改测试的挂起保护，不改任何断言与生产代码）：
+  1. 新增 `LOADED_HOST_DRIVER_TIMEOUT_SECONDS = 3600`（内层 Full 加 profile 检查，高于 1800 的 CLI 保护），`_run_actual_profile_full` 默认使用；
+  2. 上述其余 17 处统一使用各文件已有的 `LOADED_HOST_CLI_TIMEOUT_SECONDS`（1800，高于 900 秒的生产检查器保护）；
+  3. 新增不变量测试：上述测试文件的宿主侧代码里不得再出现 300 ≤ 值 < 1800 的数值 `timeout`/`*_timeout`
+     （改用校准常量），避免同类漏校准再次只在 7–8 小时的正式 Full 才暴露；
+  4. 先对受影响重型节点做 smoke，再 reseal。
+- parent：沿用 v20 的失败摘要（摘要型 parent 已在 v21 的真实 `LOCAL_MAIN_FF_PRE` 上验证通过；v22 的 `full_incomplete_recovery.json`
+  sha256 `8d564df2cee5923750f9fa4dbef9dee92e963d134a3dc21523c4d31108d2dbca` 仅作证据保留，其链路在发布阶段尚未经真实运行验证）。
+- 验收：不变量测试通过；受影响重型节点 smoke 通过；reseal 后新候选的前置 tiers 与正式 Full 通过并走完
+  `LOCAL_MAIN_FF_PRE → local-publish → REMOTE_PUSH_PRE → 普通 push → CLEANUP_PRE → RELEASED`，`local main = remote main = candidate`。
+- 状态/风险：新增/调整的超时仍属 `PROVISIONAL_PENDING_OWNER_REVIEW`（测试挂起保护，非投资启发式）；O3 identity 缓存待 owner 决定；
+  `production_effect=none`。v22 已在约 1 小时处提前终止（单个失败节点必然使该 Full FAIL），故无整轮 pytest 汇总。

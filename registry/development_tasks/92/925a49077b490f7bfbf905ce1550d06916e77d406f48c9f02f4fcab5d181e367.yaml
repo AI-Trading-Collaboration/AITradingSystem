@@ -19,20 +19,18 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: v21 正式 Full（候选 ee20d0647，parent=v20 失败摘要）完整通过：14683
-    passed/0 failed/4 skipped，pytest 7:21:37；LOCAL_MAIN_FF_PRE 通过；v19 的 16 MiB 预算修复在真实
-    27.4 MB profile 上得到验证（发布 worker 越过 hook 输入托管）。但 local-publish worker 在 hooks_created
-    之后以 LEASE_EXECUTION_PUBLICATION_HOOK_READY_ENTRYPOINT 失败（退出码 2，本地/远端 main 未变，已
-    local-publication-recover 收尾为 STABLE_FAILED_ATTEMPT/ORIGINAL_UNCHANGED，事务 FAILED
-    释放）。根因：ready 校验要求 hook 入口 scripts/architecture_arch005_publication_fence.py 出现在
-    profile 检查捕获清单中，而检查器固定清单只含 run_validation_tier.py/validation_readiness.py/integration_publication_fence.py，入口脚本只随
-    DEVX-015 任务的 mandatory runner_identity 被带入，GOV-007 等非 DEVX-015 任务永远缺这一项。此前未发现是因为非
-    DEVX-015 回归测试停在 LOCAL_MAIN_FF_PRE、worker 测试都用 DEVX-015 夹具，且我在 v19 把真实走 local-publish
-    的演练换成了用普通 git merge 的 closeout 变体（已在文档更正）。v22 修复（见 DEVX-018 需求 v21/v22 节）：检查器固定清单加入该入口脚本（只增加绑定证据，不放宽校验）；恢复并加强演练为「非
-    DEVX-015 + 大 profile + 真实 local-publish worker + 远端 push + closeout」，先红后绿并一并修掉演练暴露的其他缺口；随后
-    reseal，新 failure_fix_rerun（parent=v20 失败摘要，v21 为 PASS 不能作 parent）重跑正式 Full（约 7-8
-    小时）并发布。DEVX-020 已登记，排查待基线发布后。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082
-    → DEVX-017 → GOV-007 阶段 5。超时与等待校准待 owner 复核，O3 identity 缓存待 owner 决定。
+  unstructured_legacy_blocker_or_next_step: v22 正式 Full（候选 827f0ee7e，parent=v20 失败摘要）派发约
+    57 分钟后出现失败节点 test_original_publication_cli_interrupted_after_main_commit[full-profile-publish]：夹具驱动
+    _run_actual_profile_full 的 driver_timeout 默认 1200 秒被越过（夹具内层 Full 实际已跑完 74 passed
+    in 675 s，但 16 个 worker 在重负载段启动就用了约 6.5 分钟，加上驱动后续的 profile 检查与 FORMAL_VALIDATION_RESULT，整体越过
+    1200 秒）。是变慢不是卡死，已提前终止并以 FAILED/INSUFFICIENT 收尾（full_incomplete_recovery.json sha256
+    8d564df2…2dbca），main/origin/main 未变。因每轮 Full 都暴露一个写死的期限，这次按类盘点：宿主侧数值 timeout 共
+    128 处，其中包着内层 Full/运行时身份哈希/profile 检查/发布 CLI 且小于已校准 1800 秒的共 18 处。v23 修复（见 DEVX-018
+    需求 v22/v23 节）：driver_timeout 默认改为新常量 3600，其余 17 处统一用 1800 的校准常量，新增不变量测试禁止再出现 300≤值<1800
+    的宿主侧数值 timeout；先受影响重型节点 smoke，再 reseal，新 failure_fix_rerun（parent 沿用 v20 失败摘要）重跑正式
+    Full（约 7-8 小时）并发布。v21 已验证 v19 预算修复与 v21 退避修复；v22 的入口捕获修复与演练待真实 Full 通过后验证。DEVX-020
+    已登记，排查待基线发布后。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 →
+    GOV-007 阶段 5。超时与等待校准待 owner 复核，O3 identity 缓存待 owner 决定。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile
@@ -416,6 +414,44 @@ events:
   - change:gov-007-devx018-v22-task-20261003-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-ec3f22be93030617bbc28d668aa9b366
+- schema_version: task_event.v1
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-03T03:51:23Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx018-v23-task-20261003-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-ec3f22be93030617bbc28d668aa9b366
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: v22 正式 Full（候选 827f0ee7e，parent=v20 失败摘要）派发约 57 分钟后出现失败节点
+      test_original_publication_cli_interrupted_after_main_commit[full-profile-publish]：夹具驱动
+      _run_actual_profile_full 的 driver_timeout 默认 1200 秒被越过（夹具内层 Full 实际已跑完 74 passed
+      in 675 s，但 16 个 worker 在重负载段启动就用了约 6.5 分钟，加上驱动后续的 profile 检查与 FORMAL_VALIDATION_RESULT，整体越过
+      1200 秒）。是变慢不是卡死，已提前终止并以 FAILED/INSUFFICIENT 收尾（full_incomplete_recovery.json
+      sha256 8d564df2…2dbca），main/origin/main 未变。因每轮 Full 都暴露一个写死的期限，这次按类盘点：宿主侧数值
+      timeout 共 128 处，其中包着内层 Full/运行时身份哈希/profile 检查/发布 CLI 且小于已校准 1800 秒的共 18 处。v23
+      修复（见 DEVX-018 需求 v22/v23 节）：driver_timeout 默认改为新常量 3600，其余 17 处统一用 1800 的校准常量，新增不变量测试禁止再出现
+      300≤值<1800 的宿主侧数值 timeout；先受影响重型节点 smoke，再 reseal，新 failure_fix_rerun（parent
+      沿用 v20 失败摘要）重跑正式 Full（约 7-8 小时）并发布。v21 已验证 v19 预算修复与 v21 退避修复；v22 的入口捕获修复与演练待真实
+      Full 通过后验证。DEVX-020 已登记，排查待基线发布后。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 →
+      OPS-082 → DEVX-017 → GOV-007 阶段 5。超时与等待校准待 owner 复核，O3 identity 缓存待 owner 决定。
+    acceptance_criteria: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧
+      loadfile profile 仍按原契约通过；pre-Full tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3
+      不跨调用缓存身份或 PASS
+    notes: production_effect=none；broker_action=none；agent_harness=claude_code；v22
+      Full 因测试夹具的写死 1200 秒挂起保护被越过而必然失败，已按既有恢复路径提前收尾，本地/远端 main 均未变；owner_decision
+      2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）；owner 2026-10-02 要求登记
+      DEVX-020
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx018-v23-task-20261003-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-27fcb6839b69859f5ba54f84db513a8f
 projection:
   legacy_first_eight_cells:
   - DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
@@ -424,27 +460,25 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - v21 正式 Full（候选 ee20d0647，parent=v20 失败摘要）完整通过：14683 passed/0 failed/4 skipped，pytest
-    7:21:37；LOCAL_MAIN_FF_PRE 通过；v19 的 16 MiB 预算修复在真实 27.4 MB profile 上得到验证（发布 worker
-    越过 hook 输入托管）。但 local-publish worker 在 hooks_created 之后以 LEASE_EXECUTION_PUBLICATION_HOOK_READY_ENTRYPOINT
-    失败（退出码 2，本地/远端 main 未变，已 local-publication-recover 收尾为 STABLE_FAILED_ATTEMPT/ORIGINAL_UNCHANGED，事务
-    FAILED 释放）。根因：ready 校验要求 hook 入口 scripts/architecture_arch005_publication_fence.py
-    出现在 profile 检查捕获清单中，而检查器固定清单只含 run_validation_tier.py/validation_readiness.py/integration_publication_fence.py，入口脚本只随
-    DEVX-015 任务的 mandatory runner_identity 被带入，GOV-007 等非 DEVX-015 任务永远缺这一项。此前未发现是因为非
-    DEVX-015 回归测试停在 LOCAL_MAIN_FF_PRE、worker 测试都用 DEVX-015 夹具，且我在 v19 把真实走 local-publish
-    的演练换成了用普通 git merge 的 closeout 变体（已在文档更正）。v22 修复（见 DEVX-018 需求 v21/v22 节）：检查器固定清单加入该入口脚本（只增加绑定证据，不放宽校验）；恢复并加强演练为「非
-    DEVX-015 + 大 profile + 真实 local-publish worker + 远端 push + closeout」，先红后绿并一并修掉演练暴露的其他缺口；随后
-    reseal，新 failure_fix_rerun（parent=v20 失败摘要，v21 为 PASS 不能作 parent）重跑正式 Full（约 7-8
-    小时）并发布。DEVX-020 已登记，排查待基线发布后。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082
-    → DEVX-017 → GOV-007 阶段 5。超时与等待校准待 owner 复核，O3 identity 缓存待 owner 决定。
+  - v22 正式 Full（候选 827f0ee7e，parent=v20 失败摘要）派发约 57 分钟后出现失败节点 test_original_publication_cli_interrupted_after_main_commit[full-profile-publish]：夹具驱动
+    _run_actual_profile_full 的 driver_timeout 默认 1200 秒被越过（夹具内层 Full 实际已跑完 74 passed
+    in 675 s，但 16 个 worker 在重负载段启动就用了约 6.5 分钟，加上驱动后续的 profile 检查与 FORMAL_VALIDATION_RESULT，整体越过
+    1200 秒）。是变慢不是卡死，已提前终止并以 FAILED/INSUFFICIENT 收尾（full_incomplete_recovery.json sha256
+    8d564df2…2dbca），main/origin/main 未变。因每轮 Full 都暴露一个写死的期限，这次按类盘点：宿主侧数值 timeout 共
+    128 处，其中包着内层 Full/运行时身份哈希/profile 检查/发布 CLI 且小于已校准 1800 秒的共 18 处。v23 修复（见 DEVX-018
+    需求 v22/v23 节）：driver_timeout 默认改为新常量 3600，其余 17 处统一用 1800 的校准常量，新增不变量测试禁止再出现 300≤值<1800
+    的宿主侧数值 timeout；先受影响重型节点 smoke，再 reseal，新 failure_fix_rerun（parent 沿用 v20 失败摘要）重跑正式
+    Full（约 7-8 小时）并发布。v21 已验证 v19 预算修复与 v21 退避修复；v22 的入口捕获修复与演练待真实 Full 通过后验证。DEVX-020
+    已登记，排查待基线发布后。顺序不变：基线发布 → P1/P4/O3 → 重测 → O4 → DEVX-016 → OPS-082 → DEVX-017 →
+    GOV-007 阶段 5。超时与等待校准待 owner 复核，O3 identity 缓存待 owner 决定。
   - Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full
     tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
-  - production_effect=none；broker_action=none；agent_harness=claude_code；v21 Full 技术
-    PASS 但发布 worker 因 hook 入口脚本未被捕获而失败，已按既有恢复路径收尾，本地/远端 main 均未变；演练覆盖不足（含我 v19 的疏漏）已如实记录；owner_decision
-    2026-09-30（优化顺序、O2、S1 并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）；owner 2026-10-02 要求登记 DEVX-020
+  - production_effect=none；broker_action=none；agent_harness=claude_code；v22 Full 因测试夹具的写死
+    1200 秒挂起保护被越过而必然失败，已按既有恢复路径提前收尾，本地/远端 main 均未变；owner_decision 2026-09-30（优化顺序、O2、S1
+    并入、K=4、v12 中断后先落地 O1+O2 再跑正式验证）；owner 2026-10-02 要求登记 DEVX-020
   docs_links: []
   terminal: false
-  canonical_row_sha256: 6c745cc6c16d25960e11f4a50d9154887a665ec616d98ecd5922708d5d66687e
-last_event_id: task-event-ec3f22be93030617bbc28d668aa9b366
+  canonical_row_sha256: 82f4d547bf6219ddddf521666727dafcc7ba18c0a7ce074339e044260f511c03
+last_event_id: task-event-27fcb6839b69859f5ba54f84db513a8f
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: a1f7a31b5d03a6187fde17fef9b728f2cd315097f98f3bbec021892fc9492092
+fragment_checksum: bef2cff3625712ed621dfe009c24f9913b39aa5d84e2875181c3cae35a5233e3
