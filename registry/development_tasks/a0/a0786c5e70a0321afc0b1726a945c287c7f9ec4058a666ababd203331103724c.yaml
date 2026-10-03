@@ -20,11 +20,12 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: owner 要求最高优先级优化。O3-a/b/c 已在 DEVX-018 落地并用同一计时钩子复测（mandatory
-    链节点 94.8→55.7 s；16 worker 发布回放节点 951→735 s，16 并发单次身份 73→约 7 s，详见 DEVX-020 文档第
-    6 节进展与 DEVX-018 需求）。待办：K 实验（并发 2/4/6/8，主机遥测 CPU/磁盘/句柄）；发布回放节点每个变体重复约 420 s 的 Atlas+readiness+生成器+内层
-    Full 的变体冗余审计（测试重构须 owner 复核）；venv 精简/被哈希集合缩小（owner 策略项）。临时工作区 D:/Work/devx020-prof2（回归运行中）、devx020-prof、-bt1/-bt2/-t1/-t2
-    与 D:/Work/devx020-trace*.jsonl：回归与 K 实验结束后审计并 git worktree remove，不提交计时钩子。
+  unstructured_legacy_blocker_or_next_step: owner 要求最高优先级优化。O3-a/b/c 已落地并复测；K 实验已完成（第
+    7 节：4/6/8/12 各 21/21 通过，膨胀 1.00/1.13/1.23/1.43，模型选 K=8、间隔 120 秒，估计 Full 约 2.4-3
+    小时）。待办：用该策略的第一次真实 Full profile 校准模型；变体冗余审计（发布节点每个变体重复约 420 s 的 Atlas+readiness+生成器+内层
+    Full，测试重构须 owner 复核）；host_registry_view 复合组（约 1.77 小时）是关键路径之一，拆出不碰注册表的重型成员须 owner
+    复核；venv 精简/被哈希集合缩小（owner 策略项）。临时工作区 D:/Work/devx020-prof2、devx020-prof、-bt1/-bt2/-t1/-t2、D:/Work/devx020-k（K
+    实验原始数据，保留至本任务关闭）与 D:/Work/devx020-trace*.jsonl：Full 与发布完成后审计并 git worktree remove，不提交计时钩子。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变
@@ -124,6 +125,34 @@ events:
   - change:gov-007-devx020-o3c-task-20261003-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-90c0d917860cac3d4885a1f7820d3502
+- schema_version: task_event.v1
+  task_id: DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-03T10:56:33Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx020-k-task-20261003-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-90c0d917860cac3d4885a1f7820d3502
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: owner 要求最高优先级优化。O3-a/b/c 已落地并复测；K 实验已完成（第 7 节：4/6/8/12 各
+      21/21 通过，膨胀 1.00/1.13/1.23/1.43，模型选 K=8、间隔 120 秒，估计 Full 约 2.4-3 小时）。待办：用该策略的第一次真实
+      Full profile 校准模型；变体冗余审计（发布节点每个变体重复约 420 s 的 Atlas+readiness+生成器+内层 Full，测试重构须
+      owner 复核）；host_registry_view 复合组（约 1.77 小时）是关键路径之一，拆出不碰注册表的重型成员须 owner 复核；venv
+      精简/被哈希集合缩小（owner 策略项）。临时工作区 D:/Work/devx020-prof2、devx020-prof、-bt1/-bt2/-t1/-t2、D:/Work/devx020-k（K
+      实验原始数据，保留至本任务关闭）与 D:/Work/devx020-trace*.jsonl：Full 与发布完成后审计并 git worktree remove，不提交计时钩子。
+    acceptance_criteria: 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变
+      Full 验收语义、不放宽任何校验；任何调度或测试改动必须另有任务、评审与重测；明确列出覆盖等价性论证和风险。
+    notes: 2026-10-03：K 实验完成并写入第 7 节；变体冗余审计与遥测后续项仍待办。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx020-k-task-20261003-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-201a6afe4024e540ccc51200518f6c7d
 projection:
   legacy_first_eight_cells:
   - DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
@@ -132,18 +161,18 @@ projection:
   - P1
   - IN_PROGRESS
   - Claude Code coordinator
-  - owner 要求最高优先级优化。O3-a/b/c 已在 DEVX-018 落地并用同一计时钩子复测（mandatory 链节点 94.8→55.7 s；16
-    worker 发布回放节点 951→735 s，16 并发单次身份 73→约 7 s，详见 DEVX-020 文档第 6 节进展与 DEVX-018 需求）。待办：K
-    实验（并发 2/4/6/8，主机遥测 CPU/磁盘/句柄）；发布回放节点每个变体重复约 420 s 的 Atlas+readiness+生成器+内层 Full
-    的变体冗余审计（测试重构须 owner 复核）；venv 精简/被哈希集合缩小（owner 策略项）。临时工作区 D:/Work/devx020-prof2（回归运行中）、devx020-prof、-bt1/-bt2/-t1/-t2
-    与 D:/Work/devx020-trace*.jsonl：回归与 K 实验结束后审计并 git worktree remove，不提交计时钩子。
+  - owner 要求最高优先级优化。O3-a/b/c 已落地并复测；K 实验已完成（第 7 节：4/6/8/12 各 21/21 通过，膨胀 1.00/1.13/1.23/1.43，模型选
+    K=8、间隔 120 秒，估计 Full 约 2.4-3 小时）。待办：用该策略的第一次真实 Full profile 校准模型；变体冗余审计（发布节点每个变体重复约
+    420 s 的 Atlas+readiness+生成器+内层 Full，测试重构须 owner 复核）；host_registry_view 复合组（约 1.77
+    小时）是关键路径之一，拆出不碰注册表的重型成员须 owner 复核；venv 精简/被哈希集合缩小（owner 策略项）。临时工作区 D:/Work/devx020-prof2、devx020-prof、-bt1/-bt2/-t1/-t2、D:/Work/devx020-k（K
+    实验原始数据，保留至本任务关闭）与 D:/Work/devx020-trace*.jsonl：Full 与发布完成后审计并 git worktree remove，不提交计时钩子。
   - 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变
     Full 验收语义、不放宽任何校验；任何调度或测试改动必须另有任务、评审与重测；明确列出覆盖等价性论证和风险。
-  - 2026-10-03：O3 复测完成（第 6 节进展）；K 实验与变体冗余审计待办。
+  - 2026-10-03：K 实验完成并写入第 7 节；变体冗余审计与遥测后续项仍待办。
   docs_links:
   - docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md
   terminal: false
-  canonical_row_sha256: 5943cddecc64d10475b6195c05f84548f9298812d0a4d2193750c01ec35aedb3
-last_event_id: task-event-90c0d917860cac3d4885a1f7820d3502
+  canonical_row_sha256: 3c5fc770d3b043ab253ef0b4788520b97558f1fe3cd9d07669e9ef9493bf1773
+last_event_id: task-event-201a6afe4024e540ccc51200518f6c7d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 481168d5a93af1bb17201e86552fe6c0813fc563004ae3cbd3409b5c76652dd1
+fragment_checksum: e8bb847e934b34262c479eb12ccfc7b9abec6c8623d1b8ff8b9ed00c7e9fde89
