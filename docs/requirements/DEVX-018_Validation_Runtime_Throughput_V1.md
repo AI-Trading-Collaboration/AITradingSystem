@@ -760,3 +760,36 @@ fail closed、元数据相同但字节被换时服务的代码字节仍被拒、
   「第一次 P1/P4/O3 之后的测得 profile 就重新校准」条件正是这次）。清单升到 version 5，评审条件不变。
 - 估计整个 Full 墙钟约 2.4–3 小时（敏感性：轻量阶段对重型 ×1.2 约 2.55 小时）；这是模型，不是承诺，验收以第一次真实 Full 的 profile 为准。
 - 须披露给 owner：K/间隔取值依据与未建模风险（见 DEVX-020 §7.4）；超时与等待校准仍为 `PROVISIONAL_PENDING_OWNER_REVIEW`；O3 跨调用缓存仍未获批。
+
+
+## 2026-10-04 v24 正式 Full 结果与 v25 计划
+
+### v24 结果
+候选 `9d398798b`（O3-a/b/c + 调度清单 v5 + 生成物 reseal），事务 `gov-007-p1c-devx015-baseline-publication-20261003-v24`（parent 为 v20 失败摘要）。
+前置 tier 合计约 30 分钟（named-parent 110 s、contract-validation 375 s、integration 66 s、reproducibility 36 s、architecture-fitness 1,192 s）全部通过；
+Full **14,703 通过 / 2 失败 / 4 跳过**，墙钟 **13,549 秒（3 小时 46 分）**，v21 为 26,496 秒（7 小时 22 分），**−49%**；
+没有任何超时或挂起保护触发（K=8、间隔 120 秒在真实负载下稳定）。事务以失败释放（`claude_v24_release.json`），main/origin/main 未变。
+
+### 两个失败（都是 O3 改动引起，均已修复，commit `c61ba02a3`）
+1. `test_generated_stage_junction_swap_rejected_before_handle_read`：O3-a 的一次性内核绑定让该测试通过替换 `ctypes.WinDLL` 注入的竞态包装在 worker 内第一次读取之后不可达，
+   `HANDLE_PATH_CHANGED` 未触发。修复：`ctypes.WinDLL` 被替换时按读取逐次绑定（与原行为一致），仅真实工厂使用共享绑定；新增回归测试
+   `test_custody_kernel_is_rebound_per_read_while_the_library_factory_is_substituted`。
+2. `test_real_runtime_inventory_verification_matches_the_full_identity`（我新增的测试）：在已导入 numpy 的 xdist worker 里直接调用已加载代码校验器，
+   `ACCEPTANCE_LOADED_WRAPPER_CLASS: empty_like`（校验器按设计不建模第三方数组函数包装；生产运行器是干净进程）。修复：测试改在全新解释器子进程里运行。
+
+### 流程教训（已纳入准备清单）
+O3 的预检只跑了「真实链路」子集（`actual_runner_chain` 等 92 项）和重型节点样本，没有跑被改动模块的**非重型**测试，而这两个失败都在轻量测试里。
+此后凡改动共享基础设施（custody 读取、身份、插件），发布前必须在安静主机上跑 `-p scripts.pytest_runtime_profile -m "not real_full_chain"` 覆盖被改模块的测试文件
+（本次 6 个文件 1,205 项，17.5 分钟全部通过，含两个原失败用例）。
+
+### 实测剖面与模型对照（详见 DEVX-020 第 8 节）
+- 重型节点总耗时 26.0 小时（v21 27.6 小时，仅 −6%）：Full 墙钟减半主要来自**并发容量翻倍（K 4→8）**，不是单节点变快；
+  只有 mandatory 链族明显变快（0.29×）。K 实验里发布族 0.8×，真实 Full 里 0.99×：轻量测试同时占用 CPU，且 K 实验样本没有包含最大的几个节点。
+- **关键路径是 gw0 上的 `host_registry_view` 复合组**：串行 225 分钟 = 整个墙钟（两个 `ff_only` 发布节点各约 70 分钟 + 原生注册表测试），
+  其余 worker 在 189–220 分钟完成。模型（2.4–3 小时）在这一点上乐观，因为它按样本族平均比例缩小了不在样本里的最大节点。
+- 后续杠杆（不在 v25 范围）：(a) 拆分 `host_registry_view`（把 `ff_only` 等不依赖注册表根视图的重型成员拆出，约 3.0 小时；改变互斥语义，须 owner 复核）；
+  (b) P4（重放去重/外置 ~10 MB custody 列表，针对 7 个 3,000–4,500 秒的发布类大节点，合计 7.4 节点小时）；(c) 变体冗余审计（DEVX-020）。
+
+### v25 计划
+v25 = v24 候选 + `c61ba02a3`（仅这两处修复）。完整重跑准备链（生成器零 diff）→ 正式 Full（预期约 3.8 小时）→ 发布。仍须披露：超时与等待校准为 `PROVISIONAL_PENDING_OWNER_REVIEW`、
+O3 设计偏离与残余风险、K/间隔取值依据、O3 跨调用缓存未获批。

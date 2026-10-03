@@ -19,12 +19,12 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: K 实验完成（4/6/8/12 各 21/21 通过；相对 K=4 单节点膨胀
-    1.13/1.23/1.43，内存/磁盘非瓶颈，CPU p95 在 K>=8 触顶）；节点级模型得 K=8、间隔 120 秒的估计 Full 墙钟约 2.4-3
-    小时（v21 同口径 7.36 小时）。已决定把 devx_018_validation_scheduling.yaml 升到 version 5（cap
-    8、interval 120）并同步测试，随后：回归（调度与受影响链路）→ 新候选准备链（parent 为 v20 失败摘要）→ 正式 Full → 发布。须披露给
-    owner：K/间隔依据与未建模风险（DEVX-020 第 7.4 节）、O3 的设计偏离与残余风险（DEVX-018「O3-a/b/c 实施结果」）、超时与等待校准仍
-    PROVISIONAL_PENDING_OWNER_REVIEW、O3 跨调用缓存仍未获批。
+  unstructured_legacy_blocker_or_next_step: v24 正式 Full 完成：14,703 通过 / 2 失败 / 4 跳过，墙钟
+    3 小时 46 分（v21 7 小时 22 分，-49%），无超时或挂起保护触发。2 个失败均为 O3 改动引起并已修复（commit c61ba02a3：自定义
+    ctypes.WinDLL 注入下按读取逐次绑定内核；真实运行时清单测试改在干净解释器里运行），被改动模块的非重型测试 1,205 项全部通过。已记录模型
+    vs 实测差异与关键路径（gw0 上的 host_registry_view 复合组 225 分钟即整个墙钟）。下一步：v25 = v24 候选 + 两处修复，准备链（生成器零
+    diff）→ 正式 Full（预期约 3.8 小时）→ 发布。之后杠杆：拆分 host_registry_view（须 owner 复核）、P4 重放去重、变体冗余审计。须披露：超时与等待校准仍
+    PROVISIONAL_PENDING_OWNER_REVIEW；O3 设计偏离与残余风险；K/间隔依据；O3 跨调用缓存未获批。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile
@@ -534,6 +534,35 @@ events:
   - change:gov-007-devx018-k-task-20261003-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-adadf06c304522ae2ef6dc48bf29dbb7
+- schema_version: task_event.v1
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-03T15:55:33Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx018-v25a-task-20261004-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-adadf06c304522ae2ef6dc48bf29dbb7
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: v24 正式 Full 完成：14,703 通过 / 2 失败 / 4 跳过，墙钟 3 小时 46 分（v21
+      7 小时 22 分，-49%），无超时或挂起保护触发。2 个失败均为 O3 改动引起并已修复（commit c61ba02a3：自定义 ctypes.WinDLL
+      注入下按读取逐次绑定内核；真实运行时清单测试改在干净解释器里运行），被改动模块的非重型测试 1,205 项全部通过。已记录模型 vs 实测差异与关键路径（gw0
+      上的 host_registry_view 复合组 225 分钟即整个墙钟）。下一步：v25 = v24 候选 + 两处修复，准备链（生成器零 diff）→
+      正式 Full（预期约 3.8 小时）→ 发布。之后杠杆：拆分 host_registry_view（须 owner 复核）、P4 重放去重、变体冗余审计。须披露：超时与等待校准仍
+      PROVISIONAL_PENDING_OWNER_REVIEW；O3 设计偏离与残余风险；K/间隔依据；O3 跨调用缓存未获批。
+    acceptance_criteria: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧
+      loadfile profile 仍按原契约通过；pre-Full tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3
+      不跨调用缓存身份或 PASS
+    notes: 2026-10-04：v24 Full 结果、两个失败的根因与修复、流程教训、v25 计划写入 DEVX-018 需求。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx018-v25a-task-20261004-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-523ece6f60fdb113a9e65049487655c8
 projection:
   legacy_first_eight_cells:
   - DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
@@ -542,17 +571,18 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - K 实验完成（4/6/8/12 各 21/21 通过；相对 K=4 单节点膨胀 1.13/1.23/1.43，内存/磁盘非瓶颈，CPU p95 在 K>=8
-    触顶）；节点级模型得 K=8、间隔 120 秒的估计 Full 墙钟约 2.4-3 小时（v21 同口径 7.36 小时）。已决定把 devx_018_validation_scheduling.yaml
-    升到 version 5（cap 8、interval 120）并同步测试，随后：回归（调度与受影响链路）→ 新候选准备链（parent 为 v20 失败摘要）→
-    正式 Full → 发布。须披露给 owner：K/间隔依据与未建模风险（DEVX-020 第 7.4 节）、O3 的设计偏离与残余风险（DEVX-018「O3-a/b/c
-    实施结果」）、超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW、O3 跨调用缓存仍未获批。
+  - v24 正式 Full 完成：14,703 通过 / 2 失败 / 4 跳过，墙钟 3 小时 46 分（v21 7 小时 22 分，-49%），无超时或挂起保护触发。2
+    个失败均为 O3 改动引起并已修复（commit c61ba02a3：自定义 ctypes.WinDLL 注入下按读取逐次绑定内核；真实运行时清单测试改在干净解释器里运行），被改动模块的非重型测试
+    1,205 项全部通过。已记录模型 vs 实测差异与关键路径（gw0 上的 host_registry_view 复合组 225 分钟即整个墙钟）。下一步：v25
+    = v24 候选 + 两处修复，准备链（生成器零 diff）→ 正式 Full（预期约 3.8 小时）→ 发布。之后杠杆：拆分 host_registry_view（须
+    owner 复核）、P4 重放去重、变体冗余审计。须披露：超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW；O3 设计偏离与残余风险；K/间隔依据；O3
+    跨调用缓存未获批。
   - Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full
     tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
-  - 2026-10-03：K 实验结论与调度清单 v5 决定写入 DEVX-018 需求；数据与模型见 DEVX-020 第 7 节。
+  - 2026-10-04：v24 Full 结果、两个失败的根因与修复、流程教训、v25 计划写入 DEVX-018 需求。
   docs_links: []
   terminal: false
-  canonical_row_sha256: f608176d589bbf5c9ea438ec5b7c162dcde748a6661e37805b9b681507124d7d
-last_event_id: task-event-adadf06c304522ae2ef6dc48bf29dbb7
+  canonical_row_sha256: 6bf9d1ea8225701e768621fd852cbf68c737b95994560404ce8b0c6af5829a47
+last_event_id: task-event-523ece6f60fdb113a9e65049487655c8
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 2573318690d5045456a4149e47e2d8d3efb226a69d85611d71573ee563b0794c
+fragment_checksum: 5f3ccd3e6c27e6e9a6455e785b671fa74b257bfb9b4133c9af89826380616495
