@@ -4597,6 +4597,9 @@ def inspect_full_publication_profile(
         raise ValueError("Full original readiness identity differs from current checked inputs")
     for relative in (
         "scripts/run_validation_tier.py",
+        # The hook/worker entrypoint of local publication: the hook-ready record requires it to
+        # be a hash-bound capture, and only DEVX-015's mandatory rows used to bring it in.
+        "scripts/architecture_arch005_publication_fence.py",
         "src/ai_trading_system/platform/architecture/validation_readiness.py",
         "src/ai_trading_system/platform/architecture/integration_publication_fence.py",
         *([str(row["path"]) for row in mandatory_summary["runner_identity"]]

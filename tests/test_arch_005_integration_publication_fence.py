@@ -1341,7 +1341,11 @@ def test_full_transaction_closeout_admits_full_profile_above_default_read_budget
     (local publication, remote push, closeout receipt) over a profile above the default budget.
     """
     publication_checkout, _scope = canonical_merge_repository
-    _run_actual_publication_fixture(publication_checkout, "normal")
+    # Unbound (mandatory=False) like every non-DEVX-015 task, and through the original worker:
+    # the v21 publication stopped at the hook-ready entrypoint check only on that combination.
+    _run_actual_publication_fixture(
+        publication_checkout, "normal", mandatory=False, publish_via_worker=True,
+    )
     profile = publication_checkout / "outputs/validation_runtime/mandatory/test_runtime_profile.json"
     assert profile.stat().st_size > DEFAULT_READ_FILE_BUDGET_BYTES, profile.stat().st_size
 
@@ -2853,7 +2857,10 @@ def test_full_transaction_replays_candidate_publish_and_closeout_receipt(
     _run_actual_publication_fixture(publication_checkout, remote_state)
 
 
-def _run_actual_publication_fixture(publication_checkout: Path, remote_state: str) -> None:
+def _run_actual_publication_fixture(
+    publication_checkout: Path, remote_state: str, *,
+    mandatory: bool = True, publish_via_worker: bool = False,
+) -> None:
     remote = publication_checkout.parent / "origin.git"
     _git(publication_checkout, "init", "--bare", str(remote))
     # Preserve the real repository identity gate; isolate only the push
@@ -2866,6 +2873,7 @@ def _run_actual_publication_fixture(publication_checkout: Path, remote_state: st
         environment.setenv("GIT_TRACE2_EVENT", trace.as_posix())
         _assert_full_transaction_replays_candidate_publish_and_closeout_receipt(
             publication_checkout, remote_state,
+            mandatory=mandatory, publish_via_worker=publish_via_worker,
         )
     pushes = _actual_push_invocations(trace) - before
     # Includes the independent peer's push for the advanced/divergent variants.
@@ -2955,6 +2963,9 @@ def _assert_observed_actual_remote_tip(observed: dict[str, Any], actual_tip: str
 def _assert_full_transaction_replays_candidate_publish_and_closeout_receipt(
     publication_checkout: Path,
     remote_state: str,
+    *,
+    mandatory: bool = True,
+    publish_via_worker: bool = False,
 ) -> None:
     from test_devx015_workflow_coordination import _run_actual_profile_full
 
@@ -2969,7 +2980,9 @@ def _assert_full_transaction_replays_candidate_publish_and_closeout_receipt(
         remote_state = "advanced"
     fence = IntegrationPublicationFence(project_root=publication_checkout)
     transaction = fence.runtime_root / "transactions/merge-authority/transaction.json"
-    binding, directory, _driver, _environment = _run_actual_profile_full(publication_checkout)
+    binding, directory, _driver, _environment = _run_actual_profile_full(
+        publication_checkout, mandatory=mandatory,
+    )
     candidate = str(binding["candidate_sha"])
     summary = directory / "test_runtime_summary.json"
     assert fence.replay(transaction).phase == "FORMAL_VALIDATION_RESULT"
@@ -2978,8 +2991,18 @@ def _assert_full_transaction_replays_candidate_publish_and_closeout_receipt(
         phase="LOCAL_MAIN_FF_PRE",
         actor="integration-coordinator",
     )
-    _git(publication_checkout, "switch", "main")
-    _git(publication_checkout, "merge", "--ff-only", candidate)
+    if publish_via_worker:
+        # The real publication path: the original worker Job, hooks and fast-forward (DEVX-018 v22).
+        published = _v03_fence_cli(
+            publication_checkout, "closeout-original-publication-cli",
+            ["local-publish", "--transaction", str(transaction)], timeout=4000,
+        )
+        assert published["exit_code"] == 0, published
+        assert json.loads(published["stdout"])["status"] == "LOCAL_PUBLISHED", published
+        assert _git(publication_checkout, "rev-parse", "refs/heads/main") == candidate
+    else:
+        _git(publication_checkout, "switch", "main")
+        _git(publication_checkout, "merge", "--ff-only", candidate)
     _git(publication_checkout, "fetch",
          _git(publication_checkout, "remote", "get-url", "--push", "origin"),
          "refs/heads/main:refs/remotes/origin/main")

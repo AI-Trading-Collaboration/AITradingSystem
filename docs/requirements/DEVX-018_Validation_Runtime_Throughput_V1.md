@@ -594,3 +594,22 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
 - 验收：演练在修复前红、修复后绿；既有发布夹具与 smoke 通过；reseal 后新候选的前置 tiers 与正式 Full 通过并走完
   `LOCAL_MAIN_FF_PRE → local-publish → REMOTE_PUSH_PRE → 普通 push → CLEANUP_PRE → RELEASED`，`local main = remote main = candidate`。
 - 状态/风险：校准仍为 `PROVISIONAL_PENDING_OWNER_REVIEW`；O3 identity 缓存待 owner 决定；`production_effect=none`。
+
+#### v22 实现与演练结果（2026-10-03）
+
+- 实现：`scripts/run_validation_tier.py` 的 `inspect_full_publication_profile` 固定捕获清单加入
+  `scripts/architecture_arch005_publication_fence.py`（hook/worker 入口）。只增加被哈希绑定、并在检查期间复核未变的证据；
+  `_validate_hook_capsule` 的入口校验、预算与其余判定不变。DEVX-015 任务原本就经 mandatory 行带入该文件，捕获表按路径去重，行为不变。
+- 演练（更正 v19 的覆盖）：`_assert_full_transaction_replays_candidate_publish_and_closeout_receipt` / `_run_actual_publication_fixture`
+  新增 `mandatory` 与 `publish_via_worker` 参数；重型测试
+  `test_full_transaction_closeout_admits_full_profile_above_default_read_budget` 改为「非 DEVX-015（`mandatory=False`）+ 大 profile
+  （20.3 MB，>16 MiB）+ 真实 `local-publish` worker + 远端 push + closeout receipt」。未修复代码上复现与生产一致的
+  `PUBLICATION_STAGE hooks_created` 后 `LEASE_EXECUTION_PUBLICATION_HOOK_READY_ENTRYPOINT`；修复后全链路通过（35 分 11 秒，空闲主机），
+  worker 依次经过 `ready_held`、`heads_switched`、`merge_resumed`、`merge_exit`，随后 adoption、REMOTE_PUSH_PRE、普通 push、closeout。
+  v19 的「大 profile 演练」此前确实走过 `local-publish`（红→绿），后被只用普通 `git merge` 的 closeout 变体取代；现在两者合一。
+- 回归：`tests/test_validation_tier_script.py`、`test_arch_005_integration_publication_fence.py`、`test_devx015_workflow_integration.py`、
+  `test_devx018_validation_scheduling.py`（排除 real_full_chain）778 passed；相关重型节点 smoke
+  （`test_unbound_full_profile_admits_non_devx015_publication`、`test_full_profile_with_bound_parent_admits_failure_fix_rerun_publication`、
+  `test_actual_full_profile_preserves_real_whole_readiness`、`test_original_publication_cli_ff_only_and_independent_recovery` 两个变体）6 passed。
+- 仍待验证：新候选的前置 tiers 与正式 Full；真实仓库与真实远端上的 `local-publish`、CLOSEOUT 治理预检（夹具使用本地裸远端且不含该预检）、
+  普通 push 与收尾。
