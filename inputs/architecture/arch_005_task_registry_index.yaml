@@ -14,7 +14,7 @@ fragment_count: 1077
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: f87be358b68639a9b46a99bfddc5ac6d7172a6b2fe0d47982aead166e591d38d
+final_chain_sha256: 9d225303f661ad6cb2e85e9efe91aad3af673ac32d29c03753e69e24ca2cc65d
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 2fab76611d56d6278a102740c94bb5da2236a35467c6debc98b34ad1c9f32129
 templates:
@@ -8639,17 +8639,17 @@ fragments:
   entry_sha256: 9981ba65e87baaeca710108e70bc11d6254119e91be5936d75ebdff255a91a5c
 - task_id: DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
   path: registry/development_tasks/a0/a0786c5e70a0321afc0b1726a945c287c7f9ec4058a666ababd203331103724c.yaml
-  file_sha256: dd00d09523c01281f7c278b9fda3a8568de462548ed32fbd39e35e75ebab5ec6
-  fragment_checksum: 798a33f1b2138cacb5c7a9b9c09abf34ecc17f875b5ede3911929571168b8a08
+  file_sha256: a0d8022d8fca5b72cef87250408dfc7fa8ed82a88707092151c6ff9f20c102b1
+  fragment_checksum: 946dbebd854da5183e781c3874ff8fd0c1ad2c8aae88b7f51e10c01482b1af16
   partition: active
   order: 1077
   previous_entry_sha256: 9981ba65e87baaeca710108e70bc11d6254119e91be5936d75ebdff255a91a5c
-  entry_sha256: f87be358b68639a9b46a99bfddc5ac6d7172a6b2fe0d47982aead166e591d38d
+  entry_sha256: 9d225303f661ad6cb2e85e9efe91aad3af673ac32d29c03753e69e24ca2cc65d
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: ab5d10be4a5a3d71c8a0d0c9069b08ae94a5fd6ba6925c95dc306d7debfffa79
-  byte_count: 1364496
+  sha256: d81fd3486c8c0ee606d28cade49393e213c68bef6d822063856f0178b793efd4
+  byte_count: 1364586
   row_count: 312
   generated_do_not_edit: true
 - partition: completed
@@ -17689,7 +17689,14 @@ governance_cycles:
   change_id: gov-007-gov007-v23-task-20261003-v1
   event_count: 20
   production_effect: none
-governance_cycle_count: 1290
+- cycle_id: arch-005-s5-cycle-1291
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
+  change_id: gov-007-devx020-v2-task-20261003-v2
+  event_count: 2
+  production_effect: none
+governance_cycle_count: 1291
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -17703,4 +17710,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 0cd16e6ba9f180505e37e7dcb8fec09cc0d4a0d6ce9073957c486cbf9ebf1a30
+index_checksum: 2c30dfe851d8508826baa904c799775f4e4d54f0c9608a81f304b2ba8b5f46a1

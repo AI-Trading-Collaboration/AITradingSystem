@@ -63,3 +63,51 @@
 ## 4. 进展记录
 
 - 2026-10-02：登记；证据来自 v18 Full profile 的只读拆解（本文第 1 节）。v20 Full 运行中，排查待其结束后开始。
+
+## 5. 排查结果（2026-10-03，安静主机，owner 要求最高优先级）
+
+owner 于 2026-10-03 指示「每次 7 小时的推进效率太低，需要最高优先级优化」。v23 链在前置 tier 阶段（Full 尚未派发）被停止并以失败释放，
+让出安静主机；排查用独立 worktree `D:/Work/devx020-prof`（HEAD `a6d110f48`，仅在 `workflow_execution.py` 末尾加了不提交的临时计时钩子，
+由环境变量 `AITS_PROFILE_TRACE` 触发）。以下均为实测，不是外推。
+
+### 5.1 运行时身份计算（`acceptance_runtime_identity`）单次成本
+- 空闲主机每次 9.6–9.9 秒（1.6554 万个文件、442 MB）；cProfile：`_acceptance_distribution_code` 10.0 秒，其中主线程等待读取线程 7.8 秒；
+  sha256 仅 0.34 秒；`_verify_loaded_python_sources` 0.86 秒。
+- 读取阶段对线程数饱和：串行 17.3 秒，4/8/16/32 线程分别 7.4/7.5/6.9/7.5 秒。瓶颈是每个文件固定的 Python/系统调用开销（0.54 毫秒/文件），
+  不是线程数，也不是哈希。
+- `bounded_regular_bytes` 每个文件：`nt.stat` 约占 55%（约 11 次 `lstat`，来自对每一级祖先目录的重解析点检查）；函数自身 Python 开销约 19%
+  （每次调用重建 `ctypes.WinDLL` 与 argtypes）。`_acceptance_distribution_code` 的注释明确要求「文件之间不共享祖先/stat 或字节缓存」，
+  所以祖先检查去重是**设计层面的取舍**，需要评审；每次调用重建 ctypes 属于纯重构，可直接做。
+
+### 5.2 身份计算的调用次数与并发（真实内层 Full，DEVX-015 mandatory 插件）
+- `test_mandatory_acceptance_actual_runner_chain[pass]`（安静主机）：节点 94.8 秒，9 次身份计算合计约 100 秒进程时间（两个 worker 并行），
+  即该节点的时间几乎全部是身份计算。28 个变体 × 304 秒（Full 实测）因此主要是身份成本。
+- `test_full_transaction_replays_candidate_publish_and_closeout_receipt[normal]`（安静主机）：节点 951 秒；40 次身份计算，其中 35 次来自内层 Full 的
+  16 个 worker 在 `pytest_configure` 与 `pytest_sessionfinish` 各一次，其余来自协调器与两次 profile 检查；**最多 16 个并发**，单次耗时
+  12.7–78.1 秒（中位 73.5 秒）。单独跑一次 12 秒、16 个并发时每个 73 秒，说明系统范围的文件打开吞吐饱和（约 3.6 千文件/秒），并发越多越慢，
+  这也是正式 Full 里 worker 启动要 6.5 分钟、触发各种写死期限的根因。
+
+### 5.3 发布节点的阶段时间线（同一个 951 秒节点，安静主机）
+夹具 78 秒；Atlas 渲染约 69 秒；readiness 约 40 秒；真实生成器约 37 秒；内层 Full 274 秒；取结果与写产物 22 秒；
+`FORMAL_VALIDATION_RESULT` + `LOCAL_MAIN_FF_PRE` 检查 209 秒；远端/收尾 221 秒。
+同一测试族的所有变体都会重复「Atlas + readiness + 生成器 + 内层 Full」约 420 秒（44%）。
+
+### 5.4 调度（K）
+v18 Full 的并发时间线：约 1.5 小时后只剩 4 个重型节点（K=4），此前实测尾段 CPU 仅 19–26%（32 个逻辑核）。K=4 是在固定超时只有 60–360 秒时定下的；
+超时已全部校准到 ≥1800 秒（驱动 3600 秒）。调度模拟（v18 节点耗时，LPT）：K=4 为 6.96 小时，K=6 为 4.89 小时，K=8 为 3.94 小时。
+
+### 5.5 结论与候选方案（需 owner 对策略性项拍板）
+1. **纯重构、无语义变化（可直接做）**：每次调用只建立一次 `ctypes` 绑定、减少 `pathlib` 构造；预期单次身份约 −15–20%。
+2. **祖先检查在同一次调用内共享（设计取舍，需评审）**：已存在的「打开后核对最终路径」仍会发现祖先被重定向，祖先 `lstat` 是更早、更具体的错误码；
+   预期单次再 −30–35%。
+3. **worker 侧不再整体重算（策略取舍，需评审）**：控制器完整字节哈希一次，worker 仅对同一清单做元数据指纹比对（路径、大小、mtime_ns、文件 ID），
+   不一致即 fail closed；可消除 16×2 次并发爆发（内层 Full 节点 −16% 到 −60%），并降低系统范围争用，从而允许提高 K。
+4. **提高 K（配置变更，需 pilot 验证）**：4 → 6 预期墙钟 7.0 → 4.9 小时；风险是负载相关偶发增加，须配合上面的减负。
+5. **缩小被哈希的集合（环境/策略取舍）**：92 个发行版全部纳入；若验证用 venv 精简，文件数可显著下降。
+
+## 6. 进展记录（续）
+
+- 2026-10-03：转为 IN_PROGRESS；owner 要求最高优先级；上述 5.1–5.4 为实测结果，5.5 的 2–5 项等待 owner 决策。临时工作区
+  `D:/Work/devx020-prof`（git worktree，含不提交的计时钩子与从主检出复制的 `outputs/research`、`outputs/atlas`、
+  `outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z`）、`D:/Work/devx020-bt1`、`D:/Work/devx020-bt2`、
+  `D:/Work/devx020-trace-*.jsonl`：排查结束后审计并清理（`git worktree remove`），不得提交计时钩子。

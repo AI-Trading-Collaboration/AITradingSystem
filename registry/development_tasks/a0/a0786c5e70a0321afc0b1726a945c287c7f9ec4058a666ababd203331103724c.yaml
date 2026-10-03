@@ -20,12 +20,13 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 依赖 DEVX-018 基线发布完成（v20 正式 Full 与发布）且需要安静主机后才能开始。基于
-    v18 Full profile 的逐节点拆解：墙钟只由 99 个重型节点（26.8 worker 小时，占 59% 的 7 个测试族 15.9 小时）除以并发数
-    K=4 决定，约 1.5 小时后轻量节点跑完，其后 5.5 小时只有 4 个重型节点在跑、12 个 worker 空闲；调度模拟 6.96 小时对实测 7.05
-    小时。待做三步：(1) 对 4 个代表重型节点做函数级计时（身份哈希、回放、git、进程启动占比，空闲对比高负载）；(2) 在 Full/重负载 pilot
-    期间采样主机 CPU、磁盘队列、句柄数，由数据决定 K 与启动间隔；(3) 审计 28/11/9/14 个变体测试族的变体维度是否真的改变昂贵的前置步骤，并给出不降低覆盖的共享夹具方案。任何测试结构调整须先经
-    owner 评审，另立任务实施；P1/P4/O3 仍属 DEVX-018，O3 身份缓存仍待 owner 决定。
+  unstructured_legacy_blocker_or_next_step: owner 2026-10-03 要求最高优先级优化（每次 7 小时的推进效率太低）。v23
+    链在前置 tier 阶段被停止并以失败释放以让出安静主机。已完成实测排查（见 DEVX-020 文档第 5 节）：运行时身份计算空闲 9.6-9.9 秒/次（读取阶段对线程数饱和，nt.stat
+    占 55%），真实内层 Full 里每个 worker 在 configure/sessionfinish 各算一次，最多 16 个并发使单次升到 73 秒（系统文件打开吞吐饱和），发布类节点
+    951 秒中身份约占 20%、mandatory 链节点几乎全部是身份；同族变体重复「Atlas+readiness+生成器+内层 Full」约 420 秒；K=4
+    为固定超时时代的取值，超时已校准到 1800/3600，模拟 K=6 为 4.9 小时。待办：可直接做的纯重构（ctypes 绑定一次，预期单次 -15%~-20%）；需
+    owner 拍板的策略项（祖先检查调用内共享、worker 侧元数据指纹比对、提高 K、缩小哈希集合）。DEVX-018 基线发布（v23 候选 a6d110f48
+    已就绪）在优化落地后一并以新候选重跑。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变
@@ -67,27 +68,59 @@ events:
   - change:gov-007-devx020-v1-task-20261002-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-36562e113327b7a3a581645b14b79fab
+- schema_version: task_event.v1
+  task_id: DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-03T05:48:33Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx020-v2-task-20261003-v2
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-36562e113327b7a3a581645b14b79fab
+  from_status: PROPOSED
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: owner 2026-10-03 要求最高优先级优化（每次 7 小时的推进效率太低）。v23 链在前置 tier
+      阶段被停止并以失败释放以让出安静主机。已完成实测排查（见 DEVX-020 文档第 5 节）：运行时身份计算空闲 9.6-9.9 秒/次（读取阶段对线程数饱和，nt.stat
+      占 55%），真实内层 Full 里每个 worker 在 configure/sessionfinish 各算一次，最多 16 个并发使单次升到 73
+      秒（系统文件打开吞吐饱和），发布类节点 951 秒中身份约占 20%、mandatory 链节点几乎全部是身份；同族变体重复「Atlas+readiness+生成器+内层
+      Full」约 420 秒；K=4 为固定超时时代的取值，超时已校准到 1800/3600，模拟 K=6 为 4.9 小时。待办：可直接做的纯重构（ctypes
+      绑定一次，预期单次 -15%~-20%）；需 owner 拍板的策略项（祖先检查调用内共享、worker 侧元数据指纹比对、提高 K、缩小哈希集合）。DEVX-018
+      基线发布（v23 候选 a6d110f48 已就绪）在优化落地后一并以新候选重跑。
+    acceptance_criteria: 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变
+      Full 验收语义、不放宽任何校验；任何调度或测试改动必须另有任务、评审与重测；明确列出覆盖等价性论证和风险。
+    notes: production_effect=none；broker_action=none；agent_harness=claude_code；owner
+      2026-10-03 要求最高优先级；临时工作区 D:/Work/devx020-prof 与 devx020-bt*/trace 待清理；计时钩子不得提交
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx020-v2-task-20261003-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0b44640bf40237af5434c11b92781258
 projection:
   legacy_first_eight_cells:
   - DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
   - Validation runtime / Full heavy-node cost profiling, host telemetry and variant
     redundancy audit
   - P1
-  - PROPOSED
+  - IN_PROGRESS
   - Claude Code coordinator
-  - 依赖 DEVX-018 基线发布完成（v20 正式 Full 与发布）且需要安静主机后才能开始。基于 v18 Full profile 的逐节点拆解：墙钟只由
-    99 个重型节点（26.8 worker 小时，占 59% 的 7 个测试族 15.9 小时）除以并发数 K=4 决定，约 1.5 小时后轻量节点跑完，其后
-    5.5 小时只有 4 个重型节点在跑、12 个 worker 空闲；调度模拟 6.96 小时对实测 7.05 小时。待做三步：(1) 对 4 个代表重型节点做函数级计时（身份哈希、回放、git、进程启动占比，空闲对比高负载）；(2)
-    在 Full/重负载 pilot 期间采样主机 CPU、磁盘队列、句柄数，由数据决定 K 与启动间隔；(3) 审计 28/11/9/14 个变体测试族的变体维度是否真的改变昂贵的前置步骤，并给出不降低覆盖的共享夹具方案。任何测试结构调整须先经
-    owner 评审，另立任务实施；P1/P4/O3 仍属 DEVX-018，O3 身份缓存仍待 owner 决定。
+  - owner 2026-10-03 要求最高优先级优化（每次 7 小时的推进效率太低）。v23 链在前置 tier 阶段被停止并以失败释放以让出安静主机。已完成实测排查（见
+    DEVX-020 文档第 5 节）：运行时身份计算空闲 9.6-9.9 秒/次（读取阶段对线程数饱和，nt.stat 占 55%），真实内层 Full 里每个
+    worker 在 configure/sessionfinish 各算一次，最多 16 个并发使单次升到 73 秒（系统文件打开吞吐饱和），发布类节点 951
+    秒中身份约占 20%、mandatory 链节点几乎全部是身份；同族变体重复「Atlas+readiness+生成器+内层 Full」约 420 秒；K=4
+    为固定超时时代的取值，超时已校准到 1800/3600，模拟 K=6 为 4.9 小时。待办：可直接做的纯重构（ctypes 绑定一次，预期单次 -15%~-20%）；需
+    owner 拍板的策略项（祖先检查调用内共享、worker 侧元数据指纹比对、提高 K、缩小哈希集合）。DEVX-018 基线发布（v23 候选 a6d110f48
+    已就绪）在优化落地后一并以新候选重跑。
   - 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变
     Full 验收语义、不放宽任何校验；任何调度或测试改动必须另有任务、评审与重测；明确列出覆盖等价性论证和风险。
-  - production_effect=none；broker_action=none；agent_harness=claude_code；owner 2026-10-02
-    决定登记并在 v20 跑完后开始排查；排查只读 profile 与安静主机上的计时，不改生产行为。
+  - production_effect=none；broker_action=none；agent_harness=claude_code；owner 2026-10-03
+    要求最高优先级；临时工作区 D:/Work/devx020-prof 与 devx020-bt*/trace 待清理；计时钩子不得提交
   docs_links:
   - docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md
   terminal: false
-  canonical_row_sha256: dc85fbe80823509eff2dd0cbbb760d48517026cbf7f594998a2d772e47446f54
-last_event_id: task-event-36562e113327b7a3a581645b14b79fab
+  canonical_row_sha256: 514730fd50c07f428755b406f983f7ac31a748e2b32ee5f463ea3f46c2d8fe19
+last_event_id: task-event-0b44640bf40237af5434c11b92781258
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 798a33f1b2138cacb5c7a9b9c09abf34ecc17f875b5ede3911929571168b8a08
+fragment_checksum: 946dbebd854da5183e781c3874ff8fd0c1ad2c8aae88b7f51e10c01482b1af16
