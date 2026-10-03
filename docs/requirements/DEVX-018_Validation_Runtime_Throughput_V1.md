@@ -793,3 +793,25 @@ O3 的预检只跑了「真实链路」子集（`actual_runner_chain` 等 92 项
 ### v25 计划
 v25 = v24 候选 + `c61ba02a3`（仅这两处修复）。完整重跑准备链（生成器零 diff）→ 正式 Full（预期约 3.8 小时）→ 发布。仍须披露：超时与等待校准为 `PROVISIONAL_PENDING_OWNER_REVIEW`、
 O3 设计偏离与残余风险、K/间隔取值依据、O3 跨调用缓存未获批。
+
+
+## 2026-10-04 v25 正式 Full 通过、local-publish 被真实仓库状态拒绝与 v26 计划
+
+### v25 结果
+候选 `bbd2077d7`（v24 候选 + 两处修复 + reseal），事务 `gov-007-p1c-devx015-baseline-publication-20261004-v25`：前置 tier 约 30 分钟全部通过，
+Full **14,706 通过 / 4 跳过 / 0 失败，墙钟 12,500 秒（3 小时 28 分）**（v21 7 小时 22 分，−53%；v24 3 小时 46 分），`LOCAL_MAIN_FF_PRE` 通过。
+
+### 发布阶段新缺陷（只在真实仓库状态下出现）
+`local-publish` 约 18 分钟后返回 `RECOVERY_REQUIRED`：worker 阶段到 `merge_exit 128`，钩子以 `LEASE_EXECUTION_PUBLICATION_GIT_MERGE_LOCK` 拒绝，git 中止 ref 更新。
+根因（已在真实 `.git` 副本上复现，详见 `DEVX-021_Publication_ORIG_HEAD_Unchanged_Robustness_V1.md`）：真实主检出的 `.git/ORIG_HEAD` 已等于旧 main，
+git 对相同值只创建**空的** `ORIG_HEAD.lock`，而校验器要求其内容为 `expected_main_sha`。fixture 都是新建仓库，从未出现这种状态——这是 v22 记录的
+「真实仓库/真实远端 local-publish 未验证」风险的第一个实例。
+`local-publication-recover` 得到 `STABLE_FAILED_ATTEMPT / ORIGINAL_UNCHANGED`；HEAD 恢复到任务分支，main/origin/main 仍为 `cbc31cdff`；
+事务按失败释放。`local-publish` 只支持第 1 次尝试，故同一事务无法重试，须新事务 + 新 Full。
+
+### v26 计划
+- **不改发布代码**（改动会改变语义并仍需完整 Full，且没有真实状态演练容易再出缺陷）；持久修复登记为 `DEVX-021`（P1），排在基线发布之后。
+- v26 = 同一份代码（`bbd2077d7`）+ 本次文档/任务登记提交，新事务、新 Full（预期约 3.5 小时）。
+- **临时前置条件（须 owner 确认）**：`local-publish` 之前一次性删除 `.git/ORIG_HEAD`（其值 `cbc31cdff…` 即当前 main，已记录），使仓库状态与已演练的 fixture 一致。
+  已在真实布局副本上演练该情形的完整钩子序列，与校验器期望一致。登记在 DEVX-021 第 4 节（原因、行为影响、风险、验证覆盖、退出条件）。
+- 流程教训补充：「真实仓库状态」类缺陷无法靠 fixture 发现；发布前应在真实 `.git` 副本上演练 `git merge --ff-only` 的钩子序列（锁文件内容与 ref 更新序列）。

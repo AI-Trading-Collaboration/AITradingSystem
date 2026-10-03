@@ -19,12 +19,14 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: v24 正式 Full 完成：14,703 通过 / 2 失败 / 4 跳过，墙钟
-    3 小时 46 分（v21 7 小时 22 分，-49%），无超时或挂起保护触发。2 个失败均为 O3 改动引起并已修复（commit c61ba02a3：自定义
-    ctypes.WinDLL 注入下按读取逐次绑定内核；真实运行时清单测试改在干净解释器里运行），被改动模块的非重型测试 1,205 项全部通过。已记录模型
-    vs 实测差异与关键路径（gw0 上的 host_registry_view 复合组 225 分钟即整个墙钟）。下一步：v25 = v24 候选 + 两处修复，准备链（生成器零
-    diff）→ 正式 Full（预期约 3.8 小时）→ 发布。之后杠杆：拆分 host_registry_view（须 owner 复核）、P4 重放去重、变体冗余审计。须披露：超时与等待校准仍
-    PROVISIONAL_PENDING_OWNER_REVIEW；O3 设计偏离与残余风险；K/间隔依据；O3 跨调用缓存未获批。
+  unstructured_legacy_blocker_or_next_step: v25 正式 Full 通过（14,706 通过/0 失败，墙钟 3 小时
+    28 分，v21 的 -53%），LOCAL_MAIN_FF_PRE 通过，但 local-publish 被真实仓库状态拒绝：真实 .git/ORIG_HEAD
+    已等于旧 main，git 只创建空 ORIG_HEAD.lock，校验器要求其含 expected_main_sha（PUBLICATION_GIT_MERGE_LOCK）。已在真实
+    .git 副本上复现；已 recover（STABLE_FAILED_ATTEMPT，main/origin/main 不变），事务按失败释放；同一事务无法重试。持久修复登记为
+    DEVX-021（P1，基线发布之后）。下一步：v26 = 同一份代码 + 文档/登记提交，新事务、新 Full（预期约 3.5 小时），local-publish
+    前一次性删除 .git/ORIG_HEAD（临时前置条件，已在 DEVX-021 登记，待 owner 确认），再走 fetch → REMOTE_PUSH_PRE
+    → CLOSEOUT 预检 → 普通推送 → 核对 SHA → CLEANUP_PRE → release completed。须披露：超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW；O3
+    设计偏离与残余风险；K/间隔依据与模型偏差；ORIG_HEAD 前置条件；O3 跨调用缓存未获批。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile
@@ -563,6 +565,38 @@ events:
   - change:gov-007-devx018-v25a-task-20261004-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-523ece6f60fdb113a9e65049487655c8
+- schema_version: task_event.v1
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-03T20:45:28Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx018-v26a-task-20261004-v1
+  lane_id: null
+  base_commit: cbc31cdffcfb8cda1cf106f6da2a302f87183255
+  previous_state_event_id: task-event-523ece6f60fdb113a9e65049487655c8
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: v25 正式 Full 通过（14,706 通过/0 失败，墙钟 3 小时 28 分，v21 的 -53%），LOCAL_MAIN_FF_PRE
+      通过，但 local-publish 被真实仓库状态拒绝：真实 .git/ORIG_HEAD 已等于旧 main，git 只创建空 ORIG_HEAD.lock，校验器要求其含
+      expected_main_sha（PUBLICATION_GIT_MERGE_LOCK）。已在真实 .git 副本上复现；已 recover（STABLE_FAILED_ATTEMPT，main/origin/main
+      不变），事务按失败释放；同一事务无法重试。持久修复登记为 DEVX-021（P1，基线发布之后）。下一步：v26 = 同一份代码 + 文档/登记提交，新事务、新
+      Full（预期约 3.5 小时），local-publish 前一次性删除 .git/ORIG_HEAD（临时前置条件，已在 DEVX-021 登记，待
+      owner 确认），再走 fetch → REMOTE_PUSH_PRE → CLOSEOUT 预检 → 普通推送 → 核对 SHA → CLEANUP_PRE
+      → release completed。须披露：超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW；O3 设计偏离与残余风险；K/间隔依据与模型偏差；ORIG_HEAD
+      前置条件；O3 跨调用缓存未获批。
+    acceptance_criteria: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧
+      loadfile profile 仍按原契约通过；pre-Full tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3
+      不跨调用缓存身份或 PASS
+    notes: 2026-10-04：v25 Full 通过但 local-publish 被真实仓库状态（ORIG_HEAD==旧 main）拒绝；写入 DEVX-018
+      需求并登记 DEVX-021；v26 计划见需求文档。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx018-v26a-task-20261004-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3c20389ee0723e745fe596e284a2ab03
 projection:
   legacy_first_eight_cells:
   - DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
@@ -571,18 +605,21 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - v24 正式 Full 完成：14,703 通过 / 2 失败 / 4 跳过，墙钟 3 小时 46 分（v21 7 小时 22 分，-49%），无超时或挂起保护触发。2
-    个失败均为 O3 改动引起并已修复（commit c61ba02a3：自定义 ctypes.WinDLL 注入下按读取逐次绑定内核；真实运行时清单测试改在干净解释器里运行），被改动模块的非重型测试
-    1,205 项全部通过。已记录模型 vs 实测差异与关键路径（gw0 上的 host_registry_view 复合组 225 分钟即整个墙钟）。下一步：v25
-    = v24 候选 + 两处修复，准备链（生成器零 diff）→ 正式 Full（预期约 3.8 小时）→ 发布。之后杠杆：拆分 host_registry_view（须
-    owner 复核）、P4 重放去重、变体冗余审计。须披露：超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW；O3 设计偏离与残余风险；K/间隔依据；O3
-    跨调用缓存未获批。
+  - v25 正式 Full 通过（14,706 通过/0 失败，墙钟 3 小时 28 分，v21 的 -53%），LOCAL_MAIN_FF_PRE 通过，但
+    local-publish 被真实仓库状态拒绝：真实 .git/ORIG_HEAD 已等于旧 main，git 只创建空 ORIG_HEAD.lock，校验器要求其含
+    expected_main_sha（PUBLICATION_GIT_MERGE_LOCK）。已在真实 .git 副本上复现；已 recover（STABLE_FAILED_ATTEMPT，main/origin/main
+    不变），事务按失败释放；同一事务无法重试。持久修复登记为 DEVX-021（P1，基线发布之后）。下一步：v26 = 同一份代码 + 文档/登记提交，新事务、新
+    Full（预期约 3.5 小时），local-publish 前一次性删除 .git/ORIG_HEAD（临时前置条件，已在 DEVX-021 登记，待 owner
+    确认），再走 fetch → REMOTE_PUSH_PRE → CLOSEOUT 预检 → 普通推送 → 核对 SHA → CLEANUP_PRE → release
+    completed。须披露：超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW；O3 设计偏离与残余风险；K/间隔依据与模型偏差；ORIG_HEAD
+    前置条件；O3 跨调用缓存未获批。
   - Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full
     tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
-  - 2026-10-04：v24 Full 结果、两个失败的根因与修复、流程教训、v25 计划写入 DEVX-018 需求。
+  - 2026-10-04：v25 Full 通过但 local-publish 被真实仓库状态（ORIG_HEAD==旧 main）拒绝；写入 DEVX-018
+    需求并登记 DEVX-021；v26 计划见需求文档。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 6bf9d1ea8225701e768621fd852cbf68c737b95994560404ce8b0c6af5829a47
-last_event_id: task-event-523ece6f60fdb113a9e65049487655c8
+  canonical_row_sha256: f0e3622b230ffed9fa6ad0c823591a6cd7783da5125b191e2cdf7d2a0919d336
+last_event_id: task-event-3c20389ee0723e745fe596e284a2ab03
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 5f3ccd3e6c27e6e9a6455e785b671fa74b257bfb9b4133c9af89826380616495
+fragment_checksum: 3be301b75611ab64c639d6da6b822ac98473620e9fa864b74f7e62dc831f1cd7
