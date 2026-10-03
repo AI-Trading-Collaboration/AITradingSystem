@@ -695,3 +695,54 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
   为提高 K 腾出余量。
 - 验收：新增单测（见上）；`test_runtime_dependency_observer_preserves_original_identity` 等既有身份测试通过；mandatory 链节点与发布节点 smoke 通过；
   用同一计时钩子复测并写出前后对比；随后做 K 扫描并选定 K，再走正式 Full 与发布。
+
+
+## 2026-10-03 O3-a/b/c 实施结果与实测（commits `53258e9b5`、`2069a84a3`）
+
+按 owner 2026-10-03 的决策实施，未引入跨调用缓存（O3 跨调用缓存仍未获批）。
+
+### 实现
+- **O3-a（纯重构）**：`kernel32` 的 ctypes 原型只在进程内绑定一次（线程安全惰性单例 `_custody_kernel()`），不再每次读文件重建。
+- **O3-b（同一次计算内共享祖先检查）**：`bounded_regular_bytes(..., verified_ancestors=set)` 由调用方持有集合；只在一次
+  `acceptance_runtime_identity` 计算内共享，调用返回即丢弃，不跨调用、不缓存字节。被跳过的祖先 `lstat` 仍由「打开后核对最终路径」兜底
+  （有测试：祖先在检查后被换成 junction，读取以 `HANDLE_PATH_CHANGED` 拒绝；真实 junction 仍以 `REPARSE_PATH` 拒绝）。
+- **O3-c（worker 元数据指纹比对）**：
+  - 运行器进程（`_run_mandatory_acceptance_command`）在运行**开始与结束**各做一次完整字节哈希（本来就有，未改动）。开始时的计算同时导出文件清单
+    `acceptance_runtime_inventory.v1`（`[路径, 大小, sha256, mtime_ns, 文件 ID]`，约 3.6 MB，随 request.json 交给 pytest 进程；request 已有 sha256 绑定）。
+  - 该 pytest 运行内的**每个进程**（控制器与全部 xdist worker）用 `acceptance_runtime_identity_from_inventory` 校验：重算所有非文件内容部分；
+    RECORD 推出的路径集合必须与清单完全相等；对每个文件做 `lstat` 元数据比对（常规文件、非重解析点、祖先无重解析点、大小、`mtime_ns`、文件 ID）；
+    已加载代码校验器**实际取用**的 `.py`/`.pyc` 通过惰性映射（`_InventoryBackedInputs`）经原有 custody 读取并与清单 sha256 比对，不匹配即
+    `ACCEPTANCE_RUNTIME_CHANGED`。任何不一致 fail closed。
+  - worker/控制器行新增 `runtime_verification`（`FULL_BYTES_V1` / `INVENTORY_METADATA_V1`），运行器与插件两处「行全等」比较器均要求该字段并要求其取值在
+    允许集合内（`worker_input_matches`）。
+  - 控制器进程的 `_AcceptanceInputObserver.pytest_sessionfinish` 不再重复 `_BoundAcceptancePlugin` 在同一进程同一时刻已做的整套身份重算，只保留它独有的
+    origin 判断；worker 侧不变。
+- **与 2026-10-03 设计文本的差异（须披露）**：设计稿写「控制器在 configure/sessionfinish 仍做完整字节哈希」。实测发现控制器进程做的这 4 次整体哈希
+  （configure、两个插件各一次 sessionfinish，再加运行器终态）是节点耗时的主要部分，因此改为：完整字节哈希只在**运行开始与运行结束**（运行器进程）
+  各一次，运行内所有进程用清单校验。这符合 owner 的原话「控制器完整字节哈希一次、worker 元数据指纹比对」，但比设计稿更省，请 owner 复核。
+- **残余风险（owner 复核项）**：对既未被加载、也未被验证器取用的安装文件，若在两次完整哈希之间被原地改写且保持大小、`mtime_ns` 与文件 ID 不变、
+  并在结束前恢复，则只有结束时的完整哈希能发现「内容不同」而无法发现「曾被改过」。被加载/被取用的代码文件由惰性 sha256 校验覆盖。
+
+### 实测（安静主机，同一计时钩子，未提交）
+| 项目 | 之前 | 之后 |
+|---|---|---|
+| 单次身份计算（空闲，O3-a/b） | 9.9 s | 7.0 s（摘要逐字节相同） |
+| worker 单次校验（空闲） | 9.6 s（整体哈希） | 约 4.5 s |
+| worker 单次校验（16 并发） | 73 s（中位） | 约 7 s（中位 7.0–7.8 s） |
+| `test_mandatory_acceptance_actual_runner_chain[pass]` | 94.8 s | 76 s（O3-a/b/c worker）→ **55.7 s**（控制器也用清单） |
+| `test_full_transaction_replays_candidate_publish_and_closeout_receipt[normal]` | 951 s | 735 s（fixture 87 s + 646 s 调用） |
+| 该发布节点的身份计算进程时间合计 | 约 40 次 × 12.7–78 s | 39 次，合计 288 s（5 次完整哈希 + 34 次清单校验） |
+
+该发布节点剩余约 420 s 的 Atlas/readiness/生成器重复（同一测试族每个变体重复）不在本次范围，归入 P4 / 变体冗余审计。
+
+### 测试
+`tests/test_devx015_workflow_execution.py` 新增：清单导出与摘要一致、校验复现完整身份并惰性服务已校验字节、六种漂移（大小/mtime/文件 ID/缺行/多行/文件消失）
+fail closed、元数据相同但字节被换时服务的代码字节仍被拒、重解析点祖先与畸形行拒绝、真实 16,554 文件运行时校验与完整身份逐字节一致、worker 行比较器、
+覆盖映射、控制器观察者不重复重算、worker 观察者仍报告自身失败；O3-a/b 测试见前一节。真实链路回归（`actual_runner_chain` 全部变体、
+`survives_main_advance`、`m03_real`、`actual_mandatory_xdist_runs_inside_full_job` 等，含依赖代码/磁盘漂移篡改用例）在 O3-a/b/c 首次提交后 58 + 10 项全部通过，
+控制器改动后的同一回归见下一条进展记录。
+
+### 下一步
+1. K 实验（owner：「K 的值最好实验看看效率甜点是多少」）：在已减负的代码上，用同一批代表性重型节点分别以并发 2/4/6/8 运行，记录墙钟、单节点膨胀与主机遥测。
+2. 以选定的 K 升级 `config/architecture/devx_018_validation_scheduling.yaml`（version 5），再走准备链 → 正式 Full → 发布。
+3. P1/P4/O4 作为后续（见 DEVX-020）。
