@@ -662,3 +662,36 @@ param 决定是否运行真实整链：`whole_profile`（`full-profile*`、`full
   `test_actual_mandatory_xdist_runs_inside_full_job_and_records_custody`、`test_remote_admission_rechecks_original_full_profile`、
   `test_mandatory_acceptance_actual_runner_chain[pass]`、`test_fixed_candidate_actual_runner_result_survives_main_advance`）12 passed。
 - 仍待验证：新候选的前置 tiers 与正式 Full；真实仓库与真实远端上的 `local-publish`、CLOSEOUT 治理预检、普通 push 与收尾。
+
+### 2026-10-03 owner 决策与 O3 实施设计（最高优先级）
+
+- 背景：owner 指示「每次 7 小时的推进效率太低，需要最高优先级优化」。v23 链在前置 tier 阶段（Full 尚未派发）被停止并以失败释放以让出安静主机；
+  DEVX-020 已转为 IN_PROGRESS 并在安静主机上取得实测（见该文档第 5 节）：运行时身份计算空闲 9.6–9.9 秒/次，内层 Full 每个 worker 在
+  `pytest_configure` 与 `pytest_sessionfinish` 各算一次、最多 16 个并发，单次升到约 73 秒。
+- owner 决策（2026-10-03）：
+  1. **worker 侧运行时身份改为元数据指纹比对**：控制器仍对同一次运行做完整字节哈希；worker 对同一份清单做路径/大小/mtime_ns/文件 ID 比对，
+     任何不一致 fail closed。批准。
+  2. **祖先目录重解析点检查在同一次身份计算内共享**：每个祖先目录每次计算只检查一次；打开文件后核对最终路径的检查不变。批准。
+     仍不跨调用、不跨进程共享任何缓存。
+  3. **并发 K**：不预设，用实验找效率甜点（实验在减负之后进行）。
+- O3 实施设计（只在身份计算与 mandatory 插件范围内，不改任何投资解释或数据路径；`production_effect=none`）：
+  - O3-a 纯重构：`bounded_regular_bytes` 每次调用重建 `ctypes.WinDLL` 与 argtypes，改为进程内惰性一次绑定（线程安全）；减少 `pathlib` 构造。
+  - O3-b 祖先共享：`bounded_regular_bytes` 新增可选参数 `verified_ancestors`（调用方持有的集合）；`_acceptance_distribution_code` 的读取线程共享同一集合。
+    叶子文件始终 `lstat`；集合只在同一次 `acceptance_runtime_identity` 调用内存在。测试：lstat 次数下降、重解析祖先仍被拒绝、
+    首次检查之后被替换为重定向的祖先仍被「最终路径核对」拒绝（真实 junction）。
+  - O3-c worker 指纹比对：
+    * 控制器/协调器完整计算时通过新的可选输出参数导出逐文件清单 `[path, size, sha256, mtime_ns, file_id]`（读取前后各 `lstat`，不一致即拒绝）；
+      清单写成与 mandatory 请求同目录的 sidecar，其 sha256/大小/路径进入请求（请求 schema 版本加一）。
+    * worker 不再调用完整计算，而是：重算非文件部分（解释器与引擎字节哈希、版本信息、`distributions()` 清单摘要、环境摘要）；对清单里**每个**文件做
+      `lstat` 比对（大小、mtime_ns、文件 ID）并对 RECORD 推导出的路径集合做相等比对；对 `sys.modules` 里**已加载**模块的源码与 `.pyc` 缓存（worker 实际会执行的代码）
+      做字节读取并与清单 sha256 比对；`dependency_inputs` 只包含这些已加载文件（`_verify_loaded_python_sources` 与 `bind_acceptance_implementation` 只需要它们）。
+    * 输出的 `runtime_identity` 与完整计算逐字段相同（`distribution_code` 摘要由已核对的清单推导）；worker 报告新增 `runtime_verification = "INVENTORY_METADATA_V1"`，
+      控制器的 `worker_inputs` 期望值同步包含该字段，保证审计可见。
+    * 控制器在 `pytest_configure` 与 `pytest_sessionfinish` 仍完整字节重算（每次 Full 各一次）；协调器与 profile 检查器路径不变。
+    * 回退：请求没有清单字段时（旧请求）worker 仍走完整计算，旧测试与历史证据不受影响。
+  - 取舍如实记录：未加载的文件在 worker 侧只比元数据（mtime 被刻意保留的改写可躲过元数据检查，但这些文件不会在该 worker 里执行，且控制器在同一次运行的
+    起止各做一次完整字节核对）。
+- 预期收益（实测基线，安静主机：closeout 节点 951 秒、mandatory 链节点 95 秒）：内层 Full 节点 −16% 到 −60%；系统范围的文件打开争用同步下降（并发 16 时单次约 73 秒→约 1–2 秒），
+  为提高 K 腾出余量。
+- 验收：新增单测（见上）；`test_runtime_dependency_observer_preserves_original_identity` 等既有身份测试通过；mandatory 链节点与发布节点 smoke 通过；
+  用同一计时钩子复测并写出前后对比；随后做 K 扫描并选定 K，再走正式 Full 与发布。
