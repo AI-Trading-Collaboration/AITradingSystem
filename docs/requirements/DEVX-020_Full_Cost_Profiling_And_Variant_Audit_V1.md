@@ -204,3 +204,8 @@ v18 Full 的并发时间线：约 1.5 小时后只剩 4 个重型节点（K=4）
 
 ### 8.4 进展记录
 - 2026-10-04：本节写入；v25 以 v24 候选 + 两处修复（`c61ba02a3`）重跑。临时工作区新增 `D:/Work/devx020-prof2`（已用于开发修复，仍保留）、`D:/Work/devx018-v25-light*`（轻量回归基目录）；回归与发布完成后审计并清理。
+
+- 2026-10-04：基线已发布（main = origin/main = 1e46e6ac7）；v26 真实 Full 3 小时 35 分（v21 的 -51%）。临时工作区已清理：`devx020-prof`、`devx020-prof2`、`devx018-pilot-v15`
+  以 `git worktree remove` 移除；pytest basetemp 与复现目录按显式白名单删除（`claude_v26_tmp_cleanup.log`）；保留 `D:/Work/devx020-k`（K 实验原始数据，本任务关闭前保留）、
+  `D:/Work/devx020-trace*.jsonl` 与全部 `.log` 证据；计时钩子 diff 与 prof2 未提交修复 diff 留在 `outputs/architecture/integration_revalidation/devx015-v389/retained_pilot_v15/`。
+  发布 worker 被写死 3600 秒终止这一实测（见 DEVX-021 第 7 节）进一步提高了 P4 的优先级。

@@ -20,12 +20,12 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: owner 要求最高优先级优化。v24 真实 Full 回看已写入第 8 节：墙钟
-    3.76 小时（v21 7.36 小时），关键路径是 gw0 上串行 225 分钟的 host_registry_view 复合组（两个 ff_only 发布节点各约
-    70 分钟），重型节点总耗时仅 -6%（K 翻倍带来容量，单节点只在 mandatory 链族兑现 0.29x），K 实验模型偏乐观的原因已记录。待办（按预期收益）：拆分
-    host_registry_view 复合组（须 owner 复核互斥语义，估计墙钟约 3.0 小时）；P4 发布类大节点生命周期重放去重/外置；变体冗余审计；K=10
-    与轻量/重型 worker 分区评估；venv 精简/被哈希集合缩小（owner 策略项）。临时工作区 D:/Work/devx020-prof2、devx020-prof、-bt1/-bt2/-t1/-t2、D:/Work/devx020-k、devx018-v25-light*、devx020-trace*.jsonl：v25
-    发布完成后审计并 git worktree remove，不提交计时钩子。
+  unstructured_legacy_blocker_or_next_step: 基线已发布（main = origin/main = 1e46e6ac7），v26
+    真实 Full 3 小时 35 分（v21 的 -51%）。待办（按预期收益）：拆分 host_registry_view 复合组（关键路径 225 分钟，须
+    owner 复核互斥语义，估计墙钟约 3.0 小时）；P4 发布类大节点生命周期重放去重（同时降低发布 worker 耗时）；变体冗余审计；K=10 与轻量/重型
+    worker 分区评估；venv 精简/被哈希集合缩小（owner 策略项）；用 v24/v25/v26 的 profile 复核清单 v5。临时工作区已清理：devx020-prof/prof2/devx018-pilot-v15
+    已 git worktree remove，pytest basetemp 与复现目录按白名单删除（见 claude_v26_tmp_cleanup.log）；保留
+    D:/Work/devx020-k（K 实验原始数据，本任务关闭前保留）、D:/Work/devx020-trace*.jsonl 与全部 .log 证据。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变
@@ -181,6 +181,34 @@ events:
   - change:gov-007-devx020-v25a-task-20261004-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-1e972db232c8bdc2ea37214f0ad39035
+- schema_version: task_event.v1
+  task_id: DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-04T03:34:35Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx020-pub-task-20261004-v1
+  lane_id: null
+  base_commit: 1e46e6ac767b309a880c41dbb2796981f8a61a7e
+  previous_state_event_id: task-event-1e972db232c8bdc2ea37214f0ad39035
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 基线已发布（main = origin/main = 1e46e6ac7），v26 真实 Full 3 小时 35
+      分（v21 的 -51%）。待办（按预期收益）：拆分 host_registry_view 复合组（关键路径 225 分钟，须 owner 复核互斥语义，估计墙钟约
+      3.0 小时）；P4 发布类大节点生命周期重放去重（同时降低发布 worker 耗时）；变体冗余审计；K=10 与轻量/重型 worker 分区评估；venv
+      精简/被哈希集合缩小（owner 策略项）；用 v24/v25/v26 的 profile 复核清单 v5。临时工作区已清理：devx020-prof/prof2/devx018-pilot-v15
+      已 git worktree remove，pytest basetemp 与复现目录按白名单删除（见 claude_v26_tmp_cleanup.log）；保留
+      D:/Work/devx020-k（K 实验原始数据，本任务关闭前保留）、D:/Work/devx020-trace*.jsonl 与全部 .log 证据。
+    acceptance_criteria: 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变
+      Full 验收语义、不放宽任何校验；任何调度或测试改动必须另有任务、评审与重测；明确列出覆盖等价性论证和风险。
+    notes: 2026-10-04：基线发布完成后的状态、清理与待办。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx020-pub-task-20261004-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-666ce7809bf63faed4802965e210d932
 projection:
   legacy_first_eight_cells:
   - DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
@@ -189,19 +217,19 @@ projection:
   - P1
   - IN_PROGRESS
   - Claude Code coordinator
-  - owner 要求最高优先级优化。v24 真实 Full 回看已写入第 8 节：墙钟 3.76 小时（v21 7.36 小时），关键路径是 gw0 上串行 225
-    分钟的 host_registry_view 复合组（两个 ff_only 发布节点各约 70 分钟），重型节点总耗时仅 -6%（K 翻倍带来容量，单节点只在
-    mandatory 链族兑现 0.29x），K 实验模型偏乐观的原因已记录。待办（按预期收益）：拆分 host_registry_view 复合组（须 owner
-    复核互斥语义，估计墙钟约 3.0 小时）；P4 发布类大节点生命周期重放去重/外置；变体冗余审计；K=10 与轻量/重型 worker 分区评估；venv
-    精简/被哈希集合缩小（owner 策略项）。临时工作区 D:/Work/devx020-prof2、devx020-prof、-bt1/-bt2/-t1/-t2、D:/Work/devx020-k、devx018-v25-light*、devx020-trace*.jsonl：v25
-    发布完成后审计并 git worktree remove，不提交计时钩子。
+  - 基线已发布（main = origin/main = 1e46e6ac7），v26 真实 Full 3 小时 35 分（v21 的 -51%）。待办（按预期收益）：拆分
+    host_registry_view 复合组（关键路径 225 分钟，须 owner 复核互斥语义，估计墙钟约 3.0 小时）；P4 发布类大节点生命周期重放去重（同时降低发布
+    worker 耗时）；变体冗余审计；K=10 与轻量/重型 worker 分区评估；venv 精简/被哈希集合缩小（owner 策略项）；用 v24/v25/v26
+    的 profile 复核清单 v5。临时工作区已清理：devx020-prof/prof2/devx018-pilot-v15 已 git worktree
+    remove，pytest basetemp 与复现目录按白名单删除（见 claude_v26_tmp_cleanup.log）；保留 D:/Work/devx020-k（K
+    实验原始数据，本任务关闭前保留）、D:/Work/devx020-trace*.jsonl 与全部 .log 证据。
   - 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变
     Full 验收语义、不放宽任何校验；任何调度或测试改动必须另有任务、评审与重测；明确列出覆盖等价性论证和风险。
-  - 2026-10-04：v24 真实 Full 回看写入第 8 节（关键路径、模型对照、下一步杠杆）。
+  - 2026-10-04：基线发布完成后的状态、清理与待办。
   docs_links:
   - docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md
   terminal: false
-  canonical_row_sha256: ddd51c0b28dcd1067bf7b54244a173962bb5376d8e73b01d9971e70396c5b39b
-last_event_id: task-event-1e972db232c8bdc2ea37214f0ad39035
+  canonical_row_sha256: ad7d90599c95477af4dae949a38e6182d43f62dd0adb6160492a476cf24c4815
+last_event_id: task-event-666ce7809bf63faed4802965e210d932
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: e6ff98ee20f1f560363a559912f821f38d35dfc5402321c4903edda1e08d04c5
+fragment_checksum: e9e9869802a61912cb626451ae5f0998f329ad1d3804825b8492eda5df785ede
