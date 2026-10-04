@@ -15,7 +15,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from enum import Enum
-from functools import wraps
+from functools import lru_cache, wraps
 from hashlib import sha256
 from pathlib import Path
 from time import perf_counter
@@ -182,12 +182,37 @@ class _ObservedPath:
     digest: bytes = b""
 
 
+@dataclass
+class _FingerprintComputationMemo:
+    """Path observations shared inside ONE fingerprint computation (DEVX-022 S6).
+
+    A compatibility/explicit fingerprint observes a few hundred bound paths that share the same
+    ancestor directories; without sharing, every path re-checks every ancestor for links and
+    re-resolves the same strings (about 12 system calls per path, 87-92% of the time of the slow
+    smoothed/paper-shadow validation nodes).  The memo lives only between the start and the end
+    of a single ``_compatibility_artifact_fingerprint``/``artifact_fingerprint`` call: nothing is
+    shared across calls or sessions, nothing is written to disk, and ``stat`` results are never
+    memoized, so the "file changed while it was being read" checks are unchanged.  The
+    before/confirm/after fingerprints of one cached validation are separate computations, each
+    with a fresh memo, so a link swapped in between them is still observed.
+    """
+
+    # Exact path strings whose own entry and every ancestor were verified to be non-links.
+    verified_unlinked: set[str] = field(default_factory=set)
+    # Exact input path string -> ``Path.resolve`` result.
+    resolved: dict[str, Path] = field(default_factory=dict)
+
+
 class _UncacheableFingerprintScope(ValueError):
     """Raised when path topology cannot be fingerprinted without alias ambiguity."""
 
 
 _VALIDATION_SESSION: ContextVar[_ValidationSessionState | None] = ContextVar(
     "artifact_validation_session",
+    default=None,
+)
+_FINGERPRINT_COMPUTATION: ContextVar[_FingerprintComputationMemo | None] = ContextVar(
+    "artifact_fingerprint_computation",
     default=None,
 )
 _PROCESS_FILE_DIGESTS: OrderedDict[
@@ -199,8 +224,30 @@ _PROCESS_FILE_DIGEST_PID = os.getpid()
 _PROCESS_FILE_DIGEST_LOCK = threading.RLock()
 
 
+def _one_fingerprint_computation(function: Callable[_P, _R]) -> Callable[_P, _R]:
+    """Give each call of a fingerprint function its own, call-scoped path memo."""
+
+    @wraps(function)
+    def computation(*args: _P.args, **kwargs: _P.kwargs) -> _R:
+        token = _FINGERPRINT_COMPUTATION.set(_FingerprintComputationMemo())
+        try:
+            return function(*args, **kwargs)
+        finally:
+            _FINGERPRINT_COMPUTATION.reset(token)
+
+    return computation
+
+
 def _resolved(path: Path) -> Path:
-    return path.expanduser().resolve(strict=False)
+    memo = _FINGERPRINT_COMPUTATION.get()
+    if memo is None:
+        return path.expanduser().resolve(strict=False)
+    key = str(path)
+    resolved = memo.resolved.get(key)
+    if resolved is None:
+        resolved = path.expanduser().resolve(strict=False)
+        memo.resolved[key] = resolved
+    return resolved
 
 
 def _execution_owner() -> tuple[int, int, int | None]:
@@ -224,25 +271,46 @@ def _is_link_or_junction(path: Path) -> bool:
         lexical = expanded if expanded.is_absolute() else Path.cwd() / expanded
         if len(lexical.parts) > _MAX_BOUND_PATH_COMPONENTS:
             return True
-        for component in reversed(lexical.parents):
-            if component.is_symlink():
-                return True
-            is_junction = getattr(component, "is_junction", None)
-            if is_junction is not None and is_junction():
-                return True
+        # Inside one fingerprint computation an entry already verified to be a non-link (with
+        # all its ancestors) is not re-observed; ancestors are checked root-first, so a verified
+        # entry implies every shallower ancestor was verified too.
+        memo = _FINGERPRINT_COMPUTATION.get()
+        verified = memo.verified_unlinked if memo is not None else None
+        lexical_key = str(lexical)
+        if verified is not None and lexical_key in verified:
+            return False
+        if verified is None or str(lexical.parent) not in verified:
+            for component in reversed(lexical.parents):
+                component_key = str(component)
+                if verified is not None and component_key in verified:
+                    continue
+                if component.is_symlink():
+                    return True
+                is_junction = getattr(component, "is_junction", None)
+                if is_junction is not None and is_junction():
+                    return True
+                if verified is not None:
+                    verified.add(component_key)
         if lexical.is_symlink():
             return True
         is_junction = getattr(lexical, "is_junction", None)
         if is_junction is not None and is_junction():
             return True
+        if verified is not None:
+            verified.add(lexical_key)
         return False
     except (OSError, RuntimeError, ValueError):
         return True
 
 
-def _platform_change_token(path: Path) -> int | None:
-    if os.name != "nt":
-        return 0
+@lru_cache(maxsize=1)
+def _windows_change_token_api() -> tuple[Any, Any, Any, Any]:
+    """Bind the kernel32 entry points and the FILE_BASIC_INFO layout once per process.
+
+    DEVX-022 S6: ``_platform_change_token`` runs once per fingerprinted file (about 84k calls in
+    one slow validation node); rebuilding the ctypes structure class and re-binding ``kernel32``
+    on every call cost about 10% of such a node.  The observed value is unchanged.
+    """
     import ctypes
     from ctypes import wintypes
 
@@ -278,7 +346,16 @@ def _platform_change_token(path: Path) -> int | None:
     close_handle = kernel32.CloseHandle
     close_handle.argtypes = (wintypes.HANDLE,)
     close_handle.restype = wintypes.BOOL
+    return FileBasicInfo, create_file, get_information, close_handle
 
+
+def _platform_change_token(path: Path) -> int | None:
+    if os.name != "nt":
+        return 0
+    import ctypes
+    from ctypes import wintypes
+
+    file_basic_info, create_file, get_information, close_handle = _windows_change_token_api()
     handle = create_file(
         str(path),
         0x0080,  # FILE_READ_ATTRIBUTES
@@ -291,7 +368,7 @@ def _platform_change_token(path: Path) -> int | None:
     if handle == wintypes.HANDLE(-1).value:
         return None
     try:
-        info = FileBasicInfo()
+        info = file_basic_info()
         if not get_information(handle, 0, ctypes.byref(info), ctypes.sizeof(info)):
             return None
         return int(info.change_time)
@@ -1002,6 +1079,7 @@ def _enforce_fingerprint_path_budget(
         raise _UncacheableFingerprintScope("fingerprint scope exceeds path-count limit")
 
 
+@_one_fingerprint_computation
 def _compatibility_artifact_fingerprint(root: Path) -> str:
     """Fingerprint the pre-migration direct-file and exact-checksum dependency surface.
 
@@ -1135,6 +1213,7 @@ def _compatibility_artifact_fingerprint(root: Path) -> str:
     return digest.hexdigest()
 
 
+@_one_fingerprint_computation
 def artifact_fingerprint(
     root: Path,
     *,
