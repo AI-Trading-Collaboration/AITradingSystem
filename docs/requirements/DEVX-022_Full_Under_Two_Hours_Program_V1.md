@@ -78,6 +78,16 @@
 - 内层 Full（真实 `run_validation_tier full`，安静主机约 190 秒；其中 pytest 仅 109 秒，主要是 16 个 worker 启动）。
 - 重放仍是 JSON 体积主导：把 16.5k 行列表外置为内容寻址的旁文件（只存摘要引用，读取时一次性解析并校验）可再降一个数量级，属 S3b，涉及租约事件存储格式（事件 ID 语义不变），风险更高，待决定。
 
+### 6.5a S3a 之后的大节点复测（安静主机、同一节点、带探针）
+`ff_only_and_independent_recovery[full-profile-publish]`：调用 **1,176 秒**（O3-d 后 1,750 秒；v26 满载约 4,000 秒）。各阶段墙钟（S3a 前 → 后）：
+`local-publish` 1,363 → 862 s；`local-publication-worker` 1,054 → 687 s；8 次钩子 611 → 339 s；检查器 ×3 193 → 167 s；`recover` 84 → 41 s；readiness 37 → 39 s；Atlas 25 → 26 s。
+租约库未变（45 事件 / 396 MB）。结论：S3a 之后钩子单次仍约 42 秒（JSON 解码 + 摘要 + Python 启动与模块导入），已接近体积决定的下限；继续下降需要 S3b（事件外置）。
+
+### 6.5b S1 收尾与临时资源记录
+- 临时探针 `.venv/Lib/site-packages/sitecustomize.py` 已删除并复核不存在（它从未进入仓库，仅在环境变量存在时生效）。
+- 保留（用途：S3b 重放基准与证据；退出条件：S3b 决定后或本任务关闭时清理）：`D:/Work/devx022-s1/bt_n4b`（`ff_only` 节点 basetemp，含 396 MB/45 事件租约库，486 MB）、
+  `D:/Work/devx022-s1/` 下的 trace/profile/log 证据、`D:/Work/devx020-k`（K 实验原始数据）。其余 `D:/Work/devx021-prof` 为日志。均无活动进程依赖。
+
 ### 6.6 对计划的影响
 - 一个已经提交的低风险优化（O3-d）就让中型发布节点 −37~44%；S3a 又让大节点重放 −58%。预计 Full 工作量由 43 节点小时降到约 33–35 节点小时（待 S2 之后的正式 Full 实测）。
 - 下一步：对被改模块跑非重型层测试 + 重型样本，然后做 S2 之后的第一次正式 Full（带计数器型遥测）以得到真实 profile，再决定 S3b / S4 / S5 的取舍。
