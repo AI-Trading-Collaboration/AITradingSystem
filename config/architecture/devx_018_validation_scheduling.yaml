@@ -1,7 +1,7 @@
 schema_version: devx_018_validation_scheduling.v1
 policy_id: devx_018_governed_split_scope_scheduling
 owner: validation_operations
-version: 5
+version: 6
 status: ACTIVE_PILOT
 requirement: docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
 rationale: >-
@@ -37,6 +37,7 @@ validation_evidence: >-
   and the whole-Full wall-clock model: cap 4 about 3.6 hours, cap 6 2.8, cap 8
   2.4, cap 10 2.4, cap 12 2.5. Raw data: D:/Work/devx020-k (retained until DEVX-020
   closes).
+# v6: heavy_start_interval_seconds is ramp-only (DEVX-022 S2); caps and lists unchanged.
 review_condition: >-
   Recalibrate heavy_concurrency_cap and the lists after the first Full measured
   with this policy, and whenever a real_full_chain function is added, renamed
@@ -62,6 +63,10 @@ heavy_concurrency_cap: 8
 # minutes, about 0.7 hours of extra modelled wall time); the K experiment ran
 # starts 60 seconds apart up to 12 concurrent nodes without a failure. 0 disables
 # the ramp. Recalibrate with the first measured Full under this policy.
+# v6 (DEVX-022 S2): the spacing now applies only to the first heavy_concurrency_cap
+# heavy starts (the ramp). Before, it gated every start while light units remained,
+# which caps heavy throughput at one start per interval once heavy units get short
+# (modelled: the Full stays near 2.8 hours however little work remains).
 heavy_start_interval_seconds: 120
 split_scope_files:
   - tests/test_arch_005_integration_publication_fence.py

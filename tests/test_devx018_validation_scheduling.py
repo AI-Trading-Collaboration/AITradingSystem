@@ -544,9 +544,9 @@ def test_simulated_split_scheduler_never_deadlocks_and_respects_policy(
     ]
     assert holder_starts[0][1].startswith(EXCLUSIVE_GROUP_SCOPE_PREFIX)  # composites lead
     if interval:
-        for (previous_at, _, _), (next_at, _, light_left) in zip(
-            holder_starts, holder_starts[1:], strict=False
-        ):
+        # Manifest v6: the spacing is only the initial ramp (the first K heavy starts).
+        ramp = holder_starts[: manifest.heavy_concurrency_cap]
+        for (previous_at, _, _), (next_at, _, light_left) in zip(ramp, ramp[1:], strict=False):
             if light_left:
                 assert next_at - previous_at >= interval
 
@@ -589,7 +589,7 @@ def test_simulated_ramp_spaces_heavy_starts_with_the_injected_clock() -> None:
     )
     manifest = parse_scheduling_manifest(_raw(payload))
     nodeids = [f"{key}[0]" for key in functions] + [
-        f"tests/test_plain_{index}.py::test_x" for index in range(60)
+        f"tests/test_plain_{index}.py::test_x" for index in range(400)
     ]
     durations = {nodeid: 1000.0 if "chain" in nodeid else 100.0 for nodeid in nodeids}
     sim = _EventSimulation(manifest, nodeids, durations, workers=8)
@@ -601,8 +601,37 @@ def test_simulated_ramp_spaces_heavy_starts_with_the_injected_clock() -> None:
         if not was_holder
     ]
     assert starts[0][0] == 0.0
-    assert len(starts) >= 4
-    for (previous, _), (following, light_left) in zip(starts, starts[1:], strict=False):
+    assert len(starts) >= 5
+    ramp = starts[:4]
+    for (previous, _), (following, light_left) in zip(ramp, ramp[1:], strict=False):
         if light_left:
             assert following - previous >= 300
     assert sim.max_heavy_running <= 4
+    # DEVX-022 S2: after the ramp, a freed heavy slot is refilled at once (the old rule made the
+    # fifth start wait for the 300 s spacing after the fourth, at t=900).
+    assert starts[4][0] == 1000.0 and starts[4][1], starts
+
+
+def test_ramp_spacing_never_throttles_short_heavy_units_after_the_first_k_starts() -> None:
+    """DEVX-022 S2 regression: gating every start held 30 short heavy units to one per 120 s."""
+    functions = sorted(f"tests/test_split.py::test_chain_{index}" for index in range(30))
+    payload = _manifest_payload(
+        heavy_concurrency_cap=8,
+        heavy_start_interval_seconds=120,
+        real_full_chain={"marker": REAL_FULL_CHAIN_MARKER, "functions": functions},
+    )
+    manifest = parse_scheduling_manifest(_raw(payload))
+    nodeids = [f"{key}[0]" for key in functions] + [
+        f"tests/test_plain_{index}.py::test_x" for index in range(400)
+    ]
+    durations = {nodeid: 60.0 if "chain" in nodeid else 120.0 for nodeid in nodeids}
+    sim = _EventSimulation(manifest, nodeids, durations, workers=16)
+
+    assert sim.run(), _stuck_report(sim)
+    assert 6 <= sim.max_heavy_running <= 8
+    starts = sorted(at for at, _, _, _, _ in sim.heavy_assignments)
+    assert len(starts) == 30
+    # The first eight starts are the spaced ramp. The remaining 22 only refill freed slots; light
+    # work lasts for hours here, so the old every-start gating would still be at start 30 x 120 s.
+    assert starts[7] >= 7 * 120
+    assert starts[-1] < 1800.0, starts

@@ -1304,8 +1304,11 @@ def make_governed_split_scheduler(
     runs sequentially on the same worker and adds no concurrency. A worker that
     holds nothing and finds only capped heavy units waits for a heavy completion,
     which reschedules every worker. When ``heavy_start_interval_seconds`` is set,
-    a worker starts a heavy unit only that long after the previous start while
-    light units remain, so load ramps up instead of stepping.
+    the first ``heavy_concurrency_cap`` heavy starts are spaced that far apart while
+    light units remain, so load ramps up instead of stepping. Later starts only
+    refill a freed heavy slot and are never delayed (manifest v6, DEVX-022 S2): the
+    interval used to gate every start, which capped heavy throughput once heavy
+    units became short.
     """
     from xdist.scheduler import LoadFileScheduling
 
@@ -1313,6 +1316,7 @@ def make_governed_split_scheduler(
         def __init__(self, *args: object, **kwargs: object) -> None:
             super().__init__(*args, **kwargs)
             self._next_heavy_at: float | None = None
+            self._ramp_starts = 0
 
         def _split_scope(self, nodeid: str) -> str:
             file_path = nodeid_file(nodeid)
@@ -1349,7 +1353,12 @@ def make_governed_split_scheduler(
                 [scope for scope in self.workqueue if self._is_heavy(scope)]
             )
             light = [scope for scope in self.workqueue if not self._is_heavy(scope)]
-            ramp_open = not light or self._next_heavy_at is None or clock() >= self._next_heavy_at
+            ramp_open = (
+                not light
+                or self._ramp_starts >= manifest.heavy_concurrency_cap
+                or self._next_heavy_at is None
+                or clock() >= self._next_heavy_at
+            )
             if (
                 not holds
                 and heavy
@@ -1370,6 +1379,7 @@ def make_governed_split_scheduler(
             if chosen is None:
                 return
             if self._is_heavy(chosen) and not was_holder:
+                self._ramp_starts += 1
                 self._next_heavy_at = clock() + manifest.heavy_start_interval_seconds
             work_unit = self.workqueue.pop(chosen)
             self.assigned_work.setdefault(node, {})[chosen] = work_unit
