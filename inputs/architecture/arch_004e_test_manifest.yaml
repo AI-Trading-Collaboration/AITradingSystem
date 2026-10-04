@@ -10602,7 +10602,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx015_workflow_coordination
   path: tests/test_devx015_workflow_coordination.py
-  sha256: 1c9a35ac0190e7834be59247306ee8f00cd1687700542f9020d7f025ddb3bdce
+  sha256: 0a43af0e4083accb670ffb270dc52b4a1220186ee85fe8edbde761efe124c3ed
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10618,7 +10618,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx015_workflow_execution
   path: tests/test_devx015_workflow_execution.py
-  sha256: 24960642591aef3e5debe063f09be2d85d61210a48e55ba8a4fb1914ade1f767
+  sha256: ddc2f9566b7b81d61f73d46ba7ed69560a6e917275bd1b2dd568c5f0dc80a0a5
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10650,7 +10650,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx018_validation_scheduling
   path: tests/test_devx018_validation_scheduling.py
-  sha256: 830736b5cd8f06f18d43908661c68debc42164b3b231fbda50dc9510d2449c80
+  sha256: bd95a91dc021dfae3ef850e56c26d4b67982080b24aea00e61f0ec3fdfeaf7fe
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10682,7 +10682,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 95f6d3c447928f76c44191429e4e2b0230cd9937380d3606db4fa661b57fb46c
+  sha256: 788ff0989a0b19f96c4a04216c54ed9e4ef246ed7072ec52ad67f28665db3b1d
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
