@@ -15,20 +15,16 @@ task_record:
   priority: P0
   accountable_owner: null
   next_owner: Claude Code coordinator
-  requirement_refs:
-  - docs/requirements/DEVX-022_Full_Under_Two_Hours_Program_V1.md
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: M1 正式 Full（S1–S3a 之后，未发布）：14,711 passed/0
-    failed，pytest 8,460 s（2 小时 21 分，v26 为 12,911 s，-34.5%），整条正式链 3.01 小时（v26 4.44）。总工作量
-    37.25 节点小时（v26 43.0），16 个 worker 满载 140 分钟、尾部空闲仅 0.7%，主机 CPU 均值 78.5%（32 逻辑核，p90
-    100%）：现在是 CPU 工作量受限，不是调度受限，加 worker 无收益。下一步 S6（新发现 F4）：被归为轻量的 236 个慢节点（12.3 节点小时）里
-    92%/87% 的时间在 validation_session 的 _compatibility_artifact_fingerprint（每个绑定路径对每个祖先目录各做一次
-    is_symlink，resolve 重复 2.35 次，3M stat/1.2M _getfinalpathname）；在一次指纹计算范围内记忆祖先链接检查与
-    resolve 结果（不跨调用/会话/磁盘），预计该节点 -45%、全量 -4~5.5 节点小时；先实现并测试、静机复测，再做 M2 正式 Full（不发布）；之后按实测决定
-    S3b/S4/S5 与 DEVX-021。S6 不在 owner 批准的 S1-S5 序列内，需向 owner 披露。详见 docs/requirements/DEVX-022_Full_Under_Two_Hours_Program_V1.md
-    第 7、8 节。
+  unstructured_legacy_blocker_or_next_step: S6 已实现并提交（300fdaf57）：validation_session
+    在单次指纹计算范围内共享祖先链接检查与 resolve 结果（不跨调用/会话/磁盘，stat 不记忆），_platform_change_token 改为每进程绑定一次。静机串行
+    cProfile：paper_shadow 节点 221->94 s（-57%），smoothed_forward_weekly_run 节点 402->77
+    s（-81%），系统调用降 5-7 倍；新增 6 个测试，73 个相关测试文件非重型层 513 通过，126 个失败均为 arch_004 哈希权威家族（待候选重封）。下一步：重封候选并做
+    M2 正式 Full（不发布，计数器遥测）实测总工作量与墙钟；按剩余差距决定 S3b/S4/S5 与 DEVX-021；S6 不在 owner 批准的 S1-S5
+    序列内，需向 owner 披露。详见 DEVX-022 文档第 8 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
@@ -132,6 +128,35 @@ events:
   - change:gov-007-devx022-m1-task-20261004-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-8444ff323b73cef6bc4f6895ab7bb60f
+- schema_version: task_event.v1
+  task_id: DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-04T14:30:56Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx022-s6-task-20261004-v1
+  lane_id: null
+  base_commit: 1e46e6ac767b309a880c41dbb2796981f8a61a7e
+  previous_state_event_id: task-event-8444ff323b73cef6bc4f6895ab7bb60f
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: S6 已实现并提交（300fdaf57）：validation_session 在单次指纹计算范围内共享祖先链接检查与
+      resolve 结果（不跨调用/会话/磁盘，stat 不记忆），_platform_change_token 改为每进程绑定一次。静机串行 cProfile：paper_shadow
+      节点 221->94 s（-57%），smoothed_forward_weekly_run 节点 402->77 s（-81%），系统调用降 5-7
+      倍；新增 6 个测试，73 个相关测试文件非重型层 513 通过，126 个失败均为 arch_004 哈希权威家族（待候选重封）。下一步：重封候选并做
+      M2 正式 Full（不发布，计数器遥测）实测总工作量与墙钟；按剩余差距决定 S3b/S4/S5 与 DEVX-021；S6 不在 owner 批准的
+      S1-S5 序列内，需向 owner 披露。详见 DEVX-022 文档第 8 节。
+    acceptance_criteria: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约
+      20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实 .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5
+      最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
+    notes: 2026-10-04：S6 实现、测试与静机复测写入 DEVX-022 第 8.6 节。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx022-s6-task-20261004-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-cb1b4be3ddee401b6a38e8b0c267bb72
 projection:
   legacy_first_eight_cells:
   - DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
@@ -140,22 +165,17 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - M1 正式 Full（S1–S3a 之后，未发布）：14,711 passed/0 failed，pytest 8,460 s（2 小时 21 分，v26
-    为 12,911 s，-34.5%），整条正式链 3.01 小时（v26 4.44）。总工作量 37.25 节点小时（v26 43.0），16 个 worker
-    满载 140 分钟、尾部空闲仅 0.7%，主机 CPU 均值 78.5%（32 逻辑核，p90 100%）：现在是 CPU 工作量受限，不是调度受限，加 worker
-    无收益。下一步 S6（新发现 F4）：被归为轻量的 236 个慢节点（12.3 节点小时）里 92%/87% 的时间在 validation_session
-    的 _compatibility_artifact_fingerprint（每个绑定路径对每个祖先目录各做一次 is_symlink，resolve 重复
-    2.35 次，3M stat/1.2M _getfinalpathname）；在一次指纹计算范围内记忆祖先链接检查与 resolve 结果（不跨调用/会话/磁盘），预计该节点
-    -45%、全量 -4~5.5 节点小时；先实现并测试、静机复测，再做 M2 正式 Full（不发布）；之后按实测决定 S3b/S4/S5 与 DEVX-021。S6
-    不在 owner 批准的 S1-S5 序列内，需向 owner 披露。详见 docs/requirements/DEVX-022_Full_Under_Two_Hours_Program_V1.md
-    第 7、8 节。
+  - S6 已实现并提交（300fdaf57）：validation_session 在单次指纹计算范围内共享祖先链接检查与 resolve 结果（不跨调用/会话/磁盘，stat
+    不记忆），_platform_change_token 改为每进程绑定一次。静机串行 cProfile：paper_shadow 节点 221->94 s（-57%），smoothed_forward_weekly_run
+    节点 402->77 s（-81%），系统调用降 5-7 倍；新增 6 个测试，73 个相关测试文件非重型层 513 通过，126 个失败均为 arch_004
+    哈希权威家族（待候选重封）。下一步：重封候选并做 M2 正式 Full（不发布，计数器遥测）实测总工作量与墙钟；按剩余差距决定 S3b/S4/S5 与 DEVX-021；S6
+    不在 owner 批准的 S1-S5 序列内，需向 owner 披露。详见 DEVX-022 文档第 8 节。
   - S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
     .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5 最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
-  - 2026-10-04：M1 正式 Full 实测与 F4/S6 登记写入 DEVX-022 第 7、8 节。
-  docs_links:
-  - docs/requirements/DEVX-022_Full_Under_Two_Hours_Program_V1.md
+  - 2026-10-04：S6 实现、测试与静机复测写入 DEVX-022 第 8.6 节。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: f630a4c94c4eaf50ebfa28039e6f39d726f4c5561d902abe30c0c58ec8838938
-last_event_id: task-event-8444ff323b73cef6bc4f6895ab7bb60f
+  canonical_row_sha256: eb56041385b092e0bd15e08c355d9cb7412b6f97f6a0b1e526b1d801d97b3c18
+last_event_id: task-event-cb1b4be3ddee401b6a38e8b0c267bb72
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: c635355e513e021418757fb679fe4e55b5953b87280001118dc74c82af15279d
+fragment_checksum: dc30370adf0a1db15f81f27761c07591320e4fd26745c03e36d547651ec4c4cb
