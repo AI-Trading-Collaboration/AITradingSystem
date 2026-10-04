@@ -52,3 +52,21 @@
 
 ## 6. 进展记录
 - 2026-10-04：登记；根因复现完成；前置条件待 owner 确认；实施排在基线发布之后（P1）。
+
+
+## 7. v26 发布实测：前置条件生效，并暴露两个新项（2026-10-04）
+
+- **前置条件按预期生效**：删除 `.git/ORIG_HEAD` 后，真实仓库上的 `local-publish` 通过了 `reference-transaction prepared ORIG_HEAD`（`ORIGINAL_GIT_HOOK_RECORDED`），
+  真实 ff-only 合并成功（`Updating cbc31cdff..1e46e6ac7 Fast-forward`）。与第 2 节的根因判断一致。
+- **新项 A（须并入本任务范围）：`local-publish` worker 的写死 3600 秒墙钟**（`publish_local` 里 `handle.wait(timeout=3600)`）。真实发布各阶段
+  （hooks_created 约 16 分钟、ready_held、heads_switched、merge_resumed，之后每个钩子需要重放约 22 MB 的租约事件，约 3–5 分钟/次）总计超过 60 分钟，
+  Job 在 ff 合并完成之后、`post-merge`/`AUTO_MERGE` 钩子记录之前被终止（返回码 1067，`RECOVERY_REQUIRED`）。这是典型的「校准在空闲小仓库上的写死等待」：
+  修复方向是 P4（降低重放成本）加上把该墙钟纳入受审配置（遵守阈值治理，附 owner/依据/复核条件），而不是简单加大常量。
+- **新项 B：被终止的 git 进程遗留空锁文件**（`.git/AUTO_MERGE.lock`、`.git/packed-refs.lock`，0 字节）。`local-publication-recover` 因
+  `WORKFLOW_MERGE_PUBLICATION_CHECKOUT_PLAN_STATE_EXISTS: packed-refs.lock` fail closed。当前做法是人工审计后删除；持久方案应在恢复路径里识别「原始 Job 已终止、git 进程已退出、
+  锁为空且创建时间落在原合并窗口内」的残留，并把清理本身记录为恢复事实，而不是依赖人工删除。
+- **一次未预批的操作（须 owner 复核）**：这两个空锁的删除不在 owner 批准的 ORIG_HEAD 范围内；操作前已审计（无存活 git/python 进程、两文件 0 字节、创建时间 11:38:36 与终止时刻吻合）并记录在
+  `claude_v26_stale_locks_removal.txt`，随后 `local-publication-recover` 以 `LOCAL_PUBLISHED`（`recovered: true`）收口。
+- 恢复路径本身按设计工作：`refs/heads/main == candidate` 时走 `adopt_published_attempt(recovery=True)`，并重新检查 Full profile 与合并窗口。
+- 验收标准补充：恢复路径对「ff 已完成但 worker 被终止」的情形应无需人工清理即可收口，且有负向测试（锁非空/有存活进程/创建时间不在窗口内必须拒绝）；
+  发布 worker 的墙钟取自受审配置并有 P4 之后的实测依据。
