@@ -737,16 +737,21 @@ class FileExecutionLeaseStore:
     def replay(self) -> LeaseReplay:
         from ai_trading_system.platform.architecture.workflow_coordination import (
             _validate_checked_execution_transition,
+            replay_validation_scope,
         )
 
         events: list[LeaseEvent] = []
         issues: set[ControlIssue] = set()
         if self.events_root.exists():
-            for path in sorted(self.events_root.glob("*/*.json")):
-                try:
-                    events.append(parse_lease_event(json.loads(path.read_text(encoding="utf-8"))))
-                except (OSError, json.JSONDecodeError, ParallelControlError) as exc:
-                    issues.add(_issue("LEASE_EVENT_INVALID", (), path.as_posix(), str(exc)))
+            # DEVX-022 S3a: the scope memoizes equal large sub-structures for this call only.
+            with replay_validation_scope():
+                for path in sorted(self.events_root.glob("*/*.json")):
+                    try:
+                        events.append(
+                            parse_lease_event(json.loads(path.read_text(encoding="utf-8")))
+                        )
+                    except (OSError, json.JSONDecodeError, ParallelControlError) as exc:
+                        issues.add(_issue("LEASE_EVENT_INVALID", (), path.as_posix(), str(exc)))
         # Each local event was fully validated by parse_lease_event above in
         # this call. Check every causal/transition rule without validating the
         # same current tree twice. No validation survives this invocation and

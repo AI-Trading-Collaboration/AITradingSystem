@@ -7,6 +7,7 @@ keeps execution ownership until actual contained-process termination is known.
 
 from __future__ import annotations
 
+import contextvars
 import hashlib
 import json
 import os
@@ -47,6 +48,45 @@ if TYPE_CHECKING:
 # default; DEVX-018 v19. This is an engineering ceiling, not a model rule: the reader's 64 MiB hard cap
 # applies and larger evidence fails closed instead of being truncated or skipped.
 PUBLICATION_CAPTURE_BUDGET_BYTES = 64 * 1024 * 1024
+
+# DEVX-022 S3a: one lease-store replay validates the same ~16.5k-row hook-ready custody list once
+# per distinct content instead of once per event that carries a copy of it (18 copies in a
+# published lease, ~1.1 s each). The memo exists only between replay_validation_scope() enter and
+# exit, i.e. inside a single replay() call. Nothing survives the call and no on-disk "already
+# checked" marker exists: the next replay validates everything again, and a copy whose content
+# differs from the memoized one is validated in full.
+_REPLAY_MEMO: contextvars.ContextVar[dict[str, Any] | None] = contextvars.ContextVar(
+    "lease_replay_validation_memo", default=None,
+)
+
+
+def _memoized_canonical_sha256(slot: str, value: Any) -> str:
+    """Canonical digest; inside one replay() call an equal value is digested once per slot.
+
+    Pure function of the value. The slot holds only the last value seen in this call, so memory is
+    bounded by one copy and a value that differs in any way is digested in full.
+    """
+    from ai_trading_system.platform.architecture.parallel_control_kernel import _canonical_sha256
+
+    memo = _REPLAY_MEMO.get()
+    if memo is not None:
+        known = memo.get(slot)
+        if known is not None and known[0] == value:
+            known_sha: str = known[1]
+            return known_sha
+    digest: str = _canonical_sha256(value)
+    if memo is not None:
+        memo[slot] = (value, digest)
+    return digest
+
+
+@contextmanager
+def replay_validation_scope() -> Iterator[None]:
+    token = _REPLAY_MEMO.set({})
+    try:
+        yield
+    finally:
+        _REPLAY_MEMO.reset(token)
 
 _REQUEST_KEYS = {
     "schema_version",
@@ -435,6 +475,12 @@ def _validate_publication_profile_binding(
             or profile["publication_performed"] is not False
             or not isinstance(profile.get("captures"), list) or not profile["captures"]):
         _fail(code)
+    memo = _REPLAY_MEMO.get()
+    key = (profile["captures"], request["cwd"])
+    if memo is not None:
+        known = memo.get("profile_captures")
+        if known is not None and known[0] == key[0] and known[1] == key[1]:
+            return  # An equal list under the same cwd already passed these row checks in this call.
     paths: set[str] = set()
     for row in profile["captures"]:
         if (not isinstance(row, Mapping) or set(row) != {"path", "size_bytes", "sha256"}
@@ -445,6 +491,8 @@ def _validate_publication_profile_binding(
             _fail(code)
         _digest(row["sha256"])
         paths.add(row["path"].casefold())
+    if memo is not None:
+        memo["profile_captures"] = key
 
 
 def _validate_unchanged_publication_observation(execution: Mapping[str, Any]) -> None:
@@ -893,8 +941,6 @@ def _validate_publication_head_recovery_transition(
 
 def _validate_publication_git_launch(execution: Mapping[str, Any]) -> None:
     """Validate one immutable suspended launch; this is never resume authority."""
-    from ai_trading_system.platform.architecture.parallel_control_kernel import _canonical_sha256
-
     record, request = execution["git_launch"], execution["request"]
     capsule = execution.get("hook_capsule")
     if (not isinstance(record, Mapping) or set(record) != {
@@ -911,7 +957,7 @@ def _validate_publication_git_launch(execution: Mapping[str, Any]) -> None:
     plan = execution["checkout_plan"]["plan"]
     if (record["request_sha256"] != execution["request_sha256"]
             or record["checkout_plan_sha256"] != plan["plan_sha256"]
-            or record["ready_sha256"] != _canonical_sha256(ready)
+            or record["ready_sha256"] != _memoized_canonical_sha256("git_launch_ready", ready)
             or record["worker_process"] != capsule["worker_process"]):
         _fail("PUBLICATION_GIT_LAUNCH_BINDING")
     _process(record["process"])
@@ -984,7 +1030,9 @@ def _validate_publication_git_launch(execution: Mapping[str, Any]) -> None:
         "read_file_custodies": [*ready["inputs"]["read_file_custodies"], *files],
         "dispatch_allowed": False, "publication_allowed": False,
     }
-    if record["pre_resume_sha256"] != _canonical_sha256(reconstructed):
+    if record["pre_resume_sha256"] != _memoized_canonical_sha256(
+        "git_launch_pre_resume", reconstructed,
+    ):
         _fail("PUBLICATION_GIT_LAUNCH_PRE_RESUME")
 
 
@@ -1386,10 +1434,103 @@ def _validate_hook_created_objects(execution: Mapping[str, Any]) -> None:
         last_time = instant
 
 
-def _validate_hook_ready(execution: Mapping[str, Any]) -> None:
-    """Check the durable readset; original event transition supplies prior-hash authority."""
+def _validated_hook_ready_paths(files: list[Any], count: int) -> list[Path]:
+    """Row-level validation of the hook-ready custody list; the paths it names.
+
+    A pure function of (files, count). Inside one replay() call an equal list is validated once
+    (see _REPLAY_MEMO); any difference, however small, takes the full validation below.
+    """
     from ai_trading_system.platform.architecture.workflow_contract import portable_path
 
+    memo = _REPLAY_MEMO.get()
+    if memo is not None:
+        known = memo.get("hook_ready_rows")
+        if known is not None and known["count"] == count and known["files"] == files:
+            known_paths: list[Path] = known["paths"]
+            return known_paths
+    paths: list[Path] = []
+    namespace: dict[Path, tuple[str, list[int]]] = {}
+    # Per-call lexical interning only: every supplied native identity is still
+    # checked below. No filesystem observation or validation result is cached.
+    roots: dict[str, Path] = {}
+    directories: dict[tuple[str, str], Path] = {}
+    for index, row in enumerate(files):
+        if (not isinstance(row, Mapping) or set(row) != {
+            "schema_version", "root", "relative", "root_identity", "parent_identities", "identity",
+            "size_bytes", "sha256",
+        } or row["schema_version"] != "workflow_read_file_custody.v1"
+                or not isinstance(row["root"], str)
+                or not isinstance(row["relative"], str)
+                or portable_path(row["relative"]) != row["relative"]
+                or type(row["size_bytes"]) is not int
+                or not 0 <= row["size_bytes"] <= (
+                    PUBLICATION_CAPTURE_BUDGET_BYTES
+                    if index < count or count + 2 <= index < len(files) - 2
+                    else 16 * 1024**2
+                )):
+            _fail("PUBLICATION_HOOK_READY_FILE")
+        root_name = row["root"]
+        if root_name not in roots:
+            root = Path(root_name)
+            if not root.is_absolute() or ".." in root.parts:
+                _fail("PUBLICATION_HOOK_READY_FILE")
+            roots[root_name] = root
+        root = roots[root_name]
+        parts = Path(row["relative"]).parts
+        parents = row["parent_identities"]
+        if (not isinstance(parents, dict)
+                or set(parents) != {"/".join(parts[:n]) for n in range(1, len(parts))}):
+            _fail("PUBLICATION_HOOK_READY_FILE")
+        for pair in (row["root_identity"], row["identity"], *parents.values()):
+            if (not isinstance(pair, list) or len(pair) != 2
+                    or any(type(item) is not int or item < 0 for item in pair)):
+                _fail("PUBLICATION_HOOK_READY_FILE")
+        _digest(row["sha256"])
+        file_path = root / row["relative"]
+        observed_nodes = [
+            (root, "directory", row["root_identity"]),
+            (file_path, "file", row["identity"]),
+        ]
+        for name, pair in parents.items():
+            directory_key = (root_name, name)
+            if directory_key not in directories:
+                directories[directory_key] = root / name
+            observed_nodes.append((directories[directory_key], "directory", pair))
+        for node_path, kind, pair in observed_nodes:
+            if node_path in namespace and namespace[node_path] != (kind, pair):
+                _fail("PUBLICATION_HOOK_READY_NAMESPACE")
+            namespace[node_path] = (kind, pair)
+        paths.append(file_path)
+    if memo is not None:
+        memo["hook_ready_rows"] = {"count": count, "files": files, "paths": paths}
+    return paths
+
+
+def _hook_ready_distribution_digest(
+    distribution_paths: list[str], files: list[Any], count: int,
+) -> tuple[str, int]:
+    """Digest of the runtime file rows; memoized per replay call like the row validation."""
+    memo = _REPLAY_MEMO.get()
+    if memo is not None:
+        known = memo.get("hook_ready_digest")
+        if known is not None and known["count"] == count and known["files"] == files:
+            known_digest: tuple[str, int] = known["digest"]
+            return known_digest
+    digest, total = hashlib.sha256(), 0
+    for path, row in zip(distribution_paths, files[2:count], strict=True):
+        total += row["size_bytes"]
+        digest.update(json.dumps(
+            [path, row["size_bytes"], row["sha256"]], separators=(",", ":"),
+        ).encode())
+        digest.update(b"\n")
+    result = (digest.hexdigest(), total)
+    if memo is not None:
+        memo["hook_ready_digest"] = {"count": count, "files": files, "digest": result}
+    return result
+
+
+def _validate_hook_ready(execution: Mapping[str, Any]) -> None:
+    """Check the durable readset; original event transition supplies prior-hash authority."""
     capsule, request = execution["hook_capsule"], execution["request"]
     ready = capsule["ready"]
     if (len(capsule["objects"]) != 3 or not isinstance(ready, Mapping) or set(ready) != {
@@ -1450,59 +1591,7 @@ def _validate_hook_ready(execution: Mapping[str, Any]) -> None:
             or not isinstance(files, list) or len(files) != count + len(profile["captures"]) + 4):
         _fail("PUBLICATION_HOOK_READY_INVENTORY")
     _digest(code["sha256"])
-    paths: list[Path] = []
-    namespace: dict[Path, tuple[str, list[int]]] = {}
-    # Per-call lexical interning only: every supplied native identity is still
-    # checked below. No filesystem observation or validation result is cached.
-    roots: dict[str, Path] = {}
-    directories: dict[tuple[str, str], Path] = {}
-    for index, row in enumerate(files):
-        if (not isinstance(row, Mapping) or set(row) != {
-            "schema_version", "root", "relative", "root_identity", "parent_identities", "identity",
-            "size_bytes", "sha256",
-        } or row["schema_version"] != "workflow_read_file_custody.v1"
-                or not isinstance(row["root"], str)
-                or not isinstance(row["relative"], str)
-                or portable_path(row["relative"]) != row["relative"]
-                or type(row["size_bytes"]) is not int
-                or not 0 <= row["size_bytes"] <= (
-                    PUBLICATION_CAPTURE_BUDGET_BYTES
-                    if index < count or count + 2 <= index < len(files) - 2
-                    else 16 * 1024**2
-                )):
-            _fail("PUBLICATION_HOOK_READY_FILE")
-        root_name = row["root"]
-        if root_name not in roots:
-            root = Path(root_name)
-            if not root.is_absolute() or ".." in root.parts:
-                _fail("PUBLICATION_HOOK_READY_FILE")
-            roots[root_name] = root
-        root = roots[root_name]
-        parts = Path(row["relative"]).parts
-        parents = row["parent_identities"]
-        if (not isinstance(parents, dict)
-                or set(parents) != {"/".join(parts[:n]) for n in range(1, len(parts))}):
-            _fail("PUBLICATION_HOOK_READY_FILE")
-        for pair in (row["root_identity"], row["identity"], *parents.values()):
-            if (not isinstance(pair, list) or len(pair) != 2
-                    or any(type(item) is not int or item < 0 for item in pair)):
-                _fail("PUBLICATION_HOOK_READY_FILE")
-        _digest(row["sha256"])
-        file_path = root / row["relative"]
-        observed_nodes = [
-            (root, "directory", row["root_identity"]),
-            (file_path, "file", row["identity"]),
-        ]
-        for name, pair in parents.items():
-            directory_key = (root_name, name)
-            if directory_key not in directories:
-                directories[directory_key] = root / name
-            observed_nodes.append((directories[directory_key], "directory", pair))
-        for node_path, kind, pair in observed_nodes:
-            if node_path in namespace and namespace[node_path] != (kind, pair):
-                _fail("PUBLICATION_HOOK_READY_NAMESPACE")
-            namespace[node_path] = (kind, pair)
-        paths.append(file_path)
+    paths = _validated_hook_ready_paths(files, count)
     for index, key in enumerate(("executable", "engine")):
         if paths[index] != Path(runtime[key]) or files[index]["sha256"] != runtime[key + "_sha256"]:
             _fail("PUBLICATION_HOOK_READY_RUNTIME")
@@ -1515,14 +1604,8 @@ def _validate_hook_ready(execution: Mapping[str, Any]) -> None:
     if (distribution_paths != sorted(distribution_paths)
             or len({path.casefold() for path in distribution_paths}) != len(distribution_paths)):
         _fail("PUBLICATION_HOOK_READY_RUNTIME")
-    digest, total = hashlib.sha256(), 0
-    for path, row in zip(distribution_paths, files[2:count], strict=True):
-        total += row["size_bytes"]
-        digest.update(json.dumps(
-            [path, row["size_bytes"], row["sha256"]], separators=(",", ":"),
-        ).encode())
-        digest.update(b"\n")
-    if digest.hexdigest() != code["sha256"] or total != code["size_bytes"]:
+    digest_hex, total = _hook_ready_distribution_digest(distribution_paths, files, count)
+    if digest_hex != code["sha256"] or total != code["size_bytes"]:
         _fail("PUBLICATION_HOOK_READY_RUNTIME")
     root_pair = execution["checkout_plan"]["plan"]["topology"]["candidate_checkout"]["root"][
         "identity"

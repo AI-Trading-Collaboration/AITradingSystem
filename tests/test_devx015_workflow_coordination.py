@@ -9002,6 +9002,104 @@ def test_git_installation_root_accepts_every_git_for_windows_launcher(launcher) 
     root = Path("C:/Program Files/Git")
     assert _git_installation_root(root / launcher) == root
 
+def _custody_row(index: int, *, size: int = 10) -> dict:
+    return {
+        "schema_version": "workflow_read_file_custody.v1", "root": "C:/replay-memo",
+        "relative": f"pkg/module_{index}.py", "root_identity": [1, 2],
+        "parent_identities": {"pkg": [3, 4]}, "identity": [5, index], "size_bytes": size,
+        "sha256": "a" * 64,
+    }
+
+
+def test_replay_memo_validates_an_equal_custody_list_once_per_call_only(monkeypatch) -> None:
+    """DEVX-022 S3a: equal large lists are validated once inside a replay scope, never across it."""
+    from ai_trading_system.platform.architecture import workflow_contract
+    from ai_trading_system.platform.architecture.workflow_coordination import (
+        _REPLAY_MEMO,
+        _validated_hook_ready_paths,
+        replay_validation_scope,
+    )
+
+    calls: list[str] = []
+    real = workflow_contract.portable_path
+
+    def counting(value):
+        calls.append(value)
+        return real(value)
+
+    monkeypatch.setattr(workflow_contract, "portable_path", counting)
+    rows = [_custody_row(index) for index in range(5)]
+    outside = _validated_hook_ready_paths(rows, 5)
+    assert len(calls) == 5 and _REPLAY_MEMO.get() is None  # No scope: every call validates.
+    _validated_hook_ready_paths(rows, 5)
+    assert len(calls) == 10
+    calls.clear()
+    with replay_validation_scope():
+        first = _validated_hook_ready_paths(rows, 5)
+        copy = json.loads(json.dumps(rows))  # Equal but distinct, like a later event's copy.
+        second = _validated_hook_ready_paths(copy, 5)
+        assert len(calls) == 5 and second == first == outside
+        tampered = json.loads(json.dumps(rows))
+        tampered[3]["size_bytes"] = -1  # Any difference takes the full validation and is rejected.
+        with pytest.raises(ParallelControlError, match="PUBLICATION_HOOK_READY_FILE"):
+            _validated_hook_ready_paths(tampered, 5)
+        assert len(calls) == 9  # Rows 0-3 were re-checked in full; row 3 is the one that failed.
+        # A different count changes the budget rule, so it is not served from the memo either.
+        calls.clear()
+        _validated_hook_ready_paths(rows, 4)
+        assert len(calls) == 5
+    assert _REPLAY_MEMO.get() is None
+    calls.clear()
+    _validated_hook_ready_paths(rows, 5)
+    assert len(calls) == 5  # Nothing survived the scope.
+
+
+def test_replay_memo_digest_slot_serves_equal_values_inside_a_scope_only(monkeypatch) -> None:
+    from ai_trading_system.platform.architecture import parallel_control_kernel
+    from ai_trading_system.platform.architecture.workflow_coordination import (
+        _memoized_canonical_sha256,
+        replay_validation_scope,
+    )
+
+    digested: list[object] = []
+    real = parallel_control_kernel._canonical_sha256
+
+    def counting(value):
+        digested.append(value)
+        return real(value)
+
+    monkeypatch.setattr(parallel_control_kernel, "_canonical_sha256", counting)
+    value = {"rows": [_custody_row(index) for index in range(3)]}
+    expected = real(value)
+    assert _memoized_canonical_sha256("slot", value) == expected
+    assert _memoized_canonical_sha256("slot", value) == expected and len(digested) == 2
+    digested.clear()
+    with replay_validation_scope():
+        assert _memoized_canonical_sha256("slot", value) == expected
+        assert _memoized_canonical_sha256("slot", json.loads(json.dumps(value))) == expected
+        assert len(digested) == 1
+        changed = json.loads(json.dumps(value))
+        changed["rows"][1]["size_bytes"] += 1
+        assert _memoized_canonical_sha256("slot", changed) != expected
+        assert len(digested) == 2
+    assert _memoized_canonical_sha256("slot", value) == expected and len(digested) == 3
+
+
+def test_lease_store_replay_scopes_its_memo_to_the_call(tmp_path) -> None:
+    """The store replay enters and leaves the scope; an unreadable event is reported."""
+    from ai_trading_system.platform.architecture.workflow_coordination import _REPLAY_MEMO
+
+    store = FileExecutionLeaseStore(
+        tmp_path / "leases", policy=load_parallel_control_policy(POLICY_PATH),
+    )
+    (store.events_root / "lease-x").mkdir(parents=True)
+    (store.events_root / "lease-x" / "lease-event-1.json").write_text("{not json", encoding="utf-8")
+    first = store.replay()
+    assert first.status == "FAIL" and _REPLAY_MEMO.get() is None
+    second = store.replay()
+    assert second.issues == first.issues and _REPLAY_MEMO.get() is None
+
+
 def _clean_process_runtime_identity(environment=None, **kwargs):
     """Loaded-source custody measured in a fresh interpreter (tests only)."""
     if kwargs:
