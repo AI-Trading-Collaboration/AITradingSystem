@@ -815,3 +815,38 @@ git 对相同值只创建**空的** `ORIG_HEAD.lock`，而校验器要求其内�
 - **临时前置条件（须 owner 确认）**：`local-publish` 之前一次性删除 `.git/ORIG_HEAD`（其值 `cbc31cdff…` 即当前 main，已记录），使仓库状态与已演练的 fixture 一致。
   已在真实布局副本上演练该情形的完整钩子序列，与校验器期望一致。登记在 DEVX-021 第 4 节（原因、行为影响、风险、验证覆盖、退出条件）。
 - 流程教训补充：「真实仓库状态」类缺陷无法靠 fixture 发现；发布前应在真实 `.git` 副本上演练 `git merge --ff-only` 的钩子序列（锁文件内容与 ref 更新序列）。
+
+
+## 2026-10-04 v26：基线 P1-C 发布完成
+
+### 结果
+- v26 Full（候选 `1e46e6ac7` = v25 的代码 + 文档/登记提交，新事务 `gov-007-p1c-devx015-baseline-publication-20261004-v26`，parent 为 v20 失败摘要）：
+  **14,706 通过 / 4 跳过 / 0 失败，墙钟 12,911 秒（3 小时 35 分）**；前置 tier 约 1 小时（本次 named-parent 阶段 1,087 s，v25 为 109 s，疑为同时间创建的 1.2 GB `.git` 副本被杀毒软件扫描所致）。
+- 发布：`LOCAL_MAIN_FF_PRE` → 一次性删除 `.git/ORIG_HEAD`（owner 2026-10-04 批准，值 `cbc31cdff…`，记录于 `claude_v26_orig_head_removal.txt`）→ `local-publish`
+  → 真实 ff-only 合并成功（`Updating cbc31cdff..1e46e6ac7 Fast-forward`，钩子序列在真实仓库上通过，印证 DEVX-021 的根因判断）→ 抓取远端（`origin/main` 仍为 `cbc31cdff`，是候选祖先）
+  → `REMOTE_PUSH_PRE` → CLOSEOUT 预检（`--stage CLOSEOUT --remote-action`，expected base 为新的本地 main）通过 → **普通非强制推送 `cbc31cdff..1e46e6ac7 main -> main`**
+  → 再次抓取并以 `git ls-remote` 核对：**本地 main = origin/main = 候选 = `1e46e6ac767b309a880c41dbb2796981f8a61a7e`** → `CLEANUP_PRE` → `release --outcome completed`（RELEASED/COMPLETED）。
+  未创建 PR，未 force-push。主检出此后位于新分支 `claude/gov007-post-baseline-followups`（与 main 相同）。
+
+### 发布阶段的两个新发现（均登记到 DEVX-021）
+1. **`local-publish` 的 worker 墙钟被写死 3600 秒终止**：真实发布各阶段（租约库重放、~22 MB 事件、每个钩子约 3–5 分钟）总耗时超过 60 分钟，
+   Job 在 11:36 合并完成之后、`post-merge`/`AUTO_MERGE` 钩子记录之前被终止（返回码 1067），事务进入 `RECOVERY_REQUIRED`。这是 P4（重放去重/外置 custody 列表）要解决的成本问题的直接后果。
+2. 恢复路径按设计工作：`local-publication-recover` 检测到 `refs/heads/main == candidate` 后走 `adopt_published_attempt(recovery=True)`，**但**先因终止的 git 进程遗留的两个空锁文件
+   （`.git/AUTO_MERGE.lock`、`.git/packed-refs.lock`，均 0 字节，创建于 11:38:36，无存活进程）以 `WORKFLOW_MERGE_PUBLICATION_CHECKOUT_PLAN_STATE_EXISTS: packed-refs.lock` fail closed。
+  我审计后（无存活 git/python 进程、两文件均空、时间与终止时刻吻合）记录并删除了这两个文件，再次恢复得到 `LOCAL_PUBLISHED`（`recovered: true`）。
+  **须 owner 复核**：这是超出已批准的 ORIG_HEAD 删除范围的第二个仓库状态清理（证据 `claude_v26_stale_locks_removal.txt`）。
+- 结论：持久修复排在 DEVX-021（ORIG_HEAD 基线）与新增的「发布 worker 超时/残留锁」项（并入 DEVX-021 范围）；P4 同时降低发布耗时。
+
+### 三次 Full 对照（同一基线内容）
+| 运行 | 候选 | 通过/失败 | 墙钟 |
+|---|---|---|---|
+| v21（K=4，O3 前） | `ee20d0647` | 14,683/0（PASS，发布失败于入口捕获） | 7 小时 22 分 |
+| v24（K=8，O3） | `9d398798b` | 14,703/2 | 3 小时 46 分 |
+| v25（K=8，O3 + 两处修复） | `bbd2077d7` | 14,706/0（发布被 ORIG_HEAD 拒绝） | 3 小时 28 分 |
+| v26（同代码） | `1e46e6ac7` | 14,706/0（已发布） | 3 小时 35 分 |
+
+### 临时工作区清理（生命周期）
+已移除（`git worktree remove`）：`D:/Work/devx018-pilot-v15`（15 GB，HEAD `3d9379a56` 已是 main 祖先）、`D:/Work/devx020-prof`、`D:/Work/devx020-prof2`；
+保留的唯一证据：`outputs/architecture/integration_revalidation/devx015-v389/retained_pilot_v15/`（pilot 唯一的 e2e JSON、计时钩子 diff、prof2 未提交修复 diff——后者已由 `c61ba02a3` 取代）。
+后台按显式白名单删除我创建的 pytest basetemp/复现目录（`devx018-*`、`devx020-*`，不含 `devx020-k`），结果见 `claude_v26_tmp_cleanup.log`；保留全部 `.log`/`.jsonl` 证据与
+`D:/Work/devx020-k`（K 实验原始数据，DEVX-020 关闭前保留）。`D:/Work/devx015-*` 与 5 个 HKCU `AITS-DEVX015-Test-*` 根未动。
