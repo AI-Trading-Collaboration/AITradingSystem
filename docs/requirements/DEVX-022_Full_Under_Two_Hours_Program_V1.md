@@ -163,3 +163,13 @@ S6 不在 owner 2026-10-04 批准的 S1–S5 序列内，是 M1 profile 暴露�
   回归：`validation_session` 相关 73 个测试文件的非重型层 513 通过 / 126 失败，**126 个失败全部在 `test_arch_004_refactor_policy.py` 的哈希权威家族**（源文件哈希变化，需要候选时的兼容性授权重封；与 M1 候选前的同类现象一致），其余文件全部通过。
 - 残余风险（再次披露）：一次指纹计算内（毫秒~秒）若某祖先目录被换成链接，该次计算内后续路径不再重新观察；换链接会改变 `resolve` 后的路径字符串，使前/确认/后三次指纹之一不一致，退化为重新校验。
 - 下一步：重封候选 → M2 正式 Full（不发布，带计数器遥测）实测总工作量与墙钟；按剩余差距决定 S3b/S4/S5/DEVX-021。
+
+### 8.7 兼容性授权链的处理（须披露）
+- `validation_session.py` 与 `tests/test_artifact_validation_session.py` 是兼容性基线里**按历史哈希固定**的源文件；它们的实时内容变化后，`test_arch_004_refactor_policy` 等哈希权威家族（M2 候选重封后仍有 118 个失败）要求变化的路径由最新授权段拥有。
+- 处理方式：S6 的新测试放进新文件 `tests/test_devx022_fingerprint_computation_memo.py`（未被固定，因此原测试文件**不修改**，已从 S6 提交里还原）；只有 `validation_session.py` 一个路径需要授权，
+  已加入最新的 `phase_devx_015_workflow_contract_v3` 段的受审来源列表（`compatibility_authority.py`），并同步独立钉死的预期集合 `DEVX_015_WORKFLOW_ADDED_SOURCE_PATHS`（`tests/test_devx_006c_compatibility_authority.py`）。
+  兼容性授权链重建后，`test_arch_004_refactor_policy` / `test_devx_006c_compatibility_authority` / `test_trading2452_architecture_contract` / `test_devx_006d_report_catalog_flow_authority` 共 596 个测试全部通过，片段数仍为 28。
+- 取舍与理由：另一种做法是**追加一个新的 DEVX-022 授权段**（更符合「只追加」的表述）。但这会让 arch_004 策略测试里约 100 处 `LATEST_COMPATIBILITY_SECTION` 的「最新段」假设整体重新参数化（以及 006c/2452 里约 25 处「最后一段 == v3」的断言），
+  是一次独立的、需要完整回归的治理改动。本次选择在既有的、当前哈希会随每个候选重新封存的最新段里扩展一个受审路径，范围最小、可逆、并有测试钉死。
+  如果 owner 更希望使用专用的新授权段，这是一个独立的后续任务，不阻塞 S6 的收益。
+

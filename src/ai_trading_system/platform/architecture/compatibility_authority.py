@@ -3651,6 +3651,10 @@ def _devx_015_workflow_contract_section(
             "src/ai_trading_system/platform/architecture/workflow_coordination.py",
             "src/ai_trading_system/platform/architecture/workflow_execution.py",
             "src/ai_trading_system/platform/architecture/workflow_integration.py",
+            # DEVX-022 S6: a hash-pinned historical source changed by the validation-throughput
+            # program; current-hash ownership is extended here (reviewed addition, see the
+            # pinned set in tests/test_devx_006c_compatibility_authority.py).
+            "src/ai_trading_system/platform/artifacts/validation_session.py",
             "src/ai_trading_system/platform/validation_trigger_provenance.py",
             "tests/test_arch_004g_deprecation.py",
             "tests/test_arch_005_checkpoint_capability.py",
