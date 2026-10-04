@@ -38,3 +38,46 @@
 
 ## 5. 进展记录
 - 2026-10-04：登记任务与本计划；owner 批准顺序；开始 S1。
+
+
+## 6. S1 取证结果与已落地的两项低风险优化（2026-10-04）
+
+### 6.1 方法
+- 在 `.venv/Lib/site-packages/sitecustomize.py` 放了一个**临时、仅在环境变量 `AITS_TRACE_DIR`/`AITS_CPROFILE_DIR` 存在时才生效**的探针，记录每次选定脚本的 CLI 子进程（含 `-I` 隔离的 profile 检查器）的墙钟与 CPU 时间，
+  可选再写 cProfile；探针不进仓库，S1 结束后移除并验证。进程内部分用串行 `-m cProfile -m pytest -p no:xdist` 的诊断运行（规程允许的、已注明的串行诊断例外）。
+- 遥测只用性能计数器。教训：WMI 进程轮询采样器（0.7 秒间隔）使同一节点从 705 秒变成 1,806 秒，不能用。
+- 全部在安静主机上，一次一个测试；节点：`replays_candidate_publish[normal]`（中型）、`completed_admission_full_entry[LANE]`、`source_generation_and_commit_crash_recovers`、`ff_only_and_independent_recovery`（大节点）。
+
+### 6.2 发现 1（已修复，O3-d）：`bounded_regular_bytes` 每次读取都按 256 MiB 预算分配缓冲区
+- Full profile 检查器（`inspect_full_publication_profile`，`-I` 子进程，每个发布类节点跑 ≥2 次）捕获 1,326 个文件并整体复核一遍（共 ~2,650 次 `bounded_regular_bytes`），
+  调用方预算是 256 MiB；`reader.read(budget + 1)` 先分配整个预算：每次约 33 毫秒，哪怕文件只有几 KB。**单次检查器 155 秒里有 87 秒是这个。**围栏进程内的 `_recheck_full_profile`
+  也一样（2 次，各约 46 秒）。整节点 655 秒调用里约 264 秒（40%）是这个分配。
+- 修复（commit `828f756bc`）：读取量改为 `min(budget, 已冻结文件大小) + 1`（对象 deny-write 且大小刚核对过），预算检查与「读到的长度必须等于冻结大小」的新检查保留语义。
+  实测：检查器 155/144 秒 → 62/60 秒；`replays_candidate[normal]` 调用 655 秒 → 368 秒（**−44%**）；小文件 256 MiB 预算读取 33 毫秒 → 0.25 毫秒。
+- 同一修复让所有走检查器/重新核对的节点受益，不限于单一节点族（这是 K 实验里没发现的，因为那里测的是平均节点而非单次调用的函数级剖面）。
+
+### 6.3 发现 2（已修复，S2/L0）：起跑限速对每一次重型起跑生效
+`heavy_start_interval_seconds` 在仍有轻量单元时限制每一次重型起跑，节点变短后把重型吞吐封顶在每小时 ~30 个单元；模型显示不改它，工作量降到 27 节点小时墙钟仍约 2.8 小时。
+改为只对前 K 个起跑限速（commit `db3b5f6cb`，清单 v6），新测试在旧调度器上失败、新调度器上通过。
+
+### 6.4 发现 3：大发布节点（ff_only 等）由租约库重放主导，真实租约库已累积到 687 MB
+- 带 O3-d 修复、安静主机的 `ff_only`：调用 1,750 秒（v26 负载下约 4,000 秒）。其中 8 次 `local-publication-hook` 子进程共 611 秒墙钟（每次约 76 秒、CPU 81 秒，几乎纯 CPU）、
+  `local-publication-worker` 1,054 秒、检查器 3 次共 193 秒。**钩子与 worker 的时间是租约库重放**：保留的 396 MB/45 事件租约库单次重放 13.0 秒。
+- cProfile：重放的 88% 在 `parse_lease_event → validate_execution → _validate_hook_capsule → _validate_hook_ready`（18 次，20.5 秒）：每个事件携带同一份约 16.5k 行的 `read_file_custodies`，
+  逐行做 pathlib 校验（约 120 万次 `Path` 解析）、逐行 `json.dumps`，同一内容在一个租约里被重复校验 18 次。JSON 解码只占 1.6 秒。
+- **真实主检出的租约库**：817 个租约、5,382 个事件、687 MB（v25 与 v26 两个租约各约 300 MB），`replay()` 每次读取并校验**全部**租约：22–24 秒/次，
+  这就是 v26 `local-publish` 超过 3600 秒的原因，而且会随每次发布累积变慢（历史租约不会被排除）。
+- 修复 S3a（commit `06f5c415d`）：`FileExecutionLeaseStore.replay()` 在 `replay_validation_scope()` 内运行，只在这一次调用内按深度相等对四类大子结构做一次校验
+  （hook-ready 行校验及分发摘要、git-launch 的两个 canonical 摘要、profile 捕获行检查）；调用结束后一切失效，没有磁盘标记、没有跨调用缓存，内容有任何差异则完整校验。
+  与既有设计声明（「No validation survives this invocation」）一致，并有测试证明作用域只在单次调用内、被篡改的拷贝仍被拒绝。
+  实测：396 MB 租约库重放 13.0 → **5.5 秒（−58%）**。剩余：JSON 解码 2.9 秒（体积决定）、事件摘要 0.9 秒、其余。
+
+### 6.5 其余热点（未修复，供 S3b/S4/S5 取舍）
+- `check_full_readiness`（每个中型节点 4–5 次，每次安静主机约 38 秒、纯 CPU）：`build_architecture_fitness` 对约 1,230 个源文件做 AST 解析与访问（解析约 16 秒 + 访问约 12 秒）、规范任务库校验约 10 秒（400 次 `safe_dump`）、Atlas 绑定约 7 秒。
+- 每个发布类节点的 fixture 搭建约 87 秒（`_seed_source_generator_architecture` 约 77 秒含基线抓取与 `build_architecture_fitness`、`_seed_readiness_atlas_inputs` 约 22 秒）。
+- 内层 Full（真实 `run_validation_tier full`，安静主机约 190 秒；其中 pytest 仅 109 秒，主要是 16 个 worker 启动）。
+- 重放仍是 JSON 体积主导：把 16.5k 行列表外置为内容寻址的旁文件（只存摘要引用，读取时一次性解析并校验）可再降一个数量级，属 S3b，涉及租约事件存储格式（事件 ID 语义不变），风险更高，待决定。
+
+### 6.6 对计划的影响
+- 一个已经提交的低风险优化（O3-d）就让中型发布节点 −37~44%；S3a 又让大节点重放 −58%。预计 Full 工作量由 43 节点小时降到约 33–35 节点小时（待 S2 之后的正式 Full 实测）。
+- 下一步：对被改模块跑非重型层测试 + 重型样本，然后做 S2 之后的第一次正式 Full（带计数器型遥测）以得到真实 profile，再决定 S3b / S4 / S5 的取舍。

@@ -20,11 +20,13 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: owner 2026-10-04 批准 DEVX-020 第 9 节评估的顺序：S1
-    取证（4 个代表节点函数级剖面 + 计数器型遥测）→ S2 L0 起跑限速只管爬坡并升清单 v6 → S3 P4 租约库重放成本 + DEVX-021（ORIG_HEAD
-    基线、local-publish worker 墙钟、残留锁）→ S4 复合组拆分与变体共享不可变前缀 → S5 发布阶段只读检查事务内共享/轻量审计/worker
-    数。起点 v26：墙钟 3.59 小时、43.0 节点小时、K=8。每步一次正式 Full（不发布，事务按失败释放）验证，最终候选的 Full 用于发布；S3
-    修复之前不发布（local-publish 写死 3600 秒会再次触发恢复）。当前：S1 取证开始。详见 docs/requirements/DEVX-022_Full_Under_Two_Hours_Program_V1.md。
+  unstructured_legacy_blocker_or_next_step: S1 取证完成并已落地三项优化（均有测试，commits 828f756bc、db3b5f6cb、06f5c415d）：O3-d（bounded_regular_bytes
+    按冻结大小读取而非分配 256 MiB 预算，检查器 155→62 s，中型发布节点调用 655→368 s，-44%）、S2/L0（起跑限速只管前 K 个，清单
+    v6）、S3a（租约库重放内一次调用范围的深度相等 memo，396 MB 库 13.0→5.5 s，-58%；无跨调用缓存）。发现真实主检出租约库已累积
+    817 个租约/687 MB，replay 22–24 s/次，是 v26 local-publish 超时的原因。下一步：被改模块非重型层测试 + 重型样本
+    → 带计数器型遥测的第一次正式 Full（不发布）取真实 profile → 决定 S3b（事件外置，改存储格式）、S4（复合组拆分与变体共享，须覆盖等价性论证）、S5（readiness
+    重复评估/AST、worker 数）。临时探针 sitecustomize 在 S1 结束后移除。详见 docs/requirements/DEVX-022_Full_Under_Two_Hours_Program_V1.md
+    第 6 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
@@ -66,6 +68,36 @@ events:
   - change:gov-007-devx022-register-20261004-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-9c8a0a45198678e4845aae759db8ec37
+- schema_version: task_event.v1
+  task_id: DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-04T09:25:44Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx022-s1-task-20261004-v1
+  lane_id: null
+  base_commit: 1e46e6ac767b309a880c41dbb2796981f8a61a7e
+  previous_state_event_id: task-event-9c8a0a45198678e4845aae759db8ec37
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: S1 取证完成并已落地三项优化（均有测试，commits 828f756bc、db3b5f6cb、06f5c415d）：O3-d（bounded_regular_bytes
+      按冻结大小读取而非分配 256 MiB 预算，检查器 155→62 s，中型发布节点调用 655→368 s，-44%）、S2/L0（起跑限速只管前 K
+      个，清单 v6）、S3a（租约库重放内一次调用范围的深度相等 memo，396 MB 库 13.0→5.5 s，-58%；无跨调用缓存）。发现真实主检出租约库已累积
+      817 个租约/687 MB，replay 22–24 s/次，是 v26 local-publish 超时的原因。下一步：被改模块非重型层测试 + 重型样本
+      → 带计数器型遥测的第一次正式 Full（不发布）取真实 profile → 决定 S3b（事件外置，改存储格式）、S4（复合组拆分与变体共享，须覆盖等价性论证）、S5（readiness
+      重复评估/AST、worker 数）。临时探针 sitecustomize 在 S1 结束后移除。详见 docs/requirements/DEVX-022_Full_Under_Two_Hours_Program_V1.md
+      第 6 节。
+    acceptance_criteria: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约
+      20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实 .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5
+      最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
+    notes: 2026-10-04：S1 取证结果、O3-d、S2、S3a 写入 DEVX-022 第 6 节。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx022-s1-task-20261004-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ff8565dd9e1c3f8407654ff087fe3897
 projection:
   legacy_first_eight_cells:
   - DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
@@ -74,18 +106,20 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - owner 2026-10-04 批准 DEVX-020 第 9 节评估的顺序：S1 取证（4 个代表节点函数级剖面 + 计数器型遥测）→ S2 L0 起跑限速只管爬坡并升清单
-    v6 → S3 P4 租约库重放成本 + DEVX-021（ORIG_HEAD 基线、local-publish worker 墙钟、残留锁）→ S4 复合组拆分与变体共享不可变前缀
-    → S5 发布阶段只读检查事务内共享/轻量审计/worker 数。起点 v26：墙钟 3.59 小时、43.0 节点小时、K=8。每步一次正式 Full（不发布，事务按失败释放）验证，最终候选的
-    Full 用于发布；S3 修复之前不发布（local-publish 写死 3600 秒会再次触发恢复）。当前：S1 取证开始。详见 docs/requirements/DEVX-022_Full_Under_Two_Hours_Program_V1.md。
+  - S1 取证完成并已落地三项优化（均有测试，commits 828f756bc、db3b5f6cb、06f5c415d）：O3-d（bounded_regular_bytes
+    按冻结大小读取而非分配 256 MiB 预算，检查器 155→62 s，中型发布节点调用 655→368 s，-44%）、S2/L0（起跑限速只管前 K 个，清单
+    v6）、S3a（租约库重放内一次调用范围的深度相等 memo，396 MB 库 13.0→5.5 s，-58%；无跨调用缓存）。发现真实主检出租约库已累积
+    817 个租约/687 MB，replay 22–24 s/次，是 v26 local-publish 超时的原因。下一步：被改模块非重型层测试 + 重型样本
+    → 带计数器型遥测的第一次正式 Full（不发布）取真实 profile → 决定 S3b（事件外置，改存储格式）、S4（复合组拆分与变体共享，须覆盖等价性论证）、S5（readiness
+    重复评估/AST、worker 数）。临时探针 sitecustomize 在 S1 结束后移除。详见 docs/requirements/DEVX-022_Full_Under_Two_Hours_Program_V1.md
+    第 6 节。
   - S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
     .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5 最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
-  - production_effect=none；broker_action=none；agent_harness=claude_code；遥测只用性能计数器（WMI
-    进程轮询曾使节点慢 2.6 倍）；临时工作区按生命周期规则清理。
+  - 2026-10-04：S1 取证结果、O3-d、S2、S3a 写入 DEVX-022 第 6 节。
   docs_links:
   - docs/requirements/DEVX-022_Full_Under_Two_Hours_Program_V1.md
   terminal: false
-  canonical_row_sha256: 0c7c5ce0a5f59618f332782fa712f4dd7db680173ac91689d53af204c9bcb76d
-last_event_id: task-event-9c8a0a45198678e4845aae759db8ec37
+  canonical_row_sha256: 712424434fa00e9481df91357145a7600cb787231a68f381ff7231f72a1bef0e
+last_event_id: task-event-ff8565dd9e1c3f8407654ff087fe3897
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 59b865667323776e259346fc166ab16de0211877a0375fe7ab8e2c0a2b1f77a7
+fragment_checksum: aff172007627ec69037699217a45c7d0b496c993a4a825ce5ec882230dec3c10
