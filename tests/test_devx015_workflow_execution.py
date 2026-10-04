@@ -844,6 +844,54 @@ def test_custody_kernel_is_rebound_per_read_while_the_library_factory_is_substit
     assert calls == [] and contract._custody_kernel() is shared
 
 
+def test_bounded_read_requests_only_the_frozen_size_not_the_caller_budget(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    """DEVX-022 S1: read(budget + 1) allocated the whole budget up front (256 MiB per capture).
+
+    The read now asks for min(budget, frozen size) + 1 bytes, still enforces the budget before and
+    after the read, and treats any length other than the frozen size as a moved object.
+    """
+    from ai_trading_system.platform.architecture.workflow_contract import (
+        WorkflowContractError,
+        bounded_regular_bytes,
+    )
+
+    requested: list[int] = []
+    real_fdopen = os.fdopen
+
+    class Spy:
+        def __init__(self, stream: Any) -> None:
+            self.stream = stream
+
+        def __enter__(self) -> Spy:
+            self.stream.__enter__()
+            return self
+
+        def __exit__(self, *exc: Any) -> Any:
+            return self.stream.__exit__(*exc)
+
+        def fileno(self) -> int:
+            return self.stream.fileno()
+
+        def read(self, size: int = -1) -> bytes:
+            requested.append(size)
+            return self.stream.read(size)
+
+    monkeypatch.setattr(os, "fdopen", lambda *args, **kwargs: Spy(real_fdopen(*args, **kwargs)))
+    small = tmp_path / "small.bin"
+    small.write_bytes(b"x" * 6000)
+    empty = tmp_path / "empty.bin"
+    empty.write_bytes(b"")
+    assert bounded_regular_bytes(small, budget=1 << 30) == b"x" * 6000
+    assert bounded_regular_bytes(small, budget=6000) == b"x" * 6000
+    assert bounded_regular_bytes(empty, budget=1 << 30) == b""
+    assert requested == [6001, 6001, 1]
+    with pytest.raises(WorkflowContractError, match="ARTIFACT_BUDGET"):
+        bounded_regular_bytes(small, budget=5999)
+    assert requested == [6001, 6001, 1]  # Rejected on the verified size, before any read.
+
+
 def _small_runtime_files(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> dict[Path, bytes]:
     """A few real files standing in for the distribution inventory (RECORD enumeration is fixed)."""
     from ai_trading_system.platform.architecture import workflow_execution as execution

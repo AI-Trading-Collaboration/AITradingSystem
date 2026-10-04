@@ -230,9 +230,16 @@ def bounded_regular_bytes(
                         frozen.st_nlink != expected_link_count
                     ):
                         raise WorkflowContractError("HANDLE_IDENTITY_CHANGED")
-                    content = reader.read(budget + 1)
+                    # DEVX-022 S1: BufferedReader.read(n) allocates n bytes up front, so passing
+                    # the caller's budget (256 MiB for Full profile captures) cost about 33 ms per
+                    # file even for a 6 KB file. The frozen object is deny-write and its size was
+                    # just verified: request that size plus one probe byte. The budget is still
+                    # enforced above and below, and any other length means the object moved.
+                    content = reader.read(min(budget, frozen.st_size) + 1)
                     if len(content) > budget:
                         raise WorkflowContractError("ARTIFACT_BUDGET")
+                    if len(content) != frozen.st_size:
+                        raise WorkflowContractError("HANDLE_IDENTITY_CHANGED")
                     return content
             finally:
                 if read_owned and not api.CloseHandle(read_handle):
