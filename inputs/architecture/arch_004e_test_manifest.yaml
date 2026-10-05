@@ -8518,7 +8518,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: cfd63b30282f4d6bcdc7d094652c5270674623bcfa829fd5c5f3674c8850935b
+  sha256: 9f6e7bbbeb7a9d4dd29370175ef86a35c66dfb28254e96ce077142f2495fb2c2
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
