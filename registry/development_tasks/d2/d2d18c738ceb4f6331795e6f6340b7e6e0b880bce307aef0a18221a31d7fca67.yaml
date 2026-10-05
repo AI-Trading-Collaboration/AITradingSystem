@@ -14,19 +14,18 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Claude Code coordinator
+  next_owner: owner (decision needed)
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: M2c 之后的剖析（DEVX-022 第 10 节）：重型节点 CPU 的
-    61% 是内层 Full 的 16 个 worker 各约 24 CPU 秒的启动校验（只跑 74 个桩测试）。owner 选择「夹具内层 Full 改 4
-    个 worker」，但读代码发现 -n 16/expected_worker_count=16/expected_collections=16 写在受保护的发布检查器里（正式
-    Full 合同），改它等于放宽发布门槛并放大「夹具通过、真实仓库失败」风险，已按承诺停下并向 owner 报告，暂不实施，需要 owner 显式批准才可另行立项。改走不动合同的
-    S7：S7a worker 清单校验去 pathlib 往返（identity 逐字节相同，目标 4.0 s->2.5 s）；S7b 任务登记字节规范性比对按字节
-    SHA-256 的纯函数记忆（文件每次仍读取解析）；S4 变体共享前缀评估中（变体改写共享状态、夹具绑定绝对路径，需逐家族论证）。教训：含内层 Full 的节点不能用父进程
-    cProfile 估算（1,205 s vs 实测 326 s），用进程 CPU 计数器。S6 在最新授权段的路径扩展与该内层 worker 数搁置均需向
-    owner 披露。
+  unstructured_legacy_blocker_or_next_step: 2026-10-05 收口（DEVX-022 第 11 节）：M2c 2 小时
+    13 分（v26 为 3 小时 35 分，累计 -38%），距 2 小时差约 13 分钟。S6 已落地（最新授权段扩一个受审路径）；S7b 已提交（登记字节规范性比对按内容摘要记忆，同进程
+    3 次校验 21.6->11.5 s，尚未经正式 Full 验证）；S7a 实测仅 -9% 已撤回；内层 Full 改 4 个 worker 搁置（改的是受保护发布检查器里的正式
+    Full 合同）。named-DQ/composer 剖析与调度顺序模型：种子顺序最多约 5 分钟，租约库 689 MB 的重放（S3b/P4 同根因）是更大的杠杆但高风险。待
+    owner 决策：(1) 是否批准 S3b（租约事件存储格式变更，需真实 .git/租约库演练与一次真实发布验证）；(2) 是否批准修改正式 Full 的
+    worker 合同策略；(3) 若都不做则以 S6+S7b 候选为终版（预计约 2 小时 10 分）转入 DEVX-021 与发布；(4) 种子刷新是否随发布候选做。须向
+    owner 披露：S6 在最新授权段扩路径而非新增授权段、同候选重试的 parent 变通、2026-10-05 主机卡死（显示唤醒类，非代码）、之前未预批的残留空锁删除。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
@@ -221,6 +220,37 @@ events:
   - change:gov-007-devx022-s7reg-task-20261005-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-640267448774facf326c2a8be0578c09
+- schema_version: task_event.v1
+  task_id: DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-05T02:54:21Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx022-close-task-20261005-v1
+  lane_id: null
+  base_commit: 1e46e6ac767b309a880c41dbb2796981f8a61a7e
+  previous_state_event_id: task-event-640267448774facf326c2a8be0578c09
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: owner (decision needed)
+    blocker_or_next_step: 2026-10-05 收口（DEVX-022 第 11 节）：M2c 2 小时 13 分（v26 为 3 小时
+      35 分，累计 -38%），距 2 小时差约 13 分钟。S6 已落地（最新授权段扩一个受审路径）；S7b 已提交（登记字节规范性比对按内容摘要记忆，同进程
+      3 次校验 21.6->11.5 s，尚未经正式 Full 验证）；S7a 实测仅 -9% 已撤回；内层 Full 改 4 个 worker 搁置（改的是受保护发布检查器里的正式
+      Full 合同）。named-DQ/composer 剖析与调度顺序模型：种子顺序最多约 5 分钟，租约库 689 MB 的重放（S3b/P4 同根因）是更大的杠杆但高风险。待
+      owner 决策：(1) 是否批准 S3b（租约事件存储格式变更，需真实 .git/租约库演练与一次真实发布验证）；(2) 是否批准修改正式 Full
+      的 worker 合同策略；(3) 若都不做则以 S6+S7b 候选为终版（预计约 2 小时 10 分）转入 DEVX-021 与发布；(4) 种子刷新是否随发布候选做。须向
+      owner 披露：S6 在最新授权段扩路径而非新增授权段、同候选重试的 parent 变通、2026-10-05 主机卡死（显示唤醒类，非代码）、之前未预批的残留空锁删除。
+    acceptance_criteria: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约
+      20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实 .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5
+      最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
+    notes: 2026-10-05：S7 结果、named-DQ/composer 剖析、种子顺序模型与待 owner 决策写入 DEVX-022 第 11
+      节。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx022-close-task-20261005-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ac452f03860926624fdcfecbc58301a7
 projection:
   legacy_first_eight_cells:
   - DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
@@ -228,20 +258,20 @@ projection:
     lease-store replay, test structure)
   - P0
   - IN_PROGRESS
-  - Claude Code coordinator
-  - M2c 之后的剖析（DEVX-022 第 10 节）：重型节点 CPU 的 61% 是内层 Full 的 16 个 worker 各约 24 CPU 秒的启动校验（只跑
-    74 个桩测试）。owner 选择「夹具内层 Full 改 4 个 worker」，但读代码发现 -n 16/expected_worker_count=16/expected_collections=16
-    写在受保护的发布检查器里（正式 Full 合同），改它等于放宽发布门槛并放大「夹具通过、真实仓库失败」风险，已按承诺停下并向 owner 报告，暂不实施，需要
-    owner 显式批准才可另行立项。改走不动合同的 S7：S7a worker 清单校验去 pathlib 往返（identity 逐字节相同，目标 4.0
-    s->2.5 s）；S7b 任务登记字节规范性比对按字节 SHA-256 的纯函数记忆（文件每次仍读取解析）；S4 变体共享前缀评估中（变体改写共享状态、夹具绑定绝对路径，需逐家族论证）。教训：含内层
-    Full 的节点不能用父进程 cProfile 估算（1,205 s vs 实测 326 s），用进程 CPU 计数器。S6 在最新授权段的路径扩展与该内层
-    worker 数搁置均需向 owner 披露。
+  - owner (decision needed)
+  - 2026-10-05 收口（DEVX-022 第 11 节）：M2c 2 小时 13 分（v26 为 3 小时 35 分，累计 -38%），距 2 小时差约
+    13 分钟。S6 已落地（最新授权段扩一个受审路径）；S7b 已提交（登记字节规范性比对按内容摘要记忆，同进程 3 次校验 21.6->11.5 s，尚未经正式
+    Full 验证）；S7a 实测仅 -9% 已撤回；内层 Full 改 4 个 worker 搁置（改的是受保护发布检查器里的正式 Full 合同）。named-DQ/composer
+    剖析与调度顺序模型：种子顺序最多约 5 分钟，租约库 689 MB 的重放（S3b/P4 同根因）是更大的杠杆但高风险。待 owner 决策：(1) 是否批准
+    S3b（租约事件存储格式变更，需真实 .git/租约库演练与一次真实发布验证）；(2) 是否批准修改正式 Full 的 worker 合同策略；(3) 若都不做则以
+    S6+S7b 候选为终版（预计约 2 小时 10 分）转入 DEVX-021 与发布；(4) 种子刷新是否随发布候选做。须向 owner 披露：S6 在最新授权段扩路径而非新增授权段、同候选重试的
+    parent 变通、2026-10-05 主机卡死（显示唤醒类，非代码）、之前未预批的残留空锁删除。
   - S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
     .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5 最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
-  - 2026-10-05：登记 S7（worker 校验提速、登记字节记忆）与内层 worker 数方案的搁置原因（DEVX-022 第 10 节）。
+  - 2026-10-05：S7 结果、named-DQ/composer 剖析、种子顺序模型与待 owner 决策写入 DEVX-022 第 11 节。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 275c04573898b569f641d9be526c986e9ea7a370de163027c631abfcf5e34ac8
-last_event_id: task-event-640267448774facf326c2a8be0578c09
+  canonical_row_sha256: 5593dd25c185c3d91cad6b71d5229bfb1d66f021186372ced842662c572ef17c
+last_event_id: task-event-ac452f03860926624fdcfecbc58301a7
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: bad57ff400ab5dc7102a7c072c2883a6c3aabd7e35242d95ef4984de8cd1815a
+fragment_checksum: 34f4cb8d1d986b3723e4f629911af855801c636a9392efca2e45e2d908f7aea2
