@@ -1567,9 +1567,12 @@ def _lease_event(
     if lease.execution is not None:
         # DEVX-022 S3b: every new event is written in the externalized stored form. Qualifying
         # tables get their digest once here and are shared by the stored form and the blob write.
-        adopted, externalized = _rewrite_rows(lease.execution, _adopt_rows)
-        if externalized:
+        # A table that is already an ExternalizedRows (e.g. a head taken from replay) is kept as
+        # is, so the decision is "does a qualifying table exist", not "did adoption replace one".
+        adopted, replaced = _rewrite_rows(lease.execution, _adopt_rows)
+        if replaced:
             lease = replace(lease, execution=adopted)
+        externalized = bool(_qualifying_rows(lease.execution))
     prototype = LeaseEvent(
         event_id="",
         lease=lease,

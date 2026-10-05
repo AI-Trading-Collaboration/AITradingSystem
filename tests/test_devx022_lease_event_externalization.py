@@ -249,6 +249,28 @@ def test_a_mixed_store_replays_and_shares_one_decoded_table_per_call(
     assert blob_reads == 2  # nothing survives the call
 
 
+def test_an_event_derived_from_a_replayed_head_is_still_externalized(tmp_path: Path) -> None:
+    """Regression: a head from replay already holds ExternalizedRows; the next event (e.g. a
+    terminal transition built from that head) must still be stored compactly as v3."""
+    store = _store(tmp_path)
+    requested = _event(_lease(_execution(_rows(2000))))
+    store._append_event(requested)
+    head = next(lease for lease in store.replay().lease_heads if lease.lease_id == "lease-s3b")
+    capsule_rows = head.execution["hook_capsule"]["ready"]["inputs"][FIELD]
+    assert type(capsule_rows) is kernel.ExternalizedRows
+    following = _event(
+        replace(head, state="ACTIVE"), previous=requested.event_id, from_state="REQUESTED",
+    )
+    assert following.rows_externalized
+    store._append_event(following)
+    payload = json.loads(_event_path(store, following).read_text(encoding="utf-8"))
+    assert payload["schema_version"] == kernel.LEASE_EVENT_V3_SCHEMA_VERSION
+    assert MARKER in _stored_inputs(payload)[FIELD]
+    assert _event_path(store, following).stat().st_size < 20_000
+    replay = store.replay()
+    assert replay.status == "PASS" and replay.event_count == 2
+
+
 def test_small_tables_stay_embedded_and_write_no_blob(tmp_path: Path) -> None:
     store = _store(tmp_path)
     event = _event(_lease(_execution(_rows(kernel.EXTERNALIZED_ROWS_MINIMUM - 1))))
