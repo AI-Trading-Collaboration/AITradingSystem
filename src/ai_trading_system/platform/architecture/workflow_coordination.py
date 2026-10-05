@@ -49,6 +49,17 @@ if TYPE_CHECKING:
 # applies and larger evidence fails closed instead of being truncated or skipped.
 PUBLICATION_CAPTURE_BUDGET_BYTES = 64 * 1024 * 1024
 
+# Hang bounds of the real local publication, not performance expectations. DEVX-021 section 8
+# (provisional, owner review pending; exit condition and derivation in
+# docs/requirements/DEVX-021_Publication_ORIG_HEAD_Unchanged_Robustness_V1.md): every git hook of
+# the real publication is its own process that replays the whole lease store, and S3b leaves the
+# 653 MB of historical events in place, so the former 3600 s worker wall and 1800 s git-child wait
+# were values for a small idle repository (v26 was cut off at the wall after the fast-forward
+# merge, before the post-merge hook was recorded). The wall must stay within half of the checkout
+# lease TTL.
+LOCAL_PUBLICATION_WORKER_WALL_SECONDS = 10_800
+LOCAL_PUBLICATION_GIT_CHILD_WAIT_SECONDS = 7_200
+
 # DEVX-022 S3a: one lease-store replay validates the same ~16.5k-row hook-ready custody list once
 # per distinct content instead of once per event that carries a copy of it (18 copies in a
 # published lease, ~1.1 s each). The memo exists only between replay_validation_scope() enter and
@@ -3984,7 +3995,7 @@ class PublicationLifecycle(ExecutionLifecycle):
             self.bind(physical.lease_id, handle, actor=actor)
             self.resume(physical.lease_id, handle, actor=actor)
             try:
-                code = handle.wait(timeout=3600)
+                code = handle.wait(timeout=LOCAL_PUBLICATION_WORKER_WALL_SECONDS)
             except TimeoutError:
                 code = handle.terminate()
             self.confirm_exit(physical.lease_id, handle, actor=actor)
@@ -4038,7 +4049,7 @@ class PublicationLifecycle(ExecutionLifecycle):
                         print("PUBLICATION_STAGE heads_switched", flush=True)
                         self.resume_publication_git(request, child, held, actor=actor)
                         print("PUBLICATION_STAGE merge_resumed", flush=True)
-                        child.wait_exit(timeout=1800)
+                        child.wait_exit(timeout=LOCAL_PUBLICATION_GIT_CHILD_WAIT_SECONDS)
                         observed = self.record_publication_git_exit(request, child, actor=actor)
                         print("PUBLICATION_STAGE merge_exit", observed["returncode"], flush=True)
                         if observed["returncode"] != 0:
