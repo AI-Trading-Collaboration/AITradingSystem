@@ -570,6 +570,14 @@ v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
 - 下一步：v15 候选经限时 pilot、`failure_fix_rerun`（父为 v14 `full_incomplete_recovery.json`）事务、
   generators 与全部 tiers、Full；发布后 P1/P4/O3 与重测。
 
+### 2026-10-04 与 2026-10-06 两次发布（摘要）
+
+- **2026-10-04 12:04 P1-C DEVX-015 基线发布**：`main = origin/main = 1e46e6ac767b309a880c41dbb2796981f8a61a7e`（普通推送 `cbc31cdff..1e46e6ac7`，事务 `gov-007-p1c-devx015-baseline-publication-20261004-v26`，v26 Full 14,706 通过/0 失败，3 小时 35 分）。
+  发布期间两次仓库状态干预：经 owner 批准一次性删除 `.git/ORIG_HEAD`；未预批、审计后删除 worker 被写死 3600 秒墙钟终止后遗留的两个空锁（`.git/AUTO_MERGE.lock`、`.git/packed-refs.lock`），随后 `local-publication-recover` 收口。详见 DEVX-021 第 4、7 节。
+- **2026-10-06 02:48 第二次发布（DEVX-020/021/022 与 S3b）**：`main = origin/main = 0cbdd9a4549987364d5fd2d450d3905083ef1775`（普通推送 `1e46e6ac7..0cbdd9a45`，事务 `gov-007-devx022-m4-formal-20261005-v1`，Full 14,745 通过/0 失败，2 小时 24 分 57 秒）。
+  owner 2026-10-05 预授权「Full 全过且发布前检查清单全绿即直接发布」，并选择方案 C（不改正式 Full 合同）；本次**没有任何人工干预**（无 ORIG_HEAD 删除、无锁清理、无恢复）。S3b 租约事件外置在真实发布中得到验证。详见 DEVX-022 第 13、14 节与 DEVX-021 第 8 节。
+- 仍待 owner：超时/等待校准的复核（`PROVISIONAL_PENDING_OWNER_REVIEW`）、O3 跨调用缓存、5 个 HKCU `AITS-DEVX015-Test-*` 遗留注册表根的清理（脚本 `D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1`，agent 未执行）。
+
 ## 7. 退出条件
 
 E1–E10 全部满足，迁移到 pi 的第一个低风险任务完成完整的"预检 → 提交 → 合入 main → 推送"。

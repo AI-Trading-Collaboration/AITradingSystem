@@ -19,12 +19,14 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 基线 P1-C 已发布（main = origin/main = 1e46e6ac7）；Full
-    墙钟 7 小时 22 分 → 3 小时 35 分（-51%），0 失败，无超时。DEVX-018 的 O1/O2/O3/K 调度（清单 v5）已落地并经真实
-    Full 验证。剩余：P4（发布类大节点租约库重放去重/外置 ~10 MB custody 列表；同时降低发布耗时，真实发布 worker 因此超过写死的
-    3600 秒墙钟）、host_registry_view 复合组拆分（关键路径 225 分钟，须 owner 复核互斥语义）、O4 夹具复用、变体冗余审计（DEVX-020）。首个以清单
-    v5 测得的真实 Full profile 已有（v24/v25/v26），可用于清单复核。须披露：超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW；O3
-    设计偏离与残余风险；O3 跨调用缓存未获批；发布期间的两个仓库状态清理（ORIG_HEAD 经批准，残留空锁文件未预批，见需求文档）。
+  unstructured_legacy_blocker_or_next_step: 基线 P1-C 与 DEVX-022 均已发布（main = origin/main
+    = 0cbdd9a45）；Full 墙钟 7 小时 22 分 -> 3 小时 35 分（v26）-> 2 小时 14~25 分（M2c/M3/M4，宿主噪声
+    ±8%），M4 为已发布 PASS：14,745 通过/0 失败。DEVX-018 的 O1/O2/O3/K 调度（清单 v6）、P4 的 S3a（replay
+    内去重）与 S3b（租约事件行表外置）已落地并经真实 Full 与真实发布验证。剩余：host_registry_view 复合组拆分（须 owner 复核互斥语义）、O4
+    夹具复用、变体冗余审计（DEVX-020）；清单种子刷新（可用 M4 的已发布 PASS profile，按 TRADING-2564 S5 规则，约 -5
+    分钟）。须披露：超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW（含 composer 子进程预算 1,800 s、发布
+    worker 10,800 s/git 子进程 7,200 s）；O3 设计偏离与残余风险；O3 跨调用缓存未获批；上次发布期间两个仓库状态清理（ORIG_HEAD
+    经批准，两个残留空锁未预批，见 DEVX-021 第 7 节）。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile
@@ -624,6 +626,36 @@ events:
   - change:gov-007-devx018-pub-task-20261004-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-6c07e13ea321ed798bb972abb0609f33
+- schema_version: task_event.v1
+  task_id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-05T18:10:32Z'
+  actor: integration-coordinator
+  change_id: gov-007-d18post-task-20261006-v1
+  lane_id: null
+  base_commit: 0cbdd9a4549987364d5fd2d450d3905083ef1775
+  previous_state_event_id: task-event-6c07e13ea321ed798bb972abb0609f33
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 基线 P1-C 与 DEVX-022 均已发布（main = origin/main = 0cbdd9a45）；Full
+      墙钟 7 小时 22 分 -> 3 小时 35 分（v26）-> 2 小时 14~25 分（M2c/M3/M4，宿主噪声 ±8%），M4 为已发布 PASS：14,745
+      通过/0 失败。DEVX-018 的 O1/O2/O3/K 调度（清单 v6）、P4 的 S3a（replay 内去重）与 S3b（租约事件行表外置）已落地并经真实
+      Full 与真实发布验证。剩余：host_registry_view 复合组拆分（须 owner 复核互斥语义）、O4 夹具复用、变体冗余审计（DEVX-020）；清单种子刷新（可用
+      M4 的已发布 PASS profile，按 TRADING-2564 S5 规则，约 -5 分钟）。须披露：超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW（含
+      composer 子进程预算 1,800 s、发布 worker 10,800 s/git 子进程 7,200 s）；O3 设计偏离与残余风险；O3 跨调用缓存未获批；上次发布期间两个仓库状态清理（ORIG_HEAD
+      经批准，两个残留空锁未预批，见 DEVX-021 第 7 节）。
+    acceptance_criteria: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧
+      loadfile profile 仍按原契约通过；pre-Full tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3
+      不跨调用缓存身份或 PASS
+    notes: 2026-10-06：DEVX-022 发布后状态汇总。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-d18post-task-20261006-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5563f191ed53d1be72f92ca4b5d01b61
 projection:
   legacy_first_eight_cells:
   - DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
@@ -632,18 +664,19 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - 基线 P1-C 已发布（main = origin/main = 1e46e6ac7）；Full 墙钟 7 小时 22 分 → 3 小时 35 分（-51%），0
-    失败，无超时。DEVX-018 的 O1/O2/O3/K 调度（清单 v5）已落地并经真实 Full 验证。剩余：P4（发布类大节点租约库重放去重/外置 ~10
-    MB custody 列表；同时降低发布耗时，真实发布 worker 因此超过写死的 3600 秒墙钟）、host_registry_view 复合组拆分（关键路径
-    225 分钟，须 owner 复核互斥语义）、O4 夹具复用、变体冗余审计（DEVX-020）。首个以清单 v5 测得的真实 Full profile 已有（v24/v25/v26），可用于清单复核。须披露：超时与等待校准仍
-    PROVISIONAL_PENDING_OWNER_REVIEW；O3 设计偏离与残余风险；O3 跨调用缓存未获批；发布期间的两个仓库状态清理（ORIG_HEAD
-    经批准，残留空锁文件未预批，见需求文档）。
+  - 基线 P1-C 与 DEVX-022 均已发布（main = origin/main = 0cbdd9a45）；Full 墙钟 7 小时 22 分 -> 3
+    小时 35 分（v26）-> 2 小时 14~25 分（M2c/M3/M4，宿主噪声 ±8%），M4 为已发布 PASS：14,745 通过/0 失败。DEVX-018
+    的 O1/O2/O3/K 调度（清单 v6）、P4 的 S3a（replay 内去重）与 S3b（租约事件行表外置）已落地并经真实 Full 与真实发布验证。剩余：host_registry_view
+    复合组拆分（须 owner 复核互斥语义）、O4 夹具复用、变体冗余审计（DEVX-020）；清单种子刷新（可用 M4 的已发布 PASS profile，按
+    TRADING-2564 S5 规则，约 -5 分钟）。须披露：超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW（含 composer
+    子进程预算 1,800 s、发布 worker 10,800 s/git 子进程 7,200 s）；O3 设计偏离与残余风险；O3 跨调用缓存未获批；上次发布期间两个仓库状态清理（ORIG_HEAD
+    经批准，两个残留空锁未预批，见 DEVX-021 第 7 节）。
   - Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full
     tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
-  - 2026-10-04：基线发布完成与剩余项写入 DEVX-018 需求。
+  - 2026-10-06：DEVX-022 发布后状态汇总。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 94460a80c9afc131ad012ff75188174ad79ec11d3f72404671b345e9196e627c
-last_event_id: task-event-6c07e13ea321ed798bb972abb0609f33
+  canonical_row_sha256: 67c3350feff0c1bd3add2e4a55a0103cfedddcb9cf82d1cb0f4cd0a6f65257ee
+last_event_id: task-event-5563f191ed53d1be72f92ca4b5d01b61
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: d27a1443060e4ae5b9e3442bdc8419af1b9cd4b2f7f332bff03ef60a538b8d9e
+fragment_checksum: 86105cd062b6af701c0675d46d737936edd1cedef5b449250a71ec3f774d1f81

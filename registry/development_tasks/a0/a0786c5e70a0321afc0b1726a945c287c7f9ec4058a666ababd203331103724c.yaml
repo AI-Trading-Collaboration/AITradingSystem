@@ -20,14 +20,11 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: owner 要求评估并推进 Full 压缩到 2 小时内。评估已写入第 9
-    节：现状 3.59 小时（工作量 43 节点小时），结论「2 小时内可行但没有余量」——中等假设 2.23 小时、乐观假设 1.93 小时、再加 20 个
-    worker 才稳定低于 2 小时；前提是先改起跑限速（L0，否则墙钟停在约 2.8 小时）。已测量：7 个大发布节点（7.0 节点小时）由租约库重放主导（402
-    MB 库单次重放 16 s），其余约 70 个中型节点约 60% 是发布阶段串行操作（CPU 仅约 20%，内部分解未测）。待办（按顺序，等 owner 确认）：(1)
-    函数级剖面 4 个代表节点 + 计数器型遥测（半天，零风险，决定 L4/L6 上限）；(2) L0 起跑限速只管爬坡 + 清单 v6；(3) P4 租约事件外置/去重并同修
-    DEVX-021 的 worker 墙钟与残留锁（最高收益最高风险，须真实 .git 副本演练）；(4) L2 拆分 host_registry_view
-    与 L3 变体共享不可变前缀（测试结构，须 owner 复核）；(5) 按剖面取舍 L4 发布阶段检查合并、L5 轻量测试审计、L6 提高 worker 数。注意：WMI
-    进程采样会让节点慢 2.6 倍，遥测只能用性能计数器。
+  unstructured_legacy_blocker_or_next_step: 评估与推进已由 DEVX-022 承接并发布（main = origin/main
+    = 0cbdd9a45）：Full 3.59 小时 -> 2 小时 14~25 分（-33%~-38%），未达 <2 小时；owner 2026-10-06
+    选择不改正式 Full 合同，剩余提速手段（内层 4 worker、取消 worker 第二遍校验、起跑间隔 120->30 s、种子刷新、变体共享前缀）见
+    DEVX-022 第 13、14 节，待 owner 决定后再启动。本任务保留：变体冗余审计表（未做）与 K 实验原始数据（D:/Work/devx020-k，约
+    6.3 GB，随本任务关闭时清理）。状态转 BASELINE_DONE。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变
@@ -240,28 +237,52 @@ events:
   - change:gov-007-devx020-eval-task-20261004-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-d92b61ca4725ffc573c5634123053b30
+- schema_version: task_event.v1
+  task_id: DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-05T18:07:27Z'
+  actor: integration-coordinator
+  change_id: gov-007-d20post-task-20261006-v1
+  lane_id: null
+  base_commit: 0cbdd9a4549987364d5fd2d450d3905083ef1775
+  previous_state_event_id: task-event-d92b61ca4725ffc573c5634123053b30
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 评估与推进已由 DEVX-022 承接并发布（main = origin/main = 0cbdd9a45）：Full
+      3.59 小时 -> 2 小时 14~25 分（-33%~-38%），未达 <2 小时；owner 2026-10-06 选择不改正式 Full 合同，剩余提速手段（内层
+      4 worker、取消 worker 第二遍校验、起跑间隔 120->30 s、种子刷新、变体共享前缀）见 DEVX-022 第 13、14 节，待 owner
+      决定后再启动。本任务保留：变体冗余审计表（未做）与 K 实验原始数据（D:/Work/devx020-k，约 6.3 GB，随本任务关闭时清理）。状态转
+      BASELINE_DONE。
+    acceptance_criteria: 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变
+      Full 验收语义、不放宽任何校验；任何调度或测试改动必须另有任务、评审与重测；明确列出覆盖等价性论证和风险。
+    notes: 2026-10-06：评估由 DEVX-022 承接，状态转 BASELINE_DONE。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-d20post-task-20261006-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-78f03c3c2913ef588445a5825238febb
 projection:
   legacy_first_eight_cells:
   - DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
   - Validation runtime / Full heavy-node cost profiling, host telemetry and variant
     redundancy audit
   - P1
-  - IN_PROGRESS
+  - BASELINE_DONE
   - Claude Code coordinator
-  - owner 要求评估并推进 Full 压缩到 2 小时内。评估已写入第 9 节：现状 3.59 小时（工作量 43 节点小时），结论「2 小时内可行但没有余量」——中等假设
-    2.23 小时、乐观假设 1.93 小时、再加 20 个 worker 才稳定低于 2 小时；前提是先改起跑限速（L0，否则墙钟停在约 2.8 小时）。已测量：7
-    个大发布节点（7.0 节点小时）由租约库重放主导（402 MB 库单次重放 16 s），其余约 70 个中型节点约 60% 是发布阶段串行操作（CPU 仅约
-    20%，内部分解未测）。待办（按顺序，等 owner 确认）：(1) 函数级剖面 4 个代表节点 + 计数器型遥测（半天，零风险，决定 L4/L6 上限）；(2)
-    L0 起跑限速只管爬坡 + 清单 v6；(3) P4 租约事件外置/去重并同修 DEVX-021 的 worker 墙钟与残留锁（最高收益最高风险，须真实
-    .git 副本演练）；(4) L2 拆分 host_registry_view 与 L3 变体共享不可变前缀（测试结构，须 owner 复核）；(5) 按剖面取舍
-    L4 发布阶段检查合并、L5 轻量测试审计、L6 提高 worker 数。注意：WMI 进程采样会让节点慢 2.6 倍，遥测只能用性能计数器。
+  - 评估与推进已由 DEVX-022 承接并发布（main = origin/main = 0cbdd9a45）：Full 3.59 小时 -> 2 小时 14~25
+    分（-33%~-38%），未达 <2 小时；owner 2026-10-06 选择不改正式 Full 合同，剩余提速手段（内层 4 worker、取消 worker
+    第二遍校验、起跑间隔 120->30 s、种子刷新、变体共享前缀）见 DEVX-022 第 13、14 节，待 owner 决定后再启动。本任务保留：变体冗余审计表（未做）与
+    K 实验原始数据（D:/Work/devx020-k，约 6.3 GB，随本任务关闭时清理）。状态转 BASELINE_DONE。
   - 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变
     Full 验收语义、不放宽任何校验；任何调度或测试改动必须另有任务、评审与重测；明确列出覆盖等价性论证和风险。
-  - 2026-10-04：Full 压缩到 2 小时内的可行性评估写入第 9 节（待 owner 选择杠杆）。
+  - 2026-10-06：评估由 DEVX-022 承接，状态转 BASELINE_DONE。
   docs_links:
   - docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md
   terminal: false
-  canonical_row_sha256: 900cde4f792b16c4447f3bd3639234ee82a9dc36978afe66f77ce002e84e3433
-last_event_id: task-event-d92b61ca4725ffc573c5634123053b30
+  canonical_row_sha256: 86399973a83fadba1711f6b89768b7a923882ac41c0f65fe1200ccf3935d2e70
+last_event_id: task-event-78f03c3c2913ef588445a5825238febb
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: aac831716e84d1b6376f0d1eddbf133a964c8123cf3fa094310e89c42a0fb015
+fragment_checksum: 6fe1e9173758e6d99a6d2c06060c5aa886ba1d0fccb518b1c9648cf784652160

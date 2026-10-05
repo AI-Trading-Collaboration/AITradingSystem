@@ -850,3 +850,11 @@ git 对相同值只创建**空的** `ORIG_HEAD.lock`，而校验器要求其内�
 保留的唯一证据：`outputs/architecture/integration_revalidation/devx015-v389/retained_pilot_v15/`（pilot 唯一的 e2e JSON、计时钩子 diff、prof2 未提交修复 diff——后者已由 `c61ba02a3` 取代）。
 后台按显式白名单删除我创建的 pytest basetemp/复现目录（`devx018-*`、`devx020-*`，不含 `devx020-k`），结果见 `claude_v26_tmp_cleanup.log`；保留全部 `.log`/`.jsonl` 证据与
 `D:/Work/devx020-k`（K 实验原始数据，DEVX-020 关闭前保留）。`D:/Work/devx015-*` 与 5 个 HKCU `AITS-DEVX015-Test-*` 根未动。
+
+
+## 2026-10-06 DEVX-022 之后：已发布的状态
+
+- 第二次正式发布（M4，候选 `0cbdd9a45`，事务 `gov-007-devx022-m4-formal-20261005-v1`）：`main = origin/main = 0cbdd9a4549987364d5fd2d450d3905083ef1775`，普通推送 `1e46e6ac7..0cbdd9a45`，无恢复、无人工干预。Full `14,745 passed / 4 skipped / 0 failed`，pytest 2 小时 24 分 57 秒。
+- 三次 Full 对照追加一行：同一代码级别下 M2c 2:13:42、M3 2:16:27、M4 2:24:57（宿主噪声约 ±8%），较 v26 的 3 小时 35 分 −33%～−38%；DEVX-022 的结论与残余项见该需求文档第 13、14 节。
+- 调度清单现为 v6（起跑间隔只限制前 K 个重型起跑）；P4 的 S3a（replay 内去重）与 S3b（租约事件行表外置）已经真实发布验证：新事件最大 0.97 MB，真实租约库体积仅 +23 MB。
+- 仍属 `PROVISIONAL_PENDING_OWNER_REVIEW` 的校准：本文各节的负载校准常量，以及 DEVX-022/DEVX-021 新增的 composer 子进程预算（1,800 s）与发布 worker 墙钟（10,800 s）/git 子进程等待（7,200 s）。O3 跨调用缓存仍未获批。

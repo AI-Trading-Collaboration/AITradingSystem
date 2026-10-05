@@ -19,16 +19,16 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: M3 正式 Full（候选 2a024eda6，不发布，计数器遥测）已跑完并释放为失败：1
-    失败 / 14,739 通过 / 4 跳过，pytest 8,187 s（2:16:27），Full 阶段 8,539 s；M2c 为 2:13:42。结论见
-    DEVX-022 §13：S3b/S7b 在 Full 里无可测墙钟收益（总 CPU 54.0 vs 51.8 CPU 小时，轻量节点普遍 +4% 属主机背景负载；S3b
-    命中的 7 个大发布节点 -0.70 节点小时被其他重型节点约 10% 波动抵消），价值在于新事件体积 22 MB->不到 1.5 MB、真实库不再随发布膨胀。唯一失败是
-    composer 激活子进程 300 s 预算被满载超过（真实租约库 31->689 MB 使该子进程 50-77 s -> 250 s 以上），非 S3b
-    引起。结构下界：总工作量 31.4 节点小时/16 worker=118 分钟 + 爬坡/尾部约 17 分钟；免费调度手段（起跑间隔 120->30 s 约
-    -3.5 分钟、种子刷新约 -5 分钟且须随已发布 PASS profile）不足以进 2 小时，需再降工作量约 11%，途径均涉及正式 Full 合同（内层
-    4 worker 约 -23%、取消 worker sessionfinish 第二遍清单校验约 -10%），待 owner 决策。下一步：登记并实施 composer
-    子进程预算的负载校准（PROVISIONAL_PENDING_OWNER_REVIEW）与超时不变量扩展；DEVX-021（ORIG_HEAD 基线、local-publish
-    worker 墙钟入受审配置、残留锁恢复）；含全部修复的最终候选 Full + 发布（owner 触发）。
+  unstructured_legacy_blocker_or_next_step: M4 最终候选 0cbdd9a45 已通过正式 Full 并真实发布：main
+    = origin/main = 0cbdd9a45（普通推送 1e46e6ac7..0cbdd9a45，事务 gov-007-devx022-m4-formal-20261005-v1
+    RELEASED/COMPLETED，无恢复、无人工干预）。Full 14,745 通过/4 跳过/0 失败，pytest 8,698 s（2:24:57）；同代码级别的三次实测
+    M2c 2:13:42、M3 2:16:27、M4 2:24:57（M4 总 CPU 60.6 CPU 小时 vs M3 54.0，整机每节点小时 CPU
+    逐次上升，单次墙钟噪声约 ±8%），较 v26 的 3:35 为 -33%~-38%，未达 <2 小时目标。S3b 的真实发布验证通过：新租约事件最大 0.97
+    MB（旧 22 MB）、20 个 v3 事件、1 个 9.65 MB blob，真实库仅 +23 MB（旧法每次发布约 +300 MB），重放 PASS 12.6
+    s。owner 2026-10-05/06 选择方案 C：不改正式 Full 合同，A（夹具内层 4 worker，约 -25~-35% 重型）与 B（取消
+    worker sessionfinish 第二遍清单校验，约 -12% CPU）搁置，需要时重新评估；剩余的不动合同手段：起跑间隔 120->30 s（约
+    -3.5 分钟，须实测起跑突发安全性）、种子刷新（约 -5 分钟，用本次已发布的 PASS profile，按 TRADING-2564 S5 规则）。详见
+    DEVX-022 第 14 节。状态转 BASELINE_DONE，剩余为上述可选项与 owner 对 A/B 的后续决策。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
@@ -349,29 +349,62 @@ events:
   - change:gov-007-devx022-m3res-task-20261005-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-d48b7235a94def227d272ca5e82cc635
+- schema_version: task_event.v1
+  task_id: DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-05T18:01:01Z'
+  actor: integration-coordinator
+  change_id: gov-007-d22post-task-20261006-v1
+  lane_id: null
+  base_commit: 0cbdd9a4549987364d5fd2d450d3905083ef1775
+  previous_state_event_id: task-event-d48b7235a94def227d272ca5e82cc635
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: M4 最终候选 0cbdd9a45 已通过正式 Full 并真实发布：main = origin/main =
+      0cbdd9a45（普通推送 1e46e6ac7..0cbdd9a45，事务 gov-007-devx022-m4-formal-20261005-v1
+      RELEASED/COMPLETED，无恢复、无人工干预）。Full 14,745 通过/4 跳过/0 失败，pytest 8,698 s（2:24:57）；同代码级别的三次实测
+      M2c 2:13:42、M3 2:16:27、M4 2:24:57（M4 总 CPU 60.6 CPU 小时 vs M3 54.0，整机每节点小时 CPU
+      逐次上升，单次墙钟噪声约 ±8%），较 v26 的 3:35 为 -33%~-38%，未达 <2 小时目标。S3b 的真实发布验证通过：新租约事件最大
+      0.97 MB（旧 22 MB）、20 个 v3 事件、1 个 9.65 MB blob，真实库仅 +23 MB（旧法每次发布约 +300 MB），重放
+      PASS 12.6 s。owner 2026-10-05/06 选择方案 C：不改正式 Full 合同，A（夹具内层 4 worker，约 -25~-35%
+      重型）与 B（取消 worker sessionfinish 第二遍清单校验，约 -12% CPU）搁置，需要时重新评估；剩余的不动合同手段：起跑间隔
+      120->30 s（约 -3.5 分钟，须实测起跑突发安全性）、种子刷新（约 -5 分钟，用本次已发布的 PASS profile，按 TRADING-2564
+      S5 规则）。详见 DEVX-022 第 14 节。状态转 BASELINE_DONE，剩余为上述可选项与 owner 对 A/B 的后续决策。
+    acceptance_criteria: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约
+      20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实 .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5
+      最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
+    notes: 2026-10-06：M4 正式 Full 与真实发布结果、owner 决策 C 写入 DEVX-022 第 14 节；状态转 BASELINE_DONE。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-d22post-task-20261006-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3d0d3fa3b2371cc2110e17dac3735da7
 projection:
   legacy_first_eight_cells:
   - DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
   - Validation runtime / program to compress the formal Full below two hours (scheduler,
     lease-store replay, test structure)
   - P0
-  - IN_PROGRESS
+  - BASELINE_DONE
   - Claude Code coordinator
-  - M3 正式 Full（候选 2a024eda6，不发布，计数器遥测）已跑完并释放为失败：1 失败 / 14,739 通过 / 4 跳过，pytest 8,187
-    s（2:16:27），Full 阶段 8,539 s；M2c 为 2:13:42。结论见 DEVX-022 §13：S3b/S7b 在 Full 里无可测墙钟收益（总
-    CPU 54.0 vs 51.8 CPU 小时，轻量节点普遍 +4% 属主机背景负载；S3b 命中的 7 个大发布节点 -0.70 节点小时被其他重型节点约
-    10% 波动抵消），价值在于新事件体积 22 MB->不到 1.5 MB、真实库不再随发布膨胀。唯一失败是 composer 激活子进程 300 s 预算被满载超过（真实租约库
-    31->689 MB 使该子进程 50-77 s -> 250 s 以上），非 S3b 引起。结构下界：总工作量 31.4 节点小时/16 worker=118
-    分钟 + 爬坡/尾部约 17 分钟；免费调度手段（起跑间隔 120->30 s 约 -3.5 分钟、种子刷新约 -5 分钟且须随已发布 PASS profile）不足以进
-    2 小时，需再降工作量约 11%，途径均涉及正式 Full 合同（内层 4 worker 约 -23%、取消 worker sessionfinish 第二遍清单校验约
-    -10%），待 owner 决策。下一步：登记并实施 composer 子进程预算的负载校准（PROVISIONAL_PENDING_OWNER_REVIEW）与超时不变量扩展；DEVX-021（ORIG_HEAD
-    基线、local-publish worker 墙钟入受审配置、残留锁恢复）；含全部修复的最终候选 Full + 发布（owner 触发）。
+  - M4 最终候选 0cbdd9a45 已通过正式 Full 并真实发布：main = origin/main = 0cbdd9a45（普通推送 1e46e6ac7..0cbdd9a45，事务
+    gov-007-devx022-m4-formal-20261005-v1 RELEASED/COMPLETED，无恢复、无人工干预）。Full 14,745
+    通过/4 跳过/0 失败，pytest 8,698 s（2:24:57）；同代码级别的三次实测 M2c 2:13:42、M3 2:16:27、M4 2:24:57（M4
+    总 CPU 60.6 CPU 小时 vs M3 54.0，整机每节点小时 CPU 逐次上升，单次墙钟噪声约 ±8%），较 v26 的 3:35 为 -33%~-38%，未达
+    <2 小时目标。S3b 的真实发布验证通过：新租约事件最大 0.97 MB（旧 22 MB）、20 个 v3 事件、1 个 9.65 MB blob，真实库仅
+    +23 MB（旧法每次发布约 +300 MB），重放 PASS 12.6 s。owner 2026-10-05/06 选择方案 C：不改正式 Full 合同，A（夹具内层
+    4 worker，约 -25~-35% 重型）与 B（取消 worker sessionfinish 第二遍清单校验，约 -12% CPU）搁置，需要时重新评估；剩余的不动合同手段：起跑间隔
+    120->30 s（约 -3.5 分钟，须实测起跑突发安全性）、种子刷新（约 -5 分钟，用本次已发布的 PASS profile，按 TRADING-2564
+    S5 规则）。详见 DEVX-022 第 14 节。状态转 BASELINE_DONE，剩余为上述可选项与 owner 对 A/B 的后续决策。
   - S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
     .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5 最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
-  - 2026-10-05：M3 正式 Full 实测结果与决策点写入 DEVX-022 §13。
+  - 2026-10-06：M4 正式 Full 与真实发布结果、owner 决策 C 写入 DEVX-022 第 14 节；状态转 BASELINE_DONE。
   docs_links: []
   terminal: false
-  canonical_row_sha256: ababc4d4096d37e085815d9db42370fb1542ef31cd7cd790be8b72d288b08598
-last_event_id: task-event-d48b7235a94def227d272ca5e82cc635
+  canonical_row_sha256: 73f9ab4b3f8b223abc6453e71b4ffc594472683b4f520527754eea0c9fd5505a
+last_event_id: task-event-3d0d3fa3b2371cc2110e17dac3735da7
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 9e8632e44884fdb08d17578076c9af78900cf5810ac88d5f352dca14d043d03f
+fragment_checksum: b3f4b3a8d9c62d37863f56e5d83b755c91ac5076f93bc30b4e0e0052622628f1

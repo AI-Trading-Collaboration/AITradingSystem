@@ -384,3 +384,53 @@ S6 不在 owner 2026-10-04 批准的 S1–S5 序列内，是 M1 profile 暴露�
   - B. 取消 worker 在 `pytest_sessionfinish` 的第二遍清单校验（控制器在结束时仍完整字节重算）：每个内层 Full 约 −128 CPU 秒（节点 CPU 的 20%，总 CPU 约 −12%），重型 −15~−20%；改变强制验收的 worker 行合同与检查器；失去「运行期间被触碰又还原」的 mtime 检测。
   - C. 不动合同：停在约 2 小时 10 分（起跑间隔调整后），转入 DEVX-021 与发布；A/B 留给后续单独决策。
 - **owner 决策点**：A / B / C；以及 §13.4 的暂行校准是否接受为长期做法。我的建议是 C，并行完成 §13.4 与 DEVX-021，随最终候选的 Full 一起发布（owner 触发）。
+
+
+## 14. M4 最终候选：正式 Full、真实发布与 owner 决策（2026-10-05/06，已发布）
+
+### 14.1 候选与过程
+- 候选 `0cbdd9a45`（M3 之上的 composer 预算校准 `c737b2268`、DEVX-021 (A) `207ce5551`、两次重封与弃用清单钉死值 `ae8aecc87`/`0cbdd9a45`），正式事务 `gov-007-devx022-m4-formal-20261005-v1`（`failure_fix_rerun`，parent 为 v20 失败摘要），**这一次不释放、不当作测量**，Full 通过后继续走真实发布。
+- 发布前先做了两个重型发布节点的冒烟（`ff_only[full-profile-publish]` 819 s、`interrupted_after_main_commit[full-profile-publish]` 709 s，静机，均通过，与 S3b 之前的静机基线一致），再走重封链（弃用清单钉死值 `…7ac1e70619f26757e73f`、`python_test_file_count = 1400`，两次重封后生成器零差异）。
+- 前 5 个阶段：named-parent-positive 440 s、contract 281 s、integration 75 s、reproducibility 47 s、architecture-fitness 1,365 s；Full 阶段 9,058.81 s。
+
+### 14.2 Full 结果与三次同级别实测的对比
+- **`14,745 passed, 4 skipped, 0 failed`**（比 M3 多 5 个：DEVX-021 的 4 个预算测试和 1 个模块级常量不变量测试）；pytest `8,697.96 s`（2 小时 24 分 57 秒），summary `8,824.31 s`，composer 路由节点通过（1,388 s）。
+| 指标 | M2c | M3 | M4 |
+|---|---|---|---|
+| pytest 墙钟 | 8,023 s（2:13:42） | 8,187 s（2:16:27，1 失败） | 8,698 s（2:24:57，全过） |
+| profile 窗口 | 133.0 分钟 | 135.6 分钟 | 144.0 分钟 |
+| 总节点时长（重型 / 轻量） | 30.93（15.95 / 14.98） | 31.40（15.80 / 15.60） | 33.84（16.80 / 17.04） |
+| 窗口内总 CPU（均值） | 51.8 CPU 小时（69.7%） | 54.0（70.8%） | 60.6（75.1%） |
+| 轻量单元耗尽 / 尾部空闲 | 112.5 分钟 / 3.42 节点小时 | 118.3 / 3.98 | 128.7 / 4.01 |
+- M4 相对 M3：轻量 ×1.093、重型 ×1.063，**整机同步变慢**，每节点小时的 CPU 从 1.67 → 1.72 → 1.79 逐次上升；M4 相对 M3 只增加 5 个小测试和 composer 节点跑满（+0.23 节点小时），解释不了 +12% 的 CPU，
+  因此无法归因于候选代码，更像宿主侧的背景负载（计数器是系统级，没有逐进程拆分；下次测量应同时记录逐进程 CPU）。**单次 Full 墙钟的噪声约 ±8%**，三次同级别实测给出 2 小时 14–25 分的区间。
+- S3b 命中的 7 个大发布节点（秒，M2c / M3 / M4）：`closeout_admits[large]` 2,817 / 1,825 / 1,978；`ff_only[full-profile-publish]` 2,357 / 1,849 / 1,840；`ff_only[native-linked]` 2,289 / 1,695 / 1,921；
+  `interrupted_after_main_commit` 2,213 / 1,969 / 2,044；`recovers_independent_main_advance` 2,334 / 1,923 / 2,099；`lifecycle_binds[index-replaced]` 1,575 / 1,587 / 1,621；`lifecycle_binds[unchanged]` 1,655 / 1,842 / 1,821。前五个在 M3、M4 都比 M2c 快 8–30%（profile 节点时长，含 setup 与 teardown），`lifecycle_binds` 不用大 hook capsule，没有受益。
+- 结论：DEVX-022 把一次正式 Full 从 v26 的 **3 小时 35 分压到 2 小时 14–25 分（−33%～−38%）**，**没有达到 < 2 小时**。
+
+### 14.3 真实发布（owner 预授权，2026-10-06）
+- owner 2026-10-05 的决定（AskUserQuestion）：(1) Full 全过且发布前检查清单全绿，就由我直接执行真实发布（本地 main 快进 + 对 origin/main 的普通 push，不开 PR、不 force-push，任何一项不绿就停下）；(2) 后续提速选 **C：不动正式 Full 合同**。
+- 发布前检查清单（DEVX-021 §8.3）6 项全绿：main = 事务 expected_main `1e46e6ac7`；`.git/ORIG_HEAD` = `1144ce36…` ≠ main；无残留 `.lock`；无活动 git/python 进程；真实租约库重放 PASS（5,592 个事件、唯一活动租约为本事务）；距 Full 结束 0.04 小时。
+- 步骤与时间：worktree 审计 PASS → `LOCAL_MAIN_FF_PRE` → `local-publish`（WMI 脱离，01:32:45 启动）→ `LOCAL_PUBLISHED`、`recovered: false`（02:44:00，共 **71 分 15 秒**）→ `git fetch origin main`（远端 = `1e46e6ac7`，是候选的祖先）→ `REMOTE_PUSH_PRE` → 治理 CLOSEOUT 预检 PASS（无 blocker/warning）→ **普通 push `1e46e6ac7..0cbdd9a45 main -> main`** → push 后 fetch：
+  本地 main = FETCH_HEAD = origin/main = 候选 `0cbdd9a4549987364d5fd2d450d3905083ef1775` → `CLEANUP_PRE` → 事务 `RELEASED/COMPLETED`。**没有任何人工干预**：不需要删除 ORIG_HEAD、不需要清理锁、不需要恢复路径。发布后工作树审计 PASS，已切回任务分支 `claude/gov007-post-baseline-followups`（与 main 同一提交）。
+- worker 阶段时间线（相对 worker 启动 01:35:29）：`hooks_created` 01:54:55（+19.5 分钟，v26 约 14 分钟）→ `ready_held` 02:03:57（+9.0）→ `heads_switched` 02:14:46（+10.8）→ `merge_resumed` 02:19:10（+4.4）→ 合并与全部钩子 → `merge_exit 0` 02:38:35（**git 子进程 19.4 分钟**，旧的 1,800 s 上限刚好够）→ 协调端采纳（adopt）02:44:00（+5.4）。
+  **worker 共约 63 分钟：旧的 3,600 s 墙钟会在 02:35:29 终止它，早于 `merge_exit`（02:38:35），与 v26 被杀的位置相同**；DEVX-021 (A) 的新常量（10,800 s / 7,200 s）正是这次通过的原因，实测余量约 2.8 倍（worker）和 6 倍（git 子进程）。
+
+### 14.4 S3b 的真实发布验证
+- 真实租约库最近 3 小时（M4 的事务与发布）写入 35 个事件，合计 12.79 MB，**最大 0.97 MB**（此前每个大事件 22 MB）；其中 20 个是 `execution_lease_event.v3`（带 `externalized_rows.v1` 标记），15 个是不含大表的 v2；新增 blob 1 个（9.65 MB，内容寻址，被所有 v3 事件共享）。
+- 库体积 689.2 MB → 712.2 MB（M3 + M4 的全部事务与发布合计 **+23 MB**；旧法每次真实发布约 +300 MB）。发布之后真实库重放：PASS、5,622 个事件、842 个 head、无活动租约、无 issue，12.6 s（静机；含 20 个 v3 事件的 blob 读取）。历史 29 个大事件（653 MB）按设计不压缩，真实库重放成本约 11–13 s 保持不变。
+
+### 14.5 决策记录与剩余项
+- **owner 选择 C**：停在约 2 小时 14–25 分，不为进入 2 小时去改正式 Full 合同。A（夹具内层 4 个 worker，重型 −25~−35%，须参数化受保护的检查器并保留 16 worker 专项节点）与 B（取消 worker 在 `pytest_sessionfinish` 的第二遍清单校验，总 CPU 约 −12%）搁置；
+  复审条件：Full 耗时重新成为瓶颈，或 owner 主动要求。任务状态 `IN_PROGRESS` → `BASELINE_DONE`。
+- 剩余的不动合同手段（均未做）：(1) 起跑间隔 120 → 30 s（模型约 −3.5 分钟，须先实测起跑突发是否仍安全）；(2) 种子刷新（模型约 −5 分钟）：M4 现在是已发布的 PASS profile，可作为来源，按 TRADING-2564 S5 的严格回放与独立复核规则单独立项；
+  (3) 变体共享不可变前缀（S4，模型约 −6 分钟，须逐家族的覆盖等价性论证）；(4) 下次测量同时记录逐进程 CPU，区分测试负载与宿主背景负载。
+- 须向 owner 披露（汇总，细节在各自章节）：超时与等待校准仍为 `PROVISIONAL_PENDING_OWNER_REVIEW`（本批新增 composer 子进程预算 1,800 s、发布 worker 10,800 s / git 子进程 7,200 s）；O3 设计偏离与残余风险、O3 跨调用缓存未获批；S6 与 composer 测试路径都以「向 V3 来源清单加一条路径」承接哈希权威；
+  同一候选重试曾使用 v20 parent；2026-10-05 02:03 宿主卡死（显示唤醒类，非代码）；上次发布期间一次未预批的空锁删除；pytest 在退出时的 atexit 清理会删除旧的 `%TEMP%\pytest-of-JACK` 编号目录（本轮一次聚焦重跑因此在退出时多花了约 10 分钟）。
+
+### 14.6 临时资源（生命周期记录）
+- 已按精确绝对路径白名单删除（释放约 53 GB，脚本 `scratchpad/cleanup_closeout.py`，日志 `D:/Work/devx022-closeout-cleanup.log`）：`%TEMP%\pytest-of-JACK\pytest-21707/-21763/-22449/-22776`（本程序各次验证与冒烟的 basetemp，含 M4 Full 的 27.9 GB）、
+  `D:/Work/devx022-s3b`、`-s3b-l`、`-s3b-sm`、`-s3b-h`、`-s3b2`、`-s3b5`、`-s3b6`（S3b 的 basetemp）、`D:/Work/devx022-old`（旧代码导出）、`D:/Work/devx022-s1/bt_n4b`（旧格式 396 MB 租约库基准，数据已记入 §6.4、§12）。已确认无活动进程依赖，均可再生。
+- 保留：`D:/Work/devx022-t1`（profile/日志/计数器，12 MB）、各次计数器 CSV（`D:/Work/devx022-m{1,2,2b,2c,3,4}-counters.csv`）、`D:/Work/devx021-prof`、`D:/Work/devx021-smoke-logs`；`D:/Work/devx020-k`（K 实验原始数据 6.3 GB，随 DEVX-020 关闭时清理）；
+  `D:/Work/devx015-*`（已登记的证据根，不动）；`outputs/validation_runtime/gov-007-devx022-m*-*` 与 `outputs/architecture/integration_revalidation/devx015-v389/claude_m*`（证据，git 忽略）。
+- 仍待 owner 操作：5 个 HKCU `AITS-DEVX015-Test-*` 遗留注册表根（实测仍在）：运行 `D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1`（默认 dry-run，`-Execute` 需键入 DELETE；有 python.exe 运行时会拒绝）；agent 不执行删除。
