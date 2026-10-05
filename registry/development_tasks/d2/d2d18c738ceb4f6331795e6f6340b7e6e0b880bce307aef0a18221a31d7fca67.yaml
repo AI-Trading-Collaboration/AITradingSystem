@@ -14,18 +14,20 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: owner (decision needed)
+  next_owner: Claude Code coordinator
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 2026-10-05 收口（DEVX-022 第 11 节）：M2c 2 小时
-    13 分（v26 为 3 小时 35 分，累计 -38%），距 2 小时差约 13 分钟。S6 已落地（最新授权段扩一个受审路径）；S7b 已提交（登记字节规范性比对按内容摘要记忆，同进程
-    3 次校验 21.6->11.5 s，尚未经正式 Full 验证）；S7a 实测仅 -9% 已撤回；内层 Full 改 4 个 worker 搁置（改的是受保护发布检查器里的正式
-    Full 合同）。named-DQ/composer 剖析与调度顺序模型：种子顺序最多约 5 分钟，租约库 689 MB 的重放（S3b/P4 同根因）是更大的杠杆但高风险。待
-    owner 决策：(1) 是否批准 S3b（租约事件存储格式变更，需真实 .git/租约库演练与一次真实发布验证）；(2) 是否批准修改正式 Full 的
-    worker 合同策略；(3) 若都不做则以 S6+S7b 候选为终版（预计约 2 小时 10 分）转入 DEVX-021 与发布；(4) 种子刷新是否随发布候选做。须向
-    owner 披露：S6 在最新授权段扩路径而非新增授权段、同候选重试的 parent 变通、2026-10-05 主机卡死（显示唤醒类，非代码）、之前未预批的残留空锁删除。
+  unstructured_legacy_blocker_or_next_step: S3b 已获 owner 批准（2026-10-05）并登记（DEVX-022
+    第 12 节）。事实：真实租约库 689 MB，29 个大事件占 653 MB，read_file_custodies（17,936 行）占事件有效内容的
+    94%，每个大事件重放 ≈100 ms（读 9+解码 43+规范序列化 43+SHA 4）。设计：固定两处路径上、行数≥1024 的 read_file_custodies
+    换成 {"externalized_rows.v1":{sha256,row_count}} 标记，行表存为内容寻址 blob（<store>/blobs/<sha[:2]>/<sha>.json）；事件
+    ID 始终是存储形式规范体的哈希（旧事件公式不变，新事件用紧凑体）；含标记→execution_lease_event.v3/execution_lease.v3，否则
+    v2，严格互斥；内存形式展开后与旧版逐值相同；先写 blob 再写事件；blob 缺失/摘要不符/标记位置错误一律 fail closed；replay 内按摘要共享解码结果（不跨调用）。验收：往返与逐值相等、真实库新旧代码
+    replay 逐项一致、篡改反例全部拒绝、混合库 PASS、事件 22.9 MB→<1.5 MB、夹具库重放 5.5 s→≤0.8 s、7 个大发布节点端到端通过、M3
+    正式 Full 实测。历史 653 MB 不压缩（另行设计）；需要一次真实发布最终验证（发布前由 owner 触发）。下一步：实现 parallel_control_kernel
+    的 stored form/blob 读写与 parse_lease_event 扩展，补测试，在真实库副本上做新旧 replay 对比，再做 M3。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
@@ -251,6 +253,38 @@ events:
   - change:gov-007-devx022-close-task-20261005-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-ac452f03860926624fdcfecbc58301a7
+- schema_version: task_event.v1
+  task_id: DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-05T03:24:37Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx022-s3breg-task-20261005-v1
+  lane_id: null
+  base_commit: 1e46e6ac767b309a880c41dbb2796981f8a61a7e
+  previous_state_event_id: task-event-ac452f03860926624fdcfecbc58301a7
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: S3b 已获 owner 批准（2026-10-05）并登记（DEVX-022 第 12 节）。事实：真实租约库
+      689 MB，29 个大事件占 653 MB，read_file_custodies（17,936 行）占事件有效内容的 94%，每个大事件重放 ≈100
+      ms（读 9+解码 43+规范序列化 43+SHA 4）。设计：固定两处路径上、行数≥1024 的 read_file_custodies 换成 {"externalized_rows.v1":{sha256,row_count}}
+      标记，行表存为内容寻址 blob（<store>/blobs/<sha[:2]>/<sha>.json）；事件 ID 始终是存储形式规范体的哈希（旧事件公式不变，新事件用紧凑体）；含标记→execution_lease_event.v3/execution_lease.v3，否则
+      v2，严格互斥；内存形式展开后与旧版逐值相同；先写 blob 再写事件；blob 缺失/摘要不符/标记位置错误一律 fail closed；replay
+      内按摘要共享解码结果（不跨调用）。验收：往返与逐值相等、真实库新旧代码 replay 逐项一致、篡改反例全部拒绝、混合库 PASS、事件 22.9 MB→<1.5
+      MB、夹具库重放 5.5 s→≤0.8 s、7 个大发布节点端到端通过、M3 正式 Full 实测。历史 653 MB 不压缩（另行设计）；需要一次真实发布最终验证（发布前由
+      owner 触发）。下一步：实现 parallel_control_kernel 的 stored form/blob 读写与 parse_lease_event
+      扩展，补测试，在真实库副本上做新旧 replay 对比，再做 M3。
+    acceptance_criteria: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约
+      20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实 .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5
+      最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
+    notes: 2026-10-05：owner 批准 S3b；设计、风险与验收登记在 DEVX-022 第 12 节。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx022-s3breg-task-20261005-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a2b2f411130780d74a699f57134cb9d0
 projection:
   legacy_first_eight_cells:
   - DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
@@ -258,20 +292,21 @@ projection:
     lease-store replay, test structure)
   - P0
   - IN_PROGRESS
-  - owner (decision needed)
-  - 2026-10-05 收口（DEVX-022 第 11 节）：M2c 2 小时 13 分（v26 为 3 小时 35 分，累计 -38%），距 2 小时差约
-    13 分钟。S6 已落地（最新授权段扩一个受审路径）；S7b 已提交（登记字节规范性比对按内容摘要记忆，同进程 3 次校验 21.6->11.5 s，尚未经正式
-    Full 验证）；S7a 实测仅 -9% 已撤回；内层 Full 改 4 个 worker 搁置（改的是受保护发布检查器里的正式 Full 合同）。named-DQ/composer
-    剖析与调度顺序模型：种子顺序最多约 5 分钟，租约库 689 MB 的重放（S3b/P4 同根因）是更大的杠杆但高风险。待 owner 决策：(1) 是否批准
-    S3b（租约事件存储格式变更，需真实 .git/租约库演练与一次真实发布验证）；(2) 是否批准修改正式 Full 的 worker 合同策略；(3) 若都不做则以
-    S6+S7b 候选为终版（预计约 2 小时 10 分）转入 DEVX-021 与发布；(4) 种子刷新是否随发布候选做。须向 owner 披露：S6 在最新授权段扩路径而非新增授权段、同候选重试的
-    parent 变通、2026-10-05 主机卡死（显示唤醒类，非代码）、之前未预批的残留空锁删除。
+  - Claude Code coordinator
+  - S3b 已获 owner 批准（2026-10-05）并登记（DEVX-022 第 12 节）。事实：真实租约库 689 MB，29 个大事件占 653 MB，read_file_custodies（17,936
+    行）占事件有效内容的 94%，每个大事件重放 ≈100 ms（读 9+解码 43+规范序列化 43+SHA 4）。设计：固定两处路径上、行数≥1024 的
+    read_file_custodies 换成 {"externalized_rows.v1":{sha256,row_count}} 标记，行表存为内容寻址
+    blob（<store>/blobs/<sha[:2]>/<sha>.json）；事件 ID 始终是存储形式规范体的哈希（旧事件公式不变，新事件用紧凑体）；含标记→execution_lease_event.v3/execution_lease.v3，否则
+    v2，严格互斥；内存形式展开后与旧版逐值相同；先写 blob 再写事件；blob 缺失/摘要不符/标记位置错误一律 fail closed；replay 内按摘要共享解码结果（不跨调用）。验收：往返与逐值相等、真实库新旧代码
+    replay 逐项一致、篡改反例全部拒绝、混合库 PASS、事件 22.9 MB→<1.5 MB、夹具库重放 5.5 s→≤0.8 s、7 个大发布节点端到端通过、M3
+    正式 Full 实测。历史 653 MB 不压缩（另行设计）；需要一次真实发布最终验证（发布前由 owner 触发）。下一步：实现 parallel_control_kernel
+    的 stored form/blob 读写与 parse_lease_event 扩展，补测试，在真实库副本上做新旧 replay 对比，再做 M3。
   - S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
     .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5 最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
-  - 2026-10-05：S7 结果、named-DQ/composer 剖析、种子顺序模型与待 owner 决策写入 DEVX-022 第 11 节。
+  - 2026-10-05：owner 批准 S3b；设计、风险与验收登记在 DEVX-022 第 12 节。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 5593dd25c185c3d91cad6b71d5229bfb1d66f021186372ced842662c572ef17c
-last_event_id: task-event-ac452f03860926624fdcfecbc58301a7
+  canonical_row_sha256: 7fea7cfa55014bec8fc3d19061c939608918dad47fea655dee8639804409ec25
+last_event_id: task-event-a2b2f411130780d74a699f57134cb9d0
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 34f4cb8d1d986b3723e4f629911af855801c636a9392efca2e45e2d908f7aea2
+fragment_checksum: e5b7be65f4bd809eb5ed61a821bc8a67466d1e550cd881778249cb66334ee2a5

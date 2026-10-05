@@ -266,3 +266,44 @@ S6 不在 owner 2026-10-04 批准的 S1–S5 序列内，是 M1 profile 暴露�
   4. 种子刷新是否随发布候选一并做。
 - 临时资源：本段的 basetemp 已按白名单删除（释放约 14 GB）；保留 `D:/Work/devx022-t1` 下的 profile/日志/计数器（约 12 MB）、`D:/Work/devx022-s1/bt_n4b`（S3b 基准，486 MB）、`D:/Work/devx020-k`；无活动进程依赖。
 
+## 12. S3b：租约事件的行表外置（owner 2026-10-05 批准；实施前登记）
+
+### 12.1 事实（真实租约库与真实大事件，2026-10-05 实测）
+- 真实租约库 5,502 个文件 / **689 MB**，其中 29 个大事件（22.4–22.9 MB 文件）占 653 MB；一个大事件的紧凑 JSON 为 10.3 MB，其中 **`read_file_custodies`（17,936 行）占 9.65 MB（94%）**，其余是 `profile_inspection.captures`（0.32 MB）等。
+  文件是带缩进写入的，55% 的磁盘体积是空白。该行表在每个后续事件里原样重复一份（每个事件内嵌整个 execution 快照）。
+- 一个大事件的重放成本（隔离、热缓存）：读文件 9 ms + `json.loads` 43 ms + 规范序列化 43 ms + SHA-256 4 ms ≈ **100 ms/事件**；51 个事件 ≈ 5 s，与 S3a 之后实测的重放（396 MB 库 5.5 s）一致。
+  结论：S3a 之后重放的剩余成本几乎全是「每个事件重新解码并规范序列化那 10 MB 行表」；去掉行表后同一事件解码 1.1 ms、规范序列化 2.1 ms。
+- 每次真实发布向库里追加约 300 MB，之后每条围栏命令（钩子 ×8、worker、恢复、准入、live proof）的重放成本随之线性增长。
+
+### 12.2 设计
+1. **存储形式（stored form）**：满足阈值的 `read_file_custodies`（行数 ≥ `EXTERNALIZED_ROWS_MINIMUM = 1024`，工程不变量：低于它内嵌更省，且小夹具保持原样）只在两个固定位置被替换：
+   `execution.hook_capsule.ready.inputs.read_file_custodies` 与 `execution.publication_attempts[i].hook_capsule.ready.inputs.read_file_custodies`，
+   换成标记 `{"externalized_rows.v1": {"sha256": <规范字节的 SHA-256>, "row_count": N}}`。
+2. **行表存为内容寻址 blob**：`<store>/blobs/<sha[:2]>/<sha>.json`，内容是行表的规范 JSON 字节（`sort_keys`、紧凑分隔符、`ensure_ascii=False`），blob 的 SHA-256 即标记里的 `sha256`，因此校验只需对原始字节做一次哈希。
+3. **事件 ID 始终是「存储形式」规范体的哈希**：旧事件（内嵌）ID 公式不变；新事件的存储形式是紧凑体，所以验证 ID 不再序列化 10 MB。schema：含标记 → `execution_lease_event.v3` / `execution_lease.v3`；不含 → v2；二者严格互斥（含标记却写 v2、或 v3 却无标记，一律无效）。
+4. **内存形式不变**：解析时把标记展开成与旧版逐值相同的 `list`（子类 `ExternalizedRows` 携带 `sha256`，使 `_body()` 重新压缩时无需再序列化行表）。所有下游校验器（`validate_execution`、热点校验、过渡规则、S3a 的 replay 内记忆）看到的数据与旧版相同。
+5. **写入顺序与持久性**：先原子写 blob（已存在且字节摘要匹配则复用，不匹配则失败，不覆盖），再原子写事件；崩溃只会留下无害的孤儿 blob。写入在仲裁锁内，沿用现有 `write_json_atomic` 类写入器。
+6. **读取与失败闭合**：blob 缺失、摘要不符、行数不符、非列表、标记出现在固定位置之外、无 blob 读取器却遇到标记，一律使该事件无效，`replay` 以 `LEASE_EVENT_INVALID` fail closed（与损坏事件同级）。
+7. **replay 内共享**：同一次 `replay()` 调用内，相同摘要的 blob 只读取、哈希、解码一次，并在各事件间共享同一个 `ExternalizedRows` 对象（沿用 S3a「只在单次调用内、调用结束即失效、不落盘」的原则）。
+8. **兼容**：旧事件（内嵌 v2）原样可读、ID 公式不变；v3 事件被不认识它的旧代码拒绝（`LEASE_EVENT_SCHEMA`），是显式失败而不是误读。
+9. **不改变**：仲裁与过渡规则、`validate_execution` 语义、阈值以下的列表、`profile_inspection.captures` 等其余字段、历史事件字节。
+
+### 12.3 风险与缓解
+- 租约库是仲裁权威：任何格式改动都要有完整的负向测试（见验收 3）和对真实库的逐项一致性证明（验收 2）。
+- 「夹具全部通过、真实仓库才出问题」的风险：新旧事件混合只在真实库出现，所以必须在真实库副本上做新旧代码的 replay 对比，并构造混合库（旧内嵌 + 新 v3）测试；并且需要一次真实发布来最终验证（发布前由 owner 触发）。
+- 直接解析事件的其它调用点（`named_quality_dispatch`、`checkout_telemetry`、`task_checkpoint`、`workflow_integration`、`prospective_event_time_evidence`、`workflow_coordination` 的退役回放）读取的是 checkout/checkpoint/dispatch 租约事件，不含行表；若遇到标记则显式失败，并有测试覆盖。
+- 历史 653 MB 保持原样（历史租约的压缩/归档涉及审计证据，需另行设计），所以真实库的 live proof 重放不会立刻变快；收益主要在新写入的库（夹具、之后的每次真实发布）。
+
+### 12.4 验收标准
+1. 往返：对每个真实大事件，`compact(expand(stored)) == stored`，且展开结果与旧版内存形式逐值相等。
+2. 真实租约库（689 MB）：新代码 `replay()` 与旧代码结论逐项一致（事件数、heads、active、issues）；旧事件继续可读。
+3. 篡改反例全部拒绝：blob 字节被改、标记的 `sha256` 或 `row_count` 被改、blob 缺失、标记出现在非固定路径、schema 与标记不匹配、事件 ID 与标记不一致、无读取器遇到标记。
+4. 混合库（旧内嵌事件 + 新 v3 事件）`replay` PASS；`_append_event` 的不可变性检查对 v3 事件仍有效。
+5. 事件文件体积：22.9 MB → < 1.5 MB；夹具租约库（396 MB / 45 事件）单次重放 5.5 s → 目标 ≤ 0.8 s。
+6. 大发布节点（`ff_only`、`replays_candidate_publish`、`lifecycle_binds`、`closeout_admits`、`recovers_independent_main_advance`、`interrupted_after_main_commit`）与 `large-full-profile-publish` 端到端通过（钩子 ×8、worker、恢复、`adopt-published`）。
+7. `arch_005`、`devx015` 相关既有测试全部通过。
+8. M3 正式 Full 实测墙钟（不发布），并更新本文件。
+
+### 12.5 不做
+- 历史租约的压缩/归档；`profile_inspection.captures` 的外置；改变事件缩进写法以外的写入语义。
+
