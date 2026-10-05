@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
+import stat
 import threading
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
@@ -18,7 +21,7 @@ from ai_trading_system.platform.architecture.parallel_control import (
     ControlIssue,
     ParallelControlError,
 )
-from ai_trading_system.platform.artifacts import write_json_atomic
+from ai_trading_system.platform.artifacts import write_bytes_atomic, write_json_atomic
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 POLICY_SCHEMA_VERSION = "arch_005_parallel_control_policy.v1"
@@ -238,15 +241,29 @@ class LeaseEvent:
     occurred_at: str
     actor: str
     reason_codes: tuple[str, ...]
+    # DEVX-022 S3b: how this event is STORED. False = every historical event (the custody table is
+    # embedded, original id formula); True = qualifying tables are externalized (schema v3).
+    rows_externalized: bool = False
 
     def _body(self) -> dict[str, object]:
+        """The stored form: the id is the hash of exactly this canonical body."""
+        lease = self.lease.to_dict()
+        schema = (
+            LEASE_EVENT_SCHEMA_VERSION
+            if self.lease.execution is None
+            else "execution_lease_event.v2"
+        )
+        if self.rows_externalized and isinstance(lease.get("execution"), Mapping):
+            execution, changed = _rewrite_rows(
+                cast(Mapping[str, Any], lease["execution"]), _compact_rows,
+            )
+            if changed:
+                lease["execution"] = dict(execution)
+                lease["schema_version"] = LEASE_V3_SCHEMA_VERSION
+                schema = LEASE_EVENT_V3_SCHEMA_VERSION
         return {
-            "schema_version": (
-                LEASE_EVENT_SCHEMA_VERSION
-                if self.lease.execution is None
-                else "execution_lease_event.v2"
-            ),
-            "lease": self.lease.to_dict(),
+            "schema_version": schema,
+            "lease": lease,
             "previous_event_id": self.previous_event_id,
             "from_state": self.from_state,
             "to_state": self.to_state,
@@ -731,6 +748,8 @@ class FileExecutionLeaseStore:
         self.policy = policy
         self.events_root = self.root / "events"
         self.arbiter_root = self.root / "arbiter.lock"
+        # DEVX-022 S3b: content-addressed row tables named by externalized (v3) events.
+        self.blobs = ExternalizedRowsReader(self.root / "blobs")
         self._atomic_context = threading.local()
         self.coordination_binding: Any = None
 
@@ -744,12 +763,13 @@ class FileExecutionLeaseStore:
         issues: set[ControlIssue] = set()
         if self.events_root.exists():
             # DEVX-022 S3a: the scope memoizes equal large sub-structures for this call only.
-            with replay_validation_scope():
+            # DEVX-022 S3b: a table blob is read, hashed and decoded once per call and shared.
+            with replay_validation_scope(), _rows_sharing_scope():
                 for path in sorted(self.events_root.glob("*/*.json")):
                     try:
-                        events.append(
-                            parse_lease_event(json.loads(path.read_text(encoding="utf-8")))
-                        )
+                        events.append(parse_lease_event(
+                            json.loads(path.read_text(encoding="utf-8")), blobs=self.blobs,
+                        ))
                     except (OSError, json.JSONDecodeError, ParallelControlError) as exc:
                         issues.add(_issue("LEASE_EVENT_INVALID", (), path.as_posix(), str(exc)))
         # Each local event was fully validated by parse_lease_event above in
@@ -980,7 +1000,7 @@ class FileExecutionLeaseStore:
                     (self.events_root / lease_id / f"{previous_event}.json").read_text(
                         encoding="utf-8",
                     )
-                ))
+                ), blobs=self.blobs)
                 if event.from_state == "BLOCKED" and event.reason_codes == ("REQUEST_CANCELLED",):
                     return head
             if (
@@ -1183,6 +1203,10 @@ class FileExecutionLeaseStore:
 
     def _append_event(self, event: LeaseEvent) -> None:
         path = self.events_root / event.lease.lease_id / f"{event.event_id}.json"
+        if event.rows_externalized:
+            # DEVX-022 S3b: every named blob exists (and matches) before the event naming it.
+            for rows in _qualifying_rows(event.lease.execution):
+                self.blobs.write(rows)
         if path.exists():
             existing = json.loads(path.read_text(encoding="utf-8"))
             if existing != event.to_dict():
@@ -1250,6 +1274,285 @@ class FileExecutionLeaseStore:
             yield
 
 
+# DEVX-022 S3b: externalized row tables in lease events -----------------------------------------
+#
+# A publication execution carries the hook-ready custody list (`read_file_custodies`, ~17.9k rows,
+# 94% of a 22 MB event) and every later event repeats the whole execution snapshot. Replaying one
+# such event cost about 100 ms (read, decode, canonical serialize, hash), almost all of it for that
+# list. The stored form of an event now replaces the list, at two fixed positions only, with a
+# marker naming the SHA-256 of its canonical bytes; the bytes live in a content-addressed blob next
+# to the events. The event id is always the hash of the *stored* canonical body, so a stored form
+# that embeds the list (every historical event) keeps its original id formula, and a compact one is
+# verified without serializing the list. In memory the list is expanded back to exactly the value
+# the old code held, so every validator sees unchanged data.
+#
+# EXTERNALIZED_ROWS_MINIMUM is an engineering invariant, not a tunable heuristic: below it embedding
+# is cheaper than a blob and the small fixtures stay byte-for-byte as they were.
+EXTERNALIZED_ROWS_MINIMUM = 1024
+EXTERNALIZED_ROWS_MARKER = "externalized_rows.v1"
+EXTERNALIZED_ROWS_FIELD = "read_file_custodies"
+EXTERNALIZED_ROWS_MAX_BYTES = 64 * 1024 * 1024
+LEASE_V3_SCHEMA_VERSION = "execution_lease.v3"
+LEASE_EVENT_V3_SCHEMA_VERSION = "execution_lease_event.v3"
+_HEX_DIGITS = frozenset("0123456789abcdef")
+
+
+class ExternalizedRows(list[Any]):
+    """A verified row table, shared by every event of one replay call and never mutated.
+
+    It carries the SHA-256 of its canonical bytes so that the stored form of an event can be
+    rebuilt without serializing the rows again. Every mutator raises: a changed row would
+    silently invalidate that digest. (A deep copy is a plain list and is simply hashed again.)
+    """
+
+    __slots__ = ("sha256",)
+    sha256: str
+
+    def _immutable(self, *args: Any, **kwargs: Any) -> Any:
+        raise TypeError("externalized rows are immutable")
+
+    __setitem__ = __delitem__ = __iadd__ = __imul__ = _immutable
+    append = extend = insert = pop = remove = clear = sort = reverse = _immutable
+
+    def __copy__(self) -> list[Any]:
+        return list(self)
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> list[Any]:
+        return copy.deepcopy(list(self), memo)
+
+
+_ROWS_SHARING: ContextVar[dict[str, ExternalizedRows] | None] = ContextVar(
+    "lease_replay_externalized_rows", default=None,
+)
+
+
+@contextmanager
+def _rows_sharing_scope() -> Iterator[None]:
+    """Share decoded row tables inside ONE replay call; nothing survives the call."""
+    token = _ROWS_SHARING.set({})
+    try:
+        yield
+    finally:
+        _ROWS_SHARING.reset(token)
+
+
+def _rows_canonical_bytes(rows: Sequence[Any]) -> bytes:
+    return json.dumps(rows, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+
+
+def _is_sha256_hex(value: object) -> bool:
+    return isinstance(value, str) and len(value) == 64 and set(value) <= _HEX_DIGITS
+
+
+def _adopt_rows(rows: Any) -> Any:
+    """Give a qualifying table its digest once; any other value passes through unchanged."""
+    if not isinstance(rows, list) or len(rows) < EXTERNALIZED_ROWS_MINIMUM:
+        return rows
+    if type(rows) is ExternalizedRows and hasattr(rows, "sha256"):
+        return rows
+    adopted = ExternalizedRows(rows)
+    adopted.sha256 = hashlib.sha256(_rows_canonical_bytes(rows)).hexdigest()
+    return adopted
+
+
+def _compact_rows(rows: Any) -> Any:
+    """Stored form of a qualifying table: the marker (digest from the shared table)."""
+    adopted = _adopt_rows(rows)
+    if type(adopted) is not ExternalizedRows:
+        return rows
+    return {
+        EXTERNALIZED_ROWS_MARKER: {"sha256": adopted.sha256, "row_count": len(adopted)},
+    }
+
+
+def _rewrite_capsule(capsule: Any, convert: Callable[[Any], Any]) -> tuple[Any, bool]:
+    if not isinstance(capsule, Mapping):
+        return capsule, False
+    ready = capsule.get("ready")
+    if not isinstance(ready, Mapping):
+        return capsule, False
+    inputs = ready.get("inputs")
+    if not isinstance(inputs, Mapping) or EXTERNALIZED_ROWS_FIELD not in inputs:
+        return capsule, False
+    current = inputs[EXTERNALIZED_ROWS_FIELD]
+    converted = convert(current)
+    if converted is current:
+        return capsule, False
+    return {
+        **capsule,
+        "ready": {**ready, "inputs": {**inputs, EXTERNALIZED_ROWS_FIELD: converted}},
+    }, True
+
+
+def _rewrite_rows(
+    execution: Mapping[str, Any], convert: Callable[[Any], Any],
+) -> tuple[Mapping[str, Any], bool]:
+    """Apply `convert` to the custody table at the two fixed positions; copy on write."""
+    result = dict(execution)
+    changed = False
+    capsule, hit = _rewrite_capsule(result.get("hook_capsule"), convert)
+    if hit:
+        result["hook_capsule"] = capsule
+        changed = True
+    attempts = result.get("publication_attempts")
+    if isinstance(attempts, list):
+        rewritten = list(attempts)
+        touched = False
+        for index, attempt in enumerate(attempts):
+            if not isinstance(attempt, Mapping):
+                continue
+            capsule, hit = _rewrite_capsule(attempt.get("hook_capsule"), convert)
+            if hit:
+                rewritten[index] = {**attempt, "hook_capsule": capsule}
+                touched = True
+        if touched:
+            result["publication_attempts"] = rewritten
+            changed = True
+    return (result if changed else execution), changed
+
+
+def _qualifying_rows(execution: Mapping[str, Any] | None) -> list[ExternalizedRows]:
+    """The tables of this execution that the stored form externalizes, each with its digest."""
+    if not isinstance(execution, Mapping):
+        return []
+    found: list[ExternalizedRows] = []
+
+    def collect(rows: Any) -> Any:
+        adopted = _adopt_rows(rows)
+        if type(adopted) is ExternalizedRows:
+            found.append(adopted)
+        return rows
+
+    _rewrite_rows(execution, collect)
+    return found
+
+
+def _marker_payload(value: object) -> tuple[str, int] | None:
+    if not isinstance(value, Mapping) or set(value) != {EXTERNALIZED_ROWS_MARKER}:
+        return None
+    inner = value[EXTERNALIZED_ROWS_MARKER]
+    if (
+        not isinstance(inner, Mapping) or set(inner) != {"sha256", "row_count"}
+        or not _is_sha256_hex(inner["sha256"])
+        or type(inner["row_count"]) is not int
+        or inner["row_count"] < EXTERNALIZED_ROWS_MINIMUM
+    ):
+        raise ParallelControlError("LEASE_EXTERNALIZED_ROWS_INVALID", "marker")
+    return cast(str, inner["sha256"]), inner["row_count"]
+
+
+def _assert_no_stray_marker(node: object) -> None:
+    """A marker is legitimate only as the value of a custody-table field."""
+    if isinstance(node, Mapping):
+        if set(node) == {EXTERNALIZED_ROWS_MARKER}:
+            raise ParallelControlError("LEASE_EXTERNALIZED_ROWS_INVALID", "marker position")
+        for key, value in node.items():
+            if key != EXTERNALIZED_ROWS_FIELD:
+                _assert_no_stray_marker(value)
+    elif isinstance(node, list):
+        for item in node:
+            _assert_no_stray_marker(item)
+
+
+@dataclass(frozen=True)
+class ExternalizedRowsReader:
+    """Content-addressed row-table blobs next to the events of one lease store."""
+
+    root: Path
+
+    def path_for(self, sha256: str) -> Path:
+        if not _is_sha256_hex(sha256):
+            raise ParallelControlError("LEASE_EXTERNALIZED_ROWS_INVALID", "digest")
+        return self.root / sha256[:2] / f"{sha256}.json"
+
+    def read(self, sha256: str, row_count: int) -> ExternalizedRows:
+        shared = _ROWS_SHARING.get()
+        if shared is not None and sha256 in shared:
+            known = shared[sha256]
+            if len(known) != row_count:
+                raise ParallelControlError("LEASE_EXTERNALIZED_ROWS_INVALID", "row count")
+            return known
+        path = self.path_for(sha256)
+        try:
+            info = path.lstat()
+            if not stat.S_ISREG(info.st_mode) or info.st_size > EXTERNALIZED_ROWS_MAX_BYTES:
+                raise ParallelControlError("LEASE_EXTERNALIZED_ROWS_INVALID", "blob file")
+            raw = path.read_bytes()
+        except OSError as exc:
+            raise ParallelControlError("LEASE_EXTERNALIZED_ROWS_UNAVAILABLE", sha256) from exc
+        if hashlib.sha256(raw).hexdigest() != sha256:
+            raise ParallelControlError("LEASE_EXTERNALIZED_ROWS_DIGEST", sha256)
+        try:
+            decoded = json.loads(raw)
+        except ValueError as exc:
+            raise ParallelControlError("LEASE_EXTERNALIZED_ROWS_INVALID", "blob json") from exc
+        if (
+            not isinstance(decoded, list) or len(decoded) != row_count
+            or any(not isinstance(row, dict) for row in decoded)
+        ):
+            raise ParallelControlError("LEASE_EXTERNALIZED_ROWS_INVALID", "blob rows")
+        rows = ExternalizedRows(decoded)
+        rows.sha256 = sha256
+        if shared is not None:
+            shared[sha256] = rows
+        return rows
+
+    def write(self, rows: ExternalizedRows) -> None:
+        """Create the blob before the event that names it; an existing one must still match."""
+        path = self.path_for(rows.sha256)
+        if path.exists():
+            try:
+                existing = path.read_bytes()
+            except OSError as exc:
+                raise ParallelControlError(
+                    "LEASE_EXTERNALIZED_ROWS_UNAVAILABLE", rows.sha256,
+                ) from exc
+            if hashlib.sha256(existing).hexdigest() != rows.sha256:
+                raise ParallelControlError("LEASE_EXTERNALIZED_ROWS_DIGEST", rows.sha256)
+            return
+        content = _rows_canonical_bytes(rows)
+        if hashlib.sha256(content).hexdigest() != rows.sha256:
+            raise ParallelControlError("LEASE_EXTERNALIZED_ROWS_DIGEST", rows.sha256)
+        write_bytes_atomic(path, content)
+
+    def expand(
+        self, execution: Mapping[str, Any] | None,
+    ) -> tuple[Mapping[str, Any] | None, bool]:
+        """Stored form -> the in-memory execution; also whether any table was externalized."""
+        if not isinstance(execution, Mapping):
+            return execution, False
+        _assert_no_stray_marker(execution)
+        used = False
+
+        def restore(value: Any) -> Any:
+            nonlocal used
+            marker = _marker_payload(value)
+            if marker is None:
+                return value
+            used = True
+            return self.read(*marker)
+
+        expanded, _changed = _rewrite_rows(execution, restore)
+        return expanded, used
+
+
+def _expand_stored_execution(
+    execution: Any, blobs: ExternalizedRowsReader | None,
+) -> tuple[Any, bool]:
+    if not isinstance(execution, Mapping):
+        return execution, False
+    if blobs is None:
+        _assert_no_stray_marker(execution)
+
+        def probe(value: Any) -> Any:
+            if _marker_payload(value) is not None:
+                raise ParallelControlError("LEASE_EXTERNALIZED_ROWS_UNAVAILABLE", "no reader")
+            return value
+        _rewrite_rows(execution, probe)
+        return execution, False
+    return blobs.expand(execution)
+
+
 def _lease_event(
     *,
     lease: ExecutionLease,
@@ -1260,6 +1563,13 @@ def _lease_event(
     actor: str,
     reason_codes: tuple[str, ...],
 ) -> LeaseEvent:
+    externalized = False
+    if lease.execution is not None:
+        # DEVX-022 S3b: every new event is written in the externalized stored form. Qualifying
+        # tables get their digest once here and are shared by the stored form and the blob write.
+        adopted, externalized = _rewrite_rows(lease.execution, _adopt_rows)
+        if externalized:
+            lease = replace(lease, execution=adopted)
     prototype = LeaseEvent(
         event_id="",
         lease=lease,
@@ -1269,13 +1579,22 @@ def _lease_event(
         occurred_at=occurred_at.isoformat(),
         actor=actor,
         reason_codes=reason_codes,
+        rows_externalized=externalized,
     )
     return replace(prototype, event_id=f"lease-event-{_canonical_sha256(prototype._body())[:20]}")
 
 
-def parse_lease_event(payload: Mapping[str, Any]) -> LeaseEvent:
+def parse_lease_event(
+    payload: Mapping[str, Any], *, blobs: ExternalizedRowsReader | None = None,
+) -> LeaseEvent:
+    """Parse one STORED event. Externalized tables need the blob reader of the store
+    (DEVX-022 S3b); without one, an event that names a blob fails closed instead of being misread.
+    """
     event_id = _text(payload.get("event_id"), "event_id")
     lease_payload = _mapping(payload.get("lease"), "lease")
+    execution_payload, externalized = _expand_stored_execution(
+        lease_payload.get("execution"), blobs,
+    )
     resource_payloads = lease_payload.get("resources")
     if not isinstance(resource_payloads, list):
         raise ParallelControlError("LEASE_RESOURCES", "resources must be a list")
@@ -1320,16 +1639,21 @@ def parse_lease_event(payload: Mapping[str, Any]) -> LeaseEvent:
         ),
         resources=resources,
         evidence_refs=_strings(lease_payload.get("evidence_refs"), "evidence_refs"),
-        execution=lease_payload.get("execution"),
+        execution=execution_payload,
     )
     if lease.execution is not None:
         from ai_trading_system.platform.architecture.workflow_coordination import validate_execution
 
         validate_execution(lease)
-    if payload.get("schema_version") != (
-        LEASE_EVENT_SCHEMA_VERSION if lease.execution is None else "execution_lease_event.v2"
-    ) or lease_payload.get("schema_version") != (
-        LEASE_SCHEMA_VERSION if lease.execution is None else "execution_lease.v2"
+    if lease.execution is None:
+        event_schema, lease_schema = LEASE_EVENT_SCHEMA_VERSION, LEASE_SCHEMA_VERSION
+    elif externalized:
+        event_schema, lease_schema = LEASE_EVENT_V3_SCHEMA_VERSION, LEASE_V3_SCHEMA_VERSION
+    else:
+        event_schema, lease_schema = "execution_lease_event.v2", "execution_lease.v2"
+    if (
+        payload.get("schema_version") != event_schema
+        or lease_payload.get("schema_version") != lease_schema
     ):
         raise ParallelControlError("LEASE_EVENT_SCHEMA", event_id)
     prototype = LeaseEvent(
@@ -1349,7 +1673,10 @@ def parse_lease_event(payload: Mapping[str, Any]) -> LeaseEvent:
         occurred_at=_text(payload.get("occurred_at"), "occurred_at"),
         actor=_text(payload.get("actor"), "actor"),
         reason_codes=_strings(payload.get("reason_codes"), "reason_codes"),
+        rows_externalized=externalized,
     )
+    # The id is the hash of the stored body: the externalized form re-compacts from the shared,
+    # digest-carrying tables, so an embedded (historical) event is hashed exactly as before.
     expected = f"lease-event-{_canonical_sha256(prototype._body())[:20]}"
     if event_id != expected:
         raise ParallelControlError("LEASE_EVENT_HASH", event_id)
