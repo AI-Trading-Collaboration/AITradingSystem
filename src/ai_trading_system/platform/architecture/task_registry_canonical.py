@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
 import re
@@ -24,7 +25,7 @@ from ai_trading_system.platform.architecture.task_registry_shadow import (
     load_shadow_v2_fragments,
 )
 from ai_trading_system.platform.artifacts.writer import write_bytes_atomic
-from ai_trading_system.yaml_loader import safe_load_yaml_path
+from ai_trading_system.yaml_loader import safe_load_yaml_path, safe_load_yaml_text
 
 POLICY_PATH = "config/architecture/arch_005_s5_task_source_cutover.yaml"
 CANONICAL_FRAGMENT_SCHEMA = "arch_005_task_registry_fragment.v1"
@@ -1643,10 +1644,29 @@ def _load_mapping(path: Path) -> dict[str, Any]:
     return value
 
 
+# DEVX-022 S7b: "these exact bytes equal the canonical serialization of the mapping they parse to"
+# is a pure function of the bytes (same process, same YAML library), so a byte string that already
+# passed the check never needs its re-serialization repeated. The file is still read and parsed on
+# every call (nothing about the filesystem is cached); only the repeated yaml.safe_dump comparison
+# of identical bytes is skipped. Only passing digests are stored, so non-canonical content is
+# rejected every time, and any changed byte hashes differently and is checked in full. One
+# readiness evaluation validates the same task fragments three times (tasks, Atlas page, snapshot).
+_CANONICAL_YAML_VERIFIED: set[bytes] = set()
+
+
 def _load_generated_mapping(path: Path) -> dict[str, Any]:
-    value = _load_mapping(path)
-    if path.read_bytes() != _yaml_bytes(value):
-        _fail("NON_CANONICAL_GENERATED_YAML", str(path))
+    raw = path.read_bytes()
+    # One read feeds both the parse and the byte check; the text is decoded exactly as
+    # Path.read_text(encoding="utf-8") does (TextIOWrapper, universal newlines).
+    text = io.TextIOWrapper(io.BytesIO(raw), encoding="utf-8").read()
+    value = safe_load_yaml_text(text)
+    if not isinstance(value, dict):
+        _fail("MAPPING_REQUIRED", str(path))
+    digest = hashlib.sha256(raw).digest()
+    if digest not in _CANONICAL_YAML_VERIFIED:
+        if raw != _yaml_bytes(value):
+            _fail("NON_CANONICAL_GENERATED_YAML", str(path))
+        _CANONICAL_YAML_VERIFIED.add(digest)
     return value
 
 
