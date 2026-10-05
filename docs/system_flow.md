@@ -321,6 +321,19 @@ schema、资源冲突、actor/coordinator 权限和 execution lease TTL 保持�
 `phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1`，以精确 34 项当前源码闭包
 继承 OPS-079，不改写 C/D/S5 冻结链或 OPS-079 的历史合同。
 
+DEVX-022 S3b 改变 `FileExecutionLeaseStore` 的事件落盘形式，读取历史事件不受影响。发布 execution 的 hook-ready
+自定义清单 `read_file_custodies`（真实约 17.9k 行，占 22 MB 事件的 94%，且每个后续事件都重复一份）在存储形式里，
+仅在 `execution.hook_capsule.ready.inputs` 与 `execution.publication_attempts[i].hook_capsule.ready.inputs`
+两个固定位置、且行数不少于 1,024 时，被替换为标记 `{"externalized_rows.v1": {sha256, row_count}}`；行表以规范
+JSON 字节存为内容寻址 blob `<store>/blobs/<sha[:2]>/<sha>.json`，先原子写 blob 再写事件。事件 ID 始终是**存储形式**
+规范体的哈希：历史（内嵌、v2）事件保持原公式，含标记的 v3 事件（`execution_lease_event.v3` / `execution_lease.v3`，
+与标记严格互斥）验证时无需再序列化行表。读取时展开为与旧版逐值相同的不可变 `ExternalizedRows`（携带摘要，拷贝为
+普通 list），所有下游校验器看到的数据不变；blob 缺失、摘要或行数不符、标记位置错误、无读取器遇到标记、schema 与标记
+不匹配一律 fail closed（`LEASE_EVENT_INVALID`）。一次 replay 调用内同摘要的 blob 只读取、哈希、解码一次并共享，
+调用结束即失效，不跨调用、不落盘。真实租约库（689 MB）的历史事件原样可读，新旧代码 replay 结论逐项相同；夹具租约库
+约 396 MB → 约 20 MB，单次重放 5.6 s → 1.4 s，`ff_only` 发布节点静机 1,176 s → 814 s。历史大事件不压缩，仲裁与过渡规则、
+`validate_execution` 语义和 `production_effect=none` 不变。
+
 显式工程迁移入口 `scripts/architecture_arch005_lease_arbiter.py` 在 active publication 的只读
 验证后，检查 exact working-code SHA、原 owner SHA 与人工协调排空 receipt，保留旧目录原
 bytes，create-only 初始化同一路径的新锁并输出 admission/migration receipt。普通 acquire
