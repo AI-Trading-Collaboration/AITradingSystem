@@ -70,3 +70,34 @@
 - 恢复路径本身按设计工作：`refs/heads/main == candidate` 时走 `adopt_published_attempt(recovery=True)`，并重新检查 Full profile 与合并窗口。
 - 验收标准补充：恢复路径对「ff 已完成但 worker 被终止」的情形应无需人工清理即可收口，且有负向测试（锁非空/有存活进程/创建时间不在窗口内必须拒绝）；
   发布 worker 的墙钟取自受审配置并有 P4 之后的实测依据。
+
+
+## 8. 2026-10-05 范围拆分：本候选只做 (A)，ORIG_HEAD 代码修复与残留空锁恢复延后
+
+### 8.1 为什么 (A) 必须在下一次真实发布之前做，且数值要重估
+- S3b（DEVX-022 §12）只让**新**事件变小；真实租约库里已有 29 个历史大事件（653 MB）不压缩，所以每次重放仍约 10.8 s（静机、热缓存；cProfile 下 14.6 s：JSON 解码 4.3 s、规范序列化 2.6 s、hook-ready 校验 1.9 s、`pathlib` 约 1.2 s）。
+  真实发布里每个 git 钩子是一个独立 Python 进程，约 10 次 `ExecutionLifecycle._head()` 重放；钩子行数上限为 8（`_validate_publication_git_merge` 的 `len(hooks) > 8`）。
+- v26 实测时间线：worker 约 10:38 启动，`hooks_created` 约 10:52（约 14 分钟，运行时身份/capsule/检出计划），ff 合并之后每个钩子 3–5 分钟，60 分钟墙钟在 post-merge/AUTO_MERGE 钩子记录之前终止。
+  当前库（689 MB）里钩子每次要重放的体积比 v26 当时更大，只是新增事件不再变大，所以预计每钩子仍 2–5 分钟（8 个钩子 16–40 分钟），加起步 14–35 分钟，总计约 30–75 分钟，**不能保证低于原来的 3,600 s**；
+  worker 内层 `child.wait_exit(timeout=1800)`（等 git 子进程与全部钩子）同样不够（钩子阶段最坏 40 分钟）。两者都是「按空闲小仓库校准的写死等待」，与 DEVX-018 记录的是同一类暂行校准。
+
+### 8.2 实现（本候选）
+- `workflow_coordination.py` 新增命名常量并改用：`LOCAL_PUBLICATION_WORKER_WALL_SECONDS = 10_800`（`publish_local` 的 `handle.wait`）、`LOCAL_PUBLICATION_GIT_CHILD_WAIT_SECONDS = 7_200`（`run_publication_worker` 的 `child.wait_exit`），旁注依据与本节引用。
+  不改请求 schema、事件格式、身份绑定或返回载荷；成功路径行为不变，只延后「worker/git 子进程卡死」的判定。
+- 数值依据：子进程等待 = 钩子阶段最坏估计（8 钩子 × 5 分钟 = 2,400 s）的 3 倍；worker 墙钟 = 起步阶段最坏估计（约 2,100 s）+ 子进程等待 + 约 1,500 s 收尾余量。
+  与租约的一致性：检出租约 `ttl_seconds = 21,600`、`heartbeat_interval_seconds = 300`；Full 阶段由驱动心跳续租，发布从 Full 结束时刻起仍有完整 TTL，因此 worker 墙钟必须不超过 TTL 的一半（给 Full 结束到发布触发之间的间隔留余量）。
+  **发布须在 Full 结束后尽快触发**（建议 2 小时内），否则租约可能先过期（fail closed，与既有 expired 变体一致）。
+- 风险：真正挂起的 worker 最多多等 2–3 小时才失败，而不是 1 小时；验证：新测试（见下）+ 最终候选的 Full 与真实发布；`production_effect=none`。
+- 测试（新文件 `tests/test_devx021_publication_worker_budgets.py`）：(1) 子进程等待严格小于 worker 墙钟，且两者都大于旧值（3,600 / 1,800）；(2) worker 墙钟 ≤ 检出租约策略 TTL 的一半，且心跳间隔 < TTL（读 `arch_005_s4d_checkout_guard.yaml`）；
+  (3) AST 检查：`publish_local` 与 `run_publication_worker` 里的 `wait`/`wait_exit` 不再带数值字面量超时，必须引用这两个常量；(4) 检测器自检：把调用点写回字面量能被发现。
+- 退出条件（复核）：首次真实发布（S3b 之后）实测各阶段耗时，按实测最大值 × 余量重校准；或随「租约历史归档/压缩」降低重放成本后收紧；owner 复核后把状态从 `PROVISIONAL_PENDING_OWNER_REVIEW` 改为已批准。
+
+### 8.3 延后项与发布前检查清单
+- ORIG_HEAD 基线代码修复（第 3 节）与残留空锁恢复（第 7 节新项 B）**不进入本候选**：它们改变发布路径的锁/效果分类/恢复语义，每次改动都要新候选 + 完整 Full + 真实布局副本演练。
+  触发 ORIG_HEAD 缺陷需要「预先存在的 ORIG_HEAD 恰好等于当前 main」；2026-10-05 实测 `.git/ORIG_HEAD` = `1144ce3600557e479e7e7eb1bdb104e6c8b58307`，`main` = `1e46e6ac7`，二者不同，git 合并时会写入非空锁，已演练的 fixture 路径适用。
+- **每次 `local-publish` 之前由 coordinator 执行并记录的检查**：(1) `git rev-parse main` 等于事务的 `expected_main`；(2) `.git/ORIG_HEAD` 不存在或不等于 main（相等时按第 4 节已记录的前置条件处理，并先向 owner 说明）；
+  (3) 主检出无残留 `HEAD/index/ORIG_HEAD/AUTO_MERGE/packed-refs` 的 `.lock`；(4) 无存活的 git/python 进程；(5) 真实租约库重放 PASS；(6) 距 Full 结束不超过 2 小时。
+- 后续：首次发布完成后立即另开候选实施 ORIG_HEAD 修复与残留锁恢复（范围与验收见第 3、5、7 节），并做真实布局副本演练，不再受发布时间压力。
+
+### 8.4 进展
+- 2026-10-05：登记范围拆分；任务状态 PROPOSED → IN_PROGRESS；(A) 实施中。

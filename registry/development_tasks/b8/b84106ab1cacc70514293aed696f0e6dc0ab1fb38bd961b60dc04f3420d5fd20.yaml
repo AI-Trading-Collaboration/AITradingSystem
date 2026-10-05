@@ -15,18 +15,16 @@ task_record:
   priority: P1
   accountable_owner: null
   next_owner: Claude Code coordinator
-  requirement_refs:
-  - docs/requirements/DEVX-021_Publication_ORIG_HEAD_Unchanged_Robustness_V1.md
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: v26 发布实测：删除 ORIG_HEAD 的前置条件按预期生效（真实 ff-only
-    合并成功，基线已发布，main = origin/main = 1e46e6ac7），并暴露两项须并入本任务的缺陷：(A) local-publish worker
-    的写死 3600 秒墙钟在真实仓库上不够（租约库重放每钩子 3-5 分钟，Job 在 ff 合并后、post-merge/AUTO_MERGE 钩子前被终止，返回码
-    1067）；(B) 被终止的 git 进程遗留空 AUTO_MERGE.lock/packed-refs.lock，恢复路径 fail closed（本次人工审计后删除，未预批，须
-    owner 复核）。实施范围：ORIG_HEAD 基线（三种）、墙钟纳入受审配置并以 P4 后实测校准、恢复路径识别残留空锁并记录为恢复事实、负向测试与真实布局副本演练。排在
-    P4 之后或与 P4 同期；需 owner 复核：ORIG_HEAD 前置条件的退出、残留锁清理的授权范围。详见 docs/requirements/DEVX-021_Publication_ORIG_HEAD_Unchanged_Robustness_V1.md
-    第 7 节。
+  unstructured_legacy_blocker_or_next_step: 2026-10-05 范围拆分（DEVX-021 第 8 节）：本候选只做
+    (A)：local-publish worker 墙钟 3600 s 与 git 子进程等待 1800 s 改为带依据的命名常量（10,800 s / 7,200
+    s，PROVISIONAL_PENDING_OWNER_REVIEW，与租约 TTL 21,600 s、心跳 300 s 的一致性由测试保证）。依据：S3b
+    不压缩真实租约库的 653 MB 历史大事件，真实发布里每个钩子仍要重放 689 MB（静机约 10.8 s/次，每钩子约 10 次，钩子行数上限 8），v26
+    的 60 分钟墙钟在当前状态下无法保证。(B)：残留空锁恢复与 ORIG_HEAD 基线的代码修复暂不进本候选，发布前检查 ORIG_HEAD != main（当前
+    1144ce36 != 1e46e6ac7）作为已记录前置条件；首次发布之后另行实施并做真实布局副本演练。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 校验器与效果分类对 ORIG_HEAD 三种基线（不存在、等于旧 main、不同于旧 main）语义正确放行/拒绝并有负向测试（锁内容被篡改、基线与锁不一致必须拒绝）；fixture
@@ -101,28 +99,54 @@ events:
   - change:gov-007-devx021-pub-task-20261004-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-67e49824098c853e2bc1ff43c96f7882
+- schema_version: task_event.v1
+  task_id: DEVX-021_PUBLICATION_ORIG_HEAD_UNCHANGED_ROBUSTNESS
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-05T12:44:37Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx021-plan-task-20261005-v1
+  lane_id: null
+  base_commit: 1e46e6ac767b309a880c41dbb2796981f8a61a7e
+  previous_state_event_id: task-event-67e49824098c853e2bc1ff43c96f7882
+  from_status: PROPOSED
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 2026-10-05 范围拆分（DEVX-021 第 8 节）：本候选只做 (A)：local-publish
+      worker 墙钟 3600 s 与 git 子进程等待 1800 s 改为带依据的命名常量（10,800 s / 7,200 s，PROVISIONAL_PENDING_OWNER_REVIEW，与租约
+      TTL 21,600 s、心跳 300 s 的一致性由测试保证）。依据：S3b 不压缩真实租约库的 653 MB 历史大事件，真实发布里每个钩子仍要重放
+      689 MB（静机约 10.8 s/次，每钩子约 10 次，钩子行数上限 8），v26 的 60 分钟墙钟在当前状态下无法保证。(B)：残留空锁恢复与
+      ORIG_HEAD 基线的代码修复暂不进本候选，发布前检查 ORIG_HEAD != main（当前 1144ce36 != 1e46e6ac7）作为已记录前置条件；首次发布之后另行实施并做真实布局副本演练。
+    acceptance_criteria: 校验器与效果分类对 ORIG_HEAD 三种基线（不存在、等于旧 main、不同于旧 main）语义正确放行/拒绝并有负向测试（锁内容被篡改、基线与锁不一致必须拒绝）；fixture
+      演练覆盖「预先存在且等于旧 main」且真实布局副本演练通过；不放宽任何既有检查，恢复/adopt 路径对新情形可重放；更新任务登记与需求文档；退出条件：不再需要删除
+      ORIG_HEAD 的临时前置条件。
+    notes: 2026-10-05：登记范围拆分与 (A) 的依据，写入 DEVX-021 第 8 节。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx021-plan-task-20261005-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c25c335eb18047c676bc6f45518c4b21
 projection:
   legacy_first_eight_cells:
   - DEVX-021_PUBLICATION_ORIG_HEAD_UNCHANGED_ROBUSTNESS
   - Publication fence / local ff-merge hook validation robustness when ORIG_HEAD already
     equals the old HEAD
   - P1
-  - PROPOSED
+  - IN_PROGRESS
   - Claude Code coordinator
-  - v26 发布实测：删除 ORIG_HEAD 的前置条件按预期生效（真实 ff-only 合并成功，基线已发布，main = origin/main = 1e46e6ac7），并暴露两项须并入本任务的缺陷：(A)
-    local-publish worker 的写死 3600 秒墙钟在真实仓库上不够（租约库重放每钩子 3-5 分钟，Job 在 ff 合并后、post-merge/AUTO_MERGE
-    钩子前被终止，返回码 1067）；(B) 被终止的 git 进程遗留空 AUTO_MERGE.lock/packed-refs.lock，恢复路径 fail
-    closed（本次人工审计后删除，未预批，须 owner 复核）。实施范围：ORIG_HEAD 基线（三种）、墙钟纳入受审配置并以 P4 后实测校准、恢复路径识别残留空锁并记录为恢复事实、负向测试与真实布局副本演练。排在
-    P4 之后或与 P4 同期；需 owner 复核：ORIG_HEAD 前置条件的退出、残留锁清理的授权范围。详见 docs/requirements/DEVX-021_Publication_ORIG_HEAD_Unchanged_Robustness_V1.md
-    第 7 节。
+  - 2026-10-05 范围拆分（DEVX-021 第 8 节）：本候选只做 (A)：local-publish worker 墙钟 3600 s 与 git
+    子进程等待 1800 s 改为带依据的命名常量（10,800 s / 7,200 s，PROVISIONAL_PENDING_OWNER_REVIEW，与租约
+    TTL 21,600 s、心跳 300 s 的一致性由测试保证）。依据：S3b 不压缩真实租约库的 653 MB 历史大事件，真实发布里每个钩子仍要重放 689
+    MB（静机约 10.8 s/次，每钩子约 10 次，钩子行数上限 8），v26 的 60 分钟墙钟在当前状态下无法保证。(B)：残留空锁恢复与 ORIG_HEAD
+    基线的代码修复暂不进本候选，发布前检查 ORIG_HEAD != main（当前 1144ce36 != 1e46e6ac7）作为已记录前置条件；首次发布之后另行实施并做真实布局副本演练。
   - 校验器与效果分类对 ORIG_HEAD 三种基线（不存在、等于旧 main、不同于旧 main）语义正确放行/拒绝并有负向测试（锁内容被篡改、基线与锁不一致必须拒绝）；fixture
     演练覆盖「预先存在且等于旧 main」且真实布局副本演练通过；不放宽任何既有检查，恢复/adopt 路径对新情形可重放；更新任务登记与需求文档；退出条件：不再需要删除
     ORIG_HEAD 的临时前置条件。
-  - 2026-10-04：v26 发布实测结果与两个新项写入第 7 节。
-  docs_links:
-  - docs/requirements/DEVX-021_Publication_ORIG_HEAD_Unchanged_Robustness_V1.md
+  - 2026-10-05：登记范围拆分与 (A) 的依据，写入 DEVX-021 第 8 节。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 9f2b39118d30c4db224a2ce4111d7601eec831915c9f9218115d74369f06c36b
-last_event_id: task-event-67e49824098c853e2bc1ff43c96f7882
+  canonical_row_sha256: 17b861cc021137cf6ba3260f508d9c9cd8d926acc42af616e61e0f61ce6e5d61
+last_event_id: task-event-c25c335eb18047c676bc6f45518c4b21
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 6172947642dd7a7037a8d898dbc5f2b5e6b838926bbddd29d53971b6314ee39a
+fragment_checksum: e38be52ca4f7bcad19113d9ec28809e1e50a046e7dbc047edad9e0b3803aa902
