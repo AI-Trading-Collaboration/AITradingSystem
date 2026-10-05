@@ -19,15 +19,12 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S3b 已获 owner 批准（2026-10-05）并登记（DEVX-022
-    第 12 节）。事实：真实租约库 689 MB，29 个大事件占 653 MB，read_file_custodies（17,936 行）占事件有效内容的
-    94%，每个大事件重放 ≈100 ms（读 9+解码 43+规范序列化 43+SHA 4）。设计：固定两处路径上、行数≥1024 的 read_file_custodies
-    换成 {"externalized_rows.v1":{sha256,row_count}} 标记，行表存为内容寻址 blob（<store>/blobs/<sha[:2]>/<sha>.json）；事件
-    ID 始终是存储形式规范体的哈希（旧事件公式不变，新事件用紧凑体）；含标记→execution_lease_event.v3/execution_lease.v3，否则
-    v2，严格互斥；内存形式展开后与旧版逐值相同；先写 blob 再写事件；blob 缺失/摘要不符/标记位置错误一律 fail closed；replay 内按摘要共享解码结果（不跨调用）。验收：往返与逐值相等、真实库新旧代码
-    replay 逐项一致、篡改反例全部拒绝、混合库 PASS、事件 22.9 MB→<1.5 MB、夹具库重放 5.5 s→≤0.8 s、7 个大发布节点端到端通过、M3
-    正式 Full 实测。历史 653 MB 不压缩（另行设计）；需要一次真实发布最终验证（发布前由 owner 触发）。下一步：实现 parallel_control_kernel
-    的 stored form/blob 读写与 parse_lease_event 扩展，补测试，在真实库副本上做新旧 replay 对比，再做 M3。
+  unstructured_legacy_blocker_or_next_step: S3b 已实现并验证（DEVX-022 §12.6，提交 fda8239c9/d3a90710a/664dea047）：租约事件的
+    read_file_custodies（≥1024 行，两个固定位置）外置为内容寻址 blob，事件 ID 按存储形式计算，旧事件原样可读。验证：真实 689
+    MB 租约库新旧内核重放逐项相同；13 个新测试；夹具租约库 396 MB->4-20 MB，重放 5.63->1.36 s（-76%，未达 0.8 s 目标）；ff_only
+    节点静机 1,176->814 s；6 个大发布节点+15 个不同家族重型节点冒烟全部通过；非重型层 2,680 通过。发现并修复一个遗漏：由 replay
+    head 派生的终态事件仍按内嵌写入（22 MB），有回归测试。仍未覆盖：历史 653 MB 不压缩（真实库 live-proof 重放仍约 10.8 s）、需一次真实发布最终验证（发布前由
+    owner 触发）。下一步：M3 候选重封（新测试文件需同步 arch_004g 钉死值）、三个哈希权威家族回归、M3 正式 Full（不发布，计数器遥测）实测墙钟，据结果决定是否还需种子刷新/S4。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
@@ -285,6 +282,36 @@ events:
   - change:gov-007-devx022-s3breg-task-20261005-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-a2b2f411130780d74a699f57134cb9d0
+- schema_version: task_event.v1
+  task_id: DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-05T08:30:52Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx022-s3bres-task-20261005-v1
+  lane_id: null
+  base_commit: 1e46e6ac767b309a880c41dbb2796981f8a61a7e
+  previous_state_event_id: task-event-a2b2f411130780d74a699f57134cb9d0
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: S3b 已实现并验证（DEVX-022 §12.6，提交 fda8239c9/d3a90710a/664dea047）：租约事件的
+      read_file_custodies（≥1024 行，两个固定位置）外置为内容寻址 blob，事件 ID 按存储形式计算，旧事件原样可读。验证：真实
+      689 MB 租约库新旧内核重放逐项相同；13 个新测试；夹具租约库 396 MB->4-20 MB，重放 5.63->1.36 s（-76%，未达 0.8
+      s 目标）；ff_only 节点静机 1,176->814 s；6 个大发布节点+15 个不同家族重型节点冒烟全部通过；非重型层 2,680 通过。发现并修复一个遗漏：由
+      replay head 派生的终态事件仍按内嵌写入（22 MB），有回归测试。仍未覆盖：历史 653 MB 不压缩（真实库 live-proof 重放仍约
+      10.8 s）、需一次真实发布最终验证（发布前由 owner 触发）。下一步：M3 候选重封（新测试文件需同步 arch_004g 钉死值）、三个哈希权威家族回归、M3
+      正式 Full（不发布，计数器遥测）实测墙钟，据结果决定是否还需种子刷新/S4。
+    acceptance_criteria: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约
+      20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实 .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5
+      最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
+    notes: 2026-10-05：S3b 实现与验证结果写入 DEVX-022 §12.6。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx022-s3bres-task-20261005-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-021f1e705ed6d5eaf67a3143b3118f13
 projection:
   legacy_first_eight_cells:
   - DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
@@ -293,20 +320,18 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - S3b 已获 owner 批准（2026-10-05）并登记（DEVX-022 第 12 节）。事实：真实租约库 689 MB，29 个大事件占 653 MB，read_file_custodies（17,936
-    行）占事件有效内容的 94%，每个大事件重放 ≈100 ms（读 9+解码 43+规范序列化 43+SHA 4）。设计：固定两处路径上、行数≥1024 的
-    read_file_custodies 换成 {"externalized_rows.v1":{sha256,row_count}} 标记，行表存为内容寻址
-    blob（<store>/blobs/<sha[:2]>/<sha>.json）；事件 ID 始终是存储形式规范体的哈希（旧事件公式不变，新事件用紧凑体）；含标记→execution_lease_event.v3/execution_lease.v3，否则
-    v2，严格互斥；内存形式展开后与旧版逐值相同；先写 blob 再写事件；blob 缺失/摘要不符/标记位置错误一律 fail closed；replay 内按摘要共享解码结果（不跨调用）。验收：往返与逐值相等、真实库新旧代码
-    replay 逐项一致、篡改反例全部拒绝、混合库 PASS、事件 22.9 MB→<1.5 MB、夹具库重放 5.5 s→≤0.8 s、7 个大发布节点端到端通过、M3
-    正式 Full 实测。历史 653 MB 不压缩（另行设计）；需要一次真实发布最终验证（发布前由 owner 触发）。下一步：实现 parallel_control_kernel
-    的 stored form/blob 读写与 parse_lease_event 扩展，补测试，在真实库副本上做新旧 replay 对比，再做 M3。
+  - S3b 已实现并验证（DEVX-022 §12.6，提交 fda8239c9/d3a90710a/664dea047）：租约事件的 read_file_custodies（≥1024
+    行，两个固定位置）外置为内容寻址 blob，事件 ID 按存储形式计算，旧事件原样可读。验证：真实 689 MB 租约库新旧内核重放逐项相同；13 个新测试；夹具租约库
+    396 MB->4-20 MB，重放 5.63->1.36 s（-76%，未达 0.8 s 目标）；ff_only 节点静机 1,176->814 s；6
+    个大发布节点+15 个不同家族重型节点冒烟全部通过；非重型层 2,680 通过。发现并修复一个遗漏：由 replay head 派生的终态事件仍按内嵌写入（22
+    MB），有回归测试。仍未覆盖：历史 653 MB 不压缩（真实库 live-proof 重放仍约 10.8 s）、需一次真实发布最终验证（发布前由 owner
+    触发）。下一步：M3 候选重封（新测试文件需同步 arch_004g 钉死值）、三个哈希权威家族回归、M3 正式 Full（不发布，计数器遥测）实测墙钟，据结果决定是否还需种子刷新/S4。
   - S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
     .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5 最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
-  - 2026-10-05：owner 批准 S3b；设计、风险与验收登记在 DEVX-022 第 12 节。
+  - 2026-10-05：S3b 实现与验证结果写入 DEVX-022 §12.6。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 7fea7cfa55014bec8fc3d19061c939608918dad47fea655dee8639804409ec25
-last_event_id: task-event-a2b2f411130780d74a699f57134cb9d0
+  canonical_row_sha256: 3a8c1884294a4edc5d04f24fb16bf642fbec445f2c2ca94e159f8f0ca6419557
+last_event_id: task-event-021f1e705ed6d5eaf67a3143b3118f13
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: e5b7be65f4bd809eb5ed61a821bc8a67466d1e550cd881778249cb66334ee2a5
+fragment_checksum: 6b48f90c1218aa7878c1e045914abed76bb7259bfe25026c3cbbded320776ef6

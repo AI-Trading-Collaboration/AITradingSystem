@@ -307,3 +307,19 @@ S6 不在 owner 2026-10-04 批准的 S1–S5 序列内，是 M1 profile 暴露�
 ### 12.5 不做
 - 历史租约的压缩/归档；`profile_inspection.captures` 的外置；改变事件缩进写法以外的写入语义。
 
+### 12.6 实现与验证结果（2026-10-05）
+- 提交：`fda8239c9`（存储形式、blob、`parse_lease_event` 展开、replay 内共享）、`d3a90710a`（修复：由 replay 得到的 head 派生的事件已持有 `ExternalizedRows`，原判据「适配是否替换了表」使终态事件仍按内嵌 v2 写入，22 MB；
+  现判据为「是否存在满足条件的表」，并加回归测试，在上一版内核上该测试失败）、`664dea047`（`system_flow.md`、006d 封印、两处钉死的条目数 3449 → 3450）。
+- **验收 1/3/4**：新增 13 个测试全过（往返逐值相等；ID 绑定标记、标记绑定 blob；blob 被改/缺失/标记错位/无读取器/schema 与标记不匹配/行数不符/摘要路径穿越全部拒绝；
+  混合库（旧内嵌 + 新 v3）重放 PASS 且同摘要 blob 一次调用只读一次、下一次调用重新读；小于阈值的表仍内嵌；blob 先于事件写入、已存在但被篡改的 blob 不被信任也不被覆盖；共享表不可变、拷贝为普通 list）。
+  对真实的 22.9 MB 历史事件：转成新形式后体积 < 1/10，展开后与原内存形式逐值相等，`to_dict()` 与存储形式一致。
+- **验收 2**：真实租约库（689 MB、5,521 个事件、835 个 heads）新旧内核重放结论逐项相同（PASS、heads 摘要与 head 事件 ID 摘要相同、无 issue），旧格式事件在新内核下读取结果不变（同一个 396 MB 夹具库：旧内核 5.63 s、新内核 5.65 s）。
+- **验收 5（部分达成）**：事件文件 22.9 MB → 夹具里没有 >1.5 MB 的事件；6 个大发布节点的夹具租约库由约 396 MB 降到 4–20 MB（事件 3–11 MB + 一个 9 MB blob）；单次重放 `5.63 s → 1.36 s（−76%）`，**未达 ≤ 0.8 s 的目标**。
+  剩余成本（cProfile 占比）：17.9k 行表在每次 replay 里的第一次校验约 0.8 s（S3a 记忆命中其余 17 次，这次校验本身不能省）、每个事件为 `profile_inspection.captures` 重建 `Path` 集合约 0.35 s（replay 内可按内容相等共享，约 −11%，暂未做）、
+  事件 ID 与子结构规范序列化约 0.5 s。
+- **验收 6**：6 个大发布节点（`ff_only`、`replays_candidate_publish`、`lifecycle_binds`、`closeout_admits`（`large-full-profile-publish`）、`recovers_independent_main_advance`、`interrupted_after_main_commit`）端到端通过，含钩子 ×8、worker、恢复；
+  另取 15 个不同家族的重型节点（`workflow_coordination` 的 public_recovery/remote_admission/readiness_input_replaced 等、`workflow_integration`、`workflow_execution` 的 x01/source_generation/mandatory 链、`publication_fence` 的 x02/terminal_confirmation、`governed_development_skill` 的 completed_admission）冒烟，15/15 通过，各节点 220–380 s（M2c 满载 520–840 s）。
+  `ff_only` 单节点静机 `814 s`（S3a 1,176 s、O3-d 1,750 s、v26 满载约 4,000 s），S3b 单独贡献 −31%。
+- **验收 7**：受影响的 31 个测试文件 + 三个新测试文件的非重型层 `2,680 passed / 1 skipped / 0 failed`（35 分 57 秒）。
+- **仍未覆盖**：历史 653 MB 事件不压缩，真实租约库的 live-proof 重放（named-DQ/composer 节点，每次约 10.8 s）不会变快；需要一次真实发布最终验证（发布前由 owner 触发）；验收 8（M3 正式 Full）进行中。
+
