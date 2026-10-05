@@ -62,8 +62,16 @@ from ai_trading_system.contracts.named_data_quality_execution import (
 from ai_trading_system.contracts.prospective_capture_execution import RecorderReturnObservation
 from ai_trading_system.data.named_quality_dispatch import CHILD_TIMEOUT_SECONDS
 
-# Existing startup/guard allowance; add each nested child process budget below.
-_ACTUAL_COMPOSER_ROUTE_OVERHEAD_SECONDS = 300
+# Test hang bound, not production policy. DEVX-018/DEVX-022 load calibration (provisional, owner
+# review pending; exit condition in docs/requirements/DEVX-022_Full_Under_Two_Hours_Program_V1.md
+# section 13.4): every guard in the production composer CLI child replays the real lease store,
+# which grew from 31 MB to 689 MB when the baseline was published. The activation child needed
+# 153s on a quiet host and 258-300+s under formal-Full load, so the former 300s allowance was an
+# unloaded-host value. Production's own per-DQ-child cap (CHILD_TIMEOUT_SECONDS) is unchanged.
+LOADED_HOST_CLI_TIMEOUT_SECONDS = 1800
+
+# Startup/guard allowance of the whole child; add each nested child process budget below.
+_ACTUAL_COMPOSER_ROUTE_OVERHEAD_SECONDS = LOADED_HOST_CLI_TIMEOUT_SECONDS
 
 
 class _ComposerParentProof(Protocol):

@@ -208,6 +208,67 @@ def test_host_side_loaded_timeouts_use_calibrated_constants() -> None:
     assert offenders == [], offenders
 
 
+def _uncalibrated_module_budgets(source: str) -> list[tuple[int, str, float]]:
+    """Numeric module-level ``*SECONDS``/``*TIMEOUT*`` constants in the loaded-host band
+    (300s up to the calibrated ceiling) that do not carry the ``LOADED_HOST_`` name."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", SyntaxWarning)
+        warnings.simplefilter("ignore", DeprecationWarning)
+        tree = ast.parse(source)
+    found: list[tuple[int, str, float]] = []
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            names = [target.id for target in node.targets if isinstance(target, ast.Name)]
+            value = node.value
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            names, value = [node.target.id], node.value
+        else:
+            continue
+        if not (isinstance(value, ast.Constant) and isinstance(value.value, (int, float))
+                and not isinstance(value.value, bool)):
+            continue
+        for name in names:
+            bare = name.lstrip("_").upper()
+            if (("SECONDS" in bare or "TIMEOUT" in bare) and not bare.startswith("LOADED_HOST_")
+                    and 300 <= value.value < LOADED_HOST_CLI_TIMEOUT_SECONDS):
+                found.append((node.lineno, name, float(value.value)))
+    return found
+
+
+def test_module_level_budget_constants_in_the_loaded_host_band_are_calibrated() -> None:
+    # DEVX-022 M3 lost the composer route node to a module constant (a 300s route overhead) that
+    # fed `timeout=<expression>` and so escaped the literal scan above. The real lease store had
+    # grown from 31 MB to 689 MB, which made that unloaded-host value too small under formal-Full
+    # load. A numeric module-level budget between 300s and the calibrated 1800s must carry the
+    # LOADED_HOST_ name (and its calibration comment); everything else is left alone.
+    assert _uncalibrated_module_budgets("_ROUTE_OVERHEAD_SECONDS = 300\n") == [
+        (1, "_ROUTE_OVERHEAD_SECONDS", 300.0)
+    ]
+    assert _uncalibrated_module_budgets("SLOW_TIMEOUT: float = 1799.5\n") == [
+        (1, "SLOW_TIMEOUT", 1799.5)
+    ]
+    # The guard names are assembled so that the embedded-source detector above, which flags any
+    # string constant spelling a calibrated guard name, does not see them in these samples.
+    calibrated = "LOADED_" + "HOST_"
+    for compliant in (
+        calibrated + "WAIT_TIMEOUT_SECONDS = 600\n",  # calibrated name
+        # reuses a calibrated value
+        "_ROUTE_OVERHEAD_SECONDS = " + calibrated + "CLI_TIMEOUT_SECONDS\n",
+        "WAIT_SECONDS = 30\n",  # small-process guard stays as is
+        "DRIVER_TIMEOUT_SECONDS = 3600\n",  # already above the calibrated ceiling
+        "RETRY_COUNT = 500\n",  # not a duration
+    ):
+        assert _uncalibrated_module_budgets(compliant) == [], compliant
+    offenders: list[str] = []
+    for path in sorted((ROOT / "tests").glob("*.py")):
+        try:
+            found = _uncalibrated_module_budgets(path.read_text(encoding="utf-8"))
+        except SyntaxError:
+            continue
+        offenders.extend(f"{path.name}:{lineno}: {name}={value:g}" for lineno, name, value in found)
+    assert offenders == [], offenders
+
+
 def test_policy_reuses_s4d_lease_authority_and_freezes_no_unsafe_actions() -> None:
     policy = load_publication_fence_policy(DEFAULT_POLICY_PATH)
 

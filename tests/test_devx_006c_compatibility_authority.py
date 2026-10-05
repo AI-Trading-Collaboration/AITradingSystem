@@ -1952,6 +1952,7 @@ tests/test_arch_005_s4d_checkout_guard.py
 tests/test_arch_005_source_preservation.py
 tests/test_arch_005_task_checkpoint.py
 tests/test_architecture_wave_readiness.py
+tests/test_composer_prospective_capture_contract.py
 tests/test_devx015_workflow_acceptance.py
 tests/test_devx015_workflow_coordination.py
 tests/test_devx015_workflow_execution.py

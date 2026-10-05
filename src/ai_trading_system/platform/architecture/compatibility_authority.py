@@ -3664,6 +3664,11 @@ def _devx_015_workflow_contract_section(
             "tests/test_arch_005_source_preservation.py",
             "tests/test_arch_005_task_checkpoint.py",
             "tests/test_architecture_wave_readiness.py",
+            # DEVX-022 M3: the composer route test's hang budget was recalibrated for formal-Full
+            # load; a hash-pinned TRADING-2560 historical source, so current-hash ownership is
+            # extended here (reviewed addition, see the pinned set in
+            # tests/test_devx_006c_compatibility_authority.py).
+            "tests/test_composer_prospective_capture_contract.py",
             "tests/test_devx015_workflow_acceptance.py",
             "tests/test_devx015_workflow_coordination.py",
             "tests/test_devx015_workflow_execution.py",
