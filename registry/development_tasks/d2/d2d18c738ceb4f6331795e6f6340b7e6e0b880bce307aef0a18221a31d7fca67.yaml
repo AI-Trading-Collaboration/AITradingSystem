@@ -19,12 +19,16 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S3b 已实现并验证（DEVX-022 §12.6，提交 fda8239c9/d3a90710a/664dea047）：租约事件的
-    read_file_custodies（≥1024 行，两个固定位置）外置为内容寻址 blob，事件 ID 按存储形式计算，旧事件原样可读。验证：真实 689
-    MB 租约库新旧内核重放逐项相同；13 个新测试；夹具租约库 396 MB->4-20 MB，重放 5.63->1.36 s（-76%，未达 0.8 s 目标）；ff_only
-    节点静机 1,176->814 s；6 个大发布节点+15 个不同家族重型节点冒烟全部通过；非重型层 2,680 通过。发现并修复一个遗漏：由 replay
-    head 派生的终态事件仍按内嵌写入（22 MB），有回归测试。仍未覆盖：历史 653 MB 不压缩（真实库 live-proof 重放仍约 10.8 s）、需一次真实发布最终验证（发布前由
-    owner 触发）。下一步：M3 候选重封（新测试文件需同步 arch_004g 钉死值）、三个哈希权威家族回归、M3 正式 Full（不发布，计数器遥测）实测墙钟，据结果决定是否还需种子刷新/S4。
+  unstructured_legacy_blocker_or_next_step: M3 正式 Full（候选 2a024eda6，不发布，计数器遥测）已跑完并释放为失败：1
+    失败 / 14,739 通过 / 4 跳过，pytest 8,187 s（2:16:27），Full 阶段 8,539 s；M2c 为 2:13:42。结论见
+    DEVX-022 §13：S3b/S7b 在 Full 里无可测墙钟收益（总 CPU 54.0 vs 51.8 CPU 小时，轻量节点普遍 +4% 属主机背景负载；S3b
+    命中的 7 个大发布节点 -0.70 节点小时被其他重型节点约 10% 波动抵消），价值在于新事件体积 22 MB->不到 1.5 MB、真实库不再随发布膨胀。唯一失败是
+    composer 激活子进程 300 s 预算被满载超过（真实租约库 31->689 MB 使该子进程 50-77 s -> 250 s 以上），非 S3b
+    引起。结构下界：总工作量 31.4 节点小时/16 worker=118 分钟 + 爬坡/尾部约 17 分钟；免费调度手段（起跑间隔 120->30 s 约
+    -3.5 分钟、种子刷新约 -5 分钟且须随已发布 PASS profile）不足以进 2 小时，需再降工作量约 11%，途径均涉及正式 Full 合同（内层
+    4 worker 约 -23%、取消 worker sessionfinish 第二遍清单校验约 -10%），待 owner 决策。下一步：登记并实施 composer
+    子进程预算的负载校准（PROVISIONAL_PENDING_OWNER_REVIEW）与超时不变量扩展；DEVX-021（ORIG_HEAD 基线、local-publish
+    worker 墙钟入受审配置、残留锁恢复）；含全部修复的最终候选 Full + 发布（owner 触发）。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
@@ -312,6 +316,39 @@ events:
   - change:gov-007-devx022-s3bres-task-20261005-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-021f1e705ed6d5eaf67a3143b3118f13
+- schema_version: task_event.v1
+  task_id: DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-05T12:13:10Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx022-m3res-task-20261005-v1
+  lane_id: null
+  base_commit: 1e46e6ac767b309a880c41dbb2796981f8a61a7e
+  previous_state_event_id: task-event-021f1e705ed6d5eaf67a3143b3118f13
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: M3 正式 Full（候选 2a024eda6，不发布，计数器遥测）已跑完并释放为失败：1 失败 / 14,739
+      通过 / 4 跳过，pytest 8,187 s（2:16:27），Full 阶段 8,539 s；M2c 为 2:13:42。结论见 DEVX-022
+      §13：S3b/S7b 在 Full 里无可测墙钟收益（总 CPU 54.0 vs 51.8 CPU 小时，轻量节点普遍 +4% 属主机背景负载；S3b
+      命中的 7 个大发布节点 -0.70 节点小时被其他重型节点约 10% 波动抵消），价值在于新事件体积 22 MB->不到 1.5 MB、真实库不再随发布膨胀。唯一失败是
+      composer 激活子进程 300 s 预算被满载超过（真实租约库 31->689 MB 使该子进程 50-77 s -> 250 s 以上），非 S3b
+      引起。结构下界：总工作量 31.4 节点小时/16 worker=118 分钟 + 爬坡/尾部约 17 分钟；免费调度手段（起跑间隔 120->30 s
+      约 -3.5 分钟、种子刷新约 -5 分钟且须随已发布 PASS profile）不足以进 2 小时，需再降工作量约 11%，途径均涉及正式 Full
+      合同（内层 4 worker 约 -23%、取消 worker sessionfinish 第二遍清单校验约 -10%），待 owner 决策。下一步：登记并实施
+      composer 子进程预算的负载校准（PROVISIONAL_PENDING_OWNER_REVIEW）与超时不变量扩展；DEVX-021（ORIG_HEAD
+      基线、local-publish worker 墙钟入受审配置、残留锁恢复）；含全部修复的最终候选 Full + 发布（owner 触发）。
+    acceptance_criteria: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约
+      20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实 .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5
+      最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
+    notes: 2026-10-05：M3 正式 Full 实测结果与决策点写入 DEVX-022 §13。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx022-m3res-task-20261005-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d48b7235a94def227d272ca5e82cc635
 projection:
   legacy_first_eight_cells:
   - DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
@@ -320,18 +357,21 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - S3b 已实现并验证（DEVX-022 §12.6，提交 fda8239c9/d3a90710a/664dea047）：租约事件的 read_file_custodies（≥1024
-    行，两个固定位置）外置为内容寻址 blob，事件 ID 按存储形式计算，旧事件原样可读。验证：真实 689 MB 租约库新旧内核重放逐项相同；13 个新测试；夹具租约库
-    396 MB->4-20 MB，重放 5.63->1.36 s（-76%，未达 0.8 s 目标）；ff_only 节点静机 1,176->814 s；6
-    个大发布节点+15 个不同家族重型节点冒烟全部通过；非重型层 2,680 通过。发现并修复一个遗漏：由 replay head 派生的终态事件仍按内嵌写入（22
-    MB），有回归测试。仍未覆盖：历史 653 MB 不压缩（真实库 live-proof 重放仍约 10.8 s）、需一次真实发布最终验证（发布前由 owner
-    触发）。下一步：M3 候选重封（新测试文件需同步 arch_004g 钉死值）、三个哈希权威家族回归、M3 正式 Full（不发布，计数器遥测）实测墙钟，据结果决定是否还需种子刷新/S4。
+  - M3 正式 Full（候选 2a024eda6，不发布，计数器遥测）已跑完并释放为失败：1 失败 / 14,739 通过 / 4 跳过，pytest 8,187
+    s（2:16:27），Full 阶段 8,539 s；M2c 为 2:13:42。结论见 DEVX-022 §13：S3b/S7b 在 Full 里无可测墙钟收益（总
+    CPU 54.0 vs 51.8 CPU 小时，轻量节点普遍 +4% 属主机背景负载；S3b 命中的 7 个大发布节点 -0.70 节点小时被其他重型节点约
+    10% 波动抵消），价值在于新事件体积 22 MB->不到 1.5 MB、真实库不再随发布膨胀。唯一失败是 composer 激活子进程 300 s 预算被满载超过（真实租约库
+    31->689 MB 使该子进程 50-77 s -> 250 s 以上），非 S3b 引起。结构下界：总工作量 31.4 节点小时/16 worker=118
+    分钟 + 爬坡/尾部约 17 分钟；免费调度手段（起跑间隔 120->30 s 约 -3.5 分钟、种子刷新约 -5 分钟且须随已发布 PASS profile）不足以进
+    2 小时，需再降工作量约 11%，途径均涉及正式 Full 合同（内层 4 worker 约 -23%、取消 worker sessionfinish 第二遍清单校验约
+    -10%），待 owner 决策。下一步：登记并实施 composer 子进程预算的负载校准（PROVISIONAL_PENDING_OWNER_REVIEW）与超时不变量扩展；DEVX-021（ORIG_HEAD
+    基线、local-publish worker 墙钟入受审配置、残留锁恢复）；含全部修复的最终候选 Full + 发布（owner 触发）。
   - S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
     .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5 最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
-  - 2026-10-05：S3b 实现与验证结果写入 DEVX-022 §12.6。
+  - 2026-10-05：M3 正式 Full 实测结果与决策点写入 DEVX-022 §13。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 3a8c1884294a4edc5d04f24fb16bf642fbec445f2c2ca94e159f8f0ca6419557
-last_event_id: task-event-021f1e705ed6d5eaf67a3143b3118f13
+  canonical_row_sha256: ababc4d4096d37e085815d9db42370fb1542ef31cd7cd790be8b72d288b08598
+last_event_id: task-event-d48b7235a94def227d272ca5e82cc635
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 6b48f90c1218aa7878c1e045914abed76bb7259bfe25026c3cbbded320776ef6
+fragment_checksum: 9e8632e44884fdb08d17578076c9af78900cf5810ac88d5f352dca14d043d03f

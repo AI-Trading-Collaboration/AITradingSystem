@@ -323,3 +323,64 @@ S6 不在 owner 2026-10-04 批准的 S1–S5 序列内，是 M1 profile 暴露�
 - **验收 7**：受影响的 31 个测试文件 + 三个新测试文件的非重型层 `2,680 passed / 1 skipped / 0 failed`（35 分 57 秒）。
 - **仍未覆盖**：历史 653 MB 事件不压缩，真实租约库的 live-proof 重放（named-DQ/composer 节点，每次约 10.8 s）不会变快；需要一次真实发布最终验证（发布前由 owner 触发）；验收 8（M3 正式 Full）进行中。
 
+
+## 13. M3：S1–S3a + S6 + S7b + S3b 之后的正式 Full 实测（2026-10-05，未发布）
+
+### 13.1 过程与结果
+- 候选 `2a024eda6`，正式事务 `gov-007-devx022-m3-formal-20261005-v1`（租约 `lease-6f1042882fd8ece9f23c`，`failure_fix_rerun`，parent 为 v20 失败摘要，不发布）。前 5 个阶段通过：named-parent-positive 502 s、contract 267 s、integration 68 s、reproducibility 47 s、architecture-fitness 1,308 s。
+- Full：**`1 failed, 14,739 passed, 4 skipped`**，pytest `8,187.33 s`（2 小时 16 分 27 秒），summary 记录 `8,311.37 s`，driver 的 Full 阶段 `8,539 s`；M2c 为 `8,022.86 s`。collected 14,744（M2c 14,721，多出的 23 个是 S3b 13 个、S7b 10 个新测试）。
+- 事务按失败释放（证据 `outputs/validation_runtime/gov-007-devx022-m3-full-20261005/test_runtime_summary.json`，sha256 `3e966870cf422692a14d52a12f65b837a2df3389c6a4c6213ecda9cceb162804`；释放回执 `outputs/architecture/integration_revalidation/devx015-v389/claude_m3_release.json`）。
+  主检出无残留，`main`/`origin/main` 未动（`1e46e6ac7`）。计数器遥测 `D:/Work/devx022-m3-counters.csv` 保留。
+
+### 13.2 与 M2c 的对比：没有可测的墙钟收益
+| 指标 | M2c | M3 |
+|---|---|---|
+| pytest 墙钟 | 8,022.86 s | 8,187.33 s（+2.0%） |
+| 总节点时长 | 30.93 节点小时 | 31.40（把提前被杀的 composer 节点按 M2c 时长补回约 31.63） |
+| 重型 / 轻量（节点小时） | 15.95 / 14.98 | 15.80 / 15.60 |
+| 窗口内总 CPU（`\Processor(_Total)` 积分，32 逻辑核） | 51.8 CPU 小时（均值 69.7%） | 54.0 CPU 小时（均值 70.8%，+4.2%） |
+| 轻量单元耗尽时刻 / 最后一个 worker 结束 | 112.5 / 133.0 分钟 | 118.3 / 135.6 分钟 |
+| 尾部空闲（worker 时间） | 3.42 节点小时（9.6%） | 3.98 节点小时（11.0%） |
+- **轻量节点各档位普遍慢 4–6%**（≥1 s 的各档 ×1.04–1.06；轻量未触及 S3b 的路径），重型节点合计 ×0.991。总 CPU 同步 +4.2%。这是**主机背景负载差异**（M2c 在夜间、M3 在白天，计数器是系统级），不是代码退化；
+  单次运行的噪声约 ±4%，所以 S3b/S7b 的真实收益（见下）在单次 Full 里无法分辨。
+- S3b 命中的 7 个大发布节点（秒，M2c → M3）：`closeout_admits[large]` 2,587 → 1,603；`recovers_independent_main_advance` 2,125 → 1,709；`ff_only[full-profile-publish]` 2,118 → 1,625；`ff_only[native-linked]` 2,089 → 1,472；
+  `interrupted_after_main_commit` 1,968 → 1,728；`lifecycle_binds[unchanged]` 1,433 → 1,629；`lifecycle_binds[index-replaced]` 1,344 → 1,363。合计 13,664 → 11,129 s（**−0.70 节点小时**）；`lifecycle_binds` 两个不用大 hook capsule，没有受益。
+  同一重型通道里其余节点（`replays_candidate_publish` ×9、`completed_admission_full_entry_rejects_real_invalid_context` ×11 等）涨约 10%，抵消了这 0.70 小时。
+- 结论：**S3b 的实际价值是体积与可扩展性**（新事件 22 MB → 不到 1.5 MB，真实库不再随每次发布增长约 300 MB），不是这一轮的墙钟。S7b 同理，收益在噪声内。
+
+### 13.3 唯一的失败：composer 激活子进程的 300 秒预算（根因已查明）
+- 节点 `tests/test_composer_prospective_capture_contract.py::test_actual_composer_activation_and_readiness_routes_use_real_guards_and_replay`：生产 CLI 子进程（`activate_0`）被测试侧 `communicate(timeout=300)` 杀掉，`TIMED_OUT_AND_CHILD_REAPED`、returncode 1、stdout 0 字节
+  （保留的审计 `outputs/architecture/trading_2560_composer_known_snapshot/synthetic/synthetic_composer_routes_8ff6903cf55f408f8c5b5101a0029c5d_v1/test_parent/activate_0/parent.json`）。
+- 预算来源：`_ACTUAL_COMPOSER_ROUTE_OVERHEAD_SECONDS = 300`（激活没有 DQ 子进程，预算只有这 300 s；就绪度路径为 300 + 3×120 s）。
+- **子进程耗时随真实租约库增长**（`activate_0`，保留审计全量统计）：租约库 ≤ 31 MB 时 33–77 s；真实发布后（2026-10-03 22:49 UTC 起，库 325 → 689 MB）234–262 s（v26、M1、M2c 满载）；M3 超过 300 s；
+  安静主机（2026-10-05 02:36 UTC 的 S3b 冒烟）152.6 s。就绪度路径 `readiness_0`：安静 275.5 s，满载 541 s（预算 660 s，已用 82%）。
+- 真实租约库的体积时间线（文件 mtime 统计）：2026-10-02 前合计 30.7 MB；10-03 +294.6 MB（13 个 >5 MB 事件），10-04 +363.1 MB（16 个）；现为 **689.2 MB / 5,555 个文件 / 29 个大事件（652.9 MB）**。每次真实重放约 10.8 s（安静、热缓存），
+  就绪度路径里 DQ 子进程本身只要 18–60 s（上限 120 s，没有风险），两个 DQ 子进程之间的 67–172 s 是父侧 `_live_parent_proof` 等对真实库的重放与守卫校验。
+- 因此这是 DEVX-018 v15–v23 同一类「按空闲主机校准的固定等待在满载下被超过」，且**漏校准的原因是它是模块级命名常量而不是 `timeout=<字面量>`**：`test_host_side_loaded_timeouts_use_calibrated_constants` 只扫描关键字参数与默认值里的字面量，看不到它。
+  全量扫描 `tests/*.py` 的模块级 `*_SECONDS`/`*TIMEOUT*` 数值常量，落在 300–1799 s 且不是 `LOADED_HOST_*` 的只有这一个。
+
+### 13.4 修复方案（登记；PROVISIONAL_PENDING_OWNER_REVIEW）
+- 最佳方案是让子进程预算不随主机负载漂移（按进度或按子进程 CPU 时间计预算），而不是改墙钟常量；受阻原因：需要 Windows 子进程 CPU 计时与「无进展」判据，属于测试基础设施的新设计，且 CPU 预算对阻塞型挂起无效，仍须墙钟上限。
+  因此沿用 DEVX-018 已记录的暂行变通类别（按负载校准的命名常量）：
+  - 在该测试文件内定义 `LOADED_HOST_CLI_TIMEOUT_SECONDS = 1800`（与其他测试文件同值同含义），`_ACTUAL_COMPOSER_ROUTE_OVERHEAD_SECONDS` 取该常量，旁注测量依据；生产常量 `CHILD_TIMEOUT_SECONDS = 120` 不动。
+  - 行为影响：成功路径不变，只延后「子进程卡死」的判定（最长 1,800 s 而不是 300 s，就绪度路径 2,160 s）；风险：真正的挂起要多等 25–30 分钟才失败；验证：不变量测试 + 最终候选的 Full；
+    退出条件：真实库重放成本降低（历史大事件归档/压缩另行立项）或改为进度式预算后撤销。
+  - 把「模块级 `*_SECONDS`/`*TIMEOUT*` 数值常量不得落在 300–1799 s 之外的 `LOADED_HOST_*` 命名」加入既有不变量测试（变异检查：临时写回 300 必须失败），避免同类漏校准再在 2 小时的 Full 里才暴露。
+- 其余测试侧预算检查：本次 Full 其他节点无超时失败；readiness 路径 82% 占用属于同类风险，由同一常量覆盖。
+
+### 13.5 距 2 小时：结构下界与待 owner 决策
+- 结构：总工作量 31.4 节点小时 ÷ 16 worker = 118 分钟，是工作量守恒下界；实测 135.6 分钟 = 118 + 爬坡约 8（前两个 10 分钟桶重型并发 2.8 / 7.0）+ 尾部排空约 9（最后 8 个 540–750 s 的重型节点在 124–136 分钟结束，期间 CPU 降到 36% → 16%）。
+- 模型（M3 真实单元时长，composer 节点按 1,286.55 s 补回；基线 7,146 s 对实测窗口 8,134 s，低估 12%，与此前校准一致，下列折算已乘 ×1.138）：
+  | 方案 | 模型 | 折算墙钟 |
+  |---|---|---|
+  | 现状 K=8、间隔 120 s | 7,146 s | 8,134 s |
+  | 起跑间隔 120 → 30 s（仍只对前 K 个） | 6,963 s | 7,925 s（−3.5 分钟） |
+  | 解除重型上限 / K=6、10、12 | 7,146 / 8,687、7,448、7,797 s | 无收益或更差 |
+  | 重型工作量 −10% / −20% / −30% | 6,786 / 6,451 / 6,116 s | 7,723 / 7,341 / 6,960 s |
+  | 间隔 30 s + 重型 −20% | 6,293 s | 7,162 s（约 1 小时 59 分） |
+- 种子刷新（≈ −5 分钟）须来自已发布候选的 PASS profile，当前没有可用来源；现阶段可做的零合同改动只有起跑间隔（≈ −3.5 分钟，须实测验证起跑突发是否仍安全，O3-c 之后启动校验已大幅变轻）。
+- **要进入 2 小时，需要把重型工作量再降约 20–25%，没有不动合同的大头**：
+  - A. 夹具内层 Full 用 4 个 worker：每个重型节点 CPU 628 → 约 340 CPU 秒（−46%），重型 −25~−35%，预计 1 小时 50 分上下；须把 `-n 16`/`expected_worker_count`/`expected_collections` 参数化（受保护的发布检查器），并保留 1–2 个专项节点继续用 16；风险：夹具比真实发布更宽松，16 worker 闭合只在真实发布端到端执行（v25/v26 类缺陷）。
+  - B. 取消 worker 在 `pytest_sessionfinish` 的第二遍清单校验（控制器在结束时仍完整字节重算）：每个内层 Full 约 −128 CPU 秒（节点 CPU 的 20%，总 CPU 约 −12%），重型 −15~−20%；改变强制验收的 worker 行合同与检查器；失去「运行期间被触碰又还原」的 mtime 检测。
+  - C. 不动合同：停在约 2 小时 10 分（起跑间隔调整后），转入 DEVX-021 与发布；A/B 留给后续单独决策。
+- **owner 决策点**：A / B / C；以及 §13.4 的暂行校准是否接受为长期做法。我的建议是 C，并行完成 §13.4 与 DEVX-021，随最终候选的 Full 一起发布（owner 触发）。
