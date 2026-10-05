@@ -19,14 +19,14 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: M2c 正式 Full（S1-S3a+S6，未发布）：14,717 passed/0
-    failed，pytest 8,023 s（2 小时 13 分，v26 为 12,911 s，累计 -37.9%）；总工作量 30.93 节点小时（M1 37.25，v26
-    43.0）。S6 兑现（慢轻量节点 8.06->4.25 节点小时，smoothed 类降到 10-15%）。但墙钟只比 M1 降 5%：尾部空闲回来（最长
-    1,235 s），重型通道成为瓶颈（重型 15.95 节点小时/K=8≈1.99 h）。调度模型：解除上限/改 K/拆复合组都无大收益，重型工作量 -20%
-    才折算到 1.94 h。下一批候选：轻量侧剩余热点（composer 类）profile、就绪度评估纯加速（零差异证明）、S3b 租约事件外置（高风险需回归与真实
-    .git 演练）、S4 变体共享（须覆盖等价性论证）；取消 S4 复合组拆分与 S5 worker 数。另记录：02:03 主机硬卡死打断 M2；同候选重试被围栏拒绝（PUBLICATION_FULL_PARENT_REUSED），M2c
-    沿用 v20 parent 约定，系统缺少「主机中断后重试同一候选」路径，可另开任务。需向 owner 披露 S6 与该变通。详见 DEVX-022 文档第
-    9 节。
+  unstructured_legacy_blocker_or_next_step: M2c 之后的剖析（DEVX-022 第 10 节）：重型节点 CPU 的
+    61% 是内层 Full 的 16 个 worker 各约 24 CPU 秒的启动校验（只跑 74 个桩测试）。owner 选择「夹具内层 Full 改 4
+    个 worker」，但读代码发现 -n 16/expected_worker_count=16/expected_collections=16 写在受保护的发布检查器里（正式
+    Full 合同），改它等于放宽发布门槛并放大「夹具通过、真实仓库失败」风险，已按承诺停下并向 owner 报告，暂不实施，需要 owner 显式批准才可另行立项。改走不动合同的
+    S7：S7a worker 清单校验去 pathlib 往返（identity 逐字节相同，目标 4.0 s->2.5 s）；S7b 任务登记字节规范性比对按字节
+    SHA-256 的纯函数记忆（文件每次仍读取解析）；S4 变体共享前缀评估中（变体改写共享状态、夹具绑定绝对路径，需逐家族论证）。教训：含内层 Full 的节点不能用父进程
+    cProfile 估算（1,205 s vs 实测 326 s），用进程 CPU 计数器。S6 在最新授权段的路径扩展与该内层 worker 数搁置均需向
+    owner 披露。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
@@ -190,6 +190,37 @@ events:
   - change:gov-007-devx022-m2c-task-20261005-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-5eabae61c37e6a94db2bd255a9784f29
+- schema_version: task_event.v1
+  task_id: DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-05T02:08:43Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx022-s7reg-task-20261005-v1
+  lane_id: null
+  base_commit: 1e46e6ac767b309a880c41dbb2796981f8a61a7e
+  previous_state_event_id: task-event-5eabae61c37e6a94db2bd255a9784f29
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: M2c 之后的剖析（DEVX-022 第 10 节）：重型节点 CPU 的 61% 是内层 Full 的 16
+      个 worker 各约 24 CPU 秒的启动校验（只跑 74 个桩测试）。owner 选择「夹具内层 Full 改 4 个 worker」，但读代码发现
+      -n 16/expected_worker_count=16/expected_collections=16 写在受保护的发布检查器里（正式 Full
+      合同），改它等于放宽发布门槛并放大「夹具通过、真实仓库失败」风险，已按承诺停下并向 owner 报告，暂不实施，需要 owner 显式批准才可另行立项。改走不动合同的
+      S7：S7a worker 清单校验去 pathlib 往返（identity 逐字节相同，目标 4.0 s->2.5 s）；S7b 任务登记字节规范性比对按字节
+      SHA-256 的纯函数记忆（文件每次仍读取解析）；S4 变体共享前缀评估中（变体改写共享状态、夹具绑定绝对路径，需逐家族论证）。教训：含内层 Full
+      的节点不能用父进程 cProfile 估算（1,205 s vs 实测 326 s），用进程 CPU 计数器。S6 在最新授权段的路径扩展与该内层 worker
+      数搁置均需向 owner 披露。
+    acceptance_criteria: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约
+      20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实 .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5
+      最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
+    notes: 2026-10-05：登记 S7（worker 校验提速、登记字节记忆）与内层 worker 数方案的搁置原因（DEVX-022 第 10 节）。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx022-s7reg-task-20261005-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-640267448774facf326c2a8be0578c09
 projection:
   legacy_first_eight_cells:
   - DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
@@ -198,19 +229,19 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - M2c 正式 Full（S1-S3a+S6，未发布）：14,717 passed/0 failed，pytest 8,023 s（2 小时 13 分，v26
-    为 12,911 s，累计 -37.9%）；总工作量 30.93 节点小时（M1 37.25，v26 43.0）。S6 兑现（慢轻量节点 8.06->4.25
-    节点小时，smoothed 类降到 10-15%）。但墙钟只比 M1 降 5%：尾部空闲回来（最长 1,235 s），重型通道成为瓶颈（重型 15.95 节点小时/K=8≈1.99
-    h）。调度模型：解除上限/改 K/拆复合组都无大收益，重型工作量 -20% 才折算到 1.94 h。下一批候选：轻量侧剩余热点（composer 类）profile、就绪度评估纯加速（零差异证明）、S3b
-    租约事件外置（高风险需回归与真实 .git 演练）、S4 变体共享（须覆盖等价性论证）；取消 S4 复合组拆分与 S5 worker 数。另记录：02:03
-    主机硬卡死打断 M2；同候选重试被围栏拒绝（PUBLICATION_FULL_PARENT_REUSED），M2c 沿用 v20 parent 约定，系统缺少「主机中断后重试同一候选」路径，可另开任务。需向
-    owner 披露 S6 与该变通。详见 DEVX-022 文档第 9 节。
+  - M2c 之后的剖析（DEVX-022 第 10 节）：重型节点 CPU 的 61% 是内层 Full 的 16 个 worker 各约 24 CPU 秒的启动校验（只跑
+    74 个桩测试）。owner 选择「夹具内层 Full 改 4 个 worker」，但读代码发现 -n 16/expected_worker_count=16/expected_collections=16
+    写在受保护的发布检查器里（正式 Full 合同），改它等于放宽发布门槛并放大「夹具通过、真实仓库失败」风险，已按承诺停下并向 owner 报告，暂不实施，需要
+    owner 显式批准才可另行立项。改走不动合同的 S7：S7a worker 清单校验去 pathlib 往返（identity 逐字节相同，目标 4.0
+    s->2.5 s）；S7b 任务登记字节规范性比对按字节 SHA-256 的纯函数记忆（文件每次仍读取解析）；S4 变体共享前缀评估中（变体改写共享状态、夹具绑定绝对路径，需逐家族论证）。教训：含内层
+    Full 的节点不能用父进程 cProfile 估算（1,205 s vs 实测 326 s），用进程 CPU 计数器。S6 在最新授权段的路径扩展与该内层
+    worker 数搁置均需向 owner 披露。
   - S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
     .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5 最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
-  - 2026-10-05：M2c 实测、尾部分析、调度模型与下一批候选写入 DEVX-022 第 9 节。
+  - 2026-10-05：登记 S7（worker 校验提速、登记字节记忆）与内层 worker 数方案的搁置原因（DEVX-022 第 10 节）。
   docs_links: []
   terminal: false
-  canonical_row_sha256: cecbe4dac451f54959edda7a9de62d449b0ddb885a767415e3b617d1a2c21872
-last_event_id: task-event-5eabae61c37e6a94db2bd255a9784f29
+  canonical_row_sha256: 275c04573898b569f641d9be526c986e9ea7a370de163027c631abfcf5e34ac8
+last_event_id: task-event-640267448774facf326c2a8be0578c09
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 054f1b1d3802e67eb6f41c7327373aeae77f85bb6ca9293756cab8e7bc50a824
+fragment_checksum: bad57ff400ab5dc7102a7c072c2883a6c3aabd7e35242d95ef4984de8cd1815a

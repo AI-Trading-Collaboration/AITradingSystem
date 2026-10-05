@@ -211,3 +211,31 @@ S6 不在 owner 2026-10-04 批准的 S1–S5 序列内，是 M1 profile 暴露�
 4. **S4 变体共享不可变前缀**：预估 −2~3 节点小时；须给出覆盖等价性论证（分叉点必须晚于共享前缀），owner 已在 S4 批准时标注需复核。
 5. 取消：S4 复合组拆分（模型无收益）、S5 worker 数（CPU 已饱和）、轻量耗尽后解除上限（收益约 2%、风险上升）。
 
+## 10. M2c 之后的剖析：重型节点的 CPU 构成，以及「内层 Full 改 4 个 worker」被搁置的原因（2026-10-05）
+
+### 10.1 测量方法的教训（须记住）
+- 对含内层 Full 的节点，**不能用父进程 cProfile 的耗时估算**：`completed_admission_full_entry[LANE]` 在 cProfile 下是 1,205 s，不带 cProfile 只有 326 s（M2c 满载 Full 里 508 s），
+  差值是父进程里 Python 层的哈希/校验循环被 cProfile 放大。含子进程的节点用**进程 CPU 计数器**（`Get-Process` 每 15 s，`scratchpad/py_poll.ps1`），函数级细节只在隔离调用里取。
+
+### 10.2 重型节点的 CPU 构成（静机、一次一个节点，`D:/Work/devx022-t1/poll_f.csv`）
+- 同一节点（316 s 墙钟）python 进程累计 **628 CPU 秒**（平均并行度 2.0）：内层 Full 的 16 个 worker 各约 **24 CPU 秒、共 384 CPU 秒（61%）**，但只跑 74 个桩测试（测试窗口 0.03 s）；
+  其余是就绪度评估（内层 runner 一次、最终准入一次，各约 65 s 的单核 CPU）、夹具搭建与 git。
+- worker 在 `pytest_configure` 与 `sessionfinish` 各做一遍「运行时清单校验 + 实现绑定」：运行时清单校验 4.0 s（热缓存）、实现绑定 2.5–3.1 s、验收绑定 0.8 s，合计约 8 s/遍，两遍约 16 s，再加启动与导入约 24 CPU 秒。
+- Full 本身是 CPU 受限（32 个逻辑核，Full 窗口平均 78.5%），所以**降低 CPU 工作量**才会反映到墙钟上；每个重型节点都带一次 16 worker 的内层 Full，是 CPU 的大头。
+
+### 10.3 被搁置的方案：夹具内层 Full 改 4 个 worker（owner 2026-10-05 选择后，实施前发现须停下报告）
+- owner 选择了「夹具内层 Full 改用 4 个 worker（真实 Full 仍 -n 16）」。读代码后发现 `-n 16` 不只是夹具设置：正式 Full 的合同写在**受保护的发布检查器**里
+  （`scripts/run_validation_tier.py`：`inspect_full_publication_profile` 要求 `-n` 恰为 `"16"`、`expected_worker_count=16`；验收结果 `expected_collections=16`；时长剖析来源 `source_workers == 16`）。
+  夹具里的「真实 Full」就是走这套检查器，所以要让夹具用 4，必须把发布门槛里的常量变成可配置，等于修改正式 Full 的合同，并让夹具比真实发布更宽松。
+- 风险：这正是 v25/v26 暴露过的类型（夹具通过几百次、真实仓库才出问题）；16 worker 的闭合（witness、collections、Job 包含）只会在真实发布第一次被端到端执行。
+- 处理：**不实施**，向 owner 报告并改走不动合同的路径（10.4）。如果 owner 仍希望这样做，需要显式批准「修改正式 Full 合同的 worker 数策略」，并同时保留 1–2 个专项节点继续使用 16，另行立项。
+
+### 10.4 S7：不改验证合同的 CPU 削减（本节登记后实施）
+| 项 | 内容 | 语义边界 | 验收 |
+|---|---|---|---|
+| S7a | worker 清单校验去掉 pathlib 往返：`acceptance_runtime_identity_from_inventory`、`_InventoryBackedInputs.__init__`、`_verify_runtime_ancestors` 改用字符串路径与 `os.lstat` | 检查项不变（路径集、size、mtime_ns、文件 ID、非链接/重解析点、祖先无重解析点）；产出的 identity 与旧实现逐字节相同 | 真实运行时 identity 逐字节相等；篡改 size/mtime/链接/祖先重解析点的负向测试仍拒绝；静机 worker 校验 4.0 s → 目标 ≤ 2.5 s |
+| S7b | 任务登记 `_load_generated_mapping`：「这段字节等于它解析结果的规范序列化」是字节的纯函数，用字节 SHA-256 记忆；**文件每次仍重新读取并解析**，只跳过重复的序列化比对 | 不缓存任何文件系统状态，键是内容摘要；非规范内容永不缓存；改一个字节必然重新校验 | 同输入同结果；非规范仍以同一错误码拒绝；一次就绪度评估内 3 次登记校验的序列化比对只做 1 次；就绪度 canonical 相关耗时下降 |
+| S4（评估中） | 变体共享前缀：admission 家族 11 个变体都会改写共享状态（提交/改文件/篡改事务/释放租约/等待过期），且夹具状态绑定绝对路径，不能克隆 | 需要逐家族的覆盖等价性论证与逐变体状态还原；不可还原的变体（terminal、expired）必须独立前缀 | 另文给出每个家族的分叉点分析后再决定 |
+- 放弃：AST 解析/遍历优化（`ast.parse` 每文件一次，19 s 是固有成本；遍历仅 4.8 s）；整对象共享登记校验结果（比 S7b 多省约 6 s，但扩大「同一次评估内状态被换掉后不再重新观察」的窗口）。
+- 预估：S7a+S7b 合计约 −5~8% 的 CPU；仍不足以单独进 2 小时（M2c 为 2 h 13 m），需与 S3b/S4 的结果合并评估后再做 M3 正式 Full。
+
