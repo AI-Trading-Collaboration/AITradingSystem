@@ -19,12 +19,14 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S6 已实现并提交（300fdaf57）：validation_session
-    在单次指纹计算范围内共享祖先链接检查与 resolve 结果（不跨调用/会话/磁盘，stat 不记忆），_platform_change_token 改为每进程绑定一次。静机串行
-    cProfile：paper_shadow 节点 221->94 s（-57%），smoothed_forward_weekly_run 节点 402->77
-    s（-81%），系统调用降 5-7 倍；新增 6 个测试，73 个相关测试文件非重型层 513 通过，126 个失败均为 arch_004 哈希权威家族（待候选重封）。下一步：重封候选并做
-    M2 正式 Full（不发布，计数器遥测）实测总工作量与墙钟；按剩余差距决定 S3b/S4/S5 与 DEVX-021；S6 不在 owner 批准的 S1-S5
-    序列内，需向 owner 披露。详见 DEVX-022 文档第 8 节。
+  unstructured_legacy_blocker_or_next_step: M2c 正式 Full（S1-S3a+S6，未发布）：14,717 passed/0
+    failed，pytest 8,023 s（2 小时 13 分，v26 为 12,911 s，累计 -37.9%）；总工作量 30.93 节点小时（M1 37.25，v26
+    43.0）。S6 兑现（慢轻量节点 8.06->4.25 节点小时，smoothed 类降到 10-15%）。但墙钟只比 M1 降 5%：尾部空闲回来（最长
+    1,235 s），重型通道成为瓶颈（重型 15.95 节点小时/K=8≈1.99 h）。调度模型：解除上限/改 K/拆复合组都无大收益，重型工作量 -20%
+    才折算到 1.94 h。下一批候选：轻量侧剩余热点（composer 类）profile、就绪度评估纯加速（零差异证明）、S3b 租约事件外置（高风险需回归与真实
+    .git 演练）、S4 变体共享（须覆盖等价性论证）；取消 S4 复合组拆分与 S5 worker 数。另记录：02:03 主机硬卡死打断 M2；同候选重试被围栏拒绝（PUBLICATION_FULL_PARENT_REUSED），M2c
+    沿用 v20 parent 约定，系统缺少「主机中断后重试同一候选」路径，可另开任务。需向 owner 披露 S6 与该变通。详见 DEVX-022 文档第
+    9 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
@@ -157,6 +159,37 @@ events:
   - change:gov-007-devx022-s6-task-20261004-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-cb1b4be3ddee401b6a38e8b0c267bb72
+- schema_version: task_event.v1
+  task_id: DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-05T01:19:31Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx022-m2c-task-20261005-v1
+  lane_id: null
+  base_commit: 1e46e6ac767b309a880c41dbb2796981f8a61a7e
+  previous_state_event_id: task-event-cb1b4be3ddee401b6a38e8b0c267bb72
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: M2c 正式 Full（S1-S3a+S6，未发布）：14,717 passed/0 failed，pytest
+      8,023 s（2 小时 13 分，v26 为 12,911 s，累计 -37.9%）；总工作量 30.93 节点小时（M1 37.25，v26 43.0）。S6
+      兑现（慢轻量节点 8.06->4.25 节点小时，smoothed 类降到 10-15%）。但墙钟只比 M1 降 5%：尾部空闲回来（最长 1,235
+      s），重型通道成为瓶颈（重型 15.95 节点小时/K=8≈1.99 h）。调度模型：解除上限/改 K/拆复合组都无大收益，重型工作量 -20% 才折算到
+      1.94 h。下一批候选：轻量侧剩余热点（composer 类）profile、就绪度评估纯加速（零差异证明）、S3b 租约事件外置（高风险需回归与真实
+      .git 演练）、S4 变体共享（须覆盖等价性论证）；取消 S4 复合组拆分与 S5 worker 数。另记录：02:03 主机硬卡死打断 M2；同候选重试被围栏拒绝（PUBLICATION_FULL_PARENT_REUSED），M2c
+      沿用 v20 parent 约定，系统缺少「主机中断后重试同一候选」路径，可另开任务。需向 owner 披露 S6 与该变通。详见 DEVX-022 文档第
+      9 节。
+    acceptance_criteria: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约
+      20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实 .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5
+      最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
+    notes: 2026-10-05：M2c 实测、尾部分析、调度模型与下一批候选写入 DEVX-022 第 9 节。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx022-m2c-task-20261005-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5eabae61c37e6a94db2bd255a9784f29
 projection:
   legacy_first_eight_cells:
   - DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
@@ -165,17 +198,19 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - S6 已实现并提交（300fdaf57）：validation_session 在单次指纹计算范围内共享祖先链接检查与 resolve 结果（不跨调用/会话/磁盘，stat
-    不记忆），_platform_change_token 改为每进程绑定一次。静机串行 cProfile：paper_shadow 节点 221->94 s（-57%），smoothed_forward_weekly_run
-    节点 402->77 s（-81%），系统调用降 5-7 倍；新增 6 个测试，73 个相关测试文件非重型层 513 通过，126 个失败均为 arch_004
-    哈希权威家族（待候选重封）。下一步：重封候选并做 M2 正式 Full（不发布，计数器遥测）实测总工作量与墙钟；按剩余差距决定 S3b/S4/S5 与 DEVX-021；S6
-    不在 owner 批准的 S1-S5 序列内，需向 owner 披露。详见 DEVX-022 文档第 8 节。
+  - M2c 正式 Full（S1-S3a+S6，未发布）：14,717 passed/0 failed，pytest 8,023 s（2 小时 13 分，v26
+    为 12,911 s，累计 -37.9%）；总工作量 30.93 节点小时（M1 37.25，v26 43.0）。S6 兑现（慢轻量节点 8.06->4.25
+    节点小时，smoothed 类降到 10-15%）。但墙钟只比 M1 降 5%：尾部空闲回来（最长 1,235 s），重型通道成为瓶颈（重型 15.95 节点小时/K=8≈1.99
+    h）。调度模型：解除上限/改 K/拆复合组都无大收益，重型工作量 -20% 才折算到 1.94 h。下一批候选：轻量侧剩余热点（composer 类）profile、就绪度评估纯加速（零差异证明）、S3b
+    租约事件外置（高风险需回归与真实 .git 演练）、S4 变体共享（须覆盖等价性论证）；取消 S4 复合组拆分与 S5 worker 数。另记录：02:03
+    主机硬卡死打断 M2；同候选重试被围栏拒绝（PUBLICATION_FULL_PARENT_REUSED），M2c 沿用 v20 parent 约定，系统缺少「主机中断后重试同一候选」路径，可另开任务。需向
+    owner 披露 S6 与该变通。详见 DEVX-022 文档第 9 节。
   - S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
     .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5 最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
-  - 2026-10-04：S6 实现、测试与静机复测写入 DEVX-022 第 8.6 节。
+  - 2026-10-05：M2c 实测、尾部分析、调度模型与下一批候选写入 DEVX-022 第 9 节。
   docs_links: []
   terminal: false
-  canonical_row_sha256: eb56041385b092e0bd15e08c355d9cb7412b6f97f6a0b1e526b1d801d97b3c18
-last_event_id: task-event-cb1b4be3ddee401b6a38e8b0c267bb72
+  canonical_row_sha256: cecbe4dac451f54959edda7a9de62d449b0ddb885a767415e3b617d1a2c21872
+last_event_id: task-event-5eabae61c37e6a94db2bd255a9784f29
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: dc30370adf0a1db15f81f27761c07591320e4fd26745c03e36d547651ec4c4cb
+fragment_checksum: 054f1b1d3802e67eb6f41c7327373aeae77f85bb6ca9293756cab8e7bc50a824
