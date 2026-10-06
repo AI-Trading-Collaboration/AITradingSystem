@@ -19,16 +19,10 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: M4 最终候选 0cbdd9a45 已通过正式 Full 并真实发布：main
-    = origin/main = 0cbdd9a45（普通推送 1e46e6ac7..0cbdd9a45，事务 gov-007-devx022-m4-formal-20261005-v1
-    RELEASED/COMPLETED，无恢复、无人工干预）。Full 14,745 通过/4 跳过/0 失败，pytest 8,698 s（2:24:57）；同代码级别的三次实测
-    M2c 2:13:42、M3 2:16:27、M4 2:24:57（M4 总 CPU 60.6 CPU 小时 vs M3 54.0，整机每节点小时 CPU
-    逐次上升，单次墙钟噪声约 ±8%），较 v26 的 3:35 为 -33%~-38%，未达 <2 小时目标。S3b 的真实发布验证通过：新租约事件最大 0.97
-    MB（旧 22 MB）、20 个 v3 事件、1 个 9.65 MB blob，真实库仅 +23 MB（旧法每次发布约 +300 MB），重放 PASS 12.6
-    s。owner 2026-10-05/06 选择方案 C：不改正式 Full 合同，A（夹具内层 4 worker，约 -25~-35% 重型）与 B（取消
-    worker sessionfinish 第二遍清单校验，约 -12% CPU）搁置，需要时重新评估；剩余的不动合同手段：起跑间隔 120->30 s（约
-    -3.5 分钟，须实测起跑突发安全性）、种子刷新（约 -5 分钟，用本次已发布的 PASS profile，按 TRADING-2564 S5 规则）。详见
-    DEVX-022 第 14 节。状态转 BASELINE_DONE，剩余为上述可选项与 owner 对 A/B 的后续决策。
+  unstructured_legacy_blocker_or_next_step: S3b 回归（R1，DEVX-022 第 16 节）：已发布 main 中，真实租约库出现
+    v3 事件后，公开 to_dict() 把带摘要的共享表类型泄漏到公开字典（命名 DQ 父证明被严格规范 JSON 拒绝），且遥测加载器等外部 parse_lease_event
+    调用点不带 blob 读取器；修复与回归测试已在重建候选中。下一步：释放失败的 D21 正式事务、提交修复、重建准备链与正式事务、正式 Full，通过后向
+    owner 确认再发布（此前预授权只限 M4）。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
@@ -382,29 +376,66 @@ events:
   - change:gov-007-d22post-task-20261006-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-3d0d3fa3b2371cc2110e17dac3735da7
+- schema_version: task_event.v1
+  task_id: DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-06T06:36:04Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx022-s3breg-task-20261006-v1
+  lane_id: null
+  base_commit: 0cbdd9a4549987364d5fd2d450d3905083ef1775
+  previous_state_event_id: task-event-3d0d3fa3b2371cc2110e17dac3735da7
+  from_status: BASELINE_DONE
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: S3b 回归（R1，DEVX-022 第 16 节）：已发布 main 中，真实租约库出现 v3 事件后，公开
+      to_dict() 把带摘要的共享表类型泄漏到公开字典（命名 DQ 父证明被严格规范 JSON 拒绝），且遥测加载器等外部 parse_lease_event
+      调用点不带 blob 读取器；修复与回归测试已在重建候选中。下一步：释放失败的 D21 正式事务、提交修复、重建准备链与正式事务、正式 Full，通过后向
+      owner 确认再发布（此前预授权只限 M4）。
+    acceptance_criteria: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约
+      20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实 .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5
+      最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
+    notes: '2026-10-06：DEVX-021 P1 候选 67bfe0ae1 的正式验证 stage 1（named-parent-positive）失败，2
+      个节点，ValueError: only exact JSON scalar, object and array types are supported。根因（一类问题两个入口）：(A)
+      ExecutionLease.to_dict() 浅拷贝 execution，重放 head 里共享的 ExternalizedRows（list 子类）漏进公开字典，严格规范
+      JSON 拒绝；(B) 遥测加载器等外部 parse_lease_event 不带 blob 读取器，对 v3 事件按设计 fail-closed。M3/M4
+      没发现：第一批 v3 头是 M4 发布期间才写入真实库，且 S3b 的 13 个测试没有覆盖严格消费方与解析点枚举。影响已发布 main，但全部 fail-closed，不改变任何已存事件字节、事件
+      ID、blob 或租约语义。修复：公开字典只含精确 JSON 类型（存储形式不变）、ExternalizedRowsReader.beside_event、遥测/命名
+      DQ/source-handoff 解析点传入读取器、解析点静态守卫与 4 组回归测试（修复前失败、修复后通过）；聚焦回归 546 通过（32:43），真实库探针通过（canonical_json_bytes(replay.to_dict())
+      通过；遥测快照 6,531 个来源 166.8 s）。状态 BASELINE_DONE → IN_PROGRESS（缺陷修复未发布）；详见 DEVX-022
+      第 16 节。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx022-s3breg-task-20261006-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-882c317900179acb0c80209f06a2721d
 projection:
   legacy_first_eight_cells:
   - DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
   - Validation runtime / program to compress the formal Full below two hours (scheduler,
     lease-store replay, test structure)
   - P0
-  - BASELINE_DONE
+  - IN_PROGRESS
   - Claude Code coordinator
-  - M4 最终候选 0cbdd9a45 已通过正式 Full 并真实发布：main = origin/main = 0cbdd9a45（普通推送 1e46e6ac7..0cbdd9a45，事务
-    gov-007-devx022-m4-formal-20261005-v1 RELEASED/COMPLETED，无恢复、无人工干预）。Full 14,745
-    通过/4 跳过/0 失败，pytest 8,698 s（2:24:57）；同代码级别的三次实测 M2c 2:13:42、M3 2:16:27、M4 2:24:57（M4
-    总 CPU 60.6 CPU 小时 vs M3 54.0，整机每节点小时 CPU 逐次上升，单次墙钟噪声约 ±8%），较 v26 的 3:35 为 -33%~-38%，未达
-    <2 小时目标。S3b 的真实发布验证通过：新租约事件最大 0.97 MB（旧 22 MB）、20 个 v3 事件、1 个 9.65 MB blob，真实库仅
-    +23 MB（旧法每次发布约 +300 MB），重放 PASS 12.6 s。owner 2026-10-05/06 选择方案 C：不改正式 Full 合同，A（夹具内层
-    4 worker，约 -25~-35% 重型）与 B（取消 worker sessionfinish 第二遍清单校验，约 -12% CPU）搁置，需要时重新评估；剩余的不动合同手段：起跑间隔
-    120->30 s（约 -3.5 分钟，须实测起跑突发安全性）、种子刷新（约 -5 分钟，用本次已发布的 PASS profile，按 TRADING-2564
-    S5 规则）。详见 DEVX-022 第 14 节。状态转 BASELINE_DONE，剩余为上述可选项与 owner 对 A/B 的后续决策。
+  - S3b 回归（R1，DEVX-022 第 16 节）：已发布 main 中，真实租约库出现 v3 事件后，公开 to_dict() 把带摘要的共享表类型泄漏到公开字典（命名
+    DQ 父证明被严格规范 JSON 拒绝），且遥测加载器等外部 parse_lease_event 调用点不带 blob 读取器；修复与回归测试已在重建候选中。下一步：释放失败的
+    D21 正式事务、提交修复、重建准备链与正式事务、正式 Full，通过后向 owner 确认再发布（此前预授权只限 M4）。
   - S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
     .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5 最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
-  - 2026-10-06：M4 正式 Full 与真实发布结果、owner 决策 C 写入 DEVX-022 第 14 节；状态转 BASELINE_DONE。
+  - '2026-10-06：DEVX-021 P1 候选 67bfe0ae1 的正式验证 stage 1（named-parent-positive）失败，2
+    个节点，ValueError: only exact JSON scalar, object and array types are supported。根因（一类问题两个入口）：(A)
+    ExecutionLease.to_dict() 浅拷贝 execution，重放 head 里共享的 ExternalizedRows（list 子类）漏进公开字典，严格规范
+    JSON 拒绝；(B) 遥测加载器等外部 parse_lease_event 不带 blob 读取器，对 v3 事件按设计 fail-closed。M3/M4
+    没发现：第一批 v3 头是 M4 发布期间才写入真实库，且 S3b 的 13 个测试没有覆盖严格消费方与解析点枚举。影响已发布 main，但全部 fail-closed，不改变任何已存事件字节、事件
+    ID、blob 或租约语义。修复：公开字典只含精确 JSON 类型（存储形式不变）、ExternalizedRowsReader.beside_event、遥测/命名
+    DQ/source-handoff 解析点传入读取器、解析点静态守卫与 4 组回归测试（修复前失败、修复后通过）；聚焦回归 546 通过（32:43），真实库探针通过（canonical_json_bytes(replay.to_dict())
+    通过；遥测快照 6,531 个来源 166.8 s）。状态 BASELINE_DONE → IN_PROGRESS（缺陷修复未发布）；详见 DEVX-022
+    第 16 节。'
   docs_links: []
   terminal: false
-  canonical_row_sha256: 73f9ab4b3f8b223abc6453e71b4ffc594472683b4f520527754eea0c9fd5505a
-last_event_id: task-event-3d0d3fa3b2371cc2110e17dac3735da7
+  canonical_row_sha256: a3faea28be1684009633b22a259e17ab127b4c60969edf659fd383eca29695f4
+last_event_id: task-event-882c317900179acb0c80209f06a2721d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b3f4b3a8d9c62d37863f56e5d83b755c91ac5076f93bc30b4e0e0052622628f1
+fragment_checksum: b334acb7e47674769bf6977490c52743a872ea3fd622a7b37bcfbb109cad9d5e

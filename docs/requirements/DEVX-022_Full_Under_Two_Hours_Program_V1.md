@@ -473,3 +473,53 @@ owner 2026-10-06：「继续，但也要关注后续的流程耗时是否超出�
 - 各阶段起止时间来自 driver 日志、租约事件文件时间戳与 `claude_*` 证据文件，与 15.1 对照。
 - 计数器遥测改用 `scratchpad/k_sampler2.ps1`：在系统总量之外增加逐进程名 CPU（python、git、Defender、svchost、System、其他），仍只用性能计数器（不做 WMI 进程轮询），用来把测试负载与宿主背景负载分开；M4 总 CPU 比 M3 高 12% 而无法解释，正是缺少这一拆分。
 - 本节的预期与告警线随每次真实运行更新；若某环节反复触线，登记为任务，而不是调高告警线。
+
+
+## 16. S3b 回归：公开 `to_dict()` 泄漏共享表类型，以及不带 blob 读取器的事件解析（2026-10-06 发现并修复；**影响已发布的 main**）
+
+### 16.1 现象与发现过程
+- DEVX-021 P1 候选（`67bfe0ae1`）的正式验证在 stage 1（named-parent-positive）失败，耗时 276 s、2 个节点：
+  `test_exact_candidate_production_parent_mints_new_profile_seal_and_complete_closure` 与 `test_exact_candidate_real_clock_synthetic_activation_and_read_only_duplicate`；
+  异常 `ValueError: only exact JSON scalar, object and array types are supported`，出处 `named_quality_dispatch.py` 对 `canonical_json_bytes(before)` 的调用。静机重跑同样失败（确定性，不是负载问题）。
+- 逐层定位：命名 DQ 的父证明（`_read_lease`）把 `replay.to_dict()` 整体写进证明；真实库的重放结果里，**M4 发布期间写入的第一批 v3 事件所属租约的 head** 带着 `ExternalizedRows`（`list` 的子类，带摘要槽），
+  它从 `ExecutionLease.to_dict()` 的浅拷贝里原样漏出；严格规范 JSON 编码器只接受精确的 `list/dict/str/int/float/bool/None`，于是拒绝。
+- 同类排查发现第二处：`checkout_telemetry`（遥测快照 CLI）按 `leases/events/*/*.json` 全量解析事件时不带 blob 读取器，对 v3 事件按设计 fail-closed。
+  真实库实测：`telemetry snapshot FAILED ... LEASE_EXTERNALIZED_ROWS_UNAVAILABLE: no reader`（1.6 s）。
+
+### 16.2 为什么 M3/M4 的 Full 与发布没有发现
+- S3b 之前真实库里**没有** v3 事件；第一批 v3 头是 M4 发布过程中写入的（35 个事件里的 20 个 v3）。M3/M4 的 named-DQ 活体证明都在发布**之前**运行，当时重放里没有携带共享表的 head。
+- S3b 的 13 个测试覆盖了存储形式、blob 校验、混合库重放与共享/不可变语义，但**没有一个测试把重放结果交给严格规范 JSON 的消费方**，也没有测试枚举「外部解析点是否带读取器」。这是 S3b 验收标准里缺的一类用例，而不是测试被绕过。
+- 因此：这是已发布 main（`0cbdd9a45`）里的缺陷。表现为：真实库里已有 v3 头之后，任何把整库重放交给严格规范 JSON 的流程都会失败（命名 DQ 活体证明，即正式 Full 的 stage 1 与 Full 内对应节点），遥测快照 CLI 也失败。
+  它**不**改变任何已存事件的字节、事件 ID、blob 内容或租约语义，也没有产生任何错误的租约/发布结论（失败都是 fail-closed）。
+
+### 16.3 根因（一类问题的两个入口）
+1. `ExecutionLease.to_dict()` 对 `execution` 做浅拷贝，重放得到的 head 里共享的 `ExternalizedRows` 作为叶子原样进入「公开字典」。S3b 设计里用 list 子类携带摘要，以便存储形式不必重新序列化大表；
+   设计时只检查了「`json.dumps` 能编码」，没有检查「严格编码器拒绝 list 子类」这一类消费方。
+2. 外部 `parse_lease_event(payload)` 调用点不带 blob 读取器。设计上这是 fail-closed 的正确行为（事件引用了 blob 却没有读取器就必须失败，而不是误读），但调用点清单没有随「真实库开始出现 v3」而核对。
+
+### 16.4 修复（本批次，无合同变更、存储形式不变）
+- `ExecutionLease.to_dict(*, shared_rows=False)`：公开字典用 `_rewrite_rows(execution, _plain_rows)` 把共享表换成精确的 `list`（写时复制；没有共享表时是同一个对象，零开销；head 自己持有的共享表不被改动）。
+  `LeaseEvent._body()` 用 `shared_rows=True`，保留共享表与摘要槽，所以存储形式仍由摘要压缩、不重新哈希；`LeaseEvent.to_dict()` 在压缩之后再做一次转换，保证事件字典同样只含精确类型。
+- 新增 `ExternalizedRowsReader.beside_event(path)`：由 `<store>/events/<lease>/<event>.json` 推出 `<store>/blobs`；路径不符合该布局时返回 None，此时引用了 blob 的事件仍然 fail-closed，不会从猜测的位置读取。
+- 解析点：遥测加载器与校验器、命名 DQ 的两处（`_read_lease`、`verify_retained_named_capture_proof`，后者把守卫的构造提前）、source-handoff 释放事件，都传入所在 store 的读取器。
+- 哈希授权：`checkout_telemetry.py` 加入 V3 来源清单（`compatibility_authority.py` 的 `_devx_015_workflow_contract_section`）与 `tests/test_devx_006c_compatibility_authority.py` 的固定集合，由生成器链重封；仅此一条路径，`named_quality_dispatch.py`、`workflow_integration.py`、`parallel_control_kernel.py` 此前已在授权范围内。
+- 静态守卫：新增测试枚举 `src/` 与 `scripts/` 下所有 `parse_lease_event(` 调用，要求要么带 `blobs=`，要么在带理由的白名单里（5 处：3 处检查点租约、已退役旧控制根的终态验证、证据捕获的 ACTIVE 源租约事件；都不会携带发布托管表）；白名单条目失效（调用消失或已带读取器）也会失败，防止白名单变成死清单。
+- 新测试放在既有的 `tests/test_devx022_lease_event_externalization.py`（该文件不在哈希授权的固定清单里）：
+  `test_public_dicts_of_a_replay_hold_only_exact_json_types`（两种位置参数化：顶层胶囊与 `publication_attempts` 内；断言 replay/head/active/event 的所有字典只含精确类型、被严格编码器接受、head 自己的共享表不受影响、事件重新压缩后与存储字节相同）、
+  `test_a_derived_event_keeps_its_stored_form_after_the_public_conversion`（先取公开字典再派生事件，仍写成 v3 标记）、`test_checkout_telemetry_reads_externalized_events_of_the_lease_store`（含 blob 缺失仍 fail-closed）、`test_every_stored_event_parse_names_a_blob_reader_or_is_justified`。
+  修复前这 4 组（5 个用例中的 4 个）按预期失败，失败原因与现象一致；`test_a_derived_event_keeps_its_stored_form...` 在修复前后都通过，作为「不破坏摘要复用」的保护。
+
+### 16.5 验证（修复提交前的结果；正式 Full 与发布结果在后续章节记录）
+- 修复前：4 个新用例按预期失败（`to_dict` 泄漏、遥测不带读取器、解析点枚举），失败原因与现象一致。
+- 聚焦回归（项目 venv 的 Python 3.11.9，`-n 16 --dist loadfile`）：第一批 9 个模块（S3b、遥测、内核、租约仲裁、named-DQ dispatch、检查点、事件时间证据、checkout guard）**546 通过 / 0 失败，32:43**（§15.1 基线 27–36 分钟）。
+  第二批 16 个模块（发布围栏、dispatch、source preservation 等，排除 `real_full_chain`）1,515 通过、126 失败，全部可解释：
+  (1) 118 个 `tests/test_arch_004_refactor_policy.py` 哈希授权测试：`checkout_telemetry.py` 是历史上受哈希固定的源，改动后必须由最新授权段接管，做法同 S6（见 16.4 的授权项），由生成器重封后复跑；
+  (2) 2 个 `test_arch_005_source_preservation.py` 的「已提交实现」测试：工作树存在未提交修改时按设计必败（`SOURCE_PRESERVATION_IDENTITY: trusted implementation is not exact committed source`），提交后复跑；
+  (3) 6 个 composer 活体节点：需要 `AITS_NAMED_DQ_PUBLICATION_TRANSACTION` / `AITS_NAMED_DQ_SOURCE_LEASE_ID`（只在正式验证里运行，已知前置条件）。
+- 真实库探针（只读）：`canonical_json_bytes(replay.to_dict())` 通过（修复前失败）；遥测快照构建 PASS，6,531 个来源、852 条租约，166.8 s（每个事件解析 3 次，修复前对 v2 事件同样如此；只是手动 CLI，不在周期流程里）。
+- 观察（须记录）：命名 DQ 父证明把整库重放内嵌进证明，规范字节现在是 **32.4 MiB**（整库重放 19.8 s、`to_dict` + 规范编码 0.70 s；3 个已释放的发布 head 各带 9.5–9.9 MiB 的托管表，其中至少一个来自 v3 事件的展开）。每个活体证明因此写入更大的文件（pre/post 各一份）；
+  读写路径没有字节上限，类型修复后可通过；对时长的影响在正式 stage 1 对照 §15.1（named-parent-positive 440–502 s，告警线 900 s）。长期做法是不再把整库重放内嵌进每个证明（例如 DEVX-023 的封印之后只绑定重放摘要），须 owner 评审，本批不做。
+
+### 16.6 教训与流程改动
+- 真实库是「会演化的输入」：存储格式一旦进入真实库，所有读真实库的路径都必须有一次「用真实库」的冒烟，而不只是夹具；S3b 当时的真实库验证只覆盖了写入与重放（§14.4），没有覆盖对重放结果的下游消费。已把「公开字典精确类型」与「解析点枚举」作为静态/单元保护固化，后续任何新存储形式都要在验收里加这两类用例。
+- 本次排查中有一次误用系统 Python 3.14 运行聚焦回归（得到大量租约仲裁 `STATE_INVALID` 失败），属于已记录的环境陷阱（只能用 `.venv\Scripts\python.exe` 3.11）；这批结果已废弃并用 3.11 重跑，不作为验证证据。
