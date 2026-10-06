@@ -25238,8 +25238,9 @@ def test_devx_011_governed_workflow_health_authority_remains_historical() -> Non
         assert source["hash_normalization"] == "git_eol_lf"
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
     # DEVX-015 adds one reviewed frozen-task admission system-flow paragraph. The historical
-    # workflow contract stays frozen; only the live successor count advances.
-    assert phase["report_catalog_flow_successor"]["entry_count"] == 3450
+    # workflow contract stays frozen; only the live successor count advances. DEVX-016 F1:
+    # the successor count follows the live document, so it is a monotonic floor, not a literal.
+    assert phase["report_catalog_flow_successor"]["entry_count"] >= 3450
     assert phase["report_catalog_flow_successor"]["fragment_count"] == 192
     assert phase["safety"] == {
         "market_cache_read": False,

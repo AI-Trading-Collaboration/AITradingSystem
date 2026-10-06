@@ -127,7 +127,8 @@ def test_repository_authority_is_fresh_lossless_and_inactive() -> None:
     assert result["source_of_truth"] == "LEGACY_MONOLITH"
     assert result["fragment_shadow_active"] is False
     assert result["target_count"] == 3
-    assert result["entry_count"] == 3450
+    # DEVX-016 F1: a floor (the sum of the per-target floors below), not the live literal
+    assert result["entry_count"] >= sum(ENTRY_COUNT_FLOORS.values())
     assert 1 <= result["fragment_count"] <= 192
     assert policy["contract"] == {
         "source_of_truth": "LEGACY_MONOLITH",
@@ -176,7 +177,8 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     assert successor["source_of_truth"] == "LEGACY_MONOLITH"
     assert successor["fragment_shadow_active"] is False
     assert successor["target_count"] == 3
-    assert successor["entry_count"] == 3450
+    # the successor record is written by the generator from the live authority: it must be it
+    assert successor["entry_count"] == validate_repository_authority()["entry_count"]
     assert successor["fragment_count"] == 192
 
 
