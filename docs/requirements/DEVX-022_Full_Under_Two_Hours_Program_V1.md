@@ -434,3 +434,41 @@ S6 不在 owner 2026-10-04 批准的 S1–S5 序列内，是 M1 profile 暴露�
 - 保留：`D:/Work/devx022-t1`（profile/日志/计数器，12 MB）、各次计数器 CSV（`D:/Work/devx022-m{1,2,2b,2c,3,4}-counters.csv`）、`D:/Work/devx021-prof`、`D:/Work/devx021-smoke-logs`；`D:/Work/devx020-k`（K 实验原始数据 6.3 GB，随 DEVX-020 关闭时清理）；
   `D:/Work/devx015-*`（已登记的证据根，不动）；`outputs/validation_runtime/gov-007-devx022-m*-*` 与 `outputs/architecture/integration_revalidation/devx015-v389/claude_m*`（证据，git 忽略）。
 - 仍待 owner 操作：5 个 HKCU `AITS-DEVX015-Test-*` 遗留注册表根（实测仍在）：运行 `D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1`（默认 dry-run，`-Execute` 需键入 DELETE；有 python.exe 运行时会拒绝）；agent 不执行删除。
+
+
+## 15. 后续流程耗时基线、告警线与租约重放成本模型（2026-10-06，owner 要求持续关注）
+
+owner 2026-10-06：「继续，但也要关注后续的流程耗时是否超出目前的预期，如果发现出现过长耗时仍需要继续分析。」本节固定当前预期、告警线和分析方法；之后每一次受治理的运行都与本节对照，超出就先分析再继续，并把结论写回本节。
+
+### 15.1 基线与告警线（暂行的工程启发式，不是投资解释；每次真实运行后复核）
+| 环节 | 预期（实测区间） | 告警线 | 依据 |
+|---|---|---|---|
+| 任务行围栏事务（acquire → TASK_SOURCE_PRE_WRITE → update → release） | 1–2 分钟 / 个 | > 5 分钟 | 2026-10-06 五个事务；acquire 15 s、checkpoint 28 s、release 56 s、update 数十秒 |
+| 重封链单轮（5 个生成器 + 检查） | 约 90 s / 轮，共 3 轮 + 2 次提交 | 单轮 > 3 分钟 | M3/M4 准备链 |
+| 正式事务 acquire → `FORMAL_VALIDATION_PRE` + 预检 + 就绪度 | 约 8 分钟 | > 20 分钟 | M4 |
+| named-parent-positive | 440–502 s（M2c 1,177 s 受 Defender 影响） | > 900 s | M3/M4 |
+| contract / integration / reproducibility | 267–281 s / 68–75 s / 47 s | > 600 s / 200 s / 150 s | M3/M4 |
+| architecture-fitness | 1,308–1,408 s | > 2,400 s | M2c/M3/M4 |
+| 正式 Full（pytest 墙钟） | 8,023–8,698 s（2:14–2:25） | > 9,500 s（约 2:38） | M2c/M3/M4，单次噪声约 ±8% |
+| Full 之后的真实 `local-publish` | 71 分钟（worker 约 63 分钟） | > 100 分钟 | M4 |
+| 发布收尾（fetch → push → CLEANUP_PRE → release） | 约 10 分钟 | > 30 分钟 | M4 |
+| 非重型层聚焦回归（受影响的 30 个左右测试文件） | 约 36 分钟 | > 60 分钟 | S3b |
+- 告警线取「已观测上限 × 1.1」（Full、发布）或「典型值 × 2」（短阶段）。**超过告警线时的处理**：先判断是否宿主噪声（对照同时段的逐进程 CPU 与磁盘），再按环节下钻（重放次数、节点时长对比、尾部），并把原因与结论写回本节；不要先加大超时再说。
+
+### 15.2 租约重放主导受治理流程的耗时（2026-10-06 实测）
+- 单次真实库重放 **13.6–14.7 s**（712 MB、5,642 个事件，静机）。围栏命令的墙钟几乎全是重放：`acquire` 1 次重放（15.2 s）、`checkpoint` 2 次（28.3 s）、`release` 4 次（56.0 s），其余耗时不到 1 s（`scratchpad/fence_instrumented.py` 只计数与计时，不改行为）。
+- 真实发布的 34 个租约事件按文件时间排列：起步阶段每个事件间隔 3–5 分钟（01:35 → 01:54，6 个事件）；`ready_held` 前一个事件间隔 544 s；`heads_switched`/`merge_resumed` 前后 221–354 s；**git 钩子阶段 10 个事件各约 127–139 s（约 9 次重放/事件）**；
+  采纳与收尾 254 s、213 s、115 s、36 s。71 分钟 ≈ 34 个事件 × 约 2 分钟，也就是 **发布耗时 ≈ 重放次数 × 14 s**。
+- 一次重放的构成（cProfile，17.3 s）：`parse_lease_event` 10.7 s（JSON 解码 4.5 s、规范序列化与哈希 3.3 s）、`validate_execution` 7.3 s（hook-ready 校验 5.4 s，其中自定义清单路径解析 3.0 s、`pathlib` 1.4 s）。29 个历史大事件（653 MB）约占一半。
+- 钩子里的重放来源（读 `record_publication_hook`、`ExecutionLifecycle._head/_append`）：持锁之前的乐观读取（`fence.replay`、`_head`、`_require_original_publication`）一轮，持锁之后的复核（`_head`、`_require_original_publication`、`_append` 里为取前一个事件 ID 再重放一次）一轮；
+  `_append_event` 本身不重放。持锁复核是 TOCTOU 防护，不能省；`_append` 里那一次是同一把锁内的重复读取。
+- **可选方向（均未实施，待 owner 决定；O3 跨调用缓存仍未获批）**：
+  - W 同一原子操作内共享：只在持有仲裁锁的同一次 `atomic` 内复用上一次重放，写入之后立即作废；预计每个钩子 9 → 约 6 次重放，发布约 71 → 约 50 分钟，风险低。
+  - S 历史前缀封印：每次仍逐字节哈希全部历史事件文件（约 1–2 s），只跳过已封印前缀的语义重验；重放约 14 s → 约 2 s，发布约 71 → 约 15 分钟，每条围栏命令快约 5 倍，Full 里的 live-proof 节点也受益；但这是一种带完整性绑定的持久化检查点，须 owner 评审信任模型并随内核版本失效。
+  - M 路径解析微优化（`_validated_hook_ready_paths` 去掉 `Path` 往返）：约 −2 s/次（−14%），语义不变，收益有限。
+- 结论：当前没有环节超出预期（发布 71 分钟在预估的 30–90 分钟内）；但重放成本随库体积线性增长，S3b 之后库每次发布只涨约 +23 MB，增长已受控。
+
+### 15.3 监测方法
+- 各阶段起止时间来自 driver 日志、租约事件文件时间戳与 `claude_*` 证据文件，与 15.1 对照。
+- 计数器遥测改用 `scratchpad/k_sampler2.ps1`：在系统总量之外增加逐进程名 CPU（python、git、Defender、svchost、System、其他），仍只用性能计数器（不做 WMI 进程轮询），用来把测试负载与宿主背景负载分开；M4 总 CPU 比 M3 高 12% 而无法解释，正是缺少这一拆分。
+- 本节的预期与告警线随每次真实运行更新；若某环节反复触线，登记为任务，而不是调高告警线。
