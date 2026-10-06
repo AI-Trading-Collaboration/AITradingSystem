@@ -66,7 +66,7 @@ LOCAL_PUBLICATION_GIT_CHILD_WAIT_SECONDS = 7_200
 # exit, i.e. inside a single replay() call. Nothing survives the call and no on-disk "already
 # checked" marker exists: the next replay validates everything again, and a copy whose content
 # differs from the memoized one is validated in full.
-_REPLAY_MEMO: contextvars.ContextVar[dict[str, Any] | None] = contextvars.ContextVar(
+_REPLAY_MEMO: contextvars.ContextVar[dict[Any, Any] | None] = contextvars.ContextVar(
     "lease_replay_validation_memo", default=None,
 )
 
@@ -98,6 +98,25 @@ def replay_validation_scope() -> Iterator[None]:
         yield
     finally:
         _REPLAY_MEMO.reset(token)
+
+
+# DEVX-023 S3d: a plain (embedded) custody table is keyed by hashing it once per event; above this
+# many rows the hash would cost about what the memo saves, so such an event is simply validated in
+# full. Performance bound only: no validation outcome depends on it.
+HOOK_READY_KEY_MAX_PLAIN_ROWS = 8_192
+
+
+def _table_digest(rows: Any) -> str | None:
+    """Content digest of a replayed custody table, or None when it carries none.
+
+    Only a table taken from a replay (ExternalizedRows, immutable, digest verified against its blob
+    or computed when adopted) names its content by digest; a plain list is not trusted to.
+    """
+    from ai_trading_system.platform.architecture.parallel_control_kernel import ExternalizedRows
+
+    if type(rows) is ExternalizedRows and hasattr(rows, "sha256"):
+        return rows.sha256
+    return None
 
 _REQUEST_KEYS = {
     "schema_version",
@@ -488,10 +507,18 @@ def _validate_publication_profile_binding(
         _fail(code)
     memo = _REPLAY_MEMO.get()
     key = (profile["captures"], request["cwd"])
+    # DEVX-023 S3d: a digest-carrying table has one slot per (digest, cwd); a plain list keeps the
+    # S3a single slot with its equality comparison.
+    digest = _table_digest(profile["captures"])
+    slot = ("profile_captures", digest, request["cwd"]) if digest is not None else None
     if memo is not None:
-        known = memo.get("profile_captures")
-        if known is not None and known[0] == key[0] and known[1] == key[1]:
-            return  # An equal list under the same cwd already passed these row checks in this call.
+        if slot is not None:
+            if slot in memo:
+                return  # This table already passed these row checks under this cwd in this call.
+        else:
+            known = memo.get("profile_captures")
+            if known is not None and known[0] == key[0] and known[1] == key[1]:
+                return  # An equal list under the same cwd already passed in this call.
     paths: set[str] = set()
     for row in profile["captures"]:
         if (not isinstance(row, Mapping) or set(row) != {"path", "size_bytes", "sha256"}
@@ -503,7 +530,10 @@ def _validate_publication_profile_binding(
         _digest(row["sha256"])
         paths.add(row["path"].casefold())
     if memo is not None:
-        memo["profile_captures"] = key
+        if slot is not None:
+            memo[slot] = True
+        else:
+            memo["profile_captures"] = key
 
 
 def _validate_unchanged_publication_observation(execution: Mapping[str, Any]) -> None:
@@ -1464,11 +1494,22 @@ def _validated_hook_ready_paths(files: list[Any], count: int) -> list[Path]:
     from ai_trading_system.platform.architecture.workflow_contract import portable_path
 
     memo = _REPLAY_MEMO.get()
+    # DEVX-023 S3d: one slot per (table digest, count) for a digest-carrying table; a plain list
+    # keeps the S3a single slot. A replay visits one lease chain after another, so with a single
+    # slot chains whose tables differ evicted each other.
+    digest = _table_digest(files)
+    slot = ("hook_ready_rows", digest, count) if digest is not None else None
     if memo is not None:
-        known = memo.get("hook_ready_rows")
-        if known is not None and known["count"] == count and known["files"] == files:
-            known_paths: list[Path] = known["paths"]
-            return known_paths
+        if slot is not None:
+            keyed_paths = memo.get(slot)
+            if keyed_paths is not None:
+                keyed: list[Path] = keyed_paths
+                return keyed
+        else:
+            known = memo.get("hook_ready_rows")
+            if known is not None and known["count"] == count and known["files"] == files:
+                known_paths: list[Path] = known["paths"]
+                return known_paths
     paths: list[Path] = []
     namespace: dict[Path, tuple[str, list[int]]] = {}
     # Per-call lexical interning only: every supplied native identity is still
@@ -1523,7 +1564,10 @@ def _validated_hook_ready_paths(files: list[Any], count: int) -> list[Path]:
             namespace[node_path] = (kind, pair)
         paths.append(file_path)
     if memo is not None:
-        memo["hook_ready_rows"] = {"count": count, "files": files, "paths": paths}
+        if slot is not None:
+            memo[slot] = paths
+        else:
+            memo["hook_ready_rows"] = {"count": count, "files": files, "paths": paths}
     return paths
 
 
@@ -1532,11 +1576,19 @@ def _hook_ready_distribution_digest(
 ) -> tuple[str, int]:
     """Digest of the runtime file rows; memoized per replay call like the row validation."""
     memo = _REPLAY_MEMO.get()
+    table = _table_digest(files)
+    slot = ("hook_ready_digest", table, count) if table is not None else None
     if memo is not None:
-        known = memo.get("hook_ready_digest")
-        if known is not None and known["count"] == count and known["files"] == files:
-            known_digest: tuple[str, int] = known["digest"]
-            return known_digest
+        if slot is not None:
+            keyed_digest = memo.get(slot)
+            if keyed_digest is not None:
+                keyed_result: tuple[str, int] = keyed_digest
+                return keyed_result
+        else:
+            known = memo.get("hook_ready_digest")
+            if known is not None and known["count"] == count and known["files"] == files:
+                known_digest: tuple[str, int] = known["digest"]
+                return known_digest
     digest, total = hashlib.sha256(), 0
     for path, row in zip(distribution_paths, files[2:count], strict=True):
         total += row["size_bytes"]
@@ -1546,12 +1598,82 @@ def _hook_ready_distribution_digest(
         digest.update(b"\n")
     result = (digest.hexdigest(), total)
     if memo is not None:
-        memo["hook_ready_digest"] = {"count": count, "files": files, "digest": result}
+        if slot is not None:
+            memo[slot] = result
+        else:
+            memo["hook_ready_digest"] = {"count": count, "files": files, "digest": result}
     return result
 
 
+def _hook_ready_memo_key(execution: Mapping[str, Any]) -> str | None:
+    """Key of one `_validate_hook_ready_full` question, or None when it cannot be keyed cheaply.
+
+    DEVX-023 S3d. `_validate_hook_ready_full` is a pure function of exactly these execution fields
+    (pinned by a static test): the capsule, the request, its digest, and the candidate checkout
+    root identity of the plan. The two custody tables enter the key by content digest, so the key
+    stays small. A table that is not digest-carrying is hashed when it is plain and short; a long
+    plain table makes the question unkeyed (validated in full), and so does any malformed record,
+    which then reaches the real validator and its proper error.
+    """
+    from ai_trading_system.platform.architecture.parallel_control_kernel import (
+        _canonical_sha256,
+        _rows_canonical_bytes,
+    )
+
+    def digest_of(rows: Any) -> tuple[str, int] | None:
+        known = _table_digest(rows)
+        if known is not None:
+            return known, len(rows)
+        if isinstance(rows, list) and len(rows) <= HOOK_READY_KEY_MAX_PLAIN_ROWS:
+            return hashlib.sha256(_rows_canonical_bytes(rows)).hexdigest(), len(rows)
+        return None
+
+    try:
+        capsule = execution["hook_capsule"]
+        ready = capsule["ready"]
+        inputs, profile = ready["inputs"], ready["inputs"]["profile_inspection"]
+        files, captures = digest_of(inputs["read_file_custodies"]), digest_of(profile["captures"])
+        if files is None or captures is None:
+            return None
+        compact = {
+            **capsule,
+            "ready": {**ready, "inputs": {
+                **inputs,
+                "read_file_custodies": {"sha256": files[0], "row_count": files[1]},
+                "profile_inspection": {
+                    **profile, "captures": {"sha256": captures[0], "row_count": captures[1]},
+                },
+            }},
+        }
+        return _canonical_sha256({
+            "capsule": compact, "request": execution["request"],
+            "request_sha256": execution["request_sha256"],
+            "root_identity": execution["checkout_plan"]["plan"]["topology"][
+                "candidate_checkout"]["root"]["identity"],
+        })
+    except (KeyError, TypeError, AttributeError, ValueError):
+        return None
+
+
 def _validate_hook_ready(execution: Mapping[str, Any]) -> None:
-    """Check the durable readset; original event transition supplies prior-hash authority."""
+    """Check the durable readset; original event transition supplies prior-hash authority.
+
+    DEVX-023 S3d: inside one replay() call an equal question is answered once. The memo holds only
+    successes, lives in `_REPLAY_MEMO` (nothing survives the call, nothing is written to disk), and
+    any difference in any input named by `_hook_ready_memo_key` is a different question that takes
+    the full validation below.
+    """
+    memo = _REPLAY_MEMO.get()
+    key = _hook_ready_memo_key(execution) if memo is not None else None
+    slot = ("hook_ready_validated", key)
+    if memo is not None and key is not None and slot in memo:
+        return
+    _validate_hook_ready_full(execution)
+    if memo is not None and key is not None:
+        memo[slot] = True
+
+
+def _validate_hook_ready_full(execution: Mapping[str, Any]) -> None:
     capsule, request = execution["hook_capsule"], execution["request"]
     ready = capsule["ready"]
     if (len(capsule["objects"]) != 3 or not isinstance(ready, Mapping) or set(ready) != {

@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 import stat
 import threading
 from collections.abc import Callable, Iterator, Mapping, Sequence
@@ -28,6 +29,11 @@ POLICY_SCHEMA_VERSION = "arch_005_parallel_control_policy.v1"
 DEPENDENCY_SCHEMA_VERSION = "task_dependency.v1"
 LEASE_SCHEMA_VERSION = "execution_lease.v1"
 LEASE_EVENT_SCHEMA_VERSION = "execution_lease_event.v1"
+# DEVX-022 S3b / DEVX-023 S3c: stored-form generations (see the externalized-rows block).
+LEASE_V3_SCHEMA_VERSION = "execution_lease.v3"
+LEASE_EVENT_V3_SCHEMA_VERSION = "execution_lease_event.v3"
+LEASE_V4_SCHEMA_VERSION = "execution_lease.v4"
+LEASE_EVENT_V4_SCHEMA_VERSION = "execution_lease_event.v4"
 READINESS_SCHEMA_VERSION = "task_readiness_decision.v1"
 LEASE_REPLAY_SCHEMA_VERSION = "execution_lease_replay.v1"
 
@@ -254,6 +260,8 @@ class LeaseEvent:
     # DEVX-022 S3b: how this event is STORED. False = every historical event (the custody table is
     # embedded, original id formula); True = qualifying tables are externalized (schema v3).
     rows_externalized: bool = False
+    # DEVX-023 S3c: which generation of positions the stored form uses (v3 = S3b, v4 = S3c).
+    externalized_schema: str = LEASE_EVENT_V4_SCHEMA_VERSION
 
     def _body(self) -> dict[str, object]:
         """The stored form: the id is the hash of exactly this canonical body."""
@@ -266,11 +274,12 @@ class LeaseEvent:
         if self.rows_externalized and isinstance(lease.get("execution"), Mapping):
             execution, changed = _rewrite_rows(
                 cast(Mapping[str, Any], lease["execution"]), _compact_rows,
+                _POSITIONS_BY_EVENT_SCHEMA[self.externalized_schema],
             )
             if changed:
                 lease["execution"] = dict(execution)
-                lease["schema_version"] = LEASE_V3_SCHEMA_VERSION
-                schema = LEASE_EVENT_V3_SCHEMA_VERSION
+                lease["schema_version"] = _LEASE_SCHEMA_BY_EVENT_SCHEMA[self.externalized_schema]
+                schema = self.externalized_schema
         return {
             "schema_version": schema,
             "lease": lease,
@@ -758,6 +767,15 @@ def _replay_lease_events(
     )
 
 
+# DEVX-023 W: process-wide count of event writes per store root. A replay taken inside a locked
+# compound operation is reused only while this number is the one it was taken at.
+_WRITE_GENERATIONS: dict[str, int] = {}
+_WRITE_GENERATIONS_LOCK = threading.Lock()
+# Diagnostics only (tests and measurements): how often a locked section reused its replay.
+SECTION_REPLAY_STATS = {"hits": 0, "misses": 0}
+SECTION_REPLAY_VERIFY_ENV = "AITS_LEASE_SECTION_REPLAY_VERIFY"
+
+
 class FileExecutionLeaseStore:
     def __init__(self, root: Path, *, policy: ParallelControlPolicy) -> None:
         self.requested_root = root.absolute()
@@ -770,7 +788,69 @@ class FileExecutionLeaseStore:
         self._atomic_context = threading.local()
         self.coordination_binding: Any = None
 
+    def _write_generation(self) -> int:
+        with _WRITE_GENERATIONS_LOCK:
+            return _WRITE_GENERATIONS.get(self.root.as_posix(), 0)
+
+    def _bump_write_generation(self) -> None:
+        with _WRITE_GENERATIONS_LOCK:
+            key = self.root.as_posix()
+            _WRITE_GENERATIONS[key] = _WRITE_GENERATIONS.get(key, 0) + 1
+
+    def _events_fingerprint(self) -> tuple[int, int, int, int]:
+        """Cheap evidence that no event file appeared, vanished or changed since a replay.
+
+        (lease directories, event files, newest mtime in ns, total bytes). Defense in depth only:
+        the OS arbiter keeps other writers out of a locked section and the write generation
+        covers every writer of this process.
+        """
+        if not self.events_root.exists():
+            return (0, 0, 0, 0)
+        chains = files = newest = total = 0
+        with os.scandir(self.events_root) as directories:
+            for directory in directories:
+                chains += 1
+                with os.scandir(directory.path) as entries:
+                    for entry in entries:
+                        info = entry.stat()
+                        files += 1
+                        total += info.st_size
+                        newest = max(newest, info.st_mtime_ns)
+        return (chains, files, newest, total)
+
     def replay(self) -> LeaseReplay:
+        """The lease-store replay.
+
+        DEVX-023 W. Inside ONE locked compound operation (an `atomic()` section of this store
+        instance, on this thread) a repeated call is answered from that operation's own earlier
+        replay for as long as nothing was written: the arbiter excludes every other writer, the
+        process-wide write generation covers writers of this process, and an events-directory
+        fingerprint covers anything that bypassed both. The reuse lives in the section's
+        thread-local state, so nothing survives the section and nothing is written to disk. Outside
+        a section every call is a full replay, exactly as before. With
+        AITS_LEASE_SECTION_REPLAY_VERIFY=1 every reuse is checked against a fresh replay.
+        """
+        if getattr(self._atomic_context, "binding", None) is None:
+            return self._replay_uncached()
+        # Stamp BEFORE replaying: anything that changes meanwhile makes the next call a miss.
+        generation, fingerprint = self._write_generation(), self._events_fingerprint()
+        cached = getattr(self._atomic_context, "replay_cache", None)
+        if cached is not None and cached[0] == generation and cached[1] == fingerprint:
+            SECTION_REPLAY_STATS["hits"] += 1
+            if os.environ.get(SECTION_REPLAY_VERIFY_ENV) == "1":
+                fresh = self._replay_uncached()
+                if fresh.to_dict() != cached[2].to_dict():
+                    raise ParallelControlError(
+                        "LEASE_SECTION_REPLAY_STALE",
+                        "the section's replay differs from a fresh one",
+                    )
+            return cast(LeaseReplay, cached[2])
+        SECTION_REPLAY_STATS["misses"] += 1
+        replay = self._replay_uncached()
+        self._atomic_context.replay_cache = (generation, fingerprint, replay)
+        return replay
+
+    def _replay_uncached(self) -> LeaseReplay:
         from ai_trading_system.platform.architecture.workflow_coordination import (
             _validate_checked_execution_transition,
             replay_validation_scope,
@@ -1222,7 +1302,9 @@ class FileExecutionLeaseStore:
         path = self.events_root / event.lease.lease_id / f"{event.event_id}.json"
         if event.rows_externalized:
             # DEVX-022 S3b: every named blob exists (and matches) before the event naming it.
-            for rows in _qualifying_rows(event.lease.execution):
+            for rows in _qualifying_rows(
+                event.lease.execution, _POSITIONS_BY_EVENT_SCHEMA[event.externalized_schema],
+            ):
                 self.blobs.write(rows)
         if path.exists():
             existing = json.loads(path.read_text(encoding="utf-8"))
@@ -1230,6 +1312,7 @@ class FileExecutionLeaseStore:
                 raise ParallelControlError("LEASE_EVENT_IMMUTABILITY", event.event_id)
             return
         write_json_atomic(path, event.to_dict())
+        self._bump_write_generation()
 
     @contextmanager
     def atomic(self, *, actor: str, now: datetime, operation: str = "compound") -> Iterator[None]:
@@ -1253,9 +1336,11 @@ class FileExecutionLeaseStore:
         ) as held:
             self._assert_writer(operation)
             self._atomic_context.binding = (actor, held)
+            self._atomic_context.replay_cache = None
             try:
                 yield
             finally:
+                self._atomic_context.replay_cache = None
                 del self._atomic_context.binding
 
     def _assert_writer(self, operation: str) -> None:
@@ -1309,9 +1394,38 @@ EXTERNALIZED_ROWS_MINIMUM = 1024
 EXTERNALIZED_ROWS_MARKER = "externalized_rows.v1"
 EXTERNALIZED_ROWS_FIELD = "read_file_custodies"
 EXTERNALIZED_ROWS_MAX_BYTES = 64 * 1024 * 1024
-LEASE_V3_SCHEMA_VERSION = "execution_lease.v3"
-LEASE_EVENT_V3_SCHEMA_VERSION = "execution_lease_event.v3"
+# DEVX-023 S3c: the stored form of a NEW event also externalizes the `profile_inspection.captures`
+# table (the same 1,376 rows at three kinds of position, ~313 KB in every late event). The set of
+# positions is part of the stored-form generation: a v3 event (written by S3b code, captures
+# embedded) keeps its id and is validated with the S3b positions only; a v4 event uses all of them.
+EXTERNALIZED_CAPTURES_FIELD = "captures"
 _HEX_DIGITS = frozenset("0123456789abcdef")
+
+# (containers below `execution`, field). A container name ending in "[]" means every element of
+# that list. A table is externalized at a position only when it has at least
+# EXTERNALIZED_ROWS_MINIMUM rows; a marker anywhere else is invalid.
+RowsPosition = tuple[tuple[str, ...], str]
+EXTERNALIZED_ROWS_POSITIONS_V3: tuple[RowsPosition, ...] = (
+    (("hook_capsule", "ready", "inputs"), EXTERNALIZED_ROWS_FIELD),
+    (("publication_attempts[]", "hook_capsule", "ready", "inputs"), EXTERNALIZED_ROWS_FIELD),
+)
+EXTERNALIZED_ROWS_POSITIONS_V4: tuple[RowsPosition, ...] = (
+    *EXTERNALIZED_ROWS_POSITIONS_V3,
+    (("hook_capsule", "ready", "inputs", "profile_inspection"), EXTERNALIZED_CAPTURES_FIELD),
+    (
+        ("publication_attempts[]", "hook_capsule", "ready", "inputs", "profile_inspection"),
+        EXTERNALIZED_CAPTURES_FIELD,
+    ),
+    (("publication_stable_observation", "profile_inspection"), EXTERNALIZED_CAPTURES_FIELD),
+)
+_POSITIONS_BY_EVENT_SCHEMA: dict[str, tuple[RowsPosition, ...]] = {
+    LEASE_EVENT_V3_SCHEMA_VERSION: EXTERNALIZED_ROWS_POSITIONS_V3,
+    LEASE_EVENT_V4_SCHEMA_VERSION: EXTERNALIZED_ROWS_POSITIONS_V4,
+}
+_LEASE_SCHEMA_BY_EVENT_SCHEMA = {
+    LEASE_EVENT_V3_SCHEMA_VERSION: LEASE_V3_SCHEMA_VERSION,
+    LEASE_EVENT_V4_SCHEMA_VERSION: LEASE_V4_SCHEMA_VERSION,
+}
 
 
 class ExternalizedRows(list[Any]):
@@ -1387,53 +1501,56 @@ def _plain_rows(rows: Any) -> Any:
     return list(rows) if type(rows) is ExternalizedRows else rows
 
 
-def _rewrite_capsule(capsule: Any, convert: Callable[[Any], Any]) -> tuple[Any, bool]:
-    if not isinstance(capsule, Mapping):
-        return capsule, False
-    ready = capsule.get("ready")
-    if not isinstance(ready, Mapping):
-        return capsule, False
-    inputs = ready.get("inputs")
-    if not isinstance(inputs, Mapping) or EXTERNALIZED_ROWS_FIELD not in inputs:
-        return capsule, False
-    current = inputs[EXTERNALIZED_ROWS_FIELD]
-    converted = convert(current)
-    if converted is current:
-        return capsule, False
-    return {
-        **capsule,
-        "ready": {**ready, "inputs": {**inputs, EXTERNALIZED_ROWS_FIELD: converted}},
-    }, True
+def _rewrite_at(
+    node: Any, containers: tuple[str, ...], field: str, convert: Callable[[Any], Any],
+) -> tuple[Any, bool]:
+    """Apply `convert` to `node[containers...][field]`; copy on write, `[]` visits every element."""
+    if not isinstance(node, Mapping):
+        return node, False
+    if not containers:
+        if field not in node:
+            return node, False
+        current = node[field]
+        converted = convert(current)
+        if converted is current:
+            return node, False
+        return {**node, field: converted}, True
+    head, rest = containers[0], containers[1:]
+    if head.endswith("[]"):
+        name = head[:-2]
+        items = node.get(name)
+        if not isinstance(items, list):
+            return node, False
+        rewritten = list(items)
+        touched = False
+        for index, item in enumerate(items):
+            replaced, hit = _rewrite_at(item, rest, field, convert)
+            if hit:
+                rewritten[index] = replaced
+                touched = True
+        return ({**node, name: rewritten}, True) if touched else (node, False)
+    child = node.get(head)
+    replaced, hit = _rewrite_at(child, rest, field, convert)
+    return ({**node, head: replaced}, True) if hit else (node, False)
 
 
 def _rewrite_rows(
     execution: Mapping[str, Any], convert: Callable[[Any], Any],
+    positions: tuple[RowsPosition, ...] = EXTERNALIZED_ROWS_POSITIONS_V4,
 ) -> tuple[Mapping[str, Any], bool]:
-    """Apply `convert` to the custody table at the two fixed positions; copy on write."""
-    result = dict(execution)
+    """Apply `convert` to the custody tables at the declared positions; copy on write."""
+    result: Mapping[str, Any] = execution
     changed = False
-    capsule, hit = _rewrite_capsule(result.get("hook_capsule"), convert)
-    if hit:
-        result["hook_capsule"] = capsule
-        changed = True
-    attempts = result.get("publication_attempts")
-    if isinstance(attempts, list):
-        rewritten = list(attempts)
-        touched = False
-        for index, attempt in enumerate(attempts):
-            if not isinstance(attempt, Mapping):
-                continue
-            capsule, hit = _rewrite_capsule(attempt.get("hook_capsule"), convert)
-            if hit:
-                rewritten[index] = {**attempt, "hook_capsule": capsule}
-                touched = True
-        if touched:
-            result["publication_attempts"] = rewritten
-            changed = True
+    for containers, field in positions:
+        result, hit = _rewrite_at(result, containers, field, convert)
+        changed = changed or hit
     return (result if changed else execution), changed
 
 
-def _qualifying_rows(execution: Mapping[str, Any] | None) -> list[ExternalizedRows]:
+def _qualifying_rows(
+    execution: Mapping[str, Any] | None,
+    positions: tuple[RowsPosition, ...] = EXTERNALIZED_ROWS_POSITIONS_V4,
+) -> list[ExternalizedRows]:
     """The tables of this execution that the stored form externalizes, each with its digest."""
     if not isinstance(execution, Mapping):
         return []
@@ -1445,7 +1562,7 @@ def _qualifying_rows(execution: Mapping[str, Any] | None) -> list[ExternalizedRo
             found.append(adopted)
         return rows
 
-    _rewrite_rows(execution, collect)
+    _rewrite_rows(execution, collect, positions)
     return found
 
 
@@ -1463,17 +1580,33 @@ def _marker_payload(value: object) -> tuple[str, int] | None:
     return cast(str, inner["sha256"]), inner["row_count"]
 
 
-def _assert_no_stray_marker(node: object) -> None:
-    """A marker is legitimate only as the value of a custody-table field."""
-    if isinstance(node, Mapping):
-        if set(node) == {EXTERNALIZED_ROWS_MARKER}:
-            raise ParallelControlError("LEASE_EXTERNALIZED_ROWS_INVALID", "marker position")
-        for key, value in node.items():
-            if key != EXTERNALIZED_ROWS_FIELD:
-                _assert_no_stray_marker(value)
-    elif isinstance(node, list):
-        for item in node:
-            _assert_no_stray_marker(item)
+def _declared_fields(positions: tuple[RowsPosition, ...]) -> dict[tuple[str, ...], frozenset[str]]:
+    declared: dict[tuple[str, ...], set[str]] = {}
+    for containers, field in positions:
+        declared.setdefault(containers, set()).add(field)
+    return {containers: frozenset(fields) for containers, fields in declared.items()}
+
+
+def _assert_no_stray_marker(
+    node: object, positions: tuple[RowsPosition, ...] = EXTERNALIZED_ROWS_POSITIONS_V4,
+) -> None:
+    """A marker is legitimate only as the value of a declared table field at a declared position."""
+    declared = _declared_fields(positions)
+
+    def scan(value: object, path: tuple[str, ...]) -> None:
+        if isinstance(value, Mapping):
+            if set(value) == {EXTERNALIZED_ROWS_MARKER}:
+                raise ParallelControlError("LEASE_EXTERNALIZED_ROWS_INVALID", "marker position")
+            fields = declared.get(path, frozenset())
+            for key, item in value.items():
+                if key not in fields:  # a declared table field is checked by expand/probe
+                    scan(item, (*path, key))
+        elif isinstance(value, list):
+            below = (*path[:-1], path[-1] + "[]") if path else path
+            for item in value:
+                scan(item, below)
+
+    scan(node, ())
 
 
 @dataclass(frozen=True)
@@ -1551,11 +1684,12 @@ class ExternalizedRowsReader:
 
     def expand(
         self, execution: Mapping[str, Any] | None,
+        positions: tuple[RowsPosition, ...] = EXTERNALIZED_ROWS_POSITIONS_V4,
     ) -> tuple[Mapping[str, Any] | None, bool]:
         """Stored form -> the in-memory execution; also whether any table was externalized."""
         if not isinstance(execution, Mapping):
             return execution, False
-        _assert_no_stray_marker(execution)
+        _assert_no_stray_marker(execution, positions)
         used = False
 
         def restore(value: Any) -> Any:
@@ -1566,25 +1700,26 @@ class ExternalizedRowsReader:
             used = True
             return self.read(*marker)
 
-        expanded, _changed = _rewrite_rows(execution, restore)
+        expanded, _changed = _rewrite_rows(execution, restore, positions)
         return expanded, used
 
 
 def _expand_stored_execution(
     execution: Any, blobs: ExternalizedRowsReader | None,
+    positions: tuple[RowsPosition, ...] = EXTERNALIZED_ROWS_POSITIONS_V4,
 ) -> tuple[Any, bool]:
     if not isinstance(execution, Mapping):
         return execution, False
     if blobs is None:
-        _assert_no_stray_marker(execution)
+        _assert_no_stray_marker(execution, positions)
 
         def probe(value: Any) -> Any:
             if _marker_payload(value) is not None:
                 raise ParallelControlError("LEASE_EXTERNALIZED_ROWS_UNAVAILABLE", "no reader")
             return value
-        _rewrite_rows(execution, probe)
+        _rewrite_rows(execution, probe, positions)
         return execution, False
-    return blobs.expand(execution)
+    return blobs.expand(execution, positions)
 
 
 def _lease_event(
@@ -1617,6 +1752,7 @@ def _lease_event(
         actor=actor,
         reason_codes=reason_codes,
         rows_externalized=externalized,
+        externalized_schema=LEASE_EVENT_V4_SCHEMA_VERSION,
     )
     return replace(prototype, event_id=f"lease-event-{_canonical_sha256(prototype._body())[:20]}")
 
@@ -1629,8 +1765,14 @@ def parse_lease_event(
     """
     event_id = _text(payload.get("event_id"), "event_id")
     lease_payload = _mapping(payload.get("lease"), "lease")
+    claimed = payload.get("schema_version")
+    # A payload that claims no externalized generation is scanned with the widest position set so
+    # that a marker in it is recognized and then rejected by the schema check below.
+    positions = _POSITIONS_BY_EVENT_SCHEMA.get(
+        cast(str, claimed), EXTERNALIZED_ROWS_POSITIONS_V4,
+    )
     execution_payload, externalized = _expand_stored_execution(
-        lease_payload.get("execution"), blobs,
+        lease_payload.get("execution"), blobs, positions,
     )
     resource_payloads = lease_payload.get("resources")
     if not isinstance(resource_payloads, list):
@@ -1685,7 +1827,11 @@ def parse_lease_event(
     if lease.execution is None:
         event_schema, lease_schema = LEASE_EVENT_SCHEMA_VERSION, LEASE_SCHEMA_VERSION
     elif externalized:
-        event_schema, lease_schema = LEASE_EVENT_V3_SCHEMA_VERSION, LEASE_V3_SCHEMA_VERSION
+        event_schema = (
+            cast(str, claimed) if claimed in _POSITIONS_BY_EVENT_SCHEMA
+            else LEASE_EVENT_V4_SCHEMA_VERSION
+        )
+        lease_schema = _LEASE_SCHEMA_BY_EVENT_SCHEMA[event_schema]
     else:
         event_schema, lease_schema = "execution_lease_event.v2", "execution_lease.v2"
     if (
@@ -1711,6 +1857,9 @@ def parse_lease_event(
         actor=_text(payload.get("actor"), "actor"),
         reason_codes=_strings(payload.get("reason_codes"), "reason_codes"),
         rows_externalized=externalized,
+        externalized_schema=(
+            event_schema if externalized else LEASE_EVENT_V4_SCHEMA_VERSION
+        ),
     )
     # The id is the hash of the stored body: the externalized form re-compacts from the shared,
     # digest-carrying tables, so an embedded (historical) event is hashed exactly as before.

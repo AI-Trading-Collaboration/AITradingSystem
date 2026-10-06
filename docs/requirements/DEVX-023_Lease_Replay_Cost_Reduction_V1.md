@@ -51,18 +51,21 @@
   `read_file_custodies`（沿用：`hook_capsule.ready.inputs`、`publication_attempts[i].hook_capsule.ready.inputs`）；
   `captures`（新增三处：`hook_capsule.ready.inputs.profile_inspection`、`publication_attempts[i].hook_capsule.ready.inputs.profile_inspection`、`publication_stable_observation.profile_inspection`）。
   `_rewrite_rows`、`_assert_no_stray_marker`、`_qualifying_rows` 统一读这张位置表；marker 只在声明的位置合法，别处出现一律 `LEASE_EXTERNALIZED_ROWS_INVALID`。
-- 兼容性：schema 仍是 `execution_lease_event.v3` / `execution_lease.v3`，「位置集合」属于 v3 的定义。历史事件（内嵌 / S3b 形式）原样可读；S3b 时代的旧代码读到 S3c 的 marker 会 fail closed（不会误读）。**单一检出里新旧代码不会同时写库**，不需要双向兼容。
+- 兼容性（**实现时修订**）：S3c 事件使用新的 schema `execution_lease_event.v4` / `execution_lease.v4`，不再沿用 v3。原因：真实库里已有 S3b 时代写出的 v3 事件，它们的 `captures` 表是**内嵌**的，事件 ID 是对那份存储形式的哈希；若 v3 的位置集合被扩大，这些事件重算 ID 时 `captures` 会被压成 marker，哈希不符，整个重放 FAIL。所以位置集合属于存储形式的「代」：v3 只认 S3b 的两处（`read_file_custodies`），v4 认全部五处；解析时由事件声明的 schema 选择位置集合，v4 与「至少有一个 marker」严格互斥（与 S3b 对 v3 的规则一致）。历史事件（内嵌 v2、S3b 的 v3）原样可读，新事件一律是 v4；S3b 时代的旧代码读到 v4 会因 schema 不识别而 fail closed。**单一检出里新旧代码不会同时写库**，不需要双向兼容。
 - 预期：晚期事件 ~0.95 MB → 约 20 KB；每次发布留给库的事件字节 11.8 MiB → 不到 1 MiB；blob 每次发布新增约 10 MB（`read_file_custodies`，内容随候选变化）与约 0.3 MB（`captures`），每个**不同**的 blob 在一次重放里只读一次（约 0.15 s），所以逐发布增长约 +0.2 s 而不是 +3 s。
 - 诚实边界：S3c 不改变历史事件，现有的约 40 个大事件产生的 ~5 s 解码/哈希成本保留。
 
-### 4.3 W：同一原子段内显式传递 replay（不引入隐式缓存）
+### 4.3 W：持锁段内复用重放（**实现时修订**：由显式传递改为段内隐式复用）
 
-- 持锁段（`store.atomic(...)`）里，在 `_head` 取得的那一份 replay 之后、`_append_event` 之前，store 不会变化。`ExecutionLifecycle._head`、`PublicationLifecycle._head`/`_append`、`_require_original_publication`
-  新增可选参数 `replay`（默认 `None` = 与今天完全相同）；持锁段内的调用者把第一次 `_head` 得到的 replay 往下传，`_append` 用它取前一个事件 ID 与物理 head，而不是再重放两次。
-- 写入之后（`_append_event` 返回）该 replay 即作废：`_append` 返回后调用者不得复用。
-- 围栏自己的重放（`fence.validate_publication_merge_window` 内的 `guard.replay()`）属于另一个 store 实例，**本任务不共享**（共享需要进程级隐式缓存，风险与评审成本都更高）；若实测收益不足再单独评审「W2：按根路径与代数号的隐式持锁段缓存」。
-- 预期：一次 `record_publication_hook` 的重放数 9 → 6–7（持锁段内 5 → 2–3）。
-- 不变量：默认路径不变；传入的 replay 必须来自同一个 store 实例且 `status == "PASS"`；`_append` 在使用传入 replay 之前仍校验 head 的 `lease_id`、`actor`、事件 ID 与物理 head 一致（等价于今天的重放结论）。
+- 事实：`PublicationLifecycle.__init__` 复用围栏自己的 store **同一个实例**（`super().__init__(fence.guard.store)`），所以一个持锁段里 lifecycle 的重放与围栏校验的重放（`guard.replay()`）走的是同一个 `FileExecutionLeaseStore.replay()`；
+  `atomic()` 的绑定（`self._atomic_context.binding`）是该实例的线程局部状态。显式传递 replay 需要改 `_head/_append/_require_original_publication` 的四个签名，且只能省掉其中约 3 次（围栏的重放传不进去）；在 store 层复用能覆盖持锁段内的全部重放，也不改任何签名。
+- 设计：`store.replay()` 在**本实例、本线程持有仲裁锁**（`atomic()` 的最外层段内，嵌套的 `atomic()` 是同一段）时，用该段自己的上一次重放回答重复调用，条件是三者都未变：
+  (1) 进程内**写入代数**（按 store 根路径计数，任何实例的 `_append_event` 成功写入都会加一）；(2) 事件目录**指纹**（租约目录数、事件文件数、最新 mtime、总字节；约几十毫秒）——防御纵深，覆盖绕过了计数器的写入者；(3) 仍在同一段内。
+  复用只存在于该段的线程局部状态，段结束即丢弃，**不跨调用、不落盘**；段外每次调用都是完整重放，与改动前一致。其他线程（不持锁）永不复用。
+- 印章在重放**之前**取：重放期间任何变化只会让下一次调用判为未命中（保守方向）。
+- **校验模式**：环境变量 `AITS_LEASE_SECTION_REPLAY_VERIFY=1` 时，每一次复用都再做一次完整重放并比较 `to_dict()`，不一致抛 `LEASE_SECTION_REPLAY_STALE`。用于测试与端到端夹具：它同时能发现「某个调用者就地改了共享的 head」这类污染（lifecycle 代码都先 `_copy` 再改，校验模式是对这一习惯的验证，而不是假设）。
+- 预期：一个 `record_publication_hook` 约 8 次重放（持锁前 3 次：`_head`、围栏校验、`super()._head`；持锁后 5 次：`_head`、围栏校验、`super()._head`、`PublicationLifecycle._append` 的 `super()._head`、`ExecutionLifecycle._append` 的 `store.replay()`）→ 持锁段内 5 → 1，合计 8 → 4。
+- 不变量：段内第一次调用与今天完全相同；写入后下一次调用是完整重放且能看到该写入；`_arbiter()` 的非 `atomic()` 路径（`acquire`、`heartbeat`、`terminal` 等自己拿锁的方法）不启用复用（保守，范围外）。
 
 ### 4.4 不做（本任务范围外）
 
@@ -77,7 +80,7 @@
 | D1 | 基线测量（只读，不改代码）：真实库重放分项（`parse_lease_event`、`_validate_hook_ready` 调用数与耗时）、`record_publication_hook` 的重放数（计数器）、一次重放的 `heads_digest` | D0 | 数字写入第 9 节 |
 | D2 | S3d：多槽记忆化 + `_validate_hook_ready` 整体记忆化 | D1 | 先红后绿的单元测试：多链交替的存储里 `_validate_hook_ready` 实际执行次数 = 不同键的个数；任一键字段被改动（请求、definition、表内容、plan 根身份）都走完整校验并得到同样的失败；记忆化只在 `replay_validation_scope` 内有效；真实库重放结论与改动前**逐项相同**（status、lease_heads、active_leases、head_event_ids、event_count、issues、`heads_digest`），耗时下降 |
 | D3 | S3c：位置表 + 外置 `captures` | D2（不依赖，可并行，但同一文件，串行更安全） | 先红后绿：新事件的三个位置都是 marker 且 blob 存在；展开后与原表逐值相同；marker 出现在未声明位置、缺 blob、摘要/行数不符、无读取器 → fail closed；小于 1,024 行保持内嵌；历史 v2/S3b 事件原样可读；混合库重放结论与全量内嵌版逐项相同；真实库上用 S3c 代码重放结论不变 |
-| D4 | W：显式传递 replay | D2 | 单元测试：持锁段内重放次数的上界（计数）；传入 replay 与重新重放结论相同；写入后复用被拒绝；默认路径行为不变；重型端到端（`*-full-profile-publish`）全部通过 |
+| D4 | W：持锁段内复用重放 | D2 | 单元测试：段内重复调用只重放一次（计数）、段外每次都重放、写入（本实例或别的实例）后下一次是完整重放且可见该写入、目录里多出文件使复用失效、其他线程不复用、校验模式能抓出被污染的共享 head；打开校验模式跑全部相关聚焦回归与重型端到端（`*-full-profile-publish`）全部通过 |
 | D5 | 集成：聚焦回归、**真实库消费者冒烟清单（第 7 节）**、`system_flow` 同步、授权重封（`checkout_*` 等历史固定源按需接管） | D2–D4 | 清单全绿；`docs/system_flow.md` 的 S3b 段落改写为 S3b/S3c/S3d/W 的现状，并重算封印与测试里钉死的 SHA |
 | D6 | 候选重封链 → 正式验证 → Full → 发布（须按当时的发布授权规则确认） | D5 | 第 6 节整体验收 |
 
@@ -96,16 +99,27 @@
   (1) `store.replay()` 的结论与摘要与改动前一致；(2) `canonical_json_bytes(replay.to_dict())` 通过且无子类泄漏；(3) 遥测快照构建 PASS；(4) 命名 DQ 活体证明（正式验证 stage 1）通过；
   (5) `parse_lease_event` 调用点静态守卫测试通过（新增位置不得被未带读取器的调用点读到）；(6) 发布前清单与 `worktree-audit` 通过；(7) 夹具里的重型端到端发布变体（`*-full-profile-publish`）通过。
 - 记忆化的健全性：S3d 只记成功；键覆盖函数读取的**全部**输入；有「改动任一输入字段」的对照测试；记忆体不跨 `replay_validation_scope`。
-- W 的健全性：只在持锁段内、显式传递、写入后作废；围栏自己的重放不共享；默认路径不变。
+- W 的健全性：只在本实例、本线程持锁的段内；写入代数 + 目录指纹两道作废；段结束丢弃；校验模式逐次对账；默认路径不变。
 - 旧代码与新事件：S3b 代码读 S3c marker 会 fail closed；本检出内不会混用两套代码。
 
 ## 8. 开放问题与后续项
 
 1. S3c + W + S3d 之后若发布耗时仍不够，是否做封印 S（owner 决定，按当时的实测）。
 2. 命名 DQ 父证明不再内嵌整库重放（改为只绑定重放摘要与来源租约）：证明合同变更，随下一次合同波次评审。
-3. W2（隐式持锁段缓存）：仅在 W 实测收益不足时评审。
+3. W 的范围：`acquire`/`heartbeat`/`terminal` 等自己拿仲裁锁（不经 `atomic()`）的方法本次不启用复用，是否扩展按实测决定。
 4. `local-publish` 的 worker 墙钟（10,800 s）与 git 子进程等待（7,200 s）随选定方案复核。
 
 ## 9. 进度
 
 - 2026-10-06：登记并转 `IN_PROGRESS`（任务行事务 `gov-007-devx023-start-task-20261006-v1`）；本文档为第一版。D1 基线数字在 DEVX-022 第 17 节（重放 15.9–17.1 s、`_validate_hook_ready` 69 次 7.3 s、`parse_lease_event` 14.2 s）。
+- 2026-10-06 晚：D1–D5 的实现与验证（候选尚未发布）。提交内容：`parallel_control_kernel.py`（位置表与 schema v4、泛化的写时复制遍历、按位置精确的游离 marker 扫描、写入代数与指纹、持锁段复用）、`workflow_coordination.py`（S3d）、
+  `tests/test_devx022_lease_event_externalization.py`（该文件现含 S3b、S3b 回归、S3d、S3c、W 的测试，共 30 个）、`docs/system_flow.md` 的一段（一个块，条目数 1,491 不变）与 `devx_006d` 封印及其测试里钉死的 SHA。
+  - **D2 S3d**：真实库差分重放（基线 `25d026bf6` 对新代码，同一库状态 5,750 个事件 / 860 个 head）：status、event_count、lease_heads、`heads_digest`、`head_event_ids_digest`、issues **逐项相同**；耗时 15.0–15.3 s → 13.9–14.0 s（−7.5%）。
+    69 次 hook-ready 提问里 29 次未键控（历史 v2 内嵌表），其余 40 次只有 2 个键，完整校验共 31 次、2.0 s。结论：S3d 让之后每次发布的校验增量 ≈ 0；现有重放的下限仍由 29 个历史大事件的读取/解码/哈希决定（只有封印 S 能去掉）。
+  - **D3 S3c**：新事件为 schema v4（见 4.2 的修订）。用**真实数据**演练：把真实库里 4 条发布租约链（201 个事件，嵌入/S3b 形式共 648.6 MiB）重编码为 v4 写入临时库，用真实校验器重放：PASS、无 issue、8.0 s，4 个 head 与源逐值相同，
+    事件字节 648.6 MiB → 6.1 MiB（8 个 blob 共 38 MiB），`canonical_json_bytes(replay.to_dict())` 通过。夹具里的重型发布节点产生 18 个 v4 事件，三个位置（两处 `ready.inputs.profile_inspection.captures`、`publication_stable_observation`）与 `read_file_custodies` 都是 marker，最大事件 66.8 KB（真实 S3b 时代的晚期事件约 0.95 MB）。
+  - **D4 W**：单元测试 4 组（段内只重放一次、写入后失效、本实例与其他实例的写入、目录里多出文件、其他线程不复用、校验模式抓出被污染的共享 head）；事件目录指纹在真实库上约 60 ms（一次重放约 14 s）。
+  - **验证**（全部开着 `AITS_LEASE_SECTION_REPLAY_VERIFY=1`，任何一次复用与完整重放不一致都会抛错）：聚焦回归 A（租约/内核/仲裁/检查点/命名 DQ/发布围栏/集成等 17 个模块，排除 `real_full_chain`）1,453 通过、4 失败（2 个是 W 的计数测试在校验模式下的预期差异，已改为与该环境变量无关；
+    2 个是 `source_preservation` 的「已提交实现」测试，工作树未提交时按设计必败）；聚焦回归 B（`test_devx015_workflow_coordination.py`）334 通过；重型端到端 1 个（`test_original_publication_cli_ff_only_and_independent_recovery[full-profile-publish]`，真实 `local-publish` 钩子链路）通过，846.9 s。**没有一次 `LEASE_SECTION_REPLAY_STALE`。**
+  - 待办：`architecture_report_catalog_flow_authority` 等生成器重封（`devx_006d` 的两个依赖生成物的测试在重封前按预期失败）、两个未跑的重型变体（`native-linked`、`orig-head-equals-main`）随 Full 验证、真实库消费者冒烟清单（第 7 节）在重封后与发布后各跑一次。
+  - 临时资源（生命周期）：`D:/Work/devx023-old`（基线源码导出，差分重放用，0.05 GB）、`D:/Work/devx023-t1/-t2/-t3`（上述验证的 basetemp）、`D:/Work/devx023-batchA.log`/`-batchB.log`/`-heavy1.log`；收口时按精确路径白名单清理。

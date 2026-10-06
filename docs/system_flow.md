@@ -322,18 +322,23 @@ schema、资源冲突、actor/coordinator 权限和 execution lease TTL 保持�
 `phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1`，以精确 34 项当前源码闭包
 继承 OPS-079，不改写 C/D/S5 冻结链或 OPS-079 的历史合同。
 
-DEVX-022 S3b 改变 `FileExecutionLeaseStore` 的事件落盘形式，读取历史事件不受影响。发布 execution 的 hook-ready
-自定义清单 `read_file_custodies`（真实约 17.9k 行，占 22 MB 事件的 94%，且每个后续事件都重复一份）在存储形式里，
-仅在 `execution.hook_capsule.ready.inputs` 与 `execution.publication_attempts[i].hook_capsule.ready.inputs`
-两个固定位置、且行数不少于 1,024 时，被替换为标记 `{"externalized_rows.v1": {sha256, row_count}}`；行表以规范
-JSON 字节存为内容寻址 blob `<store>/blobs/<sha[:2]>/<sha>.json`，先原子写 blob 再写事件。事件 ID 始终是**存储形式**
-规范体的哈希：历史（内嵌、v2）事件保持原公式，含标记的 v3 事件（`execution_lease_event.v3` / `execution_lease.v3`，
-与标记严格互斥）验证时无需再序列化行表。读取时展开为与旧版逐值相同的不可变 `ExternalizedRows`（携带摘要，拷贝为
-普通 list），所有下游校验器看到的数据不变；blob 缺失、摘要或行数不符、标记位置错误、无读取器遇到标记、schema 与标记
-不匹配一律 fail closed（`LEASE_EVENT_INVALID`）。一次 replay 调用内同摘要的 blob 只读取、哈希、解码一次并共享，
-调用结束即失效，不跨调用、不落盘。真实租约库（689 MB）的历史事件原样可读，新旧代码 replay 结论逐项相同；夹具租约库
-约 396 MB → 约 20 MB，单次重放 5.6 s → 1.4 s，`ff_only` 发布节点静机 1,176 s → 814 s。历史大事件不压缩，仲裁与过渡规则、
-`validate_execution` 语义和 `production_effect=none` 不变。
+DEVX-022 S3b 与 DEVX-023 S3c 改变 `FileExecutionLeaseStore` 的事件落盘形式，读取历史事件不受影响。发布 execution 的 hook-ready
+自定义清单 `read_file_custodies`（真实约 17.9k 行，占 22 MB 事件的 94%，且每个后续事件都重复一份）与 `profile_inspection.captures`
+（约 1.4k 行、约 313 KB，在每个晚期事件里重复三份），在存储形式里仅在声明的位置、且行数不少于 1,024 时，被替换为标记
+`{"externalized_rows.v1": {sha256, row_count}}`：S3b 的位置集合（`execution.hook_capsule.ready.inputs` 与
+`execution.publication_attempts[i].hook_capsule.ready.inputs` 的 `read_file_custodies`）属于 schema v3，S3c 的位置集合（再加三处
+`profile_inspection.captures`：上述两个 `ready.inputs` 之下与 `execution.publication_stable_observation`）属于 schema v4；解析时由事件
+声明的 schema 选择位置集合，v3/v4 与标记严格互斥，历史事件（内嵌 v2、S3b 写出的 v3）保持各自原有的 ID 公式，新事件一律是 v4。行表以规范
+JSON 字节存为内容寻址 blob `<store>/blobs/<sha[:2]>/<sha>.json`，先原子写 blob 再写事件。事件 ID 始终是**存储形式**规范体的哈希：
+含标记的事件验证时无需再序列化行表。读取时展开为与旧版逐值相同的不可变 `ExternalizedRows`（携带摘要，拷贝为普通 list；公开的
+`to_dict()` 只输出精确 JSON 类型），所有下游校验器看到的数据不变；blob 缺失、摘要或行数不符、标记位置错误、无读取器遇到标记、schema 与标记
+不匹配一律 fail closed（`LEASE_EVENT_INVALID`）。一次 replay 调用内同摘要的 blob 只读取、哈希、解码一次并共享，调用结束即失效，不跨调用、
+不落盘。DEVX-023 另有两项只影响重放成本、不改变任何校验语义的改动：S3d——一次 replay 调用内，hook-ready 的行级校验、分发摘要与 profile
+捕获校验按表摘要各留一个槽，整体 `_validate_hook_ready` 按「胶囊（两张表以摘要代入）+ 请求 + 计划根身份」的规范摘要只在成功时记忆，调用结束
+即失效；W——`store.replay()` 在本实例、本线程持有仲裁锁的 `atomic()` 段内，只要进程内写入代数与事件目录指纹都未变，就用该段自己的上一次重放
+回答重复调用，段结束即丢弃，不跨调用、不落盘，`AITS_LEASE_SECTION_REPLAY_VERIFY=1` 时每次复用都与一次完整重放对账。真实租约库（689 MB）的
+历史事件原样可读，新旧代码 replay 结论逐项相同；夹具租约库约 396 MB → 约 20 MB，单次重放 5.6 s → 1.4 s，`ff_only` 发布节点静机
+1,176 s → 814 s。历史大事件不压缩，仲裁与过渡规则、`validate_execution` 语义和 `production_effect=none` 不变。
 
 显式工程迁移入口 `scripts/architecture_arch005_lease_arbiter.py` 在 active publication 的只读
 验证后，检查 exact working-code SHA、原 owner SHA 与人工协调排空 receipt，保留旧目录原
