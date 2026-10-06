@@ -45,7 +45,7 @@ def checkout(tmp_path: Path) -> Path:
     (repository / "src").mkdir()
     (repository / "src/a.py").write_text("VALUE = 1\n", encoding="utf-8")
     (repository / "docs").mkdir()
-    (repository / "docs/task_register.md").write_text("task v1\n", encoding="utf-8")
+    (repository / "docs/shared_note.md").write_text("shared v1\n", encoding="utf-8")
     (repository / ".gitignore").write_text("outputs/\n", encoding="utf-8")
     for policy in (ROOT / DEFAULT_POLICY_PATH, CHECKOUT_POLICY, PARALLEL_POLICY):
         target = repository / "config/architecture" / policy.name
@@ -76,7 +76,7 @@ def _acquire(fence: IntegrationPublicationFence, repository: Path, transaction_i
         transaction_id=transaction_id, task_id=PRIMARY, change_id=f"{transaction_id}-change",
         thread_id=f"{transaction_id}-thread", actor=ACTOR, frozen_base_sha=main,
         lane_head_sha=head, expected_main_sha=main, owned_paths=("src/a.py",),
-        shared_paths=("docs/task_register.md",), generator_ids=("canonical-task-source",),
+        shared_paths=("docs/shared_note.md",), generator_ids=("canonical-task-source",),
         **extra,  # type: ignore[arg-type]
     )
 
