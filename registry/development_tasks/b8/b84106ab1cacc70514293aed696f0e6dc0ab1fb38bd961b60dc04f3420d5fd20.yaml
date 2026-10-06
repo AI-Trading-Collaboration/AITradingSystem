@@ -19,12 +19,12 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: (A) 已在真实发布中验证（DEVX-021 第 8.4 节）：worker
-    墙钟 10,800 s、git 子进程等待 7,200 s 生效；真实 local-publish 共 71 分钟（worker 约 63 分钟，旧 3,600
-    s 墙钟会在 merge_exit 前约 3 分钟终止 worker，与 v26 同一位置），返回 LOCAL_PUBLISHED、recovered=false，无人工干预；发布前检查清单
-    6 项全绿（ORIG_HEAD != main，故 ORIG_HEAD 缺陷未触发）。(A) 的值仍为 PROVISIONAL_PENDING_OWNER_REVIEW，可按实测（worker
-    约 63 分钟、git 子进程 19.4 分钟）收紧。剩余（下一候选，无时间压力）：ORIG_HEAD 基线（不存在/等于旧 main/不同）的校验器与效果分类修复及负向测试、残留空锁恢复记录为恢复事实（含负向测试）、真实布局副本演练；这两项本次发布均未被触发（无进程被杀，ORIG_HEAD
-    != main）。
+  unstructured_legacy_blocker_or_next_step: 2026-10-06 P1（ORIG_HEAD 基线）已实现并验证（DEVX-021
+    §9.5，提交 7eb28af25/807f0bdee）：空 ORIG_HEAD.lock 仅在计划记录的原 ORIG_HEAD 已等于旧 main 时合法，最终
+    ORIG_HEAD 必须仍是原文件，其余内容一律拒绝；四处校验点；28 个单元测试（先红后绿）；端到端变体 orig-head-equals-main 在旧代码上复现
+    v25 的 LEASE_EXECUTION_PUBLICATION_GIT_MERGE_LOCK、新代码通过；聚焦回归 1,846 通过。下一步：候选重封、正式
+    Full、发布（须 owner 授权）；(A) worker 墙钟 10,800 s/git 子进程 7,200 s 仍为 PROVISIONAL_PENDING_OWNER_REVIEW。P2（残留空锁恢复记录为恢复事实，涉及租约执行记录
+    schema 的合同变更）待单独设计并提交 owner 复核；在此之前沿用发布前检查清单（§8.3）。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 校验器与效果分类对 ORIG_HEAD 三种基线（不存在、等于旧 main、不同于旧 main）语义正确放行/拒绝并有负向测试（锁内容被篡改、基线与锁不一致必须拒绝）；fixture
@@ -156,6 +156,35 @@ events:
   - change:gov-007-d21post-task-20261006-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-9414fc8e0f6cf9dff42b7d3a685f6126
+- schema_version: task_event.v1
+  task_id: DEVX-021_PUBLICATION_ORIG_HEAD_UNCHANGED_ROBUSTNESS
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-06T04:44:49Z'
+  actor: integration-coordinator
+  change_id: gov-007-d21p1-task-20261006-v1
+  lane_id: null
+  base_commit: 0cbdd9a4549987364d5fd2d450d3905083ef1775
+  previous_state_event_id: task-event-9414fc8e0f6cf9dff42b7d3a685f6126
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 2026-10-06 P1（ORIG_HEAD 基线）已实现并验证（DEVX-021 §9.5，提交 7eb28af25/807f0bdee）：空
+      ORIG_HEAD.lock 仅在计划记录的原 ORIG_HEAD 已等于旧 main 时合法，最终 ORIG_HEAD 必须仍是原文件，其余内容一律拒绝；四处校验点；28
+      个单元测试（先红后绿）；端到端变体 orig-head-equals-main 在旧代码上复现 v25 的 LEASE_EXECUTION_PUBLICATION_GIT_MERGE_LOCK、新代码通过；聚焦回归
+      1,846 通过。下一步：候选重封、正式 Full、发布（须 owner 授权）；(A) worker 墙钟 10,800 s/git 子进程 7,200
+      s 仍为 PROVISIONAL_PENDING_OWNER_REVIEW。P2（残留空锁恢复记录为恢复事实，涉及租约执行记录 schema 的合同变更）待单独设计并提交
+      owner 复核；在此之前沿用发布前检查清单（§8.3）。
+    acceptance_criteria: 校验器与效果分类对 ORIG_HEAD 三种基线（不存在、等于旧 main、不同于旧 main）语义正确放行/拒绝并有负向测试（锁内容被篡改、基线与锁不一致必须拒绝）；fixture
+      演练覆盖「预先存在且等于旧 main」且真实布局副本演练通过；不放宽任何既有检查，恢复/adopt 路径对新情形可重放；更新任务登记与需求文档；退出条件：不再需要删除
+      ORIG_HEAD 的临时前置条件。
+    notes: 2026-10-06：P1 实施与验证结果写入 DEVX-021 §9.5。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-d21p1-task-20261006-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3f03fdceefc95c492ffde52e4aaa0a2e
 projection:
   legacy_first_eight_cells:
   - DEVX-021_PUBLICATION_ORIG_HEAD_UNCHANGED_ROBUSTNESS
@@ -164,19 +193,19 @@ projection:
   - P1
   - IN_PROGRESS
   - Claude Code coordinator
-  - (A) 已在真实发布中验证（DEVX-021 第 8.4 节）：worker 墙钟 10,800 s、git 子进程等待 7,200 s 生效；真实 local-publish
-    共 71 分钟（worker 约 63 分钟，旧 3,600 s 墙钟会在 merge_exit 前约 3 分钟终止 worker，与 v26 同一位置），返回
-    LOCAL_PUBLISHED、recovered=false，无人工干预；发布前检查清单 6 项全绿（ORIG_HEAD != main，故 ORIG_HEAD
-    缺陷未触发）。(A) 的值仍为 PROVISIONAL_PENDING_OWNER_REVIEW，可按实测（worker 约 63 分钟、git 子进程 19.4
-    分钟）收紧。剩余（下一候选，无时间压力）：ORIG_HEAD 基线（不存在/等于旧 main/不同）的校验器与效果分类修复及负向测试、残留空锁恢复记录为恢复事实（含负向测试）、真实布局副本演练；这两项本次发布均未被触发（无进程被杀，ORIG_HEAD
-    != main）。
+  - 2026-10-06 P1（ORIG_HEAD 基线）已实现并验证（DEVX-021 §9.5，提交 7eb28af25/807f0bdee）：空 ORIG_HEAD.lock
+    仅在计划记录的原 ORIG_HEAD 已等于旧 main 时合法，最终 ORIG_HEAD 必须仍是原文件，其余内容一律拒绝；四处校验点；28 个单元测试（先红后绿）；端到端变体
+    orig-head-equals-main 在旧代码上复现 v25 的 LEASE_EXECUTION_PUBLICATION_GIT_MERGE_LOCK、新代码通过；聚焦回归
+    1,846 通过。下一步：候选重封、正式 Full、发布（须 owner 授权）；(A) worker 墙钟 10,800 s/git 子进程 7,200
+    s 仍为 PROVISIONAL_PENDING_OWNER_REVIEW。P2（残留空锁恢复记录为恢复事实，涉及租约执行记录 schema 的合同变更）待单独设计并提交
+    owner 复核；在此之前沿用发布前检查清单（§8.3）。
   - 校验器与效果分类对 ORIG_HEAD 三种基线（不存在、等于旧 main、不同于旧 main）语义正确放行/拒绝并有负向测试（锁内容被篡改、基线与锁不一致必须拒绝）；fixture
     演练覆盖「预先存在且等于旧 main」且真实布局副本演练通过；不放宽任何既有检查，恢复/adopt 路径对新情形可重放；更新任务登记与需求文档；退出条件：不再需要删除
     ORIG_HEAD 的临时前置条件。
-  - 2026-10-06：(A) 真实发布验证结果写入 DEVX-021 第 8.4 节。
+  - 2026-10-06：P1 实施与验证结果写入 DEVX-021 §9.5。
   docs_links: []
   terminal: false
-  canonical_row_sha256: e4c1aaef31bbdb3d579dbd51691ec05a0a83d6874315f76301a0c188be6bc570
-last_event_id: task-event-9414fc8e0f6cf9dff42b7d3a685f6126
+  canonical_row_sha256: a2c406727fc58c929b2e6412cbf28bab6e00e000d54751fdd9637629a9854baf
+last_event_id: task-event-3f03fdceefc95c492ffde52e4aaa0a2e
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 500a89351560715355d6a0b05d0df2653f06d9c232f08646f6023658a18cc4a1
+fragment_checksum: e88accc3815a376a71e92af47aad6d87544a66c72ca4c4133e07ca1dc5dd4755
