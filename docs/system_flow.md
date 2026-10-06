@@ -139,6 +139,7 @@ ORIG_HEAD与reflog指纹及必须不存在的锁/合并状态；原store内重�
 不得在main_preparation之后补写。计划和重放不授予dispatch/publication/resume权限。
 prepared引用解析器仅准许原M→C的HEAD/main配对、ORIG_HEAD旧0写M及AUTO_MERGE旧0→0；
 未知/重复/错旧值/畸形集合拒绝。解析器不是Full/Job授权，实际hook身份与执行绑定仍需接入。
+prepared阶段的ORIG_HEAD.lock内容取决于checkout plan里记录的原ORIG_HEAD：不存在或不等于M时必须是M+LF；已等于M时git只创建空锁并保持原文件不变，空锁合法，合并后的ORIG_HEAD必须仍是计划里的原文件，空锁记录本身从不是合法的最终ORIG_HEAD（DEVX-021）；其余内容一律拒绝。
 hook capsule的固定定义从原request和checkout plan重建：仅reference-transaction/post-merge，
 目录由原stdout父目录及完整request SHA导出；脚本bytes、Python/CLI/actor/policy与逐文件hash
 均固定。仅转发Git单个stage参数及原stdin，错参数数目拒绝；重新计算hash不能授权替换内容。
