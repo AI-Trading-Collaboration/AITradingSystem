@@ -498,14 +498,14 @@ def reseal_policy_seals(
         for row in changed:
             target_id = str(row["target_id"])
             text = _rewrite_target_seal(text, target_id, new_seals[target_id])
-        policy_path.write_bytes(text.encode("utf-8"))
+        write_bytes_atomic(policy_path, text.encode("utf-8"))
         try:
             verified = load_policy(root)
             for target in verified["targets"]:
                 if str(target["target_id"]) in new_seals:
                     _source_bytes(root, target)
         except ReportCatalogFlowAuthorityError:
-            policy_path.write_bytes(original)  # never leave a half-written seal behind
+            write_bytes_atomic(policy_path, original)  # never leave a half-written seal behind
             raise
         written = True
     return {
