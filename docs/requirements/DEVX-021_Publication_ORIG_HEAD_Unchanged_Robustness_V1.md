@@ -108,3 +108,35 @@
 - 值的复核：(A) 的两个常量仍为 `PROVISIONAL_PENDING_OWNER_REVIEW`。有了实测数据后可以收紧，例如 worker 墙钟取实测最大值的约 2 倍（约 7,200 s）、git 子进程等待取约 3 倍（约 3,600 s），但这会把真实发布重新放回「大状态变化就可能超时」的区间；
   在 owner 复核之前保持现值，下一次真实发布再取一组实测。
 - 下一步（DEVX-021 余项，无时间压力）：ORIG_HEAD 基线（不存在 / 等于旧 main / 不同）的校验器与效果分类修复及负向测试（第 3、5 节）；残留空锁恢复记录为恢复事实及负向测试（第 7 节新项 B）；真实布局副本演练。任务状态保持 `IN_PROGRESS`。
+
+
+## 9. 2026-10-06 剩余范围的实施计划（P1：ORIG_HEAD 基线；P2：残留空锁另行设计）
+
+### 9.1 事实核验（隔离的临时仓库，git 2.45.1.windows.1，钩子记录 `ORIG_HEAD.lock` 的大小与内容）
+| ORIG_HEAD 基线 | `reference-transaction prepared` 时的 `ORIG_HEAD.lock` | 合并后的 `ORIG_HEAD` |
+|---|---|---|
+| 不存在 | 41 字节：旧 main + LF | 旧 main（锁被改名为 ORIG_HEAD） |
+| 已等于旧 main | **0 字节（空锁）** | 保持原文件（同一个文件，没有被替换） |
+| 不同于旧 main | 41 字节：旧 main + LF | 旧 main |
+其余钩子序列（`refs/heads/main.lock`、`HEAD.lock`、AUTO_MERGE、post-merge）三种情形完全一致。与第 2 节在真实布局副本上的结论相同。
+
+### 9.2 修改面（读码结论，范围只在两个文件）
+- `workflow_coordination.py::_validate_publication_git_merge`：`prepared` 阶段的 ORIG_HEAD 锁现在要求内容恰为 `expected_main + LF`。新规则：内容恰为 `expected_main + LF`，**或**（内容为空、大小为 0，**且**计划里记录的原 ORIG_HEAD 基线已等于 `expected_main + LF`）。`record_publication_hook` 只调用该校验，不需要另改。
+- `workflow_integration.py`：合并窗口观察（`_inspect_publication_head_window` 里的 `auxiliary()`）与恢复观察（`validate_publication_recovery_observation`）按「prepared 的锁记录」推导合法的最终 ORIG_HEAD。空锁情形下，最终 ORIG_HEAD 必须仍是计划里的原文件记录（同一身份、同一字节），**空锁记录本身永远不是合法的最终 ORIG_HEAD**；非空锁情形保持不变（最终 ORIG_HEAD 必须是锁的内容）。
+- 新增三个纯函数（便于不依赖 git 做单元测试，均放在 `workflow_integration.py`）：`publication_orig_head_baseline_is_expected_main`、`publication_orig_head_prepared_is_legal`、`publication_orig_head_final_records`。
+
+### 9.3 步骤、依赖与验收
+| 步骤 | 内容 | 验收 |
+|---|---|---|
+| P1-1 | 纯函数 + 单元测试（新测试文件 `tests/test_devx021_orig_head_baselines.py`）。先写测试，在旧代码上红 | 三种基线 × 锁内容（正确、空、错误内容、篡改）：空锁只在「基线已等于 main」时合法；非空错误内容在任何基线下都拒绝；最终 ORIG_HEAD：等值基线 + 空锁 → 仅原文件合法；非等值基线 → 原文件在 ORIG_HEAD 已 committed 后不合法（git 必须写过锁）；空锁记录从不合法 |
+| P1-2 | 把两个校验器改为使用这些函数 | 既有发布节点（不存在基线）全部不变；P1-1 全绿 |
+| P1-3 | 端到端夹具变体：在既有重型函数 `test_original_publication_cli_ff_only_and_independent_recovery` 上新增参数 `orig-head-equals-main-full-profile-publish`（夹具把 `.git/ORIG_HEAD` 预置为旧 main）；函数名已在调度清单里，不需要改清单 | 真实 `git merge --ff-only` 经全部钩子、worker、`adopt` 通过；记录里 ORIG_HEAD prepared 行大小为 0；发布后 ORIG_HEAD 仍是原文件 |
+| P1-4 | `docs/system_flow.md` 加一句说明（含 devx_006d 封印重算）；DEVX-021 进展；任务行 | 文档与行为一致 |
+| P1-5 | 聚焦回归：受影响文件的非重型层 + 两个重型节点冒烟（新变体与既有 ff_only 变体） | 全绿；然后进入候选重封、Full、发布 |
+- 依赖：无。风险：校验器放宽的是一个被 git 行为精确界定的状态（见 9.1），不放宽任何其他检查；任何与表中不符的内容仍以 `PUBLICATION_GIT_MERGE_LOCK` / `PUBLICATION_EFFECT_AUXILIARY` 拒绝。
+- 回滚：改动只在两个函数和三个纯函数里，回滚即还原这些提交；已发布的历史事件不受影响（旧事件的 ORIG_HEAD 行都是非空锁，新规则对它们结论不变）。
+
+### 9.4 P2（残留空锁恢复）暂不实施的理由与方向
+- 记录为恢复事实需要在 `git_merge`/`head_recovery` 的执行记录里新增字段，而这些记录有严格的键集合（`set(merge) != {...}`），覆盖校验器、转移校验、终态判定、效果分类与采纳路径，属于租约执行记录 schema 的合同变更，须「最小串行合同波次」。
+- 方向（待单独设计并提交 owner 复核）：只在原 Job 已确认终止、无存活 git/python、锁为空普通文件且创建时间落在原合并窗口内时，把「残留锁」作为恢复事实写入记录（先写事实，再按绑定句柄删除）；负向测试覆盖「锁非空 / 有存活进程 / 创建时间不在窗口内 / 路径不在白名单」。
+- 在此之前，发布前检查清单（§8.3）与 worker 墙钟（§8.2）已把这条路径的触发概率降到「宿主崩溃或硬卡死」。
