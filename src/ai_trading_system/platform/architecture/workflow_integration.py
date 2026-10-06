@@ -2961,8 +2961,8 @@ def _validate_publication_recovery_scene(
     original = plan["orig_head"]
     orig = auxiliary["orig_head"]
     permitted = [original]
-    if "ORIG_HEAD" in prepared:
-        permitted.append({**prepared["ORIG_HEAD"], "path": original["path"]})
+    # DEVX-021: an empty prepared lock (baseline already main) never becomes the final file.
+    permitted.extend(publication_orig_head_final_records(plan, request, prepared.get("ORIG_HEAD")))
     if restored_orig is not None:
         permitted.append(restored_orig)
     if orig not in permitted:
@@ -3059,8 +3059,10 @@ def _inspect_publication_head_window(
             for row in merge["hooks"]
         )
         permitted_orig = [plan["orig_head"]] if recovering or not orig_committed else []
-        if "ORIG_HEAD" in prepared:
-            permitted_orig.append({**prepared["ORIG_HEAD"], "path": plan["orig_head"]["path"]})
+        # DEVX-021: an empty prepared lock (baseline already main) leaves the original file.
+        permitted_orig.extend(
+            publication_orig_head_final_records(plan, request, prepared.get("ORIG_HEAD"))
+        )
         if recovering and recovery is not None:
             permitted_orig.append(recovery["restored_orig_head"])
         if orig not in permitted_orig:
@@ -3351,6 +3353,58 @@ def validate_local_publication_checkout_plan(
         raise
     except (KeyError, TypeError, ValueError, AttributeError) as exc:
         _fail("PUBLICATION_CHECKOUT_PLAN_FIELDS", str(exc))
+
+
+def publication_orig_head_baseline_is_expected_main(
+    plan: Mapping[str, Any], request: Mapping[str, Any],
+) -> bool:
+    """True when ORIG_HEAD already held the expected main when the checkout plan was recorded.
+
+    DEVX-021: git then keeps the existing ORIG_HEAD file and its prepared ORIG_HEAD.lock is
+    empty (v25 was rejected for this state); with any other baseline the lock holds main + LF.
+    """
+    baseline = plan["orig_head"]
+    return (
+        baseline["identity"] is not None
+        and bytes.fromhex(baseline["bytes_hex"])
+        == (request["expected_main_sha"] + "\n").encode("ascii")
+    )
+
+
+def publication_orig_head_prepared_is_legal(
+    plan: Mapping[str, Any], request: Mapping[str, Any], prepared: Mapping[str, Any],
+) -> bool:
+    """Legal contents of the prepared ORIG_HEAD.lock for the recorded baseline.
+
+    Main + LF in every case; additionally an empty lock when the plan recorded an ORIG_HEAD that
+    already held main. The relaxation is bounded by the plan written before git ran, not by what
+    the lock claims; every other content stays rejected.
+    """
+    if prepared["identity"] is None:
+        return False
+    content = bytes.fromhex(prepared["bytes_hex"])
+    if content == (request["expected_main_sha"] + "\n").encode("ascii"):
+        return True
+    return content == b"" and publication_orig_head_baseline_is_expected_main(plan, request)
+
+
+def publication_orig_head_final_records(
+    plan: Mapping[str, Any], request: Mapping[str, Any], prepared: Mapping[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """ORIG_HEAD file states that are legal once git has committed the ORIG_HEAD update.
+
+    A non-empty prepared lock is renamed to ORIG_HEAD. An empty lock (baseline already main) is
+    removed and the original file stays untouched; the empty record is never a legal final state.
+    """
+    if prepared is None:
+        return []
+    if (
+        prepared["identity"] is not None
+        and prepared["size"] == 0
+        and publication_orig_head_baseline_is_expected_main(plan, request)
+    ):
+        return [dict(plan["orig_head"])]
+    return [{**prepared, "path": plan["orig_head"]["path"]}]
 
 
 def classify_publication_prepared_reference_update(

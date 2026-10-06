@@ -1925,10 +1925,18 @@ def _exercise_failed_publication_job(
 
 
 @pytest.mark.parametrize(
-    "canonical_merge_repository", ["full-profile-publish", "native-linked-full-profile-publish"],
+    "canonical_merge_repository",
+    [
+        "full-profile-publish",
+        "native-linked-full-profile-publish",
+        # DEVX-021: the real repository's ORIG_HEAD already equalled main (v25 was rejected for it).
+        "orig-head-equals-main-full-profile-publish",
+    ],
     indirect=True,
 )
-def test_original_publication_cli_ff_only_and_independent_recovery(canonical_merge_repository):
+def test_original_publication_cli_ff_only_and_independent_recovery(
+    canonical_merge_repository, request,
+):
     """One new original Full -> public worker/hooks -> real ff-only -> fresh adopter.
 
     The retained fixture deliberately does not publish to any remote. A FAILED
@@ -1946,6 +1954,14 @@ def test_original_publication_cli_ff_only_and_independent_recovery(canonical_mer
     fence = IntegrationPublicationFence(project_root=root)
     transaction = fence.runtime_root / "transactions/merge-authority/transaction.json"
     binding, directory, _driver, _environment = _run_actual_profile_full(root)
+    orig_head_equal = (
+        request.node.callspec.params["canonical_merge_repository"]
+        == "orig-head-equals-main-full-profile-publish"
+    )
+    if orig_head_equal:
+        # Git then keeps the existing ORIG_HEAD and prepares an EMPTY ORIG_HEAD.lock (DEVX-021).
+        old_main = _git(root, "rev-parse", "refs/heads/main")
+        (root / ".git" / "ORIG_HEAD").write_bytes((old_main + "\n").encode("ascii"))
     fence.checkpoint(transaction, phase="LOCAL_MAIN_FF_PRE", actor="integration-coordinator")
     def physical():
         return next(row for row in fence.guard.replay().lease_heads
@@ -1996,6 +2012,18 @@ def test_original_publication_cli_ff_only_and_independent_recovery(canonical_mer
         }
         for row in attempt["git_merge"]["hooks"]:
             assert row["process_chain"][-1] == attempt["git_launch"]["process"]
+        if orig_head_equal:
+            plan = attempt["checkout_plan"]["plan"]
+            prepared = next(
+                row["prepared_file"] for row in attempt["git_merge"]["hooks"]
+                if row["reference_kind"] == "ORIG_HEAD" and row["stage"] == "prepared"
+            )
+            assert prepared["size"] == 0 and prepared["bytes_hex"] == ""
+            assert plan["orig_head"]["bytes_hex"] == (old_main + "\n").encode("ascii").hex()
+            observed = value["publication_stable_observation"]["merge_observation"]
+            # The original file is kept, not replaced by the lock.
+            assert observed["auxiliary"]["orig_head"] == plan["orig_head"]
+            assert (root / ".git" / "ORIG_HEAD").read_text(encoding="ascii") == old_main + "\n"
         (directory / "publication-vertical-evidence.json").write_text(json.dumps({
             "candidate_sha": binding["candidate_sha"], "lease_id": binding["lease_id"],
             "original_full_unchanged": True, "publication": published, "recovery": recovered,

@@ -3668,6 +3668,9 @@ def canonical_merge_repository(small_repository: Path, monkeypatch: pytest.Monke
     large_profile = fixture_mode == "large-full-profile-publish"
     if large_profile:
         fixture_mode = "full-profile-publish"
+    # DEVX-021: the test body presets ORIG_HEAD to the old main before the worker records its plan.
+    if fixture_mode == "orig-head-equals-main-full-profile-publish":
+        fixture_mode = "full-profile-publish"
     bound_parent = fixture_mode == "full-readiness-profile-parent"
     if bound_parent:
         fixture_mode = "full-readiness-profile"

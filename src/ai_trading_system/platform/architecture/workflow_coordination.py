@@ -664,6 +664,7 @@ def _validate_published_observation(execution: Mapping[str, Any]) -> None:
     from ai_trading_system.platform.architecture.parallel_control_kernel import _canonical_sha256
     from ai_trading_system.platform.architecture.workflow_integration import (
         _publication_plan_metadata,
+        publication_orig_head_final_records,
     )
 
     attempt = execution["publication_attempts"][-1]
@@ -763,7 +764,10 @@ def _validate_published_observation(execution: Mapping[str, Any]) -> None:
     orig_prepared = next(row["prepared_file"] for row in merge["hooks"]
                          if row["reference_kind"] == "ORIG_HEAD" and row["stage"] == "prepared")
     if (not isinstance(auxiliary, Mapping) or set(auxiliary) != {"orig_head", "reflogs"}
-            or auxiliary["orig_head"] != {**orig_prepared, "path": plan["orig_head"]["path"]}
+            # DEVX-021: the renamed lock, or the untouched original file after an empty lock.
+            or auxiliary["orig_head"] not in publication_orig_head_final_records(
+                plan, attempt["request"], orig_prepared,
+            )
             or not isinstance(auxiliary["reflogs"], Mapping)
             or set(auxiliary["reflogs"]) != set(plan["reflogs"])):
         _fail("PUBLICATION_PUBLISHED_AUXILIARY")
@@ -1126,6 +1130,7 @@ def _validate_publication_git_merge(execution: Mapping[str, Any]) -> None:
     from ai_trading_system.platform.architecture.workflow_integration import (
         _publication_plan_metadata,
         classify_publication_prepared_reference_update,
+        publication_orig_head_prepared_is_legal,
     )
 
     merge = execution["git_merge"]
@@ -1220,11 +1225,16 @@ def _validate_publication_git_merge(execution: Mapping[str, Any]) -> None:
                         if reference == "ORIG_HEAD"
                         else Path(checkout["common"]["path"]) / "refs/heads/main.lock")
                 _publication_plan_metadata(prepared, path, contents=True)
-                target = (execution["request"]["expected_main_sha"] if reference == "ORIG_HEAD"
-                          else execution["request"]["candidate_sha"])
-                if prepared["identity"] is None or bytes.fromhex(prepared["bytes_hex"]) != (
-                    target + "\n"
-                ).encode("ascii"):
+                if reference == "ORIG_HEAD":
+                    # DEVX-021: main + LF, or an empty lock when ORIG_HEAD already held main.
+                    legal = publication_orig_head_prepared_is_legal(
+                        plan, execution["request"], prepared,
+                    )
+                else:
+                    legal = prepared["identity"] is not None and bytes.fromhex(
+                        prepared["bytes_hex"]
+                    ) == (execution["request"]["candidate_sha"] + "\n").encode("ascii")
+                if not legal:
                     _fail("PUBLICATION_GIT_MERGE_LOCK")
             elif prepared is not None:
                 _fail("PUBLICATION_GIT_MERGE_LOCK")
