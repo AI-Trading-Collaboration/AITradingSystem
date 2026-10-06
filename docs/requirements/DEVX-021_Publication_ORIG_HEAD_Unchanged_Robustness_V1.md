@@ -140,3 +140,15 @@
 - 记录为恢复事实需要在 `git_merge`/`head_recovery` 的执行记录里新增字段，而这些记录有严格的键集合（`set(merge) != {...}`），覆盖校验器、转移校验、终态判定、效果分类与采纳路径，属于租约执行记录 schema 的合同变更，须「最小串行合同波次」。
 - 方向（待单独设计并提交 owner 复核）：只在原 Job 已确认终止、无存活 git/python、锁为空普通文件且创建时间落在原合并窗口内时，把「残留锁」作为恢复事实写入记录（先写事实，再按绑定句柄删除）；负向测试覆盖「锁非空 / 有存活进程 / 创建时间不在窗口内 / 路径不在白名单」。
 - 在此之前，发布前检查清单（§8.3）与 worker 墙钟（§8.2）已把这条路径的触发概率降到「宿主崩溃或硬卡死」。
+
+### 9.5 P1 实施结果（2026-10-06）
+- 提交：`7eb28af25`（校验器、三个纯函数、测试、端到端变体）、`807f0bdee`（`system_flow` 一句说明与 devx_006d 封印重算）。
+- **P1-1/P1-2**：`tests/test_devx021_orig_head_baselines.py` 28 个单元测试（三种基线 × 锁内容；空锁只在基线已等于 main 时合法，任何基线下的篡改/错误内容都拒绝；等值基线 + 空锁的最终 ORIG_HEAD 只有原文件合法，空锁记录从不合法），先红后绿（红灯是 `ImportError`，因为函数尚不存在）。四处使用点：`_validate_publication_git_merge`、`_validate_published_observation`（`workflow_coordination.py`）、合并窗口观察的 `auxiliary()` 与恢复观察 `_validate_publication_recovery_scene`（`workflow_integration.py`）。
+  读码时发现第 9.2 节漏列的一处：`_validate_published_observation`（采纳已发布尝试时比较最终 ORIG_HEAD 与锁记录），已一并改用同一个函数。mypy 与 ruff 的问题数与改动前一致（既有的 15 个 mypy 错误与 3 个 ruff 告警不属本次）。
+- **P1-3 端到端**：既有重型函数 `test_original_publication_cli_ff_only_and_independent_recovery` 新增参数 `orig-head-equals-main-full-profile-publish`（夹具把 `.git/ORIG_HEAD` 预置为旧 main；函数名已在调度清单中，清单与已有节点 ID 不变）。
+  **新代码：通过**（call 846 s，setup 88 s；记录里 ORIG_HEAD prepared 行大小为 0，发布后 ORIG_HEAD 仍是计划里的原文件，内容为旧 main）。
+  **红灯验证（把两个源文件暂存回旧版本，同一变体）：失败**，`local-publish` 返回 `RECOVERY_REQUIRED`，worker 阶段到 `merge_exit 128`，原因 `LEASE_EXECUTION_PUBLICATION_GIT_MERGE_LOCK`、`fatal: ref updates aborted by hook`，与 v25 在真实仓库上的现象完全一致——这是该缺陷第一次在夹具里被复现（此前夹具都是新建仓库，没有预存的 ORIG_HEAD）。
+- **P1-4**：`docs/system_flow.md` 在 prepared 引用解析器那一段加了一句（不新增条目，`entry_count` 仍为 1491，3450 总数不变）；system_flow 的封印四个值与测试里钉死的 SHA 手工重算（DEVX-016 的 F1 摩擦点，约 10 分钟）。
+- **P1-5 聚焦回归**：受影响的 15 个测试文件的非重型层 `1,846 passed / 0 failed`，用时 26 分 37 秒（预期区间 36 分钟内，§15.1）；两个重型 ff_only 节点冒烟 2 passed（同一个互斥组，串行，共 31 分钟）。
+- 耗时记录（对照 DEVX-022 §15.1）：两个冒烟节点串行 31 分钟（互斥组所致，设计如此）；红灯运行 12 分 22 秒；聚焦回归 26 分 37 秒；均在预期内。
+- 下一步：候选重封链 → 正式 Full → 发布（须 owner 再次授权发布）；P2（残留空锁恢复）仍待单独设计。
