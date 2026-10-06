@@ -3879,7 +3879,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.named_quality_dispatch
   path: src/ai_trading_system/data/named_quality_dispatch.py
-  sha256: d3803fba1339617eecf492778993a6049f732ee61023daf35b0cf3e007a9539e
+  sha256: 977b14118099c5d50cee7a50e0f28fee9c0886e70c53c540d69da9202557dc7b
   rule_id: data
   owner_profile: data
   owners:
@@ -15931,7 +15931,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.checkout_telemetry
   path: src/ai_trading_system/platform/architecture/checkout_telemetry.py
-  sha256: a2572166c1e3721484a51f9dec27b36a21da3b3f0b4ec604370fe9608298bb06
+  sha256: 2b12ba058f4159dcea2a5021b45aec6cf296e0f7f1c7932ff0e2ff720fdbb5f2
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -15977,7 +15977,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.compatibility_authority
   path: src/ai_trading_system/platform/architecture/compatibility_authority.py
-  sha256: 7e136a3562065299f5b48644d7cf083f8116da6f5a4b876b00d54beec1d911dc
+  sha256: 77ba8c211e467379e70eb0b5990dd82c50772201512aef2cb0a5ceeb15328a2b
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -16184,7 +16184,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.parallel_control_kernel
   path: src/ai_trading_system/platform/architecture/parallel_control_kernel.py
-  sha256: 57b3139ae5690b0190c65118003c34cc6b7cffb2969bfbb8c8822d2a7bc68b54
+  sha256: 448ee858e82740359d47c90cf641f184e6fdb23f51d43b0f2ec1fa45d18deeb6
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -16552,7 +16552,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.workflow_integration
   path: src/ai_trading_system/platform/architecture/workflow_integration.py
-  sha256: 7f1f7e548826e0654d7f64e55920fdb0ab5d46cba0eead33e1725d5b1bff81d9
+  sha256: cbc5793cbb0d488dcd9231791517ef8ce3791fe05f144572279937333ea65ab4
   rule_id: platform_architecture
   owner_profile: platform
   owners:
