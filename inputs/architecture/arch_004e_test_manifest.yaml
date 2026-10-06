@@ -10730,7 +10730,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx022_lease_event_externalization
   path: tests/test_devx022_lease_event_externalization.py
-  sha256: 2d8f0a699b60c07ba58c23bff70b19d45edd0fa05a4ee23a25a6ee0794f4b6b0
+  sha256: 3b8966c2141b3c6c4a9ef8799f222ed9aab85af6b50fd5cd0849d1e3ea6a5f42
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10762,7 +10762,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 46b2702f847b3b6b99f988ee892436b9e954d8d3f3ac790b65f373ff3f46d846
+  sha256: c22b386f2c1183dd662b73c764fee197e0859e50703616f701b500c4bf031224
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
