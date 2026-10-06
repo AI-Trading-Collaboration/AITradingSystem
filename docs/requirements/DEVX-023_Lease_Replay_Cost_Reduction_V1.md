@@ -123,3 +123,16 @@
     2 个是 `source_preservation` 的「已提交实现」测试，工作树未提交时按设计必败）；聚焦回归 B（`test_devx015_workflow_coordination.py`）334 通过；重型端到端 1 个（`test_original_publication_cli_ff_only_and_independent_recovery[full-profile-publish]`，真实 `local-publish` 钩子链路）通过，846.9 s。**没有一次 `LEASE_SECTION_REPLAY_STALE`。**
   - 待办：`architecture_report_catalog_flow_authority` 等生成器重封（`devx_006d` 的两个依赖生成物的测试在重封前按预期失败）、两个未跑的重型变体（`native-linked`、`orig-head-equals-main`）随 Full 验证、真实库消费者冒烟清单（第 7 节）在重封后与发布后各跑一次。
   - 临时资源（生命周期）：`D:/Work/devx023-old`（基线源码导出，差分重放用，0.05 GB）、`D:/Work/devx023-t1/-t2/-t3`（上述验证的 basetemp）、`D:/Work/devx023-batchA.log`/`-batchB.log`/`-heavy1.log`；收口时按精确路径白名单清理。
+- **2026-10-07：D6 候选 `d3d34872b` 通过正式验证并真实发布**（owner 预授权，普通推送 `25d026bf6..d3d34872b`；事务 `gov-007-d23-formal-20261006-v1` RELEASED/COMPLETED；无恢复、无人工干预；`main = origin/main = d3d34872ba83146639c432d58b6a2c18c07ea24a`）。这是真实库里**第一批 v4 事件**。
+  - 正式验证：`named-parent-positive` 579 s（上次 505 s；基线 440–502，告警线 900）、`contract-validation` 264 s、`integration` 78 s、`reproducibility` 48 s、`architecture-fitness` 1,412 s（基线 1,308–1,408）；**Full 14,791 通过 / 4 跳过 / 0 失败，pytest 8,737.8 s（2:25:37，仍在 8,023–8,698 s 基线带的边缘，未触 9,500 s 告警线）**，runner 8,830 s，总 CPU 约 57.2 CPU 小时（上次 53.8；整机平均 71.6%）。
+  - **发布耗时（本任务的目标）**：`local-publish` **54 分 8 秒**（上次 86 分 13 秒，M4 71 分钟；−37%）；`LOCAL_MAIN_FF_PRE` 3:49、`REMOTE_PUSH_PRE` 3:18、从 Full 结束到事务释放共约 65 分钟（上次约 100 分钟）。阶段：`hooks_created` +16 分、`ready_held` +22 分、`heads_switched` +30.5 分、`merge_resumed` +34 分、`merge_exit 0` +49 分。
+  - **租约库增长（逐项对照验收标准，真实库实测）**：发布部分的租约事件（`scratchpad/pub_timeline.py`）：M4 / d21b / d23：v3·v4 事件均为 20 个，**>100 KB 的事件 20 / 20 / 0**，v3·v4 事件字节 **11.85 / 11.84 / 1.13 MiB**（−90%），发布事件跨度 74.0 / 89.4 / 58.1 分钟，每个钩子事件间隔中位数 129 / 162 / 107 s（均值 170 / 208 / 135 s）。
+    该发布链共 53 个事件、1.72 MiB，最大事件 68.5 KB（此前 0.97 MB）；`captures` 的三个位置与 `read_file_custodies` 在 20 个事件里都是 marker（`scratchpad/post_publication_smoke.py`）。
+  - **验收对照**：(1) 真实库重放结论与基线逐项相同 ✓；耗时 ≤ 改动前 70% ✗（15.1 → 13.9 s，−8%：现有重放的下限由历史 22 MB 事件决定，目标当时偏乐观）；(2) 每个钩子事件的重放次数 ≤ 7：**未直接计数**（真实发布的钩子在子进程里），以钩子事件间隔 162 → 107 s（−34%）作间接证据；
+    (3) 下次发布给租约库留下的事件字节 < 1 MiB：**1.13 MiB，基本达成**（余下是 20 个约 57 KB 的事件：`git_merge`、`checkout_plan`、`hook_capsule.definition` 等小结构）；`local-publish` ≤ 60 分钟 ✓（54 分）；
+    **每多一次发布单次重放的增量 < +0.5 s ✗：实测 +1.5–1.8 s**（同一代码，发布前 13.9 s / 5,750 个事件 → 发布后 15.4–15.7 s / 5,813 个事件）；(4) 无跨调用缓存、历史事件文件不变 ✓；(5) 命名 DQ 活体证明（stage 1）与遥测快照（PASS，6,688 个来源，250 s）在真实库上通过 ✓；`canonical_json_bytes(replay.to_dict())` 通过（52.2 MiB）✓；(6) `system_flow` 同步 ✓。
+  - **残余增长的原因（cProfile，发布后）**：新增的 20 个 v4 事件只触发 1 次完整 hook-ready 校验（89 次提问、32 次完整校验，上次 69 / 31），但这一次完整校验针对一张约 17.9k 行的自定义清单，约 1.1–1.7 s（`_validated_hook_ready_paths` 4.5 s / 32 次累计，`parse_lease_event` 14.6 s）；
+    此外每个发布的 9.65 MB blob 每次重放要读取、哈希、解码一次。S3c + S3d + W 使增长从约 +3 s 降到约 +1.6 s（−50%）并把发布从 86 降到 54 分钟，**但不能消除**：只要每次重放仍要重新校验每一个历史发布链的清单，每次发布就会多一份。只有封印 S（终态链的校验结果按事件字节摘要持久化）才能去掉这部分。
+  - **旧代码对含 v4 事件的库 fail closed**：用基线代码重放现在的真实库得到 `status FAIL`（20 个 v4 事件的 schema 不识别），符合设计；含义是之后不能再用 S3b 时代的代码读写这个库（回滚会连带要求清空或迁移，不要回滚）。
+  - **命名 DQ 父证明继续增长**：整库重放的规范字节 32.4 → 42.3 → **52.2 MiB**（每次发布 +约 10 MiB，来自已释放 head 的托管表），`named-parent-positive` 505 → 579 s。已登记的后续项（第 8 节第 2 条）按本数据提高优先级：证明不再内嵌整库重放。
+  - 状态：S3c / S3d / W 交付并发布；**待 owner 决定封印 S**（见上；数据已齐：残余增长 +1.6 s/次发布，发布 54 分钟，下一次预计约 60 分钟）。

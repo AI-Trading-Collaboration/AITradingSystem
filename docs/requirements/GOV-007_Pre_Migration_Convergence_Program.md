@@ -570,7 +570,7 @@ v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
 - 下一步：v15 候选经限时 pilot、`failure_fix_rerun`（父为 v14 `full_incomplete_recovery.json`）事务、
   generators 与全部 tiers、Full；发布后 P1/P4/O3 与重测。
 
-### 2026-10-04 与 2026-10-06 的三次发布（摘要）
+### 2026-10-04 至 2026-10-07 的四次发布（摘要）
 
 - **2026-10-04 12:04 P1-C DEVX-015 基线发布**：`main = origin/main = 1e46e6ac767b309a880c41dbb2796981f8a61a7e`（普通推送 `cbc31cdff..1e46e6ac7`，事务 `gov-007-p1c-devx015-baseline-publication-20261004-v26`，v26 Full 14,706 通过/0 失败，3 小时 35 分）。
   发布期间两次仓库状态干预：经 owner 批准一次性删除 `.git/ORIG_HEAD`；未预批、审计后删除 worker 被写死 3600 秒墙钟终止后遗留的两个空锁（`.git/AUTO_MERGE.lock`、`.git/packed-refs.lock`），随后 `local-publication-recover` 收口。详见 DEVX-021 第 4、7 节。
@@ -579,6 +579,8 @@ v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
 - **2026-10-06 20:40 第三次发布（S3b 回归修复与 DEVX-021 P1）**：`main = origin/main = 25d026bf6b1031bd65fd90c87b1e6418c82525e9`（普通推送 `0cbdd9a45..25d026bf6`，事务 `gov-007-d21b-formal-20261006-v1`，Full 14,779 通过/0 失败，pytest 2 小时 21 分 34 秒，`local-publish` 86 分 13 秒）。
   owner 2026-10-06 再次预授权「通过后直接发布」（只限这一次，普通推送）；无恢复、无人工干预。该候选是第二次发布之后发现的 **S3b 回归**的修复：已发布的 main 在真实租约库出现 v3 事件后，公开 `to_dict()` 泄漏共享表类型、遥测等外部解析点不带 blob 读取器（全部 fail-closed，不改变任何已存事件）。详见 DEVX-022 第 16、17 节与 DEVX-021 第 9.6 节。
   需要关注：发布耗时随每次发布约 +15 分钟（71 → 86 分钟，下一次预计越过 100 分钟告警线），选项登记在 DEVX-023，等 owner 决定。
+- **2026-10-07 02:51 第四次发布（DEVX-023：租约重放成本，S3c + S3d + W）**：`main = origin/main = d3d34872ba83146639c432d58b6a2c18c07ea24a`（普通推送 `25d026bf6..d3d34872b`，事务 `gov-007-d23-formal-20261006-v1`，Full 14,791 通过/0 失败，pytest 2 小时 25 分 37 秒，`local-publish` 54 分 8 秒，上次 86 分）。
+  owner 2026-10-06 再次预授权（只限该候选，普通推送）；无恢复、无人工干预。真实库的**第一批 v4 事件**：发布部分租约事件字节 11.85 → 1.13 MiB，>100 KB 的事件 20 → 0。须披露：库里已含 v4 事件，S3b 时代的代码读它会 fail closed，不要回滚代码；每次发布单次重放仍 +1.5–1.8 s（原 +3 s）、命名 DQ 父证明 +约 10 MiB/次，封印 S 与证明合同变更等 owner 决定。详见 DEVX-023 第 9 节与 DEVX-022 第 17.5 节。
 - 仍待 owner：超时/等待校准的复核（`PROVISIONAL_PENDING_OWNER_REVIEW`）、O3 跨调用缓存、5 个 HKCU `AITS-DEVX015-Test-*` 遗留注册表根的清理（脚本 `D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1`，agent 未执行）。
 
 ## 7. 退出条件

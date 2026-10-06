@@ -18,10 +18,10 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 继续路线：DEVX-016（先做 F1 封印重算命令、F2 钉死值改下限、S2
-    多任务事务、S3 单一发布命令；P4 通用 section 链大重构降级为可选，须 owner 确认）-> DEVX-017 -> OPS-082（须 owner
-    先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5。DEVX-023 的发布耗时增长趋势需要
-    owner 决定方向。
+  unstructured_legacy_blocker_or_next_step: 继续路线：DEVX-016 C1（F1+F2+S2）-> C2（S3）->
+    C3（P4）-> C4（S4）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖
+    OPS-077/078/081 验收）-> 阶段 5。DEVX-023 的封印 S / 证明不再内嵌整库重放需 owner 决定（数据见 DEVX-023
+    第 9 节）。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -789,6 +789,34 @@ events:
   - change:gov-007-gov007-pub3-task-20261006-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-0479b8c94db3b6a56289015f00d0da5a
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-06T18:05:38Z'
+  actor: integration-coordinator
+  change_id: gov-007-gov007-pub4-task-20261007-v1
+  lane_id: null
+  base_commit: d3d34872ba83146639c432d58b6a2c18c07ea24a
+  previous_state_event_id: task-event-0479b8c94db3b6a56289015f00d0da5a
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 继续路线：DEVX-016 C1（F1+F2+S2）-> C2（S3）-> C3（P4）-> C4（S4）->
+      DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081
+      验收）-> 阶段 5。DEVX-023 的封印 S / 证明不再内嵌整库重放需 owner 决定（数据见 DEVX-023 第 9 节）。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: 2026-10-07 第四次真实发布：main = origin/main = d3d34872b（普通推送 25d026bf6..d3d34872b；DEVX-023
+      的 S3c/S3d/W；Full 14,791 通过/0 失败，2:25:37；local-publish 54 分 8 秒，上次 86 分）。owner
+      2026-10-06 再次预授权（只限该候选，普通推送）；无恢复、无人工干预。须披露：真实库已含 v4 事件，S3b 时代代码不能再读写（回滚会 fail
+      closed）；每次发布单次重放仍 +1.5-1.8 s、命名 DQ 父证明 +10 MiB/次（stage 1 579 s）；超时/等待校准仍为 PROVISIONAL_PENDING_OWNER_REVIEW。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-gov007-pub4-task-20261007-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8e8d5459636bc3451b2c5bac3a006cd4
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
@@ -796,19 +824,18 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - 继续路线：DEVX-016（先做 F1 封印重算命令、F2 钉死值改下限、S2 多任务事务、S3 单一发布命令；P4 通用 section 链大重构降级为可选，须
-    owner 确认）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081
-    验收）-> 阶段 5。DEVX-023 的发布耗时增长趋势需要 owner 决定方向。
+  - 继续路线：DEVX-016 C1（F1+F2+S2）-> C2（S3）-> C3（P4）-> C4（S4）-> DEVX-017 -> OPS-082（须
+    owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5。DEVX-023 的封印
+    S / 证明不再内嵌整库重放需 owner 决定（数据见 DEVX-023 第 9 节）。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - 2026-10-06 第三次真实发布：main = origin/main = 25d026bf6（普通推送 0cbdd9a45..25d026bf6；DEVX-021
-    P1 的 ORIG_HEAD 基线修复 + DEVX-022 S3b 回归修复；Full 14,779 通过/0 失败，2:21:34）。须向 owner
-    披露：S3b 回归是已发布 main 的缺陷（首批 v3 事件写入真实库后暴露，全部 fail-closed，不改变任何已存事件）；checkout_telemetry.py
-    作为历史哈希固定源被 V3 授权段接管（同 S6 模式）；发布耗时 71 -> 86 分钟的增长趋势；命名 DQ 父证明 32.4 -> 42.3 MiB；超时/等待校准仍为
-    PROVISIONAL_PENDING_OWNER_REVIEW。
+  - 2026-10-07 第四次真实发布：main = origin/main = d3d34872b（普通推送 25d026bf6..d3d34872b；DEVX-023
+    的 S3c/S3d/W；Full 14,791 通过/0 失败，2:25:37；local-publish 54 分 8 秒，上次 86 分）。owner
+    2026-10-06 再次预授权（只限该候选，普通推送）；无恢复、无人工干预。须披露：真实库已含 v4 事件，S3b 时代代码不能再读写（回滚会 fail
+    closed）；每次发布单次重放仍 +1.5-1.8 s、命名 DQ 父证明 +10 MiB/次（stage 1 579 s）；超时/等待校准仍为 PROVISIONAL_PENDING_OWNER_REVIEW。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 2d61bc1ca8def1cf5aed167fdf838cee5035ff22217f786a2ee60ad74a189182
-last_event_id: task-event-0479b8c94db3b6a56289015f00d0da5a
+  canonical_row_sha256: f67b215546c975e169c9b8bae865c11c7f8a402ef7e078f6e426be6e9b7d36fb
+last_event_id: task-event-8e8d5459636bc3451b2c5bac3a006cd4
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: a99f6b39806af805b74b3898a8afab0c52d515ac5c9ee26908197a8c04dbb0af
+fragment_checksum: 97f4589a6b32d35dc45e44b8d17f03abcab1fe2f8a70b6ec690012a28b912e3d
