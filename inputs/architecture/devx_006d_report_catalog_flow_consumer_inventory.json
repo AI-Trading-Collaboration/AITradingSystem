@@ -1,6 +1,6 @@
 {
   "broker_action": "none",
-  "consumer_count": 164,
+  "consumer_count": 165,
   "consumers": [
     {
       "migration_status": "PENDING_OWNER_CUTOVER",
@@ -120,6 +120,17 @@
         }
       ],
       "role": "RUNTIME_OR_LIBRARY_CONSUMER"
+    },
+    {
+      "migration_status": "MIGRATED_SHADOW",
+      "path": "src/ai_trading_system/platform/architecture/report_catalog_flow_authority.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SHADOW_AUTHORITY_IMPLEMENTATION"
     },
     {
       "migration_status": "PENDING_OWNER_CUTOVER",
@@ -2455,7 +2466,7 @@
       "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
       "references": [
         {
-          "literal_count": 5,
+          "literal_count": 6,
           "target_path": "config/report_registry.yaml"
         },
         {
@@ -2463,7 +2474,7 @@
           "target_path": "docs/artifact_catalog.md"
         },
         {
-          "literal_count": 6,
+          "literal_count": 7,
           "target_path": "docs/system_flow.md"
         }
       ],
