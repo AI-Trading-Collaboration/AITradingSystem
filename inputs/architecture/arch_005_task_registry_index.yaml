@@ -7,14 +7,14 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 1079
-active_task_count: 314
+task_count: 1080
+active_task_count: 315
 completed_task_count: 765
-fragment_count: 1079
+fragment_count: 1080
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: dd19191cb93b99261fa12f8674c57c086d3e604e6ec918bda9d7888ae5e6873a
+final_chain_sha256: e1a9d4af5f2f5103196e94bab8d5695a44c42db8c141bad7c6739c7e665f0629
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 2fab76611d56d6278a102740c94bb5da2236a35467c6debc98b34ad1c9f32129
 templates:
@@ -8661,12 +8661,20 @@ fragments:
   order: 1079
   previous_entry_sha256: 5556558a34687070acf3ed77212dc385febfcca596ebd00ad40e1d928185ace0
   entry_sha256: dd19191cb93b99261fa12f8674c57c086d3e604e6ec918bda9d7888ae5e6873a
+- task_id: DEVX-023_LEASE_REPLAY_COST_REDUCTION
+  path: registry/development_tasks/a7/a775a6b3404caf35802e9c61b2225c1ba5e8d8c5568375b4c03baf3369972ccc.yaml
+  file_sha256: a1af3b2e374129f172d6a2640c336717a53f529b114dda5d1e69e747f5a9f122
+  fragment_checksum: 25d66da113c1a330aa028e960aae5242b2b8497f0343576b7da409b3f9965c94
+  partition: active
+  order: 1080
+  previous_entry_sha256: dd19191cb93b99261fa12f8674c57c086d3e604e6ec918bda9d7888ae5e6873a
+  entry_sha256: e1a9d4af5f2f5103196e94bab8d5695a44c42db8c141bad7c6739c7e665f0629
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: abfc668abdb7b18d970d3d3df20f600f6304d8f05178dfd56cdcf7efe8a33e32
-  byte_count: 1367418
-  row_count: 314
+  sha256: 896d521cd708d4b7483becfffcd97362bcb2ad5e5dbadf4f9657f0b1e14c6ab7
+  byte_count: 1369371
+  row_count: 315
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
@@ -17943,7 +17951,14 @@ governance_cycles:
   change_id: gov-007-g7post-task-20261006-v1
   event_count: 25
   production_effect: none
-governance_cycle_count: 1324
+- cycle_id: arch-005-s5-cycle-1325
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: DEVX-023_LEASE_REPLAY_COST_REDUCTION
+  change_id: gov-007-devx023-register-task-20261006-v1
+  event_count: 1
+  production_effect: none
+governance_cycle_count: 1325
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -17957,4 +17972,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: cfad5236e08b0a795954cd54ba6d094978d9975341eaabb62c41b7e4acb3533f
+index_checksum: 62a6e34a68538c5fdaa46ba31458e9cb7ff5392404c72b5913f9b7a011ea7686

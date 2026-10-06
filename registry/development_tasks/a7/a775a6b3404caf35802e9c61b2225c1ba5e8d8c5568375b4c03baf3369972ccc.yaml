@@ -1,0 +1,97 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-023_LEASE_REPLAY_COST_REDUCTION
+  task_id_sha256: a775a6b3404caf35802e9c61b2225c1ba5e8d8c5568375b4c03baf3369972ccc
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-023_LEASE_REPLAY_COST_REDUCTION
+  title: null
+  domain: 'Governed workflow / lease-store replay cost: one replay of the 713 MB real
+    store takes about 14 s, which dominates every fence command and the 71-minute
+    real publication'
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: Project Owner（决定是否推进）；Claude Code coordinator（方案与实施）
+  requirement_refs:
+  - docs/requirements/DEVX-022_Full_Under_Two_Hours_Program_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 2026-10-06 owner 要求持续关注流程耗时后的分析（DEVX-022
+    §15）：围栏命令墙钟几乎全是租约库重放（单次 13.6–14.7 s：acquire 1 次、checkpoint 2 次、release 4 次），真实发布的
+    34 个租约事件各约 2 分钟（git 钩子阶段每事件约 9 次重放），发布耗时 ≈ 重放次数 × 14 s。S3b 只让新事件变小，历史 29 个大事件（653
+    MB）仍在每次重放里。可选方向（均未实施）：W 同一原子操作内共享（只在持锁的同一次 atomic 内复用，低风险，约 -15% 重放次数）；S 按租约链封印历史（租约链彼此独立，终态链的校验只取决于它自己的事件字节与内核代码；逐字节哈希全部历史约
+    1–2 s，重放约 14 s -> 约 2 s，发布约 71 -> 约 20 分钟，须 owner 评审信任模型，因为是带完整性绑定的持久化检查点，不同于被否决的
+    O3 身份缓存）；M 路径解析微优化（约 -2 s/次）。等待 owner 决定方向；在此之前不实施任何跨调用缓存。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 选定方案后：围栏命令（acquire/checkpoint/release）墙钟降到当前的 1/3 以内、真实发布不超过 30 分钟；重放结论与全量重放逐项相同（真实库与变异库的差分测试，含篡改/截断/重排/替换事件、内核版本变化使封印失效、封印缺失或损坏时回退全量重放）；不引入未经
+      owner 批准的跨调用缓存；历史事件文件不被改写；文档与 system_flow 同步。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: DEVX-023_LEASE_REPLAY_COST_REDUCTION
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-10-06T03:23:15Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx023-register-task-20261006-v1
+  lane_id: null
+  base_commit: 0cbdd9a4549987364d5fd2d450d3905083ef1775
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    legacy_projection:
+    - DEVX-023_LEASE_REPLAY_COST_REDUCTION
+    - 'Governed workflow / lease-store replay cost: one replay of the 713 MB real
+      store takes about 14 s, which dominates every fence command and the 71-minute
+      real publication'
+    - P2
+    - PROPOSED
+    - Project Owner（决定是否推进）；Claude Code coordinator（方案与实施）
+    - 2026-10-06 owner 要求持续关注流程耗时后的分析（DEVX-022 §15）：围栏命令墙钟几乎全是租约库重放（单次 13.6–14.7 s：acquire
+      1 次、checkpoint 2 次、release 4 次），真实发布的 34 个租约事件各约 2 分钟（git 钩子阶段每事件约 9 次重放），发布耗时
+      ≈ 重放次数 × 14 s。S3b 只让新事件变小，历史 29 个大事件（653 MB）仍在每次重放里。可选方向（均未实施）：W 同一原子操作内共享（只在持锁的同一次
+      atomic 内复用，低风险，约 -15% 重放次数）；S 按租约链封印历史（租约链彼此独立，终态链的校验只取决于它自己的事件字节与内核代码；逐字节哈希全部历史约
+      1–2 s，重放约 14 s -> 约 2 s，发布约 71 -> 约 20 分钟，须 owner 评审信任模型，因为是带完整性绑定的持久化检查点，不同于被否决的
+      O3 身份缓存）；M 路径解析微优化（约 -2 s/次）。等待 owner 决定方向；在此之前不实施任何跨调用缓存。
+    - 选定方案后：围栏命令（acquire/checkpoint/release）墙钟降到当前的 1/3 以内、真实发布不超过 30 分钟；重放结论与全量重放逐项相同（真实库与变异库的差分测试，含篡改/截断/重排/替换事件、内核版本变化使封印失效、封印缺失或损坏时回退全量重放）；不引入未经
+      owner 批准的跨调用缓存；历史事件文件不被改写；文档与 system_flow 同步。
+    - production_effect=none；broker_action=none；agent_harness=claude_code；详见 docs/requirements/DEVX-022_Full_Under_Two_Hours_Program_V1.md
+      §15。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:gov-007-devx023-register-task-20261006-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f3e095146ed825a5f6328ffa645cdebb
+projection:
+  legacy_first_eight_cells:
+  - DEVX-023_LEASE_REPLAY_COST_REDUCTION
+  - 'Governed workflow / lease-store replay cost: one replay of the 713 MB real store
+    takes about 14 s, which dominates every fence command and the 71-minute real publication'
+  - P2
+  - PROPOSED
+  - Project Owner（决定是否推进）；Claude Code coordinator（方案与实施）
+  - 2026-10-06 owner 要求持续关注流程耗时后的分析（DEVX-022 §15）：围栏命令墙钟几乎全是租约库重放（单次 13.6–14.7 s：acquire
+    1 次、checkpoint 2 次、release 4 次），真实发布的 34 个租约事件各约 2 分钟（git 钩子阶段每事件约 9 次重放），发布耗时
+    ≈ 重放次数 × 14 s。S3b 只让新事件变小，历史 29 个大事件（653 MB）仍在每次重放里。可选方向（均未实施）：W 同一原子操作内共享（只在持锁的同一次
+    atomic 内复用，低风险，约 -15% 重放次数）；S 按租约链封印历史（租约链彼此独立，终态链的校验只取决于它自己的事件字节与内核代码；逐字节哈希全部历史约
+    1–2 s，重放约 14 s -> 约 2 s，发布约 71 -> 约 20 分钟，须 owner 评审信任模型，因为是带完整性绑定的持久化检查点，不同于被否决的
+    O3 身份缓存）；M 路径解析微优化（约 -2 s/次）。等待 owner 决定方向；在此之前不实施任何跨调用缓存。
+  - 选定方案后：围栏命令（acquire/checkpoint/release）墙钟降到当前的 1/3 以内、真实发布不超过 30 分钟；重放结论与全量重放逐项相同（真实库与变异库的差分测试，含篡改/截断/重排/替换事件、内核版本变化使封印失效、封印缺失或损坏时回退全量重放）；不引入未经
+    owner 批准的跨调用缓存；历史事件文件不被改写；文档与 system_flow 同步。
+  - production_effect=none；broker_action=none；agent_harness=claude_code；详见 docs/requirements/DEVX-022_Full_Under_Two_Hours_Program_V1.md
+    §15。
+  docs_links:
+  - docs/requirements/DEVX-022_Full_Under_Two_Hours_Program_V1.md
+  terminal: false
+  canonical_row_sha256: bcf16677ff4cfbc26f9b6a8ca9e84c050df849434ba230277b3abf12be52cf49
+last_event_id: task-event-f3e095146ed825a5f6328ffa645cdebb
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 25d66da113c1a330aa028e960aae5242b2b8497f0343576b7da409b3f9965c94
