@@ -4984,7 +4984,7 @@ def finish_source_installation(
             payload = load_strict_json_text(bounded_regular_bytes(path).decode())
             if not isinstance(payload, dict):
                 _fail("SOURCE_HANDOFF_RELEASE_EVENT")
-            event = parse_lease_event(payload)
+            event = parse_lease_event(payload, blobs=fence.guard.store.blobs)
             if event.event_id != event_id or event.lease.lease_id != lease_id:
                 _fail("SOURCE_HANDOFF_RELEASE_EVENT")
             return event

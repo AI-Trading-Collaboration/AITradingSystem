@@ -281,7 +281,7 @@ def _read_lease(
         root=root, relative_path=event_path.relative_to(root).as_posix()
     )
     raw_event = _object(strict_json_loads(event_content))
-    event = parse_lease_event(raw_event)
+    event = parse_lease_event(raw_event, blobs=guard.store.blobs)
     if (
         canonical_json_bytes(raw_event) != canonical_json_bytes(event.to_dict())
         or event.lease != head
@@ -442,13 +442,13 @@ def verify_retained_named_capture_proof(
         retained[key] = content
     intent = _parse_intent(retained["lease_intent"])
     event_raw = _object(strict_json_loads(retained["lease_event"]))
-    event = parse_lease_event(event_raw)
-    head = event.lease
     guard = CheckoutLeaseGuard(
         project_root=root,
         policy_path=root / "config/architecture/arch_005_s4d_checkout_guard.yaml",
         parallel_policy_path=root / "config/architecture/arch_005_parallel_control_policy.yaml",
     )
+    event = parse_lease_event(event_raw, blobs=guard.store.blobs)
+    head = event.lease
     task, _ = guard._lease_task(intent)
     if (
         canonical_json_bytes(event_raw) != canonical_json_bytes(event.to_dict())

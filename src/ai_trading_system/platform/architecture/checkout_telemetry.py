@@ -27,6 +27,7 @@ from ai_trading_system.platform.architecture.checkout_reconciliation import (
     validate_checkout_reconciliation_report,
 )
 from ai_trading_system.platform.architecture.parallel_control_kernel import (
+    ExternalizedRowsReader,
     LeaseEvent,
     parse_lease_event,
     replay_lease_events,
@@ -811,6 +812,7 @@ def _source_records(
             payload,
             relative,
             batch_id=batch_id,
+            blobs=_event_blob_reader(kind, absolute),
         )
         records.append(
             {
@@ -859,19 +861,27 @@ def _load_sources(
             path,
             known_unrelated_paths=known_unrelated,
         )
+        blobs = _event_blob_reader(kind, absolute)
         source_id, schema_version = _validate_source_payload(
             kind,
             payload,
             path,
             batch_id=batch_id,
+            blobs=blobs,
         )
         if source_id != record["source_id"] or schema_version != record["schema_version"]:
             raise CheckoutGuardError("CHECKOUT_TELEMETRY_SOURCE_IDENTITY", path)
         value: Any = (
-            parse_lease_event(payload) if kind == "lease_event" else payload
+            parse_lease_event(payload, blobs=blobs) if kind == "lease_event" else payload
         )
         loaded.append((kind, path, value))
     return tuple(loaded)
+
+
+def _event_blob_reader(kind: str, absolute: Path) -> ExternalizedRowsReader | None:
+    """A stored lease event may name content-addressed row tables (DEVX-022 S3b): read them from
+    the blob directory of the store the event file sits in, never from a guessed place."""
+    return ExternalizedRowsReader.beside_event(absolute) if kind == "lease_event" else None
 
 
 def _validate_source_payload(
@@ -880,12 +890,13 @@ def _validate_source_payload(
     path: str,
     *,
     batch_id: str,
+    blobs: ExternalizedRowsReader | None = None,
 ) -> tuple[str, str]:
     if kind == "checkout_intent":
         _validate_intent(payload, path)
         return str(payload["intent_id"]), CHECKOUT_INTENT_SCHEMA_VERSION
     if kind == "lease_event":
-        event = parse_lease_event(payload)
+        event = parse_lease_event(payload, blobs=blobs)
         if PurePosixPath(path).stem != event.event_id:
             raise CheckoutGuardError("CHECKOUT_TELEMETRY_EVENT_PATH", path)
         if PurePosixPath(path).parent.name != event.lease.lease_id:

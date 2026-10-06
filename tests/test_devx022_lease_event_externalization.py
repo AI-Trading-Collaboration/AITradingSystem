@@ -314,6 +314,181 @@ def test_shared_tables_are_immutable_but_copies_are_plain_lists() -> None:
     assert copy.deepcopy(rows) == rows and copy.deepcopy(rows)[0] is not rows[0]
 
 
+def _assert_exact_json(value: Any, where: str = "$") -> None:
+    """What a strict canonical-JSON consumer accepts: no list/dict subclass anywhere."""
+    kind = type(value)
+    if value is None or kind in (bool, int, float, str):
+        return
+    if kind is list:
+        for index, item in enumerate(value):
+            _assert_exact_json(item, f"{where}[{index}]")
+    elif kind is dict:
+        for key, item in value.items():
+            assert type(key) is str, where
+            _assert_exact_json(item, f"{where}.{key}")
+    else:
+        raise AssertionError(f"{where}: {kind.__module__}.{kind.__qualname__}")
+
+
+@pytest.mark.parametrize("attempts", [False, True])
+def test_public_dicts_of_a_replay_hold_only_exact_json_types(
+    tmp_path: Path, attempts: bool
+) -> None:
+    """Regression, found when the first real v3 events existed: a head taken from replay shares
+    ExternalizedRows tables and to_dict() leaked that list subclass into strict canonical-JSON
+    consumers, e.g. the named-DQ parent proof, which embeds the replay of the whole real store."""
+    from ai_trading_system.contracts.prospective_event_time_evidence import canonical_json_bytes
+
+    store = _store(tmp_path)
+    requested = _event(_lease(_execution(_rows(2000), attempts=attempts)))
+    store._append_event(requested)
+    active = _event(
+        _lease(_execution(_rows(2000), attempts=attempts), state="ACTIVE"),
+        previous=requested.event_id, from_state="REQUESTED",
+    )
+    store._append_event(active)
+    replay = store.replay()
+    assert replay.status == "PASS" and len(replay.active_leases) == 1
+    head = replay.lease_heads[0]
+    execution = head.execution
+    capsule = (
+        execution["publication_attempts"][0]["hook_capsule"] if attempts
+        else execution["hook_capsule"]
+    )
+    shared = capsule["ready"]["inputs"][FIELD]
+    assert type(shared) is kernel.ExternalizedRows  # the state that produced the leak
+
+    for payload in (replay.to_dict(), head.to_dict(), replay.active_leases[0].to_dict()):
+        _assert_exact_json(payload)
+        canonical_json_bytes(payload)
+    # converting for the public dict never disturbs the shared table of the head itself
+    assert type(capsule["ready"]["inputs"][FIELD]) is kernel.ExternalizedRows
+    plain = head.to_dict()["execution"]
+    plain_capsule = (
+        plain["publication_attempts"][0]["hook_capsule"] if attempts else plain["hook_capsule"]
+    )
+    assert plain_capsule["ready"]["inputs"][FIELD] == list(shared)
+
+    stored = json.loads(_event_path(store, active).read_text(encoding="utf-8"))
+    parsed = kernel.parse_lease_event(stored, blobs=store.blobs)
+    _assert_exact_json(parsed.to_dict())
+    assert parsed.to_dict() == stored  # the stored form is still the compacted one
+
+
+def test_a_derived_event_keeps_its_stored_form_after_the_public_conversion(
+    tmp_path: Path,
+) -> None:
+    """The conversion is for PUBLIC dicts only: an event built from a replayed head must still
+    compact from the shared table (digest reuse), i.e. be written as v3 with a marker."""
+    store = _store(tmp_path)
+    requested = _event(_lease(_execution(_rows(2000))))
+    store._append_event(requested)
+    head = store.replay().lease_heads[0]
+    head.to_dict()  # a public dict was taken first, as the named-DQ proof does
+    following = _event(
+        replace(head, state="ACTIVE"), previous=requested.event_id, from_state="REQUESTED",
+    )
+    assert following.rows_externalized
+    _assert_exact_json(following.to_dict())
+    assert MARKER in _stored_inputs(following.to_dict())[FIELD]
+
+
+def test_checkout_telemetry_reads_externalized_events_of_the_lease_store(tmp_path: Path) -> None:
+    """Regression: the telemetry loader parsed stored events without the store's blob reader and
+    failed closed on the first real v3 event."""
+    from ai_trading_system.platform.architecture import checkout_telemetry as telemetry
+
+    root = tmp_path.resolve()
+    policy = kernel.load_parallel_control_policy(
+        ROOT / "config/architecture/arch_005_parallel_control_policy.yaml"
+    )
+    store = kernel.FileExecutionLeaseStore(
+        root / "outputs/architecture/checkout-guard-test/leases", policy=policy,
+    )
+    event = _event(_lease(_execution(_rows(2000))))
+    store._append_event(event)
+    path = _event_path(store, event)
+    telemetry_policy = telemetry.load_checkout_telemetry_policy()
+
+    records = telemetry._source_records(
+        root, [("lease_event", path)], policy=telemetry_policy, batch_id="batch-s3b",
+    )
+    assert [row["source_id"] for row in records] == [event.event_id]
+    assert records[0]["schema_version"] == kernel.LEASE_EVENT_V3_SCHEMA_VERSION
+    loaded = telemetry._load_sources(
+        root, records, policy=telemetry_policy, batch_id="batch-s3b",
+    )
+    assert [(kind, value) for kind, _, value in loaded] == [("lease_event", event)]
+
+    # an event that names a blob which is gone still fails closed instead of being misread
+    blob = next(store.blobs.root.rglob("*.json"))
+    blob.unlink()
+    with pytest.raises(ParallelControlError, match="LEASE_EXTERNALIZED_ROWS_UNAVAILABLE"):
+        telemetry._load_sources(root, records, policy=telemetry_policy, batch_id="batch-s3b")
+
+
+# Callers that parse a STORED event without the store's blob reader. Each one reads events that
+# never carry a publication custody table (so they are embedded/v2 by construction). Every other
+# call site must pass `blobs=`, because the real store now holds v3 events and a blob-less parse
+# fails closed on them (DEVX-022 S3b regression: telemetry and the named-DQ proof).
+BLOBLESS_PARSE_SITES = {
+    ("src/ai_trading_system/platform/architecture/task_checkpoint.py", "_intent_lease"):
+        "checkpoint lease: no hook capsule",
+    ("src/ai_trading_system/platform/architecture/task_checkpoint.py",
+     "_validate_capture_execution"): "checkpoint lease: no hook capsule",
+    ("src/ai_trading_system/platform/architecture/task_checkpoint.py", "_interrupted_lease"):
+        "checkpoint lease: no hook capsule",
+    ("src/ai_trading_system/platform/architecture/workflow_coordination.py",
+     "registered_legacy_terminal_lease"): "retired legacy control root, frozen before S3b",
+    ("src/ai_trading_system/prospective_event_time_evidence.py", "_check_snapshot"):
+        "captured ACTIVE source-lease event, taken before any hook capsule exists",
+}
+
+
+def _parse_sites() -> dict[tuple[str, str], bool]:
+    """(file, enclosing functions) -> whether the call passes `blobs=`."""
+    import ast
+
+    sites: dict[tuple[str, str], bool] = {}
+    for base in ("src", "scripts"):
+        for path in sorted((ROOT / base).rglob("*.py")):
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            parents = {
+                child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)
+            }
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Call):
+                    continue
+                func = node.func
+                name = func.id if isinstance(func, ast.Name) else getattr(func, "attr", None)
+                if name != "parse_lease_event":
+                    continue
+                chain, current = [], node
+                while current in parents:
+                    current = parents[current]
+                    if isinstance(current, ast.FunctionDef | ast.AsyncFunctionDef):
+                        chain.append(current.name)
+                key = (path.relative_to(ROOT).as_posix(), "->".join(reversed(chain)))
+                sites[key] = any(item.arg == "blobs" for item in node.keywords)
+    return sites
+
+
+def test_every_stored_event_parse_names_a_blob_reader_or_is_justified() -> None:
+    sites = _parse_sites()
+    unjustified = sorted(
+        site for site, has_reader in sites.items()
+        if not has_reader and site not in BLOBLESS_PARSE_SITES
+    )
+    assert not unjustified, (
+        "parse_lease_event without blobs= on a store that holds v3 events: "
+        f"{unjustified}"
+    )
+    stale = sorted(site for site in BLOBLESS_PARSE_SITES if sites.get(site) is not False)
+    assert not stale, f"allowlisted call site gone or now passes a reader: {stale}"
+    for site, reason in BLOBLESS_PARSE_SITES.items():
+        assert reason, site
+
+
 REAL_STORE = ROOT / "outputs/architecture/arch_005_s4d_checkout_guard/leases/events"
 
 

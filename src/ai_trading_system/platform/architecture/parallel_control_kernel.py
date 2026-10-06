@@ -204,7 +204,17 @@ class ExecutionLease:
     evidence_refs: tuple[str, ...] = ()
     execution: Mapping[str, Any] | None = None
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self, *, shared_rows: bool = False) -> dict[str, object]:
+        """The lease as a JSON object.
+
+        A head taken from replay shares digest-carrying `ExternalizedRows` tables (DEVX-022 S3b).
+        The public dict holds only exact JSON types, because strict canonical-JSON consumers (the
+        named-DQ parent proof embeds the whole replay) reject a list subclass. Only the event's
+        own stored form asks for `shared_rows`: it compacts from the shared table and its digest.
+        """
+        execution = self.execution
+        if execution is not None and not shared_rows:
+            execution, _ = _rewrite_rows(execution, _plain_rows)
         return {
             "schema_version": LEASE_SCHEMA_VERSION
             if self.execution is None
@@ -227,7 +237,7 @@ class ExecutionLease:
             "evidence_refs": list(self.evidence_refs),
             "production_effect": "none",
             "broker_action": "none",
-            **({"execution": dict(self.execution)} if self.execution is not None else {}),
+            **({"execution": dict(execution)} if execution is not None else {}),
         }
 
 
@@ -247,7 +257,7 @@ class LeaseEvent:
 
     def _body(self) -> dict[str, object]:
         """The stored form: the id is the hash of exactly this canonical body."""
-        lease = self.lease.to_dict()
+        lease = self.lease.to_dict(shared_rows=True)
         schema = (
             LEASE_EVENT_SCHEMA_VERSION
             if self.lease.execution is None
@@ -275,7 +285,14 @@ class LeaseEvent:
         }
 
     def to_dict(self) -> dict[str, object]:
-        return {"event_id": self.event_id, **self._body()}
+        body = self._body()
+        lease = cast(dict[str, object], body["lease"])
+        execution = lease.get("execution")
+        if isinstance(execution, Mapping):
+            plain, changed = _rewrite_rows(execution, _plain_rows)
+            if changed:  # only a store form that still embeds a shared table; v3 holds markers
+                body = {**body, "lease": {**lease, "execution": dict(plain)}}
+        return {"event_id": self.event_id, **body}
 
 
 @dataclass(frozen=True)
@@ -1365,6 +1382,11 @@ def _compact_rows(rows: Any) -> Any:
     }
 
 
+def _plain_rows(rows: Any) -> Any:
+    """A shared, digest-carrying table as the plain list every JSON consumer expects."""
+    return list(rows) if type(rows) is ExternalizedRows else rows
+
+
 def _rewrite_capsule(capsule: Any, convert: Callable[[Any], Any]) -> tuple[Any, bool]:
     if not isinstance(capsule, Mapping):
         return capsule, False
@@ -1459,6 +1481,18 @@ class ExternalizedRowsReader:
     """Content-addressed row-table blobs next to the events of one lease store."""
 
     root: Path
+
+    @staticmethod
+    def beside_event(event_path: Path) -> ExternalizedRowsReader | None:
+        """The reader of the store that holds `<store>/events/<lease_id>/<event_id>.json`.
+
+        None for a path outside that layout: such an event is then parsed without a reader and
+        an event that names a blob fails closed instead of being read from a guessed place.
+        """
+        events_root = event_path.parent.parent
+        if events_root.name != "events":
+            return None
+        return ExternalizedRowsReader(events_root.parent / "blobs")
 
     def path_for(self, sha256: str) -> Path:
         if not _is_sha256_hex(sha256):

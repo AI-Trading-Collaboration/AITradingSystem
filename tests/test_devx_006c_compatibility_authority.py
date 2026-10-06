@@ -1929,6 +1929,7 @@ scripts/architecture_arch005_task_source.py
 scripts/architecture_arch005_workflow.py
 scripts/run_validation_tier.py
 src/ai_trading_system/platform/architecture/checkout_guard.py
+src/ai_trading_system/platform/architecture/checkout_telemetry.py
 src/ai_trading_system/platform/architecture/integration_publication_fence.py
 src/ai_trading_system/platform/architecture/integration_revalidation.py
 src/ai_trading_system/platform/architecture/lease_arbiter.py

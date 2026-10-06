@@ -3638,6 +3638,11 @@ def _devx_015_workflow_contract_section(
             "scripts/architecture_arch005_workflow.py",
             "scripts/run_validation_tier.py",
             "src/ai_trading_system/platform/architecture/checkout_guard.py",
+            # DEVX-022 S3b regression fix: a hash-pinned historical source (ARCH-005S4D) whose
+            # lease-event loader now passes the store's blob reader; current-hash ownership is
+            # extended here (reviewed addition, see the pinned set in
+            # tests/test_devx_006c_compatibility_authority.py).
+            "src/ai_trading_system/platform/architecture/checkout_telemetry.py",
             "src/ai_trading_system/platform/architecture/integration_publication_fence.py",
             "src/ai_trading_system/platform/architecture/integration_revalidation.py",
             "src/ai_trading_system/platform/architecture/lease_arbiter.py",
