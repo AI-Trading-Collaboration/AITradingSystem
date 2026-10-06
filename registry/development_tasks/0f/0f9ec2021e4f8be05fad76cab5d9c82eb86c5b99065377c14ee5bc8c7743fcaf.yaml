@@ -18,20 +18,10 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 2026-10-06 更新：DEVX-022/DEVX-021 随第二次正式发布并入
-    main：main = origin/main = 0cbdd9a4549987364d5fd2d450d3905083ef1775（普通推送 1e46e6ac7..0cbdd9a45；事务
-    gov-007-devx022-m4-formal-20261005-v1 已 RELEASED/COMPLETED，无恢复、无人工干预；无 PR、无 force-push）。owner
-    2026-10-05 预授权「Full 全过且发布前清单全绿即直接发布」并选择方案 C（不改正式 Full 合同）。M4 Full 14,745 通过/4
-    跳过/0 失败，pytest 2:24:57（v26 为 3:35；同代码级别的 M2c/M3 实测 2:13:42/2:16:27，宿主负载噪声约 ±8%），未达
-    <2 小时目标，A/B 提速搁置。S3b 在真实发布中得到验证（新租约事件最大 0.97 MB，真实库仅 +23 MB，重放 PASS）。须 owner 复核/知情：(1)
-    超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW，现含 composer 子进程预算 1,800 s 与发布 worker
-    10,800 s/git 子进程等待 7,200 s；(2) 上次发布期间一次性删除 ORIG_HEAD（已批）与未预批删除的两个空锁文件（DEVX-021
-    第 7 节）；(3) O3 设计偏离与残余风险，O3 跨调用缓存未获批；(4) K=8/间隔 120 的依据与模型偏差；(5) S6 与 composer
-    测试路径都以「向 V3 来源清单加一条路径」承接哈希权威（未新增 section）；(6) 同一候选重试曾使用 v20 parent（PUBLICATION_FULL_PARENT_REUSED）；2026-10-05
-    02:03 宿主卡死（显示唤醒类，非代码）；(7) 仍有 5 个 HKCU AITS-DEVX015-Test-* 遗留注册表根，待 owner 运行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1
-    清理（agent 未执行删除）。后续顺序：DEVX-021 余项（ORIG_HEAD 基线代码修复、残留空锁恢复，P1）→ O4 → DEVX-016 →
-    OPS-082 → DEVX-017 → GOV-007 阶段 5；host_registry_view 复合组拆分与 DEVX-022 的 A/B 须 owner
-    复核后再议。后续文档/任务登记变更仍在任务分支 claude/gov007-post-baseline-followups，随下一次正式发布一并发布。
+  unstructured_legacy_blocker_or_next_step: 继续路线：DEVX-016（先做 F1 封印重算命令、F2 钉死值改下限、S2
+    多任务事务、S3 单一发布命令；P4 通用 section 链大重构降级为可选，须 owner 确认）-> DEVX-017 -> OPS-082（须 owner
+    先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5。DEVX-023 的发布耗时增长趋势需要
+    owner 决定方向。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -770,6 +760,35 @@ events:
   - change:gov-007-g7post-task-20261006-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-ca66bf426c3f4d888a467dfd7b1450d1
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-06T12:06:50Z'
+  actor: integration-coordinator
+  change_id: gov-007-gov007-pub3-task-20261006-v1
+  lane_id: null
+  base_commit: 25d026bf6b1031bd65fd90c87b1e6418c82525e9
+  previous_state_event_id: task-event-ca66bf426c3f4d888a467dfd7b1450d1
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 继续路线：DEVX-016（先做 F1 封印重算命令、F2 钉死值改下限、S2 多任务事务、S3 单一发布命令；P4
+      通用 section 链大重构降级为可选，须 owner 确认）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows
+      任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5。DEVX-023 的发布耗时增长趋势需要 owner 决定方向。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: 2026-10-06 第三次真实发布：main = origin/main = 25d026bf6（普通推送 0cbdd9a45..25d026bf6；DEVX-021
+      P1 的 ORIG_HEAD 基线修复 + DEVX-022 S3b 回归修复；Full 14,779 通过/0 失败，2:21:34）。须向 owner
+      披露：S3b 回归是已发布 main 的缺陷（首批 v3 事件写入真实库后暴露，全部 fail-closed，不改变任何已存事件）；checkout_telemetry.py
+      作为历史哈希固定源被 V3 授权段接管（同 S6 模式）；发布耗时 71 -> 86 分钟的增长趋势；命名 DQ 父证明 32.4 -> 42.3 MiB；超时/等待校准仍为
+      PROVISIONAL_PENDING_OWNER_REVIEW。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-gov007-pub3-task-20261006-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0479b8c94db3b6a56289015f00d0da5a
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
@@ -777,25 +796,19 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - 2026-10-06 更新：DEVX-022/DEVX-021 随第二次正式发布并入 main：main = origin/main = 0cbdd9a4549987364d5fd2d450d3905083ef1775（普通推送
-    1e46e6ac7..0cbdd9a45；事务 gov-007-devx022-m4-formal-20261005-v1 已 RELEASED/COMPLETED，无恢复、无人工干预；无
-    PR、无 force-push）。owner 2026-10-05 预授权「Full 全过且发布前清单全绿即直接发布」并选择方案 C（不改正式 Full 合同）。M4
-    Full 14,745 通过/4 跳过/0 失败，pytest 2:24:57（v26 为 3:35；同代码级别的 M2c/M3 实测 2:13:42/2:16:27，宿主负载噪声约
-    ±8%），未达 <2 小时目标，A/B 提速搁置。S3b 在真实发布中得到验证（新租约事件最大 0.97 MB，真实库仅 +23 MB，重放 PASS）。须
-    owner 复核/知情：(1) 超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW，现含 composer 子进程预算 1,800
-    s 与发布 worker 10,800 s/git 子进程等待 7,200 s；(2) 上次发布期间一次性删除 ORIG_HEAD（已批）与未预批删除的两个空锁文件（DEVX-021
-    第 7 节）；(3) O3 设计偏离与残余风险，O3 跨调用缓存未获批；(4) K=8/间隔 120 的依据与模型偏差；(5) S6 与 composer
-    测试路径都以「向 V3 来源清单加一条路径」承接哈希权威（未新增 section）；(6) 同一候选重试曾使用 v20 parent（PUBLICATION_FULL_PARENT_REUSED）；2026-10-05
-    02:03 宿主卡死（显示唤醒类，非代码）；(7) 仍有 5 个 HKCU AITS-DEVX015-Test-* 遗留注册表根，待 owner 运行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1
-    清理（agent 未执行删除）。后续顺序：DEVX-021 余项（ORIG_HEAD 基线代码修复、残留空锁恢复，P1）→ O4 → DEVX-016 →
-    OPS-082 → DEVX-017 → GOV-007 阶段 5；host_registry_view 复合组拆分与 DEVX-022 的 A/B 须 owner
-    复核后再议。后续文档/任务登记变更仍在任务分支 claude/gov007-post-baseline-followups，随下一次正式发布一并发布。
+  - 继续路线：DEVX-016（先做 F1 封印重算命令、F2 钉死值改下限、S2 多任务事务、S3 单一发布命令；P4 通用 section 链大重构降级为可选，须
+    owner 确认）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081
+    验收）-> 阶段 5。DEVX-023 的发布耗时增长趋势需要 owner 决定方向。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - 2026-10-06：第二次正式发布（M4，0cbdd9a45）完成并记录。
+  - 2026-10-06 第三次真实发布：main = origin/main = 25d026bf6（普通推送 0cbdd9a45..25d026bf6；DEVX-021
+    P1 的 ORIG_HEAD 基线修复 + DEVX-022 S3b 回归修复；Full 14,779 通过/0 失败，2:21:34）。须向 owner
+    披露：S3b 回归是已发布 main 的缺陷（首批 v3 事件写入真实库后暴露，全部 fail-closed，不改变任何已存事件）；checkout_telemetry.py
+    作为历史哈希固定源被 V3 授权段接管（同 S6 模式）；发布耗时 71 -> 86 分钟的增长趋势；命名 DQ 父证明 32.4 -> 42.3 MiB；超时/等待校准仍为
+    PROVISIONAL_PENDING_OWNER_REVIEW。
   docs_links: []
   terminal: false
-  canonical_row_sha256: ac1c8b77eb2c2499208495f135dc449df3149ceafd6b29be78262e9c87e8ebcb
-last_event_id: task-event-ca66bf426c3f4d888a467dfd7b1450d1
+  canonical_row_sha256: 2d61bc1ca8def1cf5aed167fdf838cee5035ff22217f786a2ee60ad74a189182
+last_event_id: task-event-0479b8c94db3b6a56289015f00d0da5a
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: e73489756a3bc1271a4723f1f1dc10528a9aa573101dc7fcd29d3ba790d62954
+fragment_checksum: a99f6b39806af805b74b3898a8afab0c52d515ac5c9ee26908197a8c04dbb0af
