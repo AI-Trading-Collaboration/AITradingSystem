@@ -18,7 +18,7 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 继续路线：DEVX-016 C1（F1+F2+S2）-> C2（S3）->
+  unstructured_legacy_blocker_or_next_step: 继续路线：DEVX-016 C1（已实现，候选验证中）-> C2（S3）->
     C3（P4）-> C4（S4）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖
     OPS-077/078/081 验收）-> 阶段 5。DEVX-023 的封印 S / 证明不再内嵌整库重放需 owner 决定（数据见 DEVX-023
     第 9 节）。
@@ -817,6 +817,32 @@ events:
   - change:gov-007-gov007-pub4-task-20261007-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-8e8d5459636bc3451b2c5bac3a006cd4
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-06T19:03:16Z'
+  actor: integration-coordinator
+  change_id: gov-007-c1-rows-20261007-v2
+  lane_id: null
+  base_commit: d3d34872ba83146639c432d58b6a2c18c07ea24a
+  previous_state_event_id: task-event-8e8d5459636bc3451b2c5bac3a006cd4
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 继续路线：DEVX-016 C1（已实现，候选验证中）-> C2（S3）-> C3（P4）-> C4（S4）->
+      DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081
+      验收）-> 阶段 5。DEVX-023 的封印 S / 证明不再内嵌整库重放需 owner 决定（数据见 DEVX-023 第 9 节）。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: 2026-10-07：DEVX-016 C1 已实现并提交（8dd83045e），正在跑候选链（prep + 生成器 + 正式事务 + Full）；推送需要新的
+      owner 发布授权（只限该候选）。本行与 DEVX-016 行在同一个 TASK_SOURCE_ONLY 事务内更新（S2 首次实战）。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-c1-rows-20261007-v2
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f0b14d6fb90893f8fdd89c560a654496
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
@@ -824,18 +850,16 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - 继续路线：DEVX-016 C1（F1+F2+S2）-> C2（S3）-> C3（P4）-> C4（S4）-> DEVX-017 -> OPS-082（须
+  - 继续路线：DEVX-016 C1（已实现，候选验证中）-> C2（S3）-> C3（P4）-> C4（S4）-> DEVX-017 -> OPS-082（须
     owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5。DEVX-023 的封印
     S / 证明不再内嵌整库重放需 owner 决定（数据见 DEVX-023 第 9 节）。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - 2026-10-07 第四次真实发布：main = origin/main = d3d34872b（普通推送 25d026bf6..d3d34872b；DEVX-023
-    的 S3c/S3d/W；Full 14,791 通过/0 失败，2:25:37；local-publish 54 分 8 秒，上次 86 分）。owner
-    2026-10-06 再次预授权（只限该候选，普通推送）；无恢复、无人工干预。须披露：真实库已含 v4 事件，S3b 时代代码不能再读写（回滚会 fail
-    closed）；每次发布单次重放仍 +1.5-1.8 s、命名 DQ 父证明 +10 MiB/次（stage 1 579 s）；超时/等待校准仍为 PROVISIONAL_PENDING_OWNER_REVIEW。
+  - 2026-10-07：DEVX-016 C1 已实现并提交（8dd83045e），正在跑候选链（prep + 生成器 + 正式事务 + Full）；推送需要新的
+    owner 发布授权（只限该候选）。本行与 DEVX-016 行在同一个 TASK_SOURCE_ONLY 事务内更新（S2 首次实战）。
   docs_links: []
   terminal: false
-  canonical_row_sha256: f67b215546c975e169c9b8bae865c11c7f8a402ef7e078f6e426be6e9b7d36fb
-last_event_id: task-event-8e8d5459636bc3451b2c5bac3a006cd4
+  canonical_row_sha256: 933a3ac94a64712db0423ed16606e15e3d647a8e539cdd210947769c12e61558
+last_event_id: task-event-f0b14d6fb90893f8fdd89c560a654496
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 97f4589a6b32d35dc45e44b8d17f03abcab1fe2f8a70b6ec690012a28b912e3d
+fragment_checksum: 04c93431b7ccaf34f0f7f3490c8e0113b45b815fa3313c151dee08fb11ae8551
