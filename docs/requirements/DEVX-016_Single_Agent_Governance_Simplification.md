@@ -332,3 +332,31 @@ DEVX-017 依赖 DEVX-016 全部完成；OPS-082 须 owner 先确认「不得使�
 4. 候选合并粒度：C1 合并 F1+F2+S2 是否接受？
 
 - 2026-10-07：按三次真实发布（DEVX-015 基线、DEVX-020/021/022、DEVX-021 P1 + S3b 回归修复、DEVX-023）的实测摩擦点补充了第 10 节的实施分解；owner 2026-10-06 选择「按原计划做 P4」，不降级；第 10.10 节列出需 owner 决定的开放问题。下一步：C1（F1 + F2 + S2）。
+
+- 2026-10-07：**C1（F1 + F2 + S2）实现完成，候选验证中**（base `d3d34872b`，分支 `claude/gov007-post-baseline-followups`）。每步先写失败测试，再实现。
+  - **F1（封印重算命令）**：`report_catalog_flow_authority.reseal_policy_seals(repository_root, targets, write)` 与 CLI
+    `architecture_report_catalog_flow_authority.py reseal [--target ...] [--write]`。算法与 `build` 的校验同源（`_split_report_registry`、
+    `_split_markdown`、`_digest`、`_git_blob_id`）；默认只输出「旧 → 新」，`--write` 只重写该目标的五个封印字段行
+    （`byte_count`、`file_sha256`、`lf_sha256`、`git_blob`、`entry_count`），其余字节与换行风格（LF/CRLF）不动，写后自验，失败则恢复原文件；
+    未知目标（`RCF_RESEAL_TARGET_UNKNOWN`）与无法被无损拆分的源文件一律拒绝，不会被封印。测试：封印算法的已知答案、对三个目标逐个做影子渲染字节同一性与完整覆盖（生成式）、
+    reseal 只改五行且之后 `build` 通过（LF 与 CRLF 两种换行）、拒绝未知目标与无法无损拆分的源；条目数字面量改为 `ENTRY_COUNT_FLOORS` 单调下限。
+    dogfood：本候选给 `docs/system_flow.md` 加一段后，用 `reseal --target system_flow --write` 重算封印，`build` 通过，策略文件只改了这五行。
+  - **F2（钉死值改下限）**：`tests/test_arch_004g_deprecation.py` 的 `WAVE21_CURRENT_INVENTORY_ID` 字面量删除，改为「与冻结 yaml 自身的
+    `inventory_id` 相等」并断言同一次扫描重复两次 id 相同；`python_module_count`、`python_test_file_count` 从精确钉死改为
+    `WAVE21_REPOSITORY_COUNT_FLOORS` 单调下限（只许增长，下限只能随评审抬高，不得为掩盖删除而降低）；
+    `direct_writer_current_count`、`removal_ready_count == 0`、`direct_writer_violation_count == 0` 等安全断言不动。
+  - **S2（多任务事务）**：围栏事务新增可选字段 `task_ids`（`acquire --task-id-extra`，排序去重并含主任务）与 `kind`
+    （`acquire --task-source-only`）；两者仅在使用时写入事务体，因此历史事务的字节与哈希不变，旧单任务事务的重放不受影响。
+    `validate(task_id=X)` 改为「X 属于集合」，集合外仍抛 `PUBLICATION_TASK_MISMATCH`；租约、Full profile 与全部发布阶段仍只绑定主任务，
+    任务源写入器无需改动。`TASK_SOURCE_ONLY` 的阶段链固定为 `ACQUIRED → TASK_SOURCE_PRE_WRITE → RELEASED`，不得声明 integration plan 或
+    Full parent（`PUBLICATION_TASK_SOURCE_ONLY_SCOPE`）；候选/验证/发布阶段在**任何远端或 Full profile 预处理之前**就被拒绝（共享守卫
+    `_reject_task_source_only_phase` 同时放在装饰器的两个预处理函数和 checkpoint 本体，避免先报「缺少 candidate」这类副作用性错误）；
+    只有该种类的事务可在 `TASK_SOURCE_PRE_WRITE` 之后 `release --outcome completed`，其余事务的 completed 仍只在 `CLEANUP_PRE`。
+    种类与任务集合都进入事务哈希：篡改种类使重放失败（测试覆盖）。9 项新测试：多任务成员与越界拒绝、单任务原形式不变、acquire
+    幂等与冲突、COMPLETED 收口与幂等、无法进入候选阶段、不得声明 plan/parent 且普通事务仍需 `CLEANUP_PRE`、哈希绑定、未知种类、CLI 暴露。
+  - 开放问题 10.10 的第 2、4 项（`TASK_SOURCE_ONLY` 的 COMPLETED 收口规则、C1 合并粒度）按推荐方案实现，仍待 owner 确认；若 owner 否决，
+    S2 的行为改动在一个候选内可回退，F1/F2 不受影响。
+  - 审计记录（AGENTS.md 已登记 `known_unrelated_exclusions`）：本轮有两次仓库检查没有带完整的精确排除集，一次是带 `docs` 目录路径的限定路径
+    `git status`，一次是不带路径的 `git status --porcelain --untracked-files=all`。两次输出里都没有出现被排除路径，没有读取、复制或修改其内容，
+    按规则登记为审计事件；其后的全库检查一律使用 `architecture_arch005_checkout_guard.py worktree-audit`（PASS，仅 10 个 C1 路径为脏，
+    暂存/未暂存 diff 检查均 PASS）。LANE 阶段 governed preflight（SINGLE_LANE，coordinator）PASS，证据 `claude_c1_lane_preflight.json`。

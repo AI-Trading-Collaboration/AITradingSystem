@@ -14,12 +14,14 @@ from ai_trading_system.contracts.deprecation import (
 )
 from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.platform.architecture.deprecation import (
+    DEFAULT_DEPRECATION_INVENTORY_PATH,
     DeprecationArchitectureError,
     _canonical_repository_text_bytes,
     assert_frozen_deprecation_inventory,
     load_deprecation_policy,
     scan_deprecation_inventory,
 )
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 AT = datetime(2026, 7, 11, 5, 0, tzinfo=UTC)
 WAVE11_FINAL_REPOSITORY_COUNTS = {
@@ -59,7 +61,16 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
 }
 # OPS-081 adds one scheduler contract module and one test file; counts only.
 # GOV-007 adds one sibling lease-store migration admission test file; counts only.
-WAVE21_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_c1b8335b360d207c2b12"
+# DEVX-016 F2: inputs/architecture/arch_004g_deprecation_inventory.yaml is GENERATED
+# (`architecture_devex.py generate`) and checked against the live scan by
+# assert_frozen_deprecation_inventory. The values that change with every new module or test file
+# are monotonic floors here instead of exact pins, and the inventory id is the committed file's own
+# id, so adding a file no longer means editing this test. A floor only needs raising when someone
+# wants the ratchet to follow growth; it must never be lowered to hide a deletion.
+WAVE21_REPOSITORY_COUNT_FLOORS = {
+    "python_module_count": 1228,
+    "python_test_file_count": 1401,
+}
 WAVE21_CURRENT_REPOSITORY_COUNTS = {
     # TRADING-2526 adds the controlled HTTPS preview contract and its focused
     # test file; TRADING-2554 adds one DevEx active-worktree regression file.
@@ -85,14 +96,12 @@ WAVE21_CURRENT_REPOSITORY_COUNTS = {
     # S4 adds the strict experiment envelope and bounded result-access service.
     # DEVX-015 v386-v389 integration adds five workflow-control modules.
     # DEVX-018 adds one validation scheduling manifest module.
-    "python_module_count": 1228,
     # S5 immediate failure diagnostics adds one synthetic test file.
     # S4 adds two corresponding synthetic contract/runtime test files.
     # GOV-007 adds one sibling lease-store migration admission test file.
     # DEVX-015 v386-v389 integration adds seven workflow/protected-Full test files.
     # DEVX-018 adds one split-scope scheduling test file.
     # DEVX-021 adds one publication-worker budget test file and one ORIG_HEAD baseline test file.
-    "python_test_file_count": 1401,
     "direct_writer_current_count": 856,
 }
 WAVE21_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(
@@ -159,9 +168,13 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     surfaces = {item.surface_id: item for item in inventory.surfaces}
     repository_counts = WAVE21_CURRENT_REPOSITORY_COUNTS
 
-    assert inventory.inventory_id == WAVE21_CURRENT_INVENTORY_ID
-    assert inventory.python_module_count == repository_counts["python_module_count"]
-    assert inventory.python_test_file_count == repository_counts["python_test_file_count"]
+    frozen = safe_load_yaml_path(DEFAULT_DEPRECATION_INVENTORY_PATH)
+    assert inventory.inventory_id == frozen["inventory_id"]  # generated, not a literal here
+    assert (
+        scan_deprecation_inventory(load_deprecation_policy()).inventory_id == inventory.inventory_id
+    )  # the scan is deterministic
+    for field, floor in WAVE21_REPOSITORY_COUNT_FLOORS.items():
+        assert getattr(inventory, field) >= floor, field  # monotonic: only growth is free
     assert inventory.direct_writer_baseline_count == 894
     assert inventory.direct_writer_current_count == repository_counts["direct_writer_current_count"]
     assert inventory.direct_writer_violation_count == 0

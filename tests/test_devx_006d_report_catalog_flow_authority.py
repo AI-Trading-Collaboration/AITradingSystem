@@ -180,51 +180,128 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     assert successor["fragment_count"] == 192
 
 
+# DEVX-016 F1: the seal is GENERATED (`reseal --write`, then the generator chain), so the test no
+# longer pins the live document's SHA. It checks that the sealed values ARE the live file and that
+# the entry count never falls below the reviewed floor (monotonic: a document may grow, and
+# deliberately shrinking one means editing its floor here).
+ENTRY_COUNT_FLOORS = {
+    "report_registry": 1373,
+    "artifact_catalog": 586,
+    "system_flow": 1491,
+}
+
+
 @pytest.mark.parametrize(
-    "target_id,source_path,expected_sha256,expected_entry_count",
+    "target_id,source_path",
     [
-        (
-            "report_registry",
-            "config/report_registry.yaml",
-            "8544313ef42e43c2792dfb934bbd55030bb25f53b227593681c70e92b398920d",
-            1373,
-        ),
-        (
-            "artifact_catalog",
-            "docs/artifact_catalog.md",
-            "8f57f1321b646a9a8cc1994fe7ded7434720ec57c72df47dd5cf8463a9e8ab06",
-            586,
-        ),
-        (
-            "system_flow",
-            "docs/system_flow.md",
-            "5fa2feb10fe4c87819ad133c472c730b772d4285e74a768ae5c086cfb4a66c28",
-            1491,
-        ),
+        ("report_registry", "config/report_registry.yaml"),
+        ("artifact_catalog", "docs/artifact_catalog.md"),
+        ("system_flow", "docs/system_flow.md"),
     ],
 )
 def test_each_shadow_render_is_byte_identical_and_fully_covered(
     target_id: str,
     source_path: str,
-    expected_sha256: str,
-    expected_entry_count: int,
 ) -> None:
     rendered = render_shadow_bytes(target_id)
     source = Path(source_path).read_bytes()
+    sealed = next(row for row in load_policy()["targets"] if row["target_id"] == target_id)
     index = json.loads(
         Path("inputs/architecture/devx_006d_report_catalog_flow_authority_index.json").read_text(
             encoding="utf-8"
         )
     )
     target = next(row for row in index["targets"] if row["target_id"] == target_id)
+    entry_count = len(target["entry_order"])
 
     assert rendered == source
-    assert hashlib.sha256(rendered).hexdigest() == expected_sha256
-    assert target["entry_count"] == expected_entry_count
+    assert hashlib.sha256(rendered).hexdigest() == sealed["file_sha256"]
+    assert target["entry_count"] == sealed["entry_count"] == entry_count
+    assert entry_count >= ENTRY_COUNT_FLOORS[target_id]
     assert target["coverage_bytes"] == len(source)
     assert target["coverage_percent"] == 100
-    assert len(target["entry_order"]) == expected_entry_count
     assert target["fragment_count"] == len(target["fragments"])
+
+
+def _seal_lines(policy_text: str, target_id: str) -> list[int]:
+    """Indexes of the five seal lines of one target in the policy text."""
+    lines = policy_text.splitlines()
+    start = next(i for i, line in enumerate(lines) if line.strip() == f"- target_id: {target_id}")
+    keys = ("byte_count:", "file_sha256:", "lf_sha256:", "git_blob:", "entry_count:")
+    return [
+        i for i in range(start, min(start + 12, len(lines)))
+        if lines[i].strip().startswith(keys)
+    ]
+
+
+def test_seal_algorithm_known_answers() -> None:
+    """The algorithm itself is what stays pinned: known answers, independent of any live file."""
+    assert authority._git_blob_id(b"hello\n") == "ce013625030ba8dba906f756967f9e9ca394464a"
+    assert authority._git_blob_id(b"") == "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    assert authority._digest(b"") == (
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    )
+    blocks = authority._split_markdown("t", b"# A\n\nb\n\nc\n")
+    assert [raw for _, raw in blocks] == [b"# A\n\n", b"b\n\n", b"c\n"]
+
+
+def test_reseal_rewrites_only_the_seal_lines_and_the_build_then_passes(tmp_path: Path) -> None:
+    _write_fixture(tmp_path)
+    policy_path = tmp_path / authority.DEFAULT_POLICY_PATH
+    flow = tmp_path / "docs/system_flow.md"
+    original_policy = policy_path.read_bytes()
+    flow.write_bytes(flow.read_bytes() + b"gamma -> delta\n\n")  # one more block
+    with pytest.raises(ReportCatalogFlowAuthorityError) as drift:
+        build_repository_authority(tmp_path, write=True)
+    assert drift.value.code == "RCF_SOURCE_SEAL_DRIFT"
+
+    dry = authority.reseal_policy_seals(tmp_path)
+    assert dry["status"] == "DRY_RUN" and dry["written"] is False
+    assert [row["target_id"] for row in dry["changed"]] == ["system_flow"]
+    assert policy_path.read_bytes() == original_policy  # a dry run never writes
+
+    done = authority.reseal_policy_seals(tmp_path, write=True)
+    assert done["status"] == "RESEALED" and done["written"] is True
+    before = original_policy.decode("utf-8").splitlines()
+    after = policy_path.read_bytes().decode("utf-8").splitlines()
+    changed = {i for i, (a, b) in enumerate(zip(before, after, strict=True)) if a != b}
+    assert len(before) == len(after) and changed
+    assert changed <= set(_seal_lines(original_policy.decode("utf-8"), "system_flow"))
+    sealed = {row["target_id"]: row for row in load_policy(tmp_path)["targets"]}
+    assert sealed["system_flow"]["entry_count"] == 3  # the appended block was counted
+    build_repository_authority(tmp_path, write=True)  # the seal matches again
+
+    again = authority.reseal_policy_seals(tmp_path, write=True)  # idempotent
+    assert again["status"] == "UNCHANGED" and again["written"] is False and not again["changed"]
+
+
+@pytest.mark.parametrize("ending", [b"\n", b"\r\n"])
+def test_reseal_keeps_line_endings_and_refuses_unknown_or_broken_targets(
+    tmp_path: Path, ending: bytes
+) -> None:
+    _write_fixture(tmp_path)
+    policy_path = tmp_path / authority.DEFAULT_POLICY_PATH
+    # normalize first: on Windows the fixture is written with CRLF already
+    normalized = policy_path.read_bytes().replace(b"\r\n", b"\n")
+    policy_path.write_bytes(normalized.replace(b"\n", ending))
+    registry = tmp_path / "config/report_registry.yaml"
+    registry.write_bytes(registry.read_bytes() + b"  - report_id: gamma\n    title: Gamma\n")
+    authority.reseal_policy_seals(tmp_path, targets=("report_registry",), write=True)
+    raw = policy_path.read_bytes()
+    if ending == b"\n":
+        assert b"\r" not in raw  # no CR was introduced
+    else:
+        assert raw.count(b"\r\n") == raw.count(b"\n")  # no bare LF was introduced
+    build_repository_authority(tmp_path, write=True)
+
+    with pytest.raises(ReportCatalogFlowAuthorityError) as unknown:
+        authority.reseal_policy_seals(tmp_path, targets=("nope",))
+    assert unknown.value.code == "RCF_RESEAL_TARGET_UNKNOWN"
+
+    # a source the splitter cannot cover losslessly is refused, never sealed
+    registry.write_bytes(b"schema_version: 1\nreports: []\n")
+    with pytest.raises(ReportCatalogFlowAuthorityError):
+        authority.reseal_policy_seals(tmp_path, targets=("report_registry",), write=True)
 
 
 def test_build_is_repeatable_and_never_writes_monoliths() -> None:

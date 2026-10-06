@@ -29,6 +29,13 @@ TRANSACTION_SCHEMA_VERSION = "integration_publication_fence.v1"
 EVENT_SCHEMA_VERSION = "integration_publication_fence_event.v1"
 REPLAY_SCHEMA_VERSION = "integration_publication_fence_replay.v1"
 RECEIPT_SCHEMA_VERSION = "integration_publication_closeout_receipt.v1"
+# DEVX-016 S2: a transaction may be TASK_SOURCE_ONLY (register or move task rows). Its phase chain
+# is a fixed prefix of the ordinary one followed directly by the terminal event: it can never reach
+# a candidate, validation or publication phase. These are protocol invariants of the fence, not
+# tunable heuristics; the ordinary phase order stays in the reviewed policy file, whose hash every
+# existing transaction binds, so that file is not edited for this.
+TASK_SOURCE_ONLY_KIND = "TASK_SOURCE_ONLY"
+TASK_SOURCE_ONLY_PHASES = ("ACQUIRED", "TASK_SOURCE_PRE_WRITE")
 # Bounded combined runtime/code/custody/seven-readiness inspection, not a Full
 # execution or lease timeout. DEVX-015 V3 v83 measured 50.773s before custody and
 # startup: allow the existing 120s readiness envelope plus 60s identity/custody.
@@ -251,10 +258,20 @@ class IntegrationPublicationFence:
         required_validation_tiers: Sequence[str] | None = None,
         integration_plan_path: Path | None = None,
         full_parent_path: Path | None = None,
+        task_ids: Sequence[str] = (),
+        kind: str | None = None,
         now: datetime | None = None,
     ) -> dict[str, object]:
         instant = _aware_utc(now or datetime.now(tz=UTC))
         checked_id = _identifier(transaction_id, "transaction_id")
+        checked_kind = _transaction_kind(kind)
+        members = tuple(sorted({_required_text(row, "task_id") for row in task_ids}))
+        if checked_kind == TASK_SOURCE_ONLY_KIND and (
+            integration_plan_path is not None or full_parent_path is not None
+        ):
+            raise PublicationFenceError(
+                "PUBLICATION_TASK_SOURCE_ONLY_SCOPE", "no plan or Full parent is declared",
+            )
         transaction_dir = self.runtime_root / "transactions" / checked_id
         transaction_path = transaction_dir / "transaction.json"
         if transaction_path.exists():
@@ -275,6 +292,8 @@ class IntegrationPublicationFence:
                     required_validation_tiers=required_validation_tiers,
                     integration_plan_path=integration_plan_path,
                     full_parent_path=full_parent_path,
+                    task_ids=members,
+                    kind=checked_kind,
                 )
                 replay = self.replay(transaction_path)
                 if replay.status != "PASS":
@@ -398,6 +417,11 @@ class IntegrationPublicationFence:
             "production_effect": "none",
             "broker_action": "none",
         }
+        # Present only when used, so every historical transaction keeps its exact form and hash.
+        if members:
+            body["task_ids"] = sorted({str(body["task_id"]), *members})
+        if checked_kind is not None:
+            body["kind"] = checked_kind
         transaction_sha = _json_sha256(body)
         transaction = {**body, "transaction_sha256": transaction_sha}
         release_on_failure = True
@@ -417,6 +441,7 @@ class IntegrationPublicationFence:
                         required_validation_tiers=required_validation_tiers,
                         integration_plan_path=integration_plan_path,
                         full_parent_path=full_parent_path,
+                        task_ids=members, kind=checked_kind,
                     )
                     replay = self.replay(transaction_path)
                     if replay.status != "PASS":
@@ -496,7 +521,7 @@ class IntegrationPublicationFence:
             phase = "MISSING"
         else:
             phase = str(events[-1].get("phase"))
-            self._validate_phase_chain(events, issues)
+            self._validate_phase_chain(events, issues, payload.get("kind"))
         return PublicationReplay(
             status="PASS" if not issues else "FAIL",
             transaction=payload,
@@ -745,7 +770,9 @@ class IntegrationPublicationFence:
             )
         if replay.phase in {"FAILED", "RELEASED"}:
             raise PublicationFenceError("PUBLICATION_TRANSACTION_TERMINAL", replay.phase)
-        if task_id is not None and replay.transaction.get("task_id") != task_id:
+        members = replay.transaction.get("task_ids")
+        allowed = members if isinstance(members, list) else [replay.transaction.get("task_id")]
+        if task_id is not None and task_id not in allowed:
             raise PublicationFenceError(
                 "PUBLICATION_TASK_MISMATCH",
                 f"transaction={replay.transaction.get('task_id')};requested={task_id}",
@@ -842,6 +869,7 @@ class IntegrationPublicationFence:
         if phase not in {"REMOTE_PUSH_PRE", "CLEANUP_PRE"}:
             return None
         replay = self.replay(transaction)
+        _reject_task_source_only_phase(replay, phase)
         if replay.status != "PASS" or replay.candidate_sha is None:
             raise PublicationFenceError("PUBLICATION_REMOTE_BINDING_MISSING", "candidate")
         if replay.transaction.get("actor") != actor:
@@ -875,6 +903,7 @@ class IntegrationPublicationFence:
         if phase not in {"LOCAL_MAIN_FF_PRE", "REMOTE_PUSH_PRE"}:
             return None
         replay = self.replay(transaction)
+        _reject_task_source_only_phase(replay, phase)
         if replay.transaction.get("actor") != actor:
             raise PublicationFenceError("PUBLICATION_ACTOR_MISMATCH", actor)
         if phase != self._next_phase(replay.phase):
@@ -1016,6 +1045,8 @@ class IntegrationPublicationFence:
                 "PUBLICATION_REPLAY_INVALID",
                 ",".join(replay.issues),
             )
+        kind = replay.transaction.get("kind")
+        _reject_task_source_only_phase(replay, phase)
         remote_observation = None
         if phase in {"REMOTE_PUSH_PRE", "CLEANUP_PRE"}:
             expected = (
@@ -1035,7 +1066,7 @@ class IntegrationPublicationFence:
                 )
         if replay.transaction.get("actor") != actor:
             raise PublicationFenceError("PUBLICATION_ACTOR_MISMATCH", actor)
-        expected_next = self._next_phase(replay.phase)
+        expected_next = self._next_phase(replay.phase, kind)
         if phase != expected_next:
             raise PublicationFenceError(
                 "PUBLICATION_PHASE_TRANSITION_INVALID",
@@ -1250,7 +1281,11 @@ class IntegrationPublicationFence:
             ):
                 raise PublicationFenceError("PUBLICATION_TERMINAL_REPLAY_INVALID", "evidence")
             return self._persist_terminal_receipt(transaction_path, receipt)
-        if normalized_outcome == "COMPLETED" and replay.phase != "CLEANUP_PRE":
+        closeout_phase = (
+            "TASK_SOURCE_PRE_WRITE"
+            if replay.transaction.get("kind") == TASK_SOURCE_ONLY_KIND else "CLEANUP_PRE"
+        )
+        if normalized_outcome == "COMPLETED" and replay.phase != closeout_phase:
             raise PublicationFenceError(
                 "PUBLICATION_CLOSEOUT_PHASE_REQUIRED",
                 replay.phase,
@@ -1734,7 +1769,13 @@ class IntegrationPublicationFence:
                     f"observed={phase};minimum={minimum_phase}",
                 )
 
-    def _next_phase(self, phase: str) -> str:
+    def _next_phase(self, phase: str, kind: str | None = None) -> str:
+        if kind == TASK_SOURCE_ONLY_KIND:
+            if phase == "ACQUIRED":
+                return "TASK_SOURCE_PRE_WRITE"
+            if phase == "TASK_SOURCE_PRE_WRITE":
+                return "RELEASED"  # the terminal event, written only by release()
+            raise PublicationFenceError("PUBLICATION_TRANSACTION_TERMINAL", phase)
         if phase not in self.policy.phase_order:
             raise PublicationFenceError("PUBLICATION_PHASE_UNKNOWN", phase)
         index = self.policy.phase_order.index(phase)
@@ -1746,6 +1787,7 @@ class IntegrationPublicationFence:
         self,
         events: Sequence[Mapping[str, Any]],
         issues: list[str],
+        kind: str | None = None,
     ) -> None:
         expected = "ACQUIRED"
         for index, event in enumerate(events):
@@ -1760,7 +1802,7 @@ class IntegrationPublicationFence:
                     issues.append("PUBLICATION_PHASE_AFTER_TERMINAL")
                 continue
             try:
-                expected = self._next_phase(prior)
+                expected = self._next_phase(prior, kind)
             except PublicationFenceError:
                 issues.append("PUBLICATION_PHASE_AFTER_TERMINAL")
                 continue
@@ -1974,9 +2016,13 @@ class IntegrationPublicationFence:
         required_validation_tiers: Sequence[str] | None,
         integration_plan_path: Path | None,
         full_parent_path: Path | None,
+        task_ids: Sequence[str] = (),
+        kind: str | None = None,
     ) -> None:
         expected: dict[str, object] = {
             "task_id": task_id,
+            "task_ids": sorted({task_id, *task_ids}) if task_ids else None,
+            "kind": kind,
             "change_id": change_id,
             "thread_id": thread_id,
             "actor": actor,
@@ -2133,9 +2179,35 @@ class IntegrationPublicationFence:
             "candidate_sha": replay.candidate_sha,
             "expected_main_sha": replay.transaction["expected_main_sha"],
             "policy_version": replay.transaction["policy_version"],
+            **(
+                {"task_ids": list(replay.transaction["task_ids"])}
+                if isinstance(replay.transaction.get("task_ids"), list) else {}
+            ),
+            **({"kind": replay.transaction["kind"]} if "kind" in replay.transaction else {}),
             "production_effect": "none",
             "broker_action": "none",
         }
+
+
+def _transaction_kind(kind: str | None) -> str | None:
+    if kind is None or kind == TASK_SOURCE_ONLY_KIND:
+        return kind
+    raise PublicationFenceError("PUBLICATION_TRANSACTION_KIND_INVALID", str(kind))
+
+
+def _reject_task_source_only_phase(replay: PublicationReplay, phase: str) -> None:
+    """A TASK_SOURCE_ONLY transaction never checkpoints a candidate/validation/publication phase.
+
+    Called before any phase-specific observation (remote, Full profile) so the refusal is the phase
+    error, not a missing-candidate side effect.
+    """
+    if (
+        replay.transaction.get("kind") == TASK_SOURCE_ONLY_KIND
+        and phase not in TASK_SOURCE_ONLY_PHASES
+    ):
+        raise PublicationFenceError(
+            "PUBLICATION_PHASE_TRANSITION_INVALID", f"{replay.phase}->{phase};task_source_only",
+        )
 
 
 def load_publication_fence_policy(path: Path) -> PublicationFencePolicy:

@@ -5,7 +5,7 @@ import hashlib
 import json
 import re
 from collections import defaultdict
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path, PurePosixPath
 from typing import Any, NoReturn
 
@@ -433,6 +433,104 @@ def split_target_entries(
     if len(set(entry_ids)) != len(entry_ids):
         _fail("RCF_ENTRY_ID_DUPLICATE", target_id)
     return entries
+
+
+_SEAL_FIELDS = ("byte_count", "file_sha256", "lf_sha256", "git_blob", "entry_count")
+
+
+def reseal_policy_seals(
+    repository_root: Path = Path("."),
+    *,
+    targets: Sequence[str] = (),
+    write: bool = False,
+) -> dict[str, Any]:
+    """Recompute the policy's source seals from the live files (DEVX-016 F1).
+
+    `build` only VERIFIES a seal (`RCF_SOURCE_SEAL_DRIFT`); changing `docs/system_flow.md` used to
+    mean recomputing five values by hand. This recomputes them with the very functions the
+    verification uses, reports old -> new, and with `write=True` rewrites ONLY those five lines of
+    the named targets in the policy file (every other byte, including line endings, stays). A source
+    the splitter cannot cover losslessly is refused, never sealed. The generated index and
+    fragments are not touched: run the generator chain (`build`) afterwards.
+    """
+    root = repository_root.resolve()
+    policy = load_policy(root)
+    wanted = set(targets)
+    known = {str(row["target_id"]) for row in policy["targets"]}
+    if wanted - known:
+        _fail("RCF_RESEAL_TARGET_UNKNOWN", ",".join(sorted(wanted - known)))
+    new_seals: dict[str, dict[str, object]] = {}
+    changed: list[dict[str, object]] = []
+    for target in policy["targets"]:
+        target_id = str(target["target_id"])
+        if wanted and target_id not in wanted:
+            continue
+        portable = _portable(target["path"], "target.path")
+        content = _regular_path(root, portable, "target").read_bytes()
+        if target["splitter"] == "YAML_REPORT_ITEMS_WITH_PREFIX_V1":
+            entries = _split_report_registry(content)
+        elif target["splitter"] == "EXACT_BLANK_LINE_BLOCKS_V1":
+            entries = _split_markdown(target_id, content)
+        else:
+            _fail("RCF_TARGET_SPLITTER_INVALID", target["splitter"])
+        if b"".join(raw for _, raw in entries) != content:
+            _fail("RCF_SPLITTER_NOT_LOSSLESS", target_id)
+        fresh: dict[str, object] = {
+            "byte_count": len(content),
+            "file_sha256": _digest(content),
+            "lf_sha256": _digest(content.replace(b"\r\n", b"\n")),
+            "git_blob": _git_blob_id(content),
+            "entry_count": len(entries),
+        }
+        new_seals[target_id] = fresh
+        differences = {
+            field: {"old": target[field], "new": fresh[field]}
+            for field in _SEAL_FIELDS
+            if target[field] != fresh[field]
+        }
+        if differences:
+            changed.append({"target_id": target_id, "fields": differences})
+    written = False
+    if write and changed:
+        policy_path = _regular_path(root, DEFAULT_POLICY_PATH.as_posix(), "policy")
+        original = policy_path.read_bytes()
+        text = original.decode("utf-8")
+        for row in changed:
+            target_id = str(row["target_id"])
+            text = _rewrite_target_seal(text, target_id, new_seals[target_id])
+        policy_path.write_bytes(text.encode("utf-8"))
+        try:
+            verified = load_policy(root)
+            for target in verified["targets"]:
+                if str(target["target_id"]) in new_seals:
+                    _source_bytes(root, target)
+        except ReportCatalogFlowAuthorityError:
+            policy_path.write_bytes(original)  # never leave a half-written seal behind
+            raise
+        written = True
+    return {
+        "status": "RESEALED" if written else ("UNCHANGED" if not changed else "DRY_RUN"),
+        "written": written,
+        "changed": changed,
+        "targets": sorted(new_seals),
+    }
+
+
+def _rewrite_target_seal(text: str, target_id: str, seal: Mapping[str, object]) -> str:
+    """Replace the five seal values of one target block; everything else stays byte for byte."""
+    block = re.search(
+        rf"(?ms)^- target_id: {re.escape(target_id)}[ \t]*\r?\n(?P<body>.*?)(?=^- target_id: |^\S)",
+        text,
+    )
+    if block is None:
+        _fail("RCF_RESEAL_TARGET_BLOCK_MISSING", target_id)
+    body = block.group("body")
+    for field in _SEAL_FIELDS:
+        pattern = re.compile(rf"(?m)^(  {field}: )[^\r\n]*")
+        if len(pattern.findall(body)) != 1:
+            _fail("RCF_RESEAL_SEAL_LINE_INVALID", f"{target_id}:{field}")
+        body = pattern.sub(lambda match, f=field: f"{match.group(1)}{seal[f]}", body, count=1)
+    return text[: block.start("body")] + body + text[block.end("body") :]
 
 
 def _partition(raw_sha256: str, partition_count: int) -> str:

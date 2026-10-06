@@ -9,6 +9,7 @@ from typing import Any
 
 from ai_trading_system.platform.architecture.integration_publication_fence import (
     DEFAULT_POLICY_PATH,
+    TASK_SOURCE_ONLY_KIND,
     IntegrationPublicationFence,
     PublicationFenceError,
 )
@@ -70,6 +71,15 @@ def parse_args() -> argparse.Namespace:
     acquire.add_argument("--required-tier", action="append")
     acquire.add_argument("--integration-plan", type=Path)
     acquire.add_argument("--full-parent", type=Path)
+    acquire.add_argument(
+        "--task-id-extra", action="append", default=[],
+        help="another task whose row this transaction may write (repeatable; DEVX-016 S2)",
+    )
+    acquire.add_argument(
+        "--task-source-only", action="store_true",
+        help="a transaction that only registers/moves task rows and may complete after "
+        "TASK_SOURCE_PRE_WRITE (it can never reach a candidate or publication phase)",
+    )
 
     replay = subparsers.add_parser("replay")
     replay.add_argument("--transaction", required=True, type=Path)
@@ -190,6 +200,8 @@ def _dispatch(
             required_validation_tiers=args.required_tier,
             integration_plan_path=args.integration_plan,
             full_parent_path=args.full_parent,
+            task_ids=args.task_id_extra,
+            kind=TASK_SOURCE_ONLY_KIND if args.task_source_only else None,
             now=datetime.now(tz=UTC),
         )
     if args.command == "replay":
