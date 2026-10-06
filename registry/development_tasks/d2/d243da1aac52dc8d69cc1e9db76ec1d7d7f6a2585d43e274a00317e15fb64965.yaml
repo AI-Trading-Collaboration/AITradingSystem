@@ -13,15 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Claude Code coordinator（S1 主体/S2/S3 待 DEVX-015 合入 main）
+  next_owner: Claude Code coordinator
   requirement_refs:
   - docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: v2 分阶段计划见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md：S0（只读盘点）DONE；S1-early（3
-    个 Atlas 覆盖计数/任务列表改单调或生成式检查）随本次发布；S1 主体、S2 多任务事务、S3 单一发布命令、S4 文档同步依赖 DEVX-015 合入
-    main（S0 发现 18 个目标文件中 14 个与 DEVX-015 lane 重叠）；开放问题 2–4 在 S1 开始前由 owner 决定
+  unstructured_legacy_blocker_or_next_step: C1 = F1（封印重算命令）+ F2（钉死值改下限）+ S2（多任务事务与
+    TASK_SOURCE_ONLY 事务种类）；之后 C2 = S3（单一发布命令 + 发布范围清单，须 owner 评审）、C3 = P4（通用 section
+    链校验，变异等价性先加后删，owner 2026-10-06 选择保留）、C4 = S4。分步、依赖、验收与开放问题见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+    第 10 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移
@@ -88,25 +89,59 @@ events:
   - change:devx-016-s0-s1-early-20260925-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-bc902720f5adf84950ecfb433dee7564
+- schema_version: task_event.v1
+  task_id: DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-06T18:03:51Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx016-plan-task-20261007-v1
+  lane_id: null
+  base_commit: d3d34872ba83146639c432d58b6a2c18c07ea24a
+  previous_state_event_id: task-event-bc902720f5adf84950ecfb433dee7564
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: C1 = F1（封印重算命令）+ F2（钉死值改下限）+ S2（多任务事务与 TASK_SOURCE_ONLY
+      事务种类）；之后 C2 = S3（单一发布命令 + 发布范围清单，须 owner 评审）、C3 = P4（通用 section 链校验，变异等价性先加后删，owner
+      2026-10-06 选择保留）、C4 = S4。分步、依赖、验收与开放问题见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+      第 10 节。
+    acceptance_criteria: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为
+      0；A3 登记或转移 N 个任务 = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选
+      Full 1 次；A6 安全边界与 DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow
+      同步
+    notes: 2026-10-07：DEVX-015 基线与 DEVX-021/022/023 已发布，S1 主体解锁；按三次真实发布的实测摩擦点重新分解（第
+      10.1 节：system_flow 封印手工重算约 10 分钟/次、钉死的清单 id 与计数多一轮重封、改动历史哈希固定源需 2 行授权且靠整批回归才发现、任务行事务每个约
+      2:46、发布流程靠手写脚本与记忆）。每个候选固定成本约 4.5-5 小时，所以合并同类并先做降低后续成本的步骤。P4 实测规模：基线 49,126 行/299
+      段，test_arch_004_refactor_policy.py 40,507 行含 100 个逐 wave 测试、744 个私有 helper。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx016-plan-task-20261007-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-4d965583dcde26e6d961b147b3a39347
 projection:
   legacy_first_eight_cells:
   - DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
   - Architecture / single-agent default governance and monotonic ratchets
   - P0
   - IN_PROGRESS
-  - Claude Code coordinator（S1 主体/S2/S3 待 DEVX-015 合入 main）
-  - v2 分阶段计划见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md：S0（只读盘点）DONE；S1-early（3
-    个 Atlas 覆盖计数/任务列表改单调或生成式检查）随本次发布；S1 主体、S2 多任务事务、S3 单一发布命令、S4 文档同步依赖 DEVX-015 合入
-    main（S0 发现 18 个目标文件中 14 个与 DEVX-015 lane 重叠）；开放问题 2–4 在 S1 开始前由 owner 决定
+  - Claude Code coordinator
+  - C1 = F1（封印重算命令）+ F2（钉死值改下限）+ S2（多任务事务与 TASK_SOURCE_ONLY 事务种类）；之后 C2 = S3（单一发布命令
+    + 发布范围清单，须 owner 评审）、C3 = P4（通用 section 链校验，变异等价性先加后删，owner 2026-10-06 选择保留）、C4
+    = S4。分步、依赖、验收与开放问题见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+    第 10 节。
   - A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移 N 个任务
     = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选 Full 1 次；A6 安全边界与
     DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow 同步
-  - agent_harness=claude_code；owner_decision=owner_decision:DEVX-016:2026-09-25:s0_early_start_v1、owner_decision:DEVX-016:2026-09-25:s1_early_publication_v1；S0
-    产物 outputs/architecture/devx_016/s0_inventory_v1.json；production_effect=none；broker_action=none
+  - 2026-10-07：DEVX-015 基线与 DEVX-021/022/023 已发布，S1 主体解锁；按三次真实发布的实测摩擦点重新分解（第 10.1
+    节：system_flow 封印手工重算约 10 分钟/次、钉死的清单 id 与计数多一轮重封、改动历史哈希固定源需 2 行授权且靠整批回归才发现、任务行事务每个约
+    2:46、发布流程靠手写脚本与记忆）。每个候选固定成本约 4.5-5 小时，所以合并同类并先做降低后续成本的步骤。P4 实测规模：基线 49,126 行/299
+    段，test_arch_004_refactor_policy.py 40,507 行含 100 个逐 wave 测试、744 个私有 helper。
   docs_links:
   - docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
   terminal: false
-  canonical_row_sha256: 37106a8cb855dbc3821853cd5793e4a54c8eacaae9b3284b41701c0ff62ad2f4
-last_event_id: task-event-bc902720f5adf84950ecfb433dee7564
+  canonical_row_sha256: fd9521d0bd25ea24a4e3c98f8d46c8ee1c0ba9a32fb336ebc400284498140128
+last_event_id: task-event-4d965583dcde26e6d961b147b3a39347
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: e94a21e0f7b217c41e3ecd6779b9b9ade34e83d357cd4a8982ea5a4911e100fa
+fragment_checksum: e64315bf49166599909164f100081137642dae0a715bc4db9a5b331f1dd7e3eb
