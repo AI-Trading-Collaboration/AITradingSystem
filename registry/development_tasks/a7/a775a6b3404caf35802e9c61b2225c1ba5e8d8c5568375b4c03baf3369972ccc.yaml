@@ -15,16 +15,15 @@ task_record:
   created_by: null
   priority: P2
   accountable_owner: null
-  next_owner: Claude Code coordinator
-  requirement_refs:
-  - docs/requirements/DEVX-023_Lease_Replay_Cost_Reduction_V1.md
+  next_owner: Project Owner（决定封印 S 与证明合同）；Claude Code coordinator
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: D1-D5 已实现并验证（未发布）：S3d（多槽、按摘要的调用内记忆化 +
-    hook-ready 整体记忆化）、S3c（schema v4，外置 profile_inspection.captures 三处）、W（持锁段内复用重放，写入代数
-    + 目录指纹，校验模式）。下一步：重封链 -> 正式验证 -> Full -> 发布（须先向 owner 确认发布授权）；发布后在真实库上跑消费者冒烟清单，并观察发布耗时（目标
-    <= 60 分钟，现 86 分钟）与每次发布后的单次重放增量（目标 < +0.5 s）。
+  unstructured_legacy_blocker_or_next_step: 封印 S 的决定（owner）：数据已齐。发布 86 -> 54 分钟（目标
+    <=60 达成），发布部分事件字节 11.85 -> 1.13 MiB；但每次发布单次重放仍 +1.5-1.8 s（目标 <+0.5 s 未达成），命名 DQ
+    父证明每次发布 +约 10 MiB（52.2 MiB，stage 1 505 -> 579 s）。选项：S（按租约链封印终态链的校验，预计重放 15 ->
+    约 5 s）、命名 DQ 父证明不再内嵌整库重放（证明合同变更）、两者都做、暂不做（下一次发布预计约 60 分钟）。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 选定方案后：围栏命令（acquire/checkpoint/release）墙钟降到当前的 1/3 以内、真实发布不超过 30 分钟（只选 S3c+W
@@ -172,31 +171,69 @@ events:
   - change:gov-007-devx023-impl-task-20261006-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-8206580d85ff15ed628f6d4d655b6384
+- schema_version: task_event.v1
+  task_id: DEVX-023_LEASE_REPLAY_COST_REDUCTION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-06T18:02:05Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx023-pub4b-task-20261007-v1
+  lane_id: null
+  base_commit: d3d34872ba83146639c432d58b6a2c18c07ea24a
+  previous_state_event_id: task-event-8206580d85ff15ed628f6d4d655b6384
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P2
+    next_owner: Project Owner（决定封印 S 与证明合同）；Claude Code coordinator
+    blocker_or_next_step: 封印 S 的决定（owner）：数据已齐。发布 86 -> 54 分钟（目标 <=60 达成），发布部分事件字节
+      11.85 -> 1.13 MiB；但每次发布单次重放仍 +1.5-1.8 s（目标 <+0.5 s 未达成），命名 DQ 父证明每次发布 +约 10
+      MiB（52.2 MiB，stage 1 505 -> 579 s）。选项：S（按租约链封印终态链的校验，预计重放 15 -> 约 5 s）、命名 DQ
+      父证明不再内嵌整库重放（证明合同变更）、两者都做、暂不做（下一次发布预计约 60 分钟）。
+    acceptance_criteria: 选定方案后：围栏命令（acquire/checkpoint/release）墙钟降到当前的 1/3 以内、真实发布不超过
+      30 分钟（只选 S3c+W 时：每次发布给租约库留下的事件字节从约 11.8 MiB 降到 1 MiB 以内，单次重放的逐发布增长从约 +3 s 降到
+      +0.5 s 以内，发布耗时不再随发布数线性增长）；重放结论与全量重放逐项相同（真实库与变异库的差分测试，含篡改/截断/重排/替换事件、内核版本变化使封印失效、封印缺失或损坏时回退全量重放；外置新增位置时：旧事件原样可读、新增位置的
+      marker 在旧位置或缺 blob 时 fail-closed）；不引入未经 owner 批准的跨调用缓存；历史事件文件不被改写；命名 DQ 父证明不再随发布数线性增长（只绑定重放摘要与来源租约，须评审）；文档与
+      system_flow 同步。
+    notes: 2026-10-07：S3c/S3d/W 随候选 d3d34872b 真实发布（普通推送 25d026bf6..d3d34872b，事务 gov-007-d23-formal-20261006-v1
+      RELEASED/COMPLETED，owner 预授权，无恢复、无人工干预），是真实库的第一批 v4 事件。正式 Full 14,791 通过/0 失败，pytest
+      2:25:37；local-publish 54 分 8 秒（上次 86，M4 71）；发布部分 v3/v4 事件字节 11.85 -> 1.13 MiB，>100
+      KB 事件 20 -> 0，钩子事件间隔中位数 162 -> 107 s。验收对照：发布 <=60 分钟达成；事件字节 <1 MiB 基本达成（1.13）；每次发布单次重放增量
+      <+0.5 s 未达成（+1.5-1.8 s，原 +3 s）；重放耗时 <=70% 未达成（15.1 -> 13.9 s，历史 22 MB 事件决定下限）。旧（S3b
+      时代）代码读含 v4 事件的库会 fail closed，不要回滚代码。消费者冒烟（真实库）：重放 PASS、canonical_json_bytes(replay.to_dict())
+      通过（52.2 MiB）、遥测快照 PASS（6,688 个来源）、命名 DQ stage 1 通过。详见 DEVX-023 文档第 9 节与 DEVX-022
+      第 17.5 节。状态 IN_PROGRESS -> BASELINE_DONE。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx023-pub4b-task-20261007-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fc5e2f16b5e62e76803e16c35e4eeccc
 projection:
   legacy_first_eight_cells:
   - DEVX-023_LEASE_REPLAY_COST_REDUCTION
   - 'Governed workflow / lease-store replay cost: one replay of the 713 MB real store
     takes about 14 s, which dominates every fence command and the 71-minute real publication'
   - P2
-  - IN_PROGRESS
-  - Claude Code coordinator
-  - D1-D5 已实现并验证（未发布）：S3d（多槽、按摘要的调用内记忆化 + hook-ready 整体记忆化）、S3c（schema v4，外置 profile_inspection.captures
-    三处）、W（持锁段内复用重放，写入代数 + 目录指纹，校验模式）。下一步：重封链 -> 正式验证 -> Full -> 发布（须先向 owner 确认发布授权）；发布后在真实库上跑消费者冒烟清单，并观察发布耗时（目标
-    <= 60 分钟，现 86 分钟）与每次发布后的单次重放增量（目标 < +0.5 s）。
+  - BASELINE_DONE
+  - Project Owner（决定封印 S 与证明合同）；Claude Code coordinator
+  - 封印 S 的决定（owner）：数据已齐。发布 86 -> 54 分钟（目标 <=60 达成），发布部分事件字节 11.85 -> 1.13 MiB；但每次发布单次重放仍
+    +1.5-1.8 s（目标 <+0.5 s 未达成），命名 DQ 父证明每次发布 +约 10 MiB（52.2 MiB，stage 1 505 -> 579
+    s）。选项：S（按租约链封印终态链的校验，预计重放 15 -> 约 5 s）、命名 DQ 父证明不再内嵌整库重放（证明合同变更）、两者都做、暂不做（下一次发布预计约
+    60 分钟）。
   - 选定方案后：围栏命令（acquire/checkpoint/release）墙钟降到当前的 1/3 以内、真实发布不超过 30 分钟（只选 S3c+W 时：每次发布给租约库留下的事件字节从约
     11.8 MiB 降到 1 MiB 以内，单次重放的逐发布增长从约 +3 s 降到 +0.5 s 以内，发布耗时不再随发布数线性增长）；重放结论与全量重放逐项相同（真实库与变异库的差分测试，含篡改/截断/重排/替换事件、内核版本变化使封印失效、封印缺失或损坏时回退全量重放；外置新增位置时：旧事件原样可读、新增位置的
     marker 在旧位置或缺 blob 时 fail-closed）；不引入未经 owner 批准的跨调用缓存；历史事件文件不被改写；命名 DQ 父证明不再随发布数线性增长（只绑定重放摘要与来源租约，须评审）；文档与
     system_flow 同步。
-  - 2026-10-06 晚：真实库差分重放结论逐项相同（15.0-15.3 -> 13.8-14.5 s）；S3c 用真实数据演练：4 条真实发布租约链（201
-    个事件，648.6 MiB）重编码为 v4 后 PASS、4 个 head 逐值相同、事件字节降到 6.1 MiB；聚焦回归 A 1,453 通过 + B
-    334 通过（校验模式全程无陈旧缓存报告），重型发布端到端 1 个通过（846.9 s，产生 18 个 v4 事件，最大 66.8 KB）。设计修订：S3c
-    用新 schema v4（真实库里的 S3b 时代 v3 事件 captures 内嵌，位置集合扩大会使其 ID 校验失败）；W 由显式传递改为 store
-    层持锁段内隐式复用（PublicationLifecycle 与围栏共用同一个 store 实例）。详见 docs/requirements/DEVX-023_Lease_Replay_Cost_Reduction_V1.md
-    第 3、4、9 节。
-  docs_links:
-  - docs/requirements/DEVX-023_Lease_Replay_Cost_Reduction_V1.md
+  - 2026-10-07：S3c/S3d/W 随候选 d3d34872b 真实发布（普通推送 25d026bf6..d3d34872b，事务 gov-007-d23-formal-20261006-v1
+    RELEASED/COMPLETED，owner 预授权，无恢复、无人工干预），是真实库的第一批 v4 事件。正式 Full 14,791 通过/0 失败，pytest
+    2:25:37；local-publish 54 分 8 秒（上次 86，M4 71）；发布部分 v3/v4 事件字节 11.85 -> 1.13 MiB，>100
+    KB 事件 20 -> 0，钩子事件间隔中位数 162 -> 107 s。验收对照：发布 <=60 分钟达成；事件字节 <1 MiB 基本达成（1.13）；每次发布单次重放增量
+    <+0.5 s 未达成（+1.5-1.8 s，原 +3 s）；重放耗时 <=70% 未达成（15.1 -> 13.9 s，历史 22 MB 事件决定下限）。旧（S3b
+    时代）代码读含 v4 事件的库会 fail closed，不要回滚代码。消费者冒烟（真实库）：重放 PASS、canonical_json_bytes(replay.to_dict())
+    通过（52.2 MiB）、遥测快照 PASS（6,688 个来源）、命名 DQ stage 1 通过。详见 DEVX-023 文档第 9 节与 DEVX-022
+    第 17.5 节。状态 IN_PROGRESS -> BASELINE_DONE。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 683059cc20f370b610f9a67eff9678ca9ceac907053ad126f51a8b65a4b107ea
-last_event_id: task-event-8206580d85ff15ed628f6d4d655b6384
+  canonical_row_sha256: 18da0b344e629c55caf719b4ddc4f2c01b19f19b0848c5a1b1aa72c278999c8b
+last_event_id: task-event-fc5e2f16b5e62e76803e16c35e4eeccc
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f0f39a97fe496b25d59bf318c9fb45ec13f57ccd23742668033ed1ca06178143
+fragment_checksum: b4b0dbfdad02171f06ed48a5b89f9baddedb0fbb57b32713361821efe90909f6
