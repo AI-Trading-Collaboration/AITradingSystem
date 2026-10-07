@@ -868,9 +868,14 @@ class FileExecutionLeaseStore:
     def _replay_uncached(self) -> LeaseReplay:
         # DEVX-023 P: an opt-in chain-level parallel replay (AITS_LEASE_PARALLEL_REPLAY). The serial
         # replay below stays the authority: any anomaly makes the helper return None and the serial
-        # replay runs. With the variable unset nothing is imported and nothing changes.
+        # replay runs. With the variable unset nothing is imported and nothing changes. A process
+        # that refuses the import (the named-DQ bootstrap admits only its reviewed modules, and its
+        # isolation must not be widened by worker processes) simply stays serial.
         if os.environ.get("AITS_LEASE_PARALLEL_REPLAY"):
-            from ai_trading_system.platform.architecture import lease_parallel_replay
+            try:
+                from ai_trading_system.platform.architecture import lease_parallel_replay
+            except Exception:  # noqa: BLE001 - any refused or failed import means serial
+                return self._replay_serial()
 
             replay = lease_parallel_replay.replay_if_enabled(
                 events_root=self.events_root, blobs_root=self.root / "blobs",

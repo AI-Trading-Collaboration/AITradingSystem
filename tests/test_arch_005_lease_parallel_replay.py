@@ -371,3 +371,29 @@ def test_a_conflict_between_two_active_chains_is_reported_by_the_final_merge(
     assert any(issue.code == "ACTIVE_LEASE_RESOURCE_CONFLICT" for issue in serial.issues)
     _enable(monkeypatch)
     assert store.replay() == serial
+
+
+def test_a_process_that_refuses_the_import_stays_serial_instead_of_failing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The named-DQ bootstrap child admits only reviewed modules: with the switch inherited from its
+    parent it must keep working (serially), not die on the refused import."""
+    store = make_store(tmp_path)
+    populate(store, 4)
+    serial = store._replay_serial()
+    monkeypatch.setenv(parallel.PARALLEL_REPLAY_ENV, "3")
+    real_import = __import__
+
+    def refusing(name: str, *args: Any, **kwargs: Any) -> Any:
+        if name == "ai_trading_system.platform.architecture" and args[2:3] == (
+            ("lease_parallel_replay",),
+        ):
+            raise ValueError("NAMED_BOOTSTRAP_UNREVIEWED_IMPORT: lease_parallel_replay")
+        return real_import(name, *args, **kwargs)
+
+    def never_reached(**kwargs: Any) -> Any:
+        raise AssertionError("the helper must not run when its import was refused")
+
+    monkeypatch.setattr(parallel, "replay_if_enabled", never_reached)
+    monkeypatch.setattr("builtins.__import__", refusing)
+    assert store.replay() == serial
