@@ -318,3 +318,4 @@ P2 的测试要求：(1) 在多链夹具库上并行与串行的 `LeaseReplay` �
 
 ### 12.5 进度
 - 2026-10-08：owner 选择先做并行重放再做 C3；本节与任务行登记（P0）。
+- 2026-10-08：**P1、P2 已完成（候选尚未冻结）**。新模块 `lease_parallel_replay.py`（开关解析、链级进程池、回退、校验模式、`__main__` 守卫检查）；内核三处小改动：`_assemble_lease_replay`（串行与并行共用的汇总）、`ExternalizedRows.__reduce__`、`_replay_uncached` 的默认关闭钩子（原主体逐字不变，改名 `_replay_serial`）。测试全是新文件：`test_arch_005_lease_parallel_replay.py`（35 项，进程内）与 `test_arch_005_lease_parallel_replay_store.py`（14 项，真实进程池，对 11 种磁盘变异——篡改一个字节、截断、删中间事件、重复事件文件、垃圾 JSON、非 JSON 文件、空链目录、事件内容互换、两个 ACTIVE 租约重叠、链分叉、事件放进别的链的目录——逐项对账串行与并行）；默认关闭时既有的内核/外置/调度/仲裁测试（80 项）全部不变。真实库只读对账（`claude_p1_real_store_diff.log`，5,982 个事件 / 878 条链）：串行 18.3 s，4 个工作进程 8.3–9.2 s（三次），结果逐项相同，校验模式下 `store.replay()` 一致。ruff、mypy strict 通过（内核文件本身不是 black 风格，所以没有对它跑 black，以免产生大面积无关改动）。下一步 P3：生成器链与权威接管，然后 P4 候选链（用 S3 命令）。

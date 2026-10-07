@@ -741,6 +741,21 @@ def _replay_lease_events(
         if valid:
             heads.append(head.lease)
             head_ids.append((lease_id, head.event_id))
+    return _assemble_lease_replay(heads, head_ids, issues, event_count=len(events))
+
+
+def _assemble_lease_replay(
+    heads: Sequence[ExecutionLease],
+    head_ids: Sequence[tuple[str, str]],
+    issues: set[ControlIssue],
+    *,
+    event_count: int,
+) -> LeaseReplay:
+    """Order the heads, check ACTIVE overlaps and build the LeaseReplay.
+
+    DEVX-023 P: the serial replay and the opt-in chain-level parallel replay both end here, so
+    the ordering and status semantics exist exactly once. `issues` is extended in place.
+    """
     active = sorted(
         (lease for lease in heads if lease.state == "ACTIVE"),
         key=lambda item: item.lease_id,
@@ -762,7 +777,7 @@ def _replay_lease_events(
         lease_heads=tuple(sorted(heads, key=lambda item: item.lease_id)),
         active_leases=tuple(active),
         head_event_ids=tuple(sorted(head_ids)),
-        event_count=len(events),
+        event_count=event_count,
         issues=ordered_issues,
     )
 
@@ -851,6 +866,21 @@ class FileExecutionLeaseStore:
         return replay
 
     def _replay_uncached(self) -> LeaseReplay:
+        # DEVX-023 P: an opt-in chain-level parallel replay (AITS_LEASE_PARALLEL_REPLAY). The serial
+        # replay below stays the authority: any anomaly makes the helper return None and the serial
+        # replay runs. With the variable unset nothing is imported and nothing changes.
+        if os.environ.get("AITS_LEASE_PARALLEL_REPLAY"):
+            from ai_trading_system.platform.architecture import lease_parallel_replay
+
+            replay = lease_parallel_replay.replay_if_enabled(
+                events_root=self.events_root, blobs_root=self.root / "blobs",
+                serial=self._replay_serial,
+            )
+            if replay is not None:
+                return replay
+        return self._replay_serial()
+
+    def _replay_serial(self) -> LeaseReplay:
         from ai_trading_system.platform.architecture.workflow_coordination import (
             _validate_checked_execution_transition,
             replay_validation_scope,
@@ -1450,6 +1480,18 @@ class ExternalizedRows(list[Any]):
 
     def __deepcopy__(self, memo: dict[int, Any]) -> list[Any]:
         return copy.deepcopy(list(self), memo)
+
+    def __reduce__(self) -> tuple[Any, ...]:
+        # DEVX-023 P: pickle's default list protocol rebuilds through append/extend, which are
+        # immutable here. The rows travel as a plain list plus the digest and are re-adopted.
+        return (_rebuild_externalized_rows, (list(self), getattr(self, "sha256", None)))
+
+
+def _rebuild_externalized_rows(rows: list[Any], sha256: str | None) -> ExternalizedRows:
+    rebuilt = ExternalizedRows(rows)
+    if sha256 is not None:
+        rebuilt.sha256 = sha256
+    return rebuilt
 
 
 _ROWS_SHARING: ContextVar[dict[str, ExternalizedRows] | None] = ContextVar(
