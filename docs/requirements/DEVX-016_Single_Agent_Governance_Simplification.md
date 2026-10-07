@@ -374,14 +374,24 @@ DEVX-017 依赖 DEVX-016 全部完成；OPS-082 须 owner 先确认「不得使�
   - **耗时（对照 DEVX-022 第 15.1 节基线）**：S2 行事务 2:41；prep 每轮约 7 分；正式事务到 FORMAL_VALIDATION_PRE 3:35（基线 4:19）；预检 0:42 + 就绪度 1:00；
     stage 1 **751 s**（基线 440–502、d21b 505、d23 579；趋势 505→579→751）、contract 292（d23 264）、integration 74、reproducibility 48、architecture-fitness 1,370（基线 1,216–1,412）、
     Full pytest **8,820 s = 2:27:00**（d23 8,737 s）；发布阶段：LOCAL_MAIN_FF_PRE 3:44、`local-publish` **57 分 3 秒**（d23 54 分、d21b 86 分，目标 ≤ 60 分达成）、REMOTE_PUSH_PRE 3:32、CLOSEOUT 预检 0:48、CLEANUP_PRE 0:41、completed 释放 0:43。
-  - **stage 1 的分析**：两次对照的主机计数器里 python 约 3 个核全程占用、曲线形状几乎一致，总 CPU 时间 +33%（1,737→2,313 核·秒），所以是工作量变长而不是等待；真实租约库用旧代码（d3d34872b）和新代码
-    重放耗时相同（约 24 s，负载下；d23 发布后空闲时 15.5 s），C1 不改变重放成本；事件数只增加 0.8%（5,813→5,860），租约头 +12，不足以解释 +30%。尚未定位的原因需要在**正式窗口内**测量
-    （stage 1 要求有 FORMAL_VALIDATION_PRE 的活事务，发布后无法再跑）：C2 的正式窗口里先用 `stage1_timing_plugin.py` 单独跑一次 stage 1 的第一个测试，记录测试进程里 store.replay / live_parent_proof
-    的次数与总耗时，再决定是否需要改动。
+  - **stage 1 的分析**（2026-10-07 复核后更正并补全；完整数据与时间线见 DEVX-022 第 17.6 节）：两次对照的主机计数器（`devx022-d23/d24-counters.csv`，32 个逻辑核）里
+    python 平均约 1.25 个核（采样峰值 3.5 / 4.1 个核）、曲线形状几乎一致，python 核·秒 706 → 923（+31%，与时长 +30% 同步），所以是工作量变长而不是等待。
+    （更正：本段此前写作「python 约 3 个核全程占用、1,737→2,313 核·秒」，那是把采样峰值当成了平均值；结论不变，数字以此为准。）d24 窗口里 python 平均核数与 d23 相同，
+    没有可见的额外 python 负载，所以与我误起的杂散 pytest 重叠不是原因。真实租约库用旧代码（d3d34872b）和新代码重放耗时相同（约 24 s，负载下；d23 发布后空闲时 15.5 s），
+    C1 不改变重放成本；事件数只增加 0.8%（5,813→5,860），租约头 +12，不足以解释 +30%。**定位到的原因**：stage 1 只有两个测试（同一文件，同一 worker 串行），它们的每个组件
+    （7 次活体证明、3 个生产 CLI 子进程）都同比例变慢（d23 → d24 +22% 到 +38%），与活体证明文件的体积同步增长：`test_parent_pre_guard.json` 35.70 → 46.60 → 57.52 MB
+    （每次发布 +约 10.9 MB，来自整库重放内嵌的已释放 head 托管表），阶段约 12 s / MB，近似 86 s + 11.3 s / MB。外推下一次发布约 860–890 s（告警线 900 s），再下一次越线；
+    根治是 DEVX-023 第 8 节第 2 条（证明不再内嵌整库重放，须 owner 评审）。证明体积如何变成耗时的机制仍需在**正式窗口内**逐调用测量（stage 1 要求有 FORMAL_VALIDATION_PRE 的活事务，
+    发布后无法再跑）：C2 的正式窗口里先用 `stage1_timing_plugin.py` 单独跑一次 stage 1，记录测试进程里 store.replay / live_parent_proof 的次数与总耗时，再决定改动。
   - **事件记录（如实披露）**：(1) 本轮有两次仓库检查没有带完整的已登记排除集（已在上一条记录）；(2) 我误起过一次范围过大的 pytest（含两个文件里全部 Full 规模重节点，21 + 18 个，`--dist loadfile` 下单 worker 串行），
     尝试用 `taskkill` 终止被权限分类器拒绝，我没有绕过，它在 12,867 秒（3 小时 34 分）后自己跑完：289 通过，2 失败（一个是当时生成物过期，已被生成器轮次修好；
     一个重节点是在我同时改仓库期间失败，在最终干净树上单独重跑通过，18 分 13 秒）；(3) 3.5 小时的会话中断使发布前检查第 6 项（Full 结束后 2 小时内开始发布）超窗 27 分钟，
     owner 在核实租约仍有效（还剩 3.5 小时、`local-publish` 最长约 86 分钟）后明确批准按例外继续，其余五项全部通过；(4) 最终的 `git push origin main` 被权限分类器拒绝（Out-of-Place Publication），我没有换别的方式绕过，由 owner 在终端执行；证据文件 `claude_d24_push.log` 如实标注它不是 git push 的输出，而是我在 owner 推送后的只读 SHA 校验（本地 main = origin/main = 远端 tip = 候选）；(5) `D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1` 仍待 owner 执行（5 个 HKCU 测试根）。
+  - **临时资源（生命周期记录，2026-10-07 17:42 收口）**：按精确绝对路径白名单删除（脚本 `scratchpad/cleanup_d24.py`，日志 `D:/Work/devx024-c1-cleanup.log`，释放约 28.24 GB，用时 8 分 44 秒，
+    其中本次 Full 的 basetemp 28.03 GB / 703,505 个文件 389 s）：`%TEMP%\pytest-of-JACK\pytest-23203`，以及 `D:/Work/ptc1`、`ptc1b`、`ptc1c`、`ptc1h`、`ptc1s2`、`ptc_c2`（C1 聚焦回归的 basetemp）和 `D:/Work/devx024-old`（旧代码导出）。
+    清理前确认无其他 python 进程、无进行中的验证，必需证据都已在 `outputs/architecture/integration_revalidation/devx015-v389/` 与 `outputs/validation_runtime/gov-007-d24-*`。
+    保留：`D:/Work/devx022-d24-counters.csv`、`devx022-d24-pub-counters.csv`（逐进程计数器）、`devx015-*`（已登记证据根）、`devx020-k`（随 DEVX-020 关闭时清理）、`devx022-t1`；
+    `pytest-of-JACK` 下的空目录 `pytest-23356/-23357/-23358` 与 `pytest-current` 由 pytest 自管，未动。可恢复性：删除的都是可再生的临时目录，不需要恢复。
 - 2026-10-07：**S3 发布范围清单的草案依据（只读测量，4 个正式事务的声明范围对比）**。`gov-007-p1c-devx015-baseline-publication-…-v26`、
   `gov-007-d21b-formal-…`、`gov-007-d23-formal-…`、`gov-007-d24-formal-…` 四个事务声明的 owned/shared/生成器/必需 tier 对比：
   shared 路径 20 项、生成器 5 个、必需 tier 5 个在四个事务里**完全相同**；owned 路径的稳定核心是 59 项，四个事务的并集是 67 项，

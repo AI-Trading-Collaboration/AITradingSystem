@@ -136,3 +136,9 @@
   - **旧代码对含 v4 事件的库 fail closed**：用基线代码重放现在的真实库得到 `status FAIL`（20 个 v4 事件的 schema 不识别），符合设计；含义是之后不能再用 S3b 时代的代码读写这个库（回滚会连带要求清空或迁移，不要回滚）。
   - **命名 DQ 父证明继续增长**：整库重放的规范字节 32.4 → 42.3 → **52.2 MiB**（每次发布 +约 10 MiB，来自已释放 head 的托管表），`named-parent-positive` 505 → 579 s。已登记的后续项（第 8 节第 2 条）按本数据提高优先级：证明不再内嵌整库重放。
   - 状态：S3c / S3d / W 交付并发布；**待 owner 决定封印 S**（见上；数据已齐：残余增长 +1.6 s/次发布，发布 54 分钟，下一次预计约 60 分钟）。
+- 2026-10-07（第五次发布之后）：**命名 DQ 父证明的体积决定 stage 1 的耗时**（量化，详见 DEVX-022 第 17.6 节）。两个 stage 1 测试写出的真实文件：`test_parent_pre_guard.json` 35.70 → 46.60 → 57.52 MB（d21b → d23 → d24，每次发布 +约 10.9 MB），
+  `activation_cli_*_parent.json` 170.7 → 224.4 → 278.2 MB；每个组件的耗时同比例增长（单次活体证明约 0.8 s / MB，整个阶段约 12 s / MB），`named-parent-positive` 505 → 579 → 751 s，近似 86 s + 11.3 s / MB。
+  外推：下一次发布约 860–890 s（告警线 900 s），再下一次约 980–1,030 s（越线）；正式 Full 里同一个文件的两个测试随之增长。
+  因此第 8 节第 2 条（证明只绑定重放摘要与来源租约、不再内嵌整库重放）提高优先级：它同时去掉每次发布「+约 10.9 MB × 全部活体证明」；它是证明合同变更（生产代码 `named_quality_dispatch.py`、`named_quality_execution.py`、
+  `prospective_capture_execution.py` 同样定义并消费 `named_dq_existing_parent_proof.v1`，不是只改测试），须 owner 评审。
+  无合同变更的缓解（仅测试层，可选）：把 `tests/test_named_data_quality_actual_candidate.py` 的两个测试拆成两个文件，使 `--dist loadfile` 把它们放到两个 worker（阶段约 751 → 约 550 s，测试 2 约 530 s 是瓶颈）。待 owner 决定。
