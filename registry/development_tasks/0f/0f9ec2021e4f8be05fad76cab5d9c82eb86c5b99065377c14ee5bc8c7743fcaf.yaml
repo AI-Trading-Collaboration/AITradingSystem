@@ -18,10 +18,11 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 继续路线：DEVX-016 C1（已实现，候选验证中）-> C2（S3）->
+  unstructured_legacy_blocker_or_next_step: 继续路线：DEVX-016 C2（S3，离线已写好，待移植与评审范围策略）->
     C3（P4）-> C4（S4）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖
     OPS-077/078/081 验收）-> 阶段 5。DEVX-023 的封印 S / 证明不再内嵌整库重放需 owner 决定（数据见 DEVX-023
-    第 9 节）。
+    第 9 节）；owner 另需执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 5 个 HKCU
+    测试根。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -843,6 +844,37 @@ events:
   - change:gov-007-c1-rows-20261007-v2
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-f0b14d6fb90893f8fdd89c560a654496
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-07T08:30:01Z'
+  actor: integration-coordinator
+  change_id: gov-007-pub5-rows-20261007-v1
+  lane_id: null
+  base_commit: 7ead2d6ffae5acac93b5fdc65c4feebc82fd384e
+  previous_state_event_id: task-event-f0b14d6fb90893f8fdd89c560a654496
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 继续路线：DEVX-016 C2（S3，离线已写好，待移植与评审范围策略）-> C3（P4）-> C4（S4）->
+      DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081
+      验收）-> 阶段 5。DEVX-023 的封印 S / 证明不再内嵌整库重放需 owner 决定（数据见 DEVX-023 第 9 节）；owner 另需执行
+      D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 5 个 HKCU 测试根。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: 2026-10-07 第五次真实发布：main = origin/main = 7ead2d6ffae5acac93b5fdc65c4feebc82fd384e（DEVX-016
+      C1：F1 reseal 命令 + F2 钉死计数改下限 + S2 多任务/TASK_SOURCE_ONLY 事务；普通推送 d3d34872b..7ead2d6ff；正式事务
+      gov-007-d24-formal-20261007-v1 RELEASED/COMPLETED；owner 预授权该候选）。Full 通过 pytest
+      8,820 s（2:27:00），local-publish 57 分 3 秒。须披露：stage 1 751 s 偏高（趋势待测）；3.5 小时会话中断使发布前检查第
+      6 项超窗，owner 明确批准按例外继续；最终的 git push 被权限分类器拒绝，由 owner 在终端执行；两次仓库检查未带完整排除集（审计事件）。待
+      owner：S3 发布范围清单评审（C2 冻结前）、DEVX-023 封印 S 决定、OPS-082 规则变更确认、执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-pub5-rows-20261007-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-dd8e245a7c7572a50ef7b82146e5cf5d
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
@@ -850,16 +882,21 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - 继续路线：DEVX-016 C1（已实现，候选验证中）-> C2（S3）-> C3（P4）-> C4（S4）-> DEVX-017 -> OPS-082（须
+  - 继续路线：DEVX-016 C2（S3，离线已写好，待移植与评审范围策略）-> C3（P4）-> C4（S4）-> DEVX-017 -> OPS-082（须
     owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5。DEVX-023 的封印
-    S / 证明不再内嵌整库重放需 owner 决定（数据见 DEVX-023 第 9 节）。
+    S / 证明不再内嵌整库重放需 owner 决定（数据见 DEVX-023 第 9 节）；owner 另需执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1
+    清理 5 个 HKCU 测试根。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - 2026-10-07：DEVX-016 C1 已实现并提交（8dd83045e），正在跑候选链（prep + 生成器 + 正式事务 + Full）；推送需要新的
-    owner 发布授权（只限该候选）。本行与 DEVX-016 行在同一个 TASK_SOURCE_ONLY 事务内更新（S2 首次实战）。
+  - 2026-10-07 第五次真实发布：main = origin/main = 7ead2d6ffae5acac93b5fdc65c4feebc82fd384e（DEVX-016
+    C1：F1 reseal 命令 + F2 钉死计数改下限 + S2 多任务/TASK_SOURCE_ONLY 事务；普通推送 d3d34872b..7ead2d6ff；正式事务
+    gov-007-d24-formal-20261007-v1 RELEASED/COMPLETED；owner 预授权该候选）。Full 通过 pytest
+    8,820 s（2:27:00），local-publish 57 分 3 秒。须披露：stage 1 751 s 偏高（趋势待测）；3.5 小时会话中断使发布前检查第
+    6 项超窗，owner 明确批准按例外继续；最终的 git push 被权限分类器拒绝，由 owner 在终端执行；两次仓库检查未带完整排除集（审计事件）。待
+    owner：S3 发布范围清单评审（C2 冻结前）、DEVX-023 封印 S 决定、OPS-082 规则变更确认、执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 933a3ac94a64712db0423ed16606e15e3d647a8e539cdd210947769c12e61558
-last_event_id: task-event-f0b14d6fb90893f8fdd89c560a654496
+  canonical_row_sha256: 4a5679a0f23c1484e21fd88d938e28b99ca99228b025cecf7bb5dc8d1b48e201
+last_event_id: task-event-dd8e245a7c7572a50ef7b82146e5cf5d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 04c93431b7ccaf34f0f7f3490c8e0113b45b815fa3313c151dee08fb11ae8551
+fragment_checksum: 37abc9b012e44aa5246db620a5a17dbebdc6085e774eb38e6974488c30f0477a

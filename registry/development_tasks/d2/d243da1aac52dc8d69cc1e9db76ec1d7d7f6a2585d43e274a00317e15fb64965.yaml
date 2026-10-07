@@ -19,13 +19,12 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: C1（F1+F2+S2）已实现并提交在分支 claude/gov007-post-baseline-followups（8dd83045e，base
-    d3d34872b）：聚焦回归 991 通过；另有 95 个失败全部是生成物过期类（compat authority、consumer inventory、006d
-    index 等，须由候选的 generator 轮次重建，属预期）。下一步：prep 事务 + 生成器两轮 -> 正式事务 -> Full，通过后向 owner
-    申请该候选的发布授权（每个候选单独申请，只限该候选、普通推送）。之后 C2 = S3（单一发布命令 + 发布范围清单，须 owner 评审）、C3 = P4（通用
-    section 链校验，变异等价性先加后删，owner 2026-10-06 选择保留）、C4 = S4。开放问题 10.10 第 2、4 项已按推荐方案实现，待
-    owner 确认。分步、依赖、验收与开放问题见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
-    第 10 节。
+  unstructured_legacy_blocker_or_next_step: C1（F1+F2+S2）已发布（main = origin/main = 7ead2d6ff，普通推送
+    d3d34872b..7ead2d6ff）。C2（S3 单一发布命令）已在会话 scratchpad 离线写完并通过 164 项测试（10 个新模块、2 个脚本、范围策略草案），待移植进仓库：移植后新测试按
+    test_arch_005_publication_*.py 命名，范围策略须在冻结候选之前由 owner 评审并批准（该文件本身在普通发布的禁止路径里）；C2
+    的正式窗口里先用 stage1_timing_plugin 单独测一次 stage 1 的耗时构成。之后 C3 = P4（通用 section 链校验；owner
+    2026-10-07 决定：以变异等价性证据为准、分批提交、owner 抽查，不要求逐批批准）、C4 = S4。第 10.10 节的开放问题已全部答复。分步、依赖、验收与进度见
+    docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md 第 9、10 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移
@@ -158,6 +157,46 @@ events:
   - change:gov-007-c1-rows-20261007-v2
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-1df5d598c9853c7690d369818b513c94
+- schema_version: task_event.v1
+  task_id: DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-07T08:29:31Z'
+  actor: integration-coordinator
+  change_id: gov-007-pub5-rows-20261007-v1
+  lane_id: null
+  base_commit: 7ead2d6ffae5acac93b5fdc65c4feebc82fd384e
+  previous_state_event_id: task-event-1df5d598c9853c7690d369818b513c94
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: C1（F1+F2+S2）已发布（main = origin/main = 7ead2d6ff，普通推送 d3d34872b..7ead2d6ff）。C2（S3
+      单一发布命令）已在会话 scratchpad 离线写完并通过 164 项测试（10 个新模块、2 个脚本、范围策略草案），待移植进仓库：移植后新测试按
+      test_arch_005_publication_*.py 命名，范围策略须在冻结候选之前由 owner 评审并批准（该文件本身在普通发布的禁止路径里）；C2
+      的正式窗口里先用 stage1_timing_plugin 单独测一次 stage 1 的耗时构成。之后 C3 = P4（通用 section 链校验；owner
+      2026-10-07 决定：以变异等价性证据为准、分批提交、owner 抽查，不要求逐批批准）、C4 = S4。第 10.10 节的开放问题已全部答复。分步、依赖、验收与进度见
+      docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md 第 9、10
+      节。
+    acceptance_criteria: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为
+      0；A3 登记或转移 N 个任务 = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选
+      Full 1 次；A6 安全边界与 DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow
+      同步
+    notes: 2026-10-07 第五次真实发布：DEVX-016 C1 候选 7ead2d6ff 已发布（main = origin/main，普通推送
+      d3d34872b..7ead2d6ff；正式事务 gov-007-d24-formal-20261007-v1 RELEASED/COMPLETED；owner
+      预授权该候选）。Full 通过，pytest 8,820 s（2:27:00；d23 8,737 s）；local-publish 57 分 3 秒（d23
+      54 分）。验收：F1 reseal 在本候选 dogfood 通过；F2 新增一个测试文件只需一轮生成器提交就零差异；S2 在真实事务验证（一个 TASK_SOURCE_ONLY
+      事务更新 2 个任务，COMPLETED 收口，2:41，0 个 FAILED）。披露：stage 1 751 s（基线 440-502、d23 579，趋势
+      505->579->751，原因待在 C2 正式窗口里测量）；两次仓库检查未带完整排除集（审计事件）；一次误起的范围过大 pytest（3.5 小时，自行跑完）；3.5
+      小时会话中断使发布前检查第 6 项（Full 结束后 2 小时内开始发布）超窗 27 分钟，owner 在核实租约仍有效后明确批准按例外继续，其余五项全部通过；最终的
+      git push 被权限分类器拒绝，由 owner 在终端执行，证据文件如实标注。owner 同日决定：发布范围清单 = 核心清单评审一次 + owned
+      由候选 diff 派生；P4-4 以变异等价性证据为准、分批提交、owner 抽查。C2 已离线写完（164 项测试），待移植。详见 DEVX-016
+      文档第 9、10 节。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-pub5-rows-20261007-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-bb0cec04491c5c9a680c01c199352049
 projection:
   legacy_first_eight_cells:
   - DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
@@ -165,24 +204,28 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - C1（F1+F2+S2）已实现并提交在分支 claude/gov007-post-baseline-followups（8dd83045e，base d3d34872b）：聚焦回归
-    991 通过；另有 95 个失败全部是生成物过期类（compat authority、consumer inventory、006d index 等，须由候选的
-    generator 轮次重建，属预期）。下一步：prep 事务 + 生成器两轮 -> 正式事务 -> Full，通过后向 owner 申请该候选的发布授权（每个候选单独申请，只限该候选、普通推送）。之后
-    C2 = S3（单一发布命令 + 发布范围清单，须 owner 评审）、C3 = P4（通用 section 链校验，变异等价性先加后删，owner 2026-10-06
-    选择保留）、C4 = S4。开放问题 10.10 第 2、4 项已按推荐方案实现，待 owner 确认。分步、依赖、验收与开放问题见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
-    第 10 节。
+  - C1（F1+F2+S2）已发布（main = origin/main = 7ead2d6ff，普通推送 d3d34872b..7ead2d6ff）。C2（S3
+    单一发布命令）已在会话 scratchpad 离线写完并通过 164 项测试（10 个新模块、2 个脚本、范围策略草案），待移植进仓库：移植后新测试按 test_arch_005_publication_*.py
+    命名，范围策略须在冻结候选之前由 owner 评审并批准（该文件本身在普通发布的禁止路径里）；C2 的正式窗口里先用 stage1_timing_plugin
+    单独测一次 stage 1 的耗时构成。之后 C3 = P4（通用 section 链校验；owner 2026-10-07 决定：以变异等价性证据为准、分批提交、owner
+    抽查，不要求逐批批准）、C4 = S4。第 10.10 节的开放问题已全部答复。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+    第 9、10 节。
   - A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移 N 个任务
     = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选 Full 1 次；A6 安全边界与
     DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow 同步
-  - 2026-10-07：C1 实现并提交（8dd83045e）：F1 reseal 命令（dogfood：system_flow 加一段后 reseal --write
-    只改策略 5 行，build PASS）、F2 钉死计数改单调下限、S2 多任务事务 + TASK_SOURCE_ONLY 种类（9 项新测试；候选/验证/发布阶段在任何远端或
-    Full profile 预处理前被拒绝；仅该种类可在 TASK_SOURCE_PRE_WRITE 之后 COMPLETED）。本次任务行更新本身即是 S2
-    的第一次使用：DEVX-016 与 GOV-007 两行在一个 TASK_SOURCE_ONLY 事务内更新并以 COMPLETED 收口（此前每个任务一个事务、以
-    FAILED 收口）。
+  - 2026-10-07 第五次真实发布：DEVX-016 C1 候选 7ead2d6ff 已发布（main = origin/main，普通推送 d3d34872b..7ead2d6ff；正式事务
+    gov-007-d24-formal-20261007-v1 RELEASED/COMPLETED；owner 预授权该候选）。Full 通过，pytest
+    8,820 s（2:27:00；d23 8,737 s）；local-publish 57 分 3 秒（d23 54 分）。验收：F1 reseal 在本候选
+    dogfood 通过；F2 新增一个测试文件只需一轮生成器提交就零差异；S2 在真实事务验证（一个 TASK_SOURCE_ONLY 事务更新 2 个任务，COMPLETED
+    收口，2:41，0 个 FAILED）。披露：stage 1 751 s（基线 440-502、d23 579，趋势 505->579->751，原因待在
+    C2 正式窗口里测量）；两次仓库检查未带完整排除集（审计事件）；一次误起的范围过大 pytest（3.5 小时，自行跑完）；3.5 小时会话中断使发布前检查第
+    6 项（Full 结束后 2 小时内开始发布）超窗 27 分钟，owner 在核实租约仍有效后明确批准按例外继续，其余五项全部通过；最终的 git push
+    被权限分类器拒绝，由 owner 在终端执行，证据文件如实标注。owner 同日决定：发布范围清单 = 核心清单评审一次 + owned 由候选 diff
+    派生；P4-4 以变异等价性证据为准、分批提交、owner 抽查。C2 已离线写完（164 项测试），待移植。详见 DEVX-016 文档第 9、10 节。
   docs_links:
   - docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
   terminal: false
-  canonical_row_sha256: 162e4272503e01ef6b101300dfb39a297f4e3b4d32db09e9c3f93c782b37f94c
-last_event_id: task-event-1df5d598c9853c7690d369818b513c94
+  canonical_row_sha256: e9cce7fabdf12fa576474b86e198c6beb29ee4924f60ea9fb5310ea587f1b9db
+last_event_id: task-event-bb0cec04491c5c9a680c01c199352049
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: ee0fff98f1516cfb2ade1abf57afad7c7f4704c6125921b36aabff04f1b601ed
+fragment_checksum: 6435e3707262c472d51e85a796ec490f3ec50b2742387964a5d212da382effa0
