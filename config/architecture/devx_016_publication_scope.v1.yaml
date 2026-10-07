@@ -1,11 +1,12 @@
 schema_version: devx_016_publication_scope_policy.v1
 policy_id: DEVX-016-PUBLICATION-SCOPE
 version: 1.0.0
-status: PROPOSED_PENDING_OWNER_REVIEW
+status: OWNER_APPROVED_ENFORCED
 owner: Project Owner / architecture-control-plane
 approval_ref: >-
-  pending owner review of this core list (DEVX-016 requirement section 10.10 item 1; the direction
-  "core list reviewed once + extras derived from the candidate diff" was chosen by the owner on 2026-10-07)
+  owner decision 2026-10-07 (AskUserQuestion answer: approve the core list as drafted; DEVX-016
+  requirement section 10.10 item 1; direction "core list reviewed once + extras derived from the
+  candidate diff" chosen by the owner earlier the same day)
 rationale: >-
   Four consecutive formal publication transactions (DEVX-015 baseline, DEVX-021, DEVX-023,
   DEVX-016 C1) declared an identical shared-path set, generator list and tier list, and an owned set

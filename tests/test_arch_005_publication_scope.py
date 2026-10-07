@@ -10,6 +10,7 @@ import pytest
 
 from ai_trading_system.platform.architecture.publication_scope import (
     APPROVED_STATUS,
+    DEFAULT_POLICY_PATH,
     POLICY_SCHEMA_VERSION,
     PublicationScopeError,
     changed_paths_between,
@@ -354,3 +355,19 @@ def test_a_proposed_policy_loads_only_when_explicitly_allowed(tmp_path: Path) ->
     path.write_text(_policy_text(status="DRAFT"), encoding="utf-8", newline="\n")
     with pytest.raises(PublicationScopeError):
         load_publication_scope_policy(path, allow_proposed=True)
+
+
+def test_the_repository_policy_is_owner_approved_and_protects_the_publication_rules() -> None:
+    root = Path(__file__).resolve().parents[1]
+    policy = load_publication_scope_policy(root / DEFAULT_POLICY_PATH)  # no proposed allowance
+    assert policy.status == APPROVED_STATUS
+    for protected in (
+        "AGENTS.md",
+        "config/architecture/arch_005_integration_publication_fence.yaml",
+        "config/architecture/arch_005_s4d_checkout_guard.yaml",
+        "config/architecture/arch_005_parallel_control_policy.yaml",
+        DEFAULT_POLICY_PATH.as_posix(),
+    ):
+        assert protected in policy.forbidden_paths
+        assert (root / protected).exists()  # a typo would silently protect nothing
+    assert not any(prefix.startswith("outputs") for prefix in policy.allowed_owned_prefixes)

@@ -450,3 +450,4 @@ DEVX-017 依赖 DEVX-016 全部完成；OPS-082 须 owner 先确认「不得使�
   - **system_flow**：已加 C2 一段并用 F1 `reseal` 重算封印（只改策略 5 行；`build` PASS；生成物留给生成器链）。
   - **owner 决定（2026-10-07，会话中）**：DEVX-023 的「命名 DQ 父证明不再内嵌整库重放」排在 C3 之前（见 10.10 第 5 项与 DEVX-023 文档）。C2 照常先发布，之后是该契约波次，再 C3。
   - **待办**：范围策略的核心清单须在冻结候选之前由 owner 评审并把状态改为 `OWNER_APPROVED_ENFORCED`（该文件本身在普通发布的禁止路径里）；C2 的正式窗口里先用 `stage1_timing_plugin.py` 单独测一次 stage 1 的构成；C2 自身只能走手工链（策略此时仍是 PROPOSED），C2 之后的候选才用这条命令发布。
+- 2026-10-07：**owner 批准范围策略核心清单（AskUserQuestion，按草案）**。`config/architecture/devx_016_publication_scope.v1.yaml` 的状态改为 `OWNER_APPROVED_ENFORCED`，`approval_ref` 记录该决定，复审条件仍是围栏策略/生成器集合/共享生成权威/checkout guard 排除项变化时，或不晚于 2027-01-07；新增一个仓库级测试（真实策略必须能在不带 PROPOSED 许可的情况下加载、状态为已批准、受保护路径都真实存在）。`plan` 在 C2 自己的候选上仍然拒绝（策略文件在它自己的禁止路径里），这是设计：策略的批准发生在候选冻结之前，C2 走手工链，C2 之后的候选才用这条命令发布。owner 同时确认「推送由 owner 在自己的终端执行」的最后一步不变。
