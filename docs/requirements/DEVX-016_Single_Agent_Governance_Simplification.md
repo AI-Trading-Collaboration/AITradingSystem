@@ -360,3 +360,75 @@ DEVX-017 依赖 DEVX-016 全部完成；OPS-082 须 owner 先确认「不得使�
     `git status`，一次是不带路径的 `git status --porcelain --untracked-files=all`。两次输出里都没有出现被排除路径，没有读取、复制或修改其内容，
     按规则登记为审计事件；其后的全库检查一律使用 `architecture_arch005_checkout_guard.py worktree-audit`（PASS，仅 10 个 C1 路径为脏，
     暂存/未暂存 diff 检查均 PASS）。LANE 阶段 governed preflight（SINGLE_LANE，coordinator）PASS，证据 `claude_c1_lane_preflight.json`。
+
+- 2026-10-07：**owner 决定（AskUserQuestion，第 10.10 节）**：(1) C1 发布——通过后直接发布（只限候选 `7ead2d6ff`，普通推送，无 PR/force-push，任一项不绿即停下汇报）；
+  该授权同时接受 S2 的 `TASK_SOURCE_ONLY` COMPLETED 收口规则与 C1 合并粒度（第 2、4 项）。(2) 发布范围清单（第 1 项）：核心清单由 owner 评审一次，owned 路径由候选 diff 自动派生。
+  (3) P4-4 删除（第 3 项）：以变异等价性证据为准，分批提交，owner 抽查，不要求逐批批准。
+- 2026-10-07：**C1 已发布**（候选 `7ead2d6ff`，main = origin/main，普通推送 `d3d34872b..7ead2d6ff`；正式事务 `gov-007-d24-formal-20261007-v1`；无恢复、无人工修复；最终的 `git push` 由 owner 在终端执行（见事件记录））。
+  - **验收对照**：F1 reseal 命令在本候选自己给 `docs/system_flow.md` 加一段时 dogfood 通过（只改策略 5 行，`build` PASS）；F2 新增一个测试文件后只需**一轮**生成器提交就达到零差异
+    （此前新增测试文件需要两轮）；S2 验收 A3 以真实事务验证：一个 `TASK_SOURCE_ONLY` 事务更新 DEVX-016 与 GOV-007 两行，COMPLETED 收口，0 个 FAILED，2 分 41 秒
+    （此前每个任务约 2 分 46 秒、各一个 FAILED 事务）。
+  - **候选链实际经过**：prep 共 3 个事务——v1 在 architecture-manifests 生成器就失败（reseal 用了 `Path.write_bytes`，触发 arch_004c 依赖门
+    `NEW_DIRECT_ARTIFACT_WRITER_FORBIDDEN`，已改用 `write_bytes_atomic`）；v2 之后第二轮聚焦回归发现三处钉死的 system_flow 总条目数（006d 测试两处、refactor_policy 一处）已改为下限/一致性检查；
+    v3 一轮提交后零差异。另有一次 S2 行事务因 S2 测试夹具提到 task register 使 consumer inventory 失效而 FAILED 收口，夹具改为中性路径后重试成功。
+  - **耗时（对照 DEVX-022 第 15.1 节基线）**：S2 行事务 2:41；prep 每轮约 7 分；正式事务到 FORMAL_VALIDATION_PRE 3:35（基线 4:19）；预检 0:42 + 就绪度 1:00；
+    stage 1 **751 s**（基线 440–502、d21b 505、d23 579；趋势 505→579→751）、contract 292（d23 264）、integration 74、reproducibility 48、architecture-fitness 1,370（基线 1,216–1,412）、
+    Full pytest **8,820 s = 2:27:00**（d23 8,737 s）；发布阶段：LOCAL_MAIN_FF_PRE 3:44、`local-publish` **57 分 3 秒**（d23 54 分、d21b 86 分，目标 ≤ 60 分达成）、REMOTE_PUSH_PRE 3:32、CLOSEOUT 预检 0:48、CLEANUP_PRE 0:41、completed 释放 0:43。
+  - **stage 1 的分析**：两次对照的主机计数器里 python 约 3 个核全程占用、曲线形状几乎一致，总 CPU 时间 +33%（1,737→2,313 核·秒），所以是工作量变长而不是等待；真实租约库用旧代码（d3d34872b）和新代码
+    重放耗时相同（约 24 s，负载下；d23 发布后空闲时 15.5 s），C1 不改变重放成本；事件数只增加 0.8%（5,813→5,860），租约头 +12，不足以解释 +30%。尚未定位的原因需要在**正式窗口内**测量
+    （stage 1 要求有 FORMAL_VALIDATION_PRE 的活事务，发布后无法再跑）：C2 的正式窗口里先用 `stage1_timing_plugin.py` 单独跑一次 stage 1 的第一个测试，记录测试进程里 store.replay / live_parent_proof
+    的次数与总耗时，再决定是否需要改动。
+  - **事件记录（如实披露）**：(1) 本轮有两次仓库检查没有带完整的已登记排除集（已在上一条记录）；(2) 我误起过一次范围过大的 pytest（含两个文件里全部 Full 规模重节点，21 + 18 个，`--dist loadfile` 下单 worker 串行），
+    尝试用 `taskkill` 终止被权限分类器拒绝，我没有绕过，它在 12,867 秒（3 小时 34 分）后自己跑完：289 通过，2 失败（一个是当时生成物过期，已被生成器轮次修好；
+    一个重节点是在我同时改仓库期间失败，在最终干净树上单独重跑通过，18 分 13 秒）；(3) 3.5 小时的会话中断使发布前检查第 6 项（Full 结束后 2 小时内开始发布）超窗 27 分钟，
+    owner 在核实租约仍有效（还剩 3.5 小时、`local-publish` 最长约 86 分钟）后明确批准按例外继续，其余五项全部通过；(4) 最终的 `git push origin main` 被权限分类器拒绝（Out-of-Place Publication），我没有换别的方式绕过，由 owner 在终端执行；证据文件 `claude_d24_push.log` 如实标注它不是 git push 的输出，而是我在 owner 推送后的只读 SHA 校验（本地 main = origin/main = 远端 tip = 候选）；(5) `D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1` 仍待 owner 执行（5 个 HKCU 测试根）。
+- 2026-10-07：**S3 发布范围清单的草案依据（只读测量，4 个正式事务的声明范围对比）**。`gov-007-p1c-devx015-baseline-publication-…-v26`、
+  `gov-007-d21b-formal-…`、`gov-007-d23-formal-…`、`gov-007-d24-formal-…` 四个事务声明的 owned/shared/生成器/必需 tier 对比：
+  shared 路径 20 项、生成器 5 个、必需 tier 5 个在四个事务里**完全相同**；owned 路径的稳定核心是 59 项，四个事务的并集是 67 项，
+  逐候选新增只有 8 项，全部是「本候选 diff 里实际改动、且不在核心里」的文件（需求文档 DEVX-016/020/021/022/023，以及本候选新增或改动的
+  F1 模块与脚本、S2 测试）。结论：清单不必逐候选手写，可由「核心清单 + 候选 diff 派生的 extras」组成：
+  1. 核心清单（policy，owner 评审一次）：shared 路径集合、生成器顺序、必需 tier、owned 路径的允许前缀/glob（`docs/requirements/`、`src/`、
+     `scripts/`、`tests/`、`config/` 的受限子集）与**禁止路径**（围栏 policy yaml、AGENTS.md、known_unrelated 排除项、`.git`）；
+     带 owner、版本、状态、理由、复审条件（AGENTS.md 启发式治理）。
+  2. extras = `git diff-tree frozen_base..lane_head` 的路径 − 核心 − 生成物范围；每个 extra 必须落在允许 glob 内，否则在 acquire **之前**失败并给出
+     可读原因（候选改动了清单不允许的路径），而不是在后续阶段才因归属失败。
+  3. 命令输出把「核心版本 + extras 清单 + 它们的哈希」写进 `publish_state.json`，发布后与事务的声明范围逐项对照。
+  这样 d24 手写的 8 项 EXTRA 与「从上一个事务拷贝」都被取代。待 owner 决定：核心清单的评审人与「禁止路径」的范围。
+- 2026-10-07：**P4-0 盘点（只读 AST 分类，草稿；脚本在会话 scratchpad，发布时归档）**。对象：`tests/test_arch_004_refactor_policy.py`
+  （40,508 行、221 个测试、744 个私有 helper、969 个模块级常量）里名称含 `hash_authority`/`successor`/`retained` 的 112 个逐 wave 测试
+  （12,771 行；每个中位数 112 行、24 条断言、12 个钉死常量，最大 287 行/82 条断言/18 个常量），以及 006c（16 个，640 行）与 2452（13 个，235 行）。
+  断言分类（语句数，同一语句可属于多类）：来源集合与 delta 840、语义身份（schema/status/boundary/task_ids/owner_decisions）511、
+  来源哈希 245、安全标志 246、不可变前缀 155、取代声明 104、段顺序 87、语义内容（implementation/validation）103、篡改负向测试 51、
+  其余 603（多为逐 wave 的专属计数与字面量）。覆盖到的测试数（112 个里）：来源集合 112、语义身份 112、安全 112、来源哈希 110、不可变前缀 104、
+  取代 104、语义内容 92、顺序 76、篡改 51；既无不可变前缀也无篡改断言的 8 个测试在 P4-2 里需要单独评估它们实际抓到什么。
+  含义：来源集合、来源哈希、不可变前缀、取代、顺序、安全标志这六类（合计约 1,700 条语句）是逐 wave 重复的**同一组通用性质**，可由段数据自描述的
+  通用校验替代；语义身份与语义内容（约 600 条）是各 wave 的专属期望，应迁成段内数据；其余 603 条需要逐类归并，不能一次性删除。
+  「其余」的再分类（只数 assert，约数）：被取代集合的集合代数约 94、最新段 `next(reversed(...))` 的顺序检查约 51、循环 `all(...)` 约 43、
+  validation 状态词表（PENDING/PASS 等）约 50、逐 wave 专属块约 100（`generated_fragment_authority` 35、`owner_authorization` 及其变体约 30、
+  `preview_artifacts` 7 等）。也就是说「其余」里大部分仍是上面六类通用性质的另一种写法，真正逐 wave 专属、必须迁成段内数据的约 100–150 条。
+  下一步（P4-1 之前）：为 P4-2 的变异夹具列出至少 15 类篡改与每个现有测试的捕获集合。
+- 2026-10-07：**S3 实现草案（C2 的代码布局）；已在会话 scratchpad 离线写完并通过 164 项测试，待移植进仓库**。
+  - 布局：`src/ai_trading_system/platform/architecture/publication_orchestrator.py`（纯逻辑：步骤表、状态机、范围派生、前置检查）、
+    `scripts/architecture_arch005_publish.py`（`run|resume|status` CLI，只编排现有围栏命令）、`config/architecture/devx_016_publication_scope.v1.yaml`
+    （发布范围清单 policy）、`tests/test_devx016_publication_orchestrator.py`（夹具仓库 + 假执行器）。全部新文件；写文件只走
+    `write_bytes_atomic`（dependency gate），测试夹具不提 task register（consumer inventory）。
+  - 步骤契约：每步 = 编号、前置条件、命令 argv、期望产物、成功判定、幂等键。每步实际结果写入 `publish_state.json`（argv、退出码、stdout/stderr 路径、
+    产物哈希、起止时间、上一步结果哈希）。`resume` 先只读重放状态并校验已记录产物的哈希，再从第一个未完成步骤继续；有外部副作用的步骤
+    （本地 main 快进、推送）执行前先查实际状态（`git rev-parse main`、`git ls-remote`）判断是否已完成，已完成则只记录不重做。
+  - 授权门：`run` 在推送前停在 `AWAITING_OWNER_AUTHORIZATION`；只有存在 `--authorization-record`（候选 sha、范围=该候选的普通推送、授权时间、来源）且 sha 与冻结候选
+    相等才继续；没有记录永不推送，PR/force-push/历史改写不在命令里（AGENTS.md 单独授权）。
+  - 失败策略：任一步失败只记录 FAILED 与下一步动作，不自动重试有副作用的步骤；`status` 输出可读原因。
+  - 耗时：每步结果与 DEVX-022 第 15.1 节基线（任务行事务 2:45、prep 链约 7 分、正式事务到 FORMAL_VALIDATION_PRE 4:20、stage 1 440–502 s、contract 258–281 s、
+    integration 56–78 s、repro 36–48 s、architecture-fitness 1,216–1,412 s、Full 8,495–8,738 s、local-publish 54–86 分）自动对照，超过 1.25 倍时在
+    `status` 与终端摘要里标 `SLOW_STEP`，对应 owner「流程耗时超出预期要继续分析」的要求，并把实测写回基线表。
+  - 验收（补充）：用假执行器在夹具仓库里跑通全流程；逐阶段与 d21b/d23 真实事务的阶段序列对照；在 acquire 之后、Full 前后、local-publish 之后分别模拟进程被杀，`resume` 续跑且不重复推送；
+    缺少前置条件时在 acquire 之前失败；dogfood：C2 之后的候选全部走新命令。
+- 2026-10-07：**P4-0 数据模型事实（只读，合并后的兼容性权威）**。合并视图共 334 个顶层条目：9 个头字段（`schema_version`、`baseline_id`、`status`、`as_of`、
+  `base_commit`、`capture_mode`、`production_effect`、`frozen_sources`、`parity_requirements`）与 325 个段。段是**异构**的：138 种不同的顶层键集合、没有任何一个键出现在每个段里、
+  159 个 schema 族、`safety` 块出现在 170 个段里共 465 种键。来源记录共 10,009 条、涉及 2,004 个不同路径（每段中位数 24 条、最多 358 条；5,890 条标注 `git_eol_lf`，
+  4,119 条是更早的未标注哈希）；130 个段带 `prior_sections_immutability`；`supersession` 有 4 种键集合（14/116/3/25 个段）。每个路径的「最后一个列出它的段」里，一个 OPS-073 段占 333 条、
+  DEVX-015 V3 段占 148 条。含义：(1) 通用校验不能假设统一 schema，只能校验**段自己声明的**性质（来源哈希、不可变前缀、取代链、安全标志）；(2) 历史段的内容字面量（schema_version、task_ids、
+  safety 字典、implementation 字典）被逐 wave 测试重复断言，但只要「累计不可变前缀」一次性覆盖所有历史字节，且前缀哈希绑定到真实的 `source_commit` 与 git blob，内容字面量就是冗余的——
+  这正是 P4-2 变异等价性要证明的命题，不是预设结论；(3) 变异夹具必须覆盖「历史段字节被篡改」「当前来源被改动但没有后继段取代」「后继段取代了来源却记录了错误哈希」等类别，并对每个现有
+  逐 wave 测试记录它能抓到的变异集合，通用校验抓到的必须是其超集。
+  - 离线实现状态：十个新模块（`publication_scope|journal|orchestrator|commands|steps|checks|validation|publish_steps|services|cli`）、两个脚本（`architecture_arch005_publish.py`、`architecture_arch005_validate_candidate.py`）、范围策略草案（状态 `PROPOSED_PENDING_OWNER_REVIEW`）和 164 项测试（整条 run 用脚本化的仓库/围栏/远端/启动器走完 A–E）。真实 `plan` 在 C1 候选上干跑：78 个 diff 路径派生出 9 个 owned、69 个 shared，对比手写的 67 个 owned。移植规则：只新增文件；测试命名 `test_arch_005_publication_*.py`（归入 architecture-fitness 套件）；任何 `.py` 都不出现 `task_register.md` 字样（consumer inventory）；写文件只走 `write_bytes_atomic`（依赖门，C1 第一轮 prep 因此失败过）；范围策略文件自身在普通发布的禁止路径里，所以它的批准必须发生在 C2 候选冻结**之前**。
