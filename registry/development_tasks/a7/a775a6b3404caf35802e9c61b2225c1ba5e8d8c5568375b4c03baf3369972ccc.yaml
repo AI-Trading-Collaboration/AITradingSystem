@@ -15,18 +15,17 @@ task_record:
   created_by: null
   priority: P2
   accountable_owner: null
-  next_owner: Claude Code coordinator（出证明合同设计）；Project Owner（评审合同；封印 S 的决定仍待）
-  requirement_refs:
-  - docs/requirements/DEVX-023_Lease_Replay_Cost_Reduction_V1.md
+  next_owner: Project Owner（决定是否改「不落盘已校验标记」边界、评审封印 S 的信任模型）；Claude Code coordinator
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: owner 2026-10-07 决定：「命名 DQ 父证明不再内嵌整库重放」排在
-    DEVX-016 的 C3 之前（依据 DEVX-022 第 17.6 节：stage 1 耗时随证明体积线性增长，约 12 s / MB、每次发布 +约
-    10.9 MB，外推 C3 发布时约 980-1,030 s 越过 900 s 告警线）。路线：DEVX-016 C2 发布 → 本任务的证明契约波次（先出设计，owner
-    评审合同后再实现）→ C3 → C4。封印 S 的决定仍待 owner，不与本波次绑定。S3c/S3d/W 已发布（BASELINE_DONE）；发布 86
-    -> 54 分钟，每次发布单次重放仍 +1.5-1.8 s。设计文档为下一步（docs/requirements/DEVX-023_Lease_Replay_Cost_Reduction_V1.md
-    第 10 节）。
+  unstructured_legacy_blocker_or_next_step: 封印 S 的设计页已写入本任务文档第 10 节（owner 于 2026-10-07
+    收到）：封印是落盘的「已校验」结论，与 DEVX-018 O3 和 FileExecutionLeaseStore._replay_uncached 的不变量直接冲突，所以先要
+    owner 决定是否改这条边界（第 10.7 节 0 号问题），再评审信任模型与上线节奏；答「否」则走第 10.8 节的替代方案（减少重放次数 / 按租约链并行重放，均未实测，我先做只读原型测量）。路线（owner
+    2026-10-07 晚）：DEVX-016 C2 已发布 → 本任务的封印 S（评审前不实现）→ C3 → C4。更正：stage 1 耗时 ≈ 约 32
+    次租约库重放 × 约 21 s（DEVX-022 第 17.7 节），不是命名 DQ 证明体积；W-DQ（证明只留源租约视图）降为可选的证据体积卫生（第 11
+    节）。S3c/S3d/W 已发布（BASELINE_DONE）；单次重放 15.4 s（d23）→ 20.4–21 s（5,926 个事件、721 MB）。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 选定方案后：围栏命令（acquire/checkpoint/release）墙钟降到当前的 1/3 以内、真实发布不超过 30 分钟（只选 S3c+W
@@ -241,6 +240,38 @@ events:
   - change:gov-007-c2-rows-20261007-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-db764ed669ec389384c98e6e6db81047
+- schema_version: task_event.v1
+  task_id: DEVX-023_LEASE_REPLAY_COST_REDUCTION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-07T14:55:15Z'
+  actor: integration-coordinator
+  change_id: gov-007-pub6-rows-20261007-v1
+  lane_id: null
+  base_commit: 0834ed9576285e717185e5679c3a6e13c57a7d23
+  previous_state_event_id: task-event-db764ed669ec389384c98e6e6db81047
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P2
+    next_owner: Project Owner（决定是否改「不落盘已校验标记」边界、评审封印 S 的信任模型）；Claude Code coordinator
+    blocker_or_next_step: 封印 S 的设计页已写入本任务文档第 10 节（owner 于 2026-10-07 收到）：封印是落盘的「已校验」结论，与
+      DEVX-018 O3 和 FileExecutionLeaseStore._replay_uncached 的不变量直接冲突，所以先要 owner 决定是否改这条边界（第
+      10.7 节 0 号问题），再评审信任模型与上线节奏；答「否」则走第 10.8 节的替代方案（减少重放次数 / 按租约链并行重放，均未实测，我先做只读原型测量）。路线（owner
+      2026-10-07 晚）：DEVX-016 C2 已发布 → 本任务的封印 S（评审前不实现）→ C3 → C4。更正：stage 1 耗时 ≈ 约
+      32 次租约库重放 × 约 21 s（DEVX-022 第 17.7 节），不是命名 DQ 证明体积；W-DQ（证明只留源租约视图）降为可选的证据体积卫生（第
+      11 节）。S3c/S3d/W 已发布（BASELINE_DONE）；单次重放 15.4 s（d23）→ 20.4–21 s（5,926 个事件、721
+      MB）。
+    acceptance_criteria: 选定方案后：围栏命令（acquire/checkpoint/release）墙钟降到当前的 1/3 以内、真实发布不超过
+      30 分钟（只选 S3c+W 时：每次发布给租约库留下的事件字节从约 11.8 MiB 降到 1 MiB 以内，单次重放的逐发布增长从约 +3 s 降到
+      +0.5 s 以内，发布耗时不再随发布数线性增长）；重放结论与全量重放逐项相同（真实库与变异库的差分测试，含篡改/截断/重排/替换事件、内核版本变化使封印失效、封印缺失或损坏时回退全量重放；外置新增位置时：旧事件原样可读、新增位置的
+      marker 在旧位置或缺 blob 时 fail-closed）；不引入未经 owner 批准的跨调用缓存；历史事件文件不被改写；命名 DQ 父证明不再随发布数线性增长（只绑定重放摘要与来源租约，须评审）；文档与
+      system_flow 同步。
+    notes: 2026-10-07 晚：更正 stage 1 归因；封印 S 设计页交 owner 评审（先决定边界）；W-DQ 降为可选。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-pub6-rows-20261007-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-71084260a4000042f85f3bb742ee13b9
 projection:
   legacy_first_eight_cells:
   - DEVX-023_LEASE_REPLAY_COST_REDUCTION
@@ -248,21 +279,20 @@ projection:
     takes about 14 s, which dominates every fence command and the 71-minute real publication'
   - P2
   - BASELINE_DONE
-  - Claude Code coordinator（出证明合同设计）；Project Owner（评审合同；封印 S 的决定仍待）
-  - owner 2026-10-07 决定：「命名 DQ 父证明不再内嵌整库重放」排在 DEVX-016 的 C3 之前（依据 DEVX-022 第 17.6
-    节：stage 1 耗时随证明体积线性增长，约 12 s / MB、每次发布 +约 10.9 MB，外推 C3 发布时约 980-1,030 s 越过 900
-    s 告警线）。路线：DEVX-016 C2 发布 → 本任务的证明契约波次（先出设计，owner 评审合同后再实现）→ C3 → C4。封印 S 的决定仍待
-    owner，不与本波次绑定。S3c/S3d/W 已发布（BASELINE_DONE）；发布 86 -> 54 分钟，每次发布单次重放仍 +1.5-1.8 s。设计文档为下一步（docs/requirements/DEVX-023_Lease_Replay_Cost_Reduction_V1.md
-    第 10 节）。
+  - Project Owner（决定是否改「不落盘已校验标记」边界、评审封印 S 的信任模型）；Claude Code coordinator
+  - 封印 S 的设计页已写入本任务文档第 10 节（owner 于 2026-10-07 收到）：封印是落盘的「已校验」结论，与 DEVX-018 O3 和 FileExecutionLeaseStore._replay_uncached
+    的不变量直接冲突，所以先要 owner 决定是否改这条边界（第 10.7 节 0 号问题），再评审信任模型与上线节奏；答「否」则走第 10.8 节的替代方案（减少重放次数
+    / 按租约链并行重放，均未实测，我先做只读原型测量）。路线（owner 2026-10-07 晚）：DEVX-016 C2 已发布 → 本任务的封印 S（评审前不实现）→
+    C3 → C4。更正：stage 1 耗时 ≈ 约 32 次租约库重放 × 约 21 s（DEVX-022 第 17.7 节），不是命名 DQ 证明体积；W-DQ（证明只留源租约视图）降为可选的证据体积卫生（第
+    11 节）。S3c/S3d/W 已发布（BASELINE_DONE）；单次重放 15.4 s（d23）→ 20.4–21 s（5,926 个事件、721 MB）。
   - 选定方案后：围栏命令（acquire/checkpoint/release）墙钟降到当前的 1/3 以内、真实发布不超过 30 分钟（只选 S3c+W 时：每次发布给租约库留下的事件字节从约
     11.8 MiB 降到 1 MiB 以内，单次重放的逐发布增长从约 +3 s 降到 +0.5 s 以内，发布耗时不再随发布数线性增长）；重放结论与全量重放逐项相同（真实库与变异库的差分测试，含篡改/截断/重排/替换事件、内核版本变化使封印失效、封印缺失或损坏时回退全量重放；外置新增位置时：旧事件原样可读、新增位置的
     marker 在旧位置或缺 blob 时 fail-closed）；不引入未经 owner 批准的跨调用缓存；历史事件文件不被改写；命名 DQ 父证明不再随发布数线性增长（只绑定重放摘要与来源租约，须评审）；文档与
     system_flow 同步。
-  - 2026-10-07：owner 决定排序（证明契约波次在 C3 之前）；下一步是设计文档，合同变更须 owner 评审。
-  docs_links:
-  - docs/requirements/DEVX-023_Lease_Replay_Cost_Reduction_V1.md
+  - 2026-10-07 晚：更正 stage 1 归因；封印 S 设计页交 owner 评审（先决定边界）；W-DQ 降为可选。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: c2b35cf1ee88ec248ecb2d076256201dd2841b24c4142044dfea417042f15336
-last_event_id: task-event-db764ed669ec389384c98e6e6db81047
+  canonical_row_sha256: aaaadeae47eab29d92778c18dcf8cd328e270f19eb742758855920f93b8a3573
+last_event_id: task-event-71084260a4000042f85f3bb742ee13b9
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 5081d0f7675eb2a5291ed85aa97022a720d1389e39889ef0059252c09926d481
+fragment_checksum: 71fa4121d0bfb26655772492a4f02110c91848910c1b5ffc40baa81342182693
