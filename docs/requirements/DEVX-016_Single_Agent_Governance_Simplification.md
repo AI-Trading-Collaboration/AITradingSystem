@@ -323,6 +323,7 @@ DEVX-017 依赖 DEVX-016 全部完成；OPS-082 须 owner 先确认「不得使�
 | S3 | S2、发布范围清单经 owner 评审 | 见 10.6；dogfood：S3 之后的候选全部走新命令 |
 | P4-0 盘点 | 无（只读，可与 C1 并行） | 逐个现有逐 wave 测试的断言分类（不可变/源哈希/取代/顺序/语义/安全）与对应的变异集合 |
 | P4-1…P4-4 | P4-0 | 见 10.7 |
+| W-DQ（DEVX-023 第 8 节第 2 条：命名 DQ 父证明不再内嵌整库重放） | S3 已发布；证明合同设计经 owner 评审 | owner 2026-10-07 决定排在 C3 之前；验收见 DEVX-023 文档（设计评审后补第 10 节） |
 | S4 | S3、P4 | 见 10.8 |
 
 ### 10.10 开放问题（需 owner 决定）
@@ -330,6 +331,7 @@ DEVX-017 依赖 DEVX-016 全部完成；OPS-082 须 owner 先确认「不得使�
 2. `TASK_SOURCE_ONLY` 事务种类的 COMPLETED 收口规则是否可接受（S2）？
 3. P4-4 的大删除是否要求 owner 逐批评审，还是以变异等价性证据为准？
 4. 候选合并粒度：C1 合并 F1+F2+S2 是否接受？
+5. （2026-10-07 owner 已决定）路线顺序：C2（S3）→ **W-DQ（DEVX-023 的证明不再内嵌整库重放）→ C3（P4）→ C4（S4）**，原因是 stage 1 耗时随命名 DQ 证明体积线性增长，按 DEVX-022 第 17.6 节的外推，C3 发布时会越过 900 s 告警线。
 
 - 2026-10-07：按三次真实发布（DEVX-015 基线、DEVX-020/021/022、DEVX-021 P1 + S3b 回归修复、DEVX-023）的实测摩擦点补充了第 10 节的实施分解；owner 2026-10-06 选择「按原计划做 P4」，不降级；第 10.10 节列出需 owner 决定的开放问题。下一步：C1（F1 + F2 + S2）。
 
@@ -442,3 +444,9 @@ DEVX-017 依赖 DEVX-016 全部完成；OPS-082 须 owner 先确认「不得使�
   这正是 P4-2 变异等价性要证明的命题，不是预设结论；(3) 变异夹具必须覆盖「历史段字节被篡改」「当前来源被改动但没有后继段取代」「后继段取代了来源却记录了错误哈希」等类别，并对每个现有
   逐 wave 测试记录它能抓到的变异集合，通用校验抓到的必须是其超集。
   - 离线实现状态：十个新模块（`publication_scope|journal|orchestrator|commands|steps|checks|validation|publish_steps|services|cli`）、两个脚本（`architecture_arch005_publish.py`、`architecture_arch005_validate_candidate.py`）、范围策略草案（状态 `PROPOSED_PENDING_OWNER_REVIEW`）和 164 项测试（整条 run 用脚本化的仓库/围栏/远端/启动器走完 A–E）。真实 `plan` 在 C1 候选上干跑：78 个 diff 路径派生出 9 个 owned、69 个 shared，对比手写的 67 个 owned。移植规则：只新增文件；测试命名 `test_arch_005_publication_*.py`（归入 architecture-fitness 套件）；任何 `.py` 都不出现 `task_register.md` 字样（consumer inventory）；写文件只走 `write_bytes_atomic`（依赖门，C1 第一轮 prep 因此失败过）；范围策略文件自身在普通发布的禁止路径里，所以它的批准必须发生在 C2 候选冻结**之前**。
+- 2026-10-07：**C2（S3）已从会话 scratchpad 移植进仓库，候选尚未冻结**。新增文件全部是新路径，不改任何受哈希固定的历史源码：十个模块`src/ai_trading_system/platform/architecture/publication_{scope,journal,orchestrator,commands,steps,checks,validation,publish_steps,services,cli}.py`、两个脚本 `scripts/architecture_arch005_publish.py` 与 `scripts/architecture_arch005_validate_candidate.py`、范围策略草案 `config/architecture/devx_016_publication_scope.v1.yaml`（状态 `PROPOSED_PENDING_OWNER_REVIEW`）、十个测试文件 `tests/test_arch_005_publication_*.py` 与共享夹具 `tests/publication_run_support.py`。
+  - **移植验证**：仓库环境（项目 venv 3.11.9，`-n 16 --dist loadfile`）169 项通过（64 s）；ruff、black、mypy strict 对新文件全部通过（移植时发现并修正了离线开发没覆盖的项目规范：22 处 E501/I001、`publication_scope.py` 里同名变量复用两种类型、`publication_cli.py` 的 `Any` 返回、一个测试里写死的 `D:\Work\AITradingSystem` 根路径改为 `Path(__file__).resolve().parents[1]`）；`architecture_devex.py validate`：依赖门 PASS（0 个违规），模块与测试归属 0 个孤儿，只剩两条预期的清单新鲜度项（模块清单、测试清单，等生成器重建）。LANE 阶段 governed preflight（SINGLE_LANE，coordinator，26 项声明）PASS，证据 `claude_c2_lane_preflight.json`。
+  - **新增的设计决定（owner 推送默认模式）**：第五次发布里，harness 的权限分类器拒绝了我自己执行的 `git push origin main`，最终由 owner 在终端推送。所以 S3 命令默认**从不推送**：E58 授权门在默认模式下记 `NOT_REQUIRED_OWNER_PUSHES`；E59 在远端 tip 不是冻结候选时停在 AWAITING_AUTHORIZATION，并给出 `git push origin main`；owner 推送后 `resume` 只用远端 tip 证明（`pushed_by = OWNER_TERMINAL`），再做三方 SHA 核对与收尾。`--push-by-command` 是 owner 的显式选择，此时仍要求与冻结候选、基线、范围完全匹配的授权记录。这样 agent 不会再用命令包装去达成同一个被拒绝的动作。新增 5 个测试（默认从不推送、owner 的推送被远端证明后收尾、远端被推到别的提交时不接受、CLI 默认流程、旗标是显式选择）。
+  - **system_flow**：已加 C2 一段并用 F1 `reseal` 重算封印（只改策略 5 行；`build` PASS；生成物留给生成器链）。
+  - **owner 决定（2026-10-07，会话中）**：DEVX-023 的「命名 DQ 父证明不再内嵌整库重放」排在 C3 之前（见 10.10 第 5 项与 DEVX-023 文档）。C2 照常先发布，之后是该契约波次，再 C3。
+  - **待办**：范围策略的核心清单须在冻结候选之前由 owner 评审并把状态改为 `OWNER_APPROVED_ENFORCED`（该文件本身在普通发布的禁止路径里）；C2 的正式窗口里先用 `stage1_timing_plugin.py` 单独测一次 stage 1 的构成；C2 自身只能走手工链（策略此时仍是 PROPOSED），C2 之后的候选才用这条命令发布。

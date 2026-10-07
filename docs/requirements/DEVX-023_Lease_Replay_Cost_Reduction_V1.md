@@ -142,3 +142,4 @@
   因此第 8 节第 2 条（证明只绑定重放摘要与来源租约、不再内嵌整库重放）提高优先级：它同时去掉每次发布「+约 10.9 MB × 全部活体证明」；它是证明合同变更（生产代码 `named_quality_dispatch.py`、`named_quality_execution.py`、
   `prospective_capture_execution.py` 同样定义并消费 `named_dq_existing_parent_proof.v1`，不是只改测试），须 owner 评审。
   无合同变更的缓解（仅测试层，可选）：把 `tests/test_named_data_quality_actual_candidate.py` 的两个测试拆成两个文件，使 `--dist loadfile` 把它们放到两个 worker（阶段约 751 → 约 550 s，测试 2 约 530 s 是瓶颈）。待 owner 决定。
+- 2026-10-07：**owner 决定：「命名 DQ 父证明不再内嵌整库重放」（第 8 节第 2 条）排在 DEVX-016 的 C3 之前**（会话中答复；依据：stage 1 耗时随证明体积线性增长，DEVX-022 第 17.6 节外推 C3 发布时约 980–1,030 s 越过 900 s 告警线）。路线：C2（S3）发布 → 本任务的证明契约波次（先出设计，owner 评审合同后再实现）→ C3 → C4。封印 S 的决定仍待 owner，不与本波次绑定。下一步是设计文档：先读 `named_quality_dispatch.py`、`named_quality_execution.py`、`prospective_capture_execution.py` 与 `tests/named_data_quality_support.py` 里 `named_dq_existing_parent_proof.v1` 的生产者与消费者，列出每个消费者实际需要的字段，再决定证明改为绑定「重放摘要 + 来源租约头事件」时哪些校验必须保留（尤其是 PIT/来源租约关联的完整性），设计经 owner 评审后再实现。

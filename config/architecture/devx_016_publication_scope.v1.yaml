@@ -1,0 +1,85 @@
+schema_version: devx_016_publication_scope_policy.v1
+policy_id: DEVX-016-PUBLICATION-SCOPE
+version: 1.0.0
+status: PROPOSED_PENDING_OWNER_REVIEW
+owner: Project Owner / architecture-control-plane
+approval_ref: >-
+  pending owner review of this core list (DEVX-016 requirement section 10.10 item 1; the direction
+  "core list reviewed once + extras derived from the candidate diff" was chosen by the owner on 2026-10-07)
+rationale: >-
+  Four consecutive formal publication transactions (DEVX-015 baseline, DEVX-021, DEVX-023,
+  DEVX-016 C1) declared an identical shared-path set, generator list and tier list, and an owned set
+  that differed only by the files each candidate actually changed. This policy fixes what is the
+  same for every ordinary publication and lets the owned set of one candidate be DERIVED from its
+  commit-range diff, so a path outside the allowed prefixes, or inside the forbidden set, fails
+  before any transaction is acquired. Generators and required tiers are NOT repeated here: they stay
+  in config/architecture/arch_005_integration_publication_fence.yaml (single source of truth).
+review_condition: >-
+  Re-review when the fence policy, the generator set, the shared generated authorities or the checkout
+  guard exclusions change, and in any case before 2027-01-07 (90 days). A candidate that needs a
+  path this policy does not allow is a policy-change request for the owner, never a local workaround.
+
+# Paths that change as GENERATED authority or pinned historical evidence during every candidate:
+# they are declared shared, never owned. A path equal to or below an entry counts.
+shared_paths:
+  - docs/system_flow.md
+  - docs/artifact_catalog.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - config/architecture/devx_006d_report_catalog_flow_authority.yaml
+  - inputs/architecture
+  - registry/development_tasks
+  - registry/architecture_compatibility_authority
+  - registry/report_catalog_flow_authority
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_devx_006c_compatibility_authority.py
+  - tests/test_devx_006d_report_catalog_flow_authority.py
+  - tests/test_arch_005_s5_task_source_cutover.py
+  - tests/test_trading2452_architecture_contract.py
+
+# Untracked output directories the formal flow must declare as resources (named DQ synthetic roots and
+# the revalidation evidence tree). The fence adds publication.resource and outputs/validation_runtime
+# itself, so they are not listed. They are never part of a candidate diff.
+resource_paths:
+  - outputs/architecture/integration_revalidation
+  - outputs/architecture/trading_2564_s3b_prospective_capture/synthetic
+  - outputs/architecture/trading_2560_composer_known_snapshot/synthetic
+
+# A candidate may change (own) paths under these prefixes. Anything else is refused before acquire.
+allowed_owned_prefixes:
+  - docs/requirements/
+  - docs/architecture/
+  - docs/operations/
+  - src/ai_trading_system/
+  - scripts/
+  - tests/
+  - tools/codex_skills/
+  - config/architecture/
+  - config/data_governance/
+  - config/research/
+
+# No ordinary publication may touch these. Changing the publication rules themselves, the checkout
+# guard or the agent instructions is a reviewed contract wave, not a candidate path.
+forbidden_paths:
+  - AGENTS.md
+  - config/architecture/arch_005_integration_publication_fence.yaml
+  - config/architecture/arch_005_s4d_checkout_guard.yaml
+  - config/architecture/arch_005_parallel_control_policy.yaml
+  - config/architecture/devx_016_publication_scope.v1.yaml
+  - .git/
+  - .github/
+  - outputs/
+
+# Decision thresholds of a run (AGENTS.md heuristic governance: reviewed configuration, not code).
+limits:
+  # DEVX-021 section 8.3: the Full result is only valid for local publication while the execution
+  # lease is alive (TTL 6 h, kept alive by the validation driver); the manual checklist started the
+  # publication within two hours of the Full's end.
+  max_hours_since_full_end: 2.0
+  # A formal run writes tens of GB (Full artifacts, pytest base temp dirs, profile copies); the last
+  # cleanups freed 31-53 GB per candidate. 100 GB leaves headroom without blocking on a healthy host.
+  min_free_disk_gb: 100
+  # Generator rounds until zero diff: 1 round after the first commit (C1), 2 rounds earlier. Three
+  # gives headroom; non-convergence beyond that is a defect to fix, not a reason to loop.
+  max_generator_rounds: 3
