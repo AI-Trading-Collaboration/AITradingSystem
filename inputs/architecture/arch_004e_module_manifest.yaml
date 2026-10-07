@@ -16207,7 +16207,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.parallel_control_kernel
   path: src/ai_trading_system/platform/architecture/parallel_control_kernel.py
-  sha256: 90b958632de1efc73cfa3aeddb9af43fc8e5dc92282f5146e08fb1878719cc8e
+  sha256: a1180ee4c5ffb12aa470e8d7c4975fa66ddfae2829866acb109ee43bb6738adc
   rule_id: platform_architecture
   owner_profile: platform
   owners:

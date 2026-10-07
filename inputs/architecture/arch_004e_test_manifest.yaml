@@ -8666,7 +8666,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_lease_parallel_replay
   path: tests/test_arch_005_lease_parallel_replay.py
-  sha256: c30573a8b9160b8ce67b8d8059d635abfdbaf2660d98ea9eb02c0a2b29f5f284
+  sha256: 79b890514a72e096dce0ba05ccc47760181443f9f755f45cddd90f838c58f012
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
