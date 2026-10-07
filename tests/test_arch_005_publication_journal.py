@@ -135,3 +135,43 @@ def test_the_run_lock_admits_one_orchestrator_and_never_takes_over_silently(tmp_
     lock.release()
     lock.release()  # idempotent
     assert not lock.path.exists()
+
+
+def test_an_open_reader_does_not_block_appends(tmp_path: Path) -> None:
+    """C2.1: appending must not need to replace the file (on Windows a reader blocks a replace)."""
+    journal = _journal(tmp_path)
+    journal.append(step_id="A00.one", status="DONE", now=T0)
+    with journal.path.open("rb") as reader:  # an editor, `tail -F` or a scanner holding the journal
+        journal.append(step_id="A01.two", status="DONE", now=T0)
+        journal.append(step_id="A02.three", status="STARTED", now=T0)
+        assert reader.read().count(b"\n") == 3
+    replay = journal.replay()
+    assert replay.status == "PASS" and [entry.step_id for entry in replay.entries] == [
+        "A00.one",
+        "A01.two",
+        "A02.three",
+    ]
+
+
+def test_a_torn_final_line_is_ignored_and_cut_off_by_the_next_append(tmp_path: Path) -> None:
+    journal = _journal(tmp_path)
+    journal.append(step_id="A00.one", status="DONE", now=T0)
+    complete = journal.path.read_bytes()
+    journal.path.write_bytes(complete + b'{"detail":{},"entry_sha256":"abc')  # a crash mid-write
+    replay = journal.replay()
+    assert replay.status == "PASS" and len(replay.entries) == 1
+    assert replay.torn_tail_bytes == len(b'{"detail":{},"entry_sha256":"abc')
+    journal.append(step_id="A01.two", status="DONE", now=T0)
+    repaired = journal.replay()
+    assert repaired.status == "PASS" and repaired.torn_tail_bytes == 0
+    assert [entry.step_id for entry in repaired.entries] == ["A00.one", "A01.two"]
+    assert (
+        journal.path.read_bytes().startswith(complete) and b"abc" not in journal.path.read_bytes()
+    )
+
+
+def test_a_complete_but_corrupt_final_line_still_fails_closed(tmp_path: Path) -> None:
+    journal = _journal(tmp_path)
+    journal.append(step_id="A00.one", status="DONE", now=T0)
+    journal.path.write_bytes(journal.path.read_bytes() + b"garbage that ends with a newline\n")
+    assert journal.replay().status == "FAIL"

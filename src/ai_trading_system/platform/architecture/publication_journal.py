@@ -7,13 +7,19 @@ history, and continue from the first step that is not DONE. The journal records 
 fence transaction and the lease remain the authority for every external effect, and nothing here
 grants a push.
 
-Writes go through the canonical atomic writer (a run journal is small: one line per step event).
+The journal is APPENDED to, never rewritten (C2.1): one line per step event is written with a
+single O_APPEND write and fsync. Replacing the whole file atomically failed on Windows as soon as
+any reader (an editor, `tail -F`, a virus scanner) held it open; appending does not, and the hash
+chain plus the single-writer lock keep the integrity and exclusivity guarantees. A final line
+without its newline is a torn write: replay ignores it and the next append cuts it off. The lock
+file and `run.json` are tiny create-once files and still use the canonical atomic writer.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
@@ -55,6 +61,8 @@ class JournalReplay:
     status: str
     entries: tuple[JournalEntry, ...]
     issues: tuple[str, ...]
+    # Bytes of a final line that was never completed (a torn write); ignored by replay.
+    torn_tail_bytes: int = 0
 
     def last_status(self, step_id: str) -> str | None:
         for entry in reversed(self.entries):
@@ -83,7 +91,10 @@ class PublicationJournal:
         issues: list[str] = []
         entries: list[JournalEntry] = []
         previous: str | None = None
-        text = self.path.read_text(encoding="utf-8")
+        raw = self.path.read_bytes()
+        complete = raw.rfind(b"\n") + 1  # bytes up to and including the last newline
+        torn = len(raw) - complete
+        text = raw[:complete].decode("utf-8")
         for number, line in enumerate(text.split("\n"), start=1):
             if not line:
                 continue
@@ -106,7 +117,9 @@ class PublicationJournal:
                 issues.append(f"JOURNAL_STATUS:{number}")
             previous = entry.entry_sha256
             entries.append(entry)
-        return JournalReplay("PASS" if not issues else "FAIL", tuple(entries), tuple(issues))
+        return JournalReplay(
+            "PASS" if not issues else "FAIL", tuple(entries), tuple(issues), torn_tail_bytes=torn
+        )
 
     def append(
         self,
@@ -136,8 +149,20 @@ class PublicationJournal:
             entry_sha256="",
         )
         entry = replace(draft, entry_sha256=_entry_hash(draft))
-        existing = self.path.read_bytes() if self.path.exists() else b""
-        write_bytes_atomic(self.path, existing + _compact(entry.to_dict()) + b"\n")
+        line = _compact(entry.to_dict()) + b"\n"
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        if replay.torn_tail_bytes:  # cut off the never-completed final line before appending
+            with self.path.open("r+b") as handle:
+                handle.truncate(self.path.stat().st_size - replay.torn_tail_bytes)
+        flags = os.O_WRONLY | os.O_APPEND | os.O_CREAT | getattr(os, "O_BINARY", 0)
+        descriptor = os.open(self.path, flags, 0o666)
+        try:
+            written = os.write(descriptor, line)
+            if written != len(line):
+                raise PublicationJournalError("PUBLICATION_RUN_JOURNAL_SHORT_WRITE", str(written))
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
         return entry
 
 
