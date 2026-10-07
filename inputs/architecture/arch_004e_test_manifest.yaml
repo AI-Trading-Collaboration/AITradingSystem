@@ -3,9 +3,9 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1402
-test_count: 1341
-support_file_count: 61
+test_file_count: 1413
+test_count: 1351
+support_file_count: 62
 orphan_count: 0
 specific_overlap_count: 0
 tests:
@@ -732,6 +732,22 @@ tests:
 - test_id: tests.profile_smoothed_validation_chain
   path: tests/profile_smoothed_validation_chain.py
   sha256: 907f61c4b2dfa0337cf98ca6c6ad10fdbff29ff4e25ea599b6af92a1b80852c8
+  file_role: test_support
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.publication_run_support
+  path: tests/publication_run_support.py
+  sha256: 7dafbdcc7ae38b9af6ed34f5396a9bfc08741ed2fc404125d2e070c568baae5e
   file_role: test_support
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8635,6 +8651,166 @@ tests:
 - test_id: tests.test_arch_005_prebootstrap
   path: tests/test_arch_005_prebootstrap.py
   sha256: 804a5336a5ad57b01898fc16e16d64dc19718811dfb52a2d2d5f63b972358e01
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_publication_checks
+  path: tests/test_arch_005_publication_checks.py
+  sha256: 912a84a6aedfaf6e042e5d4272fb978ae38a86e8fcb6f4b66c63d2a1e7401ad7
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_publication_cli
+  path: tests/test_arch_005_publication_cli.py
+  sha256: 9d2a257cffdbe3dbddb16e3d073b6c9dd0449aeba0f4b640c678aed84b7be2cd
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_publication_journal
+  path: tests/test_arch_005_publication_journal.py
+  sha256: 24168757d011e6ed8a0181fce8c19f068530042c95e36d251c436712cedbcdd0
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_publication_orchestrator
+  path: tests/test_arch_005_publication_orchestrator.py
+  sha256: 3f8b3d256c6c7c49c23849181c63aba85bd4cd2c02184809f48248c3a5b5c468
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_publication_preconditions
+  path: tests/test_arch_005_publication_preconditions.py
+  sha256: 88b5d472d8c347725a61d9b6c653eaf813d47d8c5a0ba8d02a74be9cf7dcd849
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_publication_run
+  path: tests/test_arch_005_publication_run.py
+  sha256: 4d0d567064f5b0afa30edc259e03de526dcaf7ad04f9f91e8a99e1f94620c97c
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_publication_scope
+  path: tests/test_arch_005_publication_scope.py
+  sha256: 559a48f2c3ba433b4fc6d955608d549e3f9f6e6e73ddc2d4409d431d45ea6ab8
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_publication_services
+  path: tests/test_arch_005_publication_services.py
+  sha256: cf9384a02ad72b57136200f9a33e437cbc89a312efe12b0f93d0e8877198994c
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_publication_steps
+  path: tests/test_arch_005_publication_steps.py
+  sha256: 455669a758e40649003baa0d760c0972cc5121ef2d0b15af6077c0625800b768
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_publication_validation
+  path: tests/test_arch_005_publication_validation.py
+  sha256: 9bbac70c1474415a82e560a0428157d7503aa7b2b975b74d6e98cd6c8dba22ba
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality

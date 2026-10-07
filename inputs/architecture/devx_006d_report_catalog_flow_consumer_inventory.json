@@ -1,6 +1,6 @@
 {
   "broker_action": "none",
-  "consumer_count": 165,
+  "consumer_count": 169,
   "consumers": [
     {
       "migration_status": "PENDING_OWNER_CUTOVER",
@@ -233,6 +233,17 @@
         {
           "literal_count": 5,
           "target_path": "config/report_registry.yaml"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/publication_run_support.py",
+      "references": [
+        {
+          "literal_count": 3,
+          "target_path": "docs/system_flow.md"
         }
       ],
       "role": "SOURCE_CONTRACT_TEST"
@@ -2401,6 +2412,39 @@
         {
           "literal_count": 2,
           "target_path": "config/report_registry.yaml"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_arch_005_publication_cli.py",
+      "references": [
+        {
+          "literal_count": 3,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_arch_005_publication_scope.py",
+      "references": [
+        {
+          "literal_count": 5,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_arch_005_publication_steps.py",
+      "references": [
+        {
+          "literal_count": 5,
+          "target_path": "docs/system_flow.md"
         }
       ],
       "role": "SOURCE_CONTRACT_TEST"
