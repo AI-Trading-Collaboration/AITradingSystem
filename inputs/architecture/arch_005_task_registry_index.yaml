@@ -14,7 +14,7 @@ fragment_count: 1080
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 3bb75dbb2fdf805a361e03abf20e427bffb1b9dba878e3d83a5ea7172c3f1dfc
+final_chain_sha256: 89f3baefa3186d76fdd02f24186980dafa86e090388a7c151133481fa3a0f7ad
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 2fab76611d56d6278a102740c94bb5da2236a35467c6debc98b34ad1c9f32129
 templates:
@@ -8663,17 +8663,17 @@ fragments:
   entry_sha256: 652512bcf2a4ebbc241c1a0aecbd07a7bcd2fc656784fdf7361375eb9e7d89f8
 - task_id: DEVX-023_LEASE_REPLAY_COST_REDUCTION
   path: registry/development_tasks/a7/a775a6b3404caf35802e9c61b2225c1ba5e8d8c5568375b4c03baf3369972ccc.yaml
-  file_sha256: 458a4bca447f007dd1da06fa267284767252885ba28519773ddca665a9fdf611
-  fragment_checksum: 71fa4121d0bfb26655772492a4f02110c91848910c1b5ffc40baa81342182693
+  file_sha256: 014b7ec987f5a3095e5735b7f007dbcfd9a864ed40c4b5cd1477a6adf02c0bb4
+  fragment_checksum: 25fa17d6ae57748a7d2e4d699daf3564217c7c68b82c8decfaa67f10006bf318
   partition: active
   order: 1080
   previous_entry_sha256: 652512bcf2a4ebbc241c1a0aecbd07a7bcd2fc656784fdf7361375eb9e7d89f8
-  entry_sha256: 3bb75dbb2fdf805a361e03abf20e427bffb1b9dba878e3d83a5ea7172c3f1dfc
+  entry_sha256: 89f3baefa3186d76fdd02f24186980dafa86e090388a7c151133481fa3a0f7ad
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 2f813d9e5120f95dc1e49a7625bce38fa78168de795b70bfdcfb8a129c35b145
-  byte_count: 1368970
+  sha256: 70ab2e8a7d36d29fd16e0fdc4fba4ea8e731a9405e75b3cb04138d1a66bf35ba
+  byte_count: 1368498
   row_count: 315
   generated_do_not_edit: true
 - partition: completed
@@ -18098,7 +18098,14 @@ governance_cycles:
   change_id: gov-007-pub6-rows-20261007-v1
   event_count: 30
   production_effect: none
-governance_cycle_count: 1345
+- cycle_id: arch-005-s5-cycle-1346
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: DEVX-023_LEASE_REPLAY_COST_REDUCTION
+  change_id: gov-007-devx023-p0-rows-20261008-v1
+  event_count: 8
+  production_effect: none
+governance_cycle_count: 1346
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -18112,4 +18119,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 3f77db0d4a3ebc2887058399c2a116655e14669bde52c91b0f905035e7ddf878
+index_checksum: 8803249faf4c9c01b8b775283cd3040549f34828a91aba1ba7120ce6166e215a
