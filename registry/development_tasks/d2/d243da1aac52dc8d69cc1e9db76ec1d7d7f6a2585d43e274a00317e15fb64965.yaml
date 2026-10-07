@@ -13,18 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Claude Code coordinator；Project Owner（评审封印 S 的边界与信任模型）
+  next_owner: Claude Code coordinator
   requirement_refs:
   - docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: C1（F1+F2+S2）与 C2（S3 单一发布命令 + 范围策略 + 验证驱动）已发布（main
-    = origin/main = 0834ed957，普通推送 7ead2d6ff..0834ed957）。S3 命令默认从不推送，owner 在自己的终端推送（--push-by-command
-    是 owner 的显式选择）；范围策略已由 owner 批准（OWNER_APPROVED_ENFORCED），C2 之后的候选改用 scripts/architecture_arch005_publish.py
-    发布。路线（owner 2026-10-07 晚）：封印 S（DEVX-023 第 10 节；先要 owner 决定是否改「不落盘已校验标记」的边界并评审信任模型，评审前不实现）→
-    C3（P4 通用 section 链校验；以变异等价性证据为准、分批提交、owner 抽查）→ C4（S4）。stage 1 的耗时归因已更正（DEVX-022
-    第 17.7 节：约 32 次租约库重放 × 约 21 s，不是证明体积）。S3 后续小项：E59 的 owner 模式等待时对租约做心跳；plan 对「候选改了策略文件」的提示。分步、依赖、验收与进度见
+  unstructured_legacy_blocker_or_next_step: C1 与 C2 已发布（main = origin/main = 0834ed957）。S3
+    命令的第一次真实运行发现日志追加缺陷（journal 用整文件原子替换，被读者占用即失败），登记为 C2.1：改为只追加并容忍撕裂的尾巴，随 DEVX-023
+    P 候选发布（见本任务文档第 9 节 2026-10-08 条）。路线（owner）：DEVX-023 P（链级并行重放，进行中）-> C3（P4 通用 section
+    链校验）-> C4（S4）；封印 S 留作后备。S3 其余后续小项：E59 的 owner 模式等待时对租约心跳；plan 对「候选改了策略文件」的提示。分步、依赖、验收与进度见
     docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md 第 9、10 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
@@ -264,29 +262,55 @@ events:
   - change:gov-007-pub6-rows-20261007-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-aeafcb8e54c5d06e89b4bb85b853ced0
+- schema_version: task_event.v1
+  task_id: DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-07T16:03:11Z'
+  actor: integration-coordinator
+  change_id: gov-007-devx016-c21-rows-20261008-v1
+  lane_id: null
+  base_commit: 0834ed9576285e717185e5679c3a6e13c57a7d23
+  previous_state_event_id: task-event-aeafcb8e54c5d06e89b4bb85b853ced0
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: C1 与 C2 已发布（main = origin/main = 0834ed957）。S3 命令的第一次真实运行发现日志追加缺陷（journal
+      用整文件原子替换，被读者占用即失败），登记为 C2.1：改为只追加并容忍撕裂的尾巴，随 DEVX-023 P 候选发布（见本任务文档第 9 节 2026-10-08
+      条）。路线（owner）：DEVX-023 P（链级并行重放，进行中）-> C3（P4 通用 section 链校验）-> C4（S4）；封印 S 留作后备。S3
+      其余后续小项：E59 的 owner 模式等待时对租约心跳；plan 对「候选改了策略文件」的提示。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+      第 9、10 节。
+    acceptance_criteria: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为
+      0；A3 登记或转移 N 个任务 = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选
+      Full 1 次；A6 安全边界与 DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow
+      同步
+    notes: 2026-10-08：S3 首次真实运行发现并登记 C2.1（journal 只追加）；随 DEVX-023 P 候选发布。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-devx016-c21-rows-20261008-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3d24dac07deb9477013205071f6efded
 projection:
   legacy_first_eight_cells:
   - DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
   - Architecture / single-agent default governance and monotonic ratchets
   - P0
   - IN_PROGRESS
-  - Claude Code coordinator；Project Owner（评审封印 S 的边界与信任模型）
-  - C1（F1+F2+S2）与 C2（S3 单一发布命令 + 范围策略 + 验证驱动）已发布（main = origin/main = 0834ed957，普通推送
-    7ead2d6ff..0834ed957）。S3 命令默认从不推送，owner 在自己的终端推送（--push-by-command 是 owner 的显式选择）；范围策略已由
-    owner 批准（OWNER_APPROVED_ENFORCED），C2 之后的候选改用 scripts/architecture_arch005_publish.py
-    发布。路线（owner 2026-10-07 晚）：封印 S（DEVX-023 第 10 节；先要 owner 决定是否改「不落盘已校验标记」的边界并评审信任模型，评审前不实现）→
-    C3（P4 通用 section 链校验；以变异等价性证据为准、分批提交、owner 抽查）→ C4（S4）。stage 1 的耗时归因已更正（DEVX-022
-    第 17.7 节：约 32 次租约库重放 × 约 21 s，不是证明体积）。S3 后续小项：E59 的 owner 模式等待时对租约做心跳；plan 对「候选改了策略文件」的提示。分步、依赖、验收与进度见
-    docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md 第 9、10 节。
+  - Claude Code coordinator
+  - C1 与 C2 已发布（main = origin/main = 0834ed957）。S3 命令的第一次真实运行发现日志追加缺陷（journal 用整文件原子替换，被读者占用即失败），登记为
+    C2.1：改为只追加并容忍撕裂的尾巴，随 DEVX-023 P 候选发布（见本任务文档第 9 节 2026-10-08 条）。路线（owner）：DEVX-023
+    P（链级并行重放，进行中）-> C3（P4 通用 section 链校验）-> C4（S4）；封印 S 留作后备。S3 其余后续小项：E59 的 owner
+    模式等待时对租约心跳；plan 对「候选改了策略文件」的提示。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+    第 9、10 节。
   - A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移 N 个任务
     = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选 Full 1 次；A6 安全边界与
     DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow 同步
-  - 2026-10-07：C2 已发布（第六次发布，main = origin/main = 0834ed957）；路线改为封印 S 在 C3 之前；stage
-    1 归因更正；S3 命令默认由 owner 推送。
+  - 2026-10-08：S3 首次真实运行发现并登记 C2.1（journal 只追加）；随 DEVX-023 P 候选发布。
   docs_links:
   - docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
   terminal: false
-  canonical_row_sha256: f75616799e5421f6f1ddee953b47aa6d5d8553ce6ba5aef25e3bfab9f0b89387
-last_event_id: task-event-aeafcb8e54c5d06e89b4bb85b853ced0
+  canonical_row_sha256: a40119102bf14d4cb5a9f0fa6ae2eeed2ace4bad28e0d00b886be615f5ba736d
+last_event_id: task-event-3d24dac07deb9477013205071f6efded
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 0a9103249547f4adc9ce644c0845272267a861015e16132867be5c1b57fc2dbb
+fragment_checksum: 24efd4c0b3f870d7453192beb78dfec3b55766ffa09ce5fa5ed74593cf6f7624
