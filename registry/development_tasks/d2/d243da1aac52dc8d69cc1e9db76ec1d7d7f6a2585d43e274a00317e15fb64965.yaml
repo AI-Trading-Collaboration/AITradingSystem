@@ -13,18 +13,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Claude Code coordinator
+  next_owner: Project Owner（评审范围策略核心清单）；Claude Code coordinator
   requirement_refs:
   - docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: C1（F1+F2+S2）已发布（main = origin/main = 7ead2d6ff，普通推送
-    d3d34872b..7ead2d6ff）。C2（S3 单一发布命令）已在会话 scratchpad 离线写完并通过 164 项测试（10 个新模块、2 个脚本、范围策略草案），待移植进仓库：移植后新测试按
-    test_arch_005_publication_*.py 命名，范围策略须在冻结候选之前由 owner 评审并批准（该文件本身在普通发布的禁止路径里）；C2
-    的正式窗口里先用 stage1_timing_plugin 单独测一次 stage 1 的耗时构成。之后 C3 = P4（通用 section 链校验；owner
-    2026-10-07 决定：以变异等价性证据为准、分批提交、owner 抽查，不要求逐批批准）、C4 = S4。第 10.10 节的开放问题已全部答复。分步、依赖、验收与进度见
-    docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md 第 9、10 节。
+  unstructured_legacy_blocker_or_next_step: C1（F1+F2+S2）已发布（main = origin/main = 7ead2d6ff）。C2（S3
+    单一发布命令）已移植进仓库并提交（lane 分支 d6068fbbc；十个新模块、两个脚本、范围策略草案、169 项测试，ruff/black/mypy 通过，依赖门
+    PASS）。范围策略 config/architecture/devx_016_publication_scope.v1.yaml 状态为 PROPOSED_PENDING_OWNER_REVIEW：须在冻结候选之前由
+    owner 评审核心清单并改为 OWNER_APPROVED_ENFORCED（该文件本身在普通发布的禁止路径里，命令在批准前拒绝据此运行）。C2 自身走手工链（策略此时仍是
+    PROPOSED），其正式窗口里先用 stage1_timing_plugin 单独测一次 stage 1 的构成。S3 命令默认从不推送：owner 在自己的终端执行
+    git push origin main，命令用远端 tip 证明并收尾；--push-by-command 是 owner 的显式选择。路线（owner
+    2026-10-07 决定）：C2 → W-DQ（DEVX-023 的命名 DQ 证明不再内嵌整库重放）→ C3（P4，以变异等价性证据为准、分批提交、owner
+    抽查）→ C4（S4）。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+    第 9、10 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移
@@ -197,35 +200,63 @@ events:
   - change:gov-007-pub5-rows-20261007-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-bb0cec04491c5c9a680c01c199352049
+- schema_version: task_event.v1
+  task_id: DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-07T09:23:46Z'
+  actor: integration-coordinator
+  change_id: gov-007-c2-rows-20261007-v1
+  lane_id: null
+  base_commit: 7ead2d6ffae5acac93b5fdc65c4feebc82fd384e
+  previous_state_event_id: task-event-bb0cec04491c5c9a680c01c199352049
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Project Owner（评审范围策略核心清单）；Claude Code coordinator
+    blocker_or_next_step: C1（F1+F2+S2）已发布（main = origin/main = 7ead2d6ff）。C2（S3 单一发布命令）已移植进仓库并提交（lane
+      分支 d6068fbbc；十个新模块、两个脚本、范围策略草案、169 项测试，ruff/black/mypy 通过，依赖门 PASS）。范围策略 config/architecture/devx_016_publication_scope.v1.yaml
+      状态为 PROPOSED_PENDING_OWNER_REVIEW：须在冻结候选之前由 owner 评审核心清单并改为 OWNER_APPROVED_ENFORCED（该文件本身在普通发布的禁止路径里，命令在批准前拒绝据此运行）。C2
+      自身走手工链（策略此时仍是 PROPOSED），其正式窗口里先用 stage1_timing_plugin 单独测一次 stage 1 的构成。S3 命令默认从不推送：owner
+      在自己的终端执行 git push origin main，命令用远端 tip 证明并收尾；--push-by-command 是 owner 的显式选择。路线（owner
+      2026-10-07 决定）：C2 → W-DQ（DEVX-023 的命名 DQ 证明不再内嵌整库重放）→ C3（P4，以变异等价性证据为准、分批提交、owner
+      抽查）→ C4（S4）。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+      第 9、10 节。
+    acceptance_criteria: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为
+      0；A3 登记或转移 N 个任务 = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选
+      Full 1 次；A6 安全边界与 DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow
+      同步
+    notes: 2026-10-07：C2 移植完成并提交 d6068fbbc；新增 owner 推送默认模式；路线顺序按 owner 决定加入 W-DQ（C2
+      之后、C3 之前）。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-c2-rows-20261007-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-33259e4e5223a4f6f1f7da1b2870d126
 projection:
   legacy_first_eight_cells:
   - DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
   - Architecture / single-agent default governance and monotonic ratchets
   - P0
   - IN_PROGRESS
-  - Claude Code coordinator
-  - C1（F1+F2+S2）已发布（main = origin/main = 7ead2d6ff，普通推送 d3d34872b..7ead2d6ff）。C2（S3
-    单一发布命令）已在会话 scratchpad 离线写完并通过 164 项测试（10 个新模块、2 个脚本、范围策略草案），待移植进仓库：移植后新测试按 test_arch_005_publication_*.py
-    命名，范围策略须在冻结候选之前由 owner 评审并批准（该文件本身在普通发布的禁止路径里）；C2 的正式窗口里先用 stage1_timing_plugin
-    单独测一次 stage 1 的耗时构成。之后 C3 = P4（通用 section 链校验；owner 2026-10-07 决定：以变异等价性证据为准、分批提交、owner
-    抽查，不要求逐批批准）、C4 = S4。第 10.10 节的开放问题已全部答复。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+  - Project Owner（评审范围策略核心清单）；Claude Code coordinator
+  - C1（F1+F2+S2）已发布（main = origin/main = 7ead2d6ff）。C2（S3 单一发布命令）已移植进仓库并提交（lane 分支
+    d6068fbbc；十个新模块、两个脚本、范围策略草案、169 项测试，ruff/black/mypy 通过，依赖门 PASS）。范围策略 config/architecture/devx_016_publication_scope.v1.yaml
+    状态为 PROPOSED_PENDING_OWNER_REVIEW：须在冻结候选之前由 owner 评审核心清单并改为 OWNER_APPROVED_ENFORCED（该文件本身在普通发布的禁止路径里，命令在批准前拒绝据此运行）。C2
+    自身走手工链（策略此时仍是 PROPOSED），其正式窗口里先用 stage1_timing_plugin 单独测一次 stage 1 的构成。S3 命令默认从不推送：owner
+    在自己的终端执行 git push origin main，命令用远端 tip 证明并收尾；--push-by-command 是 owner 的显式选择。路线（owner
+    2026-10-07 决定）：C2 → W-DQ（DEVX-023 的命名 DQ 证明不再内嵌整库重放）→ C3（P4，以变异等价性证据为准、分批提交、owner
+    抽查）→ C4（S4）。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
     第 9、10 节。
   - A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移 N 个任务
     = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选 Full 1 次；A6 安全边界与
     DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow 同步
-  - 2026-10-07 第五次真实发布：DEVX-016 C1 候选 7ead2d6ff 已发布（main = origin/main，普通推送 d3d34872b..7ead2d6ff；正式事务
-    gov-007-d24-formal-20261007-v1 RELEASED/COMPLETED；owner 预授权该候选）。Full 通过，pytest
-    8,820 s（2:27:00；d23 8,737 s）；local-publish 57 分 3 秒（d23 54 分）。验收：F1 reseal 在本候选
-    dogfood 通过；F2 新增一个测试文件只需一轮生成器提交就零差异；S2 在真实事务验证（一个 TASK_SOURCE_ONLY 事务更新 2 个任务，COMPLETED
-    收口，2:41，0 个 FAILED）。披露：stage 1 751 s（基线 440-502、d23 579，趋势 505->579->751，原因待在
-    C2 正式窗口里测量）；两次仓库检查未带完整排除集（审计事件）；一次误起的范围过大 pytest（3.5 小时，自行跑完）；3.5 小时会话中断使发布前检查第
-    6 项（Full 结束后 2 小时内开始发布）超窗 27 分钟，owner 在核实租约仍有效后明确批准按例外继续，其余五项全部通过；最终的 git push
-    被权限分类器拒绝，由 owner 在终端执行，证据文件如实标注。owner 同日决定：发布范围清单 = 核心清单评审一次 + owned 由候选 diff
-    派生；P4-4 以变异等价性证据为准、分批提交、owner 抽查。C2 已离线写完（164 项测试），待移植。详见 DEVX-016 文档第 9、10 节。
+  - 2026-10-07：C2 移植完成并提交 d6068fbbc；新增 owner 推送默认模式；路线顺序按 owner 决定加入 W-DQ（C2 之后、C3
+    之前）。
   docs_links:
   - docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
   terminal: false
-  canonical_row_sha256: e9cce7fabdf12fa576474b86e198c6beb29ee4924f60ea9fb5310ea587f1b9db
-last_event_id: task-event-bb0cec04491c5c9a680c01c199352049
+  canonical_row_sha256: 2f80dc70c1d9a92e99f3f933513d98b0cdaed16442d825b5ef67260a91c95b7b
+last_event_id: task-event-33259e4e5223a4f6f1f7da1b2870d126
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 6435e3707262c472d51e85a796ec490f3ec50b2742387964a5d212da382effa0
+fragment_checksum: 105820ab82c4a625fff8694491a0a3e77587b8b4321e617cf951173789cbc713
