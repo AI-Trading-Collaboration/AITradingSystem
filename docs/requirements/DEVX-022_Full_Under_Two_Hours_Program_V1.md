@@ -569,6 +569,7 @@ owner 2026-10-06：「继续，但也要关注后续的流程耗时是否超出�
 - 本次 Full：14,791 通过 / 0 失败，pytest 2:25:37（基线带 2:14–2:25，边缘），总 CPU 约 57.2 CPU 小时（M2c 51.8、M3 54.0、M4 60.6、d21b 53.8）；阶段 `contract` 264 s、`integration` 78 s、`reproducibility` 48 s、`architecture-fitness` 1,412 s 均在基线带内或边缘。
 
 ### 17.6 第五次发布（2026-10-07，DEVX-016 C1）：耗时对照与 stage 1 的原因分析
+- **更正（2026-10-07 晚）**：本节「结论」与「处理与登记」里「证明体积决定 stage 1 耗时、约 12 s / MB、外推 860–890 s」的归因，已被 17.7 的逐调用计时否定，以 17.7 为准；耗时对照表、宿主侧与逐组件时间线仍然有效。
 - 对照 §15.1（`claude_d24_*` 证据文件的时间戳与 `D:/Work/devx022-d24-counters.csv`；告警线沿用，不调高）：
 
 | 环节 | d24 实测 | §15.1 预期 | 告警线 | 判断 |
@@ -611,3 +612,31 @@ owner 2026-10-06：「继续，但也要关注后续的流程耗时是否超出�
   （证明合同变更：`named_quality_dispatch.py`、`named_quality_execution.py`、`prospective_capture_execution.py` 同样定义并消费 `named_dq_existing_parent_proof.v1`，不是只改测试）；封印 S 另外降低重放本身的耗时。
   无合同变更的缓解（仅测试层，可选，待 owner 决定是否先做）：把上述文件拆成两个文件，使 `--dist loadfile` 把两个测试放到两个 worker（阶段约 751 → 约 550 s，测试 2 约 530 s 是瓶颈）。
 - **监测计划**：C2 的正式窗口里把 stage 1 用 `stage1_timing_plugin.py`（包住测试进程内的 `FileExecutionLeaseStore.replay` 与 `_live_parent_proof`）单独测一次，把耗时拆成重放、证明构造与序列化、子进程三部分，结果写入本节下一小节；该窗口没有我自己的并发杂活，是干净的对照。
+
+### 17.7 C2 窗口的 stage 1 逐调用计时：更正 17.6 的归因，以及第六次发布（DEVX-016 C2）的耗时对照
+- **更正**：17.6 把 stage 1 的增长归因于命名 DQ 证明体积（约 12 s / MB）。C2 窗口里用 `scratchpad/stage1_timing_plugin.py` 对 stage 1 的两个测试做了逐调用计时（在活的 `FORMAL_VALIDATION_PRE` 事务上、冻结驱动启动之前单独跑一次，诊断运行 761.1 s），**该归因被否定**：
+  (1) 证明体积按预测长到了 68.40 MB（+10.9 MB，`activation_cli_0_parent.json` 331.9 MB），stage 1 却只有 761 s（冻结驱动里的 stage 1 为 785.5 s，期间我并发跑了一次 32 s 的 cProfile 重放），比 d24 的 751 s 只多 10 s，旧模型预测 860–890 s；
+  (2) 测试进程内：租约库重放 14 次（每次活体证明 2 次：`fence.validate` 内 1 次、证明里 `guard.replay()` 1 次），每次 21.43 s，共 300.0 s；`guard.audit_worktree` 7 次共 5.5 s；`support._json_bytes` 21 次共 24.4 s（3%）；`_sha` 43 次共 0.4 s。每次活体证明 ≈ 47 s = 2 次重放 42.9 s + 序列化 3.5 s + 审计 0.8 s；
+  (3) 两个测试分别 215.5 s 与 537.4 s；两个生产 CLI 子进程没有被插桩，但它们的耗时与「一次重放」的比值在四次运行里几乎不变（测试 1 的子进程 5.2、5.2、5.2、5.6 倍；测试 2 的第一个 CLI 子进程 11.7、11.8、11.4、11.8 倍；d21b、d23、d24、C2 诊断运行），
+  说明它们也由重放主导（约 5 次与 11–12 次，第二个幂等 CLI 约 1 次）。全阶段约 32 次重放 × 21.4 s ≈ 685 s，约占 90%。
+- **结论**：**stage 1 ≈ 重放次数 × 单次重放**，证明体积不是主因（证明构造与序列化约 3%）。单次重放（由活体证明耗时反推，扣除序列化与审计）：d21b 约 13.4 s、d23 约 15.4 s、d24 约 21.9 s、C2 21.4 s（直接测量）；d23 → d24 之间有一次台阶，d24 → C2 持平，
+  所以 d24 的 751 s 不是我并发杂活造成的异常，而是新水平。空闲机上直接测量：20.4–21.0 s（5,926 个事件、876 条链、721 MB；d23 发布后是 15.4–15.7 s）。
+- **cProfile**（一次真实库重放，含约 ×1.5 的探针开销，30.9 s；`scratchpad/profile_replay_now.py`）：`parse_lease_event` 5,926 次共 19.9 s（JSON 解码 7.3 s、规范序列化与哈希 7.0 s）、`validate_execution` 14.7 s（hook-ready 完整校验 33 次共 9.8 s，其中 `_validated_hook_ready_paths` 6.3 s）、
+  跨事件转移校验 3.5 s、文件读取与哈希合计约 1.9 s。终态链占 875 / 876。
+- **重新外推**：每次发布单次重放约 +1.7 s × 约 32 次 ≈ +55 s；下一次 stage 1 约 840 s，再下一次约 895 s（碰 900 s 告警线）。17.6 里「860–890 s / 980–1,030 s」作废。
+- **处理与登记**：封印 S（DEVX-023 第 10 节设计）是杠杆，预计重放 21 s → 约 5 s、stage 1 → 约 280 s、`local-publish` → 约 25 分钟；但封印是一种落盘的「已校验」结论，与 DEVX-018 O3 的决定和 `_replay_uncached` 的不变量直接冲突，所以先要 owner 决定是否改这条边界；
+  不改边界的替代是减少重放次数与按租约链并行重放（第 10.8 节，未实测）。W-DQ（证明只留源租约视图）降为可选的证据体积卫生（第 11 节）。owner 2026-10-07 把路线改为 C2 → 封印 S → C3 → C4。
+- **重封链单轮的补充**：静机上的一轮是 89 s 生成器时间（canonical-task-source 6.4 s、architecture-manifests 33.5 s、atlas-authority 35.8 s、report-flow-authority 2.1 s、compatibility-authority 11.7 s），含两次检查点共 129 s；17.6 里的 119–150 s 是我并发工作造成的，§15.1 的约 90 s 预期仍成立。
+- **第六次发布（C2）的耗时对照**（§15.1；本次没有启动逐进程计数器采样，所以没有 CPU 小时数据，是监测上的缺口）：
+
+| 环节 | C2 实测 | §15.1 预期 | 告警线 | 判断 |
+|---|---|---|---|---|
+| 任务行围栏事务（`TASK_SOURCE_ONLY`，2 个任务） | 2:09 | 1–2 分钟 / 个 | > 5 分钟 | 内（约 1.1 分钟 / 个） |
+| 重封链单轮（5 个生成器，共 3 轮；第 2 轮无检查点） | 129 s、108 s、129 s | 约 90 s（生成器） | > 180 s | 内（生成器 89 s） |
+| 正式事务 acquire → 就绪度结束 | 约 5.5 分钟 | 约 8 分钟 | > 20 分钟 | 内 |
+| named-parent-positive（stage 1） | **785.5 s**（诊断 761.1 s） | 440–502 s | > 900 s | **高于预期上限 56%，未过告警线** |
+| contract / integration / reproducibility | 282 / 69 / 48 s | 267–281 / 68–75 / 47 s | > 600 / 200 / 150 s | 内（contract 高 0.4%） |
+| architecture-fitness | 1,348.6 s | 1,308–1,408 s | > 2,400 s | 内 |
+| 正式 Full（pytest 墙钟） | 8,883.6 s（2:28:03；runner 8,989.5 s） | 8,023–8,698 s | > 9,500 s | 高于带上限 2.1%，未过告警线；14,974 通过 / 4 跳过 / 0 失败；最慢节点 `test_actual_composer_activation_and_readiness_routes_use_real_guards_and_replay` 1,857.7 s（重放主导） |
+| 真实 `local-publish` | 61 分 9 秒 | 约 71 分钟 | > 100 分钟 | 内（预期约 71 分钟；比 d24 的 57 分 3 秒长 7%，随单次重放变长） |
+| 发布收尾（本机命令） | 6:05（REMOTE_PUSH_PRE 3:38 + CLOSEOUT 预检 0:47 + CLEANUP_PRE 0:52 + release 0:48；另有 LOCAL_MAIN_FF_PRE 3:25） | 约 10 分钟 | > 30 分钟 | 内（不含 owner 手工 push 的等待） |

@@ -570,7 +570,7 @@ v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
 - 下一步：v15 候选经限时 pilot、`failure_fix_rerun`（父为 v14 `full_incomplete_recovery.json`）事务、
   generators 与全部 tiers、Full；发布后 P1/P4/O3 与重测。
 
-### 2026-10-04 至 2026-10-07 的五次发布（摘要）
+### 2026-10-04 至 2026-10-07 的六次发布（摘要）
 
 - **2026-10-04 12:04 P1-C DEVX-015 基线发布**：`main = origin/main = 1e46e6ac767b309a880c41dbb2796981f8a61a7e`（普通推送 `cbc31cdff..1e46e6ac7`，事务 `gov-007-p1c-devx015-baseline-publication-20261004-v26`，v26 Full 14,706 通过/0 失败，3 小时 35 分）。
   发布期间两次仓库状态干预：经 owner 批准一次性删除 `.git/ORIG_HEAD`；未预批、审计后删除 worker 被写死 3600 秒墙钟终止后遗留的两个空锁（`.git/AUTO_MERGE.lock`、`.git/packed-refs.lock`），随后 `local-publication-recover` 收口。详见 DEVX-021 第 4、7 节。
@@ -581,7 +581,10 @@ v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
   需要关注：发布耗时随每次发布约 +15 分钟（71 → 86 分钟，下一次预计越过 100 分钟告警线），选项登记在 DEVX-023，等 owner 决定。
 - **2026-10-07 02:51 第四次发布（DEVX-023：租约重放成本，S3c + S3d + W）**：`main = origin/main = d3d34872ba83146639c432d58b6a2c18c07ea24a`（普通推送 `25d026bf6..d3d34872b`，事务 `gov-007-d23-formal-20261006-v1`，Full 14,791 通过/0 失败，pytest 2 小时 25 分 37 秒，`local-publish` 54 分 8 秒，上次 86 分）。
   owner 2026-10-06 再次预授权（只限该候选，普通推送）；无恢复、无人工干预。真实库的**第一批 v4 事件**：发布部分租约事件字节 11.85 → 1.13 MiB，>100 KB 的事件 20 → 0。须披露：库里已含 v4 事件，S3b 时代的代码读它会 fail closed，不要回滚代码；每次发布单次重放仍 +1.5–1.8 s（原 +3 s）、命名 DQ 父证明 +约 10 MiB/次，封印 S 与证明合同变更等 owner 决定。详见 DEVX-023 第 9 节与 DEVX-022 第 17.5 节。
-- **2026-10-07 17:27 第五次发布（DEVX-016 C1：reseal 命令、钉死计数改下限、多任务与 TASK_SOURCE_ONLY 事务）**：`main = origin/main = 7ead2d6ffae5acac93b5fdc65c4feebc82fd384e`（普通推送 `d3d34872b..7ead2d6ff`，事务 `gov-007-d24-formal-20261007-v1`，Full 通过，pytest 2 小时 27 分 0 秒，`local-publish` 57 分 3 秒）。owner 2026-10-07 预授权（只限该候选，普通推送）。须披露：(1) 3.5 小时的会话中断使发布前检查第 6 项（Full 结束后 2 小时内开始发布）超窗 27 分钟，owner 在核实租约仍有效（还剩 3.5 小时）后明确批准按例外继续，其余五项全部通过；(2) 最终的 `git push` 被权限分类器拒绝，我没有绕过，由 owner 在终端执行，证据文件如实标注；(3) stage 1 耗时 751 s（d23 579 s，基线 440–502 s），原因定位到命名 DQ 活体证明的体积随发布线性增长（约 12 s / MB，每次发布 +约 10.9 MB，下一次约 860–890 s，再下一次越过 900 s 告警线；见 DEVX-022 第 17.6 节），机制待 C2 的正式窗口里逐调用测量；(4) S2 在真实事务验证：一个 TASK_SOURCE_ONLY 事务更新两个任务行，COMPLETED 收口，0 个 FAILED。详见 DEVX-016 第 9、10 节。
+- **2026-10-07 17:27 第五次发布（DEVX-016 C1：reseal 命令、钉死计数改下限、多任务与 TASK_SOURCE_ONLY 事务）**：`main = origin/main = 7ead2d6ffae5acac93b5fdc65c4feebc82fd384e`（普通推送 `d3d34872b..7ead2d6ff`，事务 `gov-007-d24-formal-20261007-v1`，Full 通过，pytest 2 小时 27 分 0 秒，`local-publish` 57 分 3 秒）。owner 2026-10-07 预授权（只限该候选，普通推送）。须披露：(1) 3.5 小时的会话中断使发布前检查第 6 项（Full 结束后 2 小时内开始发布）超窗 27 分钟，owner 在核实租约仍有效（还剩 3.5 小时）后明确批准按例外继续，其余五项全部通过；(2) 最终的 `git push` 被权限分类器拒绝，我没有绕过，由 owner 在终端执行，证据文件如实标注；(3) stage 1 耗时 751 s（d23 579 s，基线 440–502 s）；原先把原因归于命名 DQ 证明体积，被 C2 窗口的逐调用计时更正：stage 1 ≈ 约 32 次租约库重放 × 单次重放（约 21 s），见 DEVX-022 第 17.7 节；(4) S2 在真实事务验证：一个 TASK_SOURCE_ONLY 事务更新两个任务行，COMPLETED 收口，0 个 FAILED。详见 DEVX-016 第 9、10 节。
+- **2026-10-07 23:53 第六次发布（DEVX-016 C2：单一发布命令、范围策略、验证驱动）**：`main = origin/main = 0834ed9576285e717185e5679c3a6e13c57a7d23`（普通推送 `7ead2d6ff..0834ed957`，事务 `gov-007-d25-formal-20261007-v1`，Full 通过 14,974 / 4 跳过 / 0 失败，pytest 2 小时 28 分 3 秒，`local-publish` 61 分 9 秒）。
+  owner 2026-10-07 预授权（只限该候选，普通推送），并按草案批准范围策略。须披露：(1) 最后的 `git push` 由 owner 在终端执行（S3 命令因此默认从不推送）；
+  (2) stage 1 785.5 s，我先前的归因（证明体积）被逐调用计时否定并已更正，路线改为 C2 → 封印 S → C3；(3) 本次没有启动逐进程计数器采样；(4) 为避免租约在 owner 不在场时到期，我起了一个脱离的 heartbeat 保活进程（每 20 分钟，共续期 1 次，推送后自动退出）；(5) stage 1 期间我并发跑了一次 32 s 的 cProfile 重放；(6) 两次 `git diff --cached --stat` 未带完整排除集（审计事件，未触及被排除路径）；详见 DEVX-016 第 9 节与 DEVX-022 第 17.7 节。
 - 仍待 owner：超时/等待校准的复核（`PROVISIONAL_PENDING_OWNER_REVIEW`）、O3 跨调用缓存、5 个 HKCU `AITS-DEVX015-Test-*` 遗留注册表根的清理（脚本 `D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1`，agent 未执行）、S3 发布范围清单的评审（C2 冻结前）、DEVX-023 封印 S 的决定、OPS-082 规则变更确认。
 
 ## 7. 退出条件

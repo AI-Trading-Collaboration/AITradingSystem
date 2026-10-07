@@ -143,3 +143,125 @@
   `prospective_capture_execution.py` 同样定义并消费 `named_dq_existing_parent_proof.v1`，不是只改测试），须 owner 评审。
   无合同变更的缓解（仅测试层，可选）：把 `tests/test_named_data_quality_actual_candidate.py` 的两个测试拆成两个文件，使 `--dist loadfile` 把它们放到两个 worker（阶段约 751 → 约 550 s，测试 2 约 530 s 是瓶颈）。待 owner 决定。
 - 2026-10-07：**owner 决定：「命名 DQ 父证明不再内嵌整库重放」（第 8 节第 2 条）排在 DEVX-016 的 C3 之前**（会话中答复；依据：stage 1 耗时随证明体积线性增长，DEVX-022 第 17.6 节外推 C3 发布时约 980–1,030 s 越过 900 s 告警线）。路线：C2（S3）发布 → 本任务的证明契约波次（先出设计，owner 评审合同后再实现）→ C3 → C4。封印 S 的决定仍待 owner，不与本波次绑定。下一步是设计文档：先读 `named_quality_dispatch.py`、`named_quality_execution.py`、`prospective_capture_execution.py` 与 `tests/named_data_quality_support.py` 里 `named_dq_existing_parent_proof.v1` 的生产者与消费者，列出每个消费者实际需要的字段，再决定证明改为绑定「重放摘要 + 来源租约头事件」时哪些校验必须保留（尤其是 PIT/来源租约关联的完整性），设计经 owner 评审后再实现。
+- 2026-10-07（晚，更正）：**stage 1 的归因更正与路线调整**。C2 窗口的逐调用计时（DEVX-022 第 17.7 节）否定了上面两条里「命名 DQ 证明体积决定 stage 1 耗时」的结论：证明体积确实长到 68.40 MB（+10.9 MB），stage 1 却只有 761 s；
+  耗时 ≈ 约 32 次租约库重放 × 约 21.4 s（重放约占 90%，证明构造与序列化约 3%）。因此 owner 把路线改为 **DEVX-016 C2 → 本任务的封印 S（先出设计）→ C3**；W-DQ（第 8 节第 2 条，证明只留源租约视图）降为可选的证据体积卫生（第 11 节）。
+  封印 S 与既有的「不落盘已校验标记」边界（DEVX-018 O3、`FileExecutionLeaseStore._replay_uncached` 的不变量）直接冲突，所以第一步是 owner 决定是否改这条边界（第 10.7 节 0 号问题）；不改的话走第 10.8 节的替代方案（减少重放次数、按租约链并行重放，均未实测）。
+
+## 10. 封印 S：按租约链封印终态链的校验（设计草案，2026-10-07；待 owner 评审信任模型，评审前不实现）
+
+owner 2026-10-07 决定路线为 DEVX-016 C2 → 本节（封印 S）→ C3。依据是 C2 窗口里 stage 1 的逐调用计时（DEVX-022 第 17.7 节）：耗时 ≈ 重放次数 × 单次重放，而不是证明体积。
+
+### 10.1 为什么做（数据）
+- **stage 1 约 31 次重放**：测试进程里 14 次（每次活体证明 2 次：`fence.validate` 内 1 次 + `guard.replay()` 1 次），两个生产 CLI 子进程里约 17 次（按时间线估算）；每次约 21 s，合计约 660 s，占 761 s 的 87%。证明序列化与哈希只有 24 s（3%）。
+- **围栏命令与发布几乎全是重放**：`acquire` 1 次、`checkpoint` 2 次、`release` 4 次；`local-publish` ≈ 事件数 × 每事件重放次数 × 单次重放（DEVX-022 第 15.2 节）。
+- **单次重放在变长**：空闲机上 d23 15.5 s → 现在 20.4–21.0 s（5,926 个事件、876 条链、721 MB）。cProfile（含约 ×1.5 的探针开销，30.9 s）：`parse_lease_event` 19.9 s（JSON 解码 7.3 s、规范序列化与哈希 7.0 s）、`validate_execution` 14.7 s（其中 hook-ready 完整校验 33 次 9.8 s）、跨事件转移校验 3.5 s、文件读取与哈希合计约 1.9 s。
+- **其中 875/876 条链是终态**（RELEASED/BLOCKED/REASSIGNED）：内容不可变，每次重放都在重复验证同一批字节；只有当前活着的事务链会变。
+- 原型实测（只读，2026-10-06，`scratchpad/seal_proto.py`）：全量重放 17.35 s；逐字节哈希全部事件文件 1.13 s；封印重放 4.41 s，`LeaseReplay` 的 status / lease_heads / active_leases / head_event_ids / event_count / issues 与全量重放逐项相同；把某条终态链的一个文件摘要置为不符后，该链回退为全量校验，结论仍相同。
+
+### 10.2 设计
+1. **封印文件** `<租约库根>/replay_seal.v1.json`（不在 `events/` 里，不影响链的枚举），由显式命令写出：
+   - 头部：schema、`kernel_fingerprint`（见下）、创建时间与工具版本、来源重放的 `event_count` / 链数 / `head_event_ids` 摘要；
+   - 每条**终态且来源重放无 issue** 的链一项：`head_event_id`、`head_state`、有序的事件文件清单（文件名 + 内容 sha256）、`chain_sha256`；活着的链不入封印；
+   - `seal_sha256`（对规范化正文）。写入只用 `write_bytes_atomic`，读者永远看到旧封印或新封印，不会看到半个。
+2. **封印感知的重放**（`FileExecutionLeaseStore._replay_uncached` 里一个窄钩子，逻辑放在新模块 `lease_replay_seal.py`）：
+   - 封印缺失、schema 不识别、`seal_sha256` 不符、`kernel_fingerprint` 不符 → **整体按今天的全量重放**；
+   - 对每条链：先**逐字节哈希目录里的全部事件文件**（全库约 1.1 s，每次重放都做）；该链在封印里、终态、文件清单与哈希逐项相同 → 只完整解析校验它的**头事件**，其余事件复用封印的结论；否则（未封印、被改动、新增、缺文件、顺序不同）→ **该链全量校验**，与今天完全相同；
+   - 跨链的 ACTIVE 资源冲突检查、`LeaseReplay` 的字段与顺序不变。
+3. **内核指纹** `kernel_fingerprint`：对决定校验结论的源码与策略做哈希——`parallel_control_kernel.py`、`workflow_coordination.py`（hook-ready 与转移校验）、`config/architecture/arch_005_parallel_control_policy.yaml`、`config/architecture/arch_005_s4d_checkout_guard.yaml`，外加解释器小版本；清单是一个有注释的具名常量，并有静态守卫测试：重放路径新引入的校验模块不在清单里就失败。指纹变了，整份封印失效，回到全量重放，直到显式重建。
+4. **封印怎么来**：显式命令（`architecture_arch005_lease_arbiter.py seal`，在仲裁锁内）先做一次**全量重放（不使用任何旧封印）**，再写封印；`seal verify` 做「封印重放 vs 全量重放」的 `to_dict()` 逐项比较，不一致即失败。S3 发布命令在 completed 释放之后加一步 `seal`（约 25 s），并在发布前检查里加一项 `seal verify`。
+
+### 10.3 信任模型（需要 owner 评审的核心）
+- **封印不替代完整性检查**：每次重放仍逐字节哈希每个事件文件，任何字节的增删改、重排都会让该链回退到全量校验并得到与今天相同的结论（包括 issues）。
+- **被信任的只有一件事**：「这批字节在同一份内核代码与策略下曾通过完整校验」这个**结论**，复用于字节完全相同的终态链。
+- **局限（如实写明）**：封印是本机的本地状态，与租约库本身同一信任级别，不是签名。能同时伪造事件文件和重算封印的写入者，可以让一条本会被全量校验拒绝的历史被接受；全量校验也防不了能写事件文件的恶意者伪造一条合法链。本系统的威胁模型是事故、漂移与 agent 误操作，不是恶意本机写入者，两种情况都在范围外。
+- **缓解**：(1) 内核指纹把封印绑定到代码与策略；(2) `seal verify` 在正式验证里对真实库做封印与全量的逐项对账（Full 里加一个真实库测试，发布前检查里加一项）；(3) 任何封印问题的默认动作是全量校验（fail-safe，不是 fail-open）；(4) 全量重放始终可用，环境变量 `AITS_LEASE_SEAL=off` 强制使用；(5) 封印只收录来源重放无 issue 的终态链。
+- **仍然不引入**：隐式的跨调用缓存、进程级缓存、对历史事件文件的任何改写。
+- **与既有决定直接冲突（必须先说清）**：封印本身就是一种落盘的「已校验」结论。`FileExecutionLeaseStore._replay_uncached` 的注释明确写着不接纳任何 caller-owned event 或落盘的 already-checked 标记；DEVX-018 的 O3（跨调用缓存与落盘已校验标记）被 owner 否决过，DEVX-023 第 2 节沿用了这条边界。所以封印 S 不是在既有边界之内的优化，而是请 owner **把这条边界改为**：允许一种显式、哈希绑定、绑定内核指纹、可被 `seal verify` 对账、首次发布默认关闭的封印。**如果 owner 不愿改这条边界，就不应做封印 S**，改走第 10.8 节不改边界的替代方案。（本页最初把封印写成「沿用 O3 的边界」，不准确，已更正。）
+
+### 10.4 验收标准（以实测为准）
+1. 在真实库和全部变异夹具上，封印重放的 `to_dict()` 与全量重放**逐项相同**（含 issues）。变异类：篡改一个字节、截断、删除文件、新增文件、重排文件名、用另一个合法事件替换、改变头状态；各自发生在已封印链与未封印链上；
+2. 封印缺失、损坏、旧 schema、指纹不符、`seal_sha256` 不符 → 行为与今天完全一致（全量重放，结论相同）；
+3. 随机单字节翻转的性质测试：任一事件文件的任意单字节变化都使该链被全量校验；
+4. 真实库一次重放 ≤ 全量的 30%（目标：约 21 s → ≤ 6 s，静机三次取中位数）；
+5. 实测收益：stage 1 ≤ 350 s（现 761 s）；`local-publish` ≤ 35 分钟（现 57 分钟）；围栏命令墙钟降到现在的 1/3 以内；每次发布给重放增加的耗时 < +0.5 s（现 +1.7 s）；
+6. 不改变租约语义；`system_flow` 与任务行同步；`docs/requirements/DEVX-022` 第 15.1 节的基线按新实测更新。
+
+### 10.5 步骤与顺序
+| 步骤 | 内容 | 依赖 | 验收 |
+|---|---|---|---|
+| S0 | owner 评审本节的信任模型与三个决定（10.7） | DEVX-016 C2 已发布 | owner 批准或提出修改 |
+| S1 | 实现：`lease_replay_seal.py`（构建、读取、校验、指纹）+ 内核里的窄钩子 + `seal` / `seal verify` 命令 | S0 | 10.4 第 2 条 |
+| S2 | 测试（全是新文件）：变异-差分、性质、回退、原子写入、指纹静态守卫 | S1 | 10.4 第 1、3 条 |
+| S3 | 候选 A：封印功能随候选发布，**默认关闭**（`AITS_LEASE_SEAL=1` 才启用）；候选的正式验证里真实库 `seal verify` 通过 | S2 | 全部 tier + Full 通过；对账一致 |
+| S4 | 发布后用封印重放测一次真实收益（stage 1、围栏命令、`local-publish`），写回 DEVX-022 第 17 节 | S3 | 10.4 第 4 条 |
+| S5 | 候选 B：默认开启，S3 命令加 `seal` 与 `seal verify` 步骤 | S4 对账一致 | 10.4 第 5 条 |
+
+### 10.6 风险
+- **重放是整套治理的核心**：实现错误会让守卫接受无效历史。缓解是变异-差分测试、`seal verify` 常驻正式验证、默认关闭的第一次发布（S3），以及 `AITS_LEASE_SEAL=off`。
+- **历史固定源码**：`parallel_control_kernel.py` 在兼容权威里被哈希固定，改动需按 DEVX-015/S3b 回归的做法接管（加入最新 section 的源路径列表与 `DEVX_015_WORKFLOW_ADDED_SOURCE_PATHS`）；新测试一律放新文件。
+- **封印过期**：新终态链未入封印时只是该链走全量校验，不影响正确性；超过阈值（建议 50 条）时 `seal verify` 报告「建议重建」，不判失败。
+- **规模**：约 600–800 行代码与约 40 项测试，一个候选加一个后续候选。
+
+### 10.7 需要 owner 决定
+0. **边界**：是否同意把「不落盘已校验标记」（DEVX-018 O3、`_replay_uncached` 的不变量）改为「允许经 `seal verify` 对账的显式封印」？这一条是前提；答「否」则下面三条不必回答，改走第 10.8 节。
+1. **信任模型**：接受「封印复用的是对字节完全相同终态链的完整校验结论，绑定内核指纹，本地、不签名」吗？
+2. **封印由谁重建**：显式命令，S3 发布命令在 completed 释放之后自动执行一步（建议），还是只手工执行？
+3. **上线节奏**：先默认关闭发一次再默认开启（建议，多一个候选的成本），还是一次到位？
+
+### 10.8 不改信任边界的替代方案（未实测，列出以便比较）
+租约库的校验是**按租约链相互独立**的（`_replay_lease_events` 逐链检查唯一 id、因果头、转移规则、执行转移；跨链只有最后的 ACTIVE 资源冲突检查），所以：
+- **A. 减少重放次数**：stage 1 约 32 次重放里，测试进程里每次活体证明连做 2 次（`fence.validate` 内一次、证明构造里 `guard.replay()` 再一次，同一库状态），生产 CLI 子进程里有 5 次与 12 次。去掉证明里重复的那一次，测试进程可省 7 次（约 150 s，约 20%）；子进程里的 `restore`/`recheck` 是各阶段的权威复核，减少它们是语义评审，不是机械优化。
+- **B. 按租约链并行重放（多进程）**：每条链的 `parse_lease_event` 与转移校验互不依赖，可分给 N 个工作进程，父进程只汇总每条链的结论并解析头事件。无持久化状态、不改信任边界；理论上 21 s 可到约 4–6 s（受 Windows 进程启动、导入内核模块与结果回传的开销限制），**尚未实测**，需要先做只读原型测量。风险是并行实现的复杂度与围栏命令（持锁、git 钩子里）下启动进程池的行为。
+- **C. 微优化**：`_validated_hook_ready_paths` 去掉 `Path` 往返（cProfile 显示 33 次调用合计 6.3 s，约 −14%）、JSON 解码与规范序列化的重复（解码 7.3 s、规范序列化 7.0 s）——语义不变，收益有限。
+比较：封印 S 的收益最大且最稳定（约 4×），但需要改边界；B 不改边界、收益潜力接近，但未测、实现复杂；A 只对 stage 1 的测试进程有用。建议 owner 在 0 号问题上先表态；若「不改边界」，我先做 B 的只读原型再决定。
+
+## 11. W-DQ（可选）：命名 DQ 证明只保留源租约的重放视图（设计草案，2026-10-07；不是耗时对策）
+
+**更正**：本节最初是按「stage 1 耗时随证明体积增长」的归因写的，owner 也据此一度把它排在 C3 之前。C2 窗口的逐调用计时（DEVX-022 第 17.7 节）否定了该归因：stage 1 的 87% 是约 31 次租约库重放，证明构造与序列化只占约 3%（再加上子进程里的解析与哈希，估计合计 3–15%）。owner 随后改为 C2 → 封印 S（第 10 节）→ C3。本节降为可选的小改动，价值是证据体积卫生（每次 stage 1 运行写出约 0.7 GB 的证明 JSON，每次发布 +约 54 MB）与少量耗时，不再作为耗时对策，也不再有时间验收目标。
+
+### 11.1 问题与量化
+- 命名 DQ 活体证明内嵌整库重放，体积随发布线性增长：`test_parent_pre_guard.json` 35.70 → 46.60 → 57.52 → 68.40 MB（每次发布 +约 10.9 MB），`activation_cli_*_parent.json` 170.7 → 224.4 → 278.2 → 331.9 MB；每个证明文件还会被写出多份（测试 2 每次运行写 2 份约 332 MB 的 `activation_cli_*_parent.json`，子进程 stdout 约 68 MB），保留的证据目录随之增长。
+- 这部分对 stage 1 耗时的贡献很小（序列化约 24 s / 761 s；见 DEVX-022 第 17.7 节），所以本节**不以耗时为目标**。
+
+### 11.2 读码结论（谁产生、谁使用）
+- **生产者**：`src/ai_trading_system/data/named_quality_dispatch.py` 的 `_read_lease` 在返回的 `named_capture_lease_recheck.v1` 里写入 `"lease_replay": replay.to_dict()`，即**全部**租约 head（约 870 个，每个带自己的 execution 载荷）；`restore_named_capture_lease`、`recheck_named_capture_lease`（父进程每次检查）与 `prospective_capture_execution` 的 `prospective_capture_parent_proof.v1` 都经过它。所有生产路径都经过这一处：`composer_prospective_capture.py`（第 294 行）、`prospective_capture_execution.py`（第 302 行）、`research_outcome_access.py`（第 272 行）与 `named_quality_dispatch.py` 的派发父证明（第 710 行）都调用 `recheck_named_capture_lease` → `_read_lease`，所以改一处即覆盖全部生产者。测试夹具 `tests/named_data_quality_support.py::_live_parent_proof` 另有一份同样内嵌整库重放的证明（只作为测试证据写出，生产代码不消费）。
+- **唯一的验证器** `verify_retained_named_capture_proof`（同文件）对 `lease_replay` 只读：`status == PASS`、`issues == []`、`event_count` 为 ≥ 1 的整数，以及 `active_leases` / `lease_heads` / `head_event_ids` 三个列表里 `lease_id == source_lease_id` 的那一项（必须恰好等于 `[head.to_dict()]` / `[{lease_id, event_id}]`）。`named_quality_execution` 对父进程 postguard 的检查只读 `active_lease` 的 `lease_id` 与 `state`；其余消费者都经过同一个验证器。**没有任何消费者使用其他租约的 head。**
+- 因此整库重放里 99.8% 以上的字节（其他租约的 head 正文）没有消费者，却在每次证明里被构造（`to_dict`）、规范序列化、哈希、写出、再解析。
+
+### 11.3 方案：只改生产者，验证器不改
+证明里的 `lease_replay` 改为「源租约视图」：
+- 保留：`schema_version`、`status`、`event_count`、`issues`、`head_event_ids` **完整列表**（只含 lease_id 与 event_id，约 70 KB，对每个 head 的身份仍有承诺）；
+- `lease_heads` 与 `active_leases` 只留 `lease_id == source_lease_id` 的那一项；
+- 新增 `lease_head_count`（整库 head 数）与 `form = "SOURCE_LEASE_VIEW.v1"`，让证明自描述为过滤形态。
+旧的完整形态证明（已留存的证据）仍能被同一验证器通过（它是超集），新形态也通过同一验证器，所以**没有新 schema、没有 fail-closed 的新标记，回滚安全**（与 S3c 不同）。测试夹具里的 `_live_parent_proof` 同步改为同一视图（用同一个视图函数，避免两边漂移）。
+
+### 11.4 信任边界
+- 证明的定位不变：验证器文档已写明它只验证「原始租约快照在记录时刻」，是 local-parent attestation，不是签名，也不替代原始的活体重放、来源封印与进程绑定。
+- 丢弃的是其他租约的 head 正文（hook manifest、托管表等），它们没有消费者，且随时可由真实库重放得到；保留的完整 `head_event_ids` 仍把证明绑定到当时整库的 head 集合。
+- 不引入任何新的缓存、封印或持久化检查点（与 DEVX-023 的封印 S 无关，S 仍待 owner 决定）。
+
+### 11.5 验收标准（以实测为准）
+1. 新证明与旧完整形态的夹具证明都通过 `verify_retained_named_capture_proof`；
+2. 篡改仍被拒绝：现有 6 类变异（`active_lease`、`replay_head`、`replay_event`、`replay_count`、`audit_head`、`audit_dirty`）全部保留，并新增针对新形态的：源租约项缺失或被替换、`head_event_ids` 里源项被改、`event_count` 非整数、`issues` 非空；
+3. 在真实库（≥ 870 个 head）上，一次证明的字节 < 1 MiB（目标约 0.1–0.3 MiB），且不再随每次发布增长：回归测试构造含 N 个大 head 的合成重放，证明大小与 N 的 head 正文无关、只随 `head_event_ids` 线性（约 +80 B / head）；
+4. 证据体积：一次证明 < 1 MiB（见第 3 条），因此每次 stage 1 运行写出的证明 JSON 从约 0.7 GB 降到几十 MB；耗时只作观察项（预计省 3–15%），不作验收；
+5. 不改变 DQ/PIT 语义、验证器判定结果与 receipt 合同的其他字段；`docs/system_flow.md` 命名 DQ 一段补一句。
+
+### 11.6 步骤、依赖与顺序
+| 步骤 | 内容 | 依赖 | 验收 |
+|---|---|---|---|
+| W1 | 设计评审（owner；可选，优先级低于封印 S） | DEVX-016 C2 已发布 | owner 批准或提出修改 |
+| W2 | 实现：生产者视图函数 + 测试夹具同步 | W1 | 11.5 第 1、2 条 |
+| W3 | 新增测试文件（视图、兼容、篡改、大小回归、消费者枚举守卫） | W2 | 11.5 第 2、3 条 |
+| W4 | 候选链：用 S3 命令发布（dogfood；owner 在自己的终端推送） | W3 | 全部 tier + Full 通过 |
+| W5 | 发布后测量证明体积与耗时，写回 DEVX-022 第 17 节 | W4 | 11.5 第 3、4 条 |
+
+### 11.7 风险与缓解
+- **未发现的消费者读取其他租约的 head**：W3 增加静态守卫测试，枚举 `lease_replay` 在 `src/` 里的全部读取点并要求都在白名单内（当前：验证器与 `named_quality_execution` 的 postguard 检查）；
+- **证明形态的判别**：验证器不需要判别；未来若要区分，`form` 字段存在即新形态；
+- **受哈希固定的历史源码**：`named_quality_dispatch.py` 出现在兼容权威的源路径里（`compatibility_authority.py` 与 `tests/test_devx_006c_compatibility_authority.py` 各 3 处）。实现时先看它是否已在最新 section（V3）的源路径列表里；若不在，按 DEVX-015/S3b 回归的做法加入 `_devx_015_workflow_contract_section` 与 `DEVX_015_WORKFLOW_ADDED_SOURCE_PATHS`；新测试一律放新文件（被改过的已固定测试文件也需要权威）；
+- **`head_event_ids` 随库增长**：每次发布 +1–3 个 head，约 +80–240 B，可忽略；
+- **与封印 S 的关系**：本方案去掉的是「与证明体积成正比」的部分，单次重放本身（约 15–20 s，每次发布 +1.5–1.8 s）仍在；S 另议。
+
+### 11.8 与耗时目标的关系
+C2 的正式窗口里已用 `stage1_timing_plugin.py` 单独跑了一次 stage 1：重放占 87%，证明序列化约 3%（DEVX-022 第 17.7 节）；因此本节的耗时目标已撤销，只保留体积卫生目标。
