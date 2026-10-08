@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1418
-test_count: 1354
+test_file_count: 1419
+test_count: 1355
 support_file_count: 64
 orphan_count: 0
 specific_overlap_count: 0
@@ -779,7 +779,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.publication_run_support
   path: tests/publication_run_support.py
-  sha256: ba46d4d26279a575ab2ddf4b6fda0ee6009b84d6176fafc3db3f2d479aa45b6d
+  sha256: cb997839a08d7d3e10eae94fc04789f408efe85b80695a200874017316803641
   file_role: test_support
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8728,6 +8728,22 @@ tests:
   suite: architecture-fitness
   covered_module_prefixes:
   - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_parallel_replay_scope
+  path: tests/test_arch_005_parallel_replay_scope.py
+  sha256: c6ae4cd0ec7f7087847cb456dd97ecc4ff3e16e22521106f31e9e138a1acb932
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_prebootstrap
   path: tests/test_arch_005_prebootstrap.py
   sha256: 804a5336a5ad57b01898fc16e16d64dc19718811dfb52a2d2d5f63b972358e01
@@ -8762,7 +8778,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_publication_cli
   path: tests/test_arch_005_publication_cli.py
-  sha256: 7158b3a5f976f48ac93fe15341064d2a09010e9a26986db4ab45dc6376d6a7cb
+  sha256: 7d1f903c0502ff30660d7d055b861f67ac5fe71d10f866f03ae03f0e1fb2090a
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -8826,7 +8842,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_publication_run
   path: tests/test_arch_005_publication_run.py
-  sha256: c4e3bbaee6994f0cfe56b78c675fbd2aeb1764b546c62be3424c4b9de88d8672
+  sha256: 6b5f91ab45bbea146d0472e74a1bce728fd5f9c07365cb161c096a3f07520232
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -8858,7 +8874,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_publication_services
   path: tests/test_arch_005_publication_services.py
-  sha256: 58e8892a06d4a3dff1ebf6f4bb7a474780db1843275e9f67fc5e7910f1dac37d
+  sha256: cdfa7c41eda441eeb085794e5ff8a8379b5546de23f8a4740805f5a8a9e66347
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -8890,7 +8906,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_publication_validation
   path: tests/test_arch_005_publication_validation.py
-  sha256: 9bbac70c1474415a82e560a0428157d7503aa7b2b975b74d6e98cd6c8dba22ba
+  sha256: a55a31c5501fff8f4eb713145326a01b89bce0331459d5196ace6473adc5b8ae
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
