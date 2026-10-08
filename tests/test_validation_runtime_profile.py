@@ -263,18 +263,17 @@ def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> No
     assert profile.partial_seed is True
     assert profile.complete_profile is False
     assert profile.owner == "validation_operations"
-    # DEVX-018 S1: refreshed from the validated v7 Full profile.
-    assert profile.version == 26
+    # DEVX-022 M5: refreshed from the validated p-20261008-v3 Full profile (1,353 files).
+    assert profile.version == 27
     assert profile.source_workers == 16
     assert profile.source_dist == "loadfile"
     assert profile.source_artifact_path == (
-        "outputs/validation_runtime/gov-007-p1c-devx015-full-20260926-v7/"
-        "test_runtime_profile.json"
+        "outputs/validation_runtime/p-20261008-v3-full/test_runtime_profile.json"
     )
     assert profile.source_artifact_sha256 == (
-        "8443b17b028f42136d0bac769cd02e640ad92028956d66c3c182cc535a3fdb62"
+        "517f143f884e7b8de2c821840ff0be87135639ae10f3a7eed9c04bde619816a2"
     )
-    assert len(profile.observed_seconds) == 1334
+    assert len(profile.observed_seconds) == 1353
     assert profile.source_node_count is None
     assert profile.source_file_count is None
     assert profile.source_collection_ordered_sha256 is None
@@ -284,12 +283,16 @@ def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> No
     assert profile.expected_scheduled_ordered_sha256 is None
     assert profile.source_file_duration_total_seconds is None
     assert profile.observed_seconds["tests/test_layer1_meta_policy_archive_stabilization.py"] == (
-        137.978968
+        132.581518
     )
     assert (
         profile.observed_seconds["tests/test_filtered_candidate_readiness_pipeline_foundation.py"]
-        == 276.5576559
+        == 139.6043162
     )
+    # The named-DQ candidate file is one loadfile unit of 6,933 s: it must rank among the first
+    # files so it starts early instead of ending the Full (DEVX-022 section 17.8).
+    ranked = sorted(profile.observed_seconds, key=lambda name: -profile.observed_seconds[name])
+    assert ranked.index("tests/test_named_data_quality_candidate.py") < 8
 
     legacy = load_duration_profile(_write_legacy_partial_profile(tmp_path / "legacy_partial.yaml"))
     assert legacy.valid is True

@@ -3229,6 +3229,7 @@ Full 正式检查从 candidate Git blob 重读清单，二者必须与 profile �
 real_full_chain"` 排除这些节点并在 summary `test_selection_policy` 与 Reader Brief 中披露；Full
 不排除任何 marker，仍是这些节点唯一的正式权威。S1 以 PASS 的 v7 Full profile 经上述 S5 入口刷新
 advisory seed 为 `devx_018_s1_full_duration_partial_seed` v26（`1334 files / 14507 nodes`）。
+DEVX-022 M5（owner 2026-10-08 批准）再用 `scripts/refresh_partial_duration_profile.py` 以 `p-20261008-v3` 的 PASS Full profile 机械刷新为 `devx_022_m5_full_duration_partial_seed` v27（`1353 files / 15031 nodes`）：命名 DQ 候选文件是单个 loadfile 单元（约 6,900 s），旧种子只记 1,000 s、排第 15 位而在约 +2,100 s 才起跑并成为最后结束的文件；新种子里它排第 5。种子仍只是调度顺序的建议：不改变任何 nodeid、文件内节点顺序或 Full 的验收语义，因 Full 敏感而随候选单独归因（逐文件起止时间）。
 该链只优化工程验证调度与层级选择，`production_effect=none`，不改变数据、DQ/PIT、评分或投资结论。
 
 S5 即时失败诊断在上述 Full plugin 的 master report hook 中，于原 phase 记录后观察 failed
