@@ -365,10 +365,25 @@ P2 的测试要求：(1) 在多链夹具库上并行与串行的 `LeaseReplay` �
 | 步骤 | 内容 | 状态 |
 |---|---|---|
 | P6.0 | 登记（本节 + 任务行） | 完成（任务行 `6ce7a54b1`） |
-| P6.1 | 配置 + `parallel_replay_scope.py` + 测试 | 完成（候选尚未冻结） |
-| P6.2 | 接线（`publication_cli`、`publish.py`、启动器、驱动 `stage_environment`）+ 测试 | 完成（候选尚未冻结） |
-| P6.3 | 文档：`docs/system_flow.md` 一段并重算封印；DEVX-022 第 15.2 节一行；本节 | 本次 |
-| P6.4 | 候选链（S3 命令）并测量 | 待做 |
-| P6.5 | 结果写回 DEVX-022 / DEVX-023 / 任务行；校准 worker 数，评估 `validation_pre_full_tiers` | 待做 |
+| P6.1 | 配置 + `parallel_replay_scope.py` + 测试 | 完成（`54e039b26`） |
+| P6.2 | 接线（`publication_cli`、`publish.py`、启动器、驱动 `stage_environment`）+ 测试 | 完成（`54e039b26`） |
+| P6.3 | 文档：`docs/system_flow.md` 一段并重算封印；DEVX-022 第 15.2 节一行；本节 | 完成（`54e039b26`） |
+| P6.4 | 候选链（S3 命令）并测量 | 完成（run `p-20261008-v7`，候选 `a63827b28` 已发布；结果见 12.6.1） |
+| P6.5 | 结果写回 DEVX-022 / DEVX-023 / 任务行；校准 worker 数，评估 `validation_pre_full_tiers` | 部分完成：结果已写回；`workers: 4` 保持（4 与 8 在真实库上差别在噪声内）；`validation_pre_full_tiers` 暂不开，等测量 |
 
 **风险**：(1) 钩子 / worker 里的进程池 spawn：`__main__` 守卫检查（仓库里调用重放的脚本都有守卫，没有守卫的脚本回退串行——这也是我用无守卫的临时脚本测不出加速的原因）；(2) 进程超订：`local-publish` 期间没有别的重负载，Full 与 xdist 的 tier 不开；(3) 每次重放的建池启动成本约 2 s：stage 1 的 P4 诊断已测得净收益 −21%（568.7 对 718.6 s），钩子演练净收益 2.5×；(4) 配置的治理：`PILOT_BASELINE` 的退出条件见上。
+
+#### 12.6.1 P6.4 的实测结果（2026-10-09，S3 run `p-20261008-v7`，候选 `a63827b28`；完整对照表在 DEVX-022 第 17.11 节）
+
+| 验收项（12.6） | 目标 | 实测 | 结论 |
+|---|---|---|---|
+| E52 / E56 | 各降 ≥ 25% | 148.0 s（−37%）/ 168.1 s（−39%） | 达成 |
+| E54 `local-publish` | ≤ 60 分钟 | 2,328.6 s = 38.8 分钟（v6 82.1 分钟，−52.7%） | 达成 |
+| journal 无 FAILED | 无 | 无 FAILED，`slow_steps` 为空 | 达成 |
+| stage 1 | ≤ 650 s | 744.8 s（v6 873.6 s，−14.7%） | **未达成**：约七成重放在按设计保持串行的受限子进程里，目标估高了 |
+| Full 的 pytest | 不变（±3%） | 9,676 s，+4.6% | **未达成，与 P6 无关**：Full 的角色是 `never_enabled`；是租约库增长的重放成本（composer 激活测试 +5.2%，命名 DQ 候选文件 +4.7%） |
+
+- 额外收益：A–C 782 → 607.8 s（−22%，生成器 / governed preflight 等子进程在重放）；E50 / E57 / E61 / E62 各降 45–57%；整条链 5 小时 20 分 → 4 小时 30 分（−16%）。
+- 回退与故障：没有。`local-publish` worker 里的进程池在隐藏的 WMI → worker → git 钩子 → python 钩子这条真实进程链里正常工作（演练的结论在真实运行里重现），`LAST_FALLBACK_REASON` 没有触发过失败路径，journal 无 FAILED。
+- 局限：P6 压的是链里「发布命令 + `local-publish`」两段（约两成）；占约八成的 Full 与受限子进程不在范围内（12.4、owner 2026-10-05 选择 C）。`PILOT_BASELINE` 的校准结论：4 个工作进程在这条链上足够，仍保持试点状态，退出条件不变（换成带证据的 `OWNER_APPROVED` 版本，最迟 2027-01-08）。
+- 下一步候选（按价值排序，未启动）：封印 S（唯一能停止增长，待 owner 决定）；DEVX-022 M6 拆开命名 DQ 候选文件（最多 −27 分钟 Full）；测量四个 xdist tier 的重放占比后决定是否开 `validation_pre_full_tiers`。

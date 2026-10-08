@@ -600,6 +600,10 @@ v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
   这次是 v5 被宿主卡死中断后的重发：v5 的事故、恢复与审计记录见本节上一条与 DEVX-021 第 10 节；v6 全程没有人工介入，隐藏窗口启动器经真实运行验证（驱动与 worker 都没有终端窗口）。
   **新发现（DEVX-022 第 17.10 节、DEVX-023 第 12.5 节）**：stage 1 之外的各阶段与 v3 持平或更快，重放主导的工作（stage 1 +21.6%、`local-publish` +30%、命名 DQ 候选文件 ×1.2、composer 激活测试 +28%）随租约库增长变慢，每次发布尝试（含被放弃的）让之后每次重放永久变慢约 1.2–2.8 s；我在 DEVX-022 17.9 里把这个变慢归因于宿主负载是错的，已更正。下一步优先级因此改为：DEVX-023 P6（并行重放开启范围）→ C3 的 P4-2…P4-4 → C4 → DEVX-017 → OPS-082 → 阶段 5；封印 S 等 owner 对信任模型的决定。
   待 owner：封印 S 的信任模型；DEVX-021 第 11 节 P2/P3 的方案；OPS-082 规则变更确认；HKCU 清理脚本；长跑期间把「关闭显示器」设为「从不」。
+- **2026-10-09 凌晨 第九次发布完成（DEVX-023 P6：并行租约重放按角色开启）**：候选 `a63827b28`，S3 run `p-20261008-v7`，**普通推送 `e30c62a97..a63827b28` 由 Claude 在 owner「仅本候选」授权下执行**（04:16 JST；授权问题在 23:59 发出，owner 回答后我才在 00:21 看到；证据 `claude_p6_v7_push_authorization.json` 与 `claude_p6_v7_push.log`），本地 main = origin/main = ls-remote = 候选，正式事务 `p-20261008-v7-formal` COMPLETED，run COMPLETE（68 条 journal，`slow_steps` 为空，无人工介入）。
+  Full 15,131 通过 / 4 跳过 / 0 失败（pytest 9,676 s，+4.6%，与 P6 无关：Full 里没开）；`local-publish` 82 → 38.8 分钟，E52 / E56 −37% / −39%，A–C −22%，stage 1 873.6 → 744.8 s（−14.7%，未达 ≤650 s 目标，原因见 DEVX-023 第 12.6.1 节）；整条链 5 小时 20 分 → 4 小时 30 分。
+  **新发现**：Full 现在占链的约八成，且仍在随租约库增长（+4.6%/次）；P6 只作用于链的另外两成。命名 DQ 候选文件比其余 worker 晚收工 1,623 s，M6 现在最多值约 27 分钟 Full。封印 S 仍是唯一能停止增长的方案。
+  下一步：C3b（DEVX-016 P4-2）→ C3c（owner 先评审 compat 账本策略）→ C3d → C4 → DEVX-017 → OPS-082 → 阶段 5；穿插封印 S / M6 / DEVX-021 P2-P3（待 owner）。
 - 仍待 owner：超时/等待校准的复核（`PROVISIONAL_PENDING_OWNER_REVIEW`）、O3 跨调用缓存与 DEVX-023 封印 S 的边界决定（并行重放已发布，封印 S 只是后备）、5 个 HKCU `AITS-DEVX015-Test-*` 遗留注册表根的清理（脚本 `D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1`，agent 未执行）、OPS-082 规则变更确认。
 
 ## 7. 退出条件
