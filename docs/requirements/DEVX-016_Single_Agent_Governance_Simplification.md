@@ -497,3 +497,10 @@ DEVX-017 依赖 DEVX-016 全部完成；OPS-082 须 owner 先确认「不得使�
     也就是说：通用校验不会漏掉旧测试会抓到的实时漂移，并且更严（P4-2 还要对「逐 wave 测试的其余断言」做同样的变异等价性对照）。
   - **发现与处理**：(1) 新的真实仓库测试（r02）和既有的约 95 个 hash-authority 测试一样，在改动被固定的源文件之后、生成器链刷新之前会失败（重算 system_flow 封印后，`docs/system_flow.md` 与 006d 配置相对 V3 记录漂移）——预期行为，不是缺陷，生成器链之后恢复；
     (2) **时长种子刷新（DEVX-022 第 17.8 节）没有搭载在本候选里**：自动模式的分类器拒绝了我对受治理时长种子清单的写入；该改动是 Full 敏感输入，也尚未得到 owner 的明确确认，所以只保留 v27 预览（刷新工具自己的构造函数生成，sha256 `e3c8545f77dfad878d14767ce616d17db5bdb22f000b5afe0f8317bbf07d8e35`，与工具 dry-run 打印的 `output_sha256` 一致；命名 DQ 候选文件在新种子里排第 5），等 owner 确认后作为独立步骤。
+- 2026-10-08（下午）：**C3a 的 Full v5 全绿，但发布阶段被宿主卡死中断；恢复后以 v6 重发**。
+  - **v4 → v5**：owner 回复「做」后把时长种子刷新（DEVX-022 M5，刷新工具 `--write` 成功，分类器没有再拦）并入候选；v4 run 当时刚停在 `C26.readiness`，尚未派发任何验证阶段，所以以 FAILED 释放并重跑为 v5（披露：我原说「作为独立步骤」，这是为了不多等一轮 4.5 小时的偏离，种子提交可单独还原；C3a 其余内容几乎不增加 Full 时长，归因仍然干净）。
+    我的两个失误（都没有后果）：v5 第一次启动时一个 `git rev-parse --short A B` 写错，链在第一步就退出；后续阶段启动命令里 `--parent-run` 的路径写法与记录不一致，被 `PUBLICATION_RUN_RECORD_CONFLICT` 拒绝，立刻改正重启。
+  - **v5 结果**：stage 1 909.6 s、contract 284.1 s、integration 68.0 s、reproducibility 47.0 s、architecture-fitness 1,374.1 s、Full 15,095 通过 / 4 跳过 / 0 失败（pytest 9,343 s，窗口 9,289 s，+2.9%）；种子的效果与归因见 DEVX-022 第 17.9 节（起跑提前 1,665 s，但该文件自身变长 28%）。
+    `--wait-for-owner-push` 没有来得及在真实环境里被验证（E54 就被中断）；owner 的推送授权（仅候选 `5480507f1`）随该候选作废，v6 到 E59 再问。
+  - **事故与恢复**：见 DEVX-021 第 10 节（显示唤醒卡死杀死 `local-publish`；两个残留锁经 owner 批准审计后删除；`local-publication-recover` 收口；`p-20261008-v5-formal` 以 FAILED 释放；什么都没有发布）。
+  - **v6 候选**：新提交 = S3 小项 (e)（`WmiDetachedLauncher` 用 `Win32_ProcessStartup.ShowWindow = 0` 隐藏窗口，owner 要求；测试断言启动信息先于 Create 构造且不使用被 WMI 拒绝的 `CreateFlags`）+ 本节与 DEVX-021/022 的记录。S3 小项 (f)（worker 被杀时的 `next_action` 提示）与 (d) 留待以后。

@@ -158,3 +158,27 @@
 - **须如实说明的覆盖边界**：该次真实发布前，`.git/ORIG_HEAD` 为 `e0501f25e`（不等于 main `0cbdd9a45`），真实发布走的是「缺失/不同」分支（`ORIG_HEAD.lock` = main + LF，旧代码同样合法）；**等值基线的新分支只由夹具端到端变体证明**（先红后绿，§9.5），真实仓库上的等值基线分支尚未被一次真实发布触发。发布完成后 `.git/ORIG_HEAD` = `0cbdd9a45`（旧 main，符合 git 行为）。
 - 这次候选先因 S3b 回归在 stage 1 失败（DEVX-022 第 16 节），P1 的验证因此被推迟了一轮，没有改变 P1 本身。
 - 状态：`IN_PROGRESS` → `BASELINE_DONE`；P2（残留空锁恢复，租约执行记录 schema 的合同变更）仍待单独设计并提交 owner 复核（§9.4）。
+
+## 10. 2026-10-08 事故：宿主显示唤醒卡死杀死 `local-publish`，P2 确有必要
+
+### 10.1 经过
+- S3 run `p-20261008-v5`（候选 `5480507f1`，Full 已全绿）在 14:59 脱离启动 `local-publish`。15:50:56 worker 打印 `merge_resumed`（`ORIG_HEAD` 15:50:55），15:56:34 `git merge --ff-only` 的引用事务已进入 prepared（锁文件创建、`index` 已被改写）。
+- 15:57:08 会话解锁，15:57:14 显示唤醒（Kernel-Power 566，InputAccelerometer），同一秒 `nvlddmkm` Id 14，随后 15:58:49、15:59:26 又有两条；内核最后存活 15:59:30（事件 6008）。owner 强制重启（约 16:10，事件 41），随后 Windows Update 又重启两次，16:18 起稳定。这与 2026-10-05 的结论（显示唤醒类硬卡死）一致。
+- 被杀的进程：S3 命令、`local-publish` worker、验证后的采样器。**什么都没有发布**：本地 `main` = `origin/main` = `5150efbac`，候选完好地在 lane 分支上。
+
+### 10.2 残留与恢复
+- 残留：`HEAD` 被切到了 `main`（旧提交），工作树与索引是候选内容；两个被杀的 git 进程留下的锁（创建时间都是 15:56:34）：`.git/HEAD.lock`（0 字节）与 `.git/refs/heads/main.lock`（41 字节，内容恰为候选 SHA + 换行，即引用事务 prepared 写入的新值）。
+- `local-publication-inspect`：`BLOCKED PUBLICATION_CANDIDATE_DRIFT`（绑定候选与观察到的 HEAD 不符）；`local-publication-recover` 第一次：`BLOCKED WORKFLOW_MERGE_PUBLICATION_CHECKOUT_PLAN_STATE_EXISTS: HEAD.lock`（fail closed，没有改任何东西，约 3 分钟）。
+- **owner 批准（AskUserQuestion，2026-10-08）手工删除这两个锁**。审计脚本 `scratchpad/remove_stale_locks_v5.py`（精确路径白名单；前提全部满足：无其他存活的 git/python 进程、`HEAD.lock` 为空、`main.lock` 内容恰为候选 SHA、创建时间落在 15:50–16:00 的合并窗口、早于最近一次开机、`main`/`origin/main` 未动、lane 分支 = 候选），
+  证据 `claude_c3a_v5_stale_locks_audit.json` 与备份目录 `claude_c3a_v5_stale_locks_backup/`；删除后 `local-publication-recover` 收口为 `STABLE_FAILED_ATTEMPT`（`CANDIDATE_STABLE_INDEX_REPLACED`，约 9.5 分钟），检出回到候选、工作树干净；`release --outcome failed`（51 s）释放 `p-20261008-v5-formal`。
+- 我**没有**把 `main.lock` 改名成 `main` 去「完成」合并：那会让本地 main 领先于围栏记录（缺 reference-transaction `committed` 记录），采纳路径很可能 fail closed，等于绕过围栏。
+- 代价：`local-publish` 只允许一次尝试、Full 结果不能复用（新候选必须是新 SHA），整条链（含 2 小时 36 分的 Full）重跑约 4.7 小时。
+
+### 10.3 P2 的范围因此扩大（仍待单独设计并提交 owner 复核；租约执行记录 schema 的合同变更，须最小串行合同波次）
+- 第 9.4 节只写了「残留空锁」。这次的残留是 **reference-transaction prepared 阶段的锁**：`HEAD.lock`（空）与内容 = 候选 SHA 的 `main.lock`，且 `main` 未动。恢复路径应当：确认原 Job 已终止、无存活 git/python、锁创建时间落在已记录的合并窗口内、`main` 仍等于旧基线、`main.lock` 内容恰为绑定候选，
+  然后把这些「残留锁」作为恢复事实写入执行记录（先写事实，再按绑定句柄删除），并把尝试收口为失败尝试，而不依赖人工删除。负向测试：锁内容不是候选 SHA / 有存活进程 / 创建时间不在窗口 / `main` 已动 / 路径不在白名单，都必须拒绝。
+- 这是第二次由「宿主崩溃或硬卡死」触发（第一次是 v26 的空 `AUTO_MERGE.lock` / `packed-refs.lock`），所以 9.4 节「触发概率已被降到宿主崩溃或硬卡死」的说法需要补一句：该概率并不低（本机的显示唤醒卡死约每 1–2 周一次）。
+
+### 10.4 对运行方式的影响
+- 长跑期间避免显示器断电/唤醒：建议 owner 把电源设置里「关闭显示器」设为「从不」（我不改系统设置）；这次的卡死恰在 owner 回到电脑、解锁唤醒时发生。
+- S3 命令的 E54 在 worker 被杀、命令本身也被杀的情形下无法自救；`resume` 之后的探测只能给出「worker 已不在、main 未动」的事实。把这类情形的检查与恢复步骤写成命令提示（`next_action`）可以省掉人工排查——记为 S3 小项 (f)。

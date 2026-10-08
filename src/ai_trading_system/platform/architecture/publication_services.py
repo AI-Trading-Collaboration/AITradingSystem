@@ -54,6 +54,16 @@ def _encode(script: str) -> list[str]:
     return ["powershell.exe", "-NoProfile", "-NonInteractive", "-EncodedCommand", encoded]
 
 
+# Detached processes must not open a console window (the owner saw three empty terminal windows and
+# closing the wrong one would have aborted a Full). ShowWindow = 0 is SW_HIDE; adding CreateFlags
+# CREATE_NO_WINDOW is rejected by WMI (return code 21) and is not needed (verified 2026-10-08: the
+# process runs and no terminal host process is started).
+HIDDEN_WINDOW_STARTUP = (
+    "$si = New-CimInstance -ClassName Win32_ProcessStartup -Namespace root/cimv2 -ClientOnly "
+    "-Property @{ ShowWindow = [uint16]0 };"
+)
+
+
 class WmiDetachedLauncher:
     def __init__(
         self,
@@ -77,8 +87,10 @@ class WmiDetachedLauncher:
         quoted_line = command_line.replace("'", "''")
         quoted_cwd = str(cwd).replace("'", "''")
         script = (
+            f"{HIDDEN_WINDOW_STARTUP} "
             "$r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create "
-            f"-Arguments @{{ CommandLine = '{quoted_line}'; CurrentDirectory = '{quoted_cwd}' }}; "
+            f"-Arguments @{{ CommandLine = '{quoted_line}'; CurrentDirectory = '{quoted_cwd}'; "
+            "ProcessStartupInformation = $si }; "
             "$r | Select-Object ProcessId, ReturnValue | ConvertTo-Json -Compress"
         )
         result = self.run_powershell(script)

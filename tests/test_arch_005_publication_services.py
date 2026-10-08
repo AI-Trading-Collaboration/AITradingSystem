@@ -80,6 +80,25 @@ def test_launch_creates_the_process_through_wmi_and_returns_its_pid(tmp_path: Pa
     assert "it''s" in script  # single quotes doubled for the PowerShell literal
 
 
+def test_launched_processes_have_no_visible_window(tmp_path: Path) -> None:
+    seen: list[str] = []
+
+    def powershell(script: str) -> CommandResult:
+        seen.append(script)
+        return _result('{"ProcessId":7,"ReturnValue":0}')
+
+    WmiDetachedLauncher(run_powershell=powershell, environment={}).launch(
+        ["py"], cwd=tmp_path, stdout_path=tmp_path / "o", stderr_path=tmp_path / "e"
+    )
+    (script,) = seen
+    # the startup information is built first and handed to Create: ShowWindow = 0 (SW_HIDE)
+    assert script.index("Win32_ProcessStartup") < script.index("Invoke-CimMethod")
+    assert "ShowWindow = [uint16]0" in script
+    assert "ProcessStartupInformation = $si" in script
+    # CREATE_NO_WINDOW through CreateFlags is rejected by WMI (return code 21): it must not be used
+    assert "CreateFlags" not in script
+
+
 @pytest.mark.parametrize(
     "output,code,error",
     [

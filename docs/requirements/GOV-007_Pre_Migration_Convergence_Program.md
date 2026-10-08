@@ -589,6 +589,12 @@ v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
   这是 S3 单一发布命令（`scripts/architecture_arch005_publish.py`）第一次完整跑通 A–E；最后的 `git push` 由 owner 在终端执行，命令用远端 tip 证明。须披露：(1) 链上第一次真实运行 v1 因我用 `tail -F` 占着 journal 而中止，催生 C2.1；v2 因开关开启诊断发现受限子进程不能开进程池而中止并修复；v3 一次通过；
   (2) stage 1 718.6 s（高于预期带 43%，未过告警线）、Full 9,078.6 s（高于带上限 4.4%，未过 9,500 s 告警线）；Full 偏慢的原因是命名 DQ 候选文件在过期的时长种子下晚起跑（DEVX-022 第 17.8 节），与本候选的改动无关；(3) 本次启动了逐进程计数器采样；
   (4) 我外挂的租约保活进程在 owner 等待期间无记录地消失（原因未查明，租约未受影响）；详见 DEVX-016 第 9 节与 DEVX-022 第 17.8 节。
+- **2026-10-08 下午 第八次发布尝试（DEVX-016 C3a：S3 小项 + P4-1 + DEVX-022 M5 种子）——Full 全绿，发布阶段被宿主卡死中断，什么都没有发布**：run `p-20261008-v5`（候选 `5480507f1`）Full 通过 15,095 / 4 跳过 / 0 失败；`local-publish` 期间（15:57）宿主显示唤醒卡死，worker 被杀在 ff 合并的引用事务 prepared 之后，
+  留下 `.git/HEAD.lock` 与 `.git/refs/heads/main.lock`。owner 批准审计后手工删除两个锁（未预批的人工操作，记录与证据见 DEVX-021 第 10 节），`local-publication-recover` 收口为 `STABLE_FAILED_ATTEMPT`，`p-20261008-v5-formal` 以 FAILED 释放；本地 `main` = `origin/main` = `5150efbac`，没有任何东西被推送。
+  `local-publish` 只允许一次尝试，所以以新提交 + 新 run（v6）重发（约 4.7 小时）。须披露：(1) owner 当天给出的「仅本候选」推送授权随旧候选作废，v6 要再问；(2) 我把 owner 批准的种子刷新并入了 C3a（原说「独立步骤」，DEVX-022 17.9 有说明）；(3) 两个启动失误（命令里的 `git rev-parse` 写法、`--parent-run` 路径写法），没有后果；
+  (4) owner 要求脱离进程不带窗口，已记为 S3 小项 (e)，在 v6 中实现。
+- 审计事件（无内容暴露）：提交任务行事务产物时我在同一条命令里用了裸 `git diff --cached --stat` 与裸 `git status --short | head`，遗漏 `known_unrelated_exclusions` 的精确排除集；
+  前者只列出了我显式暂存的 6 个白名单路径，后者输出为空（工作树当时干净），没有显示任何被排除路径或内容；未打开、哈希、复制、暂存或修改被排除文件。此后只用 `worktree-audit` 与显式白名单路径。按纪律记为审计事件。
 - 仍待 owner：超时/等待校准的复核（`PROVISIONAL_PENDING_OWNER_REVIEW`）、O3 跨调用缓存与 DEVX-023 封印 S 的边界决定（并行重放已发布，封印 S 只是后备）、5 个 HKCU `AITS-DEVX015-Test-*` 遗留注册表根的清理（脚本 `D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1`，agent 未执行）、OPS-082 规则变更确认。
 
 ## 7. 退出条件
