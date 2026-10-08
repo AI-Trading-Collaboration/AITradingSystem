@@ -9,12 +9,21 @@ docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md section 10.
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
+from ai_trading_system.platform.architecture.parallel_replay_scope import (
+    ROLE_S3_COMMAND,
+    apply_switch,
+)
 from ai_trading_system.platform.architecture.publication_cli import default_environment, main
 
 ROOT = Path(__file__).resolve().parents[1]
 
 if __name__ == "__main__":
-    sys.exit(main(environment=default_environment(ROOT)))
+    wired = default_environment(ROOT)
+    # DEVX-023 P6: this process's own lease replays follow the reviewed scope as well (the
+    # children already got it through the environment default_environment built for them).
+    apply_switch(wired.parallel_replay, ROLE_S3_COMMAND, os.environ)
+    sys.exit(main(environment=wired))

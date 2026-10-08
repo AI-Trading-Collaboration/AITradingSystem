@@ -75,14 +75,21 @@ class WmiDetachedLauncher:
         self.environment = dict(environment)
 
     def launch(
-        self, argv: Sequence[str], *, cwd: Path, stdout_path: Path, stderr_path: Path
+        self,
+        argv: Sequence[str],
+        *,
+        cwd: Path,
+        stdout_path: Path,
+        stderr_path: Path,
+        environment: Mapping[str, str] | None = None,
     ) -> int:
+        """``environment`` is added to the launcher's base variables for this one process only."""
         stdout_path.parent.mkdir(parents=True, exist_ok=True)
         command_line = build_detached_command_line(
             argv,
             stdout_path=stdout_path,
             stderr_path=stderr_path,
-            environment=self.environment,
+            environment={**self.environment, **(environment or {})},
         )
         quoted_line = command_line.replace("'", "''")
         quoted_cwd = str(cwd).replace("'", "''")

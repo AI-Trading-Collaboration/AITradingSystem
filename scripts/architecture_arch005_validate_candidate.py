@@ -18,6 +18,10 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import IO
 
+from ai_trading_system.platform.architecture.parallel_replay_scope import (
+    PARALLEL_REPLAY_ENV,
+    without_switch,
+)
 from ai_trading_system.platform.architecture.publication_validation import (
     CandidateValidationDriver,
     ValidationConfig,
@@ -25,6 +29,7 @@ from ai_trading_system.platform.architecture.publication_validation import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+STAGE_1_ID = "named-parent-positive"
 
 
 class _Child:
@@ -59,14 +64,27 @@ def main() -> int:
     parser.add_argument("--parent-run", type=Path, required=True)
     parser.add_argument("--evidence-dir", type=Path, required=True)
     parser.add_argument("--readiness", type=Path, required=True)
+    parser.add_argument(
+        "--stage-1-parallel-replay-workers",
+        type=int,
+        default=0,
+        help="DEVX-023 P6: parallel lease replay for stage 1 only (reviewed scope; 0 = serial)",
+    )
     args = parser.parse_args()
+    # The parallel replay switch is never inherited: only stage 1 gets it, from the argument, so the
+    # pre-Full tiers and the formal Full stay serial whatever the launching shell exported.
     environment = {
-        **os.environ,
+        **without_switch(os.environ),
         "PYTHONPATH": str(ROOT / "src"),
         "PYTHONDONTWRITEBYTECODE": "1",
         "AITS_NAMED_DQ_PUBLICATION_TRANSACTION": str(args.transaction),
         "AITS_NAMED_DQ_SOURCE_LEASE_ID": args.lease_id,
     }
+    stage_environment = (
+        {STAGE_1_ID: {PARALLEL_REPLAY_ENV: str(args.stage_1_parallel_replay_workers)}}
+        if args.stage_1_parallel_replay_workers >= 2
+        else {}
+    )
     config = ValidationConfig(
         run_id=args.run_id,
         repository_root=ROOT,
@@ -84,6 +102,7 @@ def main() -> int:
         readiness_path=args.readiness,
         boundary_id=f"{args.run_id}-candidate-{args.candidate_sha[:12]}",
         environment=environment,
+        stage_environment=stage_environment,
     )
 
     def run_command(argv: Sequence[str]) -> tuple[int, str]:

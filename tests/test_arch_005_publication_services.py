@@ -80,6 +80,42 @@ def test_launch_creates_the_process_through_wmi_and_returns_its_pid(tmp_path: Pa
     assert "it''s" in script  # single quotes doubled for the PowerShell literal
 
 
+def test_a_launch_environment_is_added_for_that_process_only(tmp_path: Path) -> None:
+    seen: list[str] = []
+
+    def powershell(script: str) -> CommandResult:
+        seen.append(script)
+        return _result('{"ProcessId":7,"ReturnValue":0}')
+
+    launcher = WmiDetachedLauncher(run_powershell=powershell, environment={"PYTHONPATH": "src"})
+    for extra in ({"AITS_LEASE_PARALLEL_REPLAY": "4"}, None):
+        launcher.launch(
+            ["py"],
+            cwd=tmp_path,
+            stdout_path=tmp_path / "o",
+            stderr_path=tmp_path / "e",
+            environment=extra,
+        )
+    first, second = seen
+    assert "set PYTHONPATH=src&&" in first and "set AITS_LEASE_PARALLEL_REPLAY=4&&" in first
+    assert "set PYTHONPATH=src&&" in second and "AITS_LEASE_PARALLEL_REPLAY" not in second
+    assert launcher.environment == {"PYTHONPATH": "src"}  # a launch never changes the base
+
+
+def test_an_unsafe_launch_environment_value_is_refused(tmp_path: Path) -> None:
+    launcher = WmiDetachedLauncher(
+        run_powershell=lambda script: _result('{"ProcessId":7,"ReturnValue":0}'), environment={}
+    )
+    with pytest.raises(DetachedLaunchError):
+        launcher.launch(
+            ["py"],
+            cwd=tmp_path,
+            stdout_path=tmp_path / "o",
+            stderr_path=tmp_path / "e",
+            environment={"AITS_LEASE_PARALLEL_REPLAY": "4&calc"},
+        )
+
+
 def test_launched_processes_have_no_visible_window(tmp_path: Path) -> None:
     seen: list[str] = []
 

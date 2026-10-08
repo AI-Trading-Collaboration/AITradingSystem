@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -342,3 +343,50 @@ def test_a_progress_record_taken_over_by_another_driver_is_never_overwritten(
     assert raised.value.code == "VALIDATION_PROGRESS_NOT_OWNED"
     final: dict[str, Any] | None = read_progress(config.progress_path)
     assert final is not None and final["coordinator_id"] == "someone-else"
+
+
+class _EnvironmentWorld(FakeWorld):
+    """A world that also remembers the environment every stage process was started with."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.environments: list[dict[str, str]] = []
+
+    def start_process(self, argv: Sequence[str], log: Path, env: Mapping[str, str]) -> FakeProcess:
+        self.environments.append(dict(env))
+        return super().start_process(argv, log, env)
+
+
+def test_a_stage_environment_reaches_only_its_stage_and_is_recorded(tmp_path: Path) -> None:
+    switch = {"AITS_LEASE_PARALLEL_REPLAY": "4"}
+    config = dataclasses.replace(
+        _config(tmp_path), stage_environment={"named-parent-positive": switch}
+    )
+    world = _EnvironmentWorld()
+    assert _driver(config, world).run() == 0
+    # stage 1 only: the four pre-Full tiers and the formal Full are started without the switch
+    assert [("AITS_LEASE_PARALLEL_REPLAY" in env) for env in world.environments] == [
+        True,
+        False,
+        False,
+        False,
+        False,
+        False,
+    ]
+    assert world.environments[0]["PYTHONPATH"] == "src"  # the base environment is kept
+    progress = read_progress(config.progress_path)
+    assert progress is not None
+    first, *others = progress["results"]
+    assert first["environment_additions"] == switch
+    assert all("environment_additions" not in row for row in others)
+    assert dict(config.environment) == {"PYTHONPATH": "src"}  # the shared mapping is not polluted
+
+
+def test_without_a_stage_environment_no_stage_gets_an_addition(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    world = _EnvironmentWorld()
+    assert _driver(config, world).run() == 0
+    assert all(env == {"PYTHONPATH": "src"} for env in world.environments)
+    progress = read_progress(config.progress_path)
+    assert progress is not None
+    assert all("environment_additions" not in row for row in progress["results"])

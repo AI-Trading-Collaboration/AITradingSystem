@@ -17,6 +17,14 @@ from publication_run_support import (
     make_run_config,
 )
 
+from ai_trading_system.platform.architecture.parallel_replay_scope import (
+    PARALLEL_REPLAY_ENV,
+    ROLE_LOCAL_PUBLISH_WORKER,
+    ROLE_S3_COMMAND,
+    ROLE_VALIDATION_STAGE_1,
+    ParallelReplayScope,
+    inactive_scope,
+)
 from ai_trading_system.platform.architecture.publication_checks import (
     AUTHORIZATION_SCHEMA_VERSION,
     AUTHORIZATION_SCOPE,
@@ -51,6 +59,7 @@ class Harness:
         push_by_command: bool = True,
         owner_wait_seconds: float = 0.0,
         owner_pushes_after_polls: int | None = None,
+        parallel_replay: ParallelReplayScope | None = None,
     ) -> None:
         self.world = World(tmp_path)
         self.launcher = FakeLauncher(self.world)
@@ -76,6 +85,7 @@ class Harness:
             owner_push_wait_seconds=owner_wait_seconds,
             owner_wait_poll_seconds=60.0,
             owner_wait_heartbeat_seconds=1200.0,
+            parallel_replay=parallel_replay if parallel_replay is not None else inactive_scope(),
         )
         steps = (
             build_prepare_steps(self.run_config, self.world)
@@ -446,3 +456,60 @@ def test_a_failed_lease_heartbeat_stops_the_wait_instead_of_waiting_on_a_dead_le
     failed = h.journal.replay().last_detail("E59.push", status="FAILED")
     assert failed is not None and failed["code"] == "PUBLICATION_RUN_LEASE_HEARTBEAT_FAILED"
     assert h.world.pushes == []
+
+
+def _scope(*roles: str) -> ParallelReplayScope:
+    return ParallelReplayScope(
+        status="PILOT_BASELINE",
+        version="1.0.0",
+        workers=4,
+        enabled_roles=frozenset(roles),
+        config_sha256="f" * 64,
+        problem=None,
+    )
+
+
+def _launch_of(h: Harness, marker: str) -> tuple[tuple[str, ...], dict[str, str]]:
+    (argv,) = [c for c in h.launcher.launched if marker in c]
+    return argv, h.launcher.environments[h.launcher.launched.index(argv)]
+
+
+def test_the_reviewed_parallel_replay_scope_reaches_stage_1_and_the_worker_only(
+    tmp_path: Path,
+) -> None:
+    scope = _scope(ROLE_S3_COMMAND, ROLE_VALIDATION_STAGE_1, ROLE_LOCAL_PUBLISH_WORKER)
+    h = Harness(tmp_path, parallel_replay=scope)
+    h.engine.run()
+    driver, driver_environment = _launch_of(h, "scripts/architecture_arch005_validate_candidate.py")
+    # stage 1 gets the switch through an argument the driver turns into that stage's environment
+    # alone; the driver process itself carries none, so the pre-Full tiers and the Full stay serial
+    assert driver[driver.index("--stage-1-parallel-replay-workers") + 1] == "4"
+    assert driver_environment == {}
+    worker, worker_environment = _launch_of(h, "local-publish")
+    assert worker_environment == {PARALLEL_REPLAY_ENV: "4"}
+    facts = h.journal.replay().last_detail("E53.local_publish_launch")
+    assert facts is not None and facts["parallel_replay_environment"] == {PARALLEL_REPLAY_ENV: "4"}
+
+
+def test_without_a_scope_no_launched_process_gets_the_switch(tmp_path: Path) -> None:
+    h = Harness(tmp_path)  # inactive scope: today's behaviour
+    h.engine.run()
+    driver, driver_environment = _launch_of(h, "scripts/architecture_arch005_validate_candidate.py")
+    assert "--stage-1-parallel-replay-workers" not in driver and driver_environment == {}
+    _, worker_environment = _launch_of(h, "local-publish")
+    assert worker_environment == {}
+    facts = h.journal.replay().last_detail("E53.local_publish_launch")
+    assert facts is not None and facts["parallel_replay_environment"] == {}
+
+
+def test_a_role_the_scope_leaves_out_gets_nothing(tmp_path: Path) -> None:
+    h = Harness(tmp_path, parallel_replay=_scope(ROLE_LOCAL_PUBLISH_WORKER))
+    h.engine.run()
+    driver, _ = _launch_of(h, "scripts/architecture_arch005_validate_candidate.py")
+    assert "--stage-1-parallel-replay-workers" not in driver
+    _, worker_environment = _launch_of(h, "local-publish")
+    assert worker_environment == {PARALLEL_REPLAY_ENV: "4"}
+    h2 = Harness(tmp_path / "second", parallel_replay=_scope(ROLE_VALIDATION_STAGE_1))
+    h2.engine.run()
+    _, second_worker_environment = _launch_of(h2, "local-publish")
+    assert second_worker_environment == {}

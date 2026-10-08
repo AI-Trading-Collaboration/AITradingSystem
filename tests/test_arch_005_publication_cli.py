@@ -18,6 +18,12 @@ from publication_run_support import (
     World,
 )
 
+from ai_trading_system.platform.architecture.parallel_replay_scope import (
+    PARALLEL_REPLAY_ENV,
+    SCOPE_CONFIG_PATH,
+    ParallelReplayScope,
+    inactive_scope,
+)
 from ai_trading_system.platform.architecture.publication_checks import (
     AUTHORIZATION_SCHEMA_VERSION,
     AUTHORIZATION_SCOPE,
@@ -28,6 +34,7 @@ from ai_trading_system.platform.architecture.publication_cli import (
     EXIT_FAILED,
     CliEnvironment,
     build_parser,
+    default_environment,
     main,
 )
 
@@ -105,6 +112,7 @@ class Fixture:
         *,
         sleep: Callable[[float], None] | None = None,
         now: Callable[[], datetime] | None = None,
+        parallel_replay: ParallelReplayScope | None = None,
     ) -> CliEnvironment:
         world = self.world
 
@@ -123,10 +131,16 @@ class Fixture:
             monotonic=lambda: 0.0,
             now=now or (lambda: T0),
             git=git,
+            parallel_replay=parallel_replay if parallel_replay is not None else inactive_scope(),
         )
 
-    def invoke(self, capsys: pytest.CaptureFixture[str], *args: str) -> tuple[int, dict[str, Any]]:
-        code = main(list(args), environment=self.environment())
+    def invoke(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        *args: str,
+        parallel_replay: ParallelReplayScope | None = None,
+    ) -> tuple[int, dict[str, Any]]:
+        code = main(list(args), environment=self.environment(parallel_replay=parallel_replay))
         return code, json.loads(capsys.readouterr().out)
 
     def authorize(self) -> None:
@@ -346,3 +360,47 @@ def test_resume_can_wait_for_the_owner_and_finish_the_run_itself(
     assert fx.world.pushes == []  # the command waited, it did not push
     assert len(fx.world.named("heartbeat")) == 1  # one renewal inside the 30 minutes
     assert fx.world.transactions["r1-formal"] == "RELEASED"
+
+
+def test_the_run_record_names_the_parallel_replay_scope_it_started_with(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    scope = ParallelReplayScope(
+        status="PILOT_BASELINE",
+        version="1.0.0",
+        workers=4,
+        enabled_roles=frozenset({"s3_command", "validation_stage_1"}),
+        config_sha256="a" * 64,
+        problem=None,
+    )
+    fx = Fixture(tmp_path, candidate_files=FILES)
+    fx.invoke(capsys, "run", "--run-id", "r1", "--parent-run", "p.json", parallel_replay=scope)
+    run_dir = fx.world.repo / "outputs" / "architecture" / "publication_runs" / "r1"
+    record = json.loads((run_dir / "run.json").read_text(encoding="utf-8"))
+    assert record["parallel_replay"] == scope.to_dict()
+    assert record["parallel_replay"]["enabled_roles"] == ["s3_command", "validation_stage_1"]
+    other = Fixture(tmp_path / "other", candidate_files=FILES)
+    other.invoke(capsys, "run", "--run-id", "r1", "--parent-run", "p.json")
+    other_record = json.loads(
+        (
+            other.world.repo / "outputs" / "architecture" / "publication_runs" / "r1" / "run.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert other_record["parallel_replay"]["active"] is False
+
+
+def test_the_real_wiring_takes_the_switch_from_the_reviewed_scope_never_from_the_shell(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    target = tmp_path / SCOPE_CONFIG_PATH
+    target.parent.mkdir(parents=True)
+    shutil.copy(ROOT / SCOPE_CONFIG_PATH, target)
+    monkeypatch.setenv(PARALLEL_REPLAY_ENV, "8")  # whatever the launching shell exported
+    wired = default_environment(tmp_path)
+    assert wired.parallel_replay.active and wired.parallel_replay.workers == 4
+    runner = wired.make_runner(tmp_path / "ev")
+    assert runner.env[PARALLEL_REPLAY_ENV] == "4"
+    target.unlink()  # no reviewed scope: nothing is enabled and the inherited value is dropped
+    bare = default_environment(tmp_path)
+    assert not bare.parallel_replay.active
+    assert PARALLEL_REPLAY_ENV not in bare.make_runner(tmp_path / "ev").env

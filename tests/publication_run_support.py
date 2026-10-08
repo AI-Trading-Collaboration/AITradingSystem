@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -217,6 +217,7 @@ class FakeLauncher:
     def __init__(self, world: World) -> None:
         self.world = world
         self.launched: list[tuple[str, ...]] = []
+        self.environments: list[dict[str, str]] = []  # per launch, parallel to ``launched``
         self.running_polls = 2
         self._remaining: dict[int, int] = {}
         self.driver_status = "VALIDATION_PASS_AWAITING_PUBLICATION_REVIEW"
@@ -225,10 +226,17 @@ class FakeLauncher:
         self.worker_status = "LOCAL_PUBLISHED"
 
     def launch(
-        self, argv: Sequence[str], *, cwd: Path, stdout_path: Path, stderr_path: Path
+        self,
+        argv: Sequence[str],
+        *,
+        cwd: Path,
+        stdout_path: Path,
+        stderr_path: Path,
+        environment: Mapping[str, str] | None = None,
     ) -> int:
         argv = tuple(argv)
         self.launched.append(argv)
+        self.environments.append(dict(environment or {}))
         pid = 5000 + len(self.launched)
         self._remaining[pid] = self.running_polls
         if VALIDATE_SCRIPT in argv:

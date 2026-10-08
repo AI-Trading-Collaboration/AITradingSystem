@@ -22,6 +22,13 @@ from typing import Any
 from ai_trading_system.platform.architecture.integration_publication_fence import (
     load_publication_fence_policy,
 )
+from ai_trading_system.platform.architecture.parallel_replay_scope import (
+    ROLE_S3_COMMAND,
+    ParallelReplayScope,
+    inactive_scope,
+    load_scope,
+    without_switch,
+)
 from ai_trading_system.platform.architecture.publication_commands import (
     CommandResult,
     CommandRunner,
@@ -101,6 +108,8 @@ class CliEnvironment:
     monotonic: Callable[[], float]
     now: Callable[[], datetime]
     git: Callable[[Sequence[str]], str]
+    # DEVX-023 P6: the reviewed parallel-replay scope (fail safe: inactive, every replay serial).
+    parallel_replay: ParallelReplayScope = inactive_scope()
 
 
 def default_environment(repository_root: Path) -> CliEnvironment:
@@ -120,10 +129,14 @@ def default_environment(repository_root: Path) -> CliEnvironment:
         subprocess_powershell,
     )
 
+    # The parallel-replay switch comes only from the reviewed scope (DEVX-023 P6), never from the
+    # shell that started this command: an inherited value is dropped before the role's is added.
+    scope = load_scope(repository_root)
     child_env = {
-        **os.environ,
+        **without_switch(os.environ),
         "PYTHONPATH": str(repository_root / "src"),
         "PYTHONDONTWRITEBYTECODE": "1",
+        **scope.environment_for(ROLE_S3_COMMAND),
     }
 
     def git(args: Sequence[str]) -> str:
@@ -165,6 +178,7 @@ def default_environment(repository_root: Path) -> CliEnvironment:
         monotonic=time.monotonic,
         now=lambda: datetime.now(tz=UTC),
         git=git,
+        parallel_replay=scope,
     )
 
 
@@ -313,6 +327,7 @@ def _load_or_create_run_record(
         "scope_policy_sha256": policy.sha256,
         "scope_policy_path": str(args.scope_policy),
         "fence_policy_sha256": fence_sha,
+        "parallel_replay": environment.parallel_replay.to_dict(),
         "created_at": environment.now().isoformat(),
         "production_effect": "none",
         "broker_action": "none",
@@ -379,6 +394,7 @@ def build_engine(
         start_branch=str(record["start_branch"]),
         max_hours_since_full_end=float(record["limits"]["max_hours_since_full_end"]),
         push_by_command=bool(getattr(args, "push_by_command", False)),
+        parallel_replay=environment.parallel_replay,
         owner_push_wait_seconds=(
             60.0 * float(getattr(args, "owner_wait_minutes", DEFAULT_OWNER_WAIT_MINUTES))
             if getattr(args, "wait_for_owner_push", False)

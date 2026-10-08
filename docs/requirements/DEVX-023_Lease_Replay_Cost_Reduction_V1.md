@@ -334,3 +334,41 @@ P2 的测试要求：(1) 在多链夹具库上并行与串行的 `LeaseReplay` �
   - stage 1 873.6 s（v3 718.6 s，+21.6%）、`local-publish` 82 分钟（v3 63 分钟，+30%）、命名 DQ 候选文件 ×1.2：全部是重放主导的工作（Full 里最慢的节点 composer 激活测试 +28% 同向）；stage 1 之外的各阶段与 v3 持平或更快。所以**每一次发布尝试（包括被放弃的）都让之后的每次重放永久变慢约 1.2–2.8 s**，下一次发布的 stage 1 预计越过 900 s 告警线。
   - P6 的目标阶段（时间线见 DEVX-022 第 17.10 节）：(a) S3 命令与验证驱动的子进程环境（stage 1 约 32 次重放；Full 里的重放主导节点，例如 composer 激活测试 v6 为 2,542.8 s，v3 为 1,985.9 s）；(b) `local-publish` worker 与 git 钩子（钩子目录创建前 21 分钟、`merge_resumed` 前 25 分钟、worker 结束后 7 分钟收养，全是重放；引用事务持锁窗口 2 分 46 秒也在其中）。命名 DQ 的受限子进程保持串行（12.4）。开启范围由已评审的配置值给出。
   - 封印 S（第 10 节）仍是唯一能停止增长的方案，等待 owner 对「不落盘已校验标记」边界的决定；并行只把常数除以约 2.3，增长率不变。
+
+### 12.6 P6 实施计划与进度（2026-10-08 夜；依据 DEVX-022 第 17.10 节的实测）
+
+**为什么现在做**：重放主导的工作随租约库增长变慢（stage 1 +21.6%、`local-publish` +30%、composer 激活测试 +28%），每一次发布尝试（含被放弃的）让之后的每次串行重放永久变慢约 1.2–2.8 s，下一次发布的 stage 1 预计越过 900 s 告警线。并行不改信任边界，能立刻把常数除以约 2.5–3（真实库、安静时：串行 26.0 s → 4 个工作进程 10.2–11.3 s，8 个 9.9–10.2 s，结果逐项相同）；封印 S（第 10 节）仍是唯一能停止增长的方案，待 owner 对信任模型的决定。
+
+**开启范围**（P6 的核心决定；每一行是已评审配置 `config/architecture/devx_023_parallel_replay_scope.v1.yaml` 里的一个值）：
+
+| 角色 | 进程 | 状态 | 理由 |
+|---|---|---|---|
+| `s3_command` | 发布命令本身及其围栏 / 检查点 / 生成器 / 收尾子进程 | 开 | E52 / E56 各 235–273 s，A–C 的生成器与审计都在重放 |
+| `validation_stage_1` | 验证驱动的 named-parent-positive 阶段（约 32 次重放，873.6 s） | 开 | 唯一占 stage 时间大头的重放消费者；经驱动参数 `--stage-1-parallel-replay-workers` 只加到该阶段的环境，驱动进程本身不带开关 |
+| `local_publish_worker` | `local-publish` worker 与它的 git 钩子 | 开 | 82 分钟里重放占大头；持锁窗口（2 分 46 秒）里的钩子也在其中；经启动器对这一次启动的环境 |
+| `validation_pre_full_tiers` | contract-validation / integration / reproducibility / architecture-fitness | **关** | 这些 tier 的 pytest 跑 16 个 xdist worker，每个再开进程池会超订；测量之后再评估 |
+| `formal_full` | 正式 Full（pytest 与 xdist 工作进程） | **关（never_enabled）** | owner 2026-10-05 选择 C：不改正式 Full 的合同与环境 |
+| `named_dq_restricted_children` | 命名 DQ 的受限子进程 | **关（never_enabled）** | 12.4：隔离边界，子进程只运行评审过的提交代码 |
+
+**机制与不变量**：
+1. 模块 `parallel_replay_scope.py` 读取并校验配置（严格 YAML：重复键 / 非有限数视为无效；缺失、不可读、格式错误、状态不在 `PILOT_BASELINE` / `OWNER_APPROVED`、`workers` 不在 2–8、角色集合不等于六个已知角色、任一 `never_enabled` 角色被设为 enabled → 整份策略无效，什么也不开）；`environment_for(role)` 只在策略生效且该角色开启时给出 `AITS_LEASE_PARALLEL_REPLAY=<workers>`。变量的值只来自配置：从调用 shell 继承来的值被丢弃（`without_switch`），发布脚本对自己的进程也只按角色设置（`apply_switch`）。
+2. 接线：`publication_cli.default_environment` 载入范围并把 `s3_command` 的变量放进子进程环境；`PublishConfig.parallel_replay` 给 D30（驱动命令行追加 `--stage-1-parallel-replay-workers N`）与 E53（`WmiDetachedLauncher.launch(environment=...)` 只对这一次启动生效）；验证驱动的 `ValidationConfig.stage_environment` 只给 `named-parent-positive`，并把附加变量写进该阶段的结果（`environment_additions`）；`run.json` 记录启动时的范围快照（状态、版本、worker 数、开启角色、策略文件哈希）。
+3. 默认行为不变：配置缺失或未生效 = 与现状逐字相同；任何异常仍回退串行（P1）；不持久化、不跨调用缓存、不改围栏 / 租约语义；并行结果与串行逐项相同（差分与变异测试已常驻 Full）。
+4. 启发式治理（AGENTS.md）：worker 数 4 与上限 8 是性能参数，状态 `PILOT_BASELINE`，退出条件 = 用 P6.4 那条链的实测校准后换成带证据的 `OWNER_APPROVED` 版本，最迟 2027-01-08；各角色开关改一个值即可关掉，不需要回滚代码。
+
+**测试**（`tests/test_arch_005_parallel_replay_scope.py` 26 项 + 接线测试）：真实策略有效且生效、六个角色与 never_enabled 不变量；十五类无效策略各给出预期的问题码且什么也不开；缺失 / 非 YAML / 非 UTF-8 / 重复键；四种状态；`without_switch` / `apply_switch`（继承值不会胜出、未开启的角色没有开关）；与 `lease_parallel_replay` 的常量一致；S3 运行（`test_arch_005_publication_run.py`）：开启时 D30 带参数而驱动环境为空、E53 带环境并记入 facts，未开启 / 只开一部分角色时对应进程什么也没有；驱动（`test_arch_005_publication_validation.py`）：附加环境只到 stage 1、Full 与四个 tier 没有、共享环境不被污染；启动器（`test_arch_005_publication_services.py`）：环境只对这一次启动生效、不安全的值被拒；CLI：`run.json` 快照、真实接线只从策略取值。
+
+**隔离演练**（2026-10-08 夜，真实租约库 6,214 个事件，临时仓库与钩子，演练脚本在会话 scratchpad，目录已删除）：隐藏的 WMI 启动 → cmd → worker → `git merge --ff-only` → sh 钩子 → python 钩子里重放真实库。串行对照：每次钩子里的重放 26.0–26.3 s，合并全程 187 s；开关 = 4：每次 10.2–10.8 s，**无回退**（`LAST_FALLBACK_REASON` = None），状态 PASS，合并全程 77 s（2.4×）。这覆盖了钩子 / 无控制台 / Job 对象（只有 `KILL_ON_JOB_CLOSE`，没有活动进程数限制）这些担心点中的前两个；Job 的进程数限制已读码确认不存在。
+
+**测量与验收**（候选链用候选的代码，所以在同一条链里直接量）：stage 1 ≤ 650 s（现 873.6 s）；E52 / E56 各降 ≥ 25%；E54 ≤ 60 分钟（现 82 分钟；演练给出的乐观估计约 40–45 分钟）；journal 无 FAILED；Full 的 pytest 时长不变（±3%，因为 Full 里没开）。**回滚**：任一阶段比串行慢或出现回退以外的异常 → 把对应角色关掉（配置改一个值）。
+
+| 步骤 | 内容 | 状态 |
+|---|---|---|
+| P6.0 | 登记（本节 + 任务行） | 完成（任务行 `6ce7a54b1`） |
+| P6.1 | 配置 + `parallel_replay_scope.py` + 测试 | 完成（候选尚未冻结） |
+| P6.2 | 接线（`publication_cli`、`publish.py`、启动器、驱动 `stage_environment`）+ 测试 | 完成（候选尚未冻结） |
+| P6.3 | 文档：`docs/system_flow.md` 一段并重算封印；DEVX-022 第 15.2 节一行；本节 | 本次 |
+| P6.4 | 候选链（S3 命令）并测量 | 待做 |
+| P6.5 | 结果写回 DEVX-022 / DEVX-023 / 任务行；校准 worker 数，评估 `validation_pre_full_tiers` | 待做 |
+
+**风险**：(1) 钩子 / worker 里的进程池 spawn：`__main__` 守卫检查（仓库里调用重放的脚本都有守卫，没有守卫的脚本回退串行——这也是我用无守卫的临时脚本测不出加速的原因）；(2) 进程超订：`local-publish` 期间没有别的重负载，Full 与 xdist 的 tier 不开；(3) 每次重放的建池启动成本约 2 s：stage 1 的 P4 诊断已测得净收益 −21%（568.7 对 718.6 s），钩子演练净收益 2.5×；(4) 配置的治理：`PILOT_BASELINE` 的退出条件见上。

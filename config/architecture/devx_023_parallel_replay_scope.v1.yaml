@@ -1,0 +1,62 @@
+schema_version: devx_023_parallel_replay_scope.v1
+policy_id: DEVX-023-PARALLEL-REPLAY-SCOPE
+version: 1.0.0
+status: PILOT_BASELINE
+owner: validation_operations / architecture-control-plane
+approval_ref: null
+rationale: >-
+  Replaying the lease store is the dominant cost of the publication chain and it grows with every
+  publication attempt (DEVX-022 17.10, measured 2026-10-08): stage 1 +21.6% (873.6 s against 718.6 s),
+  local-publish +30% (82 against 63 minutes), the slowest Full node +28%, while the stages that do not
+  replay are flat. Each attempt, including abandoned ones, adds 1.2-2.8 s to every later serial replay of
+  the real store (6,210 events, 893 chains, 728 MB). The chain-level parallel replay (DEVX-023 section 12,
+  published default-off with commit 5150efbac) returns a result identical to the serial replay in
+  about a third of the time (29.5 -> 11.0 s with 4 workers, 10.2 s with 8, measured 2026-10-08 on the
+  real store). This policy names, as reviewed data, which processes of the publication chain get the
+  switch so the answer is no longer an environment variable somebody exported.
+intended_effect: >-
+  The S3 command and its fence/generator children, stage 1 of the validation driver and the local-publish
+  worker with its git hooks replay the lease store with the parallel replay (every anomaly falls back to the
+  serial replay and its result). The formal Full and the restricted named-DQ children keep the serial
+  replay by design. Nothing here changes any investment interpretation, scoring rule, backtest or report;
+  it only shortens the chain (target: stage 1 <= 650 s, local-publish <= 60 minutes, fence closures -25%).
+validation_evidence: >-
+  tests/test_arch_005_parallel_replay_scope.py (loader, per-role environment, driver and launcher wiring);
+  the 36 + 14 differential and mutation tests of the parallel replay that stay in the Full;
+  the diagnostic stage 1 run of the seventh publication (568.7 s with 4 workers against 718.6 s serial);
+  the chain that publishes this policy measures every target above (DEVX-023 section 12.6).
+review_condition: >-
+  PILOT_BASELINE: the worker count is a performance parameter calibrated by one measured chain, not a
+  policy of record. Replace it with an evidence-backed OWNER_APPROVED version after the chain that
+  publishes it (DEVX-023 12.6 P6.5), and in any case before 2027-01-08 (90 days). Switch a role off by
+  changing its value to disabled; no code change is needed. A role that is marked never_enabled must stay
+  disabled (the loader treats a policy that enables it as invalid and enables nothing).
+
+# 2 <= workers <= 8 (the parallel replay clamps to 8; 4-8 were equally fast on the real store, more only
+# adds start-up cost).
+workers: 4
+
+roles:
+  s3_command:
+    value: enabled
+    applies_to: the publication command's own process and the fence, checkpoint, generator and closeout subprocesses it starts
+  validation_stage_1:
+    value: enabled
+    applies_to: the named-parent-positive stage of the validation driver (about 32 replays; 873.6 s in the last chain)
+  local_publish_worker:
+    value: enabled
+    applies_to: the local-publish worker and, through it, the git reference-transaction and post-merge hooks
+  validation_pre_full_tiers:
+    value: disabled
+    applies_to: contract-validation, integration, reproducibility and architecture-fitness
+    reason: these tiers run pytest with 16 xdist workers; a pool per worker would oversubscribe the host. Enable only after a measurement.
+  formal_full:
+    value: disabled
+    never_enabled: true
+    applies_to: the formal Full (pytest and its xdist workers)
+    reason: the owner chose on 2026-10-05 not to change the formal Full contract or environment (DEVX-022 option C).
+  named_dq_restricted_children:
+    value: disabled
+    never_enabled: true
+    applies_to: the restricted child processes of the named data-quality candidate tests
+    reason: isolation boundary; those children run only reviewed committed code (DEVX-023 12.4).

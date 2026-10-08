@@ -29,6 +29,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Protocol
 
+from ai_trading_system.platform.architecture.parallel_replay_scope import (
+    ROLE_LOCAL_PUBLISH_WORKER,
+    ROLE_VALIDATION_STAGE_1,
+    ParallelReplayScope,
+    inactive_scope,
+)
 from ai_trading_system.platform.architecture.publication_checks import (
     PrePublishFacts,
     PublicationAuthorizationError,
@@ -79,7 +85,13 @@ class DetachedLauncher(Protocol):
     """Starts a process outside this process tree (it must survive the orchestrator)."""
 
     def launch(
-        self, argv: Sequence[str], *, cwd: Path, stdout_path: Path, stderr_path: Path
+        self,
+        argv: Sequence[str],
+        *,
+        cwd: Path,
+        stdout_path: Path,
+        stderr_path: Path,
+        environment: Mapping[str, str] | None = None,
     ) -> int: ...
 
     def is_running(self, pid: int) -> bool: ...
@@ -113,6 +125,10 @@ class PublishConfig:
     owner_wait_poll_seconds: float = 60.0
     # Every fence checkpoint also renews the 6 h lease; 20 min leaves a wide margin per beat.
     owner_wait_heartbeat_seconds: float = 1200.0
+    # DEVX-023 P6: which launched processes get the parallel lease replay (reviewed configuration,
+    # fail safe = none). Stage 1 of the driver gets it through an argument, the local-publish worker
+    # through its environment; the formal Full and the named-DQ children never do.
+    parallel_replay: ParallelReplayScope = inactive_scope()
 
 
 def ordinary_push_argv() -> list[str]:
@@ -162,6 +178,9 @@ def build_validation_steps(config: PublishConfig, runner: CommandRunner) -> list
             "--evidence-dir", str(run.evidence_dir),
             "--readiness", context.fact("C26.readiness", "readiness_path"),
         ]  # fmt: skip
+        stage_1_workers = config.parallel_replay.workers_for(ROLE_VALIDATION_STAGE_1)
+        if stage_1_workers:
+            argv += ["--stage-1-parallel-replay-workers", str(stage_1_workers)]
         pid = config.launcher.launch(
             argv,
             cwd=run.repository_root,
@@ -301,10 +320,20 @@ def build_publication_steps(config: PublishConfig, runner: CommandRunner) -> lis
             "--transaction", str(run.transaction_path(formal_id)),
             "--actor", run.actor,
         ]  # fmt: skip
+        worker_environment = config.parallel_replay.environment_for(ROLE_LOCAL_PUBLISH_WORKER)
         pid = config.launcher.launch(
-            argv, cwd=run.repository_root, stdout_path=stdout, stderr_path=stderr
+            argv,
+            cwd=run.repository_root,
+            stdout_path=stdout,
+            stderr_path=stderr,
+            environment=worker_environment,
         )
-        return {"pid": pid, "stdout": str(stdout), "stderr": str(stderr)}
+        return {
+            "pid": pid,
+            "stdout": str(stdout),
+            "stderr": str(stderr),
+            "parallel_replay_environment": dict(worker_environment),
+        }
 
     def local_published(context: StepContext) -> Mapping[str, Any] | None:
         main = git_text(runner, run, "E53_probe_main", "rev-parse", "main")

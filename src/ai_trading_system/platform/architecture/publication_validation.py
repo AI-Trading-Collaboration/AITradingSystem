@@ -14,7 +14,7 @@ import json
 import os
 import uuid
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Protocol
@@ -80,6 +80,10 @@ class ValidationConfig:
     readiness_path: Path
     boundary_id: str
     environment: Mapping[str, str]
+    # Variables added to ONE stage's environment on top of ``environment`` (DEVX-023 P6: the
+    # parallel lease replay for stage 1 only). The base environment never carries the switch, so
+    # the pre-Full tiers and the formal Full stay serial.
+    stage_environment: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -305,7 +309,10 @@ class CandidateValidationDriver:
         )
         spec.log_path.parent.mkdir(parents=True, exist_ok=True)
         started = self.monotonic()
-        process = self.start_process(spec.argv, spec.log_path, self.config.environment)
+        additions = dict(self.config.stage_environment.get(spec.stage_id, {}))
+        process = self.start_process(
+            spec.argv, spec.log_path, {**self.config.environment, **additions}
+        )
         self._record("RUNNING", spec.stage_id, child_pid=process.pid, log_path=str(spec.log_path))
         due = started + HEARTBEAT_INTERVAL_SECONDS
         heartbeat_failed = False
@@ -344,6 +351,7 @@ class CandidateValidationDriver:
                 "elapsed_seconds": elapsed,
                 "baseline_seconds": baseline,
                 "log_path": str(spec.log_path),
+                **({"environment_additions": additions} if additions else {}),
             }
         )
         if returncode or heartbeat_failed:
