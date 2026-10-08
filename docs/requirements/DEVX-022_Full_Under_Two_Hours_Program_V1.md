@@ -694,5 +694,19 @@ owner 2026-10-06：「继续，但也要关注后续的流程耗时是否超出�
     按「种子时长降序」排在第 15 位，要等前面的文件释放 worker 才在约 +1,900～+2,100 s 起跑；Full 墙钟 = 起跑 + 合计。自 d24 起它就是最后结束的文件，而重型通道的尾巴（acceptance 文件）在 8,165～8,682 s 结束，所以 Full 的墙钟被这个晚起跑的单元多拉长了 180～870 s。
   - **估计**：该文件若在 ≲ +1,200 s 起跑，Full 将由重型通道的尾巴决定：v3 约 8,165 s（−866 s，−9.6%）、d25 约 8,441 s（−388 s）、d24 约 8,474 s（−183 s）。这是用实测的各文件起止时间算出来的上界，不是实测收益。
   - **调度模拟器的不可信**：`scratchpad/sim_sched.py`（真实调度类 + 实测节点时长）对 v3 给出「刷新种子无收益」（7,745 s 对 7,811 s），但它把这个文件在 +364 s 就起跑（实测 +2,098 s），重型文件的起跑时刻也与实测不符，对 v3 低估 14%——前 30 分钟的模拟并不忠实，所以这条预测不能用来否定上面的估计；决定性的实验是用刷新后的种子跑一次 Full。
-  - **处理与登记**：登记为 DEVX-022 的候选杠杆（M5：用 `scripts/refresh_partial_duration_profile.py` 机械刷新种子，默认 dry-run；种子是 Full 敏感输入，因此须单独归因——用本节的逐文件起止时间对照，而不是只看总墙钟）。另一个未评估的选项是把该文件加入 split-scope 列表使 26 个节点分散到多个 worker（须先证明节点间无共享状态）。本次发布后不单独为它起一个候选（一次完整候选约 2.5 小时 Full + 1 小时发布），随下一个候选做。（2026-10-08 补记：C3a 没有搭载它——写入受治理时长种子清单被自动模式分类器拒绝，且该改动是 Full 敏感输入、尚未获 owner 确认；用刷新工具自己的构造函数生成的 v27 预览已备好，sha256 `e3c8545f…8e35`，与工具 dry-run 的 `output_sha256` 一致，命名 DQ 候选文件在其中排第 5；等 owner 确认。）
+  - **处理与登记**：登记为 DEVX-022 的候选杠杆（M5：用 `scripts/refresh_partial_duration_profile.py` 机械刷新种子，默认 dry-run；种子是 Full 敏感输入，因此须单独归因——用本节的逐文件起止时间对照，而不是只看总墙钟）。另一个未评估的选项是把该文件加入 split-scope 列表使 26 个节点分散到多个 worker（须先证明节点间无共享状态）。本次发布后不单独为它起一个候选（一次完整候选约 2.5 小时 Full + 1 小时发布），随下一个候选做。（2026-10-08 补记：owner 回复「做」后已执行，见 17.9。）
 - **对 §15.1 的影响**：Full 的预期带上限（8,698 s）已被最近四次 Full 连续超过（pytest 墙钟 8,737 → 8,820 → 8,884 → 9,079 s，每次约 +1%～2%），都未过 9,500 s 告警线；原因已定位：命名 DQ 候选文件随租约库变慢（5,353 → 6,933 s），而调度种子过期使它在约 +2,000 s 才起跑，自 d24 起它超过重型通道成为最后结束的文件，之后它每次的增量都直接加到 Full 墙钟上；不是总工作量失控，所以不调告警线，登记杠杆。`LOCAL_MAIN_FF_PRE` / `REMOTE_PUSH_PRE` 各约 3–3.7 分钟是常态，补进监测对照。
+
+### 17.9 M5：时长种子刷新（owner 2026-10-08 批准「做」；并入 C3a 候选）
+- **决定**：我在发布后的汇报里提出刷新时长种子（预计 Full 少 180–870 s），并说明没有放进 C3a 是因为受治理清单的写入被自动模式分类器拒绝、且尚未获 owner 确认；owner 回复「做」。分类器随后放行了刷新工具的 `--write`。
+- **做法**：`scripts/refresh_partial_duration_profile.py --write`（机械刷新，校验来源 profile、summary 与 inventory 摘要），来源 `outputs/validation_runtime/p-20261008-v3-full/test_runtime_profile.json`（sha256 `517f143f884e7b8de2c821840ff0be87135639ae10f3a7eed9c04bde619816a2`，15,031 nodes / 1,353 files，PASS）；
+  写入结果的 sha256 `e3c8545f77dfad878d14767ce616d17db5bdb22f000b5afe0f8317bbf07d8e35`，与此前 dry-run 打印的 `output_sha256` 一致。新种子 `devx_022_m5_full_duration_partial_seed` v27（旧 `devx_018_s1_full_duration_partial_seed` v26 来自 2026-09-26 的 v7 Full，1,334 files）。
+  这份来源 profile 是种子的证据，必须随种子保留（git 忽略的 `outputs/validation_runtime/p-20261008-v3-full/` 不得清理）。
+- **新旧排序**（观测秒数，按种子降序的前 12 位）：`test_arch_005_integration_publication_fence` 23,207、`test_devx015_workflow_coordination` 14,493、`test_devx015_workflow_execution` 13,092、`test_governed_development_skill` 9,872、
+  **`test_named_data_quality_candidate` 6,933（第 5 位；旧种子只记 1,000.6 s，排第 15 位）**、`test_arch_005_task_checkpoint` 5,096、`test_devx015_workflow_integration` 4,942、`test_named_simple_baseline_preview_candidate` 4,261（10 个节点的单元）、`test_composer_prospective_capture_contract` 4,217、
+  `test_arch_005_source_preservation` 2,734、`test_research_outcome_access` 2,125、`test_devx015_workflow_acceptance` 1,800。
+- **打包决定（披露）**：我原先说「作为独立步骤做」。C3a 的 S3 链当时刚好停在 `C26.readiness`，尚未派发任何验证阶段，所以我没有再等一轮 4.5 小时，而是把 v4 run（候选 `2ff096e5c`，正式事务 `p-20261008-v4-formal`）以 FAILED 释放（没有验证阶段、没有 Full 被派发；证据 `claude_c3a_v4_abandoned.txt`），
+  把种子刷新作为独立提交并入候选，用新 run `p-20261008-v5` 重跑整条链。C3a 的其余内容对 Full 时长几乎没有影响（60 个新账本测试约 11 s 且在单个 worker 上，S3 测试几秒），所以归因仍然干净；若 owner 更想要单独的候选，种子提交可以单独还原。
+- **预期与验收**（以逐文件起止时间为准，不只看总墙钟；对照 17.8 的六次 Full）：(1) 命名 DQ 候选文件起跑 ≤ +1,200 s（此前 +1,875～+2,098 s）；(2) Full pytest 墙钟 ≤ 8,698 s（§15.1 带上限），预期 −200～−800 s（v3 的重型通道尾巴在 8,165 s，但新顺序会让原来排第 5 的 integration 文件晚几百秒起跑，所以不再宣称 −870 s）；
+  (3) 尾部空闲占比 ≤ 12%（v3 为 17.0%）；(4) 0 失败、无新的 hang/超时。**回滚**：任一失败或 Full 变慢超过 5% 且原因指向顺序，则还原种子提交（git revert），并把原因写回本节。
+- **风险**：命名 DQ 候选文件更早起跑，会与启动期的重型节点同时占用 CPU（它在旧顺序里也运行在 25 核满载期内，所以负载形态相近）；种子只改文件顺序，不改任何 nodeid、文件内节点顺序或验收语义（`verify_duration_order` 与调度器的重放校验不变）。
