@@ -488,3 +488,12 @@ DEVX-017 依赖 DEVX-016 全部完成；OPS-082 须 owner 先确认「不得使�
     - **P4-3（C3c）**：owner 评审策略后，把策略切到 `OWNER_APPROVED_ENFORCED`，由生成器追加一个账本采纳段（只列 6 个真实文件的当前内容），逐 wave 专属的语义期望若确有必要则迁成段内数据。
     - **P4-4（C3d…）**：分批删除逐 wave 测试与常量，每批附等价性证据，owner 抽查；`tests/test_arch_004_refactor_policy.py` 本身由最新授权段接管（同 S6 的模式）。
   - **需要 owner 决定的两件事（P4-3 前）**：(a) 策略文件的内容评审（退役前缀、易变路径、6 个待采纳路径）；(b) 是否接受「通用终态不变量比现行逻辑更严」这一结果（现行逻辑对被登记过的路径之后的漂移是免除的）。
+- 2026-10-08：**C3a（P4-1 + S3 后续小项）已实现，候选尚未冻结**。
+  - **S3 后续小项**（提交 `96180dc6c`）：(a) `resume --wait-for-owner-push [--owner-wait-minutes N]`——E59 在 owner 模式下保持存活（默认上限 720 分钟），每 60 s 探测远端 tip，每 20 分钟用受审的 `checkout_guard heartbeat` 续租约，owner 推送后自动完成 E60–E63；连续 5 次 `ls-remote` 失败或一次续租失败即失败关闭；owner 模式的 E59 不再标记为有副作用的步骤，被打断的等待可以直接再运行；
+    (b) E52 / E56 的 SLOW 基线 60 s → 210 s（具名常量 `BASELINE_FENCE_CLOSURE_SECONDS`，仅用于报告）；(c) `plan` / `run` 对越出范围策略的候选拒绝时附 `next_action`（走手工链）。新增 8 项测试，ruff、black、mypy strict 通过；(d) 可选的 stage 1 计时诊断步骤仍留待以后。
+  - **P4-1**（提交 `2ee0059dd`，纯增量，不删除任何既有断言）：新模块 `compat_ledger.py`（活动账本代数、终态不变量、策略读取，返回带类型码的违规）、策略草案 `config/architecture/devx_016_compat_ledger_policy.v1.yaml`（状态 `PROPOSED_PENDING_OWNER_REVIEW`）、`tests/test_arch_005_compat_ledger.py`（60 项）与 `tests/compat_ledger_support.py`；`docs/system_flow.md` 加一段并重算封印。
+    真实仓库：325 个段，1,992 条活动记录，383 条与实时文件不一致 = 375 条被 S5 退役 + 2 条易变生成物 + 6 条已承认的陈旧代码文件；策略下零违规、零失效条目；S5 之后 25 个生成段的严格结构检查零违规；全部 325 个段的安全检查零违规。20+ 类变异（合成权威）各自产生预期的违规码。
+  - **线下差分证据**（`outputs/architecture/integration_revalidation/devx015-v389/claude_c3a_ledger_differential.json`，脚本 `scratchpad/p4_differential.py`，不进 CI）：在全部 324 个停止段上，把通用代数的差异集合与旧 `_latest_active_source_mismatches` 逐段对照——**旧结果在每个停止段都是通用结果的子集（0 个漏报）**，54 个停止段两者完全相同；旧函数最多报告 411 条、通用代数最多 508 条，差额正是旧逻辑里「追溯调整」免除的路径。
+    也就是说：通用校验不会漏掉旧测试会抓到的实时漂移，并且更严（P4-2 还要对「逐 wave 测试的其余断言」做同样的变异等价性对照）。
+  - **发现与处理**：(1) 新的真实仓库测试（r02）和既有的约 95 个 hash-authority 测试一样，在改动被固定的源文件之后、生成器链刷新之前会失败（重算 system_flow 封印后，`docs/system_flow.md` 与 006d 配置相对 V3 记录漂移）——预期行为，不是缺陷，生成器链之后恢复；
+    (2) **时长种子刷新（DEVX-022 第 17.8 节）没有搭载在本候选里**：自动模式的分类器拒绝了我对受治理时长种子清单的写入；该改动是 Full 敏感输入，也尚未得到 owner 的明确确认，所以只保留 v27 预览（刷新工具自己的构造函数生成，sha256 `e3c8545f77dfad878d14767ce616d17db5bdb22f000b5afe0f8317bbf07d8e35`，与工具 dry-run 打印的 `output_sha256` 一致；命名 DQ 候选文件在新种子里排第 5），等 owner 确认后作为独立步骤。
