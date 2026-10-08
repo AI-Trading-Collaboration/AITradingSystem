@@ -585,7 +585,11 @@ v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
 - **2026-10-07 23:53 第六次发布（DEVX-016 C2：单一发布命令、范围策略、验证驱动）**：`main = origin/main = 0834ed9576285e717185e5679c3a6e13c57a7d23`（普通推送 `7ead2d6ff..0834ed957`，事务 `gov-007-d25-formal-20261007-v1`，Full 通过 14,974 / 4 跳过 / 0 失败，pytest 2 小时 28 分 3 秒，`local-publish` 61 分 9 秒）。
   owner 2026-10-07 预授权（只限该候选，普通推送），并按草案批准范围策略。须披露：(1) 最后的 `git push` 由 owner 在终端执行（S3 命令因此默认从不推送）；
   (2) stage 1 785.5 s，我先前的归因（证明体积）被逐调用计时否定并已更正，路线改为 C2 → 封印 S → C3；(3) 本次没有启动逐进程计数器采样；(4) 为避免租约在 owner 不在场时到期，我起了一个脱离的 heartbeat 保活进程（每 20 分钟，共续期 1 次，推送后自动退出）；(5) stage 1 期间我并发跑了一次 32 s 的 cProfile 重放；(6) 两次 `git diff --cached --stat` 未带完整排除集（审计事件，未触及被排除路径）；详见 DEVX-016 第 9 节与 DEVX-022 第 17.7 节。
-- 仍待 owner：超时/等待校准的复核（`PROVISIONAL_PENDING_OWNER_REVIEW`）、O3 跨调用缓存、5 个 HKCU `AITS-DEVX015-Test-*` 遗留注册表根的清理（脚本 `D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1`，agent 未执行）、S3 发布范围清单的评审（C2 冻结前）、DEVX-023 封印 S 的决定、OPS-082 规则变更确认。
+- **2026-10-08 09:49 第七次发布（DEVX-023 P：链级并行重放（默认关闭）+ DEVX-016 C2.1）**：`main = origin/main = 5150efbac27e3aedebeb64f46d55208902c6da38`（普通推送 `0834ed957..5150efbac`，事务 `p-20261008-v3-formal`，Full 通过 15,027 / 4 跳过 / 0 失败，pytest 2 小时 31 分 18 秒，`local-publish` 62 分 57 秒）。
+  这是 S3 单一发布命令（`scripts/architecture_arch005_publish.py`）第一次完整跑通 A–E；最后的 `git push` 由 owner 在终端执行，命令用远端 tip 证明。须披露：(1) 链上第一次真实运行 v1 因我用 `tail -F` 占着 journal 而中止，催生 C2.1；v2 因开关开启诊断发现受限子进程不能开进程池而中止并修复；v3 一次通过；
+  (2) stage 1 718.6 s（高于预期带 43%，未过告警线）、Full 9,078.6 s（高于带上限 4.4%，未过 9,500 s 告警线）；Full 偏慢的原因是命名 DQ 候选文件在过期的时长种子下晚起跑（DEVX-022 第 17.8 节），与本候选的改动无关；(3) 本次启动了逐进程计数器采样；
+  (4) 我外挂的租约保活进程在 owner 等待期间无记录地消失（原因未查明，租约未受影响）；详见 DEVX-016 第 9 节与 DEVX-022 第 17.8 节。
+- 仍待 owner：超时/等待校准的复核（`PROVISIONAL_PENDING_OWNER_REVIEW`）、O3 跨调用缓存与 DEVX-023 封印 S 的边界决定（并行重放已发布，封印 S 只是后备）、5 个 HKCU `AITS-DEVX015-Test-*` 遗留注册表根的清理（脚本 `D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1`，agent 未执行）、OPS-082 规则变更确认。
 
 ## 7. 退出条件
 
