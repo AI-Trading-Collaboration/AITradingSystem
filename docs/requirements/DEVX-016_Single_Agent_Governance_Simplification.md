@@ -472,3 +472,19 @@ DEVX-017 依赖 DEVX-016 全部完成；OPS-082 须 owner 先确认「不得使�
     (4) E52 / E56 被标 SLOW 是基线常量（60 s）设低了，实测约 190–220 s（C2 链也是 205 / 218 s），不是变慢（后续小项 (b)）；(5) 本次启动了逐进程计数器采样，补上 C2 的缺口。
   - **S3 后续小项**（登记，不阻塞，随 C3 候选一起做）：(a) E59 在 owner 模式下等待时由命令自己对租约心跳；(b) E52 / E56 的基线改为约 210 s（具名常量，仅用于报告）；(c) `plan` 对「候选改了策略文件」的提示；(d) 可选的 stage 1 计时诊断步骤。
   - **路线**：C3（P4 通用 section 链校验）→ C4（S4）；DEVX-023 P5/P6 与 DEVX-022 的时长种子刷新穿插，种子刷新是 Full 敏感输入，用逐文件起止时间做单独归因。
+  - **临时资源（生命周期记录，2026-10-08 10:15 收口）**：按精确绝对路径白名单删除（脚本 `scratchpad/cleanup_pub7.py`，日志 `D:/Work/devx027-pub7-cleanup.log`，释放约 28.08 GB，用时约 8 分 30 秒）：`%TEMP%\pytest-of-JACK\pytest-23474`（本次 Full 的 basetemp，28.07 GB / 710,065 个文件，366 s）、`D:/Work/ptp1`、`D:/Work/ptp_s1`（stage 1 开关开启诊断运行的 basetemp）。清理前确认无其他 python 进程，必需证据都已在 `outputs/architecture/integration_revalidation/devx015-v389/`、`outputs/architecture/publication_runs/p-20261008-v3/` 与 `outputs/validation_runtime/p-20261008-v3-*`。保留：计数器 CSV（含 `devx026-p4-counters.csv`）与各清理日志、`D:/Work/devx015-*`（已登记证据根）、`devx020-k`、`devx022-s1`、`devx022-t1`；`pytest-of-JACK` 下的空目录与 `pytest-current` 由 pytest 自管。
+- 2026-10-08：**P4 的真实数据（只读）与修订的分步计划**。动手设计 P4-1 之前，用与 `tests/test_arch_004_refactor_policy.py::_latest_active_source_mismatches` 相同的账本代数（按段顺序、`removed_live_source_paths` / `superseded_source_paths` 弹出、后写覆盖前写、忽略 `historical_*` 记录）在整个合并后的权威上对照实时文件：
+  - **事实**：325 个段，1,992 条「活动」来源记录；与实时文件不一致 383 条（不含各段的追溯调整）：**375 条是已退役的任务影子注册表**（`registry/development_tasks_shadow/**`，S5 cutover 之后内容已改写），**2 条是易变的生成物**（`docs/task_register.md`、`inputs/architecture/arch_005_task_registry_index.yaml`，每次任务更新都会变），**6 条是真实代码文件**（`scripts/architecture_compatibility_authority.py`、`scripts/architecture_report_catalog_flow_authority.py`、`src/ai_trading_system/platform/architecture/report_catalog_flow_authority.py`、`src/ai_trading_system/atlas/__init__.py`、`src/ai_trading_system/atlas/cited_query_renderer.py`、`src/ai_trading_system/contracts/__init__.py`）。
+  - **这些不一致今天不会让任何测试失败**——原因是 `_latest_active_source_mismatches` 的「追溯调整」：凡是被约 30 个「权威段」（名单写死在测试里）的 `superseded_live_source_paths` 登记过的路径，之后的漂移一律免除（`mismatches - (retroactive_paths - recorded_superseded_paths)`），除非最新段再次取代它；另有两个写死在测试里的 Python 常量集合（TRADING-2488 后继影子路径、TRADING-2493 后继路径）。
+    例：C1（2026-10-07）改动了 `scripts/architecture_report_catalog_flow_authority.py`，权威没有要求重新登记，所有测试通过。也就是说，现行的「当前哈希权威」有相当一部分活在**测试代码的常量与追溯规则里，而不是数据里**，并且比表面上弱：被某个权威段登记过的路径，之后的修改不会被这些测试发现。
+    `_source_sha256` 本身是一个约 200 行、按「哪些段存在」逐层嵌套的解析函数（`tests/test_arch_004_refactor_policy.py` 第 14483 行起）。
+  - **含义**：(1) P4 不是「把断言改写成通用校验」就完事；必须先把「谁拥有哪条路径的当前哈希」「哪些路径已退役」「哪些路径是易变的生成物」做成**经评审的数据**——新的策略文件，按启发式治理要求写明 owner、版本/状态、理由、预期效果、验证证据和复审条件；
+    (2) 通用的终态账本不变量（每条活动记录 = 实时文件，退役与易变路径显式声明）比现行逻辑**更严**，当前仓库要通过它，需要对上面 6 个真实文件做一次「采纳当前内容」的账本更新——这是 owner 应评审的决定，不是我能默默做的；
+    (3) 旧测试里的字面量断言之所以多数冗余，是因为历史段由不可变前缀/索引链固定，这一点由变异测试证明（P4-2），不是预设。
+  - **修订的分步（每一步一个候选，P4-4 之前不删除任何现有断言；候选里搭载 S3 后续小项与 DEVX-022 的时长种子刷新）**：
+    - **P4-1（C3a，纯增量）**：新模块 `compat_ledger.py`（活动账本代数、终态不变量、退役/易变声明的读取，返回带类型码的违规列表）；策略文件草案 `config/architecture/devx_016_compat_ledger_policy.v1.yaml`（状态 `PROPOSED_PENDING_OWNER_REVIEW`：退役前缀、易变路径、待采纳的 6 个路径及理由）；新测试（全是新文件）：合成夹具上的变异测试（至少 15 类：篡改历史记录、删除/重复/调换段、记录哈希错误、取代了却没有重新登记、`new_source_paths` 与既有记录冲突、`removed_live_source_paths` 指向仍存在的文件、安全标志被去掉……每类都必须产生预期的违规码）、真实仓库的终态不变量（策略未生效时以「报告」模式运行并断言例外集合恰为上面的 8 条，生效后断言为零）；
+      线下差分对账脚本（证据，不进 CI）：对每个停止段比较通用代数与旧 `_latest_active_source_mismatches` / `_prior_active_source_mismatches` 的结果。
+    - **P4-2（C3b）**：变异等价性证据——在 detached worktree 上对每类变异分别跑旧的逐 wave 测试子集与新的通用测试，记录各自抓到的变异集合，要求通用 ⊇ 旧；产出逐测试的等价性表（分类沿用 P4-0）。
+    - **P4-3（C3c）**：owner 评审策略后，把策略切到 `OWNER_APPROVED_ENFORCED`，由生成器追加一个账本采纳段（只列 6 个真实文件的当前内容），逐 wave 专属的语义期望若确有必要则迁成段内数据。
+    - **P4-4（C3d…）**：分批删除逐 wave 测试与常量，每批附等价性证据，owner 抽查；`tests/test_arch_004_refactor_policy.py` 本身由最新授权段接管（同 S6 的模式）。
+  - **需要 owner 决定的两件事（P4-3 前）**：(a) 策略文件的内容评审（退役前缀、易变路径、6 个待采纳路径）；(b) 是否接受「通用终态不变量比现行逻辑更严」这一结果（现行逻辑对被登记过的路径之后的漂移是免除的）。
