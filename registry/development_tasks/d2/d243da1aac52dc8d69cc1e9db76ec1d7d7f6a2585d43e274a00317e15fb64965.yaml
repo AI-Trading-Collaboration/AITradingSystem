@@ -19,11 +19,14 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: C1 与 C2 已发布（main = origin/main = 0834ed957）。S3
-    命令的第一次真实运行发现日志追加缺陷（journal 用整文件原子替换，被读者占用即失败），登记为 C2.1：改为只追加并容忍撕裂的尾巴，随 DEVX-023
-    P 候选发布（见本任务文档第 9 节 2026-10-08 条）。路线（owner）：DEVX-023 P（链级并行重放，进行中）-> C3（P4 通用 section
-    链校验）-> C4（S4）；封印 S 留作后备。S3 其余后续小项：E59 的 owner 模式等待时对租约心跳；plan 对「候选改了策略文件」的提示。分步、依赖、验收与进度见
-    docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md 第 9、10 节。
+  unstructured_legacy_blocker_or_next_step: C1、C2 与 C2.1 已发布（第七次发布，main = origin/main
+    = 5150efbac，普通推送 0834ed957..5150efbac）；S3 命令第一次完整跑通 A–E（owner 在自己的终端推送，E59 用远端
+    tip 证明；journal 70 条、无写入失败）。路线（owner）：C3（P4 通用 section 链校验；变异等价性证据、批量提交、owner 抽查）→
+    C4（S4 默认 SINGLE_LANE + 文档同步）；DEVX-023 P5/P6 与 DEVX-022 时长种子刷新（Full 敏感输入，须单独归因）穿插；封印
+    S 仍待 owner 对边界的决定。S3 后续小项：(a) E59 的 owner 模式等待时由命令自己对租约心跳——这次我外挂的保活进程在约 3 小时后无记录地消失，租约虽仍有约
+    6 小时余量，靠旁路进程不可靠；(b) E52/E56 的基线从 60 s 改为约 210 s（实测 190–220 s，被误标 SLOW）；(c) plan
+    对「候选改了策略文件」的提示；(d) 可选的 stage 1 计时诊断步骤。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+    第 9、10 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移
@@ -291,6 +294,38 @@ events:
   - change:gov-007-devx016-c21-rows-20261008-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-3d24dac07deb9477013205071f6efded
+- schema_version: task_event.v1
+  task_id: DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-08T01:01:40Z'
+  actor: integration-coordinator
+  change_id: gov-007-pub7rows-task-20261008-v1
+  lane_id: null
+  base_commit: 5150efbac27e3aedebeb64f46d55208902c6da38
+  previous_state_event_id: task-event-3d24dac07deb9477013205071f6efded
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: C1、C2 与 C2.1 已发布（第七次发布，main = origin/main = 5150efbac，普通推送
+      0834ed957..5150efbac）；S3 命令第一次完整跑通 A–E（owner 在自己的终端推送，E59 用远端 tip 证明；journal
+      70 条、无写入失败）。路线（owner）：C3（P4 通用 section 链校验；变异等价性证据、批量提交、owner 抽查）→ C4（S4 默认
+      SINGLE_LANE + 文档同步）；DEVX-023 P5/P6 与 DEVX-022 时长种子刷新（Full 敏感输入，须单独归因）穿插；封印 S
+      仍待 owner 对边界的决定。S3 后续小项：(a) E59 的 owner 模式等待时由命令自己对租约心跳——这次我外挂的保活进程在约 3 小时后无记录地消失，租约虽仍有约
+      6 小时余量，靠旁路进程不可靠；(b) E52/E56 的基线从 60 s 改为约 210 s（实测 190–220 s，被误标 SLOW）；(c) plan
+      对「候选改了策略文件」的提示；(d) 可选的 stage 1 计时诊断步骤。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+      第 9、10 节。
+    acceptance_criteria: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为
+      0；A3 登记或转移 N 个任务 = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选
+      Full 1 次；A6 安全边界与 DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow
+      同步
+    notes: 2026-10-08：第七次发布（C2.1 随 DEVX-023 P 发布）；S3 命令首次完整真实运行验证；登记 S3 后续小项 (a)–(d)。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-pub7rows-task-20261008-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c516bc73c51aeb658ec20997318ccb06
 projection:
   legacy_first_eight_cells:
   - DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
@@ -298,19 +333,22 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - C1 与 C2 已发布（main = origin/main = 0834ed957）。S3 命令的第一次真实运行发现日志追加缺陷（journal 用整文件原子替换，被读者占用即失败），登记为
-    C2.1：改为只追加并容忍撕裂的尾巴，随 DEVX-023 P 候选发布（见本任务文档第 9 节 2026-10-08 条）。路线（owner）：DEVX-023
-    P（链级并行重放，进行中）-> C3（P4 通用 section 链校验）-> C4（S4）；封印 S 留作后备。S3 其余后续小项：E59 的 owner
-    模式等待时对租约心跳；plan 对「候选改了策略文件」的提示。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+  - C1、C2 与 C2.1 已发布（第七次发布，main = origin/main = 5150efbac，普通推送 0834ed957..5150efbac）；S3
+    命令第一次完整跑通 A–E（owner 在自己的终端推送，E59 用远端 tip 证明；journal 70 条、无写入失败）。路线（owner）：C3（P4
+    通用 section 链校验；变异等价性证据、批量提交、owner 抽查）→ C4（S4 默认 SINGLE_LANE + 文档同步）；DEVX-023 P5/P6
+    与 DEVX-022 时长种子刷新（Full 敏感输入，须单独归因）穿插；封印 S 仍待 owner 对边界的决定。S3 后续小项：(a) E59 的 owner
+    模式等待时由命令自己对租约心跳——这次我外挂的保活进程在约 3 小时后无记录地消失，租约虽仍有约 6 小时余量，靠旁路进程不可靠；(b) E52/E56 的基线从
+    60 s 改为约 210 s（实测 190–220 s，被误标 SLOW）；(c) plan 对「候选改了策略文件」的提示；(d) 可选的 stage 1
+    计时诊断步骤。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
     第 9、10 节。
   - A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移 N 个任务
     = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选 Full 1 次；A6 安全边界与
     DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow 同步
-  - 2026-10-08：S3 首次真实运行发现并登记 C2.1（journal 只追加）；随 DEVX-023 P 候选发布。
+  - 2026-10-08：第七次发布（C2.1 随 DEVX-023 P 发布）；S3 命令首次完整真实运行验证；登记 S3 后续小项 (a)–(d)。
   docs_links:
   - docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
   terminal: false
-  canonical_row_sha256: a40119102bf14d4cb5a9f0fa6ae2eeed2ace4bad28e0d00b886be615f5ba736d
-last_event_id: task-event-3d24dac07deb9477013205071f6efded
+  canonical_row_sha256: 60ee8552794dc1151124a4c7abf350dc61609bcb6a5a93f7ad284d539b5b4fd0
+last_event_id: task-event-c516bc73c51aeb658ec20997318ccb06
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 24efd4c0b3f870d7453192beb78dfec3b55766ffa09ce5fa5ed74593cf6f7624
+fragment_checksum: f387af7e158113fc9c01e5d80d7de8c98cc2bbb45ea49694fb55dfe581d9a6af

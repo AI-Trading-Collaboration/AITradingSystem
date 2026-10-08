@@ -18,10 +18,11 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 继续路线：DEVX-016 C2 已发布（第六次发布）-> DEVX-023
-    封印 S（先要 owner 决定是否改「不落盘已校验标记」的边界，评审前不实现）-> DEVX-016 C3（P4）-> C4（S4）-> DEVX-017
-    -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5。owner
-    另需执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 5 个 HKCU 测试根。
+  unstructured_legacy_blocker_or_next_step: 继续路线：DEVX-016 C2/C2.1 与 DEVX-023 P 已发布（第七次发布）->
+    DEVX-016 C3（P4）-> C4（S4）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖
+    OPS-077/078/081 验收）-> 阶段 5；穿插 DEVX-023 P5/P6 与 DEVX-022 时长种子刷新（Full 敏感输入，单独归因）；封印
+    S 仍待 owner 对边界的决定。owner 另需执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理
+    5 个 HKCU 测试根。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -904,6 +905,37 @@ events:
   - change:gov-007-pub6-rows-20261007-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-ce051cd5baa458b3b16e1751832e81ca
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-08T01:03:25Z'
+  actor: integration-coordinator
+  change_id: gov-007-pub7rows-task-20261008-v1
+  lane_id: null
+  base_commit: 5150efbac27e3aedebeb64f46d55208902c6da38
+  previous_state_event_id: task-event-ce051cd5baa458b3b16e1751832e81ca
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 继续路线：DEVX-016 C2/C2.1 与 DEVX-023 P 已发布（第七次发布）-> DEVX-016
+      C3（P4）-> C4（S4）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖
+      OPS-077/078/081 验收）-> 阶段 5；穿插 DEVX-023 P5/P6 与 DEVX-022 时长种子刷新（Full 敏感输入，单独归因）；封印
+      S 仍待 owner 对边界的决定。owner 另需执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1
+      清理 5 个 HKCU 测试根。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: 2026-10-08 第七次真实发布：main = origin/main = 5150efbac27e3aedebeb64f46d55208902c6da38（DEVX-023
+      P 链级并行重放（默认关闭）+ DEVX-016 C2.1；普通推送 0834ed957..5150efbac；正式事务 p-20261008-v3-formal
+      RELEASED/COMPLETED；S3 命令首次完整跑通；最后的 git push 由 owner 在终端执行）。Full 通过 15,027 /
+      4 跳过 / 0 失败（pytest 9,078.6 s，带上限 +4.4%），local-publish 62 分 57 秒。Full 关键路径与种子过期见
+      DEVX-022 第 17.8 节。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-pub7rows-task-20261008-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fb6e4247b9bc5e25d2196341aa01734d
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
@@ -911,20 +943,20 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - 继续路线：DEVX-016 C2 已发布（第六次发布）-> DEVX-023 封印 S（先要 owner 决定是否改「不落盘已校验标记」的边界，评审前不实现）->
-    DEVX-016 C3（P4）-> C4（S4）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖
-    OPS-077/078/081 验收）-> 阶段 5。owner 另需执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1
-    清理 5 个 HKCU 测试根。
+  - 继续路线：DEVX-016 C2/C2.1 与 DEVX-023 P 已发布（第七次发布）-> DEVX-016 C3（P4）-> C4（S4）-> DEVX-017
+    -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5；穿插
+    DEVX-023 P5/P6 与 DEVX-022 时长种子刷新（Full 敏感输入，单独归因）；封印 S 仍待 owner 对边界的决定。owner 另需执行
+    D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 5 个 HKCU 测试根。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - 2026-10-07 第六次真实发布：main = origin/main = 0834ed9576285e717185e5679c3a6e13c57a7d23（DEVX-016
-    C2：S3 单一发布命令 + 范围策略 + 验证驱动；普通推送 7ead2d6ff..0834ed957；正式事务 gov-007-d25-formal-20261007-v1
-    RELEASED/COMPLETED；owner 预授权该候选）。Full 通过 14,974 / 0 失败（pytest 8,883.6 s），local-publish
-    61 分 9 秒，最后的 git push 由 owner 在终端执行。更正：先前把 stage 1 变慢归因于证明体积是错的，逐调用计时显示约 32 次租约库重放
-    × 约 21 s（DEVX-022 第 17.7 节）；路线改为封印 S 在 C3 之前。
+  - 2026-10-08 第七次真实发布：main = origin/main = 5150efbac27e3aedebeb64f46d55208902c6da38（DEVX-023
+    P 链级并行重放（默认关闭）+ DEVX-016 C2.1；普通推送 0834ed957..5150efbac；正式事务 p-20261008-v3-formal
+    RELEASED/COMPLETED；S3 命令首次完整跑通；最后的 git push 由 owner 在终端执行）。Full 通过 15,027 / 4
+    跳过 / 0 失败（pytest 9,078.6 s，带上限 +4.4%），local-publish 62 分 57 秒。Full 关键路径与种子过期见
+    DEVX-022 第 17.8 节。
   docs_links: []
   terminal: false
-  canonical_row_sha256: ded454ce73f8c72f64e7f381b190357a7dd383d1d46d74aaf1a9ba8484082dfb
-last_event_id: task-event-ce051cd5baa458b3b16e1751832e81ca
+  canonical_row_sha256: af21ac369ed34466b929481e4261049735d5c5304d855db1decfb71143f9b89e
+last_event_id: task-event-fb6e4247b9bc5e25d2196341aa01734d
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f5b4e8db854904cc712a64f2555feff9cf81a5ed4b468863b7a773c345b013ba
+fragment_checksum: 2c52110a436e2a7175533ade83c69e35a61ffa522e9d3ec044e5944145b7b5d1
