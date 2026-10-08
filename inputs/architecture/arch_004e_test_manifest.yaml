@@ -19810,7 +19810,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_validation_runtime_profile
   path: tests/test_validation_runtime_profile.py
-  sha256: 34f26be3d95dd7422ec42973c8b5444c16de97ede647276b235b1764fff8a37f
+  sha256: c3d2b681d8c9772ec392f9a26cf4c059d47f599c2fabe2b3e4817b101c4146c2
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
