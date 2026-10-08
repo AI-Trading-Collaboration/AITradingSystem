@@ -1,0 +1,283 @@
+{
+  "schema_version": "compatibility_authority_fragment.v1",
+  "section": {
+    "authority_contract": {
+      "dual_write": false,
+      "fragment_identity": "CANONICAL_SECTION_SHA256",
+      "fragment_source_active": true,
+      "index_chain": "SHA256",
+      "legacy_append_allowed": false,
+      "rollback_mode": "FROZEN_LEGACY_PREFIX_ONLY"
+    },
+    "broker_action": "none",
+    "migration_contract": {
+      "arbitrary_store_target_allowed": false,
+      "create_only_anchor": true,
+      "implementation_profiles": {
+        "current_root_bootstrap": "REVIEWED_WORKING_SOURCE_ENGINEERING_ONLY",
+        "published_source_migration": "COMMITTED_PUBLISHED_SOURCE_GIT_EOL_LF"
+      },
+      "legacy_conversion_mode": "EXPLICIT_QUIESCENT_ONLY",
+      "partial_failure_blocks_replay": true
+    },
+    "os_arbiter_contract": {
+      "live_owner_ttl_takeover_allowed": false,
+      "logical_lease_contract_changed": false,
+      "normal_anchor_rename_or_unlink_allowed": false,
+      "owner_safe_handle_release": true,
+      "protocol": "execution_lease_os_arbiter.v2",
+      "sole_existing_arbiter": true,
+      "stable_regular_file": true
+    },
+    "owner_decision": "owner_instruction:DEVX-014:2026-09-06:arbiter-safety-fix",
+    "production_effect": "none",
+    "safety": {
+      "broker_action": "none",
+      "broker_or_trading_authorization_expanded": false,
+      "ordinary_publication_fence_changed": false,
+      "production_effect": "none",
+      "research_or_data_authorization_expanded": false,
+      "snapshot_grants_data_action": false,
+      "snapshot_grants_formal_validation": false,
+      "snapshot_grants_full": false,
+      "snapshot_grants_generator": false,
+      "snapshot_grants_main_ff": false,
+      "snapshot_grants_push": false,
+      "snapshot_grants_research": false,
+      "snapshot_grants_task_source_write": false,
+      "snapshot_grants_trading": false
+    },
+    "schema_version": "devx_014_dirty_source_preservation_and_os_lease_arbiter.v1",
+    "source_preservation_contract": {
+      "canonical_history_append_only": true,
+      "configuration_drift_before_mutation_rejected": true,
+      "configuration_raw_values_retained": false,
+      "create_only_snapshot_ref": true,
+      "git_configuration_profile": "source_preservation_git_configuration.v1",
+      "implementation_profile": "COMMITTED_SOURCE_GIT_EOL_LF",
+      "ordinary_integration_required": true,
+      "raw_source_bytes_preserved": true,
+      "real_index_and_worktree_unchanged": true,
+      "snapshot_profile": "RAW_BYTES_SOURCE_ONLY_UNVALIDATED",
+      "tracked_unstaged_regular_modified_only": true,
+      "trusted_and_source_worktree_config_checked": true
+    },
+    "sources": [
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/architecture/arch_005_source_preservation.yaml",
+        "sha256": "95c2141759a40ccc7af34645ca2a128fb9058cd4d6bad5ad597ee1c4f83abac9"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+        "sha256": "5190d0ce1a4c3aa461af3f320e2323c55d0bec175a00c2fdf9d2f6f8423c8607"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md",
+        "sha256": "746fd4e35d2eafa864075d02be144999fcca254d2aeed8a5f555fb715e874bc9"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/system_flow.md",
+        "sha256": "8de9ba6726a675e519b7494b05c133e748249fcce7d18e49bfb6df444a393a15"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/task_register.md",
+        "sha256": "aae78441dfa7fc41c1338802469515a3f412bc13ad8ee98edb4894efc7a9f9ab"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/task_register_completed.md",
+        "sha256": "68eef6a1f3080ad98e158aa229bef10266bb3aa47d1e6a1f34580b64b6b99318"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "sha256": "c2f4c7fcd3e82b65803d835e68e0442ff9ce15c2066d444ae012e82ba83336b0"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "sha256": "faf94bb170e2a3379134042fd3081de3594226067ed2074b1b69d8a212362278"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_module_manifest.yaml",
+        "sha256": "27d5e686b0a58b9805e9131fa07b74da3dfa0066aaf9b312e7b1e97b3b4de2de"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_test_manifest.yaml",
+        "sha256": "7ae74106b59d964aa862417474d07361bcb3d50181179ef2145cabb345a7420c"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "sha256": "cb59b25a62ba55a093690c5aa7edc40bf7a1bc7d3a171291472e683fc38036a9"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_005_s5_consumer_inventory.yaml",
+        "sha256": "2fab76611d56d6278a102740c94bb5da2236a35467c6debc98b34ad1c9f32129"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_005_task_registry_index.yaml",
+        "sha256": "2b4a0cb3f1d85bda90e43e37e1864a12a8c00cb55f260b82f7262fbdff09d93d"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+        "sha256": "3f76d8ce1817bdb07c5bf599ad259a29af18b24b06175ca1e7bb197c59b6aa0d"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+        "sha256": "7b1fb97875673efb569a68233cd706dd9ab4bee798c3083358ae9729cebd6b35"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "registry/development_tasks/7a/7aa82ac8ab6fa54a137b6972521b5ba8c7f1d0c4033f6fe84dac77fa2b5267e1.yaml",
+        "sha256": "ef2d0b48dba04dcd40f874cb73c973d223de4e7ad430259a8bbf9f51278da84e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "scripts/architecture_arch005_lease_arbiter.py",
+        "sha256": "7692c1891f8149ae6f29bdf8438c1286f332b8115a69b9cb5d6c444c6661e236"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "scripts/architecture_arch005_source_preservation.py",
+        "sha256": "d2f71869ea54e9d63c3a9d25bac616eb2ea18756d14808f792de96b990215db1"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "sha256": "77ba8c211e467379e70eb0b5990dd82c50772201512aef2cb0a5ceeb15328a2b"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/platform/architecture/lease_arbiter.py",
+        "sha256": "decb3b5ca484e3307e93b5b3fd0f2ca7380f3c284c00c58ab981a29d3cde6c13"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/platform/architecture/parallel_control_kernel.py",
+        "sha256": "a1180ee4c5ffb12aa470e8d7c4975fa66ddfae2829866acb109ee43bb6738adc"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/platform/architecture/source_preservation.py",
+        "sha256": "83f55d5a5d105b1d858aa53ef9ef2673dccf4da353cd0f1cf335bb86a85e4cc0"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_004_refactor_policy.py",
+        "sha256": "d00dbf29e655db34852e6b1a5ea7c1140400a7e6d6fb225f1e42c7c222274ab1"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_004g_deprecation.py",
+        "sha256": "83e5e3281d36c57106c7eb592f86d295c1f0e52bca273589f21216f19a98ff2a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_005_integration_publication_fence.py",
+        "sha256": "bf69dd325c118fb5cdfb3f5afa4bd28cc862aa3529bc900ac70671199797a8c8"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_005_lease_arbiter.py",
+        "sha256": "42a6873fdf1feeb9fb166d02106b4a30eb16a713288c52891ef78ff27e11d2dc"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_005_s2_kernel.py",
+        "sha256": "77d5de4256f1fe67f73623db799dafa5ee881d523892f896f1728b9201767e42"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_005_s4d_checkout_guard.py",
+        "sha256": "c59db0d78a72cf4082fba4ceeaa9b1fa425d60bada91fd125e83803753b7b4c4"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_005_s5_task_source_cutover.py",
+        "sha256": "ec48987516249389385ceab70da6e364d1af754ced2cdf751921e515a780f36e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_005_source_preservation.py",
+        "sha256": "f777f797d177cb25ab4d14af6530a824e6641bdded2df366a718a5fe1dfdb69b"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_architecture_wave_readiness.py",
+        "sha256": "51c92568a674cce3cb5aec275d43e88e9893e455878d4015800b44f2757bb4b9"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006c_compatibility_authority.py",
+        "sha256": "4624325263ae73710340b6168603c5f63c7d6e78d91b1d3e9d3e4edb133ce4e4"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "sha256": "c7f39093c940831debf801bc0f831ce785078dd35a82f3defd42b424522f80d9"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_trading2452_architecture_contract.py",
+        "sha256": "3f8ce99bc0d331ad873313164863162435290222af6b40bf391de17179e815a5"
+      }
+    ],
+    "status": "VALIDATING",
+    "superseded_live_source_paths": [
+      "config/architecture/arch_005_source_preservation.yaml",
+      "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+      "docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md",
+      "docs/system_flow.md",
+      "docs/task_register.md",
+      "docs/task_register_completed.md",
+      "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+      "inputs/architecture/arch_004e_architecture_fitness.yaml",
+      "inputs/architecture/arch_004e_module_manifest.yaml",
+      "inputs/architecture/arch_004e_test_manifest.yaml",
+      "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+      "inputs/architecture/arch_005_s5_consumer_inventory.yaml",
+      "inputs/architecture/arch_005_task_registry_index.yaml",
+      "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+      "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+      "registry/development_tasks/7a/7aa82ac8ab6fa54a137b6972521b5ba8c7f1d0c4033f6fe84dac77fa2b5267e1.yaml",
+      "scripts/architecture_arch005_lease_arbiter.py",
+      "scripts/architecture_arch005_source_preservation.py",
+      "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+      "src/ai_trading_system/platform/architecture/lease_arbiter.py",
+      "src/ai_trading_system/platform/architecture/parallel_control_kernel.py",
+      "src/ai_trading_system/platform/architecture/source_preservation.py",
+      "tests/test_arch_004_refactor_policy.py",
+      "tests/test_arch_004g_deprecation.py",
+      "tests/test_arch_005_integration_publication_fence.py",
+      "tests/test_arch_005_lease_arbiter.py",
+      "tests/test_arch_005_s2_kernel.py",
+      "tests/test_arch_005_s4d_checkout_guard.py",
+      "tests/test_arch_005_s5_task_source_cutover.py",
+      "tests/test_arch_005_source_preservation.py",
+      "tests/test_architecture_wave_readiness.py",
+      "tests/test_devx_006c_compatibility_authority.py",
+      "tests/test_devx_006d_report_catalog_flow_authority.py",
+      "tests/test_trading2452_architecture_contract.py"
+    ],
+    "supersession": {
+      "current_hash_authority": "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1.sources",
+      "historical_hashes_rewritten": false,
+      "inherited_supersession_authority": "phase_ops_079_historical_daily_gap_recovery_executor_v1"
+    },
+    "task_id": "DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1"
+  },
+  "section_id": "phase_devx_014_dirty_source_preservation_and_os_lease_arbiter_v1",
+  "section_sha256": "e5540bbf69ed1b3a526583c97efcab4822f49c4c0d9503c96e33ebaa80679308"
+}

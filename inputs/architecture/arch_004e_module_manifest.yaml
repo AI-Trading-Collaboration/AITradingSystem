@@ -16460,7 +16460,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.publication_services
   path: src/ai_trading_system/platform/architecture/publication_services.py
-  sha256: 82862440447f6352bcdf9160cd6a635e31263f35585065dbf5f81257d64e55eb
+  sha256: 55211fae4e496fd9dcf42c6f5feeb801bdd54e16720cf9cae432c32e975b036c
   rule_id: platform_architecture
   owner_profile: platform
   owners:

@@ -8858,7 +8858,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_publication_services
   path: tests/test_arch_005_publication_services.py
-  sha256: cf9384a02ad72b57136200f9a33e437cbc89a312efe12b0f93d0e8877198994c
+  sha256: 58e8892a06d4a3dff1ebf6f4bb7a474780db1843275e9f67fc5e7910f1dac37d
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
