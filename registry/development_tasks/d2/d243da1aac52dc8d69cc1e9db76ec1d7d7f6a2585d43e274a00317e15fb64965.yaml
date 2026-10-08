@@ -19,16 +19,13 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: C3a 已发布（第八次发布）：main = origin/main = e30c62a97（S3
-    run p-20261008-v6；普通推送 5150efbac..e30c62a97，由 Claude 在 owner「仅本候选」授权下执行；Full 15,096
-    通过 / 4 跳过 / 0 失败，pytest 9,249.9 s）。交付：S3 小项 (a) E59 owner 模式等待 + 租约心跳（本次推送在 E59
-    开始 1 分钟后，只验证了探测与自动收尾，20 分钟心跳仍欠长等待验证）、(b) E52/E56 基线 210 s、(c) 拒绝时的 next_action、(e)
-    隐藏窗口启动器（真实运行验证：驱动与 worker 均无终端窗口）；P4-1（compat_ledger.py + 策略草案 PROPOSED + 60 项测试）；DEVX-022
-    M5 时长种子刷新。路线：租约库重放成本随每次发布尝试增长（stage 1 873.6 s、local-publish 82 分钟、下一次发布预计越过 900
-    s 告警线；见 DEVX-022 第 17.10 节），所以下一个候选先做 DEVX-023 P6（并行重放的开启范围），再回到 C3 的 P4-2…P4-4（P4-3
-    之前须 owner 评审 compat 账本策略）→ C4（S4）→ DEVX-017 → OPS-082 → 阶段 5。S3 小项 (d)（stage 1
-    计时诊断）与 (f)（worker 被杀时的 next_action）留待以后。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
-    第 9、10 节。
+  unstructured_legacy_blocker_or_next_step: C3a 与 DEVX-023 P6 已发布（e30c62a97、a63827b28）；发布链的「发布命令
+    + local-publish」两段快了一半（local-publish 82 -> 38.8 分钟，整条链 5 小时 20 分 -> 4 小时 30 分，slow_steps
+    为空）。下一个候选 C3b（P4-2）：对每类变异（>=15）分别在隔离副本上跑旧的逐 wave 测试与新的通用测试，记录各自抓到的变异集合，要求通用 ⊇
+    旧，产出逐测试等价性表，不删任何断言；之后 C3c（P4-3：owner 先评审 compat 账本策略，再切 OWNER_APPROVED_ENFORCED
+    并追加账本采纳段）-> C3d（P4-4 分批删除，owner 抽查）-> C4（S4）-> DEVX-017 -> OPS-082 -> 阶段 5。S3
+    小项 (d)（stage 1 计时诊断）、(f)（worker 被杀时的 next_action）与 E59 的 20 分钟心跳长等待验证仍欠。分步、依赖、验收与进度见
+    docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md 第 9、10 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移
@@ -397,6 +394,37 @@ events:
   - change:gov-007-v6crows-task-20261008-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-d2cf1a64a3e686c32af5721f7ae053ad
+- schema_version: task_event.v1
+  task_id: DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-08T19:33:39Z'
+  actor: integration-coordinator
+  change_id: gov-007-v7rows-task-20261009-v1
+  lane_id: null
+  base_commit: a63827b280d45ef668e625184571df93efa7e27b
+  previous_state_event_id: task-event-d2cf1a64a3e686c32af5721f7ae053ad
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator；Project Owner（P4-3 前评审 compat 账本策略）
+    blocker_or_next_step: C3a 与 DEVX-023 P6 已发布（e30c62a97、a63827b28）；发布链的「发布命令 + local-publish」两段快了一半（local-publish
+      82 -> 38.8 分钟，整条链 5 小时 20 分 -> 4 小时 30 分，slow_steps 为空）。下一个候选 C3b（P4-2）：对每类变异（>=15）分别在隔离副本上跑旧的逐
+      wave 测试与新的通用测试，记录各自抓到的变异集合，要求通用 ⊇ 旧，产出逐测试等价性表，不删任何断言；之后 C3c（P4-3：owner 先评审 compat
+      账本策略，再切 OWNER_APPROVED_ENFORCED 并追加账本采纳段）-> C3d（P4-4 分批删除，owner 抽查）-> C4（S4）->
+      DEVX-017 -> OPS-082 -> 阶段 5。S3 小项 (d)（stage 1 计时诊断）、(f)（worker 被杀时的 next_action）与
+      E59 的 20 分钟心跳长等待验证仍欠。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+      第 9、10 节。
+    acceptance_criteria: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为
+      0；A3 登记或转移 N 个任务 = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选
+      Full 1 次；A6 安全边界与 DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow
+      同步
+    notes: 2026-10-09：DEVX-023 P6 已发布（a63827b28），链提速；路线回到 C3b。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-v7rows-task-20261009-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-70b3027b4056012ad817b44a844ba5fe
 projection:
   legacy_first_eight_cells:
   - DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
@@ -404,23 +432,21 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator；Project Owner（P4-3 前评审 compat 账本策略）
-  - C3a 已发布（第八次发布）：main = origin/main = e30c62a97（S3 run p-20261008-v6；普通推送 5150efbac..e30c62a97，由
-    Claude 在 owner「仅本候选」授权下执行；Full 15,096 通过 / 4 跳过 / 0 失败，pytest 9,249.9 s）。交付：S3
-    小项 (a) E59 owner 模式等待 + 租约心跳（本次推送在 E59 开始 1 分钟后，只验证了探测与自动收尾，20 分钟心跳仍欠长等待验证）、(b)
-    E52/E56 基线 210 s、(c) 拒绝时的 next_action、(e) 隐藏窗口启动器（真实运行验证：驱动与 worker 均无终端窗口）；P4-1（compat_ledger.py
-    + 策略草案 PROPOSED + 60 项测试）；DEVX-022 M5 时长种子刷新。路线：租约库重放成本随每次发布尝试增长（stage 1 873.6
-    s、local-publish 82 分钟、下一次发布预计越过 900 s 告警线；见 DEVX-022 第 17.10 节），所以下一个候选先做 DEVX-023
-    P6（并行重放的开启范围），再回到 C3 的 P4-2…P4-4（P4-3 之前须 owner 评审 compat 账本策略）→ C4（S4）→ DEVX-017
-    → OPS-082 → 阶段 5。S3 小项 (d)（stage 1 计时诊断）与 (f)（worker 被杀时的 next_action）留待以后。分步、依赖、验收与进度见
-    docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md 第 9、10 节。
+  - C3a 与 DEVX-023 P6 已发布（e30c62a97、a63827b28）；发布链的「发布命令 + local-publish」两段快了一半（local-publish
+    82 -> 38.8 分钟，整条链 5 小时 20 分 -> 4 小时 30 分，slow_steps 为空）。下一个候选 C3b（P4-2）：对每类变异（>=15）分别在隔离副本上跑旧的逐
+    wave 测试与新的通用测试，记录各自抓到的变异集合，要求通用 ⊇ 旧，产出逐测试等价性表，不删任何断言；之后 C3c（P4-3：owner 先评审 compat
+    账本策略，再切 OWNER_APPROVED_ENFORCED 并追加账本采纳段）-> C3d（P4-4 分批删除，owner 抽查）-> C4（S4）->
+    DEVX-017 -> OPS-082 -> 阶段 5。S3 小项 (d)（stage 1 计时诊断）、(f)（worker 被杀时的 next_action）与
+    E59 的 20 分钟心跳长等待验证仍欠。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+    第 9、10 节。
   - A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移 N 个任务
     = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选 Full 1 次；A6 安全边界与
     DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow 同步
-  - 2026-10-08 夜：C3a 已发布（e30c62a97）；记录推送、耗时与路线调整（P6 先于 P4-2）。
+  - 2026-10-09：DEVX-023 P6 已发布（a63827b28），链提速；路线回到 C3b。
   docs_links:
   - docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
   terminal: false
-  canonical_row_sha256: 9f28702a236a3e1c3b4d94123277fe47af86cd18edd8b9d7aec8fff168d6051e
-last_event_id: task-event-d2cf1a64a3e686c32af5721f7ae053ad
+  canonical_row_sha256: ce8c6d696a3a88b3d023c2ff613ff7f6088d4704172035a520bb842456529476
+last_event_id: task-event-70b3027b4056012ad817b44a844ba5fe
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 312fb267bfcabf9d10d9af892b6b0d62c485f446cefcf0400d1f34cda1627a6d
+fragment_checksum: 7cad173378ae3abb25e6f4af3232f653e576afa71150c6a23515925460d69f6d

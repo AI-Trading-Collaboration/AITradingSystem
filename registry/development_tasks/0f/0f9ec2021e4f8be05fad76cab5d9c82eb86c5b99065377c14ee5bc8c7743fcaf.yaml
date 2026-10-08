@@ -18,11 +18,11 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 第八次发布完成（DEVX-016 C3a）：main = origin/main
-    = e30c62a97（普通推送由 Claude 在 owner「仅本候选」授权下执行）。继续路线：DEVX-023 P6（并行重放开启范围）-> DEVX-016
-    C3 的 P4-2…P4-4（P4-3 前 owner 评审 compat 账本策略）-> C4（S4）-> DEVX-017 -> OPS-082（须 owner
-    先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5；穿插 DEVX-022 M6 与 DEVX-021
-    P2/P3（owner 评审）。owner 另需：对封印 S 的信任模型作决定；执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1
+  unstructured_legacy_blocker_or_next_step: 第九次发布完成（DEVX-023 P6）：main = origin/main
+    = a63827b28（普通推送由 Claude 在 owner「仅本候选」授权下执行）。继续路线：DEVX-016 C3b（P4-2）-> C3c（P4-3，owner
+    先评审 compat 账本策略）-> C3d（P4-4）-> C4（S4）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows
+    任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5；穿插封印 S / DEVX-022 M6 / DEVX-021 P2-P3（owner
+    评审）。owner 另需：对封印 S 的信任模型作决定；执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1
     清理 HKCU 测试根；长跑期间把「关闭显示器」设为「从不」。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
@@ -994,6 +994,34 @@ events:
   - change:gov-007-v6crows-task-20261008-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-0d00058d08f226b0ef1105e5c7f3a4b1
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-08T19:36:01Z'
+  actor: integration-coordinator
+  change_id: gov-007-v7rows-task-20261009-v1
+  lane_id: null
+  base_commit: a63827b280d45ef668e625184571df93efa7e27b
+  previous_state_event_id: task-event-0d00058d08f226b0ef1105e5c7f3a4b1
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 第九次发布完成（DEVX-023 P6）：main = origin/main = a63827b28（普通推送由
+      Claude 在 owner「仅本候选」授权下执行）。继续路线：DEVX-016 C3b（P4-2）-> C3c（P4-3，owner 先评审 compat
+      账本策略）-> C3d（P4-4）-> C4（S4）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖
+      OPS-077/078/081 验收）-> 阶段 5；穿插封印 S / DEVX-022 M6 / DEVX-021 P2-P3（owner 评审）。owner
+      另需：对封印 S 的信任模型作决定；执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 HKCU
+      测试根；长跑期间把「关闭显示器」设为「从不」。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: 2026-10-09：第九次发布完成（a63827b28）；链提速；路线回到 C3b。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-v7rows-task-20261009-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-eb297f1f8b1b33d88315d05c4417ac11
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
@@ -1001,17 +1029,17 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - 第八次发布完成（DEVX-016 C3a）：main = origin/main = e30c62a97（普通推送由 Claude 在 owner「仅本候选」授权下执行）。继续路线：DEVX-023
-    P6（并行重放开启范围）-> DEVX-016 C3 的 P4-2…P4-4（P4-3 前 owner 评审 compat 账本策略）-> C4（S4）->
-    DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）->
-    阶段 5；穿插 DEVX-022 M6 与 DEVX-021 P2/P3（owner 评审）。owner 另需：对封印 S 的信任模型作决定；执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1
+  - 第九次发布完成（DEVX-023 P6）：main = origin/main = a63827b28（普通推送由 Claude 在 owner「仅本候选」授权下执行）。继续路线：DEVX-016
+    C3b（P4-2）-> C3c（P4-3，owner 先评审 compat 账本策略）-> C3d（P4-4）-> C4（S4）-> DEVX-017 ->
+    OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5；穿插封印
+    S / DEVX-022 M6 / DEVX-021 P2-P3（owner 评审）。owner 另需：对封印 S 的信任模型作决定；执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1
     清理 HKCU 测试根；长跑期间把「关闭显示器」设为「从不」。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - 2026-10-08 夜：第八次发布完成（e30c62a97）；v5 事故后的重发无人工介入；路线调整（P6 先于 P4-2）。
+  - 2026-10-09：第九次发布完成（a63827b28）；链提速；路线回到 C3b。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 72c373869867cf61c2325b853568ddc6718f20f462f0bb25fe5e10503efebbb2
-last_event_id: task-event-0d00058d08f226b0ef1105e5c7f3a4b1
+  canonical_row_sha256: b5670457d1d6068df31c3ce8370587491875bf2fccc4aafe973e095e316b9614
+last_event_id: task-event-eb297f1f8b1b33d88315d05c4417ac11
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: cb7c79bd02b9ea1b554e21e30d9e6f0aae3f03e7d8928d2d4f57b616324267ac
+fragment_checksum: 0d12a7656919fe0d17d901a0d4fe9462c1cf7700504a4cfa5f7eeb4d475c7676
