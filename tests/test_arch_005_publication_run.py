@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
@@ -43,24 +44,38 @@ from ai_trading_system.platform.architecture.publication_steps import (
 
 
 class Harness:
-    def __init__(self, tmp_path: Path, *, push_by_command: bool = True) -> None:
+    def __init__(
+        self,
+        tmp_path: Path,
+        *,
+        push_by_command: bool = True,
+        owner_wait_seconds: float = 0.0,
+        owner_pushes_after_polls: int | None = None,
+    ) -> None:
         self.world = World(tmp_path)
         self.launcher = FakeLauncher(self.world)
         self.collector = FakeCollector(self.world)
         self.run_config = make_run_config(self.world)
         self.authorization = self.world.repo / "ev" / "authorization.json"
         self.sleeps = 0
+        # The clock only moves when the run sleeps; the owner wait is the only 60 s+ sleep.
+        self.clock = T0
+        self.owner_polls = 0
+        self.owner_pushes_after_polls = owner_pushes_after_polls
         self.journal = PublicationJournal(tmp_path / "run" / "journal.jsonl")
         self.publish = PublishConfig(
             run=self.run_config,
             launcher=self.launcher,
             collector=self.collector,
             sleep=self._sleep,
-            now=lambda: T0,
+            now=lambda: self.clock,
             authorization_path=self.authorization,
             start_branch="lane",
             poll_seconds=0.0,
             push_by_command=push_by_command,
+            owner_push_wait_seconds=owner_wait_seconds,
+            owner_wait_poll_seconds=60.0,
+            owner_wait_heartbeat_seconds=1200.0,
         )
         steps = (
             build_prepare_steps(self.run_config, self.world)
@@ -78,6 +93,14 @@ class Harness:
 
     def _sleep(self, seconds: float) -> None:
         self.sleeps += 1
+        self.clock += timedelta(seconds=seconds)
+        if seconds >= 60.0:
+            self.owner_polls += 1
+            if (
+                self.owner_pushes_after_polls is not None
+                and self.owner_polls >= self.owner_pushes_after_polls
+            ):
+                self.world.remote_tip = self.world.head  # the owner ran the ordinary push
 
     def authorize(self, **overrides: Any) -> None:
         body: dict[str, Any] = {
@@ -344,3 +367,82 @@ def test_a_resumed_wait_takes_the_driver_pid_from_the_progress_record(tmp_path: 
     assert summary.outcome == OUTCOME_STOPPED_FAILED and seen == [4242]
     failed = h.journal.replay().last_detail("D31.validation_wait", status="FAILED")
     assert failed is not None and failed["code"] == "PUBLICATION_RUN_DRIVER_DIED"
+
+
+def test_the_owner_wait_polls_renews_the_lease_and_finishes_the_run_once_the_owner_pushed(
+    tmp_path: Path,
+) -> None:
+    h = Harness(tmp_path, push_by_command=False, owner_wait_seconds=6 * 3600.0)
+    h.owner_pushes_after_polls = 45  # the owner pushes 45 minutes into the wait
+    final = h.engine.run()
+    assert final.outcome == OUTCOME_COMPLETE, final.to_dict()
+    assert h.world.pushes == []  # this tool never issued a push
+    done = h.journal.replay().last_detail("E59.push")
+    assert done is not None and done["pushed_by"] == "OWNER_TERMINAL"
+    assert done["waited_seconds"] == 2700.0 and done["lease_heartbeats"] == 2
+    beats = h.world.named("heartbeat")
+    assert len(beats) == 2 and h.world.transactions["r1-formal"] == "RELEASED"
+    for beat in beats:  # the sanctioned guard command, for the formal transaction's own lease
+        assert beat[2] == "scripts/architecture_arch005_checkout_guard.py"
+        assert beat[beat.index("--lease-id") + 1] == "lease-r1-formal"
+        assert beat[beat.index("--actor") + 1] == "integration-coordinator"
+    row = next(r for r in final.rows if r.step_id == "E59.push")
+    assert row.baseline_seconds is None  # an owner wait is not judged against a git-time baseline
+    assert h.world.branch == "lane"
+
+
+def test_the_owner_wait_is_bounded_and_ends_in_the_normal_awaiting_state(tmp_path: Path) -> None:
+    h = Harness(tmp_path, push_by_command=False, owner_wait_seconds=3600.0)
+    summary = h.engine.run()
+    assert summary.outcome == OUTCOME_AWAITING_AUTHORIZATION
+    assert summary.stopped_step == "E59.push" and "git push origin main" in summary.next_action
+    waiting = h.journal.replay().last_detail("E59.push", status="AWAITING_AUTHORIZATION")
+    assert waiting is not None and waiting["lease_heartbeats"] == 2  # at 20 and 40 minutes
+    assert h.world.pushes == [] and not h.world.named("release", "--outcome", "completed")
+    h.world.remote_tip = h.world.head  # a later resume still proves the owner's push
+    assert h.engine.run().outcome == OUTCOME_COMPLETE
+
+
+def test_a_wait_of_zero_seconds_never_polls_twice_or_renews_the_lease(tmp_path: Path) -> None:
+    h = Harness(tmp_path, push_by_command=False)
+    summary = h.engine.run()
+    assert summary.outcome == OUTCOME_AWAITING_AUTHORIZATION
+    assert h.owner_polls == 0 and not h.world.named("heartbeat")
+    row = next(r for r in summary.rows if r.step_id == "E59.push")
+    assert row.baseline_seconds == 30.0  # without a wait the git-time baseline still applies
+    assert len(h.world.named("ls-remote")) >= 1
+
+
+def test_a_transient_remote_error_does_not_end_the_owner_wait(tmp_path: Path) -> None:
+    h = Harness(tmp_path, push_by_command=False, owner_wait_seconds=6 * 3600.0)
+    h.owner_pushes_after_polls = 5
+    h.engine.run(until="E58.authorization_gate")
+    h.world.ls_remote_failures = 2  # two blips, then the remote answers
+    final = h.engine.run()
+    assert final.outcome == OUTCOME_COMPLETE, final.to_dict()
+    done = h.journal.replay().last_detail("E59.push")
+    assert done is not None and done["pushed_by"] == "OWNER_TERMINAL"
+
+
+def test_a_streak_of_unreadable_remote_probes_fails_the_wait_closed(tmp_path: Path) -> None:
+    h = Harness(tmp_path, push_by_command=False, owner_wait_seconds=6 * 3600.0)
+    h.engine.run(until="E58.authorization_gate")
+    h.world.ls_remote_failures = 99
+    summary = h.engine.run()
+    assert summary.outcome == OUTCOME_STOPPED_FAILED and summary.stopped_step == "E59.push"
+    failed = h.journal.replay().last_detail("E59.push", status="FAILED")
+    assert failed is not None and failed["code"] == "PUBLICATION_RUN_REMOTE_UNREADABLE"
+    assert h.world.pushes == []
+
+
+def test_a_failed_lease_heartbeat_stops_the_wait_instead_of_waiting_on_a_dead_lease(
+    tmp_path: Path,
+) -> None:
+    h = Harness(tmp_path, push_by_command=False, owner_wait_seconds=6 * 3600.0)
+    h.engine.run(until="E58.authorization_gate")
+    h.world.heartbeat_status = "BLOCKED"
+    summary = h.engine.run()
+    assert summary.outcome == OUTCOME_STOPPED_FAILED and summary.stopped_step == "E59.push"
+    failed = h.journal.replay().last_detail("E59.push", status="FAILED")
+    assert failed is not None and failed["code"] == "PUBLICATION_RUN_LEASE_HEARTBEAT_FAILED"
+    assert h.world.pushes == []

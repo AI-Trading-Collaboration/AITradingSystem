@@ -73,6 +73,17 @@ EXIT_COMPLETE = 0
 EXIT_FAILED = 2
 EXIT_AWAITING_AUTHORIZATION = 3
 EXIT_PAUSED = 4
+# How long `--wait-for-owner-push` waits by default; the lease is renewed meanwhile, so this is a
+# bound on a forgotten run, not a lease limit.
+DEFAULT_OWNER_WAIT_MINUTES = 720.0
+# What the owner / agent should do next for the refusals that have a standard answer.
+REFUSAL_HINTS = {
+    "PUBLICATION_SCOPE_PATH_FORBIDDEN": (
+        "候选改动了普通发布不允许触碰的路径（范围策略文件本身、known-unrelated 排除项等）："
+        "这类候选走手工链，"
+        "或先把该路径从候选里移出（DEVX-016 第 9 节 C2 的记录说明了手工链）"
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -182,6 +193,11 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("--takeover", action="store_true")
             # Owner opt-in: without it this command never pushes (the owner pushes themselves).
             command.add_argument("--push-by-command", action="store_true")
+            # Owner-push mode: stay alive (renewing the lease) until the owner has pushed.
+            command.add_argument("--wait-for-owner-push", action="store_true")
+            command.add_argument(
+                "--owner-wait-minutes", type=float, default=DEFAULT_OWNER_WAIT_MINUTES
+            )
     return parser
 
 
@@ -363,6 +379,11 @@ def build_engine(
         start_branch=str(record["start_branch"]),
         max_hours_since_full_end=float(record["limits"]["max_hours_since_full_end"]),
         push_by_command=bool(getattr(args, "push_by_command", False)),
+        owner_push_wait_seconds=(
+            60.0 * float(getattr(args, "owner_wait_minutes", DEFAULT_OWNER_WAIT_MINUTES))
+            if getattr(args, "wait_for_owner_push", False)
+            else 0.0
+        ),
     )
     steps: list[Step] = [
         *build_precondition_steps(
@@ -433,6 +454,8 @@ def main(argv: Sequence[str] | None = None, *, environment: CliEnvironment | Non
             payload, code = command_run(args, environment)
     except (PublicationScopeError, PublicationJournalError) as error:
         payload = {"status": "REFUSED", "code": error.code, "message": error.message}
+        if error.code in REFUSAL_HINTS:
+            payload["next_action"] = REFUSAL_HINTS[error.code]
         code = EXIT_FAILED
     sys.stdout.write(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
     return code

@@ -50,6 +50,9 @@ BASELINE_RELEASE_SECONDS = 70.0
 BASELINE_GIT_SECONDS = 30.0
 BASELINE_PREFLIGHT_SECONDS = 60.0
 BASELINE_READINESS_SECONDS = 75.0
+# LOCAL_MAIN_FF_PRE and REMOTE_PUSH_PRE re-verify the whole closure (several lease-store replays):
+# measured 190-205 s and 217-218 s on the C2 and the DEVX-023 P chains (DEVX-022 section 17.8).
+BASELINE_FENCE_CLOSURE_SECONDS = 210.0
 
 
 @dataclass(frozen=True)
@@ -251,6 +254,27 @@ def worktree_audit(config: RunConfig, runner: CommandRunner, label: str) -> Audi
             "PUBLICATION_RUN_WORKTREE_AUDIT_FAILED", str(body.get("status")), result
         )
     return AuditResult("PASS", tuple(str(path) for path in dirty))
+
+
+def lease_heartbeat(
+    config: RunConfig, runner: CommandRunner, *, lease_id: str, label: str
+) -> dict[str, Any]:
+    """The sanctioned lease heartbeat (the validation driver and every fence checkpoint use it too).
+
+    Used while the run waits for the owner's push, so the lease does not expire in their absence.
+    """
+    argv = [
+        config.python, "-B", GUARD_SCRIPT, "heartbeat",
+        "--lease-id", lease_id,
+        "--actor", config.actor,
+    ]  # fmt: skip
+    result = runner(tuple(argv), log_name=f"{config.run_id}_{label}")
+    body = json_object(result, code="PUBLICATION_RUN_LEASE_HEARTBEAT_FAILED")
+    if body.get("status") != "PASS":
+        raise command_failure(
+            "PUBLICATION_RUN_LEASE_HEARTBEAT_FAILED", str(body.get("status")), result
+        )
+    return {"status": "PASS", "log": result.log_path}
 
 
 def git_text(runner: CommandRunner, config: RunConfig, label: str, *args: str) -> str:

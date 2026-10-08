@@ -9,6 +9,8 @@ Safety shape of this module:
 - by default the command NEVER pushes: the push step waits (AWAITING) for the owner to run the
   ordinary push in their own terminal and then proves it against the remote (the harness that
   hosts the agent refused the agent's own push at the fifth publication, and the owner ran it);
+  with `owner_push_wait_seconds` the step stays alive for that long, polls the remote, renews the
+  lease with the sanctioned heartbeat and lets the run finish itself once the owner has pushed;
 - with `push_by_command` (an explicit owner opt-in) the push step is an ORDINARY
   `git push origin main` built by one function that refuses every force/delete/mirror/refspec
   variant, and it cannot run before the authorization-gate step is DONE (the engine never executes
@@ -35,6 +37,7 @@ from ai_trading_system.platform.architecture.publication_checks import (
     load_authorization,
 )
 from ai_trading_system.platform.architecture.publication_commands import (
+    BASELINE_FENCE_CLOSURE_SECONDS,
     BASELINE_GIT_SECONDS,
     FENCE_SCRIPT,
     CommandResult,
@@ -44,6 +47,7 @@ from ai_trading_system.platform.architecture.publication_commands import (
     command_failure,
     git_text,
     governed_preflight,
+    lease_heartbeat,
     worktree_audit,
 )
 from ai_trading_system.platform.architecture.publication_orchestrator import (
@@ -63,6 +67,9 @@ VALIDATE_SCRIPT = "scripts/architecture_arch005_validate_candidate.py"
 # Baselines (reporting only): the real worker took 54 min on d23 and 71-86 min before S3c/W.
 BASELINE_VALIDATION_SECONDS = float(sum(STAGE_BASELINE_SECONDS.values()))
 BASELINE_LOCAL_PUBLISH_SECONDS = 54 * 60.0
+# Consecutive failed `git ls-remote` probes that end an owner-push wait (protocol constant: a streak
+# of five means the remote is unreachable, not a blip; the run then stops for the owner to look).
+OWNER_WAIT_MAX_PROBE_FAILURES = 5
 FORBIDDEN_PUSH_TOKENS = frozenset(
     {"--force", "-f", "--force-with-lease", "--mirror", "--delete", "-d", "--prune", "--all"}
 )
@@ -99,6 +106,13 @@ class PublishConfig:
     # Owner opt-in: only then may this command itself run `git push origin main`.
     push_by_command: bool = False
     poll_seconds: float = 30.0
+    # Owner-push mode only. 0 keeps the default: stop at AWAITING_AUTHORIZATION and let `resume`
+    # prove the push. Above 0 the push step stays alive up to that long, polls the remote, keeps the
+    # lease alive with the sanctioned heartbeat and finishes the run itself once the owner pushed.
+    owner_push_wait_seconds: float = 0.0
+    owner_wait_poll_seconds: float = 60.0
+    # Every fence checkpoint also renews the 6 h lease; 20 min leaves a wide margin per beat.
+    owner_wait_heartbeat_seconds: float = 1200.0
 
 
 def ordinary_push_argv() -> list[str]:
@@ -377,20 +391,54 @@ def build_publication_steps(config: PublishConfig, runner: CommandRunner) -> lis
             "transaction_id": formal["transaction_id"],
         }
 
+    def owner_push(context: StepContext, argv: Sequence[str]) -> Mapping[str, Any]:
+        """Prove the owner's own push against the remote; optionally wait for it (bounded)."""
+        expected = candidate(context)
+        lease_id = str(context.fact("C24.formal_validation_pre", "lease_id"))
+        started = last_beat = config.now()
+        beats = 0
+        failures = 0
+        while True:
+            try:
+                tip = _remote_tip(runner, run, "E59_owner_probe")
+                failures = 0
+            except StepFailed:
+                # A transient network error must not end a multi-hour wait; the first probe of a
+                # non-waiting run, or a streak of failures, still fails the step.
+                failures += 1
+                if config.owner_push_wait_seconds <= 0 or failures >= OWNER_WAIT_MAX_PROBE_FAILURES:
+                    raise
+                tip = None
+            now = config.now()
+            if tip == expected:
+                return {
+                    "push_log": None,
+                    "remote_tip": tip,
+                    "pushed_by": "OWNER_TERMINAL",
+                    "waited_seconds": round((now - started).total_seconds(), 1),
+                    "lease_heartbeats": beats,
+                }
+            if (now - started).total_seconds() >= config.owner_push_wait_seconds:
+                raise StepAwaitingAuthorization(
+                    "main 的推送由 owner 在自己的终端执行（这条命令默认从不推送；"
+                    "`resume --wait-for-owner-push` 会保活租约并在远端出现候选后自动收尾）",
+                    {
+                        "candidate": expected,
+                        "remote_tip": tip,
+                        "owner_command": " ".join(argv),
+                        "lease_heartbeats": beats,
+                    },
+                )
+            if (now - last_beat).total_seconds() >= config.owner_wait_heartbeat_seconds:
+                beats += 1
+                lease_heartbeat(run, runner, lease_id=lease_id, label=f"E59_heartbeat_{beats}")
+                last_beat = now
+            config.sleep(config.owner_wait_poll_seconds)
+
     def push(context: StepContext) -> Mapping[str, Any]:
         argv = ordinary_push_argv()
         if not config.push_by_command:
-            tip = _remote_tip(runner, run, "E59_owner_probe")
-            if tip == candidate(context):
-                return {"push_log": None, "remote_tip": tip, "pushed_by": "OWNER_TERMINAL"}
-            raise StepAwaitingAuthorization(
-                "main 的推送由 owner 在自己的终端执行（这条命令默认从不推送）",
-                {
-                    "candidate": candidate(context),
-                    "remote_tip": tip,
-                    "owner_command": " ".join(argv),
-                },
-            )
+            return owner_push(context, argv)
         result = runner(tuple(argv), log_name=f"{run.run_id}_E59_push")
         if result.exit_code != 0:
             raise command_failure("PUBLICATION_RUN_PUSH_FAILED", "git push origin main", result)
@@ -450,7 +498,7 @@ def build_publication_steps(config: PublishConfig, runner: CommandRunner) -> lis
         Step("E50.pre_publish_checks", "发布前检查（6 项）", pre_publish),
         Step("E51.worktree_audit", "worktree 审计：干净，HEAD 为冻结候选", audit),
         _fence_phase_step(fence, formal_id, "E52.local_main_ff_pre", "检查点 LOCAL_MAIN_FF_PRE",
-                          "LOCAL_MAIN_FF_PRE", baseline=BASELINE_GIT_SECONDS * 2),
+                          "LOCAL_MAIN_FF_PRE", baseline=BASELINE_FENCE_CLOSURE_SECONDS),
         Step("E53.local_publish_launch", "local-publish worker（脱离式，仅 ff）",
              local_publish_launch, mutating=True, already_done=local_published),
         Step("E54.local_publish_wait", "等待 LOCAL_PUBLISHED", local_publish_wait,
@@ -458,12 +506,15 @@ def build_publication_steps(config: PublishConfig, runner: CommandRunner) -> lis
         Step("E55.fetch", "fetch origin main；origin/main 必须是候选的祖先", fetch,
              baseline_seconds=BASELINE_GIT_SECONDS),
         _fence_phase_step(fence, formal_id, "E56.remote_push_pre", "检查点 REMOTE_PUSH_PRE",
-                          "REMOTE_PUSH_PRE", baseline=BASELINE_GIT_SECONDS * 2),
+                          "REMOTE_PUSH_PRE", baseline=BASELINE_FENCE_CLOSURE_SECONDS),
         Step("E57.closeout_preflight", "governed CLOSEOUT 预检", closeout_preflight,
              baseline_seconds=BASELINE_GIT_SECONDS * 2),
         Step("E58.authorization_gate", "owner 对本候选（普通推送）的授权", gate),
-        Step("E59.push", "main 的普通推送（默认由 owner 执行，绝不 force）", push, mutating=True,
-             already_done=pushed, baseline_seconds=BASELINE_GIT_SECONDS),
+        # In owner-push mode the step only reads the remote: an interrupted wait just runs again.
+        Step("E59.push", "main 的普通推送（默认由 owner 执行，绝不 force）", push,
+             mutating=config.push_by_command, already_done=pushed,
+             # an owner wait is not a slow step: only the git-time baseline applies without it
+             baseline_seconds=None if config.owner_push_wait_seconds > 0 else BASELINE_GIT_SECONDS),
         Step("E60.verify_shas", "本地 main = origin/main = 远端 tip = 候选", verify,
              baseline_seconds=BASELINE_GIT_SECONDS),
         _fence_phase_step(fence, formal_id, "E61.cleanup_pre", "检查点 CLEANUP_PRE",

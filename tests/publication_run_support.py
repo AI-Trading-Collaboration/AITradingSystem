@@ -89,6 +89,8 @@ class World:
             ],
         }
         self.push_exit = 0
+        self.ls_remote_failures = 0  # the next N `git ls-remote` calls fail (a network blip)
+        self.heartbeat_status = "PASS"
         self.transactions: dict[str, str] = {}
         self.calls: list[tuple[str, ...]] = []
         self.pushes: list[tuple[str, ...]] = []
@@ -111,6 +113,8 @@ class World:
         if script == FENCE_SCRIPT:
             return self._fence(argv)
         if script == GUARD_SCRIPT:
+            if argv[3] == "heartbeat":
+                return self._result(argv, {"status": self.heartbeat_status, "action": "heartbeat"})
             return self._result(argv, {"status": "PASS", "dirty_paths": list(self.dirty)})
         if script == DEVEX_SCRIPT and "validate" in argv:
             text = self.devex_output if self.devex_output is not None else self.devex_body
@@ -155,6 +159,9 @@ class World:
             ok = self.main_is_ancestor if argv[3] == "main" else self.remote_is_ancestor
             return self._result(argv, "", 0 if ok else 1)
         if verb == "ls-remote":
+            if self.ls_remote_failures > 0:
+                self.ls_remote_failures -= 1
+                return self._result(argv, "", 128)
             return self._result(argv, f"{self.remote_tip}\trefs/heads/main\n")
         if verb == "push":
             self.pushes.append(argv)

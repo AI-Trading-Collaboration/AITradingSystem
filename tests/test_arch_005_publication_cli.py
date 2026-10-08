@@ -5,7 +5,8 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -99,7 +100,12 @@ class Fixture:
         self.launcher = FakeLauncher(self.world)
         self.collector = FakeCollector(self.world)
 
-    def environment(self) -> CliEnvironment:
+    def environment(
+        self,
+        *,
+        sleep: Callable[[float], None] | None = None,
+        now: Callable[[], datetime] | None = None,
+    ) -> CliEnvironment:
         world = self.world
 
         def git(args: Sequence[str]) -> str:
@@ -113,9 +119,9 @@ class Fixture:
             collector=self.collector,
             interpreter=lambda: (str(world.repo / ".venv" / "Scripts" / "python.exe"), (3, 11)),
             free_disk_gb=lambda: 500.0,
-            sleep=lambda seconds: None,
+            sleep=sleep or (lambda seconds: None),
             monotonic=lambda: 0.0,
-            now=lambda: T0,
+            now=now or (lambda: T0),
             git=git,
         )
 
@@ -164,6 +170,7 @@ def test_plan_refuses_a_candidate_that_touches_a_forbidden_path_before_any_run(
     code, body = fx.invoke(capsys, "plan")
     assert code == EXIT_FAILED and body["status"] == "REFUSED"
     assert body["code"] == "PUBLICATION_SCOPE_PATH_FORBIDDEN" and "AGENTS.md" in body["message"]
+    assert "手工链" in body["next_action"]  # the standard answer for a candidate outside the policy
 
 
 def test_run_stops_at_the_gate_then_resumes_to_completion_after_authorization(
@@ -302,3 +309,40 @@ def test_a_commit_that_adds_an_owned_path_during_the_run_is_caught_before_the_fo
     code, summary = fx.invoke(capsys, "resume", "--run-id", "r1")
     assert code == EXIT_FAILED and summary["stopped_step"] == "C20.formal_acquire"
     assert fx.world.named("acquire", "r1-formal") == []
+
+
+def test_the_owner_wait_flags_default_to_no_wait_and_a_twelve_hour_bound() -> None:
+    parser = build_parser()
+    defaults = parser.parse_args(["resume", "--run-id", "r"])
+    assert defaults.wait_for_owner_push is False and defaults.owner_wait_minutes == 720.0
+    waiting = parser.parse_args(
+        ["resume", "--run-id", "r", "--wait-for-owner-push", "--owner-wait-minutes", "90"]
+    )
+    assert waiting.wait_for_owner_push is True and waiting.owner_wait_minutes == 90.0
+
+
+def test_resume_can_wait_for_the_owner_and_finish_the_run_itself(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    fx = Fixture(tmp_path, candidate_files=FILES)
+    code, summary = fx.invoke(capsys, "run", "--run-id", "r1", "--parent-run", "p.json")
+    assert code == EXIT_AWAITING_AUTHORIZATION and summary["stopped_step"] == "E59.push"
+
+    clock = {"now": T0, "polls": 0}
+
+    def sleep(seconds: float) -> None:
+        clock["now"] += timedelta(seconds=seconds)
+        clock["polls"] += 1
+        if clock["polls"] == 30:  # the owner pushes 30 minutes into the wait
+            fx.world.remote_tip = fx.head
+
+    environment = fx.environment(sleep=sleep, now=lambda: clock["now"])
+    code = main(
+        ["resume", "--run-id", "r1", "--wait-for-owner-push", "--owner-wait-minutes", "120"],
+        environment=environment,
+    )
+    summary = json.loads(capsys.readouterr().out)
+    assert code == EXIT_COMPLETE and summary["outcome"] == "COMPLETE", summary
+    assert fx.world.pushes == []  # the command waited, it did not push
+    assert len(fx.world.named("heartbeat")) == 1  # one renewal inside the 30 minutes
+    assert fx.world.transactions["r1-formal"] == "RELEASED"
