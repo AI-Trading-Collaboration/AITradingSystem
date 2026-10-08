@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1239
+module_count: 1240
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -15975,6 +15975,29 @@ modules:
   - architecture-fitness
   - contract-validation
   shared_integration: false
+- module_id: src.ai_trading_system.platform.architecture.compat_ledger
+  path: src/ai_trading_system/platform/architecture/compat_ledger.py
+  sha256: 62a63bd2c2c306272beddd012f44750af64135795d7688fbc7dbe24c69c3faf2
+  rule_id: platform_architecture
+  owner_profile: platform
+  owners:
+    code_owner: platform_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: platform_io
+    runtime_owner: platform_operations
+  layer: platform
+  category: architecture_platform_services
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004c_*.py
+  - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.compatibility_authority
   path: src/ai_trading_system/platform/architecture/compatibility_authority.py
   sha256: 77ba8c211e467379e70eb0b5990dd82c50772201512aef2cb0a5ceeb15328a2b
@@ -16299,7 +16322,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.publication_cli
   path: src/ai_trading_system/platform/architecture/publication_cli.py
-  sha256: c16ef2828beb764fa93860a8a143fb8195fa500892a616b610ed39a63051327b
+  sha256: 9f2ad9fcdb31d5e238fff11f6a8196ec027bdda1c8fec9e14f5e62fc5e66d6f6
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -16322,7 +16345,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.publication_commands
   path: src/ai_trading_system/platform/architecture/publication_commands.py
-  sha256: aa388f75ade1de781b7e161de4db02e471666958b014313bab6de60113271da2
+  sha256: 4b52fbf6effe4d682312e05287263ee43660014c0ba31f74a7acc4f24138936e
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -16391,7 +16414,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.publication_publish_steps
   path: src/ai_trading_system/platform/architecture/publication_publish_steps.py
-  sha256: 665045e0b14fdc9dcc43bea6632008c20785352c47835b1e018647d9df647dc7
+  sha256: 5ac3e06386c6aac8e47944dbb4b05f08fd0495b5c6d9914f8be381840d2f7c25
   rule_id: platform_architecture
   owner_profile: platform
   owners:
