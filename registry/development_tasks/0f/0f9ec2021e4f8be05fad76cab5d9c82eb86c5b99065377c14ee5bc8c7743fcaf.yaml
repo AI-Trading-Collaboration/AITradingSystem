@@ -18,11 +18,11 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 继续路线：DEVX-016 C2/C2.1 与 DEVX-023 P 已发布（第七次发布）->
-    DEVX-016 C3（P4）-> C4（S4）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖
-    OPS-077/078/081 验收）-> 阶段 5；穿插 DEVX-023 P5/P6 与 DEVX-022 时长种子刷新（Full 敏感输入，单独归因）；封印
-    S 仍待 owner 对边界的决定。owner 另需执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理
-    5 个 HKCU 测试根。
+  unstructured_legacy_blocker_or_next_step: 继续路线：DEVX-016 C3a（S3 后续小项 + P4-1 + DEVX-022
+    M5 种子）的 Full v5 全绿但发布被宿主卡死中断，恢复后以 v6 重发（带 S3 小项 (e) 隐藏窗口启动；owner 推送授权须对 v6 重新给出）->
+    DEVX-016 C3 的 P4-2…P4-4 -> C4（S4）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows
+    任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5；穿插 DEVX-022 的下一个杠杆（缩短命名 DQ 候选文件）与 DEVX-021
+    P2。owner 另需执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 5 个 HKCU 测试根；长跑期间建议把『关闭显示器』设为『从不』以避开显示唤醒卡死。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -936,6 +936,35 @@ events:
   - change:gov-007-pub7rows-task-20261008-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-fb6e4247b9bc5e25d2196341aa01734d
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-08T07:59:55Z'
+  actor: integration-coordinator
+  change_id: gov-007-v6rows-task-20261008-v1
+  lane_id: null
+  base_commit: 5150efbac27e3aedebeb64f46d55208902c6da38
+  previous_state_event_id: task-event-fb6e4247b9bc5e25d2196341aa01734d
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 继续路线：DEVX-016 C3a（S3 后续小项 + P4-1 + DEVX-022 M5 种子）的 Full
+      v5 全绿但发布被宿主卡死中断，恢复后以 v6 重发（带 S3 小项 (e) 隐藏窗口启动；owner 推送授权须对 v6 重新给出）-> DEVX-016
+      C3 的 P4-2…P4-4 -> C4（S4）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖
+      OPS-077/078/081 验收）-> 阶段 5；穿插 DEVX-022 的下一个杠杆（缩短命名 DQ 候选文件）与 DEVX-021 P2。owner
+      另需执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 5 个 HKCU 测试根；长跑期间建议把『关闭显示器』设为『从不』以避开显示唤醒卡死。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: 2026-10-08：宿主显示唤醒卡死（15:57）中断了 C3a v5 的发布阶段（Full 已全绿；未发布任何东西，main = origin/main
+      = 5150efbac）；owner 批准审计后手工删除两个残留锁，`local-publication-recover` 收口，事务 FAILED 释放；以
+      v6 重发。详见 DEVX-016 第 9 节与 DEVX-021 第 10 节。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-v6rows-task-20261008-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ffecfa5768af41fc63cb641f2de713ad
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
@@ -943,20 +972,19 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - 继续路线：DEVX-016 C2/C2.1 与 DEVX-023 P 已发布（第七次发布）-> DEVX-016 C3（P4）-> C4（S4）-> DEVX-017
-    -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5；穿插
-    DEVX-023 P5/P6 与 DEVX-022 时长种子刷新（Full 敏感输入，单独归因）；封印 S 仍待 owner 对边界的决定。owner 另需执行
-    D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 5 个 HKCU 测试根。
+  - 继续路线：DEVX-016 C3a（S3 后续小项 + P4-1 + DEVX-022 M5 种子）的 Full v5 全绿但发布被宿主卡死中断，恢复后以
+    v6 重发（带 S3 小项 (e) 隐藏窗口启动；owner 推送授权须对 v6 重新给出）-> DEVX-016 C3 的 P4-2…P4-4 -> C4（S4）->
+    DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）->
+    阶段 5；穿插 DEVX-022 的下一个杠杆（缩短命名 DQ 候选文件）与 DEVX-021 P2。owner 另需执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1
+    清理 5 个 HKCU 测试根；长跑期间建议把『关闭显示器』设为『从不』以避开显示唤醒卡死。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - 2026-10-08 第七次真实发布：main = origin/main = 5150efbac27e3aedebeb64f46d55208902c6da38（DEVX-023
-    P 链级并行重放（默认关闭）+ DEVX-016 C2.1；普通推送 0834ed957..5150efbac；正式事务 p-20261008-v3-formal
-    RELEASED/COMPLETED；S3 命令首次完整跑通；最后的 git push 由 owner 在终端执行）。Full 通过 15,027 / 4
-    跳过 / 0 失败（pytest 9,078.6 s，带上限 +4.4%），local-publish 62 分 57 秒。Full 关键路径与种子过期见
-    DEVX-022 第 17.8 节。
+  - 2026-10-08：宿主显示唤醒卡死（15:57）中断了 C3a v5 的发布阶段（Full 已全绿；未发布任何东西，main = origin/main
+    = 5150efbac）；owner 批准审计后手工删除两个残留锁，`local-publication-recover` 收口，事务 FAILED 释放；以
+    v6 重发。详见 DEVX-016 第 9 节与 DEVX-021 第 10 节。
   docs_links: []
   terminal: false
-  canonical_row_sha256: af21ac369ed34466b929481e4261049735d5c5304d855db1decfb71143f9b89e
-last_event_id: task-event-fb6e4247b9bc5e25d2196341aa01734d
+  canonical_row_sha256: 831328cdba5423f5318267e00f95ff67ffa829c5c4c6cc537180ca4bbf746a38
+last_event_id: task-event-ffecfa5768af41fc63cb641f2de713ad
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 2c52110a436e2a7175533ade83c69e35a61ffa522e9d3ec044e5944145b7b5d1
+fragment_checksum: 015ee4ef60f92b69dda6cbc0a354187055b2d8527fc10c47d1b4b7cc678d7d33

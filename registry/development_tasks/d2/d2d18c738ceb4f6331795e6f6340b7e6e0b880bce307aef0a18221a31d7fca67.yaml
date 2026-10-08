@@ -19,14 +19,13 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S3b 回归（R1）已修复并随 25d026bf6 真实发布。第七次发布（2026-10-08）的
-    Full pytest 9,078.6 s（2:31:18，带上限 +4.4%，未过 9,500 s 告警线）：定位到原因——命名 DQ 候选文件 tests/test_named_data_quality_candidate.py
-    是单个 loadfile 单元（26 个节点在一个 worker 上串行，合计 6,933 s，较 M4 的 5,353 s +30%，随单次重放变慢），而时长种子（PARTIAL_SEED
-    v26，来自 2026-09-26 的 v7 Full）里它只记 1,000 s，排第 15 位，要到 +2,098 s 才起跑；自 d24 起它就是最后结束的文件，Full
-    墙钟 = 起跑 + 合计。尾部空闲 6.84 节点小时（17.0%；M4–d24 为 10–11%，d25 为 13.8%）。候选杠杆：刷新时长种子使其提前起跑（预计
-    Full −400~−870 s，待实测；调度模拟器复现不了晚起跑，其「无收益」预测不可信），这是 Full 敏感输入，须单独归因地随一个候选做。其余可选项：起跑间隔
-    120->30 s、变体共享不可变前缀；发布耗时随发布增长的趋势转交 DEVX-023。正式 Full 现在 2:14-2:31 带，<2 小时未达（owner
-    2026-10-05 选择 C，不改正式 Full 合同）。详见 DEVX-022 第 17.8 节。
+  unstructured_legacy_blocker_or_next_step: S3b 回归（R1）已修复并随 25d026bf6 真实发布。M5（时长种子刷新，owner
+    2026-10-08 批准，并入 C3a 候选）的 Full v5 实测：命名 DQ 候选文件起跑 +433 s（旧 +2,098 s）达标，但该文件自身长到
+    8,856 s（v3 为 6,933 s，+28%，与 stage 1 的 +27% 同向）仍是最后结束的文件，窗口 9,289 s（v3 9,031 s，+2.9%），尾部空闲
+    13.0%（17.0%）；其余 15 个 worker 在 7,822–8,300 s 收工。种子保留（回滚条件不满足：变慢的原因不指向排序）。下一个杠杆：缩短该文件本身——拆成多个单元并行（须先证明
+    26 个节点互不共享状态）或让其中的重放并行；预计 Full 落到重型通道的尾巴 8,165–8,300 s。该候选的发布被宿主卡死中断，以 v6 重发（见
+    DEVX-016）。其余可选项：起跑间隔 120->30 s、变体共享不可变前缀；发布耗时随发布增长的趋势转交 DEVX-023。正式 Full 现在 2:14-2:35
+    带，<2 小时未达（owner 2026-10-05 选择 C，不改正式 Full 合同）。详见 DEVX-022 第 17.8、17.9 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
@@ -478,6 +477,37 @@ events:
   - change:gov-007-pub7rows-task-20261008-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-edf2b0d46c3cb755a31d6d0d2b927c69
+- schema_version: task_event.v1
+  task_id: DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-08T07:58:38Z'
+  actor: integration-coordinator
+  change_id: gov-007-v6rows-task-20261008-v1
+  lane_id: null
+  base_commit: 5150efbac27e3aedebeb64f46d55208902c6da38
+  previous_state_event_id: task-event-edf2b0d46c3cb755a31d6d0d2b927c69
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: S3b 回归（R1）已修复并随 25d026bf6 真实发布。M5（时长种子刷新，owner 2026-10-08
+      批准，并入 C3a 候选）的 Full v5 实测：命名 DQ 候选文件起跑 +433 s（旧 +2,098 s）达标，但该文件自身长到 8,856 s（v3
+      为 6,933 s，+28%，与 stage 1 的 +27% 同向）仍是最后结束的文件，窗口 9,289 s（v3 9,031 s，+2.9%），尾部空闲
+      13.0%（17.0%）；其余 15 个 worker 在 7,822–8,300 s 收工。种子保留（回滚条件不满足：变慢的原因不指向排序）。下一个杠杆：缩短该文件本身——拆成多个单元并行（须先证明
+      26 个节点互不共享状态）或让其中的重放并行；预计 Full 落到重型通道的尾巴 8,165–8,300 s。该候选的发布被宿主卡死中断，以 v6 重发（见
+      DEVX-016）。其余可选项：起跑间隔 120->30 s、变体共享不可变前缀；发布耗时随发布增长的趋势转交 DEVX-023。正式 Full 现在
+      2:14-2:35 带，<2 小时未达（owner 2026-10-05 选择 C，不改正式 Full 合同）。详见 DEVX-022 第 17.8、17.9
+      节。
+    acceptance_criteria: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约
+      20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实 .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5
+      最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
+    notes: 2026-10-08：M5 种子刷新的 Full v5 实测与归因（17.9）；下一个杠杆是缩短命名 DQ 候选文件本身。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-v6rows-task-20261008-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3faa565e5e5ee15a99c35429b5688ef0
 projection:
   legacy_first_eight_cells:
   - DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
@@ -486,20 +516,19 @@ projection:
   - P0
   - BASELINE_DONE
   - Claude Code coordinator
-  - S3b 回归（R1）已修复并随 25d026bf6 真实发布。第七次发布（2026-10-08）的 Full pytest 9,078.6 s（2:31:18，带上限
-    +4.4%，未过 9,500 s 告警线）：定位到原因——命名 DQ 候选文件 tests/test_named_data_quality_candidate.py
-    是单个 loadfile 单元（26 个节点在一个 worker 上串行，合计 6,933 s，较 M4 的 5,353 s +30%，随单次重放变慢），而时长种子（PARTIAL_SEED
-    v26，来自 2026-09-26 的 v7 Full）里它只记 1,000 s，排第 15 位，要到 +2,098 s 才起跑；自 d24 起它就是最后结束的文件，Full
-    墙钟 = 起跑 + 合计。尾部空闲 6.84 节点小时（17.0%；M4–d24 为 10–11%，d25 为 13.8%）。候选杠杆：刷新时长种子使其提前起跑（预计
-    Full −400~−870 s，待实测；调度模拟器复现不了晚起跑，其「无收益」预测不可信），这是 Full 敏感输入，须单独归因地随一个候选做。其余可选项：起跑间隔
-    120->30 s、变体共享不可变前缀；发布耗时随发布增长的趋势转交 DEVX-023。正式 Full 现在 2:14-2:31 带，<2 小时未达（owner
-    2026-10-05 选择 C，不改正式 Full 合同）。详见 DEVX-022 第 17.8 节。
+  - S3b 回归（R1）已修复并随 25d026bf6 真实发布。M5（时长种子刷新，owner 2026-10-08 批准，并入 C3a 候选）的 Full
+    v5 实测：命名 DQ 候选文件起跑 +433 s（旧 +2,098 s）达标，但该文件自身长到 8,856 s（v3 为 6,933 s，+28%，与 stage
+    1 的 +27% 同向）仍是最后结束的文件，窗口 9,289 s（v3 9,031 s，+2.9%），尾部空闲 13.0%（17.0%）；其余 15 个 worker
+    在 7,822–8,300 s 收工。种子保留（回滚条件不满足：变慢的原因不指向排序）。下一个杠杆：缩短该文件本身——拆成多个单元并行（须先证明 26 个节点互不共享状态）或让其中的重放并行；预计
+    Full 落到重型通道的尾巴 8,165–8,300 s。该候选的发布被宿主卡死中断，以 v6 重发（见 DEVX-016）。其余可选项：起跑间隔 120->30
+    s、变体共享不可变前缀；发布耗时随发布增长的趋势转交 DEVX-023。正式 Full 现在 2:14-2:35 带，<2 小时未达（owner 2026-10-05
+    选择 C，不改正式 Full 合同）。详见 DEVX-022 第 17.8、17.9 节。
   - S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
     .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5 最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
-  - 2026-10-08：第七次发布的耗时对照与 Full 关键路径分析（17.8）；登记时长种子刷新为候选杠杆。
+  - 2026-10-08：M5 种子刷新的 Full v5 实测与归因（17.9）；下一个杠杆是缩短命名 DQ 候选文件本身。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 84bfc65d91363c9370d3979a482335465158d517be9e6e7cc6043aabdd611727
-last_event_id: task-event-edf2b0d46c3cb755a31d6d0d2b927c69
+  canonical_row_sha256: cbb6ecda6dfbe52c28892c55aa19cd9513bae4c29b9c48f315d025e5ec5d7b65
+last_event_id: task-event-3faa565e5e5ee15a99c35429b5688ef0
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: a819d87dafdca40a7288115acbc9bd3b4ec3827d2ceeccc2cdb12a365a2cf82e
+fragment_checksum: 308879c1edec029a19be40239443f6a1cecb5f537ed78adfdca2a4dc14b038cf
