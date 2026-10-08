@@ -14,19 +14,16 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Claude Code coordinator；Project Owner（P2 合同波次复核）
+  next_owner: Claude Code coordinator；Project Owner（P2/P3 方案评审，合同波次）
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 'P1（ORIG_HEAD 基线等于 main 时接受空 ORIG_HEAD.lock）已实现并随
-    25d026bf6 真实发布。**2026-10-08 事故证实 P2（残留锁恢复）确有必要**：S3 run v5 的 `local-publish` 期间宿主显示唤醒卡死（15:57），worker
-    被杀在 ff 合并的引用事务 prepared 之后，留下 `.git/HEAD.lock`（0 字节）与 `.git/refs/heads/main.lock`（41
-    字节，内容正是候选 SHA）；`local-publication-recover` 因 `PLAN_STATE_EXISTS: HEAD.lock` fail
-    closed，owner 批准审计后手工删除两个锁才收口（STABLE_FAILED_ATTEMPT），已通过的 Full 作废，整条链重跑约 4.7 小时（这是第二次出现，第一次是
-    v26 的空 AUTO_MERGE.lock / packed-refs.lock）。P2 的范围因此要扩大：除空锁外，还要识别『已被 reference-transaction
-    prepared 记录的 HEAD.lock 与内容 = 候选 SHA 的 main.lock』，并让恢复路径在『ff 未提交（main 未动）』时直接收口为失败尝试而无需人工删除；仍是租约执行记录
-    schema 的合同变更，须最小串行合同波次与 owner 复核。'
+  unstructured_legacy_blocker_or_next_step: P1（ORIG_HEAD 基线）已随 25d026bf6 发布。2026-10-08
+    事故（v5，显示唤醒卡死杀死 local-publish，残留 HEAD.lock + main.lock，owner 批准审计后手工删除）证实 P2 确有必要；v6
+    的 local-publish 全程正常，实测引用事务持锁窗口为 2 分 46 秒（22:08:29→22:11:15，prepared 钩子在持锁期间重放租约库）。设计草案见
+    DEVX-021 第 11 节：P2a 窗口内残留锁的自动恢复事实（先写事实再按白名单删除，附负向测试）、缩小窗口（DEVX-023 P6(b)）、P3 选项（同一候选的有界第二次发布，把此类事故的代价从约
+    4.7 小时降到约 1.2 小时，需 owner 决定）。均属租约执行记录/工作流协议的合同变更，须最小串行合同波次与 owner 评审。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 校验器与效果分类对 ORIG_HEAD 三种基线（不存在、等于旧 main、不同于旧 main）语义正确放行/拒绝并有负向测试（锁内容被篡改、基线与锁不一致必须拒绝）；fixture
@@ -246,6 +243,34 @@ events:
   - change:gov-007-v6rows-task-20261008-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-666d509c9fe90696f92c982a0c987235
+- schema_version: task_event.v1
+  task_id: DEVX-021_PUBLICATION_ORIG_HEAD_UNCHANGED_ROBUSTNESS
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-08T14:16:02Z'
+  actor: integration-coordinator
+  change_id: gov-007-v6crows-task-20261008-v1
+  lane_id: null
+  base_commit: e30c62a976cd6a523fc84838a72b60070542754a
+  previous_state_event_id: task-event-666d509c9fe90696f92c982a0c987235
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Claude Code coordinator；Project Owner（P2/P3 方案评审，合同波次）
+    blocker_or_next_step: P1（ORIG_HEAD 基线）已随 25d026bf6 发布。2026-10-08 事故（v5，显示唤醒卡死杀死
+      local-publish，残留 HEAD.lock + main.lock，owner 批准审计后手工删除）证实 P2 确有必要；v6 的 local-publish
+      全程正常，实测引用事务持锁窗口为 2 分 46 秒（22:08:29→22:11:15，prepared 钩子在持锁期间重放租约库）。设计草案见 DEVX-021
+      第 11 节：P2a 窗口内残留锁的自动恢复事实（先写事实再按白名单删除，附负向测试）、缩小窗口（DEVX-023 P6(b)）、P3 选项（同一候选的有界第二次发布，把此类事故的代价从约
+      4.7 小时降到约 1.2 小时，需 owner 决定）。均属租约执行记录/工作流协议的合同变更，须最小串行合同波次与 owner 评审。
+    acceptance_criteria: 校验器与效果分类对 ORIG_HEAD 三种基线（不存在、等于旧 main、不同于旧 main）语义正确放行/拒绝并有负向测试（锁内容被篡改、基线与锁不一致必须拒绝）；fixture
+      演练覆盖「预先存在且等于旧 main」且真实布局副本演练通过；不放宽任何既有检查，恢复/adopt 路径对新情形可重放；更新任务登记与需求文档；退出条件：不再需要删除
+      ORIG_HEAD 的临时前置条件。
+    notes: 2026-10-08 夜：第 11 节 P2a/P3 设计草案与 v6 持锁窗口实测，待 owner 评审。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-v6crows-task-20261008-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-bb8d456e9cca46e88cb5f7891e33ad56
 projection:
   legacy_first_eight_cells:
   - DEVX-021_PUBLICATION_ORIG_HEAD_UNCHANGED_ROBUSTNESS
@@ -253,22 +278,19 @@ projection:
     equals the old HEAD
   - P1
   - BASELINE_DONE
-  - Claude Code coordinator；Project Owner（P2 合同波次复核）
-  - 'P1（ORIG_HEAD 基线等于 main 时接受空 ORIG_HEAD.lock）已实现并随 25d026bf6 真实发布。**2026-10-08
-    事故证实 P2（残留锁恢复）确有必要**：S3 run v5 的 `local-publish` 期间宿主显示唤醒卡死（15:57），worker 被杀在
-    ff 合并的引用事务 prepared 之后，留下 `.git/HEAD.lock`（0 字节）与 `.git/refs/heads/main.lock`（41
-    字节，内容正是候选 SHA）；`local-publication-recover` 因 `PLAN_STATE_EXISTS: HEAD.lock` fail
-    closed，owner 批准审计后手工删除两个锁才收口（STABLE_FAILED_ATTEMPT），已通过的 Full 作废，整条链重跑约 4.7 小时（这是第二次出现，第一次是
-    v26 的空 AUTO_MERGE.lock / packed-refs.lock）。P2 的范围因此要扩大：除空锁外，还要识别『已被 reference-transaction
-    prepared 记录的 HEAD.lock 与内容 = 候选 SHA 的 main.lock』，并让恢复路径在『ff 未提交（main 未动）』时直接收口为失败尝试而无需人工删除；仍是租约执行记录
-    schema 的合同变更，须最小串行合同波次与 owner 复核。'
+  - Claude Code coordinator；Project Owner（P2/P3 方案评审，合同波次）
+  - P1（ORIG_HEAD 基线）已随 25d026bf6 发布。2026-10-08 事故（v5，显示唤醒卡死杀死 local-publish，残留 HEAD.lock
+    + main.lock，owner 批准审计后手工删除）证实 P2 确有必要；v6 的 local-publish 全程正常，实测引用事务持锁窗口为 2 分
+    46 秒（22:08:29→22:11:15，prepared 钩子在持锁期间重放租约库）。设计草案见 DEVX-021 第 11 节：P2a 窗口内残留锁的自动恢复事实（先写事实再按白名单删除，附负向测试）、缩小窗口（DEVX-023
+    P6(b)）、P3 选项（同一候选的有界第二次发布，把此类事故的代价从约 4.7 小时降到约 1.2 小时，需 owner 决定）。均属租约执行记录/工作流协议的合同变更，须最小串行合同波次与
+    owner 评审。
   - 校验器与效果分类对 ORIG_HEAD 三种基线（不存在、等于旧 main、不同于旧 main）语义正确放行/拒绝并有负向测试（锁内容被篡改、基线与锁不一致必须拒绝）；fixture
     演练覆盖「预先存在且等于旧 main」且真实布局副本演练通过；不放宽任何既有检查，恢复/adopt 路径对新情形可重放；更新任务登记与需求文档；退出条件：不再需要删除
     ORIG_HEAD 的临时前置条件。
-  - 2026-10-08：宿主卡死事故（v5 发布期间）证实 P2；扩大 P2 范围的记录见 DEVX-021 文档第 10 节。
+  - 2026-10-08 夜：第 11 节 P2a/P3 设计草案与 v6 持锁窗口实测，待 owner 评审。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 747bc9f9e56820115990b80f0b803e0bffd2e08809407941351745b7087a7360
-last_event_id: task-event-666d509c9fe90696f92c982a0c987235
+  canonical_row_sha256: f8c2df97ac012bd1d7311a09b505a0677b74a7ad13c7fd46c8b378a0e048d340
+last_event_id: task-event-bb8d456e9cca46e88cb5f7891e33ad56
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: d9693d51ca6c04fdf4439d60bae7b0327d97c9dcfbfe5178b93f165f8b369cf8
+fragment_checksum: d24708df1418476bfeb411fd243e1cefcc085a6fefe27f0fbf1978a1efefc299
