@@ -504,3 +504,8 @@ DEVX-017 依赖 DEVX-016 全部完成；OPS-082 须 owner 先确认「不得使�
     `--wait-for-owner-push` 没有来得及在真实环境里被验证（E54 就被中断）；owner 的推送授权（仅候选 `5480507f1`）随该候选作废，v6 到 E59 再问。
   - **事故与恢复**：见 DEVX-021 第 10 节（显示唤醒卡死杀死 `local-publish`；两个残留锁经 owner 批准审计后删除；`local-publication-recover` 收口；`p-20261008-v5-formal` 以 FAILED 释放；什么都没有发布）。
   - **v6 候选**：新提交 = S3 小项 (e)（`WmiDetachedLauncher` 用 `Win32_ProcessStartup.ShowWindow = 0` 隐藏窗口，owner 要求；测试断言启动信息先于 Create 构造且不使用被 WMI 拒绝的 `CreateFlags`）+ 本节与 DEVX-021/022 的记录。S3 小项 (f)（worker 被杀时的 `next_action` 提示）与 (d) 留待以后。
+- 2026-10-08（夜）：**C3a 已发布（第八次发布）**：候选 `e30c62a97`（S3 run `p-20261008-v6`；v5 事故后重发），普通推送 `5150efbac..e30c62a97`，本地 main = origin/main = ls-remote = 候选；正式事务 `p-20261008-v6-formal` COMPLETED；journal 68 条，run COMPLETE。
+  - **推送由 Claude 执行**：owner 在 17:38 的 AskUserQuestion 里选了「仅本候选，由你(Claude)推」（证据 `claude_c3a_v6_push_authorization.json`，上次对 `5480507f1` 的授权随旧候选作废，所以重新问了一次）；E59 前核对 Full 全绿（15,096 / 4 / 0）、E57 预检 PASS、远端 main 是候选祖先、本地 main = HEAD = 候选、无 `.git` 锁文件；执行 `git push origin main` 一次，输出与核对记录在 `claude_c3a_v6_push.log`（S3 的 journal 只能证明远端 tip，不能证明是谁推的，所以另记）。
+  - **交付**：S3 小项 (a) E59 的 owner 模式等待 + 租约心跳（本次因我在 E59 开始 1 分钟后就推送，只验证了 60 s 探测与自动收尾 E60–E63；20 分钟心跳仍未在真实环境里被长等待验证）、(b) E52/E56 基线 210 s（E56 仍标 SLOW：273 s）、(c) 拒绝时的 `next_action`、**(e) 隐藏窗口启动器**（真实验证见 DEVX-022 第 17.10 节）；P4-1（`compat_ledger.py` + 策略草案 `PROPOSED` + 60 项测试，Full 里常驻）；DEVX-022 M5 时长种子刷新。
+  - **耗时**：见 DEVX-022 第 17.10 节。要点：Full 全绿、pytest 9,250 s；stage 1 873.6 s（未越 900 s 告警线）；`local-publish` 82 分钟（上次 63，SLOW）——重放主导的工作随租约库增长在变慢，下一个候选应先做 DEVX-023 P6。
+  - **仍欠**：S3 小项 (d)（stage 1 计时诊断步骤）、(f)（worker 被杀时的 `next_action` 提示）；P4-2…P4-4（P4-3 之前须 owner 评审 compat 账本策略）；C4（S4）。

@@ -182,3 +182,41 @@
 ### 10.4 对运行方式的影响
 - 长跑期间避免显示器断电/唤醒：建议 owner 把电源设置里「关闭显示器」设为「从不」（我不改系统设置）；这次的卡死恰在 owner 回到电脑、解锁唤醒时发生。
 - S3 命令的 E54 在 worker 被杀、命令本身也被杀的情形下无法自救；`resume` 之后的探测只能给出「worker 已不在、main 未动」的事实。把这类情形的检查与恢复步骤写成命令提示（`next_action`）可以省掉人工排查——记为 S3 小项 (f)。
+
+## 11. P2 设计草案（2026-10-08 事故之后；待 owner 评审；属租约执行记录/工作流协议的合同变更，须最小串行合同波次）
+
+### 11.1 事实（只读核对，代码与证据）
+- `local-publication-recover` 的计划阶段要求 `_publication_plan_absences`（`workflow_integration.py`）列出的路径全部不存在：`HEAD.lock`、`index.lock`、`ORIG_HEAD.lock`、`AUTO_MERGE.lock`、`refs/heads/main.lock`、`packed-refs.lock`、对端检出的 `HEAD.lock`，以及 `MERGE_*` 等合并状态文件；代码注释写明「未知的锁/进行中的合并状态绝不读取、也绝不删除」。
+  唯一的豁免是 reference-transaction 钩子在 `prepared` 阶段**已经记录**的 owned locks（`owned_locks` / `prepared` 行，恢复路径逐项核对其身份未变）。
+- 本次事故里这两个锁属于同一个 `git merge --ff-only` 的引用事务（git 把对 `HEAD` 的更新拆成 `refs/heads/main` 的更新和 `HEAD` 的仅日志更新，所以两把锁同秒创建），但**钩子没有来得及记录**：git 在调用 `prepared` 钩子**之前**就已经创建并持有这两把锁，而钩子要先重放租约库（约 20 s，加上校验更久）才能写记录；主机在持锁约 40 秒后卡死，落在这个窗口里。
+  所以恢复路径看到的是「未知的锁」，fail closed 是正确的；但这也意味着：只要被杀/卡死落在这个窗口，就一定要人工。
+- 协议层已有「attempt > 1 = RECOVER」的结构（`publication_attempt`、`previous_publication_sha256`，`workflow_coordination.py`）；RECOVER 只能**收养**已发生的发布（`adopt_published_attempt`）或把失败尝试收口为稳定状态（`adopt_index_replaced_failed_attempt`）。**没有「再发布一次」的动作**，所以 `STABLE_FAILED_ATTEMPT` 之后只能：释放失败 → 新候选 → 新 Full。
+
+### 11.2 P2a：窗口内残留锁的恢复事实（自动，无需人工）
+目标：被杀/卡死落在 `prepared` 记录之前的窗口时，`local-publication-recover` 自己完成与本次人工操作等价的、可审计的步骤。
+- 前提（全部满足才受理，否则维持现行 fail closed）：(1) 原 Job 已终止、没有存活的 git/python 子进程（Job 名与创建时间已在执行记录里）；(2) 锁的创建时间不早于已记录的 `merge_resumed`，且不晚于该 Job 的终止时间（宿主崩溃时用最近一次开机之前内核最后存活的时间）；(3) 锁的形状在白名单内：`HEAD.lock` 与 `ORIG_HEAD.lock` 为 0 字节，`refs/heads/main.lock` 内容恰为「绑定候选 SHA + LF」；(4) `refs/heads/main` 与 `origin/main` 仍等于记录的 `expected_main`，候选分支仍等于候选；(5) 路径与形状都在精确白名单里，没有 `index.lock`、`packed-refs.lock` 以外的陌生锁。
+- 动作（先写事实，再删除）：把每个残留锁的 `{路径、大小、sha256、创建时间、内容}` 作为 `publication_residue_locks_observed` 事实**追加**进执行记录；再按绑定句柄（路径 + 身份 + 大小）删除；最后沿用现有收口路径（`adopt_index_replaced_failed_attempt` → `STABLE_FAILED_ATTEMPT`）。
+- 明确**不做**：不把 `main.lock` 改名成 `main`（那样本地 main 会越过围栏记录，缺 `committed` 的 reference-transaction 记录，采纳路径很可能 fail closed，等于绕过围栏）；不处理陌生锁；不跨越 `main` 已被改动的情形（走现有的 `adopt_published_attempt`）。
+- 负向测试（每项都必须拒绝并保持现场不变）：锁内容不是候选 SHA；`HEAD.lock` 非空；创建时间不在窗口内；有存活的 git/python 进程；`main` 已前进；路径不在白名单；两个锁中只有一个存在且形状不成对；Job 仍存活。
+- 与 v26（空 `AUTO_MERGE.lock` / `packed-refs.lock`）的残留一并覆盖：同一机制，白名单加上这两项。
+
+### 11.3 缩小窗口（独立于 P2，可先做）
+- 窗口长度 = 钩子在持锁期间做的事（重放租约库 ≈20 s + 校验）。DEVX-023 的 P6 范围 (b)（local-publish worker 与钩子的并行重放）能把它压到几秒；封印 S 能进一步压到亚秒。窗口越短，被卡死命中的概率越小，P2a 触发的次数越少。
+
+### 11.4 P3（选项，**需 owner 决定**）：同一候选的有界第二次发布
+- 问题：`STABLE_FAILED_ATTEMPT` 已被证明「main 未动、检出已回到候选、索引已替换」，但整条链仍要重跑（本次 4.7 小时），因为 `local-publish` 只允许一次尝试、Full 结果又绑定在已终止的正式事务上。
+- 方案：新增 `PUBLISH_RETRY` 动作（`publication_attempt` = 2，`previous_publication_sha256` 绑定上一次的 `STABLE_FAILED_ATTEMPT` 观察），要求：上一次尝试以**可证明无外部效果**的方式失败（`main` 未动、`origin/main` 未动、稳定观察 `CANDIDATE_STABLE_INDEX_REPLACED`）、候选 SHA 与树未变、租约未过期、Full 的候选身份未变；最多 1 次重试（上限本身是启发式阈值，必须写进评审过的策略清单：owner、版本、理由、复审条件）。
+- 影响：把「宿主卡死」类事故的代价从约 4.7 小时降到约 1.2 小时。风险：一次尝试的安全不变量被放宽；须有负向测试（上一次失败不是「无外部效果」、候选漂移、租约过期、重试次数超限、Full 身份不符）并通过独立评审。
+- 不做 P3 的代价：每次被杀/卡死命中 `local-publish` 的窗口（约 1 小时）= 整条链重跑，且需要人工处理残留。已发生两次（v26：被写死的 3600 s 墙钟杀死；v5：宿主显示唤醒卡死），都落在这个窗口里。
+
+### 11.5 步骤与验收
+| 步骤 | 内容 | 依赖 | 验收 |
+|---|---|---|---|
+| P2a | 11.2 的受理条件 + 事实追加 + 负向测试 | 合同波次（执行记录新增事实类型）、owner 评审 | 在隔离的真实 git 夹具上复现两种残留（v26 的空锁、v5 的 prepared 锁）并自动收口；全部负向测试拒绝；旧记录重放不变 |
+| 窗口缩小 | DEVX-023 P6 (b) | DEVX-023 P6 | 钩子 `prepared` 阶段的持锁时间中位数 < 5 s |
+| P3 | 11.4 | owner 决定、合同波次 | 同上，并有「重试后成功发布」的端到端夹具 |
+
+### 11.6 v6 的实测时间线（2026-10-08；`local-publish` 全程正常，没有残留）
+- 引用事务：`merge_resumed` 22:02:59 → `git merge --ff-only` 在 22:08:29 创建 `HEAD.lock`（0 字节）与 `refs/heads/main.lock`（41 字节）并启动 `prepared` 钩子（进程树：`git.exe` → `sh.exe`（reference-transaction 钩子）→ `python.exe`，对应 11.1 的描述）→ main 在 **22:11:15** 前进（`git reflog`）、锁释放。**持锁窗口 = 2 分 46 秒**，占 82 分钟 `local-publish` 的 3.4%；`merge_resumed` 到锁出现之间的 5.5 分钟是 git 更新工作树与索引。
+- 其余阶段：+21.2 min 钩子目录创建、+25 min `hooks_created`、+50 min `merge_resumed`、+58.4 min `committed`、+75.2 min worker 结果、+82.1 min E54 DONE（详见 DEVX-022 第 17.10 节）。被杀/卡死落在其中任何阶段的后果不同：锁窗口之前（main 未动，无残留）收口为 `STABLE_FAILED_ATTEMPT`；锁窗口之内（本节要解决的）需要 P2a；`committed` 之后用现有的 `adopt_published_attempt`。
+- 与 v5 的对照：v5 的 `merge_resumed` 在 15:50:56、锁在 15:56:34 出现（同样的 5.6 分钟），卡死发生在锁出现后约 40 秒，也就是同一个 2 分 46 秒窗口的早段。

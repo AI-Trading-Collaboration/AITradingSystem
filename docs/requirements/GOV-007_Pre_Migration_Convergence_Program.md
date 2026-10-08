@@ -595,6 +595,11 @@ v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
   (4) owner 要求脱离进程不带窗口，已记为 S3 小项 (e)，在 v6 中实现。
 - 审计事件（无内容暴露）：提交任务行事务产物时我在同一条命令里用了裸 `git diff --cached --stat` 与裸 `git status --short | head`，遗漏 `known_unrelated_exclusions` 的精确排除集；
   前者只列出了我显式暂存的 6 个白名单路径，后者输出为空（工作树当时干净），没有显示任何被排除路径或内容；未打开、哈希、复制、暂存或修改被排除文件。此后只用 `worktree-audit` 与显式白名单路径。按纪律记为审计事件。
+- **2026-10-08 夜 第八次发布完成（DEVX-016 C3a：S3 小项 + P4-1 + DEVX-022 M5 种子 + 隐藏窗口启动器）**：候选 `e30c62a97`，S3 run `p-20261008-v6`，**普通推送 `5150efbac..e30c62a97` 由 Claude 在 owner「仅本候选」授权下执行**（22:41 JST；证据 `claude_c3a_v6_push_authorization.json` 与 `claude_c3a_v6_push.log`），本地 main = origin/main = ls-remote = 候选，正式事务 `p-20261008-v6-formal` COMPLETED，run COMPLETE（68 条 journal）。
+  Full 15,096 通过 / 4 跳过 / 0 失败（pytest 9,250 s）；stage 1 873.6 s、contract 206 s、integration 57 s、reproducibility 37 s、architecture-fitness 1,282 s；`local-publish` 82 分钟（SLOW，重放主导）。链从 17:23 开始到 22:43 完成（含 v5 旧临时目录的清理、隐藏启动器冒烟与向 owner 重新确认授权的间隙）。
+  这次是 v5 被宿主卡死中断后的重发：v5 的事故、恢复与审计记录见本节上一条与 DEVX-021 第 10 节；v6 全程没有人工介入，隐藏窗口启动器经真实运行验证（驱动与 worker 都没有终端窗口）。
+  **新发现（DEVX-022 第 17.10 节、DEVX-023 第 12.5 节）**：stage 1 之外的各阶段与 v3 持平或更快，重放主导的工作（stage 1 +21.6%、`local-publish` +30%、命名 DQ 候选文件 ×1.2、composer 激活测试 +28%）随租约库增长变慢，每次发布尝试（含被放弃的）让之后每次重放永久变慢约 1.2–2.8 s；我在 DEVX-022 17.9 里把这个变慢归因于宿主负载是错的，已更正。下一步优先级因此改为：DEVX-023 P6（并行重放开启范围）→ C3 的 P4-2…P4-4 → C4 → DEVX-017 → OPS-082 → 阶段 5；封印 S 等 owner 对信任模型的决定。
+  待 owner：封印 S 的信任模型；DEVX-021 第 11 节 P2/P3 的方案；OPS-082 规则变更确认；HKCU 清理脚本；长跑期间把「关闭显示器」设为「从不」。
 - 仍待 owner：超时/等待校准的复核（`PROVISIONAL_PENDING_OWNER_REVIEW`）、O3 跨调用缓存与 DEVX-023 封印 S 的边界决定（并行重放已发布，封印 S 只是后备）、5 个 HKCU `AITS-DEVX015-Test-*` 遗留注册表根的清理（脚本 `D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1`，agent 未执行）、OPS-082 规则变更确认。
 
 ## 7. 退出条件
