@@ -264,7 +264,7 @@ owner 2026-10-07 决定路线为 DEVX-016 C2 → 本节（封印 S）→ C3。�
 
 **真实库副本上的实测**（`D:/Work/p-seal-store` = 真实库的 `events/` 与 `blobs/` 拷贝，898 条链 / 6,282 个事件，不触碰真实库；证据 `outputs/architecture/integration_revalidation/devx015-v389/claude_seal_real_store_differential.json`）：构建 31–35 s（896 条终态链入封印，2 条非终态链不入），封印文件 911 KB；`verify`：封印重放与串行全量重放的 `to_dict()` **逐项相同**；经 `store.replay()`：开关未设 32.7 s，`AITS_LEASE_SEAL=1` **3.4 / 4.2 s**（约 8–9 倍），`off` 30.9 s。纯逐字节读取并哈希全部事件文件 0.99 s。验收 10.4 第 4 条（一次重放 ≤ 全量的 30%）：达成（≈ 12%）。
 
-**步骤状态**：S1 完成、S2 完成、S3（候选 A 随链发布，默认关闭）进行中；S3.5（发布后在真实库上手工 `build` + `verify` + 计时）、S4（owner 看过实测后决定候选 B 与命名 DQ 导入清单）待做。
+**步骤状态**：S1 完成、S2 完成、S3（候选 A 随链发布，默认关闭）进行中——第一次发布尝试（S3 run `p-20261009-v1`，候选 `6f77aeae0`）的 Full 因与封印无关的负载超时失败（夹具里写死的 5 s `git rev-parse HEAD` 超时，见 DEVX-022 第 17.12 节），已释放为 FAILED，什么都没有发布；以加固后的 `failure_fix_rerun` 重发。S3.5（发布后在真实库上手工 `build` + `verify` + 计时）、S4（owner 看过实测后决定候选 B 与命名 DQ 导入清单）待做。
 
 ## 11. W-DQ（可选）：命名 DQ 证明只保留源租约的重放视图（设计草案，2026-10-07；不是耗时对策）
 

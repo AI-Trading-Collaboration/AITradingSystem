@@ -817,3 +817,15 @@ v6 里重型通道已经提前到 7,989 s 收工，命名 DQ 候选文件仍在 
 **租约库重放（清理刚结束、Defender 仍在后台时测，6,274 个事件）**：串行 34.2 / 36.6 s，4 个工作进程 12.6 / 13.2 s，8 个 12.0 / 10.3 s，全部与串行逐项相同、无回退（安静时的串行约 26 s，晚间 29–33 s，噪声约 ±20%，见 17.10）。4 与 8 个进程差别在噪声之内，所以 `workers: 4` 保持不变。
 
 **结论与排序**：(1) 保留 P6（`PILOT_BASELINE`，4 个工作进程），把它记为「发布命令 + `local-publish`」这两段的有效杠杆（链约两成，压了一半）；(2) 对占八成的 Full，唯一能停止增长的是封印 S（DEVX-023 第 10 节，待 owner 对信任模型的决定）；备选是 M6 拆开命名 DQ 候选文件；(3) `validation_pre_full_tiers`（四个 xdist tier 合计约 1,690 s，需要先测它们的重放占比）暂不开。
+
+### 17.12 封印 S 候选 A 的发布尝试（S3 run `p-20261009-v1`，候选 `6f77aeae0`）：Full 因与封印无关的负载超时失败，以及对写死的 5 s git 探测超时的加固（2026-10-09）
+
+**结果**：run 在 D31 停止，正式事务 `p-20261009-v1-formal` 以 FAILED 释放（证据 `claude_seal_s1_full_failure.txt` 与 `claude_seal_s1_formal_release.json`），**没有任何东西被推送**（main = origin/main = `a63827b28`）。stage 1 749.3 s（P6 之后的水平，说明封印默认关闭时没有改变行为）、contract 234.1 s、integration 70.0 s、reproducibility 37.0 s、architecture-fitness 1,260.4 s 全部通过；Full：15,212 通过 / 4 跳过 / **1 失败 + 1 错误**（同一个节点的调用与 teardown），pytest 10,026 s（2:47:05，比 v7 的 9,676 s 慢 3.6%）。
+
+**失败的节点**：`tests/test_governed_development_skill.py::test_completed_admission_full_entry_rejects_real_invalid_context[terminal-full-profile-publish]`。该测试在临时 git 夹具里跑一次内层的「强制验收 Full」（`-n 16` 的内层 pytest）。内层 pytest 本身通过（74 passed in 130.54 s），但随后 `record_summary` 抛出 `WORKFLOW_EXECUTION_FULL_RESULT_SUMMARY_BINDING`。
+
+**原因（读夹具留下的产物得出，不是猜的）**：夹具里写出的 `test_runtime_summary.json` 的 `git_commit` 是 `"unknown"`，而执行请求里的 `candidate_sha` 是真实的提交；绑定检查要求两者相等。`scripts/run_validation_tier.py::_git_commit()` 用 `subprocess.run(("git", "rev-parse", "HEAD"), timeout=5)`，超时或失败就返回 `None`，调用处写成 `"unknown"`。这个摘要在约 15:22:30 写出，计数器显示 15:21:29 整机 CPU 100%、约 600 个进程（外层 Full 的 16 个 xdist worker 加内层 Full 的 16 个）——一次普通的 `git rev-parse HEAD` 在饱和的主机上超过了 5 s。teardown 错误是它的后果：夹具的租约留下了未终止的 execution（`LEASE_EXECUTION_NOT_TERMINAL`）。
+
+**与封印无关**：封印默认关闭（`AITS_LEASE_SEAL` 未设时钩子不导入任何东西），前两个候选（`e30c62a97`、`a63827b28`）通过了同一个测试，其余 15,212 个节点通过。这是 Full 运行器里一个写死的、对负载敏感的超时，与 `LOADED_HOST_*` 系列校准同类，只是它在生产脚本里而不是测试里。外层 Full 写自己的摘要时也经过同一个函数，只是那时机器已经空闲，所以一直没出事。
+
+**处理（durable fix，不是重跑碰运气）**：把 5 s 字面量换成具名常量 `GIT_COMMIT_PROBE_TIMEOUT_SECONDS`（挂起保护，不是语义阈值；取 120 s，远高于任何观测到的延迟、远低于 Full 自己的预算），保持「超时或失败 → `None`」的语义不变，并加测试：探测使用该常量、超时 / 非零 / 空输出返回 `None`、真实 git 夹具返回 `HEAD`、函数源码里不再有一位数的字面量超时。随后以 `failure_fix_rerun` 重发（新 run，父 = 本次失败的 Full `outputs/validation_runtime/p-20261009-v1-full/test_runtime_summary.json`）；推送授权只对旧候选 `6f77aeae0` 有效，新候选到 E59 前再问。
