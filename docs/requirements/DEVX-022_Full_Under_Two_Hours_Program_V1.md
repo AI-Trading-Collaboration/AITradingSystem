@@ -913,3 +913,20 @@ v6 里重型通道已经提前到 7,989 s 收工，命名 DQ 候选文件仍在 
 **Full 内部**（`test_runtime_profile.json`）：窗口 10,550 s，节点耗时合计 132,541 s（16 个 worker 的下限 8,284 s）；命名 DQ 候选文件 10,081 s（上一条链 9,696，+4.0%），单 worker 串行贯穿到窗口结束；其余 15 个 worker 最晚 +8,224 s 收工，相差 **2,326 s**（38.8 分钟；v7 1,623，上一条链 1,867）。窗口内平均 15.8 个核忙（python 8.7；口径同 17.11），最后 1,800 s 只有 4.3 个核忙（python 1.0）。Full 占整条链的 86%（D31 13,647 s / 15,774 s），而这个差值每条链都在变大。
 
 **结论**：(1) 封印只在链里启用，把链里除 Full 外的重放主导部分砍了约一半，整条链快 14 分钟（4 小时 37 分 → 4 小时 23 分）；(2) Full 占链的 86% 且继续增长，而封印按 owner 的选择不进 Full；(3) **Full 的下一个杠杆是 M6**——把命名 DQ 候选文件加入 split-scope 清单（只改调度清单，不动正式 Full 的合同；读码确认节点间没有共享状态：`named_data_quality_support.py` 的夹具只写 `tmp_path`、只读活体事务环境变量，测试里没有 fixture / autouse / conftest），现在最多值约 39 分钟 Full，且逐条链变大；(4) 若 owner 之后愿意放宽命名 DQ 受限子进程的导入清单，Full 关键路径里的重放会大幅缩短，仍是单独的评审决定。
+
+### 17.15 M6：命名 DQ 候选文件及另外两个单 worker 文件改为按节点调度（实施计划与模拟，2026-10-10）
+
+**依据**：17.14——命名 DQ 候选文件 10,081 s 在一个 worker 上串行，其余 15 个 worker 最晚 +8,224 s 收工，相差 2,326 s；Full 占整条链的 86%，而封印按 owner 的选择不进 Full。
+
+**模拟（只读；真实调度器类 + 模拟时钟，即 `tests/test_devx018_validation_scheduling.py::_EventSimulation`，输入是上一条链的 15,262 个真实节点耗时；脚本归档在 `outputs/architecture/devx_022/m6/`）**：
+- **校准**：旧清单（v6）模拟 10,594 s，实际窗口 10,550 s（+0.4%）；再上一条链模拟 10,122 s，实际 10,159 s（−0.4%）。模型对现状的预测误差在半个百分点内。
+- **只拆命名 DQ 候选文件**：9,215 s（−1,379 s，−13%）；再加 composer 合同文件：9,051 s；**三个一起拆（命名 DQ 候选 + 简单基线预览 + composer 合同）：8,323 s（−2,271 s，−21.5%；16 个 worker 的工作量下限 8,284 s）**。只拆命名 DQ 加预览反而是 9,347 s（比只拆命名 DQ 更差）：拆完命名 DQ 之后，尾部由 composer 合同文件（192 个节点，合计 6,216 s）与简单基线预览文件（10 个节点，合计 6,173 s，最大节点 1,261 s）两个单 worker 链接力，所以要三个一起。
+- **模拟没有的东西**：节点在并发更高时会变慢。DEVX-020 的 K 实验显示 `real_full_chain` 重节点并发每翻倍约 +13–23% 的节点膨胀；这三个文件的节点不是重节点，且 Full 尾部约 40 分钟里机器只有 4 个核在忙，所以真实收益会小于模拟，估计 −15% 到 −20%（Full 约 2:25–2:30）。
+
+**静态审查（读码，由 `tests/test_devx022_split_scope_m6.py` 钉住）**：三个文件及它们唯一的本地辅助模块 `named_data_quality_support.py`——没有 pytest fixture、autouse、`conftest.py`、`setup_module` 一类的模块 / 类级初始化；没有对模块级容器的修改；没有 `chdir` / `putenv` / `reload` / `global`；真实写入只经过 `tmp_path` 或 uuid 命名的路径（composer 合同的活体产物在 `synthetic/<含 uuid 的 manifest id>`，命名 DQ 的 live proof 在 `synthetic/exact-candidate/<uuid>`）；命名 DQ 用例只读活体事务的环境变量（`AITS_NAMED_DQ_PUBLICATION_TRANSACTION`、`AITS_NAMED_DQ_SOURCE_LEASE_ID`）。三个文件都没有 `real_full_chain` 节点，也不在任何 exclusive group 里。
+
+**改动**：`config/architecture/devx_018_validation_scheduling.yaml` v6 → v7，`split_scope_files` 加这三项（保持排序、唯一），注释与复审条件更新（新增「清单里的文件出现 fixture / 模块级可变状态 / 固定输出路径时守卫测试失败」）。不改任何被测试的代码、不改正式 Full 的合同（协议、worker 数、期望集合、受保护检查器都不变；运行时画像里的 `scheduler.split_scope` 证据只是文件清单随清单更新）。
+
+**验收（以实测为准）**：Full 通过、0 失败；命名 DQ 候选文件不再是最后收工的文件；「最晚的 worker 与第二晚的差」显著缩小（上一条链 2,326 s）；Full 的 pytest 目标 ≤ 9,300 s（模拟 8,323–9,215 s，上一条链 10,601 s；这是估计值，不是承诺）；这三个文件里没有新的负载相关超时。**回滚**：把这三项从清单删掉（只改配置）。
+
+**风险**：Full 前半段同时运行的命名 DQ 节点更多、主机更忙，可能触发某个负载敏感用例（这些用例的挂起保护已按 `LOADED_HOST_*` 校准，重节点并发上限 8 不变）；节点膨胀使收益小于模拟；守卫测试只能静态证明「现在没有共享状态」，运行期的共享（例如 uuid 冲突）靠 uuid 的唯一性。
