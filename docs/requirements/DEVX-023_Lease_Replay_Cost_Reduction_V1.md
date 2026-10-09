@@ -305,6 +305,14 @@ owner 2026-10-07 决定路线为 DEVX-016 C2 → 本节（封印 S）→ C3。�
 
 **测试**：角色策略（`lease_seal` 一节的合法 / 非法形态、`never_enabled`、状态不在 `ENABLED_STATUSES` 则什么都不启用）、`environment_for` 同时给出两个开关、`without_switch` 清掉两个、与 `lease_replay_seal.SEAL_ENV` 的一致性；A06 的步骤计划与顺序、假执行器上的 build / verify 成功 / 失败 / `NOT_APPLICABLE` / 重入；D30 的参数与 E53 的环境带上封印开关；E50 重试（第一次看到进程、第二次干净 → 通过；三次都有 → 失败）。`docs/system_flow.md` 加一段并重算封印。
 
+
+**实现记录（2026-10-09 夜，候选 B 已实现、尚未冻结）**：
+- **策略**：`config/architecture/devx_023_parallel_replay_scope.v1.yaml` 升到 1.1.0，新增 `lease_seal` 一节（`s3_command`、`validation_stage_1`、`local_publish_worker` 为 enabled，`validation_pre_full_tiers` disabled，`formal_full` 与 `named_dq_restricted_children` 为 `never_enabled`）。
+- **角色模块** `parallel_replay_scope.py`：`ParallelReplayScope` 多一个默认空的 `seal_roles`；`seal_for(role)`；`environment_for(role)` 按角色给出一个或两个开关（`AITS_LEASE_PARALLEL_REPLAY`、`AITS_LEASE_SEAL`）；`without_switch` / `apply_switch` 同时处理两个开关；缺 `lease_seal` 一节 = 不给封印（P6 之前形态的策略仍然有效），`lease_seal` 不合法 = 整份策略无效、什么都不开（新增问题码 `SCOPE_CONFIG_SEAL_SECTION` / `_SEAL_ROLES` / `_SEAL_ROLE_VALUE` / `_SEAL_NEVER_ENABLED_ROLE`）；`SEAL_ENV` 与 `lease_replay_seal.SEAL_ENV` 由测试钉成相等。
+- **发布命令**：`publication_steps.py` 新增 `A06.seal_rebuild`（`build_precondition_steps(..., seal_rebuild=...)`，由 `publication_cli.py` 按 `s3_command` 角色传入；`build` 然后 `verify`，结果事实记 `seal`、`seal_sha256`、`kernel_fingerprint`、`sealed_chains`、`sealed_events`、构建与核对耗时；`NOT_APPLICABLE` / `PUBLICATION_RUN_SEAL_BUILD` / `PUBLICATION_RUN_SEAL_VERIFY`；基线 90 s 仅用于报告）；`publication_publish_steps.py` 的 D30 在 stage 1 角色有封印时给驱动加 `--stage-1-lease-seal`，E53 的 worker 环境经 `environment_for` 自动带上；`scripts/architecture_arch005_validate_candidate.py` 把该参数变成 stage 1 的环境（驱动进程本身不带开关）。
+- **S3 小项 (g)**：`HostFactsCollector.settled_live_processes()`（5 次观察、间隔 6 s，具名常量）被 A03、D30 的「没有其他进程」检查与 E50 共用；原来 E50 的「重试 3 次」之间没有间隔，一次桌面应用的 `git.exe` 轮询只要持续超过几秒就会连续看到。
+- **测试**：新文件 `tests/test_arch_005_lease_seal_scope.py`（29 项：策略各形态、两个开关的环境、A06 的各种结果、有界重复观察）；既有的 P6 范围测试 3 项按 1.1.0 更新；运行与 CLI 测试各加 4 项与 2 项的接线测试；假的 World 多了封印 CLI 的脚本化应答。聚焦回归 400 项通过（含封印 82 项与并行重放测试）；`architecture_devex.py validate`：依赖门 PASS，只剩 3 条预期的清单新鲜度项；006d 的 3 个新鲜度测试在生成器链之前红（system_flow 片段待重建），属预期。
+
 ## 11. W-DQ（可选）：命名 DQ 证明只保留源租约的重放视图（设计草案，2026-10-07；不是耗时对策）
 
 **更正**：本节最初是按「stage 1 耗时随证明体积增长」的归因写的，owner 也据此一度把它排在 C3 之前。C2 窗口的逐调用计时（DEVX-022 第 17.7 节）否定了该归因：stage 1 的 87% 是约 31 次租约库重放，证明构造与序列化只占约 3%（再加上子进程里的解析与哈希，估计合计 3–15%）。owner 随后改为 C2 → 封印 S（第 10 节）→ C3。本节降为可选的小改动，价值是证据体积卫生（每次 stage 1 运行写出约 0.7 GB 的证明 JSON，每次发布 +约 54 MB）与少量耗时，不再作为耗时对策，也不再有时间验收目标。
