@@ -111,6 +111,13 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path, safe_load_yaml_te
 
 DEFAULT_WORKERS = "16"
 DEFAULT_DIST = "loadfile"
+# Hang guard for ONE `git rev-parse HEAD` of the Full runner, not a semantic threshold. A Full runs
+# pytest with 16 xdist workers and the fixtures' inner Fulls run another 16, so a plain git call can
+# take many seconds on a saturated host. A hard-coded 5 s used to time out there, which made the
+# summary carry git_commit "unknown" and failed the summary binding check (S3 run p-20261009-v1,
+# DEVX-022 17.12). 120 s is far above any observed delay and far below the Full's own budgets; a
+# timeout or a failure still yields None, so the binding fails closed exactly as before.
+GIT_COMMIT_PROBE_TIMEOUT_SECONDS = 120
 DEFAULT_ARTIFACT_ROOT = Path("outputs/validation_runtime")
 SERIAL_WORKER_VALUES = {"", "0", "1", "serial", "none"}
 PYTEST_OUTPUT_LOG_NAME = "pytest_output.log"
@@ -3609,7 +3616,7 @@ def _git_commit(repo_root: Path) -> str | None:
             text=True,
             capture_output=True,
             check=False,
-            timeout=5,
+            timeout=GIT_COMMIT_PROBE_TIMEOUT_SECONDS,
         )
     except (OSError, subprocess.TimeoutExpired):
         return None
