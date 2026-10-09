@@ -19,13 +19,14 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: C3a 与 DEVX-023 P6 已发布（e30c62a97、a63827b28）；发布链的「发布命令
-    + local-publish」两段快了一半（local-publish 82 -> 38.8 分钟，整条链 5 小时 20 分 -> 4 小时 30 分，slow_steps
-    为空）。下一个候选 C3b（P4-2）：对每类变异（>=15）分别在隔离副本上跑旧的逐 wave 测试与新的通用测试，记录各自抓到的变异集合，要求通用 ⊇
-    旧，产出逐测试等价性表，不删任何断言；之后 C3c（P4-3：owner 先评审 compat 账本策略，再切 OWNER_APPROVED_ENFORCED
-    并追加账本采纳段）-> C3d（P4-4 分批删除，owner 抽查）-> C4（S4）-> DEVX-017 -> OPS-082 -> 阶段 5。S3
-    小项 (d)（stage 1 计时诊断）、(f)（worker 被杀时的 next_action）与 E59 的 20 分钟心跳长等待验证仍欠。分步、依赖、验收与进度见
-    docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md 第 9、10 节。
+  unstructured_legacy_blocker_or_next_step: C3b（P4-2）进行中：变异夹具已在迷你根目录上验证（28 个用例 = 19
+    类变异，RAW / CONSISTENT / LIVE 三个通道）。新侧账本在 RAW 通道（5/5）全部被加载器的哈希钉拦下；CONSISTENT 通道（改了内容并按生成器规则重新封印）18
+    个用例里账本本身抓到 8 个，其余 10 个要靠账本之外的层（遗留前缀钉、生成器新鲜度测试），LIVE 通道 2 个漂移被抓、3 个对照被正确容忍。下一步：在已发布
+    main 的本地克隆上跑旧的逐 wave 测试一侧（D:/Work/devx016-p42/clone，用后按精确路径清理），产出逐用例 / 逐测试矩阵与差距清单；不删任何断言。S3
+    后续小项新增 (g)：E50 的进程数检查被桌面应用的瞬时 git.exe 轮询打断过一次（显式 --retry 通过），应放行该签名或在步骤内有界重试；(d)、(f)
+    与 E59 的 20 分钟心跳长等待仍欠。之后 C3c（owner 先评审 compat 账本策略）-> C3d（P4-4）-> C4（S4）-> DEVX-017
+    -> OPS-082 -> 阶段 5。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+    第 9、10 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移
@@ -425,6 +426,38 @@ events:
   - change:gov-007-v7rows-task-20261009-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-70b3027b4056012ad817b44a844ba5fe
+- schema_version: task_event.v1
+  task_id: DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-09T12:41:34Z'
+  actor: integration-coordinator
+  change_id: gov-007-s2rows-task-20261009-v1
+  lane_id: null
+  base_commit: 69f34967df866b4605cd78d1e33079ae672948c0
+  previous_state_event_id: task-event-70b3027b4056012ad817b44a844ba5fe
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator；Project Owner（P4-3 前评审 compat 账本策略）
+    blocker_or_next_step: C3b（P4-2）进行中：变异夹具已在迷你根目录上验证（28 个用例 = 19 类变异，RAW / CONSISTENT
+      / LIVE 三个通道）。新侧账本在 RAW 通道（5/5）全部被加载器的哈希钉拦下；CONSISTENT 通道（改了内容并按生成器规则重新封印）18
+      个用例里账本本身抓到 8 个，其余 10 个要靠账本之外的层（遗留前缀钉、生成器新鲜度测试），LIVE 通道 2 个漂移被抓、3 个对照被正确容忍。下一步：在已发布
+      main 的本地克隆上跑旧的逐 wave 测试一侧（D:/Work/devx016-p42/clone，用后按精确路径清理），产出逐用例 / 逐测试矩阵与差距清单；不删任何断言。S3
+      后续小项新增 (g)：E50 的进程数检查被桌面应用的瞬时 git.exe 轮询打断过一次（显式 --retry 通过），应放行该签名或在步骤内有界重试；(d)、(f)
+      与 E59 的 20 分钟心跳长等待仍欠。之后 C3c（owner 先评审 compat 账本策略）-> C3d（P4-4）-> C4（S4）-> DEVX-017
+      -> OPS-082 -> 阶段 5。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+      第 9、10 节。
+    acceptance_criteria: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为
+      0；A3 登记或转移 N 个任务 = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选
+      Full 1 次；A6 安全边界与 DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow
+      同步
+    notes: 2026-10-09：C3b 夹具在迷你根目录上验证；S3 后续小项 g（E50 瞬时进程）登记。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-s2rows-task-20261009-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-6ca2fd34b0a84d440d08a791f2ed9124
 projection:
   legacy_first_eight_cells:
   - DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
@@ -432,21 +465,22 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator；Project Owner（P4-3 前评审 compat 账本策略）
-  - C3a 与 DEVX-023 P6 已发布（e30c62a97、a63827b28）；发布链的「发布命令 + local-publish」两段快了一半（local-publish
-    82 -> 38.8 分钟，整条链 5 小时 20 分 -> 4 小时 30 分，slow_steps 为空）。下一个候选 C3b（P4-2）：对每类变异（>=15）分别在隔离副本上跑旧的逐
-    wave 测试与新的通用测试，记录各自抓到的变异集合，要求通用 ⊇ 旧，产出逐测试等价性表，不删任何断言；之后 C3c（P4-3：owner 先评审 compat
-    账本策略，再切 OWNER_APPROVED_ENFORCED 并追加账本采纳段）-> C3d（P4-4 分批删除，owner 抽查）-> C4（S4）->
-    DEVX-017 -> OPS-082 -> 阶段 5。S3 小项 (d)（stage 1 计时诊断）、(f)（worker 被杀时的 next_action）与
-    E59 的 20 分钟心跳长等待验证仍欠。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+  - C3b（P4-2）进行中：变异夹具已在迷你根目录上验证（28 个用例 = 19 类变异，RAW / CONSISTENT / LIVE 三个通道）。新侧账本在
+    RAW 通道（5/5）全部被加载器的哈希钉拦下；CONSISTENT 通道（改了内容并按生成器规则重新封印）18 个用例里账本本身抓到 8 个，其余 10
+    个要靠账本之外的层（遗留前缀钉、生成器新鲜度测试），LIVE 通道 2 个漂移被抓、3 个对照被正确容忍。下一步：在已发布 main 的本地克隆上跑旧的逐
+    wave 测试一侧（D:/Work/devx016-p42/clone，用后按精确路径清理），产出逐用例 / 逐测试矩阵与差距清单；不删任何断言。S3 后续小项新增
+    (g)：E50 的进程数检查被桌面应用的瞬时 git.exe 轮询打断过一次（显式 --retry 通过），应放行该签名或在步骤内有界重试；(d)、(f)
+    与 E59 的 20 分钟心跳长等待仍欠。之后 C3c（owner 先评审 compat 账本策略）-> C3d（P4-4）-> C4（S4）-> DEVX-017
+    -> OPS-082 -> 阶段 5。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
     第 9、10 节。
   - A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移 N 个任务
     = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选 Full 1 次；A6 安全边界与
     DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow 同步
-  - 2026-10-09：DEVX-023 P6 已发布（a63827b28），链提速；路线回到 C3b。
+  - 2026-10-09：C3b 夹具在迷你根目录上验证；S3 后续小项 g（E50 瞬时进程）登记。
   docs_links:
   - docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
   terminal: false
-  canonical_row_sha256: ce8c6d696a3a88b3d023c2ff613ff7f6088d4704172035a520bb842456529476
-last_event_id: task-event-70b3027b4056012ad817b44a844ba5fe
+  canonical_row_sha256: 3ba17e299537ca98d6c8cb7fab01e073f2e6e814404da23c0a54318389ab4cd6
+last_event_id: task-event-6ca2fd34b0a84d440d08a791f2ed9124
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 7cad173378ae3abb25e6f4af3232f653e576afa71150c6a23515925460d69f6d
+fragment_checksum: 4d1ccf2afd845cac6b94b4e344f262ff8a73471b1b3e8010432b9ca78f1d9b6a

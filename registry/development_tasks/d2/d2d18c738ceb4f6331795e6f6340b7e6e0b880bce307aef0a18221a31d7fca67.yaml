@@ -19,15 +19,14 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S3b 回归（R1）已修复并随 25d026bf6 发布。M5 时长种子随
-    C3a 发布并保留；P6（a63827b28）把「发布命令 + local-publish」压了一半（整条链 5 小时 20 分 -> 4 小时 30 分），Full
-    不在其范围、仍随租约库增长（v7 pytest 9,676 s，+4.6%）。2026-10-09：封印 S 候选 A 的第一次发布尝试（run p-20261009-v1，候选
-    6f77aeae0）的 Full 失败（15,212 通过 / 1 失败 + 1 错误）：夹具里的内层 Full 在整机 CPU 100% 时，Full 运行器
-    _git_commit() 写死的 5 s `git rev-parse HEAD` 超时触发，摘要 git_commit 变成 unknown，摘要绑定检查失败（与封印无关，详见
-    DEVX-022 第 17.12 节）；事务已按 FAILED 释放，什么都没有发布。进行中：把 5 s 改成具名常量 GIT_COMMIT_PROBE_TIMEOUT_SECONDS（挂起保护，120
-    s）并加测试，然后以 failure_fix_rerun 重发（父 = 本次失败的 Full）。排序不变：封印 S（候选 B 待 owner 决定）> M6
-    拆开命名 DQ 候选文件（最多 -27 分钟 Full）> 评估 validation_pre_full_tiers。正式 Full 现在 2:41–2:47
-    带，<2 小时未达（owner 2026-10-05 选择 C，不改正式 Full 合同）。详见 DEVX-022 第 17.8–17.12 节。
+  unstructured_legacy_blocker_or_next_step: M5 种子随 C3a（e30c62a97）发布并保留；P6（a63827b28）把发布命令与
+    local-publish 压了一半。第十次发布（封印 S 候选 A 重发，69f34967d，默认关闭）：Full 15,223 通过 / 4 跳过 /
+    0 失败，pytest 10,208.5 s（2:50:08；v7 9,676.1 s，+5.5%；第一次尝试 10,025.9 s），整条链 4 小时 38
+    分（v7 4 小时 30 分），E50 瞬时失败一次后重试通过（DEVX-016 S3 后续小项 g）。Full 仍随租约库增长，约占链的八成；命名 DQ
+    候选文件 9,696 s 单 worker 串行，其余 15 个 worker 最晚 +8,292 s 收工，相差 1,867 s。封印在真实库上把重放降到约
+    1/10（DEVX-023 10.9.2），启用与否待 owner（候选 B）；若 owner 不启用，备选是 M6 把命名 DQ 候选文件加入 split-scope
+    清单（最多 -31 分钟 Full）。正式 Full 现在 2:50 带，<2 小时未达（owner 2026-10-05 选择 C，不改正式 Full 合同）。详见
+    DEVX-022 第 17.8–17.13 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
@@ -639,6 +638,37 @@ events:
   - change:gov-007-s1frows-task-20261009-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-d028f4df14129aa5eed7bd5afcde105d
+- schema_version: task_event.v1
+  task_id: DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-09T12:40:45Z'
+  actor: integration-coordinator
+  change_id: gov-007-s2rows-task-20261009-v1
+  lane_id: null
+  base_commit: 69f34967df866b4605cd78d1e33079ae672948c0
+  previous_state_event_id: task-event-d028f4df14129aa5eed7bd5afcde105d
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: M5 种子随 C3a（e30c62a97）发布并保留；P6（a63827b28）把发布命令与 local-publish
+      压了一半。第十次发布（封印 S 候选 A 重发，69f34967d，默认关闭）：Full 15,223 通过 / 4 跳过 / 0 失败，pytest
+      10,208.5 s（2:50:08；v7 9,676.1 s，+5.5%；第一次尝试 10,025.9 s），整条链 4 小时 38 分（v7 4 小时
+      30 分），E50 瞬时失败一次后重试通过（DEVX-016 S3 后续小项 g）。Full 仍随租约库增长，约占链的八成；命名 DQ 候选文件 9,696
+      s 单 worker 串行，其余 15 个 worker 最晚 +8,292 s 收工，相差 1,867 s。封印在真实库上把重放降到约 1/10（DEVX-023
+      10.9.2），启用与否待 owner（候选 B）；若 owner 不启用，备选是 M6 把命名 DQ 候选文件加入 split-scope 清单（最多
+      -31 分钟 Full）。正式 Full 现在 2:50 带，<2 小时未达（owner 2026-10-05 选择 C，不改正式 Full 合同）。详见
+      DEVX-022 第 17.8–17.13 节。
+    acceptance_criteria: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约
+      20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实 .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5
+      最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
+    notes: 2026-10-09：第十次发布实测（17.13）：Full 又慢 5.5%，封印是唯一能停止增长的杠杆。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-s2rows-task-20261009-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-efc1c825f17370e241b76e60199ca201
 projection:
   legacy_first_eight_cells:
   - DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
@@ -647,22 +677,19 @@ projection:
   - P0
   - BASELINE_DONE
   - Claude Code coordinator
-  - S3b 回归（R1）已修复并随 25d026bf6 发布。M5 时长种子随 C3a 发布并保留；P6（a63827b28）把「发布命令 + local-publish」压了一半（整条链
-    5 小时 20 分 -> 4 小时 30 分），Full 不在其范围、仍随租约库增长（v7 pytest 9,676 s，+4.6%）。2026-10-09：封印
-    S 候选 A 的第一次发布尝试（run p-20261009-v1，候选 6f77aeae0）的 Full 失败（15,212 通过 / 1 失败 + 1
-    错误）：夹具里的内层 Full 在整机 CPU 100% 时，Full 运行器 _git_commit() 写死的 5 s `git rev-parse HEAD`
-    超时触发，摘要 git_commit 变成 unknown，摘要绑定检查失败（与封印无关，详见 DEVX-022 第 17.12 节）；事务已按 FAILED
-    释放，什么都没有发布。进行中：把 5 s 改成具名常量 GIT_COMMIT_PROBE_TIMEOUT_SECONDS（挂起保护，120 s）并加测试，然后以
-    failure_fix_rerun 重发（父 = 本次失败的 Full）。排序不变：封印 S（候选 B 待 owner 决定）> M6 拆开命名 DQ 候选文件（最多
-    -27 分钟 Full）> 评估 validation_pre_full_tiers。正式 Full 现在 2:41–2:47 带，<2 小时未达（owner
-    2026-10-05 选择 C，不改正式 Full 合同）。详见 DEVX-022 第 17.8–17.12 节。
+  - M5 种子随 C3a（e30c62a97）发布并保留；P6（a63827b28）把发布命令与 local-publish 压了一半。第十次发布（封印 S 候选
+    A 重发，69f34967d，默认关闭）：Full 15,223 通过 / 4 跳过 / 0 失败，pytest 10,208.5 s（2:50:08；v7
+    9,676.1 s，+5.5%；第一次尝试 10,025.9 s），整条链 4 小时 38 分（v7 4 小时 30 分），E50 瞬时失败一次后重试通过（DEVX-016
+    S3 后续小项 g）。Full 仍随租约库增长，约占链的八成；命名 DQ 候选文件 9,696 s 单 worker 串行，其余 15 个 worker 最晚
+    +8,292 s 收工，相差 1,867 s。封印在真实库上把重放降到约 1/10（DEVX-023 10.9.2），启用与否待 owner（候选 B）；若
+    owner 不启用，备选是 M6 把命名 DQ 候选文件加入 split-scope 清单（最多 -31 分钟 Full）。正式 Full 现在 2:50
+    带，<2 小时未达（owner 2026-10-05 选择 C，不改正式 Full 合同）。详见 DEVX-022 第 17.8–17.13 节。
   - S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
     .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5 最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
-  - 2026-10-09：封印 S 候选 A 的 Full 因写死的 5 s git 探测超时失败（17.12）；加固并以 failure_fix_rerun
-    重发。
+  - 2026-10-09：第十次发布实测（17.13）：Full 又慢 5.5%，封印是唯一能停止增长的杠杆。
   docs_links: []
   terminal: false
-  canonical_row_sha256: c8c03fb54b921b5843c86a45f0264b6968fa681b9dcfd3d6616f722c9f046b7a
-last_event_id: task-event-d028f4df14129aa5eed7bd5afcde105d
+  canonical_row_sha256: b4c3c50e2f3bdc30908f3d2b10493ce79170e94cffcf790dd886518262b2fedc
+last_event_id: task-event-efc1c825f17370e241b76e60199ca201
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 57edd9b301c6760ebdfe23b60bce539362ea43f4b7b43a9aaef1fcb65613b2ea
+fragment_checksum: 7ed9e245d58fcfced70cc61358a3ff203aee21f387e21fc1b490894a587c93e8
