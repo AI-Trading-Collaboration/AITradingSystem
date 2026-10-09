@@ -1,0 +1,391 @@
+{
+  "schema_version": "compatibility_authority_fragment.v1",
+  "section": {
+    "authority_contract": {
+      "dual_write": false,
+      "fragment_identity": "CANONICAL_SECTION_SHA256",
+      "fragment_source_active": true,
+      "index_chain": "SHA256",
+      "legacy_append_allowed": false,
+      "rollback_mode": "FROZEN_LEGACY_PREFIX_ONLY"
+    },
+    "broker_action": "none",
+    "implementation_base": "faea3a6a5dc561008cfae793a6caad0b239b4777",
+    "production_effect": "none",
+    "publication_contract": {
+      "closeout_receipt_is_replayable": true,
+      "expected_main_compare_and_set": true,
+      "full_dispatch_claim_is_atomic": true,
+      "generated_state_rebuild_once": true,
+      "single_active_coordinator": true
+    },
+    "report_catalog_flow_successor": {
+      "consumer_inventory_path": "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+      "consumer_inventory_sha256": "7b1fb97875673efb569a68233cd706dd9ab4bee798c3083358ae9729cebd6b35",
+      "current_hash_authority": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1.sources",
+      "entry_count": 3457,
+      "fragment_count": 192,
+      "fragment_shadow_active": false,
+      "index_path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+      "index_sha256": "d47e4f19e45fcb66fabbd25a9275cebc0ef09973c50a4561d08d057afa1eedd1",
+      "source_of_truth": "LEGACY_MONOLITH",
+      "target_count": 3
+    },
+    "safety": {
+      "broker_action": "none",
+      "data_or_model_research_started": false,
+      "production_effect": "none",
+      "strategy_behavior_changed": false
+    },
+    "schema_version": "devx_009_parallel_integration_publication_fence_and_generated_state_rebuild.v1",
+    "sources": [
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "AGENTS.md",
+        "sha256": "3acc539ebc79d4c76501ff3c127b56713fe64b8eaac463905786f1709fd472f7"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/architecture/arch_005_integration_publication_fence.yaml",
+        "sha256": "42d90fae84b46907ad10a0844f64a774d9db9babf88244aa24c5d5b94865ee3f"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+        "sha256": "1a591b5f3208af1545d24bc12d57ee402f4b13adbf9f81badf260c667459c314"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v1.yaml",
+        "sha256": "39650c2aba7c4b33804de01f34c52e22f9992d7ded673cc6db506112d72e7d9c"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v2.yaml",
+        "sha256": "c9c74d5da0819f206ae59543dcab34a2f1f920687fd4bf646da49a4eabbbd327"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/research/strategy_growth_action_value_preregistration_v1.yaml",
+        "sha256": "c7246611a340bbc6e948127b4a79dc9c4f46f1cdc9c0844046042990fb2647b4"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/research/strategy_growth_action_value_threshold_decision_pack_v1.yaml",
+        "sha256": "67965b51b7d73f38ef0f71a2b78c85f5d3f1301283f184fcb4a23f90a13e2ca7"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v1.yaml",
+        "sha256": "c9b79bd29de72a052e93377a736f4431419a2ef4a941bdd5be7e768ab649c4de"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v2.yaml",
+        "sha256": "ee1db5f51affe3c76e3b6fd9dc78dd7308b4b4999ed67c2853c116c079b0965d"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v3.yaml",
+        "sha256": "304b5de907bbc0858d2ca1f6786e9e325d5493572561b8e4cff71fa91ff05375"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/architecture/dual_lane_development_operating_model.md",
+        "sha256": "4db6df5db544dffa197fc00c5271f9f142eb4364e926634fd178fab99501b14a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/artifact_catalog.md",
+        "sha256": "8f57f1321b646a9a8cc1994fe7ded7434720ec57c72df47dd5cf8463a9e8ab06"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md",
+        "sha256": "9db58ab7855c2c6abc770bfa13d2e8962e3784f4909b743175ea2f5523ceb5fd"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/requirements/DEVX-009_Parallel_Integration_Publication_Fence_And_Generated_State_Rebuild_V1.md",
+        "sha256": "80e150a09fa2fcad1db0df4f9d644cc4a65650593e511e44528a22bae68068c8"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/system_flow.md",
+        "sha256": "d020d0bf375afca2523e151517eec1ddad912306c1051fae8b063477dd2e5844"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/task_register.md",
+        "sha256": "d983b0aea43de1155b61780b1fab0c34a9dffb86ea3474211add6936716007b4"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "docs/task_register_completed.md",
+        "sha256": "68eef6a1f3080ad98e158aa229bef10266bb3aa47d1e6a1f34580b64b6b99318"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "sha256": "8b6078562eb8e38f0586e2792f6a0ffa74f205857299a7e0fc72ad1ce48fc623"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "sha256": "8eac3efd061b26ace6d37d21b38bc3657923b6f1edb88c524e98ab8efa4a0e9e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_module_manifest.yaml",
+        "sha256": "10300e3f0ee103944066c9460b7f1e47f90e9b3f73bdc34cf994e26abb18b251"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004e_test_manifest.yaml",
+        "sha256": "4f45534b53c2961940f95eaaa4dee68976fbf820e74493a2721fcbd9d96eda8e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "sha256": "b7e1bed62d2a96f7a9e7a13483fbed35d04a6920c8c55fa8e499e8fd4ea93629"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_005_s5_consumer_inventory.yaml",
+        "sha256": "2fab76611d56d6278a102740c94bb5da2236a35467c6debc98b34ad1c9f32129"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/arch_005_task_registry_index.yaml",
+        "sha256": "0fd0e0a813bcc261016a7f486c5f23fe61f08afc5d373860997c7e7a10549805"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+        "sha256": "d47e4f19e45fcb66fabbd25a9275cebc0ef09973c50a4561d08d057afa1eedd1"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+        "sha256": "7b1fb97875673efb569a68233cd706dd9ab4bee798c3083358ae9729cebd6b35"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "registry/development_tasks/90/9026a496d7fcc53a31a98102a845b2fa46a3c2060116882476d2175e6239e586.yaml",
+        "sha256": "8f0651a1b210b258a1bedada3cacceb2e34f37972597eeb52fb07dc07c1a7399"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "scripts/architecture_arch005_publication_fence.py",
+        "sha256": "796eceb3543055cd2c55cf5b9f85dbb298e683e8fdcedbc6a9962206a2f38804"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "scripts/architecture_arch005_task_source.py",
+        "sha256": "bac54716c14a91a73e1355d2df2e3e2a7930879b3469481fe382b87f9947f53f"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "scripts/architecture_devex.py",
+        "sha256": "ba210c430634b7b75fb16f20f42f8730ff6b057d2775721924429a6a685ddfa0"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "scripts/run_validation_tier.py",
+        "sha256": "4eb0b1d55a42f475e31fb0e00edd22088f04f8333b98b2e2dab56efd1a45af50"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "sha256": "77ba8c211e467379e70eb0b5990dd82c50772201512aef2cb0a5ceeb15328a2b"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/platform/architecture/integration_publication_fence.py",
+        "sha256": "3b5acddec8fd21a9d6ef51618cb10979160ab92e3be5ed0f0c7e5e655b906230"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/strategy_growth_action_value_dq_pit_contract.py",
+        "sha256": "c73ad2cacb3aeded20527c83716b1eb1ccedda5b5d7e422b3c041df46c29a34a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/strategy_growth_action_value_dq_pit_contract_v2.py",
+        "sha256": "7ba8e8a9ec02abdb38260508696e53253f5b277a28863217a37afde00b4300fb"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "src/ai_trading_system/strategy_growth_action_value_freeze_readiness_contract.py",
+        "sha256": "cf69f8afb7d86f98468ef169e7d4cd9f6dfaf312bb9caef648404090d92c7648"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_004_refactor_policy.py",
+        "sha256": "d00dbf29e655db34852e6b1a5ea7c1140400a7e6d6fb225f1e42c7c222274ab1"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_004g_deprecation.py",
+        "sha256": "83e5e3281d36c57106c7eb592f86d295c1f0e52bca273589f21216f19a98ff2a"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_005_integration_publication_fence.py",
+        "sha256": "bf69dd325c118fb5cdfb3f5afa4bd28cc862aa3529bc900ac70671199797a8c8"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_arch_005_s5_task_source_cutover.py",
+        "sha256": "ec48987516249389385ceab70da6e364d1af754ced2cdf751921e515a780f36e"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006c_compatibility_authority.py",
+        "sha256": "4624325263ae73710340b6168603c5f63c7d6e78d91b1d3e9d3e4edb133ce4e4"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
+        "sha256": "c7f39093c940831debf801bc0f831ce785078dd35a82f3defd42b424522f80d9"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_governed_development_skill.py",
+        "sha256": "7648ac15ac0e3d071ccaf0fb293d1cde82163422511b7a559c08b108bfd293e0"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_strategy_growth_action_value_dq_pit_contract.py",
+        "sha256": "27c3659df3845229c09e05e433af79a17f5d26717d283fd06cbacbdf8fc3e7a1"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_strategy_growth_action_value_dq_pit_contract_v2.py",
+        "sha256": "331f9186963f6235f05479b7d55d62c0022a9468704ddb4d2b50fa13f6e95991"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_strategy_growth_action_value_freeze_readiness_contract.py",
+        "sha256": "0196ac4a60e09f53ba8dd453ad55948e5070066564dc0c2718152ddadd035013"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_strategy_growth_action_value_measurement_contract.py",
+        "sha256": "6094357b9a40088a15d319eed636c885bcfe4820b9292288df1049a1c81fe480"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_strategy_growth_action_value_preregistration.py",
+        "sha256": "824e7e3de6e2f37c7809626513639305ab2bb65cd2fac3aa2cbf9bd7fc812c69"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_strategy_growth_action_value_threshold_decision_pack.py",
+        "sha256": "4e9eacfe28754171bd6fbc9967fdb83f346a3fb76a2dc099b432a099c782fb92"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_strategy_growth_action_value_threshold_exact_value_sheet.py",
+        "sha256": "11e11a816e9cea3109e70659789d29d4af7379d5d3ea2e7dce4385dc1449dd52"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_trading2452_architecture_contract.py",
+        "sha256": "3f8ce99bc0d331ad873313164863162435290222af6b40bf391de17179e815a5"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tests/test_validation_tier_script.py",
+        "sha256": "343c23d59b8033fd201583dc41ec2735441b2abde97664a942b8ae2b10660b03"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tools/codex_skills/run-governed-development/agents/openai.yaml",
+        "sha256": "19b99dc2885932afc7723f41d481d70c2eb18edea9624b5aff54ccc1739f54d3"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tools/codex_skills/run-governed-development/references/workflow-modes.md",
+        "sha256": "96d0091136d02b5ae8c8b3ead285ca0aa0c2b7356c037c5d902099aee2ffca9b"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tools/codex_skills/run-governed-development/scripts/preflight.py",
+        "sha256": "5bb393d661b94768cade183cbe14fae6a9ce69ea4c933512358d18d010d8b98c"
+      },
+      {
+        "hash_normalization": "git_eol_lf",
+        "path": "tools/codex_skills/run-governed-development/SKILL.md",
+        "sha256": "f893b72fc2d6d046b2194010f348bc64eb9966c50a6b634584604087937f0923"
+      }
+    ],
+    "status": "DONE",
+    "superseded_live_source_paths": [
+      "AGENTS.md",
+      "config/architecture/arch_005_integration_publication_fence.yaml",
+      "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
+      "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v1.yaml",
+      "config/research/strategy_growth_action_value_canonical_dq_pit_contract_v2.yaml",
+      "config/research/strategy_growth_action_value_preregistration_v1.yaml",
+      "config/research/strategy_growth_action_value_threshold_decision_pack_v1.yaml",
+      "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v1.yaml",
+      "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v2.yaml",
+      "config/research/strategy_growth_action_value_threshold_exact_value_sheet_v3.yaml",
+      "docs/architecture/dual_lane_development_operating_model.md",
+      "docs/artifact_catalog.md",
+      "docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md",
+      "docs/requirements/DEVX-009_Parallel_Integration_Publication_Fence_And_Generated_State_Rebuild_V1.md",
+      "docs/system_flow.md",
+      "docs/task_register.md",
+      "docs/task_register_completed.md",
+      "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+      "inputs/architecture/arch_004e_architecture_fitness.yaml",
+      "inputs/architecture/arch_004e_module_manifest.yaml",
+      "inputs/architecture/arch_004e_test_manifest.yaml",
+      "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+      "inputs/architecture/arch_005_s5_consumer_inventory.yaml",
+      "inputs/architecture/arch_005_task_registry_index.yaml",
+      "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
+      "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
+      "registry/development_tasks/90/9026a496d7fcc53a31a98102a845b2fa46a3c2060116882476d2175e6239e586.yaml",
+      "scripts/architecture_arch005_publication_fence.py",
+      "scripts/architecture_arch005_task_source.py",
+      "scripts/architecture_devex.py",
+      "scripts/run_validation_tier.py",
+      "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+      "src/ai_trading_system/platform/architecture/integration_publication_fence.py",
+      "src/ai_trading_system/strategy_growth_action_value_dq_pit_contract.py",
+      "src/ai_trading_system/strategy_growth_action_value_dq_pit_contract_v2.py",
+      "src/ai_trading_system/strategy_growth_action_value_freeze_readiness_contract.py",
+      "tests/test_arch_004_refactor_policy.py",
+      "tests/test_arch_004g_deprecation.py",
+      "tests/test_arch_005_integration_publication_fence.py",
+      "tests/test_arch_005_s5_task_source_cutover.py",
+      "tests/test_devx_006c_compatibility_authority.py",
+      "tests/test_devx_006d_report_catalog_flow_authority.py",
+      "tests/test_governed_development_skill.py",
+      "tests/test_strategy_growth_action_value_dq_pit_contract.py",
+      "tests/test_strategy_growth_action_value_dq_pit_contract_v2.py",
+      "tests/test_strategy_growth_action_value_freeze_readiness_contract.py",
+      "tests/test_strategy_growth_action_value_measurement_contract.py",
+      "tests/test_strategy_growth_action_value_preregistration.py",
+      "tests/test_strategy_growth_action_value_threshold_decision_pack.py",
+      "tests/test_strategy_growth_action_value_threshold_exact_value_sheet.py",
+      "tests/test_trading2452_architecture_contract.py",
+      "tests/test_validation_tier_script.py",
+      "tools/codex_skills/run-governed-development/agents/openai.yaml",
+      "tools/codex_skills/run-governed-development/references/workflow-modes.md",
+      "tools/codex_skills/run-governed-development/scripts/preflight.py",
+      "tools/codex_skills/run-governed-development/SKILL.md"
+    ],
+    "supersession": {
+      "current_hash_authority": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1.sources",
+      "historical_hashes_rewritten": false,
+      "inherited_supersession_authority": "phase_trading_2542c_growth_action_value_independent_review_remediation_and_freeze_readiness_v1"
+    },
+    "task_id": "DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1"
+  },
+  "section_id": "phase_devx_009_parallel_integration_publication_fence_and_generated_state_rebuild_v1",
+  "section_sha256": "e2f1834dc02e9bf9ed69523a4ef7624c37f42343eea509b87c4e73a2cde74bdd"
+}

@@ -16299,7 +16299,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.parallel_replay_scope
   path: src/ai_trading_system/platform/architecture/parallel_replay_scope.py
-  sha256: 5fbf1a12a7380ff9c130ce0cdfee5b46d1876dae1325cc92b74867fdf4b7ab1a
+  sha256: 10d93718d1af5584e92148bfbdf87053121c5da2c7251e8595fcd4ac76143439
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -16368,7 +16368,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.publication_cli
   path: src/ai_trading_system/platform/architecture/publication_cli.py
-  sha256: 8b9ba0f1df97fd2aec2dd3d90bfeadc8f13d32cc20c76f88d73a2595d9ccc330
+  sha256: daf0118385b7c3f892158bf770c4a22affbd080970d26d3f1be2a2973e41ccc4
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -16391,7 +16391,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.publication_commands
   path: src/ai_trading_system/platform/architecture/publication_commands.py
-  sha256: 4b52fbf6effe4d682312e05287263ee43660014c0ba31f74a7acc4f24138936e
+  sha256: 97be6d775691668b67e6fb795594784f5db2e39164a2d2a1843e556780dcf51f
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -16460,7 +16460,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.publication_publish_steps
   path: src/ai_trading_system/platform/architecture/publication_publish_steps.py
-  sha256: 4a8d0ab6438fc7ed8c5bf25f9a95b4cbbc31000b2f670b819b08f0d53b10d632
+  sha256: 7aaca0a4fc43f4340f52f69f4fe50d1854ecd5073e9095427bdfc7dc29e0e5ec
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -16506,7 +16506,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.publication_services
   path: src/ai_trading_system/platform/architecture/publication_services.py
-  sha256: 7f1353577a05b26fa75fbcb51ea6751f46860059ccdc8f4f0989253c9a23643b
+  sha256: 1d7cb15b9fa476a12902424444b0dc0cf32ac6a3b92adff79ba0dd9d0778f78f
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -16529,7 +16529,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.publication_steps
   path: src/ai_trading_system/platform/architecture/publication_steps.py
-  sha256: e21d00253cfd4166ea229962984e9ba7bbb53adf9c478d1da9f4fee7b5330fcb
+  sha256: e1b02eff62e605b8e62c890130b2f7eb2bb365e411db62125dc5c23449512c78
   rule_id: platform_architecture
   owner_profile: platform
   owners:
