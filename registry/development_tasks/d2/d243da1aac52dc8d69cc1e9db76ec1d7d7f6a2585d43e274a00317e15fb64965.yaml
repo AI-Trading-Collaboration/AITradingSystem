@@ -20,12 +20,12 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: C3b（P4-2）完成：28 个变异用例在已发布 main 的克隆上实跑，差距清单为空（结果、89
-    个 P4-0 漏掉的同类测试、2452 测试对仓库状态无感，见第 10 节）。S3 小项 (g) 与步骤 A06 已随第十一次发布上线。下一个代码候选 =
-    DEVX-022 M6（调度清单），随后 C3c（P4-3）：方案草稿已写入第 10 节，等 owner 评审 compat 账本策略并选择采纳方式（A 手工双处登记
-    / B 生成器 reseal 时自动采纳漂移，推荐 / C 合并为策略数据）；C4（S4）与 DEVX-017 都改 AGENTS.md，而发布命令的范围策略把它列为禁止路径，需要
-    owner 决定走手工链还是先放开范围。S3 小项 (d)、(f) 与 E59 的 20 分钟心跳长等待仍欠。之后 C3d（P4-4）-> C4 -> DEVX-017
-    -> OPS-082 -> 阶段 5。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+  unstructured_legacy_blocker_or_next_step: 第十二次发布（DEVX-022 M6）已完成，链 3:38，Full 2:13。下一个代码候选
+    = C3c（P4-3）：方案草稿已写入第 10 节，等 owner 评审 compat 账本策略并选择采纳方式（A 手工双处登记 / B 生成器 reseal
+    时自动采纳漂移，推荐 / C 合并为策略数据）；背景（系统功能、为什么需要、选项与代价）已于 2026-10-10 向 owner 说明。C4（S4）与 DEVX-017
+    都改 AGENTS.md，而发布命令的范围策略把它列为禁止路径，需要 owner 决定发布方式（我的建议：把必须改 AGENTS.md 或搬 skills
+    的部分合并成一个手工链候选，其余照常走 S3 命令；冻结前先给 owner 看 AGENTS.md 的 diff）。S3 小项 (d)、(f) 与 E59
+    的 20 分钟心跳长等待仍欠。之后 C3d（P4-4）-> C4 -> DEVX-017 -> OPS-082 -> 阶段 5。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
     第 9、10 节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
@@ -520,6 +520,38 @@ events:
   - change:gov-007-b2rows-task-20261010-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-f5f03ab17d2485e3952f18edb1d89a09
+- schema_version: task_event.v1
+  task_id: DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-09T23:42:26Z'
+  actor: integration-coordinator
+  change_id: gov-007-m6rows-task-20261010-v1
+  lane_id: null
+  base_commit: 2d29e4e35ec2228bc04e68d934a8044425bcf7f7
+  previous_state_event_id: task-event-f5f03ab17d2485e3952f18edb1d89a09
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator；Project Owner（C3c 前评审 compat 账本策略与采纳方式；C4
+      / DEVX-017 的 AGENTS.md 发布方式）
+    blocker_or_next_step: 第十二次发布（DEVX-022 M6）已完成，链 3:38，Full 2:13。下一个代码候选 = C3c（P4-3）：方案草稿已写入第
+      10 节，等 owner 评审 compat 账本策略并选择采纳方式（A 手工双处登记 / B 生成器 reseal 时自动采纳漂移，推荐 / C 合并为策略数据）；背景（系统功能、为什么需要、选项与代价）已于
+      2026-10-10 向 owner 说明。C4（S4）与 DEVX-017 都改 AGENTS.md，而发布命令的范围策略把它列为禁止路径，需要 owner
+      决定发布方式（我的建议：把必须改 AGENTS.md 或搬 skills 的部分合并成一个手工链候选，其余照常走 S3 命令；冻结前先给 owner 看
+      AGENTS.md 的 diff）。S3 小项 (d)、(f) 与 E59 的 20 分钟心跳长等待仍欠。之后 C3d（P4-4）-> C4 -> DEVX-017
+      -> OPS-082 -> 阶段 5。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+      第 9、10 节。
+    acceptance_criteria: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为
+      0；A3 登记或转移 N 个任务 = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选
+      Full 1 次；A6 安全边界与 DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow
+      同步
+    notes: 2026-10-10：M6 已发布（第十二次，链 3:38）；C3c 方案与 AGENTS.md 发布方式待 owner 决定（背景已说明）。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-m6rows-task-20261010-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a4ffc485b4ad2c8015eef7e1995e9873
 projection:
   legacy_first_eight_cells:
   - DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
@@ -528,20 +560,21 @@ projection:
   - IN_PROGRESS
   - Claude Code coordinator；Project Owner（C3c 前评审 compat 账本策略与采纳方式；C4 / DEVX-017 的
     AGENTS.md 发布方式）
-  - C3b（P4-2）完成：28 个变异用例在已发布 main 的克隆上实跑，差距清单为空（结果、89 个 P4-0 漏掉的同类测试、2452 测试对仓库状态无感，见第
-    10 节）。S3 小项 (g) 与步骤 A06 已随第十一次发布上线。下一个代码候选 = DEVX-022 M6（调度清单），随后 C3c（P4-3）：方案草稿已写入第
-    10 节，等 owner 评审 compat 账本策略并选择采纳方式（A 手工双处登记 / B 生成器 reseal 时自动采纳漂移，推荐 / C 合并为策略数据）；C4（S4）与
-    DEVX-017 都改 AGENTS.md，而发布命令的范围策略把它列为禁止路径，需要 owner 决定走手工链还是先放开范围。S3 小项 (d)、(f)
-    与 E59 的 20 分钟心跳长等待仍欠。之后 C3d（P4-4）-> C4 -> DEVX-017 -> OPS-082 -> 阶段 5。分步、依赖、验收与进度见
-    docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md 第 9、10 节。
+  - 第十二次发布（DEVX-022 M6）已完成，链 3:38，Full 2:13。下一个代码候选 = C3c（P4-3）：方案草稿已写入第 10 节，等 owner
+    评审 compat 账本策略并选择采纳方式（A 手工双处登记 / B 生成器 reseal 时自动采纳漂移，推荐 / C 合并为策略数据）；背景（系统功能、为什么需要、选项与代价）已于
+    2026-10-10 向 owner 说明。C4（S4）与 DEVX-017 都改 AGENTS.md，而发布命令的范围策略把它列为禁止路径，需要 owner
+    决定发布方式（我的建议：把必须改 AGENTS.md 或搬 skills 的部分合并成一个手工链候选，其余照常走 S3 命令；冻结前先给 owner 看 AGENTS.md
+    的 diff）。S3 小项 (d)、(f) 与 E59 的 20 分钟心跳长等待仍欠。之后 C3d（P4-4）-> C4 -> DEVX-017 -> OPS-082
+    -> 阶段 5。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
+    第 9、10 节。
   - A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移 N 个任务
     = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选 Full 1 次；A6 安全边界与
     DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow 同步
-  - 2026-10-10：C3b 完成（差距清单为空）；A06 与小项 (g) 上线；C3c 方案待 owner 评审。
+  - 2026-10-10：M6 已发布（第十二次，链 3:38）；C3c 方案与 AGENTS.md 发布方式待 owner 决定（背景已说明）。
   docs_links:
   - docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md
   terminal: false
-  canonical_row_sha256: 78c33ed3b1fc138514054374e703c403f85676eea1a2c9808568e96a03bdd293
-last_event_id: task-event-f5f03ab17d2485e3952f18edb1d89a09
+  canonical_row_sha256: 92faf1a87101a7dfd75aa867f1477dce1fee7cb73cd741a75f2407a8acbecaff
+last_event_id: task-event-a4ffc485b4ad2c8015eef7e1995e9873
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b806268787b3d99f56192901c269eb57487fad335daa3f118f5487773f2a01d9
+fragment_checksum: d688b4f58b7c9122d3f2b9d0177efedb83f79e074a71f2bc45c0eb0a05624399
