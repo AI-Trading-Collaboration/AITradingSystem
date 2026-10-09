@@ -616,6 +616,11 @@ v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
   **owner 决定（2026-10-09 夜，AskUserQuestion）**：封印候选 B =「只在发布链里启用」，不放宽命名 DQ 受限子进程的导入清单、不进 Full。
   **须披露**：(1) 我自己的启动脚本误改（`sed` 把 `cimv2` 改成 `cimvB`）使 phase 2 的隐藏启动失败了一次，没有副作用，35 秒内更正；(2) C3b 的迷你根目录自测数字被克隆实跑更正（DEVX-016 第 10 节）；(3) C3b 的临时克隆与 basetemp 共约 6 GB 已按精确路径白名单删除，证据与夹具脚本在 `outputs/architecture/devx_016/p42/`；(4) S3 小项 (g) 在真实运行中没有被触发过，只有单元测试验证。
   下一步：DEVX-022 M6（只改调度清单，Full 最多少约 39 分钟）→ C3c（等 owner 评审 compat 账本策略与采纳方式）→ C3d → C4 → DEVX-017（C4 与 DEVX-017 都改 AGENTS.md，发布命令的范围策略把它列为禁止路径，需要 owner 决定走手工链还是先放开范围）→ OPS-082 → 阶段 5。
+- **2026-10-10 上午 第十二次发布完成（DEVX-022 M6：命名 DQ 候选文件等三个单 worker 文件改为按节点调度）**：候选 `2d29e4e35`，S3 run `p-20261010-v2`，**普通推送 `9a463c639..2d29e4e35` 由 Claude 在 owner「以后默认都是你推送」授权下执行**（08:27 JST，没有再询问；证据 `claude_m6_push.log`），本地 main = origin/main = ls-remote = 候选；正式事务 `p-20261010-v2-formal` RELEASED/COMPLETED，`slow_steps` 为空，journal 70 条，run COMPLETE。
+  Full 15,272 通过 / 4 跳过 / 0 失败（pytest 7,991 s = 2:13:11，上一条链 10,601 s，−24.6%）；整条链 04:50 → 08:29，3 小时 38 分（上一条 4 小时 23 分，−44 分钟）。DEVX-022 17.15 的验收全部达成：命名 DQ 候选文件不再最后收工，最晚与第二晚 worker 的差 2,326 s → 40 s，尾部空闲 2,265 → 91 s/worker，0 失败。
+  **诚实归因**：窗口 −2,608 s 里，结构性收益（尾部消除）约 −2,174 s（−20.6%），与模拟的 −2,271 s（−21.5%）一致；另约 −434 s 是两次运行之间的工作量变化（同一批节点合计 −7.3%），不记作 M6 的效果；命名 DQ 文件的节点膨胀 +10.4%。
+  **须披露**：(1) 链运行中途会话上下文被重置，所有会话监视器随之停止；链是脱离式启动，没有受影响，我重新接上监视器后在 E59 按既定程序核对并推送；(2) E50 再次一次通过，S3 小项 (g) 仍未被真实触发；(3) owner 在本次链运行期间询问并获得了 C3c 账本系统与 AGENTS.md 发布方式两项决策的背景说明，尚未作答；(4) Full 的 basetemp 已按精确路径白名单删除，计数器采样进程已停止（细节见 DEVX-022 第 17.16 节）。
+  下一步：DEVX-016 C3c（owner 先评审 compat 账本策略与采纳方式）→ C3d → C4 → DEVX-017（C4 与 DEVX-017 的 AGENTS.md 发布方式待 owner 决定）→ OPS-082 → 阶段 5。
 - 仍待 owner：超时/等待校准的复核（`PROVISIONAL_PENDING_OWNER_REVIEW`）、O3 跨调用缓存与 DEVX-023 封印 S 的边界决定（并行重放已发布，封印 S 只是后备）、5 个 HKCU `AITS-DEVX015-Test-*` 遗留注册表根的清理（脚本 `D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1`，agent 未执行）、OPS-082 规则变更确认。
 
 ## 7. 退出条件
