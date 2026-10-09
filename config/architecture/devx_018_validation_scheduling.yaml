@@ -1,7 +1,7 @@
 schema_version: devx_018_validation_scheduling.v1
 policy_id: devx_018_governed_split_scope_scheduling
 owner: validation_operations
-version: 6
+version: 7
 status: ACTIVE_PILOT
 requirement: docs/requirements/DEVX-018_Validation_Runtime_Throughput_V1.md
 rationale: >-
@@ -42,7 +42,9 @@ review_condition: >-
   Recalibrate heavy_concurrency_cap and the lists after the first Full measured
   with this policy, and whenever a real_full_chain function is added, renamed
   or removed (a listed function that is missing from a collected split file
-  fails the run closed).
+  fails the run closed), and whenever a listed split file gains a pytest fixture,
+  module-level mutable state or a fixed output path (tests/test_devx022_split_scope_m6.py
+  fails).
 # Pilot baseline. v1 used 6 (owner decision of 2026-09-30). The v13 Full at 6
 # finished in 4.95 hours instead of 10.15, but overload tripped fixed
 # subprocess/inspector timeouts (360 second profile inspection that takes 59-75
@@ -68,15 +70,26 @@ heavy_concurrency_cap: 8
 # which caps heavy throughput at one start per interval once heavy units get short
 # (modelled: the Full stays near 2.8 hours however little work remains).
 heavy_start_interval_seconds: 120
+# v7 (DEVX-022 M6): adds the three files whose single-worker loadfile chains set the Full's tail
+# (DEVX-022 17.14 and 17.15): tests/test_named_data_quality_candidate.py (26 nodes, 10,081 s on
+# one worker in the last Full), tests/test_named_simple_baseline_preview_candidate.py (10 nodes,
+# 6,173 s) and tests/test_composer_prospective_capture_contract.py (192 nodes, 6,216 s). The
+# real scheduler class on the measured node durations of that Full (run p-20261010-v1) gives
+# 10,594 s for the v6 manifest (actual window 10,550 s) and 8,323 s for this one. Static review,
+# pinned by tests/test_devx022_split_scope_m6.py: no fixtures, no autouse, no module or class
+# setup, no shared mutable state; every real write goes through tmp_path or a uuid-named path.
 split_scope_files:
   - tests/test_arch_005_integration_publication_fence.py
   - tests/test_arch_005_source_preservation.py
   - tests/test_arch_005_task_checkpoint.py
+  - tests/test_composer_prospective_capture_contract.py
   - tests/test_devx015_workflow_acceptance.py
   - tests/test_devx015_workflow_coordination.py
   - tests/test_devx015_workflow_execution.py
   - tests/test_devx015_workflow_integration.py
   - tests/test_governed_development_skill.py
+  - tests/test_named_data_quality_candidate.py
+  - tests/test_named_simple_baseline_preview_candidate.py
 # v4 (DEVX-018 v19): adds the large-profile closeout node, a real publication chain over a
 # Full profile above the 16 MiB default read budget; it is heavy like its siblings.
 real_full_chain:
