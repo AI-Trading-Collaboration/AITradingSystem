@@ -286,6 +286,25 @@ owner 2026-10-07 决定路线为 DEVX-016 C2 → 本节（封印 S）→ C3。�
 
 **候选 B 的预期效果（估计，未实测）**：(1) 开关在发布命令及其子进程、`local-publish` 的 worker 与钩子里打开：这些进程里每次重放约 13 s（P6）降到约 3 s，E52 / E56 / E57 / E61 / E62 与 `local-publish` 中的重放部分再缩小 3–4 倍；(2) stage 1 与 Full 里测试进程内的重放同样降低，但命名 DQ 受限子进程（stage 1 约七成重放、Full 里关键路径上的命名 DQ 候选文件）只有在 `lease_replay_seal` 被加入其评审导入清单之后才能受益——这是放宽一个隔离边界的决定，须 owner 评审；(3) 不启用任何一项，Full 仍会继续按约 +5% / 次增长。
 
+
+#### 10.10 候选 B：只在发布链里启用封印（owner 2026-10-09 夜选择；实施计划）
+
+**owner 决定**（AskUserQuestion，选项「只在发布链里启用 (Recommended)」）：封印只在发布链的进程里启用——发布命令及其子进程、stage 1 的测试进程、`local-publish` worker 与钩子；发布命令在链开头重建并校验封印。**不**动命名 DQ 受限子进程的评审导入清单（隔离边界不变），**不**在正式 Full 里启用（Full 合同不变）。要把收益带进 Full，须另行评审把 `lease_replay_seal` 加入命名 DQ 导入清单的设计（放宽一个隔离边界），这次没有选。
+
+**范围与不变量**
+- **策略**：与 P6 共用同一份经评审的角色策略 `config/architecture/devx_023_parallel_replay_scope.v1.yaml`（版本 1.0.0 → 1.1.0），新增 `lease_seal` 一节，角色同 P6：`s3_command`、`validation_stage_1`、`local_publish_worker` 为 enabled；`validation_pre_full_tiers` disabled（先测量）；`formal_full`、`named_dq_restricted_children` 为 `never_enabled`（载入器把启用它们的策略视为无效并什么都不启用）。状态 `PILOT_BASELINE`；退出条件：下一条链的实测之后换成有证据的 `OWNER_APPROVED`，且不晚于 2027-01-08。回滚 = 把角色改成 disabled 或把状态改成 `DISABLED`（不改代码）。
+- **开关**：`AITS_LEASE_SEAL=1` 只由策略按角色给；继承来的值先被清掉（与 P6 同一套 `without_switch` / `apply_switch` / `environment_for`）。封印命中、未命中、被拒绝导入（命名 DQ 受限子进程，内核钩子已经把失败的导入当作「没有封印」）、指纹失配都不改变结果，只改变耗时；串行重放仍是权威。
+- **新步骤 `A06.seal_rebuild`**（阶段 A，依赖门之后、prep 事务之前）：`architecture_arch005_lease_seal.py build` 然后 `verify`；策略里 `s3_command` 未启用或策略无效时记 `NOT_APPLICABLE`。`build` 持仲裁锁并完整校验每条链，所以此刻不能有活动租约（A02 干净树与 A03 安静宿主已经保证）；`verify` 比对封印重放与串行重放逐字段相同，不同则步骤失败、什么都不继续。真实库上 build 35 s + verify 37 s，预期给链增加约 75 s，换回链里所有串行重放。封印绑定内核指纹（`platform/architecture/**` 等），候选改了这些文件后封印失效，所以必须在链内用候选自己的代码重建——这是放在链开头而不是链尾的原因。
+- **S3 小项 (g)（同一候选）**：E50 与 A03 共用的进程检查，对桌面应用自己的瞬时 `git.exe` 轮询加有界重试（3 次、间隔 5 s，具名常量，属 AGENTS 允许的低风险常量）；最后一次仍看到进程就照旧失败；不放宽对任何进程类型的要求，也不按命令行签名放行。
+
+**验收（以实测为准；发布本候选的链仍跑旧代码，收益只能在下一条链里量到）**
+1. `A06` 在真实库上 build + verify 合计 ≤ 90 s 且 PASS；journal 记录封印链数、事件数与指纹；
+2. E52 / E56 各降 ≥ 40%（v2：147.3 / 163.9 s），E57 / E61 / E62 各降 ≥ 25%，`local-publish`（E54）≤ 28 分钟（v2：39:19），A–C 不变或更快，stage 1 ≤ 650 s（v2：741.9 s；受限子进程里约七成重放仍串行，所以不指望更多）；
+3. Full 的 pytest 不变（Full 角色是 `never_enabled`；±3% 之外的变化要解释）；journal 无 FAILED，`slow_steps` 为空；
+4. 全程结果与串行逐字节相同（A06 的 `verify` 每条链开头都做一次，加上既有的 82 项封印测试）。
+
+**测试**：角色策略（`lease_seal` 一节的合法 / 非法形态、`never_enabled`、状态不在 `ENABLED_STATUSES` 则什么都不启用）、`environment_for` 同时给出两个开关、`without_switch` 清掉两个、与 `lease_replay_seal.SEAL_ENV` 的一致性；A06 的步骤计划与顺序、假执行器上的 build / verify 成功 / 失败 / `NOT_APPLICABLE` / 重入；D30 的参数与 E53 的环境带上封印开关；E50 重试（第一次看到进程、第二次干净 → 通过；三次都有 → 失败）。`docs/system_flow.md` 加一段并重算封印。
+
 ## 11. W-DQ（可选）：命名 DQ 证明只保留源租约的重放视图（设计草案，2026-10-07；不是耗时对策）
 
 **更正**：本节最初是按「stage 1 耗时随证明体积增长」的归因写的，owner 也据此一度把它排在 C3 之前。C2 窗口的逐调用计时（DEVX-022 第 17.7 节）否定了该归因：stage 1 的 87% 是约 31 次租约库重放，证明构造与序列化只占约 3%（再加上子进程里的解析与哈希，估计合计 3–15%）。owner 随后改为 C2 → 封印 S（第 10 节）→ C3。本节降为可选的小改动，价值是证据体积卫生（每次 stage 1 运行写出约 0.7 GB 的证明 JSON，每次发布 +约 54 MB）与少量耗时，不再作为耗时对策，也不再有时间验收目标。
