@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1419
-test_count: 1355
+test_file_count: 1420
+test_count: 1356
 support_file_count: 64
 orphan_count: 0
 specific_overlap_count: 0
@@ -8715,6 +8715,22 @@ tests:
 - test_id: tests.test_arch_005_lease_parallel_replay_store
   path: tests/test_arch_005_lease_parallel_replay_store.py
   sha256: 8776807c055c3351d70563a9c19969d8927bfe1e07d9da51a8b55a0149e87ee8
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_lease_replay_seal
+  path: tests/test_arch_005_lease_replay_seal.py
+  sha256: adc745b00c4792a19372ee10dde7f2d6334173a1a253c0305ee7b170918d3a50
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
