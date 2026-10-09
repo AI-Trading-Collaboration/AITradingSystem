@@ -264,7 +264,7 @@ owner 2026-10-07 决定路线为 DEVX-016 C2 → 本节（封印 S）→ C3。�
 
 **真实库副本上的实测**（`D:/Work/p-seal-store` = 真实库的 `events/` 与 `blobs/` 拷贝，898 条链 / 6,282 个事件，不触碰真实库；证据 `outputs/architecture/integration_revalidation/devx015-v389/claude_seal_real_store_differential.json`）：构建 31–35 s（896 条终态链入封印，2 条非终态链不入），封印文件 911 KB；`verify`：封印重放与串行全量重放的 `to_dict()` **逐项相同**；经 `store.replay()`：开关未设 32.7 s，`AITS_LEASE_SEAL=1` **3.4 / 4.2 s**（约 8–9 倍），`off` 30.9 s。纯逐字节读取并哈希全部事件文件 0.99 s。验收 10.4 第 4 条（一次重放 ≤ 全量的 30%）：达成（≈ 12%）。
 
-**步骤状态**：S1 完成、S2 完成、S3 完成（候选 A 于 2026-10-09 随第十次发布上线，默认关闭；第一次发布尝试因与封印无关的写死 5 s git 探测超时失败，加固后重发一次通过，见 DEVX-022 第 17.12、17.13 节）、S3.5 完成（下面 10.9.2）；S4（owner 看过实测后决定候选 B：链内启用，以及是否把模块加入命名 DQ 受限子进程的评审导入清单）待决定。
+**步骤状态**：S1 完成、S2 完成、S3 完成（候选 A 于 2026-10-09 随第十次发布上线，默认关闭）、S3.5 完成（10.9.2）、S4 完成——owner 选择候选 B「只在发布链里启用」，已于 2026-10-10 随第十一次发布上线（10.10，实测见下与 DEVX-022 第 17.14 节）；命名 DQ 受限子进程的导入清单与正式 Full 不在其范围，是否另行评审见 10.10。
 
 #### 10.9.2 S3.5：真实库上的实测（2026-10-09 21:31–21:36，候选 A 发布之后；证据 `claude_seal_s35_real_store.json`）
 
@@ -312,6 +312,13 @@ owner 2026-10-07 决定路线为 DEVX-016 C2 → 本节（封印 S）→ C3。�
 - **发布命令**：`publication_steps.py` 新增 `A06.seal_rebuild`（`build_precondition_steps(..., seal_rebuild=...)`，由 `publication_cli.py` 按 `s3_command` 角色传入；`build` 然后 `verify`，结果事实记 `seal`、`seal_sha256`、`kernel_fingerprint`、`sealed_chains`、`sealed_events`、构建与核对耗时；`NOT_APPLICABLE` / `PUBLICATION_RUN_SEAL_BUILD` / `PUBLICATION_RUN_SEAL_VERIFY`；基线 90 s 仅用于报告）；`publication_publish_steps.py` 的 D30 在 stage 1 角色有封印时给驱动加 `--stage-1-lease-seal`，E53 的 worker 环境经 `environment_for` 自动带上；`scripts/architecture_arch005_validate_candidate.py` 把该参数变成 stage 1 的环境（驱动进程本身不带开关）。
 - **S3 小项 (g)**：`HostFactsCollector.settled_live_processes()`（5 次观察、间隔 6 s，具名常量）被 A03、D30 的「没有其他进程」检查与 E50 共用；原来 E50 的「重试 3 次」之间没有间隔，一次桌面应用的 `git.exe` 轮询只要持续超过几秒就会连续看到。
 - **测试**：新文件 `tests/test_arch_005_lease_seal_scope.py`（29 项：策略各形态、两个开关的环境、A06 的各种结果、有界重复观察）；既有的 P6 范围测试 3 项按 1.1.0 更新；运行与 CLI 测试各加 4 项与 2 项的接线测试；假的 World 多了封印 CLI 的脚本化应答。聚焦回归 400 项通过（含封印 82 项与并行重放测试）；`architecture_devex.py validate`：依赖门 PASS，只剩 3 条预期的清单新鲜度项；006d 的 3 个新鲜度测试在生成器链之前红（system_flow 片段待重建），属预期。
+
+
+**实测（2026-10-10，第十一次发布，S3 run `p-20261010-v1`，候选 `9a463c639`；详见 DEVX-022 第 17.14 节）**：
+- 达成：A06 74.0 s（≤ 90 s；905 条链、903 条入封印、6,379 个事件；封印重放 3.24 s 对完整重放 33.68 s）；`local-publish` 19 分 9 秒（目标 ≤ 28 分钟，上一条链 39 分 19 秒，−51%）；E57 / E61 / E62 各 −32% / −51% / −50%；`slow_steps` 为空；`verify` 通过。
+- 未达成：E52 / E56 各 −28%（目标 −40%：剩下的时间不在重放里）；stage 1 696.1 s（目标 ≤ 650 s：约七成重放在命名 DQ 受限子进程里，仍是完整重放）；Full 的 pytest +3.9%（库继续增长加 35 个新测试，Full 角色是 `never_enabled`，不是 B）。
+- 整条链 4 小时 37 分 → 4 小时 23 分；链里除 Full 外的重放主导部分（E50–E63）2,856 s → 1,505 s（−47%）。Full 占链的 86%，是下一个杠杆（DEVX-022 的 M6；若要让封印进 Full 须另行评审命名 DQ 的导入清单）。
+- S3 小项 (g)（有界重复观察）在这条链里没有被真实触发，只有单元测试验证。
 
 ## 11. W-DQ（可选）：命名 DQ 证明只保留源租约的重放视图（设计草案，2026-10-07；不是耗时对策）
 

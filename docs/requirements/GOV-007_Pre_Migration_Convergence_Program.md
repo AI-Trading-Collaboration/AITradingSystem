@@ -611,6 +611,11 @@ v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
   **S3.5 实测**（DEVX-023 第 10.9.2 节）：真实库 6,375 个事件 / 903 条链，串行重放 32–33 s，4 进程并行 13.3–13.8 s，封印 2.8–3.2 s（约 10.7 倍）；三种模式的规范 JSON 摘要相同，`verify` 通过。
   待 owner：封印候选 B——链内启用 `AITS_LEASE_SEAL` 并让发布命令在链开头重建封印；以及是否把 `lease_replay_seal` 加入命名 DQ 受限子进程的评审导入清单（Full 关键路径上收益最大，但放宽一个隔离边界）。下面「封印 S 只是后备」一语已过时：信任模型 2026-10-09 已批准并实现，待决定的只是启用范围。
   下一步：DEVX-016 C3b（夹具已在迷你根目录上验证，下一步在已发布 main 的克隆上跑旧测试一侧）→ C3c → C3d → C4 → DEVX-017 → OPS-082 → 阶段 5。
+- **2026-10-10 凌晨 第十一次发布完成（DEVX-023 候选 B：封印只在发布链里启用 + DEVX-016 A06 与 S3 小项 g）**：候选 `9a463c639`，S3 run `p-20261010-v1`，**普通推送 `69f34967d..9a463c639` 由 Claude 在 owner「以后默认都是你推送」授权下执行**（04:24 JST，没有再逐候选询问；证据 `claude_b_push.log`），本地 main = origin/main = ls-remote = 候选；正式事务 `p-20261010-v1-formal` RELEASED/COMPLETED，`slow_steps` 为空。
+  Full 15,258 通过 / 4 跳过 / 0 失败（pytest 10,601 s，对上一条链 +3.9%）；整条链 00:02 → 04:25，4 小时 23 分（上一条链 4 小时 37 分）；`local-publish` 39 分 19 秒 → 19 分 9 秒，E50–E63 合计 −47%，stage 1 −6%；Full 占链 86%，其命名 DQ 候选文件比其余 worker 晚收工 2,326 s。
+  **owner 决定（2026-10-09 夜，AskUserQuestion）**：封印候选 B =「只在发布链里启用」，不放宽命名 DQ 受限子进程的导入清单、不进 Full。
+  **须披露**：(1) 我自己的启动脚本误改（`sed` 把 `cimv2` 改成 `cimvB`）使 phase 2 的隐藏启动失败了一次，没有副作用，35 秒内更正；(2) C3b 的迷你根目录自测数字被克隆实跑更正（DEVX-016 第 10 节）；(3) C3b 的临时克隆与 basetemp 共约 6 GB 已按精确路径白名单删除，证据与夹具脚本在 `outputs/architecture/devx_016/p42/`；(4) S3 小项 (g) 在真实运行中没有被触发过，只有单元测试验证。
+  下一步：DEVX-022 M6（只改调度清单，Full 最多少约 39 分钟）→ C3c（等 owner 评审 compat 账本策略与采纳方式）→ C3d → C4 → DEVX-017（C4 与 DEVX-017 都改 AGENTS.md，发布命令的范围策略把它列为禁止路径，需要 owner 决定走手工链还是先放开范围）→ OPS-082 → 阶段 5。
 - 仍待 owner：超时/等待校准的复核（`PROVISIONAL_PENDING_OWNER_REVIEW`）、O3 跨调用缓存与 DEVX-023 封印 S 的边界决定（并行重放已发布，封印 S 只是后备）、5 个 HKCU `AITS-DEVX015-Test-*` 遗留注册表根的清理（脚本 `D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1`，agent 未执行）、OPS-082 规则变更确认。
 
 ## 7. 退出条件
