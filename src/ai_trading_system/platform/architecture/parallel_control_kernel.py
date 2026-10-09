@@ -866,6 +866,28 @@ class FileExecutionLeaseStore:
         return replay
 
     def _replay_uncached(self) -> LeaseReplay:
+        # DEVX-023 S (owner-approved 2026-10-09): an opt-in sealed replay (AITS_LEASE_SEAL).
+        # Terminal chains whose every byte (events and row-table blobs) is exactly what a seal
+        # bound to this code and policy recorded are not validated event by event again; every
+        # other chain is validated as below. Any problem with the seal, any anomaly and a
+        # refused import (the named-DQ bootstrap admits only its reviewed modules) mean "no
+        # seal": the replay below runs. With the variable unset nothing is imported and nothing
+        # is read. The serial replay stays the authority and still admits no caller-owned event
+        # and no on-disk "already checked" flag of its own.
+        if os.environ.get("AITS_LEASE_SEAL"):
+            sealer: Any = None
+            try:
+                from ai_trading_system.platform.architecture import lease_replay_seal as sealer
+            except Exception:  # noqa: BLE001 - any refused or failed import means no seal
+                sealer = None
+            if sealer is not None:
+                sealed = sealer.replay_if_enabled(
+                    events_root=self.events_root,
+                    blobs=self.blobs,
+                    seal_path=self.root / sealer.SEAL_FILE_NAME,
+                )
+                if sealed is not None:
+                    return cast(LeaseReplay, sealed)
         # DEVX-023 P: an opt-in chain-level parallel replay (AITS_LEASE_PARALLEL_REPLAY). The serial
         # replay below stays the authority: any anomaly makes the helper return None and the serial
         # replay runs. With the variable unset nothing is imported and nothing changes. A process
@@ -1806,9 +1828,16 @@ def _lease_event(
 
 def parse_lease_event(
     payload: Mapping[str, Any], *, blobs: ExternalizedRowsReader | None = None,
+    validate_execution_payload: bool = True,
 ) -> LeaseEvent:
     """Parse one STORED event. Externalized tables need the blob reader of the store
     (DEVX-022 S3b); without one, an event that names a blob fails closed instead of being misread.
+
+    DEVX-023 S: `validate_execution_payload=False` skips only the semantic validation of the
+    execution payload (`validate_execution`, the expensive step of a publication head); structure,
+    schema and the event-id hash are still checked. The sealed replay is its only caller, for the
+    head event of a chain whose every byte is identical to what passed the full validation under
+    the same code and policy. Everything else keeps the default.
     """
     event_id = _text(payload.get("event_id"), "event_id")
     lease_payload = _mapping(payload.get("lease"), "lease")
@@ -1867,7 +1896,7 @@ def parse_lease_event(
         evidence_refs=_strings(lease_payload.get("evidence_refs"), "evidence_refs"),
         execution=execution_payload,
     )
-    if lease.execution is not None:
+    if lease.execution is not None and validate_execution_payload:
         from ai_trading_system.platform.architecture.workflow_coordination import validate_execution
 
         validate_execution(lease)
