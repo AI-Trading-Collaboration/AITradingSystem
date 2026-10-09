@@ -16,19 +16,16 @@ task_record:
   priority: P2
   accountable_owner: null
   next_owner: Claude Code coordinator；Project Owner（候选 B 启用与命名 DQ 导入清单）
-  requirement_refs:
-  - docs/requirements/DEVX-023_Lease_Replay_Cost_Reduction_V1.md
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: P1–P6 已完成并发布。owner 2026-10-09 批准封印 S 的信任模型并要求开始实现（先出实现与差分
-    / 变异测试，在发布链里启用须等 owner 看过实测）。进行中：封印 S 的 S1–S3（候选 A，默认关闭）：新模块 lease_replay_seal.py（目录规则内核指纹、终态
-    = RELEASED / REASSIGNED、封印构建 / 原子写 / 读取校验 / 封印感知重放 / verify）、内核 _replay_uncached
-    里一个窄钩子（AITS_LEASE_SEAL 未设则逐字不变）、scripts/architecture_arch005_lease_seal.py（build
-    / verify / status）与差分、变异、性质测试；实现计划、四处对设计稿的更正、步骤与验收见 docs/requirements/DEVX-023_Lease_Replay_Cost_Reduction_V1.md
-    第 10.9 节。之后：S3.5 发布后在真实库上手工 build + verify + 计时；S4 owner 决定候选 B（S3 命令在链开头重建封印并在发布前检查
-    verify；是否把封印模块放进命名 DQ 受限子进程的评审导入清单——Full 关键路径所在，收益最大但略放宽导入边界）。P6 的 validation_pre_full_tiers
-    待测量后再定；worker 数保持 4。
+  unstructured_legacy_blocker_or_next_step: P1–P6 已完成并发布。封印 S（owner 2026-10-09 批准信任模型）：候选
+    A（默认关闭）已实现（lease_replay_seal.py、内核窄钩子、scripts/architecture_arch005_lease_seal.py、82
+    项测试；真实库副本上封印重放与全量逐项相同，28.6–32.7 s -> 3.4–4.2 s）。第一次发布尝试（run p-20261009-v1，候选 6f77aeae0）的
+    Full 因与封印无关的负载超时失败（DEVX-022 第 17.12 节），已释放为 FAILED；加固 Full 运行器的 git 探测超时后以 failure_fix_rerun
+    重发。之后：S3.5 发布后在真实库上手工 build + verify + 计时；S4 owner 看过实测后决定候选 B（S3 命令在链开头重建封印并在发布前检查
+    verify；是否把封印模块放进命名 DQ 受限子进程的评审导入清单）。P6 的 validation_pre_full_tiers 待测量后再定。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 选定方案后：围栏命令（acquire/checkpoint/release）墙钟降到当前的 1/3 以内、真实发布不超过 30 分钟（只选 S3c+W
@@ -431,6 +428,37 @@ events:
   - change:gov-007-sealrow-task-20261009-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-7cb216836b6c25ac0360e1af467c784a
+- schema_version: task_event.v1
+  task_id: DEVX-023_LEASE_REPLAY_COST_REDUCTION
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-09T07:15:36Z'
+  actor: integration-coordinator
+  change_id: gov-007-s1frows-task-20261009-v1
+  lane_id: null
+  base_commit: a63827b280d45ef668e625184571df93efa7e27b
+  previous_state_event_id: task-event-7cb216836b6c25ac0360e1af467c784a
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P2
+    next_owner: Claude Code coordinator；Project Owner（候选 B 启用与命名 DQ 导入清单）
+    blocker_or_next_step: P1–P6 已完成并发布。封印 S（owner 2026-10-09 批准信任模型）：候选 A（默认关闭）已实现（lease_replay_seal.py、内核窄钩子、scripts/architecture_arch005_lease_seal.py、82
+      项测试；真实库副本上封印重放与全量逐项相同，28.6–32.7 s -> 3.4–4.2 s）。第一次发布尝试（run p-20261009-v1，候选
+      6f77aeae0）的 Full 因与封印无关的负载超时失败（DEVX-022 第 17.12 节），已释放为 FAILED；加固 Full 运行器的
+      git 探测超时后以 failure_fix_rerun 重发。之后：S3.5 发布后在真实库上手工 build + verify + 计时；S4 owner
+      看过实测后决定候选 B（S3 命令在链开头重建封印并在发布前检查 verify；是否把封印模块放进命名 DQ 受限子进程的评审导入清单）。P6 的 validation_pre_full_tiers
+      待测量后再定。
+    acceptance_criteria: 选定方案后：围栏命令（acquire/checkpoint/release）墙钟降到当前的 1/3 以内、真实发布不超过
+      30 分钟（只选 S3c+W 时：每次发布给租约库留下的事件字节从约 11.8 MiB 降到 1 MiB 以内，单次重放的逐发布增长从约 +3 s 降到
+      +0.5 s 以内，发布耗时不再随发布数线性增长）；重放结论与全量重放逐项相同（真实库与变异库的差分测试，含篡改/截断/重排/替换事件、内核版本变化使封印失效、封印缺失或损坏时回退全量重放；外置新增位置时：旧事件原样可读、新增位置的
+      marker 在旧位置或缺 blob 时 fail-closed）；不引入未经 owner 批准的跨调用缓存；历史事件文件不被改写；命名 DQ 父证明不再随发布数线性增长（只绑定重放摘要与来源租约，须评审）；文档与
+      system_flow 同步。
+    notes: 2026-10-09：候选 A 首次发布尝试 Full 因无关的写死超时失败；重发中。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-s1frows-task-20261009-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-cb3e63d94a1ceaf6fc62480e90947aab
 projection:
   legacy_first_eight_cells:
   - DEVX-023_LEASE_REPLAY_COST_REDUCTION
@@ -439,23 +467,19 @@ projection:
   - P2
   - IN_PROGRESS
   - Claude Code coordinator；Project Owner（候选 B 启用与命名 DQ 导入清单）
-  - P1–P6 已完成并发布。owner 2026-10-09 批准封印 S 的信任模型并要求开始实现（先出实现与差分 / 变异测试，在发布链里启用须等 owner
-    看过实测）。进行中：封印 S 的 S1–S3（候选 A，默认关闭）：新模块 lease_replay_seal.py（目录规则内核指纹、终态 = RELEASED
-    / REASSIGNED、封印构建 / 原子写 / 读取校验 / 封印感知重放 / verify）、内核 _replay_uncached 里一个窄钩子（AITS_LEASE_SEAL
-    未设则逐字不变）、scripts/architecture_arch005_lease_seal.py（build / verify / status）与差分、变异、性质测试；实现计划、四处对设计稿的更正、步骤与验收见
-    docs/requirements/DEVX-023_Lease_Replay_Cost_Reduction_V1.md 第 10.9 节。之后：S3.5
-    发布后在真实库上手工 build + verify + 计时；S4 owner 决定候选 B（S3 命令在链开头重建封印并在发布前检查 verify；是否把封印模块放进命名
-    DQ 受限子进程的评审导入清单——Full 关键路径所在，收益最大但略放宽导入边界）。P6 的 validation_pre_full_tiers 待测量后再定；worker
-    数保持 4。
+  - P1–P6 已完成并发布。封印 S（owner 2026-10-09 批准信任模型）：候选 A（默认关闭）已实现（lease_replay_seal.py、内核窄钩子、scripts/architecture_arch005_lease_seal.py、82
+    项测试；真实库副本上封印重放与全量逐项相同，28.6–32.7 s -> 3.4–4.2 s）。第一次发布尝试（run p-20261009-v1，候选 6f77aeae0）的
+    Full 因与封印无关的负载超时失败（DEVX-022 第 17.12 节），已释放为 FAILED；加固 Full 运行器的 git 探测超时后以 failure_fix_rerun
+    重发。之后：S3.5 发布后在真实库上手工 build + verify + 计时；S4 owner 看过实测后决定候选 B（S3 命令在链开头重建封印并在发布前检查
+    verify；是否把封印模块放进命名 DQ 受限子进程的评审导入清单）。P6 的 validation_pre_full_tiers 待测量后再定。
   - 选定方案后：围栏命令（acquire/checkpoint/release）墙钟降到当前的 1/3 以内、真实发布不超过 30 分钟（只选 S3c+W 时：每次发布给租约库留下的事件字节从约
     11.8 MiB 降到 1 MiB 以内，单次重放的逐发布增长从约 +3 s 降到 +0.5 s 以内，发布耗时不再随发布数线性增长）；重放结论与全量重放逐项相同（真实库与变异库的差分测试，含篡改/截断/重排/替换事件、内核版本变化使封印失效、封印缺失或损坏时回退全量重放；外置新增位置时：旧事件原样可读、新增位置的
     marker 在旧位置或缺 blob 时 fail-closed）；不引入未经 owner 批准的跨调用缓存；历史事件文件不被改写；命名 DQ 父证明不再随发布数线性增长（只绑定重放摘要与来源租约，须评审）；文档与
     system_flow 同步。
-  - 2026-10-09：owner 批准封印 S 信任模型；实现计划见第 10.9 节；候选 A 默认关闭。
-  docs_links:
-  - docs/requirements/DEVX-023_Lease_Replay_Cost_Reduction_V1.md
+  - 2026-10-09：候选 A 首次发布尝试 Full 因无关的写死超时失败；重发中。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 3b3bc901ef5ef4e4ac2aa4b4b3721f6cd72419b672f6c1dab442dcf9df165f16
-last_event_id: task-event-7cb216836b6c25ac0360e1af467c784a
+  canonical_row_sha256: f70fb05eedb4c08e18e443a1b7da9e3ef2dc2e3912d8f70c41731104643e4b58
+last_event_id: task-event-cb3e63d94a1ceaf6fc62480e90947aab
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 06a27f1b36a79f6e6eee2c0303fe5f4aaf33f5c250d47173b8712c2afd00335a
+fragment_checksum: 6ca2765a4079c92c3c55c5ebdca2b92fa981316893489e8db2497511032a5b7b
