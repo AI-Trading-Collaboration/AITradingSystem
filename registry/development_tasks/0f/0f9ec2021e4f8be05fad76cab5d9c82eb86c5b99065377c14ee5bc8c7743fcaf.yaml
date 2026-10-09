@@ -18,14 +18,12 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 第十次发布完成（DEVX-023 封印 S 候选 A，默认关闭）：main
-    = origin/main = 69f34967d（普通推送由 Claude 在 owner 的「以后默认都是你推送」授权下执行，该授权此后为默认，不再逐候选询问）。第一次尝试（6f77aeae0）因
-    Full 运行器写死的 5 s git 探测超时失败，加固（具名常量 120 s）后重发一次通过。S3.5 实测：封印把真实库重放从 32–33 s 降到约
-    3 s（约 10.7 倍），结果逐字段相同。继续路线：DEVX-016 C3b（进行中）-> C3c（P4-3，owner 先评审 compat 账本策略）->
+  unstructured_legacy_blocker_or_next_step: 第十一次发布完成（DEVX-023 候选 B）：main = origin/main
+    = 9a463c639（普通推送由 Claude 在 owner「以后默认都是你推送」授权下执行，不再逐候选询问）。整条链 4:23，local-publish
+    19 分钟，Full 占链 86%。继续路线：DEVX-022 M6 -> DEVX-016 C3c（owner 先评审 compat 账本策略与采纳方式）->
     C3d（P4-4）-> C4（S4）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖
-    OPS-077/078/081 验收）-> 阶段 5；穿插 DEVX-022 M6 / DEVX-021 P2-P3（owner 评审）。owner 另需：对封印候选
-    B 作决定（链内启用 + 命名 DQ 导入清单）；执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理
-    HKCU 测试根；长跑期间把「关闭显示器」设为「从不」。
+    OPS-077/078/081 验收）-> 阶段 5。owner 另需：C3c 的策略评审与采纳方式；C4 / DEVX-017 改 AGENTS.md 的发布方式（手工链或放开发布命令的范围策略）；DEVX-021
+    第 11 节 P2/P3 的方案；执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 HKCU 测试根；长跑期间把「关闭显示器」设为「从不」。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -1053,6 +1051,35 @@ events:
   - change:gov-007-s2rows-task-20261009-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-64b43e8fa3f4a2b49d9c00e8bd3229a7
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-09T19:39:00Z'
+  actor: integration-coordinator
+  change_id: gov-007-b2rows-task-20261010-v1
+  lane_id: null
+  base_commit: 9a463c639f90c242e10241fa573aec2078f8d555
+  previous_state_event_id: task-event-64b43e8fa3f4a2b49d9c00e8bd3229a7
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 第十一次发布完成（DEVX-023 候选 B）：main = origin/main = 9a463c639（普通推送由
+      Claude 在 owner「以后默认都是你推送」授权下执行，不再逐候选询问）。整条链 4:23，local-publish 19 分钟，Full 占链
+      86%。继续路线：DEVX-022 M6 -> DEVX-016 C3c（owner 先评审 compat 账本策略与采纳方式）-> C3d（P4-4）->
+      C4（S4）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081
+      验收）-> 阶段 5。owner 另需：C3c 的策略评审与采纳方式；C4 / DEVX-017 改 AGENTS.md 的发布方式（手工链或放开发布命令的范围策略）；DEVX-021
+      第 11 节 P2/P3 的方案；执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 HKCU
+      测试根；长跑期间把「关闭显示器」设为「从不」。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: 2026-10-10：第十一次发布完成（9a463c639）；链 4:23；路线：M6 -> C3c -> C3d -> C4 -> DEVX-017。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-b2rows-task-20261010-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-676e8c903ac29ecf013a8de246163d3c
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
@@ -1060,19 +1087,18 @@ projection:
   - P0
   - IN_PROGRESS
   - Claude Code coordinator
-  - 第十次发布完成（DEVX-023 封印 S 候选 A，默认关闭）：main = origin/main = 69f34967d（普通推送由 Claude 在
-    owner 的「以后默认都是你推送」授权下执行，该授权此后为默认，不再逐候选询问）。第一次尝试（6f77aeae0）因 Full 运行器写死的 5 s git
-    探测超时失败，加固（具名常量 120 s）后重发一次通过。S3.5 实测：封印把真实库重放从 32–33 s 降到约 3 s（约 10.7 倍），结果逐字段相同。继续路线：DEVX-016
-    C3b（进行中）-> C3c（P4-3，owner 先评审 compat 账本策略）-> C3d（P4-4）-> C4（S4）-> DEVX-017 ->
-    OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5；穿插
-    DEVX-022 M6 / DEVX-021 P2-P3（owner 评审）。owner 另需：对封印候选 B 作决定（链内启用 + 命名 DQ 导入清单）；执行
-    D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 HKCU 测试根；长跑期间把「关闭显示器」设为「从不」。
+  - 第十一次发布完成（DEVX-023 候选 B）：main = origin/main = 9a463c639（普通推送由 Claude 在 owner「以后默认都是你推送」授权下执行，不再逐候选询问）。整条链
+    4:23，local-publish 19 分钟，Full 占链 86%。继续路线：DEVX-022 M6 -> DEVX-016 C3c（owner 先评审
+    compat 账本策略与采纳方式）-> C3d（P4-4）-> C4（S4）-> DEVX-017 -> OPS-082（须 owner 先确认「不得使用
+    Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5。owner 另需：C3c 的策略评审与采纳方式；C4
+    / DEVX-017 改 AGENTS.md 的发布方式（手工链或放开发布命令的范围策略）；DEVX-021 第 11 节 P2/P3 的方案；执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1
+    清理 HKCU 测试根；长跑期间把「关闭显示器」设为「从不」。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
-  - 2026-10-09：第十次发布完成（69f34967d）；S3.5 实测；owner 设定默认由 Claude 推送。
+  - 2026-10-10：第十一次发布完成（9a463c639）；链 4:23；路线：M6 -> C3c -> C3d -> C4 -> DEVX-017。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 071f58a103d3b35a46dcc334405928be10fafa99f73d327cabe8733d313b8462
-last_event_id: task-event-64b43e8fa3f4a2b49d9c00e8bd3229a7
+  canonical_row_sha256: fd45fe3bb4cf6a3b61435bd871df3c7e9b168e93520c2e5ec32ce2ae3e844eae
+last_event_id: task-event-676e8c903ac29ecf013a8de246163d3c
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f0eac87a74d1d90268900eb34b9be6f274f1a71422202c8baee017f6db88a6e1
+fragment_checksum: d2005bf00b058af5c2e443370940ff201668d3c1a76034c78a30fa75180096a2

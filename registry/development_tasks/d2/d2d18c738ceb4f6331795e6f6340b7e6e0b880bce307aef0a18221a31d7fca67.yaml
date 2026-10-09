@@ -19,14 +19,14 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: M5 种子随 C3a（e30c62a97）发布并保留；P6（a63827b28）把发布命令与
-    local-publish 压了一半。第十次发布（封印 S 候选 A 重发，69f34967d，默认关闭）：Full 15,223 通过 / 4 跳过 /
-    0 失败，pytest 10,208.5 s（2:50:08；v7 9,676.1 s，+5.5%；第一次尝试 10,025.9 s），整条链 4 小时 38
-    分（v7 4 小时 30 分），E50 瞬时失败一次后重试通过（DEVX-016 S3 后续小项 g）。Full 仍随租约库增长，约占链的八成；命名 DQ
-    候选文件 9,696 s 单 worker 串行，其余 15 个 worker 最晚 +8,292 s 收工，相差 1,867 s。封印在真实库上把重放降到约
-    1/10（DEVX-023 10.9.2），启用与否待 owner（候选 B）；若 owner 不启用，备选是 M6 把命名 DQ 候选文件加入 split-scope
-    清单（最多 -31 分钟 Full）。正式 Full 现在 2:50 带，<2 小时未达（owner 2026-10-05 选择 C，不改正式 Full 合同）。详见
-    DEVX-022 第 17.8–17.13 节。
+  unstructured_legacy_blocker_or_next_step: 第十一次发布（候选 B，9a463c639）：Full 15,258 通过
+    / 4 跳过 / 0 失败，pytest 10,601.2 s（2:56:41，对上一条链 +3.9%，对 v7 +9.6%）；整条链 4:23（上一条 4:37）；Full
+    占链 86%。命名 DQ 候选文件 10,081 s 单 worker 串行，其余 15 个 worker 最晚 +8,224 s 收工，相差 2,326
+    s（38.8 分钟，逐条链变大：1,623 -> 1,867 -> 2,326）。下一个杠杆 = M6：把 tests/test_named_data_quality_candidate.py
+    加入 split-scope 清单（只改调度清单，不动正式 Full 的合同；读码确认节点间无共享状态，夹具只写 tmp_path），最多少约 39 分钟
+    Full，扣争用后更少；随下一个候选发布，验收看命名 DQ 文件不再是最后收工的文件、尾部空闲下降、Full pytest 目标 <= 9,600 s（估计值，以实测为准）。正式
+    Full 现在 2:57 带，<2 小时未达（owner 2026-10-05 选择 C，不改正式 Full 合同）。详见 DEVX-022 第 17.8–17.14
+    节。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
@@ -669,6 +669,36 @@ events:
   - change:gov-007-s2rows-task-20261009-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-efc1c825f17370e241b76e60199ca201
+- schema_version: task_event.v1
+  task_id: DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-09T19:37:28Z'
+  actor: integration-coordinator
+  change_id: gov-007-b2rows-task-20261010-v1
+  lane_id: null
+  base_commit: 9a463c639f90c242e10241fa573aec2078f8d555
+  previous_state_event_id: task-event-efc1c825f17370e241b76e60199ca201
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 第十一次发布（候选 B，9a463c639）：Full 15,258 通过 / 4 跳过 / 0 失败，pytest
+      10,601.2 s（2:56:41，对上一条链 +3.9%，对 v7 +9.6%）；整条链 4:23（上一条 4:37）；Full 占链 86%。命名
+      DQ 候选文件 10,081 s 单 worker 串行，其余 15 个 worker 最晚 +8,224 s 收工，相差 2,326 s（38.8 分钟，逐条链变大：1,623
+      -> 1,867 -> 2,326）。下一个杠杆 = M6：把 tests/test_named_data_quality_candidate.py 加入
+      split-scope 清单（只改调度清单，不动正式 Full 的合同；读码确认节点间无共享状态，夹具只写 tmp_path），最多少约 39 分钟 Full，扣争用后更少；随下一个候选发布，验收看命名
+      DQ 文件不再是最后收工的文件、尾部空闲下降、Full pytest 目标 <= 9,600 s（估计值，以实测为准）。正式 Full 现在 2:57
+      带，<2 小时未达（owner 2026-10-05 选择 C，不改正式 Full 合同）。详见 DEVX-022 第 17.8–17.14 节。
+    acceptance_criteria: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约
+      20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实 .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5
+      最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
+    notes: 2026-10-10：第十一次发布实测（17.14）：链快 14 分钟，Full 占 86% 且继续变慢，M6 是下一个杠杆。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-007-b2rows-task-20261010-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e3b57a4cd28c83610e8aaf8bb232dd8c
 projection:
   legacy_first_eight_cells:
   - DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
@@ -677,19 +707,19 @@ projection:
   - P0
   - BASELINE_DONE
   - Claude Code coordinator
-  - M5 种子随 C3a（e30c62a97）发布并保留；P6（a63827b28）把发布命令与 local-publish 压了一半。第十次发布（封印 S 候选
-    A 重发，69f34967d，默认关闭）：Full 15,223 通过 / 4 跳过 / 0 失败，pytest 10,208.5 s（2:50:08；v7
-    9,676.1 s，+5.5%；第一次尝试 10,025.9 s），整条链 4 小时 38 分（v7 4 小时 30 分），E50 瞬时失败一次后重试通过（DEVX-016
-    S3 后续小项 g）。Full 仍随租约库增长，约占链的八成；命名 DQ 候选文件 9,696 s 单 worker 串行，其余 15 个 worker 最晚
-    +8,292 s 收工，相差 1,867 s。封印在真实库上把重放降到约 1/10（DEVX-023 10.9.2），启用与否待 owner（候选 B）；若
-    owner 不启用，备选是 M6 把命名 DQ 候选文件加入 split-scope 清单（最多 -31 分钟 Full）。正式 Full 现在 2:50
-    带，<2 小时未达（owner 2026-10-05 选择 C，不改正式 Full 合同）。详见 DEVX-022 第 17.8–17.13 节。
+  - 第十一次发布（候选 B，9a463c639）：Full 15,258 通过 / 4 跳过 / 0 失败，pytest 10,601.2 s（2:56:41，对上一条链
+    +3.9%，对 v7 +9.6%）；整条链 4:23（上一条 4:37）；Full 占链 86%。命名 DQ 候选文件 10,081 s 单 worker
+    串行，其余 15 个 worker 最晚 +8,224 s 收工，相差 2,326 s（38.8 分钟，逐条链变大：1,623 -> 1,867 -> 2,326）。下一个杠杆
+    = M6：把 tests/test_named_data_quality_candidate.py 加入 split-scope 清单（只改调度清单，不动正式
+    Full 的合同；读码确认节点间无共享状态，夹具只写 tmp_path），最多少约 39 分钟 Full，扣争用后更少；随下一个候选发布，验收看命名 DQ
+    文件不再是最后收工的文件、尾部空闲下降、Full pytest 目标 <= 9,600 s（估计值，以实测为准）。正式 Full 现在 2:57 带，<2
+    小时未达（owner 2026-10-05 选择 C，不改正式 Full 合同）。详见 DEVX-022 第 17.8–17.14 节。
   - S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实
     .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5 最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
-  - 2026-10-09：第十次发布实测（17.13）：Full 又慢 5.5%，封印是唯一能停止增长的杠杆。
+  - 2026-10-10：第十一次发布实测（17.14）：链快 14 分钟，Full 占 86% 且继续变慢，M6 是下一个杠杆。
   docs_links: []
   terminal: false
-  canonical_row_sha256: b4c3c50e2f3bdc30908f3d2b10493ce79170e94cffcf790dd886518262b2fedc
-last_event_id: task-event-efc1c825f17370e241b76e60199ca201
+  canonical_row_sha256: 504ddb15645dcc4f22a418cde51973a08eb77e96e36a30d9a5d67f2e6481895e
+last_event_id: task-event-e3b57a4cd28c83610e8aaf8bb232dd8c
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 7ed9e245d58fcfced70cc61358a3ff203aee21f387e21fc1b490894a587c93e8
+fragment_checksum: 16abb2719bbdff9cfc5d57cb290fff390e331854c8fb4d379e88b74c206d79b1
