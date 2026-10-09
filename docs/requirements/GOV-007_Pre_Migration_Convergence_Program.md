@@ -604,6 +604,13 @@ v11_fixture_fix_native_01.log 和 v11_fixture_fix_expired_02.log。
   Full 15,131 通过 / 4 跳过 / 0 失败（pytest 9,676 s，+4.6%，与 P6 无关：Full 里没开）；`local-publish` 82 → 38.8 分钟，E52 / E56 −37% / −39%，A–C −22%，stage 1 873.6 → 744.8 s（−14.7%，未达 ≤650 s 目标，原因见 DEVX-023 第 12.6.1 节）；整条链 5 小时 20 分 → 4 小时 30 分。
   **新发现**：Full 现在占链的约八成，且仍在随租约库增长（+4.6%/次）；P6 只作用于链的另外两成。命名 DQ 候选文件比其余 worker 晚收工 1,623 s，M6 现在最多值约 27 分钟 Full。封印 S 仍是唯一能停止增长的方案。
   下一步：C3b（DEVX-016 P4-2）→ C3c（owner 先评审 compat 账本策略）→ C3d → C4 → DEVX-017 → OPS-082 → 阶段 5；穿插封印 S / M6 / DEVX-021 P2-P3（待 owner）。
+- **2026-10-09 夜 第十次发布完成（DEVX-023 封印 S 候选 A，默认关闭；第一次发布尝试失败后重发）**：候选 `69f34967d`，S3 run `p-20261009-v2`，**普通推送 `a63827b28..69f34967d` 由 Claude 在 owner「以后默认都是你推送」授权下执行**（21:19 JST；证据 `claude_seal_s2_push_authorization.json` 与 `claude_seal_s2_push.log`），本地 main = origin/main = ls-remote = 候选；正式事务 `p-20261009-v2-formal` RELEASED/COMPLETED，`slow_steps` 为空。
+  Full 15,223 通过 / 4 跳过 / 0 失败（pytest 10,208.5 s，对 v7 +5.5%）；整条链 16:44 → 21:22，4 小时 38 分。
+  **第一次尝试失败（什么都没有发布）**：run `p-20261009-v1`（候选 `6f77aeae0`）的 Full 15,212 通过 / 1 失败 + 1 错误：Full 运行器 `_git_commit()` 写死的 5 s `git rev-parse HEAD` 超时在整机 CPU 100% 时触发，夹具里内层 Full 的摘要 `git_commit` 变成 `unknown`，摘要绑定检查失败（与封印无关；DEVX-022 第 17.12 节）。事务按 FAILED 释放，加固为具名常量 `GIT_COMMIT_PROBE_TIMEOUT_SECONDS = 120`（挂起保护）并加 10 个测试，以 `failure_fix_rerun`（父 = 失败的 Full）重发一次通过；对 `6f77aeae0` 的推送授权随之作废。
+  **须披露**：(1) E50 `pre_publish_checks` 第一次 FAILED：进程检查看到两个桌面应用自己的 `git.exe` 状态轮询，显式 `--retry E50.pre_publish_checks` 后通过（登记为 DEVX-016 S3 后续小项 (g)）；(2) 加固验证时三个 real-xdist 用例看起来「挂住」，原因是 pytest 退出时清理上一次失败 Full 的 28 GB basetemp——我先查了事件日志、进程树和 faulthandler，才想起自己运维笔记里的这一条（DEVX-022 第 17.12 节）；(3) owner 对推送的答复是默认设置：此后我对通过全部检查的候选直接执行普通推送，不再逐候选询问（仍不覆盖 PR、force-push 与 R3 动作）；(4) 封印文件 `replay_seal.v1.json`（0.92 MB）现在留在真实租约库根目录，开关默认关闭，对任何进程无效。
+  **S3.5 实测**（DEVX-023 第 10.9.2 节）：真实库 6,375 个事件 / 903 条链，串行重放 32–33 s，4 进程并行 13.3–13.8 s，封印 2.8–3.2 s（约 10.7 倍）；三种模式的规范 JSON 摘要相同，`verify` 通过。
+  待 owner：封印候选 B——链内启用 `AITS_LEASE_SEAL` 并让发布命令在链开头重建封印；以及是否把 `lease_replay_seal` 加入命名 DQ 受限子进程的评审导入清单（Full 关键路径上收益最大，但放宽一个隔离边界）。下面「封印 S 只是后备」一语已过时：信任模型 2026-10-09 已批准并实现，待决定的只是启用范围。
+  下一步：DEVX-016 C3b（夹具已在迷你根目录上验证，下一步在已发布 main 的克隆上跑旧测试一侧）→ C3c → C3d → C4 → DEVX-017 → OPS-082 → 阶段 5。
 - 仍待 owner：超时/等待校准的复核（`PROVISIONAL_PENDING_OWNER_REVIEW`）、O3 跨调用缓存与 DEVX-023 封印 S 的边界决定（并行重放已发布，封印 S 只是后备）、5 个 HKCU `AITS-DEVX015-Test-*` 遗留注册表根的清理（脚本 `D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1`，agent 未执行）、OPS-082 规则变更确认。
 
 ## 7. 退出条件
