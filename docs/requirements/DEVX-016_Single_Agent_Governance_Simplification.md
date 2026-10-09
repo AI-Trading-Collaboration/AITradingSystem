@@ -522,3 +522,41 @@ DEVX-017 依赖 DEVX-016 全部完成；OPS-082 须 owner 先确认「不得使�
   - **下一步与临时工作区（生命周期记录）**：在已发布 main 的本地克隆上运行同一批用例，同时跑旧的逐 wave 测试（`tests/test_arch_004_refactor_policy.py` 全文件、006c、2452）与保留侧测试（`test_arch_005_compat_ledger.py`），产出逐用例 / 逐测试矩阵与差距清单；不删任何断言。任务 DEVX-016 P4-2；路径 `D:/Work/devx016-p42/clone`（`git clone --local`，对象硬链接）、`D:/Work/devx016-p42/bt`（pytest basetemp）、`D:/Work/devx016-p42/results`（逐用例 JSON 与 junit）；退出条件：矩阵与差距清单写入本文档并核对，证据复制到 `outputs/architecture/devx_016/p42/` 后，按精确路径白名单删除克隆与 basetemp。运行期间不与发布链并行。
   - **候选 B 搭载（2026-10-09 夜）**：下一个代码候选 = DEVX-023 候选 B（封印只在发布链启用，owner 选择；DEVX-023 第 10.10 节），它为 S3 增加步骤 `A06.seal_rebuild`（build + verify，策略里 `s3_command` 角色启用时才执行），并搭载 S3 后续小项 (g)（E50 / A03 的进程检查对桌面应用瞬时 `git.exe` 的有界重试：3 次、间隔 5 s，具名常量）。C3b 的实跑（28 个用例在四个克隆上并行）先于它完成，结果与差距清单随后写入本节。
   - **候选 B 已实现（2026-10-09 夜，尚未冻结）**：S3 小项 (g) 与步骤 `A06.seal_rebuild` 都在这个候选里，详见 DEVX-023 第 10.10 节的实现记录。注意：C3b 迷你根目录自测里「账本自己抓到 8/18」那组数字用的是叠加哈希器（读真实检出里未改动的文件），低估了账本的检出——授权文件（遗留 YAML、策略、索引）本身就是后续段登记的来源，克隆上的实跑里改动它们会直接触发 `LEDGER_LIVE_DRIFT`；以克隆实跑为准，结果写入后更正本节上面的数字。
+- 2026-10-10：**C3b（P4-2）结果：变异等价性证据（28 个变异用例，在已发布 main `69f34967d` 的本地克隆上实跑）**。证据在 `outputs/architecture/devx_016/p42/`（逐用例 JSON、junit、矩阵、会话夹具脚本）。
+  - **方法**：四个 `git clone --local` 克隆（main，干净）并行；每个用例：还原克隆 → 应用变异 → **新侧**进程内评估（加载器 + 活动账本 + 结构检查）→ 用 pytest（xdist，`-n 8 --dist load`）跑四个文件共 641 个测试（`test_arch_004_refactor_policy.py` 全文件 256、`test_devx_006c_compatibility_authority.py` 97、`test_trading2452_architecture_contract.py` 228、`test_arch_005_compat_ledger.py` 60）→ 还原。**基线 C00：641 个测试全部通过、新侧零违规**（单次约 6.6 分钟，其中一个测试 `test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes` 独占约 318 s，它实际是遗留哈希解析器的测试）。用 `--dist load` 而不是 `loadfile` 是有意的：refactor_policy 是一个 4 万行的文件，`loadfile` 会把它串行塞进一个 worker。
+  - **分类**：旧侧（逐 wave 风格，P4-4 的删除候选）= 113 个（P4-0 的 112 个 + 上述解析器测试）+ **89 个名字没被 P4-0 过滤器（`hash_authority|successor|retained`）匹配到的同类测试**（独立的 `*_rejects_historical_prefix_tamper`、`*_is_preserved/immutable_historical_authority`、`*_remains_historical` 等；这是对 P4-0 盘点的补充：删除候选比 112 个多）+ 006c 的 16 个逐 wave + 2452 的全部 228 个；保留侧 = 006c 其余 81 个 + 账本测试 60 个 + refactor_policy 其余 54 个。
+  - **判据与结果**：对每个用例，旧侧非空时保留侧（账本 / 加载器 / 任一保留测试）必须非空。**28 个变异用例里差距清单为空**：旧侧抓到的，保留侧都抓到。分层：加载器的哈希钉 5/5（RAW 通道）；账本自己 15 个；只靠别的保留测试的 6 个（C10、C12、C16、C17、C18、L03，抓到它们的都是 `test_repository_authority_is_fresh_and_cut_over`——生成物新鲜度测试，C12 另有 `test_r01_the_real_ledger_has_the_measured_shape`）；两个对照（L04 退役影子文件、L05 无关文件）按设计两侧都沉默。
+    **C16、C17 旧侧一个都没抓到**（旧测试对最新片段里的 `owner_decision` 文本与指向仍存在文件的 `removed_live_source_paths` 无感），保留侧抓到了——保留侧在这两类上更强。**对照 L03**（手工追加 `docs/task_register.md`）：账本按策略容忍易变视图，但生成物新鲜度测试与旧侧的 10 个测试触发——手改生成视图本来就应该被抓，不是缺口。
+  - **完整矩阵**（旧侧失败 = 上述旧侧测试里失败的个数，保留侧 = 保留侧测试里失败的个数）：
+    | 用例 | 类 | 通道 | 变异 | 新侧谁抓到 | 旧侧失败 | 保留侧测试失败 |
+    |---|---|---|---|---|---|---|
+    | R01 | M01 | RAW | 改遗留 YAML 早期段一个 schema 字符（不重封） | 加载器 AUTHORITY_LEGACY_HASH_DRIFT | 160 | 63 |
+    | R02 | M03 | RAW | 改片段文件里一个来源哈希的十六进制位（不重封） | 加载器 AUTHORITY_FRAGMENT_HASH_DRIFT | 160 | 58 |
+    | R03 | M05 | RAW | 调换索引相邻两项（不重算链） | 加载器 AUTHORITY_INDEX_ORDER_INVALID | 160 | 55 |
+    | R04 | M07 | RAW | 复制索引末项 | 加载器 AUTHORITY_INDEX_ORDER_INVALID | 160 | 55 |
+    | R05 | M08 | RAW | 删除最新片段文件（索引仍列出） | 加载器 AUTHORITY_FILE_MISSING | 160 | 58 |
+    | C01 | M01 | CONSISTENT | 改遗留早期段 schema_version（重封） | 账本 LEDGER_LIVE_DRIFT | 132 | 3 |
+    | C02 | M16 | CONSISTENT | 改遗留早期段 task_ids 首项（重封） | 账本 LEDGER_LIVE_DRIFT | 132 | 3 |
+    | C03 | M16 | CONSISTENT | 改遗留中期段 status（重封） | 账本 LEDGER_LIVE_DRIFT | 133 | 3 |
+    | C04 | M06 | CONSISTENT | 遗留中期段 production_effect none→live（重封） | 账本 LEDGER_LIVE_DRIFT, LEDGER_SAFETY_FLAG | 133 | 3 |
+    | C05 | M09 | CONSISTENT | 破坏遗留段 prior_sections_immutability.raw_sha256（重封） | 账本 LEDGER_LIVE_DRIFT | 122 | 3 |
+    | C06 | M10 | CONSISTENT | 去掉遗留段 prior_sections_immutability（重封） | 账本 LEDGER_LIVE_DRIFT | 89 | 3 |
+    | C07 | M11 | CONSISTENT | 遗留段 historical_hashes_rewritten=true（重封） | 账本 LEDGER_HISTORY_REWRITTEN, LEDGER_LIVE_DRIFT | 122 | 3 |
+    | C08 | M03 | CONSISTENT | 改最新片段一个来源哈希（重封） | 账本 LEDGER_LIVE_DRIFT | 1 | 5 |
+    | C09 | M04 | CONSISTENT | 去掉中期片段 superseded_live_source_paths 末项（重封） | 账本 LEDGER_SECTION_SOURCES_BEYOND_DECLARED | 1 | 2 |
+    | C10 | M05 | CONSISTENT | 调换相邻两个片段的顺序（重渲索引） | 保留测试 repository_authority_is_fresh_and_cut_over | 5 | 1 |
+    | C11 | M06 | CONSISTENT | 中期片段 safety.production_effect→live（重封） | 账本 LEDGER_SAFETY_FLAG | 1 | 2 |
+    | C12 | M08 | CONSISTENT | 删除中期片段（重渲索引） | 保留测试 r01_the_real_ledger_has_the_measured_shape / repository_authority_is_fresh_and_cut_over | 93 | 2 |
+    | C13 | M14 | CONSISTENT | 截断：去掉最新片段（重渲索引） | 账本 LEDGER_LIVE_DRIFT | 139 | 7 |
+    | C14 | M11 | CONSISTENT | 中期片段 historical_hashes_rewritten=true（重封） | 账本 LEDGER_HISTORY_REWRITTEN | 1 | 2 |
+    | C15 | M12 | CONSISTENT | 最新片段一条记录的路径换成 README.md（重封） | 账本 LEDGER_LIVE_DRIFT, LEDGER_SECTION_SOURCES_BEYOND_DECLARED, LEDGER_SECTION_SOURCES_UNSORTED, LEDGER_SECTION_SUPERSEDED_NOT_RELISTED | 125 | 6 |
+    | C16 | M13 | CONSISTENT | 最新片段 removed_live_source_paths 指向仍存在的文件（重封） | 保留测试 repository_authority_is_fresh_and_cut_over / s2a_validator_rejects_changed_source_without_rebuild | 0 | 4 |
+    | C17 | M16 | CONSISTENT | 改最新片段 owner_decision 文本（重封） | 保留测试 repository_authority_is_fresh_and_cut_over / s2a_validator_rejects_changed_source_without_rebuild | 0 | 4 |
+    | C18 | M16 | CONSISTENT | 改中期片段 status 文本（重封） | 保留测试 repository_authority_is_fresh_and_cut_over | 1 | 1 |
+    | L01 | M02 | LIVE | AGENTS.md 末尾追加（最新段登记的来源） | 账本 LEDGER_LIVE_DRIFT | 8 | 5 |
+    | L02 | M15 | LIVE | 只被旧段登记的文档末尾追加 | 账本 LEDGER_LIVE_DRIFT | 123 | 2 |
+    | L03 | M17 | LIVE | docs/task_register.md（易变生成视图）手工追加 | 保留测试 repository_authority_is_fresh_and_cut_over | 10 | 1 |
+    | L04 | M18 | LIVE | 已退役影子注册表文件追加 | （无；对照，按设计容忍） | 0 | 0 |
+    | L05 | M19 | LIVE | 新增一个无关文件 | （无；对照，按设计容忍） | 0 | 0 |
+  - **旧测试的敏感度**（排除 RAW 通道，即只看「改了内容并重封」与「改了真实文件」的 23 个用例）：P4-0 的 113 个逐 wave 测试全部至少触发一次（113/113）；89 个同类测试里只有 30 个触发过，其余 59 个从未触发；006c 逐 wave 的 16 个里 14 个触发；**2452 的 228 个里只有 2 个触发过**。从未触发的这些测试检验的是各自的验证函数（在合成夹具上喂篡改字节、喂受限后继），不是仓库状态，对仓库变异无感——它们不在「变异等价」的覆盖范围内，P4-4 要把它们连同各自的 helper 一起退役，需要 owner 抽查确认这些 helper 不再被生产代码使用。
+  - **含义与 P4-3 的候选项**：(1) 没有发现必须补进通用校验的缺口——但这是 19 类变异的结论，不是证明；(2) 账本之外承担保护的保留测试必须留下：`test_repository_authority_is_fresh_and_cut_over`（生成物新鲜度，覆盖片段的顺序、删除、`removed` 路径、文本字面量）与 `test_legacy_prefix_bytes_equal_exact_start_base`（遗留 YAML 必须等于 `exact_start_base` 的 git blob，覆盖 C01–C07 的重封改写）；(3) 为了不让账本在顺序 / 删除 / `removed` 路径这三类上依赖那一个新鲜度测试，P4-3 可以把它们补成账本自己的检查（有序段 id 摘要进策略或索引、`LEDGER_REMOVED_PATH_EXISTS`），成本小，属于加固而非必需；(4) **更正**：上面「C3b 迷你根目录自测」那一组「账本自己抓到 8/18」的数字是叠加哈希器读真实检出里未改动的文件得出的，低估了账本——授权文件（遗留 YAML、策略、索引）本身就是后续段登记的来源，在克隆里改动它们直接触发 `LEDGER_LIVE_DRIFT`；以本条克隆实跑为准（CONSISTENT 18 个用例里账本自己抓到 13 个）；(5) 仍待 owner：compat 账本策略的内容评审与「更严的不变量」是否接受（P4-3 之前），P4-4 的删除范围（含上面补充的同类测试与 2452 的解析器测试）及抽查方式。
