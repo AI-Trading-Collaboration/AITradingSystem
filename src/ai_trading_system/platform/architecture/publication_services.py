@@ -22,6 +22,14 @@ from ai_trading_system.platform.architecture.publication_commands import Command
 
 PowerShellRunner = Callable[[str], CommandResult]
 
+# The desktop app polls the repository's git status in short bursts (git.exe command lines with
+# `-c core.hooksPath=NUL -c safe.directory=* -c core.fsmonitor=`). A burst that overlaps one
+# observation of the host must not stop a chain (E50 failed once on it, 2026-10-09); a process
+# that stays must. Engineering retry parameters, not an investment threshold: 5 observations
+# 6 s apart (a 24 s window).
+PROCESS_SETTLE_ATTEMPTS = 5
+PROCESS_SETTLE_INTERVAL_SECONDS = 6.0
+
 
 class DetachedLaunchError(RuntimeError):
     def __init__(self, code: str, message: str) -> None:
@@ -159,6 +167,7 @@ class HostFactsCollector:
         lease_replay: Callable[[], tuple[str, tuple[str, ...]]],
         now: Callable[[], datetime] = lambda: datetime.now(tz=UTC),
         own_pids: Sequence[int] | None = None,
+        sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self.repository_root = repository_root
         self.run_powershell = run_powershell
@@ -166,6 +175,7 @@ class HostFactsCollector:
         self.lease_replay = lease_replay
         self.now = now
         self.own_pids = tuple(own_pids) if own_pids is not None else (os.getpid(), os.getppid())
+        self.sleep = sleep
 
     def live_processes(self) -> tuple[str, ...]:
         script = (
@@ -184,6 +194,21 @@ class HostFactsCollector:
             found.append(line[:160])
         return tuple(found)
 
+    def settled_live_processes(self) -> tuple[str, ...]:
+        """Live foreign git/python processes after bounded re-observation (S3 follow-up g).
+
+        Clean at any observation means clean; if every observation sees a process the last one is
+        returned, so a process that stays still fails the caller exactly as before.
+        """
+        processes: tuple[str, ...] = ()
+        for attempt in range(PROCESS_SETTLE_ATTEMPTS):
+            processes = self.live_processes()
+            if not processes:
+                return ()
+            if attempt + 1 < PROCESS_SETTLE_ATTEMPTS:
+                self.sleep(PROCESS_SETTLE_INTERVAL_SECONDS)
+        return processes
+
     def pre_publish_facts(
         self, *, expected_main: str, expected_lease: str, full_ended_at: datetime
     ) -> PrePublishFacts:
@@ -195,11 +220,7 @@ class HostFactsCollector:
             base = git_dir / sub
             if base.exists():
                 locks += sorted(p.relative_to(git_dir).as_posix() for p in base.rglob("*.lock"))
-        processes: tuple[str, ...] = ()
-        for _ in range(3):  # git.exe bursts from the desktop app are transient
-            processes = self.live_processes()
-            if not processes:
-                break
+        processes = self.settled_live_processes()
         status, active = self.lease_replay()
         return PrePublishFacts(
             main=self.git(["rev-parse", "main"]),

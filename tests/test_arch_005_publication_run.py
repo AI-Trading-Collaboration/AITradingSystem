@@ -22,6 +22,8 @@ from ai_trading_system.platform.architecture.parallel_replay_scope import (
     ROLE_LOCAL_PUBLISH_WORKER,
     ROLE_S3_COMMAND,
     ROLE_VALIDATION_STAGE_1,
+    SEAL_ENV,
+    SEAL_ON_VALUE,
     ParallelReplayScope,
     inactive_scope,
 )
@@ -513,3 +515,63 @@ def test_a_role_the_scope_leaves_out_gets_nothing(tmp_path: Path) -> None:
     h2.engine.run()
     _, second_worker_environment = _launch_of(h2, "local-publish")
     assert second_worker_environment == {}
+
+
+def _seal_scope(*seal_roles: str, parallel_roles: tuple[str, ...] = ()) -> ParallelReplayScope:
+    return ParallelReplayScope(
+        status="PILOT_BASELINE",
+        version="1.1.0",
+        workers=4,
+        enabled_roles=frozenset(parallel_roles),
+        config_sha256="f" * 64,
+        problem=None,
+        seal_roles=frozenset(seal_roles),
+    )
+
+
+def test_the_reviewed_seal_scope_reaches_stage_1_and_the_worker_only(tmp_path: Path) -> None:
+    scope = _seal_scope(ROLE_S3_COMMAND, ROLE_VALIDATION_STAGE_1, ROLE_LOCAL_PUBLISH_WORKER)
+    h = Harness(tmp_path, parallel_replay=scope)
+    h.engine.run()
+    driver, driver_environment = _launch_of(h, "scripts/architecture_arch005_validate_candidate.py")
+    # stage 1 gets the seal through an argument the driver turns into that stage's environment
+    # alone; the driver process itself carries none, so the pre-Full tiers and the Full replay
+    # in full
+    assert "--stage-1-lease-seal" in driver
+    assert "--stage-1-parallel-replay-workers" not in driver
+    assert driver_environment == {}
+    _, worker_environment = _launch_of(h, "local-publish")
+    assert worker_environment == {SEAL_ENV: SEAL_ON_VALUE}
+    facts = h.journal.replay().last_detail("E53.local_publish_launch")
+    assert facts is not None and facts["parallel_replay_environment"] == {SEAL_ENV: SEAL_ON_VALUE}
+
+
+def test_both_switches_reach_the_worker_when_the_policy_gives_both(tmp_path: Path) -> None:
+    roles = (ROLE_S3_COMMAND, ROLE_VALIDATION_STAGE_1, ROLE_LOCAL_PUBLISH_WORKER)
+    h = Harness(tmp_path, parallel_replay=_seal_scope(*roles, parallel_roles=roles))
+    h.engine.run()
+    driver, _ = _launch_of(h, "scripts/architecture_arch005_validate_candidate.py")
+    assert "--stage-1-lease-seal" in driver
+    assert driver[driver.index("--stage-1-parallel-replay-workers") + 1] == "4"
+    _, worker_environment = _launch_of(h, "local-publish")
+    assert worker_environment == {PARALLEL_REPLAY_ENV: "4", SEAL_ENV: SEAL_ON_VALUE}
+
+
+def test_a_role_the_seal_scope_leaves_out_gets_no_seal(tmp_path: Path) -> None:
+    h = Harness(tmp_path, parallel_replay=_seal_scope(ROLE_LOCAL_PUBLISH_WORKER))
+    h.engine.run()
+    driver, _ = _launch_of(h, "scripts/architecture_arch005_validate_candidate.py")
+    assert "--stage-1-lease-seal" not in driver
+    _, worker_environment = _launch_of(h, "local-publish")
+    assert worker_environment == {SEAL_ENV: SEAL_ON_VALUE}
+    h2 = Harness(tmp_path / "second", parallel_replay=_seal_scope(ROLE_VALIDATION_STAGE_1))
+    h2.engine.run()
+    _, second_worker_environment = _launch_of(h2, "local-publish")
+    assert second_worker_environment == {}
+
+
+def test_without_a_scope_the_driver_gets_no_seal_flag(tmp_path: Path) -> None:
+    h = Harness(tmp_path)  # inactive scope: today's behaviour
+    h.engine.run()
+    driver, _ = _launch_of(h, "scripts/architecture_arch005_validate_candidate.py")
+    assert "--stage-1-lease-seal" not in driver

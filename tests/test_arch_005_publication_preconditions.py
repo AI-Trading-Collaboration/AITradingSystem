@@ -28,7 +28,7 @@ class Host:
 
 
 def _engine(
-    tmp_path: Path, world: World, host: Host
+    tmp_path: Path, world: World, host: Host, *, seal_rebuild: bool = False
 ) -> tuple[PublicationRunEngine, PublicationJournal]:
     config = make_run_config(world)
     steps = build_precondition_steps(
@@ -38,6 +38,7 @@ def _engine(
         interpreter=lambda: (host.executable, host.version),
         free_disk_gb=lambda: host.free_gb,
         min_free_disk_gb=100.0,
+        seal_rebuild=seal_rebuild,
     )
     journal = PublicationJournal(tmp_path / "run" / "journal.jsonl")
     engine = PublicationRunEngine(

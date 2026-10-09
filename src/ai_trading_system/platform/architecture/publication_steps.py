@@ -20,6 +20,8 @@ from ai_trading_system.platform.architecture.publication_commands import (
     BASELINE_PREFLIGHT_SECONDS,
     BASELINE_READINESS_SECONDS,
     BASELINE_RELEASE_SECONDS,
+    BASELINE_SEAL_SECONDS,
+    LEASE_SEAL_SCRIPT,
     READINESS_SCRIPT,
     CommandRunner,
     FenceCli,
@@ -56,8 +58,14 @@ def build_precondition_steps(
     interpreter: Callable[[], tuple[str, tuple[int, int]]],
     free_disk_gb: Callable[[], float],
     min_free_disk_gb: float,
+    seal_rebuild: bool = False,
 ) -> list[Step]:
-    """Stage A: everything that must be true before the first transaction is acquired."""
+    """Stage A: everything that must be true before the first transaction is acquired.
+
+    ``seal_rebuild`` (DEVX-023 candidate B) is True when the reviewed scope gives the replay seal
+    to the publication command: A06 then rebuilds the seal for this candidate's code and proves
+    it equal to the serial replay before anything else replays the store with it.
+    """
 
     def interpreter_step(context: StepContext) -> Mapping[str, Any]:
         executable, version = interpreter()
@@ -150,6 +158,60 @@ def build_precondition_steps(
             )
         return {"dependency_gate": "PASS", "freshness_pending": body.get("violation_count", 0)}
 
+    def seal_rebuild_step(context: StepContext) -> Mapping[str, Any]:
+        if not seal_rebuild:
+            return {
+                "seal": "NOT_APPLICABLE",
+                "reason": "the reviewed scope does not give the replay seal to this command",
+            }
+        built = json_object(
+            runner(
+                (config.python, "-B", LEASE_SEAL_SCRIPT, "build", "--actor", config.actor),
+                log_name=f"{config.run_id}_A06_seal_build",
+            ),
+            code="PUBLICATION_RUN_SEAL_BUILD",
+        )
+        if built.get("status") != "PASS":
+            raise StepFailed(
+                "PUBLICATION_RUN_SEAL_BUILD",
+                "重放封印构建没有通过",
+                {"status": built.get("status")},
+            )
+        verified = json_object(
+            runner(
+                (config.python, "-B", LEASE_SEAL_SCRIPT, "verify"),
+                log_name=f"{config.run_id}_A06_seal_verify",
+            ),
+            code="PUBLICATION_RUN_SEAL_VERIFY",
+        )
+        if (
+            verified.get("status") != "PASS"
+            or verified.get("ok") is not True
+            or verified.get("differing_fields")
+        ):
+            raise StepFailed(
+                "PUBLICATION_RUN_SEAL_VERIFY",
+                "封印重放与串行完整重放不一致，什么都不继续",
+                {
+                    "ok": verified.get("ok"),
+                    "reason": verified.get("reason"),
+                    "differing_fields": list(verified.get("differing_fields") or [])[:10],
+                },
+            )
+        report = built.get("report") or {}
+        return {
+            "seal": "BUILT_AND_VERIFIED",
+            "seal_sha256": built.get("seal_sha256"),
+            "kernel_fingerprint": built.get("kernel_fingerprint"),
+            "chains": report.get("chains"),
+            "sealed_chains": report.get("sealed_chains"),
+            "sealed_events": report.get("sealed_events"),
+            "skipped_non_terminal": report.get("skipped_non_terminal"),
+            "build_seconds": report.get("seconds"),
+            "verify_sealed_seconds": verified.get("sealed_seconds"),
+            "verify_full_seconds": verified.get("full_seconds"),
+        }
+
     return [
         Step("A00.interpreter", ".venv 的 Python 3.11 正在运行本命令", interpreter_step),
         Step("A01.git_state", "main 为冻结基线，HEAD 是其后代且在任务分支上",
@@ -160,6 +222,8 @@ def build_precondition_steps(
         Step("A04.disk_space", "磁盘空闲空间达到策略下限", disk_step),
         Step("A05.dependency_gate", "architecture validate：依赖门 PASS（只读）",
              dependency_gate, baseline_seconds=BASELINE_ACQUIRE_SECONDS),
+        Step("A06.seal_rebuild", "重放封印：为本候选的代码重建并与串行重放核对（策略启用时）",
+             seal_rebuild_step, baseline_seconds=BASELINE_SEAL_SECONDS),
     ]  # fmt: skip
 
 

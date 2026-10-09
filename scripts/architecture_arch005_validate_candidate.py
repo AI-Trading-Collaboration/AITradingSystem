@@ -20,6 +20,8 @@ from typing import IO
 
 from ai_trading_system.platform.architecture.parallel_replay_scope import (
     PARALLEL_REPLAY_ENV,
+    SEAL_ENV,
+    SEAL_ON_VALUE,
     without_switch,
 )
 from ai_trading_system.platform.architecture.publication_validation import (
@@ -70,6 +72,11 @@ def main() -> int:
         default=0,
         help="DEVX-023 P6: parallel lease replay for stage 1 only (reviewed scope; 0 = serial)",
     )
+    parser.add_argument(
+        "--stage-1-lease-seal",
+        action="store_true",
+        help="DEVX-023 candidate B: replay seal for stage 1 only (reviewed scope; default off)",
+    )
     args = parser.parse_args()
     # The parallel replay switch is never inherited: only stage 1 gets it, from the argument, so the
     # pre-Full tiers and the formal Full stay serial whatever the launching shell exported.
@@ -80,11 +87,12 @@ def main() -> int:
         "AITS_NAMED_DQ_PUBLICATION_TRANSACTION": str(args.transaction),
         "AITS_NAMED_DQ_SOURCE_LEASE_ID": args.lease_id,
     }
-    stage_environment = (
-        {STAGE_1_ID: {PARALLEL_REPLAY_ENV: str(args.stage_1_parallel_replay_workers)}}
-        if args.stage_1_parallel_replay_workers >= 2
-        else {}
-    )
+    stage_1_environment: dict[str, str] = {}
+    if args.stage_1_parallel_replay_workers >= 2:
+        stage_1_environment[PARALLEL_REPLAY_ENV] = str(args.stage_1_parallel_replay_workers)
+    if args.stage_1_lease_seal:
+        stage_1_environment[SEAL_ENV] = SEAL_ON_VALUE
+    stage_environment = {STAGE_1_ID: stage_1_environment} if stage_1_environment else {}
     config = ValidationConfig(
         run_id=args.run_id,
         repository_root=ROOT,

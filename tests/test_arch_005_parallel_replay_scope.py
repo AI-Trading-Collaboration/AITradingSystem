@@ -28,6 +28,8 @@ from ai_trading_system.platform.architecture.parallel_replay_scope import (
     ROLE_VALIDATION_STAGE_1,
     ROLES,
     SCOPE_CONFIG_PATH,
+    SEAL_ENV,
+    SEAL_ON_VALUE,
     ParallelReplayScope,
     apply_switch,
     inactive_scope,
@@ -67,9 +69,11 @@ def test_the_constants_stay_equal_to_the_parallel_replay_module() -> None:
 def test_the_real_policy_is_valid_in_force_and_matches_the_reviewed_design() -> None:
     scope = load_scope(ROOT)
     assert scope.problem is None and scope.active
-    assert scope.status == "PILOT_BASELINE" and scope.version == "1.0.0"
+    assert scope.status == "PILOT_BASELINE" and scope.version == "1.1.0"
     assert scope.workers == 4
     assert scope.enabled_roles == ENABLED_ROLES
+    # candidate B: the replay seal rides the same chain roles (DEVX-023 10.10)
+    assert scope.seal_roles == ENABLED_ROLES
     assert scope.config_sha256 == hashlib.sha256(REAL.read_bytes()).hexdigest()
     document = _document()
     assert set(document["roles"]) == set(ROLES)
@@ -79,13 +83,18 @@ def test_the_real_policy_is_valid_in_force_and_matches_the_reviewed_design() -> 
     # the pre-Full tiers run 16 xdist workers; the policy keeps them serial until measured
     assert document["roles"][ROLE_VALIDATION_PRE_FULL_TIERS]["value"] == "disabled"
     assert {ROLE_FORMAL_FULL, ROLE_NAMED_DQ_CHILDREN} == NEVER_ENABLED
+    seal_roles = document["lease_seal"]["roles"]
+    assert set(seal_roles) == set(ROLES)
+    for role in NEVER_ENABLED:
+        assert seal_roles[role]["value"] == "disabled" and seal_roles[role]["never_enabled"] is True
+    assert seal_roles[ROLE_VALIDATION_PRE_FULL_TIERS]["value"] == "disabled"
 
 
 def test_only_enabled_roles_get_the_switch_and_its_value_comes_from_the_policy() -> None:
     scope = load_scope(ROOT)
     for role in ENABLED_ROLES:
         assert scope.workers_for(role) == 4
-        assert scope.environment_for(role) == {PARALLEL_REPLAY_ENV: "4"}
+        assert scope.environment_for(role) == {PARALLEL_REPLAY_ENV: "4", SEAL_ENV: SEAL_ON_VALUE}
     for role in set(ROLES) - ENABLED_ROLES:
         assert scope.workers_for(role) == 0 and scope.environment_for(role) == {}
     assert scope.environment_for("a_role_nobody_declared") == {}
@@ -174,14 +183,15 @@ def test_only_pilot_baseline_and_owner_approved_put_the_policy_in_force(
 
 
 def test_an_inherited_switch_is_removed_and_only_the_policy_may_set_it() -> None:
-    shell = {"PATH": "x", PARALLEL_REPLAY_ENV: "8"}
+    shell = {"PATH": "x", PARALLEL_REPLAY_ENV: "8", SEAL_ENV: "yes"}
     assert without_switch(shell) == {"PATH": "x"}
     assert shell[PARALLEL_REPLAY_ENV] == "8"  # the caller's mapping is not modified
     scope = load_scope(ROOT)
 
     target = dict(shell)
     apply_switch(scope, ROLE_S3_COMMAND, target)
-    assert target == {"PATH": "x", PARALLEL_REPLAY_ENV: "4"}  # the shell's 8 never wins
+    # the shell's 8 and "yes" never win
+    assert target == {"PATH": "x", PARALLEL_REPLAY_ENV: "4", SEAL_ENV: SEAL_ON_VALUE}
 
     target = dict(shell)
     apply_switch(scope, ROLE_FORMAL_FULL, target)  # a role the policy leaves out: no switch at all

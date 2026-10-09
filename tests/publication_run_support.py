@@ -13,6 +13,7 @@ from ai_trading_system.platform.architecture.publication_commands import (
     FENCE_SCRIPT,
     GENERATOR_COMMANDS,
     GUARD_SCRIPT,
+    LEASE_SEAL_SCRIPT,
     PREFLIGHT_SCRIPT,
     READINESS_SCRIPT,
     TRANSACTION_ROOT,
@@ -88,6 +89,33 @@ class World:
                 {"rule_id": "aggregate_shadow_index_reproducible"},
             ],
         }
+        # DEVX-023 candidate B: the replay seal CLI (A06). Scripted like the other commands.
+        self.seal_build_exit = 0
+        self.seal_build_output: str | None = None
+        self.seal_build_body: dict[str, Any] = {
+            "status": "PASS",
+            "command": "build",
+            "seal_sha256": "5" * 64,
+            "kernel_fingerprint": "6" * 64,
+            "report": {
+                "chains": 903,
+                "events": 6375,
+                "sealed_chains": 901,
+                "sealed_events": 6371,
+                "skipped_non_terminal": 2,
+                "seconds": 34.6,
+            },
+        }
+        self.seal_verify_exit = 0
+        self.seal_verify_body: dict[str, Any] = {
+            "status": "PASS",
+            "command": "verify",
+            "ok": True,
+            "reason": None,
+            "differing_fields": [],
+            "sealed_seconds": 3.05,
+            "full_seconds": 33.08,
+        }
         self.push_exit = 0
         self.ls_remote_failures = 0  # the next N `git ls-remote` calls fail (a network blip)
         self.heartbeat_status = "PASS"
@@ -116,6 +144,15 @@ class World:
             if argv[3] == "heartbeat":
                 return self._result(argv, {"status": self.heartbeat_status, "action": "heartbeat"})
             return self._result(argv, {"status": "PASS", "dirty_paths": list(self.dirty)})
+        if script == LEASE_SEAL_SCRIPT:
+            if argv[3] == "build":
+                text = (
+                    self.seal_build_output
+                    if self.seal_build_output is not None
+                    else self.seal_build_body
+                )
+                return self._result(argv, text, self.seal_build_exit)
+            return self._result(argv, self.seal_verify_body, self.seal_verify_exit)
         if script == DEVEX_SCRIPT and "validate" in argv:
             text = self.devex_output if self.devex_output is not None else self.devex_body
             return self._result(argv, text, self.devex_exit)
@@ -298,6 +335,9 @@ class FakeCollector:
         self.hours_after_full_end = 0.5
 
     def live_processes(self) -> tuple[str, ...]:
+        return self.processes
+
+    def settled_live_processes(self) -> tuple[str, ...]:
         return self.processes
 
     def pre_publish_facts(

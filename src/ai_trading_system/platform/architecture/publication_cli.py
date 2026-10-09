@@ -405,10 +405,11 @@ def build_engine(
         *build_precondition_steps(
             run_config,
             runner,
-            live_processes=environment.collector.live_processes,
+            live_processes=environment.collector.settled_live_processes,
             interpreter=environment.interpreter,
             free_disk_gb=environment.free_disk_gb,
             min_free_disk_gb=float(record["limits"]["min_free_disk_gb"]),
+            seal_rebuild=environment.parallel_replay.seal_for(ROLE_S3_COMMAND),
         ),
         *build_prepare_steps(run_config, runner),
         *build_formal_steps(run_config, runner),

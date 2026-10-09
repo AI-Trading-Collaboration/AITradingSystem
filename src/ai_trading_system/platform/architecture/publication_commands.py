@@ -23,6 +23,7 @@ from ai_trading_system.platform.artifacts.writer import write_bytes_atomic
 FENCE_SCRIPT = "scripts/architecture_arch005_publication_fence.py"
 GUARD_SCRIPT = "scripts/architecture_arch005_checkout_guard.py"
 READINESS_SCRIPT = "scripts/validation_readiness.py"
+LEASE_SEAL_SCRIPT = "scripts/architecture_arch005_lease_seal.py"
 PREFLIGHT_SCRIPT = "tools/codex_skills/run-governed-development/scripts/preflight.py"
 TRANSACTION_ROOT = "outputs/architecture/arch_005_integration_publication_fence/transactions"
 
@@ -53,6 +54,10 @@ BASELINE_READINESS_SECONDS = 75.0
 # LOCAL_MAIN_FF_PRE and REMOTE_PUSH_PRE re-verify the whole closure (several lease-store replays):
 # measured 190-205 s and 217-218 s on the C2 and the DEVX-023 P chains (DEVX-022 section 17.8).
 BASELINE_FENCE_CLOSURE_SECONDS = 210.0
+# A06 rebuilds the replay seal (a full validation of every chain) and verifies it against the
+# serial replay: 35.2 s + 37.2 s on the real store of 6,375 events (DEVX-023 section 10.9.2).
+# Reporting baseline only.
+BASELINE_SEAL_SECONDS = 90.0
 
 
 @dataclass(frozen=True)

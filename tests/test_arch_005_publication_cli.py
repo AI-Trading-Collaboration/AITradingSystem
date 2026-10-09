@@ -21,6 +21,7 @@ from publication_run_support import (
 from ai_trading_system.platform.architecture.parallel_replay_scope import (
     PARALLEL_REPLAY_ENV,
     SCOPE_CONFIG_PATH,
+    SEAL_ENV,
     ParallelReplayScope,
     inactive_scope,
 )
@@ -404,3 +405,40 @@ def test_the_real_wiring_takes_the_switch_from_the_reviewed_scope_never_from_the
     bare = default_environment(tmp_path)
     assert not bare.parallel_replay.active
     assert PARALLEL_REPLAY_ENV not in bare.make_runner(tmp_path / "ev").env
+
+
+def test_the_real_wiring_gives_the_seal_to_the_command_from_the_scope_never_from_the_shell(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    target = tmp_path / SCOPE_CONFIG_PATH
+    target.parent.mkdir(parents=True)
+    shutil.copy(ROOT / SCOPE_CONFIG_PATH, target)
+    monkeypatch.setenv(SEAL_ENV, "0")  # whatever the launching shell exported
+    wired = default_environment(tmp_path)
+    assert wired.parallel_replay.seal_for("s3_command")
+    assert wired.make_runner(tmp_path / "ev").env[SEAL_ENV] == "1"
+    target.unlink()  # no reviewed scope: no seal, and the inherited value is dropped
+    bare = default_environment(tmp_path)
+    assert not bare.parallel_replay.active
+    assert SEAL_ENV not in bare.make_runner(tmp_path / "ev").env
+
+
+def test_the_run_record_names_the_seal_roles_it_started_with(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    scope = ParallelReplayScope(
+        status="PILOT_BASELINE",
+        version="1.1.0",
+        workers=4,
+        enabled_roles=frozenset({"s3_command"}),
+        config_sha256="a" * 64,
+        problem=None,
+        seal_roles=frozenset({"s3_command", "local_publish_worker"}),
+    )
+    fx = Fixture(tmp_path, candidate_files=FILES)
+    fx.invoke(capsys, "run", "--run-id", "r1", "--parent-run", "p.json", parallel_replay=scope)
+    run_dir = fx.world.repo / "outputs" / "architecture" / "publication_runs" / "r1"
+    record = json.loads((run_dir / "run.json").read_text(encoding="utf-8"))
+    assert record["parallel_replay"]["seal_roles"] == ["local_publish_worker", "s3_command"]
+    # A06 ran because the command's role has the seal, and the world's fake seal CLI answered it
+    assert fx.world.named("scripts/architecture_arch005_lease_seal.py", "build")

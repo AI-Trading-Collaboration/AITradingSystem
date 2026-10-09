@@ -100,6 +100,8 @@ class DetachedLauncher(Protocol):
 class FactsCollector(Protocol):
     def live_processes(self) -> tuple[str, ...]: ...
 
+    def settled_live_processes(self) -> tuple[str, ...]: ...
+
     def pre_publish_facts(
         self, *, expected_main: str, expected_lease: str, full_ended_at: datetime
     ) -> PrePublishFacts: ...
@@ -153,7 +155,7 @@ def build_validation_steps(config: PublishConfig, runner: CommandRunner) -> list
     run = config.run
 
     def launch(context: StepContext) -> Mapping[str, Any]:
-        live = config.collector.live_processes()
+        live = config.collector.settled_live_processes()
         if live:
             raise StepFailed(
                 "PUBLICATION_RUN_PROCESSES_PRESENT",
@@ -181,6 +183,8 @@ def build_validation_steps(config: PublishConfig, runner: CommandRunner) -> list
         stage_1_workers = config.parallel_replay.workers_for(ROLE_VALIDATION_STAGE_1)
         if stage_1_workers:
             argv += ["--stage-1-parallel-replay-workers", str(stage_1_workers)]
+        if config.parallel_replay.seal_for(ROLE_VALIDATION_STAGE_1):
+            argv.append("--stage-1-lease-seal")
         pid = config.launcher.launch(
             argv,
             cwd=run.repository_root,

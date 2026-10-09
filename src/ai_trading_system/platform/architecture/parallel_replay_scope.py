@@ -1,15 +1,18 @@
-"""DEVX-023 P6: the reviewed scope of the opt-in parallel lease replay.
+"""DEVX-023 P6 and candidate B: the reviewed scope of the opt-in lease replay switches.
 
-The switch (``AITS_LEASE_PARALLEL_REPLAY``) and the replay itself live in ``lease_parallel_replay``.
-This module only answers "which of the publication chain's processes get the switch" from a reviewed
-configuration, so that the answer is data with an owner, a status and an exit condition instead of
-an environment variable somebody exported. It imports nothing heavy (no lease kernel), so the
-validation driver and the publication command can both use it.
+Two switches shorten the replay of the lease store and both default to off: the chain-level parallel
+replay (``AITS_LEASE_PARALLEL_REPLAY``, ``lease_parallel_replay``) and the replay seal
+(``AITS_LEASE_SEAL``, ``lease_replay_seal``). This module only answers "which of the publication
+chain's processes get which switch" from a reviewed configuration, so that the answer is data with
+an owner, a status and an exit condition instead of an environment variable somebody exported. It
+imports nothing heavy (no lease kernel), so the validation driver and the publication command can
+both use it.
 
 Fail safe: a missing, unreadable, malformed or not-enabled configuration means that no process gets
-the switch and every replay stays serial, which is today's behaviour. The value of the switch is
-only ever taken from the configuration; an inherited value is removed by the callers
-(``without_switch``) before the per-role value is added.
+a switch and every replay stays serial, which is today's behaviour. The value of a switch is only
+ever taken from the configuration; an inherited value is removed by the callers
+(``without_switch``) before the per-role values are added. The optional ``lease_seal`` section has
+the same roles and the same invariants as ``roles``; its absence means no process gets the seal.
 """
 
 from __future__ import annotations
@@ -28,6 +31,9 @@ SCHEMA_VERSION = "devx_023_parallel_replay_scope.v1"
 # Same name as lease_parallel_replay.PARALLEL_REPLAY_ENV; a test keeps the two equal so this module
 # does not have to import the lease kernel.
 PARALLEL_REPLAY_ENV = "AITS_LEASE_PARALLEL_REPLAY"
+# Same name as lease_replay_seal.SEAL_ENV (a test keeps them equal) and the value that turns it on.
+SEAL_ENV = "AITS_LEASE_SEAL"
+SEAL_ON_VALUE = "1"
 # The parallel replay clamps larger values to this (lease_parallel_replay.MAX_WORKERS); a test keeps
 # the two equal. A configuration above it is invalid rather than silently clamped.
 MAX_CONFIGURED_WORKERS = 8
@@ -66,18 +72,33 @@ class ParallelReplayScope:
     enabled_roles: frozenset[str]
     config_sha256: str | None
     problem: str | None
+    # Roles that get the replay seal (candidate B); empty when the policy has no lease_seal section.
+    seal_roles: frozenset[str] = frozenset()
 
     @property
     def active(self) -> bool:
-        return self.problem is None and self.status in ENABLED_STATUSES and bool(self.enabled_roles)
+        return (
+            self.problem is None
+            and self.status in ENABLED_STATUSES
+            and bool(self.enabled_roles or self.seal_roles)
+        )
 
     def workers_for(self, role: str) -> int:
         """The worker count for a role, 0 when the role does not get the switch."""
         return self.workers if self.active and role in self.enabled_roles else 0
 
+    def seal_for(self, role: str) -> bool:
+        """Whether the role gets the replay seal switch."""
+        return self.active and role in self.seal_roles
+
     def environment_for(self, role: str) -> dict[str, str]:
+        environment: dict[str, str] = {}
         workers = self.workers_for(role)
-        return {PARALLEL_REPLAY_ENV: str(workers)} if workers else {}
+        if workers:
+            environment[PARALLEL_REPLAY_ENV] = str(workers)
+        if self.seal_for(role):
+            environment[SEAL_ENV] = SEAL_ON_VALUE
+        return environment
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -85,6 +106,7 @@ class ParallelReplayScope:
             "version": self.version,
             "workers": self.workers,
             "enabled_roles": sorted(self.enabled_roles),
+            "seal_roles": sorted(self.seal_roles),
             "config_sha256": self.config_sha256,
             "active": self.active,
             "problem": self.problem,
@@ -102,14 +124,18 @@ def inactive_scope(problem: str | None = None, *, status: str = "ABSENT") -> Par
     )
 
 
+SWITCH_ENVIRONMENT_NAMES = (PARALLEL_REPLAY_ENV, SEAL_ENV)
+
+
 def without_switch(environment: Mapping[str, str]) -> dict[str, str]:
-    """A copy of the environment without an inherited switch (only the configuration may set it)."""
-    return {key: value for key, value in environment.items() if key != PARALLEL_REPLAY_ENV}
+    """A copy of the environment without inherited switches (only the policy may set them)."""
+    return {key: value for key, value in environment.items() if key not in SWITCH_ENVIRONMENT_NAMES}
 
 
 def apply_switch(scope: ParallelReplayScope, role: str, target: MutableMapping[str, str]) -> None:
-    """Make ``target`` (``os.environ`` in a script) carry exactly the role's switch, or none."""
-    target.pop(PARALLEL_REPLAY_ENV, None)
+    """Make ``target`` (``os.environ`` in a script) carry exactly the role's switches, or none."""
+    for name in SWITCH_ENVIRONMENT_NAMES:
+        target.pop(name, None)
     target.update(scope.environment_for(role))
 
 
@@ -151,24 +177,40 @@ def parse_scope(document: object, digest: str) -> ParallelReplayScope:
     workers = document.get("workers")
     if type(workers) is not int or not MIN_CONFIGURED_WORKERS <= workers <= MAX_CONFIGURED_WORKERS:
         return _invalid("SCOPE_CONFIG_WORKERS", digest, status)
-    roles = document.get("roles")
+    enabled, problem = _enabled_roles(document.get("roles"), prefix="")
+    if problem is not None:
+        return _invalid(problem, digest, status)
+    seal_roles: frozenset[str] = frozenset()
+    if "lease_seal" in document:
+        section = document["lease_seal"]
+        if not isinstance(section, Mapping):
+            return _invalid("SCOPE_CONFIG_SEAL_SECTION", digest, status)
+        seal_roles, problem = _enabled_roles(section.get("roles"), prefix="SEAL_")
+        if problem is not None:
+            return _invalid(problem, digest, status)
+    return ParallelReplayScope(
+        status=status,
+        version=version,
+        workers=workers,
+        enabled_roles=enabled,
+        config_sha256=digest,
+        problem=None,
+        seal_roles=seal_roles,
+    )
+
+
+def _enabled_roles(roles: object, *, prefix: str) -> tuple[frozenset[str], str | None]:
+    """The enabled roles of one roles mapping, or the problem code (``prefix`` names the switch)."""
     if not isinstance(roles, Mapping) or set(roles) != set(ROLES):
-        return _invalid("SCOPE_CONFIG_ROLES", digest, status)
+        return frozenset(), f"SCOPE_CONFIG_{prefix}ROLES"
     enabled: set[str] = set()
     for role in ROLES:
         entry = roles[role]
         value = entry.get("value") if isinstance(entry, Mapping) else None
         if value not in ("enabled", "disabled"):
-            return _invalid("SCOPE_CONFIG_ROLE_VALUE", digest, status)
+            return frozenset(), f"SCOPE_CONFIG_{prefix}ROLE_VALUE"
         if value == "enabled":
             if role in NEVER_ENABLED:
-                return _invalid("SCOPE_CONFIG_NEVER_ENABLED_ROLE", digest, status)
+                return frozenset(), f"SCOPE_CONFIG_{prefix}NEVER_ENABLED_ROLE"
             enabled.add(role)
-    return ParallelReplayScope(
-        status=status,
-        version=version,
-        workers=workers,
-        enabled_roles=frozenset(enabled),
-        config_sha256=digest,
-        problem=None,
-    )
+    return frozenset(enabled), None
