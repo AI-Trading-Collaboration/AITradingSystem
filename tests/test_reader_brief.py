@@ -127,119 +127,6 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
         and item["navigation_source"] == "report_index_runtime"
         for item in payload["report_navigation"]
     )
-    calibration = payload["etf_calibration_experiments"]
-    assert calibration["availability"] == "AVAILABLE"
-    assert calibration["latest_experiment_pack"] == "etf_calibration_v1"
-    assert calibration["top_candidate"] == "etf-exp-20260504T000000Z:base_ai_growth"
-    assert calibration["rejected_count"] == 2
-    assert calibration["active_shadow_candidates"] == 1
-    assert calibration["weekly_review_action"] == "promote_to_longer_observation"
-    assert calibration["safety_status"] == (
-        "observe_only=true; production_effect=none; broker_action=none"
-    )
-    forward = payload["etf_forward_simulation"]
-    assert forward["availability"] == "AVAILABLE"
-    assert forward["active_shadow_candidates"] == 1
-    assert forward["watch_count"] == 1
-    assert forward["watchlist_attention_count"] == 1
-    assert forward["best_candidate"].startswith("etf-exp-20260504T000000Z:base_ai_growth")
-    assert forward["safety_status"] == (
-        "observe_only=true; production_effect=none; broker_action=none; "
-        "manual_review_required=true"
-    )
-    assert forward["decision_input_usage"] == "none; forward metrics are evaluation-only"
-    ai_confirmation = payload["etf_ai_confirmation"]
-    assert ai_confirmation["availability"] == "AVAILABLE"
-    assert ai_confirmation["AIConfirmationScore"] == "74.00"
-    assert ai_confirmation["score_band"] == "confirm"
-    assert ai_confirmation["semiconductor_breadth"] == "68.00"
-    assert ai_confirmation["mega_cap_ai_score"] == "81.00"
-    assert ai_confirmation["ai_relative_strength"] == "72.00"
-    assert ai_confirmation["event_risk"] == "medium"
-    assert "no production weights are changed" in ai_confirmation["interpretation"]
-    assert ai_confirmation["safety_status"] == (
-        "observe_only=true; candidate_only=true; production_effect=none; "
-        "broker_action=none; manual_review_required=true"
-    )
-    assert ai_confirmation["detail_report"].endswith("ai_confirmation_report_2026-05-04.json")
-    assert ai_confirmation["production_effect"] == "none"
-    assert ai_confirmation["broker_action"] == "none"
-    ai_attribution = payload["etf_ai_attribution"]
-    assert ai_attribution["availability"] == "AVAILABLE"
-    assert ai_attribution["overall_status"] == "needs_more_data"
-    assert "forward_return_evidence" in ai_attribution["best_evidence"]
-    assert ai_attribution["redundancy_status"] == "medium"
-    assert ai_attribution["detail_report"].endswith("ai_attribution_report_2026-05-04.json")
-    assert ai_attribution["safety_status"] == (
-        "observe_only=true; candidate_only=true; production_effect=none; "
-        "broker_action=none; manual_review_required=true"
-    )
-    assert ai_attribution["production_effect"] == "none"
-    assert ai_attribution["broker_action"] == "none"
-    satellite_attribution = payload["etf_satellite_attribution"]
-    assert satellite_attribution["availability"] == "AVAILABLE"
-    assert satellite_attribution["overall_status"] == "ETF_first_fallback_validated"
-    assert satellite_attribution["eligible_evidence"] == "mixed"
-    assert "saved_loss_rate" in satellite_attribution["fallback_evidence"]
-    assert "best_role=ai_accelerator" in satellite_attribution["role_evidence"]
-    assert "risk_adjusted_alpha" in satellite_attribution["risk_note"]
-    assert satellite_attribution["detail_report"].endswith(
-        "satellite_attribution_report_2026-05-04.json"
-    )
-    assert satellite_attribution["safety_status"] == (
-        "observe_only=true; candidate_only=true; production_effect=none; "
-        "broker_action=none; manual_review_required=true"
-    )
-    assert satellite_attribution["production_effect"] == "none"
-    assert satellite_attribution["broker_action"] == "none"
-    parameter_review = payload["etf_parameter_review"]
-    assert parameter_review["availability"] == "AVAILABLE"
-    assert parameter_review["status"] == "needs_more_data"
-    assert parameter_review["candidate_count"] == 3
-    assert parameter_review["eligible_for_manual_review_count"] == 0
-    assert parameter_review["continue_shadow_count"] == 2
-    assert parameter_review["rejected_count"] == 1
-    assert parameter_review["main_reason"] == "insufficient forward days and mixed evidence"
-    assert parameter_review["detail_report"].endswith("parameter_review_2026-05-04.json")
-    assert parameter_review["safety_status"] == (
-        "observe_only=true; candidate_only=true; production_effect=none; "
-        "broker_action=none; manual_review_required=true"
-    )
-    assert parameter_review["production_effect"] == "none"
-    assert parameter_review["broker_action"] == "none"
-    weight_calibration = payload["etf_weight_calibration"]
-    assert weight_calibration["availability"] == "AVAILABLE"
-    assert weight_calibration["search_pack"] == "etf_initial_weight_search_v1"
-    assert weight_calibration["top_historical_candidate"] == "weight_set_003"
-    assert weight_calibration["forward_evidence_status"] == "needs_more_forward_data"
-    assert weight_calibration["overfit_risk"] == "medium"
-    assert weight_calibration["candidate_status"] == "candidate"
-    assert weight_calibration["manual_review_proposals"] == 0
-    assert weight_calibration["detail_report"].endswith("dual_track_calibration_2026-05-04.json")
-    assert weight_calibration["safety_status"] == (
-        "observe_only=true; candidate_only=true; production_effect=none; "
-        "broker_action=none; manual_review_required=true"
-    )
-    assert weight_calibration["production_effect"] == "none"
-    assert weight_calibration["broker_action"] == "none"
-    initial_candidates = payload["etf_initial_weight_candidates"]
-    assert initial_candidates["availability"] == "AVAILABLE"
-    assert initial_candidates["latest_search_preset"] == "last_3y"
-    assert initial_candidates["top_candidate"] == "weight_set_003"
-    assert initial_candidates["suggested_action"] == "enroll_top_shadow_ready"
-    assert initial_candidates["overfit_risk"] == "medium"
-    assert initial_candidates["best_robustness"] == "balanced_growth_ref"
-    assert initial_candidates["blocked_candidate_count"] == 4
-    assert initial_candidates["recommended_weight_set_ids"] == ["weight_set_003"]
-    assert initial_candidates["detail_report"].endswith(
-        "initial_weight_recommendation_2026-05-04.json"
-    )
-    assert initial_candidates["safety_status"] == (
-        "observe_only=true; candidate_only=true; production_effect=none; "
-        "broker_action=none; manual_review_required=true"
-    )
-    assert initial_candidates["production_effect"] == "none"
-    assert initial_candidates["broker_action"] == "none"
     operations_health = payload["etf_operations_health"]
     assert operations_health["availability"] == "AVAILABLE"
     assert operations_health["status"] == "warning"
@@ -261,52 +148,6 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     )
     assert operations_health["production_effect"] == "none"
     assert operations_health["broker_action"] == "none"
-    dynamic_v3_parameter = payload["etf_dynamic_v3_parameter_research"]
-    assert dynamic_v3_parameter["availability"] == "AVAILABLE"
-    assert dynamic_v3_parameter["evaluator_mode"] == "real_dynamic_v3_rescue"
-    assert dynamic_v3_parameter["candidate_count"] == 300
-    assert dynamic_v3_parameter["top_candidate"] == "medium_candidate_001"
-    assert dynamic_v3_parameter["candidate_evidence_status"] == "PASS_WITH_WARNINGS"
-    assert dynamic_v3_parameter["candidate_evidence_usable_count"] == 5
-    assert dynamic_v3_parameter["candidate_evidence_complete_count"] == 3
-    assert dynamic_v3_parameter["observe_pool_status"] == "PASS"
-    assert dynamic_v3_parameter["observe_candidate_count"] == 2
-    assert dynamic_v3_parameter["shadow_registry_sync_status"] == "NOT_SYNCED_BY_DEFAULT"
-    assert dynamic_v3_parameter["overnight_readiness"] == "READY_WITH_WARNINGS"
-    assert dynamic_v3_parameter["overnight_blocking_reasons"] == "none"
-    assert dynamic_v3_parameter["research_decision_recommendation"] == (
-        "manual_review_observe_pool"
-    )
-    assert dynamic_v3_parameter["research_decision_priority"] == "P1"
-    assert dynamic_v3_parameter["research_decision_next_task"].startswith(
-        "Review observe_pool candidates"
-    )
-    assert dynamic_v3_parameter["evidence_diagnosis_status"] == "PASS_WITH_WARNINGS"
-    assert dynamic_v3_parameter["evidence_diagnosis_usable_candidates"] == 0
-    assert dynamic_v3_parameter["evidence_diagnosis_hard_blocked_candidates"] == 0
-    assert dynamic_v3_parameter["evidence_diagnosis_soft_blocked_candidates"] == 300
-    assert dynamic_v3_parameter["gate_impact_best_scenario"] == "true_hard_failures_only"
-    assert dynamic_v3_parameter["gate_impact_best_observe_candidates"] == 300
-    assert dynamic_v3_parameter["gate_policy_version"] == "2026-06-08"
-    assert dynamic_v3_parameter["gate_policy_observe_only_candidates"] == 300
-    assert dynamic_v3_parameter["candidate_recovery_status"] == "PASS"
-    assert dynamic_v3_parameter["recovered_candidate_count"] == 300
-    assert dynamic_v3_parameter["research_decision_update_go_no_go"] == "GO_WITH_LIMITS"
-    assert dynamic_v3_parameter["research_decision_update_recommended_action"] == (
-        "manual_review_recovered_candidates"
-    )
-    assert dynamic_v3_parameter["research_decision_update_required_owner_approval"] is True
-    assert dynamic_v3_parameter["research_decision_update_usable_candidates_before"] == 0
-    assert dynamic_v3_parameter["research_decision_update_usable_candidates_after"] == 300
-    assert "owner_approval_required" in dynamic_v3_parameter["research_decision_update_warnings"]
-    assert dynamic_v3_parameter["candidate_evidence_summary"].endswith(
-        "evidence_summary_manifest.json"
-    )
-    assert dynamic_v3_parameter["observe_pool"].endswith("observe_pool_manifest.json")
-    assert dynamic_v3_parameter["research_decision"].endswith("research_decision_manifest.json")
-    assert dynamic_v3_parameter["research_decision_update"].endswith(
-        "decision_update_manifest.json"
-    )
     core_items = payload["report_navigation_groups"]["groups"][0]["items"]
     daily_summary_rows = [
         item for item in core_items if item["artifact_id"] == "daily_decision_summary"
@@ -317,113 +158,6 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert payload["report_navigation_groups"]["groups"][0]["purpose"] == "Core decision artifacts"
 
 
-def test_reader_brief_surfaces_weight_calibration_profiling_summary(
-    tmp_path: Path,
-) -> None:
-    inputs = _write_reader_brief_inputs(tmp_path)
-    profiling_path = (
-        tmp_path
-        / "reports"
-        / "etf_portfolio"
-        / "weight_calibration"
-        / "profiling"
-        / "profile-test-run"
-        / "profiling_report.json"
-    )
-    profiling_path.parent.mkdir(parents=True, exist_ok=True)
-    profiling_path.write_text(
-        json.dumps(
-            {
-                "schema_version": "etf_weight_calibration_profiling_report_v1",
-                "report_type": "etf_weight_calibration_profiling",
-                "status": "PASS",
-                "profile_mode": "summary",
-                "total_runtime_seconds": 1378.734,
-                "step_timing": {
-                    "slowest_steps": [
-                        {
-                            "step_id": "candidate_backtest",
-                            "duration_seconds": 1200.0,
-                        }
-                    ]
-                },
-                "cache_timing_breakdown": {
-                    "cache_layers": [
-                        {
-                            "cache_layer": "candidate_backtest",
-                            "hit_count": 10,
-                            "miss_count": 0,
-                            "hit_rate": 1.0,
-                        }
-                    ]
-                },
-                "next_step_recommendation": (
-                    "继续 profile cold run before numerical optimization."
-                ),
-                "safety": {
-                    "observe_only": True,
-                    "candidate_only": True,
-                    "production_effect": "none",
-                    "broker_action": "none",
-                    "manual_review_required": True,
-                },
-                "production_effect": "none",
-                "broker_action": "none",
-            },
-            ensure_ascii=False,
-        ),
-        encoding="utf-8",
-    )
-    report_index = json.loads(inputs["report_index"].read_text(encoding="utf-8"))
-    report_index["reports"].append(
-        {
-            "report_id": "etf_weight_calibration_profiling_report",
-            "title": "ETF Weight Calibration Profiling Report",
-            "cadence": "ad_hoc",
-            "owner": "system",
-            "freshness_status": "FRESH",
-            "artifact_status": "PASS",
-            "artifact_date": "2026-05-04",
-            "latest_artifact_path": str(profiling_path),
-            "exists": True,
-            "owner_action": "review_weight_calibration_profiling_report",
-            "production_effect": "none",
-        }
-    )
-    inputs["report_index"].write_text(
-        json.dumps(report_index, ensure_ascii=False),
-        encoding="utf-8",
-    )
-
-    payload = build_reader_brief_payload(
-        as_of=date(2026, 5, 4),
-        reports_dir=tmp_path,
-        decision_snapshot_path=inputs["snapshot"],
-        calculation_explainers_path=inputs["calculation_explainers"],
-        daily_decision_summary_path=inputs["daily_decision_summary"],
-        evidence_dashboard_json_path=inputs["evidence_dashboard"],
-        daily_task_dashboard_json_path=inputs["daily_task_dashboard"],
-        daily_report_path=inputs["daily_report"],
-        trace_bundle_path=inputs["trace_bundle"],
-        score_change_attribution_path=inputs["score_change_attribution"],
-        market_panel_path=inputs["market_panel"],
-        research_governance_summary_path=inputs["research_governance_summary"],
-        report_index_path=inputs["report_index"],
-        documentation_contract_path=inputs["documentation_contract"],
-    )
-
-    profiling = payload["etf_weight_calibration_profiling"]
-    assert profiling["availability"] == "AVAILABLE"
-    assert profiling["status"] == "PASS"
-    assert profiling["profile_mode"] == "summary"
-    assert profiling["slowest_step"] == "candidate_backtest"
-    assert profiling["cache_hit_rate"] == 1.0
-    assert profiling["production_effect"] == "none"
-    assert profiling["broker_action"] == "none"
-    assert profiling["detail_report"].endswith("profiling_report.json")
-    html = render_reader_brief_html(payload)
-    assert "Weight Calibration Profiling" in html
-    assert "candidate_backtest" in html
 
 
 def test_reader_brief_operations_health_summary_shows_pass_and_blocked_status(
@@ -538,31 +272,6 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert payload["executive_decision"]["binding_gate_id"] == "valuation"
     assert payload["component_score_explainability"]["status"] == "AVAILABLE"
     assert payload["backtest_shadow_governance"]["availability"] == "LIMITED"
-    assert payload["etf_calibration_experiments"]["availability"] == "MISSING"
-    assert payload["etf_calibration_experiments"]["safety_status"] == "MISSING"
-    assert payload["etf_ai_confirmation"]["availability"] == "MISSING"
-    assert payload["etf_ai_confirmation"]["interpretation"] == (
-        "AI Confirmation: insufficient data coverage. No overlay recommendation."
-    )
-    assert payload["etf_ai_attribution"]["availability"] == "MISSING"
-    assert payload["etf_ai_attribution"]["production_effect"] == "none"
-    assert payload["etf_ai_attribution"]["broker_action"] == "none"
-    assert payload["etf_satellite_attribution"]["availability"] == "MISSING"
-    assert payload["etf_satellite_attribution"]["production_effect"] == "none"
-    assert payload["etf_satellite_attribution"]["broker_action"] == "none"
-    assert payload["etf_parameter_review"]["availability"] == "MISSING"
-    assert payload["etf_parameter_review"]["main_reason"] == "PARAMETER_REVIEW_REPORT_MISSING"
-    assert payload["etf_parameter_review"]["production_effect"] == "none"
-    assert payload["etf_parameter_review"]["broker_action"] == "none"
-    assert payload["etf_weight_calibration"]["availability"] == "MISSING"
-    assert payload["etf_weight_calibration"]["forward_evidence_status"] == "MISSING"
-    assert payload["etf_weight_calibration"]["production_effect"] == "none"
-    assert payload["etf_weight_calibration"]["broker_action"] == "none"
-    assert payload["etf_initial_weight_candidates"]["availability"] == "MISSING"
-    assert payload["etf_initial_weight_candidates"]["top_candidate"] == "MISSING"
-    assert payload["etf_initial_weight_candidates"]["overfit_risk"] == "MISSING"
-    assert payload["etf_initial_weight_candidates"]["production_effect"] == "none"
-    assert payload["etf_initial_weight_candidates"]["broker_action"] == "none"
     assert payload["etf_operations_health"]["availability"] == "MISSING"
     assert payload["etf_operations_health"]["status"] == "MISSING"
     assert payload["etf_operations_health"]["warning_count"] == 1
@@ -584,14 +293,6 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
         for item in payload["missing_limited_artifact_impact"]["items"]
     )
     html = render_reader_brief_html(payload)
-    assert "ETF Calibration Experiments" in html
-    assert "ETF Forward Simulation" in html
-    assert "AI Confirmation" in html
-    assert "AI Attribution Review" in html
-    assert "Satellite Attribution Review" in html
-    assert "ETF Parameter Review" in html
-    assert "ETF Weight Calibration" in html
-    assert "ETF Initial Weight Candidates" in html
     assert "Operations Health" in html
     assert "etf_operations_health_report" in html
     assert 'safety_status</th><td><span class="status-badge status-missing">MISSING</span>' in html
@@ -675,15 +376,6 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert "Score Change Attribution" in html
     assert "Report Index Freshness" in html
     assert "Task Cadence Calendar" in html
-    assert "ETF Parameter Review" in html
-    assert "AI Attribution Review" in html
-    assert "eligible_for_manual_review" in html
-    assert "parameter_review_2026-05-04.json" in html
-    assert "ETF Weight Calibration" in html
-    assert "ETF Initial Weight Candidates" in html
-    assert "weight_set_003" in html
-    assert "dual_track_calibration_2026-05-04.json" in html
-    assert "initial_weight_recommendation_2026-05-04.json" in html
     assert "Operations Health" in html
     assert "operations_health_2026-05-04.json" in html
     assert "daily:warning" in html
@@ -703,9 +395,7 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert "Market Movement" in html
     assert "Manual Review" in html
     assert "production_effect=none" in html
-    assert "observe_only=true; production_effect=none; broker_action=none" in html
     assert "status-badge status-limited-reader-context" in html
-    assert "status-badge status-not-promotable" in html
     assert 'class="market-card-grid"' in html
     assert "SPY" in html
     assert "QQQ" in html
@@ -1430,8 +1120,6 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
     parameter_review_path.write_text(
         json.dumps(
             {
-                "schema_version": "etf_parameter_review_report_v1",
-                "report_type": "etf_parameter_review_report",
                 "review_report_id": "etf-parameter-review-report-2026-05-04",
                 "parameter_review_id": "etf-parameter-review-2026-05-04",
                 "status": "needs_more_data",
@@ -2377,7 +2065,6 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                     },
                     {
                         "report_id": "etf_forward_dashboard",
-                        "title": "ETF Forward Simulation Dashboard",
                         "cadence": "daily",
                         "owner": "system",
                         "freshness_status": "FRESH",
@@ -2390,7 +2077,6 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                     },
                     {
                         "report_id": "etf_forward_watchlist",
-                        "title": "ETF Forward Simulation Watchlist",
                         "cadence": "daily",
                         "owner": "system",
                         "freshness_status": "FRESH",
@@ -2402,8 +2088,6 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "production_effect": "none",
                     },
                     {
-                        "report_id": "etf_ai_confirmation_report",
-                        "title": "ETF AI Confirmation Report",
                         "cadence": "daily",
                         "owner": "system",
                         "freshness_status": "FRESH",
@@ -2415,8 +2099,6 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "production_effect": "none",
                     },
                     {
-                        "report_id": "etf_ai_attribution_report",
-                        "title": "ETF AI Confirmation Forward Attribution Review",
                         "cadence": "weekly",
                         "owner": "system",
                         "freshness_status": "FRESH",
@@ -2428,7 +2110,6 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "production_effect": "none",
                     },
                     {
-                        "report_id": "etf_satellite_attribution_report",
                         "title": "ETF Satellite Replacement Forward Attribution Review",
                         "cadence": "weekly",
                         "owner": "system",
@@ -2441,7 +2122,6 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "production_effect": "none",
                     },
                     {
-                        "report_id": "etf_parameter_review_report",
                         "title": "ETF Allocation Parameter Review",
                         "cadence": "weekly",
                         "owner": "system",

@@ -47,7 +47,7 @@ flowchart TD
 | 输入采集 | 某个 capture 组件缺失只阻断依赖它的步骤；整体保持 `BLOCKED_DEPENDENCY`/`FAIL`，finalization 不运行 | `config/operations/daily_input_capture.yaml` |
 | PIT | 失败快照不得作为 PIT 输入；manifest/schema 异常 fail closed | `pit_snapshots` |
 | 休市日 | 不生成新评分、决策快照、Reader Brief 评分产物或 forward evidence | `ops_daily.py` |
-| 报告 | report index 按 `config/report_registry.yaml` 标注 fresh/STALE/MISSING；`archived_optional` 条目只做审计显示 | `reports/report_index.py` |
+| 报告 | report index 按 `config/report_registry.yaml` 标注 fresh/STALE/MISSING；`archived_optional` 条目只做审计显示。Reader Brief 不再为已归档 ETF 候选链报告生成单独栏目，仅保留 owner 简报固定板块使用的 `etf_operations_health` 遗留摘要。 | `reports/report_index.py`、`reports/reader_brief.py` |
 | 安全边界 | 全链 `production_effect=none`、`broker_action=none`；不写 production 或 active shadow 权重 | 各步骤 |
 
 运行控制：同一 workflow/as-of 只有一个活动运行；已完成的重复触发不重跑；状态与台账在
@@ -93,7 +93,7 @@ flowchart LR
 
 | 部分 | 退役时间 | 去向 |
 |---|---|---|
-| ETF 候选链（etf forward、dynamic-v3 rescue、候选跟踪每日步骤、`aits etf` 等命令） | 2026-10-10 GOV-008 P4 块 2 | 代码删除；`config/etf_portfolio/` 与 `etf_portfolio/regime.py` 作为研究证据保留 |
+| ETF 候选链（etf forward、dynamic-v3 rescue、候选跟踪每日步骤、`aits etf` 等命令） | 2026-10-10 GOV-008 P4 块 2；2026-10-10 GOV-008A Reader Brief 清理 | 代码删除；Reader Brief 已移除已归档 ETF 候选链栏目；仅 `etf_operations_health` 作为 owner 简报固定板块遗留摘要保留；`config/etf_portfolio/` 与 `etf_portfolio/regime.py` 作为研究证据保留 |
 | 发布机制（fence、lease、hash-authority reseal、Full 验证、validation tier runner） | 2026-10-10 GOV-008 P4 块 1 | 由 `ship` 与本机门禁取代 |
 | Atlas 页面 | 2026-10-10 | 代码删除 |
 | release promotion、scheduler checkout preflight、Codex scheduler observation、workflow health 遥测（含周任务 `weekly_workflow_health_review`） | 2026-10-10 GOV-008 解耦 L2/P4/P5 | 命令与配置删除；确定性调度见 OPS-082 |

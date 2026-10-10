@@ -8,14 +8,14 @@
 
 | 产物族 | 典型路径 | 状态 |
 |---|---|---|
-| ETF 候选链（forward update/dashboard/watchlist、dynamic-v3 rescue、shadow/satellite/AI confirmation、weight calibration、ETF operations health 等） | `reports/etf_portfolio/**` | GOV-008 P4 块 2 退役，代码删除；历史文件只作证据 |
+| ETF 候选链（forward update/dashboard/watchlist、dynamic-v3 rescue、shadow/satellite/AI confirmation、weight calibration 等） | `reports/etf_portfolio/**` | GOV-008 P4 块 2 退役，代码删除；GOV-008A 后 Reader Brief 不再生成这些已归档报告的单独栏目；历史文件只作证据 |
 | 候选跟踪每日产物（portfolio candidate tracking、tracking review） | `outputs/reports/portfolio_candidate_tracking_*`、`outputs/reports/portfolio_tracking_review_*` | 不再由每日链路生成；`aits portfolio` 命令仍可手动运行 |
 | 发布机制证据（fence/lease 事务、Full 验证、validation tier、publication receipt） | `outputs/architecture/**`、`outputs/validation_runtime/**` | GOV-008 P4 块 1 删除，由 `ship` 的 `Gate:` 行取代 |
 | 调度发布与观察（release candidate/promote、deployment acceptance、scheduler observation/binding，含下方 OPS-081 一节） | `outputs/operations/deployment/**` | 命令在 GOV-008 解耦 L2 删除；确定性调度见 OPS-082 |
 | workflow health 遥测、Atlas 页面 | `outputs/reports/workflow_health*`、`outputs/atlas/**` | GOV-008 删除 |
 
 报告登记（`config/report_registry.yaml`）中这些产物的条目标为 `visibility_policy: archived_optional`，报告索引只显示
-`ARCHIVED_*` 审计状态。前瞻采集产物里原来的 lease 字段在采集协议 v3 中改为 capture hold（`hold_record.json`/`hold_check.json`）。
+`ARCHIVED_*` 审计状态；Reader Brief 已停止读取这些已归档 ETF 候选链报告作为日读栏目，仅保留 owner 简报固定板块引用的 `etf_operations_health` 遗留摘要。前瞻采集产物里原来的 lease 字段在采集协议 v3 中改为 capture hold（`hold_record.json`/`hold_check.json`）。
 
 ## OPS-081 调度业务合同证据
 
