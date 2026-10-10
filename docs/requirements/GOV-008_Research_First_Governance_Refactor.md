@@ -394,3 +394,31 @@ lease 在这里做三件事：(1) 采集前后重新核验运行的是精确的�
 **现有采集证据全部在 `synthetic/` 下，真实采集为零**（`operations_runbook.md` 同样声明），所以没有真实证据需要保持兼容。
 相关测试：R1 依赖租约的 12 个文件 / 1,063 节点 / 8.17 节点小时，其中的真实链路变体已按 owner 决定排除。
 选项与建议见 owner 决策记录。
+
+### 14.1 L3 决定：采集协议 v3（owner 选 A，2026-10-10 深夜）
+
+**决定** `owner_decision:GOV-008:2026-10-10:capture_protocol_v3`：用"运行来源（provenance）+ 本机单次持有锁（capture hold）"
+替换预期采集 5 个文件里的 S4D lease，使发布机制整体可删。放弃的方案：B（为采集保留约 2 万行精简 lease 核心）、
+以及"保留 lease 字段却没有真实 lease"的空壳（证据会说谎）。理由：真实采集为零，没有需要保持兼容的真实证据；
+新协议不再依赖开发期的发布机制。
+
+**v3 保证了什么、没保证什么（须在证据格式里如实表达）：**
+
+| 项 | S4D lease（旧） | capture hold（新） |
+|---|---|---|
+| 精确候选 commit | 重放租约库核对 intent/base commit | 直接读 git：HEAD == 候选 commit，且 `src/config/scripts/tools` 无未提交修改（`core/provenance.py` 同一实现） |
+| 写入路径独占 | 租约库里的路径资源声明 | 本机 `active/` 目录下每个 hold 一份记录，获取时在短互斥（O_EXCL）内检查路径重叠，存活的重叠 hold → 拒绝 |
+| 持有期有效 | 租约 ACTIVE 且未过期 | hold 记录含 `acquired_at/expires_at`，每次 recheck 校验未过期、未释放、持有进程仍是本进程 |
+| 独立权威 | 租约库是第二份权威 | **没有**：hold 是本机自证，证据是"本机父进程自述"，不是签名；这一点与旧 `verify_retained_named_capture_proof` 文档里"本地父证明"的措辞一致 |
+
+**步骤（每步结束跑 ruff + 相关测试，S5 才跑整套 PR 门禁）：**
+
+| 步骤 | 内容 | 验收 |
+|---|---|---|
+| S1 | 新模块 `src/ai_trading_system/data/capture_hold.py`：`acquire/restore/recheck/release/verify_retained` + 单元测试（获取、重叠、过期、commit 漂移、代码被改、进程已死的陈旧 hold、保留证明篡改） | 新测试全过；不导入 `platform.*` |
+| S2 | 端口 `data/named_quality_dispatch.py`、`data/named_quality_execution.py` 与 3 个 contracts：`source_lease_id`→`source_hold_id`（`hold-<20hex>`），`active_lease`→`active_hold`，schema 版本号 +1 | 这两个文件与 contracts 不再引用 lease |
+| S3 | 端口 `prospective_event_time_evidence.py`（`lease_event/lease_intent`→`hold_record/hold_check`）、`prospective_capture_execution.py`、`composer_prospective_capture.py`、`research_outcome_access.py`（`hold_lease_arbiter`→hold 互斥）；新策略文件 v3 并更新 sha256 钉住值 | 5 个文件 `rg "lease|platform\.architecture"` 为空 |
+| S4 | 重写测试夹具 `tests/named_data_quality_support.py` 用 tmp git 仓库 + 真 hold；删除只测 lease 绑定的测试（`test_devx022_lease_event_externalization.py` 等）；行为契约测试保留并出 R1 排除名单 | 这批测试回到 PR 门禁 |
+| S5 | 重算边界清单（目标：保留代码对冻结模块的导入 = 0）；PR 门禁；提交 | 门禁绿；`frozen_boundary_worklist.csv` 为空 |
+
+**旧证据**：`synthetic/` 下的 v1/v2 证据按旧协议生成，v3 验证器**不**验证它们；它们保留原样，仅作历史。
