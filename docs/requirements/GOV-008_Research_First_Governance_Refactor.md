@@ -678,3 +678,11 @@ DEVX-019、DEVX-020、DEVX-021、DEVX-022、DEVX-023、GOV-007、OPS-077、OPS-0
 | GOV-006 | 未完成任务的优先级整理 | 新任务库下可简化为一次表格复核；建议保留，待 pi 试跑后用作 A 区试跑任务 |
 | DEVX-001 | 临时工作区生命周期工具 | 规则已在 AGENTS.md；建议 DROPPED 或降为 P3 |
 | KNOWLEDGE-001、TRADING-2560、TRADING-2564 | 研究/产品线 | 不受 GOV-008 影响，按各自需求文档推进 |
+
+收尾已发布：`ba41ae637`（ship 门禁 7,932 通过、0 失败；第一次 ship 在推进 main 前 `git fetch` 遇到网络瞬断被拒绝，main 未动，重试成功）。
+
+### 20.1 owner 决定：pi 由 owner 安装并登录（2026-10-10，聊天）
+
+`owner_decision:GOV-008:2026-10-10:pi_install_by_owner`：owner 自己用官方脚本安装 pi，并在 pi 里完成 `/login` 与 `/trust`；
+完成后由 agent 安排第 20 节的 3 个试跑并记录结果（试跑消耗 owner 的模型额度，owner 已知悉）。放弃的选项：agent 用 npm 安装；
+暂不试跑、先做 OPS-082。
