@@ -259,3 +259,48 @@ def test_retained_proof_survives_release_and_expiry(repo: tuple[Path, str]) -> N
     proof = recheck_capture_hold(hold, candidate_commit=commit, required_paths=PATHS)
     release_capture_hold(hold)
     _verify(proof, root, commit, hold.hold_id)
+
+
+def _cli() -> Any:
+    import importlib.util
+
+    path = Path(__file__).resolve().parents[1] / "scripts" / "capture_hold.py"
+    spec = importlib.util.spec_from_file_location("capture_hold_cli", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_operator_cli_acquires_lists_and_releases(
+    repo: tuple[Path, str], capsys: pytest.CaptureFixture[str]
+) -> None:
+    import json
+
+    root, commit = repo
+    cli = _cli()
+    base = ["--root", str(root)]
+    acquire = ["acquire", "--candidate-commit", commit, "--path", PATHS[0], "--actor", "t"]
+    assert cli.main([*base, *acquire, "--ttl-minutes", "30"]) == 0
+    acquired = json.loads(capsys.readouterr().out)
+    assert acquired["status"] == "ACQUIRED" and acquired["required_paths"] == list(PATHS)
+    assert cli.main([*base, "status"]) == 0
+    rows = json.loads(capsys.readouterr().out)["holds"]
+    assert [(row["hold_id"], row["released"]) for row in rows] == [(acquired["hold_id"], False)]
+    assert cli.main([*base, "release", "--hold-id", acquired["hold_id"]]) == 0
+    capsys.readouterr()
+    assert cli.main([*base, "status"]) == 0
+    assert json.loads(capsys.readouterr().out)["holds"][0]["released"] is True
+
+
+def test_operator_cli_reports_blocked_without_a_traceback(
+    repo: tuple[Path, str], capsys: pytest.CaptureFixture[str]
+) -> None:
+    import json
+
+    root, _ = repo
+    arguments = ["--root", str(root), "acquire", "--candidate-commit", "0" * 40]
+    arguments += ["--path", PATHS[0], "--actor", "t", "--ttl-minutes", "30"]
+    assert _cli().main(arguments) == 2
+    blocked = json.loads(capsys.readouterr().out)
+    assert blocked["status"] == "BLOCKED" and "CAPTURE_HOLD_COMMIT_DRIFT" in blocked["reason"]
