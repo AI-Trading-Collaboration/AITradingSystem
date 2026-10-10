@@ -67,3 +67,6 @@ run/ccra/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Capture protocol v3 runtime state (holds are local, never evidence)
+outputs/runtime/
