@@ -59,6 +59,7 @@ markers = [
   "report_validation: Reader Brief, report index, report navigation, and reader UX validation",
   "integration: scheduler, trading_engine, portfolio tooling, and cross-module integration tests",
   "slow_research_regression: Dynamic v3, backtest simulation, and research regression tests",
+  "slow: single test of 30 s or more; excluded from the PR suite (-m 'not slow'), run nightly (GOV-008)",
 ]
 
 [tool.ruff]

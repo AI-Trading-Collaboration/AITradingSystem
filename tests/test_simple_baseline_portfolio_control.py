@@ -7,6 +7,7 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
+import pytest
 from click.testing import CliRunner
 from typer.main import get_command
 
@@ -924,6 +925,7 @@ def test_simple_baseline_forward_aging_convergence_artifacts(tmp_path: Path) -> 
         assert Path(payload["artifact_paths"]["markdown_path"]).exists()
 
 
+@pytest.mark.slow
 def test_simple_baseline_data_repair_forward_aging_unblock_artifacts(tmp_path: Path) -> None:
     prices_path, marketstack_path, rates_path = _write_simple_baseline_caches(tmp_path)
     manifest_path = _write_simple_baseline_manifest(tmp_path, prices_path)

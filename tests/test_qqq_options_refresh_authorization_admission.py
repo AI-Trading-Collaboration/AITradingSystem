@@ -247,6 +247,7 @@ def test_local_dry_run_or_non_owner_source_is_not_an_authorization_fact() -> Non
         )
 
 
+@pytest.mark.slow
 def test_old_v1_token_and_binding_drift_fail_closed() -> None:
     old = (
         "owner_decision:TRADING-2513:2026-08-12:"

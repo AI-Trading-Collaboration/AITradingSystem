@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import pytest
 
 from ai_trading_system.contracts import CanonicalStatus
 from ai_trading_system.platform.artifacts import sha256_path, write_json_atomic
@@ -54,6 +55,7 @@ GENERATED_AT = datetime(2026, 7, 26, 12, 0, tzinfo=UTC)
 TASK_ID = "TRADING-2461_DECISION_TARGET_CAPABILITY_AUDIT_MODEL_LADDER"
 
 
+@pytest.mark.slow
 def test_model_ladder_is_deterministic_purged_and_content_derived(
     tmp_path: Path,
 ) -> None:

@@ -4,6 +4,7 @@ import math
 from datetime import date, timedelta
 from pathlib import Path
 
+import pytest
 import yaml
 from typer.testing import CliRunner
 
@@ -76,6 +77,7 @@ def test_execution_policy_registry_contract() -> None:
         assert metadata["review_condition"]
 
 
+@pytest.mark.slow
 def test_execution_semantics_builders_preserve_safety_and_paths(tmp_path: Path) -> None:
     prices_path, marketstack_path, rates_path, as_of = _write_execution_caches(tmp_path)
     output_root = tmp_path / "outputs" / "research_strategies" / "execution_semantics"

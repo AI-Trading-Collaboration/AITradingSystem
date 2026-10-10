@@ -363,6 +363,7 @@ def tail_risk_governance(tmp_path_factory: pytest.TempPathFactory) -> dict[str, 
     return {"paths": paths, "payloads": payloads}
 
 
+@pytest.mark.slow
 def test_tail_risk_independent_forward_outcome_contract(
     tail_risk_governance: dict[str, Any],
 ) -> None:

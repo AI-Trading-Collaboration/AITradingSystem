@@ -5,6 +5,7 @@ import math
 from datetime import date, timedelta
 from pathlib import Path
 
+import pytest
 import yaml
 from typer.testing import CliRunner
 
@@ -286,6 +287,7 @@ def test_controlled_growth_component_restart_builders_and_cli(
     assert written["summary"]["broker_action"] == "none"
 
 
+@pytest.mark.slow
 def test_roadmap_v2_real_result_convergence_builders_and_cli(
     tmp_path: Path,
 ) -> None:

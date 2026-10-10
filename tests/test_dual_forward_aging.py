@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from test_equal_risk_growth_tilt import _balanced_core_ready_activation_sources
 from test_external_validation import (
     _write_external_validation_caches,
@@ -48,6 +49,7 @@ from ai_trading_system.simple_baseline_portfolio_control import (
 )
 
 
+@pytest.mark.slow
 def test_external_validation_gate_launches_balanced_core_after_validation(
     tmp_path: Path,
 ) -> None:

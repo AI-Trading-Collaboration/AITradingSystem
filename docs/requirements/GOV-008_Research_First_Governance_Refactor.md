@@ -73,9 +73,9 @@ promotion、scheduler checkout 等）引用 lease/checkout 机制，研究执行
    `decision.md`。预注册提交并 push 之后才允许首次读取结果，GitHub push 时间为外部时间见证。前瞻采集保留只增
    哈希链 JSONL（只增不减在这里才是真需求）。
 3. **验证金字塔**：提交前（lint/format/类型/配置 schema，约 1 min）-> 快测（受影响模块，约 5 min）-> PR 套件
-   （保留的产品测试排除 ≥30 s 节点，8,882 个节点，16 核实测 7m40s～8m24s）-> 不变量套件（含在 PR 套件内）-> 夜间
+   （保留的产品测试排除 ≥30 s 节点，8,684 个节点，16 核三次实测 7m40s～8m46s）-> 不变量套件（含在 PR 套件内）-> 夜间
    （全部产品测试加慢节点、真实数据复现）。分层靠 pytest marker 与路径，不再手写文件清单。
-4. **发布 `ship`**：任务分支在本机运行新门（PR 套件加不变量套件，PR 套件 16 核实测 7m40s～8m24s，不变量套件待建），通过后同一 SHA 快进
+4. **发布 `ship`**：任务分支在本机运行新门（PR 套件加不变量套件，PR 套件 16 核实测 7m40s～8m46s（约 8.5 min），含不变量测试），通过后同一 SHA 快进
    main 并普通推送。SHA 绑定由 git 保证，没有租约库、12 阶段状态机与 reseal。门禁结果（套件、节点数、耗时、干净树）
    写进提交信息的 `Gate:` 行；区域 C 改动必须带 `Owner-Decision:` 行，缺失则 `ship` 拒绝。并发靠每任务一个
    worktree 与 git 的快进冲突检测。不开启分支保护（单人项目），所以这是 agent 自己运行的门，不是独立验证者；
@@ -85,7 +85,7 @@ promotion、scheduler checkout 等）引用 lease/checkout 机制，研究执行
    AGENTS.md 压到 150 行内并保持 harness 中立（同时满足 DEVX-017 的目标）。
 6. **日常运行**：调度器直接运行 `aits daily-run`，不经过 checkout lease，产品路径不依赖开发机制。
 
-目标工作量：改一个评分/报告模块并发布，从约 25 min 准备加约 3.6 h 验证降到快测 5 min 加本机新门约 8 min（PR 套件实测，不含尚未建立的不变量套件）；
+目标工作量：改一个评分/报告模块并发布，从约 25 min 准备加约 3.6 h 验证降到快测 5 min 加本机新门约 8.5 min（PR 套件三次实测 7m40s～8m46s，含不变量测试）；
 仅改文档/任务/实验记录从"等下一次发布"降到 5 min 内；新开一个研究实验降到一个 prereg 文件加一条命令。
 
 ## 5. 删除与简化原则
@@ -216,7 +216,9 @@ owner 可调整）：
 4. 已决定（2026-10-10，owner 在 P1 文档评论中回答）：退役日报链路中的 ETF dynamic v3 步骤
    （`etf_forward_*`、`dynamic_v3_rescue_schedule_observe`、`portfolio_candidate_tracking`）；
    现在不删除，P4 删除块 2 随代码一并移除；删除前须确认日报链路缩为"数据 -> DQ -> 评分 -> 报告"后仍通过新门。
-4. 是否启用并行会话/子 agent 加速 P1/P2（成本换时间）。
+5. 是否启用并行会话/子 agent 加速 P1/P2（成本换时间）：owner 未要求，默认不启用。
+6. **Atlas 去留（待 owner 决定）**：Atlas 是否仍用于研究决策。它的页面测试依赖本机未跟踪且绑定 commit 的页面，PR 套件因此带
+   1 个已知失败（第 13.1 节）。退役则测试随之删除；保留则需把"页面过期"改为带提示的跳过。在决定前门禁不全绿，P3 切换前必须关闭。
 
 ## 12. 进度记录
 
@@ -262,3 +264,36 @@ owner 可调整）：
 `provenance` 块：git commit、分支、`code_modified`（src/config/scripts/tools 是否被改）、每个配置文件的内容 sha256，
 每次约 0.12 s；4 个单元测试加 242 个相关现有测试通过。G2 其余部分（窗口、DQ 报告引用）清单里已有。研究线各自的清单
 （QQQ options、权重校准等）后续按同样方式接入。
+
+### 13.1 P2 剩余项完成情况（2026-10-10 晚）
+
+- **`slow` 标记（S2 收尾）**：28 个 ≥30 s 的节点已在代码里打上 `@pytest.mark.slow`（24 个测试文件，其中 6 个是从
+  `tests/layer1_meta_policy_readiness_cases.py` 重导出的，标记打在定义处），`pyproject.toml` 已注册 `slow`。`-m slow`
+  收集 28 个节点，`-m "not slow"` 收集 8,654 个节点，单进程收集 24 s。PR/夜间的边界从此是代码里的标记，不再是名单。
+- **过滤插件改为"排除名单"**：`tools/gov008/pr_filter.py` 先前按"保留名单"收集，会把分诊之后**新增**的测试文件（包括刚写的
+  `tests/invariants`）静默漏掉，这是门禁里的洞。现改为 `docs/requirements/GOV-008_lists/pr_exclude.txt`（388 个将被删除的
+  文件），新测试默认被收集。P4 删除后该名单与插件一起消失，PR 套件就是 `pytest tests -m "not slow"`。
+- **不变量套件 `tests/invariants/`（区域 C）**，3 个文件 9 个测试，每个都有反例对照：
+  - `test_dq_gate_blocks_downstream.py`（G1）：有效缓存通过（对照）；重复主键、非正收盘价、缺必需 ticker 三种缺陷下
+    `build-features` 必须失败、不写特征文件、质量报告写出且含 FAIL。
+  - `test_features_do_not_look_ahead.py`（G2）：把 as-of 之后的数据全部替换成极端值，特征不得变化；一个故意偷看最后一行的
+    构建器必须被同一检查抓住（检查本身有效力的对照）。
+  - `test_run_manifest_records_provenance.py`（G2）：清单必须含 commit、`code_modified`、配置内容哈希，配置改动哈希必须变。
+  - 变异证据（见 `tests/invariants/README.md`）：拆掉数据质量门禁使 `missing_required_ticker`、`non_positive_close` 变红，
+    `duplicate_price_key` 不变红（另有独立检查也拦重复主键，所以该用例不是门禁本身的证据）；让特征忽略 as-of 使
+    look-ahead 测试变红；丢弃 provenance 使三个清单测试变红。
+  - 已有的同类守门测试（数据质量、PIT、窗口、阈值治理、生产边界静态扫描、调度安全）不重复，列在 README 的索引里，
+    因为它们本来就在 PR 套件内。
+- **研究线运行清单接入 provenance：本轮不做。** 各研究线有自己的清单且部分带冻结或外部契约的 schema（例如 QQQ options 的
+  QC 适配器清单是对平台的导出契约），加字段可能破坏哈希绑定的历史证据。daily 与 backtest 的追踪包已覆盖；研究线逐条
+  评估后再接入，不在"本次重构不动研究线需求"的范围内擅自改。
+
+- **最终配置的干净计时**：`pytest tests -n 16 --dist loadfile -m "not slow" -p tools.gov008.pr_filter`，8,684 个节点（含 9 个
+  不变量测试、17 个 `ship` 测试、4 个 provenance 测试）**8m46s**（526 s），8,681 通过、1 失败、2 跳过。三次计时
+  7m40s、8m24s、8m46s，PR 套件按约 8.5 分钟计。
+- **唯一的失败，以及为什么不能悄悄绕过**：`tests/atlas/test_historical_projection_review.py::
+  test_local_canonical_page_uses_current_successor_identity_when_available`。它读取本机**未跟踪**的 Atlas 页面
+  （`outputs/atlas/...`），要求页面与当前任务索引一致且绑定当前 commit。页面一旦存在就会在任何新提交后过期，包括
+  `ship` 追加 `Gate:` 行的那次修改本身，所以这个测试在本机永远稳定不了；干净克隆里页面不存在则跳过。这是"测试依赖本机
+  未跟踪状态"的又一个实例。处理属于 Atlas 去留（P1 文档第 3 节最后一行）：若 Atlas 退役，测试随之删除；若保留，需要把
+  "页面过期"改成跳过并提示重新生成。**在 owner 决定前不改测试、不加豁免**，门禁带 1 个已知失败，已列入第 11 节。

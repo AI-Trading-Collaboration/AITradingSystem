@@ -275,6 +275,7 @@ def test_equal_risk_growth_tilt_builders_preserve_research_only_boundary(
         _assert_research_only_payload(payload)
 
 
+@pytest.mark.slow
 def test_growth_tilt_real_result_convergence_builders_and_cli(
     tmp_path: Path,
 ) -> None:
@@ -438,6 +439,7 @@ def test_growth_tilt_real_result_convergence_builders_and_cli(
         _assert_research_only_payload(payload)
 
 
+@pytest.mark.slow
 def test_growth_tilt_focused_diagnosis_builders_and_cli(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

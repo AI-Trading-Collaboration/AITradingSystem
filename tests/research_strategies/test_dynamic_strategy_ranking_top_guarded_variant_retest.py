@@ -5,6 +5,7 @@ import math
 from datetime import date, timedelta
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
@@ -32,6 +33,7 @@ SOURCE_2382_READY = (
 SOURCE_2382_ROUTE = "TRADING-2383_Dynamic_Strategy_Ranking_Top_Guarded_Variant_Retest"
 
 
+@pytest.mark.slow
 def test_dynamic_strategy_ranking_top_guarded_variant_retest_builder(
     tmp_path: Path,
 ) -> None:
@@ -161,6 +163,7 @@ def test_dynamic_strategy_ranking_top_guarded_variant_retest_builder(
         assert Path(payload["artifact_paths"][key]).exists()
 
 
+@pytest.mark.slow
 def test_dynamic_strategy_ranking_top_guarded_variant_retest_cli(
     tmp_path: Path,
 ) -> None:

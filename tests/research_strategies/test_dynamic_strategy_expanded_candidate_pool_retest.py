@@ -5,6 +5,7 @@ import math
 from datetime import date, timedelta
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
@@ -65,6 +66,7 @@ NEW_CANDIDATES = [
 ]
 
 
+@pytest.mark.slow
 def test_dynamic_strategy_expanded_candidate_pool_retest_builder(
     tmp_path: Path,
 ) -> None:
@@ -206,6 +208,7 @@ def test_dynamic_strategy_expanded_candidate_pool_retest_builder(
         assert Path(payload["artifact_paths"][key]).exists()
 
 
+@pytest.mark.slow
 def test_dynamic_strategy_expanded_candidate_pool_retest_cli(
     tmp_path: Path,
 ) -> None:

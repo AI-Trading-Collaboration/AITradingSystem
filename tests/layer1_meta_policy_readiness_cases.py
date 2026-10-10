@@ -167,6 +167,7 @@ def test_layer1_simple_rule_selector_registry_and_report_registry(
         assert entry["broker_action"] == "none"
 
 
+@pytest.mark.slow
 def test_layer1_simple_rule_selector_research_outputs_are_research_only(
     tmp_path: Path,
 ) -> None:
@@ -318,6 +319,7 @@ def test_layer1_simple_rule_selector_research_outputs_are_research_only(
     assert (cli_output_root / "layer1_selector_vs_component_baseline_ranking.json").exists()
 
 
+@pytest.mark.slow
 def test_layer1_selector_result_review_gate_outputs_are_research_only(
     tmp_path: Path,
 ) -> None:
@@ -441,6 +443,7 @@ def test_layer1_selector_result_review_gate_outputs_are_research_only(
     assert (cli_output_root / "layer1_selector_real_result_summary.json").exists()
 
 
+@pytest.mark.slow
 def test_layer1_selector_low_turnover_refinement_outputs_are_research_only(
     tmp_path: Path,
 ) -> None:
@@ -562,6 +565,7 @@ def test_layer1_selector_low_turnover_refinement_outputs_are_research_only(
     assert (cli_output_root / "layer1_selector_low_turnover_ranking.json").exists()
 
 
+@pytest.mark.slow
 def test_layer1_selector_low_turnover_final_gate_outputs_are_research_only(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -729,6 +733,7 @@ def test_layer1_selector_low_turnover_final_gate_outputs_are_research_only(
     assert cli_owner_doc_path.exists()
 
 
+@pytest.mark.slow
 def test_layer1_archive_and_equal_risk_forward_aging_stabilization_outputs(
     tmp_path: Path,
 ) -> None:

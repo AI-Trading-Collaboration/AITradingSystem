@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from ai_trading_system.platform.architecture import (
     capture_direct_writer_baseline,
     validate_architecture_dependencies,
@@ -14,6 +16,7 @@ BASELINE_PATH = PROJECT_ROOT / "inputs/architecture/arch_004c_direct_writer_base
 SOURCE_ROOT = PROJECT_ROOT / "src/ai_trading_system"
 
 
+@pytest.mark.slow
 def test_repository_architecture_dependency_and_direct_writer_ratchets_pass() -> None:
     report = validate_architecture_dependencies(
         policy_path=POLICY_PATH,

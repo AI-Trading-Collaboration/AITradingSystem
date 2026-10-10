@@ -924,6 +924,7 @@ def test_renderer_escapes_claim_content() -> None:
     assert "&lt;script&gt;alert" in html
 
 
+@pytest.mark.slow
 def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
     showcase = _live_showcase()
     first = write_cited_query_artifacts(showcase, tmp_path / "first")

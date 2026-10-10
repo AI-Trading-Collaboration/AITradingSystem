@@ -183,24 +183,17 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(rows)
 
-    # Lists consumed by tools/gov008/pr_filter.py (the PR-suite transition plugin).
-    keep_verdicts = (
-        "KEEP_PR",
-        "KEEP_CONTRACT",
-        "REVIEW_DECOUPLE",
-        "KEEP_DEPENDENCY_DIRECTION_REVIEW",
+    # Exclude list consumed by tools/gov008/pr_filter.py (the PR-suite transition plugin). It is an
+    # exclude list on purpose: a test file added after this triage is collected by default.
+    exclude_verdicts = (
+        "DELETE_WITH_MECHANISM",
+        "DELETE_WITH_ETF_RETIREMENT",
+        "REVIEW_DELETE_LEASE_VARIANTS",
     )
-    keep_files = sorted(
-        r["test_file"] for r in rows if r["verdict"] in keep_verdicts and r["nodes"]
+    exclude_files = sorted(r["test_file"] for r in rows if r["verdict"] in exclude_verdicts)
+    (out / "pr_exclude.txt").write_text(
+        "\n".join(exclude_files) + "\n", encoding="utf-8", newline="\n"
     )
-    keep_set = set(keep_files)
-    slow_ids = sorted(
-        n["nodeid"]
-        for n in profile["nodes"]
-        if n["file"] in keep_set and float(n["duration_seconds"]) >= SLOW_NODE_SECONDS
-    )
-    (out / "pr_keep.txt").write_text("\n".join(keep_files) + "\n", encoding="utf-8", newline="\n")
-    (out / "pr_slow.txt").write_text("\n".join(slow_ids) + "\n", encoding="utf-8", newline="\n")
 
     by_verdict: dict[str, dict[str, float]] = collections.defaultdict(
         lambda: {"files": 0, "nodes": 0, "node_hours": 0.0}

@@ -602,6 +602,7 @@ def test_complete_result_and_canonical_dq_pit_build_policy_blocked_handoff(
     assert bundle.authorization_consumption.authorization_consumed is True
 
 
+@pytest.mark.slow
 def test_refresh_v2_authorization_reuses_results_and_canonical_dq_pit_end_to_end(
     tmp_path: Path,
 ) -> None:

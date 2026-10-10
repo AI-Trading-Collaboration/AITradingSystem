@@ -618,6 +618,7 @@ def test_layer2_growth_component_gap_review_preserves_inactive_growth_reference(
     assert (output_root / "layer2_growth_component_gap_review.json").exists()
 
 
+@pytest.mark.slow
 def test_layer1_meta_policy_readiness_builders_are_research_only(tmp_path: Path) -> None:
     prices_path, marketstack_path, rates_path, as_of = _write_layer2_caches(tmp_path)
     layer2_output_root = tmp_path / "outputs" / "research_strategies" / "layer2_components"

@@ -5,6 +5,7 @@ import math
 from datetime import date, timedelta
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
@@ -192,6 +193,7 @@ def test_qqq_plus_growth_builders_write_auditable_artifacts(tmp_path: Path) -> N
         assert Path(payload["artifact_paths"]["markdown_path"]).exists()
 
 
+@pytest.mark.slow
 def test_qqq_plus_growth_cli_smoke_and_report_registry(tmp_path: Path) -> None:
     prices_path, marketstack_path, rates_path, as_of = _write_qqq_growth_caches(tmp_path)
     output_root = tmp_path / "outputs" / "research_strategies" / "qqq_plus_growth"

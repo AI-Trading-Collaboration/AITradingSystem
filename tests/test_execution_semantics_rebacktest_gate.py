@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
+import pytest
 import yaml
 from test_execution_semantics import _write_execution_caches
 from typer.testing import CliRunner
@@ -155,6 +156,7 @@ def test_dynamic_actual_path_owner_review_decision_uses_actual_metrics_only(
     assert "Target-path metrics" in docs_path.read_text(encoding="utf-8")
 
 
+@pytest.mark.slow
 def test_dynamic_actual_path_policy_sensitivity_outputs_actual_path_leaderboard(
     tmp_path: Path,
 ) -> None:

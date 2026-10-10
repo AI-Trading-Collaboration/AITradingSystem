@@ -5,6 +5,7 @@ from datetime import date, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
@@ -1968,6 +1969,7 @@ def test_indicator_validation_pack_stability_report_is_stable(tmp_path: Path) ->
     ).exists()
 
 
+@pytest.mark.slow
 def test_indicator_cli_inventory_and_validation_pack(tmp_path: Path) -> None:
     runner = CliRunner()
     inventory = runner.invoke(

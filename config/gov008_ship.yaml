@@ -70,6 +70,6 @@ gates:
   # exist yet; it joins gate C when it is created in P2, until then zone C runs the PR suite only.
   A: []
   B:
-    - [python, -m, pytest, tests, -n, "16", --dist, loadfile, -p, tools.gov008.pr_filter, -q]
+    - [python, -m, pytest, tests, -n, "16", --dist, loadfile, -m, "not slow", -p, tools.gov008.pr_filter, -q]
   C:
-    - [python, -m, pytest, tests, -n, "16", --dist, loadfile, -p, tools.gov008.pr_filter, -q]
+    - [python, -m, pytest, tests, -n, "16", --dist, loadfile, -m, "not slow", -p, tools.gov008.pr_filter, -q]
