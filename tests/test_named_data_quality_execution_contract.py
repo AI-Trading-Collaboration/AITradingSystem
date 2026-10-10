@@ -322,7 +322,7 @@ def _receipt() -> NamedDQExecutionReceipt:
             (DataQualityImplementationSourceBinding("src/ai_trading_system/stub.py", _SHA),),
         ),
         execution=_identity(),
-        execution_observation=NamedExecutionObservation(1234, "synthetic_lease", _NOW, _NOW, _NOW),
+        execution_observation=NamedExecutionObservation(1234, "hold-" + "b" * 20, _NOW, _NOW, _NOW),
         execution_dependencies=(_artifact(request.policy_path, root="EXECUTION"), calendar_policy),
         calendar=DataQualityCalendarBinding(
             "XNYS", "synthetic", "synthetic", _SHA, "synthetic_closures", "1", _SHA
@@ -362,7 +362,7 @@ def _dispatch(receipt: NamedDQExecutionReceipt) -> NamedDQSuccessfulDispatchBind
         candidate_commit=receipt.execution.candidate_commit,
         execution_root=receipt.execution.execution_root,
         execution_pid=receipt.execution_observation.execution_pid,
-        source_lease_id=receipt.execution_observation.source_lease_id,
+        source_hold_id=receipt.execution_observation.source_hold_id,
         child_started_at=_NOW - timedelta(seconds=1),
         child_terminal_checked_at=_NOW + timedelta(seconds=1),
         parent_postchecked_at=_NOW + timedelta(seconds=2),
@@ -677,7 +677,7 @@ def test_successful_dispatch_is_independent_strict_dto_not_lease_or_capability()
     restored.assert_matches_receipt(receipt, receipt_path=_receipt_path(receipt))
     assert receipt.canonical_bytes == original_bytes
     assert "successful_dispatch" not in receipt.to_dict()
-    assert "source_lease_id" not in receipt.request.to_dict()
+    assert "source_hold_id" not in receipt.request.to_dict()
     assert "parent_receipt" not in receipt.request.to_dict()
     assert binding.proof_semantics == "TRUSTED_COORDINATOR_CORRELATION_ONLY"
     assert not binding.dispatch_allowed
@@ -718,7 +718,7 @@ def test_dispatch_rejects_failed_terminal_and_authority_claims(field: str, value
         ("candidate_commit", "2" * 40),
         ("execution_root", "D:/synthetic/copied-root"),
         ("execution_pid", 5678),
-        ("source_lease_id", "other_active_verifier_lease"),
+        ("source_hold_id", "hold-" + "c" * 20),
     ],
 )
 def test_dispatch_must_match_original_identity_not_current_verifier(

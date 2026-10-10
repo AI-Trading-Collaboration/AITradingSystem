@@ -242,8 +242,8 @@ class ToyRepository:
                 request_sha256 if request_sha256 is not None else _sha(content),
                 "--operation",
                 operation,
-                "--source-lease-id",
-                "lease-00000000000000000000",
+                "--source-hold-id",
+                "hold-00000000000000000000",
             ]
         )
         if operation == "verify":

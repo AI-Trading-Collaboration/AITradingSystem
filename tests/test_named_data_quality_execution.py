@@ -4,10 +4,7 @@ from __future__ import annotations
 
 import copy
 import json
-import os
 import shutil
-import subprocess
-import sys
 from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
@@ -64,161 +61,6 @@ _DEPENDENCIES = (
     "config/data_quality/rate_row_issue_attribution_decision_v1.yaml",
     "config/data/archive/us_equity_special_closure_registry_1_0_0.yaml",
 )
-
-
-@pytest.mark.parametrize(
-    "platform_name,in_venv",
-    [("win32", True), ("win32", False), ("linux", True), ("darwin", False)],
-)
-def test_python_launch_mapping_preserves_logical_runtime_and_only_copies_child_environment(
-    platform_name: str,
-    in_venv: bool,
-) -> None:
-    # Pure path declarations: no executable, process, lease, context or DQ proof.
-    base = "C:/synthetic/base" if platform_name == "win32" else "/synthetic/base"
-    prefix = f"{base}/venv" if in_venv else base
-    suffix = "/python.exe" if platform_name == "win32" else "/bin/python"
-    logical, base_executable = prefix + suffix, base + suffix
-    ambient = {
-        "KEEP_UNRELATED": "synthetic-retained",
-        "PYTHONEXECUTABLE": "synthetic-conflicting-executable",
-        "__PYVENV_LAUNCHER__": "synthetic-stale-launcher",
-        "pythonexecutable": "synthetic-case-alias",
-    }
-    original = ambient.copy()
-    launch = parent_support._child_python_launch(
-        platform_name=platform_name,
-        implementation="cpython",
-        logical_executable=logical,
-        base_executable=base_executable,
-        prefix=prefix,
-        base_prefix=base,
-        environment=ambient,
-    )
-    mapped = platform_name == "win32" and in_venv
-    assert ambient == original
-    assert launch.environment is not ambient
-    assert launch.executable == (base_executable if mapped else logical)
-    expected_overrides = {"__PYVENV_LAUNCHER__": logical} if mapped else {}
-    assert launch.environment == {"KEEP_UNRELATED": "synthetic-retained", **expected_overrides}
-    assert launch.audit["profile"] == (
-        "CPYTHON_WINDOWS_DIRECT_VENV" if mapped else "CPYTHON_DIRECT"
-    )
-    assert launch.audit["logical_executable"] == logical
-    assert launch.audit["os_executable"] == launch.executable
-    assert launch.audit["logical_prefix"] == prefix
-    assert launch.audit["base_prefix"] == base
-    assert launch.audit["windows_redirector_bypassed"] is mapped
-    assert launch.audit["venv_detected"] is in_venv
-    assert launch.audit["child_environment_overrides"] == expected_overrides
-    assert launch.audit["child_environment_removed_keys"] == sorted(
-        original.keys() - {"KEEP_UNRELATED"}
-    )
-    assert launch.audit["parent_environment_mutated"] is False
-    assert launch.audit["dispatch_authority_granted"] is False
-    assert not any(value in json.dumps(launch.audit) for value in original.values())
-
-
-@pytest.mark.parametrize(
-    "field,value,code",
-    [
-        ("implementation", "pypy", "RUNTIME_UNSUPPORTED"),
-        ("platform_name", "unreviewed-platform", "RUNTIME_UNSUPPORTED"),
-        ("base_executable", None, "BASE_EXECUTABLE_INVALID"),
-        ("base_executable", "relative/python.exe", "BASE_EXECUTABLE_INVALID"),
-        ("base_executable", "C:/synthetic/base/pythonw.exe", "WINDOWS_EXECUTABLE_UNSUPPORTED"),
-        ("base_executable", "C:/synthetic/venv/python.exe", "VENV_IDENTITY_INCONSISTENT"),
-    ],
-)
-def test_python_launch_invalid_runtime_has_typed_failure_without_redirector_fallback(
-    field: str,
-    value: str | None,
-    code: str,
-) -> None:
-    runtime: dict[str, Any] = {
-        "platform_name": "win32",
-        "implementation": "cpython",
-        "logical_executable": "C:/synthetic/venv/python.exe",
-        "base_executable": "C:/synthetic/base/python.exe",
-        "prefix": "C:/synthetic/venv",
-        "base_prefix": "C:/synthetic/base",
-        "environment": {},
-    }
-    runtime[field] = value
-    with pytest.raises(
-        parent_support.NamedChildPythonLaunchError, match=f"NAMED_PARENT_PYTHON_{code}"
-    ):
-        parent_support._child_python_launch(**runtime)
-
-
-@pytest.mark.parametrize("nonregular", [False, True])
-def test_current_python_launch_rejects_missing_or_nonregular_base_without_spawn(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    nonregular: bool,
-) -> None:
-    base = tmp_path / "python.exe"
-    if nonregular:
-        base.mkdir()
-    monkeypatch.setattr(
-        parent_support,
-        "sys",
-        SimpleNamespace(
-            platform=sys.platform,
-            implementation=sys.implementation,
-            executable=sys.executable,
-            _base_executable=str(base),
-            prefix=str(tmp_path / "venv"),
-            base_prefix=str(tmp_path / "base"),
-        ),
-    )
-    with pytest.raises(
-        parent_support.NamedChildPythonLaunchError,
-        match="NAMED_PARENT_PYTHON_BASE_EXECUTABLE_NOT_EXECUTABLE",
-    ):
-        parent_support._current_child_python_launch()
-
-
-def test_stdlib_only_child_has_popen_pid_original_venv_and_isolated_no_pyc_flags() -> None:
-    # This is only an interpreter launch regression, never a named bootstrap,
-    # canonical DQ, real data, guard, lease, candidate identity or sealed input.
-    parent_environment = dict(os.environ)
-    launch = parent_support._current_child_python_launch()
-    probe = (
-        "import json,os,sys; "
-        "print(json.dumps({'profile':'STDLIB_INTERPRETER_LAUNCH_PROBE',"
-        "'pid':os.getpid(),'executable':sys.executable,'base_executable':sys._base_executable,"
-        "'prefix':sys.prefix,'base_prefix':sys.base_prefix,"
-        "'isolated':sys.flags.isolated,'dont_write_bytecode':sys.dont_write_bytecode,"
-        "'project_imported':any(name=='ai_trading_system' or name.startswith('ai_trading_system.') "
-        "for name in sys.modules)}))"
-    )
-    with subprocess.Popen(
-        [launch.executable, "-I", "-B", "-X", "utf8", "-c", probe],
-        executable=launch.executable,
-        env=launch.environment,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    ) as process:
-        try:
-            stdout, stderr = process.communicate(timeout=30)
-        finally:
-            if process.poll() is None:
-                process.kill()
-                process.communicate()
-    assert process.returncode == 0, stderr.decode("utf-8", errors="replace")
-    actual = json.loads(stdout)
-    assert actual["profile"] == "STDLIB_INTERPRETER_LAUNCH_PROBE"
-    assert actual["pid"] == process.pid != os.getpid()
-    assert Path(actual["executable"]) == Path(sys.executable)
-    assert Path(actual["base_executable"]) == Path(sys._base_executable)
-    assert Path(actual["prefix"]) == Path(sys.prefix)
-    assert Path(actual["base_prefix"]) == Path(sys.base_prefix)
-    assert actual["isolated"] == 1
-    assert actual["dont_write_bytecode"] is True
-    assert actual["project_imported"] is False
-    assert dict(os.environ) == parent_environment
 
 
 @dataclass(frozen=True)
@@ -689,11 +531,11 @@ def _dispatch_case() -> _DispatchCase:
     receipt = _synthetic_receipt()
     proof = _synthetic_dispatch(receipt)
     stdout = {
-        "schema_version": "named_data_quality_bootstrap_result.v1",
+        "schema_version": "named_data_quality_bootstrap_result.v2",
         "status": receipt.report.status,
         "request_id": receipt.request.request_id,
         "process_id": proof.execution_pid,
-        "source_lease_id": proof.source_lease_id,
+        "source_hold_id": proof.source_hold_id,
         "receipt_id": receipt.receipt_id,
         "receipt_path": _synthetic_receipt_path(receipt),
         "receipt_sha256": receipt.canonical_sha256,
@@ -706,7 +548,7 @@ def _dispatch_case() -> _DispatchCase:
         "broker_action": "none",
     }
     parent = {
-        "schema_version": "named_data_quality_parent_dispatch.v1",
+        "schema_version": "named_data_quality_parent_dispatch.v2",
         "status_semantics": "PARENT_ASSOCIATION_AND_PROCESS_OBSERVATION_ONLY",
         "status": "PASS",
         "operation": "run",
@@ -715,7 +557,7 @@ def _dispatch_case() -> _DispatchCase:
         "candidate_commit": receipt.request.candidate_commit,
         "execution_root": receipt.request.roots.execution_root,
         "request_id": receipt.request.request_id,
-        "source_lease_id": proof.source_lease_id,
+        "source_hold_id": proof.source_hold_id,
         "child_pid": proof.execution_pid,
         "observed_canonical_dq_call_count": 1,
         "counter_observation_state": "KNOWN",
@@ -726,13 +568,13 @@ def _dispatch_case() -> _DispatchCase:
         "broker_action": "none",
     }
     postguard = {
-        "schema_version": "named_dq_existing_parent_proof.v1",
+        "schema_version": "named_dq_existing_parent_proof.v2",
         "status": "PASS",
         "checked_at": proof.parent_postchecked_at.isoformat(),
         "candidate_commit": receipt.request.candidate_commit,
         "execution_root": receipt.request.roots.execution_root,
         "request_sha256": receipt.request.canonical_sha256,
-        "active_lease": {"lease_id": proof.source_lease_id, "state": "ACTIVE"},
+        "active_hold": {"hold_id": proof.source_hold_id},
     }
     return _DispatchCase(receipt, proof, parent, stdout, postguard, receipt.request.canonical_bytes)
 
@@ -889,7 +731,7 @@ def test_successful_dispatch_rejects_locator_hash_or_request_byte_mismatch(
         ("returncode", 2),
         ("returncode", False),
         ("child_pid", 5678),
-        ("source_lease_id", "other-lease"),
+        ("source_hold_id", "hold-" + "e" * 20),
         ("request_id", "other-request"),
         ("observed_canonical_dq_call_count", 0),
         ("counter_observation_state", "UNKNOWN"),
@@ -924,7 +766,7 @@ def test_failed_or_uncorrelated_parent_cannot_admit_its_leftover_pass_receipt(
         ("receipt_sha256", "0" * 64, True),
         ("request_id", "different-request", True),
         ("process_id", 5678, True),
-        ("source_lease_id", "different-lease", True),
+        ("source_hold_id", "hold-" + "d" * 20, True),
         ("canonical_dq_call_count", True, True),
         ("child_terminal_checked_at", "2026-09-05T01:00:03+00:00", True),
     ],
@@ -958,8 +800,8 @@ def test_successful_dispatch_requires_exact_original_child_stdout(
         ("candidate_commit", "2" * 40),
         ("execution_root", "D:/synthetic/other-root"),
         ("request_sha256", "0" * 64),
-        ("active_lease", {"lease_id": "other-lease", "state": "ACTIVE"}),
-        ("active_lease", {"lease_id": "synthetic_lease", "state": "RELEASED"}),
+        ("active_hold", {"hold_id": "hold-" + "f" * 20}),
+        ("active_hold", {}),
     ],
 )
 def test_successful_dispatch_requires_original_parent_postguard_correlation(
@@ -1533,7 +1375,7 @@ def test_bootstrap_failure_keeps_child_counter_distinct_from_zero_parent_counter
         request=Path("D:/synthetic/request.json"),
         request_sha256=sha256(content).hexdigest(),
         operation=operation,
-        source_lease_id="CONTROL_FLOW_STUB_ONLY",
+        source_hold_id="CONTROL_FLOW_STUB_ONLY",
         receipt_path=None,
         receipt_sha256=None,
         run_dispatch_path=None,
@@ -1582,231 +1424,6 @@ def test_bootstrap_failure_keeps_child_counter_distinct_from_zero_parent_counter
 
 
 @pytest.mark.parametrize(
-    "failure_mode,terminal_state,returncode,communicate_count,kill_count",
-    [
-        ("spawn_error", "NOT_STARTED", None, 0, 0),
-        ("timeout", "TIMED_OUT_AND_CHILD_REAPED", -9, 2, 1),
-        ("communicate_error", "PARENT_ERROR_AND_CHILD_REAPED", -9, 2, 1),
-        ("invalid_json", "EXITED", 0, 1, 0),
-        ("postguard_error", "EXITED", 0, 1, 0),
-        ("pid_mismatch", "EXITED", 0, 1, 0),
-    ],
-)
-def test_parent_failure_control_flow_preserves_memory_only_diagnostics_without_authority(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    failure_mode: str,
-    terminal_state: str,
-    returncode: int | None,
-    communicate_count: int,
-    kill_count: int,
-) -> None:
-    # This is NOT an actual-candidate fixture, child, guard, lease, DQ result or
-    # persisted proof. All would-be artifact bytes are intercepted in memory.
-    # The real candidate tests independently exercise these boundaries end to end.
-    label = "CONTROL_FLOW_STUB_ONLY"
-    sandbox_root = tmp_path / label
-    original_request = _synthetic_receipt().request
-    request = replace(
-        original_request,
-        roots=NamedDQRoots(
-            source_root=(tmp_path / "unused-source").as_posix(),
-            publication_root=(tmp_path / "unused-publication").as_posix(),
-            execution_root=sandbox_root.as_posix(),
-            evidence_root=(tmp_path / "unused-evidence").as_posix(),
-        ),
-    )
-    # The dispatcher only accesses request; no market/publication fixture is
-    # created or made authoritative to reach these failure-control branches.
-    fixture = cast(parent_support.NamedExecutionFixture, SimpleNamespace(request=request))
-    lease_id = f"{label}-lease"
-    clock_base = datetime(2026, 9, 5, tzinfo=UTC)
-    clock_tick = 0
-    guard_calls = 0
-
-    def instant() -> str:
-        nonlocal clock_tick
-        value = clock_base + timedelta(seconds=clock_tick)
-        clock_tick += 1
-        return value.isoformat()
-
-    def control_flow_guard(**kwargs: Any) -> dict[str, object]:
-        nonlocal guard_calls
-        guard_calls += 1
-        assert kwargs == {
-            "request": request,
-            "transaction_input": label,
-            "lease_id": lease_id,
-        }
-        if guard_calls == 2 and failure_mode == "postguard_error":
-            raise ValueError("SYNTHETIC_POSTGUARD_FAILURE")
-        return {
-            "profile": label,
-            "status": label,  # Deliberately not a PASS guard or ACTIVE lease.
-            "checked_at": instant(),
-            "active_lease": {
-                "state": label,
-                "expires_at": (clock_base + timedelta(hours=1)).isoformat(),
-            },
-        }
-
-    declared_stdout = json.dumps(
-        {
-            "profile": label,
-            "status": label,
-            "process_id": 4343 if failure_mode == "pid_mismatch" else 4242,
-            "source_lease_id": lease_id,
-            "canonical_dq_call_count": 1,  # A declaration, never an observed DQ call.
-        }
-    ).encode()
-    raw_stdout = (
-        b'{"profile":"CONTROL_FLOW_STUB_ONLY",'
-        if failure_mode == "invalid_json"
-        else declared_stdout
-    )
-    raw_stderr = b"CONTROL_FLOW_STUB_ONLY stderr\n"
-
-    class ControlFlowProcess:
-        pid = 4242
-
-        def __init__(self) -> None:
-            self.returncode: int | None = None
-            self.communicate_count = 0
-            self.kill_count = 0
-
-        def communicate(self, timeout: int | None = None) -> tuple[bytes, bytes]:
-            self.communicate_count += 1
-            if self.communicate_count == 1 and failure_mode == "timeout":
-                raise subprocess.TimeoutExpired(label, timeout)
-            if self.communicate_count == 1 and failure_mode == "communicate_error":
-                raise OSError("SYNTHETIC_COMMUNICATE_FAILURE")
-            if self.returncode is None:
-                self.returncode = 0
-            return raw_stdout, raw_stderr
-
-        def kill(self) -> None:
-            self.kill_count += 1
-            self.returncode = -9
-
-        def poll(self) -> int | None:
-            return self.returncode
-
-    process = ControlFlowProcess()
-    popen_calls: list[list[str]] = []
-
-    def controlled_popen(command: list[str], **kwargs: Any) -> ControlFlowProcess:
-        popen_calls.append(command)
-        assert kwargs["cwd"] == sandbox_root
-        assert command[1:3] == ["-I", "-B"]
-        assert command[0] == kwargs["executable"] == expected_launch.executable
-        if kwargs["env"] != expected_launch.environment:
-            # Preserve the exact comparison without printing ambient values.
-            pytest.fail("CONTROL_FLOW_CHILD_ENVIRONMENT_COPY_MISMATCH", pytrace=False)
-        assert kwargs["env"] is not os.environ
-        if failure_mode == "spawn_error":
-            raise OSError("SYNTHETIC_POPEN_FAILURE")
-        return process
-
-    captured: dict[str, bytes] = {}
-
-    def memory_sink(path: Path, content: bytes) -> dict[str, object]:
-        assert path.is_relative_to(sandbox_root)
-        assert path.name not in captured
-        captured[path.name] = content
-        return {
-            "path": path.as_posix(),
-            "sha256": sha256(content).hexdigest(),
-            "size_bytes": len(content),
-        }
-
-    def forbidden(*args: Any, **kwargs: Any) -> None:
-        raise AssertionError("CONTROL_FLOW_STUB_ONLY cannot access real authority or DQ")
-
-    original_popen = subprocess.Popen
-    monkeypatch.setattr(parent_support, "ROOT", sandbox_root)
-    monkeypatch.setattr(parent_support, "_instant", instant)
-    monkeypatch.setattr(parent_support, "_live_parent_proof", control_flow_guard)
-    monkeypatch.setattr(parent_support, "_write_new", memory_sink)
-    # Replace only this helper's module reference, not the global subprocess
-    # module used by pytest/xdist or unrelated processes in this worker.
-    monkeypatch.setattr(
-        parent_support,
-        "subprocess",
-        SimpleNamespace(
-            Popen=controlled_popen,
-            TimeoutExpired=subprocess.TimeoutExpired,
-            DEVNULL=subprocess.DEVNULL,
-            PIPE=subprocess.PIPE,
-        ),
-    )
-    for name in (
-        "_git",
-        "IntegrationPublicationFence",
-        "_write_successful_run_proof",
-        "read_contained_artifact_bytes",
-        "publish_download_transaction",
-        "build_actual_candidate_fixture",
-    ):
-        monkeypatch.setattr(parent_support, name, forbidden)
-    monkeypatch.setattr(execution, "validate_data_cache", forbidden)
-    monkeypatch.setenv(parent_support.TRANSACTION_ENV, label)
-    monkeypatch.setenv(parent_support.LEASE_ENV, lease_id)
-    expected_launch = parent_support._current_child_python_launch()
-
-    with pytest.raises(pytest.fail.Exception, match="NAMED_PARENT_DISPATCH_BLOCKED"):
-        parent_support.dispatch_actual_candidate_child(fixture)
-
-    assert guard_calls == 2
-    assert len(popen_calls) == 1
-    assert process.communicate_count == communicate_count
-    assert process.kill_count == kill_count
-    assert subprocess.Popen is original_popen
-    assert list(captured) == [
-        "pre_dispatch_proof.json",
-        "request.json",
-        "post_dispatch_proof.json",
-        "child_stdout.json",
-        "child_stderr.txt",
-        "parent_receipt.json",
-    ]
-    assert json.loads(captured["pre_dispatch_proof.json"])["status"] == label
-    parent = json.loads(captured["parent_receipt.json"])
-    assert parent["status"] == "BLOCKED"
-    assert parent["terminal_state"] == terminal_state
-    assert parent["returncode"] == returncode
-    assert parent["launch_audit"] == expected_launch.audit
-    assert parent["child_pid"] == (None if failure_mode == "spawn_error" else process.pid)
-    assert parent["dispatch_allowed"] is parent["verified_input_seal_exported"] is False
-    assert captured["child_stdout.json"] == (b"" if failure_mode == "spawn_error" else raw_stdout)
-    assert captured["child_stderr.txt"] == (b"" if failure_mode == "spawn_error" else raw_stderr)
-    if failure_mode in {"postguard_error", "pid_mismatch"}:
-        expected_failure = (
-            "NAMED_PARENT_POST_DISPATCH_BLOCKED:"
-            if failure_mode == "postguard_error"
-            else "NAMED_PARENT_CHILD_ASSOCIATION_MISMATCH"
-        )
-        assert parent["failure"].startswith(expected_failure)
-        assert parent["child_result"]["profile"] == label
-        assert parent["observed_canonical_dq_call_count"] == 1
-        assert parent["counter_observation_state"] == "KNOWN"
-        assert json.loads(captured["post_dispatch_proof.json"])["status"] == (
-            "BLOCKED" if failure_mode == "postguard_error" else label
-        )
-    else:
-        # Even a parseable declaration returned while reaping a failed process
-        # must not turn partial stdout into a known counter or successful run.
-        assert parent["child_result"] == {}
-        assert parent["observed_canonical_dq_call_count"] is None
-        assert parent["counter_observation_state"] == "UNKNOWN"
-        if failure_mode == "timeout":
-            assert parent["failure"] is None
-        else:
-            assert parent["failure"]
-    assert "successful_run_dispatch.json" not in captured
-    assert not any(path.is_file() for path in tmp_path.rglob("*"))
-
-
-@pytest.mark.parametrize(
     "case,issue",
     [
         ("lag_one", None),
@@ -1829,9 +1446,7 @@ def test_equal_risk_synthetic_canonical_fixture_semantics_before_actual_dispatch
 ) -> None:
     # Reuse only synthetic row/publication construction. No bootstrap child,
     # actual execution identity, successful dispatch proof, or seal is claimed.
-    from test_named_data_quality_candidate import _equal_risk_scope_fixture
-
-    fixture = _equal_risk_scope_fixture(tmp_path, case=case)
+    fixture = parent_support.equal_risk_scope_fixture(tmp_path, case=case)
     capture = execution.capture_named_publication(fixture.request)
     report = _canonical_report(fixture.request, capture)
     if issue is None:

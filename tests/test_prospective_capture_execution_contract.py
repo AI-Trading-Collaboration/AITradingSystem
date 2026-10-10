@@ -9,7 +9,7 @@ import json
 import socket
 import subprocess
 from collections.abc import Callable
-from dataclasses import FrozenInstanceError, fields, replace
+from dataclasses import FrozenInstanceError, replace
 from datetime import UTC, date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, cast
@@ -49,16 +49,11 @@ from ai_trading_system.contracts.prospective_capture_execution import (
     CAPTURE_RETURN_CLOCK,
     CAPTURE_TASK_ID,
     CAPTURE_TIMING_VERSION,
+    ParentCompletionAcknowledgement,
     ProspectiveCaptureManifest,
     ProspectiveCaptureOwnerReview,
     ProspectiveCaptureRequest,
     RecorderReturnObservation,
-)
-from ai_trading_system.contracts.prospective_capture_execution import (
-    ParentCompletionAcknowledgement as ParentCompletionAcknowledgementV2,
-)
-from ai_trading_system.contracts.prospective_capture_execution import (
-    ParentCompletionAcknowledgementV1 as ParentCompletionAcknowledgement,
 )
 from ai_trading_system.contracts.prospective_event_time_evidence import canonical_json_bytes
 
@@ -174,7 +169,7 @@ def _request(
     return ProspectiveCaptureRequest(**values)
 
 
-def _ack(operation: str = "capture", **changes: Any) -> ParentCompletionAcknowledgement:
+def _base_values(operation: str) -> dict[str, Any]:
     request = _request(operation)
     start = (
         datetime(2026, 11, 25, 21, 59, 59, tzinfo=UTC)
@@ -191,13 +186,12 @@ def _ack(operation: str = "capture", **changes: Any) -> ParentCompletionAcknowle
         "candidate_commit": request.candidate_commit,
         "execution_identity_sha256": _SHA,
         "parent_pid": 123,
-        "source_lease_id": "lease-" + "a" * 20,
+        "source_hold_id": "hold-" + "a" * 20,
         "recorder_event": NamedArtifactBinding(
             "EXECUTION", request.timing_relative_path + "/synthetic_event.json", _SHA, 1
         ),
         "recording_call_started_at": start,
         "witness_bundle_observed_at": start + timedelta(seconds=1),
-        "monotonic_elapsed_ns": 1_000_000_000,
         "first_feature_session": _FEATURE,
         "decision_effective_session": None if operation == "activate" else _NEXT_FEATURE,
         "decision_deadline": None if operation == "activate" else _DEADLINE,
@@ -207,8 +201,7 @@ def _ack(operation: str = "capture", **changes: Any) -> ParentCompletionAcknowle
             "ACTIVATION_ACKNOWLEDGED" if operation == "activate" else "CAPTURE_ACKNOWLEDGED"
         ),
     }
-    values.update(changes)
-    return ParentCompletionAcknowledgement(**values)
+    return values
 
 
 def _ack_v2(
@@ -219,14 +212,10 @@ def _ack_v2(
     raw_increment_ns: int = 1000,
     resolution: str = "1e-07",
     **changes: Any,
-) -> ParentCompletionAcknowledgementV2:
-    legacy = _ack(operation)
-    values = {
-        item.name: getattr(legacy, item.name)
-        for item in fields(legacy)
-        if item.name != "monotonic_elapsed_ns"
-    }
-    instant = datetime_to_utc_ns(start or legacy.recording_call_started_at)
+) -> ParentCompletionAcknowledgement:
+    values = _base_values(operation)
+    base_event = values["recorder_event"]
+    instant = datetime_to_utc_ns(start or values["recording_call_started_at"])
     provider = HostClockProvider(
         "win32",
         "CPython",
@@ -261,10 +250,7 @@ def _ack_v2(
                 "recorder_return",
             ):
                 child = append_clock_checkpoint(child, label=stage, sample=sample())
-            event = replace(
-                legacy.recorder_event,
-                relative_path=legacy.recorder_event.relative_path + "/" + label,
-            )
+            event = replace(base_event, relative_path=base_event.relative_path + "/" + label)
             returns.append(RecorderReturnObservation(event, child))
             child_bound = child.admission_bound_ns
         parent = append_clock_checkpoint(
@@ -291,7 +277,7 @@ def _ack_v2(
         ),
     )
     values.update(changes)
-    return ParentCompletionAcknowledgementV2(**values)
+    return ParentCompletionAcknowledgement(**values)
 
 
 def _declaration(kind: str) -> Any:
@@ -300,8 +286,6 @@ def _declaration(kind: str) -> Any:
         "review": _review,
         "activation": lambda: _request("activate"),
         "capture": _request,
-        "activation_ack": lambda: _ack("activate"),
-        "capture_ack": _ack,
         "activation_ack_v2": lambda: _ack_v2("activate"),
         "capture_ack_v2": _ack_v2,
     }
@@ -313,8 +297,6 @@ _KINDS = (
     "review",
     "activation",
     "capture",
-    "activation_ack",
-    "capture_ack",
     "activation_ack_v2",
     "capture_ack_v2",
 )
@@ -762,11 +744,9 @@ def test_exact_snapshot_and_guard_window_remain_in_request_identity() -> None:
         ("execution_identity_sha256", "not-a-hash"),
         ("parent_pid", 0),
         ("parent_pid", True),
-        ("source_lease_id", "lease-" + "A" * 20),
-        ("source_lease_id", "lease-" + "a" * 19),
-        ("monotonic_elapsed_ns", -1),
-        ("monotonic_elapsed_ns", True),
-        ("monotonic_elapsed_ns", 1.0),
+        ("source_hold_id", "hold-" + "A" * 20),
+        ("source_hold_id", "hold-" + "a" * 19),
+        ("source_hold_id", "lease-" + "a" * 20),
         ("authorization_state", "RETROSPECTIVELY_REVIEWED"),
         ("authorization_state", "UNAUTHORIZED_ACTION_INCIDENT"),
         ("evidence_purpose", "LIVE_RESEARCH"),
@@ -781,7 +761,7 @@ def test_exact_snapshot_and_guard_window_remain_in_request_identity() -> None:
 )
 def test_parent_ack_rejects_identity_type_or_safety_drift(field: str, value: Any) -> None:
     with pytest.raises(ValueError):
-        replace(_ack(), **{field: value})
+        replace(_ack_v2(), **{field: value})
 
 
 @pytest.mark.parametrize(
@@ -789,53 +769,11 @@ def test_parent_ack_rejects_identity_type_or_safety_drift(field: str, value: Any
 )
 @pytest.mark.parametrize("zone", (None, timezone(timedelta(hours=9))))
 def test_ack_requires_utc_aware_instants_for_all_clock_fields(field: str, zone: Any) -> None:
-    ack = _ack()
+    ack = _ack_v2()
     original = getattr(ack, field)
     changed = original.replace(tzinfo=None) if zone is None else original.astimezone(zone)
     with pytest.raises(ValueError):
         replace(ack, **{field: changed})
-
-
-def test_ack_rejects_backward_or_partially_rolled_back_utc() -> None:
-    ack = _ack()
-    with pytest.raises(ValueError, match="UTC must enclose"):
-        replace(
-            ack,
-            witness_bundle_observed_at=ack.recording_call_started_at - timedelta(microseconds=1),
-        )
-    with pytest.raises(ValueError, match="UTC must enclose"):
-        replace(ack, monotonic_elapsed_ns=1_000_001_001)
-    with pytest.raises(ValueError, match="UTC must enclose"):
-        replace(
-            ack,
-            witness_bundle_observed_at=ack.recording_call_started_at
-            + timedelta(microseconds=500_000),
-        )
-
-
-def test_ack_allows_only_datetime_precision_for_inner_monotonic_lower_bound() -> None:
-    ack = _ack()
-    exact = replace(ack, monotonic_elapsed_ns=1_000_001_000)
-    assert exact.monotonic_elapsed_ns == 1_000_001_000
-    with pytest.raises(ValueError):
-        replace(exact, monotonic_elapsed_ns=exact.monotonic_elapsed_ns + 1)
-
-
-@pytest.mark.parametrize(
-    "offset_us,status",
-    [(-1, "CAPTURE_ACKNOWLEDGED"), (0, "LATE"), (1, "LATE")],
-)
-def test_complete_witness_must_be_strictly_before_deadline(offset_us: int, status: str) -> None:
-    observed = _DEADLINE + timedelta(microseconds=offset_us)
-    ack = _ack(
-        recording_call_started_at=observed - timedelta(seconds=1),
-        witness_bundle_observed_at=observed,
-        technical_validation_state=status,
-    )
-    assert ack.technical_validation_state == status
-    other = "LATE" if status == "CAPTURE_ACKNOWLEDGED" else "CAPTURE_ACKNOWLEDGED"
-    with pytest.raises(ValueError, match="strict deadline classification"):
-        replace(ack, technical_validation_state=other)
 
 
 @pytest.mark.parametrize(
@@ -855,7 +793,7 @@ def test_capture_ack_requires_its_declared_activation_order_and_capture_fields(
     field: str, value: Any
 ) -> None:
     with pytest.raises(ValueError):
-        replace(_ack(), **{field: value})
+        replace(_ack_v2(), **{field: value})
 
 
 @pytest.mark.parametrize(
@@ -869,26 +807,20 @@ def test_capture_ack_requires_its_declared_activation_order_and_capture_fields(
 )
 def test_activation_ack_does_not_invent_a_dq_or_return_interval(field: str, value: Any) -> None:
     with pytest.raises(ValueError):
-        replace(_ack("activate"), **{field: value})
+        replace(_ack_v2("activate"), **{field: value})
 
 
 def test_recorder_event_must_be_an_execution_root_binding() -> None:
-    ack = _ack()
+    ack = _ack_v2()
     with pytest.raises(ValueError):
         replace(ack, recorder_event=replace(ack.recorder_event, root_role="PUBLICATION"))
 
 
-def test_v2_coarse_raw_clock_is_valid_without_reinterpreting_v1_inner_math() -> None:
+def test_v2_coarse_raw_clock_is_valid() -> None:
     ack = _ack_v2(counter_step_ns=1_000_000, raw_increment_ns=0)
     assert ack.recording_call_started_at == ack.witness_bundle_observed_at == ack.covered_through_at
     assert ack.parent_outer_elapsed_ns > 0
     assert ack.technical_validation_state == "CAPTURE_ACKNOWLEDGED"
-    with pytest.raises(ValueError, match="UTC must enclose"):
-        _ack(
-            recording_call_started_at=ack.recording_call_started_at,
-            witness_bundle_observed_at=ack.witness_bundle_observed_at,
-            monotonic_elapsed_ns=ack.parent_outer_elapsed_ns,
-        )
 
 
 @pytest.mark.parametrize(
@@ -922,7 +854,7 @@ def test_v2_deadline_equality_uses_complete_bound_while_raw_utc_is_still_before_
         ("parent_outer_elapsed_ns", 1.0),
         ("parent_outer_elapsed_ns", 0),
         ("parent_pid", 0),
-        ("source_lease_id", "lease-unknown"),
+        ("source_hold_id", "hold-unknown"),
         ("request_id", "prospective_capture_request_" + "b" * 64),
         ("recorder_returns", ()),
         ("hidden_host_adjustment_proof", "PASS"),
@@ -1054,16 +986,18 @@ def test_v2_terminal_precommit_cannot_be_added_to_already_frozen_ack_scope() -> 
         replace(ack, covered_through_at=ack.covered_through_at + timedelta(microseconds=1))
 
 
-def test_v1_v2_ack_parsers_are_explicit_and_cannot_silently_upgrade_bytes() -> None:
-    old, new = _ack(), _ack_v2()
+def test_previous_protocol_ack_bytes_cannot_silently_upgrade() -> None:
+    new = _ack_v2()
+    previous = cast(dict[str, Any], new.to_dict())
+    previous["schema_version"] = "prospective_parent_completion_acknowledgement.v2"
+    previous["source_lease_id"] = "lease-" + "a" * 20
+    del previous["source_hold_id"]
     with pytest.raises(ValueError):
-        ParentCompletionAcknowledgement.from_json_bytes(new.canonical_bytes)
-    with pytest.raises(ValueError):
-        ParentCompletionAcknowledgementV2.from_json_bytes(old.canonical_bytes)
+        ParentCompletionAcknowledgement.from_dict(previous)
     damaged = cast(dict[str, Any], new.to_dict())
     damaged["recorder_returns"][0]["clock_evidence"]["fabricated_utc_authority"] = True
     with pytest.raises(ValueError):
-        ParentCompletionAcknowledgementV2.from_dict(damaged)
+        ParentCompletionAcknowledgement.from_dict(damaged)
 
 
 def _forbid(*args: object, **kwargs: object) -> Any:
@@ -1088,7 +1022,7 @@ def test_pure_contract_does_not_claim_first_feature_calendar_or_runtime_verifica
         # The caller's DTO date is deliberately not calendar evidence. Actual
         # admission must derive and compare first F using complete ACK time and
         # the bound canonical calendar, including NY-date changes after S3a.
-        activation = _ack("activate", first_feature_session=date(2026, 11, 26))
+        activation = _ack_v2("activate", first_feature_session=date(2026, 11, 26))
         assert activation.first_feature_session == date(2026, 11, 26)
         assert activation.acknowledgement_own_durability_time_claimed is False
         assert activation.outcome_access_authorized is False
