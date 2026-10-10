@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DEVX-018_VALIDATION_RUNTIME_THROUGHPUT
 area: Architecture / validation runtime throughput (scheduling, tier dedup, heavy-node cost)
 priority: P0
-status: DEFERRED
+status: DROPPED
 next_owner: Claude Code coordinator
-next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：基线 P1-C 与 DEVX-022 均已发布（main = origin/main = 0cbdd9a45）；Full 墙钟 7 小时 22 分 -> 3 小时 35 分（v26）-> 2 小时 14~25 分（M2c/M3/M4，宿主噪声 ±8%），M4 为已发布 PASS：14,745 通过/0 失败。DEVX-018 的 O1/O2/O3/K 调度（清单 v6）、P4 的 S3a（replay 内去重）与 S3b（租约事件行表外置）已落地并经真实 Full 与真实发布验证。剩余：host_registry_view 复合组拆分（须 owner 复核互斥语义）、O4 夹具复用、变体冗余审计（DEVX-020）；清单种子刷新（可用 M4 的已发布 PASS profile，按 TRADING-2564 S5 规则，约 -5 分钟）。须披露：超时与等待校准仍 PROVISIONAL_PENDING_OWNER_REVIEW（含 composer 子进程预算 1,800 s、发布 worker 10,800 s/git 子进程 7,200 s）；O3 设计偏离与残余风险；O3 跨调用缓存未获批；上次发布期间两个仓库状态清理（ORIG_HEAD 经批准，两个残留空锁未预批，见 DEVX-021 第 7 节）。
+next_step: 无（被 GOV-008 取代）
 acceptance: Full 墙钟与 tail idle 实测显著下降且无挂起保护触发；Full collection 集合不变；旧 loadfile profile 仍按原契约通过；pre-Full tier summary 显示排除节点数与清单版本；清单/K 进入受审配置；P1/P4/O3 不跨调用缓存身份或 PASS
-notes: 2026-10-06：DEVX-022 发布后状态汇总。
+notes: 2026-10-06：DEVX-022 发布后状态汇总。；GOV-008 收尾（2026-10-10）：Full 验证吞吐的代码已在 GOV-008 删除，任务终止（owner_decision:GOV-008:2026-10-10:research_first_refactor_v1；需求文档第 21 节）；原状态 DEFERRED

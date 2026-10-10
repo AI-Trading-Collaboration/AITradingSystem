@@ -2,8 +2,8 @@ schema_version: task.v1
 id: OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING
 area: Operations / scheduler business contract
 priority: P0
-status: DEFERRED
+status: DROPPED
 next_owner: Codex operations coordinator
-next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：完整 Full 12762 PASS/4 FAIL；修正目录固定身份及 OPS-081 历史接续检查，完成新候选正式验证、发布与零业务预检；下一合法 ordinary daily 另作运营验收。详见 docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md
+next_step: 无（被 GOV-008 取代）
 acceptance: 偏好变更保持许可；业务合同严格验证；未知字段/并发/中断 fail closed；回归验证与受治理发布
-notes: v3 业务投影解耦偏好；初步 88 tests PASS；actual Terra/medium + reviewed efficiency 只读观察 PASS；未发布 runtime。
+notes: v3 业务投影解耦偏好；初步 88 tests PASS；actual Terra/medium + reviewed efficiency 只读观察 PASS；未发布 runtime。；GOV-008 收尾（2026-10-10）：Codex 调度观察的业务合同（命令已删，调度改由 OPS-082 设计）的代码已在 GOV-008 删除，任务终止（owner_decision:GOV-008:2026-10-10:research_first_refactor_v1；需求文档第 21 节）；原状态 DEFERRED

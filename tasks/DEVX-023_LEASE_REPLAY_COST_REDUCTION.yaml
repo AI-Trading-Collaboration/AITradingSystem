@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DEVX-023_LEASE_REPLAY_COST_REDUCTION
 area: 'Governed workflow / lease-store replay cost: one replay of the 713 MB real store takes about 14 s, which dominates every fence command and the 71-minute real publication'
 priority: P2
-status: DEFERRED
+status: DROPPED
 next_owner: Claude Code coordinator
-next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：封印 S 已上线并按 owner 的选择只在发布链里启用（候选 A 69f34967d 默认关闭；候选 B 9a463c639 = 角色策略 1.1.0 的 lease_seal 一节 + 步骤 A06.seal_rebuild + stage 1 与 local-publish worker 的开关）。第十一次发布实测（DEVX-023 第 10.10 节、DEVX-022 第 17.14 节）：A06 74.0 s、local-publish 39:19 -> 19:09（-51%）、E57/E61/E62 -32%/-51%/-50%、stage 1 696.1 s（-6%）、E50–E63 合计 -47%、整条链 4:37 -> 4:23；未达成：E52/E56 -28%（目标 -40%）、stage 1 > 650 s（命名 DQ 受限子进程里的重放仍是完整重放）、Full pytest +3.9%（库增长，Full 角色 never_enabled）。本任务剩余：测量四个 xdist tier 的重放占比后决定 validation_pre_full_tiers；让封印进 Full 须另行评审命名 DQ 受限子进程的导入清单（放宽隔离边界，owner 本轮未选）。Full 的下一个杠杆是 DEVX-022 的 M6。
+next_step: 无（被 GOV-008 取代）
 acceptance: 选定方案后：围栏命令（acquire/checkpoint/release）墙钟降到当前的 1/3 以内、真实发布不超过 30 分钟（只选 S3c+W 时：每次发布给租约库留下的事件字节从约 11.8 MiB 降到 1 MiB 以内，单次重放的逐发布增长从约 +3 s 降到 +0.5 s 以内，发布耗时不再随发布数线性增长）；重放结论与全量重放逐项相同（真实库与变异库的差分测试，含篡改/截断/重排/替换事件、内核版本变化使封印失效、封印缺失或损坏时回退全量重放；外置新增位置时：旧事件原样可读、新增位置的 marker 在旧位置或缺 blob 时 fail-closed）；不引入未经 owner 批准的跨调用缓存；历史事件文件不被改写；命名 DQ 父证明不再随发布数线性增长（只绑定重放摘要与来源租约，须评审）；文档与 system_flow 同步。
-notes: 2026-10-10：候选 B 已发布（9a463c639）并实测（10.10）；本任务主体完成，剩余为可选项。
+notes: 2026-10-10：候选 B 已发布（9a463c639）并实测（10.10）；本任务主体完成，剩余为可选项。；GOV-008 收尾（2026-10-10）：lease 回放成本的代码已在 GOV-008 删除，任务终止（owner_decision:GOV-008:2026-10-10:research_first_refactor_v1；需求文档第 21 节）；原状态 DEFERRED

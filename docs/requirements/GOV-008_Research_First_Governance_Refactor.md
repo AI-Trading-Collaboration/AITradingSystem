@@ -656,3 +656,25 @@ docs/extensions.md、docs/configuration.md、docs/security.md）**：
 建议的 3 个试跑任务（由易到难）：(1) 只读：用 `periodic-operations` skill 跑 `aits ops daily-plan --fail-on-missing-env`
 并写中文摘要；(2) A 区：按第 6 节为挂起任务写重评表（只改任务记录与文档，ship 不跑测试）；(3) B 区：GOV-008A（Reader Brief
 ETF 栏目清理）走完整 ship 流程。每个试跑记录：是否按 skill 步骤执行、守卫是否误拦或漏拦、门禁结果、耗时。
+
+P6 仓库侧已发布：`ba1746b63`（ship 门禁 7,932 通过、0 失败，10m04s），main = origin/main。
+
+## 21. 收尾：第 6 节挂起任务的重评（2026-10-10）
+
+**已关闭**（代码在 GOV-008 中删除，任务无法再推进；依据 `owner_decision:GOV-008:2026-10-10:research_first_refactor_v1`，
+记录可随时改回）：DEVX-014、DEVX-015（含 GOV-007 时"做完 106 项验收"的要求）、DEVX-015A、DEVX-016、DEVX-018、
+DEVX-019、DEVX-020、DEVX-021、DEVX-022、DEVX-023、GOV-007、OPS-077、OPS-081 → DROPPED；DEVX-017 → DONE
+（AGENTS.md 中性、skills 在 `.agents/skills`；证据 harness 字段与 token 遥测随旧机制删除不再适用）。
+
+**留给 owner 决定**（代码仍在，但原下一步依赖已删除的正式验证/release 流程，需重新定范围）：
+
+| 任务 | 现状 | 建议 |
+|---|---|---|
+| OPS-070、OPS-072、OPS-073、OPS-074、OPS-079 | 产品行为已实现（capture DAG、传输重试、终止处置、留存政策证据消费、历史缺口恢复），等真实 daily 运营验收 | 改为 VALIDATING，验收条件改成"OPS-082 新调度下第一次 ordinary daily 全链"；OPS-073/079 的恢复路径需去掉 deployment receipt 依赖 |
+| OPS-078 | Codex automation 的隔离 carrier 与同日 rescue 窗口 | 并入 OPS-082（新调度是否保留第二个 rescue 窗口由 owner 定） |
+| OPS-082 | 确定性调度，PROPOSED | 下一个要做的运营任务；需 owner 确认用 Windows 计划任务并停用 Codex automation |
+| DATA-GOV-002 | 按 consumer 能力划分的 strict DQ receipt | 保留 DEFERRED，排在 OPS-082 之后 |
+| ARCH-004、ARCH-004G5、ARCH-004H | 架构 v2 迁移计划 | 需 owner 判断还要不要做；GOV-008 已删去其中与发布机制相关的部分 |
+| GOV-006 | 未完成任务的优先级整理 | 新任务库下可简化为一次表格复核；建议保留，待 pi 试跑后用作 A 区试跑任务 |
+| DEVX-001 | 临时工作区生命周期工具 | 规则已在 AGENTS.md；建议 DROPPED 或降为 P3 |
+| KNOWLEDGE-001、TRADING-2560、TRADING-2564 | 研究/产品线 | 不受 GOV-008 影响，按各自需求文档推进 |

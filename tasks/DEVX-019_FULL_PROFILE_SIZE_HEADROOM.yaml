@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DEVX-019_FULL_PROFILE_SIZE_HEADROOM
 area: Validation runtime / Full profile size headroom vs publication custody ceiling
 priority: P2
-status: PROPOSED
+status: DROPPED
 next_owner: Claude Code coordinator
-next_step: v18 发现发布 worker 对 hook 输入使用默认 16 MiB 读取/托管预算，而真实 test_runtime_profile.json 约 27.4 MB（1.47 万节点，约 1.9 KB/节点）；DEVX-018 v19 只把捕获文件预算放宽到既有托管上限 64 MiB 并让超限错误可读，余量约 2.4 倍，节点数增至约 3.4 万会再次触顶。待评估：精简逐节点 phase 记录/时间戳重复字段，或分层存储并保持 sha256 绑定；任何方案都不得放宽哈希绑定、完整性或 fail-closed 语义。依赖 DEVX-018 v19 发布完成后再重测实际大小。
+next_step: 无（被 GOV-008 取代）
 acceptance: 超限时发布给出明确错误码且不产生部分状态；profile 大小有可审计的上限政策（配置+版本+理由）；精简方案若实施，旧 profile 仍按原契约可校验；报告/Reader Brief 标明 profile 大小与上限。
-notes: production_effect=none；broker_action=none；agent_harness=claude_code；来源 DEVX-018 v18 Full 发布阶段 WORKFLOW_ARTIFACT_BUDGET；2026-10-02 登记，不阻塞 P1-C 基线发布。
+notes: production_effect=none；broker_action=none；agent_harness=claude_code；来源 DEVX-018 v18 Full 发布阶段 WORKFLOW_ARTIFACT_BUDGET；2026-10-02 登记，不阻塞 P1-C 基线发布。；GOV-008 收尾（2026-10-10）：Full profile 大小的代码已在 GOV-008 删除，任务终止（owner_decision:GOV-008:2026-10-10:research_first_refactor_v1；需求文档第 21 节）；原状态 PROPOSED

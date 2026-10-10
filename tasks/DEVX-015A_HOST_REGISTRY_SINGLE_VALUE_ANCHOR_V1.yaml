@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DEVX-015A_HOST_REGISTRY_SINGLE_VALUE_ANCHOR_V1
 area: Architecture / host enrollment registry anchor without RegRenameKey
 priority: P0
-status: BASELINE_DONE
+status: DROPPED
 next_owner: Project Owner（清理 HKCU 遗留测试键）；Claude Code coordinator（随 DEVX-015 最终验收复核）
-next_step: S1–S3 完成并随 DEVX-015 v389 集成候选发布（S4）。剩余：owner 清理 HKCU 遗留测试键 AITS-DEVX015-Test-b12411aa…（v387 回归中止遗留）后验收第 4 条满足，再转 DONE。详见 docs/requirements/DEVX-015A_Host_Registry_Single_Value_Anchor.md 第 8 节。
+next_step: 无（被 GOV-008 取代）
 acceptance: 生产代码与测试中不再调用 RegRenameKey/NtRenameKey，并有守护检查；父键值缺失=未登记、存在即严格校验、遗留 WorkflowControl 子键 fail closed；登记幂等、拒绝不同内容覆盖、写后读回；管理员令牌/ACL 门禁不变；内存模型测试覆盖五种情形且本机无新注册表残留；DEVX-015 V3 文档同步；不改真实 HKLM/ACL
-notes: agent_harness=claude_code；值名 WorkflowControl.RegistrationV1；全程未执行原生 RegRenameKey；静态守护测试禁止绑定注册表键重命名 API；lane 提交 69729e6ff。
+notes: agent_harness=claude_code；值名 WorkflowControl.RegistrationV1；全程未执行原生 RegRenameKey；静态守护测试禁止绑定注册表键重命名 API；lane 提交 69729e6ff。；GOV-008 收尾（2026-10-10）：主机注册表锚点（DEVX-015 的一部分）的代码已在 GOV-008 删除，任务终止（owner_decision:GOV-008:2026-10-10:research_first_refactor_v1；需求文档第 21 节）；原状态 BASELINE_DONE

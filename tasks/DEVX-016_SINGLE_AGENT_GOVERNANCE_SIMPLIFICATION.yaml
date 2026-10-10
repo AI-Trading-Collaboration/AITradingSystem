@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DEVX-016_SINGLE_AGENT_GOVERNANCE_SIMPLIFICATION
 area: Architecture / single-agent default governance and monotonic ratchets
 priority: P0
-status: DEFERRED
+status: DROPPED
 next_owner: Claude Code coordinator；Project Owner（C3c 前评审 compat 账本策略与采纳方式；C4 / DEVX-017 的 AGENTS.md 发布方式）
-next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：第十二次发布（DEVX-022 M6）已完成，链 3:38，Full 2:13。下一个代码候选 = C3c（P4-3）：方案草稿已写入第 10 节，等 owner 评审 compat 账本策略并选择采纳方式（A 手工双处登记 / B 生成器 reseal 时自动采纳漂移，推荐 / C 合并为策略数据）；背景（系统功能、为什么需要、选项与代价）已于 2026-10-10 向 owner 说明。C4（S4）与 DEVX-017 都改 AGENTS.md，而发布命令的范围策略把它列为禁止路径，需要 owner 决定发布方式（我的建议：把必须改 AGENTS.md 或搬 skills 的部分合并成一个手工链候选，其余照常走 S3 命令；冻结前先给 owner 看 AGENTS.md 的 diff）。S3 小项 (d)、(f) 与 E59 的 20 分钟心跳长等待仍欠。之后 C3d（P4-4）-> C4 -> DEVX-017 -> OPS-082 -> 阶段 5。分步、依赖、验收与进度见 docs/requirements/DEVX-016_Single_Agent_Governance_Simplification.md 第 9、10 节。
+next_step: 无（被 GOV-008 取代）
 acceptance: A1 五个历史失败样本重放 0 误报；A2 无关变更（登记任务/新增测试文件/修改 system_flow）引起的测试失败为 0；A3 登记或转移 N 个任务 = 1 个事务 / 0 FAILED；A4 每次发布 generated refresh 提交 ≤1；A5 每个最终候选 Full 1 次；A6 安全边界与 DQ/PIT 测试 node 数不减少；A7 标准发布 1 条命令；A8 AGENTS.md/skill/runbook/system_flow 同步
-notes: 2026-10-10：M6 已发布（第十二次，链 3:38）；C3c 方案与 AGENTS.md 发布方式待 owner 决定（背景已说明）。
+notes: 2026-10-10：M6 已发布（第十二次，链 3:38）；C3c 方案与 AGENTS.md 发布方式待 owner 决定（背景已说明）。；GOV-008 收尾（2026-10-10）：旧治理简化（被 GOV-008 的新流程取代）的代码已在 GOV-008 删除，任务终止（owner_decision:GOV-008:2026-10-10:research_first_refactor_v1；需求文档第 21 节）；原状态 DEFERRED

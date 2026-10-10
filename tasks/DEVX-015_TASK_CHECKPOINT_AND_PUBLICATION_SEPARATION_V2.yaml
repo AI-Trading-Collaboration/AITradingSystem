@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DEVX-015_TASK_CHECKPOINT_AND_PUBLICATION_SEPARATION_V2
 area: Architecture / task checkpoint and publication separation
 priority: P0
-status: DEFERRED
+status: DROPPED
 next_owner: Claude Code coordinator（agent_harness=claude_code）；Project Owner 执行管理员主机/账户/HKLM/ACL 执行包
-next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：v386–v389 已随集成候选合入 main（lane 69729e6ff，计划 integration-revalidation-d1b239e06f110ea1409c）：受保护 Full 门禁、DEVX-015A 单值锚点、活体执行仲裁重试窗口、调用方已加载源码自检及陈旧夹具修复；首次回归 54 个失败节点全部通过。剩余：I05×2、L03×7、X05×4 共 13 项验收，管理员执行包，最终同一候选全部 required tiers/Full/迁移发布及 OPS-080 W3/W4。详见 docs/requirements/DEVX-015_Workflow_Contract_And_Acceptance_V3.md v386–v389。
+next_step: 无（被 GOV-008 取代）
 acceptance: 受审受控merge保留归属历史及当前canonical权威；I01-I06/S01-S02/L01-L03/V01-V03/P01-P02/R01-R02及X01-X05有效实证、独立oracle、反证与终态可达；最终同一C全部required tiers和实际Full、迁移发布及OPS080独立工程/运营验收。
-notes: Owner 决定（2026-09-24）：做完全部 106 项验收；worker 账户范围 A 只用于测试和 Full（owner_decision:DEVX-015:2026-09-24:worker_account_scope_full_only_v1）。主机级步骤由 owner 按执行包运行，agent 不改系统/安全设置。重型整链节点并行度不超过 2。本机禁止原生 RegRenameKey。
+notes: Owner 决定（2026-09-24）：做完全部 106 项验收；worker 账户范围 A 只用于测试和 Full（owner_decision:DEVX-015:2026-09-24:worker_account_scope_full_only_v1）。主机级步骤由 owner 按执行包运行，agent 不改系统/安全设置。重型整链节点并行度不超过 2。本机禁止原生 RegRenameKey。；GOV-008 收尾（2026-10-10）：任务检查点与发布分离机制（含 106 项验收）的代码已在 GOV-008 删除，任务终止（owner_decision:GOV-008:2026-10-10:research_first_refactor_v1；需求文档第 21 节）；原状态 DEFERRED
