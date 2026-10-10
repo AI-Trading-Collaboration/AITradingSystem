@@ -51,6 +51,12 @@ from ai_trading_system.contracts.prospective_event_time_evidence import (
     parse_utc_datetime,
     strict_json_loads,
 )
+from ai_trading_system.data.capture_hold import (
+    CaptureHold,
+    recheck_capture_hold,
+    restore_capture_hold,
+    verify_retained_capture_hold_proof,
+)
 from ai_trading_system.data.immutable_publish import (
     DataPublicationIntegrityError,
     _bound_directory,
@@ -64,9 +70,6 @@ from ai_trading_system.data.named_quality_dispatch import (
     NamedQualityDispatchResult,
     NamedQualityTerminalObservation,
     dispatch_named_quality_child,
-    recheck_named_capture_lease,
-    restore_named_capture_lease,
-    verify_retained_named_capture_proof,
 )
 from ai_trading_system.data.named_quality_execution import (
     NamedBootstrapAuthority,
@@ -74,7 +77,6 @@ from ai_trading_system.data.named_quality_execution import (
     verify_named_data_quality_execution_receipt,
 )
 from ai_trading_system.host_clock_evidence import HostClockFailureDiagnostic, HostClockSampler
-from ai_trading_system.platform.architecture.checkout_guard import CheckoutLeaseHandle
 from ai_trading_system.prospective_event_time_evidence import (
     POLICY_PATH as TIME_POLICY_PATH,
 )
@@ -96,8 +98,8 @@ from ai_trading_system.simple_baseline_named_preview import (
 )
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
-_RESULT_SCHEMA = "prospective_capture_execution_result.v2"
-_ATTEMPT_SCHEMA = "prospective_capture_attempt.v1"
+_RESULT_SCHEMA = "prospective_capture_execution_result.v3"
+_ATTEMPT_SCHEMA = "prospective_capture_attempt.v2"
 _SAFETY = {
     "outcome_access_authorized": False,
     "legacy_observation_ledger_mutated": False,
@@ -286,7 +288,7 @@ def _controls(
 def _check_live(
     request: ProspectiveCaptureRequest,
     bootstrap: NamedBootstrapAuthority,
-    lease: CheckoutLeaseHandle,
+    hold: CaptureHold,
     review: ProspectiveCaptureOwnerReview,
     *,
     at: datetime | None = None,
@@ -297,18 +299,18 @@ def _check_live(
     source_checked = parse_utc_datetime(
         bootstrap.assert_execution_unchanged(stage="PROSPECTIVE_LIVE")
     )
-    if bootstrap.source_lease_id != lease.lease_id or bootstrap.canonical_dq_call_count != 0:
+    if bootstrap.source_hold_id != hold.hold_id or bootstrap.canonical_dq_call_count != 0:
         _fail("PROSPECTIVE_CAPTURE_PARENT_SCOPE_CHANGED", request.request_id)
-    proof = recheck_named_capture_lease(
-        lease,
+    proof = recheck_capture_hold(
+        hold,
         candidate_commit=request.candidate_commit,
         required_paths=request.required_write_paths,
     )
     if source_checked > parse_utc_datetime(proof["checked_at"]):
-        _fail("PROSPECTIVE_CAPTURE_CLOCK_ROLLBACK", "source and lease proof chronology")
+        _fail("PROSPECTIVE_CAPTURE_CLOCK_ROLLBACK", "source and hold proof chronology")
     return {
         **proof,
-        "schema_version": "prospective_capture_parent_proof.v1",
+        "schema_version": "prospective_capture_parent_proof.v2",
         "request_sha256": request.canonical_sha256,
         "parent_pid": os.getpid(),
         "parent_canonical_dq_call_count": 0,
@@ -322,15 +324,15 @@ def _check_live(
 def _reserve(
     request: ProspectiveCaptureRequest,
     bootstrap: NamedBootstrapAuthority,
-    lease: CheckoutLeaseHandle,
+    hold: CaptureHold,
     review: ProspectiveCaptureOwnerReview,
 ) -> bool:
     """Claim before any DQ/recorder call; a repeated attempt never invokes them."""
-    _check_live(request, bootstrap, lease, review)
+    _check_live(request, bootstrap, hold, review)
     root = Path(request.roots.execution_root)
     relative = request.operation_relative_path
     directory = _directory(root, relative)
-    # No cross-root read or lease check while holding this existing store lock.
+    # No cross-root read or hold check while holding this existing store lock.
     with exclusive_store_maintenance(store_root=directory):
         content = _optional(directory, "attempt.json")
         if content is not None:
@@ -352,7 +354,7 @@ def _reserve(
                 require_named_execution_context().identity.stable_identity_sha256
             ),
             "parent_pid": os.getpid(),
-            "source_lease_id": lease.lease_id,
+            "source_hold_id": hold.hold_id,
             "started_at": _now().isoformat(),
             "retry_allowed": False,
         }
@@ -362,7 +364,7 @@ def _reserve(
             content=canonical_json_bytes(value),
             immutable=True,
         )
-    _check_live(request, bootstrap, lease, review)
+    _check_live(request, bootstrap, hold, review)
     return True
 
 
@@ -384,15 +386,15 @@ def _retained_attempt(request: ProspectiveCaptureRequest) -> dict[str, Any] | No
         ),
         "retry_allowed": False,
     }
-    if set(attempt) != {*expected, "parent_pid", "source_lease_id", "started_at"}:
+    if set(attempt) != {*expected, "parent_pid", "source_hold_id", "started_at"}:
         _fail("PROSPECTIVE_CAPTURE_RETAINED_ATTEMPT_CHANGED", relative)
     for key, value in expected.items():
         _same(attempt.get(key), value, "attempt: " + key)
     if (
         type(attempt["parent_pid"]) is not int
         or attempt["parent_pid"] <= 0
-        or type(attempt["source_lease_id"]) is not str
-        or not attempt["source_lease_id"].startswith("lease-")
+        or type(attempt["source_hold_id"]) is not str
+        or not attempt["source_hold_id"].startswith("hold-")
         or _optional(root, relative + "/request.json") != request.canonical_bytes
     ):
         _fail("PROSPECTIVE_CAPTURE_RETAINED_ATTEMPT_CHANGED", relative)
@@ -449,7 +451,7 @@ def _event_members(
     binding: NamedArtifactBinding,
     *,
     policy: TimeEvidencePolicy,
-    source_lease_id: str | None = None,
+    source_hold_id: str | None = None,
 ) -> tuple[RecordedTemporalEvidence, dict[str, bytes]]:
     """Read only the fixed locators after the S3a verifier has checked the chain."""
     store = Path(request.roots.execution_root) / request.timing_relative_path
@@ -468,13 +470,13 @@ def _event_members(
     if intent_binding.relative_path != (slot / "intent.json").as_posix():
         _fail("PROSPECTIVE_CAPTURE_EVENT_LOCATOR_INVALID", "same-slot intent required")
     intent = _canonical_object(bound_content(intent_binding))
-    if source_lease_id is not None:
-        lease_binding = EventBinding.from_dict(intent["lease_event"])
-        if lease_binding.relative_path != (slot / "lease_event.json").as_posix():
-            _fail("PROSPECTIVE_CAPTURE_EVENT_LOCATOR_INVALID", "fixed lease event required")
-        original_lease = _object(strict_json_loads(bound_content(lease_binding)))
-        if _object(original_lease.get("lease")).get("lease_id") != source_lease_id:
-            _fail("PROSPECTIVE_CAPTURE_ACK_LEASE_MISMATCH", "recorder's original S4D lease differs")
+    if source_hold_id is not None:
+        hold_binding = EventBinding.from_dict(intent["hold_record"])
+        if hold_binding.relative_path != (slot / "hold_record.json").as_posix():
+            _fail("PROSPECTIVE_CAPTURE_EVENT_LOCATOR_INVALID", "fixed hold record required")
+        original_hold = _object(strict_json_loads(bound_content(hold_binding)))
+        if original_hold.get("hold_id") != source_hold_id:
+            _fail("PROSPECTIVE_CAPTURE_ACK_HOLD_MISMATCH", "recorder's capture hold differs")
     members: dict[str, bytes] = {}
     for row in intent["semantic"]["payload_bindings"]:
         artifact = EventBinding.from_dict(row["artifact"])
@@ -528,7 +530,7 @@ def _acknowledge(
         candidate_commit=request.candidate_commit,
         execution_identity_sha256=require_named_execution_context().identity.stable_identity_sha256,
         parent_pid=os.getpid(),
-        source_lease_id=bootstrap.source_lease_id,
+        source_hold_id=bootstrap.source_hold_id,
         recorder_event=_event_binding(request, event.binding),
         recording_call_started_at=started_at,
         witness_bundle_observed_at=observed_at,
@@ -667,7 +669,7 @@ def _check_result_projection(
         parent = _canonical_object(_read(root, parent_binding))
         assert request.named_dq_request is not None
         for key, value in {
-            "schema_version": "named_data_quality_parent_dispatch.v1",
+            "schema_version": "named_data_quality_parent_dispatch.v2",
             "profile": "PROSPECTIVE_FIVE_CANDIDATE_PRODUCTION_PARENT",
             "status_semantics": "PARENT_ASSOCIATION_AND_PROCESS_OBSERVATION_ONLY",
             "request_id": request.named_dq_request.request_id,
@@ -676,7 +678,7 @@ def _check_result_projection(
             "candidate_commit": request.candidate_commit,
             "execution_root": request.roots.execution_root,
             "parent_pid": attempt["parent_pid"],
-            "source_lease_id": attempt["source_lease_id"],
+            "source_hold_id": attempt["source_hold_id"],
             "observed_canonical_dq_call_count": count,
             "counter_observation_state": result["counter_observation_state"],
             "parent_canonical_dq_call_count": 0,
@@ -838,7 +840,7 @@ def _closed_input_check(
     pre = _canonical_object(members["dq_pre_guard"])
     post = _canonical_object(members["dq_post_guard"])
     for key, value in {
-        "schema_version": "named_data_quality_parent_dispatch.v1",
+        "schema_version": "named_data_quality_parent_dispatch.v2",
         "profile": "PROSPECTIVE_FIVE_CANDIDATE_PRODUCTION_PARENT",
         "status_semantics": "PARENT_ASSOCIATION_AND_PROCESS_OBSERVATION_ONLY",
         "status": "PASS",
@@ -850,7 +852,7 @@ def _closed_input_check(
         "returncode": 0,
         "observed_canonical_dq_call_count": 1,
         "parent_canonical_dq_call_count": 0,
-        "lease_acquired_or_mutated": False,
+        "hold_acquired_or_mutated": False,
         "verified_input_seal_exported": False,
         "dispatch_allowed": False,
         "production_effect": "none",
@@ -858,10 +860,10 @@ def _closed_input_check(
     }.items():
         _same(parent.get(key), value, "parent identity: " + key)
     for key, value in {
-        "schema_version": "named_data_quality_bootstrap_result.v1",
+        "schema_version": "named_data_quality_bootstrap_result.v2",
         "status": "PASS",
         "request_id": receipt.request.request_id,
-        "source_lease_id": successful.source_lease_id,
+        "source_hold_id": successful.source_hold_id,
         "process_id": successful.execution_pid,
         "receipt_id": receipt.receipt_id,
         "receipt_path": successful.receipt.relative_path,
@@ -891,9 +893,9 @@ def _closed_input_check(
             request=request,
             request_sha256=receipt.request.canonical_sha256,
             parent_pid=parent["parent_pid"],
-            source_lease_id=successful.source_lease_id,
+            source_hold_id=successful.source_hold_id,
             required_paths=required,
-            schema="named_dq_existing_parent_proof.v1",
+            schema="named_dq_existing_parent_proof.v2",
         )
     if not (
         parse_utc_datetime(pre["checked_at"])
@@ -916,7 +918,7 @@ def _closed_input_check(
         or parent.get("counter_observation_state") != "KNOWN"
         or parent.get("failure") is not None
         or parent.get("child_pid") != successful.execution_pid
-        or parent.get("source_lease_id") != successful.source_lease_id
+        or parent.get("source_hold_id") != successful.source_hold_id
         or parent.get("child_result") != stdout
         or stdout.get("receipt_sha256") != receipt.canonical_sha256
         or stdout.get("receipt_id") != receipt.receipt_id
@@ -924,8 +926,7 @@ def _closed_input_check(
         or stdout.get("canonical_dq_call_count") != 1
         or post.get("status") != "PASS"
         or post.get("checked_at") != successful.parent_postchecked_at.isoformat()
-        or _object(post.get("active_lease")).get("lease_id") != successful.source_lease_id
-        or _object(post.get("active_lease")).get("state") != "ACTIVE"
+        or _object(post.get("active_hold")).get("hold_id") != successful.source_hold_id
     ):
         _fail(
             "PROSPECTIVE_CAPTURE_PARENT_EVIDENCE_INVALID", "successful original execution required"
@@ -939,7 +940,7 @@ def _verify_source_parent_proof(
     request: ProspectiveCaptureRequest,
     request_sha256: str,
     parent_pid: int,
-    source_lease_id: str,
+    source_hold_id: str,
     required_paths: tuple[str, ...],
     schema: str,
 ) -> None:
@@ -957,12 +958,12 @@ def _verify_source_parent_proof(
     checked = parse_utc_datetime(proof["checked_at"])
     if source_checked > checked:
         _fail("PROSPECTIVE_CAPTURE_PARENT_CHRONOLOGY_INVALID", request.request_id)
-    verify_retained_named_capture_proof(
+    verify_retained_capture_hold_proof(
         proof,
         execution_root=Path(request.roots.execution_root),
         candidate_commit=request.candidate_commit,
         required_paths=required_paths,
-        source_lease_id=source_lease_id,
+        source_hold_id=source_hold_id,
         checked_at=checked,
     )
 
@@ -983,11 +984,11 @@ def verify_prospective_capture_result(
 def _clock_scope(
     request: ProspectiveCaptureRequest, clock: HostClockEvidence, proof: dict[str, Any]
 ) -> None:
-    """An upper bound is used for expiry only, never as live lease-check time."""
+    """An upper bound is used for expiry only, never as live hold-check time."""
     if not (
         deadline_allows(clock.admission_bound_ns, request.manifest.expires_at)
         and deadline_allows(
-            clock.admission_bound_ns, parse_utc_datetime(proof["active_lease"]["expires_at"])
+            clock.admission_bound_ns, parse_utc_datetime(proof["active_hold"]["expires_at"])
         )
         and parse_utc_datetime(proof["checked_at"])
         <= utc_ns_to_datetime_floor(clock.latest_sample.utc_ns)
@@ -1001,7 +1002,7 @@ def _verify_terminal_clock(
     attempt: dict[str, Any],
     ack: ParentCompletionAcknowledgement | None,
 ) -> None:
-    """Pure checks after all child and source/lease proof replay has completed."""
+    """Pure checks after all child and source/hold proof replay has completed."""
     clock = HostClockEvidence.from_dict(result["terminal_clock_evidence"])
     if not clock.checkpoints or clock.checkpoints[-1].label != "terminal_precommit":
         _fail("PROSPECTIVE_CAPTURE_TERMINAL_CLOCK_INVALID", request.request_id)
@@ -1032,7 +1033,7 @@ def _verify_return_observations(
     *,
     policy: TimeEvidencePolicy,
     plan: RecordingPlan,
-    source_lease_id: str,
+    source_hold_id: str,
 ) -> tuple[RecorderReturnObservation, ...]:
     raw = result.get("recorder_returns")
     if type(raw) is not list:
@@ -1055,7 +1056,7 @@ def _verify_return_observations(
         if returned.event.relative_path != expected_path:
             _fail("PROSPECTIVE_CAPTURE_EVENT_LOCATOR_INVALID", "ordered original child slot")
         event, _ = _event_members(
-            request, returned.event, policy=policy, source_lease_id=source_lease_id
+            request, returned.event, policy=policy, source_hold_id=source_hold_id
         )
         verified = verify_recorder_return_evidence(
             store_root=Path(request.roots.execution_root) / request.timing_relative_path,
@@ -1089,7 +1090,7 @@ def _verify_prospective_capture_projection(
         _fail("PROSPECTIVE_CAPTURE_RETAINED_ATTEMPT_CHANGED", relative)
     _check_result_projection(result, request, review, attempt, terminal_required=terminal_required)
     returns = _verify_return_observations(
-        request, result, policy=policy, plan=plan, source_lease_id=attempt["source_lease_id"]
+        request, result, policy=policy, plan=plan, source_hold_id=attempt["source_hold_id"]
     )
     ack = None
     if "acknowledgement" in result:
@@ -1105,9 +1106,9 @@ def _verify_prospective_capture_projection(
             request=request,
             request_sha256=request.canonical_sha256,
             parent_pid=attempt["parent_pid"],
-            source_lease_id=attempt["source_lease_id"],
+            source_hold_id=attempt["source_hold_id"],
             required_paths=request.required_write_paths,
-            schema="prospective_capture_parent_proof.v1",
+            schema="prospective_capture_parent_proof.v2",
         )
         _verify_terminal_clock(request, result, attempt, ack)
     original_proofs: dict[str, dict[str, Any]] = {}
@@ -1123,9 +1124,9 @@ def _verify_prospective_capture_projection(
             request=request,
             request_sha256=request.canonical_sha256,
             parent_pid=attempt["parent_pid"],
-            source_lease_id=attempt["source_lease_id"],
+            source_hold_id=attempt["source_hold_id"],
             required_paths=request.required_write_paths,
-            schema="prospective_capture_parent_proof.v1",
+            schema="prospective_capture_parent_proof.v2",
         )
         original_proofs[role] = proof
     if "acknowledgement" not in result:
@@ -1162,7 +1163,7 @@ def _verify_prospective_capture_projection(
         "candidate_commit": request.candidate_commit,
         "execution_identity_sha256": context.identity.stable_identity_sha256,
         "parent_pid": result["parent_pid"],
-        "source_lease_id": attempt["source_lease_id"],
+        "source_hold_id": attempt["source_hold_id"],
         "authorization_state": review.authorization_state,
         "evidence_purpose": review.evidence_purpose,
     }.items():
@@ -1190,7 +1191,7 @@ def _verify_prospective_capture_projection(
     ):
         _fail("PROSPECTIVE_CAPTURE_EVENT_LOCATOR_INVALID", "exact plan/session/stage required")
     event, members = _event_members(
-        request, ack.recorder_event, policy=policy, source_lease_id=ack.source_lease_id
+        request, ack.recorder_event, policy=policy, source_hold_id=ack.source_hold_id
     )
     if (
         event.plan != plan
@@ -1252,7 +1253,7 @@ def _verify_prospective_capture_projection(
             request,
             _event_binding(request, event.previous_event),
             policy=policy,
-            source_lease_id=ack.source_lease_id,
+            source_hold_id=ack.source_hold_id,
         )
         if (
             inputs_event.event_kind != "INPUTS_OBSERVED"
@@ -1283,7 +1284,7 @@ def _verify_prospective_capture_projection(
         original_parent = _canonical_object(inputs["dq_parent"])
         if (
             original_parent.get("parent_pid") != ack.parent_pid
-            or original_parent.get("source_lease_id") != ack.source_lease_id
+            or original_parent.get("source_hold_id") != ack.source_hold_id
             or receipt.execution != context.identity
         ):
             _fail("PROSPECTIVE_CAPTURE_ACK_PARENT_MISMATCH", "original DQ parent/source differs")
@@ -1394,13 +1395,13 @@ def bootstrap_worker(
     replayed = _replay_existing(request, bootstrap, review)
     if replayed is not None:
         return replayed
-    lease = restore_named_capture_lease(
+    hold = restore_capture_hold(
         execution_root=root,
-        source_lease_id=bootstrap.source_lease_id,
+        hold_id=bootstrap.source_hold_id,
         candidate_commit=request.candidate_commit,
         required_paths=request.required_write_paths,
     )
-    if not _reserve(request, bootstrap, lease, review):
+    if not _reserve(request, bootstrap, hold, review):
         replayed = _replay_existing(request, bootstrap, review)
         assert replayed is not None
         return replayed
@@ -1415,7 +1416,7 @@ def bootstrap_worker(
     ack: ParentCompletionAcknowledgement | None = None
 
     def observe_return(event: RecordedTemporalEvidence) -> None:
-        # Preserve an original return before any later source/lease check can
+        # Preserve an original return before any later source/hold check can
         # fail. No retained witness is allowed to fabricate this observation.
         if event.return_clock_evidence is None:
             _fail("PROSPECTIVE_CAPTURE_ORIGINAL_RETURN_REQUIRED", event.binding.relative_path)
@@ -1473,7 +1474,7 @@ def bootstrap_worker(
         preview: dict[str, object] | None = None
         # Enclose the entire DQ/verification/recording interval so a clock
         # rollback before the recorder cannot disguise late source work.
-        pre = _check_live(request, bootstrap, lease, review)
+        pre = _check_live(request, bootstrap, hold, review)
         result["pre_recording_proof"] = _write(
             root,
             request.operation_relative_path + "/pre_recording_proof.json",
@@ -1507,7 +1508,7 @@ def bootstrap_worker(
                     "PROSPECTIVE_CAPTURE_OUTSIDE_FEATURE_WINDOW",
                     request.feature_session.isoformat(),
                 )
-            live = _check_live(request, bootstrap, lease, review)
+            live = _check_live(request, bootstrap, hold, review)
             dispatch_clock = checkpoint("pre_dispatch", live)
             if not deadline_allows(dispatch_clock.admission_bound_ns, timing.effective_close_at):
                 _fail(
@@ -1517,7 +1518,7 @@ def bootstrap_worker(
             dq = dispatch_named_quality_child(
                 request.named_dq_request,
                 bootstrap=bootstrap,
-                lease=lease,
+                hold=hold,
                 output_relative_path=request.operation_relative_path + "/dq_dispatch",
             )
             if (
@@ -1535,7 +1536,7 @@ def bootstrap_worker(
                 run_dispatch_sha256=dq.run_dispatch_sha256,
                 bootstrap=bootstrap,
             )
-            checkpoint("dq_verified", _check_live(request, bootstrap, lease, review))
+            checkpoint("dq_verified", _check_live(request, bootstrap, hold, review))
             registry = next(
                 item
                 for item in verified.receipt.execution_dependencies
@@ -1556,8 +1557,8 @@ def bootstrap_worker(
                 PayloadMember("capture_request", request.canonical_bytes),
                 PayloadMember("activation_ack", activation_ack.canonical_bytes),
             )
-            checkpoint("preview_complete", _check_live(request, bootstrap, lease, review))
-        live = _check_live(request, bootstrap, lease, review)
+            checkpoint("preview_complete", _check_live(request, bootstrap, hold, review))
+        live = _check_live(request, bootstrap, hold, review)
         checkpoint("pre_recorder", live)
         record_entered = True
         if operation == "activate":
@@ -1566,7 +1567,7 @@ def bootstrap_worker(
                 plan=plan,
                 definitions=definitions,
                 policy=policy,
-                lease_handle=lease,
+                hold_handle=hold,
             )
         else:
             assert (
@@ -1581,10 +1582,10 @@ def bootstrap_worker(
                 inputs=tuple(inputs),
                 activation=_local_event(request, activation_ack.recorder_event),
                 policy=policy,
-                lease_handle=lease,
+                hold_handle=hold,
             )
             observe_return(input_event)
-            checkpoint("inputs_return", _check_live(request, bootstrap, lease, review), input_event)
+            checkpoint("inputs_return", _check_live(request, bootstrap, hold, review), input_event)
             event = record_signal_completion(
                 store_root=root / request.timing_relative_path,
                 plan=plan,
@@ -1592,14 +1593,14 @@ def bootstrap_worker(
                 signal=PayloadMember("signal", canonical_json_bytes(preview)),
                 inputs=input_event.binding,
                 policy=policy,
-                lease_handle=lease,
+                hold_handle=hold,
             )
         observe_return(event)
         witnessed = checkpoint(
-            "witness_return", _check_live(request, bootstrap, lease, review), event
+            "witness_return", _check_live(request, bootstrap, hold, review), event
         )
         completed = utc_ns_to_datetime_floor(witnessed.latest_sample.utc_ns)
-        post = _check_live(request, bootstrap, lease, review)
+        post = _check_live(request, bootstrap, hold, review)
         if completed > parse_utc_datetime(post["source_checked_at"]):
             _fail(
                 "PROSPECTIVE_CAPTURE_CLOCK_ROLLBACK",
@@ -1704,9 +1705,9 @@ def bootstrap_worker(
         _verify_prospective_capture_projection(
             request, bootstrap=bootstrap, result=result, terminal_required=False
         )
-        # Source/lease replay and policy reads precede the final checkpoint.
+        # Source/hold replay and policy reads precede the final checkpoint.
         # The result's own write/delivery time is deliberately not claimed.
-        final_pre = _check_live(request, bootstrap, lease, review)
+        final_pre = _check_live(request, bootstrap, hold, review)
         attempt = _retained_attempt(request)
         assert attempt is not None
         _verify_source_parent_proof(
@@ -1714,9 +1715,9 @@ def bootstrap_worker(
             request=request,
             request_sha256=request.canonical_sha256,
             parent_pid=attempt["parent_pid"],
-            source_lease_id=attempt["source_lease_id"],
+            source_hold_id=attempt["source_hold_id"],
             required_paths=request.required_write_paths,
-            schema="prospective_capture_parent_proof.v1",
+            schema="prospective_capture_parent_proof.v2",
         )
         sampler.recheck_policy()
         terminal_clock = sampler.checkpoint("terminal_precommit")

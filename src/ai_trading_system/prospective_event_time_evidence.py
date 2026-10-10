@@ -3,6 +3,10 @@
 The trusted host recorder observes a write interval, not a provider publication
 time. A completion witness attests payload durability; its own final persistence
 still needs a future parent-executor acknowledgement. No function grants capture.
+
+Protocol v3 (GOV-008 L3): each recorded slot retains the capture-hold record and the
+hold check observed at recording time instead of S4D lease files. Only the v3 policy
+is recordable or verifiable; v1/v2 evidence was produced under the S4D lease protocol.
 """
 
 from __future__ import annotations
@@ -40,6 +44,13 @@ from ai_trading_system.contracts.prospective_event_time_evidence import (
     strict_json_loads,
     utc_datetime_text,
 )
+from ai_trading_system.data.capture_hold import (
+    CHECK_SCHEMA,
+    CaptureHold,
+    covered,
+    parse_hold_record,
+    recheck_capture_hold,
+)
 from ai_trading_system.data.immutable_publish import (
     DataPublicationIntegrityError,
     exclusive_store_maintenance,
@@ -47,12 +58,6 @@ from ai_trading_system.data.immutable_publish import (
     write_contained_artifact_bytes,
 )
 from ai_trading_system.host_clock_evidence import HostClockSampler
-from ai_trading_system.platform.architecture.checkout_guard import (
-    CheckoutLeaseHandle,
-    CheckoutOperationClass,
-    resolve_checkout_identity,
-)
-from ai_trading_system.platform.architecture.parallel_control_kernel import parse_lease_event
 from ai_trading_system.trading_calendar import (
     US_EQUITY_MARKET_TIMEZONE,
     is_us_equity_trading_day,
@@ -65,26 +70,21 @@ from ai_trading_system.us_equity_special_closure_policy import (
 from ai_trading_system.yaml_loader import load_strict_yaml_text
 
 SOURCE_ROOT = Path(__file__).resolve().parents[2]
-LEGACY_POLICY_PATH = "config/research/prospective_event_time_evidence_v1.yaml"
-LEGACY_POLICY_SHA256 = "364257f8c0959a6f042c646fc0ef86c4e9c8ba7351754cc15a8bd3b0db70b466"
-POLICY_PATH = "config/research/prospective_event_time_evidence_v2.yaml"
+POLICY_PATH = "config/research/prospective_event_time_evidence_v3.yaml"
 # Exact reviewed, unadopted policy identity; changing it is a new reviewed wave.
 # See the linked S3a requirement, rather than treating any caller YAML as policy.
-POLICY_SHA256 = "f88db52fc70f9ccdcf84a58666883e17f8d8921a7c6713c66552f91c59fb0662"
-_POLICIES = {LEGACY_POLICY_PATH: LEGACY_POLICY_SHA256, POLICY_PATH: POLICY_SHA256}
+POLICY_SHA256 = "d6806d33306f722f7eb6b8eb58bff259aedf9f7ddc62029da23fa40bd24e971a"
+_POLICIES = {POLICY_PATH: POLICY_SHA256}
 _CALENDAR_PATHS = (
     "src/ai_trading_system/trading_calendar.py",
     "src/ai_trading_system/us_equity_special_closure_policy.py",
     CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix(),
 )
 _STAGES = {"ACTIVATION": 0, "INPUTS_OBSERVED": 1, "SIGNAL_RECORDED": 2}
-# Historical v1 verifier only. Preserve its original inner-interval semantics;
-# v2 does not infer a relationship between UTC and counter rates from this unit.
-_UTC_RESOLUTION_NS = 1_000
 _COMPLETION_LOCATOR = re.compile(
     r"streams/[0-9a-f]{64}/(?:activation|sessions/[0-9]{4}-[0-9]{2}-[0-9]{2}/(?:inputs|signal))/completion[.]json"
 )
-_SAFETY_V1: dict[str, object] = {
+_SAFETY: dict[str, object] = {
     "temporal_evidence_only": True,
     "real_activation_adopted": False,
     "observation_authorized": False,
@@ -97,9 +97,6 @@ _SAFETY_V1: dict[str, object] = {
     "parent_executor_acknowledgement": "NOT_PRESENT",
     "production_effect": "none",
     "broker_action": "none",
-}
-_SAFETY = {
-    **_SAFETY_V1,
     "host_clock_model": "TRUSTED_LOCAL_HOST_MODEL",
     "hidden_host_adjustment_proof": "NOT_ESTABLISHED",
     "absolute_utc_accuracy_proof": "NOT_ESTABLISHED",
@@ -154,14 +151,6 @@ def _instant(value: datetime) -> datetime:
     return parse_utc_datetime(utc_datetime_text(value))
 
 
-def _check_elapsed(started: datetime, completed: datetime, elapsed: object) -> None:
-    if type(elapsed) is not int or elapsed < 0:
-        _fail("TEMPORAL_MONOTONIC_CLOCK_INVALID", "nonnegative elapsed time required")
-    utc_elapsed_ns = ((completed - started) // timedelta(microseconds=1)) * _UTC_RESOLUTION_NS
-    if completed < started or utc_elapsed_ns + _UTC_RESOLUTION_NS < elapsed:
-        _fail("TEMPORAL_CLOCK_BACKWARD", "UTC interval contradicts its inner monotonic interval")
-
-
 def _root(path: Path) -> Path:
     if not path.is_absolute():
         _fail("TEMPORAL_STORE_ROOT_INVALID", "explicit absolute existing root required")
@@ -203,7 +192,7 @@ class TimeEvidencePolicy:
     source_root: Path
     binding: EventBinding
     calendar_bindings: tuple[EventBinding, ...]
-    clock_policy_binding: EventBinding | None = None
+    clock_policy_binding: EventBinding
 
 
 def load_time_evidence_policy(
@@ -228,14 +217,12 @@ def load_time_evidence_policy(
     )
     if default_us_equity_special_closure_policy().sha256 != bindings[-1].sha256:
         _fail("TEMPORAL_CALENDAR_CACHE_DRIFT", "loaded closure policy differs from live bytes")
-    clock_binding = None
-    if policy_path == POLICY_PATH:
-        clock_binding = _binding(
-            HOST_CLOCK_POLICY_PATH,
-            read_contained_artifact_bytes(root=source, relative_path=HOST_CLOCK_POLICY_PATH),
-        )
-        if clock_binding.sha256 != HOST_CLOCK_POLICY_SHA256:
-            _fail("TEMPORAL_CLOCK_POLICY_MISMATCH", HOST_CLOCK_POLICY_PATH)
+    clock_binding = _binding(
+        HOST_CLOCK_POLICY_PATH,
+        read_contained_artifact_bytes(root=source, relative_path=HOST_CLOCK_POLICY_PATH),
+    )
+    if clock_binding.sha256 != HOST_CLOCK_POLICY_SHA256:
+        _fail("TEMPORAL_CLOCK_POLICY_MISMATCH", HOST_CLOCK_POLICY_PATH)
     return TimeEvidencePolicy(source, policy_binding, bindings, clock_binding)
 
 
@@ -248,14 +235,6 @@ def _policy_live(policy: TimeEvidencePolicy) -> None:
         != policy
     ):
         _fail("TEMPORAL_POLICY_CALENDAR_DRIFT", "policy/calendar changed")
-
-
-def _is_v2(policy: TimeEvidencePolicy) -> bool:
-    return policy.binding.relative_path == POLICY_PATH
-
-
-def _policy_safety(policy: TimeEvidencePolicy) -> dict[str, object]:
-    return _SAFETY if _is_v2(policy) else _SAFETY_V1
 
 
 def _next_session(value: date) -> date:
@@ -323,16 +302,9 @@ def _members(values: tuple[PayloadMember, ...]) -> tuple[PayloadMember, ...]:
     return tuple(sorted(values, key=lambda item: item.role))
 
 
-def _covered(path: str, declaration: str) -> bool:
-    # S4D treats Windows path claims case-insensitively and by components.
-    target = PurePosixPath(path.casefold())
-    scope = PurePosixPath(declaration.casefold())
-    return target == scope or scope in target.parents
-
-
 def _check_snapshot(
-    event_content: bytes,
-    intent_content: bytes,
+    record_bytes: bytes,
+    check_bytes: bytes,
     *,
     store_relative_path: str,
     plan: RecordingPlan,
@@ -340,96 +312,57 @@ def _check_snapshot(
     completed_at: datetime,
     admission_bound_ns: int | None = None,
 ) -> None:
-    raw_event = _object(strict_json_loads(event_content))
-    event = parse_lease_event(raw_event)
-    _equal(raw_event, event.to_dict(), "TEMPORAL_LEASE_EVENT_INVALID")
-    intent = _object(strict_json_loads(intent_content))
-    identity = _object(intent.get("workspace_identity"))
-    lease = event.lease
+    """Validate the retained hold record and the hold check made just before recording."""
+    try:
+        record = parse_hold_record(record_bytes)
+    except ValueError as exc:
+        raise TemporalEvidenceError("TEMPORAL_HOLD_EVENT_INVALID", str(exc)) from exc
+    check = _object(strict_json_loads(check_bytes))
+    provenance = _object(check.get("provenance"))
+    acquired = parse_utc_datetime(record["acquired_at"])
+    expires = parse_utc_datetime(record["expires_at"])
     if (
-        intent.get("schema_version") != "checkout_operation_intent.v1"
-        or intent.get("operation_class") not in {"domain_mutation", "shared_mutation"}
-        or intent.get("actor") != lease.actor
-        or f"checkout:{intent.get('intent_id')}" != lease.change_id
-        or intent.get("base_commit") != plan.declared_source_commit
-        or identity.get("head_commit") != plan.declared_source_commit
-        or lease.base_commit != plan.declared_source_commit
-        or event.to_state != "ACTIVE"
-        or lease.state != "ACTIVE"
-        or lease.acquired_at is None
-        or lease.expires_at is None
-        or not (
-            parse_utc_datetime(lease.acquired_at)
-            <= started_at
-            <= completed_at
-            < parse_utc_datetime(lease.expires_at)
-        )
-        or parse_utc_datetime(event.occurred_at) > started_at
-        or not any(
-            claim.kind == "path"
-            and claim.access.value == "WRITE"
-            and _covered(store_relative_path, claim.resource_id)
-            for claim in lease.resources
-        )
+        check.get("schema_version") != CHECK_SCHEMA
+        or check.get("status") != "PASS"
+        or check.get("hold_record_sha256") != hashlib.sha256(record_bytes).hexdigest()
+        or record["candidate_commit"] != plan.declared_source_commit
+        or check.get("candidate_commit") != plan.declared_source_commit
+        or provenance.get("commit") != plan.declared_source_commit
+        or provenance.get("code_modified") is not False
+        or not (acquired <= started_at <= completed_at < expires)
+        or parse_utc_datetime(check.get("checked_at")) > started_at
+        or not any(covered(store_relative_path, scope) for scope in record["required_paths"])
     ):
-        _fail("TEMPORAL_LEASE_BINDING_INVALID", "active scoped S4D evidence required")
-    if admission_bound_ns is not None and not deadline_allows(
-        admission_bound_ns, parse_utc_datetime(lease.expires_at)
-    ):
-        _fail("TEMPORAL_LEASE_BOUND_EXPIRED", "complete clock bound reaches lease expiry")
-    declared = [*intent.get("owned_paths", []), *intent.get("shared_paths", [])]
-    if not all(type(item) is str for item in declared) or not any(
-        _covered(store_relative_path, item) for item in declared
-    ):
-        _fail("TEMPORAL_LEASE_SCOPE_INVALID", store_relative_path)
+        _fail("TEMPORAL_HOLD_BINDING_INVALID", "live scoped capture-hold evidence required")
+    if admission_bound_ns is not None and not deadline_allows(admission_bound_ns, expires):
+        _fail("TEMPORAL_HOLD_BOUND_EXPIRED", "complete clock bound reaches hold expiry")
 
 
-def _live_lease(
-    handle: CheckoutLeaseHandle, root: Path, plan: RecordingPlan, at: datetime
-) -> tuple[bytes, bytes, str]:
-    if type(handle) is not CheckoutLeaseHandle or handle.released:
-        _fail("TEMPORAL_LEASE_REQUIRED", "active S4D mutation handle required")
-    guard = handle.guard
-    intent = handle.decision.intent
-    identity = resolve_checkout_identity(guard.project_root)
-    if (
-        identity != intent.workspace_identity
-        or intent.operation_class
-        not in {CheckoutOperationClass.DOMAIN_MUTATION, CheckoutOperationClass.SHARED_MUTATION}
-        or not root.is_relative_to(guard.project_root)
-        or root == guard.project_root
-    ):
-        _fail("TEMPORAL_LEASE_CHECKOUT_MISMATCH", "store and current checkout must match intent")
-    relative = root.relative_to(guard.project_root).as_posix()
+def _live_hold(
+    handle: CaptureHold, root: Path, plan: RecordingPlan
+) -> tuple[bytes, bytes, str, datetime]:
+    """Recheck the hold now; return its record bytes, the check bytes and the check time."""
+    if type(handle) is not CaptureHold or handle.released:
+        _fail("TEMPORAL_HOLD_REQUIRED", "live capture hold required")
+    if not root.is_relative_to(handle.root) or root == handle.root:
+        _fail("TEMPORAL_HOLD_CHECKOUT_MISMATCH", "store must be inside the held checkout")
+    relative = root.relative_to(handle.root).as_posix()
     # Check every original owned directory, not only its resolved final target.
-    path = guard.project_root
+    path = handle.root
     for part in PurePosixPath(relative).parts:
         path = path / part
         _root(path)
-    replay = guard.replay()
-    heads = {item.lease_id: item for item in replay.active_leases}
-    if replay.status != "PASS" or handle.lease_id not in heads:
-        _fail("TEMPORAL_LEASE_INACTIVE", handle.lease_id)
-    event_id = dict(replay.head_event_ids)[handle.lease_id]
-    event_path = guard.store.events_root / handle.lease_id / f"{event_id}.json"
-    event_bytes = read_contained_artifact_bytes(
-        root=guard.project_root,
-        relative_path=event_path.relative_to(guard.project_root).as_posix(),
+    check = recheck_capture_hold(
+        handle,
+        candidate_commit=plan.declared_source_commit,
+        required_paths=(relative,),
     )
-    intent_bytes = read_contained_artifact_bytes(
-        root=guard.project_root,
-        relative_path=handle.decision.intent_path.relative_to(guard.project_root).as_posix(),
+    return (
+        handle.record_bytes,
+        canonical_json_bytes(check),
+        relative,
+        parse_utc_datetime(check["checked_at"]),
     )
-    _equal(strict_json_loads(intent_bytes), intent.to_dict(), "TEMPORAL_LEASE_INTENT_DRIFT")
-    _check_snapshot(
-        event_bytes,
-        intent_bytes,
-        store_relative_path=relative,
-        plan=plan,
-        started_at=at,
-        completed_at=at,
-    )
-    return event_bytes, intent_bytes, relative
 
 
 @dataclass(frozen=True)
@@ -454,16 +387,12 @@ class RecordedTemporalEvidence:
     def admission_bound_ns(self) -> int:
         evidence = self.return_clock_evidence or self.clock_evidence
         if evidence is None:
-            _fail("TEMPORAL_LEGACY_CLOCK_BOUND_UNAVAILABLE", "v1 has no outer clock evidence")
+            _fail("TEMPORAL_CLOCK_EVIDENCE_REQUIRED", "outer clock evidence is required")
         return evidence.admission_bound_ns
 
     def to_dict(self) -> dict[str, object]:
         result: dict[str, object] = {
-            "schema_version": (
-                "prospective_time_evidence.v2"
-                if self.clock_evidence
-                else "prospective_time_evidence.v1"
-            ),
+            "schema_version": "prospective_time_evidence.v3",
             "event": self.binding.to_dict(),
             "plan": self.plan.to_dict(),
             "event_kind": self.event_kind,
@@ -475,7 +404,7 @@ class RecordedTemporalEvidence:
             "session_timing": self.timing.to_dict() if self.timing else None,
             "temporal_status": self.temporal_status,
             "calendar_close_authority": "REVIEWED_SCHEDULED_CLOSE",
-            **(_SAFETY if self.clock_evidence else _SAFETY_V1),
+            **_SAFETY,
         }
         if self.clock_evidence is not None:
             result.update(
@@ -498,9 +427,7 @@ def _semantic_intent(
 ) -> dict[str, object]:
     slot = _slot(plan, kind, feature)
     result: dict[str, object] = {
-        "schema_version": (
-            "prospective_time_intent.v2" if _is_v2(policy) else "prospective_time_intent.v1"
-        ),
+        "schema_version": "prospective_time_intent.v3",
         "plan": plan.to_dict(),
         "stream_id": plan.stream_id,
         "event_kind": kind,
@@ -509,6 +436,7 @@ def _semantic_intent(
         "previous_event": previous.to_dict() if previous else None,
         "policy_binding": policy.binding.to_dict(),
         "calendar_bindings": [item.to_dict() for item in policy.calendar_bindings],
+        "clock_policy_binding": policy.clock_policy_binding.to_dict(),
         "payload_bindings": [
             {
                 "role": item.role,
@@ -517,9 +445,6 @@ def _semantic_intent(
             for item in members
         ],
     }
-    if _is_v2(policy):
-        assert policy.clock_policy_binding is not None
-        result["clock_policy_binding"] = policy.clock_policy_binding.to_dict()
     return result
 
 
@@ -577,23 +502,18 @@ def _result_state(
         )
     ):
         _fail("TEMPORAL_CLOCK_BACKWARD", "event clock precedes start or predecessor")
-    if _is_v2(policy):
-        if admission_bound_ns is None or type(started_raw_utc_ns) is not int:
-            _fail(
-                "TEMPORAL_CLOCK_EVIDENCE_REQUIRED",
-                "v2 requires original raw start and replayed bound",
-            )
-        if parent is not None and (
-            parent.clock_evidence is None
-            or started_raw_utc_ns < parent.clock_evidence.latest_sample.utc_ns
-        ):
-            _fail("TEMPORAL_CLOCK_BACKWARD", "raw ns event anchor precedes predecessor")
-    if kind == "ACTIVATION":
-        upper = (
-            utc_ns_to_datetime_ceil(admission_bound_ns)
-            if admission_bound_ns is not None
-            else completed
+    if admission_bound_ns is None or type(started_raw_utc_ns) is not int:
+        _fail(
+            "TEMPORAL_CLOCK_EVIDENCE_REQUIRED",
+            "original raw start and replayed bound required",
         )
+    if parent is not None and (
+        parent.clock_evidence is None
+        or started_raw_utc_ns < parent.clock_evidence.latest_sample.utc_ns
+    ):
+        _fail("TEMPORAL_CLOCK_BACKWARD", "raw ns event anchor precedes predecessor")
+    if kind == "ACTIVATION":
+        upper = utc_ns_to_datetime_ceil(admission_bound_ns)
         first = _next_session(upper.astimezone(US_EQUITY_MARKET_TIMEZONE).date())
         return first, None, "ACTIVATION_RECORDED"
     if feature is None or parent is None:
@@ -601,11 +521,7 @@ def _result_state(
     timing = _session_timing(feature)
     if started <= timing.feature_close_at:
         _fail("TEMPORAL_FEATURE_NOT_CLOSED", "write must start strictly after the feature close")
-    timely = (
-        deadline_allows(admission_bound_ns, timing.effective_close_at)
-        if admission_bound_ns is not None
-        else completed < timing.effective_close_at
-    )
+    timely = deadline_allows(admission_bound_ns, timing.effective_close_at)
     status = "TIMELY_PAYLOAD" if timely else "LATE_PAYLOAD"
     return parent.first_feature_session, timing, status
 
@@ -623,7 +539,7 @@ def _existing_completion(
     witness = _object(strict_json_loads(content))
     intent = _object(strict_json_loads(_read(root, EventBinding.from_dict(witness["intent"]))))
     _equal(intent["semantic"], semantic, "TEMPORAL_EVENT_CONFLICT")
-    # No clock or live lease is acquired, and no original return observation is
+    # No clock or live hold is acquired, and no original return observation is
     # manufactured from a retained payload witness.
     return evidence
 
@@ -637,7 +553,7 @@ def _record(
     previous: EventBinding | None,
     members: tuple[PayloadMember, ...],
     policy: TimeEvidencePolicy,
-    lease_handle: CheckoutLeaseHandle,
+    hold_handle: CaptureHold,
 ) -> RecordedTemporalEvidence:
     _policy_live(policy)
     if type(plan) is not RecordingPlan:
@@ -655,11 +571,7 @@ def _record(
     original = _optional(root, completion_path)
     if original is not None:
         return _existing_completion(root, completion_path, original, semantic, policy)
-    if not _is_v2(policy):
-        _fail("TEMPORAL_LEGACY_RECORDING_DISABLED", "v1 policy is retained-verification only")
-    lease_event, lease_intent, relative = _live_lease(
-        lease_handle, root, plan, _instant(_utc_now())
-    )
+    hold_record, hold_check, relative, _ = _live_hold(hold_handle, root, plan)
     sampler = HostClockSampler.start(source_root=policy.source_root)
     sampler.recheck_policy()
     started = utc_ns_to_datetime_floor(sampler.anchor.utc_ns)
@@ -671,8 +583,8 @@ def _record(
         if existing is None:
             expected_paths = (
                 f"{slot}/intent.json",
-                f"{slot}/lease_event.json",
-                f"{slot}/lease_intent.json",
+                f"{slot}/hold_record.json",
+                f"{slot}/hold_check.json",
                 *(f"{slot}/payload_{item.role}.bin" for item in members),
             )
             if any(_optional(root, path) is not None for path in expected_paths):
@@ -695,8 +607,8 @@ def _record(
                 started_raw_utc_ns=sampler.anchor.utc_ns,
             )
             _check_snapshot(
-                lease_event,
-                lease_intent,
+                hold_record,
+                hold_check,
                 store_relative_path=relative,
                 plan=plan,
                 started_at=started,
@@ -706,14 +618,14 @@ def _record(
             intent = {
                 "semantic": semantic,
                 "original_store_relative_path": relative,
-                "lease_event": _binding(f"{slot}/lease_event.json", lease_event).to_dict(),
-                "lease_intent": _binding(f"{slot}/lease_intent.json", lease_intent).to_dict(),
+                "hold_record": _binding(f"{slot}/hold_record.json", hold_record).to_dict(),
+                "hold_check": _binding(f"{slot}/hold_check.json", hold_check).to_dict(),
             }
             intent_bytes = canonical_json_bytes(intent)
             payload_writes = (
                 (f"{slot}/intent.json", intent_bytes),
-                (f"{slot}/lease_event.json", lease_event),
-                (f"{slot}/lease_intent.json", lease_intent),
+                (f"{slot}/hold_record.json", hold_record),
+                (f"{slot}/hold_check.json", hold_check),
                 *((f"{slot}/payload_{item.role}.bin", item.content) for item in members),
             )
             for path, content in payload_writes:
@@ -739,8 +651,8 @@ def _record(
                 started_raw_utc_ns=sampler.anchor.utc_ns,
             )
             _check_snapshot(
-                lease_event,
-                lease_intent,
+                hold_record,
+                hold_check,
                 store_relative_path=relative,
                 plan=plan,
                 started_at=started,
@@ -750,17 +662,16 @@ def _record(
             maintenance.mark_committed()
     if existing is not None:
         return _existing_completion(root, completion_path, existing, semantic, policy)
-    lease_checked_at = _instant(_utc_now())
-    if lease_checked_at < completed:
-        _fail("TEMPORAL_CLOCK_BACKWARD", "lease recheck clock precedes payload completion")
-    _live_lease(lease_handle, root, plan, lease_checked_at)
+    _, _, _, hold_checked_at = _live_hold(hold_handle, root, plan)
+    if hold_checked_at < completed:
+        _fail("TEMPORAL_CLOCK_BACKWARD", "hold recheck clock precedes payload completion")
     _policy_live(policy)
     sampler.recheck_policy()
     if _parent(root, plan, kind, feature, previous, policy) != parent:
         _fail("TEMPORAL_PREDECESSOR_INVALID", "predecessor changed during payload persistence")
     post_payload = sampler.checkpoint("post_payload_guards")
-    if utc_ns_to_datetime_floor(post_payload.latest_sample.utc_ns) < lease_checked_at:
-        _fail("TEMPORAL_CLOCK_BACKWARD", "postguard clock precedes lease recheck")
+    if utc_ns_to_datetime_floor(post_payload.latest_sample.utc_ns) < hold_checked_at:
+        _fail("TEMPORAL_CLOCK_BACKWARD", "postguard clock precedes hold recheck")
     with exclusive_store_maintenance(store_root=root) as maintenance:
         if _optional(root, completion_path) is not None:
             _fail("TEMPORAL_EVENT_CONFLICT", "completion appeared before this recorder's witness")
@@ -768,11 +679,11 @@ def _record(
             _read(root, _binding(path, content))
         witness_clock = sampler.checkpoint("witness_precommit")
         witness_started = utc_ns_to_datetime_floor(witness_clock.latest_sample.utc_ns)
-        if witness_started < lease_checked_at:
-            _fail("TEMPORAL_CLOCK_BACKWARD", "witness start clock precedes lease recheck")
+        if witness_started < hold_checked_at:
+            _fail("TEMPORAL_CLOCK_BACKWARD", "witness start clock precedes hold recheck")
         _check_snapshot(
-            lease_event,
-            lease_intent,
+            hold_record,
+            hold_check,
             store_relative_path=relative,
             plan=plan,
             started_at=witness_started,
@@ -780,7 +691,7 @@ def _record(
             admission_bound_ns=witness_clock.admission_bound_ns,
         )
         witness = {
-            "schema_version": "prospective_time_completion.v2",
+            "schema_version": "prospective_time_completion.v3",
             "intent": _binding(f"{slot}/intent.json", intent_bytes).to_dict(),
             "started_at": utc_datetime_text(started),
             "payload_durable_completed_at": utc_datetime_text(completed),
@@ -801,18 +712,17 @@ def _record(
     verified = verify_time_evidence(
         store_root=root, event=_binding(completion_path, witness_bytes), policy=policy
     )
-    verified_at = _instant(_utc_now())
+    _, _, _, verified_at = _live_hold(hold_handle, root, plan)
     if verified_at < witness_started:
         _fail("TEMPORAL_CLOCK_BACKWARD", "final check clock precedes witness start")
-    _live_lease(lease_handle, root, plan, verified_at)
     _policy_live(policy)
     sampler.recheck_policy()
     returned = sampler.checkpoint("recorder_return")
     if utc_ns_to_datetime_floor(returned.latest_sample.utc_ns) < verified_at:
         _fail("TEMPORAL_CLOCK_BACKWARD", "return observation precedes final live check")
     _check_snapshot(
-        lease_event,
-        lease_intent,
+        hold_record,
+        hold_check,
         store_relative_path=relative,
         plan=plan,
         started_at=started,
@@ -830,7 +740,7 @@ def record_activation(
     plan: RecordingPlan,
     definitions: tuple[PayloadMember, ...],
     policy: TimeEvidencePolicy,
-    lease_handle: CheckoutLeaseHandle,
+    hold_handle: CaptureHold,
 ) -> RecordedTemporalEvidence:
     return _record(
         store_root=store_root,
@@ -840,7 +750,7 @@ def record_activation(
         previous=None,
         members=definitions,
         policy=policy,
-        lease_handle=lease_handle,
+        hold_handle=hold_handle,
     )
 
 
@@ -852,7 +762,7 @@ def record_local_input_observation(
     inputs: tuple[PayloadMember, ...],
     activation: EventBinding,
     policy: TimeEvidencePolicy,
-    lease_handle: CheckoutLeaseHandle,
+    hold_handle: CaptureHold,
 ) -> RecordedTemporalEvidence:
     return _record(
         store_root=store_root,
@@ -862,7 +772,7 @@ def record_local_input_observation(
         previous=activation,
         members=inputs,
         policy=policy,
-        lease_handle=lease_handle,
+        hold_handle=hold_handle,
     )
 
 
@@ -874,7 +784,7 @@ def record_signal_completion(
     signal: PayloadMember,
     inputs: EventBinding,
     policy: TimeEvidencePolicy,
-    lease_handle: CheckoutLeaseHandle,
+    hold_handle: CaptureHold,
 ) -> RecordedTemporalEvidence:
     return _record(
         store_root=store_root,
@@ -884,7 +794,7 @@ def record_signal_completion(
         previous=inputs,
         members=(signal,),
         policy=policy,
-        lease_handle=lease_handle,
+        hold_handle=hold_handle,
     )
 
 
@@ -894,23 +804,12 @@ def verify_time_evidence(
     event: EventBinding,
     policy: TimeEvidencePolicy,
 ) -> RecordedTemporalEvidence:
-    """Re-read exact bound bytes; no active lease, DQ, producer or event writes."""
+    """Re-read exact bound bytes; no active hold, DQ, producer or event writes."""
     _policy_live(policy)
     root = _root(store_root)
     if type(event) is not EventBinding or not _COMPLETION_LOCATOR.fullmatch(event.relative_path):
         _fail("TEMPORAL_EVENT_LOCATOR_INVALID", "canonical completion locator required")
     witness_bytes = _read(root, event)
-    version2 = _is_v2(policy)
-    clock_fields = (
-        {
-            "payload_outer_elapsed_ns",
-            "payload_admission_bound_ns",
-            "witness_write_started_at",
-            "clock_evidence",
-        }
-        if version2
-        else {"monotonic_elapsed_ns"}
-    )
     witness = _object(
         strict_json_loads(witness_bytes),
         {
@@ -918,7 +817,10 @@ def verify_time_evidence(
             "intent",
             "started_at",
             "payload_durable_completed_at",
-            *clock_fields,
+            "payload_outer_elapsed_ns",
+            "payload_admission_bound_ns",
+            "witness_write_started_at",
+            "clock_evidence",
             "first_feature_session",
             "session_timing",
             "temporal_status",
@@ -926,13 +828,12 @@ def verify_time_evidence(
         },
     )
     if (
-        witness["schema_version"]
-        != ("prospective_time_completion.v2" if version2 else "prospective_time_completion.v1")
+        witness["schema_version"] != "prospective_time_completion.v3"
         or canonical_json_bytes(witness) != witness_bytes
     ):
         _fail("TEMPORAL_WITNESS_INVALID", "canonical completion witness required")
-    _equal(witness["safety"], _policy_safety(policy), "TEMPORAL_SAFETY_INVALID")
-    elapsed = witness["payload_outer_elapsed_ns" if version2 else "monotonic_elapsed_ns"]
+    _equal(witness["safety"], _SAFETY, "TEMPORAL_SAFETY_INVALID")
+    elapsed = witness["payload_outer_elapsed_ns"]
     if type(elapsed) is not int or elapsed < 0:
         _fail("TEMPORAL_MONOTONIC_CLOCK_INVALID", "nonnegative elapsed time required")
     intent_binding = EventBinding.from_dict(witness["intent"])
@@ -943,7 +844,7 @@ def verify_time_evidence(
     intent_bytes = _read(root, intent_binding)
     intent = _object(
         strict_json_loads(intent_bytes),
-        {"semantic", "original_store_relative_path", "lease_event", "lease_intent"},
+        {"semantic", "original_store_relative_path", "hold_record", "hold_check"},
     )
     if canonical_json_bytes(intent) != intent_bytes:
         _fail("TEMPORAL_INTENT_INVALID", "canonical immutable intent required")
@@ -960,7 +861,7 @@ def verify_time_evidence(
             "policy_binding",
             "calendar_bindings",
             "payload_bindings",
-            *({"clock_policy_binding"} if version2 else set()),
+            "clock_policy_binding",
         },
     )
     plan = RecordingPlan.from_dict(semantic["plan"])
@@ -1021,41 +922,33 @@ def verify_time_evidence(
     parent = _parent(root, plan, kind, feature, previous, policy)
     started = parse_utc_datetime(witness["started_at"])
     completed = parse_utc_datetime(witness["payload_durable_completed_at"])
-    clock_evidence = None
-    payload_bound = None
-    witness_started = completed
-    if version2:
-        clock_evidence = HostClockEvidence.from_dict(witness["clock_evidence"])
-        checkpoints = clock_evidence.checkpoints
-        if tuple(row.label for row in checkpoints) != (
-            "pre_payload",
-            "payload_complete",
-            "post_payload_guards",
-            "witness_precommit",
-        ):
-            _fail(
-                "TEMPORAL_CLOCK_STAGE_INVALID", "complete fixed recorder checkpoint chain required"
-            )
-        payload = checkpoints[1]
-        payload_bound = witness["payload_admission_bound_ns"]
-        if type(payload_bound) is not int or payload_bound != payload.admission_bound_ns:
-            _fail("TEMPORAL_CLOCK_BOUND_INVALID", "payload bound differs from original checkpoint")
-        witness_started = parse_utc_datetime(witness["witness_write_started_at"])
-        if (
-            started != utc_ns_to_datetime_floor(clock_evidence.anchor.utc_ns)
-            or completed != utc_ns_to_datetime_floor(payload.sample.utc_ns)
-            or witness_started != utc_ns_to_datetime_floor(clock_evidence.latest_sample.utc_ns)
-            or elapsed != payload.sample.counter_after_ns - clock_evidence.anchor.counter_before_ns
-            or checkpoints[0].inherited_child_bound_ns
-            != (parent.admission_bound_ns if parent is not None else None)
-            or any(row.inherited_child_bound_ns is not None for row in checkpoints[1:])
-        ):
-            _fail(
-                "TEMPORAL_CLOCK_BINDING_INVALID",
-                "raw observations, outer duration or predecessor differ",
-            )
-    else:
-        _check_elapsed(started, completed, elapsed)
+    clock_evidence = HostClockEvidence.from_dict(witness["clock_evidence"])
+    checkpoints = clock_evidence.checkpoints
+    if tuple(row.label for row in checkpoints) != (
+        "pre_payload",
+        "payload_complete",
+        "post_payload_guards",
+        "witness_precommit",
+    ):
+        _fail("TEMPORAL_CLOCK_STAGE_INVALID", "complete fixed recorder checkpoint chain required")
+    payload = checkpoints[1]
+    payload_bound = witness["payload_admission_bound_ns"]
+    if type(payload_bound) is not int or payload_bound != payload.admission_bound_ns:
+        _fail("TEMPORAL_CLOCK_BOUND_INVALID", "payload bound differs from original checkpoint")
+    witness_started = parse_utc_datetime(witness["witness_write_started_at"])
+    if (
+        started != utc_ns_to_datetime_floor(clock_evidence.anchor.utc_ns)
+        or completed != utc_ns_to_datetime_floor(payload.sample.utc_ns)
+        or witness_started != utc_ns_to_datetime_floor(clock_evidence.latest_sample.utc_ns)
+        or elapsed != payload.sample.counter_after_ns - clock_evidence.anchor.counter_before_ns
+        or checkpoints[0].inherited_child_bound_ns
+        != (parent.admission_bound_ns if parent is not None else None)
+        or any(row.inherited_child_bound_ns is not None for row in checkpoints[1:])
+    ):
+        _fail(
+            "TEMPORAL_CLOCK_BINDING_INVALID",
+            "raw observations, outer duration or predecessor differ",
+        )
     first, timing, status = _result_state(
         kind=kind,
         feature=feature,
@@ -1064,7 +957,7 @@ def verify_time_evidence(
         completed=completed,
         policy=policy,
         admission_bound_ns=payload_bound,
-        started_raw_utc_ns=clock_evidence.anchor.utc_ns if clock_evidence else None,
+        started_raw_utc_ns=clock_evidence.anchor.utc_ns,
     )
     _equal(witness["first_feature_session"], first.isoformat(), "TEMPORAL_FIRST_SESSION_INVALID")
     _equal(
@@ -1073,23 +966,23 @@ def verify_time_evidence(
         "TEMPORAL_SESSION_TIMING_INVALID",
     )
     _equal(witness["temporal_status"], status, "TEMPORAL_STATUS_INVALID")
-    lease_event = EventBinding.from_dict(intent["lease_event"])
-    lease_intent = EventBinding.from_dict(intent["lease_intent"])
+    hold_record = EventBinding.from_dict(intent["hold_record"])
+    hold_check = EventBinding.from_dict(intent["hold_check"])
     if (
-        lease_event.relative_path != f"{slot}/lease_event.json"
-        or lease_intent.relative_path != f"{slot}/lease_intent.json"
+        hold_record.relative_path != f"{slot}/hold_record.json"
+        or hold_check.relative_path != f"{slot}/hold_check.json"
     ):
-        _fail("TEMPORAL_LEASE_LOCATOR_INVALID", slot)
+        _fail("TEMPORAL_HOLD_LOCATOR_INVALID", slot)
     relative = intent["original_store_relative_path"]
     EventBinding(relative, "0" * 64, 0)  # Validate a portable path, never a permission token.
     _check_snapshot(
-        _read(root, lease_event),
-        _read(root, lease_intent),
+        _read(root, hold_record),
+        _read(root, hold_check),
         store_relative_path=relative,
         plan=plan,
         started_at=started,
         completed_at=witness_started,
-        admission_bound_ns=clock_evidence.admission_bound_ns if clock_evidence else None,
+        admission_bound_ns=clock_evidence.admission_bound_ns,
     )
     _policy_live(policy)
     _read(root, event)
@@ -1121,11 +1014,10 @@ def verify_recorder_return_evidence(
 
     Source execution and the original successful-call association remain the
     parent consumer's obligations. This replays the complete child prefix and
-    its retained lease expiry without consulting any live clock or lease.
+    its retained hold expiry without consulting any live clock or hold.
     """
     verified = verify_time_evidence(store_root=store_root, event=event, policy=policy)
-    if verified.clock_evidence is None:
-        _fail("TEMPORAL_LEGACY_RETURN_EVIDENCE_INVALID", "v1 has no compatible outer prefix")
+    assert verified.clock_evidence is not None
     require_clock_evidence_extension(verified.clock_evidence, return_clock_evidence)
     tail = return_clock_evidence.checkpoints[len(verified.clock_evidence.checkpoints) :]
     if (
@@ -1138,8 +1030,8 @@ def verify_recorder_return_evidence(
     witness = _object(strict_json_loads(_read(root, event)))
     intent = _object(strict_json_loads(_read(root, EventBinding.from_dict(witness["intent"]))))
     _check_snapshot(
-        _read(root, EventBinding.from_dict(intent["lease_event"])),
-        _read(root, EventBinding.from_dict(intent["lease_intent"])),
+        _read(root, EventBinding.from_dict(intent["hold_record"])),
+        _read(root, EventBinding.from_dict(intent["hold_check"])),
         store_relative_path=intent["original_store_relative_path"],
         plan=verified.plan,
         started_at=verified.started_at,
@@ -1182,12 +1074,8 @@ def project_session_coverage(
         if content is not None:
             event_binding = _binding(f"{slot}/completion.json", content)
             evidence = verify_time_evidence(store_root=root, event=event_binding, policy=policy)
-            after_review = (
-                evidence.payload_admission_bound_ns > datetime_to_utc_ns(review_time)
-                if evidence.payload_admission_bound_ns is not None
-                else evidence.payload_durable_completed_at > review_time
-            )
-            if after_review:
+            assert evidence.payload_admission_bound_ns is not None
+            if evidence.payload_admission_bound_ns > datetime_to_utc_ns(review_time):
                 status = "NOT_RECORDED_BY_REVIEW_TIME"
             else:
                 status = (
@@ -1206,15 +1094,15 @@ def project_session_coverage(
                 _optional(root, f"{slot}/{name}") is not None
                 for name in (
                     "intent.json",
-                    "lease_event.json",
-                    "lease_intent.json",
+                    "hold_record.json",
+                    "hold_check.json",
                     "payload_signal.bin",
                 )
             ) or (
                 input_completion is None
                 and any(
                     _optional(root, f"{input_slot}/{name}") is not None
-                    for name in ("intent.json", "lease_event.json", "lease_intent.json")
+                    for name in ("intent.json", "hold_record.json", "hold_check.json")
                 )
             )
             status = (
@@ -1237,11 +1125,7 @@ def project_session_coverage(
     _read(root, activation)
     _policy_live(policy)
     return {
-        "schema_version": (
-            "prospective_session_coverage.v2"
-            if _is_v2(policy)
-            else "prospective_session_coverage.v1"
-        ),
+        "schema_version": "prospective_session_coverage.v3",
         "plan": activated.plan.to_dict(),
         "activation": activation.to_dict(),
         "requested_start": activated.first_feature_session.isoformat(),
@@ -1252,5 +1136,5 @@ def project_session_coverage(
         "expected_sessions": rows,
         "old_gap_backfill_allowed": False,
         "future_session_recovery_allowed": True,
-        **_policy_safety(policy),
+        **_SAFETY,
     }

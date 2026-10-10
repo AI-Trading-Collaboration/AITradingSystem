@@ -38,7 +38,7 @@ from ai_trading_system.contracts.prospective_event_time_evidence import (
     parse_utc_datetime,
     strict_json_loads,
 )
-from ai_trading_system.core.provenance import UNAVAILABLE, git_provenance
+from ai_trading_system.core.provenance import UNAVAILABLE, git_output, git_provenance
 from ai_trading_system.data.immutable_publish import (
     DataPublicationIntegrityError,
     exclusive_store_maintenance,
@@ -66,6 +66,7 @@ _RECORD_FIELDS = {
     "actor",
     "candidate_commit",
     "execution_root",
+    "git_common_dir",
     "required_paths",
     "holder_pid",
     "holder_host",
@@ -152,7 +153,7 @@ def _read(store: Path, relative: str) -> bytes | None:
         raise
 
 
-def _parse_record(content: bytes) -> dict[str, Any]:
+def parse_hold_record(content: bytes) -> dict[str, Any]:
     try:
         record = _object(strict_json_loads(content))
     except TemporalEvidenceError as exc:
@@ -170,6 +171,7 @@ def _parse_record(content: bytes) -> dict[str, Any]:
     _text(record["actor"])
     _text(record["holder_host"])
     _text(record["execution_root"])
+    _text(record["git_common_dir"])
     _paths(record["required_paths"])
     acquired, expires = (
         parse_utc_datetime(record["acquired_at"]),
@@ -199,7 +201,7 @@ def _live_records(store: Path, now: datetime) -> list[dict[str, Any]]:
     for entry in sorted(records.iterdir()) if records.is_dir() else ():
         content = _read(store, f"records/{entry.name}")
         assert content is not None
-        record = _parse_record(content)
+        record = parse_hold_record(content)
         if entry.name != record["hold_id"] + ".json":
             _fail("CAPTURE_HOLD_RECORD_INVALID", entry.name)
         if parse_utc_datetime(record["expires_at"]) > now and not _released(
@@ -229,6 +231,14 @@ class CaptureHold:
     @property
     def expires_at(self) -> datetime:
         return parse_utc_datetime(self.record["expires_at"])
+
+
+def git_common_dir(root: Path) -> str:
+    """Absolute common git directory: the identity of the repository shared by all worktrees."""
+    observed = git_output(root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    if observed is None:
+        _fail("CAPTURE_HOLD_PROVENANCE_UNAVAILABLE", "git common directory unreadable")
+    return Path(observed).resolve().as_posix()
 
 
 def _identity(root: Path, candidate_commit: str) -> dict[str, Any]:
@@ -271,6 +281,7 @@ def acquire_capture_hold(
             "actor": actor,
             "candidate_commit": candidate_commit,
             "execution_root": root.as_posix(),
+            "git_common_dir": git_common_dir(root),
             "required_paths": list(required),
             "holder_pid": os.getpid(),
             "holder_host": socket.gethostname(),
@@ -294,7 +305,7 @@ def _live_record(root: Path, hold_id: str) -> tuple[dict[str, Any], bytes]:
     content = _read(store, f"records/{hold_id}.json")
     if content is None:
         _fail("CAPTURE_HOLD_INACTIVE", hold_id)
-    record = _parse_record(content)
+    record = parse_hold_record(content)
     if (
         record["hold_id"] != hold_id
         or record["execution_root"] != root.as_posix()
@@ -332,6 +343,8 @@ def recheck_capture_hold(
         _fail("CAPTURE_HOLD_RECORD_DRIFT", hold.hold_id)
     checked = _now()
     identity = _identity(hold.root, candidate_commit)
+    if git_common_dir(hold.root) != record["git_common_dir"]:
+        _fail("CAPTURE_HOLD_REPOSITORY_DRIFT", hold.hold_id)
     if (
         not parse_utc_datetime(record["acquired_at"])
         <= checked
@@ -430,7 +443,7 @@ def verify_retained_capture_hold_proof(
     if re.fullmatch(r"(?:[0-9a-f]{2})+", hex_value) is None:
         _fail("CAPTURE_HOLD_RETAINED_BYTES_INVALID", "hold_record")
     content = bytes.fromhex(hex_value)
-    record = _parse_record(content)
+    record = parse_hold_record(content)
     if _sha(content) != raw.get("hold_record_sha256") or canonical_json_bytes(
         raw.get("active_hold")
     ) != canonical_json_bytes(record):

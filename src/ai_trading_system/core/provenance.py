@@ -23,7 +23,7 @@ CODE_PATHS = ("src", "config", "scripts", "tools")
 UNAVAILABLE = "unavailable"
 
 
-def _git(root: Path, *args: str) -> str | None:
+def git_output(root: Path, *args: str) -> str | None:
     try:
         done = subprocess.run(
             ["git", "-C", str(root), *args],
@@ -51,13 +51,14 @@ def file_sha256(path: Path) -> str:
 
 def git_provenance(anchor: Path) -> dict[str, Any]:
     """Commit, branch and whether result-affecting code differs from that commit."""
-    root_text = _git(anchor if anchor.is_dir() else anchor.parent, "rev-parse", "--show-toplevel")
+    directory = anchor if anchor.is_dir() else anchor.parent
+    root_text = git_output(directory, "rev-parse", "--show-toplevel")
     if root_text is None:
         return {"commit": UNAVAILABLE, "branch": UNAVAILABLE, "code_modified": UNAVAILABLE}
     root = Path(root_text)
-    commit = _git(root, "rev-parse", "HEAD") or UNAVAILABLE
-    branch = _git(root, "branch", "--show-current") or UNAVAILABLE
-    status = _git(root, "status", "--porcelain", "--untracked-files=no", "--", *CODE_PATHS)
+    commit = git_output(root, "rev-parse", "HEAD") or UNAVAILABLE
+    branch = git_output(root, "branch", "--show-current") or UNAVAILABLE
+    status = git_output(root, "status", "--porcelain", "--untracked-files=no", "--", *CODE_PATHS)
     return {
         "commit": commit,
         "branch": branch,

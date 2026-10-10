@@ -1,6 +1,6 @@
 """Bounded S4 synthetic outcome gateway; no real research consumer is admitted.
 
-The existing S4D OS arbiter serializes replay/check/append. An independent
+The capture-hold store lock serializes replay/check/append. An independent
 PREPARED/event/COMPLETED checkpoint chain detects a missing or truncated business
 ledger. Pending is durable possible exposure, even after a killed process. This
 is local controlled evidence, not an external clock, an OS sandbox or proof of
@@ -34,28 +34,26 @@ from ai_trading_system.contracts.research_experiment_envelope import (
     FreezeAdmission,
     LocalExperimentAuthority,
 )
+from ai_trading_system.data.capture_hold import (
+    HOLD_ROOT_RELATIVE,
+    CaptureHold,
+    git_common_dir,
+    recheck_capture_hold,
+    verify_retained_capture_hold_proof,
+)
 from ai_trading_system.data.immutable_publish import (
+    exclusive_store_maintenance,
     read_contained_artifact_bytes,
     write_contained_artifact_bytes,
 )
-from ai_trading_system.data.named_quality_dispatch import (
-    recheck_named_capture_lease,
-    verify_retained_named_capture_proof,
-)
-from ai_trading_system.platform.architecture.checkout_guard import (
-    CheckoutLeaseGuard,
-    CheckoutLeaseHandle,
-    resolve_checkout_identity,
-)
-from ai_trading_system.platform.architecture.lease_arbiter import hold_lease_arbiter
 
 # Reviewed protocol identities, not research thresholds or configurable output roots.
 AUTHORITY_PATH = "config/research/research_experiment_authority.json"
-CHECKPOINT_DIRECTORY = "research_outcome_access_checkpoints"
+CHECKPOINT_PATH = "outputs/research/experiment_outcome_access_checkpoints_v1"
 CANONICAL_LEDGER_PATH = "outputs/research/experiment_outcome_ledger_v1"
 CALLBACK_ATTESTATION = "TRUSTED_SYNTHETIC_CALLBACK_NOT_ATTESTED"
 _EVENT_SCHEMA = "research_outcome_access_event.v1"
-_CHECKPOINT_SCHEMA = "research_outcome_access_checkpoint.v1"
+_CHECKPOINT_SCHEMA = "research_outcome_access_checkpoint.v2"
 _TIME_SCHEMA = "research_local_freeze_time_evidence.v1"
 _ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.@-]*")
 _HASH = re.compile(r"[0-9a-f]{64}")
@@ -169,24 +167,15 @@ class ResearchOutcomeAccessGateway:
             _fail("OUTCOME_EXECUTION_IDENTITY_INVALID")
         self.root = execution_root
         self.candidate_commit = candidate_commit
-        self.guard = CheckoutLeaseGuard(
-            project_root=execution_root,
-            policy_path=execution_root / "config/architecture/arch_005_s4d_checkout_guard.yaml",
-            parallel_policy_path=execution_root
-            / "config/architecture/arch_005_parallel_control_policy.yaml",
-        )
-        self.checkpoint_path = (
-            (self.guard.store.root / CHECKPOINT_DIRECTORY).relative_to(self.root).as_posix()
-        )
+        self.checkpoint_path = CHECKPOINT_PATH
         self._authority()
 
     def _authority(self) -> LocalExperimentAuthority:
         authority = LocalExperimentAuthority.from_json_bytes(self._read(AUTHORITY_PATH))
-        identity = resolve_checkout_identity(self.root)
         if (
             not _same_path(Path(authority.canonical_execution_root), self.root)
             or not _same_path(
-                Path(authority.canonical_git_common_dir), Path(identity.git_common_dir)
+                Path(authority.canonical_git_common_dir), Path(git_common_dir(self.root))
             )
             or authority.scope != SYNTHETIC_SCOPE
         ):
@@ -194,7 +183,7 @@ class ResearchOutcomeAccessGateway:
         if authority.ledger_relative_path != CANONICAL_LEDGER_PATH:
             _fail("OUTCOME_CANONICAL_LEDGER_MISMATCH")
         ledger = self.root / authority.ledger_relative_path
-        protected = (self.root / AUTHORITY_PATH, self.guard.runtime_root)
+        protected = (self.root / AUTHORITY_PATH, self.root / HOLD_ROOT_RELATIVE)
         if any(
             ledger == path or ledger in path.parents or path in ledger.parents for path in protected
         ):
@@ -243,34 +232,21 @@ class ResearchOutcomeAccessGateway:
 
     @contextmanager
     def _locked(
-        self, lease: CheckoutLeaseHandle
+        self, hold: CaptureHold
     ) -> Iterator[tuple[LocalExperimentAuthority, dict[str, Any]]]:
         authority = self._authority()
-        # Validate the canonical lease BEFORE writing even arbiter diagnostic metadata.
-        self._proof(lease, authority)
-        with hold_lease_arbiter(
-            self.guard.store.root,
-            actor=lease.actor,
-            now=_now(),
-            arbiter_ttl_seconds=self.guard.lease_policy.arbiter_ttl_seconds,
-        ):
+        # Validate the live hold BEFORE taking the store lock or writing anything.
+        self._proof(hold, authority)
+        with exclusive_store_maintenance(store_root=self.root / HOLD_ROOT_RELATIVE):
             if self._authority() != authority:
                 _fail("OUTCOME_AUTHORITY_CHANGED")
-            yield authority, self._proof(lease, authority)
+            yield authority, self._proof(hold, authority)
 
-    def _proof(
-        self, lease: CheckoutLeaseHandle, authority: LocalExperimentAuthority
-    ) -> dict[str, Any]:
-        if type(lease) is not CheckoutLeaseHandle or lease.guard.project_root != self.root:
-            _fail("OUTCOME_LEASE_ROOT_MISMATCH")
-        if (
-            self.guard.runtime_root != lease.guard.runtime_root
-            or self.guard.policy != lease.guard.policy
-            or self.guard.lease_policy != lease.guard.lease_policy
-        ):
-            _fail("OUTCOME_CACHED_LEASE_AUTHORITY_CHANGED")
-        return recheck_named_capture_lease(
-            lease, candidate_commit=self.candidate_commit, required_paths=self._required(authority)
+    def _proof(self, hold: CaptureHold, authority: LocalExperimentAuthority) -> dict[str, Any]:
+        if type(hold) is not CaptureHold or hold.root != self.root:
+            _fail("OUTCOME_HOLD_ROOT_MISMATCH")
+        return recheck_capture_hold(
+            hold, candidate_commit=self.candidate_commit, required_paths=self._required(authority)
         )
 
     def _replay(self) -> _Replay:
@@ -302,7 +278,7 @@ class ResearchOutcomeAccessGateway:
                         "ledger_relative_path",
                         "event_sequence",
                         "event_sha256",
-                        "lease_proof",
+                        "hold_proof",
                     },
                 )
                 if row["phase"] != "PREPARED":
@@ -310,13 +286,13 @@ class ResearchOutcomeAccessGateway:
                 ledger = row["ledger_relative_path"]
                 if ledger != CANONICAL_LEDGER_PATH:
                     _fail("OUTCOME_CANONICAL_LEDGER_MISMATCH")
-                proof = _object(row["lease_proof"])
-                verify_retained_named_capture_proof(
+                proof = _object(row["hold_proof"])
+                verify_retained_capture_hold_proof(
                     proof,
                     execution_root=self.root,
                     candidate_commit=proof["candidate_commit"],
                     required_paths=(ledger, self.checkpoint_path),
-                    source_lease_id=proof["active_lease"]["lease_id"],
+                    source_hold_id=proof["active_hold"]["hold_id"],
                     checked_at=parse_utc_datetime(proof["checked_at"]),
                 )
                 events = ledgers.setdefault(ledger, [])
@@ -378,7 +354,7 @@ class ResearchOutcomeAccessGateway:
             ledger = checkpoint["ledger_relative_path"]
             event = replay.ledgers[ledger][checkpoint["event_sequence"]]
             kind, payload = event["kind"], _object(event["payload"])
-            checked = parse_utc_datetime(checkpoint["lease_proof"]["checked_at"])
+            checked = parse_utc_datetime(checkpoint["hold_proof"]["checked_at"])
             if last_checked is not None and checked < last_checked:
                 _fail("OUTCOME_EVENT_TIME_INVALID")
             last_checked = checked
@@ -398,11 +374,7 @@ class ResearchOutcomeAccessGateway:
                     or not _same_path(Path(payload["canonical_execution_root"]), self.root)
                     or not _same_path(
                         Path(payload["canonical_git_common_dir"]),
-                        Path(
-                            checkpoint["lease_proof"]["lease_intent"]["workspace_identity"][
-                                "git_common_dir"
-                            ]
-                        ),
+                        Path(checkpoint["hold_proof"]["active_hold"]["git_common_dir"]),
                     )
                     or payload["scope"] != SYNTHETIC_SCOPE
                 ):
@@ -530,7 +502,7 @@ class ResearchOutcomeAccessGateway:
         if current.checkpoints != state.checkpoints:
             _fail("OUTCOME_HISTORY_CHANGED")
         if state.checkpoints and parse_utc_datetime(proof["checked_at"]) < parse_utc_datetime(
-            state.checkpoints[-2]["lease_proof"]["checked_at"]
+            state.checkpoints[-2]["hold_proof"]["checked_at"]
         ):
             _fail("OUTCOME_LOCAL_CLOCK_REGRESSION")
         ledger = authority.ledger_relative_path
@@ -546,7 +518,7 @@ class ResearchOutcomeAccessGateway:
             "ledger_relative_path": ledger,
             "event_sequence": event["sequence"],
             "event_sha256": _sha(canonical_json_bytes(event)),
-            "lease_proof": proof,
+            "hold_proof": proof,
         }
         self._publish(f"{self.checkpoint_path}/{len(checkpoints):012d}.json", prepared)
         self._publish(f"{ledger}/{event['sequence']:012d}.json", event)
@@ -560,9 +532,9 @@ class ResearchOutcomeAccessGateway:
         self._publish(f"{self.checkpoint_path}/{len(checkpoints) + 1:012d}.json", completed)
         return self._replay()
 
-    def bootstrap(self, *, lease: CheckoutLeaseHandle) -> str:
+    def bootstrap(self, *, hold: CaptureHold) -> str:
         """Explicit one-time admission of the authority's exact pre-reviewed genesis."""
-        with self._locked(lease) as (authority, proof):
+        with self._locked(hold) as (authority, proof):
             state = self._replay()
             if authority.ledger_relative_path in state.ledgers or self._inventory(
                 authority.ledger_relative_path
@@ -610,9 +582,9 @@ class ResearchOutcomeAccessGateway:
         envelope: ExperimentEnvelope,
         admission: FreezeAdmission,
         time_evidence_bytes: bytes,
-        lease: CheckoutLeaseHandle,
+        hold: CaptureHold,
     ) -> str:
-        with self._locked(lease) as (authority, proof):
+        with self._locked(hold) as (authority, proof):
             admission.validate_bindings(envelope, authority)
             observed = parse_utc_datetime(proof["checked_at"])
             self._validate_time(envelope, admission, time_evidence_bytes, observed)
@@ -739,10 +711,10 @@ class ResearchOutcomeAccessGateway:
         return repeated[0] if repeated else None
 
     def begin_attempt(
-        self, *, envelope_sha256: str, attempt_id: str, lease: CheckoutLeaseHandle
+        self, *, envelope_sha256: str, attempt_id: str, hold: CaptureHold
     ) -> str:
         _identifier(attempt_id)
-        with self._locked(lease) as (authority, proof):
+        with self._locked(hold) as (authority, proof):
             state = self._replay()
             envelope = self._frozen(state, envelope_sha256, authority)
             if attempt_id in state.attempts:
@@ -767,7 +739,7 @@ class ResearchOutcomeAccessGateway:
         attempt_id: str,
         access_id: str,
         loader: Callable[[], bytes],
-        lease: CheckoutLeaseHandle,
+        hold: CaptureHold,
         scope: str = SYNTHETIC_SCOPE,
     ) -> ReleasedSyntheticOutcome:
         """Reserve before callback; every repeat needs a new immutable access record.
@@ -783,7 +755,7 @@ class ResearchOutcomeAccessGateway:
             _fail("OUTCOME_LOADER_INVALID")
         failed: str | None = None
         content: bytes | None = None
-        with self._locked(lease) as (authority, proof):
+        with self._locked(hold) as (authority, proof):
             state = self._replay()
             attempt = state.attempts.get(attempt_id)
             if attempt is None:
@@ -805,9 +777,9 @@ class ResearchOutcomeAccessGateway:
                     "callback_attestation": CALLBACK_ATTESTATION,
                 },
             )
-            self._proof(lease, authority)
+            self._proof(hold, authority)
             pending = dict(state.accesses[access_id])
-        # A slow or interrupted callback never owns the global S4D arbiter. Process
+        # A slow or interrupted callback never owns the global hold-store lock. Process
         # controls (SystemExit/KeyboardInterrupt/GeneratorExit) propagate unchanged,
         # leaving durable pending. Ordinary failure messages are never persisted.
         try:
@@ -818,7 +790,7 @@ class ResearchOutcomeAccessGateway:
                 content = loaded
         except Exception:
             failed = "LOADER_FAILED"
-        with self._locked(lease) as (terminal_authority, proof):
+        with self._locked(hold) as (terminal_authority, proof):
             if terminal_authority != authority:
                 _fail("OUTCOME_AUTHORITY_CHANGED")
             state = self._replay()
@@ -864,7 +836,7 @@ class ResearchOutcomeAccessGateway:
         return ReleasedSyntheticOutcome(content, receipt)
 
     def replay_metadata(self) -> dict[str, Any]:
-        """Read only: no callback, result bytes, arbiter mutation or active lease needed.
+        """Read only: no callback, result bytes, lock or live hold needed.
 
         A concurrent or incomplete append fails closed; callers may replay metadata
         later. This never retries outcome access or repairs retained history.

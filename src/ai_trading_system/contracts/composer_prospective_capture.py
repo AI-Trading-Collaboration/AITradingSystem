@@ -390,7 +390,7 @@ def validate_composer_clock_prefix(
 
 @dataclass(frozen=True)
 class ComposerCompletionAcknowledgement(_CaptureDTO):
-    schema_version: ClassVar[str] = "composer_prospective_completion_acknowledgement.v1"
+    schema_version: ClassVar[str] = "composer_prospective_completion_acknowledgement.v2"
     request_id: str
     request_sha256: str
     manifest_sha256: str
@@ -398,7 +398,7 @@ class ComposerCompletionAcknowledgement(_CaptureDTO):
     feature_session: date | None
     candidate_commit: str
     execution_identity_sha256: str
-    source_lease_id: str
+    source_hold_id: str
     recorder_event: NamedArtifactBinding
     clock_evidence: HostClockEvidence
     recorder_returns: tuple[RecorderReturnObservation, ...]
@@ -426,8 +426,8 @@ class ComposerCompletionAcknowledgement(_CaptureDTO):
             re.fullmatch(r"[0-9a-f]{40}", self.candidate_commit) is not None, "exact code identity"
         )
         require(
-            re.fullmatch(r"lease-[0-9a-f]{20}", self.source_lease_id) is not None,
-            "original S4D lease",
+            re.fullmatch(r"hold-[0-9a-f]{20}", self.source_hold_id) is not None,
+            "original capture hold",
         )
         validate_composer_clock_prefix(self.clock_evidence, self.recorder_returns, self.operation)
         require(

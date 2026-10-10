@@ -56,6 +56,12 @@ from ai_trading_system.contracts.prospective_event_time_evidence import (
     parse_utc_datetime,
     strict_json_loads,
 )
+from ai_trading_system.data.capture_hold import (
+    CaptureHold,
+    recheck_capture_hold,
+    restore_capture_hold,
+    verify_retained_capture_hold_proof,
+)
 from ai_trading_system.data.immutable_publish import (
     DataPublicationIntegrityError,
     _bound_directory,
@@ -68,9 +74,6 @@ from ai_trading_system.data.named_quality_dispatch import (
     NamedQualityDispatchError,
     NamedQualityDispatchResult,
     dispatch_named_quality_child,
-    recheck_named_capture_lease,
-    restore_named_capture_lease,
-    verify_retained_named_capture_proof,
 )
 from ai_trading_system.data.named_quality_execution import (
     NamedBootstrapAuthority,
@@ -82,7 +85,6 @@ from ai_trading_system.first_layer_composer_v2_current_session_producer import (
 )
 from ai_trading_system.first_layer_operational_forecast import _json_number
 from ai_trading_system.host_clock_evidence import HostClockSampler
-from ai_trading_system.platform.architecture.checkout_guard import CheckoutLeaseHandle
 from ai_trading_system.prospective_event_time_evidence import (
     RecordedTemporalEvidence,
     TimeEvidencePolicy,
@@ -97,8 +99,8 @@ from ai_trading_system.prospective_event_time_evidence import (
 )
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
-_ATTEMPT_SCHEMA = "composer_prospective_attempt.v1"
-_RESULT_SCHEMA = "composer_prospective_capture_result.v1"
+_ATTEMPT_SCHEMA = "composer_prospective_attempt.v2"
+_RESULT_SCHEMA = "composer_prospective_capture_result.v2"
 _CURRENT_POLICY_PATH = "config/research/first_layer_composer_v2_current_session_producer_v1.yaml"
 
 
@@ -278,7 +280,7 @@ def _controls(
 def _check_live(
     request: ComposerCaptureRequest,
     bootstrap: NamedBootstrapAuthority,
-    lease: CheckoutLeaseHandle,
+    hold: CaptureHold,
     review: ComposerOwnerReview,
 ) -> dict[str, Any]:
     require(
@@ -288,16 +290,16 @@ def _check_live(
     )
     source_checked = parse_utc_datetime(bootstrap.assert_execution_unchanged(stage="COMPOSER_LIVE"))
     require(
-        bootstrap.source_lease_id == lease.lease_id and bootstrap.canonical_dq_call_count == 0,
-        "zero-DQ original parent lease",
+        bootstrap.source_hold_id == hold.hold_id and bootstrap.canonical_dq_call_count == 0,
+        "zero-DQ original parent hold",
     )
-    proof = recheck_named_capture_lease(
-        lease,
+    proof = recheck_capture_hold(
+        hold,
         candidate_commit=request.candidate_commit,
         required_paths=request.required_write_paths,
     )
     require(
-        source_checked <= parse_utc_datetime(proof["checked_at"]), "source/lease clock rollback"
+        source_checked <= parse_utc_datetime(proof["checked_at"]), "source/hold clock rollback"
     )
     return {
         **proof,
@@ -327,12 +329,12 @@ def _check_retained_proof(
         parse_utc_datetime(proof["source_checked_at"]) <= parse_utc_datetime(proof["checked_at"]),
         "retained source chronology",
     )
-    verify_retained_named_capture_proof(
+    verify_retained_capture_hold_proof(
         proof,
         execution_root=Path(request.roots.execution_root),
         candidate_commit=request.candidate_commit,
         required_paths=request.required_write_paths,
-        source_lease_id=attempt["source_lease_id"],
+        source_hold_id=attempt["source_hold_id"],
         checked_at=parse_utc_datetime(proof["checked_at"]),
     )
 
@@ -343,11 +345,11 @@ def _clock_scope(
     require(
         deadline_allows(clock.admission_bound_ns, request.manifest.expires_at)
         and deadline_allows(
-            clock.admission_bound_ns, parse_utc_datetime(proof["active_lease"]["expires_at"])
+            clock.admission_bound_ns, parse_utc_datetime(proof["active_hold"]["expires_at"])
         )
         and parse_utc_datetime(proof["checked_at"])
         <= utc_ns_to_datetime_floor(clock.latest_sample.utc_ns),
-        "manifest/lease conservative clock bounds",
+        "manifest/hold conservative clock bounds",
         "COMPOSER_CLOCK_SCOPE_EXPIRED",
     )
 
@@ -355,10 +357,10 @@ def _clock_scope(
 def _reserve(
     request: ComposerCaptureRequest,
     bootstrap: NamedBootstrapAuthority,
-    lease: CheckoutLeaseHandle,
+    hold: CaptureHold,
     review: ComposerOwnerReview,
 ) -> bool:
-    _check_live(request, bootstrap, lease, review)
+    _check_live(request, bootstrap, hold, review)
     root = Path(request.roots.execution_root)
     directory = _directory(root, request.operation_relative_path)
     with exclusive_store_maintenance(store_root=directory):
@@ -385,13 +387,13 @@ def _reserve(
                         require_named_execution_context().stable_identity_sha256
                     ),
                     "parent_pid": os.getpid(),
-                    "source_lease_id": lease.lease_id,
+                    "source_hold_id": hold.hold_id,
                     "started_at": _now().isoformat(),
                     "retry_allowed": False,
                 }
             ),
         )
-    _check_live(request, bootstrap, lease, review)
+    _check_live(request, bootstrap, hold, review)
     return True
 
 
@@ -411,7 +413,7 @@ def _attempt(request: ComposerCaptureRequest) -> dict[str, Any] | None:
         "retry_allowed": False,
     }
     require(
-        set(value) == {*expected, "parent_pid", "source_lease_id", "started_at"},
+        set(value) == {*expected, "parent_pid", "source_hold_id", "started_at"},
         "exact retained attempt fields",
     )
     for key, item in expected.items():
@@ -449,7 +451,7 @@ def _event_members(
     binding: NamedArtifactBinding,
     *,
     policy: TimeEvidencePolicy,
-    source_lease_id: str,
+    source_hold_id: str,
 ) -> tuple[RecordedTemporalEvidence, dict[str, bytes]]:
     store = Path(request.roots.execution_root) / request.timing_relative_path
     local = _local_event(request, binding)
@@ -467,12 +469,10 @@ def _event_members(
     intent_binding = EventBinding.from_dict(witness["intent"])
     require(intent_binding.relative_path == (slot / "intent.json").as_posix(), "same-slot intent")
     intent = _json(bound_content(intent_binding))
-    lease_binding = EventBinding.from_dict(intent["lease_event"])
-    require(
-        lease_binding.relative_path == (slot / "lease_event.json").as_posix(), "same-slot lease"
-    )
-    lease = _object(strict_json_loads(bound_content(lease_binding)))
-    require(_object(lease["lease"]).get("lease_id") == source_lease_id, "original recorder lease")
+    hold_binding = EventBinding.from_dict(intent["hold_record"])
+    require(hold_binding.relative_path == (slot / "hold_record.json").as_posix(), "same-slot hold")
+    hold = _object(strict_json_loads(bound_content(hold_binding)))
+    require(hold.get("hold_id") == source_hold_id, "original recorder hold")
     result = {}
     for row in intent["semantic"]["payload_bindings"]:
         PayloadMember(row["role"], b"")
@@ -675,7 +675,7 @@ def _original_events(
         expected = f"{request.timing_relative_path}/streams/{plan.stream_id}/{slot}/completion.json"
         require(returned.event.relative_path == expected, "exact stream/event slot")
         event, payloads = _event_members(
-            request, returned.event, policy=policy, source_lease_id=ack.source_lease_id
+            request, returned.event, policy=policy, source_hold_id=ack.source_hold_id
         )
         verified = verify_recorder_return_evidence(
             store_root=Path(request.roots.execution_root) / request.timing_relative_path,
@@ -742,7 +742,7 @@ def _verify_dispatch_parent(
 ) -> None:
     """Bind observed counters even for children that cannot grant an input seal."""
     for key, value in {
-        "schema_version": "named_data_quality_parent_dispatch.v1",
+        "schema_version": "named_data_quality_parent_dispatch.v2",
         "profile": "COMPOSER_PROSPECTIVE_PRODUCTION_PARENT",
         "parent_operation": "composer-" + request.operation,
         "candidate_commit": request.candidate_commit,
@@ -817,7 +817,7 @@ def _verify_composer_projection(
             "historical_training_accessed",
         }:
             _same(result.get(key), value, "fixed result: " + key)
-    _same(result["source_lease_id"], attempt["source_lease_id"], "original source lease")
+    _same(result["source_hold_id"], attempt["source_hold_id"], "original source hold")
     _same(result["parent_pid"], attempt["parent_pid"], "original source PID")
     if terminal_required:
         proof = _object(result["terminal_precommit_proof"])
@@ -928,7 +928,7 @@ def _verify_composer_projection(
             "manifest_sha256": request.manifest.canonical_sha256,
             "candidate_commit": request.candidate_commit,
             "execution_identity_sha256": require_named_execution_context().stable_identity_sha256,
-            "source_lease_id": attempt["source_lease_id"],
+            "source_hold_id": attempt["source_hold_id"],
             "operation": request.operation,
             "feature_session": request.feature_session,
             "authorization_state": review.authorization_state,
@@ -1163,23 +1163,23 @@ def bootstrap_worker(
             "idempotent_replay": True,
             "this_invocation_canonical_dq_call_count": 0,
         }
-    lease = restore_named_capture_lease(
+    hold = restore_capture_hold(
         execution_root=root,
-        source_lease_id=bootstrap.source_lease_id,
+        hold_id=bootstrap.source_hold_id,
         candidate_commit=request.candidate_commit,
         required_paths=request.required_write_paths,
     )
-    if not _reserve(request, bootstrap, lease, review):
+    if not _reserve(request, bootstrap, hold, review):
         return bootstrap_worker(payload, operation=operation, bootstrap=bootstrap)
     result = _base_result(request, review)
-    result.update(parent_pid=os.getpid(), source_lease_id=lease.lease_id, unobserved_dispatch=False)
+    result.update(parent_pid=os.getpid(), source_hold_id=hold.hold_id, unobserved_dispatch=False)
     sampler: HostClockSampler | None = None
     returns: list[RecorderReturnObservation] = []
     ack: ComposerCompletionAcknowledgement | None = None
 
     def checkpoint(label: str, event: RecordedTemporalEvidence | None = None) -> HostClockEvidence:
         assert sampler is not None
-        proof = _check_live(request, bootstrap, lease, review)
+        proof = _check_live(request, bootstrap, hold, review)
         bound = None
         if event is not None:
             require(event.return_clock_evidence is not None, "original recorder return required")
@@ -1203,7 +1203,7 @@ def bootstrap_worker(
 
     try:
         review, definitions, plan, policy = _controls(request, bootstrap)
-        pre = _check_live(request, bootstrap, lease, review)
+        pre = _check_live(request, bootstrap, hold, review)
         sampler = HostClockSampler.start(source_root=root)
         require(
             utc_ns_to_datetime_floor(sampler.evidence.anchor.utc_ns)
@@ -1237,15 +1237,15 @@ def bootstrap_worker(
                 COMPOSER_SCOPE_ORDER, request.named_dq_requests, strict=True
             ):
                 # The child writer treats evidence_root as an existing authority.
-                # Create only the declared segment under the live parent lease.
-                _check_live(request, bootstrap, lease, review)
+                # Create only the declared segment under the live parent hold.
+                _check_live(request, bootstrap, hold, review)
                 evidence_root = Path(dq_request.roots.evidence_root)
                 _directory(root, evidence_root.relative_to(root).as_posix())
                 result["unobserved_dispatch"] = True
                 dq = dispatch_named_quality_child(
                     dq_request,
                     bootstrap=bootstrap,
-                    lease=lease,
+                    hold=hold,
                     output_relative_path=request.operation_relative_path
                     + "/dq_dispatch/"
                     + segment,
@@ -1297,7 +1297,7 @@ def bootstrap_worker(
                     ),
                     activation=_local_event(request, activation_ack.recorder_event),
                     policy=policy,
-                    lease_handle=lease,
+                    hold_handle=hold,
                 )
                 checkpoint("inputs_return", input_event)
                 loaded = load_current_session_producer_policy(project_root=root)
@@ -1340,7 +1340,7 @@ def bootstrap_worker(
                     signal=PayloadMember("signal", canonical_json_bytes(signal)),
                     inputs=input_event.binding,
                     policy=policy,
-                    lease_handle=lease,
+                    hold_handle=hold,
                 )
         else:
             checkpoint("pre_recorder")
@@ -1349,7 +1349,7 @@ def bootstrap_worker(
                 plan=plan,
                 definitions=definitions,
                 policy=policy,
-                lease_handle=lease,
+                hold_handle=hold,
             )
         if request.operation != "readiness":
             checkpoint("witness_return", event)
@@ -1388,7 +1388,7 @@ def bootstrap_worker(
                 feature_session=request.feature_session,
                 candidate_commit=request.candidate_commit,
                 execution_identity_sha256=require_named_execution_context().stable_identity_sha256,
-                source_lease_id=lease.lease_id,
+                source_hold_id=hold.hold_id,
                 recorder_event=_event_binding(request, event.binding),
                 clock_evidence=covered,
                 recorder_returns=tuple(returns),
@@ -1472,7 +1472,7 @@ def bootstrap_worker(
         assert sampler is not None
         result["parent_clock_evidence"] = sampler.evidence.to_dict()
         _verify_composer_projection(request, result, bootstrap=bootstrap, terminal_required=False)
-        final_proof = _check_live(request, bootstrap, lease, review)
+        final_proof = _check_live(request, bootstrap, hold, review)
         sampler.recheck_policy()
         terminal_clock = sampler.checkpoint("terminal_precommit")
         _clock_scope(request, terminal_clock, final_proof)
