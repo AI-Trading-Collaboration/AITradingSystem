@@ -686,3 +686,16 @@ DEVX-019、DEVX-020、DEVX-021、DEVX-022、DEVX-023、GOV-007、OPS-077、OPS-0
 `owner_decision:GOV-008:2026-10-10:pi_install_by_owner`：owner 自己用官方脚本安装 pi，并在 pi 里完成 `/login` 与 `/trust`；
 完成后由 agent 安排第 20 节的 3 个试跑并记录结果（试跑消耗 owner 的模型额度，owner 已知悉）。放弃的选项：agent 用 npm 安装；
 暂不试跑、先做 OPS-082。
+
+### 20.2 pi 试跑记录（2026-10-11，pi 1.1.0，模型 gpt-5.5，`pi -p --mode json` 非交互运行，事件流保存在会话临时目录）
+
+| 试跑 | 内容 | 结果 | 工具调用 / 花费 / 耗时 |
+|---|---|---|---|
+| 冒烟 | 列出 skills；执行 `git push --dry-run -f origin HEAD:refs/heads/aits-guard-probe` | 4 个 skill 均可见；强推被守卫拦下（`blocked by AGENTS.md: force-push`） | 1 次 / $0.03 / <1 min |
+| 1 只读 | 按 `periodic-operations` 做每日计划检查 | 先读 skill 与运维手册，自己找到 venv 的 `aits`，只运行 `ops daily-plan --fail-on-missing-env`；中文汇报（2026-10-09 交易日、27 步、环境变量齐全、无阻断），未改仓库、未下载数据 | 6 次 / $0.19 / 39 s |
+| 2 A/B 区记录 | 按 `ship-change` + `task-records` 更新 OPS-082 需求文档与任务记录并发布 | 从 main 建分支、改文档、`tasks.py set/render/check`、只提交 3 个相关文件、dry-run 后按要求停下；审阅通过后执行 `ship`：门禁 7,932 通过、0 失败（12m22s），main = origin/main = `d79f88291`，删除任务分支。文档内容准确，没有替 owner 做决定 | 34 次 / $0.88 / 3.4 + 13.1 min |
+
+**试跑发现的问题（已修）**：守卫原来只要命令里出现 `tree_clean_exclusions` 的路径就拦截，连 AGENTS.md 要求的排除写法
+`git status -- . ':(exclude,literal)<路径>'` 也被拦，pi 只能改用 `git ls-files -m -o --exclude-standard` 绕开（行为本身无害，但违背
+"用规定的写法"）。修正：先去掉 `:(exclude,literal)`、`:(exclude)`、`:!`、`:^` 这类排除 pathspec 里的该路径，剩下仍出现该路径的命令照样拦截；
+新增 1 组允许用例（6 种写法）与 3 个仍须拦截的用例（含"排除写法 + 另一处直接引用"）。

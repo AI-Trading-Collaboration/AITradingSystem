@@ -74,8 +74,29 @@ test("ordinary commands pass", () => {
 
 test("commands touching an excluded path are blocked", () => {
   const root = fakeRepo();
-  const verdict = checkCommand(root, "cat docs/research/private_pack.md");
-  assert.ok(verdict && "block" in verdict);
+  for (const command of [
+    "cat docs/research/private_pack.md",
+    "git add docs/research/private_pack.md",
+    "git diff -- docs/research/private_pack.md",
+    "git status -- . ':(exclude,literal)docs/research/private_pack.md' docs/research/private_pack.md",
+  ]) {
+    const verdict = checkCommand(root, command);
+    assert.ok(verdict && "block" in verdict, `expected block: ${command}`);
+  }
+});
+
+test("exclude pathspecs for an excluded path pass (AGENTS.md requires them)", () => {
+  const root = fakeRepo();
+  for (const command of [
+    "git status --short -- . ':(exclude,literal)docs/research/private_pack.md'",
+    'git diff --stat -- . ":(exclude,literal)docs/research/private_pack.md"',
+    "git diff -- . ':(literal,exclude)docs/research/private_pack.md'",
+    "git status -- . ':(exclude)docs/research/private_pack.md'",
+    "git status -- . ':!docs/research/private_pack.md'",
+    "git add -A -- . ':^docs/research/private_pack.md'",
+  ]) {
+    assert.equal(checkCommand(root, command), undefined, command);
+  }
 });
 
 test("writes: excluded, rendered views and pinned evidence are blocked", () => {

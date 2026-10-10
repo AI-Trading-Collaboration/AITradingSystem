@@ -106,11 +106,22 @@ export function checkCommand(root: string, command: string): Verdict {
     if (pattern.test(command)) return { block: true, reason: `blocked by AGENTS.md: ${label}` };
   }
   for (const excluded of readShipPolicy(root).exclusions) {
-    if (command.includes(excluded)) {
+    // AGENTS.md requires excluding these paths from repository-wide git commands with an exclude
+    // pathspec (":(exclude,literal)<path>", ":(exclude)<path>", ":!<path>", ":^<path>"); that form never
+    // reads the file. Any other mention of the path is blocked.
+    const excludeForm = new RegExp(
+      String.raw`:(?:\((?=[^)]*\bexclude\b)[a-z,]+\)|!|\^)` + escapeRegExp(excluded),
+      "g",
+    );
+    if (command.replace(excludeForm, "").includes(excluded)) {
       return { block: true, reason: `${excluded} is an unrelated dirty file: never open or modify it` };
     }
   }
   return undefined;
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export default function (pi: ExtensionAPI) {
