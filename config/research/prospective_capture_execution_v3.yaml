@@ -1,14 +1,17 @@
-schema_version: prospective_capture_execution_policy.v2
-policy_id: prospective_capture_execution_v2
-policy_version: 2.0.0
+schema_version: prospective_capture_execution_policy.v3
+policy_id: prospective_capture_execution_v3
+policy_version: 3.0.0
 status: REVIEWED_ENGINEERING_CONTRACT_REAL_SCOPE_REVIEW_REQUIRED
 owner: Project Owner / integration-coordinator
-requirement_ref: docs/requirements/TRADING-2564_S3b_Clock_Evidence_Correction_V1.md
+scope_ref: owner_decision:GOV-008:2026-10-10:capture_protocol_v3
+requirement_ref: docs/requirements/GOV-008_Research_First_Governance_Refactor.md
 rationale: >-
   完整前瞻父确认须覆盖 DQ、预览、recorder 原调用返回及 postguard，并保留原始 UTC
   与固定 QPC 外包络。旧微秒表示不证明独立时钟速率，不再用该推论识别 UTC 回拨。
+  v3 用本机 capture hold（精确候选 commit、代码未修改、路径单次持有、有界有效期）替换
+  S4D lease；hold 是本机自证，不是独立权威。
 intended_effect: >-
-  子事件与父链的已验证 bound 单调传递，严格约束 D、首次 F、manifest 与 lease。
+  子事件与父链的已验证 bound 单调传递，严格约束 D、首次 F、manifest 与 hold。
   最终 result 只在全部决定准入的检查完成后一次提交，不保留未绑定的致命写后时钟门禁。
 validation_plan: >-
   固定 provider/anchor/prefix、子 bound/完整源码/DQ/preview 闭包、粗时钟与回拨、
@@ -19,8 +22,8 @@ review_condition: >-
   改变 consumer、收益时钟、执行次数、来源角色、提交语义或 outcome 访问须重新审查。
 profile:
   consumer_family: FIVE_CANDIDATE
-  source_manifest_path: config/data_governance/named_prospective_five_candidate_sources_v1.json
-  source_manifest_sha256: f165e6ec29b197bac6f6a37f2109acbd63761de919c618e9e68f6937c1694320
+  source_manifest_path: config/data_governance/named_prospective_five_candidate_sources_v2.json
+  source_manifest_sha256: 880b42f1a524ac631d90153dbcda448cfcc4266791f3869c8df48b62e53ff438
   parent_operations: [activate, capture]
   child_operation: run
   parent_canonical_dq_calls: 0
@@ -28,7 +31,7 @@ profile:
   original_profiles_extended: false
 recording:
   timing_version: NEXT_XNYS_CLOSE_FORWARD_V1
-  time_policy_path: config/research/prospective_event_time_evidence_v2.yaml
+  time_policy_path: config/research/prospective_event_time_evidence_v3.yaml
   clock_policy_path: config/research/host_clock_evidence_v1.yaml
   clock_policy_sha256: 09d4b5bfa286650f4a6e1066c9a0a9fd93ede5007065ee547795d082be22557a
   first_feature_rule: FIRST_XNYS_SESSION_AFTER_COMPLETE_ACK_ADMISSION_BOUND_MARKET_DATE
@@ -47,9 +50,9 @@ recording:
 commit:
   protocol: SINGLE_IMMUTABLE_PRECHECKED_COMMIT_V2
   terminal_clock: STRICT_EXTENSION_OF_ORIGINAL_PARENT_ANCHOR_AND_ACK_PREFIX
-  terminal_clock_upper_limits: MANIFEST_AND_ORIGINAL_LEASE_EXPIRY
+  terminal_clock_upper_limits: MANIFEST_AND_ORIGINAL_HOLD_EXPIRY
   deadline_scope: FROZEN_ACK_COVERED_THROUGH_BOUND
-  final_guard: ORIGINAL_ACTIVE_SCOPED_SOURCE_LEASE_IMMEDIATELY_BEFORE_COMMIT
+  final_guard: ORIGINAL_LIVE_SCOPED_CAPTURE_HOLD_IMMEDIATELY_BEFORE_COMMIT
   projection_verification: COMPLETE_BEFORE_TERMINAL_PRECOMMIT_OBSERVATION
   fatal_unbound_postcommit_clock_guard_allowed: false
   result_own_predeadline_durability_claimed: false
@@ -63,7 +66,7 @@ authorization:
   historical_one_shot_authorization_reusable: false
   synthetic_evidence_admitted_to_research: false
 compatibility:
-  v1_ack_parser: ORIGINAL_INNER_INTERVAL_SEMANTICS_UNCHANGED
+  v1_v2_ack_and_results: NOT_VERIFIED_BY_PROTOCOL_V3
   old_attempt_or_incomplete_reexecution_allowed: false
   mixed_timing_or_source_profile_admission_allowed: false
 safety:

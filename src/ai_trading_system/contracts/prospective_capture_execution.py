@@ -41,7 +41,7 @@ from ai_trading_system.contracts.prospective_event_time_evidence import (
 )
 
 CAPTURE_POLICY_PATH = "config/research/prospective_capture_execution_v3.yaml"
-CAPTURE_POLICY_SHA256 = "eb462611044c867004178cecb043041c182c9c6528bc6cb614633284df53bb25"
+CAPTURE_POLICY_SHA256 = "9b504b0ede3fbfcd845235c62bcaa78000a4b7c0f2c1b2376d1030723eac93aa"
 # Protocol names and one-attempt-per-key are execution safety invariants, not
 # investment thresholds. See TRADING-2564_S3b_Prospective_Capture_Execution_V1.md.
 CAPTURE_TIMING_VERSION = "NEXT_XNYS_CLOSE_FORWARD_V1"

@@ -222,19 +222,19 @@ FIVE_CANDIDATE_PREVIEW_SOURCE_MANIFEST_SHA256 = (
 # the legacy 57/59 accessors or result DTO. The fixed manifest lists paths only.
 # See TRADING-2564_S3b_Prospective_Capture_Execution_V1.md §3.
 PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH = (
-    "config/data_governance/named_prospective_five_candidate_sources_v1.json"
+    "config/data_governance/named_prospective_five_candidate_sources_v2.json"
 )
 PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256 = (
-    "f165e6ec29b197bac6f6a37f2109acbd63761de919c618e9e68f6937c1694320"
+    "880b42f1a524ac631d90153dbcda448cfcc4266791f3869c8df48b62e53ff438"
 )
 
 # TRADING-2560 current-known Composer is a distinct, reviewed consumer. These
 # protocol identities never widen any old price-only or recording-only accessor.
 COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_PATH = (
-    "config/data_governance/named_composer_prospective_sources_v1.json"
+    "config/data_governance/named_composer_prospective_sources_v2.json"
 )
 COMPOSER_PROSPECTIVE_SOURCE_MANIFEST_SHA256 = (
-    "d69dc73cf496afa7a839f495ccbd9bad4f796dce8ad5f2a79c03133b61eece4b"
+    "74cdb9656e8e5b7e830b5d11397eeaf4fd1499b835a7d4359deeecc959e79cdb"
 )
 COMPOSER_INPUT_POLICY_PATH = "config/research/first_layer_composer_v2_known_snapshot_input_v1.yaml"
 COMPOSER_INPUT_POLICY_SHA256 = "a882644608705b6b1fa2f9d907f780bf485762e3725a9c782f4a2859be7eeb09"

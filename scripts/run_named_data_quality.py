@@ -362,16 +362,16 @@ class NamedBootstrapSession:
         # aliases for capture and keep their original worker behavior.
         if operation in {"activate", "capture"} and (
             self.manifest.relative_path
-            != "config/data_governance/named_prospective_five_candidate_sources_v1.json"
+            != "config/data_governance/named_prospective_five_candidate_sources_v2.json"
             or self.manifest.sha256
-            != "f165e6ec29b197bac6f6a37f2109acbd63761de919c618e9e68f6937c1694320"
+            != "880b42f1a524ac631d90153dbcda448cfcc4266791f3869c8df48b62e53ff438"
         ):
             _fail("NAMED_BOOTSTRAP_PROSPECTIVE_PROFILE_REQUIRED", operation)
         if operation in {"composer-activate", "composer-readiness", "composer-capture"} and (
             self.manifest.relative_path
-            != "config/data_governance/named_composer_prospective_sources_v1.json"
+            != "config/data_governance/named_composer_prospective_sources_v2.json"
             or self.manifest.sha256
-            != "d69dc73cf496afa7a839f495ccbd9bad4f796dce8ad5f2a79c03133b61eece4b"
+            != "74cdb9656e8e5b7e830b5d11397eeaf4fd1499b835a7d4359deeecc959e79cdb"
         ):
             _fail("NAMED_BOOTSTRAP_COMPOSER_PROFILE_REQUIRED", operation)
         self.bootstrap = self.git.artifact(BOOTSTRAP_PATH)
