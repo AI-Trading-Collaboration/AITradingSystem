@@ -348,3 +348,49 @@ owner 可调整）：
 - **A 类与测试**：直接导入 A 类模块的测试有 539 个文件（约 0.89 节点小时）。P4 的做法是先删模块再收集，凡因 `ImportError` 无法导入
   的测试文件随之删除，运行期才导入的由跑套件时的 `ModuleNotFoundError` 暴露；不靠名字猜。
 - **切换流程**：owner 决定路线 B 去掉 diff 审阅检查，也不需要保留原始 diff（第 9 节已改）。
+
+## 14. 解耦（P3 前置）：设计、结果与剩余项（2026-10-10 晚）
+
+目标：保留的代码不再导入将被删除的模块。依据是 `tools/gov008/code_usage.py` 的"边界清单"
+（`docs/requirements/GOV-008_lists/frozen_boundary_worklist.csv`）。起点 18 个保留文件（4.7 万行）仍导入被冻结的模块。
+
+**解耦分三层，难度差别很大：**
+
+| 层 | 内容 | 状态 |
+|---|---|---|
+| L1 路径函数 | 4 个报告与 `feedback` CLI 只用 `canonical_task_register_view_path`（返回任务登记视图的文件路径，但原实现要校验整个规范登记库）。新建中立模块 `core/task_register_paths.py`，5 个调用点改过去；P5 替换任务登记时只改这一处 | 完成，28 个相关测试通过 |
+| L2 功能移除 | 移除只为 Codex 自动化与发布晋升机制服务的功能，以及耦合已退役 ETF 候选链的报告命令 | 完成，见下 |
+| L3 采集协议里的 lease | 预期采集（prospective capture）的 5 个文件把 S4D lease 写进了证据格式 | **待 owner 决定** |
+
+**L2 的具体改动与可见的行为变化：**
+
+- `cli_commands/ops.py` −537 行：移除 7 个命令（`scheduler-checkout-preflight`、`release-candidate`、`release-canary`、
+  `scheduler-observe-codex`、`runtime-git-exclusions-install`、`release-promote`、`deployment-acceptance`）和 `daily-run`
+  外面的 checkout guard 装饰器。**`daily-run` 从此不持有 checkout guard、不做调度器 checkout 预检、不再强制声明执行模式**；
+  `--manual-execution` 选项保留（旧调用不报错）但已无作用。`ops_release_promotion.py`（3.3k 行）与
+  `ops_scheduler_checkout.py`（1.1k 行）因此不再被引用，随冻结代码删除。
+- `cli_commands/reports.py` −3,743 行：移除 62 个命令，均属那条已退役 ETF 候选链的生命周期报告——`next-candidate-*` 及其
+  `validate-`、`candidate-v2-*` 及其 `validate-`、`next-research-cycle-intake`、`return-to-research-reset`、
+  `executable-research-evidence-gap-ledger`、`executable-binding-safety-audit`、各类 `*-weakness-attribution`、
+  `*-blocker-drilldown`、`backfill-partial-root-cause-repair-plan`、`candidate-redesign-hypothesis-v2`；
+  以及开发流程遥测 `ensure-workflow-health` / `validate-workflow-health` 的注册。用 AST 精确定位，ruff 未定义名检查兜底，
+  只清理出一轮悬空辅助函数（3 个）。`aits` 与 `cli_direct` 导入正常。
+- Reader Brief 通过**报告索引**读取这些报告而不导入模块，缺失时显示"artifact missing"，不会报错；对应栏目与
+  `config/report_registry.yaml` 条目、`config/scheduled_tasks.yaml` 中的周任务（`weekly_workflow_health_review`、
+  `weekly_etf_forward_review`、`weekly_dynamic_v3_rescue_*`）、`docs/artifact_catalog.md` 留到 P4/P5 统一修剪，避免现在改一半。
+- 两个保留的 `ops` 测试原来只是把 guard 打桩绕过，打桩行已删除；`test_ops_scheduler_checkout.py` 测的是被移除功能，随冻结代码删除。
+
+**分类器的修正**（均为暴露出的误判）：根命令注册模块 `cli.py`、`cli_direct.py` 归 `KEEP_CLI_ROOT`；`platform.validation_scheduling`
+与 `validation_trigger_provenance` 归开发机制；`high_intensity_risk_cap_*` 的小辅助随家族冻结；`portfolio_decision` 小包整体保留复核；
+测试分诊新增 `DELETE_WITH_FROZEN_CODE`（315 个文件 / 1,437 节点 / 0.26 节点小时，导入了休眠或冻结 CLI 模块的测试）。
+
+**结果**：边界从 18 个文件降到 **5 个**（正好是 L3 的采集文件）。冻结或退役 56.5 万行（42.8%），保留 75.4 万行。
+解耦后 PR 套件 **7,019 通过、2 跳过、0 失败，7m20s**，排除名单 733 个文件。
+
+**L3 的事实**（供 owner 决定）：5 个文件——`composer_prospective_capture`、`prospective_capture_execution`、
+`prospective_event_time_evidence`、`research_outcome_access`、`data/named_quality_dispatch`（共约 6.4k 行，约 350 处 lease 引用）。
+lease 在这里做三件事：(1) 采集前后重新核验运行的是精确的候选 commit；(2) 采集用到的路径被独占持有；(3) 租约保持 ACTIVE
+（没过期没释放）。这三项被写进证据：尝试记录与确认记录含 `source_lease_id`，并校验"记录者的原始 S4D lease 处于 ACTIVE"。
+**现有采集证据全部在 `synthetic/` 下，真实采集为零**（`operations_runbook.md` 同样声明），所以没有真实证据需要保持兼容。
+相关测试：R1 依赖租约的 12 个文件 / 1,063 节点 / 8.17 节点小时，其中的真实链路变体已按 owner 决定排除。
+选项与建议见 owner 决策记录。

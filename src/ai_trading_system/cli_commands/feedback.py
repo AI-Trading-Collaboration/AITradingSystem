@@ -39,6 +39,7 @@ from ai_trading_system.config import (
     load_universe,
     market_regime_by_id,
 )
+from ai_trading_system.core.task_register_paths import task_register_view_path
 from ai_trading_system.data.quality import (
     default_quality_report_path,
     validate_data_cache,
@@ -117,9 +118,6 @@ from ai_trading_system.parameter_replay import (
     latest_backtest_robustness_summary_path,
     write_parameter_replay_report,
     write_parameter_replay_summary,
-)
-from ai_trading_system.platform.architecture.task_registry_canonical import (
-    canonical_task_register_view_path,
 )
 from ai_trading_system.prediction_ledger import (
     DEFAULT_PARAMETER_SHADOW_PREDICTION_LEDGER_PATH,
@@ -2070,7 +2068,7 @@ def feedback_loop_review_command(
         learning_queue_path=learning_queue_path,
         rule_experiment_path=rule_experiment_path,
         task_register_path=task_register_path
-        or canonical_task_register_view_path(PROJECT_ROOT, "active"),
+        or task_register_view_path(PROJECT_ROOT, "active"),
     )
     report_path = output_path or default_feedback_loop_review_report_path(
         PROJECT_ROOT / "outputs" / "reports",

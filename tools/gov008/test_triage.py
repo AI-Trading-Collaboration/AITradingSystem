@@ -78,6 +78,31 @@ ETF_PREFIXES = (f"{PKG}.etf_portfolio", f"{PKG}.interfaces.cli.etf_portfolio")
 ATLAS_PREFIX = f"{PKG}.atlas"
 
 
+def load_frozen_modules(lists_dir: Path) -> set[str]:
+    """Dormant research and frozen CLI/framework modules from the code_usage classification.
+
+    Machinery, ETF and Atlas have their own test verdicts, so they are not repeated here.
+    """
+    path = lists_dir / "code_usage.csv"
+    if not path.exists():
+        return set()
+    with path.open(encoding="utf-8", newline="") as handle:
+        return {
+            row["module"]
+            for row in csv.DictReader(handle)
+            if row["class"] in ("FREEZE_DORMANT", "FREEZE_CLI_FRAMEWORK")
+        }
+
+
+def imports_frozen(imports: set[str], frozen: set[str]) -> bool:
+    """True when any import names a frozen module (or an attribute of one)."""
+    for dotted in imports:
+        parts = dotted.split(".")
+        if any(".".join(parts[:k]) in frozen for k in range(2, len(parts) + 1)):
+            return True
+    return False
+
+
 def group_of(path: str) -> str:
     for group, pattern in GROUP_PATTERNS:
         if re.search(pattern, path):
@@ -123,6 +148,7 @@ def main() -> None:
             row["slow_nodes"] += 1
             row["slow_seconds"] += seconds
 
+    frozen_modules = load_frozen_modules(out)
     tracked = [p for p in git_tracked(repo, "tests") if p.endswith(".py")]
     support = {
         Path(p).stem: repo / p
@@ -159,6 +185,8 @@ def main() -> None:
             cls, verdict = "ETF", "DELETE_WITH_ETF_RETIREMENT"
         elif atlas:
             cls, verdict = "ATLAS", "DELETE_WITH_ATLAS_RETIREMENT"
+        elif imports_frozen(imports, frozen_modules):
+            cls, verdict = "FROZEN_CODE", "DELETE_WITH_FROZEN_CODE"
         elif group == "R1":
             if machinery_import or token_hit:
                 cls, verdict = "R1_LEASE_DEPENDENT", "REVIEW_DELETE_LEASE_VARIANTS"
@@ -196,6 +224,7 @@ def main() -> None:
         "DELETE_WITH_MECHANISM",
         "DELETE_WITH_ETF_RETIREMENT",
         "DELETE_WITH_ATLAS_RETIREMENT",
+        "DELETE_WITH_FROZEN_CODE",
         "REVIEW_DELETE_LEASE_VARIANTS",
     )
     exclude_files = sorted(r["test_file"] for r in rows if r["verdict"] in exclude_verdicts)

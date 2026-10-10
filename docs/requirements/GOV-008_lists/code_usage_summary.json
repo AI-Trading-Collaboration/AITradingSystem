@@ -1,7 +1,7 @@
 {
- "source_commit": "67c011ff833973fa90e8a9a890be3f3296572660",
+ "source_commit": "1e4f0d88f3ab0912ae6840b62ea969278c44728e",
  "total_modules": 1243,
- "total_loc": 1322686,
+ "total_loc": 1318399,
  "by_class": {
   "ATLAS_RETIRE": {
    "modules": 28,
@@ -16,12 +16,12 @@
    "loc": 303263
   },
   "FREEZE_CLI_FRAMEWORK": {
-   "modules": 26,
-   "loc": 25505
+   "modules": 27,
+   "loc": 25922
   },
   "FREEZE_DORMANT": {
-   "modules": 92,
-   "loc": 129485
+   "modules": 102,
+   "loc": 156287
   },
   "KEEP_BUILD_FEATURES_CLI": {
    "modules": 1,
@@ -40,8 +40,8 @@
    "loc": 33678
   },
   "LIVE_DAILY": {
-   "modules": 219,
-   "loc": 308161
+   "modules": 208,
+   "loc": 276319
   },
   "LIVE_FIVE_LINES": {
    "modules": 475,
@@ -49,11 +49,11 @@
   },
   "LIVE_OTHER_SCHEDULE": {
    "modules": 18,
-   "loc": 20578
+   "loc": 20576
   },
   "REVIEW_SMALL_UNREACHABLE": {
    "modules": 18,
-   "loc": 2802
+   "loc": 3140
   }
  },
  "scheduled_seed_modules": {
@@ -61,17 +61,18 @@
   "biweekly": 6,
   "daily_trading_day": 17,
   "monthly": 4,
-  "weekly": 9
+  "weekly": 8
  },
  "unresolved_scheduled_commands": [
+  "aits reports ensure-workflow-health --as-of {as_of}",
   "manual review docs/artifact_catalog.md against latest report outputs"
  ],
  "five_line_seed_modules": 252,
- "machinery_worklist_files": 16,
- "machinery_worklist_loc": 35093,
+ "machinery_worklist_files": 10,
+ "machinery_worklist_loc": 13305,
  "etf_worklist_files": 9,
- "frozen_boundary_files": 18,
- "frozen_boundary_loc": 46600,
+ "frozen_boundary_files": 5,
+ "frozen_boundary_loc": 6453,
  "registration_edit_files": [
   "ai_trading_system.cli",
   "ai_trading_system.cli_direct"

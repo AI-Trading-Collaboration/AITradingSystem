@@ -9,9 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
-from ai_trading_system.platform.architecture.task_registry_canonical import (
-    canonical_task_register_view_path,
-)
+from ai_trading_system.core.task_register_paths import task_register_view_path
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
@@ -97,16 +95,13 @@ def build_task_register_consistency_payload(
     report_registry_path: Path = DEFAULT_REPORT_REGISTRY_PATH,
     artifact_catalog_path: Path | None = None,
 ) -> dict[str, Any]:
-    unmanaged_fixture = project_root.resolve() != PROJECT_ROOT.resolve()
-    task_path = task_register_path or canonical_task_register_view_path(
+    task_path = task_register_path or task_register_view_path(
         project_root,
         "active",
-        allow_unmanaged_fixture=unmanaged_fixture,
     )
-    completed_path = completed_register_path or canonical_task_register_view_path(
+    completed_path = completed_register_path or task_register_view_path(
         project_root,
         "completed",
-        allow_unmanaged_fixture=unmanaged_fixture,
     )
     catalog_path = artifact_catalog_path or project_root / "docs" / "artifact_catalog.md"
 

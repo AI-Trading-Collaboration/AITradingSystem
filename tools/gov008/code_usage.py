@@ -82,7 +82,12 @@ def owner_class(name: str, lines: int) -> str:
         return "KEEP_DATA_FOUNDATION"
     if short.startswith(("cli_commands.", "research_framework")):
         return "KEEP_BUILD_FEATURES_CLI" if name in KEEP_CLI_EXCEPTIONS else "FREEZE_CLI_FRAMEWORK"
-    if lines < SMALL_UNREACHABLE_LOC:
+    if short.startswith("high_intensity_risk_cap"):
+        # One dormant family (31 modules, all last changed on 2026-07-04/05): its small shared
+        # helpers freeze with it instead of being kept by the size rule below.
+        return "FREEZE_DORMANT"
+    if short.startswith("portfolio_decision") or lines < SMALL_UNREACHABLE_LOC:
+        # portfolio_decision is a tiny package whose __init__ imports its own core: keep together.
         return "REVIEW_SMALL_UNREACHABLE"
     return "FREEZE_DORMANT"
 

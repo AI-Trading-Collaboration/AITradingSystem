@@ -7,9 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
-from ai_trading_system.platform.architecture.task_registry_canonical import (
-    canonical_task_register_view_path,
-)
+from ai_trading_system.core.task_register_paths import task_register_view_path
 from ai_trading_system.reports.research_monthly_review_pack import (
     PRODUCTION_EFFECT,
     _int,
@@ -109,11 +107,11 @@ def build_research_roadmap_dashboard_payload(
         report_index_payload = _read_json_mapping(source_path)
         report_index_path = source_path
 
-    active_path = task_register_path or canonical_task_register_view_path(
+    active_path = task_register_path or task_register_view_path(
         project_root,
         "active",
     )
-    completed_path = completed_register_path or canonical_task_register_view_path(
+    completed_path = completed_register_path or task_register_view_path(
         project_root,
         "completed",
     )

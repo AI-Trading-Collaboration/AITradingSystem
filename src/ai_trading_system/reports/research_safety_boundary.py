@@ -7,9 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
-from ai_trading_system.platform.architecture.task_registry_canonical import (
-    canonical_task_register_view_path,
-)
+from ai_trading_system.core.task_register_paths import task_register_view_path
 
 SCHEMA_VERSION = 1
 REPORT_TYPE = "research_safety_boundary_audit"
@@ -254,12 +252,12 @@ def build_research_safety_boundary_payload(
         report_index_payload = _read_json_mapping(source_path)
         report_index_path = source_path
 
-    task_register_path = task_register_path or canonical_task_register_view_path(
+    task_register_path = task_register_path or task_register_view_path(
         project_root,
         "active",
     )
     completed_task_register_path = completed_task_register_path or (
-        canonical_task_register_view_path(project_root, "completed")
+        task_register_view_path(project_root, "completed")
     )
     task_checks = [
         *_scan_task_register(task_register_path, "active_task_register"),
