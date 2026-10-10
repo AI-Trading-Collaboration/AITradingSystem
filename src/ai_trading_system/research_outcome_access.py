@@ -38,11 +38,11 @@ from ai_trading_system.data.capture_hold import (
     HOLD_ROOT_RELATIVE,
     CaptureHold,
     git_common_dir,
+    hold_store_lock,
     recheck_capture_hold,
     verify_retained_capture_hold_proof,
 )
 from ai_trading_system.data.immutable_publish import (
-    exclusive_store_maintenance,
     read_contained_artifact_bytes,
     write_contained_artifact_bytes,
 )
@@ -237,7 +237,7 @@ class ResearchOutcomeAccessGateway:
         authority = self._authority()
         # Validate the live hold BEFORE taking the store lock or writing anything.
         self._proof(hold, authority)
-        with exclusive_store_maintenance(store_root=self.root / HOLD_ROOT_RELATIVE):
+        with hold_store_lock(self.root):
             if self._authority() != authority:
                 _fail("OUTCOME_AUTHORITY_CHANGED")
             yield authority, self._proof(hold, authority)

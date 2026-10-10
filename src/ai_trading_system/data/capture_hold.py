@@ -26,6 +26,8 @@ import os
 import re
 import secrets
 import socket
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path, PurePosixPath
@@ -40,8 +42,10 @@ from ai_trading_system.contracts.prospective_event_time_evidence import (
 )
 from ai_trading_system.core.provenance import UNAVAILABLE, git_output, git_provenance
 from ai_trading_system.data.immutable_publish import (
+    DEFAULT_LOCK_POLL_SECONDS,
+    DEFAULT_LOCK_TIMEOUT_SECONDS,
     DataPublicationIntegrityError,
-    exclusive_store_maintenance,
+    _file_lock,
     read_contained_artifact_bytes,
     write_contained_artifact_bytes,
 )
@@ -136,9 +140,31 @@ def _root(execution_root: Path) -> Path:
 def _store(root: Path, *, create: bool) -> Path:
     store = root / HOLD_ROOT_RELATIVE
     if create:
-        (store / "records").mkdir(parents=True, exist_ok=True)
-        (store / "released").mkdir(parents=True, exist_ok=True)
+        for name in ("records", "released", "locks"):
+            (store / name).mkdir(parents=True, exist_ok=True)
     return store
+
+
+@contextmanager
+def _store_lock(store: Path) -> Iterator[None]:
+    # An OS lock that binds no root authority, so a holder may write elsewhere in the checkout.
+    with _file_lock(
+        store / "locks" / "hold_store.lock",
+        root=store,
+        timeout_seconds=DEFAULT_LOCK_TIMEOUT_SECONDS,
+        poll_seconds=DEFAULT_LOCK_POLL_SECONDS,
+    ):
+        yield
+
+
+@contextmanager
+def hold_store_lock(execution_root: Path) -> Iterator[None]:
+    """Serialize with every hold acquisition/release; callers use it for their own replay/append.
+
+    A process must not acquire or release a hold while it holds this lock.
+    """
+    with _store_lock(_store(_root(execution_root), create=True)):
+        yield
 
 
 def _read(store: Path, relative: str) -> bytes | None:
@@ -270,7 +296,7 @@ def acquire_capture_hold(
         _fail("CAPTURE_HOLD_TTL_INVALID", f"1..{MAX_HOLD_SECONDS} seconds required")
     _identity(root, candidate_commit)
     store = _store(root, create=True)
-    with exclusive_store_maintenance(store_root=store):
+    with _store_lock(store):
         now = _now()
         for other in _live_records(store, now):
             if _overlap(required, tuple(other["required_paths"])):
@@ -379,7 +405,7 @@ def release_capture_hold(hold: CaptureHold) -> None:
     if type(hold) is not CaptureHold or hold.released:
         _fail("CAPTURE_HOLD_REQUIRED", "live typed capture hold required")
     store = _store(hold.root, create=False)
-    with exclusive_store_maintenance(store_root=store):
+    with _store_lock(store):
         if not _released(store, hold.hold_id):
             write_contained_artifact_bytes(
                 root=store,
