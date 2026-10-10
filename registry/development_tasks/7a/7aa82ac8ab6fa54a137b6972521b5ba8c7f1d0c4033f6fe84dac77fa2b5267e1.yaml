@@ -16,11 +16,13 @@ task_record:
   next_owner: TRADING-2564 integration-coordinator：单一已准入candidate恢复S2b并最终验证；DEVX014保留证据与退出责任
   requirement_refs:
   - docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md
+  - docs/requirements/GOV-008_Research_First_Governance_Refactor.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: DEVX014已发布64e1d3da3：Full10685 PASS/0 FAIL/5
-    SKIP；旧S2b迁移1/1、保全1、独立校验1均PASS。完整66路径snapshot与30overlap正式plan已review/validate，clean
+  unstructured_legacy_blocker_or_next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见
+    docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：DEVX014已发布64e1d3da3：Full10685
+    PASS/0 FAIL/5 SKIP；旧S2b迁移1/1、保全1、独立校验1均PASS。完整66路径snapshot与30overlap正式plan已review/validate，clean
     C INTEGRATION PASS；接续S2b，不重复既有动作。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
@@ -433,14 +435,44 @@ events:
   - change:devx-014-s2b-coordinator-handoff-20260906-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-d476617d393878821c5d41eca5de0d33
+- schema_version: task_event.v1
+  task_id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-10T00:27:34Z'
+  actor: integration-coordinator
+  change_id: gov-008-register-task-20261010-v1
+  lane_id: null
+  base_commit: 2d29e4e35ec2228bc04e68d934a8044425bcf7f7
+  previous_state_event_id: task-event-d476617d393878821c5d41eca5de0d33
+  from_status: IN_PROGRESS
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: TRADING-2564 integration-coordinator：单一已准入candidate恢复S2b并最终验证；DEVX014保留证据与退出责任
+    blocker_or_next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见
+      docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：DEVX014已发布64e1d3da3：Full10685
+      PASS/0 FAIL/5 SKIP；旧S2b迁移1/1、保全1、独立校验1均PASS。完整66路径snapshot与30overlap正式plan已review/validate，clean
+      C INTEGRATION PASS；接续S2b，不重复既有动作。
+    acceptance_criteria: 按已审plan保留全部历史、OPS079/DEVX014和S2b来源；同root/branch/HEAD C串行task-source交接后由TRADING2564形成一个source/final候选，绑定其真实failed
+      Full，正式验证发布；旧两root未审unique内容不清理；真实研究/DQ/数据/交易全0。
+    notes: docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md；S3保全与clean
+      plan admission完成，S4在TRADING2564继续，非S2b技术PASS。复用D:/Work/AITradingSystem_devx014_source_preservation为唯一S2b
+      coordinator，branch codex/trading-2564-s2b-preserved-integration；exit为S2b发布、unique证据规范保留/hash确认和无运行依赖后审计清理；原source
+      D:/Work/AITradingSystem_trading2559_integration与18项dirty原样保留。plan integration-revalidation-f8a6fd3c9c5d05f5a27e；source-only交接事务，不派发Full或重复迁移。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-008-register-task-20261010-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a7f590c8e06d27cc3a2169cfa6fdf1de
 projection:
   legacy_first_eight_cells:
   - DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
   - Architecture / workflow governance
   - P0
-  - IN_PROGRESS
+  - DEFERRED
   - TRADING-2564 integration-coordinator：单一已准入candidate恢复S2b并最终验证；DEVX014保留证据与退出责任
-  - DEVX014已发布64e1d3da3：Full10685 PASS/0 FAIL/5 SKIP；旧S2b迁移1/1、保全1、独立校验1均PASS。完整66路径snapshot与30overlap正式plan已review/validate，clean
+  - 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md
+    第 6 节】原下一步：DEVX014已发布64e1d3da3：Full10685 PASS/0 FAIL/5 SKIP；旧S2b迁移1/1、保全1、独立校验1均PASS。完整66路径snapshot与30overlap正式plan已review/validate，clean
     C INTEGRATION PASS；接续S2b，不重复既有动作。
   - 按已审plan保留全部历史、OPS079/DEVX014和S2b来源；同root/branch/HEAD C串行task-source交接后由TRADING2564形成一个source/final候选，绑定其真实failed
     Full，正式验证发布；旧两root未审unique内容不清理；真实研究/DQ/数据/交易全0。
@@ -450,8 +482,9 @@ projection:
     D:/Work/AITradingSystem_trading2559_integration与18项dirty原样保留。plan integration-revalidation-f8a6fd3c9c5d05f5a27e；source-only交接事务，不派发Full或重复迁移。
   docs_links:
   - docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md
+  - docs/requirements/GOV-008_Research_First_Governance_Refactor.md
   terminal: false
-  canonical_row_sha256: 5e3018b9c9806e9e1fa7c2d1666d0d4092246c9b4d6b8e586a7665c247655af0
-last_event_id: task-event-d476617d393878821c5d41eca5de0d33
+  canonical_row_sha256: 64d6aa359bc873b325d089341e8e7f9b01b3972f628db99915e25378855d2220
+last_event_id: task-event-a7f590c8e06d27cc3a2169cfa6fdf1de
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 5851990c4d12da8052789a13c038dee2280af7b2e2b1b679aa3500be28aaefab
+fragment_checksum: c788029719f6dfa8df4fb8a7020ad15f1474017ca52efddd67228f18afc5bca4

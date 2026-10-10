@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: ARCH-004
   task_id_sha256: 5e3a6d52c667e346f371e37ec45628400d8be79fad5a5c3a6099df3770891cef
 task_record:
+  schema_version: task_record.v1
   task_id: ARCH-004
   title: null
   domain: Architecture / post-freeze architecture v2 after TRADING-2438N
@@ -16,19 +17,21 @@ task_record:
   requirement_refs:
   - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
   - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+  - docs/requirements/GOV-008_Research_First_Governance_Refactor.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`
+  unstructured_legacy_blocker_or_next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见
+    docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：详见
+    `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`
     与 Wave15 supporting requirement。G2.4、bootstrap handoff、ARCH-005 S0～S4D、G2.5、Wave12～15均已formal
     PASS；Wave15只含D0B3+G4B `daily_score_daily`与bounded G3 close/readiness。
   acceptance_criteria:
-  - criterion_id: legacy_markdown
+  - criterion_id: legacy_compatibility
     text: 每波exact carrier、consumer fail-closed、bounded migration与formal/final Full均通过；下一slice仍须独立owner授权、任务登记与C/D
       readiness，不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 9c2df21ccb7ae2187e4c1f9cb4d7b4dc217a45b4735c3114003c03c143582764
   cell_count: 8
@@ -78,14 +81,43 @@ events:
   evidence_refs:
   - sha256:9c2df21ccb7ae2187e4c1f9cb4d7b4dc217a45b4735c3114003c03c143582764
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: ARCH-004
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-10T00:23:06Z'
+  actor: integration-coordinator
+  change_id: gov-008-register-task-20261010-v1
+  lane_id: null
+  base_commit: 2d29e4e35ec2228bc04e68d934a8044425bcf7f7
+  previous_state_event_id: legacy-import-9c2df21ccb7ae2187e4c1f9c
+  from_status: IN_PROGRESS
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: project owner + architecture coordinator：选择下一独立slice；G4C/其他consumer、G5均未自动解锁
+    blocker_or_next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见
+      docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：详见
+      `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`
+      与 Wave15 supporting requirement。G2.4、bootstrap handoff、ARCH-005 S0～S4D、G2.5、Wave12～15均已formal
+      PASS；Wave15只含D0B3+G4B `daily_score_daily`与bounded G3 close/readiness。
+    acceptance_criteria: 每波exact carrier、consumer fail-closed、bounded migration与formal/final
+      Full均通过；下一slice仍须独立owner授权、任务登记与C/D readiness，不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。
+    notes: 2026-07-25：Wave15 failure-fix Full=`7180 passed / 3 skipped / 643 warnings`，current
+      phase=`WAVE15_S3_FORMAL_EXIT_COMPLETE`。ARCH-004 parent继续`IN_PROGRESS`，等待owner在G4C/下一consumer、G5或其他已登记slice间选择；真实periodic/provider、其他consumer、S5、production和broker仍未开放。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-008-register-task-20261010-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-684797ce214407e91bec904b72756261
 projection:
   legacy_first_eight_cells:
   - ARCH-004
   - Architecture / post-freeze architecture v2 after TRADING-2438N
   - P0
-  - IN_PROGRESS
+  - DEFERRED
   - project owner + architecture coordinator：选择下一独立slice；G4C/其他consumer、G5均未自动解锁
-  - 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`
+  - 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md
+    第 6 节】原下一步：详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`
     与 Wave15 supporting requirement。G2.4、bootstrap handoff、ARCH-005 S0～S4D、G2.5、Wave12～15均已formal
     PASS；Wave15只含D0B3+G4B `daily_score_daily`与bounded G3 close/readiness。
   - 每波exact carrier、consumer fail-closed、bounded migration与formal/final Full均通过；下一slice仍须独立owner授权、任务登记与C/D
@@ -95,8 +127,9 @@ projection:
   docs_links:
   - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
   - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+  - docs/requirements/GOV-008_Research_First_Governance_Refactor.md
   terminal: false
-  canonical_row_sha256: 9c2df21ccb7ae2187e4c1f9cb4d7b4dc217a45b4735c3114003c03c143582764
-last_event_id: legacy-import-9c2df21ccb7ae2187e4c1f9c
+  canonical_row_sha256: 7e4bd9ea51fd4484eeebe3cb76be8f02ee09aa447cc28d13b107c8bd0e5633ae
+last_event_id: task-event-684797ce214407e91bec904b72756261
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 2d4b9eb1569ecb36c3f47fecfdb52ffb82f96e5280288dda8df57ce8e094a163
+fragment_checksum: 5a2ebe04436b85809f1f4d93aae820b9ac89ebe8efcf11a388755d1a876cad30

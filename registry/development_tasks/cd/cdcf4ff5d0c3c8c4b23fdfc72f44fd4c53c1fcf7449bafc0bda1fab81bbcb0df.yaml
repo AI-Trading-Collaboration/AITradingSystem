@@ -15,12 +15,15 @@ task_record:
   accountable_owner: null
   next_owner: Codex：完成执行器、正式门禁、main 发布、release promotion 和四项 runtime 恢复；operations
     owner：复核 non-PIT 结果并维持 strict 缺口。
-  requirement_refs: []
+  requirement_refs:
+  - docs/requirements/GOV-008_Research_First_Governance_Refactor.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 已解除 lease blocker；当前推进 reviewed contract、producer/validator、formal
-    validation 与 release。八项 strict 缺口仍不可恢复。
+  unstructured_legacy_blocker_or_next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见
+    docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：已解除
+    lease blocker；当前推进 reviewed contract、producer/validator、formal validation 与 release。八项
+    strict 缺口仍不可恢复。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 隔离 bundle content-derived PASS；canonical gap/state/ledger/queue byte-identical；无
@@ -59,23 +62,54 @@ events:
   - change:OPS-079-HISTORICAL-GAP-RECOVERY-REGISTER
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-76d71ebcd078570a3afce4f8b5c32254
+- schema_version: task_event.v1
+  task_id: OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-10T00:38:31Z'
+  actor: integration-coordinator
+  change_id: gov-008-register-task-20261010-v1
+  lane_id: null
+  base_commit: 2d29e4e35ec2228bc04e68d934a8044425bcf7f7
+  previous_state_event_id: task-event-76d71ebcd078570a3afce4f8b5c32254
+  from_status: IN_PROGRESS
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: Codex：完成执行器、正式门禁、main 发布、release promotion 和四项 runtime 恢复；operations
+      owner：复核 non-PIT 结果并维持 strict 缺口。
+    blocker_or_next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见
+      docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：已解除
+      lease blocker；当前推进 reviewed contract、producer/validator、formal validation 与
+      release。八项 strict 缺口仍不可恢复。
+    acceptance_criteria: 隔离 bundle content-derived PASS；canonical gap/state/ledger/queue
+      byte-identical；无 provider/OpenAI、strict PIT、consumer cutover、weights 或 broker/trading
+      action。
+    notes: 2026-09-05：从 exact main 293813e5 建立独立 worktree；取得 publication transaction
+      v1，开始最小 serial contract wave。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-008-register-task-20261010-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8fe284d512db0c3d17c85cf74a800f44
 projection:
   legacy_first_eight_cells:
   - OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR
   - Operations / historical daily gap recovery executor
   - P0
-  - IN_PROGRESS
+  - DEFERRED
   - Codex：完成执行器、正式门禁、main 发布、release promotion 和四项 runtime 恢复；operations owner：复核
     non-PIT 结果并维持 strict 缺口。
-  - 已解除 lease blocker；当前推进 reviewed contract、producer/validator、formal validation
-    与 release。八项 strict 缺口仍不可恢复。
+  - 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md
+    第 6 节】原下一步：已解除 lease blocker；当前推进 reviewed contract、producer/validator、formal
+    validation 与 release。八项 strict 缺口仍不可恢复。
   - 隔离 bundle content-derived PASS；canonical gap/state/ledger/queue byte-identical；无
     provider/OpenAI、strict PIT、consumer cutover、weights 或 broker/trading action。
   - 2026-09-05：从 exact main 293813e5 建立独立 worktree；取得 publication transaction v1，开始最小
     serial contract wave。
-  docs_links: []
+  docs_links:
+  - docs/requirements/GOV-008_Research_First_Governance_Refactor.md
   terminal: false
-  canonical_row_sha256: 24bb18a434b23164118629423e926ae8f0ff431286ab84fcbfae72152ada9180
-last_event_id: task-event-76d71ebcd078570a3afce4f8b5c32254
+  canonical_row_sha256: 4becf263ae31f72fb94b53b6ea537535df966100fdee3979d707a8f27cb6f98b
+last_event_id: task-event-8fe284d512db0c3d17c85cf74a800f44
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 6cd6147323aa9952056f25220312b92c712f0617345469f2254c03c11002dcbf
+fragment_checksum: ab546c4a76e180c62d9648b7ccb704f586aa9f1da70df823f3299240af75d7e5

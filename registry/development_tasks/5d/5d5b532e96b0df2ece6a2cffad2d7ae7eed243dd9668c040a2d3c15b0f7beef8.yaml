@@ -15,12 +15,15 @@ task_record:
   accountable_owner: null
   next_owner: Codex operations coordinator
   requirement_refs:
+  - docs/requirements/GOV-008_Research_First_Governance_Refactor.md
   - docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 完整 Full 12762 PASS/4 FAIL；修正目录固定身份及 OPS-081
-    历史接续检查，完成新候选正式验证、发布与零业务预检；下一合法 ordinary daily 另作运营验收。详见 docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md
+  unstructured_legacy_blocker_or_next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见
+    docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：完整
+    Full 12762 PASS/4 FAIL；修正目录固定身份及 OPS-081 历史接续检查，完成新候选正式验证、发布与零业务预检；下一合法 ordinary
+    daily 另作运营验收。详见 docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 偏好变更保持许可；业务合同严格验证；未知字段/并发/中断 fail closed；回归验证与受治理发布
@@ -101,22 +104,50 @@ events:
   - change:ops081-full-regression-fix
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-b7de40e20a92823afb00e95ea254a7b1
+- schema_version: task_event.v1
+  task_id: OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-10T00:39:41Z'
+  actor: integration-coordinator
+  change_id: gov-008-register-task-20261010-v1
+  lane_id: null
+  base_commit: 2d29e4e35ec2228bc04e68d934a8044425bcf7f7
+  previous_state_event_id: task-event-b7de40e20a92823afb00e95ea254a7b1
+  from_status: VALIDATING
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: Codex operations coordinator
+    blocker_or_next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见
+      docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：完整
+      Full 12762 PASS/4 FAIL；修正目录固定身份及 OPS-081 历史接续检查，完成新候选正式验证、发布与零业务预检；下一合法 ordinary
+      daily 另作运营验收。详见 docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md
+    acceptance_criteria: 偏好变更保持许可；业务合同严格验证；未知字段/并发/中断 fail closed；回归验证与受治理发布
+    notes: v3 业务投影解耦偏好；初步 88 tests PASS；actual Terra/medium + reviewed efficiency
+      只读观察 PASS；未发布 runtime。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-008-register-task-20261010-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3697675c96af4cc4ff895d31125b7b92
 projection:
   legacy_first_eight_cells:
   - OPS-081_SCHEDULER_BUSINESS_CONTRACT_DECOUPLING
   - Operations / scheduler business contract
   - P0
-  - VALIDATING
+  - DEFERRED
   - Codex operations coordinator
-  - 完整 Full 12762 PASS/4 FAIL；修正目录固定身份及 OPS-081 历史接续检查，完成新候选正式验证、发布与零业务预检；下一合法 ordinary
-    daily 另作运营验收。详见 docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md
+  - 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md
+    第 6 节】原下一步：完整 Full 12762 PASS/4 FAIL；修正目录固定身份及 OPS-081 历史接续检查，完成新候选正式验证、发布与零业务预检；下一合法
+    ordinary daily 另作运营验收。详见 docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md
   - 偏好变更保持许可；业务合同严格验证；未知字段/并发/中断 fail closed；回归验证与受治理发布
   - v3 业务投影解耦偏好；初步 88 tests PASS；actual Terra/medium + reviewed efficiency 只读观察 PASS；未发布
     runtime。
   docs_links:
+  - docs/requirements/GOV-008_Research_First_Governance_Refactor.md
   - docs/requirements/OPS-081_Scheduler_Business_Contract_Decoupling.md
   terminal: false
-  canonical_row_sha256: f7f8e6135b7964492b79daf0127ce3d2a192ff4e994b337c4f5981ef60e7abe8
-last_event_id: task-event-b7de40e20a92823afb00e95ea254a7b1
+  canonical_row_sha256: 53565fc2edddb87c51c38b5e8615797a922557faf40354431f0a8cfe66f313fd
+last_event_id: task-event-3697675c96af4cc4ff895d31125b7b92
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 3e7c6ec817c916db950ecdeb2a44c915a2d27cf2020ab33596d345794a703832
+fragment_checksum: a6d7f334855a24a8ac9cabf57b8636e6150ea4a7f8ad32b937d46ba5f322938b

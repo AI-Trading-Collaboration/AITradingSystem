@@ -14,17 +14,19 @@ task_record:
   priority: P0
   accountable_owner: null
   next_owner: Claude Code coordinator
-  requirement_refs: []
+  requirement_refs:
+  - docs/requirements/GOV-008_Research_First_Governance_Refactor.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 第十二次发布完成（DEVX-022 M6）：main = origin/main
-    = 2d29e4e35（普通推送由 Claude 在 owner「以后默认都是你推送」授权下执行）。整条链 3:38（上一条 4:23），Full 2:13（上一条
-    2:57），0 失败，`slow_steps` 为空。继续路线：DEVX-016 C3c（owner 先评审 compat 账本策略与采纳方式）-> C3d（P4-4）->
-    C4（S4）-> DEVX-017（C4 与 DEVX-017 的 AGENTS.md 发布方式待 owner 决定）-> OPS-082（须 owner
-    先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5。owner 另需：C3c 的策略评审与采纳方式；C4
-    / DEVX-017 改 AGENTS.md 的发布方式；DEVX-021 第 11 节 P2/P3 的方案；执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1
-    清理 HKCU 测试根；长跑期间把「关闭显示器」设为「从不」。
+  unstructured_legacy_blocker_or_next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见
+    docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：第十二次发布完成（DEVX-022
+    M6）：main = origin/main = 2d29e4e35（普通推送由 Claude 在 owner「以后默认都是你推送」授权下执行）。整条链 3:38（上一条
+    4:23），Full 2:13（上一条 2:57），0 失败，`slow_steps` 为空。继续路线：DEVX-016 C3c（owner 先评审 compat
+    账本策略与采纳方式）-> C3d（P4-4）-> C4（S4）-> DEVX-017（C4 与 DEVX-017 的 AGENTS.md 发布方式待 owner
+    决定）-> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段
+    5。owner 另需：C3c 的策略评审与采纳方式；C4 / DEVX-017 改 AGENTS.md 的发布方式；DEVX-021 第 11 节 P2/P3
+    的方案；执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 HKCU 测试根；长跑期间把「关闭显示器」设为「从不」。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
@@ -1110,25 +1112,58 @@ events:
   - change:gov-007-m6rows-task-20261010-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-06b0eb1792928eaf5e4c1e473231e801
+- schema_version: task_event.v1
+  task_id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+  event_type: TASK_UPDATED
+  occurred_at: '2026-10-10T00:32:43Z'
+  actor: integration-coordinator
+  change_id: gov-008-register-task-20261010-v1
+  lane_id: null
+  base_commit: 2d29e4e35ec2228bc04e68d934a8044425bcf7f7
+  previous_state_event_id: task-event-06b0eb1792928eaf5e4c1e473231e801
+  from_status: IN_PROGRESS
+  to_status: DEFERRED
+  payload:
+    priority: P0
+    next_owner: Claude Code coordinator
+    blocker_or_next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见
+      docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：第十二次发布完成（DEVX-022
+      M6）：main = origin/main = 2d29e4e35（普通推送由 Claude 在 owner「以后默认都是你推送」授权下执行）。整条链
+      3:38（上一条 4:23），Full 2:13（上一条 2:57），0 失败，`slow_steps` 为空。继续路线：DEVX-016 C3c（owner
+      先评审 compat 账本策略与采纳方式）-> C3d（P4-4）-> C4（S4）-> DEVX-017（C4 与 DEVX-017 的 AGENTS.md
+      发布方式待 owner 决定）-> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081
+      验收）-> 阶段 5。owner 另需：C3c 的策略评审与采纳方式；C4 / DEVX-017 改 AGENTS.md 的发布方式；DEVX-021
+      第 11 节 P2/P3 的方案；执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 HKCU
+      测试根；长跑期间把「关闭显示器」设为「从不」。
+    acceptance_criteria: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
+      DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+    notes: 2026-10-10：第十二次发布完成（2d29e4e35）；链 3:38；路线：C3c -> C3d -> C4 -> DEVX-017。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:gov-008-register-task-20261010-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2ede15d1029a1589ad3867b366389cab
 projection:
   legacy_first_eight_cells:
   - GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
   - Governance / pre-migration convergence program (Codex → pi)
   - P0
-  - IN_PROGRESS
+  - DEFERRED
   - Claude Code coordinator
-  - 第十二次发布完成（DEVX-022 M6）：main = origin/main = 2d29e4e35（普通推送由 Claude 在 owner「以后默认都是你推送」授权下执行）。整条链
-    3:38（上一条 4:23），Full 2:13（上一条 2:57），0 失败，`slow_steps` 为空。继续路线：DEVX-016 C3c（owner
-    先评审 compat 账本策略与采纳方式）-> C3d（P4-4）-> C4（S4）-> DEVX-017（C4 与 DEVX-017 的 AGENTS.md
-    发布方式待 owner 决定）-> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081
-    验收）-> 阶段 5。owner 另需：C3c 的策略评审与采纳方式；C4 / DEVX-017 改 AGENTS.md 的发布方式；DEVX-021 第
-    11 节 P2/P3 的方案；执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 HKCU 测试根；长跑期间把「关闭显示器」设为「从不」。
+  - 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md
+    第 6 节】原下一步：第十二次发布完成（DEVX-022 M6）：main = origin/main = 2d29e4e35（普通推送由 Claude 在
+    owner「以后默认都是你推送」授权下执行）。整条链 3:38（上一条 4:23），Full 2:13（上一条 2:57），0 失败，`slow_steps`
+    为空。继续路线：DEVX-016 C3c（owner 先评审 compat 账本策略与采纳方式）-> C3d（P4-4）-> C4（S4）-> DEVX-017（C4
+    与 DEVX-017 的 AGENTS.md 发布方式待 owner 决定）-> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖
+    OPS-077/078/081 验收）-> 阶段 5。owner 另需：C3c 的策略评审与采纳方式；C4 / DEVX-017 改 AGENTS.md 的发布方式；DEVX-021
+    第 11 节 P2/P3 的方案；执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 HKCU 测试根；长跑期间把「关闭显示器」设为「从不」。
   - 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015
     DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
   - 2026-10-10：第十二次发布完成（2d29e4e35）；链 3:38；路线：C3c -> C3d -> C4 -> DEVX-017。
-  docs_links: []
+  docs_links:
+  - docs/requirements/GOV-008_Research_First_Governance_Refactor.md
   terminal: false
-  canonical_row_sha256: 98011521bfbfa8103d031f7eb6640850e71eab43e152149c904ca2defccdb6fc
-last_event_id: task-event-06b0eb1792928eaf5e4c1e473231e801
+  canonical_row_sha256: 658573964aa2cbf7bf2d04c4fa227572b6c4fc204d6cea1d3861f96ae2da6a20
+last_event_id: task-event-2ede15d1029a1589ad3867b366389cab
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: a35908a1ffd2064d48f3cc2d38d4f9d23351a3a5c918e2bcc0b2d2d36d7e2f70
+fragment_checksum: 673bb7b23ee2fafd429369987aeb82c203b2b13f101a951f44bf373d66df28ed

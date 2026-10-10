@@ -1,0 +1,90 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: GOV-008_RESEARCH_FIRST_GOVERNANCE_REFACTOR
+  task_id_sha256: 010bb677701011ee08b19ca4b3fae180c4aa843e4af0280b6eb5c73b2f3d1af0
+task_record:
+  schema_version: task_record.v1
+  task_id: GOV-008_RESEARCH_FIRST_GOVERNANCE_REFACTOR
+  title: null
+  domain: Governance / research-first governance refactor (derive guarantees from
+    research needs; replace the lease/fence/hash-authority publication machinery with
+    a CI gate and a run ledger; prerequisite of pi migration)
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Claude Code coordinator；Project Owner（DP1/DP2：G1-G7 映射与测试留删名单评审、引导路线、区域
+    C 路径清单；GitHub 分支保护与推送权限设置）
+  requirement_refs:
+  - docs/requirements/GOV-008_Research_First_Governance_Refactor.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: P0 已登记并挂起 20 个受影响任务；P1（只读保证映射、测试留删名单、代码
+    LIVE/FROZEN/DEAD 名单）并行进行，随后 P2 spike（Windows CI 产品套件时长、marker 分层、ship、RunContext）。重构期间不启动旧发布链与
+    Full。详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 见需求文档第 7 节各阶段退出条件与第 4 节目标工作量：PR 级验证约 30 分钟内、仅文档类改动 5 分钟内、治理机制代码与测试大幅删除、AGENTS.md
+      ≤150 行且 harness 中立、pi 就绪清单全部满足；重构完成后重新评估被挂起任务。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: GOV-008_RESEARCH_FIRST_GOVERNANCE_REFACTOR
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-10-10T00:22:08Z'
+  actor: integration-coordinator
+  change_id: gov-008-register-task-20261010-v1
+  lane_id: null
+  base_commit: 2d29e4e35ec2228bc04e68d934a8044425bcf7f7
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - GOV-008_RESEARCH_FIRST_GOVERNANCE_REFACTOR
+    - Governance / research-first governance refactor (derive guarantees from research
+      needs; replace the lease/fence/hash-authority publication machinery with a CI
+      gate and a run ledger; prerequisite of pi migration)
+    - P0
+    - IN_PROGRESS
+    - Claude Code coordinator；Project Owner（DP1/DP2：G1-G7 映射与测试留删名单评审、引导路线、区域 C 路径清单；GitHub
+      分支保护与推送权限设置）
+    - P0 已登记并挂起 20 个受影响任务；P1（只读保证映射、测试留删名单、代码 LIVE/FROZEN/DEAD 名单）并行进行，随后 P2 spike（Windows
+      CI 产品套件时长、marker 分层、ship、RunContext）。重构期间不启动旧发布链与 Full。详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md。
+    - 见需求文档第 7 节各阶段退出条件与第 4 节目标工作量：PR 级验证约 30 分钟内、仅文档类改动 5 分钟内、治理机制代码与测试大幅删除、AGENTS.md
+      ≤150 行且 harness 中立、pi 就绪清单全部满足；重构完成后重新评估被挂起任务。
+    - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision:GOV-008:2026-10-10:research_first_refactor_v1；挂起任务清单见需求文档第
+      6 节。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:gov-008-register-task-20261010-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-9424d36bf6db5dc31616d4fbda4e0634
+projection:
+  legacy_first_eight_cells:
+  - GOV-008_RESEARCH_FIRST_GOVERNANCE_REFACTOR
+  - Governance / research-first governance refactor (derive guarantees from research
+    needs; replace the lease/fence/hash-authority publication machinery with a CI
+    gate and a run ledger; prerequisite of pi migration)
+  - P0
+  - IN_PROGRESS
+  - Claude Code coordinator；Project Owner（DP1/DP2：G1-G7 映射与测试留删名单评审、引导路线、区域 C 路径清单；GitHub
+    分支保护与推送权限设置）
+  - P0 已登记并挂起 20 个受影响任务；P1（只读保证映射、测试留删名单、代码 LIVE/FROZEN/DEAD 名单）并行进行，随后 P2 spike（Windows
+    CI 产品套件时长、marker 分层、ship、RunContext）。重构期间不启动旧发布链与 Full。详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md。
+  - 见需求文档第 7 节各阶段退出条件与第 4 节目标工作量：PR 级验证约 30 分钟内、仅文档类改动 5 分钟内、治理机制代码与测试大幅删除、AGENTS.md
+    ≤150 行且 harness 中立、pi 就绪清单全部满足；重构完成后重新评估被挂起任务。
+  - production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision:GOV-008:2026-10-10:research_first_refactor_v1；挂起任务清单见需求文档第
+    6 节。
+  docs_links:
+  - docs/requirements/GOV-008_Research_First_Governance_Refactor.md
+  terminal: false
+  canonical_row_sha256: ca3512f0db7d1bea5ac157fc1c926d6cd95fd25bfaeb79362530b311d5501ea4
+last_event_id: task-event-9424d36bf6db5dc31616d4fbda4e0634
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: de6aeb48964f645b508cfa7c93d83f9a58d84a5fd1f69748f8c6b498d6521ad6
