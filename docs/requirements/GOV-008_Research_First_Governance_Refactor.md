@@ -73,9 +73,9 @@ promotion、scheduler checkout 等）引用 lease/checkout 机制，研究执行
    `decision.md`。预注册提交并 push 之后才允许首次读取结果，GitHub push 时间为外部时间见证。前瞻采集保留只增
    哈希链 JSONL（只增不减在这里才是真需求）。
 3. **验证金字塔**：提交前（lint/format/类型/配置 schema，约 1 min）-> 快测（受影响模块，约 5 min）-> PR 套件
-   （全部产品测试排除 ≥30 s 节点，约 2.1 节点小时，16 核约 8 min，估算）-> 不变量套件（含在 PR 套件内）-> 夜间
+   （保留的产品测试排除 ≥30 s 节点，8,882 个节点，16 核实测 7m40s～8m24s）-> 不变量套件（含在 PR 套件内）-> 夜间
    （全部产品测试加慢节点、真实数据复现）。分层靠 pytest marker 与路径，不再手写文件清单。
-4. **发布 `ship`**：任务分支在本机运行新门（PR 套件加不变量套件，16 核约 10 min，估算），通过后同一 SHA 快进
+4. **发布 `ship`**：任务分支在本机运行新门（PR 套件加不变量套件，PR 套件 16 核实测 7m40s～8m24s，不变量套件待建），通过后同一 SHA 快进
    main 并普通推送。SHA 绑定由 git 保证，没有租约库、12 阶段状态机与 reseal。门禁结果（套件、节点数、耗时、干净树）
    写进提交信息的 `Gate:` 行；区域 C 改动必须带 `Owner-Decision:` 行，缺失则 `ship` 拒绝。并发靠每任务一个
    worktree 与 git 的快进冲突检测。不开启分支保护（单人项目），所以这是 agent 自己运行的门，不是独立验证者；
@@ -85,7 +85,7 @@ promotion、scheduler checkout 等）引用 lease/checkout 机制，研究执行
    AGENTS.md 压到 150 行内并保持 harness 中立（同时满足 DEVX-017 的目标）。
 6. **日常运行**：调度器直接运行 `aits daily-run`，不经过 checkout lease，产品路径不依赖开发机制。
 
-目标工作量：改一个评分/报告模块并发布，从约 25 min 准备加约 3.6 h 验证降到快测 5 min 加本机新门约 10 min（估算）；
+目标工作量：改一个评分/报告模块并发布，从约 25 min 准备加约 3.6 h 验证降到快测 5 min 加本机新门约 8 min（PR 套件实测，不含尚未建立的不变量套件）；
 仅改文档/任务/实验记录从"等下一次发布"降到 5 min 内；新开一个研究实验降到一个 prereg 文件加一条命令。
 
 ## 5. 删除与简化原则
@@ -200,7 +200,7 @@ owner 可调整）：
   可选的夜间复核。agent 能在同一提交中修改测试这一点，旧机制同样防不住（测试在候选内）。pi 核心只有
   read/write/edit/bash 四个工具，权限控制来自第三方扩展，且 bash 通用，因此 pi 迁移本身不会缓解该风险，
   它只提供便利层。
-- 本机 PR 套件时长未测（P2 spike；估算 16 核约 8～10 min）；GitHub 侧问题本阶段不考虑，如夜间复核要启用再回头。
+- 本机 PR 套件时长已实测（第 13 节）；GitHub 侧问题本阶段不考虑，如夜间复核要启用再回头。
 - 约 8.8 节点小时的命名 DQ/composer 测试带真实链路性质，保留与否由第 5 节规则裁决。
 - 本任务推翻 owner 既有决定：2026-09-23"DEVX-015 做完全部 106 项"、2026-09-26"Full 后不做局部重跑/DUAL_LANE 仅
   opt-in"、2026-10-05"不改正式 Full 合同"。已由 2026-10-10 决定取代；相关任务重构后重评估。
@@ -232,3 +232,33 @@ owner 可调整）：
   下拉）、测试分诊（Full 节点时间：发布机制 62.7%、研究采集 25.2%、其余产品测试 12.1%）、代码使用分析（上文）、
   区域 C 路径清单提议、5 个待裁决问题。等待 owner 评审（DP1/DP2）。分析脚本在会话临时目录，结果已固化在上述文档，
   P2 前以仓库内脚本重新生成名单。
+
+## 13. P2 spike 结果（2026-10-10，代码在 `tools/gov008/`、`config/gov008_ship.yaml`、`core/provenance.py`）
+
+**S1 本机 PR 套件时长（关键数字）**：保留的产品测试 971 个文件、8,882 个节点（≥30 s 的 28 个节点划入夜间），
+16 个 worker、`--dist loadfile`，实测 **冷缓存 7m40s、热缓存 8m24s**（两次的差异在运行噪声内），8,877 通过、
+3 失败、2 跳过。理论下界 6.5 min（16 核理想并行），最长单文件 4.1 min。
+
+- 第一次测量跑了 25 分钟以上仍未结束、CPU 利用率只有约 19%。用 `faulthandler` 定时栈转储定位到根因：worker 停在
+  收集阶段的 `_pytest/main.py` `samefile_nofollow` -> `lstat`。**我给 pytest 传了 972 个文件参数**，pytest 9 在
+  Windows 上对每个参数逐个比较目录项，复杂度是"参数数 × 目录项数"，不是测试慢，也不是系统限速（单线程基准
+  与 WMI 脱离启动速度一致，16 路并行基准全速运行，worker 无网络连接，40 文件单进程抽样与历史耗时相符）。
+  修正为只传 `tests` 目录加按文件集合过滤的插件 `tools/gov008/pr_filter.py`（线性）。
+- 教训：`-p` 写在 `@argsfile` 里不生效，必须直接放命令行；pytest 输出重定向到文件时需 `PYTHONUNBUFFERED=1` 才能看到进度；
+  xdist 起 2 个 worker 的固定开销约 12 s。
+- 3 个失败全是旧治理的哈希钉被本任务 P0 的任务登记改动连带打破：2 个断言 `docs/task_register.md` 的权威哈希与现状不符
+  （`test_trading2452_architecture_contract.py`，分诊规则已补进 M5 随机制删除），1 个是 Atlas 页面相对任务索引过期。
+  另有 128 个测试文件引用 `docs/task_register.md` 或任务索引。这是 DEVX-016 记录过的"无关改动让测试失败"的新鲜实例，
+  支持删除生成视图与哈希钉。
+
+**S2 分层**：不需要分层清单。P4 删除后，PR 套件 = `pytest tests -m "not slow"`，夜间 = 全部；`slow` 标记只需打在
+28 个 ≥30 s 的节点上（0.52 节点小时），区域 C 不变量套件放 `tests/invariants/`。迁移期用 `pr_filter.py`。
+
+**S3 `ship`**：`--dry-run` 在真实仓库跑通（识别 2 个区域 C 路径、找到 `Owner-Decision` 行、尊重未关联脏文件豁免、选出
+门禁命令）；17 个单元测试用临时 git 仓库覆盖区域分类、`Owner-Decision` 缺失被拒、脏树被拒、main 非祖先被拒、
+在 main 上被拒、`Gate:` 行记录被测 tree、compare-and-swap 快进在 main 被并发移动时失败。**未对真实 main 执行任何移动或推送。**
+
+**S4 运行溯源**：现有运行清单（`report_traceability._run_manifest`）只记配置路径。新增 `core/provenance.py`，在清单加
+`provenance` 块：git commit、分支、`code_modified`（src/config/scripts/tools 是否被改）、每个配置文件的内容 sha256，
+每次约 0.12 s；4 个单元测试加 242 个相关现有测试通过。G2 其余部分（窗口、DQ 报告引用）清单里已有。研究线各自的清单
+（QQQ options、权重校准等）后续按同样方式接入。
