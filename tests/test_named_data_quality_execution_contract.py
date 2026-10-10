@@ -787,6 +787,7 @@ def test_seal_factory_rejects_mismatched_dispatch_before_context_access() -> Non
         )
 
 
+@pytest.mark.slow
 def test_new_private_factory_imports_and_calls_have_narrow_owner_allowlists() -> None:
     root = Path(__file__).resolve().parents[1]
     context_owner = "src/ai_trading_system/contracts/named_execution_context.py"

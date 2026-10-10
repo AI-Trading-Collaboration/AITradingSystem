@@ -542,6 +542,7 @@ tests/test_candidate_signal_binding_schema.py,P,KEEP_PR,2,0.0,0,0.0,0,0,0
 tests/test_candidate_signal_binding_validator.py,P,KEEP_PR,5,0.0,0,0.0,0,0,0
 tests/test_candidate_signal_prediction_artifact_audit.py,FROZEN_CODE,DELETE_WITH_FROZEN_CODE,3,6.3,0,0.0,0,0,0
 tests/test_canonical_system_status.py,P,KEEP_PR,3,5.2,0,0.0,0,0,0
+tests/test_capture_hold.py,P,KEEP_PR,0,0.0,0,0.0,0,0,0
 tests/test_cash_buffer_attribution.py,ETF,DELETE_WITH_ETF_RETIREMENT,1,106.5,1,106.5,0,0,1
 tests/test_catalyst_calendar.py,P,KEEP_PR,4,3.5,0,0.0,0,0,0
 tests/test_channel_aware_actual_path_evaluator.py,P,KEEP_PR,1,0.0,0,0.0,0,0,0
@@ -550,8 +551,8 @@ tests/test_channel_specific_first_layer_v4.py,P,KEEP_PR,2,0.0,0,0.0,0,0,0
 tests/test_ci_workflow.py,P_COUPLED,REVIEW_DECOUPLE,6,0.0,0,0.0,0,1,0
 tests/test_clean_clone_release_acceptance.py,P,KEEP_PR,3,0.0,0,0.0,0,0,0
 tests/test_cli_direct.py,P,KEEP_PR,31,0.9,0,0.0,0,0,0
-tests/test_composer_prospective_capture.py,R1_LEASE_DEPENDENT,REVIEW_DELETE_LEASE_VARIANTS,56,400.7,2,113.6,1,1,0
-tests/test_composer_prospective_capture_contract.py,R1_LEASE_DEPENDENT,REVIEW_DELETE_LEASE_VARIANTS,192,6033.4,6,6031.5,1,1,0
+tests/test_composer_prospective_capture.py,R1_CONTRACT,KEEP_CONTRACT,56,400.7,2,113.6,0,0,0
+tests/test_composer_prospective_capture_contract.py,R1_CONTRACT,KEEP_CONTRACT,192,6033.4,6,6031.5,0,0,0
 tests/test_conclusion_boundary.py,P,KEEP_PR,3,0.0,0,0.0,0,0,0
 tests/test_config.py,P,KEEP_PR,18,0.0,0,0.0,0,0,0
 tests/test_confirmation_cycle_plan.py,ETF,DELETE_WITH_ETF_RETIREMENT,1,0.1,0,0.0,0,0,1
@@ -838,15 +839,12 @@ tests/test_micro_search_foundation.py,ETF,DELETE_WITH_ETF_RETIREMENT,13,66.7,1,5
 tests/test_minimal_forward_diagnostic.py,P,KEEP_PR,2,0.0,0,0.0,0,0,0
 tests/test_model_rebalance.py,ETF,DELETE_WITH_ETF_RETIREMENT,2,1.2,0,0.0,0,0,1
 tests/test_model_target_portfolio.py,ETF,DELETE_WITH_ETF_RETIREMENT,3,0.3,0,0.0,0,0,1
-tests/test_named_data_quality_actual_candidate.py,R1_LEASE_DEPENDENT,REVIEW_DELETE_LEASE_VARIANTS,2,1936.1,2,1936.1,1,1,0
 tests/test_named_data_quality_bootstrap.py,R1_CONTRACT,KEEP_CONTRACT,58,127.6,0,0.0,0,0,0
-tests/test_named_data_quality_candidate.py,R1_LEASE_DEPENDENT,REVIEW_DELETE_LEASE_VARIANTS,26,11126.1,25,11125.5,1,1,0
-tests/test_named_data_quality_execution.py,R1_LEASE_DEPENDENT,REVIEW_DELETE_LEASE_VARIANTS,157,44.5,0,0.0,1,1,0
-tests/test_named_data_quality_execution_contract.py,R1_LEASE_DEPENDENT,REVIEW_DELETE_LEASE_VARIANTS,79,35.8,1,35.1,0,1,0
+tests/test_named_data_quality_execution.py,R1_CONTRACT,KEEP_CONTRACT,157,44.5,0,0.0,0,0,0
+tests/test_named_data_quality_execution_contract.py,R1_CONTRACT,KEEP_CONTRACT,79,35.8,1,35.1,0,0,0
 tests/test_named_immutable_publication.py,R1_CONTRACT,KEEP_CONTRACT,67,37.4,0,0.0,0,0,0
-tests/test_named_quality_dispatch.py,R1_LEASE_DEPENDENT,REVIEW_DELETE_LEASE_VARIANTS,79,419.9,0,0.0,1,1,0
+tests/test_named_quality_dispatch.py,R1_CONTRACT,KEEP_CONTRACT,79,419.9,0,0.0,0,0,0
 tests/test_named_simple_baseline_preview.py,R1_CONTRACT,KEEP_CONTRACT,65,2.0,0,0.0,0,0,0
-tests/test_named_simple_baseline_preview_candidate.py,R1_LEASE_DEPENDENT,REVIEW_DELETE_LEASE_VARIANTS,10,6368.3,10,6368.3,1,1,0
 tests/test_near_miss_ab_comparison.py,ETF,DELETE_WITH_ETF_RETIREMENT,1,33.1,1,33.1,0,0,1
 tests/test_near_miss_candidates.py,ETF,DELETE_WITH_ETF_RETIREMENT,1,51.1,1,51.1,0,0,1
 tests/test_next_formal_or_search_plan.py,ETF,DELETE_WITH_ETF_RETIREMENT,1,42.1,1,42.1,0,0,1
@@ -927,9 +925,9 @@ tests/test_production_boundary_static_scan.py,P,KEEP_PR,6,5.1,0,0.0,0,0,0
 tests/test_promotion_gate_threshold_calibration.py,ETF,DELETE_WITH_ETF_RETIREMENT,3,26.5,0,0.0,0,0,1
 tests/test_promotion_readiness.py,P,KEEP_PR,5,4.1,0,0.0,0,0,0
 tests/test_promotion_threshold_sensitivity.py,ETF,DELETE_WITH_ETF_RETIREMENT,1,52.7,1,52.7,0,0,1
-tests/test_prospective_capture_execution.py,R1_LEASE_DEPENDENT,REVIEW_DELETE_LEASE_VARIANTS,20,560.0,5,296.1,1,1,0
+tests/test_prospective_capture_execution.py,R1_CONTRACT,KEEP_CONTRACT,20,560.0,5,296.1,0,0,0
 tests/test_prospective_capture_execution_contract.py,R1_LEASE_DEPENDENT,REVIEW_DELETE_LEASE_VARIANTS,282,1.3,0,0.0,0,1,0
-tests/test_prospective_event_time_evidence.py,R1_LEASE_DEPENDENT,REVIEW_DELETE_LEASE_VARIANTS,85,481.0,1,39.2,1,1,0
+tests/test_prospective_event_time_evidence.py,R1_CONTRACT,KEEP_CONTRACT,85,481.0,1,39.2,0,0,0
 tests/test_prospective_event_time_evidence_contract.py,R1_CONTRACT,KEEP_CONTRACT,132,0.1,0,0.0,0,0,0
 tests/test_provenance.py,P,KEEP_PR,0,0.0,0,0.0,0,0,0
 tests/test_qc_qqq_options_bounded_cloud_pilot.py,P,KEEP_PR,24,1.6,0,0.0,0,0,0
@@ -1034,7 +1032,7 @@ tests/test_research_input_readiness.py,P,KEEP_PR,32,7.5,0,0.0,0,0,0
 tests/test_research_master_roadmap.py,P_COUPLED,REVIEW_DECOUPLE,6,8.2,0,0.0,1,1,0
 tests/test_research_method_hardening.py,ETF,DELETE_WITH_ETF_RETIREMENT,2,241.4,2,241.4,0,0,1
 tests/test_research_monthly_review_pack.py,P,KEEP_PR,5,3.2,0,0.0,0,0,0
-tests/test_research_outcome_access.py,R1_LEASE_DEPENDENT,REVIEW_DELETE_LEASE_VARIANTS,75,1999.2,27,1142.4,1,1,0
+tests/test_research_outcome_access.py,R1_CONTRACT,KEEP_CONTRACT,75,1999.2,27,1142.4,0,0,0
 tests/test_research_restart.py,FROZEN_CODE,DELETE_WITH_FROZEN_CODE,4,7.0,0,0.0,0,0,0
 tests/test_research_roadmap_dashboard.py,P,KEEP_PR,7,3.5,0,0.0,0,0,0
 tests/test_research_safety_boundary.py,P,KEEP_PR,5,3.3,0,0.0,0,0,0
@@ -1154,6 +1152,7 @@ tests/test_target_actual_position_path.py,P,KEEP_PR,2,1.5,0,0.0,0,0,0
 tests/test_targeted_search_v3.py,ETF,DELETE_WITH_ETF_RETIREMENT,2,39.6,1,39.6,0,0,1
 tests/test_targeted_v3_backfill.py,ETF,DELETE_WITH_ETF_RETIREMENT,1,122.8,1,122.8,0,0,1
 tests/test_task_register_consistency.py,P,KEEP_PR,10,6.1,0,0.0,0,0,0
+tests/test_task_register_paths.py,P,KEEP_PR,0,0.0,0,0.0,0,0,0
 tests/test_technical_features.py,P,KEEP_PR,4,0.0,0,0.0,0,0,0
 tests/test_thesis.py,P,KEEP_PR,9,4.9,0,0.0,0,0,0
 tests/test_top_variant_interpretation.py,ETF,DELETE_WITH_ETF_RETIREMENT,1,11.7,0,0.0,0,0,1

@@ -391,8 +391,6 @@ tests/test_candidate_recovery.py
 tests/test_candidate_regression_replay.py
 tests/test_candidate_signal_prediction_artifact_audit.py
 tests/test_cash_buffer_attribution.py
-tests/test_composer_prospective_capture.py
-tests/test_composer_prospective_capture_contract.py
 tests/test_confirmation_cycle_plan.py
 tests/test_confirmation_cycle_weekly.py
 tests/test_confirmation_dashboard.py
@@ -537,12 +535,6 @@ tests/test_metric_source_map.py
 tests/test_micro_search_foundation.py
 tests/test_model_rebalance.py
 tests/test_model_target_portfolio.py
-tests/test_named_data_quality_actual_candidate.py
-tests/test_named_data_quality_candidate.py
-tests/test_named_data_quality_execution.py
-tests/test_named_data_quality_execution_contract.py
-tests/test_named_quality_dispatch.py
-tests/test_named_simple_baseline_preview_candidate.py
 tests/test_near_miss_ab_comparison.py
 tests/test_near_miss_candidates.py
 tests/test_next_formal_or_search_plan.py
@@ -591,9 +583,7 @@ tests/test_pressure_trigger.py
 tests/test_primary_research_candidate_gate.py
 tests/test_promotion_gate_threshold_calibration.py
 tests/test_promotion_threshold_sensitivity.py
-tests/test_prospective_capture_execution.py
 tests/test_prospective_capture_execution_contract.py
-tests/test_prospective_event_time_evidence.py
 tests/test_qqq_options_paired_comparison_wave_a.py
 tests/test_reader_brief_dynamic_v3_defensive_evidence.py
 tests/test_readiness_health_recovery.py
@@ -613,7 +603,6 @@ tests/test_research_decision.py
 tests/test_research_decision_update.py
 tests/test_research_direction_foundation.py
 tests/test_research_method_hardening.py
-tests/test_research_outcome_access.py
 tests/test_research_restart.py
 tests/test_return_to_research_reset.py
 tests/test_risk_capped_backfill.py
