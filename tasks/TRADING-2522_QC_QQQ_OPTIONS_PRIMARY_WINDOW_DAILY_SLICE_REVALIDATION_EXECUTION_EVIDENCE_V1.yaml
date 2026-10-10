@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2522_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1
+area: QQQ Options primary-window daily Slice revalidation execution and evidence
+priority: P0
+status: BASELINE_DONE
+next_owner: Codex capability coordinator：完成2522 final gates/push/cleanup后独立启动2528 offline per-axis diagnostic contract；Project Owner：未来仅在新proposal hashes后决定是否授权外部再验证
+next_step: V4_AUTHORIZATION_CONSUMED；backtest 60ce7e0bec3ad2d83a4d1341e0221492 Completed但result INVALID_INCOMPLETE；1201/1201 chain sessions transport rejected、具体axis unresolved；second run prohibited；evidence=FAIL；DQ/PIT=NOT_EVALUATED
+acceptance: exact export-safe Results/package replay、complete action lifecycle、strict parser FAIL、typed unresolved-axis failure、orders/fills=0/0、cash preservation、2528 registration-only、final gates/push/cleanup
+notes: '[supporting requirement](docs/requirements/TRADING-2522_QC_QQQ_Options_Primary_Window_Daily_Slice_Revalidation_Execution_Evidence_V1.md)；result SHA=45e8647f4d4b0e3590252acedacca4235695341574f44bc593d8ab9b283f603e；manifest=407a9f9e8fe6a71dab62c879566b40213116606798e2ea9ba846dd4d05683892；typed failure=DAILY_SLICE_TRANSPORT_ALL_SESSIONS_REJECTED_UNRESOLVED_AXIS；no further external action authorized'

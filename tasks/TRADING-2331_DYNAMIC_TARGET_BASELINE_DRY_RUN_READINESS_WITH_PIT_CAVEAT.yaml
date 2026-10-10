@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2331_DYNAMIC_TARGET_BASELINE_DRY_RUN_READINESS_WITH_PIT_CAVEAT
+area: Research trends / exposure-cap dynamic target baseline dry-run readiness with PIT caveat
+priority: P0
+status: DONE
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 详见 `docs/requirements/TRADING-2331_Dynamic_Target_Baseline_Dry_Run_Readiness_With_PIT_Caveat.md`；承接 TRADING-2330 timestamp-remediated wrapper 已 route 到 2331。本批只检查 dynamic dry-run 前的 wrapper fields、PIT caveat、known-at / validity / latency / rebalance policy、risk-cap timestamp alignment、market-data alignment、input contract 和 2332 route；不得执行 simulation 或生成交易指令。
+acceptance: 新增 `aits research trends dynamic-target-baseline-dry-run-readiness-with-pit-caveat`；生成 readiness summary、gate checklist、PIT caveat acceptance、wrapper field validation、timestamp/risk-cap/market-data/policy alignment matrix、input contract、data-quality precheck、interpretation boundary、2332 readiness matrix、2332 task route 和 research docs；真实 run `wrapper_record_count=2682`、wrapper validation=`PASS_WITH_WARNINGS`、gate=`DYNAMIC_DRY_RUN_READY_WITH_PIT_CAVEAT`、`2332_allowed=true`、next task=`TRADING-2332_Source_Bound_Exposure_Cap_Dry_Run_With_Dynamic_Target_Baseline`；所有 outputs 固定 `simulation_executed=false`、promotion/paper-shadow/production/broker false/none，`PASS_WITH_WARNINGS` carry forward PIT / market-data / data-quality caveat。
+notes: '2026-07-03: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-03: 实现完成并进入 VALIDATING；真实 CLI run 已生成 TRADING-2331 artifacts，`aits validate-data` 不适用，因为本任务只读取 prior research outputs、static config 和 wrapper artifacts。2026-07-03: 系统验证通过 focused pytest、Ruff、compileall、docs / contract / task-register gates、contract-validation、full pytest 和 diff check。 2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_FAIL_CLOSED_RESULT 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'

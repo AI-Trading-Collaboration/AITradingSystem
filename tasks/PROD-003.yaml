@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: PROD-003
+area: 趋势判断/第二合格数据源准入
+priority: P1
+status: DEFERRED
+next_owner: 项目 owner + 系统验证
+next_step: owner 2026-05-10 决策继续使用现有 FMP + Cboe VIX + Marketstack + FRED，暂无引入额外 macro/price qualified source 计划；系统继续用 provider health、FMP/Marketstack 价格 reconciliation、FRED series freshness 和数据质量门禁披露限制
+acceptance: 重新打开前需 owner 明确新增宏观或价格 source、授权/成本、endpoint、缓存审计字段和长期口径；暂缓期间，趋势判断报告不得把 `macro_rates` 单一 FRED 来源写成跨源核验完成，价格仍按 FMP + Marketstack baseline 标识
+notes: '2026-05-06: 从 `PROD-001` 拆出，原因：市场价格和宏观利率 reconciliation 是趋势判断可信度前置条件，但供应商选择与授权需要独立 owner 决策。2026-05-10: 从 BLOCKED_OWNER_INPUT 改为 DEFERRED，原因：owner 确认继续使用现有 FMP + Marketstack + FRED（含 Cboe VIX 专用源）且暂无引入第二个更可靠 macro/price qualified source 计划；缺口改为明确限制和报告披露，不再等待供应商选择。'

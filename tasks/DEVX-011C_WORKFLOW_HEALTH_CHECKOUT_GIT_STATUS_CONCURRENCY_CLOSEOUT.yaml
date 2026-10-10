@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-011C_WORKFLOW_HEALTH_CHECKOUT_GIT_STATUS_CONCURRENCY_CLOSEOUT
+area: Developer experience / checkout-guard Git status concurrency closeout
+priority: P1
+status: DONE
+next_owner: 'Project owner: review weekly workflow-health candidates after four validated observations'
+next_step: No implementation blocker; final completion remains fail-closed on v4 formal tiers, parent-bound Full, ordinary push and release receipt
+acceptance: GIT_OPTIONAL_LOCKS=0 on dirty-path audit; checkout guard and command-contract regression PASS; parent-bound failure-fix Full PASS; local main=origin/main=final candidate; production_effect=none
+notes: '2026-08-31: DEVX-011B Full 10026 PASS / 1 FAIL / 3 skipped isolated Windows index permission race; 20-round parallel reproduction 0 failures; no-optional-lock implementation plus full checkout-guard file and task-count ratchet 22 PASS; completion is valid only if v4 closes PASS'

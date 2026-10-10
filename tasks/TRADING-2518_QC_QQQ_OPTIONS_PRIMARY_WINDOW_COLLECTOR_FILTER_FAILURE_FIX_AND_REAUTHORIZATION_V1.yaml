@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2518_QC_QQQ_OPTIONS_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_AND_REAUTHORIZATION_V1
+area: QQQ Options 主窗口 collector filter failure-fix 与重新授权
+priority: P0
+status: BASELINE_DONE
+next_owner: TRADING-2519 Codex capability coordinator：封存v3 INVALID_INCOMPLETE result并完成daily Slice failure-fix；Project Owner：仅在新hashes后决定是否另行授权
+next_step: V3_AUTHORIZATION_CONSUMED；backtest b6d711f67a47199667c8a62f86208b28=Completed但collector INVALID_INCOMPLETE 0/1202；禁止重跑；evidence/DQ-PIT不通过
+acceptance: v3唯一mutation/run与result SHA冻结；orders/fills=0/0；strict admission FAIL；2519接管daily schedule root cause且不改写2518历史
+notes: 'Supporting requirement: docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md；successor requirement: docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md；result SHA=30f95852fe509e5229a86bed77978f62f9756016f17c3159c5afb63b6eaa205b；external_action=none after consumed run。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC
+area: Research trends / diagnostic regime label generation
+priority: P2
+status: BASELINE_DONE
+next_owner: 项目 owner：后续只复核diagnostic label分布；不自动迁移TRADING-2317
+next_step: 详见 `docs/requirements/TRADING-2316_Regime_Label_Generator_Diagnostic_POC.md`；依赖 TRADING-2315 design audit、policy-governed label thresholds 和 DATA-GOV-002 reviewed capability receipt。本批只生成 PIT-safe / PIT-approx daily labels for validation segmentation，不生成 candidate signal，不进入 actual-path validation，不影响 scoring、daily report、portfolio、paper-shadow、production 或 broker。
+acceptance: 生成原有 label series/summary/PIT policy/distribution/transition/safety/report，并在任何 evaluator/output 前验证 exact consumer/version/as-of dependency/discovery/receipt和materialized bytes；真实 receipt full/scoped=`FAIL/PASS`、global claim=false、required rates=[]；missing/non-PASS/tamper/wrong-consumer/wrong-as-of全部fail closed且不写业务产物。
+notes: 2026-07-26：capability migration、真实canonical build/verify/run和正式门禁已完成。Receipt=`dq_capability_b453834493d1951868c5474f379942461cce29c61b74fd37b9aab69167759ab3`，window=`2021-02-22..2026-07-24`，label/distribution/transition=`7416/30/123`；focused/authority=`16/3 passed`，Full=`7350 passed / 3 skipped / 643 warnings`。状态转`BASELINE_DONE_CAPABILITY_RECEIPT_MIGRATION`；TRADING-2317、daily/periodic、production和broker仍未授权。

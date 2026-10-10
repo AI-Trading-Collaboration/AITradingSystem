@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION
+area: Strategy Style Discovery / decision-target redesign preregistration
+priority: P0
+status: DONE
+next_owner: strategy owner：如需验证O1 capability，等待canonical DQ strict PASS后另立capability-audit任务并取得Owner新授权
+next_step: 详见 `docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md`、`docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`、`docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md` 与 `docs/requirements/TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md`。Owner先关闭旧tail-risk path，再选择O1 `RELATIVE_OPPORTUNITY_SPREAD` single target，并以 `approve_s4_o1_pilot_policy_bundle_v1` 批准结果读取前的 `TRADING_2463_O1_S4_PILOT_V1` reviewed freeze。
+acceptance: Target/action/label/availability/PIT/DQ/coverage/falsification合同完整；冻结5-session single horizon、无sensitivity horizon、expanding purged walk-forward、effective-sample与fold/regime/event floors、OOF MSE skill及robustness gates；未读取新count/result、未访问prospective、未训练模型；capability audit、Decision Value Audit、risk overlay、candidate/backtest/weights、QLD automatic selection、paper-shadow、production与broker均未启动；适用治理门禁PASS。
+notes: 2026-07-28：S1～S4在preregistration freeze边界完成，`numeric_policy_frozen=true`、`capability_audit_started=false`。base-drift plan=`integration-revalidation-d9cf7dfd2ab0fcfd8aca`按reviewed reconciliation接入latest-main candidate；未来audit是独立新任务；`production_effect=none`、`broker_action=none`。

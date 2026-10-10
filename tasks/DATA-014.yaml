@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-014
+area: 数据质量/DTWEXBGS 新鲜度
+priority: P0
+status: DONE
+next_owner: 系统实现 + 项目 owner
+next_step: 详细拆解见 `docs/requirements/dtwexbgs_freshness_policy_2026-05-09.md`；已把 `DTWEXBGS` 从全体 FRED 宏观序列 7 日历日 freshness 改为 14 日历日 series 级阈值；后续 owner 可决定是否接入第二宏观来源或直接 Federal Reserve H.10 来源
+acceptance: '`DTWEXBGS` 使用符合 Federal Reserve H.10 周度发布机制的 series 级 freshness 阈值，DGS2/DGS10 仍保持较严格默认阈值；`aits validate-data`、`score-daily` 和 `backtest` 继续 fail closed 于真正过期或缺失的宏观输入；数据源成本选项和接入边界记录在需求文档；系统流图、配置和测试同步更新'
+notes: '2026-05-09: 新增并进入实现，原因：真实每日 `daily-run` 已更新 FRED 缓存，但 FRED/Board `DTWEXBGS` 最新 observation 仍停在 2026-05-01，8 个日历日触发全局 7 天门禁；该滞后符合 H.10 周度发布时间特征，需用 series 级 freshness 表达，而不是绕过数据质量门禁。2026-05-09: 从 IN_PROGRESS 改为 DONE，原因：新增 rate series 级 `max_stale_calendar_days` override，`DTWEXBGS` 配置为 14 天，DGS2/DGS10 保持默认 7 天；`validate-data --as-of 2026-05-09` 已从 `FAIL` 变为 `PASS_WITH_WARNINGS` 且错误数 0；验证通过 `ruff check src tests`、目标测试 39 passed 和完整 pytest 415 passed。2026-05-10: 归档时将原登记 ID 从 `DATA-012` 修正为 `DATA-014`，原因：`DATA-012` 已被早期 Yahoo 诊断复查任务占用，避免 completed register 出现重复 ID。'

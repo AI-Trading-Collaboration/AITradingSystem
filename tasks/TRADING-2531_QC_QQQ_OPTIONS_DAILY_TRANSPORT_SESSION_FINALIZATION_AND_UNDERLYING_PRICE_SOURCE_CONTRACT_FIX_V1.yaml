@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2531_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_AND_UNDERLYING_PRICE_SOURCE_CONTRACT_FIX_V1
+area: QQQ Options daily transport session finalization and underlying-price source contract fix
+priority: P0
+status: BASELINE_DONE
+next_owner: Project Owner：未来仅审阅新的 zero-order external validation authority
+next_step: 离线 v2 contract fix、zero-order candidate 与 exact hashes 已闭合；旧 1020 MISSING 不重解释。需另行 governed owner authority 才可执行一次外部 v2 validation；当前 Cloud/project/browser/API 均禁止。
+acceptance: 纯 session reducer、multi-Slice permutation regression、same-session raw QQQ bar provenance、v2 bounded aggregate contract/zero-order candidate/exact hashes；不改写 v1 evidence；focused/formal PASS。
+notes: '[supporting requirement](docs/requirements/TRADING-2531_QC_QQQ_Options_Daily_Transport_Session_Finalization_And_Underlying_Price_Source_Contract_Fix_V1.md)；focused=19 PASS；Atlas/reducer=58 PASS；authority=79 PASS；main.py_sha256=0665a759a9db9bcae100133da9dd950e7f66597d4f19d00f01b26afb6a478f45；package_content_sha256=1f018f42b1149f5c04b559e3ca1b35e0418c841a75da6a6099dbff7ec67d1b4b；external counters remain 1/1/0/0；external_action=none。'

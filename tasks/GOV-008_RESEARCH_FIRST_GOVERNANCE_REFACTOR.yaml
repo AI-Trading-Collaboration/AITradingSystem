@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: GOV-008_RESEARCH_FIRST_GOVERNANCE_REFACTOR
+area: Governance / research-first governance refactor (derive guarantees from research needs; replace the lease/fence/hash-authority publication machinery with a CI gate and a run ledger; prerequisite of pi migration)
+priority: P0
+status: IN_PROGRESS
+next_owner: Claude Code coordinator；Project Owner（仅区域 C 与研究线相关决定）
+next_step: P0–P3 完成：新门禁与 ship、解耦、采集协议 v3、新 AGENTS.md 已发布（af6b76519）；P5a 任务库迁移到 tasks/*.yaml（tools/tasks.py）；下一步 P4 删除块 1 发布机制、块 2 退役 ETF 链、块 3 Atlas 与冻结代码，随后 P5 文档重整与 P6 接入 pi
+acceptance: 见需求文档第 7 节各阶段退出条件与第 4 节目标工作量：PR 级验证约 30 分钟内、仅文档类改动 5 分钟内、治理机制代码与测试大幅删除、AGENTS.md ≤150 行且 harness 中立、pi 就绪清单全部满足；重构完成后重新评估被挂起任务。
+notes: production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision:GOV-008:2026-10-10:research_first_refactor_v1；挂起任务清单见需求文档第 6 节。

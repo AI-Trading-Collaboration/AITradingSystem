@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2517_QC_QQQ_OPTIONS_REFRESH_AUTHORIZATION_ADMISSION_AND_BOUNDED_COLLECTION_LIFECYCLE_V1
+area: QQQ Options refresh authorization admission 与 bounded collection lifecycle
+priority: P0
+status: BASELINE_DONE
+next_owner: Codex capability coordinator：在2518离线修复并发布新proposal；Project Owner：其后决定是否签署新single-use token
+next_step: 2516_TOKEN_CONSUMED_AND_QC_RUNTIME_OPTION_FILTER_CASTING_ERROR；backtest 9518360aeb329219cd83e78442a1d229 FAILED；Results/evidence/DQ-PIT未完成；禁止第二次run
+acceptance: 2517 strict contract已正确消费首次run；ledger=e3979529e8bdca48e6b44a74376bbea635f02c218b3737afb265b33481e827f2；consumption=235bf53686052fabfd21089d6b0fb4dcafeb1b039375d142dfc9478ae595d498；orders/fills=0/0；engine cash-preservation
+notes: 'Supporting requirement: docs/requirements/TRADING-2517_QC_QQQ_Options_Refresh_Authorization_Admission_and_Bounded_Collection_Lifecycle_V1.md；actual action=login+one project mutation+one failed cloud run；manual Results JSON unavailable；successor=TRADING-2518。'

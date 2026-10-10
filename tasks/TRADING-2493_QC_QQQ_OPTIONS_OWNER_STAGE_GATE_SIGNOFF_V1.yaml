@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
+area: Research governance / capability, license, DQ/PIT and range-expansion decision
+priority: P0
+status: BASELINE_DONE
+next_owner: 后续独立任务 owners：逐项解除 license/export、DQ/PIT、resource calibration、2489/2490 reconciliation 与 primary-window UNKNOWN；project owner：只对新的 exact proposal 另行授权
+next_step: 详见 `docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md`。project owner 已 exact-bind proposal/policy/authority hashes 并签署 aggregate=`NO_GO_KEEP_BLOCKED`；terminal signoff=`SIGNED_NO_GO`。capability/technical=`CONDITIONAL_GO`，license/DQ-PIT/resource/reconciliation/range/paid=`NO_GO`，五项 UNKNOWN 保留 owner/exit condition。
+acceptance: Owner attestation 与 terminal signoff 必须 canonical replay，proposal/policy/authority/axis/unknown/hash chain byte-identical；final generated/current authority、focused/adjacent/compatibility 与 final-tree formal PASS；range expansion/further cloud/paid upgrade/investment/paper/live/broker/production 保持 false/none。
+notes: 2026-08-06：Owner exact token 已接收；attestation file/content SHA=`9b159228...f4aa6`/`80db4e17...aeb54`，signoff file/content SHA=`dd9c9332...74d02`/`a6824fc8...f059f`。2493 baseline 仅完成 NO-GO 治理收口，不解除 2489/2490 或未来 experiment blocker；任何重试、roll/short/multi-leg/LEAPS/Wheel 仍须另立任务与独立授权。

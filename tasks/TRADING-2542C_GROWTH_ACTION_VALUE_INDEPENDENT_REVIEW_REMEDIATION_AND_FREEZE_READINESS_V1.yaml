@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2542C_GROWTH_ACTION_VALUE_INDEPENDENT_REVIEW_REMEDIATION_AND_FREEZE_READINESS_V1
+area: Strategy governance / growth action-value independent review remediation and freeze readiness V1
+priority: P0
+status: DEFERRED
+next_owner: Project Owner（pi 迁移后）
+next_step: 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移 pi 后重启 growth action-value / QQQ options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
+acceptance: Exact latest-main candidate preserves TRADING-2544 as PROPOSED/NOT_DUE; V3 and DQ/PIT V2 replay; append-only compatibility successor and every architecture latest-authority consumer agree; parent-bound Full plus Architecture/Contract/Integration/Reproducibility pass; no real DQ or empirical run; second independent review and Owner exact approval remain mandatory for freeze.
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第3/4条：DEFERRED；agent_harness=claude_code；原备注：Supporting requirement: docs/requirements/TRADING-2542C_Growth_Action_Value_Independent_Review_Remediation_And_Freeze_Readiness_V1.md. Architecture artifact outputs/validation_runtime/architecture-fitness_20260823T153447Z/test_runtime_summary.json retained 805 passed and 61 failed. All 61 failures share tests/test_arch_004_refactor_policy.py LATEST_COMPATIBILITY_SECTION still pointing to DEVX-007 instead of the append-only TRADING-2542C successor; no strategy mechanical assertion failed.'

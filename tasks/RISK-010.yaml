@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: RISK-010
+area: 风险事件/官方候选 AI 模块 triage
+priority: P1
+status: BASELINE_DONE
+next_owner: 系统验证 + 项目 owner
+next_step: 详细拆解见 `docs/requirements/risk_event_candidate_triage_2026-05-10.md`；已实现确定性 triage 命令和报告；后续如 owner 真实复核发现 bucket 误判，应新建或重开任务调整关键词/抽样策略
+acceptance: 提供确定性 triage 命令和报告，读取 `official_policy_source_candidates_YYYY-MM-DD.csv` 后输出 `official_policy_candidate_triage_YYYY-MM-DD.csv` 与中文报告；分类必须优先保留 AI/半导体/先进计算/出口管制/相关 ticker 的直接命中项，并把无明显 AI 模块联系的 sanctions/geopolitics 候选降为低优先级；输出强制 `production_effect=none`，不得写入正式 occurrence、评分或仓位闸门；系统流图、README 和测试同步更新
+notes: '2026-05-10: 新增并进入实现，原因：owner 确认“先分类”，关注 AI 模块，无明显联系的官方政策/地缘候选降低复核优先级。2026-05-10: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits risk-events triage-official-candidates`、triage CSV/报告、系统流图、README、需求文档和测试；真实 2026-05-10 官方候选 403 条分类为 must_review=7、review_next=1、sample_review=94、auto_low_relevance=297、duplicate_or_noise=4；验证通过 `ruff check src tests`、目标测试 24 passed 和完整 `pytest -q` 436 passed。'

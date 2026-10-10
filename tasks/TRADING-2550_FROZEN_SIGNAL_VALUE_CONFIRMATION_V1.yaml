@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2550_FROZEN_SIGNAL_VALUE_CONFIRMATION_V1
+area: Strategy research / frozen first-layer signal value confirmation
+priority: P0
+status: BASELINE_DONE
+next_owner: Project Owner：若继续研究，先另行冻结 underlying comparator fee semantics 并批准 Wave B exact package/manifest；Wave C 单次 bounded QuantConnect run 仍需再次独立授权。长期 Browser 审阅入口由 TRADING-2526 的 Atlas/DevEx coordinator 承接。
+next_step: Reader-entry exact 页面已由 Owner 完成 desktop/mobile 人工视觉验收；agent Browser 自动化因 file URL policy 保持 NOT_EXECUTED_URL_POLICY。长期受控 HTTPS preview 已纳入 TRADING-2526；Wave B/C 仍受 fee semantics、exact manifest 与独立 run authority 阻塞。
+acceptance: Atlas L0/L1 同源显示 RETAIN、Wave A complete 与 Wave B/C unauthorized；focused、formal split tiers 和 Full 通过；Owner 对 exact HTML 完成 desktop/mobile 人工视觉验收。不得把 OWNER_MANUAL_VISUAL_PASS 记为 Browser 自动化、keyboard、screen-reader、AT、audit replay 或 comprehension PASS；长期 exact-byte HTTPS review surface 由 TRADING-2526 验收。
+notes: 'Supporting requirement: docs/requirements/TRADING-2550_Frozen_Signal_Value_Confirmation_V1.md. Candidate=35e11715f6ff9e6fa6316a79ce8311083f0a3a4b; exact HTML SHA-256=bea2de7359efffcfb981a6067e58d297b821dc415be6f5078267ff5d9b36a609; Owner result=OWNER_MANUAL_VISUAL_PASS; agent Browser=NOT_EXECUTED_URL_POLICY; Full PASS artifact SHA-256=e18099b1f6803f7c13b9aed4a06efb3e867767fa45ef844564bd3267a107c427. No data/DQ/backtest/QuantConnect/provider/cache/orders/fills/positions; production_effect=none; broker_action=none.'

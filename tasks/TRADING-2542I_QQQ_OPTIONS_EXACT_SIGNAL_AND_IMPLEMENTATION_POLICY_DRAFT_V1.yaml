@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2542I_QQQ_OPTIONS_EXACT_SIGNAL_AND_IMPLEMENTATION_POLICY_DRAFT_V1
+area: QQQ options exact signal source and implementation policy owner-review draft V1
+priority: P0
+status: DONE
+next_owner: Project Owner / any follow-on strategy comparison must be a separately preregistered non-executable DATA_RESEARCH task; no further QuantConnect action is authorized
+next_step: No remaining blocker for this baseline wave. The two platform-automatic Cloud Builds are RETROSPECTIVELY_REVIEWED and the existing backtest export-safe aggregate is admitted research-only; do not run save/build/backtest/retry or promote the result.
+acceptance: 'Achieved: owner retrospectively reviewed automatic builds e826e3-52ae2f and 749e6f-52ae2f; backtest f2879a3cee7ec4e0b68b4f943aafd1f8 aggregate admitted only as non-executable DATA_RESEARCH; incident bytes remain immutable; no new QC/provider/raw/Object Store/share/paper/live/production/broker action and QC-external orders/fills/positions remain zero.'
+notes: 'Supporting requirement: docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md. Incident/result artifact SHA-256 384da42316b1dba5c338f6d48f607ffc8b0b2570732ffdef9bd6d0d8661e5bf6 remains immutable. Authorization state=RETROSPECTIVELY_REVIEWED; technical validation state=PASS_EXPORT_SAFE_AGGREGATE_ONLY; admitted aggregate end equity/net profit/fees/orders/entries/exits/cancels=104479.60/4.48%/75.40/116/58/58/0. Sharpe=-1.872 and PSR=0 prohibit interpreting positive return as strategy proof. Publication v1 failed before formal validation because terminal state preceded INTEGRATION preflight; blocker evidence SHA-256 1ae2cfb10d2740d79a39b6ed04317e7ec1a29c6b07c22d0d01afd81c1e409da0. V2 INTEGRATION preflight PASS while task remained active; no new QuantConnect action occurred.'

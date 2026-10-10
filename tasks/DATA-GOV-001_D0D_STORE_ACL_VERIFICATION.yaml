@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-GOV-001_D0D_STORE_ACL_VERIFICATION
+area: Data Foundation / exact-store ACL enforcement and scoped attestation
+priority: P0
+status: DONE
+next_owner: data platform owner：另立首个per-consumer migration任务并绑定exact DQ/publication/durability/ACL evidence；不得批量迁移
+next_step: 详见 `docs/requirements/DATA-GOV-001_D0D_Store_ACL_Verification.md`。Reviewed ACL policy、Windows NTFS protected DACL、stable SID inspector、kernel restricted-token正反probe、scoped attestation、live/offline validator与cleanup receipt均完成；D0A历史false flags不回写。
+acceptance: Exact isolated store writer/read-only reader/unapproved token/inheritance/ACL-change/tamper/drift全部fail-closed PASS；policy/module/SDDL/probe/store identity/checksum绑定；live root已清理；POSIX、production store、same-principal、administrator/root、offline/network store不在本PASS范围；generic cutover仍false。
+notes: 2026-07-29：bundle=`data_foundation_acl_bundle_3f68c2174cf4ffe1753ef8b9f32de5ea`、attestation=`store_acl_attestation_ca3499e0650954d9cde4962fb78a6fa1`；ACL/相关回归=`16/138 passed`（1 skipped），Architecture/Contract/Report/Reproducibility/Integration=`783/276/57/24/995 passed`，Full=`7668 passed / 3 skipped / 644 warnings`；任务归档DONE，production/broker none。

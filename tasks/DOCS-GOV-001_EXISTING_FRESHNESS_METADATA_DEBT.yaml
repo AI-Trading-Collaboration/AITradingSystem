@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DOCS-GOV-001_EXISTING_FRESHNESS_METADATA_DEBT
+area: Documentation governance / existing committed freshness metadata debt
+priority: P2
+status: DONE
+next_owner: documentation governance owner：后续新增 stale metadata 以独立任务处理
+next_step: 详见 `docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md`；父提交与 Wave11 push CI 均在既有 Docs freshness 前置失败，本批按每份文档内部最大状态日期修复 11 个 requirements 的 `最后更新`，不重写历史结论。
+acceptance: 11 个文档 targeted freshness=`5/0 + 6/0`，global freshness=`688 docs / 0 issues / PASS`；docs/documentation-contract/task consistency、task shadow、GOV normalization 与 compatibility authority 闭合；push CI 作为提交后远端 checkpoint，不在本地证据中预写 PASS；`production_effect=none`。
+notes: 2026-07-23：范围由原 10 个扩为 11 个（新增 TRADING-2450 metadata）；每份文档仅替换一行日期 metadata，不改变 runtime、策略、数据、投资解释或生产语义。

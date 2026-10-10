@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2443_MARKETSTACK_QUOTA_CYCLE_RECOVERY
+area: Data pipeline / Marketstack quota cycle recovery
+priority: P0
+status: DONE
+next_owner: System operations：后续 provider billing-cycle governance
+next_step: 详见 `docs/requirements/TRADING-2443_Marketstack_Quota_Cycle_Recovery.md`。Owner Dashboard evidence 确认 billing period=`2026-07-12..2026-08-11`、renewal=`2026-08-12`、current usage=0，旧负 quota header 属上一周期；实现 reviewed bounded cycle bootstrap 与 config-governed download retry，不改变原 10% overage cap。
+acceptance: Full-history/new ticker/mixed stale/当前周期负 header/超边界继续 fail closed；首个 live response 刷新 quota evidence；旧 run-control state/ledger 保留且新 spec 第二次失败后 hard stop；真实 `aits ops daily-run` 36/36 PASS，DQ/PIT/Reader Brief gates 完成，无 production/active shadow weights 或 broker/order/trading action。
+notes: '2026-07-16: 初始 quota blocker 与 run-control retry-exhausted blocker均按 no-silent-workaround 流程修复；focused parallel=`101 passed`，Ruff/compileall/docs/task/diff checks PASS。最终 run id=`daily_ops_run:2026-07-15:20260716T022111Z`；Marketstack one range request estimated/increment usage=25、live quota remaining=10000；DQ=`PASS_WITH_WARNINGS`、PIT=`PASS`、Reader Brief validation=13/13 PASS、manifest `production_effect=none`。'

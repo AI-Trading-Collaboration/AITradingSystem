@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1
+area: External validation / preregistered bounded QuantConnect Free Cloud pilot
+priority: P0
+status: BASELINE_DONE
+next_owner: TRADING-2493 research owner + independent reviewer：只消费 terminal NO-GO 处置并完成 stage-gate；2489/2490 owners：另行 reviewed policy 前 shared bundle/reconciliation 保持 blocked
+next_step: 详见 `docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md`。既有 2480–2491 blocked/shared authority 与原 2492 proposal 保持不变；single-use authorization 已消费并失效。Owner 独立接受 evidence 与 scope violation，未接受 pilot success。
+acceptance: evidence/request/attestation canonical hash chain、project/backtest/result identity、one order/one fill、data-point cap violation、无 raw rows 与 shared blocker 均可重放；terminal disposition=`PILOT_NO_GO_LICENSE_OR_EVIDENCE`；range expansion/further cloud action/investment interpretation 均 false。
+notes: 2026-08-05：project/backtest=`34808569`/`6e70793600035ddc3d7f856319a352db`；result SHA=`fdd11ab6...6ead`；processed data points=`734127` 超过 reviewed cap=`250000`。Owner attestation exact-bind evidence SHA=`2e57bfec...6293c` 与 pending request SHA=`94d7aef2...794f`；canonical attestation file SHA=`3857b5fe...c1913`。2489/2490 仍 blocked；禁止重跑/改项目/API/CLI/HTTP/Object Store/raw download/付费升级推断/paper/live/broker/production。

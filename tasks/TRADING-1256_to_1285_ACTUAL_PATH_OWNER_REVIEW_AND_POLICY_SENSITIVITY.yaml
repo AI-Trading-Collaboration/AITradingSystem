@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1256_to_1285_ACTUAL_PATH_OWNER_REVIEW_AND_POLICY_SENSITIVITY
+area: Research strategies / execution semantics actual-path owner review and policy sensitivity
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 `docs/research/dynamic_actual_path_owner_review_decision.md`、`inputs/research_reviews/dynamic_actual_path_owner_review_decision.yaml`、`outputs/research_strategies/policy_sensitivity/*`、`docs/research/dynamic_actual_path_policy_sensitivity_review.md`、`inputs/research_reviews/dynamic_actual_path_policy_sensitivity_matrix.yaml`；owner decision 保留人工决策字段；policy sensitivity ranking 只使用 actual-path metrics；target-path diagnostic-only；dynamic promotion 继续 blocked；report registry、artifact catalog、system flow、focused tests、Ruff、compileall、parallel pytest 和 `git diff --check` 通过
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求对 actual-path surviving candidates 做正式 owner review 与 execution policy sensitivity，不进入 paper-shadow/production/broker。2026-06-27: 实现完成并转入 VALIDATING；两个 surviving dynamic candidates owner recommendation 均为 `WATCH_ONLY`，policy sensitivity classification 均为 `POLICY_SENSITIVE_BUT_WATCHABLE`，best surviving candidate 为 `limited_adjustment`，remaining blockers 为 short-validity/staleness sensitivity 与 static baseline underperformance；dynamic promotion 继续 `BLOCKED`。'

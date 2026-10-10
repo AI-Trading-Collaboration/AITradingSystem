@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-862_PROMOTION_HARD_BLOCK_END_TO_END_PROOF
+area: Controlled strategy research / hard-block E2E proof
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 覆盖 TRADING-827/828/829/830、baseline dominated 和 insufficient sample 场景，最终必须 promotion/paper-shadow/production false 且 broker_action=none
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: E2E proof 完成并转入 VALIDATING；输出 `HARD_BLOCK_E2E_PASS`，6 个场景最终均保持 promotion/paper-shadow/production=false 且 broker_action=none。'

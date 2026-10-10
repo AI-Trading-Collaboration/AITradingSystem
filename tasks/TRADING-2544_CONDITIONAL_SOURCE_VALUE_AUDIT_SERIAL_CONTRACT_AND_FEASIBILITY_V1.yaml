@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2544_CONDITIONAL_SOURCE_VALUE_AUDIT_SERIAL_CONTRACT_AND_FEASIBILITY_V1
+area: Strategy research governance / contextual data-source information-value audit
+priority: P1
+status: PROPOSED
+next_owner: Project Owner：决定是否启动 S0 serial contract；Codex 仅在新授权后推进
+next_step: 当前仅记录方向；启动前需 review docs/requirements/TRADING-2544_Conditional_Source_Value_Audit_Serial_Contract_And_Feasibility_V1.md，并冻结 estimand、context、target/horizon、OOF split、DQ/PIT、capacity gate 与 conclusion taxonomy；未授权前不采数、不训练、不回测。
+acceptance: Reviewed S0 contract；可审计 source/provider/feature/PIT lineage；M0/M1 outer-fold OOF full/drop/add/group/pairwise 评估；只有 capacity gate 通过才允许 small gated MLP challenger；输出区分 predictive、tail-risk、provider reliability、decision utility，并保持 research-only。
+notes: 2026-08-23：Owner 仅要求记录该方向，状态 PROPOSED。Web Pro advisory 建议先 serial contract，再 M0/M1，M2 仅作 capacity-gated challenger；attention/gate weight 不作为价值证据。production_effect=none、broker_action=none、external_research_run=none。

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2338_B2_RESEARCH_COMPUTE_DATA_QUALITY_AS_OF_STABILIZATION
+area: Research Campaign / B2 compute data quality as-of stabilization
+priority: P0
+status: DONE
+next_owner: 系统验证；项目 owner 后续复核 B2 Campaign evidence interpretation
+next_step: 详见 `docs/requirements/TRADING-2338_B2_Research_Compute_Data_Quality_As_Of_Stabilization.md`；TRADING-2336 full validation 暴露旧 B2 research compute path 使用 wall-clock `generated_at.date()` 作为 data-quality `as_of`，会让历史 research smoke 随日历推进被错误 stale。本修复只修正 quality gate 的 cache-effective as-of，不放宽 `aits validate-data` 规则，不改变 B2 参数、threshold、evidence interpretation、paper-shadow、production、broker 或 order boundary。
+acceptance: '`prepare_research_data_context` 新增可选 `data_quality_as_of`；B2 control-window、targeted-evidence 和 full-diagnostic research builders 默认传入 `max_price_date(prices_path)`；B2 data-quality payload 披露 `as_of` 与 `as_of_basis=latest_price_cache_date`。验证通过 B2 compute adapter smoke、`tests/test_research_campaign.py` focused parallel pytest 20 passed、Ruff、compileall、contract-validation 193 passed 和 full parallel pytest 4161 passed / 643 warnings。'
+notes: '2026-07-04: 作为 TRADING-2336 full validation blocker 新增、实现并归档 DONE；根因是本地 cache latest=2026-06-29 / rates latest=2026-06-26，而 wall-clock date=2026-07-04 触发 `rates_stale`。修复后 B2 compute adapter smoke status=`B2_TARGETED_EVIDENCE_COMPUTE_PASS`，data_quality_status=`PASS_WITH_WARNINGS`，reason codes 包含 `CONTROL_BEHAVIOR_CLEAN`。'

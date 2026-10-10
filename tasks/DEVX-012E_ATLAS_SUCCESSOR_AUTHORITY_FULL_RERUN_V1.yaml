@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-012E_ATLAS_SUCCESSOR_AUTHORITY_FULL_RERUN_V1
+area: Developer experience / Atlas successor authority Full rerun
+priority: P1
+status: DONE
+next_owner: Project owner：复核自动周报中的 review-only candidates
+next_step: 实现已完成；按 v15 事务刷新 generated authority 与 final-commit Atlas ignored bundle，并绑定 prior Full FAIL 执行正式重验/发布
+acceptance: task_count ratchet=1047；显式 successor whitelist 含 TRADING-2549/2550；Atlas CURRENT/PASS；focused/formal/failure-fix Full PASS；local main=origin/main；existing automation ACTIVE；cleanup complete
+notes: Preflight PASS；仅修改 reviewed-successor test authority 和 task-count ratchet。首次 focused=22 passed/1 stale ignored-bundle failure；不得 skip，generated wave 后由官方 renderer 刷新并复验。

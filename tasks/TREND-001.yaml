@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TREND-001
+area: 趋势判断/产品边界
+priority: P0
+status: DONE
+next_owner: 系统实现
+next_step: 已落实“当前系统仅作趋势判断，不触发交易”的结论边界；详细拆解见 `docs/requirements/trend_judgment_scope_2026-05-04.md`
+acceptance: 日报和回测即使数据质量全绿，也不能把默认成功态写成交易触发、账户目标仓位或“可作为仓位复核依据”；报告必须明确趋势判断范围、`production_effect=none` 和投资姿态标签边界；实现时同步更新 `docs/system_flow.md` 并补充报告边界测试
+notes: '2026-05-04: 新增并进入实现，原因：owner 明确当前系统只做趋势判断；该边界影响投资解释，属于 P0 误读风险控制。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：新增 `trend_only` 结论等级和 `trend_judgment` 适用范围，`score-daily` 与回测均按趋势判断范围渲染，测试覆盖日报、回测和干净通过时不升级为仓位复核。'

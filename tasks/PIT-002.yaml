@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: PIT-002
+area: 特征/PIT 字段强校验
+priority: P0
+status: BASELINE_DONE
+next_owner: 系统实现
+next_step: 已完成字段级 source 检查基础版：`feature_availability` 报告可列出 `available_time` 覆盖率、缺失行、未来可见时间行和保守 fallback；`build-features`、`score-daily`、`backtest` 已对价格/利率输入写入字段级检查；剩余缺口是后续每个新增数据源继续接入专属 `available_time` 字段检查；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+acceptance: 新增或修改的数据源不能只凭 `event_time` 进入 A/B 级回测、日报主结论或 promotion gate；验证报告需要列出每个输入族的 `available_time` 字段覆盖率、缺失处理策略和最早可用时间；测试覆盖未来公告、未来 universe、未来宏观/证据样本不能进入 signal-time 结论
+notes: '2026-05-05: 新增任务，原因：`PIT-001` 已完成 catalog 和报告基础版，但最终闭环要求数据源级可见时间强校验，避免新特征绕过 `available_time <= decision_time`。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始实现数据源级 `available_time` 字段覆盖、未来可见时间和 report/trace 摘要。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `FeatureAvailabilitySourceCheck`、字段级报告/summary、市场输入 CLI 接入和未来 `filed_date` 防护测试；完整 DONE 仍需随新增数据源继续补专属检查。'

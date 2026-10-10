@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: SHADOW-002
+area: 模型评估/challenger shadow runner
+priority: P1
+status: BASELINE_DONE
+next_owner: 系统实现
+next_step: 已新增 `aits feedback run-shadow`：读取 rule experiment ledger、production decision snapshot 和 trace，追加 challenger prediction 到 append-only ledger，强制 `production_effect=none`；剩余缺口是真实候选规则每日运行调度和长期样本积累；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+acceptance: '`score-daily` 或独立 shadow 命令可同时记录 production 与多个 challenger；challenger 不写正式日报动作、不改变 `scores_daily.csv` production 行、不改变 position gate 或 belief_state；prediction ledger 能按 candidate_id/model_version 区分并追溯输入；测试覆盖 production 隔离、重复 prediction_id 停止和 candidate trace 引用'
+notes: '2026-05-05: 新增任务，原因：`SHADOW-001` 已有 ledger 和 outcome 校准，但还缺真正每天运行 challenger 的入口，这是进入前向 shadow 的下一步。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始实现独立 shadow runner 和 append-only prediction ledger 写入。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：shadow runner、报告和 CLI 测试已完成；完整 DONE 仍需真实每日调度和 outcome 样本。'

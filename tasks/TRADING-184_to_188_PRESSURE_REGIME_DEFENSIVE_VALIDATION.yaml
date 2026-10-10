@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-184_to_188_PRESSURE_REGIME_DEFENSIVE_VALIDATION
+area: ETF portfolio research/Pressure Regime Sample Expansion and Defensive Rule Validation
+priority: P0
+status: DEFERRED
+next_owner: Project Owner（pi 迁移后重启对应研究线时）
+next_step: 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待 forward/shadow 样本自然成熟，30 天以上无新证据。退出条件：迁移 pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007 需求文档
+acceptance: '`pressure-tag-diagnosis run/report`、`pressure-outcome-backfill run/report`、`defensive-pressure-compare run/report`、`defensive-rule-review run/report`、`weekly-ops-decision-update run/report` 及对应 validate CLI 可运行；artifacts 写入 dynamic_v3_rescue runtime roots；source mode 明确标记 `FORWARD_OUTCOME` / `HISTORICAL_REPLAY` / `BACKTEST_SIMULATION`；simulation evidence 标记 `SIMULATION_NOT_PIT` 且 `can_support_production=false`；`rule_approval_allowed=false` unless forward/PIT evidence sufficient；Reader Brief、README、operations runbook、system flow、report registry、artifact catalog、requirements、focused tests、ruff、compileall、git diff check 和 dynamic-v3 validation 完成；保持 `broker_action_allowed=false`、`production_effect=none`、`policy_change_allowed=false`、`auto_apply=false`'
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：DEFERRED_AWAITING_FORWARD_SAMPLES；agent_harness=claude_code；原备注：2026-06-11: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-184～188；当前 pressure tag artifact `1bc4775787a6606d` 已有 pressure windows 但 `defensive_validation_relevant_outcomes=0`，需要解释 forward outcome mapping 缺口并把 simulation/replay 样本作为 research-only pressure evidence 纳入防守规则验证。2026-06-11: baseline 实现完成并转入 VALIDATING；simulation-only evidence 不能支持 defensive label approval，下一步为 owner 复核 `RESEARCH_ONLY` / `continue_tracking` 结论并等待更多 forward pressure samples。'

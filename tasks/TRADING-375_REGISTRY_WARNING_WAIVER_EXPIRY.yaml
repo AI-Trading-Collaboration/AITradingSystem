@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-375_REGISTRY_WARNING_WAIVER_EXPIRY
+area: Report registry / waiver governance
+priority: P1
+status: DONE
+next_owner: 项目 owner 后续复核 waiver renewal/removal cadence；代码实现完成
+next_step: 详细拆解见 `docs/requirements/TRADING-375_Registry_Warning_Waiver_Expiry.md`；强化 report index visibility waiver schema，增加 affected report/artifact、owner、created/expires、review status、linked task 和 current inventory；过期或 inactive waiver 不得静默压掉 stale/missing artifact warning
+acceptance: 新增 `src/ai_trading_system/reports/waiver_inventory.py`、`aits reports waiver-inventory`、`aits reports validate-waiver-inventory`、expiry-aware report index waiver application、Reader Brief waiver inventory 摘要、report registry、artifact catalog、README、system flow、operations runbook、requirements 和 focused tests；expired waiver 或缺 registry entry fail closed，near-expiry / inactive review status visible warning，所有输出固定 `production_effect=none`
+notes: '2026-06-16: DONE；真实 artifact `outputs/reports/report_index_waiver_inventory_2026-06-16.json/md` 输出 `inventory_status=PASS`、expanded waivers=31、active=31、expired=0、expiring_soon=0；`outputs/reports/report_index_waiver_inventory_validation_2026-06-16.json/md` 输出 `validation_status=PASS`、checks=6、failed=0、warnings=0；report index `PASS_WITH_EXPLICIT_WAIVERS` / reports=384 / missing=20 / stale=10 / waived=30 / expired_waivers=0 / unwaived=0；documentation contract PASS / warnings=0；Reader Brief latest `2026-06-15` OK，Reader Brief quality OK；focused pytest `tests/test_report_index.py tests/test_waiver_inventory.py` 16 passed，Reader Brief/documentation focused pytest 24 passed，focused Ruff PASS。Exact 2026-06-16 Reader Brief generation remains limited by missing local `decision_snapshot_2026-06-16.json`; latest available Reader Brief was regenerated and validated. 保持 read-only / no waiver auto-renewal / no report repair / no data refresh / no upstream rerun / no official target / no broker / no production mutation。'

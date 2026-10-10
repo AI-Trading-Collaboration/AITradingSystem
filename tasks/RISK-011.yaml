@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: RISK-011
+area: 风险事件/高优先级候选 LLM 风险等级预审
+priority: P1
+status: BASELINE_DONE
+next_owner: 系统验证 + 项目 owner
+next_step: 详细拆解见 `docs/requirements/risk_event_triaged_llm_precheck_2026-05-10.md`；已实现高优先级候选 OpenAI metadata-only 预审入口；后续采纳为正式 occurrence 或复核声明仍需 owner 复核或独立任务推进
+acceptance: 提供命令读取 triage CSV 和官方候选 CSV，按 bucket 过滤后调用现有 OpenAI 风险预审链路；输出必须保存 model、reasoning effort、request id、input/output checksum、`status_suggestion`、`level_suggestion`、matched risk/ticker/node 和人工复核问题；结果强制 `llm_extracted / pending_review`，不得写入正式 occurrence、评分或仓位闸门；系统流图、README 和测试同步更新
+notes: '2026-05-10: 新增并进入实现，原因：owner 确认高风险源可用 LLM 判断风险等级，但该等级只能作为人工复核建议。2026-05-10: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `aits risk-events precheck-triaged-official-candidates`、官方候选 CSV loader、triage bucket 过滤、系统流图、README、需求文档和测试；真实 2026-05-10 高优先级候选 8 条送入 OpenAI，生成 5 条 pending_review 预审记录，其中 L2/L3 候选 4 条、active 候选 0 条；验证通过 `ruff check src tests`、CLI help、目标测试 26 passed 和完整 `pytest -q` 438 passed。'

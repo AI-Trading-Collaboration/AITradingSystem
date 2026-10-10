@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2325_PORTFOLIO_BASELINE_SOURCE_DECISION
+area: Research trends / exposure-cap portfolio baseline source decision
+priority: P0
+status: DONE
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 详见 `docs/requirements/TRADING-2325_Portfolio_Baseline_Source_Decision.md`；承接 TRADING-2324 synthetic observe-only source-bound dry-run readiness。本批只决策后续 simulation baseline source，审计 synthetic、static ETF allocation、dynamic strategy target exposure、paper portfolio advisory 和 actual holdings-derived baseline；不得执行新的 exposure-cap simulation，不得生成 target weight、rebalance instruction、paper-shadow、production 或 broker action。
+acceptance: 新增 `aits research trends portfolio-baseline-source-decision`；生成 candidate matrix、source feasibility matrix、PIT reproducibility audit、risk matrix、field requirement matrix、recommended baseline spec、2326 task route 和 safety boundary；默认推荐 2326 使用 `static_etf_allocation_baseline`，synthetic 仅 fallback；所有 outputs 固定 promotion/paper-shadow/production/broker false/none，并说明 `aits validate-data` 因只读 static config / prior research outputs 不适用。
+notes: '2026-07-01: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入 VALIDATING；真实 run status=`PORTFOLIO_BASELINE_SOURCE_DECISION_READY_PROMOTION_BLOCKED`，selected_baseline_for_2326=`static_etf_allocation_baseline`，next task=`TRADING-2326_Source_Bound_Exposure_Cap_Dry_Run_With_Static_ETF_Baseline`，data_quality_status=`NOT_APPLICABLE_SOURCE_DECISION_ONLY`；验证通过 focused pytest、Ruff、compileall、full pytest、docs / contract / task-register gates 和 diff check。 2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'

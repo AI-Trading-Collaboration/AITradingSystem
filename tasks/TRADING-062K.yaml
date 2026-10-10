@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-062K
+area: ETF daily brief simulation performance integration
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐日报 Simulation Performance 对 simulation ledger 的真实摘要读取
+acceptance: '`aits etf report daily` 和 `aits etf run daily` 生成的 portfolio brief 必须读取 `data/simulation/etf_ledger.csv` 或显式 ledger path，展示 model_version 级 records、20d hit rate、avg portfolio return、relative vs SPY/QQQ；缺 ledger、空 ledger、窗口不足或 benchmark 缺失必须明确输出 `n/a` / 暂无记录，不得补造表现；测试覆盖 ledger 有值和缺 ledger 两种语义；文档同步说明日报小节读取 ledger 但不触发交易动作'
+notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 12.2 要求 Daily Portfolio Brief 的 Simulation Performance 包含 last 20 trading days、signal hit rate 和 portfolio vs benchmarks；当前 CLI 日报没有读取 simulation ledger，只输出占位文案。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 `summarize_simulation_for_brief` 并接入 `aits etf report daily` / `aits etf run daily`；真实 smoke brief 显示默认 ledger 摘要，latest forward window 不足保持 `n/a`；目标测试、ruff、compileall、diff check 和全量 pytest 1628 passed。'

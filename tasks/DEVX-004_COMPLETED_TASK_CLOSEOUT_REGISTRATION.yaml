@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-004_COMPLETED_TASK_CLOSEOUT_REGISTRATION
+area: Developer experience / completed-task closeout registration
+priority: P0
+status: BASELINE_DONE
+next_owner: 后续研发任务 owner：观察新的 completed-task closeout；出现其他 register lifecycle 缺口时另建 follow-up
+next_step: 详见 `docs/requirements/DEVX-004_Completed_Task_Closeout_Registration.md`。OPS-069 暴露任务在最终提交归档后被 closeout preflight 误报 `TASK_NOT_REGISTERED`；canonical/installed skill 已恢复 byte parity。
+acceptance: 仅 `CLOSEOUT` 接受 completed register；START/LANE/INTEGRATION 仍只接受 active register；输出 typed registration source；focused=`30 passed`、parity=`PASS/5 files`、Architecture=`684 passed`、Contract=`275 passed`；无production、broker、数据或策略影响。
+notes: 2026-07-27：实现完成并转 `BASELINE_DONE`；OPS-069 真实 closeout 已以 `COMPLETED_CLOSEOUT_ONLY` 通过并普通推送，installed-only 诊断修正已由 Git canonical bundle 正式取代。

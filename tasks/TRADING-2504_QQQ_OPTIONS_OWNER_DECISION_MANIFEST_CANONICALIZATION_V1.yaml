@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_CANONICALIZATION_V1
+area: Strategy research governance / canonical Owner decision manifest serial contract wave
+priority: P0
+status: BASELINE_DONE
+next_owner: project owner：后续通过独立 handoff 提供真实 2502 typed decisions；engineering successor：只在 exact manifest 与新任务下讨论 policy adoption，不能由本任务自动推进
+next_step: 详见 `docs/requirements/TRADING-2504_QQQ_Options_Owner_Decision_Manifest_Canonicalization_V1.md`。immutable 28-slot catalog、`slot_id -> canonical_group`、PER_SLOT 全函数、G2 typed value、G5 rationale/impact、canonical manifest/hash、duplicate-key/tamper rejection 与 dependency audit 已冻结。当前 2504 blocker=`none_for_contract_baseline`；后继 blocker=`TRADING_2502_TYPED_OWNER_DECISIONS_NOT_YET_PROVIDED`。
+acceptance: 缺失/重复/额外/unknown/cross-group slot、group+override、G2/G5 附件错配、non-canonical/duplicate-key/tamper/identity drift 均 fail closed；输入排列不改 replay/hash；默认保持 `POLICY_BLOCKED_CASH_PRESERVATION`、selection=false、orders/fills=0。不得填阈值、代签 Owner decision、激活 engine/backtest 或执行 QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production。
+notes: 2026-08-09：registration ordinary-pushed main=`2da20cf0...f301`；policy file/canonical=`55fb29bb...47de`/`c872e9ae...f0db`，slot catalog=`a1492e27...1ad6`，module=`ab80c9e3...0b77`。focused failure-fix 最终=`21 PASS`，QQQ adjacent=`658 PASS`，Ruff/mypy/compileall PASS；本地真实 G1–G5 语义优先，Web 预审中的错误重命名未采纳。

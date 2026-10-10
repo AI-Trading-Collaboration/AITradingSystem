@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ARCH-003
+area: 架构/结构化降复杂度后续切片
+priority: P1
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/structured_refactor_followup_2026-05-17.md`；五个基础切片已完成并复验通过；后续若继续拆分，应新建任务或在对应模块任务中沿用这些边界
+acceptance: 五个切片均保持行为兼容；不改变 production scoring、position gate、approved overlay、正式 prediction ledger、backtest 语义或 shadow promotion 结论；每个切片有目标测试；当前复验覆盖 daily-run workflow contract、daily task dashboard view model、`aits docs` 命令组、shadow lineage helper 和 ProductionEffect 低风险替换；验证通过 focused pytest 107 passed、Ruff、repo-wide Black check、`compileall` 和目标 mypy
+notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求继续依次开发、测试、修复并验收五个低风险重构任务。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：五个切片均已实现并通过目标测试、全量 ruff、全量 pytest 和 diff check；`prediction_ledger.py` 目标 mypy 也已修复并通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核 `core/workflow.py`、`ops_daily.py`、`daily_task_dashboard.py`、`cli_commands/docs.py`、`shadow/lineage.py`、`core/production_effect.py` 和 `prediction_ledger.py` 相关契约仍有效，后续重构已沿用这些边界；验证通过 `tests/test_core_contracts.py`、`tests/test_ops_daily.py`、`tests/test_daily_task_dashboard.py`、`tests/test_cli_direct.py`、`tests/test_docs_freshness.py`、`tests/test_documentation_contract.py`、`tests/test_shadow_weight_profiles.py` 和 `tests/test_prediction_ledger.py` 共 107 passed，以及 Ruff、repo-wide Black check、`compileall` 和目标 mypy。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1
+area: Publishing & Experience / Atlas citation-first read query and answer API
+priority: P1
+status: DROPPED
+next_owner: knowledge/reporting/UX owner：维护 V1 contract 与 retained preview；可用 reviewed local-capable browser 后补人工 visual review，若无页面问题无需继续开发
+next_step: 详见 `docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md`。consumer source=`4dd78df3b…`；五个问题的 query/independent validator/static renderer 已闭合，真实 preview 5/5 validation PASS、double-build byte-identical；focused=`59 passed`，compatibility/deprecation=`165 passed`，正式五级门全部 PASS。Web Pro URL policy 禁止本地 `file://` 且禁止绕过，故 browser visual 明确保留为 `NOT_EXECUTED_URL_POLICY`，退出条件为 reviewed local-capable browser 完成人工复核。
+acceptance: 五个 stable question ids；exact entity dispatch；ANSWERED/LIMITED/BLOCKED；100% claim→canonical citation closure；source time 显式 null 不被伪造且强制 LIMITED；snapshot/diff/source identity 可重算；tamper/unknown/ambiguous fail closed；deterministic JSON/HTML；no-recompute/no-network/no-write；focused/formal PASS；browser visual review 单独显式记录状态。
+notes: 2026-07-31：Architecture=`812`、Contract=`276`、Integration=`995`、Reproducibility=`24`、Full=`7863 passed / 3 skipped / 644 warnings`；preview SHA=`b4c5c6fd…/d3317e3f…/dd17b181…`；状态转 `BASELINE_DONE`。browser visual 未伪报 PASS；V1 不授权自由文本/LLM、HTTP deployment、empirical research、production 或 broker action。；GOV-008 2026-10-10：Atlas 已退役（owner_decision:GOV-008:2026-10-10:atlas_retired），页面与代码在 P4 删除，本任务不再推进

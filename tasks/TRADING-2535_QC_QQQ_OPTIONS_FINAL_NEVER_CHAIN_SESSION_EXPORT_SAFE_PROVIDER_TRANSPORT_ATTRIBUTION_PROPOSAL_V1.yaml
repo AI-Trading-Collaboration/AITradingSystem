@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2535_QC_QQQ_OPTIONS_FINAL_NEVER_CHAIN_SESSION_EXPORT_SAFE_PROVIDER_TRANSPORT_ATTRIBUTION_PROPOSAL_V1
+area: Data governance / export-safe provider versus subscribed-transport attribution proposal for the unique final never-chain QQQ option session
+priority: P0
+status: DONE
+next_owner: Project Owner / governed successor coordinator：proposal ordinary push 后仅可用新的 exact single-use token 进入 admission；不得复用 2532 token
+next_step: Offline sealed proposal 已完成；external counters 仍为 0/0/0/0。下一步是 final-tree validation、ordinary push，再等待 OWNER_FINAL_TOKEN_REQUIRED；本任务不自动访问 QuantConnect。
+acceptance: Exact 2532/2533/2534 identities、1202 sessions/1 never-chain facts 与 count-only provider/subscribed-transport contract 已绑定；raw rows/identifiers/fields/logs/Object Store/orders/fills 禁止；focused/formal PASS、ordinary push、SHA verify。
+notes: 详见 `docs/requirements/TRADING-2535_QC_QQQ_Options_Final_Never_Chain_Session_Export_Safe_Provider_Transport_Attribution_Proposal_V1.md`。2535 terminal proposal candidate 由 TRADING-2536 吸收完成 Atlas 分类、final-tree validation 与 ordinary publication；production_effect=none、broker_action=none、external_action=none。

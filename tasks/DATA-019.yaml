@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-019
+area: 数据工程/Cboe VIX 请求缓存新鲜度
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/cboe_vix_cache_freshness_2026-05-21.md`；实现已让 Cboe VIX 静态 CSV 请求级 cache key 纳入 ticker/start/end/interval，并在同一窗口缓存体未覆盖 as-of 终点时强制重新请求；后续真实缓存已覆盖 `^VIX` 至 2026-06-05，旧 `VIX_History.csv` 响应不再导致 stale 阻断
+acceptance: '`CboeVixPriceProvider` 对可变静态 `VIX_History.csv` 的请求级缓存必须包含评估窗口身份或等价 freshness 约束；既有旧 cache 不得继续让 `^VIX` 停在 2026-05-11；`download-data` 后 `prices_daily.csv` 中 `^VIX` 至少覆盖到 as-of 2026-05-19；`aits validate-data --as-of 2026-05-19` 与 `aits ops daily-run` 不再因 `^VIX` stale 阻断；测试、系统流图和需求文档同步更新'
+notes: '2026-05-21: 新增并进入 IN_PROGRESS，原因：真实 daily-run 连续停在 `score_daily`，只读诊断确认 Cboe 官方端点已更新到 2026-05-19，但项目外部请求级 cache 命中 2026-05-13 的旧静态 URL 响应，导致 manifest downloaded_at 刷新而 `^VIX` 最新观测仍为 2026-05-11。2026-05-21: 从 IN_PROGRESS 改为 VALIDATING，原因：Cboe VIX provider cache identity 已纳入 ticker/start/end/interval，且旧缓存体若未覆盖请求 `end` 会重新抓取；聚焦测试、请求缓存相关测试、ruff、git diff --check 和全量 pytest 824 passed；真实 `aits ops daily-run` 默认 as-of=2026-05-19 已 15/15 PASS，Run ID=`daily_ops_run:2026-05-19:20260520T165804Z`，`^VIX` 覆盖到 2026-05-19，data_quality PASS。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前 `prices_daily.csv` 中 `^VIX` 覆盖 2018-01-02 至 2026-06-05；`validate-data --as-of 2026-06-05` 为 PASS、错误 0、警告 0、信息 12；`score-daily --as-of 2026-06-05 --skip-risk-event-openai-precheck` 未被 VIX stale 阻断；`tests/test_market_data.py tests/test_external_request_cache.py tests/test_data_download.py` 为 25 passed，相关 ruff/compileall 通过。'

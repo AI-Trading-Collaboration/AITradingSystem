@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-020_FULL_COST_PROFILING_AND_VARIANT_AUDIT
+area: Validation runtime / Full heavy-node cost profiling, host telemetry and variant redundancy audit
+priority: P1
+status: BASELINE_DONE
+next_owner: Claude Code coordinator
+next_step: 评估与推进已由 DEVX-022 承接并发布（main = origin/main = 0cbdd9a45）：Full 3.59 小时 -> 2 小时 14~25 分（-33%~-38%），未达 <2 小时；owner 2026-10-06 选择不改正式 Full 合同，剩余提速手段（内层 4 worker、取消 worker 第二遍校验、起跑间隔 120->30 s、种子刷新、变体共享前缀）见 DEVX-022 第 13、14 节，待 owner 决定后再启动。本任务保留：变体冗余审计表（未做）与 K 实验原始数据（D:/Work/devx020-k，约 6.3 GB，随本任务关闭时清理）。状态转 BASELINE_DONE。
+acceptance: 产出可审计证据（函数级计时与对比、主机遥测与 K 建议、变体冗余审计表）并写入 docs/requirements/DEVX-020_Full_Cost_Profiling_And_Variant_Audit_V1.md；每项节省量用实测而非外推数；不改变 Full 验收语义、不放宽任何校验；任何调度或测试改动必须另有任务、评审与重测；明确列出覆盖等价性论证和风险。
+notes: 2026-10-06：评估由 DEVX-022 承接，状态转 BASELINE_DONE。

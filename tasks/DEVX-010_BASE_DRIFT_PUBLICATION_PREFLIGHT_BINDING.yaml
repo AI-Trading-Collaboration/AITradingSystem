@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-010_BASE_DRIFT_PUBLICATION_PREFLIGHT_BINDING
+area: Base drift publication/preflight exact binding
+priority: P0
+status: BASELINE_DONE
+next_owner: System validation / integration coordinator
+next_step: v1 immutable Architecture failure identified one stale exact task-count ratchet; v2 updates 1049 to the canonical generated count 1050 and reruns all formal gates.
+acceptance: INTEGRATION preflight independently binds the frozen plan lane, exact latest-main transaction candidate base, plan id/SHA and reviewed reconciliation; mismatch/tamper/serial/phase gates fail closed; canonical/installed parity and final formal validation pass.
+notes: v1 Architecture=881 passed/1 failed; only stale task_count assertion after DEVX-010 registration. v1 released FAILED. v2 claims the exact test path; no schema or business behavior change; production_effect=none; broker_action=none.

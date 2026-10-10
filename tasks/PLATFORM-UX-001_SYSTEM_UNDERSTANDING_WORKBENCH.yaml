@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH
+area: Publishing & Experience / read-only interactive system understanding client
+priority: P1
+status: DROPPED
+next_owner: project owner + architecture coordinator + knowledge/reporting/UX owner
+next_step: 详见 `docs/requirements/PLATFORM-UX-001_System_Understanding_Workbench.md`；依赖KNOWLEDGE-001/PUBLISHING-001，并严格按完整G2.4 handoff PASS→ARCH-005 S0/S1→新显式恢复指令→G2.5→G3推进，native cut-in依赖ARCH-004H。复用canonical status、Knowledge Object、Evidence Dashboard、typed contracts、RunLedger、trace和policy，不创建第二套status、知识或数据control plane。
+acceptance: versioned deterministic `SystemUnderstandingViewModel`作为Knowledge/runtime contracts只读projection；本地HTML覆盖“现在/为什么/结果/可信度/问题/改进”；claim可下钻source/as-of/regime/range/DQ/PIT/freshness/limitations；missing显式fail closed；不重算score/gate/backtest/promotion。
+notes: '2026-07-12: 初始登记为统一理解工作台；同日按最新讨论收敛为Publishing & Experience交互客户端，原只读/no-recompute边界保留，知识核心与多载体发布由KNOWLEDGE-001/PUBLISHING-001承接。2026-07-16: 补齐phase-level handoff与ARCH-005恢复依赖，当前不可提前实施。；GOV-008 2026-10-10：Atlas 已退役（owner_decision:GOV-008:2026-10-10:atlas_retired），页面与代码在 P4 删除，本任务不再推进'

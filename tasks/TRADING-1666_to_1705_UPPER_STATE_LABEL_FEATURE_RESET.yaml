@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1666_to_1705_UPPER_STATE_LABEL_FEATURE_RESET
+area: Research trends / upper-state label and PIT feature reset with alternating two-layer discipline
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 `aits research trends upper-state-reset`、alternating two-layer protocol、upper-state label taxonomy v2、action-value score policy v2、action-value matrix v2、upper-state labels v2、PIT feature inventory/matrix v3、four 个 research-only first-layer submodel review、threshold/composer v2、walk-forward v3、frozen-probe actual-path review、failure attribution、owner pack、forward watch/final matrix/closeout、report registry、artifact catalog、system flow 和 guardrail tests；真实 run：action-value rows=57,312、label rows=14,328、PIT feature rows=1,343、composer predictions=2,205、actual-path improved_vs_flat_reference_count=4/4、final_status=`UPPER_STATE_LABEL_RESET_IMPROVES_ACTUAL_PATH`；但所有 submodels 仍为 `MODEL_EDGE_WEAK`，failure primary reason=`SUBMODEL_PRECISION_WEAK`；所有 artifacts 包含 research window metadata 和 data quality contract；target-path metrics 不能通过 gate；dynamic promotion、paper-shadow、production、broker 固定 blocked/false/none
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1666～1705，上轮 up-state repair 结论为 `UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`，不能继续在旧 label 上做 threshold/class-weight 微调。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI status=`UPPER_STATE_LABEL_FEATURE_RESET_OWNER_REVIEW_READY_PROMOTION_BLOCKED`，final status=`UPPER_STATE_LABEL_RESET_IMPROVES_ACTUAL_PATH`，但 first-layer v2 仍 research-only。'

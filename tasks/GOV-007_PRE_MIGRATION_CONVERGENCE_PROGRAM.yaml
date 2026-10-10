@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: GOV-007_PRE_MIGRATION_CONVERGENCE_PROGRAM
+area: Governance / pre-migration convergence program (Codex → pi)
+priority: P0
+status: DEFERRED
+next_owner: Claude Code coordinator
+next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：第十二次发布完成（DEVX-022 M6）：main = origin/main = 2d29e4e35（普通推送由 Claude 在 owner「以后默认都是你推送」授权下执行）。整条链 3:38（上一条 4:23），Full 2:13（上一条 2:57），0 失败，`slow_steps` 为空。继续路线：DEVX-016 C3c（owner 先评审 compat 账本策略与采纳方式）-> C3d（P4-4）-> C4（S4）-> DEVX-017（C4 与 DEVX-017 的 AGENTS.md 发布方式待 owner 决定）-> OPS-082（须 owner 先确认「不得使用 Windows 任务计划程序」规则变更，且依赖 OPS-077/078/081 验收）-> 阶段 5。owner 另需：C3c 的策略评审与采纳方式；C4 / DEVX-017 改 AGENTS.md 的发布方式；DEVX-021 第 11 节 P2/P3 的方案；执行 D:/Work/Remove-AitsDevx015TestRegistryRoots.ps1 清理 HKCU 测试根；长跑期间把「关闭显示器」设为「从不」。
+acceptance: 目标状态 E1–E10 全部满足：main=origin/main 且 workflow-health PASS；无本地唯一内容；无非终态事务；DEVX-015 DONE；OPS-077/078/081 运营验收；IN_PROGRESS 全部处置；DEVX-016、OPS-082、DEVX-017 完成；清理收尾完成
+notes: 2026-10-10：第十二次发布完成（2d29e4e35）；链 3:38；路线：C3c -> C3d -> C4 -> DEVX-017。

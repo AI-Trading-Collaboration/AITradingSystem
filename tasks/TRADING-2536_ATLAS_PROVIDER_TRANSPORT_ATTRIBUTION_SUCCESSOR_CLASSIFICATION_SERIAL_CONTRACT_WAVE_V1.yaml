@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2536_ATLAS_PROVIDER_TRANSPORT_ATTRIBUTION_SUCCESSOR_CLASSIFICATION_SERIAL_CONTRACT_WAVE_V1
+area: Atlas / provider-transport attribution successor classification serial contract wave
+priority: P0
+status: DROPPED
+next_owner: Project Owner / governed external attribution admission successor
+next_step: Atlas classification and canonical page refresh are implemented. Await a fresh exact single-use Owner token bound to the ordinary-pushed proposal identities before any QuantConnect/Cloud/provider probe; 2532 token remains consumed and invalid for reuse.
+acceptance: 2535 and 2536 are explicitly classified; canonical page freshness CURRENT; sealed package hashes unchanged; focused and five formal tiers PASS on final tree; ordinary push and SHA verification; external counters remain 0/0/0/0 until a new exact token.
+notes: BASELINE_DONE is intentionally non-terminal until final-tree validation and ordinary publication complete. No Cloud, raw rows, Object Store, orders, fills, broker, browser, or external action occurred. See `docs/requirements/TRADING-2536_Atlas_Provider_Transport_Attribution_Successor_Classification_Serial_Contract_Wave_V1.md`.；GOV-008 2026-10-10：Atlas 已退役（owner_decision:GOV-008:2026-10-10:atlas_retired），页面与代码在 P4 删除，本任务不再推进

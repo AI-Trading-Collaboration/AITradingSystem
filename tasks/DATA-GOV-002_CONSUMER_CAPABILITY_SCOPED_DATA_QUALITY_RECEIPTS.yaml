@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
+area: Data Foundation / consumer capability-scoped strict DQ receipts
+priority: P0
+status: DEFERRED
+next_owner: data platform engineering coordinator：准备consumer-specific adoption review决策上下文；未获Owner决定前不得修改active policy/classifier/consumer，Phase D仍独立授权
+next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：详见 `docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md`。Phase A/B1/B2与C1/C2/C2P/C3P/C3均已形成可审计baseline；price/rate typed contract只覆盖exact approved source/site bundle，任一归因维度不完整继续`GLOBAL_OR_UNKNOWN_SCOPE`。D0B2B/OPS-067已在`main=b646fc9ae`证明canonical as-of=`2026-07-27` strict DQ=`PASS`，receipt=`dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4`，但generic cutover/adoption仍未授权。
+acceptance: 下一决策门须绑定exact capability/consumer/policy bytes、issue site/code、typed decision authority、多个真实批次full/scoped receipts及false-isolation正反/unknown证据，并由Owner选择`AUTHORIZE_CONSUMER_SPECIFIC_ADOPTION_REVIEW_WAVE`、`HOLD_FOR_MORE_FALSE_ISOLATION_EVIDENCE`或`REJECT_ADOPTION`；在此之前不得改变capability policy、classifier、consumer、QLD automatic selection、daily/periodic、production或broker行为。Phase D还需独立Owner授权。
+notes: 2026-07-29：父任务从陈旧B2叙述对齐至当前工程事实：C3P/C3 typed contract=`BASELINE_DONE`，canonical strict DQ已由D0B2B/OPS-067恢复为`PASS`；本波仅更新parent/task/append-only governance authority和下一决策上下文，runtime/data flow/cached data均不变，`production_effect=none`、`broker_action=none`。

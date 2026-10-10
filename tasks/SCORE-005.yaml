@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: SCORE-005
+area: 仓位模型/软硬闸门与非线性映射
+priority: P1
+status: BASELINE_DONE
+next_owner: 系统设计 + 系统实现
+next_step: 已完成第一阶段 gate taxonomy 审计字段：`PositionGate` 输出 `gate_class`、`target_effect`、`execution_effect`，日报 Risk Caps 表展示每个 gate 的来源、触发状态和上限；详细拆解见 `docs/requirements/scoring_architecture_refactor_2026-05-06.md#score-005软硬闸门非线性仓位映射与执行平滑`
+acceptance: P0 硬约束仍 fail closed；soft gate 只能降低目标、速度或确认要求，不得释放硬风险；非线性映射、turnover limit、cooldown 和 rebalance band 必须先作为 challenger 经回测、forward shadow 和 rule governance 验证；报告能解释最终仓位变化来自基础分、hard cap、soft cap 还是执行平滑；完整 DONE 仍需 soft gate 与非线性映射候选通过 replay/shadow/governance
+notes: '2026-05-06: 新增任务，原因：现有 `min(cap)` 结构稳健但可能过于保守并造成跳变；需要在不削弱硬闸门的前提下，把软风险和执行纪律从硬上限中拆出来。2026-05-06: 从 PROPOSED 改为 BASELINE_DONE，原因：新增 gate taxonomy 字段和报告审计表；当前仍保持最严格上限生产行为，不启用 soft gate 或非线性仓位映射。'

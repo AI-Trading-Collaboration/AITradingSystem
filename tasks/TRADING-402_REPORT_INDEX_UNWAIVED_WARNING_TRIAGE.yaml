@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-402_REPORT_INDEX_UNWAIVED_WARNING_TRIAGE
+area: Research governance / report index warning triage
+priority: P1
+status: DONE
+next_owner: 项目 owner 复核 9 个 unwaived report-index warnings；需要显式决定 fix/waiver/archive/blocking
+next_step: 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；读取 report index validation output，把 9 个 unwaived warnings 分类并提出处理建议；不得 silently waive warnings
+acceptance: 新增 `aits reports report-index-warning-triage` / `validate-report-index-warning-triage`、JSON/Markdown report、Reader Brief section 和 focused tests；每个 warning 分类为 true blocker/governance warning/stale artifact/missing metadata/legacy warning candidate/documentation inconsistency，并建议 fix now、explicit expiring waiver、leave blocking 或 archive legacy artifact
+notes: '2026-06-17: DONE；真实 artifact `outputs/reports/report_index_warning_triage_2026-06-17.json/md` 输出 unwaived_warning_count=9、true_blockers=1、silent_waivers=0；validation `report_index_warning_triage_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。没有把 warning 静默转成 waiver。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2315_REGIME_STATE_MACHINE_DESIGN_AUDIT
+area: Research trends / diagnostic regime state machine
+priority: P2
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 生成 regime state machine design audit summary、label taxonomy、transition rule matrix、anti-lookahead guardrails、candidate segmentation use cases、TRADING-2316 route 和 safety boundary；真实 run status=`REGIME_STATE_MACHINE_DESIGN_AUDIT_READY_DIAGNOSTIC_ONLY`，data_quality_status=`NOT_APPLICABLE_STATIC_DESIGN_AUDIT`；所有 artifacts 固定 label series / candidate signal / promotion / paper-shadow / production / broker false/none。
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01: 根据 owner 附件登记；2026-07-01: 迁移到 owner roadmap 的 TRADING-2315。2026-07-01: 新增需求文档并进入 IN_PROGRESS；本任务必须 selective staging，不能混入两个既有无关 research 文档改动。2026-07-01: 实现完成并进入 VALIDATING；label_count=9、transition_rule_count=8、guardrail_count=6、candidate_segmentation_use_case_count=4；验证通过 Ruff、compileall、TRADING-2315 focused parallel pytest 7 passed、相邻 registry/docs focused parallel pytest 43 passed、contract-validation 193 passed 和 `git diff --check`。'

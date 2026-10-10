@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2516_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EVIDENCE_LANE_AUTHORIZATION_REFRESH_V1
+area: QQQ Options primary-window evidence lane selection and versioned authorization refresh contract
+priority: P0
+status: BASELINE_DONE
+next_owner: Project Owner：ordinary-pushed exact 2516 request 后另行审阅 fresh single-use token；后继 coordinator：仅在 token 到位后执行一次 bounded zero-order collection/evidence admission
+next_step: Versioned refresh contract 已实现；当前 blocker=OWNER_REFRESH_TOKEN_NOT_PROVIDED，Cloud run/Results/evidence/DQ-PIT 均未发生，engine 保持 POLICY_BLOCKED_CASH_PRESERVATION
+acceptance: 冻结 QQQ Options 唯一证据车道、2513/2514 exact authority、PRIMARY 1202 sessions、零订单/零成交与全部禁止项；old/backdated/expired/tampered token fail closed；外部动作须独立 exact token
+notes: 'Supporting requirement: docs/requirements/TRADING-2516_QC_QQQ_Options_Primary_Window_Evidence_Lane_Authorization_Refresh_V1.md；task focused 16 PASS；task+Atlas failure-fix 51 PASS；human acceptance facts 保留；external_action=none。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ARCH-004B_SEMANTIC_KERNEL
+area: Architecture / semantic contracts / research evaluation context
+priority: P0
+status: DONE
+next_owner: ARCH-004C 复用 context 并建立 platform contracts
+next_step: 详见 `docs/requirements/ARCH-004B_Semantic_Kernel.md`；新增纯 contracts、complete/blocked `ResearchEvaluationContext`、canonical status/evidence/window/policy refs、governed legacy adapter 和新 artifact enforcement；不一次迁移历史 artifacts。
+acceptance: 合法 2021 primary window + 2022 AI regime round-trip；window-id/start、requested/actual/effective/evaluation/as-of、unknown role/status、checksum/id和 legacy flat parity fail closed；首个 `first_layer_v2_effective_coverage_audit` additive consumer 保持旧计算/status/safety。
+notes: '2026-07-11: scoped Ruff/Black/compileall/mypy PASS；focused/docs 74、contract-validation 197、full parallel `5375 passed / 0 failed / 642 warnings`；artifact=`outputs/validation_runtime/full_20260710T171001Z/test_runtime_summary.json`；production effect=none。'

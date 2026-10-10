@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-795_to_799_REGIME_CONDITIONED_VALUE_SURFACE
+area: Controlled strategy research / regime-conditioned value surface design, tail-loss guardrail, loss matrix, residual regime hypotheses, controlled review
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 CLI：`aits research strategies regime-conditioned-value-surface-design`、`tail-loss-guardrail-fallback-policy`、`regime-horizon-loss-attribution-matrix`、`gbdt-residual-hypothesis-regime-conditioning` 和 `regime-conditioned-value-surface-controlled-review`；TRADING-795 必须输出 protocol/regime variables/tail-loss definitions/action changes/fallback rules/validation plan；TRADING-796 必须对比 original、regime-conditioned、tail-loss guarded、benchmark fallback；TRADING-797 必须拆解 loss_by_regime/asset/horizon/action/cluster/utility_profile/date_window；TRADING-798 只能输出 residual hypotheses；TRADING-799 决策只能为 `CONTINUE
+notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST

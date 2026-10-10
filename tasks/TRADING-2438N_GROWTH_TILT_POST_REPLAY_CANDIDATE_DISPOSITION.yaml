@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2438N_GROWTH_TILT_POST_REPLAY_CANDIDATE_DISPOSITION
+area: Strategy research / post-replay owner route
+priority: P0
+status: DROPPED
+next_owner: 项目 owner + 系统证据解释；依赖 M3
+next_step: 按 PASS/FAIL/BLOCKED 和 C second-review route 做 evidence interpretation；不自动 promotion。
+acceptance: PASS 进入 owner evidence review；FAIL 按 primary improvement/risk breach 决定 targeted redesign 或 withdraw；BLOCKED 进入 exact remediation；C 只有 structural redefinition + second approval 后可进入独立 replay wave。
+notes: '2026-07-10: 等待 M3。 2026-07-23: GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE 转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'

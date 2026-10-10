@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1
+area: Strategy governance / strategy research reopen readiness decision contract
+priority: P0
+status: BASELINE_DONE
+next_owner: Project Owner：后继从 exact 2515 main 选择唯一数据证据车道；后继 coordinator：另行登记并取得所需数据或外部授权
+next_step: 2515 readiness contract 已实现且维持 KEEP_CLOSED + PREREGISTRATION_ONLY；QLD 仅 recommendation，QQQ Options token/evidence/DQ-PIT 均未发生；下一步须由 Owner 选择唯一数据证据车道
+acceptance: 冻结 KEEP_CLOSED + PREREGISTRATION_ONLY baseline、typed authority/hash/research-window/单车道检查与 fail-closed replay；不得运行候选搜索、经验回测、holdout、外部平台或投资结论
+notes: 'Supporting requirement: docs/requirements/TRADING-2515_Strategy_Research_Reopen_Readiness_Decision_V1.md；Atlas task coverage requirement binding failure-fix；focused readiness 33 PASS；consumer 同覆盖待修复后重跑；无 candidate search/backtest/holdout/cache/external action/investment conclusion。'

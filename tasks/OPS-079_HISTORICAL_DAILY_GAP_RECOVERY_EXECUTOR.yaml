@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR
+area: Operations / historical daily gap recovery executor
+priority: P0
+status: DEFERRED
+next_owner: Codex：完成执行器、正式门禁、main 发布、release promotion 和四项 runtime 恢复；operations owner：复核 non-PIT 结果并维持 strict 缺口。
+next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：已解除 lease blocker；当前推进 reviewed contract、producer/validator、formal validation 与 release。八项 strict 缺口仍不可恢复。
+acceptance: 隔离 bundle content-derived PASS；canonical gap/state/ledger/queue byte-identical；无 provider/OpenAI、strict PIT、consumer cutover、weights 或 broker/trading action。
+notes: 2026-09-05：从 exact main 293813e5 建立独立 worktree；取得 publication transaction v1，开始最小 serial contract wave。

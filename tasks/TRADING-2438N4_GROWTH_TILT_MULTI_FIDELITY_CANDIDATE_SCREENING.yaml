@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2438N4_GROWTH_TILT_MULTI_FIDELITY_CANDIDATE_SCREENING
+area: Strategy research / contract-first multi-fidelity screening
+priority: P0
+status: DROPPED
+next_owner: 独立 baseline capability owner；N2>0且 N3 有 screening-eligible candidate 后重开
+next_step: F0 contract screen、F1 preregistered casebook、F2 actual-path slices、F3 survivor-only full PIT；return不能覆盖 hard-risk failure，F1不能 promotion。
+acceptance: N3 candidate contract-ready；policy/metrics/PIT/runner/dependencies/duplicate gates全部通过；null/empty-event fail-closed；F1/F2 rejected candidate不得调用F3。
+notes: '2026-07-10: N3 未启动且 candidate=0；status=`NOT_STARTED_NO_CONTRACT_READY_CANDIDATE`，未运行 F0/F1/F2/F3 或 PIT replay。 2026-07-23: GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE 转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'

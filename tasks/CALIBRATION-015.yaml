@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: CALIBRATION-015
+area: 市场反馈优化/shadow cap-level attribution
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/shadow_parameter_attribution_promotion_contract_2026-05-16.md`；cap-level attribution 与最终仓位变化解释已完成；后续 forward shadow 观察由后续 lifecycle/iteration 任务承接，不改变本任务完成状态
+acceptance: '`search-shadow-parameters` 报告和 manifest 在 weight/gate factorial attribution 之外，拆出单个 gate cap 的边际 excess、primary gate cap、每个 signal date 的 production/candidate 最终仓位、binding gate 和 return impact；输出 `production_effect=none`，不修改 production gate、权重、approved overlay、正式 ledger 或日报结论；当前 bundle `current_20260504_20260514_cap_promotion_v3` 仍披露 primary driver=`gate`、primary gate cap=`valuation`、valuation cap-only excess delta 约 2.42%、thesis 约 0.76%，position change attribution 覆盖 2026-05-04 至 2026-05-14'
+notes: '2026-05-16: 新增并进入 IN_PROGRESS，原因：最新 shadow 搜索显示 primary driver 为 gate，但只知道 gate 主导不足以支持治理判断。2026-05-16: 从 IN_PROGRESS 改为 VALIDATING，原因：已实现 cap-only ablation、仓位变化解释表、manifest 输出和目标测试覆盖；当前样本 `current_20260504_20260514_cap_promotion_v3` 显示 diagnostic-leading 为 `source_current__grid_gate_0217`，primary gate cap 为 `valuation`，valuation cap-only excess delta 约 2.42%、thesis 约 0.76%；全量 pytest 551 passed，ruff 通过。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前 artifact 和 CLI smoke 复核通过，`search_report.md` 保留 Cap-Level Attribution 和 Position Change Attribution；验证通过 `tests/test_shadow_weight_profiles.py` 15 passed、Ruff 和 repo-wide Black check。'

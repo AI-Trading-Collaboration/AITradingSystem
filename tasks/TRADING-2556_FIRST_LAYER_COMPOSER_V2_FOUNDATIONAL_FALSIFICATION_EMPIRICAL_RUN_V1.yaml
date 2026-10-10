@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2556_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_EMPIRICAL_RUN_V1
+area: Strategy research / first-layer composer v2 foundational falsification empirical run
+priority: P0
+status: BASELINE_DONE
+next_owner: Codex strategy-evidence coordinator：先发布 V1 terminal INVALID 证据；后续仅可在新任务中做 schema-only corrective run
+next_step: 唯一 V1 attempt 已因 BootstrapInterval extra-field schema adaptation 缺陷终止；同 manifest 禁止重跑，必须新建版本化任务、模块、authorization 与 manifest，并保持全部统计参数不变
+acceptance: V1 INVALID admission、DQ PASS 与 independent replay PASS 被哈希绑定；无收益结论被接纳；同 manifest rerun=false；后续纠正必须单独登记且只改 schema adaptation
+notes: 'Supporting requirement: docs/requirements/TRADING-2556_First_Layer_Composer_V2_Foundational_Falsification_Empirical_Run_V1.md。F1 V1 result SHA=1f0de3193b4807ed091636d4808847e9529679085d207690b2b588a8d6baaebc；failure=F1_UNEXPECTED_FAILURE；DQ 0 error/0 warning；production/broker/orders/fills/positions=none/none/0/0/0。'

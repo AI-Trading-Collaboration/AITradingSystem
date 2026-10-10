@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-006_BASE_DRIFT_AWARE_INTEGRATION_AND_REVALIDATION
+area: Developer experience / frozen-lane base-drift classification and single integration candidate
+priority: P0
+status: DONE
+next_owner: integration coordinator：后续base drift按已发布planner与governed skill执行；出现新分类缺口时另建任务
+next_step: 详见 `docs/requirements/DEVX-006_Base_Drift_Aware_Integration_and_Revalidation.md`。planner/validator、strict policy、read-only CLI、preflight frozen-lane continuation、exact reviewed reconciliation plan id与skill接线、两次真实pilot及final-tree复验均完成。
+acceptance: 从frozen base/lane head/latest main真实Git delta生成`integration_revalidation_plan.v1`；unrelated drift允许单一latest-main candidate，domain overlap要求exact reviewed plan id，contract冲突要求serial wave，undeclared/identity/ancestry/tamper fail closed；不自动Git mutation；无production/broker effect。
+notes: 2026-07-27：首plan=`integration-revalidation-927fbb12af85ec52da7a`按reviewed reconciliation接入v5；remote前进首Architecture保留`708/2 CARRIER_PUSH_DRIFT`。第二plan=`integration-revalidation-e8b52f6d7da28c3cdd37`为READY；final focused/Architecture/Contract/Integration/Reproducibility=`278/710/275/995/23 passed`，唯一Full=`7454 passed/5 skipped`，post-Full Architecture/Contract=`710/275 passed`。

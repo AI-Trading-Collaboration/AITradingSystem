@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2513_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_PROPOSAL_OWNER_DECISION_PACK_V1
+area: External validation / QC QQQ Options primary-window exact run proposal and Owner decision pack
+priority: P0
+status: BASELINE_DONE
+next_owner: Project Owner：exact proposal review/authorization；collector coordinator：future bounded run/evidence admission；independent reviewer：external lifecycle evidence
+next_step: OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL；先复核 ordinary-pushed exact package/hashes，再另行签署 single-use bounded token；无授权不得执行平台动作
+acceptance: 离线 exact 1202-session scope、2512-rendered main.py、sealed proposal/manifest、strict loader、unsigned Owner decision request 与 Atlas disclosure 已实现；无 token/run/order/raw/policy values/DQ PASS/engine activation
+notes: 'Supporting requirement: docs/requirements/TRADING-2513_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Run_Proposal_Owner_Decision_Pack_V1.md；focused task failure-fix=16 PASS；Atlas combination failure-fix=51 PASS；external_action=none。'

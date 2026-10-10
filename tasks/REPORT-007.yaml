@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: REPORT-007
+area: 报告/Base Signal 与 Risk Caps 拆分
+priority: P1
+status: BASELINE_DONE
+next_owner: 系统实现
+next_step: 已在日报结论卡后固定展示 `Base Signal / Risk Caps`：Base Signal、Raw Position、Risk Caps、Final Position 和 Channel Audit；详细拆解见 `docs/requirements/scoring_architecture_refactor_2026-05-06.md#report-007基础信号与风险调整后结论拆分`
+acceptance: 报告能一眼区分基础信号弱、基础信号强但风险受限、数据受限和人工复核要求；每个 cap 都有来源、触发状态、上限和证据引用；复用现有 `REPORT-001/002/003`、`SCORE-001/002/003` 和 `execution_policy` 输出，不新增独立评分逻辑；完整 DONE 仍需后续 soft gate/非线性映射稳定后统一周/月报模板
+notes: '2026-05-06: 新增任务，原因：当前日报已有模型仓位和最终仓位，但还未固定为 base signal、raw position、risk caps、final position 的结构化阅读块；该改动能减少把“不看好”和“看好但不能重仓”混淆的风险。2026-05-06: 从 PROPOSED 改为 BASELINE_DONE，原因：日报新增固定结构、trace claim 和测试，且不新增独立评分逻辑。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2438M1D1A_GROWTH_TILT_OWNER_DECISION_RESOLUTION_AND_CANDIDATE_A_REFRAMING
+area: Strategy research / owner decision resolution and candidate reframing
+priority: P0
+status: DONE
+next_owner: 项目 owner后续只通过新 M1E owner-input任务处理已解除 blocker后的 replacement A
+next_step: D01～D18 explicit outcomes已固化：A REDEFINE=`capped_recovery_permission_overlay`，B WITHDRAW，C REDEFINE/out-of-route；recovery semantic=`UNSCALED_SCORE`，threshold/veto/transition/native scalar缺失保持 blocker。
+acceptance: owner resolution 18/18；权威 M1 approved/redefine/withdraw=`0/2/1`、owner gaps=0、M2=0；D1A不运行 runtime/replay且只授权 existing-behavior adapters。
+notes: '2026-07-10: 实现、真实 strict D1A/M1 run与归档完成。验证：D1A+M1 focused 63、combined chain 144、fast-unit 198、contract-validation 197、report-validation 55及治理检查全部 PASS。'

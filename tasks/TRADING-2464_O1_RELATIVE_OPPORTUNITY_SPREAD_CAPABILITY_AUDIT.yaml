@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
+area: Strategy Style Discovery / O1 relative-opportunity capability evidence
+priority: P0
+status: BASELINE_DONE
+next_owner: strategy research owner：当前 O1 capability path 已机械关闭；若未来重开，必须另立新任务和结果读取前 preregistration，不得复用本 attempt 结果调整 threshold/fold/horizon/regime/event。保留唯一 candidate/event/coverage evidence root 供复验。
+next_step: 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md` 与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner A exact 复用 `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；published runner commit=`1bf9fb13245064ec2a505ea864e2e127ad445d41`。DQ gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`、event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`、coverage gate=`o1_coverage_gate_b240158b3b7d3211ad51852217aa6d93`；最终 class=`INSUFFICIENT_COVERAGE_OR_DQ`。
+acceptance: 唯一 coverage run 中 DQ=`PASS/0/0`、6 folds、total OOF effective sample=146、三类 event coverage PASS；F01 train 98<100、F02 test ESS 23.71930136737<24、volatility HIGH 2<3 folds、current_drawdown LOW effective sample 13<15，任一 FAIL 即机械关闭。report/gate exact SHA 已绑定；未训练模型、未生成prediction/metric、未访问prospective、未运行canonical/falsification；所有下游继续false。
+notes: 2026-07-30：runner 发布前 O1 focused=`38/38`、authority/deprecation=`154/154`、Architecture=`795/795`、Contract=`276/276`。随后从已发布 exact commit 只运行一次 coverage；没有阈值或设计修改、没有第二次run。`production_effect=none`、`broker_action=none`。

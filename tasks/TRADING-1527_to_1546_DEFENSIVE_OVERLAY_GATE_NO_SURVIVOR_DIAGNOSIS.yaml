@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1527_to_1546_DEFENSIVE_OVERLAY_GATE_NO_SURVIVOR_DIAGNOSIS
+area: Research strategies / defensive overlay gate and expanded no-survivor diagnosis
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 defensive overlay gate policy config、no-survivor diagnosis、candidate reclassification matrix、overlay metrics、risk-off attribution、re-risk timing、downside/stress、static frontier interpretation、TQQQ overlay safety、candidate set、survival matrix、net-of-cost/stress/walk-forward split evidence、owner review pack、forward watch plan、report registry、artifact catalog、system flow 和 guardrail tests；真实运行结果：full allocation survivor count=0、overlay gate pass count=0、primary watch pending=`limited_adjustment`、drawdown-control diagnostics=4、TQQQ diagnostic=1；所有 outputs 声明 `ai_after_chatgpt`、actual requested date range、data quality status、promotion `BLOCKED`、paper-shadow/production/broker false/none；target-path metrics 不能通过 overlay gate
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求在 no-survivor 后继续拆解 defensive overlay 是否仍有风控观察价值；原附件 TRADING-1526 已由既有 failure matrix 占用，因此本批重编号为 1527～1546。2026-06-27: 实现完成并转入 VALIDATING；新增 defensive-overlay CLI/artifacts/guardrails，真实 full-pack status=`DEFENSIVE_OVERLAY_OWNER_REVIEW_PACK_READY_PROMOTION_BLOCKED`，所有安全边界继续 false/none。'

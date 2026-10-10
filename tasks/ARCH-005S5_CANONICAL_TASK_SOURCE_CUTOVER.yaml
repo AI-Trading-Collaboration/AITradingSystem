@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ARCH-005S5_CANONICAL_TASK_SOURCE_CUTOVER
+area: Architecture / canonical task record-event source cutover 与 generated Markdown compatibility views
+priority: P0
+status: DONE
+next_owner: 'architecture coordinator: final-tree revalidation, ordinary push, cleanup and exact release'
+next_step: none; execute governed release closeout
+acceptance: canonical registry cutover, consumer migration, rollback, formal tiers, Full and ordinary release all pass
+notes: '2026-08-10: validating-tree Full 8702 passed / 3 skipped; canonical DONE event precedes exact final-tree revalidation and ordinary release'

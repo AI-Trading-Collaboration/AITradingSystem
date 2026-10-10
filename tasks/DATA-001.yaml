@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-001
+area: 估值数据
+priority: P1
+status: VALIDATING
+next_owner: system validation
+next_step: 完成 latest-main reconciliation candidate formal tiers、failure-fix Full、ordinary main push、exact release promotion/deployment acceptance；下次 provider-ready ordinary daily 重新执行 capture/DQ/score。
+acceptance: Baseline 验收：当前 `score-daily` 可从 EODHD trends 生成可审计 `eps_revision_90d_pct`，记录 provider、endpoint、请求参数、下载时间、row count 和 checksum，并标记采集日后可见；`valuation_percentile` 至少有 3 个历史点。完整 `DONE` 验收仍需要稳定 90 天真实历史/PIT 支持；历史采购/回填当前不推进，forward-only 快照按 `DATA-003` 自然积累，且不得把采集日回填伪装为 signal_date 当时可见数据
+notes: '2026-09-02: 首个 Full 10118 passed/5 skipped/1 failed，唯一失败为 stale hydrated Atlas ignored sidecar；17 artifacts 逐项 hash 后可逆隔离，未宣称 CURRENT。main 前进后 plan integration-revalidation-d183b2bfef647b2efa48 判定 domain-only reconciliation；从 latest main d9f0cd944 重放估值修复并重建共享权威。production_effect=none，无 weights/broker action。'

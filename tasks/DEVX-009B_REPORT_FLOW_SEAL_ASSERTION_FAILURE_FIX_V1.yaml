@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-009B_REPORT_FLOW_SEAL_ASSERTION_FAILURE_FIX_V1
+area: Report-flow reviewed seal assertion failure-fix V1
+priority: P0
+status: DONE
+next_owner: Codex architecture validation coordinator / complete parent-bound Full rerun and publication; then Project Owner may discuss a separate trend-to-options strategy task
+next_step: No remaining assertion implementation blocker. Rebuild shared authorities, form the failure-fix candidate, render Atlas from its exact SHA, and require one parent-bound Full PASS before publication.
+acceptance: The 24-test focused reproduction passes; authority asserts 3094/a00bf713.../1165 and task count 1034; a new candidate passes failure_fix_rerun Full bound to the failed parent artifact; production/broker/external action remain none.
+notes: 'Supporting requirement: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md. Parent Full c97b4060... recorded 9959 passed/3 failed/3 skipped; all three failures were stale reviewed-seal assertions. Focused parallel reproduction after exact assertion fix: 24 passed. No system-flow, business, Atlas or external action change.'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2551_EVIDENCE_PORTFOLIO_TERMINAL_VERDICT_CONTRACT_V1
+area: 期权研究/共享 evidence portfolio terminal verdict contract
+priority: P0
+status: BASELINE_DONE
+next_owner: TRADING-2550 integration coordinator
+next_step: 共享 terminal verdict contract 与 deterministic failure-fix 已收敛；详细证据见 [TRADING-2551 requirement](docs/requirements/trading_2551_evidence_portfolio_terminal_verdict_contract_v1.md)。完成 final formal validation/publication 后，TRADING-2550 从新 exact main 基线接入已保全 RETAIN result。
+acceptance: RETAIN/REJECT/INSUFFICIENT 与 exact next-action、SIGNAL_VALUE ladder 一致性及 Atlas 动态渲染均 fail closed；UNRESOLVED 向后兼容；正式 architecture/contract/integration/reproducibility/Full PASS；production_effect=none、broker_action=none。
+notes: 2026-09-01：恢复 canonical task blocker 中的规范 requirement Markdown binding；前一 candidate 被 Atlas exact-commit 门禁以 PAGE_EFFECTIVENESS_TASK_REQUIREMENT_BINDING_INVALID 正确拒绝，未进入 formal validation。此修复不改变 contract、结果或授权边界，也不重跑 confirmation。

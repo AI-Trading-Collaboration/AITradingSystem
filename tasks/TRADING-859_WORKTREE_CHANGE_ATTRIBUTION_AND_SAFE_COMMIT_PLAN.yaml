@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-859_WORKTREE_CHANGE_ATTRIBUTION_AND_SAFE_COMMIT_PLAN
+area: Engineering closeout / tail-risk worktree attribution
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 生成 `tail_risk_followup_change_attribution.json/md`，逐文件区分 843～858、新增 closeout、pre-existing 和 mixed attribution；输出 staged candidate list 或 `OWNER_REVIEW_REQUIRED` / `BLOCKED_BY_MIXED_WORKTREE`
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22: 新增并进入 IN_PROGRESS，原因：当前工作树含本轮开始前未提交改动，收口前必须先归因。2026-06-22: 产物完成并转入 VALIDATING；真实运行 `git status --short`、`git diff --name-status`、`git diff --stat`，输出状态 `BLOCKED_BY_MIXED_WORKTREE`，确认 7 个 mixed/unknown 文件和 5 个 safe candidates，要求 owner review 后再提交。'

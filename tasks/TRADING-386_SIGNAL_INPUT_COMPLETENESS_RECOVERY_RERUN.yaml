@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-386_SIGNAL_INPUT_COMPLETENESS_RECOVERY_RERUN
+area: ETF portfolio/dynamic v3 rescue signal input completeness recovery rerun
+priority: P0
+status: DONE
+next_owner: 系统实现 + 项目 owner 后续复核 signal warning
+next_step: 详细拆解见 `docs/requirements/TRADING-386_Signal_Input_Completeness_Recovery_Rerun.md`；在 TRADING-385 后重新运行或读取 signal input completeness monitor，显式检查 required files、schema versions、non-empty signal series、required feature columns、market coverage 和 as-of consistency，并输出恢复状态；不得运行 feature/signal/snapshot builders、刷新数据、补造 signal artifact、放宽 policy 或推进 promotion/extended shadow
+acceptance: 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_completeness_recovery.py`、`aits etf dynamic-v3-rescue signal-input-completeness-recovery run/report`、`validate-signal-input-completeness-recovery`、Reader Brief section、report registry、artifact catalog、README、operations runbook、system flow、requirements 和 focused tests；`SIGNAL_INPUTS_STILL_BLOCKED` hard stop，`SIGNAL_INPUTS_RESTORED_WITH_WARNINGS` 只允许人工复核和 readiness/health recovery
+notes: '2026-06-17: DONE；真实 artifact `signal-input-completeness-recovery_bb5f861bba0db5da` 使用 2026-06-17 as-of 重新运行 completeness monitor `signal-input-completeness_227a681c2f632a6d`，输出 `SIGNAL_INPUTS_RESTORED_WITH_WARNINGS`、`signal_input_status=WARNING`、blocking=0、warning=1、blocker_list empty、warning_list=`latest_signal_snapshot:warning,latest_signal_snapshot:warning_signal_snapshot_status`，validation PASS；warning 来源为 latest signal snapshot `LIMITED`。Focused tests 覆盖 restored、warning、blocked 和 CLI run/report/validate；保持 no upstream generation / no signal fabrication / no policy weakening / no official target / no broker / no production。'

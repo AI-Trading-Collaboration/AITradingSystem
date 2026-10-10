@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: UI-002
+area: 仪表盘/每日决策展示
+priority: P2
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/decision_dashboard_v2_2026-05-10.md`；dashboard v2 已接入自动 daily-run 并在最新生产 run 中以只读展示通过；后续 dashboard/Reader Brief 职责边界变化应新建报告任务
+acceptance: Dashboard v2 仍只读取已生成 artifact，不重新计算结论；HTML 首页能展示今日动作、仓位区间、置信度、Data Gate、最大限制、变化摘要、Top evidence/invalidators/next checks；可选读取既有 `market_feedback_optimization_YYYY-MM-DD.md`、`feedback_loop_review_YYYY-MM-DD.md` 和 `investment_weekly_review_YYYY-MM-DD.md`，缺失时必须标记 `NOT_CONNECTED` / `LIMITED`，不得补造复盘结论；页面、JSON 和文档均声明 `production_effect=none`、不替代 Markdown 日报和 trace bundle 审计源；休市日 skipped dashboard 不得从 legacy 路径带入 canonical run bundle
+notes: '2026-05-10 至 2026-05-14: 已完成静态 dashboard、自动 daily-run 接入、历史趋势、run bundle mirror guard 和旧反馈复盘读取。2026-05-29: OPS-059 将旧 feedback/investment review daily-run 前置链移出每日执行，改由 `config/scheduled_tasks.yaml` 登记为 weekly/biweekly cadence；dashboard 保持只读可选消费，Reader Brief 上游链成为新的每日报告链。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901` 中 dashboard step 在 score 后、Reader Brief 链前 PASS，canonical run bundle 收录 `evidence_dashboard_2026-06-05.html/json`，dashboard JSON 声明 `production_effect=none`，Reader Brief quality `failed=0`。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-047
+area: 基本面/SEC PIT Daily Shadow Baseline Contract
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/sec_pit_shadow_daily_run_baseline_contract_2026-05-29.md`；SEC PIT shadow observe/monitor 默认 baseline contract 已收敛到 research-only baseline，真实 daily-run 通过
+acceptance: '`shadow-observe --latest` 在默认 baseline dir 下优先使用 research-only `data/processed/research/scores_daily_backfill_sec_pit_2023_2026.csv`，显式 `--baseline-score-path` 仍优先；production `data/processed/scores_daily.csv` 仅作为兼容 fallback；observe/monitor/coverage audit 的 baseline contract 一致；目标测试和真实 `aits ops daily-run` 通过或报告新的真实门禁原因'
+notes: '2026-05-29: 新增并进入 IN_PROGRESS，原因：`RISK-016` 修复后重跑 daily-run 已通过 `score_daily`，但 `sec_pit_shadow_monitor` 失败；诊断显示同日 baseline coverage audit 为 OK，而 shadow observe summary 因 fallback 到 production scores 仅约 2.1% 覆盖。2026-05-29: 从 IN_PROGRESS 改为 VALIDATING，原因：默认 baseline contract 修复通过目标测试/ruff/black/diff check，真实 `aits ops daily-run` as-of 2026-05-28 中 `sec_pit_shadow_observe` 和 `sec_pit_shadow_monitor` 均 PASS。2026-06-07: 从 VALIDATING 改为 DONE，原因：默认 baseline contract 修复已有目标测试和真实 daily-run PASS 证据，后续 SEC PIT shadow observe/monitor 链路未再因 production score fallback drift 阻断。'

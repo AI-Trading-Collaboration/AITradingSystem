@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: RISK-006
+area: 政策/地缘可靠数据源
+priority: P1
+status: BASELINE_DONE
+next_owner: 项目 owner + 系统验证
+next_step: 已完成低成本官方来源第一版：`aits risk-events fetch-official-sources` 监控 Federal Register/BIS/OFAC/USTR/Congress.gov/GovInfo/Trade.gov CSL，写入 raw payload、download manifest、待人工复核候选 CSV 和中文报告；剩余缺口是 owner 配置 Congress.gov/GovInfo API key、每日复核声明和真实样本验证；详细边界见 `docs/requirements/risk_event_review_workflow_2026-05-04.md#risk-006`
+acceptance: Baseline 验收：官方来源组合、provider、endpoint、授权/LLM 权限、缓存路径、row count/checksum、跳过来源和 `pending_review` 隔离已可审计；完整 `DONE` 仍需真实样本通过 source policy、occurrence/attestation 校验，并让 `score-daily` 区分“已复核无重大事件”与“没有可靠来源输入”；不得把 `public_convenience`、未授权供应商文本或 `llm_extracted` 输出直接当作可评分输入
+notes: '2026-05-05: 新增任务，原因：owner 指出当前 `policy_geopolitics` 置信度很低，后续需要可靠数据源才能正确分析；在可靠来源和复核纪律到位前，本模块保持保守降级，不用临时新闻源或模型推断绕过。2026-05-05: 从 BLOCKED_OWNER_INPUT 改为 IN_PROGRESS，原因：owner 确认低成本官方来源组合和人工复核责任，开始实现第一版官方来源抓取与审计链路。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：官方来源抓取、原始缓存、manifest 审计、候选 CSV、中文报告、数据源目录、系统流图、`.env.example`、Federal Register live smoke test 和全量测试已完成；完整生产使用仍依赖 owner API key、每日复核声明和真实样本。'

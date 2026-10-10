@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1646_to_1665_RESEARCH_WINDOW_EXTENSION_VALIDATION
+area: Research windows / multi-window validation for QQQ-SGOV-TQQQ research
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 `config/research/research_window_registry.yaml` 和 `config/research/window_aware_walk_forward_policy.yaml`；新增 `aits research trends window-extension`、window-aware validation、data availability matrix、static frontier multi-window、second-layer probe multi-window、first-layer label multi-window、actual-path multi-window、window stability classification、proxy/exact guardrail tests、owner pack、final matrix/closeout、report registry、artifact catalog、system flow；真实 run：primary window data quality=`PASS`，2020 extension=`PASS_WITH_EXPECTED_SGOV_SECONDARY_GAP_CAVEAT`，static_metric_rows=198，probe_metric_rows=15，actual_path_metric_rows=30，primary_upper_state_count=855，legacy_upper_state_count=618，final_status=`WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT_PROMOTION_BLOCKED`；所有 new artifacts 包含 research_window_id、requested_start、actual_start/actual_portfolio_start、window_role、data_quality_contract；不得把 exact / primary-only / proxy 窗口 leaderboard 混排；dynamic promotion、paper-shadow、production、broker 固定 blocked/false/none
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1646～1665，把研究窗口从单一 2022-12 legacy window 升级为 2021 primary + 2020 sensitivity + 2022 legacy comparison。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI status=`RESEARCH_WINDOW_EXTENSION_OWNER_REVIEW_READY_PROMOTION_BLOCKED`，final status=`WINDOW_EXTENSION_REVEALS_LEGACY_OVERFIT_PROMOTION_BLOCKED`。'

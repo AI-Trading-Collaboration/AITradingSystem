@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-511A_to_511D_WEIGHT_RESEARCH_UNBLOCK_BATCH
+area: ETF portfolio/weight research ablation unblock batch
+priority: P0
+status: DONE
+next_owner: None / closed at hard-stop checkpoint
+next_step: 2026-09-24 按 owner 决策包第7条在既有 hard-stop checkpoint 收口；结论按已有证据为 inconclusive/blocked，不再追加研究；如需重启另开新任务
+acceptance: 新增 511A scope freeze、511B signal robustness contract、511C holdout/final gate policy、validation CLI、Reader Brief、B1-only runner、B1 mini-backfill/result/comparison、system flow、artifact catalog、task register 和 focused tests；validation CLI 拒绝 mixed logic、过早使用 holdout、缺 signal robustness contract 或 unsafe safety boundary；B1 runner 先通过 511A-C contract validation 和 `aits validate-data`，只读取 B0 weights / price returns / execution-control policy，不调用 P0 allocator/signals/regimes/features；B1 输出 research-only mixed evidence 并保持 no official/paper/broker/live/production boundary
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第7条：CLOSED_AT_HARD_STOP_CHECKPOINT；agent_harness=claude_code；原备注：2026-06-19: 新增并进入 IN_PROGRESS，原因：owner 明确要求不要直接继续 TRADING-511~520；B0 完成但 B1-B6 不能从混合 P0 dynamic strategy 推导。本轮创建 unblock batch，先冻结 contracts，再只实现 B1。2026-06-19: 实现完成并转入 VALIDATING；`aits etf weight-research validate-contracts` PASS，`run-b1` 生成 `B1_MINI_BACKFILL_COMPLETE_RESEARCH_ONLY`，data quality=`PASS_WITH_WARNINGS`，B1 vs B0 return_delta=0.002862、drawdown_reduction=-0.001205、turnover_delta=0.124318，解释为 mixed research-only evidence；B2-B6 未运行。验证通过 focused pytest 64 passed、scoped ruff、compileall、JSON parse、`git diff --check`、CLI validate-contracts 和 CLI run-b1 verify。'

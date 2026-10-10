@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2296_DAILY_INCREMENTAL_REFACTOR_CANDIDATE_GENERATOR_SAFETY_BOUNDARY
+area: Architecture / daily incremental refactor candidate generator safety metadata boundary
+priority: P2
+status: DONE
+next_owner: 系统验证
+next_step: 详见 `docs/requirements/TRADING-2296_Daily_Incremental_Refactor_Candidate_Generator_Safety_Boundary.md`；已集中 TRADING-2283 first-layer candidate generator framework 的固定 research-only safety metadata helper，外部 CLI surface 和投资解释不变
+acceptance: '`first_layer_candidate_signal_generator.py` 新增固定 generator operation / candidate artifact / framework smoke artifact safety helper，registry、runtime、signal spec 和 `framework_smoke_candidate` 复用该 helper；`aits research trends first-layer-candidate-generator-framework` 命令、artifact schema、validation status、promotion/paper-shadow/production/broker safety fields、TRADING-2281 permanently inconclusive 边界保持兼容；focused xdist pytest、CLI smoke、Ruff、compileall、docs freshness 和 `git diff --check` 通过；本轮未生成 cached-data dependent real report，因此未额外运行 `aits validate-data`'
+notes: '2026-06-29: 每日增量重构自动化新增并完成；评估范围为 `e2b9720456e4de56d4a6191dfe989d2baf80c836..HEAD`，增量新增大量 first-layer/Norgate/research governance 模块。该切片只整理 TRADING-2283 新 generator framework 内部 safety metadata duplication，不改变 threshold、score band、promotion gate、backtest acceptance、仓位约束、data quality gate、market-regime interpretation、paper-shadow/production weights 或 broker/order path。'

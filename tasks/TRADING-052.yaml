@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-052
+area: 回测输入/Trend/Sector Signal Calibration
+priority: P1
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/trend_sector_signal_calibration_2026-05-30.md`；多 profile trend/sector signal calibration、distribution/correlation diagnostics、profile ranking、报告、Dashboard/Reader Brief 和 shadow promotion 只读引用已完成；best profile 后续仍不足以解除 candidate promotion 的判断已由 `TRADING-053/054` 承接并完成
+acceptance: '`aits signals calibrate --latest` / `--dry-run` 可生成 `signal_calibration_summary.json/md` 和 recommended profile；`aits reports signal-calibration --latest` 可读取 latest 报告；calibration profile 不写 production 参数，不自动 candidate promotion；shadow promotion reason 可引用 calibration artifact 但仍保持 `production_effect=none`、`manual_review_required=true`、`auto_promotion=false`'
+notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-051A 已确认 trend/sector 接入和 ablation 链路有效但 real signal contribution below threshold。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：v0.1 实现、文档和真实 CLI 验收完成。2026-06-09: 从 VALIDATING 改为 DONE，原因：`reports signal-calibration --latest` 可读，`signals calibrate --latest --dry-run` 输出 `best_profile=trend_long_bias` 且 `can_support_candidate_promotion=false`，`parameters shadow-backtest --latest --dry-run` 仍为 `promotion_status=rejected`；后续 portfolio sensitivity / candidate 判断已由 TRADING-053/054 完成；验证通过 signal calibration focused pytest 7 passed、signal ablation / dashboard / Reader Brief / CLI direct focused pytest 54 passed、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'

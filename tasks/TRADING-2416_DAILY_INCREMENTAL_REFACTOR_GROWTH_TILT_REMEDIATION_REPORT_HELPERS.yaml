@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2416_DAILY_INCREMENTAL_REFACTOR_GROWTH_TILT_REMEDIATION_REPORT_HELPERS
+area: Architecture / daily incremental refactor growth tilt remediation report helper boundary
+priority: P2
+status: DONE
+next_owner: 系统后续每日增量重构巡检继续从本轮 refactor log 回填提交评估
+next_step: 详见 `docs/requirements/TRADING-2416_Daily_Incremental_Refactor_Growth_Tilt_Remediation_Report_Helpers.md`；本批只整理 TRADING-2411～2414 growth tilt remediation research-only wrappers 的 section JSON artifact writer 与 missing-aware text source loader helper 边界，不改变 CLI、artifact path、report schema、status enum、source validation、data-quality disclosure、阈值、score band、promotion gate、data quality gate、backtest、market-regime interpretation、paper-shadow、production 或 broker/order path。
+acceptance: '`dynamic_strategy_report_common.py` 新增共享 `write_section_json_artifact()` 与 `load_text_document_or_missing_flag()`；TRADING-2411 contract gap remediation plan、TRADING-2412 as-of semantics remediation、TRADING-2413 source traceability remediation 和 TRADING-2414 signal validity dependency remediation wrappers 复用 helper；section JSON envelope、payload key、`production_effect=none`、`broker_action=none` 和 missing text document payload 形状保持不变；focused parallel pytest、CLI help smoke、Ruff、compileall、docs/task consistency 和 `git diff --check` 通过。'
+notes: '2026-07-08: 每日增量重构巡检新增并进入 IN_PROGRESS；最近合格重构基线为 `3b2081561a74112442e9ae43cd949b8fd85290de`，HEAD `534cdb7befe61e02f62a8b75339e51990979e223` 不是重构提交。2026-07-08: 实现完成并归档 DONE；本轮未运行 `aits validate-data`，因为只整理 internal report/source helper，不读取 fresh cached market/macro data，不生成 technical features、scoring、backtest 或 daily report 输出；production effect 固定 `none`，未写 production weights / active shadow weights，未触发 broker / order / trading action。'

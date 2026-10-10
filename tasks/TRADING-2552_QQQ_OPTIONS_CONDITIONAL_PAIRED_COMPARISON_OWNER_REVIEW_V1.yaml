@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2552_QQQ_OPTIONS_CONDITIONAL_PAIRED_COMPARISON_OWNER_REVIEW_V1
+area: QQQ options conditional paired comparison Owner review V1
+priority: P0
+status: BASELINE_DONE
+next_owner: Project Owner / separately authorize Wave A non-executable implementation if paired comparison should proceed
+next_step: Owner review is complete. Existing trend data and exact 1202-session signal package are sufficient; the remaining gaps are the fully-funded comparator implementation, export-safe aggregate collector, local admission/replay, exact run manifest and separate QuantConnect authority. None is authorized by this review.
+acceptance: The review exact-binds TRADING-2550 RETAIN and the frozen TRADING-2548 contract, proves that the old one-share diagnostic cannot answer the common-capital estimand, separates Wave A implementation, Wave B manifest and Wave C single QC run, and keeps all data/external/trading actions at zero.
+notes: 'Supporting requirement: docs/requirements/TRADING-2552_QQQ_Options_Conditional_Paired_Comparison_Owner_Review_V1.md. Focused pytest-xdist=76 passed; review decision=READY_FOR_SEPARATELY_AUTHORIZED_NON_EXECUTABLE_IMPLEMENTATION_WAVE; current paired outcome=INSUFFICIENT_PLATFORM_EVIDENCE; QuantConnect/provider/DQ/exporter/manifest/orders/fills/positions/paper/live/production/broker=0/false/none.'

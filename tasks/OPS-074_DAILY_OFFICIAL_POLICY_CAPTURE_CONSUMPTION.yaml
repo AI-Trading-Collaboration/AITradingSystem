@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-074_DAILY_OFFICIAL_POLICY_CAPTURE_CONSUMPTION
+area: Operations / daily score consumes retained official-policy capture
+priority: P0
+status: DEFERRED
+next_owner: Codex：完成六类 formal gates、普通 main push、exact release promotion 与 deployment acceptance；operations owner：下一个合法 new as-of ordinary run 复核
+next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：详见 `docs/requirements/OPS-074_Daily_Official_Policy_Capture_Consumption.md`。2026-08-05 ordinary run `daily_ops_run:2026-08-04:20260805T003613Z` 中 capture 已成功抓取并验证 official-policy bytes，但 `score_daily` 再次请求 Federal Register 并遇 HTTP 503，造成重复 provider side effect 和可避免的评分失败。本 invocation 唯一 trigger 已用完，terminal parent 及 evidence 保持 immutable。
+acceptance: capture-active daily score 必须严格绑定同 as-of validated capture manifest/artifacts，校验 path/size/SHA/candidate as_of/raw lineage 并零 provider request；missing/tamper/drift fail closed；manual/non-daily live-fetch contract不扩大；DQ/PIT/recovery allowlist、weights/broker/trading boundary不变；focused+六类 formal gates、push、promotion/acceptance完成。
+notes: 2026-08-05：实现已完成；capture-active score 严格绑定 manifest/download rows/candidate/raw lineage 并写 zero-provider-request report，manual/non-daily live path 保持。focused parallel pytest=`182 passed`，Ruff/Black PASS；真实 2026-08-04 retained evidence 只读校验=`PASS / 8 payloads / 406 candidates / provider_request_performed=false`。scoped mypy 仅保留仓库既有 `87 errors`，本变更新增错误已清零。下一步是 exact candidate 六类 formal validation、push 与 promotion/acceptance；当前 failed parent 不展开 recovery，不得第二次 daily trigger。

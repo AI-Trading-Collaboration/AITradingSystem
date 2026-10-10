@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: FUND-001
+area: 基本面/TSM IR 覆盖规则
+priority: P1
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/confidence_lift_workplan_2026-05-10.md`；2026-06-05 最新 production daily-run 已验证 TSM IR merge 与 SEC metrics validation 链路，TSM Q1 `TSM-IR` 指标进入 processed metrics
+acceptance: TSM 基本面覆盖由 TSMC IR 官方季度 Management Report 或等价可审计来源满足；缺 TSM IR 时报告明确缺官方 IR 覆盖；不再因 TSM 缺 SEC companyfacts 季度指标而误判为美国 SEC 指标缺口
+notes: '2026-05-10: 新增并进入实现，原因：owner 明确 TSM 不应硬等同美国 SEC companyfacts 覆盖。2026-05-10: 从 IN_PROGRESS 改为 VALIDATING，原因：`merge-tsm-ir-sec-metrics` 后 SEC metrics 72 行且 validation PASS，`build-sec-features` PASS、警告 0；日报计划和 `score-daily` 已接入 TSM IR 合并路径。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901` 中 `merge-tsm-ir-sec-metrics` 和 `validate-sec-metrics` steps PASS；`sec_fundamentals_validation_2026-06-05.md` 只有 AMZN R&D 覆盖警告，不是 TSM 覆盖缺口，TSM Q1 `TSM-IR` 指标已在 processed metrics 中可见。'

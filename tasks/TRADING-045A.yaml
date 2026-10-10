@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-045A
+area: 基本面/SEC PIT Research Baseline Backfill Path Safety
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: TRADING-045 后续轻量安全修正：`aits score-daily backfill-baseline` 默认输出到 `data/processed/research/` research-only 路径；production `data/processed/scores_daily.csv` 只有显式传 `--overwrite-production-path` 才允许作为 output path；runbook 和文档示例改为 research-only baseline path
+acceptance: 默认 output path 不再指向 production score cache；显式 `--output-path data/processed/scores_daily.csv` 且缺少 `--overwrite-production-path` 时 fail closed；文件存在时仍需要 `--overwrite`；CLI summary 继续披露 `research_backfill=true`、`production_effect=none`；baseline backfill、baseline coverage 和 shadow-observe runbook 示例使用 `data/processed/research/scores_daily_backfill_sec_pit_2023_2026.csv`；artifact catalog 和 system flow 区分 production `scores_daily.csv` 与 research backfill CSV；新增测试覆盖 production path guard
+notes: '2026-05-27: 新增并进入 IN_PROGRESS，原因：owner 指出 TRADING-045 已支持任意 output path，但 CLI 默认仍是 production `scores_daily.csv`，容易误写生产评分缓存。2026-05-27: 从 IN_PROGRESS 改为 DONE，原因：已完成 CLI path safety、文档示例和验证；验证通过 `python -m pytest tests/trading_engine/test_baseline_score_backfill.py -q`（4 passed）、全量 `python -m pytest -q`（1316 passed, 1 warning）、全量 `python -m ruff check config src tests scripts docs`、触达 Python 文件 `python -m black --check ...` 和 `score-daily backfill-baseline --help` smoke。'

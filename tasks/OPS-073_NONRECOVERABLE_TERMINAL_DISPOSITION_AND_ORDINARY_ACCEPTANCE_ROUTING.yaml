@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-073_NONRECOVERABLE_TERMINAL_DISPOSITION_AND_ORDINARY_ACCEPTANCE_ROUTING
+area: Operations / nonrecoverable terminal disposition and ordinary acceptance routing
+priority: P0
+status: DEFERRED
+next_owner: Codex：完成 exact candidate 正式验证、普通 push、exact release promotion 与 existing automation 原位切换；operations owner：复核首个新 as-of ordinary acceptance
+next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：详见 `docs/requirements/OPS-073_Nonrecoverable_Terminal_Disposition_and_Ordinary_Acceptance_Routing.md`。OPS-072 parent 在 score 前失败且不满足 OPS-071 recovery allowlist；scheduler checkout policy v3 已增加四类 disposition pure resolver，automation prompt 将原位补齐 nonrecoverable parent 等待新 provider-ready as-of 的分支。现有唯一 scheduler `aitradingsystem-pit` 保持不变，不新增第二业务 trigger。
+acceptance: 四类 disposition 明确；同 as-of recovery 规则/allowlist不变；不可恢复 parent 保持 immutable并等待严格更晚 as-of；fresh key 无 state/lock且 active release/receipt通过后进入 `READY_FOR_NEW_AS_OF_ORDINARY`，由 existing automation 执行一次无 recovery 参数的 ordinary daily；focused+正式验证、push、promotion/acceptance与 automation pin完成；无 weights/broker/trading。
+notes: 2026-08-02：focused/task-shadow并行 pytest=`31 passed`，Ruff/Black PASS；task shadow 942 tasks、v1/v2 byte-identical。当前事件 disposition=`WAIT_FOR_NEXT_PROVIDER_READY_AS_OF_ORDINARY`；最早 provider-ready=`2026-08-04 08:00 JST`，existing automation 首次合适计划点=`2026-08-04 09:30 JST`。task worktree exit condition见 supporting requirement。

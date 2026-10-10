@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: BTINPUT-002
+area: 回测输入/shadow backtest diagnostics
+priority: P0
+status: DONE
+next_owner: 系统实现
+next_step: 详细拆解见 `docs/requirements/shadow_backtest_input_diagnostics_2026-05-29.md`；已补齐 shadow backtest input diagnostics、snapshot manifest、repair dry-run plan、shadow summary 引用、dashboard 和 Reader Brief 只读展示
+acceptance: '`aits data diagnose-backtest-inputs --latest` 生成结构化 JSON/Markdown 和 backtest input manifest；`aits data repair-backtest-inputs --latest --dry-run` 输出可执行 repair plan；shadow backtest 失败时 summary/Markdown 明确引用 diagnostic report 和 blocking errors；dashboard/Reader Brief 显示最新 backtest data quality 状态；不修改 production 参数、promotion criteria 或真实交易路径；目标测试通过'
+notes: '2026-05-29: 完成实现和验证；当前本地 latest 诊断为 FAILED，阻断项为缺少 `GOOGL`、`BRK.B`、`SGOV` price history；actual repair 按本阶段边界返回 `NOT_IMPLEMENTED`。2026-05-30: 从当前任务表归档到 completed，原因：该行已为 DONE，需保持任务登记表只保留未完成任务。'

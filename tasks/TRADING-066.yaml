@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-066
+area: ETF AI confirmation/AI Confirmation Score Calibration
+priority: P0
+status: BASELINE_DONE
+next_owner: 系统验证 + 后续 forward attribution review
+next_step: TRADING-066A~J baseline complete；后续建议新建 TRADING-071 AI Confirmation Forward Attribution Review 或 TRADING-067 Satellite Stock Replacement Policy
+acceptance: '`python -m ai_trading_system.cli etf ai-confirmation validate` PASS；AI confirmation outputs 固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；不写 official ETF target weights、不触发 broker action、不自动 promotion；feature/score timing 满足 no-lookahead；JSON/Markdown report、shadow overlay、Reader Brief、report registry、artifact catalog、system flow 和 tests 同步；全量 pytest、ruff、compileall、diff check 通过'
+notes: '2026-06-01: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：TRADING-066A~J 已完成并验证。新增 AI confirmation universe config、AI/semiconductor breadth features、MegaCapAIScore、AISemiconductorRelativeStrengthScore、event risk overlay、AIConfirmationScore composite、standalone report、shadow overlay experiment、Reader Brief AI Confirmation section 和 final validation gate；最终真实命令 `python -m ai_trading_system.cli etf ai-confirmation validate` 输出 PASS，`production_weights_mutated=false`，所有输出保持 observe-only / candidate-only / no broker action。'

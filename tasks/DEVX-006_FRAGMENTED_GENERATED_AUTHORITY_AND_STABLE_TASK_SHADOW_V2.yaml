@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+area: Developer experience / reduce generated-view dirty-path amplification
+priority: P1
+status: DONE
+next_owner: 'architecture coordinator: S5 final-tree revalidation and ordinary release'
+next_step: none; exact release closeout pending
+acceptance: B/C/D fragmentation and S5 canonical cutover remain replayable, fail closed and released
+notes: '2026-08-10: C/D released; S5 canonical cutover and validating-tree formal/Full passed; final DONE-tree release in progress'

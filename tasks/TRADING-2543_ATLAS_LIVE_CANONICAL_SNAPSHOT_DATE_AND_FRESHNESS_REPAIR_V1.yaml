@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2543_ATLAS_LIVE_CANONICAL_SNAPSHOT_DATE_AND_FRESHNESS_REPAIR_V1
+area: Atlas strategy research page / live canonical snapshot, date semantics and freshness repair
+priority: P0
+status: DONE
+next_owner: Atlas 后继任务 coordinator：任何 successor 进入 exact main 后先完成 page classification 并由 canonical writer 重建；Project Owner 可继续进行页面内容审阅
+next_step: 长期修复已完成；未来未分类 successor、source drift、snapshot/diff/task/page hash drift 会 fail closed，不属于本任务未完成项
+acceptance: 正式 writer 不依赖测试 fixture；live snapshot 覆盖 2542B 与 2543 在内的全部已分类 task 并 exact-bind event/requirement/commit；三类日期分离；canonical page exact rebuild 与五级 final-tree validation PASS；无投资/交易/production/broker effect。
+notes: '[supporting requirement](docs/requirements/TRADING-2543_Atlas_Live_Canonical_Snapshot_Date_And_Freshness_Repair_V1.md)；candidate=6fddf0ddba821ef309cc8b601917340d10ea69c5；plan=integration-revalidation-aee92b71764822bc8b3c；Architecture=865 PASS；Contract=276 PASS；Integration=995 PASS；Reproducibility=24 PASS；Full=9444 PASS/5 skipped/644 warnings；full artifact=outputs/validation_runtime/full_20260823T120227Z/test_runtime_summary.json；production_effect=none；broker_action=none。'

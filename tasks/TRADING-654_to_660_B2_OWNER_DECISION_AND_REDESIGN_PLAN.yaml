@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-654_to_660_B2_OWNER_DECISION_AND_REDESIGN_PLAN
+area: ETF portfolio/weight research campaign B2 owner decision and redesign plan
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: Owner decision audit entry 记录 `owner_action=return_to_design`、reason summary 和 next action；Campaign state 反映 owner decision 和 archived/returned-to-design status 且 evidence 不删除；archive summary、reusable evidence report、slow-drawdown overlay RFC、re-entry policy contract、fast-shock trigger RFC 和 post-B2 snapshot 均输出 JSON/Markdown/Reader Brief；snapshot 披露 B3 status、B4/B5/B6/v3/paper-shadow allowed flags 全部关闭；focused tests、Ruff、compileall、B2/B3 campaign validate、validation-pack、task-register consistency 和 `git diff --check` 通过
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-20: 新增并进入 IN_PROGRESS，原因：当前 B2 Campaign final gate 为 `OWNER_OVERRIDE_REQUIRED`，需要记录 owner `return_to_design` 决策、归档 current form，并把可复用 evidence 转入窄化 redesign planning，同时保持所有 promotion/production/broker/order 边界关闭。2026-06-20: 实现完成并转入 VALIDATING；真实 B2 owner decision 已 append，state 已更新为 `ARCHIVED` + `RETURNED_TO_DESIGN`，evidence 保留；新增 rc5 validation pack 30 artifacts、archive/reusable evidence/RFC/contract/snapshot builders 和 archived no-op runner。验证通过 focused pytest 20 passed、Ruff、compileall、B2/B3 campaign validate、adapter validation、rc5 validation-pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`、task-register consistency run/validate 和 `git diff --check`。'

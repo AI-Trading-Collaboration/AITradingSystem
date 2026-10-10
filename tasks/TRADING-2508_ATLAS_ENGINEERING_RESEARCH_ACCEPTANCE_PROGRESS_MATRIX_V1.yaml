@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2508_ATLAS_ENGINEERING_RESEARCH_ACCEPTANCE_PROGRESS_MATRIX_V1
+area: Atlas strategy research page / engineering, research and acceptance progress matrix
+priority: P1
+status: DROPPED
+next_owner: Project Owner visual review / Atlas page maintainer
+next_step: 实现与自动化视觉检查已完成；Owner 视觉验收保持独立 PENDING_REVIEW。详见 docs/requirements/TRADING-2508_Atlas_Engineering_Research_Acceptance_Progress_Matrix_V1.md；后续 source/task 变化必须通过 canonical writer 与 freshness fail-closed 重新生成页面。
+acceptance: typed 三轴矩阵、八节点工程/研究标签、独立页面验收、strategy PASS=0、27-task freshness、desktop/mobile 无水平溢出与 final-tree gates 均通过。
+notes: Atlas focused replacement 42 PASS；Playwright 1440x1200 与 390x844 验证 3 matrix cards、16 axis chips、acceptance 2/3、no horizontal overflow；首轮 header 样式污染已 scoped 修复；无投资、外部平台、production 或 broker effect。；GOV-008 2026-10-10：Atlas 已退役（owner_decision:GOV-008:2026-10-10:atlas_retired），页面与代码在 P4 删除，本任务不再推进

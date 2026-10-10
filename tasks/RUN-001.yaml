@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: RUN-001
+area: 运行归档/canonical run bundle
+priority: P1
+status: BASELINE_DONE
+next_owner: 系统实现
+next_step: '`daily-run` 已默认生成 `outputs/runs/YYYY-MM-DD/<safe_run_id>/` canonical bundle，并保留 legacy mirror；回测和 replay bundle 迁移不在本任务范围'
+acceptance: '`daily-run` 支持 `--run-output-root`、`--run-id` 和 `--legacy-output-mode mirror/off`；run bundle 包含 manifest、reports、traces、metadata；manifest 记录输入/输出路径、checksum、质量状态、legacy mirror、visibility cutoff 和 run id；stdout/stderr 原文、secret 和付费内容不得进入 manifest'
+notes: '2026-05-10: 从 READY 改为 BASELINE_DONE，原因：daily-run canonical run bundle、manifest、legacy mirror、run id 贯穿和测试已完成；剩余是后续逐步扩大 canonical bundle 覆盖面。'

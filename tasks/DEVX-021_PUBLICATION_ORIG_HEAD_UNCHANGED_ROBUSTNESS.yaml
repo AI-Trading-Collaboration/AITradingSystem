@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-021_PUBLICATION_ORIG_HEAD_UNCHANGED_ROBUSTNESS
+area: Publication fence / local ff-merge hook validation robustness when ORIG_HEAD already equals the old HEAD
+priority: P1
+status: BASELINE_DONE
+next_owner: Claude Code coordinator；Project Owner（P2/P3 方案评审，合同波次）
+next_step: P1（ORIG_HEAD 基线）已随 25d026bf6 发布。2026-10-08 事故（v5，显示唤醒卡死杀死 local-publish，残留 HEAD.lock + main.lock，owner 批准审计后手工删除）证实 P2 确有必要；v6 的 local-publish 全程正常，实测引用事务持锁窗口为 2 分 46 秒（22:08:29→22:11:15，prepared 钩子在持锁期间重放租约库）。设计草案见 DEVX-021 第 11 节：P2a 窗口内残留锁的自动恢复事实（先写事实再按白名单删除，附负向测试）、缩小窗口（DEVX-023 P6(b)）、P3 选项（同一候选的有界第二次发布，把此类事故的代价从约 4.7 小时降到约 1.2 小时，需 owner 决定）。均属租约执行记录/工作流协议的合同变更，须最小串行合同波次与 owner 评审。
+acceptance: 校验器与效果分类对 ORIG_HEAD 三种基线（不存在、等于旧 main、不同于旧 main）语义正确放行/拒绝并有负向测试（锁内容被篡改、基线与锁不一致必须拒绝）；fixture 演练覆盖「预先存在且等于旧 main」且真实布局副本演练通过；不放宽任何既有检查，恢复/adopt 路径对新情形可重放；更新任务登记与需求文档；退出条件：不再需要删除 ORIG_HEAD 的临时前置条件。
+notes: 2026-10-08 夜：第 11 节 P2a/P3 设计草案与 v6 持锁窗口实测，待 owner 评审。

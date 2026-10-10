@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: SCORE-006
+area: 评分/仓位置信度约束
+priority: P0
+status: DONE
+next_owner: 系统实现
+next_step: 详细拆解见 `docs/requirements/confidence_position_gate_2026-05-08.md`；已把判断置信度上限并入 `position_gate` 最严格上限链路；默认 live `score-daily --as-of 2026-05-08` 额外验证在 10 分钟超时内未返回，已终止残留进程，未作为通过证据
+acceptance: '`score-daily`、decision snapshot、belief_state、回测每日评分均使用一致的置信度仓位边界；置信度调整仓位基于评分模型原始仓位计算，并作为独立 gate 参与最终仓位约束；最终仓位不得高于置信度 gate 和其他风险 gate 的最严格上限；报告能说明估值、风险、thesis、数据质量和置信度谁是当前最严格限制；测试覆盖无更严格 gate 时置信度能压低最终仓位，以及估值极端过热时估值 gate 仍可比置信度更严格'
+notes: '2026-05-08: 新增并进入实现，原因：运行观察发现最近日报最终仓位持续 40%-40%，主因是估值 `EXTREME_OVERHEATED` gate；但报告同时显示“置信度调整后建议仓位”34%-34%、最终仓位 40%-40%，暴露置信度展示值未参与最终仓位约束，容易造成错误投资解释。2026-05-08: 从 IN_PROGRESS 改为 DONE，原因：`DailyConfidenceAssessment` 改为评分构建时固定计算，基于评分模型原始仓位生成 `confidence` position gate，并参与最终仓位最严格上限；日报文案、系统流图和测试同步更新；验证通过 `ruff check src tests`、`pytest -q tests/test_daily_scoring.py tests/test_position_model.py tests/test_alerts.py tests/test_backtest.py` 和完整 `pytest -q` 414 项。'

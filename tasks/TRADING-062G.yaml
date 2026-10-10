@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-062G
+area: ETF README operator documentation
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原始开发文档 Definition of Done 中 “README 说明如何运行” 的可验证交付
+acceptance: README 必须说明 ETF 主仓配置系统定位、默认 namespace 与 compatibility aliases、P0 daily/backtest/simulation/report 命令、P1/P2 observe-only 命令入口、主要 artifact 路径、数据质量门禁、`ai_after_chatgpt` 默认窗口、`production_effect=none` / no broker 边界和已知外部数据源限制；文档不得把 ETF brief 写成自动交易指令或主 daily score 替代品；测试至少覆盖 README 包含关键命令和安全边界文本
+notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文最终 DoD 要求 README 说明如何运行；当前 ETF 实现已有 `IMPLEMENTATION_NOTES.md` 和系统流图，但 README 尚未覆盖 ETF workflow、artifact 和安全边界。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：README 新增 ETF workflow、artifact、compatibility alias、`ai_after_chatgpt`、data quality gate、Reader Brief visibility 和 `production_effect=none` / no broker 边界；`tests/test_etf_readme.py` 通过。'

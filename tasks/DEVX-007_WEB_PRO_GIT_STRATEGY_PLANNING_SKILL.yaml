@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
+area: Developer experience / governed Web Pro exact-Git planning handoff
+priority: P0
+status: BASELINE_DONE
+next_owner: Owner：如需继续 Conditional Source Value Audit，另行授权 proposed TRADING-2544 serial contract/feasibility wave；当前无需继续修改 DEVX-007
+next_step: DEVX-007 v2 无 blocker。主线已把 TRADING-2543 分配给 Atlas live canonical snapshot；Conditional Source Value 后续尚未创建，拟议 id 顺延为 TRADING-2544。显式非敏感 public/authorized exact-commit Web Pro 请求可直接提交；其他上位风险仍 fail closed。
+acceptance: PASS：canonical/installed skill parity；explicit-request no-repeat-confirmation 静态契约；9/9 exact-blob Web Pro retrieval；UI/self-report 一致但 exact backend route 不可验证；append-only v2 authority 且历史三 fragment 不变；Architecture 866 passed；Contract 276 passed；production_effect=none、broker_action=none。
+notes: 2026-08-23：latest main 4eef79bd 已注册 TRADING-2543 Atlas live canonical snapshot，故未创建的 Conditional Source Value Audit 拟议编号调整为 TRADING-2544_CONDITIONAL_SOURCE_VALUE_AUDIT_SERIAL_CONTRACT_AND_FEASIBILITY_V1；未运行研究、未改变 strategy/production/broker。

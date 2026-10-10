@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-362_TASK_REGISTER_CONSISTENCY_CHECK
+area: Reporting governance / task register consistency
+priority: P1
+status: DONE
+next_owner: 项目 owner 后续复核；代码实现完成
+next_step: 详细拆解见 `docs/requirements/TRADING-362_Task_Register_Consistency_Check.md`；新增只读 task register consistency check，校验 active/completed register、显式 docs links、report registry entry、Reader Brief 可见性和 completed/archive 纪律；不得刷新数据、运行上游、写 official target weights、接 broker/order 或修改 production state
+acceptance: 新增 `src/ai_trading_system/reports/task_register_consistency.py`、`aits reports task-register-consistency run/report/validate`、JSON/Markdown consistency report、validation artifact、Reader Brief 摘要、report registry、artifact catalog、README、system flow、operations runbook、requirements 和 focused tests；validation CLI 对 blocking issue fail closed，report index 与 documentation contract 可发现新 artifact family
+notes: '2026-06-16: DONE；归档后真实 artifact `outputs/reports/task_register_consistency_2026-06-16.json/md` 输出 `consistency_status=PASS`、active=77、completed=322、checks=13、failed=0、blocking=0、warnings=0；`outputs/reports/task_register_consistency_validation_2026-06-16.json/md` 输出 `validation_status=PASS`、checks=5、failed=0；report index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，documentation contract PASS，Reader Brief latest OK，Reader Brief quality latest OK；focused pytest `tests/test_task_register_consistency.py` 6 passed，Reader Brief/report registry/documentation contract focused pytest 9 passed，Ruff PASS，compileall PASS，git diff check exit 0。2026-06-16 Reader Brief generation by exact date remains blocked by missing local `decision_snapshot_2026-06-16.json`; latest available Reader Brief `2026-06-15` was regenerated and quality validated. 保持 read-only / no task-register repair / no upstream rerun / no data refresh / no official target / no broker / no production mutation。'

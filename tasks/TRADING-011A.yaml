@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-011A
+area: 交易执行/Comparison local validation & findings
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/paperbroker_vs_ibkr_paper_comparison_local_validation_2026-05-17.md`；本机真实 IBKR Paper comparison PASS 样本、sanitized fixture、runbook、安全语义测试和当前 HEAD CI 已完成
+acceptance: 新增本机验证 review，记录 TRADING-011 comparison 真实 Paper 样本：NVDA BUY LIMIT DAY 1 @ 10、本地 PaperBroker no fill/cancelled、IBKR orderStatus `PendingSubmit`/`PreSubmitted`/`PendingCancel`/`Cancelled`、fills_seen=false、status/fill/cancel match；新增 sanitized fixture，不含完整 `DUP` account、真实 broker order id、password/token/API key/session cookie；runbook 记录前置 TWS Paper / IB Gateway Paper、API socket、local config comparison 开关、fail-closed 检查和验证后处理；测试覆盖 review/fixture/runbook 的 paper-only、`comparison_mode=diagnostic_only`、`production_effect=none`、无敏感信息、无 live/promotion 危险语义；目标 pytest、trading_engine、全量 pytest、ruff、black、push 后 CI 通过
+notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：TRADING-011 已完成并通过 CI，本机真实 comparison 已跑通，需要把 local validation evidence 固化为脱敏、可审计、无生产效果的 committed artifact，并明确 TRADING-012 之前不修改 fill model。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 TRADING-011A requirement、local validation review、sanitized fixture、comparison local validation runbook 和安全语义测试；真实本机样本为 `comparison_status=PASS`、`comparison_mode=diagnostic_only`、`production_effect=none`、本地和 IBKR 均 cancel/no fill/status match；本地验证通过目标 pytest、`tests/trading_engine`、全量 pytest、ruff 和 black check。2026-06-07: 从 VALIDATING 改为 DONE，原因：当前 HEAD `725816a7` GitHub Actions CI run `27085392644` completed/success；复验 comparison local validation focused tests、相关交易执行 tests 和触达文件 ruff 通过；脱敏 validation evidence 与安全语义闭合。'

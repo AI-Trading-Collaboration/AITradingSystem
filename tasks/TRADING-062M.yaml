@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-062M
+area: ETF features/backtest CLI option compatibility
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原文 features/backtest CLI 参数兼容
+acceptance: '`aits etf features build --end latest` 和根级 `aits features build --end latest` 必须使用价格缓存最新日期作为 end；显式 `--end YYYY-MM-DD` 继续按日期过滤；`aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` 必须读取指定 ETF backtest config；根级 `aits backtest` 不得变成 ETF alias；测试覆盖 help/CLI smoke 和现有主系统 backtest help 不变'
+notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 16.2 / 16.5 给出 `features build --end latest` 和 backtest `--config` 示例，当前 ETF features 对 `latest` 解析失败，ETF backtest run 不暴露 `--config`。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：`features build --end latest`、root alias smoke 和 ETF `backtest run --config` 均通过，根级 `aits backtest` 仍为主系统命令；全量 pytest 1630 passed。'

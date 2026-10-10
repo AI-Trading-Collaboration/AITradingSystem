@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2557_FIRST_LAYER_COMPOSER_V2_FOUNDATIONAL_FALSIFICATION_FAILURE_FIX_V1
+area: Strategy research / first-layer composer v2 foundational falsification schema-only failure-fix
+priority: P0
+status: BASELINE_DONE
+next_owner: Project Owner / strategy research：维持 HOLD；如需继续，另行预注册真正独立的新证据阶段并明确授权
+next_step: 当前 reused-development-window 证据为 INSUFFICIENT：bootstrap 下界跨 0 且 leave-2022-out 为负；禁止重跑、阈值救援或推进 Options Wave B/C
+acceptance: schema-only 修复、V1 immutable binding、EXACT_PREAUTHORIZED 1/1/1/1、DQ/independent replay、aggregate admission、Atlas/system flow 与正式发布证据全部绑定；后续独立研究另立任务
+notes: '[Supporting requirement](docs/requirements/TRADING-2557_First_Layer_Composer_V2_Foundational_Falsification_Failure_Fix_V1.md)。唯一 V2 attempt 结论=INSUFFICIENT/HOLD；5bps paired excess=+13.745976956735628pp，21/63-session bootstrap 2.5% lower=-34.943648104514985/-31.97461050658123pp，leave-2022-out=-5.048443883389609pp。EXACT_PREAUTHORIZED 计数=1/1/1/1，其余=0；DQ/independent replay PASS。无 pristine OOS、Options、生产或交易授权。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2525_ATLAS_CHANGE_EVIDENCE_DATE_AND_STATE_SEMANTICS_V1
+area: Atlas strategy research page / change evidence date and state semantics
+priority: P1
+status: DROPPED
+next_owner: 2524 coordinator：在唯一 exact HTML 上验证对象、日期、变化、下一动作与禁止推断投影，再随 coordinator closeout 更新终态。
+next_step: typed state lane 已吸收并接入 renderer；等待 final exact HTML、2526-B 与 integration formal，不能单独签署页面或策略验收。
+acceptance: 对象限定 state、data/evidence/page dates、comparison snapshot、next legal action 与 prohibited inference 可重放；raw enum 保留 audit；页面/工程 PASS 不升级为 strategy PASS。
+notes: '[supporting requirement](docs/requirements/TRADING-2525_Atlas_Change_Evidence_Date_And_State_Semantics_V1.md)；lane commit=a5183f745 已吸收并接入 why-first 页面；coordinator focused=74 passed in 138.06s；final exact HTML 与人工验收尚未发生。；GOV-008 2026-10-10：Atlas 已退役（owner_decision:GOV-008:2026-10-10:atlas_retired），页面与代码在 P4 删除，本任务不再推进'

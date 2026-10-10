@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1286_to_1305_SIGNAL_VALIDITY_STALENESS_REPAIR
+area: Research strategies / signal validity, staleness-aware execution, watch-only dynamic repair
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 `config/research/signal_validity_taxonomy.yaml`、`docs/research/signal_validity_staleness_input_summary.md`、per-strategy staleness/lag decomposition、`staleness_repair_summary.csv`、`lag_repair_summary.csv`、`inputs/research_reviews/staleness_repair_matrix.yaml`、`docs/research/signal_validity_staleness_repair_review.md`；CLI 支持 staleness repair 参数；leaderboard 继续只按 actual-path metrics 排序；target-path metrics diagnostic-only；dynamic promotion final status 继续 `BLOCKED`；no future leakage / actual-path-only promotion / stale action semantics tests、Ruff、compileall、parallel pytest 和 `git diff --check` 通过
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 附件要求对当前 watch-only surviving dynamic candidates 聚焦修复 signal validity / staleness cost / execution lag sensitivity，只允许输出 watch-only research evidence。2026-06-27: 实现完成并转入 VALIDATING；两个 repaired variants 的真实 dry-run verdict 均为 `NO_MATERIAL_IMPROVEMENT`，paper_shadow_preflight_candidate=`NOT_IDENTIFIED`，dynamic promotion 继续 `BLOCKED`；验证通过 Ruff、compileall、指定并行 pytest suites 和 `git diff --check`。'

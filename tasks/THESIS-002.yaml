@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: THESIS-002
+area: 交易 thesis/初始主动 baseline
+priority: P1
+status: DEFERRED
+next_owner: Project Owner
+next_step: 2026-09-24 按 owner 决策包第11条 DEFERRED；退出条件：owner 恢复 pending 业务指标复核
+acceptance: 原 6 个主动 baseline ticker 均具备 active thesis、验证指标、证伪条件、复核频率、来源、适用边界和 owner 复核状态；校验通过；日报不再因缺少主动交易 thesis 将 `watch_only` 观察池误写成 thesis 失败
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第11条：DEFERRED；agent_harness=claude_code；原备注：2026-05-10: 新增并进入实现，原因：owner 要求建立核心 ticker thesis，提高趋势判断到主动交易假设的可解释性。2026-05-10: 从 IN_PROGRESS 改为 BLOCKED_OWNER_INPUT，原因：MSFT/GOOG/TSM/INTC/AMD/NVDA thesis YAML 已写入，`thesis validate` PASS；`thesis review` 仍为 WATCH，因部分业务驱动指标需人工复核，系统未伪装为 confirmed。2026-05-11: owner 扩展核心观察池到 17 个代表性 ticker；本任务语义收窄为原 6 个主动 baseline thesis，新纳入 ticker 暂按 `watch_only` 处理，不新增 thesis gate 负担。'

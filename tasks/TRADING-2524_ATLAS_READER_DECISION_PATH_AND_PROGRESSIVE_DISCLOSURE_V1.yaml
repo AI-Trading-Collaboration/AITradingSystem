@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+area: Atlas strategy research page / reader decision path and progressive disclosure
+priority: P1
+status: DROPPED
+next_owner: 2524 coordinator：提交最终 failure-fix candidate，按 exact commit 重建 canonical HTML/sidecars，重跑五级 formal 与 parent-bound Full；PASS 后 ff-only main 并普通推送。
+next_step: DEVX-006D 2924 aggregate、DevEx/compatibility freshness 与完整 deprecation inventory 已经 26 PASS；剩余 promotion blocker 是最终 tracked commit、exact page rebuild、五级 formal 和 Full。
+acceptance: 最终 candidate 归属审计与 Ruff PASS；HTML/sidecars exact-bind 最终 commit；Architecture/Contract/Integration/Reproducibility PASS；Full 以 full_20260816T061310Z 为 parent 且 PASS；安全门通过后 ordinary push。
+notes: '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；targeted authority/deprecation=26 passed in 23.48s；human visual 与 reader-comprehension 仍保留 PENDING_REVIEW，不冒充 PASS。；GOV-008 2026-10-10：Atlas 已退役（owner_decision:GOV-008:2026-10-10:atlas_retired），页面与代码在 P4 删除，本任务不再推进'

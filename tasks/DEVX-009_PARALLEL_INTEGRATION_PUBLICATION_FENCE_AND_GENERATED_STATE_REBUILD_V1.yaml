@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-009_PARALLEL_INTEGRATION_PUBLICATION_FENCE_AND_GENERATED_STATE_REBUILD_V1
+area: Developer workflow / parallel integration publication fence and generated-state rebuild
+priority: P0
+status: DONE
+next_owner: Project Owner / Codex：按后续独立任务观察 publication telemetry 与趋势分析需求
+next_step: 无 blocker；DEVX-009 V1 已实现，后续扩展需另立任务并保持 transaction/Full/closeout 门禁。
+acceptance: 唯一 coordinator publication、stale-main/plan pre-write fail closed、official generated rebuild、atomic Full dispatch/exact candidate/parent、ff/push/SHA/cleanup receipt、focused/formal gates PASS。
+notes: 详见 DEVX-009 requirement。V1 复用 S4D FileExecutionLeaseStore；bootstrap v1 policy-hash drift 后 fail-closed 释放，successor v2 lease=lease-8d8e71876e7097b503a5；expanded focused=196 passed、Ruff/registry/skill parity PASS；final generated/formal/publish evidence 由 v2 transaction receipt 绑定；production_effect=none、broker_action=none。

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-050
+area: 回测输入/Signal Snapshot Builder & Full-signal-limited Shadow Backtest
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/signal_snapshot_builder_full_signal_limited_backtest_2026-05-30.md`；已实现 signal snapshot builder/validator/report alias、diagnostics mode 判定、backtest input manifest 集成、shadow backtest score calculation / attribution / parameter contribution summary、Dashboard/Reader Brief 展示和文档同步
+acceptance: '`aits signals build-snapshot --latest` 生成 `artifacts/signal_snapshots/YYYY-MM-DD/signal_snapshot.json/md`；`aits signals validate-snapshot --latest` 输出 `status=LIMITED`、`real_signals>=2`、`fallback_signals>=1`、`missing_signals=0`；diagnostics 在 snapshot limited 时输出 `backtest_mode=full_signal_backtest_limited`、`can_run_shadow_backtest=true`、`can_promote_candidate=false`；shadow backtest dry-run 读取 snapshot、输出 score calculation / attribution / parameter contribution summary，promotion 最多 watch；所有输出保持 `production_effect=none`、`manual_review_required=true`、`auto_promotion=false`，不修改 `config/parameters/production/current.yaml`；目标验证通过'
+notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-049 已使 price-only shadow backtest 可运行，下一阶段需要生成可审计 signal snapshots 并进入 full-signal-limited 模式。2026-05-30: 从 IN_PROGRESS 改为 DONE，原因：实现和真实 CLI 验收完成；`build-snapshot --latest` 生成 2026-05-28 snapshot，`status=LIMITED`、`real_signals=2`、`proxy_signals=1`、`fallback_signals=3`、`missing_signals=0`；`validate-snapshot --latest` 通过；`diagnose-backtest-inputs --latest` 输出 `price_data_status=OK`、`signal_snapshots_status=LIMITED`、`backtest_mode=full_signal_backtest_limited`、`can_run_shadow_backtest=true`、`can_promote_candidate=false`；`parameters shadow-backtest --latest --dry-run` 输出 `backtest_mode=full_signal_backtest_limited`、`promotion_status=rejected`，reason 明确 signal quality limited 不能 candidate；验证通过全量 `python -m pytest -q`（1420 passed, 1 warning）、全量 ruff、compileall 和 diff check。'

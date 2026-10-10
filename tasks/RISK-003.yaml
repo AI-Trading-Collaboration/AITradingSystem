@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: RISK-003
+area: 风险事件数据源
+priority: P1
+status: BASELINE_DONE
+next_owner: 系统实现 + 项目 owner
+next_step: 已完成正式流程基础版：`SOURCE-001` 固化来源分层，`RISK-004` 提供 OpenAI 结构化预审导入、live API 整理和待人工复核队列，`RISK-005` 提供每日复核声明链路，正式 occurrence 校验要求 reviewer/reviewed_at/review_decision/rationale/next_review_due；剩余缺口是真实授权来源样本、provider 级外部 LLM 授权记录、风险事件生产样本验证和 owner 每日复核运行纪律；详细流程见 `docs/requirements/risk_event_review_workflow_2026-05-04.md`
+acceptance: 风险事件发生记录能从更可信来源或结构化人工流程进入；报告记录 provider、endpoint/来源、captured_at、row count/checksum 或人工复核人；复核流程明确 owner、频率、SLA、升级标准、双确认条件和无法确认时的保守降级规则
+notes: '2026-05-04: 从 BLOCKED_OWNER_INPUT 改为 READY，原因：owner 确认采用“官方/一手来源 + OpenAI API 预审 + 结构化人工复核”的保守流程；实际实施拆解由 `RISK-004` 承接。2026-05-04: 从 READY 改为 BASELINE_DONE，原因：`SOURCE-001/RISK-004/RISK-005` 已完成来源分层、预审隔离、人工确认元数据、复核声明、日报识别、回测 PIT 切片和系统流图；完整生产使用仍依赖真实授权来源样本、API key、provider 级外部 LLM 授权记录和 owner 运行纪律。2026-05-04: 更新剩余缺口，原因：`RISK-004` 已补风险事件专用 live OpenAI 预审入口，生产级完成仍需真实授权样本和 owner 运行纪律。'

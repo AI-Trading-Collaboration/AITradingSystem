@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: CALIBRATION-001
+area: 反馈闭环/权重校准 overlay
+priority: P1
+status: BASELINE_DONE
+next_owner: 系统实现 + 项目 owner
+next_step: 已完成第一阶段不改变 production 的权重 profile、approved overlay schema、context matching、effective weights 计算和 `aits feedback apply-calibration-overlay`；后续再接入日报 `Historical Calibration`、weight diagnostics、policy replay、promotion 和 shadow 样本成熟度；详细拆解见 `docs/requirements/feedback_weight_calibration_overlay_2026-05-06.md`
+acceptance: 基础设施验收：非法权重、缺 approval、过期 overlay、未批准 overlay 和 `approved_soft` hard block 均会被拒绝或过滤；无 overlay 命中时 effective weights 等于 base weights；命中时输出 matched overlays、base/effective weights、confidence_delta、position_multiplier、required confirmations 和审计原因；后续完整验收需要 replay + forward shadow + owner approval 后才允许 production 使用 overlay
+notes: '2026-05-06: 新增并进入实现，原因：owner 同意先搭建基础系统，再通过每日真实 PIT 样本、回测、forward shadow 和人工审批逐步让 approved overlay 影响后续判断。2026-05-06: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：第一阶段 schema、loader、matching、standalone CLI、系统流图和单元测试已完成；尚未接入 `score-daily` production scoring 或回测仓位。'

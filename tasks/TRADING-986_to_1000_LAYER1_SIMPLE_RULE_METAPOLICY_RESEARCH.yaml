@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-986_to_1000_LAYER1_SIMPLE_RULE_METAPOLICY_RESEARCH
+area: Research strategies / Layer-1 simple-rule selector historical research
+priority: P1
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 selector registry config、15 个 `aits research strategies ...` CLI/artifacts、report registry entries、artifact catalog/system flow 更新和 focused tests；覆盖 trend/vol/drawdown/combined selector metrics、cost/latency stress、period split、drawdown episode、regret attribution、selector-vs-component ranking、overfit sensitivity、minimum holding period、watchlist gate、owner pack 和 master review；真实 master smoke 为 `LAYER1_SELECTOR_RESEARCH_ONLY`，registry=`SELECTOR_REGISTRY_READY`、ranking=`SELECTOR_RANKING_MIXED`、watchlist=`SELECTOR_WATCHLIST_NEEDS_OWNER_REVIEW`、data quality=`PASS_WITH_WARNINGS`、actual range=`2022-12-01`～`2026-06-23`；所有 outputs 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，禁止 ML selector、QQQ-plus growth selectable、tail-risk fallback/options selectable
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-24: 新增并进入 IN_PROGRESS，原因：976～985 master status=`LAYER1_SIMPLE_RULE_RESEARCH_READY` 且 owner recommendation=`START_LAYER1_SIMPLE_RULE_RESEARCH`，允许开始 research-only historical study；当前 formal selectable 仅 `equal_risk_qqq_sgov` 与 `100_qqq`。2026-06-24: 实现完成并转入 VALIDATING；新增 Layer-1 simple-rule selector registry、15 个 CLI/artifacts、report registry/artifact catalog/system flow 更新和 focused tests；真实 master smoke 输出 `LAYER1_SELECTOR_RESEARCH_ONLY`，watchlist 仍需 owner review，safety fields 仍 false/none。'

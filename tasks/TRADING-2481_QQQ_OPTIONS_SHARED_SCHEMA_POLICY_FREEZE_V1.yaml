@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1
+area: Architecture / QQQ options shared schemas and governed policy envelope
+priority: P0
+status: BASELINE_DONE
+next_owner: TRADING-2482 coordinator：必须消费本合同；breaking change 需另开 owner-reviewed serial contract wave
+next_step: 详见 `docs/requirements/TRADING-2481_QQQ_Options_Shared_Schema_Policy_Freeze_V1.md`。从 exact main `5bb71658c38da3104f9f198c9156d8f4153abe41` 冻结 run/signal/candidate/selection/order/fill/lifecycle/portfolio/DQ/evidence/reconciliation contracts；不实现 QC runner、不访问平台、不替 Owner 决定投资阈值。
+acceptance: canonical serialization、PK/enums/Decimal units/timezones/checksums/lineage/export classification、owner/version/rationale/review/expiry、safe policy envelope 与 breaking-change tests 完整；同步 system flow/architecture/task shadow；退出=`QQQ_OPTIONS_SHARED_CONTRACT_V1_REVIEWED`。
+notes: 2026-08-02：12 models + envelope/public enums + canonical seal/replay 已冻结；contract SHA-256=`c89916ee...3ff6b`、policy SHA-256=`d7cc57a3...6349`；focused=28、adjacent=98。首轮 Architecture 因 missing successor authority 正确 FAIL；追加 immutable 2481 authority、显式 worktree inventory 重算后 compatibility/deprecation=178 PASS，等待正式五级重跑。TRADING-2480 external token gap 继续 fail closed；`production_effect=none`、`broker_action=none`。

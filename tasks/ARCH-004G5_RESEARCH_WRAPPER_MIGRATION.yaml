@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ARCH-004G5_RESEARCH_WRAPPER_MIGRATION
+area: Architecture / Research wrapper native migration
+priority: P1
+status: PROPOSED
+next_owner: research-platform domain worker + architecture coordinator；等待G3与DATA-GOV lineage/DQ contract稳定
+next_step: 把research wrappers迁到canonical domain/runtime contract并删除双轨owner；必须保持现有研究窗口、candidate universe、threshold、preregistration、holdout和safety boundary，不夹带新搜索或策略调优。
+acceptance: wrapper/public contract/error/artifact/lineage parity；legacy caller归零或有明确deprecation终态；research reproducibility、architecture、contract与required Full PASS；策略B/C、prospective、paper-shadow、production和broker继续未授权。
+notes: 2026-07-23：列入G3之后的第三architecture slice；当前未启动。

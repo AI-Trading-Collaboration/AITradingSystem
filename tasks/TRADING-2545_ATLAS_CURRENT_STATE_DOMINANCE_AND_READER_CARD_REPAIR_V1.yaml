@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2545_ATLAS_CURRENT_STATE_DOMINANCE_AND_READER_CARD_REPAIR_V1
+area: Atlas strategy research page / current-state successor dominance and reader-card semantic repair
+priority: P0
+status: DONE
+next_owner: Project Owner
+next_step: No remaining implementation or data blocker. Preserve the closed strategy/order boundary; any Owner visual acceptance is a separate human track.
+acceptance: 首屏显示 1201 normal + 1 recovered + 0 unresolved = 1202/1202；DQ/PIT promotion 仍 false；历史 2533 可审计但不覆盖 2541；reader cards/why-first/source refs 单一投影；canonical writers 只导入 exact worktree local source；compatibility authority current；final exact-commit Full PASS、ordinary push/cleanup。
+notes: 'Latest-main coordinator reconciliation uses reviewed plan integration-revalidation-74570e0a36107ff544cd. Frozen-lane parent-bound Full passed 9487 tests; the first final Full then correctly failed only because DEVX-010 advanced origin/main during execution. Requirement: docs/requirements/TRADING-2545_Atlas_Current_State_Dominance_And_Reader_Card_Repair_V1.md. Final integration candidate requires fresh parent-bound Full; runtime result remains ignored evidence to avoid tracked self-reference.'

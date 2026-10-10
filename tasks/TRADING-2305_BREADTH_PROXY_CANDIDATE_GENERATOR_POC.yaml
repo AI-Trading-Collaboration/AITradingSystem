@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2305_BREADTH_PROXY_CANDIDATE_GENERATOR_POC
+area: Research trends / breadth participation proxy diagnostics
+priority: P1
+status: PROPOSED
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 依赖 TRADING-2304 selected concepts 和 frozen current constituent snapshot / coverage audit。仅允许 diagnostics-only POC，不允许 actual-path validation grade 或 promotion eligibility。
+acceptance: 形成 candidate_signal_spec、candidate_signal_series、candidate_prediction_artifact、generation_summary、validation_summary 和 proxy_bias_disclaimer；所有 artifacts 必须标记 `data_mode=current_constituents_proxy`、`strict_pit=false`、`promotion_eligible=false`。
+notes: '2026-07-01: 根据 owner post-2302 roadmap 登记；当前被 current constituent snapshot 缺口阻断。'

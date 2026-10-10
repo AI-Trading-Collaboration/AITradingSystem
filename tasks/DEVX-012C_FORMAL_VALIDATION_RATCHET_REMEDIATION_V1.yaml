@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-012C_FORMAL_VALIDATION_RATCHET_REMEDIATION_V1
+area: Developer experience / DEVX-012 formal validation ratchet remediation
+priority: P1
+status: DONE
+next_owner: Project owner：复核自动周报的 review-only candidates
+next_step: 无 implementation blocker；formal failure 的两个精确 ratchet 已修复，最终候选继续 fail-closed formal/Full
+acceptance: task_count ratchet=1045；latest compatibility section=DEVX-012；Architecture/Contract/Integration/Reproducibility/Full PASS；main/origin publish 与 automation closeout
+notes: Parent architecture failure 8a187e3a... contained two ratchet-only failures; exact assertions corrected without gate relaxation or workflow behavior change.

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
+area: Architecture / Reporting native migration and readable conclusion chain
+priority: P1
+status: BASELINE_DONE
+next_owner: project owner + reporting domain owner；剩余9项仅在独立G5授权后迁移
+next_step: 详见 Wave14/Wave15 supporting requirements。Owner Daily `data_quality_and_pit`已迁为native pure projector，Reader Brief删除本地builder；renderer只消费既有canonical DQ/PIT事实，不重算评分、阈值或策略结论。本次close不迁剩余9个generic provider、不启动G5。
+acceptance: native/generic=`1/9`、legacy builder=0、历史/current SHA、single-owner、19字段、bytes/path/schema/status parity与剩余9项readiness inventory持续PASS。
+notes: 2026-07-25：content-derived close/readiness与Wave15 failure-fix Full=`7180/0`完成，bounded slice转`BASELINE_DONE`；剩余9项均`migration_executed=false`，G5仍未授权。

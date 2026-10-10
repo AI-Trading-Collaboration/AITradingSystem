@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-266_to_270_SMOOTHED_FORWARD_EVIDENCE_OPERATIONS_AND_PRIMARY_CANDIDATE_READINESS
+area: ETF portfolio/dynamic v3 rescue smoothed progress/dashboard/event monitor/readiness/owner renewal
+priority: P0
+status: BASELINE_DONE
+next_owner: 研究流程：积累独立forward/PIT/DQ/cost/holdout证据；architecture coordinator：继续剩余G2.4 matrix
+next_step: 详细拆解见 `docs/requirements/TRADING-266_to_270_Smoothed_Forward_Evidence_Operations_and_Primary_Candidate_Readiness.md`。G2.4CR canonical closeout已完成；旧2026-06-13 DONE记录保留历史但已被G2.4CP/CQ source truth supersede。当前candidate=null、Binding=`targets=[]/NOT_REGISTERED`、Switch proposed=null，不得回填固定3d/3 targets/10-5-5 requirements；真实candidate/targets出现后再扩展非空业务路径。
+acceptance: 15 callbacks迁canonical interface/domain；五类bounded v2 snapshots；pre-output live upstream/cutoff validation；Binding-only candidate/targets；outcome/classification exact target lineage；Dashboard/Monitor同Progress lineage；Recheck与CQ Switch exact candidate；Renewal与Owner journal exact candidate；null/0-target/NOT_REGISTERED；content-derived全部views与byte rebuild；会话缓存键含validator/path/content fingerprint且byte变化必失效；CLI parity、docs/manifests/deprecation/compatibility及focused/architecture/contract；`production_effect=none`。
+notes: '2026-07-14: G2.4CR=`COMPLETE_G2_4_CONTINUES`。性能progress`557.27s→13.60s`（-97.56%/40.98x），最大snapshot`633.06MB→9.49MB`（约-98.5%）；当前Progress/Dashboard/Monitor=`NOT_REGISTERED`、Recheck=`NO_ELIGIBLE_CANDIDATE`、Renewal建议`request_more_forward_data`。Focused/CLI baseline/architecture/contract=`147/120/279/203 passed`，generated=`922/1,122/858/0`。单slice不触发ARCH-005 handoff，不进入G2.5。'

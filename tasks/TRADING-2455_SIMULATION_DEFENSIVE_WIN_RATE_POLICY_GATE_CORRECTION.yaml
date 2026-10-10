@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2455_SIMULATION_DEFENSIVE_WIN_RATE_POLICY_GATE_CORRECTION
+area: Strategy correctness / simulation defensive win-rate policy enforcement
+priority: P0
+status: DONE
+next_owner: 已完成；后续由普通 policy/version review 承接，不自动校准数值
+next_step: 详见 `docs/requirements/TRADING-2455_Simulation_Defensive_Win_Rate_Policy_Gate_Correction.md`。loader 已校验 `minimum_win_rate_vs_no_trade=0.50` 的 finite/range，regime status 已真实执行该门槛，低胜率样本不再误报 `PROVEN_DEFENSIVE`。
+acceptance: 边界/低于边界/invalid policy/不足样本测试通过；expanded focused=`164 passed/1 skipped`，architecture/contract/reproducibility=`446/265/23 passed`，Full=`6575 passed/2 skipped`；不改 policy 数值、研究窗口或 production state，`production_effect=none`。
+notes: 2026-07-22：Wave 8 correctness blocker 闭合并转 DONE；三个投资解释指标 return/drawdown/win-rate 必须同时通过。

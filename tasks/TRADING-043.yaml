@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-043
+area: 基本面/SEC PIT Shadow Candidate Review & Evidence Pack
+priority: P1
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/sec_pit_candidate_review_2026-05-27.md`；已完成 `aits sec-pit review-candidates` / `--latest`、只读 candidate review 核心模块、summary JSON/Markdown、candidate evidence CSV、by-ticker CSV、by-period CSV、baseline overlap CSV、shadow proposal CSV、缺失 artifact / baseline fields 降级、dashboard 只读卡片、artifact catalog、system flow、learning path 和 runbook 更新
+acceptance: CLI 支持 `--start`、`--end`、`--evaluation-dir`、`--comparison-dir`、`--diagnostics-dir`、`--candidate-feature`、`--output-dir`、`--latest`；输出 evidence pack 用于人工判断 SEC PIT shadow candidate 是否适合 observe-only iteration；所有 evidence 固定 `manual_review_required=true`、`production_effect=none`，所有 proposal 固定 `review_required=true`、`production_effect=none`；不修改 production weights、approved overlay、score config 或 active shadow weights；baseline fields 缺失时 overlap 明确降级为 `LIMITED_BASELINE_FIELDS_MISSING`；dashboard 只读读取 latest review JSON，不运行 review 或上游 pipeline；真实 `--latest --candidate-feature capex_intensity` 已生成 `outputs/sec_pit_candidate_review/sec_pit_candidate_review_summary_2026-05-26.*`，`review_status=OK`，`capex_intensity` 为 `READY_FOR_MANUAL_REVIEW`
+notes: '2026-05-27: 新增并进入 IN_PROGRESS，原因：TRADING-042A 修复并真实复跑后 `capex_intensity` 已进入 manual-review shadow candidate 状态，但下一步需要人工可复核 evidence pack，而不是自动 promotion。2026-05-27: 从 IN_PROGRESS 改为 DONE，原因：实现、真实 review artifacts、dashboard 和文档完成；验证通过 `python -m pytest tests/trading_engine/test_sec_pit_candidate_review.py -q`（10 passed）、`python -m pytest tests/test_daily_task_dashboard.py -q`（21 passed）、`python -m pytest tests/trading_engine/test_sec_pit_real_run_diagnostics.py -q`（10 passed）、全量 `python -m pytest -q`（1298 passed, 1 warning）、全量 `python -m ruff check config src tests scripts docs` 和触达 Python 文件 `python -m black --check ...`。'

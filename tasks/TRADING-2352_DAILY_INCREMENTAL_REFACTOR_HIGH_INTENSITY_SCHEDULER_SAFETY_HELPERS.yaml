@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2352_DAILY_INCREMENTAL_REFACTOR_HIGH_INTENSITY_SCHEDULER_SAFETY_HELPERS
+area: Daily incremental refactor / high-intensity scheduler safety helper boundary
+priority: P2
+status: DONE
+next_owner: 系统后续每日增量重构巡检继续从本轮 refactor log 回填提交评估
+next_step: 详见 `docs/requirements/TRADING-2352_Daily_Incremental_Refactor_High_Intensity_Scheduler_Safety_Helpers.md`；本批只抽取 TRADING-2347～2350 scheduler dry-run / disabled wiring / manual review / manual-run dry-run 中重复的 unsafe-field、real-scheduler 和 forbidden-action 扫描 helper，不实现 TRADING-2351，不启用 scheduler，不运行 fresh market data path。
+acceptance: 新增 `src/ai_trading_system/high_intensity_risk_cap_scheduler_common.py`；TRADING-2347 disabled wiring 和 TRADING-2348 smoke dry-run 复用 common helper，TRADING-2349 manual review gate 与 TRADING-2350 manual-run dry-run 通过 smoke dry-run wrapper 继承同一安全扫描行为；保留所有外部 CLI、artifact path、JSON key、Markdown 文案、status/readiness、safety fields、data quality disclosure、promotion / paper-shadow / production / broker false/none 语义。验证通过 Ruff、compileall、focused high-intensity scheduler parallel pytest 44 passed、docs freshness、task-register checks 和 `git diff --check`。
+notes: '2026-07-05: 每日增量重构巡检登记，基线为 `c1224b51a38036c03578da4687736649fa9dea07`，HEAD `1d603195d2147c523d6a70d27389dc35d4106561` 不是重构提交。2026-07-05: 实现完成并归档 DONE；本轮未运行 `aits validate-data`，因为只整理 observe-only scheduler 安全扫描内部 helper，不读取 cached market/macro data，不生成 technical features、scoring、backtest 或 daily report 输出。'

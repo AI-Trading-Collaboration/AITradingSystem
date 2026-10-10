@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-725_MASTER_VALIDATION_MIGRATION_DOCUMENTATION_ROLLUP
+area: Research ops / master validation, migration, documentation rollup
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: CLI/docs/tests 更新；existing_production_outputs_unchanged=true；legacy_recommendation_semantic_drift_count=0；all_primary_artifacts_registered=true；validation_tier_pass=true 或明确阻塞
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow / official weights，不触发 broker/order。2026-06-21: 继续 VALIDATING；`tests/test_research_master_roadmap.py` 已纳入 `fast-unit` 和 `contract-validation`，primary artifacts 已进入 report registry 与 artifact catalog，CLI smoke 增加 artifact existence checks；仍需真实 full-advisory / forward paper-shadow evidence 和 owner review 才能进入 promotion review。'

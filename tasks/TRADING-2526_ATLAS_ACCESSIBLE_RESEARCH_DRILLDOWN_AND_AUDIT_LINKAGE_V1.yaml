@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
+area: Atlas strategy research page / accessible research drilldown and audit linkage
+priority: P1
+status: DROPPED
+next_owner: Project Owner：冻结 hosting/provider、private access、HTTPS origin、TTL、cost ceiling、retention、browser/viewport/AT matrix 与 cleanup authority；真实 endpoint/cloud write 另需 exact R2 授权。
+next_step: 本地 pending-owner policy、allowlist manifest/atomic bundle、exact-byte replay、separate R2 binding 与 endpoint validator 已完成；current policy 因全部 Owner slots 待决而 fail closed。2526-B 仍等待 policy freeze、R2 endpoint authority 与同一 exact HTML 的 Browser/mobile/keyboard/AT/audit replay。
+acceptance: 本地 policy 未获 Owner 决策时拒绝 bundle readiness；获批 synthetic policy 下 deterministic allowlist/manifest/write/replay 与 traversal/symlink/missing/extra/hash/network/runtime/origin/expiry negative gates 通过。真实 private HTTPS endpoint 必须另获 exact R2、响应 bytes 与 manifest SHA 一致并在 TTL 后撤销；不得把本地 PASS 或 Owner visual 代签 2526-B/2527-B。
+notes: 'Supporting requirement: docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md. Source commit=6afba2bbf1257d8e62a37647c5bf2032283b755d; focused new module=11 passed; expanded Atlas excluding expected stale generated manifest=48 passed; Ruff PASS; changed-source strict mypy PASS. No hosting/cloud/project/public write, paid resource, real bundle, endpoint, Browser automation, market data, DQ, backtest, production or broker action.；GOV-008 2026-10-10：Atlas 已退役（owner_decision:GOV-008:2026-10-10:atlas_retired），页面与代码在 P4 删除，本任务不再推进'

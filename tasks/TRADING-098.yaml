@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-098
+area: ETF portfolio research/Dynamic v3 Rescue Shadow Candidate Registry
+priority: P1
+status: DONE
+next_owner: research owner：仅在 clean S1 产生新合格证据后以新任务重开登记
+next_step: Owner 选择保守迁移方案1；三条历史 observe-only records全部保留，`ce9db518659c8d68`与`a72139edcaef7d22`清空superseded evidence ids并降级为`incomplete_observation_basis`，`aa02bb947cf29885`保持incomplete；未绑定partial legacy pair。
+acceptance: 三行均显式`observation_basis_selection=none`；历史candidate/source/metrics保留；`validate-shadow-registry=PASS/0`；focused/expanded parallel tests通过；无自动enroll/promotion/production/broker。
+notes: '2026-07-12: G2.4U完成后runtime registry因两条旧complete binding FAIL 12项。2026-07-21: owner选择方案1；迁移后真实validator PASS/0，focused/expanded=`1/2 passed`，任务归档DONE；`production_effect=none`、`broker_action=none`。'

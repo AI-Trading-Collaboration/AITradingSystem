@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-121_to_125
+area: ETF portfolio research/Dynamic v3 Rescue Evidence Gate Diagnosis and Candidate Usability Recovery
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 能生成 evidence diagnosis、gate impact matrix、policy apply、candidate recovery、calibrated observe pool 和 research decision update artifacts；hard fail 不被放宽；所有恢复候选只能是 `observe_only` / `manual_review_required`；不生成 production candidate、不触发 shadow enrollment、不触发 broker action；focused tests、ruff、compileall、git diff check 和 dynamic-v3 artifact validation PASS；真实 sweep 链路输出可解释 top blocking reasons、scenario recovery counts、go/no-go 和 overnight recommendation
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-08: 新增并进入 IN_PROGRESS，原因：TRADING-114_to_120 真实 medium_real 已完成但 300/300 candidates 全部 `review_required`，evidence summary 业务状态 FAIL 且 observe pool 为 0；本阶段先诊断 gate 影响并恢复可人工复核的 observe-only 候选，仍禁止 automatic production candidate。2026-06-08: 转入 VALIDATING，真实 workflow 输出 `diagnosis_id=eb8b1c33e26c990d`、`impact_id=16ebb1bf0834db22`、`policy_run_id=0a12556b2d7f9ee2`、`recovery_id=0124f4f6abdd503b`、rebuilt `observe_pool_id=01f0f0056e78f293`、`decision_update_id=e0788af9f403b9c4`；0 hard blocked、300 soft blocked，policy/recovery 恢复 300 个 observe-only/manual-review candidates，research decision update 为 `GO_WITH_LIMITS` / `manual_review_recovered_candidates`；验证通过 focused pytest、全量 pytest（2226 passed）、ruff、compileall、git diff check 和 dynamic-v3 artifact validation。'

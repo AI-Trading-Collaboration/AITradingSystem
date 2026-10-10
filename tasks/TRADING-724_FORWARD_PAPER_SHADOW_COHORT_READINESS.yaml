@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-724_FORWARD_PAPER_SHADOW_COHORT_READINESS
+area: Research ops / forward paper-shadow cohort readiness
+priority: P0
+status: VALIDATING
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 详见 TRADING-703_to_725 总需求文档；统一准备 paper-shadow cohort，但默认仍需人工复核
+acceptance: '`paper-shadow cohort-prepare'
+notes: 'cohort-status` 可运行；paper_shadow_change_allowed=false unless human-review-ready；broker_action=none；rollback_criteria_present=true|2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow / official weights，不触发 broker/order。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: PUBLISHING-001_MULTI_CARRIER_PUBLISHING
+area: Publishing & Experience / docs site, reports, dashboards and archival renderers
+priority: P2
+status: PROPOSED
+next_owner: publishing/reporting owner + knowledge owner + UX owner
+next_step: 详见 `docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md` 的 K3；依赖K1 Knowledge Object和ARCH-004F3 typed reporting。接管REPORT-052未实施的generated index/archive/freshness事项；先做静态文档站与deterministic renderer，再按真实需求扩展交互和PDF。
+acceptance: 同一knowledge/source/evidence ids可确定性投影到Obsidian-compatible Markdown、用户文档站、Reader Brief/Dashboard links及冻结报告；renderer不重算投资结论；current/history、as-of、DQ/PIT与limitations一致；无第二套手工同步内容。
+notes: '2026-07-12: owner确认文档、网页、可视化和PDF是同一知识核心的不同载体；登记为PROPOSED。'

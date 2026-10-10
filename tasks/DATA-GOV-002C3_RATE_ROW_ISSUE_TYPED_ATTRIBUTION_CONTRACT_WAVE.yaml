@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-GOV-002C3_RATE_ROW_ISSUE_TYPED_ATTRIBUTION_CONTRACT_WAVE
+area: Data Foundation / Phase C approved rate row issue typed attribution serial contract wave
+priority: P0
+status: BASELINE_DONE
+next_owner: data platform engineering coordinator维护contract/decision authority；任何rate capability adoption、consumer migration或QLD/生产治理复审必须等待canonical DQ strict PASS并另获Owner授权
+next_step: 详见 `docs/requirements/DATA-GOV-002C3_Rate_Row_Issue_Typed_Attribution_Contract_Wave.md`。Owner decision=`owner_decision:DATA-GOV-002C3:2026-07-28:approve_rate_row_issue_attribution_contract_wave_v1`；final fresh pack=`dq_rate_issue_attribution_review_216045a1ebe282194028e1f8`。六个canonical emitters、typed threshold/predecessor evidence、Markdown和pure disjointness contract均已闭合；policy/consumer adoption仍属非范围。
+acceptance: Decision/pack bytes绑定；versioned rate row digest；primary source checksum、series/date/field/row、threshold/predecessor typed evidence；incomplete保持global；price contract兼容；pure false-isolation contract通过；active capability policy/consumer/cached data/strategy/production/broker不变；focused/formal/parent-bound Full及标准closeout PASS。
+notes: 2026-07-28：focused=`74 passed`，Black/Ruff/strict mypy、C1/C2 freshness PASS；factory引起site 69→64的漂移被fail-closed捕获并直接修复回69。Architecture/Contract/Report/Reproducibility/Integration=`775/276/57/24/995 passed`；首轮Full仅两个无关Windows同-key协调样本失败，定向并行=`20 passed`，parent-bound Full=`7629 passed / 3 skipped / 643 warnings`。真实canonical DQ as-of `2026-07-27`仍strict `FAIL`（manifest/price末端、`^VIX` 31个non-session rows、26个ticker当日缺口），故QLD自动选择与生产治理继续阻断。`production_effect=none`、`broker_action=none`。

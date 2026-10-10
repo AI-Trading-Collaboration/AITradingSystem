@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: LLM-004
+area: 新闻/LLM 请求配置
+priority: P1
+status: DONE
+next_owner: 系统实现
+next_step: 已完成请求 profile 配置、加载器、CLI 覆盖参数、daily-run profile 传递、文档和测试；详细拆解见 `docs/requirements/llm_request_profiles_2026-05-13.md`
+acceptance: 不同 LLM 请求入口从可审计 profile 读取模型、reasoning、timeout、HTTP client、缓存 TTL、重试、候选上限和 LLM formal 运行参数；CLI 显式参数可覆盖 profile；`daily-run` 传递 profile id 而不是把候选上限等效硬编码；provider 权限、cache_allowed、`store=false`、本地审计和 `llm_extracted / pending_review` 边界不放松；系统流图、README 和测试同步
+notes: '2026-05-13: 新增并进入 IN_PROGRESS，原因：owner 要求梳理当前 LLM 请求来源，并希望系统按不同请求使用不同配置。第一版只配置请求策略和候选/LLM formal 运行参数，不开放 prompt/schema 版本。2026-05-13: 从 IN_PROGRESS 改为 DONE，原因：新增 `config/llm_request_profiles.yaml`、profile schema/loader、四个 live LLM 请求入口的 profile 默认值和 CLI 覆盖、`daily-run`/direct dispatcher profile 传递、日报输出 profile id、README/系统流图/数据源说明同步；验证通过 `pytest` 506 passed、`ruff check src tests`、`git diff --check`、CLI help smoke、`data-sources validate` 和 daily-plan smoke。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2456_CURRENT_RESEARCH_EXECUTION_CHAIN_WINDOW_SEMANTIC_CONSISTENCY
+area: Strategy governance / current research execution-chain active-window semantics
+priority: P0
+status: DONE
+next_owner: 已完成；由权威文档合同持续阻止旧active-primary表述回归
+next_step: 详见 `docs/requirements/TRADING-2456_Current_Research_Execution_Chain_Window_Semantic_Consistency.md`。权威研究执行链三个残留错误已修复；2021为active primary，2022只保留immutable historical fixture实际范围与legacy comparison角色，历史artifact未改。
+acceptance: Fail-closed合同禁止三类旧错误短语并要求三处窗口边界；expanded focused/architecture/contract/reproducibility=`52/447/265/23 passed`，唯一Full=`6576 passed/2 skipped/1082.57s`；`strategy_logic_changed=false`、`production_effect=none`。
+notes: 2026-07-22：S0～S3完成并转`DONE`；Full provenance/scheduler/telemetry/performance/safety均PASS，tail-idle max=`0.016s`。

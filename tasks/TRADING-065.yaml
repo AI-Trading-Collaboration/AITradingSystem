@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-065
+area: ETF forward observation/ETF Forward Simulation Review Dashboard
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/TRADING-065_ETF_Forward_Simulation_Review_Dashboard.md`；forward simulation dashboard / weekly review / watchlist / validation baseline 已完成，后续真实 forward 样本积累由影子观察任务承接
+acceptance: '`aits etf forward validate` PASS；forward outputs 固定 `observe_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；forward returns 仅存在于 `evaluation_only=true` 评估产物；不写 production weights、不触发 broker action、不自动 promotion；JSON/Markdown reports、Reader Brief、report registry、scheduled daily ops、artifact catalog、system flow 和 tests 同步；全量 pytest、ruff、compileall、diff check 通过'
+notes: '2026-06-01: 新增并进入 IN_PROGRESS，原因：TRADING-064 已完成历史实验候选 selection/enrollment，下一步需要真实 forward shadow observation dashboard；本阶段只观察候选相对 baseline/QQQ/SPY/SMH 的表现，不改变 production ETF allocation。2026-06-01: TRADING-065A~I 完成并转入 VALIDATING，原因：新增 `config/etf_portfolio/forward_simulation.yaml`、hardened shadow registry schema、`aits etf forward update/dashboard/weekly-review/watchlist/validate`、Reader Brief forward simulation section、report registry/scheduled daily ops integration 和 docs；验证通过 `python -m pytest tests -q`（1747 passed）、ruff、compileall、diff check 和 `python -m ai_trading_system.cli etf forward validate`（PASS）。2026-06-07: 从 VALIDATING 改为 DONE，原因：`aits etf forward validate` 复验仍为 PASS，输出 `production_effect=none`、`broker_action=none`、`manual_review_required=true`；本任务的 dashboard / weekly review / Reader Brief / watchlist / validation baseline 已满足验收，后续真实 forward 样本积累由影子观察任务继续承接。'

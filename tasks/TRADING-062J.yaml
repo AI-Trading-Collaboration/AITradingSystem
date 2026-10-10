@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-062J
+area: ETF backtest artifact and benchmark completeness
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原文 ETF backtest 审计产物和 QQQ 50/200 MA 基准
+acceptance: '`aits etf backtest run` 必须输出 `daily.csv`、`weights.csv`、`trades.csv`、`summary.json`、`metrics.json` 和 `summary.md`；daily rows 必须包含资产收益和资产贡献 JSON；weights/trades 必须含 signal_date、return_date、symbol、target/current/delta、model_version、config_hash；benchmark metrics 必须包含 `ma_50_200_qqq`，并继续包含 buy-and-hold SPY/QQQ/SMH 与 static default portfolio；summary 必须披露 data quality、AI regime、execution lag、benchmark comparison 和 correctness notes；测试覆盖文件输出、权重/交易 schema、MA baseline 和资产贡献口径'
+notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 10.1/10.5/10.7 要求权重历史、交易历史、资产级收益归因、结果文件和 QQQ 50/200 MA 基准；当前 ETF backtest 只写 `daily.csv`、`summary.json/md` 和 buy-and-hold/static 基准。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 weights/trades/metrics artifacts、daily asset return/contribution JSON、扩展指标、benchmark relative return 和 `ma_50_200_qqq`；真实 fast backtest smoke 生成完整 run 目录；目标测试、ruff、compileall、diff check 和全量 pytest 1627 passed。'

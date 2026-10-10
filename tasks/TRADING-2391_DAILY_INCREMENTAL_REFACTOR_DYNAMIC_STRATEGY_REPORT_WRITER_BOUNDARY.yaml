@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2391_DAILY_INCREMENTAL_REFACTOR_DYNAMIC_STRATEGY_REPORT_WRITER_BOUNDARY
+area: Architecture / daily incremental refactor dynamic strategy report writer boundary
+priority: P2
+status: DONE
+next_owner: 系统后续每日增量重构巡检继续从本轮 refactor log 回填提交评估
+next_step: 详见 `docs/requirements/TRADING-2391_Daily_Incremental_Refactor_Dynamic_Strategy_Report_Writer_Boundary.md`；本批只抽取 dynamic strategy research-only JSON / Markdown artifact writer helper，并先迁移 TRADING-2388 threshold methodology review，不改变外部 CLI、artifact path、report schema、字段内容、阈值、score band、promotion gate、data quality gate、backtest、market-regime interpretation、paper-shadow、production 或 broker 边界。
+acceptance: 新增 `src/ai_trading_system/dynamic_strategy_report_common.py`；`dynamic_strategy_research_filter_threshold_methodology_review.py` 复用 `write_json_artifact()` / `write_markdown_artifact()`；新增 helper unit coverage；TRADING-2388 builder / CLI / registry docs focused tests 继续通过；验证通过 Ruff、compileall、focused parallel pytest 5 passed、CLI help smoke、docs freshness 574 docs PASS、docs/task focused pytest 11 passed 和 `git diff --check` PASS（仅 CRLF normalization warning）。
+notes: '2026-07-06: 每日增量重构巡检登记，基线为 `2a4b9f222fb55e554e4efce8ff828a49c7f2621d`，HEAD `8a668cd969013425d0724d6aed8217d1f27b6188` 不是重构提交。2026-07-06: 实现完成并归档 DONE；本轮未运行 `aits validate-data`，因为只整理 artifact writer，不读取 cached market/macro data，不生成 technical features、scoring、backtest 或 daily report 输出；production effect 固定 `none`，未写 production weights / active shadow weights，未触发 broker / order / trading action。'

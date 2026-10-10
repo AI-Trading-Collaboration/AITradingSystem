@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-036
+area: 交易执行/Notification Delivery Failure Classification / Retry Readiness
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/notification_delivery_failure_classification_2026-05-26.md`；只读 failure classification / retry readiness 已通过目标复验，不执行通知、重试或状态变更
+acceptance: 新增 `scripts/run_notification_delivery_failure_classification.py` 和 `src/ai_trading_system/trading_engine/notification_delivery_failure_classification.py`；默认读取 latest TRADING-035 audit summary，也支持 `--audit-summary` 指定 JSON；输出 failure classification JSON、Markdown 和 run log，覆盖 `PASS`、`INCOMPLETE`、`MISMATCH`、`SAFETY_BLOCKED`、missing/malformed source 和 unknown status；输出 categories、manual review、safe_to_retry、retry blockers、recommended actions 和 safety invariants；dashboard 只读读取 latest TRADING-036 JSON，不运行 classifier、不读取外部通知状态、不发送 notification；专项测试覆盖分类、CLI、Markdown、safety invariants、dashboard 只读和 missing report graceful handling；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff
+notes: '2026-05-26: 新增并进入 IN_PROGRESS，原因：TRADING-035 已能回答通知链路审计状态，但还缺少失败类型、重试准备度、人工复核和通知链路阻断判断；本任务严格 read-only classify + report，不执行通知、重试、状态变更或 production 参数变更。2026-05-26: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 classifier builder、CLI、JSON/Markdown/log、dashboard 只读卡片、runbook、requirements index、system flow、artifact catalog 和专项测试；验证通过 `tests/trading_engine/test_notification_delivery_failure_classification.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。2026-06-07: 从 VALIDATING 改为 DONE，原因：只读 failure classification / retry readiness 实现和安全边界已满足验收；复验通过通知链路目标 pytest 97 passed 和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: PIT-001
+area: 特征/PIT 可见时间
+priority: P0
+status: BASELINE_DONE
+next_owner: 系统实现
+next_step: 已建立 `config/feature_availability.yaml` 和 PIT feature availability 报告；`build-features`、`score-daily`、`backtest` 写入可见时间报告，并把摘要纳入 report trace bundle；剩余缺口是把单个新特征族的真实 `available_time` 字段校验继续下沉到各数据源 schema；详细拆解见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#pit-001全系统-feature-availability-policy`
+acceptance: 所有用于评分、回测、校准和日报核心结论的特征族都有明确 availability rule；缺少 `available_time` 或只有 `event_time` 的新特征默认不得进入 A/B 级回测主结论；回测报告和 trace bundle 能显示特征可见时间规则、实际 `feature_as_of` 和数据可信度等级；实现时同步更新 `docs/system_flow.md` 并补充未来快照、未来公告、未来 universe 和未来宏观修订防护测试
+notes: '2026-05-05: 新增任务，原因：PIT 讨论确认下一阶段应把 `available_time <= decision_time` 从估值/风险/SEC/观察池扩展为全系统特征规则，避免新增特征族重新引入未来函数。2026-05-05: 从 READY 改为 BASELINE_DONE，原因：新增 feature availability catalog、校验/报告模块、CLI 接入、trace 引用和测试；完整 DONE 仍需各数据源级别的可见时间字段强校验。'

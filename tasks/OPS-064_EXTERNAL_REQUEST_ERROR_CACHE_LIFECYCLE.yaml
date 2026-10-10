@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-064_EXTERNAL_REQUEST_ERROR_CACHE_LIFECYCLE
+area: Data platform / external request negative-cache governance
+priority: P1
+status: DONE
+next_owner: operations/data platform：观察 30 天 negative observations；跨进程到期 singleflight 由 OPS-065
+next_step: 详见 `docs/requirements/OPS-064_External_Request_Error_Cache_Lifecycle.md`；HTTP 4xx/5xx 不再永久 HIT。Reviewed pilot TTL/Retry-After、v1 key/legacy body 兼容、v2 content-addressed immutable body、negative observations、expiry revalidation、CAS invalidation 与 unified SEC lifecycle 已完成。
+acceptance: status/TTL/Retry-After cap 可复算；legacy v1 可读；body/observation/event 不可变；path/checksum/tamper fail closed；并发 pointer last-completed-valid；FMP/Marketstack/FRED/SEC、CLI、docs/catalog/system flow、manifests 与 formal gates PASS；不删除 cache、不绕过 DQ，`production_effect=none`。
+notes: 2026-07-20：focused integration=81 passed；architecture=446 passed/35.11s；contract=265 passed/149.33s；full=6456 passed/2 skipped/643 warnings/969.84s，较 972.33s 基线约 -0.26%，无异常回归。跨进程同 key 到期可能重复 live revalidate 已透明登记 OPS-065，不隐藏为 OPS-064 已解决。

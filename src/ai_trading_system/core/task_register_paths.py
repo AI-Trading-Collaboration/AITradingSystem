@@ -1,9 +1,8 @@
-"""Paths of the generated task register views.
+"""Paths of the rendered task register views.
 
-Reports that read the active and completed task register used to ask the publication machinery
-(``platform.architecture.task_registry_canonical``) for these paths, which also validated the whole
-canonical registry. Only the two paths were needed, so they live here, independent of that machinery
-(GOV-008 decoupling). When the task register is replaced (GOV-008 P5) this is the one place to change.
+Tasks live in ``tasks/<ID>.yaml``; ``python tools/tasks.py render`` writes the active and completed
+views below ``docs`` in the eight-column table that reports read (GOV-008 P5). Reports only need the
+two view paths, so they live here, independent of how the task files are kept.
 """
 
 from __future__ import annotations

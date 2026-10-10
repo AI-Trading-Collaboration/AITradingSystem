@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-010_FULL_PARENT_PUBLICATION_BINDING_NORMALIZATION_V1
+area: Full parent publication binding 规范化与回归验证
+priority: P1
+status: DONE
+next_owner: integration-coordinator
+next_step: 无；由 v6/v7 publication transaction 完成最终正式验证、local-main fast-forward、普通推送与清理。
+acceptance: 合法 failure_fix_rerun parent 与事务 exact-byte binding 一致时可派发；非法或不一致 parent 继续 fail closed；最终候选四层验证和 Full 均 PASS。
+notes: 结构化 parent_run.summary_path 与事务 exact-byte binding 已正确衔接；非 Full 校验延迟消费 parent，显式/Full 消费仍 fail closed；focused regression 83 passed，Ruff、LANE/INTEGRATION preflight 及真实 parent-bound LANE preflight 均 PASS。

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-063
+area: ETF 组合可信度/Portfolio Credibility Validation & Calibration
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/etf_portfolio_credibility_validation_2026-06-01.md`；TRADING-063A~K 已完成，final credibility gate PASS；后续真实 shadow evaluation artifacts、forward observation 和 owner review 由 TRADING-064+ / TRADING-070+ 链路继续承接，不阻塞本可信度 foundation 归档
+acceptance: TRADING-063A~K 均实现并逐项验证；`aits etf credibility validate --date 2026-06-01` 输出 `status=PASS`、11 项 checks PASS、`safe_for_shadow_evaluation=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；P2/live 模块保持 candidate-only / observe-only；runtime artifacts 不纳入源码；docs、task register 和 system flow 已同步；专项测试、ruff、compileall 和 diff check 通过
+notes: '2026-06-01: 新增并进入 IN_PROGRESS，原因：owner 提供 ETF Portfolio Allocation System Credibility Validation Development Plan；本阶段不新增 live trading、broker action 或 production weight mutation。2026-06-01: TRADING-063A~K 逐项完成 runtime artifact hygiene、benchmark suite、no-lookahead validation、toy accounting、risk constraints、allocation stability diagnostics、simulation ledger hardening、backtest metrics standardization、daily brief explainability、parameter governance 和 end-to-end credibility gate。2026-06-09: 系统验证复跑 `python -m ai_trading_system.cli etf credibility validate --date 2026-06-01`，gate 仍为 PASS，`production_effect=none`、`broker_action=none`、`manual_review_required=true`、`safe_for_shadow_evaluation=true`；刷新 `tests/test_etf_credibility.py` 为 6 passed。2026-06-09: 从 VALIDATING 改为 DONE，原因：本任务目标是可信度 foundation 和 final fail-closed gate，不是 production approval；后续真实 shadow/owner review 已由后续任务链承接。'

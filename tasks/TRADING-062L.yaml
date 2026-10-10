@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-062L
+area: ETF simulation record --date compatibility
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐 simulation record 的 latest/指定日期选择
+acceptance: '`aits etf simulation record --date latest` 必须按 allocation 文件最新日期记录 snapshot；`--date YYYY-MM-DD` 必须只记录该日期 allocation rows；allocation 缺 date column、无有效日期或指定日期缺失必须 fail closed；重复运行仍保持 idempotent upsert；根级 `aits simulation record --date latest` 同步可用；测试覆盖 latest、指定日期、缺日期失败和 idempotent'
+notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 11.4 / 16.6 和 README 均给出 `simulation record --date latest`，当前 CLI 未提供 `--date`，文档命令不可运行。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：`simulation record` 新增 `--date`，默认 latest allocation date，指定日期按 allocation rows 过滤，缺日期 fail closed；root alias 同步通过；真实 smoke 和全量 pytest 1629 passed。'

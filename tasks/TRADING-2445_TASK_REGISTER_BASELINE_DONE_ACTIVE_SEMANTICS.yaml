@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2445_TASK_REGISTER_BASELINE_DONE_ACTIVE_SEMANTICS
+area: Governance / task register consistency semantics
+priority: P1
+status: DONE
+next_owner: governance owner：后续变更保持新语义
+next_step: 详见 `docs/requirements/TRADING-2445_Task_Register_BASELINE_DONE_Active_Semantics.md`；terminal status 已收敛为 `DONE/DROPPED`，82 条历史 `BASELINE_DONE` 原样迁回 active，并删除两条被较新 canonical rows 取代的旧 duplicate。
+acceptance: '`BASELINE_DONE` active PASS、completed FAIL；`DONE/DROPPED` active FAIL；task id 全局唯一；真实 register consistency 与 validation PASS；文档、flow、runbook 和 focused tests 同步；`production_effect=none`。'
+notes: '2026-07-16: focused parallel=`10 passed`；真实 consistency/validation=`PASS`，迁移后 active/completed/total=`428/440/868`、active baseline=91、completed baseline=0、blocking/warning=0/0。'

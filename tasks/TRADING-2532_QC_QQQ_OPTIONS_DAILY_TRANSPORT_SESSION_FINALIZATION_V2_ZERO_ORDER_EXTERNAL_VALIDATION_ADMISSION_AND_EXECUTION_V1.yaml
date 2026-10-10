@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2532_QC_QQQ_OPTIONS_DAILY_TRANSPORT_SESSION_FINALIZATION_V2_ZERO_ORDER_EXTERNAL_VALIDATION_ADMISSION_AND_EXECUTION_V1
+area: QQQ Options session-finalization v2 zero-order external validation admission and execution
+priority: P0
+status: DONE
+next_owner: Codex capability coordinator：验证report-flow/compatibility authority refresh并完成parent-bound Full failure-fix；publication前保持no-push
+next_step: corrected四级formal已PASS；Full=9181 PASS/6 FAIL/3 skip/644 warnings，六个失败同源于system_flow的report-flow/compatibility authority snapshot陈旧。canonical writers已按report-flow→compatibility→DevEx顺序刷新；需focused与完整failure-fix formal PASS。
+acceptance: 五份sealed execution artifacts与1202-session结果边界不变；system_flow live SHA必须由report-flow与compatibility authority完整绑定；Architecture/Contract/Integration/Reproducibility及parent-bound Full failure-fix全部PASS后才可ordinary publication；禁止第二次Cloud run。
+notes: '[supporting requirement](docs/requirements/TRADING-2532_QC_QQQ_Options_Daily_Transport_Session_Finalization_V2_Zero_Order_External_Validation_Admission_And_Execution_V1.md)；retained Full failure=outputs/validation_runtime/full_20260817T155116Z/test_runtime_summary.json（9181 PASS/6 FAIL/3 skip/644 warnings）；root cause=stale report-flow/compatibility authority for docs/system_flow.md；live SHA=41451feb05a17e0e33373af56ffa651d374e33e3f338af2d643e88b002065dac；external counters=1/1/0/0。'

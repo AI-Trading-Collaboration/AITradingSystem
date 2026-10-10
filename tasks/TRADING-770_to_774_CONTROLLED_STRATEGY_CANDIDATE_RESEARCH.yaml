@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-770_to_774_CONTROLLED_STRATEGY_CANDIDATE_RESEARCH
+area: Controlled strategy research / value surface, regret state machine, simple ensemble, GBDT utility, and batch review
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 CLI：`aits research strategies value-surface-controlled-prototype`、`regret-state-machine-controlled-prototype`、`simple-strategy-selector-pilot`、`gbdt-action-utility-baseline` 和 `aits research ops controlled-strategy-batch-review`；输出附件要求的 JSON/Markdown artifacts；每个候选必须包含 data_foundation_status、evidence_source_mix、control_results、benchmark_comparison、remaining_blockers 和 safety flags；value surface 必须有 horizon leakage audit、sample quality 和 benchmark comparison；state machine 必须有可解释 transition、regret mapping、turnover/whipsaw guardrail；selector 必须比较 best simple benchmark 并披露 overfit warning；GBDT diagnostic 必须输出 split、negative control、random label、feature importance 和 no future feature audit；review board 必须为所有候选给出 `CONTINUE
+notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST

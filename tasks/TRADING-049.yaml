@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-049
+area: 回测输入/Price History Repair & Price-only Shadow Baseline
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/price_history_repair_price_only_shadow_baseline_2026-05-29.md`；已完成缺失价格历史 repair、price-only shadow backtest 模式和 promotion 禁止边界
+acceptance: '`aits data repair-backtest-inputs --latest --price-only` 可幂等补齐主价格缓存并记录 provider/source symbol mapping；repair 后 diagnostics 显示 price/asset/date coverage OK、signal snapshots LIMITED、overall LIMITED、`can_run_shadow_backtest=true`、`can_promote_candidate=false`；`aits parameters shadow-backtest --latest --dry-run` 输出 `backtest_mode=price_only_shadow_backtest`、`production_effect=none`、`manual_review_required=true` 且 candidate promotion disabled；Dashboard/Reader Brief 显示 price-only 模式和 limited signal warning；不修改 production 参数'
+notes: '2026-05-29: 新增并进入 IN_PROGRESS，原因：latest backtest input diagnostics 已把 blocker 收敛为 `GOOGL`、`BRK.B`、`SGOV` price history 缺失。2026-05-29: 从 IN_PROGRESS 改为 DONE，原因：已实现 FMP/yfinance provider 复用的 price repair、`BRK.B -> BRK-B` mapping、manifest 审计、diagnostics LIMITED-but-runnable、shadow backtest price-only promotion constraints、Dashboard/Reader Brief 展示和测试；真实 `aits data repair-backtest-inputs --latest --price-only` 已补齐 `GOOGL`、`BRK.B`、`SGOV`，重新诊断为 `overall_status=LIMITED`、`price_data_status=OK`、`signal_snapshots_status=LIMITED`、`can_run_shadow_backtest=true`、`can_promote_candidate=false`；shadow dry-run 输出 `promotion_status=rejected`，reason 明确 signal snapshots LIMITED 不能 promotion。验证通过全量 `python -m pytest -q`（1412 passed, 1 warning）、全量 ruff、compileall 和 diff check。'

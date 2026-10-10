@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ARCH-004G2_REMAINING_PHASE_EFFICIENCY_EXECUTION
+area: Architecture / G2.4剩余callback效率优先批次执行
+priority: P0
+status: DONE
+next_owner: ARCH-005 S0/S1 coordinator；ARCH-004恢复需owner新指令
+next_step: 详见 `docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md`。EB1～EB8、独立phase exit和`arch_005_bootstrap_handoff.v1`均已完成、提交并推送；ARCH-004停在G2.5前。
+acceptance: Matrix=`967/0/0/0`；focused/architecture/contract/full=`292/411/265/6386 passed`；manifests/deprecation/source hashes/clean attribution/handoff均PASS，`next_slice_unblocked=false`、`production_effect=none`。
+notes: 2026-07-19：phase-exit source commit=`152f2d33`，handoff commit=`770bf6ff`；Full=`6386 passed/2 skipped/643 warnings/946.63s`，无异常性能回退。任务归档，后续只按独立ARCH-005 S0/S1推进。

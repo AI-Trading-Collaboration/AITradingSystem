@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2277_SPLIT_ACTIVE_SELECTION_AND_PROMOTION_POLICY
+area: Research trends / split active selection and promotion policy
+priority: P0
+status: VALIDATING
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 详见 `docs/requirements/TRADING-2277_Split_Active_Selection_And_Promotion_Policy.md`；依赖 TRADING-2276 结论。本批先固化 split selection / promotion semantics，旧的 gate policy v2 challenger rerun 暂缓到该 policy 完成后。
+acceptance: 生成 `active_selection_policy_v2.md/yaml`、`research_candidate_queue.json`、`owner_review_queue.json`、`promotion_boundary_report.md` 和 `updated_challenger_selection_matrix.json`；确保 `OWNER_REVIEW_REQUIRED` 不被 active selection 改写为 `BLOCKED`，`RESEARCH_ACCEPTED` 不触发 promotion，boundary candidates `wf_504d_baseline` / `wf_378d_initial` 状态符合 owner 要求；promotion/paper-shadow/production/broker 固定 false/none。
+notes: '2026-06-28: 按 owner 最新要求进入 IN_PROGRESS。2026-06-28: 实现完成并转入 VALIDATING；真实 run candidate_count=10、ranked_review=2、offline_validation_ready=4、owner_review_required=1、blocked=4、promotion_ready=0。验证通过 Ruff、compileall、focused parallel pytest 49 passed、docs freshness、diff check 和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T150616Z/test_runtime_summary.json`。'

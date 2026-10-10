@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: STORAGE-001
+area: Data Foundation / storage, retention, partitioning and typed query layer
+priority: P1
+status: PROPOSED
+next_owner: data platform owner + architecture coordinator
+next_step: 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md` 的 D2；作为`DATA-GOV-001`子任务重新打开。本地`data/cache`已约19 GiB/10万级文件，原“尚无实际规模瓶颈”的暂缓前提失效。下一步对weight-calibration/candidate-backtest/regime-robustness做容量、重复率、读写和replay基准，再决定Parquet/DuckDB或等价方案。
+acceptance: 真实workload基准与目标SLO明确；canonical/derived/export分类、retention/GC、schema evolution、portable URI、snapshot/checksum/lineage、CSV兼容期、结果parity和rollback均有证据；不得以格式替换代替immutable publish、DQ或backup。
+notes: '2026-05-06: PROPOSED→DEFERRED，因当时未见瓶颈。2026-07-12: DEFERRED/P3→PROPOSED/P1，因当前容量和文件数已满足重新评估条件；尚未预先决定采用DuckDB/Parquet。'

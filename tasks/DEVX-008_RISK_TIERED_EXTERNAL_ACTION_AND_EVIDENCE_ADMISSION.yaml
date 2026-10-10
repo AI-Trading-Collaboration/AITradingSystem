@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-008_RISK_TIERED_EXTERNAL_ACTION_AND_EVIDENCE_ADMISSION
+area: Risk-tiered external action and empirical evidence admission
+priority: P0
+status: DONE
+next_owner: Codex strategy-evidence coordinator / apply standing R1 scope to TRADING-2537
+next_step: None for policy implementation; ordinary publication is the closeout gate before the TRADING-2537 external run.
+acceptance: Action authorization and technical evidence validity are separate; R1 standing owner scope uses automatic manifest replay without owner hash copyback; R2/R3 remain explicit; focused 20, Architecture 865, Contract 276, Integration 995 and Reproducibility 24 PASS; Full and ordinary publication remain closeout gates.
+notes: 详见 [DEVX-008 risk-tiered external action and evidence admission](docs/requirements/DEVX-008_Risk_Tiered_External_Action_and_Evidence_Admission.md)。production_effect=none、broker_action=none。

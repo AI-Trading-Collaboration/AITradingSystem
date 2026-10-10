@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2558_FIRST_LAYER_COMPOSER_V2_MATCHED_PLACEBO_FALSIFICATION_V1
+area: Strategy research / first-layer composer v2 matched-placebo timing falsification
+priority: P0
+status: DONE
+next_owner: Project Owner：维持 TRADING-2557 INSUFFICIENT/HOLD；本候选不提高后续研究优先级
+next_step: matched-placebo 单侧 p=0.20007999200079993，未区分真实时点与同形态随机安排；不得重跑或参数补救，未来仅可由新的 prospective OOS 政策另行登记
+acceptance: Manifest replay/DQ/local run/independent replay 已按 1/1/1/1 PASS；10,000 draws 保持 385 LONG intervals、41 episodes、run/gap 多重集、边界、82 trade events 与 5 bps 成本；独立重放差异 0；禁用动作均为 0
+notes: 'Supporting requirement: docs/requirements/TRADING-2558_First_Layer_Composer_V2_Matched_Placebo_Falsification_V1.md。Result admission: config/research/first_layer_composer_v2_matched_placebo_result_admission_v1.yaml。aggregate result SHA-256=410ec5522d40ba59019597235722dd6ea2e9b909c37a1ee7d60bc00d8f5780b6；technical_validation_state=PASS；reducer_status=TIMING_NOT_DISTINGUISHED_FROM_MATCHED_PLACEBO；production_effect=none，broker_action=none。'

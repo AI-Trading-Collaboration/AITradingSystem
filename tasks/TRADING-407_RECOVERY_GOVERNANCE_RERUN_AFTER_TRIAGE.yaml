@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-407_RECOVERY_GOVERNANCE_RERUN_AFTER_TRIAGE
+area: Research governance / recovery rerun after triage
+priority: P1
+status: DONE
+next_owner: 项目 owner 复核 final recovery pack；normal paper-shadow、extended shadow、live trading 继续按 fail-closed boundary
+next_step: 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；收集 TRADING-401/402/403/404/405/406 输出后只读 rerun research governance recovery pack；不得 force healthy
+acceptance: 新增 `aits reports recovery-governance-rerun-after-triage`；rerun canonical recovery pack / validation 并附带 latest triage context；保持 normal paper-shadow blocked unless all required blockers resolved；extended shadow 和 live trading forbidden
+notes: '2026-06-17: DONE；rerun `outputs/reports/research_governance_recovery_pack_2026-06-17.json/md` 仍为 `RECOVERY_GOVERNANCE_BLOCKED`、remaining_blockers=9、remaining_warnings=10、normal_paper_shadow_may_resume=false、extended_shadow_remains_forbidden=true、live_trading_remains_forbidden=true；validation `research_governance_recovery_pack_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。未 force healthy、未 silent waiver、未修改 production state。'

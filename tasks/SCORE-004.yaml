@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: SCORE-004
+area: 评分架构/Alpha-Risk 解耦
+priority: P1
+status: BASELINE_DONE
+next_owner: 系统设计 + 系统实现
+next_step: 已完成第一阶段审计输出：日报、decision snapshot 和 trace 显示 base signal、risk state、risk-adjusted score、组件 semantic role、primary_channel、horizon 和 confidence 使用边界；详细拆解见 `docs/requirements/scoring_architecture_refactor_2026-05-06.md#score-004alpha风险状态和约束通道解耦`
+acceptance: 为每个评分模块和信号声明 semantic role、horizon、source_type、primary_channel、coverage 和 confidence 使用边界；日报、decision snapshot 和 trace 能同时展示 base signal 与 risk-adjusted context；同一 evidence、risk_id、dedup_group 或 source_id 不得在 alpha 和 gate 中静默重复惩罚；第一阶段只做审计输出，不改变 production 仓位；完整 DONE 仍需 evidence/dedup_group 级双重计分强校验
+notes: '2026-05-06: 新增任务，原因：外部复核建议指出当前总分仍可能把方向信号和风险状态混在一起；现有 `position_gate` 已解决部分问题，但仍需要显式 Alpha/Risk/Execution 通道和防双重计分审计。2026-05-06: 从 PROPOSED 改为 BASELINE_DONE，原因：新增 `score_architecture` 审计、日报 `Base Signal / Risk Caps` 通道表、decision snapshot 字段和 trace claim；未改变 production scoring、position_gate 或回测仓位。'

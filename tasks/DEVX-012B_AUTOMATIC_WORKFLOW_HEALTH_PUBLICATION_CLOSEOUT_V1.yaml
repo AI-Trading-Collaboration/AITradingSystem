@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-012B_AUTOMATIC_WORKFLOW_HEALTH_PUBLICATION_CLOSEOUT_V1
+area: Developer experience / DEVX-012 governed publication closeout
+priority: P1
+status: DONE
+next_owner: Project owner：复核自动周报中的 review-only optimization candidates
+next_step: 无 implementation blocker；正式证据、main/origin publication 与 automation state 由 publication transaction v8 closeout receipt 绑定
+acceptance: DEVX-012 candidate formal tiers 与 Full PASS；local main=origin/main；aitradingsystem-pit 保持 ACTIVE 且只新增 weekly post-stage；branches cleanup
+notes: Integration preflight PASS on active closeout task; terminal projection is committed on the final candidate and remains subject to fail-closed formal validation/publication transaction v8.

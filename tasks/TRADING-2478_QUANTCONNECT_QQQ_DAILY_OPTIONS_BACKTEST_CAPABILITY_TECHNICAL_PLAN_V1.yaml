@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2478_QUANTCONNECT_QQQ_DAILY_OPTIONS_BACKTEST_CAPABILITY_TECHNICAL_PLAN_V1
+area: Engineering architecture / governed QuantConnect QQQ options backtest capability planning
+priority: P1
+status: BASELINE_DONE
+next_owner: project owner：审阅 `TRADING-2480` capability/license/evidence spike 的外部平台授权边界；engineering coordinator：保持后续 `TRADING-2480..2493` blocked/proposed 依赖
+next_step: 详见 `docs/requirements/TRADING-2478_QuantConnect_QQQ_Daily_Options_Backtest_Capability_Technical_Plan_V1.md` 与 `docs/research/quantconnect_qqq_daily_options_backtest_web_pro_advisory.md`。Web Pro exact-Git advisory 和本地官方资料对账已完成；后续实现/平台访问仍需独立任务与授权。
+acceptance: 对话 URL、exact SHA、8/8 blobs、UI/self-report/route evidence、官方 QC source/license/resource facts、architecture/contracts/state machine/failure matrix/validation/DAG/Owner gates 已审计；后续 task IDs 和 claims 已登记；本任务未实现 adapter/backtest、未访问 QuantConnect、未下载数据、未改 runtime flow；`production_effect=none`、`broker_action=none`。
+notes: 2026-08-02：conversation=`https://chatgpt.com/c/6a6e3e7a-18ac-83ee-aca5-27f92aa0fef2`；UI account/composer/generation=`Pro/Pro/Pro 思考中`，self-report=`GPT-5.6 Pro`，route=`CANNOT_VERIFY_EXACT_BACKEND_ROUTE`；结论=`CONDITIONAL_GO_FOR_CONTRACT_WAVE_AND_BOUNDED_CAPABILITY_PILOT`、`NO_GO_FOR_FULL_RANGE_OPTIONS_RESEARCH_OR_ANY_PROMOTION`。`TRADING-2479` 保留给 Atlas 线，options 波次使用 `2480..2493`。

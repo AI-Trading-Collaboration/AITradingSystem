@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-063A
+area: ETF 组合可信度/Runtime Artifact Hygiene & Fixture Policy
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/etf_portfolio_credibility_validation_2026-06-01.md`；下一步推进 TRADING-063B Benchmark Suite Hardening
+acceptance: '`.gitignore` 忽略 `data/etf_portfolio/`、`data/simulation/` 和 `reports/`；`tests/fixtures/etf_portfolio/` 成为 ETF deterministic fixture 目录；artifact catalog 与 system flow 明确 runtime artifacts 不属于 source artifacts，daily reports 不提交为源码，test fixtures 不放在 `data/` 或 `reports/`；现有 local ETF runtime outputs 不再出现在 `git status --short`；验证通过 `git diff --check`、`python -m pytest tests -q` 和 `python -m ruff check config src tests scripts docs`'
+notes: '2026-06-01: 新增并直接归档为 DONE，原因：完成 TRADING-063A runtime artifact hygiene、fixture policy 和文档同步；`git check-ignore` 确认 `data/etf_portfolio/target_weights.csv`、`data/simulation/etf_ledger.csv`、`reports/etf_portfolio/2026-05-29_portfolio_brief.md` 均被忽略；`python -m pytest tests -q` 结果为 1630 passed，ruff 和 diff check 通过。'

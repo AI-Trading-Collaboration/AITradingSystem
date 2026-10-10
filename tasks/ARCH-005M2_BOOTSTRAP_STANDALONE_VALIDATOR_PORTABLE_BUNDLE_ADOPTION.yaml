@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ARCH-005M2_BOOTSTRAP_STANDALONE_VALIDATOR_PORTABLE_BUNDLE_ADOPTION
+area: Architecture maintenance / portable bootstrap validator bundle adoption
+priority: P2
+status: DONE
+next_owner: architecture platform maintainer：后续如扩展bundle schema或支持shallow archive须另立任务
+next_step: 详见 `docs/requirements/ARCH-005M2_Bootstrap_Standalone_Validator_Portable_Bundle_Adoption.md`。复用G2.5已验证的tracked exact-byte bundle，不创建sidecar或第二套事实源；历史handoff与四份summary bytes保持不可变。
+acceptance: standalone validator不依赖untracked `outputs/`；完整校验path/SHA/decoded size/status/exit/bundle/runtime tier与Git lineage；tamper/missing/CRLF/base-drift/history-missing typed fail closed；G2.5兼容且真实clean clone在无validation outputs时CLI PASS。
+notes: 2026-07-27：candidate=`6af08fb99`；focused/Architecture/Contract/Reproducibility/Integration=`174/723/275/23/995 passed`，唯一required Full=`7469 passed / 3 skipped / 643 warnings`；首次post-Full Architecture因历史supersession测试对path hash reversion的错误假设为`721 passed / 2 failed`并保留，修复后post-Full Architecture/Contract=`723/275 passed`；任务归档DONE。

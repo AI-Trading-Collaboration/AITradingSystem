@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2438M1D1_GROWTH_TILT_BASELINE_CONTRACT_DECISION_PACK
+area: Strategy research / baseline contract owner decision pack
+priority: P0
+status: DONE
+next_owner: 项目 owner后续按 M1D1A/M1D2/M1E 最新 artifacts处理 exact blockers
+next_step: 详见 `docs/requirements/TRADING-2438M1D_Growth_Tilt_Baseline_Contract_Decision_Pack_And_Implementation_Plan.md`；历史 compute-path audit和18项 owner action已由M1D1A resolution闭合，旧 pending disposition被最新 A/B/C=`REDEFINE/WITHDRAW/REDEFINE` 取代。
+acceptance: 历史 decision pack artifacts保持可审计并被D1A/D2消费；M2=0，不运行 replay/backtest/scoring/runtime metrics或生产路径。
+notes: '2026-07-10: D1A owner resolution闭合 pending actions，D2/M1E输出 exact blockers后归档 DONE；全链 validation PASS。'

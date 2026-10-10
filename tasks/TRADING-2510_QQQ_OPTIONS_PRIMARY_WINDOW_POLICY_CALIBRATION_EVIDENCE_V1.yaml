@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2510_QQQ_OPTIONS_PRIMARY_WINDOW_POLICY_CALIBRATION_EVIDENCE_V1
+area: Strategy research governance / QQQ Options primary-window policy calibration evidence
+priority: P0
+status: BASELINE_DONE
+next_owner: primary-window derived evidence collection successor coordinator；Project Owner 后续审阅 evidence 并另行提供 G2 policy
+next_step: exact 18-slot G3 contract 已实现；production evidence inventory=0，当前 blocker=PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_NOT_PROVIDED；无外部动作授权。
+acceptance: mechanical G3 scope、canonical evidence/DQ/PIT admission、empty/partial/complete readiness 与 cash-preservation fail-closed；不填阈值、不建 G2、不激活 engine/backtest。
+notes: '2026-08-12：BASELINE_DONE；28 core、63 core+page、276 adjacent PASS；supporting requirement exact path: docs/requirements/TRADING-2510_QQQ_Options_Primary_Window_Policy_Calibration_Evidence_V1.md。'

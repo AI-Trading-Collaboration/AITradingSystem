@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: AUDIT-001
+area: 回测审计
+priority: P2
+status: DONE
+next_owner: 系统实现
+next_step: 已用 2026-04-01 至 2026-05-05 真实本地缓存回测复核 `backtest_audit_*.md` 和覆盖诊断；当前格式足够定位主要输入问题
+acceptance: 已确认报告按月列出数据可信度、模块覆盖率和历史输入缺口，`backtest_input_coverage_*.csv` 提供 `signal_date` 级下钻；若后续出现按月聚合无法定位的新问题，再登记新任务补细粒度 Markdown 视图
+notes: '2026-05-06: 从 VALIDATING 改为 DONE，原因：运行 `aits validate-data --as-of 2026-05-05` 与 `aits backtest --from 2026-04-01 --to 2026-05-05 --quality-as-of 2026-05-05`，审计输出清楚标出 C 级数据可信度、估值/风险事件历史缺口、模块覆盖率和 2026-04/2026-05 月度问题。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-356_STRESS_SCENARIO_LIBRARY
+area: ETF portfolio/dynamic v3 rescue stress scenario library
+priority: P2
+status: DONE
+next_owner: 项目 owner 后续复核；代码实现完成
+next_step: 详细拆解见 `docs/requirements/TRADING-356_Stress_Scenario_Library.md`；承接 TRADING-354 evidence freshness guard，为后续 candidate validation 提供 Dynamic v3 rescue 专用 reusable stress scenario library，覆盖 rapid drawdown、slow drawdown、V-shaped recovery、high volatility sideways market、false risk-off cluster、rate shock、AI sector correction、semiconductor-led selloff 和 liquidity squeeze；不得执行回测、刷新数据、调参、修改 candidate ledger、生成 official target weights、order ticket、broker action 或 production mutation
+acceptance: 新增 stress scenario policy/config、normalized `stress_scenario_library.json`、`stress_scenario_reader_brief.md`、report/validate CLI、Reader Brief fields、report registry、artifact catalog、README、system flow、operations runbook、requirements、task register 和 focused tests；验证通过 report/validate CLI、focused pytest、documentation contract、report index 和 task-register归档；安全边界固定 read-only / no stress backfill / no data refresh / no upstream rerun / no official target / no broker / no production
+notes: '2026-06-16: DONE；真实只读 report 生成 `stress-scenario-library_7a867b70836eba2b`，`scenario_count=9`、`required_scenarios_present=True`、`candidate_validation_use=standardized_dynamic_v3_candidate_stress_validation`、`next_validation_action=use_library_ids_in_next_stress_backfill_or_case_review`，`validate-stress-scenario-library` 返回 PASS / failed=0；`python -m pytest tests/test_stress_scenario_library.py tests/test_etf_dynamic_v3_parameter_research.py tests/test_documentation_contract.py tests/test_report_index.py -q` 36 passed；保持 read-only / no stress backfill / no data refresh / no official target / no broker / no production。'

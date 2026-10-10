@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-894_DAILY_INCREMENTAL_REFACTOR_SIMPLE_BASELINE_CLI_BOUNDARY
+area: Architecture / daily incremental refactor simple baseline CLI boundary
+priority: P2
+status: DONE
+next_owner: 系统验证
+next_step: 详见 `docs/requirements/TRADING-894_Daily_Incremental_Refactor_Simple_Baseline_CLI_Boundary.md`；已将 TRADING-865～893 `aits research strategies ...` simple baseline CLI wrapper 从过大的 `cli_commands/research.py` 拆到专用 `cli_commands/research_simple_baselines.py` 模块，外部命令和输出保持兼容
+acceptance: '`aits research strategies` 下 20 个 simple baseline 命令路径、参数、artifact 输出、安全字段和退出语义保持兼容；focused xdist pytest、`contract-validation`、Ruff、Black check、compileall、CLI help smoke 和 `git diff --check` 通过；`docs/refactor_log.md` 记录本轮基线、验证和提交 SHA'
+notes: '2026-06-23: 每日增量重构自动化新增并完成；边界固定 `production_effect=none`，不改变 simple baseline 计算逻辑、cached data validation gate、threshold、score band、promotion gate、backtest acceptance、仓位约束、投资解释、paper-shadow/production weights 或 broker/order path。验证通过 focused pytest 13 passed、`contract-validation` 193 passed、Ruff、Black check、compileall、CLI help smoke 和 `git diff --check`。'

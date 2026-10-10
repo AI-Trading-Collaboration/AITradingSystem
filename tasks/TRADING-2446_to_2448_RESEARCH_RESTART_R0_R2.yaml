@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2446_to_2448_RESEARCH_RESTART_R0_R2
+area: Strategy research / R0 contract、R1 evidence closure、R2 decision
+priority: P0
+status: BASELINE_DONE
+next_owner: research owner + forward observation / selection protocol owner
+next_step: 详见 `docs/requirements/TRADING-2446_to_2448_Research_Restart_R0_R2.md` 和 `docs/research/strategy_research_restart_r0_r2_closeout_2026-07-20.md`；R0/R1/R2 工程和真实决策链已完成，但 R1 样本/continuity 证据未闭合且 OOS 为负面。
+acceptance: R0 preflight/validator PASS；096逐fold evaluator与完整window gate；097 real neighbor/dedicated stress/per-regime comparator；777当前真实ledger maturity；R2消费validated artifacts并输出 HOLD/CONTINUE/PAUSE/READY；focused/architecture/contract/report/reproducibility/full按风险通过；`production_effect=none`。剩余退出条件：event-risk样本自然达到floor、archive gap owner治理、未来无污染selection protocol；不得降低阈值。
+notes: '2026-07-20: owner授权R0～R2连续推进；ARCH-004仍停G2.5前，ARCH-005 S2未启动。R0 13/13 checks PASS；R1 OOS 80/80 folds但20 reject+20 review-required，robustness `event_risk_high=15<20`；forward ledger=16、missing archive=5、20d/60d matured=0；R2=`CONTINUE_EVIDENCE_CLOSURE`，candidate expansion/new search=false，故转`BASELINE_DONE`而非DONE。最终 focused/fast-unit/architecture/contract/report/reproducibility=`187/300/419/265/55/23 passed`，full=`6403 passed, 2 skipped`（978.80s），无新增异常长尾。'

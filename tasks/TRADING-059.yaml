@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-059
+area: 回测输入/Restricted Backtest Weight Tuning
+priority: P1
+status: BASELINE_DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/restricted_backtest_weight_tuning_2026-05-30.md`；受限 signal weight grid search、walk-forward comparison、shadow-only recommended weights、CLI/report/Dashboard/Reader Brief 和 shadow backtest supporting artifact 接入已完成；真实 latest 结果为 `NO_CANDIDATE`，不形成 production 或 shadow promotion candidate
+acceptance: '`aits parameters tune-weights --latest` 可生成 weight tuning artifacts；`validate-weight-tuning --latest`、`reports weight-tuning --latest` 和 `explain-weight-tuning --latest` 可读；Reader Brief/Dashboard 展示 weight tuning 摘要；shadow backtest dry-run 引用 weight tuning artifact 且 promotion 仍 rejected；不修改 production config、不降低 data gate、不使用 mock 数据、不让 fallback signals 自由调参、不自动 promotion'
+notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：baseline signal weights 主要为人工设定，需要受限 backtest-based tuning 闭环判断是否存在可审计的 shadow weight candidate。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：v0.1 实现和真实 CLI 验收完成，latest 为 `NO_CANDIDATE` / `candidate_status=rejected` / `candidates_evaluated=240` / `guardrail_status=FAIL`。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：调参框架和只读报告链路完成，但没有候选通过 guardrails，失败原因已由 TRADING-059A/TRADING-060 解释并由 TRADING-061 继续处理；验证通过 tuning validation/report/explain CLI、Reader Brief、shadow backtest dry-run、focused pytest 24 passed、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'

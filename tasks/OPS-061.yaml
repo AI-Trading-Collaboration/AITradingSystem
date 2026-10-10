@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-061
+area: 运行架构/Daily-run direct dispatcher daily chain coverage
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/daily_run_direct_dispatcher_daily_chain_coverage_2026-05-31.md`；已确认 2026-05-31 的 `market_data_freshness` 阻断不是预期 freshness/data gate，而是 scheduled daily command 与 direct dispatcher coverage 漂移；修复、测试和真实 daily-run 验证已完成
+acceptance: '`ai_trading_system.cli_direct` 覆盖 `config/scheduled_tasks.yaml` 中 daily-run 会执行的全部命令，特别是 `data freshness --latest`、`data recover-freshness --latest`、`portfolio track-candidate --latest`、`portfolio review-tracking --latest --show-window-progress` 和 `reports portfolio-tracking-review --latest`；新增测试从 scheduled daily config 逐条验证 direct dispatcher coverage；真实 `aits ops daily-run` 能越过原阻断并完成 Reader Brief / `validate-reader-brief`；不修改 production weights、active shadow weights、broker 或 trading action'
+notes: '2026-05-31: 先以 `OPS-060` 新增 READY，原因：`daily_ops_run:2026-05-29:20260530T223234Z` 已通过 data gate、PIT、score、dashboard、SEC PIT shadow、score attribution 和 market panel，但在 `market_data_freshness` 以 `daily-run direct dispatcher 不支持命令：data freshness --latest` 失败；未做手动补跑或临时绕行。2026-05-31: 从 READY 改为 IN_PROGRESS，原因：排查确认阻断不符合预期，属于 direct dispatcher coverage 缺口。2026-05-31: 修正任务 ID 为 `OPS-061`，原因：`OPS-060` 已被周期任务总入口 Runbook 使用。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：已补齐 dispatcher coverage 和防回归测试；验证通过 `tests/test_scheduled_tasks.py tests/test_ops_daily.py tests/test_cli_direct.py -q`（45 passed）以及真实 `daily_ops_run:2026-05-29:20260531T020123Z` 28/28 PASS。'

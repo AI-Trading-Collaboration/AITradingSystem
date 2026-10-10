@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2279_FIRST_LAYER_BOUNDARY_CANDIDATE_OWNER_REVIEW_PACKAGE
+area: Research trends / boundary candidate owner review package
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 生成 boundary candidate owner review、comparison matrix、tradeoff summary、offline validation ready summary、blocked failure reason summary 和 recommended next experiment plan；必须覆盖 actual-path utility、return/drawdown/Sharpe/Calmar/turnover/cost、false risk、defensive probe、2022 stress、2023+ dependency、beta/TQQQ、benchmark consistency、recovery delay、drawdown warning lead time；缺失 candidate-level 指标必须显式标明 unavailable；每个 boundary candidate 输出 owner_review_decision、primary_risk_flag、utility_tradeoff_acceptable 和 promotion_ready=false。
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-29: 新增并进入 IN_PROGRESS。2026-06-29: 实现完成并转入 VALIDATING；真实 run boundary_candidate_count=2、offline_validation_ready=4、blocked=4、misclassification=`no_obvious_misclassification_detected`；`wf_504d_baseline` 结论为 expand_neighborhood，`wf_378d_initial` 结论为 continue_research。2026-06-29: 验证通过 Ruff、compileall、focused parallel pytest 51 passed、docs freshness、diff check 和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T153924Z/test_runtime_summary.json`。'

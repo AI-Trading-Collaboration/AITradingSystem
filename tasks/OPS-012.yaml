@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-012
+area: 运行架构/daily-run 子命令解释器
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/daily_run_local_python_executor_2026-05-12.md`；2026-06-05 最新 production daily-run 已用项目 `.venv` direct dispatcher 31/31 PASS，无 Windows native crash
+acceptance: '`daily-run` 执行 `aits ...` 子命令时若项目 `.venv` Python 存在，必须使用该解释器调用 direct dispatcher；找不到时才回退当前 `sys.executable`；子命令必须强制使用稳定 Python env、每次运行唯一 `PYTHONPYCACHEPREFIX`，并在启动前清理源码 `__pycache__`；PIT 等轻量子命令不得因无关 valuation pydantic class construction 或 Typer 全局 command tree annotation 解析崩溃；报告仍展示逻辑命令，主报告/metadata 不记录 secret 或未脱敏 stdout/stderr 原文；失败步骤必须写入脱敏 stdout/stderr 诊断 artifact 并在执行报告/metadata 暴露路径；真实 daily-run 必须完成最新交易日链路或报告新的真实门禁原因'
+notes: '2026-05-12: 新增并进入实现，原因：本机 PATH `aits` 指向全局 Python，daily-run 子命令继承全局解释器后在 PIT/SEC 大数据步骤出现 Windows access violation。2026-05-12: 已改用项目 `.venv`、强制稳定运行环境、唯一 pycache 前缀、清理源码 `__pycache__`，并新增 `cli_direct` 绕开 Typer 全局解析。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：本地 Python 3.11 环境切换、依赖补齐、IBKR snapshot、全量 pytest、ruff 和 black check 通过。2026-05-28: 继续保持 VALIDATING，原因：补充失败步骤脱敏 stdout/stderr 诊断 artifact。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901` 31/31 PASS，报告披露 `.venv` direct dispatcher 与隔离 pycache，所有子命令无 stderr、无 native crash。'

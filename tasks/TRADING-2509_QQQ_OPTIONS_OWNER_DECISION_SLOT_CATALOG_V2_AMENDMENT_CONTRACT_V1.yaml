@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1
+area: Strategy research governance / QQQ Options Owner decision slot catalog v2 amendment contract
+priority: P0
+status: BASELINE_DONE
+next_owner: project owner：后继任务提供 reviewed G2 per-slot policy values、canonical evidence 与明确验收策略；engineering coordinator 仅在新授权后构建 executable policy
+next_step: Versioned successor 2.0.0 contract 已完成；当前 blocker=OWNER_REVIEWED_G2_POLICY_VALUES_AND_PRIMARY_WINDOW_EVIDENCE_NOT_PROVIDED。DQ/PIT、selection、engine/backtest、external action 与投资解释继续 blocked。
+acceptance: Owner token/28-slot v1/11 amendments 已 exact-bound；v2=37 slots、deterministic migration、typed evidence admission 与 unresolved added axes fail closed；无 thresholds、orders/fills=0、cash-preservation，focused/compatibility/final formal gates PASS。
+notes: 2026-08-12：v2 contract-only baseline 与 Full failure-fix 已记录；详见 [TRADING-2509 Slot Catalog V2 Amendment Contract](docs/requirements/TRADING-2509_QQQ_Options_Owner_Decision_Slot_Catalog_V2_Amendment_Contract_V1.md)。G2 values、DQ/PIT admission、engine/backtest 与投资解释继续 blocked。

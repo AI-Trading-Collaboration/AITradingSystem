@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL
+area: Architecture / governed cutover and legacy removal
+priority: P0
+status: PROPOSED
+next_owner: architecture coordinator + 各surface owner + project owner；依赖G7 handoff
+next_step: 详见 `docs/requirements/ARCH-004H_Cutover_and_Legacy_Removal.md`。只有G7 ledger、2 daily/2 weekly/1 monthly parity、关键CLI/schema/artifact/Reader Brief parity、DQ/PIT/cost/production-effect/owner signoff和正式validation tiers全部闭合后才能转READY；`BLOCKED_WITH_OWNER`不能据此删除。
+acceptance: 逐surface满足12项removal gates并按`DEPRECATED -> FROZEN -> REMOVED`推进；0永久dual track/TODO；历史artifact/checksum/schema/commit/runner refs保留；clean worktree clean-clone、successor release candidate、architecture/contract/report/integration/reproducibility/full parallel全部PASS。
+notes: '2026-07-12: owner确认先登记H执行边界；当前ARCH-004仍在G且`next_phase_unblocked=false`，未授权cutover。'

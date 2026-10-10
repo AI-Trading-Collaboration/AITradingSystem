@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2502_QQQ_OPTIONS_OWNER_REVIEWED_BACKTEST_POLICY_DECISION_PACK_V1
+area: Strategy research governance / QQQ Options DAILY backtest policy Owner decision pack
+priority: P0
+status: BASELINE_DONE
+next_owner: TRADING-2509 coordinator；后继 project owner 提供 reviewed G2 policy values/evidence
+next_step: Owner decision token 已 exact-bound admission；2509 构建 contract-only v2 catalog/migration。真实 policy 数值、engine/backtest 与投资解释继续 blocked。
+acceptance: 2502 pack 的 28-slot 决策已由 canonical attestation exact replay；G2 values=0、G5 rationales=0，11 amendments 仅批准 versioned successor 2.0.0；cash-preservation/zero-order/zero-fill 保持。
+notes: 2026-08-12：Owner structure decision 已由 2509 contract-only successor 接管；详见 [TRADING-2502 Owner Decision Pack](docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md)。该 binding 仅恢复 canonical requirement ref，不授权 policy values、engine/backtest 或投资解释。

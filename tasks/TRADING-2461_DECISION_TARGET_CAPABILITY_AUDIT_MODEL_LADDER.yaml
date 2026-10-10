@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2461_DECISION_TARGET_CAPABILITY_AUDIT_MODEL_LADDER
+area: Strategy Style Discovery / decision-target capability audit batch-2 purged walk-forward and model ladder
+priority: P0
+status: DONE
+next_owner: strategy owner：如继续，另立预注册的tail-risk稳健性/证伪审计；在该审计通过前不建立risk overlay
+next_step: 详见 `docs/requirements/TRADING-2461_Decision_Target_Capability_Audit_Model_Ladder.md`。Reviewed policy exact绑定TRADING-2460真实label/package/panel/receipt，冻结7-fold purged walk-forward、train-only transform、M0/M1/M2 ladder及classification model；真实style=`TAIL_RISK_ONLY_SKILL`。四次共享main推进均fail closed，旧候选仅作已验证carrier。
+acceptance: Exact input/double-build/content-derived validator通过；selected/evaluated=`2021-02-22..2026-07-24`/`2021-08-11..2026-06-25`、7 folds、118300 predictions。三类return target均0 horizon通过；QQQ worst-1d在1/5/10d通过，max drawdown仅5d且target不通过。最终组合树formal/Full/post-Full门禁通过；不得形成candidate/backtest/weights/QLD signal/promotion；`production_effect=none`、`broker_action=none`。
+notes: 2026-07-26：exact `7b883b840`组合树Full=`7394 passed / 4 skipped / 643 warnings / 1183.11s`。期间四次shared-main推进均按serial contract wave重建；最终C1/C2 authority、任务实现与9/9真实审计输出共同收口。

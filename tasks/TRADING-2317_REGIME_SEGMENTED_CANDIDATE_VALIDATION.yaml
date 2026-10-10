@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2317_REGIME_SEGMENTED_CANDIDATE_VALIDATION
+area: Research trends / diagnostic regime segmentation validation
+priority: P2
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 生成 regime-segmented validation summary、candidate segment performance matrix、candidate segment coverage matrix、family blocker matrix、interpretation matrix、safety boundary 和 research report；真实 run status=`REGIME_SEGMENTED_CANDIDATE_VALIDATION_READY_DIAGNOSTIC_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`，performance_row_count=294，coverage_row_count=31，family_blocker_row_count=4，interpretation_row_count=4；volatility risk-cap、AI leadership、liquidity pressure 可分段，breadth proxy source-blocked；所有 promotion/paper-shadow/production/broker false/none。
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01: 根据 owner post-2302 roadmap 和 TRADING-2316 next task 新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入 VALIDATING；验证通过 Ruff、compileall、regime focused parallel pytest 19 passed、`aits validate-data --as-of 2026-06-29` PASS_WITH_WARNINGS、真实 CLI run、`contract-validation` 193 passed。'

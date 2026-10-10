@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2512_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EXPORT_SAFE_DERIVED_AGGREGATE_COLLECTOR_CONTRACT_V1
+area: External validation / QC QQQ Options primary-window export-safe derived aggregate collector contract
+priority: P0
+status: BASELINE_DONE
+next_owner: Project Owner：后继 exact proposal 单次授权；collector coordinator：future result/DQ handoff；independent reviewer：external lifecycle evidence
+next_step: OWNER_AUTHORIZED_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_NOT_PROVIDED；先 ordinary-push exact proposal，再独立授权一次零订单 collection；无授权不得执行平台动作
+acceptance: 离线 Free-quota-aware 10-series collector、9 supported/9 unsupported、deterministic project code、strict Results parser、canonical seals、fail-closed tests、2511 DQ handoff boundary 与 Atlas disclosure 已实现；真实 run/evidence、G2 values、engine 仍 blocked
+notes: 'Supporting requirement: docs/requirements/TRADING-2512_QC_QQQ_Options_Primary_Window_Export_Safe_Derived_Aggregate_Collector_Contract_V1.md；focused collector=35 PASS；adjacent=206 PASS；page combination failure-fix=70 PASS；external_action=none。'

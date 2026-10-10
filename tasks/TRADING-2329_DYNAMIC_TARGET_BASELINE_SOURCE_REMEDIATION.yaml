@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2329_DYNAMIC_TARGET_BASELINE_SOURCE_REMEDIATION
+area: Research trends / exposure-cap dynamic target baseline source remediation
+priority: P0
+status: DONE
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 详见 `docs/requirements/TRADING-2329_Dynamic_Target_Baseline_Source_Remediation.md`；承接 TRADING-2328 发现 34 个 candidate artifacts 但 0 个 PIT-ready source 的 remediation route。本批只筛选最接近 dynamic target baseline 的 source family，分析 gap-to-baseline-schema，定义统一 baseline schema contract，生成 schema adapter spec、research-only wrapper candidate、PIT / replayability caveat、risk-cap alignment readiness 和 TRADING-2330 route；不得执行 dynamic baseline simulation 或生成交易指令。
+acceptance: 新增 `aits research trends dynamic-target-baseline-source-remediation`；生成 source family ranking、gap-to-schema matrix、remediation action matrix、baseline schema contract、schema adapter spec、remediated candidates、wrapper validation / PIT caveat / alignment readiness、2330 readiness matrix、2330 task route、安全边界和 research docs；真实 run `remediable_source_count=4`、`wrapper_generated=true`、`wrapper_record_count=2682`、wrapper validation=`PASS_WITH_WARNINGS`，但 `2330_allowed=false`，next task=`TRADING-2330_Dynamic_Target_Baseline_Timestamp_Remediation`；所有 outputs 固定 `simulation_executed=false`、promotion/paper-shadow/production/broker false/none。
+notes: '2026-07-02: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-02: 实现完成并进入 VALIDATING；真实 CLI run 已生成 TRADING-2329 artifacts，`aits validate-data` 不适用，因为本任务只读取 prior research outputs、static config、registry 和 candidate artifacts。 2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'

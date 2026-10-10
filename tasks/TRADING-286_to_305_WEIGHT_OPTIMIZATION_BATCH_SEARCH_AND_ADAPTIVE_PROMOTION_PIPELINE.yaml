@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-286_to_305_WEIGHT_OPTIMIZATION_BATCH_SEARCH_AND_ADAPTIVE_PROMOTION_PIPELINE
+area: ETF portfolio/dynamic v3 rescue weight optimization batch search and adaptive promotion pipeline
+priority: P0
+status: BASELINE_DONE
+next_owner: 真实owner研究复核；ARCH-004 coordinator继续剩余G2.4 matrix
+next_step: 详细拆解见 `docs/requirements/TRADING-286_to_305_Weight_Optimization_Batch_Search_and_Adaptive_Promotion_Pipeline.md`；2026-06-14 research-only baseline和真实artifacts保留历史；G2.4CV1/CV2/CV3已完成39 callbacks的canonical迁移、bounded snapshots、exact lineage、live replay/all-view rebuild与tamper fail-close；不得 formal method auto-apply、official target weight mutation、portfolio mutation、order ticket、broker action 或 production effect
+acceptance: CV1/CV2/CV3分别10/11/18 callbacks全部`COMPLETE_G2_4_CONTINUES`；CLI parity、manifests/deprecation/source hashes及各slice focused/architecture/contract/full均闭合；真实研究结论仍由owner复核，且该任务完成不代表whole G2.4 phase exit。
+notes: '2026-07-15: CV1/CV2/CV3全部完成，末次focused/architecture/contract/full=145/285/203/6,029 passed，generated=934/1,128/858/0；转BASELINE_DONE，architecture继续TRADING-306～315等剩余G2.4 matrix。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2286_REGENERATED_CANDIDATE_INCONCLUSIVE_DIAGNOSTICS
+area: Research trends / regenerated candidate inconclusive diagnostics
+priority: P0
+status: DONE
+next_owner: 项目 owner 后续复核 diagnostics；TRADING-2287 执行 refinement / revalidation / observe-only plan
+next_step: 详见 `docs/requirements/TRADING-2286_Regenerated_Candidate_Inconclusive_Diagnostics_and_Signal_Utility_Drilldown.md`；已读取 TRADING-2285 actual-path outputs 和 TRADING-2284 generator context，诊断三类 regenerated candidates 为何仍为 inconclusive。本批只做 diagnostics / signal utility drilldown，不做 owner final decision、promotion、paper-shadow、production 或 broker action，不改变 TRADING-2281 permanently inconclusive 结论。
+acceptance: 新增 `aits research trends regenerated-candidate-inconclusive-diagnostics`；生成 signal density、confidence distribution、horizon/asset/direction drilldown、false signal cost、candidate overlap、data quality impact、diagnostic-only regime drilldown、refinement recommendation 和 utility summary；真实 run 读取 95,220 条 actual-path / prediction-outcome records，其中 73,188 条 validation eligible；三类 candidate primary reason 均为 `LOW_CONFIDENCE_SIGNAL`，recommended action 均为 `REFINE_CONFIDENCE_SCALING`；next task recommendation=`TRADING-2287_Candidate_Generator_Refinement_Plan`；所有 outputs 固定 promotion/paper-shadow/production false、broker_action=none；focused tests、full pytest、docs freshness、documentation contract、contract-validation、task-register consistency、Ruff、compileall 和 diff check 通过。
+notes: '2026-06-30: 新增并进入 IN_PROGRESS；范围限定为 inconclusive diagnostics 和 signal utility drilldown。2026-06-30: 实现完成并归档为 DONE；data quality impact 均为 `DATA_QUALITY_NOT_MATERIAL`，overlap 结果为 1 个 `PARTIALLY_REDUNDANT` 和 2 个 `COMPLEMENTARY`，false signal cost 显示 baseline_plus_trend_structure / risk_appetite 为 `FALSE_RISK_ON_COST_TOO_HIGH`；验证通过 focused parallel pytest 19 passed、full parallel pytest 3557 passed / 643 warnings、contract-validation 193 passed。'

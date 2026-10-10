@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-006A
+area: 交易执行/paper signal quality hardening
+priority: P0
+status: BASELINE_DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/paper_signal_quality_hardening_2026-05-17.md`；paper signal quality 状态语义、policy snapshot、gate explanation、daily-independent warning、dashboard 只读摘要、安全边界测试和当前复验证据已完成；剩余 repo-wide formatter baseline 已由 `DEV-001` 归档完成
+acceptance: '`evaluation_status` / `quality_status` 只允许 `INSUFFICIENT_DATA`、`OBSERVE_ONLY`、`PROMISING_BUT_LIMITED`、`LOW_DATA_QUALITY`、`UNRELIABLE`；JSON 顶层包含 `policy_id`、`policy_version`、`production_effect=none` 和 thresholds snapshot；Markdown 显示 policy version、关键 thresholds、evaluation gate explanation、blocked_by explanation 和 `DAILY_INDEPENDENT_ONLY` / `PAPER_ONLY_SIMULATION` warning；dashboard 只读展示摘要，不展示完整长表，不触发 runner/replay/broker；目标 pytest、Ruff 和触达文件 Black check 通过'
+notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求加固 TRADING-006 的状态语义、policy 暴露、evaluation gate 解释、daily-independent warning 和测试边界。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成状态语义收紧、policy snapshot、gate explanation、daily-independent warning、dashboard 只读摘要和安全边界测试；目标测试、全量测试、Ruff 和目标文件 Black check 通过，全仓 Black 受既有无关 baseline 阻断。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮 isolated smoke 和字段级复核确认 allowed status、policy snapshot、warnings、dashboard 只读摘要和 `production_effect=none` 安全边界均保持；forbidden live / promotion 语义只出现在测试禁止清单中；目标 paper signal quality + dashboard pytest 25 passed，Ruff 和触达文件 Black check 通过；剩余全仓 Black baseline 已登记为 `DEV-001`。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-352A_REPORT_INDEX_WARNING_CLEANUP
+area: Report registry / Reader Brief visibility governance
+priority: P1
+status: DONE
+next_owner: 项目 owner 后续复核；代码实现完成
+next_step: 详细拆解见 `docs/requirements/TRADING-352A_Report_Index_Warning_Cleanup.md`；承接 TRADING-352 后 report index 仍为 `PASS_WITH_WARNINGS` 的既有 missing/stale visibility，清理 freshness age basis、legacy/optional waiver 和 visibility audit；不得刷新数据、补造 artifact、改变 scoring/paper-shadow/target weights/strategy logic 或 production state
+acceptance: 新增 `config/report_index_visibility_waivers.yaml`、registry cadence-level `freshness_basis`、report index visibility audit、per-report `visibility_issue` / `visibility_waiver`、CLI `--waiver-path` 和 focused tests；README、operations runbook、system flow、artifact catalog、requirements 和 task register 同步；`aits reports index --as-of 2026-06-15` 返回 `PASS_WITH_EXPLICIT_WAIVERS`，不再是笼统 `PASS_WITH_WARNINGS`
+notes: '2026-06-15: DONE；report index 输出 `missing_count=20`、`stale_count=10`、`explicit_waiver_count=30`、`unwaived_warning_count=0`；focused report index / documentation contract tests 16 passed，documentation contract PASS，Reader Brief quality OK，ruff、compileall 和 git diff check 通过；保持 read-only / no upstream rerun / no replacement artifact / no scoring, paper-shadow, target weight, strategy or production change。'

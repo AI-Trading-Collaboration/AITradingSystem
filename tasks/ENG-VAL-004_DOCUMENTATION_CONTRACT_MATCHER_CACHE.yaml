@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ENG-VAL-004_DOCUMENTATION_CONTRACT_MATCHER_CACHE
+area: Developer validation / contract-validation runtime optimization
+priority: P2
+status: DONE
+next_owner: 系统后续针对 tail-risk fixture/setup、current subscription CLI smoke 和 controlled strategy CLI smoke 继续优化
+next_step: 详见 `docs/requirements/ENG-VAL-004_Documentation_Contract_Matcher_Cache.md`；承接 ENG-VAL-003 runtime artifact 的当前最慢项 `tests/test_documentation_contract.py::test_default_documentation_contract_covers_current_report_registry`。本任务只优化 documentation contract matcher 的纯函数重复计算，不改变 report registry、artifact catalog、contract 覆盖、payload schema、pass/fail/warning 判定、validation runner 默认策略或生产边界。
+acceptance: '`_normalize_path_text()` 与 `_code_spans()` 使用进程内缓存；literal prefix 在不含 `?` / `[]` glob metachar 时等价短路，日期类 `????-??-??` artifact glob 保持 `fnmatch` fallback。完整 registry/catalog pairwise reference 对比覆盖 4,547,455 个 pattern/catalog 组合，mismatch=0。验证通过 Ruff、compileall、focused docs contract pytest `5 passed in 12.31s`、docs freshness 531 docs PASS、documentation contract 1244 reports PASS、task-register consistency run/validate PASS、contract-validation `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T183540Z/test_runtime_summary.json`）和 `git diff --check`。目标单测 call duration 从 ENG-VAL-003 artifact 的 `50.45s` 降到 `5.43s`；完整 tier elapsed 从 `191.61s` 降到 `181.10s`，top20 slow duration total 从 `394.89s` 降到 `340.96s`。'
+notes: '2026-07-05: 根据 ENG-VAL-003 slow-duration evidence 新增并进入 IN_PROGRESS。2026-07-05: 实现完成并归档 DONE；docs contract 已退出 top20，当前最慢项转为 tail-risk independent setup、controlled strategy CLI smoke、current subscription CLI smoke 和 tail-risk fallback / policy fixture 群。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-067
+area: ETF satellite stock replacement/Satellite Stock Replacement Policy
+priority: P0
+status: BASELINE_DONE
+next_owner: 系统验证 + 后续 owner manual review
+next_step: 详细拆解见 `docs/requirements/TRADING-067_Satellite_Stock_Replacement_Policy.md`；TRADING-067A~K baseline complete；后续如需把个股替换候选进入更长 forward attribution 或 owner-reviewed production policy，应新建后续任务
+acceptance: '`python -m ai_trading_system.cli etf satellite validate` PASS；TRADING-067A~K 均完成；全量 pytest、ruff、compileall、diff check 通过；所有 satellite 输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`；ETF-first fallback 存在；不写 official ETF target weights、不触发 broker action、不自动 production promotion；report registry、Reader Brief、artifact catalog、system flow 和 tests 同步'
+notes: '2026-06-02: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：完成 satellite universe config、stock-to-ETF benchmark mapping、relative-strength features、SatelliteCandidateScore、replacement eligibility gate、ETF-first replacement plan、shadow experiment、risk constraint diagnostics、standalone JSON/Markdown report、Reader Brief Satellite Replacement section 和 final validation gate；所有输出仅为 candidate/shadow/hypothetical replacement artifacts，不改变 TRADING-062~066 official ETF allocation 安全边界。'

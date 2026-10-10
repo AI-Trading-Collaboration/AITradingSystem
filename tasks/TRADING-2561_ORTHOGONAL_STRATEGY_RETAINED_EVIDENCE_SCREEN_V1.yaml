@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2561_ORTHOGONAL_STRATEGY_RETAINED_EVIDENCE_SCREEN_V1
+area: Strategy research / orthogonal retained-evidence strategy screen
+priority: P1
+status: DONE
+next_owner: 无；若启动新的 empirical experiment，必须另立预注册任务并取得相应授权
+next_step: retained-evidence screen 已完成；继续 equal_risk_qqq_sgov 既有 forward-aging，不启动新 empirical run，经验独立性保持 NOT_ESTABLISHED
+acceptance: strict loader/classifier/golden-negative tests PASS；structural orthogonality 与 empirical independence 分离；route 可审计；所有外部和交易动作 0
+notes: '7 focused tests、Ruff/Black/strict mypy PASS；result SHA-256=08a982c9dab75b678529fce48f921449adaa98cca3dbcca14f364ee178ef8041；所有经验运行和禁止动作=0。Supporting requirement: docs/requirements/TRADING-2561_Orthogonal_Strategy_Retained_Evidence_Screen_V1.md'

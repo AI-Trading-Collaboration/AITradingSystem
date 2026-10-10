@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER
+area: Strategy research / terminal family closure
+priority: P0
+status: DONE
+next_owner: 独立 baseline capability owner 后续以新任务提供 reopen evidence
+next_step: 见 `docs/requirements/TRADING-2438N_Growth_Tilt_Candidate_Family_Closure_And_Contract_First_Discovery_Pivot.md`；原样保留 M1E prerequisite matrix，关闭旧 A/B/C/replacement-A family并登记 negative-result ledger/reopen policy；不把 null metric推断为FAIL。
+acceptance: strict status=`GROWTH_TILT_CANDIDATE_FAMILY_CLOSED_NO_EXECUTABLE_PIT_CANDIDATE`；dispositions=0 APPROVE/2 REDEFINE/1 WITHDRAW，prerequisites=2 PASS/8 BLOCKED，adapters=0/4，pit tested=0，M2=0；reopen只接受 candidate-independent baseline evidence；production/broker=none。
+notes: '2026-07-10: 实现、真实 strict run与归档完成。验证同 N2；closed-family M2 route disabled，未生成 runtime metrics、candidate behavior、replay、promotion、paper-shadow、production weight或 broker action。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-062E
+area: ETF reports/Reader Brief visibility
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已把 ETF brief 和关键 ETF 支撑报告纳入现有 report registry / Reader Brief navigation，不改变 ETF allocation、主 daily-run 或 broker 边界
+acceptance: '`config/report_registry.yaml` 登记 ETF portfolio brief、ETF data quality、ETF backtest summary 和 ETF P2 walk-forward readiness；`aits reports index` 能只读扫描最新 ETF artifacts 并输出 freshness/status/owner_action；Reader Brief 在有 report_index 时能通过 report navigation/cadence calendar 下钻 ETF 报告；`docs/artifact_catalog.md` 和 `docs/system_flow.md` 同步；不重跑 ETF 上游、不写 production weights、不触发交易；测试覆盖 registry 默认加载、report index 最新 artifact 识别和 documentation contract 覆盖'
+notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：ETF P0/P1/P2 报告已独立生成，但尚未进入现有 Reader Brief/report registry 可见性层。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 registry 条目、artifact catalog、system flow、report index compact ETF backtest run date 解析和 Reader Brief navigation 测试；真实 smoke `aits reports index --as-of 2026-05-29`、`aits reports reader-brief --date 2026-05-29`、`aits reports validate-reader-brief --date 2026-05-29` 通过，ETF 条目在 Reader Brief report navigation 可见且 `production_effect=none`。'

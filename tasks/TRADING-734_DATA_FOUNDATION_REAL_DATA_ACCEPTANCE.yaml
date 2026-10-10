@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-734_DATA_FOUNDATION_REAL_DATA_ACCEPTANCE
+area: Data foundation / real-data acceptance and fail-closed validation
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: '`aits data foundation-acceptance run` 可生成 data foundation acceptance report；覆盖 pit-feature-store、asset-master、universe、trading-costs、research labels/runs/execution/cases、forward-evidence；输出 source qualification、promotion_grade_ready_count、diagnostic_only_count、blocked_until_qualified_count、lookahead_violation_count；所有输出固定 production_effect=none、broker_action=none、promotion_gate_allowed=false、paper_shadow_change_allowed=false、production_weight_change_allowed=false'
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21: validation-only acceptance runner 已实现并进入 VALIDATING；默认 run 输出 `BLOCKED_UNTIL_QUALIFIED_DATA`、promotion_grade_ready_count=0、diagnostic_only_count=2、blocked_until_qualified_count=3、lookahead_violation_count=0、production_effect=none、broker_action=none，说明本地真实源仍需 qualification，不允许 promotion/paper-shadow/production use；focused tests、compileall、Ruff、Black check、fast-unit、contract-validation、report-validation 已通过。'

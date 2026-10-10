@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-895_DOCS_FRESHNESS_METADATA_CI_RESTORATION
+area: Documentation governance / docs freshness CI restoration
+priority: P2
+status: DONE
+next_owner: 系统验证
+next_step: 详见 `docs/requirements/TRADING-895_Docs_Freshness_Metadata_CI_Restoration.md`；GitHub CI `Docs freshness` 在 `main` 上失败，原因是 39 个 requirements 文档缺少 `最后更新：YYYY-MM-DD` 元数据；本次只补齐文档元数据，不改变系统行为、数据流、报告契约、评分、回测或投资解释
+acceptance: '`python -m ai_trading_system.cli docs validate-freshness` 恢复 PASS；focused docs/task/register pytest、scoped Ruff 和 `git diff --check` 通过；不更新 `docs/system_flow.md`，因为无 CLI、配置、cache schema、report output、数据质量门、评分、回测、market-regime interpretation 或主要模块影响'
+notes: '2026-06-23: 新增并完成；补齐 39 个 requirement docs 的 `最后更新：2026-06-23`，未降低 docs freshness 规则，未创建 waiver，production_effect=none，未写 production weights/active shadow weights，未触发 broker/order/trading action。'

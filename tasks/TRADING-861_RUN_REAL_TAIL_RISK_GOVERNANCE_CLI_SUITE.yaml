@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-861_RUN_REAL_TAIL_RISK_GOVERNANCE_CLI_SUITE
+area: Controlled strategy research / real CLI run summary
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 生成 `tail_risk_followup_real_run_summary.json/md`，汇总真实 status、blockers、warnings、sample_count、baseline_dominance、readiness_score 和 fixture/placeholder 检查
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 真实 CLI suite 完成并转入 VALIDATING；逐条运行 TRADING-843～858 follow-up CLI，输出 `REAL_RUN_PASS`、readiness_score=58、baseline_dominance=`BASELINE_DOMINATED_BLOCKED`，确认 zero-sample 未被 VALIDATED、daily summary 不暗示策略可用。'

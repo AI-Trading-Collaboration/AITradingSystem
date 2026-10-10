@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ARCH-002
+area: 架构/workflow 与 artifact 契约
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/architecture_contract_refactor_2026-05-17.md`；`core` 层的 `ArtifactRef`、`ProductionEffect`、`WorkflowStep` 和 `WorkflowStepResult` 契约已抽出并保持可用；daily-run manifest artifact 记录已改为复用统一契约；`ops_daily` 已提供 daily-run step/result 到通用 workflow contract 的适配层；后续 dashboard / shadow / replay 的渐进接入由 ARCH-003 或后续重构任务承接，不再作为本任务未完成项
+acceptance: daily-run run manifest 的路径、checksum、artifact type、size/file count 字段保持行为兼容；`ProductionEffect` 覆盖 `production`、`advisory`、`none`、`validation-only` 和 `blocked` 并保守解析；workflow contract、module boundary、system flow 和 artifact catalog 已同步；focused tests、Ruff 和 diff check 通过；不改变生产评分、仓位 gate、approved overlay、正式 ledger 或 shadow promotion 结论
+notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 提供结构化降复杂度重构讨论，当前最安全切片是先抽出 daily-run/artifact/production-effect 共同契约，作为后续 CLI 拆分、dashboard 分层和 shadow 子系统拆分的底座。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `core` 契约模块，`run_artifacts` 复用 `ArtifactRef` 生成 manifest artifact 记录，架构文档、产物目录和系统流图已同步；验证通过目标测试、ruff、mypy、docs freshness、diff check 和全量 pytest。2026-05-17: 继续保持 VALIDATING，原因：`ops_daily` 已新增 `DailyOpsStep` / `DailyOpsStepResult` 到 `WorkflowStep` / `WorkflowStepResult` 的适配函数并通过目标测试。2026-06-09: 从 VALIDATING 改为 DONE，原因：复核确认核心契约、manifest adapter 和 daily-run workflow adapter 均仍在当前代码中生效；后续模块渐进接入已由 ARCH-003/后续重构承接，不构成本任务未完成交付；验证通过 `python -m pytest tests/test_core_contracts.py tests/test_ops_daily.py tests/test_run_artifacts.py -q`（40 passed）和 scoped Ruff。'

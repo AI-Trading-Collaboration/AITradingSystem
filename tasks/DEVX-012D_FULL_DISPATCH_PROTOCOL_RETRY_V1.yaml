@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-012D_FULL_DISPATCH_PROTOCOL_RETRY_V1
+area: Developer experience / Full dispatch protocol retry
+priority: P1
+status: DONE
+next_owner: Project owner：复核自动周报中的 review-only candidates
+next_step: 首次 Full 的唯一失败已定位为 Atlas ignored bundle 旧 identity 与 reviewed-successor 测试白名单滞后；按官方 renderer、显式 authority 修正与 failure_fix_rerun 收口
+acceptance: task_count ratchet=1046；Atlas canonical CURRENT/PASS 且 successor whitelist 覆盖 TRADING-2549/2550；final formal tiers 与 failure-fix Full PASS；local main=origin/main；existing automation ACTIVE；cleanup complete
+notes: v12 Full=10039 passed/1 failed/3 skipped；失败 artifact 保留并释放。v13 绑定该 parent，只扩展 reviewed-successor 测试 authority、刷新 generated authority 与 final-commit ignored Atlas bundle。

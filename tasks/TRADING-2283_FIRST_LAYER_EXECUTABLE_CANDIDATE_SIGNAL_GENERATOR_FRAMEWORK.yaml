@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2283_FIRST_LAYER_EXECUTABLE_CANDIDATE_SIGNAL_GENERATOR_FRAMEWORK
+area: Research trends / first-layer executable candidate generator framework
+priority: P0
+status: DONE
+next_owner: 项目 owner 后续复核 research-only framework outputs
+next_step: 详见 `docs/requirements/TRADING-2283_First_Layer_Executable_Candidate_Signal_Generator_Framework.md`；已完成 native executable generator framework 和 `framework_smoke_candidate`，不得把 baseline rewrap POC 升级为 historical executable artifact，也不得改变 TRADING-2281 permanently inconclusive decisions
+acceptance: 生成 FirstLayerCandidateSignalGenerator interface、CandidateSignalSpec、generator registry、runtime、framework smoke generator、`aits research trends first-layer-candidate-generator-framework` CLI、candidate signal spec JSON、candidate-bound signal series CSV、candidate-bound prediction artifact JSON、generation summary、validation summary、三份 research/requirements 文档和 registry/catalog/system flow 更新；TRADING-2282 validator 已复用并扩展 signal spec / framework smoke safety checks；所有 artifacts 固定 promotion/paper-shadow/production false、broker_action=none、actual_path_validation_ready=false、historical_executable_artifact=false；validation cleanup 后 full parallel pytest、task-register consistency、docs freshness、documentation contract、Ruff、contract-validation 和 `git diff --check` 均通过
+notes: '2026-06-29: 新增并进入 IN_PROGRESS；实现完成后转入 VALIDATING，真实 smoke run signal/prediction record count=65、validation_status=PASS、candidate_bound_validator_reused=true。TRADING-2298 修复 malformed task id 与 scheduler ordering tests 后，full parallel pytest 3504 passed / 643 warnings；task-register consistency run/validate PASS；docs freshness PASS；documentation contract PASS；Ruff PASS；`contract-validation` 193 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260629T142253Z/test_runtime_summary.json`）；`git diff --check` PASS。任务归档为 DONE；TRADING-2284 trend/risk/volatility executable generators 尚未启动。'

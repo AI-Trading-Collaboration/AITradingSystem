@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-008
+area: 运行架构/daily ops runbook
+priority: P1
+status: DONE
+next_owner: 系统实现
+next_step: 已新增 `docs/runbook_daily_ops.md`，并同步更新 `OPS-003`、系统流图和系统设计 review 需求文档
+acceptance: 新协作者可按 runbook 在本地或云 VM 复现 `aits ops daily-run` 运行；runbook 明确哪些失败必须停止、哪些只能降级披露、哪些报告是正式结论、哪些是审计附录；不新增生产 GitHub Actions cron
+notes: '2026-05-10: 新增并完成，原因：系统设计 review 认为当前 daily ops 命令链路已具备基础能力，但缺少可交接运行手册和调度闭环说明。'

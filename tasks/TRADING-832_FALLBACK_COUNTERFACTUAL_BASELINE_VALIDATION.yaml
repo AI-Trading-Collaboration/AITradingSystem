@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-832_FALLBACK_COUNTERFACTUAL_BASELINE_VALIDATION
+area: Controlled strategy research / fallback counterfactual baseline validation
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 CLI `aits research strategies tail-risk-fallback-counterfactual-validation`；比较 fallback_policy、no_fallback_baseline、static_allocation_baseline、existing_best_baseline_if_available，并输出 return/drawdown/cost/sample metrics 和 COUNTERFACTUAL_* 状态
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22: 按附件任务包登记为第一批 P0。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation 190 passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall 和 git diff --check。'

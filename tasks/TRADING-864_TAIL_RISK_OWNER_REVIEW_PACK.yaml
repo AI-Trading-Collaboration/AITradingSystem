@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-864_TAIL_RISK_OWNER_REVIEW_PACK
+area: Controlled strategy research / owner review pack
+priority: P1
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 生成 `docs/research/tail_risk_followup_owner_review_pack.md` 和 `tail_risk_owner_review_pack.json`，回答实现完整性、未提交文件、mixed risk、真实 CLI、blocked/readiness/baseline dominance/trigger v2 和 owner approval 项
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: owner review pack 完成并转入 VALIDATING；输出 `OWNER_REVIEW_PACK_READY`，明确当前 fallback 仍 blocked、readiness_score=58、baseline dominated=true、trigger v2 不建议自动继续，owner 需批准 mixed worktree/hunk-level commit 边界。'

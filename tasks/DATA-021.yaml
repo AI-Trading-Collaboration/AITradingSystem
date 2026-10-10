@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-021
+area: 数据工程/估值与配置 YAML 读取边界韧性
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/valuation_yaml_loader_robustness_2026-05-29.md`；本轮修复 `score_daily` 在 valuation snapshot store 和核心配置 loader 通过 PyYAML 读取 YAML 文件流时触发 Windows access violation 并阻断 daily-run 的问题；系统验证已完成，daily-run 触达的估值/配置 YAML loader 均走稳定 UTF-8 文本快照 + 项目统一安全 YAML loader
+acceptance: daily-run 会触达的估值和配置 YAML loader 必须先读取稳定 UTF-8 文本快照，再用项目统一安全 YAML loader 解析；文件读取、解码和 YAML 解析失败都进入既有 fail-closed 路径；不得跳过估值门禁、补写快照或伪造数据；目标测试和真实 `aits ops daily-run` 通过或报告新的真实门禁原因
+notes: '2026-05-29: 新增并进入 IN_PROGRESS，原因：`DATA-020` 修复后完整 daily-run 已通过 download-data/PIT/SEC/valuation fetch/validation/SEC PIT shadow monitor，随后 `score_daily` 在 `valuation.load_valuation_snapshot_store` 的 `yaml.safe_load(file)` 路径触发 Windows native access violation，未能进入现有估值校验审计报告。2026-05-29: 范围扩展到核心配置 loader，原因：valuation loader 改为文本快照后，目标测试在 `config.load_watchlist()` 的同类 `yaml.safe_load(file)` 路径复现 access violation；完整 daily-run 又在 `pit_snapshots_validate` 读取 `config/data_sources.yaml` 时命中 PyYAML 纯 Python scanner 内部 `TypeError`，PIT manifest 报告本身为 PASS。2026-05-29: 从 IN_PROGRESS 改为 VALIDATING，原因：项目统一 YAML loader 已改为稳定 UTF-8 文本快照 + `CSafeLoader`，目标测试/ruff/black/diff check 通过，真实 `aits ops daily-run` as-of 2026-05-28 已 23/23 PASS。2026-06-09: 从 VALIDATING 改为 DONE，原因：当前复跑 `tests/test_valuation.py tests/test_daily_scoring.py` 为 40 passed，相关 ruff/compileall PASS；`score-daily --as-of 2026-06-05 --skip-risk-event-openai-precheck` 走通估值、配置 YAML、数据质量和日报评分读取路径，状态 `PASS_WITH_LIMITATIONS`，数据质量 `PASS`；本次 smoke 未触发 OpenAI 预审，完整 daily-run 归档证据仍为 2026-05-28 的 23/23 PASS。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: PROD-001
+area: 趋势判断就绪/日报边界
+priority: P1
+status: DONE
+next_owner: 系统实现 + 项目 owner
+next_step: 总控任务已收口：日报范围已从生产交易依据改为趋势判断和投研复核辅助，阻止趋势判断可靠性的缺口已拆成独立子任务；剩余推进项见 `PROD-002`、`PROD-003`、`PROD-004`、`PROD-005`、`PROD-006`
+acceptance: 完成标准为边界固定与任务拆分，而非所有子模块生产成熟：交易执行、券商税费和账户级买卖闭环不作为近期阻塞项；风险复核运行纪律、第二合格数据源、PIT 样本成熟度、规则 owner approval 和 forward shadow 成熟度均有独立任务、owner、阻塞条件和验收标准
+notes: '2026-05-04: 新增任务，原因：2026-05-04 日报虽成功生成但结论使用等级为 `data_limited`、执行动作为 `observe_only`，需要把生产化不足登记为有序 TODO。2026-05-04: 更新口径，原因：owner 明确当前系统不需要实际触发交易，仅作趋势判断。2026-05-06: 从 IN_PROGRESS 改为 DONE，原因：owner 决策将牵涉多模块的总控任务收口，后续工作拆为可独立验收的子任务并保留在当前任务登记。'

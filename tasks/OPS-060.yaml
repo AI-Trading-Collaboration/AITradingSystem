@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-060
+area: 运维/周期任务总入口 Runbook
+priority: P1
+status: DONE
+next_owner: 系统验证
+next_step: 新增 `docs/operations/operations_runbook.md`，并更新 `AGENTS.md`，要求 Codex 执行任何周期任务前先读取该总入口；本次为文档-only 变更，不修改业务代码、不提交
+acceptance: operations runbook 覆盖 daily / weekly / biweekly / monthly / governance 任务；说明每日 scheduler trigger 是统一外部入口，较长周期任务只能通过日期和条件门控编排或人工按 runbook 执行；每日任务列出 daily PIT、`score-daily`、dashboard/latest checks、Reader Brief 和 `validate-reader-brief`；周期任务登记 weekly review、biweekly weight feedback、monthly governance、scheduler validation 和 artifact catalog consistency；AGENTS 明确执行周期任务前读取该 runbook
+notes: '2026-05-29: 新增并直接归档为 DONE，原因：owner 要求补充周期任务总入口文档，范围限于 Markdown 文档和 AGENTS 指令，不改变 scheduler 代码或业务逻辑。'

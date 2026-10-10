@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-005
+area: 运行架构/日报前置数据依赖
+priority: P0
+status: DONE
+next_owner: 系统实现
+next_step: 详细拆解见 `docs/requirements/daily_score_preflight_dependencies_2026-05-07.md`；daily plan 已新增 SEC companyfacts 刷新、SEC metrics 抽取/校验和 FMP 估值快照刷新；2026-05-07 真实日报链路已验证不再因当日 SEC metrics 缺失停止；`ops health` 已显式检查 FMP PIT 抓取报告状态
+acceptance: 默认每日计划必须在 `score-daily` 前列出并阻断执行 `aits fundamentals download-sec-companyfacts`、`aits fundamentals extract-sec-metrics --as-of YYYY-MM-DD`、`aits fundamentals validate-sec-metrics --as-of YYYY-MM-DD` 和 `aits valuation fetch-fmp --as-of YYYY-MM-DD`；缺少 `SEC_USER_AGENT` 或 `FMP_API_KEY` 必须显示 `BLOCKED_ENV`；报告、README、系统流图和测试同步更新；下一次真实日报不应再因当日 SEC metrics 文件缺失或估值快照过期而失败；PIT 抓取失败必须进入 FMP PIT 抓取报告和 pipeline health/alert
+notes: '2026-05-07: 新增任务，原因：真实每日运行暴露日报依赖当日 SEC metrics，但现有每日编排没有生成该 CSV；同时审计发现估值快照刷新也不在日报前置链路中。2026-05-07: 从 IN_PROGRESS 改为 VALIDATING，原因：`aits ops daily-plan` 已补齐 SEC companyfacts、SEC metrics、SEC metrics validation 和 FMP valuation 前置步骤；验证通过 `ruff check src tests` 和完整 `pytest -q` 408 项。2026-05-07: 从 VALIDATING 改为 DONE，原因：真实日报链路通过，`score-daily` 输出 `PASS_WITH_LIMITATIONS`；同时修复运行观察发现的 PIT fetch 报告状态 health 漏报，验证通过 `ruff check src tests`、`pytest -q tests/test_pipeline_health.py`、`pytest -q tests/test_ops_daily.py tests/test_pipeline_health.py` 和 `aits ops health --as-of 2026-05-07`。'

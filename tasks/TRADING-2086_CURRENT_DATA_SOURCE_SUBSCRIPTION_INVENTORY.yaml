@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2086_CURRENT_DATA_SOURCE_SUBSCRIPTION_INVENTORY
+area: Data governance / current data-source subscription inventory
+priority: P1
+status: DONE
+next_owner: 项目 owner 后续按订阅变化复核
+next_step: 新增 `docs/data_source_subscription_inventory.md`；本任务只整理当前已配置、已审计和实际使用的数据源订阅/权限/用途边界，不新增 provider、不运行 live provider entitlement probe、不改变数据流、评分、回测、paper-shadow、production 或 broker
+acceptance: 盘点文档覆盖 `config/data_sources.yaml` 中 active/planned/inactive source_id、当前进程 env presence、2026-06-21 TRADING-738 entitlement audit、TRADING-759 source qualification batch、FMP/Marketstack/EODHD/FRED/Cboe/SEC/Congress/GovInfo/OpenAI/官方政策源/本地手工输入/TSMC IR/Yahoo/Alpha Vantage/news source TBD 的订阅与使用边界；明确不输出 secret、不升级 source status、所有结论仍为 validation-only/observe-only；focused task/docs pytest、docs freshness 和 diff check 通过
+notes: '2026-06-28: owner 要求整理当前使用的各数据源具体订阅情况；新增盘点文档并说明当前凭据 presence 与最近一次 live entitlement probe 的差异。初始 key presence 为 `FMP_API_KEY`、`MARKETSTACK_API_KEY`、`EODHD_API_KEY`、`FRED_API_KEY`、`CONGRESS_API_KEY`、`GOVINFO_API_KEY`、`OPENAI_API_KEY`、`SEC_USER_AGENT` 可见，FMP 别名不可见；最新 subscription audit 仍以 2026-06-21 artifact 为准。验证通过 `python -m pytest -n 16 --dist loadfile tests/test_task_register_consistency.py tests/test_docs_freshness.py`、`python -m pytest -n 16 --dist loadfile tests/test_documentation_contract.py` 和 `git diff --check`。2026-06-28: owner 新增 `BEA_API_KEY`、`BLS_API_KEY`、`ALPHA_VANTAGE_API_KEY` 后完成脱敏最小服务端验证：BEA `GETDATASETLIST` status 200 / dataset_count=13，BLS v2 `LNS14000000` status 200 / `REQUEST_SUCCEEDED`，Alpha Vantage `GLOBAL_QUOTE` / `MSFT` status 200 / `Global Quote`；已更新盘点文档，但正式 entitlement matrix 仍需重跑 `aits data source-qualification subscription-audit`。2026-06-28: workspace cleanup 补齐 `TRADING-2006_to_2025` 与 `TRADING-2026_to_2045` requirements 的 `最后更新` 元数据后，`python -m ai_trading_system.cli docs validate-freshness` 通过。'

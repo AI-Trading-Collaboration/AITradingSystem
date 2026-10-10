@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+area: Data platform / Windows external-request cache waiter/publish atomicity
+priority: P0
+status: BASELINE_DONE
+next_owner: 'data platform owner: monitor Windows spawned-process Full; new distinct failures require a separate task'
+next_step: 详见 docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md。runtime/current-authority focused与compatibility已PASS；blocker=final_tree_five_tiers_and_trading_2514_closeout。
+acceptance: legacy prefix/historical hashes冻结；DEVX-006C active source set派生 live LF hashes；focused 58与compatibility 211 PASS；最终五级 PASS，Full绑定 full_20260812T150211Z。
+notes: 2026-08-13：current-authority fix focused=58 PASS；compatibility/deprecation=211 PASS；tracked progress在正式门禁前封存。

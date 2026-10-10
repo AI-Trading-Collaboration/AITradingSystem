@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-062H
+area: ETF P1 experiment run/compare registry
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐原始 P1 Experiment Registry 中 `experiments run` / `experiments compare` 的本地治理入口，保持 candidate-only / observe-only
+acceptance: '`aits etf experiments run --config <candidate.yaml>` 必须读取候选配置、记录 candidate_config_hash、baseline config hash、参数 diff、可选 backtest summary strategy metrics、manual_review_required 和 `production_effect=none`，不得写正式配置或目标权重；`aits etf experiments compare --baseline production` 必须只读 registry，输出 candidate/shadow 与 production baseline 的 metric delta 或 `MISSING_METRICS`；不得自动 promotion；测试覆盖 registry record、diff、metrics delta、缺 metrics 状态和 CLI smoke'
+notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 P1 明确列出 `experiments run` / `experiments compare`，当前 ETF CLI 只有 `experiments register`。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 `append_experiment_run`、`build_experiment_comparison`、`aits etf experiments run/compare` 和根级 `aits experiments run/compare/register` alias；真实 smoke `aits experiments compare` 生成 observe-only 比较报告，目标测试通过。'

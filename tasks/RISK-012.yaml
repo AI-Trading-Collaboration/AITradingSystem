@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: RISK-012
+area: 风险事件/LLM 正式评估准入
+priority: P1
+status: IN_PROGRESS
+next_owner: Codex engineering coordinator + Project Owner
+next_step: 修复 LLM formal unknown matched_risk_ids 准入并为 retained invalid occurrence 提供 hash-bound governed quarantine；完成 focused/formal validation、main push、release promotion 后仅在合法 provider-ready 新 as_of ordinary daily 验收。
+acceptance: Producer 仅接受 reviewed risk config 中的 event_id；任一 unmatched ID 在写件前产生 typed ERROR，整批零 occurrence/零 attestation；quarantine 保留原始 bytes/path/SHA/size/reason/authorization 并从 active non-recursive store 排除，post-validation PASS；不得放宽 unknown_risk_event_id validator、不得补造 risk rule、不得同 as_of ordinary/recovery 绕过；目标并行 pytest、formal tiers、runtime promotion 和新 as_of daily 验收通过或报告新的真实 blocker。
+notes: 2026-09-01 daily_ops_run:2026-08-31:20260901T003624Z 在 score_daily 因 data_center_farmland_federal_benefit_restriction_candidate 未登记而 FAIL；用户明确要求先耐久修复后重跑。任务从 BASELINE_DONE 重开，operational severity 按 P0 处理但保留 canonical legacy priority 字段。

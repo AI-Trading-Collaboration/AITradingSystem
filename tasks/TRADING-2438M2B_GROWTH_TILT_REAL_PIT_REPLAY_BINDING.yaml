@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2438M2B_GROWTH_TILT_REAL_PIT_REPLAY_BINDING
+area: Strategy research / approved-only replay orchestration
+priority: P0
+status: DROPPED
+next_owner: 系统实现；依赖 M1A/M1B/M2A
+next_step: 只读取 M1 validation 通过且 decision=APPROVE 的 candidate；同 timeline/PIT snapshot/baseline/benchmark/cost/missing-data policy 运行 baseline 与 overlay，持久化并 reload；REDEFINE/WITHDRAW/PENDING 不得调用 executor。
+acceptance: placeholder count=0；baseline/candidate runner 均 invoked；`pit_candidates_tested` 等于真实 invocation；输出 required M2 artifacts 与 provenance；数据质量 gate 先通过；首轮允许 approved_count=2，不要求凑满 3。
+notes: '2026-07-10: 等待 M1 mappings/policy 完整和 M2A callable executor。 2026-07-23: GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE 转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'

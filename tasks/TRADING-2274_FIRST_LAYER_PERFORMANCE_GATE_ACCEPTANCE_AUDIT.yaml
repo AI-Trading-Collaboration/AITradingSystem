@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2274_FIRST_LAYER_PERFORMANCE_GATE_ACCEPTANCE_AUDIT
+area: Research trends / first-layer performance gate acceptance audit
+priority: P0
+status: VALIDATING
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 详见 `docs/requirements/TRADING-2274_First_Layer_Performance_Gate_Acceptance_Audit.md`；依赖 TRADING-2270 current-state、failure taxonomy、TRADING-2272 objective spec、TRADING-2273 challenger matrix、offline validation-ready challenger rows 和 current promotion gate policy。本批只读已有 artifacts；challenger rows 若未做 complete two-layer actual-path backtest，必须标明不可用于收益型放行。
+acceptance: 生成 `gate_acceptance_audit_report.md`、`gate_ablation_matrix.json`、`threshold_sensitivity_report.json`、`rejected_candidate_counterfactual_report.json` 和 `recommended_gate_policy.yaml`；mandatory gates 全部执行 no/relaxed/current/strict counterfactual；每个 gate 披露 marginal utility、failure mode、opportunity cost、threshold stability 和指定枚举 recommended action；promotion/paper-shadow/production/broker 固定 false/none。
+notes: '2026-06-28: 新增并进入 IN_PROGRESS；本批升级既有 gate audit 为 TRADING-2274 owner-review audit，不改变 active selection rule。2026-06-28: 实现完成并转入 VALIDATING；真实 run current accept=`1/4`，active selection accept=`0`，no-major-regression gate positive，not-2023-plus-only gate negative，beta/TQQQ/probability/all-slices gates inconclusive。2026-06-28: owner 指令 `not_2023_plus_only` 不再保留为 gate，recommended_action 调整为 `remove_gate`。'

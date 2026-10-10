@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1
+area: QQQ Options daily Slice v4 authorization admission and bounded lifecycle
+priority: P0
+status: BASELINE_DONE
+next_owner: Project Owner：review exact 2521 hashes and decide whether to provide the current-dialog v4 token; Codex runs at most one bounded zero-order revalidation only after valid admission
+next_step: OWNER_V4_TOKEN_NOT_PROVIDED；external_action=none；exact successor hashes and final validation must publish before Owner token review
+acceptance: strict current-dialog token admission、exact 2520 authority cross-binding、first-run consumption、2512 Results parser 与 2482 DQ/PIT canonical handoff、negative/property/golden、final gates；默认 cash preservation
+notes: '[supporting requirement](docs/requirements/TRADING-2521_QC_QQQ_Options_Daily_Slice_Revalidation_Authorization_Admission_V1.md)；strict 2520 cross-binding, 2514 ledger, 2517 first-run consumption adapter, 2512 Results parser adapter, 1202-session fixture and Atlas 40-task disclosure implemented；no real authorization/run/evidence/DQ-PIT'

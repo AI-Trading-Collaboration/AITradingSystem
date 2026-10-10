@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2324_EXPOSURE_CAP_SIMULATION_SOURCE_BINDING
+area: Research trends / exposure-cap simulation source binding
+priority: P0
+status: DONE
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 详见 `docs/requirements/TRADING-2324_Exposure_Cap_Simulation_Source_Binding_and_Runtime_Data_Integration.md`；承接 TRADING-2323 source-blocked simulation readiness 和 owner 附件 TRADING-2324。本批已绑定 risk-cap trigger series、cached market price history、synthetic observe-only portfolio baseline、turnover / rebalance assumptions、cooldown / cap policy 和 simulation calendar；不得输出 production action、broker action、target weight 或 rebalance instruction。
+acceptance: 新增 `aits research trends exposure-cap-simulation-source-binding`；生成 source inventory、source gap matrix、risk-cap trigger binding、market data binding、portfolio baseline binding、turnover / rebalance assumption、source-bound dry-run readiness、safety boundary、next task route，以及 dry-run result / comparison / turnover / cooldown impact proxy diagnostics；读取 cached market data 时披露 data-quality gate status；所有 outputs 固定 promotion/paper-shadow/production/broker false/none。
+notes: '2026-07-01: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入 VALIDATING；真实 run status=`EXPOSURE_CAP_SIMULATION_SOURCE_BOUND_DRY_RUN_READY_PROMOTION_BLOCKED`，data_quality_status=`PASS_WITH_WARNINGS`，dry_run_readiness_status=`SOURCE_BOUND_DRY_RUN_READY_WITH_SYNTHETIC_BASELINE`，dry_run_record_count=2595，cap_binding_days=382，next task=`TRADING-2325_Portfolio_Baseline_Source_Decision`；验证通过 focused pytest、Ruff、compileall、full pytest、validate-data、docs / contract / task-register gates 和 diff check。 2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'

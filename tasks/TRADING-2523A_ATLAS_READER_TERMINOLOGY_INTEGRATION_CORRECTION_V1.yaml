@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
+area: Atlas / 读者术语合同 base-drift 协调候选与最终门纠正
+priority: P1
+status: DONE
+next_owner: Project Owner / next governed Atlas task
+next_step: Terminal projection frozen after implementation-candidate gates; rebuild the exact final page, replay browser and formal validation on the final-tree commit, then publish by ff-only main and ordinary non-force push. Human Owner visual and reader comprehension reviews remain PENDING for their governed follow-up.
+acceptance: The latest-main candidate preserves the 2523 terminology and audit contract without page-effectiveness v2 regression; rendered inventory and first-use explanations pass; exact HTML is replayed on desktop/mobile/keyboard/ARIA; Architecture, Contract, Integration, Reproducibility, exclusive Full and governed closeout pass; local main equals origin/main.
+notes: '[supporting requirement](docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md); implementation candidate 191e8145efadc55f4c50a5d55bac810efd08ca90 passed exact browser engineering replay for HTML d44fe7fccb05aae6ce05baf45c07c6da62a6f49344d05d27edf6a72c940da343 and candidate formal gates: Architecture 865 passed; Contract 276 passed; Integration 995 passed / 642 warnings; Reproducibility 24 passed; exclusive Full 9045 passed / 3 skipped / 644 warnings. Runtime artifacts: architecture-fitness_20260815T140540Z, contract-validation_20260815T141238Z, integration_20260815T141555Z, reproducibility_20260815T141657Z, full_20260815T141737Z. Final-tree commit must regenerate exact page/browser and replay formal gates before publication. Owner visual and reader comprehension remain PENDING. Production effect none; broker action none; TRADING-2524--2527 implementation remains out of scope.'

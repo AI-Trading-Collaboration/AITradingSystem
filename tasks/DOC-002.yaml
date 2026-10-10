@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DOC-002
+area: 文档治理/新鲜度检查
+priority: P2
+status: DONE
+next_owner: 系统实现
+next_step: 已新增 `aits docs validate-freshness`、CI 门禁和单测，并补齐历史关键需求文档的 `最后更新` 元数据
+acceptance: 关键 task/requirements 文档必须包含 `最后更新`；文档内部最新状态记录日期不得晚于 `最后更新`；CI 可在无本地数据缓存时执行；检查只验证文档元数据，不推断业务完成度
+notes: '2026-05-10: 从 READY 改为 DONE，原因：文档新鲜度 CLI、报告渲染、CI 接入、通过/失败单测和当前仓库文档元数据修复已完成。'

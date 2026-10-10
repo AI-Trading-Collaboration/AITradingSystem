@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-011B_WORKFLOW_HEALTH_ROOT_RULE_DECOUPLING_CLOSEOUT
+area: Developer experience / workflow health root-rule decoupling closeout
+priority: P1
+status: DONE
+next_owner: 'Project owner: review weekly workflow-health candidates after four validated observations'
+next_step: No implementation blocker; accumulate four validated weekly observations before authorizing any separate optimization task or policy threshold retuning
+acceptance: Root AGENTS hash restored; unified periodic date gate retained; prior 327 Full failures eliminated; exact final Atlas renderer PASS; parent-bound failure-fix Full PASS; local main=origin/main=final candidate; production_effect=none
+notes: '2026-08-31: v2 prevalidation root growth 2 PASS, Full last-failed 335 PASS / 3 FAIL, final three regression PASS after explicit DEVX-011 helper authority and exact-commit Atlas rebuild; final completion fail-closed on v3 formal, parent-bound Full, push and release'

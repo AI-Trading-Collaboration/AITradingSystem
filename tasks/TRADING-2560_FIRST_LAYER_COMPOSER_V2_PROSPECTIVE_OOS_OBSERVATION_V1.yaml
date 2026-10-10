@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2560_FIRST_LAYER_COMPOSER_V2_PROSPECTIVE_OOS_OBSERVATION_V1
+area: Strategy research / first-layer composer v2 prospective OOS observation
+priority: P0
+status: IN_PROGRESS
+next_owner: Codex：完成单一最终候选验证和ordinary push，执行真实readiness/activation
+next_step: 实际Composer route已通过；latest-main生成状态已按精确drift plan协调，待新候选四tiers/Full全部6项actual测试及发布后研究运行
+acceptance: 三段canonical DQ及same-bytes identity；原模型/阈值规则/504/20不变；宏观真实carry披露；严格事件时点/一次尝试；历史训练访问和未来outcome关闭分离；正式验证/ordinary main push；实际readiness/activation结果及首条合法观察或精确时间/输入blocker留存
+notes: '完整保留原事件及失败证据，main其他任务不变。真实DQ/fit/observation仍为0。Supporting requirement: docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md'

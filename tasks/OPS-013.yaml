@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-013
+area: 运行架构/daily-run direct dispatcher
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 2026-06-05 最新 production daily-run 已验证 direct dispatcher 的 `score-daily` 映射未再因 CLI 签名漂移阻断
+acceptance: '`.venv\\Scripts\\python.exe -m ai_trading_system.cli_direct score-daily ...` 必须把 `--risk-event-openai-precheck/--skip-risk-event-openai-precheck` 正确映射到当前 `score_daily(risk_event_openai_precheck=...)`；daily-run 不得因 direct dispatcher 与主 CLI 签名漂移阻断；目标单测、ruff、`git diff --check` 和真实 daily-run 复测通过或报告新的真实门禁原因'
+notes: '2026-05-13: 新增并进入 IN_PROGRESS，原因：修复 FRED 无响应重试后，真实 `daily-run` 的 `score_daily` 子步骤失败于 `TypeError: score_daily() got an unexpected keyword argument ''skip_risk_event_openai_precheck''`，属于 daily-run 入口 wiring bug。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：`cli_direct` 已改为传 `risk_event_openai_precheck=not --skip-risk-event-openai-precheck`；新增 direct dispatcher 单测；真实 `daily-run` 已越过 `score_daily` 并最终 11/11 PASS。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新真实 `daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901` 中 `score_daily` step PASS，命令包含 OpenAI precheck profile 与显式 visibility cutoff，未出现 direct dispatcher signature drift。'

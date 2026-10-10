@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-022_FULL_UNDER_TWO_HOURS_PROGRAM
+area: Validation runtime / program to compress the formal Full below two hours (scheduler, lease-store replay, test structure)
+priority: P0
+status: BASELINE_DONE
+next_owner: Claude Code coordinator
+next_step: 第十二次发布（M6，2d29e4e35）：Full 15,272 通过 / 4 跳过 / 0 失败，pytest 7,991.1 s（2:13:11；上一条链 10,601.2 s，-24.6%），执行窗口 10,550 -> 7,942 s；整条链 3:38（上一条 4:23，-44 分钟）。17.15 的验收全部达成：命名 DQ 候选文件不再最后收工（+2,127 s，节点分布在 10 个 worker），最晚与第二晚 worker 的差 2,326 -> 40 s，尾部空闲 2,265 -> 91 s/worker，0 失败，Full <= 9,300 s（预测 8,323-9,215 s，实际更好）。诚实归因：结构性收益（尾部消除）约 -2,170 s（-20.6%），与模拟的 -21.5% 一致；另约 -430 s 是两次运行之间的工作量变化（同一批节点合计 -7.3%），不算 M6；命名 DQ 文件节点膨胀 +10.4%。Full 现在由总 CPU 工作量决定（窗口平均 22.9 核，候选 B 为 15.8），正式 Full 2:13，距 2 小时仍差约 13 分钟（owner 2026-10-05 选择 C，不改正式 Full 合同）；余下杠杆须减少总 CPU 工作：17.9 登记的 (ii) 命名 DQ 测试进程内重放并行、(iii) 减少每节点的重放次数，以及封印进 Full（须 owner 另行评审命名 DQ 受限子进程的导入清单）。详见 DEVX-022 第 17.16 节。
+acceptance: S1 产出发布阶段操作的函数级剖面与计数器型遥测；S2 起跑间隔只对前 K 个起跑生效且有性质测试；S3 7 个大发布节点各约 20 分钟内、租约库重放语义不变（篡改/截断/重排负向测试）、真实 .git 副本演练；S4 collected nodeids 与 v26 完全一致且覆盖等价性论证成立；S5 最终正式 Full 墙钟 < 2.0 小时或明确报告差距；全程不放宽验收语义、不引入跨调用身份缓存。
+notes: 2026-10-10：第十二次发布（M6）实测（17.16）：Full 2:13（-24.6%），链 3:38；验收全部达成；尾部已消除，进一步缩短须减少总 CPU 工作。

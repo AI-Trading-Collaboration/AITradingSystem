@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-062F
+area: ETF CLI compatibility aliases
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐开发文档中更接近无前缀的 CLI 入口，同时不覆盖现有主系统根级 backtest/daily scoring 语义
+acceptance: '`aits data ingest/validate`、`aits features build`、`aits signals generate`、`aits regime generate`、`aits portfolio allocate`、`aits simulation record/evaluate/report`、`aits report daily`、`aits run daily` 作为 ETF workflow compatibility aliases；`aits backtest` 保持现有主系统命令，ETF 回测继续为 `aits etf backtest run/report`；alias help 必须说明 ETF 兼容入口和 production/trading 边界；测试覆盖 help/command availability，smoke 覆盖至少一个 alias dry-run'
+notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原始开发文档 CLI 示例使用 `data/features/signals/regime/portfolio/simulation/report/run` 顶层路径，当前只有 `aits etf ...` 隔离入口。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：已新增 root-level ETF compatibility aliases，`aits backtest --help` 保持主系统每日评分回测；`aits run daily --date latest --dry-run` 输出 2026-05-29 ETF brief 且 `data_quality_status=PASS`，目标 alias 测试通过。'

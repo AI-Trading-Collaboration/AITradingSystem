@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-860_SAFE_COMMIT_OR_PATCH_HANDOFF
+area: Engineering closeout / safe commit or patch handoff
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 基于 TRADING-859 状态执行 safe commit 或生成人工 review 清单和 patch handoff；mixed worktree 时不得提交
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 产物完成并转入 VALIDATING；TRADING-859 为 `BLOCKED_BY_MIXED_WORKTREE`，因此未创建 commit，未执行 `git add .`，输出 `tail_risk_followup_safe_commit_handoff.json/md` 和 `tail_risk_followup_mixed_worktree_handoff.patch`。'

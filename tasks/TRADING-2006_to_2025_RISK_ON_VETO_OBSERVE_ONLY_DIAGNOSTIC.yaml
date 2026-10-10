@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2006_to_2025_RISK_ON_VETO_OBSERVE_ONLY_DIAGNOSTIC
+area: Research trends / risk-on veto observe-only diagnostic
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 已新增 closeout reclassification、do-not archive、diagnostic contract、metric policy、episode log、forward log spec、CLI `aits research trends risk-on-veto-diagnostic`、diagnostic summary、2022/2023+ behavior、tradeoff matrix、return-seeking diagnostic compatibility、owner brief、report registry、artifact catalog、system flow 和 guardrail tests；所有输出披露 data_quality_status=`PASS_WITH_WARNINGS`，candidate_count=0，owner_review/promotion/paper-shadow/production/broker 全部 disabled，CSV 不含 target_weights、trade_action、recommended_allocation 等 forbidden fields；验证已通过 focused parallel pytest、Ruff、compileall、治理文档检查和 diff check。
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28: 新增并进入 IN_PROGRESS，原因：owner 附件要求把 risk-on veto 从 v3 selection pass 收口为 observe-only diagnostic，并归档 do-not-de-risk v3；本批只做诊断与审计闭环，不启用任何 allocation 或生产路径。2026-06-28: 实现完成并转入 VALIDATING；真实 run episode_count=2771、veto_active_count=531、blocked_add_risk_count=347，compatibility=`VETO_TOO_STRICT_FOR_RETURN_SEEKING_DIAGNOSTIC`，`do_not_de_risk v3` archive status=`DO_NOT_DERISK_V3_ARCHIVED_NO_MATERIAL_IMPROVEMENT`。'

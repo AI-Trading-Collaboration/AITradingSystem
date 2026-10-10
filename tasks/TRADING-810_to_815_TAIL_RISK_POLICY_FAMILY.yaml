@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-810_to_815_TAIL_RISK_POLICY_FAMILY
+area: Controlled strategy research / value-surface policy kill, benchmark-first tail-risk policy contract, classifier prototype, conservative horizon risk filter, drawdown guard, controlled review
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 CLI：`aits research strategies value-surface-policy-kill-diagnostic-downgrade`、`benchmark-first-tail-risk-policy-contract`、`tail-loss-avoidance-classifier-prototype`、`conservative-horizon-risk-filter`、`benchmark-fallback-drawdown-guard-prototype` 和 `tail-risk-policy-family-controlled-review`；TRADING-810 必须输出 action_policy_allowed=false、promotion_gate_allowed=false 和 allowed_uses，只允许 diagnostic/residual_analysis/tail_loss_attribution/horizon_risk_signal/benchmark_fallback_trigger；TRADING-811 必须定义 base_policy、allowed_deviation、risk_downshift_condition、risk_recovery_condition、max_turnover_budget、fallback_policy、review_interval；TRADING-812 标签只能用于 gate value surface/aggressive action，不能直接决定仓位；TRADING-813 必须把 1d/5d/10d 设为默认可用、20d quarantine、60d fallback-only；TRADING-814 必须比较 fallback/drawdown guard 的 mean_delta、tail_loss_contribution、losing_avg、max_drawdown、turnover、cost 和 beat_rate_retention；TRADING-815 决策只能为 `CONTINUE
+notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST

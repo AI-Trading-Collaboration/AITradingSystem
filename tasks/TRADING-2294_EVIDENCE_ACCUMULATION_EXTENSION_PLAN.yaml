@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2294_EVIDENCE_ACCUMULATION_EXTENSION_PLAN
+area: Research trends / risk-cap forward observe evidence accumulation extension
+priority: P0
+status: DONE
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 详见 `docs/requirements/TRADING-2294_Evidence_Accumulation_Extension_Plan.md`；承接 TRADING-2293 next task recommendation 和 owner 附件 P0 mainline；本批已设计 `volatility_regime_scope_narrowed_risk_cap_v1` observe-only evidence accumulation extension，不启动 runtime、不接日报生产链路、不生成 owner review package、不做 paper-shadow/production/broker。
+acceptance: 形成 evidence accumulation extension plan、runtime contract、daily observe record schema、trigger follow-up schema、storage layout、minimum observation windows、trigger sample sufficiency handling、continue/extend/stop review criteria 和 safety boundary；所有 outputs 固定 promotion/paper-shadow/production/broker false/none、`forward_observe_started=false`、`runtime_started=false`、report integration=`design_only`。
+notes: '2026-07-01: 根据 TRADING-2293 readiness output 和 owner 附件登记；该 mainline 与 TRADING-2307 execution cooldown/decay/cap mechanics 分离。2026-07-01: 转入 IN_PROGRESS；当前 worktree 已有两个 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并转入 VALIDATING；真实 run status=`FORWARD_OBSERVE_EVIDENCE_ACCUMULATION_PLAN_READY_PROMOTION_BLOCKED`，source data quality=`PASS_WITH_WARNINGS`，sparse trigger route=`extend_observe`；验证通过新增 focused 4 passed、docs/registry/task-register focused 35 passed、Ruff、compileall、contract-validation 193 passed 和 `git diff --check`。 2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'

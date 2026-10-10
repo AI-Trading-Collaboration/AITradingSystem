@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-816_to_820_TAIL_RISK_FALLBACK_ROBUSTNESS
+area: Controlled strategy research / tail-risk benchmark fallback robustness, trigger precision-recall, opportunity cost, forward evidence integration, review board
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 CLI：`aits research strategies tail-risk-benchmark-fallback-robustness-expansion`、`tail-risk-fallback-trigger-precision-recall-audit`、`tail-risk-opportunity-cost-upside-capture-review`、`tail-risk-forward-evidence-integration` 和 `tail-risk-policy-controlled-review-board`；TRADING-816 必须输出 fallback trigger/frequency、tail loss、mean/median delta、upside capture、missed upside、false fallback、turnover/cost/drawdown deltas 和 by asset/horizon/regime/cluster；TRADING-817 必须输出 precision/recall、false positive/negative rates、missed upside from false positive、tail loss from false negative；TRADING-818 必须审计 benchmark upside days、participation、upside capture、missed upside concentration，并判断 tail loss reduction 是否明显大于 missed upside cost；TRADING-819 必须把 tail-risk benchmark fallback 纳入 forward dry-run archive，记录 signal、trigger、reason、expected avoided risk 和未来 maturity outcome placeholder；TRADING-820 决策只能为 `CONTROLLED_RESEARCH_CONTINUE
+notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST_FORWARD_MATURITY

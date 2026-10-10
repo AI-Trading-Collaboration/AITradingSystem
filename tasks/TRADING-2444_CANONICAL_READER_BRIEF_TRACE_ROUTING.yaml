@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2444_CANONICAL_READER_BRIEF_TRACE_ROUTING
+area: Daily operations / canonical Reader Brief trace routing
+priority: P1
+status: DONE
+next_owner: system operations：后续 daily-run 观察
+next_step: 详见 `docs/requirements/TRADING-2444_Canonical_Reader_Brief_Trace_Routing.md`。Canonical bundle 已有 `traces/daily_score_<as_of>_trace.json`，final Reader Brief refresh 改为显式消费该路径，不再查找不存在的 canonical `reports/evidence/`。
+acceptance: Integration test 证明 trace 归档后 Reader Brief 为 `AVAILABLE` 且 full path 指向本轮 `traces/`；真正缺 trace 仍 `LIMITED_READER_CONTEXT`；真实 2026-07-15 bundle 隔离复验 Reader Brief/quality=`OK`、13/13；不复制第二份 trace、不回退 legacy path，`production_effect=none`。
+notes: '2026-07-16: focused parallel=`42 passed`，缺失路径保护=`1 passed`，Ruff/compileall/diff check PASS；隔离复验默认触及的 canonical Owner Daily Brief JSON/HTML 已按 manifest 恢复且 SHA256 完全匹配。'

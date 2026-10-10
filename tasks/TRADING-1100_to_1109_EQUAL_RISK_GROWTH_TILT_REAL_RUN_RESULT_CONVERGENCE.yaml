@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1100_to_1109_EQUAL_RISK_GROWTH_TILT_REAL_RUN_RESULT_CONVERGENCE
+area: Research strategies / equal-risk growth tilt real-run result convergence
+priority: P1
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 10 个 `aits research strategies ...` CLI/artifacts：real CLI suite summary、candidate result summary、tier validation、beta-adjusted edge review、risk-return frontier review、period/drawdown/cost triage、final gate、forward-aging watchlist review、owner decision pack real-run、real-result master review；真实 master status=`GROWTH_TILT_RESEARCH_ONLY`，best candidate=`equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1`，watchlist_allowed=false，owner recommendation=`KEEP_GROWTH_TILT_RESEARCH_ONLY`；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report registry、artifact catalog、system flow、focused pytest、Ruff、compileall 和 `git diff --check` 通过
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求在 1065～1084 growth tilt framework 已落地后真实运行并回答是否存在 Tier 1/2/3 候选、收益是否只是 beta、风险/turnover 是否可接受，以及是否只允许 research-only forward-aging watchlist review。安全边界保持 no paper-shadow / no production / no broker。2026-06-26: 实现完成并转入 VALIDATING；真实运行使用本地 cache as-of 2026-06-25，data_quality=`PASS_WITH_WARNINGS`，candidate summary 找到 31 个非 rejected 候选、207 个 rejected；final gate 未通过 watchlist review，原因是 beta-adjusted edge present 但未达到 material final gate，继续保持 research-only。'

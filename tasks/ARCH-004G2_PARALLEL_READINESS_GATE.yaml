@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ARCH-004G2_PARALLEL_READINESS_GATE
+area: Architecture / G2.5 parallel change and merge readiness
+priority: P1
+status: DONE
+next_owner: architecture coordinator：按新active任务启动G4 + DATA-GOV D0B；G3/G5继续等待依赖
+next_step: 详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.4 matrix=`967/0/0/0`、bootstrap handoff与ARCH-005 S0～S4B均PASS；G2.5绑定tracked bootstrap validation bundle、三份exact change manifests、capacity=2双批rehearsal、7 fragments与20负例，历史handoff保持不可变。
+acceptance: clean-clone validator不依赖`outputs/`；Git lineage=`handoff base -> handoff HEAD -> source base`；focused/architecture/contract/Full、manifests/shadows/deprecation/compatibility/freshness全部PASS；55 current sources/24 superseded/stale=0；`production_effect=none`。
+notes: 2026-07-23：Wave11与DATA-GOV D0A、GOV-006 N0共同收口。正式focused=`183 passed / 1 skipped`、architecture=`482 passed`、contract=`266 passed`；Full attempt chain保留两次真实FAIL，最终replacement=`6710 passed / 3 skipped / 643 warnings / 1106.60s runner`。下一批仅G4 + D0B，不自动启动G3/G5、S5、H、策略B/C或production。

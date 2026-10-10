@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-048
+area: 基本面/SEC PIT Shadow Monitor Dtype Robustness
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/sec_pit_shadow_monitor_dtype_robustness_2026-05-29.md`；SEC PIT shadow monitor dtype robustness 与 dev `pyarrow` 覆盖已完成，真实 monitor 未再因 string dtype row lookup 裸崩溃
+acceptance: Shadow monitor rolling metrics 必须只用数值化 rank/label 序列计算 top-rank label delta，不依赖混合 dtype DataFrame row lookup；Arrow string / pandas string dtype 输入下不应裸 traceback；monitor 仍 fail closed 于真实 coverage/rolling metrics gate，不吞掉因子监控失败；目标测试和真实 `aits ops daily-run` 通过或报告新的真实门禁原因
+notes: '2026-05-29: 新增并进入 IN_PROGRESS，原因：TRADING-047 修复后重新执行 daily-run 已确认 shadow observe 使用 research baseline 且 baseline coverage OK，但 monitor 在 `_top_rank_label_delta` 的 `.loc[idxmin()]` 路径触发 Pandas `NotImplementedError: eq not implemented for pandas.StringDtype`，导致日报后续报告链再次阻断。2026-05-29: 从 IN_PROGRESS 改为 VALIDATING，原因：monitor dtype 修复通过目标测试/ruff/black/diff check，真实 `aits ops daily-run` as-of 2026-05-28 中 `sec_pit_shadow_monitor` PASS。2026-06-01: CI-like `.[dev]` 环境复现 GitHub Actions Test 失败，原因是 Arrow string fixture 构造需要 `pyarrow` 但 dev extra 未声明；本轮补齐 dev 依赖以保留 Arrow dtype 覆盖，不修改 monitor 逻辑或生产配置。2026-06-07: 从 VALIDATING 改为 DONE，原因：dtype robustness 修复和 dev 依赖补齐已有目标测试、CI-like 验证和真实 daily-run PASS 证据；后续 SEC PIT shadow monitor 未再因 Pandas/Arrow string dtype row lookup 裸 traceback 阻断。'

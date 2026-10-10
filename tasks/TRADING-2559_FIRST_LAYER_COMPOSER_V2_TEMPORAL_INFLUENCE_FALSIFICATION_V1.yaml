@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2559_FIRST_LAYER_COMPOSER_V2_TEMPORAL_INFLUENCE_FALSIFICATION_V1
+area: Strategy research / first-layer composer v2 temporal displacement and episode influence falsification
+priority: P0
+status: DONE
+next_owner: Project Owner：保持候选低优先级；如继续仅登记新的 prospective OOS，不重跑或参数救援
+next_step: 当前证据显示 SINGLE_EPISODE_DEPENDENT 且 ANTICIPATORY_ALIGNMENT_DOMINATES；等待自然成熟 prospective OOS 或另行批准独立预注册证据
+acceptance: failure-fix 1/1/1/1 与 independent replay PASS；canonical DQ PASS；结果 admission、Atlas、system flow、正式验证、main/origin 发布完成；禁止动作均为 0
+notes: 'Supporting requirement: docs/requirements/TRADING-2559_First_Layer_Composer_V2_Temporal_Influence_Falsification_V1.md。authorization_state=EXACT_PREAUTHORIZED；technical_validation_state=PASS；aggregate SHA-256=db8f2b9ffd33b08132c8c3798248351883cffdc39bedacb12378d45b77ecaea9；episode 12 删除后 excess=-2.56913050870304pp；shift +2=-1.6675372437030163pp；production_effect=none；broker_action=none。'

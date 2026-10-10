@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2498_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_V1
+area: External validation / QuantConnect Free Cloud daily QQQ Options capability gate
+priority: P0
+status: BASELINE_DONE
+next_owner: project owner：仅在复核 ordinary-pushed exact proposal 后另行签发 single-use token；capability coordinator：只在 exact token 下执行一次 bounded zero-order run；independent reviewer：复核 terminal evidence 与 gate outcome
+next_step: 详见 `docs/requirements/TRADING-2498_QC_QQQ_Options_Daily_Capability_Gate_V1.md`。从 exact main `d26041175eee499e5ee69c27202bef3ba364fb67` 继承 2493 NO-GO、2497 license/export boundary 与 2481/2482 evidence/DQ authority；只安排 `2021-02-22..2021-02-26`、QQQ Equity/Options DAILY、零订单的一次 Free Cloud capability run。当前 blocker=`OWNER_TOKEN_NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；未授权登录、项目修改或 cloud backtest。
+acceptance: proposal 必须冻结一次 project mutation、一次 cloud backtest、零订单/零成交、exact requested/evaluated range、five-session chain/bid-ask/OI/Greeks-IV aggregate、engine/resource/data-point/result identity 与 export-safe evidence；raw rows、API/CLI/HTTP/Object Store、下载、purchase、range expansion、策略收益、paper/live/broker/production 全部禁止。只有完整证据得到 `GO_FOR_DAILY_ENGINEERING_ONLY` 才允许另立后继日级合同任务；FAIL/UNKNOWN 保持工程 blocked。
+notes: 2026-08-08：implementation authority=`676d6b14...184ce`；proposal file/content=`6b226751...e5dc`/`98566866...7f95`；policy file/canonical=`0036996a...7812`/`1ec345fd...63f9`；authority set=`b0f4145d...4908`。focused=`52 PASS`；compatibility 首轮仅 frozen inventory/task-shadow authority 漂移=`199 PASS/2 FAIL`，不计 formal evidence。tracked proposal 仍 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`/`UNKNOWN_EVIDENCE_INCOMPLETE`；不复用 2480/2492 token，`production_effect=none`、`broker_action=none`。

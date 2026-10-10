@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-059
+area: 运维/Unified Daily Weekly Monthly Scheduled Task Orchestration Review
+priority: P1
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/scheduled_task_orchestration_review_2026-05-29.md`；已完成统一调度配置、daily-plan/daily-run 顺序约束、Reader Brief 上游链接入、非 daily cadence 登记、runbook、system flow/README 更新和专项测试
+acceptance: 新增 `config/scheduled_tasks.yaml`，登记 `daily_trading_day`、`weekly`、`biweekly`、`monthly` 和 `ad_hoc_research`；`aits ops daily-plan` 必须列出 required daily commands 并按配置顺序校验；`aits ops daily-run` 在 `score-daily` 后执行 dashboard、SEC PIT shadow observe/monitor、score change attribution、market panel、report index、documentation contract、research governance summary、Reader Brief 和 Reader Brief quality；report index/documentation contract/research governance summary/SEC PIT shadow monitor 均在 Reader Brief 前；weekly/monthly/ad hoc tasks 登记但不 daily-run；closed-market mode 跳过 scoring/Reader Brief artifacts 并保留 health/PIT/SEC/valuation；reader/governance/shadow/report tasks 固定 `production_effect=none`、不写 production weights、不写 active shadow weights、不触发 broker/trading；测试覆盖命令顺序、闭市行为、非 daily 隔离和安全边界
+notes: '2026-05-29: 新增并进入 IN_PROGRESS，原因：Reader Brief、SEC PIT shadow monitor、research governance、backtest、parameter/weight governance、documentation contract 和 report registry 产物已经形成，但缺少统一调度计划，存在上游链遗漏风险。2026-05-29: 从 IN_PROGRESS 改为 DONE，原因：已新增配置/loader/runbook/requirements，更新 daily-plan/daily-run/direct dispatcher/latest CLI 支持、system flow/README 和测试；验证通过 OPS-059 目标 pytest、ruff/black 和 diff check。'

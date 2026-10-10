@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
+area: Operations / canonical Reader Brief and report quality fail-closed finalization
+priority: P0
+status: DONE
+next_owner: operations owner：后续日常观察；power-loss durability继续由DATA-GOV D0C独立跟踪
+next_step: 详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Windows bounded transient replace retry、strict finalization、portable parent import及formal/Full已完成；`as_of=2026-07-27` canonical chain实际到达finalization。
+acceptance: Report quality `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization fail closed；最终 Reader Brief bytes由同次finalization evidence覆盖；manifest closure后才发布成功；旧FAILED bytes保持；不声称power-loss atomic；`production_effect=none`。
+notes: 2026-07-29：recovery child state SHA=`5fc5369f...e99f9`、terminal=`PASS`；manifest SHA=`306c61e9...37649`；finalization SHA=`5ee26724...6efde`=`PASS_WITH_WARNINGS`、Reader Brief quality SHA=`6e25902a...0123`=`OK`、report quality SHA=`af76905b...3e38`=`PASS_WITH_WARNINGS`，均0 blocking。任务归档DONE；无weights/broker/trading。

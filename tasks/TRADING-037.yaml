@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-037
+area: 交易执行/Retry Candidate Queue / Manual Approval Gate
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/retry_candidate_queue_2026-05-26.md`；只读 retry candidate queue 与 manual approval gate 已通过目标复验，保持 queue/report-only
+acceptance: 新增 `scripts/run_retry_candidate_queue.py` 和 `src/ai_trading_system/trading_engine/retry_candidate_queue.py`；输出 `outputs/retry_candidate_queue/retry_candidate_queue_YYYY-MM-DD.json/md/log`；区分 `EMPTY` / `PENDING_APPROVAL` / `BLOCKED` / `SAFETY_BLOCKED` / `SOURCE_UNAVAILABLE`；retryable failure 转为 `PENDING_APPROVAL` candidate，non-retryable failure 转为 blocked item；输出 approval gate、安全不变量和 recommended actions；dashboard 只读读取 TRADING-037 JSON，不运行 generator、不执行 retry、不发送 notification、不修改审批状态；专项测试覆盖 queue 规则、missing/malformed source、deterministic candidate id、Markdown、approval gate、CLI、dashboard 只读和 `--fail-on-safety-blocked`；验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和本次改动文件 black check；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入 TRADING-037 格式问题
+notes: '2026-05-26: 新增并进入 IN_PROGRESS，原因：TRADING-036 已能分类通知投递失败和 retry readiness，但还缺少稳定、可审查、可追踪的 retry candidate queue 与 manual approval gate；本任务严格 read-only queue/report-only，不触达真实通知通道或状态变更。2026-05-26: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 queue builder、CLI、JSON/Markdown/log、dashboard 只读卡片、runbook、requirements index、system flow、artifact catalog 和专项测试；验证通过 `tests/trading_engine/test_retry_candidate_queue.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断。2026-06-07: 从 VALIDATING 改为 DONE，原因：只读 retry candidate queue / manual approval gate 实现和安全边界已满足验收；复验通过通知链路目标 pytest 97 passed 和触达文件 ruff，不存在 owner、外部时间窗口或生产副作用 blocker。'

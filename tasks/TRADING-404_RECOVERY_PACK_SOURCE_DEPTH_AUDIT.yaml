@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-404_RECOVERY_PACK_SOURCE_DEPTH_AUDIT
+area: Research governance / recovery source depth audit
+priority: P1
+status: DONE
+next_owner: 项目 owner 复核 unhealthy sources；后续按 owner/code/data action map 处理
+next_step: 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；验证 TRADING-400 `sources=16/16` 是 source actually usable，不只是 present
+acceptance: 新增 `aits reports recovery-pack-source-depth-audit` / `validate-recovery-pack-source-depth-audit`、JSON/Markdown report、Reader Brief section 和 focused tests；记录 16 个 source 的 artifact id/date/status/freshness/blocking/warning/partial-complete、health summary、unhealthy sources 和 next action
+notes: '2026-06-17: DONE；真实 artifact `outputs/reports/recovery_pack_source_depth_audit_2026-06-17.json/md` 输出 source_availability=16/16、unhealthy_sources=13、blocked_sources=9；validation `recovery_pack_source_depth_audit_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。该 audit 只披露 source health，不补造 stale/partial/blocked artifact。'

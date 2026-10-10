@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: LEARNING-001
+area: 反馈闭环/错误归因
+priority: P1
+status: DONE
+next_owner: 系统实现 + 项目 owner
+next_step: 已建立结果归因、错误分类与学习队列；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#learning-001`
+acceptance: 校准报告和重大偏差样本能生成 review queue，记录 `data_issue`、`rule_issue`、`thesis_issue`、`execution_issue`、`universe_or_proxy_issue`、`exogenous_unforecastable`、`sample_limited` 等归因分类、证据、owner、下一步和是否需要规则候选；成功样本也能归因；样本不足不得强行生成规则修改建议；实现时同步更新 `docs/system_flow.md` 并补充归因分类测试
+notes: '2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：`FEEDBACK-002` 和 `CAUSE-001` 已具备基础产物，开始实现 learning queue、归因分类、CLI 和样本不足防护测试。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：新增 `decision_learning_queue`、`aits feedback build-learning-queue`、`aits feedback lookup-learning`、中文报告、系统流图和测试；样本不足项不生成规则候选，规则候选仍需 `EXPERIMENT-001/GOV-001`。'

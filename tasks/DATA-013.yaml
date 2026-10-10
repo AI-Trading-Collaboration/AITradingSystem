@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-013
+area: 数据源/SEC 日报指标缓存
+priority: P0
+status: DONE
+next_owner: 系统实现
+next_step: 已通过正式 CLI 生成并校验 `data/processed/sec_fundamentals_2026-05-05.csv`，`score-daily` 已越过 SEC 指标门禁
+acceptance: 当日 `sec_fundamentals_YYYY-MM-DD.csv` 必须来自正式 `aits fundamentals extract-sec-metrics` 路径，先通过 SEC companyfacts 缓存校验，再通过 `aits fundamentals validate-sec-metrics`；覆盖缺口必须如实进入校验报告，不允许补空行或伪造指标；`score-daily` 应能越过 SEC 指标校验进入后续门禁，若后续门禁失败则单独报告
+notes: '2026-05-05: 新增并进入实现，原因：当前 `score-daily` 已通过市场数据质量门禁，但因 `data/processed/sec_fundamentals_2026-05-05.csv` 不存在、覆盖 0/72 而停止。2026-05-05: 从 IN_PROGRESS 改为 DONE，原因：`validate-sec-companyfacts` PASS，`extract-sec-metrics` 生成 66 行并 `PASS_WITH_WARNINGS`，`validate-sec-metrics` 覆盖率 92% 且 0 错误，`score-daily --as-of 2026-05-05` 已完成。'

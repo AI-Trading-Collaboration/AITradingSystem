@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ENG-VAL-008_CONTROLLED_STRATEGY_VALUE_SURFACE_FIXTURE_REUSE
+area: Developer validation / contract-validation runtime optimization
+priority: P2
+status: DONE
+next_owner: 系统后续转入 TRADING-2350；若继续优化，需针对 tail-risk module setup 或真实 CLI smoke 做单独设计评估
+next_step: 详见 `docs/requirements/ENG-VAL-008_Controlled_Strategy_Value_Surface_Fixture_Reuse.md`；承接 ENG-VAL-007 后 focused baseline 中 controlled strategy value-surface repeated input chain 慢项。本任务只优化测试前置 artifact 构造组织，不改变 production builders、CLI smoke 语义、report behavior、tier 覆盖、validation runner 默认策略或生产边界。
+acceptance: '`tests/test_controlled_strategy_value_surface.py` 复用 module-scoped 只读 payload / artifact fixtures，保留 control-failure 变体独立 builder 执行以及原有 schema、safety 和 payload field assertions。验证通过 Ruff、compileall、focused pytest `21 passed in 25.69s`、contract-validation `197 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T194916Z/test_runtime_summary.json`）和后续文档 / task-register / diff gates。Focused pytest 从 `21 passed in 81.14s` 降到 `21 passed in 25.69s`；完整 tier elapsed 从 `91.47s` 降到 `35.70s`。'
+notes: '2026-07-05: 根据 focused runtime evidence 新增并进入 IN_PROGRESS。2026-07-05: 实现完成并归档 DONE；当前剩余 top slow 项主要是 tail-risk module setup 和若干真实 CLI smoke，继续压缩低风险收益已明显变弱。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
+area: 运行架构/每日结果恢复
+priority: P0
+status: DONE
+next_owner: None / closed by owner disposition
+next_step: 2026-09-24 按 owner 决策包第1条收口：本机全盘未找到 2026-07-16 exact archive；canonical 2026-07-16 永久保持 FAILED 并登记为缺口，不做 canonical 恢复；受限重建已获批准但无下游用途，不执行。详见 GOV-007 需求文档
+acceptance: 保留旧 state/ledger，不删除状态、不直跑下游；禁止把 cutoff 后 live refetch 或 2026-07-15 prior-day snapshot 静默 retarget 为 exact 2026-07-16 input。只有 exact archive 完整后才可执行 owner-approved unified `daily-run` recovery spec 并要求 36/36、DQ、PIT、SEC、score、dashboard、Reader Brief 同 run id PASS；受限重建只能隔离、无 canonical PASS、无 downstream/promotion/backtest/weight/production 使用，`production_effect=none`
+notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第1条：PERMANENT_GAP_OWNER_APPROVED；agent_harness=claude_code；原备注：2026-07-22：owner approval 已登记；inventory-only/cache-only preflight 绑定原 attempt 1 cutoff，状态 `INCOMPLETE_REPLAY`，market/macro/PIT manifest 等可冻结但 4 个 required exact-as-of artifacts 缺失。任务从 `IN_PROGRESS` 转 `BLOCKED_OWNER_INPUT`；未实现 historical visibility bypass，未运行 score/live recovery，等待 owner 输入。

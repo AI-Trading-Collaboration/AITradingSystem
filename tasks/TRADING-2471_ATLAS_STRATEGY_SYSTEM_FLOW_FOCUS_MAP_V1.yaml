@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2471_ATLAS_STRATEGY_SYSTEM_FLOW_FOCUS_MAP_V1
+area: Publishing & Experience / Atlas whole-system flow and current-focus map
+priority: P1
+status: DROPPED
+next_owner: knowledge/reporting/UX owner：维护 V1 展示合同；后续功能作为独立任务推进，不把节点状态解释为投资评级
+next_step: 详见 `docs/requirements/TRADING-2471_Atlas_Strategy_System_Flow_Focus_Map_V1.md`。八阶段 snake flow、“你在这里”第7阶段、五个 exact-ID focus rows 与节点进展状态胶囊已实现；角色样式和进展颜色保持独立，进展状态不代表策略 PASS/投资评级。Browser automation 因 URL policy 保持 `NOT_EXECUTED_URL_POLICY`；Owner 已在 canonical 本地页面手工验收，单独记录 `OWNER_MANUAL_VISUAL_PASS`。
+acceptance: 八阶段顺序稳定；`CITATION_FIRST_QUERY` 唯一当前位置；五个 canonical target IDs 可审计；八节点状态码/中文标签/五色图例精确匹配；缺失/重复 question 或 target typed fail closed；1280px/窄屏无页面级横向溢出；no script/form/external/write；double-build、focused、generated authority、formal 与 Owner manual visual PASS；`production_effect=none`、`broker_action=none`。
+notes: 2026-07-31：Owner 已验收页面视觉；新 HTML=`34751 bytes / SHA-256 c0f3eb5507…`，responses/validation SHA 不变；static DOM audit=`8 stages / 1 current / 5 focus / progress 2-1-2-2-1 / no external`。最终候选须通过边界 `trading-2471-owner-visual-closeout-v1` 的正式验证后才允许集成与推送。；GOV-008 2026-10-10：Atlas 已退役（owner_decision:GOV-008:2026-10-10:atlas_retired），页面与代码在 P4 删除，本任务不再推进

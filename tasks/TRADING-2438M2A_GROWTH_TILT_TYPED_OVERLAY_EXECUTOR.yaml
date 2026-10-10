@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2438M2A_GROWTH_TILT_TYPED_OVERLAY_EXECUTOR
+area: Strategy research / callable compute plane
+priority: P0
+status: DONE
+next_owner: 系统完成验证后关闭；M2B 仅在 M1 owner gate 通过后绑定真实 replay
+next_step: 已实现 research-only `GrowthTiltCandidateOverlayExecutor`，operation types=`EARLY_REENTRY_PROVISIONAL_EXPOSURE`、`DEFENSIVE_SOFT_CONFIRMATION_GRACE`、second-approved `POST_CONFIRMATION_RAMP_ACCELERATION`；只按 typed operation 分派，不解析 candidate name。
+acceptance: 相同 PIT inputs deterministic；每个 exposure delta 有 reason code；missing/placeholder/unmapped-veto/baseline mismatch fail-closed；hard veto/expiry/rollback 回 baseline；A 不改 confirmed ramp/target，B grace 仅一步且不绕 veto，C 未二次批准不得运行；无 production side effect。
+notes: '2026-07-10: implementation 与 34 项 executor tests 完成；combined M1/M2A focused parallel pytest 69 passed。真实运行仍受 M1 six owner gaps 阻断，未调用 replay。 2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'

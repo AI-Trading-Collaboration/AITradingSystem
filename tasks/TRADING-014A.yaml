@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-014A
+area: 交易执行/Successful Fill Local Validation
+priority: P0
+status: DEFERRED
+next_owner: 外部条件 / Project Owner
+next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider catalog）出现时重开
+acceptance: 固化真实 IBKR Paper controlled fill 成功样本的 sanitized review / fixture，记录 `production_effect=none`、paper-only、manual-only、`market_session_status=REGULAR`、`fill_seen=true`、fill quantity / price、commission / execution event 是否可见、同 `OrderIntent` 的本地 `PaperBroker` 诊断对比；不得提交完整 `DUP` account、真实 broker order id、perm id、execution id、password、token 或 API key；本任务不修改 `PaperBroker` fill 行为
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-05-18: 新增并进入 BLOCKED_EXTERNAL，原因：owner 明确 TRADING-014 后最有价值的是获取真实 regular session fill 样本；无 `fill_seen=true` 样本前不得进入真正 fill model 改造。'

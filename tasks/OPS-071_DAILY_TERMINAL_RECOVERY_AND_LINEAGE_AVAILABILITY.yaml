@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-071_DAILY_TERMINAL_RECOVERY_AND_LINEAGE_AVAILABILITY
+area: Operations / governed same-as-of recovery and lineage availability
+priority: P0
+status: DONE
+next_owner: operations owner：观察下一合法scheduler run；若扩大recovery boundary或改变lineage availability contract须另立任务
+next_step: 详见 `docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md`。Owner决定`owner_decision:OPS-071:2026-07-28:implement_governed_same_as_of_recovery_v1`。Recovery request/receipt、immutable parent archive、selective report-tail replay与lineage topology/availability分层已实现；v2 exact release `556f93a421...`已promotion并形成active deployment。
+acceptance: Parent state/ledger、release/deployment receipt与replay boundary精确绑定；每parent最多一个child；23个capture/DQ/PIT/score upstream steps复用、只重放`artifact_lineage`起11个幂等tail steps；missing history保持`INSUFFICIENT_DATA/PASS_WITH_WARNINGS`且0 blocking；Reader Brief和两类quality validation完成；runtime weight迁移byte-identical；无provider重复、production/active-shadow weight写入或broker/trading。
+notes: 2026-07-29：v2六档=`341/773/276/995/24/7617 passed`，Full另`3 skipped / 639 warnings`；active deployment=`ops_deployment_137332aacf307325fe93c2b72ddebfadd1de17c9`。Recovery child=`daily_ops_run:2026-07-27:20260728T072717Z`、attempt=2、terminal=`PASS`、blocker=[]；lineage=`PASS_WITH_WARNINGS`（0 blocking/21 warnings）、Reader Brief=`OK`（13/13）、report quality=`PASS_WITH_WARNINGS`（0 blocking），`production_effect=none`。OPS-071完成不自动关闭D0B2B或解锁QLD/production governance。

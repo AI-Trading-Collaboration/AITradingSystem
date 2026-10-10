@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2306_BREADTH_PROXY_DIAGNOSTICS_VALIDATION
+area: Research trends / breadth participation proxy diagnostics
+priority: P1
+status: PROPOSED
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 依赖 TRADING-2305 diagnostics-only POC 或 owner data-source decision。只能输出 `DATA_SOURCE_INVESTMENT_RECOMMENDED`、`CONTINUE_PROXY_DIAGNOSTICS` 或 `DROP_BREADTH_DIRECTION`，不得输出 promotion / paper-shadow / production / broker ready。
+acceptance: 形成 diagnostics-only validation report、data-source investment recommendation 和 stop/continue decision；保持 promotion/paper-shadow/production/broker false/none。
+notes: '2026-07-01: 根据 owner post-2302 roadmap 登记；用于判断是否值得接入 historical constituent 数据。'

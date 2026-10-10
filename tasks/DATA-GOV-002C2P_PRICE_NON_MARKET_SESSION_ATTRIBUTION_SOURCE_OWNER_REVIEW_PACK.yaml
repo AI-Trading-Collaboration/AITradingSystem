@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+area: Data Foundation / Phase C price non-market-session six-dimension source-owner review pack
+priority: P0
+status: BASELINE_DONE
+next_owner: DATA-GOV-002C3P engineering coordinator：按owner-approved conditions执行最小serial typed attribution contract wave；dimensional classifier adoption仍需另行评审
+next_step: 详见 `docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md`。Exact scope仅为C1 site `dq_issue_site_312625a26da21428b763 / prices_non_market_session_date`；现有instrument-level pilot authority不自动授权source/date/window/field/row runtime attribution。
+acceptance: Deterministic builder/validator/Markdown绑定C1 inventory、canonical source、DQ policy、calendar runtime、special-closure loader/registry与proposal bytes；明确distinct date count、全部trigger rows、ticker/rate/source/date/field/row六维完整性与fail-closed条件；decision保持pending，runtime/schema/isolation/consumer migration全部false；focused/formal/Full通过；`production_effect=none`、`broker_action=none`。
+notes: 2026-07-27：工程基线闭合。Pack ID=`dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714`；唯一自然边界Full=`7578 passed / 3 skipped`。随后project owner以price source-owner身份决定`APPROVE_FOR_CONTRACT_WAVE`，附加primary role/calendar、exact artifact checksum、snapshot-local ordinal、versioned digest、policy drift re-review、incomplete-global及C3前不改变policy/consumer/production七项conditions；decision authority由C3P固化。

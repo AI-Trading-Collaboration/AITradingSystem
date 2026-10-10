@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-006C_COMPATIBILITY_AUTHORITY_FRAGMENTATION
+area: Developer experience / immutable compatibility prefix、content-addressed fragments 与 hash-chain index
+priority: P1
+status: BASELINE_DONE
+next_owner: DEVX-006C architecture coordinator：完成 final-tree formal/Full、ordinary push、cleanup 与 release；随后 D coordinator 从 released exact main 登记
+next_step: 详见 `docs/requirements/DEVX-006C_Compatibility_Authority_Fragmentation.md`。Exact base=`cb437a4d4be178180f60cb3ee2d2994c1be45f94`；冻结现有 monolith bytes，后续 section 只写 canonical fragment + 小型 index；所有 direct consumer 迁同一 merged loader；D/S5 等待本任务 release。
+acceptance: Legacy bytes/SHA 不变；section mapping/order/hash parity；fragment/index repeat-build deterministic；missing/duplicate/reorder/tamper/path/symlink/chain failure fail closed；legacy append writer=0、growth-assuming direct consumer=0、rollback无丢失；focused/Architecture/Contract/Integration/Reproducibility/Full与ordinary push/cleanup PASS；`production_effect=none`。
+notes: 2026-08-09：C1-C4 `BASELINE_DONE`；exact legacy seal=`3151107 bytes / 253b976b...3842 / blob 12496b55...`；dynamic consumers=`8`，growth reads `135→0`、runtime writer=`0`；focused=`33 passed`、完整 compatibility=`209 passed`，latest-authority migration 与 task-shadow carry-forward PASS；进入 final-tree formal/Full closeout。

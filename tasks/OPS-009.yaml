@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-009
+area: 运行架构/replay 风险事件 PIT 冻结
+priority: P0
+status: DONE
+next_owner: 系统实现
+next_step: 已让 `replay-day` 生成 `risk_event_occurrences` 的 as-of 可见隔离视图，并把 `score-daily --risk-event-occurrences-path` 指向 replay bundle
+acceptance: input freeze manifest 记录风险事件源路径、隔离路径、总数、纳入数、排除数和 checksum；生产 occurrence YAML 不被改写；2026-05-08 cache-only replay 不再因 2026-05-10 LLM formal occurrence/attestation 触发未来日期错误；相关单测、系统流图和需求文档已同步更新
+notes: '2026-05-10: 新增并完成，原因：真实最近交易日回放验证发现 valuation 已隔离，但 risk event occurrence store 仍读取生产目录，导致历史回放被未来风险事件数据阻断。验证：`score_daily` 在真实 2026-05-08 replay 中 PASS，风险事件报告改为隔离路径且无未来日期错误。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-GOV-002C3P_PRICE_NON_MARKET_SESSION_TYPED_ATTRIBUTION_CONTRACT_WAVE
+area: Data Foundation / Phase C price non-market-session typed attribution serial contract wave
+priority: P0
+status: BASELINE_DONE
+next_owner: data platform engineering coordinator：保持typed contract与owner decision authority；任何dimensional classifier adoption、capability policy或consumer迁移必须另开任务并重新评审calendar/special-closure drift
+next_step: 详见 `docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md`。Owner decision=`owner_decision:DATA-GOV-002C3P:2026-07-27:approve_price_non_market_session_contract_wave_v1`。只批准reviewed US equity calendar约束下的`primary_market_prices`；exact artifact/checksum、snapshot-local ordinal和versioned digest为完整归因必要条件，secondary/incomplete保持`GLOBAL_OR_UNKNOWN_SCOPE`。
+acceptance: Decision exact bytes与C2P pack绑定；typed source/window/calendar/field/date/row contract；complete primary填充，任一缺失清空legacy affected scope并fail closed；capability policy/consumer bytes不变；final Architecture/Contract/Report/Reproducibility/Integration=`764/275/57/23/995 passed`，独占Full=`7606 passed / 3 skipped / 642 warnings`；`production_effect=none`、`broker_action=none`。
+notes: 2026-07-28：三次main drift均以reviewed `RECONCILIATION_REQUIRED` plan在最新exact main重建，无blocker/contract conflict；最终candidate=`af37b804f48c2aff3f7a262107343e56f8146ce5`通过focused 44、Ruff、strict mypy及全部formal/Full门禁，基线闭合。后续consumer/policy采用仍未授权，故保留`BASELINE_DONE`并由data platform engineering coordinator负责维持与发起独立评审。

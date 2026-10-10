@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-385_SIGNAL_INPUT_ROOT_CAUSE_AND_RESTORE
+area: ETF portfolio/dynamic v3 rescue signal input root cause and restore
+priority: P0
+status: DONE
+next_owner: 系统实现 + 项目 owner 后续复核 signal warning
+next_step: 详细拆解见 `docs/requirements/TRADING-385_Signal_Input_Root_Cause_And_Restore.md`；通过 canonical pipeline 恢复 ETF feature matrix、ETF signal series 和 latest signal snapshot visibility，并新增只读 signal input recovery root-cause report；本任务不运行上游于 recovery report 内、不补造 signal/feature/snapshot artifact、不放宽 completeness policy、不修改 paper-shadow/production state、不写 official target weights、不触发 broker/order
+acceptance: 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_signal_input_recovery.py`、`aits etf dynamic-v3-rescue signal-input-recovery run/report`、`validate-signal-input-recovery`、Reader Brief section、report registry、artifact catalog、README、operations runbook、system flow、requirements 和 focused tests；missing feature matrix 或 signal series 输出 `SIGNAL_INPUTS_STILL_BLOCKED` 并 hard stop，restored inputs 输出 restored artifact ids 和 remaining warning list
+notes: '2026-06-17: DONE；canonical recovery order 运行 `aits validate-data --as-of 2026-06-17` 为 `PASS_WITH_WARNINGS` / errors=0、`aits etf data validate` 为 PASS、`aits etf features build --end latest` 生成 10620 rows、`aits signals build-snapshot --latest` 和 `aits reports signal-snapshot --latest` 生成 2026-06-15 latest snapshot、`aits etf signals generate --date latest` 生成 2026-06-15 signals；restored completeness monitor `signal-input-completeness_a0aacd1aac693cc0` 输出 `signal_input_status=WARNING`、blocking=0、warning=1；previous monitor `signal-input-completeness_2fe124e7367a3282` stale `etf_feature_matrix`、`etf_signal_series` 和 `latest_signal_snapshot`。Recovery report 输出 `SIGNAL_INPUTS_RESTORED_WITH_WARNINGS`，feature/signal restored artifact ids 可见；remaining warning 为 latest signal snapshot status `LIMITED`，后续 TRADING-386/387 必须继续复核，不得解释为 promotion 或 extended-shadow approval。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2280_FIRST_LAYER_CANDIDATE_LEVEL_ACTUAL_PATH_VALIDATION
+area: Research trends / candidate-level actual-path validation
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 生成 candidate actual-path validation report/matrix、risk attribution matrix、state reclassification report 和 updated research/owner-review/offline-validation queues；每个候选必须输出 previous/updated state、utility rank、primary risk flag、continue_research、expand_neighborhood、promotion_ready=false，并披露 unavailable metric status；promotion/paper-shadow/production/broker 固定 false/none。
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-29: 新增并进入 IN_PROGRESS；已确认 offline-ready rows 只有 experiment spec，没有可执行 candidate signal artifact，本批必须标记 validation blocker / INCONCLUSIVE。2026-06-29: 实现完成并转入 VALIDATING；真实 run covered=6、candidate-level actual-path available=2、missing signal artifact=4，`wf_504d_baseline` 保持 OWNER_REVIEW_REQUIRED，`wf_378d_initial` 保持 RESEARCH_ACCEPTED，4 个 offline-ready rows 转为 INCONCLUSIVE。2026-06-29: 验证通过 Ruff、compileall、focused parallel pytest 54 passed、docs freshness、diff check 和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T155922Z/test_runtime_summary.json`。'

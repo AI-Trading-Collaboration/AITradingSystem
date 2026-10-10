@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OBS-001
+area: 观察池/行业趋势分析语义
+priority: P1
+status: DONE
+next_owner: 系统实现
+next_step: 已实现 watch-only 核心 ticker 不要求主动交易 thesis，同时保留关注股票趋势和产业链节点分析；详细拆解见 `docs/requirements/watch_only_core_observation_2026-05-10.md`
+acceptance: 默认核心观察池可被标记为观察阶段；观察阶段 ticker 不因缺少 `data/external/trade_theses/` 触发 thesis gate；active-trade 高风险 ticker 仍必须要求 thesis；日报继续输出核心 ticker 趋势和产业链节点热度/健康度，且明确 `production_effect=none`
+notes: '2026-05-10: 新增，原因：owner 明确当前 6 个核心 ticker 均处于观察阶段，希望系统结合行业趋势给出分析，而不是把缺少主动交易 thesis 解释为仓位约束。2026-05-10: 从 IN_PROGRESS 改为 DONE，原因：新增 `decision_stage`、更新核心观察池为 `watch_only`、调整 thesis 缺失校验、同步系统流图和测试；验证通过 `ruff check src tests`、`pytest -q`、`watchlist validate`、`thesis review` 和 `watchlist validate-lifecycle`。'

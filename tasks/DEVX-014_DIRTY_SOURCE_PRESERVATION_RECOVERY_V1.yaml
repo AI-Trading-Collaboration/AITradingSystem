@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-014_DIRTY_SOURCE_PRESERVATION_RECOVERY_V1
+area: Architecture / workflow governance
+priority: P0
+status: DEFERRED
+next_owner: TRADING-2564 integration-coordinator：单一已准入candidate恢复S2b并最终验证；DEVX014保留证据与退出责任
+next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：DEVX014已发布64e1d3da3：Full10685 PASS/0 FAIL/5 SKIP；旧S2b迁移1/1、保全1、独立校验1均PASS。完整66路径snapshot与30overlap正式plan已review/validate，clean C INTEGRATION PASS；接续S2b，不重复既有动作。
+acceptance: 按已审plan保留全部历史、OPS079/DEVX014和S2b来源；同root/branch/HEAD C串行task-source交接后由TRADING2564形成一个source/final候选，绑定其真实failed Full，正式验证发布；旧两root未审unique内容不清理；真实研究/DQ/数据/交易全0。
+notes: docs/requirements/DEVX-014_Dirty_Source_Preservation_Recovery_V1.md；S3保全与clean plan admission完成，S4在TRADING2564继续，非S2b技术PASS。复用D:/Work/AITradingSystem_devx014_source_preservation为唯一S2b coordinator，branch codex/trading-2564-s2b-preserved-integration；exit为S2b发布、unique证据规范保留/hash确认和无运行依赖后审计清理；原source D:/Work/AITradingSystem_trading2559_integration与18项dirty原样保留。plan integration-revalidation-f8a6fd3c9c5d05f5a27e；source-only交接事务，不派发Full或重复迁移。

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2452_UNIFIED_2021_PRIMARY_WINDOW_AND_CLEAN_RUN
+area: Strategy research / unified 2021 primary window、versioned preregistration and historical clean evaluator
+priority: P0
+status: DONE
+next_owner: strategy lane 由 TRADING-2453 承接 constraint-hit 诊断；prospective holdout 仍需未来独立 owner 授权
+next_step: 详见 `docs/requirements/TRADING-2452_Unified_2021_Primary_Window_and_Clean_Run.md`。Active default/primary conclusion 已统一从 `2021-02-22` 开始；旧 TRADING-2451 package 与paper/backfill v1保持历史只读。
+acceptance: Versioned package 300 candidates、train-only top20、六个完整半年 folds与recent diagnostic；content/DQ/independent validator、focused/architecture/contract/full与manifests/compatibility PASS；prospective/search/paper-shadow/production/broker关闭。
+notes: 2026-07-21：有效 run=`trading2452-historical-seen_20260721T053621Z_144f31edee91`，24 workers/25m45s；1,800 COMPLETE train rows 全部被现有 constraint-hit policy reject，selected/test/recent=0，状态=`INCOMPLETE_NO_ELIGIBLE_CANDIDATE`。最终 Full=`6543 passed / 2 skipped / 642 warnings / 1010.39s`，profile/telemetry/performance/provenance PASS；`production_effect=none`。

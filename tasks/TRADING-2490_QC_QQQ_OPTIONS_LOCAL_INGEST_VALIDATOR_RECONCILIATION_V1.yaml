@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2490_QC_QQQ_OPTIONS_LOCAL_INGEST_VALIDATOR_RECONCILIATION_V1
+area: Independent validation / external option event and accounting reconciliation
+priority: P1
+status: BASELINE_DONE
+next_owner: validation engineering：真实 bundle/容差映射仍等待 TRADING-2492 Owner-reviewed evidence 与 policy；tracked default 继续 policy-blocked
+next_step: 详见 `docs/requirements/TRADING-2490_QC_QQQ_Options_Local_Ingest_Validator_Reconciliation_V1.md`。已实现 2489 strict reload、2483/2486/2487/2488 canonical replay、Results/Orders/Trades normalized facts、exact/numeric reconciliation 与 typed taxonomy；不重建受限 raw chain/quotes。
+acceptance: LOGIC/PLATFORM/PROVIDER/TIMING/REALITY_MODEL/LICENSE/MANUAL_COLLECTION 七类差异闭合；external PASS 不覆盖 internal FAIL；contract/golden/tamper/tolerance tests PASS；更新 system flow；工程退出=`LOCAL_QC_RECONCILIATION_V1_READY_POLICY_BLOCKED`，完整退出=`LOCAL_QC_RECONCILIATION_V1_READY`。
+notes: 2026-08-03：baseline 实现完成；focused 22、adjacent 281、compat/deprecation 189 PASS，DevEx/task shadow/current authority PASS；正式 final-tree five-tier 待运行。容差/rounding/export field mapping 仍须 reviewed policy；外部平台动作=none。

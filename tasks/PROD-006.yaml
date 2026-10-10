@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: PROD-006
+area: 趋势判断/forward shadow 与 outcome 成熟度
+priority: P1
+status: DEFERRED
+next_owner: 外部条件 / Project Owner
+next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider catalog）出现时重开
+acceptance: shadow maturity 报告按 candidate、horizon 和 `ai_after_chatgpt` regime 输出样本数、pending/missing、收益、胜率、回撤和 benchmark excess；样本不足时 promotion gate 维持观察或缺失状态；达到门槛前，回测或 shadow 结果不得被写成 production 规则晋级结论
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-05-06: 从 `PROD-001` 拆出，原因：趋势判断长期可信度需要真实前向样本，但该成熟度受交易日和 label horizon 限制，适合作为独立时间窗口任务。2026-05-10: owner 要求继续积累 outcome 样本；本轮刷新成熟度/校准报告，样本不足仍保持外部时间窗口阻塞。'

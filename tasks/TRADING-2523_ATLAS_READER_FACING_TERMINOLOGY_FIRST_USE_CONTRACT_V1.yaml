@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2523_ATLAS_READER_FACING_TERMINOLOGY_FIRST_USE_CONTRACT_V1
+area: Atlas strategy research page / reader-facing terminology first-use contract
+priority: P1
+status: DONE
+next_owner: TRADING-2523A coordinator；Project Owner 后续通过 TRADING-2527 对 exact HTML 执行独立 visual 与 reader comprehension review
+next_step: 2523 的 immutable terminal 记录由 2523A 承接 base-drift 集成、页面 identity 重建、browser replay、exclusive Full 与 closeout；2524-S0 必须等待 2523A 发布。
+acceptance: reader-facing inventory、50 项术语 exact-once 分类、首现解释、audit binding、2522/current identity 与 no-strategy-PASS 安全边界闭合；最终门由 2523A 在 latest-main candidate 上完成。
+notes: 2026-08-15：[supporting requirement](docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md)。冻结 lane 的 late Full 因 main drift carrier 检查失败；canonical terminal task 不可逆，故由 corrective successor TRADING-2523A 继续。Owner visual/reader comprehension 保持 PENDING_REVIEW；production_effect=none，broker_action=none。

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
+area: Architecture / Operations and periodic consumer native migration
+priority: P0
+status: BASELINE_DONE
+next_owner: operations platform owner + project owner；先等待D0B2B strict canonical acceptance，G4C与下一consumer仍需独立授权
+next_step: 详见 `docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md` 与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。G4A已闭合；G4B只批准`daily_score_daily@1.0.0`的受控路径。真实run已证明token/verifier fail closed，但upstream DQ未产生strict PASS receipt。
+acceptance: 五个代表consumer保持parity；只有`daily_score_daily`可在reviewed D0B3 attestation下受控native dispatch；D0B2B PASS前runner保持零、其余四项与automatic non-daily false；G4C真实ledger不补造。
+notes: 2026-07-25：Wave15 failure-fix Full=`7180/0`保留，first-consumer工程baseline仍`BASELINE_DONE`；`as_of=2026-07-24`真实run在DQ阻断，G4C、下一consumer、production/broker和G5均未开放。

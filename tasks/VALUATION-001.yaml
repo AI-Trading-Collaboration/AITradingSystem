@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: VALUATION-001
+area: 估值/仓位
+priority: P1
+status: DONE
+next_owner: 系统实现
+next_step: 把估值拥挤从单纯评分升级为新增仓位限制或禁止加仓 gate
+acceptance: 估值过热时日报输出“趋势仍强但新增仓位受限”等结论；回测使用同一规则；不把估值拥挤误写成基本面证伪
+notes: '2026-05-04: 已完成，valuation `position_gate` 在共享 gate 层按 `EXPENSIVE_OR_CROWDED` / `EXTREME_OVERHEATED` 限制最终 AI 仓位，日报和回测共用同一最终仓位约束；补充测试验证估值拥挤 gate 压低仓位且不被误写成 thesis 证伪。'

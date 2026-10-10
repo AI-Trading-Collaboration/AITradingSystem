@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-059A
+area: 回测输入/Weight Tuning Failure Attribution & Guardrail Diagnostics
+priority: P1
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/weight_tuning_failure_attribution_2026-05-30.md`；latest weight tuning failure attribution、candidate rejection ranking、near-miss diagnostics、Dashboard/Reader Brief 和 shadow backtest 只读引用已完成；root cause 已由 TRADING-060 进一步拆解
+acceptance: '`aits parameters explain-weight-tuning-failure --latest`、`validate-weight-tuning-failure --latest` 和 `reports weight-tuning-failure --latest` 可读 latest artifact；Dashboard/Reader Brief 展示 root cause、top failure reason 和 recommended next action；shadow backtest dry-run 引用 failure attribution artifact 且 promotion 仍 rejected；不修改 production config、不降低 guardrail、不放开 fallback signal、不生成伪 candidate'
+notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-059 latest 为 `NO_CANDIDATE` / `guardrail_status=FAIL`，需要先解释候选失败主因。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：failure attribution 实现和真实 CLI 验收完成。2026-06-09: 从 VALIDATING 改为 DONE，原因：复验 latest 仍为 `NO_CANDIDATE_EXPLAINED`、`root_cause_category=portfolio_turnover_too_high`、`top_failure_reason=cost_drag_too_high`、`most_common_guardrail_failure=turnover_guardrail_failed`，且已由 TRADING-060 消费；验证通过 failure validation/report/explain CLI、Reader Brief、shadow backtest dry-run、focused pytest 24 passed、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ENG-VAL-001_VALIDATION_RUNTIME_PROFILING_AND_XDIST_BENCHMARK
+area: Developer validation / runtime profiling and xdist benchmark
+priority: P2
+status: DONE
+next_owner: 系统后续按需执行 benchmark evidence review
+next_step: 详见 `docs/requirements/ENG-VAL-001_Validation_Runtime_Profiling_and_Xdist_Benchmark.md`；基于 TRADING-2345 耗时复盘，增强 validation runtime profiling 和显式 xdist benchmark 能力。本任务不改变默认验证策略、tier 覆盖、pass/fail 语义或投资系统行为；后续默认 `--dist` / worker 策略切换必须另开任务并用 benchmark evidence 支撑。
+acceptance: '`scripts/run_validation_tier.py --write-runtime-artifact` 写出 `pytest_output.log`；`test_runtime_summary.json` 和 Reader Brief 记录 slow durations、数量、总耗时和最慢 nodeid；显式 `--benchmark-dist` / `--benchmark-worker` 可生成 print-only benchmark plan 或运行多变体并写入 `validation_benchmark_summary.json`；默认 `DEFAULT_DIST=loadfile`、`DEFAULT_WORKERS=16`、tier path 覆盖、pass/fail 语义和 safety boundary 均不变；benchmark 模式固定 `can_support_promotion_evidence=false`。验证通过 focused parallel pytest 10 passed、Ruff、compileall、benchmark print-only artifact smoke、docs freshness 525 docs PASS、documentation contract 1242 reports PASS、task-register consistency run/validate PASS、contract-validation 196 passed（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T173321Z/test_runtime_summary.json`）和 `git diff --check`。'
+notes: '2026-07-05: 根据 TRADING-2345 耗时复盘新增并进入 IN_PROGRESS。2026-07-05: 实现完成并归档 DONE；未跑 full validation，因为改动集中在 validation runner 和对应 focused tests，且 full 门禁本身是被优化观察对象。'

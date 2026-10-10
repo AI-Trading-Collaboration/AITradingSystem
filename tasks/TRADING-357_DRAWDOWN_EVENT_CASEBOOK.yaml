@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-357_DRAWDOWN_EVENT_CASEBOOK
+area: ETF portfolio/dynamic v3 rescue drawdown event casebook
+priority: P2
+status: DONE
+next_owner: 项目 owner 后续复核；代码实现完成
+next_step: 详细拆解见 `docs/requirements/TRADING-357_Drawdown_Event_Casebook.md`；承接 TRADING-356 stress scenario library，为 qualitative review 建立 historical drawdown event casebook，记录 event name、start/end、max drawdown、recovery behavior、regime label、candidate response、benchmark response 和 review notes；不得作为 trading signal、回测结论、自动 candidate promotion、official target weights、order ticket、broker action 或 production mutation
+acceptance: 新增 drawdown event casebook config/schema、normalized event casebook JSON、report/validate CLI、Reader Brief fields、report registry、artifact catalog、README、system flow、operations runbook、requirements、task register 和 focused tests；验证通过 report/validate CLI、focused pytest、documentation contract、report index 和 task-register归档；安全边界固定 research diagnostic only / not trading signal / no data refresh / no stress or backtest executor / no official target / no broker / no production
+notes: '2026-06-16: DONE；真实只读 report 生成 `drawdown-event-casebook_48f9104b90984b64`，`event_count=5`、`worst_event=semiconductor_pullback_2024_07`、`regime_coverage=risk_off,semiconductor_pullback,sideways_choppy,strong_recovery,tech_drawdown`、`next_review_action=use_casebook_in_next_drawdown_mismatch_review`，`validate-drawdown-event-casebook` 返回 PASS / failed=0；`python -m pytest tests/test_drawdown_event_casebook.py tests/test_etf_dynamic_v3_parameter_research.py tests/test_documentation_contract.py tests/test_report_index.py -q` 36 passed；保持 research diagnostic only / not trading signal / no data refresh / no official target / no broker / no production。'

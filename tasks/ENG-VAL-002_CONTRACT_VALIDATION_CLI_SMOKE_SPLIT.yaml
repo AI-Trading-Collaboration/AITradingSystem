@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ENG-VAL-002_CONTRACT_VALIDATION_CLI_SMOKE_SPLIT
+area: Developer validation / contract-validation runtime optimization
+priority: P2
+status: DONE
+next_owner: 系统后续针对 data foundation / docs contract / tail-risk fixtures 继续优化
+next_step: 详见 `docs/requirements/ENG-VAL-002_Contract_Validation_CLI_Smoke_Split.md`；承接 ENG-VAL-001 runtime profiling 暴露的 `test_controlled_strategy_batch_cli_smoke` 单测长尾。本任务只优化测试执行组织，不改变投资逻辑、报告结论、data quality gate、tier path 覆盖、默认 xdist 策略或生产边界。
+acceptance: '`test_controlled_strategy_batch_cli_smoke` 保留 5 条核心 controlled strategy batch-review CLI 真实执行，其余 controlled strategy / tail-risk command surface 使用 Typer command-tree introspection 验证注册；现有 focused builder tests 继续覆盖 artifact schema / safety / 行为。验证通过 focused parallel pytest `3 passed in 26.12s`、Ruff、compileall、docs freshness 527 docs PASS、documentation contract 1243 reports PASS、task-register consistency run/validate PASS、contract-validation `196 passed`（runtime artifact=`outputs/validation_runtime/contract-validation_20260704T175624Z/test_runtime_summary.json`）和 `git diff --check`。目标单测 call duration 从 ENG-VAL-001 artifact 的 `181.70s` 降到 focused run `20.45s`、完整 tier `24.79s`；完整 tier elapsed=`213.73s`，高于 ENG-VAL-001 的 `203.44s`，因此 tier 总耗时仍需后续优化。'
+notes: '2026-07-05: 根据 ENG-VAL-001 slow-duration evidence 新增并进入 IN_PROGRESS。2026-07-05: 实现完成并归档 DONE；单测级 tail latency 已解除，当前 contract-validation 最慢项转为 `test_data_foundation_cli_smoke` / docs contract / tail-risk fixture 群。'

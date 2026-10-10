@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-641_to_648_RESEARCH_CAMPAIGN_B2_FULL_COMPUTE_COVERAGE
+area: ETF portfolio/weight research campaign B2 full compute coverage and decision enforcement
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: B2 targeted compute、full diagnostic compute 和 gate compute 均可生成 fresh Campaign run artifact/evidence；full diagnostic 只有 risk-heavy 与 control evidence 同时 validated 才能 COMPLETE；gate 从 Campaign evidence store、budget 和 stop rules 生成 constrained B2 decision；B2 E2E compute path 可运行或明确 PASS_WITH_LIMITATIONS/BLOCKED；legacy full path parity PASS 或 explained；budget exhausted 禁止 generic `NEEDS_MORE_EVIDENCE` 并强制 final decision drill；legacy B2 runner deprecation readiness 输出 keep/deprecate/not-ready；rc3 validation pack 覆盖 adapter registry、B2 targeted/full/gate compute、E2E、parity、B3 signal-only smoke、budget final decision、holdout、next-action、no fabricated metrics 和 forbidden-effects；focused tests、Ruff、compileall、JSON parse、B2/B3 campaign validate、validation-pack 和 `git diff --check` 通过
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求把 Campaign 从 B2 control-window smoke adapter 推进到 B2 targeted/full/gate compute coverage，并继续保持 B3 signal-only 与所有 production/promotion/broker/order 边界关闭。2026-06-19: 实现完成并转入 VALIDATING；新增 B2 targeted/full/gate compute adapter、B2 E2E compute、full-path parity、budget final-decision drill、legacy B2 runner readiness 和 rc3 validation pack；验证通过 focused pytest 18 passed、Ruff、compileall、adapter validation、B2/B3 campaign validate、validation-pack `RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS`、JSON parse 和 `git diff --check`。'

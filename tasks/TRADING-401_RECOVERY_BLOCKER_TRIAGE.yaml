@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-401_RECOVERY_BLOCKER_TRIAGE
+area: Research governance / recovery blocker triage
+priority: P1
+status: DONE
+next_owner: 项目 owner 复核 blocker triage；normal paper-shadow 仍 false，extended/live/official/broker/order/production 仍 forbidden
+next_step: 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；读取 TRADING-400 recovery pack，把 9 个 remaining blockers 展开成 machine-readable blocker triage；本任务只做 triage，不解决 blocker、不放宽 paper/extended/live boundary
+acceptance: 新增 `src/ai_trading_system/reports/recovery_triage.py`、`aits reports recovery-blocker-triage` / `validate-recovery-blocker-triage`、Reader Brief section、report registry、artifact catalog、README、operations runbook、system flow 和 focused tests；每个 blocker 记录 source report、category、blocking field、related dimension、required artifact/owner action、normal/extended/live impact
+notes: '2026-06-17: DONE；真实 artifact `outputs/reports/recovery_blocker_triage_2026-06-17.json/md` 输出 `recovery_blocker_count=9`，normal_paper_shadow_may_resume=false、extended_shadow_remains_forbidden=true、live_trading_remains_forbidden=true；validation `recovery_blocker_triage_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。Blocker 未被解决、未 waiver、未 fabricated data。'

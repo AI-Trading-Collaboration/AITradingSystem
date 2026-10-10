@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-358_FLIP_ROTATION_EVENT_CASEBOOK
+area: ETF portfolio/dynamic v3 rescue flip/rotation event casebook
+priority: P2
+status: DONE
+next_owner: 项目 owner 后续复核；代码实现完成
+next_step: 详细拆解见 `docs/requirements/TRADING-358_Flip_Rotation_Event_Casebook.md`；承接 TRADING-357 drawdown event casebook，为 future reviews 建立 signal flip / rotation cluster qualitative casebook，记录 date、previous state、new state、trigger signal、useful/false-positive classification、turnover impact 和 candidate behavior；不得作为 trading signal、自动 candidate promotion、official target weights、order ticket、broker action 或 production mutation
+acceptance: 新增 flip/rotation event casebook config/schema、normalized event casebook JSON、summary metrics、report/validate CLI、Reader Brief fields、report registry、artifact catalog、README、system flow、operations runbook、requirements、task register 和 focused tests；验证通过 report/validate CLI、focused pytest、documentation contract、report index 和 task-register归档；安全边界固定 research diagnostic only / not trading signal / no data refresh / no signal extraction or backtest executor / no official target / no broker / no production
+notes: '2026-06-16: DONE；真实只读 report 生成 `flip-rotation-event-casebook_146c806ccd4bb4b3`，`event_count=5`、`useful_flip_count=3`、`false_positive_count=2`、`dominant_trigger_signal=v_shaped_recovery_confirmation`、`next_review_action=use_casebook_in_next_flip_rotation_review`，`validate-flip-rotation-event-casebook` 返回 PASS / failed=0；`python -m pytest tests/test_flip_rotation_event_casebook.py tests/test_etf_dynamic_v3_parameter_research.py tests/test_documentation_contract.py tests/test_report_index.py -q` 36 passed；保持 research diagnostic only / not trading signal / no data refresh / no official target / no broker / no production。'

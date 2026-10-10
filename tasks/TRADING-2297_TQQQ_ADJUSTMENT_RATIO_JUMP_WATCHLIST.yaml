@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2297_TQQQ_ADJUSTMENT_RATIO_JUMP_WATCHLIST
+area: Data quality / corporate action adjustment watchlist
+priority: P2
+status: READY
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 新增 watchlist 记录后，后续需确认 TQQQ 2025-11-20 `prices_adjustment_ratio_jump` 来自真实拆分/分红/复权事件、数据源调整异常、单日异常价格或复权系数跳变
+acceptance: 新增或更新 `docs/research/data_quality_watchlist.md` 与 `inputs/data_quality_watchlist/tqqq_adjustment_ratio_jump_2025_11_20.yaml`；当前状态记录为 `NON_BLOCKING_WARNING`；如果 TQQQ 未来进入正式 strategy universe，则升级为 `BLOCKING_DATA_QUALITY_REVIEW`；不得静默平滑该 warning
+notes: '2026-06-27: 新增低优先级数据质量跟踪；当前未发现其影响 actual-path ranking 的证据，因此不阻断 TRADING-1256～1285。2026-06-29: 原 id 不符合 task-register numeric prefix 约束，重新编号为 TRADING-2297。'

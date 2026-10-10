@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
+area: Atlas strategy research page / governed human comprehension acceptance pilot
+priority: P1
+status: DROPPED
+next_owner: Project Owner
+next_step: 2026-09-24 按 owner 决策包第5条 DEFERRED；退出条件：owner 给出 human comprehension pilot policy（sample/threshold/critical 定义）
+acceptance: 2527-A 保持 PENDING_OWNER_POLICY；2527-B 只对 frozen exact HTML 记录 verbatim、双 reviewer、disagreement 与 Owner attestation；HTML 变化必须重测。
+notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第5条：DEFERRED；agent_harness=claude_code；原备注：[supporting requirement](docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md)；2527-A protocol commit=2f8f24031 已吸收；participant/sample/threshold/reviewer/signature 仍 PENDING_OWNER_POLICY；未执行 pilot、未产生 comprehension PASS。；GOV-008 2026-10-10：Atlas 已退役（owner_decision:GOV-008:2026-10-10:atlas_retired），页面与代码在 P4 删除，本任务不再推进

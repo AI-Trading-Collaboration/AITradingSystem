@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: SOURCE-001
+area: 数据源/风险
+priority: P1
+status: DONE
+next_owner: 系统实现
+next_step: 已按 owner 批准的保守 source policy 落地；详细拆解见 `docs/requirements/source_policy_2026-05-04.md`
+acceptance: 形成 source policy：S/A/B/C/D/X 等级；`S/A` 可自动评分和触发仓位闸门，`B` 仅在确认后进入普通评分，`C/D/X` 只能 report/manual review；`public_convenience` 与 `llm_extracted` 不得直接评分；更新数据源目录、导入校验、风险事件评分资格和系统流图
+notes: '2026-05-04: 从 BLOCKED_OWNER_INPUT 改为 IN_PROGRESS，原因：owner 批准先按保守方案落地 source policy。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：新增 `source_policy` helper，market evidence 和 risk event 校验报告已区分普通评分/仓位闸门资格，风险事件 position gate 只读取 `S/A` active 且 `position_gate_eligible` 的记录，测试覆盖 B 级 score-only、C/D/X 报告复核、public_convenience/LLM 隔离和 CSV 缺省 action class 保守行为；`python -m pytest -q` 通过 239 项测试，`python -m ruff check .` 通过。'

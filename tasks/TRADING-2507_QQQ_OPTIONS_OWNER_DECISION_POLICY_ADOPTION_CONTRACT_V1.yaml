@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2507_QQQ_OPTIONS_OWNER_DECISION_POLICY_ADOPTION_CONTRACT_V1
+area: Strategy research governance / QQQ Options Owner attestation and policy adoption contract
+priority: P0
+status: BASELINE_DONE
+next_owner: TRADING-2509 coordinator；后继 project owner 提供 reviewed G2 policy values/evidence
+next_step: Canonical attestation 已由 2509 tracked evidence 接管；2507 admission contract 完成。executable policy、DQ/PIT、selection 与 engine gate 未解除。
+acceptance: tracked attestation raw/content/canonical hash、28-slot replay、11 amendment disposition 与 2502/2504 authority exact-bound；最高状态仍 contract-only，orders/fills=0。
+notes: 2026-08-12：真实 Owner attestation 已由 2509 tracked evidence 封存；详见 [TRADING-2507 Owner Decision Policy Adoption Contract](docs/requirements/TRADING-2507_QQQ_Options_Owner_Decision_Policy_Adoption_Contract_V1.md)。该 binding 仅恢复 canonical requirement ref，不解除 DQ/PIT、selection 或 engine gate。

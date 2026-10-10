@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2330_DYNAMIC_TARGET_BASELINE_TIMESTAMP_REMEDIATION
+area: Research trends / exposure-cap dynamic target baseline timestamp remediation
+priority: P0
+status: DONE
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 详见 `docs/requirements/TRADING-2330_Dynamic_Target_Baseline_Timestamp_Remediation.md`；承接 TRADING-2329 生成 research-only wrapper 但 timestamp / known-at / validity 语义仍需 remediation 的 route。本批只修复或明确标注 timestamp、known-at、validity window、latency、rebalance timing 和 risk-cap timestamp alignment；不得执行 simulation 或生成交易指令。
+acceptance: 新增 `aits research trends dynamic-target-baseline-timestamp-remediation`；生成 timestamp gap matrix、source priority matrix、remediation policy、derivation matrix、known-at semantics report、validity / latency / rebalance reports、timestamp-remediated wrapper、wrapper validation、PIT caveat、risk-cap timestamp alignment、2331 readiness matrix、2331 task route、安全边界和 research docs；真实 run 生成 2682 条 timestamp-remediated wrapper records，known-at policy=`NEXT_SESSION_DECISION_POLICY`，wrapper validation=`PASS_WITH_WARNINGS`，readiness=`TIMESTAMP_REMEDIATED_READY_WITH_WARNINGS_FOR_2331`，next task=`TRADING-2331_Dynamic_Target_Baseline_Dry_Run_Readiness_With_PIT_Caveat`；所有 outputs 固定 `simulation_executed=false`、promotion/paper-shadow/production/broker false/none。
+notes: '2026-07-03: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-03: 实现完成并进入 VALIDATING；真实 CLI run 已生成 TRADING-2330 artifacts，`aits validate-data` 不适用，因为本任务只读取 prior research outputs、static config、registry 和 candidate artifacts。 2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'

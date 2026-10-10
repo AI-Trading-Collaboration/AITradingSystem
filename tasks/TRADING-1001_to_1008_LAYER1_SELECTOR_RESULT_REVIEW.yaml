@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1001_to_1008_LAYER1_SELECTOR_RESULT_REVIEW
+area: Research strategies / Layer-1 selector result review and forward-aging gate
+priority: P1
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 8 个 `aits research strategies ...` CLI/artifacts、report registry entries、artifact catalog/system flow 更新、owner/master docs 和 focused tests；真实 master CLI 输出 `LAYER1_SELECTOR_DRY_RUN_ONLY`，top selector=`trend_200dma_selector`，成本后优于 `always_equal_risk` 但不优于 `always_100_qqq`，history coverage=`RECENT_REGIME_ONLY_WARNING`，recent regime risk=`RECENT_REGIME_RISK_MATERIAL`，watchlist recommendation=`KEEP_SELECTOR_RESEARCH_ONLY`，blocker=`TOO_MUCH_TURNOVER`，dry-run=`LAYER1_SELECTOR_FORWARD_DRY_RUN_WARN` 且 `observation_written=false`；所有 outputs 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`，继续禁止 ML selector、QQQ-plus growth selectable、tail-risk fallback、LEAPS、Wheel 和 Options
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-25: 新增并进入 IN_PROGRESS，原因：owner 要求实现 TRADING-1001～1008，对 986～1000 Layer-1 simple-rule selector 真实运行结果做审查并判断是否只允许 research-only forward-aging watchlist/dry-run；当前实际研究区间为 2022-12-01～2026-06-23，必须显式披露 recent-regime 和 history coverage 限制。2026-06-25: 实现完成并转入 VALIDATING；真实 master CLI 保持 paper-shadow/production/broker false/none，watchlist_allowed=false，允许 dry-run preview 但不写正式 observation。'

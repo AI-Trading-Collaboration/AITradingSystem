@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-078_DAILY_AUTOMATION_ISOLATION_AND_SAME_DAY_RESCUE
+area: Operations / daily automation isolated carrier and same-day rescue window
+priority: P0
+status: DEFERRED
+next_owner: Codex engineering coordinator：用正确 architecture-devex generator 刷新 module/test/aggregate manifests，从新 candidate 重跑六层正式验证与 deployment acceptance；operations owner：复核下一真实 daily
+next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：v10 fast-unit=350 PASS；Architecture=884 PASS/1 FAIL，唯一失败为 arch_004e module/test/aggregate manifests 未刷新，原因是 generator id architecture-manifests 被错误映射成 ARCH-005 registry generate。v11 改用 scripts/architecture_devex.py generate 并从新 candidate 全量复验。
+acceptance: architecture-devex deterministic manifests fresh；exact prior-active receipt allowlist/tamper tests PASS；六级正式验证、普通 push、promotion、scheduler observation、deployment acceptance、runtime preflight PASS；production_effect=none。
+notes: 2026-09-04：失败 artifact=outputs/validation_runtime/architecture-fitness_20260903T181337Z/test_runtime_summary.json；884 passed/1 failed，无 provider/daily/production effect。v10 transaction FAILED/lease released。

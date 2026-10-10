@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2523B_ATLAS_PAGE_EFFECTIVENESS_SERIAL_CONTRACT_WAVE_V1
+area: Atlas / page-effectiveness v2 human review SHA 与 suffix task identity 串行合同波
+priority: P1
+status: DONE
+next_owner: TRADING-2523A coordinator
+next_step: Completed; the separately governed TRADING-2523A lane may rebuild from the published exact main after this closeout.
+acceptance: v2 manifest requires exact canonical page SHA for human PASS; suffix-aware exact task coverage and current 2522/2528 facts are preserved; focused and five formal tiers pass; audit, ff-only main and ordinary push complete the closeout.
+notes: '[supporting requirement](docs/requirements/TRADING-2523B_Atlas_Page_Effectiveness_Serial_Contract_Wave_V1.md); final Architecture 865 PASS, Contract 276 PASS, Integration 995 PASS with 642 warnings, Reproducibility 24 PASS, and parent-bound failure-fix Full 9027 PASS / 4 skipped / 644 warnings; production effect none; broker action none; no TRADING-2528 mutation.'

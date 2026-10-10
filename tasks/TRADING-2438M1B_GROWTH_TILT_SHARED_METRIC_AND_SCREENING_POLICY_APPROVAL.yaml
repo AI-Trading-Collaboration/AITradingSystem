@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL
+area: Strategy research / metric and threshold governance
+priority: P0
+status: DROPPED
+next_owner: 项目 owner / policy owner签署 metric 和 screening policy；系统写入 approval provenance 后复验
+next_step: 已建立 `growth_tilt_candidate_replay_metric_contract_v1` 和 `growth_tilt_candidate_pit_screening_policy_v1`。M1C 已补齐 numerical epsilon=`1e-12`、minimum semantic denominator=`1e-8`、小分母/empty-event fail-closed 语义、false-risk-off/missed-upside/whipsaw event definitions 和稳定 owner=`research_governance`；首轮 numeric screening boundaries 未改变。contract/policy 仍保持 `PENDING_OWNER_PREREGISTRATION`，approved_at/commit/hash 为空，不能自动升级为 APPROVED。
+acceptance: 每个 APPROVE candidate 有六项 unit-matched finite thresholds、owner/version/rationale/evidence/review/expiry；event_count<5、semantic denominator<1e-8、null/NaN/Inf、unit mismatch、empty-event ambiguity、PIT/window/cost mismatch均 BLOCKED；数值在 replay 前预注册且只用于首轮 screening；approval timestamp/full commit/SHA-256 和 result visibility=`NONE` 必须冻结。
+notes: '2026-07-10: M1C 完成 proposed contract semantics 和 validator hardening；真实 shared metric/threshold readiness=`0/0`，剩余 blocker 仅 owner approval status 和 preregistration provenance，不把待审批值视为历史验证、promotion 或 production policy。 2026-07-23: GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE 转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'

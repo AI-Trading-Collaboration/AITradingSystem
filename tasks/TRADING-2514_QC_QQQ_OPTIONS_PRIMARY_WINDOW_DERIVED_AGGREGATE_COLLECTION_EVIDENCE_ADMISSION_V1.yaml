@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2514_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_COLLECTION_EVIDENCE_ADMISSION_V1
+area: External validation / QC QQQ Options primary-window collection authorization and evidence admission
+priority: P0
+status: BASELINE_DONE
+next_owner: Project Owner：exact 2513 token/signoff；collector coordinator：future bounded collection/evidence admission；independent reviewer：external lifecycle and DQ/PIT evidence
+next_step: OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL；离线合同已完成，未签 exact token 前禁止 QuantConnect/cloud/API/CLI/HTTP/raw/order/paper/live/broker/production 动作
+acceptance: 实现 strict token expiry/single-use/cap/action/hash binding、consumption receipt、external action ledger、2512 Results parser evidence admission、2482/2510/2511 DQ/PIT handoff、typed fail-closed tests 与 Atlas disclosure；不得信任自报 PASS、不得提供 policy values 或激活 engine
+notes: 'Supporting requirement: docs/requirements/TRADING-2514_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Collection_Evidence_Admission_V1.md；离线 authorization/evidence admission baseline 已实现；Owner token/run/evidence/DQ-PIT 均未发生，external_action=none。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-018C2
+area: 交易执行/Multi-day Shadow vs Production Review
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/shadow_vs_production_multi_day_review_2026-05-19.md`；只读 multi-day review builder、standalone script、dashboard 轻量卡片、系统流图/产物目录/runbook、测试和最终收尾验证已完成
+acceptance: 新增 `scripts/run_shadow_vs_production_multi_day_review.py` 和 `data/derived/weight_iterations/comparison/reviews/shadow_vs_production_review_YYYY-MM-DD.json/md`；默认读取最近 7 日既有 `daily_shadow_vs_production_YYYY-MM-DD.json`，不重跑 scoring/comparison pipeline；输出 available/missing/insufficient/safety blocked coverage、average score delta、score better/worse/equal day counts、decision difference count、risk flag delta、dominant changed weight keys 和 promotion readiness；固定 `production_effect=none`、`manual_review_only=true`、promotion readiness false；dashboard 只读展示 latest review artifact，不触发 pipeline、broker、paper runner、replay runner 或 production profile 写入
+notes: '2026-05-19: 新增并进入 IN_PROGRESS，原因：owner 要求在 TRADING-018C 单日 comparison 后新增多日 review evidence 层；本阶段只观察 shadow vs production 多日稳定性，不允许 promotion、production profile 修改或交易触发。2026-05-19: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 multi-day review JSON/Markdown 生成器、standalone script、dashboard 只读卡片、runbook、系统流图/产物目录和测试；验证通过目标 pytest、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量 pytest、ruff 和 black check。2026-05-20: 从 VALIDATING 改为 DONE，原因：最终收尾验证通过手动 CLI smoke（当前本地无 comparison artifacts，按真实可用输入生成 `INSUFFICIENT_HISTORY` review JSON/Markdown）、dashboard 只读读取 smoke、`production_effect=none`、`manual_review_only=true`、promotion readiness false 和 pipeline safety contract 检查；收尾验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和 black check。'

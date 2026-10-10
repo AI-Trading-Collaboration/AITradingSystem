@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-062B
+area: ETF P2/ML weight optimizer baseline
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已在现有 P0 signals 和 P2 policy 上新增 candidate-only 权重优化报告
+acceptance: '`p2.yaml` 治理 optimizer lookback、score/return/risk 权重、单标的上限、cash floor、candidate-only 和 auto-promotion 边界；`aits etf p2 weight-optimizer` 先复用 ETF price data quality gate，读取 P0 signals 和价格历史，输出候选权重、score components、data quality、config hash、limitation 和 `production_effect=none`；不得写入 `data/etf_portfolio/target_weights.csv`、不得调用 broker、不得改变日报正式建议；测试覆盖权重合计、CASH 吸收、上限和安全边界'
+notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 P2 明确包含“机器学习权重优化”，当前已有 `ml-ranking` 仅做排序，尚未输出候选组合权重；本阶段先实现可审计 candidate-only baseline，不宣称生产级 ML。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 `weight_optimizer` policy、`aits etf p2 weight-optimizer`、candidate weight builder 和测试；真实 2026-05-29 smoke 输出 5 行候选权重，固定 `candidate_only=true`、`auto_promotion=false`、`production_effect=none`，并披露 data quality PASS。'

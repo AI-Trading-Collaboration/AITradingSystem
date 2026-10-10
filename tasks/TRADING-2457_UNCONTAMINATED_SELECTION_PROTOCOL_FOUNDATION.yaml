@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2457_UNCONTAMINATED_SELECTION_PROTOCOL_FOUNDATION
+area: Strategy governance / uncontaminated selection admission and preregistration foundation
+priority: P0
+status: DONE
+next_owner: Future strategy owner：另建具体protocol authoring任务；当前无自动续跑
+next_step: 详见 `docs/requirements/TRADING-2457_Uncontaminated_Selection_Protocol_Foundation.md`。reviewed policy、typed四角色contract与pure validator已完成；复用canonical context/preregistration，只产生admission，不启动B/C或任何策略run。
+acceptance: 2021 active primary；full-period top-N、freeze/visibility倒序、六组role overlap、prospective access、policy-role mismatch、缺治理字段与tamper全部fail closed；valid仅`READY_FOR_OWNER_PROTOCOL_AUTHORING`且execution=false；focused 19 PASS。
+notes: 2026-07-22：foundation=`DONE`，policy semantic SHA=`99a84c...168e89`；formal focused/architecture/contract/reproducibility/Full=`28/447/265/23/6604 passed`，Full 2 skipped、1179.75s。具体hypothesis/candidate generator、B hard-gate policy、run与prospective single-access仍需独立owner授权。

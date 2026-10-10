@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2326_SOURCE_BOUND_EXPOSURE_CAP_DRY_RUN_STATIC_ETF_BASELINE
+area: Research trends / exposure-cap static ETF baseline dry-run
+priority: P0
+status: DONE
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 详见 `docs/requirements/TRADING-2326_Source_Bound_Exposure_Cap_Dry_Run_With_Static_ETF_Baseline.md`；承接 TRADING-2325 `static_etf_allocation_baseline` route。本批执行 source-bound static ETF exposure-cap dry-run simulation，消费 cached market data 时必须运行 `aits validate-data` 或同源 gate；不得读取真实账户、不得生成真实 target weight、rebalance instruction、buy/sell signal、paper-shadow、production 或 broker action。
+acceptance: 新增 `aits research trends source-bound-exposure-cap-dry-run`；生成 static ETF baseline schedule、risk-cap trigger alignment、dry-run result、exposure-cap vs no-cap comparison、binding day matrix、turnover / cooldown / false-cost / missed-upside / downside-protection reports、data-quality report、interpretation boundary、2327 route 和 research docs；所有 outputs 固定 promotion/paper-shadow/production/broker false/none。
+notes: '2026-07-02: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-02: 实现完成并进入 VALIDATING；真实 run status=`SOURCE_BOUND_STATIC_ETF_EXPOSURE_CAP_DRY_RUN_READY_PROMOTION_BLOCKED`，data_quality_status=`PASS_WITH_WARNINGS`，record_count=3460，cap_binding_days=382，next task=`TRADING-2327_Exposure_Cap_vs_No_Cap_Diagnostics_Review`；验证通过 focused pytest、Ruff、compileall、validate-data、docs / contract / task-register gates、contract-validation 和 full pytest。 2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'

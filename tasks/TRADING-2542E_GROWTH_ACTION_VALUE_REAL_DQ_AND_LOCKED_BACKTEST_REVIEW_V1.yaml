@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2542E_GROWTH_ACTION_VALUE_REAL_DQ_AND_LOCKED_BACKTEST_REVIEW_V1
+area: Growth action-value real DQ/PIT and locked zero-order backtest review V1
+priority: P0
+status: BASELINE_DONE
+next_owner: None / retained immutable historical exact-freeze and zero-order review evidence; current baseline successor is TRADING-2542H
+next_step: The five-veto path is no longer a prerequisite for the original QQQ options implementation retest. Preserve all TRADING-2542E bytes and evidence; consume them only as historical lineage. Baseline work continues through TRADING-2542H with the existing strategy signal as sole directional authority.
+acceptance: 'PASS: historical frozen identities remain unchanged, TRADING-2542E is not used as a baseline run blocker, and any future reuse is explicit optional-overlay or legacy replay only. Current executable research still requires TRADING-2542H exact signal mapping/policy freeze and separate QC authorization.'
+notes: 'Supporting requirement: docs/requirements/TRADING-2542E_Growth_Action_Value_Real_DQ_And_Locked_Backtest_Review_V1.md. Successor requirement: docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md. owner_decision=owner_decision:TRADING-2542H:2026-08-28:adopt_quantconnect_frozen_signal_implementation_retest_path_v1; immutable_predecessor_bytes=true; real DQ/backtest not run; orders/fills/positions/production/broker=0.'

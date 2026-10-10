@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-737_SOURCE_LEVEL_QUALIFICATION_REQUIREMENTS
+area: Data foundation / source-level qualification requirements
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: '`aits data source-qualification requirements` 可生成 `data_source_requirement_matrix.json/md`；每个 P0 remaining item 输出 component、current_status、missing_proof、required_raw_source、required_timestamp_fields、required_source_manifest、required_as_of_snapshot、required_corporate_action_revision_policy、can_fix_with_existing_data、requires_new_data_source、can_remain_diagnostic_only、promotion_grade_blocker，并按 SOURCE_MANIFEST_REQUIRED、AVAILABLE_TIME_REQUIRED、AS_OF_SNAPSHOT_REQUIRED、CORPORATE_ACTION_POLICY_REQUIRED、VENDOR_CURRENT_VIEW_ONLY、RESEARCH_LABEL_ONLY_BY_DESIGN、TRUE_PIT_LIMITATION、MANUAL_REVIEW_REQUIRED 分类；所有输出固定 production_effect=none、promotion_gate_allowed=false，不尝试升级 source 状态'
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-21: validation-only source requirement runner 已实现并进入 VALIDATING；默认 run 输出 `REQUIREMENTS_READY_WITH_SOURCE_BLOCKERS`、P0_remaining_count=9、source_requirement_count=9、requires_new_data_source_count=8、can_fix_with_existing_data_count=0、promotion_grade_blocker_count=9、status_upgrade_attempted=false、lookahead_violation_count=0、production_effect=none、broker_action=none；focused tests 40 passed，fast-unit 97 passed，contract-validation 96 passed，report-validation 55 passed。'

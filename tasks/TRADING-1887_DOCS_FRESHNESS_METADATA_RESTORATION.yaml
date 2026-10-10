@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1887_DOCS_FRESHNESS_METADATA_RESTORATION
+area: Documentation governance / docs freshness metadata restoration
+priority: P2
+status: DONE
+next_owner: 系统验证
+next_step: 详见 `docs/requirements/TRADING-1887_Docs_Freshness_Metadata_Restoration.md`；docs freshness gate 发现 21 个近期 requirements 文档缺少 `最后更新：YYYY-MM-DD` 元数据；本任务只补齐元数据，不改变系统行为或投资解释
+acceptance: 21 个缺失元数据的 requirements 文档已补充 `最后更新：2026-06-28`；`python -m ai_trading_system.cli docs validate-freshness` 恢复 PASS；docs/task focused pytest 和 `git diff --check` 通过；不修改 CLI、配置、cache schema、report output、data quality gate、scoring、backtest 或 production boundary
+notes: '2026-06-28: TRADING-1886 收尾验证发现 docs freshness FAIL；补齐 TRADING-1087、1119～1235、1527～1821_to_1885 等 21 个 requirements 文档元数据后，docs freshness 恢复 PASS。production_effect=none，未写 production weights/active shadow weights，未触发 broker/order/trading action。'

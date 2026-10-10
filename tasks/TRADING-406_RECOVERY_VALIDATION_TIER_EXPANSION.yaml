@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-406_RECOVERY_VALIDATION_TIER_EXPANSION
+area: Research governance / recovery validation expansion
+priority: P1
+status: DONE
+next_owner: 无；后续 recovery-governance changes 必须保留 expanded safety/status coverage
+next_step: 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；扩展 TRADING-400 recovery governance pack focused tests，覆盖 blocked、healthy-with-warnings、missing source、unwaived warning、paper-shadow false、extended forbidden、live forbidden 等状态
+acceptance: 新增 realistic TRADING-400-style fixtures 和 `tests/test_recovery_triage_reports.py`；扩展 `tests/test_research_governance_recovery_pack.py`；focused pytest 数量从 5 materially 增加到 14；validation deterministic and fast；Ruff、compileall、documentation/report quality gates 通过或既有 warning 可见披露
+notes: '2026-06-17: DONE；focused pytest `tests/test_research_governance_recovery_pack.py tests/test_recovery_triage_reports.py -q` 输出 14 passed；新增测试覆盖 blocked state、healthy-with-warnings state、missing source state、unwaived report-index warning state、paper-shadow resume false、extended forbidden、live trading forbidden 和 triage CLIs。'

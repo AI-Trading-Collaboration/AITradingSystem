@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-057A
+area: 数据质量/Market Data Refresh & Freshness Recovery Workflow
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/market_data_refresh_freshness_recovery_workflow_2026-05-30.md`；refresh/recovery 链路已通过最新 `validate-refresh --latest` 复验，freshness recovery 保持 `OK`，promotion 仍 disabled
+acceptance: '`aits data refresh-market --latest --dry-run` 生成 refresh plan；`aits data refresh-market --latest` 生成 `artifacts/data_refresh/YYYY-MM-DD/market_data_refresh_summary.json/md`；`aits data recover-freshness --latest` 执行 freshness -> refresh -> reconcile/manifest -> freshness -> tracking；可用时 freshness 恢复 `OK` 且 tracking 为 `active_tracking`；source delayed 时 refresh 输出 `SOURCE_DELAYED`、freshness 保持 `STALE`、tracking 保持 `tracking_blocked` 并说明原因；Dashboard/Reader Brief/shadow backtest 引用 refresh artifact；不修改 `config/parameters/production/current.yaml`，不降低 data gate，不使用 mock 数据，不生成 synthetic latest bar，不解除 promotion；专项测试、全量 pytest、ruff、compileall 和 diff check 通过'
+notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-057 已把 stale market data 正确阻断为 `tracking_blocked`，但缺少正式 refresh/recovery workflow 来安全刷新 required assets、更新 registry/manifest 并区分可恢复 stale cache 与 `SOURCE_DELAYED`。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：refresh workflow、CLI、报告、Dashboard/Reader Brief、candidate tracking 和 shadow backtest 集成已完成；真实 refresh 从数据源恢复 `GOOGL`、`BRK.B via BRK-B`、`SGOV` 的 2026-05-29 日线后，freshness 为 `OK`，candidate tracking 为 `active_tracking`，shadow backtest 仍 `promotion_status=rejected`；全量 pytest、ruff、compileall 和 diff check 通过，`production/current.yaml` 无 diff。2026-06-07: 从 VALIDATING 改为 DONE，原因：最新 `aits data validate-refresh --latest` 读取 `artifacts/data_refresh/2026-06-05/market_data_refresh_summary.json` 并返回 `refresh_status=OK`、`production_effect=none`、`manual_review_required=true` 和 `auto_promotion=false`；refresh/recovery 链路验收已闭合，promotion 仍保持禁用。'

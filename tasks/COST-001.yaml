@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: COST-001
+area: 回测/执行成本
+priority: P2
+status: BASELINE_DONE
+next_owner: 系统实现 + 项目 owner
+next_step: 已完成交易摩擦模型基础版：回测成本拆成 commission、spread、slippage、market impact、tax、FX、financing 和 ETF delay 等显式假设，并写入明细、报告和 trace manifest；剩余缺口是真实成交样本、券商费率/税费规则、容量约束、最小交易单位和成交质量验证；详细拆解见 `docs/requirements/transaction_cost_model_2026-05-04.md`
+acceptance: 回测支持 bid-ask spread、滑点、市场冲击、汇率、税费、融资利率、ETF 申赎或成交延迟、最小交易单位；报告显示成本敏感性，run manifest 和 evidence bundle 记录成本假设
+notes: '当前回测已有基础单边成本和线性滑点；该任务有价值但不应挤占 P1 的 point-in-time、反馈闭环和数据源健康任务。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：生产就绪缺口推进到交易摩擦层，开始实现不依赖外部数据的成本假设拆分、报告和 trace 记录。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 backtest 成本假设拆分、每日成本列、中文报告摘要、trace `cost_assumptions` 和测试；完整 `DONE` 仍需真实成交和券商/税务/容量验证。'

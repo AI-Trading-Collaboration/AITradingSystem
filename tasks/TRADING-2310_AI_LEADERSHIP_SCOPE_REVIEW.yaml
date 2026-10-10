@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2310_AI_LEADERSHIP_SCOPE_REVIEW
+area: Research trends / AI semiconductor leadership candidate family
+priority: P1
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 生成 AI leadership scope review summary、asset scope matrix、horizon scope matrix、use-case scope matrix、recommended scope、safety boundary 和 research report；必须明确 `SMH only`、`QQQ + SMH`、`10d` / `20d`、`confirmation_only` 和 `exposure_cap_modifier` 的 scope decision；所有 artifacts 固定 promotion / paper-shadow / production / broker false/none、`dynamic_promotion_status=BLOCKED`。
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01: 根据 owner post-2302 roadmap 和 TRADING-2309 next task 新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging。2026-07-01: 实现完成并转入 VALIDATING；真实 run status=`AI_LEADERSHIP_SCOPE_REVIEW_READY_RESEARCH_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`；`QQQ + SMH` / `10d` / `confirmation_only` / `exposure_cap_modifier` keep，`SMH only` / `20d` diagnostic，`standalone_alpha` reject。'

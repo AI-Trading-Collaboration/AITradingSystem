@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2282_CANDIDATE_SIGNAL_BINDING_SCHEMA_BASELINE_REWRAP_POC
+area: Research trends / candidate signal binding schema and baseline rewrap POC
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 生成 candidate signal binding schema、candidate-bound signal series contract、candidate-bound prediction artifact contract、baseline rewrapped signal series CSV、baseline rewrapped prediction artifact JSON、baseline rewrap provenance report、validation summary 和三份 Markdown 文档；validator 必须覆盖 required binding/PIT/schema/provenance/hash fields，并强制 schema migration POC promotion/paper-shadow/production/broker 全部 false/none；report registry 不得把 POC 标为 promotion artifact。
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-29: 新增并进入 IN_PROGRESS；先建立 schema / provenance POC 和 safety gate，不训练模型、不运行 actual-path validation、不打开 promotion/paper-shadow/production/broker。2026-06-29: 实现完成并转入 VALIDATING；真实 run source_row_count=2205、rewrapped_signal_record_count=2205、rewrapped_prediction_record_count=2205、validation_status=PASS，source hash=`c9a8a288f483cb3a37a84383d465e35a5b76ac890e120e5d913468e51a98cde9`。验证通过 Ruff、compileall、focused parallel pytest 12 passed、docs freshness、documentation/task consistency 14 passed、diff check 和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T163658Z/test_runtime_summary.json`。'

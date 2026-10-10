@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1165_to_1186_DYNAMIC_STRATEGY_EXECUTION_SEMANTICS
+area: Research strategies / dynamic execution semantics and rebalance assumption audit
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 22 个 `aits research strategies ...` CLI/artifacts；新增 `config/research/strategy_execution_policy_registry.yaml`；report registry、artifact catalog、system flow、需求文档和 focused tests 同步更新；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；Ruff、compileall、parallel pytest、task/register/report/docs pytest 和 `git diff --check` 通过；若发现此前结论需重跑，必须输出 review/rebacktest 状态而不是伪造完整结论
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1165～1186 dynamic strategy execution semantics & rebalance assumption audit plan，核心风险是 dynamic signals 被隐含 monthly execution 约束误读。2026-06-27: 实现完成并转入 VALIDATING；真实 artifacts 显示 monthly assumption 广泛存在、signal staleness/latency material、部分此前结论仅在 monthly constraint 下成立或需复核，默认策略选择需要 owner review，安全边界保持 no paper-shadow / no production / no broker。'

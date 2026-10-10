@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DOCS-PLATFORM-001_OBSIDIAN_AUTHORING_AND_GOVERNANCE
+area: Knowledge authoring / Obsidian-compatible Git Markdown governance
+priority: P2
+status: PROPOSED
+next_owner: knowledge/documentation owner + architecture coordinator
+next_step: 详见 `docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md` 的 K2；依赖K0/K1分类、metadata与lifecycle contract。Obsidian仅作编辑/导航客户端，Git+standard Markdown保持权威；下一步确定vault root、MOC、`.obsidian`共享/ignore策略和现有freshness validator迁移边界。
+acceptance: 标准Markdown reader可完整阅读；MOC/owner/review/supersedes模板明确；Obsidian专属syntax/plugin不是唯一依赖；`.obsidian`不制造仓库噪音；broken link/orphan/duplicate basename/missing metadata/stale CURRENT可审计；不拆出第二份system-flow真值。
+notes: '2026-07-12: 根据owner关于Obsidian长期维护的讨论登记为PROPOSED；未创建vault或同步服务。'

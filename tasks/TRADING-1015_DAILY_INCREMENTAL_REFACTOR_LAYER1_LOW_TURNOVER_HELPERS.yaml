@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1015_DAILY_INCREMENTAL_REFACTOR_LAYER1_LOW_TURNOVER_HELPERS
+area: Architecture / daily incremental refactor Layer-1 low-turnover helper boundary
+priority: P2
+status: DONE
+next_owner: 系统验证
+next_step: 详见 `docs/requirements/TRADING-1015_Daily_Incremental_Refactor_Layer1_Low_Turnover_Helper_Boundary.md`；已将 TRADING-1009～1014 low-turnover ranking / owner-decision helper 和 research-only pilot 常量拆到 `layer1_low_turnover_selector_helpers.py`；`layer1_simple_rule_meta_policy.py` 继续负责 context/data/path/report 写入
+acceptance: CLI command surface、artifact schema、status enum、data quality gate、report output 和投资解释保持兼容；focused xdist pytest、CLI help smoke、Ruff、compileall、task/docs consistency 和 `git diff --check` 通过；`docs/refactor_log.md` 记录基线、验证和提交 SHA
+notes: '2026-06-25: 每日增量重构自动化新增并完成；边界固定 `production_effect=none`，不改变 threshold、score band、promotion gate、backtest acceptance、仓位约束、data quality gate、market-regime interpretation、paper-shadow/production weights 或 broker/order path。验证通过 focused pytest 14 passed、CLI help smoke、Ruff、compileall 和 `git diff --check`。'

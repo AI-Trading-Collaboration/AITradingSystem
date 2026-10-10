@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ARCH-004A1_CLI_CONTRACT_BASELINE_FAILURE_REMEDIATION
+area: Architecture / CLI compatibility / Phase A baseline correctness
+priority: P0
+status: DONE
+next_owner: ARCH-004B 继续使用 compatibility snapshot 与 contract tests
+next_step: 详见 `docs/requirements/ARCH-004A1_CLI_Contract_Baseline_Failure_Remediation.md`；恢复 commit `98c976f0` 抽取前的 shared adapter exact contract，不逐命令补丁、不增加 `**kwargs` 或 waiver。
+acceptance: '`date_range_kwargs` 恢复 `(as_of,start_date,end_date)` 和 `as_of_date/start_date/end_date`，`as_of_kwargs` 恢复 `as_of_date`；新增直接 helper contract tests；原 46 个失败 node 并行 `46 passed`；full parallel `5358 passed / 0 failed / 643 warnings`。'
+notes: '2026-07-11: baseline artifact=`outputs/validation_runtime/full_20260710T155603Z/test_runtime_summary.json`；exit artifact=`outputs/validation_runtime/full_20260710T162418Z/test_runtime_summary.json`；strategy/threshold/weight/window/artifact schema 未变，production effect=none。'

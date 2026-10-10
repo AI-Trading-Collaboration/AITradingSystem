@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-850_TASK_PROVENANCE_AND_COVERAGE_MAP
+area: Controlled strategy research / task provenance coverage map
+priority: P1
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 输出 `docs/research/tail_risk_fallback_governance_task_coverage_map.md` 和 `tail_risk_task_coverage_map.json`，覆盖 task_id、implemented_files、CLI entrypoints、policy/registry/artifact/test/docs/shared components
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'

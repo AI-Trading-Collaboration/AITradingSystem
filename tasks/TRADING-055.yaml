@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-055
+area: 回测输入/Portfolio Candidate Manual Review Workflow
+priority: P1
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/portfolio_candidate_manual_review_workflow_2026-05-30.md`；Portfolio Candidate manual review package、decision artifact、状态流转、production hash、rollback reference、Dashboard/Reader Brief 和 shadow promotion 只读引用已完成；watch decision 只允许 shadow tracking，不代表 production approval
+acceptance: '`aits portfolio review-candidate --latest` 与 `decide-candidate --latest --decision watch` 生成 review package/decision；`validate-review --latest` 与 `reports portfolio-candidate-review --latest` 可读；shadow backtest dry-run 可引用 review decision 但仍 rejected；不修改 production config、不降低 data quality gate、不绕过 signal quality LIMITED、不自动启用 recommended profile'
+notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-054 已生成 advisory recommended candidate，但缺少人工 review/watch/shadow tracking 审计流程。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：review package/decision 2026-05-28 artifact 生成，decision 为 `watch`，production config hash 前后一致。2026-06-09：从 VALIDATING 改为 DONE，原因：复验 latest review decision 仍为 `watch` / `allowed_next_step=continue_shadow_tracking`，`portfolio validate-review --latest`、`reports portfolio-candidate-review --latest` 和 shadow backtest dry-run 均保持 no production effect、manual review required、no auto promotion 且 promotion rejected；验证通过 focused pytest 52 passed、相关 CLI/report smoke、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'

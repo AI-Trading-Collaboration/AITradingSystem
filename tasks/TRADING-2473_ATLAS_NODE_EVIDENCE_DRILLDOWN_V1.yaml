@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2473_ATLAS_NODE_EVIDENCE_DRILLDOWN_V1
+area: Publishing & Experience / Atlas native node evidence drilldown
+priority: P1
+status: DROPPED
+next_owner: knowledge/reporting/UX owner：维护 V1 静态 disclosure 与 provenance 复用合同；后续 HTTP/LLM/free-text consumer 必须另建任务
+next_step: 详见 `docs/requirements/TRADING-2473_Atlas_Node_Evidence_Drilldown_V1.md`。Owner 已在 canonical preview 手工验收并记录 `OWNER_MANUAL_VISUAL_PASS`；Browser automation 仍因本地 `file://` URL policy 为 `NOT_EXECUTED_URL_POLICY`，未绕过。无实现 blocker。
+acceptance: 八个 stable stage 各有原生 `<details>/<summary>`；current stage 唯一且默认展开；每节点展示 purpose、structured reason、source kind、exact ref、可/不可推出结论与下一合法动作；typed fail closed；keyboard/responsive/no-script/no-write/deterministic/focused/formal/Owner visual PASS；`production_effect=none`、`broker_action=none`。
+notes: 2026-08-01：推进 token=`owner_decision:TRADING-2473:2026-08-01:advance_atlas_node_evidence_drilldown_v1`；验收 token=`owner_decision:TRADING-2473:2026-08-01:accept_atlas_node_evidence_drilldown_visual_v1`。HTML=`59847 bytes / SHA-256 0e3b1b2855…`，responses/validation SHA 不变；renderer=`7`、Atlas/citation=`63`、compatibility/deprecation=`168` passed；正式 Architecture/Contract/Integration/Reproducibility/Full=`815/276/995/24/7870 passed`（Full `3 skipped / 644 warnings`）；治理写回后的最终树 Architecture/Contract=`815/276 passed`。；GOV-008 2026-10-10：Atlas 已退役（owner_decision:GOV-008:2026-10-10:atlas_retired），页面与代码在 P4 删除，本任务不再推进

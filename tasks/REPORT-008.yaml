@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: REPORT-008
+area: 报告/Decision Card v2
+priority: P2
+status: DONE
+next_owner: 系统实现
+next_step: 已在现有“今日结论卡”补充 Data Gate、Run ID / Trace、Main Invalidator 和 Next Checks，并补充文本顺序/CLI 测试
+acceptance: 日报顶部结论卡继续先于数据门禁、模块评分和审计明细；新增字段不改变 scoring、position gate、execution policy 或回测仓位；报告能一眼看到数据质量状态、run id、trace 入口、主要反证和下一观察项
+notes: '2026-05-10: 从 READY 改为 DONE，原因：Decision Card v2 字段和 `score-daily --run-id` trace 引用已实现，正式评分和仓位语义未改变。'

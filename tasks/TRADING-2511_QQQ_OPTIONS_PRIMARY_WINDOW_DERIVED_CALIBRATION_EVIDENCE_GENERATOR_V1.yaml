@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2511_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_GENERATOR_V1
+area: Strategy research engineering / QQQ Options primary-window derived calibration evidence generator
+priority: P0
+status: BASELINE_DONE
+next_owner: data-source derived aggregate collector；Project Owner evidence reviewer；后继 executable-policy serial contract coordinator
+next_step: PRIMARY_WINDOW_DERIVED_SESSION_AGGREGATES_NOT_PROVIDED；production source inventory 为空；需另行授权并提供 export-safe primary-window source bundle，之后经 2510 admission/Owner review；不得由 fixture 或默认零替代
+acceptance: 已实现 exact 18-slot versioned metric-definition policy、canonical per-session/per-slot derived source bundle、SUM/MIN/MAX deterministic generator、2481/2482 canonical DQ/PIT exact 15-check gate、2510 evidence admission/package replay；production source 缺失保持 evidence=0/POLICY_BLOCKED，owner_policy_value_count=0、selection=false、orders/fills=0，无 raw/external/engine/backtest/investment/production/broker action；focused/final gates 与 Atlas 30-task disclosure 需 PASS
+notes: 'Supporting requirement: docs/requirements/TRADING-2511_QQQ_Options_Primary_Window_Derived_Calibration_Evidence_Generator_V1.md；registration boundary=8d2ef8af0f1571addca12db4e37e506dccbd835a；实现与 policy 已封存，真实 calibration source/evidence 仍 blocked。'

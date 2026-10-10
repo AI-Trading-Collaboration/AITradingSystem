@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-017_AGENT_HARNESS_NEUTRALITY
+area: Architecture / agent harness neutrality before pi migration
+priority: P1
+status: PROPOSED
+next_owner: Claude Code coordinator（DEVX-016 之后）
+next_step: 依赖 DEVX-016。详见 `docs/requirements/DEVX-017_Agent_Harness_Neutrality.md`：AGENTS.md 中性化、skills 迁到 .agents/skills、新证据增加 agent_harness 字段、token 遥测接口化、Web Pro review skill 标注或替换；保留 codex/ 前缀与旧 *_CODEX_* 枚举
+acceptance: 旧证据仍全部通过校验；新证据可写 agent_harness 而不冒用 Codex 身份；skills 新位置可发现且 parity 通过；无 ~/.codex/sessions 时 workflow-health 降级为遥测不可用而非 BLOCKED
+notes: production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision=`owner_decision:GOV-007:2026-09-23:pre_migration_convergence_v1`

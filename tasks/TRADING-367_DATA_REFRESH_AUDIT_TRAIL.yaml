@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-367_DATA_REFRESH_AUDIT_TRAIL
+area: Data governance / paper-shadow refresh audit trail
+priority: P1
+status: DONE
+next_owner: 项目 owner 后续复核；代码实现完成
+next_step: 详细拆解见 `docs/requirements/TRADING-367_Data_Refresh_Audit_Trail.md`；为 paper-shadow 依赖的数据刷新和 validation gate 建立统一 audit trail；不得刷新数据、补造 cache、降低 `aits validate-data` 门禁、写 official target weights、broker/order 或 production state
+acceptance: 新增 `src/ai_trading_system/data_refresh_audit.py`、`aits validate-data` validation audit sidecar、`aits data refresh-audit report/validate`、Reader Brief `Data Refresh Audit` 摘要、report registry、artifact catalog、README、operations runbook、system flow、requirements 和 focused tests；每条 record 包含 data type、source、start/end time、as-of date、status、checksum、record count、warning/error count；状态限定为 `SUCCESS
+notes: 'SUCCESS_WITH_WARNINGS|FAILED|SKIPPED_MARKET_CLOSED|SKIPPED_NO_NEW_DATA`；固定 `production_effect=none`，不刷新数据、不补造 cache、不触发 broker/order|2026-06-16: DONE；真实 `validate-data --as-of 2026-06-12` 为 `PASS_WITH_WARNINGS` / errors=0 / warnings=1，并写 sidecar `validate_data_2026-06-12_a1054e1b668966ba.json`；真实 audit `data_refresh_audit_2026-06-16_dbf478380d2fce54` 输出 `status=PASS_WITH_WARNINGS`、`validation_status=PASS`、`audit_record_count=2`、`failed_record_count=0`、`skipped_record_count=0`、`warning_count=3`、`error_count=0`、`next_action=review_refresh_skip_or_warning_evidence_before_interpretation`；Reader Brief 已展示 latest audit status、counts 和 safety PASS；focused pytest 43 passed，Ruff PASS，compileall PASS，documentation contract PASS，report index `PASS_WITH_EXPLICIT_WAIVERS` / unwaived=0，Reader Brief OK，Reader Brief quality OK，git diff check PASS（仅 task register CRLF notice）。'

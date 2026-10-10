@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2554_QQQ_OPTIONS_PAIRED_COMPARISON_WAVE_B_OWNER_REVIEW_V1
+area: QQQ options paired comparison Wave B fee semantics owner review V1
+priority: P0
+status: DEFERRED
+next_owner: Project Owner（pi 迁移后）
+next_step: 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移 pi 后重启 growth action-value / QQQ options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
+acceptance: Owner-review YAML exact-binds the frozen paired contract, Wave A helper and prior QC source; recommends the same-run QQQ Security fee model via non-submitted hypothetical orders; freezes fully-funded quantity/accounting and exact 101-field compatibility boundaries; Atlas classifies the task as exact-owner-freeze required; focused and formal failure-fix validation pass with all external/data/trading counters at zero.
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第3/4条：DEFERRED；agent_harness=claude_code；原备注：Supporting requirement: [TRADING-2554 requirement](docs/requirements/TRADING-2554_QQQ_Options_Paired_Comparison_Wave_B_Owner_Review_V1.md). v15 formal architecture/contract/integration/reproducibility passed; Full recorded 10,103 PASS / 27 FAIL / 6 SKIP. Failure-fix imports exact canonical ignored validation locators and adds missing Atlas 2554 classification. Owner visual review remains pending; no Wave B, QC, provider, production, broker, or trading authority.'

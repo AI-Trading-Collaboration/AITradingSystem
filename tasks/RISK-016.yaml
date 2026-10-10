@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: RISK-016
+area: 风险事件/官方政策来源解析韧性
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/official_policy_source_parser_hardening_2026-05-29.md`；官方政策来源 parser fail-closed 修复已通过目标测试与真实 daily-run 复验，OFAC XML row count 不再裸 traceback
+acceptance: 官方政策来源每个 source 的 row_count 和候选抽取必须按 source fail closed：raw payload 写入后若解析异常，生成 `official_policy_sources_YYYY-MM-DD.md` 和结构化错误，不丢失 checksum/source_id/诊断上下文；OFAC XML row_count 不使用易产生不可审计 traceback 的 generator 路径；`score-daily` 可在正常 OFAC payload 下完成官方来源抓取，异常 parser fixture 返回 FAIL 报告而不是裸崩溃；目标测试和真实 `aits ops daily-run` 通过或报告新的真实门禁原因
+notes: '2026-05-29: 新增并进入 IN_PROGRESS，原因：自动化 daily-run as-of 2026-05-28 在 `score_daily` 的 `official_policy_sources._row_count(..., parser_kind=''ofac_xml'')` 阶段裸 traceback，导致日报、alerts、evidence dashboard、decision snapshot、ops health 和 secret scan 均未生成。2026-05-29: 从 IN_PROGRESS 改为 VALIDATING，原因：official policy parser 修复通过目标测试/ruff/black/diff check，真实 `aits ops daily-run` as-of 2026-05-28 中 `score_daily` PASS。2026-06-07: 从 VALIDATING 改为 DONE，原因：官方政策来源 parser fail-closed 修复已有目标测试与真实 daily-run 23/23 PASS 证据，后续最新生产 daily-run 也稳定越过 `score_daily` 官方来源抓取链路，未再出现 OFAC XML row count 裸 traceback。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-015
+area: PIT/原始快照不可变性
+priority: P0
+status: DONE
+next_owner: 系统实现
+next_step: 详细拆解见 `docs/requirements/pit_raw_payload_immutability_2026-05-09.md`；已修复 `valuation fetch-fmp` 同日多次运行覆盖 `fmp_analyst_estimates` raw JSON，导致 PIT manifest checksum mismatch 的问题
+acceptance: PIT manifest 指向的 raw payload 不得被后续日常步骤覆盖；同一 ticker 同一 captured date 多次运行必须写入不同 analyst-estimates raw 文件，文件名含下载时间或 checksum；`aits ops daily-run` 的 pipeline health 不再因同日 valuation rerun 产生 PIT checksum mismatch；测试覆盖同日多次写入不覆盖和 CLI raw path 变更
+notes: '2026-05-09: 新增并进入实现，原因：验证 `DATA-014` 后真实 `daily-run` 已通过 score_daily，但 pipeline_health 失败，报 6 条 PIT raw payload checksum mismatch；根因是 valuation 前置步骤覆盖了 PIT manifest 之前记录的同日 analyst-estimates raw 文件。2026-05-09: 从 IN_PROGRESS 改为 DONE，原因：analyst-estimates raw 文件名新增 downloaded_at UTC token 与 checksum 前缀，loader 继续兼容旧 glob；真实 `aits ops daily-run` 9/9 步 PASS，pipeline health PASS，secret scan PASS；目标测试 53 passed，Ruff 通过。2026-05-10: 归档时将原登记 ID 从 `DATA-013` 修正为 `DATA-015`，原因：`DATA-013` 已被早期 SEC 日报指标缓存任务占用，避免 completed register 出现重复 ID。'

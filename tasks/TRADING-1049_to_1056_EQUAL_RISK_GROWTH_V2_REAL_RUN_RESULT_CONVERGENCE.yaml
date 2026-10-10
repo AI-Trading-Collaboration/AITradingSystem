@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1049_to_1056_EQUAL_RISK_GROWTH_V2_REAL_RUN_RESULT_CONVERGENCE
+area: Research strategies / equal-risk forward-aging and controlled growth v2 real-run convergence
+priority: P1
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 8 个 `aits research strategies ...` CLI/artifacts：real CLI suite summary、equal-risk live health summary、controlled growth v2 candidate summary、beta-adjusted edge review、period/drawdown/cost triage、growth final gate、dual-track owner decision pack、roadmap v2 real-result master review；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report registry、artifact catalog、system flow、requirements 文档、focused pytest、Layer-1/Layer-2 regression pytest、Ruff、compileall 和 `git diff --check` 通过
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-1049～1056；范围仅为 research-only 真实运行结果收敛和 owner 决策包，不改变 production config 或正式 Reader Brief 交易内容。2026-06-26: 实现完成并转入 VALIDATING；验证通过 Ruff、compileall、focused equal-risk/growth pytest、Layer-1/Layer-2 readiness regression pytest、report/task/documentation pytest 和 `git diff --check`。'

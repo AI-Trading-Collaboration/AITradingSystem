@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2438M1D2_GROWTH_TILT_BASELINE_CONTRACT_ADAPTERS_AND_READINESS
+area: Strategy research / governed baseline adapters and readiness
+priority: P0
+status: DONE
+next_owner: 项目 owner如要解除 blocker需另开 governed baseline contract任务；不得直接修改本归档结论
+next_step: 承接 M1D1A；四个 versioned existing-behavior adapters覆盖 hard-veto aggregate、current/requested/applied transition trace、native scalar binding、recovery semantic/PIT lineage。禁止 raw indicator/name inference、QQQ/TQQQ substitution、默认阈值、baseline/candidate behavior或 replay。
+acceptance: 真实 strict status=`GROWTH_TILT_BASELINE_CONTRACT_ADAPTERS_READY_WITH_BLOCKERS`、implemented/ready/blocked=`4/0/4`；hard-veto unresolved BLOCKED-not-false，transition不做相邻行/same-step推断，native scalar exact blocked，recovery=`UNSCALED_SCORE`且无 trigger；M2=0。
+notes: '2026-07-10: 实现、真实 run与归档完成。验证：focused 22、combined chain 144、fast-unit 198、contract-validation 197、report-validation 55及治理检查全部 PASS。'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
+area: Architecture / validation runtime、immutable fixture reuse与memory-aware parallelism
+priority: P1
+status: DEFERRED
+next_owner: Validation performance coordinator：等待新自然Full/调用级证据；只登记能直接减少producer DAG或形成有界immutable authority且预期跨越20%与30秒的新候选
+next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md` 与 `docs/requirements/ARCH-004G2_Paper_Shadow_Weekly_Immutable_Validation_Authority_Candidate.md`。v24自然Full与opt-in telemetry已稳定；Smoothed closure和Paper Shadow Weekly session-lifetime候选均已拒绝。
+acceptance: Paper Shadow Weekly候选=`REJECTED_THRESHOLD_MISS`：baseline=`299.34s`，无重型并发After-A/B=`268.69/372.41s`；较快样本只改善`30.65s/10.24%`，较慢样本高于冻结上限`239.472s`。目标test已byte-exact恢复，current/base blob均为`6092152071797758d7413cc3d19bd5ebeac4126b`；不得重开同类scope-lifetime微优化。
+notes: 2026-07-27：与外部Full重叠的`542.51s`样本固定排除；有效After JUnit SHA-256=`a4cea28c5ad9ea9f11a8f78e91b57c306eeb4446b95816728e65e201a0b8a61a`/`aa3ebf1175ebbf5e5c4e62ec7a20d7fd2bc91476a883939af6eaca37161a8ba6`。候选拒绝且production未改，任务保持`IN_PROGRESS`；`stable_full_improvement_claimed=false`、`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。

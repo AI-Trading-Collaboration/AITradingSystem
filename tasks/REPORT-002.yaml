@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: REPORT-002
+area: 报告/执行解释
+priority: P1
+status: DONE
+next_owner: 系统实现
+next_step: 设计并实现日报/最终报告的变化原因树和“什么情况会改变判断”章节；详细拆解见 `docs/requirements/decision_support_improvements_2026-05-04.md#report-002`
+acceptance: 报告明确展示本期仓位区间变化、分模块分数变化、thesis/风险事件状态、最终动作约束和加/减仓触发条件；能区分市场短期波动、thesis 承压、thesis 证伪、估值过高但基本面未坏、基本面恶化；实现时同步更新 `docs/system_flow.md` 并补充报告快照或文本测试
+notes: '2026-05-04: 已完成首版实现，`scores_daily.csv` overall 行保存模型/最终/置信度调整仓位区间，日报新增变化原因树、分模块分数变化、最终动作约束和判断改变条件；来自 2026-05-04 报告解释优化讨论；与 `REPORT-001`、`SCORE-002`、`THESIS-001` 协同'

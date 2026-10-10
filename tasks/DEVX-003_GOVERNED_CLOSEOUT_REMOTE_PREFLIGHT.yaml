@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-003_GOVERNED_CLOSEOUT_REMOTE_PREFLIGHT
+area: Developer experience / local-main closeout remote preflight consistency
+priority: P0
+status: BASELINE_DONE
+next_owner: engineering line：回到DATA-GOV-002 Phase C typed attribution主线；后续新closeout边界另建follow-up
+next_step: 详见 `docs/requirements/DEVX-003_Governed_Closeout_Remote_Preflight.md`。实现覆盖clean main、remote equal/ancestor正例与non-main、worker、dirty、missing remote、remote ahead、wrong stage负例；canonical/installed 5文件byte-identical；真实local-main remote closeout已PASS。
+acceptance: 允许coordinator在clean local main运行只读`CLOSEOUT --remote-action`；阻断missing remote、origin-only>0、non-main、worker role、missing remote-action与dirty checkout；不自动fetch/push/merge/rebase/PR/history rewrite/force-push；canonical/installed parity、focused/formal/Full和本任务真实remote closeout PASS。
+notes: 2026-07-26：candidate `69ef2555c`已ff到local main；installed `SINGLE_LANE/coordinator/CLOSEOUT/--remote-action`在`local_only=1`、`origin_only=0`、clean checkout下PASS，无blocker/warning；此前focused 25、compatibility 64、architecture 672、contract 275、reproducibility 23、Full 7365/3 skipped/643 warnings均PASS。状态转`BASELINE_DONE`，最终普通push与双SHA复核由标准closeout执行。`production_effect=none`、`broker_action=none`。

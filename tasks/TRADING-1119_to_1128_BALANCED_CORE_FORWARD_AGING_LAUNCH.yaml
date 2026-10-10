@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1119_to_1128_BALANCED_CORE_FORWARD_AGING_LAUNCH
+area: Research strategies / balanced core forward-aging launch and dual comparator panel
+priority: P1
+status: DEFERRED
+next_owner: Project Owner（pi 迁移后重启对应研究线时）
+next_step: 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待 forward/shadow 样本自然成熟，30 天以上无新证据。退出条件：迁移 pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007 需求文档
+acceptance: 新增 10 个 `aits research strategies ...` CLI/artifacts：balanced-core-watchlist-activation-contract、balanced-core-definition-lock、balanced-core-forward-aging-dry-run、balanced-core-first-observation-write、balanced-core-idempotency-duplicate-guard、balanced-core-maturity-scoreboard-safety-gate、dual-forward-aging-comparator-panel、dual-forward-aging-reader-brief-safe-preview、balanced-core-owner-launch-pack、dual-forward-aging-master-review；首条 balanced-core research-only observation append-only 写入并具备 duplicate guard；dual panel 可对照 equal-risk / balanced-core / 100 QQQ / static references；scoreboard 样本不足时保持 pending/insufficient；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report registry、artifact catalog、system flow、focused pytest、Ruff、compileall 和 `git diff --check` 通过
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：DEFERRED_AWAITING_FORWARD_SAMPLES；agent_harness=claude_code；原备注：2026-06-26: 新增并进入 IN_PROGRESS，原因：owner 在 1110～1118 focused diagnosis 后要求正式启动 balanced core research-only forward-aging watchlist、写入第一条 observation，并建立与 defensive primary `equal_risk_qqq_sgov` 和 hard benchmark `100_qqq` 的双轨对照观察体系。2026-06-26: 实现完成并转入 VALIDATING；测试缓存下 launch 状态链为 activation ready、definition locked、dry-run pass、first observation written、duplicate guard pass、scoreboard insufficient、dual panel pending、Reader Brief safe、owner recommendation `BALANCED_CORE_FORWARD_AGING_LAUNCHED`、master status `DUAL_FORWARD_AGING_ACTIVE_RESEARCH_ONLY`；安全边界保持 no paper-shadow / no production / no broker。'

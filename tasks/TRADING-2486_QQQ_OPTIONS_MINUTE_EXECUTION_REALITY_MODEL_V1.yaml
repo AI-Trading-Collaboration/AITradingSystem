@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2486_QQQ_OPTIONS_MINUTE_EXECUTION_REALITY_MODEL_V1
+area: Execution simulation / minute quote chronology, fill and slippage
+priority: P1
+status: BASELINE_DONE
+next_owner: project owner：审核 latency/slippage/fee/quote age/marketable-limit buffer/partial-fill/cancel timeout policy；TRADING-2487 owner：只可消费 2486 sealed execution events，不得激活 blocked policy
+next_step: 详见 `docs/requirements/TRADING-2486_QQQ_Options_Minute_Execution_Reality_Model_V1.md`。offline next-independent-minute intent、bid/ask-side marketable-limit、partial/reject/cancel、canonical 2482 execution DQ replay 与 deterministic result 已完成；禁止 daily-close/same-bar，不激活 2485 blocked selection。
+acceptance: event chronology、limit bounds、canonical DQ facts、stale/missing quote/no-fill、partial replay、fee/slippage/fill identity unit/property/golden PASS；default unauthorized 与 selection-blocked typed cash-preservation；system flow/generated/final formal PASS；工程退出=`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY_POLICY_BLOCKED`，完整退出=`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY` 仍 blocked。
+notes: 2026-08-02：policy SHA=`8c8823dd...226a`，module SHA=`e2f50a6f...3feb`；focused=`26`、2481–2486 adjacent=`164` PASS，Ruff/mypy/compileall、DevEx/task shadow PASS。全部 execution 数值仍 `UNKNOWN_REQUIRES_POLICY_REVIEW`；zero slippage 仅 isolation sensitivity；formal final-tree 待收口，external action=none。

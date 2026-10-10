@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: SHADOW-001
+area: 模型评估/在线 PIT prediction ledger
+priority: P1
+status: BASELINE_DONE
+next_owner: 系统实现
+next_step: 已新增 append-only `prediction_ledger.csv` schema、`score-daily` production 写入和 `aits feedback calibrate-predictions` outcome 报告；剩余缺口是把 `EXPERIMENT-001` challenger/shadow 候选自动接入同一 ledger，并让周/月复盘读取 production vs challenger 表现；详细拆解见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#shadow-001在线-pit-prediction--shadow-ledger`
+acceptance: 每个 production/challenger prediction 都能追溯到当时可见的数据快照、特征版本、规则版本和质量状态；challenger 行 `production_effect=none`，不得改变正式评分、仓位闸门或日报动作；outcome 追加后不能改写 signal-time 字段；周报/月报能区分 production 真实判断和 challenger shadow 表现；实现时同步更新 `docs/system_flow.md` 并补充 append-only、future outcome isolation 和 challenger isolation 测试
+notes: '2026-05-05: 新增任务，原因：历史 PIT 不完整时，在线真实 prediction log 是后续模型迭代和晋级最可靠的 PIT 样本；现有 `decision_snapshot` 只覆盖 production 判断，不足以比较多个 challenger。2026-05-05: 从 READY 改为 BASELINE_DONE，原因：生产日报写入 prediction ledger，prediction outcome 校准命令和报告已实现，测试覆盖 append-only、shadow isolation 和 outcome 分桶；完整 DONE 仍需 challenger 自动接入和周期复盘展示。'

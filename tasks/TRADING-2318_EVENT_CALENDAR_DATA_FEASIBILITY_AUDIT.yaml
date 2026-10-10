@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2318_EVENT_CALENDAR_DATA_FEASIBILITY_AUDIT
+area: Research trends / event calendar gating feasibility
+priority: P2
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 形成 event calendar data feasibility audit、PIT source inventory、gating use cases、manual review trigger contract 和 no-promotion safety gates；真实 run status=`EVENT_CALENDAR_FEASIBILITY_AUDIT_READY_SOURCE_AUDIT_ONLY`，data_quality_status=`NOT_APPLICABLE_STATIC_FEASIBILITY_AUDIT`，event_source_count=8，source_audit_required_count=8，pit_ready_source_count=0，source_blocked_count=4，gating_use_case_count=4，validation_route_row_count=12；不得预测 event outcome，不得直接生成 return predictor、event gating signal、no-add runtime、manual-review runtime、post-event confirmation runtime 或 broker action。
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01: 根据 owner 附件登记；2026-07-01: 迁移到 owner roadmap 的 TRADING-2318。2026-07-01: 新增需求文档并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入 VALIDATING；验证通过 Ruff、compileall、event focused parallel pytest 7 passed、adjacent focused 26 passed、docs/registry focused 27 passed、真实 CLI run、`contract-validation` 193 passed；本命令不读取 cached market / macro data，因此不运行 `aits validate-data` 作为门禁。'

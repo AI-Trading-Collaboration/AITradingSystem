@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_V1
+area: QA / synthetic fixtures, golden outputs and cloud smoke checklist
+priority: P1
+status: BASELINE_DONE
+next_owner: project owner + 2492 pilot coordinator：2491 offline harness 已冻结；2492 external pilot/Owner token 与任何 pilot 数值仍未授权
+next_step: 详见 `docs/requirements/TRADING-2491_QQQ_Options_Cross_Layer_Validation_Harness_V1.md`。已建立 policy-bound ten-scenario corpus、tracked golden manifest、sealed observation/report 与 blocked cloud smoke checklist；只消费 2481–2490 public/canonical authority，不重定义 schema/policy/DQ/PIT。
+acceptance: valid/stale/crossed/missing quote、no-contract、partial/reject/insufficient cash、ITM expiry/corporate action exact fixtures；schema/module/policy drift fail closed；focused 39 与 2480–2491 adjacent 320 已 PASS，static/generated/current-authority 与 final formal evidence 须 PASS；退出=`QQQ_OPTIONS_VALIDATION_HARNESS_READY`。
+notes: 2026-08-03：offline baseline 已实现，默认 checklist=`BLOCKED_OWNER_AUTHORIZATION`；外部 QuantConnect/cloud/API/CLI/HTTP/raw export/paper/live/broker/production 动作均 none。

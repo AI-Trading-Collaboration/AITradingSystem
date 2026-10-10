@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-805_to_809_HORIZON_SELECTOR_CONTROLLED_RESEARCH
+area: Controlled strategy research / horizon selector contract, long-horizon quarantine/fallback, controlled prototype, cost-aware hysteresis, holdout review
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 CLI：`aits research strategies horizon-selector-problem-contract`、`long-horizon-quarantine-fallback-review`、`horizon-selector-controlled-prototype`、`cost-aware-horizon-hysteresis` 和 `horizon-selector-holdout-review`；TRADING-805 必须定义 candidate horizons、horizon status、selector output、review_interval 与 invalidation_condition，且说明 target_horizon 不是持有期承诺；TRADING-806 必须对比 baseline/disable 60d/disable 20d60d/confirmation/fallback 5d10d/fallback benchmark 并输出收益、尾损、beat retention、turnover/cost/drawdown、holdout pass rate；TRADING-807 必须输出 horizon_decision_by_date、horizon_confidence、quarantined_horizon_count、fallback_count、tail_loss_after_selector、cost_after_selector；TRADING-808 必须输出 horizon_switch_count、action_flip_count、turnover_delta、cost_delta、utility_lost_to_hysteresis、tail_loss_reduction；TRADING-809 必须做 leave-one-regime/horizon/asset-cluster/date-window-out，决策只能为 `CONTINUE
+notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST

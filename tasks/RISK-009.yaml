@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: RISK-009
+area: 风险事件/生命周期与去重
+priority: P1
+status: BASELINE_DONE
+next_owner: 系统设计 + 系统实现 + 项目 owner
+next_step: 已完成第一阶段风险事件 lifecycle/dedup schema 与过期防护：occurrence 支持 `lifecycle_state`、`dedup_group`、`primary_channel`、`used_in_alpha`、`used_in_gate`、`decay_half_life_days`、`expiry_time`、`resolution_reason`；详细拆解见 `docs/requirements/scoring_architecture_refactor_2026-05-06.md#risk-009风险事件生命周期衰减和去重`
+acceptance: 风险事件支持 extracted、pending_review、confirmed_low、confirmed_medium、confirmed_high、confirmed_thesis_break、resolved、expired、rejected 等状态；事件记录包含 dedup_group、primary_channel、used_in_alpha、used_in_gate、decay_half_life、expiry_time、next_review_due 和 resolution_reason；回测按 signal_date 只读取当时未过期、已复核且来源合格的事件状态；完整 DONE 仍需按事件类型配置默认半衰期、自动归并建议和 owner 复核运行纪律
+notes: '2026-05-06: 新增任务，原因：消息面风险不适合线性相加；现有 LLM 隔离和人工复核边界已经具备，但还缺事件生命周期、衰减、过期和重复新闻归并机制。2026-05-06: 从 PROPOSED 改为 BASELINE_DONE，原因：新增生命周期/去重字段、review report/snapshot 审计、`expiry_time` 过期 active/watch 记录不进入自动评分或仓位闸门；仍未实现自动衰减或自动 dedup。'

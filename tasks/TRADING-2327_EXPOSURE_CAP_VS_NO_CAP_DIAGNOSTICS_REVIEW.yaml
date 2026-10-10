@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2327_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+area: Research trends / exposure-cap diagnostics review
+priority: P0
+status: DONE
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 详见 `docs/requirements/TRADING-2327_Exposure_Cap_vs_No_Cap_Diagnostics_Review.md`；承接 TRADING-2326 static ETF baseline source-bound dry-run outputs。本批只读取 prior validated dry-run artifacts，不重新执行 simulation、不重新读取 cached market data、不修改 policy / baseline；必须 fail-closed 校验 2326 / 2325 / 2324 / 2323 artifacts、data-quality report、interpretation boundary 和 safety fields。
+acceptance: 新增 `aits research trends exposure-cap-vs-no-cap-diagnostics-review`；生成 cap-binding、exposure-reduction、return / drawdown、turnover / cooldown、false-cost / missed-upside、downside-protection、period attribution、policy sensitivity、dynamic baseline readiness、decision matrix、2328 route、diagnostics boundary 和 research docs；所有 outputs 固定 promotion/paper-shadow/production/broker false/none。
+notes: '2026-07-02: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-02: 实现完成并进入 VALIDATING；真实 run status=`EXPOSURE_CAP_DIAGNOSTICS_REVIEW_READY_PROMOTION_BLOCKED`，data_quality_status=`PASS_WITH_WARNINGS`，cap_binding_rate=`0.441618`，return_proxy_delta=`-0.174103`，drawdown_proxy_delta=`0.06548`，overall_recommendation=`MOVE_TO_DYNAMIC_TARGET_BASELINE_PREPARATION`，next_task=`TRADING-2328_Dynamic_Target_Baseline_Preparation`；验证通过 focused pytest、Ruff、compileall、docs / contract / task-register gates、contract-validation 和 full validation。 2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'

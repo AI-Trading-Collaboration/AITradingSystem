@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-281_to_285_SMOOTHED_DATA_REFRESH_EXECUTION_AND_SCHEDULED_RETRY_OPERATIONS
+area: ETF portfolio/dynamic v3 rescue smoothed data refresh execution and scheduled retry operations
+priority: P0
+status: BASELINE_DONE
+next_owner: research/operations data owner：提供真实provider/network/credentials并刷新2026-06-20后数据；architecture coordinator继续剩余G2.4 slices
+next_step: 详细拆解见 `docs/requirements/TRADING-281_to_285_Smoothed_Data_Refresh_Execution_and_Scheduled_Retry_Operations.md`；G2.4CU已完成受控source refresh execution、post-refresh validation、retry resume、sample growth dashboard和owner data readiness status pack的canonical迁移与硬化；真实外部refresh依赖provider credentials/network availability，缺失时继续记录blocker，不得伪造fresh cache或绕过`aits validate-data`
+acceptance: 16 callbacks/15业务入口迁独立canonical interface/domain；五类bounded v2 input snapshots；source refresh验证exact plan并冻结显式execute授权、before/after commitments且validator不重放provider副作用；post/retry/growth/readiness要求exact lineage和child validator PASS；blocked不得生成下游child；validators live replay可重验sources并逐byte重建全部JSON/Markdown/Reader Brief；CLI parity、manifests/deprecation/source hashes及focused/architecture/contract/full闭合；单slice完成仍为`COMPLETE_G2_4_CONTINUES`，不触发handoff、不进入G2.5，`production_effect=none`。
+notes: '2026-06-14 baseline实现和真实provider blocker记录保留。2026-07-15: G2.4CU=`COMPLETE_G2_4_CONTINUES`；focused/architecture/contract/full=`123/282/203/6,023 passed`，full=`1,939.34s`；generated=`928/1,125/858/0`，CLI parity不变；等待真实provider与更新数据复验。'

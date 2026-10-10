@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-018B1
+area: 交易执行/Daily Shadow Weight Iteration Multi-day Observation
+priority: P0
+status: DEFERRED
+next_owner: 外部条件 / Project Owner
+next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider catalog）出现时重开
+acceptance: 连续观察 3～7 个已完成美股交易日或等价手动样本，记录 `decision`、`decision_reason`、missing artifacts、scheduler safety status、confidence、delta、history/current 是否更新；缺输入必须保持 `INSUFFICIENT_DATA` 且不更新 existing current，scheduler safety 非 PASS 必须 `SAFETY_BLOCKED`，信号不足必须 `NO_UPDATE`，只有真实输入完整且 gate 达标才允许 `UPDATE`；所有输出固定 `mode=shadow_only`、`production_effect=none`、`manual_review_only=true`，不得写 production/approved profile、不得调用 broker/replay/交易、不得改变 dashboard 主结论；完成后补充 requirement/review 证据并归档
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-018B builder/CLI/policy/dashboard/runbook 和测试已通过，本轮 isolated smoke 仅证明缺输入 fail-closed 和首次 shadow current 初始化；当前缺真实 015/016/017/018/018A artifact 下的多日 UPDATE/NO_UPDATE/SAFETY_BLOCKED 样本，不应把运行期观察并入 baseline 完成。'

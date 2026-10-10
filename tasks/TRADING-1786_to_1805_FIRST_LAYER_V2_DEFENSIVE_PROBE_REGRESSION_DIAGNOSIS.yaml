@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1786_to_1805_FIRST_LAYER_V2_DEFENSIVE_PROBE_REGRESSION_DIAGNOSIS
+area: Research trends / first-layer v2 defensive probe regression diagnosis
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 coverage rebuild reclassification、defensive regression inventory、probe-role group comparison、2022 defensive regression slice、signal error attribution、policy variant stability review、return-seeking diagnostic reclassification、risk-off-only fallback assessment、decision matrix、owner brief、closeout/final matrix、report registry、artifact catalog、system flow 和 guardrail tests；真实 run 确认 coverage-pass variants 的回归集中在 `defensive_overlay_probe`、`drawdown_control_probe`，并在 252d 中连带 `balanced_dynamic_probe`；pure return-seeking 与 risk-on diagnostic 只支持 diagnostic-only；risk-off-only fallback 不支持；所有 artifacts 继续 research-only，owner review=false，promotion/paper-shadow/production/broker blocked/false/false/none
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28: 新增并进入 IN_PROGRESS，原因：TRADING-1766～1785 已修复 coverage 但 coverage-aware actual-path selection 失败，primary failure=`DEFENSIVE_PROBE_REGRESSION`；本批先诊断来源并固定降级边界。2026-06-28: 实现完成并转入 VALIDATING；`aits research trends first-layer-defensive-regression-diagnosis` 真实生成 final_status=`FIRST_LAYER_V2_RETURN_SEEKING_DIAGNOSTIC_ONLY`，final_diagnosis=`RETURN_SEEKING_ONLY_DIAGNOSTIC`，signal attribution primary=`DEFENSIVE_REGRESSION_DUE_TO_FALSE_ADD_RISK`，安全边界仍为 false/blocked/false/false/none。'

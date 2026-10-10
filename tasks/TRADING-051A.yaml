@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-051A
+area: 回测输入/Ablation Validation & Signal Contribution Diagnostics
+priority: P1
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/signal_ablation_diagnostics_2026-05-30.md`；signal usage、score impact、portfolio impact、threshold diagnostics、classification reason、debug/explain CLI、Dashboard 和 Reader Brief no-credit reason 已完成；该诊断已支撑 TRADING-052 进入 signal calibration
+acceptance: 每个 signal contribution 输出 `diagnostic_status`、`classification_reason`、`signal_usage_diagnostics`、`score_impact`、`portfolio_impact` 和 `threshold_diagnostics`；`aits signals explain-ablation --latest` 输出诊断链路；`validate-ablation` 显示 diagnostics present、real signals used in score、classification reasons present；不修改 production 参数、不解除 candidate promotion
+notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-051 真实结果为 `promotion_credit_signals=0`，需要解释原因。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：真实 2026-05-28 ablation 已确认 real signals used in score、ablation changed scores 和 portfolio，主要原因为 real signal contributions below threshold。2026-06-09: 从 VALIDATING 改为 DONE，原因：`signals explain-ablation --latest` 可输出 snapshot -> score -> portfolio -> metrics -> classification 诊断链路，`trend_momentum` 与 `sector_strength` 仍为 `BELOW_THRESHOLD` 而非接线缺失；后续 TRADING-052/053/054 已完成下一阶段判断；验证通过 focused pytest 54 passed、shadow backtest dry-run、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'

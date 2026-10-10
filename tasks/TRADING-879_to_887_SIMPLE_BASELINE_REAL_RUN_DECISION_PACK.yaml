@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-879_to_887_SIMPLE_BASELINE_REAL_RUN_DECISION_PACK
+area: Research strategies / QQQ-TQQQ-SGOV simple baseline real-run candidate decision pack
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 输出 `simple_baseline_pr_readiness_summary`、`simple_baseline_real_run_summary`、`simple_baseline_top_candidate_extraction_report`、`simple_baseline_dominance_explanation`、`simple_baseline_drawdown_episode_replay`、`simple_baseline_exposure_decomposition_report`、`simple_baseline_parameter_robustness_top_candidates`、`simple_baseline_owner_decision_pack`、`simple_baseline_paper_shadow_watchlist` JSON/Markdown；所有数据依赖结果必须通过 `validate_data_cache` 同源 gate 或显式 BLOCKED；候选字段、dominance 原因、关键回撤段、收益来源、鲁棒性、owner 8 个问题和 watchlist safety fields 均可审计
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-23: 新增并进入 IN_PROGRESS，原因：owner 要求从 c57cb082 的 14 个 CLI 实现转向真实运行、候选收敛和人工决策；TRADING-879 已确认当前分支为 `codex/simple-baseline-portfolio-control`、HEAD=`c57cb082`、本地 commit 存在、工作区 clean，并已 push 到 `origin/codex/simple-baseline-portfolio-control`。2026-06-23: 转入 VALIDATING；初次 simple-baseline gate 因主价格缓存缺 TQQQ fail-closed，随后通过既有 FMP price repair/manifest 路径补入 TQQQ 1008 行并重跑 `validate-data`，状态 `PASS_WITH_WARNINGS`/0 errors；865～878 真实 CLI 全部执行，ranking=`BASELINE_RANKING_READY`，top recommended=`equal_risk_qqq_sgov`，readiness=`PAPER_SHADOW_REVIEWABLE_LATER` 但 safety fields 仍 false/none，master=`PAUSE_TQQQ_HEAVY`，options=`OPTIONS_RESEARCH_BLOCKED`；881～887 artifacts 已生成，watchlist 5 个候选且全部 no activation。'

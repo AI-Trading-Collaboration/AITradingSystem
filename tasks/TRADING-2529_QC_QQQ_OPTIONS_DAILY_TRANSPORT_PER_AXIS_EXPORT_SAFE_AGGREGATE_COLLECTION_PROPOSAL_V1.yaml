@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2529_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_EXPORT_SAFE_AGGREGATE_COLLECTION_PROPOSAL_V1
+area: QQQ Options daily transport per-axis export-safe aggregate collection proposal
+priority: P0
+status: BASELINE_DONE
+next_owner: Project Owner：ordinary-pushed exact package 后复核 hashes 与一次性 token；真实 admission/Cloud/Results/evidence 必须另立 governed 后继任务。
+next_step: Proposal ready / Owner final token pending。当前 external_action=none；未授权 Cloud、raw rows、交易、订单、API/CLI/HTTP、browser 或其他外部动作。
+acceptance: Exact 5-file package、8轴×4状态 session/count aggregates、zero-order candidate code、strict replay/negative tests、generated/compatibility/formal PASS；manifest file SHA-256=856d3fda6b5ffb6ac4d5bd56886d03c4a62868498d63fc9ae0a27a079b2f6d33。
+notes: '[supporting requirement](docs/requirements/TRADING-2529_QC_QQQ_Options_Daily_Transport_Per_Axis_Export_Safe_Aggregate_Collection_Proposal_V1.md)；2529 proposal package ready，Owner final token pending，external_action=none。'

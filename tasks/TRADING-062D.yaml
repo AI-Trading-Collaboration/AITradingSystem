@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-062D
+area: ETF P2/options IV-VXN-skew source normalizer
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已把 owner/vendor 本地审计 options CSV 接入 canonical `options_iv_skew.csv` normalizer，继续保持 observe-only
+acceptance: '`aits etf p2 normalize-options-risk` 只接受本地审计 CSV/Parquet，不下载未批准 provider；必须规范化 symbol、as_of、available_at、iv_rank、skew_zscore、vxn_level、source_provider、source URL、downloaded_at、row checksum 和 source manifest；缺列或无有效值 fail closed；risk flag 只能使用输入列或 `p2.yaml` 中 IV rank 阈值派生；不得写正式权重、不得改变信号、不得调用 broker；测试覆盖列名别名、percent IV rank、VXN/skew numeric summary、manifest 和 source contract'
+notes: '2026-05-31: 新增并从 IN_PROGRESS 改为 DONE，原因：新增 `normalize_options_risk_source`、`aits etf p2 normalize-options-risk`、fixture CSV 和测试；fixture smoke 在 `artifacts/etf_portfolio/p2_options_normalize_smoke/` 输出 NORMALIZED 与 `options-risk` `PASS_WITH_LIMITATIONS`，固定 `production_effect=none`。'

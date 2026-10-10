@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2542A_GROWTH_ACTION_VALUE_EXACT_MEASUREMENT_AND_JOINT_DECISION_CONTRACT_V1
+area: Strategy governance / growth action-value exact measurement and joint decision contract V1
+priority: P0
+status: DEFERRED
+next_owner: Project Owner（pi 迁移后）
+next_step: 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移 pi 后重启 growth action-value / QQQ options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
+acceptance: Preserve V1/V2/comparator identities; require complete V2 owner review plus reviewed TRADING-2542B DQ authority before freeze; keep all DQ/provider/cache/backtest/empirical/external/trading action closed.
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第3/4条：DEFERRED；agent_harness=claude_code；原备注：Parent requirement: docs/requirements/TRADING-2542A_Growth_Action_Value_Exact_Measurement_And_Joint_Decision_Contract_V1.md. DQ successor requirement: docs/requirements/TRADING-2542B_Growth_Action_Value_Canonical_DQ_PIT_Serial_Contract_V1.md. 2542B draft separates semantic validity from numeric authority; real evidence cannot PASS before review.'

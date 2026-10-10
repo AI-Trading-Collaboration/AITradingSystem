@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-403_CRLF_NORMALIZATION_CLEANUP
+area: Docs hygiene / task register line endings
+priority: P3
+status: DONE
+next_owner: 无；保持 task register LF 规范
+next_step: 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；清理 task register docs CRLF/mixed line-ending normalization warning；不得改变 task status 或 governance logic
+acceptance: '`docs/task_register.md` 和 `docs/task_register_completed.md` worktree line endings normalized to LF；现有 `.gitattributes` 已包含 `* text=auto eol=lf` 和 `*.md text diff=markdown`，无需新增规则；`git diff --check` clean'
+notes: '2026-06-17: DONE；该项仅做 hygiene cleanup 和任务迁移记录，没有修改 scoring、governance logic、data flow、report status 或 safety boundary。'

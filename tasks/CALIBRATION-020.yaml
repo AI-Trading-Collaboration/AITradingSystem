@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: CALIBRATION-020
+area: 市场反馈优化/Shadow Parameter Backtest & Promotion Framework
+priority: P1
+status: BASELINE_DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/shadow_parameter_backtest_promotion_framework_2026-05-29.md`；v0.1 observe-only 参数回测与晋升框架已完成，后续剩余工作是更严格 PIT 数据、长期 leaderboard 和人工 promotion workflow
+acceptance: 新增 production 参数 schema、shadow backtest config、promotion rules config、parameter loader/diff、walk-forward 日频回测 skeleton、bounded candidate generator、promotion evaluator、JSON/Markdown report、`aits parameters shadow-backtest`、`aits parameters validate-shadow-backtest`、`aits reports shadow-parameter-backtest`、`aits reports parameter-promotion`、dashboard 只读卡片、Reader Brief 摘要、artifact catalog/system flow/runbook 更新和目标测试；所有输出固定 `production_effect=none`、`manual_review_required=true`、`auto_promotion=false`，不得修改 `config/parameters/production/current.yaml` 或任何 production weights/gates/broker/trading artifact；数据不足或 `aits validate-data` 失败必须输出 `INSUFFICIENT_DATA` / `FAILED` 并拒绝 candidate；2026-05-29 dry-run 样例因本地缓存质量门禁失败输出 `DEGRADED` / rejected，验证了保守拒绝路径
+notes: '2026-05-29: 新增并进入 IN_PROGRESS，原因：owner 提供完整 Shadow Parameter Backtest & Promotion Framework 需求，需要在既有 shadow search/promotion contract 之外补齐 baseline 参数读取、walk-forward 对比、参数变化归因、保守晋升判断和只读报告闭环。2026-05-29: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：已实现 v0.1 schema/config、walk-forward backtest、bounded candidate、promotion evaluator、report/CLI/dashboard/Reader Brief 接线、治理文档和目标测试；验证通过目标 pytest、受影响 dashboard/Reader Brief/CLI dispatcher tests、ruff、black check，并完成 dry-run/validate/report alias smoke。2026-05-30: 从当前任务表归档到 completed，原因：该行已为 BASELINE_DONE，需保持任务登记表只保留仍需推进或验证的任务。'

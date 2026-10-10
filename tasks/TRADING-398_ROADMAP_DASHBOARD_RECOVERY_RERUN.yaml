@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-398_ROADMAP_DASHBOARD_RECOVERY_RERUN
+area: Research governance / roadmap dashboard recovery rerun
+priority: P1
+status: DONE
+next_owner: 项目 owner 复核 roadmap blockers；后续 TRADING-399 明确 decision snapshot lifecycle，extended/live/official/broker/order/production 仍 blocked
+next_step: 详细拆解见 `docs/requirements/TRADING-398_Roadmap_Dashboard_Recovery_Rerun.md`；在 TRADING-391~397 recovery governance reports 后重跑 research roadmap dashboard，支持 `ROADMAP_HEALTHY
+acceptance: ROADMAP_WARNINGS
+notes: 'ROADMAP_BLOCKED`，并保留 legacy `ROADMAP_WITH_WARNINGS` validation compatibility；不得通过 dashboard 修复 blocker|Dashboard 汇总 active blockers、stale/missing artifacts、paper-shadow/data/monthly/promotion/extended/safety/lineage status；extended shadow blocked/not ready 必须保持 roadmap blocker；真实 2026-06-17 rerun 仍 `ROADMAP_BLOCKED`；Reader Brief、README、artifact catalog、operations runbook、system flow、focused tests、ruff、compileall、documentation contract、report index、Reader Brief quality、data quality gate 和 git diff check 通过|2026-06-17: DONE；最终 rerun `outputs/reports/research_roadmap_dashboard_2026-06-17.json/md` 输出 `ROADMAP_BLOCKED`、active_tasks=77、completed_tasks=348、open_blockers=5、stale_artifacts=19、missing_artifacts=20、active_candidates=1、paper_shadow=`HOLD_FOR_MORE_DATA`、data_governance=`PASS_WITH_WARNINGS`、safety=`SAFETY_PASS_WITH_WARNINGS`、lineage=`PASS`、top_next_task=`active_task_blockers`。Blockers: active task blockers、unwaived report-index warnings、extended shadow blocked、promotion board hold、monthly candidate major blockers。Validation `outputs/reports/research_roadmap_dashboard_validation_2026-06-17.json/md` 输出 `PASS_WITH_WARNINGS`、checks=6、failed=0、source_blockers=5、source_warnings=1。该 dashboard 只读汇总，不运行上游、不刷新数据、不修改 task/candidate/paper-shadow/production state、不补造 artifact、不写 official target weights、broker/order 或 production mutation。'

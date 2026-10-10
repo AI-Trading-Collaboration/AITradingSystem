@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: PROD-005
+area: 趋势判断/规则治理 owner approval
+priority: P1
+status: DONE
+next_owner: None / closed by owner decision
+next_step: 2026-09-24 按 owner 决策包第10条批准当前 production rule baseline；promotion/retirement 条件以后另议，届时另开任务
+acceptance: 核心 production rule card 具备 owner approval、适用范围、验证证据、已知失败模式、rollback condition 和最后复核时间；未批准候选规则不得改变正式评分、仓位 gate、日报结论或回测 production 规则；日报、回测、decision snapshot 和 trace 能追溯本次运行使用的规则版本
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第10条：BASELINE_APPROVED；agent_harness=claude_code；原备注：2026-05-06: 从 `PROD-001` 拆出，原因：规则治理工程底座已完成，但真实批准流属于 owner 决策和长期治理，不应让 `PROD-001` 继续保持进行中。'

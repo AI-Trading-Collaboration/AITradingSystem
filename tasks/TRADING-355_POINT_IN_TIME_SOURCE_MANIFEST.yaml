@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-355_POINT_IN_TIME_SOURCE_MANIFEST
+area: Data governance / PIT source manifest
+priority: P0
+status: DONE
+next_owner: 项目 owner 后续复核；代码实现完成
+next_step: 详细拆解见 `docs/requirements/TRADING-355_Point_In_Time_Source_Manifest.md`；建立 source-level point-in-time source manifest contract，用于未来研究数据治理；本任务不修复全部 PIT 数据问题，不改变 `download-data`、`validate-data`、PIT raw snapshot、score、backtest、paper-shadow 或 broker workflow
+acceptance: 新增 `src/ai_trading_system/pit_source_manifest.py`、`aits data-sources pit-manifest report` 和 `aits data-sources pit-manifest validate --latest`；每个 source record 包含 source name、retrieval time、effective date、revision risk、`STRONG_PIT
+notes: 'APPROX_PIT|NON_PIT|UNKNOWN`、cache path、checksum、refresh policy 和 validation policy；输出 JSON/Markdown manifest、validation JSON/Markdown、Reader Brief section、latest pointer；Reader Brief、report registry、artifact catalog、README、operations runbook、system flow、requirements 和 focused tests 同步；固定 `production_effect=none`、不刷新数据、不运行下游管线、不触发 broker|2026-06-16: DONE；真实 artifact `pit_source_manifest_2026-06-16_8fe811d76617ecd9` 生成成功，`status=PASS_WITH_WARNINGS`、`source_count=30`、`STRONG_PIT=10`、`APPROX_PIT=18`、`NON_PIT=1`、`UNKNOWN=1`、`error_count=0`、`warning_count=36`；`validate --latest` 为 PASS_WITH_WARNINGS；focused pytest `tests/test_pit_source_manifest.py` 3 passed，Ruff PASS；warning 为 retrieval/cache/checksum/effective-date 治理调查项，不自动支持 production-grade PIT、backtest conclusion、score change、paper-shadow continuation 或 broker action。'

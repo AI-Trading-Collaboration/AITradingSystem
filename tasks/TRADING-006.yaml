@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-006
+area: 交易执行/paper signal quality evaluation
+priority: P0
+status: BASELINE_DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/paper_signal_quality_evaluation_2026-05-17.md`；只读 paper signal quality evaluation 产物、policy manifest、evaluation gate、聚合分析、dashboard 轻量入口、测试和当前复验证据已完成；真实 daily dashboard 连续观察已拆分到 active `TRADING-006B`，repo-wide formatter baseline 已由 `DEV-001` 归档完成
+acceptance: 新增 `outputs/reports/paper_signal_quality_YYYY-MM-DD.json/md`，只读读取最近 7/14/30 日 paper summary、order intent candidates 和可选 existing replay；报告固定 `market_regime=ai_after_chatgpt`、`production_effect=none`、observe-only；evaluation gate 覆盖样本不足、filled 样本不足、低数据质量、市场数据受限和 execution state 不可靠；按 strategy/symbol/reason/blocked/confidence/source 聚合；dashboard 只读展示 evaluation_status、主要 blocked_by、synthetic_snapshot_ratio、sample_count 和 report link；不得读取 broker API key、调用真实 broker、触发 paper runner/replay、改变 production 仓位建议、影响参数晋级或把 paper PnL 当成上线依据；数据质量门、isolated smoke、目标 pytest、Ruff 和触达文件 Black check 通过
+notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求在既有 paper trading summary、order intent candidates、多日 replay 和 dashboard trend 之上增加只读 signal quality evaluation 层。2026-05-17: 实现完成但保持 IN_PROGRESS，原因：已新增 policy、script、JSON/Markdown 生成器、evaluation gate、六类聚合、dashboard 卡片和文档/测试；全仓 Black 受既有无关 baseline 阻断。2026-06-07: 从 IN_PROGRESS 改为 VALIDATING，原因：已用项目 `.venv` Python 3.11 / Black 26.5.0 对触达 dashboard 文件完成机械格式化，目标测试、Ruff 和触达文件 Black check 通过。2026-06-09: 从 VALIDATING 改为 BASELINE_DONE，原因：本轮先读取 operations runbook 并执行 `aits validate-data`，状态为 `PASS_WITH_WARNINGS` / 错误数 0；isolated 缺输入 smoke 输出 `INSUFFICIENT_DATA`、sample_count 0、candidate_count 0、filled_count 0，字段级复核确认 `market_regime=ai_after_chatgpt`、`production_effect=none`、`observe_only=true`、`PAPER_ONLY_SIMULATION` / `DAILY_INDEPENDENT_ONLY` warning、不调用 broker、不运行 replay、不改变参数晋级；目标 paper signal quality + dashboard pytest 25 passed，Ruff 和触达文件 Black check 通过。'

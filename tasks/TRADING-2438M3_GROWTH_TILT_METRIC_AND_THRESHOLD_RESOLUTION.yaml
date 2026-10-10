@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2438M3_GROWTH_TILT_METRIC_AND_THRESHOLD_RESOLUTION
+area: Strategy research / runtime evidence resolution
+priority: P0
+status: DROPPED
+next_owner: 系统实现；依赖 M2B artifacts
+next_step: 按 versioned shared contract materialize 六项 runtime metrics，并执行预注册 screening policy；PENDING/BLOCKED/FAIL/PASS 语义严格分离。
+acceptance: null/NaN/Inf、missing denominator、empty event set、unit/window/cost mismatch、event_count<5 或 expired policy 均 BLOCKED；完整证据但 threshold fail 才 FAIL；全部 screening threshold pass 才 PASS；PASS 不启用 promotion/paper-shadow/production。
+notes: '2026-07-10: 等待真实 M2 replay outputs。 2026-07-23: GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE 转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'

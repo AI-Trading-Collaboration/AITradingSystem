@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: LLM-005
+area: 新闻/LLM 请求成本调参
+priority: P1
+status: VALIDATING
+next_owner: 项目 owner + 系统验证
+next_step: '`risk_event_daily_official_precheck` 已降档为成本 pilot；下一步由 owner 明天对照 OpenAI 账单观察成本变化，并在下一次日报后复核候选命中质量'
+acceptance: 日报默认 OpenAI profile 从高成本 baseline 降为 `reasoning_effort=medium`、`max_candidates=10`、`official_policy_limit=30`；其他 LLM profile 不变；provider 权限、cache、审计、`store=false` 和 pending_review 边界不变；配置测试、ruff 和 diff check 通过；明日账单/日报预审质量用于决定是否继续降到 6-8 个候选或调整缓存 TTL
+notes: '2026-05-13: 新增并进入 IN_PROGRESS，原因：owner 反馈每日 OpenAI 请求约 5 美元，希望先降低日报默认请求成本并观察明天账单。2026-05-13: 从 IN_PROGRESS 改为 VALIDATING，原因：日报 profile 已改为 `medium`、10 个候选、官方来源 limit 30；README、系统流图、架构说明、数据源说明和配置测试同步；验证通过目标 pytest 55 passed、`ruff check src tests`、`git diff --check` 和 docs freshness。'

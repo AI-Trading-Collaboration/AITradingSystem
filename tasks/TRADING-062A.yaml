@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-062A
+area: ETF P2/EDGAR text topic audit baseline
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已在 TRADING-062 的 EDGAR text cache 之上新增只读 topic audit baseline
+acceptance: '`p2.yaml` 治理 topic keyword set、min text length、candidate-only 和 auto-promotion 边界；`aits etf p2 edgar-topics` 只能读取已缓存 official filing text，输出 topic counts、matched keywords、limitation、policy version 和 `production_effect=none`；不得生成 sentiment、财务结论、权重、交易建议或 broker action；测试覆盖 PIT as-of、缺文本、关键词计数和安全边界'
+notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：TRADING-062 已具备 official filing text cache，但原 P2 文档还要求 EDGAR / 财报文本解释层；本阶段先实现受治理、observe-only 的 topic audit，不接 LLM、不做自动投资解释。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 `edgar_text_analysis` policy、`aits etf p2 edgar-topics`、topic audit builder 和测试；真实 NVDA 10-Q smoke 输出 4 个 topic rows，固定 `candidate_only=true`、`auto_promotion=false`、`production_effect=none`。'

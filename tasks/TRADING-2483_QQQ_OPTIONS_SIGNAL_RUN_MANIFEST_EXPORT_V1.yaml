@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2483_QQQ_OPTIONS_SIGNAL_RUN_MANIFEST_EXPORT_V1
+area: Research integration / immutable daily signal and run package export
+priority: P1
+status: BASELINE_DONE
+next_owner: engineering coordinator：完成 ordinary main push/cleanup；project owner：如需 ETF direction mapping 或 non-primary window，提供独立 reviewed token/policy；TRADING-2484 owner 从 pushed latest main 继承 package contract
+next_step: 详见 `docs/requirements/TRADING-2483_QQQ_Options_Signal_Run_Manifest_Export_V1.md`。已从 pre-normalized `LONG_CALL/LONG_PUT/FLAT` 与 canonical `aits validate-data` execution receipt 生成 immutable `daily_signal`、`run_manifest`、derived receipt 与 policy/code/source/DQ/calendar hashes；不选约、不计算收益、不访问 QuantConnect。剩余缺口是 QC adapter、option-event DQ/PIT、selection/execution/accounting/backtest 与 owner-reviewed ETF mapping/non-primary window authority。
+acceptance: canonical DQ receipt 同路径重验并派生 PASS；primary requested/evaluated start=`2021-02-22`，其他 start 仅 reviewed proxy/sensitivity/stress+D Q caveat；lag=1/no-lookahead、reviewed effective session、exact coverage、canonical replay/tamper/idempotence negatives PASS；更新 system flow；退出=`INTERNAL_QQQ_OPTION_SIGNAL_PACKAGE_READY`。
+notes: 2026-08-02：offline baseline 完成；focused package=`25 passed`，2481/2482 邻接合同合计=`85 passed`，Ruff/mypy/DevEx/task-shadow PASS；正式五级门禁与 ordinary push/cleanup 待完成。`COORD-2483-DQ-WINDOW-V1` 已吸收：自报 PASS+任意 bytes 禁止，`2022-12-01` 非默认；ETF mapping/non-primary authority 均未获批准，external token 未授予，`production_effect=none`、`broker_action=none`。

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2269_NORGATE_PLATINUM_DECISION_WORDING_RECONCILIATION
+area: Norgate trial / owner memo semantics / paid experiment boundary
+priority: P1
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 生成器、真实 JSON/YAML/Markdown artifacts、report registry、artifact catalog、system flow、task register 和 guardrail tests 均改为 split decision fields：`trial_based_purchase_recommendation=no`、`stress_window_paid_experiment_recommendation=conditional_yes`、`owner_decision_required=true`、`purchase_allowed_without_owner_approval=false`、`purchase_allowed=false`；保留 no_incremental_value、weak、full_history_needed 和所有 disabled gates；focused/contract validation 完成
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-28: 根据 owner 附件新增并进入 IN_PROGRESS；本批只做语义 reconciliation，不实现 TRADING-2270～2273，不购买或启用 paid source。2026-06-28: 实现完成并转入 VALIDATING；真实 run 输出 split decision fields，所有 gate 仍 false/none。2026-06-28: 验证通过 Ruff、compileall、64 个 focused tests、diff check、task-register terminal status guard 和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T114156Z/test_runtime_summary.json`。'

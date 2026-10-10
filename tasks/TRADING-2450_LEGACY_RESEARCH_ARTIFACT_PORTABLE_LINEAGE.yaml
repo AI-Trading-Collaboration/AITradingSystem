@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2450_LEGACY_RESEARCH_ARTIFACT_PORTABLE_LINEAGE
+area: Strategy evidence platform / immutable legacy lineage portability
+priority: P0
+status: DONE
+next_owner: archive operator：仅按tracked sidecar安装exact bytes；如policy/source drift则另行review
+next_step: 详见 `docs/requirements/TRADING-2450_Legacy_Research_Artifact_Portable_Lineage.md`；versioned project-relative locator、strict policy、只读resolver、tracked canonical sidecar与R0/R1/R2 explicit opt-in adapters已闭合；未改写legacy bytes、ID或checksum。
+acceptance: 历史worktree缺失时安装同content archive后R0/R1/R2仍PASS；path/locator冲突、缺失、tamper、traversal、policy drift均fail closed；四份canonical artifact byte-identical；R2/TRADING-2449结论不变；formal/full PASS，`production_effect=none`。
+notes: 2026-07-20：sidecar=`portable-lineage_dfa5dfc7208e5913fc75`、4 artifacts/108 sources；真实R0/WF/robustness/R2=`PASS`，focused=33；architecture/contract/reproducibility=`446/265/23 passed`，Full=`6487 passed / 2 skipped / 642 warnings / 1169.47s`。

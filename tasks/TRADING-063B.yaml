@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-063B
+area: ETF 组合可信度/Benchmark Suite Hardening
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/etf_portfolio_credibility_validation_2026-06-01.md`；下一步推进 TRADING-063C No-Lookahead Validation Framework
+acceptance: '`config/etf_portfolio/backtest.yaml` 提供 B001-B008 benchmark registry；B001-B004 为 buy-and-hold SPY/QQQ/SMH/SOXX；B005/B006 为 stable static portfolios；B007 为 QQQ 50/200 moving-average baseline；B008 为 risk-off cash switch baseline；backtest summary / metrics 输出 `benchmark_metrics` 和 `benchmark_comparisons` common schema，包含 strategy-vs-benchmark CAGR、drawdown、Sharpe、Calmar 和 turnover 字段；测试覆盖 registry、buy-and-hold deterministic weights、static weight sum、MA warm-up cash behavior、risk-off signal-date switch 和 schema stability；README、artifact catalog、system flow 同步'
+notes: '2026-06-01: 新增并直接归档为 DONE，原因：完成 TRADING-063B benchmark suite hardening；真实 smoke `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` 生成 summary，其中 `benchmark_metrics` 包含 B001-B008 且 `benchmark_comparisons` 含 required fields；验证通过 `python -m pytest tests -q`（1633 passed, 330 warnings）、`python -m ruff check config src tests scripts docs`、`python -m compileall -q src tests scripts` 和 `git diff --check`。'

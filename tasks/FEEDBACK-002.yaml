@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: FEEDBACK-002
+area: 反馈闭环/评分校准
+priority: P1
+status: DONE
+next_owner: 系统实现
+next_step: 基于 `decision_snapshot` 生成 1D/5D/20D/60D/120D 结果观察和评分校准报告；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#feedback-002`
+acceptance: 输出 `decision_outcomes` 和校准报告，按总分分桶、置信度分桶、gate 状态、thesis 状态、风险等级和估值状态统计未来收益、回撤、波动、胜率和相对 SPY/QQQ/SMH/SOXX 或 AI proxy 的超额收益；报告声明样本数量、市场阶段、数据质量状态和样本不足限制；实现时同步更新 `docs/system_flow.md` 并补充 outcome 计算测试
+notes: '2026-05-04: 已完成首版实现，新增 `aits feedback calibrate`，复用数据质量门禁，从本地 decision snapshot 与 prices_daily 生成 outcome CSV 和中文校准报告；支持总分/置信度/gate/thesis/风险/估值分桶，并明确样本不足、窗口重叠和不得自动修改生产规则。'

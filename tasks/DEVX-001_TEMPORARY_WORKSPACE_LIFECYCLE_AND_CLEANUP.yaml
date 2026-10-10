@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
+area: Developer experience / temporary clone, worktree and cache lifecycle
+priority: P1
+status: DEFERRED
+next_owner: OPS-070 owner负责runtime退出；strategy research owner负责TRADING-2462；后续每个删除候选必须使用v2 target-bound audit重新评估
+next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。2026-07-27迁移TRADING-2458 v4 final evidence并清理8个TRADING-2458/2461历史carrier；两个TRADING-2462含独有实现且v2在审计期间推进checkpoint，必须保留。清理后发现absolute main-script audit实际绑定主checkout，目标tracked diff未被正确审计，事故与不可恢复边界已保留。
+acceptance: TRADING-2458 v4的19个final validation files已逐SHA迁移；8个worktree已删除并prune；DEVX-005进入reviewed main后解除工具前置阻塞，但不自动授权删除；后续清理必须同时证明target tracked/unstaged/staged、untracked、ignored、进程、canonical evidence与恢复边界。
+notes: 2026-07-27：DEVX-005已实现`checkout_worktree_audit.v2`并在真实TRADING-2462 v3 target上PASS，formal Architecture/Contract=`692/275 passed`；本轮没有执行新删除。DEVX仍为`IN_PROGRESS`，等待OPS-070/TRADING-2462独立退出条件，无production或broker effect。

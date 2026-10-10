@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-834_THRESHOLD_SENSITIVITY_ROBUSTNESS_REVIEW
+area: Controlled strategy research / threshold sensitivity robustness review
+priority: P1
+status: VALIDATING
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖 TRADING-828、832；阈值均为审计 policy，不得改 production
+acceptance: 新增 CLI `aits research strategies tail-risk-threshold-sensitivity-review`；覆盖 trigger/cutoff ±5/10%、lookback ±20%、allocation intensity ±10%，输出 sensitivity surface、stability、rank correlation、fragile parameter list
+notes: '2026-06-22: 按附件任务包登记为第二批 P1。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation 190 passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall 和 git diff --check。'

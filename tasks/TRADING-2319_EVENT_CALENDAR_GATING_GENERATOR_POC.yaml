@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2319_EVENT_CALENDAR_GATING_GENERATOR_POC
+area: Research trends / event calendar gating generator
+priority: P2
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 形成 event gating generator summary、inactive signal spec、use-case readiness matrix、source blocker report、manual review contract carry-forward、validation summary、safety boundary 和 research report；所有 outputs 固定 `source_blocked_no_generation=true`、`event_rows_consumed=false`、`gating_signal_generated=false`、`event_gating_signal_series_generated=false`、promotion/paper-shadow/production/broker false/none。
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-07-01: 根据 owner roadmap 和 TRADING-2318 recommended next task 新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入 VALIDATING；真实 run status=`EVENT_CALENDAR_GATING_GENERATOR_POC_SOURCE_BLOCKED_NO_SIGNAL`，data_quality_status=`NOT_APPLICABLE_SOURCE_BLOCKED_STATIC_GENERATOR`，source_pit_ready_source_count=0，source_blocker_count=8，use_case_readiness_count=4，blocked_use_case_count=4，validation_status=`PASS_SOURCE_BLOCKED_EXPECTED`；验证通过 Ruff、compileall、focused 2319 parallel pytest 8 passed、adjacent event/regime focused parallel pytest 21 passed、docs/registry focused parallel pytest 27 passed、真实 CLI run、contract-validation 193 passed 和 `git diff --check`；`aits validate-data` 不适用，因为命令只读取 TRADING-2318 static artifacts、不读取 cached market data 或 event rows。'

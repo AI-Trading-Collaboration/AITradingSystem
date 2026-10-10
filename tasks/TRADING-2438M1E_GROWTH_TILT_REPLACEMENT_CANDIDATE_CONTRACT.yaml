@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2438M1E_GROWTH_TILT_REPLACEMENT_CANDIDATE_CONTRACT
+area: Strategy research / replacement-A approval gate
+priority: P0
+status: DONE
+next_owner: 项目 owner仅在新任务中、所有 prerequisites proven后提供 second approval和 policy provenance
+next_step: 详见 `docs/requirements/TRADING-2438M1D1A_Growth_Tilt_Owner_Decision_Resolution_And_Candidate_A_Reframing_Plan.md`；evidence-only gate固定 `capped_recovery_permission_overlay` 十项 prerequisites。当前任一 prerequisite false即 `KEEP_REDEFINED_BLOCKED`，不生成 APPROVE runtime spec/executor binding、policy metadata或 M2 invocation。
+acceptance: 真实 strict status=`GROWTH_TILT_REPLACEMENT_CANDIDATE_CONTRACT_READY_BLOCKED`、prerequisites=`2 PASS/8 BLOCKED`、approved=0、M2 eligible=0；source/strict errors=0，policy metadata保持空，不调用 replay/runtime metrics或生产路径。
+notes: '2026-07-10: 实现、真实 run与归档完成。验证：focused 14、combined chain 144、fast-unit 198、contract-validation 197、report-validation 55、documentation contract 1356 reports PASS、task-register consistency PASS、Ruff/compileall/diff check PASS。'

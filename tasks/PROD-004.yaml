@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: PROD-004
+area: 趋势判断/PIT 估值样本成熟度
+priority: P1
+status: VALIDATING
+next_owner: 系统验证 + operations release
+next_step: 实现和真实数据只读 smoke 已完成；继续执行 generated authority、architecture/contract/integration/reproducibility/Full 门禁，合格后按默认规则集成发布。active runtime promotion 由后续 reviewed operations release 负责。
+acceptance: 默认累计 coverage 必须校验 legacy + daily capture raw 并输出 B/A readiness，显式 manifest 保持兼容；daily valuation 只写当前日隔离目录并读取 canonical 累计 PIT/valuation history；历史不足继续降级，strict PIT A 级不得由 captured snapshot 冒充。
+notes: 2026-08-31 v5 formal Architecture/Contract/Integration/Reproducibility 为 879/278/995/24 PASS；Full 10018 passed、3 failed、3 skipped。失败限于 2 个 historical compatibility current-authority 白名单遗漏 PROD-004 successor，以及本地 ignored Atlas page sidecar semantic-source drift；PIT 业务与集成路径无失败。v6 绑定失败 Full artifact，仅修正过时断言、刷新 generated authority，并在 final commit 上官方重建本地 Atlas sidecars；operations runtime 不写入。

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2542H_QQQ_OPTIONS_FROZEN_SIGNAL_IMPLEMENTATION_RETEST_CONTRACT_V1
+area: QQQ options frozen-signal implementation retest scope-correction contract V1
+priority: P0
+status: DEFERRED
+next_owner: Project Owner（pi 迁移后）
+next_step: 2026-09-24 按 owner 决策包第3/4条 DEFERRED；退出条件：迁移 pi 后重启 growth action-value / QQQ options 研究线时重新评估阈值冻结、第二位 reviewer 与 fee semantics
+acceptance: Owner exact-freezes the signal artifact and source-enum to LONG_CALL/LONG_PUT/FLAT mapping, including defensive/SGOV handling, plus all relevant TRADING-2509 selection/execution/accounting/lifecycle slots. A separate bounded QC authorization then requires exact manifest replay PASS; local repricing/raw option export remain prohibited and paper/live/broker/production remain zero.
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第3/4条：DEFERRED；agent_harness=claude_code；原备注：Supporting requirement: docs/requirements/TRADING-2542H_QQQ_Options_Frozen_Signal_Implementation_Retest_Contract_V1.md. contract file/canonical SHA=d86e294f2be3ad8b8f601953ecd5e2b90d71317bca6dd197096de0db196dc80a/133eb368414d9f93429818a8a098df4d9bd0eed994ef58ca3b7615f31363d496; terminal=OWNER_EXACT_POLICY_FREEZE_REQUIRED_NO_BACKTEST; focused/adjacent=91 passed plus Atlas targeted PASS; QC/provider/real DQ/backtest not run; orders/fills/positions/production/broker=0.'

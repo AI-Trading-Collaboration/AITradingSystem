@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC
+area: Strategy research / frozen constraint evidence narrow causal diagnostic
+priority: P0
+status: DONE
+next_owner: strategy research owner：另立任务预注册新family或继续Decision Target Capability Audit；不得复用已退役family
+next_step: 详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。Owner批准的退役policy exact绑定TRADING-2452四template、七axis、300-candidate identity和九个immutable package artifact；历史read/identity/diagnostic validation保留，package write/rebuild、evaluator rerun、search/selection/watchlist/paper-shadow/promotion/production/broker全部fail closed。原package、TRADING-2453/2458 bytes/hash不改；通用研究平台、equal-risk forward-aging与QLD角色不在退役范围。
+acceptance: 受治理policy/registry与content-derived中文报告已建立；consumer在DQ/output/worker或目录创建前阻断；policy/source/record/unknown-action tamper fail closed；新family必须新identity、独立预注册、无污染selection protocol与新Owner授权；formal architecture/contract/Full通过。
+notes: 2026-07-26：v3最终归档树focused/architecture/contract/Full=`64/665/275/7338 passed`但main推进到`b8463faac`后按ff-only停止；v4从该exact main重算DATA-GOV-002重叠载体，focused/architecture/contract=`73/668/275 passed`，Full=`7345 passed / 4 skipped / 642 warnings`，post-Full architecture=`668 passed`。任务归档DONE；`production_effect=none`、`broker_action=none`。

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2539_QC_CLOUD_FILE_API_EXACT_CONTENT_MUTATION_AND_RETRY_PROPOSAL_V1
+area: QuantConnect Cloud file API exact-content mutation and retry proposal V1
+priority: P0
+status: DONE
+next_owner: TRADING-2541/Codex
+next_step: V1 Web IDE carrier evidence remains immutable；V2 successor 已纠正 Time/EndTime 语义并确认 subscription/transport missing。后续实现不沿用已消费 scope。
+acceptance: Preserve original project 34808569 and V1 evidence；V2 clone mutation/save/build/backtest/provider query=1/1/1/1/1，new clone/orders/fills=0/0/0，no retry；technical evidence exact PASS。
+notes: 详见 [TRADING-2539 V1/V2 closure](docs/requirements/TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md) 与 [TRADING-2541 remediation](docs/requirements/TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md)。scope 已消费关闭；production_effect=none、broker_action=none。

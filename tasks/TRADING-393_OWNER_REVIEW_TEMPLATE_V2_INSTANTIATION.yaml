@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-393_OWNER_REVIEW_TEMPLATE_V2_INSTANTIATION
+area: Research governance / owner review template v2 instantiation
+priority: P1
+status: DONE
+next_owner: 项目 owner 复核 structured owner review；后续 TRADING-394 rerun monthly review recovery，promotion/extended/live 仍 blocked until gates clear
+next_step: 详细拆解见 `docs/requirements/TRADING-393_Owner_Review_Template_V2_Instantiation.md`；使用 latest owner review `outputs/reports/TRADING-384_owner_review_2026-06-17.md` 和 TRADING-391/392 recovery evidence + owner hold decision 生成 filled owner review template v2 JSON；final owner action 保持 `hold`；不得记录新的 owner decision、resume paper-shadow、approve promotion/extended shadow/live、生成 official target weights、触发 broker/order 或 production mutation
+acceptance: 新增 filled owner review JSON `docs/owner_reviews/TRADING-393_owner_review_template_v2_2026-06-17.json` 和 focused fixture regression；现有 `aits reports owner-review-template-v2 --as-of 2026-06-17` 输出 `TEMPLATE_READY`，`validate-owner-review-template-v2 --latest --review-json-path ...` 输出 `PASS`；structured artifact 链接输入证据且安全字段保持 production_effect=none/no mutation
+notes: '2026-06-17: DONE；真实 template artifacts `outputs/reports/owner_review_template_v2_2026-06-17.json/md` 输出 `TEMPLATE_READY`、fields=9、owner_actions=6。Validation `outputs/reports/owner_review_template_v2_validation_2026-06-17.json/md` 输出 `PASS`、checks=22、failed=0、review_record_provided=true、review_record_failed=0；report index 中 template/validation 均 `AVAILABLE/FRESH`。Filled review final action=`hold`、safety=`SAFETY_PASS_WITH_WARNINGS`；该 artifact 不 append audit log、不恢复 paper-shadow、不批准 promotion/extended shadow/live、official target、broker/order 或 production mutation。'

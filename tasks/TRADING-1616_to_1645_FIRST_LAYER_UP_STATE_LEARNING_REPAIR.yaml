@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1616_to_1645_FIRST_LAYER_UP_STATE_LEARNING_REPAIR
+area: Research trends / first-layer up-state learning repair
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 `aits research trends up-state-repair`、failure diagnosis、probe return-seeking metadata、upper-state label audit、hierarchical labels、PIT feature matrix v2、feature PIT audit v2、risk-off detector v2、upper-state detector v1、risk-on severity scaler、threshold policy/review、hierarchical composer、walk-forward v2、frozen probe actual-path v2、collapse guardrail tests、owner pack、forward watch plan/final matrix/closeout、report registry、artifact catalog 和 system flow；真实结果：predicted upper_state=185（constructive=159、risk_on=26），upper_state_precision=0.064865、upper_state_recall=0.105263，actual-path improved_vs_flat_probe_count=0，final_status=`UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`；所有 outputs 固定 research-only、actual-path-required、target-path diagnostic-only、promotion `BLOCKED`、paper-shadow/production/broker false/none
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-27: 新增并进入 IN_PROGRESS，原因：上一批确认 first-layer 失败核心是 up-state 学习塌缩，而非 frozen probe 链路缺失；本批将五分类拆成 risk-off detector、upper-state detector 和 severity scaler。2026-06-27: 实现完成并转入 VALIDATING；真实 CLI status=`FIRST_LAYER_UP_STATE_LEARNING_OWNER_REVIEW_READY_PROMOTION_BLOCKED`，final status=`UP_STATE_FEATURES_INSUFFICIENT_PROMOTION_BLOCKED`。'

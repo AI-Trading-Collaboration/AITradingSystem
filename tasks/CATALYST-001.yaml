@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: CATALYST-001
+area: 事件/报告
+priority: P1
+status: BASELINE_DONE
+next_owner: 系统实现 + 项目 owner
+next_step: 已完成第一阶段手工/审计 catalyst calendar schema、校验、未来 5/20/60 天分桶报告、`upcoming` 报告和查询入口；剩余缺口是真实事件数据源或 owner 手工维护流程、日报摘要接入和事件后复核队列联动
+acceptance: 日报显示未来 5/20/60 天重要财报、指引、宏观、CapEx、芯片发布、监管、出口管制和行业会议等催化剂；重大事件前可触发 `pre_event_review`、禁止主动加仓或结论降级；事件后要求复核相关 thesis、risk event 或 valuation state；实现时同步更新 `docs/system_flow.md` 并补充日历和报告测试
+notes: '自动化数据源需 owner 确认；第一版可从人工复核日历开始，但必须记录来源和采集时间。2026-05-04: 从 PROPOSED 改为 IN_PROGRESS，原因：开始实现第一阶段手工/审计 catalyst calendar schema、校验、未来 5/20/60 天分桶报告和查询入口。2026-05-04: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 `config/catalyst_calendar.yaml`、`catalyst_calendar` 模块、`aits catalysts validate`、`aits catalysts upcoming`、`aits catalysts lookup`、中文日历报告、系统流图和测试；默认日历不编造真实事件日期，当前只提供审计结构和空基线。'

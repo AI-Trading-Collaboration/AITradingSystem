@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1085_DAILY_INCREMENTAL_REFACTOR_GROWTH_TILT_CLI_BOUNDARY
+area: Architecture / daily incremental refactor growth-tilt CLI boundary
+priority: P2
+status: DONE
+next_owner: 系统验证
+next_step: 详见 `docs/requirements/TRADING-1085_Daily_Incremental_Refactor_Growth_Tilt_CLI_Boundary.md`；已将 TRADING-1065～1084 growth-tilt command adapters 拆到 `cli_commands/research_growth_tilt.py`，`research_simple_baselines.py` 继续委托注册到同一 `strategies_app`
+acceptance: growth-tilt 20 个 `aits research strategies ...` CLI 命令路径、参数、artifact path、report schema、data quality gate、status/safety fields 和投资解释保持兼容；focused xdist pytest、CLI help smoke、Ruff、compileall、docs/task consistency 和 `git diff --check` 通过；`docs/system_flow.md` 和 `docs/refactor_log.md` 记录本轮边界调整
+notes: '2026-06-26: 每日增量重构自动化新增并完成；边界固定 `production_effect=none`，不改变 threshold、score band、promotion gate、backtest acceptance、仓位约束、data quality gate、market-regime interpretation、paper-shadow/production weights 或 broker/order path。验证通过 focused pytest 17 passed、growth-tilt CLI help smoke、Ruff、compileall 和 `git diff --check`。'

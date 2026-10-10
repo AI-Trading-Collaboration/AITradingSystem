@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-012_AUTOMATIC_WORKFLOW_HEALTH_TRIGGER_AND_OUTCOME_REVIEW_V1
+area: Developer experience / automatic workflow health trigger and outcome review
+priority: P1
+status: DONE
+next_owner: Project owner：复核每周 workflow-health 优化候选；新的优化落地继续单独登记 canonical task
+next_step: 无 implementation blocker；existing aitradingsystem-pit automation 在 repo 发布后更新，自动阶段仅生成/校验报告
+acceptance: Existing daily automation 内 ISO-week 自动生成/去重；可信 previous bundle 趋势与 candidate lifecycle；失败不覆盖且可重试；review-only safety；focused/formal/Full PASS；main/origin equality；automation ACTIVE
+notes: DEVX-012 implemented ensure-workflow-health, validated weekly dedup, immutable invalid-date evidence, trend comparison and review-only safety; base drift reconciled under integration-revalidation-9eeaf505d1e76959c949.

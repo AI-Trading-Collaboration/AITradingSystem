@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-405_RECOVERY_OWNER_ACTION_MAP
+area: Research governance / recovery owner action map
+priority: P1
+status: DONE
+next_owner: 项目 owner 按 action map 先处理 `record_manual_owner_review_before_normal_shadow_resumption`，code/data 后续仍需按 blocked/warning 分类推进
+next_step: 详细拆解见 `docs/requirements/TRADING-401_to_407_Recovery_Triage_After_TRADING-400.md`；汇总 TRADING-400、TRADING-401、TRADING-402 和 TRADING-404，生成 owner-action checklist
+acceptance: 新增 `aits reports recovery-owner-action-map` / `validate-recovery-owner-action-map`、JSON/Markdown report、Reader Brief section 和 focused tests；输出 owner review、code/data rerun、explicit waiver、artifact regeneration、remain blocked 分类、recommended ordering、normal paper-shadow preconditions、extended shadow forbidden reasons 和 `live_trading_forbidden=true`
+notes: '2026-06-17: DONE；真实 artifact `outputs/reports/recovery_owner_action_map_2026-06-17.json/md` 输出 open_actions=34、next_owner_action=`record_manual_owner_review_before_normal_shadow_resumption`、live_trading_forbidden=true；validation `recovery_owner_action_map_validation_2026-06-17.json/md` 为 `PASS_WITH_WARNINGS`、blocking=0。Action map 未批准 normal/extended/live。'

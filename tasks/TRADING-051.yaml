@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-051
+area: 回测输入/Signal Ablation & Contribution Validation
+priority: P1
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/signal_ablation_contribution_validation_2026-05-30.md`；remove-one-signal ablation、贡献分类、proxy/fallback 风险标记、JSON/Markdown 报告、Dashboard/Reader Brief/promotion decision 只读接入和 report registry 可见性已完成；后续是否进入 calibration 已由 TRADING-051A/052/053/054 处理
+acceptance: '`aits signals ablation --latest` 生成 `signal_ablation_summary.json/md`；`aits reports signal-ablation --latest` 可读取并写报告 alias；`aits signals validate-ablation --latest` 输出 `status=LIMITED`、`production_effect=none`、`manual_review_required=true`、`auto_promotion=false`；fallback/proxy signal 不得获得 promotion credit；shadow promotion decision 可引用 ablation summary 但不得自动晋升'
+notes: '2026-05-30: 新增并进入 IN_PROGRESS，原因：TRADING-050 已完成 full-signal-limited shadow backtest，但缺少逐信号贡献验证。2026-05-30: 从 IN_PROGRESS 改为 VALIDATING，原因：v0.1 实现、文档和真实 CLI 验收完成。2026-06-09: 从 VALIDATING 改为 DONE，原因：后续 TRADING-051A/052/053/054 已消费该 ablation summary 并完成下一阶段决策；复验 `signals validate-ablation --latest` 为 `LIMITED`，`reports signal-ablation --latest` 可读，promotion credit 仍为 0，`production_effect=none`；验证通过 focused pytest 54 passed、signal calibration focused pytest 7 passed、shadow backtest dry-run、CLI smoke、文档检查、Ruff、repo-wide Black check、`compileall` 和 `git diff --check`。'

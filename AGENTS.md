@@ -92,9 +92,10 @@ tested tree -> ordinary push, with the remote checked before and after.
   the step plan, acceptance per step, open questions, and progress; the task record links to it.
 - Record owner decisions as `owner_decision:<task>:<date>:<slug>` in the requirement document and cite
   them in the `Owner-Decision:` trailer.
-- (until P5) The canonical task source is `registry/development_tasks` via
-  `scripts/architecture_arch005_task_source.py`; task-row updates still use its
-  `TASK_SOURCE_ONLY` transaction. `docs/task_register*.md` are generated: do not edit them.
+- Task records are `tasks/<ID>.yaml` (schema `task.v1`): edit the file or use
+  `python tools/tasks.py new|set`, then `python tools/tasks.py render`. `docs/task_register.md` and
+  `docs/task_register_completed.md` are rendered views: never edit them; the PR suite fails when they
+  are stale. A task moves to the completed view by setting `DONE` or `DROPPED`.
 - Priority follows long-term risk: correctness, data quality, auditability, investment interpretation
   and backtest validity rank above convenience. Mark a stop-gap `BASELINE_DONE` and name what remains.
 - No silent workarounds: state the best solution, why it is blocked, and whether to fix the blocker; a

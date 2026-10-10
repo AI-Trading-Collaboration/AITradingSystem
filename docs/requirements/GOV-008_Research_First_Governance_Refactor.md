@@ -469,3 +469,26 @@ AGENTS.md 字节等于钉住值"；预注册加载器仍对**当前** AGENTS.md 
 
 **风险分级测试**：`test_risk_tiered_external_action_evidence_admission.py` 原来断言旧 AGENTS.md 的 DEVX-008 章节标题；
 新 AGENTS.md 保留 R0–R3 分级但不再有该标题，测试改为断言 R0–R3 仍在。
+
+## 16. P5a 任务库（2026-10-10）
+
+P3 已发布：`af6b76519`（门禁 7,727 通过、0 失败；`Gate:` 记录在提交信息里），main = origin/main。
+
+删除发布机制会连带删掉更新任务登记的唯一工具（`scripts/architecture_arch005_task_source.py` 需要发布事务），
+所以任务库先于 P4 删除块 1 替换。
+
+**新任务库**：每个任务一个文件 `tasks/<ID>.yaml`（schema `task.v1`，字段即视图的 8 列：id、area、priority、status、
+next_owner、next_step、acceptance、notes）。`tools/tasks.py` 提供 list / show / new / set / render / check；
+`docs/task_register.md`（未完成）与 `docs/task_register_completed.md`（DONE/DROPPED）由 render 生成，格式与报告读取的
+8 列表格相同，表格后的说明文字移到 `tasks/view_templates/`。未完成视图按优先级再按 ID 排序，完成视图按 ID 排序。
+没有事件链；审计记录就是 git 历史。`tests/test_tasks_register.py` 校验每个任务文件并在视图过期时失败。
+
+**迁移**：从两个视图的任务表逐行转换（1081 个任务：316 未完成、765 完成）；多出的 `|` 留在 notes 里，渲染结果与原行
+逐字节相同。重新渲染的视图与迁移前相比，只有首行横幅与行序不同（行集合完全一致，已在 scratchpad 模拟验证）。
+删除：`registry/development_tasks` 的 1080 个事件碎片、两个 shadow 目录、索引与两个视图模板。**保留**
+`registry/development_tasks/2f/2f96dc…yaml`：QQQ options 研究线 TRADING-2548 的配对比较合约把它的精确字节钉为
+"终态结果准入事件"证据（钉住值核对仍成立），按"不改研究线"原则原样保留，并在该目录 README 说明。
+
+**首批任务更新（在新库里完成，不再需要 TASK_SOURCE_ONLY 事务）**：26 个 Atlas 相关的未完成任务（TRADING-2466～2536
+中的 Atlas 页面任务与 PLATFORM-UX-001）标为 DROPPED，依据 Atlas 退役决定（第 11 节第 6 条；引用名
+`owner_decision:GOV-008:2026-10-10:atlas_retired`）；GOV-008 任务行更新下一步与责任方（去掉已不需要的 GitHub 分支保护事项）。

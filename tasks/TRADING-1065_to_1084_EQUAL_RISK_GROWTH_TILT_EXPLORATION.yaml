@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1065_to_1084_EQUAL_RISK_GROWTH_TILT_EXPLORATION
+area: Research strategies / equal-risk growth tilt exploration
+priority: P1
+status: DONE
+next_owner: 项目 owner 后续复核 research-only outputs
+next_step: 详见 `docs/requirements/TRADING-1065_to_1084_Equal_Risk_Growth_Tilt_Exploration.md`；已完成基于 `equal_risk_qqq_sgov` defensive core 的 growth-tilt structured exploration，原始 `equal_risk_qqq_sgov` 未修改；paper-shadow、production、broker、Options、LEAPS、Wheel、tail-risk fallback、Layer-1 selector restart 和 TQQQ-heavy mainline 继续禁止
+acceptance: 新增 20 个 `aits research strategies ...` CLI/artifacts；新增 `config/research/equal_risk_growth_tilt_candidate_registry.yaml`；覆盖 framing correction、objective contract、registry review、6 类搜索、ranking/tiering、beta attribution、period/drawdown replay、cost/turnover sensitivity、tradeoff frontier、definition lock、forward-aging readiness gate、owner decision pack、master review、roadmap update 和 Reader Brief safety preview；所有 artifacts 固定 `paper_shadow_allowed=false`、`production_allowed=false`、`broker_action=none`、`manual_review_required=true`；report registry、artifact catalog、system flow、focused tests、Ruff、compileall、required pytest 和 `git diff --check` 通过
+notes: '2026-06-26: DONE；完成 TRADING-1065～1084，修正 `NO_GROWTH_EDGE_FOUND` 表述为仅约束当前 Controlled Growth V2 batch，并将后续 growth research 限定为 equal-risk defensive core 的受控微调；新增 owner/master docs copy 和 roadmap/Reader Brief safety preview，owner recommendation 仅为 manual review candidate，不自动写 forward-aging watchlist observation。验证通过 `python -m ruff check src tests`、`python -m compileall -q src tests`、focused growth tilt pytest 2 passed、growth restart pytest 5 passed、Layer-2 readiness pytest 6 passed、task/report/documentation pytest 27 passed 和 `git diff --check`。'

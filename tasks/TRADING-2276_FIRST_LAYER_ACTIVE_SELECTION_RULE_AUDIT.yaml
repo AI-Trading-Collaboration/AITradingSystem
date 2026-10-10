@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2276_FIRST_LAYER_ACTIVE_SELECTION_RULE_AUDIT
+area: Research trends / first-layer active selection rule audit
+priority: P1
+status: VALIDATING
+next_owner: 系统实现 + 项目 owner 后续复核
+next_step: 详见 `docs/requirements/TRADING-2276_First_Layer_Active_Selection_Rule_Audit.md`；依赖 TRADING-2275 gate policy v2 semantics。本批如需 v2 policy，必须通过可复现 2274/2275 code path 再生，不能依赖 ignored `outputs/` artifact 作为唯一 source of truth。
+acceptance: 生成 active selection rule audit report、ablation matrix、counterfactual report、threshold sensitivity 和 recommended policy；比较 no/relaxed/current/strict active selection 的 candidate count、owner-review count、blocked/rejected count、best accepted/rejected utility、counterfactual utility、false risk deltas、drawdown/turnover/cost-adjusted/benchmark/stress/beta/TQQQ deltas；promotion/paper-shadow/production/broker 固定 false/none。
+notes: '2026-06-28: 实现完成并转入 VALIDATING；真实 run current accept=0，no/relaxed accepted=1 且 owner_review=1，current/strict blocked=4；`wf_504d_baseline` 被 current selection 从 OWNER_REVIEW_REQUIRED 压成 BLOCKED，recommended_action=`split_selection_and_promotion`。验证通过 focused / docs / contract-validation，runtime artifact=`outputs/validation_runtime/contract-validation_20260628T144247Z/test_runtime_summary.json`。'

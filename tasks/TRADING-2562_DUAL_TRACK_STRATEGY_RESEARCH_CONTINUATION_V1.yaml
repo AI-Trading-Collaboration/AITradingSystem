@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2562_DUAL_TRACK_STRATEGY_RESEARCH_CONTINUATION_V1
+area: Strategy research / dual-track prospective observation and orthogonal screen integration
+priority: P0
+status: BASELINE_DONE
+next_owner: Codex：另起受治理实现波次完成 prospective current-session producer；继续既有 equal-risk forward-aging
+next_step: 双线首轮合同与静态筛选已完成；Track A 因旧 producer 历史截止而不能开始真实 capture，Track B 没有新 empirical run
+acceptance: 两 domain tasks 登记且 lane validation PASS；coordinator 更新 task/system flow/generated authority；Full、local-main、origin/main 与 cleanup PASS
+notes: 'TRADING-2560=BASELINE_DONE，TRADING-2561=DONE；17 focused tests 加 Ruff/Black/strict mypy PASS；所有市场数据、DQ、回测、provider、下载、cache 与交易动作=0。Supporting requirement: docs/requirements/TRADING-2562_Dual_Track_Strategy_Research_Continuation_V1.md'

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-790_to_794_VALUE_SURFACE_FAILURE_ATTRIBUTION
+area: Controlled strategy research / value surface failure attribution, horizon ranking stabilization, residual hypothesis triage, forward continuity extension, direction review
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 CLI：`aits research strategies value-surface-failure-attribution`、`horizon-cliff-utility-ranking-stabilization-review`、`gbdt-residual-hypothesis-triage`、`value-surface-direction-review` 和 `aits forward-evidence continuity-extension`；TRADING-790 必须输出 winning/losing delta、top losing cases、loss concentration、tail/cost/drawdown/downside attribution；TRADING-791 不能 validated utility boundary；TRADING-792 只能输出 diagnostic hypotheses；TRADING-793 只延续 forward evidence continuity；TRADING-794 决策只能为 `CONTINUE_LOCAL_FIX
+notes: owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：WATCHLIST

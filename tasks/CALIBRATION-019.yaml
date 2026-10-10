@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: CALIBRATION-019
+area: 市场反馈优化/forward shadow candidate lifecycle
+priority: P0
+status: DONE
+next_owner: 系统验证
+next_step: 详细拆解见 `docs/requirements/forward_shadow_candidate_lifecycle_2026-05-17.md`；`run-shadow-iteration` 幂等、`register-forward-shadow` 状态登记、`evaluate-forward-shadow` 每日评估和 `REVIEW_PENDING` 生命周期已完成；长期 outcome 样本成熟度继续由 forward shadow 观察任务承接
+acceptance: forward shadow 候选可从 registry 登记为 `FORWARD_SHADOW_ACTIVE`；每日评估输出 `forward_shadow_evaluation_YYYY-MM-DD.md/json`，按候选类型、primary driver、contract/retirement evidence 和 forward 表现给出 `CONTINUE`、`RETIRE`、`REVIEW_GATE_POLICY` 或 `REVIEW_WEIGHT_CANDIDATE`；只有 `weight_only` 且 `primary_driver=weight` 才能进入权重候选复核，`gate_only` 只进入 gate policy review，bundle 和非 weight primary driver 不得进入 weight review；重复运行不得产生重复 registry 行；实现同步更新系统流图并补测试；生产权重、gate、approved overlay 和正式 prediction ledger 保持隔离
+notes: '2026-05-17: 新增并进入 IN_PROGRESS，原因：owner 要求 shadow candidate 跨交易日持续观察，而不是每天只输出新的 search result。2026-05-17: 从 IN_PROGRESS 改为 VALIDATING，原因：已新增 `aits feedback evaluate-forward-shadow`、`REVIEW_PENDING` registry 生命周期、forward evaluation Markdown/JSON 输出、run-shadow registry 幂等保护和 production safety 测试；验证通过 shadow iteration 目标测试、daily task dashboard 相关测试、全量 `ruff check src tests`、全量 `pytest -q` 572 passed 和 `git diff --check`。2026-06-09: 从 VALIDATING 改为 DONE，原因：运行 `aits feedback evaluate-forward-shadow --as-of 2026-05-19` 输出 `forward_shadow_evaluation_2026-05-19.json/md`，状态 `PASS`、evaluated_count=1、`REVIEW_GATE_POLICY=1`、`REVIEW_WEIGHT_CANDIDATE=0`；gate-only candidate 从 `FORWARD_SHADOW_ACTIVE` 进入 `REVIEW_PENDING`，报告声明 `production_effect=none` 且 production parameters unchanged；验证通过 `tests/test_shadow_iteration.py` + `tests/test_daily_task_dashboard.py` 32 passed、Ruff、repo-wide Black check 和 `compileall`。'

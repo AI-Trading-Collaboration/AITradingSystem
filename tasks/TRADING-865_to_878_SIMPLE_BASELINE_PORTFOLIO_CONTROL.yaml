@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-865_to_878_SIMPLE_BASELINE_PORTFOLIO_CONTROL
+area: Research strategies / QQQ-TQQQ-SGOV simple baselines and portfolio control
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: 新增 simple baseline strategy registry、TRADING-865～878 CLI、JSON/Markdown artifacts、report registry、artifact catalog、system flow、Reader Brief safety summary、master review 和 options next-stage gate；所有数据依赖命令必须先调用 `validate_data_cache` 并披露质量状态；PIT audit 必须确认 signal 使用 t-1 或更早可见字段；paper-shadow readiness 只能输出人工复核建议且 safety fields false/none；focused pytest、CLI smoke、report registry validation、contract validation、report validation、Ruff、compileall 和 `git diff --check` 通过或明确记录阻塞
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-23: 新增并进入 IN_PROGRESS，原因：TRADING-843～864 closeout 后 tail-risk fallback 继续 blocked，主线切换为 QQQ / TQQQ / SGOV 简单强基准和动态仓位控制研究；本批必须回答静态 baseline、TQQQ risk-controlled baseline、动态趋势/波动仓位、dominance、成本敏感性、regime robustness、forward aging、paper-shadow reviewability、dry-run mapping、master review 和 LEAPS/Wheel gate，同时保持 production_effect=none、broker_action=none、promotion_allowed=false、paper_shadow_allowed=false、production_allowed=false。2026-06-23: 实现完成并转入 VALIDATING；验证通过：focused parallel pytest 4 passed（含 CLI smoke 与 report registry loader）、`contract-validation` 193 passed、`report-validation` 55 passed、`ruff check .`、`python -m compileall src tests scripts` 和 `git diff --check`；仍保留 VALIDATING，等待真实 QQQ/TQQQ/SGOV cache 覆盖与 owner 人工复核，不允许 promotion/paper-shadow/production/broker。'

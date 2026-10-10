@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-911_to_922_SIMPLE_BASELINE_DATA_REPAIR_FORWARD_AGING_UNBLOCK
+area: Research strategies / QQQ-TQQQ-SGOV data repair and forward-aging unblock
+priority: P0
+status: DEFERRED
+next_owner: Project Owner（pi 迁移后重启对应研究线时）
+next_step: 2026-09-24 按 GOV-007 决策包第13条转 DEFERRED：等待 forward/shadow 样本自然成熟，30 天以上无新证据。退出条件：迁移 pi 后重启该研究线，或样本成熟到可评估时，重新打开并复核。详见 GOV-007 需求文档
+acceptance: 新增 12 个 `aits research strategies ...` CLI/artifacts、report registry entries、artifact catalog/system flow、TQQQ/SGOV 默认 universe 配置、per-strategy data-quality hardening 和 tests；TQQQ 通过既有 FMP repair / manifest 补齐；SGOV total-return contract 明确 adjusted-close/分红口径；post-repair run、equal-risk recompute、TQQQ challenger review、dry-run、Reader Brief preview 和 owner decision pack 均披露 data quality、market regime、requested date range 和 safety fields；Focused parallel pytest、Ruff、py_compile、`git diff --check` 和真实 CLI 运行通过或记录 warning
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：DEFERRED_AWAITING_FORWARD_SAMPLES；agent_harness=claude_code；原备注：2026-06-23: 新增并进入 IN_PROGRESS，原因：owner 要求完成 TRADING-911～922；当前本地 cache 已知 TQQQ 主价格缺失，Marketstack 缺 TQQQ/SGOV，不能在数据质量至少 `DATA_QUALITY_PASS` 或 `DATA_QUALITY_PASS_WITH_WARNINGS` 前进入正式 research-only forward aging。2026-06-23: 实现完成并转入 VALIDATING；真实运行结果：911=`DATA_SOURCE_INVENTORY_PARTIAL`、912=`TQQQ_CACHE_REBUILT`、913=`SGOV_TOTAL_RETURN_CONTRACT_READY`、914=`REPAIR_MANIFEST_WARN`、915=`VALIDATE_DATA_HARDENED`、916=`POST_REPAIR_REAL_RUN_WARN`、917=`EQUAL_RISK_RESULT_RECOMPUTED` 且 rank=1、918=`TQQQ_CHALLENGER_STILL_PAUSED`、919=`FORWARD_AGING_READY_WITH_WARNINGS`、920=`FORWARD_OBSERVATION_DRY_RUN_WARN` 且 `observation_written=false`、921=`READER_FORWARD_PREVIEW_SAFE`、922=`OWNER_APPROVE_FORWARD_AGING`；`aits validate-data` 为 `PASS_WITH_WARNINGS` / 0 errors，warnings 来自 Marketstack/manifest 覆盖限制，safety fields 仍 false/none。'

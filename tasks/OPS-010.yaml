@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-010
+area: 运行架构/replay PIT as-of 截止窗口
+priority: P0
+status: DONE
+next_owner: 系统实现
+next_step: 已实现 replay PIT effective cutoff 和从 filtered raw manifest 重建 replay-scoped FMP forward PIT normalized CSV；不调用外部服务、不复用旧 replay 输出、不改写生产缓存
+acceptance: 当 production metadata cutoff 晚于 as-of 时，`replay-day` 的 PIT manifest/normalized 输入不包含晚于 as-of 的 `available_time`；若生产 normalized CSV 被补跑覆盖为未来 `available_time`，replay 从 filtered raw manifest 中按 ticker 选择 as-of 当天最新 raw payload 重建 normalized；2026-05-08 cache-only replay 的 `score_daily`、`ops health`、secret scan 全部 PASS；单测覆盖 cutoff 收紧和 raw manifest 重建
+notes: '2026-05-10: 新增并完成，原因：真实 replay 验证显示 5/8 production metadata 来自 5/10 补跑，直接使用 visibility cutoff 会纳入未来 PIT；随后发现生产 normalized CSV 已被 5/10 补跑覆盖，需从 5/8 raw payload 重建 replay 输入。验证：`ruff check src/ai_trading_system/historical_replay.py tests/test_historical_replay.py` 通过，`pytest -q tests/test_historical_replay.py` 8 passed，真实 `replay-day --as-of 2026-05-08 --openai-replay-policy cache-only --compare-to-production` PASS。'

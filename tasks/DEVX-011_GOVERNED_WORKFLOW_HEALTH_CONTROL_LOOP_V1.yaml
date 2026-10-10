@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-011_GOVERNED_WORKFLOW_HEALTH_CONTROL_LOOP_V1
+area: Developer experience / governed weekly workflow health control loop
+priority: P1
+status: DONE
+next_owner: Project owner：review weekly candidates after four observations; authorize any follow-up as a separate canonical task
+next_step: V1 complete with no implementation blocker; accumulate four validated weekly observations before threshold retuning
+acceptance: Policy-backed 7-day validation/transaction/Git metrics；stable review-only candidates；CLI report + validation；weekly periodic registry and Codex once-per-week trigger；focused/formal/Full PASS；production_effect=none
+notes: 2026-08-31：V1 implementation and documentation complete；focused validation 80 passed；real bundle validation PASS with 280 summaries, 192 transactions, 13 review-only candidates；final formal validation and publication remain bound to transaction devx-011-workflow-health-implementation-20260831-v1

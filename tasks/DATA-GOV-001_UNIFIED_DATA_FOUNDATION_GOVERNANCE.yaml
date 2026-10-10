@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
+area: Data Foundation / immutable snapshots, canonical DQ evidence, lifecycle and lineage
+priority: P0
+status: DEFERRED
+next_owner: data platform owner + project owner：按Owner顺序另立逐consumer migration任务并选择首个exact consumer；不得批量翻转generic cutover
+next_step: 【GOV-008 重构期间挂起（owner 2026-10-10 决定）：重构完成后重新评估是否保留、终止或并入；详见 docs/requirements/GOV-008_Research_First_Governance_Refactor.md 第 6 节】原下一步：详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、D0C/D0D supporting requirement、G4/D0B supporting requirement与D0B2B requirement。D0A/D0B/D0C/D0D均闭合；D0D只提供exact-store Windows ACL scoped capability，其他consumer仍须逐项迁移和授权。
+acceptance: 每个consumer绑定exact receipt/publication/source/window/policy/validator/durability/ACL/authorization；strict PASS only；missing/warning/FAIL/drift/tamper阻断；generic cutover、automatic non-daily、QLD automatic selection、production与broker均须独立授权。
+notes: 2026-07-29：D0D bundle=`data_foundation_acl_bundle_3f68c2174cf4ffe1753ef8b9f32de5ea`，Architecture/Contract/Report/Reproducibility/Integration=`783/276/57/24/995 passed`，Full=`7668 passed / 3 skipped / 644 warnings`并转`DONE`；下一步仅登记首个per-consumer migration，`production_effect=none`。

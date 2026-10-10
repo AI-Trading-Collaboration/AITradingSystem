@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: CAUSE-001
+area: 决策因果链/审计
+priority: P1
+status: DONE
+next_owner: 系统实现
+next_step: 已建立 `decision_causal_chain` ledger、构建命令和查询入口，把 evidence、模块变化、gate、decision snapshot、quality、outcome 和预留 rule candidate 串起来；详细拆解见 `docs/requirements/feedback_loop_governance_2026-05-04.md#cause-001`
+acceptance: 每个核心仓位变化或结论降级都能对应至少一个 `chain_id`；因果链能连接 evidence、module score/confidence 变化、gate、decision snapshot、outcome 和后续规则复核；不允许用未来 outcome 改写 signal_date 当时的 causal chain，只能追加后验观察字段；实现时同步更新 `docs/system_flow.md` 并补充因果链和未来函数防护测试
+notes: '2026-05-04: 开始实现 `decision_causal_chain` ledger、CLI 构建/查询入口和未来 outcome 隔离测试。2026-05-04: 从 IN_PROGRESS 改为 DONE，原因：新增 `aits feedback build-causal-chain`、`aits feedback lookup-chain`、`data/processed/decision_causal_chains.json` schema、中文因果链报告、系统流图和测试；后续 `linked_rule_candidate` 由 `LEARNING-001/EXPERIMENT-001` 回填。'

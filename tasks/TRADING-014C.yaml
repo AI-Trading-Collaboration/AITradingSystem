@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-014C
+area: 交易执行/Fill Model Calibration Proposal
+priority: P0
+status: DEFERRED
+next_owner: 外部条件 / Project Owner
+next_step: 2026-09-24 按 owner 决策包第12条由 BLOCKED_EXTERNAL 转 DEFERRED；退出条件：所需外部条件（如 IBKR fill、通知链、多日观察、provider catalog）出现时重开
+acceptance: 基于真实 regular session fill evidence 提出可审计 calibration 方案，说明 `PaperBroker` 与 IBKR Paper 行为差异、数据需求、候选调整项、预期影响、风险、回归测试范围、报告语义变化和退出条件；任何阈值或启发式必须进入 reviewed policy / manifest 或有注释的不可调常量；实际修改 `PaperBroker` fill 行为前需要单独任务和 owner 决策
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第12条：DEFERRED_EXTERNAL；agent_harness=claude_code；原备注：2026-05-18: 从原未提交 `TRADING-016` 改为 `TRADING-014C`，原因：owner 本轮明确 `TRADING-016` 用于 Weight Candidate Evaluation；fill model proposal 仍保持 BLOCKED_EXTERNAL，当前缺真实 fill 样本，不应提前进入 fill model 改造。'

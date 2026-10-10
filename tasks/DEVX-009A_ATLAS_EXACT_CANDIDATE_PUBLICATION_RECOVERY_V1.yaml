@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-009A_ATLAS_EXACT_CANDIDATE_PUBLICATION_RECOVERY_V1
+area: Atlas exact-candidate publication recovery V1
+priority: P0
+status: DONE
+next_owner: Project Owner / discuss a separately preregistered trend-to-options implementation and paired-comparator research task; no new QuantConnect action is authorized
+next_step: No remaining architecture publication recovery blocker after final candidate validation and publication. Preserve the admitted research-only result; discuss any new option implementation/backtest under a separate TRADING task.
+acceptance: All tracked authorities rebuild and validate on one candidate; the candidate exact SHA renders Atlas page/sidecars PASS/CURRENT; required tiers pass; local main=origin/main=candidate; external/production/broker action remain none.
+notes: 'Supporting requirement: docs/requirements/TRADING-2546_Atlas_QQQ_Options_Result_Admission_Status_Projection_Fix_V1.md. Governed INTEGRATION preflight PASS from reviewed report-flow seal lane 4fa5aff563cf39eec17b842fd245808239233c5c. This architecture-only task is outside the TRADING successor sequence and does not change Atlas research classification or authorize QuantConnect.'

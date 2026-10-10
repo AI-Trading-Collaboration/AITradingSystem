@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-1886_DAILY_INCREMENTAL_REFACTOR_EXECUTION_SEMANTICS_CLI_BOUNDARY
+area: Architecture / daily incremental refactor execution semantics CLI boundary
+priority: P2
+status: DONE
+next_owner: 系统验证
+next_step: 详见 `docs/requirements/TRADING-1886_Daily_Incremental_Refactor_Execution_Semantics_CLI_Boundary.md`；已整理 `src/ai_trading_system/cli_commands/research_execution_semantics.py` 中 execution semantics CLI adapter 的日期参数 / AI regime default helper 边界；外部 CLI surface 和投资解释不变
+acceptance: '`research_execution_semantics.py` 新增 `_date_range_kwargs` / `_as_of_kwargs`，并复用 `DEFAULT_AI_REGIME_BACKTEST_START`，移除 wrapper 内重复 `date(2022, 12, 1)` 默认开始日组装；外部 `aits research strategies ...` 命令名、参数、默认路径、artifact path、status/safety fields 和 fail-closed 语义保持兼容；focused xdist pytest、CLI help smoke、Ruff、compileall、docs/task consistency、docs freshness 和 `git diff --check` 通过；本轮未生成 cached-data dependent real report，因此未额外运行 `aits validate-data`'
+notes: '2026-06-28: 每日增量重构自动化新增并完成；评估范围为 `a502a432..HEAD`，增量新增大量 execution semantics / dynamic strategy research 模块，其中 `research_execution_semantics.py` 约 1000 行且多处重复 date range parsing 与 AI regime start default 组装。该切片仅改变 CLI adapter 内部结构，不改变 threshold、score band、promotion gate、backtest acceptance、仓位约束、data quality gate、market-regime interpretation、paper-shadow/production weights 或 broker/order path。'

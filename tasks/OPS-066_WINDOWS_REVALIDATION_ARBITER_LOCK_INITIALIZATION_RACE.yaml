@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: OPS-066_WINDOWS_REVALIDATION_ARBITER_LOCK_INITIALIZATION_RACE
+area: Data platform / Windows per-key revalidation lock first-create race
+priority: P0
+status: DONE
+next_owner: operations/data platform：继续观察 Windows lease/timeout evidence；新异常以新任务重开
+next_step: 详见 `docs/requirements/OPS-066_Windows_Revalidation_Arbiter_Lock_Initialization_Race.md`。移除 lock file 在 OS lock 外的空文件初始化窗口；所有 caller 先 open/create 与取得 byte-range lock，只有持锁者初始化空文件。
+acceptance: 保持 per-key lease/fencing/timeout/provider/DQ/TTL 语义；16-thread first-create 与 wrapper singleflight、完整 cache/coordination、architecture/full PASS；不同 key 仍并行。
+notes: 2026-07-21：由 TRADING-2452 Full 暴露真实 `PermissionError` 后修复。Focused=`2/39 passed`、architecture=`446 passed`、最终 Full=`6543 passed / 2 skipped / 642 warnings / 1010.39s`；`production_effect=none`、`broker_action=none`。

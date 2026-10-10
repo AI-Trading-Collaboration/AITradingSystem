@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2482_QQQ_OPTIONS_DQ_PIT_CACHE_EVIDENCE_IDENTITY_V1
+area: Data governance / option chain, quote, OI, Greeks, chronology and evidence identity
+priority: P0
+status: BASELINE_DONE
+next_owner: TRADING-2483 owner：从 2482 ordinary-pushed exact main 消费本 DQ/PIT identity；project owner：外部平台 token 仍需独立授权
+next_step: 详见 `docs/requirements/TRADING-2482_QQQ_Options_DQ_PIT_Cache_Evidence_Identity_V1.md`。offline evaluator/policy 已从 exact base `f1260cd7...` 继承 2481 shared contract/policy，冻结 15 个 chain/quote/OI/Greeks/calendar/mapping/chronology/engine/cache/evidence checks；不重定义 envelope，不执行 external platform action。
+acceptance: 32 focused、60 shared-adjacent、239 compatibility/governance PASS；local cache DQ 与 option-event DQ 分轴，UNKNOWN 不得 PASS，canonical cache/report replay 与 tamper/negative/PIT/property coverage 完整；system flow 已更新；退出=`QQQ_OPTIONS_DQ_PIT_IDENTITY_V1_FROZEN`。
+notes: 2026-08-02：offline baseline 完成，policy SHA-256=`1e0128c4...b2358`；provider raw checksum 不可得时显式 `NOT_EVALUATED`，不伪造 lineage；Owner external token 仍 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；`production_effect=none`、`broker_action=none`。

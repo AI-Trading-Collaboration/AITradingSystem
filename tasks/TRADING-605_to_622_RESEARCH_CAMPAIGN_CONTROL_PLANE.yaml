@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-605_to_622_RESEARCH_CAMPAIGN_CONTROL_PLANE
+area: ETF portfolio/weight research campaign systemization
+priority: P0
+status: DONE
+next_owner: None / closed_without_owner_review
+next_step: 2026-09-24 按 GOV-007 决策包第13条收口：实现已在 main，相关测试包含在最近一次 Full PASS 中，仅剩 owner 复核且 30 天以上无新证据 → DONE（closed_without_owner_review）。未批准任何 promotion、paper、production 或 broker 动作；如需继续另立任务。详见 GOV-007 需求文档
+acceptance: '`aits research campaign validate/init/plan/run/diagnose/gate/status/packet/archive` 可用；B2/B3 sample specs 可解析和迁移；P0 mixed allocator、Signal 输出权重、Evaluation 修改策略、未授权 holdout 访问和预算外 `NEEDS_MORE_EVIDENCE` 均 fail-closed；消融/交互矩阵、预算/stop-rule、gate、next action、owner packet、reproducibility manifest、system flow 和 focused tests 完成；旧 task-specific CLI 标记兼容/弃用，B2/B3 当前结论 parity 可见'
+notes: 'owner_decision:GOV-007:2026-09-24:decision_pack_v1 第13条：closed_without_owner_review；agent_harness=claude_code；原备注：2026-06-19: 新增并进入 IN_PROGRESS，原因：附件要求暂停继续增加 case-specific 任务，建设通用 Research Campaign Control Plane，并以 B2/B3 迁移验证当前研究状态。2026-06-19: 实现完成并转入 VALIDATING；新增 `aits research campaign ...` CLI、schema/validator、module registry、window/holdout policy、gate policy、state machine、evidence budget、experiment matrix、evidence store、transition audit、reproducibility manifest、next-action planner、owner packet、B2/B3 config-driven migration、compatibility/deprecation policy、system flow、artifact catalog 和 release note；计算型 diagnostic/backfill stage 尚未接入真实 adapter，当前按 no-silent-workaround fail-closed 为 `STAGE_ADAPTER_NOT_CONFIGURED`。验证通过 focused pytest 17 passed、scoped Ruff、compileall、CLI validate smoke、`git diff --check` 和 task-register terminal-status check。'
