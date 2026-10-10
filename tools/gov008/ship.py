@@ -201,10 +201,22 @@ def ship(repo: Path, base: str, push: bool) -> dict:
     new_head = git(repo, "rev-parse", "HEAD")
     if git(repo, "rev-parse", "HEAD^{tree}") != p["tree"]:
         raise ShipError("tree changed while amending the Gate trailer: refusing to move main")
+    if push:
+        # The remote must not have moved past or away from the tested base: only a fast-forward of
+        # the remote main is ever pushed, and a diverged remote is reported, never repaired.
+        git(repo, "fetch", "origin", base)
+        if not is_ancestor(repo, f"origin/{base}", new_head):
+            raise ShipError(
+                f"origin/{base} is not an ancestor of the shipped commit: stop and report"
+            )
     # compare-and-swap fast-forward: fails if main moved since the plan was made
     git(repo, "update-ref", f"refs/heads/{base}", new_head, p["base_sha"])
     if push:
         git(repo, "push", "origin", base)
+        git(repo, "fetch", "origin", base)
+        remote = git(repo, "rev-parse", f"origin/{base}")
+        if remote != new_head:
+            raise ShipError(f"after push origin/{base}={remote} differs from {new_head}")
     return {"shipped_sha": new_head, "pushed": push, "gate": result, "plan": p}
 
 

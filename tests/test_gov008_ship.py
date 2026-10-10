@@ -171,3 +171,42 @@ def test_ship_compare_and_swap_fails_if_main_moves_during_the_gate(
     monkeypatch.setattr(ship, "run_gate", gate_then_main_moves)
     with pytest.raises(ship.ShipError):
         ship.ship(repo, "main", push=False)
+
+
+def _with_origin(repo: Path, tmp_path_factory: pytest.TempPathFactory) -> Path:
+    origin = tmp_path_factory.mktemp("origin") / "origin.git"
+    run_git(origin.parent, "init", "--bare", "-b", "main", str(origin))
+    run_git(repo, "remote", "add", "origin", str(origin))
+    run_git(repo, "push", "origin", "main")
+    return origin
+
+
+def test_ship_push_fast_forwards_origin_and_verifies_it(
+    repo: Path, tmp_path_factory: pytest.TempPathFactory
+) -> None:
+    origin = _with_origin(repo, tmp_path_factory)
+    commit_file(repo, "docs/a.md", "x\n", "docs: add a")
+    done = ship.ship(repo, "main", push=True)
+    assert done["pushed"] is True
+    assert (
+        run_git(origin, "rev-parse", "main")
+        == done["shipped_sha"]
+        == run_git(repo, "rev-parse", "main")
+    )
+
+
+def test_ship_push_refuses_a_diverged_origin_without_moving_local_main(
+    repo: Path, tmp_path_factory: pytest.TempPathFactory
+) -> None:
+    origin = _with_origin(repo, tmp_path_factory)
+    other = tmp_path_factory.mktemp("other") / "clone"
+    run_git(other.parent, "clone", str(origin), str(other))
+    run_git(other, "config", "user.email", "o@example.invalid")
+    run_git(other, "config", "user.name", "o")
+    commit_file(other, "docs/elsewhere.md", "y\n", "someone else")
+    run_git(other, "push", "origin", "main")
+    before = run_git(repo, "rev-parse", "main")
+    commit_file(repo, "docs/a.md", "x\n", "docs: add a")
+    with pytest.raises(ship.ShipError, match="not an ancestor"):
+        ship.ship(repo, "main", push=True)
+    assert run_git(repo, "rev-parse", "main") == before
