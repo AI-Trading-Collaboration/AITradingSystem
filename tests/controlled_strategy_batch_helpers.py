@@ -71,7 +71,6 @@ from ai_trading_system.controlled_strategy_batch import (
     run_value_surface_warning_triage_review,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
-from scripts.run_validation_tier import TIER_SPECS
 
 TEST_AS_OF = date(2023, 5, 17)
 

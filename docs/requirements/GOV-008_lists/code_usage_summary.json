@@ -1,27 +1,19 @@
 {
- "source_commit": "0ba8aaf0102720d1aab554c64c31987f89c1a5b2",
- "total_modules": 1245,
- "total_loc": 1318207,
+ "source_commit": "66c28b9b01dab91bf182827c1e46430a97479eea",
+ "total_modules": 1162,
+ "total_loc": 1231553,
  "by_class": {
-  "ATLAS_RETIRE": {
-   "modules": 28,
-   "loc": 17094
-  },
-  "DEV_MACHINERY": {
-   "modules": 50,
-   "loc": 62031
-  },
   "ETF_RETIRE": {
    "modules": 270,
    "loc": 303263
   },
   "FREEZE_CLI_FRAMEWORK": {
-   "modules": 27,
-   "loc": 25922
+   "modules": 26,
+   "loc": 25505
   },
   "FREEZE_DORMANT": {
-   "modules": 102,
-   "loc": 156287
+   "modules": 98,
+   "loc": 149495
   },
   "KEEP_BUILD_FEATURES_CLI": {
    "modules": 1,
@@ -40,12 +32,12 @@
    "loc": 33678
   },
   "LIVE_DAILY": {
-   "modules": 208,
-   "loc": 276268
+   "modules": 207,
+   "loc": 275849
   },
   "LIVE_FIVE_LINES": {
-   "modules": 477,
-   "loc": 408068
+   "modules": 478,
+   "loc": 408167
   },
   "LIVE_OTHER_SCHEDULE": {
    "modules": 18,
@@ -68,8 +60,8 @@
   "manual review docs/artifact_catalog.md against latest report outputs"
  ],
  "five_line_seed_modules": 252,
- "machinery_worklist_files": 5,
- "machinery_worklist_loc": 6852,
+ "machinery_worklist_files": 0,
+ "machinery_worklist_loc": 0,
  "etf_worklist_files": 9,
  "frozen_boundary_files": 0,
  "frozen_boundary_loc": 0,

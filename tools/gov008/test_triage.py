@@ -177,7 +177,10 @@ def main() -> None:
             n == ATLAS_PREFIX or n.startswith(ATLAS_PREFIX + ".") for n in imports
         )
         group = group_of(rel)
-        if group.startswith("M"):
+        # A file name alone is not evidence: a test joins a mechanism group only when it also
+        # imports the machinery or names one of its tokens (fixed after `wave`/`dependency` name
+        # matches put research and kept-platform tests into the delete pool, GOV-008 P4 block 1).
+        if group.startswith("M") and (machinery_import or token_hit):
             cls, verdict = group, "DELETE_WITH_MECHANISM"
             if group == "M5" and "dependency" in rel:
                 verdict = "KEEP_DEPENDENCY_DIRECTION_REVIEW"

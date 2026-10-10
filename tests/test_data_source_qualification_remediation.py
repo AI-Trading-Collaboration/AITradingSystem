@@ -13,7 +13,6 @@ from ai_trading_system.data_foundation import (
     run_data_source_qualification_remediation,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
-from scripts.run_validation_tier import TIER_SPECS
 
 EXPECTED_MODULE_COMPONENTS = {
     "pit_feature_store",
@@ -203,9 +202,6 @@ def test_source_qualification_cli_smoke(tmp_path: Path) -> None:
 
 
 def test_source_qualification_registry_catalog_schemas_and_tiers() -> None:
-    test_path = "tests/test_data_source_qualification_remediation.py"
-    assert test_path in TIER_SPECS["fast-unit"].paths
-    assert test_path in TIER_SPECS["contract-validation"].paths
 
     registry = safe_load_yaml_path(PROJECT_ROOT / "config" / "report_registry.yaml")
     report_ids = {str(item.get("report_id")): item for item in registry["reports"]}

@@ -28,7 +28,6 @@ from ai_trading_system.data_foundation import (
     validate_asset_master,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
-from scripts.run_validation_tier import TIER_SPECS
 
 CORE_DATA_FOUNDATION_CLI_SMOKE_COMMAND_NAMES = {
     "data pit-feature-store build-snapshot",
@@ -306,9 +305,6 @@ def test_data_foundation_cli_smoke(tmp_path: Path) -> None:
 
 
 def test_data_foundation_registry_catalog_and_validation_tiers() -> None:
-    test_path = "tests/test_data_foundation_roadmap.py"
-    assert test_path in TIER_SPECS["fast-unit"].paths
-    assert test_path in TIER_SPECS["contract-validation"].paths
 
     registry = safe_load_yaml_path(PROJECT_ROOT / "config" / "report_registry.yaml")
     report_ids = {str(item.get("report_id")): item for item in registry["reports"]}

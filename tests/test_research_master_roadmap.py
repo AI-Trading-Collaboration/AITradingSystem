@@ -31,7 +31,6 @@ from ai_trading_system.research_governance import (
     ingest_evidence_ledger,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
-from scripts.run_validation_tier import TIER_SPECS
 
 
 def test_research_protocol_registry_and_evidence_policy(tmp_path: Path) -> None:
@@ -212,9 +211,6 @@ def test_research_master_roadmap_cli_smoke(tmp_path: Path) -> None:
 
 
 def test_research_master_roadmap_registry_catalog_and_validation_tiers() -> None:
-    test_path = "tests/test_research_master_roadmap.py"
-    assert test_path in TIER_SPECS["fast-unit"].paths
-    assert test_path in TIER_SPECS["contract-validation"].paths
 
     registry = safe_load_yaml_path(PROJECT_ROOT / "config" / "report_registry.yaml")
     report_ids = {str(item.get("report_id")): item for item in registry["reports"]}

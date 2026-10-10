@@ -3,7 +3,6 @@ from __future__ import annotations
 from controlled_strategy_batch_helpers import (
     PROJECT_ROOT,
     TEST_AS_OF,
-    TIER_SPECS,
     CliRunner,
     Path,
     _write_forward_ledger,
@@ -1190,20 +1189,6 @@ def test_controlled_strategy_batch_cli_smoke(tmp_path: Path) -> None:
     assert (tmp_path / "cli_state" / "regret_state_machine_controlled_prototype.json").exists()
     assert (tmp_path / "cli_simple" / "simple_strategy_selector_pilot.json").exists()
     assert (tmp_path / "cli_gbdt" / "gbdt_action_utility_baseline.json").exists()
-
-
-def test_controlled_strategy_batch_validation_tiers() -> None:
-    controlled_strategy_paths = {
-        "tests/test_controlled_strategy_value_surface.py",
-        "tests/test_controlled_strategy_regime_horizon.py",
-        "tests/test_controlled_strategy_tail_risk_policy.py",
-        "tests/test_controlled_strategy_candidate_batch.py",
-        "tests/test_controlled_strategy_batch.py",
-        "tests/test_tail_risk_fallback_falsification_audit.py",
-        "tests/test_tail_risk_independent_validation_governance.py",
-    }
-    assert controlled_strategy_paths.issubset(set(TIER_SPECS["fast-unit"].paths))
-    assert controlled_strategy_paths.issubset(set(TIER_SPECS["contract-validation"].paths))
 
 
 def test_controlled_strategy_batch_registry_catalog_and_system_flow() -> None:

@@ -1,6 +1,1 @@
-module,loc,in_five_lines,in_daily,direct_machinery_imports
-ai_trading_system.atlas.live_snapshot,1008,0,0,platform.architecture;platform.architecture.task_registry_canonical
-ai_trading_system.atlas.page_effectiveness,970,0,0,platform.architecture;platform.architecture.source_preservation;platform.architecture.task_registry_canonical
-ai_trading_system.ops_release_promotion,3326,0,0,platform.architecture;platform.architecture.checkout_guard
-ai_trading_system.ops_scheduler_checkout,1062,0,0,platform.architecture;platform.architecture.checkout_guard
-ai_trading_system.reports.workflow_improvement,486,0,0,platform.architecture;platform.architecture.task_registry_canonical
+module

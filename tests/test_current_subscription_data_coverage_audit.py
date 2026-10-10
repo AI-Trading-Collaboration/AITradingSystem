@@ -18,7 +18,6 @@ from ai_trading_system.data_source_subscription_audit import (
     run_current_subscription_data_coverage_audit,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
-from scripts.run_validation_tier import TIER_SPECS
 
 SECRET_ENV = {
     "FINANCIAL_MODELING_PREP_API_KEY": "FMP_SECRET_VALUE_12345",
@@ -159,9 +158,6 @@ def test_current_subscription_data_coverage_cli_smoke(
 
 
 def test_current_subscription_registry_catalog_schema_and_tiers() -> None:
-    test_path = "tests/test_current_subscription_data_coverage_audit.py"
-    assert test_path in TIER_SPECS["fast-unit"].paths
-    assert test_path in TIER_SPECS["contract-validation"].paths
 
     registry = safe_load_yaml_path(PROJECT_ROOT / "config" / "report_registry.yaml")
     report_ids = {str(item.get("report_id")): item for item in registry["reports"]}

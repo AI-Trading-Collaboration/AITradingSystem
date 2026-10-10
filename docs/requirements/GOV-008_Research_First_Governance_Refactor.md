@@ -492,3 +492,37 @@ next_owner、next_step、acceptance、notes）。`tools/tasks.py` 提供 list / 
 **首批任务更新（在新库里完成，不再需要 TASK_SOURCE_ONLY 事务）**：26 个 Atlas 相关的未完成任务（TRADING-2466～2536
 中的 Atlas 页面任务与 PLATFORM-UX-001）标为 DROPPED，依据 Atlas 退役决定（第 11 节第 6 条；引用名
 `owner_decision:GOV-008:2026-10-10:atlas_retired`）；GOV-008 任务行更新下一步与责任方（去掉已不需要的 GitHub 分支保护事项）。
+
+## 17. P4 删除块 1：发布机制（2026-10-10，与 P5a 同一次发布）
+
+**为什么和 P5a 合并**：P5a 单独 ship 时门禁两次失败在同一个测试（`test_validation_failure_diagnostics.py` 的真实
+16 进程运行，第二次在主机空闲时仍超时）。原因是旧验证运行器 `scripts/run_validation_tier.py` 的部分路径读取刚删除的
+旧任务登记库。旧登记库与读取它的旧机制必须在同一次发布里一起删除，main 才保持一致；`ship` 两次都正确拒绝，main 未动。
+
+**删除**：`src/ai_trading_system/platform/architecture/`（整个目录）与 `platform/validation_scheduling.py`、
+`platform/validation_trigger_provenance.py`；31 个机制脚本（`scripts/architecture_*`、`run_validation_tier.py`、
+`pytest_runtime_profile.py`、`refresh_partial_duration_profile.py`、`build_validation_parent_run_import.py`、
+`governance_task_portfolio_normalization.py` 等）；`config/architecture/`；`registry/architecture_compatibility_authority`、
+`registry/report_catalog_flow_authority`；`inputs/architecture/` 除 `arch_004e_*` 三个文件（日报的 engineering_closeout
+仍读取）外的全部；`tools/codex_skills/`（两个绑定旧机制的 Codex 技能，P6 为 pi 重建）。导入了已删机制的冻结/退役代码同批删除：
+Atlas 包、`scripts/render_atlas_strategy_research_page.py`、`config/atlas`、`ops_release_promotion.py`、
+`ops_scheduler_checkout.py`、workflow health 遥测（`reports/workflow_health.py`、`reports/workflow_improvement.py`、
+`cli_commands/workflow_health_reports.py`）。测试：机制测试 75 个文件，以及上述模块各自的测试与依赖方向门禁测试。
+
+**修正的分诊误判**：`tools/gov008/test_triage.py` 原来只凭文件名（如 `wave`、`dependency`）把测试归入"机制"组，
+有 21 个既不导入机制也不含机制标记的测试被排除在 PR 门禁外，其中包括 QQQ options 研究线的
+`test_qqq_options_paired_comparison_wave_a.py` 与测保留平台模块的 `test_arch_004c_*`、`test_arch_004f*`、`test_arch_004g*`。
+规则改为：文件名命中且确有机制导入或标记，才判为机制测试；其余按导入关系正常分类，因此这些测试回到 PR 门禁。
+
+**产品测试的解耦**：8 个产品测试（数据源资格、数据基础、研究路线图、controlled strategy 辅助模块等）原来断言"自己登记在
+旧验证分层 `TIER_SPECS` 里"，这只是旧机制的登记要求，删去这些断言与导入；测试本身的行为断言不变。
+
+**GitHub CI**：原 `ci.yml` 在每次推送 main 时于 Ubuntu 调用已删的 `run_validation_tier.py`。按 owner 决定（GitHub Actions
+至多可选检查、Linux 不考虑），改为手动触发的 ruff 检查；仓库已有的 lint 存量（`inputs/research` 下的 QuantConnect 算法文件、
+src 里两处超长行）不作为门禁失败。
+
+**首轮 PR 套件（删除后）发现的 17 个失败与处理**：都是刚回到门禁的 ARCH-004 架构棘轮测试（wave14/15 就绪度、F3 报告
+清单、G4 架构碎片），读取已删除的 `config/architecture`。日报 owner 简报运行时只读 `config/reporting/reporting_architecture.yaml`，
+不调用这些棘轮，日报链路不受影响。删除 `platform/reporting/g3_close_readiness.py` 与两个 wave 测试文件、F3/G4 测试中的棘轮函数；
+"owner 简报固定 10 个板块（1 个原生、9 个来自旧载荷）"这条产品行为保留为测试内的明确常量。风险分级测试中对已退役 Atlas
+页面的断言删除，其余文档断言不变。`platform/reporting/inventory.py` 里不再被调用的扫描/冻结比对函数留到后续清理。

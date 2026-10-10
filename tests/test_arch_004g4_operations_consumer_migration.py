@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Self, cast
 
 import pytest
-import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.contracts.data_quality import DataQualityEvidence
@@ -1050,62 +1049,3 @@ def test_legacy_direct_caller_ratchet_fails_closed_on_unparseable_source(
     assert assessment.unexpected_callers == ()
     assert assessment.scan_blocker_codes == ("LEGACY_CALLER_SCAN_FAILED:src/broken.py",)
 
-
-def test_architecture_fragments_freeze_non_executing_typed_lineage() -> None:
-    artifact_path = (
-        PROJECT_ROOT
-        / "config"
-        / "architecture"
-        / "fragments"
-        / "artifacts"
-        / "arch_004g4_periodic_consumers.yaml"
-    )
-    flow_path = (
-        PROJECT_ROOT
-        / "config"
-        / "architecture"
-        / "fragments"
-        / "flows"
-        / "arch_004g4_periodic_consumers.yaml"
-    )
-    artifact = yaml.safe_load(artifact_path.read_text(encoding="utf-8"))
-    flow = yaml.safe_load(flow_path.read_text(encoding="utf-8"))
-
-    assert artifact["execution_mode"] == "non_executing_parity"
-    assert artifact["automatic_dispatch_enabled"] is False
-    assert artifact["dispatch_authorized"] is False
-    assert artifact["dispatch_mode_semantics"]["daily_value_role"] == (
-        "legacy_and_future_parity_metadata_only"
-    )
-    assert artifact["production_effect"] == "none"
-    assert artifact["lineage"]["strict_pass_required"] is True
-    assert artifact["lineage"]["warning_allowed"] is False
-    assert artifact["lineage"]["date_binding"] == {
-        "operations_trigger": "as_of",
-        "receipt_and_validate_command": "data_quality_as_of",
-        "invariant": "data_quality_as_of_lte_as_of_and_matches_latest_trading_day",
-    }
-    assert artifact["lineage"]["producer_boundary"] == {
-        "task_id": "daily_validate_data",
-        "receipt_required_as_input": False,
-        "requires_data_quality_due_gate": False,
-    }
-    assert artifact["materialization"] == {
-        "default_root": "outputs/run_control/periodic/plans",
-        "filename": "native_periodic_consumer_parity_YYYY-MM-DD.json",
-        "writer": "ai_trading_system.platform.artifacts.write_json_atomic",
-        "deterministic_to_dict": True,
-        "sidecar_only": True,
-    }
-    assert tuple(flow["consumer_matrix"]["identities"]) == G4A_CONSUMER_IDS
-    assert flow["automatic_non_daily_dispatch"] is False
-    assert flow["dispatch_authorized"] is False
-    assert flow["daily_controlled_automatic_is_metadata_only"] is True
-    assert flow["lineage"]["operations_trigger_date"] == "as_of"
-    assert flow["lineage"]["receipt_validation_date"] == "data_quality_as_of"
-    assert flow["real_command_execution"] is False
-    assert flow["blocked_invariants"] == {
-        "applies_to": "verified_receipt_consumers",
-        "runner_calls": 0,
-        "downstream_artifacts": 0,
-    }

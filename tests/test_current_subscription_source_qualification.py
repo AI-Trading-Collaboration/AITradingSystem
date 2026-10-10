@@ -47,7 +47,6 @@ from ai_trading_system.current_subscription_qualification import (
     validate_forward_capture_contract,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
-from scripts.run_validation_tier import TIER_SPECS
 
 
 def test_current_subscription_source_qualification_contracts(tmp_path: Path) -> None:
@@ -557,9 +556,6 @@ def test_current_subscription_source_qualification_cli_smoke(tmp_path: Path) -> 
 
 
 def test_current_subscription_source_qualification_registry_catalog_schema_and_tiers() -> None:
-    test_path = "tests/test_current_subscription_source_qualification.py"
-    assert test_path in TIER_SPECS["fast-unit"].paths
-    assert test_path in TIER_SPECS["contract-validation"].paths
 
     registry = safe_load_yaml_path(PROJECT_ROOT / "config" / "report_registry.yaml")
     report_ids = {str(item.get("report_id")): item for item in registry["reports"]}

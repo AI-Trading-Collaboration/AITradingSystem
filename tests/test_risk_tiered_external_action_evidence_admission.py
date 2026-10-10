@@ -165,7 +165,6 @@ def test_trading_2537_v2_execution_evidence_is_exact_and_self_verifying() -> Non
 
 def test_trading_2537_resolution_and_trading_2541_repair_boundary_are_disclosed() -> None:
     flow = (ROOT / "docs/system_flow.md").read_text(encoding="utf-8")
-    atlas = (ROOT / "config/atlas/page_effectiveness.yaml").read_text(encoding="utf-8")
     requirement_2537 = (
         ROOT
         / "docs/requirements/"
@@ -182,13 +181,13 @@ def test_trading_2537_resolution_and_trading_2541_repair_boundary_are_disclosed(
         "TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md"
     ).read_text(encoding="utf-8")
 
-    for content in (flow, atlas, requirement_2537, requirement_2539, requirement_2541):
+    # The retired Atlas page no longer discloses this boundary (Atlas retired, GOV-008).
+    for content in (flow, requirement_2537, requirement_2539, requirement_2541):
         assert "2022-08-26" in content
         assert "6496" in content
     assert "## TRADING-2541 exact-date subscription missing remediation V1" in flow
     assert "EXACT_DATE_CATALOG_AVAILABLE_SUBSCRIPTION_MISSING" in flow
     assert "diagnosis" not in requirement_2541.lower() or "repair" in requirement_2541.lower()
-    assert "数据修复尚未实现" in atlas
     assert "cross-date" in requirement_2541
 
 

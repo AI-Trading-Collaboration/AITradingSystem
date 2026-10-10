@@ -1,139 +1,27 @@
 name: CI
 
+# GOV-008: the gate that guards main is local (`python tools/gov008/ship.py`, Windows, 16 workers).
+# GitHub Actions is at most an optional check and Linux is out of scope
+# (owner_decision:GOV-008:2026-10-10:research_first_refactor_v1), so CI is a manual lint only.
+# Known pre-existing lint findings (QuantConnect algorithm files under inputs/research and two long
+# lines in src) are not gate failures; run it on demand.
+
 on:
-  pull_request:
-  push:
-    branches: [main]
   workflow_dispatch:
-    inputs:
-      validation_tier:
-        description: "Validation tier to run"
-        required: true
-        default: fast-unit
-        type: choice
-        options:
-          - fast-unit
-          - contract-validation
-          - full
-      validation_trigger_reason:
-        description: "Audited validation boundary; Full requires a reviewed Full reason"
-        required: true
-        default: manual_validation
-        type: choice
-        options:
-          - manual_validation
-          - natural_integration_boundary
-          - phase_exit_or_handoff
-          - broad_shared_contract_change
-          - formal_performance_profile
-      task_id:
-        description: "Owning project task id"
-        required: true
-        default: CI_MANUAL_VALIDATION
-        type: string
-  schedule:
-    - cron: "0 18 * * *"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
-    env:
-      VALIDATION_TIER: fast-unit
-      VALIDATION_TRIGGER_REASON: ci_change_validation
-      VALIDATION_TASK_ID: CI_CHANGE_VALIDATION
-      VALIDATION_BOUNDARY_ID: "github:${{ github.workflow }}:${{ github.run_id }}:${{ github.run_attempt }}"
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install package
-        run: python -m pip install -e ".[dev]"
+      - name: Install ruff
+        run: python -m pip install ruff
       - name: Lint
         run: python -m ruff check .
-      - name: Docs freshness
-        run: python -m ai_trading_system.cli docs validate-freshness
-      - name: Select scheduled validation tier
-        if: ${{ github.event_name == 'schedule' }}
-        run: |
-          echo "VALIDATION_TIER=full" >> "$GITHUB_ENV"
-          echo "VALIDATION_TRIGGER_REASON=scheduled_ci" >> "$GITHUB_ENV"
-          echo "VALIDATION_TASK_ID=CI_DAILY_FULL" >> "$GITHUB_ENV"
-      - name: Select manual validation tier
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: |
-          echo "VALIDATION_TIER=${{ inputs.validation_tier }}" >> "$GITHUB_ENV"
-          echo "VALIDATION_TRIGGER_REASON=${{ inputs.validation_trigger_reason }}" >> "$GITHUB_ENV"
-          echo "VALIDATION_TASK_ID=${{ inputs.task_id }}" >> "$GITHUB_ENV"
-      - name: Test
-        id: pytest
-        run: >-
-          python scripts/run_validation_tier.py "$VALIDATION_TIER"
-          --write-runtime-artifact
-          --trigger-reason="$VALIDATION_TRIGGER_REASON"
-          --task-id="$VALIDATION_TASK_ID"
-          --boundary-id="$VALIDATION_BOUNDARY_ID"
-          --pytest-arg=--junitxml=pytest-results.xml
-      - name: Upload validation evidence
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: validation-evidence-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            outputs/validation_runtime/
-            pytest-results.xml
-          if-no-files-found: warn
-      - name: Test failure annotations
-        if: ${{ failure() && steps.pytest.conclusion == 'failure' }}
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import xml.etree.ElementTree as ET
-
-          report_path = Path("pytest-results.xml")
-
-          def escape_data(value: str) -> str:
-              return value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
-
-          def escape_property(value: str) -> str:
-              return escape_data(value).replace(":", "%3A").replace(",", "%2C")
-
-          if not report_path.exists():
-              print("::error title=pytest failure::pytest failed before writing pytest-results.xml")
-              raise SystemExit(0)
-
-          root = ET.parse(report_path).getroot()
-          emitted = 0
-          for testcase in root.iter("testcase"):
-              failures = list(testcase.findall("failure")) + list(testcase.findall("error"))
-              if not failures:
-                  continue
-              file_name = testcase.get("file") or ""
-              line = testcase.get("line") or "1"
-              class_name = testcase.get("classname") or ""
-              test_name = testcase.get("name") or ""
-              nodeid = f"{class_name}.{test_name}".strip(".") or "pytest failure"
-              for failure in failures:
-                  message = (failure.get("message") or failure.text or "").strip()
-                  detail = f"{nodeid}: {message}" if message else nodeid
-                  print(
-                      "::error "
-                      f"file={escape_property(file_name)},"
-                      f"line={escape_property(line)},"
-                      "title=pytest failure::"
-                      f"{escape_data(detail[:8000])}"
-                  )
-                  emitted += 1
-
-          if emitted == 0:
-              print(
-                  "::error title=pytest failure::"
-                  "pytest failed but pytest-results.xml did not include failure or error cases"
-              )
-          PY
