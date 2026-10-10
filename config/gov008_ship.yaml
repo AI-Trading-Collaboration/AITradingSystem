@@ -1,8 +1,8 @@
 schema_version: gov008_ship_policy.v1
 policy_id: GOV-008-SHIP
-version: 0.1.0
-# PILOT_BASELINE: P2 spike. Becomes OWNER_APPROVED_ENFORCED when the owner approves the P3 cutover.
-status: PILOT_BASELINE
+version: 1.0.0
+# In force from the GOV-008 P3 cutover (owner_decision:GOV-008:2026-10-10:bootstrap_route_b_v1).
+status: OWNER_APPROVED_ENFORCED
 owner: Project Owner
 rationale: >
   Zone C is the small set of files whose change can alter an investment interpretation (data quality,
@@ -66,8 +66,8 @@ gates:
   # Commands are argv lists run from the repository root; "python" means the interpreter running
   # ship. Zone A needs no test run. The PR suite is ONE directory argument plus the transition
   # plugin: passing hundreds of file arguments makes pytest 9 collection quadratic on Windows
-  # (measured 2026-10-10: tens of minutes vs 7m40s). The invariant suite (tests/invariants) does not
-  # exist yet; it joins gate C when it is created in P2, until then zone C runs the PR suite only.
+  # (measured 2026-10-10: tens of minutes vs 7m40s). The invariant suite (tests/invariants) is part of
+  # the PR suite. The pr_filter plugin is transitional: it goes away when P4 deletes the excluded tests.
   A: []
   B:
     - [python, -m, pytest, tests, -n, "16", --dist, loadfile, -m, "not slow", -p, tools.gov008.pr_filter, -q]

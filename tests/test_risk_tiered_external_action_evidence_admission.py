@@ -199,10 +199,10 @@ def test_project_rules_and_flow_expose_successor_policy() -> None:
         ROOT / "docs/requirements/DEVX-008_Risk_Tiered_External_Action_and_Evidence_Admission.md"
     ).read_text(encoding="utf-8")
 
-    assert "## Risk-Tiered External Actions and Evidence Admission" in agents
-    assert "R1_BOUNDED_RESEARCH_SANDBOX" in agents
-    assert "authorization_state" in agents
-    assert "technical_validation_state" in agents
+    # GOV-008 cutover: the risk tiers stay in AGENTS.md; the token-era section heading is retired.
+    assert "## External actions and workspaces" in agents
+    for tier in ("**R0**", "**R1**", "**R2**", "**R3**"):
+        assert tier in agents
     assert "## DEVX-008 风险分级外部动作与实证证据准入" in flow
     assert "STANDING_OWNER_SCOPE" in flow
     assert "动作授权与证据正确性分轴" in requirement

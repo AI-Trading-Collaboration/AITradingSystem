@@ -449,3 +449,23 @@ lease 在这里做三件事：(1) 采集前后重新核验运行的是精确的�
 
 **留给后续：**任务登记的状态更新并入下一次 TASK_SOURCE_ONLY 批量事务（与 Atlas/B/D 决定一起）；
 P4 删除发布机制时同时删除 `config/architecture/arch_005_*` 与机制测试。
+
+## 15. P3 切换（2026-10-10）
+
+**切换内容**：新 AGENTS.md 生效（137 行，取代 516 行旧版；草稿文件删除）；`config/gov008_ship.yaml` 状态改为
+`OWNER_APPROVED_ENFORCED`；`ship` 推送前 fetch 远端 main 并要求它是候选的祖先，推送后核对远端 SHA；切换前给当时的
+main（`2d29e4e35`）打 tag `legacy-governance-final`，回退用普通 `git revert`。按路线 B，切换提交在本机新门通过后普通推送，不走旧 fence/Full。
+
+**切换时发现的阻塞与决定**：TRADING-2540（QQQ options 研究线）的预注册 `strategy_growth_action_value_preregistration_v1.yaml`
+与阈值决策包 `strategy_growth_action_value_threshold_decision_pack_v1.yaml` 把 AGENTS.md 的精确字节哈希钉为"工程规则权威"，
+加载时与当前文件逐字节比对；改写 AGENTS.md 会让这条研究线的加载器失败（8 月 24 日旧流程改 AGENTS.md 时就重钉过一次）。
+
+决定 `owner_decision:GOV-008:2026-10-10:historical_rules_authority`（owner 选项 1，聊天）：研究记录一个字节都不改；
+新模块 `core/rules_authority.py` 只对 `AGENTS.md` 这一个权威文件放宽为"当前字节等于钉住值，或该记录最后一次提交时的
+AGENTS.md 字节等于钉住值"；预注册加载器仍对**当前** AGENTS.md 检查要求的规则原文（新 AGENTS.md 保留了
+`default research and backtest start: 2021-02-22;` 等原句）。其余所有权威文件保持逐字节严格比对。加载结果里的观测哈希
+仍是钉住值，下游哈希不变。测试：`tests/test_rules_authority.py`（5 个，含"记录与规则同时改则必须重钉"），三个研究测试的
+无 git 夹具改为写入登记时的 AGENTS.md 字节。
+
+**风险分级测试**：`test_risk_tiered_external_action_evidence_admission.py` 原来断言旧 AGENTS.md 的 DEVX-008 章节标题；
+新 AGENTS.md 保留 R0–R3 分级但不再有该标题，测试改为断言 R0–R3 仍在。
