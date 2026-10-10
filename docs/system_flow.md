@@ -1,5 +1,7 @@
 # 系统数据流示意图
 
+GOV-008 L3 采集协议 v3：前瞻采集（TRADING-2564 S3b 五候选、TRADING-2560 Composer）与研究结果访问网关不再依赖 S4D lease 和发布机制。流程为 `scripts/capture_hold.py acquire` 建立 capture hold（精确候选 commit、`src/config/scripts/tools` 未修改、写入路径单次持有、有界有效期）→ `scripts/run_named_data_quality.py --source-hold-id` 子进程只恢复并复核该 hold → 每个事件槽保留 `hold_record.json`/`hold_check.json` → ACK/结果 v3 → `capture_hold.py release`。时间证据策略为 `prospective_event_time_evidence_v3.yaml`，采集策略为 `prospective_capture_execution_v3.yaml`，源清单为五候选 v2（68 模块）与 Composer v2（84 模块）；v1/v2 证据按旧协议生成，不再验证。hold 是本机自证，不是独立权威。
+
 DEVX-015 显式worker启动前置：WindowsWorkerToken只复制真实primary token，绑定SID/非elevated/会话及持有线程，拒绝字典、关闭能力和同principal；原WindowsJobProcess.create_as_worker使用CreateProcessAsUserW并保留创建时JOB_LIST、标准句柄白名单、挂起核对和原清理。API权限不足不回退继承调用者身份。当前未接入受保护账户配置/可信入口，worker直接访问命名Job和控制记录的路径仍需迁移；不能据此启用ACTIVE。
 
 DEVX-015 身份隔离前置：原 WindowsJobProcess 在创建 Job/stdout/候选进程之前读取调用进程的 primary token，拒绝 elevated 或 SYSTEM/LocalService/NetworkService 身份通过继承启动候选。CreateProcessW 返回后，在原挂起状态核对实际子进程 token；不一致走原 Job 清理，不执行候选代码。线程 impersonation 不替代进程身份。此检查不赋予独立账户启动能力、不完成可信验证者接线或主机 ACTIVE，正式隔离与最终验收仍待完成。

@@ -16,18 +16,26 @@
 ## TRADING-2564 S3b 手工前瞻采集边界
 
 S3b `python -I -B scripts/run_named_data_quality.py --operation activate|capture` 为有限手工研究
-入口，固定新 87-module/14-dependency profile 与 `prospective_capture_execution_v2.yaml`，
-不登记第二个 scheduler。执行前显式 replay exact manifest/owner review、source commit、原
-S4D lease、根/输出归属、允许的 feature sessions 和 expiry。真实范围尚待独立 review；本工程波
-仅合成验证，真实 activation/capture/DQ/provider/order/fill 均为零，现有 heartbeat 状态不变。
+入口，固定 68-module/11-dependency profile（`named_prospective_five_candidate_sources_v2.json`）与
+`prospective_capture_execution_v3.yaml`（采集协议 v3，GOV-008），不登记第二个 scheduler。执行前
+显式复核 exact manifest/owner review、source commit、capture hold、根/输出归属、允许的 feature
+sessions 和 expiry。真实范围尚待独立 review；真实 activation/capture/DQ/provider/order/fill 均为零。
+
+**采集 hold（协议 v3，替代 S4D lease）**：hold 绑定精确候选 commit（HEAD 相同且 `src/config/scripts/tools`
+无未提交修改）、独占写入路径和有界有效期；它是本机自证，不是独立权威。操作顺序：
+
+1. `python scripts/capture_hold.py acquire --candidate-commit <HEAD> --path <manifest 输出目录> --actor <名字> --ttl-minutes <分钟>`，记下输出里的 `hold_id`；
+2. 以 `--source-hold-id <hold_id>` 启动上面的采集入口（子进程只恢复并复核该 hold，不新建）；
+3. 结束后 `python scripts/capture_hold.py release --hold-id <hold_id>`；进程崩溃留下的 hold 同样用 release 清除，
+   `python scripts/capture_hold.py status` 列出全部记录。hold 状态在 `outputs/runtime/capture_holds/`（git 忽略）。
 
 activation 完整 ACK 保守时间上界的纽约日期之后首 XNYS 为最早 F；capture 仅 F close 后、next_XNYS(F) close
 前执行。父固定零 DQ，child 最多一次 canonical DQ，严格 PASS + 原始成功终态/guards 后，同父
 context 零 DQ verify、原五候选 preview、完整闭包保全及 S3a signal witness 才能进入 ACK。
 ACK v2 保留固定 raw UTC ns/QPC anchor、每个原 recorder return 与 postguard；全部已验证
 bound 必须严格小于 D close。第一段收益为 Close(D)→Close(next(D))。
-result v2 单次提交前重验完整闭包及原 active source lease，并保留同 anchor 最终时间证据；
-最终 bound 仅约束 manifest/lease expiry，自己落盘完成时间不作承诺。外层 source terminal
+result v3 单次提交前重验完整闭包及原 live capture hold，并保留同 anchor 最终时间证据；
+最终 bound 仅约束 manifest/hold expiry，自己落盘完成时间不作承诺。外层 source terminal
 失败属于交付未确认；失败 sampler 的完整/部分原始读数必须保留，不得换 anchor 重试。
 本入口不读取收益或运行 maturity/scoreboard。首次 outcome 访问须先冻结 S4 实验/会计合同。
 
@@ -40,12 +48,13 @@ available_at、PIT/OOS、调度启用、production 或 broker 权限。
 
 `python -I -B scripts/run_named_data_quality.py --operation
 composer-activate|composer-readiness|composer-capture --request <request.json>
---request-sha256 <sha256> --source-lease-id <lease-id>` 使用独立 103-module/24-dependency
-`named_composer_prospective_sources_v1.json` 与 `composer_prospective_capture_v1.yaml`。
+--request-sha256 <sha256> --source-hold-id <hold-id>` 使用独立 84-module/21-dependency
+`named_composer_prospective_sources_v2.json` 与 `composer_prospective_capture_v1.yaml`；hold 的获取与
+释放见上一节。
 这是 Owner 已选择的有限手工研究，沿用当前已知 revision 输入规则；不新增 scheduler entry。
 详细边界见 `docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md`。
 
-每次派发前自动 replay exact manifest、owner review、代码/政策、原 S4D lease、根路径、唯一 F
+每次派发前自动 replay exact manifest、owner review、代码/政策、原 capture hold、根路径、唯一 F
 和 expiry。readiness 仅对显式现有快照运行 training/exact_cash/primary 三段 canonical DQ，
 完整保留 requested/evaluated 窗口与原 consistency 起点，零拟合、零观察；不能替代未来 F 的 DQ。
 activate 零 DQ/拟合，以实际完整 ACK 确定纽约日期之后首 XNYS F。

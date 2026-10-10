@@ -422,3 +422,30 @@ lease 在这里做三件事：(1) 采集前后重新核验运行的是精确的�
 | S5 | 重算边界清单（目标：保留代码对冻结模块的导入 = 0）；PR 门禁；提交 | 门禁绿；`frozen_boundary_worklist.csv` 为空 |
 
 **旧证据**：`synthetic/` 下的 v1/v2 证据按旧协议生成，v3 验证器**不**验证它们；它们保留原样，仅作历史。
+
+### 14.2 L3 结果（2026-10-10 深夜，S1–S5 完成）
+
+| 步骤 | 结果 |
+|---|---|
+| S1 | `data/capture_hold.py`（获取/恢复/复核/释放/按 id 释放/保留证明验证，hold 记录含 `git_common_dir`）+ `scripts/capture_hold.py`（acquire/release/status）；`tests/test_capture_hold.py` 26 个测试 |
+| S2 | `named_quality_dispatch`（删掉 lease 的 5 个函数，−453 行）、`named_quality_execution`、contracts、启动脚本改用 hold；`--source-lease-id` → `--source-hold-id`；相关 schema 版本 +1 |
+| S3 | 事件时间证据（槽内 `hold_record.json`/`hold_check.json`，只认 v3 策略，删 v1 分支）、五候选采集（只留 v3 ACK）、Composer 采集、结果访问网关（检查点移到 `outputs/research/experiment_outcome_access_checkpoints_v1`，串行化用 hold 存储的 OS 文件锁）；新策略 `prospective_event_time_evidence_v3.yaml`、`prospective_capture_execution_v3.yaml`；源清单 v2：五候选 94→68 模块、Composer 110→84 模块（去掉 28 个发布机制模块，加入 `core.provenance`、`data.capture_hold`）；旧 v1/v2 策略与 v1 源清单删除 |
+| S4 | 测试改用真 hold：dispatch、执行、bootstrap、事件时间、五候选、Composer、结果访问。按 owner 对 R1 的决定**删除**依赖发布事务/lease 环境的真实链路变体：`test_named_data_quality_actual_candidate.py`、`test_named_data_quality_candidate.py`、`test_named_simple_baseline_preview_candidate.py`、`named_data_quality_support.py` 的真实候选父进程、Composer 合约测试末尾的真实候选段；只测旧 V1 ACK 内部时钟算法与 v1 策略的测试删除；lease 恢复/保留证明测试由 `test_capture_hold.py` 覆盖 |
+| S5 | 边界清单为空（保留代码对冻结模块的导入 = 0）；8 个采集测试文件回到 PR 门禁（排除名单 −11）；一个 40 s 节点标 `slow`；**PR 门禁 7,720 通过、3 跳过、0 失败，8m35s** |
+
+**实现中发现并修正的问题：**结果访问网关在持锁期间要写仓库根下的账本，而 `exclusive_store_maintenance` 会把"根权限"
+绑定到 hold 目录，导致 `ARTIFACT_ROOT_AUTHORITY_CONFLICT`。改为 hold 存储使用不绑定根权限的 OS 文件锁
+（`hold_store_lock`），hold 的获取/释放与网关共用同一把锁。
+
+**行为与覆盖的变化（需要知道的）：**
+
+- 自动化测试里**不再有用真实仓库 + 真实数据跑命名 DQ 子进程的端到端测试**（被删的真实链路变体）。合成端到端测试
+  仍覆盖父/子协议、时间证据、ACK 与重放。真实链路的第一次检验将是 TRADING-2560 的第一次真实采集
+  （按运维手册：先 `capture_hold.py acquire`，再以 `--source-hold-id` 启动，最后 release）。
+- hold 是本机自证：保留证明携带 hold 记录原文与检查时的 git 状态，但没有第二份权威可以交叉核对。
+- 崩溃进程留下的 hold 在有效期内会挡住重叠路径的采集，用 `capture_hold.py release --hold-id` 清除；
+  有效期上限 24 小时（`MAX_HOLD_SECONDS`，代码内注明理由）。
+- `daily_input_capture.py` 自带的本地 "source lease" 与 S4D 无关，未改动。
+
+**留给后续：**任务登记的状态更新并入下一次 TASK_SOURCE_ONLY 批量事务（与 Atlas/B/D 决定一起）；
+P4 删除发布机制时同时删除 `config/architecture/arch_005_*` 与机制测试。
