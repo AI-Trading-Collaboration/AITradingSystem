@@ -293,6 +293,7 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
         for item in payload["missing_limited_artifact_impact"]["items"]
     )
     html = render_reader_brief_html(payload)
+    assert "Backtest / Shadow / Governance" in html
     assert "Operations Health" in html
     assert "etf_operations_health_report" in html
     assert 'safety_status</th><td><span class="status-badge status-missing">MISSING</span>' in html

@@ -2901,6 +2901,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                 ]
             ),
         ),
+        _section("Backtest / Shadow / Governance", _definition_table(list(governance.items()))),
         _section(
             "Parameter Shadow Review",
             _definition_table(
