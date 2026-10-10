@@ -86,6 +86,8 @@ flowchart LR
 任务分支 → `python tools/gov008/ship.py --repo . --execute --push`：在本机跑门禁（A 区只记录；B/C 区跑 PR 套件
 `pytest tests -n 16 --dist loadfile -m "not slow"`，C 区还要求 `Owner-Decision:` 行）→ 提交信息写 `Gate:` 行 → main 快进到
 被测试的树 → 普通推送并核对远端。任务记录在 `tasks/<ID>.yaml`，`docs/task_register*.md` 由 `tools/tasks.py render` 生成。
+各步骤的操作说明是 `.agents/skills/` 下的 Agent Skills（ship-change、task-records、periodic-operations、research-run）；
+使用 pi 时，`.pi/extensions/aits-guard` 拦截强推、改写历史、直接推 main 等被禁止的 git 操作，并在编辑 C 区路径前要求确认。
 
 ## 6. 已退役、不再运行
 

@@ -3,7 +3,9 @@
 This is an investment decision-support system. Data quality, auditability, and correctness are
 product requirements, not polish. "The agent" means whichever coding agent works in this repository;
 nothing here depends on a specific harness. Background and the decisions behind these rules:
-`docs/requirements/GOV-008_Research_First_Governance_Refactor.md`.
+`docs/requirements/GOV-008_Research_First_Governance_Refactor.md`. Step-by-step procedures are Agent
+Skills in `.agents/skills/` (ship-change, task-records, periodic-operations, research-run);
+`.pi/extensions/aits-guard` blocks the forbidden git actions for pi. Neither replaces these rules.
 
 ## Primary Research Window
 

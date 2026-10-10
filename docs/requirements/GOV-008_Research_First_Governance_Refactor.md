@@ -617,3 +617,42 @@ ship 在最终树上重跑）。变异等价：被删测试只覆盖被删代码
   `GOV-008A_READER_BRIEF_ETF_SECTION_RETIREMENT`（P2）。
 - 验证：调度/每日计划/控制面/CLI 测试 138 通过；研究策略目录与文档契约等 913 通过；docs freshness 与 research trends 41 通过；
   整套 PR 门禁由 ship 运行。
+
+P5 已发布：`6dc531d22`（ship 门禁 7,926 通过、0 失败，10m21s），main = origin/main。
+
+## 20. P6 接入 pi（2026-10-10）
+
+**pi 的事实（官方文档 2026-10-10 查阅：github.com/badlogic/pi-mono `packages/coding-agent` 的 README、docs/skills.md、
+docs/extensions.md、docs/configuration.md、docs/security.md）**：
+
+- 包名 `@earendil-works/pi-coding-agent`；官方安装脚本（Windows：`powershell -c "irm https://pi.dev/install.ps1 | iex"`）或
+  `npm install -g --ignore-scripts @earendil-works/pi-coding-agent`；需要 Node ≥ 22.19（本机 v24.15.0）。
+- 登录：在 pi 里 `/login` 连接订阅或 API key，凭据在 `~/.pi/agent/auth.json`。
+- 上下文：从工作目录及其上级读取 `AGENTS.md`（不需要信任项目）。项目级 `.pi/`（settings、extensions、skills）与
+  `.agents/skills/` 只在**信任项目**后加载（`/trust`，记录在 `~/.pi/agent/trust.json`）。
+- **pi 没有内置沙箱或权限系统**：工具按 pi 进程的操作系统权限运行；扩展可以在 `tool_call` 事件里拦截工具调用。
+
+**仓库侧已完成**：
+
+| 项 | 内容 |
+|---|---|
+| Skills | `.agents/skills/` 4 个 Agent Skills（pi、Codex、Claude Code 通用格式）：`ship-change`（改动到发布的步骤）、`task-records`（任务库与需求文档、owner 决定的记法）、`periodic-operations`（运维手册、唯一入口、DQ 门禁、恢复与派发）、`research-run`（研究窗口、预注册、运行溯源、结果准入、capture hold、证据文件不改）。取代 P4 块 1 删除的两个 Codex 技能 |
+| 权限 | `.pi/extensions/aits-guard/`：拦截强推、直接推 main、`update-ref` main、rebase、`reset --hard`、历史改写、`git clean`、整体丢弃改动、`--no-verify`；拦截写入 `tree_clean_exclusions`、渲染出的任务视图、被字节钉住的研究证据；编辑 C 区路径前弹确认（无交互界面时直接拦截）。它是防误操作的护栏，不是安全边界 |
+| 测试 | `guard.test.ts`（7 个 node 测试）；`tests/test_agent_harness_files.py` 在 PR 套件里运行它（本机无 Node ≥ 23.6 时跳过并说明），并校验每个 skill 的名称规则、描述长度、名称与目录一致 |
+| 文档 | AGENTS.md 引言加一句指向 skills 与守卫（137 行）；`system_flow.md` 第 5 节同步 |
+
+**pi 就绪清单（第 7 节）**：
+
+| 条件 | 状态 |
+|---|---|
+| AGENTS.md 中性且 ≤150 行 | 满足（137 行，不点名任何 harness） |
+| 一条 `ship` 命令、统一发布门、C 区要求 owner 决定 | 满足 |
+| agent 路径上没有 Windows 注册表或租约依赖 | 满足（src/scripts/tools 无 `winreg` 引用；lease 字样只出现在分析工具 `tools/gov008/test_triage.py` 的分类关键词里） |
+| 任务库简单 | 满足（`tasks/<ID>.yaml`） |
+| skills 移植、权限配置 | 满足（上表） |
+| 日常调度确定 | **未满足**：OPS-082（PROPOSED），需 owner 确认调度规则与停用 Codex automation |
+| 3 个真实任务试跑 | **未开始**：需要 owner 安装 pi 并 `/login`、信任本项目 |
+
+建议的 3 个试跑任务（由易到难）：(1) 只读：用 `periodic-operations` skill 跑 `aits ops daily-plan --fail-on-missing-env`
+并写中文摘要；(2) A 区：按第 6 节为挂起任务写重评表（只改任务记录与文档，ship 不跑测试）；(3) B 区：GOV-008A（Reader Brief
+ETF 栏目清理）走完整 ship 流程。每个试跑记录：是否按 skill 步骤执行、守卫是否误拦或漏拦、门禁结果、耗时。
