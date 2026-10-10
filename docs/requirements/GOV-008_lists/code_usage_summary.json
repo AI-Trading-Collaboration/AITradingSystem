@@ -1,5 +1,5 @@
 {
- "source_commit": "e7e34e0f4309cda495731892bc7005db301a0c31",
+ "source_commit": "67c011ff833973fa90e8a9a890be3f3296572660",
  "total_modules": 1243,
  "total_loc": 1322686,
  "by_class": {
@@ -8,12 +8,36 @@
    "loc": 17094
   },
   "DEV_MACHINERY": {
-   "modules": 48,
-   "loc": 61466
+   "modules": 50,
+   "loc": 62031
   },
   "ETF_RETIRE": {
    "modules": 270,
    "loc": 303263
+  },
+  "FREEZE_CLI_FRAMEWORK": {
+   "modules": 26,
+   "loc": 25505
+  },
+  "FREEZE_DORMANT": {
+   "modules": 92,
+   "loc": 129485
+  },
+  "KEEP_BUILD_FEATURES_CLI": {
+   "modules": 1,
+   "loc": 263
+  },
+  "KEEP_CLI_ROOT": {
+   "modules": 2,
+   "loc": 1330
+  },
+  "KEEP_DATA_FOUNDATION": {
+   "modules": 9,
+   "loc": 10287
+  },
+  "KEEP_TRADING_ENGINE": {
+   "modules": 35,
+   "loc": 33678
   },
   "LIVE_DAILY": {
    "modules": 219,
@@ -27,9 +51,9 @@
    "modules": 18,
    "loc": 20578
   },
-  "UNASSIGNED": {
-   "modules": 185,
-   "loc": 203915
+  "REVIEW_SMALL_UNREACHABLE": {
+   "modules": 18,
+   "loc": 2802
   }
  },
  "scheduled_seed_modules": {
@@ -46,6 +70,12 @@
  "machinery_worklist_files": 16,
  "machinery_worklist_loc": 35093,
  "etf_worklist_files": 9,
+ "frozen_boundary_files": 18,
+ "frozen_boundary_loc": 46600,
+ "registration_edit_files": [
+  "ai_trading_system.cli",
+  "ai_trading_system.cli_direct"
+ ],
  "caveats": [
   "static import closure over-approximates reachability",
   "dynamic import_module use and hand-run aits research commands are not counted",

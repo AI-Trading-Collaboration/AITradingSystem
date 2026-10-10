@@ -111,5 +111,16 @@ def closure(graph: dict[str, set[str]], seeds: Iterable[str]) -> set[str]:
     return seen
 
 
+# Validation scheduling and trigger provenance belong to the publication/validation machinery even
+# though they live outside platform/architecture.
+EXTRA_MACHINERY_MODULES = frozenset(
+    {f"{PKG}.platform.validation_scheduling", f"{PKG}.platform.validation_trigger_provenance"}
+)
+
+
 def is_machinery_module(name: str) -> bool:
-    return name == MACHINERY_PREFIX or name.startswith(MACHINERY_PREFIX + ".")
+    return (
+        name == MACHINERY_PREFIX
+        or name.startswith(MACHINERY_PREFIX + ".")
+        or name in EXTRA_MACHINERY_MODULES
+    )

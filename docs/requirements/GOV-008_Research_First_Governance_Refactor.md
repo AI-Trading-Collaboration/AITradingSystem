@@ -154,7 +154,7 @@ pi 就绪清单：AGENTS.md 中性且 ≤150 行；有一条 `ship` 命令；存
    切换后走新门。
 2. **owner 决策集中、提前**：DP1（G1～G7 映射、真实链路测试留删、LIVE/FROZEN/DEAD 名单、区域 C 清单）与 DP2（引导路线）
    在 P1 结束时一次评审问完，避免在 P3 才发现阻塞。不开启分支保护后，新流程不需要
-   任何 owner 外部操作（`ship` 只用已有的推送 main 权限）；owner 只在 P3 前审阅切换 diff 摘要。删除批次不做逐批审批。
+   任何 owner 外部操作（`ship` 只用已有的推送 main 权限）；切换提交也不要求 owner 审阅 diff（第 9 节）。删除批次不做逐批审批。
 3. **并行流（写范围互不相交）**：S-A 新门（`.github/workflows`、`ship`、pytest 分层）；S-B 测试分诊（只读 profile
    与依赖图，产出清单）；S-C 代码使用分析（只读，产出清单）；S-D `RunContext` 与台账最小版；S-E 文档草拟
    （AGENTS.md、system_flow、runbook 草稿）。S-B/S-C 只读，可与 S-A 同时进行；是否启用并行会话或子 agent 由 owner 决定
@@ -179,17 +179,18 @@ AGENTS.md 列为禁止路径。现在不阻塞（P0～P2 在分支上完成，�
 
 - **路线 A（旧链一次）**：把"新门基础 + AGENTS.md 修订"通过旧链发布一次（因 AGENTS.md 是禁止路径需走手工链，约 4～5 小时），
   之后所有改动走新门。
-- **路线 B（一次性引导例外）**：owner 书面决定，切换提交以"新门通过 + owner 审阅 diff"代替旧 fence，普通推送到 main。
+- **路线 B（一次性引导例外）**：owner 书面决定，切换提交以"新门通过"代替旧 fence（owner 后来也去掉了 diff 审阅，见下），普通推送到 main。
 
 **已决定（2026-10-10，P1 文档评论，`owner_decision:GOV-008:2026-10-10:bootstrap_route_b_v1`）：路线 B。**
 理由：路线 A 是花数小时满足一个已决定拆除的流程，且手工链最少演练。适用范围与条件（本文对该决定的操作化定义，
 owner 可调整）：
 
 - 仅适用于 GOV-008 的切换提交（含 AGENTS.md 改写与伴随的未发布任务行/文档提交），不构成对其它任务的先例；
-- 替代条件：该提交的准确 SHA 已在任务分支上通过新门（本机新门运行并留证据；不要求 GitHub CI），
-  且 owner 审阅过切换 diff 摘要后；
+- 替代条件：该提交的准确 SHA 已在任务分支上通过新门（本机新门运行并留证据；不要求 GitHub CI）；
 - 动作仍是普通非强制推送到 main，不使用 PR；不放宽 AGENTS.md 中 force-push、历史改写、远端分叉修复的限制；
-- 切换前我把 diff 摘要（改写的 AGENTS.md、停用与保留的机制清单）交 owner 审阅，审阅通过再推送；
+- **不再要求 owner 审阅 diff 摘要，也不保留原始 diff**（owner 2026-10-10 聊天回复：去掉这个检查，
+  `owner_decision:GOV-008:2026-10-10:route_b_no_diff_review_v1`）。切换前我仍会发一条简短的变更说明作为通知，不作为门槛。
+  回退办法：切换前给当时的 main 打 tag `legacy-governance-final`；切换若有问题，用普通提交 `git revert` 回退，不改写历史；
 - 例外随 P3 完成而结束，之后所有改动走新门。
 
 ## 10. 风险与未验证项
@@ -324,3 +325,26 @@ owner 可调整）：
   `Owner-Decision:`/`Gate:` 行、运行溯源；删除治理开发模式与 preflight、fence 纪律、DUAL_LANE/base-drift、未关联脏文件审计命令、
   token 级证据准入记录。过渡条款标注"(until P4)/(until P5)"：任务行仍用现有 `TASK_SOURCE_ONLY` 事务直到 P5。草稿**不生效**，
   现行 AGENTS.md 未改动。
+
+### 13.3 owner 对未归属代码与切换流程的决定（2026-10-10 晚，聊天回复）
+
+- **B 类 `trading_engine` 保留**（owner：也是研究基础设施，用于回测）。35 个模块 / 3.4 万行，分类 `KEEP_TRADING_ENGINE`，其 broker
+  与 execution 路径仍在区域 C。**C 类 `data.*` 保留**（默认，随 DATA-GOV-001/002 重估）。
+- **D 类冻结，判据是"没有被实际研究模块逻辑引用"**（owner 从未手动调用这些命令）。核查结果：27 个模块没有任何被日常链路、
+  五条线或其他调度的逻辑导入，只被 `cli.py`、`cli_direct.py` 注册引用；6 个研究插件只出现在各自的实验 YAML 与
+  `config/report_registry.yaml`（目录），没有被研究逻辑加载。结论：26 个模块 / 2.55 万行冻结。**唯一例外**
+  `cli_commands.market_features`（`build-features`，263 行）保留，因为 `tests/invariants` 用它证明数据质量门禁会拦截下游。
+  点名一项供 owner 单独撤回：`research_framework.plugins.leveraged_exposure_instrument_evaluation`（杠杆标的评估，
+  主题离 TQQQ 主窗口研究最近，1,184 行），目前随 D 类冻结。
+- **A 类冻结**（owner 无异议）：92 个模块 / 12.9 万行（`FREEZE_DORMANT`）。另有 18 个不足 400 行的不可达小模块（0.28 万行，含
+  `watchlist`、`industry_chain`、`explain`、`error_taxonomy`、`features.technical`）归 `REVIEW_SMALL_UNREACHABLE`，默认保留，
+  P4 逐个复核（静态分析看不到动态导入，且收益可忽略）。
+- **合计**：冻结或退役 **537,378 行 = 40.6%**，保留 785,308 行（59.4%）。分项：开发机制 6.2 万（含两个验证调度模块）、
+  ETF 30.3 万、Atlas 1.7 万、休眠研究 12.9 万、CLI 与框架 2.6 万。
+- **解耦工作量**（`frozen_boundary_worklist.csv`）：保留代码里仍导入被冻结模块的文件 18 个 / 4.7 万行 = 此前的 16 个（机制 14、
+  ETF 2）加 2 个小残留（`high_intensity_risk_cap_guardrail_closure_common`、`portfolio_decision` 包）。**没有任何保留文件导入
+  A、D 类冻结模块**，所以这两类只需删除并去掉命令注册。`cli.py` 与 `cli_direct.py` 需去掉 25 处被冻结命令的注册
+  （`frozen_registration_edits.csv`），`config/report_registry.yaml` 需修剪对应报告条目。
+- **A 类与测试**：直接导入 A 类模块的测试有 539 个文件（约 0.89 节点小时）。P4 的做法是先删模块再收集，凡因 `ImportError` 无法导入
+  的测试文件随之删除，运行期才导入的由跑套件时的 `ModuleNotFoundError` 暴露；不靠名字猜。
+- **切换流程**：owner 决定路线 B 去掉 diff 审阅检查，也不需要保留原始 diff（第 9 节已改）。

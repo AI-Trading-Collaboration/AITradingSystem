@@ -1,17 +1,19 @@
 """GOV-008 P1: classify every ``src/ai_trading_system`` module by static reachability.
 
 Classes (first match wins):
-  DEV_MACHINERY       platform/architecture: fence, leases, DEVX-015 runtime, hash authorities.
-  ETF_RETIRE          etf_portfolio package and its CLI: owner retired the ETF dynamic v3 steps
-  ATLAS_RETIRE        atlas package: owner retired Atlas (2026-10-10).
-                      (GOV-008 P1 review, 2026-10-10). Deleted only after the two decouplings.
-  LIVE_FIVE_LINES     import closure of the five research lines the owner keeps.
-  LIVE_DAILY          import closure of the commands in the daily_trading_day cadence.
-  LIVE_OTHER_SCHEDULE closure of the other scheduled cadences.
-  UNASSIGNED          not reachable from the above: candidate FROZEN / DEAD, needs line owner.
+  DEV_MACHINERY        platform/architecture plus validation scheduling: fence, leases, DEVX-015
+                       runtime, hash authorities. Deleted after the machinery decoupling.
+  ETF_RETIRE           etf_portfolio package and its CLI (owner retired the ETF dynamic v3 steps).
+  ATLAS_RETIRE         atlas package (owner retired Atlas).
+  LIVE_FIVE_LINES      import closure of the five research lines the owner keeps.
+  LIVE_DAILY           import closure of the commands in the daily_trading_day cadence.
+  LIVE_OTHER_SCHEDULE  closure of the other scheduled cadences.
+  KEEP_*               unreachable, kept by owner decision (see owner_class).
+  FREEZE_*             unreachable, frozen by owner decision (dormant research code, CLI wrappers).
+  REVIEW_SMALL_UNREACHABLE  unreachable but tiny: kept by default, reviewed at P4.
 
 Static reachability over-approximates (one import counts) and misses dynamic ``import_module``
-use and commands the owner runs by hand, so UNASSIGNED is a candidate list, not a delete list.
+use, so "unreachable" is a candidate list. Frozen means the code leaves ``main`` (a tag keeps it).
 
 usage:  PYTHONPATH=src python tools/gov008/code_usage.py --repo . \
         --out docs/requirements/GOV-008_lists
@@ -52,6 +54,47 @@ FIVE_LINE_PATTERN = re.compile(
 
 def is_etf(name: str) -> bool:
     return any(name == p or name.startswith(p + ".") for p in ETF_PREFIXES)
+
+
+# Owner decisions 2026-10-10 (GOV-008 P1 review) for modules no schedule or research line reaches:
+#  - trading_engine is backtest/research infrastructure: keep.
+#  - cli_commands.* and research_framework.* were never run by hand and no live research logic
+#    imports them: freeze, except build-features, which tests/invariants uses to prove that the
+#    data-quality gate stops downstream work.
+#  - data.* (data foundation) is kept by default and re-evaluated with DATA-GOV-001/002.
+#  - other unreachable modules are dormant one-off research code: freeze.
+KEEP_CLI_EXCEPTIONS = {f"{PKG}.cli_commands.market_features"}
+# TEMPORARY PILOT BASELINE: an unreachable module under this size is not frozen automatically.
+# Static analysis cannot see dynamic imports and the saving is negligible (18 modules, about 2,800
+# lines in the 2026-10-10 run). Exit condition: each is reviewed in P4 and kept or deleted.
+SMALL_UNREACHABLE_LOC = 400
+
+
+def owner_class(name: str, lines: int) -> str:
+    short = name.removeprefix(PKG + ".")
+    if name in REGISTRATION_MODULES or name == PKG:
+        # The root command registry and package entry points stay; they are edited to drop the
+        # registrations of frozen commands (see frozen_registration_edits.csv).
+        return "KEEP_CLI_ROOT"
+    if short.startswith("trading_engine"):
+        return "KEEP_TRADING_ENGINE"
+    if short.startswith("data."):
+        return "KEEP_DATA_FOUNDATION"
+    if short.startswith(("cli_commands.", "research_framework")):
+        return "KEEP_BUILD_FEATURES_CLI" if name in KEEP_CLI_EXCEPTIONS else "FREEZE_CLI_FRAMEWORK"
+    if lines < SMALL_UNREACHABLE_LOC:
+        return "REVIEW_SMALL_UNREACHABLE"
+    return "FREEZE_DORMANT"
+
+
+FROZEN_CLASSES = {
+    "DEV_MACHINERY",
+    "ETF_RETIRE",
+    "ATLAS_RETIRE",
+    "FREEZE_DORMANT",
+    "FREEZE_CLI_FRAMEWORK",
+}
+REGISTRATION_MODULES = {f"{PKG}.cli", f"{PKG}.cli_direct", f"{PKG}.cli_commands", f"{PKG}.__main__"}
 
 
 def is_atlas(name: str) -> bool:
@@ -143,7 +186,7 @@ def main() -> None:
         elif name in other:
             cls = "LIVE_OTHER_SCHEDULE"
         else:
-            cls = "UNASSIGNED"
+            cls = owner_class(name, loc[name])
         rows.append(
             {
                 "module": name,
@@ -200,6 +243,34 @@ def main() -> None:
             writer.writeheader()
             writer.writerows(data)
 
+    klass = {row["module"]: row["class"] for row in rows}
+    boundary = []
+    registration_edits = []
+    for name in sorted(modules):
+        if klass[name] in FROZEN_CLASSES:
+            continue
+        hits = sorted(d for d in graph[name] if klass[d] in FROZEN_CLASSES)
+        if not hits:
+            continue
+        record = {
+            "module": name,
+            "loc": loc[name],
+            "class": klass[name],
+            "frozen_imports": len(hits),
+            "examples": ";".join(h.removeprefix(PKG + ".") for h in hits[:3]),
+        }
+        (registration_edits if name in REGISTRATION_MODULES else boundary).append(record)
+    for fname, data in (
+        ("frozen_boundary_worklist.csv", boundary),
+        ("frozen_registration_edits.csv", registration_edits),
+    ):
+        with (out / fname).open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.DictWriter(
+                handle, fieldnames=list(data[0]) if data else ["module"], lineterminator="\n"
+            )
+            writer.writeheader()
+            writer.writerows(data)
+
     total = sum(loc.values())
     by_class: dict[str, dict[str, int]] = collections.defaultdict(lambda: {"modules": 0, "loc": 0})
     for row in rows:
@@ -217,6 +288,9 @@ def main() -> None:
         "machinery_worklist_files": len(machinery_work),
         "machinery_worklist_loc": sum(int(r["loc"]) for r in machinery_work),
         "etf_worklist_files": len(etf_work),
+        "frozen_boundary_files": len(boundary),
+        "frozen_boundary_loc": sum(int(r["loc"]) for r in boundary),
+        "registration_edit_files": [r["module"] for r in registration_edits],
         "caveats": [
             "static import closure over-approximates reachability",
             "dynamic import_module use and hand-run aits research commands are not counted",
