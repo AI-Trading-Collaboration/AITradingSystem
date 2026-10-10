@@ -128,7 +128,7 @@ def _absolute_directory(value: object) -> Path:
 def _initial_file_bytes(root: Path, relative: str) -> bytes:
     """Narrow pre-import check, not a replacement for the contained reader.
 
-    The coordinator's checkout/reparse audit and cooperative lease remain
+    The coordinator's checkout/reparse audit and capture hold remain
     prerequisites.  Once project code is loaded, all repeated reads use the
     existing descriptor-bound contained reader.
     """
@@ -314,7 +314,7 @@ class CapturedProjectLoader(importlib.abc.MetaPathFinder, importlib.abc.Loader):
 class NamedBootstrapSession:
     """One child; only plain observations leave it, never its context/seal."""
 
-    def __init__(self, request: Mapping[str, Any], *, operation: str, source_lease_id: str) -> None:
+    def __init__(self, request: Mapping[str, Any], *, operation: str, source_hold_id: str) -> None:
         preloaded = sorted(
             name
             for name in sys.modules
@@ -332,12 +332,12 @@ class NamedBootstrapSession:
             "composer-capture",
         }:
             _fail("NAMED_BOOTSTRAP_OPERATION_INVALID", operation)
-        # Correlation from the trusted coordinator, not an independent lease
-        # proof. The parent binds a live guard/fence proof and this child's
-        # terminal outcome; no new lock/lease store is created by the bootstrap.
-        self.source_lease_id = _text(source_lease_id, "source_lease_id")
-        if re.fullmatch(r"lease-[0-9a-f]{20}", self.source_lease_id) is None:
-            _fail("NAMED_BOOTSTRAP_LEASE_ID_INVALID", "coordinator lease id required")
+        # Correlation from the trusted coordinator, not an independent proof. The
+        # parent binds a live capture-hold check and this child's terminal
+        # outcome; the bootstrap never acquires a hold.
+        self.source_hold_id = _text(source_hold_id, "source_hold_id")
+        if re.fullmatch(r"hold-[0-9a-f]{20}", self.source_hold_id) is None:
+            _fail("NAMED_BOOTSTRAP_HOLD_ID_INVALID", "coordinator capture hold id required")
         roots = request.get("roots")
         if not isinstance(roots, dict):
             _fail("NAMED_BOOTSTRAP_FIELD_INVALID", "roots")
@@ -541,7 +541,7 @@ def main() -> int:
         ),
         required=True,
     )
-    parser.add_argument("--source-lease-id", required=True)
+    parser.add_argument("--source-hold-id", required=True)
     parser.add_argument("--receipt-path")
     parser.add_argument("--receipt-sha256")
     parser.add_argument("--run-dispatch-path")
@@ -588,7 +588,7 @@ def main() -> int:
             _digest(args.run_dispatch_sha256, "run_dispatch_sha256")
         request = _json_object(content)
         session = NamedBootstrapSession(
-            request, operation=args.operation, source_lease_id=args.source_lease_id
+            request, operation=args.operation, source_hold_id=args.source_hold_id
         )
         session.load()
         worker = importlib.import_module(WORKER_MODULE)
@@ -657,7 +657,7 @@ def main() -> int:
         print(
             json.dumps(
                 {
-                    "schema_version": "named_data_quality_bootstrap_result.v1",
+                    "schema_version": "named_data_quality_bootstrap_result.v2",
                     "status": "BLOCKED",
                     "reason_code": getattr(exc, "code", "NAMED_BOOTSTRAP_FAILED"),
                     "detail": str(exc),

@@ -604,7 +604,7 @@ class NamedDQInputBinding(_NamedDTO):
 @dataclass(frozen=True)
 class NamedExecutionObservation(_NamedDTO):
     execution_pid: int
-    source_lease_id: str
+    source_hold_id: str
     import_completed_at: datetime
     pre_dq_checked_at: datetime
     terminal_checked_at: datetime
@@ -613,14 +613,14 @@ class NamedExecutionObservation(_NamedDTO):
         self._check_types()
         if _int_value(self.execution_pid, "execution_pid") == 0:
             _invalid("execution PID must be positive")
-        _text_value(self.source_lease_id, "source_lease_id")
+        _text_value(self.source_hold_id, "source_hold_id")
         if not self.import_completed_at <= self.pre_dq_checked_at <= self.terminal_checked_at:
             _invalid("execution observation chronology mismatch")
 
 
 @dataclass(frozen=True)
 class NamedDQExecutionReceipt(_NamedDTO):
-    schema_version: ClassVar[str] = "named_data_quality_execution_receipt.v1"
+    schema_version: ClassVar[str] = "named_data_quality_execution_receipt.v2"
     run_id: str
     contract_id: str
     request: NamedDQExecutionRequest
@@ -810,7 +810,7 @@ class NamedDQExecutionReceipt(_NamedDTO):
 
 @dataclass(frozen=True)
 class NamedDQSuccessfulDispatchBinding(_NamedDTO):
-    """Trusted coordinator's terminal-run association, never a signature/lease.
+    """Trusted coordinator's terminal-run association, never a signature or capture hold.
 
     The coordinator writes its parent receipt only after child exit 0 and the
     existing postguard PASS, then writes this association. The parent receipt
@@ -819,7 +819,7 @@ class NamedDQSuccessfulDispatchBinding(_NamedDTO):
     explicit hashes before this pure declaration can participate in sealing.
     """
 
-    schema_version: ClassVar[str] = "named_data_quality_successful_dispatch.v1"
+    schema_version: ClassVar[str] = "named_data_quality_successful_dispatch.v2"
     receipt: NamedArtifactBinding
     receipt_id: str
     request_id: str
@@ -828,7 +828,7 @@ class NamedDQSuccessfulDispatchBinding(_NamedDTO):
     candidate_commit: str
     execution_root: str
     execution_pid: int
-    source_lease_id: str
+    source_hold_id: str
     child_started_at: datetime
     child_terminal_checked_at: datetime
     parent_postchecked_at: datetime
@@ -844,7 +844,7 @@ class NamedDQSuccessfulDispatchBinding(_NamedDTO):
         self._check_types()
         if self.receipt.root_role != "EVIDENCE" or self.parent_receipt.root_role != "EXECUTION":
             _invalid("successful dispatch requires EVIDENCE receipt and EXECUTION parent")
-        for value in (self.receipt_id, self.request_id, self.source_lease_id):
+        for value in (self.receipt_id, self.request_id, self.source_hold_id):
             _text_value(value, "successful dispatch identity")
         _sha256(self.request_sha256, "successful dispatch request_sha256")
         _sha256(self.execution_identity_sha256, "successful dispatch execution_identity_sha256")
@@ -871,7 +871,7 @@ class NamedDQSuccessfulDispatchBinding(_NamedDTO):
     def assert_matches_receipt(
         self, receipt: NamedDQExecutionReceipt, *, receipt_path: str
     ) -> None:
-        """Check pure associations; no file, lease or coordinator authentication."""
+        """Check pure associations; no file, hold or coordinator authentication."""
         if not isinstance(receipt, NamedDQExecutionReceipt):
             _invalid("successful dispatch requires typed named receipt")
         _repo_relative_path(receipt_path, "successful dispatch receipt_path")
@@ -887,7 +887,7 @@ class NamedDQSuccessfulDispatchBinding(_NamedDTO):
             or self.candidate_commit != receipt.execution.candidate_commit
             or self.execution_root != receipt.execution.execution_root
             or self.execution_pid != observation.execution_pid
-            or self.source_lease_id != observation.source_lease_id
+            or self.source_hold_id != observation.source_hold_id
         ):
             _invalid("successful dispatch does not match original receipt/request/execution")
         if not (

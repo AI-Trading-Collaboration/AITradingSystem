@@ -1,22 +1,21 @@
 """Production parent correlation for one canonical DQ child, never research authority.
 
-TRADING-2564 S3b: an existing capture bootstrap and S4D lease are prerequisites.
+TRADING-2564 S3b: an existing capture bootstrap and capture hold are prerequisites.
 Attempts are immutable and cannot be resumed or dispatched twice. This module
-does not acquire leases, generate previews, or adopt temporal evidence.
+does not acquire holds, generate previews, or adopt temporal evidence.
 """
 
 from __future__ import annotations
 
 import hashlib
 import os
-import re
 import subprocess
 import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath, PureWindowsPath
-from typing import Any, NoReturn, cast
+from typing import Any, NoReturn
 
 from ai_trading_system.contracts.named_data_quality_execution import (
     NamedArtifactBinding,
@@ -31,6 +30,7 @@ from ai_trading_system.contracts.prospective_event_time_evidence import (
     parse_utc_datetime,
     strict_json_loads,
 )
+from ai_trading_system.data.capture_hold import CaptureHold, recheck_capture_hold
 from ai_trading_system.data.immutable_publish import (
     _bound_directory,
     _root_authority,
@@ -39,19 +39,6 @@ from ai_trading_system.data.immutable_publish import (
     write_contained_artifact_bytes,
 )
 from ai_trading_system.data.named_quality_execution import NamedBootstrapAuthority
-from ai_trading_system.platform.architecture.checkout_guard import (
-    CheckoutGuardDecision,
-    CheckoutIdentity,
-    CheckoutLeaseGuard,
-    CheckoutLeaseHandle,
-    CheckoutOperationClass,
-    CheckoutOperationIntent,
-    KnownUnrelatedExclusion,
-)
-from ai_trading_system.platform.architecture.parallel_control_kernel import (
-    manifest_resource_claims,
-    parse_lease_event,
-)
 
 # Process resource limit, not an investment threshold. No timeout retry is allowed.
 CHILD_TIMEOUT_SECONDS = 120
@@ -137,416 +124,6 @@ def _path(value: object) -> str:
     result = _text(value)
     EventBinding(result, "0" * 64, 0)
     return result
-
-
-def _paths(value: object) -> tuple[str, ...]:
-    if type(value) not in {tuple, list}:
-        _fail("NAMED_PARENT_PATHS_INVALID", "path sequence required")
-    result = tuple(_path(item) for item in cast(tuple[object, ...] | list[object], value))
-    if len(set(item.casefold() for item in result)) != len(result):
-        _fail("NAMED_PARENT_PATHS_INVALID", "duplicate path")
-    return result
-
-
-def _covered(path: str, scope: str) -> bool:
-    target, declaration = PurePosixPath(path.casefold()), PurePosixPath(scope.casefold())
-    return target == declaration or declaration in target.parents
-
-
-def _parse_intent(content: bytes) -> CheckoutOperationIntent:
-    raw = _object(strict_json_loads(content))
-    identity_raw = _object(raw.get("workspace_identity"))
-    if set(identity_raw) != set(CheckoutIdentity.__dataclass_fields__):
-        _fail("NAMED_PARENT_LEASE_INTENT_INVALID", "identity fields")
-    for key, value in identity_raw.items():
-        if value is None and key in {"branch_name", "upstream_ref", "upstream_commit"}:
-            continue
-        _text(value)
-    exclusions = raw.get("known_unrelated_exclusions")
-    if type(exclusions) is not list:
-        _fail("NAMED_PARENT_LEASE_INTENT_INVALID", "exclusions")
-    typed_exclusions = []
-    for item in exclusions:
-        item = _object(item)
-        if set(item) != {"path", "rationale", "owner_ref"}:
-            _fail("NAMED_PARENT_LEASE_INTENT_INVALID", "exclusion fields")
-        typed_exclusions.append(
-            KnownUnrelatedExclusion(
-                _path(item["path"]), _text(item["rationale"]), _text(item["owner_ref"])
-            )
-        )
-    result = CheckoutOperationIntent(
-        intent_id=_text(raw.get("intent_id")),
-        task_id=_text(raw.get("task_id")),
-        thread_id=_text(raw.get("thread_id")),
-        actor=_text(raw.get("actor")),
-        operation_class=CheckoutOperationClass(_text(raw.get("operation_class"))),
-        base_commit=_text(raw.get("base_commit")),
-        owned_paths=_paths(raw.get("owned_paths")),
-        shared_paths=_paths(raw.get("shared_paths")),
-        workspace_identity=CheckoutIdentity(**identity_raw),
-        observed_dirty_paths=_paths(raw.get("observed_dirty_paths")),
-        known_unrelated_exclusions=tuple(typed_exclusions),
-        created_at=parse_utc_datetime(raw.get("created_at")),
-    )
-    if canonical_json_bytes(raw) != canonical_json_bytes(result.to_dict()):
-        _fail("NAMED_PARENT_LEASE_INTENT_INVALID", "exact intent schema required")
-    return result
-
-
-def _read_lease(
-    guard: CheckoutLeaseGuard,
-    source_lease_id: str,
-    candidate_commit: str,
-    required_paths: tuple[str, ...],
-) -> tuple[CheckoutOperationIntent, Path, dict[str, Any]]:
-    if re.fullmatch(r"lease-[a-zA-Z0-9_-]+", _text(source_lease_id)) is None:
-        _fail("NAMED_PARENT_LEASE_ID_INVALID", source_lease_id)
-    if re.fullmatch(r"[0-9a-f]{40}", _text(candidate_commit)) is None:
-        _fail("NAMED_PARENT_CANDIDATE_INVALID", candidate_commit)
-    if type(required_paths) is not tuple or not required_paths:
-        _fail("NAMED_PARENT_PATHS_INVALID", "nonempty immutable required paths")
-    required = _paths(required_paths)
-    replay = guard.replay()
-    heads = {item.lease_id: item for item in replay.active_leases}
-    if replay.status != "PASS" or source_lease_id not in heads:
-        _fail("NAMED_PARENT_LEASE_INACTIVE", source_lease_id)
-    head = heads[source_lease_id]
-    if not head.change_id.startswith("checkout:"):
-        _fail("NAMED_PARENT_LEASE_INTENT_INVALID", "checkout authority required")
-    intent_id = head.change_id.removeprefix("checkout:")
-    if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", intent_id) is None:
-        _fail("NAMED_PARENT_LEASE_INTENT_INVALID", "intent id")
-    root = guard.project_root
-    intent_path = guard.runtime_root / "intents" / f"{intent_id}.json"
-    intent_content = read_contained_artifact_bytes(
-        root=root, relative_path=intent_path.relative_to(root).as_posix()
-    )
-    intent = _parse_intent(intent_content)
-    audit = guard.audit_worktree()
-    checked = _now()
-    task, _ = guard._lease_task(intent)
-    if (
-        intent.intent_id != intent_id
-        or intent.operation_class
-        not in {CheckoutOperationClass.DOMAIN_MUTATION, CheckoutOperationClass.SHARED_MUTATION}
-        or intent.workspace_identity != audit.audited_identity
-        or Path(intent.workspace_identity.checkout_root) != root
-        or intent.base_commit != candidate_commit
-        or intent.workspace_identity.head_commit != candidate_commit
-        or intent.actor != head.actor
-        or intent.actor not in guard.policy.allowlisted_actors
-        or intent.known_unrelated_exclusions != guard.policy.known_unrelated_exclusions
-        or head.base_commit != candidate_commit
-        or head.task_id != task.task_id
-        or head.change_manifest_sha256 != task.manifest.sha256
-        or head.resources != manifest_resource_claims(task.manifest)
-        or head.policy_version != guard.lease_policy.policy_version
-        or head.lane_id
-        != (
-            "checkout-shared-coordinator"
-            if intent.operation_class is CheckoutOperationClass.SHARED_MUTATION
-            else "checkout-domain-mutation"
-        )
-        or head.acquired_at is None
-        or head.expires_at is None
-        or not intent.created_at
-        <= parse_utc_datetime(head.acquired_at)
-        <= checked
-        < parse_utc_datetime(head.expires_at)
-    ):
-        _fail("NAMED_PARENT_LEASE_BINDING_INVALID", source_lease_id)
-    # The governed audit never opens the registered known-unrelated contents.
-    declarations = (*intent.owned_paths, *intent.shared_paths)
-    if any(not any(_covered(path, scope) for scope in declarations) for path in audit.dirty_paths):
-        _fail("NAMED_PARENT_DIRTY_UNATTRIBUTED", source_lease_id)
-    for path in required:
-        if (
-            any(
-                _covered(path, item.path) or _covered(item.path, path)
-                for item in guard.policy.known_unrelated_exclusions
-            )
-            or not any(_covered(path, scope) for scope in declarations)
-            or not any(
-                item.kind == "path"
-                and item.access.value == "WRITE"
-                and _covered(path, item.resource_id)
-                for item in head.resources
-            )
-        ):
-            _fail("NAMED_PARENT_LEASE_SCOPE_INVALID", path)
-    event_id = dict(replay.head_event_ids)[source_lease_id]
-    event_path = guard.store.events_root / source_lease_id / f"{event_id}.json"
-    event_content = read_contained_artifact_bytes(
-        root=root, relative_path=event_path.relative_to(root).as_posix()
-    )
-    raw_event = _object(strict_json_loads(event_content))
-    event = parse_lease_event(raw_event, blobs=guard.store.blobs)
-    if (
-        canonical_json_bytes(raw_event) != canonical_json_bytes(event.to_dict())
-        or event.lease != head
-        or event.event_id != event_id
-        or event.to_state != "ACTIVE"
-        or parse_utc_datetime(event.occurred_at) > checked
-    ):
-        _fail("NAMED_PARENT_LEASE_EVENT_DRIFT", source_lease_id)
-    return (
-        intent,
-        intent_path,
-        {
-            "schema_version": "named_capture_lease_recheck.v1",
-            "status": "PASS",
-            "checked_at": checked.isoformat(),
-            "candidate_commit": candidate_commit,
-            "execution_root": root.as_posix(),
-            "active_lease": head.to_dict(),
-            "required_paths": list(required),
-            "checkout_audit": audit.to_dict(),
-            "lease_replay": replay.to_dict(),
-            "lease_intent": intent.to_dict(),
-            "lease_intent_sha256": _sha(intent_content),
-            "lease_intent_bytes_hex": intent_content.hex(),
-            "lease_event": event.to_dict(),
-            "lease_event_sha256": _sha(event_content),
-            "lease_event_bytes_hex": event_content.hex(),
-            "lease_acquired_or_mutated": False,
-            "production_effect": "none",
-            "broker_action": "none",
-        },
-    )
-
-
-def restore_named_capture_lease(
-    *,
-    execution_root: Path,
-    source_lease_id: str,
-    candidate_commit: str,
-    required_paths: tuple[str, ...],
-) -> CheckoutLeaseHandle:
-    """Restore only a replayed active S4D intent; the supplied id is an address."""
-    root = execution_root
-    if not root.is_absolute() or root.resolve(strict=True) != root:
-        _fail("NAMED_PARENT_ROOT_INVALID", str(root))
-    guard = CheckoutLeaseGuard(
-        project_root=root,
-        policy_path=root / "config/architecture/arch_005_s4d_checkout_guard.yaml",
-        parallel_policy_path=root / "config/architecture/arch_005_parallel_control_policy.yaml",
-    )
-    intent, path, _ = _read_lease(guard, source_lease_id, candidate_commit, required_paths)
-    return CheckoutLeaseHandle(
-        guard=guard,
-        decision=CheckoutGuardDecision(
-            status="PASS",
-            reason_codes=("NAMED_CAPTURE_EXISTING_LEASE_REPLAYED",),
-            intent=intent,
-            intent_path=path,
-            lease_id=source_lease_id,
-            lease_state="ACTIVE",
-        ),
-    )
-
-
-def recheck_named_capture_lease(
-    lease: CheckoutLeaseHandle,
-    *,
-    candidate_commit: str,
-    required_paths: tuple[str, ...],
-) -> dict[str, Any]:
-    """Re-read all authority; a caller-created decision cannot grant scope."""
-    if type(lease) is not CheckoutLeaseHandle or lease.released:
-        _fail("NAMED_PARENT_LEASE_REQUIRED", "live typed S4D handle required")
-    root = lease.guard.project_root
-    canonical_guard = CheckoutLeaseGuard(
-        project_root=root,
-        policy_path=root / "config/architecture/arch_005_s4d_checkout_guard.yaml",
-        parallel_policy_path=root / "config/architecture/arch_005_parallel_control_policy.yaml",
-    )
-    if (
-        type(lease.guard) is not CheckoutLeaseGuard
-        or lease.guard.runtime_root != canonical_guard.runtime_root
-        or lease.guard.policy != canonical_guard.policy
-        or lease.guard.lease_policy != canonical_guard.lease_policy
-    ):
-        _fail("NAMED_PARENT_LEASE_AUTHORITY_DRIFT", lease.lease_id)
-    intent, path, proof = _read_lease(
-        canonical_guard, lease.lease_id, candidate_commit, required_paths
-    )
-    if (
-        lease.decision.status != "PASS"
-        or lease.decision.lease_state != "ACTIVE"
-        or lease.decision.lease_id != lease.lease_id
-        or lease.actor != intent.actor
-        or lease.decision.intent != intent
-        or lease.decision.intent_path != path
-    ):
-        _fail("NAMED_PARENT_LEASE_HANDLE_DRIFT", lease.lease_id)
-    return proof
-
-
-def verify_retained_named_capture_proof(
-    proof: object,
-    *,
-    execution_root: Path,
-    candidate_commit: str,
-    required_paths: tuple[str, ...],
-    source_lease_id: str,
-    checked_at: datetime,
-) -> None:
-    """Validate the original lease snapshot at its recorded check time.
-
-    This checks retained source-parent evidence, not a new action permission.
-    Released/expired leases and later heartbeats do not erase a valid original
-    check. Raw snapshots remain local-parent attestations, not signatures or a
-    substitute for the original live replay, source seal and process binding.
-    """
-    root = execution_root
-    if not root.is_absolute() or root.resolve(strict=True) != root:
-        _fail("NAMED_PARENT_ROOT_INVALID", str(root))
-    if re.fullmatch(r"[0-9a-f]{40}", _text(candidate_commit)) is None:
-        _fail("NAMED_PARENT_CANDIDATE_INVALID", candidate_commit)
-    if re.fullmatch(r"lease-[a-zA-Z0-9_-]+", _text(source_lease_id)) is None:
-        _fail("NAMED_PARENT_LEASE_ID_INVALID", source_lease_id)
-    if type(required_paths) is not tuple or not required_paths:
-        _fail("NAMED_PARENT_PATHS_INVALID", "nonempty immutable required paths")
-    required = _paths(required_paths)
-    if type(checked_at) is not datetime or checked_at.tzinfo is None:
-        _fail("NAMED_PARENT_RETAINED_TIME_INVALID", "aware original check time required")
-    checked = parse_utc_datetime(checked_at.isoformat())
-    raw = _object(proof)
-    if (
-        raw.get("schema_version")
-        not in {
-            "named_capture_lease_recheck.v1",
-            "named_dq_existing_parent_proof.v1",
-            "prospective_capture_parent_proof.v1",
-        }
-        or raw.get("status") != "PASS"
-        or raw.get("candidate_commit") != candidate_commit
-        or raw.get("execution_root") != root.as_posix()
-        or parse_utc_datetime(raw.get("checked_at")) != checked
-        or raw.get("lease_acquired_or_mutated") is not False
-        or raw.get("production_effect") != "none"
-        or raw.get("broker_action") != "none"
-    ):
-        _fail("NAMED_PARENT_RETAINED_PROOF_INVALID", source_lease_id)
-    retained: dict[str, bytes] = {}
-    for key in ("lease_intent", "lease_event"):
-        hex_value = _text(raw.get(f"{key}_bytes_hex"))
-        if re.fullmatch(r"(?:[0-9a-f]{2})+", hex_value) is None:
-            _fail("NAMED_PARENT_RETAINED_BYTES_INVALID", key)
-        content = bytes.fromhex(hex_value)
-        if _sha(content) != raw.get(f"{key}_sha256") or canonical_json_bytes(
-            strict_json_loads(content)
-        ) != canonical_json_bytes(raw.get(key)):
-            _fail("NAMED_PARENT_RETAINED_BYTES_INVALID", key)
-        retained[key] = content
-    intent = _parse_intent(retained["lease_intent"])
-    event_raw = _object(strict_json_loads(retained["lease_event"]))
-    guard = CheckoutLeaseGuard(
-        project_root=root,
-        policy_path=root / "config/architecture/arch_005_s4d_checkout_guard.yaml",
-        parallel_policy_path=root / "config/architecture/arch_005_parallel_control_policy.yaml",
-    )
-    event = parse_lease_event(event_raw, blobs=guard.store.blobs)
-    head = event.lease
-    task, _ = guard._lease_task(intent)
-    if (
-        canonical_json_bytes(event_raw) != canonical_json_bytes(event.to_dict())
-        or canonical_json_bytes(raw.get("active_lease")) != canonical_json_bytes(head.to_dict())
-        or intent.operation_class
-        not in {CheckoutOperationClass.DOMAIN_MUTATION, CheckoutOperationClass.SHARED_MUTATION}
-        or Path(intent.workspace_identity.checkout_root) != root
-        or intent.base_commit != candidate_commit
-        or intent.workspace_identity.head_commit != candidate_commit
-        or intent.actor != head.actor
-        or intent.actor not in guard.policy.allowlisted_actors
-        or intent.known_unrelated_exclusions != guard.policy.known_unrelated_exclusions
-        or head.lease_id != source_lease_id
-        or head.change_id != f"checkout:{intent.intent_id}"
-        or head.base_commit != candidate_commit
-        or head.task_id != task.task_id
-        or head.change_manifest_sha256 != task.manifest.sha256
-        or head.resources != manifest_resource_claims(task.manifest)
-        or head.policy_version != guard.lease_policy.policy_version
-        or head.lane_id
-        != (
-            "checkout-shared-coordinator"
-            if intent.operation_class is CheckoutOperationClass.SHARED_MUTATION
-            else "checkout-domain-mutation"
-        )
-        or head.state != "ACTIVE"
-        or event.to_state != "ACTIVE"
-        or event.actor != intent.actor
-        or head.acquired_at is None
-        or head.expires_at is None
-        or not intent.created_at
-        <= parse_utc_datetime(head.requested_at)
-        <= parse_utc_datetime(head.acquired_at)
-        <= parse_utc_datetime(event.occurred_at)
-        <= checked
-        < parse_utc_datetime(head.expires_at)
-    ):
-        _fail("NAMED_PARENT_RETAINED_LEASE_INVALID", source_lease_id)
-    declarations = (*intent.owned_paths, *intent.shared_paths)
-    for path in (*required, *_paths(raw.get("required_paths"))):
-        if (
-            any(
-                _covered(path, item.path) or _covered(item.path, path)
-                for item in guard.policy.known_unrelated_exclusions
-            )
-            or not any(_covered(path, scope) for scope in declarations)
-            or not any(
-                item.kind == "path"
-                and item.access.value == "WRITE"
-                and _covered(path, item.resource_id)
-                for item in head.resources
-            )
-        ):
-            _fail("NAMED_PARENT_LEASE_SCOPE_INVALID", path)
-    replay = _object(raw.get("lease_replay"))
-    if (
-        replay.get("status") != "PASS"
-        or replay.get("issues") != []
-        or type(replay.get("event_count")) is not int
-        or replay["event_count"] < 1
-    ):
-        _fail("NAMED_PARENT_RETAINED_REPLAY_INVALID", source_lease_id)
-    for field in ("active_leases", "lease_heads", "head_event_ids"):
-        values = replay.get(field)
-        if type(values) is not list:
-            _fail("NAMED_PARENT_RETAINED_REPLAY_INVALID", field)
-        matches = [item for item in values if _object(item).get("lease_id") == source_lease_id]
-        expected = (
-            {"lease_id": source_lease_id, "event_id": event.event_id}
-            if field == "head_event_ids"
-            else head.to_dict()
-        )
-        if canonical_json_bytes(matches) != canonical_json_bytes([expected]):
-            _fail("NAMED_PARENT_RETAINED_REPLAY_INVALID", field)
-    audit = _object(raw.get("checkout_audit"))
-    identity = intent.workspace_identity
-    expected_audited = {
-        "toplevel": identity.checkout_root,
-        "git_common_dir": identity.git_common_dir,
-        "workspace_id": identity.workspace_id,
-        "head_commit": identity.head_commit,
-        "branch_name": identity.branch_name,
-    }
-    if (
-        audit.get("status") != "PASS"
-        or audit.get("same_git_common_dir") is not True
-        or audit.get("unstaged_diff_check") != "PASS"
-        or audit.get("staged_diff_check") != "PASS"
-        or canonical_json_bytes(audit.get("audited_repository"))
-        != canonical_json_bytes(expected_audited)
-        or audit.get("known_unrelated_exclusions")
-        != [item.path for item in guard.policy.known_unrelated_exclusions]
-        or any(
-            not any(_covered(path, scope) for scope in declarations)
-            for path in _paths(audit.get("dirty_paths"))
-        )
-    ):
-        _fail("NAMED_PARENT_RETAINED_AUDIT_INVALID", source_lease_id)
 
 
 @dataclass(frozen=True)
@@ -661,7 +238,7 @@ def _current_child_python_launch() -> _ChildPythonLaunch:
 def _parent_proof(
     request: NamedDQExecutionRequest,
     bootstrap: NamedBootstrapAuthority,
-    lease: CheckoutLeaseHandle,
+    hold: CaptureHold,
     required_paths: tuple[str, ...],
     *,
     stage: str,
@@ -698,23 +275,23 @@ def _parent_proof(
         or not operation_profile_allowed
         or type(bootstrap.canonical_dq_call_count) is not int
         or bootstrap.canonical_dq_call_count != 0
-        or bootstrap.source_lease_id != lease.lease_id
+        or bootstrap.source_hold_id != hold.hold_id
         or context.identity.execution_root != request.roots.execution_root
         or context.identity.candidate_commit != request.candidate_commit
         or context.identity.source_manifest_path != request.source_manifest_path
         or context.identity.source_manifest_sha256 != request.source_manifest_sha256
-        or Path(request.roots.execution_root) != lease.guard.project_root
+        or Path(request.roots.execution_root) != hold.root
     ):
         _fail("NAMED_PARENT_CAPTURE_CONTEXT_REQUIRED", request.request_id)
     source_checked = parse_utc_datetime(bootstrap.assert_execution_unchanged(stage=stage))
-    proof = recheck_named_capture_lease(
-        lease, candidate_commit=request.candidate_commit, required_paths=required_paths
+    proof = recheck_capture_hold(
+        hold, candidate_commit=request.candidate_commit, required_paths=required_paths
     )
     if source_checked > parse_utc_datetime(proof["checked_at"]):
         _fail("NAMED_PARENT_CLOCK_ROLLBACK", stage)
     return {
         **proof,
-        "schema_version": "named_dq_existing_parent_proof.v1",
+        "schema_version": "named_dq_existing_parent_proof.v2",
         "request_sha256": request.canonical_sha256,
         "parent_pid": os.getpid(),
         "parent_execution_identity_sha256": context.stable_identity_sha256,
@@ -739,7 +316,7 @@ def _matching_receipt(
     child: dict[str, Any],
     *,
     child_pid: int | None,
-    lease_id: str,
+    hold_id: str,
     identity_sha256: str,
     spawned: datetime,
     terminal: datetime,
@@ -750,11 +327,11 @@ def _matching_receipt(
     )
     receipt = NamedDQExecutionReceipt.from_json_bytes(content)
     expected = {
-        "schema_version": "named_data_quality_bootstrap_result.v1",
+        "schema_version": "named_data_quality_bootstrap_result.v2",
         "status": "PASS",
         "request_id": request.request_id,
         "process_id": child_pid,
-        "source_lease_id": lease_id,
+        "source_hold_id": hold_id,
         "receipt_id": receipt.receipt_id,
         "receipt_sha256": _sha(content),
         "canonical_dq_call_count": 1,
@@ -772,7 +349,7 @@ def _matching_receipt(
         or receipt.report.status != "PASS"
         or receipt.execution.stable_identity_sha256 != identity_sha256
         or receipt.execution_observation.execution_pid != child_pid
-        or receipt.execution_observation.source_lease_id != lease_id
+        or receipt.execution_observation.source_hold_id != hold_id
         or not spawned
         <= parse_utc_datetime(child.get("child_started_at"))
         <= receipt.started_at
@@ -789,7 +366,7 @@ def dispatch_named_quality_child(
     request: NamedDQExecutionRequest,
     *,
     bootstrap: NamedBootstrapAuthority,
-    lease: CheckoutLeaseHandle,
+    hold: CaptureHold,
     output_relative_path: str,
 ) -> NamedQualityDispatchResult:
     """Dispatch once; return retained BLOCKED evidence for any terminal failure.
@@ -797,8 +374,8 @@ def dispatch_named_quality_child(
     Invalid preconditions raise before attempt creation. Once an attempt exists,
     the same slot can never dispatch again, including after process interruption.
     """
-    if type(request) is not NamedDQExecutionRequest or type(lease) is not CheckoutLeaseHandle:
-        _fail("NAMED_PARENT_TYPED_INPUT_REQUIRED", "request and S4D handle required")
+    if type(request) is not NamedDQExecutionRequest or type(hold) is not CaptureHold:
+        _fail("NAMED_PARENT_TYPED_INPUT_REQUIRED", "request and capture hold handle required")
     output = _path(output_relative_path)
     root = Path(request.roots.execution_root)
     evidence = Path(request.roots.evidence_root)
@@ -806,7 +383,7 @@ def dispatch_named_quality_child(
         _fail("NAMED_PARENT_EVIDENCE_SCOPE_INVALID", str(evidence))
     required = tuple(sorted(set((output, evidence.relative_to(root).as_posix()))))
     launch = _current_child_python_launch()
-    before = _parent_proof(request, bootstrap, lease, required, stage="PARENT_PRE_DISPATCH")
+    before = _parent_proof(request, bootstrap, hold, required, stage="PARENT_PRE_DISPATCH")
     store = root / output
     # Reuse the writer's descriptor-bound namespace creation. No shared file
     # may be written before acquiring this store's existing maintenance lock:
@@ -814,11 +391,11 @@ def dispatch_named_quality_child(
     with _root_authority(root), _bound_directory(root, store, "named dispatch store", create=True):
         pass
     attempt = {
-        "schema_version": "named_quality_dispatch_attempt.v1",
+        "schema_version": "named_quality_dispatch_attempt.v2",
         "request_sha256": request.canonical_sha256,
         "parent_pid": os.getpid(),
         "created_at": _now().isoformat(),
-        "source_lease_id": lease.lease_id,
+        "source_hold_id": hold.hold_id,
     }
     with exclusive_store_maintenance(store_root=store):
         # This directory is dedicated to the business key supplied by the parent.
@@ -853,8 +430,8 @@ def dispatch_named_quality_child(
         str(store / "request.json"),
         "--request-sha256",
         request.canonical_sha256,
-        "--source-lease-id",
-        lease.lease_id,
+        "--source-hold-id",
+        hold.hold_id,
         "--operation",
         "run",
     ]
@@ -870,9 +447,9 @@ def dispatch_named_quality_child(
         if (
             not parse_utc_datetime(before["checked_at"])
             <= spawned
-            < parse_utc_datetime(before["active_lease"]["expires_at"])
+            < parse_utc_datetime(before["active_hold"]["expires_at"])
         ):
-            _fail("NAMED_PARENT_LEASE_EXPIRED_BEFORE_SPAWN", lease.lease_id)
+            _fail("NAMED_PARENT_HOLD_EXPIRED_BEFORE_SPAWN", hold.hold_id)
         process = subprocess.Popen(
             command,
             executable=launch.executable,
@@ -902,7 +479,7 @@ def dispatch_named_quality_child(
             terminal_state = "PARENT_ERROR_AND_CHILD_REAPED"
     terminal = _now()
     try:
-        after = _parent_proof(request, bootstrap, lease, required, stage="PARENT_POST_DISPATCH")
+        after = _parent_proof(request, bootstrap, hold, required, stage="PARENT_POST_DISPATCH")
     except (OSError, RuntimeError, ValueError, TypeError) as exc:
         after = {"status": "BLOCKED", "checked_at": _now().isoformat(), "detail": str(exc)}
         failure = f"NAMED_PARENT_POST_DISPATCH_BLOCKED: {exc}"
@@ -923,7 +500,7 @@ def dispatch_named_quality_child(
                 request,
                 child,
                 child_pid=child_pid,
-                lease_id=lease.lease_id,
+                hold_id=hold.hold_id,
                 identity_sha256=before["parent_execution_identity_sha256"],
                 spawned=spawned,
                 terminal=terminal,
@@ -946,7 +523,7 @@ def dispatch_named_quality_child(
         publication_stage = "child_stderr.txt"
         stderr_binding = _write(store, publication_stage, stderr)
         parent: dict[str, Any] = {
-            "schema_version": "named_data_quality_parent_dispatch.v1",
+            "schema_version": "named_data_quality_parent_dispatch.v2",
             "profile": (
                 "COMPOSER_PROSPECTIVE_PRODUCTION_PARENT"
                 if bootstrap.operation.startswith("composer-")
@@ -958,7 +535,7 @@ def dispatch_named_quality_child(
             "execution_root": root.as_posix(),
             "request": request_binding,
             "request_id": request.request_id,
-            "source_lease_id": lease.lease_id,
+            "source_hold_id": hold.hold_id,
             "operation": "run",
             "parent_operation": (
                 bootstrap.operation if bootstrap.operation.startswith("composer-") else "capture"
@@ -981,7 +558,7 @@ def dispatch_named_quality_child(
             "counter_observation_state": "KNOWN" if count is not None else "UNKNOWN",
             "parent_canonical_dq_call_count": bootstrap.canonical_dq_call_count,
             "failure": failure,
-            "lease_acquired_or_mutated": False,
+            "hold_acquired_or_mutated": False,
             "verified_input_seal_exported": False,
             "dispatch_allowed": False,
             "production_effect": "none",
@@ -1010,7 +587,7 @@ def dispatch_named_quality_child(
                 candidate_commit=request.candidate_commit,
                 execution_root=root.as_posix(),
                 execution_pid=receipt.execution_observation.execution_pid,
-                source_lease_id=lease.lease_id,
+                source_hold_id=hold.hold_id,
                 child_started_at=parse_utc_datetime(child["child_started_at"]),
                 child_terminal_checked_at=parse_utc_datetime(child["child_terminal_checked_at"]),
                 parent_postchecked_at=parse_utc_datetime(after["checked_at"]),

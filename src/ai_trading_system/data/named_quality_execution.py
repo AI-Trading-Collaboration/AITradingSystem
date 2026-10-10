@@ -1,6 +1,6 @@
 """Pinned immutable-input DQ execution and zero-DQ process-local verification.
 
-The trusted coordinator owns the existing lease and dispatch provenance.  A
+The trusted coordinator owns the capture hold and dispatch provenance.  A
 receipt/hash is not a signature or an external-action authorization.  Only the
 fresh Git-byte bootstrap supplies the execution context used by this module.
 """
@@ -145,7 +145,7 @@ class NamedBootstrapAuthority(Protocol):
     def dependencies(self) -> Mapping[str, _CapturedDependency]: ...
 
     @property
-    def source_lease_id(self) -> str: ...
+    def source_hold_id(self) -> str: ...
 
     @property
     def imports_completed_at(self) -> str | None: ...
@@ -753,7 +753,7 @@ def run_named_data_quality_execution(
         execution=context.identity,
         execution_observation=NamedExecutionObservation(
             execution_pid=os.getpid(),
-            source_lease_id=bootstrap.source_lease_id,
+            source_hold_id=bootstrap.source_hold_id,
             import_completed_at=datetime.fromisoformat(bootstrap.imports_completed_at),
             pre_dq_checked_at=datetime.fromisoformat(bootstrap.pre_dq_checked_at),
             terminal_checked_at=terminal,
@@ -931,7 +931,7 @@ def _verify_successful_run_dispatch(
 ) -> NamedDQSuccessfulDispatchBinding:
     """Bind a trusted coordinator's successful terminal attestation, not a signature.
 
-    The coordinator remains responsible for real guard replay/lease validity;
+    The coordinator remains responsible for real capture-hold validity;
     this child verifies the attested bytes and their exact execution correlation.
     A naked or failed-dispatch PASS receipt is insufficient to mint input bytes.
     """
@@ -953,7 +953,7 @@ def _verify_successful_run_dispatch(
         _fail("NAMED_DQ_DISPATCH_PARENT_SHA_MISMATCH", proof.parent_receipt.relative_path)
     parent = _object(_strict_json_loads(parent_content.decode("utf-8")), "parent receipt")
     expected_parent = {
-        "schema_version": "named_data_quality_parent_dispatch.v1",
+        "schema_version": "named_data_quality_parent_dispatch.v2",
         "status_semantics": "PARENT_ASSOCIATION_AND_PROCESS_OBSERVATION_ONLY",
         "status": "PASS",
         "operation": "run",
@@ -962,7 +962,7 @@ def _verify_successful_run_dispatch(
         "candidate_commit": receipt.request.candidate_commit,
         "execution_root": receipt.request.roots.execution_root,
         "request_id": receipt.request.request_id,
-        "source_lease_id": proof.source_lease_id,
+        "source_hold_id": proof.source_hold_id,
         "child_pid": proof.execution_pid,
         "observed_canonical_dq_call_count": 1,
         "counter_observation_state": "KNOWN",
@@ -984,12 +984,12 @@ def _verify_successful_run_dispatch(
     if result != parent.get("child_result"):
         _fail("NAMED_DQ_DISPATCH_PARENT_RESULT_MISMATCH", receipt.receipt_id)
     expected_result = {
-        "schema_version": "named_data_quality_bootstrap_result.v1",
+        "schema_version": "named_data_quality_bootstrap_result.v2",
         "verified_input_seal_exported": False,
         "status": receipt.report.status,
         "request_id": receipt.request.request_id,
         "process_id": proof.execution_pid,
-        "source_lease_id": proof.source_lease_id,
+        "source_hold_id": proof.source_hold_id,
         "receipt_id": receipt.receipt_id,
         "receipt_path": receipt_path,
         "receipt_sha256": receipt.canonical_sha256,
@@ -1008,7 +1008,7 @@ def _verify_successful_run_dispatch(
     post_content = _read_parent_artifact(parent.get("post_dispatch_proof"), root=root)
     post = _object(_strict_json_loads(post_content.decode("utf-8")), "parent postguard")
     if (
-        post.get("schema_version") != "named_dq_existing_parent_proof.v1"
+        post.get("schema_version") != "named_dq_existing_parent_proof.v2"
         or post.get("status") != "PASS"
         or post.get("checked_at") != proof.parent_postchecked_at.isoformat()
         or post.get("candidate_commit") != receipt.request.candidate_commit
@@ -1016,12 +1016,9 @@ def _verify_successful_run_dispatch(
         or post.get("request_sha256") != receipt.request.canonical_sha256
     ):
         _fail("NAMED_DQ_DISPATCH_PARENT_POSTGUARD_MISMATCH", receipt.receipt_id)
-    active_lease = _object(post.get("active_lease"), "parent active lease")
-    if (
-        active_lease.get("lease_id") != proof.source_lease_id
-        or active_lease.get("state") != "ACTIVE"
-    ):
-        _fail("NAMED_DQ_DISPATCH_PARENT_POSTGUARD_MISMATCH", "lease correlation")
+    active_hold = _object(post.get("active_hold"), "parent active hold")
+    if active_hold.get("hold_id") != proof.source_hold_id:
+        _fail("NAMED_DQ_DISPATCH_PARENT_POSTGUARD_MISMATCH", "hold correlation")
     return proof
 
 
@@ -1290,10 +1287,10 @@ def bootstrap_worker(
         return capture_worker(request, operation=operation, bootstrap=bootstrap)
     typed = NamedDQExecutionRequest.from_dict(request)
     common: dict[str, object] = {
-        "schema_version": "named_data_quality_bootstrap_result.v1",
+        "schema_version": "named_data_quality_bootstrap_result.v2",
         "request_id": typed.request_id,
         "process_id": os.getpid(),
-        "source_lease_id": bootstrap.source_lease_id,
+        "source_hold_id": bootstrap.source_hold_id,
         "dispatch_allowed": False,
         "production_effect": "none",
         "broker_action": "none",
