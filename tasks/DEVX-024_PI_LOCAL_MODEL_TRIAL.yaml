@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-024_PI_LOCAL_MODEL_TRIAL
+area: Developer workflow / pi 接入本地模型（降低成本）
+priority: P2
+status: IN_PROGRESS
+next_owner: Project Owner（在 dashboard 重启本地模型服务）；随后 Claude Code coordinator（验证与试跑）
+next_step: 重启服务后验证 16k 上下文生效；用本地模型重跑只读试跑与一个小记录类任务，记录成功率、工具调用错误与耗时；按结果决定本地模型可承担的任务范围
+acceptance: 本地模型在 pi 下完成至少 2 个真实任务（含 1 个走完 ship）；记录与 gpt-5.5 试跑的对比；明确适用范围与限制
+notes: production_effect=none；broker_action=none；owner 2026-10-11 聊天要求；配置在仓库外（~/.pi/agent、~/.local-model-service），细节见 GOV-008 需求文档第 20.5 节

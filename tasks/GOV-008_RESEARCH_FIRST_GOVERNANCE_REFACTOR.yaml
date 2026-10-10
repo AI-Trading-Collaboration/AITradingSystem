@@ -4,6 +4,6 @@ area: Governance / research-first governance refactor (derive guarantees from re
 priority: P0
 status: IN_PROGRESS
 next_owner: Project Owner（安装并登录 pi）；随后 Claude Code coordinator（试跑与记录）
-next_step: P0–P6 仓库侧完成，挂起的机制类任务已关闭（需求文档第 20、21 节）；owner 决定自己安装 pi 并 /login、/trust（第 20.1 节），完成后做 3 个试跑；owner 决定第 21 节剩余任务的去留；OPS-082 待定；全部满足后 GOV-008 → DONE
+next_step: P0–P6 完成（pi 三个试跑通过，需求文档第 20 节）；剩余：OPS-082 确定性调度与第 21 节挂起任务的去留待 owner 决定；pi + 本地模型降成本另立 DEVX-024
 acceptance: 见需求文档第 7 节各阶段退出条件与第 4 节目标工作量：PR 级验证约 30 分钟内、仅文档类改动 5 分钟内、治理机制代码与测试大幅删除、AGENTS.md ≤150 行且 harness 中立、pi 就绪清单全部满足；重构完成后重新评估被挂起任务。
 notes: production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision:GOV-008:2026-10-10:research_first_refactor_v1；挂起任务清单见需求文档第 6 节。

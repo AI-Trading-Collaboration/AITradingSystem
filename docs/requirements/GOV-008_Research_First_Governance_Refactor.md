@@ -699,3 +699,37 @@ DEVX-019、DEVX-020、DEVX-021、DEVX-022、DEVX-023、GOV-007、OPS-077、OPS-0
 `git status -- . ':(exclude,literal)<路径>'` 也被拦，pi 只能改用 `git ls-files -m -o --exclude-standard` 绕开（行为本身无害，但违背
 "用规定的写法"）。修正：先去掉 `:(exclude,literal)`、`:(exclude)`、`:!`、`:^` 这类排除 pathspec 里的该路径，剩下仍出现该路径的命令照样拦截；
 新增 1 组允许用例（6 种写法）与 3 个仍须拦截的用例（含"排除写法 + 另一处直接引用"）。
+
+### 20.3 试跑 3：GOV-008A Reader Brief ETF 栏目清理（B 区，pi 完成，2026-10-11）
+
+| 轮次 | 内容 | 工具调用 / 花费 / 耗时 |
+|---|---|---|
+| 实施 | 读 skill 与任务记录，先把 GOV-008A 设为 IN_PROGRESS，从 main 建分支；用 AST 分析 `reader_brief.py`（2.9 万行）后删除栏目，跑相关测试与完整 PR 套件（7,930 通过），ruff 通过，dry-run 后停下 | 75 次（6 次报错均为自我修正中的语法错误、测试失败、未用导入）/ $4.99 / 23.3 min |
+| 修正 1 | 审阅发现误删非 ETF 栏目 "Backtest / Shadow / Governance"；pi 按 main 原样恢复并加回归断言 | 14 次 / $1.96 |
+| 修正 2 | 任务记录：pi 把状态设为 DONE（应为 BASELINE_DONE，`etf_operations_health` 仍保留），且整段替换了原 notes；改正 | 5 次 / $0.58 |
+| 发布 | `ship`：门禁 7,930 通过、0 失败（613 s），main = origin/main = `ea560aa89` | $0.31 |
+
+**审阅方法（以后同类改动照此做）**：用同一份真实输入（as_of 2026-07-20 的日报产物）分别在 main 与分支上生成 Reader Brief，
+逐项比较：payload（删掉的 32 个字段全为 `etf_*`，其余 72 个逐字相同）、HTML 栏目（删 41 个、保留栏目顺序与内容不变）、
+Reader Brief 质量 payload（相同）、owner 简报视图模型（固定时间戳后相同）。PR 套件全绿也没有发现误删的栏目——这类删除必须做
+行为等价比较，不能只看测试。
+
+**结果**：`reader_brief.py` 29,005 → 约 12,900 行；GOV-008A 为 BASELINE_DONE，遗留 `etf_operations_health`（owner 简报
+operations_health 板块的来源键，改板块构成需 owner 审阅）。
+
+### 20.4 P6 试跑结论
+
+三个试跑全部按 skill 步骤走完"任务记录 → 分支 → 改动 → 测试 → dry-run → 审阅 → ship"，没有越权的 git 操作；守卫拦下了强推，
+修正后的排除写法可正常使用。需要人工把关的是**判断类错误**（误删一个栏目、任务状态与备注处理），由审阅与行为等价比较抓到。
+另一处小偏差：pi 一次用系统 Python 而不是项目 venv 运行临时脚本。花费合计约 $9（试跑 3 占 $7.8，主要是 2.9 万行文件的上下文）。
+pi 就绪清单除"日常调度确定（OPS-082）"外全部满足。
+
+### 20.5 pi 接入本地模型（owner 要求，2026-10-11，进行中）
+
+owner 要求先试 pi + 本地模型以降低成本（聊天：可以先尝试将 pi 接入我们本地模型来跑），并给出接入步骤。本机服务
+`LocalModelService`（`~/.local-model-service`，OpenAI 兼容接口 `http://127.0.0.1:8080/v1`，模型 Qwen3.8-27B Q4_K_M + DFlash2
+推测解码，RTX 4090 24 GB，空闲 60 s 卸载）。已做：`service.json` 上下文 4096 → 16384（备份 `service.before-pi-16k.json`）；
+pi `models.json`（provider `local-model-service`，`contextWindow` 16384，`maxTokens` 2048，temperature 0）与 `settings.json`
+压缩参数（reserve 2048 / keepRecent 4096，备份 `settings.before-local-model.json`）。实测：服务只在启动时读配置，修改后加载仍为
+`n_ctx_slot = 4096`，需要在 dashboard 重启服务。下一步：重启后验证 16k 生效，再用本地模型重跑试跑 1（只读）与一个小的记录类任务，
+记录成功率、工具调用错误、耗时；16k 上下文装不下大文件（如 2.9 万行的 `reader_brief.py`），本地模型先只承担小范围任务。
