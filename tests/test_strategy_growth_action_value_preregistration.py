@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -45,6 +46,22 @@ AUTHORITY_PATHS = (
 AXIS_ORDER = tuple(MandatoryAxis)
 
 
+def registered_rules_bytes(record: Path) -> bytes:
+    """AGENTS.md as it was in the commit that last changed ``record`` (the pinned rules)."""
+    relative = record.relative_to(PROJECT_ROOT).as_posix() if record.is_absolute() else record
+    commit = subprocess.run(
+        ["git", "-C", str(PROJECT_ROOT), "log", "-1", "--format=%H", "--", str(relative)],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    return subprocess.run(
+        ["git", "-C", str(PROJECT_ROOT), "show", f"{commit}:AGENTS.md"],
+        capture_output=True,
+        check=True,
+    ).stdout
+
+
 def _copy_policy_authorities(tmp_path: Path) -> Path:
     relative_paths = (
         DEFAULT_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_POLICY_PATH.as_posix(),
@@ -55,6 +72,10 @@ def _copy_policy_authorities(tmp_path: Path) -> Path:
         destination = tmp_path / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
+    # The copy has no git history, so it carries the rules bytes the record pinned when written.
+    (tmp_path / "AGENTS.md").write_bytes(
+        registered_rules_bytes(DEFAULT_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_POLICY_PATH)
+    )
     return tmp_path
 
 
@@ -80,8 +101,7 @@ def _all_outcomes(
     outcome: TerminalOutcome = TerminalOutcome.PASS,
 ) -> tuple[MandatoryAxisOutcome, ...]:
     return tuple(
-        MandatoryAxisOutcome(axis_id=axis, outcome=outcome, reason_codes=())
-        for axis in AXIS_ORDER
+        MandatoryAxisOutcome(axis_id=axis, outcome=outcome, reason_codes=()) for axis in AXIS_ORDER
     )
 
 
@@ -119,8 +139,7 @@ def test_policy_freezes_growth_scope_and_selected_not_executable_lane() -> None:
     assert policy.data_lane.selection_status == "OWNER_RETAINED_NOT_EXECUTABLE"
     assert policy.data_lane.qqq_options_lane_selected is True
     assert (
-        policy.data_lane.transport_completeness_status
-        == "RECOVERED_COMPLETE_NOT_DQ_PIT_PROMOTED"
+        policy.data_lane.transport_completeness_status == "RECOVERED_COMPLETE_NOT_DQ_PIT_PROMOTED"
     )
     assert policy.data_lane.expected_session_count == 1202
     assert policy.data_lane.observed_session_count == 1202
@@ -349,8 +368,7 @@ def test_qqq_options_lane_authority_semantic_drift_fails_even_when_hash_is_updat
     root = _copy_policy_authorities(tmp_path)
     policy_path = root / DEFAULT_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_POLICY_PATH
     authority_path = (
-        root
-        / "docs/requirements/"
+        root / "docs/requirements/"
         "TRADING-2516_QC_QQQ_Options_Primary_Window_Evidence_Lane_Authorization_Refresh_V1.md"
     )
     old_hash = hashlib.sha256(authority_path.read_bytes()).hexdigest()
@@ -374,8 +392,7 @@ def test_exact_date_recovery_authority_cannot_forge_dq_pit_promotion(
     root = _copy_policy_authorities(tmp_path)
     policy_path = root / DEFAULT_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_POLICY_PATH
     authority_path = (
-        root
-        / "docs/requirements/"
+        root / "docs/requirements/"
         "TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md"
     )
     old_hash = hashlib.sha256(authority_path.read_bytes()).hexdigest()
@@ -466,7 +483,5 @@ def test_noncanonical_and_duplicate_decision_json_are_rejected() -> None:
         StrategyGrowthActionValuePreregistrationError, match="not canonical JSON bytes"
     ):
         StrategyGrowthActionValuePreregistrationDecision.from_json_bytes(noncanonical)
-    with pytest.raises(
-        StrategyGrowthActionValuePreregistrationError, match="duplicate JSON key"
-    ):
+    with pytest.raises(StrategyGrowthActionValuePreregistrationError, match="duplicate JSON key"):
         StrategyGrowthActionValuePreregistrationDecision.from_json_bytes(duplicate)

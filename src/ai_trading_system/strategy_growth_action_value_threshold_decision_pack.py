@@ -12,6 +12,7 @@ from typing import Literal, Self
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.core.rules_authority import RULES_AUTHORITY_PATH, rules_authority_matches
 from ai_trading_system.strategy_growth_action_value_preregistration import MandatoryAxis
 from ai_trading_system.yaml_loader import load_strict_yaml_text
 
@@ -612,7 +613,12 @@ def load_strategy_growth_action_value_threshold_decision_pack(
             )
             actual_sha256 = hashlib.sha256(authority_path.read_bytes()).hexdigest()
             if actual_sha256 != binding.file_sha256:
-                raise ValueError(f"authority file SHA-256 mismatch: {binding.authority_id}")
+                if binding.path != RULES_AUTHORITY_PATH or not rules_authority_matches(
+                    project_root=project_root, pinned_sha256=binding.file_sha256, record_path=path
+                ):
+                    raise ValueError(f"authority file SHA-256 mismatch: {binding.authority_id}")
+                # Pinned project rules that were current when this pack was written.
+                actual_sha256 = binding.file_sha256
             authority_paths[binding.authority_id] = authority_path
             observations.append(
                 AuthorityObservation(

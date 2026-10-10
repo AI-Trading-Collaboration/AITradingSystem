@@ -13,6 +13,7 @@ from typing import Any, Literal, Self
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.core.rules_authority import RULES_AUTHORITY_PATH, rules_authority_matches
 from ai_trading_system.yaml_loader import load_strict_yaml_text
 
 DEFAULT_STRATEGY_GROWTH_ACTION_VALUE_PREREGISTRATION_POLICY_PATH = Path(
@@ -666,9 +667,15 @@ def load_strategy_growth_action_value_preregistration_policy(
             authority_raw = authority_path.read_bytes()
             actual_sha256 = hashlib.sha256(authority_raw).hexdigest()
             if actual_sha256 != binding.file_sha256:
-                raise ValueError(
-                    f"authority file SHA-256 mismatch: {binding.authority_id}"
-                )
+                if binding.path != RULES_AUTHORITY_PATH or not rules_authority_matches(
+                    project_root=project_root, pinned_sha256=binding.file_sha256, record_path=path
+                ):
+                    raise ValueError(
+                        f"authority file SHA-256 mismatch: {binding.authority_id}"
+                    )
+                # The pinned rules were in force when this record was written; the current rules
+                # text must still contain every required snippet (checked below).
+                actual_sha256 = binding.file_sha256
             authority_text = authority_raw.decode("utf-8")
             if binding.format == "YAML":
                 authority_payload = load_strict_yaml_text(

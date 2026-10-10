@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from test_strategy_growth_action_value_preregistration import registered_rules_bytes
 
 from ai_trading_system.strategy_growth_action_value_threshold_exact_value_sheet import (
     StrategyGrowthActionValueThresholdExactValueSheet,
@@ -62,6 +63,10 @@ def _fixture_root(tmp_path: Path) -> Path:
         target = fixture / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
+    # The copy has no git history, so it carries the rules bytes the pack pinned when written.
+    (fixture / "AGENTS.md").write_bytes(
+        registered_rules_bytes(Path(loaded.sheet.decision_pack_binding.path))
+    )
     return fixture
 
 

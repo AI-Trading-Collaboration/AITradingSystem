@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from test_strategy_growth_action_value_preregistration import registered_rules_bytes
 
 from ai_trading_system.strategy_growth_action_value_preregistration import MandatoryAxis
 from ai_trading_system.strategy_growth_action_value_threshold_decision_pack import (
@@ -17,9 +18,7 @@ from ai_trading_system.strategy_growth_action_value_threshold_decision_pack impo
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-PACK_PATH = Path(
-    "config/research/strategy_growth_action_value_threshold_decision_pack_v1.yaml"
-)
+PACK_PATH = Path("config/research/strategy_growth_action_value_threshold_decision_pack_v1.yaml")
 PACK_FILE_SHA256 = "67965b51b7d73f38ef0f71a2b78c85f5d3f1301283f184fcb4a23f90a13e2ca7"
 PACK_CANONICAL_SHA256 = "e4a83e702470ce5a4f79deb6e8ebe9367916f2d86c7c6c8df912a9f40fb9e13a"
 AUTHORITY_SET_SHA256 = "78e29b6b54916b110d23ab194202c8176ebadb9851b5a0b2f64e0017bec9d9bf"
@@ -57,6 +56,8 @@ def _fixture_root(tmp_path: Path) -> Path:
         target = fixture / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
+    # The copy has no git history, so it carries the rules bytes the pack pinned when written.
+    (fixture / "AGENTS.md").write_bytes(registered_rules_bytes(PACK_PATH))
     return fixture
 
 
@@ -143,8 +144,7 @@ def test_authority_inventory_has_exact_scope_dispositions_and_no_admissible_bund
         "QQQ_OPTIONS_STAGED_DQ_PIT_READINESS_V1",
     }
     assert all(
-        "NUMERIC_DQ_THRESHOLD_SOURCE" in item.prohibited_roles
-        for item in dq_sources.values()
+        "NUMERIC_DQ_THRESHOLD_SOURCE" in item.prohibited_roles for item in dq_sources.values()
     )
 
 
