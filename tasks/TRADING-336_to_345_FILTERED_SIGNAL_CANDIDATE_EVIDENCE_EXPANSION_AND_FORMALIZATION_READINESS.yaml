@@ -2,8 +2,8 @@ schema_version: task.v1
 id: TRADING-336_to_345_FILTERED_SIGNAL_CANDIDATE_EVIDENCE_EXPANSION_AND_FORMALIZATION_READINESS
 area: ETF portfolio/dynamic v3 rescue filtered signal candidate evidence expansion and formalization readiness
 priority: P0
-status: BASELINE_DONE
+status: DROPPED
 next_owner: 项目 owner后续复核 + dated evidence collection
-next_step: 详见 `docs/requirements/TRADING-336_to_345_Filtered_Signal_Candidate_Evidence_Expansion_and_Formalization_Readiness.md`；10组canonical CLI/validators绑定EB2 source、reviewed policy、lineage与chronology；禁止合成performance、固定stress windows、默认targets或auto formalization。
+next_step: 无（ETF 候选链退役，GOV-008 P4 块 2）
 acceptance: 10类v2 snapshots与47 views逐byte重建；无dated outcomes时rows/targets为空、metrics/winner/confidence为null、spec=`RESEARCH_SPEC_ONLY`、其余=`INSUFFICIENT_DATA`；focused/architecture/contract/Full闭合且no broker/production。
-notes: 2026-07-19：EB3已取代2026-06-15 legacy synthetic READY结果；30 callbacks迁canonical，当前next decision=`COLLECT_DATED_EVIDENCE`。正式architecture/contract/Full与runtime evidence全部PASS，剩余为真实dated evidence外部条件。
+notes: 2026-07-19：EB3已取代2026-06-15 legacy synthetic READY结果；30 callbacks迁canonical，当前next decision=`COLLECT_DATED_EVIDENCE`。正式architecture/contract/Full与runtime evidence全部PASS，剩余为真实dated evidence外部条件。；GOV-008 P4 块 2（2026-10-10）：ETF 候选链按 owner 决定退役（需求文档第 11 节第 4 条、第 18 节），实现代码已删除，任务终止；代码可从 git 历史（tag legacy-governance-final）取回

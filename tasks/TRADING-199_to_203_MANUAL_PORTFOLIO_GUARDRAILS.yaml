@@ -2,8 +2,8 @@ schema_version: task.v1
 id: TRADING-199_to_203_MANUAL_PORTFOLIO_GUARDRAILS
 area: ETF portfolio/manual portfolio snapshot and execution guardrails
 priority: P0
-status: VALIDATING
+status: DROPPED
 next_owner: 项目 owner 人工复核 + 系统运行观察
-next_step: 详细拆解见 `docs/requirements/TRADING-199_to_203_Manual_Portfolio_Snapshot_Hardening_and_Execution_Guardrails.md`；baseline 实现已完成并生成真实 artifacts：manual snapshot `f2d6dd8cbba63619`、portfolio exposure `562ce5641d143dc8`、position drift `0c5a083d54b21fa1`、execution guardrail `0ea07df8d5414d79`、manual execution review `e8ff7d0d375a216d`；仍不做 broker import、order ticket、自动下单、自动 owner approval、production candidate 或真实仓位 mutation
+next_step: 无（ETF 候选链退役，GOV-008 P4 块 2）
 acceptance: '`manual-portfolio validate/normalize/report`、`portfolio-exposure validate/report`、`position-drift run/report`、`execution-guardrails check/report`、`manual-execution-review pack/report` 及对应 validate CLI 可运行；新增 schema/policy config 和 artifacts 写入 dynamic_v3_rescue runtime roots；报告明确 `order_ticket_generated=false`、`broker_action_allowed=false`、`broker_action_taken=false`、`owner_approval_required=true`、`production_effect=none`；README、operations runbook、system flow、report registry、artifact catalog、requirements、Reader Brief、focused tests、ruff、compileall、git diff check、documentation contract、dynamic-v3 validation、family artifact validation、report index、Reader Brief quality 和 full pytest 完成'
-notes: '2026-06-11: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-199～203；本轮优先交付 P0 manual snapshot hardening、exposure/drift/guardrail/review pack 闭环，P1/P2 的更细行业映射、多币种、broker import、税务和费用估算后续另行登记。2026-06-11: baseline 实现完成并转入 VALIDATING；全量 pytest `2353 passed, 640 warnings`，warnings 来自既有 numpy/eventkit warning；下一步为 owner 复核 manual execution review pack。'
+notes: '2026-06-11: 新增并进入 IN_PROGRESS，原因：owner 要求完成附件中的 TRADING-199～203；本轮优先交付 P0 manual snapshot hardening、exposure/drift/guardrail/review pack 闭环，P1/P2 的更细行业映射、多币种、broker import、税务和费用估算后续另行登记。2026-06-11: baseline 实现完成并转入 VALIDATING；全量 pytest `2353 passed, 640 warnings`，warnings 来自既有 numpy/eventkit warning；下一步为 owner 复核 manual execution review pack。；GOV-008 P4 块 2（2026-10-10）：ETF 候选链按 owner 决定退役（需求文档第 11 节第 4 条、第 18 节），实现代码已删除，任务终止；代码可从 git 历史（tag legacy-governance-final）取回'

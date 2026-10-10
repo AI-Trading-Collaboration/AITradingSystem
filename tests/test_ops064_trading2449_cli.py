@@ -116,27 +116,6 @@ def test_external_request_cache_invalidation_cli_rejects_stale_cas(tmp_path) -> 
     assert "stale cache invalidation target" in result.output
 
 
-def test_clean_selection_preregistration_gate_commands_are_registered() -> None:
-    build_help = runner.invoke(
-        app,
-        ["research", "ops", "clean-selection-preregistration-gate", "--help"],
-    )
-    validate_help = runner.invoke(
-        app,
-        [
-            "research",
-            "ops",
-            "validate-clean-selection-preregistration-gate",
-            "--help",
-        ],
-    )
-
-    assert build_help.exit_code == 0, build_help.output
-    assert "--r2-manifest" in build_help.output
-    assert validate_help.exit_code == 0, validate_help.output
-    assert "--output-root" in validate_help.output
-
-
 def test_invalidation_function_requires_a_current_v2_generation(tmp_path) -> None:
     try:
         invalidate_external_request_cache(

@@ -2,8 +2,8 @@ schema_version: task.v1
 id: TRADING-346_FORMAL_RESEARCH_METHOD_CONTRACT
 area: ETF portfolio/dynamic v3 rescue formal research method governance contract
 priority: P0
-status: BASELINE_DONE
+status: DROPPED
 next_owner: 项目 owner 后续复核；当前收集dated evidence
-next_step: 详细拆解见 `docs/requirements/TRADING-346_Formal_Research_Method_Contract.md`；承接canonical TRADING-336～345，把证据状态映射为可审计Contract；缺dated evidence应为`NEEDS_MORE_EVIDENCE`而非READY或hard REJECTED。
+next_step: 无（ETF 候选链退役，GOV-008 P4 块 2）
 acceptance: Contract输出`NOT_READY / NEEDS_MORE_EVIDENCE / NOT_ELIGIBLE`并阻断paper-shadow；只有safety failure或上游显式REJECTED/FAIL才hard reject；保持no official weights/broker/production。
-notes: 2026-07-19：EB3修正legacy bridge并闭合正式门禁；2026-06-15 `FORMAL_RESEARCH_READY` artifact被canonical v2链路取代。当前下一动作=`COLLECT_VALIDATED_DATED_FILTERED_OUTCOMES`；architecture/contract/Full均PASS。
+notes: 2026-07-19：EB3修正legacy bridge并闭合正式门禁；2026-06-15 `FORMAL_RESEARCH_READY` artifact被canonical v2链路取代。当前下一动作=`COLLECT_VALIDATED_DATED_FILTERED_OUTCOMES`；architecture/contract/Full均PASS。；GOV-008 P4 块 2（2026-10-10）：ETF 候选链按 owner 决定退役（需求文档第 11 节第 4 条、第 18 节），实现代码已删除，任务终止；代码可从 git 历史（tag legacy-governance-final）取回

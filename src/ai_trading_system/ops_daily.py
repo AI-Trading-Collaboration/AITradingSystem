@@ -141,16 +141,6 @@ from ai_trading_system.trading_engine.market_data_refresh import (
     default_market_data_refresh_markdown_path,
     default_market_data_refresh_plan_path,
 )
-from ai_trading_system.trading_engine.portfolio_candidate_tracking import (
-    default_active_shadow_candidates_path,
-    default_portfolio_candidate_tracking_json_path,
-    default_portfolio_candidate_tracking_markdown_path,
-)
-from ai_trading_system.trading_engine.portfolio_tracking_review import (
-    default_portfolio_tracking_review_json_path,
-    default_portfolio_tracking_review_markdown_path,
-    portfolio_tracking_review_report_alias_paths,
-)
 from ai_trading_system.valuation import default_valuation_validation_report_path
 from ai_trading_system.valuation_sources import (
     default_fmp_analyst_estimate_history_dir,
@@ -612,8 +602,6 @@ def build_daily_ops_plan(
     market_panel_json = default_market_panel_json_path(reports_dir, as_of)
     market_data_freshness_root = project_root / "artifacts" / "data_freshness"
     market_data_refresh_root = project_root / "artifacts" / "data_refresh"
-    portfolio_candidate_tracking_root = project_root / "artifacts" / "portfolio_candidate_tracking"
-    portfolio_tracking_review_root = project_root / "artifacts" / "portfolio_tracking_reviews"
     market_data_freshness_json = default_market_data_freshness_json_path(
         market_data_freshness_root,
         as_of,
@@ -634,39 +622,6 @@ def build_daily_ops_plan(
         market_data_refresh_root,
         as_of,
     )
-    portfolio_candidate_tracking_json = default_portfolio_candidate_tracking_json_path(
-        portfolio_candidate_tracking_root,
-        as_of,
-    )
-    portfolio_candidate_tracking_md = default_portfolio_candidate_tracking_markdown_path(
-        portfolio_candidate_tracking_root,
-        as_of,
-    )
-    active_shadow_candidates = default_active_shadow_candidates_path(
-        portfolio_candidate_tracking_root,
-    )
-    portfolio_tracking_review_json = default_portfolio_tracking_review_json_path(
-        portfolio_tracking_review_root,
-        as_of,
-    )
-    portfolio_tracking_review_md = default_portfolio_tracking_review_markdown_path(
-        portfolio_tracking_review_root,
-        as_of,
-    )
-    portfolio_tracking_review_alias_json, portfolio_tracking_review_alias_md = (
-        portfolio_tracking_review_report_alias_paths(reports_dir, as_of)
-    )
-    etf_forward_root = project_root / "reports" / "etf_portfolio" / "forward"
-    etf_forward_update_json = etf_forward_root / "updates" / f"forward_update_{as_of_text}.json"
-    etf_forward_update_md = etf_forward_root / "updates" / f"forward_update_{as_of_text}.md"
-    etf_forward_dashboard_json = (
-        etf_forward_root / "dashboard" / f"forward_dashboard_{as_of_text}.json"
-    )
-    etf_forward_dashboard_md = etf_forward_root / "dashboard" / f"forward_dashboard_{as_of_text}.md"
-    etf_forward_watchlist_json = (
-        etf_forward_root / "watchlist" / f"forward_watchlist_{as_of_text}.json"
-    )
-    etf_forward_watchlist_md = etf_forward_root / "watchlist" / f"forward_watchlist_{as_of_text}.md"
     artifact_lineage_json = default_artifact_lineage_json_path(reports_dir, as_of)
     artifact_lineage_report = default_artifact_lineage_markdown_path(reports_dir, as_of)
     artifact_lineage_validation_json = default_artifact_lineage_validation_json_path(
@@ -698,15 +653,6 @@ def build_daily_ops_plan(
     )
     report_quality_gate_json = default_report_quality_gate_json_path(reports_dir, as_of)
     report_quality_gate_report = default_report_quality_gate_markdown_path(reports_dir, as_of)
-    dynamic_v3_schedule_observe_root = (
-        project_root / "reports" / "etf_portfolio" / "dynamic_v3_rescue" / "schedule_observe"
-    )
-    dynamic_v3_schedule_observe_json = (
-        dynamic_v3_schedule_observe_root / f"dynamic_v3_rescue_schedule_observe_{as_of_text}.json"
-    )
-    dynamic_v3_schedule_observe_md = (
-        dynamic_v3_schedule_observe_root / f"dynamic_v3_rescue_schedule_observe_{as_of_text}.md"
-    )
 
     steps: list[DailyOpsStep] = []
     if market_session.is_trading_day:
@@ -1417,127 +1363,6 @@ def build_daily_ops_plan(
                 input_visibility="live_provider_or_cached",
             ),
             DailyOpsStep(
-                step_id="portfolio_candidate_tracking",
-                title="滚动 active portfolio candidate tracking",
-                command=(
-                    ("aits", "portfolio", "track-candidate", "--latest")
-                    if dashboard_enabled
-                    else ()
-                ),
-                required_env_vars=(),
-                produced_paths=(
-                    portfolio_candidate_tracking_json,
-                    portfolio_candidate_tracking_md,
-                    active_shadow_candidates,
-                ),
-                quality_gate=(
-                    "读取 latest candidate review、freshness 和 data gate 后写 shadow "
-                    "tracking artifact；production_effect=none，不启用 candidate。"
-                ),
-                blocks_downstream=True,
-                enabled=dashboard_enabled,
-                skip_reason=scoring_artifact_skip_reason,
-                input_visibility="readonly",
-            ),
-            DailyOpsStep(
-                step_id="portfolio_tracking_review",
-                title="生成 portfolio tracking review window progress",
-                command=(
-                    (
-                        "aits",
-                        "portfolio",
-                        "review-tracking",
-                        "--latest",
-                        "--show-window-progress",
-                    )
-                    if dashboard_enabled
-                    else ()
-                ),
-                required_env_vars=(),
-                produced_paths=(portfolio_tracking_review_json, portfolio_tracking_review_md),
-                quality_gate=(
-                    "读取真实 daily tracking summaries 生成 window progress；"
-                    "tracking_days<5 时保持 needs_more_data，不作为失败。"
-                ),
-                blocks_downstream=True,
-                enabled=dashboard_enabled,
-                skip_reason=scoring_artifact_skip_reason,
-                input_visibility="readonly",
-            ),
-            DailyOpsStep(
-                step_id="portfolio_tracking_review_report",
-                title="生成 portfolio tracking review report alias",
-                command=(
-                    ("aits", "reports", "portfolio-tracking-review", "--latest")
-                    if dashboard_enabled
-                    else ()
-                ),
-                required_env_vars=(),
-                produced_paths=(
-                    portfolio_tracking_review_alias_json,
-                    portfolio_tracking_review_alias_md,
-                ),
-                quality_gate=(
-                    "只读读取 tracking review artifact 并写 reports alias；不运行上游 "
-                    "candidate tracking 或修改 production。"
-                ),
-                blocks_downstream=True,
-                enabled=dashboard_enabled,
-                skip_reason=scoring_artifact_skip_reason,
-                input_visibility="readonly",
-            ),
-            DailyOpsStep(
-                step_id="etf_forward_update",
-                title="更新 ETF forward shadow simulation",
-                command=(
-                    ("aits", "etf", "forward", "update", "--latest") if dashboard_enabled else ()
-                ),
-                required_env_vars=(),
-                produced_paths=(etf_forward_update_json, etf_forward_update_md),
-                quality_gate=(
-                    "在全局 validate-data 通过后读取 ETF price cache 和 shadow registry；"
-                    "只写 evaluation-only forward update，不修改 production weights。"
-                ),
-                blocks_downstream=True,
-                enabled=dashboard_enabled,
-                skip_reason=scoring_artifact_skip_reason,
-                input_visibility="local_or_readonly",
-            ),
-            DailyOpsStep(
-                step_id="etf_forward_dashboard",
-                title="生成 ETF forward simulation dashboard",
-                command=(
-                    ("aits", "etf", "forward", "dashboard", "--latest") if dashboard_enabled else ()
-                ),
-                required_env_vars=(),
-                produced_paths=(etf_forward_dashboard_json, etf_forward_dashboard_md),
-                quality_gate=(
-                    "只读 latest forward update 和 shadow registry；输出 candidate、baseline "
-                    "和 benchmark 对比，不触发 broker action。"
-                ),
-                blocks_downstream=True,
-                enabled=dashboard_enabled,
-                skip_reason=scoring_artifact_skip_reason,
-                input_visibility="readonly",
-            ),
-            DailyOpsStep(
-                step_id="etf_forward_watchlist",
-                title="生成 ETF forward simulation watchlist",
-                command=(
-                    ("aits", "etf", "forward", "watchlist", "--latest") if dashboard_enabled else ()
-                ),
-                required_env_vars=(),
-                produced_paths=(etf_forward_watchlist_json, etf_forward_watchlist_md),
-                quality_gate=(
-                    "只读 dashboard 生成本地 attention summary；allowed actions "
-                    "限定为 manual review / observation，不发送外部 alert。"
-                ),
-                blocks_downstream=True,
-                enabled=dashboard_enabled,
-                skip_reason=scoring_artifact_skip_reason,
-                input_visibility="readonly",
-            ),
-            DailyOpsStep(
                 step_id="artifact_lineage",
                 title="生成 artifact lineage graph",
                 command=(
@@ -1678,29 +1503,6 @@ def build_daily_ops_plan(
                 blocks_downstream=True,
                 enabled=dashboard_enabled,
                 skip_reason=scoring_artifact_skip_reason,
-                input_visibility="readonly",
-            ),
-            DailyOpsStep(
-                step_id="dynamic_v3_rescue_schedule_observe",
-                title="Dynamic v3 rescue scheduled observation gate",
-                command=(
-                    "aits",
-                    "etf",
-                    "dynamic-v3-rescue",
-                    "schedule",
-                    "observe",
-                    "--as-of",
-                    as_of_text,
-                ),
-                required_env_vars=(),
-                produced_paths=(dynamic_v3_schedule_observe_json, dynamic_v3_schedule_observe_md),
-                quality_gate=(
-                    "只读执行 Dynamic v3 rescue weekly/ad hoc research 的轻量门控观察："
-                    "交易日和周度 due 条件、latest pointer validation、stale 检查和可选 "
-                    "observe-only shadow monitor；不运行 real sweep、不生成 promotion pack、"
-                    "不产生 production candidate。"
-                ),
-                blocks_downstream=False,
                 input_visibility="readonly",
             ),
             DailyOpsStep(

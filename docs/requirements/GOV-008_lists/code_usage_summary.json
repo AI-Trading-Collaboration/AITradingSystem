@@ -1,19 +1,11 @@
 {
- "source_commit": "66c28b9b01dab91bf182827c1e46430a97479eea",
- "total_modules": 1162,
- "total_loc": 1231553,
+ "source_commit": "1646ae0b50012517f0630f79e2ab3dbe056ba094",
+ "total_modules": 762,
+ "total_loc": 748883,
  "by_class": {
-  "ETF_RETIRE": {
-   "modules": 270,
-   "loc": 303263
-  },
   "FREEZE_CLI_FRAMEWORK": {
-   "modules": 26,
-   "loc": 25505
-  },
-  "FREEZE_DORMANT": {
-   "modules": 98,
-   "loc": 149495
+   "modules": 1,
+   "loc": 1060
   },
   "KEEP_BUILD_FEATURES_CLI": {
    "modules": 1,
@@ -21,7 +13,7 @@
   },
   "KEEP_CLI_ROOT": {
    "modules": 2,
-   "loc": 1330
+   "loc": 871
   },
   "KEEP_DATA_FOUNDATION": {
    "modules": 9,
@@ -32,8 +24,8 @@
    "loc": 33678
   },
   "LIVE_DAILY": {
-   "modules": 207,
-   "loc": 275849
+   "modules": 199,
+   "loc": 270701
   },
   "LIVE_FIVE_LINES": {
    "modules": 478,
@@ -44,16 +36,16 @@
    "loc": 20576
   },
   "REVIEW_SMALL_UNREACHABLE": {
-   "modules": 18,
-   "loc": 3140
+   "modules": 19,
+   "loc": 3280
   }
  },
  "scheduled_seed_modules": {
-  "ad_hoc_research": 9,
+  "ad_hoc_research": 3,
   "biweekly": 6,
-  "daily_trading_day": 17,
+  "daily_trading_day": 14,
   "monthly": 4,
-  "weekly": 8
+  "weekly": 5
  },
  "unresolved_scheduled_commands": [
   "aits reports ensure-workflow-health --as-of {as_of}",
@@ -62,7 +54,7 @@
  "five_line_seed_modules": 252,
  "machinery_worklist_files": 0,
  "machinery_worklist_loc": 0,
- "etf_worklist_files": 9,
+ "etf_worklist_files": 0,
  "frozen_boundary_files": 0,
  "frozen_boundary_loc": 0,
  "registration_edit_files": [

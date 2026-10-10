@@ -54,8 +54,8 @@ tested tree -> ordinary push, with the remote checked before and after.
 
 - **Zones** (`config/gov008_ship.yaml`): **A** records (docs, task and experiment records) need no
   tests. **B** product code runs the PR suite:
-  `python -m pytest tests -n 16 --dist loadfile -m "not slow" -p tools.gov008.pr_filter` (about
-  8.5 minutes; `slow` marks single tests of 30 s or more, which run nightly). **C** semantic-critical
+  `python -m pytest tests -n 16 --dist loadfile -m "not slow"` (about 10 minutes; `slow` marks
+  single tests of 30 s or more, which run nightly). **C** semantic-critical
   paths (data quality, PIT, research window, scoring, thresholds, position caps, production and broker
   boundaries, `tests/invariants`, `.github`, this file, the ship policy) run the PR suite and need an
   `Owner-Decision:` trailer in at least one commit of the range; `ship` refuses without it.
@@ -65,9 +65,6 @@ tested tree -> ordinary push, with the remote checked before and after.
 - Never pass hundreds of test file paths to pytest (collection becomes quadratic on Windows); pass
   `tests` and select with markers. Run serial pytest only to reproduce a parallelism-related failure
   and say so. Use the project venv interpreter, not a system Python.
-- (until P4) The old publication machinery (fence, leases, hash-authority reseal, Full validation) is
-  not required for any change. Tests of code being deleted are excluded by
-  `docs/requirements/GOV-008_lists/pr_exclude.txt` through the `tools.gov008.pr_filter` plugin.
 
 ## Git
 

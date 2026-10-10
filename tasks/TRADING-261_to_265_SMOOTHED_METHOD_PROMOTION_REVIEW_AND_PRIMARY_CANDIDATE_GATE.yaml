@@ -2,8 +2,8 @@ schema_version: task.v1
 id: TRADING-261_to_265_SMOOTHED_METHOD_PROMOTION_REVIEW_AND_PRIMARY_CANDIDATE_GATE
 area: ETF portfolio/dynamic v3 rescue smoothed promotion/gate/binding/switch/owner journal
 priority: P0
-status: BASELINE_DONE
+status: DROPPED
 next_owner: 研究 owner：积累独立 forward/PIT/DQ/cost/holdout 证据并执行人工 review；architecture coordinator：继续剩余 G2.4 matrix
-next_step: 详细拆解见 `docs/requirements/TRADING-261_to_265_Smoothed_Method_Promotion_Review_and_Primary_Candidate_Gate.md`。G2.4CQ canonical closeout已完成；旧固定3d/PROMOTE、静态evidence/criteria、0-target补造和candidate-null switch语义已撤销。当前无eligible candidate，workflow PASS不是promotion或投资结论。
+next_step: 无（ETF 候选链退役，GOV-008 P4 块 2）
 acceptance: 16 callbacks迁canonical interface/domain；五类bounded v2 snapshots；pre-output upstream/live policy validation；Confirmation-only candidate与Scorecard/Owner/Watch exact match；content-derived evidence/criteria/targets/switch/journal；null/0-target保持；reviewed policy；Owner record原子重建并拒绝无资格promote；全部views byte rebuild；bounded business-view commitments不递归嵌入上游snapshot；CLI parity、docs/manifests/deprecation/compatibility与focused/architecture/contract验证；`production_effect=none`。
-notes: '2026-07-14: G2.4CQ=`COMPLETE_G2_4_CONTINUES`。当前candidate=null、Promotion不能进入owner review、Gate=`CONTINUE_OBSERVATION`、Binding=`targets=[]/NOT_REGISTERED`、Switch proposed=null、Owner推荐`request_more_forward_data`；非法promote record fail closed、合法continue-observation validation PASS。Focused=`7/5`、architecture/contract=`278/203 passed`，generated=`919/1,120/858/0`。单slice不触发ARCH-005 handoff，不进入G2.5。'
+notes: '2026-07-14: G2.4CQ=`COMPLETE_G2_4_CONTINUES`。当前candidate=null、Promotion不能进入owner review、Gate=`CONTINUE_OBSERVATION`、Binding=`targets=[]/NOT_REGISTERED`、Switch proposed=null、Owner推荐`request_more_forward_data`；非法promote record fail closed、合法continue-observation validation PASS。Focused=`7/5`、architecture/contract=`278/203 passed`，generated=`919/1,120/858/0`。单slice不触发ARCH-005 handoff，不进入G2.5。；GOV-008 P4 块 2（2026-10-10）：ETF 候选链按 owner 决定退役（需求文档第 11 节第 4 条、第 18 节），实现代码已删除，任务终止；代码可从 git 历史（tag legacy-governance-final）取回'

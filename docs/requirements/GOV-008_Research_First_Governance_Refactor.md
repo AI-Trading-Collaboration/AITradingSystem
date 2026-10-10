@@ -526,3 +526,53 @@ src 里两处超长行）不作为门禁失败。
 不调用这些棘轮，日报链路不受影响。删除 `platform/reporting/g3_close_readiness.py` 与两个 wave 测试文件、F3/G4 测试中的棘轮函数；
 "owner 简报固定 10 个板块（1 个原生、9 个来自旧载荷）"这条产品行为保留为测试内的明确常量。风险分级测试中对已退役 Atlas
 页面的断言删除，其余文档断言不变。`platform/reporting/inventory.py` 里不再被调用的扫描/冻结比对函数留到后续清理。
+
+## 18. P4 删除块 2：ETF 候选链与休眠研究代码（2026-10-10）
+
+依据：ETF 每日步骤退役（第 11 节第 4 条）、A 类休眠代码冻结（13.3）、D 类 CLI/框架冻结（13.3，见下方修正）。
+
+**删除**：`src/` 371 个文件 / 约 45.3 万行——`etf_portfolio/` 包（127 个文件，保留 `regime.py`）、`interfaces/`（144 个，ETF CLI
+分层）、`cli_commands/etf_compat.py` 与 `etf_portfolio.py`、100 个休眠研究模块（`dynamic_target_baseline_*`、
+`high_intensity_risk_cap_*`、`dynamic_v3_clean_selection_*`、`defensive_preservation_lane`、`return_seeking_diagnostic_lane`、
+`equal_weight_proxy_data_fix` 等）。测试 643 个文件 / 约 11.2 万行：测已删模块的测试、45 个只被它们使用的测试辅助文件。
+`tools/gov008/pr_filter.py`（PR 套件过渡插件）随排除名单清空一起删除，门禁命令不再带 `-p tools.gov008.pr_filter`。
+
+**每日计划与调度**（行为变化）：`ops_daily.py` 去掉 7 步（`portfolio_candidate_tracking`、`portfolio_tracking_review`、
+`portfolio_tracking_review_report`、`etf_forward_update/dashboard/watchlist`、`dynamic_v3_rescue_schedule_observe`）；
+`config/scheduled_tasks.yaml` 去掉这 7 个每日任务与 14 个非每日任务（`weekly_etf_forward_review`、`weekly_dynamic_v3_rescue_*`、
+`ad_hoc_dynamic_v3_rescue_*`）及对它们的依赖，登记任务 81 → 60（非每日 42 → 28）。其余每日步骤的顺序不变。Reader Brief 的
+ETF forward 栏目通过报告索引读取，从此显示缺失、不报错；栏目本身与 `config/report_registry.yaml` 条目留到 P5 修剪。
+`aits etf`、`regime`、`features`、`simulation`、`report`、`run`、`experiments` 命令组移除。
+
+**作为证据保留（不是运行代码）**：
+
+- `config/etf_portfolio/`（96 个文件）：被研究登记与阈值登记按路径引用，删除会让研究线加载失败。
+- `src/ai_trading_system/etf_portfolio/regime.py`：QQQ options growth-action-value 生产者合约与 owner 冻结包按精确字节钉住它，
+  同目录 README 注明"不得编辑或移动"。没有保留代码导入它。
+- `cli_commands/portfolio.py`：属于 `trading_engine` 的 CLI（owner 决定 B 保留），其 track-candidate 等命令仍可手动运行，
+  只是不再在每日计划里。
+
+**D 类决定的前提修正（需要 owner 知道）**：13.3 记录 D 类"只被 `cli.py`/`cli_direct.py` 注册引用、没有被研究逻辑加载"，因此
+整体冻结。删除后首轮 PR 套件 361 个失败，暴露这个前提不成立：静态导入分析只看"谁 import 谁"，而 `aits research ...` 等
+命令组本身就是保留研究模块的调用入口，测试通过这些命令运行研究代码（另一部分失败来自上面两项证据文件）。处理：恢复 24 个非 ETF 的 D 类模块（18 个 `cli_commands` 模块与 6 个
+`research_framework` 插件）及其 50 个测试；只把实现模块已被删除的命令从中剪掉（AST 定位 + ruff 未定义名检查兜底），
+`research trends` 106 → 29 个命令、`research` 195 → 179 个、`scenarios` 2 → 0 个，测这些命令的 29 个 `research_trends` CLI 测试与
+3 个注册测试随之删除。只有 ETF 的两个 CLI 模块真正删除。实际冻结的 D 类因此远小于 13.3 的 2.55 万行。
+另有 4 个被分类器误判为可删、实际在每日链路上的模块恢复：`research_restart`（`register_research_restart_commands` 只保留
+preflight 命令）、`historical_portable_source_archive`、`legacy_research_artifact_portable_lineage`、
+`platform/artifacts/validation_session`。
+
+**测试更新**：每日计划/调度的预期测试（`test_ops_daily`、`test_scheduled_tasks`、`test_arch_004f1_operations_control_plane`、
+`test_cli_direct`）改为新的步骤序列与任务数；新增断言"调度里不再有 ETF/dynamic-v3 任务、每日命令不含 `etf`/`dynamic-v3-rescue`"。
+占位符拦截测试原来借用已退役的 dynamic-v3 ad hoc 任务（其命令含 `{max_candidates}`、`<sweep_id>`），改为在保留的 SEC PIT ad hoc
+任务上注入含占位符的模板，覆盖不变。`test_prospective_capture_execution_contract` 的"旧协议"用例只改 `schema_version`。
+
+**分析清单**：`docs/requirements/GOV-008_lists/` 重新生成，排除名单为空，机制与 ETF 工作清单为 0。剩余分类：
+`FREEZE_CLI_FRAMEWORK` 1 个（`cli_commands/portfolio`，按上文保留）、`REVIEW_SMALL_UNREACHABLE` 19 个小模块（默认保留，P5/P6 期间复核）。
+
+**任务登记**：48 个仍未关闭的 ETF 候选链任务（area 以 `ETF` 开头：TRADING-062～350 中的 BASELINE_DONE/VALIDATING/DEFERRED 行）
+标为 DROPPED，notes 追加"ETF 候选链退役、代码已删除、可从 git 历史取回"，下一步改为"无"。依据同上；与 Atlas 任务的处理方式
+一致（第 16 节）。`OPS-078` 等名字里含 rescue 但不属于 ETF 链的任务不动。
+
+**验证**：PR 套件（`pytest tests -n 16 --dist loadfile -m "not slow"`）7,926 通过、3 跳过、0 失败，11m05s（任务登记更新前的同一树；
+ship 在最终树上重跑）。变异等价：被删测试只覆盖被删代码；对保留模块的测试只做了步骤列表与任务数的预期更新，未删除行为断言。

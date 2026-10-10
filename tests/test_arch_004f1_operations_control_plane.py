@@ -328,7 +328,7 @@ def test_periodic_policy_covers_all_non_daily_cadences_without_dispatch() -> Non
     assert all(item.due_policy.requires_owner_gate for item in policy.cadence_controls)
 
 
-def test_periodic_plan_accounts_for_all_42_tasks_and_round_trips() -> None:
+def test_periodic_plan_accounts_for_all_28_tasks_and_round_trips() -> None:
     as_of = date(2026, 7, 10)
     generated_at = datetime(2026, 7, 11, tzinfo=UTC)
     contexts = build_periodic_due_contexts_from_daily(
@@ -343,7 +343,7 @@ def test_periodic_plan_accounts_for_all_42_tasks_and_round_trips() -> None:
         contexts=contexts,
     )
 
-    assert len(plan.entries) == 42
+    assert len(plan.entries) == 28
     assert PeriodicOperationsPlan.from_dict(plan.to_dict()) == plan
     assert plan.automatic_command_dispatch_enabled is False
     assert all(entry.command_executed is False for entry in plan.entries)
@@ -587,6 +587,23 @@ def test_periodic_dispatch_blocks_manual_checkpoint_and_unresolved_placeholders(
         contexts=full_contexts(date(2026, 7, 10), explicit_trigger=True),
         policy=policy,
     )
+    # No registered ad hoc task carries an unresolved placeholder since the dynamic-v3 rescue
+    # tasks retired (GOV-008 P4 block 2), so inject templates that do.
+    placeholder_templates = {
+        "ad_hoc_sec_pit_diagnostics": "aits sec-pit diagnose-run --run-id {run_id}",
+        "ad_hoc_sec_pit_candidate_review": (
+            "aits sec-pit review-candidates --candidate-id <candidate_id>"
+        ),
+    }
+    ad_hoc_plan = replace(
+        ad_hoc_plan,
+        entries=tuple(
+            replace(entry, command_template=placeholder_templates[entry.task_id])
+            if entry.task_id in placeholder_templates
+            else entry
+            for entry in ad_hoc_plan.entries
+        ),
+    )
     control = OperationsRunControl(
         root=tmp_path / "periodic",
         policy=_runtime_policy(non_daily_dispatch=True),
@@ -608,8 +625,8 @@ def test_periodic_dispatch_blocks_manual_checkpoint_and_unresolved_placeholders(
     ad_hoc = dispatch_periodic_operations_plan(
         ad_hoc_plan,
         selected_task_ids=(
-            "ad_hoc_dynamic_v3_rescue_injection_audit",
-            "ad_hoc_dynamic_v3_rescue_candidate_attribution",
+            "ad_hoc_sec_pit_diagnostics",
+            "ad_hoc_sec_pit_candidate_review",
         ),
         control=control,
         policy=policy,
@@ -877,7 +894,7 @@ def test_all_registered_tasks_are_inventoryable_via_explicit_bindings() -> None:
         )
         total += len(assessment.workflow_spec.steps)
 
-    assert total == 81
+    assert total == 60
 
 
 def test_daily_adapter_preserves_order_explicit_dag_and_legacy_commands() -> None:

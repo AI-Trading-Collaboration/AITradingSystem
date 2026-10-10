@@ -1,5 +1,12 @@
 # 系统数据流示意图
 
+GOV-008 P4 块 2：ETF 候选链退役。每日链路在 `score_daily` 之后不再运行 candidate tracking（`portfolio track-candidate` /
+`review-tracking` / `reports portfolio-tracking-review`）、ETF forward（update/dashboard/watchlist）与 dynamic-v3 rescue
+schedule observe；`score_daily` → forward evidence → dashboard → SEC PIT shadow → 归因/市场面板/新鲜度 → artifact lineage
+→ report index → 文档契约 → 研究治理摘要 → Reader Brief → 质量门禁 → pipeline health 的顺序不变。调度登记 81 → 60 个任务
+（非每日 42 → 28）。Reader Brief 通过报告索引读取的 ETF 报告从此显示为缺失，不报错。本文件将在 P5 重写为真正的流程图，
+下方 ETF 相关段落均为历史描述。
+
 GOV-008 L3 采集协议 v3：前瞻采集（TRADING-2564 S3b 五候选、TRADING-2560 Composer）与研究结果访问网关不再依赖 S4D lease 和发布机制。流程为 `scripts/capture_hold.py acquire` 建立 capture hold（精确候选 commit、`src/config/scripts/tools` 未修改、写入路径单次持有、有界有效期）→ `scripts/run_named_data_quality.py --source-hold-id` 子进程只恢复并复核该 hold → 每个事件槽保留 `hold_record.json`/`hold_check.json` → ACK/结果 v3 → `capture_hold.py release`。时间证据策略为 `prospective_event_time_evidence_v3.yaml`，采集策略为 `prospective_capture_execution_v3.yaml`，源清单为五候选 v2（68 模块）与 Composer v2（84 模块）；v1/v2 证据按旧协议生成，不再验证。hold 是本机自证，不是独立权威。
 
 DEVX-015 显式worker启动前置：WindowsWorkerToken只复制真实primary token，绑定SID/非elevated/会话及持有线程，拒绝字典、关闭能力和同principal；原WindowsJobProcess.create_as_worker使用CreateProcessAsUserW并保留创建时JOB_LIST、标准句柄白名单、挂起核对和原清理。API权限不足不回退继承调用者身份。当前未接入受保护账户配置/可信入口，worker直接访问命名Job和控制记录的路径仍需迁移；不能据此启用ACTIVE。

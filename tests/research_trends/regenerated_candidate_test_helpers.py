@@ -6,9 +6,6 @@ from pathlib import Path
 
 import pandas as pd
 
-from ai_trading_system.candidate_confidence_scaling_refinement_plan import (
-    run_candidate_generator_confidence_scaling_refinement_plan,
-)
 from ai_trading_system.first_layer_candidate_generator_runtime import (
     validate_candidate_generation_bundle,
 )
@@ -19,26 +16,8 @@ from ai_trading_system.first_layer_candidate_signal_generator import (
     CandidateGenerationBundle,
     CandidateGeneratorContext,
 )
-from ai_trading_system.refined_candidate_actual_path_validation import (
-    run_refined_candidate_actual_path_validation,
-)
-from ai_trading_system.refined_candidate_generators_regenerate import (
-    run_refined_candidate_generators_regenerate,
-)
-from ai_trading_system.regenerated_candidate_actual_path_validation import (
-    run_regenerated_candidate_actual_path_validation,
-)
 from ai_trading_system.regenerated_candidate_generator_common import (
     REGENERATED_CANDIDATE_FAMILY,
-)
-from ai_trading_system.regenerated_candidate_inconclusive_diagnostics import (
-    run_regenerated_candidate_inconclusive_diagnostics,
-)
-from ai_trading_system.scope_narrowed_candidate_actual_path_validation import (
-    run_scope_narrowed_candidate_actual_path_validation,
-)
-from ai_trading_system.scope_narrowed_candidate_generators_regenerate import (
-    run_scope_narrowed_candidate_generators_regenerate,
 )
 
 REFINED_REVIEW_CANDIDATES = (
@@ -127,114 +106,6 @@ def build_regenerated_artifact_fixture(tmp_path: Path) -> dict[str, Path]:
         "input_dir": output_dir,
         "prices_path": price_path,
         "rates_path": rates_path,
-    }
-
-
-def build_regenerated_actual_path_validation_fixture(tmp_path: Path) -> dict[str, Path]:
-    fixture = build_regenerated_artifact_fixture(tmp_path)
-    output_dir = tmp_path / "actual_path_validation"
-    run_regenerated_candidate_actual_path_validation(
-        input_dir=fixture["input_dir"],
-        candidates="baseline_plus_trend_structure,risk_appetite,volatility_regime",
-        target_assets="QQQ,SPY,SMH",
-        horizons="5d,10d,20d",
-        output_dir=output_dir,
-        mode="actual_path_validation",
-        prices_path=fixture["prices_path"],
-        rates_path=fixture["rates_path"],
-        marketstack_prices_path=None,
-        docs_root=tmp_path / "actual_path_docs",
-    )
-    return {
-        **fixture,
-        "validation_dir": output_dir,
-        "generator_dir": fixture["input_dir"],
-    }
-
-
-def build_regenerated_inconclusive_diagnostics_fixture(tmp_path: Path) -> dict[str, Path]:
-    fixture = build_regenerated_actual_path_validation_fixture(tmp_path)
-    output_dir = tmp_path / "inconclusive_diagnostics"
-    run_regenerated_candidate_inconclusive_diagnostics(
-        validation_dir=fixture["validation_dir"],
-        generator_dir=fixture["generator_dir"],
-        candidates="baseline_plus_trend_structure,risk_appetite,volatility_regime",
-        target_assets="QQQ,SPY,SMH",
-        horizons="5d,10d,20d",
-        output_dir=output_dir,
-        mode="inconclusive_diagnostics",
-        docs_root=tmp_path / "diagnostics_docs",
-    )
-    return {
-        **fixture,
-        "diagnostics_dir": output_dir,
-    }
-
-
-def build_confidence_scaling_refinement_plan_fixture(tmp_path: Path) -> dict[str, Path]:
-    fixture = build_regenerated_inconclusive_diagnostics_fixture(tmp_path)
-    output_dir = tmp_path / "confidence_scaling_refinement_plan"
-    run_candidate_generator_confidence_scaling_refinement_plan(
-        diagnostics_dir=fixture["diagnostics_dir"],
-        validation_dir=fixture["validation_dir"],
-        generator_dir=fixture["generator_dir"],
-        candidates="baseline_plus_trend_structure,risk_appetite,volatility_regime",
-        target_assets="QQQ,SPY,SMH",
-        horizons="5d,10d,20d",
-        output_dir=output_dir,
-        mode="refinement_plan",
-        docs_root=tmp_path / "confidence_scaling_docs",
-    )
-    return {
-        **fixture,
-        "refinement_plan_dir": output_dir,
-        "original_generator_dir": fixture["generator_dir"],
-    }
-
-
-def build_refined_candidate_regeneration_fixture(tmp_path: Path) -> dict[str, Path]:
-    fixture = build_confidence_scaling_refinement_plan_fixture(tmp_path)
-    output_dir = tmp_path / "refined_candidate_generators_regenerated"
-    run_refined_candidate_generators_regenerate(
-        refinement_plan_dir=fixture["refinement_plan_dir"],
-        original_generator_dir=fixture["original_generator_dir"],
-        candidates="baseline_plus_trend_structure,risk_appetite,volatility_regime",
-        target_assets="QQQ,SPY,SMH",
-        horizons="5d,10d,20d",
-        output_dir=output_dir,
-        mode="refined_regeneration",
-        docs_root=tmp_path / "refined_generation_docs",
-    )
-    return {
-        **fixture,
-        "refined_generator_dir": output_dir,
-    }
-
-
-def build_refined_candidate_actual_path_validation_fixture(tmp_path: Path) -> dict[str, Path]:
-    fixture = build_refined_candidate_regeneration_fixture(tmp_path)
-    output_dir = tmp_path / "refined_candidate_actual_path_validation"
-    run_refined_candidate_actual_path_validation(
-        refined_generator_dir=fixture["refined_generator_dir"],
-        original_validation_dir=fixture["validation_dir"],
-        refinement_plan_dir=fixture["refinement_plan_dir"],
-        candidates=(
-            "baseline_plus_trend_structure_refined_confidence_v1,"
-            "risk_appetite_refined_confidence_v1,"
-            "volatility_regime_refined_confidence_v1"
-        ),
-        target_assets="QQQ,SPY,SMH",
-        horizons="5d,10d,20d",
-        output_dir=output_dir,
-        mode="refined_actual_path_validation",
-        prices_path=fixture["prices_path"],
-        rates_path=fixture["rates_path"],
-        marketstack_prices_path=None,
-        docs_root=tmp_path / "refined_actual_path_docs",
-    )
-    return {
-        **fixture,
-        "refined_validation_dir": output_dir,
     }
 
 
@@ -889,63 +760,6 @@ def build_scope_narrowed_candidate_regeneration_input_fixture(tmp_path: Path) ->
         "scope_review_dir": scope_review_dir,
         "refined_generator_dir": refined_generator_dir,
         "refined_validation_dir": refined_validation_dir,
-    }
-
-
-def build_scope_narrowed_candidate_actual_path_validation_fixture(
-    tmp_path: Path,
-) -> dict[str, Path]:
-    inputs = build_scope_narrowed_candidate_regeneration_input_fixture(tmp_path)
-    output_dir = tmp_path / "scope_narrowed_generator"
-    run_scope_narrowed_candidate_generators_regenerate(
-        scope_review_dir=inputs["scope_review_dir"],
-        refined_generator_dir=inputs["refined_generator_dir"],
-        refined_validation_dir=inputs["refined_validation_dir"],
-        include_candidates=(
-            "baseline_plus_trend_structure_refined_confidence_v1,"
-            "volatility_regime_refined_confidence_v1"
-        ),
-        archive_candidates="risk_appetite_refined_confidence_v1",
-        target_assets="QQQ,SPY,SMH",
-        horizons="5d,10d,20d",
-        output_dir=output_dir,
-        mode="scope_narrowed_regeneration",
-        docs_root=tmp_path / "scope_narrowed_docs",
-    )
-    return {
-        **inputs,
-        "scope_narrowed_generator_dir": output_dir,
-        "prices_path": write_price_fixture(tmp_path),
-        "rates_path": write_rates_fixture(tmp_path),
-    }
-
-
-def build_scope_narrowed_forward_observe_readiness_fixture(
-    tmp_path: Path,
-) -> dict[str, Path]:
-    fixture = build_scope_narrowed_candidate_actual_path_validation_fixture(tmp_path)
-    scope_validation_dir = tmp_path / "scope_narrowed_validation"
-    run_scope_narrowed_candidate_actual_path_validation(
-        scope_narrowed_generator_dir=fixture["scope_narrowed_generator_dir"],
-        scope_review_dir=fixture["scope_review_dir"],
-        refined_validation_dir=fixture["refined_validation_dir"],
-        include_candidates=(
-            "baseline_plus_trend_structure_scope_narrowed_confirmation_v1,"
-            "volatility_regime_scope_narrowed_risk_cap_v1"
-        ),
-        archived_candidates="risk_appetite_refined_confidence_v1",
-        target_assets="QQQ,SPY,SMH",
-        horizons="5d,10d,20d",
-        output_dir=scope_validation_dir,
-        mode="scope_narrowed_actual_path_validation",
-        prices_path=fixture["prices_path"],
-        rates_path=fixture["rates_path"],
-        marketstack_prices_path=None,
-        docs_root=tmp_path / "scope_narrowed_validation_docs",
-    )
-    return {
-        **fixture,
-        "scope_validation_dir": scope_validation_dir,
     }
 
 

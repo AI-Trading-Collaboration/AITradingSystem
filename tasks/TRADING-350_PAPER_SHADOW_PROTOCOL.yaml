@@ -2,8 +2,8 @@ schema_version: task.v1
 id: TRADING-350_PAPER_SHADOW_PROTOCOL
 area: ETF portfolio/dynamic v3 rescue paper-shadow protocol governance
 priority: P1
-status: VALIDATING
+status: DROPPED
 next_owner: 系统实现 + 项目 owner 后续复核；当前eligibility blocked
-next_step: 详细拆解见 `docs/requirements/TRADING-350_Paper_Shadow_Protocol.md`；保留observation-only协议设计，但live eligibility必须承接canonical TRADING-346，不得使用旧READY artifact；不得生成official weights、broker action、order ticket或production mutation。
+next_step: 无（ETF 候选链退役，GOV-008 P4 块 2）
 acceptance: Protocol build/report/validator在`NEEDS_MORE_EVIDENCE`时必须fail closed为blocked；只有未来validated dated outcomes使formal contract重新合格，才可复核启动观察。
-notes: 2026-07-19：ARCH-004G2.4-EB3已将当前formal contract修正为`NOT_READY / NEEDS_MORE_EVIDENCE / NOT_ELIGIBLE`；2026-06-15的`PROTOCOL_READY`结果仅为历史artifact，不能支持daily paper-shadow。Downstream focused验证确认protocol/daily blocked、weekly review返回research；`production_effect=none`。
+notes: 2026-07-19：ARCH-004G2.4-EB3已将当前formal contract修正为`NOT_READY / NEEDS_MORE_EVIDENCE / NOT_ELIGIBLE`；2026-06-15的`PROTOCOL_READY`结果仅为历史artifact，不能支持daily paper-shadow。Downstream focused验证确认protocol/daily blocked、weekly review返回research；`production_effect=none`。；GOV-008 P4 块 2（2026-10-10）：ETF 候选链按 owner 决定退役（需求文档第 11 节第 4 条、第 18 节），实现代码已删除，任务终止；代码可从 git 历史（tag legacy-governance-final）取回

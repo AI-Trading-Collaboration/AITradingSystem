@@ -221,8 +221,8 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(rows)
 
-    # Exclude list consumed by tools/gov008/pr_filter.py (the PR-suite transition plugin). It is an
-    # exclude list on purpose: a test file added after this triage is collected by default.
+    # Exclude list the GOV-008 transition plugin used to read (removed once P4 emptied the list). A
+    # non-empty list now means a test still depends on deleted or to-be-deleted code.
     exclude_verdicts = (
         "DELETE_WITH_MECHANISM",
         "DELETE_WITH_ETF_RETIREMENT",

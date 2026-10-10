@@ -2,8 +2,8 @@ schema_version: task.v1
 id: TRADING-097
 area: ETF portfolio research/Dynamic v3 Rescue Robustness Sensitivity Overfit Diagnostics
 priority: P0
-status: BASELINE_DONE
+status: DROPPED
 next_owner: 研究验证 owner + forward observation
-next_step: 9/9 real/derived neighbors 与 dedicated high-drawdown/fast-recovery、per-regime comparators均已实现并通过 content validator；`event_risk_high`真实样本15行低于reviewed floor 20，证据保持不完整。
+next_step: 无（ETF 候选链退役，GOV-008 P4 块 2）
 acceptance: 所有neighbor path/report/checksum归属可证；stress/regime方法与completeness显式；validator从source重算；dedicated bucket与per-regime reviewed policy完成后才可校准PASS boundary。退出条件为独立样本自然达到floor后按同policy重跑，禁止降低门槛。
-notes: '2026-07-12: artifact `87b0fc81d6681368`有8 real neighbors/1 missing，stress=`AGGREGATE_OR_MISSING_STRESS_EVIDENCE`、regime=`PATH_DERIVED_REGIME_OBSERVATION_ONLY`、validation PASS；旧`6df822e705e15a42` validation FAIL。2026-07-20: R1真实重跑9/9 neighbors、2/2 stress完整，validator PASS；`event_risk_high=15<20`，故转`BASELINE_DONE`而非伪造robustness PASS。'
+notes: '2026-07-12: artifact `87b0fc81d6681368`有8 real neighbors/1 missing，stress=`AGGREGATE_OR_MISSING_STRESS_EVIDENCE`、regime=`PATH_DERIVED_REGIME_OBSERVATION_ONLY`、validation PASS；旧`6df822e705e15a42` validation FAIL。2026-07-20: R1真实重跑9/9 neighbors、2/2 stress完整，validator PASS；`event_risk_high=15<20`，故转`BASELINE_DONE`而非伪造robustness PASS。；GOV-008 P4 块 2（2026-10-10）：ETF 候选链按 owner 决定退役（需求文档第 11 节第 4 条、第 18 节），实现代码已删除，任务终止；代码可从 git 历史（tag legacy-governance-final）取回'

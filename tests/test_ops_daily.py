@@ -78,7 +78,6 @@ def test_daily_ops_plan_defers_provider_env_failures_until_capture() -> None:
     assert "`aits reports research-governance-summary --latest`" in markdown
     assert "`aits reports reader-brief --latest`" in markdown
     assert "`aits reports validate-reader-brief --latest`" in markdown
-    assert "`aits etf dynamic-v3-rescue schedule observe --as-of 2026-05-06`" in markdown
     assert "`live_provider`" in markdown
     assert "`readonly`" in markdown
     assert "缺少关键环境变量时，后续真实执行器必须 fail closed" in markdown
@@ -426,12 +425,6 @@ def test_daily_ops_plan_includes_forward_evidence_after_score_daily() -> None:
         "market_panel",
         "market_data_freshness",
         "market_data_recover_freshness",
-        "portfolio_candidate_tracking",
-        "portfolio_tracking_review",
-        "portfolio_tracking_review_report",
-        "etf_forward_update",
-        "etf_forward_dashboard",
-        "etf_forward_watchlist",
         "artifact_lineage",
         "validate_artifact_lineage",
         "report_index",
@@ -440,7 +433,6 @@ def test_daily_ops_plan_includes_forward_evidence_after_score_daily() -> None:
         "reader_brief",
         "report_quality_gate",
         "validate_reader_brief",
-        "dynamic_v3_rescue_schedule_observe",
         "pipeline_health",
     ]
 
@@ -490,22 +482,6 @@ def test_daily_ops_plan_includes_forward_evidence_after_score_daily() -> None:
         "freshness",
         "--latest",
     )
-    assert next(
-        step for step in plan.steps if step.step_id == "portfolio_tracking_review"
-    ).command == (
-        "aits",
-        "portfolio",
-        "review-tracking",
-        "--latest",
-        "--show-window-progress",
-    )
-    assert next(step for step in plan.steps if step.step_id == "etf_forward_update").command == (
-        "aits",
-        "etf",
-        "forward",
-        "update",
-        "--latest",
-    )
     assert next(step for step in plan.steps if step.step_id == "artifact_lineage").command == (
         "aits",
         "reports",
@@ -539,17 +515,6 @@ def test_daily_ops_plan_includes_forward_evidence_after_score_daily() -> None:
         "reports",
         "reader-brief",
         "--latest",
-    )
-    assert next(
-        step for step in plan.steps if step.step_id == "dynamic_v3_rescue_schedule_observe"
-    ).command == (
-        "aits",
-        "etf",
-        "dynamic-v3-rescue",
-        "schedule",
-        "observe",
-        "--as-of",
-        "2026-05-06",
     )
 
 
@@ -593,15 +558,11 @@ def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
     assert "reports market-panel --latest" in markdown
     assert "data freshness --latest" in markdown
     assert "data recover-freshness --latest" in markdown
-    assert "portfolio track-candidate --latest" in markdown
-    assert "portfolio review-tracking --latest --show-window-progress" in markdown
-    assert "reports portfolio-tracking-review --latest" in markdown
     assert "reports index --latest" in markdown
     assert "docs report-contract --latest" in markdown
     assert "reports research-governance-summary --latest" in markdown
     assert "reports reader-brief --latest" in markdown
     assert "reports validate-reader-brief --latest" in markdown
-    assert "etf dynamic-v3-rescue schedule observe --as-of 2026-05-06" in markdown
     assert "ops health --as-of 2026-05-06" in markdown
     assert "security scan-secrets --as-of 2026-05-06" in markdown
 
@@ -932,7 +893,7 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     assert order_candidate["would_submit_order"] is False
     periodic_plan = json.loads(periodic_plan_json.read_text(encoding="utf-8"))
     assert periodic_plan["schema_version"] == "periodic_operations_plan.v1"
-    assert len(periodic_plan["entries"]) == 42
+    assert len(periodic_plan["entries"]) == 28
     assert periodic_plan["automatic_command_dispatch_enabled"] is False
     assert all(entry["command_executed"] is False for entry in periodic_plan["entries"])
 
@@ -1086,7 +1047,7 @@ def test_periodic_dispatch_cli_requires_evidence_and_uses_controlled_runtime(
     assert plan_path.exists()
     payload = json.loads(plan_path.read_text(encoding="utf-8"))
     assert payload["automatic_command_dispatch_enabled"] is False
-    assert len(payload["entries"]) == 42
+    assert len(payload["entries"]) == 28
 
 
 def test_periodic_dispatch_cli_fails_without_manual_confirmation() -> None:
@@ -1215,9 +1176,6 @@ def test_daily_ops_plan_closed_market_skips_score_and_current_download(
     assert step_by_id["market_panel"].enabled is False
     assert step_by_id["market_data_freshness"].enabled is False
     assert step_by_id["market_data_recover_freshness"].enabled is False
-    assert step_by_id["portfolio_candidate_tracking"].enabled is False
-    assert step_by_id["portfolio_tracking_review"].enabled is False
-    assert step_by_id["portfolio_tracking_review_report"].enabled is False
     assert step_by_id["artifact_lineage"].enabled is False
     assert step_by_id["validate_artifact_lineage"].enabled is False
     assert step_by_id["report_index"].enabled is False
@@ -1226,16 +1184,6 @@ def test_daily_ops_plan_closed_market_skips_score_and_current_download(
     assert step_by_id["reader_brief"].enabled is False
     assert step_by_id["report_quality_gate"].enabled is False
     assert step_by_id["validate_reader_brief"].enabled is False
-    assert step_by_id["dynamic_v3_rescue_schedule_observe"].enabled is True
-    assert step_by_id["dynamic_v3_rescue_schedule_observe"].command == (
-        "aits",
-        "etf",
-        "dynamic-v3-rescue",
-        "schedule",
-        "observe",
-        "--as-of",
-        "2026-05-10",
-    )
     assert step_by_id["pit_snapshots_fetch_fmp_forward"].produced_paths[0] == (
         tmp_path / "data" / "raw" / "fmp_forward_pit"
     )
@@ -1316,7 +1264,6 @@ def test_run_daily_ops_plan_continues_independent_branches_after_failure(
     command_texts = {" ".join(call) for call in calls}
     assert any("validate-data" in command for command in command_texts)
     assert any("data freshness" in command for command in command_texts)
-    assert any("dynamic-v3-rescue schedule observe" in command for command in command_texts)
     assert any("ops health" in command for command in command_texts)
     assert not any("score-daily" in command for command in command_texts)
     assert not any("merge-tsm-ir-sec-metrics" in command for command in command_texts)

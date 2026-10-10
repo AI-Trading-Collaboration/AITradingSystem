@@ -55,11 +55,6 @@ def test_scheduled_tasks_config_registers_required_cadences_and_safety() -> None
         "weekly_weight_promotion_gate",
         "weekly_research_governance_summary_review",
         "weekly_workflow_health_review",
-        "weekly_dynamic_v3_rescue_artifact_validate",
-        "weekly_dynamic_v3_rescue_artifact_stale",
-        "weekly_dynamic_v3_rescue_governance_validate",
-        "weekly_dynamic_v3_rescue_research_index",
-        "weekly_dynamic_v3_rescue_shadow_monitor",
         "biweekly_investment_review",
         "biweekly_feedback_loop_review",
         "biweekly_shadow_lane_review",
@@ -79,15 +74,12 @@ def test_scheduled_tasks_config_registers_required_cadences_and_safety() -> None
         "ad_hoc_sec_pit_candidate_review",
         "ad_hoc_large_parameter_search",
         "ad_hoc_cache_only_replay_window",
-        "ad_hoc_dynamic_v3_rescue_data_audit",
-        "ad_hoc_dynamic_v3_rescue_profile_validate",
-        "ad_hoc_dynamic_v3_rescue_small_real_sweep",
-        "ad_hoc_dynamic_v3_rescue_injection_audit",
-        "ad_hoc_dynamic_v3_rescue_candidate_attribution",
-        "ad_hoc_dynamic_v3_rescue_walk_forward_selection",
-        "ad_hoc_dynamic_v3_rescue_overfit",
-        "ad_hoc_dynamic_v3_rescue_promotion_pack",
     }.issubset(set(scheduled_non_daily_task_ids(config)))
+    # The ETF / dynamic-v3 rescue and candidate-tracking tasks retired with GOV-008 P4 block 2.
+    assert not any(
+        "dynamic_v3_rescue" in task_id or "etf_forward" in task_id
+        for task_id in config.tasks_by_id()
+    )
 
 
 def test_daily_plan_matches_required_scheduled_order() -> None:
@@ -118,9 +110,6 @@ def test_daily_plan_matches_required_scheduled_order() -> None:
         "reports market-panel --latest",
         "data freshness --latest",
         "data recover-freshness --latest",
-        "portfolio track-candidate --latest",
-        "portfolio review-tracking --latest --show-window-progress",
-        "reports portfolio-tracking-review --latest",
         "reports artifact-lineage --latest",
         "reports validate-artifact-lineage --latest",
         "reports index --latest",
@@ -129,11 +118,12 @@ def test_daily_plan_matches_required_scheduled_order() -> None:
         "reports reader-brief --latest",
         "reports quality-gate --latest",
         "reports validate-reader-brief --latest",
-        "etf dynamic-v3-rescue schedule observe",
         "ops health",
         "security scan-secrets",
     ):
         assert expected in command_text
+    for retired in ("portfolio track-candidate", "etf ", "dynamic-v3-rescue"):
+        assert retired not in command_text
 
 
 def test_non_daily_tasks_are_registered_but_not_in_daily_plan() -> None:
@@ -149,38 +139,7 @@ def test_non_daily_tasks_are_registered_but_not_in_daily_plan() -> None:
     assert "aits feedback build-parameter-replay --as-of {as_of}" not in daily_commands
     assert "python scripts/run_weight_candidate_evaluation.py --date {as_of}" not in daily_commands
     assert "aits ops replay-window --mode cache-only" not in daily_commands
-    assert not any("dynamic-v3-rescue sweep run-profile" in command for command in daily_commands)
-    assert not any("dynamic-v3-rescue promotion pack" in command for command in daily_commands)
-    assert any("dynamic-v3-rescue schedule observe" in command for command in daily_commands)
-
-
-def test_dynamic_v3_rescue_scheduled_tasks_are_condition_gated() -> None:
-    config = load_scheduled_tasks_config()
-    tasks_by_id = config.tasks_by_id()
-    daily_gate = tasks_by_id["daily_dynamic_v3_rescue_schedule_observe"]
-
-    assert daily_gate.cadence == DAILY_CADENCE_ID
-    assert daily_gate.daily_plan_step_id == "dynamic_v3_rescue_schedule_observe"
-    assert daily_gate.manual_review_required is True
-    assert daily_gate.date_gate
-    assert daily_gate.trigger_condition
-    assert daily_gate.data_quality_gate
-    assert "schedule observe" in daily_gate.command
-
-    dynamic_non_daily = [
-        task for task in config.non_daily_tasks() if "dynamic-v3-rescue" in task.command
-    ]
-    assert dynamic_non_daily
-    for task in dynamic_non_daily:
-        assert task.production_effect == "none"
-        assert task.production_weight_write is False
-        assert task.active_shadow_weight_write is False
-        assert task.broker_action is False
-        assert task.trading_action is False
-        assert task.manual_review_required is True
-        assert task.date_gate
-        assert task.trigger_condition
-        assert task.data_quality_gate
+    assert not any("dynamic-v3-rescue" in command for command in daily_commands)
 
 
 def test_closed_market_skips_score_and_reader_artifacts_but_keeps_data_refresh(
@@ -209,9 +168,6 @@ def test_closed_market_skips_score_and_reader_artifacts_but_keeps_data_refresh(
         "market_panel",
         "market_data_freshness",
         "market_data_recover_freshness",
-        "portfolio_candidate_tracking",
-        "portfolio_tracking_review",
-        "portfolio_tracking_review_report",
         "artifact_lineage",
         "validate_artifact_lineage",
         "report_index",
@@ -232,7 +188,6 @@ def test_closed_market_skips_score_and_reader_artifacts_but_keeps_data_refresh(
         "tsm_ir_sec_metrics_merge",
         "sec_metrics_validation",
         "valuation_snapshots",
-        "dynamic_v3_rescue_schedule_observe",
         "pipeline_health",
     ):
         assert step_by_id[step_id].enabled is True
@@ -307,7 +262,7 @@ def test_daily_run_executes_forward_evidence_then_reader_brief_chain_after_score
             "--skip-risk-event-openai-precheck",
         )
     )
-    assert calls[score_index + 1 : score_index + 24] == [
+    assert calls[score_index + 1 : score_index + 17] == [
         ("forward-evidence", "capture-dry-run-daily", "--as-of", "2026-05-06"),
         ("reports", "dashboard", "--as-of", "2026-05-06"),
         ("sec-pit", "shadow-observe", "--latest", "--end", "2026-05-06"),
@@ -316,12 +271,6 @@ def test_daily_run_executes_forward_evidence_then_reader_brief_chain_after_score
         ("reports", "market-panel", "--latest"),
         ("data", "freshness", "--latest"),
         ("data", "recover-freshness", "--latest"),
-        ("portfolio", "track-candidate", "--latest"),
-        ("portfolio", "review-tracking", "--latest", "--show-window-progress"),
-        ("reports", "portfolio-tracking-review", "--latest"),
-        ("etf", "forward", "update", "--latest"),
-        ("etf", "forward", "dashboard", "--latest"),
-        ("etf", "forward", "watchlist", "--latest"),
         ("reports", "artifact-lineage", "--latest"),
         ("reports", "validate-artifact-lineage", "--latest"),
         ("reports", "index", "--latest"),
@@ -330,7 +279,6 @@ def test_daily_run_executes_forward_evidence_then_reader_brief_chain_after_score
         ("reports", "reader-brief", "--latest"),
         ("reports", "quality-gate", "--latest"),
         ("reports", "validate-reader-brief", "--latest"),
-        ("etf", "dynamic-v3-rescue", "schedule", "observe", "--as-of", "2026-05-06"),
     ]
 
 

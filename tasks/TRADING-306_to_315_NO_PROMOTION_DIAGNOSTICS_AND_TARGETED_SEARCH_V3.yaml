@@ -2,8 +2,8 @@ schema_version: task.v1
 id: TRADING-306_to_315_NO_PROMOTION_DIAGNOSTICS_AND_TARGETED_SEARCH_V3
 area: ETF portfolio/dynamic v3 rescue no-promotion diagnostics and targeted expanded search v3
 priority: P0
-status: BASELINE_DONE
+status: DROPPED
 next_owner: 研究 owner：复核 continue smaller v4 / signal-level diagnosis 结论；architecture coordinator：继续剩余 G2.4 matrix
-next_step: 详细拆解见 `docs/requirements/TRADING-306_to_315_No_Promotion_Diagnostics_and_Targeted_Search_v3.md`；2026-06-14 research-only artifacts保留历史；G2.4已将31个legacy callbacks按CW1/CW2/CW3=`12/10/9`全部迁canonical并完成hardening；不得 broker/order/official weights/production/auto owner approval/paper primary switch。
+next_step: 无（ETF 候选链退役，GOV-008 P4 块 2）
 acceptance: 31 callbacks/31业务入口、十一类v2 snapshots、reviewed policies、exact lineage、pre-output validation、live replay/all-view byte rebuild、tamper fail-close与全部分层验证闭合；真实 owner 复核缺口仍保留。单任务完成不触发handoff、不进入G2.5，`production_effect=none`。
-notes: '2026-07-15: CW3=`COMPLETE_G2_4_CONTINUES`；focused合并=`142 passed`，architecture/contract/full=`291/203/6,039 passed`，generated=`940/1,131/858/0`。2026-07-16: task row由过时`IN_PROGRESS`修正为`BASELINE_DONE`；whole G2.4仍pending。'
+notes: '2026-07-15: CW3=`COMPLETE_G2_4_CONTINUES`；focused合并=`142 passed`，architecture/contract/full=`291/203/6,039 passed`，generated=`940/1,131/858/0`。2026-07-16: task row由过时`IN_PROGRESS`修正为`BASELINE_DONE`；whole G2.4仍pending。；GOV-008 P4 块 2（2026-10-10）：ETF 候选链按 owner 决定退役（需求文档第 11 节第 4 条、第 18 节），实现代码已删除，任务终止；代码可从 git 历史（tag legacy-governance-final）取回'

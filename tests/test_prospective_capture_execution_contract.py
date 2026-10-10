@@ -990,8 +990,6 @@ def test_previous_protocol_ack_bytes_cannot_silently_upgrade() -> None:
     new = _ack_v2()
     previous = cast(dict[str, Any], new.to_dict())
     previous["schema_version"] = "prospective_parent_completion_acknowledgement.v2"
-    previous["source_lease_id"] = "lease-" + "a" * 20
-    del previous["source_hold_id"]
     with pytest.raises(ValueError):
         ParentCompletionAcknowledgement.from_dict(previous)
     damaged = cast(dict[str, Any], new.to_dict())

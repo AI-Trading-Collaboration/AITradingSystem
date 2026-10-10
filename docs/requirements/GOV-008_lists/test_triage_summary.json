@@ -1,37 +1,22 @@
 {
- "source_commit": "66c28b9b01dab91bf182827c1e46430a97479eea",
+ "source_commit": "1646ae0b50012517f0630f79e2ab3dbe056ba094",
  "profile": "D:\\Work\\AITradingSystem\\outputs\\validation_runtime\\p-20261010-v2-full\\test_runtime_profile.json",
  "profile_sha256": "5fb1e534ea1a1f233798c96620a06109b132f8917f8542328ce0e61677f0e745",
  "slow_node_seconds_boundary": 30.0,
  "by_verdict": {
-  "DELETE_WITH_ETF_RETIREMENT": {
-   "files": 296,
-   "nodes": 1601,
-   "node_hours": 2.57
-  },
-  "DELETE_WITH_FROZEN_CODE": {
-   "files": 312,
-   "nodes": 1354,
-   "node_hours": 0.22
-  },
   "KEEP_CONTRACT": {
-   "files": 30,
-   "nodes": 1436,
+   "files": 31,
+   "nodes": 1718,
    "node_hours": 3.2
   },
   "KEEP_PR": {
-   "files": 613,
-   "nodes": 6176,
-   "node_hours": 1.47
+   "files": 609,
+   "nodes": 6082,
+   "node_hours": 1.46
   },
   "REVIEW_DECOUPLE": {
    "files": 2,
    "nodes": 26,
-   "node_hours": 0.0
-  },
-  "REVIEW_DELETE_LEASE_VARIANTS": {
-   "files": 1,
-   "nodes": 282,
    "node_hours": 0.0
   }
  },

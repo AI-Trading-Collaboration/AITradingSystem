@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from typer.testing import CliRunner
-
-from ai_trading_system.cli import app
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 POLICY_PATH = Path("config/research/return_seeking_diagnostic_lane_policy.yaml")
@@ -13,13 +10,6 @@ ACTUAL_PATH = Path("inputs/research_reviews/return_seeking_actual_path_matrix.ya
 BETA_ATTRIBUTION_PATH = Path("inputs/research_reviews/return_seeking_beta_tqqq_attribution.yaml")
 CONTRAST_PATH = Path("inputs/research_reviews/return_seeking_2022_vs_2023_contrast.yaml")
 FINAL_MATRIX_PATH = Path("inputs/research_reviews/return_seeking_diagnostic_lane_final_matrix.yaml")
-
-
-def test_return_seeking_diagnostic_lane_cli_is_registered() -> None:
-    result = CliRunner().invoke(app, ["research", "trends", "--help"])
-
-    assert result.exit_code == 0
-    assert "return-seeking-diagnostic-lane" in result.output
 
 
 def test_return_seeking_policy_is_diagnostic_only() -> None:

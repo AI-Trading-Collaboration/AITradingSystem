@@ -13,6 +13,19 @@
 - `docs/artifact_catalog.md` 说明关键 artifact 的生成者、上游、下游、production effect 和常见误解。
 - `docs/system_flow.md` 仍是数据输入到结论输出路径的源-of-truth 图。
 
+## GOV-008 P4 块 2：ETF 候选链退役（2026-10-10）
+
+ETF 候选链按 owner 决定退役，代码已删除；本文下方凡涉及以下内容的段落均为历史描述，**不再执行**：
+
+- 每日计划去掉 7 步：`portfolio track-candidate`、`portfolio review-tracking`、`reports portfolio-tracking-review`、
+  `etf forward update/dashboard/watchlist`、`etf dynamic-v3-rescue schedule observe`；
+- `config/scheduled_tasks.yaml` 去掉对应的 7 个每日任务与 14 个非每日任务（`weekly_etf_forward_review`、
+  `weekly_dynamic_v3_rescue_*`、`ad_hoc_dynamic_v3_rescue_*`）；登记任务 81 → 60，其中非每日任务 42 → 28；
+- `aits etf ...`、`aits regime/features/simulation/report/run/experiments` 命令组不再存在。
+
+`config/etf_portfolio/` 与 `src/ai_trading_system/etf_portfolio/regime.py` 作为研究证据原样保留（被研究与阈值登记引用、
+被 QQQ options 合约按字节钉住），不是运行入口。本文将在 GOV-008 P5 整体重写。
+
 ## TRADING-2564 S3b 手工前瞻采集边界
 
 S3b `python -I -B scripts/run_named_data_quality.py --operation activate|capture` 为有限手工研究

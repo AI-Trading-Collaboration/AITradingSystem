@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from typer.testing import CliRunner
-
-from ai_trading_system.cli import app
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 POLICY_PATH = Path("config/research/defensive_preservation_lane_policy.yaml")
@@ -14,13 +11,6 @@ FEATURE_AUDIT_PATH = Path("inputs/research_reviews/defensive_lane_feature_pit_au
 MODEL_MATRIX_PATH = Path("inputs/research_reviews/defensive_lane_model_matrix.yaml")
 ACTUAL_PATH = Path("inputs/research_reviews/defensive_lane_actual_path_matrix.yaml")
 FINAL_MATRIX_PATH = Path("inputs/research_reviews/defensive_preservation_lane_final_matrix.yaml")
-
-
-def test_defensive_lane_cli_is_registered() -> None:
-    result = CliRunner().invoke(app, ["research", "trends", "--help"])
-
-    assert result.exit_code == 0
-    assert "defensive-lane" in result.output
 
 
 def test_defensive_lane_policy_blocks_add_risk_and_tqqq() -> None:
