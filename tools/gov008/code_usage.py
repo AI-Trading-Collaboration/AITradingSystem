@@ -3,6 +3,7 @@
 Classes (first match wins):
   DEV_MACHINERY       platform/architecture: fence, leases, DEVX-015 runtime, hash authorities.
   ETF_RETIRE          etf_portfolio package and its CLI: owner retired the ETF dynamic v3 steps
+  ATLAS_RETIRE        atlas package: owner retired Atlas (2026-10-10).
                       (GOV-008 P1 review, 2026-10-10). Deleted only after the two decouplings.
   LIVE_FIVE_LINES     import closure of the five research lines the owner keeps.
   LIVE_DAILY          import closure of the commands in the daily_trading_day cadence.
@@ -51,6 +52,11 @@ FIVE_LINE_PATTERN = re.compile(
 
 def is_etf(name: str) -> bool:
     return any(name == p or name.startswith(p + ".") for p in ETF_PREFIXES)
+
+
+def is_atlas(name: str) -> bool:
+    """Atlas is retired (owner decision 2026-10-10, GOV-008 P1 review)."""
+    return name == f"{PKG}.atlas" or name.startswith(f"{PKG}.atlas.")
 
 
 def scheduled_seeds(repo: Path, modules: dict[str, Path]) -> tuple[dict[str, set[str]], list[str]]:
@@ -117,7 +123,8 @@ def main() -> None:
     five_seeds = [
         name
         for name in modules
-        if FIVE_LINE_PATTERN.search(name.split(".")[-1]) or ".qqq_options_research" in name
+        if not is_atlas(name)
+        and (FIVE_LINE_PATTERN.search(name.split(".")[-1]) or ".qqq_options_research" in name)
     ]
     five = closure(graph, five_seeds)
 
@@ -127,6 +134,8 @@ def main() -> None:
             cls = "DEV_MACHINERY"
         elif is_etf(name):
             cls = "CONFLICT_ETF_NEEDED_BY_FIVE_LINES" if name in five else "ETF_RETIRE"
+        elif is_atlas(name):
+            cls = "CONFLICT_ATLAS_NEEDED_BY_FIVE_LINES" if name in five else "ATLAS_RETIRE"
         elif name in five:
             cls = "LIVE_FIVE_LINES"
         elif name in daily:

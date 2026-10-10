@@ -1,8 +1,12 @@
 {
- "source_commit": "36b10235d5d1f96fada92ec7f560589e10ac7a38",
+ "source_commit": "e7e34e0f4309cda495731892bc7005db301a0c31",
  "total_modules": 1243,
  "total_loc": 1322686,
  "by_class": {
+  "ATLAS_RETIRE": {
+   "modules": 28,
+   "loc": 17094
+  },
   "DEV_MACHINERY": {
    "modules": 48,
    "loc": 61466
@@ -16,16 +20,16 @@
    "loc": 308161
   },
   "LIVE_FIVE_LINES": {
-   "modules": 476,
-   "loc": 408501
+   "modules": 475,
+   "loc": 408209
   },
   "LIVE_OTHER_SCHEDULE": {
    "modules": 18,
    "loc": 20578
   },
   "UNASSIGNED": {
-   "modules": 212,
-   "loc": 220717
+   "modules": 185,
+   "loc": 203915
   }
  },
  "scheduled_seed_modules": {
@@ -38,7 +42,7 @@
  "unresolved_scheduled_commands": [
   "manual review docs/artifact_catalog.md against latest report outputs"
  ],
- "five_line_seed_modules": 253,
+ "five_line_seed_modules": 252,
  "machinery_worklist_files": 16,
  "machinery_worklist_loc": 35093,
  "etf_worklist_files": 9,

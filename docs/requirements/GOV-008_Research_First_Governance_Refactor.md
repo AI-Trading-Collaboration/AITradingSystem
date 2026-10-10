@@ -217,8 +217,10 @@ owner 可调整）：
    （`etf_forward_*`、`dynamic_v3_rescue_schedule_observe`、`portfolio_candidate_tracking`）；
    现在不删除，P4 删除块 2 随代码一并移除；删除前须确认日报链路缩为"数据 -> DQ -> 评分 -> 报告"后仍通过新门。
 5. 是否启用并行会话/子 agent 加速 P1/P2（成本换时间）：owner 未要求，默认不启用。
-6. **Atlas 去留（待 owner 决定）**：Atlas 是否仍用于研究决策。它的页面测试依赖本机未跟踪且绑定 commit 的页面，PR 套件因此带
-   1 个已知失败（第 13.1 节）。退役则测试随之删除；保留则需把"页面过期"改为带提示的跳过。在决定前门禁不全绿，P3 切换前必须关闭。
+6. **Atlas 已决定退役**（2026-10-10，owner 回复：退役）。Atlas 的页面测试依赖本机未跟踪且绑定 commit 的页面，曾使 PR 套件
+   带 1 个已知失败（第 13.1 节）。退役后：`atlas` 包 28 个模块 / 1.7 万行、33 个测试文件、`scripts/render_atlas_strategy_research_page.py`、
+   35 个 config 与 31 个 docs 文件进入 P4 删除块（现在只从 PR 套件排除）；Atlas 相关任务（TRADING-2466～2525、PLATFORM-UX-001）
+   随下一个任务行事务标记终止。src 里只有将被删除的 `validation_readiness` 引用 Atlas，其余无依赖。门禁已全绿（第 13.2 节）。
 
 ## 12. 进度记录
 
@@ -296,4 +298,29 @@ owner 可调整）：
   （`outputs/atlas/...`），要求页面与当前任务索引一致且绑定当前 commit。页面一旦存在就会在任何新提交后过期，包括
   `ship` 追加 `Gate:` 行的那次修改本身，所以这个测试在本机永远稳定不了；干净克隆里页面不存在则跳过。这是"测试依赖本机
   未跟踪状态"的又一个实例。处理属于 Atlas 去留（P1 文档第 3 节最后一行）：若 Atlas 退役，测试随之删除；若保留，需要把
-  "页面过期"改成跳过并提示重新生成。**在 owner 决定前不改测试、不加豁免**，门禁带 1 个已知失败，已列入第 11 节。
+  "页面过期"改成跳过并提示重新生成。**在 owner 决定前不改测试、不加豁免**，门禁带 1 个已知失败。（已解决：owner 决定 Atlas 退役，见第 11 节第 6 条与第 13.2 节。）
+
+### 13.2 Atlas 退役后的门禁与未归属代码（2026-10-10 晚）
+
+- **门禁全绿**：Atlas 的 30 个测试文件加入 `pr_exclude.txt`（共 418 个文件）后，PR 套件 8,453 个节点 8m54s（534 s），
+  8,451 通过、2 跳过、0 失败。四次计时 7m40s～8m54s，PR 套件按约 8.5 分钟计。
+- **确认可移除的代码**：开发机制 6.1 万 + ETF 30.3 万 + Atlas 1.7 万 = **38.2 万行（28.9%）**，前提仍是两处解耦
+  （第 5 节）。分类脚本中 Atlas 不再参与五条线的关键字种子（`atlas.qqq_options_projection` 因名字含 `qqq_options`
+  曾被误判为五条线依赖，实际没有任何 Atlas 之外的模块导入它）。
+- **未归属 185 个模块 / 20.4 万行，分为四类**（"未归属"只表示不在调度、不在五条线、不在 ETF/Atlas/机制里，不表示无用；
+  例如 `cli_commands.market_features` 就是 `build-features` 命令）：
+
+| 类 | 模块 | 代码行 | 直接引用它们的测试 | 最后修改 | 建议 |
+|---|---|---|---|---|---|
+| A 休眠的一次性研究/复盘模块（`high_intensity_risk_cap_*` 31 个、`dynamic_target_*`、`scope_narrowed_*`、`refined_*`、`liquidity_rates_*`、`ai_leadership_*`、`exposure_cap_*`、`regenerated_*` 等） | 114 | 13.4 万 | 539 个文件 / 3,269 节点 / 0.89 节点小时 | 2026-06～07，其中 `high_intensity_risk_cap_*` 的 31 个文件全部改于 7 月 4～5 日 | 冻结：代码移出 main（tag 可恢复），证据文件保留 |
+| B `trading_engine.*`（paper trading 引擎与 broker 适配器） | 35 | 3.4 万 | 32 个文件 / 541 节点 / 0.01 节点小时 | 2026-05～07 | 待 owner：是否计划使用 paper trading；区域 C 含其 broker 路径 |
+| C `data.*`（数据基础治理：访问控制、持久性、消费者迁移等） | 9 | 1.0 万 | 9 个文件 / 128 节点 | 2026-07～09 | 默认保留，随 DATA-GOV-001/002 重估 |
+| D `cli_commands.*` 与 `research_framework.*`（`build-features`、`system`、`watchlist`、`industry-chain`、`parameters`、`trade_review`、`trace` 等命令；研究插件） | 27 | 2.6 万 | 92 个文件 / 426 节点 / 0.14 节点小时 | 2026-06～09 | 默认保留（属认知层与手动命令）；请 owner 圈出不再运行的命令 |
+
+  A 类的价格标签：它们的测试约占 0.89 节点小时，冻结后 PR 套件粗估缩短 2～3 分钟（估算，删除后实测）。B、C、D 的测试几乎
+  不占时间，保留的代价主要是维护复杂度而不是验证时间。
+- **AGENTS.md 重写草稿**：`docs/requirements/GOV-008_AGENTS_md_v2_DRAFT.md`，130 行（现行 516 行），harness 中立。保留研究窗口、
+  数据源纪律、数据质量门禁、阈值治理、中文输出、外部动作分级、no silent workarounds；新增 `ship` 发布流程、区域与
+  `Owner-Decision:`/`Gate:` 行、运行溯源；删除治理开发模式与 preflight、fence 纪律、DUAL_LANE/base-drift、未关联脏文件审计命令、
+  token 级证据准入记录。过渡条款标注"(until P4)/(until P5)"：任务行仍用现有 `TASK_SOURCE_ONLY` 事务直到 P5。草稿**不生效**，
+  现行 AGENTS.md 未改动。

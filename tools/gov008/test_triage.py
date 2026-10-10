@@ -74,6 +74,8 @@ MACHINERY_TOKENS = (
     "source_lease",
 )
 ETF_PREFIXES = (f"{PKG}.etf_portfolio", f"{PKG}.interfaces.cli.etf_portfolio")
+# Owner decision 2026-10-10 (GOV-008 P1 review): Atlas is retired.
+ATLAS_PREFIX = f"{PKG}.atlas"
 
 
 def group_of(path: str) -> str:
@@ -145,6 +147,9 @@ def main() -> None:
         etf = any(n == p or n.startswith(p + ".") for n in imports for p in ETF_PREFIXES) or bool(
             re.search(r"dynamic_v3|test_etf_", rel)
         )
+        atlas = rel.startswith("tests/atlas/") or any(
+            n == ATLAS_PREFIX or n.startswith(ATLAS_PREFIX + ".") for n in imports
+        )
         group = group_of(rel)
         if group.startswith("M"):
             cls, verdict = group, "DELETE_WITH_MECHANISM"
@@ -152,6 +157,8 @@ def main() -> None:
                 verdict = "KEEP_DEPENDENCY_DIRECTION_REVIEW"
         elif etf:
             cls, verdict = "ETF", "DELETE_WITH_ETF_RETIREMENT"
+        elif atlas:
+            cls, verdict = "ATLAS", "DELETE_WITH_ATLAS_RETIREMENT"
         elif group == "R1":
             if machinery_import or token_hit:
                 cls, verdict = "R1_LEASE_DEPENDENT", "REVIEW_DELETE_LEASE_VARIANTS"
@@ -188,6 +195,7 @@ def main() -> None:
     exclude_verdicts = (
         "DELETE_WITH_MECHANISM",
         "DELETE_WITH_ETF_RETIREMENT",
+        "DELETE_WITH_ATLAS_RETIREMENT",
         "REVIEW_DELETE_LEASE_VARIANTS",
     )
     exclude_files = sorted(r["test_file"] for r in rows if r["verdict"] in exclude_verdicts)
