@@ -1,0 +1,50 @@
+{
+ "source_commit": "36b10235d5d1f96fada92ec7f560589e10ac7a38",
+ "total_modules": 1243,
+ "total_loc": 1322686,
+ "by_class": {
+  "DEV_MACHINERY": {
+   "modules": 48,
+   "loc": 61466
+  },
+  "ETF_RETIRE": {
+   "modules": 270,
+   "loc": 303263
+  },
+  "LIVE_DAILY": {
+   "modules": 219,
+   "loc": 308161
+  },
+  "LIVE_FIVE_LINES": {
+   "modules": 476,
+   "loc": 408501
+  },
+  "LIVE_OTHER_SCHEDULE": {
+   "modules": 18,
+   "loc": 20578
+  },
+  "UNASSIGNED": {
+   "modules": 212,
+   "loc": 220717
+  }
+ },
+ "scheduled_seed_modules": {
+  "ad_hoc_research": 9,
+  "biweekly": 6,
+  "daily_trading_day": 17,
+  "monthly": 4,
+  "weekly": 9
+ },
+ "unresolved_scheduled_commands": [
+  "manual review docs/artifact_catalog.md against latest report outputs"
+ ],
+ "five_line_seed_modules": 253,
+ "machinery_worklist_files": 16,
+ "machinery_worklist_loc": 35093,
+ "etf_worklist_files": 9,
+ "caveats": [
+  "static import closure over-approximates reachability",
+  "dynamic import_module use and hand-run aits research commands are not counted",
+  "five-line seeds are a module-name approximation until the owner confirms ownership"
+ ]
+}

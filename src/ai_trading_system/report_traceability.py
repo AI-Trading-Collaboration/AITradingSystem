@@ -11,6 +11,7 @@ import pandas as pd
 
 from ai_trading_system.backtest.audit import BacktestAuditReport
 from ai_trading_system.backtest.daily import BacktestRegimeContext, DailyBacktestResult
+from ai_trading_system.core.provenance import provenance_block
 from ai_trading_system.data.quality import DataFileSummary, DataQualityReport
 from ai_trading_system.scoring.daily import DailyScoreReport
 
@@ -882,6 +883,7 @@ def _run_manifest(
         "market_regime": _market_regime_record(market_regime),
         "config_ids": sorted(config_paths),
         "config_paths": {key: str(path) for key, path in sorted(config_paths.items())},
+        "provenance": provenance_block(config_paths),
         "output_artifacts": output_artifacts,
     }
     if parameters is not None:

@@ -1,0 +1,17 @@
+module,loc,in_five_lines,in_daily,direct_machinery_imports
+ai_trading_system.atlas.live_snapshot,1008,0,0,platform.architecture;platform.architecture.task_registry_canonical
+ai_trading_system.atlas.page_effectiveness,970,0,0,platform.architecture;platform.architecture.source_preservation;platform.architecture.task_registry_canonical
+ai_trading_system.cli_commands.feedback,2402,0,0,platform.architecture;platform.architecture.task_registry_canonical
+ai_trading_system.cli_commands.ops,4307,0,1,platform.architecture;platform.architecture.checkout_guard
+ai_trading_system.cli_commands.reports,11939,0,1,platform.architecture;platform.architecture.task_registry_canonical
+ai_trading_system.composer_prospective_capture,1501,1,0,platform.architecture;platform.architecture.checkout_guard
+ai_trading_system.data.named_quality_dispatch,1050,1,0,platform.architecture;platform.architecture.checkout_guard;platform.architecture.parallel_control_kernel
+ai_trading_system.ops_release_promotion,3326,0,1,platform.architecture;platform.architecture.checkout_guard
+ai_trading_system.ops_scheduler_checkout,1062,0,1,platform.architecture;platform.architecture.checkout_guard
+ai_trading_system.prospective_capture_execution,1749,1,0,platform.architecture;platform.architecture.checkout_guard
+ai_trading_system.prospective_event_time_evidence,1256,1,0,platform.architecture;platform.architecture.checkout_guard;platform.architecture.parallel_control_kernel
+ai_trading_system.reports.research_roadmap_dashboard,991,0,1,platform.architecture;platform.architecture.task_registry_canonical
+ai_trading_system.reports.research_safety_boundary,1202,0,1,platform.architecture;platform.architecture.task_registry_canonical
+ai_trading_system.reports.task_register_consistency,947,0,1,platform.architecture;platform.architecture.task_registry_canonical
+ai_trading_system.reports.workflow_improvement,486,0,1,platform.architecture;platform.architecture.task_registry_canonical
+ai_trading_system.research_outcome_access,897,1,0,platform.architecture;platform.architecture.checkout_guard;platform.architecture.lease_arbiter

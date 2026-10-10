@@ -1,0 +1,51 @@
+{
+ "source_commit": "36b10235d5d1f96fada92ec7f560589e10ac7a38",
+ "profile": "outputs\\validation_runtime\\p-20261010-v2-full\\test_runtime_profile.json",
+ "profile_sha256": "5fb1e534ea1a1f233798c96620a06109b132f8917f8542328ce0e61677f0e745",
+ "slow_node_seconds_boundary": 30.0,
+ "by_verdict": {
+  "DELETE_WITH_ETF_RETIREMENT": {
+   "files": 296,
+   "nodes": 1601,
+   "node_hours": 2.57
+  },
+  "DELETE_WITH_MECHANISM": {
+   "files": 80,
+   "nodes": 3930,
+   "node_hours": 21.89
+  },
+  "KEEP_CONTRACT": {
+   "files": 22,
+   "nodes": 693,
+   "node_hours": 0.43
+  },
+  "KEEP_DEPENDENCY_DIRECTION_REVIEW": {
+   "files": 4,
+   "nodes": 15,
+   "node_hours": 0.01
+  },
+  "KEEP_PR": {
+   "files": 915,
+   "nodes": 7386,
+   "node_hours": 1.67
+  },
+  "REVIEW_DECOUPLE": {
+   "files": 32,
+   "nodes": 588,
+   "node_hours": 0.16
+  },
+  "REVIEW_DELETE_LEASE_VARIANTS": {
+   "files": 12,
+   "nodes": 1063,
+   "node_hours": 8.17
+  }
+ },
+ "pr_suite_node_hours_keep_only": 1.57,
+ "nightly_node_hours_keep_only": 0.52,
+ "review_pool_node_hours": 8.33,
+ "caveats": [
+  "file-name groups and direct-import detection are approximations",
+  "REVIEW_* verdicts need the owner's exception decisions before deletion",
+  "node durations come from a saturated 16-worker Full: 1.1-1.4x an idle host"
+ ]
+}
