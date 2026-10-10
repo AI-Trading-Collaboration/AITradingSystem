@@ -1,4 +1,4 @@
-"""Synthetic parent tests with real S4D, S3a and contained immutable writes.
+"""Synthetic parent tests with a real capture hold, S3a and contained immutable writes.
 
 The named context and source-bootstrap objects are explicit doubles. These
 tests establish parent state/clock/replay behavior, never actual Git-byte source
@@ -52,14 +52,15 @@ from ai_trading_system.contracts.prospective_event_time_evidence import (
     canonical_json_bytes,
     strict_json_loads,
 )
+from ai_trading_system.data import capture_hold
+from ai_trading_system.data.capture_hold import (
+    CaptureHold,
+    acquire_capture_hold,
+    release_capture_hold,
+)
 from ai_trading_system.data.named_quality_execution import (
     NamedBootstrapAuthority,
     _preview_calendar_witness,
-)
-from ai_trading_system.platform.architecture.checkout_guard import (
-    CheckoutLeaseGuard,
-    CheckoutLeaseHandle,
-    CheckoutOperationClass,
 )
 from ai_trading_system.simple_baseline_named_preview import (
     rebuild_prospective_simple_baseline_preview,
@@ -67,6 +68,8 @@ from ai_trading_system.simple_baseline_named_preview import (
 
 ROOT = Path(__file__).resolve().parents[1]
 ACTIVATED = datetime(2026, 11, 25, 22, tzinfo=UTC)
+# Same six-hour window the S4D lease gave these fixtures.
+HOLD_TTL_SECONDS = 6 * 60 * 60
 
 
 @dataclass
@@ -82,26 +85,16 @@ class _Harness:
     root: Path
     request: ProspectiveCaptureRequest
     bootstrap: Any
-    lease: CheckoutLeaseHandle
+    hold: CaptureHold
     clock: _Clock
 
     def renew(self, at: datetime) -> None:
-        if not self.lease.released:
-            self.lease.release(outcome="synthetic_clock_transition", at=self.clock.value)
+        if not self.hold.released:
+            release_capture_hold(self.hold)
+        self.clock.value = at - timedelta(seconds=1)
+        self.hold = _acquire(self.root, self.request)
         self.clock.value = at
-        decision, lease = self.lease.guard.acquire(
-            intent_id="synthetic-capture-renewed",
-            task_id="TRADING-2564-SYNTHETIC",
-            thread_id="synthetic-capture-parent",
-            actor="integration-coordinator",
-            operation_class=CheckoutOperationClass.SHARED_MUTATION,
-            shared_paths=self.request.required_write_paths,
-            base_commit=self.request.candidate_commit,
-            now=at - timedelta(seconds=1),
-        )
-        assert decision.status == "PASS" and lease is not None
-        self.lease = lease
-        self.bootstrap.source_lease_id = lease.lease_id
+        self.bootstrap.source_hold_id = self.hold.hold_id
 
     def run(self, request: ProspectiveCaptureRequest | None = None) -> dict[str, Any]:
         request = request or self.request
@@ -122,10 +115,21 @@ class _Harness:
         )
 
 
+def _acquire(root: Path, request: ProspectiveCaptureRequest) -> CaptureHold:
+    return acquire_capture_hold(
+        execution_root=root,
+        candidate_commit=request.candidate_commit,
+        required_paths=request.required_write_paths,
+        actor="integration-coordinator",
+        ttl_seconds=HOLD_TTL_SECONDS,
+    )
+
+
 @pytest.fixture
 def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Harness]:
     root = tmp_path / "synthetic-capture-parent"
     root.mkdir()
+    root = root.resolve()
     (root / ".gitignore").write_text("outputs/\n", encoding="utf-8")
     dependencies = (
         CAPTURE_POLICY_PATH,
@@ -134,8 +138,6 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Harnes
         EQUAL_RISK_PRICE_REGISTRY_PATH,
     )
     for relative in (
-        "config/architecture/arch_005_s4d_checkout_guard.yaml",
-        "config/architecture/arch_005_parallel_control_policy.yaml",
         *dependencies,
         *recorder._CALENDAR_PATHS,
     ):
@@ -164,22 +166,10 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Harnes
     target = root / request.owner_review.relative_path
     target.parent.mkdir(parents=True)
     target.write_bytes(review.canonical_bytes)
-    guard = CheckoutLeaseGuard(
-        project_root=root,
-        policy_path=root / "config/architecture/arch_005_s4d_checkout_guard.yaml",
-        parallel_policy_path=root / "config/architecture/arch_005_parallel_control_policy.yaml",
-    )
-    decision, lease = guard.acquire(
-        intent_id="synthetic-capture-parent",
-        task_id="TRADING-2564-SYNTHETIC",
-        thread_id="synthetic-capture-parent",
-        actor="integration-coordinator",
-        operation_class=CheckoutOperationClass.SHARED_MUTATION,
-        shared_paths=(output,),
-        base_commit=commit,
-        now=ACTIVATED - timedelta(minutes=1),
-    )
-    assert decision.status == "PASS" and lease is not None
+    clock = _Clock(ACTIVATED - timedelta(minutes=1))
+    monkeypatch.setattr(capture_hold, "_now", clock)
+    hold = _acquire(root, request)
+    clock.value = ACTIVATED
     identity = replace(
         synthetic_receipt().execution,
         execution_root=root.as_posix(),
@@ -192,12 +182,11 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Harnes
         process_id=os.getpid(),
         stable_identity_sha256=identity.stable_identity_sha256,
     )
-    clock = _Clock()
     bootstrap = SimpleNamespace(
         operation="activate",
         context=context,
         canonical_dq_call_count=0,
-        source_lease_id=lease.lease_id,
+        source_hold_id=hold.hold_id,
         dependencies={
             path: SimpleNamespace(content=(root / path).read_bytes()) for path in dependencies
         },
@@ -211,12 +200,10 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Harnes
     monkeypatch.setattr(recorder, "_utc_now", clock)
     monkeypatch.setattr(host_clock, "_utc_ns", lambda: datetime_to_utc_ns(clock.value))
     monkeypatch.setattr(host_clock, "_counter_ns", lambda: 0)
-    value = _Harness(root, request, bootstrap, lease, clock)
+    value = _Harness(root, request, bootstrap, hold, clock)
     yield value
-    if not value.lease.released:
-        value.lease.release(
-            outcome="synthetic_capture_complete", at=clock.value + timedelta(seconds=1)
-        )
+    if not value.hold.released:
+        release_capture_hold(value.hold)
 
 
 def _forbidden(*args: Any, **kwargs: Any) -> Any:
@@ -228,7 +215,7 @@ def _synthetic_terminal_parent(
 ) -> dict[str, Any]:
     assert request.named_dq_request is not None
     return {
-        "schema_version": "named_data_quality_parent_dispatch.v1",
+        "schema_version": "named_data_quality_parent_dispatch.v2",
         "profile": "PROSPECTIVE_FIVE_CANDIDATE_PRODUCTION_PARENT",
         "status_semantics": "PARENT_ASSOCIATION_AND_PROCESS_OBSERVATION_ONLY",
         "request_id": request.named_dq_request.request_id,
@@ -237,7 +224,7 @@ def _synthetic_terminal_parent(
         "candidate_commit": request.candidate_commit,
         "execution_root": request.roots.execution_root,
         "parent_pid": os.getpid(),
-        "source_lease_id": harness.lease.lease_id,
+        "source_hold_id": harness.hold.hold_id,
         "observed_canonical_dq_call_count": count,
         "counter_observation_state": "KNOWN",
         "parent_canonical_dq_call_count": 0,
@@ -251,7 +238,7 @@ def _synthetic_full_capture(
     """Prepare a declared DQ/verification double, never mint VerifiedNamedInputs.
 
     Original publication/report bytes are explicit synthetic declarations. Their
-    internal hash/DTO closure, real S4D snapshots and actual preview arithmetic
+    internal hash/DTO closure, real capture-hold snapshots and actual preview arithmetic
     exercise this parent's validation, not the replaced DQ/source verifier.
     """
     original = synthetic_receipt()
@@ -356,9 +343,7 @@ def _synthetic_full_capture(
         ended_at=now,
         evaluated_window=dq_request.expected_evaluated_window,
         execution=harness.bootstrap.context.identity,
-        execution_observation=NamedExecutionObservation(
-            7654, harness.lease.lease_id, now, now, now
-        ),
+        execution_observation=NamedExecutionObservation(7654, harness.hold.hold_id, now, now, now),
         execution_dependencies=tuple(dependencies),
         policy=replace(original.policy, sha256=policy_binding.sha256),
         calendar_policy=calendar_binding,
@@ -386,10 +371,10 @@ def _synthetic_full_capture(
         )
         prefix = request.operation_relative_path + "/dq_dispatch/"
         pre = dispatch._parent_proof(
-            dq_request, harness.bootstrap, harness.lease, required, stage="SYNTHETIC_CHILD_PRE"
+            dq_request, harness.bootstrap, harness.hold, required, stage="SYNTHETIC_CHILD_PRE"
         )
         post = dispatch._parent_proof(
-            dq_request, harness.bootstrap, harness.lease, required, stage="SYNTHETIC_CHILD_POST"
+            dq_request, harness.bootstrap, harness.hold, required, stage="SYNTHETIC_CHILD_POST"
         )
         receipt_path = "named_data_quality/executions/" + receipt.receipt_id + "/receipt.json"
         receipt_binding = NamedArtifactBinding(
@@ -397,10 +382,10 @@ def _synthetic_full_capture(
         )
         rows["dq_receipt"] = receipt_binding, receipt.canonical_bytes
         stdout = {
-            "schema_version": "named_data_quality_bootstrap_result.v1",
+            "schema_version": "named_data_quality_bootstrap_result.v2",
             "status": "PASS",
             "request_id": dq_request.request_id,
-            "source_lease_id": harness.lease.lease_id,
+            "source_hold_id": harness.hold.hold_id,
             "process_id": 7654,
             "receipt_id": receipt.receipt_id,
             "receipt_path": receipt_path,
@@ -439,7 +424,7 @@ def _synthetic_full_capture(
                 "size_bytes": binding.size_bytes,
             }
         parent = {
-            "schema_version": "named_data_quality_parent_dispatch.v1",
+            "schema_version": "named_data_quality_parent_dispatch.v2",
             "profile": "PROSPECTIVE_FIVE_CANDIDATE_PRODUCTION_PARENT",
             "status_semantics": "PARENT_ASSOCIATION_AND_PROCESS_OBSERVATION_ONLY",
             "status": "PASS",
@@ -452,8 +437,8 @@ def _synthetic_full_capture(
             "observed_canonical_dq_call_count": 1,
             "parent_canonical_dq_call_count": 0,
             "parent_pid": os.getpid(),
-            "source_lease_id": harness.lease.lease_id,
-            "lease_acquired_or_mutated": False,
+            "source_hold_id": harness.hold.hold_id,
+            "hold_acquired_or_mutated": False,
             "verified_input_seal_exported": False,
             "dispatch_allowed": False,
             "production_effect": "none",
@@ -479,7 +464,7 @@ def _synthetic_full_capture(
             candidate_commit=request.candidate_commit,
             execution_root=request.roots.execution_root,
             execution_pid=7654,
-            source_lease_id=harness.lease.lease_id,
+            source_hold_id=harness.hold.hold_id,
             child_started_at=now,
             child_terminal_checked_at=now,
             parent_postchecked_at=now,
@@ -572,14 +557,14 @@ def test_activation_real_s4d_recorder_and_parent_ack_replay_after_expiry(
     ack_bytes = (harness.root / result["acknowledgement"]["relative_path"]).read_bytes()
     ack = ParentCompletionAcknowledgement.from_json_bytes(ack_bytes)
     assert ack.first_feature_session == date(2026, 11, 27)
-    assert ack.source_lease_id == harness.lease.lease_id and ack.parent_pid == os.getpid()
+    assert ack.source_hold_id == harness.hold.hold_id and ack.parent_pid == os.getpid()
     terminal_clock = HostClockEvidence.from_dict(result["terminal_clock_evidence"])
     require_clock_evidence_extension(ack.clock_evidence, terminal_clock)
     assert terminal_clock.checkpoints[-1].label == "terminal_precommit"
     assert result["result_own_durability_time_claimed"] is False
-    harness.lease.release(outcome="synthetic_capture_complete", at=harness.clock.value)
+    release_capture_hold(harness.hold)
     harness.clock.value = harness.request.manifest.expires_at + timedelta(days=1)
-    monkeypatch.setattr(capture, "restore_named_capture_lease", _forbidden)
+    monkeypatch.setattr(capture, "restore_capture_hold", _forbidden)
     monkeypatch.setattr(capture, "record_activation", _forbidden)
     monkeypatch.setattr(capture, "dispatch_named_quality_child", _forbidden)
     monkeypatch.setattr(host_clock, "_utc_ns", _forbidden)
@@ -593,16 +578,16 @@ def test_activation_real_s4d_recorder_and_parent_ack_replay_after_expiry(
     assert (harness.root / result["acknowledgement"]["relative_path"]).read_bytes() == ack_bytes
 
 
-def test_incomplete_original_attempt_replays_after_lease_release_and_manifest_expiry(
+def test_incomplete_original_attempt_replays_after_hold_release_and_manifest_expiry(
     harness: _Harness, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     review = _review(harness.request.manifest)
-    assert capture._reserve(harness.request, harness.bootstrap, harness.lease, review)
+    assert capture._reserve(harness.request, harness.bootstrap, harness.hold, review)
     attempt_path = harness.root / harness.request.operation_relative_path / "attempt.json"
     original = attempt_path.read_bytes()
-    harness.lease.release(outcome="synthetic_capture_complete", at=harness.clock.value)
+    release_capture_hold(harness.hold)
     harness.clock.value = harness.request.manifest.expires_at + timedelta(days=1)
-    monkeypatch.setattr(capture, "restore_named_capture_lease", _forbidden)
+    monkeypatch.setattr(capture, "restore_capture_hold", _forbidden)
     monkeypatch.setattr(capture, "record_activation", _forbidden)
     replay = harness.run()
     assert replay["status"] == "INCOMPLETE" and replay["idempotent_replay"]
@@ -653,20 +638,20 @@ def test_retained_activation_ack_requires_original_parent_proof_even_after_rehas
     binding = result["post_recording_proof"]
     path = harness.root / binding["relative_path"]
     original = path.read_bytes()
-    for mutation in ("lease", "pid", "source", "raw_bytes", "missing_post"):
+    for mutation in ("hold", "pid", "source", "raw_bytes", "missing_post"):
         projection = dict(result)
         if mutation == "missing_post":
             projection.pop("post_recording_proof")
         else:
             proof = cast(dict[str, Any], strict_json_loads(original))
-            if mutation == "lease":
-                proof["active_lease"]["lease_id"] = "lease-" + "a" * 20
+            if mutation == "hold":
+                proof["active_hold"]["hold_id"] = "hold-" + "a" * 20
             elif mutation == "pid":
                 proof["parent_pid"] += 1
             elif mutation == "source":
                 proof["parent_execution_identity_sha256"] = "a" * 64
             elif mutation == "raw_bytes":
-                proof["lease_event_bytes_hex"] += "20"
+                proof["hold_record_bytes_hex"] += "20"
             content = canonical_json_bytes(proof)
             path.write_bytes(content)
             projection["post_recording_proof"] = capture._binding(
@@ -830,7 +815,7 @@ def test_single_commit_rejects_precommit_rollback_and_retains_postcommit_fact(
         result = harness.run()
         assert result["status"] == "ACTIVATED"
         assert result["result_own_durability_time_claimed"] is False
-        assert checks_after_ack == 1  # No unbound fatal clock/lease guard after commit.
+        assert checks_after_ack == 1  # No unbound fatal clock/hold guard after commit.
         assert harness.run()["status"] == "ACTIVATED"
     else:
         with pytest.raises(
@@ -988,7 +973,7 @@ def test_coarse_raw_clock_accepts_positive_outer_interval_and_terminal_tamper_fa
     for mutation in (
         "missing_clock",
         "missing_proof",
-        "lease_identity",
+        "hold_identity",
         "parent_identity",
         "terminal_stage",
         "reset_anchor",
@@ -1001,8 +986,8 @@ def test_coarse_raw_clock_accepts_positive_outer_interval_and_terminal_tamper_fa
             del changed["terminal_clock_evidence"]
         elif mutation == "missing_proof":
             del changed["terminal_precommit_proof"]
-        elif mutation == "lease_identity":
-            changed["terminal_precommit_proof"]["active_lease"]["lease_id"] = "lease-" + "a" * 20
+        elif mutation == "hold_identity":
+            changed["terminal_precommit_proof"]["active_hold"]["hold_id"] = "hold-" + "a" * 20
         elif mutation == "parent_identity":
             changed["terminal_precommit_proof"]["parent_pid"] += 1
         elif mutation == "terminal_stage":
@@ -1056,9 +1041,9 @@ def test_raw_before_deadline_with_long_counter_budget_cannot_admit_capture(
     assert harness.run(request)["status"] == "LATE" and calls == [1]
 
 
-@pytest.mark.parametrize("exhaust_lease", [False, True])
+@pytest.mark.parametrize("exhaust_hold", [False, True])
 def test_terminal_verification_latency_checks_expiry_without_reclassifying_frozen_ack(
-    harness: _Harness, monkeypatch: pytest.MonkeyPatch, exhaust_lease: bool
+    harness: _Harness, monkeypatch: pytest.MonkeyPatch, exhaust_hold: bool
 ) -> None:
     assert harness.run()["status"] == "ACTIVATED"
     harness.renew(datetime(2026, 11, 30, 20, 59, 58, tzinfo=UTC))
@@ -1072,13 +1057,13 @@ def test_terminal_verification_latency_checks_expiry_without_reclassifying_froze
         result = verify(*args, **kwargs)
         if kwargs.get("terminal_required") is False:
             harness.clock.value += timedelta(seconds=10)
-            # Fixture budgets: finite replay latency or the six-hour lease.
-            counter = (6 * 60 * 60 if exhaust_lease else 20) * 1_000_000_000
+            # Fixture budgets: finite replay latency or the six-hour hold.
+            counter = (6 * 60 * 60 if exhaust_hold else 20) * 1_000_000_000
         return result
 
     monkeypatch.setattr(capture, "_verify_prospective_capture_projection", slow_verify)
     path = harness.root / request.operation_relative_path / "result.json"
-    if exhaust_lease:
+    if exhaust_hold:
         with pytest.raises(capture.ProspectiveCaptureExecutionError, match="CLOCK_SCOPE_EXPIRED"):
             harness.run(request)
         assert not path.exists()
