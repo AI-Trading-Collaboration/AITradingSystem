@@ -1,7 +1,7 @@
 {
- "source_commit": "1e4f0d88f3ab0912ae6840b62ea969278c44728e",
- "total_modules": 1243,
- "total_loc": 1318399,
+ "source_commit": "0ba8aaf0102720d1aab554c64c31987f89c1a5b2",
+ "total_modules": 1245,
+ "total_loc": 1318207,
  "by_class": {
   "ATLAS_RETIRE": {
    "modules": 28,
@@ -41,11 +41,11 @@
   },
   "LIVE_DAILY": {
    "modules": 208,
-   "loc": 276319
+   "loc": 276268
   },
   "LIVE_FIVE_LINES": {
-   "modules": 475,
-   "loc": 408209
+   "modules": 477,
+   "loc": 408068
   },
   "LIVE_OTHER_SCHEDULE": {
    "modules": 18,
@@ -68,11 +68,11 @@
   "manual review docs/artifact_catalog.md against latest report outputs"
  ],
  "five_line_seed_modules": 252,
- "machinery_worklist_files": 10,
- "machinery_worklist_loc": 13305,
+ "machinery_worklist_files": 5,
+ "machinery_worklist_loc": 6852,
  "etf_worklist_files": 9,
- "frozen_boundary_files": 5,
- "frozen_boundary_loc": 6453,
+ "frozen_boundary_files": 0,
+ "frozen_boundary_loc": 0,
  "registration_edit_files": [
   "ai_trading_system.cli",
   "ai_trading_system.cli_direct"

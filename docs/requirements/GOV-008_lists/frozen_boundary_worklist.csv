@@ -1,6 +1,1 @@
-module,loc,class,frozen_imports,examples
-ai_trading_system.composer_prospective_capture,1501,LIVE_FIVE_LINES,2,platform.architecture;platform.architecture.checkout_guard
-ai_trading_system.data.named_quality_dispatch,1050,LIVE_FIVE_LINES,3,platform.architecture;platform.architecture.checkout_guard;platform.architecture.parallel_control_kernel
-ai_trading_system.prospective_capture_execution,1749,LIVE_FIVE_LINES,2,platform.architecture;platform.architecture.checkout_guard
-ai_trading_system.prospective_event_time_evidence,1256,LIVE_FIVE_LINES,3,platform.architecture;platform.architecture.checkout_guard;platform.architecture.parallel_control_kernel
-ai_trading_system.research_outcome_access,897,LIVE_FIVE_LINES,3,platform.architecture;platform.architecture.checkout_guard;platform.architecture.lease_arbiter
+module
