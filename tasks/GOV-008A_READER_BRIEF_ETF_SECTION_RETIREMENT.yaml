@@ -2,8 +2,8 @@ schema_version: task.v1
 id: GOV-008A_READER_BRIEF_ETF_SECTION_RETIREMENT
 area: Reports / Reader Brief：移除已退役 ETF 候选链的栏目（GOV-008 后续）
 priority: P2
-status: DONE
+status: BASELINE_DONE
 next_owner: Project Owner
-next_step: 'Done: Reader Brief retired archived ETF candidate-chain sections; retained etf_operations_health legacy owner-brief summary'
+next_step: 遗留项：owner 决定是否从 config/reporting/reporting_architecture.yaml 的 operations_health 板块去掉 etf_operations_health（改板块构成需先审阅）；之后删除该字段、摘要函数与渲染段落。
 acceptance: Reader Brief 不再含 ETF 候选链栏目；保留板块的输出与测试不变；PR 套件绿；system_flow 与 artifact_catalog 同步
-notes: production_effect=none；broker_action=none；GOV-008A completed Reader Brief ETF candidate-chain section retirement; retained legacy etf_operations_health per owner-brief fixed-section constraint
+notes: production_effect=none；broker_action=none；来源：GOV-008 P5（需求文档第 19 节 D7）；ETF 候选链退役依据 owner_decision:GOV-008:2026-10-10:research_first_refactor_v1；本次清理删除 Reader Brief 中已归档 ETF 候选链的 41 个栏目、32 个 payload 字段，reader_brief.py 由 29,005 行降至约 12,900 行；误删的 Backtest / Shadow / Governance 已在审阅后恢复并加回归断言；etf_operations_health 作为 owner 简报固定板块遗留项保留。
