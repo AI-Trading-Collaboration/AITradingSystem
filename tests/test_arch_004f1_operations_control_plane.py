@@ -328,7 +328,7 @@ def test_periodic_policy_covers_all_non_daily_cadences_without_dispatch() -> Non
     assert all(item.due_policy.requires_owner_gate for item in policy.cadence_controls)
 
 
-def test_periodic_plan_accounts_for_all_28_tasks_and_round_trips() -> None:
+def test_periodic_plan_accounts_for_all_27_tasks_and_round_trips() -> None:
     as_of = date(2026, 7, 10)
     generated_at = datetime(2026, 7, 11, tzinfo=UTC)
     contexts = build_periodic_due_contexts_from_daily(
@@ -343,7 +343,7 @@ def test_periodic_plan_accounts_for_all_28_tasks_and_round_trips() -> None:
         contexts=contexts,
     )
 
-    assert len(plan.entries) == 28
+    assert len(plan.entries) == 27
     assert PeriodicOperationsPlan.from_dict(plan.to_dict()) == plan
     assert plan.automatic_command_dispatch_enabled is False
     assert all(entry.command_executed is False for entry in plan.entries)
@@ -894,7 +894,7 @@ def test_all_registered_tasks_are_inventoryable_via_explicit_bindings() -> None:
         )
         total += len(assessment.workflow_spec.steps)
 
-    assert total == 60
+    assert total == 59
 
 
 def test_daily_adapter_preserves_order_explicit_dag_and_legacy_commands() -> None:
@@ -1135,7 +1135,7 @@ def test_daily_plan_writes_additive_deterministic_non_executing_shadow_sidecar(
     assert payload["shadow_plan"]["execution_enabled"] is False
     assert payload["shadow_plan"]["due_resolution"]["status"] == "DUE"
     assert payload["workflow_spec"]["semantic_revision"] == (
-        "scheduled=scheduled_tasks_v6;capture=daily_input_capture_v6"
+        "scheduled=scheduled_tasks_v7;capture=daily_input_capture_v6"
     )
     assert plan.workflow_semantic_revision == payload["workflow_spec"]["semantic_revision"]
     assert payload["runtime_control_policy"]["policy_id"] == "operations_runtime_control_v1"

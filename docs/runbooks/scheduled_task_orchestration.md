@@ -1,5 +1,7 @@
 # 统一计划任务编排 Runbook
 
+> **2026-10-10 说明（GOV-008）**：本文部分段落描述的机制已删除（ETF 候选链与 `aits etf ...`、dynamic-v3 rescue 每日 gate、候选跟踪每日步骤、release promotion 与 scheduler checkout preflight、workflow health）。当前步骤以 `docs/operations/operations_runbook.md` 为准，本文其余内容作历史参考。
+
 ## 目标
 
 `config/scheduled_tasks.yaml` 是 OPS-059 后的统一调度计划源，登记 daily / weekly / biweekly / monthly / ad hoc research 任务。`aits ops daily-plan` 和 `aits ops daily-run` 只执行 `daily_trading_day` 链路，并在生成计划时校验顺序与配置一致。TRADING-099 允许 daily 链路包含 Dynamic v3 rescue lightweight `schedule observe` gate；它只做 due/skip/block 审计和只读检查，不执行参数搜索或 promotion pack。

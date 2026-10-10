@@ -1,5 +1,109 @@
 # 系统数据流示意图
 
+本文件是"数据输入 → 中间评估 → 结论输出"路径的权威说明。第 1～6 节描述**当前**系统（2026-10-10，GOV-008 之后），
+修改数据流、缓存 schema、报告输出、数据质量门禁、评分、回测行为或市场状态解释时同步更新这几节。
+第 7 节起是 2026-10-10 之前逐次追加的变更记录，**只读保留**：多个研究模块按文本核对其中的条目
+（`REQUIRED_SYSTEM_FLOW_REFERENCES` 等），删改会让这些研究线的加载器失败。
+
+## 1. 每日链路
+
+唯一外部入口是 `aits ops daily-run`（`aits ops daily-plan` 只出计划不执行）。步骤、依赖和交易日/休市日条件以
+`config/scheduled_tasks.yaml` 的 `daily_trading_day` 为准（32 个任务）；`ops_daily.py` 与运行控制使用同一份 DAG。
+
+```mermaid
+flowchart TD
+    TRIG["aits ops daily-run<br/>交易日判定（XNYS，America/New_York，收盘后 3 小时 provider-ready）"]
+    TRIG --> CAP["capture_daily_inputs（交易日）<br/>market_macro · fmp_forward_pit · sec_companyfacts · fmp_valuation · official_policy_sources<br/>原始字节 + checksum manifest + 缺口台账"]
+    TRIG --> CLOSED["休市日：download-data · fetch-fmp-forward · SEC companyfacts · valuation · official sources"]
+    CAP --> DQ["validate-data（daily_default.v1）<br/>DQ receipt + 按 profile/as-of 的发现指针"]
+    CLOSED --> DQ
+    CAP --> PIT["pit-snapshots project → build-manifest → validate"]
+    CLOSED --> PIT
+    CAP --> SEC["SEC metrics extract → TSM IR merge → validate"]
+    CLOSED --> SEC
+    DQ --> SCORE["score-daily<br/>consumer 授权：严格复核 DQ receipt 与 capture 证据"]
+    PIT --> SCORE
+    SEC --> SCORE
+    SCORE --> FE["forward-evidence 干跑存档"]
+    SCORE --> DASH["reports dashboard"]
+    SCORE --> ATTR["score-change attribution · market panel"]
+    SEC --> SPS["sec-pit shadow observe → monitor"]
+    DQ --> FRESH["data freshness → recover-freshness"]
+    DASH --> LIN["artifact lineage → validate"]
+    ATTR --> LIN
+    SPS --> LIN
+    FRESH --> LIN
+    LIN --> IDX["report index → docs report-contract → research governance summary"]
+    IDX --> RB["Reader Brief → report quality gate → validate reader brief"]
+    RB --> FIN["canonical finalization：decision summary · task dashboard · 最终 Reader Brief 质量复核"]
+    TRIG --> ALWAYS["ops health · secret scan（always-run，不覆盖投资门禁）"]
+```
+
+## 2. 门禁与阻断规则
+
+| 环节 | 规则 | 代码/配置 |
+|---|---|---|
+| 数据质量 | `score-daily` 只接受同 as-of 的 strict `PASS` receipt；`PASS_WITH_WARNINGS`、`FAIL`、receipt/指针/源数据漂移都在评分前阻断 | `data/quality*`、`config/data_quality.yaml`、`tests/invariants/` |
+| 输入采集 | 某个 capture 组件缺失只阻断依赖它的步骤；整体保持 `BLOCKED_DEPENDENCY`/`FAIL`，finalization 不运行 | `config/operations/daily_input_capture.yaml` |
+| PIT | 失败快照不得作为 PIT 输入；manifest/schema 异常 fail closed | `pit_snapshots` |
+| 休市日 | 不生成新评分、决策快照、Reader Brief 评分产物或 forward evidence | `ops_daily.py` |
+| 报告 | report index 按 `config/report_registry.yaml` 标注 fresh/STALE/MISSING；`archived_optional` 条目只做审计显示 | `reports/report_index.py` |
+| 安全边界 | 全链 `production_effect=none`、`broker_action=none`；不写 production 或 active shadow 权重 | 各步骤 |
+
+运行控制：同一 workflow/as-of 只有一个活动运行；已完成的重复触发不重跑；状态与台账在
+`outputs/run_control/daily/states/`，不得手工删除状态或锁来强行重跑。
+
+## 3. 非每日任务
+
+`config/scheduled_tasks.yaml`（`scheduled_tasks_v7`）另登记 27 个 weekly / biweekly / monthly / ad hoc 任务，`daily-run` 只为它们写不执行的
+`periodic_operations_plan`（是否到期、缺什么证据）。自动派发关闭（`config/operations/periodic_control.yaml`
+`automatic_command_dispatch_enabled: false`）；人工运行用 `aits ops periodic-dispatch`，需显式给出 DQ 证据、
+源 artifact 与 owner 决策 id。主要内容：周度回测（`unified_primary_2021`，起点 2021-02-22）与稳健性、参数回放与治理、
+权重候选评估；双周投资/反馈/SEC PIT 复核；月度文档契约、报告登记、数据源与 PIT 覆盖、长窗口回测复核；
+ad hoc 的 SEC PIT 回填/评估与缓存回放。
+
+## 4. 研究链路
+
+```mermaid
+flowchart LR
+    PRE["预注册：假设 · 窗口 · 成本模型 · kill 条件<br/>先提交，后读结果"] --> AUTH["run authorization"]
+    AUTH --> RUN["研究运行<br/>validate-data → 计算 → manifest"]
+    RUN --> PROV["运行溯源 core/provenance.py<br/>commit · 代码是否修改 · 配置哈希 · requested/evaluated 窗口"]
+    PROV --> ADM["result admission → 决策记录"]
+    HOLD["前瞻采集：capture_hold acquire →<br/>run_named_data_quality.py --source-hold-id → release"] --> ADM
+```
+
+- 默认研究与回测窗口起点 2021-02-22（`config/research/primary_research_window_policy.yaml`）；更早的数据只用于有说明的
+  敏感性、代理或压力测试。
+- 保留的五条研究线：Composer 前瞻观察、equal-risk、simple baseline、第一/二层 meta policy、QQQ options。研究入口是
+  `aits research ...` 命令组与各自的预注册/授权/准入配置。
+- 前瞻采集（TRADING-2564 S3b、TRADING-2560 Composer）用 capture hold：精确 commit、`src/config/scripts/tools` 未修改、
+  写入路径独占、有效期 ≤ 24 小时；hold 是本机自证，不是独立权威。步骤见运维手册。
+- 验证 PASS 不代表候选有效、可进入 paper shadow 或获准用于 production/broker。
+
+## 5. 开发与发布
+
+任务分支 → `python tools/gov008/ship.py --repo . --execute --push`：在本机跑门禁（A 区只记录；B/C 区跑 PR 套件
+`pytest tests -n 16 --dist loadfile -m "not slow"`，C 区还要求 `Owner-Decision:` 行）→ 提交信息写 `Gate:` 行 → main 快进到
+被测试的树 → 普通推送并核对远端。任务记录在 `tasks/<ID>.yaml`，`docs/task_register*.md` 由 `tools/tasks.py render` 生成。
+
+## 6. 已退役、不再运行
+
+| 部分 | 退役时间 | 去向 |
+|---|---|---|
+| ETF 候选链（etf forward、dynamic-v3 rescue、候选跟踪每日步骤、`aits etf` 等命令） | 2026-10-10 GOV-008 P4 块 2 | 代码删除；`config/etf_portfolio/` 与 `etf_portfolio/regime.py` 作为研究证据保留 |
+| 发布机制（fence、lease、hash-authority reseal、Full 验证、validation tier runner） | 2026-10-10 GOV-008 P4 块 1 | 由 `ship` 与本机门禁取代 |
+| Atlas 页面 | 2026-10-10 | 代码删除 |
+| release promotion、scheduler checkout preflight、Codex scheduler observation、workflow health 遥测（含周任务 `weekly_workflow_health_review`） | 2026-10-10 GOV-008 解耦 L2/P4/P5 | 命令与配置删除；确定性调度见 OPS-082 |
+| 报告登记中命令已不存在的 507 个条目 | 2026-10-10 GOV-008 P5 | 保留条目（研究记录按 id 引用），标 `archived_optional` |
+| 任务事件库 `registry/development_tasks` | 2026-10-10 GOV-008 P5a | `tasks/<ID>.yaml` |
+
+旧机制的完整代码与文档在 tag `legacy-governance-final`（`2d29e4e35`）。
+
+## 7. 历史变更记录（2026-10-10 之前，只读）
+
+以下为原文，按当时的写法保留，其中提到的命令、机制和步骤可能已经不存在（见第 6 节）。
+
 GOV-008 P4 块 2：ETF 候选链退役。每日链路在 `score_daily` 之后不再运行 candidate tracking（`portfolio track-candidate` /
 `review-tracking` / `reports portfolio-tracking-review`）、ETF forward（update/dashboard/watchlist）与 dynamic-v3 rescue
 schedule observe；`score_daily` → forward evidence → dashboard → SEC PIT shadow → 归因/市场面板/新鲜度 → artifact lineage

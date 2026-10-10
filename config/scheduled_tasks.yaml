@@ -1,5 +1,5 @@
 schema_version: 1
-policy_version: scheduled_tasks_v6
+policy_version: scheduled_tasks_v7
 policy_metadata:
   owner: system
   status: active_baseline
@@ -19,6 +19,10 @@ policy_metadata:
     schema instead of applying the generic report-artifact schema contract.
     Version 6 adds the retained-capture-to-canonical FMP forward PIT projection
     and makes forward snapshot-kind coverage an explicit consumer gate.
+    Version 7 (GOV-008, 2026-10-10) retires the ETF candidate chain: the seven
+    ETF/candidate-tracking daily steps and the weekly/ad hoc ETF and dynamic-v3
+    rescue tasks are removed, and so is the weekly workflow-health task whose
+    command was deleted with the old publication machinery.
   intended_effect: >
     Make `aits ops daily-plan` and `aits ops daily-run` enforce the default
     dependency-aware daily trading-day chain while registering non-daily governance chains for
@@ -570,14 +574,6 @@ cadences:
       - task_id: weekly_research_governance_summary_review
         title: Research governance summary review
         command: aits reports research-governance-summary --latest
-        production_effect: none
-      - task_id: weekly_workflow_health_review
-        title: Automatic governed developer workflow health review
-        command: aits reports ensure-workflow-health --as-of {as_of}
-        date_gate: "The existing aitradingsystem-pit automation invokes the idempotent gate after its single daily-run stage; reuse an independently validated current-ISO-week bundle and retry only after a failed or blocked receipt."
-        trigger_condition: "Automatic report generation and week-over-week outcome review only; candidate output remains review-only and cannot mutate tasks, code, validation gates, production, or broker state. No second scheduler is allowed."
-        data_quality_gate: "Not applicable to developer telemetry; the report must state data_quality_status=NOT_APPLICABLE_DEVELOPER_TELEMETRY and must not read market caches."
-        manual_review_required: true
         production_effect: none
   biweekly:
     description: Biweekly manual review cadence; registered but not part of daily-run.

@@ -19,7 +19,7 @@ from ai_trading_system.scheduled_tasks import (
 def test_scheduled_tasks_config_registers_required_cadences_and_safety() -> None:
     config = load_scheduled_tasks_config()
 
-    assert config.policy_version == "scheduled_tasks_v6"
+    assert config.policy_version == "scheduled_tasks_v7"
     cadence_ids = {cadence.cadence_id for cadence in config.cadences}
     assert DAILY_CADENCE_ID in cadence_ids
     assert set(NON_DAILY_CADENCE_IDS).issubset(cadence_ids)
@@ -54,7 +54,6 @@ def test_scheduled_tasks_config_registers_required_cadences_and_safety() -> None
         "weekly_weight_candidate_evaluation",
         "weekly_weight_promotion_gate",
         "weekly_research_governance_summary_review",
-        "weekly_workflow_health_review",
         "biweekly_investment_review",
         "biweekly_feedback_loop_review",
         "biweekly_shadow_lane_review",

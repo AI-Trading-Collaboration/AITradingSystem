@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: GOV-008A_READER_BRIEF_ETF_SECTION_RETIREMENT
+area: Reports / Reader Brief：移除已退役 ETF 候选链的栏目（GOV-008 后续）
+priority: P2
+status: PROPOSED
+next_owner: Claude Code coordinator
+next_step: reports/reader_brief.py 中约 1,700 行 ETF 相关摘要函数（etf forward、weekly review、decision journal、parameter review、weight calibration、operations health、data quality、strategy evidence、baseline review 等）读取的报告已不再产生，目前显示为缺失；删除这些栏目与对应测试断言，保持 owner 简报固定板块不变
+acceptance: Reader Brief 不再含 ETF 候选链栏目；保留板块的输出与测试不变；PR 套件绿；system_flow 与 artifact_catalog 同步
+notes: production_effect=none；broker_action=none；来源：GOV-008 P5（需求文档第 19 节 D7）；ETF 候选链退役依据 owner_decision:GOV-008:2026-10-10:research_first_refactor_v1

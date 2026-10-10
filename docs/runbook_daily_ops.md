@@ -1,5 +1,7 @@
 # Daily Ops Runbook
 
+> **2026-10-10 说明（GOV-008）**：本文部分段落描述的机制已删除（ETF 候选链与 `aits etf ...`、dynamic-v3 rescue 每日 gate、候选跟踪每日步骤、release promotion 与 scheduler checkout preflight、workflow health）。当前步骤以 `docs/operations/operations_runbook.md` 为准，本文其余内容作历史参考。
+
 最后更新：2026-07-25
 
 本文是 `aits ops daily-run` 的人工可交接运行手册。它不替代数据质量门禁、日报、pipeline health、secret hygiene 或 evidence bundle；它只规定什么时候跑、失败时看什么、哪些输出是正式结论、哪些只是审计附录。

@@ -26,6 +26,9 @@ defaults:
     biweekly: us_equity_trading_days
     monthly: calendar_days
     ad_hoc: calendar_days
+# GOV-008 P5 (2026-10-10): entries whose command no longer exists (retired ETF chain, deleted dormant
+# research commands, workflow-health telemetry) are `visibility_policy: archived_optional`. They stay
+# because research records check their report ids here; the index shows them as ARCHIVED_* only.
 reports:
   - report_id: daily_score
     title: Daily Score Report
@@ -287,7 +290,7 @@ reports:
     title: ETF Portfolio Brief
     group: daily
     cadence: daily
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: investor
     owner: system
     command: aits etf report daily --date YYYY-MM-DD
@@ -300,6 +303,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_parameter_governance
+    visibility_policy: archived_optional
     title: ETF Parameter Governance
     group: governance
     cadence: ad_hoc
@@ -316,6 +320,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_credibility_gate
+    visibility_policy: archived_optional
     title: ETF Credibility Gate
     group: governance
     cadence: ad_hoc
@@ -335,7 +340,7 @@ reports:
     title: ETF Data Quality Report
     group: data_quality
     cadence: daily
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: operator
     owner: system
     command: aits etf data validate
@@ -348,6 +353,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_backtest_summary
+    visibility_policy: archived_optional
     title: ETF Portfolio Backtest Summary & Standardized Metrics
     group: backtest
     cadence: ad_hoc
@@ -367,7 +373,7 @@ reports:
     title: ETF Experiment Run Manifest
     group: research
     cadence: ad_hoc
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf experiments run --pack etf_calibration_v1
@@ -383,7 +389,7 @@ reports:
     title: ETF Experiment Comparison
     group: research
     cadence: ad_hoc
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf experiments compare --latest
@@ -400,7 +406,7 @@ reports:
     title: ETF Experiment Candidate Selection
     group: research
     cadence: ad_hoc
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf experiments select-candidates --latest
@@ -414,6 +420,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_shadow_candidates
+    visibility_policy: archived_optional
     title: ETF Shadow Candidate Registry
     group: research
     cadence: ad_hoc
@@ -432,7 +439,7 @@ reports:
     title: ETF Experiment Weekly Review
     group: research
     cadence: weekly
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf experiments weekly-review --latest
@@ -446,6 +453,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_experiment_validation
+    visibility_policy: archived_optional
     title: ETF Experiment Validation Gate
     group: research
     cadence: on_change
@@ -462,6 +470,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_forward_update
+    visibility_policy: archived_optional
     title: ETF Forward Simulation Daily Update
     group: research
     cadence: daily
@@ -478,6 +487,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_forward_dashboard
+    visibility_policy: archived_optional
     title: ETF Forward Simulation Dashboard
     group: research
     cadence: daily
@@ -494,6 +504,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_forward_weekly_review
+    visibility_policy: archived_optional
     title: ETF Forward Simulation Weekly Review
     group: research
     cadence: weekly
@@ -510,6 +521,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_forward_watchlist
+    visibility_policy: archived_optional
     title: ETF Forward Simulation Watchlist
     group: research
     cadence: daily
@@ -526,6 +538,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_forward_validation
+    visibility_policy: archived_optional
     title: ETF Forward Simulation Validation Gate
     group: governance
     cadence: on_change
@@ -545,7 +558,7 @@ reports:
     title: ETF AI Confirmation Report
     group: research
     cadence: daily
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf ai-confirmation report --date YYYY-MM-DD
@@ -562,7 +575,7 @@ reports:
     title: ETF AI Confirmation Shadow Overlay
     group: research
     cadence: ad_hoc
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf ai-confirmation overlay --date YYYY-MM-DD --candidate <candidate_id>
@@ -576,6 +589,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_ai_confirmation_validation
+    visibility_policy: archived_optional
     title: ETF AI Confirmation Validation Gate
     group: governance
     cadence: on_change
@@ -592,6 +606,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_ai_attribution_report
+    visibility_policy: archived_optional
     title: ETF AI Confirmation Forward Attribution Review
     group: research
     cadence: weekly
@@ -608,6 +623,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_ai_attribution_validation
+    visibility_policy: archived_optional
     title: ETF AI Attribution Validation Gate
     group: governance
     cadence: on_change
@@ -627,7 +643,7 @@ reports:
     title: ETF Satellite Relative Strength Features
     group: research
     cadence: daily
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf satellite features --date YYYY-MM-DD
@@ -644,7 +660,7 @@ reports:
     title: ETF Satellite Replacement Report
     group: research
     cadence: daily
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf satellite report --date YYYY-MM-DD
@@ -661,7 +677,7 @@ reports:
     title: ETF Satellite Shadow Experiment
     group: research
     cadence: ad_hoc
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf satellite experiment --date YYYY-MM-DD
@@ -675,6 +691,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_satellite_validation
+    visibility_policy: archived_optional
     title: ETF Satellite Policy Validation Gate
     group: governance
     cadence: on_change
@@ -691,6 +708,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_satellite_attribution_report
+    visibility_policy: archived_optional
     title: ETF Satellite Replacement Forward Attribution Review
     group: research
     cadence: weekly
@@ -707,6 +725,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_satellite_attribution_validation
+    visibility_policy: archived_optional
     title: ETF Satellite Attribution Validation Gate
     group: governance
     cadence: on_change
@@ -723,6 +742,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_weekly_review
+    visibility_policy: archived_optional
     title: ETF Weekly Portfolio Review
     group: research
     cadence: weekly
@@ -739,6 +759,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_weekly_review_validation
+    visibility_policy: archived_optional
     title: ETF Weekly Review Validation Gate
     group: governance
     cadence: on_change
@@ -755,6 +776,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_decision_journal_report
+    visibility_policy: archived_optional
     title: ETF Portfolio Decision Journal
     group: research
     cadence: weekly
@@ -772,6 +794,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_decision_journal_validation
+    visibility_policy: archived_optional
     title: ETF Decision Journal Validation Gate
     group: governance
     cadence: on_change
@@ -788,6 +811,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_parameter_review_report
+    visibility_policy: archived_optional
     title: ETF Allocation Parameter Review
     group: governance
     cadence: weekly
@@ -804,6 +828,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_parameter_review_validation
+    visibility_policy: archived_optional
     title: ETF Allocation Parameter Review Validation
     group: governance
     cadence: weekly
@@ -820,6 +845,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_report
+    visibility_policy: archived_optional
     title: ETF Weight Dual-Track Calibration Report
     group: governance
     cadence: weekly
@@ -836,6 +862,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_initial_weight_recommendation_report
+    visibility_policy: archived_optional
     title: ETF Initial Weight Recommendation Report
     group: governance
     cadence: weekly
@@ -855,6 +882,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_historical_weight_search_diagnostics
+    visibility_policy: archived_optional
     title: ETF Historical Weight Search Diagnostics
     group: governance
     cadence: ad_hoc
@@ -875,6 +903,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_weight_calibration_profiling_report
+    visibility_policy: archived_optional
     title: ETF Weight Calibration Profiling Report
     group: governance
     cadence: ad_hoc
@@ -899,6 +928,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_shadow_candidate_review_package
+    visibility_policy: archived_optional
     title: ETF Shadow Candidate Review Package
     group: governance
     cadence: weekly
@@ -921,7 +951,7 @@ reports:
     title: ETF Shadow Candidate Owner Approval
     group: governance
     cadence: weekly
-    visibility_policy: deprecated_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf shadow-review approve --package PACKAGE.json --shape SHAPE_ID
@@ -940,7 +970,7 @@ reports:
     title: ETF Shadow Candidate Approved Enrollment
     group: governance
     cadence: weekly
-    visibility_policy: deprecated_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf shadow-review enroll-approved --approval APPROVAL.json --package PACKAGE.json
@@ -956,6 +986,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_shadow_candidate_review_validation
+    visibility_policy: archived_optional
     title: ETF Shadow Candidate Review Validation Gate
     group: governance
     cadence: ad_hoc
@@ -975,6 +1006,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_trend_calibration_report
+    visibility_policy: archived_optional
     title: ETF Trend Signal Calibration Report
     group: research
     cadence: ad_hoc
@@ -998,6 +1030,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_trend_calibration_validation
+    visibility_policy: archived_optional
     title: ETF Trend Calibration Validation Gate
     group: governance
     cadence: ad_hoc
@@ -1017,6 +1050,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_allocation_report
+    visibility_policy: archived_optional
     title: ETF Dynamic Allocation Candidate Report
     group: research
     cadence: ad_hoc
@@ -1040,6 +1074,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_allocation_validation
+    visibility_policy: archived_optional
     title: ETF Dynamic Allocation Validation Gate
     group: governance
     cadence: ad_hoc
@@ -1059,6 +1094,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_calibration_report
+    visibility_policy: archived_optional
     title: ETF Dynamic Calibration Batch Report
     group: research
     cadence: ad_hoc
@@ -1080,6 +1116,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_calibration_validation
+    visibility_policy: archived_optional
     title: ETF Dynamic Calibration Validation Gate
     group: governance
     cadence: ad_hoc
@@ -1099,6 +1136,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_robustness_report
+    visibility_policy: archived_optional
     title: ETF Dynamic Robustness Review
     group: research
     cadence: ad_hoc
@@ -1118,6 +1156,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_robustness_validation
+    visibility_policy: archived_optional
     title: ETF Dynamic Robustness Validation Gate
     group: governance
     cadence: ad_hoc
@@ -1137,6 +1176,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_shadow_review_package
+    visibility_policy: archived_optional
     title: ETF Dynamic Shadow Review Package
     group: research
     cadence: ad_hoc
@@ -1159,7 +1199,7 @@ reports:
     title: ETF Dynamic Shadow Owner Approval
     group: governance
     cadence: ad_hoc
-    visibility_policy: deprecated_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: project_owner
     command: aits etf dynamic-shadow approve --package <package_path> --candidate <candidate_id>
@@ -1178,7 +1218,7 @@ reports:
     title: ETF Dynamic Shadow Enrollment
     group: shadow
     cadence: ad_hoc
-    visibility_policy: deprecated_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf dynamic-shadow enroll-approved --latest
@@ -1197,7 +1237,7 @@ reports:
     title: ETF Dynamic Shadow Forward Update
     group: shadow
     cadence: daily
-    visibility_policy: deprecated_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf dynamic-shadow update --latest
@@ -1216,7 +1256,7 @@ reports:
     title: ETF Dynamic Shadow Weekly Review
     group: shadow
     cadence: weekly
-    visibility_policy: deprecated_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf dynamic-shadow weekly-review --latest
@@ -1232,6 +1272,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_shadow_validation
+    visibility_policy: archived_optional
     title: ETF Dynamic Shadow Validation Gate
     group: governance
     cadence: ad_hoc
@@ -1251,6 +1292,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_failure_dataset
+    visibility_policy: archived_optional
     title: ETF Dynamic Failure Diagnostics Dataset
     group: research
     cadence: ad_hoc
@@ -1269,6 +1311,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_rescue_evaluation_report
+    visibility_policy: archived_optional
     title: ETF Dynamic Rescue Evaluation Report
     group: research
     cadence: ad_hoc
@@ -1288,6 +1331,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_rescue_validation
+    visibility_policy: archived_optional
     title: ETF Dynamic Rescue Validation Gate
     group: governance
     cadence: ad_hoc
@@ -1307,6 +1351,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v2_review_package
+    visibility_policy: archived_optional
     title: ETF Dynamic v0.2 Review Package
     group: research
     cadence: ad_hoc
@@ -1325,6 +1370,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v2_review_validation
+    visibility_policy: archived_optional
     title: ETF Dynamic v0.2 Review Validation Gate
     group: governance
     cadence: ad_hoc
@@ -1347,7 +1393,7 @@ reports:
     title: ETF Dynamic v0.3 Constraint-Aware Rescue Evaluation Report
     group: research
     cadence: ad_hoc
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf dynamic-v3-rescue run --latest-v2-review
@@ -1364,6 +1410,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_rescue_validation
+    visibility_policy: archived_optional
     title: ETF Dynamic v0.3 Rescue Validation Gate
     group: governance
     cadence: ad_hoc
@@ -1384,6 +1431,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_real_evaluation_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v0.3 Rescue Real Evaluation and Promotion Gate
     group: research
     cadence: ad_hoc
@@ -1406,6 +1454,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_real_evaluation_validation
+    visibility_policy: archived_optional
     title: ETF Dynamic v0.3 Rescue Real Evaluation Validation Gate
     group: governance
     cadence: ad_hoc
@@ -1426,6 +1475,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_failure_attribution_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v0.3 Rescue Failure Attribution and v0.4 Promotion Review
     group: research
     cadence: ad_hoc
@@ -1450,6 +1500,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_failure_attribution_validation
+    visibility_policy: archived_optional
     title: ETF Dynamic v0.3 Failure Attribution Validation Gate
     group: governance
     cadence: ad_hoc
@@ -1472,6 +1523,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_parameter_sweep_leaderboard
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Parameter Sweep Leaderboard
     group: research
     cadence: ad_hoc
@@ -1493,6 +1545,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_data_audit_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Data Audit Report
     group: data_quality
     cadence: ad_hoc
@@ -1513,6 +1566,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_data_provenance_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Price Cache Data Provenance Report
     group: data_quality
     cadence: ad_hoc
@@ -1533,6 +1587,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_window_audit_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Backtest Window Audit Report
     group: data_quality
     cadence: ad_hoc
@@ -1552,6 +1607,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_injection_audit_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Injection Audit Report
     group: research
     cadence: ad_hoc
@@ -1572,6 +1628,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_candidate_attribution_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Candidate Attribution Report
     group: research
     cadence: ad_hoc
@@ -1595,6 +1652,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_weight_path_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Real Evaluator Daily Weight Path Report
     group: research
     cadence: ad_hoc
@@ -1620,6 +1678,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_walk_forward_selection_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Walk-forward Selection Report
     group: research
     cadence: ad_hoc
@@ -1644,6 +1703,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_overfit_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Overfit Risk Report
     group: governance
     cadence: ad_hoc
@@ -1668,6 +1728,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_parameter_governance_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Parameter Governance Report
     group: governance
     cadence: ad_hoc
@@ -1686,6 +1747,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_research_index
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Research Index
     group: research
     cadence: ad_hoc
@@ -1704,6 +1766,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_shadow_monitor_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Shadow Monitor Report
     group: shadow
     cadence: weekly
@@ -1723,6 +1786,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_walk_forward_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Walk-forward Report
     group: research
     cadence: ad_hoc
@@ -1743,6 +1807,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_robustness_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Robustness Diagnostics
     group: research
     cadence: ad_hoc
@@ -1762,6 +1827,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_shadow_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Shadow Candidate Report
     group: shadow
     cadence: weekly
@@ -1782,6 +1848,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_promotion_pack
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Promotion Review Pack
     group: governance
     cadence: ad_hoc
@@ -1806,6 +1873,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_evidence_summary
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Candidate Evidence Summary
     group: research
     cadence: ad_hoc
@@ -1826,6 +1894,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_medium_real_report
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Medium Real Report
     group: research
     cadence: ad_hoc
@@ -1845,6 +1914,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_regime_coverage
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Regime Coverage Gap Report
     group: research
     cadence: ad_hoc
@@ -1868,7 +1938,7 @@ reports:
     title: ETF Dynamic v3 Rescue Candidate Interpretation Pack
     group: research
     cadence: ad_hoc
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf dynamic-v3-rescue candidate interpretation-pack --candidate-id <candidate_id>
@@ -1885,6 +1955,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_observe_pool
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Observe-only Candidate Pool
     group: shadow
     cadence: ad_hoc
@@ -1904,6 +1975,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_overnight_readiness
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Overnight Real Readiness
     group: governance
     cadence: ad_hoc
@@ -1922,6 +1994,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_research_decision
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Research Decision
     group: governance
     cadence: ad_hoc
@@ -1943,6 +2016,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_evidence_diagnosis
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Evidence Gate Diagnosis
     group: governance
     cadence: ad_hoc
@@ -1964,6 +2038,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_gate_impact
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Gate Impact Matrix
     group: governance
     cadence: ad_hoc
@@ -1985,6 +2060,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_gate_policy
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Evidence Gate Policy
     group: governance
     cadence: ad_hoc
@@ -2006,6 +2082,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_candidate_recovery
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Candidate Usability Recovery
     group: shadow
     cadence: ad_hoc
@@ -2027,6 +2104,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_research_decision_update
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Research Decision Update
     group: governance
     cadence: ad_hoc
@@ -2049,6 +2127,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_shortlist
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Shadow Shortlist
     group: shadow
     cadence: ad_hoc
@@ -2069,6 +2148,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_candidate_cluster
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Candidate Cluster Report
     group: research
     cadence: ad_hoc
@@ -2090,6 +2170,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_shadow_shortlist
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Shadow Shortlist Monitoring Pack
     group: shadow
     cadence: ad_hoc
@@ -2111,6 +2192,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Position Advisory
     group: governance
     cadence: ad_hoc
@@ -2135,6 +2217,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Position Advisory Review Pack
     group: governance
     cadence: ad_hoc
@@ -2156,6 +2239,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_shadow_monitor_run
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Shadow Monitor Run
     group: shadow
     cadence: daily
@@ -2179,6 +2263,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_portfolio_snapshot
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Manual Portfolio Snapshot
     group: governance
     cadence: ad_hoc
@@ -2199,6 +2284,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_manual_portfolio_snapshot
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Strict Manual Portfolio Snapshot
     group: governance
     cadence: manual
@@ -2220,6 +2306,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_portfolio_exposure
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Portfolio Exposure Validation
     group: governance
     cadence: manual
@@ -2240,6 +2327,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_drift
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Position Drift Analysis
     group: governance
     cadence: manual
@@ -2262,6 +2350,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_execution_guardrails
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Execution Guardrails
     group: governance
     cadence: manual
@@ -2283,6 +2372,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_manual_execution_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Manual Execution Review Pack
     group: governance
     cadence: manual
@@ -2305,6 +2395,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_real_snapshot_intake
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Real Manual Snapshot Intake
     group: governance
     cadence: manual
@@ -2325,6 +2416,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_real_snapshot_dry_run
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Real Snapshot Advisory Dry Run
     group: governance
     cadence: manual
@@ -2347,6 +2439,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_real_execution_owner_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Real Execution Owner Review
     group: governance
     cadence: manual
@@ -2366,6 +2459,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_real_snapshot_paper_action
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Real Snapshot Paper Action Tracking
     group: governance
     cadence: manual
@@ -2386,6 +2480,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_weekly_real_snapshot_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Weekly Real Snapshot Advisory Review
     group: governance
     cadence: weekly
@@ -2407,6 +2502,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_model_target
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Research Model Target Portfolio
     group: governance
     cadence: manual
@@ -2430,6 +2526,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Paper Shadow Account
     group: governance
     cadence: manual
@@ -2451,6 +2548,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_model_rebalance
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Model Rebalance Simulation
     group: governance
     cadence: manual
@@ -2474,6 +2572,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_performance
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Paper Shadow Performance
     group: governance
     cadence: manual
@@ -2498,6 +2597,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_system_target_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue System Target Review Pack
     group: governance
     cadence: manual
@@ -2520,6 +2620,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_backfill
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Paper Shadow Historical Backfill
     group: governance
     cadence: manual
@@ -2545,6 +2646,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_rolling_eval
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Paper Shadow Rolling Evaluation
     group: governance
     cadence: manual
@@ -2567,6 +2669,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_regime_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Paper Shadow Regime Review
     group: governance
     cadence: manual
@@ -2590,6 +2693,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_stability
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Paper Shadow Stability Diagnostics
     group: governance
     cadence: manual
@@ -2612,6 +2716,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_system_target_selection_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue System Target Selection Review
     group: governance
     cadence: manual
@@ -2636,6 +2741,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_selection_attribution
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Selection Attribution
     group: governance
     cadence: manual
@@ -2658,6 +2764,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_limited_long_risk
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Limited Long-window Risk Review
     group: governance
     cadence: manual
@@ -2680,6 +2787,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_limited_consistency
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Limited Consistency Check
     group: governance
     cadence: manual
@@ -2702,6 +2810,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_data_warning_impact
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Data Warning Impact Review
     group: data_quality
     cadence: manual
@@ -2724,6 +2833,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_research_method_hardening
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Research Method Hardening
     group: governance
     cadence: manual
@@ -2746,6 +2856,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_limited_instability
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Limited Instability Diagnosis
     group: governance
     cadence: manual
@@ -2768,6 +2879,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_limited_risk_attribution
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Limited Risk Attribution
     group: governance
     cadence: manual
@@ -2791,6 +2903,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_data_warning_repair_plan
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Data Warning Repair Plan
     group: data_quality
     cadence: manual
@@ -2812,6 +2925,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_alternative_method_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Alternative Method Review
     group: governance
     cadence: manual
@@ -2833,6 +2947,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_refined_method_proposal
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Refined Research Method Proposal
     group: governance
     cadence: manual
@@ -2856,6 +2971,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_risk_capped_limited_config
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Risk-Capped Limited Config
     group: governance
     cadence: manual
@@ -2876,6 +2992,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_risk_capped_limited
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Risk-Capped Limited Target
     group: governance
     cadence: manual
@@ -2899,6 +3016,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_risk_capped_backfill
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Risk-Capped Limited Backfill
     group: governance
     cadence: manual
@@ -2921,6 +3039,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_risk_capped_comparison
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Risk-Capped vs Limited Comparison
     group: governance
     cadence: manual
@@ -2944,6 +3063,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_risk_capped_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Risk-Capped Research Method Review
     group: governance
     cadence: manual
@@ -2966,6 +3086,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_limited_config
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Limited Config
     group: governance
     cadence: manual
@@ -2986,6 +3107,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_limited
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Limited Target
     group: governance
     cadence: manual
@@ -3009,6 +3131,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_backfill
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Limited Backfill
     group: governance
     cadence: manual
@@ -3031,6 +3154,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_comparison
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed vs Limited Comparison
     group: governance
     cadence: manual
@@ -3055,6 +3179,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Research Method Review
     group: governance
     cadence: manual
@@ -3077,6 +3202,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_review_attribution
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Review Attribution
     group: governance
     cadence: manual
@@ -3097,6 +3223,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothing_benefit_lag
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothing Benefit Lag Drilldown
     group: governance
     cadence: manual
@@ -3118,6 +3245,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_regime_validation
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Regime Validation
     group: governance
     cadence: manual
@@ -3138,6 +3266,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_confirmation
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Forward Confirmation Targets
     group: governance
     cadence: manual
@@ -3158,6 +3287,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_watch_pack
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Method Watch Pack
     group: governance
     cadence: weekly
@@ -3179,6 +3309,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_evidence_gap
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Evidence Gap Diagnosis
     group: governance
     cadence: manual
@@ -3202,6 +3333,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_churn_backfill
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Churn Backfill
     group: governance
     cadence: manual
@@ -3226,6 +3358,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_sideways_mixed_attribution
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Sideways Mixed Attribution
     group: governance
     cadence: manual
@@ -3249,6 +3382,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_readiness_scorecard
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Readiness Scorecard
     group: governance
     cadence: manual
@@ -3271,6 +3405,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_owner_review_update
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Owner Review Update
     group: governance
     cadence: manual
@@ -3294,6 +3429,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_promotion_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Promotion Review
     group: governance
     cadence: manual
@@ -3316,6 +3452,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_primary_research_candidate_gate
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Primary Research Candidate Gate
     group: governance
     cadence: manual
@@ -3337,6 +3474,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_forward_binding
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Forward Binding
     group: governance
     cadence: weekly
@@ -3359,6 +3497,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_primary_switch
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Paper Shadow Primary Switch Plan
     group: governance
     cadence: manual
@@ -3381,6 +3520,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_owner_promotion
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Owner Promotion Decision
     group: governance
     cadence: manual
@@ -3403,6 +3543,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_forward_progress
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Forward Progress
     group: governance
     cadence: weekly
@@ -3426,6 +3567,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_weekly_dashboard
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Weekly Evidence Dashboard
     group: governance
     cadence: weekly
@@ -3448,6 +3590,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_event_monitor
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Event Monitor
     group: governance
     cadence: weekly
@@ -3470,6 +3613,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_switch_readiness
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Switch Readiness Recheck
     group: governance
     cadence: weekly
@@ -3492,6 +3636,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_owner_renewal
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Owner Renewal
     group: governance
     cadence: weekly
@@ -3514,6 +3659,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_daily_emission
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Daily Emission
     group: governance
     cadence: daily
@@ -3537,6 +3683,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_outcome_due
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Outcome Due Scan
     group: governance
     cadence: daily
@@ -3558,6 +3705,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_outcome_update
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Outcome Update
     group: governance
     cadence: daily
@@ -3581,6 +3729,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_forward_classification
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Forward Classification
     group: governance
     cadence: daily
@@ -3603,6 +3752,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_forward_weekly_run
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Forward Weekly Run
     group: governance
     cadence: weekly
@@ -3627,6 +3777,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_data_preflight
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Data Preflight
     group: governance
     cadence: daily
@@ -3650,6 +3801,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_latest_emission
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Latest-Available Emission
     group: governance
     cadence: daily
@@ -3672,6 +3824,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_blocked_explain
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Blocked Explain
     group: governance
     cadence: daily
@@ -3694,6 +3847,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_refresh_plan
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Source Refresh Plan
     group: governance
     cadence: daily
@@ -3716,6 +3870,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_bootstrap_retry
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Bootstrap Retry
     group: governance
     cadence: weekly
@@ -3740,6 +3895,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_source_refresh
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Source Refresh
     group: governance
     cadence: manual
@@ -3763,6 +3919,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_post_refresh_validation
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Post Refresh Validation
     group: governance
     cadence: manual
@@ -3786,6 +3943,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_retry_resume
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Retry Resume
     group: governance
     cadence: manual
@@ -3810,6 +3968,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_sample_growth
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Sample Growth
     group: governance
     cadence: manual
@@ -3832,6 +3991,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_smoothed_data_readiness
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Smoothed Data Readiness
     group: governance
     cadence: manual
@@ -3854,6 +4014,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_hypothesis_backlog
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Weight Optimization Hypothesis Backlog
     group: research
     cadence: manual
@@ -3876,6 +4037,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_variant_transform_spec
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Lightweight Variant Transform Spec
     group: research
     cadence: manual
@@ -3897,6 +4059,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_experiment_matrix
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Weight Experiment Matrix
     group: research
     cadence: manual
@@ -3918,6 +4081,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_batch_experiment
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Batch Lightweight Experiment
     group: research
     cadence: manual
@@ -3941,6 +4105,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_experiment_triage
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Experiment Triage
     group: governance
     cadence: manual
@@ -3964,6 +4129,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_top_variant_interpretation
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Top Variant Interpretation
     group: governance
     cadence: manual
@@ -3986,6 +4152,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_method_promotion_plan
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Method Promotion Plan
     group: governance
     cadence: manual
@@ -4009,6 +4176,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_weight_search_space
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Weight Search Space
     group: research
     cadence: manual
@@ -4031,6 +4199,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_weight_experiment_batch2
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Weight Experiment Batch2 Matrix
     group: research
     cadence: manual
@@ -4053,6 +4222,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_weight_batch_backfill
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Weight Batch Backfill
     group: research
     cadence: manual
@@ -4080,6 +4250,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_weight_scorecard
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Weight Search Scorecard
     group: governance
     cadence: manual
@@ -4103,6 +4274,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_weight_robustness_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Weight Robustness Review
     group: governance
     cadence: manual
@@ -4126,6 +4298,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_weight_adaptive_branch
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Weight Adaptive Branch
     group: governance
     cadence: manual
@@ -4146,6 +4319,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_weight_candidate_cluster
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Weight Candidate Cluster
     group: governance
     cadence: manual
@@ -4167,6 +4341,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_weight_top_candidate_interpretation
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Weight Top Candidate Interpretation
     group: governance
     cadence: manual
@@ -4190,6 +4365,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_weight_method_promotion_gate
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Weight Method Promotion Gate
     group: governance
     cadence: manual
@@ -4211,6 +4387,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_formal_method_auto_plan
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Formal Method Auto Plan
     group: governance
     cadence: manual
@@ -4234,6 +4411,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_weight_search_dashboard
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Weight Search Dashboard
     group: research
     cadence: manual
@@ -4258,6 +4436,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_owner_research_decision_pack
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Owner Research Decision Pack
     group: governance
     cadence: manual
@@ -4279,6 +4458,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_no_promotion_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 No-Promotion Review
     group: governance
     cadence: manual
@@ -4302,6 +4482,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_near_miss_candidates
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Near-Miss Candidates
     group: research
     cadence: manual
@@ -4324,6 +4505,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_cash_buffer_attribution
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Cash Buffer Attribution
     group: research
     cadence: manual
@@ -4346,6 +4528,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_search_coverage_gap
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Search Coverage Gap
     group: research
     cadence: manual
@@ -4368,6 +4551,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_targeted_search_v3
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Targeted Search v3 Matrix
     group: research
     cadence: manual
@@ -4389,6 +4573,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_targeted_v3_backfill
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Targeted v3 Backfill
     group: research
     cadence: manual
@@ -4414,6 +4599,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_near_miss_ab_comparison
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Near-Miss A/B Comparison
     group: research
     cadence: manual
@@ -4435,6 +4621,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_promotion_threshold_sensitivity
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Promotion Threshold Sensitivity
     group: governance
     cadence: manual
@@ -4456,6 +4643,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_candidate_promotion_v2
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Candidate Promotion v2
     group: governance
     cadence: manual
@@ -4480,6 +4668,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_next_formal_or_search_plan
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Next Formal or Search Plan
     group: governance
     cadence: manual
@@ -4504,6 +4693,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_gate_calibration_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Gate Calibration Review
     group: governance
     cadence: manual
@@ -4527,6 +4717,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_scorecard_attribution
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Scorecard Attribution
     group: research
     cadence: manual
@@ -4549,6 +4740,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_signal_instability_diagnosis
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Signal Instability Diagnosis
     group: research
     cadence: manual
@@ -4573,6 +4765,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_consensus_quality_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Consensus Quality Review
     group: research
     cadence: manual
@@ -4596,6 +4789,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_micro_search_v4_design
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Micro Search v4 Design
     group: research
     cadence: manual
@@ -4617,6 +4811,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_micro_search_v4_backfill
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Micro Search v4 Backfill
     group: research
     cadence: manual
@@ -4643,6 +4838,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_gate_calibrated_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Gate-Calibrated Review
     group: governance
     cadence: manual
@@ -4665,6 +4861,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_signal_vs_parameter_attribution
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Signal vs Parameter Attribution
     group: research
     cadence: manual
@@ -4688,6 +4885,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_next_research_direction
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Next Research Direction
     group: governance
     cadence: manual
@@ -4711,6 +4909,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_owner_research_roadmap
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Owner Research Roadmap
     group: governance
     cadence: manual
@@ -4734,6 +4933,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_signal_failure_taxonomy
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Signal Failure Taxonomy
     group: governance
     cadence: manual
@@ -4751,6 +4951,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_candidate_signal_ledger
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Candidate Signal Ledger
     group: research
     cadence: manual
@@ -4770,6 +4971,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_signal_churn_root_cause
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Signal Churn Root Cause
     group: research
     cadence: manual
@@ -4788,6 +4990,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_regime_mismatch_attribution
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Regime Mismatch Attribution
     group: research
     cadence: manual
@@ -4806,6 +5009,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_candidate_quality_filter_design
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Candidate Quality Filter Design
     group: research
     cadence: manual
@@ -4825,6 +5029,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_filtered_candidate_backfill
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Filtered Candidate Backfill
     group: research
     cadence: manual
@@ -4844,6 +5049,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_filtered_vs_original_comparison
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Filtered vs Original Comparison
     group: research
     cadence: manual
@@ -4862,6 +5068,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_signal_gate_experiment
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Signal Gate Experiment
     group: research
     cadence: manual
@@ -4881,6 +5088,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_filtered_candidate_promotion_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Filtered Candidate Promotion Review
     group: governance
     cadence: manual
@@ -4900,6 +5108,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_owner_signal_roadmap
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Owner Signal Roadmap
     group: governance
     cadence: manual
@@ -4919,6 +5128,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_filtered_candidate_evidence
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Filtered Candidate Evidence
     group: research
     cadence: manual
@@ -4939,6 +5149,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_median_regime_filter_spec
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Median Regime Filter Spec
     group: research
     cadence: manual
@@ -4957,6 +5168,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_filtered_candidate_stress_backfill
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Filtered Candidate Stress Backfill
     group: research
     cadence: manual
@@ -4976,6 +5188,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_drawdown_mismatch_reduction
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Drawdown Mismatch Reduction
     group: research
     cadence: manual
@@ -4994,6 +5207,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_flip_rotation_reduction
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Flip Rotation Reduction
     group: research
     cadence: manual
@@ -5012,6 +5226,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_filtered_candidate_ab_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Filtered Candidate A/B Review
     group: research
     cadence: manual
@@ -5031,6 +5246,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_signal_gate_confirmation
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Signal Gate Confirmation
     group: governance
     cadence: manual
@@ -5049,6 +5265,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_filtered_formalization_readiness
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Filtered Formalization Readiness
     group: governance
     cadence: manual
@@ -5068,6 +5285,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_owner_filtered_candidate_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Owner Filtered Candidate Review
     group: governance
     cadence: manual
@@ -5087,6 +5305,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_filtered_next_decision
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Filtered Next Decision
     group: governance
     cadence: manual
@@ -5106,6 +5325,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_formal_research_method_contract
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Formal Research Method Contract
     group: governance
     cadence: manual
@@ -5131,6 +5351,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_promotion_gate_threshold_calibration
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Promotion Gate Threshold Calibration
     group: governance
     cadence: manual
@@ -5159,6 +5380,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_protocol
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Paper Shadow Protocol
     group: governance
     cadence: manual
@@ -5183,6 +5405,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_signal_input_completeness
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Signal Input Completeness
     group: governance
     cadence: daily
@@ -5208,6 +5431,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_signal_input_recovery
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Signal Input Recovery Root Cause
     group: governance
     cadence: manual
@@ -5232,6 +5456,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_signal_input_completeness_recovery
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Signal Input Completeness Recovery
     group: governance
     cadence: manual
@@ -5255,6 +5480,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_daily
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Paper Shadow Daily Observation
     group: governance
     cadence: manual
@@ -5281,6 +5507,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_drift_monitor
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Paper Shadow Drift Monitor
     group: governance
     cadence: manual
@@ -5309,6 +5536,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_weekly_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Paper Shadow Weekly Review
     group: governance
     cadence: weekly
@@ -5339,6 +5567,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_candidate_decision_ledger
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Candidate Decision Ledger
     group: governance
     cadence: manual
@@ -5365,6 +5594,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_evidence_staleness_monitor
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Evidence Staleness Monitor
     group: governance
     cadence: manual
@@ -5396,6 +5626,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_shadow_continuation_readiness
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Shadow Continuation Readiness
     group: governance
     cadence: manual
@@ -5424,6 +5655,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_health
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Canonical Paper Shadow Health
     group: governance
     cadence: daily
@@ -5451,6 +5683,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_readiness_health_recovery
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Readiness and Health Recovery
     group: governance
     cadence: manual
@@ -5475,6 +5708,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_normal_paper_shadow_resumption_gate
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Normal Paper Shadow Resumption Gate
     group: governance
     cadence: manual
@@ -5500,6 +5734,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_outcome_attribution
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Paper Shadow Outcome Attribution
     group: governance
     cadence: weekly
@@ -5528,6 +5763,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_shadow_decision_comparison
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Shadow Decision Comparison
     group: governance
     cadence: weekly
@@ -5556,6 +5792,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_cost_sensitivity_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Cost Sensitivity Review
     group: governance
     cadence: weekly
@@ -5580,6 +5817,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_metric_source_map
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Metric Source Map
     group: governance
     cadence: manual
@@ -5604,6 +5842,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_cost_metrics_materialization
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Cost Metrics Materialization
     group: governance
     cadence: manual
@@ -5629,6 +5868,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_benchmark_baseline_metrics_materialization
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Benchmark Baseline Metrics Materialization
     group: governance
     cadence: manual
@@ -5657,6 +5897,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_benchmark_baseline_control
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Benchmark Baseline Control Pack
     group: governance
     cadence: weekly
@@ -5682,6 +5923,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_candidate_regression_replay
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Candidate Regression Replay
     group: governance
     cadence: weekly
@@ -5706,6 +5948,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_stress_scenario_library
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Stress Scenario Library
     group: governance
     cadence: manual
@@ -5730,6 +5973,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_drawdown_event_casebook
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Drawdown Event Casebook
     group: governance
     cadence: manual
@@ -5754,6 +5998,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_flip_rotation_event_casebook
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Flip Rotation Event Casebook
     group: governance
     cadence: manual
@@ -6298,6 +6543,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_position_advisory_daily
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Daily Position Advisory
     group: governance
     cadence: daily
@@ -6322,6 +6568,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_consensus_drift
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Consensus Drift
     group: governance
     cadence: daily
@@ -6344,6 +6591,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_owner_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Owner Review Journal
     group: governance
     cadence: daily
@@ -6366,6 +6614,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_portfolio
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Paper Portfolio
     group: governance
     cadence: daily
@@ -6388,6 +6637,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_advisory_outcome
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Advisory Outcome
     group: governance
     cadence: daily
@@ -6414,6 +6664,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_owner_attribution
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Owner Attribution
     group: governance
     cadence: weekly
@@ -6439,6 +6690,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_shadow_aging
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Shadow Aging v2
     group: shadow
     cadence: weekly
@@ -6463,6 +6715,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_weekly_advisory_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Weekly Advisory Review
     group: governance
     cadence: weekly
@@ -6490,6 +6743,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_replay_inventory
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Historical Replay Inventory
     group: research
     cadence: ad_hoc
@@ -6514,6 +6768,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_historical_replay
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Historical Advisory Replay
     group: research
     cadence: ad_hoc
@@ -6537,6 +6792,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_backfilled_outcome
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Backfilled Outcome Evaluation
     group: research
     cadence: ad_hoc
@@ -6562,6 +6818,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_historical_paper_sim
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Historical Paper Simulation
     group: research
     cadence: ad_hoc
@@ -6585,6 +6842,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_replay_performance_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Replay Performance Review
     group: governance
     cadence: ad_hoc
@@ -6609,6 +6867,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_replay_diagnosis
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Replay Result Diagnosis
     group: governance
     cadence: ad_hoc
@@ -6633,6 +6892,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_backfill_repair
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Backfilled Outcome Repair
     group: research
     cadence: ad_hoc
@@ -6658,6 +6918,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_variant_comparison
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Variant Performance Comparison
     group: research
     cadence: ad_hoc
@@ -6681,6 +6942,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_rule_calibration
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Rule Calibration Proposal
     group: governance
     cadence: ad_hoc
@@ -6706,6 +6968,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_replay_forward_bridge
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Replay-to-Forward Bridge
     group: governance
     cadence: ad_hoc
@@ -6729,6 +6992,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_outcome_due
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Outcome Due Scan
     group: governance
     cadence: ad_hoc
@@ -6753,6 +7017,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_replay_sample_expansion
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Replay Sample Expansion
     group: research
     cadence: ad_hoc
@@ -6777,6 +7042,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_outcome_dashboard
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Outcome Availability Dashboard
     group: governance
     cadence: ad_hoc
@@ -6801,6 +7067,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_limited_vs_notrade
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Limited Adjustment vs No-Trade Evaluation
     group: research
     cadence: ad_hoc
@@ -6824,6 +7091,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_consensus_risk
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Consensus Risk Review
     group: governance
     cadence: ad_hoc
@@ -6849,6 +7117,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_outcome_update_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Outcome Update Review
     group: governance
     cadence: ad_hoc
@@ -6873,6 +7142,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_outcome_update
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Safe Outcome Update
     group: governance
     cadence: ad_hoc
@@ -6897,6 +7167,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_rolling_evidence_refresh
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Rolling Evidence Refresh
     group: governance
     cadence: ad_hoc
@@ -6923,6 +7194,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_evidence_trend
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Advisory Evidence Trend
     group: research
     cadence: ad_hoc
@@ -6946,6 +7218,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_forward_outcome_decision
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Forward Outcome Decision
     group: governance
     cadence: weekly
@@ -6969,6 +7242,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_backtest_sim_events
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Backtest Simulation Events
     group: research
     cadence: ad_hoc
@@ -6993,6 +7267,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_backtest_sim_variants
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Backtest Simulation Variants
     group: research
     cadence: ad_hoc
@@ -7017,6 +7292,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_backtest_sim_outcome
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Backtest Simulation Outcome
     group: research
     cadence: ad_hoc
@@ -7041,6 +7317,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_backtest_sim_paper
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Backtest Simulation Paper Portfolio
     group: research
     cadence: ad_hoc
@@ -7066,6 +7343,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_backtest_sim_regime
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Backtest Simulation Regime Review
     group: research
     cadence: ad_hoc
@@ -7090,6 +7368,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_backtest_sim_sensitivity
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Backtest Simulation Sensitivity
     group: governance
     cadence: ad_hoc
@@ -7116,6 +7395,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_backtest_sim_calibration
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Backtest Simulation Calibration Pack
     group: governance
     cadence: ad_hoc
@@ -7141,6 +7421,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_backtest_sim_forward_bridge
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Backtest Simulation Forward Bridge
     group: governance
     cadence: weekly
@@ -7165,6 +7446,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_sim_interpretation
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Simulation Interpretation
     group: research
     cadence: ad_hoc
@@ -7188,6 +7470,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_sim_risk_return
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Simulation Risk-Return Review
     group: research
     cadence: ad_hoc
@@ -7211,6 +7494,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_sim_defensive_validation
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Simulation Defensive Validation
     group: research
     cadence: ad_hoc
@@ -7235,6 +7519,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_advisory_proposal_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Advisory Proposal Review
     group: governance
     cadence: ad_hoc
@@ -7259,6 +7544,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_forward_confirmation_plan
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Forward Confirmation Plan
     group: governance
     cadence: weekly
@@ -7284,6 +7570,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_confirmation_registry
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Confirmation Registry
     group: governance
     cadence: weekly
@@ -7307,6 +7594,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_confirmation_progress
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Confirmation Progress
     group: governance
     cadence: weekly
@@ -7329,6 +7617,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_confirmation_evaluation
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Confirmation Evaluation
     group: governance
     cadence: weekly
@@ -7352,6 +7641,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_rule_review_cycle
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rule Review Cycle
     group: governance
     cadence: weekly
@@ -7375,6 +7665,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_rule_owner_decision
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rule Owner Decision
     group: governance
     cadence: weekly
@@ -7400,6 +7691,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_confirmation_cycle_plan
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Confirmation Cycle Plan
     group: governance
     cadence: weekly
@@ -7423,6 +7715,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_confirmation_cycle_weekly
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Confirmation Cycle Weekly Run
     group: governance
     cadence: weekly
@@ -7449,6 +7742,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_pressure_regime_tag
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Pressure Regime Outcome Tags
     group: research
     cadence: weekly
@@ -7474,6 +7768,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_confirmation_dashboard
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Confirmation Dashboard
     group: governance
     cadence: weekly
@@ -7499,6 +7794,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_rule_review_queue
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Rule Review Queue
     group: governance
     cadence: weekly
@@ -7522,6 +7818,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_pressure_tag_diagnosis
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Pressure Tag Diagnosis
     group: research
     cadence: weekly
@@ -7546,6 +7843,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_pressure_outcome_backfill
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Pressure Outcome Backfill
     group: research
     cadence: weekly
@@ -7568,6 +7866,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_defensive_pressure_compare
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Defensive Pressure Compare
     group: research
     cadence: weekly
@@ -7592,6 +7891,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_defensive_rule_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Defensive Rule Review
     group: governance
     cadence: weekly
@@ -7615,6 +7915,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_weekly_ops_decision_update
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Weekly Ops Decision Update
     group: governance
     cadence: weekly
@@ -7638,6 +7939,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_defensive_hypothesis_deep_dive
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Defensive Hypothesis Deep Dive
     group: research
     cadence: weekly
@@ -7663,6 +7965,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_defensive_label_review
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Defensive Label Review
     group: governance
     cadence: weekly
@@ -7686,6 +7989,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_defensive_failure_study
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Defensive Failure Study
     group: research
     cadence: weekly
@@ -7709,6 +8013,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_defensive_research_note
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Defensive Research Note
     group: research
     cadence: weekly
@@ -7731,6 +8036,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_defensive_owner_pack
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Defensive Owner Pack
     group: governance
     cadence: weekly
@@ -7753,6 +8059,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_forward_pressure_capture
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Forward Pressure Capture Plan
     group: governance
     cadence: weekly
@@ -7776,6 +8083,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_pressure_trigger
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Pressure Trigger Scan
     group: research
     cadence: daily
@@ -7799,6 +8107,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_pressure_capture
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Pressure Capture Workflow
     group: research
     cadence: event_driven
@@ -7821,6 +8130,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_pressure_sample_ledger
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Pressure Sample Ledger
     group: research
     cadence: weekly
@@ -7843,6 +8153,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_weekly_defensive_evidence
+    visibility_policy: archived_optional
     title: ETF Dynamic v3 Weekly Defensive Evidence
     group: governance
     cadence: weekly
@@ -7865,6 +8176,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
+    visibility_policy: archived_optional
     title: ETF Weight Dual-Track Calibration Validation
     group: governance
     cadence: ad_hoc
@@ -7881,6 +8193,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_weight_calibration_usability_validation
+    visibility_policy: archived_optional
     title: ETF Weight Calibration Usability Validation
     group: governance
     cadence: ad_hoc
@@ -7903,7 +8216,7 @@ reports:
     title: ETF Operations Health Report
     group: governance
     cadence: daily
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: operator
     owner: system
     command: aits etf ops report --cadence daily --as-of YYYY-MM-DD
@@ -7916,6 +8229,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_operations_validation
+    visibility_policy: archived_optional
     title: ETF Operations Validation Gate
     group: governance
     cadence: ad_hoc
@@ -7935,7 +8249,7 @@ reports:
     title: ETF Data Quality Governance Report
     group: data_quality
     cadence: daily
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: operator
     owner: system
     command: aits etf data-quality report --as-of YYYY-MM-DD
@@ -7949,6 +8263,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_data_quality_validation
+    visibility_policy: archived_optional
     title: ETF Data Quality Validation Gate
     group: governance
     cadence: ad_hoc
@@ -7968,7 +8283,7 @@ reports:
     title: ETF Strategy Evidence Dashboard
     group: governance
     cadence: daily
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf evidence-dashboard report --as-of YYYY-MM-DD
@@ -7982,6 +8297,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_strategy_evidence_dashboard_validation
+    visibility_policy: archived_optional
     title: ETF Strategy Evidence Dashboard Validation Gate
     group: governance
     cadence: on_change
@@ -7998,6 +8314,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_baseline_review_package
+    visibility_policy: archived_optional
     title: ETF Baseline Candidate Review Package
     group: governance
     cadence: weekly
@@ -8017,7 +8334,7 @@ reports:
     title: ETF Baseline Review Owner Decision
     group: governance
     cadence: weekly
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf baseline-review capture-decision --review-package-path PACKAGE.json
@@ -8034,7 +8351,7 @@ reports:
     title: ETF Baseline Change Proposal Draft
     group: governance
     cadence: ad_hoc
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf baseline-review proposal-draft --review-package-path PACKAGE.json --decision-path DECISION.json
@@ -8051,7 +8368,7 @@ reports:
     title: ETF Baseline Review Outcome Tracker
     group: governance
     cadence: weekly
-    visibility_policy: legacy_optional
+    visibility_policy: archived_optional
     audience: reviewer
     owner: system
     command: aits etf baseline-review outcome --candidate CANDIDATE_ID
@@ -8065,6 +8382,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_baseline_review_validation
+    visibility_policy: archived_optional
     title: ETF Baseline Review Playbook Validation Gate
     group: governance
     cadence: on_change
@@ -8081,6 +8399,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
+    visibility_policy: archived_optional
     title: ETF P2 Walk Forward Readiness
     group: research
     cadence: ad_hoc
@@ -8177,6 +8496,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: workflow_health
+    visibility_policy: archived_optional
     title: Governed Developer Workflow Health
     group: governance
     cadence: weekly
@@ -8194,6 +8514,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: workflow_health_validation
+    visibility_policy: archived_optional
     title: Governed Developer Workflow Health Validation
     group: governance
     cadence: weekly
@@ -9452,6 +9773,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: owner_return_to_research_decision_record
+    visibility_policy: archived_optional
     title: Owner Return-To-Research Decision Record
     group: governance
     cadence: manual
@@ -9470,6 +9792,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_return_to_research_transition_pack
+    visibility_policy: archived_optional
     title: Candidate Return-To-Research Transition Pack
     group: governance
     cadence: manual
@@ -9489,6 +9812,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_failure_mode_attribution
+    visibility_policy: archived_optional
     title: Candidate Failure Mode Attribution
     group: research
     cadence: manual
@@ -9507,6 +9831,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: reusable_evidence_extraction
+    visibility_policy: archived_optional
     title: Reusable Evidence Extraction
     group: research
     cadence: manual
@@ -9525,6 +9850,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: return_to_research_hypothesis_backlog
+    visibility_policy: archived_optional
     title: Return-To-Research Hypothesis Backlog
     group: research
     cadence: manual
@@ -9543,6 +9869,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_spec_draft
+    visibility_policy: archived_optional
     title: Next Candidate Spec Draft
     group: research
     cadence: manual
@@ -9561,6 +9888,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: research_backfill_plan_for_next_candidate
+    visibility_policy: archived_optional
     title: Research Backfill Plan For Next Candidate
     group: research
     cadence: manual
@@ -9579,6 +9907,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: archived_candidate_status_update
+    visibility_policy: archived_optional
     title: Archived Candidate Status Update
     group: governance
     cadence: manual
@@ -9597,6 +9926,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: research_cycle_reset_pack
+    visibility_policy: archived_optional
     title: Research Cycle Reset Pack
     group: governance
     cadence: manual
@@ -9615,6 +9945,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: return_to_research_governance_snapshot
+    visibility_policy: archived_optional
     title: Return-To-Research Governance Snapshot
     group: governance
     cadence: manual
@@ -9634,6 +9965,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: return_to_research_governance_snapshot_validation
+    visibility_policy: archived_optional
     title: Return-To-Research Governance Snapshot Validation
     group: governance
     cadence: manual
@@ -9653,6 +9985,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_research_cycle_intake
+    visibility_policy: archived_optional
     title: Next Research Cycle Intake
     group: research
     cadence: manual
@@ -9672,6 +10005,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_spec_frozen
+    visibility_policy: archived_optional
     title: Next Candidate Spec Frozen
     group: research
     cadence: manual
@@ -9690,6 +10024,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_backfill
+    visibility_policy: archived_optional
     title: Next Candidate Backfill
     group: research
     cadence: manual
@@ -9710,6 +10045,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_backfill_validation
+    visibility_policy: archived_optional
     title: Next Candidate Backfill Validation
     group: governance
     cadence: manual
@@ -9729,6 +10065,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_stress_review
+    visibility_policy: archived_optional
     title: Next Candidate Stress Review
     group: research
     cadence: manual
@@ -9749,6 +10086,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_stress_review_validation
+    visibility_policy: archived_optional
     title: Next Candidate Stress Review Validation
     group: governance
     cadence: manual
@@ -9768,6 +10106,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_cost_benchmark_review
+    visibility_policy: archived_optional
     title: Next Candidate Cost Benchmark Review
     group: research
     cadence: manual
@@ -9787,6 +10126,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_cost_benchmark_review_validation
+    visibility_policy: archived_optional
     title: Next Candidate Cost Benchmark Review Validation
     group: governance
     cadence: manual
@@ -9806,6 +10146,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_vs_returned_candidate_comparison
+    visibility_policy: archived_optional
     title: Next Candidate Vs Returned Candidate Comparison
     group: research
     cadence: manual
@@ -9824,6 +10165,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_vs_returned_candidate_comparison_validation
+    visibility_policy: archived_optional
     title: Next Candidate Vs Returned Candidate Comparison Validation
     group: governance
     cadence: manual
@@ -9844,6 +10186,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_signal_robustness_review
+    visibility_policy: archived_optional
     title: Next Candidate Signal Robustness Review
     group: research
     cadence: manual
@@ -9863,6 +10206,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_signal_robustness_review_validation
+    visibility_policy: archived_optional
     title: Next Candidate Signal Robustness Review Validation
     group: governance
     cadence: manual
@@ -9882,6 +10226,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_overfit_window_sensitivity
+    visibility_policy: archived_optional
     title: Next Candidate Overfit Window Sensitivity
     group: research
     cadence: manual
@@ -9901,6 +10246,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_overfit_window_sensitivity_validation
+    visibility_policy: archived_optional
     title: Next Candidate Overfit Window Sensitivity Validation
     group: governance
     cadence: manual
@@ -9920,6 +10266,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_research_gate
+    visibility_policy: archived_optional
     title: Next Candidate Research Gate
     group: governance
     cadence: manual
@@ -9940,6 +10287,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_research_gate_validation
+    visibility_policy: archived_optional
     title: Next Candidate Research Gate Validation
     group: governance
     cadence: manual
@@ -9960,6 +10308,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_owner_research_review_packet
+    visibility_policy: archived_optional
     title: Next Candidate Owner Research Review Packet
     group: governance
     cadence: manual
@@ -9979,6 +10328,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_owner_research_review_packet_validation
+    visibility_policy: archived_optional
     title: Next Candidate Owner Research Review Packet Validation
     group: governance
     cadence: manual
@@ -9999,6 +10349,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_research_cycle_snapshot
+    visibility_policy: archived_optional
     title: Next Candidate Research Cycle Snapshot
     group: governance
     cadence: manual
@@ -10018,6 +10369,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_research_cycle_snapshot_validation
+    visibility_policy: archived_optional
     title: Next Candidate Research Cycle Snapshot Validation
     group: governance
     cadence: manual
@@ -10038,6 +10390,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: executable_research_evidence_gap_ledger
+    visibility_policy: archived_optional
     title: Executable Research Evidence Gap Ledger
     group: governance
     cadence: manual
@@ -10058,6 +10411,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: executable_research_evidence_gap_ledger_validation
+    visibility_policy: archived_optional
     title: Executable Research Evidence Gap Ledger Validation
     group: governance
     cadence: manual
@@ -10077,6 +10431,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: backfill_partial_root_cause_repair_plan
+    visibility_policy: archived_optional
     title: Backfill Partial Root Cause Repair Plan
     group: governance
     cadence: manual
@@ -10097,6 +10452,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: backfill_partial_root_cause_repair_plan_validation
+    visibility_policy: archived_optional
     title: Backfill Partial Root Cause Repair Plan Validation
     group: governance
     cadence: manual
@@ -10117,6 +10473,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: signal_robustness_blocker_drilldown
+    visibility_policy: archived_optional
     title: Signal Robustness Blocker Drilldown
     group: governance
     cadence: manual
@@ -10137,6 +10494,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: signal_robustness_blocker_drilldown_validation
+    visibility_policy: archived_optional
     title: Signal Robustness Blocker Drilldown Validation
     group: governance
     cadence: manual
@@ -10157,6 +10515,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: window_fragility_attribution
+    visibility_policy: archived_optional
     title: Window Fragility Attribution
     group: governance
     cadence: manual
@@ -10178,6 +10537,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: window_fragility_attribution_validation
+    visibility_policy: archived_optional
     title: Window Fragility Attribution Validation
     group: governance
     cadence: manual
@@ -10197,6 +10557,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: stress_weakness_attribution
+    visibility_policy: archived_optional
     title: Stress Weakness Attribution
     group: governance
     cadence: manual
@@ -10218,6 +10579,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: stress_weakness_attribution_validation
+    visibility_policy: archived_optional
     title: Stress Weakness Attribution Validation
     group: governance
     cadence: manual
@@ -10238,6 +10600,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: cost_benchmark_weakness_attribution
+    visibility_policy: archived_optional
     title: Cost Benchmark Weakness Attribution
     group: governance
     cadence: manual
@@ -10259,6 +10622,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: cost_benchmark_weakness_attribution_validation
+    visibility_policy: archived_optional
     title: Cost Benchmark Weakness Attribution Validation
     group: governance
     cadence: manual
@@ -10279,6 +10643,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_redesign_hypothesis_v2
+    visibility_policy: archived_optional
     title: Candidate Redesign Hypothesis V2
     group: governance
     cadence: manual
@@ -10299,6 +10664,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_redesign_hypothesis_v2_validation
+    visibility_policy: archived_optional
     title: Candidate Redesign Hypothesis V2 Validation
     group: governance
     cadence: manual
@@ -10318,6 +10684,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_spec_freeze
+    visibility_policy: archived_optional
     title: Candidate V2 Spec Freeze
     group: governance
     cadence: manual
@@ -10339,6 +10706,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_spec_freeze_validation
+    visibility_policy: archived_optional
     title: Candidate V2 Spec Freeze Validation
     group: governance
     cadence: manual
@@ -10358,6 +10726,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_executable_binding_update
+    visibility_policy: archived_optional
     title: Candidate V2 Executable Binding Update
     group: research
     cadence: manual
@@ -10378,6 +10747,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_executable_binding_update_validation
+    visibility_policy: archived_optional
     title: Candidate V2 Executable Binding Update Validation
     group: research
     cadence: manual
@@ -10398,6 +10768,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_mini_backfill
+    visibility_policy: archived_optional
     title: Candidate V2 Mini Backfill
     group: research
     cadence: manual
@@ -10418,6 +10789,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_mini_backfill_validation
+    visibility_policy: archived_optional
     title: Candidate V2 Mini Backfill Validation
     group: research
     cadence: manual
@@ -10438,6 +10810,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_mini_gate
+    visibility_policy: archived_optional
     title: Candidate V2 Mini Gate
     group: research
     cadence: manual
@@ -10457,6 +10830,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_mini_gate_validation
+    visibility_policy: archived_optional
     title: Candidate V2 Mini Gate Validation
     group: research
     cadence: manual
@@ -10477,6 +10851,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_full_backfill_if_approved
+    visibility_policy: archived_optional
     title: Candidate V2 Full Backfill If Approved
     group: research
     cadence: manual
@@ -10496,6 +10871,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_full_backfill_if_approved_validation
+    visibility_policy: archived_optional
     title: Candidate V2 Full Backfill If Approved Validation
     group: research
     cadence: manual
@@ -10516,6 +10892,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_research_gate
+    visibility_policy: archived_optional
     title: Candidate V2 Research Gate
     group: research
     cadence: manual
@@ -10536,6 +10913,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_research_gate_validation
+    visibility_policy: archived_optional
     title: Candidate V2 Research Gate Validation
     group: research
     cadence: manual
@@ -10556,6 +10934,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_owner_research_review_packet
+    visibility_policy: archived_optional
     title: Candidate V2 Owner Research Review Packet
     group: research
     cadence: manual
@@ -10576,6 +10955,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_owner_research_review_packet_validation
+    visibility_policy: archived_optional
     title: Candidate V2 Owner Research Review Packet Validation
     group: research
     cadence: manual
@@ -10595,6 +10975,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_research_cycle_snapshot
+    visibility_policy: archived_optional
     title: Candidate V2 Research Cycle Snapshot
     group: research
     cadence: manual
@@ -10614,6 +10995,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_research_cycle_snapshot_validation
+    visibility_policy: archived_optional
     title: Candidate V2 Research Cycle Snapshot Validation
     group: research
     cadence: manual
@@ -10634,6 +11016,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_executable_binding_contract
+    visibility_policy: archived_optional
     title: Next Candidate Executable Binding Contract
     group: research
     cadence: manual
@@ -10653,6 +11036,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_executable_binding_contract_validation
+    visibility_policy: archived_optional
     title: Next Candidate Executable Binding Contract Validation
     group: governance
     cadence: manual
@@ -10672,6 +11056,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_signal_binding
+    visibility_policy: archived_optional
     title: Next Candidate Signal Binding
     group: research
     cadence: manual
@@ -10692,6 +11077,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_signal_binding_validation
+    visibility_policy: archived_optional
     title: Next Candidate Signal Binding Validation
     group: governance
     cadence: manual
@@ -10711,6 +11097,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_research_weight_binding
+    visibility_policy: archived_optional
     title: Next Candidate Research Weight Binding
     group: research
     cadence: manual
@@ -10731,6 +11118,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_research_weight_binding_validation
+    visibility_policy: archived_optional
     title: Next Candidate Research Weight Binding Validation
     group: governance
     cadence: manual
@@ -10750,6 +11138,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: executable_binding_safety_audit
+    visibility_policy: archived_optional
     title: Executable Binding Safety Audit
     group: governance
     cadence: manual
@@ -10770,6 +11159,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: executable_binding_safety_audit_validation
+    visibility_policy: archived_optional
     title: Executable Binding Safety Audit Validation
     group: governance
     cadence: manual
@@ -23944,6 +24334,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: defensive_preservation_lane_policy_contract
+    visibility_policy: archived_optional
     title: Defensive Preservation Lane Policy Contract
     group: research
     cadence: ad_hoc
@@ -23965,6 +24356,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: defensive_lane_feature_pit_audit
+    visibility_policy: archived_optional
     title: Defensive Lane Feature PIT Audit
     group: research
     cadence: ad_hoc
@@ -23985,6 +24377,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: defensive_lane_model_review
+    visibility_policy: archived_optional
     title: Defensive Lane Model Review
     group: research
     cadence: ad_hoc
@@ -24006,6 +24399,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: defensive_lane_actual_path_review
+    visibility_policy: archived_optional
     title: Defensive Lane Actual-Path Review
     group: research
     cadence: ad_hoc
@@ -24025,6 +24419,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: defensive_lane_2022_slice_review
+    visibility_policy: archived_optional
     title: Defensive Lane 2022 Slice Review
     group: research
     cadence: ad_hoc
@@ -24044,6 +24439,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: defensive_preservation_lane_closeout
+    visibility_policy: archived_optional
     title: Defensive Preservation Lane Closeout
     group: research
     cadence: ad_hoc
@@ -24063,6 +24459,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: return_seeking_diagnostic_lane_policy_contract
+    visibility_policy: archived_optional
     title: Return-Seeking Diagnostic Lane Policy Contract
     group: research
     cadence: ad_hoc
@@ -24082,6 +24479,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: return_seeking_signal_audit
+    visibility_policy: archived_optional
     title: Return-Seeking Signal Audit
     group: research
     cadence: ad_hoc
@@ -24101,6 +24499,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: return_seeking_actual_path_review
+    visibility_policy: archived_optional
     title: Return-Seeking Actual-Path Review
     group: research
     cadence: ad_hoc
@@ -24120,6 +24519,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: return_seeking_beta_tqqq_attribution
+    visibility_policy: archived_optional
     title: Return-Seeking Beta and TQQQ Attribution
     group: research
     cadence: ad_hoc
@@ -24139,6 +24539,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: return_seeking_2022_vs_2023_contrast
+    visibility_policy: archived_optional
     title: Return-Seeking 2022 vs 2023+ Contrast
     group: research
     cadence: ad_hoc
@@ -24158,6 +24559,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: return_seeking_diagnostic_lane_closeout
+    visibility_policy: archived_optional
     title: Return-Seeking Diagnostic Lane Closeout
     group: research
     cadence: ad_hoc
@@ -24271,6 +24673,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: indicator_family_ablation
+    visibility_policy: archived_optional
     title: Indicator Family Ablation Evidence Pack
     group: research
     cadence: ad_hoc
@@ -24298,6 +24701,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: indicator_family_pit_coverage_audit
+    visibility_policy: archived_optional
     title: Indicator Family PIT Coverage Audit
     group: research
     cadence: ad_hoc
@@ -24317,6 +24721,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: indicator_family_do_not_de_risk_review
+    visibility_policy: archived_optional
     title: Indicator Family Do-Not-De-Risk Review
     group: research
     cadence: ad_hoc
@@ -24336,6 +24741,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: indicator_family_add_risk_review
+    visibility_policy: archived_optional
     title: Indicator Family Add-Risk Review
     group: research
     cadence: ad_hoc
@@ -24355,6 +24761,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: indicator_family_risk_on_veto_review
+    visibility_policy: archived_optional
     title: Indicator Family Risk-On Veto Review
     group: research
     cadence: ad_hoc
@@ -24374,6 +24781,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: indicator_family_selection_matrix
+    visibility_policy: archived_optional
     title: Indicator Family Selection Matrix
     group: research
     cadence: ad_hoc
@@ -24393,6 +24801,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: channel_specific_feature_set_v1
+    visibility_policy: archived_optional
     title: Channel-Specific Feature Set v1
     group: research
     cadence: ad_hoc
@@ -24693,6 +25102,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: risk_on_veto_observe_only_diagnostic
+    visibility_policy: archived_optional
     title: Risk-On Veto Observe-Only Diagnostic
     group: research
     cadence: ad_hoc
@@ -25067,6 +25477,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: free_feature_family_reablation
+    visibility_policy: archived_optional
     title: Free Feature Family Re-Ablation
     group: research
     cadence: ad_hoc
@@ -25096,6 +25507,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: participation_proxy_validation
+    visibility_policy: archived_optional
     title: Participation Proxy Validation
     group: research
     cadence: ad_hoc
@@ -25937,6 +26349,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: equal_weight_proxy_data_fix
+    visibility_policy: archived_optional
     title: Equal-Weight Proxy Data Availability Fix
     group: research
     cadence: ad_hoc
@@ -26138,6 +26551,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: candidate_signal_prediction_artifact_audit
+    visibility_policy: archived_optional
     title: Candidate Signal / Prediction Artifact Backfill and Provenance Audit
     group: research
     cadence: ad_hoc
@@ -26251,6 +26665,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: regenerated_candidate_actual_path_validation
+    visibility_policy: archived_optional
     title: Regenerated Candidate Actual-Path Validation
     group: research
     cadence: ad_hoc
@@ -26284,6 +26699,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: regenerated_candidate_inconclusive_diagnostics
+    visibility_policy: archived_optional
     title: Regenerated Candidate Inconclusive Diagnostics
     group: research
     cadence: ad_hoc
@@ -26328,6 +26744,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: candidate_generator_confidence_scaling_refinement_plan
+    visibility_policy: archived_optional
     title: Candidate Generator Confidence Scaling Refinement Plan
     group: research
     cadence: ad_hoc
@@ -26368,6 +26785,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: refined_candidate_regeneration
+    visibility_policy: archived_optional
     title: Refined Candidate Regeneration with Adjusted Confidence Scaling
     group: research
     cadence: ad_hoc
@@ -26417,6 +26835,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: refined_candidate_actual_path_validation
+    visibility_policy: archived_optional
     title: Refined Candidate Actual-Path Validation
     group: research
     cadence: ad_hoc
@@ -26459,6 +26878,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: refined_candidate_local_edge_scope_review
+    visibility_policy: archived_optional
     title: Refined Candidate Local Edge and Scope Narrowing Review
     group: research
     cadence: ad_hoc
@@ -26505,6 +26925,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: scope_narrowed_candidate_regeneration
+    visibility_policy: archived_optional
     title: Scope-Narrowed Candidate Regeneration
     group: research
     cadence: ad_hoc
@@ -26551,6 +26972,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: scope_narrowed_candidate_actual_path_validation
+    visibility_policy: archived_optional
     title: Scope-Narrowed Candidate Actual-Path Validation
     group: research
     cadence: ad_hoc
@@ -26599,6 +27021,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: scope_narrowed_forward_observe_readiness_review
+    visibility_policy: archived_optional
     title: Scope-Narrowed Forward Observe Readiness Review
     group: research
     cadence: ad_hoc
@@ -26641,6 +27064,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: forward_observe_evidence_accumulation_plan
+    visibility_policy: archived_optional
     title: Forward Observe Evidence Accumulation Plan
     group: research
     cadence: ad_hoc
@@ -26686,6 +27110,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: risk_cap_cooldown_decay_design
+    visibility_policy: archived_optional
     title: Risk-Cap Cooldown / Decay Design
     group: research
     cadence: ad_hoc
@@ -26751,6 +27176,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: exposure_cap_mechanics_simulation
+    visibility_policy: archived_optional
     title: Exposure-Cap Mechanics Simulation
     group: research
     cadence: ad_hoc
@@ -26827,6 +27253,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: exposure_cap_simulation_source_binding
+    visibility_policy: archived_optional
     title: Exposure-Cap Simulation Source Binding
     group: research
     cadence: ad_hoc
@@ -26902,6 +27329,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: portfolio_baseline_source_decision
+    visibility_policy: archived_optional
     title: Portfolio Baseline Source Decision
     group: research
     cadence: ad_hoc
@@ -26965,6 +27393,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: source_bound_exposure_cap_dry_run_static_etf_baseline
+    visibility_policy: archived_optional
     title: Source-Bound Exposure-Cap Dry-Run With Static ETF Baseline
     group: research
     cadence: ad_hoc
@@ -27049,6 +27478,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: exposure_cap_vs_no_cap_diagnostics_review
+    visibility_policy: archived_optional
     title: Exposure-Cap vs No-Cap Diagnostics Review
     group: research
     cadence: ad_hoc
@@ -27144,6 +27574,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: dynamic_target_baseline_preparation
+    visibility_policy: archived_optional
     title: Dynamic Target Baseline Preparation
     group: research
     cadence: ad_hoc
@@ -27231,6 +27662,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: dynamic_target_baseline_source_remediation
+    visibility_policy: archived_optional
     title: Dynamic Target Baseline Source Remediation
     group: research
     cadence: ad_hoc
@@ -27325,6 +27757,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: dynamic_target_baseline_timestamp_remediation
+    visibility_policy: archived_optional
     title: Dynamic Target Baseline Timestamp Remediation
     group: research
     cadence: ad_hoc
@@ -27416,6 +27849,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: dynamic_target_baseline_dry_run_readiness_with_pit_caveat
+    visibility_policy: archived_optional
     title: Dynamic Target Baseline Dry-Run Readiness With PIT Caveat
     group: research
     cadence: ad_hoc
@@ -27500,6 +27934,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: source_bound_exposure_cap_dynamic_target_dry_run
+    visibility_policy: archived_optional
     title: Source-Bound Exposure-Cap Dry-Run With Dynamic Target Baseline
     group: research
     cadence: ad_hoc
@@ -27601,6 +28036,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: dynamic_exposure_cap_vs_no_cap_diagnostics_review
+    visibility_policy: archived_optional
     title: Dynamic Exposure-Cap vs No-Cap Diagnostics Review
     group: research
     cadence: ad_hoc
@@ -27704,6 +28140,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_forward_observe_plan
+    visibility_policy: archived_optional
     title: High-Intensity-Only Risk-Cap Forward Observe Plan
     group: research
     cadence: ad_hoc
@@ -27803,6 +28240,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_threshold_selection
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Threshold Selection
     group: research
     cadence: ad_hoc
@@ -27914,6 +28352,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_forward_observe_event_logger
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Forward Observe Event Logger
     group: research
     cadence: ad_hoc
@@ -28028,6 +28467,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_actual_path_outcome_binder
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Actual Path Outcome Binder
     group: research
     cadence: ad_hoc
@@ -28138,6 +28578,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_partial_outcome_readiness_review
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Partial Outcome Readiness Review
     group: research
     cadence: ad_hoc
@@ -28243,6 +28684,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_forward_outcome_review
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Forward Outcome Review
     group: research
     cadence: ad_hoc
@@ -28364,6 +28806,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_continue_forward_observe_decision
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Continue Forward Observe Decision
     group: research
     cadence: ad_hoc
@@ -28483,6 +28926,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_runtime_integration_plan
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Runtime Integration Plan
     group: research
     cadence: ad_hoc
@@ -28608,6 +29052,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_runtime_dry_run
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Runtime Dry-Run
     group: research
     cadence: ad_hoc
@@ -28739,6 +29184,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Runtime Scheduler Integration Plan
     group: research
     cadence: ad_hoc
@@ -28855,6 +29301,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_scheduler_dry_run
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Scheduler Dry-Run
     group: research
     cadence: ad_hoc
@@ -28976,6 +29423,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_scheduler_wiring_plan
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Scheduler Wiring Plan
     group: research
     cadence: ad_hoc
@@ -29084,6 +29532,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_scheduler_disabled_wiring
+    visibility_policy: archived_optional
     title: Disabled High-Intensity Risk-Cap Observe-Only Scheduler Wiring Implementation
     group: research
     cadence: ad_hoc
@@ -29178,6 +29627,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_scheduler_smoke_dry_run
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Scheduler Smoke Dry-Run Evidence
     group: research
     cadence: ad_hoc
@@ -29279,6 +29729,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_scheduler_manual_review_gate
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Scheduler Manual Review Gate
     group: research
     cadence: ad_hoc
@@ -29387,6 +29838,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_scheduler_manual_run_dry_run
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Scheduler Manual-Run Interface Dry-Run
     group: research
     cadence: ad_hoc
@@ -29497,6 +29949,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_scheduler_manual_run_replay_validation
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Scheduler Manual-Run Replay No-Side-Effect Validation
     group: research
     cadence: ad_hoc
@@ -29621,6 +30074,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_scheduler_audit_package
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Scheduler Audit Package And Owner Review Checklist
     group: research
     cadence: ad_hoc
@@ -29754,6 +30208,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_scheduler_owner_review_decision
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Scheduler Owner Review Decision Record
     group: research
     cadence: ad_hoc
@@ -29895,6 +30350,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_scheduler_gap_closure_plan
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Scheduler Gap Closure And Readiness Hardening Plan
     group: research
     cadence: ad_hoc
@@ -30028,6 +30484,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_scheduler_hardening_backlog
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Scheduler Hardening Backlog And Evidence Matrix
     group: research
     cadence: ad_hoc
@@ -30170,6 +30627,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_scheduler_kill_switch_plan
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Scheduler Kill-Switch And Disabled-Enforcement Evidence Plan
     group: research
     cadence: ad_hoc
@@ -30322,6 +30780,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Scheduler Idempotency And Replay Contract Plan
     group: research
     cadence: ad_hoc
@@ -30507,6 +30966,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_event_append_contract_plan
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Event Append Contract Plan
     group: research
     cadence: ad_hoc
@@ -30668,6 +31128,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_outcome_binding_contract_plan
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Outcome Binding Contract Plan
     group: research
     cadence: ad_hoc
@@ -30835,6 +31296,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_paper_shadow_scope_plan
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Paper-Shadow Scope No-Broker Guardrail Plan
     group: research
     cadence: ad_hoc
@@ -31007,6 +31469,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_production_broker_hard_blocker_plan
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Production Broker Hard-Blocker Plan
     group: research
     cadence: ad_hoc
@@ -31167,6 +31630,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_promotion_blocker_matrix
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Promotion Blocker Safety Evidence Matrix
     group: research
     cadence: ad_hoc
@@ -31331,6 +31795,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: high_intensity_risk_cap_observe_only_owner_decision_pause_checkpoint
+    visibility_policy: archived_optional
     title: High-Intensity Risk-Cap Observe-Only Owner Decision Pause Checkpoint
     group: research
     cadence: ad_hoc
@@ -31484,6 +31949,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: signal_validity_aging_runtime_design
+    visibility_policy: archived_optional
     title: Signal Validity / Aging Runtime Design
     group: research
     cadence: ad_hoc
@@ -31595,6 +32061,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: breadth_participation_candidate_family_feasibility_audit
+    visibility_policy: archived_optional
     title: Breadth Participation Candidate Family Feasibility Audit
     group: research
     cadence: ad_hoc
@@ -31643,6 +32110,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: current_constituents_breadth_proxy_diagnostics
+    visibility_policy: archived_optional
     title: Current Constituents Breadth Proxy Diagnostics
     group: research
     cadence: ad_hoc
@@ -31685,6 +32153,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: breadth_proxy_signal_concept_selection
+    visibility_policy: archived_optional
     title: Breadth Proxy Signal Concept Selection
     group: research
     cadence: ad_hoc
@@ -31724,6 +32193,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: ai_semiconductor_leadership_feasibility_audit
+    visibility_policy: archived_optional
     title: AI Semiconductor Leadership Feasibility Audit
     group: research
     cadence: ad_hoc
@@ -31763,6 +32233,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: ai_semiconductor_leadership_generator_poc
+    visibility_policy: archived_optional
     title: AI Semiconductor Leadership Generator POC
     group: research
     cadence: ad_hoc
@@ -31810,6 +32281,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: ai_leadership_actual_path_validation
+    visibility_policy: archived_optional
     title: AI Leadership Actual-Path Validation
     group: research
     cadence: ad_hoc
@@ -31863,6 +32335,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: ai_leadership_scope_review
+    visibility_policy: archived_optional
     title: AI Leadership Scope Review
     group: research
     cadence: ad_hoc
@@ -31921,6 +32394,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: liquidity_rates_data_feasibility_audit
+    visibility_policy: archived_optional
     title: Liquidity Rates Pressure Data Feasibility Audit
     group: research
     cadence: ad_hoc
@@ -31979,6 +32453,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: liquidity_rates_pressure_generator_poc
+    visibility_policy: archived_optional
     title: Liquidity Rates Pressure Generator POC
     group: research
     cadence: ad_hoc
@@ -32037,6 +32512,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: liquidity_rates_actual_path_validation
+    visibility_policy: archived_optional
     title: Liquidity Rates Actual-Path Validation
     group: research
     cadence: ad_hoc
@@ -32100,6 +32576,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: liquidity_rates_scope_review
+    visibility_policy: archived_optional
     title: Liquidity Rates Scope Review
     group: research
     cadence: ad_hoc
@@ -32177,6 +32654,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: regime_state_machine_design_audit
+    visibility_policy: archived_optional
     title: Regime State Machine Design Audit
     group: research
     cadence: ad_hoc
@@ -32245,6 +32723,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: regime_label_generator_diagnostic_poc
+    visibility_policy: archived_optional
     title: Regime Label Generator Diagnostic POC
     group: research
     cadence: ad_hoc
@@ -32330,6 +32809,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: regime_segmented_candidate_validation
+    visibility_policy: archived_optional
     title: Regime-Segmented Candidate Validation
     group: research
     cadence: ad_hoc
@@ -32409,6 +32889,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: event_calendar_data_feasibility_audit
+    visibility_policy: archived_optional
     title: Event Calendar Data Feasibility Audit
     group: research
     cadence: ad_hoc
@@ -32486,6 +32967,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: event_calendar_gating_generator_poc
+    visibility_policy: archived_optional
     title: Event Calendar Gating Generator POC
     group: research
     cadence: ad_hoc
@@ -32559,6 +33041,7 @@ reports:
     broker_action: none
     dynamic_promotion_status: BLOCKED
   - report_id: event_gating_validation
+    visibility_policy: archived_optional
     title: Event Gating Validation
     group: research
     cadence: ad_hoc
@@ -32658,6 +33141,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: strategy_research_restart_r0_r2
+    visibility_policy: archived_optional
     title: Strategy Research Restart R0-R2 Evidence Decision
     group: research
     cadence: ad_hoc
@@ -32691,6 +33175,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: dynamic_v3_clean_selection_preregistration_gate
+    visibility_policy: archived_optional
     title: Dynamic v3 Clean-Selection Preregistration Eligibility Gate
     group: research
     cadence: ad_hoc

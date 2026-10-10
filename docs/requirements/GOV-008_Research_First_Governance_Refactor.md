@@ -576,3 +576,44 @@ preflight 命令）、`historical_portable_source_archive`、`legacy_research_ar
 
 **验证**：PR 套件（`pytest tests -n 16 --dist loadfile -m "not slow"`）7,926 通过、3 跳过、0 失败，11m05s（任务登记更新前的同一树；
 ship 在最终树上重跑）。变异等价：被删测试只覆盖被删代码；对保留模块的测试只做了步骤列表与任务数的预期更新，未删除行为断言。
+
+块 2 已发布：`2eb7579e8`（ship 门禁 7,926 通过、0 失败，10m42s），main = origin/main。
+
+## 19. P5 文档重整（2026-10-10）
+
+**约束（实测）**：多个保留的研究模块按文本核对 `docs/system_flow.md`（`REQUIRED_SYSTEM_FLOW_REFERENCES` 等）与
+`docs/artifact_catalog.md`（`REQUIRED_CATALOG_REFERENCES`）中的条目，并读取 `config/report_registry.yaml` 中自己的报告条目；
+运维手册只被检查"文件存在"。所以前两个文件不能删旧文字，只能在前面加当前说明、把旧文字保留为只读附录；
+报告登记不删条目，用已有的 `visibility_policy: archived_optional` 标记退役（报告索引把 MISSING/STALE 显示为
+`ARCHIVED_MISSING`/`ARCHIVED_STALE`，只做审计，不进警告）。
+
+| 步骤 | 内容 | 验收 |
+|---|---|---|
+| D1 | `system_flow.md`：新增第 1～6 节当前流程（每日链路 mermaid 图、门禁与阻断、非每日任务、研究链路、开发与发布、已退役清单），原文整体降为第 7 节只读附录 | 研究模块的文本核对测试仍通过 |
+| D2 | 运维手册重写为当前步骤（入口、每日链路、非每日任务人工派发、DQ 门禁、恢复、前瞻采集 hold 步骤、已删除机制）；旧全文移到 `docs/operations/operations_runbook_legacy_2026-10-10.md` | 新手册不再描述已删除的命令；旧文可查 |
+| D3 | `artifact_catalog.md` 顶部加当前状态与退役 artifact 族说明，正文不动 | 同 D1 |
+| D4 | 报告登记：命令已不存在的 507 个条目（ETF 链、已删的休眠研究命令、workflow health、退役 ETF 报告命令）标 `archived_optional`；均非每日必读 | 报告索引测试通过 |
+| D5 | 调度：退役 `weekly_workflow_health_review`（调用块 1 已删除的 `aits reports ensure-workflow-health`）；登记 60 → 59，非每日 28 → 27 | 调度测试更新后通过；所有登记任务命令都能解析 |
+| D6 | 删除代码已在解耦 L2 删除的 `config/operations/ops_release_promotion.yaml`、`ops_scheduler_checkout.yaml` | 无代码引用 |
+| D7 | 任务：OPS-082 下一步去掉已删除机制的描述；新登记 Reader Brief ETF 栏目清理（约 1,700 行，独立代码改动，不放进 P5） | `tools/tasks.py check` |
+
+**已知但不在 P5 处理**：`ops daily-run` 的终止恢复（OPS-071）仍要求 `AITS_OPS_DEPLOYMENT_RECEIPT`，而生成该 receipt 的
+`deployment-acceptance` 已在 L2 删除——在 OPS-082 重新设计调度之前，恢复只能使用现存 receipt。运维手册如实写明。
+其余未被代码引用的研究配置（约 50 个）被研究记录或文档引用，属于证据，不清理。
+
+**P5 结果（D1～D7 完成）**：
+
+- D1 `system_flow.md` 新增第 1～6 节（约 100 行，含每日链路与研究链路两张 mermaid 图），原 11,770 行降为第 7 节只读附录，
+  一行未删。D3 `artifact_catalog.md` 顶部加"当前状态"一节与不再生成的产物族表（路径按本机实际目录核对）。
+- D2 新运维手册 174 行（旧 579 行）：入口与调度现状、每日链路表、运行控制与恢复（含 deployment receipt 限制）、DQ 门禁、
+  非每日任务人工派发、操作前检查、前瞻采集两节（原文）、已删除机制清单；旧全文移到
+  `docs/operations/operations_runbook_legacy_2026-10-10.md`。`docs/runbook_daily_ops.md` 与
+  `docs/runbooks/scheduled_task_orchestration.md` 顶部加说明，指向新手册。
+- D4 报告登记 507 个条目标 `archived_optional`（482 个新增字段、25 个由 legacy/deprecated 改为 archived），文件头注释说明原因。
+- D5 调度退役 `weekly_workflow_health_review`，策略版本升为 `scheduled_tasks_v7`，并在 `policy_metadata` 记录块 2 与本次退役
+  （块 2 删除每日步骤时漏了版本号；运行控制的规格 id 对步骤列表做哈希，所以块 2 已自动产生新幂等键，没有误复用旧状态）。
+  所有登记任务的命令现在都能解析到现存 CLI 命令或脚本。
+- D6 删除 `ops_release_promotion.yaml`、`ops_scheduler_checkout.yaml`。D7 OPS-082 下一步与验收改写；新任务
+  `GOV-008A_READER_BRIEF_ETF_SECTION_RETIREMENT`（P2）。
+- 验证：调度/每日计划/控制面/CLI 测试 138 通过；研究策略目录与文档契约等 913 通过；docs freshness 与 research trends 41 通过；
+  整套 PR 门禁由 ship 运行。
