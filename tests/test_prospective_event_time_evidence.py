@@ -34,10 +34,11 @@ from ai_trading_system.contracts.prospective_event_time_evidence import (
     TemporalEvidenceError,
     canonical_json_bytes,
 )
-from ai_trading_system.platform.architecture.checkout_guard import (
-    CheckoutLeaseGuard,
-    CheckoutLeaseHandle,
-    CheckoutOperationClass,
+from ai_trading_system.data import capture_hold
+from ai_trading_system.data.capture_hold import (
+    CaptureHold,
+    acquire_capture_hold,
+    release_capture_hold,
 )
 
 ACTIVATED = datetime(2025, 3, 5, 22, tzinfo=UTC)
@@ -47,6 +48,8 @@ SIGNAL_TIME = INPUT_TIME + timedelta(minutes=1)
 DEFINITIONS = (PayloadMember("definition", b"synthetic definition v1"),)
 INPUTS = (PayloadMember("prices", b"synthetic prices, not market data"),)
 SIGNAL = PayloadMember("signal", b"synthetic opaque signal, not an algorithm result")
+# Same window the S4D lease used in these tests, so every time span below keeps its meaning.
+HOLD_TTL_SECONDS = 21600
 
 
 def _git(root: Path, *args: str) -> str:
@@ -90,30 +93,34 @@ class _Clock:
 class _Harness:
     root: Path
     store: Path
-    guard: CheckoutLeaseGuard
     plan: RecordingPlan
     policy: recorder.TimeEvidencePolicy
     clock: _Clock
-    handle: CheckoutLeaseHandle | None = None
+    handle: CaptureHold | None = None
     acquisitions: int = 0
     acquired_at: datetime = ACTIVATED
+    # The hold module reads this synthetic instant while acquiring/releasing; otherwise it reads
+    # the recorder clock's current value without consuming its scripted readings.
+    hold_now: datetime | None = None
 
-    def renew(self, at: datetime, *, scope: str = "outputs/events") -> CheckoutLeaseHandle:
+    def hold_clock(self) -> datetime:
+        return self.hold_now or self.clock.value
+
+    def renew(self, at: datetime, *, scope: str = "outputs/events") -> CaptureHold:
         self.release()
         self.acquisitions += 1
         self.acquired_at = at - timedelta(minutes=1)
-        decision, self.handle = self.guard.acquire(
-            intent_id=f"synthetic-event-{self.acquisitions}",
-            task_id="TRADING-2564-SYNTHETIC-TEST",
-            thread_id="synthetic-recorder-test",
-            actor="integration-coordinator",
-            operation_class=CheckoutOperationClass.SHARED_MUTATION,
-            shared_paths=(scope,),
-            base_commit=self.plan.declared_source_commit,
-            now=self.acquired_at,
-        )
-        assert decision.status == "PASS", decision.reason_codes
-        assert self.handle is not None
+        self.hold_now = self.acquired_at
+        try:
+            self.handle = acquire_capture_hold(
+                execution_root=self.root,
+                candidate_commit=self.plan.declared_source_commit,
+                required_paths=(scope,),
+                actor="integration-coordinator",
+                ttl_seconds=HOLD_TTL_SECONDS,
+            )
+        finally:
+            self.hold_now = None
         self.clock.value = at
         self.clock.pending.clear()
         return self.handle
@@ -123,10 +130,11 @@ class _Harness:
             instant = self.clock.value
             if instant.tzinfo is None:
                 instant = self.acquired_at + timedelta(seconds=1)
-            self.handle.release(
-                outcome="synthetic_test_complete",
-                at=max(instant, self.acquired_at + timedelta(seconds=1)),
-            )
+            self.hold_now = max(instant, self.acquired_at + timedelta(seconds=1))
+            try:
+                release_capture_hold(self.handle)
+            finally:
+                self.hold_now = None
 
     def activate(self) -> recorder.RecordedTemporalEvidence:
         self.renew(ACTIVATED)
@@ -137,7 +145,7 @@ class _Harness:
             plan=self.plan,
             definitions=DEFINITIONS,
             policy=self.policy,
-            lease_handle=self.handle,
+            hold_handle=self.handle,
         )
 
     def inputs(
@@ -157,7 +165,7 @@ class _Harness:
             inputs=INPUTS,
             activation=activation,
             policy=self.policy,
-            lease_handle=self.handle,
+            hold_handle=self.handle,
         )
 
     def signal(
@@ -178,7 +186,7 @@ class _Harness:
             signal=content,
             inputs=inputs,
             policy=self.policy,
-            lease_handle=self.handle,
+            hold_handle=self.handle,
         )
 
     def verify(self, event: EventBinding) -> recorder.RecordedTemporalEvidence:
@@ -198,26 +206,18 @@ class _Harness:
 def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Harness]:
     root = tmp_path / "trading-2564-synthetic-recorder"
     _checkout(root)
-    guard = CheckoutLeaseGuard(
-        project_root=root,
-        runtime_root=root / "outputs/guard",
-        policy_path=recorder.SOURCE_ROOT / "config/architecture/arch_005_s4d_checkout_guard.yaml",
-        parallel_policy_path=(
-            recorder.SOURCE_ROOT / "config/architecture/arch_005_parallel_control_policy.yaml"
-        ),
-    )
+    root = root.resolve()
     store = root / "outputs/events"
     store.mkdir(parents=True)
     clock = _Clock()
     monkeypatch.setattr(recorder, "_utc_now", clock)
     # These explicit synthetic primitives affect only this clock runtime;
-    # global stdlib time, leases and store-lock timing remain real.
+    # global stdlib time and store-lock timing remain real.
     monkeypatch.setattr(host_clock, "_utc_ns", lambda: datetime_to_utc_ns(recorder._utc_now()))
     monkeypatch.setattr(host_clock, "_counter_ns", lambda: 0)
     instance = _Harness(
         root,
         store,
-        guard,
         RecordingPlan(
             "synthetic-v1",
             "FIVE_CANDIDATE",
@@ -227,6 +227,7 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Harnes
         recorder.load_time_evidence_policy(source_root=recorder.SOURCE_ROOT),
         clock,
     )
+    monkeypatch.setattr(capture_hold, "_now", instance.hold_clock)
     yield instance
     instance.release()
 
@@ -263,7 +264,7 @@ def _tamper(
 
 
 def _forbidden(*args: Any, **kwargs: Any) -> Any:
-    raise AssertionError("unexpected writer, clock, external call or active-lease dependency")
+    raise AssertionError("unexpected writer, clock, external call or live-hold dependency")
 
 
 @pytest.mark.parametrize("mode", ["live", "retained"])
@@ -386,29 +387,29 @@ def test_stalled_raw_utc_with_positive_counter_elapsed_is_not_misreported_as_rol
     assert coverage["expected_sessions"][0]["status"] == "NOT_RECORDED_BY_REVIEW_TIME"
 
 
-def test_derived_bound_reaches_lease_expiry_before_payload_even_when_raw_is_live(
+def test_derived_bound_reaches_hold_expiry_before_payload_even_when_raw_is_live(
     harness: _Harness, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     activation = harness.activate()
     inputs = harness.inputs(activation.binding)
     harness.renew(SIGNAL_TIME)
-    expiry = harness.acquired_at + timedelta(seconds=harness.guard.policy.lease_ttl_seconds)
+    expiry = harness.acquired_at + timedelta(seconds=HOLD_TTL_SECONDS)
     remaining = datetime_to_utc_ns(expiry) - datetime_to_utc_ns(SIGNAL_TIME)
     ticks = iter((0, 0, remaining, remaining))
     monkeypatch.setattr(host_clock, "_counter_ns", lambda: next(ticks))
-    with pytest.raises(TemporalEvidenceError, match="TEMPORAL_LEASE_BOUND_EXPIRED"):
+    with pytest.raises(TemporalEvidenceError, match="TEMPORAL_HOLD_BOUND_EXPIRED"):
         harness.signal(inputs.binding, at=SIGNAL_TIME, completed=SIGNAL_TIME)
     assert not list(harness.store.glob("streams/*/sessions/*/signal/intent.json"))
 
 
-def test_original_return_observation_replays_after_expiry_without_clock_or_lease(
+def test_original_return_observation_replays_after_expiry_without_clock_or_hold(
     harness: _Harness, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     activation = harness.activate()
     assert activation.return_clock_evidence is not None
     harness.release()
     with monkeypatch.context() as guard:
-        guard.setattr(recorder, "_live_lease", _forbidden)
+        guard.setattr(recorder, "_live_hold", _forbidden)
         guard.setattr(recorder, "_utc_now", _forbidden)
         guard.setattr(host_clock, "_utc_ns", _forbidden)
         guard.setattr(host_clock, "_counter_ns", _forbidden)
@@ -426,13 +427,13 @@ def test_original_return_observation_replays_after_expiry_without_clock_or_lease
             plan=harness.plan,
             definitions=DEFINITIONS,
             policy=harness.policy,
-            lease_handle=harness.handle,
+            hold_handle=harness.handle,
         )
         assert replay.return_clock_evidence is None
 
 
 @pytest.mark.parametrize("damage", ["no_extension", "provider", "extra_stage", "expiry"])
-def test_return_observation_must_extend_exact_child_prefix_and_original_lease(
+def test_return_observation_must_extend_exact_child_prefix_and_original_hold(
     harness: _Harness, damage: str
 ) -> None:
     activation = harness.activate()
@@ -448,7 +449,7 @@ def test_return_observation_must_extend_exact_child_prefix_and_original_lease(
             original, label="unbound_later_stage", sample=original.latest_sample
         )
     else:
-        expiry = harness.acquired_at + timedelta(seconds=harness.guard.policy.lease_ttl_seconds)
+        expiry = harness.acquired_at + timedelta(seconds=HOLD_TTL_SECONDS)
         duration = datetime_to_utc_ns(expiry) - frozen.anchor.utc_ns
         changed = append_clock_checkpoint(
             frozen,
@@ -457,7 +458,7 @@ def test_return_observation_must_extend_exact_child_prefix_and_original_lease(
         )
     with pytest.raises(
         ValueError,
-        match="HOST_CLOCK_EXTENSION_INVALID|TEMPORAL_RETURN_CLOCK_STAGE_INVALID|TEMPORAL_LEASE_BOUND_EXPIRED",
+        match="HOST_CLOCK_EXTENSION_INVALID|TEMPORAL_RETURN_CLOCK_STAGE_INVALID|TEMPORAL_HOLD_BOUND_EXPIRED",
     ):
         recorder.verify_recorder_return_evidence(
             store_root=harness.store,
@@ -485,99 +486,6 @@ def test_clock_rejection_retains_original_backward_raw_tuple_and_partial_payload
     slot = harness.store / f"streams/{harness.plan.stream_id}/sessions/{FEATURE}/signal"
     assert (slot / "payload_signal.bin").read_bytes() == SIGNAL.content
     assert not (slot / "completion.json").exists()
-
-
-def _legacy_activation_fixture(
-    harness: _Harness, *, elapsed_ns: int = 0
-) -> tuple[EventBinding, recorder.TimeEvidencePolicy]:
-    """Build explicitly synthetic original-v1 wire bytes; never enable a v1 writer."""
-    activation = harness.activate()
-    policy = recorder.load_time_evidence_policy(
-        source_root=recorder.SOURCE_ROOT, policy_path=recorder.LEGACY_POLICY_PATH
-    )
-    witness = _read_json(harness, activation.binding.relative_path)
-    assert HostClockEvidence.from_dict(witness["clock_evidence"]) == activation.clock_evidence
-    intent_relative = witness["intent"]["relative_path"]
-    intent = _read_json(harness, intent_relative)
-    semantic = intent["semantic"]
-    semantic["schema_version"] = "prospective_time_intent.v1"
-    semantic["policy_binding"] = policy.binding.to_dict()
-    del semantic["clock_policy_binding"]
-    intent_content = canonical_json_bytes(intent)
-    (harness.store / intent_relative).write_bytes(intent_content)
-    legacy = {
-        "schema_version": "prospective_time_completion.v1",
-        "intent": _binding(intent_relative, intent_content).to_dict(),
-        "started_at": witness["started_at"],
-        "payload_durable_completed_at": witness["payload_durable_completed_at"],
-        "monotonic_elapsed_ns": elapsed_ns,
-        "first_feature_session": witness["first_feature_session"],
-        "session_timing": None,
-        "temporal_status": "ACTIVATION_RECORDED",
-        "safety": dict(recorder._SAFETY_V1),
-    }
-    content = canonical_json_bytes(legacy)
-    (harness.store / activation.binding.relative_path).write_bytes(content)
-    return _binding(activation.binding.relative_path, content), policy
-
-
-@pytest.mark.parametrize("elapsed_ns,accepted", [(1_000_001_000, True), (1_000_001_001, False)])
-def test_v1_retained_inner_interval_math_is_not_reinterpreted_as_outer_envelope(
-    harness: _Harness, elapsed_ns: int, accepted: bool
-) -> None:
-    event, policy = _legacy_activation_fixture(harness, elapsed_ns=elapsed_ns)
-    if accepted:
-        original = recorder.verify_time_evidence(
-            store_root=harness.store, event=event, policy=policy
-        )
-        assert original.clock_evidence is None and original.return_clock_evidence is None
-        assert original.to_dict()["schema_version"] == "prospective_time_evidence.v1"
-        with pytest.raises(TemporalEvidenceError, match="TEMPORAL_LEGACY_CLOCK_BOUND_UNAVAILABLE"):
-            _ = original.admission_bound_ns
-    else:
-        with pytest.raises(TemporalEvidenceError, match="TEMPORAL_CLOCK_BACKWARD"):
-            recorder.verify_time_evidence(store_root=harness.store, event=event, policy=policy)
-
-
-def test_v1_is_readonly_and_cannot_be_mixed_into_new_v2_recording(
-    harness: _Harness, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    event, policy = _legacy_activation_fixture(harness)
-    retained_bytes = (harness.store / event.relative_path).read_bytes()
-    harness.release()
-    assert harness.handle is not None
-    with monkeypatch.context() as guard:
-        guard.setattr(recorder, "_utc_now", _forbidden)
-        guard.setattr(recorder, "_live_lease", _forbidden)
-        guard.setattr(host_clock, "_utc_ns", _forbidden)
-        replay = recorder.record_activation(
-            store_root=harness.store,
-            plan=harness.plan,
-            definitions=DEFINITIONS,
-            policy=policy,
-            lease_handle=harness.handle,
-        )
-        assert replay.binding == event and replay.return_clock_evidence is None
-        with pytest.raises(TemporalEvidenceError, match="TEMPORAL_LEGACY_RECORDING_DISABLED"):
-            recorder.record_activation(
-                store_root=harness.store,
-                plan=replace(harness.plan, plan_id="synthetic-legacy-new-v1"),
-                definitions=DEFINITIONS,
-                policy=policy,
-                lease_handle=harness.handle,
-            )
-        with pytest.raises(TemporalEvidenceError):
-            recorder.record_local_input_observation(
-                store_root=harness.store,
-                plan=harness.plan,
-                feature_session=FEATURE,
-                inputs=INPUTS,
-                activation=event,
-                policy=harness.policy,
-                lease_handle=harness.handle,
-            )
-    assert (harness.store / event.relative_path).read_bytes() == retained_bytes
-    assert not list(harness.store.glob("streams/*/sessions/*/inputs/intent.json"))
 
 
 @pytest.mark.parametrize("offset", [-1, 0])
@@ -701,7 +609,7 @@ def test_activation_is_singleton_and_definition_bytes_must_match_plan(
             plan=harness.plan,
             definitions=DEFINITIONS,
             policy=harness.policy,
-            lease_handle=harness.handle,
+            hold_handle=harness.handle,
         )
     assert replay == replace(activation, return_clock_evidence=None)
     assert replay.return_clock_evidence is None
@@ -711,7 +619,7 @@ def test_activation_is_singleton_and_definition_bytes_must_match_plan(
             plan=harness.plan,
             definitions=(PayloadMember("definition", b"changed synthetic definition"),),
             policy=harness.policy,
-            lease_handle=harness.handle,
+            hold_handle=harness.handle,
         )
     assert len(list(harness.store.glob("streams/*/activation/completion.json"))) == 1
 
@@ -900,7 +808,7 @@ def test_record_entry_rejects_wrong_predecessor_locator_before_reading_it(
                 inputs=INPUTS,
                 activation=previous,
                 policy=harness.policy,
-                lease_handle=harness.handle,
+                hold_handle=harness.handle,
             )
         else:
             harness.signal(previous, feature=date(2025, 3, 7))
@@ -961,7 +869,7 @@ def test_retained_witness_rejects_outer_duration_different_from_raw_counter_evid
         harness.verify(event)
 
 
-def test_post_payload_lease_check_cannot_hide_a_later_utc_rollback(
+def test_post_payload_hold_check_cannot_hide_a_later_utc_rollback(
     harness: _Harness,
 ) -> None:
     activation = harness.activate()
@@ -984,7 +892,7 @@ def test_post_payload_lease_check_cannot_hide_a_later_utc_rollback(
             signal=SIGNAL,
             inputs=inputs.binding,
             policy=harness.policy,
-            lease_handle=harness.handle,
+            hold_handle=harness.handle,
         )
     assert not list(harness.store.glob("streams/*/sessions/*/signal/completion.json"))
 
@@ -1002,7 +910,7 @@ def test_activation_first_feature_uses_completion_upper_bound_across_market_midn
         plan=harness.plan,
         definitions=DEFINITIONS,
         policy=harness.policy,
-        lease_handle=harness.handle,
+        hold_handle=harness.handle,
     )
     assert activation.first_feature_session == date(2025, 3, 7)
     assert activation.started_at == started
@@ -1034,14 +942,14 @@ def test_rehashed_session_clock_cannot_change_feature_effective_or_return_anchor
 @pytest.mark.parametrize(
     "mode,code",
     [
-        ("scope", "TEMPORAL_LEASE_BINDING_INVALID"),
-        ("expired", "TEMPORAL_LEASE_BINDING_INVALID"),
-        ("released", "TEMPORAL_LEASE_REQUIRED"),
-        ("checkout", "TEMPORAL_LEASE_CHECKOUT_MISMATCH"),
-        ("source_commit", "TEMPORAL_LEASE_BINDING_INVALID"),
+        ("scope", "CAPTURE_HOLD_SCOPE_INVALID"),
+        ("expired", "CAPTURE_HOLD_INACTIVE"),
+        ("released", "TEMPORAL_HOLD_REQUIRED"),
+        ("checkout", "TEMPORAL_HOLD_CHECKOUT_MISMATCH"),
+        ("source_commit", "CAPTURE_HOLD_RECORD_DRIFT"),
     ],
 )
-def test_real_s4d_lease_scope_expiry_release_checkout_and_source_are_enforced(
+def test_real_capture_hold_scope_expiry_release_checkout_and_source_are_enforced(
     harness: _Harness, mode: str, code: str
 ) -> None:
     harness.renew(ACTIVATED, scope="outputs/elsewhere" if mode == "scope" else "outputs/events")
@@ -1049,7 +957,7 @@ def test_real_s4d_lease_scope_expiry_release_checkout_and_source_are_enforced(
     store = harness.store
     at = ACTIVATED
     if mode == "expired":
-        at = harness.acquired_at + timedelta(seconds=harness.guard.policy.lease_ttl_seconds)
+        at = harness.acquired_at + timedelta(seconds=HOLD_TTL_SECONDS)
     elif mode == "released":
         harness.release()
     elif mode == "checkout":
@@ -1067,25 +975,25 @@ def test_real_s4d_lease_scope_expiry_release_checkout_and_source_are_enforced(
             plan=plan,
             definitions=DEFINITIONS,
             policy=harness.policy,
-            lease_handle=harness.handle,
+            hold_handle=harness.handle,
         )
     assert not list(store.glob("streams/*/activation/completion.json"))
 
 
-def test_lease_expiry_during_payload_write_preserves_incomplete_slot(
+def test_hold_expiry_during_payload_write_preserves_incomplete_slot(
     harness: _Harness,
 ) -> None:
     harness.renew(ACTIVATED)
-    deadline = harness.acquired_at + timedelta(seconds=harness.guard.policy.lease_ttl_seconds)
+    deadline = harness.acquired_at + timedelta(seconds=HOLD_TTL_SECONDS)
     harness.clock.event(deadline - timedelta(seconds=1), deadline)
     assert harness.handle is not None
-    with pytest.raises(TemporalEvidenceError, match="TEMPORAL_LEASE_BINDING_INVALID"):
+    with pytest.raises(TemporalEvidenceError, match="TEMPORAL_HOLD_BINDING_INVALID"):
         recorder.record_activation(
             store_root=harness.store,
             plan=harness.plan,
             definitions=DEFINITIONS,
             policy=harness.policy,
-            lease_handle=harness.handle,
+            hold_handle=harness.handle,
         )
     slot = harness.store / f"streams/{harness.plan.stream_id}/activation"
     assert (slot / "intent.json").is_file()
@@ -1119,7 +1027,7 @@ def test_two_threads_same_key_keep_one_event_and_completed_replay_is_idempotent(
                 signal=SIGNAL,
                 inputs=inputs.binding,
                 policy=harness.policy,
-                lease_handle=harness.handle,
+                hold_handle=harness.handle,
             )
         except TemporalEvidenceError as exc:
             return exc
@@ -1187,7 +1095,7 @@ def test_same_key_completed_while_waiting_for_store_lock_returns_original_timest
             signal=SIGNAL,
             inputs=inputs.binding,
             policy=harness.policy,
-            lease_handle=harness.handle,
+            hold_handle=harness.handle,
         )
 
     monkeypatch.setattr(recorder, "_utc_now", lambda: SIGNAL_TIME)
@@ -1205,7 +1113,7 @@ def test_same_key_completed_while_waiting_for_store_lock_returns_original_timest
     assert completion_writes == [original.binding.relative_path]
 
 
-@pytest.mark.parametrize("change", ["policy", "lease"])
+@pytest.mark.parametrize("change", ["policy", "hold"])
 def test_authority_change_between_payload_and_witness_prevents_completion(
     harness: _Harness, monkeypatch: pytest.MonkeyPatch, change: str
 ) -> None:
@@ -1213,7 +1121,7 @@ def test_authority_change_between_payload_and_witness_prevents_completion(
     inputs = harness.inputs(activation.binding)
     original_writer = recorder.write_contained_artifact_bytes
     original_policy_loader = recorder.load_time_evidence_policy
-    original_live_lease = recorder._live_lease
+    original_live_hold = recorder._live_hold
     payload_persisted = False
 
     def writer(**kwargs: Any) -> Any:
@@ -1229,18 +1137,18 @@ def test_authority_change_between_payload_and_witness_prevents_completion(
             return replace(policy, binding=replace(policy.binding, sha256="0" * 64))
         return policy
 
-    def live_lease(*args: Any, **kwargs: Any) -> Any:
+    def live_hold(*args: Any, **kwargs: Any) -> Any:
         if payload_persisted:
             harness.release()
-        return original_live_lease(*args, **kwargs)
+        return original_live_hold(*args, **kwargs)
 
     monkeypatch.setattr(recorder, "write_contained_artifact_bytes", writer)
     if change == "policy":
         monkeypatch.setattr(recorder, "load_time_evidence_policy", load_policy)
         code = "TEMPORAL_POLICY_CALENDAR_DRIFT"
     else:
-        monkeypatch.setattr(recorder, "_live_lease", live_lease)
-        code = "TEMPORAL_LEASE_REQUIRED"
+        monkeypatch.setattr(recorder, "_live_hold", live_hold)
+        code = "TEMPORAL_HOLD_REQUIRED"
     with pytest.raises(TemporalEvidenceError, match=code):
         harness.signal(inputs.binding)
     slot = harness.store / f"streams/{harness.plan.stream_id}/sessions/{FEATURE}/signal"
@@ -1248,7 +1156,7 @@ def test_authority_change_between_payload_and_witness_prevents_completion(
     assert not (slot / "completion.json").exists()
 
 
-def test_readonly_verifier_and_coverage_need_no_live_lease_writer_clock_or_network(
+def test_readonly_verifier_and_coverage_need_no_live_hold_writer_clock_or_network(
     harness: _Harness, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     import ai_trading_system.data.named_quality_execution as named_quality
@@ -1267,7 +1175,7 @@ def test_readonly_verifier_and_coverage_need_no_live_lease_writer_clock_or_netwo
         patch.setattr(recorder, "write_contained_artifact_bytes", _forbidden)
         patch.setattr(recorder, "exclusive_store_maintenance", _forbidden)
         patch.setattr(recorder, "_utc_now", _forbidden)
-        patch.setattr(recorder, "_live_lease", _forbidden)
+        patch.setattr(recorder, "_live_hold", _forbidden)
         patch.setattr(subprocess, "run", _forbidden)
         patch.setattr(socket, "create_connection", _forbidden)
         patch.setattr(socket.socket, "connect", _forbidden)
@@ -1319,10 +1227,10 @@ def test_coverage_distinguishes_not_due_deadline_gap_and_future_record(harness: 
 @pytest.mark.parametrize(
     "stage,fragment",
     [
-        ("inputs", "lease_event.json"),
-        ("inputs", "lease_intent.json"),
-        ("signal", "lease_event.json"),
-        ("signal", "lease_intent.json"),
+        ("inputs", "hold_record.json"),
+        ("inputs", "hold_check.json"),
+        ("signal", "hold_record.json"),
+        ("signal", "hold_check.json"),
         ("signal", "payload_signal.bin"),
     ],
 )
@@ -1356,3 +1264,17 @@ def test_later_legal_feature_recovers_after_canonical_gap(harness: _Harness) -> 
     assert signal.timing is not None
     assert signal.timing.effective_session == date(2025, 3, 11)
     assert signal.timing.first_return_end_session == date(2025, 3, 12)
+
+
+@pytest.mark.parametrize(
+    "policy_path",
+    [
+        "config/research/prospective_event_time_evidence_v1.yaml",
+        "config/research/prospective_event_time_evidence_v2.yaml",
+    ],
+)
+def test_previous_protocol_policies_are_neither_recordable_nor_verifiable(policy_path: str) -> None:
+    with pytest.raises(TemporalEvidenceError, match="TEMPORAL_POLICY_IDENTITY_MISMATCH"):
+        recorder.load_time_evidence_policy(
+            source_root=recorder.SOURCE_ROOT, policy_path=policy_path
+        )

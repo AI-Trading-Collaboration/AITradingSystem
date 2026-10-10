@@ -47,6 +47,7 @@ from ai_trading_system.contracts.prospective_event_time_evidence import (
 from ai_trading_system.data.capture_hold import (
     CHECK_SCHEMA,
     CaptureHold,
+    CaptureHoldError,
     covered,
     parse_hold_record,
     recheck_capture_hold,
@@ -341,7 +342,12 @@ def _check_snapshot(
 def _live_hold(
     handle: CaptureHold, root: Path, plan: RecordingPlan
 ) -> tuple[bytes, bytes, str, datetime]:
-    """Recheck the hold now; return its record bytes, the check bytes and the check time."""
+    """Recheck the hold now; return its record bytes, the check bytes and the recorder instant.
+
+    The instant is read from the recorder clock before the recheck, as the S4D check did, so the
+    recorder's own clock orders every later observation against this check.
+    """
+    at = _instant(_utc_now())
     if type(handle) is not CaptureHold or handle.released:
         _fail("TEMPORAL_HOLD_REQUIRED", "live capture hold required")
     if not root.is_relative_to(handle.root) or root == handle.root:
@@ -352,17 +358,15 @@ def _live_hold(
     for part in PurePosixPath(relative).parts:
         path = path / part
         _root(path)
-    check = recheck_capture_hold(
-        handle,
-        candidate_commit=plan.declared_source_commit,
-        required_paths=(relative,),
-    )
-    return (
-        handle.record_bytes,
-        canonical_json_bytes(check),
-        relative,
-        parse_utc_datetime(check["checked_at"]),
-    )
+    try:
+        check = recheck_capture_hold(
+            handle,
+            candidate_commit=plan.declared_source_commit,
+            required_paths=(relative,),
+        )
+    except CaptureHoldError as exc:
+        raise TemporalEvidenceError("TEMPORAL_HOLD_CHECK_FAILED", str(exc)) from exc
+    return handle.record_bytes, canonical_json_bytes(check), relative, at
 
 
 @dataclass(frozen=True)
