@@ -1,8 +1,8 @@
-"""Synthetic Composer runtime tests with real S4D/S3a immutable recording.
+"""Synthetic Composer runtime tests with a real capture hold and S3a immutable recording.
 
 The source bootstrap, Named DQ verifier/seal and model are explicit doubles.
 No test invokes canonical DQ, a real market source, provider or fitted model.
-The existing S3b clock/Git fixtures supply the same host-clock and lease boundary.
+The existing S3b clock/Git fixtures supply the same host-clock and capture-hold boundary.
 """
 
 from __future__ import annotations
@@ -56,20 +56,23 @@ from ai_trading_system.contracts.prospective_event_time_evidence import (
     canonical_json_bytes,
     strict_json_loads,
 )
+from ai_trading_system.data import capture_hold
+from ai_trading_system.data.capture_hold import (
+    CaptureHold,
+    acquire_capture_hold,
+    release_capture_hold,
+)
 from ai_trading_system.first_layer_composer_v2_current_session_producer import (
     CurrentSessionPreviewResult,
 )
 from ai_trading_system.first_layer_operational_forecast import _next_xnys_session, _xnys_sessions
-from ai_trading_system.platform.architecture.checkout_guard import (
-    CheckoutLeaseGuard,
-    CheckoutLeaseHandle,
-    CheckoutOperationClass,
-)
 
 ROOT = Path(__file__).resolve().parents[1]
 ACTIVATED = datetime(2026, 11, 25, 22, tzinfo=UTC)
 CAPTURED = datetime(2026, 11, 27, 18, 1, tzinfo=UTC)
 _CURRENT_POLICY = "config/research/first_layer_composer_v2_current_session_producer_v1.yaml"
+# Same six-hour window the S4D lease gave these fixtures.
+HOLD_TTL_SECONDS = 6 * 60 * 60
 
 
 @dataclass
@@ -77,26 +80,16 @@ class _Harness:
     root: Path
     request: ComposerCaptureRequest
     bootstrap: Any
-    lease: CheckoutLeaseHandle
+    hold: CaptureHold
     clock: _Clock
 
     def renew(self, at: datetime) -> None:
-        if not self.lease.released:
-            self.lease.release(outcome="synthetic_clock_transition", at=self.clock.value)
+        if not self.hold.released:
+            release_capture_hold(self.hold)
+        self.clock.value = at - timedelta(seconds=1)
+        self.hold = _acquire(self.root, self.request)
         self.clock.value = at
-        decision, lease = self.lease.guard.acquire(
-            intent_id="synthetic-composer-renewed",
-            task_id="TRADING-2560-SYNTHETIC",
-            thread_id="synthetic-composer-parent",
-            actor="integration-coordinator",
-            operation_class=CheckoutOperationClass.SHARED_MUTATION,
-            shared_paths=self.request.required_write_paths,
-            base_commit=self.request.candidate_commit,
-            now=at - timedelta(seconds=1),
-        )
-        assert decision.status == "PASS" and lease is not None
-        self.lease = lease
-        self.bootstrap.source_lease_id = lease.lease_id
+        self.bootstrap.source_hold_id = self.hold.hold_id
 
     def run(self, request: ComposerCaptureRequest | None = None) -> dict[str, Any]:
         request = request or self.request
@@ -110,10 +103,21 @@ class _Harness:
         return cast(dict[str, Any], strict_json_loads((self.root / relative).read_bytes()))
 
 
+def _acquire(root: Path, request: ComposerCaptureRequest) -> CaptureHold:
+    return acquire_capture_hold(
+        execution_root=root,
+        candidate_commit=request.candidate_commit,
+        required_paths=request.required_write_paths,
+        actor="integration-coordinator",
+        ttl_seconds=HOLD_TTL_SECONDS,
+    )
+
+
 @pytest.fixture
 def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Harness]:
     root = tmp_path / "synthetic-composer-parent"
     root.mkdir()
+    root = root.resolve()
     (root / ".gitignore").write_text("outputs/\n", encoding="utf-8")
     dependencies = (
         CAPTURE_POLICY_PATH,
@@ -123,8 +127,6 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Harnes
         CLOCK_POLICY_PATH,
     )
     for relative in (
-        "config/architecture/arch_005_s4d_checkout_guard.yaml",
-        "config/architecture/arch_005_parallel_control_policy.yaml",
         *dependencies,
         *recorder._CALENDAR_PATHS,
     ):
@@ -154,22 +156,10 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Harnes
     target = root / request.owner_review.relative_path
     target.parent.mkdir(parents=True)
     target.write_bytes(review.canonical_bytes)
-    guard = CheckoutLeaseGuard(
-        project_root=root,
-        policy_path=root / "config/architecture/arch_005_s4d_checkout_guard.yaml",
-        parallel_policy_path=root / "config/architecture/arch_005_parallel_control_policy.yaml",
-    )
-    decision, lease = guard.acquire(
-        intent_id="synthetic-composer-parent",
-        task_id="TRADING-2560-SYNTHETIC",
-        thread_id="synthetic-composer-parent",
-        actor="integration-coordinator",
-        operation_class=CheckoutOperationClass.SHARED_MUTATION,
-        shared_paths=request.required_write_paths,
-        base_commit=commit,
-        now=ACTIVATED - timedelta(minutes=1),
-    )
-    assert decision.status == "PASS" and lease is not None
+    clock = _Clock(ACTIVATED - timedelta(minutes=1))
+    monkeypatch.setattr(capture_hold, "_now", clock)
+    hold = _acquire(root, request)
+    clock.value = ACTIVATED
     identity = replace(
         synthetic_receipt().execution,
         execution_root=root.as_posix(),
@@ -182,12 +172,11 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Harnes
         process_id=os.getpid(),
         stable_identity_sha256=identity.stable_identity_sha256,
     )
-    clock = _Clock(ACTIVATED)
     bootstrap = SimpleNamespace(
         operation="composer-activate",
         context=context,
         canonical_dq_call_count=0,
-        source_lease_id=lease.lease_id,
+        source_hold_id=hold.hold_id,
         dependencies={
             path: SimpleNamespace(content=(root / path).read_bytes()) for path in dependencies
         },
@@ -203,12 +192,10 @@ def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Harnes
     monkeypatch.setattr(host_clock, "_counter_ns", lambda: 0)
     monkeypatch.setattr(capture, "dispatch_named_quality_child", _forbidden)
     monkeypatch.setattr(capture, "build_known_snapshot_preview", _forbidden)
-    value = _Harness(root, request, bootstrap, lease, clock)
+    value = _Harness(root, request, bootstrap, hold, clock)
     yield value
-    if not value.lease.released:
-        value.lease.release(
-            outcome="synthetic_composer_complete", at=clock.value + timedelta(seconds=1)
-        )
+    if not value.hold.released:
+        release_capture_hold(value.hold)
 
 
 def _forbidden(*args: Any, **kwargs: Any) -> Any:
@@ -342,7 +329,7 @@ def _parent_payload(
 ) -> dict[str, Any]:
     dq_request = request.named_dq_requests[COMPOSER_SCOPE_ORDER.index(segment)]
     return {
-        "schema_version": "named_data_quality_parent_dispatch.v1",
+        "schema_version": "named_data_quality_parent_dispatch.v2",
         "profile": "COMPOSER_PROSPECTIVE_PRODUCTION_PARENT",
         "status_semantics": "PARENT_ASSOCIATION_AND_PROCESS_OBSERVATION_ONLY",
         "status": status,
@@ -350,7 +337,7 @@ def _parent_payload(
         "candidate_commit": request.candidate_commit,
         "execution_root": request.roots.execution_root,
         "parent_pid": os.getpid(),
-        "source_lease_id": harness.lease.lease_id,
+        "source_hold_id": harness.hold.hold_id,
         "operation": "run",
         "parent_operation": "composer-" + request.operation,
         "request": {
@@ -718,10 +705,10 @@ def test_activation_uses_real_recording_and_replays_after_expiry_without_clock_o
     assert ack.acknowledgement_own_durability_time_claimed is False
     terminal = HostClockEvidence.from_dict(result["terminal_clock_evidence"])
     require_clock_evidence_extension(ack.clock_evidence, terminal)
-    harness.lease.release(outcome="synthetic_complete", at=harness.clock.value)
+    release_capture_hold(harness.hold)
     harness.clock.value = harness.request.manifest.expires_at + timedelta(days=1)
     for name in (
-        "restore_named_capture_lease",
+        "restore_capture_hold",
         "record_activation",
         "dispatch_named_quality_child",
         "_write",
@@ -814,7 +801,7 @@ def test_readiness_rejects_external_evidence_reparse_before_dispatch(
 
 
 @pytest.mark.parametrize("completed_segments", [1, 2])
-def test_readiness_rechecks_live_lease_before_each_segment_directory(
+def test_readiness_rechecks_live_hold_before_each_segment_directory(
     harness: _Harness, monkeypatch: pytest.MonkeyPatch, completed_segments: int
 ) -> None:
     request = _request("readiness", manifest=harness.request.manifest)
@@ -828,7 +815,7 @@ def test_readiness_rechecks_live_lease_before_each_segment_directory(
         observed.append(ordinal)
         result = _dispatch_result(harness, request, COMPOSER_SCOPE_ORDER[ordinal])
         if len(observed) == completed_segments:
-            harness.lease.release(outcome="synthetic_lease_revoked", at=harness.clock.value)
+            release_capture_hold(harness.hold)
         return result
 
     monkeypatch.setattr(capture, "dispatch_named_quality_child", child)
@@ -897,14 +884,14 @@ def test_incomplete_attempt_is_not_retried_after_expiry(
     harness: _Harness, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     assert capture._reserve(
-        harness.request, harness.bootstrap, harness.lease, _review(harness.request.manifest)
+        harness.request, harness.bootstrap, harness.hold, _review(harness.request.manifest)
     )
     original = (
         harness.root / harness.request.operation_relative_path / "attempt.json"
     ).read_bytes()
-    harness.lease.release(outcome="synthetic_partial", at=harness.clock.value)
+    release_capture_hold(harness.hold)
     harness.clock.value = harness.request.manifest.expires_at + timedelta(days=1)
-    monkeypatch.setattr(capture, "restore_named_capture_lease", _forbidden)
+    monkeypatch.setattr(capture, "restore_capture_hold", _forbidden)
     monkeypatch.setattr(capture, "record_activation", _forbidden)
     result = harness.run()
     assert result["status"] == "INCOMPLETE" and result["idempotent_replay"] is True
