@@ -1,4 +1,4 @@
-"""Synthetic parent tests with real S4D replay and contained immutable writers.
+"""Synthetic parent tests with a real capture hold and contained immutable writers.
 
 The process/context doubles do not prove Git-byte execution or canonical DQ.
 The coordinator's fresh-candidate E2E covers that separate runtime boundary.
@@ -36,17 +36,15 @@ from ai_trading_system.contracts.named_data_quality_execution import (
 from ai_trading_system.contracts.named_execution_context import NamedExecutionIdentity
 from ai_trading_system.contracts.prospective_event_time_evidence import (
     canonical_json_bytes,
-    parse_utc_datetime,
+)
+from ai_trading_system.data.capture_hold import (
+    CaptureHold,
+    acquire_capture_hold,
+    release_capture_hold,
 )
 from ai_trading_system.data.named_quality_execution import (
     NamedBootstrapAuthority,
     _verify_successful_run_dispatch,
-)
-from ai_trading_system.platform.architecture.checkout_guard import (
-    CheckoutGuardError,
-    CheckoutLeaseGuard,
-    CheckoutLeaseHandle,
-    CheckoutOperationClass,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -60,263 +58,39 @@ def _git(root: Path, *arguments: str) -> str:
 
 
 @dataclass
-class _LeaseFixture:
+class _HoldFixture:
     root: Path
     commit: str
-    handle: CheckoutLeaseHandle
+    handle: CaptureHold
 
 
 @pytest.fixture
-def leased(tmp_path: Path) -> Iterator[_LeaseFixture]:
+def held(tmp_path: Path) -> Iterator[_HoldFixture]:
     root = tmp_path / "synthetic-dispatch"
     root.mkdir()
+    root = root.resolve()
     (root / ".gitignore").write_text("outputs/\n", encoding="utf-8")
-    for relative in (
-        "config/architecture/arch_005_s4d_checkout_guard.yaml",
-        "config/architecture/arch_005_parallel_control_policy.yaml",
-    ):
-        target = root / relative
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes((ROOT / relative).read_bytes())
+    (root / "src").mkdir()
+    (root / "src" / "placeholder.py").write_text("VALUE = 1\n", encoding="utf-8")
     _git(root, "init", "-b", "synthetic-dispatch")
     _git(root, "config", "user.email", "dispatch@example.invalid")
     _git(root, "config", "user.name", "Synthetic Dispatch")
     _git(root, "config", "core.autocrlf", "false")
-    _git(root, "add", ".gitignore", "config")
+    _git(root, "add", ".gitignore", "src")
     _git(root, "commit", "-m", "synthetic dispatch fixture")
     commit = _git(root, "rev-parse", "HEAD")
-    guard = CheckoutLeaseGuard(
-        project_root=root,
-        policy_path=root / "config/architecture/arch_005_s4d_checkout_guard.yaml",
-        parallel_policy_path=root / "config/architecture/arch_005_parallel_control_policy.yaml",
-    )
-    decision, handle = guard.acquire(
-        intent_id="synthetic-named-dispatch",
-        task_id="TRADING-2564-SYNTHETIC",
-        thread_id="synthetic-dispatch",
+    handle = acquire_capture_hold(
+        execution_root=root,
+        candidate_commit=commit,
+        required_paths=("outputs/capture",),
         actor="integration-coordinator",
-        operation_class=CheckoutOperationClass.SHARED_MUTATION,
-        shared_paths=("outputs/capture",),
-        base_commit=commit,
+        ttl_seconds=3600,
     )
-    assert decision.status == "PASS" and handle is not None
     try:
-        yield _LeaseFixture(root, commit, handle)
+        yield _HoldFixture(root, commit, handle)
     finally:
         if not handle.released:
-            handle.release(outcome="synthetic_test_complete")
-
-
-def test_restore_and_recheck_replay_real_authority_without_new_events(
-    leased: _LeaseFixture,
-) -> None:
-    before = leased.handle.guard.replay().to_dict()
-    restored = dispatch.restore_named_capture_lease(
-        execution_root=leased.root,
-        source_lease_id=leased.handle.lease_id,
-        candidate_commit=leased.commit,
-        required_paths=(OUTPUT,),
-    )
-    assert type(restored) is CheckoutLeaseHandle
-    proof = dispatch.recheck_named_capture_lease(
-        restored,
-        candidate_commit=leased.commit,
-        required_paths=(OUTPUT,),
-    )
-    assert proof["status"] == "PASS"
-    assert proof["active_lease"]["lease_id"] == leased.handle.lease_id
-    assert not proof["lease_acquired_or_mutated"]
-    assert leased.handle.guard.replay().to_dict() == before
-
-
-def _retained_proof(leased: _LeaseFixture) -> dict[str, Any]:
-    return dispatch.recheck_named_capture_lease(
-        leased.handle, candidate_commit=leased.commit, required_paths=(OUTPUT,)
-    )
-
-
-def _verify_retained(leased: _LeaseFixture, proof: dict[str, Any], **changes: Any) -> None:
-    arguments = {
-        "execution_root": leased.root,
-        "candidate_commit": leased.commit,
-        "required_paths": (OUTPUT,),
-        "source_lease_id": leased.handle.lease_id,
-        "checked_at": parse_utc_datetime(proof["checked_at"]),
-        **changes,
-    }
-    dispatch.verify_retained_named_capture_proof(proof, **arguments)
-
-
-def test_retained_proof_survives_heartbeat_release_expiry_and_checkout_drift(
-    leased: _LeaseFixture, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    original = _retained_proof(leased)
-    leased.handle.heartbeat()
-    after_heartbeat = _retained_proof(leased)
-    assert original["lease_event_sha256"] != after_heartbeat["lease_event_sha256"]
-    leased.handle.release(outcome="synthetic_retained_proof_complete")
-    _git(leased.root, "commit", "--allow-empty", "-m", "later unrelated head")
-
-    def forbidden(*args: Any, **kwargs: Any) -> Any:
-        raise AssertionError("retained proof verification must not require current live authority")
-
-    monkeypatch.setattr(CheckoutLeaseGuard, "replay", forbidden)
-    monkeypatch.setattr(CheckoutLeaseGuard, "audit_worktree", forbidden)
-    monkeypatch.setattr(dispatch, "_now", lambda: datetime.now(UTC) + timedelta(days=3))
-    _verify_retained(leased, original)
-    _verify_retained(leased, after_heartbeat)
-    _verify_retained(leased, {**original, "schema_version": "named_dq_existing_parent_proof.v1"})
-    _verify_retained(leased, {**original, "schema_version": "prospective_capture_parent_proof.v1"})
-
-
-@pytest.mark.parametrize("member", ["lease_intent", "lease_event"])
-def test_retained_proof_rejects_structural_tamper_with_recomputed_raw_hash(
-    leased: _LeaseFixture, member: str
-) -> None:
-    proof = _retained_proof(leased)
-    if member == "lease_intent":
-        proof[member]["shared_paths"] = ["outputs"]
-    else:
-        proof[member]["actor"] = "unreviewed-actor"
-    content = canonical_json_bytes(proof[member])
-    proof[f"{member}_bytes_hex"] = content.hex()
-    proof[f"{member}_sha256"] = dispatch._sha(content)
-    with pytest.raises(ValueError):
-        _verify_retained(leased, proof)
-
-
-@pytest.mark.parametrize(
-    "mutation",
-    [
-        "intent_bytes",
-        "event_bytes",
-        "intent_hash",
-        "event_hash",
-        "intent_dto",
-        "event_dto",
-        "active_lease",
-        "replay_head",
-        "replay_event",
-        "replay_count",
-        "audit_head",
-        "audit_dirty",
-        "scope",
-        "checked_time",
-        "outer_root",
-        "safety",
-    ],
-)
-def test_retained_proof_rejects_tampered_original_authority(
-    leased: _LeaseFixture, mutation: str
-) -> None:
-    proof = _retained_proof(leased)
-    if mutation in {"intent_bytes", "event_bytes"}:
-        proof[f"lease_{mutation}_hex"] += "20"
-    elif mutation in {"intent_hash", "event_hash"}:
-        proof[f"lease_{mutation.replace('_hash', '')}_sha256"] = "0" * 64
-    elif mutation == "intent_dto":
-        proof["lease_intent"]["actor"] = "unreviewed"
-    elif mutation == "event_dto":
-        proof["lease_event"]["actor"] = "unreviewed"
-    elif mutation == "active_lease":
-        proof["active_lease"]["lease_id"] = "lease-forged"
-    elif mutation == "replay_head":
-        proof["lease_replay"]["lease_heads"] = []
-    elif mutation == "replay_event":
-        proof["lease_replay"]["head_event_ids"][0]["event_id"] = "lease-event-forged"
-    elif mutation == "replay_count":
-        proof["lease_replay"]["event_count"] = True
-    elif mutation == "audit_head":
-        proof["checkout_audit"]["audited_repository"]["head_commit"] = "a" * 40
-    elif mutation == "audit_dirty":
-        proof["checkout_audit"]["dirty_paths"] = ["config/unowned.yaml"]
-    elif mutation == "scope":
-        proof["required_paths"] = ["config/unowned.yaml"]
-    elif mutation == "checked_time":
-        proof["checked_at"] = proof["active_lease"]["expires_at"]
-    elif mutation == "outer_root":
-        proof["execution_root"] = leased.root.parent.as_posix()
-    elif mutation == "safety":
-        proof["lease_acquired_or_mutated"] = True
-    with pytest.raises(ValueError):
-        _verify_retained(leased, proof)
-
-
-@pytest.mark.parametrize("change", ["root", "candidate", "lease", "scope", "time", "naive"])
-def test_retained_proof_rejects_wrong_expected_identity_or_scope(
-    leased: _LeaseFixture, change: str
-) -> None:
-    proof = _retained_proof(leased)
-    changes: dict[str, dict[str, Any]] = {
-        "root": {"execution_root": leased.root.parent},
-        "candidate": {"candidate_commit": "f" * 40},
-        "lease": {"source_lease_id": "lease-wrong"},
-        "scope": {"required_paths": ("outputs/unclaimed",)},
-        "time": {"checked_at": parse_utc_datetime(proof["checked_at"]) + timedelta(microseconds=1)},
-        "naive": {"checked_at": datetime(2026, 1, 1)},
-    }
-    with pytest.raises(ValueError):
-        _verify_retained(leased, proof, **changes[change])
-
-
-@pytest.mark.parametrize(
-    "scope", ["outputs/capture-other", "config", "../outputs/capture", "outputs/capture/../x"]
-)
-def test_restore_rejects_unclaimed_or_noncanonical_scope(leased: _LeaseFixture, scope: str) -> None:
-    with pytest.raises(ValueError):
-        dispatch.restore_named_capture_lease(
-            execution_root=leased.root,
-            source_lease_id=leased.handle.lease_id,
-            candidate_commit=leased.commit,
-            required_paths=(scope,),
-        )
-
-
-@pytest.mark.parametrize(
-    "mutation", ["actor", "scope", "path", "released", "head", "expired", "extra_intent"]
-)
-def test_recheck_rejects_forged_stale_or_tampered_handle(
-    leased: _LeaseFixture,
-    monkeypatch: pytest.MonkeyPatch,
-    mutation: str,
-) -> None:
-    handle = leased.handle
-    intent_path = handle.decision.intent_path
-    original_intent_bytes: bytes | None = None
-    if mutation == "actor":
-        monkeypatch.setattr(handle, "actor", "unreviewed-actor")
-    elif mutation == "scope":
-        handle.decision = replace(
-            handle.decision, intent=replace(handle.decision.intent, shared_paths=("outputs",))
-        )
-    elif mutation == "path":
-        handle.decision = replace(handle.decision, intent_path=leased.root / "other.json")
-    elif mutation == "released":
-        handle.release(outcome="synthetic_test_complete")
-    elif mutation == "head":
-        _git(leased.root, "commit", "--allow-empty", "-m", "synthetic drift")
-    elif mutation == "expired":
-        monkeypatch.setattr(dispatch, "_now", lambda: datetime.now(UTC) + timedelta(days=1))
-    elif mutation == "extra_intent":
-        original_intent_bytes = intent_path.read_bytes()
-        raw = json.loads(original_intent_bytes)
-        intent_path.write_bytes(canonical_json_bytes({**raw, "caller_permission": True}))
-    try:
-        with pytest.raises((ValueError, RuntimeError)):
-            dispatch.recheck_named_capture_lease(
-                handle, candidate_commit=leased.commit, required_paths=(OUTPUT,)
-            )
-        if mutation == "extra_intent":
-            before_release = handle.guard.replay().to_dict()
-            with pytest.raises(CheckoutGuardError) as rejected_release:
-                handle.release(outcome="synthetic_tampered_intent")
-            assert rejected_release.value.code == "CHECKOUT_INTENT_INVALID"
-            assert not handle.released
-            assert handle.guard.replay().to_dict() == before_release
-    finally:
-        if original_intent_bytes is not None:
-            # Restore only this fresh synthetic fixture after proving release fails closed.
-            intent_path.write_bytes(original_intent_bytes)
+            release_capture_hold(handle)
 
 
 @pytest.mark.parametrize(
@@ -379,7 +153,7 @@ def test_actual_stdlib_child_preserves_pid_and_venv() -> None:
 
 @dataclass
 class _Harness:
-    leased: _LeaseFixture
+    held: _HoldFixture
     request: NamedDQExecutionRequest
     identity: NamedExecutionIdentity
     bootstrap: Any
@@ -391,38 +165,38 @@ class _Harness:
         return dispatch.dispatch_named_quality_child(
             self.request,
             bootstrap=cast(NamedBootstrapAuthority, self.bootstrap),
-            lease=self.leased.handle,
+            hold=self.held.handle,
             output_relative_path=OUTPUT,
         )
 
     def parent(self, result: dispatch.NamedQualityDispatchResult) -> dict[str, Any]:
         return cast(
             dict[str, Any],
-            json.loads((self.leased.root / result.parent_receipt.relative_path).read_bytes()),
+            json.loads((self.held.root / result.parent_receipt.relative_path).read_bytes()),
         )
 
 
 @pytest.fixture
-def harness(leased: _LeaseFixture, monkeypatch: pytest.MonkeyPatch) -> _Harness:
+def harness(held: _HoldFixture, monkeypatch: pytest.MonkeyPatch) -> _Harness:
     original = synthetic_receipt()
-    evidence = leased.root / "outputs/capture/evidence"
+    evidence = held.root / "outputs/capture/evidence"
     evidence.mkdir(parents=True)
     request = replace(
         original.request,
         roots=NamedDQRoots(
             original.request.roots.source_root,
             original.request.roots.publication_root,
-            leased.root.as_posix(),
+            held.root.as_posix(),
             evidence.as_posix(),
         ),
-        candidate_commit=leased.commit,
+        candidate_commit=held.commit,
         source_manifest_path=PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_PATH,
         source_manifest_sha256=PROSPECTIVE_FIVE_CANDIDATE_SOURCE_MANIFEST_SHA256,
     )
     identity = replace(
         original.execution,
-        execution_root=leased.root.as_posix(),
-        candidate_commit=leased.commit,
+        execution_root=held.root.as_posix(),
+        candidate_commit=held.commit,
         source_manifest_path=request.source_manifest_path,
         source_manifest_sha256=request.source_manifest_sha256,
     )
@@ -435,10 +209,10 @@ def harness(leased: _LeaseFixture, monkeypatch: pytest.MonkeyPatch) -> _Harness:
         context=context,
         operation="capture",
         canonical_dq_call_count=0,
-        source_lease_id=leased.handle.lease_id,
+        source_hold_id=held.handle.hold_id,
         assert_execution_unchanged=lambda **_: datetime.now(UTC).isoformat(),
     )
-    result = _Harness(leased, request, identity, bootstrap)
+    result = _Harness(held, request, identity, bootstrap)
     monkeypatch.setattr(dispatch, "require_named_execution_context", lambda: context)
 
     class Child:
@@ -468,7 +242,7 @@ def harness(leased: _LeaseFixture, monkeypatch: pytest.MonkeyPatch) -> _Harness:
                 checked_at=started,
                 ended_at=started,
                 execution_observation=NamedExecutionObservation(
-                    self.pid, leased.handle.lease_id, started, started, started
+                    self.pid, held.handle.hold_id, started, started, started
                 ),
                 data_quality_evidence=replace(original.data_quality_evidence, checked_at=started),
             )
@@ -478,11 +252,11 @@ def harness(leased: _LeaseFixture, monkeypatch: pytest.MonkeyPatch) -> _Harness:
             path.write_bytes(receipt.canonical_bytes)
             result.receipt = receipt
             child: dict[str, Any] = {
-                "schema_version": "named_data_quality_bootstrap_result.v1",
+                "schema_version": "named_data_quality_bootstrap_result.v2",
                 "status": "PASS",
                 "request_id": request.request_id,
                 "process_id": self.pid,
-                "source_lease_id": leased.handle.lease_id,
+                "source_hold_id": held.handle.hold_id,
                 "receipt_id": receipt.receipt_id,
                 "receipt_path": receipt_path,
                 "receipt_sha256": receipt.canonical_sha256,
@@ -502,7 +276,7 @@ def harness(leased: _LeaseFixture, monkeypatch: pytest.MonkeyPatch) -> _Harness:
                 "count_bool": ("canonical_dq_call_count", True),
                 "count_unknown": ("canonical_dq_call_count", None),
                 "wrong_pid": ("process_id", self.pid + 1),
-                "wrong_lease": ("source_lease_id", "other"),
+                "wrong_hold": ("source_hold_id", "other"),
                 "wrong_sha": ("receipt_sha256", "0" * 64),
                 "wrong_request": ("request_id", "other"),
                 "future_terminal": (
@@ -546,7 +320,7 @@ def test_strict_pass_creates_existing_v1_binding_and_is_consumable(harness: _Har
     assert harness.child_calls == 1 and harness.bootstrap.canonical_dq_call_count == 0
     assert result.run_dispatch_path is not None and harness.receipt is not None
     proof = NamedDQSuccessfulDispatchBinding.from_json_bytes(
-        (harness.leased.root / result.run_dispatch_path).read_bytes()
+        (harness.held.root / result.run_dispatch_path).read_bytes()
     )
     assert proof.parent_receipt == result.parent_receipt
     verified = _verify_successful_run_dispatch(
@@ -605,7 +379,7 @@ def test_terminal_writer_failure_retains_original_counter_and_only_completed_par
     assert observation.canonical_dq_call_count == 1
     assert observation.counter_observation_state == "KNOWN"
     assert observation.returncode == 0 and observation.terminal_state == "EXITED"
-    dispatch_store = harness.leased.root / OUTPUT
+    dispatch_store = harness.held.root / OUTPUT
     if filename == "successful_run_dispatch.json":
         assert observation.parent_receipt is not None
         raw = (dispatch_store / "parent_receipt.json").read_bytes()
@@ -641,8 +415,8 @@ def test_parent_write_exception_never_adopts_same_named_disk_bytes(
     observation = caught.value.terminal_observation
     assert observation is not None and observation.canonical_dq_call_count == 1
     assert observation.parent_receipt is None
-    assert (harness.leased.root / OUTPUT / "parent_receipt.json").is_file()
-    assert not (harness.leased.root / OUTPUT / "successful_run_dispatch.json").exists()
+    assert (harness.held.root / OUTPUT / "parent_receipt.json").is_file()
+    assert not (harness.held.root / OUTPUT / "successful_run_dispatch.json").exists()
     assert harness.child_calls == 1
 
 
@@ -661,7 +435,7 @@ def test_parent_write_exception_never_adopts_same_named_disk_bytes(
         "count_bool",
         "count_unknown",
         "wrong_pid",
-        "wrong_lease",
+        "wrong_hold",
         "wrong_sha",
         "wrong_request",
         "future_terminal",
@@ -701,7 +475,7 @@ def test_failure_preserves_bytes_and_never_mints_success_or_retries(
 
 
 @pytest.mark.parametrize(
-    "mutation", ["operation", "count", "context", "pid", "profile", "source", "lease"]
+    "mutation", ["operation", "count", "context", "pid", "profile", "source", "hold"]
 )
 def test_invalid_parent_preconditions_do_not_create_attempt(
     harness: _Harness, mutation: str
@@ -723,15 +497,15 @@ def test_invalid_parent_preconditions_do_not_create_attempt(
 
         harness.bootstrap.assert_execution_unchanged = changed
     else:
-        harness.bootstrap.source_lease_id = "other"
+        harness.bootstrap.source_hold_id = "other"
     with pytest.raises(ValueError):
         harness.run()
     assert harness.child_calls == 0
-    assert not (harness.leased.root / OUTPUT / "attempt.json").exists()
+    assert not (harness.held.root / OUTPUT / "attempt.json").exists()
 
 
 def test_incomplete_attempt_cannot_be_resumed(harness: _Harness) -> None:
-    store = harness.leased.root / OUTPUT
+    store = harness.held.root / OUTPUT
     store.mkdir(parents=True)
     (store / "attempt.json").write_bytes(b"retained incomplete original attempt")
     with pytest.raises(dispatch.NamedQualityDispatchError, match="ATTEMPT_ALREADY_EXISTS"):
@@ -765,21 +539,6 @@ def test_concurrent_same_key_has_exactly_one_dispatch(
         results = list(pool.map(lambda _: attempt(), range(2)))
     assert sorted(results) == ["NAMED_PARENT_ATTEMPT_ALREADY_EXISTS", "PASS"]
     assert harness.child_calls == 1
-
-
-@pytest.mark.parametrize("lease_id", ["../lease-one", "lease-../one", "", "lease-missing"])
-def test_restore_never_searches_for_a_replacement_lease(
-    leased: _LeaseFixture, lease_id: str
-) -> None:
-    before = leased.handle.guard.replay().to_dict()
-    with pytest.raises(ValueError):
-        dispatch.restore_named_capture_lease(
-            execution_root=leased.root,
-            source_lease_id=lease_id,
-            candidate_commit=leased.commit,
-            required_paths=(OUTPUT,),
-        )
-    assert leased.handle.guard.replay().to_dict() == before
 
 
 def test_production_module_never_imports_test_authority() -> None:
