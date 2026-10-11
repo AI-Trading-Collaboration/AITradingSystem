@@ -188,27 +188,112 @@ function shellWords(command: string): string[] {
   return command.match(/"[^"]*"|'[^']*'|\S+/g)?.map((word) => word.replace(/^['"]|['"]$/g, "")) ?? [];
 }
 
-function commandWord(command: string): string {
-  const words = shellWords(command);
+function commandName(word: string): string {
+  return basename(word.replace(/\\/g, "/")).toLowerCase().replace(/\.exe$/, "");
+}
+
+// Wrappers that run the next word as the command, with their options that take a separate value.
+const COMMAND_WRAPPERS = new Map<string, readonly string[]>([
+  ["env", ["-u", "--unset", "-C", "--chdir", "-S", "--split-string"]],
+  ["command", []],
+  ["exec", ["-a"]],
+  ["nohup", []],
+  ["time", ["-f", "--format", "-o", "--output"]],
+]);
+
+// Words of the command a segment runs, from the command word on: skips VAR=value assignments and wrappers
+// such as env together with their options. `command -v` / `command -V` only looks a name up and runs nothing.
+function invokedWords(segment: string): string[] {
+  const words = shellWords(segment);
   let index = 0;
   for (;;) {
     while (/^[A-Za-z_][A-Za-z0-9_]*=/.test(words[index] ?? "")) index += 1;
-    const word = words[index] ?? "";
-    if (!["env", "command", "exec", "nohup", "time"].includes(basename(word).toLowerCase())) return word;
+    const wrapper = commandName(words[index] ?? "");
+    const valueOptions = COMMAND_WRAPPERS.get(wrapper);
+    if (valueOptions === undefined) return words.slice(index);
     index += 1;
+    while ((words[index] ?? "").startsWith("-")) {
+      const option = words[index];
+      if (option === "--") {
+        index += 1;
+        break;
+      }
+      if (wrapper === "command" && /^-[A-Za-z]*[vV]/.test(option)) return [];
+      index += valueOptions.includes(option) ? 2 : 1;
+    }
   }
 }
 
+function commandWord(segment: string): string {
+  return invokedWords(segment)[0] ?? "";
+}
+
 function isShellInterpreter(word: string): boolean {
-  const name = basename(word.replace(/\\/g, "/")).toLowerCase().replace(/\.exe$/, "");
-  return ["bash", "sh", "zsh", "pwsh", "powershell"].includes(name);
+  return ["bash", "sh", "zsh", "pwsh", "powershell"].includes(commandName(word));
+}
+
+function isSystemPython(segment: string): boolean {
+  const word = commandWord(segment).replace(/\\/g, "/");
+  if (!/^(?:python(?:3(?:\.\d+)?)?|py|pytest)$/.test(commandName(word))) return false;
+  return !/(?:^|\/)\.venv\/(?:Scripts|bin)\/[^/]+$/i.test(word);
+}
+
+type Segment = { start: number; text: string };
+
+// Splits a command into simple commands at &&, ||, ;, |, |&, a background & and newlines outside quotes.
+// As in Git Bash, a backslash outside single quotes escapes the next character and # after a space starts a comment.
+function shellSegments(command: string): Segment[] {
+  const segments: Segment[] = [];
+  let start = 0;
+  let quote = "";
+  const push = (end: number): void => {
+    const text = command.slice(start, end).trim();
+    if (text !== "") segments.push({ start, text });
+  };
+  for (let i = 0; i < command.length; i++) {
+    const c = command[i];
+    if (c === "\\" && quote !== "'") {
+      i += 1;
+      continue;
+    }
+    if (quote !== "") {
+      if (c === quote) quote = "";
+      continue;
+    }
+    if (c === "'" || c === '"') {
+      quote = c;
+      continue;
+    }
+    if (c === "#" && (i === 0 || /\s/.test(command[i - 1]))) {
+      push(i);
+      const newline = command.indexOf("\n", i);
+      start = newline < 0 ? command.length : newline;
+      i = start - 1;
+      continue;
+    }
+    const next = command[i + 1];
+    const previous = command[i - 1];
+    let width = 0;
+    if (c === ";" || c === "\n" || c === "\r") width = 1;
+    else if (c === "|") width = next === "|" || next === "&" ? 2 : 1;
+    else if (c === "&" && next === "&") width = 2;
+    else if (c === "&" && previous !== ">" && previous !== "<" && next !== ">") width = 1;
+    if (width === 0) continue;
+    push(i);
+    start = i + width;
+    i = start - 1;
+  }
+  push(command.length);
+  return segments;
 }
 
 function heredocLineRunsShell(line: string, heredocIndex: number): boolean {
-  const before = line.slice(0, heredocIndex);
-  const start = Math.max(before.lastIndexOf("&&"), before.lastIndexOf("||"), before.lastIndexOf(";"), before.lastIndexOf("|"));
-  const fromHeredocSegment = line.slice(start < 0 ? 0 : start + (before[start] === "&" || before[start] === "|" ? 2 : 1));
-  return fromHeredocSegment.split(/&&|\|\||;|\|/).some((part) => isShellInterpreter(commandWord(part)));
+  const segments = shellSegments(line);
+  let first = 0;
+  segments.forEach((segment, index) => {
+    if (segment.start <= heredocIndex) first = index;
+  });
+  return segments.slice(first).some((segment) => isShellInterpreter(commandWord(segment.text)));
 }
 
 function stripHeredocBodies(command: string): string {
@@ -236,19 +321,65 @@ function stripHeredocBodies(command: string): string {
 }
 
 function splitShellCommands(command: string): string[] {
-  return stripHeredocBodies(command).split(/\s*(?:&&|\|\||;|\r?\n)\s*/).filter(Boolean);
+  return shellSegments(stripHeredocBodies(command)).map((segment) => segment.text);
+}
+
+// git options that come before the subcommand and take a separate value.
+const GIT_VALUE_OPTIONS = new Set(["-C", "-c", "--git-dir", "--work-tree", "--namespace", "--config-env"]);
+
+function gitInvocation(segment: string): { sub: string; args: string[] } | undefined {
+  const words = invokedWords(segment);
+  if (commandName(words[0] ?? "") !== "git") return undefined;
+  let index = 1;
+  while ((words[index] ?? "").startsWith("-")) index += GIT_VALUE_OPTIONS.has(words[index]) ? 2 : 1;
+  return { sub: words[index] ?? "", args: words.slice(index + 1) };
+}
+
+// Letters of the short options before "--"; skips the value after a group that ends in a value-taking letter.
+function shortFlags(args: readonly string[], valueLetters: string): string {
+  let flags = "";
+  for (let i = 0; i < args.length && args[i] !== "--"; i++) {
+    if (!/^-[A-Za-z]+$/.test(args[i])) continue;
+    flags += args[i].slice(1);
+    if (valueLetters.includes(args[i].slice(-1))) i += 1;
+  }
+  return flags;
+}
+
+function isExcludePathspec(spec: string): boolean {
+  return /^:(?:!|\^|\([^)]*\bexclude\b[^)]*\))/.test(spec);
+}
+
+// No pathspec, only exclude pathspecs, or a pathspec naming the whole tree.
+function coversWholeTree(pathspecs: readonly string[]): boolean {
+  return pathspecs.every(isExcludePathspec) || pathspecs.some((spec) => [".", "./", ":/", "*"].includes(spec));
 }
 
 function isWholeRepoGitCommand(part: string): boolean {
-  const trimmed = part.trim();
-  if (/\bgit\s+add\s+(?:[^;&|]*\s)?(?:-A\b|\.(?:\s|$))/.test(trimmed)) return true;
-  const statusOrDiff = /\bgit\s+(status|diff)\b/.exec(trimmed);
-  if (!statusOrDiff) return false;
-  const after = trimmed.slice((statusOrDiff.index ?? 0) + statusOrDiff[0].length).trim();
-  const marker = /(?:^|\s)--\s+(.+)$/.exec(after);
-  if (!marker) return true;
-  const pathspecs = marker[1].trim();
-  return pathspecs === "" || pathspecs === "." || /^\.\s+['"]?:\((?:literal,)?exclude\b/.test(pathspecs);
+  const git = gitInvocation(part);
+  if (git === undefined) return false;
+  const { sub, args } = git;
+  const marker = args.indexOf("--");
+  const pathspecs = marker < 0 ? undefined : args.slice(marker + 1);
+  if (sub === "add") {
+    return args.some((arg) => [".", "./", ":/", "*", "--all", "--update"].includes(arg)) || /[Au]/.test(shortFlags(args, ""));
+  }
+  if (sub === "commit") return args.includes("--all") || shortFlags(args, "mFCct").includes("a");
+  if (sub === "stash") {
+    // git stash [push|save] with no pathspec stashes every tracked change, excluded dirty files included.
+    if (args.length > 0 && !args[0].startsWith("-") && args[0] !== "push" && args[0] !== "save") return false;
+    return pathspecs === undefined || coversWholeTree(pathspecs);
+  }
+  if (sub === "status" || sub === "diff") return pathspecs === undefined || coversWholeTree(pathspecs);
+  return false;
+}
+
+// Drops git's global options (git -C <dir> push ... is still a push) so FORBIDDEN_COMMANDS also match them.
+function withoutGitGlobalOptions(command: string): string {
+  return command.replace(
+    /\bgit((?:\s+(?:(?:-C|-c|--git-dir|--work-tree|--namespace)(?:\s+|=)(?:"[^"]*"|'[^']*'|\S+)|--no-pager|--literal-pathspecs|--no-replace-objects|-P))+)(?=\s)/g,
+    "git",
+  );
 }
 
 function isAitsOpsCommand(part: string): boolean {
@@ -257,8 +388,9 @@ function isAitsOpsCommand(part: string): boolean {
 
 export function commandVerdict(root: string, command: string, state = makeState()): Verdict {
   if (state.locked) return { block: true, reason: LOCK_REASON, rule: "c-zone-lock", terminate: true };
+  const gitNormalized = withoutGitGlobalOptions(command);
   for (const [pattern, label] of FORBIDDEN_COMMANDS) {
-    if (pattern.test(command)) return { block: true, rule: label, reason: `blocked by AGENTS.md: ${label}` };
+    if (pattern.test(command) || pattern.test(gitNormalized)) return { block: true, rule: label, reason: `blocked by AGENTS.md: ${label}` };
   }
   const policy = readShipPolicy(root);
   for (const excluded of policy.exclusions) {
@@ -281,7 +413,7 @@ export function commandVerdict(root: string, command: string, state = makeState(
     return { block: true, rule: "run-artifact", reason: "run artifacts are written by guard, accept_checks, acceptance, or publish scripts" };
   }
   for (const part of splitShellCommands(command)) {
-    if (/^\s*(python|py|pytest)(\s|$)/i.test(part)) {
+    if (isSystemPython(part)) {
       return {
         block: true,
         rule: "system-python",
@@ -292,7 +424,8 @@ export function commandVerdict(root: string, command: string, state = makeState(
       return {
         block: true,
         rule: "git-whole-repo",
-        reason: "repository-wide git status/diff/add must include tree_clean_exclusions as exact exclude pathspecs",
+        reason:
+          "repository-wide git status/diff/add/stash must include tree_clean_exclusions as exact exclude pathspecs; instead of git commit -a, git add the changed files by path",
       };
     }
     if (isAitsOpsCommand(part) && !state.runbookRead) {

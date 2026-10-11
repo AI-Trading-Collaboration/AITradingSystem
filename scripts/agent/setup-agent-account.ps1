@@ -61,6 +61,34 @@ function Test-TwsPorts {
     if ($listeners) { $listeners | ForEach-Object { Add-Problem ("Port {0} is listening on {1}" -f $_.LocalPort,$_.LocalAddress) } } else { Write-Host "No TWS/Gateway ports are listening." }
 }
 
+function Get-BatchLogonHolders {
+    $tempDir = Join-Path ([IO.Path]::GetTempPath()) ("aits-rights-" + [Guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $tempDir | Out-Null
+    try {
+        $inf = Join-Path $tempDir "rights.inf"
+        secedit /export /cfg $inf /areas USER_RIGHTS /quiet | Out-Null; Check-Native "secedit export"
+        $line = Get-Content -LiteralPath $inf | Where-Object { $_ -match '^\s*SeBatchLogonRight\s*=' } | Select-Object -First 1
+        if (-not $line) { return @() }
+        return @(($line -replace '^\s*SeBatchLogonRight\s*=\s*', '').Split(',') | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    } finally { Remove-Item -LiteralPath $tempDir -Recurse -Force -ErrorAction SilentlyContinue }
+}
+
+function Grant-BatchLogonRight([string[]]$Holders, [string]$Sid) {
+    $tempDir = Join-Path ([IO.Path]::GetTempPath()) ("aits-rights-" + [Guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $tempDir | Out-Null
+    try {
+        $inf = Join-Path $tempDir "batch.inf"
+        $value = (@($Holders | Where-Object { $_ }) + "*$Sid") -join ","
+        Set-Content -LiteralPath $inf -Encoding Unicode -Value @("[Unicode]", "Unicode=yes", "[Version]", 'signature="$CHICAGO$"', "Revision=1", "[Privilege Rights]", "SeBatchLogonRight = $value")
+        secedit /configure /db (Join-Path $tempDir "batch.sdb") /cfg $inf /areas USER_RIGHTS /quiet | Out-Null
+        $code = $LASTEXITCODE
+    } finally { Remove-Item -LiteralPath $tempDir -Recurse -Force -ErrorAction SilentlyContinue }
+    $after = @(Get-BatchLogonHolders)
+    foreach ($holder in @($Holders) + "*$Sid") {
+        if ($after -notcontains $holder) { throw "SeBatchLogonRight is missing $holder after secedit (exit $code); check secpol.msc > Local Policies > User Rights Assignment > Log on as a batch job" }
+    }
+}
+
 function Invoke-CheckOnly {
     $ProblemList.Clear() | Out-Null
     Test-PathAcl $WorkRoot
@@ -111,6 +139,18 @@ if ((-not $userNow) -or (-not $userNow.PasswordRequired)) {
     if ($PSCmdlet.ShouldProcess($UserName, "require a password (net user /passwordreq:yes)")) { net user $UserName /passwordreq:yes | Out-Null; Check-Native "net user passwordreq" }
 }
 
+# The task logs on as a batch job; without this right schtasks /Run reports SUCCESS but the logon fails (0x80070569).
+$batchHolders = @()
+if (-not $preview) { $batchHolders = @(Get-BatchLogonHolders) }
+if (($batchHolders -contains "*$agentSid") -or ($batchHolders -contains $UserName) -or ($batchHolders -contains "$env:COMPUTERNAME\$UserName")) {
+    Write-Host "$UserName already has SeBatchLogonRight (log on as a batch job)."
+} elseif ($PSCmdlet.ShouldProcess($UserName, "grant SeBatchLogonRight (log on as a batch job), keeping the existing holders")) {
+    # secedit replaces the whole holder list, so only go ahead when the export clearly worked (Administrators hold this right by default).
+    if ($batchHolders -notcontains "*S-1-5-32-544") { throw ("SeBatchLogonRight holders could not be read safely (got: {0}). Add $UserName by hand in secpol.msc > Local Policies > User Rights Assignment > Log on as a batch job, then run setup again." -f ($batchHolders -join ",")) }
+    Grant-BatchLogonRight $batchHolders $agentSid
+    Write-Host "Granted SeBatchLogonRight to $UserName."
+}
+
 foreach ($dir in @($AgentClone, $AgentWorktree, $RunsRoot, (Split-Path -Parent $QueueFile))) {
     if ($PSCmdlet.ShouldProcess($dir, "create directory")) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
 }
@@ -150,9 +190,20 @@ $agentPython = Join-Path $AgentClone ".venv\Scripts\python.exe"
 if (-not (Test-Path -LiteralPath $agentPython)) {
     if ($PSCmdlet.ShouldProcess($AgentClone, "create venv")) { & $basePython -m venv (Join-Path $AgentClone ".venv"); Check-Native "python -m venv" }
 }
-if ($PSCmdlet.ShouldProcess($AgentClone, "install project and dev dependencies")) {
-    & $agentPython -m pip install -e $AgentClone; Check-Native "pip install -e"
-    & $agentPython -m pip install pytest pytest-xdist ruff pyyaml; Check-Native "pip install dev tools"
+# The agent venv mirrors the main venv package for package, so tests in the agent clone see the same versions.
+$sourcePython = Join-Path $Repo ".venv\Scripts\python.exe"
+$venvRequirements = Join-Path $RunsRoot "agent-venv-requirements.txt"
+if ($PSCmdlet.ShouldProcess($AgentClone, "install the main venv's packages at the same versions (pip freeze --exclude-editable of $sourcePython, saved to $venvRequirements), then the project in editable mode")) {
+    if (-not (Test-Path -LiteralPath $sourcePython -PathType Leaf)) { throw "Main venv python not found: $sourcePython" }
+    $frozen = @(& $sourcePython -m pip freeze --exclude-editable); Check-Native "pip freeze (main venv)"
+    [IO.File]::WriteAllLines($venvRequirements, [string[]]$frozen)
+    & $agentPython -m pip install -r $venvRequirements; Check-Native "pip install -r"
+    & $agentPython -m pip install --no-deps -e $AgentClone; Check-Native "pip install -e"
+    $agentFrozen = @(& $agentPython -m pip freeze --exclude-editable); Check-Native "pip freeze (agent venv)"
+    $venvDiff = @(Compare-Object $frozen $agentFrozen)
+    if ($venvDiff.Count -gt 0) {
+        Write-Warning ("Agent venv differs from the main venv: " + (($venvDiff | ForEach-Object { $_.SideIndicator + " " + $_.InputObject }) -join "; "))
+    } else { Write-Host ("Agent venv matches the main venv ({0} packages)." -f $frozen.Count) }
 }
 
 $blockedPython = $basePython

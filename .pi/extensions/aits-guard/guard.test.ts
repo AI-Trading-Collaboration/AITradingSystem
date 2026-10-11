@@ -546,6 +546,133 @@ test("split command segments are checked and recorded", async () => {
   assert.deepEqual(report.tests.map((item) => item.command), [command]);
 });
 
+function assertBlocked(root: string, rule: string, commands: readonly string[]): void {
+  for (const command of commands) {
+    const verdict = checkCommand(root, command);
+    assert.ok(verdict && "block" in verdict, `expected block: ${command}`);
+    assert.equal(verdict.rule, rule, command);
+  }
+}
+
+function assertPasses(root: string, commands: readonly string[]): void {
+  for (const command of commands) assert.equal(checkCommand(root, command), undefined, command);
+}
+
+test("segments split at pipes and background & but not inside quotes or comments", () => {
+  const root = fakeRepo();
+  assertBlocked(root, "system-python", [
+    "cat x | python -",
+    "cat x |python -",
+    "git log -1 | python -c 'print(1)'",
+    "sleep 1 & python -V",
+    "make 2>&1 |& python -",
+    'echo "a; b" ; python -V',
+  ]);
+  assertBlocked(root, "git-whole-repo", ['echo "x" && git status', "git status --short | head -5"]);
+  assertPasses(root, [
+    'git commit -m "fix; git status"',
+    'git commit -m "note: python -V && pytest"',
+    "echo 'a | python -V'",
+    'git commit -m "release notes\n\npython 3.11 is required"',
+    "git status --short -- . ':(exclude,literal)docs/research/private_pack.md' # it's clean; python -V",
+    '.venv/Scripts/python.exe -m pytest -k "a or b" -q 2>&1 | tail -5',
+    ".venv/Scripts/python.exe -m pytest tests/x.py -q &> pytest.log",
+  ]);
+});
+
+test("system python is found behind wrappers, assignments and paths; venv python passes", () => {
+  const root = fakeRepo();
+  assertBlocked(root, "system-python", [
+    "env -i python -V",
+    "env -u HOME python -V",
+    "env -- python -V",
+    "PYTHONPATH=src python -m x",
+    "command python -V",
+    "nohup python x.py",
+    "time -p python x.py",
+    "exec -a name python x.py",
+    "python3 -V",
+    "python3.11 -V",
+    "Python -V",
+    "/usr/bin/python3 -V",
+    "C:/Users/x/AppData/Local/Programs/Python/Python311/python.exe -V",
+    '"C:\\Program Files\\Python311\\python.exe" -V',
+  ]);
+  assertPasses(root, [
+    ".venv/Scripts/python.exe -V",
+    "./.venv/Scripts/python.exe -V",
+    ".venv\\Scripts\\python.exe -V",
+    "D:/Work/AITradingSystem_agent/.venv/Scripts/python.exe -V",
+    "env AITS_X=1 .venv/Scripts/python.exe -V",
+    ".venv/Scripts/pytest.exe -q",
+    "command -v python",
+    "which python",
+    "grep -n python README.md",
+  ]);
+});
+
+test("heredoc bodies stay checked when a shell runs them right after | or || or behind env options", () => {
+  const root = fakeRepo();
+  assertBlocked(root, "system-python", [
+    "cat x|bash <<'EOF'\npython -V\nEOF",
+    "false ||bash <<'EOF'\npython -V\nEOF",
+    "cat <<'EOF' |bash\npython -V\nEOF",
+    "env -i bash <<'EOF'\npython -V\nEOF",
+    "env -u X bash <<'EOF'\npython -V\nEOF",
+  ]);
+  assertPasses(root, ["cat > a.md <<'EOF'\nit's python -V; fine\nEOF", "cd x|| cat > a.py <<'PY'\nimport os\nPY"]);
+});
+
+test("whole-repo git rule covers global options, add -u, commit -a and stash", () => {
+  const root = fakeRepo();
+  assertBlocked(root, "git-whole-repo", [
+    "git -C . status",
+    "git --no-pager diff",
+    "git -c core.quotepath=off status --short",
+    "git add -u",
+    "git add --all",
+    "git add -Av",
+    'git commit -am "x"',
+    "git commit -a -m x",
+    "git commit --all -m x",
+    "git stash",
+    "git stash push -m wip",
+    "git stash -u",
+    "git status -- . src",
+    "git diff -- ':!docs/other.md'",
+    "git status -- . ':(exclude)docs/other.md'",
+  ]);
+  assertPasses(root, [
+    'git commit -m "add -a flag"',
+    'git commit -m "-a"',
+    "git commit -F msg.txt",
+    "git add src/a.py tests/test_a.py",
+    "git stash list",
+    "git stash pop",
+    "git stash show -p",
+    "git -C . status --short -- . ':(exclude,literal)docs/research/private_pack.md'",
+    "git stash push -- . ':(exclude,literal)docs/research/private_pack.md'",
+    "git diff --name-only main...HEAD -- . ':(exclude,literal)docs/research/private_pack.md'",
+    "git diff -- src/a.py",
+    "git log --stat",
+  ]);
+  const verdict = checkCommand(root, "git commit -am x");
+  assert.ok(verdict && "block" in verdict);
+  assert.match(verdict.reason, /git add the changed files by path/);
+});
+
+test("forbidden git commands are blocked behind git global options", () => {
+  const root = fakeRepo();
+  for (const [command, rule] of [
+    ["git -C D:/x push --force origin pi/x", "force-push"],
+    ["git --no-pager rebase main", "rebase"],
+    ["git -c user.name=x reset --hard HEAD", "git reset --hard"],
+    ["git -C . push origin main", "pushing main directly (use tools/gov008/ship.py)"],
+  ]) {
+    assertBlocked(root, rule, [command]);
+  }
+});
+
 test("test command recording ignores mentions and records real test invocations", async () => {
   const root = fakeRepo(true);
   const runToolResult = async (handlers: Record<string, (event: unknown, ctx?: unknown) => Promise<unknown>>, command: string) => {

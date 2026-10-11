@@ -141,6 +141,21 @@ owner_decision:DEVX-025:2026-10-11:agent_task_launch —— 2026-10-11 owner（B
 - `ship.py --dry-run` 显示本次为 B 区，不执行 gate 或发布。
 - 用真实配置 DryRun 时，云端任务单的模型参数是 `openai/gpt-6.1-sol:high`，本地默认值不追加 thinking 冒号。
 
+### 运行 09：守卫按引号切分命令，安装脚本补齐
+
+步骤：
+
+1. 守卫按引号和注释切分命令：`&&`、`||`、`;`、`|`、`|&`、后台 `&` 和换行都是分隔，引号和注释里的不算；heredoc 正文是否交给 shell 按所在的段判断，修正 `|` 或 `||` 后面紧跟 shell 时少看一个字符的问题。
+2. 找命令词时跳过 `env`、`exec`、`time` 的选项（如 `env -i`、`env -u X`），`command -v` 只查名字、不算执行；系统 Python 按命令词判断，覆盖 `python3`、带路径的系统 Python 和前置变量赋值，项目 `.venv` 下的解释器照常放行。
+3. 全仓库 git 规则认出 `git -C`、`-c`、`--no-pager` 等全局选项，并覆盖 `git add -u`/`--all`、`git commit -a` 和不带路径的 `git stash`；强推、rebase 等禁止命令带全局选项也拦。
+4. 安装脚本在受限账户缺少"作为批处理作业登录"权利时补上，保留现有持有者；agent venv 按主 venv 的 `pip freeze --exclude-editable` 逐包同版本安装，再以 editable 方式装项目，最后核对两边一致。只通过 `-WhatIf`/`-CheckOnly` 验证。
+
+验收：
+
+- 新旧测试通过；新增的守卫用例在修改前的守卫上失败。
+- `ship.py --dry-run` 显示本次为 B 区。
+- owner 以管理员身份重跑安装脚本后，agent venv 与主 venv 一致，在 agent clone 里复测 PR 测试。
+
 ## 4. 开放问题
 
 - 已决定：受限账户的手动计划任务作为 periodic-operations“不要注册第二个计划任务”规则的唯一例外（`owner_decision:DEVX-025:2026-10-11:manual_agent_task_exception`），运行 05 已登记。
@@ -163,6 +178,7 @@ owner_decision:DEVX-025:2026-10-11:agent_task_launch —— 2026-10-11 owner（B
 - 2026-10-11：运行 06 发布（main 17fda1f49）。1b 第一次运行安装脚本时，权限检查遇到 Program Files 目录上的"所有应用程序包"条目抛错，脚本在建账户之前停下，没有改动。运行 07：权限检查改为直接按 SID 读取。
 
 - 2026-10-11：运行 07 发布（main f328dd127）。1b：owner 以管理员身份完成安装脚本、封住 D 盘其他目录、以 aits-agent 用订阅登录 pi；只读核对确认 aits-agent 读不到 owner 的用户目录和 D 盘其他目录。核对时发现三处问题，都已处理：计划任务的启动请求返回 SUCCESS，但任务没有运行，原因是 aits-agent 没有"作为批处理作业登录"权利（任务日志错误 0x80070569），owner 已手工添加，任务已能以 aits-agent 启动；agent venv 的底层 Python 在 owner 的用户目录里，aits-agent 读不到，owner 已授权读取；pi 1.1.0 的订阅登录凭据在 `openai` 下面，模型要写 `openai/…`，不是 `openai-codex/…`。owner 授权 Claude 直接启动这个计划任务。GOV-008-01（第一次用本地模型）发布（main fa0ab59d6）。运行 08：模型配置和约定、pi 进程去掉 API key 环境变量、任务启动检查、notes 按解析值比较、安装脚本小修。
+- 2026-10-11：运行 08 发布（main ce82757b8）。1b 隔离核对（DEVX-025-iso01）通过：受限账户下守卫照常拦截，aits-agent 读不到 owner 的用户目录和 D 盘其他目录，写不进 owner 的仓库目录和 `.git`，底层 Python 出站被防火墙拦住。核对时在 agent clone 跑 PR 测试，有 263 个失败、43 个错误，原因是 agent venv 只装了项目和几个开发工具（36 个包，主 venv 有 92 个），版本也和主 venv 不同，不是隔离问题。运行 09：守卫按引号切分命令并修正几处规则，安装脚本补批处理登录权利、agent venv 与主 venv 同版本。
 
 ## 6. 运行影响边界
 

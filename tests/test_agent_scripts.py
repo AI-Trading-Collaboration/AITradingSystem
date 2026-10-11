@@ -531,6 +531,11 @@ def test_setup_whatif_shows_password_and_base_python_steps(tmp_path: Path) -> No
     assert done.returncode == 0, output
     assert "require a password" in output
     assert "grant aits-whatif-test read and execute on the base Python" in output
+    flattened = output.replace("\r", "").replace("\n", "")
+    assert "SeBatchLogonRight" in flattened
+    assert "already has SeBatchLogonRight" not in flattened
+    assert "--exclude-editable" in flattened
+    assert "Main venv python not found" not in flattened
     after = subprocess.run(["icacls", str(basepy)], check=True, text=True, capture_output=True, timeout=60).stdout
     assert after == before
 
