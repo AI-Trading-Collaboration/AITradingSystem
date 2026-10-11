@@ -40,7 +40,9 @@ function Test-PathAcl([string]$Path, [switch]$AlsoRead) {
 
 function Show-MachineSecretNames {
     $names = [Environment]::GetEnvironmentVariables("Machine").Keys | Where-Object { $_ -match "KEY|TOKEN|SECRET|PASSWORD" } | Sort-Object
-    if ($names) { Write-Host "Machine environment variables with secret-like names:"; $names | ForEach-Object { Write-Host "  $_" } } else { Write-Host "No machine environment variables with secret-like names." }
+    if ($names) {
+        Add-Problem ("Machine environment variables have secret-like names: " + ($names -join ", "))
+    } else { Write-Host "No machine environment variables with secret-like names." }
 }
 
 function Test-TwsPorts {
@@ -90,7 +92,8 @@ if (-not (Test-Path -LiteralPath (Join-Path $AgentClone ".git"))) {
     if ($PSCmdlet.ShouldProcess($AgentClone, "clone main from source .git")) { git clone --branch main $gitDir $AgentClone | Out-Null; Check-Native "git clone" }
 } else { Write-Host "Agent clone already exists; skipping clone." }
 
-foreach ($safe in @($Repo, $gitDir, $AgentClone, $AgentWorktree)) {
+foreach ($safeRaw in @($Repo, $gitDir, $AgentClone, $AgentWorktree)) {
+    $safe = $safeRaw.Replace('\\', '/')
     $existing = git config --system --get-all safe.directory 2>$null
     if ($existing -notcontains $safe) { git config --system --add safe.directory $safe; Check-Native "git safe.directory" }
 }
@@ -111,7 +114,8 @@ if ($PSCmdlet.ShouldProcess($AgentClone, "install project and dev dependencies")
 $blockedPython = $basePython
 if (-not (Get-NetFirewallRule -DisplayName "AITradingSystem agent base python no outbound" -ErrorAction SilentlyContinue)) {
     if ($PSCmdlet.ShouldProcess($blockedPython, "block outbound firewall rule for $UserName")) {
-        New-NetFirewallRule -DisplayName "AITradingSystem agent base python no outbound" -Direction Outbound -Program $blockedPython -LocalUser $agentSid -Action Block | Out-Null
+        $agentSddl = "D:(A;;CC;;;$agentSid)"
+        New-NetFirewallRule -DisplayName "AITradingSystem agent base python no outbound" -Direction Outbound -Program $blockedPython -LocalUser $agentSddl -Action Block | Out-Null
     }
 }
 Write-Host "1b manual validation required: HTTPS as $UserName should fail; HTTPS as your account should succeed."

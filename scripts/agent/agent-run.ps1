@@ -54,22 +54,28 @@ function Resolve-Pi([string]$Override) {
         $py = if ($env:PYTHON) { $env:PYTHON } else { "python" }
         return @{ FileName = $py; Prefix = @($cmdPath) }
     }
-    if ($ext -eq ".cmd" -or $ext -eq ".ps1") {
-        $text = Get-Content -LiteralPath $cmdPath -Raw -Encoding UTF8
-        $js = $null
-        $matches = [regex]::Matches($text, '"([^"]+\.js)"|([^\s"]+\.js)')
-        foreach ($m in $matches) {
-            $candidate = if ($m.Groups[1].Value) { $m.Groups[1].Value } else { $m.Groups[2].Value }
-            $candidate = $candidate -replace '%~dp0', (Split-Path -Parent $cmdPath) + '\'
-            $candidate = $candidate -replace '\$PSScriptRoot', (Split-Path -Parent $cmdPath)
-            if (-not [IO.Path]::IsPathRooted($candidate)) { $candidate = Join-Path (Split-Path -Parent $cmdPath) $candidate }
-            if (Test-Path -LiteralPath $candidate) { $js = (Resolve-Path -LiteralPath $candidate).Path; break }
+    if ($ext -eq ".cmd" -or $ext -eq ".ps1" -or $ext -eq "") {
+        $basedir = Split-Path -Parent $cmdPath
+        $js = Join-Path $basedir "pi-launcher.js"
+        if (-not (Test-Path -LiteralPath $js)) {
+            $text = Get-Content -LiteralPath $cmdPath -Raw -Encoding UTF8
+            $js = $null
+            $regexMatches = [regex]::Matches($text, '"([^"]+\.js)"|([^\s"]+\.js)')
+            foreach ($matchItem in $regexMatches) {
+                $candidate = if ($matchItem.Groups[1].Value) { $matchItem.Groups[1].Value } else { $matchItem.Groups[2].Value }
+                $candidate = $candidate.Replace('%~dp0', $basedir + '\')
+                $candidate = $candidate.Replace('%dp0%', $basedir + '\')
+                $candidate = $candidate.Replace('$basedir', $basedir)
+                $candidate = $candidate.Replace('$PSScriptRoot', $basedir)
+                if (-not [IO.Path]::IsPathRooted($candidate)) { $candidate = Join-Path $basedir $candidate }
+                if (Test-Path -LiteralPath $candidate) { $js = (Resolve-Path -LiteralPath $candidate).Path; break }
+            }
         }
-        if (-not $js) { throw "could not find pi JavaScript entry in $cmdPath" }
+        if (-not $js -or -not (Test-Path -LiteralPath $js)) { throw "could not find pi JavaScript entry in $cmdPath" }
         $node = (Get-Command node.exe -ErrorAction SilentlyContinue | Select-Object -First 1).Source
         if (-not $node) { $node = (Get-Command node -ErrorAction SilentlyContinue | Select-Object -First 1).Source }
         if (-not $node) { throw "node.exe not found for $cmdPath" }
-        return @{ FileName = $node; Prefix = @($js) }
+        return @{ FileName = $node; Prefix = @((Resolve-Path -LiteralPath $js).Path) }
     }
     return @{ FileName = $cmdPath; Prefix = @() }
 }
@@ -127,12 +133,17 @@ try {
     $psi.WorkingDirectory = (Resolve-Path -LiteralPath $Repo).Path
     $psi.UseShellExecute = $false
     $psi.RedirectStandardInput = $true; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
-    try { $psi.StandardInputEncoding = $Utf8NoBom } catch { }
-    @($psi.Environment.Keys) | Where-Object { $_ -like "AITS_PI_*" } | ForEach-Object { $psi.Environment.Remove($_) }
+    @($psi.Environment.Keys) | Where-Object { $_ -like "AITS_PI_*" } | ForEach-Object { [void]$psi.Environment.Remove($_) }
     foreach ($key in $AitsEnv.Keys) { $psi.Environment[$key] = [string]$AitsEnv[$key] }
-    $proc = [System.Diagnostics.Process]::Start($psi)
-    $proc.StandardInput.Close()
-    $proc.StandardInput.Dispose()
+    $oldInputEncoding = [Console]::InputEncoding
+    [Console]::InputEncoding = $Utf8NoBom
+    try {
+        $proc = [System.Diagnostics.Process]::Start($psi)
+        $proc.StandardInput.Close()
+        $proc.StandardInput.Dispose()
+    } finally {
+        [Console]::InputEncoding = $oldInputEncoding
+    }
     $outTask = $proc.StandardOutput.ReadToEndAsync(); $errTask = $proc.StandardError.ReadToEndAsync()
     $proc.WaitForExit()
     [IO.File]::WriteAllText($eventsPath, $outTask.Result, $Utf8NoBom)

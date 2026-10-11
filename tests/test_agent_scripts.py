@@ -111,9 +111,9 @@ if '--export' in sys.argv:
     if len(sys.argv) >= 4:
         open(sys.argv[-1], 'w', encoding='utf-8').write('<html></html>')
     sys.exit(0)
-stdin_data = sys.stdin.read()
+stdin_bytes = sys.stdin.buffer.read()
 if cap:
-    data = {'argv': sys.argv[1:], 'cwd': os.getcwd(), 'env': {k:v for k,v in os.environ.items() if k.startswith('AITS_PI_')}, 'stdin_empty': stdin_data in ('', '\ufeff'), 'stdin_repr': repr(stdin_data)}
+    data = {'argv': sys.argv[1:], 'cwd': os.getcwd(), 'env': {k:v for k,v in os.environ.items() if k.startswith('AITS_PI_')}, 'stdin_bytes': len(stdin_bytes)}
     open(cap, 'w', encoding='utf-8').write(json.dumps(data, ensure_ascii=False))
 stop = os.environ.get('FAKE_PI_STOP', 'stop')
 print(json.dumps({'type':'message_end','message':{'role':'assistant','stopReason':stop,'timestamp':'2026-10-11T00:00:00Z','provider':'fake','model':'fake','usage':{'cost':{'total':0}},'content':'ok'}}))
@@ -136,7 +136,7 @@ def test_agent_run_executes_fake_pi_direct_and_request_modes(tmp_path: Path) -> 
     assert json.loads(raw.decode("utf-8"))["stopReason"] == "stop"
     cap = json.loads(capture.read_text(encoding="utf-8"))
     assert f"@{prompt}" in cap["argv"] and "--session-dir" in cap["argv"]
-    assert "AITS_PI_OWNER_DECISION" not in cap["env"] and cap["stdin_empty"] is True
+    assert "AITS_PI_OWNER_DECISION" not in cap["env"] and cap["stdin_bytes"] == 0
 
     req = tmp_path / "request.json"; run2 = tmp_path / "run2"; capture2 = tmp_path / "cap2.json"; prompt2 = tmp_path / "p.md"; prompt2.write_text("x", encoding="utf-8")
     req.write_text(json.dumps({"repo": str(ROOT), "run_dir": str(run2), "attempt": "01", "purpose": "run", "prompt_file": str(prompt2), "model_id": "fake/model", "tools": "default", "session_file": None, "aits_env": {"AITS_PI_RUN": "DEVX"}}), encoding="utf-8")
@@ -144,6 +144,55 @@ def test_agent_run_executes_fake_pi_direct_and_request_modes(tmp_path: Path) -> 
     done = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/agent/agent-run.ps1"), "-RequestFile", str(req), "-PiCommand", str(fake)], text=True, capture_output=True, timeout=60, env=env)
     assert done.returncode == 0, done.stdout + done.stderr
     assert not req.exists() and (run2 / "attempts/01/request.json").exists()
+
+
+def write_fake_pi_wrappers(tmp_path: Path) -> tuple[Path, Path]:
+    (tmp_path / "pi.ps1").write_text(
+        """#!/usr/bin/env pwsh
+$basedir=Split-Path $MyInvocation.MyCommand.Definition -Parent
+$launcher=Join-Path $basedir "pi-launcher.js"
+if ($MyInvocation.ExpectingInput) {
+  $input | & node $launcher $args
+} else {
+  & node $launcher $args
+}
+exit $LASTEXITCODE
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "pi.cmd").write_text('@ECHO off\nnode "%~dp0pi-launcher.js" %*\n', encoding="utf-8")
+    (tmp_path / "pi-launcher.js").write_text(
+        """const fs = require('fs');
+const cap = process.env.FAKE_PI_CAPTURE;
+const chunks = [];
+process.stdin.on('data', c => chunks.push(c));
+process.stdin.on('end', () => {
+  if (cap) fs.writeFileSync(cap, JSON.stringify({argv: process.argv.slice(2), env: Object.fromEntries(Object.entries(process.env).filter(([k]) => k.startsWith('AITS_PI_'))), stdinBytes: Buffer.concat(chunks).length}));
+  console.log(JSON.stringify({type:'message_end', message:{role:'assistant', stopReason:'stop', timestamp:'2026-10-11T00:00:00Z', provider:'fake', model:'fake', usage:{cost:{total:0}}, content:'ok'}}));
+  console.log(JSON.stringify({type:'agent_settled', aborted:false}));
+});
+""",
+        encoding="utf-8",
+    )
+    return tmp_path / "pi.ps1", tmp_path / "pi.cmd"
+
+
+@pytest.mark.parametrize("wrapper_name", ["ps1", "cmd"])
+def test_agent_run_resolves_real_pi_wrappers_and_empty_stdin(tmp_path: Path, wrapper_name: str) -> None:
+    if shutil.which("node.exe") is None and shutil.which("node") is None:
+        raise pytest.skip.Exception("node is not installed; pi wrapper resolution smoke test needs node")
+    ps = powershell()
+    pi_ps1, pi_cmd = write_fake_pi_wrappers(tmp_path)
+    wrapper = pi_ps1 if wrapper_name == "ps1" else pi_cmd
+    prompt = tmp_path / "提示 文件.md"; prompt.write_text("hello", encoding="utf-8")
+    run_dir = tmp_path / f"run-{wrapper_name}"; capture = tmp_path / f"cap-{wrapper_name}.json"
+    env = os.environ.copy(); env["FAKE_PI_CAPTURE"] = str(capture); env["AITS_PI_OWNER_DECISION"] = "leak"
+    done = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/agent/agent-run.ps1"), "-Repo", str(ROOT), "-RunDir", str(run_dir), "-Attempt", "01", "-PromptFile", str(prompt), "-ModelId", "fake/model", "-PiCommand", str(wrapper)], text=True, capture_output=True, timeout=60, env=env)
+    assert done.returncode == 0, done.stdout + done.stderr
+    cap = json.loads(capture.read_text(encoding="utf-8"))
+    assert f"@{prompt}" in cap["argv"]
+    assert cap["stdinBytes"] == 0
+    assert "AITS_PI_OWNER_DECISION" not in cap["env"]
 
 
 def test_agent_run_model_error_returns_one(tmp_path: Path) -> None:

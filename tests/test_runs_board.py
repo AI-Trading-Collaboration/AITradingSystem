@@ -112,6 +112,11 @@ def test_blocked_from_events_partial_json_html_escape_and_empty(tmp_path: Path) 
     assert parsed["summary"]["blocked"] == 1
     assert "&lt;script&gt;" in runs_board.render([parsed], tmp_path)
 
+    real_shape = tmp_path / "DEVX-10-02"; brief(real_shape)
+    real_events = [{"type": "tool_execution_start", "toolCallId": "2", "toolName": "bash", "args": {"command": "git add -A"}}, {"type": "tool_execution_end", "toolCallId": "2", "toolName": "bash", "isError": True, "content": "blocked"}]
+    attempt(real_shape, extra_events=real_events)
+    assert runs_board.parse_run(real_shape)["summary"]["blocked"] == 1
+
 
 def test_bom_json_publish_failed_weekly_costs_and_first_pass_rate(tmp_path: Path) -> None:
     run = tmp_path / "DEVX-11-01"; brief(run); attempt(run)

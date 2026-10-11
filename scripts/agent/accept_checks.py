@@ -17,7 +17,7 @@ from typing import Any
 
 SCHEMA = "aits.pi.accept-checks/0"
 GATE_RE = re.compile(
-    r"^Gate:\s*zone=([ABC])\s+tree=([0-9a-f]+)\s+commands=\d+\s+seconds=[0-9.]+\s+PASS\s*$",
+    r"^Gate:\s*zone=([ABC])\s+tree=([0-9a-f]{7,40})\s+commands=\d+\s+seconds=[0-9.]+\s+PASS\s*$",
     re.I | re.M,
 )
 
