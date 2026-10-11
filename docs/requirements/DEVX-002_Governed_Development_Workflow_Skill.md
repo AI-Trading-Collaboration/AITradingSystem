@@ -169,6 +169,9 @@ Preflight 至少输出：
 - canonical skill由Git恢复；installed bundle可由canonical bundle重新部署；
 - 既有 `D:\Work\AITradingSystem_ops_runtime_20260725` 继续受 DEVX-001/OPS-070
   exit condition约束，本任务不得使用或删除；
+  - 2026-10-11 更正：该目录已按 `owner_decision:GOV-008:2026-10-11:workspace_cleanup_all` 在导出唯一文件后删除
+    （导出位置 `D:\Work\AITradingSystem_backups\2026-10-11\m3b_export\AITradingSystem_ops_runtime_20260725\`，记录见
+    GOV-008 需求文档第 22 节），本条约束已不再适用。
 - `production_effect=none`、`broker_action=none`。
 
 ## 7. 进度记录

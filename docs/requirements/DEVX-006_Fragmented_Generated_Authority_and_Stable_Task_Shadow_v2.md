@@ -119,6 +119,9 @@ Owner 要求在恢复策略线与 Atlas 两条线并行前，先串行解除 sha
 - 本波不创建额外临时worktree或clone；
 - 既有 `D:\Work\AITradingSystem_ops_runtime_20260725` 与
   `D:\Work\AITradingSystem_t2463_target_redesign` 不属于本任务，不读取、不修改、不清理；
+  - 2026-10-11 更正：这两个目录都已按 `owner_decision:GOV-008:2026-10-11:workspace_cleanup_all` 在导出唯一文件后删除
+    （导出位置 `D:\Work\AITradingSystem_backups\2026-10-11\m3b_export\` 下的同名子目录，记录见 GOV-008 需求文档第 22 节），
+    本条约束已不再适用。
 - known-unrelated `docs/research/growth_tilt_owner_diagnosis_pack.md` 继续由exact exclusion
   保护，本任务不读取、不修改。
 

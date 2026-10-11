@@ -90,6 +90,9 @@ cache schema、provider request、request budget、DQ/PIT 或生产行为。
 - pytest temporary directories由pytest回收；spawn children与queues必须由harness在每次
   run结束时回收；
 - 既有`D:\Work\AITradingSystem_ops_runtime_20260725`不得使用或删除；
+  - 2026-10-11 更正：该目录已按 `owner_decision:GOV-008:2026-10-11:workspace_cleanup_all` 在导出唯一文件后删除
+    （导出位置 `D:\Work\AITradingSystem_backups\2026-10-11\m3b_export\AITradingSystem_ops_runtime_20260725\`，记录见
+    GOV-008 需求文档第 22 节），上面"不得使用或删除"的约束已被该决定取代。
 - known-unrelated owner文档不得读取、修改或提交；
 - task branch在main集成和ordinary push验证后删除，可由main历史完整恢复。
 

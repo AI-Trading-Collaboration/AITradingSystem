@@ -1,10 +1,10 @@
 # GOV-008：研究需求驱动的治理重构（Research-First Governance Refactor）
 
-最后更新：2026-10-10（登记；P0 开始，P1 并行）
+最后更新：2026-10-11（迁移收尾 M1–M4 完成，任务 DONE，见第 23、24 节）；2026-10-10（登记；P0 开始，P1 并行）
 
 稳定任务 ID：`GOV-008_RESEARCH_FIRST_GOVERNANCE_REFACTOR`
 
-状态：`IN_PROGRESS`；优先级：`P0`（工程任务最高优先级，owner 2026-10-10 决定）
+状态：`DONE`（2026-10-11；此前为 `IN_PROGRESS`）；优先级：`P0`（工程任务最高优先级，owner 2026-10-10 决定）
 
 模式：`SINGLE_LANE`；production effect：`none`；broker action：`none`；`agent_harness=claude_code`
 
@@ -911,3 +911,89 @@ owner 于 14:03 JST 在项目对话中再次确认（"确认按 M3 清单全部�
   TRADING-2473 的需求文档与 `docs/system_flow.md` 也提到这个路径，一并留到 M4 复核。
 - `tree_clean_exclusions` 中的 `docs/research/growth_tilt_owner_diagnosis_pack.md` 在各 worktree 中都是已跟踪文件。按规则没有打开，
   也没有比对（M3a 同样排除）；它随 worktree 一起删除，各 HEAD 的版本在 bundle 中。
+
+## 23. 收尾（2026-10-11，GOV-008 DONE）
+
+**验收核对**（第 7 节退出条件与任务验收）：
+- PR 套件约 10 分钟（第 13 节与各次 ship 门禁）；只改文档的 A 区 ship 不跑测试，几十秒完成；
+- 发布机制、Atlas、ETF 候选链和休眠代码已删除（第 17、18 节）；
+- AGENTS.md 137 行，harness 中立；
+- pi 就绪清单逐项满足：
+  - 有一条 `ship` 命令；
+  - C 区改动要求 `Owner-Decision:` trailer；
+  - agent 路径上的 src/scripts/tools/.agents/.pi 中没有 Windows 注册表或租约依赖（只剩两个已删除脚本留下的被忽略 `.pyc`）；
+  - 任务库是 `tasks/*.yaml`；
+  - 日常调度确定：OPS-082 DONE。
+- 被挂起任务已重评（第 21、21.1 节）；
+- 只读核对时 main = origin/main，除 GOV-008 外没有 IN_PROGRESS 任务。
+
+**完成内容与 main 上的提交**：
+
+| 阶段 | 内容 | 提交 |
+|---|---|---|
+| P3 切换 | 新 AGENTS.md 生效、ship 策略强制 | `c149567ae`、`af6b76519` |
+| P5a / P4 块 1 | 任务库改为 `tasks/*.yaml`；删除发布机制、Atlas | `66c28b9b0`、`1646ae0b5` |
+| P4 块 2+3 | 退役 ETF 候选链，删除休眠研究代码 | `2eb7579e8` |
+| P5 | system_flow、运维手册重写 | `6dc531d22` |
+| P6 | skills 与 pi 守卫；收尾关闭机制类任务；pi 试跑与本地模型（DEVX-024） | `ba1746b63`、`ba41ae637`、`be3e7466a`…`74d484e51` |
+| M1 | OPS-082 确定性调度：包装脚本、代码摘要、终止恢复改为运行副本校验、运行副本切换 | `db240adac` |
+| M1 | 首次计划任务运行（as_of 2026-10-09 全链 PASS）记录，OPS-082 DONE | `5debf74ee` |
+| M2 | 第 21 节挂起任务按 owner 默认处置（第 21.1 节） | `4e48ff1e1` |
+| M3a | 备份与清单（`D:\Work\AITradingSystem_backups\2026-10-11\`，不在仓库中） | 无仓库提交 |
+| M3b | 工作区清理记录（第 22 节） | `310e7470a` |
+| M4 | 记录收尾与切换（本节与第 24 节） | 本节所在提交 |
+
+**M4 改动**：
+- OPS-082 notes 逐字补录提交 `74d484e51` 中的原 next_step 与 acceptance。
+- 用 as_of 2026-10-09 的计划任务运行证据，只读复核 OPS-070、072、073、074、079（未运行任何 aits 命令）：
+  - **OPS-074 → DONE**：score_daily 消费同日留存 capture，`provider_request_performed=false`。
+  - OPS-070、072、073 保持 VALIDATING：核心是失败路径行为，全链 PASS 运行没有触发。
+  - OPS-079 保持 VALIDATING：ordinary daily 不运行该执行器。
+  - 证据路径与"还差什么"写在各任务的 notes 和 next_step 开头。
+- `docs/artifact_catalog.md` 中"OPS-081 调度业务合同证据"一节改为历史说明，原文以引用块保留。
+- 在 ARCH-005M3、DEVX-001、DEVX-002、DEVX-006、TRADING-2473 的需求文档中，凡是约束 `AITradingSystem_ops_runtime_20260725`
+  （DEVX-006 与 TRADING-2473 还包括 `AITradingSystem_t2463_target_redesign`）的地方，都追加了带日期的更正；ARCH-005M3 与 DEVX-001
+  的任务记录也追加了更正。以下几处是纯历史叙述，未改：
+  - DEVX-001 第 174、294 行；
+  - OPS-070 的 2026-07-27 审计段；
+  - DEVX-015 第 5636 行；
+  - `docs/system_flow.md` 旧文附录（受测试按文本核对）。
+- OPS-080 notes 追加 M3 后的保全位置核对。
+
+**遗留**：
+1. **迁移后的研究策略讨论**（`owner_decision:GOV-008:2026-10-11:research_after_migration`）：
+   - 付费数据源的去留：2026-10-09 运行中 FMP/Marketstack 仍可用；
+   - 9/5–10/8 的日报缺口能否用 OPS-079 执行器补：按 OPS-079 规则只能形成隔离的历史证据 bundle，不能补造 strict PIT 或改写 canonical 历史；
+   - RISK-012、TRADING-2560、TRADING-2564 是否重启。
+2. **DEFERRED 项的复核时点**：在上述讨论时一并复核。涉及两组任务：
+   - 退出条件写为"工程迁移结束后复核/评估"的 DATA-GOV-002、ARCH-004、ARCH-004G5、ARCH-004H、GOV-006、OPS-080（第 21.1 节）；
+   - `research_after_migration` 下的 RISK-012、TRADING-2560、TRADING-2564。
+3. **仍 VALIDATING**：
+   - OPS-070、OPS-072、OPS-073：等一次真实失败场景的证据，或由 owner 决定接受 PR 套件中的失败路径测试作为证据；
+   - OPS-079：需要 owner 确认运行副本 bundle 引用、但仓库中没有记录的 `owner_decision:OPS-079:2026-09-06:first-four-reviewed-recovery`，
+     并用现行代码只读重跑 `validate-historical-gap`；
+   - 其余 VALIDATING 任务（CALIBRATION、TRADING 等）不在本次范围。
+4. **OPS-080 评估**：DEFERRED，保全位置（worktree、分支、ref、2026-09-23 与 2026-10-11 备份）保留到评估结束。
+
+**回退方式**：
+- 记录类提交：用普通提交 `git revert <SHA>` 回退，不改写历史。
+- 运行副本：按 `docs/operations/operations_runbook.md` 第 9.1 节切回上一个已 ship 的 SHA（工作区干净、无运行锁、fetch 后
+  `checkout --detach <SHA>`，不用 pull/reset/clean/stash）。
+- 计划任务 "AITradingSystem Daily Run" 可以禁用。Codex automation 不得与计划任务同时启用；如果要回到 Codex 调度，必须先禁用计划任务。
+- M3b 删除的目录只能从 bundle 与 `m3b_export\` 恢复；可重建缓存与 pytest basetemp 不可恢复。
+
+## 24. 迁移说明（2026-10-11 起的日常开发方式）
+
+- 日常开发默认用 pi：规则在 AGENTS.md，步骤在 `.agents/skills/`，`.pi/extensions/aits-guard` 拦截禁止的 git 操作。
+  守卫不是安全边界，真正的控制是 owner 决定与 ship 门禁。
+- 模型分工：
+  - 云端模型做判断类和大范围改动；
+  - 本地模型（`LocalModelService` 上的 Strata + Qwen3.8-Flash-Next，128k 上下文，第 20.7 节）做指令明确的小任务，例如只读检查、
+    记录类改动、按 skill 走 ship；
+  - 改动都要审阅，删除类改动做行为等价比较（第 20.3 节）。
+- C 区任务交互运行，或在提示里写明"确认被拒就停下汇报"。非交互运行时守卫的确认无法弹出，pi 曾改用 bash 绕开（第 20.8 节）。
+- pi 运行 Python 必须用项目 `.venv` 的解释器，不用系统 Python（第 20.4、20.7 节记录的偏差）。
+- `~/.codex` 下 4 个 Codex automation 全部保持暂停：`aitradingsystem`、`aitradingsystem-pit`、`gov-007-fence`、`trading-2564`。
+  日常调度只有 Windows 计划任务 "AITradingSystem Daily Run"（OPS-082）。
+- 发布一律用 `python tools/gov008/ship.py --repo . --execute --push`，先 `--dry-run`。需要进生产的改动 ship 后，按运维手册第 9.1 节
+  把运行副本切到新 SHA。

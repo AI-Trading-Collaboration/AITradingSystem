@@ -17,16 +17,24 @@
 报告登记（`config/report_registry.yaml`）中这些产物的条目标为 `visibility_policy: archived_optional`，报告索引只显示
 `ARCHIVED_*` 审计状态；Reader Brief 已停止读取这些已归档 ETF 候选链报告作为日读栏目，仅保留 owner 简报固定板块引用的 `etf_operations_health` 遗留摘要。前瞻采集产物里原来的 lease 字段在采集协议 v3 中改为 capture hold（`hold_record.json`/`hold_check.json`）。
 
-## OPS-081 调度业务合同证据
+## OPS-081 调度业务合同证据（历史说明，2026-10-11）
 
-`ops_scheduler_observation.v3` 由既有 `observe_codex_automation_config` 读取 actual TOML
-生成；`ops_scheduler_binding.v3` 由 deployment acceptance 发布在 active receipt 的 scheduler
-字段。二者包含 `ops_scheduler_business_contract.v1`：strict business projection 与 SHA-256。
-完整 config SHA/size/model/effort/updated_at 保留为观察审计；未来偏好变化不要求重写旧 receipt。
-Live verifier 必须重算业务 projection，并继续校验 canonical prompt/source、release、runtime
-和所有既有安全约束。未知字段、未登记 prompt 指令、target/root/cadence 漂移均 BLOCKED。
-旧 v2 不自动升级；新观察不允许混合/过期快照。工程校验 PASS 不等于 daily operational PASS；
-全部固定 `production_effect=none`，不生成或修改投资权重、broker/order/trading action。
+本节描述的产物已不再生成。生成它们的 `observe_codex_automation_config`（读取 Codex automation 的 TOML 生成
+`ops_scheduler_observation.v3`）与 deployment acceptance（把 `ops_scheduler_binding.v3` 写进 active receipt 的 scheduler
+字段）都已删除：命令在 GOV-008 解耦 L2 中删除，OPS-081 为 DROPPED。日常调度改为 OPS-082 的 Windows 计划任务
+（`scripts/ops/daily_scheduler_run.ps1`，见 `docs/operations/operations_runbook.md` 第 9 节），不再有 Codex automation 观察
+与 deployment receipt。`outputs/operations/deployment/**` 下已有的这类文件只作为历史证据，不需要也不应重新生成或重写。
+
+原文（2026-10-10 前，保留备查）：
+
+> `ops_scheduler_observation.v3` 由既有 `observe_codex_automation_config` 读取 actual TOML
+> 生成；`ops_scheduler_binding.v3` 由 deployment acceptance 发布在 active receipt 的 scheduler
+> 字段。二者包含 `ops_scheduler_business_contract.v1`：strict business projection 与 SHA-256。
+> 完整 config SHA/size/model/effort/updated_at 保留为观察审计；未来偏好变化不要求重写旧 receipt。
+> Live verifier 必须重算业务 projection，并继续校验 canonical prompt/source、release、runtime
+> 和所有既有安全约束。未知字段、未登记 prompt 指令、target/root/cadence 漂移均 BLOCKED。
+> 旧 v2 不自动升级；新观察不允许混合/过期快照。工程校验 PASS 不等于 daily operational PASS；
+> 全部固定 `production_effect=none`，不生成或修改投资权重、broker/order/trading action。
 
 本文从“看到一个文件后怎么理解它”的角度列出关键 artifact。`docs/system_flow.md` 仍是工程事实源；本文是阅读索引，帮助使用者判断 artifact 的生成者、上游输入、下游用途、production 影响和常见误解。
 

@@ -350,6 +350,10 @@ bundle SHA-256=`0bfe5f2929ccfbd7404e6c15a509acf3a751db916acdbdffca373eb8a13cdc21
 - `D:\Work\AITradingSystem_ops_runtime_20260725` 继续分类为 `KEEP_ACTIVE`，仍由
   OPS-070 下一合法 scheduler run、canonical evidence 迁移与 operational acceptance
   退出条件控制，本轮不得修改或删除。
+  - 2026-10-11 更正：该目录已按 `owner_decision:GOV-008:2026-10-11:workspace_cleanup_all` 在导出唯一文件后删除
+    （导出位置 `D:\Work\AITradingSystem_backups\2026-10-11\m3b_export\AITradingSystem_ops_runtime_20260725\`，记录见
+    GOV-008 需求文档第 22 节），`KEEP_ACTIVE` 分类与"不得修改或删除"已被该决定取代；本文第 174、294 行的同名路径是
+    当时的历史记录，不再代表现状。
 
 known-unrelated
 `docs/research/growth_tilt_owner_diagnosis_pack.md` 在所有 Git inspection 中使用 exact
