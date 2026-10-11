@@ -87,6 +87,7 @@ owner_decision:DEVX-025:2026-10-11:ship_gate_publish_split —— 2026-10-11 own
 - 2026-10-11：运行 03 把 ship 拆成 gate 和 publish，新增 publish.ps1（owner 账户只发布，运行 main 上的 ship.py，不跑测试）。
 - 2026-10-11：运行 03 验收退回一次（publish 不跑门禁的测试不成立、拒绝用例断言太宽、验收记录没有锁定 tree、读子进程输出可能卡住），执行 03 修正。
 - 2026-10-11：运行 04 小修：accept_checks 门禁核对对齐 ship.py、补认跳过写法；agent-run 运行中写 events.jsonl；守卫拦截写运行目录产物、heredoc 误拦和测试误记；publish.ps1 区分大小写。
+- 2026-10-11：运行 04 验收退回一次（守卫拆分命令的正则少了 `|`、测试记录用例不成立、heredoc 接收者判断和 `<<<`、skip 选项写法），执行 02 修正。
 
 ## 6. 运行影响边界
 

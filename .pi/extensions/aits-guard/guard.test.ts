@@ -82,6 +82,22 @@ function withEnv<T>(vars: Record<string, string | undefined>, fn: () => T): T {
   }
 }
 
+async function withEnvAsync<T>(vars: Record<string, string | undefined>, fn: () => Promise<T>): Promise<T> {
+  const old = new Map(Object.keys(vars).map((key) => [key, process.env[key]]));
+  for (const [key, value] of Object.entries(vars)) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
+  try {
+    return await fn();
+  } finally {
+    for (const [key, value] of old) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+}
+
 async function makeHandlers(root: string): Promise<Record<string, (event: unknown, ctx?: unknown) => Promise<unknown>>> {
   const handlers: Record<string, (event: unknown, ctx?: unknown) => Promise<unknown>> = {};
   guard({ on: (name: string, h: (event: unknown, ctx: unknown) => Promise<unknown>) => ((handlers[name] = h), () => undefined) } as never);
@@ -439,7 +455,6 @@ test("extension handler blocks, asks, handles no UI denial, and records rules", 
   assert.equal(((await handlers.tool_call(writeAfterLock, ctx(root))) as { block: boolean }).block, true);
 });
 
-
 test("run directory artifacts cannot be written by tools or commands", () => {
   const root = fakeRepo();
   const runDir = mkdtempSync(join(tmpdir(), "aits-run-artifacts-"));
@@ -488,12 +503,16 @@ test("run directory artifacts cannot be written by tools or commands", () => {
 test("heredoc bodies are ignored except when executed by a shell", () => {
   const root = fakeRepo();
   assert.equal(checkCommand(root, "cat > x.py <<'PY'\nprint(1)\nPY"), undefined);
+  assert.equal(checkCommand(root, "cd x && cat > a.py <<'PY'\nprint(1)\nPY"), undefined);
   assert.equal(checkCommand(root, ".venv/Scripts/python.exe - <<'PY'\nimport sys\nPY"), undefined);
   assert.equal(checkCommand(root, "cat > x.py <<-EOF\nprint(1)\n\tEOF"), undefined);
   for (const command of [
     "python - <<'PY'\nPY",
     "cat <<'EOF'\nx\nEOF\npython -V",
     "bash <<'EOF'\npython -V\nEOF",
+    "cd x && bash <<'EOF'\npython -V\nEOF",
+    "cat <<'EOF' | bash\npython -V\nEOF",
+    "cat <<<'x'\npython -V",
   ]) {
     const verdict = checkCommand(root, command);
     assert.ok(verdict && "block" in verdict, command);
@@ -501,30 +520,62 @@ test("heredoc bodies are ignored except when executed by a shell", () => {
   }
 });
 
+test("split command segments are checked and recorded", async () => {
+  const root = fakeRepo(true);
+  for (const [command, rule] of [
+    ["cd x; python -V", "system-python"],
+    ["true || python -V", "system-python"],
+    ["cd x; git status", "git-whole-repo"],
+  ]) {
+    const verdict = checkCommand(root, command);
+    assert.ok(verdict && "block" in verdict, command);
+    assert.equal(verdict.rule, rule);
+  }
+  const handlers = await makeHandlers(root);
+  const command = "cd repo; .venv/Scripts/python.exe -m pytest tests/x.py -q";
+  await handlers.tool_result({ type: "tool_result", toolCallId: "seg", toolName: "bash", input: { command }, content: [{ type: "text", text: "ok" }], isError: false }, ctx(root));
+  const runDir = mkdtempSync(join(tmpdir(), "aits-segment-report-"));
+  await withEnvAsync({ AITS_PI_RUN_DIR: runDir }, async () => {
+    await handlers.agent_settled({ type: "agent_settled" }, ctx(root));
+  });
+  const report = JSON.parse(readFileSync(join(runDir, "report.json"), "utf8")) as { tests: { command: string }[] };
+  assert.deepEqual(report.tests.map((item) => item.command), [command]);
+});
+
 test("test command recording ignores mentions and records real test invocations", async () => {
   const root = fakeRepo(true);
-  const handlers = await makeHandlers(root);
-  const stateReport = async (command: string) => {
+  const runToolResult = async (handlers: Record<string, (event: unknown, ctx?: unknown) => Promise<unknown>>, command: string) => {
     await handlers.tool_result({ type: "tool_result", toolCallId: command, toolName: "bash", input: { command }, content: [{ type: "text", text: "ok" }], isError: false }, ctx(root));
   };
-  await stateReport("cat >> tests/test_x.py <<'PY'\nimport pytest\nPY");
-  await stateReport("grep pytest tests/x.py");
-  await stateReport("echo pytest");
-  let report = buildReport(root, makeState()) as { tests: unknown[] };
-  assert.equal(report.tests.length, 0);
+
+  const handlers = await makeHandlers(root);
+  for (const command of [
+    "cat >> tests/test_x.py <<'PY'\nimport pytest\nPY",
+    "grep pytest tests/x.py",
+    "echo pytest",
+    "Get-Content -LiteralPath 'C:/Users/x/AppData/Local/Temp/pytest-of-JACK/pytest-1/run/stderr.log' -Raw",
+    ".venv/Scripts/python.exe -c \"from pathlib import Path; print(Path(r'C:/Temp/pytest-of-JACK/x.log').exists())\"",
+  ]) {
+    await runToolResult(handlers, command);
+  }
+  const ignoredRunDir = mkdtempSync(join(tmpdir(), "aits-report-ignored-"));
+  await withEnvAsync({ AITS_PI_RUN_DIR: ignoredRunDir }, async () => {
+    await handlers.agent_settled({ type: "agent_settled" }, ctx(root));
+  });
+  let report = JSON.parse(readFileSync(join(ignoredRunDir, "report.json"), "utf8")) as { tests: { command: string }[] };
+  assert.deepEqual(report.tests, []);
 
   const handlers2 = await makeHandlers(root);
-  for (const command of [
+  const commands = [
     ".venv/Scripts/python.exe -m pytest tests/x.py -q",
     "cd repo && .venv/Scripts/python.exe -m ruff check x",
     "node --test .pi/extensions/aits-guard/guard.test.ts",
-  ]) {
-    await handlers2.tool_result({ type: "tool_result", toolCallId: command, toolName: "bash", input: { command }, content: [{ type: "text", text: "ok" }], isError: false }, ctx(root));
-  }
+  ];
+  for (const command of commands) await runToolResult(handlers2, command);
   const runDir = mkdtempSync(join(tmpdir(), "aits-report-tests-"));
-  withEnv({ AITS_PI_RUN_DIR: runDir }, async () => {
+  await withEnvAsync({ AITS_PI_RUN_DIR: runDir }, async () => {
     await handlers2.agent_settled({ type: "agent_settled" }, ctx(root));
   });
-  report = JSON.parse(readFileSync(join(runDir, "report.json"), "utf8")) as { tests: unknown[] };
-  assert.equal(report.tests.length, 3);
+  report = JSON.parse(readFileSync(join(runDir, "report.json"), "utf8")) as { tests: { command: string }[] };
+  assert.deepEqual(report.tests.map((item) => item.command), commands);
 });

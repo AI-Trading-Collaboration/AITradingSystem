@@ -138,7 +138,7 @@ function isRunArtifactPath(target: string, cwd = process.cwd()): boolean {
   return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
 }
 
-function hasRunArtifactWrite(command: string, cwd = process.cwd()): boolean {
+function hasRunArtifactWrite(command: string): boolean {
   const runDir = process.env.AITS_PI_RUN_DIR;
   if (!runDir) return false;
   const runPrefix = normalizedAbsolute(runDir).replace(/\/+$/, "");
@@ -185,7 +185,7 @@ function hasAllExclusions(command: string, exclusions: readonly string[]): boole
 }
 
 function firstShellWord(command: string): string {
-  const match = /^\s*(?:env\s+)?((?:["'][^"']+["']|\S)+)/.exec(command);
+  const match = /^\s*(?:[A-Za-z_][A-Za-z0-9_]*=[^\s]+\s+)*((?:["'][^"']+["']|\S)+)/.exec(command);
   return (match?.[1] ?? "").replace(/^['"]|['"]$/g, "");
 }
 
@@ -194,17 +194,27 @@ function isShellInterpreter(word: string): boolean {
   return ["bash", "sh", "zsh", "pwsh", "powershell"].includes(name);
 }
 
+function heredocReceiver(line: string, heredocIndex: number): string {
+  const before = line.slice(0, heredocIndex);
+  const pieces = before.split(/&&|\|\||;|\|/);
+  return firstShellWord(pieces[pieces.length - 1] ?? "");
+}
+
+function heredocPipesToShell(line: string, heredocEnd: number): boolean {
+  return /^\s*\|\s*(?:[A-Za-z_][A-Za-z0-9_]*=[^\s]+\s+)*(bash|sh|zsh|pwsh|powershell)(?:\.exe)?(?:\s|$)/i.test(line.slice(heredocEnd));
+}
+
 function stripHeredocBodies(command: string): string {
-  const receiver = firstShellWord(command);
-  if (isShellInterpreter(receiver)) return command;
   const lines = command.split(/\r?\n/);
   const out: string[] = [];
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     out.push(line);
-    const matches = [...line.matchAll(/<<(-)?\s*(?!<)(?:'([^']+)'|"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))/g)];
+    const matches = [...line.matchAll(/(?<!<)<<(-)?\s*(?!<)(?:'([^']+)'|"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))/g)];
     if (matches.length === 0) continue;
     for (const match of matches) {
+      const index = match.index ?? 0;
+      if (isShellInterpreter(heredocReceiver(line, index)) || heredocPipesToShell(line, index + match[0].length)) continue;
       const allowTabs = match[1] === "-";
       const marker = match[2] ?? match[3] ?? match[4] ?? "";
       i += 1;
@@ -219,9 +229,8 @@ function stripHeredocBodies(command: string): string {
 }
 
 function splitShellCommands(command: string): string[] {
-  return stripHeredocBodies(command).split(/\s*(?:&&|\|\|;|\r?\n)\s*/).filter(Boolean);
+  return stripHeredocBodies(command).split(/\s*(?:&&|\|\||;|\r?\n)\s*/).filter(Boolean);
 }
-
 
 function isWholeRepoGitCommand(part: string): boolean {
   const trimmed = part.trim();
@@ -261,7 +270,7 @@ export function commandVerdict(root: string, command: string, state = makeState(
       };
     }
   }
-  if (hasRunArtifactWrite(command, root)) {
+  if (hasRunArtifactWrite(command)) {
     return { block: true, rule: "run-artifact", reason: "run artifacts are written by guard, accept_checks, acceptance, or publish scripts" };
   }
   for (const part of splitShellCommands(command)) {

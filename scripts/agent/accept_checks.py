@@ -207,7 +207,7 @@ SKIP_RE = re.compile(
     r"@(?:skip|skipIf|skipUnless|expectedFailure)\b|"
     r"from\s+pytest\s+import\s+.*\b(skip|xfail|importorskip|mark)\b|"
     r"\b(?:test|it|describe)\.(?:skip|todo)\(|\bt\.(?:skip|todo)\(|"
-    r"\{\s*(?:skip|todo)\s*:"
+    r"[{,]\s*(?:skip|todo)\s*:"
 )
 TS_TEST_RE = re.compile(r"^\s*(test|it|describe)(\.\w+)?\(")
 PY_TEST_RE = re.compile(r"def test_|async def test_|\bit\(")

@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -221,7 +222,6 @@ def test_agent_run_streams_events_while_pi_runs(tmp_path: Path) -> None:
     proc = subprocess.Popen([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/agent/agent-run.ps1"), "-Repo", str(ROOT), "-RunDir", str(run_dir), "-Attempt", "01", "-PromptFile", str(prompt), "-ModelId", "fake/model", "-PiCommand", str(fake)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     events = run_dir / "attempts/01/events.jsonl"
     first = b""
-    import time
     deadline = time.time() + 60
     while time.time() < deadline:
         try:

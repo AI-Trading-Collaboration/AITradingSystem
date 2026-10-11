@@ -375,48 +375,50 @@ def test_gate_short_tree_and_wrong_zone_fail(tmp_path: Path) -> None:
 
 
 def test_gate_regex_matches_ship() -> None:
-    spec = util.spec_from_file_location("ship", ROOT / "tools/gov008/ship.py")
-    assert spec and spec.loader
-    ship = util.module_from_spec(spec)
-    spec.loader.exec_module(ship)
-    sys.path.insert(0, str(ROOT / "scripts/agent"))
-    import accept_checks  # noqa: PLC0415
+    ship_spec = util.spec_from_file_location("ship", ROOT / "tools/gov008/ship.py")
+    assert ship_spec and ship_spec.loader
+    ship = util.module_from_spec(ship_spec)
+    ship_spec.loader.exec_module(ship)
+    accept_spec = util.spec_from_file_location("accept_checks", ROOT / "scripts/agent/accept_checks.py")
+    assert accept_spec and accept_spec.loader
+    accept_checks = util.module_from_spec(accept_spec)
+    accept_spec.loader.exec_module(accept_checks)
     assert accept_checks.GATE_RE.pattern == ship.GATE_RE.pattern
 
 
 @pytest.mark.parametrize(
-    "line",
+    ("line", "suffix"),
     [
-        "mark.skip(reason='x')",
-        "mark.skipif(True, reason='x')",
-        "mark.xfail(reason='x')",
-        "skip('x')",
-        "xfail('x')",
-        "importorskip('x')",
-        "unittest.skip('x')",
-        "unittest.skipIf(True, 'x')",
-        "unittest.skipUnless(False, 'x')",
-        "unittest.expectedFailure(test_ok)",
-        "@skip('x')",
-        "@skipIf(True, 'x')",
-        "@skipUnless(False, 'x')",
-        "@expectedFailure",
-        "from pytest import skip, xfail, importorskip, mark",
-        "test.skip('x', () => {})",
-        "it.skip('x', () => {})",
-        "describe.skip('x', () => {})",
-        "test.todo('x')",
-        "it.todo('x')",
-        "describe.todo('x')",
-        "t.skip('x')",
-        "t.todo('x')",
-        "test('x', { skip: true }, () => {})",
-        "test('x', { todo: true }, () => {})",
+        ("mark.skip(reason='x')", ".py"),
+        ("mark.skipif(True, reason='x')", ".py"),
+        ("mark.xfail(reason='x')", ".py"),
+        ("skip('x')", ".py"),
+        ("xfail('x')", ".py"),
+        ("importorskip('x')", ".py"),
+        ("unittest.skip('x')", ".py"),
+        ("unittest.skipIf(True, 'x')", ".py"),
+        ("unittest.skipUnless(False, 'x')", ".py"),
+        ("unittest.expectedFailure(test_ok)", ".py"),
+        ("@skip('x')", ".py"),
+        ("@skipIf(True, 'x')", ".py"),
+        ("@skipUnless(False, 'x')", ".py"),
+        ("@expectedFailure", ".py"),
+        ("from pytest import skip, xfail, importorskip, mark", ".py"),
+        ("test.skip('x', () => {})", ".test.ts"),
+        ("it.skip('x', () => {})", ".test.ts"),
+        ("describe.skip('x', () => {})", ".test.ts"),
+        ("test.todo('x')", ".test.ts"),
+        ("it.todo('x')", ".test.ts"),
+        ("describe.todo('x')", ".test.ts"),
+        ("t.skip('x')", ".test.ts"),
+        ("t.todo('x')", ".test.ts"),
+        ("test('x', { skip: true }, () => {})", ".test.ts"),
+        ("test('x', { todo: true }, () => {})", ".test.ts"),
+        ("test('x', { timeout: 5, skip: true }, () => {})", ".test.ts"),
     ],
 )
-def test_new_skip_forms_are_listed_not_failed(tmp_path: Path, line: str) -> None:
+def test_new_skip_forms_are_listed_not_failed(tmp_path: Path, line: str, suffix: str) -> None:
     repo, run_dir = init_repo(tmp_path)
-    suffix = ".test.ts" if any(token in line for token in ["test.", "it.", "describe.", "t.", "{ skip", "{ todo"]) else ".py"
     path = "tests/test_added" + suffix
     body = line + "\n" if suffix == ".test.ts" else line + "\ndef test_ok():\n    assert True\n"
     commit_change(repo, path, body)
