@@ -845,3 +845,69 @@ dry-run 正确识别 C 区与 owner 决定，停在 dry-run。审阅：逻辑与
 偏差（需要关注）：aits-guard 对 C 区路径的 `edit` 会请求确认，非交互运行时确认无法弹出，两次被拒后 pi 改用 bash 写入同一改动，
 并在汇报中主动说明。改动本身有 owner 决定且经审阅，但这说明非交互运行下守卫的 C 区确认可被 bash 绕开（守卫本就声明不是安全边界，
 真正的控制是 owner 决定与门禁）。以后给 pi 的 C 区任务应在提示里写明"确认被拒时停下汇报"，或交互运行。
+
+## 22. 2026-10-11 工作区清理（M3）
+
+**owner 决定**：`owner_decision:GOV-008:2026-10-11:workspace_cleanup_all`。Baker 于 2026-10-11 13:43 JST 在决定卡片
+"按清单删除哪些旧 worktree、分支和临时目录？"上选了"全部删除"：M3a 清单的 A、B、C 三类全部删除，B 类和旧运行副本
+`AITradingSystem_ops_runtime_20260725` 的唯一内容先导出再删。第一次执行删除时被会话的权限检查拦下，未删除任何东西；
+owner 于 14:03 JST 在项目对话中再次确认（"确认按 M3 清单全部删除，继续"）后执行。production_effect=none；broker_action=none。
+
+**备份（M3a，未改动）**：`D:\Work\AITradingSystem_backups\2026-10-11\`。`aits-all-refs.bundle` 的 SHA-256 为
+`B7D97E5D6361A15A9952415042B3EC7D839C01B6A2A747CF380BDB149856BDCA`（69 个 ref + 17 个 worktree HEAD，`git bundle verify`
+结果为 okay）。另有 `refs-before.txt`、`worktree_dirty\`（3 个脏 worktree 的 patch/tar）、`M3A_INVENTORY.md`、`inventory.csv`
+（逐项分类与原因）以及 `SHA256SUMS`。`2026-09-23\` 备份未动。
+
+**M3b 执行记录**：
+
+1. **预检**全部通过：main = `5debf74ee`，工作区干净；for-each-ref 与 `refs-before.txt` 一致；bundle 哈希与 verify 通过；
+   `SHA256SUMS` 26/26 通过；计划任务 "AITradingSystem Daily Run" 为 Ready，运行副本 `outputs\run_control\daily\locks` 为空；
+   运行副本 HEAD 为 `db240adac` 且干净。各 worktree 的 HEAD 与脏状态和 M3a 相同，devx015_checkpoint 与 trading2559 的
+   patch、untracked 清单与 `worktree_dirty\` 中的导出逐字节相同。
+2. **重新比对**：16 个待删 worktree 中未跟踪、且不属于可重建缓存的文件，逐文件按相同相对路径、大小和 SHA-256，
+   与主仓库和现役运行副本重新比对。没有文件在 M3a 之后变得不一致，第 1 步新增导出项为 0；各 worktree 的唯一文件数与 M3a 相同。
+   M3a 对 `AITradingSystem_ops_runtime_20260725` 的 `data/` 少有一处重复计数：`data/trading_engine/` 与
+   `data/trading_engine/audit/` 同时列为条目，后者的 22 个文件（137,562 B，均与主仓库相同）算了两次，内容没有缺口。
+3. **导出**：`m3b_export\<项名>\`，保留相对路径；D:\Work 顶层的 102 个散落文件放在 `m3b_export\work_top_level_files\`。
+   共 26,740 个文件，2,999,229,321 B，逐文件 SHA-256 核对失败 0 个。范围如下：
+   - 14 个 B 类 worktree 与旧运行副本中未跟踪的唯一文件。其中 devx014 有 26 个位于 `outputs/` 下的缓存样式文件，
+     M3a 按顶层目录计为可能唯一，这里补充导出，保持与 M3a 一致。devx015_checkpoint 的 6 个 untracked 文件也再导出了一份。
+   - `devx020-k` 的 K4/K6/K8/K12 与 `chain.done`（101 个文件）。
+   - `devx021-prof`、`devx021-smoke-logs`、`devx022-s1`、`devx022-t1` 整个目录。
+   - D:\Work 顶层的 102 个散落文件。
+
+   清单为 `m3b_export\EXPORT_MANIFEST.csv`（SHA-256 `95047fee12ca15f47c8a3d93ebb2639bec55e50af2020a3c84f1833433f4dfd7`，
+   列出每个文件的来源路径、导出路径、字节数、SHA-256、原因和核对结果），另有 `m3b_export\SCAN_SUMMARY.json`
+   （逐 worktree 比对计数）。新的 `SHA256SUMS_m3b` 有 26,742 行，SHA-256 为
+   `aa6d81a5f58251316aa4bbde76a9e499a6bda5f5ac42dd0934c98f848585aa53`。原 `SHA256SUMS` 未改写；删除后两份校验文件复核仍全部通过。
+4. **删除**：
+   - worktree 16 个：除 ops080 外的全部 linked worktree，用 `git worktree remove --force`（带 `-c core.longpaths=true`），
+     随后执行 `git worktree prune`。删前确认路径在 `git worktree list` 中且完全一致、HEAD 与清单相同、导出核对通过。
+     devx015_integration 内有 1 个 pytest 目录符号链接，指向同一 worktree 内的目录，先只删了链接本身。
+   - 分支 29 个（`git branch -D`），自定义 ref 7 个（2 个 `refs/aits/*` 与 5 个 `refs/codex/*`，`git update-ref -d <ref> <旧值>`）。
+     每个删除前确认 tip 与 bundle 和清单一致。
+   - 目录 323 个（A 18、B 5、C 300）与顶层散落文件 102 个。共删除 2,127,913 个文件、57,404,785,550 B。删除时不跟进
+     junction 或符号链接，只删链接本身，共 17,811 个，均为 pytest 的 `*current` 链接一类。错误 0 个，删不掉的项：无。
+   - 合计删除清单项 441 个（worktree 16 + 目录 323 + 文件 102）、分支 29 个、ref 7 个，明细见 `inventory.csv`
+     （class 为 A/B/C 的行）与 `EXPORT_MANIFEST.csv`。未做 `git gc`/`prune`：对象仍在对象库中，可从 bundle 恢复。
+5. **后检**：
+   - `git worktree list` 只剩主 checkout 与 `AITradingSystem_ops080_input_closure`（HEAD `9489d807f`，仍有 61 个修改、31 个 untracked）。
+   - 分支只剩 `main` 与 `codex/ops-080-daily-immutable-input-closure`；`refs/aits` 只剩 `ops080-v2-source-20260921-v1`；
+     `refs/codex` 为空；tag 仍为 3 个；远程跟踪 ref 27 个未动；共 33 个 ref，均为原 69 个中的保留项。
+   - 主仓库 HEAD 仍为 `5debf74ee`，工作区干净；运行副本 HEAD 仍为 `db240adac`，工作区干净。
+   - 清单中 441 项在磁盘上均已不存在；D:\Work 顶层剩 21 项，全是保留项与未归类项。
+6. **空间**：D 盘剩余空间删除前为 221,075,124,224 B（205.9 GiB），导出后为 217,989,877,760 B，删除后为 324,877,361,152 B（302.6 GiB）。
+   删除本身释放 106,887,483,392 B（99.5 GiB）；扣除留在 D 盘的约 3.0 GB 导出，净增 103,802,236,928 B（96.7 GiB）。
+
+**保留（未动）**：
+- 主 checkout `D:\Work\AITradingSystem`、现役运行副本 `D:\Work\AITradingSystem_ops_runtime`、`AITradingSystem_backups` 下的已有内容。
+- ops080 的 worktree、分支和 `refs/aits/source-preservation/ops080-v2-source-20260921-v1`，3 个 tag，main，以及远程跟踪 ref。
+- `LocalModelService`、`Strata`、`Strata-data`、`KanColle*`，以及未归类项（BV、DevSpace、DiskCleanUp、FB、LanguageLearnerForPC、
+  MetaClashForAndroid、Profiling、doc、REC20250721_101956_0120926845.m4a）。
+
+**注意事项**：
+- `AITradingSystem_ops_runtime_20260725` 原先在 ARCH-005M3、DEVX-001 文档中标为"不得使用或删除"。按本决定，在导出其
+  15 个唯一文件（5.6 MiB）后已删除。这些旧文档与任务记录的更正留到 M4。另外，DEVX-002、DEVX-006、DEVX-015、OPS-070、
+  TRADING-2473 的需求文档与 `docs/system_flow.md` 也提到这个路径，一并留到 M4 复核。
+- `tree_clean_exclusions` 中的 `docs/research/growth_tilt_owner_diagnosis_pack.md` 在各 worktree 中都是已跟踪文件。按规则没有打开，
+  也没有比对（M3a 同样排除）；它随 worktree 一起删除，各 HEAD 的版本在 bundle 中。
