@@ -93,7 +93,7 @@ if (-not (Test-Path -LiteralPath (Join-Path $AgentClone ".git"))) {
 } else { Write-Host "Agent clone already exists; skipping clone." }
 
 foreach ($safeRaw in @($Repo, $gitDir, $AgentClone, $AgentWorktree)) {
-    $safe = $safeRaw.Replace('\\', '/')
+    $safe = $safeRaw.Replace('\', '/')
     $existing = git config --system --get-all safe.directory 2>$null
     if ($existing -notcontains $safe) { git config --system --add safe.directory $safe; Check-Native "git safe.directory" }
 }

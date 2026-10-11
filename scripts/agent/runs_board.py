@@ -171,21 +171,6 @@ def parse_attempt(path: Path) -> dict:
                 "name": ev.get("toolName"),
                 "args": _args_summary(ev.get("toolName", ""), ev.get("args")),
             }
-        elif t == "tool_execution_end":
-            call = pending.pop(ev.get("toolCallId"), {})
-            duration = ev.get("durationMs")
-            is_error = bool(ev.get("isError"))
-            status = "blocked" if is_error and duration is None else ("error" if is_error else "ok")
-            end_ms = ev.get("timestamp")
-            att["tools"].append({
-                "id": ev.get("toolCallId"),
-                "name": call.get("name") or ev.get("toolName"),
-                "args": call.get("args", ""),
-                "duration_ms": duration,
-                "start_ms": (end_ms - duration) if (end_ms is not None and duration is not None) else end_ms,
-                "status": status,
-                "output_tail": _text_of(ev.get("content"))[-600:],
-            })
         elif t == "message_end":
             msg = ev.get("message") or {}
             ts = parse_time(msg.get("timestamp"))

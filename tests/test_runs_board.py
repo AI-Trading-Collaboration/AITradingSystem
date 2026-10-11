@@ -113,9 +113,18 @@ def test_blocked_from_events_partial_json_html_escape_and_empty(tmp_path: Path) 
     assert "&lt;script&gt;" in runs_board.render([parsed], tmp_path)
 
     real_shape = tmp_path / "DEVX-10-02"; brief(real_shape)
-    real_events = [{"type": "tool_execution_start", "toolCallId": "2", "toolName": "bash", "args": {"command": "git add -A"}}, {"type": "tool_execution_end", "toolCallId": "2", "toolName": "bash", "isError": True, "content": "blocked"}]
+    real_events = [
+        {"type": "tool_execution_start", "toolCallId": "2", "toolName": "bash", "args": {"command": "echo ok"}},
+        {"type": "tool_execution_end", "toolCallId": "2", "toolName": "bash", "result": "ok", "isError": False, "durationMs": 10},
+        {"type": "message_end", "message": {"role": "toolResult", "toolCallId": "2", "toolName": "bash", "content": "ok", "isError": False, "durationMs": 10, "timestamp": 100}},
+        {"type": "tool_execution_start", "toolCallId": "3", "toolName": "bash", "args": {"command": "git add -A"}},
+        {"type": "tool_execution_end", "toolCallId": "3", "toolName": "bash", "result": "blocked", "isError": True},
+        {"type": "message_end", "message": {"role": "toolResult", "toolCallId": "3", "toolName": "bash", "content": "blocked", "isError": True, "timestamp": 110}},
+    ]
     attempt(real_shape, extra_events=real_events)
-    assert runs_board.parse_run(real_shape)["summary"]["blocked"] == 1
+    real_parsed = runs_board.parse_run(real_shape)
+    assert real_parsed["summary"]["tool_calls"] == 2
+    assert real_parsed["summary"]["blocked"] == 1
 
 
 def test_bom_json_publish_failed_weekly_costs_and_first_pass_rate(tmp_path: Path) -> None:

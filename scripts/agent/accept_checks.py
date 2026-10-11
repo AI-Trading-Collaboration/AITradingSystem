@@ -186,22 +186,39 @@ def check_exclusions_and_views(files: list[str], policy: dict[str, Any]) -> tupl
     return (not problems, "; ".join(problems) or "no excluded files or orphan task views")
 
 
+SKIP_RE = re.compile(
+    r"@?pytest\.mark\.(skip|skipif|xfail)\b|pytest\.mark\.(skip|skipif|xfail)\b|"
+    r"pytest\.skip\.Exception\(|pytest\.skip\(|pytest\.importorskip\(|pytest\.xfail\(|"
+    r"unittest\.SkipTest\b|\bSkipTest\("
+)
+
+
 def check_test_weakening(diff: str) -> tuple[bool, str]:
     in_test = False
     removed_bad: list[str] = []
-    added_bad: list[str] = []
+    skip_review: list[str] = []
     tolerance: list[str] = []
     current = ""
+    current_file = ""
+    new_line: int | None = None
     removed_assert_by_file: dict[str, int] = {}
     added_assert_by_file: dict[str, int] = {}
     for line in diff.splitlines():
         if line.startswith("diff --git "):
             current = line
+            match = re.search(r" b/(.+)$", line)
+            current_file = match.group(1) if match else ""
             in_test = bool(re.search(r" b/(tests/|.*\.test\.ts$)", line))
+            new_line = None
+            continue
+        hunk = re.match(r"@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", line)
+        if hunk:
+            new_line = int(hunk.group(1))
             continue
         if not in_test:
             continue
         body = line[1:] if line[:1] in "+-" else line
+        line_no = new_line
         if line.startswith("-") and re.search(r"def test_|async def test_|\bit\(", body):
             removed_assert_by_file[current + "#tests"] = removed_assert_by_file.get(current + "#tests", 0) + 1
         if line.startswith("+") and re.search(r"def test_|async def test_|\bit\(", body):
@@ -210,21 +227,23 @@ def check_test_weakening(diff: str) -> tuple[bool, str]:
             removed_assert_by_file[current] = removed_assert_by_file.get(current, 0) + 1
         if line.startswith("+") and re.search(r"\bassert\b", body):
             added_assert_by_file[current] = added_assert_by_file.get(current, 0) + 1
-        if line.startswith("+") and re.search(r"@pytest\.mark\.(skip|xfail)|\.skip\(|\bskip\(", body):
-            added_bad.append(current)
+        if line.startswith("+") and SKIP_RE.search(body):
+            skip_review.append(f"{current_file}:{line_no or '?'}: {body.strip()}")
         if line[:1] in "+-" and re.search(r"approx\(|\babs=|\brel=|\batol\b|\brtol\b", body):
             tolerance.append(body.strip()[:120])
+        if not line.startswith("-") and new_line is not None:
+            new_line += 1
     for file_key, count in removed_assert_by_file.items():
         if added_assert_by_file.get(file_key, 0) < count:
             removed_bad.append(file_key)
     problems = []
     if removed_bad:
         problems.append(f"removed asserts/tests in {len(set(removed_bad))} diff(s)")
-    if added_bad:
-        problems.append(f"added skip/xfail in {len(set(added_bad))} diff(s)")
+    if skip_review:
+        problems.append("skip/xfail additions for review: " + "; ".join(skip_review[:12]))
     if tolerance:
         problems.append("tolerance changes: " + "; ".join(tolerance[:6]))
-    return (not (removed_bad or added_bad), "; ".join(problems) or "no test weakening patterns")
+    return (not removed_bad, "; ".join(problems) or "no test weakening patterns")
 
 
 def file_at(repo: Path, rev: str, path: str) -> str | None:

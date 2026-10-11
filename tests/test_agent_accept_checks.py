@@ -138,13 +138,51 @@ def test_exclusion_and_orphan_task_views_fail(tmp_path: Path) -> None:
     assert not check_map(run_dir)["exclusions and task views"]["ok"]
 
 
-def test_test_weakening_detects_removed_assert_and_added_skip(tmp_path: Path) -> None:
+def test_test_weakening_detects_removed_assert(tmp_path: Path) -> None:
     repo, run_dir = init_repo(tmp_path)
-    marker = "pytest.mark." + "sk" + "ip"
-    commit_change(repo, "tests/test_app.py", f"import pytest\n\n@{marker}(reason='x')\ndef test_ok():\n    pass\n")
+    commit_change(repo, "tests/test_app.py", "def test_ok():\n    pass\n")
     res = run_checks(repo, run_dir)
     assert res.returncode == 1
     assert not check_map(run_dir)["tests not weakened"]["ok"]
+
+
+def test_skip_and_xfail_additions_are_listed_for_review_but_do_not_fail(tmp_path: Path) -> None:
+    repo, run_dir = init_repo(tmp_path)
+    body = """import pytest
+import unittest
+from unittest import SkipTest
+
+pytestmark = pytest.mark.skipif(True, reason='x')
+CASES = [pytest.param(1, marks=pytest.mark.xfail(reason='x'))]
+
+@pytest.mark.skip(reason='x')
+def test_a():
+    assert True
+
+def test_b():
+    raise pytest.skip.Exception('x')
+
+def test_c():
+    pytest.importorskip('missing_pkg')
+
+def test_d():
+    pytest.xfail('x')
+
+def test_e():
+    raise unittest.SkipTest('x')
+
+def test_f():
+    raise SkipTest('x')
+"""
+    commit_change(repo, "tests/test_app.py", body)
+    res = run_checks(repo, run_dir)
+    assert res.returncode == 0, res.stdout + res.stderr
+    check = check_map(run_dir)["tests not weakened"]
+    assert check["ok"]
+    detail = check["detail"]
+    for needle in ["pytest.mark.skipif", "pytest.mark.xfail", "pytest.mark.skip", "pytest.skip.Exception", "pytest.importorskip", "pytest.xfail", "unittest.SkipTest", "SkipTest("]:
+        assert needle in detail
+    assert "tests/test_app.py:" in detail
 
 
 def test_tolerance_change_is_reported_but_not_failed(tmp_path: Path) -> None:

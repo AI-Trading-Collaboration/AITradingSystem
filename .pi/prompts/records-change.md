@@ -54,4 +54,4 @@ read_paths:
 
 ## 汇报
 
-用中文汇报：任务状态、变更文件、render/check 结果、owner decision（如有）和后续责任方。production_effect=none；broker_action=none。
+用中文汇报：任务状态、变更文件、render/check 结果、owner decision（如有）和后续责任方。accept_checks、测试或 ruff 报出的问题，不要为了让它通过而换一种写法绕开；照实写进汇报并说明原因，由 Claude 判断。production_effect=none；broker_action=none。

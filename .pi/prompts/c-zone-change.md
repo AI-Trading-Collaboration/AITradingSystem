@@ -61,4 +61,4 @@ read_paths:
 
 ## 汇报
 
-用中文汇报：分支、提交 SHA、owner decision、C 区文件、测试结果、dry-run 摘要、风险和未解决问题。production_effect=none；broker_action=none。
+用中文汇报：分支、提交 SHA、owner decision、C 区文件、测试结果、dry-run 摘要、风险和未解决问题。accept_checks、测试或 ruff 报出的问题，不要为了让它通过而换一种写法绕开；照实写进汇报并说明原因，由 Claude 判断。production_effect=none；broker_action=none。
