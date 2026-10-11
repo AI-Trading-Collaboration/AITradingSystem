@@ -271,3 +271,188 @@ def test_ship_push_refuses_a_diverged_origin_without_moving_local_main(
     with pytest.raises(ship.ShipError, match="not an ancestor"):
         ship.ship(repo, "main", push=True)
     assert run_git(repo, "rev-parse", "main") == before
+
+
+def _gate_values(repo: Path) -> list[str]:
+    out = run_git(repo, "log", "-1", "--format=%(trailers:key=Gate,valueonly)")
+    return [line.strip() for line in out.splitlines() if line.strip()]
+
+
+def _write_policy(repo: Path, policy: dict) -> None:
+    (repo / "config/gov008_ship.yaml").write_text(yaml.safe_dump(policy), encoding="utf-8")
+
+
+def test_gate_records_trailer_without_moving_main_or_origin(
+    repo: Path, tmp_path_factory: pytest.TempPathFactory
+) -> None:
+    origin = _with_origin(repo, tmp_path_factory)
+    before_main = run_git(repo, "rev-parse", "main")
+    before_origin = run_git(origin, "rev-parse", "main")
+    commit_file(repo, "docs/a.md", "x\n", "docs: add a")
+    tree = run_git(repo, "rev-parse", "HEAD^{tree}")
+    done = ship.gate(repo, "main")
+    assert done["tree"] == tree
+    assert run_git(repo, "rev-parse", "HEAD^{tree}") == tree
+    assert run_git(repo, "rev-parse", "main") == before_main
+    assert run_git(origin, "rev-parse", "main") == before_origin
+    assert f"tree={tree[:12]}" in _gate_values(repo)[-1]
+
+
+def test_gate_refuses_plan_problems(repo: Path) -> None:
+    commit_file(repo, "secret/rule.txt", "x\n", "change guarded file")
+    with pytest.raises(ship.ShipError, match="Owner-Decision"):
+        ship.gate(repo, "main")
+
+
+def test_gate_then_publish_fast_forwards_main(repo: Path) -> None:
+    commit_file(repo, "docs/a.md", "x\n", "docs: add a")
+    gated = ship.gate(repo, "main")
+    done = ship.publish(repo, "main", push=False)
+    assert done["shipped_sha"] == gated["gated_sha"] == run_git(repo, "rev-parse", "main")
+    assert done["gate_trailer"] == _gate_values(repo)[-1]
+
+
+def test_publish_does_not_run_gate_commands_but_gate_and_execute_do(repo: Path) -> None:
+    failing = [["python", "-c", "raise SystemExit(1)"]]
+    policy = MINI_POLICY | {"gates": {"A": [], "B": failing, "C": failing}}
+    _write_policy(repo, policy)
+    run_git(repo, "add", "config/gov008_ship.yaml")
+    run_git(repo, "commit", "-m", "policy\n\nOwner-Decision: owner_decision:T:2026-10-10:x")
+    commit_file(repo, "src/app.py", "x\n", "code")
+    p = ship.plan(repo)
+    assert p["zone"] == "C"  # base policy treats config/*.yaml as C
+    tree = run_git(repo, "rev-parse", "HEAD^{tree}")
+    ship.append_gate_trailer(repo, f"zone=C tree={tree[:12]} commands=0 seconds=0 PASS")
+    assert ship.publish(repo, "main", push=False)["shipped_sha"] == run_git(
+        repo, "rev-parse", "HEAD"
+    )
+
+    run_git(repo, "update-ref", "refs/heads/main", run_git(repo, "rev-parse", "HEAD~1"))
+    with pytest.raises(ship.ShipError, match="exit 1"):
+        ship.gate(repo, "main")
+    with pytest.raises(ship.ShipError, match="exit 1"):
+        ship.ship(repo, "main", push=False)
+
+
+def test_publish_refuses_missing_gate_trailer(repo: Path) -> None:
+    before = run_git(repo, "rev-parse", "main")
+    commit_file(repo, "docs/a.md", "x\n", "docs: add a")
+    with pytest.raises(ship.ShipError, match="missing Gate"):
+        ship.publish(repo, "main", push=False)
+    assert run_git(repo, "rev-parse", "main") == before
+
+
+def test_publish_refuses_tree_mismatch_after_extra_commit(repo: Path) -> None:
+    before = run_git(repo, "rev-parse", "main")
+    commit_file(repo, "docs/a.md", "x\n", "docs: add a")
+    ship.gate(repo, "main")
+    old_gate = _gate_values(repo)[-1]
+    commit_file(repo, "docs/b.md", "y\n", f"docs: add b\n\nGate: {old_gate}")
+    with pytest.raises(ship.ShipError, match="tree"):
+        ship.publish(repo, "main", push=False)
+    assert run_git(repo, "rev-parse", "main") == before
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        "nonsense",
+        "zone=A tree=123 commands=0 seconds=0",
+        "zone=A tree=123456789abc commands=0 seconds=0 FAIL",
+    ],
+)
+def test_publish_refuses_bad_trailer_format(repo: Path, bad: str) -> None:
+    before = run_git(repo, "rev-parse", "main")
+    commit_file(repo, "docs/a.md", "x\n", f"docs: add a\n\nGate: {bad}")
+    with pytest.raises(ship.ShipError, match="format"):
+        ship.publish(repo, "main", push=False)
+    assert run_git(repo, "rev-parse", "main") == before
+
+
+def test_publish_refuses_zone_lower_than_actual(repo: Path) -> None:
+    before = run_git(repo, "rev-parse", "main")
+    commit_file(repo, "src/app.py", "x\n", "code")
+    tree = run_git(repo, "rev-parse", "HEAD^{tree}")
+    ship.append_gate_trailer(repo, f"zone=A tree={tree[:12]} commands=0 seconds=0 PASS")
+    with pytest.raises(ship.ShipError, match="zone"):
+        ship.publish(repo, "main", push=False)
+    assert run_git(repo, "rev-parse", "main") == before
+
+
+def test_publish_refuses_command_count_mismatch(repo: Path) -> None:
+    before = run_git(repo, "rev-parse", "main")
+    commit_file(repo, "docs/a.md", "x\n", "docs: add a")
+    tree = run_git(repo, "rev-parse", "HEAD^{tree}")
+    ship.append_gate_trailer(repo, f"zone=A tree={tree[:12]} commands=1 seconds=0 PASS")
+    with pytest.raises(ship.ShipError, match="commands"):
+        ship.publish(repo, "main", push=False)
+    assert run_git(repo, "rev-parse", "main") == before
+
+
+def test_publish_refuses_when_main_not_ancestor(repo: Path) -> None:
+    commit_file(repo, "docs/a.md", "x\n", "docs: add a")
+    ship.gate(repo, "main")
+    run_git(repo, "switch", "main")
+    commit_file(repo, "docs/other.md", "m\n", "main moved")
+    run_git(repo, "switch", "task/x")
+    before = run_git(repo, "rev-parse", "main")
+    with pytest.raises(ship.ShipError, match="not an ancestor"):
+        ship.publish(repo, "main", push=False)
+    assert run_git(repo, "rev-parse", "main") == before
+
+
+def test_publish_reads_base_policy_while_dry_run_reads_worktree_policy(repo: Path) -> None:
+    policy = MINI_POLICY | {"zones": {"C": [], "A": ["docs/**", "*.md", "secret/**", "config/**"]}}
+    _write_policy(repo, policy)
+    run_git(repo, "add", "config/gov008_ship.yaml")
+    run_git(repo, "commit", "-m", "loosen policy")
+    commit_file(repo, "secret/rule.txt", "x\n", "secret")
+    p = ship.plan(repo)
+    assert p["ok"] and p["zone"] == "A"
+    with pytest.raises(ship.ShipError, match="Owner-Decision"):
+        ship.publish(repo, "main", push=False)
+
+
+def test_publish_push_fast_forwards_origin_and_verifies(
+    repo: Path, tmp_path_factory: pytest.TempPathFactory
+) -> None:
+    origin = _with_origin(repo, tmp_path_factory)
+    commit_file(repo, "docs/a.md", "x\n", "docs: add a")
+    ship.gate(repo, "main")
+    done = ship.publish(repo, "main", push=True)
+    assert done["pushed"] is True
+    assert (
+        run_git(origin, "rev-parse", "main")
+        == done["shipped_sha"]
+        == run_git(repo, "rev-parse", "main")
+    )
+
+
+def test_publish_push_refuses_diverged_origin_without_moving_local_main(
+    repo: Path, tmp_path_factory: pytest.TempPathFactory
+) -> None:
+    origin = _with_origin(repo, tmp_path_factory)
+    other = tmp_path_factory.mktemp("other-publish") / "clone"
+    run_git(other.parent, "clone", str(origin), str(other))
+    run_git(other, "config", "user.email", "o@example.invalid")
+    run_git(other, "config", "user.name", "o")
+    commit_file(other, "docs/elsewhere.md", "y\n", "someone else")
+    run_git(other, "push", "origin", "main")
+    before = run_git(repo, "rev-parse", "main")
+    commit_file(repo, "docs/a.md", "x\n", "docs: add a")
+    ship.gate(repo, "main")
+    with pytest.raises(ship.ShipError, match="not an ancestor"):
+        ship.publish(repo, "main", push=True)
+    assert run_git(repo, "rev-parse", "main") == before
+
+
+@pytest.mark.parametrize("args", [["--dry-run", "--push"], ["--gate", "--push"]])
+def test_cli_rejects_push_with_dry_run_or_gate(repo: Path, args: list[str]) -> None:
+    done = subprocess.run(
+        ["python", str(REPO / "tools/gov008/ship.py"), "--repo", str(repo), *args],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert done.returncode == 2
+    assert "--push can only be used" in done.stderr

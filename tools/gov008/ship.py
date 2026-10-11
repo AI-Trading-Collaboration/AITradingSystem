@@ -1,9 +1,8 @@
-"""GOV-008 P2 spike: ``ship`` runs the new gate locally and fast-forwards main.
+"""GOV-008 ship gate: run local gates, record ``Gate:``, and publish by fast-forward.
 
 Flow: task branch -> local gate -> ``Gate:`` trailer -> ``main`` moves to the same tree ->
-ordinary push.
-There is no lease store, no phase machine and no regenerated authority: git guarantees main only
-moves to a descendant of itself, and the Gate trailer records which tree was tested.
+ordinary push. ``--gate`` can stop after recording the tested tree; ``--publish`` verifies that
+record without running branch code, then fast-forwards the base branch.
 
 This is an agent-run gate, not an independent verifier (no branch protection; owner decision
 2026-10-10). Zone C changes (see config/gov008_ship.yaml) must carry an ``Owner-Decision:`` trailer.
@@ -11,6 +10,8 @@ This is an agent-run gate, not an independent verifier (no branch protection; ow
 usage:
   python tools/gov008/ship.py --repo . --dry-run          # plan only: zones, gate, trailer checks
   python tools/gov008/ship.py --repo . --execute [--push] # run gate, amend trailer, move main
+  python tools/gov008/ship.py --repo . --gate             # run gate and amend trailer only
+  python tools/gov008/ship.py --repo . --publish [--push] # verify Gate trailer, move main
 """
 
 from __future__ import annotations
@@ -29,6 +30,10 @@ import yaml
 POLICY_PATH = "config/gov008_ship.yaml"
 OWNER_DECISION_TRAILER = "Owner-Decision"
 GATE_TRAILER = "Gate"
+GATE_RE = re.compile(
+    r"^zone=(?P<zone>[ABC]) tree=(?P<tree>[0-9a-f]{12,40}) commands=(?P<commands>\d+) "
+    r"seconds=(?P<seconds>\d+(?:\.\d+)?) PASS$"
+)
 # On a failing gate command the terminal shows only this many trailing lines, enough to see pytest's
 # short test summary. Display truncation only: the full output always goes to the gate log file.
 GATE_FAILURE_TAIL_LINES = 60
@@ -110,6 +115,10 @@ def load_policy(repo: Path) -> dict:
     return yaml.safe_load((repo / POLICY_PATH).read_text(encoding="utf-8"))
 
 
+def load_policy_from_ref(repo: Path, ref: str) -> dict:
+    return yaml.safe_load(git(repo, "show", f"{ref}:{POLICY_PATH}"))
+
+
 def dirty_paths(repo: Path, exclusions: list[str]) -> list[str]:
     """Dirty/untracked paths; each registered unrelated path is excluded by literal pathspec."""
     spec = [".", *[f":(exclude,literal){p}" for p in exclusions]]
@@ -124,9 +133,9 @@ def owner_decisions(repo: Path, base: str) -> list[str]:
     return [line.strip() for line in out.splitlines() if line.strip()]
 
 
-def plan(repo: Path, base: str = "main") -> dict:
+def plan(repo: Path, base: str = "main", policy: dict | None = None) -> dict:
     """Everything ship would decide, without running tests or moving refs."""
-    policy = load_policy(repo)
+    policy = load_policy(repo) if policy is None else policy
     branch = git(repo, "branch", "--show-current")
     problems: list[str] = []
     if branch in ("", base):
@@ -170,9 +179,7 @@ def git_dir(repo: Path) -> Path:
 
 
 def run_gate(repo: Path, commands: list[list[str]]) -> dict:
-    """Run the gate quietly: full stdout/stderr of every command goes to a log file under the git
-    directory (never the working tree), the terminal gets one summary line per command. On failure
-    the tail of that command's output is printed and the ShipError names the log file."""
+    """Run the gate quietly and log full stdout/stderr under the git directory."""
     started = time.monotonic()
     log_dir = git_dir(repo) / GATE_LOG_DIRNAME
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -224,12 +231,7 @@ def gate_trailer(plan_: dict, result: dict) -> str:
     )
 
 
-def ship(repo: Path, base: str, push: bool) -> dict:
-    """Run the gate, record it on the tip commit, move ``base`` to it, optionally push."""
-    p = plan(repo, base)
-    if not p["ok"]:
-        raise ShipError("; ".join(p["problems"]))
-    result = run_gate(repo, p["gate"])
+def append_gate_trailer(repo: Path, trailer: str) -> str:
     message = git(repo, "log", "-1", "--format=%B")
     amended = subprocess.run(
         [
@@ -238,7 +240,7 @@ def ship(repo: Path, base: str, push: bool) -> dict:
             str(repo),
             "interpret-trailers",
             "--trailer",
-            f"{GATE_TRAILER}: {gate_trailer(p, result)}",
+            f"{GATE_TRAILER}: {trailer}",
         ],
         input=message + "\n",
         capture_output=True,
@@ -247,9 +249,12 @@ def ship(repo: Path, base: str, push: bool) -> dict:
         check=True,
     ).stdout
     git(repo, "commit", "--amend", "-m", amended.strip())
-    new_head = git(repo, "rev-parse", "HEAD")
-    if git(repo, "rev-parse", "HEAD^{tree}") != p["tree"]:
-        raise ShipError("tree changed while amending the Gate trailer: refusing to move main")
+    return git(repo, "rev-parse", "HEAD")
+
+
+def move_base_and_maybe_push(
+    repo: Path, base: str, new_head: str, old_base_sha: str, push: bool
+) -> None:
     if push:
         # The remote must not have moved past or away from the tested base: only a fast-forward of
         # the remote main is ever pushed, and a diverged remote is reported, never repaired.
@@ -259,13 +264,80 @@ def ship(repo: Path, base: str, push: bool) -> dict:
                 f"origin/{base} is not an ancestor of the shipped commit: stop and report"
             )
     # compare-and-swap fast-forward: fails if main moved since the plan was made
-    git(repo, "update-ref", f"refs/heads/{base}", new_head, p["base_sha"])
+    git(repo, "update-ref", f"refs/heads/{base}", new_head, old_base_sha)
     if push:
         git(repo, "push", "origin", base)
         git(repo, "fetch", "origin", base)
         remote = git(repo, "rev-parse", f"origin/{base}")
         if remote != new_head:
             raise ShipError(f"after push origin/{base}={remote} differs from {new_head}")
+
+
+def read_gate_trailer(repo: Path) -> str:
+    out = git(repo, "log", "-1", f"--format=%(trailers:key={GATE_TRAILER},valueonly)")
+    trailers = [line.strip() for line in out.splitlines() if line.strip()]
+    if not trailers:
+        raise ShipError("missing Gate trailer on HEAD")
+    return trailers[-1]
+
+
+def validate_gate_trailer(repo: Path, trailer: str, plan_: dict) -> None:
+    match = GATE_RE.fullmatch(trailer)
+    if match is None:
+        raise ShipError(
+            "Gate trailer format is invalid; expected "
+            "zone=<A|B|C> tree=<12-40 hex> commands=<digits> seconds=<digits> PASS"
+        )
+    tree_prefix = match.group("tree")
+    if not plan_["tree"].startswith(tree_prefix):
+        raise ShipError(
+            f"Gate trailer tree {tree_prefix} does not match HEAD tree {plan_['tree']}"
+        )
+    zone = match.group("zone")
+    if zone != plan_["zone"]:
+        raise ShipError(f"Gate trailer zone {zone} does not match planned zone {plan_['zone']}")
+    commands = int(match.group("commands"))
+    expected_commands = len(plan_["gate"])
+    if commands != expected_commands:
+        raise ShipError(
+            f"Gate trailer commands {commands} does not match policy commands {expected_commands}"
+        )
+
+
+def gate(repo: Path, base: str) -> dict:
+    p = plan(repo, base)
+    if not p["ok"]:
+        raise ShipError("; ".join(p["problems"]))
+    tree = p["tree"]
+    result = run_gate(repo, p["gate"])
+    new_head = append_gate_trailer(repo, gate_trailer(p, result))
+    if git(repo, "rev-parse", "HEAD^{tree}") != tree:
+        raise ShipError("tree changed while amending the Gate trailer: refusing to move main")
+    return {"gated_sha": new_head, "tree": tree, "gate": result, "plan": p}
+
+
+def publish(repo: Path, base: str, push: bool) -> dict:
+    """Verify HEAD's Gate trailer against base policy, then fast-forward ``base``."""
+    p = plan(repo, base, policy=load_policy_from_ref(repo, base))
+    if not p["ok"]:
+        raise ShipError("; ".join(p["problems"]))
+    trailer = read_gate_trailer(repo)
+    validate_gate_trailer(repo, trailer, p)
+    new_head = git(repo, "rev-parse", "HEAD")
+    move_base_and_maybe_push(repo, base, new_head, p["base_sha"], push)
+    return {"shipped_sha": new_head, "pushed": push, "gate_trailer": trailer, "plan": p}
+
+
+def ship(repo: Path, base: str, push: bool) -> dict:
+    """Run the gate, record it on the tip commit, move ``base`` to it, optionally push."""
+    p = plan(repo, base)
+    if not p["ok"]:
+        raise ShipError("; ".join(p["problems"]))
+    result = run_gate(repo, p["gate"])
+    new_head = append_gate_trailer(repo, gate_trailer(p, result))
+    if git(repo, "rev-parse", "HEAD^{tree}") != p["tree"]:
+        raise ShipError("tree changed while amending the Gate trailer: refusing to move main")
+    move_base_and_maybe_push(repo, base, new_head, p["base_sha"], push)
     return {"shipped_sha": new_head, "pushed": push, "gate": result, "plan": p}
 
 
@@ -276,20 +348,27 @@ def main() -> int:
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--dry-run", action="store_true")
     mode.add_argument("--execute", action="store_true")
-    parser.add_argument("--push", action="store_true", help="with --execute: ordinary push of base")
+    mode.add_argument("--gate", action="store_true")
+    mode.add_argument("--publish", action="store_true")
+    parser.add_argument(
+        "--push", action="store_true", help="with --execute or --publish: ordinary push of base"
+    )
     args = parser.parse_args()
+    if args.push and not (args.execute or args.publish):
+        parser.error("--push can only be used with --execute or --publish")
     repo = args.repo.resolve()
     try:
         # Compact one-line JSON: the full plan/ship result stays machine-readable without spending
         # ~30 lines (and thousands of tokens in a small model context) on indentation.
         if args.dry_run:
-            print(json.dumps(plan(repo, args.base), ensure_ascii=False, separators=(", ", ": ")))
-            return 0
-        print(
-            json.dumps(
-                ship(repo, args.base, args.push), ensure_ascii=False, separators=(", ", ": ")
-            )
-        )
+            result = plan(repo, args.base)
+        elif args.gate:
+            result = gate(repo, args.base)
+        elif args.publish:
+            result = publish(repo, args.base, args.push)
+        else:
+            result = ship(repo, args.base, args.push)
+        print(json.dumps(result, ensure_ascii=False, separators=(", ", ": ")))
         return 0
     except ShipError as exc:
         print(f"SHIP REFUSED: {exc}", file=sys.stderr)

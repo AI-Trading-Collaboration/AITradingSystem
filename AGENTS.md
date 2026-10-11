@@ -50,9 +50,10 @@ subjective policy expose its version or link the policy report.
 
 ## How a change ships
 
-One flow for every change, run by `python tools/gov008/ship.py --repo . --execute --push` (use
-`--dry-run` first to see zones and gate): task branch -> local gate -> `main` fast-forwards to the
-tested tree -> ordinary push, with the remote checked before and after.
+One flow for every change, either one-step `python tools/gov008/ship.py --repo . --execute --push`
+(use `--dry-run` first to see zones and gate) or two-step `--gate` then
+`scripts/agent/publish.ps1`: task branch -> local gate -> `Gate:` trailer -> `main` fast-forwards to
+the tested tree -> ordinary push, with the remote checked before and after.
 
 - **Zones** (`config/gov008_ship.yaml`): **A** records (docs, task and experiment records) need no
   tests. **B** product code runs the PR suite:
@@ -62,8 +63,10 @@ tested tree -> ordinary push, with the remote checked before and after.
   boundaries, `tests/invariants`, `.github`, this file, the ship policy) run the PR suite and need an
   `Owner-Decision:` trailer in at least one commit of the range; `ship` refuses without it.
 - `ship` writes a `Gate:` trailer recording the tested tree. The gate is run by the agent itself and
-  is not an independent verifier; for zone C the owner decision is the real control. Do not weaken a test,
-  invariant, or this policy to make a gate pass.
+  is not an independent verifier; for zone C the owner decision is the real control. In two-step pi
+  runs, after Claude acceptance the owner account runs `publish.ps1`, which uses `main`'s `ship.py` to
+  `--publish --push` without tests or branch code and verifies the Gate tree, zone, and Owner-Decision.
+  Do not weaken a test, invariant, or this policy to make a gate pass.
 - Never pass hundreds of test file paths to pytest (collection becomes quadratic on Windows); pass
   `tests` and select with markers. Run serial pytest only to reproduce a parallelism-related failure
   and say so. Use the project venv interpreter, not a system Python.
