@@ -293,7 +293,6 @@ def test_publish_no_push_moves_main_but_not_origin(tmp_path: Path) -> None:
     assert run_git(origin, "rev-parse", "main") == before_origin
 
 
-
 def test_publish_validation_rejects_uppercase_accepted_tree_without_json(tmp_path: Path) -> None:
     repo, _origin, run_dir = setup_repo(tmp_path)
     commit_file(repo, "src/app.py", "x\n", "code")

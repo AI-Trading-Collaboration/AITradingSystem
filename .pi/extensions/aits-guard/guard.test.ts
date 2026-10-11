@@ -504,6 +504,7 @@ test("heredoc bodies are ignored except when executed by a shell", () => {
   const root = fakeRepo();
   assert.equal(checkCommand(root, "cat > x.py <<'PY'\nprint(1)\nPY"), undefined);
   assert.equal(checkCommand(root, "cd x && cat > a.py <<'PY'\nprint(1)\nPY"), undefined);
+  assert.equal(checkCommand(root, "cat > a.sh <<'SH'\npython -V\nSH"), undefined);
   assert.equal(checkCommand(root, ".venv/Scripts/python.exe - <<'PY'\nimport sys\nPY"), undefined);
   assert.equal(checkCommand(root, "cat > x.py <<-EOF\nprint(1)\n\tEOF"), undefined);
   for (const command of [
@@ -512,6 +513,9 @@ test("heredoc bodies are ignored except when executed by a shell", () => {
     "bash <<'EOF'\npython -V\nEOF",
     "cd x && bash <<'EOF'\npython -V\nEOF",
     "cat <<'EOF' | bash\npython -V\nEOF",
+    "env bash <<'EOF'\npython -V\nEOF",
+    "cat <<'EOF' | sed s/a/b/ | bash\npython -V\nEOF",
+    "cat <<'EOF' > a.sh; bash a.sh\npython -V\nEOF",
     "cat <<<'x'\npython -V",
   ]) {
     const verdict = checkCommand(root, command);

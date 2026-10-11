@@ -213,7 +213,6 @@ def test_agent_run_model_error_returns_one(tmp_path: Path) -> None:
     assert done.returncode == 1
 
 
-
 def test_agent_run_streams_events_while_pi_runs(tmp_path: Path) -> None:
     ps = powershell(); fake = tmp_path / "fake_pi.py"; write_fake_pi(fake)
     prompt = tmp_path / "p.md"; prompt.write_text("hello", encoding="utf-8")

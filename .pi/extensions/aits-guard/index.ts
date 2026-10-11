@@ -184,24 +184,31 @@ function hasAllExclusions(command: string, exclusions: readonly string[]): boole
   return exclusions.every((excluded) => hasExcludePathspec(command, excluded));
 }
 
-function firstShellWord(command: string): string {
-  const match = /^\s*(?:[A-Za-z_][A-Za-z0-9_]*=[^\s]+\s+)*((?:["'][^"']+["']|\S)+)/.exec(command);
-  return (match?.[1] ?? "").replace(/^['"]|['"]$/g, "");
+function shellWords(command: string): string[] {
+  return command.match(/"[^"]*"|'[^']*'|\S+/g)?.map((word) => word.replace(/^['"]|['"]$/g, "")) ?? [];
+}
+
+function commandWord(command: string): string {
+  const words = shellWords(command);
+  let index = 0;
+  for (;;) {
+    while (/^[A-Za-z_][A-Za-z0-9_]*=/.test(words[index] ?? "")) index += 1;
+    const word = words[index] ?? "";
+    if (!["env", "command", "exec", "nohup", "time"].includes(basename(word).toLowerCase())) return word;
+    index += 1;
+  }
 }
 
 function isShellInterpreter(word: string): boolean {
-  const name = basename(word).toLowerCase().replace(/\.exe$/, "");
+  const name = basename(word.replace(/\\/g, "/")).toLowerCase().replace(/\.exe$/, "");
   return ["bash", "sh", "zsh", "pwsh", "powershell"].includes(name);
 }
 
-function heredocReceiver(line: string, heredocIndex: number): string {
+function heredocLineRunsShell(line: string, heredocIndex: number): boolean {
   const before = line.slice(0, heredocIndex);
-  const pieces = before.split(/&&|\|\||;|\|/);
-  return firstShellWord(pieces[pieces.length - 1] ?? "");
-}
-
-function heredocPipesToShell(line: string, heredocEnd: number): boolean {
-  return /^\s*\|\s*(?:[A-Za-z_][A-Za-z0-9_]*=[^\s]+\s+)*(bash|sh|zsh|pwsh|powershell)(?:\.exe)?(?:\s|$)/i.test(line.slice(heredocEnd));
+  const start = Math.max(before.lastIndexOf("&&"), before.lastIndexOf("||"), before.lastIndexOf(";"), before.lastIndexOf("|"));
+  const fromHeredocSegment = line.slice(start < 0 ? 0 : start + (before[start] === "&" || before[start] === "|" ? 2 : 1));
+  return fromHeredocSegment.split(/&&|\|\||;|\|/).some((part) => isShellInterpreter(commandWord(part)));
 }
 
 function stripHeredocBodies(command: string): string {
@@ -214,7 +221,7 @@ function stripHeredocBodies(command: string): string {
     if (matches.length === 0) continue;
     for (const match of matches) {
       const index = match.index ?? 0;
-      if (isShellInterpreter(heredocReceiver(line, index)) || heredocPipesToShell(line, index + match[0].length)) continue;
+      if (heredocLineRunsShell(line, index)) continue;
       const allowTabs = match[1] === "-";
       const marker = match[2] ?? match[3] ?? match[4] ?? "";
       i += 1;

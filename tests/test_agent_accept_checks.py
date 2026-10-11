@@ -320,7 +320,6 @@ def test_test_function_rename_passes_but_delete_fails(tmp_path: Path) -> None:
     assert run_checks(repo, run_dir).returncode == 1
 
 
-
 def test_gate_c_zone_owner_decision_in_first_commit_passes(tmp_path: Path) -> None:
     c_brief = BRIEF.replace("zone: B", "zone: C").replace("owner_decision: none", "owner_decision: owner_decision:DEVX-1:2026-10-11:ok").replace("  - docs/task_register_completed.md\n", "  - docs/task_register_completed.md\n  - config/critical.yaml\n")
     repo, run_dir = init_repo(tmp_path, c_brief)
@@ -434,7 +433,9 @@ def test_ts_test_delete_fails_and_rename_passes(tmp_path: Path) -> None:
     commit_change(repo, "tests/example.test.ts", "test('a', () => {});\ntest('b', () => {});\n", "base ts tests")
     git(repo, "switch", "-C", "work", "main")
     commit_change(repo, "tests/example.test.ts", "test('renamed', () => {});\n", "delete ts test")
-    assert run_checks(repo, run_dir).returncode == 1
+    res = run_checks(repo, run_dir)
+    assert res.returncode == 1
+    assert "removed asserts/tests" in check_map(run_dir)["tests not weakened"]["detail"]
     repo2, run_dir2 = init_repo(tmp_path / "rename")
     git(repo2, "switch", "main")
     commit_change(repo2, "tests/example.test.ts", "test('a', () => {});\n", "base ts test")
