@@ -1,6 +1,8 @@
 # AITradingSystem 平台用户指南
 
-最后更新：2026-06-19
+最后更新：2026-10-11
+
+> **2026-10-11 说明**：本文是 2026-06-19 工程收尾批次的入口说明，其余正文保留原样作为历史记录。`scripts/run_validation_tier.py` 和分层验证已在 GOV-008 删除，下文 4 处已改为 ship 门禁（`tools/gov008/ship.py`）。现行入口见 [README](../README.md)、[AGENTS.md](../AGENTS.md) 和[运维手册](operations/operations_runbook.md)。
 
 本文是 TRADING-487_to_504 工程收尾批次的稳定入口说明，面向不想先阅读
 task register 的新用户。当前系统状态是工程控制面 ready、研究候选回到 backlog；
@@ -12,7 +14,7 @@ Stage C clean-clone release acceptance runner 已建立，但提交后的 clean 
 | 角色 | 第一入口 | 主要问题 | 常用命令或文档 |
 |---|---|---|---|
 | Researcher | `aits system status --as-of YYYY-MM-DD` | 当前候选是否值得继续研究，证据弱在哪里 | `aits reports latest --report-id next_candidate_research_cycle_snapshot`、`docs/research/weight_research_turn_2026-06-19.md`、`docs/system_flow.md` |
-| Operator | `aits system doctor --as-of YYYY-MM-DD` | 环境、数据、registry、validation 是否阻断运行 | `aits validate-data`、`aits reports index --as-of YYYY-MM-DD`、`python scripts/run_validation_tier.py --list`、`docs/operations/operations_runbook.md` |
+| Operator | `aits system doctor --as-of YYYY-MM-DD` | 环境、数据、registry、validation 是否阻断运行 | `aits validate-data`、`aits reports index --as-of YYYY-MM-DD`、`python tools/gov008/ship.py --repo . --dry-run`、`docs/operations/operations_runbook.md` |
 | Owner / Reviewer | `aits system status --as-of YYYY-MM-DD` | 当前结论、blocker、warning、安全边界和下一步 owner action | Reader Brief、`docs/artifact_catalog.md`、`docs/requirements/TRADING-487_to_504_Engineering_Closeout_and_Weight_Research_Turn.md` |
 
 三条路径共享同一原则：先看 canonical status / doctor，再下钻到 source artifact。
@@ -30,8 +32,7 @@ python -m pip install -e ".[dev,data,dashboard,brokers]"
 aits system status --as-of 2026-06-19
 aits system doctor --as-of 2026-06-19
 aits reports index --as-of 2026-06-19
-python scripts/run_validation_tier.py fast-unit --write-runtime-artifact
-python scripts/run_validation_tier.py reproducibility --write-runtime-artifact
+python -m pytest tests -n 16 --dist loadfile -m "not slow" -q
 python scripts/run_clean_clone_release_acceptance.py --as-of 2026-06-19
 aits reports engineering-closeout-release-candidate --as-of 2026-06-19
 aits reports validate-engineering-closeout-release-candidate --latest
@@ -60,8 +61,8 @@ aits validate-data
 - `aits system status` 是当前状态第一屏，不替代底层 source artifact。
 - `aits system doctor` 是工程和操作诊断，不批准 paper-shadow 或 live trading。
 - `aits reports latest` 查询 registry latest artifact，不运行上游。
-- `python scripts/run_validation_tier.py reproducibility` 验证 artifact lineage、run manifest
-  和 runtime summary 复现契约，不替代数据质量门禁。
+- `python tools/gov008/ship.py --repo . --dry-run` 列出改动的分区和要跑的门禁；ship 门禁运行完整 PR 套件，
+  不替代数据质量门禁。
 - `python scripts/run_clean_clone_release_acceptance.py` 只在 clean worktree 上能给出
   clean-clone PASS；dirty snapshot smoke 必须保持 BLOCKED，不能作为 release signoff。
 - `aits reports engineering-closeout-release-candidate` 聚合 release tag/changelog、

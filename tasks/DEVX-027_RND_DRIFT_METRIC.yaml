@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-027_RND_DRIFT_METRIC
+area: Developer workflow / 研发漂移指标（RSI 借鉴）
+priority: P2
+status: PROPOSED
+next_owner: Claude（写任务单）
+next_step: 排在 DEVX-026 之后，B 区，可交给本地模型。runs_board.py 增加“改动去向”一节：按 main 上一段时间（默认最近 14 天）的提交，把改动文件分成“投资系统”（研究线和日常链路的产品代码、config/research、research/ 等）和“工作流与治理”（scripts/agent、tools、.pi、.agents、tasks、DEVX/GOV/OPS 需求文档等）两类，显示两类提交占比的按周走势；分类规则放在一个小配置文件里，未分类的文件单列。只显示数据，不设阈值、不拦截
+acceptance: 只读 git log，不写仓库；对 2026-10-01 至 2026-10-10 重算，复现 GOV-008 需求文档第 1 节“约 180 个提交中没有一个是投资系统改动”的结论（口径有差异时写明）；测试覆盖分类、空区间和未分类文件
+notes: production_effect=none；broker_action=none；依据：RSI 综述（arXiv 2607.07663）指出自我改进循环容易滑向代理目标；本项目 TRADING-2564 自主推进期间的漂移（owner 2026-09-09 指出）和 GOV-008 第 1 节的统计；看板数据在 pi 方案第 4.8 节的每 20 次复核时一起看

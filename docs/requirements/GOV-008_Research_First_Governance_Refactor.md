@@ -995,5 +995,38 @@ owner 于 14:03 JST 在项目对话中再次确认（"确认按 M3 清单全部�
 - pi 运行 Python 必须用项目 `.venv` 的解释器，不用系统 Python（第 20.4、20.7 节记录的偏差）。
 - `~/.codex` 下 4 个 Codex automation 全部保持暂停：`aitradingsystem`、`aitradingsystem-pit`、`gov-007-fence`、`trading-2564`。
   日常调度只有 Windows 计划任务 "AITradingSystem Daily Run"（OPS-082）。
-- 发布一律用 `python tools/gov008/ship.py --repo . --execute --push`，先 `--dry-run`。需要进生产的改动 ship 后，按运维手册第 9.1 节
-  把运行副本切到新 SHA。
+- 发布一律经 ship 门禁，先 `--dry-run`：一步式 `python tools/gov008/ship.py --repo . --execute --push`；或两步式，先 `--gate`，
+  再由 owner 账户运行 `scripts/agent/publish.ps1`（pi 的运行用两步式，见 AGENTS.md 和 ship-change skill）。
+  需要进生产的改动 ship 后，按运维手册第 9.1 节把运行副本切到新 SHA。
+
+## 25. 迁移后的记录与入口清理（2026-10-11）
+
+来源：线程"工程收尾遗留盘点"的清单（E2、E3、E6）。新的 owner 决定是 `owner_decision:ARCH-004:2026-10-11:end_program_after_gov008`，
+全文在 ARCH-004 需求文档开头。改过的任务，原 next_step 保留在新文字之后，notes 只追加。
+
+| 任务 | 原状态 | 新状态 | 依据 |
+|---|---|---|---|
+| ARCH-005、ARCH-005S4D、ARCH-005S4E、DEVX-002、DEVX-003、DEVX-004、DEVX-005、DEVX-006C、DEVX-006D、DEVX-007、DEVX-010、DEVX-013 | BASELINE_DONE | DROPPED | 跟进的机制已在第 17 节删除，与第 21 节同一依据（`owner_decision:GOV-008:2026-10-10:research_first_refactor_v1`） |
+| ARCH-004、ARCH-004G2、ARCH-004G5、ARCH-004H | DEFERRED | DROPPED | `owner_decision:ARCH-004:2026-10-11:end_program_after_gov008` |
+| ARCH-004G3、ARCH-004G4、ARCH-004W15 | BASELINE_DONE | DONE | 同上；已落地部分在用，剩余范围不再推进 |
+| GOV-006 | DEFERRED | DROPPED | 由本次清理和研究讨论后的一次性重排取代 |
+| OPS-075、OPS-076 | BASELINE_DONE | DONE | 剩下的只有已删除的正式五级门禁；回归测试随 ship 门禁的 PR 套件运行 |
+| LLM-005 | VALIDATING | DONE | 降档配置自 2026-05-13 起在日报使用；当时计划的账单对照没有记录，不再追补 |
+| DATA-001、PROD-004 | VALIDATING | VALIDATING | 下一步改成现行说法：付费数据源恢复后的日报或运行副本验收；PROD-004 的代码已在 main |
+| OPS-080 | DEFERRED | PROPOSED | 只读对照确认问题仍在，见下 |
+
+OPS-073 的下一步已在第 23 节的复核中改成现行说法，这次不动。研究类任务（TRADING、CALIBRATION 等）留给研究讨论。
+
+**OPS-080 对照**：10/09 计划任务那次运行中，`market_data_recover_freshness` 在 DQ 和评分之后从 FMP 抓取 GOOGL、BRK.B，
+`updated_price_cache: true`（运行副本 `artifacts\data_refresh\2026-10-09\market_data_refresh_summary.json`）。诱因之一是
+`config/data/market_data_refresh.yaml` 的 `assets.required` 含 GOOGL、BRK.B，而评分股票池用 GOOG、不含 BRK.B。所以保留 OPS-080，
+在现行 main 上重定范围：日报 DQ 之后不再改写输入。旧 v2 源码不恢复；数据路径属 C 区，实现时需要 owner 决定。保全位置保留到新修复发布之后。
+
+**入口文档**：
+- `README.md`：改写前的全文（约 300 KB，很多命令已在本任务中删除）原样移到 `docs/archive/README.md`，新 README 只列现行入口。
+  `README.md` 这个文件名保留，因为 `canonical_system_status` 把它列为入口，`production_boundary_static_scan` 会扫描它。
+- `docs/platform_user_guide.md`：文档契约测试检查它的章节，所以不归档；顶部加说明，4 处 `scripts/run_validation_tier.py` 改为 ship 门禁。
+- 第 24 节的发布说明补上两步式。
+
+**同一次提交里新登记的任务**：RSI 借鉴讨论（2026-10-11）追加的 DEVX-026、DEVX-027、DEVX-028、TRADING-2565、TRADING-2566，
+来源写在各自的 notes 里。

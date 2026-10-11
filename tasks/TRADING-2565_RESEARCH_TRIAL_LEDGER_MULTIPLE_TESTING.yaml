@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING
+area: 研究方法 / 试验自动登记与多重检验校正（RSI 借鉴）
+priority: P2
+status: DEFERRED
+next_owner: Project Owner
+next_step: DEFERRED（owner_decision:GOV-008:2026-10-11:research_after_migration）：退出条件——工程迁移结束后的研究策略讨论；届时决定是否并入 TRADING-2564 的 S4。内容：所有 aits research 运行经 RunContext 自动登记试验，失败和放弃的变体也登记；报告最好结果时同时给出试验次数和多重检验校正后的指标（deflated Sharpe、PBO）；把 parameter_replay、calibration_protocol、indicator_research 中已有的 deflated Sharpe 实现统一到一处
+acceptance: 研究运行默认自动登记，未登记的运行结果不能进入结果准入；报告第一屏显示试验次数和校正后指标；校正实现有固定数值用例；涉及 backtest/** 或阈值的改动走 C 区并带 owner 决定
+notes: production_effect=none；broker_action=none；落实 GOV-008 第 3 节 G3 的试验计数（第 4 节第 2 条的实验台账目前只有最小版）；依据：AQuA（arXiv 2608.12841）和 Huang & Fan（arXiv 2603.14288）的自主因子研究都报了很高的 Sharpe，但没讲清试验次数和多重检验

@@ -2,8 +2,8 @@ schema_version: task.v1
 id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
 area: Architecture / Reporting native migration and readable conclusion chain
 priority: P1
-status: BASELINE_DONE
+status: DONE
 next_owner: project owner + reporting domain owner；剩余9项仅在独立G5授权后迁移
-next_step: 详见 Wave14/Wave15 supporting requirements。Owner Daily `data_quality_and_pit`已迁为native pure projector，Reader Brief删除本地builder；renderer只消费既有canonical DQ/PIT事实，不重算评分、阈值或策略结论。本次close不迁剩余9个generic provider、不启动G5。
+next_step: 无（已落地部分在用，剩余范围随 ARCH-004 计划结束不再推进）；原下一步：详见 Wave14/Wave15 supporting requirements。Owner Daily `data_quality_and_pit`已迁为native pure projector，Reader Brief删除本地builder；renderer只消费既有canonical DQ/PIT事实，不重算评分、阈值或策略结论。本次close不迁剩余9个generic provider、不启动G5。
 acceptance: native/generic=`1/9`、legacy builder=0、历史/current SHA、single-owner、19字段、bytes/path/schema/status parity与剩余9项readiness inventory持续PASS。
-notes: 2026-07-25：content-derived close/readiness与Wave15 failure-fix Full=`7180/0`完成，bounded slice转`BASELINE_DONE`；剩余9项均`migration_executed=false`，G5仍未授权。
+notes: 2026-07-25：content-derived close/readiness与Wave15 failure-fix Full=`7180/0`完成，bounded slice转`BASELINE_DONE`；剩余9项均`migration_executed=false`，G5仍未授权。；2026-10-11：owner 决定结束 ARCH-004 架构 v2 迁移计划（owner_decision:ARCH-004:2026-10-11:end_program_after_gov008）；已落地部分在用，剩余范围不再推进；原状态 BASELINE_DONE

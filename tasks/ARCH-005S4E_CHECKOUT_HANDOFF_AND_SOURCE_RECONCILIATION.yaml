@@ -2,8 +2,8 @@ schema_version: task.v1
 id: ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
 area: Architecture / checkout handoff and source reconciliation
 priority: P0
-status: BASELINE_DONE
+status: DROPPED
 next_owner: architecture control-plane owner：观察后续S4D S2 telemetry；known-unrelated研究文档继续由其owner处理
-next_step: 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0-S2、DEVX unique迁移、迁移前exact blob preservation、current-main受控收口及S4C fast-forward integration均已完成；S4D protected-main guard和handoff/reconciliation退出事务已进入main。
+next_step: 无（跟进的机制已在 GOV-008 删除）；原下一步：详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0-S2、DEVX unique迁移、迁移前exact blob preservation、current-main受控收口及S4C fast-forward integration均已完成；S4D protected-main guard和handoff/reconciliation退出事务已进入main。
 acceptance: protected-main mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full PASS；第二份report blocking/unattributed/retained=0，26项exact/history allowlist与324项generated rebuild完成人工收口；automatic cleanup/task mutation/production/broker保持false/none。
-notes: 2026-07-25：S4C候选`a318b9e11`通过focused/architecture/contract/integration/reproducibility=`56/634/275/995/23 passed`及natural-boundary Full=`7255 passed / 4 skipped / 642 warnings`；`main=origin/main=candidate=a318b9e1120215ce400870aa3dfab5d36e47a2a3`。known-unrelated exact path全程未读未改；S5未授权。
+notes: 2026-07-25：S4C候选`a318b9e11`通过focused/architecture/contract/integration/reproducibility=`56/634/275/995/23 passed`及natural-boundary Full=`7255 passed / 4 skipped / 642 warnings`；`main=origin/main=candidate=a318b9e1120215ce400870aa3dfab5d36e47a2a3`。known-unrelated exact path全程未读未改；S5未授权。；2026-10-11 记录清理：跟进的机制（lease、checkout guard、formal/Full、兼容性权威、报告目录分片、Codex skill、token 遥测等）的代码已在 GOV-008 第 17 节删除，任务无法再推进；依据 owner_decision:GOV-008:2026-10-10:research_first_refactor_v1，与 GOV-008 第 21 节关闭 DEVX-014～023 相同（GOV-008 需求文档第 25 节）；原状态 BASELINE_DONE

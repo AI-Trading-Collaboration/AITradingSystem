@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-028_PI_RUN_REPLAY_REVIEW
+area: Developer workflow / 用运行记录离线回放比较调度规则（RSI 借鉴）
+priority: P3
+status: DEFERRED
+next_owner: Claude
+next_step: DEFERRED：退出条件——pi 累计发布 20 次（pi 方案第 4.8 节的第一次复核）。届时用已记录的运行（attempts/*/events.jsonl、exit.json、acceptance.json）离线回放，比较不同调度规则：本地模型升级到云端的触发条件（现为报错或被退回两次）、L1/L2 的起始次数、一批放几个任务。只回放已记录的运行，不新跑 pi；门禁和人工核验不变；结果作为复核时给 owner 的数据
+acceptance: 回放脚本只读运行目录；每条候选规则给出回放下的耗时、云端花费和退回次数，并注明回放只覆盖记录里真实发生过的分支；规则变更仍由 owner 决定
+notes: production_effect=none；broker_action=none；依据：Google Dream-RSI（arXiv 2609.14858）用历史发现树离线比较探索策略，模型和评估器固定；样本太少时回放没有意义，所以等到 20 次

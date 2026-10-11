@@ -2,8 +2,8 @@ schema_version: task.v1
 id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
 area: Data platform / Windows external-request cache waiter/publish atomicity
 priority: P0
-status: BASELINE_DONE
+status: DONE
 next_owner: 'data platform owner: monitor Windows spawned-process Full; new distinct failures require a separate task'
-next_step: 详见 docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md。runtime/current-authority focused与compatibility已PASS；blocker=final_tree_five_tiers_and_trading_2514_closeout。
+next_step: 无（修复在 main，回归测试在 ship 门禁的 PR 套件里；出现不同的协调异常另建任务）；原下一步：详见 docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md。runtime/current-authority focused与compatibility已PASS；blocker=final_tree_five_tiers_and_trading_2514_closeout。
 acceptance: legacy prefix/historical hashes冻结；DEVX-006C active source set派生 live LF hashes；focused 58与compatibility 211 PASS；最终五级 PASS，Full绑定 full_20260812T150211Z。
-notes: 2026-08-13：current-authority fix focused=58 PASS；compatibility/deprecation=211 PASS；tracked progress在正式门禁前封存。
+notes: 2026-08-13：current-authority fix focused=58 PASS；compatibility/deprecation=211 PASS；tracked progress在正式门禁前封存。；2026-10-11 记录清理：剩下的只有已在 GOV-008 删除的正式五级门禁；修复在 main，tests/test_external_request_cache_revalidation_coordination.py 随 ship 门禁的 PR 套件运行（GOV-008 需求文档第 25 节）；原状态 BASELINE_DONE
