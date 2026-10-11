@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -28,6 +29,10 @@ import yaml
 POLICY_PATH = "config/gov008_ship.yaml"
 OWNER_DECISION_TRAILER = "Owner-Decision"
 GATE_TRAILER = "Gate"
+# On a failing gate command the terminal shows only this many trailing lines, enough to see pytest's
+# short test summary. Display truncation only: the full output always goes to the gate log file.
+GATE_FAILURE_TAIL_LINES = 60
+GATE_LOG_DIRNAME = "gov008-ship"
 
 
 class ShipError(RuntimeError):
@@ -158,14 +163,60 @@ def plan(repo: Path, base: str = "main") -> dict:
     }
 
 
+def git_dir(repo: Path) -> Path:
+    out = git(repo, "rev-parse", "--git-dir")
+    path = Path(out)
+    return path if path.is_absolute() else (repo / path).resolve()
+
+
 def run_gate(repo: Path, commands: list[list[str]]) -> dict:
+    """Run the gate quietly: full stdout/stderr of every command goes to a log file under the git
+    directory (never the working tree), the terminal gets one summary line per command. On failure
+    the tail of that command's output is printed and the ShipError names the log file."""
     started = time.monotonic()
-    for argv in commands:
-        resolved = [sys.executable if a == "python" else a for a in argv]
-        proc = subprocess.run(resolved, cwd=repo, check=False)
-        if proc.returncode != 0:
-            raise ShipError(f"gate command failed (exit {proc.returncode}): {' '.join(argv)}")
-    return {"seconds": round(time.monotonic() - started, 1), "commands": len(commands)}
+    log_dir = git_dir(repo) / GATE_LOG_DIRNAME
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"gate-{time.strftime('%Y%m%d-%H%M%S')}-{os.getpid()}.log"
+    with log_path.open("w", encoding="utf-8", errors="replace") as log:
+        for argv in commands:
+            resolved = [sys.executable if a == "python" else a for a in argv]
+            cmd_started = time.monotonic()
+            proc = subprocess.run(
+                resolved,
+                cwd=repo,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+            )
+            seconds = round(time.monotonic() - cmd_started, 1)
+            output = (proc.stdout or "") + (proc.stderr or "")
+            log.write(f"\n===== command: {' '.join(argv)} =====\n")
+            log.write(output)
+            log.write(f"\n===== exit={proc.returncode} seconds={seconds} =====\n")
+            log.flush()
+            non_empty = [line for line in output.splitlines() if line.strip()]
+            summary = non_empty[-1] if non_empty else "(no output)"
+            print(
+                f"gate: {' '.join(argv)} -> exit={proc.returncode} seconds={seconds} | {summary}"
+            )
+            if proc.returncode != 0:
+                tail_lines = output.splitlines()[-GATE_FAILURE_TAIL_LINES:]
+                print(
+                    f"gate command failed; last {len(tail_lines)} lines of output "
+                    f"(full output: {log_path}):\n" + "\n".join(tail_lines),
+                    file=sys.stderr,
+                )
+                raise ShipError(
+                    f"gate command failed (exit {proc.returncode}): {' '.join(argv)}; "
+                    f"full gate output: {log_path}"
+                )
+    return {
+        "seconds": round(time.monotonic() - started, 1),
+        "commands": len(commands),
+        "log": str(log_path),
+    }
 
 
 def gate_trailer(plan_: dict, result: dict) -> str:
@@ -231,10 +282,14 @@ def main() -> int:
     args = parser.parse_args()
     repo = args.repo.resolve()
     try:
+        # Compact one-line JSON: the full plan/ship result stays machine-readable without spending
+        # ~30 lines (and thousands of tokens in a small model context) on indentation.
         if args.dry_run:
-            print(json.dumps(plan(repo, args.base), ensure_ascii=False, indent=1))
+            print(json.dumps(plan(repo, args.base), ensure_ascii=False, separators=(", ", ": ")))
             return 0
-        print(json.dumps(ship(repo, args.base, args.push), ensure_ascii=False, indent=1))
+        print(
+            json.dumps(ship(repo, args.base, args.push), ensure_ascii=False, separators=(", ", ": "))
+        )
         return 0
     except ShipError as exc:
         print(f"SHIP REFUSED: {exc}", file=sys.stderr)

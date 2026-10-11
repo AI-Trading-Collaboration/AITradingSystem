@@ -783,3 +783,15 @@ owner 要求在本机模型服务里加入 Strata 模型供本项目使用，选
 `consumer_cutover_allowed=false`。也就是说缓存行情自 2026-07-23 后未刷新。gpt-5.5 与 Qwen 27B 的试跑只看了计划，没有检查 DQ 回执。
 
 **结论**：128k 上下文解决了 20.6 记录的溢出与大文件限制，本地模型可以承担更大范围的阅读任务。判断类改动仍需审阅把关。
+
+### 20.8 DEVX-024 遗留项：让 `ship` 的门禁输出更短（owner 决定，2026-10-11）
+
+20.6 记录了可选后续"让 `ship` 的门禁输出更短，减少溢出"。向 owner 提出选项"让 ship 的门禁输出更短，`tools/gov008/ship.py`
+属于 C 区，需要 owner 决定"，owner 在聊天中回复"A"（同意执行）。决定记录为
+`owner_decision:DEVX-024:2026-10-11:shorter_ship_gate_output`。
+
+范围：只改 `run_gate` 的输出方式与 `main()` 的 JSON 打印——每条门禁命令的完整 stdout/stderr 写入 git 目录下的日志文件
+（`<git-dir>/gov008-ship/gate-<时间戳>.log`，不进工作区），终端只打印每条命令一行结果（命令、退出码、耗时、输出最后一行摘要），
+失败时打印该命令输出末尾 60 行并在 `ShipError` 消息里给出日志路径；最终 JSON 改为不带缩进的紧凑一行。门禁判定逻辑、`Gate:` trailer
+格式、main 的 compare-and-swap、push 前后检查均不变；不削弱任何测试，`tests/test_gov008_ship.py` 新增测试证明日志完整、终端只有摘要、
+工作区保持干净、失败路径带日志路径。

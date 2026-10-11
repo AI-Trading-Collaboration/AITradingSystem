@@ -195,6 +195,67 @@ def test_ship_push_fast_forwards_origin_and_verifies_it(
     )
 
 
+NOISY_SUCCESS = (
+    "print(*[f'progress dot line {i}' for i in range(300)], sep='\\n'); "
+    "print('7930 passed, 614 warnings in 600.00s')"
+)
+NOISY_FAILURE = (
+    "import sys; "
+    "print(*[f'chatty output line {i}' for i in range(120)], sep='\\n'); "
+    "print('FAILED tests/test_x.py::test_broken - assert False'); sys.exit(1)"
+)
+
+
+def test_run_gate_logs_full_output_and_prints_only_one_summary_line(
+    repo: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    result = ship.run_gate(repo, [["python", "-c", NOISY_SUCCESS]])
+    captured = capsys.readouterr()
+    # the terminal gets exactly one line per command: command, exit code, seconds, last output line
+    assert captured.out.count("\n") == 1
+    assert "exit=0" in captured.out and "7930 passed, 614 warnings in 600.00s" in captured.out
+    assert "progress dot line 299" not in captured.out
+    assert captured.err == ""
+    # the full output goes to a log file under the git directory, never the working tree
+    log_path = Path(result["log"])
+    git_dir = Path(ship.git_dir(repo))
+    assert log_path.parent == git_dir / ship.GATE_LOG_DIRNAME
+    log_text = log_path.read_text(encoding="utf-8")
+    assert "progress dot line 299" in log_text
+    assert "7930 passed, 614 warnings in 600.00s" in log_text
+    assert "exit=0" in log_text
+    assert ship.dirty_paths(repo, []) == []
+
+
+def test_run_gate_failure_prints_tail_and_error_names_the_log(
+    repo: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    with pytest.raises(ship.ShipError) as excinfo:
+        ship.run_gate(repo, [["python", "-c", NOISY_FAILURE]])
+    message = str(excinfo.value)
+    assert "exit 1" in message
+    log_path = message.rsplit("full gate output: ", 1)[1].strip()
+    assert Path(log_path).is_file()
+    captured = capsys.readouterr()
+    # the failure tail on stderr shows the short-test-summary-style line but is truncated
+    assert "FAILED tests/test_x.py::test_broken" in captured.err
+    tail = captured.err.splitlines()
+    assert "chatty output line 119" in captured.err
+    assert "chatty output line 0" not in captured.err
+    printed_body = [ln for ln in tail if ln.startswith("chatty output line")]
+    assert len(printed_body) == ship.GATE_FAILURE_TAIL_LINES - 1  # one line is the FAILED line
+    # the log keeps everything, including the lines the terminal never showed
+    log_text = Path(log_path).read_text(encoding="utf-8")
+    assert "chatty output line 0" in log_text and "chatty output line 119" in log_text
+    assert ship.dirty_paths(repo, []) == []
+
+
+def test_run_gate_log_lives_in_git_dir_so_working_tree_stays_clean(repo: Path) -> None:
+    result = ship.run_gate(repo, [["python", "-c", NOISY_SUCCESS]])
+    assert Path(result["log"]).is_relative_to(Path(ship.git_dir(repo)))
+    assert run_git(repo, "status", "--porcelain", "--untracked-files=all") == ""
+
+
 def test_ship_push_refuses_a_diverged_origin_without_moving_local_main(
     repo: Path, tmp_path_factory: pytest.TempPathFactory
 ) -> None:
