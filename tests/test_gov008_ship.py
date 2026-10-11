@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -315,19 +316,21 @@ def test_gate_then_publish_fast_forwards_main(repo: Path) -> None:
 def test_publish_does_not_run_gate_commands_but_gate_and_execute_do(repo: Path) -> None:
     failing = [["python", "-c", "raise SystemExit(1)"]]
     policy = MINI_POLICY | {"gates": {"A": [], "B": failing, "C": failing}}
+    run_git(repo, "switch", "main")
     _write_policy(repo, policy)
     run_git(repo, "add", "config/gov008_ship.yaml")
     run_git(repo, "commit", "-m", "policy\n\nOwner-Decision: owner_decision:T:2026-10-10:x")
+    before_publish = run_git(repo, "rev-parse", "main")
+    run_git(repo, "switch", "task/x")
+    run_git(repo, "merge", "--ff-only", "main")
     commit_file(repo, "src/app.py", "x\n", "code")
-    p = ship.plan(repo)
-    assert p["zone"] == "C"  # base policy treats config/*.yaml as C
     tree = run_git(repo, "rev-parse", "HEAD^{tree}")
-    ship.append_gate_trailer(repo, f"zone=C tree={tree[:12]} commands=0 seconds=0 PASS")
-    assert ship.publish(repo, "main", push=False)["shipped_sha"] == run_git(
-        repo, "rev-parse", "HEAD"
-    )
+    ship.append_gate_trailer(repo, f"zone=B tree={tree[:12]} commands=1 seconds=0 PASS")
+    head = run_git(repo, "rev-parse", "HEAD")
+    assert ship.publish(repo, "main", push=False)["shipped_sha"] == head
+    assert run_git(repo, "rev-parse", "main") == head
 
-    run_git(repo, "update-ref", "refs/heads/main", run_git(repo, "rev-parse", "HEAD~1"))
+    run_git(repo, "update-ref", "refs/heads/main", before_publish)
     with pytest.raises(ship.ShipError, match="exit 1"):
         ship.gate(repo, "main")
     with pytest.raises(ship.ShipError, match="exit 1"):
@@ -348,7 +351,7 @@ def test_publish_refuses_tree_mismatch_after_extra_commit(repo: Path) -> None:
     ship.gate(repo, "main")
     old_gate = _gate_values(repo)[-1]
     commit_file(repo, "docs/b.md", "y\n", f"docs: add b\n\nGate: {old_gate}")
-    with pytest.raises(ship.ShipError, match="tree"):
+    with pytest.raises(ship.ShipError, match="does not match HEAD tree"):
         ship.publish(repo, "main", push=False)
     assert run_git(repo, "rev-parse", "main") == before
 
@@ -364,7 +367,7 @@ def test_publish_refuses_tree_mismatch_after_extra_commit(repo: Path) -> None:
 def test_publish_refuses_bad_trailer_format(repo: Path, bad: str) -> None:
     before = run_git(repo, "rev-parse", "main")
     commit_file(repo, "docs/a.md", "x\n", f"docs: add a\n\nGate: {bad}")
-    with pytest.raises(ship.ShipError, match="format"):
+    with pytest.raises(ship.ShipError, match="format is invalid"):
         ship.publish(repo, "main", push=False)
     assert run_git(repo, "rev-parse", "main") == before
 
@@ -374,7 +377,7 @@ def test_publish_refuses_zone_lower_than_actual(repo: Path) -> None:
     commit_file(repo, "src/app.py", "x\n", "code")
     tree = run_git(repo, "rev-parse", "HEAD^{tree}")
     ship.append_gate_trailer(repo, f"zone=A tree={tree[:12]} commands=0 seconds=0 PASS")
-    with pytest.raises(ship.ShipError, match="zone"):
+    with pytest.raises(ship.ShipError, match="does not match planned zone"):
         ship.publish(repo, "main", push=False)
     assert run_git(repo, "rev-parse", "main") == before
 
@@ -384,7 +387,7 @@ def test_publish_refuses_command_count_mismatch(repo: Path) -> None:
     commit_file(repo, "docs/a.md", "x\n", "docs: add a")
     tree = run_git(repo, "rev-parse", "HEAD^{tree}")
     ship.append_gate_trailer(repo, f"zone=A tree={tree[:12]} commands=1 seconds=0 PASS")
-    with pytest.raises(ship.ShipError, match="commands"):
+    with pytest.raises(ship.ShipError, match="does not match policy commands"):
         ship.publish(repo, "main", push=False)
     assert run_git(repo, "rev-parse", "main") == before
 
@@ -402,6 +405,7 @@ def test_publish_refuses_when_main_not_ancestor(repo: Path) -> None:
 
 
 def test_publish_reads_base_policy_while_dry_run_reads_worktree_policy(repo: Path) -> None:
+    before = run_git(repo, "rev-parse", "main")
     policy = MINI_POLICY | {"zones": {"C": [], "A": ["docs/**", "*.md", "secret/**", "config/**"]}}
     _write_policy(repo, policy)
     run_git(repo, "add", "config/gov008_ship.yaml")
@@ -411,6 +415,7 @@ def test_publish_reads_base_policy_while_dry_run_reads_worktree_policy(repo: Pat
     assert p["ok"] and p["zone"] == "A"
     with pytest.raises(ship.ShipError, match="Owner-Decision"):
         ship.publish(repo, "main", push=False)
+    assert run_git(repo, "rev-parse", "main") == before
 
 
 def test_publish_push_fast_forwards_origin_and_verifies(
@@ -449,7 +454,7 @@ def test_publish_push_refuses_diverged_origin_without_moving_local_main(
 @pytest.mark.parametrize("args", [["--dry-run", "--push"], ["--gate", "--push"]])
 def test_cli_rejects_push_with_dry_run_or_gate(repo: Path, args: list[str]) -> None:
     done = subprocess.run(
-        ["python", str(REPO / "tools/gov008/ship.py"), "--repo", str(repo), *args],
+        [sys.executable, str(REPO / "tools/gov008/ship.py"), "--repo", str(repo), *args],
         text=True,
         capture_output=True,
         check=False,

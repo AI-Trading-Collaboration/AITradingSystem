@@ -47,8 +47,8 @@ owner_decision:DEVX-025:2026-10-11:ship_gate_publish_split —— 2026-10-11 own
 步骤：
 
 1. 按 owner 决定把 `tools/gov008/ship.py` 拆成 `--gate`（跑门禁、写 `Gate:`、不动 main）与 `--publish`（不跑测试，核对 `Gate:`、tree、区划和 Owner-Decision 后快进 main）的受控路径，保留 `--execute` 一步走。
-2. 新增 owner 账户使用的 `scripts/agent/publish.ps1`，从 main 取 `ship.py` 到仓库外临时目录执行发布，避免运行分支代码。
-3. 更新 ship policy、文档和测试，保证门禁只跑一次且发布只接受已验证树。
+2. 新增 owner 账户使用的 `scripts/agent/publish.ps1`，从 main 取 `ship.py` 到仓库外临时目录执行发布，只发布验收记录里 tree 对应的提交，避免运行分支代码。
+3. 更新文档和测试（不改 ship policy），保证门禁只跑一次且发布只接受已验证树。
 4. 为 C 区变更提交引用 `Owner-Decision: owner_decision:DEVX-025:2026-10-11:ship_gate_publish_split`。
 
 验收：
@@ -70,6 +70,7 @@ owner_decision:DEVX-025:2026-10-11:ship_gate_publish_split —— 2026-10-11 own
 - 2026-10-11：运行 02 第二次验收退回（真实 pi 的启动解析、stdin 带 BOM、安装脚本两处），执行 03 修正。
 - 2026-10-11：运行 02 第三次验收退回（看板重复计数工具调用、safe.directory 路径没转换、accept_checks 漏认几种 skip 写法），执行 04 修正。
 - 2026-10-11：运行 03 把 ship 拆成 gate 和 publish，新增 publish.ps1（owner 账户只发布，运行 main 上的 ship.py，不跑测试）。
+- 2026-10-11：运行 03 验收退回一次（publish 不跑门禁的测试不成立、拒绝用例断言太宽、验收记录没有锁定 tree、读子进程输出可能卡住），执行 03 修正。
 
 ## 6. 运行影响边界
 

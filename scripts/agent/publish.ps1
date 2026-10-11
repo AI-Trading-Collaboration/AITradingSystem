@@ -9,7 +9,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-function Get-UtcIso { (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ") }
+function Get-UtcIso { (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", [System.Globalization.CultureInfo]::InvariantCulture) }
 
 function Write-Utf8NoBom([string]$Path, [string]$Text) {
   $encoding = New-Object System.Text.UTF8Encoding($false)
@@ -37,9 +37,10 @@ function Invoke-Native([string]$FileName, [string[]]$ArgList, [string]$WorkingDi
   $proc = New-Object System.Diagnostics.Process
   $proc.StartInfo = $psi
   [void]$proc.Start()
+  $errTask = $proc.StandardError.ReadToEndAsync()
   $stdout = $proc.StandardOutput.ReadToEnd()
-  $stderr = $proc.StandardError.ReadToEnd()
   $proc.WaitForExit()
+  $stderr = $errTask.Result
   return @{ code = $proc.ExitCode; stdout = $stdout; stderr = $stderr }
 }
 
@@ -61,10 +62,11 @@ function Copy-GitBlob([string]$Spec, [string]$OutFile) {
   $proc = New-Object System.Diagnostics.Process
   $proc.StartInfo = $psi
   [void]$proc.Start()
+  $errTask = $proc.StandardError.ReadToEndAsync()
   $fs = [System.IO.File]::Open($OutFile, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
   try { $proc.StandardOutput.BaseStream.CopyTo($fs) } finally { $fs.Close() }
-  $stderr = $proc.StandardError.ReadToEnd()
   $proc.WaitForExit()
+  $stderr = $errTask.Result
   if ($proc.ExitCode -ne 0) { throw "git show $Spec failed: $stderr" }
 }
 
@@ -110,6 +112,7 @@ function Write-PublishJson([bool]$Ok, [string]$Summary, [object]$Result, [bool]$
 }
 
 $validationErrors = @()
+$acceptedTree = $null
 foreach ($entry in [System.Environment]::GetEnvironmentVariables().GetEnumerator()) {
   if ([string]$entry.Key -like "AITS_PI_*") { $validationErrors += "AITS_PI environment variable is set: $($entry.Key)" }
 }
@@ -125,6 +128,11 @@ if (-not (Test-Path -LiteralPath $RunDir -PathType Container)) {
       $reviews = @($accept.reviews)
       if (($reviews.Count -eq 0) -or ($reviews[$reviews.Count - 1].verdict -ne "accepted")) {
         $validationErrors += "last acceptance review verdict is not accepted"
+      } else {
+        $acceptedTree = [string]$reviews[$reviews.Count - 1].tree
+        if ($acceptedTree -notmatch "^[0-9a-f]{40}$") {
+          $validationErrors += "last accepted review tree is missing or is not a 40-character lowercase hex tree"
+        }
       }
     } catch {
       $validationErrors += "acceptance.json cannot be read: $($_.Exception.Message)"
@@ -138,6 +146,12 @@ try {
   $startBranch = (Git @("branch", "--show-current")).stdout.Trim()
   if (($startBranch -ne $Base) -and ($startBranch -ne $Branch)) {
     $validationErrors += "current branch must be Base '$Base' or Branch '$Branch', got '$startBranch'"
+  }
+  if ($acceptedTree -match "^[0-9a-f]{40}$") {
+    $branchTree = (Git @("rev-parse", "$Branch`^{tree}")).stdout.Trim()
+    if ($branchTree -ne $acceptedTree) {
+      $validationErrors += "Branch tree $branchTree does not match accepted review tree $acceptedTree"
+    }
   }
 } catch {
   $validationErrors += $_.Exception.Message

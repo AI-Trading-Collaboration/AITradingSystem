@@ -49,8 +49,9 @@ scripts/agent/publish.ps1 -Branch <branch> -RunDir <run-dir>                # ow
 
 - `ship` runs the gate, writes a `Gate:` trailer, fast-forwards `main` to the tested tree, pushes
   normally, and checks `origin/main` before and after. In two-step pi runs, run `--gate` after Claude
-  acceptance, then `publish.ps1` in the owner account; it does not run tests or branch code. Do nothing
-  else in the repository while it runs.
+  acceptance, then `publish.ps1` in the owner account; it only publishes the commit whose tree is in
+  the acceptance record and does not run tests or branch code. Do nothing else in the repository while
+  it runs.
 - If the gate fails: read the failures, fix them on the branch, commit, and run `ship` again. Never
   bypass `ship` with a manual `git push`, and never force-push, rebase, or rewrite history.
 - If `main` moved meanwhile, `ship` refuses. The second shipper brings the new `main` into its branch

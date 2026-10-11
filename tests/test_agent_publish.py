@@ -41,10 +41,17 @@ def commit_file(repo: Path, rel: str, text: str, message: str) -> None:
     run_git(repo, "commit", "-m", message)
 
 
-def write_acceptance(run_dir: Path, verdict: str = "accepted") -> None:
+def current_tree(repo: Path, ref: str = "HEAD") -> str:
+    return run_git(repo, "rev-parse", f"{ref}^{{tree}}")
+
+
+def write_acceptance(run_dir: Path, verdict: str = "accepted", tree: str | None = None) -> None:
     run_dir.mkdir(parents=True, exist_ok=True)
+    review = {"verdict": verdict}
+    if tree is not None:
+        review["tree"] = tree
     (run_dir / "acceptance.json").write_text(
-        json.dumps({"reviews": [{"verdict": verdict}]}), encoding="utf-8"
+        json.dumps({"reviews": [review]}), encoding="utf-8"
     )
 
 
@@ -87,7 +94,11 @@ def show_main_ship(repo: Path, path: Path) -> None:
 
 
 def run_publish(
-    repo: Path, run_dir: Path, *extra: str, env: dict[str, str] | None = None
+    repo: Path,
+    run_dir: Path,
+    *extra: str,
+    env: dict[str, str] | None = None,
+    branch: str = "task/x",
 ) -> subprocess.CompletedProcess[str]:
     ps = powershell()
     if env is None:
@@ -101,7 +112,7 @@ def run_publish(
             "-File",
             str(PUBLISH),
             "-Branch",
-            "task/x",
+            branch,
             "-RunDir",
             str(run_dir),
             "-Repo",
@@ -119,8 +130,8 @@ def run_publish(
 
 def test_publish_success_fast_forwards_pushes_deletes_branch(tmp_path: Path) -> None:
     repo, origin, run_dir = setup_repo(tmp_path)
-    write_acceptance(run_dir)
     commit_file(repo, "src/app.py", "x\n", "code")
+    write_acceptance(run_dir, tree=current_tree(repo))
     assert run_ship(repo, "--base", "main", "--gate").returncode == 0
     done = run_publish(repo, run_dir)
     assert done.returncode == 0, done.stdout + done.stderr
@@ -151,7 +162,6 @@ def test_publish_success_fast_forwards_pushes_deletes_branch(tmp_path: Path) -> 
 
 def test_publish_uses_ship_py_from_main_not_task_branch(tmp_path: Path) -> None:
     repo, _origin, run_dir = setup_repo(tmp_path)
-    write_acceptance(run_dir)
     commit_file(repo, "src/app.py", "x\n", "code")
     main_ship = tmp_path / "main-ship.py"
     show_main_ship(repo, main_ship)
@@ -159,6 +169,7 @@ def test_publish_uses_ship_py_from_main_not_task_branch(tmp_path: Path) -> None:
     (repo / "tools/gov008/ship.py").write_text("raise SystemExit(99)\n", encoding="utf-8")
     run_git(repo, "add", "tools/gov008/ship.py")
     run_git(repo, "commit", "-m", "break branch ship")
+    write_acceptance(run_dir, tree=current_tree(repo))
     gate = subprocess.run(
         [sys.executable, "-I", str(main_ship), "--repo", str(repo), "--base", "main", "--gate"],
         text=True,
@@ -173,9 +184,9 @@ def test_publish_uses_ship_py_from_main_not_task_branch(tmp_path: Path) -> None:
 
 def test_publish_fails_without_gate_trailer_and_restores_branch(tmp_path: Path) -> None:
     repo, _origin, run_dir = setup_repo(tmp_path)
-    write_acceptance(run_dir)
     before = run_git(repo, "rev-parse", "main")
     commit_file(repo, "src/app.py", "x\n", "code")
+    write_acceptance(run_dir, tree=current_tree(repo))
     done = run_publish(repo, run_dir)
     assert done.returncode == 1
     assert json.loads((run_dir / "publish.json").read_text(encoding="utf-8"))["ok"] is False
@@ -186,12 +197,12 @@ def test_publish_fails_without_gate_trailer_and_restores_branch(tmp_path: Path) 
 
 def test_publish_fails_after_extra_commit_and_restores_branch(tmp_path: Path) -> None:
     repo, _origin, run_dir = setup_repo(tmp_path)
-    write_acceptance(run_dir)
     before = run_git(repo, "rev-parse", "main")
     commit_file(repo, "src/app.py", "x\n", "code")
     assert run_ship(repo, "--base", "main", "--gate").returncode == 0
     gate = run_git(repo, "log", "-1", "--format=%(trailers:key=Gate,valueonly)")
     commit_file(repo, "src/next.py", "y\n", f"next\n\nGate: {gate}")
+    write_acceptance(run_dir, tree=current_tree(repo))
     done = run_publish(repo, run_dir)
     assert done.returncode == 1
     assert json.loads((run_dir / "publish.json").read_text(encoding="utf-8"))["ok"] is False
@@ -211,7 +222,7 @@ def test_publish_validation_rejects_unaccepted_review_without_json(tmp_path: Pat
 
 def test_publish_validation_rejects_aits_pi_environment(tmp_path: Path) -> None:
     repo, _origin, run_dir = setup_repo(tmp_path)
-    write_acceptance(run_dir)
+    write_acceptance(run_dir, tree=current_tree(repo))
     env = os.environ.copy()
     env["AITS_PI_RUN"] = "leak"
     done = run_publish(repo, run_dir, env=env)
@@ -219,11 +230,60 @@ def test_publish_validation_rejects_aits_pi_environment(tmp_path: Path) -> None:
     assert not (run_dir / "publish.json").exists()
 
 
+def test_publish_validation_rejects_missing_acceptance_tree_without_json(tmp_path: Path) -> None:
+    repo, _origin, run_dir = setup_repo(tmp_path)
+    write_acceptance(run_dir)
+    before = run_git(repo, "rev-parse", "main")
+    done = run_publish(repo, run_dir)
+    assert done.returncode == 2
+    assert "tree" in done.stdout
+    assert not (run_dir / "publish.json").exists()
+    assert run_git(repo, "rev-parse", "main") == before
+
+
+def test_publish_validation_rejects_branch_tree_after_acceptance_without_json(
+    tmp_path: Path,
+) -> None:
+    repo, _origin, run_dir = setup_repo(tmp_path)
+    commit_file(repo, "src/app.py", "x\n", "code")
+    write_acceptance(run_dir, tree=current_tree(repo))
+    before = run_git(repo, "rev-parse", "main")
+    commit_file(repo, "src/after.py", "y\n", "after acceptance")
+    done = run_publish(repo, run_dir)
+    assert done.returncode == 2
+    assert "accepted review tree" in done.stdout
+    assert not (run_dir / "publish.json").exists()
+    assert run_git(repo, "rev-parse", "main") == before
+
+
+def test_publish_validation_rejects_worktree_checkout_without_json(tmp_path: Path) -> None:
+    repo, _origin, run_dir = setup_repo(tmp_path)
+    write_acceptance(run_dir, tree=current_tree(repo))
+    worktree = tmp_path / "worktree"
+    run_git(repo, "worktree", "add", "-b", "task/worktree", str(worktree), "HEAD")
+    done = run_publish(worktree, run_dir, branch="task/worktree")
+    assert done.returncode == 2
+    assert "main checkout" in done.stdout
+    assert not (run_dir / "publish.json").exists()
+
+
+def test_publish_validation_rejects_wrong_current_branch_without_json(tmp_path: Path) -> None:
+    repo, _origin, run_dir = setup_repo(tmp_path)
+    write_acceptance(run_dir, tree=current_tree(repo, "task/x"))
+    before = run_git(repo, "rev-parse", "main")
+    run_git(repo, "switch", "-c", "other")
+    done = run_publish(repo, run_dir)
+    assert done.returncode == 2
+    assert "current branch" in done.stdout
+    assert not (run_dir / "publish.json").exists()
+    assert run_git(repo, "rev-parse", "main") == before
+
+
 def test_publish_no_push_moves_main_but_not_origin(tmp_path: Path) -> None:
     repo, origin, run_dir = setup_repo(tmp_path)
-    write_acceptance(run_dir)
     before_origin = run_git(origin, "rev-parse", "main")
     commit_file(repo, "src/app.py", "x\n", "code")
+    write_acceptance(run_dir, tree=current_tree(repo))
     assert run_ship(repo, "--base", "main", "--gate").returncode == 0
     done = run_publish(repo, run_dir, "-NoPush")
     assert done.returncode == 0, done.stdout + done.stderr
