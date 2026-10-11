@@ -37,12 +37,14 @@ function Test-Right($Rights, [string]$Kind) {
 
 function Test-PathAcl([string]$Path, [switch]$AlsoRead) {
     $acl = (New-Object System.IO.DirectoryInfo($Path)).GetAccessControl()
-    foreach ($ace in $acl.Access) {
+    foreach ($ace in $acl.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier])) {
         if ($ace.AccessControlType -ne "Allow") { continue }
-        $sid = $ace.IdentityReference.Translate([Security.Principal.SecurityIdentifier]).Value
+        $sid = $ace.IdentityReference.Value
         if ($sid -ne $UsersSid -and $sid -ne $AuthenticatedUsersSid) { continue }
-        if (Test-Right $ace.FileSystemRights "write") { Add-Problem "$Path is writable by $($ace.IdentityReference.Value) ($sid)" }
-        if ($AlsoRead -and (Test-Right $ace.FileSystemRights "read")) { Add-Problem "$Path is readable by $($ace.IdentityReference.Value) ($sid)" }
+        $name = $sid
+        try { $name = $ace.IdentityReference.Translate([System.Security.Principal.NTAccount]).Value } catch { }
+        if (Test-Right $ace.FileSystemRights "write") { Add-Problem "$Path is writable by $name ($sid)" }
+        if ($AlsoRead -and (Test-Right $ace.FileSystemRights "read")) { Add-Problem "$Path is readable by $name ($sid)" }
     }
 }
 

@@ -463,3 +463,37 @@ def test_setup_whatif_reports_missing_pi(tmp_path: Path) -> None:
     assert "pi command not found:" in output
     assert "Full setup would stop here" in output
     assert not agent.exists() and not wt.exists() and not runs.exists()
+
+
+APP_PACKAGE_SIDS = ("S-1-15-2-1", "S-1-15-2-2")
+
+
+def grant_app_package_read(path: Path) -> None:
+    for sid in APP_PACKAGE_SIDS:
+        subprocess.run(["icacls", str(path), "/grant", f"*{sid}:(OI)(CI)(RX)"], check=True, text=True, capture_output=True, timeout=60)
+
+
+def test_setup_check_only_accepts_app_package_aces(tmp_path: Path) -> None:
+    ps = powershell(); work = tmp_path / "work"; repo = tmp_path / "repo"
+    work.mkdir(); repo.mkdir()
+    grant_app_package_read(work); grant_app_package_read(repo)
+    done = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/agent/setup-agent-account.ps1"), "-CheckOnly", "-WorkRoot", str(work), "-Repo", str(repo)], text=True, capture_output=True, timeout=120)
+    output = done.stdout + done.stderr
+    assert "IdentityNotMapped" not in output and "Translate" not in output, output
+    assert f"{work} is" not in output and f"{repo} is" not in output, output
+    if done.returncode != 0:
+        pytest.skip("CheckOnly found machine-level problems on this machine: " + output)
+    assert "CheckOnly passed." in output
+
+
+def test_setup_whatif_accepts_app_package_aces_on_pi_dir(tmp_path: Path) -> None:
+    ps = powershell(); pi_dir = tmp_path / "aits pi"; pi_dir.mkdir(); pi_command = pi_dir / "pi.cmd"; pi_command.write_text("", encoding="ascii")
+    grant_app_package_read(pi_dir)
+    done = run_setup_whatif(ps, tmp_path, pi_command=pi_command)
+    output = done.stdout + done.stderr
+    if "Full setup stopped because CheckOnly found problems" in output:
+        pytest.skip("WhatIf CheckOnly found problems on this machine: " + output)
+    assert done.returncode == 0, output
+    assert "IdentityNotMapped" not in output and "Translate" not in output, output
+    assert "pi command: " in output
+    assert "Full setup would stop here" not in output

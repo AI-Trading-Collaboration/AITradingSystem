@@ -104,6 +104,19 @@ owner_decision:DEVX-025:2026-10-11:tighten_d_work_acl —— 2026-10-11 owner（
 - `ship.py --dry-run` 显示本次为 B 区。
 - 安装脚本仍只由 owner 在 1b 以管理员身份运行；1b 时实测受限账户下守卫生效、owner 不提权能启动任务。
 
+### 运行 07：权限检查直接读 SID
+
+步骤：
+
+1. 安装脚本的 `Test-PathAcl` 改为直接按 SID 读取 ACL 条目，只在报告问题时尝试把 SID 翻译为帐户名。
+2. 补充 `-CheckOnly` 和 `-WhatIf` 覆盖，验证 Program Files 常见的应用程序包 SID 读权限不会触发 `IdentityNotMappedException` 或误报。
+
+验收：
+
+- 新旧测试通过。
+- `ship.py --dry-run` 显示本次为 B 区。
+- owner 在 1b 重新运行安装脚本时，pi 目录的权限检查不再抛错。
+
 ## 4. 开放问题
 
 - 已决定：受限账户的手动计划任务作为 periodic-operations“不要注册第二个计划任务”规则的唯一例外（`owner_decision:DEVX-025:2026-10-11:manual_agent_task_exception`），运行 05 已登记。
@@ -123,6 +136,7 @@ owner_decision:DEVX-025:2026-10-11:tighten_d_work_acl —— 2026-10-11 owner（
 - 2026-10-11：运行 04 验收第二次退回（heredoc 经 `env`、多级管道或同一行后面的 shell 执行时正文被剥掉；删测试用例缺断言；测试文件多余空行），执行 03 修正。
 - 2026-10-11：运行 04 发布（main e1c489055）。运行 05：登记手动计划任务例外和收紧 D:\Work 两项 owner 决定；安装脚本修正权限位判断、重复报告、CheckOnly 退出码和 WhatIf，并给受限账户的三个目录关闭继承。
 - 2026-10-11：运行 05 发布（main d3c1f8d40），owner 收紧 D:\Work。运行 06：安装脚本只认 Windows PowerShell 5.1，计划任务固定使用管理员安装的只读 pi，并允许 owner 不提权启动；agent-run 每次显式信任工作目录，保证受限账户下守卫照常加载。
+- 2026-10-11：运行 06 发布（main 17fda1f49）。1b 第一次运行安装脚本时，权限检查遇到 Program Files 目录上的"所有应用程序包"条目抛错，脚本在建账户之前停下，没有改动。运行 07：权限检查改为直接按 SID 读取。
 
 ## 6. 运行影响边界
 
