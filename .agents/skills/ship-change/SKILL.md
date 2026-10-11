@@ -20,7 +20,7 @@ The repository rules are in `AGENTS.md`; this skill is the step order. Use the p
 ## 2. While editing
 
 - Run focused tests for what you touched:
-  `python -m pytest <a few test files or one directory> -n 16 --dist loadfile -q`.
+  `.venv/Scripts/python.exe -m pytest <a few test files or one directory> -n 16 --dist loadfile -q`.
   Never pass hundreds of test file paths; pass `tests` or a directory and select with markers.
 - Changing data flow, cache schemas, report outputs, quality gates, scoring, backtests, or regime
   interpretation: update `docs/system_flow.md` sections 1-6 in the same change. Never edit its section 7
@@ -39,8 +39,8 @@ The repository rules are in `AGENTS.md`; this skill is the step order. Use the p
 ## 4. Ship
 
 ```powershell
-python tools/gov008/ship.py --repo . --dry-run            # zones, gate commands, problems
-python tools/gov008/ship.py --repo . --execute --push     # gate (~10 min for zone B/C), then main and origin
+.venv/Scripts/python.exe tools/gov008/ship.py --repo . --dry-run            # zones, gate commands, problems
+.venv/Scripts/python.exe tools/gov008/ship.py --repo . --execute --push     # gate (~10 min for zone B/C), then main and origin
 ```
 
 - `ship` runs the gate, writes a `Gate:` trailer, fast-forwards `main` to the tested tree, pushes

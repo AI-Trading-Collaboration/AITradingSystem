@@ -58,6 +58,24 @@ def test_new_set_and_completion_move_the_row_between_views(root: Path) -> None:
     assert tasks.stale_views(root) == []
 
 
+def test_append_note_adds_separator_and_renders(root: Path) -> None:
+    assert _new(root, notes="production_effect=none") == 0
+    assert tasks.main(["append-note", "DEMO-001", "broker_action=none"], root=root) == 0
+    assert _rows(root, "active") == [
+        "|DEMO-001|示例|P1|PROPOSED|owner|do it|done when done|"
+        "production_effect=none；broker_action=none|"
+    ]
+    assert tasks.stale_views(root) == []
+
+
+def test_append_note_populates_empty_notes(root: Path) -> None:
+    assert _new(root) == 0
+    assert tasks.main(["append-note", "DEMO-001", "first note"], root=root) == 0
+    assert _rows(root, "active") == [
+        "|DEMO-001|示例|P1|PROPOSED|owner|do it|done when done|first note|"
+    ]
+
+
 def test_active_view_is_ordered_by_priority_then_id(root: Path) -> None:
     _new(root, "B-2", priority="P2")
     _new(root, "A-1", priority="P2")

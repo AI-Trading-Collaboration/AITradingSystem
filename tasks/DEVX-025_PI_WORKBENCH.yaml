@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-025_PI_WORKBENCH
+area: Developer workflow / pi 工作台
+priority: P1
+status: IN_PROGRESS
+next_owner: Claude 验收
+next_step: 01 守卫加固、append-note、任务单模板；02 启动脚本与看板；03 ship 拆分（C 区）
+acceptance: 试跑暴露的偏差各有测试证明被拦；受限账户脚本经审阅；ship 拆分后门禁只跑一次
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-025_Pi_Workbench.md

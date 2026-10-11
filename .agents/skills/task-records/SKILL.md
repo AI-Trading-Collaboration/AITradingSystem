@@ -12,12 +12,13 @@ them by hand; the PR suite fails when they are stale. History is git history.
 ## Commands (project venv Python)
 
 ```powershell
-python tools/tasks.py list [--status IN_PROGRESS] [--priority P0]
-python tools/tasks.py show <ID>
-python tools/tasks.py new <ID> --area "..." --priority P1 --next-owner "..." --next-step "..." --acceptance "..." [--status PROPOSED] [--notes "..."]
-python tools/tasks.py set <ID> status=IN_PROGRESS "next_step=..."      # any field=value
-python tools/tasks.py render     # rewrite both views (new and set already do this)
-python tools/tasks.py check      # validate every task file and that the views are current
+.venv/Scripts/python.exe tools/tasks.py list [--status IN_PROGRESS] [--priority P0]
+.venv/Scripts/python.exe tools/tasks.py show <ID>
+.venv/Scripts/python.exe tools/tasks.py new <ID> --area "..." --priority P1 --next-owner "..." --next-step "..." --acceptance "..." [--status PROPOSED] [--notes "..."]
+.venv/Scripts/python.exe tools/tasks.py set <ID> status=IN_PROGRESS "next_step=..."      # any field=value except notes
+.venv/Scripts/python.exe tools/tasks.py append-note <ID> "text to add"      # appends with ； and renders
+.venv/Scripts/python.exe tools/tasks.py render     # rewrite both views (new, set, and append-note already do this)
+.venv/Scripts/python.exe tools/tasks.py check      # validate every task file and that the views are current
 ```
 
 Fields: `id`, `area`, `priority` (P0-P3), `status`, `next_owner`, `next_step`, `acceptance`, `notes`.

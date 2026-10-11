@@ -10,7 +10,8 @@ usage:
   python tools/tasks.py show <ID>
   python tools/tasks.py new <ID> --area ... --priority P1 --next-owner ... --next-step ...
       --acceptance ... [--status PROPOSED] [--notes ...]
-  python tools/tasks.py set <ID> status=DONE next_step="..." [notes="..."]
+  python tools/tasks.py set <ID> status=DONE next_step="..."
+  python tools/tasks.py append-note <ID> "text"
   python tools/tasks.py render        # rewrite both views
   python tools/tasks.py check         # exit 1 when a task file is invalid or a view is stale
 """
@@ -184,6 +185,9 @@ def main(argv: list[str] | None = None, root: Path = ROOT) -> int:
     update = commands.add_parser("set")
     update.add_argument("task_id")
     update.add_argument("assignments", nargs="+", help="field=value")
+    append_note = commands.add_parser("append-note")
+    append_note.add_argument("task_id")
+    append_note.add_argument("text")
     commands.add_parser("render")
     commands.add_parser("check")
     args = parser.parse_args(argv)
@@ -221,6 +225,13 @@ def main(argv: list[str] | None = None, root: Path = ROOT) -> int:
                 if not separator or name not in FIELDS or name == "id":
                     raise TaskError(f"use field=value with one of {', '.join(FIELDS[1:])}")
                 values[name] = value
+            write_task(root, Task(**values))
+            render(root)
+        elif args.command == "append-note":
+            values = dict(_find(root, args.task_id).__dict__)
+            values["notes"] = (
+                args.text if values["notes"] == "" else values["notes"] + "；" + args.text
+            )
             write_task(root, Task(**values))
             render(root)
         elif args.command == "render":
