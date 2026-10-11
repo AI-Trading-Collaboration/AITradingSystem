@@ -1,3 +1,4 @@
+#Requires -PSEdition Desktop
 [CmdletBinding(SupportsShouldProcess=$true)]
 param(
     [switch]$CheckOnly,
@@ -9,7 +10,8 @@ param(
     [string]$RunsRoot = "D:\Work\AITradingSystem_agent_runs",
     [string]$QueueFile = "D:\Work\AITradingSystem_agent_runs\queue\request.json",
     [string]$TaskName = "AITradingSystem pi agent",
-    [int]$ExecutionLimitHours = 2
+    [int]$ExecutionLimitHours = 2,
+    [string]$PiCommand = "C:\Program Files\aits-pi\pi.cmd"
 )
 
 $ErrorActionPreference = "Stop"
@@ -74,6 +76,22 @@ if ($CheckOnly) {
 }
 if ($problemCount -gt 0) { throw "Full setup stopped because CheckOnly found problems." }
 
+$piProblemStart = $ProblemList.Count
+if (-not (Test-Path -LiteralPath $PiCommand -PathType Leaf)) {
+    Add-Problem "pi command not found: $PiCommand"
+} else {
+    Test-PathAcl (Split-Path -Parent $PiCommand)
+}
+if ($ProblemList.Count -gt $piProblemStart) {
+    if ($preview) {
+        Write-Host "Full setup would stop here: pi command is missing or writable by standard users."
+    } else {
+        throw "Full setup stopped: pi command is missing or writable by standard users. Install pi to $PiCommand as Administrator first."
+    }
+} else {
+    Write-Host "pi command: $PiCommand"
+}
+
 if (-not $preview) {
     $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
     if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw "Full setup must run as Administrator." }
@@ -137,11 +155,23 @@ if (-not (Get-NetFirewallRule -DisplayName "AITradingSystem agent base python no
 }
 Write-Host "1b manual validation required: HTTPS as $UserName should fail; HTTPS as your account should succeed."
 
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`" -RequestFile `"{1}`"" -f (Join-Path $AgentClone "scripts\agent\agent-run.ps1"), $QueueFile)
+$taskArgument = "-NoProfile -ExecutionPolicy Bypass -File `"{0}`" -RequestFile `"{1}`" -PiCommand `"{2}`"" -f (Join-Path $AgentClone "scripts\agent\agent-run.ps1"), $QueueFile, $PiCommand
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $taskArgument
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours $ExecutionLimitHours) -MultipleInstances IgnoreNew
-if ($PSCmdlet.ShouldProcess($TaskName, "register manual scheduled task")) {
+if ($PSCmdlet.ShouldProcess($TaskName, "register manual scheduled task: powershell.exe $taskArgument")) {
     $plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
     try {
         Register-ScheduledTask -TaskName $TaskName -Action $action -Settings $settings -User $UserName -Password $plainPassword -RunLevel Limited -Force | Out-Null
     } finally { $plainPassword = $null }
+    $service = New-Object -ComObject Schedule.Service
+    $service.Connect()
+    $registeredTask = $service.GetFolder("\").GetTask($TaskName)
+    $taskSddl = $registeredTask.GetSecurityDescriptor(4)
+    $ownerAce = "(A;;GRGX;;;$ownerSid)"
+    if (-not $taskSddl.Contains($ownerAce)) {
+        $aceStart = $taskSddl.IndexOf("(")
+        $newSddl = if ($aceStart -ge 0) { $taskSddl.Insert($aceStart, $ownerAce) } else { $taskSddl + $ownerAce }
+        $registeredTask.SetSecurityDescriptor($newSddl, 0)
+    }
+    Write-Host ("Task DACL: " + $registeredTask.GetSecurityDescriptor(4))
 }

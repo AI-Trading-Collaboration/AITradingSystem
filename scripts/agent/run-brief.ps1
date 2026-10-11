@@ -93,8 +93,8 @@ if ($brief.allow_done -eq $true) { $envMap.AITS_PI_ALLOW_DONE = "1" }
 
 $promptTarget = if ($Fix) { Join-Path (Join-Path $attemptRoot $attempt) "prompt.md" } else { Join-Path $runDir "brief.md" }
 $toolList = if ($brief.tools -eq "readonly") { "read,grep,find,ls" } else { "read,bash,edit,write" }
-$piPreview = "pi -p @$promptTarget --mode json --model $modelArg --tools $toolList --session-dir $runDir\session"
-if ($sessionFile) { $piPreview = "pi -p @$promptTarget --mode json --model $modelArg --tools $toolList --session $sessionFile" }
+$piPreview = "pi -p @$promptTarget --mode json --model $modelArg --tools $toolList --approve --session-dir $runDir\session"
+if ($sessionFile) { $piPreview = "pi -p @$promptTarget --mode json --model $modelArg --tools $toolList --approve --session $sessionFile" }
 
 if ($DryRun) {
     Write-Host "DryRun: would run"

@@ -90,6 +90,20 @@ owner_decision:DEVX-025:2026-10-11:tighten_d_work_acl —— 2026-10-11 owner（
 - `ship.py --dry-run` 显示本次为 B 区。
 - 安装脚本仍只由 owner 在 1b 以管理员身份运行完整模式。
 
+### 运行 06：1b 前置（固定 pi 路径、显式信任、任务启动权限）
+
+步骤：
+
+1. 安装脚本只允许 Windows PowerShell 5.1，增加 `-PiCommand` 并在完整模式前检查固定 pi 路径存在且目录不被普通用户写入。
+2. 计划任务命令显式传入 `-PiCommand`，注册后给 owner SID 只读和执行权限；`agent-run.ps1` 每次 pi 运行加 `--approve`，`run-brief.ps1 -DryRun` 同步展示。
+3. 补充安装脚本、npm cmd-shim 解析、`--approve` 参数和预览输出覆盖，保持安装完整模式只由 owner 在 1b 管理员执行。
+
+验收：
+
+- 新旧测试通过。
+- `ship.py --dry-run` 显示本次为 B 区。
+- 安装脚本仍只由 owner 在 1b 以管理员身份运行；1b 时实测受限账户下守卫生效、owner 不提权能启动任务。
+
 ## 4. 开放问题
 
 - 已决定：受限账户的手动计划任务作为 periodic-operations“不要注册第二个计划任务”规则的唯一例外（`owner_decision:DEVX-025:2026-10-11:manual_agent_task_exception`），运行 05 已登记。
@@ -108,6 +122,7 @@ owner_decision:DEVX-025:2026-10-11:tighten_d_work_acl —— 2026-10-11 owner（
 - 2026-10-11：运行 04 验收退回一次（守卫拆分命令的正则少了 `|`、测试记录用例不成立、heredoc 接收者判断和 `<<<`、skip 选项写法），执行 02 修正。
 - 2026-10-11：运行 04 验收第二次退回（heredoc 经 `env`、多级管道或同一行后面的 shell 执行时正文被剥掉；删测试用例缺断言；测试文件多余空行），执行 03 修正。
 - 2026-10-11：运行 04 发布（main e1c489055）。运行 05：登记手动计划任务例外和收紧 D:\Work 两项 owner 决定；安装脚本修正权限位判断、重复报告、CheckOnly 退出码和 WhatIf，并给受限账户的三个目录关闭继承。
+- 2026-10-11：运行 05 发布（main d3c1f8d40），owner 收紧 D:\Work。运行 06：安装脚本只认 Windows PowerShell 5.1，计划任务固定使用管理员安装的只读 pi，并允许 owner 不提权启动；agent-run 每次显式信任工作目录，保证受限账户下守卫照常加载。
 
 ## 6. 运行影响边界
 

@@ -121,7 +121,7 @@ $stderrPath = Join-Path $attemptDir "stderr.log"
 $exitPath = Join-Path $attemptDir "exit.json"
 
 $toolList = if ($Tools -eq "readonly") { "read,grep,find,ls" } else { "read,bash,edit,write" }
-$piArgs = @("-p", "@$PromptFile", "--mode", "json", "--model", $ModelId, "--tools", $toolList)
+$piArgs = @("-p", "@$PromptFile", "--mode", "json", "--model", $ModelId, "--tools", $toolList, "--approve")
 if ($SessionFile) { $piArgs += @("--session", $SessionFile) } else { $piArgs += @("--session-dir", $sessionDir) }
 
 $started = Get-IsoUtcNow

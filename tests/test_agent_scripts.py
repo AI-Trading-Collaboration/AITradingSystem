@@ -22,6 +22,11 @@ def powershell() -> str:
     return exe
 
 
+def test_setup_requires_desktop_edition() -> None:
+    text = (ROOT / "scripts/agent/setup-agent-account.ps1").read_text(encoding="utf-8-sig")
+    assert text.splitlines()[0] == "#Requires -PSEdition Desktop"
+
+
 @pytest.mark.parametrize("path", PS1, ids=lambda p: p.name)
 def test_powershell_scripts_parse(path: Path) -> None:
     ps = powershell()
@@ -71,7 +76,7 @@ def test_run_brief_dry_run_prints_command_env_and_tools(tmp_path: Path) -> None:
     done = run_brief(ps, brief, config, "-DryRun", "-Direct", "-Now", "2026-10-11T12:00:00+09:00")
     assert done.returncode == 0, done.stdout + done.stderr
     assert "pi -p @" in done.stdout and "--mode json" in done.stdout
-    assert "--tools read,bash,edit,write" in done.stdout
+    assert "--tools read,bash,edit,write --approve" in done.stdout
     assert "AITS_PI_RUN_DIR" in done.stdout and "AITS_PI_ALLOWED_PATHS=scripts/agent/**" in done.stdout
 
 
@@ -146,6 +151,7 @@ def test_agent_run_executes_fake_pi_direct_and_request_modes(tmp_path: Path) -> 
     assert json.loads(raw.decode("utf-8"))["stopReason"] == "stop"
     cap = json.loads(capture.read_text(encoding="utf-8"))
     assert f"@{prompt}" in cap["argv"] and "--session-dir" in cap["argv"]
+    assert "--approve" in cap["argv"]
     assert "AITS_PI_OWNER_DECISION" not in cap["env"] and cap["stdin_bytes"] == 0
 
     req = tmp_path / "request.json"; run2 = tmp_path / "run2"; capture2 = tmp_path / "cap2.json"; prompt2 = tmp_path / "p.md"; prompt2.write_text("x", encoding="utf-8")
@@ -154,6 +160,18 @@ def test_agent_run_executes_fake_pi_direct_and_request_modes(tmp_path: Path) -> 
     done = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/agent/agent-run.ps1"), "-RequestFile", str(req), "-PiCommand", str(fake)], text=True, capture_output=True, timeout=60, env=env)
     assert done.returncode == 0, done.stdout + done.stderr
     assert not req.exists() and (run2 / "attempts/01/request.json").exists()
+
+
+FAKE_PI_LAUNCHER_JS = """const fs = require('fs');
+const cap = process.env.FAKE_PI_CAPTURE;
+const chunks = [];
+process.stdin.on('data', c => chunks.push(c));
+process.stdin.on('end', () => {
+  if (cap) fs.writeFileSync(cap, JSON.stringify({argv: process.argv.slice(2), env: Object.fromEntries(Object.entries(process.env).filter(([k]) => k.startsWith('AITS_PI_'))), stdinBytes: Buffer.concat(chunks).length}));
+  console.log(JSON.stringify({type:'message_end', message:{role:'assistant', stopReason:'stop', timestamp:'2026-10-11T00:00:00Z', provider:'fake', model:'fake', usage:{cost:{total:0}}, content:'ok'}}));
+  console.log(JSON.stringify({type:'agent_settled', aborted:false}));
+});
+"""
 
 
 def write_fake_pi_wrappers(tmp_path: Path) -> tuple[Path, Path]:
@@ -171,19 +189,7 @@ exit $LASTEXITCODE
         encoding="utf-8",
     )
     (tmp_path / "pi.cmd").write_text('@ECHO off\nnode "%~dp0pi-launcher.js" %*\n', encoding="utf-8")
-    (tmp_path / "pi-launcher.js").write_text(
-        """const fs = require('fs');
-const cap = process.env.FAKE_PI_CAPTURE;
-const chunks = [];
-process.stdin.on('data', c => chunks.push(c));
-process.stdin.on('end', () => {
-  if (cap) fs.writeFileSync(cap, JSON.stringify({argv: process.argv.slice(2), env: Object.fromEntries(Object.entries(process.env).filter(([k]) => k.startsWith('AITS_PI_'))), stdinBytes: Buffer.concat(chunks).length}));
-  console.log(JSON.stringify({type:'message_end', message:{role:'assistant', stopReason:'stop', timestamp:'2026-10-11T00:00:00Z', provider:'fake', model:'fake', usage:{cost:{total:0}}, content:'ok'}}));
-  console.log(JSON.stringify({type:'agent_settled', aborted:false}));
-});
-""",
-        encoding="utf-8",
-    )
+    (tmp_path / "pi-launcher.js").write_text(FAKE_PI_LAUNCHER_JS, encoding="utf-8")
     return tmp_path / "pi.ps1", tmp_path / "pi.cmd"
 
 
@@ -201,8 +207,49 @@ def test_agent_run_resolves_real_pi_wrappers_and_empty_stdin(tmp_path: Path, wra
     assert done.returncode == 0, done.stdout + done.stderr
     cap = json.loads(capture.read_text(encoding="utf-8"))
     assert f"@{prompt}" in cap["argv"]
+    assert "--approve" in cap["argv"]
     assert cap["stdinBytes"] == 0
     assert "AITS_PI_OWNER_DECISION" not in cap["env"]
+
+
+def test_agent_run_resolves_npm_cmd_shim(tmp_path: Path) -> None:
+    if shutil.which("node.exe") is None and shutil.which("node") is None:
+        raise pytest.skip.Exception("node is not installed; npm cmd shim resolution smoke test needs node")
+    ps = powershell()
+    pi_root = tmp_path / "aits pi"
+    cli = pi_root / "node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js"
+    cli.parent.mkdir(parents=True)
+    cli.write_text(FAKE_PI_LAUNCHER_JS, encoding="utf-8")
+    pi_cmd = pi_root / "pi.cmd"
+    pi_cmd.write_text(
+        "@ECHO off\r\n"
+        "GOTO start\r\n"
+        ":find_dp0\r\n"
+        "SET dp0=%~dp0\r\n"
+        "EXIT /b\r\n"
+        ":start\r\n"
+        "SETLOCAL\r\n"
+        "CALL :find_dp0\r\n"
+        "\r\n"
+        "IF EXIST \"%dp0%\\node.exe\" (\r\n"
+        "  SET \"_prog=%dp0%\\node.exe\"\r\n"
+        ") ELSE (\r\n"
+        "  SET \"_prog=node\"\r\n"
+        "  SET PATHEXT=%PATHEXT:;.JS;=;%\r\n"
+        ")\r\n"
+        "\r\n"
+        "endLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & \"%_prog%\"  \"%dp0%\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js\" %*\r\n",
+        encoding="ascii",
+    )
+    prompt = tmp_path / "prompt.md"; prompt.write_text("hello", encoding="utf-8")
+    run_dir = tmp_path / "run-npm"; capture = tmp_path / "cap-npm.json"
+    env = os.environ.copy(); env["FAKE_PI_CAPTURE"] = str(capture); env["AITS_PI_OWNER_DECISION"] = "leak"
+    done = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/agent/agent-run.ps1"), "-Repo", str(ROOT), "-RunDir", str(run_dir), "-Attempt", "01", "-PromptFile", str(prompt), "-ModelId", "fake/model", "-PiCommand", str(pi_cmd)], text=True, capture_output=True, timeout=60, env=env)
+    assert done.returncode == 0, done.stdout + done.stderr
+    cap = json.loads(capture.read_text(encoding="utf-8"))
+    assert f"@{prompt}" in cap["argv"]
+    assert "--approve" in cap["argv"]
+    assert cap["stdinBytes"] == 0
 
 
 def test_agent_run_model_error_returns_one(tmp_path: Path) -> None:
@@ -342,12 +389,11 @@ def ps_command(ps: str, command: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run([ps, "-NoProfile", "-Command", command], text=True, capture_output=True, timeout=60)
 
 
-def test_setup_whatif_changes_nothing(tmp_path: Path) -> None:
-    ps = powershell(); work = tmp_path / "work"; repo = tmp_path / "repo"
+def run_setup_whatif(ps: str, tmp_path: Path, *, pi_command: Path) -> subprocess.CompletedProcess[str]:
+    work = tmp_path / "work"; repo = tmp_path / "repo"
     agent = tmp_path / "agent"; wt = tmp_path / "wt"; runs = tmp_path / "runs"
     work.mkdir(); repo.mkdir()
-    before = system_safe_directories()
-    done = subprocess.run(
+    return subprocess.run(
         [
             ps,
             "-NoProfile",
@@ -372,12 +418,21 @@ def test_setup_whatif_changes_nothing(tmp_path: Path) -> None:
             str(runs / "queue/request.json"),
             "-TaskName",
             "AITradingSystem pi agent whatif test",
+            "-PiCommand",
+            str(pi_command),
         ],
         stdin=subprocess.DEVNULL,
         text=True,
         capture_output=True,
         timeout=120,
     )
+
+
+def test_setup_whatif_changes_nothing(tmp_path: Path) -> None:
+    ps = powershell(); pi_dir = tmp_path / "aits pi"; pi_dir.mkdir(); pi_command = pi_dir / "pi.cmd"; pi_command.write_text("", encoding="ascii")
+    agent = tmp_path / "agent"; wt = tmp_path / "wt"; runs = tmp_path / "runs"
+    before = system_safe_directories()
+    done = run_setup_whatif(ps, tmp_path, pi_command=pi_command)
     output = done.stdout + done.stderr
     if "Full setup stopped because CheckOnly found problems" in output:
         pytest.skip("WhatIf CheckOnly found problems on this machine: " + output)
@@ -386,5 +441,25 @@ def test_setup_whatif_changes_nothing(tmp_path: Path) -> None:
     assert "Password for local standard user" not in output
     assert not agent.exists() and not wt.exists() and not runs.exists()
     assert system_safe_directories() == before
-    assert ps_command(ps, "Get-LocalUser aits-whatif-test").returncode != 0
-    assert ps_command(ps, "Get-ScheduledTask -TaskName 'AITradingSystem pi agent whatif test'").returncode != 0
+    user_check = ps_command(ps, "if (Get-LocalUser -Name 'aits-whatif-test' -ErrorAction SilentlyContinue) { 'user-present' } else { 'user-absent' }")
+    assert user_check.returncode == 0, user_check.stdout + user_check.stderr
+    assert user_check.stdout.strip() == "user-absent"
+    task_check = ps_command(ps, "if (Get-ScheduledTask -TaskName 'AITradingSystem pi agent whatif test' -ErrorAction SilentlyContinue) { 'task-present' } else { 'task-absent' }")
+    assert task_check.returncode == 0, task_check.stdout + task_check.stderr
+    assert task_check.stdout.strip() == "task-absent"
+    flattened = output.replace("\r", "").replace("\n", "")
+    assert '-PiCommand "' + str(pi_command) in flattened
+    assert "pi command: " in output
+
+
+def test_setup_whatif_reports_missing_pi(tmp_path: Path) -> None:
+    ps = powershell(); pi_command = tmp_path / "missing" / "pi.cmd"
+    agent = tmp_path / "agent"; wt = tmp_path / "wt"; runs = tmp_path / "runs"
+    done = run_setup_whatif(ps, tmp_path, pi_command=pi_command)
+    output = done.stdout + done.stderr
+    if "Full setup stopped because CheckOnly found problems" in output:
+        pytest.skip("WhatIf CheckOnly found problems on this machine: " + output)
+    assert done.returncode == 0, output
+    assert "pi command not found:" in output
+    assert "Full setup would stop here" in output
+    assert not agent.exists() and not wt.exists() and not runs.exists()
