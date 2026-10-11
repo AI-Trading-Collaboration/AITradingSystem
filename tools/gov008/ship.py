@@ -198,9 +198,7 @@ def run_gate(repo: Path, commands: list[list[str]]) -> dict:
             log.flush()
             non_empty = [line for line in output.splitlines() if line.strip()]
             summary = non_empty[-1] if non_empty else "(no output)"
-            print(
-                f"gate: {' '.join(argv)} -> exit={proc.returncode} seconds={seconds} | {summary}"
-            )
+            print(f"gate: {' '.join(argv)} -> exit={proc.returncode} seconds={seconds} | {summary}")
             if proc.returncode != 0:
                 tail_lines = output.splitlines()[-GATE_FAILURE_TAIL_LINES:]
                 print(
@@ -288,7 +286,9 @@ def main() -> int:
             print(json.dumps(plan(repo, args.base), ensure_ascii=False, separators=(", ", ": ")))
             return 0
         print(
-            json.dumps(ship(repo, args.base, args.push), ensure_ascii=False, separators=(", ", ": "))
+            json.dumps(
+                ship(repo, args.base, args.push), ensure_ascii=False, separators=(", ", ": ")
+            )
         )
         return 0
     except ShipError as exc:
