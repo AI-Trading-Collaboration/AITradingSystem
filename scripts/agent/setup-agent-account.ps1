@@ -1,6 +1,7 @@
 [CmdletBinding(SupportsShouldProcess=$true)]
 param(
     [switch]$CheckOnly,
+    [string]$WorkRoot = "D:\Work",
     [string]$Repo = (Resolve-Path ".").Path,
     [string]$UserName = "aits-agent",
     [string]$AgentClone = "D:\Work\AITradingSystem_agent",
@@ -12,29 +13,34 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$preview = [bool]$WhatIfPreference
 $ProblemList = New-Object System.Collections.ArrayList
 $UsersSid = "S-1-5-32-545"
 $AuthenticatedUsersSid = "S-1-5-11"
 
-function Add-Problem([string]$Message) { [void]$ProblemList.Add($Message); Write-Warning $Message }
+function Add-Problem([string]$Message) {
+    if ($ProblemList -contains $Message) { return }
+    [void]$ProblemList.Add($Message)
+    [Console]::Error.WriteLine("WARNING: " + $Message)
+}
 function Check-Native([string]$Name) { if ($LASTEXITCODE -ne 0) { throw "$Name failed with exit code $LASTEXITCODE" } }
 
 function Test-Right($Rights, [string]$Kind) {
-    $mask = [int64]$Rights
-    $writeMask = [int64]([Security.AccessControl.FileSystemRights]::Write -bor [Security.AccessControl.FileSystemRights]::Modify -bor [Security.AccessControl.FileSystemRights]::FullControl -bor [Security.AccessControl.FileSystemRights]::CreateFiles -bor [Security.AccessControl.FileSystemRights]::AppendData -bor [Security.AccessControl.FileSystemRights]::WriteData)
-    $readMask = [int64]([Security.AccessControl.FileSystemRights]::Read -bor [Security.AccessControl.FileSystemRights]::ReadAndExecute -bor [Security.AccessControl.FileSystemRights]::ListDirectory)
+    $mask = ([int64]$Rights) -band 4294967295
+    $writeMask = [int64]1343029590
+    $readMask = [int64]2415919105
     if ($Kind -eq "write") { return (($mask -band $writeMask) -ne 0) }
     return (($mask -band $readMask) -ne 0)
 }
 
 function Test-PathAcl([string]$Path, [switch]$AlsoRead) {
-    $acl = Get-Acl -LiteralPath $Path
+    $acl = (New-Object System.IO.DirectoryInfo($Path)).GetAccessControl()
     foreach ($ace in $acl.Access) {
         if ($ace.AccessControlType -ne "Allow") { continue }
         $sid = $ace.IdentityReference.Translate([Security.Principal.SecurityIdentifier]).Value
         if ($sid -ne $UsersSid -and $sid -ne $AuthenticatedUsersSid) { continue }
-        if (Test-Right $ace.FileSystemRights "write") { Add-Problem "$Path is writable by $($ace.IdentityReference.Value)" }
-        if ($AlsoRead -and (Test-Right $ace.FileSystemRights "read")) { Add-Problem "$Path is readable by $($ace.IdentityReference.Value)" }
+        if (Test-Right $ace.FileSystemRights "write") { Add-Problem "$Path is writable by $($ace.IdentityReference.Value) ($sid)" }
+        if ($AlsoRead -and (Test-Right $ace.FileSystemRights "read")) { Add-Problem "$Path is readable by $($ace.IdentityReference.Value) ($sid)" }
     }
 }
 
@@ -53,7 +59,7 @@ function Test-TwsPorts {
 
 function Invoke-CheckOnly {
     $ProblemList.Clear() | Out-Null
-    Test-PathAcl "D:\Work"
+    Test-PathAcl $WorkRoot
     Test-PathAcl $Repo -AlsoRead
     Show-MachineSecretNames
     Test-TwsPorts
@@ -62,26 +68,35 @@ function Invoke-CheckOnly {
 }
 
 $problemCount = Invoke-CheckOnly
-if ($CheckOnly) { return }
+if ($CheckOnly) {
+    if ($problemCount -gt 0) { exit 1 }
+    exit 0
+}
 if ($problemCount -gt 0) { throw "Full setup stopped because CheckOnly found problems." }
 
-$principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw "Full setup must run as Administrator." }
+if (-not $preview) {
+    $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+    if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw "Full setup must run as Administrator." }
+}
 
-$password = Read-Host -AsSecureString "Password for local standard user $UserName"
+$password = $null
+if (-not $preview) { $password = Read-Host -AsSecureString "Password for local standard user $UserName" }
 $user = Get-LocalUser -Name $UserName -ErrorAction SilentlyContinue
 if (-not $user) {
-    if ($PSCmdlet.ShouldProcess($UserName, "create local standard user")) { New-LocalUser -Name $UserName -Password $password -PasswordNeverExpires:$false | Out-Null }
+    if ($PSCmdlet.ShouldProcess($UserName, "create local standard user")) { New-LocalUser -Name $UserName -Password $password -PasswordNeverExpires | Out-Null }
 } else { Write-Host "User $UserName already exists; skipping creation." }
-$agentSid = (Get-LocalUser -Name $UserName).Sid.Value
+if ($user) { $agentSid = $user.Sid.Value } elseif ($preview) { $agentSid = "<SID of $UserName>" } else { $agentSid = (Get-LocalUser -Name $UserName).Sid.Value }
 
 foreach ($dir in @($AgentClone, $AgentWorktree, $RunsRoot, (Split-Path -Parent $QueueFile))) {
     if ($PSCmdlet.ShouldProcess($dir, "create directory")) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
 }
+$ownerIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
+$ownerSid = $ownerIdentity.User.Value
+Write-Host "Owner account: $($ownerIdentity.Name) ($ownerSid)"
 foreach ($dir in @($AgentClone, $AgentWorktree, $RunsRoot)) {
-    if ($PSCmdlet.ShouldProcess($dir, "grant $UserName modify and current user read")) {
-        icacls $dir /grant "${UserName}:(OI)(CI)M" | Out-Null; Check-Native "icacls grant modify"
-        icacls $dir /grant "${env:USERNAME}:(OI)(CI)R" | Out-Null; Check-Native "icacls grant read"
+    if ($PSCmdlet.ShouldProcess($dir, "disable inheritance; grant Administrators, SYSTEM, and current account full control; grant $UserName modify")) {
+        icacls $dir /inheritance:r /grant:r "*S-1-5-32-544:(OI)(CI)F" "*S-1-5-18:(OI)(CI)F" "*${ownerSid}:(OI)(CI)F" "*${agentSid}:(OI)(CI)M" | Out-Null; Check-Native "icacls restrict inheritance"
+        icacls $dir
     }
 }
 
@@ -95,7 +110,9 @@ if (-not (Test-Path -LiteralPath (Join-Path $AgentClone ".git"))) {
 foreach ($safeRaw in @($Repo, $gitDir, $AgentClone, $AgentWorktree)) {
     $safe = $safeRaw.Replace('\', '/')
     $existing = git config --system --get-all safe.directory 2>$null
-    if ($existing -notcontains $safe) { git config --system --add safe.directory $safe; Check-Native "git safe.directory" }
+    if ($existing -notcontains $safe) {
+        if ($PSCmdlet.ShouldProcess($safe, "add system git safe.directory")) { git config --system --add safe.directory $safe; Check-Native "git safe.directory" }
+    }
 }
 
 $sourceCfg = Join-Path $Repo ".venv\pyvenv.cfg"
@@ -120,11 +137,11 @@ if (-not (Get-NetFirewallRule -DisplayName "AITradingSystem agent base python no
 }
 Write-Host "1b manual validation required: HTTPS as $UserName should fail; HTTPS as your account should succeed."
 
-$plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
-try {
-    $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`" -RequestFile `"{1}`"" -f (Join-Path $AgentClone "scripts\agent\agent-run.ps1"), $QueueFile)
-    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours $ExecutionLimitHours) -MultipleInstances IgnoreNew
-    if ($PSCmdlet.ShouldProcess($TaskName, "register manual scheduled task")) {
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`" -RequestFile `"{1}`"" -f (Join-Path $AgentClone "scripts\agent\agent-run.ps1"), $QueueFile)
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours $ExecutionLimitHours) -MultipleInstances IgnoreNew
+if ($PSCmdlet.ShouldProcess($TaskName, "register manual scheduled task")) {
+    $plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
+    try {
         Register-ScheduledTask -TaskName $TaskName -Action $action -Settings $settings -User $UserName -Password $plainPassword -RunLevel Limited -Force | Out-Null
-    }
-} finally { $plainPassword = $null }
+    } finally { $plainPassword = $null }
+}

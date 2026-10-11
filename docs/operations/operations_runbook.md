@@ -210,6 +210,7 @@ dynamic-v3 rescue、候选跟踪每日步骤）。发布改由 `python tools/gov
 - **手动触发**（与定时触发走同一路径）：`Start-ScheduledTask -TaskName 'AITradingSystem Daily Run'`。
 - **查看配置**：`schtasks /query /tn "\AITradingSystem Daily Run" /xml`。
 - **停用**：`Disable-ScheduledTask -TaskName 'AITradingSystem Daily Run'`，只在 owner 决定时执行；不得另建第二个调度来源。
+- **唯一例外：pi 受限账户的手动任务**（`owner_decision:DEVX-025:2026-10-11:manual_agent_task_exception`）。`\AITradingSystem pi agent` 由 `scripts\agent\setup-agent-account.ps1` 注册，以本地标准用户 `aits-agent` 运行，没有触发器。`scripts\agent\run-brief.ps1` 写入 `D:\Work\AITradingSystem_agent_runs\queue\request.json` 后用 `schtasks /Run` 启动它，它运行 `D:\Work\AITradingSystem_agent\scripts\agent\agent-run.ps1` 跑一次 pi（DEVX-025）。它不调用 `aits ops`，不访问运行副本，不是第二个调度来源；不得给它加触发器，也不得用它运行别的命令。aits-agent 的密码由任务计划程序保存、设为永不过期；要换密码时先 `Set-LocalUser aits-agent -Password (Read-Host -AsSecureString)`，再以管理员身份重跑安装脚本并输入同一个新密码。
 - 任务以 `conhost.exe --headless` 启动 Windows PowerShell，不弹控制台窗口。conhost 不转发退出码，所以
   `Get-ScheduledTaskInfo` 的 `LastTaskResult` 只表示包装脚本已启动；**运行结论看日志与摘要**。
 

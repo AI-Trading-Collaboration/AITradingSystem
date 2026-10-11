@@ -13,7 +13,9 @@ expected artifacts. `docs/system_flow.md` sections 1-6 show the data flow.
 - One external entry point: `aits ops daily-run`, started by the single Windows scheduled task
   `\AITradingSystem Daily Run` in the runtime checkout `D:\Work\AITradingSystem_ops_runtime` (runbook
   section 9). Never register a second scheduler or a weekly/monthly/ad hoc command as its own task.
-  `aits ops daily-plan --fail-on-missing-env` previews without executing.
+  The one exception is the trigger-less `\AITradingSystem pi agent` task (runbook section 9.2,
+  owner_decision:DEVX-025:2026-10-11:manual_agent_task_exception): it only starts pi as `aits-agent`
+  and never runs `aits` commands. `aits ops daily-plan --fail-on-missing-env` previews without executing.
 - Each scheduled run writes `outputs\run_control\scheduler\<date>_<window>.log` and a code-generated
   `.summary.md`/`.summary.json` in the runtime checkout; read those first. The development checkout
   does not run the daily report, so its DQ receipts say nothing about production daily status.

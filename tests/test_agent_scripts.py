@@ -246,3 +246,145 @@ def test_agent_run_streams_events_while_pi_runs(tmp_path: Path) -> None:
     assert events.read_bytes() == expected
     assert (run_dir / "attempts/01/stderr.log").stat().st_size == 200000
     assert json.loads((run_dir / "attempts/01/exit.json").read_text(encoding="utf-8"))["stopReason"] == "stop"
+
+
+def write_function_loader_script(path: Path, body: str) -> None:
+    path.write_text(
+        f"""
+$scriptPath = '{ROOT / "scripts/agent/setup-agent-account.ps1"}'
+$tokens = $null
+$errors = $null
+$ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$tokens, [ref]$errors)
+if ($errors.Count -gt 0) {{ $errors | ForEach-Object {{ Write-Error $_ }}; exit 1 }}
+$functions = $ast.FindAll({{ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] }}, $true)
+foreach ($f in $functions) {{ . ([scriptblock]::Create($f.Extent.Text)) }}
+{body}
+""".lstrip(),
+        encoding="ascii",
+    )
+
+
+def test_setup_test_right_masks(tmp_path: Path) -> None:
+    ps = powershell(); script = tmp_path / "test-right.ps1"
+    write_function_loader_script(
+        script,
+        """
+$rows = @(
+    @(1179817, $false, $true),
+    @(-1610612736, $false, $true),
+    @(1245631, $true, $true),
+    @(4, $true, $false),
+    @(2032127, $true, $true),
+    @(268435456, $true, $true),
+    @(1048576, $false, $false)
+)
+$out = @()
+foreach ($row in $rows) {
+    $actualWrite = Test-Right $row[0] "write"
+    $actualRead = Test-Right $row[0] "read"
+    $out += [pscustomobject]@{ Rights = $row[0]; Write = $actualWrite; Read = $actualRead }
+}
+$out | ConvertTo-Json
+""",
+    )
+    done = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script)], text=True, capture_output=True, timeout=60)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert json.loads(done.stdout) == [
+        {"Rights": 1179817, "Write": False, "Read": True},
+        {"Rights": -1610612736, "Write": False, "Read": True},
+        {"Rights": 1245631, "Write": True, "Read": True},
+        {"Rights": 4, "Write": True, "Read": False},
+        {"Rights": 2032127, "Write": True, "Read": True},
+        {"Rights": 268435456, "Write": True, "Read": True},
+        {"Rights": 1048576, "Write": False, "Read": False},
+    ]
+
+
+def test_setup_add_problem_deduplicates(tmp_path: Path) -> None:
+    ps = powershell(); script = tmp_path / "add-problem.ps1"
+    write_function_loader_script(
+        script,
+        """
+$WarningPreference = "SilentlyContinue"
+$ProblemList = New-Object System.Collections.ArrayList
+Add-Problem "same problem"
+Add-Problem "same problem"
+Add-Problem "other problem"
+$ProblemList | ForEach-Object { $_ }
+""",
+    )
+    done = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script)], text=True, capture_output=True, timeout=60)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert done.stdout.splitlines() == ["same problem", "other problem"]
+
+
+def test_setup_check_only_reports_once_and_exits_one(tmp_path: Path) -> None:
+    ps = powershell(); work = tmp_path / "work"; repo = tmp_path / "repo"
+    work.mkdir(); repo.mkdir()
+    subprocess.run(["icacls", str(work), "/grant", "*S-1-5-11:(M)"], check=True, text=True, capture_output=True, timeout=60)
+    subprocess.run(["icacls", str(work), "/grant", "*S-1-5-11:(OI)(CI)(IO)(M)"], check=True, text=True, capture_output=True, timeout=60)
+    subprocess.run(["icacls", str(repo), "/grant", "*S-1-5-32-545:(OI)(CI)(RX)"], check=True, text=True, capture_output=True, timeout=60)
+    done = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/agent/setup-agent-account.ps1"), "-CheckOnly", "-WorkRoot", str(work), "-Repo", str(repo)], text=True, capture_output=True, timeout=120)
+    output = done.stdout + done.stderr
+    assert done.returncode == 1, output
+    assert output.count(f"{work} is writable by") == 1
+    assert f"{work} is writable by" in output and "(S-1-5-11)" in output
+    assert f"{repo} is readable by" in output and "(S-1-5-32-545)" in output
+    assert f"{repo} is writable by" not in output
+
+
+def system_safe_directories() -> list[str]:
+    done = subprocess.run(["git", "config", "--system", "--get-all", "safe.directory"], text=True, capture_output=True, timeout=60)
+    return done.stdout.splitlines()
+
+
+def ps_command(ps: str, command: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run([ps, "-NoProfile", "-Command", command], text=True, capture_output=True, timeout=60)
+
+
+def test_setup_whatif_changes_nothing(tmp_path: Path) -> None:
+    ps = powershell(); work = tmp_path / "work"; repo = tmp_path / "repo"
+    agent = tmp_path / "agent"; wt = tmp_path / "wt"; runs = tmp_path / "runs"
+    work.mkdir(); repo.mkdir()
+    before = system_safe_directories()
+    done = subprocess.run(
+        [
+            ps,
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(ROOT / "scripts/agent/setup-agent-account.ps1"),
+            "-WhatIf",
+            "-WorkRoot",
+            str(work),
+            "-Repo",
+            str(repo),
+            "-UserName",
+            "aits-whatif-test",
+            "-AgentClone",
+            str(agent),
+            "-AgentWorktree",
+            str(wt),
+            "-RunsRoot",
+            str(runs),
+            "-QueueFile",
+            str(runs / "queue/request.json"),
+            "-TaskName",
+            "AITradingSystem pi agent whatif test",
+        ],
+        stdin=subprocess.DEVNULL,
+        text=True,
+        capture_output=True,
+        timeout=120,
+    )
+    output = done.stdout + done.stderr
+    if "Full setup stopped because CheckOnly found problems" in output:
+        pytest.skip("WhatIf CheckOnly found problems on this machine: " + output)
+    assert done.returncode == 0, output
+    assert "What if:" in output
+    assert "Password for local standard user" not in output
+    assert not agent.exists() and not wt.exists() and not runs.exists()
+    assert system_safe_directories() == before
+    assert ps_command(ps, "Get-LocalUser aits-whatif-test").returncode != 0
+    assert ps_command(ps, "Get-ScheduledTask -TaskName 'AITradingSystem pi agent whatif test'").returncode != 0

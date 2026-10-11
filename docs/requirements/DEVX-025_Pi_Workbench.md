@@ -10,6 +10,10 @@ GOV-008 迁移后，pi 将承担日常开发工作台职责。试跑暴露出两
 
 owner_decision:DEVX-025:2026-10-11:ship_gate_publish_split —— 2026-10-11 owner（Baker）在项目线程的决定卡片上，对问题"把 ship 拆成'受限账户跑门禁、你的账户只发布'吗"选择了"在 1a 拆"（选项后果："门禁只在受限账户里跑一次，每次发布省约 10 分钟，pi 写的代码不在你的账户里运行"）。在运行 03 执行。
 
+owner_decision:DEVX-025:2026-10-11:manual_agent_task_exception —— 2026-10-11 owner（Baker）在项目线程的决定卡片上，对问题"同意把 pi 的手动计划任务登记为运维规则的例外吗？"选择了"同意例外"（选项后果："注册这个手动任务，写成 owner 决定，并在运维手册里登记；以后启动 pi 不用每次输密码。"）。在运行 05 登记到运维手册 9.2 节和 periodic-operations skill。
+
+owner_decision:DEVX-025:2026-10-11:tighten_d_work_acl —— 2026-10-11 owner（Baker）在项目线程的决定卡片上，对问题"收紧 D:\Work 的权限，去掉'所有登录用户'的修改和读取吗？"选择了"收紧"（选项后果："D:\Work 只留管理员、SYSTEM 和你的账户；aits-agent 只拿到自己的三个目录，以及仓库 .git 的只读权限。"）。对追问"你现在还在 D:\Work 里用 Codex 吗？"回答"还用"，所以 CodexSandboxUsers 组保留 D:\Work 的修改权限。D:\Work 本身由 owner 用管理员身份手工收紧；运行 05 让安装脚本给受限账户的三个目录关闭继承。
+
 ## 3. 分三次运行的步骤与验收
 
 ### 运行 01：守卫加固、append-note、任务单模板
@@ -72,9 +76,23 @@ owner_decision:DEVX-025:2026-10-11:ship_gate_publish_split —— 2026-10-11 own
 - 小修不触碰 C 区 ship policy/ship.py，`ship.py --dry-run` 显示本次为 B 区。
 - 新增验收脚本、启动脚本、守卫和发布脚本回归测试通过。
 
+### 运行 05：受限账户安装脚本修正与例外登记
+
+步骤：
+
+1. 登记手动计划任务唯一例外和收紧 `D:\Work` 的 owner 决定，并把例外写入运维手册和 periodic-operations skill。
+2. 修正 `setup-agent-account.ps1` 的权限位判断、重复问题报告、`-CheckOnly` 退出码、`-WhatIf` 只读预览，以及受限账户三个目录关闭继承后的 ACL。
+3. 补充安装脚本函数级和 `-CheckOnly`/`-WhatIf` 覆盖，验证只读权限不误报可写、重复 ACE 只报一次、预览不改系统状态。
+
+验收：
+
+- 新旧测试通过。
+- `ship.py --dry-run` 显示本次为 B 区。
+- 安装脚本仍只由 owner 在 1b 以管理员身份运行完整模式。
+
 ## 4. 开放问题
 
-- 受限账户的“只能手动运行的计划任务”是否作为 periodic-operations“不要注册第二个计划任务”规则的例外，待 owner 决定（阶段 1b 前）。
+- 已决定：受限账户的手动计划任务作为 periodic-operations“不要注册第二个计划任务”规则的唯一例外（`owner_decision:DEVX-025:2026-10-11:manual_agent_task_exception`），运行 05 已登记。
 
 ## 5. 进度
 
@@ -89,6 +107,7 @@ owner_decision:DEVX-025:2026-10-11:ship_gate_publish_split —— 2026-10-11 own
 - 2026-10-11：运行 04 小修：accept_checks 门禁核对对齐 ship.py、补认跳过写法；agent-run 运行中写 events.jsonl；守卫拦截写运行目录产物、heredoc 误拦和测试误记；publish.ps1 区分大小写。
 - 2026-10-11：运行 04 验收退回一次（守卫拆分命令的正则少了 `|`、测试记录用例不成立、heredoc 接收者判断和 `<<<`、skip 选项写法），执行 02 修正。
 - 2026-10-11：运行 04 验收第二次退回（heredoc 经 `env`、多级管道或同一行后面的 shell 执行时正文被剥掉；删测试用例缺断言；测试文件多余空行），执行 03 修正。
+- 2026-10-11：运行 04 发布（main e1c489055）。运行 05：登记手动计划任务例外和收紧 D:\Work 两项 owner 决定；安装脚本修正权限位判断、重复报告、CheckOnly 退出码和 WhatIf，并给受限账户的三个目录关闭继承。
 
 ## 6. 运行影响边界
 
