@@ -6,7 +6,7 @@
 // pattern checks. The real controls stay the ship gate, the zone C owner decision, and git history.
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, isAbsolute, join, relative, sep } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
@@ -42,6 +42,7 @@ const MAX_TOOL_RESULT_CHARS = 32_000; // about 8,000 tokens at 4 chars/token.
 const HEAD_CHARS = 4_000;
 const TAIL_CHARS = 8_000;
 const OWNER_DECISION_ID = /^owner_decision:[A-Za-z0-9_.-]+:\d{4}-\d{2}-\d{2}:[A-Za-z0-9_.-]+$/;
+const RUN_ARTIFACT_FILES = new Set(["report.json", "checks.json", "acceptance.json", "publish.json"]);
 
 // Shell commands AGENTS.md forbids (history rewrite, force push, moving main outside ship, hooks off).
 const FORBIDDEN_COMMANDS: readonly [RegExp, string][] = [
@@ -123,6 +124,37 @@ function repoRelative(root: string, cwd: string, target: string): string | undef
   return rel.split(sep).join("/");
 }
 
+function normalizedAbsolute(path: string): string {
+  return resolve(path).split(sep).join("/").toLowerCase();
+}
+
+function isRunArtifactPath(target: string, cwd = process.cwd()): boolean {
+  const runDir = process.env.AITS_PI_RUN_DIR;
+  if (!runDir) return false;
+  const absolute = isAbsolute(target) ? target : join(cwd, target);
+  const artifact = basename(absolute).toLowerCase();
+  if (!RUN_ARTIFACT_FILES.has(artifact)) return false;
+  const rel = relative(runDir, absolute);
+  return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
+}
+
+function hasRunArtifactWrite(command: string, cwd = process.cwd()): boolean {
+  const runDir = process.env.AITS_PI_RUN_DIR;
+  if (!runDir) return false;
+  const runPrefix = normalizedAbsolute(runDir).replace(/\/+$/, "");
+  const filePattern = String.raw`(?:report|checks|acceptance|publish)\.json`;
+  const absPattern = escapeRegExp(runPrefix).replace(/\//g, String.raw`[\\/]`) + String.raw`[\\/][^\s'"|;&<>]*` + filePattern;
+  const quotedAbs = String.raw`["']?` + absPattern + String.raw`["']?`;
+  const relFile = String.raw`["']?(?:\.\.?[\\/])?(?:[^\s'"|;&<>]+[\\/])*` + filePattern + String.raw`["']?`;
+  const normalized = command.replace(/\\/g, "/").toLowerCase();
+  const target = String.raw`(?:` + quotedAbs + String.raw`|` + relFile + String.raw`)`;
+  const writePatterns = [
+    new RegExp(String.raw`(?:^|\s)(?:>|>>|tee\b)[^\n;&|]*` + target, "i"),
+    new RegExp(String.raw`\b(?:Set-Content|Add-Content|Out-File|New-Item|Copy-Item|Move-Item|Remove-Item|cp|mv|rm|del|copy|move)\b[^\n;&|]*` + target, "i"),
+  ];
+  return writePatterns.some((pattern) => pattern.test(normalized));
+}
+
 function ownerDecisionVerified(root: string, decision = process.env.AITS_PI_OWNER_DECISION ?? ""): boolean {
   if (!OWNER_DECISION_ID.test(decision)) return false;
   try {
@@ -152,9 +184,44 @@ function hasAllExclusions(command: string, exclusions: readonly string[]): boole
   return exclusions.every((excluded) => hasExcludePathspec(command, excluded));
 }
 
-function splitShellCommands(command: string): string[] {
-  return command.split(/\s*(?:&&|\|\||;|\r?\n)\s*/).filter(Boolean);
+function firstShellWord(command: string): string {
+  const match = /^\s*(?:env\s+)?((?:["'][^"']+["']|\S)+)/.exec(command);
+  return (match?.[1] ?? "").replace(/^['"]|['"]$/g, "");
 }
+
+function isShellInterpreter(word: string): boolean {
+  const name = basename(word).toLowerCase().replace(/\.exe$/, "");
+  return ["bash", "sh", "zsh", "pwsh", "powershell"].includes(name);
+}
+
+function stripHeredocBodies(command: string): string {
+  const receiver = firstShellWord(command);
+  if (isShellInterpreter(receiver)) return command;
+  const lines = command.split(/\r?\n/);
+  const out: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    out.push(line);
+    const matches = [...line.matchAll(/<<(-)?\s*(?!<)(?:'([^']+)'|"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))/g)];
+    if (matches.length === 0) continue;
+    for (const match of matches) {
+      const allowTabs = match[1] === "-";
+      const marker = match[2] ?? match[3] ?? match[4] ?? "";
+      i += 1;
+      while (i < lines.length) {
+        const candidate = allowTabs ? lines[i].replace(/^\t+/, "") : lines[i];
+        if (candidate === marker) break;
+        i += 1;
+      }
+    }
+  }
+  return out.join("\n");
+}
+
+function splitShellCommands(command: string): string[] {
+  return stripHeredocBodies(command).split(/\s*(?:&&|\|\|;|\r?\n)\s*/).filter(Boolean);
+}
+
 
 function isWholeRepoGitCommand(part: string): boolean {
   const trimmed = part.trim();
@@ -193,6 +260,9 @@ export function commandVerdict(root: string, command: string, state = makeState(
         reason: `${excluded} is an unrelated dirty file: never open or modify it`,
       };
     }
+  }
+  if (hasRunArtifactWrite(command, root)) {
+    return { block: true, rule: "run-artifact", reason: "run artifacts are written by guard, accept_checks, acceptance, or publish scripts" };
   }
   for (const part of splitShellCommands(command)) {
     if (/^\s*(python|py|pytest)(\s|$)/i.test(part)) {
@@ -234,6 +304,9 @@ export function checkCommand(root: string, command: string): Verdict {
 
 export function writeVerdict(root: string, cwd: string, target: string, state = makeState()): Verdict {
   if (state.locked) return { block: true, reason: LOCK_REASON, rule: "c-zone-lock", terminate: true };
+  if (isRunArtifactPath(target, cwd)) {
+    return { block: true, rule: "run-artifact", reason: "run artifacts are written by guard, accept_checks, acceptance, or publish scripts" };
+  }
   const rel = repoRelative(root, cwd, target);
   if (rel === undefined) return undefined;
   const policy = readShipPolicy(root);
@@ -384,14 +457,40 @@ export function truncateToolResult(root: string, toolCallId: string, content: st
   };
 }
 
+function stripEnvAssignments(part: string): string {
+  return part.trim().replace(/^(?:[A-Za-z_][A-Za-z0-9_]*=[^\s]+\s+)*/, "").trim();
+}
+
+function commandWords(part: string): string[] {
+  return stripEnvAssignments(part).match(/"[^"]*"|'[^']*'|\S+/g)?.map((word) => word.replace(/^['"]|['"]$/g, "")) ?? [];
+}
+
+function isPythonWord(word: string): boolean {
+  const normalized = word.replace(/\\/g, "/").toLowerCase();
+  const name = basename(normalized);
+  return word === "python" || word === "python3" || word === "py" || name === "python.exe";
+}
+
+function isTestCommandPart(part: string): boolean {
+  const words = commandWords(part);
+  if (words.length === 0) return false;
+  const first = basename(words[0].replace(/\\/g, "/")).toLowerCase();
+  if (first === "pytest" || first === "ruff") return true;
+  if (first === "node") return words.includes("--test");
+  if (!isPythonWord(words[0])) return false;
+  if (words[1] === "-m" && ["pytest", "ruff"].includes(words[2] ?? "")) return true;
+  const script = (words[1] ?? "").replace(/\\/g, "/");
+  return script === "tools/tasks.py" && ["check", "render"].includes(words[2] ?? "");
+}
+
 function recordCommandResult(state: RunState, command: string, output: string | undefined, isError: boolean, root: string): void {
   const result = isError ? "failed" : "passed";
   const summary = (output ?? "").split(/\r?\n/).slice(-8).join("\n").trim();
-  if (/\b(pytest|ruff|node\s+--test|tools[\\/]tasks\.py\s+(check|render))\b/.test(command)) {
+  if (splitShellCommands(command).some(isTestCommandPart)) {
     state.tests.push({ command, result, summary });
   }
   if (/tools[\\/]gov008[\\/]ship\.py\b/.test(command)) {
-    const mode = /--dry-run\b/.test(command) ? "dry-run" : /--execute\b/.test(command) ? "execute" : "unknown";
+    const mode = /--dry-run\b/.test(command) ? "dry-run" : /--execute\b/.test(command) ? "execute" : /--gate\b/.test(command) ? "gate" : /--publish\b/.test(command) ? "publish" : "unknown";
     state.ship = { mode, ok: !isError, sha: currentSha(root), summary };
   }
 }

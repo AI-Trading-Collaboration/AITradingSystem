@@ -125,7 +125,11 @@ $piArgs = @("-p", "@$PromptFile", "--mode", "json", "--model", $ModelId, "--tool
 if ($SessionFile) { $piArgs += @("--session", $SessionFile) } else { $piArgs += @("--session-dir", $sessionDir) }
 
 $started = Get-IsoUtcNow
+$eventsStream = $null
+$stderrStream = $null
 try {
+    $eventsStream = [System.IO.File]::Open($eventsPath, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::ReadWrite)
+    $stderrStream = [System.IO.File]::Open($stderrPath, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::ReadWrite)
     $pi = Resolve-Pi $PiCommand
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = $pi.FileName
@@ -144,14 +148,26 @@ try {
     } finally {
         [Console]::InputEncoding = $oldInputEncoding
     }
-    $outTask = $proc.StandardOutput.ReadToEndAsync(); $errTask = $proc.StandardError.ReadToEndAsync()
+    $errTask = $proc.StandardError.BaseStream.CopyToAsync($stderrStream)
+    $buffer = New-Object byte[] 8192
+    while ($true) {
+        $count = $proc.StandardOutput.BaseStream.Read($buffer, 0, $buffer.Length)
+        if ($count -le 0) { break }
+        $eventsStream.Write($buffer, 0, $count)
+        $eventsStream.Flush()
+    }
     $proc.WaitForExit()
-    [IO.File]::WriteAllText($eventsPath, $outTask.Result, $Utf8NoBom)
-    [IO.File]::WriteAllText($stderrPath, $errTask.Result, $Utf8NoBom)
+    $errTask.Wait()
+    $stderrStream.Flush()
     $code = $proc.ExitCode
 } catch {
-    [IO.File]::WriteAllText($stderrPath, $_.Exception.ToString(), $Utf8NoBom)
+    if ($eventsStream -ne $null) { $eventsStream.Close(); $eventsStream = $null }
+    if ($stderrStream -ne $null) { $stderrStream.Close(); $stderrStream = $null }
+    [IO.File]::AppendAllText($stderrPath, $_.Exception.ToString(), $Utf8NoBom)
     $code = 1
+} finally {
+    if ($eventsStream -ne $null) { $eventsStream.Close() }
+    if ($stderrStream -ne $null) { $stderrStream.Close() }
 }
 $ended = Get-IsoUtcNow
 $stop = Get-LastAssistantStopReason $eventsPath

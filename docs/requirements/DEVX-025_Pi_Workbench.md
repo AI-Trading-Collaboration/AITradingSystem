@@ -57,6 +57,21 @@ owner_decision:DEVX-025:2026-10-11:ship_gate_publish_split —— 2026-10-11 own
 - gate artifact 能证明 tested tree，publish 只 fast-forward 到该树。
 - 原 `ship --execute --push` 的安全语义有等价或更强替代。
 
+### 运行 04：工作台小修
+
+步骤：
+
+1. `accept_checks.py` 的 `Gate:` 读取、格式校验、区划核对和 C 区 Owner-Decision 收集对齐 `ship.py`，并补认 Python/TypeScript 跳过写法与 `.test.ts` 测试删除。
+2. `agent-run.ps1` 改为运行中按字节流式写入 `events.jsonl`，stderr 同步落盘，避免 stdout 解码改写中文字节。
+3. `.pi/extensions/aits-guard` 拦截 pi 写运行目录四个受管产物，修正 heredoc 正文误拦，并只把真实测试命令记入报告。
+4. `publish.ps1` 对验收 tree 和哈希比较改用区分大小写的匹配与相等判断，拒绝大写 tree。
+5. 补充上述行为的 Python、PowerShell 和 node:test 覆盖，保持发布流程语义不变。
+
+验收：
+
+- 小修不触碰 C 区 ship policy/ship.py，`ship.py --dry-run` 显示本次为 B 区。
+- 新增验收脚本、启动脚本、守卫和发布脚本回归测试通过。
+
 ## 4. 开放问题
 
 - 受限账户的“只能手动运行的计划任务”是否作为 periodic-operations“不要注册第二个计划任务”规则的例外，待 owner 决定（阶段 1b 前）。
@@ -71,6 +86,7 @@ owner_decision:DEVX-025:2026-10-11:ship_gate_publish_split —— 2026-10-11 own
 - 2026-10-11：运行 02 第三次验收退回（看板重复计数工具调用、safe.directory 路径没转换、accept_checks 漏认几种 skip 写法），执行 04 修正。
 - 2026-10-11：运行 03 把 ship 拆成 gate 和 publish，新增 publish.ps1（owner 账户只发布，运行 main 上的 ship.py，不跑测试）。
 - 2026-10-11：运行 03 验收退回一次（publish 不跑门禁的测试不成立、拒绝用例断言太宽、验收记录没有锁定 tree、读子进程输出可能卡住），执行 03 修正。
+- 2026-10-11：运行 04 小修：accept_checks 门禁核对对齐 ship.py、补认跳过写法；agent-run 运行中写 events.jsonl；守卫拦截写运行目录产物、heredoc 误拦和测试误记；publish.ps1 区分大小写。
 
 ## 6. 运行影响边界
 

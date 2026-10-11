@@ -7,6 +7,8 @@ import sys
 from importlib import util
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "agent" / "accept_checks.py"
 
@@ -316,3 +318,133 @@ def test_test_function_rename_passes_but_delete_fails(tmp_path: Path) -> None:
     assert run_checks(repo, run_dir).returncode == 0
     commit_change(repo, "tests/test_app.py", "VALUE = 1\n")
     assert run_checks(repo, run_dir).returncode == 1
+
+
+
+def test_gate_c_zone_owner_decision_in_first_commit_passes(tmp_path: Path) -> None:
+    c_brief = BRIEF.replace("zone: B", "zone: C").replace("owner_decision: none", "owner_decision: owner_decision:DEVX-1:2026-10-11:ok").replace("  - docs/task_register_completed.md\n", "  - docs/task_register_completed.md\n  - config/critical.yaml\n")
+    repo, run_dir = init_repo(tmp_path, c_brief)
+    commit_change(repo, "config/critical.yaml", "x: 3\n", "critical\n\nOwner-Decision: owner_decision:DEVX-1:2026-10-11:ok")
+    commit_change(repo, "src/app.py", "VALUE = 8\n")
+    tree = git(repo, "rev-parse", "HEAD^{tree}").stdout.strip()
+    amend_gate(repo, f"zone=C tree={tree[:12]} commands=1 seconds=1.0 PASS")
+    res = run_checks(repo, run_dir, "HEAD", "--gate")
+    assert res.returncode == 0, res.stdout + res.stderr
+
+
+def test_gate_c_zone_owner_decision_mismatch_fails(tmp_path: Path) -> None:
+    c_brief = BRIEF.replace("zone: B", "zone: C").replace("owner_decision: none", "owner_decision: owner_decision:DEVX-1:2026-10-11:other").replace("  - docs/task_register_completed.md\n", "  - docs/task_register_completed.md\n  - config/critical.yaml\n")
+    repo, run_dir = init_repo(tmp_path, c_brief)
+    commit_change(repo, "config/critical.yaml", "x: 4\n", "critical\n\nOwner-Decision: owner_decision:DEVX-1:2026-10-11:ok")
+    tree = git(repo, "rev-parse", "HEAD^{tree}").stdout.strip()
+    amend_message(repo, f"critical\n\nOwner-Decision: owner_decision:DEVX-1:2026-10-11:ok\nGate: zone=C tree={tree[:12]} commands=1 seconds=1.0 PASS")
+    res = run_checks(repo, run_dir, "HEAD", "--gate")
+    assert res.returncode == 1
+    assert "brief owner_decision is not among Owner-Decision trailers in base..head" in check_map(run_dir)["gate trailers"]["detail"]
+
+
+def amend_message(repo: Path, message: str) -> None:
+    git(repo, "commit", "--amend", "-m", message)
+
+
+def test_gate_uses_last_gate_trailer(tmp_path: Path) -> None:
+    repo, run_dir = init_repo(tmp_path)
+    commit_change(repo, "src/app.py", "VALUE = 9\n")
+    tree = git(repo, "rev-parse", "HEAD^{tree}").stdout.strip()
+    amend_message(repo, f"change\n\nGate: zone=B tree={tree[:12]} commands=1 seconds=1.0 PASS\nGate: zone=B tree=deadbeefdead commands=1 seconds=1.0 PASS")
+    res = run_checks(repo, run_dir, "HEAD", "--gate")
+    assert res.returncode == 1
+    assert "does not match head tree" in check_map(run_dir)["gate trailers"]["detail"]
+    amend_message(repo, f"change\n\nGate: zone=B tree=deadbeefdead commands=1 seconds=1.0 PASS\nGate: zone=B tree={tree[:12]} commands=1 seconds=1.0 PASS")
+    res = run_checks(repo, run_dir, "HEAD", "--gate")
+    assert res.returncode == 0, res.stdout + res.stderr
+
+
+def test_gate_short_tree_and_wrong_zone_fail(tmp_path: Path) -> None:
+    repo, run_dir = init_repo(tmp_path)
+    commit_change(repo, "src/app.py", "VALUE = 10\n")
+    tree = git(repo, "rev-parse", "HEAD^{tree}").stdout.strip()
+    amend_gate(repo, f"zone=B tree={tree[:7]} commands=1 seconds=1.0 PASS")
+    res = run_checks(repo, run_dir, "HEAD", "--gate")
+    assert res.returncode == 1
+    assert "format is invalid" in check_map(run_dir)["gate trailers"]["detail"]
+    amend_gate(repo, f"zone=A tree={tree[:12]} commands=1 seconds=1.0 PASS")
+    res = run_checks(repo, run_dir, "HEAD", "--gate")
+    assert res.returncode == 1
+    assert "does not match planned zone" in check_map(run_dir)["gate trailers"]["detail"]
+
+
+def test_gate_regex_matches_ship() -> None:
+    spec = util.spec_from_file_location("ship", ROOT / "tools/gov008/ship.py")
+    assert spec and spec.loader
+    ship = util.module_from_spec(spec)
+    spec.loader.exec_module(ship)
+    sys.path.insert(0, str(ROOT / "scripts/agent"))
+    import accept_checks  # noqa: PLC0415
+    assert accept_checks.GATE_RE.pattern == ship.GATE_RE.pattern
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "mark.skip(reason='x')",
+        "mark.skipif(True, reason='x')",
+        "mark.xfail(reason='x')",
+        "skip('x')",
+        "xfail('x')",
+        "importorskip('x')",
+        "unittest.skip('x')",
+        "unittest.skipIf(True, 'x')",
+        "unittest.skipUnless(False, 'x')",
+        "unittest.expectedFailure(test_ok)",
+        "@skip('x')",
+        "@skipIf(True, 'x')",
+        "@skipUnless(False, 'x')",
+        "@expectedFailure",
+        "from pytest import skip, xfail, importorskip, mark",
+        "test.skip('x', () => {})",
+        "it.skip('x', () => {})",
+        "describe.skip('x', () => {})",
+        "test.todo('x')",
+        "it.todo('x')",
+        "describe.todo('x')",
+        "t.skip('x')",
+        "t.todo('x')",
+        "test('x', { skip: true }, () => {})",
+        "test('x', { todo: true }, () => {})",
+    ],
+)
+def test_new_skip_forms_are_listed_not_failed(tmp_path: Path, line: str) -> None:
+    repo, run_dir = init_repo(tmp_path)
+    suffix = ".test.ts" if any(token in line for token in ["test.", "it.", "describe.", "t.", "{ skip", "{ todo"]) else ".py"
+    path = "tests/test_added" + suffix
+    body = line + "\n" if suffix == ".test.ts" else line + "\ndef test_ok():\n    assert True\n"
+    commit_change(repo, path, body)
+    res = run_checks(repo, run_dir)
+    assert res.returncode == 0, res.stdout + res.stderr
+    detail = check_map(run_dir)["tests not weakened"]["detail"]
+    assert line in detail
+
+
+def test_ts_test_delete_fails_and_rename_passes(tmp_path: Path) -> None:
+    repo, run_dir = init_repo(tmp_path)
+    git(repo, "switch", "main")
+    commit_change(repo, "tests/example.test.ts", "test('a', () => {});\ntest('b', () => {});\n", "base ts tests")
+    git(repo, "switch", "-C", "work", "main")
+    commit_change(repo, "tests/example.test.ts", "test('renamed', () => {});\n", "delete ts test")
+    assert run_checks(repo, run_dir).returncode == 1
+    repo2, run_dir2 = init_repo(tmp_path / "rename")
+    git(repo2, "switch", "main")
+    commit_change(repo2, "tests/example.test.ts", "test('a', () => {});\n", "base ts test")
+    git(repo2, "switch", "-C", "work", "main")
+    commit_change(repo2, "tests/example.test.ts", "test('renamed', () => {});\n", "rename ts test")
+    assert run_checks(repo2, run_dir2).returncode == 0
+
+
+def test_skip_review_limit_reports_more(tmp_path: Path) -> None:
+    repo, run_dir = init_repo(tmp_path)
+    body = "\n".join(f"pytest.skip('x{i}')" for i in range(15)) + "\ndef test_ok():\n    assert True\n"
+    commit_change(repo, "tests/test_app.py", body)
+    res = run_checks(repo, run_dir)
+    assert res.returncode == 0, res.stdout + res.stderr
+    assert "+3 more" in check_map(run_dir)["tests not weakened"]["detail"]

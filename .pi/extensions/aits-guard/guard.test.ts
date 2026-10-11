@@ -438,3 +438,93 @@ test("extension handler blocks, asks, handles no UI denial, and records rules", 
   const writeAfterLock = { type: "tool_call", toolCallId: "5", toolName: "write", input: { path: "notes.md" } };
   assert.equal(((await handlers.tool_call(writeAfterLock, ctx(root))) as { block: boolean }).block, true);
 });
+
+
+test("run directory artifacts cannot be written by tools or commands", () => {
+  const root = fakeRepo();
+  const runDir = mkdtempSync(join(tmpdir(), "aits-run-artifacts-"));
+  withEnv({ AITS_PI_RUN_DIR: runDir }, () => {
+    for (const name of ["report.json", "checks.json", "acceptance.json", "publish.json"]) {
+      const verdict = checkWrite(root, root, join(runDir, name));
+      assert.ok(verdict && "block" in verdict, name);
+      assert.equal(verdict.rule, "run-artifact");
+    }
+    assert.equal(checkWrite(root, root, join(runDir, "equivalence.json")), undefined);
+    assert.equal(checkWrite(root, root, join(runDir, "tmp.py")), undefined);
+    for (const command of [
+      `echo x > ${join(runDir, "report.json")}`,
+      `echo x >> ${join(runDir, "checks.json")}`,
+      `echo x | tee ${join(runDir, "acceptance.json")}`,
+      `Set-Content ${join(runDir, "publish.json")} x`,
+      `Add-Content ${join(runDir, "report.json")} x`,
+      `Out-File ${join(runDir, "checks.json")}`,
+      `New-Item ${join(runDir, "acceptance.json")}`,
+      `Copy-Item x ${join(runDir, "publish.json")}`,
+      `Move-Item x ${join(runDir, "report.json")}`,
+      `Remove-Item ${join(runDir, "checks.json")}`,
+      `cp x ${join(runDir, "acceptance.json")}`,
+      `mv x ${join(runDir, "publish.json")}`,
+      `rm ${join(runDir, "report.json")}`,
+      `del ${join(runDir, "checks.json")}`,
+      `copy x ${join(runDir, "acceptance.json")}`,
+      `move x ${join(runDir, "publish.json")}`,
+    ]) {
+      const verdict = checkCommand(root, command);
+      assert.ok(verdict && "block" in verdict, command);
+      assert.equal(verdict.rule, "run-artifact");
+    }
+    for (const command of [
+      `cat ${join(runDir, "report.json")}`,
+      `Get-Content ${join(runDir, "checks.json")}`,
+      "grep -n publish.json scripts/agent/publish.ps1",
+      `.venv/Scripts/python.exe scripts/agent/accept_checks.py --run-dir ${runDir}`,
+    ]) assert.equal(checkCommand(root, command), undefined, command);
+  });
+  withEnv({ AITS_PI_RUN_DIR: undefined }, () => {
+    assert.equal(checkWrite(root, root, join(runDir, "report.json")), undefined);
+  });
+});
+
+test("heredoc bodies are ignored except when executed by a shell", () => {
+  const root = fakeRepo();
+  assert.equal(checkCommand(root, "cat > x.py <<'PY'\nprint(1)\nPY"), undefined);
+  assert.equal(checkCommand(root, ".venv/Scripts/python.exe - <<'PY'\nimport sys\nPY"), undefined);
+  assert.equal(checkCommand(root, "cat > x.py <<-EOF\nprint(1)\n\tEOF"), undefined);
+  for (const command of [
+    "python - <<'PY'\nPY",
+    "cat <<'EOF'\nx\nEOF\npython -V",
+    "bash <<'EOF'\npython -V\nEOF",
+  ]) {
+    const verdict = checkCommand(root, command);
+    assert.ok(verdict && "block" in verdict, command);
+    assert.equal(verdict.rule, "system-python");
+  }
+});
+
+test("test command recording ignores mentions and records real test invocations", async () => {
+  const root = fakeRepo(true);
+  const handlers = await makeHandlers(root);
+  const stateReport = async (command: string) => {
+    await handlers.tool_result({ type: "tool_result", toolCallId: command, toolName: "bash", input: { command }, content: [{ type: "text", text: "ok" }], isError: false }, ctx(root));
+  };
+  await stateReport("cat >> tests/test_x.py <<'PY'\nimport pytest\nPY");
+  await stateReport("grep pytest tests/x.py");
+  await stateReport("echo pytest");
+  let report = buildReport(root, makeState()) as { tests: unknown[] };
+  assert.equal(report.tests.length, 0);
+
+  const handlers2 = await makeHandlers(root);
+  for (const command of [
+    ".venv/Scripts/python.exe -m pytest tests/x.py -q",
+    "cd repo && .venv/Scripts/python.exe -m ruff check x",
+    "node --test .pi/extensions/aits-guard/guard.test.ts",
+  ]) {
+    await handlers2.tool_result({ type: "tool_result", toolCallId: command, toolName: "bash", input: { command }, content: [{ type: "text", text: "ok" }], isError: false }, ctx(root));
+  }
+  const runDir = mkdtempSync(join(tmpdir(), "aits-report-tests-"));
+  withEnv({ AITS_PI_RUN_DIR: runDir }, async () => {
+    await handlers2.agent_settled({ type: "agent_settled" }, ctx(root));
+  });
+  report = JSON.parse(readFileSync(join(runDir, "report.json"), "utf8")) as { tests: unknown[] };
+  assert.equal(report.tests.length, 3);
+});

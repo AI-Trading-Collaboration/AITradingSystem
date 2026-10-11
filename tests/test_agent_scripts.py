@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-PS1 = [ROOT / "scripts/agent/agent-run.ps1", ROOT / "scripts/agent/run-brief.ps1", ROOT / "scripts/agent/setup-agent-account.ps1"]
+PS1 = [ROOT / "scripts/agent/agent-run.ps1", ROOT / "scripts/agent/run-brief.ps1", ROOT / "scripts/agent/setup-agent-account.ps1", ROOT / "scripts/agent/publish.ps1"]
 
 
 def powershell() -> str:
@@ -115,9 +115,18 @@ stdin_bytes = sys.stdin.buffer.read()
 if cap:
     data = {'argv': sys.argv[1:], 'cwd': os.getcwd(), 'env': {k:v for k,v in os.environ.items() if k.startswith('AITS_PI_')}, 'stdin_bytes': len(stdin_bytes)}
     open(cap, 'w', encoding='utf-8').write(json.dumps(data, ensure_ascii=False))
+wait_for = os.environ.get('FAKE_PI_WAIT_FOR')
+if wait_for:
+    first = json.dumps({'type':'progress','message':'中文'}, ensure_ascii=False).encode('utf-8') + b'\\n'
+    sys.stdout.buffer.write(first); sys.stdout.buffer.flush()
+    sys.stderr.buffer.write(b'e' * 200000); sys.stderr.buffer.flush()
+    import time
+    deadline = time.time() + 60
+    while time.time() < deadline and not os.path.exists(wait_for):
+        time.sleep(0.05)
 stop = os.environ.get('FAKE_PI_STOP', 'stop')
-print(json.dumps({'type':'message_end','message':{'role':'assistant','stopReason':stop,'timestamp':'2026-10-11T00:00:00Z','provider':'fake','model':'fake','usage':{'cost':{'total':0}},'content':'ok'}}))
-print(json.dumps({'type':'agent_settled','aborted':False}))
+print(json.dumps({'type':'message_end','message':{'role':'assistant','stopReason':stop,'timestamp':'2026-10-11T00:00:00Z','provider':'fake','model':'fake','usage':{'cost':{'total':0}},'content':'ok'}}, ensure_ascii=False))
+print(json.dumps({'type':'agent_settled','aborted':False}, ensure_ascii=False))
 sys.exit(0)
 """,
         encoding="utf-8",
@@ -201,3 +210,40 @@ def test_agent_run_model_error_returns_one(tmp_path: Path) -> None:
     env = os.environ.copy(); env["FAKE_PI_STOP"] = "error"; env["PYTHON"] = sys.executable
     done = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/agent/agent-run.ps1"), "-Repo", str(ROOT), "-RunDir", str(tmp_path / "run"), "-Attempt", "01", "-PromptFile", str(prompt), "-ModelId", "fake/model", "-PiCommand", str(fake)], text=True, capture_output=True, timeout=60, env=env)
     assert done.returncode == 1
+
+
+
+def test_agent_run_streams_events_while_pi_runs(tmp_path: Path) -> None:
+    ps = powershell(); fake = tmp_path / "fake_pi.py"; write_fake_pi(fake)
+    prompt = tmp_path / "p.md"; prompt.write_text("hello", encoding="utf-8")
+    run_dir = tmp_path / "run"; sentinel = tmp_path / "continue.flag"
+    env = os.environ.copy(); env["FAKE_PI_WAIT_FOR"] = str(sentinel); env["PYTHON"] = sys.executable
+    proc = subprocess.Popen([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/agent/agent-run.ps1"), "-Repo", str(ROOT), "-RunDir", str(run_dir), "-Attempt", "01", "-PromptFile", str(prompt), "-ModelId", "fake/model", "-PiCommand", str(fake)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+    events = run_dir / "attempts/01/events.jsonl"
+    first = b""
+    import time
+    deadline = time.time() + 60
+    while time.time() < deadline:
+        try:
+            if events.exists():
+                first = events.read_bytes().splitlines()[0] if events.read_bytes() else b""
+                if first:
+                    break
+        except OSError:
+            pass
+        time.sleep(0.05)
+    assert first == json.dumps({"type": "progress", "message": "中文"}, ensure_ascii=False).encode("utf-8")
+    assert proc.poll() is None
+    assert not sentinel.exists()
+    sentinel.write_text("go", encoding="utf-8")
+    stdout, stderr = proc.communicate(timeout=60)
+    assert proc.returncode == 0, stdout.decode(errors="replace") + stderr.decode(errors="replace")
+    text_newline = os.linesep.encode()
+    expected = (
+        json.dumps({"type": "progress", "message": "中文"}, ensure_ascii=False).encode("utf-8") + b"\n" +
+        json.dumps({"type":"message_end","message":{"role":"assistant","stopReason":"stop","timestamp":"2026-10-11T00:00:00Z","provider":"fake","model":"fake","usage":{"cost":{"total":0}},"content":"ok"}}, ensure_ascii=False).encode("utf-8") + text_newline +
+        json.dumps({"type":"agent_settled","aborted":False}, ensure_ascii=False).encode("utf-8") + text_newline
+    )
+    assert events.read_bytes() == expected
+    assert (run_dir / "attempts/01/stderr.log").stat().st_size == 200000
+    assert json.loads((run_dir / "attempts/01/exit.json").read_text(encoding="utf-8"))["stopReason"] == "stop"

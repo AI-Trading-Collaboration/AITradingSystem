@@ -17,8 +17,8 @@ from typing import Any
 
 SCHEMA = "aits.pi.accept-checks/0"
 GATE_RE = re.compile(
-    r"^Gate:\s*zone=([ABC])\s+tree=([0-9a-f]{7,40})\s+commands=\d+\s+seconds=[0-9.]+\s+PASS\s*$",
-    re.I | re.M,
+    r"^zone=(?P<zone>[ABC]) tree=(?P<tree>[0-9a-f]{12,40}) commands=(?P<commands>\d+) "
+    r"seconds=(?P<seconds>\d+(?:\.\d+)?) PASS$"
 )
 
 
@@ -135,6 +135,17 @@ def changed_files(repo: Path, base: str, head: str, policy: dict[str, Any]) -> t
     return sorted(norm(f) for f in files if f), detail
 
 
+def planned_zone(repo: Path, base: str, head: str, policy: dict[str, Any]) -> str:
+    changed = [norm(f) for f in git_lines(repo, ["diff", "--name-only", f"{base}..{head}"], ok=(0,)) if f]
+    zones = {"A": [], "B": [], "C": []}
+    for f in changed:
+        zones[zone_for(f, policy)].append(f)
+    for zone in ("C", "B", "A"):
+        if zones[zone]:
+            return zone
+    return "A"
+
+
 def diff_text(repo: Path, base: str, head: str, policy: dict[str, Any]) -> str:
     spec = ["--", ".", *exclusion_pathspecs(policy)]
     parts = [run_git(repo, ["diff", f"{base}...{head}", *spec], ok=(0,)).stdout]
@@ -188,9 +199,24 @@ def check_exclusions_and_views(files: list[str], policy: dict[str, Any]) -> tupl
 
 SKIP_RE = re.compile(
     r"@?pytest\.mark\.(skip|skipif|xfail)\b|pytest\.mark\.(skip|skipif|xfail)\b|"
+    r"(?:^|[^.\w])mark\.(skip|skipif|xfail)\b|"
     r"pytest\.skip\.Exception\(|pytest\.skip\(|pytest\.importorskip\(|pytest\.xfail\(|"
-    r"unittest\.SkipTest\b|\bSkipTest\("
+    r"(?:^|[^.\w])(skip|xfail|importorskip)\(|"
+    r"unittest\.SkipTest\b|\bSkipTest\(|"
+    r"unittest\.(skip|skipIf|skipUnless|expectedFailure)\(|"
+    r"@(?:skip|skipIf|skipUnless|expectedFailure)\b|"
+    r"from\s+pytest\s+import\s+.*\b(skip|xfail|importorskip|mark)\b|"
+    r"\b(?:test|it|describe)\.(?:skip|todo)\(|\bt\.(?:skip|todo)\(|"
+    r"\{\s*(?:skip|todo)\s*:"
 )
+TS_TEST_RE = re.compile(r"^\s*(test|it|describe)(\.\w+)?\(")
+PY_TEST_RE = re.compile(r"def test_|async def test_|\bit\(")
+
+
+def limited_list(items: list[str], limit: int) -> list[str]:
+    if len(items) <= limit:
+        return items
+    return [*items[:limit], f"+{len(items) - limit} more"]
 
 
 def check_test_weakening(diff: str) -> tuple[bool, str]:
@@ -219,9 +245,10 @@ def check_test_weakening(diff: str) -> tuple[bool, str]:
             continue
         body = line[1:] if line[:1] in "+-" else line
         line_no = new_line
-        if line.startswith("-") and re.search(r"def test_|async def test_|\bit\(", body):
+        test_re = TS_TEST_RE if current_file.endswith(".test.ts") else PY_TEST_RE
+        if line.startswith("-") and test_re.search(body):
             removed_assert_by_file[current + "#tests"] = removed_assert_by_file.get(current + "#tests", 0) + 1
-        if line.startswith("+") and re.search(r"def test_|async def test_|\bit\(", body):
+        if line.startswith("+") and test_re.search(body):
             added_assert_by_file[current + "#tests"] = added_assert_by_file.get(current + "#tests", 0) + 1
         if line.startswith("-") and re.search(r"\bassert\b", body):
             removed_assert_by_file[current] = removed_assert_by_file.get(current, 0) + 1
@@ -240,9 +267,9 @@ def check_test_weakening(diff: str) -> tuple[bool, str]:
     if removed_bad:
         problems.append(f"removed asserts/tests in {len(set(removed_bad))} diff(s)")
     if skip_review:
-        problems.append("skip/xfail additions for review: " + "; ".join(skip_review[:12]))
+        problems.append("skip/xfail additions for review: " + "; ".join(limited_list(skip_review, 12)))
     if tolerance:
-        problems.append("tolerance changes: " + "; ".join(tolerance[:6]))
+        problems.append("tolerance changes: " + "; ".join(limited_list(tolerance, 6)))
     return (not removed_bad, "; ".join(problems) or "no test weakening patterns")
 
 
@@ -293,7 +320,7 @@ def check_tasks(repo: Path, base: str, head: str, files: list[str], allow_done: 
 def check_report(run_dir: Path) -> tuple[bool, str]:
     path = run_dir / "report.json"
     if not path.exists():
-        return False, "report.json 缺失"
+        return False, "report.json 缺失（守卫在运行结束时写入，运行中缺失是预期的）"
     data = json.loads(path.read_text(encoding="utf-8-sig"))
     blocked = data.get("blocked") or []
     rules = sorted({str(b.get("rule") or b.get("reason") or b.get("tool") or "unknown") for b in blocked})
@@ -317,30 +344,41 @@ def check_equivalence(run_dir: Path) -> tuple[bool, str]:
     return (data.get("ok") is True, "equivalence.json ok=true" if data.get("ok") is True else "equivalence.json ok is not true")
 
 
-def check_gate(repo: Path, head: str, brief_data: dict[str, Any]) -> tuple[bool, str]:
+def check_gate(repo: Path, base: str, head: str, policy: dict[str, Any], brief_data: dict[str, Any]) -> tuple[bool, str]:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import brief  # type: ignore
 
     sha = run_git(repo, ["rev-parse", head]).stdout.strip()
-    msg = run_git(repo, ["log", "-1", "--format=%B", sha]).stdout
     tree = run_git(repo, ["rev-parse", f"{sha}^{{tree}}"]).stdout.strip()
-    m = GATE_RE.search(msg)
+    trailers = git_lines(repo, ["log", "-1", "--format=%(trailers:key=Gate,valueonly)", sha], ok=(0,))
+    gate = trailers[-1].strip() if trailers else ""
     problems: list[str] = []
-    if not m:
-        problems.append("missing valid Gate trailer")
+    if not gate:
+        problems.append("missing Gate trailer on head")
     else:
-        gate_zone, gate_tree = m.group(1).upper(), m.group(2).lower()
-        if not tree.startswith(gate_tree):
-            problems.append(f"Gate tree {gate_tree} is not a prefix of commit tree {tree}")
-        if gate_zone == "C" and brief_data.get("zone") != "C":
-            problems.append("Gate trailer zone=C but brief zone is not C")
-    if brief_data.get("zone") == "C":
-        owners = git_lines(repo, ["log", "-1", "--format=%(trailers:key=Owner-Decision,valueonly)", sha], ok=(0,))
-        if not owners:
-            problems.append("missing Owner-Decision trailer")
+        m = GATE_RE.fullmatch(gate)
+        if not m:
+            problems.append("Gate trailer format is invalid")
         else:
+            gate_zone, gate_tree = m.group("zone"), m.group("tree")
+            planned = planned_zone(repo, base, head, policy)
+            if not tree.startswith(gate_tree):
+                problems.append(f"Gate trailer tree {gate_tree} does not match head tree {tree}")
+            if gate_zone != planned:
+                problems.append(f"Gate trailer zone {gate_zone} does not match planned zone {planned}")
+            if gate_zone == "C" and brief_data.get("zone") != "C":
+                problems.append("Gate trailer zone=C but brief zone is not C")
+    if brief_data.get("zone") == "C":
+        owners = git_lines(repo, ["log", "--format=%(trailers:key=Owner-Decision,valueonly)", f"{base}..{head}"], ok=(0,))
+        owners = [owner.strip() for owner in owners if owner.strip()]
+        distinct = list(dict.fromkeys(owners))
+        if not owners:
+            problems.append("missing Owner-Decision trailer in base..head")
+        elif str(brief_data.get("owner_decision") or "") not in owners:
+            problems.append("brief owner_decision is not among Owner-Decision trailers in base..head")
+        for owner in distinct:
             checked = dict(brief_data)
-            checked["owner_decision"] = owners[-1].strip()
+            checked["owner_decision"] = owner
             problems.extend([e for e in brief.validate(checked, repo) if "owner_decision" in e or "owner decision" in e])
     return (not problems, "; ".join(problems) or "gate trailers passed")
 
@@ -378,7 +416,7 @@ def main(argv: list[str] | None = None) -> int:
     ok, detail = check_equivalence(run_dir)
     checks.append({"name": "equivalence artifact", "ok": ok, "detail": detail})
     if args.gate:
-        ok, detail = check_gate(repo, args.head, brief)
+        ok, detail = check_gate(repo, args.base, args.head, policy, brief)
         checks.append({"name": "gate trailers", "ok": ok, "detail": detail})
 
     result = {"schema": SCHEMA, "head": head_sha, "checks": checks}

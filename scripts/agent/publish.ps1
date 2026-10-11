@@ -130,7 +130,7 @@ if (-not (Test-Path -LiteralPath $RunDir -PathType Container)) {
         $validationErrors += "last acceptance review verdict is not accepted"
       } else {
         $acceptedTree = [string]$reviews[$reviews.Count - 1].tree
-        if ($acceptedTree -notmatch "^[0-9a-f]{40}$") {
+        if ($acceptedTree -cnotmatch "^[0-9a-f]{40}$") {
           $validationErrors += "last accepted review tree is missing or is not a 40-character lowercase hex tree"
         }
       }
@@ -147,9 +147,9 @@ try {
   if (($startBranch -ne $Base) -and ($startBranch -ne $Branch)) {
     $validationErrors += "current branch must be Base '$Base' or Branch '$Branch', got '$startBranch'"
   }
-  if ($acceptedTree -match "^[0-9a-f]{40}$") {
+  if ($acceptedTree -cmatch "^[0-9a-f]{40}$") {
     $branchTree = (Git @("rev-parse", "$Branch`^{tree}")).stdout.Trim()
-    if ($branchTree -ne $acceptedTree) {
+    if ($branchTree -cne $acceptedTree) {
       $validationErrors += "Branch tree $branchTree does not match accepted review tree $acceptedTree"
     }
   }
@@ -171,7 +171,7 @@ try {
   Copy-GitBlob "$Base`:tools/gov008/ship.py" $tempShip
   $tempHash = (Git @("hash-object", $tempShip)).stdout.Trim()
   $baseHash = (Git @("rev-parse", "$Base`:tools/gov008/ship.py")).stdout.Trim()
-  if ($tempHash -ne $baseHash) { throw "temporary ship.py hash does not match $Base" }
+  if ($tempHash -cne $baseHash) { throw "temporary ship.py hash does not match $Base" }
 
   $publishArgs = @("-I", $tempShip, "--repo", $Repo, "--base", $Base, "--publish")
   if (-not $NoPush) { $publishArgs += "--push" }
@@ -187,10 +187,10 @@ try {
 
   [void](Git @("switch", $Base))
   $localBase = (Git @("rev-parse", $Base)).stdout.Trim()
-  if ($localBase -ne $resultObj.shipped_sha) { throw "$Base is $localBase, expected $($resultObj.shipped_sha)" }
+  if ($localBase -cne $resultObj.shipped_sha) { throw "$Base is $localBase, expected $($resultObj.shipped_sha)" }
   if (-not $NoPush) {
     $originBase = (Git @("rev-parse", "origin/$Base")).stdout.Trim()
-    if ($originBase -ne $resultObj.shipped_sha) { throw "origin/$Base is $originBase, expected $($resultObj.shipped_sha)" }
+    if ($originBase -cne $resultObj.shipped_sha) { throw "origin/$Base is $originBase, expected $($resultObj.shipped_sha)" }
   }
   $delete = Git @("branch", "-d", $Branch) -AllowFailure
   $branchDeleted = ($delete.code -eq 0)

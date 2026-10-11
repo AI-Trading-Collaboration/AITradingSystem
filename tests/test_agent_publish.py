@@ -291,3 +291,19 @@ def test_publish_no_push_moves_main_but_not_origin(tmp_path: Path) -> None:
     assert data["pushed"] is False
     assert run_git(repo, "rev-parse", "main") == data["main_sha"]
     assert run_git(origin, "rev-parse", "main") == before_origin
+
+
+
+def test_publish_validation_rejects_uppercase_accepted_tree_without_json(tmp_path: Path) -> None:
+    repo, _origin, run_dir = setup_repo(tmp_path)
+    commit_file(repo, "src/app.py", "x\n", "code")
+    write_acceptance(run_dir, tree=current_tree(repo).upper())
+    before = run_git(repo, "rev-parse", "main")
+    done = run_publish(repo, run_dir)
+    assert done.returncode == 2
+    assert (
+        "last accepted review tree is missing or is not a 40-character lowercase hex tree"
+        in done.stdout
+    )
+    assert not (run_dir / "publish.json").exists()
+    assert run_git(repo, "rev-parse", "main") == before
