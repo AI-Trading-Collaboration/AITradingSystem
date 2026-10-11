@@ -73,6 +73,8 @@ def parse_text(text: str) -> dict[str, Any]:
         value = raw.strip()
         if key not in FIELDS:
             raise BriefError([f"unsupported field: {key}"])
+        if key in out:
+            raise BriefError([f"duplicate field: {key}"])
         current = key
         if value == "[]":
             out[key] = []
@@ -108,6 +110,13 @@ def _git_grep_main(repo: Path, needle: str) -> bool:
 
 def validate(data: dict[str, Any], repo: Path) -> list[str]:
     errors: list[str] = []
+    for required in ("task", "run", "template"):
+        if not str(data.get(required) or "").strip():
+            errors.append(f"{required} is required")
+    task = str(data.get("task") or "")
+    run = str(data.get("run") or "")
+    if task and run and not run.startswith(f"{task}-"):
+        errors.append("run must start with <task>-")
     if data.get("zone") not in {"A", "B", "C"}:
         errors.append("zone must be A, B or C")
     if data.get("model") not in {"local", "cloud"}:

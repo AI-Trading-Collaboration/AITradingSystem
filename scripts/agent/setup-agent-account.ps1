@@ -4,23 +4,38 @@ param(
     [string]$Repo = (Resolve-Path ".").Path,
     [string]$UserName = "aits-agent",
     [string]$AgentClone = "D:\Work\AITradingSystem_agent",
-    [string]$AgentWorktree = "D:\Work\AITradingSystem_agent\_agent_wt",
+    [string]$AgentWorktree = "D:\Work\AITradingSystem_agent_wt",
     [string]$RunsRoot = "D:\Work\AITradingSystem_agent_runs",
     [string]$QueueFile = "D:\Work\AITradingSystem_agent_runs\queue\request.json",
-    [string]$TaskName = "AITradingSystem pi agent"
+    [string]$TaskName = "AITradingSystem pi agent",
+    [int]$ExecutionLimitHours = 2
 )
 
 $ErrorActionPreference = "Stop"
+$ProblemList = New-Object System.Collections.ArrayList
+$UsersSid = "S-1-5-32-545"
+$AuthenticatedUsersSid = "S-1-5-11"
 
-function Test-WorkAcl {
-    $acl = Get-Acl -LiteralPath "D:\Work"
-    $hits = @()
+function Add-Problem([string]$Message) { [void]$ProblemList.Add($Message); Write-Warning $Message }
+function Check-Native([string]$Name) { if ($LASTEXITCODE -ne 0) { throw "$Name failed with exit code $LASTEXITCODE" } }
+
+function Test-Right($Rights, [string]$Kind) {
+    $mask = [int64]$Rights
+    $writeMask = [int64]([Security.AccessControl.FileSystemRights]::Write -bor [Security.AccessControl.FileSystemRights]::Modify -bor [Security.AccessControl.FileSystemRights]::FullControl -bor [Security.AccessControl.FileSystemRights]::CreateFiles -bor [Security.AccessControl.FileSystemRights]::AppendData -bor [Security.AccessControl.FileSystemRights]::WriteData)
+    $readMask = [int64]([Security.AccessControl.FileSystemRights]::Read -bor [Security.AccessControl.FileSystemRights]::ReadAndExecute -bor [Security.AccessControl.FileSystemRights]::ListDirectory)
+    if ($Kind -eq "write") { return (($mask -band $writeMask) -ne 0) }
+    return (($mask -band $readMask) -ne 0)
+}
+
+function Test-PathAcl([string]$Path, [switch]$AlsoRead) {
+    $acl = Get-Acl -LiteralPath $Path
     foreach ($ace in $acl.Access) {
-        $id = $ace.IdentityReference.Value
-        $rights = $ace.FileSystemRights.ToString()
-        if (($id -match "Authenticated Users|Users") -and ($rights -match "Modify|Write|FullControl")) { $hits += ("$id $rights") }
+        if ($ace.AccessControlType -ne "Allow") { continue }
+        $sid = $ace.IdentityReference.Translate([Security.Principal.SecurityIdentifier]).Value
+        if ($sid -ne $UsersSid -and $sid -ne $AuthenticatedUsersSid) { continue }
+        if (Test-Right $ace.FileSystemRights "write") { Add-Problem "$Path is writable by $($ace.IdentityReference.Value)" }
+        if ($AlsoRead -and (Test-Right $ace.FileSystemRights "read")) { Add-Problem "$Path is readable by $($ace.IdentityReference.Value)" }
     }
-    if ($hits.Count -eq 0) { Write-Warning "D:\Work is not writable by Authenticated Users or Users" } else { Write-Host ("D:\Work writable ACL: " + ($hits -join "; ")) }
 }
 
 function Show-MachineSecretNames {
@@ -31,66 +46,81 @@ function Show-MachineSecretNames {
 function Test-TwsPorts {
     $ports = @(7496, 7497, 4001, 4002)
     $listeners = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $ports -contains $_.LocalPort }
-    if ($listeners) { $listeners | ForEach-Object { Write-Warning ("Port {0} is listening on {1}" -f $_.LocalPort,$_.LocalAddress) } } else { Write-Host "No TWS/Gateway ports are listening." }
+    if ($listeners) { $listeners | ForEach-Object { Add-Problem ("Port {0} is listening on {1}" -f $_.LocalPort,$_.LocalAddress) } } else { Write-Host "No TWS/Gateway ports are listening." }
 }
 
 function Invoke-CheckOnly {
-    Test-WorkAcl
+    $ProblemList.Clear() | Out-Null
+    Test-PathAcl "D:\Work"
+    Test-PathAcl $Repo -AlsoRead
     Show-MachineSecretNames
     Test-TwsPorts
+    if ($ProblemList.Count -eq 0) { Write-Host "CheckOnly passed." } else { Write-Warning ("CheckOnly found {0} problem(s)." -f $ProblemList.Count) }
+    return $ProblemList.Count
 }
 
-Invoke-CheckOnly
+$problemCount = Invoke-CheckOnly
 if ($CheckOnly) { return }
+if ($problemCount -gt 0) { throw "Full setup stopped because CheckOnly found problems." }
 
 $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw "Full setup must run as Administrator." }
 
+$password = Read-Host -AsSecureString "Password for local standard user $UserName"
 $user = Get-LocalUser -Name $UserName -ErrorAction SilentlyContinue
 if (-not $user) {
-    $password = Read-Host -AsSecureString "Password for local standard user $UserName"
     if ($PSCmdlet.ShouldProcess($UserName, "create local standard user")) { New-LocalUser -Name $UserName -Password $password -PasswordNeverExpires:$false | Out-Null }
-} else { Write-Host "User $UserName already exists; skipping." }
+} else { Write-Host "User $UserName already exists; skipping creation." }
+$agentSid = (Get-LocalUser -Name $UserName).Sid.Value
 
 foreach ($dir in @($AgentClone, $AgentWorktree, $RunsRoot, (Split-Path -Parent $QueueFile))) {
     if ($PSCmdlet.ShouldProcess($dir, "create directory")) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
 }
-
 foreach ($dir in @($AgentClone, $AgentWorktree, $RunsRoot)) {
     if ($PSCmdlet.ShouldProcess($dir, "grant $UserName modify and current user read")) {
-        icacls $dir /grant "${UserName}:(OI)(CI)M" | Out-Null
-        icacls $dir /grant "${env:USERNAME}:(OI)(CI)R" | Out-Null
+        icacls $dir /grant "${UserName}:(OI)(CI)M" | Out-Null; Check-Native "icacls grant modify"
+        icacls $dir /grant "${env:USERNAME}:(OI)(CI)R" | Out-Null; Check-Native "icacls grant read"
     }
 }
 
 $gitDir = Join-Path $Repo ".git"
-if ($PSCmdlet.ShouldProcess($gitDir, "grant $UserName read")) { icacls $gitDir /grant "${UserName}:(OI)(CI)R" | Out-Null }
+if ($PSCmdlet.ShouldProcess($gitDir, "grant $UserName read")) { icacls $gitDir /grant "${UserName}:(OI)(CI)R" | Out-Null; Check-Native "icacls .git read" }
 
 if (-not (Test-Path -LiteralPath (Join-Path $AgentClone ".git"))) {
-    if ($PSCmdlet.ShouldProcess($AgentClone, "clone main from source .git")) { git clone --branch main $gitDir $AgentClone | Out-Null }
+    if ($PSCmdlet.ShouldProcess($AgentClone, "clone main from source .git")) { git clone --branch main $gitDir $AgentClone | Out-Null; Check-Native "git clone" }
 } else { Write-Host "Agent clone already exists; skipping clone." }
 
-$sourceCfg = Join-Path $Repo ".venv\pyvenv.cfg"
-$home = $null
-if (Test-Path -LiteralPath $sourceCfg) {
-    foreach ($line in Get-Content -LiteralPath $sourceCfg) { if ($line -match '^home\s*=\s*(.+)$') { $home = $Matches[1].Trim() } }
+foreach ($safe in @($Repo, $gitDir, $AgentClone, $AgentWorktree)) {
+    $existing = git config --system --get-all safe.directory 2>$null
+    if ($existing -notcontains $safe) { git config --system --add safe.directory $safe; Check-Native "git safe.directory" }
 }
-$basePython = if ($home) { Join-Path $home "python.exe" } else { "python" }
+
+$sourceCfg = Join-Path $Repo ".venv\pyvenv.cfg"
+$venvHome = $null
+if (Test-Path -LiteralPath $sourceCfg) { foreach ($line in Get-Content -LiteralPath $sourceCfg) { if ($line -match '^home\s*=\s*(.+)$') { $venvHome = $Matches[1].Trim() } } }
+$basePython = if ($venvHome) { Join-Path $venvHome "python.exe" } else { "python" }
 $agentPython = Join-Path $AgentClone ".venv\Scripts\python.exe"
 if (-not (Test-Path -LiteralPath $agentPython)) {
-    if ($PSCmdlet.ShouldProcess($AgentClone, "create venv")) { & $basePython -m venv (Join-Path $AgentClone ".venv") }
+    if ($PSCmdlet.ShouldProcess($AgentClone, "create venv")) { & $basePython -m venv (Join-Path $AgentClone ".venv"); Check-Native "python -m venv" }
 }
-if ($PSCmdlet.ShouldProcess($AgentClone, "editable install")) { & $agentPython -m pip install -e $AgentClone }
+if ($PSCmdlet.ShouldProcess($AgentClone, "install project and dev dependencies")) {
+    & $agentPython -m pip install -e $AgentClone; Check-Native "pip install -e"
+    & $agentPython -m pip install pytest pytest-xdist ruff pyyaml; Check-Native "pip install dev tools"
+}
 
-$agentPythonExe = Join-Path $AgentClone ".venv\Scripts\python.exe"
-if (-not (Get-NetFirewallRule -DisplayName "AITradingSystem agent python no outbound" -ErrorAction SilentlyContinue)) {
-    if ($PSCmdlet.ShouldProcess($agentPythonExe, "block outbound firewall rule")) {
-        New-NetFirewallRule -DisplayName "AITradingSystem agent python no outbound" -Direction Outbound -Program $agentPythonExe -Action Block | Out-Null
+$blockedPython = $basePython
+if (-not (Get-NetFirewallRule -DisplayName "AITradingSystem agent base python no outbound" -ErrorAction SilentlyContinue)) {
+    if ($PSCmdlet.ShouldProcess($blockedPython, "block outbound firewall rule for $UserName")) {
+        New-NetFirewallRule -DisplayName "AITradingSystem agent base python no outbound" -Direction Outbound -Program $blockedPython -LocalUser $agentSid -Action Block | Out-Null
     }
 }
+Write-Host "1b manual validation required: HTTPS as $UserName should fail; HTTPS as your account should succeed."
 
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`" -RequestFile `"{1}`"" -f (Join-Path $AgentClone "scripts\agent\agent-run.ps1"), $QueueFile)
-$principalTask = New-ScheduledTaskPrincipal -UserId $UserName -LogonType Password -RunLevel Limited
-if ($PSCmdlet.ShouldProcess($TaskName, "register manual scheduled task")) {
-    Register-ScheduledTask -TaskName $TaskName -Action $action -Principal $principalTask -Force | Out-Null
-}
+$plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
+try {
+    $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`" -RequestFile `"{1}`"" -f (Join-Path $AgentClone "scripts\agent\agent-run.ps1"), $QueueFile)
+    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours $ExecutionLimitHours) -MultipleInstances IgnoreNew
+    if ($PSCmdlet.ShouldProcess($TaskName, "register manual scheduled task")) {
+        Register-ScheduledTask -TaskName $TaskName -Action $action -Settings $settings -User $UserName -Password $plainPassword -RunLevel Limited -Force | Out-Null
+    }
+} finally { $plainPassword = $null }

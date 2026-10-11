@@ -51,7 +51,7 @@ _SKIP_PREFIXES = ('{"type":"message_update"', '{"type":"tool_execution_update"')
 
 def read_json(path: Path):
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        return json.loads(path.read_text(encoding="utf-8-sig"))
     except (OSError, ValueError):
         return None
 
@@ -249,8 +249,12 @@ def compute_stage(run: dict) -> tuple[str, str]:
     report = run["report"] or {}
     ship = report.get("ship") or {}
     publish = run.get("publish") or {}
-    if publish.get("ok") is True:
-        return "shipped", publish.get("summary") or "已发布"
+    if publish:
+        if publish.get("ok") is True:
+            main_sha = str(publish.get("main_sha") or publish.get("sha") or "")[:9]
+            suffix = f" {main_sha}" if main_sha else ""
+            return "shipped", publish.get("summary") or f"已发布{suffix}"
+        return "ship_failed", publish.get("summary") or "发布失败"
     if last["purpose"] == "ship":
         if ship.get("mode") == "execute" and ship.get("ok"):
             return "shipped", ship.get("summary") or f"已发布 {ship.get('sha') or ''}".strip()
@@ -712,9 +716,6 @@ def weekly_cloud_costs(runs: list[dict]) -> dict[str, float]:
     weekly: dict[str, float] = {}
     for run in runs:
         for att in run["attempts"]:
-            models = " ".join(att.get("models") or [])
-            if "openai/" not in models:
-                continue
             started = parse_time(att.get("started_at")) or parse_time(run["summary"].get("started_at"))
             week = started.date().isocalendar() if started else None
             key = f"{week.year}-W{week.week:02d}" if week else "unknown"

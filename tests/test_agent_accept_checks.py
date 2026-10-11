@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from importlib import util
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -55,8 +56,8 @@ def git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProce
 def init_repo(tmp_path: Path, brief_text: str = BRIEF) -> tuple[Path, Path]:
     repo = tmp_path / "repo"
     run_dir = tmp_path / "run"
-    repo.mkdir()
-    run_dir.mkdir()
+    repo.mkdir(parents=True)
+    run_dir.mkdir(parents=True)
     git(repo, "init", "-b", "main")
     git(repo, "config", "user.email", "t@example.com")
     git(repo, "config", "user.name", "Tester")
@@ -69,12 +70,15 @@ def init_repo(tmp_path: Path, brief_text: str = BRIEF) -> tuple[Path, Path]:
     (repo / "tasks").mkdir()
     (repo / "tasks/DEVX.yaml").write_text("status: IN_PROGRESS\nnotes: old\n", encoding="utf-8")
     (repo / "docs").mkdir()
+    (repo / "docs/requirements").mkdir()
+    (repo / "docs/requirements/REQ.md").write_text("owner_decision:DEVX-1:2026-10-11:ok\n", encoding="utf-8")
     (repo / "docs/task_register.md").write_text("old\n", encoding="utf-8")
     (repo / "docs/task_register_completed.md").write_text("old\n", encoding="utf-8")
     git(repo, "add", ".")
     git(repo, "commit", "-m", "base")
     git(repo, "checkout", "-b", "work")
     (run_dir / "brief.md").write_text(brief_text, encoding="utf-8")
+    (run_dir / "report.json").write_text('{"blocked": [], "out_of_scope_files": []}\n', encoding="utf-8")
     return repo, run_dir
 
 
@@ -160,6 +164,15 @@ def test_task_notes_must_be_append_only_and_done_forbidden(tmp_path: Path) -> No
     assert not check_map(run_dir)["task notes append-only and allow_done"]["ok"]
 
 
+def test_report_missing_fails(tmp_path: Path) -> None:
+    repo, run_dir = init_repo(tmp_path)
+    (run_dir / "report.json").unlink()
+    commit_change(repo, "src/app.py", "VALUE = 30\n")
+    res = run_checks(repo, run_dir)
+    assert res.returncode == 1
+    assert "缺失" in check_map(run_dir)["run report"]["detail"]
+
+
 def test_report_out_of_scope_fails_and_blocked_rules_are_listed(tmp_path: Path) -> None:
     repo, run_dir = init_repo(tmp_path)
     (run_dir / "report.json").write_text(json.dumps({"blocked": [{"rule": "git-whole-repo"}], "out_of_scope_files": ["x"]}), encoding="utf-8")
@@ -182,9 +195,86 @@ def test_equivalence_required_when_section_is_not_na(tmp_path: Path) -> None:
     assert res.returncode == 0, res.stdout + res.stderr
 
 
-def test_gate_trailer_check(tmp_path: Path) -> None:
+def amend_gate(repo: Path, trailer: str) -> None:
+    git(repo, "commit", "--amend", "-m", "change\n\nGate: " + trailer)
+
+
+def test_gate_trailer_real_format_passes_and_failures_are_detected(tmp_path: Path) -> None:
     repo, run_dir = init_repo(tmp_path)
     commit_change(repo, "src/app.py", "VALUE = 5\n")
+    tree = git(repo, "rev-parse", "HEAD^{tree}").stdout.strip()
+    amend_gate(repo, f"zone=B tree={tree[:12]} commands=1 seconds=626.2 PASS")
     res = run_checks(repo, run_dir, "HEAD", "--gate")
-    assert res.returncode == 1
-    assert not check_map(run_dir)["gate trailers"]["ok"]
+    assert res.returncode == 0, res.stdout + res.stderr
+
+    commit_change(repo, "src/app.py", "VALUE = 6\n")
+    assert run_checks(repo, run_dir, "HEAD", "--gate").returncode == 1
+    tree = git(repo, "rev-parse", "HEAD^{tree}").stdout.strip()
+    amend_gate(repo, "zone=B tree=deadbeef commands=1 seconds=1.0 PASS")
+    assert run_checks(repo, run_dir, "HEAD", "--gate").returncode == 1
+    amend_gate(repo, f"zone=B tree={tree[:12]} commands=1 seconds=1.0 FAIL")
+    assert run_checks(repo, run_dir, "HEAD", "--gate").returncode == 1
+
+
+def test_c_zone_with_owner_decision_on_main_passes(tmp_path: Path) -> None:
+    c_brief = BRIEF.replace("zone: B", "zone: C").replace("owner_decision: none", "owner_decision: owner_decision:DEVX-1:2026-10-11:ok").replace("  - docs/task_register_completed.md\n", "  - docs/task_register_completed.md\n  - config/critical.yaml\n")
+    repo, run_dir = init_repo(tmp_path, c_brief)
+    commit_change(repo, "config/critical.yaml", "x: 2\n")
+    assert run_checks(repo, run_dir).returncode == 0
+
+
+def test_task_views_pass_when_task_yaml_changes_and_fail_when_alone(tmp_path: Path) -> None:
+    repo, run_dir = init_repo(tmp_path)
+    (repo / "docs/task_register.md").write_text("new\n", encoding="utf-8")
+    (repo / "tasks/DEVX.yaml").write_text("status: IN_PROGRESS\nnotes: old; more\n", encoding="utf-8")
+    git(repo, "add", "docs/task_register.md", "tasks/DEVX.yaml")
+    git(repo, "commit", "-m", "task view")
+    assert run_checks(repo, run_dir).returncode == 0
+
+    repo2, run_dir2 = init_repo(tmp_path / "alone")
+    commit_change(repo2, "docs/task_register.md", "new\n")
+    assert run_checks(repo2, run_dir2).returncode == 1
+
+
+def test_zone_classification_matches_ship_for_real_policy() -> None:
+    spec = util.spec_from_file_location("ship", ROOT / "tools/gov008/ship.py")
+    assert spec and spec.loader
+    ship = util.module_from_spec(spec)
+    spec.loader.exec_module(ship)
+    sys.path.insert(0, str(ROOT / "scripts/agent"))
+    import accept_checks  # noqa: PLC0415
+
+    policy_text = subprocess.run(["git", "show", "main:config/gov008_ship.yaml"], cwd=ROOT, text=True, capture_output=True, check=True).stdout
+    policy = accept_checks.parse_policy(policy_text)
+    paths = subprocess.run(["git", "ls-files"], cwd=ROOT, text=True, capture_output=True, check=True).stdout.splitlines()
+    paths += [".agents/skills/ship-change/SKILL.md", ".pi/prompts/x.md", "README.md", "docs/x.md", "tasks/x.yaml", "src/ai_trading_system/scoring/a.py", "config/ibkr_paper_x.yaml"]
+    ours = {p: accept_checks.zone_for(p, policy) for p in paths}
+    theirs_by_zone = ship.classify(paths, ship.load_policy(ROOT))
+    theirs = {p: z for z, vals in theirs_by_zone.items() for p in vals}
+    assert ours == theirs
+
+
+def test_excluded_worktree_file_and_non_head_worktree_are_ignored(tmp_path: Path) -> None:
+    repo, run_dir = init_repo(tmp_path)
+    commit_change(repo, "src/app.py", "VALUE = 7\n")
+    dirty = repo / "docs/research/dirty.md"
+    dirty.parent.mkdir(parents=True, exist_ok=True)
+    dirty.write_text("SECRET\n", encoding="utf-8")
+    res = run_checks(repo, run_dir)
+    assert "docs/research/dirty.md" not in res.stdout
+    assert "SECRET" not in res.stdout
+
+    head = git(repo, "rev-parse", "HEAD").stdout.strip()
+    commit_change(repo, "src/other.py", "x=1\n")
+    (repo / "other.txt").write_text("dirty\n", encoding="utf-8")
+    res = run_checks(repo, run_dir, head)
+    assert "working tree ignored" in check_map(run_dir)["changes within allowed_paths"]["detail"]
+    assert "other.txt" not in res.stdout
+
+
+def test_test_function_rename_passes_but_delete_fails(tmp_path: Path) -> None:
+    repo, run_dir = init_repo(tmp_path)
+    commit_change(repo, "tests/test_app.py", "def test_renamed():\n    assert True\n")
+    assert run_checks(repo, run_dir).returncode == 0
+    commit_change(repo, "tests/test_app.py", "VALUE = 1\n")
+    assert run_checks(repo, run_dir).returncode == 1

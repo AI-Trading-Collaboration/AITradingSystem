@@ -87,10 +87,29 @@ def test_validation_failures(tmp_path: Path, capsys: pytest.CaptureFixture[str],
     assert message in capsys.readouterr().err
 
 
+def test_required_fields_duplicate_keys_and_run_prefix(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path)
+    data = brief.parse_text(text(task=""))
+    assert any("task is required" in e for e in brief.validate(data, repo))
+    data = brief.parse_text(text(run="OTHER-1"))
+    assert any("run must start" in e for e in brief.validate(data, repo))
+    duplicated = text().replace("run: DEVX-1-01", "run: DEVX-1-01\ntask: AGAIN")
+    with pytest.raises(brief.BriefError) as exc:
+        brief.parse_text(duplicated)
+    assert "duplicate field" in str(exc.value)
+
+
 def test_readonly_may_have_empty_allowed_paths(tmp_path: Path) -> None:
     repo = make_repo(tmp_path)
     data = brief.parse_text(text(tools="readonly", allowed_paths=[], ship="none"))
     assert brief.validate(data, repo) == []
+
+
+def test_zone_c_owner_decision_must_be_committed_to_main_not_worktree(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path)
+    (repo / "docs/requirements/REQ.md").write_text("owner_decision:DEVX-1:2026-10-11:worktree\n", encoding="utf-8")
+    data = brief.parse_text(text(zone="C", owner_decision="owner_decision:DEVX-1:2026-10-11:worktree"))
+    assert any("not found" in e for e in brief.validate(data, repo))
 
 
 def test_zone_c_owner_decision_must_be_on_main(tmp_path: Path) -> None:
