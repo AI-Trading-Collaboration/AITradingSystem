@@ -3,7 +3,7 @@ id: GOV-008_RESEARCH_FIRST_GOVERNANCE_REFACTOR
 area: Governance / research-first governance refactor (derive guarantees from research needs; replace the lease/fence/hash-authority publication machinery with a CI gate and a run ledger; prerequisite of pi migration)
 priority: P0
 status: IN_PROGRESS
-next_owner: Project Owner（安装并登录 pi）；随后 Claude Code coordinator（试跑与记录）
-next_step: P0–P6 完成（pi 三个试跑通过，需求文档第 20 节）；剩余：OPS-082 确定性调度与第 21 节挂起任务的去留待 owner 决定；pi + 本地模型降成本另立 DEVX-024
+next_owner: Claude Code coordinator（迁移收尾的清理与收尾步骤）
+next_step: 2026-10-11：OPS-082 DONE（Windows 计划任务，第一次运行 ordinary daily 全链 PASS），第 21 节挂起任务已按 owner 默认处置（需求文档第 21.1 节）；剩余为迁移收尾的清理与收尾步骤；原下一步：P0–P6 完成（pi 三个试跑通过，需求文档第 20 节）；剩余：OPS-082 确定性调度与第 21 节挂起任务的去留待 owner 决定；pi + 本地模型降成本另立 DEVX-024
 acceptance: 见需求文档第 7 节各阶段退出条件与第 4 节目标工作量：PR 级验证约 30 分钟内、仅文档类改动 5 分钟内、治理机制代码与测试大幅删除、AGENTS.md ≤150 行且 harness 中立、pi 就绪清单全部满足；重构完成后重新评估被挂起任务。
-notes: production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision:GOV-008:2026-10-10:research_first_refactor_v1；挂起任务清单见需求文档第 6 节。
+notes: production_effect=none；broker_action=none；agent_harness=claude_code；owner_decision:GOV-008:2026-10-10:research_first_refactor_v1；挂起任务清单见需求文档第 6 节。；owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1；owner_decision:GOV-008:2026-10-11:research_after_migration；owner_decision:OPS-082:2026-10-11:done_on_first_scheduled_pass

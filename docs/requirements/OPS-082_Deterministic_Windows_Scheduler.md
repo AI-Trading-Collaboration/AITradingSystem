@@ -4,7 +4,7 @@
 
 稳定任务 ID：`OPS-082_DETERMINISTIC_WINDOWS_SCHEDULER`
 
-状态：`IN_PROGRESS`（M1 实施中；见第 7 节）
+状态：`DONE`（2026-10-11；计划任务第一次运行即 ordinary daily 全链 PASS，见第 7 节）
 
 原始总控：`docs/requirements/GOV-007_Pre_Migration_Convergence_Program.md`
 
@@ -48,7 +48,13 @@ Codex automation。GOV-008 后 AGENTS.md 与 runbook 已不再维持"不得使�
 研究策略调整（含付费源停订后的替代）推迟到工程迁移结束后讨论。付费数据源（FMP、Marketstack）停订期间，ordinary daily
 全链 PASS 不是 OPS-082 的完成条件；本次只做工程验证。
 
-同日的任务处置（OPS-078 并入本任务后 DROPPED；OPS-070/072/073/074/079 改 VALIDATING 等）记录在 GOV-008 需求文档第 21 节之后。
+**`owner_decision:OPS-082:2026-10-11:done_on_first_scheduled_pass`**
+
+工程验证结果与预期不符：FMP 与 Marketstack 在 2026-10-11 仍正常返回数据，计划任务第一次运行即 ordinary daily 全链 PASS（第 7 节）。
+向 owner 提出两个选项——A：OPS-082 记为 DONE，证据就是这次运行；OPS-078 记为 DROPPED（并入 OPS-082）；与挂起任务处置一起 ship 一次。
+B：仍记为 BASELINE_DONE，等 owner 确认付费源状态后再转 DONE。owner 在聊天中回复"A"（2026-10-11）。
+
+同日的任务处置（OPS-078 并入本任务后 DROPPED；OPS-070/072/073/074/079 改 VALIDATING 等）记录在 GOV-008 需求文档第 21.1 节。
 
 ## 3. 设计（按上述决定实施）
 
@@ -74,7 +80,7 @@ Codex automation。GOV-008 后 AGENTS.md 与 runbook 已不再维持"不得使�
 
 ## 5. 验收标准
 
-本次（工程验证，`BASELINE_DONE`）：
+本次（原计划为工程验证 `BASELINE_DONE`；实际第一次运行已满足下面的 DONE 条件，owner 选 A 记为 `DONE`，见第 2、7 节）：
 
 - 计划任务按上表注册，`schtasks /query /xml` 可见两个触发时间、运行身份、仅登录时运行、不提权；
 - 通过 `Start-ScheduledTask` 触发一次：daily-run 执行一次，依赖付费源的 capture 组件失败并留下错误证据，不评分、不调用
@@ -101,3 +107,20 @@ Codex automation。GOV-008 后 AGENTS.md 与 runbook 已不再维持"不得使�
   为 detached `6498d0300`，工作区干净，`outputs\run_control\daily\locks` 为空，最后一次 daily PASS 为 as_of 2026-09-04；
   `~/.codex/automations/aitradingsystem-pit/automation.toml` 的 `status = "PAUSED"`（只读，未编辑）；系统代码页 65001，
   无需额外的 Python 编码变量；本机原有计划任务中没有启动 daily-run 的任务。
+- 2026-10-11 M1 发布与验证：
+  - ship `db240adac`（B 区，门禁 7,926 通过、3 跳过、0 失败，9m49s），main = origin/main。
+  - 运行副本按运维手册第 9.1 节从 `6498d0300` 移到 `db240adac`（fetch + checkout --detach，未 pull/reset/clean/stash，旧 state 与台账保留）；
+    `pyproject.toml` 只多一个 pytest marker，未动 `.venv`；`daily-plan --fail-on-missing-env` = READY（as_of 2026-10-09，27 步）。
+  - 注册 `\AITradingSystem Daily Run`（不需要管理员）。`schtasks /xml`：触发 09:30、17:30（+09:00，每日）；用户 JACK（SID …-1001）；
+    `LogonType InteractiveToken`；RunLevel 默认（最低权限）；`IgnoreNew`；`StartWhenAvailable`；`PT6H`；动作 `conhost.exe --headless`
+    启动 powershell 运行包装脚本。注册时没有补跑。两次触发都没有出现控制台窗口进程。
+  - `Start-ScheduledTask` 第 1 次（12:17–12:33 JST）：daily-run 一次，`daily_ops_run:2026-10-09:20261011T031736Z` PASS，27/27 步；
+    5 个 capture 组件全部 PASS（FMP forward PIT 12,820 条，Marketstack 价格写入）；DQ 严格 PASS（`dq_execution_8cacaa1d…`，请求窗口
+    2021-02-22～2026-10-09，评估窗口到 2026-10-08）；score-daily 运行，OpenAI 风险事件预审 10 次请求（gpt-5.5，缓存 MISS）；
+    Reader Brief 生成；finalization 与 report quality `PASS_WITH_WARNINGS`，reader `OK`；包装退出码 0；摘要
+    `outputs\run_control\scheduler\2026-10-11_PRIMARY.summary.md` 分类"无阻断"；run state
+    `outputs\run_control\daily\states\operations_run_ab3dfb16a4cf315c9dfd40ef.json`（PASS）。
+  - 第 2 次（12:33 JST）：`RUN_CONTROL_ALREADY_COMPLETE`，7 秒，没有执行步骤，capture 来源状态未变；摘要 `2026-10-11_PRIMARY_2.summary.md`
+    分类"无阻断"。
+  - 与预期（付费源停订 → BLOCKED、不评分、不调用 OpenAI、不生成日报）不符，停下汇报；owner 选 A（第 2 节），本任务 DONE。
+    后续是日常运维：付费源若真的失效，运行会被摘要归为"数据源不可用"。

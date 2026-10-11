@@ -710,8 +710,8 @@ owner 在 Codex 应用里暂停了 automation `aitradingsystem-pit`，并在聊�
 | TRADING-2564（长期研究能力） | IN_PROGRESS | DEFERRED | 同上 |
 | OPS-070、OPS-072、OPS-074 | DEFERRED | VALIDATING | 验收改为"OPS-082 新调度下、付费数据源恢复后的第一次 ordinary daily 全链"；原验收保留在 notes |
 | OPS-073、OPS-079 | DEFERRED | VALIDATING | 同上；恢复路径已不依赖 deployment receipt（OPS-082 决定 e） |
-| OPS-078 | DEFERRED | 待定 | 计划并入 OPS-082 后 DROPPED（17:30 rescue 为同一计划任务的第二个触发时间）；随 OPS-082 记录一起处理 |
-| OPS-082 | PROPOSED → IN_PROGRESS | 待定 | 工程验证结果与预期不符（付费源仍可用，第一次计划任务运行即 ordinary daily 全链 PASS），状态等 owner 决定 |
+| OPS-078 | DEFERRED | DROPPED | 并入 OPS-082（17:30 rescue 为同一计划任务的第二个触发时间） |
+| OPS-082 | PROPOSED | DONE | 工程验证与预期不符：付费源仍可用，第一次计划任务运行即 ordinary daily 全链 PASS（as_of 2026-10-09）；owner 选 A，记为 DONE（`owner_decision:OPS-082:2026-10-11:done_on_first_scheduled_pass`，见 OPS-082 需求文档第 2、7 节） |
 | DATA-GOV-002、ARCH-004、GOV-006 | DEFERRED | DEFERRED | 退出条件改为"工程迁移结束后复核" |
 | ARCH-004G5、ARCH-004H | PROPOSED | DEFERRED | 同上 |
 | DEVX-001 | DEFERRED | DROPPED | 临时工作区规则已在 AGENTS.md |
