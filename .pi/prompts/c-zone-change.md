@@ -28,18 +28,18 @@ read_paths:
 ## 步骤
 
 1. 读取 AGENTS.md、ship-change skill、相关需求文档和 owner decision 原文。
-2. 设置并核对 `AITS_PI_OWNER_DECISION={{OWNER_DECISION_ID}}`；找不到原文时停止。
+2. 核对启动脚本已设置的 `AITS_PI_OWNER_DECISION` 与 front matter 的 `owner_decision` 一致；不一致就停止。
 3. 从 main 建任务分支：`git checkout -b {{BRANCH}} main`。
-4. 修改允许路径，保持 C 区控制不被削弱。
+4. 修改允许路径，保持 C 区控制不被削弱；C 区文件只用 edit 和 write 工具改，不要用 bash 或 powershell 改。
 5. 更新任务记录；追加 notes 用 `.venv/Scripts/python.exe tools/tasks.py append-note`。
-6. 运行 PR suite：`.venv/Scripts/python.exe -m pytest tests -n 16 --dist loadfile -m "not slow" -q`。
+6. 运行相关的针对性测试：`.venv/Scripts/python.exe -m pytest {{TARGETED_TESTS}} -q`。完整 PR suite 由 ship 门禁跑一次，dry-run 之前不要重复跑。
 7. 提交时加入 `Owner-Decision: {{OWNER_DECISION_ID}}` trailer。
 8. 运行 `.venv/Scripts/python.exe tools/gov008/ship.py --repo . --dry-run`；只有 owner 明确要求时才执行发布。
 
 ## 验收
 
 - owner decision trailer 存在且与需求文档原文一致。
-- PR suite 通过，dry-run 显示 C 区和预期门禁。
+- 针对性测试通过，dry-run 显示 C 区和预期门禁。
 - 报告、文档或系统流在受影响时同步更新。
 - {{其他验收条件}}。
 

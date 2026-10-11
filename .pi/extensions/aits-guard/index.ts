@@ -5,12 +5,14 @@
 // It is a guard rail against mistakes, not a security boundary: a determined command can get around
 // pattern checks. The real controls stay the ship gate, the zone C owner decision, and git history.
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, sep } from "node:path";
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-type Verdict = { block: true; reason: string } | { confirm: string; path?: string } | undefined;
+type BlockVerdict = { block: true; reason: string; rule: string; terminate?: boolean };
+type ConfirmVerdict = { confirm: string; path?: string };
+type Verdict = BlockVerdict | ConfirmVerdict | undefined;
 type BlockRecord = { tool?: string; command?: string; path?: string; rule: string; reason: string };
 type TestRecord = { command: string; result: string; summary: string };
 type ShipRecord = { mode: string; ok: boolean; sha: string; summary: string };
@@ -19,6 +21,7 @@ type RunState = {
   blocked: BlockRecord[];
   cZoneConfirmations: string[];
   confirmedCPaths: Set<string>;
+  cZoneBaseline?: Set<string>;
   runbookRead: boolean;
   tests: TestRecord[];
   ship: ShipRecord;
@@ -36,6 +39,9 @@ const NEVER_WRITE: readonly string[] = [
 const READ_ONLY_WHEN_LOCKED = new Set(["read", "grep", "find", "ls"]);
 const LOCK_REASON = "C 区确认被拒，停止并汇报";
 const MAX_TOOL_RESULT_CHARS = 32_000; // about 8,000 tokens at 4 chars/token.
+const HEAD_CHARS = 4_000;
+const TAIL_CHARS = 8_000;
+const OWNER_DECISION_ID = /^owner_decision:[A-Za-z0-9_.-]+:\d{4}-\d{2}-\d{2}:[A-Za-z0-9_.-]+$/;
 
 // Shell commands AGENTS.md forbids (history rewrite, force push, moving main outside ship, hooks off).
 const FORBIDDEN_COMMANDS: readonly [RegExp, string][] = [
@@ -117,21 +123,18 @@ function repoRelative(root: string, cwd: string, target: string): string | undef
   return rel.split(sep).join("/");
 }
 
-function requirementFiles(dir: string): string[] {
-  const found: string[] = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) found.push(...requirementFiles(path));
-    else if (entry.isFile() && entry.name.endsWith(".md")) found.push(path);
-  }
-  return found;
-}
-
 function ownerDecisionVerified(root: string, decision = process.env.AITS_PI_OWNER_DECISION ?? ""): boolean {
-  if (decision.trim() === "") return false;
-  const dir = join(root, "docs", "requirements");
-  if (!existsSync(dir)) return false;
-  return requirementFiles(dir).some((path) => readFileSync(path, "utf8").includes(decision));
+  if (!OWNER_DECISION_ID.test(decision)) return false;
+  try {
+    execFileSync("git", ["grep", "-F", "-e", decision, "main", "--", "docs/requirements"], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function escapeRegExp(text: string): string {
@@ -165,10 +168,14 @@ function isWholeRepoGitCommand(part: string): boolean {
   return pathspecs === "" || pathspecs === "." || /^\.\s+['"]?:\((?:literal,)?exclude\b/.test(pathspecs);
 }
 
+function isAitsOpsCommand(part: string): boolean {
+  return /(?:^|\s)(?:\.venv[\\/]Scripts[\\/]aits(?:\.exe)?|aits(?:\.exe)?)\s+ops\b/.test(part);
+}
+
 export function commandVerdict(root: string, command: string, state = makeState()): Verdict {
-  if (state.locked) return { block: true, reason: LOCK_REASON };
+  if (state.locked) return { block: true, reason: LOCK_REASON, rule: "c-zone-lock", terminate: true };
   for (const [pattern, label] of FORBIDDEN_COMMANDS) {
-    if (pattern.test(command)) return { block: true, reason: `blocked by AGENTS.md: ${label}` };
+    if (pattern.test(command)) return { block: true, rule: label, reason: `blocked by AGENTS.md: ${label}` };
   }
   const policy = readShipPolicy(root);
   for (const excluded of policy.exclusions) {
@@ -180,29 +187,41 @@ export function commandVerdict(root: string, command: string, state = makeState(
       "g",
     );
     if (command.replace(excludeForm, "").includes(excluded)) {
-      return { block: true, reason: `${excluded} is an unrelated dirty file: never open or modify it` };
+      return {
+        block: true,
+        rule: "excluded-file",
+        reason: `${excluded} is an unrelated dirty file: never open or modify it`,
+      };
     }
   }
   for (const part of splitShellCommands(command)) {
     if (/^\s*(python|py|pytest)(\s|$)/i.test(part)) {
       return {
         block: true,
+        rule: "system-python",
         reason: "use the project venv interpreter: .venv/Scripts/python.exe (for pytest: .venv/Scripts/python.exe -m pytest ...)",
       };
     }
     if (isWholeRepoGitCommand(part) && !hasAllExclusions(part, policy.exclusions)) {
       return {
         block: true,
+        rule: "git-whole-repo",
         reason: "repository-wide git status/diff/add must include tree_clean_exclusions as exact exclude pathspecs",
       };
     }
-    if (/\baits\s+ops\b/.test(part) && !state.runbookRead) {
-      return { block: true, reason: "read docs/operations/operations_runbook.md before running aits ops commands" };
+    if (isAitsOpsCommand(part) && !state.runbookRead) {
+      return {
+        block: true,
+        rule: "runbook-before-ops",
+        reason: "read docs/operations/operations_runbook.md before running aits ops commands",
+      };
     }
     if (/\btools\/tasks\.py\s+set\b/.test(part) || /\btools\\tasks\.py\s+set\b/.test(part)) {
-      if (/\bnotes=/.test(part)) return { block: true, reason: "use tools/tasks.py append-note instead of set notes=" };
+      if (/\bnotes=/.test(part)) {
+        return { block: true, rule: "tasks-set-notes", reason: "use tools/tasks.py append-note instead of set notes=" };
+      }
       if (/\bstatus=DONE\b/.test(part) && process.env.AITS_PI_ALLOW_DONE !== "1") {
-        return { block: true, reason: "status=DONE requires AITS_PI_ALLOW_DONE=1" };
+        return { block: true, rule: "tasks-done-flag", reason: "status=DONE requires AITS_PI_ALLOW_DONE=1" };
       }
     }
   }
@@ -214,15 +233,19 @@ export function checkCommand(root: string, command: string): Verdict {
 }
 
 export function writeVerdict(root: string, cwd: string, target: string, state = makeState()): Verdict {
-  if (state.locked) return { block: true, reason: LOCK_REASON };
+  if (state.locked) return { block: true, reason: LOCK_REASON, rule: "c-zone-lock", terminate: true };
   const rel = repoRelative(root, cwd, target);
   if (rel === undefined) return undefined;
   const policy = readShipPolicy(root);
   if (policy.exclusions.includes(rel)) {
-    return { block: true, reason: `${rel} is an unrelated dirty file (tree_clean_exclusions): never modify it` };
+    return {
+      block: true,
+      rule: "excluded-file",
+      reason: `${rel} is an unrelated dirty file (tree_clean_exclusions): never modify it`,
+    };
   }
   if (matchesAny(rel, NEVER_WRITE)) {
-    return { block: true, reason: `${rel} is protected (rendered view or pinned research evidence)` };
+    return { block: true, rule: "never-write", reason: `${rel} is protected (rendered view or pinned research evidence)` };
   }
   if (matchesAny(rel, policy.zoneC)) {
     if (ownerDecisionVerified(root)) {
@@ -232,7 +255,7 @@ export function writeVerdict(root: string, cwd: string, target: string, state = 
     }
     if ((process.env.AITS_PI_OWNER_DECISION ?? "") !== "") {
       state.locked = true;
-      return { block: true, reason: LOCK_REASON };
+      return { block: true, rule: "owner-decision-missing", reason: LOCK_REASON, terminate: true };
     }
     return { confirm: `${rel} is a zone C path: the change needs an owner decision. Allow this edit?`, path: rel };
   }
@@ -243,17 +266,54 @@ export function checkWrite(root: string, cwd: string, target: string): Verdict {
   return writeVerdict(root, cwd, target);
 }
 
-function changedFiles(root: string): string[] {
-  try {
-    return execFileSync("git", ["status", "--porcelain", "--untracked-files=all"], { cwd: root, encoding: "utf8" })
-      .split(/\r?\n/)
-      .filter(Boolean)
-      .map((line) => line.slice(3).replace(/"/g, ""))
-      .map((path) => path.split(" -> ").pop() ?? path)
-      .map((path) => path.split(sep).join("/"));
-  } catch {
-    return [];
+function gitPathspecArgs(root: string): string[] {
+  return ["--", ".", ...readShipPolicy(root).exclusions.map((excluded) => `:(exclude,literal)${excluded}`)];
+}
+
+function normalizeRel(path: string): string {
+  return path.split(sep).join("/");
+}
+
+function statusChangedFiles(root: string): string[] {
+  const out = execFileSync("git", ["status", "--porcelain=v1", "-z", "--untracked-files=all", ...gitPathspecArgs(root)], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  });
+  const items = out.split("\0").filter(Boolean);
+  const paths: string[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const code = item.slice(0, 2);
+    const path = item.slice(3);
+    if (path) paths.push(normalizeRel(path));
+    if (code.includes("R") || code.includes("C")) i += 1;
   }
+  return paths;
+}
+
+function committedChangedFiles(root: string): string[] {
+  const out = execFileSync("git", ["diff", "--name-only", "-z", "main...HEAD", ...gitPathspecArgs(root)], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  });
+  return out.split("\0").filter(Boolean).map(normalizeRel);
+}
+
+function changedFiles(root: string): string[] {
+  const paths = new Set<string>();
+  try {
+    for (const path of committedChangedFiles(root)) paths.add(path);
+  } catch {
+    // main may not exist in non-git test fixtures.
+  }
+  try {
+    for (const path of statusChangedFiles(root)) paths.add(path);
+  } catch {
+    // not a git repository or status failed.
+  }
+  return [...paths].sort();
 }
 
 function zoneFor(root: string, rel: string): "A" | "B" | "C" {
@@ -263,8 +323,16 @@ function zoneFor(root: string, rel: string): "A" | "B" | "C" {
   return "B";
 }
 
+export function initializeCZoneBaseline(root: string, state: RunState): void {
+  if (state.cZoneBaseline !== undefined) return;
+  state.cZoneBaseline = new Set(changedFiles(root).filter((rel) => zoneFor(root, rel) === "C"));
+}
+
 export function detectUnconfirmedCChanges(root: string, state: RunState): string[] {
-  return changedFiles(root).filter((rel) => zoneFor(root, rel) === "C" && !state.confirmedCPaths.has(rel));
+  const baseline = state.cZoneBaseline ?? new Set<string>();
+  return changedFiles(root).filter(
+    (rel) => zoneFor(root, rel) === "C" && !state.confirmedCPaths.has(rel) && !baseline.has(rel),
+  );
 }
 
 function readToolPath(root: string, cwd: string, input: Record<string, unknown>): string | undefined {
@@ -295,33 +363,42 @@ function runOutputDir(root: string): string {
   }
 }
 
-export function truncateToolResult(root: string, toolCallId: string, content: string): string | undefined {
+function limitedHeadAndTail(content: string): { head: string; tail: string } {
+  const lines = content.split(/\r?\n/);
+  const head = lines.slice(0, 40).join("\n").slice(0, HEAD_CHARS);
+  const tailLines = lines.slice(Math.max(40, lines.length - 80)).join("\n");
+  const tail = tailLines.slice(Math.max(0, tailLines.length - TAIL_CHARS));
+  return { head, tail };
+}
+
+export function truncateToolResult(root: string, toolCallId: string, content: string): { text: string; path: string } | undefined {
   if (content.length <= MAX_TOOL_RESULT_CHARS) return undefined;
   const dir = runOutputDir(root);
   mkdirSync(dir, { recursive: true });
   const path = join(dir, `tool-${toolCallId.replace(/[^A-Za-z0-9_.-]/g, "_")}.txt`);
   writeFileSync(path, content, "utf8");
-  const lines = content.split(/\r?\n/);
-  const head = lines.slice(0, 40).join("\n");
-  const tail = lines.slice(Math.max(40, lines.length - 80)).join("\n");
-  return `${head}\n\n[... full output written to ${path}; showing first 40 and last 80 lines ...]\n\n${tail}`;
+  const { head, tail } = limitedHeadAndTail(content);
+  return {
+    path,
+    text: `${head}\n\n[... full output written to ${path}; showing first 40 and last 80 lines ...]\n\n${tail}`,
+  };
 }
 
-function recordCommandResult(state: RunState, command: string, output: string | undefined, isError: boolean): void {
-  const result = isError ? "FAIL" : "PASS";
+function recordCommandResult(state: RunState, command: string, output: string | undefined, isError: boolean, root: string): void {
+  const result = isError ? "failed" : "passed";
   const summary = (output ?? "").split(/\r?\n/).slice(-8).join("\n").trim();
   if (/\b(pytest|ruff|node\s+--test|tools[\\/]tasks\.py\s+(check|render))\b/.test(command)) {
     state.tests.push({ command, result, summary });
   }
   if (/tools[\\/]gov008[\\/]ship\.py\b/.test(command)) {
     const mode = /--dry-run\b/.test(command) ? "dry-run" : /--execute\b/.test(command) ? "execute" : "unknown";
-    state.ship = { mode, ok: !isError, sha: currentSha(), summary };
+    state.ship = { mode, ok: !isError, sha: currentSha(root), summary };
   }
 }
 
-function currentSha(): string {
+function currentSha(root: string): string {
   try {
-    return execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+    return execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
   } catch {
     return "";
   }
@@ -389,20 +466,30 @@ export function writeReport(root: string, state: RunState): void {
   writeFileSync(join(dir, "report.json"), JSON.stringify(buildReport(root, state), null, 2), "utf8");
 }
 
-function block(state: RunState, record: BlockRecord): { block: true; reason: string; terminate: true } {
+function block(state: RunState, record: BlockRecord, terminate = false): { block: true; reason: string; terminate?: true } {
   state.blocked.push(record);
-  return { block: true, reason: record.reason, terminate: true };
+  return terminate ? { block: true, reason: record.reason, terminate: true } : { block: true, reason: record.reason };
+}
+
+function isBlockVerdict(verdict: Verdict): verdict is BlockVerdict {
+  return verdict !== undefined && "block" in verdict;
 }
 
 export default function (pi: ExtensionAPI) {
   const state = makeState();
 
+  pi.on("session_start", async (_event, ctx) => {
+    const root = findRepoRoot(ctx.cwd);
+    if (root !== undefined) initializeCZoneBaseline(root, state);
+  });
+
   pi.on("tool_call", async (event, ctx) => {
     const root = findRepoRoot(ctx.cwd);
     if (root === undefined) return undefined; // not inside this repository
+    initializeCZoneBaseline(root, state);
     const input = (event.input ?? {}) as Record<string, unknown>;
     if (state.locked && !READ_ONLY_WHEN_LOCKED.has(event.toolName)) {
-      return block(state, { tool: event.toolName, rule: "c-zone-lock", reason: LOCK_REASON });
+      return block(state, { tool: event.toolName, rule: "c-zone-lock", reason: LOCK_REASON }, true);
     }
     if (event.toolName === "read" && readToolPath(root, ctx.cwd, input) === "docs/operations/operations_runbook.md") {
       state.runbookRead = true;
@@ -414,14 +501,18 @@ export default function (pi: ExtensionAPI) {
       verdict = writeVerdict(root, ctx.cwd, input.path, state);
     }
     if (verdict === undefined) return undefined;
-    if ("block" in verdict) {
-      return block(state, {
-        tool: event.toolName,
-        command: typeof input.command === "string" ? input.command : undefined,
-        path: typeof input.path === "string" ? input.path : undefined,
-        rule: "policy",
-        reason: verdict.reason,
-      });
+    if (isBlockVerdict(verdict)) {
+      return block(
+        state,
+        {
+          tool: event.toolName,
+          command: typeof input.command === "string" ? input.command : undefined,
+          path: typeof input.path === "string" ? input.path : undefined,
+          rule: verdict.rule,
+          reason: verdict.reason,
+        },
+        verdict.terminate === true,
+      );
     }
     if (ctx.hasUI && (await ctx.ui.confirm("AITradingSystem zone C", verdict.confirm))) {
       if (verdict.path) {
@@ -431,32 +522,44 @@ export default function (pi: ExtensionAPI) {
       return undefined;
     }
     state.locked = true;
-    return block(state, { tool: event.toolName, path: verdict.path, rule: "c-zone-denied", reason: LOCK_REASON });
+    return block(state, { tool: event.toolName, path: verdict.path, rule: "c-zone-denied", reason: LOCK_REASON }, true);
   });
 
-  pi.on("tool_result", async (event) => {
-    const root = findRepoRoot(process.cwd());
+  pi.on("tool_result", async (event, ctx) => {
+    const root = findRepoRoot(ctx.cwd);
     if (root === undefined) return undefined;
     const input = (event.input ?? {}) as Record<string, unknown>;
     const command = typeof input.command === "string" ? input.command : undefined;
     const output = textContent(event as { content?: unknown });
     if ((event.toolName === "bash" || event.toolName === "powershell") && command) {
-      recordCommandResult(state, command, output, event.isError);
+      recordCommandResult(state, command, output, event.isError, root);
       const unconfirmed = detectUnconfirmedCChanges(root, state);
       if (unconfirmed.length > 0) {
         state.locked = true;
-        state.blocked.push({ tool: event.toolName, command, path: unconfirmed.join(", "), rule: "c-zone-status", reason: LOCK_REASON });
+        state.blocked.push({
+          tool: event.toolName,
+          command,
+          path: unconfirmed.join(", "),
+          rule: "c-zone-status",
+          reason: LOCK_REASON,
+        });
       }
-    }
-    if (output) {
-      const truncated = truncateToolResult(root, event.toolCallId, output);
-      if (truncated) return { content: [{ type: "text", text: truncated }] };
+      if (output) {
+        const truncated = truncateToolResult(root, event.toolCallId, output);
+        if (truncated) {
+          const result: Record<string, unknown> = { content: [{ type: "text", text: truncated.text }] };
+          if (event.structuredContent !== undefined) {
+            result.structuredContent = { truncated: true, full_output_path: truncated.path };
+          }
+          return result;
+        }
+      }
     }
     return undefined;
   });
 
-  pi.on("agent_settled", async () => {
-    const root = findRepoRoot(process.cwd());
+  pi.on("agent_settled", async (_event, ctx) => {
+    const root = findRepoRoot(ctx.cwd);
     if (root !== undefined) writeReport(root, state);
   });
 }
