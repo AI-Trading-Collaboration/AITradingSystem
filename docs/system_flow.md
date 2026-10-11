@@ -7,7 +7,8 @@
 
 ## 1. 每日链路
 
-唯一外部入口是 `aits ops daily-run`（`aits ops daily-plan` 只出计划不执行）。步骤、依赖和交易日/休市日条件以
+唯一外部入口是 `aits ops daily-run`（`aits ops daily-plan` 只出计划不执行），由 Windows 计划任务在运行副本里每天触发
+（09:30、17:30 Asia/Tokyo，见第 5 节与 OPS-082）。步骤、依赖和交易日/休市日条件以
 `config/scheduled_tasks.yaml` 的 `daily_trading_day` 为准（32 个任务）；`ops_daily.py` 与运行控制使用同一份 DAG。
 
 ```mermaid
@@ -89,6 +90,24 @@ flowchart LR
 各步骤的操作说明是 `.agents/skills/` 下的 Agent Skills（ship-change、task-records、periodic-operations、research-run）；
 使用 pi 时，`.pi/extensions/aits-guard` 拦截强推、改写历史、直接推 main 等被禁止的 git 操作，并在编辑 C 区路径前要求确认。
 
+**运行与调度（OPS-082，`owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1`）**：ship 之后，运行副本
+`D:\Work\AITradingSystem_ops_runtime`（独立 clone，detached 到已 ship 的 main 提交，`.venv` editable 安装指向本副本 `src`）
+按运维手册第 9.1 节更新。唯一外部调度入口是 Windows 计划任务 `\AITradingSystem Daily Run`（`scripts/ops/register_daily_scheduler_task.ps1`
+幂等注册；当前用户、仅登录时运行、不提权；09:30 与 17:30 两个触发时间），它运行 `scripts/ops/daily_scheduler_run.ps1`：
+
+```mermaid
+flowchart LR
+    TASK["Windows 计划任务<br/>09:30 / 17:30 Asia/Tokyo"] --> PRE["前置检查：运行副本工作区干净 ·<br/>HEAD 可从 origin/main 到达 · aits.exe 存在"]
+    PRE -->|失败| SUM
+    PRE --> ENV["只设置 daily-run 读取的环境变量<br/>（日志只记 PRESENT/MISSING）"]
+    ENV --> RUN["一次 aits ops daily-run<br/>运行控制按 as_of 去重"]
+    RUN --> LOG["outputs/run_control/scheduler/&lt;日期&gt;_&lt;窗口&gt;.log"]
+    LOG --> SUM["daily_scheduler_summary.py（代码，无 LLM）<br/>.summary.md / .summary.json：终态 · 每步 · capture 组件 · DQ · 阻断分类"]
+```
+
+终止恢复绑定的当前版本是运行副本 HEAD（工作区干净、可从 `origin/main` 到达、与父运行 `git_commit` 不同），
+`OperationsRecoveryRequest` v2 记录 HEAD、运行副本路径与 `origin/main`；不再使用 deployment receipt。
+
 ## 6. 已退役、不再运行
 
 | 部分 | 退役时间 | 去向 |
@@ -97,6 +116,7 @@ flowchart LR
 | 发布机制（fence、lease、hash-authority reseal、Full 验证、validation tier runner） | 2026-10-10 GOV-008 P4 块 1 | 由 `ship` 与本机门禁取代 |
 | Atlas 页面 | 2026-10-10 | 代码删除 |
 | release promotion、scheduler checkout preflight、Codex scheduler observation、workflow health 遥测（含周任务 `weekly_workflow_health_review`） | 2026-10-10 GOV-008 解耦 L2/P4/P5 | 命令与配置删除；确定性调度见 OPS-082 |
+| Codex automation `aitradingsystem-pit`、其提示词 `config/operations/aitradingsystem_pit_automation_prompt.md` 与业务合同模块 `ops_scheduler_business_contract.py`；终止恢复的 deployment receipt 依赖 | 2026-10-11 OPS-082 | Windows 计划任务 + 包装脚本（第 5 节）；恢复改为校验运行副本 HEAD |
 | 报告登记中命令已不存在的 507 个条目 | 2026-10-10 GOV-008 P5 | 保留条目（研究记录按 id 引用），标 `archived_optional` |
 | 任务事件库 `registry/development_tasks` | 2026-10-10 GOV-008 P5a | `tasks/<ID>.yaml` |
 

@@ -1,6 +1,6 @@
 # AITradingSystem Operations Runbook
 
-最后更新：2026-10-10（GOV-008 P5 重写）
+最后更新：2026-10-11（OPS-082：Windows 计划任务、终止恢复改为运行副本校验、新增第 9 节）；2026-10-10 GOV-008 P5 重写
 
 执行任何 daily、weekly、biweekly、monthly、调度或产物目录任务前先读本文：确认 cadence、触发路径、质量门禁、
 预期产物和"不影响 production"的边界。数据怎么流动见 `docs/system_flow.md` 第 1～6 节；产物怎么理解见
@@ -20,11 +20,13 @@ aits ops replay-day --mode cache-only --as-of YYYY-MM-DD   # 历史严格复现�
   cron、GitHub Actions 或云调度器都一样）。
 - 未给 `--as-of` 时，`daily-run` 与 `validate-data` 使用 America/New_York 最近已完成交易日加收盘后 3 小时
   provider-ready 缓冲，不用主机本地日期。
-- **调度现状**：此前的外部触发是 Codex automation `aitradingsystem-pit`，在独立运行副本里调用 `aits ops daily-run`。
-  为它服务的 release promotion、scheduler checkout preflight、Codex scheduler observation 与 deployment acceptance
-  命令已在 GOV-008 删除，`daily-run` 也不再持有 checkout guard（`--manual-execution` 选项保留但已无作用）。
-  确定性调度（Windows 计划任务调用一次 `aits ops daily-run`，并停用 Codex automation）是 OPS-082，尚未实施；
-  在此之前 Codex automation 的启停由 owner 决定。
+- **调度（OPS-082，2026-10-11 起）**：唯一外部调度入口是 Windows 计划任务 `\AITradingSystem Daily Run`，
+  在独立运行副本 `D:\Work\AITradingSystem_ops_runtime` 里经包装脚本调用一次 `aits ops daily-run`；每天 09:30 与 17:30
+  （Asia/Tokyo）两个触发时间，17:30 是同一任务的补救时间，重复触发由 `daily-run` 的运行控制去重
+  （`owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1`）。Codex automation `aitradingsystem-pit` 已停用
+  （owner 2026-10-11 暂停），任一时刻只有一个调度来源；不得再登记第二个调度。包装脚本、中文摘要、注册与运行副本更新
+  步骤见第 9 节。为旧调度服务的 release promotion、scheduler checkout preflight、Codex scheduler observation 与
+  deployment acceptance 命令已在 GOV-008 删除，`daily-run` 不再持有 checkout guard（`--manual-execution` 选项保留但已无作用）。
 
 ## 2. 每日链路
 
@@ -57,10 +59,14 @@ aits ops replay-day --mode cache-only --as-of YYYY-MM-DD   # 历史严格复现�
   状态与台账在 `outputs/run_control/daily/states/`。**不得手工删除状态或锁来强行重跑**，过期锁由控制层回收。
 - 步骤列表变化会产生新的规格 id 与新的幂等键（旧状态与台账保留），所以修改 `config/scheduled_tasks.yaml` 后同一 as-of
   会作为新运行开始。
+- 计划任务的第二次触发（17:30 或手动）遇到同一 as-of 已 PASS 时返回 `RUN_CONTROL_ALREADY_COMPLETE`（退出码 0），遇到
+  BLOCKED/FAILED 终态时返回 `RUN_CONTROL_BLOCKED_TERMINAL_RECOVERY_REQUIRED`（退出码 1），都不执行任何步骤；摘要分别归为
+  "无阻断"与"等待新 as_of"。
 - 终止后恢复（OPS-071）只能用同一入口：`aits ops daily-run --recovery-parent-run-id <id> --recovery-from-step <step>
   --recovery-reason-code <code>`，三项必须同时给出；只允许从 `artifact_lineage` 及其后的报告/收尾步骤恢复，已 PASS 的
-  capture、DQ、PIT、评分必须复用。**限制**：恢复目前仍要求环境变量 `AITS_OPS_DEPLOYMENT_RECEIPT` 指向一个 deployment
-  receipt，而生成它的命令已删除，所以只能使用现存 receipt；OPS-082 会去掉这一依赖。
+  capture、DQ、PIT、评分必须复用。恢复绑定的当前版本是**运行副本的 HEAD**：工作区必须干净、HEAD 必须是本地 `origin/main`
+  可达的提交，并且与父运行 manifest 的 `git_commit` 不同（OPS-082 决定 e）；CLI 构造请求与运行控制放行时各检查一次。
+  不再需要 `AITS_OPS_DEPLOYMENT_RECEIPT`（已无代码读取）。恢复只在 owner 指示下人工执行，计划任务不会自动恢复。
 - 同一 as-of 的终止运行没有合法恢复边界时，等待下一个 provider-ready 交易日的普通运行，不得伪装成恢复。
 - 历史缺口：`aits ops recover-historical-gap` / `validate-historical-gap` 只由 owner 人工触发单个已审查的队列项，只生成
   隔离证据，不改旧运行、不补造 strict PIT。
@@ -172,3 +178,60 @@ production/broker/order/fill 均关闭。首次收益查看另须既有 S4 研�
 release candidate/canary/promote、runtime git exclusions、scheduler checkout preflight、Codex scheduler observation、
 deployment acceptance、workflow health 遥测与周任务、Atlas、DEVX-015 源码保全检查点、ETF 候选链（`aits etf ...`、
 dynamic-v3 rescue、候选跟踪每日步骤）。发布改由 `python tools/gov008/ship.py` 完成（见 AGENTS.md）。
+
+## 9. 运行副本与计划任务（OPS-082）
+
+日常运行只在独立运行副本 `D:\Work\AITradingSystem_ops_runtime` 里进行：它是单独的 clone，detached 到一个已经 ship 的
+`main` 提交，`.venv` 是 editable 安装（`.venv\Lib\site-packages\_editable_impl_ai_trading_system.pth` 指向本副本 `src`）。
+开发 checkout（`D:\Work\AITradingSystem`）不运行日报，它的 DQ 回执与报告不代表生产日报状态。
+
+### 9.1 运行副本更新
+
+只把运行副本移到已经 ship 的提交（`git rev-parse main origin/main` 相等）。在运行副本根目录：
+
+1. 确认没有活动运行：计划任务不在运行（`(Get-ScheduledTask -TaskName 'AITradingSystem Daily Run').State` 不是
+   `Running`），`outputs\run_control\daily\locks\` 下没有锁文件。有活动运行就等它结束，不删锁。
+2. 确认工作区干净：`git status --porcelain=v1 --untracked-files=normal` 没有输出。不干净就停下报告。
+3. `git fetch origin main`，然后 `git checkout --detach <已 ship 的 SHA>`；该 SHA 必须可从 `origin/main` 到达
+   （`git merge-base --is-ancestor <SHA> origin/main` 退出码 0）。
+4. 不得 `pull`、`reset`、`clean`、`stash`；不改 `data/` 与 `outputs/`；不删除旧 state、ledger、recovery 回执或 intent。
+5. 确认 editable 安装仍指向本副本 `src`。`pyproject.toml` 的依赖变化时先在任务记录里说明，再在本副本 `.venv` 里按变化安装；
+   没有变化就不动 `.venv`。
+6. `.venv\Scripts\aits.exe ops daily-plan --fail-on-missing-env` 应为 `READY`（交易日 capture 模式下也可能是
+   `READY_WITH_BLOCKED_BRANCHES`，需说明原因）。
+7. 在相关任务记录或需求文档里记下新 HEAD、时间与 daily-plan 结果。
+
+### 9.2 计划任务
+
+- **注册或更新**（幂等，重复运行不会产生第二个任务）：在运行副本根目录运行
+  `powershell -NoProfile -File scripts\ops\register_daily_scheduler_task.ps1`（默认运行副本 `D:\Work\AITradingSystem_ops_runtime`、
+  任务 `\AITradingSystem Daily Run`）。脚本要求主机时区为 Tokyo Standard Time；发现另一个计划任务也在启动 daily-run 时拒绝注册。
+  任务：当前用户、仅登录时运行（不存密码）、不提权、每天 09:30 与 17:30、StartWhenAvailable、不并行实例、单次上限 6 小时。
+- **手动触发**（与定时触发走同一路径）：`Start-ScheduledTask -TaskName 'AITradingSystem Daily Run'`。
+- **查看配置**：`schtasks /query /tn "\AITradingSystem Daily Run" /xml`。
+- **停用**：`Disable-ScheduledTask -TaskName 'AITradingSystem Daily Run'`，只在 owner 决定时执行；不得另建第二个调度来源。
+- 任务以 `conhost.exe --headless` 启动 Windows PowerShell，不弹控制台窗口。conhost 不转发退出码，所以
+  `Get-ScheduledTaskInfo` 的 `LastTaskResult` 只表示包装脚本已启动；**运行结论看日志与摘要**。
+
+包装脚本 `scripts\ops\daily_scheduler_run.ps1` 每次触发做且只做：
+
+1. 前置检查：工作区干净、HEAD 可从本地 `origin/main` 到达、`.venv\Scripts\aits.exe` 存在。任一失败不调用 daily-run，
+   退出码 2，摘要归为"控制面问题"。
+2. 只设置 daily-run 实际读取的环境变量：`FMP_API_KEY`、`MARKETSTACK_API_KEY`、`SEC_USER_AGENT`、`OPENAI_API_KEY`、
+   `CONGRESS_API_KEY`、`GOVINFO_API_KEY`；进程里没有时取用户环境变量。值不打印、不写日志，日志只记 PRESENT/MISSING。
+   新增或停用数据源时，同一次改动更新这个列表。
+3. 调用一次 `.venv\Scripts\aits.exe ops daily-run`（不带 `--as-of`，由 daily-run 解析最近 provider-ready 交易日）。
+4. 输出与退出码写 `outputs\run_control\scheduler\<东京日期>_<PRIMARY|RESCUE>.log`（13:00 前为 PRIMARY；已存在则加 `_2`、`_3`）。
+5. `scripts\ops\daily_scheduler_summary.py` 用代码（不调用 LLM）写同名 `.summary.md`（中文）与 `.summary.json`：as_of、窗口、
+   终态、每步状态、每个 capture 组件、DQ 状态与阻断原因分类。通知只写这些文件。
+
+摘要的阻断分类是给运维的初步判断，每条依据写明出处：
+
+| 分类 | 典型证据 | 下一步 |
+|---|---|---|
+| 无阻断 | daily-run PASS，或同一 as-of 已 PASS 不重跑 | 无 |
+| 数据源不可用 | capture 组件 blocker 为 provider 鉴权/额度/不可用/schema/请求失败（含付费源停订） | 等数据源恢复或改源（研究策略调整在迁移后与 owner 讨论）；不重试刷额度 |
+| 数据质量未通过 | `validate_data` FAIL | 读 DQ 报告；按数据问题处理，不放宽门禁 |
+| 代码缺陷 | 未处理异常、非数据原因的步骤失败、finalization 失败 | 任务记录 + `ship-change` 修复，再更新运行副本 |
+| 控制面问题 | 前置检查失败、运行控制拒绝（并发、恢复无效）、缺环境变量、本地 source-control 问题 | 按证据修复环境；不删状态或锁 |
+| 等待新 as_of | 同一 as-of 已有 BLOCKED/FAILED 终态的重复触发；as-of 尚未 provider-ready | 等下一个 provider-ready 交易日的普通运行；只有 owner 指示才做终止恢复 |

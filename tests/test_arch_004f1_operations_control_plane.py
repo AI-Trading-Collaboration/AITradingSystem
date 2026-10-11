@@ -114,6 +114,48 @@ def _daily_env() -> dict[str, str]:
     }
 
 
+def _git(root: Path, *args: str) -> str:
+    completed = subprocess.run(
+        (
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=AITS Test",
+            "-c",
+            "user.email=test@example.com",
+            "-c",
+            "commit.gpgsign=false",
+            *args,
+        ),
+        capture_output=True,
+        text=True,
+        check=True,
+        env={
+            name: value
+            for name, value in os.environ.items()
+            if name not in {"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE"}
+        },
+    )
+    return completed.stdout.strip()
+
+
+def _runtime_checkout(tmp_path: Path) -> tuple[Path, str]:
+    """A clean runtime checkout whose HEAD is origin/main (OPS-082 decision e)."""
+
+    root = tmp_path / "runtime_checkout"
+    if (root / ".git").exists():
+        return root, _git(root, "rev-parse", "HEAD")
+    root.mkdir(parents=True)
+    _git(root, "init", "-q")
+    (root / "README.md").write_text("runtime release\n", encoding="utf-8")
+    _git(root, "add", "README.md")
+    _git(root, "commit", "-q", "-m", "release")
+    head = _git(root, "rev-parse", "HEAD")
+    _git(root, "update-ref", "refs/remotes/origin/main", head)
+    return root, head
+
+
 def _recovery_request(
     tmp_path: Path,
     *,
@@ -121,7 +163,6 @@ def _recovery_request(
     as_of: date,
     recovery_from_step_id: str = "second",
     parent_release_commit: str = "a" * 40,
-    current_release_commit: str = "b" * 40,
 ) -> OperationsRecoveryRequest:
     manifest_path = tmp_path / "parent_manifest.json"
     manifest_path.write_text(
@@ -138,20 +179,7 @@ def _recovery_request(
         ),
         encoding="utf-8",
     )
-    deployment_receipt_path = tmp_path / "active.json"
-    deployment_receipt_path.write_text(
-        json.dumps(
-            {
-                "schema_version": "ops_deployment_acceptance.v1",
-                "status": "ACTIVE_OWNER_ACCEPTED",
-                "release": {"candidate_commit": current_release_commit},
-                "runtime": {"head_commit": current_release_commit},
-                "production_effect": "none",
-            },
-            indent=2,
-        ),
-        encoding="utf-8",
-    )
+    runtime_root, runtime_head = _runtime_checkout(tmp_path)
     return OperationsRecoveryRequest(
         parent_run_id=parent_run_id,
         recovery_from_step_id=recovery_from_step_id,
@@ -159,9 +187,9 @@ def _recovery_request(
         parent_manifest_path=str(manifest_path),
         parent_manifest_sha256=sha256_path(manifest_path),
         parent_release_commit=parent_release_commit,
-        current_release_commit=current_release_commit,
-        deployment_receipt_path=str(deployment_receipt_path),
-        deployment_receipt_sha256=sha256_path(deployment_receipt_path),
+        current_release_commit=runtime_head,
+        runtime_checkout_root=str(runtime_root),
+        runtime_origin_main_commit=runtime_head,
         requested_at=datetime(2026, 7, 28, tzinfo=UTC),
     )
 
@@ -1246,9 +1274,7 @@ def test_runtime_control_terminal_failure_requires_explicit_recovery(
     assert blocked.lease is None
 
 
-def test_runtime_control_recovery_rejects_tampered_deployment_receipt(
-    tmp_path: Path,
-) -> None:
+def _failed_parent_control(tmp_path: Path) -> tuple[OperationsRunControl, WorkflowSpec]:
     as_of = date(2026, 7, 27)
     now = datetime(2026, 7, 28, tzinfo=UTC)
     control = OperationsRunControl(
@@ -1269,26 +1295,64 @@ def test_runtime_control_recovery_rejects_tampered_deployment_receipt(
         blocker_codes=("DAILY_STEP_FAILED:second",),
         at=now,
     )
-    request = _recovery_request(
-        tmp_path,
-        parent_run_id="parent",
-        as_of=as_of,
-    )
-    Path(request.deployment_receipt_path).write_text("{}", encoding="utf-8")
+    return control, spec
+
+
+@pytest.mark.parametrize(
+    ("tamper", "expected_code"),
+    [
+        pytest.param("untracked", "RECOVERY_RUNTIME_CHECKOUT_DIRTY", id="untracked-file"),
+        pytest.param("modified", "RECOVERY_RUNTIME_CHECKOUT_DIRTY", id="modified-file"),
+        pytest.param(
+            "local_commit",
+            "RECOVERY_RUNTIME_CHECKOUT_HEAD_NOT_ON_ORIGIN_MAIN",
+            id="head-not-on-origin-main",
+        ),
+        pytest.param(
+            "head_moved", "RECOVERY_CURRENT_RELEASE_MISMATCH", id="head-moved-after-request"
+        ),
+    ],
+)
+def test_runtime_control_recovery_rejects_unverifiable_runtime_checkout(
+    tmp_path: Path, tamper: str, expected_code: str
+) -> None:
+    """OPS-082 decision (e) replaces the deployment receipt with the runtime checkout itself.
+
+    Equivalent of the old tampered-receipt test: the release identity the recovery binds to must
+    still hold when the run control re-reads it, and it holds only for a clean checkout whose
+    HEAD is reachable from origin/main.
+    """
+
+    control, spec = _failed_parent_control(tmp_path)
+    request = _recovery_request(tmp_path, parent_run_id="parent", as_of=date(2026, 7, 27))
+    runtime_root = Path(request.runtime_checkout_root)
+    if tamper == "untracked":
+        (runtime_root / "stray.txt").write_text("not committed\n", encoding="utf-8")
+    elif tamper == "modified":
+        (runtime_root / "README.md").write_text("edited in place\n", encoding="utf-8")
+    elif tamper == "local_commit":
+        (runtime_root / "local.txt").write_text("local only\n", encoding="utf-8")
+        _git(runtime_root, "add", "local.txt")
+        _git(runtime_root, "commit", "-q", "-m", "local commit not on origin/main")
+        request = replace(request, current_release_commit=_git(runtime_root, "rev-parse", "HEAD"))
+    else:
+        (runtime_root / "next.txt").write_text("next release\n", encoding="utf-8")
+        _git(runtime_root, "add", "next.txt")
+        _git(runtime_root, "commit", "-q", "-m", "next release")
+        _git(runtime_root, "update-ref", "refs/remotes/origin/main", "HEAD")
 
     blocked = control.acquire(
         spec=spec,
-        as_of=as_of,
+        as_of=date(2026, 7, 27),
         run_id="child",
-        now=now,
+        now=datetime(2026, 7, 28, tzinfo=UTC),
         recovery_request=request,
     )
 
     assert blocked.resolution.decision is OperationsRunDecision.BLOCKED_INVALID_RECOVERY
-    assert blocked.resolution.blocker_codes == (
-        "RECOVERY_DEPLOYMENT_RECEIPT_INVALID_SHA256_MISMATCH",
-    )
+    assert blocked.resolution.blocker_codes == (expected_code,)
     assert blocked.lease is None
+    assert not (control.root / "recovery").exists()
 
 
 def test_runtime_control_recovery_rejects_non_idempotent_replay(

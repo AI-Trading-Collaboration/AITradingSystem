@@ -1,7 +1,7 @@
 schema_version: operations_runtime_control_policy.v1
 policy_id: operations_runtime_control_v1
 owner: system_operations
-version: 1.1.0
+version: 1.2.0
 status: active_ops_071
 policy_metadata:
   rationale: >
@@ -16,13 +16,18 @@ policy_metadata:
     execution remains disabled in periodic_control.yaml. OPS-071 additionally
     permits one explicit same-as-of terminal recovery child after a reviewed
     release change. The child must bind the immutable parent state/run manifest,
-    active deployment receipt, reason code, and a report-only replay boundary.
+    the current release, reason code, and a report-only replay boundary. Since
+    1.2.0 (OPS-082, owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1
+    (e)) the current release is the HEAD of the clean runtime checkout, reachable
+    from origin/main, instead of an active deployment receipt.
   validation_evidence: >
     ARCH-004F1 focused tests cover concurrent acquisition, stale-lock recovery,
     duplicate completed triggers, retry exhaustion, safe resume, unsafe
     non-idempotent resume, owner-only release, and atomic state persistence.
-    OPS-071 tests cover immutable parent archives, exact parent/release/deployment
-    binding, one-child limit, selective report-tail replay, and tamper rejection.
+    OPS-071 tests cover immutable parent archives, exact parent/release binding,
+    one-child limit, selective report-tail replay, and tamper rejection; OPS-082
+    tests reject a dirty runtime checkout, a HEAD not on origin/main, and a HEAD
+    that moved after the request.
   review_condition: >
     Review before changing lock TTL, attempt budget, resume/recovery eligibility,
     allowed recovery boundary, daily executor cut-in, non-daily manual dispatch,

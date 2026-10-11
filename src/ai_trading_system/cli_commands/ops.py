@@ -144,6 +144,10 @@ from ai_trading_system.platform.operations.periodic_consumer_migration import (
     default_native_periodic_consumer_parity_plan_path,
     write_native_periodic_consumer_parity_plan,
 )
+from ai_trading_system.platform.operations.runtime_checkout import (
+    RuntimeCheckoutError,
+    require_clean_runtime_release,
+)
 from ai_trading_system.platform.reporting import write_owner_daily_brief_sidecars
 from ai_trading_system.report_traceability import default_report_trace_bundle_path
 from ai_trading_system.reports.calculation_explainers import default_calculation_explainers_path
@@ -2145,7 +2149,7 @@ def daily_ops_run_command(
             recovery_from_step=recovery_from_step,
             recovery_reason_code=recovery_reason_code,
             requested_at=run_generated_at,
-            env=os.environ,
+            project_root=PROJECT_ROOT,
         )
     except (OSError, ValueError, StrictJsonContractError) as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -3397,7 +3401,7 @@ def _build_daily_terminal_recovery_request(
     recovery_from_step: str | None,
     recovery_reason_code: str | None,
     requested_at: datetime,
-    env: Mapping[str, str],
+    project_root: Path,
 ) -> OperationsRecoveryRequest | None:
     supplied = (parent_run_id, recovery_from_step, recovery_reason_code)
     if not any(value is not None for value in supplied):
@@ -3410,26 +3414,16 @@ def _build_daily_terminal_recovery_request(
     assert recovery_from_step is not None
     assert recovery_reason_code is not None
 
-    deployment_receipt_raw = env.get("AITS_OPS_DEPLOYMENT_RECEIPT", "").strip()
-    if not deployment_receipt_raw:
-        raise ValueError("terminal recovery requires AITS_OPS_DEPLOYMENT_RECEIPT")
-    deployment_receipt_path = Path(deployment_receipt_raw).resolve()
-    deployment_payload = load_strict_json_path(deployment_receipt_path)
-    if not isinstance(deployment_payload, Mapping):
-        raise ValueError("active deployment receipt must be a JSON object")
-    release_payload = deployment_payload.get("release")
-    if not isinstance(release_payload, Mapping):
-        raise ValueError("active deployment receipt release must be a JSON object")
-    current_release_commit = str(release_payload.get("candidate_commit", "")).strip().lower()
-    if len(current_release_commit) != 40 or any(
-        character not in "0123456789abcdef" for character in current_release_commit
-    ):
-        raise ValueError("active deployment receipt candidate_commit is invalid")
-    legacy_release_assertion = env.get("AITS_OPS_RELEASE_COMMIT", "").strip().lower()
-    if legacy_release_assertion and legacy_release_assertion != current_release_commit:
+    # OPS-082 decision (e): the current release is the HEAD of this runtime checkout, which
+    # must be clean and reachable from origin/main; no deployment receipt is involved.
+    try:
+        checkout = require_clean_runtime_release(project_root)
+    except RuntimeCheckoutError as exc:
         raise ValueError(
-            "legacy AITS_OPS_RELEASE_COMMIT must exactly match active deployment receipt"
-        )
+            "terminal recovery requires a clean runtime checkout whose HEAD is on origin/main: "
+            f"{exc}"
+        ) from exc
+    current_release_commit = checkout.head_commit
 
     manifest_matches: list[tuple[Path, Mapping[str, object]]] = []
     daily_root = run_output_root.resolve() / "daily"
@@ -3460,8 +3454,8 @@ def _build_daily_terminal_recovery_request(
         parent_manifest_sha256=sha256_path(parent_manifest_path),
         parent_release_commit=parent_release_commit,
         current_release_commit=current_release_commit,
-        deployment_receipt_path=str(deployment_receipt_path),
-        deployment_receipt_sha256=sha256_path(deployment_receipt_path),
+        runtime_checkout_root=str(checkout.root),
+        runtime_origin_main_commit=checkout.origin_main_commit,
         requested_at=requested_at,
     )
 

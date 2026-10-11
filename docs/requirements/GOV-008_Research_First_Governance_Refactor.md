@@ -237,6 +237,14 @@ owner 可调整）：
   下拉）、测试分诊（Full 节点时间：发布机制 62.7%、研究采集 25.2%、其余产品测试 12.1%）、代码使用分析（上文）、
   区域 C 路径清单提议、5 个待裁决问题。等待 owner 评审（DP1/DP2）。分析脚本在会话临时目录，结果已固化在上述文档，
   P2 前以仓库内脚本重新生成名单。
+- 2026-10-11：owner（Baker）在聊天中作出两条决定（经发起迁移收尾的线程会话转达，全文见
+  `docs/requirements/OPS-082_Deterministic_Windows_Scheduler.md` 第 2 节）：
+  `owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1`——Windows 任务计划程序为唯一外部调度入口，Codex
+  automation `aitradingsystem-pit` 停用（已暂停），PowerShell 包装脚本调用一次运行副本的 `aits.exe ops daily-run` 并用代码
+  写中文摘要（无 LLM，通知只写文件），17:30 rescue 作为同一计划任务的第二个触发时间，终止恢复改为校验运行副本工作区干净且
+  HEAD 可从 `origin/main` 到达（取代 deployment receipt）；`owner_decision:GOV-008:2026-10-11:research_after_migration`——
+  研究策略调整（含付费源停订后的替代）推迟到工程迁移结束后讨论，付费源停订期间 ordinary daily 全链 PASS 不是 OPS-082 的完成
+  条件，本次只做工程验证。其余挂起任务的处置按第 21 节建议执行（见第 21 节之后的"2026-10-11 owner 决定与处置结果"）。
 
 ## 13. P2 spike 结果（2026-10-10，代码在 `tools/gov008/`、`config/gov008_ship.yaml`、`core/provenance.py`）
 

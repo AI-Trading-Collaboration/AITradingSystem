@@ -661,7 +661,15 @@ class OperationsExecutionState:
 
 @dataclass(frozen=True)
 class OperationsRecoveryRequest:
-    schema_version: ClassVar[str] = "operations_recovery_request.v1"
+    """Explicit terminal-recovery request.
+
+    v2 (OPS-082, owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1 (e)): the current
+    release is the HEAD of the clean runtime checkout, reachable from origin/main, instead of the
+    candidate commit of a deployment receipt (the command that wrote receipts was deleted in
+    GOV-008). v1 receipts already written stay as immutable history and are never read back.
+    """
+
+    schema_version: ClassVar[str] = "operations_recovery_request.v2"
 
     parent_run_id: str
     recovery_from_step_id: str
@@ -670,8 +678,8 @@ class OperationsRecoveryRequest:
     parent_manifest_sha256: str
     parent_release_commit: str
     current_release_commit: str
-    deployment_receipt_path: str
-    deployment_receipt_sha256: str
+    runtime_checkout_root: str
+    runtime_origin_main_commit: str
     requested_at: datetime
 
     def __post_init__(self) -> None:
@@ -680,17 +688,14 @@ class OperationsRecoveryRequest:
             (self.recovery_from_step_id, "recovery_from_step_id"),
             (self.reason_code, "reason_code"),
             (self.parent_manifest_path, "parent_manifest_path"),
-            (self.deployment_receipt_path, "deployment_receipt_path"),
+            (self.runtime_checkout_root, "runtime_checkout_root"),
         ):
             _nonempty(value, field)
-        for value, field in (
-            (self.parent_manifest_sha256, "parent_manifest_sha256"),
-            (self.deployment_receipt_sha256, "deployment_receipt_sha256"),
-        ):
-            _hex_digest(value, field, length=64)
+        _hex_digest(self.parent_manifest_sha256, "parent_manifest_sha256", length=64)
         for value, field in (
             (self.parent_release_commit, "parent_release_commit"),
             (self.current_release_commit, "current_release_commit"),
+            (self.runtime_origin_main_commit, "runtime_origin_main_commit"),
         ):
             _hex_digest(value, field, length=40)
         _aware_datetime(self.requested_at, "requested_at")
@@ -710,8 +715,8 @@ class OperationsRecoveryRequest:
             "parent_manifest_sha256": self.parent_manifest_sha256,
             "parent_release_commit": self.parent_release_commit,
             "current_release_commit": self.current_release_commit,
-            "deployment_receipt_path": self.deployment_receipt_path,
-            "deployment_receipt_sha256": self.deployment_receipt_sha256,
+            "runtime_checkout_root": self.runtime_checkout_root,
+            "runtime_origin_main_commit": self.runtime_origin_main_commit,
             "requested_at": self.requested_at.isoformat(),
         }
 
@@ -725,8 +730,8 @@ class OperationsRecoveryRequest:
             parent_manifest_sha256=str(payload.get("parent_manifest_sha256", "")),
             parent_release_commit=str(payload.get("parent_release_commit", "")),
             current_release_commit=str(payload.get("current_release_commit", "")),
-            deployment_receipt_path=str(payload.get("deployment_receipt_path", "")),
-            deployment_receipt_sha256=str(payload.get("deployment_receipt_sha256", "")),
+            runtime_checkout_root=str(payload.get("runtime_checkout_root", "")),
+            runtime_origin_main_commit=str(payload.get("runtime_origin_main_commit", "")),
             requested_at=_datetime_value(payload.get("requested_at"), "requested_at"),
         )
 

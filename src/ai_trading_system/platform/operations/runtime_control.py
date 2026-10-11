@@ -18,6 +18,10 @@ from ai_trading_system.contracts.operations import (
 from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.contracts.workflow import RunLedger, WorkflowSpec, WorkflowStepSpec
 from ai_trading_system.platform.artifacts import write_json_atomic
+from ai_trading_system.platform.operations.runtime_checkout import (
+    RuntimeCheckoutError,
+    require_clean_runtime_release,
+)
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_OPERATIONS_RUNTIME_CONTROL_POLICY_PATH = (
@@ -620,27 +624,17 @@ class OperationsRunControl:
                 "RECOVERY_PARENT_RELEASE_MISMATCH",
                 str(manifest.get("git_commit")),
             )
-        deployment = _read_bound_json(
-            Path(request.deployment_receipt_path),
-            expected_sha256=request.deployment_receipt_sha256,
-            missing_code="RECOVERY_DEPLOYMENT_RECEIPT_INVALID",
-        )
-        release = deployment.get("release")
-        runtime = deployment.get("runtime")
-        release_commit = release.get("candidate_commit") if isinstance(release, dict) else None
-        runtime_commit = runtime.get("head_commit") if isinstance(runtime, dict) else None
-        if deployment.get("status") != "ACTIVE_OWNER_ACCEPTED":
-            raise OperationsRuntimeControlError(
-                "RECOVERY_DEPLOYMENT_NOT_ACTIVE",
-                str(deployment.get("status")),
-            )
-        if (
-            release_commit != request.current_release_commit
-            or runtime_commit != request.current_release_commit
-        ):
+        # OPS-082 decision (e): the current release is the HEAD of the clean runtime checkout,
+        # reachable from origin/main. Re-read it here so a request built earlier cannot carry a
+        # release the checkout no longer has.
+        try:
+            checkout = require_clean_runtime_release(Path(request.runtime_checkout_root))
+        except RuntimeCheckoutError as exc:
+            raise OperationsRuntimeControlError(f"RECOVERY_{exc.code}", exc.message) from exc
+        if checkout.head_commit != request.current_release_commit:
             raise OperationsRuntimeControlError(
                 "RECOVERY_CURRENT_RELEASE_MISMATCH",
-                f"release={release_commit};runtime={runtime_commit}",
+                f"request={request.current_release_commit};runtime_head={checkout.head_commit}",
             )
 
     def _exhausted_resume_steps(
